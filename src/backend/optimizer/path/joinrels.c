@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.13 1998/08/10 02:26:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.14 1998/09/01 03:23:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ bool		_use_right_sided_plans_ = false;
 
 static List *find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list);
 static List *find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels);
-static RelOptInfo *init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *joininfo);
+static RelOptInfo *init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo);
 static List *
 new_join_tlist(List *tlist, List *other_relids,
 			   int first_resdomno);
@@ -43,7 +43,7 @@ static bool nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2);
 static bool nonoverlap_sets(List *s1, List *s2);
 static void
 set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel,
-				 JInfo *jinfo);
+				 JoinInfo *jinfo);
 
 /*
  * find-join-rels--
@@ -80,7 +80,7 @@ find_join_rels(Query *root, List *outer_rels)
 		join_list = nconc(join_list, joins);
 	}
 
-	return (join_list);
+	return join_list;
 }
 
 /*
@@ -106,7 +106,7 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 
 	foreach(i, joininfo_list)
 	{
-		JInfo	   *joininfo = (JInfo *) lfirst(i);
+		JoinInfo	   *joininfo = (JoinInfo *) lfirst(i);
 		RelOptInfo		   *rel;
 
 		if (!joininfo->inactive)
@@ -146,7 +146,7 @@ find_clause_joins(Query *root, RelOptInfo *outer_rel, List *joininfo_list)
 		}
 	}
 
-	return (join_list);
+	return join_list;
 }
 
 /*
@@ -172,13 +172,13 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
 		{
 			temp_node = lcons(init_join_rel(outer_rel,
 											inner_rel,
-											(JInfo *) NULL),
+											(JoinInfo *) NULL),
 							  NIL);
 			t_list = nconc(t_list, temp_node);
 		}
 	}
 
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -193,7 +193,7 @@ find_clauseless_joins(RelOptInfo *outer_rel, List *inner_rels)
  * Returns the new join relation node.
  */
 static RelOptInfo *
-init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *joininfo)
+init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *joininfo)
 {
 	RelOptInfo		   *joinrel = makeNode(RelOptInfo);
 	List	   *joinrel_joininfo_list = NIL;
@@ -253,7 +253,7 @@ init_join_rel(RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *joininfo)
 
 	set_joinrel_size(joinrel, outer_rel, inner_rel, joininfo);
 
-	return (joinrel);
+	return joinrel;
 }
 
 /*
@@ -301,7 +301,7 @@ new_join_tlist(List *tlist,
 		}
 	}
 
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -327,13 +327,13 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 {
 	List	   *current_joininfo_list = NIL;
 	List	   *new_otherrels = NIL;
-	JInfo	   *other_joininfo = (JInfo *) NULL;
+	JoinInfo	   *other_joininfo = (JoinInfo *) NULL;
 	List	   *xjoininfo = NIL;
 
 	foreach(xjoininfo, joininfo_list)
 	{
 		List	   *or;
-		JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
+		JoinInfo	   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
 		new_otherrels = joininfo->otherrels;
 		foreach(or, new_otherrels)
@@ -354,7 +354,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 			}
 			else
 			{
-				other_joininfo = makeNode(JInfo);
+				other_joininfo = makeNode(JoinInfo);
 
 				other_joininfo->otherrels =
 					joininfo->otherrels;
@@ -372,7 +372,7 @@ new_joininfo_list(List *joininfo_list, List *join_relids)
 		}
 	}
 
-	return (current_joininfo_list);
+	return current_joininfo_list;
 }
 
 /*
@@ -412,7 +412,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 
 		foreach(xjoininfo, joinrel->joininfo)
 		{
-			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
+			JoinInfo	   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 			List	   *other_rels = joininfo->otherrels;
 			List	   *clause_info = joininfo->jinfoclauseinfo;
 			bool		mergejoinable = joininfo->mergejoinable;
@@ -424,7 +424,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 				RelOptInfo		   *rel = get_join_rel(root, relid);
 				List	   *super_rels = rel->superrels;
 				List	   *xsuper_rel = NIL;
-				JInfo	   *new_joininfo = makeNode(JInfo);
+				JoinInfo	   *new_joininfo = makeNode(JoinInfo);
 
 				new_joininfo->otherrels = joinrel->relids;
 				new_joininfo->jinfoclauseinfo = clause_info;
@@ -441,7 +441,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 					if (nonoverlap_rels(super_rel, joinrel))
 					{
 						List	   *new_relids = super_rel->relids;
-						JInfo	   *other_joininfo =
+						JoinInfo	   *other_joininfo =
 						joininfo_member(new_relids,
 										joinrel->joininfo);
 
@@ -453,7 +453,7 @@ add_new_joininfos(Query *root, List *joinrels, List *outerrels)
 						}
 						else
 						{
-							JInfo	   *new_joininfo = makeNode(JInfo);
+							JoinInfo	   *new_joininfo = makeNode(JoinInfo);
 
 							new_joininfo->otherrels = new_relids;
 							new_joininfo->jinfoclauseinfo = clause_info;
@@ -505,7 +505,7 @@ final_join_rels(List *join_rel_list)
 
 		foreach(xjoininfo, rel->joininfo)
 		{
-			JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
+			JoinInfo	   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
 			if (joininfo->otherrels != NIL)
 			{
@@ -520,7 +520,7 @@ final_join_rels(List *join_rel_list)
 		}
 	}
 
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -550,7 +550,7 @@ add_superrels(RelOptInfo *rel, RelOptInfo *super_rel)
 static bool
 nonoverlap_rels(RelOptInfo *rel1, RelOptInfo *rel2)
 {
-	return (nonoverlap_sets(rel1->relids, rel2->relids));
+	return nonoverlap_sets(rel1->relids, rel2->relids);
 }
 
 static bool
@@ -563,13 +563,13 @@ nonoverlap_sets(List *s1, List *s2)
 		int			e = lfirsti(x);
 
 		if (intMember(e, s2))
-			return (false);
+			return false;
 	}
-	return (true);
+	return true;
 }
 
 static void
-set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JInfo *jinfo)
+set_joinrel_size(RelOptInfo *joinrel, RelOptInfo *outer_rel, RelOptInfo *inner_rel, JoinInfo *jinfo)
 {
 	int			ntuples;
 	float		selec;

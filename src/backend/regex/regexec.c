@@ -159,7 +159,7 @@ pg95_regexec(preg, string, nmatch, pmatch, eflags)
 const regex_t *preg;
 const char *string;
 size_t		nmatch;
-regmatch_t	pmatch[];
+regmatch_t	*pmatch;
 int			eflags;
 {
 	struct re_guts *g = preg->re_g;
@@ -176,10 +176,10 @@ int			eflags;
 #endif
 
 	if (preg->re_magic != MAGIC1 || g->magic != MAGIC2)
-		return (REG_BADPAT);
+		return REG_BADPAT;
 	assert(!(g->iflags & BAD));
 	if (g->iflags & BAD)		/* backstop for no-debug case */
-		return (REG_BADPAT);
+		return REG_BADPAT;
 	eflags = GOODFLAGS(eflags);
 
 #ifdef MULTIBYTE
@@ -198,8 +198,8 @@ int			eflags;
 #  else
 
 	if (g->nstates <= CHAR_BIT * sizeof(states1) && !(eflags & REG_LARGE))
-		return (smatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags));
+		return smatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags);
 	else
-		return (lmatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags));
+		return lmatcher(g, (pg_wchar *) string, nmatch, pmatch, eflags);
 #endif
 }

@@ -99,7 +99,7 @@ RelationGetGISTStrategy(Relation r,
 						AttrNumber attnum,
 						RegProcedure proc)
 {
-	return (RelationGetStrategy(r, attnum, &GISTEvaluationData, proc));
+	return RelationGetStrategy(r, attnum, &GISTEvaluationData, proc);
 }
 
 #ifdef NOT_USED

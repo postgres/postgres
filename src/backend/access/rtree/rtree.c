@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.26 1998/08/19 02:01:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.27 1998/09/01 03:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,8 +136,8 @@ rtbuild(Relation heap,
 	}
 
 	/* init the tuple descriptors and get set for a heap scan */
-	hd = RelationGetTupleDescriptor(heap);
-	id = RelationGetTupleDescriptor(index);
+	hd = RelationGetDescr(heap);
+	id = RelationGetDescr(index);
 	d = (Datum *) palloc(natts * sizeof(*d));
 	nulls = (bool *) palloc(natts * sizeof(*nulls));
 
@@ -310,7 +310,7 @@ rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation he
 	RTSTATE		rtState;
 
 	/* generate an index tuple */
-	itup = index_formtuple(RelationGetTupleDescriptor(r), datum, nulls);
+	itup = index_formtuple(RelationGetDescr(r), datum, nulls);
 	itup->t_tid = *ht_ctid;
 	initRtstate(&rtState, r);
 
@@ -318,7 +318,7 @@ rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation he
 	res = rtdoinsert(r, itup, &rtState);
 
 	/* XXX two-phase locking -- don't unlock the relation until EOT */
-	return (res);
+	return res;
 }
 
 static InsertIndexResult
@@ -372,7 +372,7 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 		res = dosplit(r, buffer, stack, itup, rtstate);
 		freestack(stack);
 		WriteBuffer(buffer);	/* don't forget to release buffer! */
-		return (res);
+		return res;
 	}
 
 	/* add the item and write the buffer */
@@ -402,7 +402,7 @@ rtdoinsert(Relation r, IndexTuple itup, RTSTATE *rtstate)
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 	ItemPointerSet(&(res->pointerData), blk, l);
 
-	return (res);
+	return res;
 }
 
 static void
@@ -435,7 +435,7 @@ rttighten(Relation r,
 
 	if (newd_size != old_size)
 	{
-		TupleDesc	td = RelationGetTupleDescriptor(r);
+		TupleDesc	td = RelationGetDescr(r);
 
 		if (td->attrs[0]->attlen < 0)
 		{
@@ -620,7 +620,7 @@ dosplit(Relation r,
 	pfree(ltup);
 	pfree(rtup);
 
-	return (res);
+	return res;
 }
 
 static void
@@ -922,13 +922,13 @@ choose(Relation r, Page p, IndexTuple it, RTSTATE *rtstate)
 		}
 	}
 
-	return (which);
+	return which;
 }
 
 static int
 nospace(Page p, IndexTuple it)
 {
-	return (PageGetFreeSpace(p) < IndexTupleSize(it));
+	return PageGetFreeSpace(p) < IndexTupleSize(it);
 }
 
 void
@@ -970,7 +970,7 @@ rtdelete(Relation r, ItemPointer tid)
 	WriteBuffer(buf);
 
 	/* XXX -- two-phase locking, don't release the write lock */
-	return ((char *) NULL);
+	return (char *) NULL;
 }
 
 static void

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.30 1998/08/04 16:44:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.31 1998/09/01 03:23:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -154,7 +154,7 @@ create_plan(Path *best_path)
 	}
 #endif
 
-	return (plan_node);
+	return plan_node;
 }
 
 /*
@@ -281,7 +281,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 								   (get_locclauseinfo(best_path)))));
 #endif
 
-	return (retval);
+	return retval;
 }
 
 /*****************************************************************************
@@ -316,7 +316,7 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 
 	scan_node->plan.cost = best_path->path_cost;
 
-	return (scan_node);
+	return scan_node;
 }
 
 /*
@@ -342,7 +342,7 @@ create_indexscan_node(IndexPath *best_path,
 	IndexScan  *scan_node = (IndexScan *) NULL;
 	bool		lossy = FALSE;
 	HeapTuple	indexTuple;
-	IndexTupleForm index;
+	Form_pg_index index;
 
 	/*
 	 * If an 'or' clause is to be used with this index, the indxqual field
@@ -377,7 +377,7 @@ create_indexscan_node(IndexPath *best_path,
 		if (!HeapTupleIsValid(indexTuple))
 			elog(ERROR, "create_plan: index %d not found",
 				 lfirsti(ixid));
-		index = (IndexTupleForm) GETSTRUCT(indexTuple);
+		index = (Form_pg_index) GETSTRUCT(indexTuple);
 		if (index->indislossy)
 			lossy = TRUE;
 	}
@@ -418,7 +418,7 @@ create_indexscan_node(IndexPath *best_path,
 					   fixed_indxqual,
 					   best_path->path.path_cost);
 
-	return (scan_node);
+	return scan_node;
 }
 
 /*****************************************************************************
@@ -506,7 +506,7 @@ create_nestloop_node(JoinPath *best_path,
 
 	join_node->join.cost = best_path->path.path_cost;
 
-	return (join_node);
+	return join_node;
 }
 
 static MergeJoin *
@@ -595,7 +595,7 @@ create_mergejoin_node(MergePath *best_path,
 
 	join_node->join.cost = best_path->jpath.path.path_cost;
 
-	return (join_node);
+	return join_node;
 }
 
 /*
@@ -650,7 +650,7 @@ create_hashjoin_node(HashPath *best_path,
 							  (Plan *) hash_node);
 	join_node->join.cost = best_path->jpath.path.path_cost;
 
-	return (join_node);
+	return join_node;
 }
 
 
@@ -684,17 +684,17 @@ fix_indxqual_references(Node *clause, Path *index_path)
 			}
 			newclause = copyObject((Node *) clause);
 			((Var *) newclause)->varattno = pos + 1;
-			return (newclause);
+			return newclause;
 		}
 		else
-			return (clause);
+			return clause;
 	}
 	else if (IsA(clause, Const))
-		return (clause);
+		return clause;
 	else if (IsA(clause, Param))
 	{
 		/* Function parameter used as index scan arg.  DZ - 27-8-1996 */
-		return (clause);
+		return clause;
 	}
 	else if (is_opclause(clause) &&
 			 is_funcclause((Node *) get_leftop((Expr *) clause)) &&
@@ -743,7 +743,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 				make_clause(expr->opType, expr->oper, new_subclauses);
 		}
 		else
-			return (clause);
+			return clause;
 	}
 	else
 	{
@@ -770,7 +770,7 @@ fix_indxqual_references(Node *clause, Path *index_path)
 		if (new_subclauses)
 			return (Node *) new_subclauses;
 		else
-			return (clause);
+			return clause;
 	}
 }
 
@@ -812,7 +812,7 @@ switch_outer(List *clauses)
 		else
 			t_list = lappend(t_list, clause);
 	}
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -856,7 +856,7 @@ set_temp_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
 		}
 		keyno += 1;
 	}
-	return (tlist);
+	return tlist;
 }
 
 /*****************************************************************************
@@ -917,7 +917,7 @@ make_temp(List *tlist,
 			elog(ERROR, "make_temp: unknown temp type %d", temptype);
 
 	}
-	return (retval);
+	return retval;
 }
 
 
@@ -939,7 +939,7 @@ make_seqscan(List *qptlist,
 	node->scanrelid = scanrelid;
 	node->scanstate = (CommonScanState *) NULL;
 
-	return (node);
+	return node;
 }
 
 static IndexScan *
@@ -964,7 +964,7 @@ make_indexscan(List *qptlist,
 	node->indxqual = indxqual;
 	node->scan.scanstate = (CommonScanState *) NULL;
 
-	return (node);
+	return node;
 }
 
 
@@ -986,7 +986,7 @@ make_nestloop(List *qptlist,
 	plan->righttree = righttree;
 	node->nlstate = (NestLoopState *) NULL;
 
-	return (node);
+	return node;
 }
 
 static HashJoin *
@@ -1013,7 +1013,7 @@ make_hashjoin(List *tlist,
 	node->hashjointablesize = 0;
 	node->hashdone = false;
 
-	return (node);
+	return node;
 }
 
 static Hash *
@@ -1034,7 +1034,7 @@ make_hash(List *tlist, Var *hashkey, Plan *lefttree)
 	node->hashtablekey = 0;
 	node->hashtablesize = 0;
 
-	return (node);
+	return node;
 }
 
 static MergeJoin *
@@ -1062,7 +1062,7 @@ make_mergejoin(List *tlist,
 	node->mergerightorder = rightorder;
 	node->mergeleftorder = leftorder;
 
-	return (node);
+	return node;
 }
 
 Sort *
@@ -1080,7 +1080,7 @@ make_sort(List *tlist, Oid tempid, Plan *lefttree, int keycount)
 	node->tempid = tempid;
 	node->keycount = keycount;
 
-	return (node);
+	return node;
 }
 
 static Material *
@@ -1101,7 +1101,7 @@ make_material(List *tlist,
 	node->tempid = tempid;
 	node->keycount = keycount;
 
-	return (node);
+	return node;
 }
 
 Agg *
@@ -1117,7 +1117,7 @@ make_agg(List *tlist, Plan *lefttree)
 	node->plan.righttree = (Plan *) NULL;
 	node->aggs = NIL;
 
-	return (node);
+	return node;
 }
 
 Group *
@@ -1139,7 +1139,7 @@ make_group(List *tlist,
 	node->numCols = ngrp;
 	node->grpColIdx = grpColIdx;
 
-	return (node);
+	return node;
 }
 
 /*
@@ -1168,7 +1168,7 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 		node->uniqueAttr = NULL;
 	else
 		node->uniqueAttr = pstrdup(uniqueAttr);
-	return (node);
+	return node;
 }
 
 #ifdef NOT_USED

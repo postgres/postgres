@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.16 1998/06/15 19:27:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.17 1998/09/01 03:20:57 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -84,7 +84,7 @@ _hash_addovflpage(Relation rel, Buffer *metabufp, Buffer buf)
 	/* logically chain overflow page to previous page */
 	pageopaque->hasho_nextblkno = ovflblkno;
 	_hash_wrtnorelbuf(rel, buf);
-	return (ovflbuf);
+	return ovflbuf;
 }
 
 /*
@@ -227,7 +227,7 @@ _hash_getovfladdr(Relation rel, Buffer *metabufp)
 	/* Calculate address of the new overflow page */
 	oaddr = OADDR_OF(splitnum, offset);
 	_hash_chgbufaccess(rel, metabufp, HASH_WRITE, HASH_READ);
-	return (oaddr);
+	return oaddr;
 
 found:
 	bit = bit + _hash_firstfreebit(freep[j]);
@@ -254,7 +254,7 @@ found:
 	/* initialize this page */
 	oaddr = OADDR_OF(i, offset);
 	_hash_chgbufaccess(rel, metabufp, HASH_WRITE, HASH_READ);
-	return (oaddr);
+	return oaddr;
 }
 
 /*
@@ -275,10 +275,10 @@ _hash_firstfreebit(uint32 map)
 	for (i = 0; i < BITS_PER_MAP; i++)
 	{
 		if (!(mask & map))
-			return (i);
+			return i;
 		mask = mask << 1;
 	}
-	return (i);
+	return i;
 }
 
 /*
@@ -387,9 +387,9 @@ _hash_freeovflpage(Relation rel, Buffer ovflbuf)
 	 * return that buffer with a write lock.
 	 */
 	if (BlockNumberIsValid(nextblkno))
-		return (_hash_getbuf(rel, nextblkno, HASH_WRITE));
+		return _hash_getbuf(rel, nextblkno, HASH_WRITE);
 	else
-		return (InvalidBuffer);
+		return InvalidBuffer;
 }
 
 
@@ -455,7 +455,7 @@ _hash_initbitmap(Relation rel,
 	/* write out the new bitmap page (releasing its locks) */
 	_hash_wrtbuf(rel, buf);
 
-	return (0);
+	return 0;
 }
 
 

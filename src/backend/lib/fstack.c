@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.8 1998/06/15 19:28:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.9 1998/09/01 03:22:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,12 +62,12 @@ FixedStackPop(FixedStack stack)
 	AssertArg(FixedStackIsValid(stack));
 
 	if (!PointerIsValid(stack->top))
-		return (NULL);
+		return NULL;
 
 	pointer = FixedStackGetItemBase(stack, stack->top);
 	stack->top = stack->top->next;
 
-	return (pointer);
+	return pointer;
 }
 
 void
@@ -108,9 +108,9 @@ FixedStackContains(FixedStack stack, Pointer pointer)
 	for (next = stack->top; FixedItemIsValid(next); next = next->next)
 	{
 		if (next == item)
-			return (true);
+			return true;
 	}
-	return (false);
+	return false;
 }
 
 #endif
@@ -121,9 +121,9 @@ FixedStackGetTop(FixedStack stack)
 	AssertArg(FixedStackIsValid(stack));
 
 	if (!PointerIsValid(stack->top))
-		return (NULL);
+		return NULL;
 
-	return (FixedStackGetItemBase(stack, stack->top));
+	return FixedStackGetItemBase(stack, stack->top);
 }
 
 Pointer
@@ -138,7 +138,7 @@ FixedStackGetNext(FixedStack stack, Pointer pointer)
 	item = FixedStackGetItem(stack, pointer)->next;
 
 	if (!PointerIsValid(item))
-		return (NULL);
+		return NULL;
 
-	return (FixedStackGetItemBase(stack, item));
+	return FixedStackGetItemBase(stack, item);
 }

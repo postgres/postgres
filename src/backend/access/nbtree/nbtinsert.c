@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.28 1998/08/19 02:01:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.29 1998/09/01 03:21:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 			Buffer		nbuf;
 			BlockNumber blkno;
 
-			itupdesc = RelationGetTupleDescriptor(rel);
+			itupdesc = RelationGetDescr(rel);
 			nbuf = InvalidBuffer;
 			opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -182,7 +182,7 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	_bt_freestack(stack);
 	_bt_freeskey(itup_scankey);
 
-	return (res);
+	return res;
 }
 
 /*
@@ -301,7 +301,7 @@ _bt_insertonpg(Relation rel,
 									 keysz, scankey, stack->bts_btitem,
 									 NULL);
 				ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
-				return (res);
+				return res;
 			}
 		}
 		else
@@ -780,7 +780,7 @@ _bt_insertonpg(Relation rel,
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 	ItemPointerSet(&(res->pointerData), itup_blkno, itup_off);
 
-	return (res);
+	return res;
 }
 
 /*
@@ -961,7 +961,7 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright)
 	}
 
 	/* split's done */
-	return (rbuf);
+	return rbuf;
 }
 
 /*
@@ -1045,7 +1045,7 @@ _bt_findsplitloc(Relation rel,
 	if (saferight == maxoff && (maxoff - start) > 1)
 		saferight = start + (maxoff - start) / 2;
 
-	return (saferight);
+	return saferight;
 }
 
 /*
@@ -1193,7 +1193,7 @@ _bt_pgaddtup(Relation rel,
 	/* write the buffer, but hold our lock */
 	_bt_wrtnorelbuf(rel, buf);
 
-	return (itup_off);
+	return itup_off;
 }
 
 /*
@@ -1227,7 +1227,7 @@ _bt_goesonpg(Relation rel,
 	/* no right neighbor? */
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (P_RIGHTMOST(opaque))
-		return (true);
+		return true;
 
 	/*
 	 * this is a non-rightmost page, so it must have a high key item.
@@ -1237,7 +1237,7 @@ _bt_goesonpg(Relation rel,
 	 */
 	hikey = PageGetItemId(page, P_HIKEY);
 	if (_bt_skeycmp(rel, keysz, scankey, page, hikey, BTLessStrategyNumber))
-		return (true);
+		return true;
 
 	/*
 	 * If the scan key is > the high key, then it for sure doesn't belong
@@ -1245,7 +1245,7 @@ _bt_goesonpg(Relation rel,
 	 */
 
 	if (_bt_skeycmp(rel, keysz, scankey, page, hikey, BTGreaterStrategyNumber))
-		return (false);
+		return false;
 
 	/*
 	 * If we have no adjacency information, and the item is equal to the
@@ -1258,14 +1258,14 @@ _bt_goesonpg(Relation rel,
 	if (afteritem == (BTItem) NULL)
 	{
 		if (opaque->btpo_flags & BTP_LEAF)
-			return (false);
+			return false;
 		if (opaque->btpo_flags & BTP_CHAIN)
-			return (true);
+			return true;
 		if (_bt_skeycmp(rel, keysz, scankey, page,
 						PageGetItemId(page, P_FIRSTKEY),
 						BTEqualStrategyNumber))
-			return (true);
-		return (false);
+			return true;
+		return false;
 	}
 
 	/* damn, have to work for it.  i hate that. */
@@ -1293,7 +1293,7 @@ _bt_goesonpg(Relation rel,
 		}
 	}
 
-	return (found);
+	return found;
 }
 
 /*
@@ -1330,7 +1330,7 @@ _bt_itemcmp(Relation rel,
 		strat = BTGreaterStrategyNumber;
 	}
 
-	tupDes = RelationGetTupleDescriptor(rel);
+	tupDes = RelationGetDescr(rel);
 	indexTuple1 = &(item1->bti_itup);
 	indexTuple2 = &(item2->bti_itup);
 
@@ -1357,13 +1357,13 @@ _bt_itemcmp(Relation rel,
 		if (compare)			/* true for one of ">, <, =" */
 		{
 			if (strat != BTEqualStrategyNumber)
-				return (true);
+				return true;
 		}
 		else
 /* false for one of ">, <, =" */
 		{
 			if (strat == BTEqualStrategyNumber)
-				return (false);
+				return false;
 
 			/*
 			 * if original strat was "<=, >=" OR "<, >" but some
@@ -1379,10 +1379,10 @@ _bt_itemcmp(Relation rel,
 				if (compare)	/* item1' and item2' attributes are equal */
 					continue;	/* - try to compare next attributes */
 			}
-			return (false);
+			return false;
 		}
 	}
-	return (true);
+	return true;
 }
 
 /*
@@ -1475,15 +1475,15 @@ _bt_isequal(TupleDesc itupdesc, Page page, OffsetNumber offnum,
 
 		/* NULLs are not equal */
 		if (entry->sk_flags & SK_ISNULL || null)
-			return (false);
+			return false;
 
 		result = (long) FMGR_PTR2(&entry->sk_func, entry->sk_argument, datum);
 		if (result != 0)
-			return (false);
+			return false;
 	}
 
 	/* by here, the keys are equal */
-	return (true);
+	return true;
 }
 
 #ifdef NOT_USED
@@ -1621,7 +1621,7 @@ _bt_shift(Relation rel, Buffer buf, BTStack stack, int keysz,
 
 	ItemPointerSet(&(res->pointerData), nbknum, P_HIKEY);
 
-	return (res);
+	return res;
 }
 
 #endif

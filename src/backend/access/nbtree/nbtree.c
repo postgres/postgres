@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.30 1998/08/25 21:33:56 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.31 1998/09/01 03:21:16 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -119,8 +119,8 @@ btbuild(Relation heap,
 		_bt_metapinit(index);
 
 	/* get tuple descriptors for heap and index relations */
-	htupdesc = RelationGetTupleDescriptor(heap);
-	itupdesc = RelationGetTupleDescriptor(index);
+	htupdesc = RelationGetDescr(heap);
+	itupdesc = RelationGetDescr(index);
 
 	/* get space for data items that'll appear in the index tuple */
 	attdata = (Datum *) palloc(natts * sizeof(Datum));
@@ -355,13 +355,14 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	InsertIndexResult res;
 
 	/* generate an index tuple */
-	itup = index_formtuple(RelationGetTupleDescriptor(rel), datum, nulls);
+	itup = index_formtuple(RelationGetDescr(rel), datum, nulls);
 	itup->t_tid = *ht_ctid;
 
 	/*
 	 * See comments in btbuild.
 	 *
-	 * if (itup->t_info & INDEX_NULL_MASK) return ((InsertIndexResult) NULL);
+	 * if (itup->t_info & INDEX_NULL_MASK)
+			return (InsertIndexResult) NULL;
 	 */
 
 	btitem = _bt_formitem(itup);
@@ -377,7 +378,7 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	_bt_adjscans(rel, &(res->pointerData), BT_INSERT);
 #endif
 
-	return (res);
+	return res;
 }
 
 /*
@@ -417,7 +418,7 @@ btgettuple(IndexScanDesc scan, ScanDirection dir)
 	if (res)
 		((BTScanOpaque)scan->opaque)->curHeapIptr = res->heap_iptr;
 	
-	return ((char *) res);
+	return (char *) res;
 }
 
 /*
@@ -434,7 +435,7 @@ btbeginscan(Relation rel, bool fromEnd, uint16 keysz, ScanKey scankey)
 	/* register scan in case we change pages it's using */
 	_bt_regscan(scan);
 
-	return ((char *) scan);
+	return (char *) scan;
 }
 
 /*

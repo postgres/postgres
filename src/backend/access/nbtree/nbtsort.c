@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.31 1998/08/25 21:33:57 scrappy Exp $
+ *	  $Id: nbtsort.c,v 1.32 1998/09/01 03:21:19 momjian Exp $
  *
  * NOTES
  *
@@ -180,11 +180,11 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 	if (k1->btsk_item == (BTItem) NULL)
 	{
 		if (k2->btsk_item == (BTItem) NULL)
-			return (0);			/* 1 = 2 */
-		return (1);				/* 1 > 2 */
+			return 0;			/* 1 = 2 */
+		return 1;				/* 1 > 2 */
 	}
 	else if (k2->btsk_item == (BTItem) NULL)
-		return (-1);			/* 1 < 2 */
+		return -1;			/* 1 < 2 */
 
 	for (i = 0; i < _bt_nattr; i++)
 	{
@@ -195,17 +195,17 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 				equal_isnull = true;
 				continue;
 			}
-			return (1);			/* NULL ">" NOT_NULL */
+			return 1;			/* NULL ">" NOT_NULL */
 		}
 		else if (k2_nulls[i] != ' ')	/* k2 attr is NULL */
-			return (-1);		/* NOT_NULL "<" NULL */
+			return -1;		/* NOT_NULL "<" NULL */
 
 		if (_bt_invokestrat(_bt_sortrel, i + 1, BTGreaterStrategyNumber,
 							k1_datum[i], k2_datum[i]))
-			return (1);			/* 1 > 2 */
+			return 1;			/* 1 > 2 */
 		else if (_bt_invokestrat(_bt_sortrel, i + 1, BTGreaterStrategyNumber,
 								 k2_datum[i], k1_datum[i]))
-			return (-1);		/* 1 < 2 */
+			return -1;		/* 1 < 2 */
 	}
 
 	if (_bt_inspool->isunique && !equal_isnull)
@@ -213,7 +213,7 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 		_bt_spooldestroy((void *) _bt_inspool);
 		elog(ERROR, "Cannot create unique index. Table contains non-unique values");
 	}
-	return (0);					/* 1 = 2 */
+	return 0;					/* 1 = 2 */
 }
 
 static void
@@ -307,17 +307,17 @@ _bt_pqnext(BTPriQueue *q, BTPriQueueElem *e)
 {
 	if (q->btpq_nelem < 1)
 	{							/* already empty */
-		return (-1);
+		return -1;
 	}
 	*e = q->btpq_queue[0];		/* struct = */
 
 	if (--q->btpq_nelem < 1)
 	{							/* now empty, don't sift */
-		return (0);
+		return 0;
 	}
 	q->btpq_queue[0] = q->btpq_queue[q->btpq_nelem];	/* struct = */
 	_bt_pqsift(q, 0);
-	return (0);
+	return 0;
 }
 
 static void
@@ -426,7 +426,7 @@ _bt_tapecreate(char *fname)
 	/* initialize the buffer */
 	_bt_tapereset(tape);
 
-	return (tape);
+	return tape;
 }
 
 /*
@@ -468,7 +468,7 @@ _bt_taperead(BTTapeBlock *tape)
 
 	if (tape->bttb_eor)
 	{
-		return (0);				/* we are already at End-Of-Run */
+		return 0;				/* we are already at End-Of-Run */
 	}
 
 	/*
@@ -482,11 +482,11 @@ _bt_taperead(BTTapeBlock *tape)
 	if (nread != TAPEBLCKSZ)
 	{
 		Assert(nread == 0);		/* we are at EOF */
-		return (0);
+		return 0;
 	}
 	Assert(tape->bttb_magic == BTTAPEMAGIC);
 	NDirectFileRead += TAPEBLCKSZ / BLCKSZ;
-	return (1);
+	return 1;
 }
 
 /*
@@ -506,11 +506,11 @@ _bt_tapenext(BTTapeBlock *tape, char **pos)
 	BTItem		bti;
 
 	if (*pos >= tape->bttb_data + tape->bttb_top)
-		return ((BTItem) NULL);
+		return (BTItem) NULL;
 	bti = (BTItem) *pos;
 	itemsz = BTITEMSZ(bti);
 	*pos += DOUBLEALIGN(itemsz);
-	return (bti);
+	return bti;
 }
 
 /*
@@ -574,7 +574,7 @@ _bt_spoolinit(Relation index, int ntapes, bool isunique)
 
 	_bt_isortcmpinit(index, btspool);
 
-	return ((void *) btspool);
+	return (void *) btspool;
 }
 
 /*
@@ -838,7 +838,7 @@ _bt_pagestate(Relation index, int flags, int level, bool doupper)
 	state->btps_level = level;
 	state->btps_doupper = doupper;
 
-	return ((void *) state);
+	return (void *) state;
 }
 
 /*
@@ -859,7 +859,7 @@ _bt_minitem(Page opage, BlockNumber oblkno, int atend)
 	nbti = _bt_formitem(&(obti->bti_itup));
 	ItemPointerSet(&(nbti->bti_itup.t_tid), oblkno, P_HIKEY);
 
-	return (nbti);
+	return nbti;
 }
 
 /*
@@ -1074,7 +1074,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 	state->btps_lastoff = last_off;
 	state->btps_firstoff = first_off;
 
-	return (last_bti);
+	return last_bti;
 }
 
 static void

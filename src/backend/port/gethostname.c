@@ -1,4 +1,4 @@
-/* $Id: gethostname.c,v 1.3 1998/01/15 20:54:34 scrappy Exp $ */
+/* $Id: gethostname.c,v 1.4 1998/09/01 03:24:25 momjian Exp $ */
 
 #include <sys/types.h>
 #include <string.h>
@@ -20,5 +20,5 @@ gethostname(char *name, int namelen)
 	}
 	strncpy(name, mname.nodename, (SYS_NMLN < namelen ? SYS_NMLN : namelen));
 
-	return (0);
+	return 0;
 }

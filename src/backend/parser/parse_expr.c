@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.32 1998/07/12 21:29:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.33 1998/09/01 03:24:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,7 +597,7 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
 						false,	/* was omitted */
 						false,	/* not a set */
 						true /* is cast */ );
-		return ((Node *) adt);
+		return (Node *) adt;
 	}
 
 	cp = stringTypeString(tp, const_string, atttypmod);
@@ -638,5 +638,5 @@ parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
 	if (string_palloced)
 		pfree(const_string);
 
-	return ((Node *) adt);
+	return (Node *) adt;
 }

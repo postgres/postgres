@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.26 1998/08/25 21:25:42 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.27 1998/09/01 03:24:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,7 +128,7 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 								   precedence);
 	}
 
-	return (retval);
+	return retval;
 }
 
 /*
@@ -483,7 +483,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		retval = (Node *) iter;
 	}
 
-	return (retval);
+	return retval;
 }
 
 static Oid
@@ -502,7 +502,7 @@ funcid_get_rettype(Oid funcid)
 	funcrettype = (Oid)
 		((Form_pg_proc) GETSTRUCT(func_tuple))->prorettype;
 
-	return (funcrettype);
+	return funcrettype;
 }
 
 
@@ -672,7 +672,7 @@ func_select_candidate(int nargs,
 		}
 
 		if ((nmatch + nident) == nargs)
-			return (current_candidate->args);
+			return current_candidate->args;
 
 #ifdef PARSEDEBUG
 printf("func_select_candidate- candidate has %d matches\n", nmatch);
@@ -789,9 +789,9 @@ printf("func_select_candidate- column #%d input type is %s\n",
 	}
 
 	if (ncandidates == 1)
-		return (candidates->args);
+		return candidates->args;
 
-	return (NULL);
+	return NULL;
 } /* func_select_candidate() */
 
 
@@ -920,11 +920,11 @@ func_get_detail(char *funcname,
 		*rettype = pform->prorettype;
 		*retset = pform->proretset;
 
-		return (true);
+		return true;
 	}
 
 	/* shouldn't reach here */
-	return (false);
+	return false;
 }	/* func_get_detail() */
 
 /*
@@ -978,7 +978,7 @@ argtype_inherit(int nargs, Oid *oid_array)
 	}
 
 	/* return an ordered cross-product of the classes involved */
-	return (gen_cross_product(arginh, nargs));
+	return gen_cross_product(arginh, nargs);
 }
 
 static int
@@ -1010,7 +1010,7 @@ find_inheritors(Oid relid, Oid **supervec)
 
 	inhrel = heap_openr(InheritsRelationName);
 	RelationSetLockForRead(inhrel);
-	inhtupdesc = RelationGetTupleDescriptor(inhrel);
+	inhtupdesc = RelationGetDescr(inhrel);
 
 	/*
 	 * Use queue to do a breadth-first traversal of the inheritance graph
@@ -1094,7 +1094,7 @@ find_inheritors(Oid relid, Oid **supervec)
 	else
 		*supervec = (Oid *) NULL;
 
-	return (nvisited);
+	return nvisited;
 }
 
 static Oid **
@@ -1130,7 +1130,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 		if (i < 0)
 		{
 			*iter = NULL;
-			return (result);
+			return result;
 		}
 
 		/* no, increment this column and zero the ones after it */
@@ -1237,7 +1237,7 @@ setup_tlist(char *attname, Oid relid)
 	varnode = makeVar(-1, attno, typeid, type_mod, 0, -1, attno);
 
 	tle = makeTargetEntry(resnode, (Node *) varnode);
-	return (lcons(tle, NIL));
+	return lcons(tle, NIL);
 }
 
 /*
@@ -1262,7 +1262,7 @@ setup_base_tlist(Oid typeid)
 	varnode = makeVar(-1, 1, typeid, -1, 0, -1, 1);
 	tle = makeTargetEntry(resnode, (Node *) varnode);
 
-	return (lcons(tle, NIL));
+	return lcons(tle, NIL);
 }
 
 /*
@@ -1315,7 +1315,7 @@ ParseComplexProjection(ParseState *pstate,
 						func->func_tlist =
 							setup_tlist(funcname, argrelid);
 						iter->itertype = attnumTypeId(rd, attnum);
-						return ((Node *) iter);
+						return (Node *) iter;
 					}
 					else
 					{
@@ -1382,7 +1382,7 @@ ParseComplexProjection(ParseState *pstate,
 						newexpr->oper = (Node *) funcnode;
 						newexpr->args = lcons(first_arg, NIL);
 
-						return ((Node *) newexpr);
+						return (Node *) newexpr;
 					}
 
 				}
@@ -1409,7 +1409,7 @@ ParseComplexProjection(ParseState *pstate,
 					{
 						param->paramtype = attnumTypeId(rd, attnum);
 						param->param_tlist = setup_tlist(funcname, relid);
-						return ((Node *) param);
+						return (Node *) param;
 					}
 				}
 				break;

@@ -141,8 +141,8 @@ gistbuild(Relation heap,
 	}
 
 	/* init the tuple descriptors and get set for a heap scan */
-	hd = RelationGetTupleDescriptor(heap);
-	id = RelationGetTupleDescriptor(index);
+	hd = RelationGetDescr(heap);
+	id = RelationGetDescr(index);
 	d = (Datum *) palloc(natts * sizeof(*d));
 	nulls = (bool *) palloc(natts * sizeof(*nulls));
 
@@ -350,7 +350,7 @@ gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 			compvec[i] = FALSE;
 		datum[i] = (Datum) tmpentry.pred;
 	}
-	itup = index_formtuple(RelationGetTupleDescriptor(r), datum, nulls);
+	itup = index_formtuple(RelationGetDescr(r), datum, nulls);
 	itup->t_tid = *ht_ctid;
 
 	RelationSetLockForWrite(r);
@@ -362,7 +362,7 @@ gistinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	pfree(compvec);
 
 	/* XXX two-phase locking -- don't unlock the relation until EOT */
-	return (res);
+	return res;
 }
 
 /*
@@ -431,7 +431,7 @@ gistdoinsert(Relation r,
 		res = gistSplit(r, buffer, stack, itup, giststate);
 		gistfreestack(stack);
 		WriteBuffer(buffer);	/* don't forget to release buffer! */
-		return (res);
+		return res;
 	}
 
 	if (PageIsEmpty(page))
@@ -458,7 +458,7 @@ gistdoinsert(Relation r,
 	res = (InsertIndexResult) palloc(sizeof(InsertIndexResultData));
 	ItemPointerSet(&(res->pointerData), blk, l);
 
-	return (res);
+	return res;
 }
 
 
@@ -512,7 +512,7 @@ gistChooseSubtree(Relation r, IndexTuple itup,	/* itup has compressed
 	*retstack = stack;
 	*leafbuf = buffer;
 
-	return (blk);
+	return blk;
 }
 
 
@@ -568,7 +568,7 @@ gistAdjustKeys(Relation r,
 	(*fmgr_faddr(&giststate->equalFn)) (ev0p->pred, datum, &result);
 	if (!result)
 	{
-		TupleDesc	td = RelationGetTupleDescriptor(r);
+		TupleDesc	td = RelationGetDescr(r);
 
 		/* compress datum for storage on page */
 		gistcentryinit(giststate, &centry, datum, ev0p->rel, ev0p->page,
@@ -869,7 +869,7 @@ gistSplit(Relation r,
 	pfree(ltup);
 	pfree(rtup);
 
-	return (res);
+	return res;
 }
 
 /*
@@ -962,7 +962,7 @@ gistentryinsert(Relation r, GISTSTACK *stk, IndexTuple tup,
 		res = gistSplit(r, b, stk->gs_parent, tup, giststate);
 		WriteBuffer(b);			/* don't forget to release buffer!  -
 								 * 01/31/94 */
-		return (res);
+		return res;
 	}
 	else
 	{
@@ -978,7 +978,7 @@ gistentryinsert(Relation r, GISTSTACK *stk, IndexTuple tup,
 			pfree(tmpentry.pred);
 		if (tup != newtup)
 			pfree(newtup);
-		return (res);
+		return res;
 	}
 }
 
@@ -1079,13 +1079,13 @@ gistchoose(Relation r, Page p, IndexTuple it,	/* it has compressed entry */
 	if (identry.pred != id)
 		pfree(identry.pred);
 
-	return (which);
+	return which;
 }
 
 static int
 gistnospace(Page p, IndexTuple it)
 {
-	return (PageGetFreeSpace(p) < IndexTupleSize(it));
+	return PageGetFreeSpace(p) < IndexTupleSize(it);
 }
 
 void
@@ -1144,7 +1144,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 				picksplit_proc,
 				equal_proc;
 	HeapTuple	htup;
-	IndexTupleForm itupform;
+	Form_pg_index itupform;
 
 	consistent_proc = index_getprocid(index, 1, GIST_CONSISTENT_PROC);
 	union_proc = index_getprocid(index, 1, GIST_UNION_PROC);
@@ -1165,7 +1165,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 	htup = SearchSysCacheTuple(INDEXRELID,
 							   ObjectIdGetDatum(RelationGetRelid(index)),
 							   0, 0, 0);
-	itupform = (IndexTupleForm) GETSTRUCT(htup);
+	itupform = (Form_pg_index) GETSTRUCT(htup);
 	if (!HeapTupleIsValid(htup))
 		elog(ERROR, "initGISTstate: index %d not found",
 		RelationGetRelid(index));
@@ -1183,7 +1183,7 @@ initGISTstate(GISTSTATE *giststate, Relation index)
 				 itupform->indexrelid, FirstOffsetNumber);
 			return;
 		}
-		giststate->keytypbyval = (((AttributeTupleForm) htup)->attbyval);
+		giststate->keytypbyval = (((Form_pg_attribute) htup)->attbyval);
 	}
 	else
 		giststate->keytypbyval = FALSE;
@@ -1210,7 +1210,7 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 		/* or in new size */
 		t->t_info |= MAXALIGN(entry.bytes + sizeof(IndexTupleData));
 
-		return (t);
+		return t;
 	}
 	else
 	{
@@ -1228,7 +1228,7 @@ gist_tuple_replacekey(Relation r, GISTENTRY entry, IndexTuple t)
 											  isnull);
 		newtup->t_tid = t->t_tid;
 		pfree(isnull);
-		return (newtup);
+		return newtup;
 	}
 }
 
@@ -1345,7 +1345,7 @@ text_range_out(TXTRANGE *r)
 			   *upper;
 
 	if (r == NULL)
-		return (NULL);
+		return NULL;
 	result = (char *) palloc(NAMEDATALEN + VARSIZE(TRLOWER(r)) + VARSIZE(TRUPPER(r))
 							 - 2 * VARHDRSZ);
 
@@ -1359,7 +1359,7 @@ text_range_out(TXTRANGE *r)
 	sprintf(result, "[%s,%s): %d", lower, upper, r->flag);
 	pfree(lower);
 	pfree(upper);
-	return (result);
+	return result;
 }
 
 #endif
@@ -1370,11 +1370,11 @@ int_range_out(INTRANGE *r)
 	char	   *result;
 
 	if (r == NULL)
-		return (NULL);
+		return NULL;
 	result = (char *) palloc(80);
 	sprintf(result, "[%d,%d): %d", r->lower, r->upper, r->flag);
 
-	return (result);
+	return result;
 }
 
 #endif							/* defined GISTDEBUG */

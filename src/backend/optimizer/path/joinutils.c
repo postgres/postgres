@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.6 1998/06/15 19:28:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.7 1998/09/01 03:23:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ match_pathkeys_joinkeys(List *pathkeys,
 			joinkeys = LispRemove(xjoinkey, joinkeys);
 		}
 		else
-			return (NIL);
+			return NIL;
 
 	}
 	if (matched_joinkeys == NULL ||
@@ -114,7 +114,7 @@ match_pathkeys_joinkeys(List *pathkeys,
 		return NIL;
 
 	*matchedJoinClausesPtr = nreverse(matched_joinclauses);
-	return (nreverse(matched_joinkeys));
+	return nreverse(matched_joinkeys);
 }
 
 /*
@@ -142,11 +142,11 @@ match_pathkey_joinkeys(List *pathkey,
 			jk = (JoinKey *) lfirst(x);
 			if (var_equal(path_subkey,
 						  extract_subkey(jk, which_subkey)))
-				return (pos);
+				return pos;
 			pos++;
 		}
 	}
-	return (-1);				/* no index found	*/
+	return -1;				/* no index found	*/
 }
 
 /*
@@ -197,9 +197,9 @@ every_func(List *joinkeys, List *pathkey, int which_subkey)
 			}
 		}
 		if (found == false)
-			return (false);
+			return false;
 	}
-	return (found);
+	return found;
 }
 
 
@@ -294,7 +294,7 @@ extract_path_keys(List *joinkeys,
 		pathkeys =
 			lappend(pathkeys, lcons(key, NIL));
 	}
-	return (pathkeys);
+	return pathkeys;
 }
 
 
@@ -337,7 +337,7 @@ new_join_pathkeys(List *outer_pathkeys,
 		if (x != NIL)
 			t_list = lappend(t_list, x);
 	}
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -395,7 +395,7 @@ new_join_pathkey(List *subkeys,
 
 		t_list = nconc(t_list, newly_considered_subkeys);
 	}
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -451,5 +451,5 @@ new_matching_subkeys(Var *subkey,
 			t_list = nconc(t_list, temp);
 		}
 	}
-	return (t_list);
+	return t_list;
 }

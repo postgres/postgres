@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.21 1998/08/31 17:49:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.22 1998/09/01 03:21:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,7 @@ ProcedureCreate(char *procedureName,
 
 	heap_insert(rel, tup);
 
-	if (RelationGetRelationTupleForm(rel)->relhasindex)
+	if (RelationGetForm(rel)->relhasindex)
 	{
 		Relation	idescs[Num_pg_proc_indices];
 

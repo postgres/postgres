@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.26 1998/08/19 02:01:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.27 1998/09/01 03:21:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ StrategyMapGetScanKeyEntry(StrategyMap map,
 {
 	Assert(StrategyMapIsValid(map));
 	Assert(StrategyNumberIsValid(strategyNumber));
-	return (&map->entry[strategyNumber - 1]);
+	return &map->entry[strategyNumber - 1];
 }
 
 /*
@@ -515,7 +515,7 @@ OperatorRelationFillScanKeyEntry(Relation operatorRelation,
 	}
 
 	entry->sk_flags = 0;
-	entry->sk_procedure = ((OperatorTupleForm) GETSTRUCT(tuple))->oprcode;
+	entry->sk_procedure = ((Form_pg_operator) GETSTRUCT(tuple))->oprcode;
 	fmgr_info(entry->sk_procedure, &entry->sk_func);
 	entry->sk_nargs = entry->sk_func.fn_nargs;
 
@@ -578,13 +578,13 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 	/*
 	 * XXX note that the following assumes the INDEX tuple is well formed
-	 * and that the key[] and class[] are 0 terminated.
+	 * and that the *key and *class are 0 terminated.
 	 */
 	for (attributeIndex = 0; attributeIndex < maxAttributeNumber; attributeIndex++)
 	{
-		IndexTupleForm iform;
+		Form_pg_index iform;
 
-		iform = (IndexTupleForm) GETSTRUCT(tuple);
+		iform = (Form_pg_index) GETSTRUCT(tuple);
 
 		if (!OidIsValid(iform->indkey[attributeIndex]))
 		{

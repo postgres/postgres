@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.32 1998/06/15 19:29:11 momjian Exp $
+ *	  $Id: fd.c,v 1.33 1998/09/01 03:25:06 momjian Exp $
  *
  * NOTES:
  *
@@ -336,7 +336,7 @@ tryAgain:
 		{
 			DO_DB(elog(DEBUG, "RE_OPEN FAILED: %d",
 					   errno));
-			return (vfdP->fd);
+			return vfdP->fd;
 		}
 		else
 		{
@@ -363,7 +363,7 @@ tryAgain:
 
 	Insert(file);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -484,7 +484,7 @@ filepath(char *filename)
 	printf("filepath: path is %s\n", buf);
 #endif
 
-	return (buf);
+	return buf;
 }
 
 static int
@@ -521,7 +521,7 @@ FileAccess(File file)
 		Insert(file);
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -604,7 +604,7 @@ FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 	fname = filepath(fileName);
 	fd = fileNameOpenFile(fname, fileFlags, fileMode);
 	pfree(fname);
-	return (fd);
+	return fd;
 }
 
 /*
@@ -613,7 +613,7 @@ FileNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 File
 PathNameOpenFile(FileName fileName, int fileFlags, int fileMode)
 {
-	return (fileNameOpenFile(fileName, fileFlags, fileMode));
+	return fileNameOpenFile(fileName, fileFlags, fileMode);
 }
 
 void
@@ -766,7 +766,7 @@ FileSeek(File file, long offset, int whence)
 		return returnCode;
 	}
 	/* NOTREACHED */
-	return (-1L);
+	return -1L;
 }
 
 /*
@@ -794,7 +794,7 @@ FileTruncate(File file, int offset)
 	FileSync(file);
 	FileAccess(file);
 	returnCode = ftruncate(VfdCache[file].fd, offset);
-	return (returnCode);
+	return returnCode;
 }
 
 int
@@ -828,7 +828,7 @@ FileNameUnlink(char *filename)
 	fname = filepath(filename);
 	retval = unlink(fname);
 	pfree(fname);
-	return (retval);
+	return retval;
 }
 
 /*

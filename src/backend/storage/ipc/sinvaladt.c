@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.13 1998/08/25 21:31:18 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.14 1998/09/01 03:25:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -170,7 +170,7 @@ SIAssignBackendId(SISeg *segInOutP, BackendTag backendTag)
 
 	stateP->tag = backendTag;
 
-	return (1 + stateP - &segInOutP->procState[0]);
+	return 1 + stateP - &segInOutP->procState[0];
 }
 
 
@@ -232,7 +232,7 @@ SIComputeSize(int *segSize)
 	oP->startSegment = A;
 	oP->offsetToFirstEntry = a; /* relatiove to A */
 	oP->offsetToEndOfSegemnt = totalSize;		/* relative to A */
-	return (oP);
+	return oP;
 }
 
 
@@ -251,7 +251,7 @@ SISetStartEntrySection(SISeg *segP, Offset offset)
 static Offset
 SIGetStartEntrySection(SISeg *segP)
 {
-	return (segP->startEntrySection);
+	return segP->startEntrySection;
 }
 
 
@@ -279,7 +279,7 @@ SISetEndEntryChain(SISeg *segP, Offset offset)
 static Offset
 SIGetEndEntryChain(SISeg *segP)
 {
-	return (segP->endEntryChain);
+	return segP->endEntryChain;
 }
 
 /************************************************************************/
@@ -297,7 +297,7 @@ SISetStartEntryChain(SISeg *segP, Offset offset)
 static Offset
 SIGetStartEntryChain(SISeg *segP)
 {
-	return (segP->startEntryChain);
+	return segP->startEntryChain;
 }
 
 /************************************************************************/
@@ -309,11 +309,11 @@ SISetNumEntries(SISeg *segP, int num)
 	if (num <= MAXNUMMESSAGES)
 	{
 		segP->numEntries = num;
-		return (true);
+		return true;
 	}
 	else
 	{
-		return (false);			/* table full */
+		return false;			/* table full */
 	}
 }
 
@@ -323,7 +323,7 @@ SISetNumEntries(SISeg *segP, int num)
 static int
 SIGetNumEntries(SISeg *segP)
 {
-	return (segP->numEntries);
+	return segP->numEntries;
 }
 
 
@@ -336,11 +336,11 @@ SISetMaxNumEntries(SISeg *segP, int num)
 	if (num <= MAXNUMMESSAGES)
 	{
 		segP->maxNumEntries = num;
-		return (true);
+		return true;
 	}
 	else
 	{
-		return (false);			/* wrong number */
+		return false;			/* wrong number */
 	}
 }
 
@@ -351,7 +351,7 @@ SISetMaxNumEntries(SISeg *segP, int num)
 static int
 SIGetProcStateLimit(SISeg *segP, int i)
 {
-	return (segP->procState[i].limit);
+	return segP->procState[i].limit;
 }
 
 /************************************************************************/
@@ -376,11 +376,11 @@ SIIncNumEntries(SISeg *segP, int num)
 	if ((segP->numEntries + num) <= MAXNUMMESSAGES)
 	{
 		segP->numEntries = segP->numEntries + num;
-		return (true);
+		return true;
 	}
 	else
 	{
-		return (false);			/* table full */
+		return false;			/* table full */
 	}
 }
 
@@ -393,11 +393,11 @@ SIDecNumEntries(SISeg *segP, int num)
 	if ((segP->numEntries - num) >= 0)
 	{
 		segP->numEntries = segP->numEntries - num;
-		return (true);
+		return true;
 	}
 	else
 	{
-		return (false);			/* not enough entries in table */
+		return false;			/* not enough entries in table */
 	}
 }
 
@@ -416,7 +416,7 @@ SISetStartFreeSpace(SISeg *segP, Offset offset)
 static Offset
 SIGetStartFreeSpace(SISeg *segP)
 {
-	return (segP->startFreeSpace);
+	return segP->startFreeSpace;
 }
 
 
@@ -433,12 +433,12 @@ SIGetFirstDataEntry(SISeg *segP)
 	startChain = SIGetStartEntryChain(segP);
 
 	if (startChain == InvalidOffset)
-		return (NULL);
+		return NULL;
 
 	eP = (SISegEntry *) ((Pointer) segP +
 						 SIGetStartEntrySection(segP) +
 						 startChain);
-	return (eP);
+	return eP;
 }
 
 
@@ -454,12 +454,12 @@ SIGetLastDataEntry(SISeg *segP)
 	endChain = SIGetEndEntryChain(segP);
 
 	if (endChain == InvalidOffset)
-		return (NULL);
+		return NULL;
 
 	eP = (SISegEntry *) ((Pointer) segP +
 						 SIGetStartEntrySection(segP) +
 						 endChain);
-	return (eP);
+	return eP;
 }
 
 /************************************************************************/
@@ -471,12 +471,12 @@ SIGetNextDataEntry(SISeg *segP, Offset offset)
 	SISegEntry *eP;
 
 	if (offset == InvalidOffset)
-		return (NULL);
+		return NULL;
 
 	eP = (SISegEntry *) ((Pointer) segP +
 						 SIGetStartEntrySection(segP) +
 						 offset);
-	return (eP);
+	return eP;
 }
 
 
@@ -491,7 +491,7 @@ SIGetNthDataEntry(SISeg *segP,
 	int			i;
 
 	if (n <= 0)
-		return (NULL);
+		return NULL;
 
 	eP = SIGetFirstDataEntry(segP);
 	for (i = 1; i < n; i++)
@@ -500,7 +500,7 @@ SIGetNthDataEntry(SISeg *segP,
 		eP = SIGetNextDataEntry(segP, eP->next);
 	}
 
-	return (eP);
+	return eP;
 }
 
 /************************************************************************/
@@ -527,7 +527,7 @@ SISetDataEntry(SISeg *segP, SharedInvalidData *data)
 			   *lastP;
 
 	if (!SIIncNumEntries(segP, 1))
-		return (false);			/* no space */
+		return false;			/* no space */
 
 	/* get a free entry */
 	offsetToNewData = SIGetStartFreeSpace(segP);
@@ -551,7 +551,7 @@ SISetDataEntry(SISeg *segP, SharedInvalidData *data)
 		lastP->next = SIEntryOffset(segP, eP);
 	}
 	SISetEndEntryChain(segP, SIEntryOffset(segP, eP));
-	return (true);
+	return true;
 }
 
 
@@ -591,7 +591,7 @@ SIDelDataEntry(SISeg *segP)
 	if (!SIDecNumEntries(segP, 1))
 	{
 		/* no entries in buffer */
-		return (false);
+		return false;
 	}
 
 	e1P = SIGetFirstDataEntry(segP);
@@ -606,7 +606,7 @@ SIDelDataEntry(SISeg *segP)
 	e1P->next = SIGetStartFreeSpace(segP);
 	SISetStartFreeSpace(segP, SIEntryOffset(segP, e1P));
 	SIDecProcLimit(segP, 1);
-	return (true);
+	return true;
 }
 
 
@@ -794,7 +794,7 @@ SISegmentGet(int key,			/* the corresponding key for the segment */
 		shmid = IpcMemoryCreate(key, size, IPCProtection);
 	else
 		shmid = IpcMemoryIdGet(key, size);
-	return (shmid);
+	return shmid;
 }
 
 /************************************************************************/
@@ -844,7 +844,7 @@ SISegmentInit(bool killExistingSegment, IPCKey key)
 		if (shmId < 0)
 		{
 			perror("SISegmentGet: failed");
-			return (-1);		/* an error */
+			return -1;		/* an error */
 		}
 
 		/* Attach the shared cache invalidation  segment */
@@ -862,10 +862,10 @@ SISegmentInit(bool killExistingSegment, IPCKey key)
 		if (shmId < 0)
 		{
 			perror("SISegmentGet: getting an existent segment failed");
-			return (-1);		/* an error */
+			return -1;		/* an error */
 		}
 		/* Attach the shared cache invalidation segment */
 		SISegmentAttach(shmId);
 	}
-	return (1);
+	return 1;
 }

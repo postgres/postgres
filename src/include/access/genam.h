@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.14 1998/08/19 02:03:35 momjian Exp $
+ * $Id: genam.h,v 1.15 1998/09/01 03:27:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ index_getprocid(Relation irel, AttrNumber attnum,
 				uint16 procnum);
 extern Datum
 GetIndexValue(HeapTuple tuple, TupleDesc hTupDesc,
-			  int attOff, AttrNumber attrNums[], FuncIndexInfo *fInfo,
+			  int attOff, AttrNumber *attrNums, FuncIndexInfo *fInfo,
 			  bool *attNull);
 
 /* in genam.c */

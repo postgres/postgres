@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.10 1998/06/15 19:28:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.11 1998/09/01 03:21:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,14 +43,14 @@ rtgettuple(IndexScanDesc s, ScanDirection dir)
 
 	/* if we have it cached in the scan desc, just return the value */
 	if ((res = rtscancache(s, dir)) != (RetrieveIndexResult) NULL)
-		return (res);
+		return res;
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
 		res = rtnext(s, dir);
 	else
 		res = rtfirst(s, dir);
-	return (res);
+	return res;
 }
 
 static RetrieveIndexResult
@@ -85,7 +85,7 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 
 			ReleaseBuffer(b);
 			if (so->s_stack == (RTSTACK *) NULL)
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			stk = so->s_stack;
 			b = ReadBuffer(s->relation, stk->rts_blk);
@@ -111,7 +111,7 @@ rtfirst(IndexScanDesc s, ScanDirection dir)
 			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
 
 			ReleaseBuffer(b);
-			return (res);
+			return res;
 		}
 		else
 		{
@@ -169,7 +169,7 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 
 			ReleaseBuffer(b);
 			if (so->s_stack == (RTSTACK *) NULL)
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			stk = so->s_stack;
 			b = ReadBuffer(s->relation, stk->rts_blk);
@@ -195,7 +195,7 @@ rtnext(IndexScanDesc s, ScanDirection dir)
 			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
 
 			ReleaseBuffer(b);
-			return (res);
+			return res;
 		}
 		else
 		{
@@ -250,14 +250,14 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 		if (po->flags & F_LEAF)
 		{
 			if (index_keytest(it,
-							  RelationGetTupleDescriptor(s->relation),
+							  RelationGetDescr(s->relation),
 							  s->numberOfKeys, s->keyData))
 				break;
 		}
 		else
 		{
 			if (index_keytest(it,
-							  RelationGetTupleDescriptor(s->relation),
+							  RelationGetDescr(s->relation),
 							  so->s_internalNKey, so->s_internalKey))
 				break;
 		}
@@ -268,7 +268,7 @@ findnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 			n = OffsetNumberNext(n);
 	}
 
-	return (n);
+	return n;
 }
 
 static RetrieveIndexResult
@@ -281,7 +281,7 @@ rtscancache(IndexScanDesc s, ScanDirection dir)
 		  && ItemPointerIsValid(&(s->currentItemData))))
 	{
 
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 	}
 
 	ip = rtheapptr(s->relation, &(s->currentItemData));
@@ -293,7 +293,7 @@ rtscancache(IndexScanDesc s, ScanDirection dir)
 
 	pfree(ip);
 
-	return (res);
+	return res;
 }
 
 /*
@@ -323,5 +323,5 @@ rtheapptr(Relation r, ItemPointer itemp)
 	else
 		ItemPointerSetInvalid(ip);
 
-	return (ip);
+	return ip;
 }

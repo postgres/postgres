@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.7 1998/07/18 04:22:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/keys.c,v 1.8 1998/09/01 03:23:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,9 +59,9 @@ match_indexkey_operand(int indexkey, Var *operand, RelOptInfo *rel)
 	if (IsA(operand, Var) &&
 		(lfirsti(rel->relids) == operand->varno) &&
 		equal_indexkey_var(indexkey, operand))
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*
@@ -74,9 +74,9 @@ static bool
 equal_indexkey_var(int index_key, Var *var)
 {
 	if (index_key == var->varattno)
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*
@@ -102,7 +102,7 @@ extract_subkey(JoinKey *jk, int which_subkey)
 			elog(DEBUG, "extract_subkey with neither INNER or OUTER");
 			retval = NULL;
 	}
-	return (retval);
+	return retval;
 }
 
 /*
@@ -130,9 +130,9 @@ samekeys(List *keys1, List *keys2)
 			allmember = false;
 
 	if ((length(keys2) >= length(keys1)) && allmember)
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*
@@ -172,9 +172,9 @@ matching2_tlvar(int var, List *tlist, bool (*test) ())
 	}
 
 	if (tlentry)
-		return ((Expr *) get_expr(tlentry));
+		return (Expr *) get_expr(tlentry);
 	else
-		return ((Expr *) NULL);
+		return (Expr *) NULL;
 }
 
 
@@ -197,5 +197,5 @@ collect_index_pathkeys(int *index_keys, List *tlist)
 										 NIL));
 		index_keys++;
 	}
-	return (retval);
+	return retval;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.16 1998/08/19 02:01:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/catalog.c,v 1.17 1998/09/01 03:21:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
  *		Perhaps this should be in-line code in relopen().
  */
 char *
-relpath(char relname[])
+relpath(char *relname)
 {
 	char	   *path;
 
@@ -35,9 +35,9 @@ relpath(char relname[])
 	{
 		path = (char *) palloc(strlen(DataDir) + sizeof(NameData) + 2);
 		sprintf(path, "%s/%s", DataDir, relname);
-		return (path);
+		return path;
 	}
-	return (relname);
+	return relname;
 }
 
 #ifdef NOT_USED
@@ -51,7 +51,7 @@ relpath(char relname[])
  *		XXX this is way bogus. -- pma
  */
 bool
-issystem(char relname[])
+issystem(char *relname)
 {
 	if (relname[0] && relname[1] && relname[2])
 		return (relname[0] == 'p' &&
@@ -154,12 +154,12 @@ newoid()
 void
 fillatt(TupleDesc tupleDesc)
 {
-	AttributeTupleForm *attributeP;
-	TypeTupleForm typp;
+	Form_pg_attribute *attributeP;
+	Form_pg_type typp;
 	HeapTuple	tuple;
 	int			i;
 	int			natts = tupleDesc->natts;
-	AttributeTupleForm *att = tupleDesc->attrs;
+	Form_pg_attribute *att = tupleDesc->attrs;
 
 	if (natts < 0 || natts > MaxHeapAttributeNumber)
 		elog(ERROR, "fillatt: %d attributes is too large", natts);
@@ -193,7 +193,7 @@ fillatt(TupleDesc tupleDesc)
 			 */
 			if (!(*attributeP)->attisset)
 			{
-				typp = (TypeTupleForm) GETSTRUCT(tuple);		/* XXX */
+				typp = (Form_pg_type) GETSTRUCT(tuple);		/* XXX */
 				(*attributeP)->attlen = typp->typlen;
 				(*attributeP)->attbyval = typp->typbyval;
 			}

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.23 1998/08/25 21:20:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.24 1998/09/01 03:25:23 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -188,7 +188,7 @@ MultiLockReln(LockInfo lockinfo, LOCKMODE lockmode)
 	MemSet(&tag, 0, sizeof(tag));
 	tag.relId = lockinfo->lockRelId.relId;
 	tag.dbId = lockinfo->lockRelId.dbId;
-	return (MultiAcquire(MultiTableId, &tag, lockmode, RELN_LEVEL));
+	return MultiAcquire(MultiTableId, &tag, lockmode, RELN_LEVEL);
 }
 
 /*
@@ -215,7 +215,7 @@ MultiLockTuple(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 
 	/* not locking any valid Tuple, just the page */
 	tag.tupleId = *tidPtr;
-	return (MultiAcquire(MultiTableId, &tag, lockmode, TUPLE_LEVEL));
+	return MultiAcquire(MultiTableId, &tag, lockmode, TUPLE_LEVEL);
 }
 
 /*
@@ -245,7 +245,7 @@ MultiLockPage(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	tag.relId = lockinfo->lockRelId.relId;
 	tag.dbId = lockinfo->lockRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
-	return (MultiAcquire(MultiTableId, &tag, lockmode, PAGE_LEVEL));
+	return MultiAcquire(MultiTableId, &tag, lockmode, PAGE_LEVEL);
 }
 
 /*
@@ -295,7 +295,7 @@ MultiAcquire(LOCKMETHOD lockmethod,
 			break;
 		default:
 			elog(ERROR, "MultiAcquire: bad lock level");
-			return (FALSE);
+			return FALSE;
 	}
 
 	/*
@@ -357,7 +357,7 @@ MultiAcquire(LOCKMETHOD lockmethod,
 			}
 		}
 	}
-	return (retStatus);
+	return retStatus;
 }
 
 /* ------------------
@@ -382,7 +382,7 @@ MultiReleasePage(LockInfo lockinfo, ItemPointer tidPtr, LOCKMODE lockmode)
 	tag.dbId = lockinfo->lockRelId.dbId;
 	BlockIdCopy(&(tag.tupleId.ip_blkid), &(tidPtr->ip_blkid));
 
-	return (MultiRelease(MultiTableId, &tag, lockmode, PAGE_LEVEL));
+	return MultiRelease(MultiTableId, &tag, lockmode, PAGE_LEVEL);
 }
 
 #endif
@@ -406,7 +406,7 @@ MultiReleaseReln(LockInfo lockinfo, LOCKMODE lockmode)
 	tag.relId = lockinfo->lockRelId.relId;
 	tag.dbId = lockinfo->lockRelId.dbId;
 
-	return (MultiRelease(MultiTableId, &tag, lockmode, RELN_LEVEL));
+	return MultiRelease(MultiTableId, &tag, lockmode, RELN_LEVEL);
 }
 
 /*

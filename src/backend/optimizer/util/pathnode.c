@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.10 1998/08/04 16:44:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.11 1998/09/01 03:23:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ path_is_cheaper(Path *path1, Path *path2)
 	Cost		cost1 = path1->path_cost;
 	Cost		cost2 = path2->path_cost;
 
-	return ((bool) (cost1 < cost2));
+	return (bool) (cost1 < cost2);
 }
 
 /*
@@ -82,7 +82,7 @@ set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 
 	parent_rel->cheapestpath = cheapest_so_far;
 
-	return (cheapest_so_far);
+	return cheapest_so_far;
 }
 
 /*
@@ -133,7 +133,7 @@ add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
 									 LispRemove(old_path, unique_paths));
 		}
 	}
-	return (unique_paths);
+	return unique_paths;
 }
 
 /*
@@ -184,7 +184,7 @@ better_path(Path *new_path, List *unique_paths, bool *noOther)
 			retval = old_path;
 	}
 
-	return (retval);
+	return retval;
 }
 
 
@@ -233,7 +233,7 @@ create_seqscan_path(RelOptInfo *rel)
 			xfunc_get_path_cost(pathnode);
 	}
 #endif
-	return (pathnode);
+	return pathnode;
 }
 
 /*
@@ -388,7 +388,7 @@ create_index_path(Query *root,
 		/* XXX Can this divide the selectivities in a better way? */
 		set_clause_selectivities(restriction_clauses, clausesel);
 	}
-	return (pathnode);
+	return pathnode;
 }
 
 /*
@@ -458,7 +458,7 @@ create_nestloop_path(RelOptInfo *joinrel,
 	if (XfuncMode != XFUNC_OFF)
 		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
 #endif
-	return (pathnode);
+	return pathnode;
 }
 
 /*
@@ -525,7 +525,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
 			xfunc_get_path_cost((Path *) pathnode);
 	}
 #endif
-	return (pathnode);
+	return pathnode;
 }
 
 /*
@@ -592,5 +592,5 @@ create_hashjoin_path(RelOptInfo *joinrel,
 			xfunc_get_path_cost((Path *) pathnode);
 	}
 #endif
-	return (pathnode);
+	return pathnode;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.11 1998/08/09 04:17:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/clausesel.c,v 1.12 1998/09/01 03:23:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,12 +46,12 @@ void
 set_clause_selectivities(List *clauseinfo_list, Cost new_selectivity)
 {
 	List	   *temp;
-	CInfo	   *clausenode;
+	ClauseInfo	   *clausenode;
 	Cost		cost_clause;
 
 	foreach(temp, clauseinfo_list)
 	{
-		clausenode = (CInfo *) lfirst(temp);
+		clausenode = (ClauseInfo *) lfirst(temp);
 		cost_clause = clausenode->selectivity;
 		if (FLOAT_IS_ZERO(cost_clause) || new_selectivity < cost_clause)
 			clausenode->selectivity = new_selectivity;
@@ -76,11 +76,11 @@ product_selec(List *clauseinfo_list)
 
 		foreach(xclausenode, clauseinfo_list)
 		{
-			temp = ((CInfo *) lfirst(xclausenode))->selectivity;
+			temp = ((ClauseInfo *) lfirst(xclausenode))->selectivity;
 			result = result * temp;
 		}
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -117,12 +117,12 @@ void
 set_rest_selec(Query *root, List *clauseinfo_list)
 {
 	List	   *temp = NIL;
-	CInfo	   *clausenode = (CInfo *) NULL;
+	ClauseInfo	   *clausenode = (ClauseInfo *) NULL;
 	Cost		cost_clause;
 
 	foreach(temp, clauseinfo_list)
 	{
-		clausenode = (CInfo *) lfirst(temp);
+		clausenode = (ClauseInfo *) lfirst(temp);
 		cost_clause = clausenode->selectivity;
 
 		/*
@@ -179,11 +179,11 @@ compute_clause_selec(Query *root, Node *clause, List *or_selectivities)
 		 * Both 'or' and 'and' clauses are evaluated as described in
 		 * (compute_selec).
 		 */
-		return (compute_selec(root, ((Expr *) clause)->args, or_selectivities));
+		return compute_selec(root, ((Expr *) clause)->args, or_selectivities);
 	}
 	else
 	{
-		return (compute_selec(root, lcons(clause, NIL), or_selectivities));
+		return compute_selec(root, lcons(clause, NIL), or_selectivities);
 	}
 }
 
@@ -350,7 +350,7 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 	 */
 
 	if (length(clauses) < 2)
-		return (s1);
+		return s1;
 	else
 	{
 		/* Compute selectivity of the 'or'ed subclauses. */
@@ -361,6 +361,6 @@ compute_selec(Query *root, List *clauses, List *or_selectivities)
 			s2 = compute_selec(root, lnext(clauses), lnext(or_selectivities));
 		else
 			s2 = compute_selec(root, lnext(clauses), NIL);
-		return (s1 + s2 - s1 * s2);
+		return s1 + s2 - s1 * s2;
 	}
 }

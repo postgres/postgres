@@ -863,12 +863,12 @@ ECPGtrans(int lineno, const char * transaction)
 	if ((res = PQexec(actual_connection->connection, transaction)) == NULL)
 	{
 		register_error(ECPG_TRANS, "Error in transaction processing line %d.", lineno);
-		return (FALSE);
+		return FALSE;
 	}
 	PQclear(res);
 	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
 		committed = 1;
-	return (TRUE);
+	return TRUE;
 }
 
 bool

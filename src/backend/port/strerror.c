@@ -1,4 +1,4 @@
-/* $Id: strerror.c,v 1.4 1997/12/19 13:34:32 scrappy Exp $ */
+/* $Id: strerror.c,v 1.5 1998/09/01 03:24:33 momjian Exp $ */
 
 /*
  * strerror - map error number to descriptive string
@@ -24,8 +24,8 @@ strerror(int errnum)
 	if (errnum < 0 || errnum > sys_nerr)
 	{
 		sprintf(buf, "unknown error %d", errnum);
-		return (buf);
+		return buf;
 	}
 
-	return (sys_errlist[errnum]);
+	return sys_errlist[errnum];
 }

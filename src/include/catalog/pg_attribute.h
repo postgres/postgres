@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.41 1998/08/27 05:06:56 momjian Exp $
+ * $Id: pg_attribute.h,v 1.42 1998/09/01 03:27:49 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -56,7 +56,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 
 	/*
 	 * attlen is a copy of the typlen field from pg_type for this
-	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
+	 * attribute.  See atttypid above.	See struct Form_pg_type for
 	 * definition.
 	 */
 	int2		attnum;
@@ -98,7 +98,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 
 	/*
 	 * attbyval is a copy of the typbyval field from pg_type for this
-	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
+	 * attribute.  See atttypid above.	See struct Form_pg_type for
 	 * definition.
 	 */
 	bool		attisset;
@@ -106,7 +106,7 @@ CATALOG(pg_attribute) BOOTSTRAP
 
 	/*
 	 * attalign is a copy of the typalign field from pg_type for this
-	 * attribute.  See atttypid above.	See struct TypeTupleFormData for
+	 * attribute.  See atttypid above.	See struct Form_pg_type for
 	 * definition.
 	 */
 	bool		attnotnull;
@@ -129,7 +129,7 @@ CATALOG(pg_attribute) BOOTSTRAP
  *		the format of pg_attribute relation.
  * ----------------
  */
-typedef FormData_pg_attribute *AttributeTupleForm;
+typedef FormData_pg_attribute *Form_pg_attribute;
 
 /* ----------------
  *		compiler constants for pg_attribute

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.37 1998/07/24 03:31:42 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.38 1998/09/01 03:26:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	int			i;
 
 	if (s == NULL)
-		return ((char *) NULL);
+		return (char *) NULL;
 
 	if (atttypmod == -1)
 	{
@@ -99,7 +99,7 @@ bpcharin(char *s, int dummy, int32 atttypmod)
 	/* blank pad the string if necessary */
 	for (; i < len; i++)
 		*r++ = ' ';
-	return (result);
+	return result;
 }
 
 char *
@@ -125,7 +125,7 @@ bpcharout(char *s)
 	convertstr(result, len, 1);
 #endif
 
-	return (result);
+	return result;
 }
 
 /* bpchar()
@@ -141,10 +141,10 @@ bpchar(char *s, int32 len)
 	int			i;
 
 	if (s == NULL)
-		return ((char *) NULL);
+		return (char *) NULL;
 
 	if ((len == -1) || (len == VARSIZE(s)))
-		return (s);
+		return s;
 
 	rlen = len - VARHDRSZ;
 
@@ -186,7 +186,7 @@ printf("'\n");
 	for (; i < rlen; i++)
 		*r++ = ' ';
 
-	return (result);
+	return result;
 } /* bpchar() */
 
 
@@ -196,7 +196,7 @@ printf("'\n");
 int32
 bpchar_char(char *s)
 {
-	return ((int32) *VARDATA(s));
+	return (int32) *VARDATA(s);
 } /* bpchar_char() */
 
 /* char_bpchar()
@@ -226,7 +226,7 @@ bpchar_name(char *s)
 	int			len;
 
 	if (s == NULL)
-		return (NULL);
+		return NULL;
 
 	len = VARSIZE(s) - VARHDRSZ;
 	if (len > NAMEDATALEN) len = NAMEDATALEN;
@@ -250,7 +250,7 @@ printf("bpchar- convert string length %d (%d) ->%d\n",
 		len++;
 	}
 
-	return (result);
+	return result;
 } /* bpchar_name() */
 
 /* name_bpchar()
@@ -263,7 +263,7 @@ name_bpchar(NameData *s)
 	int			len;
 
 	if (s == NULL)
-		return (NULL);
+		return NULL;
 
 	len = strlen(s->data);
 
@@ -276,7 +276,7 @@ printf("bpchar- convert string length %d (%d) ->%d\n",
 	strncpy(VARDATA(result), s->data, len);
 	VARSIZE(result) = len + VARHDRSZ;
 
-	return (result);
+	return result;
 } /* name_bpchar() */
 
 
@@ -297,7 +297,7 @@ varcharin(char *s, int dummy, int32 atttypmod)
 	int			len;
 
 	if (s == NULL)
-		return ((char *) NULL);
+		return (char *) NULL;
 
 	len = strlen(s) + VARHDRSZ;
 	if (atttypmod != -1 && len > atttypmod)
@@ -314,7 +314,7 @@ varcharin(char *s, int dummy, int32 atttypmod)
 	convertstr(result + VARHDRSZ, len, 0);
 #endif
 
-	return (result);
+	return result;
 }
 
 char *
@@ -340,7 +340,7 @@ varcharout(char *s)
 	convertstr(result, len, 1);
 #endif
 
-	return (result);
+	return result;
 }
 
 /* varchar()
@@ -354,11 +354,11 @@ varchar(char *s, int32 slen)
 	int			len;
 
 	if (s == NULL)
-		return ((char *) NULL);
+		return (char *) NULL;
 
 	len = VARSIZE(s);
 	if ((slen == -1) || (len <= slen))
-		return ((char *) s);
+		return (char *) s;
 
 	/* only reach here if we need to truncate string... */
 
@@ -371,7 +371,7 @@ varchar(char *s, int32 slen)
 	VARSIZE(result) = slen;
 	strncpy(VARDATA(result), VARDATA(s), len);
 
-	return (result);
+	return result;
 } /* varchar() */
 
 
@@ -392,7 +392,7 @@ bcTruelen(char *arg)
 		if (s[i] != ' ')
 			break;
 	}
-	return (i + 1);
+	return i + 1;
 }
 
 int32
@@ -416,7 +416,7 @@ bpcharlen(char *arg)
 	}
 	return(len);
 #else
-	return (bcTruelen(arg));
+	return bcTruelen(arg);
 #endif
 }
 
@@ -426,7 +426,7 @@ bpcharoctetlen(char *arg)
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) char() external representation", NULL);
 
-	return (bcTruelen(arg));
+	return bcTruelen(arg);
 }
 
 bool
@@ -436,14 +436,14 @@ bpchareq(char *arg1, char *arg2)
 				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
 	if (len1 != len2)
 		return 0;
 
-	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
+	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0;
 }
 
 bool
@@ -453,14 +453,14 @@ bpcharne(char *arg1, char *arg2)
 				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
 	if (len1 != len2)
 		return 1;
 
-	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
+	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0;
 }
 
 bool
@@ -471,15 +471,15 @@ bpcharlt(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
-		return (len1 < len2);
+		return len1 < len2;
 	else
-		return (cmp < 0);
+		return cmp < 0;
 }
 
 bool
@@ -490,7 +490,7 @@ bpcharle(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
@@ -509,15 +509,15 @@ bpchargt(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
-		return (len1 > len2);
+		return len1 > len2;
 	else
-		return (cmp > 0);
+		return cmp > 0;
 }
 
 bool
@@ -528,7 +528,7 @@ bpcharge(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = bcTruelen(arg1);
 	len2 = bcTruelen(arg2);
 
@@ -582,7 +582,7 @@ varcharlen(char *arg)
 	}
 	return(len);
 #else
-	return (VARSIZE(arg) - VARHDRSZ);
+	return VARSIZE(arg) - VARHDRSZ;
 #endif
 }
 
@@ -591,7 +591,7 @@ varcharoctetlen(char *arg)
 {
 	if (!PointerIsValid(arg))
 		elog(ERROR, "Bad (null) varchar() external representation", NULL);
-	return (VARSIZE(arg) - VARHDRSZ);
+	return VARSIZE(arg) - VARHDRSZ;
 }
 
 bool
@@ -601,7 +601,7 @@ varchareq(char *arg1, char *arg2)
 				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
@@ -609,7 +609,7 @@ varchareq(char *arg1, char *arg2)
 	if (len1 != len2)
 		return 0;
 
-	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0);
+	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) == 0;
 }
 
 bool
@@ -619,14 +619,14 @@ varcharne(char *arg1, char *arg2)
 				len2;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	if (len1 != len2)
 		return 1;
 
-	return (strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0);
+	return strncmp(VARDATA(arg1), VARDATA(arg2), len1) != 0;
 }
 
 bool
@@ -637,15 +637,15 @@ varcharlt(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
-		return (len1 < len2);
+		return len1 < len2;
 	else
-		return (cmp < 0);
+		return cmp < 0;
 }
 
 bool
@@ -656,7 +656,7 @@ varcharle(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
@@ -675,15 +675,15 @@ varchargt(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
 	cmp = varstr_cmp(VARDATA(arg1), len1, VARDATA(arg2), len2);
 	if (cmp == 0)
-		return (len1 > len2);
+		return len1 > len2;
 	else
-		return (cmp > 0);
+		return cmp > 0;
 }
 
 bool
@@ -694,7 +694,7 @@ varcharge(char *arg1, char *arg2)
 	int			cmp;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
 
@@ -767,7 +767,7 @@ hashbpchar(struct varlena * key)
 				} while (--loop);
 		}
 	}
-	return (n);
+	return n;
 }
 
 uint32
@@ -811,5 +811,5 @@ hashvarchar(struct varlena * key)
 				} while (--loop);
 		}
 	}
-	return (n);
+	return n;
 }

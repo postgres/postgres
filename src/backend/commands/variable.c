@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.10 1998/07/26 04:30:26 scrappy Exp $
+ * $Id: variable.c,v 1.11 1998/09/01 03:22:10 momjian Exp $
  *
  */
 
@@ -73,13 +73,13 @@ get_token(char **tok, char **val, const char *str)
 	/* end of string? */
 	if (!(*str))
 	{
-		return (str);
+		return str;
 
 		/* delimiter? */
 	}
 	else if (*str == ',')
 	{
-		return (++str);
+		return ++str;
 
 	}
 	else if ((val == NULL) || (*str != '='))
@@ -117,9 +117,9 @@ get_token(char **tok, char **val, const char *str)
 		str++;
 
 	if (!(*str))
-		return (NULL);
+		return NULL;
 	if (*str == ',')
-		return (++str);
+		return ++str;
 
 	elog(ERROR, "Syntax error near (%s)", str);
 

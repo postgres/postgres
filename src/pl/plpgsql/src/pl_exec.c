@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.1 1998/08/24 19:14:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.2 1998/09/01 03:29:05 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1459,7 +1459,7 @@ static int exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt
 static int exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 {
     HeapTuple		typetup;
-    TypeTupleForm	typeStruct;
+    Form_pg_type	typeStruct;
     FmgrInfo		finfo_output;
     char		*extval;
     int			pidx = 0;
@@ -1505,7 +1505,7 @@ static int exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 			if (!HeapTupleIsValid(typetup)) {
 			    elog(ERROR, "cache lookup for type %d failed (1)", var->datatype->typoid);
 			}
-			typeStruct = (TypeTupleForm) GETSTRUCT(typetup);
+			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 			fmgr_info(typeStruct->typoutput, &finfo_output);
 			extval = (char *)(*fmgr_faddr(&finfo_output))(var->value, &(var->isnull), var->datatype->atttypmod);
@@ -1794,7 +1794,7 @@ static void exec_assign_value(PLpgSQL_execstate *estate,
     Oid			atttype;
     int4		atttypmod;
     HeapTuple		typetup;
-    TypeTupleForm	typeStruct;
+    Form_pg_type	typeStruct;
     FmgrInfo		finfo_input;
 
     switch (target->dtype) {
@@ -1883,7 +1883,7 @@ static void exec_assign_value(PLpgSQL_execstate *estate,
 		if (!HeapTupleIsValid(typetup)) {
 		    elog(ERROR, "cache lookup for type %d failed", atttype);
 		}
-		typeStruct = (TypeTupleForm) GETSTRUCT(typetup);
+		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 		fmgr_info(typeStruct->typinput, &finfo_input);
 
 		attisnull = *isNull;
@@ -2203,7 +2203,7 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 	 */
 	if (valtype != reqtype || reqtypmod > 0) {
 	    HeapTuple		typetup;
-	    TypeTupleForm	typeStruct;
+	    Form_pg_type	typeStruct;
 	    FmgrInfo		finfo_output;
 	    char		*extval;
 
@@ -2212,7 +2212,7 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 	    if (!HeapTupleIsValid(typetup)) {
 		elog(ERROR, "cache lookup for type %d failed", valtype);
 	    }
-	    typeStruct = (TypeTupleForm) GETSTRUCT(typetup);
+	    typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
 	    fmgr_info(typeStruct->typoutput, &finfo_output);
 	    extval = (char *)(*fmgr_faddr(&finfo_output))(value, &isnull, -1);

@@ -48,14 +48,14 @@ gistgettuple(IndexScanDesc s, ScanDirection dir)
 
 	/* if we have it cached in the scan desc, just return the value */
 	if ((res = gistscancache(s, dir)) != (RetrieveIndexResult) NULL)
-		return (res);
+		return res;
 
 	/* not cached, so we'll have to do some work */
 	if (ItemPointerIsValid(&(s->currentItemData)))
 		res = gistnext(s, dir);
 	else
 		res = gistfirst(s, dir);
-	return (res);
+	return res;
 }
 
 static RetrieveIndexResult
@@ -90,7 +90,7 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 
 			ReleaseBuffer(b);
 			if (so->s_stack == (GISTSTACK *) NULL)
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			stk = so->s_stack;
 			b = ReadBuffer(s->relation, stk->gs_blk);
@@ -116,7 +116,7 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
 
 			ReleaseBuffer(b);
-			return (res);
+			return res;
 		}
 		else
 		{
@@ -174,7 +174,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 
 			ReleaseBuffer(b);
 			if (so->s_stack == (GISTSTACK *) NULL)
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			stk = so->s_stack;
 			b = ReadBuffer(s->relation, stk->gs_blk);
@@ -200,7 +200,7 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 			res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
 
 			ReleaseBuffer(b);
-			return (res);
+			return res;
 		}
 		else
 		{
@@ -258,7 +258,7 @@ gistindex_keytest(IndexTuple tuple,
 		if (isNull)
 		{
 			/* XXX eventually should check if SK_ISNULL */
-			return (false);
+			return false;
 		}
 
 		if (key[0].sk_flags & SK_COMMUTE)
@@ -276,13 +276,13 @@ gistindex_keytest(IndexTuple tuple,
 		}
 
 		if (!test == !(key[0].sk_flags & SK_NEGATE))
-			return (false);
+			return false;
 
 		scanKeySize -= 1;
 		key++;
 	}
 
-	return (true);
+	return true;
 }
 
 
@@ -315,7 +315,7 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 	{
 		it = (char *) PageGetItem(p, PageGetItemId(p, n));
 		if (gistindex_keytest((IndexTuple) it,
-							  RelationGetTupleDescriptor(s->relation),
+							  RelationGetDescr(s->relation),
 							  s->numberOfKeys, s->keyData, giststate,
 							  s->relation, p, n))
 			break;
@@ -326,7 +326,7 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
 			n = OffsetNumberNext(n);
 	}
 
-	return (n);
+	return n;
 }
 
 static RetrieveIndexResult
@@ -339,7 +339,7 @@ gistscancache(IndexScanDesc s, ScanDirection dir)
 		  && ItemPointerIsValid(&(s->currentItemData))))
 	{
 
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 	}
 
 	ip = gistheapptr(s->relation, &(s->currentItemData));
@@ -351,7 +351,7 @@ gistscancache(IndexScanDesc s, ScanDirection dir)
 
 	pfree(ip);
 
-	return (res);
+	return res;
 }
 
 /*
@@ -381,5 +381,5 @@ gistheapptr(Relation r, ItemPointer itemp)
 	else
 		ItemPointerSetInvalid(ip);
 
-	return (ip);
+	return ip;
 }

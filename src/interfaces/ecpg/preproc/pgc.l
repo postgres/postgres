@@ -206,7 +206,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					yylval.ival = strtol((char *)literal,&endptr,2);
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad binary integer input!");
-					return (ICONST);
+					return ICONST;
 				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
@@ -232,7 +232,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					yylval.ival = strtol((char *)literal,&endptr,16);
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad hexadecimal integer input");
-					return (ICONST);
+					return ICONST;
 				}
 
 <SQL>{xqstart}		{
@@ -243,7 +243,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <xq>{xqstop}	{
 					BEGIN(SQL);
 					yylval.str = strdup(scanstr(literal));
-					return (SCONST);
+					return SCONST;
 				}
 <xq>{xqdouble}	|
 <xq>{xqinside}	{
@@ -278,7 +278,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <xd>{xdstop}	{
 					BEGIN(SQL);
 					yylval.str = strdup(literal);
-					return (CSTRING);
+					return CSTRING;
 				}
 <xd>{xdinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
@@ -294,7 +294,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <xdc>{xdstop}	{
 					BEGIN(C);
 					yylval.str = strdup(literal);
-					return (CSTRING);
+					return CSTRING;
 				}
 <xdc>{xdinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
@@ -306,30 +306,30 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <xm>{space}*	{ /* ignore */ }
 <xm>{xmstop}	{
 					BEGIN(SQL);
-					return (yytext[0]);
+					return yytext[0];
 				}
 
 
 <SQL>{typecast}			{ 	return TYPECAST; }
 <SQL>{self}/{space}*-[\.0-9]	{
 					BEGIN(xm);
-					return (yytext[0]);
+					return yytext[0];
 				}
-<SQL>{self}				{ 	return (yytext[0]); }
+<SQL>{self}				{ 	return yytext[0]; }
 <SQL>{operator}/-[\.0-9]	{
 					yylval.str = strdup((char*)yytext);
-					return (Op);
+					return Op;
 				}
 <SQL>{operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
 						yylval.str = strdup("<>"); /* compatability */
 					else
 						yylval.str = strdup((char*)yytext);
-					return (Op);
+					return Op;
 				}
 <SQL>{param}			{
 					yylval.ival = atoi((char*)&yytext[1]);
-					return (PARAM);
+					return PARAM;
 				}
 <SQL>{identifier}/{space}*-{number}	{
 					int i;
@@ -342,13 +342,13 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
-						return (keyword->value);
+						return keyword->value;
 					}
 					else
 					{
 						keyword = ScanECPGKeywordLookup((char*)yytext);
 						if (keyword != NULL) {
-							return (keyword->value);
+							return keyword->value;
 						}
 						else
 						{
@@ -376,7 +376,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 							if (ptr == NULL) 
 							{
 								yylval.str = strdup((char*)yytext);
-								return (IDENT);
+								return IDENT;
 							}
 						}
 					}
@@ -394,9 +394,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad integer input");
 						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return (FCONST);
+						return FCONST;
 					}
-					return (ICONST);
+					return ICONST;
 				}
 <SQL>{real}/{space}*-{number} {
 					char* endptr;
@@ -406,7 +406,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					yylval.dval = strtod(((char *)yytext),&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad float8 input");
-					return (FCONST);
+					return FCONST;
 				}
 <SQL>{integer}		{
 					char* endptr;
@@ -420,9 +420,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad integer input");
 						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return (FCONST);
+						return FCONST;
 					}
-					return (ICONST);
+					return ICONST;
 				}
 <SQL>{real}			{
 					char* endptr;
@@ -431,7 +431,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 					yylval.dval = strtod((char *)yytext,&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
 						yyerror("ERROR: Bad float input");
-					return (FCONST);
+					return FCONST;
 				}
 <C>{integer}/{space}*-{number}	{
 					char* endptr;
@@ -446,9 +446,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad integer input");
 						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return (FCONST);
+						return FCONST;
 					}
-					return (ICONST);
+					return ICONST;
 				}
 <C>{integer}		{
 					char* endptr;
@@ -462,9 +462,9 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (*endptr != '\0' || errno == ERANGE)
 							yyerror("ERROR: Bad integer input");
 						yyerror("WARNING: Integer input is out of range; promoted to float");
-						return (FCONST);
+						return FCONST;
 					}
-					return (ICONST);
+					return ICONST;
 				}
 <SQL>:{identifier}(("->"|\.){identifier})*	{
 					yylval.str = strdup((char*)yytext+1);
@@ -480,13 +480,13 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
-						return (keyword->value);
+						return keyword->value;
 					}
 					else
 					{
 						keyword = ScanECPGKeywordLookup((char*)yytext);
 						if (keyword != NULL) {
-							return (keyword->value);
+							return keyword->value;
 						}
 						else
 						{
@@ -514,14 +514,14 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 							if (ptr == NULL) 
 							{
 								yylval.str = strdup((char*)yytext);
-								return (IDENT);
+								return IDENT;
 							}
 						}
 					}
 				}
 <SQL>{space}			{ /* ignore */ }
 <SQL>";"	                { BEGIN C; return SQL_SEMI; }
-<SQL>{other}			{ return (yytext[0]); }
+<SQL>{other}			{ return yytext[0]; }
 <C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
 <C>{ccomment}			{ /* ignore */ } 
 <C>{cppline}			{
@@ -533,7 +533,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 
 					keyword = ScanCKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
-						return (keyword->value);
+						return keyword->value;
 					}
 					else
 					{
@@ -561,7 +561,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 						if (ptr == NULL) 
 						{
 							yylval.str = strdup((char*)yytext);
-							return (IDENT);
+							return IDENT;
 						}
 					}
 				}
@@ -574,7 +574,7 @@ cppline		{space}*#.*(\\{space}*\n)*\n*
 <C>\[			{ return('['); }
 <C>\]			{ return(']'); }
 <C>\=			{ return('='); }
-<C>{other}			{ return (S_ANYTHING); }
+<C>{other}			{ return S_ANYTHING; }
 <C>{exec}{space}{sql}{space}{define}	{BEGIN(def_ident);}
 <def_ident>{space}	{}
 <def_ident>{identifier}	{

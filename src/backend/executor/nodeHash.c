@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.21 1998/06/15 19:28:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHash.c,v 1.22 1998/09/01 03:22:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -438,7 +438,7 @@ ExecHashTableCreate(Hash *node)
 		bucket->firstotuple = bucket->lastotuple = -1;
 		bucket = (HashBucket) LONGALIGN(((char *) bucket + bucketsize));
 	}
-	return (hashtable);
+	return hashtable;
 }
 
 /* ----------------------------------------------------------------
@@ -586,7 +586,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		printf("hash(%d) = %d\n", keyval, bucketno);
 #endif
 
-	return (bucketno);
+	return bucketno;
 }
 
 /* ----------------------------------------------------------------
@@ -810,7 +810,7 @@ hashFunc(char *key, int len)
 		h = h * PRIME1 ^ (*k++);
 	h %= PRIME2;
 
-	return (h);
+	return h;
 }
 
 /* ----------------------------------------------------------------

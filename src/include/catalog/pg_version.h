@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_version.h,v 1.5 1997/09/08 02:35:35 momjian Exp $
+ * $Id: pg_version.h,v 1.6 1998/09/01 03:28:00 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,7 +42,7 @@ CATALOG(pg_version)
  *		the format of pg_version relation.
  * ----------------
  */
-typedef FormData_pg_version *VersionTupleForm;
+typedef FormData_pg_version *Form_pg_version;
 
 /* ----------------
  *		compiler constants for pg_version

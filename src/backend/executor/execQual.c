@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.34 1998/08/01 22:12:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.35 1998/09/01 03:22:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,7 +390,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 			ExecSetParamPlan(prm->execPlan);
 		Assert(prm->execPlan == NULL);
 		*isNull = prm->isnull;
-		return (prm->value);
+		return prm->value;
 	}
 
 	thisParameterName = expression->paramname;
@@ -487,7 +487,7 @@ ExecEvalParam(Param *expression, ExprContext *econtext, bool *isNull)
 								 tle, tup, isNull);
 		return value;
 	}
-	return (paramList->value);
+	return paramList->value;
 }
 
 
@@ -545,7 +545,7 @@ att_by_num(TupleTableSlot *slot,
 		   AttrNumber attrno,
 		   bool *isNull)
 {
-	return (GetAttributeByNum(slot, attrno, isNull));
+	return GetAttributeByNum(slot, attrno, isNull);
 }
 
 #endif
@@ -604,7 +604,7 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 char *
 att_by_name(TupleTableSlot *slot, char *attname, bool *isNull)
 {
-	return (GetAttributeByName(slot, attname, isNull));
+	return GetAttributeByName(slot, attname, isNull);
 }
 
 #endif
@@ -829,7 +829,7 @@ ExecMakeFunctionResult(Node *node,
 			if (fcache->nullVect[i] == true)
 				*isNull = true;
 
-		return ((Datum) fmgr_c(&fcache->func, (FmgrValues *) argV, isNull));
+		return (Datum) fmgr_c(&fcache->func, (FmgrValues *) argV, isNull);
 	}
 }
 

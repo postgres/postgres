@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.9 1998/06/15 19:28:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.10 1998/09/01 03:23:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ static Expr *
 pull_args(Expr *qual)
 {
 	if (qual == NULL)
-		return (NULL);
+		return NULL;
 
 	if (is_opclause((Node *) qual))
 	{
@@ -117,7 +117,7 @@ pull_args(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, pull_args(lfirst(temp)));
-		return (make_andclause(pull_ands(t_list)));
+		return make_andclause(pull_ands(t_list));
 	}
 	else if (or_clause((Node *) qual))
 	{
@@ -126,12 +126,12 @@ pull_args(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, pull_args(lfirst(temp)));
-		return (make_orclause(pull_ors(t_list)));
+		return make_orclause(pull_ors(t_list));
 	}
 	else if (not_clause((Node *) qual))
-		return (make_notclause(pull_args(get_notclausearg(qual))));
+		return make_notclause(pull_args(get_notclausearg(qual)));
 	else
-		return (qual);
+		return qual;
 }
 
 /*
@@ -145,7 +145,7 @@ static List *
 pull_ors(List *orlist)
 {
 	if (orlist == NIL)
-		return (NIL);
+		return NIL;
 
 	if (or_clause(lfirst(orlist)))
 	{
@@ -155,7 +155,7 @@ pull_ors(List *orlist)
 							   copyObject((Node *) lnext(orlist)))));
 	}
 	else
-		return (lcons(lfirst(orlist), pull_ors(lnext(orlist))));
+		return lcons(lfirst(orlist), pull_ors(lnext(orlist)));
 }
 
 /*
@@ -169,7 +169,7 @@ static List *
 pull_ands(List *andlist)
 {
 	if (andlist == NIL)
-		return (NIL);
+		return NIL;
 
 	if (and_clause(lfirst(andlist)))
 	{
@@ -179,7 +179,7 @@ pull_ands(List *andlist)
 								copyObject((Node *) lnext(andlist)))));
 	}
 	else
-		return (lcons(lfirst(andlist), pull_ands(lnext(andlist))));
+		return lcons(lfirst(andlist), pull_ands(lnext(andlist)));
 }
 
 /*
@@ -196,7 +196,7 @@ static Expr *
 find_nots(Expr *qual)
 {
 	if (qual == NULL)
-		return (NULL);
+		return NULL;
 
 	if (is_opclause((Node *) qual))
 	{
@@ -213,7 +213,7 @@ find_nots(Expr *qual)
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, find_nots(lfirst(temp)));
 
-		return (make_andclause(t_list));
+		return make_andclause(t_list);
 	}
 	else if (or_clause((Node *) qual))
 	{
@@ -222,12 +222,12 @@ find_nots(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, find_nots(lfirst(temp)));
-		return (make_orclause(t_list));
+		return make_orclause(t_list);
 	}
 	else if (not_clause((Node *) qual))
-		return (push_nots(get_notclausearg(qual)));
+		return push_nots(get_notclausearg(qual));
 	else
-		return (qual);
+		return qual;
 }
 
 /*
@@ -241,7 +241,7 @@ static Expr *
 push_nots(Expr *qual)
 {
 	if (qual == NULL)
-		return (NULL);
+		return NULL;
 
 	/*
 	 * Negate an operator clause if possible: ("NOT" (< A B)) => (> A B)
@@ -265,7 +265,7 @@ push_nots(Expr *qual)
 				(make_opclause(op, get_leftop(qual), get_rightop(qual)));
 		}
 		else
-			return (make_notclause(qual));
+			return make_notclause(qual);
 	}
 	else if (and_clause((Node *) qual))
 	{
@@ -280,7 +280,7 @@ push_nots(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, push_nots(lfirst(temp)));
-		return (make_orclause(t_list));
+		return make_orclause(t_list);
 	}
 	else if (or_clause((Node *) qual))
 	{
@@ -289,7 +289,7 @@ push_nots(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, push_nots(lfirst(temp)));
-		return (make_andclause(t_list));
+		return make_andclause(t_list);
 	}
 	else if (not_clause((Node *) qual))
 
@@ -297,14 +297,14 @@ push_nots(Expr *qual)
 		 * Another 'not' cancels this 'not', so eliminate the 'not' and
 		 * stop negating this branch.
 		 */
-		return (find_nots(get_notclausearg(qual)));
+		return find_nots(get_notclausearg(qual));
 	else
 
 		/*
 		 * We don't know how to negate anything else, place a 'not' at
 		 * this level.
 		 */
-		return (make_notclause(qual));
+		return make_notclause(qual);
 }
 
 /*
@@ -322,7 +322,7 @@ static Expr *
 normalize(Expr *qual)
 {
 	if (qual == NULL)
-		return (NULL);
+		return NULL;
 
 	if (is_opclause((Node *) qual))
 	{
@@ -340,7 +340,7 @@ normalize(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, normalize(lfirst(temp)));
-		return (make_andclause(t_list));
+		return make_andclause(t_list);
 	}
 	else if (or_clause((Node *) qual))
 	{
@@ -360,15 +360,15 @@ normalize(Expr *qual)
 			}
 		}
 		if (has_andclause == TRUE)
-			return (make_andclause(or_normalize(orlist)));
+			return make_andclause(or_normalize(orlist));
 		else
-			return (make_orclause(orlist));
+			return make_orclause(orlist);
 
 	}
 	else if (not_clause((Node *) qual))
-		return (make_notclause(normalize(get_notclausearg(qual))));
+		return make_notclause(normalize(get_notclausearg(qual)));
 	else
-		return (qual);
+		return qual;
 }
 
 /*
@@ -405,7 +405,7 @@ or_normalize(List *orlist)
 								lnext(new_orlist))));
 	}
 	else
-		return (orlist);
+		return orlist;
 }
 
 /*
@@ -425,7 +425,7 @@ distribute_args(List *item, List *args)
 	List	   *t_list = NIL;
 
 	if (args == NULL)
-		return (item);
+		return item;
 
 	foreach(temp, args)
 	{
@@ -434,7 +434,7 @@ distribute_args(List *item, List *args)
 		or_list = (List *) make_orclause(n_list);
 		t_list = lappend(t_list, or_list);
 	}
-	return ((List *) make_andclause(t_list));
+	return (List *) make_andclause(t_list);
 }
 
 /*
@@ -450,7 +450,7 @@ static List *
 qualcleanup(Expr *qual)
 {
 	if (qual == NULL)
-		return (NIL);
+		return NIL;
 
 	if (is_opclause((Node *) qual))
 	{
@@ -471,9 +471,9 @@ qualcleanup(Expr *qual)
 		new_and_args = remove_duplicates(t_list);
 
 		if (length(new_and_args) > 1)
-			return ((List *) make_andclause(new_and_args));
+			return (List *) make_andclause(new_and_args);
 		else
-			return (lfirst(new_and_args));
+			return lfirst(new_and_args);
 	}
 	else if (or_clause((Node *) qual))
 	{
@@ -488,15 +488,15 @@ qualcleanup(Expr *qual)
 
 
 		if (length(new_or_args) > 1)
-			return ((List *) make_orclause(new_or_args));
+			return (List *) make_orclause(new_or_args);
 		else
-			return (lfirst(new_or_args));
+			return lfirst(new_or_args);
 	}
 	else if (not_clause((Node *) qual))
-		return ((List *) make_notclause((Expr *) qualcleanup((Expr *) get_notclausearg(qual))));
+		return (List *) make_notclause((Expr *) qualcleanup((Expr *) get_notclausearg(qual)));
 
 	else
-		return ((List *) qual);
+		return (List *) qual;
 }
 
 /*
@@ -513,7 +513,7 @@ remove_ands(Expr *qual)
 	List	   *t_list = NIL;
 
 	if (qual == NULL)
-		return (NIL);
+		return NIL;
 	if (is_opclause((Node *) qual))
 	{
 		return ((List *) make_clause(qual->opType, qual->oper,
@@ -527,7 +527,7 @@ remove_ands(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, remove_ands(lfirst(temp)));
-		return (t_list);
+		return t_list;
 	}
 	else if (or_clause((Node *) qual))
 	{
@@ -535,12 +535,12 @@ remove_ands(Expr *qual)
 
 		foreach(temp, qual->args)
 			t_list = lappend(t_list, remove_ands(lfirst(temp)));
-		return ((List *) make_orclause((List *) t_list));
+		return (List *) make_orclause((List *) t_list);
 	}
 	else if (not_clause((Node *) qual))
-		return ((List *) make_notclause((Expr *) remove_ands((Expr *) get_notclausearg(qual))));
+		return (List *) make_notclause((Expr *) remove_ands((Expr *) get_notclausearg(qual)));
 	else
-		return ((List *) qual);
+		return (List *) qual;
 }
 
 /*****************************************************************************
@@ -558,7 +558,7 @@ remove_duplicates(List *list)
 	bool		there_exists_duplicate = false;
 
 	if (length(list) == 1)
-		return (list);
+		return list;
 
 	foreach(i, list)
 	{
@@ -575,5 +575,5 @@ remove_duplicates(List *list)
 			there_exists_duplicate = false;
 		}
 	}
-	return (result);
+	return result;
 }

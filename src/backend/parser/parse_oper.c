@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.15 1998/08/19 02:02:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.16 1998/09/01 03:24:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ any_ordering_op(int restype)
 Oid
 oprid(Operator op)
 {
-	return (op->t_oid);
+	return op->t_oid;
 }
 
 
@@ -85,7 +85,7 @@ binary_oper_get_candidates(char *opname,
 	Relation	pg_operator_desc;
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
-	OperatorTupleForm oper;
+	Form_pg_operator oper;
 	int			nkeys;
 	int			ncandidates = 0;
 	ScanKeyData opKey[3];
@@ -116,7 +116,7 @@ binary_oper_get_candidates(char *opname,
 		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
 		current_candidate->args = (Oid *) palloc(2 * sizeof(Oid));
 
-		oper = (OperatorTupleForm) GETSTRUCT(tup);
+		oper = (Form_pg_operator) GETSTRUCT(tup);
 		current_candidate->args[0] = oper->oprleft;
 		current_candidate->args[1] = oper->oprright;
 		current_candidate->next = *candidates;
@@ -250,7 +250,7 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 		if (!can_coerce_type(1, &input_typeids[0], &candidates->args[0])
 		 || !can_coerce_type(1, &input_typeids[1], &candidates->args[1]))
 			ncandidates = 0;
-		return ((ncandidates == 1)? candidates->args: NULL);
+		return (ncandidates == 1)? candidates->args: NULL;
 	}
 
 /*
@@ -321,7 +321,7 @@ printf("oper_select_candidate- reject candidate as possible match\n");
 printf("oper_select_candidate- unable to coerce preferred candidate\n");
 #endif
 		}
-		return ((ncandidates == 1)? candidates->args: NULL);
+		return (ncandidates == 1)? candidates->args: NULL;
 	}
 
 /*
@@ -354,7 +354,7 @@ printf("oper_select_candidate- unable to coerce preferred candidate\n");
 					nmatch++;
 			}
 			if (nmatch == nargs)
-				return (candidates->args);
+				return candidates->args;
 		}
 	}
 
@@ -436,7 +436,7 @@ printf("oper_select_candidate- column #%d input type is %s\n",
 			ncandidates++;
 	}
 
-	return ((ncandidates == 1)? candidates->args: NULL);
+	return (ncandidates == 1)? candidates->args: NULL;
 } /* oper_select_candidate() */
 
 
@@ -472,12 +472,12 @@ oper_exact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWarn
 
 		if (HeapTupleIsValid(tup))
 		{
-			OperatorTupleForm opform;
+			Form_pg_operator opform;
 
 #if PARSEDEBUG
 printf("oper_exact: found possible commutative operator candidate\n");
 #endif
-			opform = (OperatorTupleForm) GETSTRUCT(tup);
+			opform = (Form_pg_operator) GETSTRUCT(tup);
 			if (opform->oprcom == tup->t_oid)
 			{
 #if PARSEDEBUG
@@ -529,7 +529,7 @@ oper_inexact(char *op, Oid arg1, Oid arg2, Node **ltree, Node **rtree, bool noWa
 	{
 		if (!noWarnings)
 			op_error(op, arg1, arg2);
-		return (NULL);
+		return NULL;
 	}
 
 	/* Or found exactly one? Then proceed... */
@@ -577,10 +577,10 @@ printf("oper_inexact: found candidate\n");
 					"\n\tYou will have to retype this query using an explicit cast",
 					op, typeTypeName(typeidType(arg1)), typeTypeName(typeidType(arg2)));
 			}
-			return (NULL);
+			return NULL;
 		}
 	}
-	return ((Operator) tup);
+	return (Operator) tup;
 } /* oper_inexact() */
 
 
@@ -608,7 +608,7 @@ oper(char *opname, Oid ltypeId, Oid rtypeId, bool noWarnings)
 			 opname, typeTypeName(typeidType(ltypeId)), typeTypeName(typeidType(rtypeId)));
 	}
 
-	return ((Operator) tup);
+	return (Operator) tup;
 } /* oper() */
 
 
@@ -627,7 +627,7 @@ unary_oper_get_candidates(char *op,
 	Relation	pg_operator_desc;
 	HeapScanDesc pg_operator_scan;
 	HeapTuple	tup;
-	OperatorTupleForm oper;
+	Form_pg_operator oper;
 	int			ncandidates = 0;
 
 	static ScanKeyData opKey[2] = {
@@ -656,7 +656,7 @@ printf("unary_oper_get_candidates: start scan for '%s'\n", op);
 		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
 		current_candidate->args = (Oid *) palloc(sizeof(Oid));
 
-		oper = (OperatorTupleForm) GETSTRUCT(tup);
+		oper = (Form_pg_operator) GETSTRUCT(tup);
 		if (rightleft == 'r')
 			current_candidate->args[0] = oper->oprleft;
 		else
@@ -702,7 +702,7 @@ right_oper(char *op, Oid arg)
 		if (ncandidates == 0)
 		{
 			elog(ERROR, "Can't find right op '%s' for type %d", op, arg);
-			return (NULL);
+			return NULL;
 		}
 		else if (ncandidates == 1)
 		{
@@ -732,11 +732,11 @@ right_oper(char *op, Oid arg)
 			{
 				elog(ERROR, "Unable to convert right operator '%s' from type %s to %s",
 					 op, typeidTypeName(arg), typeidTypeName(*targetOid));
-				return (NULL);
+				return NULL;
 			}
 		}
 	}
-	return ((Operator) tup);
+	return (Operator) tup;
 } /* right_oper() */
 
 
@@ -762,7 +762,7 @@ left_oper(char *op, Oid arg)
 		if (ncandidates == 0)
 		{
 			elog(ERROR, "Can't find left op '%s' for type %d", op, arg);
-			return (NULL);
+			return NULL;
 		}
 		else if (ncandidates == 1)
 		{
@@ -790,7 +790,7 @@ printf("left_oper: searched cache for single left oper candidate '%s %s'\n",
 			{
 				elog(ERROR, "Unable to convert left operator '%s' from type %s to %s",
 					 op, typeidTypeName(arg), typeidTypeName(*targetOid));
-				return (NULL);
+				return NULL;
 			}
 #ifdef PARSEDEBUG
 printf("left_oper: searched cache for best left oper candidate '%s %s'\n",
@@ -798,7 +798,7 @@ printf("left_oper: searched cache for best left oper candidate '%s %s'\n",
 #endif
 		}
 	}
-	return ((Operator) tup);
+	return (Operator) tup;
 } /* left_oper() */
 
 

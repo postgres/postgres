@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.16 1998/07/20 21:18:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.17 1998/09/01 03:23:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,10 +54,10 @@ tlistentry_member(Var *var, List *targetlist)
 		{
 			if (var_equal(var,
 						  get_expr(lfirst(temp))))
-				return ((TargetEntry *) lfirst(temp));
+				return (TargetEntry *) lfirst(temp);
 		}
 	}
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -75,9 +75,9 @@ matching_tlvar(Var *var, List *targetlist)
 
 	tlentry = tlistentry_member(var, targetlist);
 	if (tlentry)
-		return ((Expr *) get_expr(tlentry));
+		return (Expr *) get_expr(tlentry);
 
-	return ((Expr *) NULL);
+	return (Expr *) NULL;
 }
 
 /*
@@ -163,7 +163,7 @@ get_actual_tlist(List *tlist)
 	if (tlist == NULL)
 	{
 		elog(DEBUG, "calling get_actual_tlist with empty tlist");
-		return (NIL);
+		return NIL;
 	}
 
 	/*
@@ -175,7 +175,7 @@ get_actual_tlist(List *tlist)
 	foreach(element, tlist)
 		result = lappend(result, lfirst((List *) lfirst(element)));
 
-	return (result);
+	return result;
 #endif
 	return tlist;
 }
@@ -216,11 +216,11 @@ tlist_member(Var *var, List *tlist)
 		}
 
 		if (tl_elt != NULL)
-			return (tl_elt->resdom);
+			return tl_elt->resdom;
 		else
-			return ((Resdom *) NULL);
+			return (Resdom *) NULL;
 	}
-	return ((Resdom *) NULL);
+	return (Resdom *) NULL;
 }
 
 /*
@@ -239,9 +239,9 @@ tlist_resdom(List *tlist, Resdom *resnode)
 		resdom = temp_tle->resdom;
 		/* Since resnos are supposed to be unique */
 		if (resnode->resno == resdom->resno)
-			return (resdom);
+			return resdom;
 	}
-	return ((Resdom *) NULL);
+	return (Resdom *) NULL;
 }
 
 
@@ -291,11 +291,11 @@ match_varid(Var *test_var, List *tlist)
 		{
 
 			if (tlvar->vartype == type_var)
-				return (entry);
+				return entry;
 		}
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 
@@ -322,7 +322,7 @@ new_unsorted_tlist(List *targetlist)
 		tle->resdom->reskey = 0;
 		tle->resdom->reskeyop = (Oid) 0;
 	}
-	return (new_targetlist);
+	return new_targetlist;
 }
 
 /*
@@ -352,7 +352,7 @@ copy_vars(List *target, List *source)
 
 		result = lappend(result, temp);
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -436,7 +436,7 @@ flatten_tlist_vars(List *full_tlist, List *flat_tlist)
 											   flat_tlist)));
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -546,7 +546,7 @@ get_expr(TargetEntry *tle)
 	Assert(tle != NULL);
 	Assert(tle->expr != NULL);
 
-	return ((Var *) tle->expr);
+	return (Var *) tle->expr;
 }
 
 

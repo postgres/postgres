@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.22 1998/08/17 03:50:31 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.23 1998/09/01 03:28:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -149,7 +149,7 @@ pg_krb4_authname(char *PQerrormsg)
 	static char name[SNAME_SZ + 1] = "";
 
 	if (name[0])
-		return (name);
+		return name;
 
 	pg_krb4_init();
 
@@ -160,9 +160,9 @@ pg_krb4_authname(char *PQerrormsg)
 		(void) sprintf(PQerrormsg,
 					   "pg_krb4_authname: krb_get_tf_fullname: %s\n",
 					   krb_err_txt[status]);
-		return ((char *) NULL);
+		return (char *) NULL;
 	}
-	return (name);
+	return name;
 }
 
 /*
@@ -218,9 +218,9 @@ pg_krb4_sendauth(const char *PQerrormsg, int sock,
 		(void) sprintf(PQerrormsg,
 					   "pg_krb4_sendauth: kerberos error: %s\n",
 					   krb_err_txt[status]);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 #endif							/* KRB4 */
@@ -253,7 +253,7 @@ pg_an_to_ln(const char *aname)
 
 	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
 		*p = '\0';
-	return (aname);
+	return aname;
 }
 
 
@@ -276,7 +276,7 @@ pg_krb5_init(void)
 	static krb5_ccache ccache = (krb5_ccache) NULL;
 
 	if (ccache)
-		return (ccache);
+		return ccache;
 
 	/*
 	 * If the user set PGREALM, then we use a ticket file with a special
@@ -286,7 +286,7 @@ pg_krb5_init(void)
 	{
 		(void) sprintf(PQerrormsg,
 					   "pg_krb5_init: krb5_cc_default_name failed\n");
-		return ((krb5_ccache) NULL);
+		return (krb5_ccache) NULL;
 	}
 	strcpy(tktbuf, defname);
 	if (realm = getenv("PGREALM"))
@@ -301,9 +301,9 @@ pg_krb5_init(void)
 				  "pg_krb5_init: Kerberos error %d in krb5_cc_resolve\n",
 					   code);
 		com_err("pg_krb5_init", code, "in krb5_cc_resolve");
-		return ((krb5_ccache) NULL);
+		return (krb5_ccache) NULL;
 	}
-	return (ccache);
+	return ccache;
 }
 
 /*
@@ -321,7 +321,7 @@ pg_krb5_authname(const char *PQerrormsg)
 	static char *authname = (char *) NULL;
 
 	if (authname)
-		return (authname);
+		return authname;
 
 	ccache = pg_krb5_init();	/* don't free this */
 
@@ -331,7 +331,7 @@ pg_krb5_authname(const char *PQerrormsg)
 		"pg_krb5_authname: Kerberos error %d in krb5_cc_get_principal\n",
 					   code);
 		com_err("pg_krb5_authname", code, "in krb5_cc_get_principal");
-		return ((char *) NULL);
+		return (char *) NULL;
 	}
 	if (code = krb5_unparse_name(principal, &authname))
 	{
@@ -340,10 +340,10 @@ pg_krb5_authname(const char *PQerrormsg)
 					   code);
 		com_err("pg_krb5_authname", code, "in krb5_unparse_name");
 		krb5_free_principal(principal);
-		return ((char *) NULL);
+		return (char *) NULL;
 	}
 	krb5_free_principal(principal);
-	return (pg_an_to_ln(authname));
+	return pg_an_to_ln(authname);
 }
 
 /*
@@ -389,7 +389,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 		"pg_krb5_sendauth: Kerberos error %d in krb5_cc_get_principal\n",
 					   code);
 		com_err("pg_krb5_sendauth", code, "in krb5_cc_get_principal");
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	/*
@@ -418,7 +418,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 					   code);
 		com_err("pg_krb5_sendauth", code, "in krb5_parse_name");
 		krb5_free_principal(client);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	/*
@@ -454,7 +454,7 @@ pg_krb5_sendauth(const char *PQerrormsg, int sock,
 	}
 	krb5_free_principal(client);
 	krb5_free_principal(server);
-	return (code ? STATUS_ERROR : STATUS_OK);
+	return code ? STATUS_ERROR : STATUS_OK;
 }
 
 #endif							/* KRB5 */
@@ -490,13 +490,13 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			{
 				(void) sprintf(PQerrormsg,
 							"fe_sendauth: krb4 authentication failed\n");
-				return (STATUS_ERROR);
+				return STATUS_ERROR;
 			}
 			break;
 #else
 			(void) sprintf(PQerrormsg,
 					 "fe_sendauth: krb4 authentication not supported\n");
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 #endif
 
 		case AUTH_REQ_KRB5:
@@ -507,13 +507,13 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			{
 				(void) sprintf(PQerrormsg,
 							"fe_sendauth: krb5 authentication failed\n");
-				return (STATUS_ERROR);
+				return STATUS_ERROR;
 			}
 			break;
 #else
 			(void) sprintf(PQerrormsg,
 					 "fe_sendauth: krb5 authentication not supported\n");
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 #endif
 
 		case AUTH_REQ_PASSWORD:
@@ -522,13 +522,13 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 			{
 				(void) sprintf(PQerrormsg,
 				 "fe_sendauth: no password supplied\n");
-				return (STATUS_ERROR);
+				return STATUS_ERROR;
 			}
 			if (pg_password_sendauth(conn, password, areq) != STATUS_OK)
 			{
 				(void) sprintf(PQerrormsg,
 				 "fe_sendauth: error sending password authentication\n");
-				return (STATUS_ERROR);
+				return STATUS_ERROR;
 			}
 
 			break;
@@ -536,10 +536,10 @@ fe_sendauth(AuthRequest areq, PGconn *conn, const char *hostname,
 		default:
 			(void) sprintf(PQerrormsg,
 			"fe_sendauth: authentication type %u not supported\n", areq);
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 	}
 
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 /*
@@ -576,7 +576,7 @@ fe_getauthsvc(char *PQerrormsg)
 {
 	if (pg_authsvc < 0 || pg_authsvc >= n_authsvcs)
 		fe_setauthsvc(DEFAULT_CLIENT_AUTHSVC, PQerrormsg);
-	return (authsvcs[pg_authsvc].msgtype);
+	return authsvcs[pg_authsvc].msgtype;
 }
 
 /*
@@ -629,5 +629,5 @@ fe_getauthname(char *PQerrormsg)
 
 	if (name && (authn = (char *) malloc(strlen(name) + 1)))
 		strcpy(authn, name);
-	return (authn);
+	return authn;
 }

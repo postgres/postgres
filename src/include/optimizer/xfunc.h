@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.8 1998/07/18 04:22:52 momjian Exp $
+ * $Id: xfunc.h,v 1.9 1998/09/01 03:28:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,9 +52,9 @@ extern int	XfuncMode;			/* defined in tcop/postgres.c */
 extern void xfunc_trypullup(RelOptInfo *rel);
 extern int
 xfunc_shouldpull(Path *childpath, JoinPath *parentpath,
-				 int whichchild, CInfo *maxcinfopt);
-extern CInfo *
-xfunc_pullup(Path *childpath, JoinPath *parentpath, CInfo *cinfo,
+				 int whichchild, ClauseInfo *maxcinfopt);
+extern ClauseInfo *
+xfunc_pullup(Path *childpath, JoinPath *parentpath, ClauseInfo *cinfo,
 			 int whichchild, int clausetype);
 extern Cost xfunc_rank(Expr *clause);
 extern Cost xfunc_expense(Query *queryInfo, Expr *clause);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.19 1998/06/15 19:27:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.20 1998/09/01 03:20:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,11 +57,11 @@ index_keytest(IndexTuple tuple,
 		if (isNull)
 		{
 			/* XXX eventually should check if SK_ISNULL */
-			return (false);
+			return false;
 		}
 
 		if (key[0].sk_flags & SK_ISNULL)
-			return (false);
+			return false;
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
@@ -77,11 +77,11 @@ index_keytest(IndexTuple tuple,
 		}
 
 		if (!test == !(key[0].sk_flags & SK_NEGATE))
-			return (false);
+			return false;
 
 		scanKeySize -= 1;
 		key++;
 	}
 
-	return (true);
+	return true;
 }

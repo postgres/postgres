@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.8 1998/07/18 04:22:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.9 1998/09/01 03:23:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,9 +36,9 @@ List *
 find_relation_indices(Query *root, RelOptInfo *rel)
 {
 	if (rel->indexed)
-		return (find_secondary_index(root, lfirsti(rel->relids)));
+		return find_secondary_index(root, lfirsti(rel->relids));
 	else
-		return (NIL);
+		return NIL;
 }
 
 /*

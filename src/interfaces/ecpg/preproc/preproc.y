@@ -171,9 +171,9 @@ find_struct(char * name, char *next)
     if (c == '-')
     {
 	next++;
-	return (find_struct_member(name, next, p->type->u.element->u.members));
+	return find_struct_member(name, next, p->type->u.element->u.members);
     }
-    else return (find_struct_member(name, next, p->type->u.members));
+    else return find_struct_member(name, next, p->type->u.members);
 }
 
 static struct variable *
@@ -333,7 +333,7 @@ make1_str(const char *str)
         char * res_str = (char *)mm_alloc(strlen(str) + 1);
 
 	strcpy(res_str, str);
-	return (res_str);
+	return res_str;
 }
 
 static char *

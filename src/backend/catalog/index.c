@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.58 1998/08/31 17:49:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.59 1998/09/01 03:21:43 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -71,7 +71,7 @@ static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc
 ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
 						 List *attributeList,
-						 int numatts, AttrNumber attNums[]);
+						 int numatts, AttrNumber *attNums);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation);
@@ -84,13 +84,13 @@ static void
 static void
 UpdateIndexRelation(Oid indexoid, Oid heapoid,
 					FuncIndexInfo *funcInfo, int natts,
-				  AttrNumber attNums[], Oid classOids[], Node *predicate,
+				  AttrNumber *attNums, Oid *classOids, Node *predicate,
 					List *attributeList, bool islossy, bool unique);
 static void
 DefaultBuild(Relation heapRelation, Relation indexRelation,
-			 int numberOfAttributes, AttrNumber attributeNumber[],
+			 int numberOfAttributes, AttrNumber *attributeNumber,
 			 IndexStrategy indexStrategy, uint16 parameterCount,
-	   Datum parameter[], FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
+	   Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
 
 /* ----------------------------------------------------------------
  *	  sysatts is a structure containing attribute tuple forms
@@ -241,7 +241,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	 * Allocate and zero a tuple descriptor.
 	 */
 	funcTupDesc = CreateTemplateTupleDesc(1);
-	funcTupDesc->attrs[0] = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	MemSet(funcTupDesc->attrs[0], 0, ATTRIBUTE_TUPLE_SIZE);
 
 	/*
@@ -273,20 +273,20 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 	/*
 	 * Assign some of the attributes values. Leave the rest as 0.
 	 */
-	funcTupDesc->attrs[0]->attlen = ((TypeTupleForm) GETSTRUCT(tuple))->typlen;
+	funcTupDesc->attrs[0]->attlen = ((Form_pg_type) GETSTRUCT(tuple))->typlen;
 	funcTupDesc->attrs[0]->atttypid = retType;
 	funcTupDesc->attrs[0]->attnum = 1;
-	funcTupDesc->attrs[0]->attbyval = ((TypeTupleForm) GETSTRUCT(tuple))->typbyval;
+	funcTupDesc->attrs[0]->attbyval = ((Form_pg_type) GETSTRUCT(tuple))->typbyval;
 	funcTupDesc->attrs[0]->attcacheoff = -1;
 	funcTupDesc->attrs[0]->atttypmod = -1;
-	funcTupDesc->attrs[0]->attalign = ((TypeTupleForm) GETSTRUCT(tuple))->typalign;
+	funcTupDesc->attrs[0]->attalign = ((Form_pg_type) GETSTRUCT(tuple))->typalign;
 
 	/*
 	 * make the attributes name the same as the functions
 	 */
 	namestrcpy(&funcTupDesc->attrs[0]->attname, funcname);
 
-	return (funcTupDesc);
+	return funcTupDesc;
 }
 
 /* ----------------------------------------------------------------
@@ -298,7 +298,7 @@ ConstructTupleDescriptor(Oid heapoid,
 						 Relation heapRelation,
 						 List *attributeList,
 						 int numatts,
-						 AttrNumber attNums[])
+						 AttrNumber *attNums)
 {
 	TupleDesc	heapTupDesc;
 	TupleDesc	indexTupDesc;
@@ -306,7 +306,7 @@ ConstructTupleDescriptor(Oid heapoid,
 	TypeName   *IndexKeyType;
 	AttrNumber	atnum;			/* attributeNumber[attributeOffset] */
 	AttrNumber	atind;
-	int			natts;			/* RelationTupleForm->relnatts */
+	int			natts;			/* Form_pg_class->relnatts */
 	char	   *from;			/* used to simplify memcpy below */
 	char	   *to;				/* used to simplify memcpy below */
 	int			i;
@@ -315,7 +315,7 @@ ConstructTupleDescriptor(Oid heapoid,
 	 *	allocate the new tuple descriptor
 	 * ----------------
 	 */
-	natts = RelationGetRelationTupleForm(heapRelation)->relnatts;
+	natts = RelationGetForm(heapRelation)->relnatts;
 
 	indexTupDesc = CreateTemplateTupleDesc(numatts);
 
@@ -350,7 +350,7 @@ ConstructTupleDescriptor(Oid heapoid,
 		else
 			IndexKeyType = NULL;
 
-		indexTupDesc->attrs[i] = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+		indexTupDesc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
 		/* ----------------
 		 *	 determine which tuple descriptor to copy
@@ -379,7 +379,7 @@ ConstructTupleDescriptor(Oid heapoid,
 			 *	  here we are indexing on a normal attribute (1...n)
 			 * ----------------
 			 */
-			heapTupDesc = RelationGetTupleDescriptor(heapRelation);
+			heapTupDesc = RelationGetDescr(heapRelation);
 			atind = AttrNumberGetAttrOffset(atnum);
 
 			from = (char *) (heapTupDesc->attrs[atind]);
@@ -394,13 +394,13 @@ ConstructTupleDescriptor(Oid heapoid,
 		to = (char *) (indexTupDesc->attrs[i]);
 		memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
 
-		((AttributeTupleForm) to)->attnum = i + 1;
+		((Form_pg_attribute) to)->attnum = i + 1;
 
-		((AttributeTupleForm) to)->attnotnull = false;
-		((AttributeTupleForm) to)->atthasdef = false;
-		((AttributeTupleForm) to)->attcacheoff = -1;
-		((AttributeTupleForm) to)->atttypmod = -1;
-		((AttributeTupleForm) to)->attalign = 'i';
+		((Form_pg_attribute) to)->attnotnull = false;
+		((Form_pg_attribute) to)->atthasdef = false;
+		((Form_pg_attribute) to)->attcacheoff = -1;
+		((Form_pg_attribute) to)->atttypmod = -1;
+		((Form_pg_attribute) to)->attalign = 'i';
 
 		/*
 		 * if the keytype is defined, we need to change the tuple form's
@@ -416,14 +416,14 @@ ConstructTupleDescriptor(Oid heapoid,
 			if (!HeapTupleIsValid(tup))
 				elog(ERROR, "create index: type '%s' undefined",
 					 IndexKeyType->name);
-			((AttributeTupleForm) to)->atttypid = tup->t_oid;
-			((AttributeTupleForm) to)->attbyval =
-				((TypeTupleForm) GETSTRUCT(tup))->typbyval;
-			((AttributeTupleForm) to)->attlen =
-				((TypeTupleForm) GETSTRUCT(tup))->typlen;
-			((AttributeTupleForm) to)->attalign =
-				((TypeTupleForm) GETSTRUCT(tup))->typalign;
-			((AttributeTupleForm) to)->atttypmod = IndexKeyType->typmod;
+			((Form_pg_attribute) to)->atttypid = tup->t_oid;
+			((Form_pg_attribute) to)->attbyval =
+				((Form_pg_type) GETSTRUCT(tup))->typbyval;
+			((Form_pg_attribute) to)->attlen =
+				((Form_pg_type) GETSTRUCT(tup))->typlen;
+			((Form_pg_attribute) to)->attalign =
+				((Form_pg_type) GETSTRUCT(tup))->typalign;
+			((Form_pg_attribute) to)->atttypmod = IndexKeyType->typmod;
 		}
 
 
@@ -433,14 +433,14 @@ ConstructTupleDescriptor(Oid heapoid,
 		 *	  all set.
 		 * ----------------
 		 */
-		((AttributeTupleForm) to)->attrelid = heapoid;
+		((Form_pg_attribute) to)->attrelid = heapoid;
 	}
 
 	return indexTupDesc;
 }
 
 /* ----------------------------------------------------------------
- * AccessMethodObjectIdGetAccessMethodTupleForm --
+ * AccessMethodObjectIdGetForm --
  *		Returns the formated access method tuple given its object identifier.
  *
  * XXX ADD INDEXING
@@ -450,7 +450,7 @@ ConstructTupleDescriptor(Oid heapoid,
  * ----------------------------------------------------------------
  */
 Form_pg_am
-AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId)
+AccessMethodObjectIdGetForm(Oid accessMethodObjectId)
 {
 	Relation	pg_am_desc;
 	HeapScanDesc pg_am_scan;
@@ -483,7 +483,7 @@ AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId)
 	{
 		heap_endscan(pg_am_scan);
 		heap_close(pg_am_desc);
-		return (NULL);
+		return NULL;
 	}
 
 	/* ----------------
@@ -496,7 +496,7 @@ AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId)
 	heap_endscan(pg_am_scan);
 	heap_close(pg_am_desc);
 
-	return (form);
+	return form;
 }
 
 /* ----------------------------------------------------------------
@@ -521,7 +521,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
 
 	indexRelation->rd_am =
-		AccessMethodObjectIdGetAccessMethodTupleForm(amoid);
+		AccessMethodObjectIdGetForm(amoid);
 
 	MemoryContextSwitchTo(oldcxt);
 
@@ -583,7 +583,7 @@ UpdateRelationRelation(Relation indexRelation)
 	pfree(tuple);
 	heap_close(pg_class);
 
-	return (tupleOid);
+	return tupleOid;
 }
 
 /* ----------------------------------------------------------------
@@ -598,7 +598,7 @@ InitializeAttributeOids(Relation indexRelation,
 	TupleDesc	tupleDescriptor;
 	int			i;
 
-	tupleDescriptor = RelationGetTupleDescriptor(indexRelation);
+	tupleDescriptor = RelationGetDescr(indexRelation);
 
 	for (i = 0; i < numatts; i += 1)
 		tupleDescriptor->attrs[i]->attrelid = indexoid;
@@ -633,7 +633,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	pg_attribute = heap_openr(AttributeRelationName);
 
 	/* ----------------
-	 *	initialize null[], replace[] and value[]
+	 *	initialize *null, *replace and *value
 	 * ----------------
 	 */
 	MemSet(nullv, ' ', Natts_pg_attribute);
@@ -681,7 +681,7 @@ AppendAttributeTuples(Relation indexRelation, int numatts)
 	 *	descriptor to form the remaining attribute tuples.
 	 * ----------------
 	 */
-	indexTupDesc = RelationGetTupleDescriptor(indexRelation);
+	indexTupDesc = RelationGetDescr(indexRelation);
 
 	for (i = 1; i < numatts; i += 1)
 	{
@@ -731,14 +731,14 @@ UpdateIndexRelation(Oid indexoid,
 					Oid heapoid,
 					FuncIndexInfo *funcInfo,
 					int natts,
-					AttrNumber attNums[],
-					Oid classOids[],
+					AttrNumber *attNums,
+					Oid *classOids,
 					Node *predicate,
 					List *attributeList,
 					bool islossy,
 					bool unique)
 {
-	IndexTupleForm indexForm;
+	Form_pg_index indexForm;
 	IndexElem  *IndexKey;
 	char	   *predString;
 	text	   *predText;
@@ -749,7 +749,7 @@ UpdateIndexRelation(Oid indexoid,
 	int			i;
 
 	/* ----------------
-	 *	allocate an IndexTupleForm big enough to hold the
+	 *	allocate an Form_pg_index big enough to hold the
 	 *	index-predicate (if any) in string form
 	 * ----------------
 	 */
@@ -763,7 +763,7 @@ UpdateIndexRelation(Oid indexoid,
 		predText = (text *) fmgr(F_TEXTIN, "");
 	predLen = VARSIZE(predText);
 	itupLen = predLen + sizeof(FormData_pg_index);
-	indexForm = (IndexTupleForm) palloc(itupLen);
+	indexForm = (Form_pg_index) palloc(itupLen);
 
 	memmove((char *) &indexForm->indpred, (char *) predText, predLen);
 
@@ -1009,8 +1009,8 @@ index_create(char *heapRelationName,
 			 List *attributeList,
 			 Oid accessMethodObjectId,
 			 int numatts,
-			 AttrNumber attNums[],
-			 Oid classObjectId[],
+			 AttrNumber *attNums,
+			 Oid *classObjectId,
 			 uint16 parameterCount,
 			 Datum *parameter,
 			 Node *predicate,
@@ -1259,7 +1259,7 @@ index_destroy(Oid indexId)
  */
 void
 FormIndexDatum(int numberOfAttributes,
-			   AttrNumber attributeNumber[],
+			   AttrNumber *attributeNumber,
 			   HeapTuple heapTuple,
 			   TupleDesc heapDescriptor,
 			   Datum *datum,
@@ -1475,10 +1475,10 @@ static void
 DefaultBuild(Relation heapRelation,
 			 Relation indexRelation,
 			 int numberOfAttributes,
-			 AttrNumber attributeNumber[],
+			 AttrNumber *attributeNumber,
 			 IndexStrategy indexStrategy,		/* not used */
 			 uint16 parameterCount,		/* not used */
-			 Datum parameter[], /* not used */
+			 Datum *parameter, /* not used */
 			 FuncIndexInfoPtr funcInfo,
 			 PredInfo *predInfo)
 {
@@ -1514,8 +1514,8 @@ DefaultBuild(Relation heapRelation,
 	 *	how to form the index tuples..
 	 * ----------------
 	 */
-	heapDescriptor = RelationGetTupleDescriptor(heapRelation);
-	indexDescriptor = RelationGetTupleDescriptor(indexRelation);
+	heapDescriptor = RelationGetDescr(heapRelation);
+	indexDescriptor = RelationGetDescr(indexRelation);
 
 	/* ----------------
 	 *	datum and null are arrays in which we collect the index attributes
@@ -1675,7 +1675,7 @@ void
 index_build(Relation heapRelation,
 			Relation indexRelation,
 			int numberOfAttributes,
-			AttrNumber attributeNumber[],
+			AttrNumber *attributeNumber,
 			uint16 parameterCount,
 			Datum *parameter,
 			FuncIndexInfo *funcInfo,
@@ -1727,7 +1727,7 @@ bool
 IndexIsUnique(Oid indexId)
 {
 	HeapTuple	tuple;
-	IndexTupleForm index;
+	Form_pg_index index;
 
 	tuple = SearchSysCacheTuple(INDEXRELID,
 								ObjectIdGetDatum(indexId),
@@ -1737,7 +1737,7 @@ IndexIsUnique(Oid indexId)
 		elog(ERROR, "IndexIsUnique: can't find index id %d",
 			 indexId);
 	}
-	index = (IndexTupleForm) GETSTRUCT(tuple);
+	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 
 	return index->indisunique;
@@ -1762,7 +1762,7 @@ IndexIsUniqueNoCache(Oid indexId)
 	ScanKeyData skey[1];
 	HeapScanDesc scandesc;
 	HeapTuple	tuple;
-	IndexTupleForm index;
+	Form_pg_index index;
 	bool		isunique;
 
 	pg_index = heap_openr(IndexRelationName);
@@ -1779,7 +1779,7 @@ IndexIsUniqueNoCache(Oid indexId)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "IndexIsUniqueNoCache: can't find index id %d", indexId);
 
-	index = (IndexTupleForm) GETSTRUCT(tuple);
+	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 	isunique = index->indisunique;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.7 1998/02/26 04:32:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.8 1998/09/01 03:22:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,9 +33,9 @@ bool
 single_node(Node *node)
 {
 	if (IsA(node, Ident) ||IsA(node, Const) ||IsA(node, Var) ||IsA(node, Param))
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*****************************************************************************
@@ -60,13 +60,13 @@ single_node(Node *node)
 bool
 var_is_outer(Var *var)
 {
-	return ((bool) (var->varno == OUTER));
+	return (bool) (var->varno == OUTER);
 }
 
 static bool
 var_is_inner(Var *var)
 {
-	return ((bool) (var->varno == INNER));
+	return (bool) (var->varno == INNER);
 }
 
 bool
@@ -94,7 +94,7 @@ replace_opid(Oper *oper)
 {
 	oper->opid = get_opcode(oper->opno);
 	oper->op_fcache = NULL;
-	return (oper);
+	return oper;
 }
 
 /*****************************************************************************
@@ -112,7 +112,7 @@ non_null(Expr *c)
 {
 
 	if (IsA(c, Const) &&!((Const *) c)->constisnull)
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.34 1998/06/15 19:28:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.35 1998/09/01 03:24:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ parser(char *str, Oid *typev, int nargs)
 	clearerr(stdin);
 
 	if (yyresult)				/* error */
-		return ((QueryTreeList *) NULL);
+		return (QueryTreeList *) NULL;
 
 	queryList = parse_analyze(parsetree, NULL);
 

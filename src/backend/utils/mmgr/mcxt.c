@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.8 1998/06/15 19:29:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.9 1998/09/01 03:27:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -227,7 +227,7 @@ MemoryContextAlloc(MemoryContext context, Size size)
 	LogTrap(!AllocSizeIsValid(size), BadAllocSize,
 			("size=%d [0x%x]", size, size));
 
-	return (context->method->alloc(context, size));
+	return context->method->alloc(context, size);
 }
 
 /*
@@ -274,7 +274,7 @@ MemoryContextRealloc(MemoryContext context,
 	LogTrap(!AllocSizeIsValid(size), BadAllocSize,
 			("size=%d [0x%x]", size, size));
 
-	return (context->method->realloc(context, pointer, size));
+	return context->method->realloc(context, pointer, size);
 }
 
 /*
@@ -295,7 +295,7 @@ MemoryContextGetName(MemoryContext context)
 	AssertState(MemoryContextEnabled);
 	AssertArg(MemoryContextIsValid(context));
 
-	return (context->method->getName(context));
+	return context->method->getName(context);
 }
 
 #endif
@@ -318,7 +318,7 @@ PointerGetAllocSize(Pointer pointer)
 	AssertState(MemoryContextEnabled);
 	AssertArg(PointerIsValid(pointer));
 
-	return (PSIZE(pointer));
+	return PSIZE(pointer);
 }
 
 #endif
@@ -344,7 +344,7 @@ MemoryContextSwitchTo(MemoryContext context)
 
 	old = CurrentMemoryContext;
 	CurrentMemoryContext = context;
-	return (old);
+	return old;
 }
 
 /*
@@ -381,7 +381,7 @@ CreateGlobalMemory(char *name)	/* XXX MemoryContextName */
 	OrderedElemPushInto(&context->elemData, ActiveGlobalMemorySet);
 
 	MemoryContextSwitchTo(savecxt);
-	return (context);
+	return context;
 }
 
 /*
@@ -422,7 +422,7 @@ GlobalMemoryDestroy(GlobalMemory context)
 static Pointer
 GlobalMemoryAlloc(GlobalMemory this, Size size)
 {
-	return (AllocSetAlloc(&this->setData, size));
+	return AllocSetAlloc(&this->setData, size);
 }
 
 /*
@@ -457,7 +457,7 @@ GlobalMemoryRealloc(GlobalMemory this,
 					Pointer pointer,
 					Size size)
 {
-	return (AllocSetRealloc(&this->setData, pointer, size));
+	return AllocSetRealloc(&this->setData, pointer, size);
 }
 
 /*
@@ -470,7 +470,7 @@ GlobalMemoryRealloc(GlobalMemory this,
 static char *
 GlobalMemoryGetName(GlobalMemory this)
 {
-	return (this->name);
+	return this->name;
 }
 
 /*

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.21 1998/08/19 02:03:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.22 1998/09/01 03:26:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ eqsel(Oid opid,
 		*result = 0.1;
 	else
 		*result = (float64data) getattdisbursion(relid, (int) attno);
-	return (result);
+	return result;
 }
 
 /*
@@ -80,7 +80,7 @@ neqsel(Oid opid,
 
 	result = eqsel(opid, relid, attno, value, flag);
 	*result = 1.0 - *result;
-	return (result);
+	return result;
 }
 
 /*
@@ -114,7 +114,7 @@ intltsel(Oid opid,
 		if (*highchar == 'n' || *lowchar == 'n')
 		{
 			*result = 1.0 / 3.0;
-			return (result);
+			return result;
 		}
 		high = atol(highchar);
 		low = atol(lowchar);
@@ -152,7 +152,7 @@ intltsel(Oid opid,
 			}
 		}
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -174,7 +174,7 @@ intgtsel(Oid opid,
 	else
 		notflag = flag | SEL_RIGHT;
 	result = intltsel(opid, relid, attno, value, (int32) notflag);
-	return (result);
+	return result;
 }
 
 /*
@@ -206,7 +206,7 @@ eqjoinsel(Oid opid,
 		else
 			*result = (float64data) max;
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -223,7 +223,7 @@ neqjoinsel(Oid opid,
 
 	result = eqjoinsel(opid, relid1, attno1, relid2, attno2);
 	*result = 1.0 - *result;
-	return (result);
+	return result;
 }
 
 /*
@@ -240,7 +240,7 @@ intltjoinsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 3.0;
-	return (result);
+	return result;
 }
 
 /*
@@ -257,7 +257,7 @@ intgtjoinsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 3.0;
-	return (result);
+	return result;
 }
 
 /*
@@ -289,11 +289,11 @@ getattdisbursion(Oid relid, AttrNumber attnum)
 	{
 		elog(ERROR, "getattdisbursion: no attribute tuple %d %d",
 			 relid, attnum);
-		return (0);
+		return 0;
 	}
-	nvals = ((AttributeTupleForm) GETSTRUCT(atp))->attdisbursion;
+	nvals = ((Form_pg_attribute) GETSTRUCT(atp))->attdisbursion;
 	if (nvals > 0)
-		return (nvals);
+		return nvals;
 
 	atp = SearchSysCacheTuple(RELOID,
 							  ObjectIdGetDatum(relid),
@@ -306,14 +306,14 @@ getattdisbursion(Oid relid, AttrNumber attnum)
 	if (!HeapTupleIsValid(atp))
 	{
 		elog(ERROR, "getattdisbursion: no relation tuple %d", relid);
-		return (0);
+		return 0;
 	}
 	ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
 	/* Look above how nvals is used.	- vadim 04/09/97 */
 	if (ntuples > 0)
 		nvals = 1.0 / ntuples;
 
-	return (nvals);
+	return nvals;
 }
 
 /*
@@ -366,14 +366,14 @@ gethilokey(Oid relid,
 	*high = textout((struct varlena *)
 					heap_getattr(tuple,
 								 Anum_pg_statistic_stahikey,
-								 RelationGetTupleDescriptor(rel),
+								 RelationGetDescr(rel),
 								 &isnull));
 	if (isnull)
 		elog(DEBUG, "gethilokey: high key is null");
 	*low = textout((struct varlena *)
 				   heap_getattr(tuple,
 								Anum_pg_statistic_stalokey,
-								RelationGetTupleDescriptor(rel),
+								RelationGetDescr(rel),
 								&isnull));
 	if (isnull)
 		elog(DEBUG, "gethilokey: low key is null");
@@ -420,7 +420,7 @@ btreesel(Oid operatorObjectId,
 	if (*result < 0.0 || *result > 1.0)
 		elog(ERROR, "Btree Selectivity: bad value %lf", *result);
 
-	return (result);
+	return result;
 }
 
 float64
@@ -465,13 +465,13 @@ btreenpage(Oid operatorObjectId,
 	if (!HeapTupleIsValid(atp))
 	{
 		elog(ERROR, "btreenpage: no index tuple %d", indexrelid);
-		return (0);
+		return 0;
 	}
 
 	npage = ((Form_pg_class) GETSTRUCT(atp))->relpages;
 	result = (float64) palloc(sizeof(float64data));
 	*result = *temp * npage;
-	return (result);
+	return result;
 }
 
 float64
@@ -504,7 +504,7 @@ hashsel(Oid operatorObjectId,
 		if (!HeapTupleIsValid(atp))
 		{
 			elog(ERROR, "hashsel: no index tuple %d", indexrelid);
-			return (0);
+			return 0;
 		}
 		ntuples = ((Form_pg_class) GETSTRUCT(atp))->reltuples;
 		if (ntuples > 0)
@@ -530,7 +530,7 @@ hashsel(Oid operatorObjectId,
 	if (*result < 0.0 || *result > 1.0)
 		elog(ERROR, "Hash Table Selectivity: bad value %lf", *result);
 
-	return (result);
+	return result;
 
 
 }
@@ -557,7 +557,7 @@ hashnpage(Oid operatorObjectId,
 	if (!HeapTupleIsValid(atp))
 	{
 		elog(ERROR, "hashsel: no index tuple %d", indexrelid);
-		return (0);
+		return 0;
 	}
 
 
@@ -592,7 +592,7 @@ hashnpage(Oid operatorObjectId,
 	npage = ((Form_pg_class) GETSTRUCT(atp))->relpages;
 	result = (float64) palloc(sizeof(float64data));
 	*result = *temp * npage;
-	return (result);
+	return result;
 }
 
 

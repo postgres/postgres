@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.24 1998/08/26 16:43:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.25 1998/09/01 03:21:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,7 +234,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	HeapTuple	tuple;
 	FuncIndexInfo fInfo;
 	FuncIndexInfo *funcInfo = NULL;
-	IndexTupleForm index;
+	Form_pg_index index;
 	Node	   *oldPred = NULL;
 	List	   *cnfPred = NULL;
 	PredInfo   *predInfo;
@@ -271,7 +271,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	/*
 	 * Extract info from the pg_index tuple
 	 */
-	index = (IndexTupleForm) GETSTRUCT(tuple);
+	index = (Form_pg_index) GETSTRUCT(tuple);
 	Assert(index->indexrelid == indexId);
 	relationId = index->indrelid;
 	indproc = index->indproc;
@@ -421,7 +421,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 {
 	List	   *rest;
 	HeapTuple	tuple;
-	AttributeTupleForm att;
+	Form_pg_attribute att;
 
 	tuple = SearchSysCacheTuple(CLANAME,
 								PointerGetDatum(funcIndex->class),
@@ -455,7 +455,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 				 "DefineIndex: attribute \"%s\" not found",
 				 arg);
 		}
-		att = (AttributeTupleForm) GETSTRUCT(tuple);
+		att = (Form_pg_attribute) GETSTRUCT(tuple);
 		*attNumP++ = att->attnum;
 		*argTypes++ = att->atttypid;
 	}
@@ -477,7 +477,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 	for (rest = attList; rest != NIL; rest = lnext(rest))
 	{
 		IndexElem  *attribute;
-		AttributeTupleForm attform;
+		Form_pg_attribute attform;
 
 		attribute = lfirst(rest);
 
@@ -495,7 +495,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 				 attribute->name);
 		}
 
-		attform = (AttributeTupleForm) GETSTRUCT(atttuple);
+		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
 		*attNumP++ = attform->attnum;
 
 		/* we want the type so we can set the proper alignment, etc. */
@@ -509,7 +509,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 					 attribute->name);
 			/* we just set the type name because that is all we need */
 			attribute->typename = makeNode(TypeName);
-			attribute->typename->name = nameout(&((TypeTupleForm) GETSTRUCT(tuple))->typname);
+			attribute->typename->name = nameout(&((Form_pg_type) GETSTRUCT(tuple))->typname);
 		}
 
 		if (attribute->class == NULL)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.14 1998/08/20 22:07:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.15 1998/09/01 03:26:29 momjian Exp $
  *
  * Note - this code is real crufty...
  *
@@ -103,7 +103,7 @@ InvalidationEntryAllocate(uint16 size)
 	entryDataP = (InvalidationEntryData *)
 		malloc(sizeof(char *) + size);	/* XXX alignment */
 	entryDataP->nextP = NULL;
-	return ((Pointer) &entryDataP->userData);
+	return (Pointer) &entryDataP->userData;
 }
 
 /* --------------------------------
@@ -120,7 +120,7 @@ LocalInvalidRegister(LocalInvalid invalid,
 	((InvalidationUserData *) entry)->dataP[-1] =
 		(InvalidationUserData *) invalid;
 
-	return (entry);
+	return entry;
 }
 
 /* --------------------------------
@@ -485,7 +485,7 @@ RelationInvalidateRelationCache(Relation relation,
 	if (relationId == MyRelationRelationId)
 		objectId = tuple->t_oid;
 	else if (relationId == MyAttributeRelationId)
-		objectId = ((AttributeTupleForm) GETSTRUCT(tuple))->attrelid;
+		objectId = ((Form_pg_attribute) GETSTRUCT(tuple))->attrelid;
 	else if (relationId == MyAMRelationId)
 		objectId = tuple->t_oid;
 	else if (relationId == MyAMOPRelationId)
@@ -621,7 +621,7 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 	 *	this only works for system relations now
 	 * ----------------
 	 */
-	if (!IsSystemRelationName(RelationGetRelationTupleForm(relation)->relname.data))
+	if (!IsSystemRelationName(RelationGetForm(relation)->relname.data))
 		return;
 
 	/* ----------------

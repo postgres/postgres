@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.3 1998/08/25 21:37:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.4 1998/09/01 03:28:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -234,12 +234,12 @@ ScanKeywordLookup(char *text)
 		middle = low + (high - low) / 2;
 		difference = strcmp(middle->name, text);
 		if (difference == 0)
-			return (middle);
+			return middle;
 		else if (difference < 0)
 			low = middle + 1;
 		else
 			high = middle - 1;
 	}
 
-	return (NULL);
+	return NULL;
 }

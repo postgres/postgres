@@ -1,4 +1,4 @@
-/* $Id: random.c,v 1.4 1998/02/26 04:34:11 momjian Exp $ */
+/* $Id: random.c,v 1.5 1998/09/01 03:24:30 momjian Exp $ */
 
 #include <math.h>				/* for pow() prototype */
 
@@ -8,5 +8,5 @@
 long
 random()
 {
-	return (lrand48());
+	return lrand48();
 }

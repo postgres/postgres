@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.14 1998/02/26 04:36:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.15 1998/09/01 03:25:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,35 +38,35 @@ boolin(char *b)
 			case 't':
 			case 'T':
 			if (strncasecmp(b, "true", strlen(b)) == 0)
-				return (TRUE);
+				return TRUE;
 			break;
 
 		case 'f':
 		case 'F':
 			if (strncasecmp(b, "false", strlen(b)) == 0)
-				return (FALSE);
+				return FALSE;
 			break;
 
 		case 'y':
 		case 'Y':
 			if (strncasecmp(b, "yes", strlen(b)) == 0)
-				return (TRUE);
+				return TRUE;
 			break;
 
 		case '1':
 			if (strncasecmp(b, "1", strlen(b)) == 0)
-				return (TRUE);
+				return TRUE;
 			break;
 
 		case 'n':
 		case 'N':
 			if (strncasecmp(b, "no", strlen(b)) == 0)
-				return (FALSE);
+				return FALSE;
 			break;
 
 		case '0':
 			if (strncasecmp(b, "0", strlen(b)) == 0)
-				return (FALSE);
+				return FALSE;
 			break;
 
 		default:
@@ -75,7 +75,7 @@ boolin(char *b)
 
 	elog(ERROR, "Bad boolean external representation '%s'", b);
 	/* not reached */
-	return (FALSE);
+	return FALSE;
 }	/* boolin() */
 
 /*
@@ -88,7 +88,7 @@ boolout(bool b)
 
 	*result = (b) ? 't' : 'f';
 	result[1] = '\0';
-	return (result);
+	return result;
 }	/* boolout() */
 
 
@@ -99,35 +99,35 @@ boolout(bool b)
 bool
 booleq(bool arg1, bool arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 boolne(bool arg1, bool arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
 boollt(bool arg1, bool arg2)
 {
-	return (arg1 < arg2);
+	return arg1 < arg2;
 }
 
 bool
 boolgt(bool arg1, bool arg2)
 {
-	return (arg1 > arg2);
+	return arg1 > arg2;
 }
 
 bool
 istrue(bool arg1)
 {
-	return (arg1 == TRUE);
+	return arg1 == TRUE;
 }	/* istrue() */
 
 bool
 isfalse(bool arg1)
 {
-	return (arg1 != TRUE);
+	return arg1 != TRUE;
 }	/* isfalse() */

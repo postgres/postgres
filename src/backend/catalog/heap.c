@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.62 1998/08/29 04:19:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.63 1998/09/01 03:21:41 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -73,7 +73,7 @@ static void AddToTempRelList(Relation r);
 static void DeletePgAttributeTuples(Relation rel);
 static void DeletePgRelationTuple(Relation rel);
 static void DeletePgTypeTuple(Relation rel);
-static int	RelationAlreadyExists(Relation pg_class_desc, char relname[]);
+static int	RelationAlreadyExists(Relation pg_class_desc, char *relname);
 static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
 static void RemoveFromTempRelList(Relation r);
@@ -129,7 +129,7 @@ static FormData_pg_attribute a6 = {
 	MaxCommandIdAttributeNumber, 0, -1, -1, '\001', '\0', 'i', '\0', '\0'
 };
 
-static AttributeTupleForm HeapAtt[] =
+static Form_pg_attribute HeapAtt[] =
 {&a1, &a2, &a3, &a4, &a5, &a6};
 
 /* ----------------------------------------------------------------
@@ -185,7 +185,7 @@ heap_create(char *name,
 	int			isTemp = 0;
 	int			natts = tupDesc->natts;
 
-/*	  AttributeTupleForm *att = tupDesc->attrs; */
+/*	  Form_pg_attribute *att = tupDesc->attrs; */
 
 	extern GlobalMemory CacheCxt;
 	MemoryContext oldcxt;
@@ -332,7 +332,7 @@ heap_create(char *name,
 	if (isTemp)
 		AddToTempRelList(rel);
 
-	return (rel);
+	return rel;
 }
 
 
@@ -465,7 +465,7 @@ CheckAttributeNames(TupleDesc tupdesc)
  * --------------------------------
  */
 static int
-RelationAlreadyExists(Relation pg_class_desc, char relname[])
+RelationAlreadyExists(Relation pg_class_desc, char *relname)
 {
 	ScanKeyData key;
 	HeapScanDesc pg_class_scan;
@@ -535,7 +535,7 @@ static void
 AddNewAttributeTuples(Oid new_rel_oid,
 					  TupleDesc tupdesc)
 {
-	AttributeTupleForm *dpp;
+	Form_pg_attribute *dpp;
 	unsigned	i;
 	HeapTuple	tup;
 	Relation	rel;
@@ -555,7 +555,7 @@ AddNewAttributeTuples(Oid new_rel_oid,
 	 */
 	Assert(rel);
 	Assert(rel->rd_rel);
-	hasindex = RelationGetRelationTupleForm(rel)->relhasindex;
+	hasindex = RelationGetForm(rel)->relhasindex;
 	if (hasindex)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
@@ -911,7 +911,7 @@ RelationRemoveInheritance(Relation relation)
 		heap_close(catalogRelation);
 
 		elog(ERROR, "relation <%d> inherits \"%s\"",
-			 ((InheritsTupleForm) GETSTRUCT(tuple))->inhrel,
+			 ((Form_pg_inherits) GETSTRUCT(tuple))->inhrel,
 			 RelationGetRelationName(relation));
 	}
 
@@ -984,7 +984,7 @@ RelationRemoveIndexes(Relation relation)
 						  &entry);
 
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
-		index_destroy(((IndexTupleForm) GETSTRUCT(tuple))->indexrelid);
+		index_destroy(((Form_pg_index) GETSTRUCT(tuple))->indexrelid);
 
 	heap_endscan(scan);
 	heap_close(indexRelation);
@@ -1165,7 +1165,7 @@ DeletePgTypeTuple(Relation rel)
 
 	if (HeapTupleIsValid(atttup))
 	{
-		Oid			relid = ((AttributeTupleForm) GETSTRUCT(atttup))->attrelid;
+		Oid			relid = ((Form_pg_attribute) GETSTRUCT(atttup))->attrelid;
 
 		heap_endscan(pg_type_scan);
 		heap_close(pg_type_desc);
@@ -1428,7 +1428,7 @@ StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 {
 	char		str[MAX_PARSE_BUFFER];
 	char		cast[2 * NAMEDATALEN] = {0};
-	AttributeTupleForm atp = rel->rd_att->attrs[attrdef->adnum - 1];
+	Form_pg_attribute atp = rel->rd_att->attrs[attrdef->adnum - 1];
 	QueryTreeList *queryTree_list;
 	Query	   *query;
 	List	   *planTree_list;

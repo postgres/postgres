@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.15 1998/08/19 02:01:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.16 1998/09/01 03:20:59 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -153,13 +153,13 @@ _hash_scantouched(IndexScanDesc scan,
 	if (ItemPointerIsValid(current)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return (true);
+		return true;
 
 	current = &(scan->currentMarkData);
 	if (ItemPointerIsValid(current)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return (true);
+		return true;
 
-	return (false);
+	return false;
 }

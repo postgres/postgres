@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.17 1998/08/19 02:01:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.18 1998/09/01 03:21:12 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -85,7 +85,7 @@ btoidcmp(Oid a, Oid b)
 }
 
 int32
-btoid8cmp(Oid a[], Oid b[])
+btoid8cmp(Oid *a, Oid *b)
 {
 	int i;
 	for (i=0; i < 8; i++)

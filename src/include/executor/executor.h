@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.23 1998/07/27 19:38:32 vadim Exp $
+ * $Id: executor.h,v 1.24 1998/09/01 03:28:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ ExecAssignScanType(CommonScanState *csstate,
 extern void
 ExecAssignScanTypeFromOuterPlan(Plan *node,
 								CommonScanState *csstate);
-extern AttributeTupleForm ExecGetTypeInfo(Relation relDesc);
+extern Form_pg_attribute ExecGetTypeInfo(Relation relDesc);
 
 extern void
 ExecOpenIndices(Oid resultRelationOid,

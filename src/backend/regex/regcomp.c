@@ -206,18 +206,18 @@ int			cflags;
 
 	cflags = GOODFLAGS(cflags);
 	if ((cflags & REG_EXTENDED) && (cflags & REG_NOSPEC))
-		return (REG_INVARG);
+		return REG_INVARG;
 
 	if (cflags & REG_PEND)
 	{
 #ifdef MULTIBYTE
 	        wcp = preg->patsave;
 		if (preg->re_endp < wcp)
-			return (REG_INVARG);
+			return REG_INVARG;
 		len = preg->re_endp - wcp;
 #else
 		if (preg->re_endp < pattern)
-			return (REG_INVARG);
+			return REG_INVARG;
 		len = preg->re_endp - pattern;
 #endif
 	}
@@ -225,7 +225,7 @@ int			cflags;
 #ifdef MULTIBYTE
 	  wcp = (pg_wchar *)malloc((strlen(pattern)+1) * sizeof(pg_wchar));
 	  if (wcp == NULL) {
-	    return (REG_ESPACE);
+	    return REG_ESPACE;
 	  }
 	  preg->patsave = wcp;
 	  (void)pg_mb2wchar((unsigned char *)pattern,wcp);
@@ -240,7 +240,7 @@ int			cflags;
 	g = (struct re_guts *) malloc(sizeof(struct re_guts) +
 								  (NC - 1) * sizeof(cat_t));
 	if (g == NULL)
-		return (REG_ESPACE);
+		return REG_ESPACE;
 	p->ssize = len / (size_t) 2 *(size_t) 3 + (size_t) 1;		/* ugh */
 
 	p->strip = (sop *) malloc(p->ssize * sizeof(sop));
@@ -248,7 +248,7 @@ int			cflags;
 	if (p->strip == NULL)
 	{
 		free((char *) g);
-		return (REG_ESPACE);
+		return REG_ESPACE;
 	}
 
 	/* set things up */
@@ -312,7 +312,7 @@ int			cflags;
 	/* win or lose, we're done */
 	if (p->error != 0)			/* lose */
 		pg95_regfree(preg);
-	return (p->error);
+	return p->error;
 }
 
 /*
@@ -716,9 +716,9 @@ int			starordinary;		/* is a leading * an ordinary character? */
 		}
 	}
 	else if (c == (unsigned char) '$')	/* $ (but not \$) ends it */
-		return (1);
+		return 1;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -739,7 +739,7 @@ struct parse *p;
 	}
 
 	REQUIRE(ndigits > 0 && count <= DUPMAX, REG_BADBR);
-	return (count);
+	return count;
 }
 
 /*
@@ -982,12 +982,12 @@ struct parse *p;
 
 	REQUIRE(MORE(), REG_EBRACK);
 	if (!EATTWO('[', '.'))
-		return (GETNEXT());
+		return GETNEXT();
 
 	/* collating symbol */
 	value = p_b_coll_elem(p, '.');
 	REQUIRE(EATTWO('.', ']'), REG_ECOLLATE);
-	return (value);
+	return value;
 }
 
 /*
@@ -1008,7 +1008,7 @@ int			endc;				/* name ended by endc,']' */
 	if (!MORE())
 	{
 		SETERROR(REG_EBRACK);
-		return (0);
+		return 0;
 	}
 	len = p->next - sp;
 	for (cp = cnames; cp->name != NULL; cp++)
@@ -1017,11 +1017,11 @@ int			endc;				/* name ended by endc,']' */
 #else
 		if (strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
 #endif
-			return (cp->code);	/* known name */
+			return cp->code;	/* known name */
 	if (len == 1)
-		return (*sp);			/* single character */
+		return *sp;			/* single character */
 	SETERROR(REG_ECOLLATE);		/* neither */
-	return (0);
+	return 0;
 }
 
 /*
@@ -1034,12 +1034,12 @@ int			ch;
 {
 	assert(pg_isalpha(ch));
 	if (pg_isupper(ch))
-		return (tolower(ch));
+		return tolower(ch);
 	else if (pg_islower(ch))
-		return (toupper(ch));
+		return toupper(ch);
 	else
 /* peculiar, but could happen */
-		return (ch);
+		return ch;
 }
 
 /*
@@ -1208,7 +1208,7 @@ int			e;
 		p->error = e;
 	p->next = nuls;				/* try to bring things to a halt */
 	p->end = nuls;
-	return (0);					/* make the return value well-defined */
+	return 0;					/* make the return value well-defined */
 }
 
 /*
@@ -1266,7 +1266,7 @@ struct parse *p;
 	cs->smultis = 0;
 	cs->multis = NULL;
 
-	return (cs);
+	return cs;
 }
 
 /*
@@ -1327,7 +1327,7 @@ cset	   *cs;
 		cs = cs2;
 	}
 
-	return ((int) (cs - p->g->sets));
+	return (int) (cs - p->g->sets);
 }
 
 /*
@@ -1344,9 +1344,9 @@ cset	   *cs;
 
 	for (i = 0; i < css; i++)
 		if (CHIN(cs, i))
-			return (i);
+			return i;
 	assert(never);
-	return (0);					/* arbitrary */
+	return 0;					/* arbitrary */
 }
 
 /*
@@ -1365,7 +1365,7 @@ cset	   *cs;
 	for (i = 0; i < css; i++)
 		if (CHIN(cs, i))
 			n++;
-	return (n);
+	return n;
 }
 
 /*
@@ -1505,8 +1505,8 @@ int			c;
 
 	for (i = 0, col = g->setbits; i < ncols; i++, col += g->csetsize)
 		if (col[uc] != 0)
-			return (1);
-	return (0);
+			return 1;
+	return 0;
 }
 
 /*
@@ -1527,8 +1527,8 @@ int			c2;
 
 	for (i = 0, col = g->setbits; i < ncols; i++, col += g->csetsize)
 		if (col[uc1] != col[uc2])
-			return (0);
-	return (1);
+			return 0;
+	return 1;
 }
 
 /*
@@ -1575,13 +1575,13 @@ sopno		finish;				/* to this less one */
 
 	assert(finish >= start);
 	if (len == 0)
-		return (ret);
+		return ret;
 	enlarge(p, p->ssize + len); /* this many unexpected additions */
 	assert(p->ssize >= p->slen + len);
 	memcpy((char *) (p->strip + p->slen),
 		   (char *) (p->strip + start), (size_t) len * sizeof(sop));
 	p->slen += len;
-	return (ret);
+	return ret;
 }
 
 /*
@@ -1826,7 +1826,7 @@ struct re_guts *g;
 	sopno		maxnest = 0;
 
 	if (p->error != 0)
-		return (0);				/* there may not be an OEND */
+		return 0;				/* there may not be an OEND */
 
 	scan = g->strip + 1;
 	do
@@ -1846,7 +1846,7 @@ struct re_guts *g;
 	} while (OP(s) != OEND);
 	if (plusnest != 0)
 		g->iflags |= BAD;
-	return (maxnest);
+	return maxnest;
 }
 
 /*

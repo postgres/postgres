@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.78 1998/08/28 04:57:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.79 1998/09/01 03:22:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ static void vc_vacpage(Page page, VPageDescr vpd);
 static void vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples);
 static void vc_scanoneind(Relation indrel, int num_tuples);
 static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple);
-static void vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_len);
+static void vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_len);
 static void vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
 static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
 static void vc_setpagelock(Relation rel, BlockNumber blkno);
@@ -295,7 +295,7 @@ vc_getrels(NameData *VacRelP)
 	vrl = cur = (VRelList) NULL;
 
 	rel = heap_openr(RelationRelationName);
-	tupdesc = RelationGetTupleDescriptor(rel);
+	tupdesc = RelationGetDescr(rel);
 
 	scan = heap_beginscan(rel, false, SnapshotNow, 1, &key);
 
@@ -354,7 +354,7 @@ vc_getrels(NameData *VacRelP)
 
 	CommitTransactionCommand();
 
-	return (vrl);
+	return vrl;
 }
 
 /*
@@ -390,7 +390,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	StartTransactionCommand();
 
 	rel = heap_openr(RelationRelationName);
-	tupdesc = RelationGetTupleDescriptor(rel);
+	tupdesc = RelationGetDescr(rel);
 
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the
@@ -417,7 +417,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	{
 		int			attr_cnt,
 				   *attnums = NULL;
-		AttributeTupleForm *attr;
+		Form_pg_attribute *attr;
 
 		attr_cnt = onerel->rd_att->natts;
 		attr = onerel->rd_att->attrs;
@@ -457,7 +457,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 		for (i = 0; i < attr_cnt; i++)
 		{
 			Operator	func_operator;
-			OperatorTupleForm pgopform;
+			Form_pg_operator pgopform;
 			VacAttrStats *stats;
 
 			stats = &vacrelstats->vacattrstats[i];
@@ -474,7 +474,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			func_operator = oper("=", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
+				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmpeq));
 			}
 			else
@@ -483,7 +483,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			func_operator = oper("<", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
+				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmplt));
 			}
 			else
@@ -492,7 +492,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			func_operator = oper(">", stats->attr->atttypid, stats->attr->atttypid, true);
 			if (func_operator != NULL)
 			{
-				pgopform = (OperatorTupleForm) GETSTRUCT(func_operator);
+				pgopform = (Form_pg_operator) GETSTRUCT(func_operator);
 				fmgr_info(pgopform->oprcode, &(stats->f_cmpgt));
 			}
 			else
@@ -502,7 +502,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 									 ObjectIdGetDatum(stats->attr->atttypid),
 										 0, 0, 0);
 			if (HeapTupleIsValid(typetuple))
-				stats->outfunc = ((TypeTupleForm) GETSTRUCT(typetuple))->typoutput;
+				stats->outfunc = ((Form_pg_type) GETSTRUCT(typetuple))->typoutput;
 			else
 				stats->outfunc = InvalidOid;
 		}
@@ -975,7 +975,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 	if (Irel != (Relation *) NULL)		/* preparation for index' inserts */
 	{
 		vc_mkindesc(onerel, nindices, Irel, &Idesc);
-		tupdesc = RelationGetTupleDescriptor(onerel);
+		tupdesc = RelationGetDescr(onerel);
 		idatum = (Datum *) palloc(INDEX_MAX_KEYS * sizeof(*idatum));
 		inulls = (char *) palloc(INDEX_MAX_KEYS * sizeof(*inulls));
 	}
@@ -1559,14 +1559,14 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 									vc_cmp_blk);
 
 	if (vpp == (VPageDescr *) NULL)
-		return ((VPageDescr) NULL);
+		return (VPageDescr) NULL;
 	vp = *vpp;
 
 	/* ok - we are on true page */
 
 	if (vp->vpd_offsets_free == 0)
 	{							/* this is EmptyPage !!! */
-		return (vp);
+		return vp;
 	}
 
 	voff = (OffsetNumber *) vc_find_eq((char *) (vp->vpd_offsets),
@@ -1574,9 +1574,9 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 									   vc_cmp_offno);
 
 	if (voff == (OffsetNumber *) NULL)
-		return ((VPageDescr) NULL);
+		return (VPageDescr) NULL;
 
-	return (vp);
+	return vp;
 
 }	/* vc_tidreapped */
 
@@ -1702,7 +1702,7 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple)
  *
  */
 static void
-vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_len)
+vc_bucketcpy(Form_pg_attribute attr, Datum value, Datum *bucket, int16 *bucket_len)
 {
 	if (attr->attbyval && attr->attlen != -1)
 		*bucket = value;
@@ -1744,7 +1744,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 				stup;
 	Form_pg_class pgcform;
 	ScanKeyData askey;
-	AttributeTupleForm attp;
+	Form_pg_attribute attp;
 	Buffer		buffer;
 	
 	/*
@@ -1790,7 +1790,7 @@ vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *
 			Datum		values[Natts_pg_statistic];
 			char		nulls[Natts_pg_statistic];
 
-			attp = (AttributeTupleForm) GETSTRUCT(atup);
+			attp = (Form_pg_attribute) GETSTRUCT(atup);
 			if (attp->attnum <= 0)		/* skip system attributes for now, */
 				/* they are unique anyway */
 				continue;
@@ -2040,27 +2040,27 @@ vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, cha
 		{
 			res = compar(bot, elm);
 			if (res > 0)
-				return (NULL);
+				return NULL;
 			if (res == 0)
-				return (bot);
+				return bot;
 			first_move = false;
 		}
 		if (last_move == true)
 		{
 			res = compar(elm, bot + last * size);
 			if (res > 0)
-				return (NULL);
+				return NULL;
 			if (res == 0)
-				return (bot + last * size);
+				return bot + last * size;
 			last_move = false;
 		}
 		res = compar(elm, bot + celm * size);
 		if (res == 0)
-			return (bot + celm * size);
+			return bot + celm * size;
 		if (res < 0)
 		{
 			if (celm == 0)
-				return (NULL);
+				return NULL;
 			last = celm - 1;
 			celm = celm / 2;
 			last_move = true;
@@ -2068,7 +2068,7 @@ vc_find_eq(char *bot, int nelem, int size, char *elm, int (*compar) (char *, cha
 		}
 
 		if (celm == last)
-			return (NULL);
+			return NULL;
 
 		last = last - celm - 1;
 		bot = bot + (celm + 1) * size;
@@ -2088,10 +2088,10 @@ vc_cmp_blk(char *left, char *right)
 	rblk = (*((VPageDescr *) right))->vpd_blkno;
 
 	if (lblk < rblk)
-		return (-1);
+		return -1;
 	if (lblk == rblk)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 
 }	/* vc_cmp_blk */
 
@@ -2100,10 +2100,10 @@ vc_cmp_offno(char *left, char *right)
 {
 
 	if (*(OffsetNumber *) left < *(OffsetNumber *) right)
-		return (-1);
+		return -1;
 	if (*(OffsetNumber *) left == *(OffsetNumber *) right)
-		return (0);
-	return (1);
+		return 0;
+	return 1;
 
 }	/* vc_cmp_offno */
 
@@ -2129,7 +2129,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 
 	/* prepare a heap scan on the pg_index relation */
 	pgindex = heap_openr(IndexRelationName);
-	tupdesc = RelationGetTupleDescriptor(pgindex);
+	tupdesc = RelationGetDescr(pgindex);
 
 	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_index_indrelid,
 						   F_OIDEQ,
@@ -2217,7 +2217,7 @@ vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 										0, 0, 0);
 		Assert(cachetuple);
 		/* we never free the copy we make, because Idesc needs it for later */
-		idcur->tform = (IndexTupleForm) GETSTRUCT(cachetuple);
+		idcur->tform = (Form_pg_index) GETSTRUCT(cachetuple);
 		for (attnumP = &(idcur->tform->indkey[0]), natts = 0;
 			 *attnumP != InvalidAttrNumber && natts != INDEX_MAX_KEYS;
 			 attnumP++, natts++);
@@ -2245,15 +2245,15 @@ vc_enough_space(VPageDescr vpd, Size len)
 	len = DOUBLEALIGN(len);
 
 	if (len > vpd->vpd_free)
-		return (false);
+		return false;
 
 	if (vpd->vpd_offsets_used < vpd->vpd_offsets_free)	/* there are free itemid(s) */
-		return (true);			/* and len <= free_space */
+		return true;			/* and len <= free_space */
 
 	/* ok. noff_usd >= noff_free and so we'll have to allocate new itemid */
 	if (len <= vpd->vpd_free - sizeof(ItemIdData))
-		return (true);
+		return true;
 
-	return (false);
+	return false;
 
 }	/* vc_enough_space */

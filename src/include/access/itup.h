@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.14 1998/06/15 18:39:54 momjian Exp $
+ * $Id: itup.h,v 1.15 1998/09/01 03:27:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ typedef struct PredInfo
 /* indextuple.h */
 extern IndexTuple
 index_formtuple(TupleDesc tupleDescriptor,
-				Datum value[], char null[]);
+				Datum *value, char *null);
 extern Datum
 nocache_index_getattr(IndexTuple tup, int attnum,
 					  TupleDesc tupleDesc, bool *isnull);

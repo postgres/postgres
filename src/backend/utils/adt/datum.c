@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.10 1998/06/15 19:29:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.11 1998/09/01 03:25:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ datumGetSize(Datum value, Oid type, bool byVal, Size len)
 		}
 	}
 
-	return (size);
+	return size;
 }
 
 /*-------------------------------------------------------------------------
@@ -118,7 +118,7 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
 	else
 	{
 		if (value == 0)
-			return ((Datum) NULL);
+			return (Datum) NULL;
 		realSize = datumGetSize(value, type, byVal, len);
 
 		/*
@@ -131,7 +131,7 @@ datumCopy(Datum value, Oid type, bool byVal, Size len)
 		memmove(s, DatumGetPointer(value), realSize);
 		res = (Datum) s;
 	}
-	return (res);
+	return res;
 }
 
 /*-------------------------------------------------------------------------
@@ -196,9 +196,9 @@ datumIsEqual(Datum value1, Datum value2, Oid type, bool byVal, Size len)
 		 * are aligned inside the "Datum".
 		 */
 		if (value1 == value2)
-			return (true);
+			return true;
 		else
-			return (false);
+			return false;
 	}
 	else
 	{
@@ -210,12 +210,12 @@ datumIsEqual(Datum value1, Datum value2, Oid type, bool byVal, Size len)
 		size1 = datumGetSize(value1, type, byVal, len);
 		size2 = datumGetSize(value2, type, byVal, len);
 		if (size1 != size2)
-			return (false);
+			return false;
 		s1 = (char *) DatumGetPointer(value1);
 		s2 = (char *) DatumGetPointer(value2);
 		if (!memcmp(s1, s2, size1))
-			return (true);
+			return true;
 		else
-			return (false);
+			return false;
 	}
 }

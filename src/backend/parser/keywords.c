@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.42 1998/08/25 21:36:55 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.43 1998/09/01 03:24:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,12 +242,12 @@ ScanKeywordLookup(char *text)
 		middle = low + (high - low) / 2;
 		difference = strcmp(middle->name, text);
 		if (difference == 0)
-			return (middle);
+			return middle;
 		else if (difference < 0)
 			low = middle + 1;
 		else
 			high = middle - 1;
 	}
 
-	return (NULL);
+	return NULL;
 }

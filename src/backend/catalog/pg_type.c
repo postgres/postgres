@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.28 1998/08/20 22:07:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.29 1998/09/01 03:21:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,7 +98,7 @@ TypeGetWithOpenRelation(Relation pg_type_desc,
 	 * ----------------
 	 */
 	heap_endscan(scan);
-	*defined = (bool) ((TypeTupleForm) GETSTRUCT(tup))->typisdefined;
+	*defined = (bool) ((Form_pg_type) GETSTRUCT(tup))->typisdefined;
 
 	return tup->t_oid;
 }
@@ -163,7 +163,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	TupleDesc	tupDesc;
 
 	/* ----------------
-	 *	initialize our nulls[] and values[] arrays
+	 *	initialize our *nulls and *values arrays
 	 * ----------------
 	 */
 	for (i = 0; i < Natts_pg_type; ++i)
@@ -173,7 +173,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	}
 
 	/* ----------------
-	 *	initialize values[] with the type name and
+	 *	initialize *values with the type name and
 	 * ----------------
 	 */
 	i = 0;
@@ -215,7 +215,7 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	heap_insert(pg_type_desc, tup);
 	typoid = tup->t_oid;
 
-	if (RelationGetRelationTupleForm(pg_type_desc)->relhasindex)
+	if (RelationGetForm(pg_type_desc)->relhasindex)
 	{
 		Relation	idescs[Num_pg_type_indices];
 
@@ -375,7 +375,7 @@ TypeCreate(char *typeName,
 		internalSize = -1;
 
 	/* ----------------
-	 *	initialize the values[] information
+	 *	initialize the *values information
 	 * ----------------
 	 */
 	i = 0;
@@ -509,7 +509,7 @@ TypeCreate(char *typeName,
 	 */
 	heap_endscan(pg_type_scan);
 
-	if (RelationGetRelationTupleForm(pg_type_desc)->relhasindex)
+	if (RelationGetForm(pg_type_desc)->relhasindex)
 	{
 		Relation	idescs[Num_pg_type_indices];
 
@@ -558,7 +558,7 @@ TypeRename(char *oldTypeName, char *newTypeName)
 		elog(ERROR, "TypeRename: type %s already defined", newTypeName);
 	}
 	
-	namestrcpy(&(((TypeTupleForm) GETSTRUCT(oldtup))->typname), newTypeName);
+	namestrcpy(&(((Form_pg_type) GETSTRUCT(oldtup))->typname), newTypeName);
 
 	setheapoverride(true);
 	heap_replace(pg_type_desc, &oldtup->t_ctid, oldtup);

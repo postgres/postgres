@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.8 1998/07/13 16:34:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.9 1998/09/01 03:25:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,9 +47,9 @@ SingleLockReln(LockInfo lockinfo, LOCKMODE lockmode, int action)
 	tag.tupleId.ip_posid = InvalidOffsetNumber;
 
 	if (action == UNLOCK)
-		return (LockRelease(MultiTableId, &tag, lockmode));
+		return LockRelease(MultiTableId, &tag, lockmode);
 	else
-		return (LockAcquire(MultiTableId, &tag, lockmode));
+		return LockAcquire(MultiTableId, &tag, lockmode);
 }
 
 /*
@@ -80,7 +80,7 @@ SingleLockPage(LockInfo lockinfo,
 
 
 	if (action == UNLOCK)
-		return (LockRelease(MultiTableId, &tag, lockmode));
+		return LockRelease(MultiTableId, &tag, lockmode);
 	else
-		return (LockAcquire(MultiTableId, &tag, lockmode));
+		return LockAcquire(MultiTableId, &tag, lockmode);
 }

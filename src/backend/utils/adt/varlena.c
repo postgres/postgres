@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.40 1998/08/29 04:09:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.41 1998/09/01 03:26:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ byteain(char *inputText)
 			byte <<= 3;
 			*rp++ = byte + VAL(*tp++);
 		}
-	return (result);
+	return result;
 }
 
 /*
@@ -103,7 +103,7 @@ byteaout(text *vlena)
 		result = (char *) palloc(2);
 		result[0] = '-';
 		result[1] = '\0';
-		return (result);
+		return result;
 	}
 	vp = vlena->vl_dat;
 	len = 1;					/* empty string has 1 char */
@@ -138,7 +138,7 @@ byteaout(text *vlena)
 			rp += 3;
 		}
 	*rp = '\0';
-	return (result);
+	return result;
 }
 
 
@@ -152,7 +152,7 @@ textin(char *inputText)
 	int			len;
 
 	if (inputText == NULL)
-		return (NULL);
+		return NULL;
 
 	len = strlen(inputText) + VARHDRSZ;
 	result = (text *) palloc(len);
@@ -164,7 +164,7 @@ textin(char *inputText)
 	convertstr(VARDATA(result), len - VARHDRSZ, 0);
 #endif
 
-	return (result);
+	return result;
 }
 
 /*
@@ -181,7 +181,7 @@ textout(text *vlena)
 		result = (char *) palloc(2);
 		result[0] = '-';
 		result[1] = '\0';
-		return (result);
+		return result;
 	}
 	len = VARSIZE(vlena) - VARHDRSZ;
 	result = (char *) palloc(len + 1);
@@ -192,7 +192,7 @@ textout(text *vlena)
 	convertstr(result, len, 1);
 #endif
 
-	return (result);
+	return result;
 }
 
 
@@ -226,7 +226,7 @@ textlen(text *t)
 	}
 	return(len);
 #else
-	return (VARSIZE(t) - VARHDRSZ);
+	return VARSIZE(t) - VARHDRSZ;
 #endif
 	
 }	/* textlen() */
@@ -242,7 +242,7 @@ textoctetlen(text *t)
 	if (!PointerIsValid(t))
 		elog(ERROR, "Null input to textoctetlen");
 
-	return (VARSIZE(t) - VARHDRSZ);
+	return VARSIZE(t) - VARHDRSZ;
 
 }	/* textoctetlen() */
 
@@ -266,7 +266,7 @@ textcat(text *t1, text *t2)
 	text	   *result;
 
 	if (!PointerIsValid(t1) || !PointerIsValid(t2))
-		return (NULL);
+		return NULL;
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	if (len1 < 0)
@@ -293,7 +293,7 @@ textcat(text *t1, text *t2)
 	if (len2 > 0)
 		memcpy(ptr + len1, VARDATA(t2), len2);
 
-	return (result);
+	return result;
 }	/* textcat() */
 
 /*
@@ -392,10 +392,10 @@ textpos(text *t1, text *t2)
 #endif
 
 	if (!PointerIsValid(t1) || !PointerIsValid(t2))
-		return (0);
+		return 0;
 
 	if (VARSIZE(t2) <= 0)
-		return (1);
+		return 1;
 
 	len1 = (VARSIZE(t1) - VARHDRSZ);
 	len2 = (VARSIZE(t2) - VARHDRSZ);
@@ -429,7 +429,7 @@ textpos(text *t1, text *t2)
 	pfree(ps1);
 	pfree(ps2);
 #endif
-	return (pos);
+	return pos;
 }	/* textpos() */
 
 /*
@@ -444,9 +444,9 @@ texteq(text *arg1, text *arg2)
 			   *a2p;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) NULL);
+		return (bool) NULL;
 	if ((len = arg1->vl_len) != arg2->vl_len)
-		return ((bool) 0);
+		return (bool) 0;
 	a1p = arg1->vl_dat;
 	a2p = arg2->vl_dat;
 
@@ -458,14 +458,14 @@ texteq(text *arg1, text *arg2)
 	len -= VARHDRSZ;
 	while (len-- != 0)
 		if (*a1p++ != *a2p++)
-			return ((bool) 0);
-	return ((bool) 1);
+			return (bool) 0;
+	return (bool) 1;
 }	/* texteq() */
 
 bool
 textne(text *arg1, text *arg2)
 {
-	return ((bool) !texteq(arg1, arg2));
+	return (bool) !texteq(arg1, arg2);
 }
 
 /* varstr_cmp()
@@ -504,7 +504,7 @@ varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 		result = (len1 < len2) ? -1 : 1;
 #endif
 
-	return (result);
+	return result;
 }	/* varstr_cmp() */
 
 /* text_cmp()
@@ -522,7 +522,7 @@ text_cmp(text *arg1, text *arg2)
 	int		len1, len2;
 
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) FALSE);
+		return (bool) FALSE;
 
 	a1p = VARDATA(arg1);
 	a2p = VARDATA(arg2);
@@ -554,13 +554,13 @@ text_le(text *arg1, text *arg2)
 bool
 text_gt(text *arg1, text *arg2)
 {
-	return ((bool) !text_le(arg1, arg2));
+	return (bool) !text_le(arg1, arg2);
 }
 
 bool
 text_ge(text *arg1, text *arg2)
 {
-	return ((bool) !text_lt(arg1, arg2));
+	return (bool) !text_lt(arg1, arg2);
 }
 
 /*-------------------------------------------------------------
@@ -576,7 +576,7 @@ byteaGetSize(text *v)
 
 	len = v->vl_len - sizeof(v->vl_len);
 
-	return (len);
+	return len;
 }
 
 /*-------------------------------------------------------------
@@ -603,7 +603,7 @@ byteaGetByte(text *v, int32 n)
 
 	byte = (unsigned char) (v->vl_dat[n]);
 
-	return ((int32) byte);
+	return (int32) byte;
 }
 
 /*-------------------------------------------------------------
@@ -628,9 +628,9 @@ byteaGetBit(text *v, int32 n)
 	byte = byteaGetByte(v, byteNo);
 
 	if (byte & (1 << bitNo))
-		return ((int32) 1);
+		return (int32) 1;
 	else
-		return ((int32) 0);
+		return (int32) 0;
 }
 
 /*-------------------------------------------------------------
@@ -672,7 +672,7 @@ byteaSetByte(text *v, int32 n, int32 newByte)
 	 */
 	res->vl_dat[n] = newByte;
 
-	return (res);
+	return res;
 }
 
 /*-------------------------------------------------------------
@@ -718,7 +718,7 @@ byteaSetBit(text *v, int32 n, int32 newBit)
 	 */
 	res = byteaSetByte(v, byteNo, newByte);
 
-	return (res);
+	return res;
 }
 
 
@@ -732,7 +732,7 @@ text_name(text *s)
 	int			len;
 
 	if (s == NULL)
-		return (NULL);
+		return NULL;
 
 	len = VARSIZE(s) - VARHDRSZ;
 	if (len > NAMEDATALEN) len = NAMEDATALEN;
@@ -751,7 +751,7 @@ printf("text- convert string length %d (%d) ->%d\n",
 		len++;
 	}
 
-	return (result);
+	return result;
 } /* text_name() */
 
 /* name_text()
@@ -764,7 +764,7 @@ name_text(NameData *s)
 	int			len;
 
 	if (s == NULL)
-		return (NULL);
+		return NULL;
 
 	len = strlen(s->data);
 
@@ -777,5 +777,5 @@ printf("text- convert string length %d (%d) ->%d\n",
 	strncpy(VARDATA(result), s->data, len);
 	VARSIZE(result) = len + VARHDRSZ;
 
-	return (result);
+	return result;
 } /* name_text() */

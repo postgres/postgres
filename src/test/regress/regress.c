@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.27 1998/07/20 16:57:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.28 1998/09/01 03:29:11 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -68,7 +68,7 @@ PATH	   *path;
 			}
 			break;
 	}
-	return (result);
+	return result;
 }
 
 /* this essentially does a cartesian product of the lsegs in the
@@ -100,7 +100,7 @@ PATH	   *p2;
 			pfree(tmp);
 		}
 
-	return (min);
+	return min;
 }
 
 PATH *
@@ -121,7 +121,7 @@ POLYGON    *poly;
 
 	sprintf(buf, "%c", RDELIM);
 	strcat(output, buf);
-	return (path_in(output));
+	return path_in(output);
 }
 
 /* return the point where two paths intersect.	Assumes that they do. */
@@ -160,7 +160,7 @@ PATH	   *p2;
 #endif
 	retval = lseg_interpt(&seg1, &seg2);
 
-	return (retval);
+	return retval;
 }
 
 
@@ -187,7 +187,7 @@ TUPLE		tuple;
 	long		salary;
 
 	salary = (long) GetAttributeByName(tuple, "salary", &isnull);
-	return (salary > 699);
+	return salary > 699;
 }
 
 /* New type "widget"
@@ -218,12 +218,12 @@ char	   *str;
 	WIDGET	   *result;
 
 	if (str == NULL)
-		return (NULL);
+		return NULL;
 	for (i = 0, p = str; *p && i < NARGS && *p != RDELIM; p++)
 		if (*p == ',' || (*p == LDELIM && !i))
 			coord[i++] = p + 1;
 	if (i < NARGS - 1)
-		return (NULL);
+		return NULL;
 	result = (WIDGET *) palloc(sizeof(WIDGET));
 	result->center.x = atof(coord[0]);
 	result->center.y = atof(coord[1]);
@@ -231,7 +231,7 @@ char	   *str;
 
 	sprintf(buf2, "widget_in: read (%f, %f, %f)\n", result->center.x,
 			result->center.y, result->radius);
-	return (result);
+	return result;
 }
 
 char *
@@ -241,12 +241,12 @@ WIDGET	   *widget;
 	char	   *result;
 
 	if (widget == NULL)
-		return (NULL);
+		return NULL;
 
 	result = (char *) palloc(60);
 	sprintf(result, "(%g,%g,%g)",
 			widget->center.x, widget->center.y, widget->radius);
-	return (result);
+	return result;
 }
 
 int
@@ -256,7 +256,7 @@ WIDGET	   *widget;
 {
 	extern double point_dt();
 
-	return (point_dt(point, &widget->center) < widget->radius);
+	return point_dt(point, &widget->center) < widget->radius;
 }
 
 #define ABS(X) ((X) > 0 ? (X) : -(X))
@@ -272,7 +272,7 @@ BOX		   *box;
 
 	width = ABS(box->high.x - box->low.x);
 	height = ABS(box->high.y - box->low.y);
-	return (width * height);
+	return width * height;
 }
 
 char *
@@ -286,7 +286,7 @@ char	   *string;
 	if (!(new_string = palloc(NAMEDATALEN)))
 	{
 		fprintf(stderr, "reverse_name: palloc failed\n");
-		return (NULL);
+		return NULL;
 	}
 	MemSet(new_string, 0, NAMEDATALEN);
 	for (i = 0; i < NAMEDATALEN && string[i]; ++i)
@@ -296,7 +296,7 @@ char	   *string;
 	len = i;
 	for (; i >= 0; --i)
 		new_string[len - i] = string[i];
-	return (new_string);
+	return new_string;
 }
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
@@ -355,11 +355,11 @@ funny_dup17()
 	if (*level == 17)
 	{
 		*recursion = false;
-		return (tuple);
+		return tuple;
 	}
 
 	if (!(*recursion))
-		return (tuple);
+		return tuple;
 
 	(*level)++;
 
@@ -409,7 +409,7 @@ funny_dup17()
 	if (*level == 0)
 		*xid = InvalidTransactionId;
 
-	return (tuple);
+	return tuple;
 }
 
 HeapTuple	ttdummy(void);
@@ -465,7 +465,7 @@ ttdummy()
 	if (ttoff)					/* OFF - nothing to do */
 	{
 		pfree(relname);
-		return ((newtuple != NULL) ? newtuple : trigtuple);
+		return (newtuple != NULL) ? newtuple : trigtuple;
 	}
 
 	trigger = CurrentTriggerData->tg_trigger;
@@ -514,13 +514,13 @@ ttdummy()
 		if (newoff != TTDUMMY_INFINITY)
 		{
 			pfree(relname);		/* allocated in upper executor context */
-			return (NULL);
+			return NULL;
 		}
 	}
 	else if (oldoff != TTDUMMY_INFINITY)		/* DELETE */
 	{
 		pfree(relname);
-		return (NULL);
+		return NULL;
 	}
 
 	{
@@ -614,7 +614,7 @@ ttdummy()
 
 	pfree(relname);
 
-	return (rettuple);
+	return rettuple;
 }
 
 int32
@@ -624,20 +624,20 @@ set_ttdummy(int32 on)
 	if (ttoff)					/* OFF currently */
 	{
 		if (on == 0)
-			return (0);
+			return 0;
 
 		/* turn ON */
 		ttoff = false;
-		return (0);
+		return 0;
 	}
 
 	/* ON currently */
 	if (on != 0)
-		return (1);
+		return 1;
 
 	/* turn OFF */
 	ttoff = true;
 
-	return (1);
+	return 1;
 
 }

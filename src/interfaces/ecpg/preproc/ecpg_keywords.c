@@ -55,12 +55,12 @@ ScanECPGKeywordLookup(char *text)
 		middle = low + (high - low) / 2;
 		difference = strcmp(middle->name, text);
 		if (difference == 0)
-			return (middle);
+			return middle;
 		else if (difference < 0)
 			low = middle + 1;
 		else
 			high = middle - 1;
 	}
 
-	return (NULL);
+	return NULL;
 }

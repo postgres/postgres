@@ -116,5 +116,5 @@ register int base;
 		acc = -acc;
 	if (endptr != 0)
 		*endptr = (char *) (any ? s - 1 : nptr);
-	return (acc);
+	return acc;
 }

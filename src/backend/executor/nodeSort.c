@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.15 1998/06/15 19:28:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.16 1998/09/01 03:22:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ ExecSort(Sort *node)
 	 */
 	heapTuple = psort_grabtuple(node, &should_free);
 
-	return (ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free));
+	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
 
 /* ----------------------------------------------------------------

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.4 1998/02/26 04:40:31 momjian Exp $
+ * $Id: tupmacs.h,v 1.5 1998/09/01 03:27:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #define att_isnull(ATT, BITS) (!((BITS)[(ATT) >> 3] & (1 << ((ATT) & 0x07))))
 
 /*
- * given a AttributeTupleForm and a pointer into a tuple's data
+ * given a Form_pg_attribute and a pointer into a tuple's data
  * area, return the correct value or pointer.
  *
  * We return a 4 byte (char *) value in all cases.	If the attribute has

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.15 1998/01/07 21:01:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtpage.c,v 1.16 1998/09/01 03:21:14 momjian Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -274,7 +274,7 @@ _bt_getroot(Relation rel, int access)
 			 */
 
 			_bt_relbuf(rel, metabuf, BT_WRITE);
-			return (_bt_getroot(rel, access));
+			return _bt_getroot(rel, access);
 		}
 	}
 	else
@@ -298,7 +298,7 @@ _bt_getroot(Relation rel, int access)
 
 		/* it happened, try again */
 		_bt_relbuf(rel, rootbuf, access);
-		return (_bt_getroot(rel, access));
+		return _bt_getroot(rel, access);
 	}
 
 	/*
@@ -307,7 +307,7 @@ _bt_getroot(Relation rel, int access)
 	 * Return the root block.
 	 */
 
-	return (rootbuf);
+	return rootbuf;
 }
 
 /*
@@ -350,7 +350,7 @@ _bt_getbuf(Relation rel, BlockNumber blkno, int access)
 	}
 
 	/* ref count and lock type are correct */
-	return (buf);
+	return buf;
 }
 
 /*
@@ -505,7 +505,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 			item_save = (BTItem) palloc(item_nbytes);
 			memmove((char *) item_save, (char *) item, item_nbytes);
 			stack->bts_btitem = item_save;
-			return (buf);
+			return buf;
 		}
 
 		/* if the item has just moved right on this page, we're done */
@@ -525,7 +525,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 				item_save = (BTItem) palloc(item_nbytes);
 				memmove((char *) item_save, (char *) item, item_nbytes);
 				stack->bts_btitem = item_save;
-				return (buf);
+				return buf;
 			}
 		}
 	}
@@ -562,7 +562,7 @@ _bt_getstackbuf(Relation rel, BTStack stack, int access)
 				item_save = (BTItem) palloc(item_nbytes);
 				memmove((char *) item_save, (char *) item, item_nbytes);
 				stack->bts_btitem = item_save;
-				return (buf);
+				return buf;
 			}
 		}
 	}

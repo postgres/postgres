@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.17 1998/02/26 04:30:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.18 1998/09/01 03:21:31 momjian Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -188,7 +188,7 @@ TransactionLogTest(TransactionId transactionId, /* transaction id to test */
 	/*
 	 * so lint is happy...
 	 */
-	return (false);
+	return false;
 }
 
 /* --------------------------------

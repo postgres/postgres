@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.3 1998/08/25 21:04:40 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/enbl.c,v 1.4 1998/09/01 03:26:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,12 +35,12 @@ BypassEnable(int *enableCountInOutP, bool on)
 	if (on)
 	{
 		*enableCountInOutP += 1;
-		return ((bool) (*enableCountInOutP >= 2));
+		return (bool) (*enableCountInOutP >= 2);
 	}
 
 	AssertState(*enableCountInOutP >= 1);
 
 	*enableCountInOutP -= 1;
 
-	return ((bool) (*enableCountInOutP >= 1));
+	return (bool) (*enableCountInOutP >= 1);
 }

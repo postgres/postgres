@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_inherits.h,v 1.4 1997/09/08 02:35:14 momjian Exp $
+ * $Id: pg_inherits.h,v 1.5 1998/09/01 03:27:53 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -42,7 +42,7 @@ CATALOG(pg_inherits)
  *		the format of pg_inherits relation.
  * ----------------
  */
-typedef FormData_pg_inherits *InheritsTupleForm;
+typedef FormData_pg_inherits *Form_pg_inherits;
 
 /* ----------------
  *		compiler constants for pg_inherits

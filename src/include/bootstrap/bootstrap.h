@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.11 1998/02/26 04:40:35 momjian Exp $
+ * $Id: bootstrap.h,v 1.12 1998/09/01 03:27:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,7 @@ typedef struct hashnode
 #define EMITPROMPT printf("> ")
 
 extern Relation reldesc;
-extern AttributeTupleForm attrtypes[MAXATTR];
+extern Form_pg_attribute attrtypes[MAXATTR];
 extern int	numattr;
 extern int	DebugMode;
 

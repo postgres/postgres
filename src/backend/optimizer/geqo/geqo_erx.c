@@ -3,7 +3,7 @@
 * geqo_erx.c--
 *	 edge recombination crossover [ER]
 *
-* $Id: geqo_erx.c,v 1.9 1998/06/15 19:28:34 momjian Exp $
+* $Id: geqo_erx.c,v 1.10 1998/09/01 03:23:06 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -77,7 +77,7 @@ alloc_edge_table(int num_gene)
 
 	edge_table = (Edge *) palloc((num_gene + 1) * sizeof(Edge));
 
-	return (edge_table);
+	return edge_table;
 }
 
 /* free_edge_table--
@@ -147,7 +147,7 @@ gimme_edge_table(Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table)
 	}
 
 	/* return average number of edges per index */
-	return (((float) (edge_total * 2) / (float) num_gene));
+	return ((float) (edge_total * 2) / (float) num_gene);
 }
 
 /* gimme_edge--
@@ -184,7 +184,7 @@ gimme_edge(Gene gene1, Gene gene2, Edge *edge_table)
 			/* mark shared edges as negative */
 			edge_table[city1].edge_list[i] = 0 - city2;
 
-			return (0);
+			return 0;
 		}
 	}
 
@@ -195,7 +195,7 @@ gimme_edge(Gene gene1, Gene gene2, Edge *edge_table)
 	edge_table[city1].total_edges++;
 	edge_table[city1].unused_edges++;
 
-	return (1);
+	return 1;
 }
 
 /* gimme_tour--
@@ -242,7 +242,7 @@ gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene)
 
 	}							/* for (i=1; i<num_gene; i++) */
 
-	return (edge_failures);
+	return edge_failures;
 
 }
 
@@ -326,7 +326,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 		 * converting to absolute values
 		 */
 		if (friend < 0)
-			return ((Gene) Abs(friend));
+			return (Gene) Abs(friend);
 
 
 		/*
@@ -372,7 +372,7 @@ gimme_gene(Edge edge, Edge *edge_table)
 			minimum_count--;
 
 			if (minimum_count == rand_decision)
-				return (friend);
+				return friend;
 		}
 	}
 
@@ -433,7 +433,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 				four_count--;
 
 				if (rand_decision == four_count)
-					return ((Gene) i);
+					return (Gene) i;
 			}
 		}
 
@@ -458,7 +458,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 				remaining_edges--;
 
 				if (rand_decision == remaining_edges)
-					return (i);
+					return i;
 			}
 		}
 
@@ -478,7 +478,7 @@ edge_failure(Gene *gene, int index, Edge *edge_table, int num_gene)
 
 		for (i = 1; i <= num_gene; i++)
 			if (edge_table[i].unused_edges >= 0)
-				return ((Gene) i);
+				return (Gene) i;
 
 		elog(DEBUG, "edge_failure(3): no edge found via looking for the last ununsed point");
 	}

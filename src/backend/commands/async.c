@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.38 1998/08/30 21:04:43 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.39 1998/09/01 03:21:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,7 +189,7 @@ Async_Notify(char *relname)
 						   PointerGetDatum(notifyName));
 
 	lRel = heap_openr(ListenerRelationName);
-	tdesc = RelationGetTupleDescriptor(lRel);
+	tdesc = RelationGetDescr(lRel);
 	RelationSetLockForWrite(lRel);
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
 
@@ -281,7 +281,7 @@ Async_NotifyAtCommit()
 			lRel = heap_openr(ListenerRelationName);
 			RelationSetLockForWrite(lRel);
 			sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, &key);
-			tdesc = RelationGetTupleDescriptor(lRel);
+			tdesc = RelationGetDescr(lRel);
 
 			while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
 			{
@@ -445,7 +445,7 @@ Async_Listen(char *relname, int pid)
 	RelationSetLockForWrite(lDesc);
 
 	/* is someone already listening.  One listener per relation */
-	tdesc = RelationGetTupleDescriptor(lDesc);
+	tdesc = RelationGetDescr(lDesc);
 	scan = heap_beginscan(lDesc, 0, SnapshotNow, 0, (ScanKey) NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
@@ -571,7 +571,7 @@ Async_UnlistenAll()
 						   Int32GetDatum(MyProcPid));
 	lRel = heap_openr(ListenerRelationName);
 	RelationSetLockForWrite(lRel);
-	tdesc = RelationGetTupleDescriptor(lRel);
+	tdesc = RelationGetDescr(lRel);
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 1, key);
 
 	while (HeapTupleIsValid(lTuple = heap_getnext(sRel, 0)))
@@ -672,7 +672,7 @@ Async_NotifyFrontEnd_Aux()
 						   Int32GetDatum(MyProcPid));
 	lRel = heap_openr(ListenerRelationName);
 	RelationSetLockForWrite(lRel);
-	tdesc = RelationGetTupleDescriptor(lRel);
+	tdesc = RelationGetDescr(lRel);
 	sRel = heap_beginscan(lRel, 0, SnapshotNow, 2, key);
 
 	nulls[0] = nulls[1] = nulls[2] = ' ';

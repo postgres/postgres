@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.46 1998/08/04 16:43:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.47 1998/09/01 03:22:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -765,7 +765,7 @@ _copyConst(Const *from)
 	if (!from->constisnull && cached_type != from->consttype)
 	{
 		HeapTuple	typeTuple;
-		TypeTupleForm typeStruct;
+		Form_pg_type typeStruct;
 
 		/* ----------------
 		 *	 get the type tuple corresponding to the paramList->type,
@@ -784,7 +784,7 @@ _copyConst(Const *from)
 		 */
 		Assert(PointerIsValid(typeTuple));
 
-		typeStruct = (TypeTupleForm) GETSTRUCT(typeTuple);
+		typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 		cached_typbyval = (typeStruct)->typbyval ? true : false;
 		cached_type = from->consttype;
 	}
@@ -1316,13 +1316,13 @@ _copyMergeOrder(MergeOrder *from)
 }
 
 /* ----------------
- *		_copyCInfo
+ *		_copyClauseInfo
  * ----------------
  */
-static CInfo *
-_copyCInfo(CInfo *from)
+static ClauseInfo *
+_copyClauseInfo(ClauseInfo *from)
 {
-	CInfo	   *newnode = makeNode(CInfo);
+	ClauseInfo	   *newnode = makeNode(ClauseInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1409,13 +1409,13 @@ _copyMInfo(MInfo *from)
 }
 
 /* ----------------
- *		_copyJInfo
+ *		_copyJoinInfo
  * ----------------
  */
-static JInfo *
-_copyJInfo(JInfo *from)
+static JoinInfo *
+_copyJoinInfo(JoinInfo *from)
 {
-	JInfo	   *newnode = makeNode(JInfo);
+	JoinInfo	   *newnode = makeNode(JoinInfo);
 
 	/* ----------------
 	 *	copy remainder of node
@@ -1761,8 +1761,8 @@ copyObject(void *from)
 		case T_MergeOrder:
 			retval = _copyMergeOrder(from);
 			break;
-		case T_CInfo:
-			retval = _copyCInfo(from);
+		case T_ClauseInfo:
+			retval = _copyClauseInfo(from);
 			break;
 		case T_JoinMethod:
 			retval = _copyJoinMethod(from);
@@ -1773,8 +1773,8 @@ copyObject(void *from)
 		case T_MInfo:
 			retval = _copyMInfo(from);
 			break;
-		case T_JInfo:
-			retval = _copyJInfo(from);
+		case T_JoinInfo:
+			retval = _copyJoinInfo(from);
 			break;
 		case T_Iter:
 			retval = _copyIter(from);

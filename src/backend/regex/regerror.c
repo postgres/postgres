@@ -200,7 +200,7 @@ size_t		errbuf_size;
 		}
 	}
 
-	return (len);
+	return len;
 }
 
 /*
@@ -222,8 +222,8 @@ char	   *localbuf;
 #endif
 			break;
 	if (r->code == 0)
-		return ("0");
+		return "0";
 
 	sprintf(localbuf, "%d", r->code);
-	return (localbuf);
+	return localbuf;
 }

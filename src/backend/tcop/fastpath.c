@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.19 1998/08/19 02:02:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.20 1998/09/01 03:25:40 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -187,7 +187,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 	Oid			rettype;
 	HeapTuple	func_htp,
 				type_htp;
-	TypeTupleForm tp;
+	Form_pg_type tp;
 	Form_pg_proc pp;
 	int			i;
 
@@ -229,7 +229,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 				elog(ERROR, "update_fp_info: bad argument type %d for %d",
 					 argtypes[i], func_id);
 			}
-			tp = (TypeTupleForm) GETSTRUCT(type_htp);
+			tp = (Form_pg_type) GETSTRUCT(type_htp);
 			fip->argbyval[i] = tp->typbyval;
 			fip->arglen[i] = tp->typlen;
 		}						/* else it had better be VAR_LENGTH_ARG */
@@ -245,7 +245,7 @@ update_fp_info(Oid func_id, struct fp_info * fip)
 			elog(ERROR, "update_fp_info: bad return type %d for %d",
 				 rettype, func_id);
 		}
-		tp = (TypeTupleForm) GETSTRUCT(type_htp);
+		tp = (Form_pg_type) GETSTRUCT(type_htp);
 		fip->retbyval = tp->typbyval;
 		fip->retlen = tp->typlen;
 	}							/* else it had better by VAR_LENGTH_RESULT */
@@ -375,5 +375,5 @@ HandleFunctionRequest()
 
 
 
-	return (0);
+	return 0;
 }

@@ -43,6 +43,6 @@ pg_char_and_wchar_strcmp(s1, s2)
 {
 	while ((pg_wchar)*s1 == *s2++)
 		if (*s1++ == 0)
-			return (0);
-	return (*(const unsigned char *)s1 - *(const pg_wchar *)(s2 - 1));
+			return 0;
+	return *(const unsigned char *)s1 - *(const pg_wchar *)(s2 - 1);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.16 1998/04/26 04:05:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.17 1998/09/01 03:21:34 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -34,7 +34,7 @@ extern TransactionId FirstTransactionId;
 TransactionId
 xidin(char *representation)
 {
-	return (atol(representation));
+	return atol(representation);
 }
 
 /* XXX name for catalogs */
@@ -49,7 +49,7 @@ xidout(TransactionId transactionId)
 
 	sprintf(representation, "%u", transactionId);
 
-	return (representation);
+	return representation;
 
 }
 
@@ -60,7 +60,7 @@ xidout(TransactionId transactionId)
 bool
 TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
 {
-	return ((bool) (id1 < id2));
+	return (bool) (id1 < id2);
 }
 
 /* ----------------------------------------------------------------
@@ -75,7 +75,7 @@ TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
 bool
 xideq(TransactionId xid1, TransactionId xid2)
 {
-	return ((bool) (xid1 == xid2));
+	return (bool) (xid1 == xid2);
 }
 
 

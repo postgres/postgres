@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.15 1998/07/19 05:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.16 1998/09/01 03:24:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,7 +288,7 @@ FindMatchingNew(List *tlist, int attno)
 		TargetEntry *tle = lfirst(i);
 
 		if (tle->resdom->resno == attno)
-			return (tle->expr);
+			return tle->expr;
 	}
 	return NULL;
 }
@@ -305,7 +305,7 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
 
 		resname = tle->resdom->resname;
 		if (!strcmp(e_attname, resname))
-			return (tle->expr);
+			return tle->expr;
 	}
 	return NULL;
 }

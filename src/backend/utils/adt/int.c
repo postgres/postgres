@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.15 1998/02/26 04:37:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.16 1998/09/01 03:26:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@
 int32
 int2in(char *num)
 {
-	return ((int32) pg_atoi(num, sizeof(int16), '\0'));
+	return (int32) pg_atoi(num, sizeof(int16), '\0');
 }
 
 /*
@@ -68,7 +68,7 @@ int2out(int16 sh)
 
 	result = (char *) palloc(7);/* assumes sign, 5 digits, '\0' */
 	itoa((int) sh, result);
-	return (result);
+	return result;
 }
 
 /*
@@ -80,12 +80,12 @@ int2out(int16 sh)
 int16 *
 int28in(char *shs)
 {
-	int16		(*result)[];
+	int16		**result;
 	int			nums;
 
 	if (shs == NULL)
-		return (NULL);
-	result = (int16 (*)[]) palloc(sizeof(int16[8]));
+		return NULL;
+	result = (int16 **) palloc(sizeof(int16[8]));
 	if ((nums = sscanf(shs, "%hd%hd%hd%hd%hd%hd%hd%hd",
 					   *result,
 					   *result + 1,
@@ -100,14 +100,14 @@ int28in(char *shs)
 			(*result)[nums++] = 0;
 		while (nums < 8);
 	}
-	return ((int16 *) result);
+	return (int16 *) result;
 }
 
 /*
  *		int28out		- converts internal form to "num num ..."
  */
 char *
-int28out(int16 (*shs)[])
+int28out(int16 **shs)
 {
 	int			num;
 	int16	   *sp;
@@ -119,7 +119,7 @@ int28out(int16 (*shs)[])
 		result = (char *) palloc(2);
 		result[0] = '-';
 		result[1] = '\0';
-		return (result);
+		return result;
 	}
 	rp = result = (char *) palloc(8 * 7);		/* assumes sign, 5 digits,
 												 * ' ' */
@@ -132,7 +132,7 @@ int28out(int16 (*shs)[])
 		*rp++ = ' ';
 	}
 	*--rp = '\0';
-	return (result);
+	return result;
 }
 
 /*
@@ -156,14 +156,14 @@ int44in(char *input_string)
 	while (i < 4)
 		foo[i++] = 0;
 
-	return (foo);
+	return foo;
 }
 
 /*
  *		int28out		- converts internal form to "num num ..."
  */
 char *
-int44out(int32 an_array[])
+int44out(int32 *an_array)
 {
 	int			temp = 4;
 	char	   *output_string = NULL;
@@ -185,7 +185,7 @@ int44out(int32 an_array[])
 		}
 		*--walk = '\0';
 	}
-	return (output_string);
+	return output_string;
 }
 
 
@@ -199,7 +199,7 @@ int44out(int32 an_array[])
 int32
 int4in(char *num)
 {
-	return (pg_atoi(num, sizeof(int32), '\0'));
+	return pg_atoi(num, sizeof(int32), '\0');
 }
 
 /*
@@ -212,7 +212,7 @@ int4out(int32 l)
 
 	result = (char *) palloc(12);		/* assumes sign, 10 digits, '\0' */
 	ltoa(l, result);
-	return (result);
+	return result;
 }
 
 
@@ -225,7 +225,7 @@ int4out(int32 l)
 int32
 i2toi4(int16 arg1)
 {
-	return ((int32) arg1);
+	return (int32) arg1;
 }
 
 int16
@@ -236,7 +236,7 @@ i4toi2(int32 arg1)
 	if (arg1 > SHRT_MAX)
 		elog(ERROR, "i4toi2: '%d' causes int2 overflow", arg1);
 
-	return ((int16) arg1);
+	return (int16) arg1;
 }
 
 text *
@@ -257,7 +257,7 @@ int2_text(int16 arg1)
 
 	pfree(str);
 
-	return (result);
+	return result;
 }	/* int2_text() */
 
 int16
@@ -277,7 +277,7 @@ text_int2(text *string)
 	result = int2in(str);
 	pfree(str);
 
-	return (result);
+	return result;
 }	/* text_int2() */
 
 text *
@@ -298,7 +298,7 @@ int4_text(int32 arg1)
 
 	pfree(str);
 
-	return (result);
+	return result;
 }	/* int4_text() */
 
 int32
@@ -318,7 +318,7 @@ text_int4(text *string)
 	result = int4in(str);
 	pfree(str);
 
-	return (result);
+	return result;
 }	/* text_int4() */
 
 
@@ -339,152 +339,152 @@ text_int4(text *string)
 bool
 int4eq(int32 arg1, int32 arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 int4ne(int32 arg1, int32 arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
 int4lt(int32 arg1, int32 arg2)
 {
-	return (arg1 < arg2);
+	return arg1 < arg2;
 }
 
 bool
 int4le(int32 arg1, int32 arg2)
 {
-	return (arg1 <= arg2);
+	return arg1 <= arg2;
 }
 
 bool
 int4gt(int32 arg1, int32 arg2)
 {
-	return (arg1 > arg2);
+	return arg1 > arg2;
 }
 
 bool
 int4ge(int32 arg1, int32 arg2)
 {
-	return (arg1 >= arg2);
+	return arg1 >= arg2;
 }
 
 bool
 int2eq(int16 arg1, int16 arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 int2ne(int16 arg1, int16 arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
 int2lt(int16 arg1, int16 arg2)
 {
-	return (arg1 < arg2);
+	return arg1 < arg2;
 }
 
 bool
 int2le(int16 arg1, int16 arg2)
 {
-	return (arg1 <= arg2);
+	return arg1 <= arg2;
 }
 
 bool
 int2gt(int16 arg1, int16 arg2)
 {
-	return (arg1 > arg2);
+	return arg1 > arg2;
 }
 
 bool
 int2ge(int16 arg1, int16 arg2)
 {
-	return (arg1 >= arg2);
+	return arg1 >= arg2;
 }
 
 bool
 int24eq(int32 arg1, int32 arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 int24ne(int32 arg1, int32 arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
 int24lt(int32 arg1, int32 arg2)
 {
-	return (arg1 < arg2);
+	return arg1 < arg2;
 }
 
 bool
 int24le(int32 arg1, int32 arg2)
 {
-	return (arg1 <= arg2);
+	return arg1 <= arg2;
 }
 
 bool
 int24gt(int32 arg1, int32 arg2)
 {
-	return (arg1 > arg2);
+	return arg1 > arg2;
 }
 
 bool
 int24ge(int32 arg1, int32 arg2)
 {
-	return (arg1 >= arg2);
+	return arg1 >= arg2;
 }
 
 bool
 int42eq(int32 arg1, int32 arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 int42ne(int32 arg1, int32 arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
 int42lt(int32 arg1, int32 arg2)
 {
-	return (arg1 < arg2);
+	return arg1 < arg2;
 }
 
 bool
 int42le(int32 arg1, int32 arg2)
 {
-	return (arg1 <= arg2);
+	return arg1 <= arg2;
 }
 
 bool
 int42gt(int32 arg1, int32 arg2)
 {
-	return (arg1 > arg2);
+	return arg1 > arg2;
 }
 
 bool
 int42ge(int32 arg1, int32 arg2)
 {
-	return (arg1 >= arg2);
+	return arg1 >= arg2;
 }
 
 
 bool
 keyfirsteq(int16 *arg1, int16 arg2)
 {
-	return (*arg1 == arg2);
+	return *arg1 == arg2;
 }
 
 /*
@@ -496,121 +496,121 @@ keyfirsteq(int16 *arg1, int16 arg2)
 int32
 int4um(int32 arg)
 {
-	return (-arg);
+	return -arg;
 }
 
 int32
 int4pl(int32 arg1, int32 arg2)
 {
-	return (arg1 + arg2);
+	return arg1 + arg2;
 }
 
 int32
 int4mi(int32 arg1, int32 arg2)
 {
-	return (arg1 - arg2);
+	return arg1 - arg2;
 }
 
 int32
 int4mul(int32 arg1, int32 arg2)
 {
-	return (arg1 * arg2);
+	return arg1 * arg2;
 }
 
 int32
 int4div(int32 arg1, int32 arg2)
 {
-	return (arg1 / arg2);
+	return arg1 / arg2;
 }
 
 int32
 int4inc(int32 arg)
 {
-	return (arg + (int32) 1);
+	return arg + (int32) 1;
 }
 
 int16
 int2um(int16 arg)
 {
-	return (-arg);
+	return -arg;
 }
 
 int16
 int2pl(int16 arg1, int16 arg2)
 {
-	return (arg1 + arg2);
+	return arg1 + arg2;
 }
 
 int16
 int2mi(int16 arg1, int16 arg2)
 {
-	return (arg1 - arg2);
+	return arg1 - arg2;
 }
 
 int16
 int2mul(int16 arg1, int16 arg2)
 {
-	return (arg1 * arg2);
+	return arg1 * arg2;
 }
 
 int16
 int2div(int16 arg1, int16 arg2)
 {
-	return (arg1 / arg2);
+	return arg1 / arg2;
 }
 
 int16
 int2inc(int16 arg)
 {
-	return (arg + (int16) 1);
+	return arg + (int16) 1;
 }
 
 int32
 int24pl(int32 arg1, int32 arg2)
 {
-	return (arg1 + arg2);
+	return arg1 + arg2;
 }
 
 int32
 int24mi(int32 arg1, int32 arg2)
 {
-	return (arg1 - arg2);
+	return arg1 - arg2;
 }
 
 int32
 int24mul(int32 arg1, int32 arg2)
 {
-	return (arg1 * arg2);
+	return arg1 * arg2;
 }
 
 int32
 int24div(int32 arg1, int32 arg2)
 {
-	return (arg1 / arg2);
+	return arg1 / arg2;
 }
 
 int32
 int42pl(int32 arg1, int32 arg2)
 {
-	return (arg1 + arg2);
+	return arg1 + arg2;
 }
 
 int32
 int42mi(int32 arg1, int32 arg2)
 {
-	return (arg1 - arg2);
+	return arg1 - arg2;
 }
 
 int32
 int42mul(int32 arg1, int32 arg2)
 {
-	return (arg1 * arg2);
+	return arg1 * arg2;
 }
 
 int32
 int42div(int32 arg1, int32 arg2)
 {
-	return (arg1 / arg2);
+	return arg1 / arg2;
 }
 
 /*
@@ -619,25 +619,25 @@ int42div(int32 arg1, int32 arg2)
 int32
 int4mod(int32 arg1, int32 arg2)
 {
-	return (arg1 % arg2);
+	return arg1 % arg2;
 }
 
 int32
 int2mod(int16 arg1, int16 arg2)
 {
-	return (arg1 % arg2);
+	return arg1 % arg2;
 }
 
 int32
 int24mod(int32 arg1, int32 arg2)
 {
-	return (arg1 % arg2);
+	return arg1 % arg2;
 }
 
 int32
 int42mod(int32 arg1, int32 arg2)
 {
-	return (arg1 % arg2);
+	return arg1 % arg2;
 }
 
 /*
@@ -653,7 +653,7 @@ int4fac(int32 arg1)
 	else
 		for (result = 1; arg1 > 0; --arg1)
 			result *= arg1;
-	return (result);
+	return result;
 }
 
 int32
@@ -666,29 +666,29 @@ int2fac(int16 arg1)
 	else
 		for (result = 1; arg1 > 0; --arg1)
 			result *= arg1;
-	return (result);
+	return result;
 }
 
 int16
 int2larger(int16 arg1, int16 arg2)
 {
-	return ((arg1 > arg2) ? arg1 : arg2);
+	return (arg1 > arg2) ? arg1 : arg2;
 }
 
 int16
 int2smaller(int16 arg1, int16 arg2)
 {
-	return ((arg1 < arg2) ? arg1 : arg2);
+	return (arg1 < arg2) ? arg1 : arg2;
 }
 
 int32
 int4larger(int32 arg1, int32 arg2)
 {
-	return ((arg1 > arg2) ? arg1 : arg2);
+	return (arg1 > arg2) ? arg1 : arg2;
 }
 
 int32
 int4smaller(int32 arg1, int32 arg2)
 {
-	return ((arg1 < arg2) ? arg1 : arg2);
+	return (arg1 < arg2) ? arg1 : arg2;
 }

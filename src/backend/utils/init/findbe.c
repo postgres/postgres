@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.10 1998/06/15 19:29:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.11 1998/09/01 03:26:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,7 +63,7 @@ ValidateBinary(char *path)
 		if (DebugLvl > 1)
 			fprintf(stderr, "ValidateBinary: pathname \"%s\" is too long\n",
 					path);
-		return (-1);
+		return -1;
 	}
 
 	if (stat(path, &buf) < 0)
@@ -71,14 +71,14 @@ ValidateBinary(char *path)
 		if (DebugLvl > 1)
 			fprintf(stderr, "ValidateBinary: can't stat \"%s\"\n",
 					path);
-		return (-1);
+		return -1;
 	}
 	if (!(buf.st_mode & S_IFREG))
 	{
 		if (DebugLvl > 1)
 			fprintf(stderr, "ValidateBinary: \"%s\" is not a regular file\n",
 					path);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -104,7 +104,7 @@ ValidateBinary(char *path)
 		if (DebugLvl > 1 && !(is_r && is_x))
 			fprintf(stderr, "ValidateBinary: \"%s\" is not user read/execute\n",
 					path);
-		return (is_x ? (is_r ? 0 : -2) : -1);
+		return is_x ? (is_r ? 0 : -2) : -1;
 	}
 	pwp = getpwuid(euid);
 	if (pwp)
@@ -130,7 +130,7 @@ ValidateBinary(char *path)
 			if (DebugLvl > 1 && !(is_r && is_x))
 				fprintf(stderr, "ValidateBinary: \"%s\" is not group read/execute\n",
 						path);
-			return (is_x ? (is_r ? 0 : -2) : -1);
+			return is_x ? (is_r ? 0 : -2) : -1;
 		}
 	}
 	is_r = buf.st_mode & S_IROTH;
@@ -138,7 +138,7 @@ ValidateBinary(char *path)
 	if (DebugLvl > 1 && !(is_r && is_x))
 		fprintf(stderr, "ValidateBinary: \"%s\" is not other read/execute\n",
 				path);
-	return (is_x ? (is_r ? 0 : -2) : -1);
+	return is_x ? (is_r ? 0 : -2) : -1;
 }
 
 /*
@@ -189,11 +189,11 @@ FindExec(char *full_path, char *argv0, char *binary_name)
 			if (DebugLvl)
 				fprintf(stderr, "FindExec: found \"%s\" using argv[0]\n",
 						full_path);
-			return (0);
+			return 0;
 		}
 		fprintf(stderr, "FindExec: invalid binary \"%s\"\n",
 				buf);
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -228,14 +228,14 @@ FindExec(char *full_path, char *argv0, char *binary_name)
 						fprintf(stderr, "FindExec: found \"%s\" using PATH\n",
 								full_path);
 					free(path);
-					return (0);
+					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
 					fprintf(stderr, "FindExec: could not read binary \"%s\"\n",
 							buf);
 					free(path);
-					return (-1);
+					return -1;
 			}
 			if (!endp)			/* last one */
 				break;
@@ -244,5 +244,5 @@ FindExec(char *full_path, char *argv0, char *binary_name)
 	}
 
 	fprintf(stderr, "FindExec: could not find a %s to execute...\n", binary_name);
-	return (-1);
+	return -1;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.15 1998/08/25 21:34:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/spin.c,v 1.16 1998/09/01 03:25:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,7 @@ bool
 CreateSpinlocks(IPCKey key)
 {
 	/* the spin lock shared memory must have been created by now */
-	return (TRUE);
+	return TRUE;
 }
 
 bool
@@ -78,7 +78,7 @@ InitSpinLocks(int init, IPCKey key)
 	MMCacheLock = (SPINLOCK) MMCACHELOCKID;
 #endif
 
-	return (TRUE);
+	return TRUE;
 }
 
 #ifdef LOCKDEBUG
@@ -217,7 +217,7 @@ SpinIsLocked(SPINLOCK lock)
 	int			semval;
 
 	semval = IpcSemaphoreGetValue(SpinLockId, lock);
-	return (semval < IpcSemaphoreDefaultStartValue);
+	return semval < IpcSemaphoreDefaultStartValue;
 }
 
 /*
@@ -245,11 +245,11 @@ CreateSpinlocks(IPCKey key)
 	if (semid >= 0)
 	{
 		SpinLockId = semid;
-		return (TRUE);
+		return TRUE;
 	}
 	/* cannot create spinlocks */
 	elog(FATAL, "CreateSpinlocks: cannot create spin locks");
-	return (FALSE);
+	return FALSE;
 }
 
 /*
@@ -270,10 +270,10 @@ AttachSpinLocks(IPCKey key)
 		}
 		/* cannot create spinlocks */
 		elog(FATAL, "AttachSpinlocks: cannot create spin locks");
-		return (FALSE);
+		return FALSE;
 	}
 	SpinLockId = id;
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -314,7 +314,7 @@ InitSpinLocks(int init, IPCKey key)
 		if (!AttachSpinLocks(key))
 		{
 			elog(FATAL, "InitSpinLocks: couldnt attach spin locks");
-			return (FALSE);
+			return FALSE;
 		}
 	}
 
@@ -331,7 +331,7 @@ InitSpinLocks(int init, IPCKey key)
 	MMCacheLock = (SPINLOCK) MMCACHELOCKID;
 #endif
 
-	return (TRUE);
+	return TRUE;
 }
 
 #endif							/* HAS_TEST_AND_SET */

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.11 1998/06/15 19:28:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.12 1998/09/01 03:22:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 	{
 		result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
 		if (result == FALSE)
-			return (FALSE);
+			return FALSE;
 	}
 
 	switch (nodeTag(node))
@@ -211,7 +211,7 @@ ExecInitNode(Plan *node, EState *estate, Plan *parent)
 		{
 			result = ExecInitSubPlan((SubPlan *) lfirst(subp), estate, node);
 			if (result == FALSE)
-				return (FALSE);
+				return FALSE;
 		}
 	}
 

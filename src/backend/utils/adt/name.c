@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.13 1998/06/15 19:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.14 1998/09/01 03:26:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,7 +39,7 @@ namein(char *s)
 	int			len;
 
 	if (s == NULL)
-		return (NULL);
+		return NULL;
 	result = (NameData *) palloc(NAMEDATALEN);
 	/* always keep it null-padded */
 	StrNCpy(result->data, s, NAMEDATALEN);
@@ -49,7 +49,7 @@ namein(char *s)
 		*(result->data + len) = '\0';
 		len++;
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -89,49 +89,49 @@ nameeq(NameData *arg1, NameData *arg2)
 	if (!arg1 || !arg2)
 		return 0;
 	else
-		return ((bool) strncmp(arg1->data, arg2->data, NAMEDATALEN) == 0);
+		return (bool) strncmp(arg1->data, arg2->data, NAMEDATALEN) == 0;
 }
 
 bool
 namene(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
-	return ((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) != 0));
+		return (bool) 0;
+	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) != 0);
 }
 
 bool
 namelt(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
-	return ((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) < 0));
+		return (bool) 0;
+	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) < 0);
 }
 
 bool
 namele(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
-	return ((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) <= 0));
+		return (bool) 0;
+	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) <= 0);
 }
 
 bool
 namegt(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 
-	return ((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) > 0));
+	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) > 0);
 }
 
 bool
 namege(NameData *arg1, NameData *arg2)
 {
 	if (arg1 == NULL || arg2 == NULL)
-		return ((bool) 0);
+		return (bool) 0;
 
-	return ((bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) >= 0));
+	return (bool) (strncmp(arg1->data, arg2->data, NAMEDATALEN) >= 0);
 }
 
 
@@ -141,16 +141,16 @@ int
 namecpy(Name n1, Name n2)
 {
 	if (!n1 || !n2)
-		return (-1);
+		return -1;
 	strncpy(n1->data, n2->data, NAMEDATALEN);
-	return (0);
+	return 0;
 }
 
 #ifdef NOT_USED
 int
 namecat(Name n1, Name n2)
 {
-	return (namestrcat(n1, n2->data));	/* n2 can't be any longer than n1 */
+	return namestrcat(n1, n2->data);	/* n2 can't be any longer than n1 */
 }
 
 #endif
@@ -158,16 +158,16 @@ namecat(Name n1, Name n2)
 int
 namecmp(Name n1, Name n2)
 {
-	return (strncmp(n1->data, n2->data, NAMEDATALEN));
+	return strncmp(n1->data, n2->data, NAMEDATALEN);
 }
 
 int
 namestrcpy(Name name, char *str)
 {
 	if (!name || !str)
-		return (-1);
+		return -1;
 	StrNCpy(name->data, str, NAMEDATALEN);
-	return (0);
+	return 0;
 }
 
 #ifdef NOT_USED
@@ -179,7 +179,7 @@ namestrcat(Name name, char *str)
 			   *q;
 
 	if (!name || !str)
-		return (-1);
+		return -1;
 	for (i = 0, p = name->data; i < NAMEDATALEN && *p; ++i, ++p)
 		;
 	for (q = str; i < NAMEDATALEN; ++i, ++p, ++q)
@@ -188,7 +188,7 @@ namestrcat(Name name, char *str)
 		if (!*q)
 			break;
 	}
-	return (0);
+	return 0;
 }
 
 #endif
@@ -197,12 +197,12 @@ int
 namestrcmp(Name name, char *str)
 {
 	if (!name && !str)
-		return (0);
+		return 0;
 	if (!name)
-		return (-1);			/* NULL < anything */
+		return -1;			/* NULL < anything */
 	if (!str)
-		return (1);				/* NULL < anything */
-	return (strncmp(name->data, str, NAMEDATALEN));
+		return 1;				/* NULL < anything */
+	return strncmp(name->data, str, NAMEDATALEN);
 }
 
 /*****************************************************************************

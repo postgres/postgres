@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.22 1998/08/06 05:12:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.23 1998/09/01 03:22:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -692,7 +692,7 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList *inputQlist)
    this code is very similar to ProcedureDefine() in pg_proc.c
 */
 static int
-getParamTypes(TgElement * elem, Oid typev[])
+getParamTypes(TgElement * elem, Oid *typev)
 {
 	/* this code is similar to ProcedureDefine() */
 	int16		parameterCount;

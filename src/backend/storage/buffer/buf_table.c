@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.12 1998/06/30 19:09:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.13 1998/09/01 03:25:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ BufTableLookup(BufferTag *tagPtr)
 	bool		found;
 
 	if (tagPtr->blockNum == P_NEW)
-		return (NULL);
+		return NULL;
 
 	result = (LookupEnt *)
 		hash_search(SharedBufHash, (char *) tagPtr, HASH_FIND, &found);
@@ -88,11 +88,11 @@ BufTableLookup(BufferTag *tagPtr)
 	if (!result)
 	{
 		elog(ERROR, "BufTableLookup: BufferLookup table corrupted");
-		return (NULL);
+		return NULL;
 	}
 	if (!found)
-		return (NULL);
-	return (&(BufferDescriptors[result->id]));
+		return NULL;
+	return &(BufferDescriptors[result->id]);
 }
 
 /*
@@ -109,7 +109,7 @@ BufTableDelete(BufferDesc *buf)
 	 * BM_DELETED keeps us from removing buffer twice.
 	 */
 	if (buf->flags & BM_DELETED)
-		return (TRUE);
+		return TRUE;
 
 	buf->flags |= BM_DELETED;
 
@@ -119,10 +119,10 @@ BufTableDelete(BufferDesc *buf)
 	if (!(result && found))
 	{
 		elog(ERROR, "BufTableDelete: BufferLookup table corrupted");
-		return (FALSE);
+		return FALSE;
 	}
 
-	return (TRUE);
+	return TRUE;
 }
 
 bool
@@ -142,18 +142,18 @@ BufTableInsert(BufferDesc *buf)
 	{
 		Assert(0);
 		elog(ERROR, "BufTableInsert: BufferLookup table corrupted");
-		return (FALSE);
+		return FALSE;
 	}
 	/* found something else in the table ! */
 	if (found)
 	{
 		Assert(0);
 		elog(ERROR, "BufTableInsert: BufferLookup table corrupted");
-		return (FALSE);
+		return FALSE;
 	}
 
 	result->id = buf->buf_id;
-	return (TRUE);
+	return TRUE;
 }
 
 /* prints out collision stats for the buf table */

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.10 1998/08/19 02:02:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.11 1998/09/01 03:25:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ mminit()
 	if (mmcacheblk == (char *) NULL)
 	{
 		SpinRelease(MMCacheLock);
-		return (SM_FAIL);
+		return SM_FAIL;
 	}
 
 	info.keysize = sizeof(MMCacheTag);
@@ -121,7 +121,7 @@ mminit()
 	if (MMCacheHT == (HTAB *) NULL)
 	{
 		SpinRelease(MMCacheLock);
-		return (SM_FAIL);
+		return SM_FAIL;
 	}
 
 	info.keysize = sizeof(MMRelTag);
@@ -135,14 +135,14 @@ mminit()
 	if (MMRelCacheHT == (HTAB *) NULL)
 	{
 		SpinRelease(MMCacheLock);
-		return (SM_FAIL);
+		return SM_FAIL;
 	}
 
 	if (IsUnderPostmaster) /* was IsPostmaster bjm */
 	{
 		MemSet(mmcacheblk, 0, mmsize);
 		SpinRelease(MMCacheLock);
-		return (SM_SUCCESS);
+		return SM_SUCCESS;
 	}
 
 	SpinRelease(MMCacheLock);
@@ -155,13 +155,13 @@ mminit()
 	mmcacheblk += (MMNBUFFERS * sizeof(MMCacheTag));
 	MMBlockCache = mmcacheblk;
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 int
 mmshutdown()
 {
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 int
@@ -176,7 +176,7 @@ mmcreate(Relation reln)
 	if (*MMCurRelno == MMNRELATIONS)
 	{
 		SpinRelease(MMCacheLock);
-		return (SM_FAIL);
+		return SM_FAIL;
 	}
 
 	(*MMCurRelno)++;
@@ -200,14 +200,14 @@ mmcreate(Relation reln)
 	{
 		/* already exists */
 		SpinRelease(MMCacheLock);
-		return (SM_FAIL);
+		return SM_FAIL;
 	}
 
 	entry->mmrhe_nblocks = 0;
 
 	SpinRelease(MMCacheLock);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -305,7 +305,7 @@ mmextend(Relation reln, char *buffer)
 		if (i == MMNBUFFERS)
 		{
 			SpinRelease(MMCacheLock);
-			return (SM_FAIL);
+			return SM_FAIL;
 		}
 	}
 	else
@@ -346,7 +346,7 @@ mmextend(Relation reln, char *buffer)
 
 	SpinRelease(MMCacheLock);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -356,7 +356,7 @@ int
 mmopen(Relation reln)
 {
 	/* automatically successful */
-	return (0);
+	return 0;
 }
 
 /*
@@ -368,7 +368,7 @@ int
 mmclose(Relation reln)
 {
 	/* automatically successful */
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -407,7 +407,7 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 		/* reading nonexistent pages is defined to fill them with zeroes */
 		SpinRelease(MMCacheLock);
 		MemSet(buffer, 0, BLCKSZ);
-		return (SM_SUCCESS);
+		return SM_SUCCESS;
 	}
 
 	offset = (entry->mmhe_bufno * BLCKSZ);
@@ -415,7 +415,7 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 
 	SpinRelease(MMCacheLock);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -460,7 +460,7 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 
 	SpinRelease(MMCacheLock);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -471,7 +471,7 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 int
 mmflush(Relation reln, BlockNumber blocknum, char *buffer)
 {
-	return (mmwrite(reln, blocknum, buffer));
+	return mmwrite(reln, blocknum, buffer);
 }
 
 /*
@@ -488,7 +488,7 @@ mmblindwrt(char *dbstr,
 		   BlockNumber blkno,
 		   char *buffer)
 {
-	return (SM_FAIL);
+	return SM_FAIL;
 }
 
 /*
@@ -529,7 +529,7 @@ mmnblocks(Relation reln)
 
 	SpinRelease(MMCacheLock);
 
-	return (nblocks);
+	return nblocks;
 }
 
 /*
@@ -540,7 +540,7 @@ mmnblocks(Relation reln)
 int
 mmcommit()
 {
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -550,7 +550,7 @@ mmcommit()
 int
 mmabort()
 {
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -605,7 +605,7 @@ MMShmemSize()
 	size += MAXALIGN(sizeof(*MMCurRelno));
 	size += MAXALIGN(MMNBUFFERS * sizeof(MMCacheTag));
 
-	return (size);
+	return size;
 }
 
 #endif							/* STABLE_MEMORY_STORAGE */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.23 1998/08/19 02:01:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.24 1998/09/01 03:21:09 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relationId
@@ -207,7 +207,7 @@ index_insert(Relation relation,
 	 * ----------------
 	 */
 
-	return (specificResult);
+	return specificResult;
 }
 
 /* ----------------
@@ -366,14 +366,14 @@ index_getprocid(Relation irel,
 
 	Assert(loc != NULL);
 
-	return (loc[(natts * (procnum - 1)) + (attnum - 1)]);
+	return loc[(natts * (procnum - 1)) + (attnum - 1)];
 }
 
 Datum
 GetIndexValue(HeapTuple tuple,
 			  TupleDesc hTupDesc,
 			  int attOff,
-			  AttrNumber attrNums[],
+			  AttrNumber *attrNums,
 			  FuncIndexInfo *fInfo,
 			  bool *attNull)
 {

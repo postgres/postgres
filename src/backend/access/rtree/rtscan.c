@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.17 1998/08/19 02:01:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.18 1998/09/01 03:21:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,7 +73,7 @@ rtbeginscan(Relation r,
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
 	rtregscan(s);
 
-	return (s);
+	return s;
 }
 
 void

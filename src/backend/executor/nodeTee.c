@@ -15,7 +15,7 @@
  *		ExecEndTee
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.21 1998/08/19 02:02:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/nodeTee.c,v 1.22 1998/09/01 03:22:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,7 +402,7 @@ ExecTee(Tee *node, Plan *parent)
 			IncrBufferRefCount(scanDesc->rs_cbuf);
 
 		slot = teeState->cstate.cs_ResultTupleSlot;
-		slot->ttc_tupleDescriptor = RelationGetTupleDescriptor(bufferRel);
+		slot->ttc_tupleDescriptor = RelationGetDescr(bufferRel);
 
 		result = ExecStoreTuple(heapTuple,		/* tuple to store */
 								slot,	/* slot to store in */

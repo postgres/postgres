@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.81 1998/08/29 18:06:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.82 1998/09/01 03:27:21 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -409,7 +409,7 @@ dumpClasses_dumpData(FILE *fout, const char *classname,
  *	  dump the contents of all the classes.
  */
 static void
-dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
+dumpClasses(const TableInfo *tblinfo, const int numTables, FILE *fout,
 			const char *onlytable, const bool oids)
 {
 
@@ -2270,12 +2270,12 @@ AddAcl(char *s, const char *add)
 	char	   *t;
 
 	if (s == (char *) NULL)
-		return (strdup(add));
+		return strdup(add);
 
 	t = (char *) calloc((strlen(s) + strlen(add) + 1), sizeof(char));
 	sprintf(t, "%s,%s", s, add);
 
-	return (t);
+	return t;
 }
 
 /*
@@ -2294,7 +2294,7 @@ GetPrivledges(char *s)
 	/* RULE          == R   */
 
 	if (strstr(s, "arwR"))
-		return (strdup("ALL"));
+		return strdup("ALL");
 
 	if (strchr(s, 'a'))
 		acls = AddAcl(acls, "INSERT");
@@ -2308,7 +2308,7 @@ GetPrivledges(char *s)
 	if (strchr(s, 'R'))
 		acls = AddAcl(acls, "RULES");
 
-	return (acls);
+	return acls;
 }
 
 /* This will parse the acl string of TableInfo
@@ -2373,7 +2373,7 @@ ParseACL(const char *acls, int *count)
 	}
 
 	*count = NumAcls;
-	return (ParsedAcl);
+	return ParsedAcl;
 }
 /*
  * dumpACL:

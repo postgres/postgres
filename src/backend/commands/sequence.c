@@ -38,7 +38,7 @@ typedef struct FormData_pg_sequence
 	char		is_called;
 } FormData_pg_sequence;
 
-typedef FormData_pg_sequence *SequenceTupleForm;
+typedef FormData_pg_sequence *Form_pg_sequence;
 
 typedef struct sequence_magic
 {
@@ -61,8 +61,8 @@ typedef SeqTableData *SeqTable;
 static SeqTable seqtab = NULL;
 
 static SeqTable init_sequence(char *caller, char *name);
-static SequenceTupleForm read_info(char *caller, SeqTable elm, Buffer *buf);
-static void init_params(CreateSeqStmt *seq, SequenceTupleForm new);
+static Form_pg_sequence read_info(char *caller, SeqTable elm, Buffer *buf);
+static void init_params(CreateSeqStmt *seq, Form_pg_sequence new);
 static int	get_param(DefElem *def);
 
 /*
@@ -91,7 +91,7 @@ DefineSequence(CreateSeqStmt *seq)
 	init_params(seq, &new);
 
 	/*
-	 * Create relation (and fill null[] & value[])
+	 * Create relation (and fill *null & *value)
 	 */
 	stmt->tableElts = NIL;
 	for (i = SEQ_COL_FIRSTCOL; i <= SEQ_COL_LASTCOL; i++)
@@ -164,7 +164,7 @@ DefineSequence(CreateSeqStmt *seq)
 
 	RelationSetLockForWrite(rel);
 
-	tupDesc = RelationGetTupleDescriptor(rel);
+	tupDesc = RelationGetDescr(rel);
 
 	Assert(RelationGetNumberOfBlocks(rel) == 0);
 	buf = ReadBuffer(rel, P_NEW);
@@ -199,7 +199,7 @@ nextval(struct varlena * seqin)
 	char	   *seqname = textout(seqin);
 	SeqTable	elm;
 	Buffer		buf;
-	SequenceTupleForm seq;
+	Form_pg_sequence seq;
 	ItemPointerData iptr;
 	int4		incby,
 				maxv,
@@ -216,7 +216,7 @@ nextval(struct varlena * seqin)
 	if (elm->last != elm->cached)		/* some numbers were cached */
 	{
 		elm->last += elm->increment;
-		return (elm->last);
+		return elm->last;
 	}
 
 	seq = read_info("nextval", elm, &buf);		/* lock page and read
@@ -288,7 +288,7 @@ nextval(struct varlena * seqin)
 	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
 	RelationUnsetSingleWLockPage(elm->rel, &iptr);
 
-	return (result);
+	return result;
 
 }
 
@@ -309,7 +309,7 @@ currval(struct varlena * seqin)
 
 	result = elm->last;
 
-	return (result);
+	return result;
 
 }
 
@@ -319,7 +319,7 @@ setval(struct varlena * seqin, int4 next)
 	char	*seqname = textout(seqin);
 	SeqTable	elm;
 	Buffer	buf;
-	SequenceTupleForm seq;
+	Form_pg_sequence seq;
 	ItemPointerData iptr;
 
 #ifndef NO_SECURITY
@@ -356,10 +356,10 @@ setval(struct varlena * seqin, int4 next)
 	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
 	RelationUnsetSingleWLockPage (elm->rel, &iptr);
 
-	return (next);
+	return next;
 }
 
-static SequenceTupleForm
+static Form_pg_sequence
 read_info(char *caller, SeqTable elm, Buffer *buf)
 {
 	ItemPointerData iptr;
@@ -367,7 +367,7 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	ItemId		lp;
 	HeapTuple	tuple;
 	sequence_magic *sm;
-	SequenceTupleForm seq;
+	Form_pg_sequence seq;
 
 	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
 	RelationSetSingleWLockPage(elm->rel, &iptr);
@@ -390,11 +390,11 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	Assert(ItemIdIsUsed(lp));
 	tuple = (HeapTuple) PageGetItem((Page) page, lp);
 
-	seq = (SequenceTupleForm) GETSTRUCT(tuple);
+	seq = (Form_pg_sequence) GETSTRUCT(tuple);
 
 	elm->increment = seq->increment_by;
 
-	return (seq);
+	return seq;
 
 }
 
@@ -427,7 +427,7 @@ init_sequence(char *caller, char *name)
 /* found */
 	{
 		if (elm->rel != (Relation) NULL)		/* already opened */
-			return (elm);
+			return elm;
 		temp = elm;
 	}
 
@@ -461,7 +461,7 @@ init_sequence(char *caller, char *name)
 			priv->next = elm;
 	}
 
-	return (elm);
+	return elm;
 
 }
 
@@ -494,7 +494,7 @@ CloseSequences(void)
 
 
 static void
-init_params(CreateSeqStmt *seq, SequenceTupleForm new)
+init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 {
 	DefElem    *last_value = NULL;
 	DefElem    *increment_by = NULL;
@@ -591,8 +591,8 @@ get_param(DefElem *def)
 		elog(ERROR, "DefineSequence: \"%s\" value unspecified", def->defname);
 
 	if (nodeTag(def->arg) == T_Integer)
-		return (intVal(def->arg));
+		return intVal(def->arg);
 
 	elog(ERROR, "DefineSequence: \"%s\" is to be integer", def->defname);
-	return (-1);
+	return -1;
 }

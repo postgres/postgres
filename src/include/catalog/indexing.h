@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.16 1998/08/19 02:03:46 momjian Exp $
+ * $Id: indexing.h,v 1.17 1998/09/01 03:27:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ extern char *IndexedCatalogNames[];
  *
  * Functions for each index to perform the necessary scan on a cache miss.
  */
-extern void CatalogOpenIndices(int nIndices, char *names[], Relation idescs[]);
+extern void CatalogOpenIndices(int nIndices, char **names, Relation *idescs);
 extern void CatalogCloseIndices(int nIndices, Relation *idescs);
 extern void
 CatalogIndexInsert(Relation *idescs,

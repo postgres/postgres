@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.24 1998/07/20 19:53:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.25 1998/09/01 03:23:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -274,7 +274,7 @@ index_outerjoin_references(List *inner_indxqual,
 		}
 
 	}
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -305,14 +305,14 @@ replace_clause_joinvar_refs(Expr *clause,
 		temp = (List *) replace_joinvar_refs((Var *) clause,
 											 outer_tlist, inner_tlist);
 		if (temp)
-			return (temp);
+			return temp;
 		else if (clause != NULL)
-			return ((List *) clause);
+			return (List *) clause;
 		else
-			return (NIL);
+			return NIL;
 	}
 	else if (single_node((Node *) clause))
-		return ((List *) clause);
+		return (List *) clause;
 	else if (and_clause((Node *) clause))
 	{
 		List	   *andclause =
@@ -320,7 +320,7 @@ replace_clause_joinvar_refs(Expr *clause,
 									   outer_tlist,
 									   inner_tlist);
 
-		return ((List *) make_andclause(andclause));
+		return (List *) make_andclause(andclause);
 	}
 	else if (or_clause((Node *) clause))
 	{
@@ -329,7 +329,7 @@ replace_clause_joinvar_refs(Expr *clause,
 									   outer_tlist,
 									   inner_tlist);
 
-		return ((List *) make_orclause(orclause));
+		return (List *) make_orclause(orclause);
 	}
 	else if (IsA(clause, ArrayRef))
 	{
@@ -355,7 +355,7 @@ replace_clause_joinvar_refs(Expr *clause,
 		 * structure 'clause'.
 		 */
 
-		return ((List *) clause);
+		return (List *) clause;
 	}
 	else if (is_funcclause((Node *) clause))
 	{
@@ -374,7 +374,7 @@ replace_clause_joinvar_refs(Expr *clause,
 									outer_tlist,
 									inner_tlist);
 
-		return ((List *) make_notclause((Expr *) notclause));
+		return (List *) make_notclause((Expr *) notclause);
 	}
 	else if (is_opclause((Node *) clause))
 	{
@@ -401,7 +401,7 @@ replace_clause_joinvar_refs(Expr *clause,
 			replace_subclause_joinvar_refs(((SubPlan *) ((Expr *) clause)->oper)->sublink->oper,
 										   outer_tlist,
 										   inner_tlist);
-		return ((List *) clause);
+		return (List *) clause;
 	}
 	/* shouldn't reach here */
 	elog(ERROR, "replace_clause_joinvar_refs: unsupported clause %d",
@@ -425,7 +425,7 @@ replace_subclause_joinvar_refs(List *clauses,
 										   inner_tlist);
 		t_list = lappend(t_list, temp);
 	}
-	return (t_list);
+	return t_list;
 }
 
 static Var *
@@ -508,7 +508,7 @@ tlist_temp_references(Oid tempid,
 
 		t_list = lappend(t_list, temp);
 	}
-	return (t_list);
+	return t_list;
 }
 
 /*---------------------------------------------------------

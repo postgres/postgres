@@ -283,7 +283,7 @@ RETCODE SQL_API SQLTransact(
         UWORD   fType)
 {
 char *func = "SQLTransact";
-extern ConnectionClass *conns[];
+extern ConnectionClass **conns;
 ConnectionClass *conn;
 QResultClass *res;
 char ok, *stmt_string;

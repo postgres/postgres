@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.41 1998/06/15 19:29:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.42 1998/09/01 03:27:13 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -428,7 +428,7 @@ createfirstrun(Sort *node)
 	{
 		Assert(foundeor);
 		pfree(memtuples);
-		return (false);
+		return false;
 	}
 	t_last++;
 	PS(node)->tupcount = t_last;
@@ -456,7 +456,7 @@ createfirstrun(Sort *node)
 		PS(node)->memtuples = memtuples;
 	}
 
-	return (!foundeor);
+	return !foundeor;
 }
 
 /*
@@ -574,7 +574,7 @@ createrun(Sort *node, FILE *file)
 
 	pfree(memtuples);
 
-	return (!foundeor);
+	return !foundeor;
 }
 
 /*
@@ -590,11 +590,11 @@ tuplecopy(HeapTuple tup)
 
 	if (!HeapTupleIsValid(tup))
 	{
-		return (NULL);			/* just in case */
+		return NULL;			/* just in case */
 	}
 	rettup = (HeapTuple) palloc(tup->t_len);
 	memmove((char *) rettup, (char *) tup, tup->t_len); /* XXX */
-	return (rettup);
+	return rettup;
 }
 
 /*
@@ -624,7 +624,7 @@ mergeruns(Sort *node)
 		merge(node, tp);
 		rewind(tp->tp_file);
 	}
-	return (tp->tp_file);
+	return tp->tp_file;
 }
 
 /*
@@ -875,7 +875,7 @@ psort_grabtuple(Sort *node, bool *should_free)
 		if (ScanDirectionIsForward(node->plan.state->es_direction))
 		{
 			if (PS(node)->psort_current < PS(node)->tupcount)
-				return (PS(node)->memtuples[PS(node)->psort_current++]);
+				return PS(node)->memtuples[PS(node)->psort_current++];
 			else
 			{
 				PS(node)->all_fetched = true;
@@ -898,7 +898,7 @@ psort_grabtuple(Sort *node, bool *should_free)
 			if (PS(node)->psort_current <= 0)
 				return NULL;
 		}
-		return (PS(node)->memtuples[PS(node)->psort_current - 1]);
+		return PS(node)->memtuples[PS(node)->psort_current - 1];
 	}
 }
 
@@ -1049,7 +1049,7 @@ gettape()
 	tp->tl_fd = fileno(file);
 	tp->tl_next = Tapes;
 	Tapes = tp;
-	return (file);
+	return file;
 }
 
 /*
@@ -1159,5 +1159,5 @@ _psort_cmp(HeapTuple *ltup, HeapTuple *rtup)
 		else if (!(result = -(long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (lattr, rattr)))
 			result = (long) (*fmgr_faddr(&PsortKeys[nkey].sk_func)) (rattr, lattr);
 	}
-	return (result);
+	return result;
 }

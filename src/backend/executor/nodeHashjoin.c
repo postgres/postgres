@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.11 1998/02/26 04:31:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeHashjoin.c,v 1.12 1998/09/01 03:22:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ ExecHashJoin(HashJoin *node)
 		node->hashdone = true;
 	}
 	else if (hashtable == NULL)
-		return (NULL);
+		return NULL;
 
 	nbatch = hashtable->nbatch;
 	outerbatches = hjstate->hj_OuterBatches;

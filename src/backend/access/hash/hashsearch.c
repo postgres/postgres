@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.15 1998/06/15 19:27:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.16 1998/09/01 03:21:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	 * next tuple, we come back with a lock on that buffer.
 	 */
 	if (!_hash_step(scan, &buf, dir, metabuf))
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
@@ -118,7 +118,7 @@ _hash_next(IndexScanDesc scan, ScanDirection dir)
 	itup = &hitem->hash_itup;
 	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 
-	return (res);
+	return res;
 }
 
 static void
@@ -236,7 +236,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 			{
 				_hash_relbuf(rel, buf, HASH_READ);
 				_hash_relbuf(rel, metabuf, HASH_READ);
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 			}
 		}
 	}
@@ -247,7 +247,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	}
 
 	if (!_hash_step(scan, &buf, dir, metabuf))
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 
 	/* if we're here, _hash_step found a valid tuple */
 	current = &(scan->currentItemData);
@@ -258,7 +258,7 @@ _hash_first(IndexScanDesc scan, ScanDirection dir)
 	itup = &hitem->hash_itup;
 	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 
-	return (res);
+	return res;
 }
 
 /*
@@ -432,7 +432,7 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 			_hash_relbuf(rel, metabuf, HASH_READ);
 			*bufP = so->hashso_curbuf = InvalidBuffer;
 			ItemPointerSetInvalid(current);
-			return (false);
+			return false;
 		}
 
 		/* get ready to check this tuple */
@@ -445,5 +445,5 @@ _hash_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir, Buffer metabuf)
 	blkno = BufferGetBlockNumber(buf);
 	*bufP = so->hashso_curbuf = buf;
 	ItemPointerSet(current, blkno, offnum);
-	return (true);
+	return true;
 }

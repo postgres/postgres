@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.22 1998/08/31 07:55:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.23 1998/09/01 03:23:49 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -60,7 +60,7 @@ make_clause(int type, Node *oper, List *args)
 	{
 		elog(ERROR, "make_clause: unsupported type %d", type);
 		/* will this ever happen? translated from lispy C code - ay 10/94 */
-		return ((Expr *) args);
+		return (Expr *) args;
 	}
 }
 
@@ -117,7 +117,7 @@ Var *
 get_leftop(Expr *clause)
 {
 	if (clause->args != NULL)
-		return (lfirst(clause->args));
+		return lfirst(clause->args);
 	else
 		return NULL;
 }
@@ -132,7 +132,7 @@ Var *
 get_rightop(Expr *clause)
 {
 	if (clause->args != NULL && lnext(clause->args) != NULL)
-		return (lfirst(lnext(clause->args)));
+		return lfirst(lnext(clause->args));
 	else
 		return NULL;
 }
@@ -266,7 +266,7 @@ make_notclause(Expr *notclause)
 Expr *
 get_notclausearg(Expr *notclause)
 {
-	return (lfirst(notclause->args));
+	return lfirst(notclause->args);
 }
 
 /*****************************************************************************
@@ -405,7 +405,7 @@ NumRelids(Node *clause)
 			var_list = lconsi(var->varno, var_list);
 	}
 
-	return (length(var_list));
+	return length(var_list);
 }
 
 /*
@@ -419,10 +419,10 @@ bool
 contains_not(Node *clause)
 {
 	if (single_node(clause))
-		return (false);
+		return false;
 
 	if (not_clause(clause))
-		return (true);
+		return true;
 
 	if (or_clause(clause) || and_clause(clause))
 	{
@@ -431,11 +431,11 @@ contains_not(Node *clause)
 		foreach(a, ((Expr *) clause)->args)
 		{
 			if (contains_not(lfirst(a)))
-				return (true);
+				return true;
 		}
 	}
 
-	return (false);
+	return false;
 }
 
 /*
@@ -467,9 +467,9 @@ is_joinable(Node *clause)
 	 * ... or a func node.
 	 */
 	if (is_funcclause(leftop) || is_funcclause(rightop))
-		return (true);
+		return true;
 
-	return (false);
+	return false;
 }
 
 /*
@@ -487,11 +487,11 @@ qual_clause_p(Node *clause)
 	/* How about Param-s ?	- vadim 02/03/98 */
 	if (IsA(get_leftop((Expr *) clause), Var) &&
 		IsA(get_rightop((Expr *) clause), Const))
-		return (true);
+		return true;
 	else if (IsA(get_rightop((Expr *) clause), Var) &&
 			 IsA(get_leftop((Expr *) clause), Const))
-		return (true);
-	return (false);
+		return true;
+	return false;
 }
 
 /*
@@ -558,7 +558,7 @@ fix_opids(List *clauses)
 	foreach(clause, clauses)
 		fix_opid(lfirst(clause));
 
-	return (clauses);
+	return clauses;
 }
 
 /*
@@ -759,7 +759,7 @@ CommuteClause(Node *clause)
 {
 	Node	   *temp;
 	Oper	   *commu;
-	OperatorTupleForm commuTup;
+	Form_pg_operator commuTup;
 	HeapTuple	heapTup;
 
 	if (!is_opclause(clause))
@@ -771,7 +771,7 @@ CommuteClause(Node *clause)
 	if (heapTup == (HeapTuple) NULL)
 		return;
 
-	commuTup = (OperatorTupleForm) GETSTRUCT(heapTup);
+	commuTup = (Form_pg_operator) GETSTRUCT(heapTup);
 
 	commu = makeOper(heapTup->t_oid,
 					 InvalidOid,

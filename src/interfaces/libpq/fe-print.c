@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.10 1998/08/17 03:50:39 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.11 1998/09/01 03:28:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,17 +55,17 @@ static struct winsize
 static void
 do_field(PQprintOpt *po, PGresult *res,
 		 const int i, const int j, char *buf, const int fs_len,
-		 char *fields[],
-		 const int nFields, char *fieldNames[],
-		 unsigned char fieldNotNum[], int fieldMax[],
+		 char **fields,
+		 const int nFields, char **fieldNames,
+		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout);
 static char *
 do_header(FILE *fout, PQprintOpt *po, const int nFields,
-		  int fieldMax[], char *fieldNames[], unsigned char fieldNotNum[],
+		  int *fieldMax, char **fieldNames, unsigned char *fieldNotNum,
 		  const int fs_len, PGresult *res);
 static void
-output_row(FILE *fout, PQprintOpt *po, const int nFields, char *fields[],
-		   unsigned char fieldNotNum[], int fieldMax[], char *border,
+output_row(FILE *fout, PQprintOpt *po, const int nFields, char **fields,
+		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index);
 static void fill(int length, int max, char filler, FILE *fp);
 
@@ -521,9 +521,9 @@ int PQmblen(unsigned char *s)
 static void
 do_field(PQprintOpt *po, PGresult *res,
 		 const int i, const int j, char *buf, const int fs_len,
-		 char *fields[],
-		 const int nFields, char *fieldNames[],
-		 unsigned char fieldNotNum[], int fieldMax[],
+		 char **fields,
+		 const int nFields, char **fieldNames,
+		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout)
 {
 
@@ -626,8 +626,8 @@ do_field(PQprintOpt *po, PGresult *res,
 
 
 static char *
-do_header(FILE *fout, PQprintOpt *po, const int nFields, int fieldMax[],
-		  char *fieldNames[], unsigned char fieldNotNum[],
+do_header(FILE *fout, PQprintOpt *po, const int nFields, int *fieldMax,
+		  char **fieldNames, unsigned char *fieldNotNum,
 		  const int fs_len, PGresult *res)
 {
 
@@ -714,8 +714,8 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int fieldMax[],
 
 
 static void
-output_row(FILE *fout, PQprintOpt *po, const int nFields, char *fields[],
-		   unsigned char fieldNotNum[], int fieldMax[], char *border,
+output_row(FILE *fout, PQprintOpt *po, const int nFields, char **fields,
+		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index)
 {
 

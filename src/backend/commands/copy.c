@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.57 1998/08/29 18:19:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.58 1998/09/01 03:21:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 
 	int32		attr_count,
 				i;
-	AttributeTupleForm *attr;
+	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
 	Oid			out_func_oid;
 	Oid		   *elements;
@@ -371,7 +371,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 {
 	HeapTuple	tuple;
 	AttrNumber	attr_count;
-	AttributeTupleForm *attr;
+	Form_pg_attribute *attr;
 	FmgrInfo   *in_functions;
 	int			i;
 	Oid			in_func_oid;
@@ -397,7 +397,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			  **finfoP = NULL;
 	TupleDesc  *itupdescArr;
 	HeapTuple	pgIndexTup;
-	IndexTupleForm *pgIndexP = NULL;
+	Form_pg_index *pgIndexP = NULL;
 	int		   *indexNatts = NULL;
 	char	   *predString;
 	Node	  **indexPred = NULL;
@@ -418,7 +418,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	Oid			loaded_oid;
 	bool		skip_tuple = false;
 
-	tupDesc = RelationGetTupleDescriptor(rel);
+	tupDesc = RelationGetDescr(rel);
 	attr = tupDesc->attrs;
 	attr_count = tupDesc->natts;
 
@@ -438,7 +438,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			itupdescArr =
 				(TupleDesc *) palloc(n_indices * sizeof(TupleDesc));
 			pgIndexP =
-				(IndexTupleForm *) palloc(n_indices * sizeof(IndexTupleForm));
+				(Form_pg_index *) palloc(n_indices * sizeof(Form_pg_index));
 			indexNatts = (int *) palloc(n_indices * sizeof(int));
 			finfo = (FuncIndexInfo *) palloc(n_indices * sizeof(FuncIndexInfo));
 			finfoP = (FuncIndexInfo **) palloc(n_indices * sizeof(FuncIndexInfo *));
@@ -446,13 +446,13 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 			econtext = NULL;
 			for (i = 0; i < n_indices; i++)
 			{
-				itupdescArr[i] = RelationGetTupleDescriptor(index_rels[i]);
+				itupdescArr[i] = RelationGetDescr(index_rels[i]);
 				pgIndexTup =
 					SearchSysCacheTuple(INDEXRELID,
 								  ObjectIdGetDatum(RelationGetRelid(index_rels[i])),
 										0, 0, 0);
 				Assert(pgIndexTup);
-				pgIndexP[i] = (IndexTupleForm) GETSTRUCT(pgIndexTup);
+				pgIndexP[i] = (Form_pg_index) GETSTRUCT(pgIndexTup);
 				for (attnumP = &(pgIndexP[i]->indkey[0]), natts = 0;
 					 *attnumP != InvalidAttrNumber;
 					 attnumP++, natts++);
@@ -480,7 +480,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 						slot = ExecAllocTableSlot(tupleTable);
 						econtext = makeNode(ExprContext);
 						econtext->ecxt_scantuple = slot;
-						rtupdesc = RelationGetTupleDescriptor(rel);
+						rtupdesc = RelationGetDescr(rel);
 						slot->ttc_tupleDescriptor = rtupdesc;
 
 						/*
@@ -831,10 +831,10 @@ GetOutputFunction(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
+		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typoutput;
 
 	elog(ERROR, "GetOutputFunction: Cache lookup of type %d failed", type);
-	return (InvalidOid);
+	return InvalidOid;
 }
 
 static Oid
@@ -847,10 +847,10 @@ GetTypeElement(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
+		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 
 	elog(ERROR, "GetOutputFunction: Cache lookup of type %d failed", type);
-	return (InvalidOid);
+	return InvalidOid;
 }
 
 static Oid
@@ -863,10 +863,10 @@ GetInputFunction(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typinput);
+		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typinput;
 
 	elog(ERROR, "GetInputFunction: Cache lookup of type %d failed", type);
-	return (InvalidOid);
+	return InvalidOid;
 }
 
 static Oid
@@ -879,11 +879,11 @@ IsTypeByVal(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((int) ((TypeTupleForm) GETSTRUCT(typeTuple))->typbyval);
+		return (int) ((Form_pg_type) GETSTRUCT(typeTuple))->typbyval;
 
 	elog(ERROR, "GetInputFunction: Cache lookup of type %d failed", type);
 
-	return (InvalidOid);
+	return InvalidOid;
 }
 
 /*
@@ -917,7 +917,7 @@ GetIndexRelations(Oid main_relation_oid,
 
 	pg_index_rel = heap_openr(IndexRelationName);
 	scandesc = heap_beginscan(pg_index_rel, 0, SnapshotNow, 0, NULL);
-	tupDesc = RelationGetTupleDescriptor(pg_index_rel);
+	tupDesc = RelationGetDescr(pg_index_rel);
 
 	*n_indices = 0;
 
@@ -1039,25 +1039,25 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 	if (*newline)
 	{
 		*isnull = (bool) true;
-		return (NULL);
+		return NULL;
 	}
 #endif
 
 	*isnull = (bool) false;		/* set default */
 	if (feof(fp))
-		return (NULL);
+		return NULL;
 
 	while (!done)
 	{
 		c = getc(fp);
 
 		if (feof(fp))
-			return (NULL);
+			return NULL;
 		else if (c == '\\')
 		{
 			c = getc(fp);
 			if (feof(fp))
-				return (NULL);
+				return NULL;
 			switch (c)
 			{
 				case '0':
@@ -1082,14 +1082,14 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 							else
 							{
 								if (feof(fp))
-									return (NULL);
+									return NULL;
 								ungetc(c, fp);
 							}
 						}
 						else
 						{
 							if (feof(fp))
-								return (NULL);
+								return NULL;
 							ungetc(c, fp);
 						}
 						c = val & 0377;
@@ -1121,7 +1121,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 					c = getc(fp);
 					if (c != '\n')
 						elog(ERROR, "CopyReadAttribute - end of record marker corrupted. line: %d", lineno);
-					return (NULL);
+					return NULL;
 					break;
 			}
 		}
@@ -1142,7 +1142,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 			for(j=0;j<mblen;j++) {
 			  c = getc(fp);
 			  if (feof(fp))
-			    return (NULL);
+			    return NULL;
 			  attribute[i++] = c;
 			}
 #endif
@@ -1153,7 +1153,7 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 #ifdef MULTIBYTE
 	return(pg_client_to_server((unsigned char*)attribute, strlen(attribute)));
 #else
-	return (&attribute[0]);
+	return &attribute[0];
 #endif
 }
 
@@ -1233,5 +1233,5 @@ CountTuples(Relation relation)
 	while (HeapTupleIsValid(tuple = heap_getnext(scandesc, 0)))
 		i++;
 	heap_endscan(scandesc);
-	return (i);
+	return i;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.63 1998/08/29 02:09:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.64 1998/09/01 03:28:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -650,7 +650,7 @@ PQisBusy(PGconn *conn)
 	parseInput(conn);
 
 	/* PQgetResult will return immediately in all states except BUSY. */
-	return (conn->asyncStatus == PGASYNC_BUSY);
+	return conn->asyncStatus == PGASYNC_BUSY;
 }
 
 
@@ -1410,7 +1410,7 @@ PQcmdTuples(PGresult *res)
 		}
 		p++;
 		if (*(res->cmdStatus) != 'I')	/* UPDATE/DELETE */
-			return (p);
+			return p;
 		while (*p != ' ' && *p)
 			p++;				/* INSERT: skip oid */
 		if (*p == 0)
@@ -1421,7 +1421,7 @@ PQcmdTuples(PGresult *res)
 			return "";
 		}
 		p++;
-		return (p);
+		return p;
 	}
 	return "";
 }

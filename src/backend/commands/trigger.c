@@ -57,7 +57,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	Relation	tgrel;
 	HeapScanDesc tgscan;
 	ScanKeyData key;
-	Relation	relrdesc;
+	Relation	pgrel;
 	HeapTuple	tuple;
 	Relation	idescs[Num_pg_trigger_indices];
 	Relation	ridescs[Num_pg_class_indices];
@@ -225,15 +225,15 @@ CreateTrigger(CreateTrigStmt *stmt)
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
 
-	relrdesc = heap_openr(RelationRelationName);
+	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
-	RelationInvalidateHeapTuple(relrdesc, tuple);
-	heap_replace(relrdesc, &tuple->t_ctid, tuple);
+	RelationInvalidateHeapTuple(pgrel, tuple);
+	heap_replace(pgrel, &tuple->t_ctid, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, relrdesc, tuple);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	pfree(tuple);
-	heap_close(relrdesc);
+	heap_close(pgrel);
 
 	CommandCounterIncrement();
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
@@ -252,7 +252,7 @@ DropTrigger(DropTrigStmt *stmt)
 	Relation	tgrel;
 	HeapScanDesc tgscan;
 	ScanKeyData key;
-	Relation	relrdesc;
+	Relation	pgrel;
 	HeapTuple	tuple;
 	Relation	ridescs[Num_pg_class_indices];
 	MemoryContext oldcxt;
@@ -304,15 +304,15 @@ DropTrigger(DropTrigStmt *stmt)
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
 
 	/* update pg_class */
-	relrdesc = heap_openr(RelationRelationName);
+	pgrel = heap_openr(RelationRelationName);
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
-	RelationInvalidateHeapTuple(relrdesc, tuple);
-	heap_replace(relrdesc, &tuple->t_ctid, tuple);
+	RelationInvalidateHeapTuple(pgrel, tuple);
+	heap_replace(pgrel, &tuple->t_ctid, tuple);
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, relrdesc, tuple);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, pgrel, tuple);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 	pfree(tuple);
-	heap_close(relrdesc);
+	heap_close(pgrel);
 
 	CommandCounterIncrement();
 	oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
@@ -631,7 +631,7 @@ ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 	}
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
-	return (newtuple);
+	return newtuple;
 }
 
 void
@@ -670,7 +670,7 @@ ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
 
 	trigtuple = GetTupleForTrigger(rel, tupleid, true);
 	if (trigtuple == NULL)
-		return (false);
+		return false;
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
 	SaveTriggerData->tg_event =
@@ -690,7 +690,7 @@ ExecBRDeleteTriggers(Relation rel, ItemPointer tupleid)
 	pfree(SaveTriggerData);
 	pfree(trigtuple);
 
-	return ((newtuple == NULL) ? false : true);
+	return (newtuple == NULL) ? false : true;
 }
 
 void
@@ -736,7 +736,7 @@ ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 
 	trigtuple = GetTupleForTrigger(rel, tupleid, true);
 	if (trigtuple == NULL)
-		return (NULL);
+		return NULL;
 
 	SaveTriggerData = (TriggerData *) palloc(sizeof(TriggerData));
 	SaveTriggerData->tg_event =
@@ -757,7 +757,7 @@ ExecBRUpdateTriggers(Relation rel, ItemPointer tupleid, HeapTuple newtuple)
 	CurrentTriggerData = NULL;
 	pfree(SaveTriggerData);
 	pfree(trigtuple);
-	return (newtuple);
+	return newtuple;
 }
 
 void
@@ -816,7 +816,7 @@ GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 		{
 			elog(NOTICE, "GetTupleForTrigger: Non-functional delete/update");
 			ReleaseBuffer(b);
-			return (NULL);
+			return NULL;
 		}
 
 		HeapTupleSatisfies(lp, relation, b, dp,
@@ -831,5 +831,5 @@ GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 	tuple = heap_copytuple(tuple);
 	ReleaseBuffer(b);
 
-	return (tuple);
+	return tuple;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.18 1998/08/04 16:43:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.19 1998/09/01 03:22:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,19 +39,19 @@ static bool
 _equalResdom(Resdom *a, Resdom *b)
 {
 	if (a->resno != b->resno)
-		return (false);
+		return false;
 	if (a->restype != b->restype)
-		return (false);
+		return false;
 	if (a->restypmod != b->restypmod)
-		return (false);
+		return false;
 	if (strcmp(a->resname, b->resname) != 0)
-		return (false);
+		return false;
 	if (a->reskey != b->reskey)
-		return (false);
+		return false;
 	if (a->reskeyop != b->reskeyop)
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 static bool
@@ -60,19 +60,19 @@ _equalFjoin(Fjoin *a, Fjoin *b)
 	int			nNodes;
 
 	if (a->fj_initialized != b->fj_initialized)
-		return (false);
+		return false;
 	if (a->fj_nNodes != b->fj_nNodes)
-		return (false);
+		return false;
 	if (!equal(a->fj_innerNode, b->fj_innerNode))
-		return (false);
+		return false;
 
 	nNodes = a->fj_nNodes;
 	if (memcmp(a->fj_results, b->fj_results, nNodes * sizeof(Datum)) != 0)
-		return (false);
+		return false;
 	if (memcmp(a->fj_alwaysDone, b->fj_alwaysDone, nNodes * sizeof(bool)) != 0)
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 /*
@@ -82,39 +82,39 @@ static bool
 _equalExpr(Expr *a, Expr *b)
 {
 	if (a->opType != b->opType)
-		return (false);
+		return false;
 	if (!equal(a->oper, b->oper))
-		return (false);
+		return false;
 	if (!equal(a->args, b->args))
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 static bool
 _equalIter(Iter *a, Iter *b)
 {
-	return (equal(a->iterexpr, b->iterexpr));
+	return equal(a->iterexpr, b->iterexpr);
 }
 
 static bool
 _equalStream(Stream *a, Stream *b)
 {
 	if (a->clausetype != b->clausetype)
-		return (false);
+		return false;
 	if (a->groupup != b->groupup)
-		return (false);
+		return false;
 	if (a->groupcost != b->groupcost)
-		return (false);
+		return false;
 	if (a->groupsel != b->groupsel)
-		return (false);
+		return false;
 	if (!equal(a->pathptr, b->pathptr))
-		return (false);
+		return false;
 	if (!equal(a->cinfo, b->cinfo))
-		return (false);
+		return false;
 	if (!equal(a->upstream, b->upstream))
-		return (false);
-	return (equal(a->downstream, b->downstream));
+		return false;
+	return equal(a->downstream, b->downstream);
 }
 
 /*
@@ -124,57 +124,57 @@ static bool
 _equalVar(Var *a, Var *b)
 {
 	if (a->varno != b->varno)
-		return (false);
+		return false;
 	if (a->varattno != b->varattno)
-		return (false);
+		return false;
 	if (a->vartype != b->vartype)
-		return (false);
+		return false;
 	if (a->vartypmod != b->vartypmod)
-		return (false);
+		return false;
 	if (a->varlevelsup != b->varlevelsup)
-		return (false);
+		return false;
 	if (a->varnoold != b->varnoold)
-		return (false);
+		return false;
 	if (a->varoattno != b->varoattno)
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 static bool
 _equalArray(Array *a, Array *b)
 {
 	if (a->arrayelemtype != b->arrayelemtype)
-		return (false);
+		return false;
 	if (a->arrayndim != b->arrayndim)
-		return (false);
+		return false;
 	if (a->arraylow.indx[0] != b->arraylow.indx[0])
-		return (false);
+		return false;
 	if (a->arrayhigh.indx[0] != b->arrayhigh.indx[0])
-		return (false);
+		return false;
 	if (a->arraylen != b->arraylen)
-		return (false);
-	return (TRUE);
+		return false;
+	return TRUE;
 }
 
 static bool
 _equalArrayRef(ArrayRef *a, ArrayRef *b)
 {
 	if (a->refelemtype != b->refelemtype)
-		return (false);
+		return false;
 	if (a->refattrlength != b->refattrlength)
-		return (false);
+		return false;
 	if (a->refelemlength != b->refelemlength)
-		return (false);
+		return false;
 	if (a->refelembyval != b->refelembyval)
-		return (false);
+		return false;
 	if (!equal(a->refupperindexpr, b->refupperindexpr))
-		return (false);
+		return false;
 	if (!equal(a->reflowerindexpr, b->reflowerindexpr))
-		return (false);
+		return false;
 	if (!equal(a->refexpr, b->refexpr))
-		return (false);
-	return (equal(a->refassgnexpr, b->refassgnexpr));
+		return false;
+	return equal(a->refassgnexpr, b->refassgnexpr);
 }
 
 /*
@@ -184,11 +184,11 @@ static bool
 _equalOper(Oper *a, Oper *b)
 {
 	if (a->opno != b->opno)
-		return (false);
+		return false;
 	if (a->opresulttype != b->opresulttype)
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 /*
@@ -203,13 +203,13 @@ _equalConst(Const *a, Const *b)
 	 * ridiculous.	-- JMH, 7/11/92
 	 */
 	if (a->consttype != b->consttype)
-		return (false);
+		return false;
 	if (a->constlen != b->constlen)
-		return (false);
+		return false;
 	if (a->constisnull != b->constisnull)
-		return (false);
+		return false;
 	if (a->constbyval != b->constbyval)
-		return (false);
+		return false;
 	return (datumIsEqual(a->constvalue, b->constvalue,
 						 a->consttype, a->constbyval, a->constlen));
 }
@@ -221,11 +221,11 @@ static bool
 _equalParam(Param *a, Param *b)
 {
 	if (a->paramkind != b->paramkind)
-		return (false);
+		return false;
 	if (a->paramtype != b->paramtype)
-		return (false);
+		return false;
 	if (!equal(a->param_tlist, b->param_tlist))
-		return (false);
+		return false;
 
 	switch (a->paramkind)
 	{
@@ -233,26 +233,26 @@ _equalParam(Param *a, Param *b)
 		case PARAM_NEW:
 		case PARAM_OLD:
 			if (strcmp(a->paramname, b->paramname) != 0)
-				return (false);
+				return false;
 			break;
 		case PARAM_NUM:
 		case PARAM_EXEC:
 			if (a->paramid != b->paramid)
-				return (false);
+				return false;
 			break;
 		case PARAM_INVALID:
 
 			/*
 			 * XXX: Hmmm... What are we supposed to return in this case ??
 			 */
-			return (true);
+			return true;
 			break;
 		default:
 			elog(ERROR, "_equalParam: Invalid paramkind value: %d",
 				 a->paramkind);
 	}
 
-	return (true);
+	return true;
 }
 
 /*
@@ -262,42 +262,42 @@ static bool
 _equalFunc(Func *a, Func *b)
 {
 	if (a->funcid != b->funcid)
-		return (false);
+		return false;
 	if (a->functype != b->functype)
-		return (false);
+		return false;
 	if (a->funcisindex != b->funcisindex)
-		return (false);
+		return false;
 	if (a->funcsize != b->funcsize)
-		return (false);
+		return false;
 	if (!equal(a->func_tlist, b->func_tlist))
-		return (false);
+		return false;
 	if (!equal(a->func_planlist, b->func_planlist))
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 /*
- * CInfo is a subclass of Node.
+ * ClauseInfo is a subclass of Node.
  */
 static bool
-_equalCInfo(CInfo *a, CInfo *b)
+_equalClauseInfo(ClauseInfo *a, ClauseInfo *b)
 {
-	Assert(IsA(a, CInfo));
-	Assert(IsA(b, CInfo));
+	Assert(IsA(a, ClauseInfo));
+	Assert(IsA(b, ClauseInfo));
 
 	if (!equal(a->clause, b->clause))
-		return (false);
+		return false;
 	if (a->selectivity != b->selectivity)
-		return (false);
+		return false;
 	if (a->notclause != b->notclause)
-		return (false);
+		return false;
 #ifdef EqualMergeOrderExists
 	if (!EqualMergeOrder(a->mergejoinorder, b->mergejoinorder))
-		return (false);
+		return false;
 #endif
 	if (a->hashjoinoperator != b->hashjoinoperator)
-		return (false);
+		return false;
 	return (equal((a->indexids),
 				  (b->indexids)));
 }
@@ -323,20 +323,20 @@ _equalJoinMethod(JoinMethod *a, JoinMethod *b)
 
 	if (!equal((a->jmkeys),
 			   (b->jmkeys)))
-		return (false);
+		return false;
 	if (!equal((a->clauses),
 			   (b->clauses)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
 _equalPath(Path *a, Path *b)
 {
 	if (a->pathtype != b->pathtype)
-		return (false);
+		return false;
 	if (a->parent != b->parent)
-		return (false);
+		return false;
 
 	/*
 	 * if (a->path_cost != b->path_cost) return(false);
@@ -370,31 +370,31 @@ _equalPath(Path *a, Path *b)
 	{
 		if (!equal((a->p_ordering.ord.merge),
 				   (b->p_ordering.ord.merge)))
-			return (false);
+			return false;
 	}
 	if (!equal((a->keys),
 			   (b->keys)))
-		return (false);
+		return false;
 
 	/*
 	 * if (a->outerjoincost != b->outerjoincost) return(false);
 	 */
 	if (!equali((a->joinid),
 				(b->joinid)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
 _equalIndexPath(IndexPath *a, IndexPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
-		return (false);
+		return false;
 	if (!equali((a->indexid), (b->indexid)))
-		return (false);
+		return false;
 	if (!equal((a->indexqual), (b->indexqual)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
@@ -404,14 +404,14 @@ _equalJoinPath(JoinPath *a, JoinPath *b)
 	Assert(IsA_JoinPath(b));
 
 	if (!_equalPath((Path *) a, (Path *) b))
-		return (false);
+		return false;
 	if (!equal((a->pathclauseinfo), (b->pathclauseinfo)))
-		return (false);
+		return false;
 	if (!equal((a->outerjoinpath), (b->outerjoinpath)))
-		return (false);
+		return false;
 	if (!equal((a->innerjoinpath), (b->innerjoinpath)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
@@ -421,14 +421,14 @@ _equalMergePath(MergePath *a, MergePath *b)
 	Assert(IsA(b, MergePath));
 
 	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
-		return (false);
+		return false;
 	if (!equal((a->path_mergeclauses), (b->path_mergeclauses)))
-		return (false);
+		return false;
 	if (!equal((a->outersortkeys), (b->outersortkeys)))
-		return (false);
+		return false;
 	if (!equal((a->innersortkeys), (b->innersortkeys)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
@@ -438,14 +438,14 @@ _equalHashPath(HashPath *a, HashPath *b)
 	Assert(IsA(b, HashPath));
 
 	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
-		return (false);
+		return false;
 	if (!equal((a->path_hashclauses), (b->path_hashclauses)))
-		return (false);
+		return false;
 	if (!equal((a->outerhashkeys), (b->outerhashkeys)))
-		return (false);
+		return false;
 	if (!equal((a->innerhashkeys), (b->innerhashkeys)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
@@ -455,31 +455,31 @@ _equalJoinKey(JoinKey *a, JoinKey *b)
 	Assert(IsA(b, JoinKey));
 
 	if (!equal((a->outer), (b->outer)))
-		return (false);
+		return false;
 	if (!equal((a->inner), (b->inner)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
 _equalMergeOrder(MergeOrder *a, MergeOrder *b)
 {
 	if (a == (MergeOrder *) NULL && b == (MergeOrder *) NULL)
-		return (true);
+		return true;
 	Assert(IsA(a, MergeOrder));
 	Assert(IsA(b, MergeOrder));
 
 	if (a->join_operator != b->join_operator)
-		return (false);
+		return false;
 	if (a->left_operator != b->left_operator)
-		return (false);
+		return false;
 	if (a->right_operator != b->right_operator)
-		return (false);
+		return false;
 	if (a->left_type != b->left_type)
-		return (false);
+		return false;
 	if (a->right_type != b->right_type)
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
@@ -489,8 +489,8 @@ _equalHInfo(HInfo *a, HInfo *b)
 	Assert(IsA(b, HInfo));
 
 	if (a->hashop != b->hashop)
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 /* XXX	This equality function is a quick hack, should be
@@ -507,42 +507,42 @@ _equalIndexScan(IndexScan *a, IndexScan *b)
 	 */
 
 	if (!equal((a->indxqual), (b->indxqual)))
-		return (false);
+		return false;
 
 	if (a->scan.scanrelid != b->scan.scanrelid)
-		return (false);
+		return false;
 
 	if (!equali((a->indxid), (b->indxid)))
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 static bool
 _equalSubPlan(SubPlan *a, SubPlan *b)
 {
 	if (a->plan_id != b->plan_id)
-		return (false);
+		return false;
 
 	if (!equal((a->sublink->oper), (b->sublink->oper)))
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 static bool
-_equalJInfo(JInfo *a, JInfo *b)
+_equalJoinInfo(JoinInfo *a, JoinInfo *b)
 {
-	Assert(IsA(a, JInfo));
-	Assert(IsA(b, JInfo));
+	Assert(IsA(a, JoinInfo));
+	Assert(IsA(b, JoinInfo));
 	if (!equal((a->otherrels), (b->otherrels)))
-		return (false);
+		return false;
 	if (!equal((a->jinfoclauseinfo), (b->jinfoclauseinfo)))
-		return (false);
+		return false;
 	if (a->mergejoinable != b->mergejoinable)
-		return (false);
+		return false;
 	if (a->hashjoinable != b->hashjoinable)
-		return (false);
-	return (true);
+		return false;
+	return true;
 }
 
 /*
@@ -556,28 +556,28 @@ static bool
 _equalEState(EState *a, EState *b)
 {
 	if (a->es_direction != b->es_direction)
-		return (false);
+		return false;
 
 	if (!equal(a->es_range_table, b->es_range_table))
-		return (false);
+		return false;
 
 	if (a->es_result_relation_info != b->es_result_relation_info)
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 static bool
 _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 {
 	if (!equal(a->resdom, b->resdom))
-		return (false);
+		return false;
 	if (!equal(a->fjoin, b->fjoin))
-		return (false);
+		return false;
 	if (!equal(a->expr, b->expr))
-		return (false);
+		return false;
 
-	return (true);
+	return true;
 }
 
 
@@ -591,21 +591,21 @@ static bool
 _equalValue(Value *a, Value *b)
 {
 	if (a->type != b->type)
-		return (false);
+		return false;
 
 	switch (a->type)
 	{
 		case T_String:
 			return strcmp(a->val.str, b->val.str);
 		case T_Integer:
-			return (a->val.ival == b->val.ival);
+			return a->val.ival == b->val.ival;
 		case T_Float:
-			return (a->val.dval == b->val.dval);
+			return a->val.dval == b->val.dval;
 		default:
 			break;
 	}
 
-	return (true);
+	return true;
 }
 
 /*
@@ -618,19 +618,19 @@ equal(void *a, void *b)
 	bool		retval = false;
 
 	if (a == b)
-		return (true);
+		return true;
 
 	/*
 	 * note that a!=b, so only one of them can be NULL
 	 */
 	if (a == NULL || b == NULL)
-		return (false);
+		return false;
 
 	/*
 	 * are they the same type of nodes?
 	 */
 	if (nodeTag(a) != nodeTag(b))
-		return (false);
+		return false;
 
 	switch (nodeTag(a))
 	{
@@ -673,8 +673,8 @@ equal(void *a, void *b)
 		case T_Func:
 			retval = _equalFunc(a, b);
 			break;
-		case T_CInfo:
-			retval = _equalCInfo(a, b);
+		case T_ClauseInfo:
+			retval = _equalClauseInfo(a, b);
 			break;
 		case T_RelOptInfo:
 			retval = _equalRelOptInfo(a, b);
@@ -712,8 +712,8 @@ equal(void *a, void *b)
 		case T_SubPlan:
 			retval = _equalSubPlan(a, b);
 			break;
-		case T_JInfo:
-			retval = _equalJInfo(a, b);
+		case T_JoinInfo:
+			retval = _equalJoinInfo(a, b);
 			break;
 		case T_EState:
 			retval = _equalEState(a, b);
@@ -730,13 +730,13 @@ equal(void *a, void *b)
 				List	   *l;
 
 				if (a == NULL && b == NULL)
-					return (true);
+					return true;
 				if (length(a) != length(b))
-					return (false);
+					return false;
 				foreach(l, la)
 				{
 					if (!equal(lfirst(l), lfirst(lb)))
-						return (false);
+						return false;
 					lb = lnext(lb);
 				}
 				retval = true;
@@ -765,13 +765,13 @@ equali(List *a, List *b)
 	List	   *l;
 
 	if (a == NULL && b == NULL)
-		return (true);
+		return true;
 	if (length(a) != length(b))
-		return (false);
+		return false;
 	foreach(l, la)
 	{
 		if (lfirsti(l) != lfirsti(lb))
-			return (false);
+			return false;
 		lb = lnext(lb);
 	}
 	return true;

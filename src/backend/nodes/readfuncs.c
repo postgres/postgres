@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.35 1998/08/04 16:44:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.36 1998/09/01 03:23:03 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -163,7 +163,7 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :unionClause */
 	local_node->unionClause = nodeRead(true);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -186,7 +186,7 @@ _readSortClause()
 	token = lsptok(NULL, &length);		/* get opoid */
 	local_node->opoid = strtoul(token, NULL, 10);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -209,7 +209,7 @@ _readGroupClause()
 	token = lsptok(NULL, &length);		/* get grpOpoid */
 	local_node->grpOpoid = strtoul(token, NULL, 10);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -277,7 +277,7 @@ _readPlan()
 
 	_getPlan(local_node);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -301,7 +301,7 @@ _readResult()
 	token = lsptok(NULL, &length);		/* eat :resconstantqual */
 	local_node->resconstantqual = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -335,7 +335,7 @@ _readAppend()
 	token = lsptok(NULL, &length);		/* eat :inheritrtable */
 	local_node->inheritrtable = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -366,7 +366,7 @@ _readJoin()
 
 	_getJoin(local_node);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -385,7 +385,7 @@ _readNestLoop()
 
 	_getJoin((Join *) local_node);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -411,7 +411,7 @@ _readMergeJoin()
 	token = lsptok(NULL, &length);		/* get mergejoinop */
 	local_node->mergejoinop = atol(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -454,7 +454,7 @@ _readHashJoin()
 	token = lsptok(NULL, &length);		/* eat hashdone */
 	local_node->hashdone = false;
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -495,7 +495,7 @@ _readScan()
 
 	_getScan(local_node);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -513,7 +513,7 @@ _readSeqScan()
 
 	_getScan((Scan *) local_node);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -540,7 +540,7 @@ _readIndexScan()
 	token = lsptok(NULL, &length);		/* eat :indxqual */
 	local_node->indxqual = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -568,7 +568,7 @@ _readTemp()
 	token = lsptok(NULL, &length);		/* get keycount */
 	local_node->keycount = atoi(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -596,7 +596,7 @@ _readSort()
 	token = lsptok(NULL, &length);		/* get keycount */
 	local_node->keycount = atoi(token);
 
-	return (local_node);
+	return local_node;
 }
 
 static Agg *
@@ -612,7 +612,7 @@ _readAgg()
 	token = lsptok(NULL, &length);		/* eat :agg */
 	local_node->aggs = nodeRead(true);	/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -639,7 +639,7 @@ _readUnique()
 	token = lsptok(NULL, &length);		/* get :keycount */
 	local_node->keycount = atoi(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -674,7 +674,7 @@ _readHash()
 	token = lsptok(NULL, &length);		/* get hashtablesize */
 	local_node->hashtablesize = 0;
 
-	return (local_node);
+	return local_node;
 }
 
 /*
@@ -731,7 +731,7 @@ _readResdom()
 	token = lsptok(NULL, &length);		/* get resjunk */
 	local_node->resjunk = atoi(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -774,7 +774,7 @@ _readExpr()
 	token = lsptok(NULL, &length);		/* eat :args */
 	local_node->args = nodeRead(true);	/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -820,7 +820,7 @@ _readVar()
 	token = lsptok(NULL, &length);		/* eat :varoattno */
 	local_node->varoattno = (int) atol(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -862,7 +862,7 @@ _readArray()
 	token = lsptok(NULL, &length);		/* get arraylen */
 	local_node->arraylen = atoi(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -908,7 +908,7 @@ _readArrayRef()
 	token = lsptok(NULL, &length);		/* eat :refassgnexpr */
 	local_node->refassgnexpr = nodeRead(true);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -967,7 +967,7 @@ _readConst()
 	else
 		local_node->constbyval = false;
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1017,7 +1017,7 @@ _readFunc()
 	token = lsptok(NULL, &length);		/* get :func_planlist */
 	local_node->func_planlist = nodeRead(true); /* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1053,7 +1053,7 @@ _readOper()
 	 */
 	local_node->op_fcache = (FunctionCache *) NULL;
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1096,7 +1096,7 @@ _readParam()
 	token = lsptok(NULL, &length);		/* get :param_tlist */
 	local_node->param_tlist = nodeRead(true);	/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1138,7 +1138,7 @@ _readAggreg()
 	token = lsptok(NULL, &length);		/* get usenulls */
 	local_node->usenulls = (token[0] == 't') ? true : false;
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1173,7 +1173,7 @@ _readSubLink()
 	token = lsptok(NULL, &length);		/* eat :subselect */
 	local_node->subselect = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /*
@@ -1210,7 +1210,7 @@ _readEState()
 
 	sscanf(token, "%x", (unsigned int *) &local_node->es_result_relation_info);
 
-	return (local_node);
+	return local_node;
 }
 
 /*
@@ -1292,7 +1292,7 @@ _readRelOptInfo()
 	token = lsptok(NULL, &length);		/* get :innerjoin */
 	local_node->innerjoin = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1314,7 +1314,7 @@ _readTargetEntry()
 	token = lsptok(NULL, &length);		/* get :expr */
 	local_node->expr = nodeRead(true);	/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1366,7 +1366,7 @@ _readRangeTblEntry()
 	token = lsptok(NULL, &length);		/* get :skipAcl */
 	local_node->skipAcl = (token[0] == 't') ? true : false;
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1401,7 +1401,7 @@ _readPath()
 	token = lsptok(NULL, &length);		/* get :keys */
 	local_node->keys = nodeRead(true);	/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1442,7 +1442,7 @@ _readIndexPath()
 	token = lsptok(NULL, &length);		/* get :indexqual */
 	local_node->indexqual = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1509,7 +1509,7 @@ _readJoinPath()
 	local_node->path.joinid =
 		toIntList(nodeRead(true));		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1586,7 +1586,7 @@ _readMergePath()
 	token = lsptok(NULL, &length);		/* get :innersortkeys */
 	local_node->innersortkeys = nodeRead(true); /* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1663,7 +1663,7 @@ _readHashPath()
 	token = lsptok(NULL, &length);		/* get :innerhashkeys */
 	local_node->innerhashkeys = nodeRead(true); /* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1691,7 +1691,7 @@ _readOrderKey()
 
 	local_node->array_index = strtoul(token, NULL, 10);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1715,7 +1715,7 @@ _readJoinKey()
 	token = lsptok(NULL, &length);		/* get :inner */
 	local_node->inner = nodeRead(true); /* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1757,23 +1757,23 @@ _readMergeOrder()
 
 	local_node->right_type = atol(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
- *		_readCInfo
+ *		_readClauseInfo
  *
- *	CInfo is a subclass of Node.
+ *	ClauseInfo is a subclass of Node.
  * ----------------
  */
-static CInfo *
-_readCInfo()
+static ClauseInfo *
+_readClauseInfo()
 {
-	CInfo	   *local_node;
+	ClauseInfo	   *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(CInfo);
+	local_node = makeNode(ClauseInfo);
 
 	token = lsptok(NULL, &length);		/* get :clause */
 	local_node->clause = nodeRead(true);		/* now read it */
@@ -1802,7 +1802,7 @@ _readCInfo()
 
 	local_node->hashjoinoperator = atol(token);
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1826,7 +1826,7 @@ _readJoinMethod()
 	token = lsptok(NULL, &length);		/* get :clauses */
 	local_node->clauses = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1855,23 +1855,23 @@ _readHInfo()
 	token = lsptok(NULL, &length);		/* get :clauses */
 	local_node->jmethod.clauses = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
- *		_readJInfo()
+ *		_readJoinInfo()
  *
- *	JInfo is a subclass of Node.
+ *	JoinInfo is a subclass of Node.
  * ----------------
  */
-static JInfo *
-_readJInfo()
+static JoinInfo *
+_readJoinInfo()
 {
-	JInfo	   *local_node;
+	JoinInfo	   *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(JInfo);
+	local_node = makeNode(JoinInfo);
 
 	token = lsptok(NULL, &length);		/* get :otherrels */
 	local_node->otherrels =
@@ -1894,7 +1894,7 @@ _readJInfo()
 	else
 		local_node->hashjoinable = false;
 
-	return (local_node);
+	return local_node;
 }
 
 /* ----------------
@@ -1914,7 +1914,7 @@ _readIter()
 	token = lsptok(NULL, &length);		/* eat :iterexpr */
 	local_node->iterexpr = nodeRead(true);		/* now read it */
 
-	return (local_node);
+	return local_node;
 }
 
 
@@ -2012,12 +2012,12 @@ parsePlanString(void)
 		return_value = _readJoinKey();
 	else if (!strncmp(token, "MERGEORDER", length))
 		return_value = _readMergeOrder();
-	else if (!strncmp(token, "CINFO", length))
-		return_value = _readCInfo();
+	else if (!strncmp(token, "CLAUSEINFO", length))
+		return_value = _readClauseInfo();
 	else if (!strncmp(token, "JOINMETHOD", length))
 		return_value = _readJoinMethod();
-	else if (!strncmp(token, "JINFO", length))
-		return_value = _readJInfo();
+	else if (!strncmp(token, "JOININFO", length))
+		return_value = _readJoinInfo();
 	else if (!strncmp(token, "HINFO", length))
 		return_value = _readHInfo();
 	else if (!strncmp(token, "ITER", length))
@@ -2031,7 +2031,7 @@ parsePlanString(void)
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
 
-	return ((Node *) return_value);
+	return (Node *) return_value;
 }
 
 /*------------------------------------------------------------*/
@@ -2092,5 +2092,5 @@ readDatum(Oid type)
 	if (token[0] != ']')
 		elog(ERROR, "readValue: ']' expected, length =%d", length);
 
-	return (res);
+	return res;
 }

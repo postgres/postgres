@@ -102,7 +102,7 @@ SPI_connect()
 	 * to _SPI_connected
 	 */
 	if (_SPI_curid != _SPI_connected)
-		return (SPI_ERROR_CONNECT);
+		return SPI_ERROR_CONNECT;
 
 	if (_SPI_stack == NULL)
 	{
@@ -141,7 +141,7 @@ SPI_connect()
 	_SPI_current->savedId = GetScanCommandId();
 	SetScanCommandId(GetCurrentCommandId());
 
-	return (SPI_OK_CONNECT);
+	return SPI_OK_CONNECT;
 
 }
 
@@ -152,7 +152,7 @@ SPI_finish()
 
 	res = _SPI_begin_call(false);		/* live in procedure memory */
 	if (res < 0)
-		return (res);
+		return res;
 
 	/* Restore memory context as it was before procedure call */
 	MemoryContextSwitchTo(_SPI_current->savedcxt);
@@ -179,7 +179,7 @@ SPI_finish()
 		_SPI_current = &(_SPI_stack[_SPI_connected]);
 	}
 
-	return (SPI_OK_FINISH);
+	return SPI_OK_FINISH;
 
 }
 
@@ -189,16 +189,16 @@ SPI_exec(char *src, int tcount)
 	int			res;
 
 	if (src == NULL || tcount < 0)
-		return (SPI_ERROR_ARGUMENT);
+		return SPI_ERROR_ARGUMENT;
 
 	res = _SPI_begin_call(true);
 	if (res < 0)
-		return (res);
+		return res;
 
 	res = _SPI_execute(src, tcount, NULL);
 
 	_SPI_end_call(true);
-	return (res);
+	return res;
 }
 
 int
@@ -207,14 +207,14 @@ SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
 	int			res;
 
 	if (plan == NULL || tcount < 0)
-		return (SPI_ERROR_ARGUMENT);
+		return SPI_ERROR_ARGUMENT;
 
 	if (((_SPI_plan *) plan)->nargs > 0 && Values == NULL)
-		return (SPI_ERROR_PARAM);
+		return SPI_ERROR_PARAM;
 
 	res = _SPI_begin_call(true);
 	if (res < 0)
-		return (res);
+		return res;
 
 	/* copy plan to current (executor) context */
 	plan = (void *) _SPI_copy_plan(plan, _SPI_CPLAN_CURCXT);
@@ -222,7 +222,7 @@ SPI_execp(void *plan, Datum *Values, char *Nulls, int tcount)
 	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls, tcount);
 
 	_SPI_end_call(true);
-	return (res);
+	return res;
 }
 
 void *
@@ -233,12 +233,12 @@ SPI_prepare(char *src, int nargs, Oid *argtypes)
 	if (src == NULL || nargs < 0 || (nargs > 0 && argtypes == NULL))
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
-		return (NULL);
+		return NULL;
 	}
 
 	SPI_result = _SPI_begin_call(true);
 	if (SPI_result < 0)
-		return (NULL);
+		return NULL;
 
 	plan = (_SPI_plan *) palloc(sizeof(_SPI_plan));		/* Executor context */
 	plan->argtypes = argtypes;
@@ -253,7 +253,7 @@ SPI_prepare(char *src, int nargs, Oid *argtypes)
 
 	_SPI_end_call(true);
 
-	return ((void *) plan);
+	return (void *) plan;
 
 }
 
@@ -265,19 +265,19 @@ SPI_saveplan(void *plan)
 	if (plan == NULL)
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
-		return (NULL);
+		return NULL;
 	}
 
 	SPI_result = _SPI_begin_call(false);		/* don't change context */
 	if (SPI_result < 0)
-		return (NULL);
+		return NULL;
 
 	newplan = _SPI_copy_plan((_SPI_plan *) plan, _SPI_CPLAN_TOPCXT);
 
 	_SPI_curid--;
 	SPI_result = 0;
 
-	return ((void *) newplan);
+	return (void *) newplan;
 
 }
 
@@ -290,7 +290,7 @@ SPI_copytuple(HeapTuple tuple)
 	if (tuple == NULL)
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
-		return (NULL);
+		return NULL;
 	}
 
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
@@ -305,7 +305,7 @@ SPI_copytuple(HeapTuple tuple)
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
 
-	return (ctuple);
+	return ctuple;
 }
 
 HeapTuple
@@ -324,7 +324,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	if (rel == NULL || tuple == NULL || natts <= 0 || attnum == NULL || Values == NULL)
 	{
 		SPI_result = SPI_ERROR_ARGUMENT;
-		return (NULL);
+		return NULL;
 	}
 
 	if (_SPI_curid + 1 == _SPI_connected)		/* connected */
@@ -354,7 +354,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 		n[attnum[i] - 1] = (Nulls && Nulls[i] == 'n') ? 'n' : ' ';
 	}
 
-	if (i == natts)				/* no errors in attnum[] */
+	if (i == natts)				/* no errors in *attnum */
 	{
 		mtuple = heap_formtuple(rel->rd_att, v, n);
 		infomask = mtuple->t_infomask;
@@ -375,7 +375,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
 
-	return (mtuple);
+	return mtuple;
 }
 
 int
@@ -386,10 +386,10 @@ SPI_fnumber(TupleDesc tupdesc, char *fname)
 	for (res = 0; res < tupdesc->natts; res++)
 	{
 		if (strcasecmp(tupdesc->attrs[res]->attname.data, fname) == 0)
-			return (res + 1);
+			return res + 1;
 	}
 
-	return (SPI_ERROR_NOATTRIBUTE);
+	return SPI_ERROR_NOATTRIBUTE;
 }
 
 char *
@@ -400,10 +400,10 @@ SPI_fname(TupleDesc tupdesc, int fnumber)
 	if (tupdesc->natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
-		return (NULL);
+		return NULL;
 	}
 
-	return (nameout(&(tupdesc->attrs[fnumber - 1]->attname)));
+	return nameout(&(tupdesc->attrs[fnumber - 1]->attname));
 }
 
 char *
@@ -417,17 +417,17 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 	if (tuple->t_natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
-		return (NULL);
+		return NULL;
 	}
 
 	val = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
-		return (NULL);
+		return NULL;
 	foutoid = typtoout((Oid) tupdesc->attrs[fnumber - 1]->atttypid);
 	if (!OidIsValid(foutoid))
 	{
 		SPI_result = SPI_ERROR_NOOUTFUNC;
-		return (NULL);
+		return NULL;
 	}
 
 	return (fmgr(foutoid, val,
@@ -445,12 +445,12 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool *isnull)
 	if (tuple->t_natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
-		return ((Datum) NULL);
+		return (Datum) NULL;
 	}
 
 	val = heap_getattr(tuple, fnumber, tupdesc, isnull);
 
-	return (val);
+	return val;
 }
 
 char *
@@ -462,7 +462,7 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	if (tupdesc->natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
-		return (NULL);
+		return NULL;
 	}
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
@@ -472,10 +472,10 @@ SPI_gettype(TupleDesc tupdesc, int fnumber)
 	if (!HeapTupleIsValid(typeTuple))
 	{
 		SPI_result = SPI_ERROR_TYPUNKNOWN;
-		return (NULL);
+		return NULL;
 	}
 
-	return (pstrdup(((TypeTupleForm) GETSTRUCT(typeTuple))->typname.data));
+	return pstrdup(((Form_pg_type) GETSTRUCT(typeTuple))->typname.data);
 }
 
 Oid
@@ -486,16 +486,16 @@ SPI_gettypeid(TupleDesc tupdesc, int fnumber)
 	if (tupdesc->natts < fnumber || fnumber <= 0)
 	{
 		SPI_result = SPI_ERROR_NOATTRIBUTE;
-		return (InvalidOid);
+		return InvalidOid;
 	}
 
-	return (tupdesc->attrs[fnumber - 1]->atttypid);
+	return tupdesc->attrs[fnumber - 1]->atttypid;
 }
 
 char *
 SPI_getrelname(Relation rel)
 {
-	return (pstrdup(rel->rd_rel->relname.data));
+	return pstrdup(rel->rd_rel->relname.data);
 }
 
 void *
@@ -516,7 +516,7 @@ SPI_palloc(Size size)
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
 
-	return (pointer);
+	return pointer;
 }
 
 void *
@@ -536,7 +536,7 @@ SPI_repalloc(void *pointer, Size size)
 	if (oldcxt)
 		MemoryContextSwitchTo(oldcxt);
 
-	return (pointer);
+	return pointer;
 }
 
 void
@@ -661,13 +661,13 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 				CopyStmt   *stmt = (CopyStmt *) (queryTree->utilityStmt);
 
 				if (stmt->filename == NULL)
-					return (SPI_ERROR_COPY);
+					return SPI_ERROR_COPY;
 			}
 			else if (nodeTag(queryTree->utilityStmt) == T_ClosePortalStmt ||
 					 nodeTag(queryTree->utilityStmt) == T_FetchStmt)
-				return (SPI_ERROR_CURSOR);
+				return SPI_ERROR_CURSOR;
 			else if (nodeTag(queryTree->utilityStmt) == T_TransactionStmt)
-				return (SPI_ERROR_TRANSACTION);
+				return SPI_ERROR_TRANSACTION;
 			res = SPI_OK_UTILITY;
 			if (plan == NULL)
 			{
@@ -675,7 +675,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 				if (i < qlen - 1)
 					CommandCounterIncrement();
 				else
-					return (res);
+					return res;
 			}
 			else if (i >= qlen - 1)
 				break;
@@ -687,7 +687,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 			state = CreateExecutorState();
 			res = _SPI_pquery(qdesc, state, (i < qlen - 1) ? 0 : tcount);
 			if (res < 0 || i >= qlen - 1)
-				return (res);
+				return res;
 			CommandCounterIncrement();
 		}
 		else
@@ -696,7 +696,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 									(i < qlen - 1) ? None : SPI);
 			res = _SPI_pquery(qdesc, NULL, (i < qlen - 1) ? 0 : tcount);
 			if (res < 0)
-				return (res);
+				return res;
 			if (i >= qlen - 1)
 				break;
 		}
@@ -705,7 +705,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 	plan->qtlist = queryTree_list;
 	plan->ptlist = ptlist;
 
-	return (res);
+	return res;
 
 }
 
@@ -745,7 +745,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 			if (i < qlen - 1)
 				CommandCounterIncrement();
 			else
-				return (SPI_OK_UTILITY);
+				return SPI_OK_UTILITY;
 		}
 		else
 		{
@@ -771,12 +771,12 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 				state->es_param_list_info = NULL;
 			res = _SPI_pquery(qdesc, state, (i < qlen - 1) ? 0 : tcount);
 			if (res < 0 || i >= qlen - 1)
-				return (res);
+				return res;
 			CommandCounterIncrement();
 		}
 	}
 
-	return (res);
+	return res;
 
 }
 
@@ -803,7 +803,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 				intoName = parseTree->into;
 				parseTree->isBinary = false;	/* */
 
-				return (SPI_ERROR_CURSOR);
+				return SPI_ERROR_CURSOR;
 
 			}
 			else if (parseTree->into != NULL)	/* select into table */
@@ -823,11 +823,11 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 			res = SPI_OK_UPDATE;
 			break;
 		default:
-			return (SPI_ERROR_OPUNKNOWN);
+			return SPI_ERROR_OPUNKNOWN;
 	}
 
 	if (state == NULL)			/* plan preparation */
-		return (res);
+		return res;
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
 		ResetUsage();
@@ -843,7 +843,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 					  state,
 					  tupdesc,
 					  None);
-		return (SPI_OK_CURSOR);
+		return SPI_OK_CURSOR;
 	}
 
 	ExecutorRun(queryDesc, state, EXEC_FOR, tcount);
@@ -872,7 +872,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	}
 	queryDesc->dest = dest;
 
-	return (res);
+	return res;
 
 }
 
@@ -925,7 +925,7 @@ _SPI_execmem()
 	phmem = PortalGetHeapMemory(_SPI_current->portal);
 	oldcxt = MemoryContextSwitchTo((MemoryContext) phmem);
 
-	return (oldcxt);
+	return oldcxt;
 
 }
 
@@ -938,7 +938,7 @@ _SPI_procmem()
 	pvmem = PortalGetVariableMemory(_SPI_current->portal);
 	oldcxt = MemoryContextSwitchTo((MemoryContext) pvmem);
 
-	return (oldcxt);
+	return oldcxt;
 
 }
 
@@ -950,7 +950,7 @@ static int
 _SPI_begin_call(bool execmem)
 {
 	if (_SPI_curid + 1 != _SPI_connected)
-		return (SPI_ERROR_UNCONNECTED);
+		return SPI_ERROR_UNCONNECTED;
 	_SPI_curid++;
 	if (_SPI_current != &(_SPI_stack[_SPI_curid]))
 		elog(FATAL, "SPI: stack corrupted");
@@ -961,7 +961,7 @@ _SPI_begin_call(bool execmem)
 		StartPortalAllocMode(DefaultAllocMode, 0);
 	}
 
-	return (0);
+	return 0;
 }
 
 static int
@@ -986,7 +986,7 @@ _SPI_end_call(bool procmem)
 		_SPI_procmem();
 	}
 
-	return (0);
+	return 0;
 }
 
 static bool
@@ -1010,7 +1010,7 @@ _SPI_checktuples()
 			failed = true;
 	}
 
-	return (failed);
+	return failed;
 }
 
 static _SPI_plan *
@@ -1048,5 +1048,5 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 	if (location != _SPI_CPLAN_CURCXT)
 		MemoryContextSwitchTo(oldcxt);
 
-	return (newplan);
+	return newplan;
 }

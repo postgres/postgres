@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.13 1998/06/15 19:27:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.14 1998/09/01 03:20:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,7 +85,7 @@ _hash_doinsert(Relation rel, HashItem hitem)
 	/* be tidy */
 	_hash_freeskey(itup_scankey);
 
-	return (res);
+	return res;
 }
 
 /*
@@ -206,7 +206,7 @@ _hash_insertonpg(Relation rel,
 		> metap->hashm_ffactor)
 		_hash_expandtable(rel, metabuf);
 	_hash_relbuf(rel, metabuf, HASH_READ);
-	return (res);
+	return res;
 }
 
 /*
@@ -236,5 +236,5 @@ _hash_pgaddtup(Relation rel,
 	/* write the buffer, but hold our lock */
 	_hash_wrtnorelbuf(rel, buf);
 
-	return (itup_off);
+	return itup_off;
 }

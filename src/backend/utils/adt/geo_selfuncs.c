@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.5 1997/09/08 02:30:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_selfuncs.c,v 1.6 1998/09/01 03:26:02 momjian Exp $
  *
  *		XXX These are totally bogus.
  *
@@ -32,7 +32,7 @@ areasel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 4.0;
-	return (result);
+	return result;
 }
 
 float64
@@ -46,7 +46,7 @@ areajoinsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 4.0;
-	return (result);
+	return result;
 }
 
 /*
@@ -77,7 +77,7 @@ leftsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 6.0;
-	return (result);
+	return result;
 }
 
 #endif
@@ -94,7 +94,7 @@ leftjoinsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 6.0;
-	return (result);
+	return result;
 }
 
 #endif
@@ -114,7 +114,7 @@ contsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 10.0;
-	return (result);
+	return result;
 }
 
 #endif
@@ -131,7 +131,7 @@ contjoinsel(Oid opid,
 
 	result = (float64) palloc(sizeof(float64data));
 	*result = 1.0 / 10.0;
-	return (result);
+	return result;
 }
 
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.44 1998/08/26 05:22:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.45 1998/09/01 03:22:59 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1353,10 +1353,10 @@ _outMergeOrder(StringInfo str, MergeOrder *node)
 }
 
 /*
- *	CInfo is a subclass of Node.
+ *	ClauseInfo is a subclass of Node.
  */
 static void
-_outCInfo(StringInfo str, CInfo *node)
+_outClauseInfo(StringInfo str, ClauseInfo *node)
 {
 	char		buf[500];
 
@@ -1421,10 +1421,10 @@ _outHInfo(StringInfo str, HInfo *node)
 }
 
 /*
- *	JInfo is a subclass of Node.
+ *	JoinInfo is a subclass of Node.
  */
 static void
-_outJInfo(StringInfo str, JInfo *node)
+_outJoinInfo(StringInfo str, JoinInfo *node)
 {
 	appendStringInfo(str, " JINFO ");
 
@@ -1820,8 +1820,8 @@ _outNode(StringInfo str, void *obj)
 			case T_MergeOrder:
 				_outMergeOrder(str, obj);
 				break;
-			case T_CInfo:
-				_outCInfo(str, obj);
+			case T_ClauseInfo:
+				_outClauseInfo(str, obj);
 				break;
 			case T_JoinMethod:
 				_outJoinMethod(str, obj);
@@ -1829,8 +1829,8 @@ _outNode(StringInfo str, void *obj)
 			case T_HInfo:
 				_outHInfo(str, obj);
 				break;
-			case T_JInfo:
-				_outJInfo(str, obj);
+			case T_JoinInfo:
+				_outJoinInfo(str, obj);
 				break;
 			case T_Iter:
 				_outIter(str, obj);

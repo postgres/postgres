@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.16 1998/02/26 04:30:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtproc.c,v 1.17 1998/09/01 03:21:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ rt_box_union(BOX *a, BOX *b)
 	n->low.x = Min(a->low.x, b->low.x);
 	n->low.y = Min(a->low.y, b->low.y);
 
-	return (n);
+	return n;
 }
 
 BOX *
@@ -55,10 +55,10 @@ rt_box_inter(BOX *a, BOX *b)
 	if (n->high.x < n->low.x || n->high.y < n->low.y)
 	{
 		pfree(n);
-		return ((BOX *) NULL);
+		return (BOX *) NULL;
 	}
 
-	return (n);
+	return n;
 }
 
 void
@@ -149,8 +149,8 @@ rt_poly_inter(POLYGON *a, POLYGON *b)
 	if (p->boundbox.high.x < p->boundbox.low.x || p->boundbox.high.y < p->boundbox.low.y)
 	{
 		pfree(p);
-		return ((POLYGON *) NULL);
+		return (POLYGON *) NULL;
 	}
 
-	return (p);
+	return p;
 }

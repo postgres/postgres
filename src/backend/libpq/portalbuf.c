@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.10 1998/02/26 04:31:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.11 1998/09/01 03:22:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ pbuf_alloc(size_t size)
 	if (addr == (caddr_t) NULL)
 		libpq_raise(&MemoryError, form("Cannot Allocate space."));
 
-	return (addr);
+	return addr;
 }
 
 /* --------------------------------
@@ -152,7 +152,7 @@ pbuf_addPortal()
 	portal->no_groups = 0;
 	portal->groups = NULL;
 
-	return (portal);
+	return portal;
 }
 
 /* --------------------------------
@@ -184,7 +184,7 @@ pbuf_addGroup(PortalBuffer *portal)
 		group1->next = group;
 	}
 
-	return (group);
+	return group;
 }
 
 /* --------------------------------
@@ -199,7 +199,7 @@ pbuf_addTypes(int n)
 	types = (TypeBlock *)
 		pbuf_alloc(n * sizeof(TypeBlock));
 
-	return (types);
+	return types;
 }
 
 /* --------------------------------
@@ -217,7 +217,7 @@ pbuf_addTuples()
 	tuples->next = NULL;
 	tuples->tuple_index = 0;
 
-	return (tuples);
+	return tuples;
 }
 
 /* --------------------------------
@@ -373,7 +373,7 @@ pbuf_getIndex(char *pname)
 				return i;
 	}
 
-	return (-1);
+	return -1;
 }
 
 /* --------------------------------
@@ -465,7 +465,7 @@ pbuf_findGroup(PortalBuffer *portal,
 		libpq_raise(&PortalError,
 					form("Group index %d out of bound.", group_index));
 
-	return (group);
+	return group;
 }
 
 /* --------------------------------
@@ -483,7 +483,7 @@ pbuf_findFnumber(GroupBuffer *group,
 
 	for (i = 0; i < group->no_fields; i++)
 		if (strncmp(types[i].name, field_name, NAMEDATALEN) == 0)
-			return (i);
+			return i;
 
 	libpq_raise(&PortalError,
 				form("Field-name %s does not exist.", field_name));

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.4 1997/09/08 21:44:41 momjian Exp $
+ * $Id: geqo_selection.c,v 1.5 1998/09/01 03:23:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,5 +101,5 @@ linear(int pool_size, double bias)		/* bias is y-intercept of linear
 		max * (bias - sqrt((bias * bias) - 4.0 * (bias - 1.0) * geqo_rand()))
 		/ 2.0 / (bias - 1.0);
 
-	return ((int) index);
+	return (int) index;
 }

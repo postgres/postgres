@@ -49,7 +49,7 @@ int8in(char *str)
 	result = NULL;
 #endif
 
-	return (result);
+	return result;
 }	/* int8in() */
 
 
@@ -64,7 +64,7 @@ int8out(int64 * val)
 	char		buf[MAXINT8LEN + 1];
 
 	if (!PointerIsValid(val))
-		return (NULL);
+		return NULL;
 
 	if ((len = snprintf(buf, MAXINT8LEN, INT64_FORMAT, *val)) < 0)
 		elog(ERROR, "Unable to format int8", NULL);
@@ -73,7 +73,7 @@ int8out(int64 * val)
 
 	strcpy(result, buf);
 
-	return (result);
+	return result;
 }	/* int8out() */
 
 
@@ -87,37 +87,37 @@ int8out(int64 * val)
 bool
 int8eq(int64 * val1, int64 * val2)
 {
-	return (*val1 == *val2);
+	return *val1 == *val2;
 }	/* int8eq() */
 
 bool
 int8ne(int64 * val1, int64 * val2)
 {
-	return (*val1 != *val2);
+	return *val1 != *val2;
 }	/* int8ne() */
 
 bool
 int8lt(int64 * val1, int64 * val2)
 {
-	return (*val1 < *val2);
+	return *val1 < *val2;
 }	/* int8lt() */
 
 bool
 int8gt(int64 * val1, int64 * val2)
 {
-	return (*val1 > *val2);
+	return *val1 > *val2;
 }	/* int8gt() */
 
 bool
 int8le(int64 * val1, int64 * val2)
 {
-	return (*val1 <= *val2);
+	return *val1 <= *val2;
 }	/* int8le() */
 
 bool
 int8ge(int64 * val1, int64 * val2)
 {
-	return (*val1 >= *val2);
+	return *val1 >= *val2;
 }	/* int8ge() */
 
 
@@ -127,37 +127,37 @@ int8ge(int64 * val1, int64 * val2)
 bool
 int84eq(int64 * val1, int32 val2)
 {
-	return (*val1 == val2);
+	return *val1 == val2;
 }	/* int84eq() */
 
 bool
 int84ne(int64 * val1, int32 val2)
 {
-	return (*val1 != val2);
+	return *val1 != val2;
 }	/* int84ne() */
 
 bool
 int84lt(int64 * val1, int32 val2)
 {
-	return (*val1 < val2);
+	return *val1 < val2;
 }	/* int84lt() */
 
 bool
 int84gt(int64 * val1, int32 val2)
 {
-	return (*val1 > val2);
+	return *val1 > val2;
 }	/* int84gt() */
 
 bool
 int84le(int64 * val1, int32 val2)
 {
-	return (*val1 <= val2);
+	return *val1 <= val2;
 }	/* int84le() */
 
 bool
 int84ge(int64 * val1, int32 val2)
 {
-	return (*val1 >= val2);
+	return *val1 >= val2;
 }	/* int84ge() */
 
 
@@ -167,37 +167,37 @@ int84ge(int64 * val1, int32 val2)
 bool
 int48eq(int32 val1, int64 * val2)
 {
-	return (val1 == *val2);
+	return val1 == *val2;
 }	/* int48eq() */
 
 bool
 int48ne(int32 val1, int64 * val2)
 {
-	return (val1 != *val2);
+	return val1 != *val2;
 }	/* int48ne() */
 
 bool
 int48lt(int32 val1, int64 * val2)
 {
-	return (val1 < *val2);
+	return val1 < *val2;
 }	/* int48lt() */
 
 bool
 int48gt(int32 val1, int64 * val2)
 {
-	return (val1 > *val2);
+	return val1 > *val2;
 }	/* int48gt() */
 
 bool
 int48le(int32 val1, int64 * val2)
 {
-	return (val1 <= *val2);
+	return val1 <= *val2;
 }	/* int48le() */
 
 bool
 int48ge(int32 val1, int64 * val2)
 {
-	return (val1 >= *val2);
+	return val1 >= *val2;
 }	/* int48ge() */
 
 
@@ -220,7 +220,7 @@ int8um(int64 * val)
     result = int8mi(&temp, val);
 #endif
 
-	return (result);
+	return result;
 }	/* int8um() */
 
 
@@ -234,7 +234,7 @@ int8pl(int64 * val1, int64 * val2)
 
 	*result = *val1 + *val2;
 
-	return (result);
+	return result;
 }	/* int8pl() */
 
 int64 *
@@ -247,7 +247,7 @@ int8mi(int64 * val1, int64 * val2)
 
 	*result = *val1 - *val2;
 
-	return (result);
+	return result;
 }	/* int8mi() */
 
 int64 *
@@ -260,7 +260,7 @@ int8mul(int64 * val1, int64 * val2)
 
 	*result = *val1 * *val2;
 
-	return (result);
+	return result;
 }	/* int8mul() */
 
 int64 *
@@ -273,7 +273,7 @@ int8div(int64 * val1, int64 * val2)
 
 	*result = *val1 / *val2;
 
-	return (result);
+	return result;
 }	/* int8div() */
 
 int64 *
@@ -289,9 +289,9 @@ int8larger(int64 * val1, int64 * val2)
 #if FALSE
 	*result = ((*val1 > *val2)? *val1: *val2);
 
-	return (result);
+	return result;
 #endif
-	return ((*val1 > *val2)? val1: val2);
+	return (*val1 > *val2)? val1: val2;
 }	/* int8larger() */
 
 int64 *
@@ -307,9 +307,9 @@ int8smaller(int64 * val1, int64 * val2)
 #if FALSE
 	*result = ((*val1 < *val2)? *val1: *val2);
 
-	return (result);
+	return result;
 #endif
-	return ((*val1 < *val2)? val1: val2);
+	return (*val1 < *val2)? val1: val2;
 }	/* int8smaller() */
 
 
@@ -323,7 +323,7 @@ int84pl(int64 * val1, int32 val2)
 
 	*result = *val1 + (int64) val2;
 
-	return (result);
+	return result;
 }	/* int84pl() */
 
 int64 *
@@ -336,7 +336,7 @@ int84mi(int64 * val1, int32 val2)
 
 	*result = *val1 - (int64) val2;
 
-	return (result);
+	return result;
 }	/* int84mi() */
 
 int64 *
@@ -349,7 +349,7 @@ int84mul(int64 * val1, int32 val2)
 
 	*result = *val1 * (int64) val2;
 
-	return (result);
+	return result;
 }	/* int84mul() */
 
 int64 *
@@ -362,7 +362,7 @@ int84div(int64 * val1, int32 val2)
 
 	*result = *val1 / (int64) val2;
 
-	return (result);
+	return result;
 }	/* int84div() */
 
 
@@ -376,7 +376,7 @@ int48pl(int32 val1, int64 * val2)
 
 	*result = (int64) val1 + *val2;
 
-	return (result);
+	return result;
 }	/* int48pl() */
 
 int64 *
@@ -389,7 +389,7 @@ int48mi(int32 val1, int64 * val2)
 
 	*result = (int64) val1 - *val2;
 
-	return (result);
+	return result;
 }	/* int48mi() */
 
 int64 *
@@ -402,7 +402,7 @@ int48mul(int32 val1, int64 * val2)
 
 	*result = (int64) val1 * *val2;
 
-	return (result);
+	return result;
 }	/* int48mul() */
 
 int64 *
@@ -415,7 +415,7 @@ int48div(int32 val1, int64 * val2)
 
 	*result = (int64) val1 / *val2;
 
-	return (result);
+	return result;
 }	/* int48div() */
 
 
@@ -430,7 +430,7 @@ int48(int32 val)
 
 	*result = val;
 
-	return (result);
+	return result;
 }	/* int48() */
 
 int32
@@ -453,7 +453,7 @@ int84(int64 * val)
 
 	result = *val;
 
-	return (result);
+	return result;
 }	/* int84() */
 
 #if FALSE
@@ -466,7 +466,7 @@ int28		(int16 val)
 
 	*result = val;
 
-	return (result);
+	return result;
 }	/* int28() */
 
 int16
@@ -482,7 +482,7 @@ int82(int64 * val)
 
 	result = *val;
 
-	return (result);
+	return result;
 }	/* int82() */
 
 #endif
@@ -494,7 +494,7 @@ i8tod(int64 * val)
 
 	*result = *val;
 
-	return (result);
+	return result;
 }	/* i8tod() */
 
 /* dtoi8()
@@ -517,5 +517,5 @@ dtoi8(float64 val)
 
 	*result = *val;
 
-	return (result);
+	return result;
 }	/* dtoi8() */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.18 1998/08/24 01:37:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.19 1998/09/01 03:22:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -276,7 +276,7 @@ copy_function_result(FunctionCachePtr fcache,
 		while (i < oldTuple->t_natts)
 		{
 			funcTd->attrs[i] =
-				(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+				(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 			memmove(funcTd->attrs[i],
 					resultTd->attrs[i],
 					ATTRIBUTE_TUPLE_SIZE);

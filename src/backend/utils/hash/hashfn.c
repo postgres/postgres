@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.7 1998/02/26 04:37:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.8 1998/09/01 03:26:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@ string_hash(char *key, int keysize)
 		h = h * PRIME1 ^ (*k++ - ' ');
 	h %= PRIME2;
 
-	return (h);
+	return h;
 }
 
 
@@ -114,7 +114,7 @@ tag_hash(int *key, int keysize)
 	}
 
 	h %= PRIME2;
-	return (h);
+	return h;
 }
 
 /*
@@ -165,7 +165,7 @@ disk_hash(char *key)
 		}
 
 	}
-	return (n);
+	return n;
 }
 
 #endif

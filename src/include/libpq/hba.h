@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.9 1998/06/13 04:27:18 momjian Exp $
+ * $Id: hba.h,v 1.10 1998/09/01 03:28:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,6 @@ hba_getauthmethod(SockAddr *raddr, char *user, char *database,
 				  char *auth_arg, UserAuth *auth_method);
 int
 authident(struct sockaddr_in * raddr, struct sockaddr_in * laddr,
-		  const char postgres_username[], const char auth_arg[]);
+		  const char *postgres_username, const char *auth_arg);
 
 #endif

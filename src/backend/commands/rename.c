@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.15 1998/08/24 01:13:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.16 1998/09/01 03:22:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ renameatt(char *relname,
 	if (!HeapTupleIsValid(oldatttup))
 		elog(ERROR, "renameatt: attribute \"%s\" nonexistent", oldattname);
 
-	if (((AttributeTupleForm) GETSTRUCT(oldatttup))->attnum < 0)
+	if (((Form_pg_attribute) GETSTRUCT(oldatttup))->attnum < 0)
 		elog(ERROR, "renameatt: system attribute \"%s\" not renamed", oldattname);
 
 	newatttup = SearchSysCacheTuple(ATTNAME,
@@ -178,7 +178,7 @@ renameatt(char *relname,
 		elog(ERROR, "renameatt: attribute \"%s\" exists", newattname);
 	}
 
-	StrNCpy((((AttributeTupleForm) (GETSTRUCT(oldatttup)))->attname.data),
+	StrNCpy((((Form_pg_attribute) (GETSTRUCT(oldatttup)))->attname.data),
 			   newattname, NAMEDATALEN);
 
 	attrelation = heap_openr(AttributeRelationName);

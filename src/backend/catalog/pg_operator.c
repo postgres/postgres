@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.27 1998/08/19 02:01:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.28 1998/09/01 03:21:47 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -234,7 +234,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	TupleDesc	tupDesc;
 
 	/* ----------------
-	 *	initialize our nulls[] and values[] arrays
+	 *	initialize our *nulls and *values arrays
 	 * ----------------
 	 */
 	for (i = 0; i < Natts_pg_operator; ++i)
@@ -244,7 +244,7 @@ OperatorShellMakeWithOpenRelation(Relation pg_operator_desc,
 	}
 
 	/* ----------------
-	 *	initialize values[] with the type name and
+	 *	initialize *values with the type name and
 	 * ----------------
 	 */
 	i = 0;
@@ -807,9 +807,9 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 	{
 		if (HeapTupleIsValid(tup))
 		{
-			OperatorTupleForm t;
+			Form_pg_operator t;
 
-			t = (OperatorTupleForm) GETSTRUCT(tup);
+			t = (Form_pg_operator) GETSTRUCT(tup);
 			if (!OidIsValid(t->oprcom)
 				|| !OidIsValid(t->oprnegate))
 			{
@@ -849,7 +849,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	/* if commutator and negator are different, do two updates */
 	if (HeapTupleIsValid(tup) &&
-		!(OidIsValid(((OperatorTupleForm) GETSTRUCT(tup))->oprcom)))
+		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprcom)))
 	{
 		values[Anum_pg_operator_oprcom - 1] = ObjectIdGetDatum(baseId);
 		replaces[Anum_pg_operator_oprcom - 1] = 'r';
@@ -878,7 +878,7 @@ OperatorUpd(Oid baseId, Oid commId, Oid negId)
 
 	tup = heap_getnext(pg_operator_scan, 0);
 	if (HeapTupleIsValid(tup) &&
-		!(OidIsValid(((OperatorTupleForm) GETSTRUCT(tup))->oprnegate)))
+		!(OidIsValid(((Form_pg_operator) GETSTRUCT(tup))->oprnegate)))
 	{
 		values[Anum_pg_operator_oprnegate - 1] = ObjectIdGetDatum(baseId);
 		replaces[Anum_pg_operator_oprnegate - 1] = 'r';

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.29 1998/08/19 02:02:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.30 1998/09/01 03:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ getid(char *s, char *n)
 	n[len] = '\0';
 	while (isspace(*s))
 		++s;
-	return (s);
+	return s;
 }
 
 /*
@@ -169,7 +169,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 	elog(DEBUG, "aclparse: correctly read [%x %d %x], modechg=%x",
 		 aip->ai_idtype, aip->ai_id, aip->ai_mode, *modechg);
 #endif
-	return (s);
+	return s;
 }
 
 /*
@@ -196,7 +196,7 @@ makeacl(int n)
 	new_acl->flags = 0;
 	ARR_LBOUND(new_acl)[0] = 0;
 	ARR_DIMS(new_acl)[0] = n;
-	return (new_acl);
+	return new_acl;
 }
 
 /*
@@ -226,7 +226,7 @@ aclitemin(char *s)
 		++s;
 	if (*s)
 		elog(ERROR, "aclitemin: extra garbage at end of specification");
-	return (aip);
+	return aip;
 }
 
 /*
@@ -307,7 +307,7 @@ aclitemout(AclItem *aip)
 			*p++ = ACL_MODE_STR[i];
 	*p = '\0';
 
-	return (out);
+	return out;
 }
 
 /*
@@ -324,19 +324,19 @@ static int32
 aclitemeq(AclItem *a1, AclItem *a2)
 {
 	if (!a1 && !a2)
-		return (1);
+		return 1;
 	if (!a1 || !a2)
-		return (0);
-	return (a1->ai_idtype == a2->ai_idtype && a1->ai_id == a2->ai_id);
+		return 0;
+	return a1->ai_idtype == a2->ai_idtype && a1->ai_id == a2->ai_id;
 }
 
 static int32
 aclitemgt(AclItem *a1, AclItem *a2)
 {
 	if (a1 && !a2)
-		return (1);
+		return 1;
 	if (!a1 || !a2)
-		return (0);
+		return 0;
 	return ((a1->ai_idtype > a2->ai_idtype) ||
 			(a1->ai_idtype == a2->ai_idtype && a1->ai_id > a2->ai_id));
 }
@@ -355,7 +355,7 @@ aclownerdefault(char *relname, AclId ownerid)
 	aip[1].ai_idtype = ACL_IDTYPE_UID;
 	aip[1].ai_id = ownerid;
 	aip[1].ai_mode = ACL_OWNER_DEFAULT;
-	return (acl);
+	return acl;
 }
 
 Acl *
@@ -369,7 +369,7 @@ acldefault(char *relname)
 	aip[0].ai_idtype = ACL_IDTYPE_WORLD;
 	aip[0].ai_id = ACL_ID_WORLD;
 	aip[0].ai_mode = IsSystemRelationName(relname) ? ACL_RD : ACL_WORLD_DEFAULT;
-	return (acl);
+	return acl;
 }
 
 Acl *
@@ -385,13 +385,13 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 	if (!old_acl || ACL_NUM(old_acl) < 1)
 	{
 		new_acl = makeacl(0);
-		return (new_acl);
+		return new_acl;
 	}
 	if (!mod_aip)
 	{
 		new_acl = makeacl(ACL_NUM(old_acl));
 		memmove((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
-		return (new_acl);
+		return new_acl;
 	}
 
 	num = ACL_NUM(old_acl);
@@ -482,7 +482,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 		}
 	}
 
-	return (new_acl);
+	return new_acl;
 }
 
 /*
@@ -492,7 +492,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 Acl *
 aclinsert(Acl *old_acl, AclItem *mod_aip)
 {
-	return (aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL));
+	return aclinsert3(old_acl, mod_aip, ACL_MODECHG_EQL);
 }
 
 Acl *
@@ -508,13 +508,13 @@ aclremove(Acl *old_acl, AclItem *mod_aip)
 	if (!old_acl || ACL_NUM(old_acl) < 1)
 	{
 		new_acl = makeacl(0);
-		return (new_acl);
+		return new_acl;
 	}
 	if (!mod_aip)
 	{
 		new_acl = makeacl(ACL_NUM(old_acl));
 		memmove((char *) new_acl, (char *) old_acl, ACL_SIZE(old_acl));
-		return (new_acl);
+		return new_acl;
 	}
 
 	old_num = ACL_NUM(old_acl);
@@ -552,7 +552,7 @@ aclremove(Acl *old_acl, AclItem *mod_aip)
 					(new_num - dst) * sizeof(AclItem));
 		}
 	}
-	return (new_acl);
+	return new_acl;
 }
 
 int32
@@ -563,12 +563,12 @@ aclcontains(Acl *acl, AclItem *aip)
 	AclItem    *aidat;
 
 	if (!acl || !aip || ((num = ACL_NUM(acl)) < 1))
-		return (0);
+		return 0;
 	aidat = ACL_DAT(acl);
 	for (i = 0; i < num; ++i)
 		if (aclitemeq(aip, aidat + i))
-			return (1);
-	return (0);
+			return 1;
+	return 0;
 }
 
 /* parser support routines */

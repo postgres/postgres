@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.14 1998/08/19 02:02:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.15 1998/09/01 03:24:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -291,7 +291,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 
 	heap_close(rel);
 
-	return (te_head);
+	return te_head;
 }
 
 /*
@@ -308,11 +308,11 @@ attnameAttNum(Relation rd, char *a)
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 		if (!namestrcmp(&(rd->rd_att->attrs[i]->attname), a))
-			return (i + 1);
+			return i + 1;
 
 	for (i = 0; i < SPECIALS; i++)
 		if (!strcmp(special_attr[i].field, a))
-			return (special_attr[i].code);
+			return special_attr[i].code;
 
 	/* on failure */
 	elog(ERROR, "Relation %s does not have attribute %s",
@@ -340,10 +340,10 @@ attnameIsSet(Relation rd, char *name)
 	{
 		if (!strcmp(special_attr[i].field, name))
 		{
-			return (false);		/* no sys attr is a set */
+			return false;		/* no sys attr is a set */
 		}
 	}
-	return (get_attisset(RelationGetRelid(rd), name));
+	return get_attisset(RelationGetRelid(rd), name);
 }
 
 /*
@@ -354,7 +354,7 @@ attnameIsSet(Relation rd, char *name)
 int
 attnumAttNelems(Relation rd, int attid)
 {
-	return (rd->rd_att->attrs[attid - 1]->attnelems);
+	return rd->rd_att->attrs[attid - 1]->attnelems;
 }
 
 /* given attribute id, return type of that attribute */
@@ -368,13 +368,13 @@ attnumTypeId(Relation rd, int attid)
 {
 
 	if (attid < 0)
-		return (typeTypeId(typenameType(attnum_type[-attid - 1])));
+		return typeTypeId(typenameType(attnum_type[-attid - 1]));
 
 	/*
 	 * -1 because varattno (where attid comes from) returns one more than
 	 * index
 	 */
-	return (rd->rd_att->attrs[attid - 1]->atttypid);
+	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
 
 /* handleTargetColname()

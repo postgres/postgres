@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.10 1998/07/18 04:22:28 momjian Exp $
+ * $Id: geqo_paths.c,v 1.11 1998/09/01 03:23:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,7 @@ geqo_prune_rels(List *rel_list)
 				 geqo_prune_rels(geqo_prune_rel((RelOptInfo *) lfirst(rel_list),
 												lnext(rel_list))));
 	}
-	return (temp_list);
+	return temp_list;
 }
 
 /*
@@ -88,7 +88,7 @@ geqo_prune_rel(RelOptInfo *rel, List *other_rels)
 			t_list = nconc(t_list, temp_node);
 		}
 	}
-	return (t_list);
+	return t_list;
 }
 
 /*
@@ -149,5 +149,5 @@ set_paths(RelOptInfo *rel, Path *unorderedpath)
 	else
 		rel->unorderedpath = (Path *) unorderedpath;
 
-	return (cheapest);
+	return cheapest;
 }

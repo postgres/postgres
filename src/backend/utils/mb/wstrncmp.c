@@ -42,7 +42,7 @@ pg_wchar_strncmp(s1, s2, n)
 {
 
 	if (n == 0)
-		return (0);
+		return 0;
 	do {
 		if (*s1 != *s2++)
 			return (*(const pg_wchar *)s1 -
@@ -50,7 +50,7 @@ pg_wchar_strncmp(s1, s2, n)
 		if (*s1++ == 0)
 			break;
 	} while (--n != 0);
-	return (0);
+	return 0;
 }
 
 int
@@ -61,7 +61,7 @@ pg_char_and_wchar_strncmp(s1, s2, n)
 {
 
 	if (n == 0)
-		return (0);
+		return 0;
 	do {
 		if ((pg_wchar )*s1 != *s2++)
 			return (*(const pg_wchar *)s1 -
@@ -69,7 +69,7 @@ pg_char_and_wchar_strncmp(s1, s2, n)
 		if (*s1++ == 0)
 			break;
 	} while (--n != 0);
-	return (0);
+	return 0;
 }
 
 size_t

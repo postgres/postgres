@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauseinfo.h,v 1.7 1998/02/26 04:42:08 momjian Exp $
+ * $Id: clauseinfo.h,v 1.8 1998/09/01 03:28:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #include "nodes/pg_list.h"
 #include "nodes/relation.h"
 
-extern bool valid_or_clause(CInfo *clauseinfo);
+extern bool valid_or_clause(ClauseInfo *clauseinfo);
 extern List *get_actual_clauses(List *clauseinfo_list);
 extern void
 get_relattvals(List *clauseinfo_list, List **attnos,

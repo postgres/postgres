@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.27 1998/08/26 05:22:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.28 1998/09/01 03:24:08 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4915,7 +4915,7 @@ FlattenStringList(List *list)
 	elog(DEBUG, "flattened string is \"%s\"\n", s);
 #endif
 
-	return (s);
+	return s;
 } /* FlattenStringList() */
 
 
@@ -4966,7 +4966,7 @@ makeConstantList( A_Const *n)
 	elog(DEBUG, "AexprConst argument is \"%s\"\n", defval);
 #endif
 
-	return (result);
+	return result;
 } /* makeConstantList() */
 
 
@@ -4996,7 +4996,7 @@ fmtId(char *rawid)
 	 ((cp == rawid)? "do not ": ""), rawid, cp);
 #endif
 
-	return (cp);
+	return cp;
 }
 
 /*

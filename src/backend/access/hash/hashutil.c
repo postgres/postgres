@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.13 1998/01/07 21:01:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.14 1998/09/01 03:21:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
 	bool		null;
 
 	natts = rel->rd_rel->relnatts;
-	itupdesc = RelationGetTupleDescriptor(rel);
+	itupdesc = RelationGetDescr(rel);
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
@@ -49,7 +49,7 @@ _hash_mkscankey(Relation rel, IndexTuple itup, HashMetaPage metap)
 							   0x0, (AttrNumber) (i + 1), proc, arg);
 	}
 
-	return (skey);
+	return skey;
 }
 
 void
@@ -64,10 +64,10 @@ _hash_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
 	if (scan->numberOfKeys > 0)
 		return (index_keytest(itup,
-							  RelationGetTupleDescriptor(scan->relation),
+							  RelationGetDescr(scan->relation),
 							  scan->numberOfKeys, scan->keyData));
 	else
-		return (true);
+		return true;
 }
 
 HashItem
@@ -89,7 +89,7 @@ _hash_formitem(IndexTuple itup)
 	hitem = (HashItem) palloc(nbytes_hitem);
 	memmove((char *) &(hitem->hash_itup), (char *) itup, tuplen);
 
-	return (hitem);
+	return hitem;
 }
 
 Bucket
@@ -104,7 +104,7 @@ _hash_call(Relation rel, HashMetaPage metap, Datum key)
 	bucket = n & metap->hashm_highmask;
 	if (bucket > metap->hashm_maxbucket)
 		bucket = bucket & metap->hashm_lowmask;
-	return (bucket);
+	return bucket;
 }
 
 /*
@@ -119,7 +119,7 @@ _hash_log2(uint32 num)
 	limit = 1;
 	for (i = 0; limit < num; limit = limit << 1, i++)
 		;
-	return (i);
+	return i;
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.24 1998/08/19 02:02:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.25 1998/09/01 03:22:44 momjian Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -211,7 +211,7 @@ lo_tell(int fd)
 int
 lo_unlink(Oid lobjId)
 {
-	return (inv_destroy(lobjId));
+	return inv_destroy(lobjId);
 }
 
 /*****************************************************************************

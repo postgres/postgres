@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.17 1998/08/24 01:14:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.18 1998/09/01 03:26:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,13 +85,13 @@ GetDatabaseInfo(char *name, int4 *owner, char *path)
 
 	dbowner = (Oid) heap_getattr(dbtup,
 								 Anum_pg_database_datdba,
-								 RelationGetTupleDescriptor(dbrel),
+								 RelationGetDescr(dbrel),
 								 (char *) NULL);
 	dbid = dbtup->t_oid;
 
 	dbtext = (text *) heap_getattr(dbtup,
 								   Anum_pg_database_datpath,
-								   RelationGetTupleDescriptor(dbrel),
+								   RelationGetDescr(dbrel),
 								   (char *) NULL);
 
 	memcpy(dbpath, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));

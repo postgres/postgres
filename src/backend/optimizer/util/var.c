@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.12 1998/06/15 19:28:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.13 1998/09/01 03:24:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ pull_varnos(Node *me)
 			   *result = NIL;
 
 	if (me == NULL)
-		return (NIL);
+		return NIL;
 
 	switch (nodeTag(me))
 	{
@@ -63,7 +63,7 @@ pull_varnos(Node *me)
 		default:
 			break;
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -154,7 +154,7 @@ pull_var_clause(Node *clause)
 	List	   *retval = NIL;
 
 	if (clause == NULL)
-		return (NIL);
+		return NIL;
 	else if (IsA(clause, Var))
 		retval = lcons(clause, NIL);
 	else if (IsA(clause, Iter))
@@ -202,7 +202,7 @@ pull_var_clause(Node *clause)
 	else
 		retval = NIL;
 
-	return (retval);
+	return retval;
 }
 
 /*
@@ -221,8 +221,8 @@ var_equal(Var *var1, Var *var2)
 		(((Var *) var1)->varattno == ((Var *) var2)->varattno))
 	{
 		Assert(((Var *) var1)->varlevelsup == 0);
-		return (true);
+		return true;
 	}
 	else
-		return (false);
+		return false;
 }

@@ -125,7 +125,7 @@ DefineUser(CreateUserStmt *stmt)
 	 * exist.
 	 */
 	pg_shadow_rel = heap_openr(ShadowRelationName);
-	pg_shadow_dsc = RelationGetTupleDescriptor(pg_shadow_rel);
+	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	/*
 	 * Secure a write lock on pg_shadow so we can be sure of what the next
@@ -247,7 +247,7 @@ AlterUser(AlterUserStmt *stmt)
 	 * Scan the pg_shadow relation to be certain the user exists.
 	 */
 	pg_shadow_rel = heap_openr(ShadowRelationName);
-	pg_shadow_dsc = RelationGetTupleDescriptor(pg_shadow_rel);
+	pg_shadow_dsc = RelationGetDescr(pg_shadow_rel);
 
 	/*
 	 * Secure a write lock on pg_shadow so we can be sure that when the
@@ -363,7 +363,7 @@ RemoveUser(char *user)
 	 * message.
 	 */
 	pg_shadow_rel = heap_openr(ShadowRelationName);
-	pg_dsc = RelationGetTupleDescriptor(pg_shadow_rel);
+	pg_dsc = RelationGetDescr(pg_shadow_rel);
 
 	/*
 	 * Secure a write lock on pg_shadow so we can be sure that when the
@@ -390,7 +390,7 @@ RemoveUser(char *user)
 	 * owned by usesysid.  Then drop them.
 	 */
 	pg_rel = heap_openr(DatabaseRelationName);
-	pg_dsc = RelationGetTupleDescriptor(pg_rel);
+	pg_dsc = RelationGetDescr(pg_rel);
 
 	scan = heap_beginscan(pg_rel, false, SnapshotNow, 0, NULL);
 	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))

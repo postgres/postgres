@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.41 1998/08/19 02:02:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.42 1998/09/01 03:25:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,19 +128,19 @@ RelationGetBufferWithBuffer(Relation relation,
 				bufHdr->tag.relId.dbId == lrelId->dbId)
 			{
 				SpinRelease(BufMgrLock);
-				return (buffer);
+				return buffer;
 			}
-			return (ReadBufferWithBufferLock(relation, blockNumber, true));
+			return ReadBufferWithBufferLock(relation, blockNumber, true);
 		}
 		else
 		{
 			bufHdr = &LocalBufferDescriptors[-buffer - 1];
 			if (bufHdr->tag.relId.relId == RelationGetRelid(relation) &&
 				bufHdr->tag.blockNum == blockNumber)
-				return (buffer);
+				return buffer;
 		}
 	}
-	return (ReadBuffer(relation, blockNumber));
+	return ReadBuffer(relation, blockNumber);
 }
 
 /*
@@ -256,7 +256,7 @@ ReadBufferWithBufferLock(Relation reln,
 	}
 
 	if (!bufHdr)
-		return (InvalidBuffer);
+		return InvalidBuffer;
 
 	/* if its already in the buffer pool, we're done */
 	if (found)
@@ -274,7 +274,7 @@ ReadBufferWithBufferLock(Relation reln,
 			smgrextend(DEFAULT_SMGR, reln,
 					   (char *) MAKE_PTR(bufHdr->data));
 		}
-		return (BufferDescriptorGetBuffer(bufHdr));
+		return BufferDescriptorGetBuffer(bufHdr);
 
 	}
 
@@ -296,7 +296,7 @@ ReadBufferWithBufferLock(Relation reln,
 	}
 
 	if (isLocalBuf)
-		return (BufferDescriptorGetBuffer(bufHdr));
+		return BufferDescriptorGetBuffer(bufHdr);
 
 	/* lock buffer manager again to update IO IN PROGRESS */
 	SpinAcquire(BufMgrLock);
@@ -338,9 +338,9 @@ ReadBufferWithBufferLock(Relation reln,
 	SpinRelease(BufMgrLock);
 
 	if (status == SM_FAIL)
-		return (InvalidBuffer);
+		return InvalidBuffer;
 
-	return (BufferDescriptorGetBuffer(bufHdr));
+	return BufferDescriptorGetBuffer(bufHdr);
 }
 
 /*
@@ -421,7 +421,7 @@ BufferAlloc(Relation reln,
 
 		SpinRelease(BufMgrLock);
 
-		return (buf);
+		return buf;
 	}
 
 	*foundPtr = FALSE;
@@ -444,7 +444,7 @@ BufferAlloc(Relation reln,
 		 * again.
 		 */
 		if (buf == NULL)
-			return (NULL);
+			return NULL;
 
 		/*
 		 * There should be exactly one pin on the buffer after it is
@@ -606,7 +606,7 @@ BufferAlloc(Relation reln,
 
 				SpinRelease(BufMgrLock);
 
-				return (buf2);
+				return buf2;
 			}
 		}
 	}
@@ -665,7 +665,7 @@ BufferAlloc(Relation reln,
 
 	SpinRelease(BufMgrLock);
 
-	return (buf);
+	return buf;
 }
 
 /*
@@ -689,7 +689,7 @@ WriteBuffer(Buffer buffer)
 	BufferDesc *bufHdr;
 
 	if (WriteMode == BUFFER_FLUSH_WRITE)
-		return (FlushBuffer(buffer, TRUE));
+		return FlushBuffer(buffer, TRUE);
 	else
 	{
 
@@ -697,7 +697,7 @@ WriteBuffer(Buffer buffer)
 			return WriteLocalBuffer(buffer, TRUE);
 
 		if (BAD_BUFFER_ID(buffer))
-			return (FALSE);
+			return FALSE;
 
 		bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -708,7 +708,7 @@ WriteBuffer(Buffer buffer)
 		SpinRelease(BufMgrLock);
 		CommitInfoNeedsSave[buffer - 1] = 0;
 	}
-	return (TRUE);
+	return TRUE;
 }
 
 #ifdef NOT_USED
@@ -803,7 +803,7 @@ FlushBuffer(Buffer buffer, bool release)
 		return FlushLocalBuffer(buffer, release);
 
 	if (BAD_BUFFER_ID(buffer))
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 	bufdb = bufHdr->tag.relId.dbId;
@@ -826,7 +826,7 @@ FlushBuffer(Buffer buffer, bool release)
 	{
 		elog(ERROR, "FlushBuffer: cannot flush block %u of the relation %s",
 			 bufHdr->tag.blockNum, bufHdr->sb_relname);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	BufferFlushCount++;
 
@@ -848,7 +848,7 @@ FlushBuffer(Buffer buffer, bool release)
 	SpinRelease(BufMgrLock);
 	CommitInfoNeedsSave[buffer - 1] = 0;
 
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 /*
@@ -865,7 +865,7 @@ WriteNoReleaseBuffer(Buffer buffer)
 	BufferDesc *bufHdr;
 
 	if (WriteMode == BUFFER_FLUSH_WRITE)
-		return (FlushBuffer(buffer, FALSE));
+		return FlushBuffer(buffer, FALSE);
 	else
 	{
 
@@ -873,7 +873,7 @@ WriteNoReleaseBuffer(Buffer buffer)
 			return WriteLocalBuffer(buffer, FALSE);
 
 		if (BAD_BUFFER_ID(buffer))
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 
 		bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -882,7 +882,7 @@ WriteNoReleaseBuffer(Buffer buffer)
 		SpinRelease(BufMgrLock);
 		CommitInfoNeedsSave[buffer - 1] = 0;
 	}
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 
@@ -938,7 +938,7 @@ ReleaseAndReadBuffer(Buffer buffer,
 		}
 	}
 
-	return (ReadBuffer(relation, blockNum));
+	return ReadBuffer(relation, blockNum);
 }
 
 /*
@@ -1224,9 +1224,9 @@ BufferPoolCheckLeak()
 	if (error)
 	{
 		PrintBufferDescs();
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 }
 
 /* ------------------------------------------------
@@ -1260,9 +1260,9 @@ BufferGetBlockNumber(Buffer buffer)
 
 	/* XXX should be a critical section */
 	if (BufferIsLocal(buffer))
-		return (LocalBufferDescriptors[-buffer - 1].tag.blockNum);
+		return LocalBufferDescriptors[-buffer - 1].tag.blockNum;
 	else
-		return (BufferDescriptors[buffer - 1].tag.blockNum);
+		return BufferDescriptors[buffer - 1].tag.blockNum;
 }
 
 /*
@@ -1297,7 +1297,7 @@ BufferGetRelation(Buffer buffer)
 		RelationIncrementReferenceCount(relation);
 	}
 
-	return (relation);
+	return relation;
 }
 
 /*
@@ -1354,11 +1354,11 @@ BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld)
 		RelationDecrementReferenceCount(reln);
 
 	if (status == SM_FAIL)
-		return (FALSE);
+		return FALSE;
 
 	BufferFlushCount++;
 
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -1576,19 +1576,19 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 				{
 					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is dirty",
 						 rel->rd_rel->relname.data, block, buf->tag.blockNum);
-					return (-1);
+					return -1;
 				}
 				if (LocalRefCount[i] > 0)
 				{
 					elog(NOTICE, "BlowawayRelationBuffers(%s (local), %u): block %u is referenced (%d)",
 						 rel->rd_rel->relname.data, block,
 						 buf->tag.blockNum, LocalRefCount[i]);
-					return (-2);
+					return -2;
 				}
 				buf->tag.relId.relId = InvalidOid;
 			}
 		}
-		return (0);
+		return 0;
 	}
 
 	SpinAcquire(BufMgrLock);
@@ -1605,7 +1605,7 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 					 buf->sb_relname, block, buf->tag.blockNum,
 					 PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
-				return (-1);
+				return -1;
 			}
 			if (!(buf->flags & BM_FREE))
 			{
@@ -1613,13 +1613,13 @@ BlowawayRelationBuffers(Relation rel, BlockNumber block)
 					 buf->sb_relname, block, buf->tag.blockNum,
 					 PrivateRefCount[i], LastRefCount[i], buf->refcount);
 				SpinRelease(BufMgrLock);
-				return (-2);
+				return -2;
 			}
 			BufTableDelete(buf);
 		}
 	}
 	SpinRelease(BufMgrLock);
-	return (0);
+	return 0;
 }
 
 #undef ReleaseBuffer
@@ -1638,11 +1638,11 @@ ReleaseBuffer(Buffer buffer)
 	{
 		Assert(LocalRefCount[-buffer - 1] > 0);
 		LocalRefCount[-buffer - 1]--;
-		return (STATUS_OK);
+		return STATUS_OK;
 	}
 
 	if (BAD_BUFFER_ID(buffer))
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
@@ -1670,7 +1670,7 @@ ReleaseBuffer(Buffer buffer)
 		SpinRelease(BufMgrLock);
 	}
 
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 #ifdef NOT_USED
@@ -1923,7 +1923,7 @@ SetBufferWriteMode(int mode)
 
 	old = WriteMode;
 	WriteMode = mode;
-	return (old);
+	return old;
 }
 
 void

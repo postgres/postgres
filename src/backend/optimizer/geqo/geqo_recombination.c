@@ -3,7 +3,7 @@
 * geqo_recombination.c--
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.5 1998/02/26 04:32:25 momjian Exp $
+* $Id: geqo_recombination.c,v 1.6 1998/09/01 03:23:15 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -96,7 +96,7 @@ alloc_city_table(int num_gene)
 
 	city_table = (City *) palloc((num_gene + 1) * sizeof(City));
 
-	return (city_table);
+	return city_table;
 }
 
 /* free_city_table--

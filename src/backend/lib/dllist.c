@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.10 1998/06/15 19:28:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.11 1998/09/01 03:22:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ DLFreeElem(Dlelem *e)
 Dlelem *
 DLGetHead(Dllist *l)
 {
-	return (l ? l->dll_head : 0);
+	return l ? l->dll_head : 0;
 }
 
 /* get the value stored in the first element */
@@ -74,7 +74,7 @@ DLGetHeadVal(Dllist *l)
 {
 	Dlelem	   *e = DLGetHead(l);
 
-	return (e ? e->dle_val : 0);
+	return e ? e->dle_val : 0;
 }
 
 #endif
@@ -82,7 +82,7 @@ DLGetHeadVal(Dllist *l)
 Dlelem *
 DLGetTail(Dllist *l)
 {
-	return (l ? l->dll_tail : 0);
+	return l ? l->dll_tail : 0;
 }
 
 /* get the value stored in the first element */
@@ -92,7 +92,7 @@ DLGetTailVal(Dllist *l)
 {
 	Dlelem	   *e = DLGetTail(l);
 
-	return (e ? e->dle_val : 0);
+	return e ? e->dle_val : 0;
 }
 
 #endif
@@ -100,13 +100,13 @@ DLGetTailVal(Dllist *l)
 Dlelem *
 DLGetPred(Dlelem *e)			/* get predecessor */
 {
-	return (e ? e->dle_prev : 0);
+	return e ? e->dle_prev : 0;
 }
 
 Dlelem *
 DLGetSucc(Dlelem *e)			/* get successor */
 {
-	return (e ? e->dle_next : 0);
+	return e ? e->dle_next : 0;
 }
 
 void

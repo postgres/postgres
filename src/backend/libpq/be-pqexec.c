@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.18 1998/08/24 01:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.19 1998/09/01 03:22:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,5 +412,5 @@ pqtest(struct varlena * vlena)
 			return pqtest_PQexec(q);
 			break;
 	}
-	return (0);
+	return 0;
 }

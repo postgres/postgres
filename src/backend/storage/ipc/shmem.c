@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.29 1998/07/27 19:38:10 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.30 1998/09/01 03:25:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ InitShmem(unsigned int key, unsigned int size)
 	if (sharedRegion == NULL)
 	{
 		elog(FATAL, "AttachSharedRegion: couldn't attach to shmem\n");
-		return (FALSE);
+		return FALSE;
 	}
 
 	/* get pointers to the dimensions of shared memory */
@@ -195,7 +195,7 @@ InitShmem(unsigned int key, unsigned int size)
 	 * allocator and shmem index.
 	 */
 	if (!InitSpinLocks(ShmemBootstrap, IPCKeyGetSpinLockSemaphoreKey(key)))
-		return (FALSE);
+		return FALSE;
 
 	/*
 	 * We have just allocated additional space for two spinlocks. Now
@@ -223,7 +223,7 @@ InitShmem(unsigned int key, unsigned int size)
 	if (!ShmemIndex)
 	{
 		elog(FATAL, "InitShmem: couldn't initialize Shmem Index");
-		return (FALSE);
+		return FALSE;
 	}
 
 	/*
@@ -241,7 +241,7 @@ InitShmem(unsigned int key, unsigned int size)
 	if (!result)
 	{
 		elog(FATAL, "InitShmem: corrupted shmem index");
-		return (FALSE);
+		return FALSE;
 	}
 
 	if (!found)
@@ -267,7 +267,7 @@ InitShmem(unsigned int key, unsigned int size)
 
 	Assert(result->location == MAKE_OFFSET(ShmemIndex->hctl));
 
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -312,7 +312,7 @@ ShmemAlloc(unsigned long size)
 
 	if (!newSpace)
 		elog(NOTICE, "ShmemAlloc: out of memory ");
-	return (newSpace);
+	return newSpace;
 }
 
 /*
@@ -323,7 +323,7 @@ ShmemAlloc(unsigned long size)
 int
 ShmemIsValid(unsigned long addr)
 {
-	return ((addr < ShmemEnd) && (addr >= ShmemBase));
+	return (addr < ShmemEnd) && (addr >= ShmemBase);
 }
 
 /*
@@ -366,7 +366,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	 * message since they have more information
 	 */
 	if (location == NULL)
-		return (0);
+		return 0;
 
 	/*
 	 * it already exists, attach to it rather than allocate and initialize
@@ -381,7 +381,7 @@ ShmemInitHash(char *name,		/* table string name for shmem index */
 	/* directory for hash lookup */
 	infoP->dir = (long *) (location + sizeof(HHDR));
 
-	return (hash_create(init_size, infoP, hash_flags));;
+	return hash_create(init_size, infoP, hash_flags);;
 }
 
 /*
@@ -414,7 +414,7 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 
 		SpinRelease(ShmemIndexLock);
 		elog(ERROR, "ShmemInitPID: ShmemIndex corrupted");
-		return (FALSE);
+		return FALSE;
 
 	}
 
@@ -424,7 +424,7 @@ ShmemPIDLookup(int pid, SHMEM_OFFSET *locationPtr)
 		result->location = *locationPtr;
 
 	SpinRelease(ShmemIndexLock);
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -461,14 +461,14 @@ ShmemPIDDestroy(int pid)
 	{
 
 		elog(ERROR, "ShmemPIDDestroy: PID table corrupted");
-		return (INVALID_OFFSET);
+		return INVALID_OFFSET;
 
 	}
 
 	if (found)
-		return (location);
+		return location;
 	else
-		return (INVALID_OFFSET);
+		return INVALID_OFFSET;
 }
 
 /*
@@ -516,14 +516,14 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 			/* in POSTMASTER/Single process */
 
 			*foundPtr = FALSE;
-			return ((long *) ShmemAlloc(size));
+			return (long *) ShmemAlloc(size);
 		}
 		else
 		{
 			Assert(ShmemIndexOffset);
 
 			*foundPtr = TRUE;
-			return ((long *) MAKE_PTR(*ShmemIndexOffset));
+			return (long *) MAKE_PTR(*ShmemIndexOffset);
 		}
 
 
@@ -540,7 +540,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 		SpinRelease(ShmemIndexLock);
 
 		elog(ERROR, "ShmemInitStruct: Shmem Index corrupted");
-		return (NULL);
+		return NULL;
 
 	}
 	else if (*foundPtr)
@@ -556,7 +556,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 
 			elog(NOTICE, "ShmemInitStruct: ShmemIndex entry size is wrong");
 			/* let caller print its message too */
-			return (NULL);
+			return NULL;
 		}
 		structPtr = (long *) MAKE_PTR(result->location);
 	}
@@ -574,7 +574,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 
 			elog(NOTICE, "ShmemInitStruct: cannot allocate '%s'",
 				 name);
-			return (NULL);
+			return NULL;
 		}
 		result->size = size;
 		result->location = MAKE_OFFSET(structPtr);
@@ -582,7 +582,7 @@ ShmemInitStruct(char *name, unsigned long size, bool *foundPtr)
 	Assert(ShmemIsValid((unsigned long) structPtr));
 
 	SpinRelease(ShmemIndexLock);
-	return (structPtr);
+	return structPtr;
 }
 
 /*
@@ -607,7 +607,7 @@ TransactionIdIsInProgress(TransactionId xid)
 		if (result == (ShmemIndexEnt *) TRUE)
 		{
 			SpinRelease(ShmemIndexLock);
-			return (false);
+			return false;
 		}
 		if (result->location == INVALID_OFFSET ||
 			strncmp(result->key, "PID ", 4) != 0)
@@ -616,13 +616,13 @@ TransactionIdIsInProgress(TransactionId xid)
 		if (proc->xid == xid)
 		{
 			SpinRelease(ShmemIndexLock);
-			return (true);
+			return true;
 		}
 	}
 
 	SpinRelease(ShmemIndexLock);
 	elog(ERROR, "TransactionIdIsInProgress: ShmemIndex corrupted");
-	return (false);
+	return false;
 }
 
 #ifdef LowLevelLocking
@@ -665,7 +665,7 @@ GetSnapshotData(bool serialized)
 				MyProc->xmin = snapshot->xmin;
 			SpinRelease(ShmemIndexLock);
 			snapshot->xip[count] = InvalidTransactionId;
-			return (snapshot);
+			return snapshot;
 		}
 		if (result->location == INVALID_OFFSET ||
 			strncmp(result->key, "PID ", 4) != 0)
@@ -693,6 +693,6 @@ GetSnapshotData(bool serialized)
 	free(snapshot->xip);
 	free(snapshot);
 	elog(ERROR, "GetSnapshotData: ShmemIndex corrupted");
-	return (NULL);
+	return NULL;
 }
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.6 1997/09/08 02:20:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.7 1998/09/01 03:21:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,7 +115,7 @@ _bt_getstrat(Relation rel,
 
 	Assert(StrategyNumberIsValid(strat));
 
-	return (strat);
+	return strat;
 }
 
 bool

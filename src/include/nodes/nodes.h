@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.28 1998/08/25 21:37:02 scrappy Exp $
+ * $Id: nodes.h,v 1.29 1998/09/01 03:28:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,11 +79,11 @@ typedef enum NodeTag
 	T_OrderKey,
 	T_JoinKey,
 	T_MergeOrder,
-	T_CInfo,
+	T_ClauseInfo,
 	T_JoinMethod,
 	T_HInfo,
 	T_MInfo,
-	T_JInfo,
+	T_JoinInfo,
 	T_Iter,
 	T_Stream,
 

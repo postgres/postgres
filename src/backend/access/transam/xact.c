@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.21 1998/07/21 04:17:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.22 1998/09/01 03:21:33 momjian Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -295,7 +295,7 @@ IsTransactionState(void)
 	/*
 	 * Shouldn't get here, but lint is not happy with this...
 	 */
-	return (false);
+	return false;
 }
 
 /* --------------------------------
@@ -863,7 +863,7 @@ StartTransaction()
 bool
 CurrentXactInProgress()
 {
-	return (CurrentTransactionState->state == TRANS_INPROGRESS);
+	return CurrentTransactionState->state == TRANS_INPROGRESS;
 }
 
 /* --------------------------------
@@ -1462,7 +1462,7 @@ IsTransactionBlock()
 
 	if (s->blockState == TBLOCK_INPROGRESS
 		|| s->blockState == TBLOCK_ENDABORT)
-		return (true);
+		return true;
 
-	return (false);
+	return false;
 }

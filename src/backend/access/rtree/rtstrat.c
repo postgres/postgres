@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.8 1997/09/08 02:21:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtstrat.c,v 1.9 1998/09/01 03:21:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,7 +209,7 @@ RelationGetRTStrategy(Relation r,
 					  AttrNumber attnum,
 					  RegProcedure proc)
 {
-	return (RelationGetStrategy(r, attnum, &RTEvaluationData, proc));
+	return RelationGetStrategy(r, attnum, &RTEvaluationData, proc);
 }
 
 #ifdef NOT_USED
@@ -239,5 +239,5 @@ RTMapOperator(Relation r,
 											  RTNStrategies,
 											  attnum);
 
-	return (strategyMap->entry[RTOperMap[procstrat - 1] - 1].sk_procedure);
+	return strategyMap->entry[RTOperMap[procstrat - 1] - 1].sk_procedure;
 }

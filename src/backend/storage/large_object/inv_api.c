@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.36 1998/08/27 01:04:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.37 1998/09/01 03:25:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,8 +197,8 @@ inv_create(int flags)
 	retval->heap_r = r;
 	retval->index_r = indr;
 	retval->iscan = (IndexScanDesc) NULL;
-	retval->hdesc = RelationGetTupleDescriptor(r);
-	retval->idesc = RelationGetTupleDescriptor(indr);
+	retval->hdesc = RelationGetDescr(r);
+	retval->idesc = RelationGetDescr(indr);
 	retval->offset = retval->lowbyte =
 		retval->highbyte = 0;
 	ItemPointerSetInvalid(&(retval->htid));
@@ -215,7 +215,7 @@ inv_create(int flags)
 	}
 	retval->flags |= IFS_ATEOF;
 
-	return (retval);
+	return retval;
 }
 
 LargeObjectDesc *
@@ -229,7 +229,7 @@ inv_open(Oid lobjId, int flags)
 	r = heap_open(lobjId);
 
 	if (!RelationIsValid(r))
-		return ((LargeObjectDesc *) NULL);
+		return (LargeObjectDesc *) NULL;
 
 	indname = pstrdup((r->rd_rel->relname).data);
 
@@ -242,15 +242,15 @@ inv_open(Oid lobjId, int flags)
 	indrel = index_openr(indname);
 
 	if (!RelationIsValid(indrel))
-		return ((LargeObjectDesc *) NULL);
+		return (LargeObjectDesc *) NULL;
 
 	retval = (LargeObjectDesc *) palloc(sizeof(LargeObjectDesc));
 
 	retval->heap_r = r;
 	retval->index_r = indrel;
 	retval->iscan = (IndexScanDesc) NULL;
-	retval->hdesc = RelationGetTupleDescriptor(r);
-	retval->idesc = RelationGetTupleDescriptor(indrel);
+	retval->hdesc = RelationGetDescr(r);
+	retval->idesc = RelationGetDescr(indrel);
 	retval->offset = retval->lowbyte = retval->highbyte = 0;
 	ItemPointerSetInvalid(&(retval->htid));
 
@@ -265,7 +265,7 @@ inv_open(Oid lobjId, int flags)
 		retval->flags = IFS_RDLOCK;
 	}
 
-	return (retval);
+	return retval;
 }
 
 /*
@@ -348,7 +348,7 @@ inv_stat(LargeObjectDesc *obj_desc, struct pgstat * stbuf)
 	/* we have no good way of computing access times right now */
 	stbuf->st_atime_s = stbuf->st_mtime_s = stbuf->st_ctime_s = 0;
 
-	return (0);
+	return 0;
 }
 
 #endif
@@ -365,7 +365,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 	if (whence == SEEK_CUR)
 	{
 		offset += obj_desc->offset;		/* calculate absolute position */
-		return (inv_seek(obj_desc, offset, SEEK_SET));
+		return inv_seek(obj_desc, offset, SEEK_SET);
 	}
 
 	/*
@@ -383,7 +383,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 		offset += _inv_getsize(obj_desc->heap_r,
 							   obj_desc->hdesc,
 							   obj_desc->index_r);
-		return (inv_seek(obj_desc, offset, SEEK_SET));
+		return inv_seek(obj_desc, offset, SEEK_SET);
 	}
 
 	/*
@@ -400,7 +400,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 		&& offset <= obj_desc->highbyte
 		&& oldOffset <= obj_desc->highbyte
 		&& obj_desc->iscan != (IndexScanDesc) NULL)
-		return (offset);
+		return offset;
 
 	/*
 	 * To do a seek on an inversion file, we start an index scan that will
@@ -427,7 +427,7 @@ inv_seek(LargeObjectDesc *obj_desc, int offset, int whence)
 										  &skey);
 	}
 
-	return (offset);
+	return offset;
 }
 
 int
@@ -435,7 +435,7 @@ inv_tell(LargeObjectDesc *obj_desc)
 {
 	Assert(PointerIsValid(obj_desc));
 
-	return (obj_desc->offset);
+	return obj_desc->offset;
 }
 
 int
@@ -454,7 +454,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 
 	/* if we're already at EOF, we don't need to do any work here */
 	if (obj_desc->flags & IFS_ATEOF)
-		return (0);
+		return 0;
 
 	/* make sure we obey two-phase locking */
 	if (!(obj_desc->flags & IFS_RDLOCK))
@@ -497,7 +497,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		obj_desc->offset += ncopy;
 	}
 
-	return (nread);
+	return nread;
 }
 
 int
@@ -560,7 +560,7 @@ inv_write(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	}
 
 	/* that's it */
-	return (nwritten);
+	return nwritten;
 }
 
 /*
@@ -650,7 +650,7 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *buffer)
 			if (res == (RetrieveIndexResult) NULL)
 			{
 				ItemPointerSetInvalid(&(obj_desc->htid));
-				return ((HeapTuple) NULL);
+				return (HeapTuple) NULL;
 			}
 
 			/*
@@ -791,7 +791,7 @@ inv_wrnew(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 	/* new tuple is inserted */
 	WriteBuffer(buffer);
 
-	return (nwritten);
+	return nwritten;
 }
 
 static int
@@ -836,7 +836,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 		&& obj_desc->lowbyte + nbytes >= obj_desc->highbyte)
 	{
 		WriteBuffer(buffer);
-		return (inv_wrnew(obj_desc, dbuf, nbytes));
+		return inv_wrnew(obj_desc, dbuf, nbytes);
 	}
 
 	/*
@@ -974,7 +974,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 		WriteBuffer(newbuf);
 
 	/* done */
-	return (nwritten);
+	return nwritten;
 }
 
 static HeapTuple
@@ -1092,7 +1092,7 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 	obj_desc->highbyte = obj_desc->offset + nwrite - 1;
 
 	/* new tuple is filled -- return it */
-	return (ntup);
+	return ntup;
 }
 
 static void
@@ -1199,7 +1199,7 @@ ItemPointerFormExternal(ItemPointer pointer)
 					ItemPointerGetOffsetNumber(pointer));
 		}
 
-		return (itemPointerString);
+		return itemPointerString;
 }
 */
 
@@ -1230,7 +1230,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 		{
 			index_endscan(iscan);
 			pfree(iscan);
-			return (0);
+			return 0;
 		}
 
 		/*
@@ -1251,5 +1251,5 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 	size = DatumGetInt32(d) + 1;
 	ReleaseBuffer(buffer);
 	
-	return (size);
+	return size;
 }

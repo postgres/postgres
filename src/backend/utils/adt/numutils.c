@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.24 1998/06/15 19:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.25 1998/09/01 03:26:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ pg_atoi(char *s, int size, int c)
 		default:
 			elog(ERROR, "pg_atoi: invalid result size: %d", size);
 	}
-	return ((int32) l);
+	return (int32) l;
 }
 
 /*
@@ -177,10 +177,10 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 	{
 		MemSet(ascii, '*', width - 2);
 		ascii[width] = 0;
-		return (0);
+		return 0;
 	}
 	strcpy(ascii, out);
-	return (ret);
+	return ret;
 #else
 	auto int	expon;
 	auto int	sign;
@@ -271,7 +271,7 @@ ftoa(double value, char *ascii, int width, int prec1, char format)
 		for (avail = width; avail > 0; avail--)
 			*a++ = '*';
 		*a = 0;
-		return (0);
+		return 0;
 	}
 
 	/* it fits; output the number */
@@ -330,7 +330,7 @@ frac_out:
 	/* finally, we can return */
 	*a = 0;
 	avail = a - ascii;
-	return (avail);
+	return avail;
 #endif
 }
 
@@ -455,14 +455,14 @@ atof1(char *str, double *val)
 	{
 		/* if no exponent, then nothing */
 		if (c != 0)
-			return (-1);
+			return -1;
 	}
 
 	/* store the result and exit */
 	if (minus)
 		v = -v;
 	*val = v;
-	return (0);
+	return 0;
 }
 
 #endif

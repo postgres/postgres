@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.5 1998/03/01 04:53:54 scrappy Exp $ */
+/* $Id: isinf.c,v 1.6 1998/09/01 03:24:29 momjian Exp $ */
 
 #include <math.h>
 #include "config.h"
@@ -16,11 +16,11 @@ isinf(double d)
 	{
 		case FP_NINF:
 		case FP_PINF:
-			return (1);
+			return 1;
 		default:
 			break;
 	}
-	return (0);
+	return 0;
 }
 
 #else
@@ -42,10 +42,10 @@ double		x;
 #endif
 
 	if (fpclass == FP_POS_INF)
-		return (1);
+		return 1;
 	if (fpclass == FP_NEG_INF)
-		return (-1);
-	return (0);
+		return -1;
+	return 0;
 }
 
 #endif
@@ -58,10 +58,10 @@ isinf(double x)
 	int			fpclass = class(x);
 
 	if (fpclass == FP_PLUS_INF)
-		return (1);
+		return 1;
 	if (fpclass == FP_MINUS_INF)
-		return (-1);
-	return (0);
+		return -1;
+	return 0;
 }
 
 #endif

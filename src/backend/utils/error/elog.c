@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.33 1998/08/31 04:48:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.34 1998/09/01 03:26:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,6 @@
 static int	Debugfile = -1;
 static int	Err_file = -1;
 static int	ElogDebugIndentLevel = 0;
-
-extern char OutputFileName[];
 
 /*
  * elog --
@@ -287,7 +285,7 @@ DebugFileOpen(void)
 			elog(FATAL, "DebugFileOpen: %s reopen as stderr: %m",
 				 OutputFileName);
 		Err_file = Debugfile = fileno(stderr);
-		return (Debugfile);
+		return Debugfile;
 	}
 
 	/*
@@ -305,7 +303,7 @@ DebugFileOpen(void)
 		elog(FATAL, "DebugFileOpen: could not open debugging file");
 
 	Err_file = Debugfile = fd;
-	return (Debugfile);
+	return Debugfile;
 }
 
 #endif

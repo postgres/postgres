@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.34 1998/08/19 02:03:53 momjian Exp $
+ * $Id: pg_operator.h,v 1.35 1998/09/01 03:27:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -58,7 +58,7 @@ CATALOG(pg_operator)
  *		the format of pg_operator relation.
  * ----------------
  */
-typedef FormData_pg_operator *OperatorTupleForm;
+typedef FormData_pg_operator *Form_pg_operator;
 
 /* ----------------
  *		compiler constants for pg_operator

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.7 1998/08/10 02:26:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.8 1998/09/01 03:23:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -124,8 +124,8 @@ rel_member(List *relid, List *rels)
 		{
 			temprelid = ((RelOptInfo *) lfirst(temp))->relids;
 			if (same(temprelid, relid))
-				return ((RelOptInfo *) (lfirst(temp)));
+				return (RelOptInfo *) (lfirst(temp));
 		}
 	}
-	return (NULL);
+	return NULL;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.24 1998/08/31 07:55:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.25 1998/09/01 03:26:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@ regprocin(char *pro_name_and_oid)
 	RegProcedure result = (Oid) 0;
 
 	if (pro_name_and_oid == NULL)
-		return (0);
+		return 0;
 
 
 	if (!IsBootstrapProcessingMode())
@@ -80,7 +80,7 @@ regprocin(char *pro_name_and_oid)
 		{
 			elog(ERROR, "regprocin: could not open %s",
 				 ProcedureRelationName);
-			return (0);
+			return 0;
 		}
 		ScanKeyEntryInitialize(&key,
 							   (bits16) 0,
@@ -94,14 +94,14 @@ regprocin(char *pro_name_and_oid)
 			heap_close(proc);
 			elog(ERROR, "regprocin: could not being scan of %s",
 				 ProcedureRelationName);
-			return (0);
+			return 0;
 		}
 		proctup = heap_getnext(procscan, 0);
 		if (HeapTupleIsValid(proctup))
 		{
 				result = (RegProcedure) heap_getattr(proctup,
 													 ObjectIdAttributeNumber,
-											RelationGetTupleDescriptor(proc),
+											RelationGetDescr(proc),
 													 &isnull);
 				if (isnull)
 					elog(FATAL, "regprocin: null procedure %s", pro_name_and_oid);
@@ -160,7 +160,7 @@ regprocout(RegProcedure proid)
 		{
 			elog(ERROR, "regprocout: could not open %s",
 				 ProcedureRelationName);
-			return (0);
+			return 0;
 		}
 		ScanKeyEntryInitialize(&key,
 							   (bits16) 0,
@@ -174,7 +174,7 @@ regprocout(RegProcedure proid)
 			heap_close(proc);
 			elog(ERROR, "regprocout: could not being scan of %s",
 				 ProcedureRelationName);
-			return (0);
+			return 0;
 		}
 		proctup = heap_getnext(procscan, 0);
 		if (HeapTupleIsValid(proctup))
@@ -183,7 +183,7 @@ regprocout(RegProcedure proid)
 			bool		isnull;
 
 			s = (char *) heap_getattr(proctup, 1,
-							  RelationGetTupleDescriptor(proc), &isnull);
+							  RelationGetDescr(proc), &isnull);
 			if (!isnull)
 				StrNCpy(result, s, NAMEDATALEN);
 			else
@@ -196,20 +196,20 @@ regprocout(RegProcedure proid)
 		}
 		heap_endscan(procscan);
 		heap_close(proc);
-		return (result);
+		return result;
 	}
 
 #ifdef	EBUG
 			elog(DEBUG, "regprocout: no such procedure %d", proid);
 #endif							/* defined(EBUG) */
-	return (result);
+	return result;
 }
 
 /*
  *		int8typeout			- converts int8 type oids to "typname" list
  */
 text *
-oid8types(Oid (*oidArray)[])
+oid8types(Oid **oidArray)
 {
 	HeapTuple	typetup;
 	text	   *result;
@@ -220,7 +220,7 @@ oid8types(Oid (*oidArray)[])
 	{
 		result = (text *) palloc(VARHDRSZ);
 		VARSIZE(result) = 0;
-		return (result);
+		return result;
 	}
 
 	result = (text *) palloc(NAMEDATALEN * 8 + 8 + VARHDRSZ);
@@ -238,7 +238,7 @@ oid8types(Oid (*oidArray)[])
 			{
 				char	   *s;
 
-				s = ((TypeTupleForm) GETSTRUCT(typetup))->typname.data;
+				s = ((Form_pg_type) GETSTRUCT(typetup))->typname.data;
 				StrNCpy(VARDATA(result) + strlen(VARDATA(result)), s,
 							NAMEDATALEN);
 				strcat(VARDATA(result), " ");
@@ -246,7 +246,7 @@ oid8types(Oid (*oidArray)[])
 		}
 	}
 	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
-	return (result);
+	return result;
 }
 
 

@@ -1,4 +1,4 @@
-/* $Id: getrusage.c,v 1.9 1998/07/13 16:39:07 momjian Exp $ */
+/* $Id: getrusage.c,v 1.10 1998/09/01 03:24:26 momjian Exp $ */
 
 #include <errno.h>
 #include "rusagestub.h"
@@ -26,12 +26,12 @@ getrusage(int who, struct rusage * rusage)
 	if (rusage == (struct rusage *) NULL)
 	{
 		errno = EFAULT;
-		return (-1);
+		return -1;
 	}
 	if (times(&tms) < 0)
 	{
 		/* errno set by times */
-		return (-1);
+		return -1;
 	}
 	switch (who)
 	{
@@ -45,7 +45,7 @@ getrusage(int who, struct rusage * rusage)
 			break;
 		default:
 			errno = EINVAL;
-			return (-1);
+			return -1;
 	}
 #define TICK_TO_SEC(T, RATE)	((T)/(RATE))
 #define TICK_TO_USEC(T,RATE)	(((T)%(RATE)*1000000)/RATE)
@@ -53,5 +53,5 @@ getrusage(int who, struct rusage * rusage)
 	rusage->ru_utime.tv_usec = TICK_TO_USEC(u, tick_rate);
 	rusage->ru_stime.tv_sec = TICK_TO_SEC(s, tick_rate);
 	rusage->ru_stime.tv_usec = TICK_TO_USEC(u, tick_rate);
-	return (0);
+	return 0;
 }

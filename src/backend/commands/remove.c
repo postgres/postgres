@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.27 1998/08/19 02:01:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.28 1998/09/01 03:22:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ AttributeAndRelationRemove(Oid typeOid)
 	scan = heap_beginscan(rel, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(tup = heap_getnext(scan, 0)))
 	{
-		optr->reloid = ((AttributeTupleForm) GETSTRUCT(tup))->attrelid;
+		optr->reloid = ((Form_pg_attribute) GETSTRUCT(tup))->attrelid;
 		optr->next = (struct oidlist *) palloc(sizeof(*oidptr));
 		optr = optr->next;
 	}

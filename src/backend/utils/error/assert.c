@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.10 1998/08/25 21:34:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.11 1998/09/01 03:26:35 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
@@ -72,5 +72,5 @@ ExceptionalCondition(char *conditionName,
 
 	/* XXX FIXME: detail is lost */
 	ExcRaise(exceptionP, (ExcDetail) 0, (ExcData) NULL, conditionName);
-	return (0);
+	return 0;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.16 1998/07/13 16:34:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.17 1998/09/01 03:22:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,7 @@ be_currentportal(void)
 	Dlelem	   *elt;
 
 	elt = DLGetTail(be_portalstack);
-	return (elt ? (PortalEntry *) DLE_VAL(elt) : NULL);
+	return elt ? (PortalEntry *) DLE_VAL(elt) : NULL;
 }
 
 /* ----------------
@@ -173,7 +173,7 @@ be_typeinit(PortalEntry *entry,
 	PortalBuffer *portal;
 	GroupBuffer *group;
 	int			i;
-	AttributeTupleForm *attrs = tupDesc->attrs;
+	Form_pg_attribute *attrs = tupDesc->attrs;
 
 	/* ----------------
 	 *	add a new portal group to the portal

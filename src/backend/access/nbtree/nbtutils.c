@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.21 1998/08/19 02:01:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.22 1998/09/01 03:21:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 	bits16		flag;
 
 	natts = rel->rd_rel->relnatts;
-	itupdesc = RelationGetTupleDescriptor(rel);
+	itupdesc = RelationGetDescr(rel);
 
 	skey = (ScanKey) palloc(natts * sizeof(ScanKeyData));
 
@@ -64,7 +64,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
 		ScanKeyEntryInitialize(&skey[i], flag, (AttrNumber) (i + 1), proc, arg);
 	}
 
-	return (skey);
+	return skey;
 }
 
 void
@@ -306,7 +306,7 @@ _bt_formitem(IndexTuple itup)
 #ifndef BTREE_VERSION_1
 	btitem->bti_oid = newoid();
 #endif
-	return (btitem);
+	return btitem;
 }
 
 #ifdef NOT_USED
@@ -317,10 +317,10 @@ _bt_checkqual(IndexScanDesc scan, IndexTuple itup)
 
 	so = (BTScanOpaque) scan->opaque;
 	if (so->numberOfKeys > 0)
-		return (index_keytest(itup, RelationGetTupleDescriptor(scan->relation),
+		return (index_keytest(itup, RelationGetDescr(scan->relation),
 							  so->numberOfKeys, so->keyData));
 	else
-		return (true);
+		return true;
 }
 
 #endif
@@ -333,10 +333,10 @@ _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
 
 	so = (BTScanOpaque) scan->opaque;
 	if (keysz > 0 && so->numberOfKeys >= keysz)
-		return (index_keytest(itup, RelationGetTupleDescriptor(scan->relation),
+		return (index_keytest(itup, RelationGetDescr(scan->relation),
 							  keysz, so->keyData));
 	else
-		return (true);
+		return true;
 }
 
 #endif
@@ -354,10 +354,10 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 
 	*keysok = 0;
 	if (keysz == 0)
-		return (true);
+		return true;
 
 	key = so->keyData;
-	tupdesc = RelationGetTupleDescriptor(scan->relation);
+	tupdesc = RelationGetDescr(scan->relation);
 
 	IncrIndexProcessed();
 
@@ -370,7 +370,7 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 
 		/* btree doesn't support 'A is null' clauses, yet */
 		if (isNull || key[0].sk_flags & SK_ISNULL)
-			return (false);
+			return false;
 
 		if (key[0].sk_flags & SK_COMMUTE)
 		{
@@ -386,12 +386,12 @@ _bt_checkkeys(IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 		}
 
 		if (!test == !(key[0].sk_flags & SK_NEGATE))
-			return (false);
+			return false;
 
 		keysz -= 1;
 		key++;
 		(*keysok)++;
 	}
 
-	return (true);
+	return true;
 }

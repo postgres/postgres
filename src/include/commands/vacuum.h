@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.14 1998/08/19 19:59:49 momjian Exp $
+ * $Id: vacuum.h,v 1.15 1998/09/01 03:28:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,13 +53,13 @@ typedef struct
 {
 	FuncIndexInfo finfo;
 	FuncIndexInfo *finfoP;
-	IndexTupleForm tform;
+	Form_pg_index tform;
 	int			natts;
 } IndDesc;
 
 typedef struct
 {
-	AttributeTupleForm attr;
+	Form_pg_attribute attr;
 	Datum		best,
 				guess1,
 				guess2,

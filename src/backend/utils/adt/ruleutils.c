@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.1 1998/08/24 01:38:05 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.2 1998/09/01 03:26:17 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1213,7 +1213,7 @@ char *
 get_const_expr(Const *constval)
 {
     HeapTuple		typetup;
-    TypeTupleForm	typeStruct;
+    Form_pg_type	typeStruct;
     FmgrInfo		finfo_output;
     char		*extval;
     bool		isnull = FALSE;
@@ -1227,7 +1227,7 @@ get_const_expr(Const *constval)
     if (!HeapTupleIsValid(typetup))
 	elog(ERROR, "cache lookup of type %d failed", constval->consttype);
 
-    typeStruct = (TypeTupleForm) GETSTRUCT(typetup);
+    typeStruct = (Form_pg_type) GETSTRUCT(typetup);
 
     fmgr_info(typeStruct->typoutput, &finfo_output);
     extval = (char *)(*fmgr_faddr(&finfo_output))(constval->constvalue,
@@ -1267,7 +1267,7 @@ static char *
 get_attribute_name(Oid relid, int2 attnum)
 {
     HeapTuple		atttup;
-    AttributeTupleForm	attStruct;
+    Form_pg_attribute	attStruct;
 
     atttup = SearchSysCacheTuple(ATTNUM,
     		ObjectIdGetDatum(relid), (Datum)attnum, 0, 0);
@@ -1275,7 +1275,7 @@ get_attribute_name(Oid relid, int2 attnum)
     	elog(ERROR, "cache lookup of attribute %d in relation %d failed", 
 			attnum, relid);
 
-    attStruct = (AttributeTupleForm) GETSTRUCT(atttup);
+    attStruct = (Form_pg_attribute) GETSTRUCT(atttup);
     return nameout(&(attStruct->attname));
 }
 
@@ -1329,7 +1329,7 @@ check_if_rte_used(int rt_index, Node *node, int sup)
 	case T_Var:
 		{
 			Var		*var = (Var *)node;
-			return (var->varno == rt_index && var->varlevelsup == sup);
+			return var->varno == rt_index && var->varlevelsup == sup;
 		}
 		break;
 

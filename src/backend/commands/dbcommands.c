@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.22 1998/08/29 04:09:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.23 1998/09/01 03:21:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,7 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 		dbtup = tup;
 
 	heap_endscan(scan);
-	return (dbtup);
+	return dbtup;
 }
 
 /*
@@ -250,12 +250,12 @@ check_permissions(char *command,
 	{
 		dbowner = (int4) heap_getattr(dbtup,
 									 Anum_pg_database_datdba,
-									 RelationGetTupleDescriptor(dbrel),
+									 RelationGetDescr(dbrel),
 									 (char *) NULL);
 		*dbIdP = dbtup->t_oid;
 		dbtext = (text *) heap_getattr(dbtup,
 									   Anum_pg_database_datpath,
-									   RelationGetTupleDescriptor(dbrel),
+									   RelationGetDescr(dbrel),
 									   (char *) NULL);
 
 		strncpy(path, VARDATA(dbtext), (VARSIZE(dbtext) - VARHDRSZ));

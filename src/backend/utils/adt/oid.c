@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.16 1998/08/19 02:02:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.17 1998/09/01 03:26:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,12 +31,12 @@
 Oid *
 oid8in(char *oidString)
 {
-	Oid			(*result)[];
+	Oid			**result;
 	int			nums;
 
 	if (oidString == NULL)
-		return (NULL);
-	result = (Oid (*)[]) palloc(sizeof(Oid[8]));
+		return NULL;
+	result = (Oid **) palloc(sizeof(Oid[8]));
 	if ((nums = sscanf(oidString, "%d%d%d%d%d%d%d%d",
 					   &(*result)[0],
 					   &(*result)[1],
@@ -51,14 +51,14 @@ oid8in(char *oidString)
 			(*result)[nums++] = 0;
 		while (nums < 8);
 	}
-	return ((Oid *) result);
+	return (Oid *) result;
 }
 
 /*
  *		oid8out - converts internal form to "num num ..."
  */
 char *
-oid8out(Oid (*oidArray)[])
+oid8out(Oid **oidArray)
 {
 	int			num;
 	Oid		   *sp;
@@ -70,7 +70,7 @@ oid8out(Oid (*oidArray)[])
 		result = (char *) palloc(2);
 		result[0] = '-';
 		result[1] = '\0';
-		return (result);
+		return result;
 	}
 
 	/* assumes sign, 10 digits, ' ' */
@@ -84,19 +84,19 @@ oid8out(Oid (*oidArray)[])
 		*rp++ = ' ';
 	}
 	*--rp = '\0';
-	return (result);
+	return result;
 }
 
 Oid
 oidin(char *s)
 {
-	return (int4in(s));
+	return int4in(s);
 }
 
 char *
 oidout(Oid o)
 {
-	return (int4out(o));
+	return int4out(o);
 }
 
 /*****************************************************************************
@@ -110,23 +110,23 @@ oidout(Oid o)
 bool
 oideq(Oid arg1, Oid arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 oidne(Oid arg1, Oid arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
-oid8eq(Oid arg1[], Oid arg2[])
+oid8eq(Oid *arg1, Oid *arg2)
 {
 	return (bool) (memcmp(arg1, arg2, 8 * sizeof(Oid)) == 0);
 }
 
 bool
-oid8lt(Oid arg1[], Oid arg2[])
+oid8lt(Oid *arg1, Oid *arg2)
 {
 	int i;
 	for (i=0; i < 8; i++)
@@ -136,7 +136,7 @@ oid8lt(Oid arg1[], Oid arg2[])
 }
 
 bool
-oid8le(Oid arg1[], Oid arg2[])
+oid8le(Oid *arg1, Oid *arg2)
 {
 	int i;
 	for (i=0; i < 8; i++)
@@ -146,7 +146,7 @@ oid8le(Oid arg1[], Oid arg2[])
 }
 
 bool
-oid8ge(Oid arg1[], Oid arg2[])
+oid8ge(Oid *arg1, Oid *arg2)
 {
 	int i;
 	for (i=0; i < 8; i++)
@@ -156,7 +156,7 @@ oid8ge(Oid arg1[], Oid arg2[])
 }
 
 bool
-oid8gt(Oid arg1[], Oid arg2[])
+oid8gt(Oid *arg1, Oid *arg2)
 {
 	int i;
 	for (i=0; i < 8; i++)
@@ -169,14 +169,14 @@ bool
 oideqint4(Oid arg1, int32 arg2)
 {
 /* oid is unsigned, but int4 is signed */
-	return (arg2 >= 0 && arg1 == arg2);
+	return arg2 >= 0 && arg1 == arg2;
 }
 
 bool
 int4eqoid(int32 arg1, Oid arg2)
 {
 /* oid is unsigned, but int4 is signed */
-	return (arg1 >= 0 && arg1 == arg2);
+	return arg1 >= 0 && arg1 == arg2;
 }
 
 text *
@@ -196,7 +196,7 @@ oid_text(Oid oid)
 	memmove(VARDATA(result), str, (len - VARHDRSZ));
 	pfree(str);
 
-	return (result);
+	return result;
 }	/* oid_text() */
 
 Oid
@@ -216,5 +216,5 @@ text_oid(text *string)
 	result = oidin(str);
 	pfree(str);
 
-	return (result);
+	return result;
 }	/* oid_text() */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.11 1998/08/19 02:03:45 momjian Exp $
+ * $Id: index.h,v 1.12 1998/09/01 03:27:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include <access/itup.h>
 #include <access/funcindex.h>
 
-extern Form_pg_am AccessMethodObjectIdGetAccessMethodTupleForm(Oid accessMethodObjectId);
+extern Form_pg_am AccessMethodObjectIdGetForm(Oid accessMethodObjectId);
 
 extern void UpdateIndexPredicate(Oid indexoid, Node *oldPred, Node *predicate);
 
@@ -34,8 +34,8 @@ index_create(char *heapRelationName,
 			 List *attributeList,
 			 Oid accessMethodObjectId,
 			 int numatts,
-			 AttrNumber attNums[],
-			 Oid classObjectId[],
+			 AttrNumber *attNums,
+			 Oid *classObjectId,
 			 uint16 parameterCount,
 			 Datum *parameter,
 			 Node *predicate,
@@ -46,7 +46,7 @@ extern void index_destroy(Oid indexId);
 
 extern void
 FormIndexDatum(int numberOfAttributes,
-			   AttrNumber attributeNumber[], HeapTuple heapTuple,
+			   AttrNumber *attributeNumber, HeapTuple heapTuple,
 			   TupleDesc heapDescriptor, Datum *datum,
 			   char *nullv, FuncIndexInfoPtr fInfo);
 
@@ -58,7 +58,7 @@ FillDummyExprContext(ExprContext *econtext, TupleTableSlot *slot,
 
 extern void
 index_build(Relation heapRelation, Relation indexRelation,
-			int numberOfAttributes, AttrNumber attributeNumber[],
+			int numberOfAttributes, AttrNumber *attributeNumber,
 		uint16 parameterCount, Datum *parameter, FuncIndexInfo *funcInfo,
 			PredInfo *predInfo);
 

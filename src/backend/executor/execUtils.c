@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.36 1998/08/20 22:07:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.37 1998/09/01 03:22:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@
 #include "utils/mcxt.h"
 
 static void
-ExecGetIndexKeyInfo(IndexTupleForm indexTuple, int *numAttsOutP,
+ExecGetIndexKeyInfo(Form_pg_index indexTuple, int *numAttsOutP,
 					AttrNumber **attsOutP, FuncIndexInfoPtr fInfoP);
 
 /* ----------------------------------------------------------------
@@ -484,7 +484,7 @@ ExecSetTypeInfo(int index,
 				bool attbyVal,
 				char attalign)
 {
-	AttributeTupleForm att;
+	Form_pg_attribute att;
 
 	/* ----------------
 	 *	get attribute pointer and preform a sanity check..
@@ -600,7 +600,7 @@ QueryDescGetTypeInfo(QueryDesc *queryDesc)
  * ----------------------------------------------------------------
  */
 static void
-ExecGetIndexKeyInfo(IndexTupleForm indexTuple,
+ExecGetIndexKeyInfo(Form_pg_index indexTuple,
 					int *numAttsOutP,
 					AttrNumber **attsOutP,
 					FuncIndexInfoPtr fInfoP)
@@ -706,7 +706,7 @@ ExecOpenIndices(Oid resultRelationOid,
 	HeapScanDesc indexSd;
 	ScanKeyData key;
 	HeapTuple	tuple;
-	IndexTupleForm indexStruct;
+	Form_pg_index indexStruct;
 	Oid			indexOid;
 	List	   *oidList;
 	List	   *nkeyList;
@@ -770,7 +770,7 @@ ExecOpenIndices(Oid resultRelationOid,
 		 *	first get the oid of the index relation from the tuple
 		 * ----------------
 		 */
-		indexStruct = (IndexTupleForm) GETSTRUCT(tuple);
+		indexStruct = (Form_pg_index) GETSTRUCT(tuple);
 		indexOid = indexStruct->indexrelid;
 
 		/* ----------------
@@ -1005,8 +1005,8 @@ ExecFormIndexTuple(HeapTuple heapTuple,
 	 *	how to form the index tuples..
 	 * ----------------
 	 */
-	heapDescriptor = RelationGetTupleDescriptor(heapRelation);
-	indexDescriptor = RelationGetTupleDescriptor(indexRelation);
+	heapDescriptor = RelationGetDescr(heapRelation);
+	indexDescriptor = RelationGetDescr(indexRelation);
 
 	/* ----------------
 	 *	FormIndexDatum fills in its datum and null parameters
@@ -1124,7 +1124,7 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 		fInfoP = indexInfo->ii_FuncIndexInfo;
 		datum = (Datum *) palloc(numberOfAttributes * sizeof *datum);
 		nulls = (char *) palloc(numberOfAttributes * sizeof *nulls);
-		heapDescriptor = (TupleDesc) RelationGetTupleDescriptor(heapRelation);
+		heapDescriptor = (TupleDesc) RelationGetDescr(heapRelation);
 
 		FormIndexDatum(numberOfAttributes,		/* num attributes */
 					   keyAttributeNumbers,		/* array of att nums to

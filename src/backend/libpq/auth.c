@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.29 1998/07/09 03:28:45 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.30 1998/09/01 03:22:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ pg_krb4_recvauth(Port *port)
 				krb_err_txt[status]);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	if (strncmp(version, PG_KRB4_VERSION, KRB_SENDAUTH_VLEN))
 	{
@@ -112,7 +112,7 @@ pg_krb4_recvauth(Port *port)
 				PG_KRB4_VERSION);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	if (strncmp(port->user, auth_data.pname, SM_USER))
 	{
@@ -122,9 +122,9 @@ pg_krb4_recvauth(Port *port)
 				auth_data.pname);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 #else
@@ -137,7 +137,7 @@ pg_krb4_recvauth(Port *port)
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
-	return (STATUS_ERROR);
+	return STATUS_ERROR;
 }
 
 #endif							/* KRB4 */
@@ -174,7 +174,7 @@ pg_an_to_ln(char *aname)
 
 	if ((p = strchr(aname, '/')) || (p = strchr(aname, '@')))
 		*p = '\0';
-	return (aname);
+	return aname;
 }
 
 /*
@@ -230,7 +230,7 @@ pg_krb5_recvauth(Port *port)
 			  "pg_krb5_recvauth: Kerberos error %d in krb5_parse_name\n",
 				code);
 		com_err("pg_krb5_recvauth", code, "in krb5_parse_name");
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	/*
@@ -265,7 +265,7 @@ pg_krb5_recvauth(Port *port)
 				code);
 		com_err("pg_krb5_recvauth", code, "in krb5_recvauth");
 		krb5_free_principal(server);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	krb5_free_principal(server);
 
@@ -281,7 +281,7 @@ pg_krb5_recvauth(Port *port)
 				code);
 		com_err("pg_krb5_recvauth", code, "in krb5_unparse_name");
 		krb5_free_principal(client);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	krb5_free_principal(client);
 	if (!kusername)
@@ -290,7 +290,7 @@ pg_krb5_recvauth(Port *port)
 				"pg_krb5_recvauth: could not decode username\n");
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	kusername = pg_an_to_ln(kusername);
 	if (strncmp(username, kusername, SM_USER))
@@ -301,10 +301,10 @@ pg_krb5_recvauth(Port *port)
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 		pfree(kusername);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	pfree(kusername);
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 #else
@@ -317,7 +317,7 @@ pg_krb5_recvauth(Port *port)
 	fputs(PQerrormsg, stderr);
 	pqdebug("%s", PQerrormsg);
 
-	return (STATUS_ERROR);
+	return STATUS_ERROR;
 }
 
 #endif							/* KRB5 */
@@ -394,7 +394,7 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 			auth_failed(port);
 	}
 
-	return (STATUS_OK);			/* don't close the connection yet */
+	return STATUS_OK;			/* don't close the connection yet */
 }
 
 
@@ -628,7 +628,7 @@ readPasswordPacket(void *arg, PacketLen len, void *pkt)
 	else
 		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
 
-	return (STATUS_OK);			/* don't close the connection yet */
+	return STATUS_OK;			/* don't close the connection yet */
 }
 
 

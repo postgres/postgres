@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.5 1998/02/26 04:32:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodes.c,v 1.6 1998/09/01 03:22:58 momjian Exp $
  *
  * HISTORY
  *	  Andrew Yu			Oct 20, 1994	file creation
@@ -41,5 +41,5 @@ newNode(Size size, NodeTag tag)
 	newNode = (Node *) palloc(size);
 	MemSet((char *) newNode, 0, size);
 	newNode->type = tag;
-	return (newNode);
+	return newNode;
 }

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.16 1998/02/26 04:36:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/chunk.c,v 1.17 1998/09/01 03:25:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,20 +41,20 @@ static CHUNK_INFO cInfo;
 
 /* non-export function prototypes */
 static int
-_FindBestChunk(int size, int dmax[], int dbest[], int dim,
+_FindBestChunk(int size, int *dmax, int *dbest, int dim,
 			   int A[MAXPAT][MAXDIM + 1], int N);
-static int	get_next(int d[], int k, int C, int dmax[]);
-static void initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[]);
+static int	get_next(int *d, int k, int C, int *dmax);
+static void initialize_info(CHUNK_INFO *A, int ndim, int *dim, int *chunk);
 
 #ifdef LOARRAY
 static void
-_ConvertToChunkFile(int n, int baseSize, int dim[], int C[],
+_ConvertToChunkFile(int n, int baseSize, int *dim, int *C,
 					int srcfd, int destfd);
 static void
-read_chunk(int chunk_no[], int C[], char a_chunk[], int srcfd,
-		   int n, int baseSize, int PX[], int dist[]);
+read_chunk(int *chunk_no, int *C, char *a_chunk, int srcfd,
+		   int n, int baseSize, int *PX, int *dist);
 static int	write_chunk(struct varlena * a_chunk, int ofile);
-static int	seek_and_read(int pos, int size, char buff[], int fp, int from);
+static int	seek_and_read(int pos, int size, char *buff, int fp, int from);
 
 #endif
 static int
@@ -74,7 +74,7 @@ char *
 _ChunkArray(int fd,
 			FILE *afd,
 			int ndim,
-			int dim[],
+			int *dim,
 			int baseSize,
 			int *nbytes,
 			char *chunkfile)
@@ -172,8 +172,8 @@ GetChunkSize(FILE *fd,
  */
 static int
 _FindBestChunk(int size,
-			   int dmax[],
-			   int dbest[],
+			   int *dmax,
+			   int *dbest,
 			   int dim,
 			   int A[MAXPAT][MAXDIM + 1],
 			   int N)
@@ -188,8 +188,8 @@ _FindBestChunk(int size,
 	{
 
 		/*
-		 * compute the number of page fetches for a given chunk size (d[])
-		 * and access pattern (A[][])
+		 * compute the number of page fetches for a given chunk size (*d)
+		 * and access pattern (**A)
 		 */
 		int			i,
 					j,
@@ -213,7 +213,7 @@ _FindBestChunk(int size,
 				;
 		}
 	}
-	return (mintc);
+	return mintc;
 }
 
 /*----------------------------------------------------------------------
@@ -222,7 +222,7 @@ _FindBestChunk(int size,
  *---------------------------------------------------------------------
  */
 static int
-get_next(int d[], int k, int C, int dmax[])
+get_next(int *d, int k, int C, int *dmax)
 {
 	int			i,
 				j,
@@ -236,7 +236,7 @@ get_next(int d[], int k, int C, int dmax[])
 			d[j] = min(temp, dmax[j]);
 			temp = max(1, temp / d[j]);
 		}
-		return (1);
+		return 1;
 	}
 
 	for (j = 0, temp = 1; j < k; j++)
@@ -249,7 +249,7 @@ get_next(int d[], int k, int C, int dmax[])
 			break;
 	}
 	if (i < 0)
-		return (0);
+		return 0;
 
 	d[i]++;
 	j = C / temp;
@@ -262,7 +262,7 @@ get_next(int d[], int k, int C, int dmax[])
 		d[j] = min(temp, dmax[j]);
 		temp = max(1, temp / d[j]);
 	}
-	return (1);
+	return 1;
 }
 
 #ifdef LOARRAY
@@ -272,7 +272,7 @@ static char a_chunk[BLCKSZ + VARHDRSZ]; /* VARHDRSZ since a_chunk is in
 #endif
 
 static void
-initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[])
+initialize_info(CHUNK_INFO *A, int ndim, int *dim, int *chunk)
 {
 	int			i;
 
@@ -295,8 +295,8 @@ initialize_info(CHUNK_INFO *A, int ndim, int dim[], int chunk[])
 static void
 _ConvertToChunkFile(int n,
 					int baseSize,
-					int dim[],
-					int C[],
+					int *dim,
+					int *C,
 					int srcfd,
 					int destfd)
 {
@@ -335,14 +335,14 @@ _ConvertToChunkFile(int n,
  *--------------------------------------------------------------------------
  */
 static void
-read_chunk(int chunk_no[],
-		   int C[],
-		   char a_chunk[],
+read_chunk(int *chunk_no,
+		   int *C,
+		   char *a_chunk,
 		   int srcfd,
 		   int n,
 		   int baseSize,
-		   int PX[],
-		   int dist[])
+		   int *PX,
+		   int *dist)
 {
 	int			i,
 				j,
@@ -392,7 +392,7 @@ write_chunk(struct varlena * a_chunk, int ofile)
 #ifdef LOARRAY
 	got_n = LOwrite(ofile, a_chunk);
 #endif
-	return (got_n);
+	return got_n;
 }
 
 /*--------------------------------------------------------------------------
@@ -403,7 +403,7 @@ write_chunk(struct varlena * a_chunk, int ofile)
  *--------------------------------------------------------------------------
  */
 static int
-seek_and_read(int pos, int size, char buff[], int fp, int from)
+seek_and_read(int pos, int size, char *buff, int fp, int from)
 {
 	struct varlena *v = NULL;
 
@@ -417,7 +417,7 @@ seek_and_read(int pos, int size, char buff[], int fp, int from)
 		elog(ERROR, "File read error");
 	memmove(buff, VARDATA(v), size);
 	pfree(v);
-	return (1);
+	return 1;
 
 }
 
@@ -430,8 +430,8 @@ seek_and_read(int pos, int size, char buff[], int fp, int from)
  *---------------------------------------------------------------------------
  */
 int
-_ReadChunkArray(int st[],
-				int endp[],
+_ReadChunkArray(int *st,
+				int *endp,
 				int bsize,
 				int fp,
 				char *destfp,
@@ -576,7 +576,7 @@ _ReadChunkArray(int st[],
 			block_seek += (to_read / bsize);
 
 			/*
-			 * compute next tuple in range[]
+			 * compute next tuple in *range
 			 */
 			{
 				int			x;
@@ -620,7 +620,7 @@ _ReadChunkArray(int st[],
 			range_end[i] = min((chunk_st[i] + chunk_off[i]) * C[i] + C[i] - 1, endp[i]);
 		}
 	} while (jj != -1);
-	return (words_read);
+	return words_read;
 }
 
 /*------------------------------------------------------------------------
@@ -630,7 +630,7 @@ _ReadChunkArray(int st[],
  *-------------------------------------------------------------------------
  */
 struct varlena *
-_ReadChunkArray1El(int st[],
+_ReadChunkArray1El(int *st,
 				   int bsize,
 				   int fp,
 				   ArrayType *array,

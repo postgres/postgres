@@ -67,11 +67,11 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 		if (sublink->subLinkType == EXPR_SUBLINK && found)
 		{
 			elog(ERROR, "ExecSubPlan: more than one tuple returned by expression subselect");
-			return ((Datum) false);
+			return (Datum) false;
 		}
 
 		if (sublink->subLinkType == EXISTS_SUBLINK)
-			return ((Datum) true);
+			return (Datum) true;
 
 		found = true;
 
@@ -96,9 +96,9 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext)
 	}
 
 	if (!found && sublink->subLinkType == ALL_SUBLINK)
-		return ((Datum) true);
+		return (Datum) true;
 
-	return ((Datum) result);
+	return (Datum) result;
 }
 
 /* ----------------------------------------------------------------
@@ -123,7 +123,7 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 	sp_estate->es_refcount = estate->es_refcount;
 
 	if (!ExecInitNode(node->plan, sp_estate, NULL))
-		return (false);
+		return false;
 
 	node->shutdown = true;
 
@@ -149,7 +149,7 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 		 */
 	}
 
-	return (true);
+	return true;
 }
 
 /* ----------------------------------------------------------------

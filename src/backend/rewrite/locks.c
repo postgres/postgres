@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.11 1998/08/24 01:37:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.12 1998/09/01 03:24:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
 		default:
 			break;
 	}
-	return (FALSE);
+	return FALSE;
 }
 
 /*
@@ -145,7 +145,7 @@ matchLocks(CmdType event,
 	if (parsetree->commandType != CMD_SELECT)
 	{
 		if (parsetree->resultRelation != varno)
-			return (NULL);
+			return NULL;
 	}
 
 	nlocks = rulelocks->numLocks;
@@ -166,7 +166,7 @@ matchLocks(CmdType event,
 
 	checkLockPerms(real_locks, parsetree, varno);
 
-	return (real_locks);
+	return real_locks;
 }
 
 

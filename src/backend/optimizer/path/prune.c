@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.15 1998/07/18 04:22:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.16 1998/09/01 03:23:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ prune_joinrel(RelOptInfo *rel, List *other_rels)
 		else
 			result = nconc(result, lcons(other_rel, NIL));
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -145,7 +145,7 @@ prune_rel_path(RelOptInfo *rel, Path *unorderedpath)
 	else
 		rel->unorderedpath = (Path *) unorderedpath;
 
-	return (cheapest);
+	return cheapest;
 }
 
 /*
@@ -169,7 +169,7 @@ merge_joinrels(List *rel_list1, List *rel_list2)
 
 		rel_list2 = prune_joinrel(rel, rel_list2);
 	}
-	return (append(rel_list1, rel_list2));
+	return append(rel_list1, rel_list2);
 }
 
 /*
@@ -204,7 +204,7 @@ prune_oldrels(List *old_rels)
 		{
 			foreach(xjoininfo, joininfo_list)
 			{
-				JInfo	   *joininfo = (JInfo *) lfirst(xjoininfo);
+				JoinInfo	   *joininfo = (JoinInfo *) lfirst(xjoininfo);
 
 				if (!joininfo->inactive)
 				{

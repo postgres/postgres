@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.9 1998/08/04 16:44:26 momjian Exp $
+ * $Id: relation.h,v 1.10 1998/09/01 03:28:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,7 +207,7 @@ typedef struct JoinKey
  * clause info
  *******/
 
-typedef struct CInfo
+typedef struct ClauseInfo
 {
 	NodeTag		type;
 	Expr	   *clause;			/* should be an OP clause */
@@ -221,7 +221,7 @@ typedef struct CInfo
 	/* hashjoin only */
 	Oid			hashjoinoperator;
 	Relid		cinfojoinid;
-} CInfo;
+} ClauseInfo;
 
 typedef struct JoinMethod
 {
@@ -242,7 +242,7 @@ typedef struct MInfo
 	MergeOrder *m_ordering;
 } MInfo;
 
-typedef struct JInfo
+typedef struct JoinInfo
 {
 	NodeTag		type;
 	List	   *otherrels;
@@ -250,7 +250,7 @@ typedef struct JInfo
 	bool		mergejoinable;
 	bool		hashjoinable;
 	bool		inactive;
-} JInfo;
+} JoinInfo;
 
 typedef struct Iter
 {
@@ -285,7 +285,7 @@ typedef struct Stream
 {
 	NodeTag		type;
 	Path	   *pathptr;
-	CInfo	   *cinfo;
+	ClauseInfo	   *cinfo;
 	int		   *clausetype;
 	struct Stream *upstream;
 	struct Stream *downstream;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.3 1997/09/07 04:49:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/itemptr.c,v 1.4 1998/09/01 03:25:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ ItemPointerEquals(ItemPointer pointer1, ItemPointer pointer2)
 		ItemPointerGetBlockNumber(pointer2) &&
 		ItemPointerGetOffsetNumber(pointer1) ==
 		ItemPointerGetOffsetNumber(pointer2))
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }

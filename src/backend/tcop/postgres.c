@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.87 1998/08/30 21:05:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.88 1998/09/01 03:25:41 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -296,7 +296,7 @@ InteractiveBackend(char *inBuf)
 	if (EchoQuery)
 		printf("query: %s\n", inBuf);
 
-	return ('Q');
+	return 'Q';
 }
 
 /* ----------------
@@ -661,7 +661,7 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	if (queryListP)
 		*queryListP = querytree_list;
 
-	return (plan_list);
+	return plan_list;
 }
 
 /* ----------------------------------------------------------------
@@ -1521,7 +1521,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.87 $ $Date: 1998/08/30 21:05:27 $");
+		puts("$Revision: 1.88 $ $Date: 1998/09/01 03:25:41 $");
 	}
 
 	/* ----------------

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.18 1998/04/26 04:07:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.19 1998/09/01 03:25:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,8 +29,8 @@ int32
 charin(char *ch)
 {
 	if (ch == NULL)
-		return ((int32) NULL);
-	return ((int32) *ch);
+		return (int32) NULL;
+	return (int32) *ch;
 }
 
 /*
@@ -43,7 +43,7 @@ charout(int32 ch)
 
 	result[0] = (char) ch;
 	result[1] = '\0';
-	return (result);
+	return result;
 }
 
 /*
@@ -62,7 +62,7 @@ cidin(char *s)
 	else
 		c = atoi(s);
 
-	return ((int32) c);
+	return (int32) c;
 }
 
 /*
@@ -80,7 +80,7 @@ cidout(int32 c)
 	result = palloc(12);
 	c2 = (CommandId) c;
 	sprintf(result, "%u", (unsigned) (c2));
-	return (result);
+	return result;
 }
 
 
@@ -91,65 +91,65 @@ cidout(int32 c)
 bool
 chareq(int8 arg1, int8 arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }
 
 bool
 charne(int8 arg1, int8 arg2)
 {
-	return (arg1 != arg2);
+	return arg1 != arg2;
 }
 
 bool
 charlt(int8 arg1, int8 arg2)
 {
-	return ((uint8) arg1 < (uint8) arg2);
+	return (uint8) arg1 < (uint8) arg2;
 }
 
 bool
 charle(int8 arg1, int8 arg2)
 {
-	return ((uint8) arg1 <= (uint8) arg2);
+	return (uint8) arg1 <= (uint8) arg2;
 }
 
 bool
 chargt(int8 arg1, int8 arg2)
 {
-	return ((uint8) arg1 > (uint8) arg2);
+	return (uint8) arg1 > (uint8) arg2;
 }
 
 bool
 charge(int8 arg1, int8 arg2)
 {
-	return ((uint8) arg1 >= (uint8) arg2);
+	return (uint8) arg1 >= (uint8) arg2;
 }
 
 int8
 charpl(int8 arg1, int8 arg2)
 {
-	return (arg1 + arg2);
+	return arg1 + arg2;
 }
 
 int8
 charmi(int8 arg1, int8 arg2)
 {
-	return (arg1 - arg2);
+	return arg1 - arg2;
 }
 
 int8
 charmul(int8 arg1, int8 arg2)
 {
-	return (arg1 * arg2);
+	return arg1 * arg2;
 }
 
 int8
 chardiv(int8 arg1, int8 arg2)
 {
-	return (arg1 / arg2);
+	return arg1 / arg2;
 }
 
 bool
 cideq(int8 arg1, int8 arg2)
 {
-	return (arg1 == arg2);
+	return arg1 == arg2;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayutils.c,v 1.5 1997/09/08 02:30:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayutils.c,v 1.6 1998/09/01 03:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #include "utils/array.h"
 
 int
-GetOffset(int n, int dim[], int lb[], int indx[])
+GetOffset(int n, int *dim, int *lb, int *indx)
 {
 	int			i,
 				scale,
@@ -31,7 +31,7 @@ GetOffset(int n, int dim[], int lb[], int indx[])
 }
 
 int
-getNitems(int n, int a[])
+getNitems(int n, int *a)
 {
 	int			i,
 				ret;
@@ -43,7 +43,7 @@ getNitems(int n, int a[])
 }
 
 int
-compute_size(int st[], int endp[], int n, int base)
+compute_size(int *st, int *endp, int n, int base)
 {
 	int			i,
 				ret;
@@ -54,7 +54,7 @@ compute_size(int st[], int endp[], int n, int base)
 }
 
 void
-mda_get_offset_values(int n, int dist[], int PC[], int span[])
+mda_get_offset_values(int n, int *dist, int *PC, int *span)
 {
 	int			i,
 				j;
@@ -65,7 +65,7 @@ mda_get_offset_values(int n, int dist[], int PC[], int span[])
 }
 
 void
-mda_get_range(int n, int span[], int st[], int endp[])
+mda_get_range(int n, int *span, int *st, int *endp)
 {
 	int			i;
 
@@ -74,7 +74,7 @@ mda_get_range(int n, int span[], int st[], int endp[])
 }
 
 void
-mda_get_prod(int n, int range[], int P[])
+mda_get_prod(int n, int *range, int *P)
 {
 	int			i;
 
@@ -83,7 +83,7 @@ mda_get_prod(int n, int range[], int P[])
 }
 
 int
-tuple2linear(int n, int tup[], int scale[])
+tuple2linear(int n, int *tup, int *scale)
 {
 	int			i,
 				lin;
@@ -94,7 +94,7 @@ tuple2linear(int n, int tup[], int scale[])
 }
 
 void
-array2chunk_coord(int n, int C[], int a_coord[], int c_coord[])
+array2chunk_coord(int n, int *C, int *a_coord, int *c_coord)
 {
 	int			i;
 
@@ -110,19 +110,19 @@ array2chunk_coord(int n, int C[], int a_coord[], int c_coord[])
   1   otherwise
   -----------------------------------------------------------------------------*/
 int
-next_tuple(int n, int curr[], int span[])
+next_tuple(int n, int *curr, int *span)
 {
 	int			i;
 
 	if (!n)
-		return (-1);
+		return -1;
 	curr[n - 1] = (curr[n - 1] + 1) % span[n - 1];
 	for (i = n - 1; i * (!curr[i]); i--)
 		curr[i - 1] = (curr[i - 1] + 1) % span[i - 1];
 
 	if (i)
-		return (i);
+		return i;
 	if (curr[0])
-		return (0);
-	return (-1);
+		return 0;
+	return -1;
 }

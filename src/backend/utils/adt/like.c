@@ -79,7 +79,7 @@ fixedlen_like(char *s, struct varlena * p, int charlen)
 	pfree(sterm);
 	pfree(pterm);
 
-	return ((bool) result);
+	return (bool) result;
 }
 
 bool
@@ -87,13 +87,13 @@ namelike(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
-	return (fixedlen_like(n->data, p, NAMEDATALEN));
+	return fixedlen_like(n->data, p, NAMEDATALEN);
 }
 
 bool
 namenlike(NameData *s, struct varlena * p)
 {
-	return (!namelike(s, p));
+	return !namelike(s, p);
 }
 
 bool
@@ -101,17 +101,17 @@ textlike(struct varlena * s, struct varlena * p)
 {
 	if (!s)
 		return FALSE;
-	return (fixedlen_like(VARDATA(s), p, VARSIZE(s) - VARHDRSZ));
+	return fixedlen_like(VARDATA(s), p, VARSIZE(s) - VARHDRSZ);
 }
 
 bool
 textnlike(struct varlena * s, struct varlena * p)
 {
-	return (!textlike(s, p));
+	return !textlike(s, p);
 }
 
 
-/*	$Revision: 1.18 $
+/*	$Revision: 1.19 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.
@@ -193,5 +193,5 @@ like(pg_wchar *text, pg_wchar *p)
 {
 	if (p[0] == '%' && p[1] == '\0')
 		return TRUE;
-	return (DoMatch(text, p) == LIKE_TRUE);
+	return DoMatch(text, p) == LIKE_TRUE;
 }

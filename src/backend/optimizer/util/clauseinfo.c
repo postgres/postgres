@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.7 1998/02/26 04:33:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/clauseinfo.c,v 1.8 1998/09/01 03:23:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,15 +27,15 @@
  *
  */
 bool
-valid_or_clause(CInfo *clauseinfo)
+valid_or_clause(ClauseInfo *clauseinfo)
 {
 	if (clauseinfo != NULL &&
 		!single_node((Node *) clauseinfo->clause) &&
 		!clauseinfo->notclause &&
 		or_clause((Node *) clauseinfo->clause))
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*
@@ -49,14 +49,14 @@ get_actual_clauses(List *clauseinfo_list)
 {
 	List	   *temp = NIL;
 	List	   *result = NIL;
-	CInfo	   *clause = (CInfo *) NULL;
+	ClauseInfo	   *clause = (ClauseInfo *) NULL;
 
 	foreach(temp, clauseinfo_list)
 	{
-		clause = (CInfo *) lfirst(temp);
+		clause = (ClauseInfo *) lfirst(temp);
 		result = lappend(result, clause->clause);
 	}
-	return (result);
+	return result;
 }
 
 /*
@@ -93,7 +93,7 @@ get_relattvals(List *clauseinfo_list,
 	List	   *result1 = NIL;
 	List	   *result2 = NIL;
 	List	   *result3 = NIL;
-	CInfo	   *temp = (CInfo *) NULL;
+	ClauseInfo	   *temp = (ClauseInfo *) NULL;
 	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
@@ -103,7 +103,7 @@ get_relattvals(List *clauseinfo_list,
 		Datum		constval;
 		int			flag;
 
-		temp = (CInfo *) lfirst(i);
+		temp = (ClauseInfo *) lfirst(i);
 		get_relattval((Node *) temp->clause, &dummy, &attno, &constval, &flag);
 		result1 = lappendi(result1, (int) attno);
 		result2 = lappendi(result2, constval);
@@ -144,7 +144,7 @@ get_joinvars(Oid relid,
 
 	foreach(temp, clauseinfo_list)
 	{
-		CInfo	   *clauseinfo = lfirst(temp);
+		ClauseInfo	   *clauseinfo = lfirst(temp);
 		Expr	   *clause = clauseinfo->clause;
 
 		if (IsA(get_leftop(clause), Var) &&
@@ -176,16 +176,16 @@ get_joinvars(Oid relid,
 List *
 get_opnos(List *clauseinfo_list)
 {
-	CInfo	   *temp = (CInfo *) NULL;
+	ClauseInfo	   *temp = (ClauseInfo *) NULL;
 	List	   *result = NIL;
 	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
 	{
-		temp = (CInfo *) lfirst(i);
+		temp = (ClauseInfo *) lfirst(i);
 		result =
 			lappendi(result,
 					 (((Oper *) temp->clause->oper)->opno));
 	}
-	return (result);
+	return result;
 }

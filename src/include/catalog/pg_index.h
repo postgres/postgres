@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_index.h,v 1.6 1997/11/21 18:12:09 momjian Exp $
+ * $Id: pg_index.h,v 1.7 1998/09/01 03:27:51 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -63,7 +63,7 @@ CATALOG(pg_index)
  *		the format of pg_index relation.
  * ----------------
  */
-typedef FormData_pg_index *IndexTupleForm;
+typedef FormData_pg_index *Form_pg_index;
 
 /* ----------------
  *		compiler constants for pg_index

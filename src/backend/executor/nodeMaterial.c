@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.15 1998/08/19 02:02:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.16 1998/09/01 03:22:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ ExecMaterial(Material *node)
 		matstate->csstate.css_currentScanDesc = currentScanDesc;
 
 		ExecAssignScanType(&matstate->csstate,
-						   RelationGetTupleDescriptor(currentRelation));
+						   RelationGetDescr(currentRelation));
 
 		/* ----------------
 		 *	finally set the sorted flag to true

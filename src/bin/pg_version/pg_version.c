@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.9 1998/03/30 16:47:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/pg_version.c,v 1.10 1998/09/01 03:27:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,5 +41,5 @@ main(int argc, char **argv)
 	}
 	else
 		retcode = 0;
-	return (retcode);
+	return retcode;
 }

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.29 1998/08/20 22:24:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.30 1998/09/01 03:21:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ static void rebuildheap(Oid OIDNewHeap, Oid OIDOldHeap, Oid OIDOldIndex);
  *
  */
 void
-cluster(char oldrelname[], char oldindexname[])
+cluster(char *oldrelname, char *oldindexname)
 {
 	Oid			OIDOldHeap,
 				OIDOldIndex,
@@ -209,7 +209,7 @@ copy_heap(Oid OIDOldHeap)
 	sprintf(NewName, "temp_%x", OIDOldHeap);
 
 	OldHeap = heap_open(OIDOldHeap);
-	OldHeapDesc = RelationGetTupleDescriptor(OldHeap);
+	OldHeapDesc = RelationGetDescr(OldHeap);
 
 	/*
 	 * Need to make a copy of the tuple descriptor,
@@ -239,7 +239,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 	HeapTuple	Old_pg_index_Tuple,
 				Old_pg_index_relation_Tuple,
 				pg_proc_Tuple;
-	IndexTupleForm Old_pg_index_Form;
+	Form_pg_index Old_pg_index_Form;
 	Form_pg_class Old_pg_index_relation_Form;
 	Form_pg_proc pg_proc_Form;
 	char	   *NewIndexName;
@@ -261,7 +261,7 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 							0, 0, 0);
 
 	Assert(Old_pg_index_Tuple);
-	Old_pg_index_Form = (IndexTupleForm) GETSTRUCT(Old_pg_index_Tuple);
+	Old_pg_index_Form = (Form_pg_index) GETSTRUCT(Old_pg_index_Tuple);
 
 	Old_pg_index_relation_Tuple =
 		SearchSysCacheTuple(RELOID,

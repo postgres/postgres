@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.11 1998/06/15 19:28:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.12 1998/09/01 03:23:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ static void xfunc_free_stream(Stream root);
 static Stream xfunc_add_clauses(Stream current);
 static void xfunc_setup_group(Stream node, Stream bottom);
 static Stream
-xfunc_streaminsert(CInfo clauseinfo, Stream current,
+xfunc_streaminsert(ClauseInfo clauseinfo, Stream current,
 				   int clausetype);
 static int	xfunc_num_relids(Stream node);
 static StreamPtr xfunc_get_downjoin(Stream node);
@@ -102,7 +102,7 @@ xfunc_do_predmig(Path root)
 			if (progress)
 				changed = true;
 		} while (progress);
-	return (changed);
+	return changed;
 }
 
 
@@ -145,7 +145,7 @@ xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 		set_downstream(laststream, (StreamPtr) newstream);
 	set_downstream(newstream, (StreamPtr) NULL);
 	set_pathptr(newstream, (pathPtr) pathnode);
-	set_cinfo(newstream, (CInfo) NULL);
+	set_cinfo(newstream, (ClauseInfo) NULL);
 	set_clausetype(newstream, XFUNC_UNKNOWN);
 
 	/* base case: we're at a leaf, call xfunc_series_llel */
@@ -203,7 +203,7 @@ xfunc_series_llel(Stream stream)
 			if (xfunc_llel_chains(stream, temp))
 				progress = true;
 	}
-	return (progress);
+	return progress;
 }
 
 /*
@@ -270,7 +270,7 @@ xfunc_llel_chains(Stream root, Stream bottom)
 
 	/* free up origstream */
 	xfunc_free_stream(origstream);
-	return (progress);
+	return progress;
 }
 
 /*
@@ -304,7 +304,7 @@ xfunc_complete_stream(Stream stream)
 		 tmpstream = (Stream) get_upstream(tmpstream))
 		 /* no body in for loop */ ;
 
-	return (tmpstream);
+	return tmpstream;
 }
 
 /*
@@ -318,7 +318,7 @@ xfunc_complete_stream(Stream stream)
 static bool
 xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 {
-	CInfo		clauseinfo = get_cinfo(pullme);
+	ClauseInfo		clauseinfo = get_cinfo(pullme);
 	bool		progress = false;
 	Stream		upjoin,
 				orignode,
@@ -391,7 +391,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 	}
 	if (!progress)
 		elog(DEBUG, "didn't succeed in pulling up in xfunc_prdmig_pullup");
-	return (progress);
+	return progress;
 }
 
 /*
@@ -530,7 +530,7 @@ xfunc_add_clauses(Stream current)
 	foreach(temp, get_locclauseinfo((Path) get_pathptr(current)))
 	{
 		topnode =
-			xfunc_streaminsert((CInfo) lfirst(temp), topnode,
+			xfunc_streaminsert((ClauseInfo) lfirst(temp), topnode,
 							   XFUNC_LOCPRD);
 	}
 
@@ -540,13 +540,13 @@ xfunc_add_clauses(Stream current)
 		primjoin = xfunc_primary_join((JoinPath) get_pathptr(current));
 		foreach(temp, get_pathclauseinfo((JoinPath) get_pathptr(current)))
 		{
-			if (!equal(get_clause((CInfo) lfirst(temp)), primjoin))
+			if (!equal(get_clause((ClauseInfo) lfirst(temp)), primjoin))
 				topnode =
-					xfunc_streaminsert((CInfo) lfirst(temp), topnode,
+					xfunc_streaminsert((ClauseInfo) lfirst(temp), topnode,
 									   XFUNC_JOINPRD);
 		}
 	}
-	return (topnode);
+	return topnode;
 }
 
 
@@ -596,7 +596,7 @@ xfunc_setup_group(Stream node, Stream bottom)
  ** Return new node.
  */
 static Stream
-xfunc_streaminsert(CInfo clauseinfo,
+xfunc_streaminsert(ClauseInfo clauseinfo,
 				   Stream current,
 				   int clausetype)		/* XFUNC_LOCPRD or XFUNC_JOINPRD */
 {
@@ -610,7 +610,7 @@ xfunc_streaminsert(CInfo clauseinfo,
 	set_pathptr(newstream, get_pathptr(current));
 	set_cinfo(newstream, clauseinfo);
 	set_clausetype(newstream, clausetype);
-	return (newstream);
+	return newstream;
 }
 
 /*
@@ -623,7 +623,7 @@ static int
 xfunc_num_relids(Stream node)
 {
 	if (!node || !IsA(get_pathptr(node), JoinPath))
-		return (0);
+		return 0;
 	else
 		return (length
 				(get_relids(get_parent((JoinPath) get_pathptr(node)))));
@@ -645,7 +645,7 @@ xfunc_get_downjoin(Stream node)
 		 temp = (Stream) get_downstream(temp))
 		 /* empty body in for loop */ ;
 
-	return ((StreamPtr) temp);
+	return (StreamPtr) temp;
 }
 
 /*
@@ -663,7 +663,7 @@ xfunc_get_upjoin(Stream node)
 		 temp = (Stream) get_upstream(temp))
 		 /* empty body in for loop */ ;
 
-	return ((StreamPtr) temp);
+	return (StreamPtr) temp;
 }
 
 /*
@@ -685,7 +685,7 @@ xfunc_stream_qsort(Stream root, Stream bottom)
 		 tmp = (Stream) get_downstream(tmp))
 		num++;
 	if (num <= 1)
-		return (root);
+		return root;
 
 	/* copy elements of the list into an array */
 	nodearray = (Stream *) palloc(num * sizeof(Stream));
@@ -710,7 +710,7 @@ xfunc_stream_qsort(Stream root, Stream bottom)
 		set_upstream(bottom, (StreamPtr) nodearray[0]);
 
 	Assert(xfunc_check_stream(output));
-	return (output);
+	return output;
 }
 
 /*
@@ -731,33 +731,33 @@ xfunc_stream_compare(void *arg1, void *arg2)
 	rank2 = get_grouprank(stream2);
 
 	if (rank1 > rank2)
-		return (1);
+		return 1;
 	else if (rank1 < rank2)
-		return (-1);
+		return -1;
 	else
 	{
 		if (is_clause(stream1) && is_clause(stream2))
-			return (0);			/* doesn't matter what order if both are
+			return 0;			/* doesn't matter what order if both are
 								 * restrictions */
 		else if (!is_clause(stream1) && !is_clause(stream2))
 		{
 			if (xfunc_num_relids(stream1) < xfunc_num_relids(stream2))
-				return (-1);
+				return -1;
 			else
-				return (1);
+				return 1;
 		}
 		else if (is_clause(stream1) && !is_clause(stream2))
 		{
 			if (xfunc_num_relids(stream1) == xfunc_num_relids(stream2))
 				/* stream1 is a restriction over stream2 */
-				return (1);
+				return 1;
 			else
-				return (-1);
+				return -1;
 		}
 		else if (!is_clause(stream1) && is_clause(stream2))
 		{
 			/* stream2 is a restriction over stream1: never push down */
-			return (-1);
+			return -1;
 		}
 	}
 }
@@ -788,20 +788,20 @@ xfunc_check_stream(Stream node)
 		if ((Stream) get_upstream((Stream) get_downstream(temp)) != temp)
 		{
 			elog(ERROR, "bad pointers in stream");
-			return (false);
+			return false;
 		}
 		if (!is_clause(temp))
 		{
 			if ((tmp = xfunc_num_relids(temp)) >= numrelids)
 			{
 				elog(ERROR, "Joins got reordered!");
-				return (false);
+				return false;
 			}
 			numrelids = tmp;
 		}
 	}
 
-	return (true);
+	return true;
 }
 
 /*
@@ -815,6 +815,6 @@ xfunc_in_stream(Stream node, Stream stream)
 
 	for (temp = stream; temp; temp = (Stream) get_downstream(temp))
 		if (temp == node)
-			return (1);
-	return (0);
+			return 1;
+	return 0;
 }

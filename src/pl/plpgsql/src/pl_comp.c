@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.1 1998/08/24 19:14:48 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.2 1998/09/01 03:29:03 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -107,7 +107,7 @@ PLpgSQL_function *plpgsql_compile(Oid fn_oid, int functype)
     HeapTuple		procTup;
     Form_pg_proc	procStruct;
     HeapTuple		typeTup;
-    TypeTupleForm	typeStruct;
+    Form_pg_type	typeStruct;
     char		*proc_source;
     PLpgSQL_function	*function;
     PLpgSQL_var		*var;
@@ -183,7 +183,7 @@ PLpgSQL_function *plpgsql_compile(Oid fn_oid, int functype)
 		elog(ERROR, "cache lookup for return type %d failed",
 				procStruct->prorettype);
 	    }
-	    typeStruct = (TypeTupleForm) GETSTRUCT(typeTup);
+	    typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 	    if (typeStruct->typrelid != InvalidOid) {
 		function->fn_retistuple = true;
 	    } else {
@@ -211,7 +211,7 @@ PLpgSQL_function *plpgsql_compile(Oid fn_oid, int functype)
 		    elog(ERROR, "cache lookup for argument type %d failed",
 				procStruct->proargtypes[i]);
 		}
-		typeStruct = (TypeTupleForm) GETSTRUCT(typeTup);
+		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 		if (typeStruct->typrelid != InvalidOid) {
 		    /* ----------
@@ -522,7 +522,7 @@ int plpgsql_parse_word(char *word)
     PLpgSQL_nsitem		*nse;
     char			*cp;
     HeapTuple			typeTup;
-    TypeTupleForm		typeStruct;
+    Form_pg_type		typeStruct;
     char			*typeXlated;
 
     /* ----------
@@ -597,7 +597,7 @@ int plpgsql_parse_word(char *word)
     if (HeapTupleIsValid(typeTup)) {
 	PLpgSQL_type	*typ;
 
-	typeStruct = (TypeTupleForm) GETSTRUCT(typeTup);
+	typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 	if (typeStruct->typrelid != InvalidOid) {
 	    pfree(cp);
@@ -857,7 +857,7 @@ int plpgsql_parse_wordtype(char *word)
     PLpgSQL_nsitem		*nse;
     char			*cp;
     HeapTuple			typeTup;
-    TypeTupleForm		typeStruct;
+    Form_pg_type		typeStruct;
     char			*typeXlated;
     bool			old_nsstate;
 
@@ -901,7 +901,7 @@ int plpgsql_parse_wordtype(char *word)
     if (HeapTupleIsValid(typeTup)) {
 	PLpgSQL_type	*typ;
 
-	typeStruct = (TypeTupleForm) GETSTRUCT(typeTup);
+	typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 	if (typeStruct->typrelid != InvalidOid) {
 	    pfree(cp);
@@ -945,9 +945,9 @@ int plpgsql_parse_dblwordtype(char *string)
     HeapTuple		classtup;
     Form_pg_class	classStruct;
     HeapTuple		attrtup;
-    AttributeTupleForm	attrStruct;
+    Form_pg_attribute	attrStruct;
     HeapTuple		typetup;
-    TypeTupleForm	typeStruct;
+    Form_pg_type	typeStruct;
     PLpgSQL_type	*typ;
 
 
@@ -1027,7 +1027,7 @@ int plpgsql_parse_dblwordtype(char *string)
 	pfree(word1);
 	return T_ERROR;
     }
-    attrStruct = (AttributeTupleForm)GETSTRUCT(attrtup);
+    attrStruct = (Form_pg_attribute)GETSTRUCT(attrtup);
 
     typetup = SearchSysCacheTuple(TYPOID,
 	    ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
@@ -1041,7 +1041,7 @@ int plpgsql_parse_dblwordtype(char *string)
      * Found that - build a compiler type struct and return it
      * ----------
      */
-    typeStruct = (TypeTupleForm)GETSTRUCT(typetup);
+    typeStruct = (Form_pg_type)GETSTRUCT(typetup);
 
     typ = (PLpgSQL_type *)malloc(sizeof(PLpgSQL_type));
 
@@ -1068,9 +1068,9 @@ int plpgsql_parse_wordrowtype(char *string)
     HeapTuple		classtup;
     Form_pg_class	classStruct;
     HeapTuple		typetup;
-    TypeTupleForm	typeStruct;
+    Form_pg_type	typeStruct;
     HeapTuple		attrtup;
-    AttributeTupleForm	attrStruct;
+    Form_pg_attribute	attrStruct;
     char		*word1;
     char		*cp;
     int			i;
@@ -1135,7 +1135,7 @@ int plpgsql_parse_wordrowtype(char *string)
 	    elog(ERROR, "cache lookup for attribute %d of class %s failed",
 	    		i + 1, word1);
 	}
-	attrStruct = (AttributeTupleForm)GETSTRUCT(attrtup);
+	attrStruct = (Form_pg_attribute)GETSTRUCT(attrtup);
 
 	typetup = SearchSysCacheTuple(TYPOID,
 		ObjectIdGetDatum(attrStruct->atttypid), 0, 0, 0);
@@ -1145,7 +1145,7 @@ int plpgsql_parse_wordrowtype(char *string)
 	    		attrStruct->atttypid, word1,
 			nameout(&(attrStruct->attname)));
 	}
-	typeStruct = (TypeTupleForm)GETSTRUCT(typetup);
+	typeStruct = (Form_pg_type)GETSTRUCT(typetup);
 
 	cp = strdup(nameout(&(attrStruct->attname)));
 

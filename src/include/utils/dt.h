@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.30 1998/05/31 17:08:35 thomas Exp $
+ * $Id: dt.h,v 1.31 1998/09/01 03:28:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -325,17 +325,17 @@ extern double time2t(const int hour, const int min, const double sec);
 
 extern int
 ParseDateTime(char *timestr, char *lowstr,
-			  char *field[], int ftype[], int maxfields, int *numfields);
+			  char **field, int *ftype, int maxfields, int *numfields);
 extern int
-DecodeDateTime(char *field[], int ftype[],
+DecodeDateTime(char **field, int *ftype,
 			 int nf, int *dtype, struct tm * tm, double *fsec, int *tzp);
 
 extern int
-DecodeTimeOnly(char *field[], int ftype[], int nf,
+DecodeTimeOnly(char **field, int *ftype, int nf,
 			   int *dtype, struct tm * tm, double *fsec);
 
 extern int
-DecodeDateDelta(char *field[], int ftype[],
+DecodeDateDelta(char **field, int *ftype,
 				int nf, int *dtype, struct tm * tm, double *fsec);
 
 extern int	EncodeDateOnly(struct tm * tm, int style, char *str);

@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.24 1998/06/15 19:29:32 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.25 1998/09/01 03:25:49 momjian Exp $
  */
 
 #include <stdio.h>
@@ -187,7 +187,7 @@ printf( "cashin- string is '%s'\n", s);
 printf( "cashin- result is %d\n", *result);
 #endif
 
-	return (result);
+	return result;
 }	/* cash_in() */
 
 
@@ -301,7 +301,7 @@ cash_out(Cash *in_value)
 		strcpy(result, buf + count);
 	}
 
-	return (result);
+	return result;
 }	/* cash_out() */
 
 
@@ -309,54 +309,54 @@ bool
 cash_eq(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (FALSE);
+		return FALSE;
 
-	return (*c1 == *c2);
+	return *c1 == *c2;
 }	/* cash_eq() */
 
 bool
 cash_ne(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (FALSE);
+		return FALSE;
 
-	return (*c1 != *c2);
+	return *c1 != *c2;
 }	/* cash_ne() */
 
 bool
 cash_lt(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (FALSE);
+		return FALSE;
 
-	return (*c1 < *c2);
+	return *c1 < *c2;
 }	/* cash_lt() */
 
 bool
 cash_le(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (FALSE);
+		return FALSE;
 
-	return (*c1 <= *c2);
+	return *c1 <= *c2;
 }	/* cash_le() */
 
 bool
 cash_gt(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (FALSE);
+		return FALSE;
 
-	return (*c1 > *c2);
+	return *c1 > *c2;
 }	/* cash_gt() */
 
 bool
 cash_ge(Cash *c1, Cash *c2)
 {
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (FALSE);
+		return FALSE;
 
-	return (*c1 >= *c2);
+	return *c1 >= *c2;
 }	/* cash_ge() */
 
 
@@ -369,14 +369,14 @@ cash_pl(Cash *c1, Cash *c2)
 	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't add cash", NULL);
 
 	*result = (*c1 + *c2);
 
-	return (result);
+	return result;
 }	/* cash_pl() */
 
 
@@ -389,14 +389,14 @@ cash_mi(Cash *c1, Cash *c2)
 	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't subtract cash", NULL);
 
 	*result = (*c1 - *c2);
 
-	return (result);
+	return result;
 }	/* cash_mi() */
 
 
@@ -409,14 +409,14 @@ cash_mul_flt8(Cash *c, float8 *f)
 	Cash	   *result;
 
 	if (!PointerIsValid(f) || !PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((*f) * (*c));
 
-	return (result);
+	return result;
 }	/* cash_mul_flt8() */
 
 
@@ -426,7 +426,7 @@ cash_mul_flt8(Cash *c, float8 *f)
 Cash *
 flt8_mul_cash(float8 *f, Cash *c)
 {
-	return (cash_mul_flt8(c, f));
+	return cash_mul_flt8(c, f);
 }	/* flt8_mul_cash() */
 
 
@@ -442,7 +442,7 @@ cash_div_flt8(Cash *c, float8 *f)
 	Cash	   *result;
 
 	if (!PointerIsValid(f) || !PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
@@ -452,7 +452,7 @@ cash_div_flt8(Cash *c, float8 *f)
 
 	*result = rint(*c / *f);
 
-	return (result);
+	return result;
 }	/* cash_div_flt8() */
 
 /* cash_mul_flt4()
@@ -464,14 +464,14 @@ cash_mul_flt4(Cash *c, float4 *f)
 	Cash	   *result;
 
 	if (!PointerIsValid(f) || !PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((*f) * (*c));
 
-	return (result);
+	return result;
 }	/* cash_mul_flt4() */
 
 
@@ -481,7 +481,7 @@ cash_mul_flt4(Cash *c, float4 *f)
 Cash *
 flt4_mul_cash(float4 *f, Cash *c)
 {
-	return (cash_mul_flt4(c, f));
+	return cash_mul_flt4(c, f);
 }	/* flt4_mul_cash() */
 
 
@@ -497,7 +497,7 @@ cash_div_flt4(Cash *c, float4 *f)
 	Cash	   *result;
 
 	if (!PointerIsValid(f) || !PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
@@ -507,7 +507,7 @@ cash_div_flt4(Cash *c, float4 *f)
 
 	*result = rint(*c / *f);
 
-	return (result);
+	return result;
 }	/* cash_div_flt4() */
 
 
@@ -520,14 +520,14 @@ cash_mul_int4(Cash *c, int4 i)
 	Cash	   *result;
 
 	if (!PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((i) * (*c));
 
-	return (result);
+	return result;
 }	/* cash_mul_int4() */
 
 
@@ -537,7 +537,7 @@ cash_mul_int4(Cash *c, int4 i)
 Cash *
 int4_mul_cash(int4 i, Cash *c)
 {
-	return (cash_mul_int4(c, i));
+	return cash_mul_int4(c, i);
 }	/* int4_mul_cash() */
 
 
@@ -553,7 +553,7 @@ cash_div_int4(Cash *c, int4 i)
 	Cash	   *result;
 
 	if (!PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
@@ -563,7 +563,7 @@ cash_div_int4(Cash *c, int4 i)
 
 	*result = rint(*c / i);
 
-	return (result);
+	return result;
 }	/* cash_div_int4() */
 
 
@@ -576,14 +576,14 @@ cash_mul_int2(Cash *c, int2 s)
 	Cash	   *result;
 
 	if (!PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't multiply cash", NULL);
 
 	*result = ((s) * (*c));
 
-	return (result);
+	return result;
 }	/* cash_mul_int2() */
 
 
@@ -593,7 +593,7 @@ cash_mul_int2(Cash *c, int2 s)
 Cash *
 int2_mul_cash(int2 s, Cash *c)
 {
-	return (cash_mul_int2(c, s));
+	return cash_mul_int2(c, s);
 }	/* int2_mul_cash() */
 
 
@@ -609,7 +609,7 @@ cash_div_int2(Cash *c, int2 s)
 	Cash	   *result;
 
 	if (!PointerIsValid(c))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't divide cash", NULL);
@@ -619,7 +619,7 @@ cash_div_int2(Cash *c, int2 s)
 
 	*result = rint(*c / s);
 
-	return (result);
+	return result;
 }	/* cash_div_int2() */
 
 
@@ -632,14 +632,14 @@ cashlarger(Cash *c1, Cash *c2)
 	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't return larger cash", NULL);
 
 	*result = ((*c1 > *c2) ? *c1 : *c2);
 
-	return (result);
+	return result;
 }	/* cashlarger() */
 
 
@@ -652,14 +652,14 @@ cashsmaller(Cash *c1, Cash *c2)
 	Cash	   *result;
 
 	if (!PointerIsValid(c1) || !PointerIsValid(c2))
-		return (NULL);
+		return NULL;
 
 	if (!PointerIsValid(result = palloc(sizeof(Cash))))
 		elog(ERROR, "Memory allocation failed, can't return smaller cash", NULL);
 
 	*result = ((*c1 < *c2) ? *c1 : *c2);
 
-	return (result);
+	return result;
 }	/* cashsmaller() */
 
 
@@ -714,7 +714,7 @@ cash_words_out(Cash *value)
 	strcat(buf, num_word(m0));
 	strcat(buf, m0 == 1 ? " cent" : " cents");
 	*buf = toupper(*buf);
-	return (buf);
+	return buf;
 }	/* cash_words_out() */
 
 
@@ -737,13 +737,13 @@ num_word(Cash value)
 
 	/* deal with the simple cases first */
 	if (value <= 20)
-		return (small[value]);
+		return small[value];
 
 	/* is it an even multiple of 100? */
 	if (!tu)
 	{
 		sprintf(buf, "%s hundred", small[value / 100]);
-		return (buf);
+		return buf;
 	}
 
 	/* more than 99? */
@@ -772,5 +772,5 @@ num_word(Cash value)
 			sprintf(buf, "%s %s", big[tu / 10], small[tu % 10]);
 	}
 
-	return (buf);
+	return buf;
 }	/* num_word() */

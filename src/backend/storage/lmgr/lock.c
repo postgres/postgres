@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.34 1998/08/28 12:08:03 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.35 1998/09/01 03:25:19 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -275,7 +275,7 @@ LockMethodTableInit(char *tabName,
 	{
 		elog(NOTICE, "LockMethodTableInit: too many lock types %d greater than %d",
 			 numModes, MAX_LOCKMODES);
-		return (INVALID_LOCKMETHOD);
+		return INVALID_LOCKMETHOD;
 	}
 
 	/* allocate a string for the shmem index table lookup */
@@ -283,7 +283,7 @@ LockMethodTableInit(char *tabName,
 	if (!shmemName)
 	{
 		elog(NOTICE, "LockMethodTableInit: couldn't malloc string %s \n", tabName);
-		return (INVALID_LOCKMETHOD);
+		return INVALID_LOCKMETHOD;
 	}
 
 	/* each lock table has a non-shared header */
@@ -292,7 +292,7 @@ LockMethodTableInit(char *tabName,
 	{
 		elog(NOTICE, "LockMethodTableInit: couldn't malloc lock table %s\n", tabName);
 		pfree(shmemName);
-		return (INVALID_LOCKMETHOD);
+		return INVALID_LOCKMETHOD;
 	}
 
 	/* ------------------------
@@ -393,9 +393,9 @@ LockMethodTableInit(char *tabName,
 	pfree(shmemName);
 
 	if (status)
-		return (lockMethodTable->ctl->lockmethod);
+		return lockMethodTable->ctl->lockmethod;
 	else
-		return (INVALID_LOCKMETHOD);
+		return INVALID_LOCKMETHOD;
 }
 
 /*
@@ -417,16 +417,16 @@ LockMethodTableRename(LOCKMETHOD lockmethod)
 	LOCKMETHOD newLockMethod;
 
 	if (NumLockMethods >= MAX_LOCK_METHODS)
-		return (INVALID_LOCKMETHOD);
+		return INVALID_LOCKMETHOD;
 	if (LockMethodTable[lockmethod] == INVALID_LOCKMETHOD)
-		return (INVALID_LOCKMETHOD);
+		return INVALID_LOCKMETHOD;
 
 	/* other modules refer to the lock table by a lockmethod */
 	newLockMethod = NumLockMethods;
 	NumLockMethods++;
 
 	LockMethodTable[newLockMethod] = LockMethodTable[lockmethod];
-	return (newLockMethod);
+	return newLockMethod;
 }
 
 /*
@@ -522,11 +522,11 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	if (!lockMethodTable)
 	{
 		elog(NOTICE, "LockAcquire: bad lock table %d", lockmethod);
-		return (FALSE);
+		return FALSE;
 	}
 
 	if (LockingIsDisabled)
-		return (TRUE);
+		return TRUE;
 
 	masterLock = lockMethodTable->ctl->masterLock;
 
@@ -542,7 +542,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		SpinRelease(masterLock);
 		elog(FATAL, "LockAcquire: lock table %d is corrupted", lockmethod);
-		return (FALSE);
+		return FALSE;
 	}
 
 	/* --------------------
@@ -606,7 +606,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	if (!result)
 	{
 		elog(NOTICE, "LockAcquire: xid table corrupted");
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	/*
@@ -649,7 +649,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		Assert((result->nHolding > 0) && (result->holders[lockmode] > 0));
 		GrantLock(lock, lockmode);
 		SpinRelease(masterLock);
-		return (TRUE);
+		return TRUE;
 	}
 
 	status = LockResolveConflicts(lockmethod, lock, lockmode, xid, result);
@@ -682,7 +682,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			Assert((lock->nHolding > 0) && (lock->holders[lockmode] >= 0));
 			Assert(lock->nActive <= lock->nHolding);
 			SpinRelease(masterLock);
-			return (FALSE);
+			return FALSE;
 		}
 #endif
 		status = WaitOnLock(lockmethod, lock, lockmode, xid);
@@ -694,7 +694,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 			XID_PRINT_AUX("LockAcquire: INCONSISTENT ", result);
 			LOCK_PRINT_AUX("LockAcquire: INCONSISTENT ", lock, lockmode);
 			/* Should we retry ? */
-			return (FALSE);
+			return FALSE;
 		}
 		XID_PRINT("LockAcquire: granted", result);
 		LOCK_PRINT("LockAcquire: granted", lock, lockmode);
@@ -702,7 +702,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 
 	SpinRelease(masterLock);
 
-	return (status == STATUS_OK);
+	return status == STATUS_OK;
 }
 
 /* ----------------------------
@@ -784,7 +784,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		if (!result)
 		{
 			elog(NOTICE, "LockResolveConflicts: xid table corrupted");
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 		}
 
 		/*
@@ -845,7 +845,7 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		result->nHolding++;
 		XID_PRINT("LockResolveConflicts: no conflict", result);
 		Assert((result->nHolding > 0) && (result->holders[lockmode] > 0));
-		return (STATUS_OK);
+		return STATUS_OK;
 	}
 
 	/* ------------------------
@@ -877,11 +877,11 @@ LockResolveConflicts(LOCKMETHOD lockmethod,
 		result->nHolding++;
 		XID_PRINT("LockResolveConflicts: resolved", result);
 		Assert((result->nHolding > 0) && (result->holders[lockmode] > 0));
-		return (STATUS_OK);
+		return STATUS_OK;
 	}
 
 	XID_PRINT("LockResolveConflicts: conflicting", result);
-	return (STATUS_FOUND);
+	return STATUS_FOUND;
 }
 
 /*
@@ -951,7 +951,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCK *lock, LOCKMODE lockmode,
 
 	PS_SET_STATUS(old_status);
 	LOCK_PRINT_AUX("WaitOnLock: wakeup on lock", lock, lockmode);
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 /*
@@ -1007,11 +1007,11 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	if (!lockMethodTable)
 	{
 		elog(NOTICE, "lockMethodTable is null in LockRelease");
-		return (FALSE);
+		return FALSE;
 	}
 
 	if (LockingIsDisabled)
-		return (TRUE);
+		return TRUE;
 
 	masterLock = lockMethodTable->ctl->masterLock;
 	SpinAcquire(masterLock);
@@ -1030,7 +1030,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	{
 		SpinRelease(masterLock);
 		elog(NOTICE, "LockRelease: locktable corrupted");
-		return (FALSE);
+		return FALSE;
 	}
 
 	if (!found)
@@ -1039,11 +1039,11 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 #ifdef USER_LOCKS
 		if (is_user_lock) {
 			TPRINTF(TRACE_USERLOCKS, "LockRelease: no lock with this tag");
-			return (FALSE);
+			return FALSE;
 		}
 #endif
 		elog(NOTICE, "LockRelease: locktable lookup failed, no lock");
-		return (FALSE);
+		return FALSE;
 	}
 	LOCK_PRINT("LockRelease: found", lock, lockmode);
 	Assert((lock->nHolding > 0) && (lock->holders[lockmode] >= 0));
@@ -1089,7 +1089,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		} else
 #endif
 		elog(NOTICE, "LockReplace: xid table corrupted");
-		return (FALSE);
+		return FALSE;
 	}
 	XID_PRINT("LockRelease: found", result);
 	Assert(result->tag.lock == MAKE_OFFSET(lock));
@@ -1104,7 +1104,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
 			 lock_types[lockmode]);
 		Assert(result->holders[lockmode] >= 0);
-		return (FALSE);
+		return FALSE;
 	}
 	Assert(result->nHolding > 0);
 
@@ -1184,7 +1184,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 		{
 			SpinRelease(masterLock);
 			elog(NOTICE, "LockRelease: remove xid, table corrupted");
-			return (FALSE);
+			return FALSE;
 		}
 	}
 
@@ -1204,7 +1204,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag, LOCKMODE lockmode)
 	}
 
 	SpinRelease(masterLock);
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -1247,7 +1247,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 	lockMethodTable = LockMethodTable[lockmethod];
 	if (!lockMethodTable) {
 		elog(NOTICE, "LockAcquire: bad lockmethod %d", lockmethod);
-		return (FALSE);
+		return FALSE;
 	}
 
 	if (SHMQueueEmpty(lockQueue))
@@ -1406,7 +1406,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 		{
 			SpinRelease(masterLock);
 			elog(NOTICE, "LockReleaseAll: xid table corrupted");
-			return (FALSE);
+			return FALSE;
 		}
 
 		if (!lock->nHolding)
@@ -1425,7 +1425,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, SHM_QUEUE *lockQueue)
 			{
 				SpinRelease(masterLock);
 				elog(NOTICE, "LockReleaseAll: cannot remove lock from HTAB");
-				return (FALSE);
+				return FALSE;
 			}
 		}
 		else
@@ -1736,12 +1736,12 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	if (!lockMethodTable)
 	{
 		elog(NOTICE, "lockMethodTable is null in LockOwners");
-		return ((ArrayType *) &empty_array);
+		return (ArrayType *) &empty_array;
 	}
 
 	if (LockingIsDisabled)
 	{
-		return ((ArrayType *) &empty_array);
+		return (ArrayType *) &empty_array;
 	}
 
 	masterLock = lockMethodTable->ctl->masterLock;
@@ -1761,7 +1761,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	{
 		SpinRelease(masterLock);
 		elog(NOTICE, "LockOwners: locktable corrupted");
-		return ((ArrayType *) &empty_array);
+		return (ArrayType *) &empty_array;
 	}
 
 	if (!found)
@@ -1770,11 +1770,11 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 #ifdef USER_LOCKS
 		if (is_user_lock) {
 			TPRINTF(TRACE_USERLOCKS, "LockOwners: no lock with this tag");
-			return ((ArrayType *) &empty_array);
+			return (ArrayType *) &empty_array;
 		}
 #endif
 		elog(NOTICE, "LockOwners: locktable lookup failed, no lock");
-		return ((ArrayType *) &empty_array);
+		return (ArrayType *) &empty_array;
 	}
 	LOCK_PRINT("LockOwners: found", lock, 0);
 	Assert((lock->nHolding > 0) && (lock->nActive > 0));
@@ -1864,7 +1864,7 @@ LockOwners(LOCKMETHOD lockmethod, LOCKTAG *locktag)
 	memmove((char *) array, (char *) &size, sizeof(int));
 	memmove((char *) ARR_DIMS(array), (char *) hbounds, ndims * sizeof(int));
 
-	return (array);
+	return array;
 }
 
 #ifdef DEADLOCK_DEBUG

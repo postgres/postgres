@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.18 1998/08/19 02:04:07 momjian Exp $
+ * $Id: rel.h,v 1.19 1998/09/01 03:28:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,22 +127,13 @@ typedef Relation *RelationPtr;
 #define RelationDecrementReferenceCount(relation) ((relation)->rd_refcnt -= 1)
 
 /*
- * RelationGetAccessMethodTupleForm --
- *		Returns access method attribute values for a relation.
- *
- * Note:
- *		Assumes relation descriptor is valid.
- */
-#define RelationGetAccessMethodTupleForm(relation) ((relation)->rd_am)
-
-/*
- * RelationGetRelationTupleForm --
+ * RelationGetForm --
  *		Returns relation attribute values for a relation.
  *
  * Note:
  *		Assumes relation descriptor is valid.
  */
-#define RelationGetRelationTupleForm(relation) ((relation)->rd_rel)
+#define RelationGetForm(relation) ((relation)->rd_rel)
 
 
 /*
@@ -176,13 +167,13 @@ typedef Relation *RelationPtr;
 #define RelationGetNumberOfAttributes(relation) ((relation)->rd_rel->relnatts)
 
 /*
- * RelationGetTupleDescriptor --
+ * RelationGetDescr --
  *		Returns tuple descriptor for a relation.
  *
  * Note:
  *		Assumes relation descriptor is valid.
  */
-#define RelationGetTupleDescriptor(relation) ((relation)->rd_att)
+#define RelationGetDescr(relation) ((relation)->rd_att)
 
 extern IndexStrategy RelationGetIndexStrategy(Relation relation);
 

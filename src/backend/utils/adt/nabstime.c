@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.44 1998/07/19 10:08:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.45 1998/09/01 03:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,7 +96,7 @@ GetCurrentAbsoluteTime(void)
 		   CTZName, CTimeZone);
 #endif
 
-	return ((AbsoluteTime) now);
+	return (AbsoluteTime) now;
 }	/* GetCurrentAbsoluteTime() */
 
 
@@ -202,13 +202,13 @@ tm2abstime(struct tm * tm, int tz)
 		|| tm->tm_hour < 0 || tm->tm_hour >= 24
 		|| tm->tm_min < 0 || tm->tm_min > 59
 		|| tm->tm_sec < 0 || tm->tm_sec > 59)
-		return (INVALID_ABSTIME);
+		return INVALID_ABSTIME;
 
 	day = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(1970, 1, 1));
 
 	/* check for time out of range */
 	if ((day < MIN_DAYNUM) || (day > MAX_DAYNUM))
-		return (INVALID_ABSTIME);
+		return INVALID_ABSTIME;
 
 	/* convert to seconds */
 	sec = tm->tm_sec + tz + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
@@ -216,13 +216,13 @@ tm2abstime(struct tm * tm, int tz)
 	/* check for overflow */
 	if ((day == MAX_DAYNUM && sec < 0) ||
 		(day == MIN_DAYNUM && sec > 0))
-		return (INVALID_ABSTIME);
+		return INVALID_ABSTIME;
 
 	/* check for reserved values (e.g. "current" on edge of usual range */
 	if (!AbsoluteTimeIsReal(sec))
-		return (INVALID_ABSTIME);
+		return INVALID_ABSTIME;
 
-	return (sec);
+	return sec;
 }	/* tm2abstime() */
 
 
@@ -338,7 +338,7 @@ nabstimeout(AbsoluteTime time)
 	result = palloc(strlen(buf) + 1);
 	strcpy(result, buf);
 
-	return (result);
+	return result;
 }	/* nabstimeout() */
 
 
@@ -358,7 +358,7 @@ AbsoluteTimeIsBefore(AbsoluteTime time1, AbsoluteTime time2)
 	if (time2 == CURRENT_ABSTIME)
 		time2 = GetCurrentTransactionStartTime();
 
-	return (time1 < time2);
+	return time1 < time2;
 }
 
 bool
@@ -373,7 +373,7 @@ AbsoluteTimeIsAfter(AbsoluteTime time1, AbsoluteTime time2)
 	if (time2 == CURRENT_ABSTIME)
 		time2 = GetCurrentTransactionStartTime();
 
-	return (time1 > time2);
+	return time1 > time2;
 }
 
 
@@ -399,78 +399,78 @@ bool
 abstimeeq(AbsoluteTime t1, AbsoluteTime t2)
 {
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		return (FALSE);
+		return FALSE;
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
 	if (t2 == CURRENT_ABSTIME)
 		t2 = GetCurrentTransactionStartTime();
 
-	return (t1 == t2);
+	return t1 == t2;
 }
 
 bool
 abstimene(AbsoluteTime t1, AbsoluteTime t2)
 {
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		return (FALSE);
+		return FALSE;
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
 	if (t2 == CURRENT_ABSTIME)
 		t2 = GetCurrentTransactionStartTime();
 
-	return (t1 != t2);
+	return t1 != t2;
 }
 
 bool
 abstimelt(AbsoluteTime t1, AbsoluteTime t2)
 {
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		return (FALSE);
+		return FALSE;
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
 	if (t2 == CURRENT_ABSTIME)
 		t2 = GetCurrentTransactionStartTime();
 
-	return (t1 < t2);
+	return t1 < t2;
 }
 
 bool
 abstimegt(AbsoluteTime t1, AbsoluteTime t2)
 {
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		return (FALSE);
+		return FALSE;
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
 	if (t2 == CURRENT_ABSTIME)
 		t2 = GetCurrentTransactionStartTime();
 
-	return (t1 > t2);
+	return t1 > t2;
 }
 
 bool
 abstimele(AbsoluteTime t1, AbsoluteTime t2)
 {
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		return (FALSE);
+		return FALSE;
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
 	if (t2 == CURRENT_ABSTIME)
 		t2 = GetCurrentTransactionStartTime();
 
-	return (t1 <= t2);
+	return t1 <= t2;
 }
 
 bool
 abstimege(AbsoluteTime t1, AbsoluteTime t2)
 {
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		return (FALSE);
+		return FALSE;
 	if (t1 == CURRENT_ABSTIME)
 		t1 = GetCurrentTransactionStartTime();
 	if (t2 == CURRENT_ABSTIME)
 		t2 = GetCurrentTransactionStartTime();
 
-	return (t1 >= t2);
+	return t1 >= t2;
 }
 
 
@@ -525,7 +525,7 @@ datetime_abstime(DateTime *datetime)
 		};
 	};
 
-	return (result);
+	return result;
 }	/* datetime_abstime() */
 
 /* abstime_datetime()
@@ -566,5 +566,5 @@ abstime_datetime(AbsoluteTime abstime)
 			break;
 	};
 
-	return (result);
+	return result;
 }	/* abstime_datetime() */

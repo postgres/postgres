@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.51 1998/08/25 21:32:10 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.52 1998/09/01 03:22:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,8 +139,8 @@ pq_getport()
 	char	   *envport = getenv("PGPORT");
 
 	if (envport)
-		return (atoi(envport));
-	return (atoi(DEF_PGPORT));
+		return atoi(envport);
+	return atoi(DEF_PGPORT);
 }
 
 /* --------------------------------
@@ -194,7 +194,7 @@ pq_getstr(char *s, int maxlen)
 	if (Pfin == (FILE *) NULL)
 	{
 /*		elog(DEBUG, "Input descriptor is null"); */
-		return (EOF);
+		return EOF;
 	}
 
 	while (maxlen-- && (c = pq_getc(Pfin)) != EOF && c)
@@ -215,8 +215,8 @@ pq_getstr(char *s, int maxlen)
 	 * -----------------
 	 */
 	if (c == EOF)
-		return (EOF);
-	return (!EOF);
+		return EOF;
+	return !EOF;
 }
 
 /*
@@ -240,7 +240,7 @@ int
 PQgetline(char *s, int maxlen)
 {
 	if (!Pfin || !s || maxlen <= 1)
-		return (EOF);
+		return EOF;
 
 	if (fgets(s, maxlen - 1, Pfin) == NULL)
 		return feof(Pfin) ? EOF : 1;
@@ -275,7 +275,7 @@ PQputline(char *s)
 		fputs(s, Pfout);
 		fflush(Pfout);
 	}
-	return (0);
+	return 0;
 }
 
 /* --------------------------------
@@ -438,7 +438,7 @@ pq_getinaddr(struct sockaddr_in * sin,
 			if (!(hs = gethostbyname(host)))
 			{
 				perror(host);
-				return (1);
+				return 1;
 			}
 			if (hs->h_addrtype != AF_INET)
 			{
@@ -447,7 +447,7 @@ pq_getinaddr(struct sockaddr_in * sin,
 						host);
 				fputs(PQerrormsg, stderr);
 				pqdebug("%s", PQerrormsg);
-				return (1);
+				return 1;
 			}
 			memmove((char *) &sin->sin_addr,
 					hs->h_addr,
@@ -456,7 +456,7 @@ pq_getinaddr(struct sockaddr_in * sin,
 	}
 	sin->sin_family = AF_INET;
 	sin->sin_port = htons(port);
-	return (0);
+	return 0;
 }
 
 /* --------------------------------
@@ -469,7 +469,7 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
 	struct servent *ss;
 
 	if (*serv >= '0' && *serv <= '9')
-		return (pq_getinaddr(sin, host, atoi(serv)));
+		return pq_getinaddr(sin, host, atoi(serv));
 	if (!(ss = getservbyname(serv, NULL)))
 	{
 		sprintf(PQerrormsg,
@@ -477,9 +477,9 @@ pq_getinserv(struct sockaddr_in * sin, char *host, char *serv)
 				serv);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (1);
+		return 1;
 	}
-	return (pq_getinaddr(sin, host, ntohs(ss->s_port)));
+	return pq_getinaddr(sin, host, ntohs(ss->s_port));
 }
 
 /*
@@ -535,7 +535,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	if ((setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (char *) &one,
 					sizeof(one))) == -1)
@@ -545,7 +545,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	MemSet((char *) &saddr, 0, sizeof(saddr));
 	saddr.sa.sa_family = family;
@@ -590,7 +590,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 		else
 			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
 		fputs(PQerrormsg, stderr);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	if (family == AF_UNIX) {
@@ -620,7 +620,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	*fdP = fd;
 	if (family == AF_UNIX)
 		chmod(sock_path, 0777);
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 /*
@@ -647,7 +647,7 @@ StreamConnection(int server_fd, Port *port)
 							 &addrlen)) < 0)
 	{
 		elog(ERROR, "postmaster: StreamConnection: accept: %m");
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	/* fill in the server (local) address */
@@ -656,7 +656,7 @@ StreamConnection(int server_fd, Port *port)
 					&addrlen) < 0)
 	{
 		elog(ERROR, "postmaster: StreamConnection: getsockname: %m");
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	if (family == AF_INET)
 	{
@@ -667,20 +667,20 @@ StreamConnection(int server_fd, Port *port)
 		if (pe == NULL)
 		{
 			elog(ERROR, "postmaster: getprotobyname failed");
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 		}
 		if (setsockopt(port->sock, pe->p_proto, TCP_NODELAY,
 					   &on, sizeof(on)) < 0)
 		{
 			elog(ERROR, "postmaster: setsockopt failed");
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 		}
 	}
 
 	/* reset to non-blocking */
 	fcntl(port->sock, F_SETFL, 1);
 
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 /*
@@ -722,7 +722,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 					hostName);
 			fputs(PQerrormsg, stderr);
 			pqdebug("%s", PQerrormsg);
-			return (STATUS_ERROR);
+			return STATUS_ERROR;
 		}
 		memmove((char *) &(port->raddr.in.sin_addr),
 				(char *) hp->h_addr,
@@ -744,7 +744,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 	err = connect(port->sock, &port->raddr.sa, len);
 	if (err < 0)
@@ -754,7 +754,7 @@ StreamOpen(char *hostName, short portName, Port *port)
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
 	/* fill in the client address */
@@ -765,10 +765,10 @@ StreamOpen(char *hostName, short portName, Port *port)
 				errno);
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
-		return (STATUS_ERROR);
+		return STATUS_ERROR;
 	}
 
-	return (STATUS_OK);
+	return STATUS_OK;
 }
 
 #ifdef MULTIBYTE

@@ -80,7 +80,7 @@ char new_field_name[MAX_MESSAGE_LEN+1];
 			CI_set_field_info(self, lf, new_field_name, new_adtid, new_adtsize);
 	}
 
-	return (SOCK_get_errcode(sock) == 0);
+	return SOCK_get_errcode(sock) == 0;
 }
 
 

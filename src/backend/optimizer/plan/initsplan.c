@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.18 1998/08/10 02:26:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.19 1998/09/01 03:23:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@
 extern int	Quiet;
 
 static void add_clause_to_rels(Query *root, List *clause);
-static void add_join_info_to_rels(Query *root, CInfo *clauseinfo,
+static void add_join_info_to_rels(Query *root, ClauseInfo *clauseinfo,
 							 List *join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars, List *join_relids);
 
@@ -170,7 +170,7 @@ add_clause_to_rels(Query *root, List *clause)
 {
 	List	   *relids;
 	List	   *vars;
-	CInfo	   *clauseinfo = makeNode(CInfo);
+	ClauseInfo	   *clauseinfo = makeNode(ClauseInfo);
 
 	/*
 	 * Retrieve all relids and vars contained within the clause.
@@ -252,13 +252,13 @@ add_clause_to_rels(Query *root, List *clause)
  *
  */
 static void
-add_join_info_to_rels(Query *root, CInfo *clauseinfo, List *join_relids)
+add_join_info_to_rels(Query *root, ClauseInfo *clauseinfo, List *join_relids)
 {
 	List	   *join_relid;
 
 	foreach(join_relid, join_relids)
 	{
-		JInfo	   *joininfo;
+		JoinInfo	   *joininfo;
 		List	   *other_rels = NIL;
 		List	   *rel;
 
@@ -332,8 +332,8 @@ init_join_info(List *rel_list)
 			   *y,
 			   *z;
 	RelOptInfo *rel;
-	JInfo	   *joininfo;
-	CInfo	   *clauseinfo;
+	JoinInfo	   *joininfo;
+	ClauseInfo	   *clauseinfo;
 	Expr	   *clause;
 
 	foreach(x, rel_list)
@@ -341,10 +341,10 @@ init_join_info(List *rel_list)
 		rel = (RelOptInfo *) lfirst(x);
 		foreach(y, rel->joininfo)
 		{
-			joininfo = (JInfo *) lfirst(y);
+			joininfo = (JoinInfo *) lfirst(y);
 			foreach(z, joininfo->jinfoclauseinfo)
 			{
-				clauseinfo = (CInfo *) lfirst(z);
+				clauseinfo = (ClauseInfo *) lfirst(z);
 				clause = clauseinfo->clause;
 				if (is_joinable((Node *) clause))
 				{
@@ -400,10 +400,10 @@ mergejoinop(Expr *clause)
 		morder->right_operator = rightOp;
 		morder->left_type = (get_leftop(clause))->vartype;
 		morder->right_type = (get_rightop(clause))->vartype;
-		return (morder);
+		return morder;
 	}
 	else
-		return (NULL);
+		return NULL;
 }
 
 /*

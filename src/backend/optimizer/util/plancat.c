@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.19 1998/08/19 02:02:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.20 1998/09/01 03:23:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,8 +42,8 @@
 
 static void
 IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,
-			  Oid AccessMethodOperatorClasses[], Oid operatorObjectIds[],
-	int32 varAttributeNumbers[], char *constValues[], int32 constFlags[],
+			  Oid *AccessMethodOperatorClasses, Oid *operatorObjectIds,
+	int32 *varAttributeNumbers, char **constValues, int32 *constFlags,
 				 float *idxPages, float *idxSelec);
 
 
@@ -106,7 +106,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 	int			i;
 	HeapTuple	indexTuple,
 				amopTuple;
-	IndexTupleForm index;
+	Form_pg_index index;
 	Relation	indexRelation;
 	uint16		amstrategy;
 	Oid			relam;
@@ -160,11 +160,11 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 		heap_close(relation);
 		scan = (HeapScanDesc) NULL;
 		relation = (Relation) NULL;
-		return (0);
+		return 0;
 	}
 
 	/* Extract info from the index tuple */
-	index = (IndexTupleForm) GETSTRUCT(indexTuple);
+	index = (Form_pg_index) GETSTRUCT(indexTuple);
 	info->relid = index->indexrelid;	/* index relation */
 	for (i = 0; i < 8; i++)
 		info->indexkeys[i] = index->indkey[i];
@@ -223,7 +223,7 @@ index_info(Query *root, bool first, int relid, IdxInfoRetval *info)
 		info->orderOprs[i] =
 			((Form_pg_amop) GETSTRUCT(amopTuple))->amopopr;
 	}
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -347,7 +347,7 @@ restriction_selectivity(Oid functionObjectId,
 		elog(ERROR, "RestrictionClauseSelectivity: bad value %lf",
 			 *result);
 
-	return ((Cost) *result);
+	return (Cost) *result;
 }
 
 /*
@@ -386,7 +386,7 @@ join_selectivity(Oid functionObjectId,
 		elog(ERROR, "JoinClauseSelectivity: bad value %lf",
 			 *result);
 
-	return ((Cost) *result);
+	return (Cost) *result;
 }
 
 /*
@@ -416,12 +416,12 @@ find_inheritance_children(Oid inhparent)
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(inheritsTuple = heap_getnext(scan, 0)))
 	{
-		inhrelid = ((InheritsTupleForm) GETSTRUCT(inheritsTuple))->inhrel;
+		inhrelid = ((Form_pg_inherits) GETSTRUCT(inheritsTuple))->inhrel;
 		list = lappendi(list, inhrelid);
 	}
 	heap_endscan(scan);
 	heap_close(relation);
-	return (list);
+	return list;
 }
 
 /*
@@ -450,7 +450,7 @@ VersionGetParents(Oid verrelid)
 	scan = heap_beginscan(relation, 0, SnapshotNow, 1, key);
 	while (HeapTupleIsValid(versionTuple = heap_getnext(scan, 0)))
 	{
-		verbaseid = ((VersionTupleForm)
+		verbaseid = ((Form_pg_version)
 					 GETSTRUCT(versionTuple))->verbaseid;
 
 		list = lconsi(verbaseid, list);
@@ -460,7 +460,7 @@ VersionGetParents(Oid verrelid)
 	}
 	heap_endscan(scan);
 	heap_close(relation);
-	return (list);
+	return list;
 }
 
 /*****************************************************************************
@@ -492,11 +492,11 @@ static void
 IndexSelectivity(Oid indexrelid,
 				 Oid indrelid,
 				 int32 nIndexKeys,
-				 Oid AccessMethodOperatorClasses[],		/* XXX not used? */
-				 Oid operatorObjectIds[],
-				 int32 varAttributeNumbers[],
-				 char *constValues[],
-				 int32 constFlags[],
+				 Oid *AccessMethodOperatorClasses,		/* XXX not used? */
+				 Oid *operatorObjectIds,
+				 int32 *varAttributeNumbers,
+				 char **constValues,
+				 int32 *constFlags,
 				 float *idxPages,
 				 float *idxSelec)
 {
@@ -505,7 +505,7 @@ IndexSelectivity(Oid indexrelid,
 	HeapTuple	indexTuple,
 				amopTuple,
 				indRel;
-	IndexTupleForm index;
+	Form_pg_index index;
 	Form_pg_amop amop;
 	Oid			indclass;
 	float64data npages,
@@ -530,7 +530,7 @@ IndexSelectivity(Oid indexrelid,
 	if (!HeapTupleIsValid(indexTuple))
 		elog(ERROR, "IndexSelectivity: index %d not found",
 			 indexrelid);
-	index = (IndexTupleForm) GETSTRUCT(indexTuple);
+	index = (Form_pg_index) GETSTRUCT(indexTuple);
 
 	/*
 	 * Hack for non-functional btree npages estimation: npages =

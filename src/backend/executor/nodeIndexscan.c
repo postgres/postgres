@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.25 1998/08/19 15:47:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.26 1998/09/01 03:22:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -954,7 +954,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	 *	get the scan type from the relation descriptor.
 	 * ----------------
 	 */
-	ExecAssignScanType(scanstate, RelationGetTupleDescriptor(currentRelation));
+	ExecAssignScanType(scanstate, RelationGetDescr(currentRelation));
 	ExecAssignResultTypeFromTL((Plan *) node, &scanstate->cstate);
 
 	/* ----------------

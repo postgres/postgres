@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.11 1998/08/19 02:02:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.12 1998/09/01 03:26:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 	{
 		value = heap_getattr(current_tuple,
 							 (AttrNumber) attrid,
-							 RelationGetTupleDescriptor(relation_to_scan),
+							 RelationGetDescr(relation_to_scan),
 							 &dummy);
 
 		integer_value = DatumGetInt16(value);
@@ -93,7 +93,7 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 
 	/* close the relation */
 	heap_close(relation_to_scan);
-	return (retval);
+	return retval;
 }
 
 bool
@@ -101,7 +101,7 @@ oidnotin(Oid the_oid, char *compare)
 {
 	if (the_oid == InvalidOid)
 		return false;
-	return (int4notin(the_oid, compare));
+	return int4notin(the_oid, compare);
 }
 
 /*
@@ -117,7 +117,7 @@ my_varattno(Relation rd, char *a)
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
 	{
 		if (!namestrcmp(&rd->rd_att->attrs[i]->attname, a))
-			return (i + 1);
+			return i + 1;
 	}
-	return (-1);
+	return -1;
 }

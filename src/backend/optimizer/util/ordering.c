@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.6 1997/09/08 21:45:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/ordering.c,v 1.7 1998/09/01 03:23:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,13 +81,13 @@ equal_path_merge_ordering(Oid *path_ordering,
 						  MergeOrder *merge_ordering)
 {
 	if (path_ordering == NULL || merge_ordering == NULL)
-		return (false);
+		return false;
 
 	if (path_ordering[0] == merge_ordering->left_operator ||
 		path_ordering[0] == merge_ordering->right_operator)
-		return (true);
+		return true;
 	else
-		return (false);
+		return false;
 }
 
 /*
@@ -99,7 +99,7 @@ bool
 equal_merge_merge_ordering(MergeOrder *merge_ordering1,
 						   MergeOrder *merge_ordering2)
 {
-	return (equal(merge_ordering1, merge_ordering2));
+	return equal(merge_ordering1, merge_ordering2);
 }
 
 /*****************************************************************************
@@ -116,7 +116,7 @@ equal_sortops_order(Oid *ordering1, Oid *ordering2)
 	int			i = 0;
 
 	if (ordering1 == NULL || ordering2 == NULL)
-		return (ordering1 == ordering2);
+		return ordering1 == ordering2;
 
 	while (ordering1[i] != 0 && ordering2[i] != 0)
 	{
@@ -125,5 +125,5 @@ equal_sortops_order(Oid *ordering1, Oid *ordering2)
 		i++;
 	}
 
-	return (ordering1[i] == 0 && ordering2[i] == 0);
+	return ordering1[i] == 0 && ordering2[i] == 0;
 }

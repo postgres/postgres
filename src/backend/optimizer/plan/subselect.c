@@ -58,7 +58,7 @@ _new_param(Var *var, int varlevel)
 	lfirst(last) = makeVar(var->varno, var->varattno, var->vartype,
 				var->vartypmod, varlevel, var->varnoold, var->varoattno);
 
-	return (i);
+	return i;
 }
 
 static Param *
@@ -99,7 +99,7 @@ _replace_var(Var *var)
 	retval->paramid = (AttrNumber) i;
 	retval->paramtype = var->vartype;
 
-	return (retval);
+	return retval;
 }
 
 static Node *
@@ -239,7 +239,7 @@ _make_subplan(SubLink *slink)
 		result = (Node *) expr;
 	}
 
-	return (result);
+	return result;
 
 }
 
@@ -247,11 +247,11 @@ static List *
 set_unioni(List *l1, List *l2)
 {
 	if (l1 == NULL)
-		return (l2);
+		return l2;
 	if (l2 == NULL)
-		return (l1);
+		return l1;
 
-	return (nconc(l1, set_differencei(l2, l1)));
+	return nconc(l1, set_differencei(l2, l1));
 }
 
 static List *
@@ -260,15 +260,15 @@ _finalize_primnode(void *expr, List **subplan)
 	List	   *result = NULL;
 
 	if (expr == NULL)
-		return (NULL);
+		return NULL;
 
 	if (IsA(expr, Param))
 	{
 		if (((Param *) expr)->paramkind == PARAM_EXEC)
-			return (lconsi(((Param *) expr)->paramid, (List *) NULL));
+			return lconsi(((Param *) expr)->paramid, (List *) NULL);
 	}
 	else if (single_node(expr))
-		return (NULL);
+		return NULL;
 	else if (IsA(expr, List))
 	{
 		List	   *le;
@@ -278,12 +278,12 @@ _finalize_primnode(void *expr, List **subplan)
 								_finalize_primnode(lfirst(le), subplan));
 	}
 	else if (IsA(expr, Iter))
-		return (_finalize_primnode(((Iter *) expr)->iterexpr, subplan));
+		return _finalize_primnode(((Iter *) expr)->iterexpr, subplan);
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
 			 not_clause(expr) || is_funcclause(expr))
-		return (_finalize_primnode(((Expr *) expr)->args, subplan));
+		return _finalize_primnode(((Expr *) expr)->args, subplan);
 	else if (IsA(expr, Aggreg))
-		return (_finalize_primnode(((Aggreg *) expr)->target, subplan));
+		return _finalize_primnode(((Aggreg *) expr)->target, subplan);
 	else if (IsA(expr, ArrayRef))
 	{
 		result = _finalize_primnode(((ArrayRef *) expr)->refupperindexpr, subplan);
@@ -295,7 +295,7 @@ _finalize_primnode(void *expr, List **subplan)
 		 _finalize_primnode(((ArrayRef *) expr)->refassgnexpr, subplan));
 	}
 	else if (IsA(expr, TargetEntry))
-		return (_finalize_primnode(((TargetEntry *) expr)->expr, subplan));
+		return _finalize_primnode(((TargetEntry *) expr)->expr, subplan);
 	else if (is_subplan(expr))
 	{
 		List	   *lst;
@@ -314,7 +314,7 @@ _finalize_primnode(void *expr, List **subplan)
 		elog(ERROR, "_finalize_primnode: can't handle node %d",
 			 nodeTag(expr));
 
-	return (result);
+	return result;
 }
 
 Node *
@@ -322,7 +322,7 @@ SS_replace_correlation_vars(Node *expr)
 {
 
 	if (expr == NULL)
-		return (NULL);
+		return NULL;
 	if (IsA(expr, List))
 	{
 		List	   *le;
@@ -344,7 +344,7 @@ SS_replace_correlation_vars(Node *expr)
 			SS_replace_correlation_vars(((Iter *) expr)->iterexpr);
 	}
 	else if (single_node(expr))
-		return (expr);
+		return expr;
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
 			 not_clause(expr) || is_funcclause(expr))
 		((Expr *) expr)->args = (List *)
@@ -384,14 +384,14 @@ SS_replace_correlation_vars(Node *expr)
 		elog(NOTICE, "SS_replace_correlation_vars: can't handle node %d",
 			 nodeTag(expr));
 
-	return (expr);
+	return expr;
 }
 
 Node *
 SS_process_sublinks(Node *expr)
 {
 	if (expr == NULL)
-		return (NULL);
+		return NULL;
 	if (IsA(expr, List))
 	{
 		List	   *le;
@@ -419,7 +419,7 @@ SS_process_sublinks(Node *expr)
 	    expr = _make_subplan((SubLink *) expr);
 	}
 	
-	return (expr);
+	return expr;
 }
 
 List *
@@ -432,7 +432,7 @@ SS_finalize_plan(Plan *plan)
 	List	   *lst;
 
 	if (plan == NULL)
-		return (NULL);
+		return NULL;
 
 	param_list = _finalize_primnode(plan->targetlist, &subPlan);
 	Assert(subPlan == NULL);
@@ -489,7 +489,7 @@ SS_finalize_plan(Plan *plan)
 			break;
 		default:
 			elog(ERROR, "SS_finalize_plan: node %d unsupported", nodeTag(plan));
-			return (NULL);
+			return NULL;
 	}
 
 	param_list = set_unioni(param_list, _finalize_primnode(plan->qual, &subPlan));
@@ -515,7 +515,7 @@ SS_finalize_plan(Plan *plan)
 	plan->locParam = locParam;
 	plan->subPlan = subPlan;
 
-	return (param_list);
+	return param_list;
 
 }
 
@@ -527,7 +527,7 @@ SS_pull_subplan(void *expr)
 	List	   *result = NULL;
 
 	if (expr == NULL || single_node(expr))
-		return (NULL);
+		return NULL;
 
 	if (IsA(expr, List))
 	{
@@ -537,12 +537,12 @@ SS_pull_subplan(void *expr)
 			result = nconc(result, SS_pull_subplan(lfirst(le)));
 	}
 	else if (IsA(expr, Iter))
-		return (SS_pull_subplan(((Iter *) expr)->iterexpr));
+		return SS_pull_subplan(((Iter *) expr)->iterexpr);
 	else if (or_clause(expr) || and_clause(expr) || is_opclause(expr) ||
 			 not_clause(expr) || is_funcclause(expr))
-		return (SS_pull_subplan(((Expr *) expr)->args));
+		return SS_pull_subplan(((Expr *) expr)->args);
 	else if (IsA(expr, Aggreg))
-		return (SS_pull_subplan(((Aggreg *) expr)->target));
+		return SS_pull_subplan(((Aggreg *) expr)->target);
 	else if (IsA(expr, ArrayRef))
 	{
 		result = SS_pull_subplan(((ArrayRef *) expr)->refupperindexpr);
@@ -554,12 +554,12 @@ SS_pull_subplan(void *expr)
 					 SS_pull_subplan(((ArrayRef *) expr)->refassgnexpr));
 	}
 	else if (IsA(expr, TargetEntry))
-		return (SS_pull_subplan(((TargetEntry *) expr)->expr));
+		return SS_pull_subplan(((TargetEntry *) expr)->expr);
 	else if (is_subplan(expr))
-		return (lcons(((Expr *) expr)->oper, NULL));
+		return lcons(((Expr *) expr)->oper, NULL);
 	else
 		elog(ERROR, "SS_pull_subplan: can't handle node %d",
 			 nodeTag(expr));
 
-	return (result);
+	return result;
 }

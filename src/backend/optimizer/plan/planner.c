@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.30 1998/08/29 04:09:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.31 1998/09/01 03:23:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ planner(Query *parse)
 	}
 	result_plan->nParamExec = length(PlannerParamVar);
 
-	return (result_plan);
+	return result_plan;
 }
 
 /*
@@ -298,14 +298,14 @@ union_planner(Query *parse)
 	{
 		Plan	   *sortplan = make_sortplan(tlist, parse->sortClause, result_plan);
 
-		return ((Plan *) make_unique(tlist, sortplan, parse->uniqueFlag));
+		return (Plan *) make_unique(tlist, sortplan, parse->uniqueFlag);
 	}
 	else
 	{
 		if (parse->sortClause)
-			return (make_sortplan(tlist, parse->sortClause, result_plan));
+			return make_sortplan(tlist, parse->sortClause, result_plan);
 		else
-			return ((Plan *) result_plan);
+			return (Plan *) result_plan;
 	}
 
 }
@@ -367,7 +367,7 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 
 	sortplan->cost = plannode->cost;
 
-	return (sortplan);
+	return sortplan;
 }
 
 /*

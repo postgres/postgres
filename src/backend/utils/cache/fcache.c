@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.16 1998/08/24 01:13:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.17 1998/09/01 03:26:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ init_fcache(Oid foid,
 	HeapTuple	procedureTuple;
 	HeapTuple	typeTuple;
 	Form_pg_proc procedureStruct;
-	TypeTupleForm typeStruct;
+	Form_pg_type typeStruct;
 	FunctionCachePtr retval;
 	text	   *tmp;
 	int			nargs;
@@ -140,7 +140,7 @@ init_fcache(Oid foid,
 	 *	 save the information in our one element cache.
 	 * ----------------
 	 */
-	typeStruct = (TypeTupleForm) GETSTRUCT(typeTuple);
+	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	retval->typlen = (typeStruct)->typlen;
 	if ((typeStruct)->typrelid == InvalidOid)
@@ -292,7 +292,7 @@ init_fcache(Oid foid,
 		retval->func.fn_addr = (func_ptr) NULL;
 
 
-	return (retval);
+	return retval;
 }
 
 void

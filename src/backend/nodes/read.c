@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.12 1998/06/15 19:28:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/read.c,v 1.13 1998/09/01 03:23:01 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -105,7 +105,7 @@ nodeTokenType(char *token, int length)
 		retval = T_String;
 	else if (*token == '{')
 		retval = PLAN_SYM;
-	return (retval);
+	return retval;
 }
 
 /*
@@ -125,7 +125,7 @@ lsptok(char *string, int *length)
 	{
 		local_str = string;
 		if (length == NULL)
-			return (NULL);
+			return NULL;
 	}
 
 	for (; *local_str == ' '
@@ -137,7 +137,7 @@ lsptok(char *string, int *length)
 	 */
 	ret_string = local_str;
 	if (*local_str == '\0')
-		return (NULL);
+		return NULL;
 	*length = 1;
 
 	if (*local_str == '"')
@@ -167,7 +167,7 @@ lsptok(char *string, int *length)
 			 && *local_str != ')'; local_str++, (*length)++);
 		(*length)--;
 	}
-	return (ret_string);
+	return ret_string;
 }
 
 /*
@@ -190,7 +190,7 @@ nodeRead(bool read_car_only)
 	token = lsptok(NULL, &tok_len);
 
 	if (token == NULL)
-		return (NULL);
+		return NULL;
 
 	type = nodeTokenType(token, tok_len);
 
@@ -200,7 +200,7 @@ nodeRead(bool read_car_only)
 			this_value = parsePlanString();
 			token = lsptok(NULL, &tok_len);
 			if (token[0] != '}')
-				return (NULL);
+				return NULL;
 
 			if (!read_car_only)
 				make_dotted_pair_cell = true;
@@ -288,5 +288,5 @@ nodeRead(bool read_car_only)
 	}
 	else
 		return_value = this_value;
-	return (return_value);
+	return return_value;
 }

@@ -30,7 +30,7 @@ c_overpaid(TUPLE t,				/* the current instance of EMP */
 int
 add_one(int arg)
 {
-	return (arg + 1);
+	return arg + 1;
 }
 
 char16 *
@@ -63,7 +63,7 @@ copytext(text *t)
 		   (void *) VARDATA(t), /* source */
 		   VARSIZE(t) - VARHDRSZ);		/* how many bytes */
 
-	return (new_t);
+	return new_t;
 }
 
 bool
@@ -76,6 +76,6 @@ c_overpaid(TUPLE t,				/* the current instance of EMP */
 	salary = (int4) GetAttributeByName(t, "salary", &isnull);
 
 	if (isnull)
-		return (false);
-	return (salary > limit);
+		return false;
+	return salary > limit;
 }

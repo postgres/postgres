@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.31 1998/04/27 14:43:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.32 1998/09/01 03:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -229,7 +229,7 @@ float4out(float32 num)
 		return strcpy(ascii, "(null)");
 
 	sprintf(ascii, "%.*g", FLT_DIG, *num);
-	return (ascii);
+	return ascii;
 }
 
 
@@ -254,7 +254,7 @@ float8in(char *num)
 
 	CheckFloat8Val(val);
 	*result = val;
-	return (result);
+	return result;
 }
 
 
@@ -276,7 +276,7 @@ float8out(float64 num)
 		return strcpy(ascii, "Infinity");
 
 	sprintf(ascii, "%.*g", DBL_DIG, *num);
-	return (ascii);
+	return ascii;
 }
 
 /* ========== PUBLIC ROUTINES ========== */
@@ -306,7 +306,7 @@ float4abs(float32 arg1)
 
 	result = (float32) palloc(sizeof(float32data));
 	*result = val;
-	return (result);
+	return result;
 }
 
 /*
@@ -326,7 +326,7 @@ float4um(float32 arg1)
 
 	result = (float32) palloc(sizeof(float32data));
 	*result = val;
-	return (result);
+	return result;
 }
 
 float32
@@ -380,7 +380,7 @@ float8abs(float64 arg1)
 	val = fabs(*arg1);
 	CheckFloat8Val(val);
 	*result = val;
-	return (result);
+	return result;
 }
 
 
@@ -401,7 +401,7 @@ float8um(float64 arg1)
 	CheckFloat8Val(val);
 	result = (float64) palloc(sizeof(float64data));
 	*result = val;
-	return (result);
+	return result;
 }
 
 float64
@@ -461,7 +461,7 @@ float4pl(float32 arg1, float32 arg2)
 	result = (float32) palloc(sizeof(float32data));
 	*result = val;
 
-	return (result);
+	return result;
 }
 
 float32
@@ -478,7 +478,7 @@ float4mi(float32 arg1, float32 arg2)
 	CheckFloat4Val(val);
 	result = (float32) palloc(sizeof(float32data));
 	*result = val;
-	return (result);
+	return result;
 }
 
 float32
@@ -495,7 +495,7 @@ float4mul(float32 arg1, float32 arg2)
 	CheckFloat4Val(val);
 	result = (float32) palloc(sizeof(float32data));
 	*result = val;
-	return (result);
+	return result;
 }
 
 float32
@@ -515,7 +515,7 @@ float4div(float32 arg1, float32 arg2)
 	CheckFloat4Val(val);
 	result = (float32) palloc(sizeof(float32data));
 	*result = *arg1 / *arg2;
-	return (result);
+	return result;
 }
 
 float32
@@ -553,7 +553,7 @@ float8pl(float64 arg1, float64 arg2)
 	val = *arg1 + *arg2;
 	CheckFloat8Val(val);
 	*result = val;
-	return (result);
+	return result;
 }
 
 float64
@@ -570,7 +570,7 @@ float8mi(float64 arg1, float64 arg2)
 	val = *arg1 - *arg2;
 	CheckFloat8Val(val);
 	*result = val;
-	return (result);
+	return result;
 }
 
 float64
@@ -587,7 +587,7 @@ float8mul(float64 arg1, float64 arg2)
 	val = *arg1 * *arg2;
 	CheckFloat8Val(val);
 	*result = val;
-	return (result);
+	return result;
 }
 
 float64
@@ -607,7 +607,7 @@ float8div(float64 arg1, float64 arg2)
 	val = *arg1 / *arg2;
 	CheckFloat8Val(val);
 	*result = val;
-	return (result);
+	return result;
 }
 
 float64
@@ -621,7 +621,7 @@ float8inc(float64 arg1)
 	val = *arg1 + (float64data) 1.0;
 	CheckFloat8Val(val);
 	*arg1 = val;
-	return (arg1);
+	return arg1;
 }
 
 
@@ -640,7 +640,7 @@ float4eq(float32 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 == *arg2);
+	return *arg1 == *arg2;
 }
 
 bool
@@ -649,7 +649,7 @@ float4ne(float32 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 != *arg2);
+	return *arg1 != *arg2;
 }
 
 bool
@@ -658,7 +658,7 @@ float4lt(float32 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 < *arg2);
+	return *arg1 < *arg2;
 }
 
 bool
@@ -667,7 +667,7 @@ float4le(float32 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 <= *arg2);
+	return *arg1 <= *arg2;
 }
 
 bool
@@ -676,7 +676,7 @@ float4gt(float32 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 > *arg2);
+	return *arg1 > *arg2;
 }
 
 bool
@@ -685,7 +685,7 @@ float4ge(float32 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 >= *arg2);
+	return *arg1 >= *arg2;
 }
 
 /*
@@ -697,7 +697,7 @@ float8eq(float64 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 == *arg2);
+	return *arg1 == *arg2;
 }
 
 bool
@@ -706,7 +706,7 @@ float8ne(float64 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 != *arg2);
+	return *arg1 != *arg2;
 }
 
 bool
@@ -715,7 +715,7 @@ float8lt(float64 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 < *arg2);
+	return *arg1 < *arg2;
 }
 
 bool
@@ -724,7 +724,7 @@ float8le(float64 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 <= *arg2);
+	return *arg1 <= *arg2;
 }
 
 bool
@@ -733,7 +733,7 @@ float8gt(float64 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 > *arg2);
+	return *arg1 > *arg2;
 }
 
 bool
@@ -742,7 +742,7 @@ float8ge(float64 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 >= *arg2);
+	return *arg1 >= *arg2;
 }
 
 
@@ -766,7 +766,7 @@ ftod(float32 num)
 	result = (float64) palloc(sizeof(float64data));
 
 	*result = *num;
-	return (result);
+	return result;
 }
 
 
@@ -786,7 +786,7 @@ dtof(float64 num)
 	result = (float32) palloc(sizeof(float32data));
 
 	*result = *num;
-	return (result);
+	return result;
 }
 
 
@@ -805,7 +805,7 @@ dtoi4(float64 num)
 		elog(ERROR, "dtoi4: integer out of range", NULL);
 
 	result = rint(*num);
-	return (result);
+	return result;
 }
 
 
@@ -824,7 +824,7 @@ dtoi2(float64 num)
 		elog(ERROR, "dtoi2: integer out of range", NULL);
 
 	result = rint(*num);
-	return (result);
+	return result;
 }
 
 
@@ -839,7 +839,7 @@ i4tod(int32 num)
 	result = (float64) palloc(sizeof(float64data));
 
 	*result = num;
-	return (result);
+	return result;
 }
 
 
@@ -854,7 +854,7 @@ i2tod(int16 num)
 	result = (float64) palloc(sizeof(float64data));
 
 	*result = num;
-	return (result);
+	return result;
 }
 
 
@@ -873,7 +873,7 @@ ftoi4(float32 num)
 		elog(ERROR, "ftoi4: integer out of range", NULL);
 
 	result = rint(*num);
-	return (result);
+	return result;
 }
 
 
@@ -892,7 +892,7 @@ ftoi2(float32 num)
 		elog(ERROR, "ftoi2: integer out of range", NULL);
 
 	result = rint(*num);
-	return (result);
+	return result;
 }
 
 
@@ -907,7 +907,7 @@ i4tof(int32 num)
 	result = (float32) palloc(sizeof(float32data));
 
 	*result = num;
-	return (result);
+	return result;
 }
 
 
@@ -922,7 +922,7 @@ i2tof(int16 num)
 	result = (float32) palloc(sizeof(float32data));
 
 	*result = num;
-	return (result);
+	return result;
 }
 
 
@@ -948,7 +948,7 @@ dround(float64 arg1)
 
 	tmp = *arg1;
 	*result = (float64data) rint(tmp);
-	return (result);
+	return result;
 }
 
 
@@ -975,7 +975,7 @@ dtrunc(float64 arg1)
 		*result = (float64data) floor(tmp);
 	else
 		*result = (float64data) -(floor(-tmp));
-	return (result);
+	return result;
 }
 
 
@@ -995,7 +995,7 @@ dsqrt(float64 arg1)
 
 	tmp = *arg1;
 	*result = (float64data) sqrt(tmp);
-	return (result);
+	return result;
 }
 
 
@@ -1015,7 +1015,7 @@ dcbrt(float64 arg1)
 
 	tmp = *arg1;
 	*result = (float64data) cbrt(tmp);
-	return (result);
+	return result;
 }
 
 
@@ -1048,7 +1048,7 @@ dpow(float64 arg1, float64 arg2)
 		elog(ERROR, "pow() result is out of range");
 
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 
@@ -1079,7 +1079,7 @@ dexp(float64 arg1)
 		elog(ERROR, "exp() result is out of range");
 
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 
@@ -1106,7 +1106,7 @@ dlog1(float64 arg1)
 	*result = (float64data) log(tmp);
 
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 
@@ -1134,7 +1134,7 @@ float48pl(float32 arg1, float64 arg2)
 
 	*result = *arg1 + *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 float64
@@ -1149,7 +1149,7 @@ float48mi(float32 arg1, float64 arg2)
 
 	*result = *arg1 - *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 float64
@@ -1164,7 +1164,7 @@ float48mul(float32 arg1, float64 arg2)
 
 	*result = *arg1 * *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 float64
@@ -1182,7 +1182,7 @@ float48div(float32 arg1, float64 arg2)
 
 	*result = *arg1 / *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 /*
@@ -1203,7 +1203,7 @@ float84pl(float64 arg1, float32 arg2)
 
 	*result = *arg1 + *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 float64
@@ -1218,7 +1218,7 @@ float84mi(float64 arg1, float32 arg2)
 
 	*result = *arg1 - *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 float64
@@ -1234,7 +1234,7 @@ float84mul(float64 arg1, float32 arg2)
 
 	*result = *arg1 * *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 float64
@@ -1252,7 +1252,7 @@ float84div(float64 arg1, float32 arg2)
 
 	*result = *arg1 / *arg2;
 	CheckFloat8Val(*result);
-	return (result);
+	return result;
 }
 
 /*
@@ -1270,7 +1270,7 @@ float48eq(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 == (float) *arg2);
+	return *arg1 == (float) *arg2;
 }
 
 bool
@@ -1279,7 +1279,7 @@ float48ne(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 != (float) *arg2);
+	return *arg1 != (float) *arg2;
 }
 
 bool
@@ -1288,7 +1288,7 @@ float48lt(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 < (float) *arg2);
+	return *arg1 < (float) *arg2;
 }
 
 bool
@@ -1297,7 +1297,7 @@ float48le(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 <= (float) *arg2);
+	return *arg1 <= (float) *arg2;
 }
 
 bool
@@ -1306,7 +1306,7 @@ float48gt(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 > (float) *arg2);
+	return *arg1 > (float) *arg2;
 }
 
 bool
@@ -1315,7 +1315,7 @@ float48ge(float32 arg1, float64 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return (*arg1 >= (float) *arg2);
+	return *arg1 >= (float) *arg2;
 }
 
 /*
@@ -1327,7 +1327,7 @@ float84eq(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return ((float) *arg1 == *arg2);
+	return (float) *arg1 == *arg2;
 }
 
 bool
@@ -1336,7 +1336,7 @@ float84ne(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return ((float) *arg1 != *arg2);
+	return (float) *arg1 != *arg2;
 }
 
 bool
@@ -1345,7 +1345,7 @@ float84lt(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return ((float) *arg1 < *arg2);
+	return (float) *arg1 < *arg2;
 }
 
 bool
@@ -1354,7 +1354,7 @@ float84le(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return ((float) *arg1 <= *arg2);
+	return (float) *arg1 <= *arg2;
 }
 
 bool
@@ -1363,7 +1363,7 @@ float84gt(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return ((float) *arg1 > *arg2);
+	return (float) *arg1 > *arg2;
 }
 
 bool
@@ -1372,7 +1372,7 @@ float84ge(float64 arg1, float32 arg2)
 	if (!arg1 || !arg2)
 		return 0;
 
-	return ((float) *arg1 >= *arg2);
+	return (float) *arg1 >= *arg2;
 }
 
 /* ========== PRIVATE ROUTINES ========== */
@@ -1503,7 +1503,7 @@ double		x;
 	int			isneg = (x < 0.0);
 	double		tmpres = pow(fabs(x), (double) 1.0 / (double) 3.0);
 
-	return (isneg ? -tmpres : tmpres);
+	return isneg ? -tmpres : tmpres;
 }
 
 #endif							/* !HAVE_CBRT */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.33 1998/06/15 19:28:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.34 1998/09/01 03:22:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,7 @@
 static bool
 isblank(const char c)
 {
-	return (c == ' ' || c == 9 /* tab */ );
+	return c == ' ' || c == 9 /* tab */ ;
 }
 
 
@@ -97,7 +97,7 @@ read_through_eol(FILE *file)
 
 
 static void
-read_hba_entry2(FILE *file, UserAuth *userauth_p, char auth_arg[],
+read_hba_entry2(FILE *file, UserAuth *userauth_p, char *auth_arg,
 				bool *error_p)
 {
 /*--------------------------------------------------------------------------
@@ -154,15 +154,15 @@ read_hba_entry2(FILE *file, UserAuth *userauth_p, char auth_arg[],
 
 
 static void
-process_hba_record(FILE *file, SockAddr *raddr, const char user[],
-				   const char database[], bool *matches_p, bool *error_p,
-				   UserAuth *userauth_p, char auth_arg[])
+process_hba_record(FILE *file, SockAddr *raddr, const char *user,
+				   const char *database, bool *matches_p, bool *error_p,
+				   UserAuth *userauth_p, char *auth_arg)
 {
 /*---------------------------------------------------------------------------
   Process the non-comment record in the config file that is next on the file.
   See if it applies to a connection to a host with IP address "*raddr"
-  to a database named "database[]".  If so, return *matches_p true
-  and *userauth_p and auth_arg[] as the values from the entry.
+  to a database named "*database".  If so, return *matches_p true
+  and *userauth_p and *auth_arg as the values from the entry.
   If not, leave *matches_p as it was.  If the record has a syntax error,
   return *error_p true, after issuing a message to stderr.	If no error,
   leave *error_p as it was.
@@ -299,9 +299,9 @@ syntax:
 
 
 static void
-process_open_config_file(FILE *file, SockAddr *raddr, const char user[],
-						 const char database[], bool *host_ok_p,
-						 UserAuth *userauth_p, char auth_arg[])
+process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
+						 const char *database, bool *host_ok_p,
+						 UserAuth *userauth_p, char *auth_arg)
 {
 /*---------------------------------------------------------------------------
   This function does the same thing as find_hba_entry, only with
@@ -355,8 +355,8 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char user[],
 
 
 static void
-find_hba_entry(SockAddr *raddr, const char user[], const char database[],
-			   bool *host_ok_p, UserAuth *userauth_p, char auth_arg[])
+find_hba_entry(SockAddr *raddr, const char *user, const char *database,
+			   bool *host_ok_p, UserAuth *userauth_p, char *auth_arg)
 {
 /*--------------------------------------------------------------------------
   Read the config file and find an entry that allows connection from
@@ -442,16 +442,16 @@ find_hba_entry(SockAddr *raddr, const char user[], const char database[],
 
 
 static void
-interpret_ident_response(char ident_response[],
-						 bool *error_p, char ident_username[])
+interpret_ident_response(char *ident_response,
+						 bool *error_p, char *ident_username)
 {
 /*----------------------------------------------------------------------------
-  Parse the string "ident_response[]" as a response from a query to an Ident
+  Parse the string "*ident_response" as a response from a query to an Ident
   server.  If it's a normal response indicating a username, return
-  *error_p == false and the username as ident_username[].  If it's anything
-  else, return *error_p == true and ident_username[] undefined.
+  *error_p == false and the username as *ident_username.  If it's anything
+  else, return *error_p == true and *ident_username undefined.
 ----------------------------------------------------------------------------*/
-	char	   *cursor;			/* Cursor into ident_response[] */
+	char	   *cursor;			/* Cursor into *ident_response */
 
 	cursor = &ident_response[0];
 
@@ -474,7 +474,7 @@ interpret_ident_response(char ident_response[],
 		{
 			/* We're positioned to colon before response type field */
 			char		response_type[80];
-			int			i;		/* Index into response_type[] */
+			int			i;		/* Index into *response_type */
 
 			cursor++;			/* Go over colon */
 			while (isblank(*cursor))
@@ -508,7 +508,7 @@ interpret_ident_response(char ident_response[],
 						*error_p = true;
 					else
 					{
-						int			i;	/* Index into ident_username[] */
+						int			i;	/* Index into *ident_username */
 
 						cursor++;		/* Go over colon */
 						while (isblank(*cursor))
@@ -531,18 +531,18 @@ interpret_ident_response(char ident_response[],
 static void
 ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 	  const ushort remote_port, const ushort local_port,
-	  bool *ident_failed, char ident_username[])
+	  bool *ident_failed, char *ident_username)
 {
 /*--------------------------------------------------------------------------
   Talk to the ident server on host "remote_ip_addr" and find out who
   owns the tcp connection from his port "remote_port" to port
   "local_port_addr" on host "local_ip_addr".  Return the username the
-  ident server gives as "ident_username[]".
+  ident server gives as "*ident_username".
 
   IP addresses and port numbers are in network byte order.
 
   But iff we're unable to get the information from ident, return
-  *ident_failed == true (and ident_username[] undefined).
+  *ident_failed == true (and *ident_username undefined).
 ----------------------------------------------------------------------------*/
 
 	int			sock_fd;
@@ -644,7 +644,7 @@ ident(const struct in_addr remote_ip_addr, const struct in_addr local_ip_addr,
 
 static void
 parse_map_record(FILE *file,
-				 char file_map[], char file_pguser[], char file_iuser[])
+				 char *file_map, char *file_pguser, char *file_iuser)
 {
 /*---------------------------------------------------------------------------
   Take the noncomment line which is next on file "file" and interpret
@@ -689,9 +689,9 @@ parse_map_record(FILE *file,
 
 static void
 verify_against_open_usermap(FILE *file,
-							const char pguser[],
-							const char ident_username[],
-							const char usermap_name[],
+							const char *pguser,
+							const char *ident_username,
+							const char *usermap_name,
 							bool *checks_out_p)
 {
 /*--------------------------------------------------------------------------
@@ -740,9 +740,9 @@ verify_against_open_usermap(FILE *file,
 
 
 static void
-verify_against_usermap(const char pguser[],
-					   const char ident_username[],
-					   const char usermap_name[],
+verify_against_usermap(const char *pguser,
+					   const char *ident_username,
+					   const char *usermap_name,
 					   bool *checks_out_p)
 {
 /*--------------------------------------------------------------------------
@@ -821,14 +821,14 @@ verify_against_usermap(const char pguser[],
 
 int
 authident(struct sockaddr_in * raddr, struct sockaddr_in * laddr,
-		  const char postgres_username[],
-		  const char auth_arg[])
+		  const char *postgres_username,
+		  const char *auth_arg)
 {
 /*---------------------------------------------------------------------------
   Talk to the ident server on the remote host and find out who owns the
   connection described by "port".  Then look in the usermap file under
-  the usermap auth_arg[] and see if that user is equivalent to
-  Postgres user user[].
+  the usermap *auth_arg and see if that user is equivalent to
+  Postgres user *user.
 
   Return STATUS_OK if yes.
 ---------------------------------------------------------------------------*/
@@ -850,7 +850,7 @@ authident(struct sockaddr_in * raddr, struct sockaddr_in * laddr,
 	verify_against_usermap(postgres_username, ident_username, auth_arg,
 						   &checks_out);
 
-	return (checks_out ? STATUS_OK : STATUS_ERROR);
+	return checks_out ? STATUS_OK : STATUS_ERROR;
 }
 
 
@@ -930,7 +930,7 @@ InRange(char *buf, int host)
 			if (valid)
 			{
 				FromAddr = file_ip_addr.s_addr;
-				return ((unsigned) FromAddr == (unsigned) host);
+				return (unsigned) FromAddr == (unsigned) host;
 			}
 		}
 	}
@@ -938,7 +938,7 @@ InRange(char *buf, int host)
 }
 
 void
-GetCharSetByHost(char TableName[], int host, const char DataDir[])
+GetCharSetByHost(char *TableName, int host, const char *DataDir)
 {
 	FILE	   *file;
 	char		buf[MAX_TOKEN],
@@ -1064,5 +1064,5 @@ hba_getauthmethod(SockAddr *raddr, char *user, char *database,
 
 	find_hba_entry(raddr, user, database, &host_ok, auth_method, auth_arg);
 
-	return (host_ok ? STATUS_OK : STATUS_ERROR);
+	return host_ok ? STATUS_OK : STATUS_ERROR;
 }

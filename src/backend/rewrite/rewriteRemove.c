@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.16 1998/08/19 02:02:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteRemove.c,v 1.17 1998/09/01 03:24:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ RemoveRewriteRule(char *ruleName)
 	ruleId = tuple->t_oid;
 	eventRelationOidDatum =	heap_getattr(tuple,
 								 Anum_pg_rewrite_ev_class,
-								 RelationGetTupleDescriptor(RewriteRelation),
+								 RelationGetDescr(RewriteRelation),
 								 &isNull);
 	if (isNull)
 	{

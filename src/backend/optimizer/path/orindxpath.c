@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.9 1998/08/31 07:19:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.10 1998/09/01 03:23:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ create_or_index_paths(Query *root,
 
 	foreach(clist, clauses)
 	{
-		CInfo	   *clausenode = (CInfo *) (lfirst(clist));
+		ClauseInfo	   *clausenode = (ClauseInfo *) (lfirst(clist));
 
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
@@ -131,7 +131,7 @@ create_or_index_paths(Query *root,
 		}
 	}
 
-	return (t_list);
+	return t_list;
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.48 1998/08/28 03:36:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.49 1998/09/01 03:26:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ do { \
 /* non-export function prototypes */
 static void
 formrdesc(char *relationName, u_int natts,
-		  FormData_pg_attribute att[]);
+		  FormData_pg_attribute *att);
 
 #if 0							/* See comments at line 1304 */
 static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
@@ -324,9 +324,9 @@ ScanPgRelation(RelationBuildDescInfo buildinfo)
 	 */
 
 	if (IsBootstrapProcessingMode())
-		return (scan_pg_rel_seq(buildinfo));
+		return scan_pg_rel_seq(buildinfo);
 	else
-		return (scan_pg_rel_ind(buildinfo));
+		return scan_pg_rel_ind(buildinfo);
 }
 
 static HeapTuple
@@ -454,16 +454,16 @@ AllocateRelationDesc(u_int natts, Form_pg_class relp)
 {
 	Relation	relation;
 	Size		len;
-	Form_pg_class relationTupleForm;
+	Form_pg_class relationForm;
 
 	/* ----------------
 	 *	allocate space for the relation tuple form
 	 * ----------------
 	 */
-	relationTupleForm = (Form_pg_class)
+	relationForm = (Form_pg_class)
 		palloc((Size) (sizeof(FormData_pg_class)));
 
-	memmove((char *) relationTupleForm, (char *) relp, CLASS_TUPLE_SIZE);
+	memmove((char *) relationForm, (char *) relp, CLASS_TUPLE_SIZE);
 
 	/* ----------------
 	 *	allocate space for new relation descriptor
@@ -482,7 +482,7 @@ AllocateRelationDesc(u_int natts, Form_pg_class relp)
 	relation->rd_att = CreateTemplateTupleDesc(natts);
 
 	/* and initialize relation tuple form */
-	relation->rd_rel = relationTupleForm;
+	relation->rd_rel = relationForm;
 
 	return relation;
 }
@@ -520,7 +520,7 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	HeapTuple	pg_attribute_tuple;
 	Relation	pg_attribute_desc;
 	HeapScanDesc pg_attribute_scan;
-	AttributeTupleForm attp;
+	Form_pg_attribute attp;
 	ScanKeyData key;
 	int			need;
 
@@ -549,12 +549,12 @@ build_tupdesc_seq(RelationBuildDescInfo buildinfo,
 	pg_attribute_tuple = heap_getnext(pg_attribute_scan, 0);
 	while (HeapTupleIsValid(pg_attribute_tuple) && need > 0)
 	{
-		attp = (AttributeTupleForm) GETSTRUCT(pg_attribute_tuple);
+		attp = (Form_pg_attribute) GETSTRUCT(pg_attribute_tuple);
 
 		if (attp->attnum > 0)
 		{
 			relation->rd_att->attrs[attp->attnum - 1] =
-				(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+				(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
 			memmove((char *) (relation->rd_att->attrs[attp->attnum - 1]),
 					(char *) attp,
@@ -583,7 +583,7 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 {
 	Relation	attrel;
 	HeapTuple	atttup;
-	AttributeTupleForm attp;
+	Form_pg_attribute attp;
 	TupleConstr *constr = (TupleConstr *) palloc(sizeof(TupleConstr));
 	AttrDefault *attrdef = NULL;
 	int			ndef = 0;
@@ -601,10 +601,10 @@ build_tupdesc_ind(RelationBuildDescInfo buildinfo,
 		if (!HeapTupleIsValid(atttup))
 			elog(ERROR, "cannot find attribute %d of relation %s", i,
 				relation->rd_rel->relname.data);
-		attp = (AttributeTupleForm) GETSTRUCT(atttup);
+		attp = (Form_pg_attribute) GETSTRUCT(atttup);
 
 		relation->rd_att->attrs[i - 1] =
-			(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
 		memmove((char *) (relation->rd_att->attrs[i - 1]),
 				(char *) attp,
@@ -708,7 +708,7 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	pg_rewrite_desc = heap_openr(RewriteRelationName);
 	pg_rewrite_scan = heap_beginscan(pg_rewrite_desc, 0, SnapshotNow, 1, &key);
-	pg_rewrite_tupdesc = RelationGetTupleDescriptor(pg_rewrite_desc);
+	pg_rewrite_tupdesc = RelationGetDescr(pg_rewrite_desc);
 
 	/* ----------------
 	 *	add attribute data to relation->rd_att
@@ -880,7 +880,7 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo)
 	if (OidIsValid(relam))
 	{
 		relation->rd_am = (Form_pg_am)
-			AccessMethodObjectIdGetAccessMethodTupleForm(relam);
+			AccessMethodObjectIdGetForm(relam);
 	}
 
 	/* ----------------
@@ -1000,7 +1000,7 @@ IndexedAccessMethodInitialize(Relation relation)
 static void
 formrdesc(char *relationName,
 		  u_int natts,
-		  FormData_pg_attribute att[])
+		  FormData_pg_attribute *att)
 {
 	Relation	relation;
 	Size		len;
@@ -1072,7 +1072,7 @@ formrdesc(char *relationName,
 	for (i = 0; i < natts; i++)
 	{
 		relation->rd_att->attrs[i] =
-			(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 
 		MemSet((char *) relation->rd_att->attrs[i], 0,
 			   ATTRIBUTE_TUPLE_SIZE);
@@ -1138,7 +1138,7 @@ RelationIdCacheGetRelation(Oid relationId)
 
 	}
 
-	return (rd);
+	return rd;
 }
 
 /* --------------------------------
@@ -1171,7 +1171,7 @@ RelationNameCacheGetRelation(char *relationName)
 
 	}
 
-	return (rd);
+	return rd;
 }
 
 /* --------------------------------
@@ -1337,7 +1337,7 @@ RelationFlushRelation(Relation *relationPtr,
 #endif
 
 		pfree(RelationGetLockInfo(relation));
-		pfree(RelationGetRelationTupleForm(relation));
+		pfree(RelationGetForm(relation));
 		pfree(relation);
 
 		MemoryContextSwitchTo(oldcxt);
@@ -1955,7 +1955,7 @@ init_irels(void)
 				return;
 			}
 
-			ird->rd_att->attrs[i] = (AttributeTupleForm) palloc(len);
+			ird->rd_att->attrs[i] = (Form_pg_attribute) palloc(len);
 
 			if ((nread = FileRead(fd, (char *) ird->rd_att->attrs[i], len)) != len)
 			{

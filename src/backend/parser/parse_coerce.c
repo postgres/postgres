@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.4 1998/08/14 16:06:52 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.5 1998/09/01 03:24:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -306,7 +306,7 @@ TypeCategory(Oid inType)
 			result = USER_TYPE;
 			break;
 	}
-	return (result);
+	return result;
 } /* TypeCategory() */
 
 
@@ -316,7 +316,7 @@ TypeCategory(Oid inType)
 bool
 IsPreferredType(CATEGORY category, Oid type)
 {
-	return (type == PreferredType(category, type));
+	return type == PreferredType(category, type);
 } /* IsPreferredType() */
 
 
@@ -365,7 +365,7 @@ PreferredType(CATEGORY category, Oid type)
 #ifdef PARSEDEBUG
 printf("PreferredType- (%d) preferred type is %s\n", category, typeidTypeName(result));
 #endif
-	return (result);
+	return result;
 } /* PreferredType() */
 
 
@@ -417,7 +417,7 @@ PromoteTypeToNext(Oid inType)
 			result = inType;
 			break;
 	}
-	return (result);
+	return result;
 } /* PromoteTypeToNext() */
 
 
@@ -437,7 +437,7 @@ DemoteType(Oid inType)
 			result = inType;
 			break;
 	}
-	return (result);
+	return result;
 } /* DemoteType() */
 
 
@@ -451,7 +451,7 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 		result = PromoteTypeToNext(inType1);
 		inType1 = result;
 		*arg2 = result;
-		return (result);
+		return result;
 	}
 
 	kind1 = ClassifyType(inType1);
@@ -505,12 +505,12 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 		if ((promotedType = PromoteBuiltInType(*arg1)) != *arg1)
 		{
 			*arg1 = promotedType;
-			return (promotedType);
+			return promotedType;
 		}
 		else if (CanCoerceType(*arg1, *arg2))
 		{
 			*arg1 = *arg2;
-			return (*arg2);
+			return *arg2;
 		}
 	}
 	else if (!isBuiltIn1 && isBuiltIn2)
@@ -518,12 +518,12 @@ PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
 		if ((promotedType = PromoteBuiltInType(*arg2)) != *arg2)
 		{
 			*arg2 = promotedType;
-			return (promotedType);
+			return promotedType;
 		}
 		else if (CanCoerceType(*arg2, *arg1))
 		{
 			*arg2 = *arg1;
-			return (*arg1);
+			return *arg1;
 		}
 	}
 

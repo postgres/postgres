@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.24 1998/08/31 17:49:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.25 1998/09/01 03:21:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,7 @@ static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
  * associated with them.
  */
 void
-CatalogOpenIndices(int nIndices, char *names[], Relation idescs[])
+CatalogOpenIndices(int nIndices, char **names, Relation *idescs)
 {
 	int			i;
 
@@ -108,7 +108,7 @@ CatalogIndexInsert(Relation *idescs,
 {
 	HeapTuple	pgIndexTup;
 	TupleDesc	heapDescriptor;
-	IndexTupleForm pgIndexP;
+	Form_pg_index pgIndexP;
 	Datum		datum;
 	int			natts;
 	AttrNumber *attnumP;
@@ -117,19 +117,19 @@ CatalogIndexInsert(Relation *idescs,
 	char		nulls[INDEX_MAX_KEYS];
 	int			i;
 
-	heapDescriptor = RelationGetTupleDescriptor(heapRelation);
+	heapDescriptor = RelationGetDescr(heapRelation);
 
 	for (i = 0; i < nIndices; i++)
 	{
 		TupleDesc	indexDescriptor;
 		InsertIndexResult indexRes;
 
-		indexDescriptor = RelationGetTupleDescriptor(idescs[i]);
+		indexDescriptor = RelationGetDescr(idescs[i]);
 		pgIndexTup = SearchSysCacheTupleCopy(INDEXRELID,
 										 ObjectIdGetDatum(idescs[i]->rd_id),
 										 0, 0, 0);
 		Assert(pgIndexTup);
-		pgIndexP = (IndexTupleForm) GETSTRUCT(pgIndexTup);
+		pgIndexP = (Form_pg_index) GETSTRUCT(pgIndexTup);
 
 		/*
 		 * Compute the number of attributes we are indexing upon.
@@ -191,9 +191,9 @@ CatalogHasIndex(char *catName, Oid catId)
 		for (i = 0; IndexedCatalogNames[i] != NULL; i++)
 		{
 			if (strcmp(IndexedCatalogNames[i], catName) == 0)
-				return (true);
+				return true;
 		}
-		return (false);
+		return false;
 	}
 
 	pg_class = heap_openr(RelationRelationName);
@@ -207,7 +207,7 @@ CatalogHasIndex(char *catName, Oid catId)
 	}
 
 	pgRelP = (Form_pg_class) GETSTRUCT(htup);
-	return (pgRelP->relhasindex);
+	return pgRelP->relhasindex;
 }
 
 /*

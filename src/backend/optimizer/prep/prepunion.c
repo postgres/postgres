@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.25 1998/07/15 14:54:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.26 1998/09/01 03:23:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,7 +297,7 @@ plan_inherit_query(List *relids,
 	}
 
 	*union_rtentriesPtr = union_rtentries;
-	return (union_plans);
+	return union_plans;
 }
 
 /*
@@ -333,7 +333,7 @@ find_all_inheritors(List *unexamined_relids,
 											new_examined_relids);
 
 	if (new_unexamined_relids == NULL)
-		return (new_examined_relids);
+		return new_examined_relids;
 	else
 	{
 		return (find_all_inheritors(new_unexamined_relids,
@@ -386,7 +386,7 @@ new_rangetable_entry(Oid new_relid, RangeTblEntry *old_entry)
 		new_entry->relname = get_rel_name(new_relid);
 
 	new_entry->relid = new_relid;
-	return (new_entry);
+	return new_entry;
 }
 
 /*
@@ -406,7 +406,7 @@ subst_rangetable(Query *root, Index index, RangeTblEntry *new_entry)
 		;
 	lfirst(temp) = new_entry;
 
-	return (new_root);
+	return new_root;
 }
 
 static void
@@ -516,5 +516,5 @@ make_append(List *appendplans,
 	node->plan.lefttree = (Plan *) NULL;
 	node->plan.righttree = (Plan *) NULL;
 
-	return (node);
+	return node;
 }

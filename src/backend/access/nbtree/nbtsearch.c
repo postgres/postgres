@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.36 1998/06/15 19:27:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.37 1998/09/01 03:21:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ BTStack
 _bt_search(Relation rel, int keysz, ScanKey scankey, Buffer *bufP)
 {
 	*bufP = _bt_getroot(rel, BT_READ);
-	return (_bt_searchr(rel, keysz, scankey, bufP, (BTStack) NULL));
+	return _bt_searchr(rel, keysz, scankey, bufP, (BTStack) NULL);
 }
 
 /*
@@ -81,7 +81,7 @@ _bt_searchr(Relation rel,
 	page = BufferGetPage(*bufP);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 	if (opaque->btpo_flags & BTP_LEAF)
-		return (stack_in);
+		return stack_in;
 
 	/*
 	 * Find the appropriate item on the internal page, and get the child
@@ -127,7 +127,7 @@ _bt_searchr(Relation rel,
 	*bufP = _bt_moveright(rel, *bufP, keysz, scankey, BT_READ);
 
 	/* okay, all set to move down a level */
-	return (_bt_searchr(rel, keysz, scankey, bufP, stack));
+	return _bt_searchr(rel, keysz, scankey, bufP, stack);
 }
 
 /*
@@ -166,7 +166,7 @@ _bt_moveright(Relation rel,
 
 	/* if we're on a rightmost page, we don't need to move right */
 	if (P_RIGHTMOST(opaque))
-		return (buf);
+		return buf;
 
 	/* by convention, item 0 on non-rightmost pages is the high key */
 	hikey = PageGetItemId(page, P_HIKEY);
@@ -252,7 +252,7 @@ _bt_moveright(Relation rel,
 				 && _bt_skeycmp(rel, keysz, scankey, page, hikey,
 								BTGreaterEqualStrategyNumber));
 	}
-	return (buf);
+	return buf;
 }
 
 /*
@@ -300,7 +300,7 @@ _bt_skeycmp(Relation rel,
 	item = (BTItem) PageGetItem(page, itemid);
 	indexTuple = &(item->bti_itup);
 
-	tupDes = RelationGetTupleDescriptor(rel);
+	tupDes = RelationGetDescr(rel);
 
 	/* see if the comparison is true for all of the key attributes */
 	for (i = 1; i <= keysz; i++)
@@ -338,13 +338,13 @@ _bt_skeycmp(Relation rel,
 		if (compare)			/* true for one of ">, <, =" */
 		{
 			if (strat != BTEqualStrategyNumber)
-				return (true);
+				return true;
 		}
 		else
 /* false for one of ">, <, =" */
 		{
 			if (strat == BTEqualStrategyNumber)
-				return (false);
+				return false;
 
 			/*
 			 * if original strat was "<=, >=" OR "<, >" but some
@@ -360,11 +360,11 @@ _bt_skeycmp(Relation rel,
 				if (compare)	/* key' and item' attributes are equal */
 					continue;	/* - try to compare next attributes */
 			}
-			return (false);
+			return false;
 		}
 	}
 
-	return (true);
+	return true;
 }
 
 /*
@@ -397,7 +397,7 @@ _bt_binsrch(Relation rel,
 	int			natts = rel->rd_rel->relnatts;
 	int			result;
 
-	itupdesc = RelationGetTupleDescriptor(rel);
+	itupdesc = RelationGetDescr(rel);
 	page = BufferGetPage(buf);
 	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
 
@@ -416,17 +416,17 @@ _bt_binsrch(Relation rel,
 	 */
 
 	if (PageIsEmpty(page))
-		return (low);
+		return low;
 	if ((!P_RIGHTMOST(opaque) && high <= low))
 	{
 		if (high < low ||
 			(srchtype == BT_DESCENT && !(opaque->btpo_flags & BTP_LEAF)))
-			return (low);
+			return low;
 		/* It's insertion and high == low == 2 */
 		result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
 		if (result > 0)
-			return (OffsetNumberNext(low));
-		return (low);
+			return OffsetNumberNext(low);
+		return low;
 	}
 
 	while ((high - low) > 1)
@@ -454,11 +454,11 @@ _bt_binsrch(Relation rel,
 			 * code (natts == keysz).		   - vadim 04/15/97
 			 */
 			if (natts == keysz || opaque->btpo_flags & BTP_LEAF)
-				return (mid);
+				return mid;
 			low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 			if (mid == low)
-				return (mid);
-			return (OffsetNumberPrev(mid));
+				return mid;
+			return OffsetNumberPrev(mid);
 		}
 	}
 
@@ -490,33 +490,33 @@ _bt_binsrch(Relation rel,
 			 * comments above for multi-column indices.
 			 */
 			if (natts == keysz)
-				return (mid);
+				return mid;
 			low = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
 			if (mid == low)
-				return (mid);
-			return (OffsetNumberPrev(mid));
+				return mid;
+			return OffsetNumberPrev(mid);
 		}
 		else if (result > 0)
-			return (high);
+			return high;
 		else
-			return (low);
+			return low;
 	}
 	else
 /* we want the first key >= the scan key */
 	{
 		result = _bt_compare(rel, itupdesc, page, keysz, scankey, low);
 		if (result <= 0)
-			return (low);
+			return low;
 		else
 		{
 			if (low == high)
-				return (OffsetNumberNext(low));
+				return OffsetNumberNext(low);
 
 			result = _bt_compare(rel, itupdesc, page, keysz, scankey, high);
 			if (result <= 0)
-				return (high);
+				return high;
 			else
-				return (OffsetNumberNext(high));
+				return OffsetNumberNext(high);
 		}
 	}
 }
@@ -543,7 +543,7 @@ _bt_firsteq(Relation rel,
 						  keysz, scankey, OffsetNumberPrev(offnum)) == 0)
 		offnum = OffsetNumberPrev(offnum);
 
-	return (offnum);
+	return offnum;
 }
 
 /*
@@ -630,8 +630,8 @@ _bt_compare(Relation rel,
 
 		if (_bt_skeycmp(rel, keysz, scankey, page, itemid,
 						BTEqualStrategyNumber))
-			return (0);
-		return (1);
+			return 0;
+		return 1;
 #endif
 	}
 
@@ -675,11 +675,11 @@ _bt_compare(Relation rel,
 
 		/* if the keys are unequal, return the difference */
 		if (result != 0)
-			return (result);
+			return result;
 	}
 
 	/* by here, the keys are equal */
-	return (0);
+	return 0;
 }
 
 /*
@@ -726,7 +726,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	{
 		/* step one tuple in the appropriate direction */
 		if (!_bt_step(scan, &buf, dir))
-			return ((RetrieveIndexResult) NULL);
+			return (RetrieveIndexResult) NULL;
 
 		/* by here, current is the tuple we want to return */
 		offnum = ItemPointerGetOffsetNumber(current);
@@ -741,7 +741,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 
 			/* remember which buffer we have pinned and locked */
 			so->btso_curbuf = buf;
-			return (res);
+			return res;
 		}
 
 	} while (keysok >= so->numberOfFirstKeys);
@@ -750,7 +750,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	so->btso_curbuf = InvalidBuffer;
 	_bt_relbuf(rel, buf, BT_READ);
 
-	return ((RetrieveIndexResult) NULL);
+	return (RetrieveIndexResult) NULL;
 }
 
 /*
@@ -812,13 +812,13 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		scan->scanFromEnd = true;
 
 	if (so->qual_ok == 0)
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 
 	/* if we just need to walk down one edge of the tree, do that */
 	if (scan->scanFromEnd)
-		return (_bt_endpoint(scan, dir));
+		return _bt_endpoint(scan, dir);
 
-	itupdesc = RelationGetTupleDescriptor(rel);
+	itupdesc = RelationGetDescr(rel);
 	current = &(scan->currentItemData);
 
 	/*
@@ -831,7 +831,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	if (so->keyData[0].sk_flags & SK_ISNULL)
 	{
 		elog(ERROR, "_bt_first: btree doesn't support is(not)null, yet");
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 	}
 	proc = index_getprocid(rel, 1, BTORDER_PROC);
 	ScanKeyEntryInitialize(&skdata, so->keyData[0].sk_flags, 1, proc,
@@ -855,7 +855,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		ItemPointerSetInvalid(current);
 		so->btso_curbuf = InvalidBuffer;
 		_bt_relbuf(rel, buf, BT_READ);
-		return ((RetrieveIndexResult) NULL);
+		return (RetrieveIndexResult) NULL;
 	}
 	maxoff = PageGetMaxOffsetNumber(page);
 	pop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -881,7 +881,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 			ItemPointerSetInvalid(current);
 			so->btso_curbuf = InvalidBuffer;
 			_bt_relbuf(rel, buf, BT_READ);
-			return ((RetrieveIndexResult) NULL);
+			return (RetrieveIndexResult) NULL;
 		}
 		maxoff = PageGetMaxOffsetNumber(page);
 		pop = (BTPageOpaque) PageGetSpecialPointer(page);
@@ -955,7 +955,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 				_bt_relbuf(scan->relation, buf, BT_READ);
 				so->btso_curbuf = InvalidBuffer;
 				ItemPointerSetInvalid(&(scan->currentItemData));
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 			}
 			break;
 
@@ -970,7 +970,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 						_bt_relbuf(scan->relation, buf, BT_READ);
 						so->btso_curbuf = InvalidBuffer;
 						ItemPointerSetInvalid(&(scan->currentItemData));
-						return ((RetrieveIndexResult) NULL);
+						return (RetrieveIndexResult) NULL;
 					}
 				}
 				else if (result > 0)
@@ -1035,7 +1035,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 	else if (keysok >= so->numberOfFirstKeys)
 	{
 		so->btso_curbuf = buf;
-		return (_bt_next(scan, dir));
+		return _bt_next(scan, dir);
 	}
 	else
 	{
@@ -1045,7 +1045,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
 		res = (RetrieveIndexResult) NULL;
 	}
 
-	return (res);
+	return res;
 }
 
 /*
@@ -1093,7 +1093,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				_bt_relbuf(rel, *bufP, BT_READ);
 				ItemPointerSetInvalid(current);
 				*bufP = so->btso_curbuf = InvalidBuffer;
-				return (false);
+				return false;
 			}
 			else
 			{
@@ -1118,7 +1118,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 						{
 							*bufP = so->btso_curbuf = InvalidBuffer;
 							ItemPointerSetInvalid(current);
-							return (false);
+							return false;
 						}
 					}
 				}
@@ -1144,7 +1144,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 				_bt_relbuf(rel, *bufP, BT_READ);
 				*bufP = so->btso_curbuf = InvalidBuffer;
 				ItemPointerSetInvalid(current);
-				return (false);
+				return false;
 			}
 			else
 			{
@@ -1192,7 +1192,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 						{
 							*bufP = so->btso_curbuf = InvalidBuffer;
 							ItemPointerSetInvalid(current);
-							return (false);
+							return false;
 						}
 					}
 				}
@@ -1204,7 +1204,7 @@ _bt_step(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	so->btso_curbuf = *bufP;
 	ItemPointerSet(current, blkno, offnum);
 
-	return (true);
+	return true;
 }
 
 /*
@@ -1252,19 +1252,19 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	if (ScanDirectionIsForward(dir) && offnum < maxoff)
 	{							/* XXX PageIsEmpty? */
 		ItemPointerSet(current, blkno, OffsetNumberNext(offnum));
-		return (true);
+		return true;
 	}
 	else if (ScanDirectionIsBackward(dir) && offnum > start)
 	{
 		ItemPointerSet(current, blkno, OffsetNumberPrev(offnum));
-		return (true);
+		return true;
 	}
 
 	/* if we've hit end of scan we don't have to do any work */
 	if (ScanDirectionIsForward(dir) && P_RIGHTMOST(opaque))
-		return (false);
+		return false;
 	else if (ScanDirectionIsBackward(dir) && P_LEFTMOST(opaque))
-		return (false);
+		return false;
 
 	/*
 	 * Okay, it's off the page; let _bt_step() do the hard work, and we'll
@@ -1283,7 +1283,7 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 	if (_bt_step(scan, bufP, dir))
 	{
 		pfree(svitem);
-		return (true);
+		return true;
 	}
 
 	/* try to find our place again */
@@ -1299,7 +1299,7 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 		{
 			pfree(svitem);
 			ItemPointerSet(current, blkno, offnum);
-			return (false);
+			return false;
 		}
 	}
 
@@ -1312,7 +1312,7 @@ _bt_twostep(IndexScanDesc scan, Buffer *bufP, ScanDirection dir)
 
 	elog(ERROR, "btree synchronization error:  concurrent update botched scan");
 
-	return (false);
+	return false;
 }
 
 /*
@@ -1406,7 +1406,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		{
 			ItemPointerSet(current, blkno, maxoff);
 			if (!_bt_step(scan, &buf, BackwardScanDirection))
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			start = ItemPointerGetOffsetNumber(current);
 			page = BufferGetPage(buf);
@@ -1424,13 +1424,13 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 			_bt_relbuf(rel, buf, BT_READ);
 			ItemPointerSetInvalid(current);
 			so->btso_curbuf = InvalidBuffer;
-			return ((RetrieveIndexResult) NULL);
+			return (RetrieveIndexResult) NULL;
 		}
 		if (start > maxoff)		/* start == 2 && maxoff == 1 */
 		{
 			ItemPointerSet(current, blkno, maxoff);
 			if (!_bt_step(scan, &buf, ForwardScanDirection))
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			start = ItemPointerGetOffsetNumber(current);
 			page = BufferGetPage(buf);
@@ -1452,7 +1452,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		{
 			ItemPointerSet(current, blkno, FirstOffsetNumber);
 			if (!_bt_step(scan, &buf, ForwardScanDirection))
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			start = ItemPointerGetOffsetNumber(current);
 			page = BufferGetPage(buf);
@@ -1466,12 +1466,12 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 				_bt_relbuf(rel, buf, BT_READ);
 				ItemPointerSetInvalid(current);
 				so->btso_curbuf = InvalidBuffer;
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 			}
 			/* Go back ! */
 			ItemPointerSet(current, blkno, FirstOffsetNumber);
 			if (!_bt_step(scan, &buf, BackwardScanDirection))
-				return ((RetrieveIndexResult) NULL);
+				return (RetrieveIndexResult) NULL;
 
 			start = ItemPointerGetOffsetNumber(current);
 			page = BufferGetPage(buf);
@@ -1500,7 +1500,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 	else if (keysok >= so->numberOfFirstKeys)
 	{
 		so->btso_curbuf = buf;
-		return (_bt_next(scan, dir));
+		return _bt_next(scan, dir);
 	}
 	else
 	{
@@ -1510,5 +1510,5 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		res = (RetrieveIndexResult) NULL;
 	}
 
-	return (res);
+	return res;
 }

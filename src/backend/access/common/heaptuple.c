@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.39 1998/08/19 02:00:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.40 1998/09/01 03:20:41 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -55,13 +55,13 @@ long		heap_sysoffset[] = {
  */
 Size
 ComputeDataSize(TupleDesc tupleDesc,
-				Datum value[],
-				char nulls[])
+				Datum *value,
+				char *nulls)
 {
 	uint32		data_length;
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
-	AttributeTupleForm *att = tupleDesc->attrs;
+	Form_pg_attribute *att = tupleDesc->attrs;
 
 	for (data_length = 0, i = 0; i < numberOfAttributes; i++)
 	{
@@ -118,8 +118,8 @@ ComputeDataSize(TupleDesc tupleDesc,
 void
 DataFill(char *data,
 		 TupleDesc tupleDesc,
-		 Datum value[],
-		 char nulls[],
+		 Datum *value,
+		 char *nulls,
 		 uint16 *infomask,
 		 bits8 *bit)
 {
@@ -128,7 +128,7 @@ DataFill(char *data,
 	uint32		data_length;
 	int			i;
 	int			numberOfAttributes = tupleDesc->natts;
-	AttributeTupleForm *att = tupleDesc->attrs;
+	Form_pg_attribute *att = tupleDesc->attrs;
 
 	if (bit != NULL)
 	{
@@ -227,13 +227,13 @@ int
 heap_attisnull(HeapTuple tup, int attnum)
 {
 	if (attnum > (int) tup->t_natts)
-		return (1);
+		return 1;
 
 	if (HeapTupleNoNulls(tup))
-		return (0);
+		return 0;
 
 	if (attnum > 0)
-		return (att_isnull(attnum - 1, tup->t_bits));
+		return att_isnull(attnum - 1, tup->t_bits);
 	else
 		switch (attnum)
 		{
@@ -252,7 +252,7 @@ heap_attisnull(HeapTuple tup, int attnum)
 				elog(ERROR, "heap_attisnull: undefined negative attnum");
 		}
 
-	return (0);
+	return 0;
 }
 
 /* ----------------------------------------------------------------
@@ -343,21 +343,21 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 	switch (attnum)
 	{
 			case SelfItemPointerAttributeNumber:
-			return ((Datum) &tup->t_ctid);
+			return (Datum) &tup->t_ctid;
 		case ObjectIdAttributeNumber:
-			return ((Datum) (long) tup->t_oid);
+			return (Datum) (long) tup->t_oid;
 		case MinTransactionIdAttributeNumber:
-			return ((Datum) (long) tup->t_xmin);
+			return (Datum) (long) tup->t_xmin;
 		case MinCommandIdAttributeNumber:
-			return ((Datum) (long) tup->t_cmin);
+			return (Datum) (long) tup->t_cmin;
 		case MaxTransactionIdAttributeNumber:
-			return ((Datum) (long) tup->t_xmax);
+			return (Datum) (long) tup->t_xmax;
 		case MaxCommandIdAttributeNumber:
-			return ((Datum) (long) tup->t_cmax);
+			return (Datum) (long) tup->t_cmax;
 		default:
 			elog(ERROR, "heap_getsysattr: undefined attnum %d", attnum);
 	}
-	return ((Datum) NULL);
+	return (Datum) NULL;
 }
 
 /* ----------------
@@ -388,7 +388,7 @@ nocachegetattr(HeapTuple tup,
 	char	   *tp;				/* ptr to att in tuple */
 	bits8	   *bp = tup->t_bits;		/* ptr to att in tuple */
 	int			slow;			/* do we have to walk nulls? */
-	AttributeTupleForm *att = tupleDesc->attrs;
+	Form_pg_attribute *att = tupleDesc->attrs;
 
 
 #if IN_MACRO
@@ -426,7 +426,7 @@ nocachegetattr(HeapTuple tup,
 			/*
 			 * first attribute is always at position zero
 			 */
-			return ((Datum) fetchatt(&(att[0]), (char *) tup + tup->t_hoff));
+			return (Datum) fetchatt(&(att[0]), (char *) tup + tup->t_hoff);
 		}
 #endif
 
@@ -505,7 +505,7 @@ nocachegetattr(HeapTuple tup,
 									tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
-			return ((Datum) fetchatt(&(att[0]), (char *) tp));
+			return (Datum) fetchatt(&(att[0]), (char *) tp);
 		else if (!HeapTupleAllFixed(tup))
 		{
 			int			j = 0;
@@ -734,11 +734,11 @@ heap_copytuple(HeapTuple tuple)
 	HeapTuple	newTuple;
 
 	if (!HeapTupleIsValid(tuple))
-		return (NULL);
+		return NULL;
 
 	newTuple = (HeapTuple) palloc(tuple->t_len);
 	memmove((char *) newTuple, (char *) tuple, (int) tuple->t_len);
-	return (newTuple);
+	return newTuple;
 }
 
 #ifdef NOT_USED
@@ -751,8 +751,8 @@ heap_copytuple(HeapTuple tuple)
 void
 heap_deformtuple(HeapTuple tuple,
 				 TupleDesc tdesc,
-				 Datum values[],
-				 char nulls[])
+				 Datum *values,
+				 char *nulls)
 {
 	int			i;
 	int			natts;
@@ -780,7 +780,7 @@ heap_deformtuple(HeapTuple tuple,
 /* ----------------
  *		heap_formtuple
  *
- *		constructs a tuple from the given value[] and null[] arrays
+ *		constructs a tuple from the given *value and *null arrays
  *
  * old comments
  *		Handles alignment by aligning 2 byte attributes on short boundries
@@ -789,7 +789,7 @@ heap_deformtuple(HeapTuple tuple,
  *		not properly align fixed length arrays of 1 or 2 byte types (yet).
  *
  *		Null attributes are indicated by a 'n' in the appropriate byte
- *		of the null[].	Non-null attributes are indicated by a ' ' (space).
+ *		of the *null.	Non-null attributes are indicated by a ' ' (space).
  *
  *		Fix me.  (Figure that must keep context if debug--allow give oid.)
  *		Assumes in order.
@@ -797,8 +797,8 @@ heap_deformtuple(HeapTuple tuple,
  */
 HeapTuple
 heap_formtuple(TupleDesc tupleDescriptor,
-			   Datum value[],
-			   char nulls[])
+			   Datum *value,
+			   char *nulls)
 {
 	char	   *tp;				/* tuple pointer */
 	HeapTuple	tuple;			/* return tuple */
@@ -849,7 +849,7 @@ heap_formtuple(TupleDesc tupleDescriptor,
 
 	tuple->t_infomask |= HEAP_XMAX_INVALID;
 
-	return (tuple);
+	return tuple;
 }
 
 /* ----------------
@@ -862,9 +862,9 @@ heap_formtuple(TupleDesc tupleDescriptor,
 HeapTuple
 heap_modifytuple(HeapTuple tuple,
 				 Relation relation,
-				 Datum replValue[],
-				 char replNull[],
-				 char repl[])
+				 Datum *replValue,
+				 char *replNull,
+				 char *repl)
 {
 	int			attoff;
 	int			numberOfAttributes;
@@ -884,10 +884,10 @@ heap_modifytuple(HeapTuple tuple,
 	Assert(PointerIsValid(replNull));
 	Assert(PointerIsValid(repl));
 
-	numberOfAttributes = RelationGetRelationTupleForm(relation)->relnatts;
+	numberOfAttributes = RelationGetForm(relation)->relnatts;
 
 	/* ----------------
-	 *	allocate and fill value[] and nulls[] arrays from either
+	 *	allocate and fill *value and *nulls arrays from either
 	 *	the tuple or the repl information, as appropriate.
 	 * ----------------
 	 */
@@ -904,7 +904,7 @@ heap_modifytuple(HeapTuple tuple,
 			value[attoff] =
 				heap_getattr(tuple,
 							 AttrOffsetGetAttrNumber(attoff),
-							 RelationGetTupleDescriptor(relation),
+							 RelationGetDescr(relation),
 							 &isNull);
 			nulls[attoff] = (isNull) ? 'n' : ' ';
 
@@ -919,10 +919,10 @@ heap_modifytuple(HeapTuple tuple,
 	}
 
 	/* ----------------
-	 *	create a new tuple from the values[] and nulls[] arrays
+	 *	create a new tuple from the *values and *nulls arrays
 	 * ----------------
 	 */
-	newTuple = heap_formtuple(RelationGetTupleDescriptor(relation),
+	newTuple = heap_formtuple(RelationGetDescr(relation),
 							  value,
 							  nulls);
 
@@ -972,5 +972,5 @@ heap_addheader(uint32 natts,	/* max domain index */
 
 	memmove(tp, structure, structlen);
 
-	return (tup);
+	return tup;
 }

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.16 1998/08/19 02:03:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/sets.c,v 1.17 1998/09/01 03:26:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,7 @@ SetDefine(char *querystr, char *typename)
 		else
 			elog(ERROR, "setin: could not find new set oid tuple");
 
-		if (RelationGetRelationTupleForm(procrel)->relhasindex)
+		if (RelationGetForm(procrel)->relhasindex)
 		{
 			Relation	idescs[Num_pg_proc_indices];
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.25 1998/06/15 18:39:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.26 1998/09/01 03:25:53 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -97,8 +97,8 @@ static int	sec_tab[] = {
 static void reltime2tm(int32 time, struct tm * tm);
 
 #if FALSE
-static int	correct_unit(char unit[], int *unptr);
-static int	correct_dir(char direction[], int *signptr);
+static int	correct_unit(char *unit, int *unptr);
+static int	correct_dir(char *direction, int *signptr);
 
 #endif
 
@@ -147,14 +147,14 @@ reltimein(char *str)
 		case DTK_DELTA:
 			result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
 			result += (((tm->tm_year * 365) + (tm->tm_mon * 30) + tm->tm_mday) * (24 * 60 * 60));
-			return (result);
+			return result;
 
 		default:
-			return (INVALID_RELTIME);
+			return INVALID_RELTIME;
 	}
 
 	elog(ERROR, "Bad reltime (internal coding error) '%s'", str);
-	return (INVALID_RELTIME);
+	return INVALID_RELTIME;
 }	/* reltimein() */
 
 
@@ -183,7 +183,7 @@ reltimeout(int32 time)
 	result = palloc(strlen(buf) + 1);
 	strcpy(result, buf);
 
-	return (result);
+	return result;
 }	/* reltimeout() */
 
 
@@ -217,7 +217,7 @@ timestring = (char *) palloc(Max(strlen(INVALID_RELTIME_STR),
 if (timevalue == INVALID_RELTIME)
 {
 	strcpy(timestring, INVALID_RELTIME_STR);
-	return (timestring);
+	return timestring;
 }
 
 if (timevalue == 0)
@@ -236,7 +236,7 @@ if (quantity >= 0)
 else
 	sprintf(timestring, "%c %lu %s %s", RELTIME_LABEL,
 			(quantity * -1), unit_tab[unitnr], RELTIME_PAST);
-return (timestring);
+return timestring;
 }
 
 #endif
@@ -269,7 +269,7 @@ tintervalin(char *intervalstr)
 		interval->data[1] = i_end;
 		interval->status = T_INTERVAL_VALID;
 	}
-	return (interval);
+	return interval;
 }
 
 
@@ -298,7 +298,7 @@ tintervalout(TimeInterval interval)
 		pfree(p);
 	}
 	strcat(i_str, "\"]\0");
-	return (i_str);
+	return i_str;
 }
 
 
@@ -352,7 +352,7 @@ timespan_reltime(TimeSpan *timespan)
 		time = (((span > INT_MIN) && (span < INT_MAX)) ? span : INVALID_RELTIME);
 	}
 
-	return (time);
+	return time;
 }	/* timespan_reltime() */
 
 
@@ -380,7 +380,7 @@ reltime_timespan(RelativeTime reltime)
 			result->month = ((12 * year) + month);
 	}
 
-	return (result);
+	return result;
 }	/* reltime_timespan() */
 
 
@@ -427,9 +427,9 @@ timepl(AbsoluteTime t1, RelativeTime t2)
 		RelativeTimeIsValid(t2) &&
 		((t2 > 0) ? (t1 < NOEND_ABSTIME - t2)
 		 : (t1 > NOSTART_ABSTIME - t2)))		/* prevent overflow */
-		return (t1 + t2);
+		return t1 + t2;
 
-	return (INVALID_ABSTIME);
+	return INVALID_ABSTIME;
 }
 
 
@@ -446,9 +446,9 @@ timemi(AbsoluteTime t1, RelativeTime t2)
 		RelativeTimeIsValid(t2) &&
 		((t2 > 0) ? (t1 > NOSTART_ABSTIME + t2)
 		 : (t1 < NOEND_ABSTIME + t2)))	/* prevent overflow */
-		return (t1 - t2);
+		return t1 - t2;
 
-	return (INVALID_ABSTIME);
+	return INVALID_ABSTIME;
 }
 
 
@@ -465,9 +465,9 @@ abstimemi(AbsoluteTime t1, AbsoluteTime t2)
 
 	if (AbsoluteTimeIsReal(t1) &&
 		AbsoluteTimeIsReal(t2))
-		return (t1 - t2);
+		return t1 - t2;
 
-	return (INVALID_RELTIME);
+	return INVALID_RELTIME;
 }
 
 
@@ -480,7 +480,7 @@ ininterval(AbsoluteTime t, TimeInterval interval)
 	if (interval->status == T_INTERVAL_VALID && t != INVALID_ABSTIME)
 		return (abstimege(t, interval->data[0]) &&
 				abstimele(t, interval->data[1]));
-	return (0);
+	return 0;
 }
 
 /*
@@ -490,9 +490,9 @@ RelativeTime
 intervalrel(TimeInterval interval)
 {
 	if (interval->status == T_INTERVAL_VALID)
-		return (abstimemi(interval->data[1], interval->data[0]));
+		return abstimemi(interval->data[1], interval->data[0]);
 	else
-		return (INVALID_RELTIME);
+		return INVALID_RELTIME;
 }
 
 /*
@@ -506,8 +506,8 @@ timenow()
 	time_t		sec;
 
 	if (time(&sec) < 0)
-		return (INVALID_ABSTIME);
-	return ((AbsoluteTime) sec);
+		return INVALID_ABSTIME;
+	return (AbsoluteTime) sec;
 }
 
 /*
@@ -523,7 +523,7 @@ reltimeeq(RelativeTime t1, RelativeTime t2)
 {
 	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 		return 0;
-	return (t1 == t2);
+	return t1 == t2;
 }
 
 bool
@@ -531,7 +531,7 @@ reltimene(RelativeTime t1, RelativeTime t2)
 {
 	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 		return 0;
-	return (t1 != t2);
+	return t1 != t2;
 }
 
 bool
@@ -539,7 +539,7 @@ reltimelt(RelativeTime t1, RelativeTime t2)
 {
 	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 		return 0;
-	return (t1 < t2);
+	return t1 < t2;
 }
 
 bool
@@ -547,7 +547,7 @@ reltimegt(RelativeTime t1, RelativeTime t2)
 {
 	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 		return 0;
-	return (t1 > t2);
+	return t1 > t2;
 }
 
 bool
@@ -555,7 +555,7 @@ reltimele(RelativeTime t1, RelativeTime t2)
 {
 	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 		return 0;
-	return (t1 <= t2);
+	return t1 <= t2;
 }
 
 bool
@@ -563,7 +563,7 @@ reltimege(RelativeTime t1, RelativeTime t2)
 {
 	if (t1 == INVALID_RELTIME || t2 == INVALID_RELTIME)
 		return 0;
-	return (t1 >= t2);
+	return t1 >= t2;
 }
 
 
@@ -575,7 +575,7 @@ bool
 intervalsame(TimeInterval i1, TimeInterval i2)
 {
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 	return (abstimeeq(i1->data[0], i2->data[0]) &&
 			abstimeeq(i1->data[1], i2->data[1]));
 }	/* intervalsame() */
@@ -594,7 +594,7 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 
 	t10 = i1->data[0];
 	t11 = i1->data[1];
@@ -603,7 +603,7 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		return (FALSE);
+		return FALSE;
 
 	if (t10 == CURRENT_ABSTIME)
 		t10 = GetCurrentTransactionStartTime();
@@ -614,7 +614,7 @@ intervaleq(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11 - t10) == (t21 - t20));
+	return (t11 - t10) == (t21 - t20);
 }	/* intervaleq() */
 
 /*
@@ -630,7 +630,7 @@ intervalne(TimeInterval i1, TimeInterval i2)
 				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 
 	t10 = i1->data[0];
 	t11 = i1->data[1];
@@ -639,7 +639,7 @@ intervalne(TimeInterval i1, TimeInterval i2)
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		return (FALSE);
+		return FALSE;
 
 	if (t10 == CURRENT_ABSTIME)
 		t10 = GetCurrentTransactionStartTime();
@@ -650,7 +650,7 @@ intervalne(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11 - t10) != (t21 - t20));
+	return (t11 - t10) != (t21 - t20);
 }	/* intervalne() */
 
 /*
@@ -666,7 +666,7 @@ intervallt(TimeInterval i1, TimeInterval i2)
 				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 
 	t10 = i1->data[0];
 	t11 = i1->data[1];
@@ -675,7 +675,7 @@ intervallt(TimeInterval i1, TimeInterval i2)
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		return (FALSE);
+		return FALSE;
 
 	if (t10 == CURRENT_ABSTIME)
 		t10 = GetCurrentTransactionStartTime();
@@ -686,7 +686,7 @@ intervallt(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11 - t10) < (t21 - t20));
+	return (t11 - t10) < (t21 - t20);
 }	/* intervallt() */
 
 /*
@@ -702,7 +702,7 @@ intervalle(TimeInterval i1, TimeInterval i2)
 				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 
 	t10 = i1->data[0];
 	t11 = i1->data[1];
@@ -711,7 +711,7 @@ intervalle(TimeInterval i1, TimeInterval i2)
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		return (FALSE);
+		return FALSE;
 
 	if (t10 == CURRENT_ABSTIME)
 		t10 = GetCurrentTransactionStartTime();
@@ -722,7 +722,7 @@ intervalle(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11 - t10) <= (t21 - t20));
+	return (t11 - t10) <= (t21 - t20);
 }	/* intervalle() */
 
 /*
@@ -738,7 +738,7 @@ intervalgt(TimeInterval i1, TimeInterval i2)
 				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 
 	t10 = i1->data[0];
 	t11 = i1->data[1];
@@ -747,7 +747,7 @@ intervalgt(TimeInterval i1, TimeInterval i2)
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		return (FALSE);
+		return FALSE;
 
 	if (t10 == CURRENT_ABSTIME)
 		t10 = GetCurrentTransactionStartTime();
@@ -758,7 +758,7 @@ intervalgt(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11 - t10) > (t21 - t20));
+	return (t11 - t10) > (t21 - t20);
 }	/* intervalgt() */
 
 /*
@@ -774,7 +774,7 @@ intervalge(TimeInterval i1, TimeInterval i2)
 				t21;
 
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (FALSE);			/* invalid interval */
+		return FALSE;			/* invalid interval */
 
 	t10 = i1->data[0];
 	t11 = i1->data[1];
@@ -783,7 +783,7 @@ intervalge(TimeInterval i1, TimeInterval i2)
 
 	if ((t10 == INVALID_ABSTIME) || (t20 == INVALID_ABSTIME)
 		|| (t20 == INVALID_ABSTIME) || (t21 == INVALID_ABSTIME))
-		return (FALSE);
+		return FALSE;
 
 	if (t10 == CURRENT_ABSTIME)
 		t10 = GetCurrentTransactionStartTime();
@@ -794,7 +794,7 @@ intervalge(TimeInterval i1, TimeInterval i2)
 	if (t21 == CURRENT_ABSTIME)
 		t21 = GetCurrentTransactionStartTime();
 
-	return ((t11 - t10) >= (t21 - t20));
+	return (t11 - t10) >= (t21 - t20);
 }	/* intervalge() */
 
 
@@ -808,9 +808,9 @@ intervalleneq(TimeInterval i, RelativeTime t)
 	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
-		return (0);
+		return 0;
 	rt = intervalrel(i);
-	return (rt != INVALID_RELTIME && rt == t);
+	return rt != INVALID_RELTIME && rt == t;
 }
 
 /*
@@ -823,9 +823,9 @@ intervallenne(TimeInterval i, RelativeTime t)
 	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
-		return (0);
+		return 0;
 	rt = intervalrel(i);
-	return (rt != INVALID_RELTIME && rt != t);
+	return rt != INVALID_RELTIME && rt != t;
 }
 
 /*
@@ -838,9 +838,9 @@ intervallenlt(TimeInterval i, RelativeTime t)
 	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
-		return (0);
+		return 0;
 	rt = intervalrel(i);
-	return (rt != INVALID_RELTIME && rt < t);
+	return rt != INVALID_RELTIME && rt < t;
 }
 
 /*
@@ -853,9 +853,9 @@ intervallengt(TimeInterval i, RelativeTime t)
 	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
-		return (0);
+		return 0;
 	rt = intervalrel(i);
-	return (rt != INVALID_RELTIME && rt > t);
+	return rt != INVALID_RELTIME && rt > t;
 }
 
 /*
@@ -868,9 +868,9 @@ intervallenle(TimeInterval i, RelativeTime t)
 	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
-		return (0);
+		return 0;
 	rt = intervalrel(i);
-	return (rt != INVALID_RELTIME && rt <= t);
+	return rt != INVALID_RELTIME && rt <= t;
 }
 
 /*
@@ -883,9 +883,9 @@ intervallenge(TimeInterval i, RelativeTime t)
 	RelativeTime rt;
 
 	if ((i->status == T_INTERVAL_INVAL) || (t == INVALID_RELTIME))
-		return (0);
+		return 0;
 	rt = intervalrel(i);
-	return (rt != INVALID_RELTIME && rt >= t);
+	return rt != INVALID_RELTIME && rt >= t;
 }
 
 /*
@@ -895,7 +895,7 @@ bool
 intervalct(TimeInterval i1, TimeInterval i2)
 {
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (0);
+		return 0;
 	return (abstimele(i1->data[0], i2->data[0]) &&
 			abstimege(i1->data[1], i2->data[1]));
 }
@@ -907,7 +907,7 @@ bool
 intervalov(TimeInterval i1, TimeInterval i2)
 {
 	if (i1->status == T_INTERVAL_INVAL || i2->status == T_INTERVAL_INVAL)
-		return (0);
+		return 0;
 	return (!(abstimelt(i1->data[1], i2->data[0]) ||
 			  abstimegt(i1->data[0], i2->data[1])));
 }
@@ -920,7 +920,7 @@ intervalstart(TimeInterval i)
 {
 	if (i->status == T_INTERVAL_INVAL)
 		return INVALID_ABSTIME;
-	return (i->data[0]);
+	return i->data[0];
 }
 
 /*
@@ -931,7 +931,7 @@ intervalend(TimeInterval i)
 {
 	if (i->status == T_INTERVAL_INVAL)
 		return INVALID_ABSTIME;
-	return (i->data[1]);
+	return i->data[1];
 }
 
 
@@ -971,7 +971,7 @@ isreltime(char *str)
 	switch (dtype)
 	{
 		case (DTK_DELTA):
-			return ((abs(tm->tm_year) <= 68) ? 1 : 0);
+			return (abs(tm->tm_year) <= 68) ? 1 : 0;
 			break;
 
 		case (DTK_INVALID):
@@ -1024,14 +1024,14 @@ while ((c = *p) != '\0')
 
  /* Test whether 'invalid time' identifier or not */
 if (!strncmp(INVALID_RELTIME_STR, p, strlen(INVALID_RELTIME_STR) + 1))
-	return (2);					/* correct 'invalid time' identifier found */
+	return 2;					/* correct 'invalid time' identifier found */
 
  /* handle label of relative time */
 if (c != RELTIME_LABEL)
-	return (0);					/* syntax error */
+	return 0;					/* syntax error */
 c = *++p;
 if (c != ' ')
-	return (0);					/* syntax error */
+	return 0;					/* syntax error */
 p++;
  /* handle the quantity */
 *quantity = 0;
@@ -1048,7 +1048,7 @@ for (;;)
 		if (c == ' ')
 			break;				/* correct quantity found */
 		else
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 	}
 }
 
@@ -1070,7 +1070,7 @@ for (;;)
 			&& correct_unit(unit, unitnr))
 			break;				/* correct unit found */
 		else
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 	}
 }
 
@@ -1102,11 +1102,11 @@ for (;;)
 			break;				/* correct direction found */
 		}
 		else
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 	}
 }
 
-return (1);
+return 1;
 }
 
 /*
@@ -1117,7 +1117,7 @@ return (1);
  *					   (see function isreltime())
  */
 static int
-correct_unit(char unit[], int *unptr)
+correct_unit(char *unit, int *unptr)
 {
 	int			j = 0;
 
@@ -1126,11 +1126,11 @@ correct_unit(char unit[], int *unptr)
 		if (strncmp(unit, unit_tab[j], strlen(unit_tab[j])) == 0)
 		{
 			*unptr = j;
-			return (1);
+			return 1;
 		}
 		j++;
 	}
-	return (0);					/* invalid unit descriptor */
+	return 0;					/* invalid unit descriptor */
 }
 
 /*
@@ -1141,16 +1141,16 @@ correct_unit(char unit[], int *unptr)
  *						 else  to 1
  */
 static int
-correct_dir(char direction[], int *signptr)
+correct_dir(char *direction, int *signptr)
 {
 	*signptr = 1;
 	if (strncmp(RELTIME_PAST, direction, strlen(RELTIME_PAST) + 1) == 0)
 	{
 		*signptr = -1;
-		return (1);
+		return 1;
 	}
 	else
-		return (0);				/* invalid direction descriptor */
+		return 0;				/* invalid direction descriptor */
 }
 
 #endif
@@ -1188,7 +1188,7 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != '[')
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 		else
 			break;
 	}
@@ -1199,13 +1199,13 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != '"')
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 		else
 			break;
 	}
 	p++;
 	if (strncmp(INVALID_INTERVAL_STR, p, strlen(INVALID_INTERVAL_STR)) == 0)
-		return (0);				/* undefined range, handled like a syntax
+		return 0;				/* undefined range, handled like a syntax
 								 * err. */
 	/* search for the end of the first date and change it to a NULL */
 	p1 = p;
@@ -1229,7 +1229,7 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != '"')
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 		else
 			break;
 	}
@@ -1256,16 +1256,16 @@ istinterval(char *i_string,
 		if (IsSpace(c))
 			p++;
 		else if (c != ']')
-			return (0);			/* syntax error */
+			return 0;			/* syntax error */
 		else
 			break;
 	}
 	p++;
 	c = *p;
 	if (c != '\0')
-		return (0);				/* syntax error */
+		return 0;				/* syntax error */
 	/* it seems to be a valid interval */
-	return (1);
+	return 1;
 }
 
 

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.49 1998/08/24 19:04:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.50 1998/09/01 03:21:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@
 
 extern int	Int_yyparse(void);
 static hashnode *AddStr(char *str, int strlength, int mderef);
-static AttributeTupleForm AllocateAttribute(void);
+static Form_pg_attribute AllocateAttribute(void);
 static bool BootstrapAlreadySeen(Oid id);
 static int	CompHash(char *str, int len);
 static hashnode *FindStr(char *str, int length, hashnode *mderef);
@@ -165,7 +165,7 @@ static int	n_types = sizeof(Procid) / sizeof(struct typinfo);
 struct typmap
 {								/* a hack */
 	Oid			am_oid;
-	TypeTupleFormData am_typ;
+	FormData_pg_type am_typ;
 };
 
 static struct typmap **Typ = (struct typmap **) NULL;
@@ -176,7 +176,7 @@ static char Blanks[MAXATTR];
 
 static char *relname;			/* current relation name */
 
-AttributeTupleForm attrtypes[MAXATTR];	/* points to attribute info */
+Form_pg_attribute attrtypes[MAXATTR];	/* points to attribute info */
 static char *values[MAXATTR];	/* cooresponding attribute values */
 int			numattr;			/* number of attributes for cur. rel */
 extern int	fsyncOff;			/* do not fsync the database */
@@ -394,7 +394,7 @@ BootstrapMain(int argc, char *argv[])
 
 	for (i = 0; i < MAXATTR; i++)
 	{
-		attrtypes[i] = (AttributeTupleForm) NULL;
+		attrtypes[i] = (Form_pg_attribute) NULL;
 		Blanks[i] = ' ';
 	}
 	for (i = 0; i < STRTABLESIZE; ++i)
@@ -514,7 +514,7 @@ boot_openrel(char *relname)
 
 		if (DebugMode)
 		{
-			AttributeTupleForm at = attrtypes[i];
+			Form_pg_attribute at = attrtypes[i];
 
 			printf("create attribute %d name %s len %d num %d type %d\n",
 				   i, at->attname.data, at->attlen, at->attnum,
@@ -580,7 +580,7 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 
 	typeoid = gettype(type);
-	if (attrtypes[attnum] == (AttributeTupleForm) NULL)
+	if (attrtypes[attnum] == (Form_pg_attribute) NULL)
 		attrtypes[attnum] = AllocateAttribute();
 	if (Typ != (struct typmap **) NULL)
 	{
@@ -757,7 +757,7 @@ BootstrapAlreadySeen(Oid id)
 		seenArray[nseen] = id;
 		nseen++;
 	}
-	return (seenthis);
+	return seenthis;
 }
 
 /* ----------------
@@ -802,7 +802,7 @@ gettype(char *type)
 			if (strncmp((*app)->am_typ.typname.data, type, NAMEDATALEN) == 0)
 			{
 				Ap = *app;
-				return ((*app)->am_oid);
+				return (*app)->am_oid;
 			}
 		}
 	}
@@ -811,7 +811,7 @@ gettype(char *type)
 		for (i = 0; i <= n_types; i++)
 		{
 			if (strncmp(type, Procid[i].name, NAMEDATALEN) == 0)
-				return (i);
+				return i;
 		}
 		if (DebugMode)
 			printf("bootstrap.c: External Type: %s\n", type);
@@ -836,7 +836,7 @@ gettype(char *type)
 		}
 		heap_endscan(scan);
 		heap_close(rel);
-		return (gettype(type));
+		return gettype(type);
 	}
 	elog(ERROR, "Error: unknown type '%s'.\n", type);
 	err_out();
@@ -848,17 +848,17 @@ gettype(char *type)
  *		AllocateAttribute
  * ----------------
  */
-static AttributeTupleForm		/* XXX */
+static Form_pg_attribute		/* XXX */
 AllocateAttribute()
 {
-	AttributeTupleForm attribute =
-	(AttributeTupleForm) malloc(ATTRIBUTE_TUPLE_SIZE);
+	Form_pg_attribute attribute =
+	(Form_pg_attribute) malloc(ATTRIBUTE_TUPLE_SIZE);
 
 	if (!PointerIsValid(attribute))
 		elog(FATAL, "AllocateAttribute: malloc failed");
 	MemSet(attribute, 0, ATTRIBUTE_TUPLE_SIZE);
 
-	return (attribute);
+	return attribute;
 }
 
 /* ----------------
@@ -912,11 +912,11 @@ EnterString(char *str)
 
 	node = FindStr(str, len, 0);
 	if (node)
-		return (node->strnum);
+		return node->strnum;
 	else
 	{
 		node = AddStr(str, len, 0);
-		return (node->strnum);
+		return node->strnum;
 	}
 }
 
@@ -929,7 +929,7 @@ EnterString(char *str)
 char *
 LexIDStr(int ident_num)
 {
-	return (strtable[ident_num]);
+	return strtable[ident_num];
 }
 
 
@@ -949,7 +949,7 @@ CompHash(char *str, int len)
 
 	result = (NUM * str[0] + NUMSQR * str[len - 1] + NUMCUBE * str[(len - 1) / 2]);
 
-	return (result % HASHTABLESIZE);
+	return result % HASHTABLESIZE;
 
 }
 
@@ -976,13 +976,13 @@ FindStr(char *str, int length, hashnode *mderef)
 		 */
 		if (!strcmp(str, strtable[node->strnum]))
 		{
-			return (node);		/* no need to check */
+			return node;		/* no need to check */
 		}
 		else
 			node = node->next;
 	}
 	/* Couldn't find it in the list */
-	return (NULL);
+	return NULL;
 }
 
 /* ----------------
@@ -1048,7 +1048,7 @@ AddStr(char *str, int strlength, int mderef)
 		}
 		trail->next = newnode;
 	}
-	return (newnode);
+	return newnode;
 }
 
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.20 1998/08/19 02:03:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.21 1998/09/01 03:26:33 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -205,7 +205,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(TypeTupleFormData, typalign) +sizeof(char),
+		offsetof(FormData_pg_type, typalign) +sizeof(char),
 		TypeNameIndex,
 	TypeNameIndexScan},
 	{TypeRelationName,			/* TYPOID */
@@ -216,7 +216,7 @@ static struct cachedesc cacheinfo[] = {
 			0,
 			0
 		},
-		offsetof(TypeTupleFormData, typalign) +sizeof(char),
+		offsetof(FormData_pg_type, typalign) +sizeof(char),
 		TypeOidIndex,
 	TypeOidIndexScan},
 	{AccessMethodRelationName,	/* AMNAME */
@@ -484,7 +484,7 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 	if (cacheId < 0 || cacheId >= SysCacheSize)
 	{
 		elog(ERROR, "SearchSysCacheTuple: Bad cache id %d", cacheId);
-		return ((HeapTuple) NULL);
+		return (HeapTuple) NULL;
 	}
 
 	Assert(AMI_OVERRIDE || PointerIsValid(SysCache[cacheId]));
@@ -514,9 +514,9 @@ SearchSysCacheTuple(int cacheId,/* cache selection code */
 			 cacheinfo[cacheId].name,
 			 cacheId, key1, key2, key3, key4);
 #endif
-		return ((HeapTuple) NULL);
+		return (HeapTuple) NULL;
 	}
-	return (tp);
+	return tp;
 }
 
 /*
@@ -543,13 +543,13 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
 	if (!PointerIsValid(returnStruct))
 	{
 		elog(ERROR, "SearchSysCacheStruct: No receiving struct");
-		return (0);
+		return 0;
 	}
 	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
 	if (!HeapTupleIsValid(tp))
-		return (0);
+		return 0;
 	memmove(returnStruct, (char *) GETSTRUCT(tp), cacheinfo[cacheId].size);
-	return (1);
+	return 1;
 }
 
 
@@ -589,7 +589,7 @@ SearchSysCacheGetAttribute(int cacheId,
 			 "SearchSysCacheGetAttribute: Lookup in %s(%d) failed",
 			 cacheName, cacheId);
 #endif							/* defined(CACHEDEBUG) */
-		return (NULL);
+		return NULL;
 	}
 
 	relation = heap_openr(cacheName);
@@ -613,12 +613,12 @@ SearchSysCacheGetAttribute(int cacheId,
 		elog(ERROR,
 			 "SearchSysCacheGetAttribute: Bad attr # %d in %s(%d)",
 			 attributeNumber, cacheName, cacheId);
-		return (NULL);
+		return NULL;
 	}
 
 	attributeValue = heap_getattr(tp,
 								  attributeNumber,
-								  RelationGetTupleDescriptor(relation),
+								  RelationGetDescr(relation),
 								  &isNull);
 
 	if (isNull)
@@ -627,7 +627,7 @@ SearchSysCacheGetAttribute(int cacheId,
 		 * Used to be an elog(DEBUG, ...) here and a claim that it should
 		 * be a FATAL error, I don't think either is warranted -mer 6/9/92
 		 */
-		return (NULL);
+		return NULL;
 	}
 
 	if (attributeByValue)
@@ -645,7 +645,7 @@ SearchSysCacheGetAttribute(int cacheId,
 	}
 
 	heap_close(relation);
-	return (returnValue);
+	return returnValue;
 }
 
 /*
@@ -665,7 +665,7 @@ void *
 TypeDefaultRetrieve(Oid typId)
 {
 	HeapTuple	typeTuple;
-	TypeTupleForm type;
+	Form_pg_type type;
 	int32		typByVal,
 				typLen;
 	struct varlena *typDefault;
@@ -682,10 +682,10 @@ TypeDefaultRetrieve(Oid typId)
 		elog(DEBUG, "TypeDefaultRetrieve: Lookup in %s(%d) failed",
 			 cacheinfo[TYPOID].name, TYPOID);
 #endif							/* defined(CACHEDEBUG) */
-		return (NULL);
+		return NULL;
 	}
 
-	type = (TypeTupleForm) GETSTRUCT(typeTuple);
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	typByVal = type->typbyval;
 	typLen = type->typlen;
 
@@ -701,7 +701,7 @@ TypeDefaultRetrieve(Oid typId)
 		elog(DEBUG, "TypeDefaultRetrieve: No extractable typdefault in %s(%d)",
 			 cacheinfo[TYPOID].name, TYPOID);
 #endif							/* defined(CACHEDEBUG) */
-		return (NULL);
+		return NULL;
 	}
 
 	dataSize = VARSIZE(typDefault) - VARHDRSZ;
@@ -746,5 +746,5 @@ TypeDefaultRetrieve(Oid typId)
 		}
 	}
 
-	return (returnValue);
+	return returnValue;
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.18 1998/07/20 16:14:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.19 1998/09/01 03:25:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ smgrinit()
 	/* register the shutdown proc */
 	on_proc_exit(smgrshutdown, NULL);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 static void
@@ -134,7 +134,7 @@ smgrcreate(int16 which, Relation reln)
 	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
 		elog(ERROR, "cannot create %s",	reln->rd_rel->relname.data);
 
-	return (fd);
+	return fd;
 }
 
 /*
@@ -150,7 +150,7 @@ smgrunlink(int16 which, Relation reln)
 	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
 		elog(ERROR, "cannot unlink %s", reln->rd_rel->relname.data);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -169,7 +169,7 @@ smgrextend(int16 which, Relation reln, char *buffer)
 	if (status == SM_FAIL)
 		elog(ERROR, "%s: cannot extend", reln->rd_rel->relname.data);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -186,7 +186,7 @@ smgropen(int16 which, Relation reln)
 	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
 		elog(ERROR, "cannot open %s", reln->rd_rel->relname.data);
 
-	return (fd);
+	return fd;
 }
 
 /*
@@ -207,7 +207,7 @@ smgrclose(int16 which, Relation reln)
 	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
 		elog(ERROR, "cannot close %s", reln->rd_rel->relname.data);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -231,7 +231,7 @@ smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 		elog(ERROR, "cannot read block %d of %s",
 			 blocknum, reln->rd_rel->relname.data);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -253,7 +253,7 @@ smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 		elog(ERROR, "cannot write block %d of %s",
 			blocknum, reln->rd_rel->relname.data);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -270,7 +270,7 @@ smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 		elog(ERROR, "cannot flush block %d of %s to stable store",
 			 blocknum, reln->rd_rel->relname.data);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -311,7 +311,7 @@ smgrblindwrt(int16 which,
 	pfree(dbstr);
 	pfree(relstr);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -329,7 +329,7 @@ smgrnblocks(int16 which, Relation reln)
 	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
 		elog(ERROR, "cannot count blocks for %s", reln->rd_rel->relname.data);
 
-	return (nblocks);
+	return nblocks;
 }
 
 /*
@@ -352,7 +352,7 @@ smgrtruncate(int16 which, Relation reln, int nblocks)
 				reln->rd_rel->relname.data, nblocks);
 	}
 
-	return (newblks);
+	return newblks;
 }
 
 /*
@@ -373,7 +373,7 @@ smgrcommit()
 		}
 	}
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 #ifdef NOT_USED
@@ -391,7 +391,7 @@ smgrabort()
 		}
 	}
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 #endif
@@ -402,5 +402,5 @@ smgriswo(int16 smgrno)
 	if (smgrno < 0 || smgrno >= NSmgr)
 		elog(ERROR, "illegal storage manager number %d", smgrno);
 
-	return (smgrwo[smgrno]);
+	return smgrwo[smgrno];
 }

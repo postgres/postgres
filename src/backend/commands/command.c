@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.30 1998/08/19 02:01:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.31 1998/09/01 03:21:53 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -270,11 +270,11 @@ PerformAddAttribute(char *relationName,
 					bool inherits,
 					ColumnDef *colDef)
 {
-	Relation	relrdesc,
+	Relation	rel,
 				attrdesc;
 	HeapTuple	reltup;
 	HeapTuple	attributeTuple;
-	AttributeTupleForm attribute;
+	Form_pg_attribute attribute;
 	FormData_pg_attribute attributeD;
 	int			i;
 	int			minattnum,
@@ -325,14 +325,14 @@ PerformAddAttribute(char *relationName,
 			List	   *child,
 					   *children;
 
-			relrdesc = heap_openr(relationName);
-			if (!RelationIsValid(relrdesc))
+			rel = heap_openr(relationName);
+			if (!RelationIsValid(rel))
 			{
 				elog(ERROR, "PerformAddAttribute: unknown relation: \"%s\"",
 					 relationName);
 			}
-			myrelid = RelationGetRelid(relrdesc);
-			heap_close(relrdesc);
+			myrelid = RelationGetRelid(rel);
+			heap_close(rel);
 
 			/* this routine is actually in the planner */
 			children = find_all_inheritors(lconsi(myrelid, NIL), NIL);
@@ -347,20 +347,20 @@ PerformAddAttribute(char *relationName,
 				childrelid = lfirsti(child);
 				if (childrelid == myrelid)
 					continue;
-				relrdesc = heap_open(childrelid);
-				if (!RelationIsValid(relrdesc))
+				rel = heap_open(childrelid);
+				if (!RelationIsValid(rel))
 				{
 					elog(ERROR, "PerformAddAttribute: can't find catalog entry for inheriting class with oid %d",
 						 childrelid);
 				}
-				PerformAddAttribute((relrdesc->rd_rel->relname).data,
+				PerformAddAttribute((rel->rd_rel->relname).data,
 									userName, false, colDef);
-				heap_close(relrdesc);
+				heap_close(rel);
 			}
 		}
 	}
 
-	relrdesc = heap_openr(RelationRelationName);
+	rel = heap_openr(RelationRelationName);
 
 	reltup = SearchSysCacheTupleCopy(RELNAME,
 									 PointerGetDatum(relationName),
@@ -368,7 +368,7 @@ PerformAddAttribute(char *relationName,
 
 	if (!HeapTupleIsValid(reltup))
 	{
-		heap_close(relrdesc);
+		heap_close(rel);
 		elog(ERROR, "PerformAddAttribute: relation \"%s\" not found",
 			 relationName);
 	}
@@ -388,7 +388,7 @@ PerformAddAttribute(char *relationName,
 	if (maxatts > MaxHeapAttributeNumber)
 	{
 		pfree(reltup);
-		heap_close(relrdesc);
+		heap_close(rel);
 		elog(ERROR, "PerformAddAttribute: relations limited to %d attributes",
 			 MaxHeapAttributeNumber);
 	}
@@ -396,12 +396,12 @@ PerformAddAttribute(char *relationName,
 	attrdesc = heap_openr(AttributeRelationName);
 
 	Assert(attrdesc);
-	Assert(RelationGetRelationTupleForm(attrdesc));
+	Assert(RelationGetForm(attrdesc));
 
 	/*
 	 * Open all (if any) pg_attribute indices
 	 */
-	hasindex = RelationGetRelationTupleForm(attrdesc)->relhasindex;
+	hasindex = RelationGetForm(attrdesc)->relhasindex;
 	if (hasindex)
 		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
 
@@ -411,13 +411,13 @@ PerformAddAttribute(char *relationName,
 									sizeof attributeD,
 									(char *) &attributeD);
 
-	attribute = (AttributeTupleForm) GETSTRUCT(attributeTuple);
+	attribute = (Form_pg_attribute) GETSTRUCT(attributeTuple);
 
 	i = 1 + minattnum;
 
 	{
 		HeapTuple	typeTuple;
-		TypeTupleForm form;
+		Form_pg_type form;
 		char	   *typename;
 		int			attnelems;
 
@@ -429,7 +429,7 @@ PerformAddAttribute(char *relationName,
 		if (HeapTupleIsValid(tup))
 		{
 			heap_close(attrdesc);
-			heap_close(relrdesc);
+			heap_close(rel);
 			elog(ERROR, "PerformAddAttribute: attribute \"%s\" already exists in class \"%s\"",
 				colDef->colname, relationName);
 		}
@@ -451,7 +451,7 @@ PerformAddAttribute(char *relationName,
 		typeTuple = SearchSysCacheTuple(TYPNAME,
 										PointerGetDatum(typename),
 										0, 0, 0);
-		form = (TypeTupleForm) GETSTRUCT(typeTuple);
+		form = (Form_pg_type) GETSTRUCT(typeTuple);
 
 		if (!HeapTupleIsValid(typeTuple))
 			elog(ERROR, "Add: type \"%s\" nonexistent", typename);
@@ -482,13 +482,13 @@ PerformAddAttribute(char *relationName,
 	heap_close(attrdesc);
 
 	((Form_pg_class) GETSTRUCT(reltup))->relnatts = maxatts;
-	heap_replace(relrdesc, &reltup->t_ctid, reltup);
+	heap_replace(rel, &reltup->t_ctid, reltup);
 
 	/* keep catalog indices current */
 	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, relrdesc, reltup);
+	CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, reltup);
 	CatalogCloseIndices(Num_pg_class_indices, ridescs);
 
 	pfree(reltup);
-	heap_close(relrdesc);
+	heap_close(rel);
 }

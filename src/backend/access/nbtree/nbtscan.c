@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.16 1998/08/19 02:01:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.17 1998/09/01 03:21:17 momjian Exp $
  *
  *
  * NOTES
@@ -231,13 +231,13 @@ _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 	if (ItemPointerIsValid(current)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return (true);
+		return true;
 
 	current = &(scan->currentMarkData);
 	if (ItemPointerIsValid(current)
 		&& ItemPointerGetBlockNumber(current) == blkno
 		&& ItemPointerGetOffsetNumber(current) >= offno)
-		return (true);
+		return true;
 
-	return (false);
+	return false;
 }

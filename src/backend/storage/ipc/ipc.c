@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.31 1998/08/25 21:34:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.32 1998/09/01 03:25:08 momjian Exp $
  *
  * NOTES
  *
@@ -88,13 +88,13 @@ PrivateMemoryCreate(IpcMemoryKey memKey,
 		elog(ERROR, "PrivateMemoryCreate: not enough memory to malloc");
 	MemSet(IpcPrivateMem[memid].memptr, 0, size);		/* XXX PURIFY */
 
-	return (memid++);
+	return memid++;
 }
 
 static char *
 PrivateMemoryAttach(IpcMemoryId memid)
 {
-	return (IpcPrivateMem[memid].memptr);
+	return IpcPrivateMem[memid].memptr;
 }
 
 
@@ -205,14 +205,14 @@ int
 on_proc_exit(void (*function) (), caddr_t arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
-		return (-1);
+		return -1;
 
 	on_proc_exit_list[on_proc_exit_index].function = function;
 	on_proc_exit_list[on_proc_exit_index].arg = arg;
 
 	++on_proc_exit_index;
 
-	return (0);
+	return 0;
 }
 
 /* ----------------------------------------------------------------
@@ -226,14 +226,14 @@ int
 on_shmem_exit(void (*function) (), caddr_t arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
-		return (-1);
+		return -1;
 
 	on_shmem_exit_list[on_shmem_exit_index].function = function;
 	on_shmem_exit_list[on_shmem_exit_index].arg = arg;
 
 	++on_shmem_exit_index;
 
-	return (0);
+	return 0;
 }
 
 /* ----------------------------------------------------------------
@@ -327,7 +327,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	if (semNum > IPC_NMAXSEM || semNum <= 0)
 	{
 		*status = IpcInvalidArgument;
-		return (2);				/* returns the number of the invalid
+		return 2;				/* returns the number of the invalid
 								 * argument   */
 	}
 
@@ -378,7 +378,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	fflush(stdout);
 	fflush(stderr);
 #endif
-	return (semId);
+	return semId;
 }
 
 
@@ -560,13 +560,13 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 		EPRINTF("IpcMemoryCreate: shmget failed (%s) "
 				"key=%d, size=%d, permission=%o",
 				strerror(errno), memKey, size, permission);
-		return (IpcMemCreationFailed);
+		return IpcMemCreationFailed;
 	}
 
 	/* if (memKey == PrivateIPCKey) */
 	on_shmem_exit(IPCPrivateMemoryKill, (caddr_t) shmid);
 
-	return (shmid);
+	return shmid;
 }
 
 /****************************************************************************/
@@ -585,10 +585,10 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 		EPRINTF("IpcMemoryIdGet: shmget failed (%s) "
 				"key=%d, size=%d, permission=%o",
 				strerror(errno), memKey, size, 0);
-		return (IpcMemIdGetFailed);
+		return IpcMemIdGetFailed;
 	}
 
-	return (shmid);
+	return shmid;
 }
 
 /****************************************************************************/
@@ -625,13 +625,13 @@ IpcMemoryAttach(IpcMemoryId memId)
 	{
 		EPRINTF("IpcMemoryAttach: shmat failed (%s) id=%d",
 				strerror(errno), memId);
-		return (IpcMemAttachFailed);
+		return IpcMemAttachFailed;
 	}
 
 	if (!UsePrivateMemory)
 		on_shmem_exit(IpcMemoryDetach, (caddr_t) memAddress);
 
-	return ((char *) memAddress);
+	return (char *) memAddress;
 }
 
 
@@ -729,7 +729,7 @@ AttachSLockMemory(IPCKey key)
 bool
 LockIsFree(int lockid)
 {
-	return (SLockArray[lockid].flag == NOLOCK);
+	return SLockArray[lockid].flag == NOLOCK;
 }
 
 #endif

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.18 1998/06/15 19:29:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.19 1998/09/01 03:25:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,7 +133,7 @@ PageAddItem(Page page,
 				((*itemId).lp_len != 0))
 			{
 				elog(ERROR, "PageAddItem: tried overwrite of used ItemId");
-				return (InvalidOffsetNumber);
+				return InvalidOffsetNumber;
 			}
 		}
 	}
@@ -161,7 +161,7 @@ PageAddItem(Page page,
 	upper = ((PageHeader) page)->pd_upper - alignedSize;
 
 	if (lower > upper)
-		return (InvalidOffsetNumber);
+		return InvalidOffsetNumber;
 
 	itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
 	(*itemId).lp_off = upper;
@@ -171,7 +171,7 @@ PageAddItem(Page page,
 	((PageHeader) page)->pd_lower = lower;
 	((PageHeader) page)->pd_upper = upper;
 
-	return (offsetNumber);
+	return offsetNumber;
 }
 
 /*
@@ -204,7 +204,7 @@ PageGetTempPage(Page page, Size specialSize)
 	thdr->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
 	thdr->pd_upper = pageSize - DOUBLEALIGN(specialSize);
 
-	return (temp);
+	return temp;
 }
 
 /*
@@ -238,12 +238,12 @@ itemidcompare(const void *itemidp1, const void *itemidp2)
 {
 	if (((struct itemIdSortData *) itemidp1)->itemiddata.lp_off ==
 		((struct itemIdSortData *) itemidp2)->itemiddata.lp_off)
-		return (0);
+		return 0;
 	else if (((struct itemIdSortData *) itemidp1)->itemiddata.lp_off <
 			 ((struct itemIdSortData *) itemidp2)->itemiddata.lp_off)
-		return (1);
+		return 1;
 	else
-		return (-1);
+		return -1;
 }
 
 /*
@@ -340,10 +340,10 @@ PageGetFreeSpace(Page page)
 	space = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 
 	if (space < sizeof(ItemIdData))
-		return (0);
+		return 0;
 	space -= sizeof(ItemIdData);/* XXX not always true */
 
-	return (space);
+	return space;
 }
 
 /*

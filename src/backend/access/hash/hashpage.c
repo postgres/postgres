@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.16 1998/06/15 19:27:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.17 1998/09/01 03:20:58 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -204,7 +204,7 @@ _hash_getbuf(Relation rel, BlockNumber blkno, int access)
 	buf = ReadBuffer(rel, blkno);
 
 	/* ref count and lock type are correct */
-	return (buf);
+	return buf;
 }
 
 /*
@@ -288,7 +288,7 @@ _hash_chgbufaccess(Relation rel,
 			break;
 	}
 	*bufp = _hash_getbuf(rel, blkno, to_access);
-	return (BufferGetPage(*bufp));
+	return BufferGetPage(*bufp);
 }
 
 /*
@@ -604,7 +604,7 @@ _hash_splitpage(Relation rel,
 		/* hash on the tuple */
 		hitem = (HashItem) PageGetItem(opage, PageGetItemId(opage, ooffnum));
 		itup = &(hitem->hash_itup);
-		itupdesc = RelationGetTupleDescriptor(rel);
+		itupdesc = RelationGetDescr(rel);
 		datum = index_getattr(itup, 1, itupdesc, &null);
 		bucket = _hash_call(rel, metap, datum);
 

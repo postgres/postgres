@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.7 1998/07/20 16:56:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.8 1998/09/01 03:25:13 momjian Exp $
  *
  * NOTES
  *
@@ -54,7 +54,7 @@ bool
 SHMQueueIsDetached(SHM_QUEUE *queue)
 {
 	Assert(SHM_PTR_VALID(queue));
-	return ((queue)->prev == INVALID_OFFSET);
+	return (queue)->prev == INVALID_OFFSET;
 }
 
 #endif
@@ -250,7 +250,7 @@ SHMQueueEmpty(SHM_QUEUE *queue)
 	if (queue->prev == MAKE_OFFSET(queue))
 	{
 		Assert(queue->next = MAKE_OFFSET(queue));
-		return (TRUE);
+		return TRUE;
 	}
-	return (FALSE);
+	return FALSE;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.14 1998/08/19 02:01:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.15 1998/09/01 03:21:38 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -130,7 +130,7 @@ ChangeAcl(char *relname,
 	if (!heap_attisnull(tuple, Anum_pg_class_relacl))
 		old_acl = (Acl *) heap_getattr(tuple,
 									   Anum_pg_class_relacl,
-									   RelationGetTupleDescriptor(relation),
+									   RelationGetDescr(relation),
 									   (bool *) NULL);
 	if (!old_acl || ACL_NUM(old_acl) < 1)
 	{
@@ -190,7 +190,7 @@ get_grosysid(char *groname)
 		id = ((Form_pg_group) GETSTRUCT(tuple))->grosysid;
 	else
 		elog(ERROR, "non-existent group \"%s\"", groname);
-	return (id);
+	return id;
 }
 
 char *
@@ -206,7 +206,7 @@ get_groname(AclId grosysid)
 		name = (((Form_pg_group) GETSTRUCT(tuple))->groname).data;
 	else
 		elog(NOTICE, "get_groname: group %d not found", grosysid);
-	return (name);
+	return name;
 }
 
 static int32
@@ -225,7 +225,7 @@ in_group(AclId uid, AclId gid)
 	{
 		elog(NOTICE, "in_group: could not open \"%s\"??",
 			 GroupRelationName);
-		return (0);
+		return 0;
 	}
 	tuple = SearchSysCacheTuple(GROSYSID,
 								ObjectIdGetDatum(gid),
@@ -235,7 +235,7 @@ in_group(AclId uid, AclId gid)
 	{
 		tmp = (IdList *) heap_getattr(tuple,
 									  Anum_pg_group_grolist,
-									RelationGetTupleDescriptor(relation),
+									RelationGetDescr(relation),
 									  (bool *) NULL);
 		/* XXX make me a function */
 		num = IDLIST_NUM(tmp);
@@ -250,7 +250,7 @@ in_group(AclId uid, AclId gid)
 	else
 		elog(NOTICE, "in_group: group %d not found", gid);
 	heap_close(relation);
-	return (found);
+	return found;
 }
 
 /*
@@ -300,7 +300,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					elog(DEBUG, "aclcheck: found %d/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
-					return ((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
+					return (aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 				}
 			}
 			for (found_group = 0;
@@ -340,7 +340,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 					elog(DEBUG, "aclcheck: found %d/%d",
 						 aip->ai_id, aip->ai_mode);
 #endif
-					return ((aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
+					return (aip->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 				}
 			}
 			break;
@@ -354,7 +354,7 @@ aclcheck(char *relname, Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 #ifdef ACLDEBUG_TRACE
 	elog(DEBUG, "aclcheck: using world=%d", aidat->ai_mode);
 #endif
-	return ((aidat->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV);
+	return (aidat->ai_mode & mode) ? ACLCHECK_OK : ACLCHECK_NO_PRIV;
 }
 
 int32
@@ -433,7 +433,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		relation = heap_openr(RelationRelationName);
 		tmp = (Acl *) heap_getattr(tuple,
 								   Anum_pg_class_relacl,
-								   RelationGetTupleDescriptor(relation),
+								   RelationGetDescr(relation),
 								   (bool *) NULL);
 		acl = makeacl(ACL_NUM(tmp));
 		memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
@@ -451,7 +451,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		relation = heap_openr(RelationRelationName);
 		ownerId = (int4) heap_getattr(tuple,
 									 Anum_pg_class_relowner,
-									 RelationGetTupleDescriptor(relation),
+									 RelationGetDescr(relation),
 									 (bool *) NULL);
 		acl = aclownerdefault(relname, (AclId)ownerId);
 	}
@@ -476,7 +476,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		{
 			tmp = (Acl *) heap_getattr(tuple,
 									   Anum_pg_class_relacl,
-										RelationGetTupleDescriptor(relation),
+										RelationGetDescr(relation),
 									   (bool *) NULL);
 			acl = makeacl(ACL_NUM(tmp));
 			memmove((char *) acl, (char *) tmp, ACL_SIZE(tmp));
@@ -487,7 +487,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	result = aclcheck(relname, acl, id, (AclIdType) ACL_IDTYPE_UID, mode);
 	if (acl)
 		pfree(acl);
-	return (result);
+	return result;
 }
 
 int32
@@ -516,7 +516,7 @@ pg_ownercheck(char *usename,
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
-		return (1);
+		return 1;
 	}
 
 	tuple = SearchSysCacheTuple(cacheid, PointerGetDatum(value),
@@ -527,7 +527,7 @@ pg_ownercheck(char *usename,
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: operator %ld not found",
 					 PointerGetDatum(value));
-			owner_id = ((OperatorTupleForm) GETSTRUCT(tuple))->oprowner;
+			owner_id = ((Form_pg_operator) GETSTRUCT(tuple))->oprowner;
 			break;
 		case PRONAME:
 			if (!HeapTupleIsValid(tuple))
@@ -545,7 +545,7 @@ pg_ownercheck(char *usename,
 			if (!HeapTupleIsValid(tuple))
 				elog(ERROR, "pg_ownercheck: type \"%s\" not found",
 					 value);
-			owner_id = ((TypeTupleForm) GETSTRUCT(tuple))->typowner;
+			owner_id = ((Form_pg_type) GETSTRUCT(tuple))->typowner;
 			break;
 		default:
 			elog(ERROR, "pg_ownercheck: invalid cache id: %d",
@@ -553,7 +553,7 @@ pg_ownercheck(char *usename,
 			break;
 	}
 
-	return (user_id == owner_id);
+	return user_id == owner_id;
 }
 
 int32
@@ -583,7 +583,7 @@ pg_func_ownercheck(char *usename,
 		elog(DEBUG, "pg_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
-		return (1);
+		return 1;
 	}
 
 	tuple = SearchSysCacheTuple(PRONAME,
@@ -596,7 +596,7 @@ pg_func_ownercheck(char *usename,
 
 	owner_id = ((Form_pg_proc) GETSTRUCT(tuple))->proowner;
 
-	return (user_id == owner_id);
+	return user_id == owner_id;
 }
 
 int32
@@ -625,7 +625,7 @@ pg_aggr_ownercheck(char *usename,
 		elog(DEBUG, "pg_aggr_ownercheck: user \"%s\" is superuser",
 			 usename);
 #endif
-		return (1);
+		return 1;
 	}
 
 	tuple = SearchSysCacheTuple(AGGNAME,
@@ -638,5 +638,5 @@ pg_aggr_ownercheck(char *usename,
 
 	owner_id = ((Form_pg_aggregate) GETSTRUCT(tuple))->aggowner;
 
-	return (user_id == owner_id);
+	return user_id == owner_id;
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.13 1998/01/31 04:39:24 momjian Exp $
+ * $Id: valid.h,v 1.14 1998/09/01 03:27:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ do \
 		_tuple = (HeapTuple) PageGetItem((Page) (disk_page), (itemId)); \
 	 \
 		if ((key) != NULL) \
-			HeapKeyTest(_tuple, RelationGetTupleDescriptor(relation), \
+			HeapKeyTest(_tuple, RelationGetDescr(relation), \
 							   (nKeys), (key), _res); \
 		else \
 			_res = TRUE; \

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.17 1998/08/19 02:03:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.18 1998/09/01 03:27:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,21 +82,21 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)		/* xid invalid or
 														 * aborted */
-			return (false);
+			return false;
 
 		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
-				return (true);
+				return true;
 			else
-				return (false);
+				return false;
 		}
 
 		if (!TransactionIdDidCommit(tuple->t_xmin))
 		{
 			if (TransactionIdDidAbort(tuple->t_xmin))
 				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
-			return (false);
+			return false;
 		}
 
 		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
@@ -104,25 +104,25 @@ HeapTupleSatisfiesItself(HeapTuple tuple)
 	/* the tuple was inserted validly */
 
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
-		return (true);
+		return true;
 
 	if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
-		return (false);
+		return false;
 
 	if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
-		return (false);
+		return false;
 
 	if (!TransactionIdDidCommit(tuple->t_xmax))
 	{
 		if (TransactionIdDidAbort(tuple->t_xmax))
 			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
-		return (true);
+		return true;
 	}
 
 	/* by here, deleting transaction has committed */
 	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
-	return (false);
+	return false;
 }
 
 /*
@@ -191,22 +191,22 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 	{
 		if (tuple->t_infomask & HEAP_XMIN_INVALID)		/* xid invalid or
 														 * aborted */
-			return (false);
+			return false;
 
 		if (TransactionIdIsCurrentTransactionId(tuple->t_xmin))
 		{
 			if (CommandIdGEScanCommandId(tuple->t_cmin))
-				return (false); /* inserted after scan started */
+				return false; /* inserted after scan started */
 
 			if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid */
-				return (true);
+				return true;
 
 			Assert(TransactionIdIsCurrentTransactionId(tuple->t_xmax));
 
 			if (CommandIdGEScanCommandId(tuple->t_cmax))
-				return (true);	/* deleted after scan started */
+				return true;	/* deleted after scan started */
 			else
-				return (false); /* deleted before scan started */
+				return false; /* deleted before scan started */
 		}
 
 		/*
@@ -217,7 +217,7 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 		{
 			if (TransactionIdDidAbort(tuple->t_xmin))
 				tuple->t_infomask |= HEAP_XMIN_INVALID; /* aborted */
-			return (false);
+			return false;
 		}
 
 		tuple->t_infomask |= HEAP_XMIN_COMMITTED;
@@ -226,28 +226,28 @@ HeapTupleSatisfiesNow(HeapTuple tuple)
 	/* by here, the inserting transaction has committed */
 
 	if (tuple->t_infomask & HEAP_XMAX_INVALID)	/* xid invalid or aborted */
-		return (true);
+		return true;
 
 	if (tuple->t_infomask & HEAP_XMAX_COMMITTED)
-		return (false);
+		return false;
 
 	if (TransactionIdIsCurrentTransactionId(tuple->t_xmax))
 	{
 		if (CommandIdGEScanCommandId(tuple->t_cmax))
-			return (true);		/* deleted after scan started */
+			return true;		/* deleted after scan started */
 		else
-			return (false);		/* deleted before scan started */
+			return false;		/* deleted before scan started */
 	}
 
 	if (!TransactionIdDidCommit(tuple->t_xmax))
 	{
 		if (TransactionIdDidAbort(tuple->t_xmax))
 			tuple->t_infomask |= HEAP_XMAX_INVALID;		/* aborted */
-		return (true);
+		return true;
 	}
 
 	/* xmax transaction committed */
 	tuple->t_infomask |= HEAP_XMAX_COMMITTED;
 
-	return (false);
+	return false;
 }

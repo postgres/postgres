@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.13 1998/07/20 20:48:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.14 1998/09/01 03:22:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,7 +244,7 @@ ExecInitJunkFilter(List *targetList)
 	junkfilter->jf_cleanTupType = cleanTupType;
 	junkfilter->jf_cleanMap = cleanMap;
 
-	return (junkfilter);
+	return junkfilter;
 
 }
 
@@ -301,7 +301,7 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	if (resno == InvalidAttrNumber)
 	{
 		/* Ooops! We couldn't find this attribute... */
-		return (false);
+		return false;
 	}
 
 	/* ---------------------
@@ -414,5 +414,5 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 		pfree(nulls);
 	}
 
-	return (cleanTuple);
+	return cleanTuple;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.13 1998/02/26 04:38:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.14 1998/09/01 03:27:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ lmerge(struct leftist * pt, struct leftist * qt, LeftistContext context)
 			root->lt_right = majorLeftist;
 		}
 	}
-	return (root);
+	return root;
 }
 
 static struct leftist *
@@ -82,7 +82,7 @@ linsert(struct leftist * root, struct leftist * new1, LeftistContext context)
 	if (!tuplecmp(root->lt_tuple, new1->lt_tuple, context))
 	{
 		new1->lt_left = root;
-		return (new1);
+		return new1;
 	}
 	left = root->lt_left;
 	right = root->lt_right;
@@ -95,7 +95,7 @@ linsert(struct leftist * root, struct leftist * new1, LeftistContext context)
 			root->lt_right = new1;
 			root->lt_dist = 2;
 		}
-		return (root);
+		return root;
 	}
 	right = linsert(right, new1, context);
 	if (right->lt_dist < left->lt_dist)
@@ -109,7 +109,7 @@ linsert(struct leftist * root, struct leftist * new1, LeftistContext context)
 		root->lt_dist = 1 + right->lt_dist;
 		root->lt_right = right;
 	}
-	return (root);
+	return root;
 }
 
 /*
@@ -141,7 +141,7 @@ gettuple(struct leftist ** treep,
 		*treep = lmerge(tp->lt_left, tp->lt_right, context);
 
 	pfree(tp);
-	return (tup);
+	return tup;
 }
 
 /*
@@ -193,22 +193,22 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 	bool		isnull;
 
 	if (ltup == (HeapTuple) NULL)
-		return (0);
+		return 0;
 	if (rtup == (HeapTuple) NULL)
-		return (1);
+		return 1;
 	while (nkey < context->nKeys && !result)
 	{
 		lattr = heap_getattr(ltup,
 							 context->scanKeys[nkey].sk_attno,
 							 context->tupDesc, &isnull);
 		if (isnull)
-			return (0);
+			return 0;
 		rattr = heap_getattr(rtup,
 							 context->scanKeys[nkey].sk_attno,
 							 context->tupDesc,
 							 &isnull);
 		if (isnull)
-			return (1);
+			return 1;
 		if (context->scanKeys[nkey].sk_flags & SK_COMMUTE)
 		{
 			if (!(result =
@@ -222,7 +222,7 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 				-(long) (*fmgr_faddr(&context->scanKeys[nkey].sk_func)) (rattr, lattr);
 		nkey++;
 	}
-	return (result == 1);
+	return result == 1;
 }
 
 #ifdef	EBUG
@@ -286,7 +286,7 @@ checktreer(struct leftist * tree, int level, LeftistContext context)
 	int			error = 0;
 
 	if (tree == NULL)
-		return (0);
+		return 0;
 	lnodes = checktreer(tree->lt_left, level + 1, context);
 	rnodes = checktreer(tree->lt_right, level + 1, context);
 	if (lnodes < 0)
@@ -347,8 +347,8 @@ checktreer(struct leftist * tree, int level, LeftistContext context)
 			printf("%d:\tRight child < parent.\n");
 		}
 	if (error)
-		return (-1 + -lnodes + -rnodes);
-	return (1 + lnodes + rnodes);
+		return -1 + -lnodes + -rnodes;
+	return 1 + lnodes + rnodes;
 }
 
 #endif

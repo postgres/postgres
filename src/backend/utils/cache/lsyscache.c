@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.20 1998/08/19 02:03:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.21 1998/09/01 03:26:30 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -111,7 +111,7 @@ get_attnum(Oid relid, char *attname)
 Oid
 get_atttype(Oid relid, AttrNumber attnum)
 {
-	AttributeTupleForm att_tup = (AttributeTupleForm) palloc(sizeof(*att_tup));
+	Form_pg_attribute att_tup = (Form_pg_attribute) palloc(sizeof(*att_tup));
 
 	if (SearchSysCacheStruct(ATTNUM, (char *) att_tup,
 							 ObjectIdGetDatum(relid),
@@ -131,7 +131,7 @@ get_attisset(Oid relid, char *attname)
 {
 	HeapTuple	tuple;
 	AttrNumber	attno;
-	AttributeTupleForm att_tup;
+	Form_pg_attribute att_tup;
 
 	attno = get_attnum(relid, attname);
 
@@ -146,7 +146,7 @@ get_attisset(Oid relid, char *attname)
 		return false;
 	else
 	{
-		att_tup = (AttributeTupleForm) GETSTRUCT(tuple);
+		att_tup = (Form_pg_attribute) GETSTRUCT(tuple);
 		return att_tup->attisset;
 	}
 }
@@ -415,7 +415,7 @@ get_rel_name(Oid relid)
 int16
 get_typlen(Oid typid)
 {
-	TypeTupleFormData typtup;
+	FormData_pg_type typtup;
 
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
@@ -435,7 +435,7 @@ get_typlen(Oid typid)
 bool
 get_typbyval(Oid typid)
 {
-	TypeTupleFormData typtup;
+	FormData_pg_type typtup;
 
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
@@ -456,7 +456,7 @@ get_typbyval(Oid typid)
 char
 get_typalign(Oid typid)
 {
-	TypeTupleFormData typtup;
+	FormData_pg_type typtup;
 
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),
@@ -495,7 +495,7 @@ get_typdefault(Oid typid)
 char
 get_typtype(Oid typid)
 {
-	TypeTupleFormData typtup;
+	FormData_pg_type typtup;
 
 	if (SearchSysCacheStruct(TYPOID, (char *) &typtup,
 							 ObjectIdGetDatum(typid),

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.32 1998/08/19 02:03:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.33 1998/09/01 03:26:25 momjian Exp $
  *
  * Notes:
  *		XXX This needs to use exception.h to handle recovery when
@@ -181,7 +181,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 */
 	Assert(RelationIsValid(relation));
 	cache->relationId = RelationGetRelid(relation);
-	tupdesc = cache->cc_tupdesc = RelationGetTupleDescriptor(relation);
+	tupdesc = cache->cc_tupdesc = RelationGetDescr(relation);
 
 	CACHE3_elog(DEBUG, "CatalogCacheInitializeCache: relid %d, %d keys",
 				cache->relationId, cache->cc_nkeys);
@@ -240,7 +240,7 @@ CatalogCacheInitializeCache(struct catcache * cache,
 	 */
 	if (cache->cc_indname != NULL && cache->indexId == InvalidOid)
 	{
-		if (RelationGetRelationTupleForm(relation)->relhasindex)
+		if (RelationGetForm(relation)->relhasindex)
 		{
 
 			/*
@@ -301,7 +301,7 @@ comphash(long l, char *v)
 		case 1:
 		case 2:
 		case 4:
-			return ((long) v);
+			return (long) v;
 	}
 
 	if (l == NAMEDATALEN)
@@ -322,7 +322,7 @@ comphash(long l, char *v)
 	i = 0;
 	while (l--)
 		i += *v++;
-	return (i);
+	return i;
 }
 
 /* --------------------------------
@@ -365,7 +365,7 @@ CatalogCacheComputeHashIndex(struct catcache * cacheInP)
 			break;
 	}
 	hashIndex %= cacheInP->cc_size;
-	return (hashIndex);
+	return hashIndex;
 }
 
 /* --------------------------------
@@ -389,7 +389,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 				? (Datum) tuple->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[3],
-							  RelationGetTupleDescriptor(relation),
+							  RelationGetDescr(relation),
 							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
@@ -399,7 +399,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 				? (Datum) tuple->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[2],
-							  RelationGetTupleDescriptor(relation),
+							  RelationGetDescr(relation),
 							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
@@ -409,7 +409,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 				? (Datum) tuple->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[1],
-							  RelationGetTupleDescriptor(relation),
+							  RelationGetDescr(relation),
 							  &isNull);
 			Assert(!isNull);
 			/* FALLTHROUGH */
@@ -419,7 +419,7 @@ CatalogCacheComputeTupleHashIndex(struct catcache * cacheInOutP,
 				? (Datum) tuple->t_oid
 				: fastgetattr(tuple,
 							  cacheInOutP->cc_key[0],
-							  RelationGetTupleDescriptor(relation),
+							  RelationGetDescr(relation),
 							  &isNull);
 			Assert(!isNull);
 			break;
@@ -675,7 +675,7 @@ InitSysCache(char *relname,
 			 char *iname,
 			 int id,
 			 int nkeys,
-			 int key[],
+			 int *key,
 			 HeapTuple (*iScanfuncP) ())
 {
 	CatCache   *cp;
@@ -801,7 +801,7 @@ InitSysCache(char *relname,
 	 * ----------------
 	 */
 	MemoryContextSwitchTo(oldcxt);
-	return (cp);
+	return cp;
 }
 
 
@@ -896,7 +896,7 @@ SearchSysCache(struct catcache * cache,
 		heap_close(relation);
 #endif							/* CACHEDEBUG */
 
-		return (ct->ct_tup);
+		return ct->ct_tup;
 	}
 
 	/* ----------------
@@ -913,7 +913,7 @@ SearchSysCache(struct catcache * cache,
 	if (DisableCache)
 	{
 		elog(ERROR, "SearchSysCache: Called while cache disabled");
-		return ((HeapTuple) NULL);
+		return (HeapTuple) NULL;
 	}
 
 	/* ----------------
@@ -943,7 +943,7 @@ SearchSysCache(struct catcache * cache,
 	CACHE2_elog(DEBUG, "SearchSysCache: performing scan (override==%d)",
 				heapisoverride());
 
-	if ((RelationGetRelationTupleForm(relation))->relhasindex
+	if ((RelationGetForm(relation))->relhasindex
 		&& !IsBootstrapProcessingMode())
 	{
 		/* ----------

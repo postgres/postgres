@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.12 1998/08/19 02:02:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.13 1998/09/01 03:22:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ InitScanRelation(SeqScan *node, EState *estate,
 		scanstate->css_currentScanDesc = currentScanDesc;
 
 		ExecAssignScanType(scanstate,
-						   RelationGetTupleDescriptor(currentRelation));
+						   RelationGetDescr(currentRelation));
 	}
 	else
 	{

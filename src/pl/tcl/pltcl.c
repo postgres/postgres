@@ -3,7 +3,7 @@
  *			  procedural language (PL)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.4 1998/08/19 02:04:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.5 1998/09/01 03:29:08 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -481,7 +481,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 		HeapTuple	procTup;
 		HeapTuple	typeTup;
 		Form_pg_proc procStruct;
-		TypeTupleForm typeStruct;
+		Form_pg_type typeStruct;
 		Tcl_DString proc_internal_def;
 		Tcl_DString proc_internal_body;
 		char		proc_internal_args[4096];
@@ -522,7 +522,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 			free(prodesc);
 			elog(ERROR, "pltcl: cache lookup for return type failed");
 		}
-		typeStruct = (TypeTupleForm) GETSTRUCT(typeTup);
+		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 		if (typeStruct->typrelid != InvalidOid)
 		{
@@ -552,7 +552,7 @@ pltcl_func_handler(FmgrInfo *proinfo,
 				free(prodesc);
 				elog(ERROR, "pltcl: cache lookup for argument type failed");
 			}
-			typeStruct = (TypeTupleForm) GETSTRUCT(typeTup);
+			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
 			if (typeStruct->typrelid != InvalidOid)
 			{
@@ -1147,8 +1147,8 @@ pltcl_trigger_handler(FmgrInfo *proinfo)
 				 ret_values[--i],
 				 ObjectIdGetDatum(tupdesc->attrs[attnum - 1]->atttypid));
 		}
-		typinput = (Oid) (((TypeTupleForm) GETSTRUCT(typeTup))->typinput);
-		typelem = (Oid) (((TypeTupleForm) GETSTRUCT(typeTup))->typelem);
+		typinput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typinput);
+		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
 
 		/************************************************************
 		 * Set the attribute to NOT NULL and convert the contents
@@ -1616,11 +1616,11 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
 		if (!HeapTupleIsValid(typeTup))
 			elog(ERROR, "pltcl: Cache lookup of type %s failed", args[i]);
 		qdesc->argtypes[i] = typeTup->t_oid;
-		fmgr_info(((TypeTupleForm) GETSTRUCT(typeTup))->typinput,
+		fmgr_info(((Form_pg_type) GETSTRUCT(typeTup))->typinput,
 				  &(qdesc->arginfuncs[i]));
-		qdesc->argtypelems[i] = ((TypeTupleForm) GETSTRUCT(typeTup))->typelem;
+		qdesc->argtypelems[i] = ((Form_pg_type) GETSTRUCT(typeTup))->typelem;
 		qdesc->argvalues[i] = (Datum) NULL;
-		qdesc->arglen[i] = (int) (((TypeTupleForm) GETSTRUCT(typeTup))->typlen);
+		qdesc->arglen[i] = (int) (((Form_pg_type) GETSTRUCT(typeTup))->typlen);
 	}
 
 	/************************************************************
@@ -2164,8 +2164,8 @@ pltcl_set_tuple_values(Tcl_Interp * interp, char *arrayname,
 				 attname, ObjectIdGetDatum(tupdesc->attrs[i]->atttypid));
 		}
 
-		typoutput = (Oid) (((TypeTupleForm) GETSTRUCT(typeTup))->typoutput);
-		typelem = (Oid) (((TypeTupleForm) GETSTRUCT(typeTup))->typelem);
+		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
+		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
 
 		/************************************************************
 		 * If there is a value, set the variable
@@ -2237,8 +2237,8 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 				 attname, ObjectIdGetDatum(tupdesc->attrs[i]->atttypid));
 		}
 
-		typoutput = (Oid) (((TypeTupleForm) GETSTRUCT(typeTup))->typoutput);
-		typelem = (Oid) (((TypeTupleForm) GETSTRUCT(typeTup))->typelem);
+		typoutput = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typoutput);
+		typelem = (Oid) (((Form_pg_type) GETSTRUCT(typeTup))->typelem);
 
 		/************************************************************
 		 * If there is a value, append the attribute name and the

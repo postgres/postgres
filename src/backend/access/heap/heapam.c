@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.33 1998/08/20 22:07:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.34 1998/09/01 03:21:05 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -194,7 +194,7 @@ unpinscan(HeapScanDesc scan)
 static int
 nextpage(int page, int dir)
 {
-	return ((dir < 0) ? page - 1 : page + 1);
+	return (dir < 0) ? page - 1 : page + 1;
 }
 
 /* ----------------
@@ -268,7 +268,7 @@ heapgettup(Relation relation,
 	 * ----------------
 	 */
 	if (!(pages = relation->rd_nblocks))
-		return (NULL);
+		return NULL;
 
 	/* ----------------
 	 *	calculate next starting lineoff, given scan direction
@@ -284,7 +284,7 @@ heapgettup(Relation relation,
 		if (ItemPointerIsValid(tid) == false)
 		{
 			*buf= InvalidBuffer;
-			return (NULL);
+			return NULL;
 		}
 		*buf = RelationGetBufferWithBuffer(relation,
 										 ItemPointerGetBlockNumber(tid),
@@ -300,7 +300,7 @@ heapgettup(Relation relation,
 		lpp = PageGetItemId(dp, lineoff);
 
 		rtup = (HeapTuple) PageGetItem((Page) dp, lpp);
-		return (rtup);
+		return rtup;
 
 	}
 	else if (dir < 0)
@@ -322,7 +322,7 @@ heapgettup(Relation relation,
 		if (page < 0)
 		{
 			*buf = InvalidBuffer;
-			return (NULL);
+			return NULL;
 		}
 
 		*buf = RelationGetBufferWithBuffer(relation, page, *buf);
@@ -366,7 +366,7 @@ heapgettup(Relation relation,
 		if (page >= pages)
 		{
 			*buf = InvalidBuffer;
-			return (NULL);
+			return NULL;
 		}
 		/* page and lineoff now reference the physically next tid */
 
@@ -420,7 +420,7 @@ heapgettup(Relation relation,
 					 */
 					ItemPointerSetBlockNumber(iptr, page);
 				}
-				return (rtup);
+				return rtup;
 			}
 
 			/* ----------------
@@ -455,7 +455,7 @@ heapgettup(Relation relation,
 			if (BufferIsValid(*buf))
 				ReleaseBuffer(*buf);
 			*buf = InvalidBuffer;
-			return (NULL);
+			return NULL;
 		}
 
 		*buf = ReleaseAndReadBuffer(*buf, relation, page);
@@ -526,7 +526,7 @@ heap_open(Oid relationId)
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
 
-	return (r);
+	return r;
 }
 
 /* ----------------
@@ -553,7 +553,7 @@ heap_openr(char *relationName)
 	if (RelationIsValid(r) && r->rd_rel->relkind == RELKIND_INDEX)
 		elog(ERROR, "%s is an index relation", r->rd_rel->relname.data);
 
-	return (r);
+	return r;
 }
 
 /* ----------------
@@ -646,7 +646,7 @@ heap_beginscan(Relation relation,
 	scan->rs_snapshot = snapshot;
 	scan->rs_nkeys = (short) nkeys;
 
-	return (scan);
+	return scan;
 }
 
 /* ----------------
@@ -806,7 +806,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 		{
 			if (BufferIsValid(scan->rs_nbuf))
 				ReleaseBuffer(scan->rs_nbuf);
-			return (NULL);
+			return NULL;
 		}
 
 		/*
@@ -871,7 +871,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 				ReleaseBuffer(scan->rs_nbuf);
 			scan->rs_ntup = NULL;
 			scan->rs_nbuf = InvalidBuffer;
-			return (NULL);
+			return NULL;
 		}
 
 		if (BufferIsValid(scan->rs_pbuf))
@@ -892,7 +892,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 			if (BufferIsValid(scan->rs_pbuf))
 				ReleaseBuffer(scan->rs_pbuf);
 			HEAPDEBUG_3;		/* heap_getnext returns NULL at end */
-			return (NULL);
+			return NULL;
 		}
 
 		/*
@@ -959,7 +959,7 @@ heap_getnext(HeapScanDesc scandesc, int backw)
 			scan->rs_ptup = NULL;
 			scan->rs_pbuf = InvalidBuffer;
 			HEAPDEBUG_6;		/* heap_getnext returning EOS */
-			return (NULL);
+			return NULL;
 		}
 
 		if (BufferIsValid(scan->rs_nbuf))
@@ -1064,7 +1064,7 @@ heap_fetch(Relation relation,
 	if (tuple == NULL)
 	{
 		ReleaseBuffer(buffer);
-		return (NULL);
+		return NULL;
 	}
 
 	/* ----------------
@@ -1076,7 +1076,7 @@ heap_fetch(Relation relation,
 
 	*userbuf = buffer;	/* user is required to ReleaseBuffer() this */
 
-	return (tuple);
+	return tuple;
 }
 
 /* ----------------
@@ -1150,7 +1150,7 @@ heap_insert(Relation relation, HeapTuple tup)
 		SetRefreshWhenInvalidate((bool) !ImmediateInvalidation);
 	}
 
-	return (tup->t_oid);
+	return tup->t_oid;
 }
 
 /* ----------------
@@ -1213,7 +1213,7 @@ heap_delete(Relation relation, ItemPointer tid)
 		if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 			RelationUnsetLockForWrite(relation);
 		ReleaseBuffer(buf);
-		return (1);
+		return 1;
 	}
 	/* ----------------
 	 *	check that we're deleteing a valid item
@@ -1256,7 +1256,7 @@ heap_delete(Relation relation, ItemPointer tid)
 	if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 		RelationUnsetLockForWrite(relation);
 
-	return (0);
+	return 0;
 }
 
 /* ----------------
@@ -1339,7 +1339,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple replace_tuple)
 		if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 			RelationUnsetLockForWrite(relation);
 		ReleaseBuffer(buffer);
-		return (1);
+		return 1;
 	}
 
 	/* ----------------
@@ -1411,7 +1411,7 @@ heap_replace(Relation relation, ItemPointer otid, HeapTuple replace_tuple)
 	if (IsSystemRelationName(RelationGetRelationName(relation)->data))
 		RelationUnsetLockForWrite(relation);
 
-	return (0);
+	return 0;
 }
 
 /* ----------------

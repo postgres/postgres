@@ -6,7 +6,7 @@
 *	 CX operator according to Oliver et al
 *	 (Proc 2nd Int'l Conf on GA's)
 *
-* $Id: geqo_cx.c,v 1.4 1997/09/08 21:44:15 momjian Exp $
+* $Id: geqo_cx.c,v 1.5 1998/09/01 03:23:04 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -133,5 +133,5 @@ cx(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table)
 
 	}
 
-	return (num_diffs);
+	return num_diffs;
 }

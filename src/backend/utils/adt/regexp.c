@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.18 1998/06/15 19:29:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.19 1998/09/01 03:26:14 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -155,7 +155,7 @@ RE_compile_and_execute(struct varlena * text_re, char *text, int cflags)
 	}
 
 	/* not reached */
-	return (0);
+	return 0;
 }
 
 
@@ -189,7 +189,7 @@ fixedlen_regexeq(char *s, struct varlena * p, int charlen, int cflags)
 
 	pfree(sterm);
 
-	return ((bool) result);
+	return (bool) result;
 
 }
 
@@ -202,27 +202,27 @@ nameregexeq(NameData *n, struct varlena * p)
 {
 	if (!n)
 		return FALSE;
-	return (fixedlen_regexeq(n->data, p, NAMEDATALEN, REG_EXTENDED));
+	return fixedlen_regexeq(n->data, p, NAMEDATALEN, REG_EXTENDED);
 }
 
 bool
 nameregexne(NameData *s, struct varlena * p)
 {
-	return (!nameregexeq(s, p));
+	return !nameregexeq(s, p);
 }
 
 bool
 textregexeq(struct varlena * s, struct varlena * p)
 {
 	if (!s)
-		return (FALSE);
-	return (fixedlen_regexeq(VARDATA(s), p, VARSIZE(s) - VARHDRSZ, REG_EXTENDED));
+		return FALSE;
+	return fixedlen_regexeq(VARDATA(s), p, VARSIZE(s) - VARHDRSZ, REG_EXTENDED);
 }
 
 bool
 textregexne(struct varlena * s, struct varlena * p)
 {
-	return (!textregexeq(s, p));
+	return !textregexeq(s, p);
 }
 
 
@@ -242,7 +242,7 @@ texticregexeq(struct varlena * s, struct varlena * p)
 bool
 texticregexne(struct varlena * s, struct varlena * p)
 {
-	return (!texticregexeq(s, p));
+	return !texticregexeq(s, p);
 }
 
 bool
@@ -257,5 +257,5 @@ nameicregexeq(NameData *n, struct varlena * p)
 bool
 nameicregexne(NameData *s, struct varlena * p)
 {
-	return (!nameicregexeq(s, p));
+	return !nameicregexeq(s, p);
 }

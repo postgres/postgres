@@ -17,7 +17,7 @@ mm_alloc(size_t size)
 		exit(OUT_OF_MEMORY);
 	}
 
-	return (ptr);
+	return ptr;
 }
 
 /* duplicate memberlist */

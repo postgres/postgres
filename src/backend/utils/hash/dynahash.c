@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.14 1998/06/15 19:29:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.15 1998/09/01 03:26:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -183,7 +183,7 @@ hash_create(int nelem, HASHCTL *info, int flags)
 
 		/* hash table already exists, we're just attaching to it */
 		if (flags & HASH_ATTACH)
-			return (hashp);
+			return hashp;
 
 	}
 	else
@@ -200,11 +200,11 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	{
 		hashp->hctl = (HHDR *) hashp->alloc((unsigned long) sizeof(HHDR));
 		if (!hashp->hctl)
-			return (0);
+			return 0;
 	}
 
 	if (!hdefault(hashp))
-		return (0);
+		return 0;
 	hctl = hashp->hctl;
 #ifdef HASH_STATISTICS
 	hctl->accesses = hctl->collisions = 0;
@@ -248,9 +248,9 @@ hash_create(int nelem, HASHCTL *info, int flags)
 	if (init_htab(hashp, nelem))
 	{
 		hash_destroy(hashp);
-		return (0);
+		return 0;
 	}
-	return (hashp);
+	return hashp;
 }
 
 /*
@@ -285,7 +285,7 @@ hdefault(HTAB *hashp)
 	/* garbage collection for HASH_REMOVE */
 	hctl->freeBucketIndex = INVALID_INDEX;
 
-	return (1);
+	return 1;
 }
 
 
@@ -332,7 +332,7 @@ init_htab(HTAB *hashp, int nelem)
 		hashp->dir =
 			(SEG_OFFSET *) hashp->alloc(hctl->dsize * sizeof(SEG_OFFSET));
 		if (!hashp->dir)
-			return (-1);
+			return -1;
 	}
 
 	/* Allocate initial segments */
@@ -342,7 +342,7 @@ init_htab(HTAB *hashp, int nelem)
 		if (*segp == (SEG_OFFSET) 0)
 		{
 			hash_destroy(hashp);
-			return (0);
+			return 0;
 		}
 	}
 
@@ -362,7 +362,7 @@ init_htab(HTAB *hashp, int nelem)
 			"NSEGS           ", hctl->nsegs,
 			"NKEYS           ", hctl->nkeys);
 #endif
-	return (0);
+	return 0;
 }
 
 /********************** DESTROY ROUTINES ************************/
@@ -442,7 +442,7 @@ call_hash(HTAB *hashp, char *k, int len)
 	if (bucket > hctl->max_bucket)
 		bucket = bucket & hctl->low_mask;
 
-	return (bucket);
+	return bucket;
 }
 
 /*
@@ -539,7 +539,7 @@ hash_search(HTAB *hashp,
 	{
 		case HASH_ENTER:
 			if (currIndex != INVALID_INDEX)
-				return (&(curr->key));
+				return &(curr->key);
 			break;
 		case HASH_REMOVE:
 		case HASH_REMOVE_SAVED:
@@ -558,25 +558,25 @@ hash_search(HTAB *hashp,
 				 * element, because someone else is going to reuse it the
 				 * next time something is added to the table
 				 */
-				return (&(curr->key));
+				return &(curr->key);
 			}
-			return ((long *) TRUE);
+			return (long *) TRUE;
 		case HASH_FIND:
 			if (currIndex != INVALID_INDEX)
-				return (&(curr->key));
-			return ((long *) TRUE);
+				return &(curr->key);
+			return (long *) TRUE;
 		case HASH_FIND_SAVE:
 			if (currIndex != INVALID_INDEX)
 			{
 				saveState.currElem = curr;
 				saveState.prevIndex = prevIndexPtr;
 				saveState.currIndex = currIndex;
-				return (&(curr->key));
+				return &(curr->key);
 			}
-			return ((long *) TRUE);
+			return (long *) TRUE;
 		default:
 			/* can't get here */
-			return (NULL);
+			return NULL;
 	}
 
 	/*
@@ -592,7 +592,7 @@ hash_search(HTAB *hashp,
 
 		/* no free elements.  allocate another chunk of buckets */
 		if (!bucket_alloc(hashp))
-			return (NULL);
+			return NULL;
 		currIndex = hctl->freeBucketIndex;
 	}
 	Assert(currIndex != INVALID_INDEX);
@@ -624,9 +624,9 @@ hash_search(HTAB *hashp,
 		 * hash_stats("expanded table",hashp);
 		 */
 		if (!expand_table(hashp))
-			return (NULL);
+			return NULL;
 	}
-	return (&(curr->key));
+	return &(curr->key);
 }
 
 /*
@@ -654,7 +654,7 @@ hash_seq(HTAB *hashp)
 		 */
 		curBucket = 0;
 		curIndex = INVALID_INDEX;
-		return ((long *) NULL);
+		return (long *) NULL;
 	}
 
 	hctl = hashp->hctl;
@@ -666,7 +666,7 @@ hash_seq(HTAB *hashp)
 			curIndex = curElem->next;
 			if (curIndex == INVALID_INDEX)		/* end of this bucket */
 				++curBucket;
-			return (&(curElem->key));
+			return &(curElem->key);
 		}
 
 		/*
@@ -681,7 +681,7 @@ hash_seq(HTAB *hashp)
 		segp = GET_SEG(hashp, segment_num);
 		if (segp == NULL)
 			/* this is probably an error */
-			return ((long *) NULL);
+			return (long *) NULL;
 
 		/*
 		 * now find the right index into the segment for the first item in
@@ -697,7 +697,7 @@ hash_seq(HTAB *hashp)
 			++curBucket;
 	}
 
-	return ((long *) TRUE);		/* out of buckets */
+	return (long *) TRUE;		/* out of buckets */
 }
 
 
@@ -738,7 +738,7 @@ expand_table(HTAB *hashp)
 		if (new_segnum >= hctl->dsize)
 			dir_realloc(hashp);
 		if (!(hashp->dir[new_segnum] = seg_alloc(hashp)))
-			return (0);
+			return 0;
 		hctl->nsegs++;
 	}
 
@@ -782,7 +782,7 @@ expand_table(HTAB *hashp)
 		}
 		chain->next = INVALID_INDEX;
 	}
-	return (1);
+	return 1;
 }
 
 
@@ -796,7 +796,7 @@ dir_realloc(HTAB *hashp)
 
 
 	if (hashp->hctl->max_dsize != NO_MAX_DSIZE)
-		return (0);
+		return 0;
 
 	/* Reallocate directory */
 	old_dirsize = hashp->hctl->dsize * sizeof(SEGMENT *);
@@ -811,9 +811,9 @@ dir_realloc(HTAB *hashp)
 		free((char *) *p_ptr);
 		*p_ptr = p;
 		hashp->hctl->dsize = new_dirsize;
-		return (1);
+		return 1;
 	}
-	return (0);
+	return 0;
 
 }
 
@@ -829,13 +829,13 @@ seg_alloc(HTAB *hashp)
 								  sizeof(SEGMENT) * hashp->hctl->ssize);
 
 	if (!segp)
-		return (0);
+		return 0;
 
 	MemSet((char *) segp, 0,
 		   (long) sizeof(SEGMENT) * hashp->hctl->ssize);
 
 	segOffset = MAKE_HASHOFFSET(hashp, segp);
-	return (segOffset);
+	return segOffset;
 }
 
 /*
@@ -863,7 +863,7 @@ bucket_alloc(HTAB *hashp)
 		hashp->alloc((unsigned long) BUCKET_ALLOC_INCR * bucketSize);
 
 	if (!tmpBucket)
-		return (0);
+		return 0;
 
 	tmpIndex = MAKE_HASHOFFSET(hashp, tmpBucket);
 
@@ -885,7 +885,7 @@ bucket_alloc(HTAB *hashp)
 	 */
 	tmpBucket->next = lastIndex;
 
-	return (1);
+	return 1;
 }
 
 /* calculate the log base 2 of num */
@@ -896,5 +896,5 @@ my_log2(long num)
 	int			limit;
 
 	for (i = 0, limit = 1; limit < num; limit = 2 * limit, i++);
-	return (i);
+	return i;
 }

@@ -49,7 +49,7 @@ complex_in(char *str)
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = x;
 	result->y = y;
-	return (result);
+	return result;
 }
 
 /*
@@ -66,11 +66,11 @@ complex_out(Complex * complex)
 	char	   *result;
 
 	if (complex == NULL)
-		return (NULL);
+		return NULL;
 
 	result = (char *) palloc(60);
 	sprintf(result, "(%g,%g)", complex->x, complex->y);
-	return (result);
+	return result;
 }
 
 /*****************************************************************************
@@ -85,7 +85,7 @@ complex_add(Complex * a, Complex * b)
 	result = (Complex *) palloc(sizeof(Complex));
 	result->x = a->x + b->x;
 	result->y = a->y + b->y;
-	return (result);
+	return result;
 }
 
 
@@ -101,7 +101,7 @@ complex_abs_lt(Complex * a, Complex * b)
 	double		amag = Mag(a),
 				bmag = Mag(b);
 
-	return (amag < bmag);
+	return amag < bmag;
 }
 
 bool
@@ -110,7 +110,7 @@ complex_abs_le(Complex * a, Complex * b)
 	double		amag = Mag(a),
 				bmag = Mag(b);
 
-	return (amag <= bmag);
+	return amag <= bmag;
 }
 
 bool
@@ -119,7 +119,7 @@ complex_abs_eq(Complex * a, Complex * b)
 	double		amag = Mag(a),
 				bmag = Mag(b);
 
-	return (amag == bmag);
+	return amag == bmag;
 }
 
 bool
@@ -128,7 +128,7 @@ complex_abs_ge(Complex * a, Complex * b)
 	double		amag = Mag(a),
 				bmag = Mag(b);
 
-	return (amag >= bmag);
+	return amag >= bmag;
 }
 
 bool
@@ -137,7 +137,7 @@ complex_abs_gt(Complex * a, Complex * b)
 	double		amag = Mag(a),
 				bmag = Mag(b);
 
-	return (amag > bmag);
+	return amag > bmag;
 }
 
 int4

@@ -26,7 +26,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.14 1998/05/06 23:50:49 momjian Exp $
+ * $Id: dest.h,v 1.15 1998/09/01 03:28:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,7 @@ typedef enum
 
 typedef struct AttrInfo {
 	int					numAttr;
-	AttributeTupleForm	*attrs;
+	Form_pg_attribute	*attrs;
 } AttrInfo;
 */
 

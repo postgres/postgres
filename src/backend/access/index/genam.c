@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.13 1998/08/19 02:01:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.14 1998/09/01 03:21:07 momjian Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -123,7 +123,7 @@ RelationGetIndexScan(Relation relation,
 
 	index_rescan(scan, scanFromEnd, key);
 
-	return (scan);
+	return scan;
 }
 
 #ifdef NOT_USED

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.11 1998/02/26 04:43:53 momjian Exp $
+ * $Id: catcache.h,v 1.12 1998/09/01 03:28:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,7 @@ extern void ResetSystemCache(void);
 extern void SystemCacheRelationFlushed(Oid relId);
 extern CatCache *
 InitSysCache(char *relname, char *indname, int id, int nkeys,
-			 int key[], HeapTuple (*iScanfuncP) ());
+			 int *key, HeapTuple (*iScanfuncP) ());
 extern HeapTuple
 SearchSysCache(struct catcache * cache, Datum v1, Datum v2,
 			   Datum v3, Datum v4);

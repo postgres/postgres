@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.12 1998/06/15 19:29:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.13 1998/09/01 03:27:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ static Pointer
 PortalVariableMemoryAlloc(PortalVariableMemory this,
 						  Size size)
 {
-	return (AllocSetAlloc(&this->setData, size));
+	return AllocSetAlloc(&this->setData, size);
 }
 
 /* ----------------
@@ -224,7 +224,7 @@ PortalVariableMemoryRealloc(PortalVariableMemory this,
 							Pointer pointer,
 							Size size)
 {
-	return (AllocSetRealloc(&this->setData, pointer, size));
+	return AllocSetRealloc(&this->setData, pointer, size);
 }
 
 /* ----------------
@@ -234,7 +234,7 @@ PortalVariableMemoryRealloc(PortalVariableMemory this,
 static char *
 PortalVariableMemoryGetName(PortalVariableMemory this)
 {
-	return (form("%s-var", PortalVariableMemoryGetPortal(this)->name));
+	return form("%s-var", PortalVariableMemoryGetPortal(this)->name);
 }
 
 /* ----------------
@@ -261,7 +261,7 @@ PortalHeapMemoryAlloc(PortalHeapMemory this,
 
 	AssertState(PointerIsValid(block));
 
-	return (AllocSetAlloc(&block->setData, size));
+	return AllocSetAlloc(&block->setData, size);
 }
 
 /* ----------------
@@ -302,7 +302,7 @@ PortalHeapMemoryRealloc(PortalHeapMemory this,
 
 	AssertState(PointerIsValid(block));
 
-	return (AllocSetRealloc(&block->setData, pointer, size));
+	return AllocSetRealloc(&block->setData, pointer, size);
 }
 
 /* ----------------
@@ -312,7 +312,7 @@ PortalHeapMemoryRealloc(PortalHeapMemory this,
 static char *
 PortalHeapMemoryGetName(PortalHeapMemory this)
 {
-	return (form("%s-heap", PortalHeapMemoryGetPortal(this)->name));
+	return form("%s-heap", PortalHeapMemoryGetPortal(this)->name);
 }
 
 /* ----------------
@@ -602,7 +602,7 @@ GetPortalByName(char *name)
 		portal = BlankPortal;
 	}
 
-	return (portal);
+	return portal;
 }
 
 /*
@@ -632,7 +632,7 @@ BlankPortalAssignName(char *name)		/* XXX PortalName */
 	if (PortalIsValid(portal))
 	{
 		elog(NOTICE, "BlankPortalAssignName: portal %s already exists", name);
-		return (portal);
+		return portal;
 	}
 
 	/*
@@ -655,7 +655,7 @@ BlankPortalAssignName(char *name)		/* XXX PortalName */
 	 */
 	PortalHashTableInsert(portal);
 
-	return (portal);
+	return portal;
 }
 
 /*
@@ -699,7 +699,7 @@ PortalGetQueryDesc(Portal portal)
 	AssertState(PortalManagerEnabled);
 	AssertArg(PortalIsValid(portal));
 
-	return (portal->queryDesc);
+	return portal->queryDesc;
 }
 
 /*
@@ -716,7 +716,7 @@ PortalGetState(Portal portal)
 	AssertState(PortalManagerEnabled);
 	AssertArg(PortalIsValid(portal));
 
-	return (portal->state);
+	return portal->state;
 }
 
 /*
@@ -745,7 +745,7 @@ CreatePortal(char *name)		/* XXX PortalName */
 	if (PortalIsValid(portal))
 	{
 		elog(NOTICE, "CreatePortal: portal %s already exists", name);
-		return (portal);
+		return portal;
 	}
 
 	/* make new portal structure */
@@ -780,7 +780,7 @@ CreatePortal(char *name)		/* XXX PortalName */
 	PortalHashTableInsert(portal);
 
 	/* Trap(PointerIsValid(name), Unimplemented); */
-	return (portal);
+	return portal;
 }
 
 /*
@@ -936,7 +936,7 @@ EndPortalAllocMode()
 PortalVariableMemory
 PortalGetVariableMemory(Portal portal)
 {
-	return (&portal->variable);
+	return &portal->variable;
 }
 
 /*
@@ -950,7 +950,7 @@ PortalGetVariableMemory(Portal portal)
 PortalHeapMemory
 PortalGetHeapMemory(Portal portal)
 {
-	return (&portal->heap);
+	return &portal->heap;
 }
 
 /*
@@ -964,7 +964,7 @@ PortalGetHeapMemory(Portal portal)
 static Portal
 PortalVariableMemoryGetPortal(PortalVariableMemory context)
 {
-	return ((Portal) ((char *) context - offsetof(PortalD, variable)));
+	return (Portal) ((char *) context - offsetof(PortalD, variable));
 }
 
 /*
@@ -978,7 +978,7 @@ PortalVariableMemoryGetPortal(PortalVariableMemory context)
 static Portal
 PortalHeapMemoryGetPortal(PortalHeapMemory context)
 {
-	return ((Portal) ((char *) context - offsetof(PortalD, heap)));
+	return (Portal) ((char *) context - offsetof(PortalD, heap));
 }
 
 /*

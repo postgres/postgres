@@ -55,7 +55,7 @@ BSD44_derived_dlerror(void)
 
 	strcpy(ret, error_message);
 	error_message[0] = 0;
-	return ((ret[0] == 0) ? (char *) NULL : ret);
+	return (ret[0] == 0) ? (char *) NULL : ret;
 }
 
 void *
@@ -69,7 +69,7 @@ BSD44_derived_dlopen(const char *file, int num)
 
 	if ((vp = dlopen((char *) file, num)) == (void *) NULL)
 		sprintf(error_message, "dlopen (%s) failed", file);
-	return (vp);
+	return vp;
 #endif
 }
 
@@ -90,7 +90,7 @@ BSD44_derived_dlsym(void *handle, const char *name)
 	}
 	if ((vp = dlsym(handle, (char *) name)) == (void *) NULL)
 		sprintf(error_message, "dlsym (%s) failed", name);
-	return (vp);
+	return vp;
 #endif
 }
 

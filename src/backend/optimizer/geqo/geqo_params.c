@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.9 1998/06/15 19:28:36 momjian Exp $
+* $Id: geqo_params.c,v 1.10 1998/09/01 03:23:11 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -297,7 +297,7 @@ next_token(FILE *fp, char *buf, int bufsz)
 	ungetc(c, fp);
 
 	/* If we ended with a newline, return that, otherwise return 0 */
-	return (c == '\n' ? '\n' : 0);
+	return c == '\n' ? '\n' : 0;
 }
 
 /* gimme_pool_size--
@@ -315,11 +315,11 @@ gimme_pool_size(int string_length)
 	size = pow(2.0, exponent);
 
 	if (size < MIN_POOL)
-		return (MIN_POOL);
+		return MIN_POOL;
 	else if (size > MAX_POOL)
-		return (MAX_POOL);
+		return MAX_POOL;
 	else
-		return ((int) ceil(size));
+		return (int) ceil(size);
 }
 
 /* gimme_number_generations--
@@ -333,5 +333,5 @@ gimme_number_generations(int pool_size, int effort)
 
 	number_gens = (int) ceil(geqo_log((double) pool_size, 2.0));
 
-	return (effort * number_gens);
+	return effort * number_gens;
 }

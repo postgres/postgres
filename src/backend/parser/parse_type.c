@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.14 1998/08/19 02:02:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.15 1998/09/01 03:24:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,16 +45,16 @@ char *
 typeidTypeName(Oid id)
 {
 	HeapTuple	tup;
-	TypeTupleForm typetuple;
+	Form_pg_type typetuple;
 
 	if (!(tup = SearchSysCacheTuple(TYPOID,
 									ObjectIdGetDatum(id),
 									0, 0, 0)))
 	{
 		elog(ERROR, "type id lookup of %u failed", id);
-		return (NULL);
+		return NULL;
 	}
-	typetuple = (TypeTupleForm) GETSTRUCT(tup);
+	typetuple = (Form_pg_type) GETSTRUCT(tup);
 	return (typetuple->typname).data;
 }
 
@@ -69,9 +69,9 @@ typeidType(Oid id)
 									0, 0, 0)))
 	{
 		elog(ERROR, "type id lookup of %u failed", id);
-		return (NULL);
+		return NULL;
 	}
-	return ((Type) tup);
+	return (Type) tup;
 }
 
 /* return a Type structure, given type name */
@@ -87,7 +87,7 @@ typenameType(char *s)
 									PointerGetDatum(s),
 									0, 0, 0)))
 		elog(ERROR, "type name lookup of %s failed", s);
-	return ((Type) tup);
+	return (Type) tup;
 }
 
 /* given type, return the type OID */
@@ -96,36 +96,36 @@ typeTypeId(Type tp)
 {
 	if (tp == NULL)
 		elog(ERROR, "typeTypeId() called with NULL type struct");
-	return (tp->t_oid);
+	return tp->t_oid;
 }
 
 /* given type (as type struct), return the length of type */
 int16
 typeLen(Type t)
 {
-	TypeTupleForm typ;
+	Form_pg_type typ;
 
-	typ = (TypeTupleForm) GETSTRUCT(t);
-	return (typ->typlen);
+	typ = (Form_pg_type) GETSTRUCT(t);
+	return typ->typlen;
 }
 
 /* given type (as type struct), return the value of its 'byval' attribute.*/
 bool
 typeByVal(Type t)
 {
-	TypeTupleForm typ;
+	Form_pg_type typ;
 
-	typ = (TypeTupleForm) GETSTRUCT(t);
-	return (typ->typbyval);
+	typ = (Form_pg_type) GETSTRUCT(t);
+	return typ->typbyval;
 }
 
 /* given type (as type struct), return the name of type */
 char *
 typeTypeName(Type t)
 {
-	TypeTupleForm typ;
+	Form_pg_type typ;
 
-	typ = (TypeTupleForm) GETSTRUCT(t);
+	typ = (Form_pg_type) GETSTRUCT(t);
 	return (typ->typname).data;
 }
 
@@ -133,10 +133,10 @@ typeTypeName(Type t)
 char
 typeTypeFlag(Type t)
 {
-	TypeTupleForm typ;
+	Form_pg_type typ;
 
-	typ = (TypeTupleForm) GETSTRUCT(t);
-	return (typ->typtype);
+	typ = (Form_pg_type) GETSTRUCT(t);
+	return typ->typtype;
 }
 
 /* Given a type structure and a string, returns the internal form of
@@ -147,10 +147,10 @@ stringTypeString(Type tp, char *string, int32 atttypmod)
 	Oid			op;
 	Oid			typelem;
 
-	op = ((TypeTupleForm) GETSTRUCT(tp))->typinput;
-	typelem = ((TypeTupleForm) GETSTRUCT(tp))->typelem; /* XXX - used for
+	op = ((Form_pg_type) GETSTRUCT(tp))->typinput;
+	typelem = ((Form_pg_type) GETSTRUCT(tp))->typelem; /* XXX - used for
 														 * array_in */
-	return ((char *) fmgr(op, string, typelem, atttypmod));
+	return (char *) fmgr(op, string, typelem, atttypmod);
 }
 
 /* Given a type id, returns the out-conversion function of the type */
@@ -158,7 +158,7 @@ Oid
 typeidOutfunc(Oid type_id)
 {
 	HeapTuple	typeTuple;
-	TypeTupleForm type;
+	Form_pg_type type;
 	Oid			outfunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
@@ -167,16 +167,16 @@ typeidOutfunc(Oid type_id)
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "typeidOutfunc: Invalid type - oid = %u", type_id);
 
-	type = (TypeTupleForm) GETSTRUCT(typeTuple);
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	outfunc = type->typoutput;
-	return (outfunc);
+	return outfunc;
 }
 
 Oid
 typeidTypeRelid(Oid type_id)
 {
 	HeapTuple	typeTuple;
-	TypeTupleForm type;
+	Form_pg_type type;
 	Oid			infunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
@@ -185,34 +185,34 @@ typeidTypeRelid(Oid type_id)
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "typeidTypeRelid: Invalid type - oid = %u", type_id);
 
-	type = (TypeTupleForm) GETSTRUCT(typeTuple);
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	infunc = type->typrelid;
-	return (infunc);
+	return infunc;
 }
 
 Oid
 typeTypeRelid(Type typ)
 {
-	TypeTupleForm typtup;
+	Form_pg_type typtup;
 
-	typtup = (TypeTupleForm) GETSTRUCT(typ);
+	typtup = (Form_pg_type) GETSTRUCT(typ);
 
-	return (typtup->typrelid);
+	return typtup->typrelid;
 }
 
 Oid
 typeidTypElem(Oid type_id)
 {
 	HeapTuple	typeTuple;
-	TypeTupleForm type;
+	Form_pg_type type;
 
 	if (!(typeTuple = SearchSysCacheTuple(TYPOID,
 										  ObjectIdGetDatum(type_id),
 										  0, 0, 0)))
 		elog(ERROR, "type id lookup of %u failed", type_id);
-	type = (TypeTupleForm) GETSTRUCT(typeTuple);
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
 
-	return (type->typelem);
+	return type->typelem;
 }
 
 /* Given the attribute type of an array return the arrtribute type of
@@ -222,7 +222,7 @@ Oid
 GetArrayElementType(Oid typearray)
 {
 	HeapTuple	type_tuple;
-	TypeTupleForm type_struct_array;
+	Form_pg_type type_struct_array;
 
 	type_tuple = SearchSysCacheTuple(TYPOID,
 									 ObjectIdGetDatum(typearray),
@@ -233,7 +233,7 @@ GetArrayElementType(Oid typearray)
 			 typearray);
 
 	/* get the array type struct from the type tuple */
-	type_struct_array = (TypeTupleForm) GETSTRUCT(type_tuple);
+	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple);
 
 	if (type_struct_array->typelem == InvalidOid)
 	{
@@ -241,7 +241,7 @@ GetArrayElementType(Oid typearray)
 			 type_struct_array->typname);
 	}
 
-	return (type_struct_array->typelem);
+	return type_struct_array->typelem;
 }
 
 /* Given a type id, returns the in-conversion function of the type */
@@ -249,7 +249,7 @@ Oid
 typeidInfunc(Oid type_id)
 {
 	HeapTuple	typeTuple;
-	TypeTupleForm type;
+	Form_pg_type type;
 	Oid			infunc;
 
 	typeTuple = SearchSysCacheTuple(TYPOID,
@@ -258,7 +258,7 @@ typeidInfunc(Oid type_id)
 	if (!HeapTupleIsValid(typeTuple))
 		elog(ERROR, "typeidInfunc: Invalid type - oid = %u", type_id);
 
-	type = (TypeTupleForm) GETSTRUCT(typeTuple);
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
 	infunc = type->typinput;
-	return (infunc);
+	return infunc;
 }

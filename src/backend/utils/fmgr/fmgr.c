@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.18 1998/08/19 02:03:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.19 1998/09/01 03:26:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ fmgr_c(FmgrInfo *finfo,
 				 finfo->fn_oid, n_arguments, MAXFMGRARGS);
 			break;
 	}
-	return (returnValue);
+	return returnValue;
 }
 
 void
@@ -283,7 +283,7 @@ fmgr(Oid procedureId,...)
 	va_end(pvar);
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
-	return (fmgr_c(&finfo, &values, &isNull));
+	return fmgr_c(&finfo, &values, &isNull);
 }
 
 /*
@@ -323,7 +323,7 @@ fmgr_ptr(FmgrInfo *finfo,...)
 	va_end(pvar);
 
 	/* XXX see WAY_COOL_ORTHOGONAL_FUNCTIONS */
-	return (fmgr_c(&local_finfo, &values, &isNull));
+	return fmgr_c(&local_finfo, &values, &isNull);
 }
 
 #endif

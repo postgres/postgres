@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.21 1998/08/10 04:49:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.22 1998/09/01 03:23:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -280,7 +280,7 @@ print_joinclauses(Query *root, List *clauses)
 
 	foreach(l, clauses)
 	{
-		CInfo	   *c = lfirst(l);
+		ClauseInfo	   *c = lfirst(l);
 
 		print_expr((Node *) c->clause, root->rtable);
 		if (lnext(l))

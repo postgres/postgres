@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.30 1998/08/27 05:06:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.31 1998/09/01 03:20:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,8 +38,8 @@
  */
 IndexTuple
 index_formtuple(TupleDesc tupleDescriptor,
-				Datum value[],
-				char null[])
+				Datum *value,
+				char *null)
 {
 	char	   *tp;				/* tuple pointer */
 	IndexTuple	tuple;			/* return tuple */
@@ -107,7 +107,7 @@ index_formtuple(TupleDesc tupleDescriptor,
 	 * ----------------
 	 */
 	tuple->t_info = infomask;
-	return (tuple);
+	return tuple;
 }
 
 /* ----------------
@@ -139,7 +139,7 @@ nocache_index_getattr(IndexTuple tup,
 	char	   *bp = NULL;		/* ptr to att in tuple */
 	int			slow;			/* do we have to walk nulls? */
 	int			data_off;		/* tuple data offset */
-	AttributeTupleForm *att = tupleDesc->attrs;
+	Form_pg_attribute *att = tupleDesc->attrs;
 
 	/* ----------------
 	 *	sanity checks
@@ -256,7 +256,7 @@ nocache_index_getattr(IndexTuple tup,
 									tp + att[attnum]->attcacheoff);
 		}
 		else if (attnum == 0)
-			return ((Datum) fetchatt(&(att[0]), (char *) tp));
+			return (Datum) fetchatt(&(att[0]), (char *) tp);
 		else if (!IndexTupleAllFixed(tup))
 		{
 			int			j = 0;
@@ -461,7 +461,7 @@ FormRetrieveIndexResult(ItemPointer indexItemPointer,
 	result->index_iptr = *indexItemPointer;
 	result->heap_iptr = *heapItemPointer;
 
-	return (result);
+	return result;
 }
 
 /*

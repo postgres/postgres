@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.32 1998/08/19 02:01:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.33 1998/09/01 03:21:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,12 +258,12 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		}
 		if (relation->rd_rel->relkind == 'S')
 			elog(ERROR, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
-		tupleDesc = RelationGetTupleDescriptor(relation);
+		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
 
 		for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--)
 		{
-			AttributeTupleForm attribute = tupleDesc->attrs[attrno];
+			Form_pg_attribute attribute = tupleDesc->attrs[attrno];
 			char	   *attributeName;
 			char	   *attributeType;
 			HeapTuple	tuple;
@@ -280,7 +280,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 									0, 0, 0);
 			AssertState(HeapTupleIsValid(tuple));
 			attributeType =
-				(((TypeTupleForm) GETSTRUCT(tuple))->typname).data;
+				(((Form_pg_type) GETSTRUCT(tuple))->typname).data;
 
 			/*
 			 * check validity
@@ -363,7 +363,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 	 */
 	schema = nconc(inhSchema, schema);
 	*supconstr = constraints;
-	return (schema);
+	return schema;
 }
 
 /*
@@ -394,7 +394,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	 * ----------------
 	 */
 	relation = heap_openr(InheritsRelationName);
-	desc = RelationGetTupleDescriptor(relation);
+	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
 	idList = NIL;
@@ -469,7 +469,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 				break;
 
 			lnext(current) =
-				lconsi(((InheritsTupleForm)
+				lconsi(((Form_pg_inherits)
 						GETSTRUCT(tuple))->inhparent,
 					   NIL);
 
@@ -519,7 +519,7 @@ again:
 	 * ----------------
 	 */
 	relation = heap_openr(InheritancePrecidenceListRelationName);
-	desc = RelationGetTupleDescriptor(relation);
+	desc = RelationGetDescr(relation);
 
 	seqNumber = 1;
 

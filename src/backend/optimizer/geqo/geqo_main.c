@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_main.c,v 1.9 1998/08/10 02:26:17 momjian Exp $
+ * $Id: geqo_main.c,v 1.10 1998/09/01 03:23:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,5 +284,5 @@ print_plan(best_plan, root);
 
 	free_pool(pool);
 
-	return (best_rel);
+	return best_rel;
 }

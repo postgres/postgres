@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.23 1998/08/04 16:44:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.24 1998/09/01 03:23:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ cost_seqscan(int relid, int relpages, int reltuples)
 		temp += _cpu_page_wight_ * reltuples;
 	}
 	Assert(temp >= 0);
-	return (temp);
+	return temp;
 }
 
 
@@ -152,7 +152,7 @@ cost_index(Oid indexid,
 	temp = temp + (_cpu_page_wight_ * selec * reltuples);
 
 	Assert(temp >= 0);
-	return (temp);
+	return temp;
 }
 
 /*
@@ -186,7 +186,7 @@ cost_sort(List *keys, int tuples, int width, bool noread)
 	if (tuples == 0 || keys == NULL)
 	{
 		Assert(temp >= 0);
-		return (temp);
+		return temp;
 	}
 	temp += pages * base_log((double) pages, (double) 2.0);
 
@@ -201,7 +201,7 @@ cost_sort(List *keys, int tuples, int width, bool noread)
 		temp = temp + cost_seqscan(_TEMP_RELATION_ID_, npages, tuples);
 	Assert(temp >= 0);
 
-	return (temp);
+	return temp;
 }
 
 
@@ -222,7 +222,7 @@ cost_result(int tuples, int width)
 	temp = temp + page_size(tuples, width);
 	temp = temp + _cpu_page_wight_ * tuples;
 	Assert(temp >= 0);
-	return (temp);
+	return temp;
 }
 
 #endif
@@ -255,7 +255,7 @@ cost_nestloop(Cost outercost,
 	temp += outertuples * innercost;
 	Assert(temp >= 0);
 
-	return (temp);
+	return temp;
 }
 
 /*
@@ -294,7 +294,7 @@ cost_mergejoin(Cost outercost,
 	temp += _cpu_page_wight_ * (outersize + innersize);
 	Assert(temp >= 0);
 
-	return (temp);
+	return temp;
 }
 
 /*
@@ -346,7 +346,7 @@ cost_hashjoin(Cost outercost,
 	temp += _cpu_page_wight_ * (outersize + nrun * innersize);
 	Assert(temp >= 0);
 
-	return (temp);
+	return temp;
 }
 
 /*
@@ -373,7 +373,7 @@ compute_rel_size(RelOptInfo *rel)
 		temp1 = ceil((double) temp);
 	Assert(temp1 >= 0);
 	Assert(temp1 <= MAXINT);
-	return (temp1);
+	return temp1;
 }
 
 /*
@@ -385,7 +385,7 @@ compute_rel_size(RelOptInfo *rel)
 int
 compute_rel_width(RelOptInfo *rel)
 {
-	return (compute_targetlist_width(get_actual_tlist(rel->targetlist)));
+	return compute_targetlist_width(get_actual_tlist(rel->targetlist));
 }
 
 /*
@@ -405,7 +405,7 @@ compute_targetlist_width(List *targetlist)
 		tuple_width = tuple_width +
 			compute_attribute_width(lfirst(temp_tl));
 	}
-	return (tuple_width);
+	return tuple_width;
 }
 
 /*
@@ -423,9 +423,9 @@ compute_attribute_width(TargetEntry *tlistentry)
 	int			width = get_typlen(tlistentry->resdom->restype);
 
 	if (width < 0)
-		return (_DEFAULT_ATTRIBUTE_WIDTH_);
+		return _DEFAULT_ATTRIBUTE_WIDTH_;
 	else
-		return (width);
+		return width;
 }
 
 /*
@@ -457,7 +457,7 @@ compute_joinrel_size(JoinPath *joinpath)
 	}
 	Assert(temp1 >= 0);
 
-	return (temp1);
+	return temp1;
 }
 
 /*
@@ -473,11 +473,11 @@ page_size(int tuples, int width)
 	temp = ceil((double) (tuples * (width + sizeof(HeapTupleData)))
 				/ BLCKSZ);
 	Assert(temp >= 0);
-	return (temp);
+	return temp;
 }
 
 static double
 base_log(double x, double b)
 {
-	return (log(x) / log(b));
+	return log(x) / log(b);
 }

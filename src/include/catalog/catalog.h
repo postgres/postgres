@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.4 1997/09/08 02:34:39 momjian Exp $
+ * $Id: catalog.h,v 1.5 1998/09/01 03:27:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 #include <access/tupdesc.h>
 
-extern char *relpath(char relname[]);
+extern char *relpath(char *relname);
 extern bool IsSystemRelationName(char *relname);
 extern bool IsSharedSystemRelationName(char *relname);
 extern Oid	newoid(void);

@@ -47,7 +47,7 @@ sigaddset(int *set, int signo)
 int
 sigemptyset(int *set)
 {
-	return (*set = 0);
+	return *set = 0;
 }
 
 char *

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.26 1998/08/10 04:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.27 1998/09/01 03:23:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,7 +112,7 @@ query_planner(Query *root,
 										  (Plan *) NULL));
 		}
 		else
-			return ((Plan *) NULL);
+			return (Plan *) NULL;
 	}
 
 	/*
@@ -167,12 +167,12 @@ query_planner(Query *root,
 													 (Plan *) scan));
 					}
 					else
-						return ((Plan *) scan);
+						return (Plan *) scan;
 				}
 				break;
 
 			default:
-				return ((Plan *) NULL);
+				return (Plan *) NULL;
 		}
 	}
 
@@ -312,11 +312,11 @@ subplanner(Query *root,
 	 * it.
 	 */
 	if (final_rel)
-		return (create_plan((Path *) final_rel->cheapestpath));
+		return create_plan((Path *) final_rel->cheapestpath);
 	else
 	{
 		elog(NOTICE, "final relation is nil");
-		return (create_plan((Path *) NULL));
+		return create_plan((Path *) NULL);
 	}
 
 }
@@ -344,7 +344,7 @@ make_result(List *tlist,
 	node->resconstantqual = resconstantqual;
 	node->resstate = NULL;
 
-	return (node);
+	return node;
 }
 
 /*****************************************************************************

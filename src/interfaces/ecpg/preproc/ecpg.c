@@ -76,10 +76,10 @@ main(int argc, char *const argv[])
 				for (ip = include_paths; ip != NULL; ip = ip->next)
 					fprintf(stderr, " %s\n", ip->path);
 				fprintf(stderr, "End of search list.\n");
-				return (OK);
+				return OK;
 			default:
 				usage(argv[0]);
-				return (ILLEGAL_OPTION);
+				return ILLEGAL_OPTION;
 		}
 	}
 
@@ -193,5 +193,5 @@ main(int argc, char *const argv[])
 			free(input_filename);
 		}
 	}
-	return (OK);
+	return OK;
 }

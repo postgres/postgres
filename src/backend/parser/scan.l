@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.42 1998/08/29 05:27:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.43 1998/09/01 03:24:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ other			.
 					yylval.ival = strtol((char *)literal,&endptr,2);
 					if (*endptr != '\0' || errno == ERANGE)
 						elog(ERROR,"Bad binary integer input '%s'",literal);
-					return (ICONST);
+					return ICONST;
 				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
@@ -227,7 +227,7 @@ other			.
 					yylval.ival = strtol((char *)literal,&endptr,16);
 					if (*endptr != '\0' || errno == ERANGE)
 						elog(ERROR,"Bad hexadecimal integer input '%s'",literal);
-					return (ICONST);
+					return ICONST;
 				}
 
 {xqstart}		{
@@ -238,7 +238,7 @@ other			.
 <xq>{xqstop}	{
 					BEGIN(INITIAL);
 					yylval.str = pstrdup(scanstr(literal));
-					return (SCONST);
+					return SCONST;
 				}
 <xq>{xqdouble}	|
 <xq>{xqinside}	{
@@ -273,7 +273,7 @@ other			.
 <xd>{xdstop}	{
 					BEGIN(INITIAL);
 					yylval.str = pstrdup(literal);
-					return (IDENT);
+					return IDENT;
 				}
 <xd>{xdinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
@@ -286,7 +286,7 @@ other			.
 <xm>{space}*	{ /* ignore */ }
 <xm>{xmstop}	{
 					BEGIN(INITIAL);
-					return (yytext[0]);
+					return yytext[0];
 				}
 
 
@@ -294,23 +294,24 @@ other			.
 
 {self}/{space}*-[\.0-9]	{
 					BEGIN(xm);
-					return (yytext[0]);
+					return yytext[0];
 				}
-{self}			{ 	return (yytext[0]); }
+{self}			{ 	return yytext[0]; }
+{self}			{ 	return yytext[0]; }
 {operator}/-[\.0-9]	{
 					yylval.str = pstrdup((char*)yytext);
-					return (Op);
+					return Op;
 				}
 {operator}		{
 					if (strcmp((char*)yytext,"!=") == 0)
 						yylval.str = pstrdup("<>"); /* compatability */
 					else
 						yylval.str = pstrdup((char*)yytext);
-					return (Op);
+					return Op;
 				}
 {param}			{
 					yylval.ival = atoi((char*)&yytext[1]);
-					return (PARAM);
+					return PARAM;
 				}
 
 
@@ -328,12 +329,12 @@ other			.
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
-						return (keyword->value);
+						return keyword->value;
 					}
 					else
 					{
 						yylval.str = pstrdup((char*)yytext);
-						return (IDENT);
+						return IDENT;
 					}
 				}
 {integer}/{space}*-{number}	{
@@ -350,9 +351,9 @@ other			.
 							elog(ERROR,"Bad integer input '%s'",yytext);
 						CheckFloat8Val(yylval.dval);
 						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
-						return (FCONST);
+						return FCONST;
 					}
-					return (ICONST);
+					return ICONST;
 				}
 {real}/{space}*-{number} {
 					char* endptr;
@@ -363,7 +364,7 @@ other			.
 					if (*endptr != '\0' || errno == ERANGE)
 						elog(ERROR,"Bad float8 input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
-					return (FCONST);
+					return FCONST;
 				}
 {integer}		{
 					char* endptr;
@@ -378,9 +379,9 @@ other			.
 							elog(ERROR,"Bad integer input '%s'",yytext);
 						CheckFloat8Val(yylval.dval);
 						elog(NOTICE,"Integer input '%s' is out of range; promoted to float", yytext);
-						return (FCONST);
+						return FCONST;
 					}
-					return (ICONST);
+					return ICONST;
 				}
 {real}			{
 					char* endptr;
@@ -390,7 +391,7 @@ other			.
 					if (*endptr != '\0' || errno == ERANGE)
 						elog(ERROR,"Bad float input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
-					return (FCONST);
+					return FCONST;
 				}
 
 
@@ -407,17 +408,17 @@ other			.
 
 					keyword = ScanKeywordLookup((char*)yytext);
 					if (keyword != NULL) {
-						return (keyword->value);
+						return keyword->value;
 					}
 					else
 					{
 						yylval.str = pstrdup((char*)yytext);
-						return (IDENT);
+						return IDENT;
 					}
 				}
 {space}			{ /* ignore */ }
 
-{other}			{ return (yytext[0]); }
+{other}			{ return yytext[0]; }
 
 %%
 

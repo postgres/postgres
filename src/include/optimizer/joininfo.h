@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: joininfo.h,v 1.6 1998/07/18 04:22:51 momjian Exp $
+ * $Id: joininfo.h,v 1.7 1998/09/01 03:28:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 #include "nodes/relation.h"
 #include "nodes/primnodes.h"
 
-extern JInfo *joininfo_member(List *join_relids, List *joininfo_list);
-extern JInfo *find_joininfo_node(RelOptInfo *this_rel, List *join_relids);
+extern JoinInfo *joininfo_member(List *join_relids, List *joininfo_list);
+extern JoinInfo *find_joininfo_node(RelOptInfo *this_rel, List *join_relids);
 extern Var *other_join_clause_var(Var *var, Expr *clause);
 
 #endif							/* JOININFO_H */

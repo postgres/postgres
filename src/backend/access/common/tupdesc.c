@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.42 1998/08/19 02:00:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.43 1998/09/01 03:20:46 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -57,25 +57,25 @@ CreateTemplateTupleDesc(int natts)
 	 *	is filled with NULL pointers.
 	 * ----------------
 	 */
-	size = natts * sizeof(AttributeTupleForm);
+	size = natts * sizeof(Form_pg_attribute);
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
-	desc->attrs = (AttributeTupleForm *) palloc(size);
+	desc->attrs = (Form_pg_attribute *) palloc(size);
 	desc->constr = NULL;
 	MemSet(desc->attrs, 0, size);
 
 	desc->natts = natts;
 
-	return (desc);
+	return desc;
 }
 
 /* ----------------------------------------------------------------
  *		CreateTupleDesc
  *
- *		This function allocates a new TupleDesc from AttributeTupleForm array
+ *		This function allocates a new TupleDesc from Form_pg_attribute array
  * ----------------------------------------------------------------
  */
 TupleDesc
-CreateTupleDesc(int natts, AttributeTupleForm *attrs)
+CreateTupleDesc(int natts, Form_pg_attribute *attrs)
 {
 	TupleDesc	desc;
 
@@ -90,7 +90,7 @@ CreateTupleDesc(int natts, AttributeTupleForm *attrs)
 	desc->natts = natts;
 	desc->constr = NULL;
 
-	return (desc);
+	return desc;
 }
 
 /* ----------------------------------------------------------------
@@ -111,12 +111,12 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
-	size = desc->natts * sizeof(AttributeTupleForm);
-	desc->attrs = (AttributeTupleForm *) palloc(size);
+	size = desc->natts * sizeof(Form_pg_attribute);
+	desc->attrs = (Form_pg_attribute *) palloc(size);
 	for (i = 0; i < desc->natts; i++)
 	{
 		desc->attrs[i] =
-			(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memmove(desc->attrs[i],
 				tupdesc->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
@@ -146,12 +146,12 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 
 	desc = (TupleDesc) palloc(sizeof(struct tupleDesc));
 	desc->natts = tupdesc->natts;
-	size = desc->natts * sizeof(AttributeTupleForm);
-	desc->attrs = (AttributeTupleForm *) palloc(size);
+	size = desc->natts * sizeof(Form_pg_attribute);
+	desc->attrs = (Form_pg_attribute *) palloc(size);
 	for (i = 0; i < desc->natts; i++)
 	{
 		desc->attrs[i] =
-			(AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+			(Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memmove(desc->attrs[i],
 				tupdesc->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
@@ -260,8 +260,8 @@ TupleDescInitEntry(TupleDesc desc,
 				   bool attisset)
 {
 	HeapTuple	tuple;
-	TypeTupleForm typeForm;
-	AttributeTupleForm att;
+	Form_pg_type typeForm;
+	Form_pg_attribute att;
 
 	/* ----------------
 	 *	sanity checks
@@ -284,7 +284,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 * ----------------
 	 */
 
-	att = (AttributeTupleForm) palloc(ATTRIBUTE_TUPLE_SIZE);
+	att = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	desc->attrs[attributeNumber - 1] = att;
 
 	/* ----------------
@@ -349,7 +349,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 *	information from the type tuple we found..
 	 * ----------------
 	 */
-	typeForm = (TypeTupleForm) GETSTRUCT(tuple);
+	typeForm = (Form_pg_type) GETSTRUCT(tuple);
 
 	att->atttypid = tuple->t_oid;
 	att->attalign = typeForm->typalign;
@@ -412,7 +412,7 @@ TupleDescMakeSelfReference(TupleDesc desc,
 						   AttrNumber attnum,
 						   char *relname)
 {
-	AttributeTupleForm att;
+	Form_pg_attribute att;
 	Type		t = typeidType(OIDOID);
 
 	att = desc->attrs[attnum - 1];

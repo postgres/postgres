@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.19 1998/08/19 02:02:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.20 1998/09/01 03:24:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ make_parsestate(ParseState *parentParseState)
 	pstate->p_last_resno = 1;
 	pstate->parentParseState = parentParseState;
 
-	return (pstate);
+	return pstate;
 }
 
 
@@ -134,7 +134,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	Oid			ltypeId,
 				rtypeId;
 	Operator	tup;
-	OperatorTupleForm opform;
+	Form_pg_operator opform;
 	Oper	   *newop;
 	Node	   *left,
 			   *right;
@@ -145,7 +145,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 	{
 		ltypeId = (ltree == NULL) ? UNKNOWNOID : exprType(ltree);
 		tup = right_oper(opname, ltypeId);
-		opform = (OperatorTupleForm) GETSTRUCT(tup);
+		opform = (Form_pg_operator) GETSTRUCT(tup);
 		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
 		right = NULL;
 
@@ -159,7 +159,7 @@ make_op(char *opname, Node *ltree, Node *rtree)
 #ifdef PARSEDEBUG
 printf("make_op: returned from left_oper() with structure at %p\n", (void *)tup);
 #endif
-		opform = (OperatorTupleForm) GETSTRUCT(tup);
+		opform = (Form_pg_operator) GETSTRUCT(tup);
 #ifdef PARSEDEBUG
 printf("make_op: calling make_operand()\n");
 #endif
@@ -187,7 +187,7 @@ printf("make_op: calling make_operand()\n");
 			/* Won't return from oper_inexact() without a candidate... */
 		}
 
-		opform = (OperatorTupleForm) GETSTRUCT(tup);
+		opform = (Form_pg_operator) GETSTRUCT(tup);
 		left = make_operand(opname, ltree, ltypeId, opform->oprleft);
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 	}
@@ -258,7 +258,7 @@ make_array_ref(Node *expr,
 {
 	Oid			typearray;
 	HeapTuple	type_tuple;
-	TypeTupleForm type_struct_array,
+	Form_pg_type type_struct_array,
 				type_struct_element;
 	ArrayRef   *aref;
 	Oid			reftype;
@@ -276,7 +276,7 @@ make_array_ref(Node *expr,
 			 typearray);
 
 	/* get the array type struct from the type tuple */
-	type_struct_array = (TypeTupleForm) GETSTRUCT(type_tuple);
+	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple);
 
 	if (type_struct_array->typelem == InvalidOid)
 		elog(ERROR, "make_array_ref: type %s is not an array",
@@ -290,7 +290,7 @@ make_array_ref(Node *expr,
 		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
 			 typearray);
 
-	type_struct_element = (TypeTupleForm) GETSTRUCT(type_tuple);
+	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple);
 
 	while (indirection != NIL)
 	{
@@ -342,8 +342,8 @@ make_array_set(Expr *target_expr,
 {
 	Oid			typearray;
 	HeapTuple	type_tuple;
-	TypeTupleForm type_struct_array;
-	TypeTupleForm type_struct_element;
+	Form_pg_type type_struct_array;
+	Form_pg_type type_struct_element;
 	ArrayRef   *aref;
 	Oid			reftype;
 
@@ -358,7 +358,7 @@ make_array_set(Expr *target_expr,
 			 typearray);
 
 	/* get the array type struct from the type tuple */
-	type_struct_array = (TypeTupleForm) GETSTRUCT(type_tuple);
+	type_struct_array = (Form_pg_type) GETSTRUCT(type_tuple);
 
 	if (type_struct_array->typelem == InvalidOid)
 		elog(ERROR, "make_array_ref: type %s is not an array",
@@ -372,7 +372,7 @@ make_array_set(Expr *target_expr,
 		elog(ERROR, "make_array_ref: Cache lookup failed for type %d\n",
 			 typearray);
 
-	type_struct_element = (TypeTupleForm) GETSTRUCT(type_tuple);
+	type_struct_element = (Form_pg_type) GETSTRUCT(type_tuple);
 
 	aref = makeNode(ArrayRef);
 	aref->refattrlength = type_struct_array->typlen;
@@ -461,5 +461,5 @@ make_const(Value *value)
 					false,		/* not a set */
 					false);
 
-	return (con);
+	return con;
 }

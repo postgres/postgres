@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.10 1998/08/19 02:01:02 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.11 1998/09/01 03:20:54 momjian Exp $
  *
  * NOTES
  *	  These functions are stored in pg_amproc.	For each operator class
@@ -23,13 +23,13 @@
 uint32
 hashint2(int16 key)
 {
-	return ((uint32) ~key);
+	return (uint32) ~key;
 }
 
 uint32
 hashint4(uint32 key)
 {
-	return (~key);
+	return ~key;
 }
 
 /* Hash function from Chris Torek. */
@@ -76,7 +76,7 @@ hashfloat4(float32 keyp)
 				} while (--loop);
 		}
 	}
-	return (h);
+	return h;
 }
 
 
@@ -123,18 +123,18 @@ hashfloat8(float64 keyp)
 				} while (--loop);
 		}
 	}
-	return (h);
+	return h;
 }
 
 
 uint32
 hashoid(Oid key)
 {
-	return ((uint32) ~key);
+	return (uint32) ~key;
 }
 
 uint32
-hashoid8(Oid key[])
+hashoid8(Oid *key)
 {
 	int i;
 	uint32 result = 0;
@@ -160,7 +160,7 @@ hashchar(char key)
 	h = h * PRIME1 ^ (key - ' ');
 	h %= PRIME2;
 
-	return (h);
+	return h;
 }
 
 
@@ -180,7 +180,7 @@ hashname(NameData *n)
 		h = h * PRIME1 ^ (*key++ - ' ');
 	h %= PRIME2;
 
-	return (h);
+	return h;
 }
 
 
@@ -240,5 +240,5 @@ hashtext(struct varlena * key)
 				} while (--loop);
 		}
 	}
-	return (n);
+	return n;
 }

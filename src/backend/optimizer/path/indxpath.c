@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.32 1998/08/31 07:19:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.33 1998/09/01 03:23:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,9 @@ group_clauses_by_indexkey(RelOptInfo *rel, RelOptInfo *index,
 static List *
 group_clauses_by_ikey_for_joins(RelOptInfo *rel, RelOptInfo *index,
 								int *indexkeys, Oid *classes, List *join_cinfo_list, List *restr_cinfo_list);
-static CInfo *
+static ClauseInfo *
 match_clause_to_indexkey(RelOptInfo *rel, RelOptInfo *index, int indexkey,
-						 int xclass, CInfo *clauseInfo, bool join);
+						 int xclass, ClauseInfo *clauseInfo, bool join);
 static bool
 pred_test(List *predicate_list, List *clauseinfo_list,
 		  List *joininfo_list);
@@ -231,12 +231,12 @@ match_index_orclauses(RelOptInfo *rel,
 					  int xclass,
 					  List *clauseinfo_list)
 {
-	CInfo	   *clauseinfo = (CInfo *) NULL;
+	ClauseInfo	   *clauseinfo = (ClauseInfo *) NULL;
 	List	   *i = NIL;
 
 	foreach(i, clauseinfo_list)
 	{
-		clauseinfo = (CInfo *) lfirst(i);
+		clauseinfo = (ClauseInfo *) lfirst(i);
 		if (valid_or_clause(clauseinfo))
 		{
 
@@ -350,7 +350,7 @@ match_index_orclause(RelOptInfo *rel,
 
 		matching_indices = lnext(matching_indices);
 	}
-	return (index_list);
+	return index_list;
 
 }
 
@@ -403,7 +403,7 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 						  List *clauseinfo_list)
 {
 	List	   *curCinfo = NIL;
-	CInfo	   *matched_clause = (CInfo *) NULL;
+	ClauseInfo	   *matched_clause = (ClauseInfo *) NULL;
 	List	   *clausegroup = NIL;
 	int			curIndxKey;
 	Oid			curClass;
@@ -420,7 +420,7 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 
 		foreach(curCinfo, clauseinfo_list)
 		{
-			CInfo	   *temp = (CInfo *) lfirst(curCinfo);
+			ClauseInfo	   *temp = (ClauseInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -446,7 +446,7 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 	/* clausegroup holds all matched clauses ordered by indexkeys */
 
 	if (clausegroup != NIL)
-		return (lcons(clausegroup, NIL));
+		return lcons(clausegroup, NIL);
 	return NIL;
 }
 
@@ -466,7 +466,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 								List *restr_cinfo_list)
 {
 	List	   *curCinfo = NIL;
-	CInfo	   *matched_clause = (CInfo *) NULL;
+	ClauseInfo	   *matched_clause = (ClauseInfo *) NULL;
 	List	   *clausegroup = NIL;
 	int			curIndxKey;
 	Oid			curClass;
@@ -484,7 +484,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 
 		foreach(curCinfo, join_cinfo_list)
 		{
-			CInfo	   *temp = (CInfo *) lfirst(curCinfo);
+			ClauseInfo	   *temp = (ClauseInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -500,7 +500,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 		}
 		foreach(curCinfo, restr_cinfo_list)
 		{
-			CInfo	   *temp = (CInfo *) lfirst(curCinfo);
+			ClauseInfo	   *temp = (ClauseInfo *) lfirst(curCinfo);
 
 			matched_clause = match_clause_to_indexkey(rel,
 													  index,
@@ -537,7 +537,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
 			freeList(clausegroup);
 			return NIL;
 		}
-		return (lcons(clausegroup, NIL));
+		return lcons(clausegroup, NIL);
 	}
 	return NIL;
 }
@@ -579,12 +579,12 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  * NOTE:  returns nil if clause is an or_clause.
  *
  */
-static CInfo *
+static ClauseInfo *
 match_clause_to_indexkey(RelOptInfo *rel,
 						 RelOptInfo *index,
 						 int indexkey,
 						 int xclass,
-						 CInfo *clauseInfo,
+						 ClauseInfo *clauseInfo,
 						 bool join)
 {
 	Expr	   *clause = clauseInfo->clause;
@@ -596,7 +596,7 @@ match_clause_to_indexkey(RelOptInfo *rel,
 
 	if (or_clause((Node *) clause) ||
 		not_clause((Node *) clause) || single_node((Node *) clause))
-		return ((CInfo *) NULL);
+		return (ClauseInfo *) NULL;
 
 	leftop = get_leftop(clause);
 	rightop = get_rightop(clause);
@@ -771,9 +771,9 @@ match_clause_to_indexkey(RelOptInfo *rel,
 	}
 
 	if (isIndexable)
-		return (clauseInfo);
+		return clauseInfo;
 
-	return (NULL);
+	return NULL;
 }
 
 /****************************************************************************
@@ -848,13 +848,13 @@ pred_test(List *predicate_list, List *clauseinfo_list, List *joininfo_list)
 static bool
 one_pred_test(Expr *predicate, List *clauseinfo_list)
 {
-	CInfo	   *clauseinfo;
+	ClauseInfo	   *clauseinfo;
 	List	   *item;
 
 	Assert(predicate != NULL);
 	foreach(item, clauseinfo_list)
 	{
-		clauseinfo = (CInfo *) lfirst(item);
+		clauseinfo = (ClauseInfo *) lfirst(item);
 		/* if any clause implies the predicate, return true */
 		if (one_pred_clause_expr_test(predicate, (Node *) clauseinfo->clause))
 			return true;
@@ -1187,7 +1187,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
  *
  * Returns a list of these clause groups.
  *
- *	  Added: clauseinfo_list - list of restriction CInfos. It's to
+ *	  Added: clauseinfo_list - list of restriction ClauseInfos. It's to
  *		support multi-column indices in joins and for cases
  *		when a key is in both join & restriction clauses. - vadim 03/18/97
  *
@@ -1196,14 +1196,14 @@ static List *
 indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 					  List *joininfo_list, List *clauseinfo_list)
 {
-	JInfo	   *joininfo = (JInfo *) NULL;
+	JoinInfo	   *joininfo = (JoinInfo *) NULL;
 	List	   *cg_list = NIL;
 	List	   *i = NIL;
 	List	   *clausegroups = NIL;
 
 	foreach(i, joininfo_list)
 	{
-		joininfo = (JInfo *) lfirst(i);
+		joininfo = (JoinInfo *) lfirst(i);
 
 		if (joininfo->jinfoclauseinfo == NIL)
 			continue;
@@ -1219,12 +1219,12 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 		{
 			List	   *clauses = lfirst(clausegroups);
 
-			((CInfo *) lfirst(clauses))->cinfojoinid =
+			((ClauseInfo *) lfirst(clauses))->cinfojoinid =
 				joininfo->otherrels;
 		}
 		cg_list = nconc(cg_list, clausegroups);
 	}
-	return (cg_list);
+	return cg_list;
 }
 
 /****************************************************************************
@@ -1245,7 +1245,7 @@ extract_restrict_clauses(List *clausegroup)
 
 	foreach(l, clausegroup)
 	{
-		CInfo	   *cinfo = lfirst(l);
+		ClauseInfo	   *cinfo = lfirst(l);
 
 		if (!is_joinable((Node *) cinfo->clause))
 			restrict_cls = lappend(restrict_cls, cinfo);
@@ -1305,7 +1305,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->indexkeys = index->indexkeys;
 		pathnode->indexqual = clausegroup;
 
-		pathnode->path.joinid = ((CInfo *) lfirst(clausegroup))->cinfojoinid;
+		pathnode->path.joinid = ((ClauseInfo *) lfirst(clausegroup))->cinfojoinid;
 
 		pathnode->path.path_cost =
 			cost_index((Oid) lfirsti(index->relids),
@@ -1335,7 +1335,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 #endif
 		cg_list = lappend(cg_list, pathnode);
 	}
-	return (cg_list);
+	return cg_list;
 }
 
 /*
@@ -1367,7 +1367,7 @@ create_index_paths(Query *root,
 
 	foreach(i, clausegroup_list)
 	{
-		CInfo	   *clauseinfo;
+		ClauseInfo	   *clauseinfo;
 		List	   *temp_node = NIL;
 		bool		temp = true;
 
@@ -1375,7 +1375,7 @@ create_index_paths(Query *root,
 
 		foreach(j, clausegroup)
 		{
-			clauseinfo = (CInfo *) lfirst(j);
+			clauseinfo = (ClauseInfo *) lfirst(j);
 			if (!(is_joinable((Node *) clauseinfo->clause) &&
 				  equal_path_merge_ordering(index->ordering,
 											clauseinfo->mergejoinorder)))
@@ -1389,7 +1389,7 @@ create_index_paths(Query *root,
 			ip_list = nconc(ip_list, temp_node);
 		}
 	}
-	return (ip_list);
+	return ip_list;
 }
 
 static List *
@@ -1447,10 +1447,10 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	{
 
 		if (indexKeys[i] == 0)
-			return (false);
+			return false;
 
 		if (((Var *) lfirst(arg))->varattno != indexKeys[i])
-			return (false);
+			return false;
 
 		i++;
 	}

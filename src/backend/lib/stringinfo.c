@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.10 1998/06/15 19:28:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/stringinfo.c,v 1.11 1998/09/01 03:22:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ makeStringInfo()
 	 */
 	res->data[0] = '\0';
 
-	return (res);
+	return res;
 }
 
 /*---------------------------------------------------------------------

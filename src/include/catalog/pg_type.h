@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.45 1998/08/27 05:06:57 momjian Exp $
+ * $Id: pg_type.h,v 1.46 1998/09/01 03:27:58 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -106,14 +106,14 @@ CATALOG(pg_type) BOOTSTRAP
 	 * but I doubt it - BRYANH 96.08).
 	 */
 	text		typdefault;		/* VARIABLE LENGTH FIELD */
-} TypeTupleFormData;
+} FormData_pg_type;
 
 /* ----------------
  *		Form_pg_type corresponds to a pointer to a row with
  *		the format of pg_type relation.
  * ----------------
  */
-typedef TypeTupleFormData *TypeTupleForm;
+typedef FormData_pg_type *Form_pg_type;
 
 /* ----------------
  *		compiler constants for pg_type

@@ -72,7 +72,7 @@ gistbeginscan(Relation r,
 	s = RelationGetIndexScan(r, fromEnd, nkeys, key);
 	gistregscan(s);
 
-	return (s);
+	return s;
 }
 
 void

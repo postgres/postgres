@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.37 1998/08/24 01:13:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.38 1998/09/01 03:25:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,14 +109,14 @@ mdinit()
 
 	MdCxt = (MemoryContext) CreateGlobalMemory("MdSmgr");
 	if (MdCxt == (MemoryContext) NULL)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	oldcxt = MemoryContextSwitchTo(MdCxt);
 	Md_fdvec = (MdfdVec *) palloc(Nfds * sizeof(MdfdVec));
 	MemoryContextSwitchTo(oldcxt);
 
 	if (Md_fdvec == (MdfdVec *) NULL)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	MemSet(Md_fdvec, 0, Nfds * sizeof(MdfdVec));
 
@@ -129,7 +129,7 @@ mdinit()
 	Md_Free = 0;
 	Md_fdvec[Nfds - 1].mdfd_nextFree = -1;
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 int
@@ -156,15 +156,15 @@ mdcreate(Relation reln)
 	if (fd < 0)
 	{
 		if (!IsBootstrapProcessingMode())
-			return (-1);
+			return -1;
 		fd = FileNameOpenFile(path, O_RDWR, 0600);		/* Bootstrap */
 		if (fd < 0)
-			return (-1);
+			return -1;
 	}
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
-		return (-1);
+		return -1;
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
@@ -173,7 +173,7 @@ mdcreate(Relation reln)
 #endif
 	Md_fdvec[vfd].mdfd_lstbcnt = 0;
 
-	return (vfd);
+	return vfd;
 }
 
 /*
@@ -199,7 +199,7 @@ mdunlink(Relation reln)
 	StrNCpy(fname, RelationGetRelationName(reln)->data, NAMEDATALEN);
 
 	if (FileNameUnlink(fname) < 0)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	/* unlink all the overflow files for large relations */
 	for (i = 1;; i++)
@@ -233,7 +233,7 @@ mdunlink(Relation reln)
 
 	_fdvec_free(fd);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -253,10 +253,10 @@ mdextend(Relation reln, char *buffer)
 	v = _mdfd_getseg(reln, nblocks, O_CREAT);
 
 	if ((pos = FileSeek(v->mdfd_vfd, 0L, SEEK_END)) < 0)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	/* remember that we did a write, so we can sync at xact commit */
 	v->mdfd_flags |= MDFD_DIRTY;
@@ -275,7 +275,7 @@ mdextend(Relation reln, char *buffer)
 	v->mdfd_lstbcnt = ++nblocks;
 #endif
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -298,7 +298,7 @@ mdopen(Relation reln)
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
-		return (-1);
+		return -1;
 
 	Md_fdvec[vfd].mdfd_vfd = fd;
 	Md_fdvec[vfd].mdfd_flags = (uint16) 0;
@@ -312,7 +312,7 @@ mdopen(Relation reln)
 #endif
 #endif
 
-	return (vfd);
+	return vfd;
 }
 
 /*
@@ -384,7 +384,7 @@ mdclose(Relation reln)
 
 	_fdvec_free(fd);
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -414,7 +414,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	status = SM_SUCCESS;
 	if ((nbytes = FileRead(v->mdfd_vfd, buffer, BLCKSZ)) != BLCKSZ)
@@ -425,7 +425,7 @@ mdread(Relation reln, BlockNumber blocknum, char *buffer)
 			status = SM_FAIL;
 	}
 
-	return (status);
+	return status;
 }
 
 /*
@@ -453,7 +453,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	status = SM_SUCCESS;
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
@@ -461,7 +461,7 @@ mdwrite(Relation reln, BlockNumber blocknum, char *buffer)
 
 	v->mdfd_flags |= MDFD_DIRTY;
 
-	return (status);
+	return status;
 }
 
 /*
@@ -490,7 +490,7 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 #endif
 
 	if (FileSeek(v->mdfd_vfd, seekpos, SEEK_SET) != seekpos)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	/* write and sync the block */
 	status = SM_SUCCESS;
@@ -506,7 +506,7 @@ mdflush(Relation reln, BlockNumber blocknum, char *buffer)
 
 	v->mdfd_flags &= ~MDFD_DIRTY;
 
-	return (status);
+	return status;
 }
 
 /*
@@ -623,7 +623,7 @@ mdblindwrt(char *dbstr,
 #endif
 
 	if ((fd = open(path, O_RDWR, 0600)) < 0)
-		return (SM_FAIL);
+		return SM_FAIL;
 
 	/* seek to the right spot */
 #ifndef LET_OS_MANAGE_FILESIZE
@@ -635,7 +635,7 @@ mdblindwrt(char *dbstr,
 	if (lseek(fd, seekpos, SEEK_SET) != seekpos)
 	{
 		close(fd);
-		return (SM_FAIL);
+		return SM_FAIL;
 	}
 
 	status = SM_SUCCESS;
@@ -649,7 +649,7 @@ mdblindwrt(char *dbstr,
 
 	pfree(path);
 
-	return (status);
+	return status;
 }
 
 /*
@@ -695,10 +695,10 @@ mdnblocks(Relation reln)
 			v = v->mdfd_chain;
 		}
 		else
-			return ((segno * RELSEG_SIZE) + nblocks);
+			return (segno * RELSEG_SIZE) + nblocks;
 	}
 #else
-	return (_mdnblocks(v->mdfd_vfd, BLCKSZ));
+	return _mdnblocks(v->mdfd_vfd, BLCKSZ);
 #endif
 }
 
@@ -721,7 +721,7 @@ mdtruncate(Relation reln, int nblocks)
 	{
 		elog(NOTICE, "Can't truncate multi-segments relation %s",
 			 reln->rd_rel->relname.data);
-		return (curnblk);
+		return curnblk;
 	}
 #endif
 
@@ -729,9 +729,9 @@ mdtruncate(Relation reln, int nblocks)
 	v = &Md_fdvec[fd];
 
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
-		return (-1);
+		return -1;
 
-	return (nblocks);
+	return nblocks;
 
 }	/* mdtruncate */
 
@@ -763,14 +763,14 @@ mdcommit()
 			if (v->mdfd_flags & MDFD_DIRTY)
 			{
 				if (FileSync(v->mdfd_vfd) < 0)
-					return (SM_FAIL);
+					return SM_FAIL;
 
 				v->mdfd_flags &= ~MDFD_DIRTY;
 			}
 		}
 	}
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -796,7 +796,7 @@ mdabort()
 			v->mdfd_flags &= ~MDFD_DIRTY;
 	}
 
-	return (SM_SUCCESS);
+	return SM_SUCCESS;
 }
 
 /*
@@ -823,7 +823,7 @@ _fdvec_alloc()
 			Assert(fdvec == CurFd);
 			CurFd++;
 		}
-		return (fdvec);
+		return fdvec;
 	}
 
 	/* Must allocate more room */
@@ -857,7 +857,7 @@ _fdvec_alloc()
 	CurFd++;
 	Md_fdvec[fdvec].mdfd_flags = 0;
 
-	return (fdvec);
+	return fdvec;
 }
 
 /*
@@ -906,7 +906,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 		pfree(fullpath);
 
 	if (fd < 0)
-		return ((MdfdVec *) NULL);
+		return (MdfdVec *) NULL;
 
 	/* allocate an mdfdvec entry for it */
 	oldcxt = MemoryContextSwitchTo(MdCxt);
@@ -927,7 +927,7 @@ _mdfd_openseg(Relation reln, int segno, int oflags)
 #endif
 
 	/* all done */
-	return (v);
+	return v;
 }
 
 static MdfdVec *
@@ -967,7 +967,7 @@ _mdfd_getseg(Relation reln, int blkno, int oflag)
 	v = &Md_fdvec[fd];
 #endif
 
-	return (v);
+	return v;
 }
 
 static BlockNumber
@@ -976,5 +976,5 @@ _mdnblocks(File file, Size blcksz)
 	long		len;
 
 	len = FileSeek(file, 0L, SEEK_END) - 1;
-	return ((BlockNumber) ((len < 0) ? 0 : 1 + len / blcksz));
+	return (BlockNumber) ((len < 0) ? 0 : 1 + len / blcksz);
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.15 1998/06/27 15:47:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipci.c,v 1.16 1998/09/01 03:25:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ SystemPortAddressCreateIPCKey(SystemPortAddress address)
 {
 	Assert(address < 32768);	/* XXX */
 
-	return (SystemPortAddressGetIPCKey(address));
+	return SystemPortAddressGetIPCKey(address);
 }
 
 /*

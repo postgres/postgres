@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.19 1998/08/19 02:03:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.20 1998/09/01 03:26:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	if (procedureId == procedureId_save)
 	{
 		*pronargs = pronargs_save;
-		return (user_fn_save);
+		return user_fn_save;
 	}
 
 	/*
@@ -78,7 +78,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	{
 		elog(ERROR, "fmgr: Cache lookup failed for procedure %d\n",
 			 procedureId);
-		return ((func_ptr) NULL);
+		return (func_ptr) NULL;
 	}
 
 	procedureStruct = (Form_pg_proc) GETSTRUCT(procedureTuple);
@@ -98,17 +98,17 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	{
 		elog(ERROR, "fmgr: Could not open relation %s",
 			 ProcedureRelationName);
-		return ((func_ptr) NULL);
+		return (func_ptr) NULL;
 	}
 	probinattr = heap_getattr(procedureTuple,
 							  Anum_pg_proc_probin,
-							  RelationGetTupleDescriptor(rel), &isnull);
+							  RelationGetDescr(rel), &isnull);
 	if (!PointerIsValid(probinattr) /* || isnull */ )
 	{
 		heap_close(rel);
 		elog(ERROR, "fmgr: Could not extract probin for %d from %s",
 			 procedureId, ProcedureRelationName);
-		return ((func_ptr) NULL);
+		return (func_ptr) NULL;
 	}
 	probinstring = textout((struct varlena *) probinattr);
 
@@ -117,7 +117,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 	procedureId_save = procedureId;
 	user_fn_save = user_fn;
 
-	return (user_fn);
+	return user_fn;
 }
 
 static func_ptr
@@ -213,7 +213,7 @@ handle_load(char *filename, char *funcname)
 		file_tail = file_scanner;
 
 		if (funcname == (char *) NULL)
-			return ((func_ptr) NULL);
+			return (func_ptr) NULL;
 	}
 
 	retval = (func_ptr) pg_dlsym(file_scanner->handle, funcname);
@@ -221,7 +221,7 @@ handle_load(char *filename, char *funcname)
 	if (retval == (func_ptr) NULL)
 		elog(ERROR, "Can't find function %s in file %s", funcname, filename);
 
-	return (retval);
+	return retval;
 }
 
 /*
@@ -286,5 +286,5 @@ trigger_dynamic(char *filename, char *funcname)
 
 	trigger_fn = handle_load(filename, funcname);
 
-	return (trigger_fn);
+	return trigger_fn;
 }

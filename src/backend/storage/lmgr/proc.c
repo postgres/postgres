@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.41 1998/08/25 21:20:29 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.42 1998/09/01 03:25:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.41 1998/08/25 21:20:29 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.42 1998/09/01 03:25:24 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -312,7 +312,7 @@ ProcRemove(int pid)
 
 	location = ShmemPIDDestroy(pid);
 	if (location == INVALID_OFFSET)
-		return (FALSE);
+		return FALSE;
 	proc = (PROC *) MAKE_PTR(location);
 
 	SpinAcquire(ProcStructLock);
@@ -324,7 +324,7 @@ ProcRemove(int pid)
 
 	SpinRelease(ProcStructLock);
 
-	return (TRUE);
+	return TRUE;
 }
 
 /*
@@ -407,10 +407,10 @@ ProcQueueAlloc(char *name)
 	ShmemInitStruct(name, (unsigned) sizeof(PROC_QUEUE), &found);
 
 	if (!queue)
-		return (NULL);
+		return NULL;
 	if (!found)
 		ProcQueueInit(queue);
-	return (queue);
+	return queue;
 }
 
 #endif
@@ -564,7 +564,7 @@ ProcSleep(PROC_QUEUE *waitQueue,		/* lock->waitProcs */
 	MyProc->waitLock = (LOCK *)NULL;
 #endif
 
-	return (MyProc->errType);
+	return MyProc->errType;
 }
 
 
@@ -583,7 +583,7 @@ ProcWakeup(PROC *proc, int errType)
 
 	if (proc->links.prev == INVALID_OFFSET ||
 		proc->links.next == INVALID_OFFSET)
-		return ((PROC *) NULL);
+		return (PROC *) NULL;
 
 	retProc = (PROC *) MAKE_PTR(proc->links.prev);
 
@@ -614,7 +614,7 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 	Assert(queue->size >= 0);
 
 	if (!queue->size)
-		return (STATUS_NOT_FOUND);
+		return STATUS_NOT_FOUND;
 
 	proc = (PROC *) MAKE_PTR(queue->links.prev);
 	count = 0;
@@ -662,7 +662,7 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 	Assert(queue->size >= 0);
 
 	if (count)
-		return (STATUS_OK);
+		return STATUS_OK;
 	else {
 		/* Something is still blocking us.	May have deadlocked. */
 		trace_flag = (lock->tag.lockmethod == USER_LOCKMETHOD) ? \
@@ -674,7 +674,7 @@ ProcLockWakeup(PROC_QUEUE *queue, LOCKMETHOD lockmethod, LOCK *lock)
 		if (pg_options[trace_flag] >= 2)
 			DumpAllLocks();
 #endif
-		return (STATUS_NOT_FOUND);
+		return STATUS_NOT_FOUND;
 	}
 }
 

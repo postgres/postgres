@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.33 1998/08/30 19:30:38 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.34 1998/09/01 03:20:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,10 +46,10 @@ typtoout(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((Oid) ((TypeTupleForm) GETSTRUCT(typeTuple))->typoutput);
+		return (Oid) ((Form_pg_type) GETSTRUCT(typeTuple))->typoutput;
 
 	elog(ERROR, "typtoout: Cache lookup of type %d failed", type);
-	return (InvalidOid);
+	return InvalidOid;
 }
 
 Oid
@@ -62,10 +62,10 @@ gettypelem(Oid type)
 									0, 0, 0);
 
 	if (HeapTupleIsValid(typeTuple))
-		return ((Oid) ((TypeTupleForm) GETSTRUCT(typeTuple))->typelem);
+		return (Oid) ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
 
 	elog(ERROR, "typtoout: Cache lookup of type %d failed", type);
-	return (InvalidOid);
+	return InvalidOid;
 }
 
 /* ----------------
@@ -157,7 +157,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
  */
 static void
 printatt(unsigned attributeId,
-		 AttributeTupleForm attributeP,
+		 Form_pg_attribute attributeP,
 		 char *value)
 {
 	printf("\t%2d: %s%s%s%s\t(typeid = %u, len = %d, typmod = %d, byval = %c)\n",
@@ -181,7 +181,7 @@ showatts(char *name, TupleDesc tupleDesc)
 {
 	int			i;
 	int			natts = tupleDesc->natts;
-	AttributeTupleForm *attinfo = tupleDesc->attrs;
+	Form_pg_attribute *attinfo = tupleDesc->attrs;
 
 	puts(name);
 	for (i = 0; i < natts; ++i)

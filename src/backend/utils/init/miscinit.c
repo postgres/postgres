@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.20 1998/08/19 02:03:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.21 1998/09/01 03:26:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,7 +152,7 @@ static ProcessingMode Mode = NoProcessing;
 bool
 IsNoProcessingMode()
 {
-	return ((bool) (Mode == NoProcessing));
+	return (bool) (Mode == NoProcessing);
 }
 
 /*
@@ -162,7 +162,7 @@ IsNoProcessingMode()
 bool
 IsBootstrapProcessingMode()
 {
-	return ((bool) (Mode == BootstrapProcessing));
+	return (bool) (Mode == BootstrapProcessing);
 }
 
 /*
@@ -172,7 +172,7 @@ IsBootstrapProcessingMode()
 bool
 IsInitProcessingMode()
 {
-	return ((bool) (Mode == InitProcessing));
+	return (bool) (Mode == InitProcessing);
 }
 
 /*
@@ -182,7 +182,7 @@ IsInitProcessingMode()
 bool
 IsNormalProcessingMode()
 {
-	return ((bool) (Mode == NormalProcessing));
+	return (bool) (Mode == NormalProcessing);
 }
 
 /*
@@ -207,7 +207,7 @@ SetProcessingMode(ProcessingMode mode)
 ProcessingMode
 GetProcessingMode()
 {
-	return (Mode);
+	return Mode;
 }
 
 /* ----------------------------------------------------------------
@@ -255,7 +255,7 @@ getdatabaseencoding()
 static bool
 isblank(const char c)
 {
-	return (c == ' ' || c == 9 /* tab */ );
+	return c == ' ' || c == 9 /* tab */ ;
 }
 
 static void
@@ -446,7 +446,7 @@ int
 GetUserId()
 {
 	Assert(OidIsValid(UserId));
-	return (UserId);
+	return UserId;
 }
 
 void

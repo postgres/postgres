@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.24 1998/08/19 02:02:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.25 1998/09/01 03:25:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ date_in(char *str)
 
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
-	return (date);
+	return date;
 }	/* date_in() */
 
 /* date_out()
@@ -132,43 +132,43 @@ date_out(DateADT date)
 
 	strcpy(result, buf);
 
-	return (result);
+	return result;
 }	/* date_out() */
 
 bool
 date_eq(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 == dateVal2);
+	return dateVal1 == dateVal2;
 }
 
 bool
 date_ne(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 != dateVal2);
+	return dateVal1 != dateVal2;
 }
 
 bool
 date_lt(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 < dateVal2);
+	return dateVal1 < dateVal2;
 }	/* date_lt() */
 
 bool
 date_le(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 <= dateVal2);
+	return dateVal1 <= dateVal2;
 }	/* date_le() */
 
 bool
 date_gt(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 > dateVal2);
+	return dateVal1 > dateVal2;
 }	/* date_gt() */
 
 bool
 date_ge(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 >= dateVal2);
+	return dateVal1 >= dateVal2;
 }	/* date_ge() */
 
 int
@@ -184,13 +184,13 @@ date_cmp(DateADT dateVal1, DateADT dateVal2)
 DateADT
 date_larger(DateADT dateVal1, DateADT dateVal2)
 {
-	return (date_gt(dateVal1, dateVal2) ? dateVal1 : dateVal2);
+	return date_gt(dateVal1, dateVal2) ? dateVal1 : dateVal2;
 }	/* date_larger() */
 
 DateADT
 date_smaller(DateADT dateVal1, DateADT dateVal2)
 {
-	return (date_lt(dateVal1, dateVal2) ? dateVal1 : dateVal2);
+	return date_lt(dateVal1, dateVal2) ? dateVal1 : dateVal2;
 }	/* date_smaller() */
 
 /* Compute difference between two dates in days.
@@ -198,7 +198,7 @@ date_smaller(DateADT dateVal1, DateADT dateVal2)
 int4
 date_mi(DateADT dateVal1, DateADT dateVal2)
 {
-	return (dateVal1 - dateVal2);
+	return dateVal1 - dateVal2;
 }	/* date_mi() */
 
 /* Add a number of days to a date, giving a new date.
@@ -207,7 +207,7 @@ date_mi(DateADT dateVal1, DateADT dateVal2)
 DateADT
 date_pli(DateADT dateVal, int4 days)
 {
-	return (dateVal + days);
+	return dateVal + days;
 }	/* date_pli() */
 
 /* Subtract a number of days from a date, giving a new date.
@@ -215,7 +215,7 @@ date_pli(DateADT dateVal, int4 days)
 DateADT
 date_mii(DateADT dateVal, int4 days)
 {
-	return (date_pli(dateVal, -days));
+	return date_pli(dateVal, -days);
 }	/* date_mii() */
 
 
@@ -245,7 +245,7 @@ date_datetime(DateADT dateVal)
 	if (tm2datetime(tm, fsec, &tz, result) != 0)
 		elog(ERROR, "Datetime out of range", NULL);
 
-	return (result);
+	return result;
 }	/* date_datetime() */
 
 
@@ -286,7 +286,7 @@ datetime_date(DateTime *datetime)
 
 	result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
 
-	return (result);
+	return result;
 }	/* datetime_date() */
 
 
@@ -328,7 +328,7 @@ abstime_date(AbsoluteTime abstime)
 			break;
 	}
 
-	return (result);
+	return result;
 }	/* abstime_date() */
 
 
@@ -453,7 +453,7 @@ time_in(char *str)
 
 	*time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
-	return (time);
+	return time;
 }	/* time_in() */
 
 
@@ -482,7 +482,7 @@ time_out(TimeADT *time)
 
 	strcpy(result, buf);
 
-	return (result);
+	return result;
 }	/* time_out() */
 
 
@@ -490,60 +490,60 @@ bool
 time_eq(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return (FALSE);
+		return FALSE;
 
-	return (*time1 == *time2);
+	return *time1 == *time2;
 }	/* time_eq() */
 
 bool
 time_ne(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return (FALSE);
+		return FALSE;
 
-	return (*time1 != *time2);
+	return *time1 != *time2;
 }	/* time_eq() */
 
 bool
 time_lt(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return (FALSE);
+		return FALSE;
 
-	return (*time1 < *time2);
+	return *time1 < *time2;
 }	/* time_eq() */
 
 bool
 time_le(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return (FALSE);
+		return FALSE;
 
-	return (*time1 <= *time2);
+	return *time1 <= *time2;
 }	/* time_eq() */
 
 bool
 time_gt(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return (FALSE);
+		return FALSE;
 
-	return (*time1 > *time2);
+	return *time1 > *time2;
 }	/* time_eq() */
 
 bool
 time_ge(TimeADT *time1, TimeADT *time2)
 {
 	if (!PointerIsValid(time1) || !PointerIsValid(time2))
-		return (FALSE);
+		return FALSE;
 
-	return (*time1 >= *time2);
+	return *time1 >= *time2;
 }	/* time_eq() */
 
 int
 time_cmp(TimeADT *time1, TimeADT *time2)
 {
-	return ((*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0)));
+	return (*time1 < *time2) ? -1 : (((*time1 > *time2) ? 1 : 0));
 }	/* time_cmp() */
 
 
@@ -586,7 +586,7 @@ datetime_time(DateTime *datetime)
 
 	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
-	return (result);
+	return result;
 }	/* datetime_time() */
 
 
@@ -609,12 +609,12 @@ datetime_datetime(DateADT date, TimeADT *time)
 		*result += *time;
 	}
 
-	return (result);
+	return result;
 }	/* datetime_datetime() */
 
 
 int32							/* RelativeTime */
 int4reltime(int32 timevalue)
 {
-	return (timevalue);
+	return timevalue;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.83 1998/08/26 05:22:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.84 1998/09/01 03:24:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,7 +264,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 		pstate->p_target_relation->rd_att->constr &&
 		pstate->p_target_relation->rd_att->constr->num_defval > 0)
 	{
-		AttributeTupleForm *att = pstate->p_target_relation->rd_att->attrs;
+		Form_pg_attribute *att = pstate->p_target_relation->rd_att->attrs;
 		AttrDefault *defval = pstate->p_target_relation->rd_att->constr->defval;
 		int			ndef = pstate->p_target_relation->rd_att->constr->num_defval;
 
@@ -390,7 +390,7 @@ makeTableName(void *elem,...)
 	{
 		/* not enough room for next part? then return nothing */
 		if ((strlen(buf) + strlen(name)) >= (sizeof(buf) - 1))
-			return (NULL);
+			return NULL;
 
 		if (strlen(buf) > 0)
 			strcat(buf, "_");
@@ -404,7 +404,7 @@ makeTableName(void *elem,...)
 	name = palloc(strlen(buf) + 1);
 	strcpy(name, buf);
 
-	return (name);
+	return name;
 }
 
 static char *
@@ -445,7 +445,7 @@ CreateIndexName(char *table_name, char *column_name, char *label, List *indices)
 		sprintf(name2, "%s_%d", column_name, (pass + 1));
 	}
 
-	return (iname);
+	return iname;
 }
 
 /*

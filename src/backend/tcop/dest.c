@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.21 1998/07/20 16:56:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.22 1998/09/01 03:25:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,7 +238,7 @@ BeginCommand(char *pname,
 			 CommandDest dest)
 {
 	PortalEntry *entry;
-	AttributeTupleForm *attrs = tupdesc->attrs;
+	Form_pg_attribute *attrs = tupdesc->attrs;
 	int			natts = tupdesc->natts;
 	int			i;
 	char	   *p;
