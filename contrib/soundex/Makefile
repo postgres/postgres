@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/soundex/Attic/Makefile,v 1.9 2000/10/20 21:03:28 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/soundex/Attic/Makefile,v 1.10 2001/06/18 21:38:02 momjian Exp $
 #
 
 subdir = contrib/soundex
@@ -11,6 +11,7 @@ SONAME	:= $(NAME)$(DLSUFFIX)
 
 override CPPFLAGS += -I$(srcdir)
 override CFLAGS += $(CFLAGS_SL)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 all: $(SONAME) $(NAME).sql
 

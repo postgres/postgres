@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/earthdistance/Makefile,v 1.9 2001/05/30 12:58:45 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/earthdistance/Makefile,v 1.10 2001/06/18 21:38:01 momjian Exp $
 #
 
 subdir = contrib/earthdistance
@@ -11,6 +11,7 @@ SONAME	:= $(NAME)$(DLSUFFIX)
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 all: $(SONAME) $(NAME).sql
 

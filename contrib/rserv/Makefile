@@ -16,6 +16,7 @@ SCRIPTS	= InitRservTest
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 
 all: $(SQLS) $(TCLS) $(PERLS) $(SCRIPTS) $(SONAME)

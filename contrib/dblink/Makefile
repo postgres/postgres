@@ -12,6 +12,7 @@ override CFLAGS += -I$(srcdir)
 override CFLAGS += -I$(include_srcdir)
 override CFLAGS += -I$(libpq_srcdir)
 override CFLAGS += $(CFLAGS_SL)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 OBJS	= $(NAME).o
 

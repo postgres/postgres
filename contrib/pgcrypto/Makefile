@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.3 2001/02/20 15:34:14 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pgcrypto/Makefile,v 1.4 2001/06/18 21:38:02 momjian Exp $
 #
 
 subdir = contrib/pgcrypto
@@ -43,6 +43,7 @@ SO_MAJOR_VERSION = 0
 SO_MINOR_VERSION = 1
 
 override CPPFLAGS	+= $(CRYPTO_CFLAGS) -I$(srcdir) 
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 all: all-lib $(NAME).sql
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.86 2001/06/13 21:44:41 tgl Exp $
+ * $Id: miscadmin.h,v 1.87 2001/06/18 21:38:02 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -115,7 +115,7 @@ extern int	PostmasterMain(int argc, char *argv[]);
 extern bool Noversion;
 extern char *DataDir;
 
-extern int	MyProcPid;
+extern DLLIMPORT int	MyProcPid;
 extern struct Port *MyProcPort;
 extern long MyCancelKey;
 
@@ -126,7 +126,7 @@ extern char OutputFileName[];
  *
  * extern BackendId    MyBackendId;
  */
-extern Oid	MyDatabaseId;
+extern DLLIMPORT Oid	MyDatabaseId;
 
 extern bool IsUnderPostmaster;
 

@@ -11,6 +11,10 @@
 #include "postgres.h"
 #include "utils/elog.h"
   
+#ifdef __CYGWIN__
+#define HUGE HUGE_VAL
+#endif /* __CYGWIN__ */
+
 #undef yylex                  /* falure to redefine yylex will result in calling the */
 #define yylex seg_yylex       /* wrong scanner when running inside postgres backend  */
 

@@ -1,5 +1,5 @@
 #
-# $Header: /cvsroot/pgsql/contrib/lo/Makefile,v 1.9 2001/02/20 19:20:27 petere Exp $
+# $Header: /cvsroot/pgsql/contrib/lo/Makefile,v 1.10 2001/06/18 21:38:01 momjian Exp $
 #
 
 subdir = contrib/lo
@@ -14,6 +14,7 @@ MODS	= $(NAME)$(DLSUFFIX)
 
 override CPPFLAGS := -I$(srcdir) $(CPPFLAGS)
 override CFLAGS += $(CFLAGS_SL)
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 ifdef REFINT_VERBOSE
 override CPPFLAGS+= -DREFINT_VERBOSE
