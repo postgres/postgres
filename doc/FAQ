@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jul 11 20:18:47 EDT 2004
+   Last updated: Sun Jul 11 21:10:08 EDT 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -641,7 +641,7 @@
    all PC hardware is of equal quality. It is not. ECC RAM, SCSI, and
    quality motherboards are more reliable and have better performance
    than less expensive hardware. PostgreSQL will run on almost any
-   hardware, but if you are building a server where reliability and
+   hardware but, if you are building a server where reliability and
    performance are concerns, it is wise to research your hardware options
    thoroughly. Our email lists can be used to discuss hardware options
    and tradeoffs.
