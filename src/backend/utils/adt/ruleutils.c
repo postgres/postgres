@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.164 2004/05/05 04:48:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.165 2004/05/07 03:19:44 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3788,14 +3788,9 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			switch (j->jointype)
 			{
 				case JOIN_INNER:
-					if (j->quals)
-						appendContextKeyword(context, "NATURAL JOIN ",
-											 -PRETTYINDENT_JOIN,
-											 PRETTYINDENT_JOIN, 0);
-					else
-						appendContextKeyword(context, "NATURAL CROSS JOIN ",
-											 -PRETTYINDENT_JOIN,
-											 PRETTYINDENT_JOIN, 0);
+					appendContextKeyword(context, "NATURAL JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 0);
 					break;
 				case JOIN_LEFT:
 					appendContextKeyword(context, "NATURAL LEFT JOIN ",
