@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.22 1999/09/18 19:07:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.23 1999/10/01 04:08:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,6 +14,7 @@
 
 #include "access/heapam.h"
 #include "catalog/pg_shadow.h"
+#include "optimizer/clauses.h"
 #include "rewrite/locks.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -22,102 +23,86 @@
 
 
 /*
- * ThisLockWasTriggered
+ * thisLockWasTriggered
  *
  * walk the tree, if there we find a varnode,
  * we check the varattno against the attnum
  * if we find at least one such match, we return true
  * otherwise, we return false
+ *
+ * XXX this should be unified with attribute_used()
  */
+
+typedef struct {
+	int			varno;
+	int			attnum;
+	int			sublevels_up;
+} thisLockWasTriggered_context;
+
 static bool
-nodeThisLockWasTriggered(Node *node, int varno, AttrNumber attnum,
-						 int sublevels_up)
+thisLockWasTriggered_walker (Node *node,
+							 thisLockWasTriggered_context *context)
 {
 	if (node == NULL)
-		return FALSE;
-	switch (nodeTag(node))
+		return false;
+	if (IsA(node, Var))
 	{
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
+		Var		   *var = (Var *) node;
 
-				if (varno == var->varno &&
-					(attnum == var->varattno || attnum == -1))
-					return TRUE;
-			}
-			break;
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				return nodeThisLockWasTriggered((Node *) expr->args, varno,
-												attnum, sublevels_up);
-			}
-			break;
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				return nodeThisLockWasTriggered(tle->expr, varno, attnum,
-												sublevels_up);
-			}
-			break;
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				return nodeThisLockWasTriggered(aggref->target, varno, attnum,
-												sublevels_up);
-			}
-			break;
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					if (nodeThisLockWasTriggered(lfirst(l), varno, attnum,
-												 sublevels_up))
-						return TRUE;
-				}
-				return FALSE;
-			}
-			break;
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
-
-				return nodeThisLockWasTriggered(query->qual, varno, attnum,
-												sublevels_up + 1);
-			}
-			break;
-		default:
-			break;
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->varno &&
+			(var->varattno == context->attnum || context->attnum == -1))
+			return true;
+		return false;
 	}
-	return FALSE;
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (thisLockWasTriggered_walker((Node *) (sub->lefthand), context))
+			return true;
+		context->sublevels_up++;
+		if (thisLockWasTriggered_walker((Node *) (sub->subselect), context))
+		{
+			context->sublevels_up--; /* not really necessary */
+			return true;
+		}
+		context->sublevels_up--;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (thisLockWasTriggered_walker((Node *) (qry->targetList), context))
+			return true;
+		if (thisLockWasTriggered_walker((Node *) (qry->qual), context))
+			return true;
+		if (thisLockWasTriggered_walker((Node *) (qry->havingQual), context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, thisLockWasTriggered_walker,
+								  (void *) context);
 }
 
-/*
- * thisLockWasTriggered -
- *	   walk the tree, if there we find a varnode, we check the varattno
- *	   against the attnum if we find at least one such match, we return true
- *	   otherwise, we return false
- */
 static bool
 thisLockWasTriggered(int varno,
-					 AttrNumber attnum,
+					 int attnum,
 					 Query *parsetree)
 {
+	thisLockWasTriggered_context context;
 
-	if (nodeThisLockWasTriggered(parsetree->qual, varno, attnum, 0))
-		return true;
+	context.varno = varno;
+	context.attnum = attnum;
+	context.sublevels_up = 0;
 
-	if (nodeThisLockWasTriggered((Node *) parsetree->targetList, varno, attnum, 0))
-		return true;
-
-	return false;
-
+	return thisLockWasTriggered_walker((Node *) parsetree, &context);
 }
 
 /*

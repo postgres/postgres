@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.57 1999/09/19 17:20:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.58 1999/10/01 04:08:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,19 @@
 #include "utils/lsyscache.h"
 
 
+extern void CheckSelectForUpdate(Query *rule_action);	/* in analyze.c */
+
+
+/* macros borrowed from expression_tree_mutator */
+
+#define FLATCOPY(newnode, node, nodetype)  \
+	( (newnode) = makeNode(nodetype), \
+	  memcpy((newnode), (node), sizeof(nodetype)) )
+
+#define MUTATE(newfield, oldfield, fieldtype, mutator, context)  \
+		( (newfield) = (fieldtype) mutator((Node *) (oldfield), (context)) )
+
+
 static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  Query *rule_action,
 				  Node *rule_qual,
@@ -39,12 +52,14 @@ static RewriteInfo *gatherRewriteMeta(Query *parsetree,
 				  CmdType event,
 				  bool *instead_flag);
 static bool rangeTableEntry_used(Node *node, int rt_index, int sublevels_up);
-static bool attribute_used(Node *node, int rt_index, int attno, int sublevels_up);
-static void modifyAggrefUplevel(Node *node);
-static void modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up);
-static void modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr);
+static bool attribute_used(Node *node, int rt_index, int attno,
+						   int sublevels_up);
+static bool modifyAggrefUplevel(Node *node, void *context);
+static bool modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
+									   int sublevels_up);
+static Node *modifyAggrefDropQual(Node *node, Node *targetNode);
 static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
-static void modifyAggrefQual(Node **nodePtr, Query *parsetree);
+static Node *modifyAggrefQual(Node *node, Query *parsetree);
 static bool checkQueryHasAggs(Node *node);
 static bool checkQueryHasAggs_walker(Node *node, void *context);
 static bool checkQueryHasSubLink(Node *node);
@@ -135,221 +150,68 @@ gatherRewriteMeta(Query *parsetree,
  *	we need to process a RTE for RIR rules only if it is
  *	referenced somewhere in var nodes of the query.
  */
+
+typedef struct {
+	int			rt_index;
+	int			sublevels_up;
+} rangeTableEntry_used_context;
+
+static bool
+rangeTableEntry_used_walker (Node *node,
+							 rangeTableEntry_used_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->rt_index)
+			return true;
+		return false;
+	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (rangeTableEntry_used_walker((Node *) (sub->lefthand), context))
+			return true;
+		if (rangeTableEntry_used((Node *) (sub->subselect),
+								 context->rt_index,
+								 context->sublevels_up + 1))
+			return true;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (rangeTableEntry_used_walker((Node *) (qry->targetList), context))
+			return true;
+		if (rangeTableEntry_used_walker((Node *) (qry->qual), context))
+			return true;
+		if (rangeTableEntry_used_walker((Node *) (qry->havingQual), context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, rangeTableEntry_used_walker,
+								  (void *) context);
+}
+
 static bool
 rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
 {
-	if (node == NULL)
-		return FALSE;
+	rangeTableEntry_used_context context;
 
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				return rangeTableEntry_used(
-											(Node *) (tle->expr),
-											rt_index,
-											sublevels_up);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				return rangeTableEntry_used(
-											(Node *) (aggref->target),
-											rt_index,
-											sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			return FALSE;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				return rangeTableEntry_used(
-											(Node *) (exp->args),
-											rt_index,
-											sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				return rangeTableEntry_used(
-											(Node *) (iter->iterexpr),
-											rt_index,
-											sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				if (rangeTableEntry_used(
-										 (Node *) (ref->refupperindexpr),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (ref->reflowerindexpr),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (ref->refexpr),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (ref->refassgnexpr),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varlevelsup == sublevels_up)
-					return var->varno == rt_index;
-				else
-					return FALSE;
-			}
-			break;
-
-		case T_Param:
-			return FALSE;
-
-		case T_Const:
-			return FALSE;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					if (rangeTableEntry_used(
-											 (Node *) lfirst(l),
-											 rt_index,
-											 sublevels_up))
-						return TRUE;
-				}
-				return FALSE;
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				if (rangeTableEntry_used(
-										 (Node *) (sub->lefthand),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (sub->subselect),
-										 rt_index,
-										 sublevels_up + 1))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				if (rangeTableEntry_used(
-										 (Node *) (exp->args),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (exp->defresult),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *when = (CaseWhen *) node;
-
-				if (rangeTableEntry_used(
-										 (Node *) (when->expr),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (when->result),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				if (rangeTableEntry_used(
-										 (Node *) (qry->targetList),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (qry->qual),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				if (rangeTableEntry_used(
-										 (Node *) (qry->havingQual),
-										 rt_index,
-										 sublevels_up))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in rangeTableEntry_used()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
-
-	return FALSE;
+	context.rt_index = rt_index;
+	context.sublevels_up = sublevels_up;
+	return rangeTableEntry_used_walker(node, &context);
 }
 
 
@@ -358,666 +220,246 @@ rangeTableEntry_used(Node *node, int rt_index, int sublevels_up)
  *	Check if a specific attribute number of a RTE is used
  *	somewhere in the query
  */
+
+typedef struct {
+	int			rt_index;
+	int			attno;
+	int			sublevels_up;
+} attribute_used_context;
+
+static bool
+attribute_used_walker (Node *node,
+					   attribute_used_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->rt_index &&
+			var->varattno == context->attno)
+			return true;
+		return false;
+	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (attribute_used_walker((Node *) (sub->lefthand), context))
+			return true;
+		if (attribute_used((Node *) (sub->subselect),
+						   context->rt_index,
+						   context->attno,
+						   context->sublevels_up + 1))
+			return true;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (attribute_used_walker((Node *) (qry->targetList), context))
+			return true;
+		if (attribute_used_walker((Node *) (qry->qual), context))
+			return true;
+		if (attribute_used_walker((Node *) (qry->havingQual), context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, attribute_used_walker,
+								  (void *) context);
+}
+
 static bool
 attribute_used(Node *node, int rt_index, int attno, int sublevels_up)
 {
-	if (node == NULL)
-		return FALSE;
+	attribute_used_context context;
 
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				return attribute_used(
-									  (Node *) (tle->expr),
-									  rt_index,
-									  attno,
-									  sublevels_up);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				return attribute_used(
-									  (Node *) (aggref->target),
-									  rt_index,
-									  attno,
-									  sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			return FALSE;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				return attribute_used(
-									  (Node *) (exp->args),
-									  rt_index,
-									  attno,
-									  sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				return attribute_used(
-									  (Node *) (iter->iterexpr),
-									  rt_index,
-									  attno,
-									  sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				if (attribute_used(
-								   (Node *) (ref->refupperindexpr),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				if (attribute_used(
-								   (Node *) (ref->reflowerindexpr),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				if (attribute_used(
-								   (Node *) (ref->refexpr),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				if (attribute_used(
-								   (Node *) (ref->refassgnexpr),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varlevelsup == sublevels_up)
-					return var->varno == rt_index;
-				else
-					return FALSE;
-			}
-			break;
-
-		case T_Param:
-			return FALSE;
-
-		case T_Const:
-			return FALSE;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					if (attribute_used(
-									   (Node *) lfirst(l),
-									   rt_index,
-									   attno,
-									   sublevels_up))
-						return TRUE;
-				}
-				return FALSE;
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				if (attribute_used(
-								   (Node *) (sub->lefthand),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				if (attribute_used(
-								   (Node *) (sub->subselect),
-								   rt_index,
-								   attno,
-								   sublevels_up + 1))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				if (attribute_used(
-								   (Node *) (qry->targetList),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				if (attribute_used(
-								   (Node *) (qry->qual),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				if (attribute_used(
-								   (Node *) (qry->havingQual),
-								   rt_index,
-								   attno,
-								   sublevels_up))
-					return TRUE;
-
-				return FALSE;
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in attribute_used()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
-
-	return FALSE;
+	context.rt_index = rt_index;
+	context.attno = attno;
+	context.sublevels_up = sublevels_up;
+	return attribute_used_walker(node, &context);
 }
 
 
 /*
  * modifyAggrefUplevel -
  *	In the newly created sublink for an aggregate column used in
- *	the qualification, we must adjust the varlevelsup in all the
+ *	the qualification, we must increment the varlevelsup in all the
  *	var nodes.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * Var nodes in-place.  The given expression tree should have been copied
+ * earlier to ensure that no unwanted side-effects occur!
  */
-static void
-modifyAggrefUplevel(Node *node)
+static bool
+modifyAggrefUplevel(Node *node, void *context)
 {
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return false;
+	if (IsA(node, Var))
 	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
+		Var		   *var = (Var *) node;
 
-				modifyAggrefUplevel(
-									(Node *) (tle->expr));
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				modifyAggrefUplevel(
-									(Node *) (aggref->target));
-			}
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				modifyAggrefUplevel(
-									(Node *) (exp->args));
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				modifyAggrefUplevel(
-									(Node *) (iter->iterexpr));
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				modifyAggrefUplevel(
-									(Node *) (ref->refupperindexpr));
-				modifyAggrefUplevel(
-									(Node *) (ref->reflowerindexpr));
-				modifyAggrefUplevel(
-									(Node *) (ref->refexpr));
-				modifyAggrefUplevel(
-									(Node *) (ref->refassgnexpr));
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				var->varlevelsup++;
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					modifyAggrefUplevel(
-										(Node *) lfirst(l));
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				modifyAggrefUplevel(
-									(Node *) (sub->lefthand));
-
-				modifyAggrefUplevel(
-									(Node *) (sub->subselect));
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				modifyAggrefUplevel(
-									(Node *) (qry->targetList));
-
-				modifyAggrefUplevel(
-									(Node *) (qry->qual));
-
-				modifyAggrefUplevel(
-									(Node *) (qry->havingQual));
-
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggrefUplevel()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
+		var->varlevelsup++;
+		return false;
 	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (modifyAggrefUplevel((Node *) (sub->lefthand), context))
+			return true;
+		if (modifyAggrefUplevel((Node *) (sub->subselect), context))
+			return true;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (modifyAggrefUplevel((Node *) (qry->targetList), context))
+			return true;
+		if (modifyAggrefUplevel((Node *) (qry->qual), context))
+			return true;
+		if (modifyAggrefUplevel((Node *) (qry->havingQual), context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, modifyAggrefUplevel,
+								  (void *) context);
 }
 
 
 /*
  * modifyAggrefChangeVarnodes -
  *	Change the var nodes in a sublink created for an aggregate column
- *	used in the qualification that is subject of the aggregate
- *	function to point to the correct local RTE.
+ *	used in the qualification to point to the correct local RTE.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * Var nodes in-place.  The given expression tree should have been copied
+ * earlier to ensure that no unwanted side-effects occur!
  */
-static void
-modifyAggrefChangeVarnodes(Node **nodePtr, int rt_index, int new_index, int sublevels_up)
+
+typedef struct {
+	int			rt_index;
+	int			new_index;
+	int			sublevels_up;
+} modifyAggrefChangeVarnodes_context;
+
+static bool
+modifyAggrefChangeVarnodes_walker(Node *node,
+								  modifyAggrefChangeVarnodes_context *context)
 {
-	Node	   *node = *nodePtr;
-
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return false;
+	if (IsA(node, Var))
 	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
+		Var		   *var = (Var *) node;
 
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(tle->expr)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(aggref->target)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(exp->args)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(iter->iterexpr)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				modifyAggrefChangeVarnodes(
-									 (Node **) (&(ref->refupperindexpr)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-				modifyAggrefChangeVarnodes(
-									 (Node **) (&(ref->reflowerindexpr)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(ref->refexpr)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-				modifyAggrefChangeVarnodes(
-										(Node **) (&(ref->refassgnexpr)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varlevelsup == sublevels_up &&
-					var->varno == rt_index)
-				{
-					var = copyObject(var);
-					var->varno = new_index;
-					var->varnoold = new_index;
-					var->varlevelsup = 0;
-
-					*nodePtr = (Node *) var;
-				}
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					modifyAggrefChangeVarnodes(
-											   (Node **) (&lfirst(l)),
-											   rt_index,
-											   new_index,
-											   sublevels_up);
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(sub->lefthand)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(sub->subselect)),
-										   rt_index,
-										   new_index,
-										   sublevels_up + 1);
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(qry->targetList)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(qry->qual)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-
-				modifyAggrefChangeVarnodes(
-										   (Node **) (&(qry->havingQual)),
-										   rt_index,
-										   new_index,
-										   sublevels_up);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggrefChangeVarnodes()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->rt_index)
+		{
+			var->varno = context->new_index;
+			var->varnoold = context->new_index;
+			var->varlevelsup = 0;
+		}
+		return false;
 	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (modifyAggrefChangeVarnodes_walker((Node *) (sub->lefthand),
+											  context))
+			return true;
+		if (modifyAggrefChangeVarnodes((Node *) (sub->subselect),
+									   context->rt_index,
+									   context->new_index,
+									   context->sublevels_up + 1))
+			return true;
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (modifyAggrefChangeVarnodes_walker((Node *) (qry->targetList),
+											  context))
+			return true;
+		if (modifyAggrefChangeVarnodes_walker((Node *) (qry->qual),
+											  context))
+			return true;
+		if (modifyAggrefChangeVarnodes_walker((Node *) (qry->havingQual),
+											  context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, modifyAggrefChangeVarnodes_walker,
+								  (void *) context);
+}
+
+static bool
+modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
+						   int sublevels_up)
+{
+	modifyAggrefChangeVarnodes_context context;
+
+	context.rt_index = rt_index;
+	context.new_index = new_index;
+	context.sublevels_up = sublevels_up;
+	return modifyAggrefChangeVarnodes_walker(node, &context);
 }
 
 
 /*
  * modifyAggrefDropQual -
- *	remove the pure aggref clase from a qualification
+ *	remove the pure aggref clause from a qualification
+ *
+ * targetNode is a boolean expression node somewhere within the given
+ * expression tree.  When we find it, replace it with a constant TRUE.
+ * The return tree is a modified copy of the given tree; the given tree
+ * is not altered.
+ *
+ * Note: we don't recurse into subselects looking for targetNode; that's
+ * not necessary in the current usage, since in fact targetNode will be
+ * within the same select level as the given toplevel node.
  */
-static void
-modifyAggrefDropQual(Node **nodePtr, Node *orignode, Expr *expr)
+static Node *
+modifyAggrefDropQual(Node *node, Node *targetNode)
 {
-	Node	   *node = *nodePtr;
-
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return NULL;
+	if (node == targetNode)
 	{
-		case T_Var:
-			break;
+		Expr	   *expr = (Expr *) node;
 
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-				Aggref	   *oaggref = (Aggref *) orignode;
-
-				modifyAggrefDropQual(
-									 (Node **) (&(aggref->target)),
-									 (Node *) (oaggref->target),
-									 expr);
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *this_expr = (Expr *) node;
-				Expr	   *orig_expr = (Expr *) orignode;
-
-				if (orig_expr == expr)
-				{
-					Const	   *ctrue;
-
-					if (expr->typeOid != BOOLOID)
-						elog(ERROR,
-							 "aggregate expression in qualification isn't of type bool");
-					ctrue = makeNode(Const);
-					ctrue->consttype = BOOLOID;
-					ctrue->constlen = 1;
-					ctrue->constisnull = FALSE;
-					ctrue->constvalue = (Datum) TRUE;
-					ctrue->constbyval = TRUE;
-
-					*nodePtr = (Node *) ctrue;
-				}
-				else
-					modifyAggrefDropQual(
-										 (Node **) (&(this_expr->args)),
-										 (Node *) (orig_expr->args),
-										 expr);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-				Iter	   *oiter = (Iter *) orignode;
-
-				modifyAggrefDropQual(
-									 (Node **) (&(iter->iterexpr)),
-									 (Node *) (oiter->iterexpr),
-									 expr);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-				ArrayRef   *oref = (ArrayRef *) orignode;
-
-				modifyAggrefDropQual(
-									 (Node **) (&(ref->refupperindexpr)),
-									 (Node *) (oref->refupperindexpr),
-									 expr);
-				modifyAggrefDropQual(
-									 (Node **) (&(ref->reflowerindexpr)),
-									 (Node *) (oref->reflowerindexpr),
-									 expr);
-				modifyAggrefDropQual(
-									 (Node **) (&(ref->refexpr)),
-									 (Node *) (oref->refexpr),
-									 expr);
-				modifyAggrefDropQual(
-									 (Node **) (&(ref->refassgnexpr)),
-									 (Node *) (oref->refassgnexpr),
-									 expr);
-			}
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-				List	   *ol = (List *) orignode;
-				int			li = 0;
-
-				foreach(l, (List *) node)
-				{
-					modifyAggrefDropQual(
-										 (Node **) (&(lfirst(l))),
-										 (Node *) nth(li, ol),
-										 expr);
-					li++;
-				}
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-				SubLink    *osub = (SubLink *) orignode;
-
-				/* what about the lefthand? */
-				modifyAggrefDropQual(
-									 (Node **) (&(sub->subselect)),
-									 (Node *) (osub->subselect),
-									 expr);
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-				Query	   *oqry = (Query *) orignode;
-
-				modifyAggrefDropQual(
-									 (Node **) (&(qry->qual)),
-									 (Node *) (oqry->qual),
-									 expr);
-
-				modifyAggrefDropQual(
-									 (Node **) (&(qry->havingQual)),
-									 (Node *) (oqry->havingQual),
-									 expr);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggrefDropQual()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
+		if (! IsA(expr, Expr) || expr->typeOid != BOOLOID)
+			elog(ERROR,
+				 "aggregate expression in qualification isn't of type bool");
+		return (Node *) makeConst(BOOLOID, 1, (Datum) true,
+								  false, true, false, false);
 	}
+	return expression_tree_mutator(node, modifyAggrefDropQual,
+								   (void *) targetNode);
 }
-
 
 /*
  * modifyAggrefMakeSublink -
@@ -1029,7 +471,6 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 {
 	SubLink    *sublink;
 	Query	   *subquery;
-	Node	   *subqual;
 	RangeTblEntry *rte;
 	Aggref	   *aggref;
 	Var		   *target;
@@ -1037,24 +478,22 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	Resdom	   *resdom;
 	Expr	   *exp = copyObject(origexp);
 
-	if (nodeTag(nth(0, exp->args)) == T_Aggref)
+	if (IsA(nth(0, exp->args), Aggref))
 	{
-		if (nodeTag(nth(1, exp->args)) == T_Aggref)
-			elog(ERROR, "rewrite: comparision of 2 aggregate columns not supported");
+		if (IsA(nth(1, exp->args), Aggref))
+			elog(ERROR, "rewrite: comparison of 2 aggregate columns not supported");
 		else
 			elog(ERROR, "rewrite: aggregate column of view must be at right side in qual");
+		/* XXX could try to commute operator, instead of failing */
 	}
 
 	aggref = (Aggref *) nth(1, exp->args);
 	target = (Var *) (aggref->target);
-	/* XXX bogus --- agg's target might not be a Var! */
+	if (! IsA(target, Var))
+		elog(ERROR, "rewrite: aggregates of views only allowed on simple variables for now");
 	rte = (RangeTblEntry *) nth(target->varno - 1, parsetree->rtable);
 
-	tle = makeNode(TargetEntry);
 	resdom = makeNode(Resdom);
-
-	aggref->usenulls = TRUE;	/* XXX safe for all aggs?? */
-
 	resdom->resno = 1;
 	resdom->restype = aggref->aggtype;
 	resdom->restypmod = -1;
@@ -1063,15 +502,14 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	resdom->reskeyop = 0;
 	resdom->resjunk = false;
 
+	tle = makeNode(TargetEntry);
 	tle->resdom = resdom;
-	tle->expr = (Node *) aggref;
-
-	subqual = copyObject(parsetree->qual);
-	modifyAggrefDropQual((Node **) &subqual, (Node *) parsetree->qual, origexp);
+	tle->expr = (Node *) aggref; /* note this is from the copied expr */
 
 	sublink = makeNode(SubLink);
 	sublink->subLinkType = EXPR_SUBLINK;
-	sublink->useor = FALSE;
+	sublink->useor = false;
+	/* note lefthand and oper are made from the copied expr */
 	sublink->lefthand = lcons(lfirst(exp->args), NIL);
 	sublink->oper = lcons(exp->oper, NIL);
 
@@ -1088,21 +526,25 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	subquery->unionall = FALSE;
 	subquery->uniqueFlag = NULL;
 	subquery->sortClause = NULL;
-	subquery->rtable = lappend(NIL, rte);
-	subquery->targetList = lappend(NIL, tle);
-	subquery->qual = subqual;
+	subquery->rtable = lcons(rte, NIL);
+	subquery->targetList = lcons(tle, NIL);
+	subquery->qual = modifyAggrefDropQual((Node *) parsetree->qual,
+										  (Node *) origexp);
 	subquery->groupClause = NIL;
 	subquery->havingQual = NULL;
 	subquery->hasAggs = TRUE;
 	subquery->hasSubLinks = FALSE;
 	subquery->unionClause = NULL;
 
-
-	modifyAggrefUplevel((Node *) sublink);
-
-	modifyAggrefChangeVarnodes((Node **) &(sublink->lefthand), target->varno,
-							   1, target->varlevelsup);
-	modifyAggrefChangeVarnodes((Node **) &(sublink->subselect), target->varno,
+	modifyAggrefUplevel((Node *) subquery, NULL);
+	/*
+	 * Note: it might appear that we should be passing target->varlevelsup+1
+	 * here, since modifyAggrefUplevel has increased all the varlevelsup
+	 * values in the subquery.  However, target itself is a pointer to a
+	 * Var node in the subquery, so it's been incremented too!  What a kluge
+	 * this all is ... we need to make subquery RTEs so it can go away...
+	 */
+	modifyAggrefChangeVarnodes((Node *) subquery, target->varno,
 							   1, target->varlevelsup);
 
 	return sublink;
@@ -1112,166 +554,37 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 /*
  * modifyAggrefQual -
  *	Search for qualification expressions that contain aggregate
- *	functions and substiture them by sublinks. These expressions
+ *	functions and substitute them by sublinks. These expressions
  *	originally come from qualifications that use aggregate columns
  *	of a view.
+ *
+ *	The return value is a modified copy of the given expression tree.
  */
-static void
-modifyAggrefQual(Node **nodePtr, Query *parsetree)
+static Node *
+modifyAggrefQual(Node *node, Query *parsetree)
 {
-	Node	   *node = *nodePtr;
-
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return NULL;
+	if (IsA(node, Expr))
 	{
-		case T_Var:
-			break;
+		Expr	   *expr = (Expr *) node;
 
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-				SubLink    *sub;
-
-
-				if (length(exp->args) != 2)
-				{
-					modifyAggrefQual(
-									 (Node **) (&(exp->args)),
-									 parsetree);
-					break;
-				}
-
-				if (nodeTag(nth(0, exp->args)) != T_Aggref &&
-					nodeTag(nth(1, exp->args)) != T_Aggref)
-				{
-
-					modifyAggrefQual(
-									 (Node **) (&(exp->args)),
-									 parsetree);
-					break;
-				}
-
-				sub = modifyAggrefMakeSublink(exp,
-											  parsetree);
-
-				*nodePtr = (Node *) sub;
-				parsetree->hasSubLinks = TRUE;
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-
-				/*
-				 * We're calling recursively, and this routine knows how
-				 * to handle lists so let it do the work to handle the
-				 * WHEN clauses...
-				 */
-				modifyAggrefQual(
-								 (Node **) (&(((CaseExpr *) node)->args)),
-								 parsetree);
-
-				modifyAggrefQual(
-						   (Node **) (&(((CaseExpr *) node)->defresult)),
-								 parsetree);
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				modifyAggrefQual(
-								 (Node **) (&(((CaseWhen *) node)->expr)),
-								 parsetree);
-
-				modifyAggrefQual(
-							  (Node **) (&(((CaseWhen *) node)->result)),
-								 parsetree);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				modifyAggrefQual(
-								 (Node **) (&(iter->iterexpr)),
-								 parsetree);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				modifyAggrefQual(
-								 (Node **) (&(ref->refupperindexpr)),
-								 parsetree);
-				modifyAggrefQual(
-								 (Node **) (&(ref->reflowerindexpr)),
-								 parsetree);
-				modifyAggrefQual(
-								 (Node **) (&(ref->refexpr)),
-								 parsetree);
-				modifyAggrefQual(
-								 (Node **) (&(ref->refassgnexpr)),
-								 parsetree);
-			}
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					modifyAggrefQual(
-									 (Node **) (&(lfirst(l))),
-									 parsetree);
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				/* lefthand ??? */
-				modifyAggrefQual(
-								 (Node **) (&(sub->subselect)),
-								 (Query *) (sub->subselect));
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				modifyAggrefQual(
-								 (Node **) (&(qry->qual)),
-								 parsetree);
-
-				modifyAggrefQual(
-								 (Node **) (&(qry->havingQual)),
-								 parsetree);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in modifyAggrefQual()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
+		if (length(expr->args) == 2 &&
+			(IsA(lfirst(expr->args), Aggref) ||
+			 IsA(lsecond(expr->args), Aggref)))
+		{
+			SubLink    *sub = modifyAggrefMakeSublink(expr,
+													  parsetree);
+			parsetree->hasSubLinks = true;
+			return (Node *) sub;
+		}
+		/* otherwise, fall through and copy the expr normally */
 	}
+	/* We do NOT recurse into subselects in this routine.  It's sufficient
+	 * to get rid of aggregates that are in the qual expression proper.
+	 */
+	return expression_tree_mutator(node, modifyAggrefQual,
+								   (void *) parsetree);
 }
 
 
@@ -1350,406 +663,141 @@ make_null(Oid type)
 }
 
 
+/*
+ * apply_RIR_adjust_sublevel -
+ *	Set the varlevelsup field of all Var nodes in the given expression tree
+ *	to sublevels_up.  We do NOT recurse into subselects.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * Var nodes in-place.  The given expression tree should have been copied
+ * earlier to ensure that no unwanted side-effects occur!
+ */
+static bool
+apply_RIR_adjust_sublevel_walker(Node *node, int *sublevels_up)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		var->varlevelsup = *sublevels_up;
+		return false;
+	}
+	return expression_tree_walker(node, apply_RIR_adjust_sublevel_walker,
+								  (void *) sublevels_up);
+}
+
 static void
 apply_RIR_adjust_sublevel(Node *node, int sublevels_up)
 {
-	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (tle->expr),
-										  sublevels_up);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (aggref->target),
-										  sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (exp->args),
-										  sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (iter->iterexpr),
-										  sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (ref->refupperindexpr),
-										  sublevels_up);
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (ref->reflowerindexpr),
-										  sublevels_up);
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (ref->refexpr),
-										  sublevels_up);
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (ref->refassgnexpr),
-										  sublevels_up);
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				var->varlevelsup = sublevels_up;
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					apply_RIR_adjust_sublevel(
-											  (Node *) lfirst(l),
-											  sublevels_up);
-				}
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (exp->args),
-										  sublevels_up);
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (exp->defresult),
-										  sublevels_up);
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *exp = (CaseWhen *) node;
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (exp->expr),
-										  sublevels_up);
-
-				apply_RIR_adjust_sublevel(
-										  (Node *) (exp->result),
-										  sublevels_up);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in attribute_used()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
+	apply_RIR_adjust_sublevel_walker(node, &sublevels_up);
 }
 
 
-static void
-apply_RIR_view(Node **nodePtr, int rt_index, RangeTblEntry *rte, List *tlist, int *modified, int sublevels_up)
+/*
+ * apply_RIR_view
+ *	Replace Vars matching a given RT index with copies of TL expressions.
+ */
+
+typedef struct {
+	int				rt_index;
+	int				sublevels_up;
+	RangeTblEntry  *rte;
+	List		   *tlist;
+	int			   *modified;
+} apply_RIR_view_context;
+
+static Node *
+apply_RIR_view_mutator(Node *node,
+					   apply_RIR_view_context *context)
 {
-	Node	   *node = *nodePtr;
-
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return NULL;
+	if (IsA(node, Var))
 	{
-		case T_TargetEntry:
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->rt_index)
+		{
+			Node	   *expr;
+
+			if (var->varattno < 0)
+				elog(ERROR, "system column %s not available - %s is a view",
+					 get_attname(context->rte->relid, var->varattno),
+					 context->rte->relname);
+
+			expr = FindMatchingTLEntry(context->tlist,
+									   get_attname(context->rte->relid,
+												   var->varattno));
+			if (expr == NULL)
 			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(tle->expr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
+				/* XXX shouldn't this be an error condition? */
+				return make_null(var->vartype);
 			}
-			break;
 
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(aggref->target)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(exp->args)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(iter->iterexpr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(ref->refupperindexpr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-				apply_RIR_view(
-							   (Node **) (&(ref->reflowerindexpr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-				apply_RIR_view(
-							   (Node **) (&(ref->refexpr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-				apply_RIR_view(
-							   (Node **) (&(ref->refassgnexpr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varlevelsup == sublevels_up &&
-					var->varno == rt_index)
-				{
-					Node	   *exp;
-
-					if (var->varattno < 0)
-						elog(ERROR, "system column %s not available - %s is a view", get_attname(rte->relid, var->varattno), rte->relname);
-					exp = FindMatchingTLEntry(
-											  tlist,
-											  get_attname(rte->relid,
-														  var->varattno));
-
-					if (exp == NULL)
-					{
-						*nodePtr = make_null(var->vartype);
-						return;
-					}
-
-					exp = copyObject(exp);
-					if (var->varlevelsup > 0)
-						apply_RIR_adjust_sublevel(exp, var->varlevelsup);
-					*nodePtr = exp;
-					*modified = TRUE;
-				}
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					apply_RIR_view(
-								   (Node **) (&(lfirst(l))),
-								   rt_index,
-								   rte,
-								   tlist,
-								   modified,
-								   sublevels_up);
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(sub->lefthand)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-
-				apply_RIR_view(
-							   (Node **) (&(sub->subselect)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up + 1);
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(qry->targetList)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-
-				apply_RIR_view(
-							   (Node **) (&(qry->qual)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-
-				apply_RIR_view(
-							   (Node **) (&(qry->havingQual)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(exp->args)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-
-				apply_RIR_view(
-							   (Node **) (&(exp->defresult)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *exp = (CaseWhen *) node;
-
-				apply_RIR_view(
-							   (Node **) (&(exp->expr)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-
-				apply_RIR_view(
-							   (Node **) (&(exp->result)),
-							   rt_index,
-							   rte,
-							   tlist,
-							   modified,
-							   sublevels_up);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in apply_RIR_view()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
+			expr = copyObject(expr);
+			if (var->varlevelsup > 0)
+				apply_RIR_adjust_sublevel(expr, var->varlevelsup);
+			*(context->modified) = true;
+			return (Node *) expr;
+		}
+		/* otherwise fall through to copy the var normally */
 	}
+	/*
+	 * Since expression_tree_mutator won't touch subselects, we have to
+	 * handle them specially.
+	 */
+	if (IsA(node, SubLink))
+	{
+		SubLink   *sublink = (SubLink *) node;
+		SubLink   *newnode;
+
+		FLATCOPY(newnode, sublink, SubLink);
+		MUTATE(newnode->lefthand, sublink->lefthand, List *,
+			   apply_RIR_view_mutator, context);
+		context->sublevels_up++;
+		MUTATE(newnode->subselect, sublink->subselect, Node *,
+			   apply_RIR_view_mutator, context);
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	if (IsA(node, Query))
+	{
+		Query  *query = (Query *) node;
+		Query  *newnode;
+
+		FLATCOPY(newnode, query, Query);
+		MUTATE(newnode->targetList, query->targetList, List *,
+			   apply_RIR_view_mutator, context);
+		MUTATE(newnode->qual, query->qual, Node *,
+			   apply_RIR_view_mutator, context);
+		MUTATE(newnode->havingQual, query->havingQual, Node *,
+			   apply_RIR_view_mutator, context);
+		return (Node *) newnode;
+	}
+	return expression_tree_mutator(node, apply_RIR_view_mutator,
+								   (void *) context);
 }
 
-extern void CheckSelectForUpdate(Query *rule_action);	/* in analyze.c */
+static Node *
+apply_RIR_view(Node *node, int rt_index, RangeTblEntry *rte, List *tlist,
+			   int *modified, int sublevels_up)
+{
+	apply_RIR_view_context	context;
 
-static void
+	context.rt_index = rt_index;
+	context.sublevels_up = sublevels_up;
+	context.rte = rte;
+	context.tlist = tlist;
+	context.modified = modified;
+
+	return apply_RIR_view_mutator(node, &context);
+}
+
+
+static Query *
 ApplyRetrieveRule(Query *parsetree,
 				  RewriteRule *rule,
 				  int rt_index,
@@ -1764,7 +812,7 @@ ApplyRetrieveRule(Query *parsetree,
 			   *l;
 	int			nothing,
 				rt_length;
-	int			badsql = FALSE;
+	int			badsql = false;
 
 	rule_qual = rule->qual;
 	if (rule->actions)
@@ -1773,7 +821,7 @@ ApplyRetrieveRule(Query *parsetree,
 										 * rules with more than one
 										 * action? -ay */
 
-			return;
+			return parsetree;
 		rule_action = copyObject(lfirst(rule->actions));
 		nothing = FALSE;
 	}
@@ -1817,6 +865,7 @@ ApplyRetrieveRule(Query *parsetree,
 		 * them.
 		 */
 		((RowMark *) lfirst(l))->info &= ~ROW_MARK_FOR_UPDATE;
+
 		foreach(l2, rule_action->rtable)
 		{
 
@@ -1847,12 +896,16 @@ ApplyRetrieveRule(Query *parsetree,
 
 	if (relation_level)
 	{
-		apply_RIR_view((Node **) &parsetree, rt_index,
-					   (RangeTblEntry *) nth(rt_index - 1, rtable),
-					   rule_action->targetList, modified, 0);
-		apply_RIR_view((Node **) &rule_action, rt_index,
-					   (RangeTblEntry *) nth(rt_index - 1, rtable),
-					   rule_action->targetList, modified, 0);
+		RangeTblEntry  *rte = (RangeTblEntry *) nth(rt_index - 1, rtable);
+
+		parsetree = (Query *) apply_RIR_view((Node *) parsetree,
+											 rt_index, rte,
+											 rule_action->targetList,
+											 modified, 0);
+		rule_action = (Query *) apply_RIR_view((Node *) rule_action,
+											   rt_index, rte,
+											   rule_action->targetList,
+											   modified, 0);
 	}
 	else
 	{
@@ -1868,153 +921,59 @@ ApplyRetrieveRule(Query *parsetree,
 		parsetree->hasAggs = (rule_action->hasAggs || parsetree->hasAggs);
 		parsetree->hasSubLinks = (rule_action->hasSubLinks || parsetree->hasSubLinks);
 	}
+
+	return parsetree;
 }
 
 
-static void
-fireRIRonSubselect(Node *node)
+/*
+ * fireRIRonSubselect -
+ *	Apply fireRIRrules() to each subselect found in the given tree.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * SubLink nodes in-place.  It is caller's responsibility to ensure that
+ * no unwanted side-effects occur!
+ */
+static bool
+fireRIRonSubselect(Node *node, void *context)
 {
 	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
+		return false;
+	if (IsA(node, SubLink))
 	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+		Query	   *qry;
 
-				fireRIRonSubselect(
-								   (Node *) (tle->expr));
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (aggref->target));
-			}
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (exp->args));
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (iter->iterexpr));
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (ref->refupperindexpr));
-				fireRIRonSubselect(
-								   (Node *) (ref->reflowerindexpr));
-				fireRIRonSubselect(
-								   (Node *) (ref->refexpr));
-				fireRIRonSubselect(
-								   (Node *) (ref->refassgnexpr));
-			}
-			break;
-
-		case T_Var:
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					fireRIRonSubselect(
-									   (Node *) (lfirst(l)));
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-				Query	   *qry;
-
-				fireRIRonSubselect(
-								   (Node *) (sub->lefthand));
-
-				qry = fireRIRrules((Query *) (sub->subselect));
-
-				fireRIRonSubselect(
-								   (Node *) qry);
-
-				sub->subselect = (Node *) qry;
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (exp->args));
-
-				fireRIRonSubselect(
-								   (Node *) (exp->defresult));
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *exp = (CaseWhen *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (exp->expr));
-
-				fireRIRonSubselect(
-								   (Node *) (exp->result));
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				fireRIRonSubselect(
-								   (Node *) (qry->targetList));
-
-				fireRIRonSubselect(
-								   (Node *) (qry->qual));
-
-				fireRIRonSubselect(
-								   (Node *) (qry->havingQual));
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in fireRIRonSubselect()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
+		/* Process lefthand args */
+		if (fireRIRonSubselect((Node *) (sub->lefthand), context))
+			return true;
+		/* Do what we came for */
+		qry = fireRIRrules((Query *) (sub->subselect));
+		sub->subselect = (Node *) qry;
+		/* Must recurse to handle any sub-subselects! */
+		if (fireRIRonSubselect((Node *) qry, context))
+			return true;
+		return false;
 	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (fireRIRonSubselect((Node *) (qry->targetList), context))
+			return true;
+		if (fireRIRonSubselect((Node *) (qry->qual), context))
+			return true;
+		if (fireRIRonSubselect((Node *) (qry->havingQual), context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, fireRIRonSubselect,
+								  (void *) context);
 }
 
 
@@ -2032,7 +991,7 @@ fireRIRrules(Query *parsetree)
 	RuleLock   *rules;
 	RewriteRule *rule;
 	RewriteRule RIRonly;
-	int			modified;
+	int			modified = false;
 	int			i;
 	List	   *l;
 
@@ -2104,19 +1063,20 @@ fireRIRrules(Query *parsetree)
 			RIRonly.qual = rule->qual;
 			RIRonly.actions = rule->actions;
 
-			ApplyRetrieveRule(parsetree,
-							  &RIRonly,
-							  rt_index,
-							  RIRonly.attrno == -1,
-							  rel,
-							  &modified);
+			parsetree = ApplyRetrieveRule(parsetree,
+										  &RIRonly,
+										  rt_index,
+										  RIRonly.attrno == -1,
+										  rel,
+										  &modified);
 		}
 
 		heap_close(rel, AccessShareLock);
 	}
 
-	fireRIRonSubselect((Node *) parsetree);
-	modifyAggrefQual((Node **) &(parsetree->qual), parsetree);
+	fireRIRonSubselect((Node *) parsetree, NULL);
+
+	parsetree->qual = modifyAggrefQual(parsetree->qual, parsetree);
 
 	return parsetree;
 }
@@ -2639,9 +1599,9 @@ BasicQueryRewrite(Query *parsetree)
 		 */
 		if (query->hasAggs)
 			query->hasAggs = checkQueryHasAggs((Node *) (query->targetList))
-				| checkQueryHasAggs((Node *) (query->havingQual));
+				|| checkQueryHasAggs((Node *) (query->havingQual));
 		query->hasSubLinks = checkQueryHasSubLink((Node *) (query->qual))
-			| checkQueryHasSubLink((Node *) (query->havingQual));
+			|| checkQueryHasSubLink((Node *) (query->havingQual));
 		results = lappend(results, query);
 	}
 	return results;

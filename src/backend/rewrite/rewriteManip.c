@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.40 1999/08/25 23:21:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.41 1999/10/01 04:08:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,410 +19,182 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 
-static void ResolveNew(RewriteInfo *info, List *targetlist,
-		   Node **node, int sublevels_up);
+
+/* macros borrowed from expression_tree_mutator */
+
+#define FLATCOPY(newnode, node, nodetype)  \
+	( (newnode) = makeNode(nodetype), \
+	  memcpy((newnode), (node), sizeof(nodetype)) )
+
+#define MUTATE(newfield, oldfield, fieldtype, mutator, context)  \
+		( (newfield) = (fieldtype) mutator((Node *) (oldfield), (context)) )
 
 
 /*
- * OffsetVarnodes -
+ * OffsetVarNodes - adjust Vars when appending one query's RT to another
+ *
+ * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
+ * and increment their varno fields (rangetable indexes) by 'offset'.
+ * The varnoold fields are adjusted similarly.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * Var nodes in-place.  The given expression tree should have been copied
+ * earlier to ensure that no unwanted side-effects occur!
  */
+
+typedef struct {
+	int			offset;
+	int			sublevels_up;
+} OffsetVarNodes_context;
+
+static bool
+OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up)
+		{
+			var->varno += context->offset;
+			var->varnoold += context->offset;
+		}
+		return false;
+	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (OffsetVarNodes_walker((Node *) (sub->lefthand),
+								  context))
+			return true;
+		OffsetVarNodes((Node *) (sub->subselect),
+					   context->offset,
+					   context->sublevels_up + 1);
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (OffsetVarNodes_walker((Node *) (qry->targetList),
+								  context))
+			return true;
+		if (OffsetVarNodes_walker((Node *) (qry->qual),
+								  context))
+			return true;
+		if (OffsetVarNodes_walker((Node *) (qry->havingQual),
+								  context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, OffsetVarNodes_walker,
+								  (void *) context);
+}
+
 void
 OffsetVarNodes(Node *node, int offset, int sublevels_up)
 {
-	if (node == NULL)
-		return;
+	OffsetVarNodes_context context;
 
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				OffsetVarNodes(
-							   (Node *) (tle->expr),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				OffsetVarNodes(
-							   (Node *) (aggref->target),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				OffsetVarNodes(
-							   (Node *) (exp->args),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				OffsetVarNodes(
-							   (Node *) (iter->iterexpr),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				OffsetVarNodes(
-							   (Node *) (ref->refupperindexpr),
-							   offset,
-							   sublevels_up);
-				OffsetVarNodes(
-							   (Node *) (ref->reflowerindexpr),
-							   offset,
-							   sublevels_up);
-				OffsetVarNodes(
-							   (Node *) (ref->refexpr),
-							   offset,
-							   sublevels_up);
-				OffsetVarNodes(
-							   (Node *) (ref->refassgnexpr),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varlevelsup == sublevels_up)
-				{
-					var->varno += offset;
-					var->varnoold += offset;
-				}
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					OffsetVarNodes(
-								   (Node *) lfirst(l),
-								   offset,
-								   sublevels_up);
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				OffsetVarNodes(
-							   (Node *) (sub->lefthand),
-							   offset,
-							   sublevels_up);
-
-				OffsetVarNodes(
-							   (Node *) (sub->subselect),
-							   offset,
-							   sublevels_up + 1);
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				OffsetVarNodes(
-							   (Node *) (qry->targetList),
-							   offset,
-							   sublevels_up);
-
-				OffsetVarNodes(
-							   (Node *) (qry->qual),
-							   offset,
-							   sublevels_up);
-
-				OffsetVarNodes(
-							   (Node *) (qry->havingQual),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				OffsetVarNodes(
-							   (Node *) (exp->args),
-							   offset,
-							   sublevels_up);
-
-				OffsetVarNodes(
-							   (Node *) (exp->defresult),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *exp = (CaseWhen *) node;
-
-				OffsetVarNodes(
-							   (Node *) (exp->expr),
-							   offset,
-							   sublevels_up);
-
-				OffsetVarNodes(
-							   (Node *) (exp->result),
-							   offset,
-							   sublevels_up);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in OffsetVarNodes()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
+	context.offset = offset;
+	context.sublevels_up = sublevels_up;
+	OffsetVarNodes_walker(node, &context);
 }
 
-
 /*
- * ChangeVarNodes -
+ * ChangeVarNodes - adjust Var nodes for a specific change of RT index
+ *
+ * Find all Var nodes in the given tree belonging to a specific relation
+ * (identified by sublevels_up and rt_index), and change their varno fields
+ * to 'new_index'.  The varnoold fields are changed too.
+ *
+ * NOTE: although this has the form of a walker, we cheat and modify the
+ * Var nodes in-place.  The given expression tree should have been copied
+ * earlier to ensure that no unwanted side-effects occur!
  */
+
+typedef struct {
+	int			rt_index;
+	int			new_index;
+	int			sublevels_up;
+} ChangeVarNodes_context;
+
+static bool
+ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+
+		if (var->varlevelsup == context->sublevels_up &&
+			var->varno == context->rt_index)
+		{
+			var->varno = context->new_index;
+			var->varnoold = context->new_index;
+		}
+		return false;
+	}
+	if (IsA(node, SubLink))
+	{
+		/*
+		 * Standard expression_tree_walker will not recurse into subselect,
+		 * but here we must do so.
+		 */
+		SubLink    *sub = (SubLink *) node;
+
+		if (ChangeVarNodes_walker((Node *) (sub->lefthand),
+								  context))
+			return true;
+		ChangeVarNodes((Node *) (sub->subselect),
+					   context->rt_index,
+					   context->new_index,
+					   context->sublevels_up + 1);
+		return false;
+	}
+	if (IsA(node, Query))
+	{
+		/* Reach here after recursing down into subselect above... */
+		Query	   *qry = (Query *) node;
+
+		if (ChangeVarNodes_walker((Node *) (qry->targetList),
+								  context))
+			return true;
+		if (ChangeVarNodes_walker((Node *) (qry->qual),
+								  context))
+			return true;
+		if (ChangeVarNodes_walker((Node *) (qry->havingQual),
+								  context))
+			return true;
+		return false;
+	}
+	return expression_tree_walker(node, ChangeVarNodes_walker,
+								  (void *) context);
+}
+
 void
 ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 {
-	if (node == NULL)
-		return;
+	ChangeVarNodes_context context;
 
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				ChangeVarNodes(
-							   (Node *) (tle->expr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				ChangeVarNodes(
-							   (Node *) (aggref->target),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_GroupClause:
-			break;
-
-		case T_Expr:
-			{
-				Expr	   *exp = (Expr *) node;
-
-				ChangeVarNodes(
-							   (Node *) (exp->args),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				ChangeVarNodes(
-							   (Node *) (iter->iterexpr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				ChangeVarNodes(
-							   (Node *) (ref->refupperindexpr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-				ChangeVarNodes(
-							   (Node *) (ref->reflowerindexpr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-				ChangeVarNodes(
-							   (Node *) (ref->refexpr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-				ChangeVarNodes(
-							   (Node *) (ref->refassgnexpr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-
-				if (var->varlevelsup == sublevels_up &&
-					var->varno == rt_index)
-				{
-					var->varno = new_index;
-					var->varnoold = new_index;
-				}
-			}
-			break;
-
-		case T_Param:
-			break;
-
-		case T_Const:
-			break;
-
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					ChangeVarNodes(
-								   (Node *) lfirst(l),
-								   rt_index,
-								   new_index,
-								   sublevels_up);
-			}
-			break;
-
-		case T_SubLink:
-			{
-				SubLink    *sub = (SubLink *) node;
-
-				ChangeVarNodes(
-							   (Node *) (sub->lefthand),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-
-				ChangeVarNodes(
-							   (Node *) (sub->subselect),
-							   rt_index,
-							   new_index,
-							   sublevels_up + 1);
-			}
-			break;
-
-		case T_Query:
-			{
-				Query	   *qry = (Query *) node;
-
-				ChangeVarNodes(
-							   (Node *) (qry->targetList),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-
-				ChangeVarNodes(
-							   (Node *) (qry->qual),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-
-				ChangeVarNodes(
-							   (Node *) (qry->havingQual),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_CaseExpr:
-			{
-				CaseExpr   *exp = (CaseExpr *) node;
-
-				ChangeVarNodes(
-							   (Node *) (exp->args),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-
-				ChangeVarNodes(
-							   (Node *) (exp->defresult),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		case T_CaseWhen:
-			{
-				CaseWhen   *exp = (CaseWhen *) node;
-
-				ChangeVarNodes(
-							   (Node *) (exp->expr),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-
-				ChangeVarNodes(
-							   (Node *) (exp->result),
-							   rt_index,
-							   new_index,
-							   sublevels_up);
-			}
-			break;
-
-		default:
-			elog(NOTICE, "unknown node tag %d in ChangeVarNodes()", nodeTag(node));
-			elog(NOTICE, "Node is: %s", nodeToString(node));
-			break;
-
-
-	}
+	context.rt_index = rt_index;
+	context.new_index = new_index;
+	context.sublevels_up = sublevels_up;
+	ChangeVarNodes_walker(node, &context);
 }
 
-
-
+/*
+ * Add the given qualifier condition to the query's WHERE clause
+ */
 void
 AddQual(Query *parsetree, Node *qual)
 {
@@ -433,18 +205,19 @@ AddQual(Query *parsetree, Node *qual)
 		return;
 
 	/* INTERSECT want's the original, but we need to copy - Jan */
-	/* copy = qual; */
 	copy = copyObject(qual);
 
 	old = parsetree->qual;
 	if (old == NULL)
 		parsetree->qual = copy;
 	else
-		parsetree->qual = (Node *) make_andclause(makeList(parsetree->qual, copy, -1));
+		parsetree->qual = (Node *) make_andclause(makeList(old, copy, -1));
 }
 
-/* Adds the given havingQual to the one already contained in the parsetree just as
- * AddQual does for the normal 'where' qual */
+/*
+ * Add the given havingQual to the one already contained in the parsetree
+ * just as AddQual does for the normal 'where' qual
+ */
 void
 AddHavingQual(Query *parsetree, Node *havingQual)
 {
@@ -455,46 +228,43 @@ AddHavingQual(Query *parsetree, Node *havingQual)
 		return;
 
 	/* INTERSECT want's the original, but we need to copy - Jan */
-	/* copy = havingQual; */
 	copy = copyObject(havingQual);
 
 	old = parsetree->havingQual;
 	if (old == NULL)
 		parsetree->havingQual = copy;
 	else
-		parsetree->havingQual = (Node *) make_andclause(makeList(parsetree->havingQual, copy, -1));
+		parsetree->havingQual = (Node *) make_andclause(makeList(old, copy, -1));
 }
 
 #ifdef NOT_USED
 void
 AddNotHavingQual(Query *parsetree, Node *havingQual)
 {
-	Node	   *copy;
+	Node	   *notqual;
 
 	if (havingQual == NULL)
 		return;
 
-	/* INTERSECT want's the original, but we need to copy - Jan */
-	/* copy = (Node *) make_notclause((Expr *)havingQual); */
-	copy = (Node *) make_notclause((Expr *) copyObject(havingQual));
+	/* Need not copy input qual, because AddHavingQual will... */
+	notqual = (Node *) make_notclause((Expr *) havingQual);
 
-	AddHavingQual(parsetree, copy);
+	AddHavingQual(parsetree, notqual);
 }
 #endif
 
 void
 AddNotQual(Query *parsetree, Node *qual)
 {
-	Node	   *copy;
+	Node	   *notqual;
 
 	if (qual == NULL)
 		return;
 
-	/* INTERSECT want's the original, but we need to copy - Jan */
-	/* copy = (Node *) make_notclause((Expr *)qual); */
-	copy = (Node *) make_notclause((Expr *) copyObject(qual));
+	/* Need not copy input qual, because AddQual will... */
+	notqual = (Node *) make_notclause((Expr *) qual);
 
-	AddQual(parsetree, copy);
+	AddQual(parsetree, notqual);
 }
 
 
@@ -583,6 +353,7 @@ FixResdomTypes(List *tlist)
 
 #endif
 
+/* Find a targetlist entry by resno */
 static Node *
 FindMatchingNew(List *tlist, int attno)
 {
@@ -598,6 +369,7 @@ FindMatchingNew(List *tlist, int attno)
 	return NULL;
 }
 
+/* Find a targetlist entry by resname */
 static Node *
 FindMatchingTLEntry(List *tlist, char *e_attname)
 {
@@ -615,260 +387,245 @@ FindMatchingTLEntry(List *tlist, char *e_attname)
 	return NULL;
 }
 
-static void
-ResolveNew(RewriteInfo *info, List *targetlist, Node **nodePtr,
+
+/*
+ * ResolveNew - replace Vars with corresponding items from a targetlist
+ *
+ * Vars matching info->new_varno and sublevels_up are replaced by the
+ * entry with matching resno from targetlist, if there is one.
+ */
+
+typedef struct {
+	RewriteInfo	   *info;
+	List		   *targetlist;
+	int				sublevels_up;
+} ResolveNew_context;
+
+static Node *
+ResolveNew_mutator(Node *node, ResolveNew_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		int			this_varno = (int) var->varno;
+		int			this_varlevelsup = (int) var->varlevelsup;
+
+		if (this_varno == context->info->new_varno &&
+			this_varlevelsup == context->sublevels_up)
+		{
+			Node	   *n = FindMatchingNew(context->targetlist,
+											var->varattno);
+
+			if (n == NULL)
+			{
+				if (context->info->event == CMD_UPDATE)
+				{
+					/* For update, just change unmatched var's varno */
+					n = copyObject(node);
+					((Var *) n)->varno = context->info->current_varno;
+					((Var *) n)->varnoold = context->info->current_varno;
+					return n;
+				}
+				else
+				{
+					/* Otherwise replace unmatched var with a null */
+					return make_null(var->vartype);
+				}
+			}
+			else
+			{
+				/* Make a copy of the tlist item to return */
+				n = copyObject(n);
+				if (IsA(n, Var))
+				{
+					((Var *) n)->varlevelsup = this_varlevelsup;
+				}
+				/* XXX what to do if tlist item is NOT a var?
+				 * Should we be using something like apply_RIR_adjust_sublevel?
+				 */
+				return n;
+			}
+		}
+		/* otherwise fall through to copy the var normally */
+	}
+	/*
+	 * Since expression_tree_mutator won't touch subselects, we have to
+	 * handle them specially.
+	 */
+	if (IsA(node, SubLink))
+	{
+		SubLink   *sublink = (SubLink *) node;
+		SubLink   *newnode;
+
+		FLATCOPY(newnode, sublink, SubLink);
+		MUTATE(newnode->lefthand, sublink->lefthand, List *,
+			   ResolveNew_mutator, context);
+		context->sublevels_up++;
+		MUTATE(newnode->subselect, sublink->subselect, Node *,
+			   ResolveNew_mutator, context);
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	if (IsA(node, Query))
+	{
+		Query  *query = (Query *) node;
+		Query  *newnode;
+
+		/*
+		 * XXX original code for ResolveNew only recursed into qual field
+		 * of subquery.  I'm assuming that was an oversight ... tgl 9/99
+		 */
+
+		FLATCOPY(newnode, query, Query);
+		MUTATE(newnode->targetList, query->targetList, List *,
+			   ResolveNew_mutator, context);
+		MUTATE(newnode->qual, query->qual, Node *,
+			   ResolveNew_mutator, context);
+		MUTATE(newnode->havingQual, query->havingQual, Node *,
+			   ResolveNew_mutator, context);
+		return (Node *) newnode;
+	}
+	return expression_tree_mutator(node, ResolveNew_mutator,
+								   (void *) context);
+}
+
+static Node *
+ResolveNew(Node *node, RewriteInfo *info, List *targetlist,
 		   int sublevels_up)
 {
-	Node	   *node = *nodePtr;
+	ResolveNew_context	context;
 
-	if (node == NULL)
-		return;
+	context.info = info;
+	context.targetlist = targetlist;
+	context.sublevels_up = sublevels_up;
 
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			ResolveNew(info, targetlist, &((TargetEntry *) node)->expr,
-					   sublevels_up);
-			break;
-		case T_Aggref:
-			ResolveNew(info, targetlist, &((Aggref *) node)->target,
-					   sublevels_up);
-			break;
-		case T_Expr:
-			ResolveNew(info, targetlist, (Node **) (&(((Expr *) node)->args)),
-					   sublevels_up);
-			break;
-		case T_Iter:
-			ResolveNew(info, targetlist, (Node **) (&(((Iter *) node)->iterexpr)),
-					   sublevels_up);
-			break;
-		case T_ArrayRef:
-			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->refupperindexpr)),
-					   sublevels_up);
-			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->reflowerindexpr)),
-					   sublevels_up);
-			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->refexpr)),
-					   sublevels_up);
-			ResolveNew(info, targetlist, (Node **) (&(((ArrayRef *) node)->refassgnexpr)),
-					   sublevels_up);
-			break;
-		case T_Var:
-			{
-				int			this_varno = (int) ((Var *) node)->varno;
-				int			this_varlevelsup = (int) ((Var *) node)->varlevelsup;
-				Node	   *n;
-
-				if (this_varno == info->new_varno &&
-					this_varlevelsup == sublevels_up)
-				{
-					n = FindMatchingNew(targetlist,
-										((Var *) node)->varattno);
-					if (n == NULL)
-					{
-						if (info->event == CMD_UPDATE)
-						{
-							*nodePtr = n = copyObject(node);
-							((Var *) n)->varno = info->current_varno;
-							((Var *) n)->varnoold = info->current_varno;
-						}
-						else
-							*nodePtr = make_null(((Var *) node)->vartype);
-					}
-					else
-					{
-						*nodePtr = copyObject(n);
-						((Var *) *nodePtr)->varlevelsup = this_varlevelsup;
-					}
-				}
-				break;
-			}
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-					ResolveNew(info, targetlist, (Node **) &(lfirst(l)),
-							   sublevels_up);
-				break;
-			}
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
-
-				/* XXX what about lefthand?  What about rest of subquery? */
-				ResolveNew(info, targetlist, (Node **) &(query->qual), sublevels_up + 1);
-			}
-			break;
-		case T_GroupClause:
-			break;
-		default:
-			/* ignore the others */
-			break;
-	}
+	return ResolveNew_mutator(node, &context);
 }
 
 void
 FixNew(RewriteInfo *info, Query *parsetree)
 {
-	ResolveNew(info, parsetree->targetList,
-			   (Node **) &(info->rule_action->targetList), 0);
-	ResolveNew(info, parsetree->targetList,
-			   (Node **) &info->rule_action->qual, 0);
-	ResolveNew(info, parsetree->targetList,
-			   (Node **) &(info->rule_action->groupClause), 0);
-}
-
-static void
-nodeHandleRIRAttributeRule(Node **nodePtr,
-						   List *rtable,
-						   List *targetlist,
-						   int rt_index,
-						   int attr_num,
-						   int *modified,
-						   int *badsql,
-						   int sublevels_up)
-{
-	Node	   *node = *nodePtr;
-
-	if (node == NULL)
-		return;
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				nodeHandleRIRAttributeRule(&tle->expr, rtable, targetlist,
-									rt_index, attr_num, modified, badsql,
-										   sublevels_up);
-			}
-			break;
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				nodeHandleRIRAttributeRule(&aggref->target, rtable, targetlist,
-									rt_index, attr_num, modified, badsql,
-										   sublevels_up);
-			}
-			break;
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				nodeHandleRIRAttributeRule((Node **) (&(expr->args)), rtable,
-										   targetlist, rt_index, attr_num,
-										   modified, badsql,
-										   sublevels_up);
-			}
-			break;
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				nodeHandleRIRAttributeRule((Node **) (&(iter->iterexpr)), rtable,
-										   targetlist, rt_index, attr_num,
-										   modified, badsql,
-										   sublevels_up);
-			}
-			break;
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				nodeHandleRIRAttributeRule((Node **) (&(ref->refupperindexpr)), rtable,
-										   targetlist, rt_index, attr_num,
-										   modified, badsql,
-										   sublevels_up);
-				nodeHandleRIRAttributeRule((Node **) (&(ref->reflowerindexpr)), rtable,
-										   targetlist, rt_index, attr_num,
-										   modified, badsql,
-										   sublevels_up);
-				nodeHandleRIRAttributeRule((Node **) (&(ref->refexpr)), rtable,
-										   targetlist, rt_index, attr_num,
-										   modified, badsql,
-										   sublevels_up);
-				nodeHandleRIRAttributeRule((Node **) (&(ref->refassgnexpr)), rtable,
-										   targetlist, rt_index, attr_num,
-										   modified, badsql,
-										   sublevels_up);
-			}
-			break;
-		case T_Var:
-			{
-				int			this_varno = ((Var *) node)->varno;
-				int			this_varattno = ((Var *) node)->varattno;
-				int			this_varlevelsup = ((Var *) node)->varlevelsup;
-
-				if (this_varno == rt_index &&
-					this_varattno == attr_num &&
-					this_varlevelsup == sublevels_up)
-				{
-					if (((Var *) node)->vartype == 32)
-					{			/* HACK */
-						*nodePtr = make_null(((Var *) node)->vartype);
-						*modified = TRUE;
-						*badsql = TRUE;
-						break;
-					}
-					else
-					{
-						NameData	name_to_look_for;
-
-						name_to_look_for.data[0] = '\0';
-						namestrcpy(&name_to_look_for,
-								(char *) get_attname(getrelid(this_varno,
-															  rtable),
-													 attr_num));
-						if (name_to_look_for.data[0])
-						{
-							Node	   *n;
-
-							n = FindMatchingTLEntry(targetlist, (char *) &name_to_look_for);
-							if (n == NULL)
-								*nodePtr = make_null(((Var *) node)->vartype);
-							else
-								*nodePtr = n;
-							*modified = TRUE;
-						}
-					}
-				}
-			}
-			break;
-		case T_List:
-			{
-				List	   *i;
-
-				foreach(i, (List *) node)
-				{
-					nodeHandleRIRAttributeRule((Node **) (&(lfirst(i))), rtable,
-										  targetlist, rt_index, attr_num,
-										 modified, badsql, sublevels_up);
-				}
-			}
-			break;
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
-
-				/* XXX what about lefthand?  What about rest of subquery? */
-				nodeHandleRIRAttributeRule((Node **) &(query->qual), rtable, targetlist,
-									rt_index, attr_num, modified, badsql,
-										   sublevels_up + 1);
-			}
-			break;
-		default:
-			/* ignore the others */
-			break;
-	}
+	info->rule_action->targetList = (List *)
+		ResolveNew((Node *) info->rule_action->targetList,
+				   info, parsetree->targetList, 0);
+	info->rule_action->qual = ResolveNew(info->rule_action->qual,
+										 info, parsetree->targetList, 0);
+	/* XXX original code didn't fix havingQual; presumably an oversight? */
+	info->rule_action->havingQual = ResolveNew(info->rule_action->havingQual,
+											   info, parsetree->targetList, 0);
 }
 
 /*
+ * HandleRIRAttributeRule
+ *	Replace Vars matching a given RT index with copies of TL expressions.
+ *
  * Handles 'on retrieve to relation.attribute
  *			do instead retrieve (attribute = expression) w/qual'
+ *
+ * XXX Why is this not unified with apply_RIR_view()?
  */
+
+typedef struct {
+	List		   *rtable;
+	List		   *targetlist;
+	int				rt_index;
+	int				attr_num;
+	int			   *modified;
+	int			   *badsql;
+	int				sublevels_up;
+} HandleRIRAttributeRule_context;
+
+static Node *
+HandleRIRAttributeRule_mutator(Node *node,
+							   HandleRIRAttributeRule_context *context)
+{
+	if (node == NULL)
+		return NULL;
+	if (IsA(node, Var))
+	{
+		Var		   *var = (Var *) node;
+		int			this_varno = var->varno;
+		int			this_varattno = var->varattno;
+		int			this_varlevelsup = var->varlevelsup;
+
+		if (this_varno == context->rt_index &&
+			this_varattno == context->attr_num &&
+			this_varlevelsup == context->sublevels_up)
+		{
+			if (var->vartype == 32)
+			{					/* HACK: disallow SET variables */
+				*context->modified = TRUE;
+				*context->badsql = TRUE;
+				return make_null(var->vartype);
+			}
+			else
+			{
+				NameData	name_to_look_for;
+
+				name_to_look_for.data[0] = '\0';
+				namestrcpy(&name_to_look_for,
+						   (char *) get_attname(getrelid(this_varno,
+														 context->rtable),
+												this_varattno));
+				if (name_to_look_for.data[0])
+				{
+					Node	   *n;
+
+					*context->modified = TRUE;
+					n = FindMatchingTLEntry(context->targetlist,
+											(char *) &name_to_look_for);
+					if (n == NULL)
+						return make_null(var->vartype);
+					else
+						return copyObject(n);
+				}
+			}
+		}
+		/* otherwise fall through to copy the var normally */
+	}
+	/*
+	 * Since expression_tree_mutator won't touch subselects, we have to
+	 * handle them specially.
+	 */
+	if (IsA(node, SubLink))
+	{
+		SubLink   *sublink = (SubLink *) node;
+		SubLink   *newnode;
+
+		FLATCOPY(newnode, sublink, SubLink);
+		MUTATE(newnode->lefthand, sublink->lefthand, List *,
+			   HandleRIRAttributeRule_mutator, context);
+		context->sublevels_up++;
+		MUTATE(newnode->subselect, sublink->subselect, Node *,
+			   HandleRIRAttributeRule_mutator, context);
+		context->sublevels_up--;
+		return (Node *) newnode;
+	}
+	if (IsA(node, Query))
+	{
+		Query  *query = (Query *) node;
+		Query  *newnode;
+
+		/*
+		 * XXX original code for HandleRIRAttributeRule only recursed into
+		 * qual field of subquery.  I'm assuming that was an oversight ...
+		 */
+
+		FLATCOPY(newnode, query, Query);
+		MUTATE(newnode->targetList, query->targetList, List *,
+			   HandleRIRAttributeRule_mutator, context);
+		MUTATE(newnode->qual, query->qual, Node *,
+			   HandleRIRAttributeRule_mutator, context);
+		MUTATE(newnode->havingQual, query->havingQual, Node *,
+			   HandleRIRAttributeRule_mutator, context);
+		return (Node *) newnode;
+	}
+	return expression_tree_mutator(node, HandleRIRAttributeRule_mutator,
+								   (void *) context);
+}
+
 void
 HandleRIRAttributeRule(Query *parsetree,
 					   List *rtable,
@@ -878,201 +635,22 @@ HandleRIRAttributeRule(Query *parsetree,
 					   int *modified,
 					   int *badsql)
 {
+	HandleRIRAttributeRule_context	context;
 
-	nodeHandleRIRAttributeRule((Node **) (&(parsetree->targetList)), rtable,
-							   targetlist, rt_index, attr_num,
-							   modified, badsql, 0);
-	nodeHandleRIRAttributeRule(&parsetree->qual, rtable, targetlist,
-							   rt_index, attr_num, modified, badsql, 0);
+	context.rtable = rtable;
+	context.targetlist = targetlist;
+	context.rt_index = rt_index;
+	context.attr_num = attr_num;
+	context.modified = modified;
+	context.badsql = badsql;
+	context.sublevels_up = 0;
+
+	parsetree->targetList = (List *) 
+		HandleRIRAttributeRule_mutator((Node *) parsetree->targetList,
+									   &context);
+	parsetree->qual = HandleRIRAttributeRule_mutator(parsetree->qual,
+													 &context);
+	/* XXX original code did not fix havingQual ... oversight? */
+	parsetree->havingQual = HandleRIRAttributeRule_mutator(parsetree->havingQual,
+														   &context);
 }
-
-#ifdef NOT_USED
-static void
-nodeHandleViewRule(Node **nodePtr,
-				   List *rtable,
-				   List *targetlist,
-				   int rt_index,
-				   int *modified,
-				   int sublevels_up)
-{
-	Node	   *node = *nodePtr;
-
-	if (node == NULL)
-		return;
-
-	switch (nodeTag(node))
-	{
-		case T_TargetEntry:
-			{
-				TargetEntry *tle = (TargetEntry *) node;
-
-				nodeHandleViewRule(&(tle->expr), rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-			}
-			break;
-		case T_Aggref:
-			{
-				Aggref	   *aggref = (Aggref *) node;
-
-				nodeHandleViewRule(&(aggref->target), rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-			}
-			break;
-
-			/*
-			 * This has to be done to make queries using groupclauses work
-			 * on views
-			 */
-		case T_GroupClause:
-			{
-				GroupClause *group = (GroupClause *) node;
-
-				nodeHandleViewRule((Node **) (&(group->entry)), rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-			}
-			break;
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) node;
-
-				nodeHandleViewRule((Node **) (&(expr->args)),
-								   rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-			}
-			break;
-		case T_Iter:
-			{
-				Iter	   *iter = (Iter *) node;
-
-				nodeHandleViewRule((Node **) (&(iter->iterexpr)),
-								   rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-			}
-			break;
-		case T_ArrayRef:
-			{
-				ArrayRef   *ref = (ArrayRef *) node;
-
-				nodeHandleViewRule((Node **) (&(ref->refupperindexpr)),
-								   rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-				nodeHandleViewRule((Node **) (&(ref->reflowerindexpr)),
-								   rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-				nodeHandleViewRule((Node **) (&(ref->refexpr)),
-								   rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-				nodeHandleViewRule((Node **) (&(ref->refassgnexpr)),
-								   rtable, targetlist,
-								   rt_index, modified, sublevels_up);
-			}
-			break;
-		case T_Var:
-			{
-				Var		   *var = (Var *) node;
-				int			this_varno = var->varno;
-				int			this_varlevelsup = var->varlevelsup;
-				Node	   *n;
-
-				if (this_varno == rt_index &&
-					this_varlevelsup == sublevels_up)
-				{
-					n = FindMatchingTLEntry(targetlist,
-										 get_attname(getrelid(this_varno,
-															  rtable),
-													 var->varattno));
-					if (n == NULL)
-						*nodePtr = make_null(((Var *) node)->vartype);
-					else
-					{
-
-						/*
-						 * This is a hack: The varlevelsup of the orignal
-						 * variable and the new one should be the same.
-						 * Normally we adapt the node by changing a
-						 * pointer to point to a var contained in
-						 * 'targetlist'. In the targetlist all
-						 * varlevelsups are 0 so if we want to change it
-						 * to the original value we have to copy the node
-						 * before! (Maybe this will cause troubles with
-						 * some sophisticated queries on views?)
-						 */
-						if (this_varlevelsup > 0)
-							*nodePtr = copyObject(n);
-						else
-							*nodePtr = n;
-
-						if (nodeTag(nodePtr) == T_Var)
-							((Var *) *nodePtr)->varlevelsup = this_varlevelsup;
-						else
-							nodeHandleViewRule(&n, rtable, targetlist,
-									   rt_index, modified, sublevels_up);
-					}
-					*modified = TRUE;
-				}
-				break;
-			}
-		case T_List:
-			{
-				List	   *l;
-
-				foreach(l, (List *) node)
-				{
-					nodeHandleViewRule((Node **) (&(lfirst(l))),
-									   rtable, targetlist,
-									   rt_index, modified, sublevels_up);
-				}
-			}
-			break;
-		case T_SubLink:
-			{
-				SubLink    *sublink = (SubLink *) node;
-				Query	   *query = (Query *) sublink->subselect;
-
-				nodeHandleViewRule((Node **) &(query->qual), rtable, targetlist,
-								   rt_index, modified, sublevels_up + 1);
-
-				/***S*H*D***/
-				nodeHandleViewRule((Node **) &(query->havingQual), rtable, targetlist,
-								   rt_index, modified, sublevels_up + 1);
-				nodeHandleViewRule((Node **) &(query->targetList), rtable, targetlist,
-								   rt_index, modified, sublevels_up + 1);
-
-
-				/*
-				 * We also have to adapt the variables used in
-				 * sublink->lefthand
-				 */
-				nodeHandleViewRule((Node **) &(sublink->lefthand), rtable,
-						   targetlist, rt_index, modified, sublevels_up);
-			}
-			break;
-		default:
-			/* ignore the others */
-			break;
-	}
-}
-
-void
-HandleViewRule(Query *parsetree,
-			   List *rtable,
-			   List *targetlist,
-			   int rt_index,
-			   int *modified)
-{
-	nodeHandleViewRule(&parsetree->qual, rtable, targetlist, rt_index,
-					   modified, 0);
-	nodeHandleViewRule((Node **) (&(parsetree->targetList)), rtable, targetlist,
-					   rt_index, modified, 0);
-
-	/*
-	 * The variables in the havingQual and groupClause also have to be
-	 * adapted
-	 */
-	nodeHandleViewRule(&parsetree->havingQual, rtable, targetlist, rt_index,
-					   modified, 0);
-	nodeHandleViewRule((Node **) (&(parsetree->groupClause)), rtable, targetlist, rt_index,
-					   modified, 0);
-}
-
-#endif
