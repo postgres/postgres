@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq.h,v 1.40 2000/11/13 15:18:14 momjian Exp $
+ * $Id: libpq.h,v 1.41 2000/11/14 01:15:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern char PQerrormsg[PQERRORMSG_LENGTH];		/* in libpq/util.c */
  * prototypes for functions in pqcomm.c
  */
 extern int	StreamServerPort(int family, char *hostName,
-			unsigned short portName, char *unixSocketName, int *fdP);
+			unsigned short portNumber, char *unixSocketName, int *fdP);
 extern int	StreamConnection(int server_fd, Port *port);
 extern void StreamClose(int sock);
 extern void pq_init(void);

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.70 2000/11/12 20:51:52 tgl Exp $
+ * $Id: miscadmin.h,v 1.71 2000/11/14 01:15:03 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -110,7 +110,7 @@ extern bool EnableSSL;
 extern bool SilentMode;
 extern int MaxBackends;
 extern int NBuffers;
-extern int PostPortName;
+extern int PostPortNumber;
 
 /*****************************************************************************
  *	  pdir.h --																 *

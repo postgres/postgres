@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.146 2000/11/13 23:37:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.147 2000/11/14 01:15:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,13 +342,6 @@ PQconnectStart(const char *conninfo)
 		conn->pgunixsocket = conn->pghost;
 		conn->pghost = NULL;
 	}
-	if (conn->pghostaddr && conn->pghostaddr[0] == '/')
-	{
-		if (conn->pgunixsocket)
-			free(conn->pgunixsocket);
-		conn->pgunixsocket = conn->pghostaddr;
-		conn->pghostaddr = NULL;
-	}
 
 	/* ----------
 	 * Connect to the database
@@ -473,13 +466,6 @@ PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
 			free(conn->pgunixsocket);
 		conn->pgunixsocket = conn->pghost;
 		conn->pghost = NULL;
-	}
-	if (conn->pghostaddr && conn->pghostaddr[0] == '/')
-	{
-		if (conn->pgunixsocket)
-			free(conn->pgunixsocket);
-		conn->pgunixsocket = conn->pghostaddr;
-		conn->pghostaddr = NULL;
 	}
 
 	if (pgtty == NULL)

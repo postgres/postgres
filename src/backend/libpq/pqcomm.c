@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.111 2000/11/13 21:31:46 momjian Exp $
+ *	$Id: pqcomm.c,v 1.112 2000/11/14 01:15:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ StreamDoUnlink(void)
  */
 
 int
-StreamServerPort(int family, char *hostName, unsigned short portName,
+StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				 char *unixSocketName, int *fdP)
 {
 	SockAddr	saddr;
@@ -219,7 +219,7 @@ StreamServerPort(int family, char *hostName, unsigned short portName,
 #ifdef HAVE_UNIX_SOCKETS
 	if (family == AF_UNIX)
 	{
-		UNIXSOCK_PATH(saddr.un, portName, unixSocketName);
+		UNIXSOCK_PATH(saddr.un, portNumber, unixSocketName);
 		len = UNIXSOCK_LEN(saddr.un);
 		strcpy(sock_path, saddr.un.sun_path);
 		/*
@@ -265,7 +265,7 @@ StreamServerPort(int family, char *hostName, unsigned short portName,
 					hp->h_length);
 		}
 	
-		saddr.in.sin_port = htons(portName);
+		saddr.in.sin_port = htons(portNumber);
 		len = sizeof(struct sockaddr_in);
 	}
 

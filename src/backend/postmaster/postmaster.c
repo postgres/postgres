@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.184 2000/11/13 23:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.185 2000/11/14 01:15:01 momjian Exp $
  *
  * NOTES
  *
@@ -113,7 +113,7 @@ static Dllist *BackendList;
 static Dllist *PortList;
 
 /* The socket number we are listening for connections on */
-int PostPortName;
+int PostPortNumber;
 char * UnixSocketName;
 char * HostName;
 
@@ -511,7 +511,7 @@ PostmasterMain(int argc, char *argv[])
 				strcpy(original_extraoptions, optarg);
 				break;
 			case 'p':
-				PostPortName = atoi(optarg);
+				PostPortNumber = atoi(optarg);
 				break;
 			case 'S':
 
@@ -616,7 +616,7 @@ PostmasterMain(int argc, char *argv[])
 	if (NetServer)
 	{
 		status = StreamServerPort(AF_INET, HostName,
-						(unsigned short) PostPortName, UnixSocketName,
+						(unsigned short) PostPortNumber, UnixSocketName,
 						&ServerSock_INET);
 		if (status != STATUS_OK)
 		{
@@ -628,7 +628,7 @@ PostmasterMain(int argc, char *argv[])
 
 #ifdef HAVE_UNIX_SOCKETS
 	status = StreamServerPort(AF_UNIX, HostName,
-						(unsigned short) PostPortName, UnixSocketName, 
+						(unsigned short) PostPortNumber, UnixSocketName, 
 						&ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
@@ -639,7 +639,7 @@ PostmasterMain(int argc, char *argv[])
 #endif
 
 	/* set up shared memory and semaphores */
-	reset_shared(PostPortName);
+	reset_shared(PostPortNumber);
 
 	/* Init XLOG paths */
 	snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
@@ -1619,7 +1619,7 @@ reaper(SIGNAL_ARGS)
 				ctime(&tnow));
 		fflush(stderr);
 		shmem_exit(0);
-		reset_shared(PostPortName);
+		reset_shared(PostPortNumber);
 		StartupPID = StartupDataBase();
 		return;
 	}

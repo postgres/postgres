@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.18 2000/11/13 21:35:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.19 2000/11/14 01:15:02 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -245,7 +245,7 @@ ConfigureNamesInt[] =
 	 DEF_MAXBACKENDS, 1, MAXBACKENDS},
 	{"shared_buffers",          PGC_POSTMASTER,         &NBuffers,
 	 DEF_NBUFFERS, 16, INT_MAX},
-	{"port",                    PGC_POSTMASTER,         &PostPortName,
+	{"port",                    PGC_POSTMASTER,         &PostPortNumber,
 	 DEF_PGPORT, 1, 65535},
 
 	{"sort_mem",                PGC_USERSET,            &SortMem,
@@ -409,7 +409,7 @@ ResetAllOptions(void)
 	}
 
 	if (getenv("PGPORT"))
-		PostPortName = atoi(getenv("PGPORT"));
+		PostPortNumber = atoi(getenv("PGPORT"));
 }
 
 
