@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.122 1997/12/23 21:38:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.123 1998/01/05 02:21:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,9 +527,11 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	char		descbuf[256];
 	int			nColumns;
 	char	   *rtype;
+	char	   *rnotnull;
+	char	   *rhasdef;
 	int			i;
 	int			rsize;
-	PGresult   *res;
+	PGresult   *res, *res2;
 	int			usePipe = 0;
 	char	   *pagerenv;
 
@@ -564,7 +566,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	}
 
 	descbuf[0] = '\0';
-	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull ");
+	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull, a.atthasdef ");
 	strcat(descbuf, "FROM pg_class c, pg_attribute a, pg_type t ");
 	strcat(descbuf, "WHERE c.relname = '");
 	strcat(descbuf, table);
@@ -594,7 +596,7 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 				fout = stdout;
 		}
 		/*
-		 * * Display the information
+		 *	Display the information
 		 */
 
 		fprintf(fout,"\nTable    = %s\n", table);
@@ -605,39 +607,59 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 		/* next, print out the instances */
 		for (i = 0; i < PQntuples(res); i++)
 		{
+			char type_str[33];
+			
 			fprintf(fout,"| %-32.32s | ", PQgetvalue(res, i, 1));
 			rtype = PQgetvalue(res, i, 2);
 			rsize = atoi(PQgetvalue(res, i, 3));
-			if (strcmp(rtype, "text") == 0)
-			{
-				fprintf(fout,"%-32.32s |", rtype);
-				fprintf(fout,"%6s |", "var");
-			}
-			else if (strcmp(rtype, "bpchar") == 0)
-			{
-				fprintf(fout,"%-32.32s |", "(bp)char");
-				fprintf(fout,"%6i |", rsize > 0 ? rsize - VARHDRSZ : 0);
-			}
+			rnotnull = PQgetvalue(res, i, 4);
+			rhasdef = PQgetvalue(res, i, 5);
+
+			strcpy(type_str, rtype);
+			if (strcmp(rtype, "bpchar") == 0)
+				strcpy(type_str, "char()");
 			else if (strcmp(rtype, "varchar") == 0)
+				strcpy(type_str, "varchar()");
+			else if (rtype[0] == '_')
 			{
-				fprintf(fout,"%-32.32s |", rtype);
-				fprintf(fout,"%6i |", rsize > 0 ? rsize - VARHDRSZ: 0);
+				strcpy(type_str, rtype + 1);
+				strncat(type_str, "[]", 32 - strlen(type_str));
+				type_str[32] = '\0';
 			}
+			
+			if (rnotnull[0] == 't')
+			{
+				strncat(type_str," not null", 32 - strlen(type_str));
+				type_str[32] = '\0';
+			}
+			if (rhasdef[0] == 't')
+			{
+				descbuf[0] = '\0';
+				strcat(descbuf, "SELECT d.adsrc ");
+				strcat(descbuf, "FROM pg_attrdef d, pg_class c ");
+				strcat(descbuf, "WHERE c.relname = '");
+				strcat(descbuf, table);
+				strcat(descbuf, "'");
+				strcat(descbuf, "    and c.oid = d.adrelid ");
+				strcat(descbuf, "    and d.adnum = ");
+				strcat(descbuf, PQgetvalue(res, i, 0));
+				if (!(res2 = PSQLexec(pset, descbuf)))
+					return -1;
+				strcat(type_str," default '");
+				strncat(type_str, PQgetvalue(res2, 0, 0), 32-strlen(type_str));
+				type_str[32] = '\0';
+				strncat(type_str, "'", 32-strlen(type_str));
+				type_str[32] = '\0';
+			}
+			fprintf(fout,"%-32.32s |", type_str);
+
+			if (strcmp(rtype, "text") == 0)
+				fprintf(fout,"%6s |", "var");
+			else if (strcmp(rtype, "bpchar") == 0 ||
+					 strcmp(rtype, "varchar") == 0)
+				fprintf(fout,"%6i |", rsize > 0 ? rsize - VARHDRSZ : 0);
 			else
 			{
-				/* array types start with an underscore */
-				if (rtype[0] != '_')
-					fprintf(fout,"%-32.32s |", rtype);
-				else
-				{
-					char	   *newname;
-
-					newname = malloc(strlen(rtype) + 2);
-					strcpy(newname, rtype + 1);
-					strcat(newname, "[]");
-					fprintf(fout,"%-32.32s |", newname);
-					free(newname);
-				}
 				if (rsize > 0)
 					fprintf(fout,"%6i |", rsize);
 				else
