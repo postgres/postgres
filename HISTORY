@@ -17,99 +17,104 @@ Major contributors:
 	Vadim is "Vadim B. Mikheev" <vadim@sable.krasnoyarsk.su>
 	Vivek is Vivek Khera <khera@kci.kciLink.com>
 
-Changes in this release:
-------------------------
-Restructured object file generation/location(Bryan, Marc)
-Restructured port-specific file locations(Bryan, Marc)
-Makefile restructuring(Bryan, Marc)
-all functions now have prototypes that are compared against the calls
-unused/uninialized variables corrected
-gcc -Wall compiles cleanly with warnings only from unfixable constructs
-major include file reorganization/reduction(Marc)
-reduced the number of #define's, centeralized #define's
-removed many os-specific #define's
-fixed a few small memory leaks
-removed duplicate system oid's
-overhauled parser/analyze code to properly report errors and increase speed
-properly report errors when INSERT ... SELECT columns did not match
-properly report errors when insert column names were not correct
-minor improvements to rules system
-execute lowercase function names if not found with exact case
-change oid constants used in code to #define names
-Memory leaks (hunt and destroy with tools like Purify(Kurt)
-fix unitialized reads of memory(Kurt)
-fix array over-runs of memory writes(Kurt)
-Change default decimal constant representation from float4 to float8(Bruce)
-Allow libpq to distinguish between text value '' and null(Bruce)
-Starting quote in insert string errors(Bruce)
+Bug Fixes
+---------
 ALTER TABLE bug - running postgress process needs to re-read table definition
-Allow non-postgres users with createdb privs to destroydb's
-Prevent SELECT NULL from crashing server (Bruce)
+Allow vacuum to be run on one table or entire database(Bruce)
+Array fixes
+Fix array over-runs of memory writes(Kurt)
 Fix elusive btree range/non-range bug(Dan)
-Remove duplicate system catalog info or report mismatches(Dan)
-Remove duplicate OIDS in system tables(Dan)
-Prevent postmaster from being run as root
-Implement IN qualifier(Bruce)
-Implement BETWEEN qualifier(Bruce)
-add synonym of != for <>(Bruce)
-add UNIQUE index capability(Dan)
-Re-visit and fix vacuum(Vadim)
-speed up vacuum(Vadim)
-can't shrink tables, pg_time and pg_log(Vadim & Erich)
-allow actual compression, not just reuse on the same page(Vadim)
-allow vacuum to be run on one table or entire database(Bruce)
-Reverse meaning of HBA masks(Bryan)
+Fix for hash indexes on some types like time and date
+Fix for pg_log size explosion
+Fix permissions on lo_export()(Bruce)
+Fix unitialized reads of memory(Kurt)
+Fixed ALTER TABLE ... char(3) bug(Bruce)
+Fixed a few small memory leaks
+Fixed output of group acl permissions
+Memory leaks (hunt and destroy with tools like Purify(Kurt)
+Minor improvements to rules system
+NOTIFY fixes
+New asserts for run-checking
+Overhauled parser/analyze code to properly report errors and increase speed
+Pg_dump -d now handles NULL's properly(Bruce)
+Prevent SELECT NULL from crashing server (Bruce)
+Properly report errors when INSERT ... SELECT columns did not match
+Properly report errors when insert column names were not correct
+Psql \g filename now works(Bruce)
+Psql fixed problem with multiple statements on one line with multiple outputs
+Removed duplicate system oid's
+Several fixes for queries that crashed the backend
+Starting quote in insert string errors(Bruce)
+Submiting an empty query now returns empty status, not just " " query(Bruce)
+
+Enhancements
+------------
+Add UNIQUE index capability(Dan)
 Add hostname/user level access control rather than just hostname and user
-Allow restriction on who can create C functions(Bryan)
+Add synonym of != for <>(Bruce)
+Allow "select oid,* from table"
+Allow BY,ORDER BY to specify columns by number, or by non-alias table.column(Bruce)
+Allow COPY from the frontend(Bryan)
+Allow GROUP BY to use alias column name(Bruce)
+Allow actual compression, not just reuse on the same page(Vadim)
 Allow installation-configuration option to auto-add all local users(Bryan)
+Allow libpq to distinguish between text value '' and null(Bruce)
+Allow non-postgres users with createdb privs to destroydb's
+Allow restriction on who can create C functions(Bryan)
 Allow restriction on who can do backend COPY(Bryan)
-allow COPY from the frontend(Bryan)
-Secure Authentication of local users(Bryan)
-Idend authentication of local users(Bryan)
+Can shrink tables, pg_time and pg_log(Vadim & Erich)
 Change debug level 2 to print queries only, changed debug heading layout(Bruce)
+Change default decimal constant representation from float4 to float8(Bruce)
+Execute lowercase function names if not found with exact case
+Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
+Gist now included in the distrubution(Marc)
+Idend authentication of local users(Bryan)
+Implement BETWEEN qualifier(Bruce)
+Implement IN qualifier(Bruce)
+Libpq has PQgetisnull()(Bruce)
+Libpq++ improvements
+New options to initdb(Bryan)
+Pg_dump allow dump of oid's(Bruce)
+Pg_dump create indexes after tables are loaded for speed(Bruce)
+Pg_dump(Bruce)
+Pginterface additions for NULL values(Bruce)
+Prevent postmaster from being run as root
+Psql \h and \? is now readable(Bruce)
+Psql allow backslashed, semicolons anywhere on the line(Bruce)
+Psql changed command prompt for lines in query or in quotes(Bruce)
+Psql char(3) now displays as (bp)char in \d output(Bruce)
+Psql return code now more accurate(Bryan?)
+Psql updated help syntax(Bruce)
+Re-visit and fix vacuum(Vadim)
 Reduce size of regression diffs, remove timezone name difference(Bruce)
 Remove compile-time parameters to enable binary distributions(Bryan)
-Merge bsdi_2_1 to bsdi(Bruce)
-pg_dump(Bruce)
-	allow dump of oid's
-	create indexes after tables are loaded for speed
-	pg_dump -d now handles NULL's properly
-psql(Bruce)
-	fixed problem with multiple statements on one line with multiple outputs
-	changed command prompt for lines in query or in quotes
-	allow backslashed, semicolons anywhere on the line
-	\h and \? is now readable
-	\g filename now works
-	updated help syntax
-	char(3) now displays as (bp)char in \d output
-	return code now more accurate(Bryan?)
-new config.h file(Marc, Bryan)
-fix permissions on lo_export()(Bruce)
+Reverse meaning of HBA masks(Bryan)
+Secure Authentication of local users(Bryan)
+Speed up vacuum(Vadim)
+
+Source tree changes
+-------------------
+All functions now have prototypes that are compared against the calls
+Allow asserts to be disabled easly from Makefile.global(Bruce)
+Change oid constants used in code to #define names
+Decoupled sparc and solaris defines(Kurt)
+Gcc -Wall compiles cleanly with warnings only from unfixable constructs
+Major include file reorganization/reduction(Marc)
 Make now stops on compile failure(Bryan)
-submiting an empty query now returns empty status, not just " " query(Bruce)
-several fixes for queries that crashed the backend
-portability additions, including Ultrix, DG/UX, AIX, and Solaris
-fix for pg_log size explosion
-decoupled sparc and solaris defines(Kurt)
-new options to initdb(Bryan)
-allow asserts to be disabled easly from Makefile.global(Bruce)
-allow "select oid,* from table"
-NOTIFY fixes
+Makefile restructuring(Bryan, Marc)
+Merge bsdi_2_1 to bsdi(Bruce)
+Monitor program removed
+Name change from Postgres95 to PostgreSQL
+New config.h file(Marc, Bryan)
 PG_VERSION now set to 6.0 and used by postmaster
-libpq has PQgetisnull()(Bruce)
-pginterface additions for NULL values(Bruce)
-fixed ALTER TABLE ... char(3) bug(Bruce)
-fixed output of group acl permissions
-new asserts for run-checking
-name change from Postgres95 to PostgreSQL
-monitor program removed
-fix for hash indexes on some types like time and date
-gist now included in the distrubution(Marc)
-array fixes
-fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
-libpq++ improvements
-Allow BY,ORDER BY to specify columns by number, or by non-alias table.column(Bruce)
-Allow GROUP BY to use alias column name(Bruce)
+Portability additions, including Ultrix, DG/UX, AIX, and Solaris
+Reduced the number of #define's, centeralized #define's
+Remove duplicate OIDS in system tables(Dan)
+Remove duplicate system catalog info or report mismatches(Dan)
+Removed many os-specific #define's
+Restructured object file generation/location(Bryan, Marc)
+Restructured port-specific file locations(Bryan, Marc)
+Unused/uninialized variables corrected
 
 
 
