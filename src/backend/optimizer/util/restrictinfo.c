@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.16 2003/01/24 03:58:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.17 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,12 @@
 #include "optimizer/paths.h"
 #include "optimizer/restrictinfo.h"
 #include "optimizer/var.h"
+
+
+static bool join_clause_is_redundant(Query *root,
+									 RestrictInfo *rinfo,
+									 List *reference_list,
+									 JoinType jointype);
 
 
 /*
@@ -94,6 +100,76 @@ get_actual_join_clauses(List *restrictinfo_list,
  * discussion). We detect that case and omit the redundant clause from the
  * result list.
  *
+ * The result is a fresh List, but it points to the same member nodes
+ * as were in the input.
+ */
+List *
+remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
+							  JoinType jointype)
+{
+	List	   *result = NIL;
+	List	   *item;
+
+	foreach(item, restrictinfo_list)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
+
+		/* drop it if redundant with any prior clause */
+		if (join_clause_is_redundant(root, rinfo, result, jointype))
+			continue;
+
+		/* otherwise, add it to result list */
+		result = lappend(result, rinfo);
+	}
+
+	return result;
+}
+
+/*
+ * select_nonredundant_join_clauses
+ *
+ * Given a list of RestrictInfo clauses that are to be applied in a join,
+ * select the ones that are not redundant with any clause in the
+ * reference_list.
+ *
+ * This is similar to remove_redundant_join_clauses, but we are looking for
+ * redundancies with a separate list of clauses (i.e., clauses that have
+ * already been applied below the join itself).
+ *
+ * Note that we assume the given restrictinfo_list has already been checked
+ * for local redundancies, so we don't check again.
+ */
+List *
+select_nonredundant_join_clauses(Query *root,
+								 List *restrictinfo_list,
+								 List *reference_list,
+								 JoinType jointype)
+{
+	List	   *result = NIL;
+	List	   *item;
+
+	foreach(item, restrictinfo_list)
+	{
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
+
+		/* drop it if redundant with any reference clause */
+		if (join_clause_is_redundant(root, rinfo, reference_list, jointype))
+			continue;
+
+		/* otherwise, add it to result list */
+		result = lappend(result, rinfo);
+	}
+
+	return result;
+}
+
+/*
+ * join_clause_is_redundant
+ *		Returns true if rinfo is redundant with any clause in reference_list.
+ *
+ * This is the guts of both remove_redundant_join_clauses and
+ * select_nonredundant_join_clauses.  See the docs above for motivation.
+ *
  * We can detect redundant mergejoinable clauses very cheaply by using their
  * left and right pathkeys, which uniquely identify the sets of equijoined
  * variables in question.  All the members of a pathkey set that are in the
@@ -113,69 +189,59 @@ get_actual_join_clauses(List *restrictinfo_list,
  * except one is pushed down into an outer join and the other isn't,
  * then they're not really redundant, because one constrains the
  * joined rows after addition of null fill rows, and the other doesn't.
- *
- * The result is a fresh List, but it points to the same member nodes
- * as were in the input.
  */
-List *
-remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
-							  JoinType jointype)
+static bool
+join_clause_is_redundant(Query *root,
+						 RestrictInfo *rinfo,
+						 List *reference_list,
+						 JoinType jointype)
 {
-	List	   *result = NIL;
-	List	   *item;
+	/* always consider exact duplicates redundant */
+	/* XXX would it be sufficient to use ptrMember here? */
+	if (member(rinfo, reference_list))
+		return true;
 
-	foreach(item, restrictinfo_list)
+	/* check for redundant merge clauses */
+	if (rinfo->mergejoinoperator != InvalidOid)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
+		bool		redundant = false;
+		List	   *refitem;
 
-		/* always eliminate duplicates */
-		if (member(rinfo, result))
-			continue;
+		cache_mergeclause_pathkeys(root, rinfo);
 
-		/* check for redundant merge clauses */
-		if (rinfo->mergejoinoperator != InvalidOid)
+		/* do the cheap tests first */
+		foreach(refitem, reference_list)
 		{
-			bool		redundant = false;
-			List	   *olditem;
+			RestrictInfo *refrinfo = (RestrictInfo *) lfirst(refitem);
 
-			cache_mergeclause_pathkeys(root, rinfo);
-
-			/* do the cheap tests first */
-			foreach(olditem, result)
+			if (refrinfo->mergejoinoperator != InvalidOid &&
+				rinfo->left_pathkey == refrinfo->left_pathkey &&
+				rinfo->right_pathkey == refrinfo->right_pathkey &&
+				(rinfo->ispusheddown == refrinfo->ispusheddown ||
+				 !IS_OUTER_JOIN(jointype)))
 			{
-				RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);
-
-				if (oldrinfo->mergejoinoperator != InvalidOid &&
-					rinfo->left_pathkey == oldrinfo->left_pathkey &&
-					rinfo->right_pathkey == oldrinfo->right_pathkey &&
-					(rinfo->ispusheddown == oldrinfo->ispusheddown ||
-					 !IS_OUTER_JOIN(jointype)))
-				{
-					redundant = true;
-					break;
-				}
-			}
-
-			if (redundant)
-			{
-				/*
-				 * It looks redundant, now check for "var = const" case.
-				 * If left_relids/right_relids are set, then there are
-				 * definitely vars on both sides; else we must check the
-				 * hard way.
-				 */
-				if (rinfo->left_relids)
-					continue;	/* var = var, so redundant */
-				if (contain_var_clause(get_leftop(rinfo->clause)) &&
-					contain_var_clause(get_rightop(rinfo->clause)))
-					continue;	/* var = var, so redundant */
-				/* else var = const, not redundant */
+				redundant = true;
+				break;
 			}
 		}
 
-		/* otherwise, add it to result list */
-		result = lappend(result, rinfo);
+		if (redundant)
+		{
+			/*
+			 * It looks redundant, now check for "var = const" case.
+			 * If left_relids/right_relids are set, then there are
+			 * definitely vars on both sides; else we must check the
+			 * hard way.
+			 */
+			if (rinfo->left_relids)
+				return true;	/* var = var, so redundant */
+			if (contain_var_clause(get_leftop(rinfo->clause)) &&
+				contain_var_clause(get_rightop(rinfo->clause)))
+				return true;	/* var = var, so redundant */
+			/* else var = const, not redundant */
+		}
 	}
 
-	return result;
+	/* otherwise, not redundant */
+	return false;
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.36 2003/05/28 22:32:50 tgl Exp $
+ * $Id: pg_list.h,v 1.37 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,6 +140,8 @@ typedef struct FastList
 } FastList;
 
 #define FastListInit(fl)	( (fl)->head = (fl)->tail = NIL )
+#define FastListFromList(fl, l)  \
+	( (fl)->head = (l), (fl)->tail = llastnode((fl)->head) )
 #define FastListValue(fl)	( (fl)->head )
 
 
@@ -166,6 +168,7 @@ extern void FastConcFast(FastList *fl, FastList *fl2);
 extern void *nth(int n, List *l);
 extern int	length(List *list);
 extern void *llast(List *list);
+extern List *llastnode(List *list);
 extern bool member(void *datum, List *list);
 extern bool ptrMember(void *datum, List *list);
 extern bool intMember(int datum, List *list);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: restrictinfo.h,v 1.16 2002/11/24 21:52:15 tgl Exp $
+ * $Id: restrictinfo.h,v 1.17 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,5 +23,9 @@ extern void get_actual_join_clauses(List *restrictinfo_list,
 extern List *remove_redundant_join_clauses(Query *root,
 										   List *restrictinfo_list,
 										   JoinType jointype);
+extern List *select_nonredundant_join_clauses(Query *root,
+											  List *restrictinfo_list,
+											  List *reference_list,
+											  JoinType jointype);
 
 #endif   /* RESTRICTINFO_H */

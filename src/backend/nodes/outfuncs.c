@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.207 2003/06/06 15:04:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.208 2003/06/15 22:51:45 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -933,6 +933,7 @@ _outIndexPath(StringInfo str, IndexPath *node)
 
 	WRITE_NODE_FIELD(indexinfo);
 	WRITE_NODE_FIELD(indexqual);
+	WRITE_NODE_FIELD(indexjoinclauses);
 	WRITE_ENUM_FIELD(indexscandir, ScanDirection);
 	WRITE_FLOAT_FIELD(rows, "%.2f");
 }
@@ -1034,6 +1035,7 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 {
 	WRITE_NODE_TYPE("RESTRICTINFO");
 
+	/* NB: this isn't a complete set of fields */
 	WRITE_NODE_FIELD(clause);
 	WRITE_BOOL_FIELD(ispusheddown);
 	WRITE_NODE_FIELD(subclauseindices);
@@ -1042,6 +1044,8 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	WRITE_OID_FIELD(mergejoinoperator);
 	WRITE_OID_FIELD(left_sortop);
 	WRITE_OID_FIELD(right_sortop);
+	WRITE_NODE_FIELD(left_pathkey);
+	WRITE_NODE_FIELD(right_pathkey);
 	WRITE_OID_FIELD(hashjoinoperator);
 }
 

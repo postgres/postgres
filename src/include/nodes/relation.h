@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.80 2003/05/28 16:04:02 tgl Exp $
+ * $Id: relation.h,v 1.81 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,6 +340,15 @@ typedef struct Path
  * Also note that indexquals lists do not contain RestrictInfo nodes,
  * just bare clause expressions.
  *
+ * 'indexjoinclauses' is NIL for an ordinary indexpath (one that does not
+ * use any join clauses in the index conditions).  For an innerjoin indexpath,
+ * it has the same structure as 'indexqual', but references the RestrictInfo
+ * nodes from which the indexqual was built, rather than the bare clause
+ * expressions.  (Note: there isn't necessarily a one-to-one correspondence
+ * between RestrictInfos and expressions, because of expansion of special
+ * indexable operators.)  We need this so that we can eliminate redundant
+ * join clauses when plans are built.
+ *
  * 'indexscandir' is one of:
  *		ForwardScanDirection: forward scan of an ordered index
  *		BackwardScanDirection: backward scan of an ordered index
@@ -360,6 +369,7 @@ typedef struct IndexPath
 	Path		path;
 	List	   *indexinfo;
 	List	   *indexqual;
+	List	   *indexjoinclauses;
 	ScanDirection indexscandir;
 	double		rows;			/* estimated number of result tuples */
 } IndexPath;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.144 2003/05/28 23:06:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.145 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,17 +51,11 @@ static SubqueryScan *create_subqueryscan_plan(Path *best_path,
 						 List *tlist, List *scan_clauses);
 static FunctionScan *create_functionscan_plan(Path *best_path,
 						 List *tlist, List *scan_clauses);
-static NestLoop *create_nestloop_plan(Query *root,
-					 NestPath *best_path, List *tlist,
-					 List *joinclauses, List *otherclauses,
+static NestLoop *create_nestloop_plan(Query *root, NestPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
-static MergeJoin *create_mergejoin_plan(Query *root,
-					  MergePath *best_path, List *tlist,
-					  List *joinclauses, List *otherclauses,
+static MergeJoin *create_mergejoin_plan(Query *root, MergePath *best_path,
 					  Plan *outer_plan, Plan *inner_plan);
-static HashJoin *create_hashjoin_plan(Query *root,
-					 HashPath *best_path, List *tlist,
-					 List *joinclauses, List *otherclauses,
+static HashJoin *create_hashjoin_plan(Query *root, HashPath *best_path,
 					 Plan *outer_plan, Plan *inner_plan);
 static void fix_indxqual_references(List *indexquals, IndexPath *index_path,
 						List **fixed_indexquals,
@@ -356,59 +350,35 @@ disuse_physical_tlist(Plan *plan, Path *path)
 static Join *
 create_join_plan(Query *root, JoinPath *best_path)
 {
-	List	   *join_tlist = best_path->path.parent->targetlist;
 	Plan	   *outer_plan;
 	Plan	   *inner_plan;
-	List	   *joinclauses;
-	List	   *otherclauses;
 	Join	   *plan;
 
 	outer_plan = create_plan(root, best_path->outerjoinpath);
 	inner_plan = create_plan(root, best_path->innerjoinpath);
-
-	if (IS_OUTER_JOIN(best_path->jointype))
-	{
-		get_actual_join_clauses(best_path->joinrestrictinfo,
-								&joinclauses, &otherclauses);
-	}
-	else
-	{
-		/* We can treat all clauses alike for an inner join */
-		joinclauses = get_actual_clauses(best_path->joinrestrictinfo);
-		otherclauses = NIL;
-	}
 
 	switch (best_path->path.pathtype)
 	{
 		case T_MergeJoin:
 			plan = (Join *) create_mergejoin_plan(root,
 												  (MergePath *) best_path,
-												  join_tlist,
-												  joinclauses,
-												  otherclauses,
 												  outer_plan,
 												  inner_plan);
 			break;
 		case T_HashJoin:
 			plan = (Join *) create_hashjoin_plan(root,
 												 (HashPath *) best_path,
-												 join_tlist,
-												 joinclauses,
-												 otherclauses,
 												 outer_plan,
 												 inner_plan);
 			break;
 		case T_NestLoop:
 			plan = (Join *) create_nestloop_plan(root,
 												 (NestPath *) best_path,
-												 join_tlist,
-												 joinclauses,
-												 otherclauses,
 												 outer_plan,
 												 inner_plan);
 			break;
 		default:
-			elog(ERROR, "create_join_plan: unknown node type: %d",
+			elog(ERROR, "unsupported node type %d",
 				 best_path->path.pathtype);
 			plan = NULL;		/* keep compiler quiet */
 			break;
@@ -869,15 +839,16 @@ create_functionscan_plan(Path *best_path, List *tlist, List *scan_clauses)
 static NestLoop *
 create_nestloop_plan(Query *root,
 					 NestPath *best_path,
-					 List *tlist,
-					 List *joinclauses,
-					 List *otherclauses,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
+	List	   *tlist = best_path->path.parent->targetlist;
+	List	   *joinrestrictclauses = best_path->joinrestrictinfo;
+	List	   *joinclauses;
+	List	   *otherclauses;
 	NestLoop   *join_plan;
 
-	if (IsA(inner_plan, IndexScan))
+	if (IsA(best_path->innerjoinpath, IndexPath))
 	{
 		/*
 		 * An index is being used to reduce the number of tuples scanned
@@ -888,20 +859,39 @@ create_nestloop_plan(Query *root,
 		 * (otherwise, several different sets of clauses are being ORed
 		 * together).
 		 *
-		 * Note we must compare against indxqualorig not the "fixed" indxqual
-		 * (which has index attnos instead of relation attnos, and may have
-		 * been commuted as well).
+		 * We can also remove any join clauses that are redundant with those
+		 * being used in the index scan; prior redundancy checks will not
+		 * have caught this case because the join clauses would never have
+		 * been put in the same joininfo list.
+		 *
+		 * This would be a waste of time if the indexpath was an ordinary
+		 * indexpath and not a special innerjoin path.  We will skip it in
+		 * that case since indexjoinclauses is NIL in an ordinary indexpath.
 		 */
-		IndexScan  *innerscan = (IndexScan *) inner_plan;
-		List	   *indxqualorig = innerscan->indxqualorig;
+		IndexPath  *innerpath = (IndexPath *) best_path->innerjoinpath;
+		List	   *indexjoinclauses = innerpath->indexjoinclauses;
 
-		if (length(indxqualorig) == 1) /* single indexscan? */
+		if (length(indexjoinclauses) == 1) /* single indexscan? */
 		{
-			/* No work needed if indxqual refers only to its own relation... */
-			if (NumRelids((Node *) indxqualorig) > 1)
-				joinclauses = set_difference(joinclauses,
-											 lfirst(indxqualorig));
+			joinrestrictclauses =
+				select_nonredundant_join_clauses(root,
+												 joinrestrictclauses,
+												 lfirst(indexjoinclauses),
+												 best_path->jointype);
 		}
+	}
+
+	/* Get the join qual clauses (in plain expression form) */
+	if (IS_OUTER_JOIN(best_path->jointype))
+	{
+		get_actual_join_clauses(joinrestrictclauses,
+								&joinclauses, &otherclauses);
+	}
+	else
+	{
+		/* We can treat all clauses alike for an inner join */
+		joinclauses = get_actual_clauses(joinrestrictclauses);
+		otherclauses = NIL;
 	}
 
 	join_plan = make_nestloop(tlist,
@@ -919,14 +909,27 @@ create_nestloop_plan(Query *root,
 static MergeJoin *
 create_mergejoin_plan(Query *root,
 					  MergePath *best_path,
-					  List *tlist,
-					  List *joinclauses,
-					  List *otherclauses,
 					  Plan *outer_plan,
 					  Plan *inner_plan)
 {
+	List	   *tlist = best_path->jpath.path.parent->targetlist;
+	List	   *joinclauses;
+	List	   *otherclauses;
 	List	   *mergeclauses;
 	MergeJoin  *join_plan;
+
+	/* Get the join qual clauses (in plain expression form) */
+	if (IS_OUTER_JOIN(best_path->jpath.jointype))
+	{
+		get_actual_join_clauses(best_path->jpath.joinrestrictinfo,
+								&joinclauses, &otherclauses);
+	}
+	else
+	{
+		/* We can treat all clauses alike for an inner join */
+		joinclauses = get_actual_clauses(best_path->jpath.joinrestrictinfo);
+		otherclauses = NIL;
+	}
 
 	/*
 	 * Remove the mergeclauses from the list of join qual clauses, leaving
@@ -986,17 +989,30 @@ create_mergejoin_plan(Query *root,
 static HashJoin *
 create_hashjoin_plan(Query *root,
 					 HashPath *best_path,
-					 List *tlist,
-					 List *joinclauses,
-					 List *otherclauses,
 					 Plan *outer_plan,
 					 Plan *inner_plan)
 {
+	List	   *tlist = best_path->jpath.path.parent->targetlist;
+	List	   *joinclauses;
+	List	   *otherclauses;
 	List	   *hashclauses;
 	HashJoin   *join_plan;
 	Hash	   *hash_plan;
 	List	   *innerhashkeys;
 	List	   *hcl;
+
+	/* Get the join qual clauses (in plain expression form) */
+	if (IS_OUTER_JOIN(best_path->jpath.jointype))
+	{
+		get_actual_join_clauses(best_path->jpath.joinrestrictinfo,
+								&joinclauses, &otherclauses);
+	}
+	else
+	{
+		/* We can treat all clauses alike for an inner join */
+		joinclauses = get_actual_clauses(best_path->jpath.joinrestrictinfo);
+		otherclauses = NIL;
+	}
 
 	/*
 	 * Remove the hashclauses from the list of join qual clauses, leaving
@@ -1056,13 +1072,9 @@ create_hashjoin_plan(Query *root,
  *	  Adjust indexqual clauses to the form the executor's indexqual
  *	  machinery needs, and check for recheckable (lossy) index conditions.
  *
- * We have four tasks here:
+ * We have three tasks here:
  *	* Index keys must be represented by Var nodes with varattno set to the
  *	  index's attribute number, not the attribute number in the original rel.
- *	* indxpath.c may have selected an index that is binary-compatible with
- *	  the actual expression operator, but not exactly the same datatype.
- *	  We must replace the expression's operator with the binary-compatible
- *	  equivalent operator that the index will recognize.
  *	* If the index key is on the right, commute the clause to put it on the
  *	  left.  (Someday the executor might not need this, but for now it does.)
  *	* If the indexable operator is marked 'amopreqcheck' in pg_amop, then

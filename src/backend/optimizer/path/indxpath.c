@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.143 2003/05/28 22:32:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.144 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,10 +59,10 @@ static bool match_or_subclause_to_indexkey(RelOptInfo *rel,
 							   IndexOptInfo *index,
 							   Expr *clause);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index);
-static List *group_clauses_by_indexkey_for_join(RelOptInfo *rel,
-								IndexOptInfo *index,
-								Relids outer_relids,
-								bool isouterjoin);
+static List *group_clauses_by_indexkey_for_join(Query *root,
+								   RelOptInfo *rel, IndexOptInfo *index,
+								   Relids outer_relids,
+								   JoinType jointype, bool isouterjoin);
 static bool match_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
 									 int indexcol, Oid opclass, Expr *clause);
 static bool match_join_clause_to_indexcol(RelOptInfo *rel, IndexOptInfo *index,
@@ -583,8 +583,10 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
  * will already have been generated for it.)
  */
 static List *
-group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
-								   Relids outer_relids, bool isouterjoin)
+group_clauses_by_indexkey_for_join(Query *root,
+								   RelOptInfo *rel, IndexOptInfo *index,
+								   Relids outer_relids,
+								   JoinType jointype, bool isouterjoin)
 {
 	FastList	clausegroup_list;
 	bool		jfound = false;
@@ -627,6 +629,24 @@ group_clauses_by_indexkey_for_join(RelOptInfo *rel, IndexOptInfo *index,
 					jfound = true;
 				}
 			}
+		}
+
+		/*
+		 * If we found join clauses in more than one joininfo list, we may
+		 * now have clauses that are known redundant.  Get rid of 'em.
+		 * (There is no point in looking at restriction clauses, because
+		 * remove_redundant_join_clauses will never think they are
+		 * redundant, so we do this before adding restriction clauses to
+		 * the clause group.)
+		 */
+		if (FastListValue(&clausegroup) != NIL)
+		{
+			List *nl;
+
+			nl = remove_redundant_join_clauses(root,
+											   FastListValue(&clausegroup),
+											   jointype);
+			FastListFromList(&clausegroup, nl);
 		}
 
 		/* We can also use plain restriction clauses for the rel */
@@ -1461,9 +1481,11 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 			List	   *clausegroups;
 
 			/* find useful clauses for this index and outerjoin set */
-			clausegroups = group_clauses_by_indexkey_for_join(rel,
+			clausegroups = group_clauses_by_indexkey_for_join(root,
+															  rel,
 															  index,
 															  index_outer_relids,
+															  jointype,
 															  isouterjoin);
 			if (clausegroups)
 			{
@@ -1520,7 +1542,7 @@ make_innerjoin_index_path(Query *root,
 			   *allclauses,
 			   *l;
 
-	/* XXX this code ought to be merged with create_index_path? */
+	/* XXX perhaps this code should be merged with create_index_path? */
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
@@ -1536,11 +1558,24 @@ make_innerjoin_index_path(Query *root,
 	indexquals = expand_indexqual_conditions(index, clausegroups);
 
 	/*
+	 * Also make a flattened list of the RestrictInfo nodes; createplan.c
+	 * will need this later.  We assume here that we can destructively
+	 * modify the passed-in clausegroups list structure.
+	 */
+	allclauses = NIL;
+	foreach(l, clausegroups)
+	{
+		/* nconc okay here since same clause couldn't be in two sublists */
+		allclauses = nconc(allclauses, (List *) lfirst(l));
+	}
+
+	/*
 	 * Note that we are making a pathnode for a single-scan indexscan;
-	 * therefore, both indexinfo and indexqual should be single-element lists.
+	 * therefore, indexinfo and indexqual should be single-element lists.
 	 */
 	pathnode->indexinfo = makeList1(index);
 	pathnode->indexqual = makeList1(indexquals);
+	pathnode->indexjoinclauses = makeList1(allclauses);
 
 	/* We don't actually care what order the index scans in ... */
 	pathnode->indexscandir = NoMovementScanDirection;
@@ -1558,17 +1593,9 @@ make_innerjoin_index_path(Query *root,
 	 * linking them into different lists, it should be sufficient to use
 	 * pointer comparison to remove duplicates.)
 	 *
-	 * We assume we can destructively modify the input sublists.
-	 *
 	 * Always assume the join type is JOIN_INNER; even if some of the
 	 * join clauses come from other contexts, that's not our problem.
 	 */
-	allclauses = NIL;
-	foreach(l, clausegroups)
-	{
-		/* nconc okay here since same clause couldn't be in two sublists */
-		allclauses = nconc(allclauses, (List *) lfirst(l));
-	}
 	allclauses = set_ptrUnion(rel->baserestrictinfo, allclauses);
 	pathnode->rows = rel->tuples *
 		restrictlist_selectivity(root,

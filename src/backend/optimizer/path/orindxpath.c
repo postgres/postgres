@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.50 2003/05/28 22:32:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.51 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,6 +88,9 @@ create_or_index_paths(Query *root, RelOptInfo *rel)
 				 * claimed to have any particular ordering.
 				 */
 				pathnode->path.pathkeys = NIL;
+
+				/* It's not an innerjoin path. */
+				pathnode->indexjoinclauses = NIL;
 
 				/* We don't actually care what order the index scans in. */
 				pathnode->indexscandir = NoMovementScanDirection;

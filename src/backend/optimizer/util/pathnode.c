@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.89 2003/05/26 00:11:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.90 2003/06/15 22:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -361,6 +361,9 @@ create_index_path(Query *root,
 	 */
 	pathnode->indexinfo = makeList1(index);
 	pathnode->indexqual = makeList1(indexquals);
+
+	/* It's not an innerjoin path. */
+	pathnode->indexjoinclauses = NIL;
 
 	pathnode->indexscandir = indexscandir;
 

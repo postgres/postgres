@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.49 2003/05/28 22:32:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.50 2003/06/15 22:51:45 tgl Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -356,6 +356,21 @@ llast(List *l)
 	while (lnext(l) != NIL)
 		l = lnext(l);
 	return lfirst(l);
+}
+
+/*
+ *	llastnode
+ *
+ *	Get the last node of l ... NIL if empty list
+ */
+List *
+llastnode(List *l)
+{
+	if (l == NIL)
+		return NIL;
+	while (lnext(l) != NIL)
+		l = lnext(l);
+	return l;
 }
 
 /*
