@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.39 1998/08/26 17:12:11 momjian Exp $
+ * $Id: pg_attribute.h,v 1.40 1998/08/27 01:04:23 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -317,7 +317,7 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 -1 t f i f f));
  */
 #define Schema_pg_attribute \
 { 1249, {"attrelid"},	  26, 0,	4,	1, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
-{ 1249, {"attname"},	  19, 0, NAMEDATALEN,	2, 0, -1, -1, '\0', '\0', 'd ', '\0', '\0' }, \
+{ 1249, {"attname"},	  19, 0, NAMEDATALEN,	2, 0, -1, -1, '\0', '\0', 'd', '\0', '\0' }, \
 { 1249, {"atttypid"},	  26, 0,	4,	3, 0, -1, -1, '\001', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attdisbursion"}, 700, 0,	4,	4, 0, -1, -1, '\0', '\0', 'i', '\0', '\0' }, \
 { 1249, {"attlen"},		  21, 0,	2,	5, 0, -1, -1, '\001', '\0', 's', '\0', '\0' }, \

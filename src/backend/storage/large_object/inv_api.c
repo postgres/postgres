@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.35 1998/08/20 22:24:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.36 1998/08/27 01:04:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -497,7 +497,6 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		obj_desc->offset += ncopy;
 	}
 
-	/* that's it */
 	return (nread);
 }
 
