@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.131 1999/12/16 01:25:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.132 2000/01/07 09:28:03 ishii Exp $
  *
  * NOTES
  *
@@ -2268,7 +2268,7 @@ static int SetPidFile(pid_t pid, char *progname, int port, char *datadir,
 			 * Another postmaster is running
 			 */
 			fprintf(stderr, "Can't create pidfile: %s\n", PidFile);
-			fprintf(stderr, "Is another postmaser (pid: %s) running?\n", pidstr);
+			fprintf(stderr, "Is another postmaster (pid: %s) running?\n", pidstr);
 			return(-1);
 		}
 	}
