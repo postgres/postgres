@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 19 16:52:49 EST 2001
+Last updated:		Tue Feb 20 12:25:28 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -311,6 +311,7 @@ MISC
 	  lock and truncate table [vacuum]
 	* -Redesign ANALYZE in VACUUM so it can be run separately without locks
 	* Make ANALYZE a separate command
+	* Allow ANALYZE to process a certain random precentage of rows
 * Add connection pooling [pool]
 * Allow persistent backends [persistent]
 * Create a transaction processor to aid in persistent connections and
