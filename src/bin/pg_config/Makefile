@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/bin/pg_config/Makefile,v 1.4 2002/03/29 17:32:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Makefile,v 1.5 2002/09/09 18:35:04 petere Exp $
 
 subdir = src/bin/pg_config
 top_builddir = ../../..
@@ -12,7 +12,7 @@ pg_config: pg_config.sh $(top_builddir)/src/Makefile.global Makefile
 	    -e 's,@includedir_server@,$(includedir_server),g' \
 	    -e 's,@libdir@,$(libdir),g' \
 	    -e 's,@pkglibdir@,$(pkglibdir),g' \
-	    -e "s,@configure@,$(configure_args),g" \
+	    -e "s|@configure@|$(configure_args)|g" \
 	    -e 's,@version@,$(VERSION),g' \
 	  $< >$@
 	chmod a+x $@
