@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.165 2004/05/07 03:19:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.166 2004/05/10 22:44:46 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2432,6 +2432,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 
 		case T_ArrayRef:
 		case T_ArrayExpr:
+		case T_RowExpr:
 		case T_CoalesceExpr:
 		case T_NullIfExpr:
 		case T_Aggref:
@@ -2528,6 +2529,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 				case T_BoolExpr:		/* lower precedence */
 				case T_ArrayRef:		/* other separators */
 				case T_ArrayExpr:		/* other separators */
+				case T_RowExpr:			/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:			/* own parentheses */
@@ -2574,6 +2576,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 					}
 				case T_ArrayRef:		/* other separators */
 				case T_ArrayExpr:		/* other separators */
+				case T_RowExpr:			/* other separators */
 				case T_CoalesceExpr:	/* own parentheses */
 				case T_NullIfExpr:		/* other separators */
 				case T_Aggref:			/* own parentheses */
@@ -2942,11 +2945,9 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * arg.fieldname, but most cases where FieldSelect is used
 				 * are *not* simple.  So, always use parenthesized syntax.
 				 */
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, '(');
+				appendStringInfoChar(buf, '(');
 				get_rule_expr_paren((Node *) fselect->arg, context, true, node);
-				if (!PRETTY_PAREN(context))
-					appendStringInfoChar(buf, ')');
+				appendStringInfoChar(buf, ')');
 				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 			}
 			break;
@@ -3048,6 +3049,33 @@ get_rule_expr(Node *node, deparse_context *context,
 					sep = ", ";
 				}
 				appendStringInfo(buf, "]");
+			}
+			break;
+
+		case T_RowExpr:
+			{
+				RowExpr	   *rowexpr = (RowExpr *) node;
+				List	   *arg;
+				char	   *sep;
+
+				/*
+				 * SQL99 allows "ROW" to be omitted when length(args) > 1,
+				 * but for simplicity we always print it.
+				 */
+				appendStringInfo(buf, "ROW(");
+				sep = "";
+				foreach(arg, rowexpr->args)
+				{
+					Node	   *e = (Node *) lfirst(arg);
+
+					appendStringInfo(buf, sep);
+					get_rule_expr(e, context, true);
+					sep = ", ";
+				}
+				appendStringInfo(buf, ")");
+				if (rowexpr->row_format == COERCE_EXPLICIT_CAST)
+					appendStringInfo(buf, "::%s",
+									 format_type_with_typemod(rowexpr->row_typeid, -1));
 			}
 			break;
 

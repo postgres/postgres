@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/optimizer/var.h,v 1.29 2003/11/29 22:41:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/optimizer/var.h,v 1.30 2004/05/10 22:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,7 +20,6 @@
 extern Relids pull_varnos(Node *node);
 extern bool contain_var_reference(Node *node, int varno, int varattno,
 					  int levelsup);
-extern bool contain_whole_tuple_var(Node *node, int varno, int levelsup);
 extern bool contain_var_clause(Node *node);
 extern bool contain_vars_of_level(Node *node, int levelsup);
 extern bool contain_vars_above_level(Node *node, int levelsup);

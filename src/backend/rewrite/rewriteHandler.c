@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.134 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.135 2004/05/10 22:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,6 +212,8 @@ rewriteRuleAction(Query *parsetree,
 		sub_action = (Query *) ResolveNew((Node *) sub_action,
 										  new_varno,
 										  0,
+										  rt_fetch(new_varno,
+												   sub_action->rtable),
 										  parsetree->targetList,
 										  event,
 										  current_varno);
@@ -947,6 +949,7 @@ CopyAndAddInvertedQual(Query *parsetree,
 		new_qual = ResolveNew(new_qual,
 							  PRS2_NEW_VARNO,
 							  0,
+							  rt_fetch(rt_index, parsetree->rtable),
 							  parsetree->targetList,
 							  event,
 							  rt_index);

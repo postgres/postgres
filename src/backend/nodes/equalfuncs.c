@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.219 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.220 2004/05/10 22:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -419,6 +419,24 @@ _equalArrayExpr(ArrayExpr *a, ArrayExpr *b)
 	COMPARE_SCALAR_FIELD(element_typeid);
 	COMPARE_NODE_FIELD(elements);
 	COMPARE_SCALAR_FIELD(multidims);
+
+	return true;
+}
+
+static bool
+_equalRowExpr(RowExpr *a, RowExpr *b)
+{
+	COMPARE_NODE_FIELD(args);
+	COMPARE_SCALAR_FIELD(row_typeid);
+
+	/*
+	 * Special-case COERCE_DONTCARE, so that planner can build coercion
+	 * nodes that are equal() to both explicit and implicit coercions.
+	 */
+	if (a->row_format != b->row_format &&
+		a->row_format != COERCE_DONTCARE &&
+		b->row_format != COERCE_DONTCARE)
+		return false;
 
 	return true;
 }
@@ -1747,6 +1765,9 @@ equal(void *a, void *b)
 			break;
 		case T_ArrayExpr:
 			retval = _equalArrayExpr(a, b);
+			break;
+		case T_RowExpr:
+			retval = _equalRowExpr(a, b);
 			break;
 		case T_CoalesceExpr:
 			retval = _equalCoalesceExpr(a, b);

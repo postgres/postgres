@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.90 2004/03/12 00:25:40 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/syntax.sgml,v 1.91 2004/05/10 22:44:43 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -922,6 +922,12 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
+      A row constructor.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       Another value expression in parentheses, useful to group
       subexpressions and override
       precedence.<indexterm><primary>parenthesis</></>
@@ -1424,6 +1430,79 @@ SELECT ARRAY(SELECT oid FROM pg_proc WHERE proname LIKE 'bytea%');
    The subscripts of an array value built with <literal>ARRAY</literal>
    always begin with one.  For more information about arrays, see
    <xref linkend="arrays">.
+  </para>
+
+  </sect2>
+
+  <sect2 id="sql-syntax-row-constructors">
+   <title>Row Constructors</title>
+
+   <indexterm>
+    <primary>row</primary>
+    <secondary>constructor</secondary>
+   </indexterm>
+
+   <para>
+    A row constructor is an expression that builds a row value from values
+    for its member fields.  A row constructor consists of the key word
+    <literal>ROW</literal>, a left parenthesis <literal>(</>, zero or more
+    expressions (separated by commas) for the row field values, and finally
+    a right parenthesis <literal>)</>.  For example,
+<programlisting>
+SELECT myfunc(ROW(1,2.5,'this is a test'));
+</programlisting>
+    The key word <literal>ROW</> is optional when there is more than one
+    expression in the list.
+   </para>
+
+   <para>
+    By default, the value created by a <literal>ROW</> expression is of
+    an anonymous record type.  If necessary, it can be cast to a named
+    composite type --- either the rowtype of a table, or a composite type
+    created with <command>CREATE TYPE AS</>.  An explicit cast may be needed
+    to avoid ambiguity.  For example:
+<programlisting>
+CREATE TABLE mytable(f1 int, f2 float, f3 text);
+CREATE FUNCTION getf1(mytable) RETURNS int AS 'SELECT $1.f1' LANGUAGE SQL;
+-- No cast needed since only one getf1() exists
+SELECT getf1(ROW(1,2.5,'this is a test'));
+ getf1
+-------
+     1
+(1 row)
+
+CREATE TYPE myrowtype AS (f1 int, f2 text, f3 numeric);
+CREATE FUNCTION getf1(myrowtype) RETURNS int AS 'SELECT $1.f1' LANGUAGE SQL;
+-- Now we need a cast to indicate which function to call:
+SELECT getf1(ROW(1,2.5,'this is a test'));
+ERROR:  function getf1(record) is not unique
+SELECT getf1(ROW(1,2.5,'this is a test')::mytable);
+ getf1
+-------
+     1
+(1 row)
+
+SELECT getf1(CAST(ROW(11,'this is a test',2.5) AS myrowtype));
+ getf1
+-------
+    11
+(1 row)
+</programlisting>
+  </para>
+
+  <para>
+   Row constructors have only limited uses, other than creating an argument
+   value for a user-defined function that accepts a rowtype parameter, as
+   illustrated above.
+   It is possible to compare two row values or test a row with
+   <literal>IS NULL</> or <literal>IS NOT NULL</>, for example
+<programlisting>
+SELECT ROW(1,2.5,'this is a test') = ROW(1, 3, 'not the same');
+SELECT ROW(a, b, c) IS NOT NULL FROM table;
+</programlisting>
+   For more detail see <xref linkend="functions-comparisons">.
+   Row constructors can also be used in connection with subqueries,
+   as discussed in <xref linkend="functions-subquery">.
   </para>
 
   </sect2>

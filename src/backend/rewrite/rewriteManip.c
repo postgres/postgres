@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.81 2003/11/29 19:51:55 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.82 2004/05/10 22:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -850,6 +850,10 @@ AddInvertedQual(Query *parsetree, Node *qual)
  * If not, we either change the unmatched Var's varno to update_varno
  * (when event == CMD_UPDATE) or replace it with a constant NULL.
  *
+ * The caller must also provide target_rte, the RTE describing the target
+ * relation.  This is needed to handle whole-row Vars referencing the target.
+ * We expand such Vars into RowExpr constructs.
+ *
  * Note: the business with inserted_sublink is needed to update hasSubLinks
  * in subqueries when the replacement adds a subquery inside a subquery.
  * Messy, isn't it?  We do not need to do similar pushups for hasAggs,
@@ -861,11 +865,51 @@ typedef struct
 {
 	int			target_varno;
 	int			sublevels_up;
+	RangeTblEntry *target_rte;
 	List	   *targetlist;
 	int			event;
 	int			update_varno;
 	bool		inserted_sublink;
 } ResolveNew_context;
+
+static Node *
+resolve_one_var(Var *var, ResolveNew_context *context)
+{
+	TargetEntry *tle;
+
+	tle = get_tle_by_resno(context->targetlist, var->varattno);
+
+	if (tle == NULL)
+	{
+		/* Failed to find column in insert/update tlist */
+		if (context->event == CMD_UPDATE)
+		{
+			/* For update, just change unmatched var's varno */
+			var = (Var *) copyObject(var);
+			var->varno = context->update_varno;
+			var->varnoold = context->update_varno;
+			return (Node *) var;
+		}
+		else
+		{
+			/* Otherwise replace unmatched var with a null */
+			return (Node *) makeNullConst(var->vartype);
+		}
+	}
+	else
+	{
+		/* Make a copy of the tlist item to return */
+		Node	   *n = copyObject(tle->expr);
+
+		/* Adjust varlevelsup if tlist item is from higher query */
+		if (var->varlevelsup > 0)
+			IncrementVarSublevelsUp(n, var->varlevelsup, 0);
+		/* Report it if we are adding a sublink to query */
+		if (!context->inserted_sublink)
+			context->inserted_sublink = checkExprHasSubLink(n);
+		return n;
+	}
+}
 
 static Node *
 ResolveNew_mutator(Node *node, ResolveNew_context *context)
@@ -881,45 +925,41 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 		if (this_varno == context->target_varno &&
 			this_varlevelsup == context->sublevels_up)
 		{
-			TargetEntry *tle;
-
-			/* band-aid: don't do the wrong thing with a whole-tuple Var */
 			if (var->varattno == InvalidAttrNumber)
-				ereport(ERROR,
-						(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-						 errmsg("cannot handle whole-row reference")));
-
-			tle = get_tle_by_resno(context->targetlist, var->varattno);
-
-			if (tle == NULL)
 			{
-				if (context->event == CMD_UPDATE)
-				{
-					/* For update, just change unmatched var's varno */
-					var = (Var *) copyObject(node);
-					var->varno = context->update_varno;
-					var->varnoold = context->update_varno;
-					return (Node *) var;
-				}
-				else
-				{
-					/* Otherwise replace unmatched var with a null */
-					return (Node *) makeNullConst(var->vartype);
-				}
-			}
-			else
-			{
-				/* Make a copy of the tlist item to return */
-				Node	   *n = copyObject(tle->expr);
+				/* Must expand whole-tuple reference into RowExpr */
+				RangeTblEntry *rte = context->target_rte;
+				RowExpr *rowexpr;
+				List	*fields = NIL;
+				AttrNumber nfields = length(rte->eref->colnames);
+				AttrNumber nf;
 
-				/* Adjust varlevelsup if tlist item is from higher query */
-				if (this_varlevelsup > 0)
-					IncrementVarSublevelsUp(n, this_varlevelsup, 0);
-				/* Report it if we are adding a sublink to query */
-				if (!context->inserted_sublink)
-					context->inserted_sublink = checkExprHasSubLink(n);
-				return n;
+				for (nf = 1; nf <= nfields; nf++)
+				{
+					Oid		vartype;
+					int32	vartypmod;
+					Var	   *newvar;
+
+					get_rte_attribute_type(rte, nf, &vartype, &vartypmod);
+					newvar = makeVar(this_varno,
+									 nf,
+									 vartype,
+									 vartypmod,
+									 this_varlevelsup);
+					fields = lappend(fields,
+									 resolve_one_var(newvar, context));
+				}
+
+				rowexpr = makeNode(RowExpr);
+				rowexpr->args = fields;
+				rowexpr->row_typeid = var->vartype;
+				rowexpr->row_format = COERCE_IMPLICIT_CAST;
+
+				return (Node *) rowexpr;
 			}
+
+			/* Normal case for scalar variable */
+			return resolve_one_var(var, context);
 		}
 		/* otherwise fall through to copy the var normally */
 	}
@@ -948,12 +988,14 @@ ResolveNew_mutator(Node *node, ResolveNew_context *context)
 
 Node *
 ResolveNew(Node *node, int target_varno, int sublevels_up,
+		   RangeTblEntry *target_rte,
 		   List *targetlist, int event, int update_varno)
 {
 	ResolveNew_context context;
 
 	context.target_varno = target_varno;
 	context.sublevels_up = sublevels_up;
+	context.target_rte = target_rte;
 	context.targetlist = targetlist;
 	context.event = event;
 	context.update_varno = update_varno;

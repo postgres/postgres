@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.115 2004/04/01 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/execnodes.h,v 1.116 2004/05/10 22:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -612,6 +612,17 @@ typedef struct ArrayExprState
 	bool		elembyval;		/* is the element type pass-by-value? */
 	char		elemalign;		/* typalign of the element type */
 } ArrayExprState;
+
+/* ----------------
+ *		RowExprState node
+ * ----------------
+ */
+typedef struct RowExprState
+{
+	ExprState	xprstate;
+	List	   *args;			/* the arguments */
+	TupleDesc	tupdesc;		/* descriptor for result tuples */
+} RowExprState;
 
 /* ----------------
  *		CoalesceExprState node

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.109 2004/04/01 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.110 2004/05/10 22:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,6 +175,7 @@ extern TupleTableSlot *ExecInitNullTupleSlot(EState *estate,
 					  TupleDesc tupType);
 extern TupleDesc ExecTypeFromTL(List *targetList, bool hasoid);
 extern TupleDesc ExecCleanTypeFromTL(List *targetList, bool hasoid);
+extern TupleDesc ExecTypeFromExprList(List *exprList);
 extern void UpdateChangedParamSet(PlanState *node, Bitmapset *newchg);
 
 typedef struct TupOutputState

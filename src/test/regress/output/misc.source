@@ -687,6 +687,45 @@ SELECT name, overpaid(emp.*) FROM emp;
 (6 rows)
 
 --
+-- Try a few cases with SQL-spec row constructor expressions
+--
+SELECT * FROM equipment(ROW('skywalking', 'mer'));
+ name |   hobby    
+------+------------
+ guts | skywalking
+(1 row)
+
+SELECT name(equipment(ROW('skywalking', 'mer')));
+ name 
+------
+ guts
+(1 row)
+
+SELECT *, name(equipment(h.*)) FROM hobbies_r h;
+    name     | person |     name      
+-------------+--------+---------------
+ posthacking | mike   | advil
+ posthacking | mike   | peet's coffee
+ posthacking | jeff   | advil
+ posthacking | jeff   | peet's coffee
+ basketball  | joe    | hightops
+ basketball  | sally  | hightops
+ skywalking  |        | guts
+(7 rows)
+
+SELECT *, (equipment(CAST((h.*) AS hobbies_r))).name FROM hobbies_r h;
+    name     | person |     name      
+-------------+--------+---------------
+ posthacking | mike   | advil
+ posthacking | mike   | peet's coffee
+ posthacking | jeff   | advil
+ posthacking | jeff   | peet's coffee
+ basketball  | joe    | hightops
+ basketball  | sally  | hightops
+ skywalking  |        | guts
+(7 rows)
+
+--
 -- check that old-style C functions work properly with TOASTed values
 --
 create table oldstyle_test(i int4, t text);

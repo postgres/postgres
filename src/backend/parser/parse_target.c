@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.116 2004/04/02 19:06:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.117 2004/05/10 22:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -642,6 +642,10 @@ FigureColnameInternal(Node *node, char **name)
 		case T_ArrayExpr:
 			/* make ARRAY[] act like a function */
 			*name = "array";
+			return 2;
+		case T_RowExpr:
+			/* make ROW() act like a function */
+			*name = "row";
 			return 2;
 		case T_CoalesceExpr:
 			/* make coalesce() act like a regular function */

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.200 2004/05/10 21:08:28 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.201 2004/05/10 22:44:42 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -7822,13 +7822,15 @@ SELECT col1 FROM tab1
   </para>
 
 <synopsis>
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) IN (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> IN (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>IN</token> is a parenthesized
+   The left-hand side of this form of <token>IN</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors">.
+   The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
-   expressions in the left-hand list.  The left-hand expressions are
+   expressions in the left-hand row.  The left-hand expressions are
    evaluated and compared row-wise to each row of the subquery result.
    The result of <token>IN</token> is <quote>true</> if any equal subquery row is found.
    The result is <quote>false</> if no equal row is found (including the special
@@ -7876,13 +7878,15 @@ SELECT col1 FROM tab1
   </para>
 
 <synopsis>
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) NOT IN (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> NOT IN (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>NOT IN</token> is a parenthesized
+   The left-hand side of this form of <token>NOT IN</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors">.
+   The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
-   expressions in the left-hand list.  The left-hand expressions are
+   expressions in the left-hand row.  The left-hand expressions are
    evaluated and compared row-wise to each row of the subquery result.
    The result of <token>NOT IN</token> is <quote>true</> if only unequal subquery rows
    are found (including the special case where the subquery returns no rows).
@@ -7938,14 +7942,16 @@ SELECT col1 FROM tab1
   </para>
 
 <synopsis>
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</> ANY (<replaceable>subquery</replaceable>)
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</> SOME (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> <replaceable>operator</> ANY (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> <replaceable>operator</> SOME (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>ANY</token> is a parenthesized
+   The left-hand side of this form of <token>ANY</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors">.
+   The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
-   expressions in the left-hand list.  The left-hand expressions are
+   expressions in the left-hand row.  The left-hand expressions are
    evaluated and compared row-wise to each row of the subquery result,
    using the given <replaceable>operator</replaceable>.  Presently,
    only <literal>=</literal> and <literal>&lt;&gt;</literal> operators are allowed
@@ -8003,13 +8009,15 @@ SELECT col1 FROM tab1
   </para>
 
 <synopsis>
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> ALL (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> ALL (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The right-hand side of this form of <token>ALL</token> is a parenthesized
+   The left-hand side of this form of <token>ALL</token> is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors">.
+   The right-hand side is a parenthesized
    subquery, which must return exactly as many columns as there are
-   expressions in the left-hand list.  The left-hand expressions are
+   expressions in the left-hand row.  The left-hand expressions are
    evaluated and compared row-wise to each row of the subquery result,
    using the given <replaceable>operator</replaceable>.  Presently,
    only <literal>=</literal> and <literal>&lt;&gt;</literal> operators are allowed
@@ -8041,16 +8049,17 @@ SELECT col1 FROM tab1
    </indexterm>
 
 <synopsis>
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> (<replaceable>subquery</replaceable>)
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> (<replaceable>subquery</replaceable>)
 </synopsis>
 
   <para>
-   The left-hand side is a list of scalar expressions.  The right-hand side is
-   a parenthesized subquery, which must return exactly as many columns as there
-   are expressions on the left-hand side.  Furthermore, the subquery cannot
-   return more than one row.  (If it returns zero rows, the result is taken to
-   be null.)  The left-hand side is evaluated and compared row-wise to the
-   single subquery result row.
+   The left-hand side is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors">.
+   The right-hand side is a parenthesized subquery, which must return exactly
+   as many columns as there are expressions in the left-hand row. Furthermore,
+   the subquery cannot return more than one row.  (If it returns zero rows,
+   the result is taken to be null.)  The left-hand side is evaluated and
+   compared row-wise to the single subquery result row.
    Presently, only <literal>=</literal> and <literal>&lt;&gt;</literal> operators are allowed
    in row-wise comparisons.
    The result is <quote>true</> if the two rows are equal or unequal, respectively.
@@ -8223,13 +8232,14 @@ AND
    <title>Row-wise Comparison</title>
 
 <synopsis>
-(<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>) <replaceable>operator</replaceable> (<replaceable>expression</replaceable> <optional>, <replaceable>expression</replaceable> ...</optional>)
+<replaceable>row_constructor</replaceable> <replaceable>operator</replaceable> <replaceable>row_constructor</replaceable>
 </synopsis>
 
   <para>
-   Each side is a list of scalar expressions; the two lists must be
-   of the same length.  Each side is evaluated and they are compared
-   row-wise.
+   Each side is a row constructor,
+   as described in <xref linkend="sql-syntax-row-constructors">.
+   The two row values must have the same number of fields.
+   Each side is evaluated and they are compared row-wise.
    Presently, only <literal>=</literal> and <literal>&lt;&gt;</literal> operators are allowed
    in row-wise comparisons.
    The result is <quote>true</> if the two rows are equal or unequal, respectively.
@@ -8242,6 +8252,29 @@ AND
    are unequal if any corresponding members are non-null and unequal;
    otherwise the result of the row comparison is unknown (null).
   </para>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> IS DISTINCT FROM <replaceable>row_constructor</replaceable>
+</synopsis>
+
+  <para>
+   This construct is similar to a <literal>&lt;&gt;</literal> row comparison,
+   but it does not yield null for null inputs.  Instead, any null value is
+   considered unequal to (distinct from) any non-null value, and any two
+   nulls are considered equal (not distinct).  Thus the result will always
+   be either true or false, never null.
+  </para>
+
+<synopsis>
+<replaceable>row_constructor</replaceable> IS NULL
+<replaceable>row_constructor</replaceable> IS NOT NULL
+</synopsis>
+
+  <para>
+   These constructs test a row value for null or not null.  A row value
+   is considered not null if it has at least one field that is not null.
+  </para>
+
   </sect2>
  </sect1>
 

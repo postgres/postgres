@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.97 2004/04/01 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/primnodes.h,v 1.98 2004/05/10 22:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,6 +631,23 @@ typedef struct ArrayExpr
 	List	   *elements;		/* the array elements or sub-arrays */
 	bool		multidims;		/* true if elements are sub-arrays */
 } ArrayExpr;
+
+/*
+ * RowExpr - a ROW() expression
+ */
+typedef struct RowExpr
+{
+	Expr		xpr;
+	List	   *args;			/* the fields */
+	Oid			row_typeid;		/* RECORDOID or a composite type's ID */
+	/*
+	 * Note: we deliberately do NOT store a typmod.  Although a typmod
+	 * will be associated with specific RECORD types at runtime, it will
+	 * differ for different backends, and so cannot safely be stored in
+	 * stored parsetrees.  We must assume typmod -1 for a RowExpr node.
+	 */
+	CoercionForm row_format;	/* how to display this node */
+} RowExpr;
 
 /*
  * CoalesceExpr - a COALESCE expression

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.169 2004/04/18 18:12:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.170 2004/05/10 22:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,13 +37,19 @@
 
 bool		Transform_null_equals = false;
 
-static Node *typecast_expression(ParseState *pstate, Node *expr,
-					TypeName *typename);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
 								  char *relname);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
+static Node *typecast_expression(ParseState *pstate, Node *expr,
+					TypeName *typename);
+static Node *make_row_op(ParseState *pstate, List *opname,
+						 Node *ltree, Node *rtree);
+static Node *make_row_distinct_op(ParseState *pstate, List *opname,
+								  Node *ltree, Node *rtree);
+static Expr *make_distinct_op(ParseState *pstate, List *opname,
+							  Node *ltree, Node *rtree);
 
 
 /*
@@ -202,6 +208,9 @@ transformExpr(ParseState *pstate, Node *expr)
 				{
 					case AEXPR_OP:
 						{
+							Node	   *lexpr = a->lexpr;
+							Node	   *rexpr = a->rexpr;
+
 							/*
 							 * Special-case "foo = NULL" and "NULL = foo"
 							 * for compatibility with standards-broken
@@ -211,27 +220,51 @@ transformExpr(ParseState *pstate, Node *expr)
 							if (Transform_null_equals &&
 								length(a->name) == 1 &&
 							 strcmp(strVal(lfirst(a->name)), "=") == 0 &&
-								(exprIsNullConstant(a->lexpr) ||
-								 exprIsNullConstant(a->rexpr)))
+								(exprIsNullConstant(lexpr) ||
+								 exprIsNullConstant(rexpr)))
 							{
 								NullTest   *n = makeNode(NullTest);
 
 								n->nulltesttype = IS_NULL;
 
-								if (exprIsNullConstant(a->lexpr))
-									n->arg = (Expr *) a->rexpr;
+								if (exprIsNullConstant(lexpr))
+									n->arg = (Expr *) rexpr;
 								else
-									n->arg = (Expr *) a->lexpr;
+									n->arg = (Expr *) lexpr;
 
 								result = transformExpr(pstate,
 													   (Node *) n);
 							}
+							else if (lexpr && IsA(lexpr, RowExpr) &&
+									 rexpr && IsA(rexpr, SubLink) &&
+									 ((SubLink *) rexpr)->subLinkType == EXPR_SUBLINK)
+							{
+								/*
+								 * Convert "row op subselect" into a
+								 * MULTIEXPR sublink.  Formerly the grammar
+								 * did this, but now that a row construct is
+								 * allowed anywhere in expressions, it's
+								 * easier to do it here.
+								 */
+								SubLink	   *s = (SubLink *) rexpr;
+
+								s->subLinkType = MULTIEXPR_SUBLINK;
+								s->lefthand = ((RowExpr *) lexpr)->args;
+								s->operName = a->name;
+								result = transformExpr(pstate, (Node *) s);
+							}
+							else if (lexpr && IsA(lexpr, RowExpr) &&
+									 rexpr && IsA(rexpr, RowExpr))
+							{
+								/* "row op row" */
+								result = make_row_op(pstate, a->name,
+													 lexpr, rexpr);
+							}
 							else
 							{
-								Node	   *lexpr = transformExpr(pstate,
-															   a->lexpr);
-								Node	   *rexpr = transformExpr(pstate,
-															   a->rexpr);
+								/* Ordinary scalar operator */
+								lexpr = transformExpr(pstate, lexpr);
+								rexpr = transformExpr(pstate, rexpr);
 
 								result = (Node *) make_op(pstate,
 														  a->name,
@@ -311,25 +344,27 @@ transformExpr(ParseState *pstate, Node *expr)
 						break;
 					case AEXPR_DISTINCT:
 						{
-							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr);
-							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr);
+							Node	   *lexpr = a->lexpr;
+							Node	   *rexpr = a->rexpr;
 
-							result = (Node *) make_op(pstate,
-													  a->name,
-													  lexpr,
-													  rexpr);
-							if (((OpExpr *) result)->opresulttype != BOOLOID)
-								ereport(ERROR,
-									 (errcode(ERRCODE_DATATYPE_MISMATCH),
-									  errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+							if (lexpr && IsA(lexpr, RowExpr) &&
+								rexpr && IsA(rexpr, RowExpr))
+							{
+								/* "row op row" */
+								result = make_row_distinct_op(pstate, a->name,
+															  lexpr, rexpr);
+							}
+							else
+							{
+								/* Ordinary scalar operator */
+								lexpr = transformExpr(pstate, lexpr);
+								rexpr = transformExpr(pstate, rexpr);
 
-							/*
-							 * We rely on DistinctExpr and OpExpr being
-							 * same struct
-							 */
-							NodeSetTag(result, T_DistinctExpr);
+								result = (Node *) make_distinct_op(pstate,
+																   a->name,
+																   lexpr,
+																   rexpr);
+							}
 						}
 						break;
 					case AEXPR_NULLIF:
@@ -787,6 +822,32 @@ transformExpr(ParseState *pstate, Node *expr)
 				break;
 			}
 
+		case T_RowExpr:
+			{
+				RowExpr	   *r = (RowExpr *) expr;
+				RowExpr	   *newr = makeNode(RowExpr);
+				List	   *newargs = NIL;
+				List	   *arg;
+
+				/* Transform the field expressions */
+				foreach(arg, r->args)
+				{
+					Node	   *e = (Node *) lfirst(arg);
+					Node	   *newe;
+
+					newe = transformExpr(pstate, e);
+					newargs = lappend(newargs, newe);
+				}
+				newr->args = newargs;
+
+				/* Barring later casting, we consider the type RECORD */
+				newr->row_typeid = RECORDOID;
+				newr->row_format = COERCE_IMPLICIT_CAST;
+
+				result = (Node *) newr;
+				break;
+			}
+
 		case T_CoalesceExpr:
 			{
 				CoalesceExpr *c = (CoalesceExpr *) expr;
@@ -1113,14 +1174,11 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 /*
  * Construct a whole-row reference to represent the notation "relation.*".
  *
- * In simple cases, this will be a Var with varno set to the correct range
+ * A whole-row reference is a Var with varno set to the correct range
  * table entry, and varattno == 0 to signal that it references the whole
  * tuple.  (Use of zero here is unclean, since it could easily be confused
  * with error cases, but it's not worth changing now.)  The vartype indicates
  * a rowtype; either a named composite type, or RECORD.
- *
- * We also need the ability to build a row-constructor expression, but the
- * infrastructure for that doesn't exist just yet.
  */
 static Node *
 transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
@@ -1185,12 +1243,10 @@ transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
 			break;
 		default:
 			/*
-			 * RTE is a join or subselect.  For the moment we represent this
-			 * as a whole-row Var of RECORD type, but this will not actually
-			 * work; need a row-constructor expression instead.
-			 *
-			 * XXX after fixing, be sure that unknown_attribute still
-			 * does the right thing.
+			 * RTE is a join or subselect.  We represent this as a whole-row
+			 * Var of RECORD type.  (Note that in most cases the Var will
+			 * be expanded to a RowExpr during planning, but that is not
+			 * our concern here.)
 			 */
 			result = (Node *) makeVar(vnum,
 									  InvalidAttrNumber,
@@ -1266,8 +1322,8 @@ exprType(Node *expr)
 					if (sublink->subLinkType == EXPR_SUBLINK)
 						type = tent->resdom->restype;
 					else
-/* ARRAY_SUBLINK */
 					{
+						/* ARRAY_SUBLINK */
 						type = get_array_type(tent->resdom->restype);
 						if (!OidIsValid(type))
 							ereport(ERROR,
@@ -1305,8 +1361,8 @@ exprType(Node *expr)
 					if (subplan->subLinkType == EXPR_SUBLINK)
 						type = tent->resdom->restype;
 					else
-/* ARRAY_SUBLINK */
 					{
+						/* ARRAY_SUBLINK */
 						type = get_array_type(tent->resdom->restype);
 						if (!OidIsValid(type))
 							ereport(ERROR,
@@ -1339,6 +1395,9 @@ exprType(Node *expr)
 			break;
 		case T_ArrayExpr:
 			type = ((ArrayExpr *) expr)->array_typeid;
+			break;
+		case T_RowExpr:
+			type = ((RowExpr *) expr)->row_typeid;
 			break;
 		case T_CoalesceExpr:
 			type = ((CoalesceExpr *) expr)->coalescetype;
@@ -1572,4 +1631,167 @@ typecast_expression(ParseState *pstate, Node *expr, TypeName *typename)
 						format_type_be(targetType))));
 
 	return expr;
+}
+
+/*
+ * Transform a "row op row" construct
+ */
+static Node *
+make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
+{
+	Node	   *result = NULL;
+	RowExpr	   *lrow,
+			   *rrow;
+	List	   *largs,
+			   *rargs;
+	List	   *largl,
+			   *rargl;
+	char	   *oprname;
+	BoolExprType boolop;
+
+	/* Inputs are untransformed RowExprs */
+	lrow = (RowExpr *) transformExpr(pstate, ltree);
+	rrow = (RowExpr *) transformExpr(pstate, rtree);
+	Assert(IsA(lrow, RowExpr));
+	Assert(IsA(rrow, RowExpr));
+	largs = lrow->args;
+	rargs = rrow->args;
+
+	if (length(largs) != length(rargs))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unequal number of entries in row expression")));
+
+	/*
+	 * XXX it's really wrong to generate a simple AND combination for < <=
+	 * > >=.  We probably need to invent a new runtime node type to handle
+	 * those correctly.  For the moment, though, keep on doing this ...
+	 */
+	oprname = strVal(llast(opname));
+
+	if ((strcmp(oprname, "=") == 0) ||
+		(strcmp(oprname, "<") == 0) ||
+		(strcmp(oprname, "<=") == 0) ||
+		(strcmp(oprname, ">") == 0) ||
+		(strcmp(oprname, ">=") == 0))
+	{
+		boolop = AND_EXPR;
+	}
+	else if (strcmp(oprname, "<>") == 0)
+	{
+		boolop = OR_EXPR;
+	}
+	else
+	{
+		ereport(ERROR,
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+				 errmsg("operator %s is not supported for row expressions",
+						oprname)));
+		boolop = 0;			/* keep compiler quiet */
+	}
+
+	/* XXX use forboth */
+	rargl = rargs;
+	foreach(largl, largs)
+	{
+		Node	*larg = (Node *) lfirst(largl);
+		Node	*rarg = (Node *) lfirst(rargl);
+		Node	*cmp;
+
+		rargl = lnext(rargl);
+		cmp = (Node *) make_op(pstate, opname, larg, rarg);
+		cmp = coerce_to_boolean(pstate, cmp, "row comparison");
+		if (result == NULL)
+			result = cmp;
+		else
+			result = (Node *) makeBoolExpr(boolop,
+										   makeList2(result, cmp));
+	}
+
+	if (result == NULL)
+	{
+		/* zero-length rows?  Generate constant TRUE or FALSE */
+		if (boolop == AND_EXPR)
+			result = makeBoolConst(true, false);
+		else
+			result = makeBoolConst(false, false);
+	}
+
+	return result;
+}
+
+/*
+ * Transform a "row IS DISTINCT FROM row" construct
+ */
+static Node *
+make_row_distinct_op(ParseState *pstate, List *opname,
+					 Node *ltree, Node *rtree)
+{
+	Node	   *result = NULL;
+	RowExpr	   *lrow,
+			   *rrow;
+	List	   *largs,
+			   *rargs;
+	List	   *largl,
+			   *rargl;
+
+	/* Inputs are untransformed RowExprs */
+	lrow = (RowExpr *) transformExpr(pstate, ltree);
+	rrow = (RowExpr *) transformExpr(pstate, rtree);
+	Assert(IsA(lrow, RowExpr));
+	Assert(IsA(rrow, RowExpr));
+	largs = lrow->args;
+	rargs = rrow->args;
+
+	if (length(largs) != length(rargs))
+		ereport(ERROR,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("unequal number of entries in row expression")));
+
+	/* XXX use forboth */
+	rargl = rargs;
+	foreach(largl, largs)
+	{
+		Node	*larg = (Node *) lfirst(largl);
+		Node	*rarg = (Node *) lfirst(rargl);
+		Node	*cmp;
+
+		rargl = lnext(rargl);
+		cmp = (Node *) make_distinct_op(pstate, opname, larg, rarg);
+		if (result == NULL)
+			result = cmp;
+		else
+			result = (Node *) makeBoolExpr(OR_EXPR,
+										   makeList2(result, cmp));
+	}
+
+	if (result == NULL)
+	{
+		/* zero-length rows?  Generate constant FALSE */
+		result = makeBoolConst(false, false);
+	}
+
+	return result;
+}
+
+/*
+ * make the node for an IS DISTINCT FROM operator
+ */
+static Expr *
+make_distinct_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
+{
+	Expr	*result;
+
+	result = make_op(pstate, opname, ltree, rtree);
+	if (((OpExpr *) result)->opresulttype != BOOLOID)
+		ereport(ERROR,
+				(errcode(ERRCODE_DATATYPE_MISMATCH),
+				 errmsg("IS DISTINCT FROM requires = operator to yield boolean")));
+	/*
+	 * We rely on DistinctExpr and OpExpr being
+	 * same struct
+	 */
+	NodeSetTag(result, T_DistinctExpr);
+
+	return result;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.168 2004/05/08 21:21:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.169 2004/05/10 22:44:44 tgl Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -629,6 +629,21 @@ _readArrayExpr(void)
 }
 
 /*
+ * _readRowExpr
+ */
+static RowExpr *
+_readRowExpr(void)
+{
+	READ_LOCALS(RowExpr);
+
+	READ_NODE_FIELD(args);
+	READ_OID_FIELD(row_typeid);
+	READ_ENUM_FIELD(row_format, CoercionForm);
+
+	READ_DONE();
+}
+
+/*
  * _readCoalesceExpr
  */
 static CoalesceExpr *
@@ -978,6 +993,8 @@ parseNodeString(void)
 		return_value = _readCaseTestExpr();
 	else if (MATCH("ARRAY", 5))
 		return_value = _readArrayExpr();
+	else if (MATCH("ROW", 3))
+		return_value = _readRowExpr();
 	else if (MATCH("COALESCE", 8))
 		return_value = _readCoalesceExpr();
 	else if (MATCH("NULLIFEXPR", 10))

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.48 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/makefuncs.h,v 1.49 2004/05/10 22:44:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,8 @@ extern Const *makeConst(Oid consttype,
 		  bool constbyval);
 
 extern Const *makeNullConst(Oid consttype);
+
+extern Node *makeBoolConst(bool value, bool isnull);
 
 extern Expr *makeBoolExpr(BoolExprType boolop, List *args);
 

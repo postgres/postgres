@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.280 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.281 2004/05/10 22:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -994,6 +994,21 @@ _copyArrayExpr(ArrayExpr *from)
 	COPY_SCALAR_FIELD(element_typeid);
 	COPY_NODE_FIELD(elements);
 	COPY_SCALAR_FIELD(multidims);
+
+	return newnode;
+}
+
+/*
+ * _copyRowExpr
+ */
+static RowExpr *
+_copyRowExpr(RowExpr *from)
+{
+	RowExpr  *newnode = makeNode(RowExpr);
+
+	COPY_NODE_FIELD(args);
+	COPY_SCALAR_FIELD(row_typeid);
+	COPY_SCALAR_FIELD(row_format);
 
 	return newnode;
 }
@@ -2673,6 +2688,9 @@ copyObject(void *from)
 			break;
 		case T_ArrayExpr:
 			retval = _copyArrayExpr(from);
+			break;
+		case T_RowExpr:
+			retval = _copyRowExpr(from);
 			break;
 		case T_CoalesceExpr:
 			retval = _copyCoalesceExpr(from);

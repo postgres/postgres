@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.81 2004/04/01 21:28:43 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.82 2004/05/10 22:44:43 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -240,10 +240,11 @@ SELECT clean_emp();
     <title><acronym>SQL</acronym> Functions on Composite Types</title>
 
     <para>
-     When  specifying  functions with arguments of composite
+     When writing  functions with arguments of composite
      types, we must  not  only  specify  which
      argument  we  want (as we did above with <literal>$1</> and <literal>$2</literal>) but
-     also the attributes of  that  argument.   For  example, suppose that
+     also the desired attribute (field) of  that  argument.   For  example,
+     suppose that 
      <type>emp</type> is a table containing employee data, and therefore
      also the name of the composite type of each row of the table.  Here
      is a function <function>double_salary</function> that computes what someone's
@@ -252,16 +253,16 @@ SELECT clean_emp();
 <screen>
 CREATE TABLE emp (
     name        text,
-    salary      integer,
+    salary      numeric,
     age         integer,
     cubicle     point
 );
 
-CREATE FUNCTION double_salary(emp) RETURNS integer AS '
+CREATE FUNCTION double_salary(emp) RETURNS numeric AS '
     SELECT $1.salary * 2 AS salary;
 ' LANGUAGE SQL;
 
-SELECT name, double_salary(emp) AS dream
+SELECT name, double_salary(emp.*) AS dream
     FROM emp
     WHERE emp.cubicle ~= point '(2,1)';
 
@@ -274,15 +275,27 @@ SELECT name, double_salary(emp) AS dream
     <para>
      Notice the use of the syntax <literal>$1.salary</literal>
      to select one field of the argument row value.  Also notice
-     how the calling <command>SELECT</> command uses a table name to denote
-     the entire current row of that table as a composite value.  The table
-     row can alternatively be referenced like this:
+     how the calling <command>SELECT</> command uses <literal>*</>
+     to select
+     the entire current row of a table as a composite value.  The table
+     row can alternatively be referenced using just the table name,
+     like this:
 <screen>
-SELECT name, double_salary(emp.*) AS dream
+SELECT name, double_salary(emp) AS dream
     FROM emp
     WHERE emp.cubicle ~= point '(2,1)';
 </screen>
-     which emphasizes its row nature.
+     but this usage is deprecated since it's easy to get confused.
+    </para>
+
+    <para>
+     Sometimes it is handy to construct a composite argument value
+     on-the-fly.  This can be done with the <literal>ROW</> construct.
+     For example, we could adjust the data being passed to the function:
+<screen>
+SELECT name, double_salary(row(name, salary*1.1, age, cubicle)) AS dream
+    FROM emp;
+</screen>
     </para>
 
     <para>

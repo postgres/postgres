@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.16 2004/01/10 18:13:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.17 2004/05/10 22:44:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,8 @@ typedef struct reduce_outer_joins_state
 
 static bool is_simple_subquery(Query *subquery);
 static bool has_nullable_targetlist(Query *subquery);
-static void resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist);
+static void resolvenew_in_jointree(Node *jtnode, int varno,
+								   RangeTblEntry *rte, List *subtlist);
 static reduce_outer_joins_state *reduce_outer_joins_pass1(Node *jtnode);
 static void reduce_outer_joins_pass2(Node *jtnode,
 						 reduce_outer_joins_state *state,
@@ -154,14 +155,10 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 		 * such expressions; we'd have to figure out how to get the pseudo-
 		 * variables evaluated at the right place in the modified plan
 		 * tree. Fix it someday.
-		 *
-		 * Note: even if the subquery itself is simple enough, we can't pull
-		 * it up if there is a reference to its whole tuple result.
-		 * Perhaps a pseudo-variable is the answer here too.
 		 */
-		if (rte->rtekind == RTE_SUBQUERY && is_simple_subquery(subquery) &&
-			(!below_outer_join || has_nullable_targetlist(subquery)) &&
-			!contain_whole_tuple_var((Node *) parse, varno, 0))
+		if (rte->rtekind == RTE_SUBQUERY &&
+			is_simple_subquery(subquery) &&
+			(!below_outer_join || has_nullable_targetlist(subquery)))
 		{
 			int			rtoffset;
 			List	   *subtlist;
@@ -206,8 +203,7 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			 * the one above.
 			 */
 			if (is_simple_subquery(subquery) &&
-				(!below_outer_join || has_nullable_targetlist(subquery)) &&
-				!contain_whole_tuple_var((Node *) parse, varno, 0))
+				(!below_outer_join || has_nullable_targetlist(subquery)))
 			{
 				/* good to go */
 			}
@@ -247,24 +243,25 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 			subtlist = subquery->targetList;
 			parse->targetList = (List *)
 				ResolveNew((Node *) parse->targetList,
-						   varno, 0, subtlist, CMD_SELECT, 0);
-			resolvenew_in_jointree((Node *) parse->jointree, varno, subtlist);
+						   varno, 0, rte, subtlist, CMD_SELECT, 0);
+			resolvenew_in_jointree((Node *) parse->jointree, varno,
+								   rte, subtlist);
 			Assert(parse->setOperations == NULL);
 			parse->havingQual =
 				ResolveNew(parse->havingQual,
-						   varno, 0, subtlist, CMD_SELECT, 0);
+						   varno, 0, rte, subtlist, CMD_SELECT, 0);
 			parse->in_info_list = (List *)
 				ResolveNew((Node *) parse->in_info_list,
-						   varno, 0, subtlist, CMD_SELECT, 0);
+						   varno, 0, rte, subtlist, CMD_SELECT, 0);
 
 			foreach(rt, parse->rtable)
 			{
-				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
+				RangeTblEntry *otherrte = (RangeTblEntry *) lfirst(rt);
 
-				if (rte->rtekind == RTE_JOIN)
-					rte->joinaliasvars = (List *)
-						ResolveNew((Node *) rte->joinaliasvars,
-								   varno, 0, subtlist, CMD_SELECT, 0);
+				if (otherrte->rtekind == RTE_JOIN)
+					otherrte->joinaliasvars = (List *)
+						ResolveNew((Node *) otherrte->joinaliasvars,
+								   varno, 0, rte, subtlist, CMD_SELECT, 0);
 			}
 
 			/*
@@ -479,7 +476,8 @@ has_nullable_targetlist(Query *subquery)
  * but there's no other way...
  */
 static void
-resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
+resolvenew_in_jointree(Node *jtnode, int varno,
+					   RangeTblEntry *rte, List *subtlist)
 {
 	if (jtnode == NULL)
 		return;
@@ -493,18 +491,18 @@ resolvenew_in_jointree(Node *jtnode, int varno, List *subtlist)
 		List	   *l;
 
 		foreach(l, f->fromlist)
-			resolvenew_in_jointree(lfirst(l), varno, subtlist);
+			resolvenew_in_jointree(lfirst(l), varno, rte, subtlist);
 		f->quals = ResolveNew(f->quals,
-							  varno, 0, subtlist, CMD_SELECT, 0);
+							  varno, 0, rte, subtlist, CMD_SELECT, 0);
 	}
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
 
-		resolvenew_in_jointree(j->larg, varno, subtlist);
-		resolvenew_in_jointree(j->rarg, varno, subtlist);
+		resolvenew_in_jointree(j->larg, varno, rte, subtlist);
+		resolvenew_in_jointree(j->rarg, varno, rte, subtlist);
 		j->quals = ResolveNew(j->quals,
-							  varno, 0, subtlist, CMD_SELECT, 0);
+							  varno, 0, rte, subtlist, CMD_SELECT, 0);
 
 		/*
 		 * We don't bother to update the colvars list, since it won't be

@@ -219,6 +219,17 @@ SELECT hobbies_by_name('basketball');
 SELECT name, overpaid(emp.*) FROM emp;
 
 --
+-- Try a few cases with SQL-spec row constructor expressions
+--
+SELECT * FROM equipment(ROW('skywalking', 'mer'));
+
+SELECT name(equipment(ROW('skywalking', 'mer')));
+
+SELECT *, name(equipment(h.*)) FROM hobbies_r h;
+
+SELECT *, (equipment(CAST((h.*) AS hobbies_r))).name FROM hobbies_r h;
+
+--
 -- check that old-style C functions work properly with TOASTed values
 --
 create table oldstyle_test(i int4, t text);

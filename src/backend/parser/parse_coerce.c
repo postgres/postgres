@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.114 2004/03/15 01:13:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.115 2004/05/10 22:44:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,19 +19,26 @@
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "optimizer/clauses.h"
+#include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_func.h"
+#include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+#include "utils/typcache.h"
 
 
 static Node *coerce_type_typmod(Node *node,
 				   Oid targetTypeId, int32 targetTypMod,
 				   CoercionForm cformat, bool isExplicit);
+static Node *coerce_record_to_complex(ParseState *pstate, Node *node,
+									  Oid targetTypeId,
+									  CoercionContext ccontext,
+									  CoercionForm cformat);
 
 
 /*
@@ -279,6 +286,13 @@ coerce_type(ParseState *pstate, Node *node,
 		}
 		return result;
 	}
+	if (inputTypeId == RECORDOID &&
+		ISCOMPLEX(targetTypeId))
+	{
+		/* Coerce a RECORD to a specific complex type */
+		return coerce_record_to_complex(pstate, node, targetTypeId,
+										ccontext, cformat);
+	}
 	if (typeInheritsFrom(inputTypeId, targetTypeId))
 	{
 		/*
@@ -357,6 +371,14 @@ can_coerce_type(int nargs, Oid *input_typeids, Oid *target_typeids,
 		 */
 		if (find_coercion_pathway(targetTypeId, inputTypeId, ccontext,
 								  &funcId))
+			continue;
+
+		/*
+		 * If input is RECORD and target is a composite type, assume
+		 * we can coerce (may need tighter checking here)
+		 */
+		if (inputTypeId == RECORDOID &&
+			ISCOMPLEX(targetTypeId))
 			continue;
 
 		/*
@@ -506,6 +528,103 @@ coerce_type_typmod(Node *node, Oid targetTypeId, int32 targetTypMod,
 	return node;
 }
 
+/*
+ * coerce_record_to_complex
+ *		Coerce a RECORD to a specific composite type.
+ *
+ * Currently we only support this for inputs that are RowExprs or whole-row
+ * Vars.
+ */
+static Node *
+coerce_record_to_complex(ParseState *pstate, Node *node,
+						 Oid targetTypeId,
+						 CoercionContext ccontext,
+						 CoercionForm cformat)
+{
+	RowExpr	   *rowexpr;
+	TupleDesc	tupdesc;
+	List	   *args = NIL;
+	List	   *newargs;
+	int			i;
+	List	   *arg;
+
+	if (node && IsA(node, RowExpr))
+	{
+		args = ((RowExpr *) node)->args;
+	}
+	else if (node && IsA(node, Var) &&
+			 ((Var *) node)->varattno == InvalidAttrNumber)
+	{
+		RangeTblEntry *rte;
+		AttrNumber nfields;
+		AttrNumber nf;
+
+		rte = GetRTEByRangeTablePosn(pstate,
+									 ((Var *) node)->varno,
+									 ((Var *) node)->varlevelsup);
+		nfields = length(rte->eref->colnames);
+		for (nf = 1; nf <= nfields; nf++)
+		{
+			Oid		vartype;
+			int32	vartypmod;
+
+			get_rte_attribute_type(rte, nf, &vartype, &vartypmod);
+			args = lappend(args,
+						   makeVar(((Var *) node)->varno,
+								   nf,
+								   vartype,
+								   vartypmod,
+								   ((Var *) node)->varlevelsup));
+		}
+	}
+	else
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast type %s to %s",
+						format_type_be(RECORDOID),
+						format_type_be(targetTypeId))));
+
+	tupdesc = lookup_rowtype_tupdesc(targetTypeId, -1);
+	if (length(args) != tupdesc->natts)
+		ereport(ERROR,
+				(errcode(ERRCODE_CANNOT_COERCE),
+				 errmsg("cannot cast type %s to %s",
+						format_type_be(RECORDOID),
+						format_type_be(targetTypeId)),
+				 errdetail("Input has wrong number of columns.")));
+	newargs = NIL;
+	i = 0;
+	foreach(arg, args)
+	{
+		Node   *expr = (Node *) lfirst(arg);
+		Oid		exprtype = exprType(expr);
+
+		expr = coerce_to_target_type(pstate,
+									 expr, exprtype,
+									 tupdesc->attrs[i]->atttypid,
+									 tupdesc->attrs[i]->atttypmod,
+									 ccontext,
+									 COERCE_IMPLICIT_CAST);
+		if (expr == NULL)
+			ereport(ERROR,
+					(errcode(ERRCODE_CANNOT_COERCE),
+					 errmsg("cannot cast type %s to %s",
+							format_type_be(RECORDOID),
+							format_type_be(targetTypeId)),
+					 errdetail("Cannot cast type %s to %s in column %d.",
+							   format_type_be(exprtype),
+							   format_type_be(tupdesc->attrs[i]->atttypid),
+							   i + 1)));
+		newargs = lappend(newargs, expr);
+		i++;
+	}
+
+	rowexpr = makeNode(RowExpr);
+	rowexpr->args = newargs;
+	rowexpr->row_typeid = targetTypeId;
+	rowexpr->row_format = cformat;
+	return (Node *) rowexpr;
+}
 
 /* coerce_to_boolean()
  *		Coerce an argument of a construct that requires boolean input

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.158 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.159 2004/05/10 22:44:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,7 @@
 #include "executor/execdebug.h"
 #include "executor/functions.h"
 #include "executor/nodeSubplan.h"
+#include "funcapi.h"
 #include "miscadmin.h"
 #include "optimizer/planmain.h"
 #include "parser/parse_expr.h"
@@ -93,6 +94,9 @@ static Datum ExecEvalCaseTestExpr(ExprState *exprstate,
 static Datum ExecEvalArray(ArrayExprState *astate,
 						   ExprContext *econtext,
 						   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalRow(RowExprState *rstate,
+						 ExprContext *econtext,
+						 bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalCoalesce(CoalesceExprState *coalesceExpr,
 							  ExprContext *econtext,
 							  bool *isNull, ExprDoneCond *isDone);
@@ -2102,6 +2106,54 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalRow - ROW() expressions
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalRow(RowExprState *rstate,
+			ExprContext *econtext,
+			bool *isNull, ExprDoneCond *isDone)
+{
+	HeapTuple	tuple;
+	Datum	   *values;
+	char	   *nulls;
+	int			nargs;
+	List	   *arg;
+	int			i;
+
+	/* Set default values for result flags: non-null, not a set result */
+	*isNull = false;
+	if (isDone)
+		*isDone = ExprSingleResult;
+
+	/* Allocate workspace */
+	nargs = length(rstate->args);
+	if (nargs == 0)				/* avoid palloc(0) if no fields */
+		nargs = 1;
+	values = (Datum *) palloc(nargs * sizeof(Datum));
+	nulls = (char *) palloc(nargs * sizeof(char));
+
+	/* Evaluate field values */
+	i = 0;
+	foreach(arg, rstate->args)
+	{
+		ExprState  *e = (ExprState *) lfirst(arg);
+		bool		eisnull;
+
+		values[i] = ExecEvalExpr(e, econtext, &eisnull, NULL);
+		nulls[i] = eisnull ? 'n' : ' ';
+		i++;
+	}
+
+	tuple = heap_formtuple(rstate->tupdesc, values, nulls);
+
+	pfree(values);
+	pfree(nulls);
+
+	return HeapTupleGetDatum(tuple);
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalCoalesce
  * ----------------------------------------------------------------
  */
@@ -2820,6 +2872,39 @@ ExecInitExpr(Expr *node, PlanState *parent)
 									 &astate->elembyval,
 									 &astate->elemalign);
 				state = (ExprState *) astate;
+			}
+			break;
+		case T_RowExpr:
+			{
+				RowExpr	   *rowexpr = (RowExpr *) node;
+				RowExprState *rstate = makeNode(RowExprState);
+				List	   *outlist;
+				List	   *inlist;
+
+				rstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRow;
+				outlist = NIL;
+				foreach(inlist, rowexpr->args)
+				{
+					Expr	   *e = (Expr *) lfirst(inlist);
+					ExprState  *estate;
+
+					estate = ExecInitExpr(e, parent);
+					outlist = lappend(outlist, estate);
+				}
+				rstate->args = outlist;
+				/* Build tupdesc to describe result tuples */
+				if (rowexpr->row_typeid == RECORDOID)
+				{
+					/* generic record, use runtime type assignment */
+					rstate->tupdesc = ExecTypeFromExprList(rowexpr->args);
+					rstate->tupdesc = BlessTupleDesc(rstate->tupdesc);
+				}
+				else
+				{
+					/* it's been cast to a named type, use that */
+					rstate->tupdesc = lookup_rowtype_tupdesc(rowexpr->row_typeid, -1);
+				}
+				state = (ExprState *) rstate;
 			}
 			break;
 		case T_CoalesceExpr:

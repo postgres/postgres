@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.55 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.56 2004/05/10 22:44:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -188,19 +188,6 @@ contain_var_reference_walker(Node *node,
 	}
 	return expression_tree_walker(node, contain_var_reference_walker,
 								  (void *) context);
-}
-
-
-/*
- *		contain_whole_tuple_var
- *
- *		Detect whether a parsetree contains any references to the whole
- *		tuple of a given rtable entry (ie, a Var with varattno = 0).
- */
-bool
-contain_whole_tuple_var(Node *node, int varno, int levelsup)
-{
-	return contain_var_reference(node, varno, InvalidAttrNumber, levelsup);
 }
 
 
@@ -486,7 +473,10 @@ pull_var_clause_walker(Node *node, pull_var_clause_context *context)
  * flatten_join_alias_vars
  *	  Replace Vars that reference JOIN outputs with references to the original
  *	  relation variables instead.  This allows quals involving such vars to be
- *	  pushed down.
+ *	  pushed down.  Whole-row Vars that reference JOIN relations are expanded
+ *	  into RowExpr constructs that name the individual output Vars.  This
+ *	  is necessary since we will not scan the JOIN as a base relation, which
+ *	  is the only way that the executor can directly handle whole-row Vars.
  *
  * NOTE: this is used on not-yet-planned expressions.  We do not expect it
  * to be applied directly to a Query node.
@@ -520,8 +510,39 @@ flatten_join_alias_vars_mutator(Node *node,
 		rte = rt_fetch(var->varno, context->root->rtable);
 		if (rte->rtekind != RTE_JOIN)
 			return node;
+		if (var->varattno == InvalidAttrNumber)
+		{
+			/* Must expand whole-row reference */
+			RowExpr *rowexpr;
+			List	*fields = NIL;
+			List    *l;
+
+			foreach(l, rte->joinaliasvars)
+			{
+				newvar = (Node *) lfirst(l);
+				/*
+				 * If we are expanding an alias carried down from an upper
+				 * query, must adjust its varlevelsup fields.
+				 */
+				if (context->sublevels_up != 0)
+				{
+					newvar = copyObject(newvar);
+					IncrementVarSublevelsUp(newvar, context->sublevels_up, 0);
+				}
+				/* Recurse in case join input is itself a join */
+				newvar = flatten_join_alias_vars_mutator(newvar, context);
+				fields = lappend(fields, newvar);
+			}
+			rowexpr = makeNode(RowExpr);
+			rowexpr->args = fields;
+			rowexpr->row_typeid = var->vartype;
+			rowexpr->row_format = COERCE_IMPLICIT_CAST;
+
+			return (Node *) rowexpr;
+		}
+
+		/* Expand join alias reference */
 		Assert(var->varattno > 0);
-		/* Okay, must expand it */
 		newvar = (Node *) nth(var->varattno - 1, rte->joinaliasvars);
 
 		/*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.169 2004/04/02 23:14:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.170 2004/05/10 22:44:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -40,10 +40,6 @@
 #include "utils/memutils.h"
 #include "utils/syscache.h"
 
-
-/* note that pg_type.h hardwires size of bool as 1 ... duplicate it */
-#define MAKEBOOLCONST(val,isnull) \
-	((Node *) makeConst(BOOLOID, 1, (Datum) (val), (isnull), true))
 
 typedef struct
 {
@@ -281,7 +277,7 @@ Expr *
 make_ands_explicit(List *andclauses)
 {
 	if (andclauses == NIL)
-		return (Expr *) MAKEBOOLCONST(true, false);
+		return (Expr *) makeBoolConst(true, false);
 	else if (lnext(andclauses) == NIL)
 		return (Expr *) lfirst(andclauses);
 	else
@@ -483,6 +479,8 @@ expression_returns_set_walker(Node *node, void *context)
 	if (IsA(node, SubPlan))
 		return false;
 	if (IsA(node, ArrayExpr))
+		return false;
+	if (IsA(node, RowExpr))
 		return false;
 	if (IsA(node, CoalesceExpr))
 		return false;
@@ -778,6 +776,8 @@ contain_nonstrict_functions_walker(Node *node, void *context)
 	if (IsA(node, CaseWhen))
 		return true;
 	/* NB: ArrayExpr might someday be nonstrict */
+	if (IsA(node, RowExpr))
+		return true;
 	if (IsA(node, CoalesceExpr))
 		return true;
 	if (IsA(node, NullIfExpr))
@@ -1030,6 +1030,8 @@ set_coercionform_dontcare_walker(Node *node, void *context)
 		((FuncExpr *) node)->funcformat = COERCE_DONTCARE;
 	if (IsA(node, RelabelType))
 		((RelabelType *) node)->relabelformat = COERCE_DONTCARE;
+	if (IsA(node, RowExpr))
+		((RowExpr *) node)->row_format = COERCE_DONTCARE;
 	if (IsA(node, CoerceToDomain))
 		((CoerceToDomain *) node)->coercionformat = COERCE_DONTCARE;
 	return expression_tree_walker(node, set_coercionform_dontcare_walker,
@@ -1197,11 +1199,11 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		{
 			/* all nulls? then not distinct */
 			if (all_null_input)
-				return MAKEBOOLCONST(false, false);
+				return makeBoolConst(false, false);
 
 			/* one null? then distinct */
 			if (has_null_input)
-				return MAKEBOOLCONST(true, false);
+				return makeBoolConst(true, false);
 
 			/* otherwise try to evaluate the '=' operator */
 			/* (NOT okay to try to inline it, though!) */
@@ -1272,12 +1274,12 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					newargs = simplify_or_arguments(args,
 													&haveNull, &forceTrue);
 					if (forceTrue)
-						return MAKEBOOLCONST(true, false);
+						return makeBoolConst(true, false);
 					if (haveNull)
-						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+						newargs = lappend(newargs, makeBoolConst(false, true));
 					/* If all the inputs are FALSE, result is FALSE */
 					if (newargs == NIL)
-						return MAKEBOOLCONST(false, false);
+						return makeBoolConst(false, false);
 					/* If only one nonconst-or-NULL input, it's the result */
 					if (lnext(newargs) == NIL)
 						return (Node *) lfirst(newargs);
@@ -1293,12 +1295,12 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					newargs = simplify_and_arguments(args,
 													 &haveNull, &forceFalse);
 					if (forceFalse)
-						return MAKEBOOLCONST(false, false);
+						return makeBoolConst(false, false);
 					if (haveNull)
-						newargs = lappend(newargs, MAKEBOOLCONST(false, true));
+						newargs = lappend(newargs, makeBoolConst(false, true));
 					/* If all the inputs are TRUE, result is TRUE */
 					if (newargs == NIL)
-						return MAKEBOOLCONST(true, false);
+						return makeBoolConst(true, false);
 					/* If only one nonconst-or-NULL input, it's the result */
 					if (lnext(newargs) == NIL)
 						return (Node *) lfirst(newargs);
@@ -1313,9 +1315,9 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 
 					/* NOT NULL => NULL */
 					if (const_input->constisnull)
-						return MAKEBOOLCONST(false, true);
+						return makeBoolConst(false, true);
 					/* otherwise pretty easy */
-					return MAKEBOOLCONST(!DatumGetBool(const_input->constvalue),
+					return makeBoolConst(!DatumGetBool(const_input->constvalue),
 										 false);
 				}
 				else if (not_clause((Node *) lfirst(args)))
@@ -1387,7 +1389,6 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	}
 	if (IsA(node, CaseExpr))
 	{
-
 		/*----------
 		 * CASE expressions can be simplified if there are constant
 		 * condition clauses:
@@ -1546,22 +1547,38 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		 * We can optimize field selection from a whole-row Var into a
 		 * simple Var.	(This case won't be generated directly by the
 		 * parser, because ParseComplexProjection short-circuits it. But
-		 * it can arise while simplifying functions.)  If the argument
-		 * isn't a whole-row Var, just fall through to do generic
-		 * processing.
+		 * it can arise while simplifying functions.)  Also, we can
+		 * optimize field selection from a RowExpr construct.
 		 */
 		FieldSelect *fselect = (FieldSelect *) node;
-		Var		   *argvar = (Var *) fselect->arg;
+		FieldSelect *newfselect;
+		Node	   *arg;
 
-		if (argvar && IsA(argvar, Var) &&
-			argvar->varattno == InvalidAttrNumber)
+		arg = eval_const_expressions_mutator((Node *) fselect->arg,
+											 active_fns);
+		if (arg && IsA(arg, Var) &&
+			((Var *) arg)->varattno == InvalidAttrNumber)
 		{
-			return (Node *) makeVar(argvar->varno,
+			return (Node *) makeVar(((Var *) arg)->varno,
 									fselect->fieldnum,
 									fselect->resulttype,
 									fselect->resulttypmod,
-									argvar->varlevelsup);
+									((Var *) arg)->varlevelsup);
 		}
+		if (arg && IsA(arg, RowExpr))
+		{
+			RowExpr	*rowexpr = (RowExpr *) arg;
+
+			if (fselect->fieldnum > 0 &&
+				fselect->fieldnum <= length(rowexpr->args))
+				return (Node *) nth(fselect->fieldnum - 1, rowexpr->args);
+		}
+		newfselect = makeNode(FieldSelect);
+		newfselect->arg = (Expr *) arg;
+		newfselect->fieldnum = fselect->fieldnum;
+		newfselect->resulttype = fselect->resulttype;
+		newfselect->resulttypmod = fselect->resulttypmod;
+		return (Node *) newfselect;
 	}
 
 	/*
@@ -1759,7 +1776,6 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	bool		has_null_input = false;
 	List	   *arg;
 	FuncExpr   *newexpr;
-	char		result_typtype;
 
 	/*
 	 * Can't simplify if it returns a set.
@@ -1794,15 +1810,6 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	 */
 	if (funcform->provolatile != PROVOLATILE_IMMUTABLE ||
 		has_nonconst_input)
-		return NULL;
-
-	/*
-	 * Can't simplify functions returning composite types (mainly because
-	 * datumCopy() doesn't cope; FIXME someday when we have a saner
-	 * representation for whole-tuple results).
-	 */
-	result_typtype = get_typtype(funcform->prorettype);
-	if (result_typtype == 'c')
 		return NULL;
 
 	/*
@@ -1850,7 +1857,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 				HeapTuple func_tuple, List *active_fns)
 {
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
-	char		result_typtype;
 	bool		polymorphic = false;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	char	   *src;
@@ -1877,21 +1883,6 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		funcform->pronargs != length(args))
 		return NULL;
 
-	/*
-	 * Forget it if declared return type is not base, domain, or
-	 * polymorphic
-	 */
-	result_typtype = get_typtype(funcform->prorettype);
-	if (result_typtype != 'b' &&
-		result_typtype != 'd')
-	{
-		if (funcform->prorettype == ANYARRAYOID ||
-			funcform->prorettype == ANYELEMENTOID)
-			polymorphic = true;
-		else
-			return NULL;
-	}
-
 	/* Check for recursive function, and give up trying to expand if so */
 	if (oidMember(funcid, active_fns))
 		return NULL;
@@ -1911,6 +1902,10 @@ inline_function(Oid funcid, Oid result_type, List *args,
 			argtypes[i] = exprType((Node *) nth(i, args));
 		}
 	}
+
+	if (funcform->prorettype == ANYARRAYOID ||
+		funcform->prorettype == ANYELEMENTOID)
+		polymorphic = true;
 
 	/*
 	 * Setup error traceback support for ereport().  This is so that we
@@ -2483,6 +2478,8 @@ expression_tree_walker(Node *node,
 			break;
 		case T_ArrayExpr:
 			return walker(((ArrayExpr *) node)->elements, context);
+		case T_RowExpr:
+			return walker(((RowExpr *) node)->args, context);
 		case T_CoalesceExpr:
 			return walker(((CoalesceExpr *) node)->args, context);
 		case T_NullIfExpr:
@@ -2886,6 +2883,16 @@ expression_tree_mutator(Node *node,
 
 				FLATCOPY(newnode, arrayexpr, ArrayExpr);
 				MUTATE(newnode->elements, arrayexpr->elements, List *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_RowExpr:
+			{
+				RowExpr	   *rowexpr = (RowExpr *) node;
+				RowExpr	   *newnode;
+
+				FLATCOPY(newnode, rowexpr, RowExpr);
+				MUTATE(newnode->args, rowexpr->args, List *);
 				return (Node *) newnode;
 			}
 			break;

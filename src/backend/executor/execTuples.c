@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.76 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execTuples.c,v 1.77 2004/05/10 22:44:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,12 +111,14 @@
 #include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "executor/executor.h"
+#include "parser/parse_expr.h"
 #include "utils/lsyscache.h"
 #include "utils/typcache.h"
 
 
 static TupleDesc ExecTypeFromTLInternal(List *targetList,
 										bool hasoid, bool skipjunk);
+
 
 /* ----------------------------------------------------------------
  *				  tuple table create/delete functions
@@ -589,6 +591,38 @@ ExecTypeFromTLInternal(List *targetList, bool hasoid, bool skipjunk)
 						   resdom->resname,
 						   resdom->restype,
 						   resdom->restypmod,
+						   0);
+	}
+
+	return typeInfo;
+}
+
+/*
+ * ExecTypeFromExprList - build a tuple descriptor from a list of Exprs
+ *
+ * Here we must make up an arbitrary set of field names.
+ */
+TupleDesc
+ExecTypeFromExprList(List *exprList)
+{
+	TupleDesc	 typeInfo;
+	List		*l;
+	int			 cur_resno = 1;
+	char		fldname[NAMEDATALEN];
+
+	typeInfo = CreateTemplateTupleDesc(length(exprList), false);
+
+	foreach(l, exprList)
+	{
+		Node	*e = lfirst(l);
+
+		sprintf(fldname, "f%d", cur_resno);
+
+		TupleDescInitEntry(typeInfo,
+						   cur_resno++,
+						   fldname,
+						   exprType(e),
+						   exprTypmod(e),
 						   0);
 	}
 
