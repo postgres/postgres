@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.16 1999/02/10 21:02:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/joinutils.c,v 1.17 1999/02/11 05:29:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,8 +373,7 @@ new_join_pathkey(List *subkeys,
 		if (tlist_key)
 		{
 			if (!member(tlist_key, matched_subkeys))
-				newly_considered_subkeys = lcons(tlist_key,
-												 matched_subkeys);
+				newly_considered_subkeys = lcons(tlist_key, matched_subkeys);
 		}
 		else
 			newly_considered_subkeys = matched_subkeys;
