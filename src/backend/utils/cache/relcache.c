@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.180 2002/11/13 00:39:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.181 2002/11/15 17:18:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1333,8 +1333,8 @@ LookupOpclassInfo(Oid operatorClassOid,
  * formrdesc is currently used for: pg_class, pg_attribute, pg_proc,
  * and pg_type (see RelationCacheInitialize).
  *
- * Note that these catalogs can't have constraints, default values,
- * rules, or triggers, since we don't cope with any of that.
+ * Note that these catalogs can't have constraints (except attnotnull),
+ * default values, rules, or triggers, since we don't cope with any of that.
  *
  * NOTE: we assume we are already switched into CacheMemoryContext.
  */
@@ -1345,6 +1345,7 @@ formrdesc(const char *relationName,
 {
 	Relation	relation;
 	int			i;
+	bool		has_not_null;
 
 	/*
 	 * allocate new relation desc
@@ -1408,18 +1409,29 @@ formrdesc(const char *relationName,
 	/*
 	 * initialize tuple desc info
 	 */
+	has_not_null = false;
 	for (i = 0; i < natts; i++)
 	{
 		relation->rd_att->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 		memcpy((char *) relation->rd_att->attrs[i],
 			   (char *) &att[i],
 			   ATTRIBUTE_TUPLE_SIZE);
+		has_not_null |= att[i].attnotnull;
 		/* make sure attcacheoff is valid */
 		relation->rd_att->attrs[i]->attcacheoff = -1;
 	}
 
 	/* initialize first attribute's attcacheoff, cf RelationBuildTupleDesc */
 	relation->rd_att->attrs[0]->attcacheoff = 0;
+
+	/* mark not-null status */
+	if (has_not_null)
+	{
+		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+
+		constr->has_not_null = true;
+		relation->rd_att->constr = constr;
+	}
 
 	/*
 	 * initialize relation id from info in att array (my, this is ugly)
@@ -2035,6 +2047,7 @@ RelationBuildLocalRelation(const char *relname,
 	MemoryContext oldcxt;
 	int			natts = tupDesc->natts;
 	int			i;
+	bool		has_not_null;
 
 	AssertArg(natts > 0);
 
@@ -2081,8 +2094,20 @@ RelationBuildLocalRelation(const char *relname,
 	 * however.
 	 */
 	rel->rd_att = CreateTupleDescCopy(tupDesc);
+	has_not_null = false;
 	for (i = 0; i < natts; i++)
+	{
 		rel->rd_att->attrs[i]->attnotnull = tupDesc->attrs[i]->attnotnull;
+		has_not_null |= tupDesc->attrs[i]->attnotnull;
+	}
+
+	if (has_not_null)
+	{
+		TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+
+		constr->has_not_null = true;
+		rel->rd_att->constr = constr;
+	}
 
 	/*
 	 * initialize relation tuple form (caller may add/override data later)
@@ -2723,6 +2748,7 @@ load_relcache_init_file(void)
 		size_t		nread;
 		Relation	rel;
 		Form_pg_class relform;
+		bool		has_not_null;
 
 		/* first read the relation descriptor length */
 		if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
@@ -2764,6 +2790,7 @@ load_relcache_init_file(void)
 											  relform->relhasoids);
 
 		/* next read all the attribute tuple form data entries */
+		has_not_null = false;
 		for (i = 0; i < relform->relnatts; i++)
 		{
 			if ((nread = fread(&len, 1, sizeof(len), fp)) != sizeof(len))
@@ -2773,6 +2800,17 @@ load_relcache_init_file(void)
 
 			if ((nread = fread(rel->rd_att->attrs[i], 1, len, fp)) != len)
 				goto read_failed;
+
+			has_not_null |= rel->rd_att->attrs[i]->attnotnull;
+		}
+
+		/* mark not-null status */
+		if (has_not_null)
+		{
+			TupleConstr *constr = (TupleConstr *) palloc0(sizeof(TupleConstr));
+
+			constr->has_not_null = true;
+			rel->rd_att->constr = constr;
 		}
 
 		/* If it's an index, there's more to do */
