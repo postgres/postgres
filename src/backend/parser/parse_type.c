@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.30 2000/05/30 04:24:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.31 2000/06/06 16:50:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,8 @@ typeidTypeName(Oid id)
 		return NULL;
 	}
 	typetuple = (Form_pg_type) GETSTRUCT(tup);
-	return NameStr(typetuple->typname);
+	/* pstrdup here because result may need to outlive the syscache entry */
+	return pstrdup(NameStr(typetuple->typname));
 }
 
 /* return a Type structure, given a type id */
@@ -119,7 +120,8 @@ typeTypeName(Type t)
 	Form_pg_type typ;
 
 	typ = (Form_pg_type) GETSTRUCT(t);
-	return NameStr(typ->typname);
+	/* pstrdup here because result may need to outlive the syscache entry */
+	return pstrdup(NameStr(typ->typname));
 }
 
 /* given a type, return its typetype ('c' for 'c'atalog types) */
