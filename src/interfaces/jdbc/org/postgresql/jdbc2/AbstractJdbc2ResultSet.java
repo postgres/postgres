@@ -9,7 +9,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.17 2003/03/14 05:36:58 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.18 2003/03/25 02:24:07 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1083,7 +1083,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 				rows.setElementAt( rowBuffer, current_row );
 				if ( Driver.logDebug )
 					Driver.debug("done updates");
-
+				updateValues.clear();
 				doingUpdates = false;
 			}
 			catch (Exception e)
