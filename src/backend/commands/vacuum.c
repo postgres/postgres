@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.77 1998/08/28 03:36:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.78 1998/08/28 04:57:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "access/transam.h"
@@ -189,8 +190,8 @@ vc_init()
 	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
 	{
 		elog(ERROR, "Can't create lock file.  Is another vacuum cleaner running?\n\
-\tIf not, you may remove the pg_vlock file in the pgsql/data/base/your_db\n\
-\tdirectory");
+\tIf not, you may remove the pg_vlock file in the %s\n\
+\tdirectory", DatabasePath);
 	}
 	close(fd);
 
@@ -2202,11 +2203,10 @@ static void
 vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 {
 	IndDesc    *idcur;
-	HeapTuple	tuple, cachetuple;
+	HeapTuple	cachetuple;
 	AttrNumber *attnumP;
 	int			natts;
 	int			i;
-	Buffer		buffer;
 		
 	*Idesc = (IndDesc *) palloc(nindices * sizeof(IndDesc));
 
@@ -2216,13 +2216,8 @@ vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 										ObjectIdGetDatum(RelationGetRelid(Irel[i])),
 										0, 0, 0);
 		Assert(cachetuple);
-
-		/* get the buffer cache tuple */
-		tuple = heap_fetch(onerel, SnapshotNow, &cachetuple->t_ctid, &buffer);
-		Assert(tuple);
-		pfree(cachetuple);
-
-		idcur->tform = (IndexTupleForm) GETSTRUCT(tuple);
+		/* we never free the copy we make, because Idesc needs it for later */
+		idcur->tform = (IndexTupleForm) GETSTRUCT(cachetuple);
 		for (attnumP = &(idcur->tform->indkey[0]), natts = 0;
 			 *attnumP != InvalidAttrNumber && natts != INDEX_MAX_KEYS;
 			 attnumP++, natts++);
@@ -2238,7 +2233,6 @@ vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 			idcur->finfoP = (FuncIndexInfo *) NULL;
 
 		idcur->natts = natts;
-		ReleaseBuffer(buffer);
 	}
 
 }	/* vc_mkindesc */
