@@ -292,10 +292,23 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 			{					/* change T/F to 1/0 */
 				char	   *s = (char *) value;
 
-				if (s[0] == 'T' || s[0] == 't')
+				/*  Aidan Mountford (aidan@oz.to) 1/08/2001:  
+					
+					>> if (s[0] == 'T' || s[0] == 't') <<< This wont work...
+
+					When MoveFirst is called twice on one set of tuples, 
+					this will have the effect of setting s[0] to 1 on the
+					first pass, and s[0] on the second.
+
+					This is bad ;)
+
+				*/
+					
+				if (s[0] == 'T' || s[0] == 't' || s[0] == '1')
 					s[0] = '1';
 				else
-					s[0] = '0';
+				    s[0] = '0';
+
 			}
 			break;
 
@@ -1158,7 +1171,10 @@ copy_statement_with_parameters(StatementClass *stmt)
 		}
 		else
 		{
+			
+			
 			used = stmt->parameters[param_number].used ? *stmt->parameters[param_number].used : SQL_NTS;
+			
 			buffer = stmt->parameters[param_number].buffer;
 		}
 
