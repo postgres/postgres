@@ -349,184 +349,184 @@ insert into t values(3,array[3],'b');
 select f3, myaggp01a(*) from t group by f3;
  f3 | myaggp01a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp03a(*) from t group by f3;
  f3 | myaggp03a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp03b(*) from t group by f3;
  f3 | myaggp03b 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp05a(f1) from t group by f3;
  f3 | myaggp05a 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggp06a(f1) from t group by f3;
  f3 | myaggp06a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp08a(f1) from t group by f3;
  f3 | myaggp08a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp09a(f1) from t group by f3;
  f3 | myaggp09a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp09b(f1) from t group by f3;
  f3 | myaggp09b 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggp10a(f1) from t group by f3;
  f3 | myaggp10a 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggp10b(f1) from t group by f3;
  f3 | myaggp10b 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggp20a(f1) from t group by f3;
  f3 | myaggp20a 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggp20b(f1) from t group by f3;
  f3 | myaggp20b 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggn01a(*) from t group by f3;
  f3 | myaggn01a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn01b(*) from t group by f3;
  f3 | myaggn01b 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn03a(*) from t group by f3;
  f3 | myaggn03a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn05a(f1) from t group by f3;
  f3 | myaggn05a 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggn05b(f1) from t group by f3;
  f3 | myaggn05b 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 
 select f3, myaggn06a(f1) from t group by f3;
  f3 | myaggn06a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn06b(f1) from t group by f3;
  f3 | myaggn06b 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn08a(f1) from t group by f3;
  f3 | myaggn08a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn08b(f1) from t group by f3;
  f3 | myaggn08b 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn09a(f1) from t group by f3;
  f3 | myaggn09a 
 ----+-----------
+ b  | {}
  c  | {}
  a  | {}
- b  | {}
 (3 rows)
 
 select f3, myaggn10a(f1) from t group by f3;
  f3 | myaggn10a 
 ----+-----------
+ b  | {1,2,3}
  c  | {1,2}
  a  | {1,2,3}
- b  | {1,2,3}
 (3 rows)
 

@@ -1124,8 +1124,8 @@ insert into shoelace values ('sl10', 1000, 'magenta', 40.0, 'inch', 0.0);
 SELECT * FROM shoelace_obsolete;
   sl_name   | sl_avail |  sl_color  | sl_len | sl_unit  | sl_len_cm 
 ------------+----------+------------+--------+----------+-----------
- sl10       |     1000 | magenta    |     40 | inch     |     101.6
  sl9        |        0 | pink       |     35 | inch     |      88.9
+ sl10       |     1000 | magenta    |     40 | inch     |     101.6
 (2 rows)
 
 SELECT * FROM shoelace_candelete;
