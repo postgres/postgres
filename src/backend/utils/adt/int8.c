@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.42 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int8.c,v 1.43 2003/03/11 21:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -504,6 +504,9 @@ int8div(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 
+	if (val2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT64(val1 / val2);
 }
 
@@ -527,6 +530,9 @@ int8mod(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int64		val2 = PG_GETARG_INT64(1);
 	int64		result;
+
+	if (val2 == 0)
+		elog(ERROR, "division by zero");
 
 	result = val1 / val2;
 	result *= val2;
@@ -621,6 +627,9 @@ int84div(PG_FUNCTION_ARGS)
 	int64		val1 = PG_GETARG_INT64(0);
 	int32		val2 = PG_GETARG_INT32(1);
 
+	if (val2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT64(val1 / val2);
 }
 
@@ -656,6 +665,9 @@ int48div(PG_FUNCTION_ARGS)
 {
 	int32		val1 = PG_GETARG_INT32(0);
 	int64		val2 = PG_GETARG_INT64(1);
+
+	if (val2 == 0)
+		elog(ERROR, "division by zero");
 
 	PG_RETURN_INT64(val1 / val2);
 }

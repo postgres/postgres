@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.56 2002/09/04 20:31:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.57 2003/03/11 21:01:33 tgl Exp $
  */
 
 #include "postgres.h"
@@ -442,7 +442,7 @@ cash_div_flt8(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (f == 0.0)
-		elog(ERROR, "cash_div:  divide by 0.0 error");
+		elog(ERROR, "division by zero");
 
 	result = rint(c / f);
 	PG_RETURN_CASH(result);
@@ -492,7 +492,7 @@ cash_div_flt4(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (f == 0.0)
-		elog(ERROR, "cash_div:  divide by 0.0 error");
+		elog(ERROR, "division by zero");
 
 	result = rint(c / f);
 	PG_RETURN_CASH(result);
@@ -543,7 +543,7 @@ cash_div_int4(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (i == 0)
-		elog(ERROR, "cash_div_int4: divide by 0 error");
+		elog(ERROR, "division by zero");
 
 	result = rint(c / i);
 
@@ -593,7 +593,7 @@ cash_div_int2(PG_FUNCTION_ARGS)
 	Cash		result;
 
 	if (s == 0)
-		elog(ERROR, "cash_div:  divide by 0 error");
+		elog(ERROR, "division by zero");
 
 	result = rint(c / s);
 	PG_RETURN_CASH(result);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.83 2002/11/08 17:37:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.84 2003/03/11 21:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -505,7 +505,7 @@ float4div(PG_FUNCTION_ARGS)
 	double		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "float4div: divide by zero error");
+		elog(ERROR, "division by zero");
 
 	/* Do division in float8, then check for overflow */
 	result = (float8) arg1 / (float8) arg2;
@@ -567,7 +567,7 @@ float8div(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "float8div: divide by zero error");
+		elog(ERROR, "division by zero");
 
 	result = arg1 / arg2;
 
@@ -1753,7 +1753,7 @@ float48div(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "float48div: divide by zero");
+		elog(ERROR, "division by zero");
 
 	result = arg1 / arg2;
 	CheckFloat8Val(result);
@@ -1813,7 +1813,7 @@ float84div(PG_FUNCTION_ARGS)
 	float8		result;
 
 	if (arg2 == 0.0)
-		elog(ERROR, "float84div: divide by zero");
+		elog(ERROR, "division by zero");
 
 	result = arg1 / arg2;
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.74 2003/01/21 19:44:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.75 2003/03/11 21:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3504,7 +3504,7 @@ point_div(PG_FUNCTION_ARGS)
 	div = (p2->x * p2->x) + (p2->y * p2->y);
 
 	if (div == 0.0)
-		elog(ERROR, "point_div:  divide by 0.0 error");
+		elog(ERROR, "division by zero");
 
 	result->x = ((p1->x * p2->x) + (p1->y * p2->y)) / div;
 	result->y = ((p2->x * p1->y) - (p2->y * p1->x)) / div;

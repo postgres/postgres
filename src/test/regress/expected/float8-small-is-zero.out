@@ -257,7 +257,7 @@ ERROR:  can't take log of a negative number
 SELECT '' AS bad, exp(f.f1) from FLOAT8_TBL f;
 ERROR:  exp() result is out of range
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT8_TBL f;
-ERROR:  float8div: divide by zero error
+ERROR:  division by zero
 SELECT '' AS five, FLOAT8_TBL.*;
  five |          f1           
 ------+-----------------------

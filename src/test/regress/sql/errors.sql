@@ -17,7 +17,7 @@ select 1;
 --
 
 --
--- RETRIEVE
+-- SELECT
  
 -- missing relation name 
 select;
@@ -55,7 +55,7 @@ delete from nonesuch;
 
 
 --
--- DESTROY
+-- DROP
  
 -- missing relation name (this had better not wildcard!) 
 drop table;
@@ -65,9 +65,8 @@ drop table nonesuch;
 
 
 --
--- RENAME
+-- ALTER TABLE
  
-
 -- relation renaming 
 
 -- missing relation name 
@@ -112,7 +111,7 @@ end;
 
 
 --
--- DEFINE AGGREGATE
+-- CREATE AGGREGATE
 
 -- sfunc/finalfunc type disagreement 
 create aggregate newavg2 (sfunc = int4pl,
@@ -128,7 +127,7 @@ create aggregate newcnt1 (sfunc = int4inc,
 
 
 --
--- REMOVE INDEX
+-- DROP INDEX
  
 -- missing index name 
 drop index;
@@ -141,7 +140,7 @@ drop index nonesuch;
 
 
 --
--- REMOVE AGGREGATE
+-- DROP AGGREGATE
  
 -- missing aggregate name 
 drop aggregate;
@@ -163,7 +162,7 @@ drop aggregate newcnt (float4);
 
 
 --
--- REMOVE FUNCTION
+-- DROP FUNCTION
  
 -- missing function name 
 drop function ();
@@ -176,7 +175,7 @@ drop function nonesuch();
 
 
 --
--- REMOVE TYPE
+-- DROP TYPE
  
 -- missing type name 
 drop type;
@@ -252,3 +251,28 @@ drop instance rule nonesuch on noplace;
 -- no such rule 
 drop rewrite rule nonesuch;
 
+--
+-- Check that division-by-zero is properly caught.
+--
+
+select 1/0;
+
+select 1::int8/0;
+
+select 1/0::int8;
+
+select 1::int2/0;
+
+select 1/0::int2;
+
+select 1::numeric/0;
+
+select 1/0::numeric;
+
+select 1::float8/0;
+
+select 1/0::float8;
+
+select 1::float4/0;
+
+select 1/0::float4;

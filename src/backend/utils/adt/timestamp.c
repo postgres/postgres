@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.79 2003/02/27 21:36:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.80 2003/03/11 21:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1869,7 +1869,7 @@ interval_div(PG_FUNCTION_ARGS)
 	result = (Interval *) palloc(sizeof(Interval));
 
 	if (factor == 0.0)
-		elog(ERROR, "interval_div: divide by 0.0 error");
+		elog(ERROR, "division by zero");
 
 #ifdef HAVE_INT64_TIMESTAMP
 	result->month = (span->month / factor);

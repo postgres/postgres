@@ -18,7 +18,7 @@ select 1;
 -- notify pg_class
 --
 --
--- RETRIEVE
+-- SELECT
  
 -- missing relation name 
 select;
@@ -54,7 +54,7 @@ ERROR:  parser: parse error at or near ";" at character 12
 delete from nonesuch;
 ERROR:  Relation "nonesuch" does not exist
 --
--- DESTROY
+-- DROP
  
 -- missing relation name (this had better not wildcard!) 
 drop table;
@@ -63,7 +63,7 @@ ERROR:  parser: parse error at or near ";" at character 11
 drop table nonesuch;
 ERROR:  table "nonesuch" does not exist
 --
--- RENAME
+-- ALTER TABLE
  
 -- relation renaming 
 -- missing relation name 
@@ -104,7 +104,7 @@ WARNING:  ROLLBACK: no transaction in progress
 end;
 WARNING:  COMMIT: no transaction in progress
 --
--- DEFINE AGGREGATE
+-- CREATE AGGREGATE
 -- sfunc/finalfunc type disagreement 
 create aggregate newavg2 (sfunc = int4pl,
 			  basetype = int4,
@@ -118,7 +118,7 @@ create aggregate newcnt1 (sfunc = int4inc,
 			  initcond = '0');
 ERROR:  Define: "basetype" unspecified
 --
--- REMOVE INDEX
+-- DROP INDEX
  
 -- missing index name 
 drop index;
@@ -130,7 +130,7 @@ ERROR:  parser: parse error at or near "314159" at character 12
 drop index nonesuch;
 ERROR:  index "nonesuch" does not exist
 --
--- REMOVE AGGREGATE
+-- DROP AGGREGATE
  
 -- missing aggregate name 
 drop aggregate;
@@ -151,7 +151,7 @@ ERROR:  RemoveAggregate: aggregate nonesuch(integer) does not exist
 drop aggregate newcnt (float4);
 ERROR:  RemoveAggregate: aggregate newcnt(real) does not exist
 --
--- REMOVE FUNCTION
+-- DROP FUNCTION
  
 -- missing function name 
 drop function ();
@@ -163,7 +163,7 @@ ERROR:  parser: parse error at or near "314159" at character 15
 drop function nonesuch();
 ERROR:  RemoveFunction: function nonesuch() does not exist
 --
--- REMOVE TYPE
+-- DROP TYPE
  
 -- missing type name 
 drop type;
@@ -237,3 +237,28 @@ ERROR:  parser: parse error at or near "instance" at character 6
 -- no such rule 
 drop rewrite rule nonesuch;
 ERROR:  parser: parse error at or near "rewrite" at character 6
+--
+-- Check that division-by-zero is properly caught.
+--
+select 1/0;
+ERROR:  division by zero
+select 1::int8/0;
+ERROR:  division by zero
+select 1/0::int8;
+ERROR:  division by zero
+select 1::int2/0;
+ERROR:  division by zero
+select 1/0::int2;
+ERROR:  division by zero
+select 1::numeric/0;
+ERROR:  division by zero
+select 1/0::numeric;
+ERROR:  division by zero
+select 1::float8/0;
+ERROR:  division by zero
+select 1/0::float8;
+ERROR:  division by zero
+select 1::float4/0;
+ERROR:  division by zero
+select 1/0::float4;
+ERROR:  division by zero

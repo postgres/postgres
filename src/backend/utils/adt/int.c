@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.52 2002/08/22 00:01:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.53 2003/03/11 21:01:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -551,6 +551,9 @@ int4div(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		arg2 = PG_GETARG_INT32(1);
 
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT32(arg1 / arg2);
 }
 
@@ -611,6 +614,9 @@ int2div(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	int16		arg2 = PG_GETARG_INT16(1);
 
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT16(arg1 / arg2);
 }
 
@@ -646,6 +652,9 @@ int24div(PG_FUNCTION_ARGS)
 {
 	int16		arg1 = PG_GETARG_INT16(0);
 	int32		arg2 = PG_GETARG_INT32(1);
+
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
 
 	PG_RETURN_INT32(arg1 / arg2);
 }
@@ -683,6 +692,9 @@ int42div(PG_FUNCTION_ARGS)
 	int32		arg1 = PG_GETARG_INT32(0);
 	int16		arg2 = PG_GETARG_INT16(1);
 
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT32(arg1 / arg2);
 }
 
@@ -691,6 +703,9 @@ int4mod(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
 	int32		arg2 = PG_GETARG_INT32(1);
+
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
 
 	PG_RETURN_INT32(arg1 % arg2);
 }
@@ -701,6 +716,9 @@ int2mod(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	int16		arg2 = PG_GETARG_INT16(1);
 
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT16(arg1 % arg2);
 }
 
@@ -710,6 +728,9 @@ int24mod(PG_FUNCTION_ARGS)
 	int16		arg1 = PG_GETARG_INT16(0);
 	int32		arg2 = PG_GETARG_INT32(1);
 
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
+
 	PG_RETURN_INT32(arg1 % arg2);
 }
 
@@ -718,6 +739,9 @@ int42mod(PG_FUNCTION_ARGS)
 {
 	int32		arg1 = PG_GETARG_INT32(0);
 	int16		arg2 = PG_GETARG_INT16(1);
+
+	if (arg2 == 0)
+		elog(ERROR, "division by zero");
 
 	PG_RETURN_INT32(arg1 % arg2);
 }

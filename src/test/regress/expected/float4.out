@@ -113,7 +113,7 @@ SELECT '' AS three, f.f1, f.f1 - '-10' AS x FROM FLOAT4_TBL f
 
 -- test divide by zero
 SELECT '' AS bad, f.f1 / '0.0' from FLOAT4_TBL f;
-ERROR:  float4div: divide by zero error
+ERROR:  division by zero
 SELECT '' AS five, FLOAT4_TBL.*;
  five |     f1      
 ------+-------------

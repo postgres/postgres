@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.56 2002/10/19 02:08:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.57 2003/03/11 21:01:33 tgl Exp $
  *
  * ----------
  */
@@ -3266,7 +3266,7 @@ div_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 	 */
 	ndigits_tmp = var2->ndigits + 1;
 	if (ndigits_tmp == 1)
-		elog(ERROR, "division by zero on numeric");
+		elog(ERROR, "division by zero");
 
 	/*
 	 * Determine the result sign, weight and number of digits to calculate
