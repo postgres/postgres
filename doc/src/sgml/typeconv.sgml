@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.27 2003/03/13 01:30:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/typeconv.sgml,v 1.28 2003/03/19 21:20:52 momjian Exp $
 -->
 
 <chapter Id="typeconv">
@@ -400,57 +400,6 @@ bit-string-category inputs.  Since string category is preferred when available,
 that category is selected, and then the 
 preferred type for strings, <type>text</type>, is used as the specific
 type to resolve the unknown literals to.
-</para>
-</example>
-
-<example>
-<title>Absolute-Value and Factorial Operator Type Resolution</title>
-
-<para>
-The <productname>PostgreSQL</productname> operator catalog has several
-entries for the prefix operator <literal>@</>, all of which implement
-absolute-value operations for various numeric data types.  One of these
-entries is for type <type>float8</type>, which is the preferred type in
-the numeric category.  Therefore, <productname>PostgreSQL</productname>
-will use that entry when faced with a non-numeric input:
-<screen>
-SELECT @ '-4.5' AS "abs";
- abs
------
- 4.5
-(1 row)
-</screen>
-Here the system has performed an implicit conversion from <type>text</type> to <type>float8</type>
-before applying the chosen operator.  We can verify that <type>float8</type> and
-not some other type was used:
-<screen>
-SELECT @ '-4.5e500' AS "abs";
-
-ERROR:  Input '-4.5e500' is out of range for float8
-</screen>
-</para>
-
-<para>
-On the other hand, the postfix operator <literal>!</> (factorial)
-is defined only for integer data types, not for <type>float8</type>.  So, if we
-try a similar case with <literal>!</>, we get:
-<screen>
-SELECT '20' ! AS "factorial";
-
-ERROR:  Unable to identify a postfix operator '!' for type 'text'
-        You may need to add parentheses or an explicit cast
-</screen>
-This happens because the system can't decide which of the several
-possible <literal>!</> operators should be preferred.  We can help
-it out with an explicit cast:
-<screen>
-SELECT CAST('20' AS int8) ! AS "factorial";
-
-      factorial
----------------------
- 2432902008176640000
-(1 row)
-</screen>
 </para>
 </example>
 
