@@ -23,9 +23,9 @@ Questions answered:
 
 1) What tools are available for developers?
 
-Aside from the User documentation mentioned in the regular FAQ, there are
-several development tools available. First, all the files in the /tools
-directory are designed for developers.
+Aside from the User documentation mentioned in the regular FAQ, there
+are several development tools available. First, all the files in the
+pgsql/src/tools directory are designed for developers.
 
         RELEASE_CHANGES         changes we have to make for each release
         SQL_keywords            standard SQL'92 keywords
@@ -42,14 +42,15 @@ directory are designed for developers.
         mkldexport              create AIX exports file
         pgindent                indents C source files
 
-Let me note some of these. If you point your browser at the tools/backend
-directory, you will see all the backend components in a flow chart. You can
-click on any one to see a description. If you then click on the directory
-name, you will be taken to the source directory, to browse the actual source
-code behind it. We also have several README files in some source directories
-to describe the function of the module. The browser will display these when
-you enter the directory also. The tools/backend directory is also contained
-on our web page under the title Backend Flowchart.
+Let me note some of these. If you point your browser at the
+pgsql/src/tools/backend directory, you will see all the backend
+components in a flow chart. You can click on any one to see a
+description. If you then click on the directory name, you will be taken
+to the source directory, to browse the actual source code behind it. We
+also have several README files in some source directories to describe
+the function of the module. The browser will display these when you
+enter the directory also. The pgsql/src/tools/backend directory is also
+contained on our web page under the title Backend Flowchart.
 
 Second, you really should have an editor that can handle tags, so you can
 tag a function call to see the function definition, and then tag inside that
