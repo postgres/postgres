@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.46 1999/07/16 17:46:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.47 1999/07/17 16:25:25 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -49,6 +49,10 @@
 #include "utils/relcache.h"
 #include "utils/syscache.h"
 #include "version.h"
+
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
 
 static void VerifySystemDatabase(void);
 static void VerifyMyDatabase(void);
