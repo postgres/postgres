@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.29 2000/04/12 17:15:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.30 2000/07/03 02:54:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,25 +50,12 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	PageSetPageSize(page, pageSize);
 }
 
-/*
- * PageAddItem
- *		Adds item to the given page.
- *
- * Note:
- *		This does not assume that the item resides on a single page.
- *		It is the responsiblity of the caller to act appropriately
- *		depending on this fact.  The "pskip" routines provide a
- *		friendlier interface, in this case.
- *
- *		This does change the status of any of the resources passed.
- *		The semantics may change in the future.
- *
- *		This routine should probably be combined with others?
- */
 /* ----------------
  *		PageAddItem
  *
  *		add an item to a page.
+ *
+ *   !!! ELOG(ERROR) IS DISALLOWED HERE !!!
  *
  *	 Notes on interface:
  *		If offsetNumber is valid, shuffle ItemId's down to make room
@@ -126,7 +113,7 @@ PageAddItem(Page page,
 			if (((*itemId).lp_flags & LP_USED) ||
 				((*itemId).lp_len != 0))
 			{
-				elog(ERROR, "PageAddItem: tried overwrite of used ItemId");
+				elog(NOTICE, "PageAddItem: tried overwrite of used ItemId");
 				return InvalidOffsetNumber;
 			}
 		}

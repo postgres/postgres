@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.31 2000/07/02 22:01:00 momjian Exp $
+ * $Id: htup.h,v 1.32 2000/07/03 02:54:17 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,22 +69,25 @@ typedef HeapTupleHeaderData *HeapTupleHeader;
 #define	XLOG_HEAP_MOVE		0x30
 
 /*
- * All what we need to find changed tuple (14 bytes)
+ * All what we need to find changed tuple (18 bytes)
  */
 typedef struct xl_heaptid
 {
 	Oid					dbId;		/* database */
 	Oid					relId;		/* relation */
+	CommandId			cid;		/* this is for "better" tuple' */
+									/* identification - it allows to avoid */
+									/* "compensation" records for undo */
 	ItemPointerData		tid;		/* changed tuple id */
 } xl_heaptid;
 
-/* This is what we need to know about delete - ALIGN(14) = 16 bytes */
+/* This is what we need to know about delete - ALIGN(18) = 24 bytes */
 typedef struct xl_heap_delete
 {
 	xl_heaptid			dtid;		/* deleted tuple id */
 } xl_heap_delete;
 
-/* This is what we need to know about insert - 22 + data */
+/* This is what we need to know about insert - 26 + data */
 typedef struct xl_heap_insert
 {
 	xl_heaptid			itid;		/* inserted tuple id */
@@ -108,7 +111,7 @@ typedef struct xl_heap_update
 	/* NEW TUPLE DATA FOLLOWS AT END OF STRUCT */
 } xl_heap_update;
 
-/* This is what we need to know about tuple move - ALIGN(20) = 24 bytes */
+/* This is what we need to know about tuple move - 24 bytes */
 typedef struct xl_heap_move
 {
 	xl_heaptid			ftid;		/* moved from */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.31 2000/04/12 17:14:45 momjian Exp $
+ *	  $Id: hio.c,v 1.32 2000/07/03 02:54:15 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,17 +19,11 @@
 #include "access/hio.h"
 
 /*
- * amputunique	- place tuple at tid
- *	 Currently on errors, calls elog.  Perhaps should return -1?
- *	 Possible errors include the addition of a tuple to the page
- *	 between the time the linep is chosen and the page is L_UP'd.
+ * RelationPutHeapTuple	- place tuple at specified page
  *
- *	 This should be coordinated with the B-tree code.
- *	 Probably needs to have an amdelunique to allow for
- *	 internal index records to be deleted and reordered as needed.
- *	 For the heap AM, this should never be needed.
+ * !!! ELOG(ERROR) IS DISALLOWED HERE !!!
  *
- *	 Note - we assume that caller hold BUFFER_LOCK_EXCLUSIVE on the buffer.
+ * Note - we assume that caller hold BUFFER_LOCK_EXCLUSIVE on the buffer.
  *
  */
 void
@@ -57,62 +51,41 @@ RelationPutHeapTuple(Relation relation,
 	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
 						 tuple->t_len, InvalidOffsetNumber, LP_USED);
 
+	if (offnum == InvalidOffsetNumber)
+		elog(STOP, "RelationPutHeapTuple: failed to add tuple");
+
 	itemId = PageGetItemId((Page) pageHeader, offnum);
 	item = PageGetItem((Page) pageHeader, itemId);
 
 	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid,
 				   BufferGetBlockNumber(buffer), offnum);
 
-	/*
-	 * Let the caller do this!
-	 *
-	 * WriteBuffer(buffer);
-	 */
-
 	/* return an accurate tuple */
 	ItemPointerSet(&tuple->t_self, BufferGetBlockNumber(buffer), offnum);
 }
 
 /*
- * This routine is another in the series of attempts to reduce the number
- * of I/O's and system calls executed in the various benchmarks.  In
- * particular, this routine is used to append data to the end of a relation
- * file without excessive lseeks.  This code should do no more than 2 semops
- * in the ideal case.
+ * RelationGetBufferForTuple
  *
- * Eventually, we should cache the number of blocks in a relation somewhere.
- * Until that time, this code will have to do an lseek to determine the number
- * of blocks in a relation.
+ * Returns (locked) buffer to add tuple with given len.
+ * If Ubuf is valid then no attempt to lock it should be made -
+ * this is for heap_update...
  *
- * This code should ideally do at most 4 semops, 1 lseek, and possibly 1 write
- * to do an append; it's possible to eliminate 2 of the semops if we do direct
- * buffer stuff (!); the lseek and the write can go if we get
- * RelationGetNumberOfBlocks to be useful.
+ * ELOG(ERROR) is allowed here, so this routine *must* be called
+ * before any (unlogged) changes are made in buffer pool.
  *
- * NOTE: This code presumes that we have a write lock on the relation.
- * Not now - we use extend locking...
- *
- * Also note that this routine probably shouldn't have to exist, and does
- * screw up the call graph rather badly, but we are wasting so much time and
- * system resources being massively general that we are losing badly in our
- * performance benchmarks.
  */
-void
-RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
+Buffer
+RelationGetBufferForTuple(Relation relation, Size len, Buffer Ubuf)
 {
 	Buffer		buffer;
 	Page		pageHeader;
 	BlockNumber lastblock;
-	OffsetNumber offnum;
-	Size		len;
-	ItemId		itemId;
-	Item		item;
 
-	len = MAXALIGN(tuple->t_len);		/* be conservative */
+	len = MAXALIGN(len);		/* be conservative */
 
 	/*
-	 * If we're gonna fail for oversize tuple, do it right away... this
-	 * code should go away eventually.
+	 * If we're gonna fail for oversize tuple, do it right away
 	 */
 	if (len > MaxTupleSize)
 		elog(ERROR, "Tuple is too big: size %u, max size %ld",
@@ -152,7 +125,8 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	else
 		buffer = ReadBuffer(relation, lastblock - 1);
 
-	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	if (buffer != Ubuf)
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	pageHeader = (Page) BufferGetPage(buffer);
 
 	/*
@@ -160,7 +134,8 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 	 */
 	if (len > PageGetFreeSpace(pageHeader))
 	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		if (buffer != Ubuf)
+			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		pageHeader = (Page) BufferGetPage(buffer);
@@ -168,36 +143,22 @@ RelationPutHeapTupleAtEnd(Relation relation, HeapTuple tuple)
 
 		if (len > PageGetFreeSpace(pageHeader))
 		{
-
-			/*
-			 * BUG: by elog'ing here, we leave the new buffer locked and
-			 * not marked dirty, which may result in an invalid page
-			 * header being left on disk.  But we should not get here
-			 * given the test at the top of the routine, and the whole
-			 * deal should go away when we implement tuple splitting
-			 * anyway...
-			 */
-			elog(ERROR, "Tuple is too big: size %u", len);
+			/* We should not get here given the test at the top */
+			elog(STOP, "Tuple is too big: size %u", len);
 		}
+	}
+	/*
+	 * Caller should check space in Ubuf but...
+	 */
+	else if (buffer == Ubuf)
+	{
+		ReleaseBuffer(buffer);
+		buffer = Ubuf;
 	}
 
 	if (!relation->rd_myxactonly)
 		UnlockPage(relation, 0, ExclusiveLock);
 
-	offnum = PageAddItem((Page) pageHeader, (Item) tuple->t_data,
-						 tuple->t_len, InvalidOffsetNumber, LP_USED);
-
-	itemId = PageGetItemId((Page) pageHeader, offnum);
-	item = PageGetItem((Page) pageHeader, itemId);
-
-	lastblock = BufferGetBlockNumber(buffer);
-
-	ItemPointerSet(&((HeapTupleHeader) item)->t_ctid, lastblock, offnum);
-
-	/* return an accurate tuple self-pointer */
-	ItemPointerSet(&tuple->t_self, lastblock, offnum);
-
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	WriteBuffer(buffer);
+	return(buffer);
 
 }

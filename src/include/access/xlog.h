@@ -68,6 +68,13 @@ typedef XLogPageHeaderData *XLogPageHeader;
 
 #define XLP_FIRST_IS_SUBRECORD	0x0001
 
+/*
+ * StartUpID (SUI) - system startups counter.
+ * It's to allow removing pg_log after shutdown.
+ */
+typedef	uint32		StartUpID;
+extern	StartUpID	ThisStartUpID;
+
 extern XLogRecPtr XLogInsert(RmgrId rmid, uint8 info, 
 			char *hdr, uint32 hdrlen,
 			char *buf, uint32 buflen);

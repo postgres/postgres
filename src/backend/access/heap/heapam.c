@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.74 2000/07/02 22:00:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.75 2000/07/03 02:54:15 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1271,10 +1271,9 @@ heap_get_latest_tid(Relation relation,
 Oid
 heap_insert(Relation relation, HeapTuple tup)
 {
-	/* ----------------
-	 *	increment access statistics
-	 * ----------------
-	 */
+	Buffer buffer;
+
+	/* increment access statistics */
 	tup->tableOid = relation->rd_id;
 	IncrHeapAccessStat(local_insert);
 	IncrHeapAccessStat(global_insert);
@@ -1300,7 +1299,11 @@ heap_insert(Relation relation, HeapTuple tup)
 	tup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	tup->t_data->t_infomask |= HEAP_XMAX_INVALID;
 
-	RelationPutHeapTupleAtEnd(relation, tup);
+	/* Find buffer for this tuple */
+	buffer = RelationGetBufferForTuple(relation, tup->t_len, InvalidBuffer);
+
+	/* NO ELOG(ERROR) from here till changes are logged */
+	RelationPutHeapTuple(relation, buffer, tup);
 
 #ifdef XLOG
 	/* XLOG stuff */
@@ -1308,7 +1311,8 @@ heap_insert(Relation relation, HeapTuple tup)
 		xl_heap_insert	xlrec;
 		xlrec.itid.dbId = relation->rd_lockInfo.lockRelId.dbId;
 		xlrec.itid.relId = relation->rd_lockInfo.lockRelId.relId;
-XXX		xlrec.itid.tid = tp.t_self;
+		xlrec.itid.cid = GetCurrentCommandId();
+		xlrec.itid.tid = tup->t_self;
 		xlrec.t_natts = tup->t_data->t_natts;
 		xlrec.t_oid = tup->t_data->t_oid;
 		xlrec.t_hoff = tup->t_data->t_hoff;
@@ -1319,9 +1323,13 @@ XXX		xlrec.itid.tid = tp.t_self;
 			(char*) tup->t_data + offsetof(HeapTupleHeaderData, tbits), 
 			tup->t_len - offsetof(HeapTupleHeaderData, tbits));
 
-		dp->pd_lsn = recptr;
+		((PageHeader) BufferGetPage(buffer))->pd_lsn = recptr;
+		((PageHeader) BufferGetPage(buffer))->pd_sui = ThisStartUpID;
 	}
 #endif
+
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	if (IsSystemRelationName(RelationGetRelationName(relation)))
 		RelationMark4RollbackHeapTuple(relation, tup);
@@ -1417,11 +1425,13 @@ l1:
 		xl_heap_delete	xlrec;
 		xlrec.dtid.dbId = relation->rd_lockInfo.lockRelId.dbId;
 		xlrec.dtid.relId = relation->rd_lockInfo.lockRelId.relId;
+		xlrec.dtid.cid = GetCurrentCommandId();
 		xlrec.dtid.tid = tp.t_self;
 		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE,
 			(char*) xlrec, sizeof(xlrec), NULL, 0);
 
 		dp->pd_lsn = recptr;
+		dp->pd_sui = ThisStartUpID;
 	}
 #endif
 
@@ -1451,7 +1461,7 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	ItemId		lp;
 	HeapTupleData oldtup;
 	PageHeader	dp;
-	Buffer		buffer;
+	Buffer		buffer, newbuf;
 	int			result;
 
 	newtup->tableOid = relation->rd_id;
@@ -1531,43 +1541,65 @@ l2:
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
 
-	/* logically delete old item */
+	/* Find buffer for new tuple */
+
+	if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
+		newbuf = buffer;
+	else
+		newbuf = RelationGetBufferForTuple(relation, newtup->t_len, buffer);
+
+	/* NO ELOG(ERROR) from here till changes are logged */
+
+	/* insert new tuple */
+	RelationPutHeapTuple(relation, newbuf, newtup);
+
+	/* logically delete old tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
 	oldtup.t_data->t_cmax = GetCurrentCommandId();
 	oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
 							 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
 
-	/* insert new item */
-	if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
-		RelationPutHeapTuple(relation, buffer, newtup);
-	else
-	{
-
-		/*
-		 * New item won't fit on same page as old item, have to look for a
-		 * new place to put it. Note that we have to unlock current buffer
-		 * context - not good but RelationPutHeapTupleAtEnd uses extend
-		 * lock.
-		 */
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		RelationPutHeapTupleAtEnd(relation, newtup);
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-	}
-	/* mark for rollback caches */
-	RelationMark4RollbackHeapTuple(relation, newtup);
-
-	/*
-	 * New item in place, now record address of new tuple in t_ctid of old
-	 * one.
-	 */
+	/* record address of new tuple in t_ctid of old one */
 	oldtup.t_data->t_ctid = newtup->t_self;
 
+#ifdef XLOG
+	/* XLOG stuff */
+	{
+		xl_heap_update	xlrec;
+		xlrec.dtid.dbId = relation->rd_lockInfo.lockRelId.dbId;
+		xlrec.dtid.relId = relation->rd_lockInfo.lockRelId.relId;
+		xlrec.dtid.cid = GetCurrentCommandId();
+		xlrec.itid.tid = newtup->t_self;
+		xlrec.t_natts = newtup->t_data->t_natts;
+		xlrec.t_hoff = newtup->t_data->t_hoff;
+		xlrec.mask = newtup->t_data->t_infomask;
+		
+		XLogRecPtr recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_UPDATE,
+			(char*) xlrec, sizeof(xlrec), 
+			(char*) newtup->t_data + offsetof(HeapTupleHeaderData, tbits), 
+			newtup->t_len - offsetof(HeapTupleHeaderData, tbits));
+
+		if (newbuf != buffer)
+		{
+			((PageHeader) BufferGetPage(newbuf))->pd_lsn = recptr;
+			((PageHeader) BufferGetPage(newbuf))->pd_sui = ThisStartUpID;
+		}
+		((PageHeader) BufferGetPage(buffer))->pd_lsn = recptr;
+		((PageHeader) BufferGetPage(buffer))->pd_sui = ThisStartUpID;
+	}
+#endif
+
+	if (newbuf != buffer)
+	{
+		LockBuffer(newbuf, BUFFER_LOCK_UNLOCK);
+		WriteBuffer(newbuf);
+	}
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	WriteBuffer(buffer);
 
 	/* invalidate caches */
 	RelationInvalidateHeapTuple(relation, &oldtup);
-
-	WriteBuffer(buffer);
+	RelationMark4RollbackHeapTuple(relation, newtup);
 
 	return HeapTupleMayBeUpdated;
 }
@@ -1647,6 +1679,14 @@ l3:
 		LockBuffer(*buffer, BUFFER_LOCK_UNLOCK);
 		return result;
 	}
+
+#ifdef XLOG
+	/*
+	 * XLOG stuff: no logging is required as long as we have no
+	 * savepoints. For savepoints private log could be used...
+	 */
+	((PageHeader) BufferGetPage(*buffer))->pd_sui = ThisStartUpID;
+#endif
 
 	/* store transaction information of xact marking the tuple */
 	TransactionIdStore(GetCurrentTransactionId(), &(tuple->t_data->t_xmax));
