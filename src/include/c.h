@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.59 1999/07/13 20:00:32 momjian Exp $
+ * $Id: c.h,v 1.60 1999/07/17 04:12:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,10 @@
    on some platforms, and we only want our definitions used if stdlib.h doesn't
    have its own.  The same goes for stddef and stdarg if present.
 */
+
+#include "config.h"
+
+
 #include <stdlib.h>
 #ifdef STDC_HEADERS
 #include <stddef.h>
@@ -101,12 +105,6 @@ typedef bool *BoolPtr;
  *				type prefixes: const, signed, volatile, inline
  *				cpp magic macros
  * ----------------------------------------------------------------
- */
-
-/*
- * We used to define const, signed, volatile, and inline as empty
- * if __STDC__ wasn't defined.  Now we let configure test whether
- * those keywords work; config.h defines them as empty if not.
  */
 
 /*
