@@ -760,9 +760,9 @@ adjust_array(enum ECPGttype type_enum, int *dimension, int *length, int type_dim
 %type  <str>	opt_collate Datetime datetime opt_timezone opt_interval
 %type  <str>	numeric a_expr_or_null row_expr row_descriptor row_list
 %type  <str>	SelectStmt SubSelect result OptTemp OptTempType OptTempScope
-%type  <str>	opt_table opt_all opt_unique sort_clause sortby_list
+%type  <str>	opt_table opt_all sort_clause sortby_list
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
-%type  <str>	group_clause having_clause from_clause
+%type  <str>	group_clause having_clause from_clause opt_distinct
 %type  <str>	table_list join_outer where_clause relation_expr sub_type
 %type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
@@ -1306,35 +1306,35 @@ AlterTableStmt:
 /* ALTER TABLE <name> ADD [COLUMN] <coldef> */
         ALTER TABLE relation_name opt_inh_star ADD opt_column columnDef
 		{
-			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("add"), $6, $7);
+			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("add"), $6, $7);
 		}
 /* ALTER TABLE <name> ALTER [COLUMN] <colname> {SET DEFAULT <expr>|DROP
 DEFAULT} */
 	| ALTER TABLE relation_name opt_inh_star ALTER opt_column ColId
 		alter_column_action
 		{
-			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("alter"), $6, $7, $8);
+			$$ = cat_str(7, make_str("alter table"), $3, $4, make_str("alter"), $6, $7, $8);
 		}
 /* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
-	| ALTER TABLE relation_name opt_inh_star DROP opt_column ColId
-		/* drop_behavior */
+	| ALTER TABLE relation_name opt_inh_star DROP opt_column ColId drop_behavior
 		{
-			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("drop"), $6, $7);
+			$$ = cat_str(7, make_str("alter table"), $3, $4, make_str("drop"), $6, $7, $8);
 		}
 /* ALTER TABLE <name> ADD CONSTRAINT ... */
 	| ALTER TABLE relation_name opt_inh_star ADD TableConstraint
 		{
-			$$ = cat_str(4, make_str("alter table"), $3, $4, make_str("add"), $6);
+			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("add"), $6);
 		}
 /* ALTER TABLE <name> DROP CONSTRAINT ... */
 	| ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
 		{
-			$$ = cat_str(5, make_str("alter table"), $3, $4, make_str("drop constraint"), $7, $8);
+			$$ = cat_str(6, make_str("alter table"), $3, $4, make_str("drop constraint"), $7, $8);
 		}
 		;
 
 alter_column_action:
-        SET DEFAULT a_expr_or_null { $$ = cat2_str(make_str("set default"), $3); }
+        SET DEFAULT a_expr	{ $$ = cat2_str(make_str("set default"), $3); }
+        | SET DEFAULT NULL_P    { $$ = make_str("set default null"); }
         | DROP DEFAULT          { $$ = make_str("drop default"); }
         ;
 
@@ -1579,7 +1579,6 @@ key_match:  MATCH FULL
 		}
 		| /*EMPTY*/
 		{
-			mmerror(ET_WARN, "FOREIGN KEY match type UNSPECIFIED not implemented yet");
 			$$ = EMPTY;
 		}
 		;
@@ -1735,7 +1734,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				{
 					$$ = cat_str(12, make_str("create trigger"), $3, $4, $5, make_str("on"), $7, $8, make_str("execute procedure"), $11, make_str("("), $13, make_str(")"));
 				}
-	|	CREATE CONSTRAINT TRIGGER name AFTER TriggerOneEvent ON
+	|	CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
                                 relation_name OptConstrFromTable
 				ConstraintAttributeSpec
                                 FOR EACH ROW EXECUTE PROCEDURE
@@ -2507,12 +2506,8 @@ UnlistenStmt:  UNLISTEN relation_name
  *
  *              Transactions:
  *
- *              abort transaction
- *                              (ABORT)
- *              begin transaction
- *                              (BEGIN)
- *              end transaction  
- *                              (END)
+ *	  BEGIN / COMMIT / ROLLBACK
+ *      (also older versions END / ABORT)
  *
  *****************************************************************************/
 TransactionStmt:  ABORT_TRANS opt_trans	{ $$ = make_str("rollback"); }
@@ -2912,7 +2907,7 @@ select_clause: '(' select_clause ')'
 			}
 		;
 
-SubSelect:     SELECT opt_unique target_list
+SubSelect:     SELECT opt_distinct target_list
                          result from_clause where_clause
                          group_clause having_clause
 				{
@@ -2937,8 +2932,8 @@ opt_all:  ALL						{ $$ = make_str("all"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
 
-opt_unique:  DISTINCT					{ $$ = make_str("distinct"); }
-		| DISTINCT ON ColId			{ $$ = cat2_str(make_str("distinct on"), $3); }
+opt_distinct:  DISTINCT					{ $$ = make_str("distinct"); }
+		| DISTINCT ON '(' expr_list ')'   	{ $$ = cat_str(3, make_str("distinct on ("), $4, make_str(")")); }
 		| ALL					{ $$ = make_str("all"); }
 		| /*EMPTY*/				{ $$ = EMPTY; }
 		;
@@ -5428,7 +5423,7 @@ blockend : '}' {
 
 %%
 
-void yyerror(const char * error)
+void yyerror(char * error)
 {
 	mmerror(ET_ERROR, error);
 }

@@ -37,7 +37,7 @@ extern void lex_init(void);
 extern char *input_filename;
 extern int	yyparse(void);
 extern int	yylex(void);
-extern void yyerror(const char * error);
+extern void yyerror(char *);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
 extern char *mm_strdup(const char *);
 extern void mmerror(enum errortype, char * );

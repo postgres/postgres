@@ -790,6 +790,9 @@ Thu Jan 27 08:12:05 CET 2000
 	- Fixed error messages in pgc.l.
 	- Improved variable parsing.
 	- Synced preproc.y with gram.y.
+
+Mon Feb 14 10:35:18 CET 2000
+
+	- Synced preproc.y with gram.y.
 	- Set library version to 3.0.10.
 	- Set ecpg version to 2.7.0.
-

@@ -13,7 +13,6 @@ int main (void)
 	EXEC SQL END DECLARE SECTION;
 	FILE *dbgs;
 	
-	
         if ((dbgs = fopen("log", "w")) != NULL)
                 ECPGdebug(1, dbgs);
 

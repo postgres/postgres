@@ -395,7 +395,7 @@ ECPGexecute(struct statement * stmt)
 {
 	bool		status = false;
 	char	   *copiedquery;
-	PGresult   *results;
+	PGresult   *results, *query;
 	PGnotify   *notify;
 	struct variable *var;
 
@@ -669,7 +669,8 @@ ECPGexecute(struct statement * stmt)
 				{
 					char	   *pval;
 					char	   *scan_length;
-
+					char       *array_query;
+					
 					if (var == NULL)
 					{
 						ECPGlog("ECPGexecute line %d: Too few arguments.\n", stmt->lineno);
@@ -724,10 +725,15 @@ ECPGexecute(struct statement * stmt)
 						*((void **) var->pointer) = var->value;
 						add_mem(var->value, stmt->lineno);
 					}
-					
-					
-					ECPGlog("ECPGexecute line %d: TYPE db: %d c: %d\n", stmt->lineno, PQftype(results, act_field), var->type);
-
+										
+#if 0
+					array_query = (char *)ecpg_alloc(strlen("select typelem from pg_type where oid=") + 11, stmt -> lineno);
+					sprintf(array_query, "select typelem from pg_type where oid=%d", PQftype(results, act_field));
+					query = PQexec(stmt->connection->connection, array_query);
+					if (PQresultStatus(query) == PGRES_TUPLES_OK)
+						ECPGlog("ECPGexecute line %d: TYPE database: %d C: %d array OID: %s\n", stmt->lineno, PQftype(results, act_field), var->type, (char *)PQgetvalue(query, 0, 0));
+					PQclear(query);
+#endif
 					for (act_tuple = 0; act_tuple < ntuples && status; act_tuple++)
 					{
 						pval = (char *)PQgetvalue(results, act_tuple, act_field);
