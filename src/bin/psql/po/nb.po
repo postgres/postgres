@@ -1,5 +1,5 @@
 # Norwegian bokmål translation of messages for PostgreSQL (psql).
-# Copyright (C) 2003 The PostgreSQL Global Development Group.
+# Copyright (c) 2003-2005, PostgreSQL Global Development Group
 # Trond Endrestøl <trond@ramstind.gtf.ol.no>, 2003.
 #
 # In the translator's comments for each message below, these initials

@@ -9,7 +9,7 @@
 # This configure script is free software; the Free Software Foundation
 # gives unlimited permission to copy, distribute and modify it.
 #
-# Copyright 2005 PostgreSQL Global Development Group
+# Copyright (c) 1996-2005, PostgreSQL Global Development Group
 
 if expr a : '\(a\)' >/dev/null 2>&1; then
   as_expr=expr
@@ -963,7 +963,7 @@ Free Software Foundation, Inc.
 This configure script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it.
 
-Copyright 2005 PostgreSQL Global Development Group
+Copyright (c) 1996-2005, PostgreSQL Global Development Group
 _ACEOF
   exit 0
 fi

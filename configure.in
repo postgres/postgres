@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.394 2004/12/31 21:58:46 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.395 2005/01/01 22:14:26 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -20,7 +20,7 @@ m4_pattern_forbid(^PGAC_)dnl to catch undefined macros
 AC_INIT([PostgreSQL], [8.0.0rc3], [pgsql-bugs@postgresql.org])
 
 AC_PREREQ(2.53)
-AC_COPYRIGHT([Copyright 2005 PostgreSQL Global Development Group])
+AC_COPYRIGHT([Copyright (c) 1996-2005, PostgreSQL Global Development Group])
 AC_CONFIG_SRCDIR([src/backend/access/common/heaptuple.c])
 AC_CONFIG_AUX_DIR(config)
 AC_PREFIX_DEFAULT(/usr/local/pgsql)
