@@ -6,12 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.1 1996/08/28 01:56:26 scrappy Exp $
+ * $Id: heap.h,v 1.2 1996/11/05 11:23:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HEAP_H
 #define HEAP_H
+
+#include <utils/rel.h>
 
 extern Relation heap_creatr(char *relname, unsigned smgr, TupleDesc att);
 
