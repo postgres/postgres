@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.33 1998/02/05 03:47:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.34 1998/02/05 15:08:49 scrappy Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -554,7 +554,7 @@ nocachegetattr(HeapTuple tup,
 		while (att[j]->attcacheoff > 0)
 			j++;
 
-		if (!VARLENA_FIXED_SIZE(att[j]))
+		if (!VARLENA_FIXED_SIZE(att[j - 1]))
 			off = att[j - 1]->attcacheoff + att[j - 1]->attlen;
 		else
 			off = att[j - 1]->attcacheoff + att[j - 1]->atttypmod;
