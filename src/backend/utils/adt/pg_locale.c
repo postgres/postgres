@@ -2,14 +2,14 @@
  *
  * PostgreSQL locale utilities
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.19 2002/09/04 20:31:28 momjian Exp $
- *
  * Portions Copyright (c) 2002, PostgreSQL Global Development Group
+ *
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/pg_locale.c,v 1.20 2002/10/18 20:44:02 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
 
-/*
+/*----------
  * Here is how the locale stuff is handled: LC_COLLATE and LC_CTYPE
  * are fixed by initdb, stored in pg_control, and cannot be changed.
  * Thus, the effects of strcoll(), strxfrm(), isupper(), toupper(),
@@ -20,14 +20,29 @@
  *
  * The other categories, LC_MONETARY, LC_NUMERIC, and LC_TIME are also
  * settable at run-time.  However, we don't actually set those locale
- * categories permanently.	This would have bizzare effects like no
+ * categories permanently.	This would have bizarre effects like no
  * longer accepting standard floating-point literals in some locales.
  * Instead, we only set the locales briefly when needed, cache the
  * required information obtained from localeconv(), and set them back.
- * The information is only used by the formatting functions (to_char,
- * etc.) and the money type.  For the user, this should all be
+ * The cached information is only used by the formatting functions
+ * (to_char, etc.) and the money type.  For the user, this should all be
  * transparent.  (Actually, LC_TIME doesn't do anything at all right
  * now.)
+ *
+ * !!! NOW HEAR THIS !!!
+ *
+ * We've been bitten repeatedly by this bug, so let's try to keep it in
+ * mind in future: on some platforms, the locale functions return pointers
+ * to static data that will be overwritten by any later locale function.
+ * Thus, for example, the obvious-looking sequence
+ *			save = setlocale(category, NULL);
+ *			if (!setlocale(category, value))
+ *				fail = true;
+ *			setlocale(category, save);
+ * DOES NOT WORK RELIABLY: on some platforms the second setlocale() call
+ * will change the memory save is pointing at.  To do this sort of thing
+ * safely, you *must* pstrdup what setlocale returns the first time.
+ *----------
  */
 
 
@@ -64,15 +79,19 @@ locale_xxx_assign(int category, const char *value, bool doit, bool interactive)
 
 	save = setlocale(category, NULL);
 	if (!save)
-		return NULL;
+		return NULL;			/* won't happen, we hope */
+
+	/* save may be pointing at a modifiable scratch variable, see above */
+	save = pstrdup(save);
 
 	if (!setlocale(category, value))
-		return NULL;
+		value = NULL;			/* set failure return marker */
 
-	setlocale(category, save);
+	setlocale(category, save);	/* assume this won't fail */
+	pfree(save);
 
-	/* need to reload cache next time */
-	if (doit)
+	/* need to reload cache next time? */
+	if (doit && value != NULL)
 		CurrentLocaleConvValid = false;
 
 	return value;
@@ -99,7 +118,7 @@ locale_time_assign(const char *value, bool doit, bool interactive)
 
 
 /*
- * lc_messages takes effect immediately
+ * We allow LC_MESSAGES to actually be set globally.
  */
 const char *
 locale_messages_assign(const char *value, bool doit, bool interactive)
@@ -116,16 +135,7 @@ locale_messages_assign(const char *value, bool doit, bool interactive)
 	}
 	else
 	{
-		char	   *save;
-
-		save = setlocale(LC_MESSAGES, NULL);
-		if (!save)
-			return NULL;
-
-		if (!setlocale(LC_MESSAGES, value))
-			return NULL;
-
-		setlocale(LC_MESSAGES, save);
+		value = locale_xxx_assign(LC_MESSAGES, value, false, interactive);
 	}
 #endif
 	return value;
@@ -210,8 +220,13 @@ PGLC_localeconv(void)
 
 	free_struct_lconv(&CurrentLocaleConv);
 
+	/* Set user's values of monetary and numeric locales */
 	save_lc_monetary = setlocale(LC_MONETARY, NULL);
+	if (save_lc_monetary)
+		save_lc_monetary = pstrdup(save_lc_monetary);
 	save_lc_numeric = setlocale(LC_NUMERIC, NULL);
+	if (save_lc_numeric)
+		save_lc_numeric = pstrdup(save_lc_numeric);
 
 	setlocale(LC_MONETARY, locale_monetary);
 	setlocale(LC_NUMERIC, locale_numeric);
@@ -221,7 +236,7 @@ PGLC_localeconv(void)
 
 	/*
 	 * Must copy all values since restoring internal settings may
-	 * overwrite
+	 * overwrite localeconv()'s results.
 	 */
 	CurrentLocaleConv = *extlconv;
 	CurrentLocaleConv.currency_symbol = strdup(extlconv->currency_symbol);
@@ -236,8 +251,18 @@ PGLC_localeconv(void)
 	CurrentLocaleConv.positive_sign = strdup(extlconv->positive_sign);
 	CurrentLocaleConv.n_sign_posn = extlconv->n_sign_posn;
 
-	setlocale(LC_MONETARY, save_lc_monetary);
-	setlocale(LC_NUMERIC, save_lc_numeric);
+	/* Try to restore internal settings */
+	if (save_lc_monetary)
+	{
+		setlocale(LC_MONETARY, save_lc_monetary);
+		pfree(save_lc_monetary);
+	}
+
+	if (save_lc_numeric)
+	{
+		setlocale(LC_NUMERIC, save_lc_numeric);
+		pfree(save_lc_numeric);
+	}
 
 	CurrentLocaleConvValid = true;
 	return &CurrentLocaleConv;
