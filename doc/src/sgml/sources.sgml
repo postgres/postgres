@@ -1,9 +1,9 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.7 2003/05/19 21:38:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sources.sgml,v 2.8 2003/06/22 16:17:01 tgl Exp $
 -->
 
  <chapter id="source">
-  <title>PostgreSQL Source Code</title>
+  <title>PostgreSQL Coding Conventions</title>
 
   <sect1 id="source-format">
    <title>Formatting</title>
@@ -76,6 +76,13 @@ less -x4
 
   <sect1 id="error-message-reporting">
    <title>Reporting Errors Within the Server</title>
+
+   <indexterm>
+    <primary>ereport</primary>
+   </indexterm>
+   <indexterm>
+    <primary>elog</primary>
+   </indexterm>
 
    <para>
     Error, warning, and log messages generated within the server code

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.23 2003/04/07 01:29:25 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.24 2003/06/22 16:17:00 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -437,6 +437,7 @@ SELECT 'doesn''t' AS ret
      <varlistentry>
       <indexterm>
        <primary>elog</primary>
+       <secondary>PL/Tcl</secondary>
       </indexterm>
       <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
