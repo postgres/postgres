@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.156.2.1 2004/08/11 04:08:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.156.2.2 2004/10/29 22:20:03 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -917,33 +917,25 @@ CommitTransaction(void)
 		elog(WARNING, "CommitTransaction and not in in-progress state");
 
 	/*
+	 * Do pre-commit processing (most of this stuff requires database
+	 * access, and in fact could still cause an error...)
+	 */
+
+	/*
 	 * Tell the trigger manager that this transaction is about to be
 	 * committed. He'll invoke all trigger deferred until XACT before we
 	 * really start on committing the transaction.
 	 */
 	DeferredTriggerEndXact();
 
+	/* Close open cursors */
+	AtCommit_Portals();
+
 	/*
-	 * Similarly, let ON COMMIT management do its thing before we start to
-	 * commit.
+	 * Let ON COMMIT management do its thing (must happen after closing
+	 * cursors, to avoid dangling-reference problems)
 	 */
 	PreCommit_on_commit_actions();
-
-	/* Prevent cancel/die interrupt while cleaning up */
-	HOLD_INTERRUPTS();
-
-	/*
-	 * set the current transaction state information appropriately during
-	 * the abort processing
-	 */
-	s->state = TRANS_COMMIT;
-
-	/*
-	 * Do pre-commit processing (most of this stuff requires database
-	 * access, and in fact could still cause an error...)
-	 */
-
-	AtCommit_Portals();
 
 	/* handle commit for large objects [ PA, 7/17/98 ] */
 	/* XXX probably this does not belong here */
@@ -954,6 +946,15 @@ CommitTransaction(void)
 
 	/* Update the flat password file if we changed pg_shadow or pg_group */
 	AtEOXact_UpdatePasswordFile(true);
+
+	/* Prevent cancel/die interrupt while cleaning up */
+	HOLD_INTERRUPTS();
+
+	/*
+	 * set the current transaction state information appropriately during
+	 * the abort processing
+	 */
+	s->state = TRANS_COMMIT;
 
 	/*
 	 * Here is where we really truly commit.
