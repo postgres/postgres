@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.161 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.162 2003/07/30 22:56:23 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6494,10 +6494,9 @@ SET search_path TO <replaceable>schema</> <optional>, <replaceable>schema</>, ..
 
    <para>
     The function <function>current_setting</function> yields the
-    current value of the setting <parameter>setting_name</parameter>,
-    as part of a query result. It corresponds to the
-    <acronym>SQL</acronym> command <command>SHOW</command>.  An
-    example:
+    current value of the setting <parameter>setting_name</parameter>.
+    It corresponds to the <acronym>SQL</acronym> command
+    <command>SHOW</command>.  An example:
 <programlisting>
 SELECT current_setting('datestyle');
 
@@ -6833,6 +6832,10 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    </indexterm>
 
    <indexterm zone="functions-misc">
+    <primary>pg_get_expr</primary>
+   </indexterm>
+
+   <indexterm zone="functions-misc">
     <primary>pg_get_userbyid</primary>
    </indexterm>
 
@@ -6846,7 +6849,16 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
    <function>pg_get_constraintdef</function> respectively
    reconstruct the creating command for a view, rule, index, or
    constraint.  (Note that this is a decompiled reconstruction, not
-   the verbatim text of the command.)
+   the original text of the command.)  Most of these come in two
+   variants, one of which can optionally <quote>pretty-print</> the result.
+   The pretty-printed form is more readable but is less likely to be
+   interpreted the same way by future versions of <productname>PostgreSQL</>;
+   avoid using pretty-printed output for dump purposes.
+   Passing <literal>false</> for the pretty-print parameter yields the
+   same result as the variant that does not have the parameter at all.
+   <function>pg_get_expr</function> decompiles the internal form of an
+   individual expression, such as the default value for a column.  It
+   may be useful when examining the contents of system catalogs.
    <function>pg_get_userbyid</function>
    extracts a user's name given a user ID number.
   </para>
@@ -6865,7 +6877,17 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get <command>CREATE VIEW</> command for view (<emphasis>deprecated</emphasis>)</entry>
       </row>
       <row>
+       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_name</parameter>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE VIEW</> command for view (<emphasis>deprecated</emphasis>)</entry>
+      </row>
+      <row>
        <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE VIEW</> command for view</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_viewdef</function>(<parameter>view_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get <command>CREATE VIEW</> command for view</entry>
       </row>
@@ -6875,9 +6897,21 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry>get <command>CREATE RULE</> command for rule</entry>
       </row>
       <row>
+       <entry><literal><function>pg_get_ruledef</function>(<parameter>rule_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE RULE</> command for rule</entry>
+      </row>
+      <row>
        <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get <command>CREATE INDEX</> command for index</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_indexdef</function>(<parameter>index_oid</parameter>, <parameter>column_no</>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get <command>CREATE INDEX</> command for index,
+       or definition of just one index column when
+       <parameter>column_no</> is not zero</entry>
       </row>
       <row>
        <entry><function>pg_get_triggerdef</function>(<parameter>trigger_oid</parameter>)</entry>
@@ -6888,6 +6922,23 @@ SELECT pg_type_is_visible('myschema.widget'::regtype);
        <entry><literal><function>pg_get_constraintdef</function>(<parameter>constraint_oid</parameter>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>get definition of a constraint</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_constraintdef</function>(<parameter>constraint_oid</parameter>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>get definition of a constraint</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_expr</function>(<parameter>expr_text</parameter>, <parameter>relation_oid</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>decompile internal form of an expression, assuming that any Vars
+       in it refer to the relation indicated by the second parameter</entry>
+      </row>
+      <row>
+       <entry><literal><function>pg_get_expr</function>(<parameter>expr_text</parameter>, <parameter>relation_oid</>, <parameter>pretty_bool</>)</literal></entry>
+       <entry><type>text</type></entry>
+       <entry>decompile internal form of an expression, assuming that any Vars
+       in it refer to the relation indicated by the second parameter</entry>
       </row>
       <row>
        <entry><literal><function>pg_get_userbyid</function>(<parameter>userid</parameter>)</literal></entry>

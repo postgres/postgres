@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.309 2003/07/01 00:04:38 tgl Exp $
+ * $Id: pg_proc.h,v 1.310 2003/07/30 22:56:24 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3404,6 +3404,20 @@ DATA(insert OID = 2502 (  anyarray_recv		   PGNSP PGUID 12 f f t f s 1 2277 "228
 DESCR("I/O");
 DATA(insert OID = 2503 (  anyarray_send		   PGNSP PGUID 12 f f t f s 1 17 "2277"  anyarray_send - _null_ ));
 DESCR("I/O");
+
+/* System-view support functions with pretty-print option */
+DATA(insert OID = 2504 (  pg_get_ruledef	   PGNSP PGUID 12 f f t f s 2 25 "26 16"  pg_get_ruledef_ext - _null_ ));
+DESCR("source text of a rule with pretty-print option");
+DATA(insert OID = 2505 (  pg_get_viewdef	   PGNSP PGUID 12 f f t f s 2 25 "25 16"  pg_get_viewdef_name_ext - _null_ ));
+DESCR("select statement of a view with pretty-print option");
+DATA(insert OID = 2506 (  pg_get_viewdef	   PGNSP PGUID 12 f f t f s 2 25 "26 16"  pg_get_viewdef_ext - _null_ ));
+DESCR("select statement of a view with pretty-print option");
+DATA(insert OID = 2507 (  pg_get_indexdef	   PGNSP PGUID 12 f f t f s 3 25 "26 23 16"  pg_get_indexdef_ext - _null_ ));
+DESCR("index description (full create statement or single expression) with pretty-print option");
+DATA(insert OID = 2508 (  pg_get_constraintdef PGNSP PGUID 12 f f t f s 2 25 "26 16"  pg_get_constraintdef_ext - _null_ ));
+DESCR("constraint description with pretty-print option");
+DATA(insert OID = 2509 (  pg_get_expr		   PGNSP PGUID 12 f f t f s 3 25 "25 26 16"	pg_get_expr_ext - _null_ ));
+DESCR("deparse an encoded expression with pretty-print option");
 
 
 /*

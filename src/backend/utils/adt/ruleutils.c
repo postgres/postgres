@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.146 2003/07/27 04:53:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.147 2003/07/30 22:56:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -72,6 +72,26 @@
 
 
 /* ----------
+ * Pretty formatting constants
+ * ----------
+ */
+
+/* Indent counts */
+#define PRETTYINDENT_STD        8
+#define PRETTYINDENT_JOIN      13
+#define PRETTYINDENT_JOIN_ON    (PRETTYINDENT_JOIN-PRETTYINDENT_STD)
+#define PRETTYINDENT_VAR        4
+
+/* Pretty flags */
+#define PRETTYFLAG_PAREN        1
+#define PRETTYFLAG_INDENT       2
+
+/* macro to test if pretty action needed */
+#define PRETTY_PAREN(context)   ((context)->prettyFlags & PRETTYFLAG_PAREN)
+#define PRETTY_INDENT(context)  ((context)->prettyFlags & PRETTYFLAG_INDENT)
+
+
+/* ----------
  * Local data types
  * ----------
  */
@@ -81,6 +101,8 @@ typedef struct
 {
 	StringInfo	buf;			/* output buffer to append to */
 	List	   *namespaces;		/* List of deparse_namespace nodes */
+	int			prettyFlags;	/* enabling of pretty-print functions */
+	int			indentLevel;	/* current indent level for prettyprint */
 	bool		varprefix;		/* TRUE to print prefixes on Vars */
 } deparse_context;
 
@@ -123,13 +145,24 @@ static char *query_getviewrule = "SELECT * FROM pg_catalog.pg_rewrite WHERE ev_c
  * as a parameter, and append their text output to its contents.
  * ----------
  */
-static text *pg_do_getviewdef(Oid viewoid);
+static char *deparse_expression_pretty(Node *expr, List *dpcontext,
+									   bool forceprefix, bool showimplicit,
+									   int prettyFlags, int startIndent);
+static text *pg_do_getviewdef(Oid viewoid, int prettyFlags);
 static void decompile_column_index_array(Datum column_index_array, Oid relId,
 							 StringInfo buf);
-static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
-static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc);
+static Datum pg_get_ruledef_worker(Oid ruleoid, int prettyFlags);
+static Datum pg_get_indexdef_worker(Oid indexrelid, int colno,
+									int prettyFlags);
+static Datum pg_get_constraintdef_worker(Oid constraintId, int prettyFlags);
+static Datum pg_get_expr_worker(text *expr, Oid relid, char *relname,
+								int prettyFlags);
+static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
+						 int prettyFlags);
+static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
+						 int prettyFlags);
 static void get_query_def(Query *query, StringInfo buf, List *parentnamespace,
-			  TupleDesc resultDesc);
+			  TupleDesc resultDesc, int prettyFlags, int startIndent);
 static void get_select_query_def(Query *query, deparse_context *context,
 					 TupleDesc resultDesc);
 static void get_insert_query_def(Query *query, deparse_context *context);
@@ -148,6 +181,11 @@ static void get_names_for_var(Var *var, deparse_context *context,
 				  char **schemaname, char **refname, char **attname);
 static RangeTblEntry *find_rte_by_refname(const char *refname,
 					deparse_context *context);
+static const char *get_simple_binary_op_name(OpExpr *expr);
+static bool isSimpleNode(Node *node, Node *parentNode, int prettyFlags);
+static void appendStringInfoSpaces(StringInfo buf, int count);
+static void appendContextKeyword(deparse_context *context, const char *str,
+						 int indentBefore, int indentAfter, int indentPlus);
 static void get_rule_expr(Node *node, deparse_context *context,
 						  bool showimplicit);
 static void get_oper_expr(OpExpr *expr, deparse_context *context);
@@ -184,6 +222,26 @@ Datum
 pg_get_ruledef(PG_FUNCTION_ARGS)
 {
 	Oid			ruleoid = PG_GETARG_OID(0);
+
+	return pg_get_ruledef_worker(ruleoid, 0);
+}
+
+
+Datum
+pg_get_ruledef_ext(PG_FUNCTION_ARGS)
+{
+	Oid			ruleoid = PG_GETARG_OID(0);
+	bool		pretty = PG_GETARG_BOOL(1);
+	int			prettyFlags;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN|PRETTYFLAG_INDENT : 0;
+	return pg_get_ruledef_worker(ruleoid, prettyFlags);
+}
+
+
+static Datum
+pg_get_ruledef_worker(Oid ruleoid, int prettyFlags)
+{
 	text	   *ruledef;
 	Datum		args[1];
 	char		nulls[1];
@@ -241,7 +299,7 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 	 * Get the rules definition and put it into executors memory
 	 */
 	initStringInfo(&buf);
-	make_ruledef(&buf, ruletup, rulettc);
+	make_ruledef(&buf, ruletup, rulettc, prettyFlags);
 	len = buf.len + VARHDRSZ;
 	ruledef = SPI_palloc(len);
 	VARATT_SIZEP(ruledef) = len;
@@ -273,7 +331,22 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 	Oid			viewoid = PG_GETARG_OID(0);
 	text	   *ruledef;
 
-	ruledef = pg_do_getviewdef(viewoid);
+	ruledef = pg_do_getviewdef(viewoid, 0);
+	PG_RETURN_TEXT_P(ruledef);
+}
+
+
+Datum
+pg_get_viewdef_ext(PG_FUNCTION_ARGS)
+{
+	/* By OID */
+	Oid			viewoid = PG_GETARG_OID(0);
+	bool		pretty = PG_GETARG_BOOL(1);
+	text	   *ruledef;
+	int			prettyFlags;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN|PRETTYFLAG_INDENT : 0;
+	ruledef = pg_do_getviewdef(viewoid, prettyFlags);
 	PG_RETURN_TEXT_P(ruledef);
 }
 
@@ -290,7 +363,28 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
 														 "get_viewdef"));
 	viewoid = RangeVarGetRelid(viewrel, false);
 
-	ruledef = pg_do_getviewdef(viewoid);
+	ruledef = pg_do_getviewdef(viewoid, 0);
+	PG_RETURN_TEXT_P(ruledef);
+}
+
+
+Datum
+pg_get_viewdef_name_ext(PG_FUNCTION_ARGS)
+{
+	/* By qualified name */
+	text	   *viewname = PG_GETARG_TEXT_P(0);
+	bool		pretty = PG_GETARG_BOOL(1);
+	int			prettyFlags;
+	RangeVar   *viewrel;
+	Oid			viewoid;
+	text	   *ruledef;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN|PRETTYFLAG_INDENT : 0;
+	viewrel = makeRangeVarFromNameList(textToQualifiedNameList(viewname,
+														 "get_viewdef"));
+	viewoid = RangeVarGetRelid(viewrel, false);
+
+	ruledef = pg_do_getviewdef(viewoid, prettyFlags);
 	PG_RETURN_TEXT_P(ruledef);
 }
 
@@ -298,7 +392,7 @@ pg_get_viewdef_name(PG_FUNCTION_ARGS)
  * Common code for by-OID and by-name variants of pg_get_viewdef
  */
 static text *
-pg_do_getviewdef(Oid viewoid)
+pg_do_getviewdef(Oid viewoid, int prettyFlags)
 {
 	text	   *ruledef;
 	Datum		args[2];
@@ -353,7 +447,7 @@ pg_do_getviewdef(Oid viewoid)
 		 */
 		ruletup = SPI_tuptable->vals[0];
 		rulettc = SPI_tuptable->tupdesc;
-		make_viewdef(&buf, ruletup, rulettc);
+		make_viewdef(&buf, ruletup, rulettc, prettyFlags);
 	}
 	len = buf.len + VARHDRSZ;
 	ruledef = SPI_palloc(len);
@@ -521,12 +615,35 @@ pg_get_triggerdef(PG_FUNCTION_ARGS)
 
 /* ----------
  * get_indexdef			- Get the definition of an index
+ *
+ * In the extended version, there is a colno argument as well as pretty bool.
+ *	if colno == 0, we want a complete index definition.
+ *	if colno > 0, we only want the Nth index key's variable or expression.
  * ----------
  */
 Datum
 pg_get_indexdef(PG_FUNCTION_ARGS)
 {
 	Oid			indexrelid = PG_GETARG_OID(0);
+
+	return pg_get_indexdef_worker(indexrelid, 0, 0);
+}
+
+Datum
+pg_get_indexdef_ext(PG_FUNCTION_ARGS)
+{
+	Oid			indexrelid = PG_GETARG_OID(0);
+	int32       colno = PG_GETARG_INT32(1);
+	bool		pretty = PG_GETARG_BOOL(2);
+	int			prettyFlags;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN|PRETTYFLAG_INDENT : 0;
+	return pg_get_indexdef_worker(indexrelid, colno, prettyFlags);
+}
+
+static Datum
+pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
+{
 	text	   *indexdef;
 	HeapTuple	ht_idx;
 	HeapTuple	ht_idxrel;
@@ -607,7 +724,9 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	 * never be schema-qualified, but the indexed rel's name may be.
 	 */
 	initStringInfo(&buf);
-	appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
+
+	if (!colno)
+	    appendStringInfo(&buf, "CREATE %sINDEX %s ON %s USING %s (",
 					 idxrec->indisunique ? "UNIQUE " : "",
 					 quote_identifier(NameStr(idxrelrec->relname)),
 					 generate_relation_name(indrelid),
@@ -621,7 +740,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 	{
 		AttrNumber	attnum = idxrec->indkey[keyno];
 
-		appendStringInfo(&buf, sep);
+		if (!colno)
+		    appendStringInfo(&buf, sep);
 		sep = ", ";
 
 		if (attnum != 0)
@@ -630,7 +750,8 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 			char	   *attname;
 
 			attname = get_relid_attribute_name(indrelid, attnum);
-			appendStringInfo(&buf, "%s", quote_identifier(attname));
+			if (!colno || colno == keyno+1)
+			    appendStringInfo(&buf, "%s", quote_identifier(attname));
 			keycoltype = get_atttype(indrelid, attnum);
 		}
 		else
@@ -643,54 +764,63 @@ pg_get_indexdef(PG_FUNCTION_ARGS)
 			indexkey = (Node *) lfirst(indexprs);
 			indexprs = lnext(indexprs);
 			/* Deparse */
-			str = deparse_expression(indexkey, context, false, false);
-			/* Need parens if it's not a bare function call */
-			if (indexkey && IsA(indexkey, FuncExpr) &&
-				((FuncExpr *) indexkey)->funcformat == COERCE_EXPLICIT_CALL)
-				appendStringInfo(&buf, "%s", str);
-			else
-				appendStringInfo(&buf, "(%s)", str);
+			str = deparse_expression_pretty(indexkey, context, false, false,
+											prettyFlags, 0);
+			if (!colno || colno == keyno+1)
+			{
+			    /* Need parens if it's not a bare function call */
+			    if (indexkey && IsA(indexkey, FuncExpr) &&
+					((FuncExpr *) indexkey)->funcformat == COERCE_EXPLICIT_CALL)
+					appendStringInfo(&buf, "%s", str);
+			    else
+					appendStringInfo(&buf, "(%s)", str);
+			}
 			keycoltype = exprType(indexkey);
 		}
 
 		/*
 		 * Add the operator class name
 		 */
-		get_opclass_name(idxrec->indclass[keyno], keycoltype,
+		if (!colno)
+		    get_opclass_name(idxrec->indclass[keyno], keycoltype,
 						 &buf);
 	}
 
-	appendStringInfoChar(&buf, ')');
-
-	/*
-	 * If it's a partial index, decompile and append the predicate
-	 */
-	if (!heap_attisnull(ht_idx, Anum_pg_index_indpred))
+	if (!colno)
 	{
-		Node	   *node;
-		Datum		predDatum;
-		bool		isnull;
-		char	   *predString;
+	    appendStringInfoChar(&buf, ')');
 
-		/* Convert text string to node tree */
-		predDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
-									Anum_pg_index_indpred, &isnull);
-		Assert(!isnull);
-		predString = DatumGetCString(DirectFunctionCall1(textout,
-														 predDatum));
-		node = (Node *) stringToNode(predString);
-		pfree(predString);
+	    /*
+	     * If it's a partial index, decompile and append the predicate
+	     */
+	    if (!heap_attisnull(ht_idx, Anum_pg_index_indpred))
+	    {
+			Node	   *node;
+			Datum		predDatum;
+			bool		isnull;
+			char	   *predString;
 
-		/*
-		 * If top level is a List, assume it is an implicit-AND structure,
-		 * and convert to explicit AND.  This is needed for partial index
-		 * predicates.
-		 */
-		if (node && IsA(node, List))
-			node = (Node *) make_ands_explicit((List *) node);
-		/* Deparse */
-		str = deparse_expression(node, context, false, false);
-		appendStringInfo(&buf, " WHERE %s", str);
+			/* Convert text string to node tree */
+			predDatum = SysCacheGetAttr(INDEXRELID, ht_idx,
+										Anum_pg_index_indpred, &isnull);
+			Assert(!isnull);
+			predString = DatumGetCString(DirectFunctionCall1(textout,
+															 predDatum));
+			node = (Node *) stringToNode(predString);
+			pfree(predString);
+
+			/*
+			 * If top level is a List, assume it is an implicit-AND structure,
+			 * and convert to explicit AND.  This is needed for partial index
+			 * predicates.
+			 */
+			if (node && IsA(node, List))
+				node = (Node *) make_ands_explicit((List *) node);
+			/* Deparse */
+			str = deparse_expression_pretty(node, context, false, false,
+											prettyFlags, 0);
+			appendStringInfo(&buf, " WHERE %s", str);
+	    }
 	}
 
 	/*
@@ -721,6 +851,25 @@ Datum
 pg_get_constraintdef(PG_FUNCTION_ARGS)
 {
 	Oid			constraintId = PG_GETARG_OID(0);
+
+	return pg_get_constraintdef_worker(constraintId, 0);
+}
+
+Datum
+pg_get_constraintdef_ext(PG_FUNCTION_ARGS)
+{
+	Oid			constraintId = PG_GETARG_OID(0);
+	bool		pretty = PG_GETARG_BOOL(1);
+	int			prettyFlags;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN|PRETTYFLAG_INDENT : 0;
+	return pg_get_constraintdef_worker(constraintId, prettyFlags);
+}
+
+
+static Datum
+pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
+{
 	text	   *result;
 	StringInfoData buf;
 	int			len;
@@ -934,7 +1083,8 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 					context = deparse_context_for(get_typname(conForm->contypid),
 												  InvalidOid);
 
-				consrc = deparse_expression(expr, context, false, false);
+				consrc = deparse_expression_pretty(expr, context, false, false,
+												   prettyFlags, 0);
 
 				/* Append the constraint source */
 				appendStringInfoString(&buf, consrc); 
@@ -1012,19 +1162,45 @@ decompile_column_index_array(Datum column_index_array, Oid relId,
 Datum
 pg_get_expr(PG_FUNCTION_ARGS)
 {
-	text	   *expr = PG_GETARG_TEXT_P(0);
-	Oid			relid = PG_GETARG_OID(1);
-	text	   *result;
-	Node	   *node;
-	List	   *context;
-	char	   *exprstr;
+	text	*expr = PG_GETARG_TEXT_P(0);
+	Oid	relid = PG_GETARG_OID(1);
 	char	   *relname;
-	char	   *str;
 
 	/* Get the name for the relation */
 	relname = get_rel_name(relid);
 	if (relname == NULL)
 		PG_RETURN_NULL();		/* should we raise an error? */
+
+	return pg_get_expr_worker(expr, relid, relname, 0);
+}
+
+Datum
+pg_get_expr_ext(PG_FUNCTION_ARGS)
+{
+	text	*expr = PG_GETARG_TEXT_P(0);
+	Oid	relid = PG_GETARG_OID(1);
+	bool		pretty = PG_GETARG_BOOL(2);
+	int			prettyFlags;
+	char	   *relname;
+
+	prettyFlags = pretty ? PRETTYFLAG_PAREN|PRETTYFLAG_INDENT : 0;
+
+	/* Get the name for the relation */
+	relname = get_rel_name(relid);
+	if (relname == NULL)
+		PG_RETURN_NULL();		/* should we raise an error? */
+
+	return pg_get_expr_worker(expr, relid, relname, prettyFlags);
+}
+
+static Datum
+pg_get_expr_worker(text *expr, Oid relid, char *relname, int prettyFlags)
+{
+	text	   *result;
+	Node	   *node;
+	List	   *context;
+	char	   *exprstr;
+	char	   *str;
 
 	/* Convert input TEXT object to C string */
 	exprstr = DatumGetCString(DirectFunctionCall1(textout,
@@ -1043,7 +1219,8 @@ pg_get_expr(PG_FUNCTION_ARGS)
 
 	/* Deparse */
 	context = deparse_context_for(relname, relid);
-	str = deparse_expression(node, context, false, false);
+	str = deparse_expression_pretty(node, context, false, false,
+									prettyFlags, 0);
 
 	/* Pass the result back as TEXT */
 	result = DatumGetTextP(DirectFunctionCall1(textin,
@@ -1093,6 +1270,19 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
 /* ----------
  * deparse_expression			- General utility for deparsing expressions
  *
+ * calls deparse_expression_pretty with all prettyPrinting disabled
+ */
+char *
+deparse_expression(Node *expr, List *dpcontext,
+				   bool forceprefix, bool showimplicit)
+{
+    return deparse_expression_pretty(expr, dpcontext, forceprefix,
+									 showimplicit, 0, 0);
+}
+
+/* ----------
+ * deparse_expression_pretty	- General utility for deparsing expressions
+ *
  * expr is the node tree to be deparsed.  It must be a transformed expression
  * tree (ie, not the raw output of gram.y).
  *
@@ -1102,13 +1292,16 @@ pg_get_userbyid(PG_FUNCTION_ARGS)
  * forceprefix is TRUE to force all Vars to be prefixed with their table names.
  *
  * showimplicit is TRUE to force all implicit casts to be shown explicitly.
+ * 
+ * tries to pretty up the output according to prettyFlags and startIndent.
  *
  * The result is a palloc'd string.
  * ----------
  */
 char *
-deparse_expression(Node *expr, List *dpcontext,
-				   bool forceprefix, bool showimplicit)
+deparse_expression_pretty(Node *expr, List *dpcontext,
+						  bool forceprefix, bool showimplicit,
+						  int prettyFlags, int startIndent)
 {
 	StringInfoData buf;
 	deparse_context context;
@@ -1117,6 +1310,8 @@ deparse_expression(Node *expr, List *dpcontext,
 	context.buf = &buf;
 	context.namespaces = dpcontext;
 	context.varprefix = forceprefix;
+	context.prettyFlags = prettyFlags;
+	context.indentLevel = startIndent;
 
 	get_rule_expr(expr, &context, showimplicit);
 
@@ -1269,7 +1464,8 @@ deparse_context_for_subplan(const char *name, List *tlist,
  * ----------
  */
 static void
-make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
+make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
+			 int prettyFlags)
 {
 	char	   *rulename;
 	char		ev_type;
@@ -1323,8 +1519,13 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 	/*
 	 * Build the rules definition text
 	 */
-	appendStringInfo(buf, "CREATE RULE %s AS ON ",
+	appendStringInfo(buf, "CREATE RULE %s AS",
 					 quote_identifier(rulename));
+
+	if (prettyFlags & PRETTYFLAG_INDENT)
+	    appendStringInfoString(buf, "\n    ON ");
+	else
+	    appendStringInfoString(buf, " ON ");
 
 	/* The event the rule is fired for */
 	switch (ev_type)
@@ -1370,6 +1571,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		deparse_context context;
 		deparse_namespace dpns;
 
+		if (prettyFlags & PRETTYFLAG_INDENT)
+		    appendStringInfoString(buf, "\n  ");
 		appendStringInfo(buf, " WHERE ");
 
 		qual = stringToNode(ev_qual);
@@ -1391,6 +1594,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		context.buf = buf;
 		context.namespaces = makeList1(&dpns);
 		context.varprefix = (length(query->rtable) != 1);
+		context.prettyFlags = prettyFlags;
+		context.indentLevel = PRETTYINDENT_STD;
 		dpns.rtable = query->rtable;
 		dpns.outer_varno = dpns.inner_varno = 0;
 		dpns.outer_rte = dpns.inner_rte = NULL;
@@ -1414,8 +1619,11 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		foreach(action, actions)
 		{
 			query = (Query *) lfirst(action);
-			get_query_def(query, buf, NIL, NULL);
-			appendStringInfo(buf, "; ");
+			get_query_def(query, buf, NIL, NULL, prettyFlags, 0);
+			if (prettyFlags)
+			    appendStringInfo(buf, ";\n");
+			else
+			    appendStringInfo(buf, "; ");
 		}
 		appendStringInfo(buf, ");");
 	}
@@ -1428,7 +1636,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		Query	   *query;
 
 		query = (Query *) lfirst(actions);
-		get_query_def(query, buf, NIL, NULL);
+		get_query_def(query, buf, NIL, NULL, prettyFlags, 0);
 		appendStringInfo(buf, ";");
 	}
 }
@@ -1440,7 +1648,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
  * ----------
  */
 static void
-make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
+make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
+			 int prettyFlags)
 {
 	Query	   *query;
 	char		ev_type;
@@ -1494,7 +1703,8 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 
 	ev_relation = heap_open(ev_class, AccessShareLock);
 
-	get_query_def(query, buf, NIL, RelationGetDescr(ev_relation));
+	get_query_def(query, buf, NIL, RelationGetDescr(ev_relation),
+				  prettyFlags, 0);
 	appendStringInfo(buf, ";");
 
 	heap_close(ev_relation, AccessShareLock);
@@ -1510,7 +1720,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
  */
 static void
 get_query_def(Query *query, StringInfo buf, List *parentnamespace,
-			  TupleDesc resultDesc)
+			  TupleDesc resultDesc, int prettyFlags, int startIndent)
 {
 	deparse_context context;
 	deparse_namespace dpns;
@@ -1519,6 +1729,9 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	context.namespaces = lcons(&dpns, parentnamespace);
 	context.varprefix = (parentnamespace != NIL ||
 						 length(query->rtable) != 1);
+	context.prettyFlags = prettyFlags;
+	context.indentLevel = startIndent;
+
 	dpns.rtable = query->rtable;
 	dpns.outer_varno = dpns.inner_varno = 0;
 	dpns.outer_rte = dpns.inner_rte = NULL;
@@ -1590,7 +1803,8 @@ get_select_query_def(Query *query, deparse_context *context,
 	/* Add the ORDER BY clause if given */
 	if (query->sortClause != NIL)
 	{
-		appendStringInfo(buf, " ORDER BY ");
+	        appendContextKeyword(context, " ORDER BY ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		sep = "";
 		foreach(l, query->sortClause)
 		{
@@ -1619,12 +1833,14 @@ get_select_query_def(Query *query, deparse_context *context,
 	/* Add the LIMIT clause if given */
 	if (query->limitOffset != NULL)
 	{
-		appendStringInfo(buf, " OFFSET ");
+		appendContextKeyword(context, " OFFSET ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 		get_rule_expr(query->limitOffset, context, false);
 	}
 	if (query->limitCount != NULL)
 	{
-		appendStringInfo(buf, " LIMIT ");
+		appendContextKeyword(context, " LIMIT ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 		if (IsA(query->limitCount, Const) &&
 			((Const *) query->limitCount)->constisnull)
 			appendStringInfo(buf, "ALL");
@@ -1645,6 +1861,11 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/*
 	 * Build up the query string - first we say SELECT
 	 */
+	if (PRETTY_INDENT(context))
+	{
+	    context->indentLevel += PRETTYINDENT_STD;
+	    appendStringInfoChar(buf, ' ');
+	}
 	appendStringInfo(buf, "SELECT");
 
 	/* Add the DISTINCT clause if given */
@@ -1724,14 +1945,16 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/* Add the WHERE clause if given */
 	if (query->jointree->quals != NULL)
 	{
-		appendStringInfo(buf, " WHERE ");
+		appendContextKeyword(context, " WHERE ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		get_rule_expr(query->jointree->quals, context, false);
 	}
 
 	/* Add the GROUP BY clause if given */
 	if (query->groupClause != NULL)
 	{
-		appendStringInfo(buf, " GROUP BY ");
+		appendContextKeyword(context, " GROUP BY ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		sep = "";
 		foreach(l, query->groupClause)
 		{
@@ -1747,7 +1970,8 @@ get_basic_select_query(Query *query, deparse_context *context,
 	/* Add the HAVING clause if given */
 	if (query->havingQual != NULL)
 	{
-		appendStringInfo(buf, " HAVING ");
+		appendContextKeyword(context, " HAVING ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 0);
 		get_rule_expr(query->havingQual, context, false);
 	}
 }
@@ -1765,35 +1989,71 @@ get_setop_query(Node *setOp, Query *query, deparse_context *context,
 		Query	   *subquery = rte->subquery;
 
 		Assert(subquery != NULL);
-		get_query_def(subquery, buf, context->namespaces, resultDesc);
+		get_query_def(subquery, buf, context->namespaces, resultDesc,
+					  context->prettyFlags, context->indentLevel);
 	}
 	else if (IsA(setOp, SetOperationStmt))
 	{
 		SetOperationStmt *op = (SetOperationStmt *) setOp;
+		bool need_paren;
 
-		appendStringInfo(buf, "((");
+		need_paren = (PRETTY_PAREN(context) ?
+					  !IsA(op->rarg, RangeTblRef) : true);
+
+		if (!PRETTY_PAREN(context))
+		    appendStringInfoString(buf, "((");
+
 		get_setop_query(op->larg, query, context, resultDesc);
+
+		if (!PRETTY_PAREN(context))
+		    appendStringInfoChar(buf, ')');
+		if (!PRETTY_INDENT(context))
+		    appendStringInfoChar(buf, ' ');
 		switch (op->op)
 		{
 			case SETOP_UNION:
-				appendStringInfo(buf, ") UNION ");
+				appendContextKeyword(context, "UNION ",
+									 -PRETTYINDENT_STD, 0, 0);
 				break;
 			case SETOP_INTERSECT:
-				appendStringInfo(buf, ") INTERSECT ");
+				appendContextKeyword(context, "INTERSECT ",
+									 -PRETTYINDENT_STD, 0, 0);
 				break;
 			case SETOP_EXCEPT:
-				appendStringInfo(buf, ") EXCEPT ");
+				appendContextKeyword(context, "EXCEPT ",
+									 -PRETTYINDENT_STD, 0, 0);
 				break;
 			default:
 				elog(ERROR, "unrecognized set op: %d",
 					 (int) op->op);
 		}
 		if (op->all)
-			appendStringInfo(buf, "ALL (");
+			appendStringInfo(buf, "ALL ");
+
+		if (PRETTY_INDENT(context))
+		    appendStringInfoChar(buf, '\n');
+
+		if (PRETTY_PAREN(context))
+		{
+		    if (need_paren)
+		    {
+				appendStringInfoChar(buf, '(');
+				if (PRETTY_INDENT(context))
+					appendStringInfoChar(buf, '\n');
+		    }
+		}
 		else
-			appendStringInfo(buf, "(");
+		    appendStringInfoChar(buf, '(');
+
 		get_setop_query(op->rarg, query, context, resultDesc);
-		appendStringInfo(buf, "))");
+
+		if (PRETTY_PAREN(context))
+		{
+		    if (need_paren)
+				appendStringInfoChar(buf, ')');
+		}
+		else
+		    appendStringInfoString(buf, "))");
 	}
 	else
 	{
@@ -1866,6 +2126,12 @@ get_insert_query_def(Query *query, deparse_context *context)
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	Assert(rte->rtekind == RTE_RELATION);
+
+	if (PRETTY_INDENT(context))
+	{
+	    context->indentLevel += PRETTYINDENT_STD;
+	    appendStringInfoChar(buf, ' ');
+	}
 	appendStringInfo(buf, "INSERT INTO %s",
 					 generate_relation_name(rte->relid));
 
@@ -1887,7 +2153,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 	/* Add the VALUES or the SELECT */
 	if (select_rte == NULL)
 	{
-		appendStringInfo(buf, "VALUES (");
+		appendContextKeyword(context, "VALUES (",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
 		sep = "";
 		foreach(l, query->targetList)
 		{
@@ -1903,7 +2170,8 @@ get_insert_query_def(Query *query, deparse_context *context)
 		appendStringInfoChar(buf, ')');
 	}
 	else
-		get_query_def(select_rte->subquery, buf, NIL, NULL);
+		get_query_def(select_rte->subquery, buf, NIL, NULL,
+					  context->prettyFlags, context->indentLevel);
 }
 
 
@@ -1924,6 +2192,11 @@ get_update_query_def(Query *query, deparse_context *context)
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	Assert(rte->rtekind == RTE_RELATION);
+	if (PRETTY_INDENT(context))
+	{
+	    appendStringInfoChar(buf, ' ');
+	    context->indentLevel += PRETTYINDENT_STD;
+	}
 	appendStringInfo(buf, "UPDATE %s%s SET ",
 					 only_marker(rte),
 					 generate_relation_name(rte->relid));
@@ -1957,7 +2230,8 @@ get_update_query_def(Query *query, deparse_context *context)
 	/* Finally add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
 	{
-		appendStringInfo(buf, " WHERE ");
+		appendContextKeyword(context, " WHERE ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		get_rule_expr(query->jointree->quals, context, false);
 	}
 }
@@ -1978,6 +2252,11 @@ get_delete_query_def(Query *query, deparse_context *context)
 	 */
 	rte = rt_fetch(query->resultRelation, query->rtable);
 	Assert(rte->rtekind == RTE_RELATION);
+	if (PRETTY_INDENT(context))
+	{
+	    context->indentLevel += PRETTYINDENT_STD;
+	    appendStringInfoChar(buf, ' ');
+	}
 	appendStringInfo(buf, "DELETE FROM %s%s",
 					 only_marker(rte),
 					 generate_relation_name(rte->relid));
@@ -1985,7 +2264,8 @@ get_delete_query_def(Query *query, deparse_context *context)
 	/* Add a WHERE clause if given */
 	if (query->jointree->quals != NULL)
 	{
-		appendStringInfo(buf, " WHERE ");
+		appendContextKeyword(context, " WHERE ",
+							 -PRETTYINDENT_STD, PRETTYINDENT_STD, 1);
 		get_rule_expr(query->jointree->quals, context, false);
 	}
 }
@@ -2004,6 +2284,8 @@ get_utility_query_def(Query *query, deparse_context *context)
 	{
 		NotifyStmt *stmt = (NotifyStmt *) query->utilityStmt;
 
+		appendContextKeyword(context, "",
+							 0, PRETTYINDENT_STD, 1);
 		appendStringInfo(buf, "NOTIFY %s",
 				   quote_qualified_identifier(stmt->relation->schemaname,
 											  stmt->relation->relname));
@@ -2142,6 +2424,285 @@ find_rte_by_refname(const char *refname, deparse_context *context)
 			break;
 	}
 	return result;
+}
+
+
+/*
+ * get_simple_binary_op_name
+ *
+ * helper function for isSimpleNode
+ * will return single char binary operator name, or NULL if it's not
+ */
+static const char *
+get_simple_binary_op_name(OpExpr *expr)
+{
+	List	   *args = expr->args;
+
+	if (length(args) == 2)
+	{
+		/* binary operator */
+		Node	   *arg1 = (Node *) lfirst(args);
+		Node	   *arg2 = (Node *) lsecond(args);
+		const char *op;
+
+		op = generate_operator_name(expr->opno, exprType(arg1), exprType(arg2));
+		if (strlen(op) == 1)
+		    return op;
+	}
+	return NULL;
+}
+
+
+/*
+ * isSimpleNode - check if given node is simple (doesn't need parenthesizing)
+ *
+ *  true   : simple in the context of parent node's type
+ *  false  : not simple
+ */
+static bool
+isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
+{
+    if (!node)
+		return false;
+
+    switch (nodeTag(node))
+    {
+		case T_Var:
+		case T_Const:
+		case T_Param:
+		case T_CoerceToDomainValue:
+		case T_SetToDefault:
+			/* single words: always simple */
+			return true;
+
+		case T_ArrayRef:
+		case T_ArrayExpr:
+		case T_CoalesceExpr:
+		case T_NullIfExpr:
+		case T_Aggref:
+		case T_FuncExpr:
+			/* function-like: name(..) or name[..] */
+			return true;
+
+        /* CASE keywords act as parentheses */
+		case T_CaseExpr:
+			return true;
+
+		case T_FieldSelect:
+			/*
+			 * appears simple since . has top precedence, unless parent is
+			 * T_FieldSelect itself!
+			 */
+			return (IsA(parentNode, FieldSelect) ? false : true);
+
+		case T_CoerceToDomain:
+			/* maybe simple, check args */
+			return isSimpleNode((Node*) ((CoerceToDomain*)node)->arg,
+								node, prettyFlags);
+		case T_RelabelType:
+			return isSimpleNode((Node*) ((RelabelType*)node)->arg,
+								node, prettyFlags);
+
+		case T_OpExpr:
+		{
+			/* depends on parent node type; needs further checking */
+			if (prettyFlags & PRETTYFLAG_PAREN && IsA(parentNode, OpExpr))
+			{
+				const char *op;
+				const char *parentOp;
+				bool		is_lopriop;
+				bool		is_hipriop;
+				bool		is_lopriparent;
+				bool		is_hipriparent;
+
+				op = get_simple_binary_op_name((OpExpr*) node);
+				if (!op)
+					return false;
+
+				/* We know only the basic operators + - and * / % */
+				is_lopriop = (strchr("+-", *op) != NULL);
+				is_hipriop = (strchr("*/%", *op) != NULL);
+				if (!(is_lopriop || is_hipriop))
+					return false;
+
+				parentOp = get_simple_binary_op_name((OpExpr*) parentNode);
+				if (!parentOp)
+					return false;
+
+				is_lopriparent = (strchr("+-", *parentOp) != NULL);
+				is_hipriparent = (strchr("*/%", *parentOp) != NULL);
+				if (!(is_lopriparent || is_hipriparent))
+					return false;
+
+				if (is_hipriop && is_lopriparent)
+					return true; /* op binds tighter than parent */
+
+				if (is_lopriop && is_hipriparent)
+					return false;
+
+				/*
+				 * Operators are same priority --- can skip parens only
+				 * if we have (a - b) - c, not a - (b - c).
+				 */
+				if (node == (Node *) lfirst(((OpExpr *) parentNode)->args))
+					return true;
+
+				return false;
+			}
+            /* else do the same stuff as for T_SubLink et al. */
+			/* FALL THROUGH */
+		}
+
+		case T_SubLink:
+		case T_NullTest:
+		case T_BooleanTest:
+		case T_DistinctExpr:
+			switch (nodeTag(parentNode))
+			{
+				case T_FuncExpr:
+				{
+					/* special handling for casts */
+					CoercionForm	type = ((FuncExpr*)parentNode)->funcformat;
+
+					if (type == COERCE_EXPLICIT_CAST ||
+						type == COERCE_IMPLICIT_CAST)
+						return false;
+                    return true;      /* own parentheses */
+				}
+				case T_BoolExpr:      /* lower precedence */
+				case T_ArrayRef:      /* other separators */
+				case T_ArrayExpr:     /* other separators */
+				case T_CoalesceExpr:  /* own parentheses */
+				case T_NullIfExpr:    /* other separators */
+				case T_Aggref:        /* own parentheses */
+				case T_CaseExpr:      /* other separators */
+					return true;
+				default:
+					return false;
+			}
+
+		case T_BoolExpr:
+			switch (nodeTag(parentNode))
+			{
+				case T_BoolExpr:
+					if (prettyFlags & PRETTYFLAG_PAREN)
+					{
+						BoolExprType type;
+						BoolExprType parentType;
+
+						type = ((BoolExpr*)node)->boolop;
+						parentType = ((BoolExpr*)parentNode)->boolop;
+						switch (type)
+						{
+							case NOT_EXPR:
+							case AND_EXPR:
+								if (parentType == AND_EXPR || parentType == OR_EXPR)
+									return true;
+								break;
+							case OR_EXPR:
+								if (parentType == OR_EXPR)
+									return true;
+								break;
+						}
+					}
+					return false;
+				case T_FuncExpr:
+				{
+					/* special handling for casts */
+					CoercionForm type=((FuncExpr*)parentNode)->funcformat;
+
+					if (type == COERCE_EXPLICIT_CAST ||
+						type == COERCE_IMPLICIT_CAST)
+						return false;
+                    return true;      /* own parentheses */
+				}
+				case T_ArrayRef:      /* other separators */
+				case T_ArrayExpr:     /* other separators */
+				case T_CoalesceExpr:  /* own parentheses */
+				case T_NullIfExpr:    /* other separators */
+				case T_Aggref:        /* own parentheses */
+				case T_CaseExpr:      /* other separators */
+					return true;
+				default:
+					return false;
+			}
+
+		default:
+			break;
+    }
+    /* those we don't know: in dubio complexo */
+    return false;
+}
+
+
+/*
+ * appendStringInfoSpaces - append spaces to buffer
+ */
+static void
+appendStringInfoSpaces(StringInfo buf, int count)
+{
+    while (count-- > 0)
+		appendStringInfoChar(buf, ' ');
+}
+
+/*
+ * appendContextKeyword - append a keyword to buffer
+ *
+ * If prettyPrint is enabled, perform a line break, and adjust indentation.
+ * Otherwise, just append the keyword.
+ */
+static void
+appendContextKeyword(deparse_context *context, const char *str,
+					 int indentBefore, int indentAfter, int indentPlus)
+{
+    if (PRETTY_INDENT(context))
+    {
+		context->indentLevel += indentBefore;
+		if (context->indentLevel < 0)
+			context->indentLevel = 0;
+
+		appendStringInfoChar(context->buf, '\n');
+		appendStringInfoSpaces(context->buf,
+							   context->indentLevel + indentPlus);
+    }
+
+    appendStringInfoString(context->buf, str);
+
+    if (PRETTY_INDENT(context))
+    {
+		context->indentLevel += indentAfter;
+		if (context->indentLevel < 0)
+			context->indentLevel = 0;
+    }
+}
+
+/*
+ * get_rule_expr_paren  - deparse expr using get_rule_expr, 
+ * embracing the string with parentheses if necessary for prettyPrint.
+ *
+ * Never embrace if prettyFlags=0, because it's done in the calling node.
+ *
+ * Any node that does *not* embrace its argument node by sql syntax (with
+ * parentheses, non-operator keywords like CASE/WHEN/ON, or comma etc) should
+ * use get_rule_expr_paren instead of get_rule_expr so parentheses can be
+ * added.
+ */
+static void
+get_rule_expr_paren(Node *node, deparse_context *context, 
+					bool showimplicit, Node *parentNode)
+{
+	bool need_paren;
+
+	need_paren = PRETTY_PAREN(context) &&
+		!isSimpleNode(node, parentNode, context->prettyFlags);
+
+	if (need_paren)
+	    appendStringInfoChar(context->buf, '(');
+
+	get_rule_expr(node, context, showimplicit);
+
+	if (need_paren)
+	    appendStringInfoChar(context->buf, ')');
 }
 
 
@@ -2300,11 +2861,13 @@ get_rule_expr(Node *node, deparse_context *context,
 				Node	   *arg1 = (Node *) lfirst(args);
 				Node	   *arg2 = (Node *) lsecond(args);
 
-				appendStringInfoChar(buf, '(');
-				get_rule_expr(arg1, context, true);
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, '(');
+				get_rule_expr_paren(arg1, context, true, node);
 				appendStringInfo(buf, " IS DISTINCT FROM ");
-				get_rule_expr(arg2, context, true);
-				appendStringInfoChar(buf, ')');
+				get_rule_expr_paren(arg2, context, true, node);
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -2315,15 +2878,18 @@ get_rule_expr(Node *node, deparse_context *context,
 				Node	   *arg1 = (Node *) lfirst(args);
 				Node	   *arg2 = (Node *) lsecond(args);
 
-				appendStringInfoChar(buf, '(');
-				get_rule_expr(arg1, context, true);
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, '(');
+				get_rule_expr_paren(arg1, context, true, node);
 				appendStringInfo(buf, " %s %s (",
 								 generate_operator_name(expr->opno,
 														exprType(arg1),
 										get_element_type(exprType(arg2))),
 								 expr->useOr ? "ANY" : "ALL");
-				get_rule_expr(arg2, context, true);
-				appendStringInfo(buf, "))");
+				get_rule_expr_paren(arg2, context, true, node);
+				appendStringInfoChar(buf, ')');
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -2335,33 +2901,43 @@ get_rule_expr(Node *node, deparse_context *context,
 				switch (expr->boolop)
 				{
 					case AND_EXPR:
-						appendStringInfoChar(buf, '(');
-						get_rule_expr((Node *) lfirst(args), context, false);
+						if (!PRETTY_PAREN(context))
+						    appendStringInfoChar(buf, '(');
+						get_rule_expr_paren((Node *) lfirst(args), context,
+											false, node);
 						while ((args = lnext(args)) != NIL)
 						{
 							appendStringInfo(buf, " AND ");
-							get_rule_expr((Node *) lfirst(args), context,
-										  false);
+							get_rule_expr_paren((Node *) lfirst(args), context,
+												false, node);
 						}
-						appendStringInfoChar(buf, ')');
+						if (!PRETTY_PAREN(context))
+						    appendStringInfoChar(buf, ')');
 						break;
 
 					case OR_EXPR:
-						appendStringInfoChar(buf, '(');
-						get_rule_expr((Node *) lfirst(args), context, false);
+						if (!PRETTY_PAREN(context))
+						    appendStringInfoChar(buf, '(');
+						get_rule_expr_paren((Node *) lfirst(args), context,
+											false, node);
 						while ((args = lnext(args)) != NIL)
 						{
 							appendStringInfo(buf, " OR ");
-							get_rule_expr((Node *) lfirst(args), context,
-										  false);
+							get_rule_expr_paren((Node *) lfirst(args), context,
+												false, node);
 						}
-						appendStringInfoChar(buf, ')');
+						if (!PRETTY_PAREN(context))
+						    appendStringInfoChar(buf, ')');
 						break;
 
 					case NOT_EXPR:
-						appendStringInfo(buf, "(NOT ");
-						get_rule_expr((Node *) lfirst(args), context, false);
-						appendStringInfoChar(buf, ')');
+						if (!PRETTY_PAREN(context))
+						    appendStringInfoChar(buf, '(');
+						appendStringInfo(buf, "NOT ");
+						get_rule_expr_paren((Node *) lfirst(args), context,
+											false, node);
+						if (!PRETTY_PAREN(context))
+						    appendStringInfoChar(buf, ')');
 						break;
 
 					default:
@@ -2409,9 +2985,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * arg.fieldname, but most cases where FieldSelect is used
 				 * are *not* simple.  So, always use parenthesized syntax.
 				 */
-				appendStringInfoChar(buf, '(');
-				get_rule_expr((Node *) fselect->arg, context, true);
-				appendStringInfo(buf, ").%s", quote_identifier(fieldname));
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, '(');
+				get_rule_expr_paren((Node *) fselect->arg, context, true, node);
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, ')');
+				appendStringInfo(buf, ".%s", quote_identifier(fieldname));
 			}
 			break;
 
@@ -2424,7 +3003,7 @@ get_rule_expr(Node *node, deparse_context *context,
 					!showimplicit)
 				{
 					/* don't show the implicit cast */
-					get_rule_expr(arg, context, showimplicit);
+					get_rule_expr_paren(arg, context, showimplicit, node);
 				}
 				else
 				{
@@ -2436,9 +3015,12 @@ get_rule_expr(Node *node, deparse_context *context,
 					 */
 					arg = strip_type_coercion(arg, relabel->resulttype);
 
-					appendStringInfoChar(buf, '(');
-					get_rule_expr(arg, context, showimplicit);
-					appendStringInfo(buf, ")::%s",
+					if (!PRETTY_PAREN(context))
+					    appendStringInfoChar(buf, '(');
+					get_rule_expr_paren(arg, context, showimplicit, node);
+					if (!PRETTY_PAREN(context))
+					    appendStringInfoChar(buf, ')');
+					appendStringInfo(buf, "::%s",
 							format_type_with_typemod(relabel->resulttype,
 													 relabel->resulttypmod));
 				}
@@ -2450,19 +3032,29 @@ get_rule_expr(Node *node, deparse_context *context,
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				List	   *temp;
 
-				appendStringInfo(buf, "CASE");
+				appendContextKeyword(context, "CASE",
+									 0, PRETTYINDENT_VAR, 0);
 				foreach(temp, caseexpr->args)
 				{
 					CaseWhen   *when = (CaseWhen *) lfirst(temp);
 
-					appendStringInfo(buf, " WHEN ");
+					if (!PRETTY_INDENT(context))
+						appendStringInfoChar(buf, ' ');
+					appendContextKeyword(context, "WHEN ",
+										 0, 0, 0);
 					get_rule_expr((Node *) when->expr, context, false);
 					appendStringInfo(buf, " THEN ");
 					get_rule_expr((Node *) when->result, context, true);
 				}
-				appendStringInfo(buf, " ELSE ");
+				if (!PRETTY_INDENT(context))
+				    appendStringInfoChar(buf, ' ');
+				appendContextKeyword(context, "ELSE ",
+									 0, 0, 0);
 				get_rule_expr((Node *) caseexpr->defresult, context, true);
-				appendStringInfo(buf, " END");
+				if (!PRETTY_INDENT(context))
+				    appendStringInfoChar(buf, ' ');
+				appendContextKeyword(context, "END",
+									 -PRETTYINDENT_VAR, 0, 0);
 			}
 			break;
 
@@ -2530,20 +3122,23 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				NullTest   *ntest = (NullTest *) node;
 
-				appendStringInfo(buf, "(");
-				get_rule_expr((Node *) ntest->arg, context, true);
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, '(');
+				get_rule_expr_paren((Node *) ntest->arg, context, true, node);
 				switch (ntest->nulltesttype)
 				{
 					case IS_NULL:
-						appendStringInfo(buf, " IS NULL)");
+						appendStringInfo(buf, " IS NULL");
 						break;
 					case IS_NOT_NULL:
-						appendStringInfo(buf, " IS NOT NULL)");
+						appendStringInfo(buf, " IS NOT NULL");
 						break;
 					default:
 						elog(ERROR, "unrecognized nulltesttype: %d",
 							 (int) ntest->nulltesttype);
 				}
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -2551,32 +3146,35 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				BooleanTest *btest = (BooleanTest *) node;
 
-				appendStringInfo(buf, "(");
-				get_rule_expr((Node *) btest->arg, context, false);
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, '(');
+				get_rule_expr_paren((Node *) btest->arg, context, false, node);
 				switch (btest->booltesttype)
 				{
 					case IS_TRUE:
-						appendStringInfo(buf, " IS TRUE)");
+						appendStringInfo(buf, " IS TRUE");
 						break;
 					case IS_NOT_TRUE:
-						appendStringInfo(buf, " IS NOT TRUE)");
+						appendStringInfo(buf, " IS NOT TRUE");
 						break;
 					case IS_FALSE:
-						appendStringInfo(buf, " IS FALSE)");
+						appendStringInfo(buf, " IS FALSE");
 						break;
 					case IS_NOT_FALSE:
-						appendStringInfo(buf, " IS NOT FALSE)");
+						appendStringInfo(buf, " IS NOT FALSE");
 						break;
 					case IS_UNKNOWN:
-						appendStringInfo(buf, " IS UNKNOWN)");
+						appendStringInfo(buf, " IS UNKNOWN");
 						break;
 					case IS_NOT_UNKNOWN:
-						appendStringInfo(buf, " IS NOT UNKNOWN)");
+						appendStringInfo(buf, " IS NOT UNKNOWN");
 						break;
 					default:
 						elog(ERROR, "unrecognized booltesttype: %d",
 							 (int) btest->booltesttype);
 				}
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -2598,9 +3196,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				}
 				else
 				{
-					appendStringInfoChar(buf, '(');
-					get_rule_expr(arg, context, false);
-					appendStringInfo(buf, ")::%s",
+					if (!PRETTY_PAREN(context))
+					    appendStringInfoChar(buf, '(');
+					get_rule_expr_paren(arg, context, false, node);
+					if (!PRETTY_PAREN(context))
+					    appendStringInfoChar(buf, ')');
+					appendStringInfo(buf, "::%s",
 							format_type_with_typemod(ctest->resulttype,
 													 ctest->resulttypmod));
 				}
@@ -2632,19 +3233,19 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 	Oid			opno = expr->opno;
 	List	   *args = expr->args;
 
-	appendStringInfoChar(buf, '(');
+	if (!PRETTY_PAREN(context))
+	    appendStringInfoChar(buf, '(');
 	if (length(args) == 2)
 	{
 		/* binary operator */
 		Node	   *arg1 = (Node *) lfirst(args);
 		Node	   *arg2 = (Node *) lsecond(args);
-
-		get_rule_expr(arg1, context, true);
+		get_rule_expr_paren(arg1, context, true, (Node*)expr);
 		appendStringInfo(buf, " %s ",
 						 generate_operator_name(opno,
 												exprType(arg1),
 												exprType(arg2)));
-		get_rule_expr(arg2, context, true);
+		get_rule_expr_paren(arg2, context, true, (Node*)expr);
 	}
 	else
 	{
@@ -2666,10 +3267,10 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 								 generate_operator_name(opno,
 														InvalidOid,
 														exprType(arg)));
-				get_rule_expr(arg, context, true);
+				get_rule_expr_paren(arg, context, true, (Node*)expr);
 				break;
 			case 'r':
-				get_rule_expr(arg, context, true);
+				get_rule_expr_paren(arg, context, true, (Node*)expr);
 				appendStringInfo(buf, " %s",
 								 generate_operator_name(opno,
 														exprType(arg),
@@ -2680,7 +3281,8 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 		}
 		ReleaseSysCache(tp);
 	}
-	appendStringInfoChar(buf, ')');
+	if (!PRETTY_PAREN(context))
+	    appendStringInfoChar(buf, ')');
 }
 
 /*
@@ -2703,7 +3305,8 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	 */
 	if (expr->funcformat == COERCE_IMPLICIT_CAST && !showimplicit)
 	{
-		get_rule_expr((Node *) lfirst(expr->args), context, showimplicit);
+		get_rule_expr_paren((Node *) lfirst(expr->args), context,
+							showimplicit, (Node*)expr);
 		return;
 	}
 
@@ -2729,9 +3332,12 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 		 */
 		arg = strip_type_coercion(arg, rettype);
 
-		appendStringInfoChar(buf, '(');
-		get_rule_expr(arg, context, showimplicit);
-		appendStringInfo(buf, ")::%s",
+		if (!PRETTY_PAREN(context))
+		    appendStringInfoChar(buf, '(');
+		get_rule_expr_paren(arg, context, showimplicit, (Node*)expr);
+		if (!PRETTY_PAREN(context))
+		    appendStringInfoChar(buf, ')');
+		appendStringInfo(buf, "::%s",
 						 format_type_with_typemod(rettype, coercedTypmod));
 
 		return;
@@ -3052,7 +3658,8 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 	if (need_paren)
 		appendStringInfoChar(buf, '(');
 
-	get_query_def(query, buf, context->namespaces, NULL);
+	get_query_def(query, buf, context->namespaces, NULL,
+				  context->prettyFlags, context->indentLevel);
 
 	if (need_paren)
 		appendStringInfo(buf, "))");
@@ -3069,7 +3676,7 @@ static void
 get_from_clause(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	char	   *sep;
+	bool		first = true;
 	List	   *l;
 
 	/*
@@ -3079,8 +3686,6 @@ get_from_clause(Query *query, deparse_context *context)
 	 * sufficient to check here.) Also ignore the rule pseudo-RTEs for NEW
 	 * and OLD.
 	 */
-	sep = " FROM ";
-
 	foreach(l, query->jointree->fromlist)
 	{
 		Node	   *jtnode = (Node *) lfirst(l);
@@ -3098,9 +3703,16 @@ get_from_clause(Query *query, deparse_context *context)
 				continue;
 		}
 
-		appendStringInfo(buf, sep);
+		if (first)
+		{
+		    appendContextKeyword(context, " FROM ",
+								 -PRETTYINDENT_STD, PRETTYINDENT_STD, 2);
+			first = false;
+		}
+		else
+		    appendStringInfoString(buf, ", ");
+
 		get_from_clause_item(jtnode, query, context);
-		sep = ", ";
 	}
 }
 
@@ -3127,7 +3739,8 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			case RTE_SUBQUERY:
 				/* Subquery RTE */
 				appendStringInfoChar(buf, '(');
-				get_query_def(rte->subquery, buf, context->namespaces, NULL);
+				get_query_def(rte->subquery, buf, context->namespaces, NULL, 
+							  context->prettyFlags, context->indentLevel);
 				appendStringInfoChar(buf, ')');
 				break;
 			case RTE_FUNCTION:
@@ -3149,7 +3762,7 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			{
 				List	   *col;
 
-				appendStringInfo(buf, "(");
+				appendStringInfoChar(buf, '(');
 				foreach(col, rte->alias->colnames)
 				{
 					if (col != rte->alias->colnames)
@@ -3183,36 +3796,105 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	else if (IsA(jtnode, JoinExpr))
 	{
 		JoinExpr   *j = (JoinExpr *) jtnode;
+		bool need_paren_on_right;
 
-		appendStringInfoChar(buf, '(');
+		need_paren_on_right = PRETTY_PAREN(context) &&
+			!IsA(j->rarg, RangeTblRef);
+
+		if (!PRETTY_PAREN(context) || j->alias != NULL)
+		    appendStringInfoChar(buf, '(');
+
 		get_from_clause_item(j->larg, query, context);
+
 		if (j->isNatural)
-			appendStringInfo(buf, " NATURAL");
-		switch (j->jointype)
 		{
-			case JOIN_INNER:
-				if (j->quals)
-					appendStringInfo(buf, " JOIN ");
-				else
-					appendStringInfo(buf, " CROSS JOIN ");
-				break;
-			case JOIN_LEFT:
-				appendStringInfo(buf, " LEFT JOIN ");
-				break;
-			case JOIN_FULL:
-				appendStringInfo(buf, " FULL JOIN ");
-				break;
-			case JOIN_RIGHT:
-				appendStringInfo(buf, " RIGHT JOIN ");
-				break;
-			case JOIN_UNION:
-				appendStringInfo(buf, " UNION JOIN ");
-				break;
-			default:
-				elog(ERROR, "unrecognized join type: %d",
-					 (int) j->jointype);
+		    if (!PRETTY_INDENT(context))
+				appendStringInfoChar(buf, ' ');
+		    switch (j->jointype)
+		    {
+				case JOIN_INNER:
+					if (j->quals)
+						appendContextKeyword(context, "NATURAL JOIN ",
+											 -PRETTYINDENT_JOIN,
+											 PRETTYINDENT_JOIN, 0);
+					else
+						appendContextKeyword(context, "NATURAL CROSS JOIN ",
+											 -PRETTYINDENT_JOIN,
+											 PRETTYINDENT_JOIN, 0);
+					break;
+				case JOIN_LEFT:
+					appendContextKeyword(context, "NATURAL LEFT JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 0);
+					break;
+				case JOIN_FULL:
+					appendContextKeyword(context, "NATURAL FULL JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 0);
+					break;
+				case JOIN_RIGHT:
+					appendContextKeyword(context, "NATURAL RIGHT JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 0);
+					break;
+				case JOIN_UNION:
+					appendContextKeyword(context, "NATURAL UNION JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 0);
+					break;
+				default:
+					elog(ERROR, "unrecognized join type: %d",
+						 (int) j->jointype);
+		    }
 		}
+		else
+		{
+		    switch (j->jointype)
+		    {
+				case JOIN_INNER:
+					if (j->quals)
+						appendContextKeyword(context, " JOIN ",
+											 -PRETTYINDENT_JOIN,
+											 PRETTYINDENT_JOIN, 2);
+					else
+						appendContextKeyword(context, " CROSS JOIN ",
+											 -PRETTYINDENT_JOIN,
+											 PRETTYINDENT_JOIN, 1);
+					break;
+				case JOIN_LEFT:
+					appendContextKeyword(context, " LEFT JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 2);
+					break;
+				case JOIN_FULL:
+					appendContextKeyword(context, " FULL JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 2);
+					break;
+				case JOIN_RIGHT:
+					appendContextKeyword(context, " RIGHT JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 2);
+					break;
+				case JOIN_UNION:
+					appendContextKeyword(context, " UNION JOIN ",
+										 -PRETTYINDENT_JOIN,
+										 PRETTYINDENT_JOIN, 2);
+					break;
+				default:
+					elog(ERROR, "unrecognized join type: %d",
+						 (int) j->jointype);
+		    }
+		}
+
+		if (need_paren_on_right)
+		    appendStringInfoChar(buf, '(');
 		get_from_clause_item(j->rarg, query, context);
+		if (need_paren_on_right)
+		    appendStringInfoChar(buf, ')');
+
+		context->indentLevel -= PRETTYINDENT_JOIN_ON;
+
 		if (!j->isNatural)
 		{
 			if (j->using)
@@ -3225,18 +3907,23 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 					if (col != j->using)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
-								  quote_identifier(strVal(lfirst(col))));
+									 quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
 			else if (j->quals)
 			{
-				appendStringInfo(buf, " ON (");
+				appendStringInfo(buf, " ON ");
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, '(');
 				get_rule_expr(j->quals, context, false);
-				appendStringInfoChar(buf, ')');
+				if (!PRETTY_PAREN(context))
+				    appendStringInfoChar(buf, ')');
 			}
 		}
-		appendStringInfoChar(buf, ')');
+		if (!PRETTY_PAREN(context) || j->alias != NULL)
+		    appendStringInfoChar(buf, ')');
+
 		/* Yes, it's correct to put alias after the right paren ... */
 		if (j->alias != NULL)
 		{
@@ -3246,13 +3933,13 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			{
 				List	   *col;
 
-				appendStringInfo(buf, "(");
+				appendStringInfoChar(buf, '(');
 				foreach(col, j->alias->colnames)
 				{
 					if (col != j->alias->colnames)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
-								  quote_identifier(strVal(lfirst(col))));
+									 quote_identifier(strVal(lfirst(col))));
 				}
 				appendStringInfoChar(buf, ')');
 			}
