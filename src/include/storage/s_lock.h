@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.39 1998/07/18 14:58:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.40 1998/07/19 01:19:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,6 +209,22 @@ tas(slock_t *s_lock)
 #endif /* NEED_I386_TAS_ASM */
 
 
+
+#if defined(NEED_NS32K_TAS_ASM)
+
+#define S_LOCK(lock)				\
+{						\
+    slock_t res = 1;				\
+    while (res) {				\
+      __asm__("movqd 0, r0");			\
+      __asm__("sbitd r0, %0" : "=m"(*lock));	\
+      __asm__("sprb us, %0" : "=r" (res));	\
+      res = ((res >> 5) & 1);			\
+    }						\
+}
+#endif /* NEED_NS32K_TAS_ASM */
+
+
 #endif /* defined(__GNUC__) */
 
 
@@ -307,6 +323,10 @@ extern void s_lock(volatile slock_t *lock, const char *file, const int line);
 int	tas(volatile slock_t *lock); /* port/.../tas.s, or s_lock.c */
 #define TAS(lock)		tas((volatile slock_t *) lock)
 #endif /* TAS */
+
+#define S_UNLOCK(lock)  (*(lock) = 0)
+
+#define S_INIT_LOCK(lock)       S_UNLOCK(lock)
 
 
 #endif /* HAS_TEST_AND_SET */

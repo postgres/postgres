@@ -15,8 +15,8 @@
 #define HAS_TEST_AND_SET
 #endif
 
-#if defined(ns32k)
-#define NEED_NS32k_TAS_ASM
+#if defined(__ns32k__)
+#define NEED_NS32K_TAS_ASM
 #define HAS_TEST_AND_SET
 #endif
 
