@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.117 2002/03/06 06:10:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.118 2002/04/08 03:48:10 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -115,6 +115,7 @@ PQescapeString(char *to, const char *from, size_t length)
  *		'\0' == ASCII  0 == \\000
  *		'\'' == ASCII 39 == \'
  *		'\\' == ASCII 92 == \\\\
+ *		anything >= 0x80 ---> \\ooo (where ooo is an octal expression)
  */
 unsigned char *
 PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
@@ -131,40 +132,39 @@ PQescapeBytea(unsigned char *bintext, size_t binlen, size_t *bytealen)
 	len = 1;
 
 	vp = bintext;
-	for (i = binlen; i != 0; i--, vp++)
+	for (i = binlen; i > 0; i--, vp++)
 	{
-		if (*vp == 0)
-			len += 5;
-		else if (*vp == 39)
+		if (*vp == 0 || *vp >= 0x80)
+			len += 5;	/* '5' is for '\\ooo' */
+		else if (*vp == '\'')
 			len += 2;
-		else if (*vp == 92)
+		else if (*vp == '\\')
 			len += 4;
 		else
 			len++;
 	}
 
 	rp = result = (unsigned char *) malloc(len);
+	if (rp == NULL)
+		return NULL;
+
 	vp = bintext;
 	*bytealen = len;
 
-	for (i = binlen; i != 0; i--, vp++)
+	for (i = binlen; i > 0; i--, vp++)
 	{
-		if (*vp == 0)
+		if (*vp == 0 || *vp >= 0x80)
 		{
-			rp[0] = '\\';
-			rp[1] = '\\';
-			rp[2] = '0';
-			rp[3] = '0';
-			rp[4] = '0';
+			(void)sprintf(rp,"\\\\%03o",*vp);
 			rp += 5;
 		}
-		else if (*vp == 39)
+		else if (*vp == '\'')
 		{
 			rp[0] = '\\';
 			rp[1] = '\'';
 			rp += 2;
 		}
-		else if (*vp == 92)
+		else if (*vp == '\\')
 		{
 			rp[0] = '\\';
 			rp[1] = '\\';
@@ -224,34 +224,36 @@ PQunescapeBytea(unsigned char *strtext, size_t *retbuflen)
 				if(*sp == '\'') /* state=5 */
 				{ /* replace \' with 39 */
 					bp--;
-					*bp = 39;
+					*bp = '\'';
 					buflen--;
 					state=0;
 				}
 				else if(*sp == '\\') /* state=6 */
 				{ /* replace \\ with 92 */
 					bp--;
-					*bp = 92;
+					*bp = '\\';
 					buflen--;
 					state=0;
 				}
 				else
 				{
-					if(*sp == '0')state=2;
+					if(isdigit(*sp))state=2;
 					else state=0;
 					*bp = *sp;
 				}
 				break;
 			case 2:
-				if(*sp == '0')state=3;
+				if(isdigit(*sp))state=3;
 				else state=0;
 				*bp = *sp;
 				break;
 			case 3:
-				if(*sp == '0') /* state=4 */
+				if(isdigit(*sp)) /* state=4 */
 				{
+					int v;
 					bp -= 3;
-					*bp = 0;
+					sscanf(sp-2, "%03o", &v);
+					*bp = v;
 					buflen -= 3;
 					state=0;
 				}
@@ -263,7 +265,9 @@ PQunescapeBytea(unsigned char *strtext, size_t *retbuflen)
 				break;
 		}
 	}
-	realloc(buffer,buflen);
+	buffer = realloc(buffer,buflen);
+	if (buffer == NULL)
+		return NULL;
 
 	*retbuflen=buflen;
 	return buffer;
