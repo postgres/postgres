@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.212 2004/12/13 18:05:08 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.213 2004/12/14 00:36:12 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1447,6 +1447,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
       <tbody>
        <row>
         <entry><systemitem class="osname">AIX</></entry>
+        <entry><systemitem>PowerPC</></entry>
+        <entry>8.0.0</entry>
+        <entry>Travis P (<email>twp@castle.fastmail.fm</email>), 2004-12-12</entry>
+        <entry>see also <filename>doc/FAQ_AIX</filename></entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">AIX</></entry>
         <entry><systemitem>RS6000</></entry>
         <entry>8.0.0</entry>
         <entry>Hans-J&uuml;rgen Sch&ouml;nig (<email>hs@cybertec.at</email>), 2004-12-06</entry>
@@ -1535,6 +1542,13 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry>8.0.0</entry>
         <entry>Peter Eisentraut (<email>peter_e@gmx.net</email>), 2004-12-06</entry>
         <entry>3.1 (sarge), kernel 2.6</entry>
+       </row>
+       <row>
+        <entry><systemitem class="osname">Fedora</></entry>
+        <entry><systemitem>AMD64</></entry>
+        <entry>8.0.0</entry>
+        <entry>John Gray (<email>jgray@azuli.co.uk</email>), 2004-12-12</entry>
+        <entry>FC3</entry>
        </row>
        <row>
         <entry><systemitem class="osname">Fedora</></entry>
@@ -1683,16 +1697,17 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>Sparc</></entry>
-        <entry>7.4</entry>
-        <entry>Christopher Browne (<email>cbbrowne@libertyrms.info</email>), 2003-10-26</entry>
-        <entry>2.8; see also <filename>doc/FAQ_Solaris</filename></entry>
+        <entry>8.0.0</entry>
+        <entry>Kenneth Marshall (<email>ktm@is.rice.edu</email>), 2004-12-07</entry>
+        <entry>Solaris 8; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Solaris</></entry>
         <entry><systemitem>x86</></entry>
-        <entry>7.4</entry>
-        <entry>Kurt Roeckx (<email>Q@ping.be</email>), 2003-10-26</entry>
-        <entry>2.6; see also <filename>doc/FAQ_Solaris</filename></entry>
+        <entry>8.0.0</entry>
+        <entry>Build farm <systemitem class="systemname">kudu</systemitem>, snapshot 2004-12-10 02:30:04 (<command>cc</command>);
+          <systemitem class="systemname">dragonfly</systemitem>, snapshot 2004-12-09 04:30:00 (<command>gcc</command>)</entry>
+        <entry>Solaris 9; see also <filename>doc/FAQ_Solaris</filename></entry>
        </row>
        <row>
         <entry><systemitem class="osname">Tru64 UNIX</></entry>
