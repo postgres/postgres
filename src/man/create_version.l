@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_version.l,v 1.4 1998/06/23 17:52:34 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_version.l,v 1.5 1998/06/24 13:21:25 momjian Exp $
 .TH "CREATE VERSION" SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 create version - construct a version class 
@@ -62,7 +62,7 @@ in [ONG90].
 create version foobar from barfoo [ "Jan 17 1990" ]
 .fi
 .SH "SEE ALSO"
-create_view(l), merge(l). 
+create_view(l). 
 .SH "BUGS"
 Snapshots (i.e., the optional 
 .IR abstime 

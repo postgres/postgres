@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.9 1998/06/23 17:52:31 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_function.l,v 1.10 1998/06/24 13:21:24 momjian Exp $
 .TH "CREATE FUNCTION" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 create function - define a new function
@@ -59,7 +59,7 @@ functions, as explained below.
 .SH "C FUNCTIONS"
 Functions written in C can be defined to Postgres, which will dynamically
 load them into its address space.  The loading happens either using
-.IR load (l)
+.IR load(l)
 or automatically the first time the function is necessary for
 execution. Repeated execution of a function will cause negligible
 additional overhead, as the function will remain in a main memory
@@ -201,7 +201,7 @@ Under HP-UX, DEC OSF/1, AIX and SunOS 4, all object files must be
 turned into
 .IR "shared libraries"
 using the operating system's native object file loader,
-.IR ld (1).
+.IR ld(1).
 .PP
 Under HP-UX, an object file must be compiled using the native HP-UX C
 compiler,

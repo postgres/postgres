@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.11 1998/04/26 04:09:51 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/sql.l,v 1.12 1998/06/24 13:21:30 momjian Exp $
 .TH INTRODUCTION SQL 11/5/95 PostgreSQL PostgreSQL
 .SH "Section 4 - SQL Commands (COMMANDS)"
 .SH "General Information"
@@ -173,7 +173,7 @@ New and current can only appear in the action portion of a rule, while
 other instance variables can be used in any SQL statement.
 .IR Composite_field
 is a field of of one of the Postgres composite types indicated in the 
-.IR information (l)
+.IR pgbuiltin(l)
 section, while successive composite fields address attributes in the
 class(s) to which the composite field evaluates.  Lastly,
 .IR field

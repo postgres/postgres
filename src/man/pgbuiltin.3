@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.10 1997/11/18 23:04:27 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgbuiltin.3,v 1.11 1998/06/24 13:21:29 momjian Exp $
 .TH PGBUILTIN INTRO 04/01/97 PostgreSQL PostgreSQL
 .PP
 .SH "DESCRIPTION"
@@ -80,14 +80,14 @@ and
 the input can have any of a wide variety of styles. For numeric date representations,
 European and US conventions can differ, and the proper interpretation is obtained
 by using the
-.IR set (l)
+.IR set(l)
 command before entering data.
 Output formats can be set to one of three styles: 
 ISO-8601, SQL (traditional Oracle/Ingres), and traditional
 Postgres (see section on
 .IR "absolute time" )
 with the SQL style having European and US variants (see
-.IR set (l)).
+.IR set(l)).
 
 In future releases, the number of date/time types will decrease, with the current
 implementation of datetime becoming timestamp, timespan becoming interval,
@@ -528,12 +528,12 @@ Consult those
 commands for more listings.
 .PP
 .SH "SEE ALSO"
-.IR set (l),
-.IR show (l),
-.IR reset (l),
-.IR psql (1).
+.IR set(l),
+.IR show(l),
+.IR reset(l),
+.IR psql(1).
 For examples on specifying literals of built-in types, see
-.IR SQL (l).
+.IR SQL(l).
 .PP
 .SH BUGS
 Although most of the input and output functions corresponding to the

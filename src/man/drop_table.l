@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_table.l,v 1.3 1998/06/23 17:52:36 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_table.l,v 1.4 1998/06/24 13:21:26 momjian Exp $
 .TH "DROP TABLE" SQL 09/26/97 PostgreSQL
 .SH NAME
 drop table - destroy existing classes
@@ -13,7 +13,7 @@ drop table - destroy existing classes
 removes classes from the data base.  Only its owner may destroy a
 class.  A class may be emptied of instances, but not destroyed, by
 using 
-.IR delete (l).
+.IR delete(l).
 .PP
 If a class being destroyed has secondary indices on it, then they will
 be removed first.  The removal of just a secondary index will not

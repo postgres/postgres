@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.16 1998/04/26 04:09:48 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.17 1998/06/24 13:21:27 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -488,13 +488,13 @@ backend server) into a buffer
 of size
 .I length .
 Like
-.I fgets (3),
+.I fgets(3),
 this routine copies up to 
 .I length "-1"
 characters into 
 .I string .
 It is like 
-.I gets (3),
+.I gets(3),
 however, in that it converts the terminating newline into a null
 character.
 .IP
@@ -599,9 +599,9 @@ routines no longer have any effect and should not be used.
 .IP
 Returns a pointer to static space containing whatever name the user
 has authenticated.  Use of this routine in place of calls to
-.I getenv (3)
+.I getenv(3)
 or 
-.I getpwuid (3)
+.I getpwuid(3)
 by applications is highly recommended, as it is entirely possible that
 the authenticated user name is 
 .B not

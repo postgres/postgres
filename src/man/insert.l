@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.10 1998/06/23 17:52:37 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.11 1998/06/24 13:21:27 momjian Exp $
 .TH INSERT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 insert - insert tuples to a relation
@@ -61,7 +61,7 @@ or
 is an integer constant and
 .IR array_str
 is an array constant (see
-.IR pgintro (1)).
+.IR pgintro(1)).
 .PP
 
 If the user does not specify any array bounds (as in the third form)
@@ -77,8 +77,7 @@ contain garbage.
 .PP
 You must have write or append access to a class in order to append to
 it, as well as read access on any class whose values are read in the
-target list or qualification (see
-.IR "change acl" (l)).
+target list or qualification.
 .SH EXAMPLES
 .nf
 --

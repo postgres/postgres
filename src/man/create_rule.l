@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.8 1998/06/23 17:52:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_rule.l,v 1.9 1998/06/24 13:21:24 momjian Exp $
 .TH "CREATE RULE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create rule - define a new rule
@@ -140,8 +140,7 @@ select * from EMP
 .PP
 You must have
 .IR "rule definition"
-access to a class in order to define a rule on it (see
-.IR "change acl" (l).
+access to a class in order to define a rule on it.
 .SH EXAMPLES
 .nf
 --

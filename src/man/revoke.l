@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/revoke.l,v 1.3 1998/01/11 22:17:56 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/revoke.l,v 1.4 1998/06/24 13:21:29 momjian Exp $
 .TH REVOKE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 revoke - revoke access privileges
@@ -26,4 +26,4 @@ revoke insert
 	from public
 .fi
 .SH "SEE ALSO"
-grant(l)
+grant(l).

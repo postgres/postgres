@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_user.l,v 1.2 1998/03/06 18:03:21 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_user.l,v 1.3 1998/06/24 13:21:24 momjian Exp $
 .TH "CREATE USER" SQL 01/26/98 PostgreSQL PostgreSQL
 .SH NAME
 create user -- create a new user within a PostgreSQL instance
@@ -87,4 +87,4 @@ create user tab with password jw8s0F4 valid until 'Jan 1 2002';
 create user tab with password jw8s0F4 createdb;
 .fi
 .SH "SEE ALSO"
-pg_crypt(3), alter_user(l), drop_user(l).
+alter_user(l), drop_user(l).

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.5 1998/06/23 17:52:37 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/listen.l,v 1.6 1998/06/24 13:21:27 momjian Exp $
 .TH "LISTEN" SQL 03/12/94 PostgreSQL PostgreSQL
 .SH NAME
 listen - listen for notification on a relation
@@ -40,5 +40,5 @@ There is no way to un-\c
 except to drop the connection (i.e., restart the backend server).
 .PP
 The
-.IR psql (1)
+.IR psql(1)
 command does not poll for asynchronous events.

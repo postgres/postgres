@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.11 1998/01/26 01:42:52 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.12 1998/06/24 13:21:29 momjian Exp $
 .TH POSTMASTER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 postmaster - run the Postgres postmaster
@@ -91,7 +91,7 @@ discarded.
 Specifies whether or not to use the authentication system 
 .IR "system"
 (see 
-.IR pgintro (1))
+.IR pgintro(1))
 for frontend applications to use in connecting to the 
 .IR postmaster
 process.  Specify
@@ -180,7 +180,7 @@ program to examine shared memory and semaphore state.
 .TP
 .BR "-o" " backend_options"
 The 
-.IR postgres (1)
+.IR postgres(1)
 options specified in
 .IR "backend_options"
 are passed to all backend server processes started by this
@@ -226,7 +226,7 @@ as this will prevent the
 from freeing the system resources (e.g., shared memory and semaphores)
 that it holds before dying.  This prevents you from having to deal with
 the problem with
-.IR shmat (2)
+.IR shmat(2)
 described below.
 .SH "EXAMPLES"
 .nf

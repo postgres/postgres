@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.6 1998/03/23 15:09:29 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/fetch.l,v 1.7 1998/06/24 13:21:26 momjian Exp $
 .TH FETCH SQL 01/23/93 PostgreSQL PostgreSQL
 .SH NAME
 fetch - fetch instance(s) from a cursor
@@ -32,9 +32,9 @@ view updates.  Consequently, users must issue explicit replace
 commands to update data.
 .PP
 Cursors may only be used inside of transaction blocks marked by 
-.IR begin (l)
+.IR begin(l)
 and
-.IR commit (l)
+.IR commit(l)
 because the data that they store spans multiple user queries.
 .SH EXAMPLE
 .nf

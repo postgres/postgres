@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_user.l,v 1.1 1998/01/25 07:42:02 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/drop_user.l,v 1.2 1998/06/24 13:21:26 momjian Exp $
 .TH "DROP USER" SQL 01/26/98 PostgreSQL PostgreSQL
 .SH NAME
 drop user -- drop user from within a PostgreSQL instance
@@ -27,4 +27,3 @@ drop user tab;
 
 .SH "SEE ALSO"
 alter_user(l), create_user(l).
-

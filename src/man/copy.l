@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.5 1998/06/23 17:52:30 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/copy.l,v 1.6 1998/06/24 13:21:24 momjian Exp $
 .TH COPY SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 copy - copy data to or from a class from or to a Unix file.
@@ -153,7 +153,7 @@ in the event of a
 but the target relation will, of course, be partially modified in a
 .BR "copy to" .
 The 
-.IR vacuum (l)
+.IR vacuum(l)
 query should be used to clean up after a failed
 .BR "copy" .
 .PP

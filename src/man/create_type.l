@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_type.l,v 1.5 1998/06/23 17:52:33 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_type.l,v 1.6 1998/06/24 13:21:24 momjian Exp $
 .TH "CREATE TYPE" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create type - define a new base data type 
@@ -28,7 +28,7 @@ defined for this database.
 .PP
 .BR "Create type"
 requires the registration of two functions (using
-.IR "create_function" (l))
+.IR create_function(l))
 before defining the type.  The representation of a new base type is
 determined by 
 .IR input_function ,

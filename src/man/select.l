@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.8 1998/06/23 17:52:37 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/select.l,v 1.9 1998/06/24 13:21:29 momjian Exp $
 .TH SELECT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 select - retrieve instances from a class
@@ -71,7 +71,7 @@ of the system depends on whether you used "nested dots" to project
 out attributes of the complex type or not.  See the examples below.
 .PP
 You must have read access to a class to read its values (see
-.IR "grant/revoke" (l).
+.IR grant/revoke(l).
 .SH EXAMPLES
 .nf
 --

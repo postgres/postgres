@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.7 1998/06/16 03:03:03 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.8 1998/06/24 13:21:27 momjian Exp $
 .TH "LARGE OBJECTS" INTRO 03/18/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 .PP
@@ -42,10 +42,10 @@ for dynamically-loaded C functions as well as for \*(LQ.
 .PP
 The Postgres large object interface is modeled after the Unix file
 system interface, with analogues of
-.I open (2),
-.I read (2),
-.I write (2),
-.I lseek (2),
+.I open(2),
+.I read(2),
+.I write(2),
+.I lseek(2),
 etc.  User functions call these routines to retrieve only the data of
 interest from a large object.  For example, if a large object type
 called
@@ -259,7 +259,7 @@ library.
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.7 1998/06/16 03:03:03 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/man/Attic/large_objects.3,v 1.8 1998/06/24 13:21:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

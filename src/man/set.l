@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.8 1998/01/11 22:17:58 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/set.l,v 1.9 1998/06/24 13:21:30 momjian Exp $
 .TH SET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 set - set run-time parameters for session
@@ -15,9 +15,9 @@ will modify configuration parameters for
 during a session.
 .PP
 Current values can be obtained using
-.IR show (l),
+.IR show(l),
 and values can be restored to the defaults using
-.IR reset (l).
+.IR reset(l).
 Parameters and values are case-insensitive.
 Note that the value field is always specified as a string, so
 is enclosed in single-quotes.
@@ -25,7 +25,7 @@ is enclosed in single-quotes.
 .IR DateStyle
 determines the output format for the date and time data types.
 See
-.IR "pgbuiltin" (3)
+.IR pgbuiltin(3)
 for more information on available styles.
 
 .ce 1

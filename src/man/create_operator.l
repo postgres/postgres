@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.5 1998/06/23 17:52:32 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/create_operator.l,v 1.6 1998/06/24 13:21:24 momjian Exp $
 .TH "CREATE OPERATOR" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 create operator - define a new user operator
@@ -66,7 +66,7 @@ The name of the operator,
 can be composed of symbols only.  Also, the
 .IR func_name
 procedure must have been previously defined using
-.IR "create_function" (l)
+.IR create_function(l)
 and must have one or two arguments.
 .PP
 .\" that multiple instances of the 
@@ -191,7 +191,7 @@ is present in the qualification, then Postgres may have to estimate the
 fraction of the instances in MYBOXES that satisfy the clause.  The
 function res_proc must be a registered function (meaning it is already
 defined using
-.IR "define function" (l))
+.IR create_function(l))
 which accepts one argument of the correct data type and returns a
 floating point number.  The query optimizer simply calls this
 function, passing the parameter "0,0,1,1"

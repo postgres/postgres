@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/grant.l,v 1.4 1998/03/26 21:01:47 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/grant.l,v 1.5 1998/06/24 13:21:26 momjian Exp $
 .TH GRANT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 grant - grant access control to a user or group
@@ -28,4 +28,4 @@ grant insert
 	to public
 .fi
 .SH "SEE ALSO"
-revoke(l)
+revoke(l).

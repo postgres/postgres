@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/reset.l,v 1.3 1998/01/11 22:17:55 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/reset.l,v 1.4 1998/06/24 13:21:29 momjian Exp $
 .TH RESET SQL 05/14/97 PostgreSQL PostgreSQL
 .SH NAME
 reset - restore run-time parameters for session to default values
@@ -15,13 +15,13 @@ will display the current configuration parameters for
 during a session.
 .PP
 The session can be configured using
-.IR set (l),
+.IR set(l),
 and values can be displayed using
-.IR show (l).
+.IR show(l).
 Parameters and values are case-insensitive.
 .PP
 See
-.IR set (l)
+.IR set(l)
 for more information on available variables.
 
 .SH EXAMPLES

@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/notify.l,v 1.3 1998/01/11 22:17:45 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/notify.l,v 1.4 1998/06/24 13:21:27 momjian Exp $
 .TH "NOTIFY" SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 notify - signal all frontends and backends listening on a class
@@ -12,7 +12,7 @@ notify - signal all frontends and backends listening on a class
 .BR notify
 is used to awaken all backends and consequently all frontends
 that have executed 
-.IR listen (l)
+.IR listen(l)
 on
 .IR class_name .
 This can be used either within an instance-level rule as part of the
@@ -45,4 +45,4 @@ never be processed.
 .SH "SEE ALSO"
 define rule(l),
 listen(l),
-libpq.
+libpq(3).

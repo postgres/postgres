@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/pgintro.1,v 1.6 1998/06/24 13:05:01 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/pgintro.1,v 1.7 1998/06/24 13:21:29 momjian Exp $
 .TH PGINTRO UNIX 11/05/95 PostgreSQL PostgreSQL
 .SP INFORMATION UNIX 11/05/95
 .BH "SECTION 2 - Unix COMMANDS (Unix)"
@@ -36,7 +36,7 @@ or DBA, is the person who is responsible for installing Postgres to
 enforce a security policy for a site.  The DBA can add new users by
 the method described below 
 and maintain a set of template databases for use by
-.IR createdb (1).
+.IR createdb(1).
 .PP
 The
 .IR postmaster
@@ -51,7 +51,7 @@ can take several command-line arguments to tune its behavior.
 However,
 supplying arguments is necessary only if you intend to run multiple
 sites or a non-default site.  See
-.IR postmaster (1)
+.IR postmaster(1)
 for details.
 .PP
 The
@@ -97,7 +97,7 @@ identity is performed in a variety of ways.
 .SS "From the user shell"
 A backend server started from a user shell notes the user's (effective)
 user-id before performing a 
-.IR setuid (3)
+.IR setuid(3)
 to the user-id of user \*(lqpostgres\*(rq.  The effective user-id is used
 as the basis for access control checks.  No other authentication is
 conducted.
@@ -126,7 +126,7 @@ system catalogs (or modification of their schemas) is never allowed.
 .SS "Access Privilege
 The use of access privilege to limit reading, writing and setting
 of rules on classes is covered in
-.IR "grant/revoke" (l).
+.IR grant/revoke(l).
 .SS "Class removal and schema modification"
 Commands that destroy or modify the structure of an existing class,
 such as
@@ -260,9 +260,9 @@ normal
 .IR Kerberos
 service.  For details on the use of authentication, see the manual
 pages for 
-.IR postmaster (1)
+.IR postmaster(1)
 and 
-.IR psql (1).
+.IR psql(1).
 .PP
 In the 
 .IR Kerberos

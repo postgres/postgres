@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/delete.l,v 1.3 1998/01/11 22:17:24 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/delete.l,v 1.4 1998/06/24 13:21:25 momjian Exp $
 .TH DELETE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 delete - delete instances from a class
@@ -17,9 +17,7 @@ If the qualification is absent, the effect is to delete all instances
 in the class.  The result is a valid, but empty class.
 .PP
 You must have write access to the class in order to modify it, as well
-as read access to any class whose values are read in the qualification
-(see
-.IR "change acl" (l).
+as read access to any class whose values are read in the qualification.
 .SH EXAMPLE
 .nf
 --
