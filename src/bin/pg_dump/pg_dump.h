@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.55 2000/11/27 20:51:40 momjian Exp $
+ * $Id: pg_dump.h,v 1.56 2001/01/12 15:41:29 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -116,7 +116,7 @@ typedef struct _tableInfo
 	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */
 	int			ntrig;			/* # of triggers */
 	TrigInfo	*triggers;		/* Triggers on the table */
-	char	   *primary_key;	/* PRIMARY KEY of the table, if any */
+	char	   *pkIndexOid;		/* Primary Key index OID */
 	char	   *primary_key_name;	/* PRIMARY KEY name, if any */
 } TableInfo;
 
@@ -128,6 +128,7 @@ typedef struct _inhInfo
 
 typedef struct _indInfo
 {
+	char	   *oid;			/* Oid of the pg_index entry */
 	char	   *indoid;			/* oid of the pg_class entry for the index */
 	char	   *indexrelname;	/* name of the secondary index class */
 	char	   *indrelname;		/* name of the indexed heap class */
@@ -139,6 +140,7 @@ typedef struct _indInfo
 										 * attributes */
 	char	   *indclass[INDEX_MAX_KEYS];		/* opclass of the keys */
 	char	   *indisunique;	/* is this index unique? */
+	char	   *indisprimary;	/* is this a PK index? */
 } IndInfo;
 
 typedef struct _aggInfo
@@ -253,6 +255,7 @@ extern void dumpAggs(Archive *fout, AggInfo *agginfo, int numAggregates,
 extern void dumpOprs(Archive *fout, OprInfo *agginfo, int numOperators,
 		 TypeInfo *tinfo, int numTypes);
 extern void dumpTables(Archive *fout, TableInfo *tbinfo, int numTables,
+		   IndInfo *indinfo, int numIndices,
 		   InhInfo *inhinfo, int numInherits,
 		   TypeInfo *tinfo, int numTypes, const char *tablename,
 		   const bool acls, const bool oids,

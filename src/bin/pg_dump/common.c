@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.48 2000/12/03 20:45:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.49 2001/01/12 15:41:29 pjw Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -270,12 +270,14 @@ dumpSchema(Archive  *fout,
 	int			numInherits;
 	int			numAggregates;
 	int			numOperators;
+	int			numIndices;
 	TypeInfo   *tinfo = NULL;
 	FuncInfo   *finfo = NULL;
 	AggInfo    *agginfo = NULL;
 	TableInfo  *tblinfo = NULL;
 	InhInfo    *inhinfo = NULL;
 	OprInfo    *oprinfo = NULL;
+	IndInfo    *indinfo = NULL;
 
 	if (g_verbose)
 		fprintf(stderr, "%s reading user-defined types %s\n",
@@ -301,6 +303,11 @@ dumpSchema(Archive  *fout,
 		fprintf(stderr, "%s reading user-defined tables %s\n",
 				g_comment_start, g_comment_end);
 	tblinfo = getTables(&numTables, finfo, numFuncs);
+
+	if (g_verbose)
+		fprintf(stderr, "%s reading indices information %s\n",
+				g_comment_start, g_comment_end);
+	indinfo = getIndices(&numIndices);
 
 	if (g_verbose)
 		fprintf(stderr, "%s reading table inheritance information %s\n",
@@ -336,8 +343,17 @@ dumpSchema(Archive  *fout,
 	if (g_verbose)
 		fprintf(stderr, "%s dumping out tables %s\n",
 				g_comment_start, g_comment_end);
-	dumpTables(fout, tblinfo, numTables, inhinfo, numInherits,
+
+	dumpTables(fout, tblinfo, numTables, indinfo, numIndices, inhinfo, numInherits,
 			   tinfo, numTypes, tablename, aclsSkip, oids, schemaOnly, dataOnly);
+
+	if (fout && !dataOnly)
+	{
+		if (g_verbose)
+			fprintf(stderr, "%s dumping out indices %s\n",
+					g_comment_start, g_comment_end);
+		dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
+	}
 
 	if (!tablename && !dataOnly)
 	{
@@ -377,35 +393,8 @@ dumpSchema(Archive  *fout,
 	clearTypeInfo(tinfo, numTypes);
 	clearFuncInfo(finfo, numFuncs);
 	clearInhInfo(inhinfo, numInherits);
-	return tblinfo;
-}
-
-/*
- * dumpSchemaIdx:
- *	  dump indexes at the end for performance
- *
- */
-
-extern void
-dumpSchemaIdx(Archive *fout, const char *tablename,
-			  TableInfo *tblinfo, int numTables)
-{
-	int			numIndices;
-	IndInfo    *indinfo;
-
-	if (g_verbose)
-		fprintf(stderr, "%s reading indices information %s\n",
-				g_comment_start, g_comment_end);
-	indinfo = getIndices(&numIndices);
-
-	if (fout)
-	{
-		if (g_verbose)
-			fprintf(stderr, "%s dumping out indices %s\n",
-					g_comment_start, g_comment_end);
-		dumpIndices(fout, indinfo, numIndices, tblinfo, numTables, tablename);
-	}
 	clearIndInfo(indinfo, numIndices);
+	return tblinfo;
 }
 
 /* flagInhAttrs -

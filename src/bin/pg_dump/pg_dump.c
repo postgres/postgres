@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.186 2001/01/12 04:32:07 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.187 2001/01/12 15:41:29 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -155,6 +155,7 @@ static char *GetPrivileges(const char *s);
 
 static int dumpBlobs(Archive *AH, char*, void*);
 static int dumpDatabase(Archive *AH);
+static PQExpBuffer getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo);
 
 extern char *optarg;
 extern int	optind,
@@ -1027,7 +1028,6 @@ main(int argc, char **argv)
 	if (!dataOnly)				/* dump indexes and triggers at the end
 								 * for performance */
 	{
-		dumpSchemaIdx(g_fout, tablename, tblinfo, numTables);
 		dumpTriggers(g_fout, tablename, tblinfo, numTables);
 		dumpRules(g_fout, tablename, tblinfo, numTables);
 	}
@@ -1038,6 +1038,7 @@ main(int argc, char **argv)
 	MoveToEnd(g_fout, "TABLE DATA");
 	MoveToEnd(g_fout, "BLOBS");
 	MoveToEnd(g_fout, "INDEX");
+	MoveToEnd(g_fout, "CONSTRAINT");
 	MoveToEnd(g_fout, "TRIGGER");
 	MoveToEnd(g_fout, "RULE");
 	MoveToEnd(g_fout, "SEQUENCE SET");
@@ -1568,8 +1569,6 @@ clearTableInfo(TableInfo *tblinfo, int numTables)
 			free(tblinfo[i].typnames);
 		if (tblinfo[i].notnull)
 			free(tblinfo[i].notnull);
-		if (tblinfo[i].primary_key)
-			free(tblinfo[i].primary_key);
 		if (tblinfo[i].primary_key_name)
 			free(tblinfo[i].primary_key_name);
 	}
@@ -1656,6 +1655,8 @@ clearIndInfo(IndInfo *ind, int numIndices)
 			free(ind[i].indproc);
 		if (ind[i].indisunique)
 			free(ind[i].indisunique);
+		if (ind[i].indisprimary)
+			free(ind[i].indisprimary);
 		for (a = 0; a < INDEX_MAX_KEYS; ++a)
 		{
 			if (ind[i].indkey[a])
@@ -2132,50 +2133,36 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 		if (strcmp(PQgetvalue(res, i, i_relhasindex), "t") == 0)
 		{
 			PGresult   *res2;
-			char		str[INDEX_MAX_KEYS * (NAMEDATALEN * 2 + 4) + 1];
-			int			j;
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query,
-							  "SELECT a.attname "
-						   "FROM pg_index i, pg_class c, pg_attribute a "
-							  "WHERE i.indisprimary AND i.indrelid = %s "
-							  "  AND i.indexrelid = c.oid AND a.attnum > 0 AND a.attrelid = c.oid "
-							  "ORDER BY a.attnum ",
+							  "SELECT Oid FROM pg_index i WHERE i.indisprimary AND i.indrelid = %s ",
 							  tblinfo[i].oid);
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
 			{
-				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s",
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) failed.  Explanation from backend: %s\n",
 						PQerrorMessage(g_conn));
 				exit_nicely(g_conn);
 			}
 
-			str[0] = '\0';
-			for (j = 0; j < PQntuples(res2); j++)
-			{
-				if (strlen(str) > 0)
-					strcat(str, ", ");
-				strcat(str, fmtId(PQgetvalue(res2, j, 0), force_quotes));
+			if (PQntuples(res2) > 1) {
+				fprintf(stderr, "getTables(): SELECT (for PRIMARY KEY) produced more than one row.\n");
+				exit_nicely(g_conn);
 			}
 
-			if (strlen(str) > 0)
-			{
-				tblinfo[i].primary_key = strdup(str);
-				if (tblinfo[i].primary_key == NULL)
-				{
-					perror("strdup");
-					exit(1);
-				}
+			if (PQntuples(res2) == 1) {
+				tblinfo[i].pkIndexOid = strdup(PQgetvalue(res2, 0, 0));
+			} else {
+				tblinfo[i].pkIndexOid = NULL;
 			}
-			else
-				tblinfo[i].primary_key = NULL;
+
 		}
 		else
-			tblinfo[i].primary_key = NULL;
+			tblinfo[i].pkIndexOid = NULL;
 
 		/* Get primary key name (if primary key exist) */
-		if (tblinfo[i].primary_key)
+		if (tblinfo[i].pkIndexOid != NULL)
 		{
 			PGresult   *res2;
 			int		   n;
@@ -2695,6 +2682,8 @@ getIndices(int *numIndices)
 	int			i_indclass;
 	int			i_indisunique;
 	int			i_indoid;
+	int			i_oid;
+	int			i_indisprimary;
 
 	/*
 	 * find all the user-defined indices. We do not handle partial
@@ -2706,13 +2695,13 @@ getIndices(int *numIndices)
 	 */
 
 	appendPQExpBuffer(query,
-					  "SELECT t1.oid as indoid, t1.relname as indexrelname, t2.relname as indrelname, "
+					  "SELECT i.oid, t1.oid as indoid, t1.relname as indexrelname, t2.relname as indrelname, "
 					  "i.indproc, i.indkey, i.indclass, "
-					  "a.amname as indamname, i.indisunique "
+					  "a.amname as indamname, i.indisunique, i.indisprimary "
 					"from pg_index i, pg_class t1, pg_class t2, pg_am a "
 				   "WHERE t1.oid = i.indexrelid and t2.oid = i.indrelid "
 					  "and t1.relam = a.oid and i.indexrelid > '%u'::oid "
-					  "and t2.relname !~ '^pg_' and not i.indisprimary",
+					  "and t2.relname !~ '^pg_' ",
 					  g_last_builtin_oid);
 
 	res = PQexec(g_conn, query->data);
@@ -2732,6 +2721,7 @@ getIndices(int *numIndices)
 
 	memset((char *) indinfo, 0, ntups * sizeof(IndInfo));
 
+	i_oid = PQfnumber(res, "oid");
 	i_indoid = PQfnumber(res, "indoid");
 	i_indexrelname = PQfnumber(res, "indexrelname");
 	i_indrelname = PQfnumber(res, "indrelname");
@@ -2740,9 +2730,11 @@ getIndices(int *numIndices)
 	i_indkey = PQfnumber(res, "indkey");
 	i_indclass = PQfnumber(res, "indclass");
 	i_indisunique = PQfnumber(res, "indisunique");
+	i_indisprimary = PQfnumber(res, "indisprimary");
 
 	for (i = 0; i < ntups; i++)
 	{
+		indinfo[i].oid = strdup(PQgetvalue(res, i, i_oid));
 		indinfo[i].indoid = strdup(PQgetvalue(res, i, i_indoid));
 		indinfo[i].indexrelname = strdup(PQgetvalue(res, i, i_indexrelname));
 		indinfo[i].indrelname = strdup(PQgetvalue(res, i, i_indrelname));
@@ -2755,6 +2747,7 @@ getIndices(int *numIndices)
 						  indinfo[i].indclass,
 						  INDEX_MAX_KEYS);
 		indinfo[i].indisunique = strdup(PQgetvalue(res, i, i_indisunique));
+		indinfo[i].indisprimary = strdup(PQgetvalue(res, i, i_indisprimary));
 	}
 	PQclear(res);
 	return indinfo;
@@ -3551,6 +3544,7 @@ dumpACL(Archive *fout, TableInfo tbinfo)
 
 void
 dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
+		   IndInfo *indinfo, int numIndices,
 		   InhInfo *inhinfo, int numInherits,
 		   TypeInfo *tinfo, int numTypes, const char *tablename,
 		   const bool aclsSkip, const bool oids,
@@ -3651,6 +3645,8 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 					}
 				}
 
+
+
 				/* put the CONSTRAINTS inside the table def */
 				for (k = 0; k < tblinfo[i].ncheck; k++)
 				{
@@ -3661,16 +3657,35 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 								  tblinfo[i].check_expr[k]);
 				}
 
-				/* PRIMARY KEY */
-				if (tblinfo[i].primary_key)
+				/* Primary Key */
+				if (tblinfo[i].pkIndexOid != NULL)
 				{
-					if (actual_atts + tblinfo[i].ncheck > 0)
+					PQExpBuffer	consDef;
+
+					/* Find the corresponding index */
+					for (k = 0; k < numIndices; k++)
+					{
+						if (strcmp(indinfo[k].oid, tblinfo[i].pkIndexOid) == 0) 
+							break;
+					}
+
+					if (k >= numIndices)
+					{
+						fprintf(stderr, "dumpTables(): failed sanity check, could not find index (%s) for PK constraint\n",
+									tblinfo[i].pkIndexOid);
+						exit_nicely(g_conn);
+					}
+
+					consDef = getPKconstraint(&tblinfo[i], &indinfo[k]);
+
+					if ( (actual_atts + tblinfo[i].ncheck) > 0)
 						appendPQExpBuffer(q, ",\n\t");
-					appendPQExpBuffer(q,
-									  "CONSTRAINT %s PRIMARY KEY (%s)",
-									  tblinfo[i].primary_key_name,
-									  tblinfo[i].primary_key);
+
+					appendPQExpBuffer(q, "%s", consDef->data);
+
+					destroyPQExpBuffer(consDef);
 				}
+
 
 				appendPQExpBuffer(q, "\n)");
 
@@ -3690,13 +3705,15 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 			}
 
 			if (!dataOnly) {
-					ArchiveEntry(fout, tblinfo[i].oid, fmtId(tblinfo[i].relname, false),
+
+				ArchiveEntry(fout, tblinfo[i].oid, fmtId(tblinfo[i].relname, false),
 								reltypename, NULL, q->data, delq->data, "", tblinfo[i].usename,
 								NULL, NULL);
-			}
 
-			if (!dataOnly && !aclsSkip)
-				dumpACL(fout, tblinfo[i]);
+				if (!aclsSkip)
+					dumpACL(fout, tblinfo[i]);
+
+			}
 
 			/* Dump Field Comments */
 
@@ -3717,6 +3734,41 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 		}
 	}
+}
+
+static PQExpBuffer getPKconstraint(TableInfo *tblInfo, IndInfo *indInfo)
+{
+	PQExpBuffer 	pkBuf = createPQExpBuffer();
+	int				k;
+	int				indkey;
+
+   	resetPQExpBuffer(pkBuf);
+
+	appendPQExpBuffer(pkBuf, "Constraint %s Primary Key (",
+						tblInfo->primary_key_name);
+
+
+	for (k = 0; k < INDEX_MAX_KEYS; k++)
+	{
+		char	   *attname;
+
+		indkey = atoi(indInfo->indkey[k]);
+		if (indkey == InvalidAttrNumber)
+			break;
+		indkey--;
+		if (indkey == ObjectIdAttributeNumber - 1)
+			attname = "oid";
+		else
+			attname = tblInfo->attnames[indkey];
+
+		appendPQExpBuffer(pkBuf, "%s%s",
+							(k == 0) ? "" : ", ", 
+							fmtId(attname, force_quotes));
+	}
+
+	appendPQExpBuffer(pkBuf, ")");
+
+	return pkBuf;
 }
 
 /*
@@ -3754,6 +3806,31 @@ dumpIndices(Archive *fout, IndInfo *indinfo, int numIndices,
 					indinfo[i].indrelname);
 			exit(1);
 		}
+
+		/* Handle PK indexes */
+		if (strcmp(indinfo[i].indisprimary, "t") == 0)
+		{
+/*
+ *			***PK: Enable this code when ALTER TABLE supports PK constraints. ***
+ *
+ *			PQExpBuffer	consDef = getPKconstraint(&tblinfo[tableInd], &indinfo[i]);
+ *
+ *			resetPQExpBuffer(attlist);
+ *
+ *			appendPQExpBuffer(attlist, "Alter Table %s Add %s;", 
+ *								fmtId(tblinfo[tableInd].relname, force_quotes),
+ *								consDef->data);
+ *
+ *			ArchiveEntry(fout, indinfo[i].oid, tblinfo[tableInd].primary_key_name, "CONSTRAINT", NULL, 
+ *							attlist->data, "",
+ *							"", tblinfo[tableInd].usename, NULL, NULL);
+ *
+ *			destroyPQExpBuffer(consDef);
+ */
+			/* Don't need to do anything else for this system-generated index */
+			continue;
+		}
+
 
 		if (strcmp(indinfo[i].indproc, "0") == 0)
 			funcname = NULL;
