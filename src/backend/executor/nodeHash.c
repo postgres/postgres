@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.91 2005/03/16 21:38:07 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHash.c,v 1.92 2005/03/31 02:02:52 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,6 @@ ExecHash(HashState *node)
 	 * get state info from node
 	 */
 	outerNode = outerPlanState(node);
-
 	hashtable = node->hashtable;
 
 	/*
@@ -78,11 +77,8 @@ ExecHash(HashState *node)
 		ExecHashTableInsert(hashtable, ExecFetchSlotTuple(slot), hashvalue);
 	}
 
-	/*
-	 * Return the slot so that we have the tuple descriptor when we need
-	 * to save/restore them.  -Jeff 11 July 1991  (XXX isn't this dead code?)
-	 */
-	return slot;
+	/* We needn't return a tuple slot or anything else */
+	return NULL;
 }
 
 /* ----------------------------------------------------------------
