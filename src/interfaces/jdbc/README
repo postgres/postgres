@@ -9,7 +9,7 @@ This isn't a guide on how to use JDBC - for that refer to Javasoft's web site:
 
 	http://www.javasoft.com/
 
-For problems with this driver, then refer to the postgres-interfaces email
+For problems with this driver, then refer to the postgres-jdbc email
 list:
 
 	http://www.postgresql.org/
@@ -29,7 +29,7 @@ COMPILING
 To compile you will need to have ANT installed. To obtain ant go to
 http://jakarta.apache.org/ant/index.html and download the binary. Being pure
 java it will run on virtually all java platforms. If you have any problems
-please email the INTERFACES list.
+please email the jdbc list.
 
 Once you have ANT, run the configure script in the top-level directory with
 the --with-java option.  Then proceed with 'make' and 'make install' as
