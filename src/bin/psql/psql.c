@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.58 1997/03/12 21:19:14 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.59 1997/04/10 11:54:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,6 +82,7 @@ handleCopyIn(PGresult * res, const bool mustprompt,
 	     FILE * copystream);
 static int      tableList(PsqlSettings * ps, bool deep_tablelist);
 static int      tableDesc(PsqlSettings * ps, char *table);
+static int	rightsList(PsqlSettings * ps);
 static void     prompt_for_password(char *username, char *password);
 static char *   make_connect_string(char *host, char *port, char *dbname,
 				    char *username, char *password);
@@ -173,6 +174,7 @@ slashUsage(PsqlSettings * ps)
     fprintf(stderr, " \\t           -- toggle table headings and row count (currently %s)\n", on(ps->opt.header));
     fprintf(stderr, " \\T [<html>]  -- set html3.0 <table ...> options (currently '%s')\n", ps->opt.tableOpt ? ps->opt.tableOpt : "");
     fprintf(stderr, " \\x           -- toggle expanded output (currently %s)\n", on(ps->opt.expanded));
+    fprintf(stderr, " \\z           -- list current grant/revoke permissions\n");
     fprintf(stderr, " \\! [<cmd>]   -- shell escape or command\n");
 }
 
@@ -301,6 +303,53 @@ tableList(PsqlSettings * ps, bool deep_tablelist)
     }
 }
 
+/*
+ * List Tables Grant/Revoke Permissions returns 0 if all went well
+ * 
+ */
+int
+rightsList(PsqlSettings * ps)
+{
+    char            listbuf[256];
+    int             nColumns;
+    int             i;
+
+    PGresult       *res;
+
+    listbuf[0] = '\0';
+    strcat(listbuf, "SELECT relname, relacl");
+    strcat(listbuf, "  FROM pg_class, pg_user ");
+    strcat(listbuf, "WHERE ( relkind = 'r' OR relkind = 'i') "); 
+    strcat(listbuf, "  and relname !~ '^pg_'");
+    strcat(listbuf, "  and relname !~ '^Inv[0-9]+'");
+    strcat(listbuf, "  and usesysid = relowner");
+    strcat(listbuf, "  ORDER BY relname ");
+    if (!(res = PSQLexec(ps, listbuf)))
+	return -1;
+    
+    nColumns = PQntuples(res);
+    if(nColumns > 0) {
+      /* Display the information */
+    
+      printf("\nDatabase    = %s\n", PQdb(ps->db));
+      printf(" +------------------+----------------------------------------------------+\n");
+      printf(" |  Relation        |             Grant/Revoke Permissions               |\n");
+      printf(" +------------------+----------------------------------------------------+\n");
+      
+      /* next, print out the instances */
+      for (i = 0; i < PQntuples(res); i++) {
+         printf(" | %-16.16s", PQgetvalue(res, i, 0));
+         printf(" | %-50.50s | ", PQgetvalue(res, i, 1));
+         printf("\n");
+       }
+       printf(" +------------------+----------------------------------------------------+\n");
+       PQclear(res);
+       return (0);
+    } else {
+	fprintf(stderr, "Couldn't find any tables!\n");
+	return (-1);
+    }
+}
 /*
  * Describe a table
  * 
@@ -1192,6 +1241,9 @@ HandleSlashCmds(PsqlSettings * settings,
 	    if (!settings->quiet)
 		fprintf(stderr, "field separater changed to '%s'\n", settings->opt.fieldSep);
 	}
+	break;
+    case 'z': 			/* list table rights (grant/revoke) */
+	rightsList(settings);
 	break;
     case 't':			/* toggle headers */
 	toggle(settings, &settings->opt.header, "output headings and row count");
