@@ -18,7 +18,7 @@ do
 	sed 's;/\*  *---;/*---X_X;g' |
 	detab -t4 -qc >/tmp/$$a
 	indent -bad -bap -bbb -bc -bl -d0 -cdb -nce -cli1 -di16 -nfc1 \
-		-lp -nip -nbc -psl -di1 -i4 -l75 /tmp/$$a >/tmp/$$ 2>&1
+		-lp -nip -nbc -psl -di1 -i4 -l75 -npro /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
 	then	echo "$FILE"
 		cat /tmp/$$
