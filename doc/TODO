@@ -257,7 +257,6 @@ Clients
 	o Implement SQLDA
 	o Allow multi-threaded use of SQLCA
 	o Solve cardinality > 1 for input descriptors / variables
-	o Understand structure definitions outside a declare section
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o Improve error handling
 	o Allow :var[:index] or :var[<integer>] as cvariable for an array var
