@@ -4,8 +4,8 @@ Makefile.PL
 Pg.pm
 Pg.xs
 README
-eg/ApachePg.pl
-eg/example.newstyle
-eg/example.oldstyle
+examples/ApachePg.pl
+examples/example.newstyle
+examples/example.oldstyle
 test.pl
 typemap
