@@ -1,4 +1,4 @@
-$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.5 2001/07/15 22:48:16 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/access/nbtree/README,v 1.6 2002/10/20 20:47:31 tgl Exp $
 
 This directory contains a correct implementation of Lehman and Yao's
 high-concurrency B-tree management algorithm (P. Lehman and S. Yao,
@@ -60,14 +60,19 @@ into Postgres:
    move right until we find a page whose right-link matches the page we
    came from.
 
-+  Read locks on a page are held for as long as a scan has a pointer
-   to the page.  However, locks are always surrendered before the
-   sibling page lock is acquired (for readers), so we remain deadlock-
-   free.  I will do a formal proof if I get bored anytime soon.
-   NOTE: nbtree.c arranges to drop the read lock, but not the buffer pin,
++  Read locks on a page are held for as long as a scan is examining a page.
+   But nbtree.c arranges to drop the read lock, but not the buffer pin,
    on the current page of a scan before control leaves nbtree.  When we
    come back to resume the scan, we have to re-grab the read lock and
-   then move right if the current item moved (see _bt_restscan()).
+   then move right if the current item moved (see _bt_restscan()).  Keeping
+   the pin ensures that the current item cannot move left or be deleted
+   (see btbulkdelete).
+
++  In most cases we release our lock and pin on a page before attempting
+   to acquire pin and lock on the page we are moving to.  In a few places
+   it is necessary to lock the next page before releasing the current one.
+   This is safe when moving right or up, but not when moving left or down
+   (else we'd create the possibility of deadlocks).
 
 +  Lehman and Yao fail to discuss what must happen when the root page
    becomes full and must be split.  Our implementation is to split the
