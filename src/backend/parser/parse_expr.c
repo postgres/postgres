@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.167 2004/03/24 22:40:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.168 2004/04/02 19:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,8 @@ bool		Transform_null_equals = false;
 static Node *typecast_expression(ParseState *pstate, Node *expr,
 					TypeName *typename);
 static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
+static Node *transformWholeRowRef(ParseState *pstate, char *schemaname,
+								  char *relname);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 
@@ -932,34 +934,29 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 {
 	int			numnames = length(cref->fields);
 	Node	   *node;
-	RangeVar   *rv;
 	int			levels_up;
 
 	/*----------
 	 * The allowed syntaxes are:
 	 *
 	 * A		First try to resolve as unqualified column name;
-	 *			if no luck, try to resolve as unqual. table name (A.*).
-	 * A.B		A is an unqual. table name; B is either a
+	 *			if no luck, try to resolve as unqualified table name (A.*).
+	 * A.B		A is an unqualified table name; B is either a
 	 *			column or function name (trying column name first).
 	 * A.B.C	schema A, table B, col or func name C.
 	 * A.B.C.D	catalog A, schema B, table C, col or func D.
-	 * A.*		A is an unqual. table name; means whole-row value.
+	 * A.*		A is an unqualified table name; means whole-row value.
 	 * A.B.*	whole-row value of table B in schema A.
 	 * A.B.C.*	whole-row value of table C in schema B in catalog A.
 	 *
 	 * We do not need to cope with bare "*"; that will only be accepted by
 	 * the grammar at the top level of a SELECT list, and transformTargetList
-	 * will take care of it before it ever gets here.
+	 * will take care of it before it ever gets here.  Also, "A.*" etc will
+	 * be expanded by transformTargetList if they appear at SELECT top level,
+	 * so here we are only going to see them as function or operator inputs.
 	 *
 	 * Currently, if a catalog name is given then it must equal the current
 	 * database name; we check it here and then discard it.
-	 *
-	 * For whole-row references, the result is an untransformed RangeVar,
-	 * which will work as the argument to a function call, but not in any
-	 * other context at present.  (We could instead coerce to a whole-row Var,
-	 * but that will fail for subselect and join RTEs, because there is no
-	 * pg_type entry for their rowtypes.)
 	 *----------
 	 */
 	switch (numnames)
@@ -1001,16 +998,12 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					if (cref->indirection == NIL &&
 						refnameRangeTblEntry(pstate, NULL, name,
 											 &levels_up) != NULL)
-					{
-						rv = makeNode(RangeVar);
-						rv->relname = name;
-						rv->inhOpt = INH_DEFAULT;
-						node = (Node *) rv;
-					}
+						node = transformWholeRowRef(pstate, NULL, name);
 					else
 						ereport(ERROR,
 								(errcode(ERRCODE_UNDEFINED_COLUMN),
-							errmsg("column \"%s\" does not exist", name)));
+								 errmsg("column \"%s\" does not exist",
+										name)));
 				}
 				break;
 			}
@@ -1022,10 +1015,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				/* Whole-row reference? */
 				if (strcmp(name2, "*") == 0)
 				{
-					rv = makeNode(RangeVar);
-					rv->relname = name1;
-					rv->inhOpt = INH_DEFAULT;
-					node = (Node *) rv;
+					node = transformWholeRowRef(pstate, NULL, name1);
 					break;
 				}
 
@@ -1038,12 +1028,10 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 					 * try it as a function call.  Here, we will create an
 					 * implicit RTE for tables not already entered.
 					 */
-					rv = makeNode(RangeVar);
-					rv->relname = name1;
-					rv->inhOpt = INH_DEFAULT;
+					node = transformWholeRowRef(pstate, NULL, name1);
 					node = ParseFuncOrColumn(pstate,
 											 makeList1(makeString(name2)),
-											 makeList1(rv),
+											 makeList1(node),
 											 false, false, true);
 				}
 				break;
@@ -1057,11 +1045,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				/* Whole-row reference? */
 				if (strcmp(name3, "*") == 0)
 				{
-					rv = makeNode(RangeVar);
-					rv->schemaname = name1;
-					rv->relname = name2;
-					rv->inhOpt = INH_DEFAULT;
-					node = (Node *) rv;
+					node = transformWholeRowRef(pstate, name1, name2);
 					break;
 				}
 
@@ -1070,13 +1054,10 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				if (node == NULL)
 				{
 					/* Try it as a function call */
-					rv = makeNode(RangeVar);
-					rv->schemaname = name1;
-					rv->relname = name2;
-					rv->inhOpt = INH_DEFAULT;
+					node = transformWholeRowRef(pstate, name1, name2);
 					node = ParseFuncOrColumn(pstate,
 											 makeList1(makeString(name3)),
-											 makeList1(rv),
+											 makeList1(node),
 											 false, false, true);
 				}
 				break;
@@ -1100,11 +1081,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				/* Whole-row reference? */
 				if (strcmp(name4, "*") == 0)
 				{
-					rv = makeNode(RangeVar);
-					rv->schemaname = name2;
-					rv->relname = name3;
-					rv->inhOpt = INH_DEFAULT;
-					node = (Node *) rv;
+					node = transformWholeRowRef(pstate, name2, name3);
 					break;
 				}
 
@@ -1113,13 +1090,10 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				if (node == NULL)
 				{
 					/* Try it as a function call */
-					rv = makeNode(RangeVar);
-					rv->schemaname = name2;
-					rv->relname = name3;
-					rv->inhOpt = INH_DEFAULT;
+					node = transformWholeRowRef(pstate, name2, name3);
 					node = ParseFuncOrColumn(pstate,
 											 makeList1(makeString(name4)),
-											 makeList1(rv),
+											 makeList1(node),
 											 false, false, true);
 				}
 				break;
@@ -1134,6 +1108,99 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	}
 
 	return transformIndirection(pstate, node, cref->indirection);
+}
+
+/*
+ * Construct a whole-row reference to represent the notation "relation.*".
+ *
+ * In simple cases, this will be a Var with varno set to the correct range
+ * table entry, and varattno == 0 to signal that it references the whole
+ * tuple.  (Use of zero here is unclean, since it could easily be confused
+ * with error cases, but it's not worth changing now.)  The vartype indicates
+ * a rowtype; either a named composite type, or RECORD.
+ *
+ * We also need the ability to build a row-constructor expression, but the
+ * infrastructure for that doesn't exist just yet.
+ */
+static Node *
+transformWholeRowRef(ParseState *pstate, char *schemaname, char *relname)
+{
+	Node	   *result;
+	RangeTblEntry *rte;
+	int			vnum;
+	int			sublevels_up;
+	Oid			toid;
+
+	/* Look up the referenced RTE, creating it if needed */
+
+	rte = refnameRangeTblEntry(pstate, schemaname, relname,
+							   &sublevels_up);
+
+	if (rte == NULL)
+		rte = addImplicitRTE(pstate, makeRangeVar(schemaname, relname));
+
+	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
+
+	/* Build the appropriate referencing node */
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+			/* relation: the rowtype is a named composite type */
+			toid = get_rel_type_id(rte->relid);
+			if (!OidIsValid(toid))
+				elog(ERROR, "could not find type OID for relation %u",
+					 rte->relid);
+			result = (Node *) makeVar(vnum,
+									  InvalidAttrNumber,
+									  toid,
+									  -1,
+									  sublevels_up);
+			break;
+		case RTE_FUNCTION:
+			toid = exprType(rte->funcexpr);
+			if (toid == RECORDOID || get_typtype(toid) == 'c')
+			{
+				/* func returns composite; same as relation case */
+				result = (Node *) makeVar(vnum,
+										  InvalidAttrNumber,
+										  toid,
+										  -1,
+										  sublevels_up);
+			}
+			else
+			{
+				/*
+				 * func returns scalar; instead of making a whole-row Var,
+				 * just reference the function's scalar output.  (XXX this
+				 * seems a tad inconsistent, especially if "f.*" was
+				 * explicitly written ...)
+				 */
+				result = (Node *) makeVar(vnum,
+										  1,
+										  toid,
+										  -1,
+										  sublevels_up);
+			}
+			break;
+		default:
+			/*
+			 * RTE is a join or subselect.  For the moment we represent this
+			 * as a whole-row Var of RECORD type, but this will not actually
+			 * work; need a row-constructor expression instead.
+			 *
+			 * XXX after fixing, be sure that unknown_attribute still
+			 * does the right thing.
+			 */
+			result = (Node *) makeVar(vnum,
+									  InvalidAttrNumber,
+									  RECORDOID,
+									  -1,
+									  sublevels_up);
+			break;
+	}
+
+	return result;
 }
 
 /*
@@ -1293,19 +1360,6 @@ exprType(Node *expr)
 			break;
 		case T_SetToDefault:
 			type = ((SetToDefault *) expr)->typeId;
-			break;
-		case T_RangeVar:
-
-			/*
-			 * If someone uses a bare relation name in an expression, we
-			 * will likely first notice a problem here (see comments in
-			 * transformColumnRef()).  Issue an appropriate error message.
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("relation reference \"%s\" cannot be used in an expression",
-							((RangeVar *) expr)->relname)));
-			type = InvalidOid;	/* keep compiler quiet */
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d", (int) nodeTag(expr));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.92 2004/01/14 23:01:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.93 2004/04/02 19:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,6 @@ static Node *scanNameSpaceForRelid(ParseState *pstate, Node *nsnode,
 					  Oid relid);
 static void scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 						 RangeTblEntry *rte1, const char *aliasname1);
-static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
-				 char *colname);
 static bool isForUpdate(ParseState *pstate, char *refname);
 static bool get_rte_attribute_is_dropped(RangeTblEntry *rte,
 							 AttrNumber attnum);
@@ -425,6 +423,24 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
 }
 
 /*
+ * Given an RT index and nesting depth, find the corresponding RTE.
+ * This is the inverse of RTERangeTablePosn.
+ */
+RangeTblEntry *
+GetRTEByRangeTablePosn(ParseState *pstate,
+					   int varno,
+					   int sublevels_up)
+{
+	while (sublevels_up-- > 0)
+	{
+		pstate = pstate->parentParseState;
+		Assert(pstate != NULL);
+	}
+	Assert(varno > 0 && varno <= length(pstate->p_rtable));
+	return rt_fetch(varno, pstate->p_rtable);
+}
+
+/*
  * scanRTEForColumn
  *	  Search the column names of a single RTE for the given name.
  *	  If found, return an appropriate Var node, else return NULL.
@@ -439,7 +455,7 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
  * expression can only appear in a FROM clause, and any table named in
  * FROM will be marked as requiring read access from the beginning.
  */
-static Node *
+Node *
 scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 {
 	Node	   *result = NULL;

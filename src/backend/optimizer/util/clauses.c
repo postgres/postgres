@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.167 2004/03/24 22:40:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.168 2004/04/02 19:06:57 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2550,16 +2550,6 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
-		case T_RangeVar:
-			/*
-			 * Give a useful complaint if someone uses a bare relation name
-			 * in an expression (see comments in transformColumnRef()).
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("relation reference \"%s\" cannot be used in an expression",
-							((RangeVar *) node)->relname)));
-			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
 				 (int) nodeTag(node));
@@ -3030,16 +3020,6 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->sub_targetlist, ininfo->sub_targetlist, List *);
 				return (Node *) newnode;
 			}
-			break;
-		case T_RangeVar:
-			/*
-			 * Give a useful complaint if someone uses a bare relation name
-			 * in an expression (see comments in transformColumnRef()).
-			 */
-			ereport(ERROR,
-					(errcode(ERRCODE_SYNTAX_ERROR),
-					 errmsg("relation reference \"%s\" cannot be used in an expression",
-							((RangeVar *) node)->relname)));
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.166 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.167 2004/04/02 19:06:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,14 +32,14 @@
 #include "utils/syscache.h"
 
 
-static Node *ParseComplexProjection(char *funcname, Node *first_arg);
+static Node *ParseComplexProjection(ParseState *pstate, char *funcname,
+									Node *first_arg);
 static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
 static Oid **gen_cross_product(InhPaths *arginh, int nargs);
 static FieldSelect *setup_field_select(Node *input, char *attname, Oid relid);
-static void unknown_attribute(const char *schemaname, const char *relname,
-				  const char *attname);
+static void unknown_attribute(ParseState *pstate, Node *relref, char *attname);
 
 
 /*
@@ -48,7 +48,9 @@ static void unknown_attribute(const char *schemaname, const char *relname,
  *	For historical reasons, Postgres tries to treat the notations tab.col
  *	and col(tab) as equivalent: if a single-argument function call has an
  *	argument of complex type and the (unqualified) function name matches
- *	any attribute of the type, we take it as a column projection.
+ *	any attribute of the type, we take it as a column projection.  Conversely
+ *	a function of a single complex-type argument can be written like a
+ *	column reference, allowing functions to act like computed columns.
  *
  *	Hence, both cases come through here.  The is_column parameter tells us
  *	which syntactic construct is actually being dealt with, but this is
@@ -57,9 +59,7 @@ static void unknown_attribute(const char *schemaname, const char *relname,
  *	a single argument (the putative table), unqualified function name
  *	equal to the column name, and no aggregate decoration.
  *
- *	In the function-call case, the argument expressions have been transformed
- *	already.  In the column case, we may get either a transformed expression
- *	or a RangeVar node as argument.
+ *	The argument expressions (in fargs) must have been transformed already.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
@@ -96,44 +96,32 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	}
 
 	/*
-	 * check for column projection: if function has one argument, and that
+	 * Check for column projection: if function has one argument, and that
 	 * argument is of complex type, and function name is not qualified,
 	 * then the "function call" could be a projection.	We also check that
 	 * there wasn't any aggregate decoration.
 	 */
 	if (nargs == 1 && !agg_star && !agg_distinct && length(funcname) == 1)
 	{
-		char	   *cname = strVal(lfirst(funcname));
+		Oid			argtype = exprType(first_arg);
 
-		/* Is it a not-yet-transformed RangeVar node? */
-		if (IsA(first_arg, RangeVar))
+		if (argtype == RECORDOID || ISCOMPLEX(argtype))
 		{
-			/* First arg is a relation. This could be a projection. */
-			retval = qualifiedNameToVar(pstate,
-									((RangeVar *) first_arg)->schemaname,
-										((RangeVar *) first_arg)->relname,
-										cname,
-										true);
+			retval = ParseComplexProjection(pstate,
+											strVal(lfirst(funcname)),
+											first_arg);
 			if (retval)
 				return retval;
-		}
-		else if (ISCOMPLEX(exprType(first_arg)))
-		{
 			/*
-			 * Attempt to handle projection of a complex argument. If
-			 * ParseComplexProjection can't handle the projection, we have
-			 * to keep going.
+			 * If ParseComplexProjection doesn't recognize it as a projection,
+			 * just press on.
 			 */
-			retval = ParseComplexProjection(cname, first_arg);
-			if (retval)
-				return retval;
 		}
 	}
 
 	/*
 	 * Okay, it's not a column projection, so it must really be a
-	 * function. Extract arg type info and transform RangeVar arguments
-	 * into varnodes of the appropriate form.
+	 * function. Extract arg type info in preparation for function lookup.
 	 */
 	MemSet(actual_arg_types, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -141,96 +129,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	foreach(i, fargs)
 	{
 		Node	   *arg = lfirst(i);
-		Oid			toid;
 
-		if (IsA(arg, RangeVar))
-		{
-			char	   *schemaname;
-			char	   *relname;
-			RangeTblEntry *rte;
-			int			vnum;
-			int			sublevels_up;
-
-			/*
-			 * a relation: look it up in the range table, or add if needed
-			 */
-			schemaname = ((RangeVar *) arg)->schemaname;
-			relname = ((RangeVar *) arg)->relname;
-
-			rte = refnameRangeTblEntry(pstate, schemaname, relname,
-									   &sublevels_up);
-
-			if (rte == NULL)
-				rte = addImplicitRTE(pstate, (RangeVar *) arg);
-
-			vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
-
-			/*
-			 * The parameter to be passed to the function is the whole
-			 * tuple from the relation.  We build a special VarNode to
-			 * reflect this -- it has varno set to the correct range table
-			 * entry, but has varattno == 0 to signal that the whole tuple
-			 * is the argument.
-			 */
-			switch (rte->rtekind)
-			{
-				case RTE_RELATION:
-					toid = get_rel_type_id(rte->relid);
-					if (!OidIsValid(toid))
-						elog(ERROR, "could not find type OID for relation %u",
-							 rte->relid);
-					/* replace RangeVar in the arg list */
-					lfirst(i) = makeVar(vnum,
-										InvalidAttrNumber,
-										toid,
-										-1,
-										sublevels_up);
-					break;
-				case RTE_FUNCTION:
-					toid = exprType(rte->funcexpr);
-					if (get_typtype(toid) == 'c')
-					{
-						/* func returns composite; same as relation case */
-						lfirst(i) = makeVar(vnum,
-											InvalidAttrNumber,
-											toid,
-											-1,
-											sublevels_up);
-					}
-					else
-					{
-						/* func returns scalar; use attno 1 instead */
-						lfirst(i) = makeVar(vnum,
-											1,
-											toid,
-											-1,
-											sublevels_up);
-					}
-					break;
-				default:
-
-					/*
-					 * RTE is a join or subselect; must fail for lack of a
-					 * named tuple type
-					 *
-					 * XXX FIXME
-					 */
-					if (is_column)
-						unknown_attribute(schemaname, relname,
-										  strVal(lfirst(funcname)));
-					else
-						ereport(ERROR,
-								(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-								 errmsg("cannot pass result of subquery or join \"%s\" to a function",
-										relname)));
-					toid = InvalidOid;	/* keep compiler quiet */
-					break;
-			}
-		}
-		else
-			toid = exprType(arg);
-
-		actual_arg_types[argn++] = toid;
+		actual_arg_types[argn++] = exprType(arg);
 	}
 
 	/*
@@ -281,25 +181,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 */
 		if (is_column)
 		{
-			char	   *colname = strVal(lfirst(funcname));
-			Oid			relTypeId;
-
 			Assert(nargs == 1);
-			if (IsA(first_arg, RangeVar))
-				unknown_attribute(((RangeVar *) first_arg)->schemaname,
-								  ((RangeVar *) first_arg)->relname,
-								  colname);
-			relTypeId = exprType(first_arg);
-			if (!ISCOMPLEX(relTypeId))
-				ereport(ERROR,
-						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-						 errmsg("attribute notation .%s applied to type %s, which is not a complex type",
-								colname, format_type_be(relTypeId))));
-			else
-				ereport(ERROR,
-						(errcode(ERRCODE_UNDEFINED_COLUMN),
-					  errmsg("attribute \"%s\" not found in data type %s",
-							 colname, format_type_be(relTypeId))));
+			Assert(length(funcname) == 1);
+			unknown_attribute(pstate, first_arg, strVal(lfirst(funcname)));
 		}
 
 		/*
@@ -1284,80 +1168,92 @@ setup_field_select(Node *input, char *attname, Oid relid)
  *	  handles function calls with a single argument that is of complex type.
  *	  If the function call is actually a column projection, return a suitably
  *	  transformed expression tree.	If not, return NULL.
- *
- * NB: argument is expected to be transformed already, ie, not a RangeVar.
  */
 static Node *
-ParseComplexProjection(char *funcname, Node *first_arg)
+ParseComplexProjection(ParseState *pstate, char *funcname, Node *first_arg)
 {
-	Oid			argtype = exprType(first_arg);
+	Oid			argtype;
 	Oid			argrelid;
 	AttrNumber	attnum;
-	FieldSelect *fselect;
 
+	/*
+	 * Special case for whole-row Vars so that we can resolve (foo.*).bar
+	 * even when foo is a reference to a subselect, join, or RECORD function.
+	 * A bonus is that we avoid generating an unnecessary FieldSelect; our
+	 * result can omit the whole-row Var and just be a Var for the selected
+	 * field.
+	 */
+	if (IsA(first_arg, Var) &&
+		((Var *) first_arg)->varattno == InvalidAttrNumber)
+	{
+		RangeTblEntry *rte;
+
+		rte = GetRTEByRangeTablePosn(pstate,
+									 ((Var *) first_arg)->varno,
+									 ((Var *) first_arg)->varlevelsup);
+		/* Return a Var if funcname matches a column, else NULL */
+		return scanRTEForColumn(pstate, rte, funcname);
+	}
+
+	/*
+	 * Else do it the hard way.  Note that if the arg is of RECORD type,
+	 * we will never recognize a column name, and always assume the item
+	 * must be a function.
+	 */
+	argtype = exprType(first_arg);
 	argrelid = typeidTypeRelid(argtype);
 	if (!argrelid)
-		return NULL;			/* probably should not happen */
+		return NULL;			/* can only happen if RECORD */
+
 	attnum = get_attnum(argrelid, funcname);
 	if (attnum == InvalidAttrNumber)
 		return NULL;			/* funcname does not match any column */
 
-	/*
-	 * Check for special cases where we don't want to return a
-	 * FieldSelect.
-	 */
-	switch (nodeTag(first_arg))
-	{
-		case T_Var:
-			{
-				Var		   *var = (Var *) first_arg;
-
-				/*
-				 * If the Var is a whole-row tuple, we can just replace it
-				 * with a simple Var reference.
-				 */
-				if (var->varattno == InvalidAttrNumber)
-				{
-					Oid			vartype;
-					int32		vartypmod;
-
-					get_atttypetypmod(argrelid, attnum,
-									  &vartype, &vartypmod);
-
-					return (Node *) makeVar(var->varno,
-											attnum,
-											vartype,
-											vartypmod,
-											var->varlevelsup);
-				}
-				break;
-			}
-		default:
-			break;
-	}
-
-	/* Else generate a FieldSelect expression */
-	fselect = setup_field_select(first_arg, funcname, argrelid);
-	return (Node *) fselect;
+	/* Success, so generate a FieldSelect expression */
+	return (Node *) setup_field_select(first_arg, funcname, argrelid);
 }
 
 /*
- * Simple helper routine for delivering "column does not exist" error message
+ * helper routine for delivering "column does not exist" error message
  */
 static void
-unknown_attribute(const char *schemaname, const char *relname,
-				  const char *attname)
+unknown_attribute(ParseState *pstate, Node *relref, char *attname)
 {
-	if (schemaname)
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_COLUMN),
-				 errmsg("column %s.%s.%s does not exist",
-						schemaname, relname, attname)));
-	else
+	RangeTblEntry *rte;
+
+	if (IsA(relref, Var))
+	{
+		/* Reference the RTE by alias not by actual table name */
+		rte = GetRTEByRangeTablePosn(pstate,
+									 ((Var *) relref)->varno,
+									 ((Var *) relref)->varlevelsup);
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_COLUMN),
 				 errmsg("column %s.%s does not exist",
-						relname, attname)));
+						rte->eref->aliasname, attname)));
+	}
+	else
+	{
+		/* Have to do it by reference to the type of the expression */
+		Oid			relTypeId = exprType(relref);
+
+		if (ISCOMPLEX(relTypeId))
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("column \"%s\" not found in data type %s",
+							attname, format_type_be(relTypeId))));
+		else if (relTypeId == RECORDOID)
+			ereport(ERROR,
+					(errcode(ERRCODE_UNDEFINED_COLUMN),
+					 errmsg("could not identify column \"%s\" in record data type",
+							attname)));
+		else
+			ereport(ERROR,
+					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+					 errmsg("column notation .%s applied to type %s, "
+							"which is not a composite type",
+							attname, format_type_be(relTypeId))));
+	}
 }
 
 /*
