@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.240 2003/02/08 20:20:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.241 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,8 +120,8 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	COPY_NODE_FIELD(lefttree);
 	COPY_NODE_FIELD(righttree);
 	COPY_NODE_FIELD(initPlan);
-	COPY_INTLIST_FIELD(extParam);
-	COPY_INTLIST_FIELD(locParam);
+	COPY_BITMAPSET_FIELD(extParam);
+	COPY_BITMAPSET_FIELD(allParam);
 	COPY_SCALAR_FIELD(nParamExec);
 }
 

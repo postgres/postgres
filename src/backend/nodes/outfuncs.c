@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.196 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.197 2003/02/09 00:30:39 tgl Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -255,8 +255,8 @@ _outPlanInfo(StringInfo str, Plan *node)
 	WRITE_NODE_FIELD(lefttree);
 	WRITE_NODE_FIELD(righttree);
 	WRITE_NODE_FIELD(initPlan);
-	WRITE_INTLIST_FIELD(extParam);
-	WRITE_INTLIST_FIELD(locParam);
+	WRITE_BITMAPSET_FIELD(extParam);
+	WRITE_BITMAPSET_FIELD(allParam);
 	WRITE_INT_FIELD(nParamExec);
 }
 

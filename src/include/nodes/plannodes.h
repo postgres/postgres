@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.63 2002/12/12 15:49:40 tgl Exp $
+ * $Id: plannodes.h,v 1.64 2003/02/09 00:30:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,7 @@
 #define PLANNODES_H
 
 #include "access/sdir.h"
+#include "nodes/bitmapset.h"
 #include "nodes/primnodes.h"
 
 
@@ -65,14 +66,17 @@ typedef struct Plan
 
 	/*
 	 * Information for management of parameter-change-driven rescanning
+	 *
+	 * extParam includes the paramIDs of all external PARAM_EXEC params
+	 * affecting this plan node or its children.  setParam params from
+	 * the node's initPlans are not included, but their extParams are.
+	 *
+	 * allParam includes all the extParam paramIDs, plus the IDs of local
+	 * params that affect the node (i.e., the setParams of its initplans).
+	 * These are _all_ the PARAM_EXEC params that affect this node.
 	 */
-	List	   *extParam;		/* indices of _all_ _external_ PARAM_EXEC
-								 * for this plan in global
-								 * es_param_exec_vals. Params from
-								 * setParam from initPlan-s are not
-								 * included, but their execParam-s are
-								 * here!!! */
-	List	   *locParam;		/* someones from setParam-s */
+	Bitmapset  *extParam;
+	Bitmapset  *allParam;
 
 	/*
 	 * We really need in some TopPlan node to store range table and

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.34 2002/12/14 00:17:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.35 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,7 +282,7 @@ ExecProcNode(PlanState *node)
 	if (node == NULL)
 		return NULL;
 
-	if (node->chgParam != NIL)	/* something changed */
+	if (node->chgParam != NULL)	/* something changed */
 		ExecReScan(node, NULL); /* let ReScan handle this */
 
 	if (node->instrument)
@@ -504,10 +504,10 @@ ExecEndNode(PlanState *node)
 	foreach(subp, node->subPlan)
 		ExecEndSubPlan((SubPlanState *) lfirst(subp));
 
-	if (node->chgParam != NIL)
+	if (node->chgParam != NULL)
 	{
-		freeList(node->chgParam);
-		node->chgParam = NIL;
+		bms_free(node->chgParam);
+		node->chgParam = NULL;
 	}
 
 	switch (nodeTag(node))

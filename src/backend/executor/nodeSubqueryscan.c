@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.17 2003/01/12 22:01:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubqueryscan.c,v 1.18 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -261,10 +261,10 @@ ExecSubqueryReScan(SubqueryScanState *node, ExprContext *exprCtxt)
 	 * ExecReScan doesn't know about my subplan, so I have to do
 	 * changed-parameter signaling myself.  This is just as well,
 	 * because the subplan has its own memory context in which its
-	 * chgParam lists live.
+	 * chgParam state lives.
 	 */
 	if (node->ss.ps.chgParam != NULL)
-		SetChangedParamList(node->subplan, node->ss.ps.chgParam);
+		UpdateChangedParamSet(node->subplan, node->ss.ps.chgParam);
 
 	/*
 	 * if chgParam of subnode is not null then plan will be re-scanned by

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.96 2003/01/23 05:10:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.97 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,25 +874,28 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	}
 }
 
+/*
+ * UpdateChangedParamSet
+ *		Add changed parameters to a plan node's chgParam set
+ */
 void
-SetChangedParamList(PlanState *node, List *newchg)
+UpdateChangedParamSet(PlanState *node, Bitmapset *newchg)
 {
-	List	   *nl;
+	Bitmapset  *parmset;
 
-	foreach(nl, newchg)
-	{
-		int			paramId = lfirsti(nl);
-
-		/* if this node doesn't depend on a param ... */
-		if (!intMember(paramId, node->plan->extParam) &&
-			!intMember(paramId, node->plan->locParam))
-			continue;
-		/* if this param is already in list of changed ones ... */
-		if (intMember(paramId, node->chgParam))
-			continue;
-		/* else - add this param to the list */
-		node->chgParam = lappendi(node->chgParam, paramId);
-	}
+	/*
+	 * The plan node only depends on params listed in its allParam set.
+	 * Don't include anything else into its chgParam set.
+	 */
+	parmset = bms_intersect(node->plan->allParam, newchg);
+	/*
+	 * Keep node->chgParam == NULL if there's not actually any members;
+	 * this allows the simplest possible tests in executor node files.
+	 */
+	if (!bms_is_empty(parmset))
+		node->chgParam = bms_join(node->chgParam, parmset);
+	else
+		bms_free(parmset);
 }
 
 /*

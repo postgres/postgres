@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.144 2003/02/04 00:50:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.145 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -268,14 +268,14 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	/*
 	 * If any subplans were generated, or if we're inside a subplan, build
-	 * initPlan, extParam and locParam lists for plan nodes.
+	 * initPlan list and extParam/allParam sets for plan nodes.
 	 */
 	if (PlannerPlanId != saved_planid || PlannerQueryLevel > 1)
 	{
 		Cost	initplan_cost = 0;
 
-		/* Prepare extParam/locParam data for all nodes in tree */
-		(void) SS_finalize_plan(plan, parse->rtable);
+		/* Prepare extParam/allParam sets for all nodes in tree */
+		SS_finalize_plan(plan, parse->rtable);
 
 		/*
 		 * SS_finalize_plan doesn't handle initPlans, so we have to manually
@@ -293,8 +293,8 @@ subquery_planner(Query *parse, double tuple_fraction)
 		{
 			SubPlan	   *initplan = (SubPlan *) lfirst(lst);
 
-			plan->extParam = set_unioni(plan->extParam,
-										initplan->plan->extParam);
+			plan->extParam = bms_add_members(plan->extParam,
+											 initplan->plan->extParam);
 			initplan_cost += initplan->plan->total_cost;
 		}
 

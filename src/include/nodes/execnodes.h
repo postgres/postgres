@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.93 2003/02/03 21:15:44 tgl Exp $
+ * $Id: execnodes.h,v 1.94 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include "executor/hashjoin.h"
 #include "executor/tuptable.h"
 #include "fmgr.h"
+#include "nodes/bitmapset.h"
 #include "nodes/params.h"
 #include "nodes/plannodes.h"
 #include "utils/tuplestore.h"
@@ -616,7 +617,7 @@ typedef struct PlanState
 	/*
 	 * State for management of parameter-change-driven rescanning
 	 */
-	List	   *chgParam;		/* integer list of IDs of changed Params */
+	Bitmapset  *chgParam;		/* set of IDs of changed Params */
 
 	/*
 	 * Other run-time state needed by most if not all node types.

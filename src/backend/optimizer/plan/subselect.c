@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.70 2003/02/08 20:20:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.71 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,10 +57,11 @@ int			PlannerPlanId = 0;	/* to assign unique ID to subquery plans */
  */
 
 
-typedef struct finalize_primnode_results
+typedef struct finalize_primnode_context
 {
-	List	   *paramids;		/* List of PARAM_EXEC paramids found */
-} finalize_primnode_results;
+	Bitmapset   *paramids;		/* Set of PARAM_EXEC paramids found */
+	Bitmapset   *outer_params;	/* Set of accessible outer paramids */
+} finalize_primnode_context;
 
 
 static List *convert_sublink_opers(List *lefthand, List *operOids,
@@ -69,7 +70,10 @@ static List *convert_sublink_opers(List *lefthand, List *operOids,
 static bool subplan_is_hashable(SubLink *slink, SubPlan *node);
 static Node *replace_correlation_vars_mutator(Node *node, void *context);
 static Node *process_sublinks_mutator(Node *node, bool *isTopQual);
-static bool finalize_primnode(Node *node, finalize_primnode_results *results);
+static Bitmapset *finalize_plan(Plan *plan, List *rtable,
+								Bitmapset *outer_params,
+								Bitmapset *valid_params);
+static bool finalize_primnode(Node *node, finalize_primnode_context *context);
 
 
 /*
@@ -178,6 +182,8 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	Query	   *subquery = (Query *) (slink->subselect);
 	double		tuple_fraction;
 	Plan	   *plan;
+	Bitmapset  *tmpset;
+	int			paramid;
 	List	   *lst;
 	Node	   *result;
 
@@ -246,15 +252,16 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	 * Make parParam list of params that current query level will pass to
 	 * this child plan.
 	 */
-	foreach(lst, plan->extParam)
+	tmpset = bms_copy(plan->extParam);
+	while ((paramid = bms_first_member(tmpset)) >= 0)
 	{
-		int			paramid = lfirsti(lst);
 		Var		   *var = nth(paramid, PlannerParamVar);
 
 		/* note varlevelsup is absolute level number */
 		if (var->varlevelsup == PlannerQueryLevel)
 			node->parParam = lappendi(node->parParam, paramid);
 	}
+	bms_free(tmpset);
 
 	/*
 	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, or
@@ -269,7 +276,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		Param	   *prm;
 
 		prm = generate_new_param(BOOLOID, -1);
-		node->setParam = lappendi(node->setParam, prm->paramid);
+		node->setParam = makeListi1(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
 	}
@@ -280,7 +287,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 
 		Assert(!te->resdom->resjunk);
 		prm = generate_new_param(te->resdom->restype, te->resdom->restypmod);
-		node->setParam = lappendi(node->setParam, prm->paramid);
+		node->setParam = makeListi1(prm->paramid);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		result = (Node *) prm;
 	}
@@ -294,7 +301,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 									  plan->targetlist,
 									  0,
 									  &node->paramIds);
-		node->setParam = nconc(node->setParam, listCopy(node->paramIds));
+		node->setParam = listCopy(node->paramIds);
 		PlannerInitPlan = lappend(PlannerInitPlan, node);
 		/*
 		 * The executable expressions are returned to become part of the
@@ -387,8 +394,8 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 				matplan->plan_rows = plan->plan_rows;
 				matplan->plan_width = plan->plan_width;
 				/* parameter kluge --- see comments above */
-				matplan->extParam = listCopy(plan->extParam);
-				matplan->locParam = listCopy(plan->locParam);
+				matplan->extParam = bms_copy(plan->extParam);
+				matplan->allParam = bms_copy(plan->allParam);
 				node->plan = plan = matplan;
 			}
 		}
@@ -769,44 +776,94 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 /*
  * SS_finalize_plan - do final sublink processing for a completed Plan.
  *
- * This recursively computes and sets the extParam and locParam lists
- * for every Plan node in the given tree.
+ * This recursively computes the extParam and allParam sets
+ * for every Plan node in the given plan tree.
  */
-List *
+void
 SS_finalize_plan(Plan *plan, List *rtable)
 {
-	List	   *extParam = NIL;
-	List	   *locParam = NIL;
-	finalize_primnode_results results;
+	Bitmapset  *outer_params = NULL;
+	Bitmapset  *valid_params = NULL;
+	int			paramid;
+	List	   *lst;
+
+	/*
+	 * First, scan the param list to discover the sets of params that
+	 * are available from outer query levels and my own query level.
+	 * We do this once to save time in the per-plan recursion steps.
+	 */
+	paramid = 0;
+	foreach(lst, PlannerParamVar)
+	{
+		Var		   *var = (Var *) lfirst(lst);
+
+		/* note varlevelsup is absolute level number */
+		if (var->varlevelsup < PlannerQueryLevel)
+		{
+			/* valid outer-level parameter */
+			outer_params = bms_add_member(outer_params, paramid);
+			valid_params = bms_add_member(valid_params, paramid);
+		}
+		else if (var->varlevelsup == PlannerQueryLevel &&
+				 var->varno == 0 && var->varattno == 0)
+		{
+			/* valid local parameter (i.e., a setParam of my child) */
+			valid_params = bms_add_member(valid_params, paramid);
+		}
+
+		paramid++;
+	}
+
+	/*
+	 * Now recurse through plan tree.
+	 */
+	(void) finalize_plan(plan, rtable, outer_params, valid_params);
+
+	bms_free(outer_params);
+	bms_free(valid_params);
+}
+
+/*
+ * Recursive processing of all nodes in the plan tree
+ *
+ * The return value is the computed allParam set for the given Plan node.
+ * This is just an internal notational convenience.
+ */
+static Bitmapset *
+finalize_plan(Plan *plan, List *rtable,
+			  Bitmapset *outer_params, Bitmapset *valid_params)
+{
+	finalize_primnode_context context;
 	List	   *lst;
 
 	if (plan == NULL)
-		return NIL;
+		return NULL;
 
-	results.paramids = NIL;		/* initialize list to NIL */
+	context.paramids = NULL;	/* initialize set to empty */
+	context.outer_params = outer_params;
 
 	/*
-	 * When we call finalize_primnode, results.paramids lists are
+	 * When we call finalize_primnode, context.paramids sets are
 	 * automatically merged together.  But when recursing to self, we have
-	 * to do it the hard way.  We want the paramids list to include params
+	 * to do it the hard way.  We want the paramids set to include params
 	 * in subplans as well as at this level.
 	 */
 
 	/* Find params in targetlist and qual */
-	finalize_primnode((Node *) plan->targetlist, &results);
-	finalize_primnode((Node *) plan->qual, &results);
+	finalize_primnode((Node *) plan->targetlist, &context);
+	finalize_primnode((Node *) plan->qual, &context);
 
 	/* Check additional node-type-specific fields */
 	switch (nodeTag(plan))
 	{
 		case T_Result:
 			finalize_primnode(((Result *) plan)->resconstantqual,
-							  &results);
+							  &context);
 			break;
 
 		case T_IndexScan:
 			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
-							  &results);
+							  &context);
 
 			/*
 			 * we need not look at indxqualorig, since it will have the
@@ -816,7 +873,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 
 		case T_TidScan:
 			finalize_primnode((Node *) ((TidScan *) plan)->tideval,
-							  &results);
+							  &context);
 			break;
 
 		case T_SubqueryScan:
@@ -828,7 +885,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 			 * subplan's extParams list, which represents the params it
 			 * needs from my level and higher levels.
 			 */
-			results.paramids = set_unioni(results.paramids,
+			context.paramids = bms_add_members(context.paramids,
 							 ((SubqueryScan *) plan)->subplan->extParam);
 			break;
 
@@ -839,39 +896,44 @@ SS_finalize_plan(Plan *plan, List *rtable)
 				rte = rt_fetch(((FunctionScan *) plan)->scan.scanrelid,
 							   rtable);
 				Assert(rte->rtekind == RTE_FUNCTION);
-				finalize_primnode(rte->funcexpr, &results);
+				finalize_primnode(rte->funcexpr, &context);
 			}
 			break;
 
 		case T_Append:
 			foreach(lst, ((Append *) plan)->appendplans)
-				results.paramids = set_unioni(results.paramids,
-								   SS_finalize_plan((Plan *) lfirst(lst),
-													rtable));
+			{
+				context.paramids =
+					bms_add_members(context.paramids,
+									finalize_plan((Plan *) lfirst(lst),
+												  rtable,
+												  outer_params,
+												  valid_params));
+			}
 			break;
 
 		case T_NestLoop:
 			finalize_primnode((Node *) ((Join *) plan)->joinqual,
-							  &results);
+							  &context);
 			break;
 
 		case T_MergeJoin:
 			finalize_primnode((Node *) ((Join *) plan)->joinqual,
-							  &results);
+							  &context);
 			finalize_primnode((Node *) ((MergeJoin *) plan)->mergeclauses,
-							  &results);
+							  &context);
 			break;
 
 		case T_HashJoin:
 			finalize_primnode((Node *) ((Join *) plan)->joinqual,
-							  &results);
+							  &context);
 			finalize_primnode((Node *) ((HashJoin *) plan)->hashclauses,
-							  &results);
+							  &context);
 			break;
 
 		case T_Hash:
 			finalize_primnode((Node *) ((Hash *) plan)->hashkeys,
-							  &results);
+							  &context);
 			break;
 
 		case T_Agg:
@@ -885,50 +947,55 @@ SS_finalize_plan(Plan *plan, List *rtable)
 			break;
 
 		default:
-			elog(ERROR, "SS_finalize_plan: node %d unsupported",
+			elog(ERROR, "finalize_plan: node %d unsupported",
 				 nodeTag(plan));
 	}
 
 	/* Process left and right child plans, if any */
-	results.paramids = set_unioni(results.paramids,
-								  SS_finalize_plan(plan->lefttree,
-												   rtable));
-	results.paramids = set_unioni(results.paramids,
-								  SS_finalize_plan(plan->righttree,
-												   rtable));
+	context.paramids = bms_add_members(context.paramids,
+									   finalize_plan(plan->lefttree,
+													 rtable,
+													 outer_params,
+													 valid_params));
+
+	context.paramids = bms_add_members(context.paramids,
+									   finalize_plan(plan->righttree,
+													 rtable,
+													 outer_params,
+													 valid_params));
 
 	/* Now we have all the paramids */
 
-	foreach(lst, results.paramids)
-	{
-		int			paramid = lfirsti(lst);
-		Var		   *var = nth(paramid, PlannerParamVar);
+	if (!bms_is_subset(context.paramids, valid_params))
+		elog(ERROR, "finalize_plan: plan shouldn't reference subplan's variable");
 
-		/* note varlevelsup is absolute level number */
-		if (var->varlevelsup < PlannerQueryLevel)
-			extParam = lappendi(extParam, paramid);
-		else if (var->varlevelsup > PlannerQueryLevel)
-			elog(ERROR, "SS_finalize_plan: plan shouldn't reference subplan's variable");
-		else
-		{
-			Assert(var->varno == 0 && var->varattno == 0);
-			locParam = lappendi(locParam, paramid);
-		}
+	plan->extParam = bms_intersect(context.paramids, outer_params);
+	plan->allParam = context.paramids;
+
+	/*
+	 * For speed at execution time, make sure extParam/allParam are actually
+	 * NULL if they are empty sets.
+	 */
+	if (bms_is_empty(plan->extParam))
+	{
+		bms_free(plan->extParam);
+		plan->extParam = NULL;
+	}
+	if (bms_is_empty(plan->allParam))
+	{
+		bms_free(plan->allParam);
+		plan->allParam = NULL;
 	}
 
-	plan->extParam = extParam;
-	plan->locParam = locParam;
-
-	return results.paramids;
+	return plan->allParam;
 }
 
 /*
- * finalize_primnode: build lists of params appearing
- * in the given expression tree.  NOTE: items are added to list passed in,
- * so caller must initialize list to NIL before first call!
+ * finalize_primnode: add IDs of all PARAM_EXEC params appearing in the given
+ * expression tree to the result set.
  */
 static bool
-finalize_primnode(Node *node, finalize_primnode_results *results)
+finalize_primnode(Node *node, finalize_primnode_context *context)
 {
 	if (node == NULL)
 		return false;
@@ -938,29 +1005,20 @@ finalize_primnode(Node *node, finalize_primnode_results *results)
 		{
 			int			paramid = (int) ((Param *) node)->paramid;
 
-			if (!intMember(paramid, results->paramids))
-				results->paramids = lconsi(paramid, results->paramids);
+			context->paramids = bms_add_member(context->paramids, paramid);
 		}
 		return false;			/* no more to do here */
 	}
 	if (is_subplan(node))
 	{
 		SubPlan	   *subplan = (SubPlan *) node;
-		List	   *lst;
 
-		/* Check extParam list for params to add to paramids */
-		foreach(lst, subplan->plan->extParam)
-		{
-			int			paramid = lfirsti(lst);
-			Var		   *var = nth(paramid, PlannerParamVar);
-
-			/* note varlevelsup is absolute level number */
-			if (var->varlevelsup < PlannerQueryLevel &&
-				!intMember(paramid, results->paramids))
-				results->paramids = lconsi(paramid, results->paramids);
-		}
+		/* Add outer-level params needed by the subplan to paramids */
+		context->paramids = bms_join(context->paramids,
+									 bms_intersect(subplan->plan->extParam,
+												   context->outer_params));
 		/* fall through to recurse into subplan args */
 	}
 	return expression_tree_walker(node, finalize_primnode,
-								  (void *) results);
+								  (void *) context);
 }

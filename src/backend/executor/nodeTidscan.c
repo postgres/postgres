@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.32 2003/02/03 15:07:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.33 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -349,7 +349,7 @@ ExecInitTidScan(TidScan *node, EState *estate)
 	Oid			relid;
 	Oid			reloid;
 	Relation	currentRelation;
-	List	   *execParam = NIL;
+	Bitmapset  *execParam = NULL;
 
 	/*
 	 * create state structure

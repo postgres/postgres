@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.43 2003/01/12 04:03:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.44 2003/02/09 00:30:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ ExecHashSubPlan(SubPlanState *node,
 	 * If first time through or we need to rescan the subplan, build
 	 * the hash table.
 	 */
-	if (node->hashtable == NULL || planstate->chgParam != NIL)
+	if (node->hashtable == NULL || planstate->chgParam != NULL)
 		buildSubPlanHash(node);
 
 	/*
@@ -218,22 +218,18 @@ ExecScanSubPlan(SubPlanState *node,
 	 * Set Params of this plan from parent plan correlation Vars
 	 */
 	pvar = node->args;
-	if (subplan->parParam != NIL)
+	foreach(lst, subplan->parParam)
 	{
-		foreach(lst, subplan->parParam)
-		{
-			ParamExecData *prm;
+		int		paramid = lfirsti(lst);
+		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
-			prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
-			Assert(pvar != NIL);
-			prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
-												   econtext,
-												   &(prm->isnull),
-												   NULL);
-			pvar = lnext(pvar);
-		}
-		planstate->chgParam = nconc(planstate->chgParam,
-									listCopy(subplan->parParam));
+		Assert(pvar != NIL);
+		prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
+											   econtext,
+											   &(prm->isnull),
+											   NULL);
+		pvar = lnext(pvar);
+		planstate->chgParam = bms_add_member(planstate->chgParam, paramid);
 	}
 	Assert(pvar == NIL);
 
@@ -686,7 +682,12 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 
 	/*
 	 * If this plan is un-correlated or undirect correlated one and want
-	 * to set params for parent plan then prepare parameters.
+	 * to set params for parent plan then mark parameters as needing
+	 * evaluation.
+	 *
+	 * Note that in the case of un-correlated subqueries we don't care
+	 * about setting parent->chgParam here: indices take care about
+	 * it, for others - it doesn't matter...
 	 */
 	if (subplan->setParam != NIL)
 	{
@@ -694,16 +695,11 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 
 		foreach(lst, subplan->setParam)
 		{
-			ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(lst)]);
+			int		paramid = lfirsti(lst);
+			ParamExecData *prm = &(estate->es_param_exec_vals[paramid]);
 
 			prm->execPlan = node;
 		}
-
-		/*
-		 * Note that in the case of un-correlated subqueries we don't care
-		 * about setting parent->chgParam here: indices take care about
-		 * it, for others - it doesn't matter...
-		 */
 	}
 
 	/*
@@ -884,7 +880,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 
 		if (subLinkType == EXISTS_SUBLINK)
 		{
-			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(subplan->setParam)]);
+			/* There can be only one param... */
+			int		paramid = lfirsti(subplan->setParam);
+			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
 			prm->value = BoolGetDatum(true);
@@ -914,9 +912,13 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		node->curTuple = tup;
 		MemoryContextSwitchTo(node->sub_estate->es_query_cxt);
 
+		/*
+		 * Now set all the setParam params from the columns of the tuple
+		 */
 		foreach(lst, subplan->setParam)
 		{
-			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
+			int		paramid = lfirsti(lst);
+			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
 			prm->value = heap_getattr(tup, i, tdesc, &(prm->isnull));
@@ -928,7 +930,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	{
 		if (subLinkType == EXISTS_SUBLINK)
 		{
-			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(subplan->setParam)]);
+			/* There can be only one param... */
+			int		paramid = lfirsti(subplan->setParam);
+			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
 			prm->value = BoolGetDatum(false);
@@ -938,7 +942,8 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		{
 			foreach(lst, subplan->setParam)
 			{
-				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[lfirsti(lst)]);
+				int		paramid = lfirsti(lst);
+				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 				prm->execPlan = NULL;
 				prm->value = (Datum) 0;
@@ -979,12 +984,12 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	EState	   *estate = parent->state;
 	List	   *lst;
 
-	if (subplan->parParam != NULL)
+	if (subplan->parParam != NIL)
 		elog(ERROR, "ExecReScanSetParamPlan: direct correlated subquery unsupported, yet");
-	if (subplan->setParam == NULL)
-		elog(ERROR, "ExecReScanSetParamPlan: setParam list is NULL");
-	if (planstate->plan->extParam == NULL)
-		elog(ERROR, "ExecReScanSetParamPlan: extParam list of plan is NULL");
+	if (subplan->setParam == NIL)
+		elog(ERROR, "ExecReScanSetParamPlan: setParam list is empty");
+	if (bms_is_empty(planstate->plan->extParam))
+		elog(ERROR, "ExecReScanSetParamPlan: extParam set of plan is empty");
 
 	/*
 	 * Don't actually re-scan: ExecSetParamPlan does it if needed.
@@ -995,10 +1000,10 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	 */
 	foreach(lst, subplan->setParam)
 	{
-		ParamExecData *prm = &(estate->es_param_exec_vals[lfirsti(lst)]);
+		int		paramid = lfirsti(lst);
+		ParamExecData *prm = &(estate->es_param_exec_vals[paramid]);
 
 		prm->execPlan = node;
+		parent->chgParam = bms_add_member(parent->chgParam, paramid);
 	}
-
-	parent->chgParam = nconc(parent->chgParam, listCopy(subplan->setParam));
 }
