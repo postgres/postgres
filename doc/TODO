@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jun  2 13:26:09 EDT 2003
+Last updated:		Mon Jun  2 14:42:27 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -150,6 +150,7 @@ Indexes
 * Add FILLFACTOR to btree index creation
 * Add concurrency to GIST
 * Improve concurrency of hash indexes (Neil)
+* Allow a single index to index multiple tables (for inheritance and subtables)
 
 
 Commands
@@ -406,6 +407,7 @@ Optimizer / Executor
 * Use CHECK constraints to improve optimizer decisions
 * Check GUC geqo_threshold to see if it is still accurate
 * Allow sorting, temp files, temp tables to use multiple work directories
+* Improve the planner to use CHECK constraints to prune the plan (for subtables)
 
 
 Miscellaneous
@@ -416,7 +418,9 @@ Miscellaneous
 * Use mmap() rather than SYSV shared memory or to write WAL files (?) [mmap]
 * Improve caching of attribute offsets when NULLs exist in the row
 * Add a script to ask system configuration questions and tune postgresql.conf
+* Allow partitioning of table into multiple subtables
 
+T
 
 Source Code
 ===========
