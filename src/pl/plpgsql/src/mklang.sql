@@ -1,7 +1,7 @@
 --
 -- PL/pgSQL language declaration
 --
--- $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/mklang.sql,v 1.2 1998/10/12 04:32:24 momjian Exp $
+-- $Header: /cvsroot/pgsql/src/pl/plpgsql/src/Attic/mklang.sql,v 1.3 1998/10/12 04:40:48 momjian Exp $
 --
 
 create function plpgsql_call_handler() returns opaque
