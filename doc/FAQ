@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 10 16:44:55 EDT 2002
+   Last updated: Mon Jun 10 22:22:31 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -323,29 +323,16 @@
           reduce lock contention.
           
    Performance
-          PostgreSQL runs in two modes. Normal fsync mode flushes every
-          completed transaction to disk, guaranteeing that if the OS
-          crashes or loses power in the next few seconds, all your data
-          is safely stored on disk. In this mode, we are slower than most
-          commercial databases, partly because few of them do such
-          conservative flushing to disk in their default modes. In
-          no-fsync mode, we are usually faster than commercial databases,
-          though in this mode, an OS crash could cause data corruption.
-          We are working to provide an intermediate mode that suffers
-          less performance overhead than full fsync mode, and will allow
-          data integrity within 30 seconds of an OS crash.
+          PostgreSQL has performance similar to other commercial and open
+          source databases. it is faster for some things, slower for
+          others.
           In comparison to MySQL or leaner database systems, we are
           slower on inserts/updates because we have transaction overhead.
           Of course, MySQL does not have any of the features mentioned in
-          the Features section above. We are built for flexibility and
-          features, though we continue to improve performance through
-          profiling and source code analysis. There is an interesting Web
-          page comparing PostgreSQL to MySQL at
-          http://openacs.org/why-not-mysql.html
-          We handle each user connection by creating a Unix process.
-          Backend processes share data buffers and locking information.
-          With multiple CPUs, multiple backends can easily run on
-          different CPUs.
+          the Features section above. We are built for reliability and
+          features, though we continue to improve performance in every
+          release. There is an interesting Web page comparing PostgreSQL
+          to MySQL at http://openacs.org/why-not-mysql.html
           
    Reliability
           We realize that a DBMS must be reliable, or it is worthless. We

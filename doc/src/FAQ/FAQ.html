@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jun 10 16:44:55 EDT 2002</P>
+    <P>Last updated: Mon Jun 10 22:22:31 EDT 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -425,32 +425,20 @@
 
       <DT><B>Performance</B></DT>
 
-      <DD>PostgreSQL runs in two modes. Normal <I>fsync</I> mode
-      flushes every completed transaction to disk, guaranteeing that if
-      the OS crashes or loses power in the next few seconds, all your
-      data is safely stored on disk. In this mode, we are slower than
-      most commercial databases, partly because few of them do such
-      conservative flushing to disk in their default modes. In
-      <I>no-fsync</I> mode, we are usually faster than commercial
-      databases, though in this mode, an OS crash could cause data
-      corruption. We are working to provide an intermediate mode that
-      suffers less performance overhead than full fsync mode, and will
-      allow data integrity within 30 seconds of an OS crash.<BR>
+      <DD>PostgreSQL has performance similar to other commercial and
+      open source databases. it is faster for some things, slower for
+      others.
       <BR>
-       In comparison to MySQL or leaner database systems, we are slower
+      In comparison to MySQL or leaner database systems, we are slower
       on inserts/updates because we have transaction overhead. Of
       course, MySQL does not have any of the features mentioned in the
-      <I>Features</I> section above. We are built for flexibility and
-      features, though we continue to improve performance through
-      profiling and source code analysis. There is an interesting Web
-      page comparing PostgreSQL to MySQL at <A href=
-      "http://openacs.org/why-not-mysql.html">http://openacs.org/why-not-mysql.html</A><BR>
+      <I>Features</I> section above. We are built for reliability and
+      features, though we continue to improve performance in every
+      release. There is an interesting Web page comparing PostgreSQL to
+      MySQL at <A href= "http://openacs.org/why-not-mysql.html">
 
-      <BR>
-       We handle each user connection by creating a Unix process.
-      Backend processes share data buffers and locking information.
-      With multiple CPUs, multiple backends can easily run on different
-      CPUs.<BR>
+      http://openacs.org/why-not-mysql.html</A><BR>
+
       <BR>
       </DD>
 
