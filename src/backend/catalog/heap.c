@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.65 1998/11/12 15:39:06 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.66 1998/11/17 14:26:39 thomas Exp $
  *
  * INTERFACE ROUTINES
  *		heap_create()			- Create an uncataloged heap relation
@@ -1444,7 +1444,10 @@ StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 	extern GlobalMemory CacheCxt;
 
 start:;
-	sprintf(str, "select %s%s from %.*s", attrdef->adsrc, cast,
+	/* Surround table name with double quotes to allow mixed-case and
+	 * whitespaces in names. - BGA 1998-11-14
+	 */
+	sprintf(str, "select %s%s from \"%.*s\"", attrdef->adsrc, cast,
 			NAMEDATALEN, rel->rd_rel->relname.data);
 	setheapoverride(true);
 	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None, FALSE);
