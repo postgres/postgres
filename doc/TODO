@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Dec 13 19:13:04 EST 1999
+Last updated:		Sun Jan  9 23:23:02 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -194,6 +194,7 @@ MISC
 * Have UPDATE/DELETE clean out indexes
 * -Allow WHERE restriction on ctid(Hiroshi)
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
+* Allow DELETE WHERE CURRENT OF cursor
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * -Transaction log, so re-do log can be on a separate disk by
   with after-row images(Vadim) [logging](Vadim)
