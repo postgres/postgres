@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.29 2001/01/20 20:59:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.30 2001/01/22 16:11:17 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -874,12 +874,12 @@ PG_FUNCTION_INFO_V1(funcname);
      <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
      macro that corresponds to the argument's datatype, and the result
      is returned using a
-     <function>PG_GETARG_<replaceable>xxx</replaceable>()</function>
+     <function>PG_RETURN_<replaceable>xxx</replaceable>()</function>
      macro for the return type.
     </para>
 
     <para>
-     Here we show the same functions as above, coded in new style:
+     Here we show the same functions as above, coded in version-1 style:
 
 <programlisting>
 #include &lt;string.h&gt;
@@ -916,6 +916,7 @@ PG_FUNCTION_INFO_V1(makepoint);
 Datum
 makepoint(PG_FUNCTION_ARGS)
 {
+    /* Here, the pass-by-reference nature of Point is not hidden */
     Point     *pointx = PG_GETARG_POINT_P(0);
     Point     *pointy = PG_GETARG_POINT_P(1);
     Point     *new_point = (Point *) palloc(sizeof(Point));
@@ -969,7 +970,7 @@ concat_text(PG_FUNCTION_ARGS)
 
     <para>
      The <command>CREATE FUNCTION</command> commands are the same as
-     for the old-style equivalents.
+     for the version-0 equivalents.
     </para>
 
     <para>
@@ -994,7 +995,9 @@ concat_text(PG_FUNCTION_ARGS)
      test for NULL inputs to a non-strict function, return a NULL
      result (from either strict or non-strict functions), return
      <quote>set</quote> results, and implement trigger functions and
-     procedural-language call handlers.  For more details see
+     procedural-language call handlers.  Version-1 code is also more
+     portable than version-0, because it does not break ANSI C restrictions
+     on function call protocol.  For more details see
      <filename>src/backend/utils/fmgr/README</filename> in the source
      distribution.
     </para>
