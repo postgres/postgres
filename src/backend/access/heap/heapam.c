@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.99 2000/12/03 10:27:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.100 2000/12/11 05:25:23 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2427,6 +2427,8 @@ newsame:;
 		if (move)
 		{
 			htup->t_xmin = (TransactionId) xlrec->target.cid;
+			TransactionIdStore(record->xl_xid, (TransactionId *) &(h
+tup->t_cmin));
 			memcpy(&(htup->t_xmax), 
 					(char*)xlrec + SizeOfHeapUpdate, sizeof(TransactionId));
 			htup->t_infomask = xlrec->mask;
