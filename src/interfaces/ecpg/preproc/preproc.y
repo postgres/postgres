@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.222 2003/05/23 15:19:34 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.223 2003/05/27 11:31:52 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -3783,8 +3783,6 @@ update_target_list:  update_target_list ',' update_target_el
 			}
 		| update_target_el
 			{ $$ = $1;	}
-		| '*'
-			{ $$ = make_str("*"); }
 		;
 
 inf_col_list: ColId opt_indirection
@@ -4833,7 +4831,11 @@ s_struct_union_symbol: SQL_STRUCT symbol
 		}
 		;
 
-s_struct_union: SQL_STRUCT	{ $$ = make_str("struct"); }
+s_struct_union: SQL_STRUCT	
+		{
+			ECPGstruct_sizeof = make_str(""); /* This must not be NULL to distinguish from simple types. */
+			$$ = make_str("struct");
+		}
 		| UNION 	{ $$ = make_str("union"); }
 		;
 
