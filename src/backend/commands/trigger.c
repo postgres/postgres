@@ -66,7 +66,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 	int			found = 0;
 	int			i;
 
-	if (IsSystemRelationName(stmt->relname))
+	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
 		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
 
 #ifndef NO_SECURITY

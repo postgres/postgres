@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.75 1999/02/23 07:54:03 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.76 1999/03/17 22:52:48 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -195,7 +195,7 @@ heap_create(char *relname,
 	 */
 	AssertArg(natts > 0);
 
-	if (relname && IsSystemRelationName(relname) && IsNormalProcessingMode())
+	if (relname && !allowSystemTableMods && IsSystemRelationName(relname) && IsNormalProcessingMode())
 	{
 		elog(ERROR, "Illegal class name '%s'"
 			 "\n\tThe 'pg_' name prefix is reserved for system catalogs",
@@ -1260,7 +1260,8 @@ heap_destroy_with_catalog(char *relname)
 	 * ----------------
 	 */
 	/* allow temp of pg_class? Guess so. */
-	if (!istemp && IsSystemRelationName(RelationGetRelationName(rel)->data))
+	if (!istemp &&
+		!allowSystemTableMods && IsSystemRelationName(RelationGetRelationName(rel)->data))
 		elog(ERROR, "System relation '%s' cannot be destroyed",
 			 &rel->rd_rel->relname);
 

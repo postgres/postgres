@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.104 1999/02/21 03:49:27 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.105 1999/03/17 22:53:18 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -917,6 +917,7 @@ usage(char *progname)
 #ifdef LOCK_MGR_DEBUG
 	fprintf(stderr, "\t-K \t\tset locking debug level [0|1|2]\n");
 #endif
+	fprintf(stderr, "\t-O \t\tallow system table structure changes\n");
 	fprintf(stderr, "\t-P port\t\tset port file descriptor\n");
 	fprintf(stderr, "\t-Q \t\tsuppress informational messages\n");
 	fprintf(stderr, "\t-S buffers\tset amount of sort memory available\n");
@@ -1017,7 +1018,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	optind = 1;					/* reset after postmaster usage */
 
 	while ((flag = getopt(argc, argv,
-						  "A:B:CD:d:Eef:iK:Lm:MNo:P:pQS:st:v:x:FW:"))
+						  "A:B:CD:d:Eef:iK:Lm:MNOo:P:pQS:st:v:x:FW:"))
 		   != EOF)
 		switch (flag)
 		{
@@ -1096,7 +1097,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 *	turn off fsync
 				 * --------------------
 				 */
-				fsyncOff = 1;
+				disableFsync = true;
 				break;
 
 			case 'f':
@@ -1166,6 +1167,14 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * ----------------
 				 */
 				StrNCpy(OutputFileName, optarg, MAXPGPATH);
+				break;
+
+			case 'O':
+				/* --------------------
+				 *	allow system table structure modifications
+				 * --------------------
+				 */
+				allowSystemTableMods = true;
 				break;
 
 			case 'p':			/* started by postmaster */
@@ -1522,7 +1531,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.104 $ $Date: 1999/02/21 03:49:27 $\n");
+		puts("$Revision: 1.105 $ $Date: 1999/03/17 22:53:18 $\n");
 	}
 
 	/* ----------------

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.58 1999/03/16 03:24:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.59 1999/03/17 22:53:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,7 +187,7 @@ ProcessUtility(Node *parsetree,
 				foreach(arg, args)
 				{
 					relname = strVal(lfirst(arg));
-					if (IsSystemRelationName(relname))
+					if (!allowSystemTableMods && IsSystemRelationName(relname))
 						elog(ERROR, "class \"%s\" is a system catalog",
 							 relname);
 					rel = heap_openr(relname);
@@ -268,7 +268,7 @@ ProcessUtility(Node *parsetree,
 				CHECK_IF_ABORTED();
 
 				relname = stmt->relname;
-				if (IsSystemRelationName(relname))
+				if (!allowSystemTableMods && IsSystemRelationName(relname))
 					elog(ERROR, "class \"%s\" is a system catalog",
 						 relname);
 #ifndef NO_SECURITY
@@ -457,7 +457,7 @@ ProcessUtility(Node *parsetree,
 				{
 					case INDEX:
 						relname = stmt->name;
-						if (IsSystemRelationName(relname))
+						if (!allowSystemTableMods && IsSystemRelationName(relname))
 							elog(ERROR, "class \"%s\" is a system catalog index",
 								 relname);
 #ifndef NO_SECURITY

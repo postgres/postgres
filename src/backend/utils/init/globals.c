@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.27 1999/02/13 23:20:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.28 1999/03/17 22:53:19 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -82,7 +82,8 @@ char		DateFormat[20] = "%d-%m-%Y";		/* mjl: sizes! or better
 												 * malloc? XXX */
 char		FloatFormat[20] = "%f";
 
-int			fsyncOff = 0;
+bool		disableFsync = false;
+bool		allowSystemTableMods = false;
 int			SortMem = 512;
 
 char	   *IndexedCatalogNames[] = {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.39 1999/02/24 17:28:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.40 1999/03/17 22:52:51 momjian Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -308,7 +308,7 @@ PerformAddAttribute(char *relationName,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (IsSystemRelationName(relationName))
+	if (!allowSystemTableMods && IsSystemRelationName(relationName))
 		elog(ERROR, "PerformAddAttribute: class \"%s\" is a system catalog",
 			 relationName);
 #ifndef NO_SECURITY

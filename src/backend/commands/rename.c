@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.21 1999/02/13 23:15:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.22 1999/03/17 22:52:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ renameatt(char *relname,
 	 *
 	 * normally, only the owner of a class can change its schema.
 	 */
-	if (IsSystemRelationName(relname))
+	if (!allowSystemTableMods && IsSystemRelationName(relname))
 		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 relname);
 #ifndef NO_SECURITY
@@ -207,11 +207,11 @@ renamerel(char *oldrelname, char *newrelname)
 				newpath[MAXPGPATH];
 	Relation	irelations[Num_pg_class_indices];
 
-	if (IsSystemRelationName(oldrelname))
+	if (!allowSystemTableMods && IsSystemRelationName(oldrelname))
 		elog(ERROR, "renamerel: system relation \"%s\" not renamed",
 			 oldrelname);
 
-	if (IsSystemRelationName(newrelname))
+	if (!allowSystemTableMods && IsSystemRelationName(newrelname))
 		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
 			 newrelname);
 

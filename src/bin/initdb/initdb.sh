@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.57 1999/01/28 15:28:40 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.58 1999/03/17 22:53:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -398,7 +398,7 @@ fi
 
 echo
 
-PGSQL_OPT="-o /dev/null -F -Q -D$PGDATA"
+PGSQL_OPT="-o /dev/null -O -F -Q -D$PGDATA"
 
 # If the COPY is first, the VACUUM generates an error, so we vacuum first
 echo "Vacuuming template1"
@@ -408,7 +408,7 @@ echo "COPY pg_shadow TO '$PGDATA/pg_pwd' USING DELIMITERS '\\t'" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating public pg_user view"
-echo "CREATE TABLE xpg_user (		\
+echo "CREATE TABLE pg_user (		\
 	    usename	name,		\
 	    usesysid	int4,		\
 	    usecreatedb	bool,		\
@@ -418,12 +418,6 @@ echo "CREATE TABLE xpg_user (		\
 	    passwd		text,		\
 	    valuntil	abstime);" | postgres $PGSQL_OPT template1 > /dev/null
 
-#move it into pg_user
-echo "UPDATE pg_class SET relname = 'pg_user' WHERE relname = 'xpg_user';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_user' WHERE typname = 'xpg_user';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_user $PGDATA/base/template1/pg_user
 
 echo "CREATE RULE \"_RETpg_user\" AS ON SELECT TO pg_user DO INSTEAD	\
 	    SELECT usename, usesysid, usecreatedb, usetrace,		\
@@ -434,16 +428,10 @@ echo "REVOKE ALL on pg_shadow FROM public" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_rules"
-echo "CREATE TABLE xpg_rules (		\
+echo "CREATE TABLE pg_rules (		\
 	    tablename	name,		\
 	    rulename	name,		\
 	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
-#move it into pg_rules
-echo "UPDATE pg_class SET relname = 'pg_rules' WHERE relname = 'xpg_rules';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_rules' WHERE typname = 'xpg_rules';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_rules $PGDATA/base/template1/pg_rules
 
 echo "CREATE RULE \"_RETpg_rules\" AS ON SELECT TO pg_rules DO INSTEAD	\
 	    SELECT C.relname AS tablename,				\
@@ -455,16 +443,10 @@ echo "CREATE RULE \"_RETpg_rules\" AS ON SELECT TO pg_rules DO INSTEAD	\
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_views"
-echo "CREATE TABLE xpg_views (		\
+echo "CREATE TABLE pg_views (		\
 	    viewname	name,		\
 	    viewowner	name,		\
 	    definition	text);" | postgres $PGSQL_OPT template1 > /dev/null
-#move it into pg_views
-echo "UPDATE pg_class SET relname = 'pg_views' WHERE relname = 'xpg_views';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_views' WHERE typname = 'xpg_views';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_views $PGDATA/base/template1/pg_views
 
 echo "CREATE RULE \"_RETpg_views\" AS ON SELECT TO pg_views DO INSTEAD	\
 	    SELECT C.relname AS viewname, 				\
@@ -476,18 +458,12 @@ echo "CREATE RULE \"_RETpg_views\" AS ON SELECT TO pg_views DO INSTEAD	\
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_tables"
-echo "CREATE TABLE xpg_tables (		\
+echo "CREATE TABLE pg_tables (		\
 	    tablename	name,		\
 	    tableowner	name,		\
 	    hasindexes	bool,		\
 	    hasrules	bool,		\
 	    hastriggers	bool);" | postgres $PGSQL_OPT template1 > /dev/null
-#move it into pg_tables
-echo "UPDATE pg_class SET relname = 'pg_tables' WHERE relname = 'xpg_tables';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_tables' WHERE typname = 'xpg_tables';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_tables $PGDATA/base/template1/pg_tables
 
 echo "CREATE RULE \"_RETpg_tables\" AS ON SELECT TO pg_tables DO INSTEAD	\
 	    SELECT C.relname AS tablename, 				\
@@ -501,16 +477,10 @@ echo "CREATE RULE \"_RETpg_tables\" AS ON SELECT TO pg_tables DO INSTEAD	\
 	postgres $PGSQL_OPT template1 > /dev/null
 
 echo "Creating view pg_indexes"
-echo "CREATE TABLE xpg_indexes (	\
+echo "CREATE TABLE pg_indexes (	\
 	    tablename	name,		\
 	    indexname	name,		\
 	    indexdef	text);" | postgres $PGSQL_OPT template1 > /dev/null
-#move it into pg_indexes
-echo "UPDATE pg_class SET relname = 'pg_indexes' WHERE relname = 'xpg_indexes';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-echo "UPDATE pg_type SET typname = 'pg_indexes' WHERE typname = 'xpg_indexes';" |\
-	postgres $PGSQL_OPT template1 > /dev/null
-mv $PGDATA/base/template1/xpg_indexes $PGDATA/base/template1/pg_indexes
 
 echo "CREATE RULE \"_RETpg_indexes\" AS ON SELECT TO pg_indexes DO INSTEAD	\
 	    SELECT C.relname AS tablename, 				\
@@ -528,4 +498,3 @@ echo "copy pg_description from '$GLOBAL_DESCR'" | \
 	postgres $PGSQL_OPT template1 > /dev/null
 echo "vacuum analyze" | \
 	postgres $PGSQL_OPT template1 > /dev/null
-

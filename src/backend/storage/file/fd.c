@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.37 1999/02/13 23:18:05 momjian Exp $
+ *	  $Id: fd.c,v 1.38 1999/03/17 22:53:06 momjian Exp $
  *
  * NOTES:
  *
@@ -168,9 +168,7 @@ static long pg_nofile(void);
 int
 pg_fsync(int fd)
 {
-	extern int	fsyncOff;
-
-	return fsyncOff ? 0 : fsync(fd);
+	return disableFsync ? 0 : fsync(fd);
 }
 
 #define fsync pg_fsync

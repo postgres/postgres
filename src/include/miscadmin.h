@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.35 1999/02/13 23:20:46 momjian Exp $
+ * $Id: miscadmin.h,v 1.36 1999/03/17 22:53:30 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -94,7 +94,8 @@ extern char CTZName[];
 extern char FloatFormat[];
 extern char DateFormat[];
 
-extern int	fsyncOff;
+extern bool	disableFsync;
+extern bool	allowSystemTableMods;
 extern int	SortMem;
 
 extern Oid	LastOidProcessed;	/* for query rewrite */
