@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.98 2003/07/01 00:04:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.99 2003/07/01 01:28:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -639,23 +639,31 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 		}
 	}
 
+	tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+
+	prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
+
 	/*
-	 * We can't precheck the function definition if there are any polymorphic
-	 * input types, because actual datatypes of expression results will be
-	 * unresolvable.  The check will be done at runtime instead.
+	 * We can't do full prechecking of the function definition if there are
+	 * any polymorphic input types, because actual datatypes of expression
+	 * results will be unresolvable.  The check will be done at runtime
+	 * instead.
+	 *
+	 * We can run the text through the raw parser though; this will at
+	 * least catch silly syntactic errors.
 	 */
 	if (!haspolyarg)
 	{
-		tmp = SysCacheGetAttr(PROCOID, tuple, Anum_pg_proc_prosrc, &isnull);
-		if (isnull)
-			elog(ERROR, "null prosrc");
-
-		prosrc = DatumGetCString(DirectFunctionCall1(textout, tmp));
-
 		querytree_list = pg_parse_and_rewrite(prosrc,
 											  proc->proargtypes,
 											  proc->pronargs);
 		check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
+	}
+	else
+	{
+		querytree_list = pg_parse_query(prosrc);
 	}
 
 	ReleaseSysCache(tuple);
