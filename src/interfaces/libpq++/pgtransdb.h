@@ -14,7 +14,7 @@
 * Portions Copyright (c) 1994, Regents of the University of California
 *
 *
-*  $Id: pgtransdb.h,v 1.10 2002/07/02 16:32:19 momjian Exp $
+*  $Id: pgtransdb.h,v 1.11 2002/07/18 04:49:30 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -32,8 +32,9 @@
 //
 // ****************************************************************
 // This is the database access class that keeps an open
-// transaction block during its lifetime.  The block is ENDed when
-// the object is destroyed.
+// transaction block during its lifetime.  The block is ABORTed when
+// the object is destroyed, unless you call EndTransaction() method
+// before destruction of the object.
 class DLLIMPORT PgTransaction : public PgDatabase
 {
 public:
@@ -42,7 +43,6 @@ public:
 	// explicit PgTransaction(const PgConnection&);
 	~PgTransaction();	// close connection and clean up
 
-protected:
 	ExecStatusType BeginTransaction();
 	ExecStatusType EndTransaction();
 
