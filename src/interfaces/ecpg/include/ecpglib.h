@@ -5,8 +5,8 @@ bool		ECPGconnect(const char *dbname);
 bool		ECPGdo(int, char *,...);
 bool		ECPGcommit(int);
 bool		ECPGrollback(int);
-bool		ECPGfinish();
-bool		ECPGstatus();
+bool		ECPGfinish(void);
+bool		ECPGstatus(void);
 
 void		ECPGlog(const char *format,...);
 

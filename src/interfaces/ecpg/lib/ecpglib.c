@@ -18,11 +18,11 @@
 #include <stdarg.h>
 #include <string.h>
 
+#include <libpq-fe.h>
+#include <libpq/pqcomm.h>
 #include <ecpgtype.h>
 #include <ecpglib.h>
 #include <sqlca.h>
-#include <libpq-fe.h>
-#include <libpq/pqcomm.h>
 
 static PGconn *simple_connection = NULL;
 static int	simple_debug = 0;
@@ -639,14 +639,14 @@ ECPGconnect(const char *dbname)
 
 
 bool
-ECPGstatus()
+ECPGstatus(void)
 {
 	return PQstatus(simple_connection) != CONNECTION_BAD;
 }
 
 
 bool
-ECPGfinish()
+ECPGfinish(void)
 {
 	if (simple_connection != NULL)
 	{

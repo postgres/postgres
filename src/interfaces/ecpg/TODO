@@ -59,3 +59,4 @@ There is no way yet to fill a complete array with one call except arrays of
 
 ecpg cannot use pointer variables except [unsigned] char *
 
+List all commands as sqlcommand, not just S_SYMBOL

@@ -29,9 +29,7 @@ usage(char *progname)
 int
 main(int argc, char *const argv[])
 {
-	char		c,
-				out_option = 0;
-	int			fnr;
+	int			fnr, c, out_option = 0;
 
 	while ((c = getopt(argc, argv, "vdo:")) != EOF)
 	{

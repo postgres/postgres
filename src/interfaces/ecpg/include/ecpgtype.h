@@ -43,3 +43,5 @@ enum ECPGttype
 };
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)
+
+const char * ECPGtype_name(enum ECPGttype);

@@ -42,10 +42,6 @@ print_action(struct when *w)
 {
 	switch (w->code)
 	{
-		case W_CONTINUE: fprintf(yyout, "continue;");
-				 break;
-		case W_BREAK:	 fprintf(yyout, "break;");
-                                 break;
 		case W_SQLPRINT: fprintf(yyout, "sqlprint();");
                                  break;
 		case W_GOTO:	 fprintf(yyout, "goto %s;", w->str);
@@ -224,12 +220,12 @@ dump_variables(struct arguments * list)
     struct when			action;
 }
 
-%token <tagname> SQL_START SQL_SEMI SQL_STRING SQL_INTO
+%token <tagname> SQL_START SQL_SEMI SQL_STRING SQL_INTO SQL_IN
 %token <tagname> SQL_BEGIN SQL_END SQL_DECLARE SQL_SECTION SQL_INCLUDE 
 %token <tagname> SQL_CONNECT SQL_OPEN SQL_EXECUTE SQL_IMMEDIATE
 %token <tagname> SQL_COMMIT SQL_ROLLBACK SQL_RELEASE SQL_WORK SQL_WHENEVER
-%token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_CONTINUE
-%token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT SQL_STOP
+%token <tagname> SQL_SQLERROR SQL_NOT_FOUND SQL_CONTINUE SQL_FROM SQL_FETCH
+%token <tagname> SQL_DO SQL_GOTO SQL_SQLPRINT SQL_STOP SQL_CONV
 
 %token <tagname> S_SYMBOL S_LENGTH S_ANYTHING S_LABEL
 %token <tagname> S_VARCHAR S_VARCHAR2
@@ -241,11 +237,11 @@ dump_variables(struct arguments * list)
 %type <type> type type_detailed varchar_type simple_type struct_type string_type
 /* % type <type> array_type pointer_type */
 %type <symbolname> symbol label
-%type <tagname> maybe_storage_clause varchar_tag db_name
+%type <tagname> maybe_storage_clause varchar_tag db_name cursor
 %type <type_enum> simple_tag char_tag
 %type <indexsize> index length
 %type <action> action
-%type <tagname> canything sqlanything both_anything vartext commit_release
+%type <tagname> canything sqlanything both_anything vartext commit_release sqlcommand
 
 %%
 prog : statements;
@@ -262,6 +258,7 @@ statement : sqldeclaration
 	  | sqlexecute
 	  | sqlwhenever
 	  | sqlstatement
+	  | sqlfetch
 	  | cthing
 	  | blockstart
 	  | blockend;
@@ -573,9 +570,30 @@ label : S_LABEL {
     $<symbolname>$ = name;
 }
 
+sqlfetch: SQL_START SQL_FETCH {
+    reset_variables();
+    fprintf(yyout, "ECPGdo(__LINE__, \"fetch in ");
+} cursor {
+    fwrite(yytext, yyleng, 1, yyout);
+    fwrite(" ", 1, 1, yyout);
+} SQL_INTO into_list SQL_SEMI {
+    /* Dump */
+    fprintf(yyout, "\", ");		   
+    dump_variables(argsinsert);
+    fprintf(yyout, "ECPGt_EOIT, ");
+    dump_variables(argsresult);
+    fprintf(yyout, "ECPGt_EORT );");
+    whenever_action();
+}
+
+cursor: SQL_IN S_SYMBOL | S_SYMBOL;
+
 sqlstatement : SQL_START { /* Reset stack */
     reset_variables();
     fprintf(yyout, "ECPGdo(__LINE__, \"");
+} sqlcommand {
+    fwrite(yytext, yyleng, 1, yyout);
+    fwrite(" ", 1, 1, yyout);
 } sqlstatement_words SQL_SEMI {  
     /* Dump */
     fprintf(yyout, "\", ");		   
@@ -584,7 +602,10 @@ sqlstatement : SQL_START { /* Reset stack */
     dump_variables(argsresult);
     fprintf(yyout, "ECPGt_EORT );");
     whenever_action();
-};
+}
+
+/* FIXME: instead of S_SYMBOL we should list all possible commands */
+sqlcommand : S_SYMBOL | SQL_DECLARE;
 
 sqlstatement_words : sqlstatement_word
 		   | sqlstatement_words sqlstatement_word;
@@ -594,7 +615,10 @@ sqlstatement_word : ':' symbol
 		      add_variable(&argsinsert, find_variable($2));
 		      fprintf(yyout, " ;; ");
 		  }
-		  | SQL_INTO into_list { }
+		  | SQL_INTO into_list SQL_FROM {
+		      fwrite(yytext, yyleng, 1, yyout);
+		      fwrite(" ", 1, 1, yyout);
+		  }
 		  | sqlanything 
                   { 
 		      fwrite(yytext, yyleng, 1, yyout);
@@ -610,7 +634,7 @@ sqlstatement_word : ':' symbol
 into_list : ':' symbol {
     add_variable(&argsresult, find_variable($2)); 
 }
-	  | into_list ',' ':' symbol {
+	  | into_list ',' ':' symbol{
     add_variable(&argsresult, find_variable($4)); 
 };
 
@@ -627,10 +651,10 @@ sqlanything : both_anything;
 both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2 
 	  | S_LONG | S_SHORT | S_INT | S_CHAR | S_FLOAT | S_DOUBLE | S_BOOL 
 	  | SQL_OPEN | SQL_CONNECT
-	  | SQL_STRING
+	  | SQL_STRING | SQL_CONV
 	  | SQL_BEGIN | SQL_END 
-	  | SQL_DECLARE | SQL_SECTION 
-	  | SQL_INCLUDE 
+	  | SQL_DECLARE | SQL_SECTION | SQL_FETCH | SQL_FROM
+	  | SQL_INCLUDE | SQL_IN
 	  | S_SYMBOL | S_LABEL
 	  | S_STATIC | S_EXTERN | S_AUTO | S_CONST | S_REGISTER | S_STRUCT
 	  | '[' | ']' | ',' | '=' | '*' | '(' | ')'

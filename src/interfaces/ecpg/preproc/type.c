@@ -3,6 +3,7 @@
 #include <stdlib.h>
 
 #include "type.h"
+#include "extern.h"
 
 /* malloc + error check */
 void *

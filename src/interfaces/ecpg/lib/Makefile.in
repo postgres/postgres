@@ -8,6 +8,10 @@ SO_MINOR_VERSION=0
 
 PORTNAME=@PORTNAME@
 
+ifdef KRBVERS
+CFLAGS+= $(KRBFLAGS)
+endif
+
 # Shared library stuff
 shlib := 
 install-shlib-dep :=
@@ -20,10 +24,12 @@ ifeq ($(PORTNAME), linux)
   endif
 endif
 ifeq ($(PORTNAME), bsd)
-  install-shlib-dep := install-shlib
-  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
-  LDFLAGS_SL = -x -Bshareable -Bforcearchive
-  CFLAGS += $(CFLAGS_SL)
+  ifdef BSD_SHLIB
+    install-shlib-dep := install-shlib
+    shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL = -x -Bshareable -Bforcearchive
+    CFLAGS += $(CFLAGS_SL)
+  endif
 endif
 #ifeq ($(PORTNAME), i386_solaris)
 #  install-shlib-dep := install-shlib
@@ -61,6 +67,6 @@ uninstall::
 libecpg.a : libecpg.a(ecpglib.o) libecpg.a(typename.o)
 
 ecpglib.o : ecpglib.c ../include/ecpglib.h ../include/ecpgtype.h
-	$(CC) -I../include $(PQ_INCLUDE) -c ecpglib.c
+	$(CC) $(CFLAGS) -I../include $(PQ_INCLUDE) -c ecpglib.c
 typename.o : typename.c ../include/ecpgtype.h
-	$(CC) -I../include $(PQ_INCLUDE) -c typename.c
+	$(CC) $(CFLAGS) -I../include $(PQ_INCLUDE) -c typename.c

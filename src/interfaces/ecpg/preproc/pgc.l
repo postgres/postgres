@@ -28,11 +28,14 @@ do      [dD][oO]
 end	[eE][nN][dD]
 exec	[eE][xX][eE][cC]
 execute	[eE][xX][eE][cC][uU][tT][eE]
+fetch   [fF][eE][tT][cC][hH]
 found	[fF][oO][uU][nN][dD]
+from    [fF][rR][oO][mM]
 go	[gG][oO]
 goto    [gG][oO][tT][oO]
 immediate [iI][mM][mM][eE][dD][iI][aA][tT][eE]
 include [iI][nN][cC][lL][uU][dD][eE]
+in	[iI][nN]
 into	[iI][nN][tT][oO]
 not	[nN][oO][tT]
 open	[oO][pP][eE][nN]
@@ -63,6 +66,7 @@ work    [wW][oO][rR][kK]
 <SQL>{commit}		{ dbg(SQL_COMMIT); return SQL_COMMIT; }
 <SQL>{release}		{ dbg(SQL_RELEASE); return SQL_RELEASE; }
 <SQL>{work}		{ dbg(SQL_WORK); return SQL_WORK; }
+<SQL>{fetch}		{ dbg(SQL_FETCH); return SQL_FETCH; }
 <SQL>{rollback}		{ dbg(SQL_ROLLBACK); return SQL_ROLLBACK; }
 <SQL>{whenever}		{ dbg(SQL_WHENEVER); return SQL_WHENEVER; }
 <SQL>{sqlerror}		{ dbg(SQL_SQLERROR); return SQL_SQLERROR; }
@@ -70,10 +74,12 @@ work    [wW][oO][rR][kK]
 <SQL>{not}{ws}{found}	{ dbg(SQL_NOT_FOUND); return SQL_NOT_FOUND; }
 <SQL>{continue}		{ dbg(SQL_CONTINUE); return SQL_CONTINUE; }
 <SQL>{into}		{ dbg(SQL_INTO); return SQL_INTO; }
+<SQL>{in}		{ dbg(SQL_IN); return SQL_IN; }
 <SQL>{goto}		{ dbg(SQL_GOTO); return SQL_GOTO; }
 <SQL>{go}{ws}{to}	{ dbg(SQL_GOTO); return SQL_GOTO; }
 <SQL>{stop}		{ dbg(SQL_STOP); return SQL_STOP; }
 <SQL>{do}		{ dbg(SQL_DO); return SQL_DO; }
+<SQL>{from}		{ dbg(SQL_FROM); return SQL_FROM; }
 			  
 {length}		{ dbg(S_LENGTH); return S_LENGTH; }
 			  
@@ -144,6 +150,7 @@ struct			{ dbg(S_STRUCT); return S_STRUCT; }
 \*			{ dbg(*); return('*'); }
 
 <SQL>":"		{ dbg(:); return ':'; }
+<SQL>"::"		{ dbg(SQL_CONV); return SQL_CONV; }
 
 {ws}			{ ECHO; }
 .			{ dbg(.); return S_ANYTHING; }

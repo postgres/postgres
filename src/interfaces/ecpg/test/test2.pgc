@@ -4,15 +4,14 @@ exec sql include sqlca;
 
 extern void ECPGdebug(int n, FILE *dbgs);
 
-exec sql whenever not found sqlprint;
-exec sql whenever sqlerror do db_error(msg);
+exec sql whenever not found do set_not_found();
+exec sql whenever sqlerror sqlprint;
 
-void
-db_error (char *msg)
+static int not_found = 0;
+static void
+set_not_found(void)
 {
-	sqlca.sqlerrm.sqlerrmc[sqlca.sqlerrm.sqlerrml] = '\0';
-	printf ("%s: db error %s\n", msg, sqlca.sqlerrm.sqlerrmc);
-	exit (1);
+	not_found = 1;
 }
 
 int
@@ -50,17 +49,12 @@ exec sql end declare section;
 
 	exec sql open cur;
 
-	while (1) {
-		/* make sure we leave this loop */
-		exec sql whenever not found break;
-
+	while (not_found == 0) {
 		strcpy(msg, "fetch");
-		exec sql fetch in cur into :personal;
-		printf ("%8.8s was born %d (age = %d)\n", personal.name.arr, personal.birth.born, personal.birth.age);
+		exec sql fetch cur into :personal;
+		if (not_found == 0)
+			printf ("%8.8s was born %d (age = %d)\n", personal.name.arr, personal.birth.born, personal.birth.age);
 	}
-
-	/* back to normal behaviour */
-	exec sql whenever not found sqlprint;
 
 	strcpy(msg, "close");
 	exec sql close cur;
