@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.3.2.1 1996/09/21 06:16:39 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/createuser/Attic/createuser.sh,v 1.3.2.2 1996/10/04 20:28:57 scrappy Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -67,7 +67,7 @@ PSQL="psql $PARGS"
 # see if user $USER is allowed to create new users
 #
 
-QUERY="select usesuper from pg_user where usename = '$USER'"
+QUERY="select usesuper from pg_user where usename = '$USER' "
 #echo $QUERY
 
 ADDUSER=`$PSQL -c "$QUERY" template1`
@@ -98,7 +98,7 @@ then
     read NEWUSER
 fi
 
-QUERY="select usesysid from pg_user where usename = '$NEWUSER'"
+QUERY="select usesysid from pg_user where usename = '$NEWUSER' "
 
 RES=`$PSQL -c "$QUERY" template1`
 
