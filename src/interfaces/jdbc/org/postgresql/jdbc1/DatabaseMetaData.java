@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
 /**
  * This class provides information about the database as a whole.
  *
- * $Id: DatabaseMetaData.java,v 1.30 2001/09/06 03:20:30 momjian Exp $
+ * $Id: DatabaseMetaData.java,v 1.31 2001/09/06 12:53:15 momjian Exp $
  *
  * <p>Many of the methods here return lists of information in ResultSets.  You
  * can use the normal ResultSet methods such as getString and getInt to
@@ -1972,8 +1972,6 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 		"        ) " +
 		"order by" +
 		"    c.relname, a.attnum");
-
-	System.out.println(sql);
 
 	java.sql.ResultSet r = connection.ExecSQL(sql.toString());
 	while (r.next()) {
