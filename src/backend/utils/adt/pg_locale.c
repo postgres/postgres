@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.28 2004/08/29 05:06:49 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/pg_locale.c,v 1.29 2004/10/17 20:02:26 tgl Exp $
  *
  *-----------------------------------------------------------------------
  */
@@ -123,6 +123,7 @@ locale_time_assign(const char *value, bool doit, GucSource source)
 const char *
 locale_messages_assign(const char *value, bool doit, GucSource source)
 {
+#ifndef WIN32
 	/*
 	 * LC_MESSAGES category does not exist everywhere, but accept it
 	 * anyway
@@ -131,25 +132,40 @@ locale_messages_assign(const char *value, bool doit, GucSource source)
 	if (doit)
 	{
 		if (!setlocale(LC_MESSAGES, value))
-		{
-#ifdef WIN32
-
-			/*
-			 * Win32 returns NULL when you set LC_MESSAGES to "".  So
-			 * don't complain unless we're trying to set it to something
-			 * else.
-			 */
-			if (value[0])
-				return NULL;
-#else
 			return NULL;
-#endif
-		}
 	}
 	else
 		value = locale_xxx_assign(LC_MESSAGES, value, false, source);
 #endif   /* LC_MESSAGES */
 	return value;
+
+#else /* WIN32 */
+
+	/*
+	 * Win32 does not have working setlocale() for LC_MESSAGES. We can only
+	 * use environment variables to change it (per gettext FAQ).  This
+	 * means we can't actually check the supplied value, so always assume
+	 * it's good.  Also, ignore attempts to set to "", which really means
+	 * "keep using the old value".  (Actually it means "use the environment
+	 * value", but we are too lazy to try to implement that exactly.)
+	 */
+	if (doit && value[0])
+	{
+		/*
+		 * We need to modify both the process environment and the cached
+		 * version in msvcrt
+		 */
+		static char env[128];
+
+		if (!SetEnvironmentVariable("LC_MESSAGES", value))
+			return NULL;
+
+		snprintf(env, sizeof(env)-1, "LC_MESSAGES=%s", value);
+		if (_putenv(env))
+			return NULL;
+	}
+	return value;
+#endif /* WIN32 */
 }
 
 
