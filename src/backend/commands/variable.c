@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.63 2002/04/21 21:35:17 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.64 2002/04/22 14:34:27 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -593,7 +593,8 @@ parse_XactIsoLevel(List *args)
 	Assert(IsA(args, List));
 	Assert(IsA(lfirst(args), A_Const));
 	/* Should only get one argument from the parser */
-	Assert(lnext(args) == NIL);
+	if (lnext(args) != NIL)
+		elog(ERROR, "SET TRANSACTION ISOLATION LEVEL does not allow multiple arguments");
 
 	Assert(((A_Const *) lfirst(args))->val.type = T_String);
 	value = ((A_Const *) lfirst(args))->val.val.str;
@@ -655,7 +656,8 @@ parse_random_seed(List *args)
 
 	Assert(IsA(args, List));
 	/* Should only get one argument from the parser */
-	Assert(lnext(args) == NIL);
+	if (lnext(args) != NIL)
+		elog(ERROR, "SET SEED does not allow multiple arguments");
 
 	p = lfirst(args);
 	Assert(IsA(p, A_Const));
@@ -716,6 +718,9 @@ parse_client_encoding(List *args)
 
 	if (args == NULL)
 		return reset_client_encoding();
+
+	if (lnext(args) != NIL)
+		elog(ERROR, "SET CLIENT ENCODING does not allow multiple arguments");
 
 	Assert(IsA(lfirst(args), A_Const));
 	if (((A_Const *) lfirst(args))->val.type != T_String)
@@ -844,7 +849,8 @@ SetPGVariable(const char *name, List *args)
 
 			/* Ensure one argument only... */
 			if (lnext(args) != NIL)
-				elog(ERROR, "SET takes only one argument for this parameter");
+				elog(ERROR, "SET %s takes only one argument", name);
+
 			n = (A_Const *) lfirst(args);
 			/* If this is a T_Integer, then we should convert back to a string
 			 * but for now we just reject the parameter.
