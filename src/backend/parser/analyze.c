@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.4 1996/08/06 16:27:56 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.5 1996/08/06 16:37:58 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,8 @@ static TargetEntry *make_targetlist_expr(ParseState *pstate,
 					 bool ResdomNoIsAttrNo);
 static Node *transformWhereClause(ParseState *pstate, Node *a_expr);
 static List *transformGroupClause(ParseState *pstate, List *grouplist);
-static List *transformSortClause(List *orderlist, List *targetlist,
+static List *transformSortClause(ParseState *pstate,
+				 List *orderlist, List *targetlist,
 				 char* uniqueFlag);
 
 static void parseFromClause(ParseState *pstate, List *frmList);
@@ -418,7 +419,8 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
     qry->qual = transformWhereClause(pstate,stmt->whereClause);
 
     /* fix order clause */
-    qry->sortClause = transformSortClause(stmt->orderClause,
+    qry->sortClause = transformSortClause(pstate,
+					  stmt->orderClause,
 					  qry->targetList,
 					  qry->uniqueFlag);
 
@@ -506,7 +508,8 @@ transformCursorStmt(ParseState *pstate, CursorStmt *stmt)
     qry->qual = transformWhereClause(pstate,stmt->whereClause);
 
     /* fix order clause */
-    qry->sortClause = transformSortClause(stmt->orderClause,
+    qry->sortClause = transformSortClause(pstate,
+					  stmt->orderClause,
 					  qry->targetList,
 					  qry->uniqueFlag);
     /* fix group by clause */
@@ -1512,20 +1515,35 @@ transformWhereClause(ParseState *pstate, Node *a_expr)
 /*
  *  find_tl_elt -
  *    returns the Resdom in the target list matching the specified varname
+ *    and range
  *
  */
 static Resdom *
-find_tl_elt(char *varname, List *tlist)
+find_tl_elt(ParseState *pstate, char *range, char *varname, List *tlist)
 {
     List *i;
-    
+    int real_rtable_pos;
+
+    if(range) {
+	real_rtable_pos = RangeTablePosn(pstate->p_rtable, range);
+    }
+
     foreach(i, tlist) {
 	TargetEntry *target = (TargetEntry *)lfirst(i);
 	Resdom *resnode = target->resdom;
+	Var *var = (Var *)target->expr;
 	char *resname = resnode->resname;
-	
-	if (!strcmp(resname, varname))
-	    return (resnode);
+	int test_rtable_pos = var->varno;
+
+	if (!strcmp(resname, varname)) {
+	    if(range) {
+		if(real_rtable_pos == test_rtable_pos) {
+		    return (resnode);
+		}
+	    } else {
+		return (resnode);
+	    }
+	}
     }
     return ((Resdom *)NULL);
 }
@@ -1579,7 +1597,8 @@ transformGroupClause(ParseState *pstate, List *grouplist)
  *
  */
 static List *
-transformSortClause(List *orderlist, List *targetlist,
+transformSortClause(ParseState *pstate,
+		    List *orderlist, List *targetlist,
 		    char* uniqueFlag)
 {
     List *sortlist = NIL;
@@ -1590,7 +1609,7 @@ transformSortClause(List *orderlist, List *targetlist,
 	SortClause *sortcl = makeNode(SortClause);
 	Resdom *resdom;
 	
-	resdom = find_tl_elt(sortby->name, targetlist);
+	resdom = find_tl_elt(pstate, sortby->range, sortby->name, targetlist);
 	if (resdom == NULL)
 	    elog(WARN,"The field being sorted by must appear in the target list");
 	

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.2 1996/08/06 16:27:48 scrappy Exp $
+ * $Id: parsenodes.h,v 1.3 1996/08/06 16:37:53 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,6 +631,7 @@ typedef struct RelExpr {
  */
 typedef struct SortBy {
     NodeTag		type;
+    char                *range;
     char		*name;		/* name of column to sort on */
     char		*useOp;		/* operator to use */
 } SortBy;

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.3 1996/08/06 16:27:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.4 1996/08/06 16:38:03 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -1426,12 +1426,20 @@ sortby_list:  sortby
 sortby:  Id OptUseOp
 		{ 
 		    $$ = makeNode(SortBy);
+		    $$->range = NULL;
 		    $$->name = $1;
 		    $$->useOp = $2;
 		}
-	| attr OptUseOp
+	| Id '.' Id OptUseOp
+		{
+		    $$ = makeNode(SortBy);
+		    $$->range = $1;
+		    $$->name = $3;
+		    $$->useOp = $4;
+		}
+        | /*EMPTY*/
                 { 
-                  yyerror("parse error: use 'sort by attribute_name'");
+                  yyerror("parse error: use 'order by attribute_name'");
                 }
 	;
 
