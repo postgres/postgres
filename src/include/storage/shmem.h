@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.26 2001/01/24 19:43:28 momjian Exp $
+ * $Id: shmem.h,v 1.27 2001/02/22 18:39:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,8 @@
  */
 typedef unsigned long SHMEM_OFFSET;
 
-#define INVALID_OFFSET (-1)
-#define BAD_LOCATION (-1)
+#define INVALID_OFFSET 	(-1)
+#define BAD_LOCATION 	(-1)
 
 /*
  * Start of the primary shared memory region, in this process' address space.

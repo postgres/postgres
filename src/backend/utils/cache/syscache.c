@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.58 2001/01/24 19:43:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.59 2001/02/22 18:39:20 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -75,9 +75,9 @@
   ---------------------------------------------------------------------------
 */
 
-/* ----------------
+/*
  *		struct cachedesc: information defining a single syscache
- * ----------------
+ *
  */
 struct cachedesc
 {
