@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.249 2002/08/04 06:33:54 thomas Exp $
+ * $Id: pg_proc.h,v 1.250 2002/08/04 20:01:33 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2703,7 +2703,7 @@ DATA(insert OID = 1935 (  pg_stat_get_blocks_hit		PGNSP PGUID 12 f f t f s 1 20 
 DESCR("Statistics: Number of blocks found in cache");
 DATA(insert OID = 1936 (  pg_stat_get_backend_idset		PGNSP PGUID 12 f f t t s 0 23 ""	pg_stat_get_backend_idset - _null_ ));
 DESCR("Statistics: Currently active backend IDs");
-DATA(insert OID = 2026 (  backend_pid					PGNSP PGUID 12 f f t f s 0 23 ""	backend_pid - _null_ ));
+DATA(insert OID = 2026 (  pg_backend_pid				PGNSP PGUID 12 f f t f s 0 23 ""	backend_pid - _null_ ));
 DESCR("Statistics: Current backend ID");
 DATA(insert OID = 1937 (  pg_stat_get_backend_pid		PGNSP PGUID 12 f f t f s 1 23 "23"  pg_stat_get_backend_pid - _null_ ));
 DESCR("Statistics: PID of backend");
