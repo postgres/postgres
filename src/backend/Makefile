@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.93 2003/01/26 01:19:22 momjian Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.94 2003/02/03 14:24:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -133,7 +133,6 @@ endif
 endif
 	$(MAKE) -C catalog install-data
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_hba.conf.sample $(DESTDIR)$(datadir)/pg_hba.conf.sample
-	$(INSTALL_DATA) $(srcdir)/libpq/pg_service.conf.sample $(DESTDIR)$(datadir)/pg_service.conf.sample
 	$(INSTALL_DATA) $(srcdir)/libpq/pg_ident.conf.sample $(DESTDIR)$(datadir)/pg_ident.conf.sample
 	$(INSTALL_DATA) $(srcdir)/utils/misc/postgresql.conf.sample $(DESTDIR)$(datadir)/postgresql.conf.sample
 

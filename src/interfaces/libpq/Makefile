@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.72 2003/01/10 10:59:08 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.73 2003/02/03 14:24:07 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -65,6 +65,7 @@ install: all installdirs install-lib
 	$(INSTALL_DATA) $(srcdir)/libpq-fe.h $(DESTDIR)$(includedir)
 	$(INSTALL_DATA) $(srcdir)/libpq-int.h $(DESTDIR)$(includedir_internal)
 	$(INSTALL_DATA) $(srcdir)/pqexpbuffer.h $(DESTDIR)$(includedir_internal)
+	$(INSTALL_DATA) $(srcdir)/pg_service.conf.sample $(DESTDIR)$(datadir)/pg_service.conf.sample
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(libdir) $(DESTDIR)$(includedir) $(DESTDIR)$(includedir_internal)
