@@ -9,10 +9,11 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.3 1998/06/15 19:30:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.4 1998/06/16 06:57:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include <postgres.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <signal.h>
