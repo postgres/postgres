@@ -2,10 +2,12 @@
 #
 # pg_dumpall [pg_dump parameters]
 # dumps all databases to standard output
-# It also dumps the pg_shadow table
+# It also dumps the pg_shadow and pg_group tables, which belong to the
+# whole installation rather than any one individual database.
+#
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_dumpall,v 1.25 2000/05/05 03:04:00 tgl Exp $
 #
 # to adapt to System V vs. BSD 'echo'
-#set -x
 if echo '\\' | grep '\\\\' >/dev/null 2>&1
 then	
 	BS='\'			# BSD
@@ -36,6 +38,8 @@ echo "delete from pg_shadow where usesysid <> tmp_pg_shadow.datdba;"
 echo "drop table tmp_pg_shadow;"
 #
 # load all the non-postgres users
+# XXX this breaks badly if the layout of pg_shadow ever changes.
+# It'd be better to convert the data into CREATE USER commands.
 #
 echo "copy pg_shadow from stdin;"
 psql -q template1 <<END
@@ -47,6 +51,19 @@ copy tmp_pg_shadow to stdout;
 drop table tmp_pg_shadow;
 END
 echo "${BS}."
+#
+# copy the pg_group table too
+# XXX this breaks badly if the layout of pg_group ever changes.
+# It'd be better to convert the data into CREATE GROUP commands.
+#
+echo "copy pg_group from stdin;"
+psql -q template1 <<END
+copy pg_group to stdout;
+END
+echo "${BS}."
+#
+# For each database, run pg_dump to dump the contents of that database.
+#
 psql -A -q -t -c "select * from pg_database" template1 | grep '|' | tr '|' ' ' | \
 grep -v '^template1 ' | \
 while read DATABASE DBUSERID ENCODING DATAPATH
@@ -73,3 +90,5 @@ do
 		exit 1
 	fi
 done
+
+exit 0
