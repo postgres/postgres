@@ -18,6 +18,15 @@ typedef long int slock_t;
 typedef unsigned char slock_t;
 #endif
 
+#if (__GLIBC__ >= 2)
+#  ifdef HAVE_INT_TIMEZONE
+#    undef HAVE_INT_TIMEZONE
+#  endif
+   /* currently undefined as I (teunis@computersupportcentre.com) have not
+      checked this yet */
+/* #define HAVE_SIGSETJMP 1 */
+#endif
+
 #if defined(PPC)
 #undef NEED_I386_TAS_ASM
 #undef HAVE_INT_TIMEZONE
