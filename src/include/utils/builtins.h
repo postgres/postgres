@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.233 2004/01/19 19:04:40 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.234 2004/02/03 08:29:57 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,6 +175,8 @@ extern Datum int2xor(PG_FUNCTION_ARGS);
 extern Datum int2not(PG_FUNCTION_ARGS);
 extern Datum int2shl(PG_FUNCTION_ARGS);
 extern Datum int2shr(PG_FUNCTION_ARGS);
+extern Datum generate_series_int4(PG_FUNCTION_ARGS);
+extern Datum generate_series_step_int4(PG_FUNCTION_ARGS);
 
 /* name.c */
 extern Datum namein(PG_FUNCTION_ARGS);

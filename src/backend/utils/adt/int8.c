@@ -7,21 +7,29 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.50 2003/12/01 21:52:37 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/int8.c,v 1.51 2004/02/03 08:29:56 joe Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <ctype.h>
+#include <limits.h>
 #include <math.h>
 
+#include "funcapi.h"
 #include "libpq/pqformat.h"
 #include "utils/int8.h"
 
 
 #define MAXINT8LEN		25
 
+typedef struct
+{
+	int64		current;
+	int64		finish;
+	int64		step;
+}	generate_series_fctx;
 
 /***********************************************************************
  **
@@ -936,3 +944,84 @@ int8_text(PG_FUNCTION_ARGS)
 
 	PG_RETURN_TEXT_P(result);
 }
+
+/*
+ * non-persistent numeric series generator
+ */
+Datum
+generate_series_int8(PG_FUNCTION_ARGS)
+{
+	return generate_series_step_int8(fcinfo);
+}
+
+Datum
+generate_series_step_int8(PG_FUNCTION_ARGS)
+{
+	FuncCallContext		   *funcctx;
+	generate_series_fctx   *fctx;
+	int64					result;
+	MemoryContext			oldcontext;
+
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
+	{
+		int64			start = PG_GETARG_INT64(0);
+		int64			finish = PG_GETARG_INT64(1);
+		int64			step = 1;
+
+		/* see if we were given an explicit step size */
+		if (PG_NARGS() == 3)
+			step = PG_GETARG_INT64(2);
+		if (step == 0)
+			ereport(ERROR,
+					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
+					 errmsg("step size may not equal zero")));
+
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
+
+		/*
+		 * switch to memory context appropriate for multiple function
+		 * calls
+		 */
+		oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+		/* allocate memory for user context */
+		fctx = (generate_series_fctx *) palloc(sizeof(generate_series_fctx));
+
+		/*
+		 * Use fctx to keep state from call to call.
+		 * Seed current with the original start value
+		 */
+		fctx->current = start;
+		fctx->finish = finish;
+		fctx->step = step;
+
+		funcctx->user_fctx = fctx;
+		MemoryContextSwitchTo(oldcontext);
+	}
+
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+
+	/*
+	 * get the saved state and use current as the result for
+	 * this iteration
+	 */
+	fctx = funcctx->user_fctx;
+	result = fctx->current;
+
+	if ((fctx->step > 0 && fctx->current <= fctx->finish) ||
+		(fctx->step < 0 && fctx->current >= fctx->finish))
+	{
+		/* increment current in preparation for next iteration */
+		fctx->current += fctx->step;
+
+		/* do when there is more left to send */
+		SRF_RETURN_NEXT(funcctx, Int64GetDatum(result));
+	}
+	else
+		/* do when there is no more left */
+		SRF_RETURN_DONE(funcctx);
+}
+
