@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.201 2004/04/01 21:28:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.202 2004/05/08 19:09:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -889,17 +889,6 @@ RelationBuildDesc(RelationBuildDescInfo buildinfo,
 	RelationCacheInsert(relation);
 	MemoryContextSwitchTo(oldcxt);
 
-	/*
-	 * If it's a temp rel, RelationGetNumberOfBlocks will assume that
-	 * rd_nblocks is correct.  Must forcibly update the block count when
-	 * creating the relcache entry.  But if we are doing a rebuild, don't
-	 * do this yet; leave it to RelationClearRelation to do at the end.
-	 * (Otherwise, an elog in RelationUpdateNumberOfBlocks would leave us
-	 * with inconsistent relcache state.)
-	 */
-	if (relation->rd_istemp && oldrelation == NULL)
-		RelationUpdateNumberOfBlocks(relation);
-
 	return relation;
 }
 
@@ -1583,9 +1572,7 @@ RelationReloadClassinfo(Relation relation)
 	memcpy((char *) relation->rd_rel, (char *) relp, CLASS_TUPLE_SIZE);
 	relation->rd_node.relNode = relp->relfilenode;
 	heap_freetuple(pg_class_tuple);
-	/* Must adjust number of blocks after we know the new relfilenode */
 	relation->rd_targblock = InvalidBlockNumber;
-	RelationUpdateNumberOfBlocks(relation);
 	/* Okay, now it's valid again */
 	relation->rd_isnailed = 1;
 }
@@ -1620,28 +1607,25 @@ RelationClearRelation(Relation relation, bool rebuild)
 
 	/*
 	 * Never, never ever blow away a nailed-in system relation, because
-	 * we'd be unable to recover.  However, we must update rd_nblocks and
-	 * reset rd_targblock, in case we got called because of a relation
-	 * cache flush that was triggered by VACUUM.  If it's a nailed index,
-	 * then we need to re-read the pg_class row to see if its relfilenode
-	 * changed.  We can't necessarily do that here, because we might be in
-	 * a failed transaction.  We assume it's okay to do it if there are open
-	 * references to the relcache entry (cf notes for AtEOXact_RelationCache).
-	 * Otherwise just mark the entry as possibly invalid, and it'll be fixed
-	 * when next opened.
+	 * we'd be unable to recover.  However, we must reset rd_targblock, in
+	 * case we got called because of a relation cache flush that was triggered
+	 * by VACUUM.
+	 *
+	 * If it's a nailed index, then we need to re-read the pg_class row to see
+	 * if its relfilenode changed.  We can't necessarily do that here, because
+	 * we might be in a failed transaction.  We assume it's okay to do it if
+	 * there are open references to the relcache entry (cf notes for
+	 * AtEOXact_RelationCache).  Otherwise just mark the entry as possibly
+	 * invalid, and it'll be fixed when next opened.
 	 */
 	if (relation->rd_isnailed)
 	{
+		relation->rd_targblock = InvalidBlockNumber;
 		if (relation->rd_rel->relkind == RELKIND_INDEX)
 		{
 			relation->rd_isnailed = 2;	/* needs to be revalidated */
 			if (relation->rd_refcnt > 1)
 				RelationReloadClassinfo(relation);
-		}
-		else
-		{
-			relation->rd_targblock = InvalidBlockNumber;
-			RelationUpdateNumberOfBlocks(relation);
 		}
 		return;
 	}
@@ -1746,15 +1730,6 @@ RelationClearRelation(Relation relation, bool rebuild)
 			if (old_rulescxt)
 				MemoryContextDelete(old_rulescxt);
 		}
-
-		/*
-		 * Update rd_nblocks.  This is kind of expensive, but I think we
-		 * must do it in case relation has been truncated... we definitely
-		 * must do it if the rel is new or temp, since
-		 * RelationGetNumberOfBlocks will subsequently assume that the
-		 * block count is correct.
-		 */
-		RelationUpdateNumberOfBlocks(relation);
 	}
 }
 

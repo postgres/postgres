@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.164 2004/04/25 23:50:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.165 2004/05/08 19:09:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,6 @@ static void write_buffer(Buffer buffer, bool unpin);
  *
  * Assume when this function is called, that reln has been
  *		opened already.
- *
- * Note: a side effect of a P_NEW call is to update reln->rd_nblocks.
  */
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
@@ -129,14 +127,14 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	if (reln->rd_smgr == NULL)
 		reln->rd_smgr = smgropen(reln->rd_node);
 
+	/* Substitute proper block number if caller asked for P_NEW */
+	if (isExtend)
+		blockNum = smgrnblocks(reln->rd_smgr);
+
 	if (isLocalBuf)
 	{
 		ReadLocalBufferCount++;
 		pgstat_count_buffer_read(&reln->pgstat_info, reln);
-		/* Substitute proper block number if caller asked for P_NEW */
-		if (isExtend)
-			blockNum = reln->rd_nblocks;
-
 		bufHdr = LocalBufferAlloc(reln, blockNum, &found);
 		if (found)
 			LocalBufferHitCount++;
@@ -145,13 +143,6 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	{
 		ReadBufferCount++;
 		pgstat_count_buffer_read(&reln->pgstat_info, reln);
-		/* Substitute proper block number if caller asked for P_NEW */
-		if (isExtend)
-		{
-			/* must be sure we have accurate file length! */
-			blockNum = reln->rd_nblocks = smgrnblocks(reln->rd_smgr);
-		}
-
 		/*
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested
 		 * block is not currently in memory.
@@ -196,8 +187,6 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 		/* new buffers are zero-filled */
 		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
 		smgrextend(reln->rd_smgr, blockNum, (char *) MAKE_PTR(bufHdr->data));
-		/* After successful extend, increment relation length */
-		reln->rd_nblocks++;
 	}
 	else
 	{
@@ -1085,55 +1074,36 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 /*
  * RelationGetNumberOfBlocks
  *		Determines the current number of pages in the relation.
- *		Side effect: relation->rd_nblocks is updated.
  */
 BlockNumber
 RelationGetNumberOfBlocks(Relation relation)
 {
-	/*
-	 * relation->rd_nblocks should be accurate already if the relation is
-	 * new or temp, because no one else should be modifying it.  Otherwise
-	 * we need to ask the smgr for the current physical file length.
-	 *
-	 * Don't call smgr on a view or a composite type, either.
-	 */
-	if (relation->rd_rel->relkind == RELKIND_VIEW ||
-		relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		relation->rd_nblocks = 0;
-	else if (!relation->rd_isnew && !relation->rd_istemp)
-	{
-		/* Open it at the smgr level if not already done */
-		if (relation->rd_smgr == NULL)
-			relation->rd_smgr = smgropen(relation->rd_node);
+	/* Open it at the smgr level if not already done */
+	if (relation->rd_smgr == NULL)
+		relation->rd_smgr = smgropen(relation->rd_node);
 
-		relation->rd_nblocks = smgrnblocks(relation->rd_smgr);
-	}
-
-	return relation->rd_nblocks;
+	return smgrnblocks(relation->rd_smgr);
 }
 
 /*
- * RelationUpdateNumberOfBlocks
- *		Forcibly update relation->rd_nblocks.
+ * RelationTruncate
+ *		Physically truncate a relation to the specified number of blocks.
  *
- * If the relcache drops an entry for a temp relation, it must call this
- * routine after recreating the relcache entry, so that rd_nblocks is
- * re-sync'd with reality.  See RelationGetNumberOfBlocks.
+ * Caller should already have done something to flush any buffered pages
+ * that are to be dropped.
  */
 void
-RelationUpdateNumberOfBlocks(Relation relation)
+RelationTruncate(Relation rel, BlockNumber nblocks)
 {
-	if (relation->rd_rel->relkind == RELKIND_VIEW ||
-		relation->rd_rel->relkind == RELKIND_COMPOSITE_TYPE)
-		relation->rd_nblocks = 0;
-	else
-	{
-		/* Open it at the smgr level if not already done */
-		if (relation->rd_smgr == NULL)
-			relation->rd_smgr = smgropen(relation->rd_node);
+	/* Open it at the smgr level if not already done */
+	if (rel->rd_smgr == NULL)
+		rel->rd_smgr = smgropen(rel->rd_node);
 
-		relation->rd_nblocks = smgrnblocks(relation->rd_smgr);
-	}
+	/* Make sure rd_targblock isn't pointing somewhere past end */
+	rel->rd_targblock = InvalidBlockNumber;
+
+	/* Do the real work */
+	smgrtruncate(rel->rd_smgr, nblocks);
 }
 
 /* ---------------------------------------------------------------------

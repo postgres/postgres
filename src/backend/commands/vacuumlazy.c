@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.39 2004/04/25 23:50:54 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuumlazy.c,v 1.40 2004/05/08 19:09:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -738,11 +738,7 @@ lazy_truncate_heap(Relation onerel, LVRelStats *vacrelstats)
 	/*
 	 * Do the physical truncation.
 	 */
-	if (onerel->rd_smgr == NULL)
-		onerel->rd_smgr = smgropen(onerel->rd_node);
-	new_rel_pages = smgrtruncate(onerel->rd_smgr, new_rel_pages);
-	onerel->rd_nblocks = new_rel_pages; /* update relcache immediately */
-	onerel->rd_targblock = InvalidBlockNumber;
+	RelationTruncate(onerel, new_rel_pages);
 	vacrelstats->rel_pages = new_rel_pages;		/* save new number of
 												 * blocks */
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.263 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.264 2004/05/08 19:09:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1979,12 +1979,8 @@ RelationTruncateIndexes(Oid heapId)
 		 */
 		DropRelationBuffers(currentIndex);
 
-		/* Now truncate the actual data and set blocks to zero */
-		if (currentIndex->rd_smgr == NULL)
-			currentIndex->rd_smgr = smgropen(currentIndex->rd_node);
-		smgrtruncate(currentIndex->rd_smgr, 0);
-		currentIndex->rd_nblocks = 0;
-		currentIndex->rd_targblock = InvalidBlockNumber;
+		/* Now truncate the actual data */
+		RelationTruncate(currentIndex, 0);
 
 		/* Initialize the index and rebuild */
 		index_build(heapRelation, currentIndex, indexInfo);
@@ -2028,12 +2024,8 @@ heap_truncate(Oid rid)
 	 */
 	DropRelationBuffers(rel);
 
-	/* Now truncate the actual data and set blocks to zero */
-	if (rel->rd_smgr == NULL)
-		rel->rd_smgr = smgropen(rel->rd_node);
-	smgrtruncate(rel->rd_smgr, 0);
-	rel->rd_nblocks = 0;
-	rel->rd_targblock = InvalidBlockNumber;
+	/* Now truncate the actual data */
+	RelationTruncate(rel, 0);
 
 	/* If this relation has indexes, truncate the indexes too */
 	RelationTruncateIndexes(rid);

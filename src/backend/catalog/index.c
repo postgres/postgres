@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.230 2004/05/08 00:34:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.231 2004/05/08 19:09:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1702,12 +1702,8 @@ reindex_index(Oid indexId)
 		 */
 		DropRelationBuffers(iRel);
 
-		/* Now truncate the actual data and set blocks to zero */
-		if (iRel->rd_smgr == NULL)
-			iRel->rd_smgr = smgropen(iRel->rd_node);
-		smgrtruncate(iRel->rd_smgr, 0);
-		iRel->rd_nblocks = 0;
-		iRel->rd_targblock = InvalidBlockNumber;
+		/* Now truncate the actual data */
+		RelationTruncate(iRel, 0);
 	}
 	else
 	{

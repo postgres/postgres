@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.274 2004/02/12 05:39:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.275 2004/05/08 19:09:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2522,11 +2522,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 	/* truncate relation, if needed */
 	if (blkno < nblocks)
 	{
-		if (onerel->rd_smgr == NULL)
-			onerel->rd_smgr = smgropen(onerel->rd_node);
-		blkno = smgrtruncate(onerel->rd_smgr, blkno);
-		onerel->rd_nblocks = blkno;		/* update relcache immediately */
-		onerel->rd_targblock = InvalidBlockNumber;
+		RelationTruncate(onerel, blkno);
 		vacrelstats->rel_pages = blkno; /* set new number of blocks */
 	}
 
@@ -2594,11 +2590,7 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 				(errmsg("\"%s\": truncated %u to %u pages",
 						RelationGetRelationName(onerel),
 						vacrelstats->rel_pages, relblocks)));
-		if (onerel->rd_smgr == NULL)
-			onerel->rd_smgr = smgropen(onerel->rd_node);
-		relblocks = smgrtruncate(onerel->rd_smgr, relblocks);
-		onerel->rd_nblocks = relblocks; /* update relcache immediately */
-		onerel->rd_targblock = InvalidBlockNumber;
+		RelationTruncate(onerel, relblocks);
 		vacrelstats->rel_pages = relblocks;		/* set new number of
 												 * blocks */
 	}

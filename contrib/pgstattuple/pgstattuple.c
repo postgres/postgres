@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.14 2004/04/01 21:28:43 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pgstattuple/pgstattuple.c,v 1.15 2004/05/08 19:09:24 tgl Exp $
  *
  * Copyright (c) 2001,2002	Tatsuo Ishii
  *
@@ -127,8 +127,9 @@ pgstattuple_real(Relation rel)
 	 */
 	attinmeta = TupleDescGetAttInMetadata(tupdesc);
 
-	nblocks = RelationGetNumberOfBlocks(rel);
 	scan = heap_beginscan(rel, SnapshotAny, 0, NULL);
+
+	nblocks = scan->rs_nblocks;	/* # blocks to be scanned */
 
 	/* scan the relation */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)

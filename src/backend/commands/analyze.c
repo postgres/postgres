@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.70 2004/02/15 21:01:39 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.71 2004/05/08 19:09:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -388,7 +388,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 
 	/*
 	 * If we are running a standalone ANALYZE, update pages/tuples stats
-	 * in pg_class.  We have the accurate page count from heap_beginscan,
+	 * in pg_class.  We know the accurate page count from the smgr,
 	 * but only an approximate number of tuples; therefore, if we are part
 	 * of VACUUM ANALYZE do *not* overwrite the accurate count already
 	 * inserted by VACUUM.  The same consideration applies to indexes.
@@ -396,7 +396,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	if (!vacstmt->vacuum)
 	{
 		vac_update_relstats(RelationGetRelid(onerel),
-							onerel->rd_nblocks,
+							RelationGetNumberOfBlocks(onerel),
 							totalrows,
 							hasindex);
 		for (ind = 0; ind < nindexes; ind++)
@@ -657,6 +657,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 {
 	int			numrows = 0;
 	HeapScanDesc scan;
+	BlockNumber	totalblocks;
 	HeapTuple	tuple;
 	ItemPointer lasttuple;
 	BlockNumber lastblock,
@@ -673,6 +674,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 	 * Do a simple linear scan until we reach the target number of rows.
 	 */
 	scan = heap_beginscan(onerel, SnapshotNow, 0, NULL);
+	totalblocks = scan->rs_nblocks;	/* grab current relation size */
 	while ((tuple = heap_getnext(scan, ForwardScanDirection)) != NULL)
 	{
 		rows[numrows++] = heap_copytuple(tuple);
@@ -693,7 +695,7 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 		ereport(elevel,
 				(errmsg("\"%s\": %u pages, %d rows sampled, %.0f estimated total rows",
 						RelationGetRelationName(onerel),
-						onerel->rd_nblocks, numrows, *totalrows)));
+						totalblocks, numrows, *totalrows)));
 
 		return numrows;
 	}
@@ -772,10 +774,9 @@ acquire_sample_rows(Relation onerel, HeapTuple *rows, int targrows,
 pageloop:;
 
 		/*
-		 * Have we fallen off the end of the relation?	(We rely on
-		 * heap_beginscan to have updated rd_nblocks.)
+		 * Have we fallen off the end of the relation?
 		 */
-		if (targblock >= onerel->rd_nblocks)
+		if (targblock >= totalblocks)
 			break;
 
 		/*
@@ -841,7 +842,7 @@ pageloop:;
 	/*
 	 * Estimate total number of valid rows in relation.
 	 */
-	*totalrows = floor((double) onerel->rd_nblocks * tuplesperpage + 0.5);
+	*totalrows = floor((double) totalblocks * tuplesperpage + 0.5);
 
 	/*
 	 * Emit some interesting relation info 
@@ -849,7 +850,7 @@ pageloop:;
 	ereport(elevel,
 			(errmsg("\"%s\": %u pages, %d rows sampled, %.0f estimated total rows",
 					RelationGetRelationName(onerel),
-					onerel->rd_nblocks, numrows, *totalrows)));
+					totalblocks, numrows, *totalrows)));
 
 	return numrows;
 }

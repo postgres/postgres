@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.165 2004/04/21 18:24:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.166 2004/05/08 19:09:24 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -73,12 +73,13 @@ static void
 initscan(HeapScanDesc scan, ScanKey key)
 {
 	/*
-	 * Make sure we have up-to-date idea of number of blocks in relation.
+	 * Determine the number of blocks we have to scan.
+	 *
 	 * It is sufficient to do this once at scan start, since any tuples
 	 * added while the scan is in progress will be invisible to my
 	 * transaction anyway...
 	 */
-	scan->rs_rd->rd_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
+	scan->rs_nblocks = RelationGetNumberOfBlocks(scan->rs_rd);
 
 	scan->rs_ctup.t_datamcxt = NULL;
 	scan->rs_ctup.t_data = NULL;
@@ -113,12 +114,12 @@ heapgettup(Relation relation,
 		   Buffer *buffer,
 		   Snapshot snapshot,
 		   int nkeys,
-		   ScanKey key)
+		   ScanKey key,
+		   BlockNumber pages)
 {
 	ItemId		lpp;
 	Page		dp;
 	BlockNumber page;
-	BlockNumber pages;
 	int			lines;
 	OffsetNumber lineoff;
 	int			linesleft;
@@ -159,7 +160,7 @@ heapgettup(Relation relation,
 	/*
 	 * return null immediately if relation is empty
 	 */
-	if ((pages = relation->rd_nblocks) == 0)
+	if (pages == 0)
 	{
 		if (BufferIsValid(*buffer))
 			ReleaseBuffer(*buffer);
@@ -832,7 +833,8 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 			   &(scan->rs_cbuf),
 			   scan->rs_snapshot,
 			   scan->rs_nkeys,
-			   scan->rs_key);
+			   scan->rs_key,
+			   scan->rs_nblocks);
 
 	if (scan->rs_ctup.t_data == NULL && !BufferIsValid(scan->rs_cbuf))
 	{
@@ -1992,7 +1994,8 @@ heap_restrpos(HeapScanDesc scan)
 				   &(scan->rs_cbuf),
 				   scan->rs_snapshot,
 				   0,
-				   NULL);
+				   NULL,
+				   scan->rs_nblocks);
 	}
 }
 
