@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.24 2000/08/22 04:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.25 2001/01/11 23:27:05 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
  * CurrentMemoryContext
  *		Default memory context for allocations.
  */
-DLLIMPORT MemoryContext CurrentMemoryContext = NULL;
+MemoryContext CurrentMemoryContext = NULL;
 
 /*
  * Standard top-level contexts
