@@ -42,7 +42,7 @@ DROP TABLE tmp;
 COPY onek TO '@abs_builddir@/results/onek.data';
 DELETE FROM onek;
 COPY onek FROM '@abs_builddir@/results/onek.data';
-SELECT unique1 FROM onek WHERE unique1 < 2;
+SELECT unique1 FROM onek WHERE unique1 < 2 ORDER BY unique1;
  unique1 
 ---------
        0
@@ -51,7 +51,7 @@ SELECT unique1 FROM onek WHERE unique1 < 2;
 
 DELETE FROM onek2;
 COPY onek2 FROM '@abs_builddir@/results/onek.data';
-SELECT unique1 FROM onek2 WHERE unique1 < 2;
+SELECT unique1 FROM onek2 WHERE unique1 < 2 ORDER BY unique1;
  unique1 
 ---------
        0
