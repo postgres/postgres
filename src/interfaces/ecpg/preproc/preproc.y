@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.220 2003/05/22 07:58:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.221 2003/05/22 17:09:00 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -610,15 +610,17 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 				snprintf(errortext, sizeof(errortext), "trying to open undeclared cursor %s\n", $1);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
+			else
+			{
+				/* merge variables given in prepare statement with those given here */
+				for (p = ptr->argsinsert; p; p = p->next)
+					append_variable(&argsinsert, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
 
-			/* merge variables given in prepare statement with those given here */
-			for (p = ptr->argsinsert; p; p = p->next)
-				append_variable(&argsinsert, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
+				for (p = ptr->argsresult; p; p = p->next)
+					add_variable(&argsresult, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
 
-			for (p = ptr->argsresult; p; p = p->next)
-				add_variable(&argsresult, p->variable, p->var_array_element, p->indicator, p->ind_array_element);
-
-			output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
+				output_statement(mm_strdup(ptr->command), 0, ptr->connection ? mm_strdup(ptr->connection) : NULL);
+			}
 		}
 		| ECPGPrepare
 		{
