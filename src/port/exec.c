@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.21 2004/08/09 20:20:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.22 2004/08/16 01:26:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -381,26 +381,28 @@ static char *pipe_read_line(char *cmd, char *line, int maxsize)
 		{
 			/* So we read some data */
 			retval = line;
+			int len = strlen(line);
 
 			/*
-			 *	Sometime the child returns "\r\n", which doesn't match
-			 *	our version string.  The backend uses
-			 *	setvbuf(stdout, NULL, _IONBF, 0), but pg_dump doesn't
-			 *	so we have to fix it here.
+			 *	If EOL is \r\n, convert to just \n.
+			 *	Because stdout is a text-mode stream, the \n output by
+			 *	the child process is received as \r\n, so we convert it
+			 *	to \n.  The server main.c sets
+			 *	setvbuf(stdout, NULL, _IONBF, 0) which has the effect
+			 *	of disabling \n to \r\n expansion for stdout.
 			 */
-			if (strlen(line) >= 2 &&
-				line[strlen(line)-2] == '\r' &&
-				line[strlen(line)-1] == '\n')
+			if (len >= 2 && line[len-2] == '\r' && line[len-1] == '\n')
 			{
-				line[strlen(line)-2] = '\n';
-				line[strlen(line)-1] = '\0';
+				line[len-2] = '\n';
+				line[len-1] = '\0';
+				len--;
 			}
 
 			/*
 			 *	We emulate fgets() behaviour. So if there is no newline
 			 *	at the end, we add one...
 			 */
-			if (line[strlen(line)-1] != '\n')
+			if (line[len-1] != '\n')
 				strcat(line,"\n");
 		}
 
