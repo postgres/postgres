@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.12 2000/10/08 19:44:01 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.13 2001/02/04 15:28:18 petere Exp $
 -->
 
  <Chapter Id="manage">
@@ -255,22 +255,6 @@ mydb=> \q
      line is ignored. Multiple-line comments, and comments within a line,
      are denoted by "<literal>/* ... */</literal>".
 </Para>
-
-<Sect2>
-<Title>Database Privileges</Title>
-
-<Para>
-</para>
-</Sect2>
-
-<Sect2>
-<Title>Table Privileges</Title>
-
-<Para>
-TBD
-</Para>
-
-</Sect2>
 
 </Sect1>
      

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.33 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/programmer.sgml,v 1.34 2001/02/04 15:28:18 petere Exp $
 
 PostgreSQL Programmer's Guide.
 -->
@@ -28,7 +28,9 @@ PostgreSQL Programmer's Guide.
    operators, aggregates, and both query language and programming
    language functions.  After a discussion of the
    <productname>PostgreSQL</productname> rule system, we discuss the
-   trigger and SPI interfaces.
+   trigger and SPI interfaces.  The third part documents the
+   procedural languages available in the
+   <productname>PostgreSQL</productname> distribution.
   </para>
 
   <para>
@@ -61,7 +63,6 @@ PostgreSQL Programmer's Guide.
   &xindex;
   &indexcost;
   &gist;
-  &xplang;
 
 <!-- reference -->
 
@@ -74,6 +75,15 @@ Disable it until we put in some info.
 
  &trigger;
  &spi;
+ </part>
+
+ <part id="programmer-pl">
+  <title>Procedural Languages</title>
+
+  &xplang;
+  &plsql;
+  &pltcl;
+  &plperl;
  </part>
 
 <![%single-book;[

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.32 2001/02/03 19:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.33 2001/02/04 15:28:18 petere Exp $
 -->
 
 <book id="admin">
@@ -31,6 +31,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/admin.sgml,v 1.32 2001/02/03 19:03:26
   &user-manag;
   &backup;
   &wal;
+  &storage;
   &recovery;
   &regress;
   &release;

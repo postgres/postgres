@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.27 2001/02/03 19:03:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.28 2001/02/04 15:28:18 petere Exp $
 -->
 
 <book id="user">
@@ -23,13 +23,8 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.27 2001/02/03 19:03:27 
  &array;
  &indices;
  &inherit;
- &plsql;
- &pltcl;
- &plperl;
  &mvcc;
- &environ;
  &manage;
- &storage;
  &perform;
 
  <!-- appendices -->
