@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.269 2004/01/04 14:49:06 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.270 2004/01/21 14:09:34 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -643,7 +643,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		/*| DeallocateStmt	{ output_statement($1, 0, connection); }*/
 		| DeclareCursorStmt	{ output_simple_statement($1); }
 		| DefineStmt		{ output_statement($1, 0, connection); }
-		| DeleteStmt		{ output_statement($1, 0, connection); }
+		| DeleteStmt		{ output_statement($1, 1, connection); }
 		| DropAssertStmt	{ output_statement($1, 0, connection); }
 		| DropCastStmt		{ output_statement($1, 0, connection); }
 		| DropGroupStmt		{ output_statement($1, 0, connection); }
@@ -659,7 +659,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| FetchStmt		{ output_statement($1, 1, connection); }
 		| GrantStmt		{ output_statement($1, 0, connection); }
 		| IndexStmt		{ output_statement($1, 0, connection); }
-		| InsertStmt		{ output_statement($1, 0, connection); }
+		| InsertStmt		{ output_statement($1, 1, connection); }
 		| ListenStmt		{ output_statement($1, 0, connection); }
 		| LoadStmt		{ output_statement($1, 0, connection); }
 		| LockStmt		{ output_statement($1, 0, connection); }
@@ -672,7 +672,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		| RenameStmt		{ output_statement($1, 0, connection); }
 		| RevokeStmt		{ output_statement($1, 0, connection); }
 		| RuleStmt		{ output_statement($1, 0, connection); }
-		| SelectStmt		{ output_statement($1, 0, connection); }
+		| SelectStmt		{ output_statement($1, 1, connection); }
 		| TransactionStmt
 		{
 			fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
@@ -681,7 +681,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 		}
 		| TruncateStmt		{ output_statement($1, 0, connection); }
 		| UnlistenStmt		{ output_statement($1, 0, connection); }
-		| UpdateStmt		{ output_statement($1, 0, connection); }
+		| UpdateStmt		{ output_statement($1, 1, connection); }
 		| VacuumStmt		{ output_statement($1, 0, connection); }
 		| VariableSetStmt	{ output_statement($1, 0, connection); }
 		| VariableShowStmt	{ output_statement($1, 0, connection); }
