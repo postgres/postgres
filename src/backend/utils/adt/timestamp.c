@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.117 2004/12/31 22:01:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.118 2005/04/01 14:25:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2754,12 +2754,23 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_WEEK:
-				isoweek2date(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+			{
+				int woy;
+				
+				woy = date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
+				/*
+				 *	If it is week 52/53 and the month is January,
+				 *	then the week must belong to the previous year.
+				 */
+				if (woy >= 52 && tm->tm_mon == 1)
+					--tm->tm_year;
+				isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 				tm->tm_hour = 0;
 				tm->tm_min = 0;
 				tm->tm_sec = 0;
 				fsec = 0;
 				break;
+			}
 			case DTK_MILLENNIUM:
 				/* see comments in timestamptz_trunc */
 				if (tm->tm_year > 0)
@@ -2874,13 +2885,24 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 		switch (val)
 		{
 			case DTK_WEEK:
-				isoweek2date(date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+			{
+				int woy;
+				
+				woy = date2isoweek(tm->tm_year, tm->tm_mon, tm->tm_mday);
+				/*
+				 *	If it is week 52/53 and the month is January,
+				 *	then the week must belong to the previous year.
+				 */
+				if (woy >= 52 && tm->tm_mon == 1)
+					--tm->tm_year;
+				isoweek2date(woy, &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 				tm->tm_hour = 0;
 				tm->tm_min = 0;
 				tm->tm_sec = 0;
 				fsec = 0;
 				redotz = true;
 				break;
+			}
 				/* one may consider DTK_THOUSAND and DTK_HUNDRED... */
 			case DTK_MILLENNIUM:
 
@@ -3142,7 +3164,7 @@ date2isoweek(int year, int mon, int mday)
 	 * Sometimes the last few days in a year will fall into the first week
 	 * of the next year, so check for this.
 	 */
-	if (result >= 53)
+	if (result >= 52)
 	{
 		day4 = date2j(year + 1, 1, 4);
 
@@ -3198,7 +3220,7 @@ date2isoyear(int year, int mon, int mday)
 	 * Sometimes the last few days in a year will fall into the first week
 	 * of the next year, so check for this.
 	 */
-	if (result >= 53)
+	if (result >= 52)
 	{
 		day4 = date2j(year + 1, 1, 4);
 

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.243 2005/03/30 04:52:49 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.244 2005/04/01 14:25:22 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -5471,6 +5471,12 @@ SELECT EXTRACT(SECOND FROM TIME '17:12:28.5');
         contains January 4 of that year.  (The <acronym>ISO</acronym>-8601
         week starts on Monday.)  In other words, the first Thursday of
         a year is in week 1 of that year. (for <type>timestamp</type> values only)
+       </para>
+       <para>
+        Because of this, it is possible for early January dates to be part of the 
+        52nd or 53rd week of the previous year.  For example, <literal>2005-01-01</>
+        is part of the 53rd week of year 2004, and <literal>2006-01-01</> is part of 
+        the 52nd week of year 2005.
        </para>
 
 <screen>
