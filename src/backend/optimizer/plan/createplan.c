@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.101 2000/11/16 22:30:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.102 2000/12/23 18:49:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1732,6 +1732,49 @@ make_limit(List *tlist, Plan *lefttree,
 	Plan	   *plan = &node->plan;
 
 	copy_plan_costsize(plan, lefttree);
+
+	/*
+	 * If offset/count are constants, adjust the output rows count and costs
+	 * accordingly.  This is only a cosmetic issue if we are at top level,
+	 * but if we are building a subquery then it's important to report
+	 * correct info to the outer planner.
+	 */
+	if (limitOffset && IsA(limitOffset, Const))
+	{
+		Const	   *limito = (Const *) limitOffset;
+		int32		offset = DatumGetInt32(limito->constvalue);
+
+		if (!limito->constisnull && offset > 0)
+		{
+			if (offset > plan->plan_rows)
+				offset = (int32) plan->plan_rows;
+			if (plan->plan_rows > 0)
+				plan->startup_cost +=
+					(plan->total_cost - plan->startup_cost)
+					* ((double) offset) / plan->plan_rows;
+			plan->plan_rows -= offset;
+			if (plan->plan_rows < 1)
+				plan->plan_rows = 1;
+		}
+	}
+	if (limitCount && IsA(limitCount, Const))
+	{
+		Const	   *limitc = (Const *) limitCount;
+		int32		count = DatumGetInt32(limitc->constvalue);
+
+		if (!limitc->constisnull && count >= 0)
+		{
+			if (count > plan->plan_rows)
+				count = (int32) plan->plan_rows;
+			if (plan->plan_rows > 0)
+				plan->total_cost = plan->startup_cost +
+					(plan->total_cost - plan->startup_cost)
+					* ((double) count) / plan->plan_rows;
+			plan->plan_rows = count;
+			if (plan->plan_rows < 1)
+				plan->plan_rows = 1;
+		}
+	}
 
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
