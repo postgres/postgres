@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.35 2001/02/10 02:31:26 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.36 2001/02/10 18:24:14 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]> Installation Instructions</title>
@@ -74,7 +74,10 @@ su - postgres
       The <acronym>GNU</> <productname>Readline</> library for comfortable
       line editing and command history retrieval will automatically be used
       if found. You might wish to install it before proceeding, but it is not
-      required.
+      required.  (On <productname>NetBSD</productname>, the
+      <filename>libedit</filename> library is
+      <productname>readline</productname>-compatible and is used if
+      <filename>libreadline</filename> is not found.)
      </para>
     </listitem>
 
