@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.233 2001/07/31 22:55:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.234 2001/08/04 00:14:43 tgl Exp $
  *
  * NOTES
  *
@@ -696,7 +696,7 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (pgstat_init() < 0)
 		ExitPostmaster(1);
-	if (pgstat_start() < 0)
+	if (pgstat_start(real_argc, real_argv) < 0)
 		ExitPostmaster(1);
 
 	/*
@@ -1488,7 +1488,7 @@ reaper(SIGNAL_ARGS)
 		{
 			fprintf(stderr, "%s: Performance collector exited with status %d\n",
 					progname, exitstatus);
-			pgstat_start();
+			pgstat_start(real_argc, real_argv);
 			continue;
 		}
 

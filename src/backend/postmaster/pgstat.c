@@ -16,41 +16,41 @@
  *
  *	Copyright (c) 2001, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.c,v 1.4 2001/07/05 15:19:40 wieck Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/postmaster/pgstat.c,v 1.5 2001/08/04 00:14:43 tgl Exp $
  * ----------
  */
 #include "postgres.h"
 
 #include <unistd.h>
 #include <fcntl.h>
-
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
 #include <errno.h>
 #include <signal.h>
 
-#include "miscadmin.h"
-#include "utils/memutils.h"
-#include "storage/backendid.h"
-#include "utils/rel.h"
-#include "utils/hsearch.h"
-#include "utils/syscache.h"
 #include "access/xact.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_database.h"
+#include "libpq/pqsignal.h"
+#include "miscadmin.h"
+#include "utils/memutils.h"
+#include "storage/backendid.h"
+#include "utils/rel.h"
+#include "utils/hsearch.h"
+#include "utils/ps_status.h"
+#include "utils/syscache.h"
 
 #include "pgstat.h"
 
 
 /* ----------
- * Global data
+ * GUC parameters
  * ----------
  */
 bool	pgstat_collect_startcollector	= true;
@@ -95,8 +95,8 @@ static char					pgStat_fname[MAXPGPATH];
  * Local function forward declarations
  * ----------
  */
-static void		pgstat_main(void);
-static void		pgstat_recvbuffer(void);
+static void		pgstat_main(int real_argc, char *real_argv[]);
+static void		pgstat_recvbuffer(int real_argc, char *real_argv[]);
 
 static int		pgstat_add_backend(PgStat_MsgHdr *msg);
 static void		pgstat_sub_backend(int procpid);
@@ -227,11 +227,14 @@ pgstat_init(void)
  * pgstat_start() -
  *
  *	Called from postmaster at startup or after an existing collector
- *	died. Fire up a fresh statistics collector.
+ *	died.  Fire up a fresh statistics collector.
+ *
+ *	The process' original argc and argv are passed, because they are
+ *	needed by init_ps_display() on some platforms.
  * ----------
  */
 int
-pgstat_start(void)
+pgstat_start(int real_argc, char *real_argv[])
 {
 	/*
 	 * Do nothing if no collector needed
@@ -267,7 +270,8 @@ pgstat_start(void)
 			return 0;
 	}
 
-	pgstat_main();
+	pgstat_main(real_argc, real_argv);
+
 	exit(0);
 }
 
@@ -989,15 +993,6 @@ pgstat_fetch_stat_numbackends(void)
 
 
 
-
-
-
-
-
-
-
-
-
 /* ------------------------------------------------------------
  * Local support functions follow
  * ------------------------------------------------------------
@@ -1053,7 +1048,7 @@ pgstat_send(void *msg, int len)
  * ----------
  */
 static void
-pgstat_main(void)
+pgstat_main(int real_argc, char *real_argv[])
 {
 	PgStat_Msg	msg;
 	fd_set			rfds;
@@ -1076,27 +1071,22 @@ pgstat_main(void)
 	/*
 	 * Ignore all signals usually bound to some action in the postmaster
 	 */
-	signal(SIGHUP, SIG_IGN);
-	signal(SIGINT, SIG_IGN);
-	signal(SIGQUIT, SIG_IGN);
-	signal(SIGTERM, SIG_IGN);
-	signal(SIGALRM, SIG_IGN);
-	signal(SIGPIPE, SIG_IGN);
-	signal(SIGUSR1, SIG_IGN);
-	signal(SIGUSR2, SIG_IGN);
-	signal(SIGCHLD, SIG_IGN);
-	signal(SIGTTIN, SIG_IGN);
-	signal(SIGTTOU, SIG_IGN);
-	signal(SIGWINCH, SIG_IGN);
+	pqsignal(SIGHUP, SIG_IGN);
+	pqsignal(SIGINT, SIG_IGN);
+	pqsignal(SIGTERM, SIG_IGN);
+	pqsignal(SIGQUIT, SIG_IGN);
+	pqsignal(SIGALRM, SIG_IGN);
+	pqsignal(SIGPIPE, SIG_IGN);
+	pqsignal(SIGUSR1, SIG_IGN);
+	pqsignal(SIGUSR2, SIG_IGN);
+	pqsignal(SIGCHLD, SIG_DFL);
+	pqsignal(SIGTTIN, SIG_DFL);
+	pqsignal(SIGTTOU, SIG_DFL);
+	pqsignal(SIGCONT, SIG_DFL);
+	pqsignal(SIGWINCH, SIG_DFL);
 
 	/*
-	 * Write the initial status file right at startup
-	 */
-	gettimeofday(&next_statwrite, NULL);
-	need_statwrite = TRUE;
-
-	/*
-	 * Now we start the buffer process to read from the socket, so
+	 * Start a buffering subprocess to read from the socket, so
 	 * we have a little more time to process incoming messages.
 	 */
 	if (pipe(pgStatPipe) < 0)
@@ -1107,18 +1097,37 @@ pgstat_main(void)
 
 	switch(fork())
 	{
-		case -1:	perror("PGSTAT: fork(2)");
-					exit(1);
+		case -1:
+			perror("PGSTAT: fork(2)");
+			exit(1);
 
-		case 0:		close(pgStatPipe[0]);
-					signal(SIGPIPE, SIG_DFL);
-					pgstat_recvbuffer();
-					exit(2);
+		case 0:
+			close(pgStatPipe[0]);
+			/* child process should die if can't pipe to parent collector */
+			pqsignal(SIGPIPE, SIG_DFL);
+			pgstat_recvbuffer(real_argc, real_argv);
+			exit(2);
 
-		default:	close(pgStatPipe[1]);
-					close(pgStatSock);
-					break;
+		default:
+			close(pgStatPipe[1]);
+			close(pgStatSock);
+			break;
 	}
+
+	/*
+	 * Identify myself via ps
+	 *
+	 * WARNING: On some platforms the environment will be moved around to
+	 * make room for the ps display string.
+	 */
+	init_ps_display(real_argc, real_argv, "stats collector process", "", "");
+	set_ps_display("");
+
+	/*
+	 * Arrange to write the initial status file right away
+	 */
+	gettimeofday(&next_statwrite, NULL);
+	need_statwrite = TRUE;
 
 	/*
 	 * Read in an existing statistics stats file or initialize the
@@ -1358,7 +1367,7 @@ pgstat_main(void)
  * ----------
  */
 static void
-pgstat_recvbuffer(void)
+pgstat_recvbuffer(int real_argc, char *real_argv[])
 {
 	fd_set				rfds;
 	fd_set				wfds;
@@ -1372,6 +1381,15 @@ pgstat_recvbuffer(void)
 	struct sockaddr_in	fromaddr;
 	int					fromlen;
 	int					overflow = 0;
+
+	/*
+	 * Identify myself via ps
+	 *
+	 * WARNING: On some platforms the environment will be moved around to
+	 * make room for the ps display string.
+	 */
+	init_ps_display(real_argc, real_argv, "stats buffer process", "", "");
+	set_ps_display("");
 
 	/*
 	 * Allocate the message buffer

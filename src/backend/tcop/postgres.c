@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.229 2001/07/31 22:55:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.230 2001/08/04 00:14:43 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1102,7 +1102,9 @@ usage(char *progname)
  * ----------------------------------------------------------------
  */
 int
-PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const char *username)
+PostgresMain(int argc, char *argv[],
+			 int real_argc, char *real_argv[],
+			 const char *username)
 {
 	int			flag;
 
@@ -1535,15 +1537,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 */
 	pqsignal(SIGPIPE, SIG_IGN);
 	pqsignal(SIGUSR1, SIG_IGN); /* this signal available for use */
+
 	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
 	pqsignal(SIGFPE, FloatExceptionHandler);
-	pqsignal(SIGCHLD, SIG_IGN); /* ignored (may get this in system()
-								 * calls) */
 
 	/*
 	 * Reset some signals that are accepted by postmaster but not by
 	 * backend
 	 */
+	pqsignal(SIGCHLD, SIG_DFL);	/* system() requires this on some platforms */
 	pqsignal(SIGTTIN, SIG_DFL);
 	pqsignal(SIGTTOU, SIG_DFL);
 	pqsignal(SIGCONT, SIG_DFL);
@@ -1711,7 +1713,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.229 $ $Date: 2001/07/31 22:55:45 $\n");
+		puts("$Revision: 1.230 $ $Date: 2001/08/04 00:14:43 $\n");
 	}
 
 	/*

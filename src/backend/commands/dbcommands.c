@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.76 2001/07/02 20:50:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.77 2001/08/04 00:14:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,6 @@ createdb(const char *dbname, const char *dbpath,
 	char	   *target_dir;
 	char		src_loc[MAXPGPATH];
 	char		buf[2 * MAXPGPATH + 100];
-	int			ret;
 	bool		use_super,
 				use_createdb;
 	Oid			src_dboid;
@@ -195,9 +194,7 @@ createdb(const char *dbname, const char *dbpath,
 	/* Copy the template database to the new location */
 	snprintf(buf, sizeof(buf), "cp -r '%s' '%s'", src_loc, target_dir);
 
-	ret = system(buf);
-	/* Some versions of SunOS seem to return ECHILD after a system() call */
-	if (ret != 0 && errno != ECHILD)
+	if (system(buf) != 0)
 	{
 		if (remove_dbdirs(nominal_loc, alt_loc))
 			elog(ERROR, "CREATE DATABASE: could not initialize database directory");
@@ -557,7 +554,7 @@ remove_dbdirs(const char *nominal_loc, const char *alt_loc)
 
 	snprintf(buf, sizeof(buf), "rm -rf '%s'", target_dir);
 
-	if (system(buf) != 0 && errno != ECHILD)
+	if (system(buf) != 0)
 	{
 		elog(NOTICE, "database directory '%s' could not be removed",
 			 target_dir);
