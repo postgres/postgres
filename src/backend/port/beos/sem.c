@@ -12,9 +12,20 @@
 #include "postgres.h"
 #include <stdio.h>
 #include <errno.h>
+#include <unistd.h>
 #include <OS.h>
 #include "utils/elog.h"
 
+/*#define TDBG*/
+#ifdef TDBG
+#define TRACEDBG(x) printf(x);printf("\n")
+#define TRACEDBGP(x,y) printf(x,y);printf("\n")
+#define TRACEDBGPP(x,y,z) printf(x,y,z);printf("\n")
+#else
+#define TRACEDBG(x)
+#define TRACEDBGP(x,y)
+#define TRACEDBGPP(x,y,z)
+#endif
 
 /* Control of a semaphore pool. The pool is an area in which we stored all
 the semIds of the pool. The first 4 bytes are the number of semaphore allocated
@@ -25,16 +36,19 @@ int semctl(int semId,int semNum,int flag,union semun semun)
 	int32* Address;
 	area_info info; 
 
+	TRACEDBG("->semctl");
 	/* Try to find the pool */
 	if (get_area_info(semId,&info)!=B_OK)
 	{
 		/* pool is invalid (BeOS area id is invalid) */
 		errno=EINVAL;
+		TRACEDBG("<-semctl invalid pool");
 		return -1;
 	}
 	
 	/* Get the pool address */
 	Address=(int32*)info.address;
+	TRACEDBGP("--semctl address %d",Address);
 	
 	
 	/* semNum might be 0 */
@@ -44,18 +58,22 @@ int semctl(int semId,int semNum,int flag,union semun semun)
 	if (flag==SETALL)
 	{
 		long i;
+		TRACEDBG("--semctl setall");
 		for (i=0;i<Address[0];i++)
 		{
 			int32 cnt;
 			/* Get the current count */
-			get_sem_count(Address[i+1],&cnt);
+			get_sem_count(Address[2*i+1],&cnt);
+	
+			TRACEDBGP("--semctl setall %d",semun.array[i]);
 
 			/* Compute and set the new count (relative to the old one) */
 			cnt-=semun.array[i];
+			TRACEDBGPP("--semctl acquire id : %d cnt : %d",Address[2*i+1],cnt);
 			if (cnt > 0)
-				while(acquire_sem_etc(Address[i+1],cnt,0,0)==B_INTERRUPTED);
+				while(acquire_sem_etc(Address[2*i+1],cnt,0,0)==B_INTERRUPTED);
 			if (cnt < 0)
-				release_sem_etc(Address[i+1],-cnt,0);
+				release_sem_etc(Address[2*i+1],-cnt,0);
 		}
 		return 1;
 	}
@@ -64,16 +82,25 @@ int semctl(int semId,int semNum,int flag,union semun semun)
 	if (flag==SETVAL)
 	{
 		int32 cnt;
+		TRACEDBGP("--semctl setval %d",semun.val);
 		/* Get the current count */
-		get_sem_count(Address[semNum+1],&cnt);
+		get_sem_count(Address[2*semNum+1],&cnt);
 
 		/* Compute and set the new count (relative to the old one) */
 		cnt-=semun.val;
+		TRACEDBGPP("--semctl acquire id : %d cnt : %d",Address[2*semNum+1],cnt);
 		if (cnt > 0)
-			while(acquire_sem_etc(Address[semNum+1],cnt,0,0)==B_INTERRUPTED);
+			while(acquire_sem_etc(Address[2*semNum+1],cnt,0,0)==B_INTERRUPTED);
 		if (cnt < 0)
-			release_sem_etc(Address[semNum+1],-cnt,0);
+			release_sem_etc(Address[2*semNum+1],-cnt,0);
 		return 1;
+	}
+	
+	/* Get the last pid which accesed the sem */
+	if (flag==GETPID)
+	{
+		TRACEDBG("->semctl getpid");
+		return Address[2*semNum+2];
 	}
 	
 	/* Delete the pool */
@@ -82,19 +109,22 @@ int semctl(int semId,int semNum,int flag,union semun semun)
 		long i;
 
 		thread_info ti;
+		TRACEDBG("->semctl rmid");
 		get_thread_info(find_thread(NULL),&ti);
 		
 		/* Loop over all semaphore to delete them */
+		TRACEDBGP("->semctl nmbre %d",Address[0]);
 		for (i=0;i<Address[0];i++)
 		{
-			/* Don't remember why I do that */
-			set_sem_owner(Address[i+1],ti.team);
+			/* Make sure to have ownership of the semaphore (if created by another team) */
+			TRACEDBGP("->semctl id %d",Address[2*i+1]);
+			set_sem_owner(Address[2*i+1],ti.team);
 			
 			/* Delete the semaphore */
-			delete_sem(Address[i+1]);
+			delete_sem(Address[2*i+1]);
 
 			/* Reset to an invalid semId (in case other process try to get the infos from a cloned area */
-			Address[i+1]=0;
+			Address[2*i+1]=0;
 		}
 		
 		/* Set the semaphore count to 0 */
@@ -111,6 +141,7 @@ int semctl(int semId,int semNum,int flag,union semun semun)
 	if (flag==GETNCNT)
 	{
 		/* TO BE IMPLEMENTED */
+		TRACEDBG("--semctl getncnt");
 		elog(ERROR,"beos : semctl error : GETNCNT not implemented");
 		return 0;
 	}
@@ -119,12 +150,15 @@ int semctl(int semId,int semNum,int flag,union semun semun)
 	if (flag==GETVAL)
 	{
 		int32 cnt;
-		get_sem_count(Address[semNum+1],&cnt);
+		TRACEDBG("--semctl getval");
+		get_sem_count(Address[2*semNum+1],&cnt);
+		TRACEDBGP("--semctl val %d",cnt);
 		return cnt;
 	}
 
 	elog(ERROR,"beos : semctl error : unknown flag");
 
+	TRACEDBG("<-semctl unknown flag");
 	return 0;
 }
 
@@ -135,6 +169,7 @@ int semget(int semKey, int semNum, int flags)
 	area_id parea;
 	void* Address;
 
+	TRACEDBGPP("->semget key : %d num : %d",semKey,semNum);
 	/* Name of the area to find */
 	sprintf(Nom,"SYSV_IPC_SEM : %d",semKey);
 
@@ -165,8 +200,9 @@ int semget(int semKey, int semNum, int flags)
 			void* Ad;
 			long i;
 
-			/* Limit to 500 semaphore in a pool */
-			if (semNum>500)
+			/* Limit to 250 (8 byte per sem : 4 for the semid and 4 for the last pid
+			which acceced the semaphore in a pool */
+			if (semNum>250)
 			{
 				errno=ENOSPC;
 				return -1;
@@ -183,12 +219,12 @@ int semget(int semKey, int semNum, int flags)
 			/* fill up informations (sem number and sem ids) */
 			Address=(int32*)Ad;
 			Address[0]=semNum;
-			for (i=1;i<=Address[0];i++)
+			for (i=0;i<Address[0];i++)
 			{
 				/* Create the semaphores */
-				Address[i]=create_sem(0,Nom);
+				Address[2*i+1]=create_sem(0,Nom);
 				
-				if ((Address[i]==B_BAD_VALUE)|| (Address[i]==B_NO_MEMORY)||(Address[i]==B_NO_MORE_SEMS))
+				if ((Address[2*i+1]==B_BAD_VALUE)|| (Address[2*i+1]==B_NO_MEMORY)||(Address[2*i+1]==B_NO_MORE_SEMS))
 				{
 					errno=ENOMEM;
 					return -1;
@@ -212,6 +248,7 @@ int semop(int semId, struct sembuf *sops, int nsops)
 	int32* Address; /*Pool address*/
    	area_info info; 
 	long i;
+	long ret;
 
 	/* Get the pool address (semId IS an area id) */
 	get_area_info(semId,&info);
@@ -227,16 +264,32 @@ int semop(int semId, struct sembuf *sops, int nsops)
 	/* Perform acquire or release */
 	for(i=0;i<nsops;i++)
 	{
+		/* remember the PID */
+		Address[2*(sops[i].sem_num)+2]=getpid();
+		
 		/* For each sem in the pool, check the operation to perform */
 		if (sops[i].sem_op < 0)
 		{
 			/* Try acuiring the semaphore till we are not inteerupted by a signal */
-			while (acquire_sem_etc(Address[sops[i].sem_num+1],-sops[i].sem_op,0,0)==B_INTERRUPTED);
+			if (sops[i].sem_flg==IPC_NOWAIT)
+			{
+				/* Try to lock ... */
+				while ((ret=acquire_sem_etc(Address[2*(sops[i].sem_num)+1],-sops[i].sem_op,B_RELATIVE_TIMEOUT,0))==B_INTERRUPTED);
+				if (ret!=B_OK)
+				{
+					return EWOULDBLOCK;
+				}
+			}
+			else
+			{
+				while (acquire_sem_etc(Address[2*(sops[i].sem_num)+1],-sops[i].sem_op,0,0)==B_INTERRUPTED);
+			}
 		}
 		if (sops[i].sem_op > 0)
 		{
-			release_sem_etc(Address[sops[i].sem_num+1],sops[i].sem_op,0);
+			release_sem_etc(Address[2*(sops[i].sem_num)+1],sops[i].sem_op,0);
 		}
 	}
+
 	return 0;
 }

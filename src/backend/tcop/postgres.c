@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.196 2000/12/18 17:33:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.197 2000/12/18 18:45:05 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1649,7 +1649,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.196 $ $Date: 2000/12/18 17:33:41 $\n");
+		puts("$Revision: 1.197 $ $Date: 2000/12/18 18:45:05 $\n");
 	}
 
 	/*
@@ -1950,7 +1950,7 @@ ShowUsage(void)
 			(long int) sys.tv_sec,
 			(long int) sys.tv_usec);
 /* BeOS has rusage but only has some fields, and not these... */
-#if defined(HAVE_GETRUSAGE) && !defined(__BEOS__)
+#if defined(HAVE_GETRUSAGE)
 	fprintf(StatFp,
 			"!\t%ld/%ld [%ld/%ld] filesystem blocks in/out\n",
 			r.ru_inblock - Save_r.ru_inblock,

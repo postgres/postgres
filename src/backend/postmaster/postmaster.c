@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.199 2000/12/18 17:33:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.200 2000/12/18 18:45:04 momjian Exp $
  *
  * NOTES
  *
@@ -2181,6 +2181,11 @@ SSDataBase(int xlop)
 	fflush(stdout);
 	fflush(stderr);
 
+#ifdef __BEOS__
+	/* Specific beos actions before backend startup */
+	beos_before_backend_startup();
+#endif
+
 	if ((pid = fork()) == 0)	/* child */
 	{
 		char	   *av[ARGV_SIZE * 2];
@@ -2188,6 +2193,11 @@ SSDataBase(int xlop)
 		char		nbbuf[ARGV_SIZE];
 		char		dbbuf[ARGV_SIZE];
 		char		xlbuf[ARGV_SIZE];
+
+#ifdef __BEOS__
+		/* Specific beos actions after backend startup */
+		beos_backend_startup();
+#endif
 
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
@@ -2234,6 +2244,11 @@ SSDataBase(int xlop)
 	/* in parent */
 	if (pid < 0)
 	{
+#ifdef __BEOS__
+		/* Specific beos actions before backend startup */
+		beos_backend_startup_failed();
+#endif
+
 		fprintf(stderr, "%s Data Base: fork failed: %s\n",
 				((xlop == BS_XLOG_STARTUP) ? "Startup" : 
 					((xlop == BS_XLOG_CHECKPOINT) ? "CheckPoint" :

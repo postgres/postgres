@@ -5,7 +5,13 @@
 
 typedef unsigned char slock_t;
 
-#define AF_UNIX     1 /* no domain sockets on BeOS */
+#define AF_UNIX     10 /* no domain sockets on BeOS */
+
+/* Beos doesn't have sysnerr but strerror should works on every error */
+extern int sys_nerr;
+
+/* Beos doesn't have all the required getrusage fields */
+#undef HAVE_GETRUSAGE
 
 /* SYS V emulation */
 
@@ -16,6 +22,7 @@ typedef unsigned char slock_t;
 #define IPC_CREAT 512
 #define IPC_EXCL 1024
 #define IPC_PRIVATE 234564
+#define IPC_NOWAIT	2048
 
 #define EACCESS 2048
 #define EIDRM 4096
@@ -24,6 +31,7 @@ typedef unsigned char slock_t;
 #define GETNCNT 16384
 #define GETVAL 65536
 #define SETVAL 131072
+#define GETPID 262144
 
 union semun
 {

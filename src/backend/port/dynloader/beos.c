@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.3 2000/10/07 14:39:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/Attic/beos.c,v 1.4 2000/12/18 18:45:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,6 +51,11 @@ pg_dlsym(void *handle, char *funcname)
 		/* Loading symbol */
 		if(get_image_symbol(*((int*)(handle)),funcname,B_SYMBOL_TYPE_TEXT,(void**)&fpt)==B_OK);
 		{
+			/* Sometime the loader return B_OK for an inexistant function with an invalid address !!! 
+			Check that the return address is in the image range */
+			image_info info;
+			get_image_info(*((int*)(handle)),&info);
+			if ((fpt<info.text) || (fpt>=(info.text+info.text_size))) return NULL;
 			return fpt;
 		}
 		elog(NOTICE, "loading symbol '%s' failed ",funcname);
