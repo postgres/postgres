@@ -1061,26 +1061,53 @@ static int _tarGetHeader(ArchiveHandle *AH, TAR_MEMBER* th)
 	int				sum, chk;
 	int				len;
 	int				hPos;
+	int				i;
+	bool			gotBlock = false;
 
-	/*
-	 * if ( ftell(ctx->tarFH) != ctx->tarFHpos)
-	 *		die_horribly(AH, "%s: mismatch in actual vs. predicted file pos - %d vs. %d\n",
-	 *						progname, ftell(ctx->tarFH), ctx->tarFHpos);
-	 */
+	while (!gotBlock)
+	{
+		/*
+		 * if ( ftell(ctx->tarFH) != ctx->tarFHpos)
+		 *		die_horribly(AH, "%s: mismatch in actual vs. predicted file pos - %d vs. %d\n",
+		 *						progname, ftell(ctx->tarFH), ctx->tarFHpos);
+		 */
 
-	hPos = ctx->tarFHpos;
+		/* Save the pos for reporting purposes */
+		hPos = ctx->tarFHpos;
 
-	len = _tarReadRaw(AH, &h[0], 512, NULL, ctx->tarFH);
-	if (len == 0) /* EOF */
-		return 0;
+		/* Read a 512 byte block, return EOF, exit if short */
+		len = _tarReadRaw(AH, &h[0], 512, NULL, ctx->tarFH);
+		if (len == 0) /* EOF */
+			return 0;
 
-	if (len != 512)
-		die_horribly(AH, "%s: incomplete tar header found (%d bytes)\n", progname, len);
+		if (len != 512)
+			die_horribly(AH, "%s: incomplete tar header found (%d bytes)\n", progname, len);
+
+		/* Calc checksum */
+		chk = _tarChecksum(&h[0]);
+
+		/*
+		 * If the checksum failed, see if it is a null block.
+		 * If so, then just try with next block...
+		 */
+
+		if (chk == sum) {
+			gotBlock = true;
+		} else {
+			for( i = 0 ; i < 512 ; i++)
+			{
+				if (h[0] != 0) 
+				{
+					gotBlock = true;	
+					break;
+				}
+			}
+		}
+	}
 
 	sscanf(&h[0], "%99s", &name[0]);
 	sscanf(&h[124], "%12o", &len);
 	sscanf(&h[148], "%8o", &sum);
-	chk = _tarChecksum(&h[0]);
 
 	ahlog(AH, 3, "TOC Entry %s at %d (len=%d, chk=%d)\n", &name[0], hPos, len, sum);
 

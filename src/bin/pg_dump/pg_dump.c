@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.191 2001/02/10 02:31:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.192 2001/02/13 01:31:54 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -96,11 +96,17 @@
  *		table with the currently implementation, and (b) it's not clear how to restore
  *		a partial BLOB backup (given the current OID-based BLOB implementation).
  *
- * Modifications - 04-Jan-2000 - pjw@rhyme.com.au
+ * Modifications - 04-Jan-2001 - pjw@rhyme.com.au
  *
  *	  - Check ntuples == 1 for various SELECT statements.
  *	  - Fix handling of --tables=* (multiple tables never worked properly, AFAICT)
  *
+ * Modifications - 13-Feb-2001 - pjw@rhyme.com.au
+ *
+ *    - Fix help output: replace 'f' with 't' and change desc.
+ *    - Add extra arg to formatStringLiteral to specify how to handle LF & TAB.
+ *      I opted for encoding them except in procedure bodies.
+ * 
  *-------------------------------------------------------------------------
  */
 
@@ -140,6 +146,15 @@
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 
+
+typedef enum _formatLiteralOptions {
+        CONV_ALL = 0,
+        PASS_LFTAB = 3	/* NOTE: 1 and 2 are reserved in case we want to make a mask. */ 
+						/* We could make this a bit mask for control chars, but I don't */
+						/* see any value in making it more complex...the current code */
+						/* only checks for 'opts == CONV_ALL' anyway. */
+} formatLiteralOptions;
+
 static void dumpComment(Archive *outfile, const char *target, const char *oid);
 static void dumpSequence(Archive *fout, TableInfo tbinfo);
 static void dumpACL(Archive *fout, TableInfo tbinfo);
@@ -147,7 +162,7 @@ static void dumpTriggers(Archive *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
 static void dumpRules(Archive *fout, const char *tablename,
 		  TableInfo *tblinfo, int numTables);
-static void formatStringLiteral(PQExpBuffer buf, const char *str);
+static void formatStringLiteral(PQExpBuffer buf, const char *str, const formatLiteralOptions opts);
 static void clearTableInfo(TableInfo *, int);
 static void dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 			TypeInfo *tinfo, int numTypes);
@@ -209,7 +224,7 @@ help(const char *progname)
 		"  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
 		"  -D, --attribute-inserts  dump data as INSERT commands with attribute names\n"
 		"  -f, --file=FILENAME      specify output file name\n"
-		"  -F, --format {c|f|p}     output file format (custom, files, plain text)\n"
+		"  -F, --format {c|t|p}     output file format (custom, tar, plain text)\n"
 		"  -h, --host=HOSTNAME      server host name\n"
 		"  -i, --ignore-version     proceed when database version != pg_dump version\n"
 		"  -n, --no-quotes          suppress most quotes around identifiers\n"
@@ -238,7 +253,7 @@ help(const char *progname)
 		"  -d                       dump data as INSERT, rather than COPY, commands\n"
 		"  -D                       dump data as INSERT commands with attribute names\n"
 		"  -f FILENAME              specify output file name\n"
-		"  -F {c|f|p}               output file format (custom, files, plain text)\n"
+		"  -F {c|t|p}               output file format (custom, tar, plain text)\n"
 		"  -h HOSTNAME              server host name\n"
 		"  -i                       proceed when database version != pg_dump version\n"
 		"  -n                       suppress most quotes around identifiers\n"
@@ -509,7 +524,7 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
 					 * with appropriate escaping of special characters.
 					 */
 					resetPQExpBuffer(q);
-					formatStringLiteral(q, PQgetvalue(res, tuple, field));
+					formatStringLiteral(q, PQgetvalue(res, tuple, field), CONV_ALL);
 					archprintf(fout, "%s", q->data);
 					break;
 			}
@@ -528,7 +543,7 @@ dumpClasses_dumpData(Archive *fout, char* oid, void *dctxv)
  * The literal is appended to the given PQExpBuffer.
  */
 static void
-formatStringLiteral(PQExpBuffer buf, const char *str)
+formatStringLiteral(PQExpBuffer buf, const char *str, const formatLiteralOptions opts)
 {
 	appendPQExpBufferChar(buf, '\'');
 	while (*str)
@@ -541,7 +556,9 @@ formatStringLiteral(PQExpBuffer buf, const char *str)
 			appendPQExpBufferChar(buf, ch);
 		}
 		else if ((unsigned char) ch < (unsigned char) ' ' &&
-				 ch != '\n' && ch != '\t')
+				(		opts == CONV_ALL
+					|| 	(ch != '\n' && ch != '\t')
+				))
 		{
 			/* generate octal escape for control chars other than whitespace */
 			appendPQExpBufferChar(buf, '\\');
@@ -1099,7 +1116,7 @@ dumpDatabase(Archive *AH)
 	/* Get the dba */
 	appendPQExpBuffer(dbQry, "select (select usename from pg_user where datdba = usesysid) as dba from pg_database"
 							" where datname = ");
-	formatStringLiteral(dbQry, PQdb(g_conn));
+	formatStringLiteral(dbQry, PQdb(g_conn), CONV_ALL);
 
 	res = PQexec(g_conn, dbQry->data);
 	if (!res ||
@@ -1988,7 +2005,7 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 
 			resetPQExpBuffer(query);
 			appendPQExpBuffer(query, "SELECT pg_get_viewdef(");
-			formatStringLiteral(query, tblinfo[i].relname);
+			formatStringLiteral(query, tblinfo[i].relname, CONV_ALL);
 			appendPQExpBuffer(query, ") as viewdef");
 			res2 = PQexec(g_conn, query->data);
 			if (!res2 || PQresultStatus(res2) != PGRES_TUPLES_OK)
@@ -2823,7 +2840,7 @@ dumpComment(Archive *fout, const char *target, const char *oid)
 		i_description = PQfnumber(res, "description");
 		resetPQExpBuffer(query);
 		appendPQExpBuffer(query, "COMMENT ON %s IS ", target);
-		formatStringLiteral(query, PQgetvalue(res, 0, i_description));
+		formatStringLiteral(query, PQgetvalue(res, 0, i_description), PASS_LFTAB);
 		appendPQExpBuffer(query, ";\n");
 
 		ArchiveEntry(fout, oid, target, "COMMENT", NULL, query->data, "" /*Del*/,
@@ -2859,7 +2876,7 @@ dumpDBComment(Archive *fout)
 
 	query = createPQExpBuffer();
 	appendPQExpBuffer(query, "SELECT oid FROM pg_database WHERE datname = ");
-	formatStringLiteral(query, PQdb(g_conn));
+	formatStringLiteral(query, PQdb(g_conn), CONV_ALL);
 
 	/*** Execute query ***/
 
@@ -2947,7 +2964,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 						  fmtId(tinfo[i].typsend, force_quotes));
 		appendPQExpBuffer(q, " receive = %s, default = ",
 						  fmtId(tinfo[i].typreceive, force_quotes));
-		formatStringLiteral(q, tinfo[i].typdefault);
+		formatStringLiteral(q, tinfo[i].typdefault, CONV_ALL);
 
 		if (tinfo[i].isArray)
 		{
@@ -2964,7 +2981,7 @@ dumpTypes(Archive *fout, FuncInfo *finfo, int numFuncs,
 			}
 
 			appendPQExpBuffer(q, ", element = %s, delimiter = ", elemType);
-			formatStringLiteral(q, tinfo[i].typdelim);
+			formatStringLiteral(q, tinfo[i].typdelim, CONV_ALL);
 		}
 		if (tinfo[i].passedbyvalue)
 			appendPQExpBuffer(q, ",passedbyvalue);\n");
@@ -3057,16 +3074,16 @@ dumpProcLangs(Archive *fout, FuncInfo *finfo, int numFuncs,
 		lancompiler = PQgetvalue(res, i, i_lancompiler);
 
 		appendPQExpBuffer(delqry, "DROP PROCEDURAL LANGUAGE ");
-		formatStringLiteral(delqry, lanname);
+		formatStringLiteral(delqry, lanname, CONV_ALL);
 		appendPQExpBuffer(delqry, ";\n");
 
 		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE ",
 						  (PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ?
 						  "TRUSTED " : "");
-		formatStringLiteral(defqry, lanname);
+		formatStringLiteral(defqry, lanname, CONV_ALL);
 		appendPQExpBuffer(defqry, " HANDLER %s LANCOMPILER ",
 						  fmtId(finfo[fidx].proname, force_quotes));
-		formatStringLiteral(defqry, lancompiler);
+		formatStringLiteral(defqry, lancompiler, CONV_ALL);
 		appendPQExpBuffer(defqry, ";\n");
 
 		ArchiveEntry(fout, PQgetvalue(res, i, i_oid), lanname, "PROCEDURAL LANGUAGE",
@@ -3156,11 +3173,11 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 	if (strcmp(finfo[i].probin, "-") != 0)
 	{
 		appendPQExpBuffer(asPart, "AS ");
-		formatStringLiteral(asPart, finfo[i].probin);
+		formatStringLiteral(asPart, finfo[i].probin, CONV_ALL);
 		if (strcmp(finfo[i].prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, ", ");
-			formatStringLiteral(asPart, finfo[i].prosrc);
+			formatStringLiteral(asPart, finfo[i].prosrc, PASS_LFTAB);
 		}
 	}
 	else
@@ -3168,7 +3185,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 		if (strcmp(finfo[i].prosrc, "-") != 0)
 		{
 			appendPQExpBuffer(asPart, "AS ");
-			formatStringLiteral(asPart, finfo[i].prosrc);
+			formatStringLiteral(asPart, finfo[i].prosrc, PASS_LFTAB);
 		}
 	}
 
@@ -3233,7 +3250,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo, int i,
 					  (finfo[i].retset) ? "SETOF " : "",
 					  rettypename,
 					  asPart->data);
-	formatStringLiteral(q, func_lang);
+	formatStringLiteral(q, func_lang, CONV_ALL);
 
 	if (finfo[i].iscachable || finfo[i].isstrict) /* OR in new attrs here */
 	{
@@ -3477,7 +3494,7 @@ dumpAggs(Archive *fout, AggInfo *agginfo, int numAggs,
 		if (agginfo[i].agginitval)
 		{
 			appendPQExpBuffer(details, ", INITCOND = ");
-			formatStringLiteral(details, agginfo[i].agginitval);
+			formatStringLiteral(details, agginfo[i].agginitval, CONV_ALL);
 		}
 
 		if (!(strcmp(agginfo[i].aggfinalfn, "-") == 0))
@@ -4267,7 +4284,7 @@ findLastBuiltinOid(const char* dbname)
 
 	resetPQExpBuffer(query);
 	appendPQExpBuffer(query, "SELECT datlastsysoid from pg_database where datname = ");
-	formatStringLiteral(query, dbname);
+	formatStringLiteral(query, dbname, CONV_ALL);
 
 	res = PQexec(g_conn, query->data);
 	if (res == NULL ||
@@ -4376,7 +4393,7 @@ dumpSequence(Archive *fout, TableInfo tbinfo)
 
 	resetPQExpBuffer(query);
 	appendPQExpBuffer(query, "SELECT setval (");
-	formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes));
+	formatStringLiteral(query, fmtId(tbinfo.relname, force_quotes), CONV_ALL);
 	appendPQExpBuffer(query, ", %d, '%c');\n", last, called);
 
 	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE SET", NULL,
@@ -4458,7 +4475,7 @@ dumpRules(Archive *fout, const char *tablename,
 						  "   pg_rewrite.oid, pg_rewrite.rulename "
 						  "FROM pg_rewrite, pg_class, pg_rules "
 						  "WHERE pg_class.relname = ");
-		formatStringLiteral(query, tblinfo[t].relname);
+		formatStringLiteral(query, tblinfo[t].relname, CONV_ALL);
 		appendPQExpBuffer(query,
 						  "    AND pg_rewrite.ev_class = pg_class.oid "
 						  "    AND pg_rules.tablename = pg_class.relname "
