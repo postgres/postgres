@@ -278,7 +278,7 @@ pushval_morph(QPRS_STATE * state, int typeval, char *strval, int lenval, int2 we
 		pushval_asis(state, VAL, prs.words[count].word, prs.words[count].len, weight);
 		pfree(prs.words[count].word);
 		if (count)
-			pushquery(state, OPR, (int4) '|', 0, 0, 0);
+			pushquery(state, OPR, (int4) '&', 0, 0, 0);
 	}
 	pfree(prs.words);
 
