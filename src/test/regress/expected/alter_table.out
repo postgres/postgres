@@ -271,10 +271,10 @@ SELECT unique1 FROM tenk1 WHERE unique1 < 5;
 
 -- FOREIGN KEY CONSTRAINT adding TEST
 CREATE TABLE tmp2 (a int primary key);
-NOTICE:  CREATE TABLE / ADD PRIMARY KEY will create implicit index 'tmp2_pkey' for table 'tmp2'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'tmp2_pkey' for table 'tmp2'
 CREATE TABLE tmp3 (a int, b int);
 CREATE TABLE tmp4 (a int, b int, unique(a,b));
-NOTICE:  CREATE TABLE / ADD UNIQUE will create implicit index 'tmp4_a_key' for table 'tmp4'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'tmp4_a_key' for table 'tmp4'
 CREATE TABLE tmp5 (a int, b int);
 -- Insert rows into tmp2 (pktable)
 INSERT INTO tmp2 values (1);
@@ -317,7 +317,7 @@ DROP TABLE tmp2;
 -- Note: these tables are TEMP to avoid name conflicts when this test
 -- is run in parallel with foreign_key.sql.
 CREATE TEMP TABLE PKTABLE (ptest1 int PRIMARY KEY);
-NOTICE:  CREATE TABLE / ADD PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
 CREATE TEMP TABLE FKTABLE (ftest1 text);
 -- This next should fail, because text=int does not exist
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1) references pktable;
@@ -345,7 +345,7 @@ NOTICE:  DROP TABLE implicitly drops referential integrity trigger from table "f
 DROP TABLE fktable;
 CREATE TEMP TABLE PKTABLE (ptest1 int, ptest2 text,
                            PRIMARY KEY(ptest1, ptest2));
-NOTICE:  CREATE TABLE / ADD PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
+NOTICE:  CREATE TABLE / PRIMARY KEY will create implicit index 'pktable_pkey' for table 'pktable'
 -- This should fail, because we just chose really odd types
 CREATE TEMP TABLE FKTABLE (ftest1 cidr, ftest2 datetime);
 ALTER TABLE FKTABLE ADD FOREIGN KEY(ftest1, ftest2) references pktable;
@@ -452,7 +452,7 @@ drop table atacc1;
 create table atacc1 ( test int );
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 -- insert first value
 insert into atacc1 (test) values (2);
 -- should fail
@@ -462,7 +462,7 @@ ERROR:  Cannot insert a duplicate key into unique index atacc_test1
 insert into atacc1 (test) values (4);
 -- try adding a unique oid constraint
 alter table atacc1 add constraint atacc_oid1 unique(oid);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_oid1' for table 'atacc1'
+NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_oid1' for table 'atacc1'
 drop table atacc1;
 -- let's do one where the unique constraint fails when added
 create table atacc1 ( test int );
@@ -471,7 +471,7 @@ insert into atacc1 (test) values (2);
 insert into atacc1 (test) values (2);
 -- add a unique constraint (fails)
 alter table atacc1 add constraint atacc_test1 unique (test);
- NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+ NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 ERROR:  Cannot create unique index. Table contains non-unique values
 insert into atacc1 (test) values (3);
 drop table atacc1;
@@ -486,7 +486,7 @@ drop table atacc1;
 create table atacc1 ( test int, test2 int);
 -- add a unique constraint
 alter table atacc1 add constraint atacc_test1 unique (test, test2);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
+NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc_test1' for table 'atacc1'
 -- insert initial value
 insert into atacc1 (test,test2) values (4,4);
 -- should fail
@@ -499,9 +499,9 @@ insert into atacc1 (test,test2) values (5,5);
 drop table atacc1;
 -- lets do some naming tests
 create table atacc1 (test int, test2 int, unique(test));
-NOTICE:  CREATE TABLE / ADD UNIQUE will create implicit index 'atacc1_test_key' for table 'atacc1'
+NOTICE:  CREATE TABLE / UNIQUE will create implicit index 'atacc1_test_key' for table 'atacc1'
 alter table atacc1 add unique (test2);
-NOTICE:  ALTER TABLE / ADD UNIQUE will create implicit index 'atacc1_test2_key' for table 'atacc1'
+NOTICE:  ALTER TABLE / UNIQUE will create implicit index 'atacc1_test2_key' for table 'atacc1'
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);

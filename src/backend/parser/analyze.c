@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.207 2001/11/02 20:23:02 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.208 2001/11/04 02:41:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1239,7 +1239,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				 cxt->stmtType);
 
 		elog(NOTICE, "%s / %s will create implicit index '%s' for table '%s'",
-			 cxt->stmtType, (index->primary ? "ADD PRIMARY KEY" : "ADD UNIQUE"),
+			 cxt->stmtType, (index->primary ? "PRIMARY KEY" : "UNIQUE"),
 			 index->idxname, cxt->relname);
 	}
 }
