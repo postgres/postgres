@@ -27,6 +27,11 @@ echo "
 	into	table debug2 
 	from 	debug;
 
+	create index idebug on debug(scope,func);
+	create index idebug2 on debug2(func,scope);
+	vacuum debug;
+	vacuum debug2;
+
 	update 	debug2 
 	set 	scope = '_' 
 	from 	debug

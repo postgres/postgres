@@ -1,13 +1,13 @@
 #!/bin/sh
-trap "/bin/rm -f /tmp/$$.*" 0 1 2 3 15
+trap "rm -f /tmp/$$.*" 0 1 2 3 15
 cd /tmp
-/bin/cat >$$.c <<EOF
+cat >$$.c <<EOF
 extern int foo;
 EOF
 for i in `cc -v -c $$.c 2>&1`
 do
         case "$i" in
-        -D*) echo "$i" | /usr/bin/sed 's/^-D//';;
-        -A*) /bin/test "2.7.2.1" && echo "$i" | /usr/bin/sed 's/^-A\(.*\)(\(.*\))/\1=\2/';;
+        -D*) echo "$i" | sed 's/^-D//';;
+        -A*) test "2.7.2.1" && echo "$i" | sed 's/^-A\(.*\)(\(.*\))/\1=\2/';;
         esac
 done
