@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.214 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.215 2004/01/18 02:15:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,6 +139,7 @@ static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
 						Oid typelem, bool *isnull);
 static void CopyAttributeOut(char *string, char *delim);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
+static void limit_printout_length(StringInfo buf);
 
 /* Internal communications functions */
 static void SendCopyBegin(bool binary, int natts);
@@ -1140,8 +1141,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 static void
 copy_in_error_callback(void *arg)
 {
-#define MAX_COPY_DATA_DISPLAY 100
-
 	if (copy_binary)
 	{
 		/* can't usefully display the data */
@@ -1156,10 +1155,10 @@ copy_in_error_callback(void *arg)
 		if (copy_attname)
 		{
 			/* error is relevant to a particular column */
-			errcontext("COPY %s, line %d, column %s: \"%.*s%s\"",
+			limit_printout_length(&attribute_buf);
+			errcontext("COPY %s, line %d, column %s: \"%s\"",
 					   copy_relname, copy_lineno, copy_attname,
-					   MAX_COPY_DATA_DISPLAY, attribute_buf.data,
-					   (attribute_buf.len > MAX_COPY_DATA_DISPLAY) ? "..." : "");
+					   attribute_buf.data);
 		}
 		else
 		{
@@ -1167,6 +1166,7 @@ copy_in_error_callback(void *arg)
 			if (!line_buf_converted)
 			{
 				/* didn't convert the encoding yet... */
+				line_buf_converted = true;
 				if (client_encoding != server_encoding)
 				{
 					char	   *cvt;
@@ -1181,16 +1181,46 @@ copy_in_error_callback(void *arg)
 						appendBinaryStringInfo(&line_buf, cvt, strlen(cvt));
 					}
 				}
-				line_buf_converted = true;
 			}
-			errcontext("COPY %s, line %d: \"%.*s%s\"",
+			limit_printout_length(&line_buf);
+			errcontext("COPY %s, line %d: \"%s\"",
 					   copy_relname, copy_lineno,
-					   MAX_COPY_DATA_DISPLAY, line_buf.data,
-					   (line_buf.len > MAX_COPY_DATA_DISPLAY) ? "..." : "");
+					   line_buf.data);
 		}
 	}
 }
 
+/*
+ * Make sure we don't print an unreasonable amount of COPY data in a message.
+ *
+ * It would seem a lot easier to just use the sprintf "precision" limit to
+ * truncate the string.  However, some versions of glibc have a bug/misfeature
+ * that vsnprintf will always fail (return -1) if it is asked to truncate
+ * a string that contains invalid byte sequences for the current encoding.
+ * So, do our own truncation.  We assume we can alter the StringInfo buffer
+ * holding the input data.
+ */
+static void
+limit_printout_length(StringInfo buf)
+{
+#define MAX_COPY_DATA_DISPLAY 100
+
+	int len;
+
+	/* Fast path if definitely okay */
+	if (buf->len <= MAX_COPY_DATA_DISPLAY)
+		return;
+
+	/* Apply encoding-dependent truncation */
+	len = pg_mbcliplen(buf->data, buf->len, MAX_COPY_DATA_DISPLAY);
+	if (buf->len <= len)
+		return;					/* no need to truncate */
+	buf->len = len;
+	buf->data[len] = '\0';
+
+	/* Add "..." to show we truncated the input */
+	appendStringInfoString(buf, "...");
+}
 
 /*
  * Copy FROM file to relation.
@@ -1875,7 +1905,15 @@ CopyReadLine(void)
 
 	/*
 	 * Done reading the line.  Convert it to server encoding.
+	 *
+	 * Note: set line_buf_converted to true *before* attempting conversion;
+	 * this prevents infinite recursion during error reporting should
+	 * pg_client_to_server() issue an error, due to copy_in_error_callback
+	 * again attempting the same conversion.  We'll end up issuing the message
+	 * without conversion, which is bad but better than nothing ...
 	 */
+	line_buf_converted = true;
+
 	if (change_encoding)
 	{
 		cvt = (char *) pg_client_to_server((unsigned char *) line_buf.data,
@@ -1888,8 +1926,6 @@ CopyReadLine(void)
 			appendBinaryStringInfo(&line_buf, cvt, strlen(cvt));
 		}
 	}
-
-	line_buf_converted = true;
 
 	return result;
 }
