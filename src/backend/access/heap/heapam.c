@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.113 2001/03/25 23:23:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.114 2001/05/12 19:58:27 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -487,7 +487,7 @@ heapgettup(Relation relation,
 			return;
 		}
 
-		*buffer = ReleaseAndReadBuffer(*buffer, relation, page);
+		*buffer = ReleaseAndReadBuffer(*buffer, relation, page, false);
 
 		if (!BufferIsValid(*buffer))
 			elog(ERROR, "heapgettup: failed ReadBuffer");

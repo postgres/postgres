@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: hio.c,v 1.37 2001/03/22 06:16:07 momjian Exp $
+ *	  $Id: hio.c,v 1.38 2001/05/12 19:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,7 +66,7 @@ RelationPutHeapTuple(Relation relation,
 /*
  * RelationGetBufferForTuple
  *
- * Returns (locked) buffer with free space >= given len.
+ * Returns exclusive-locked buffer with free space >= given len.
  *
  * Note that we use LockPage to lock relation for extension. We can
  * do this as long as in all other places we use page-level locking
@@ -75,14 +75,14 @@ RelationPutHeapTuple(Relation relation,
  *
  * ELOG(ERROR) is allowed here, so this routine *must* be called
  * before any (unlogged) changes are made in buffer pool.
- *
  */
 Buffer
 RelationGetBufferForTuple(Relation relation, Size len)
 {
-	Buffer		buffer;
+	Buffer		buffer = InvalidBuffer;
 	Page		pageHeader;
-	BlockNumber lastblock;
+	BlockNumber lastblock,
+				oldnblocks;
 
 	len = MAXALIGN(len);		/* be conservative */
 
@@ -93,59 +93,102 @@ RelationGetBufferForTuple(Relation relation, Size len)
 		elog(ERROR, "Tuple is too big: size %lu, max size %ld",
 			 (unsigned long) len, MaxTupleSize);
 
+	/*
+	 * First, use relcache's record of table length to guess where the
+	 * last page is, and try to put the tuple there.  This cached value
+	 * may be out of date, in which case we'll be inserting into a non-last
+	 * page, but that should be OK.  Note that in a newly created relcache
+	 * entry, rd_nblocks may be zero; if so, we'll set it correctly below.
+	 */
+	if (relation->rd_nblocks > 0)
+	{
+		lastblock = relation->rd_nblocks - 1;
+		buffer = ReadBuffer(relation, lastblock);
+		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+		pageHeader = (Page) BufferGetPage(buffer);
+		if (len <= PageGetFreeSpace(pageHeader))
+			return buffer;
+		/*
+		 * Doesn't fit, so we'll have to try someplace else.
+		 */
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		/* buffer release will happen below... */
+	}
+
+	/*
+	 * Before extending relation, make sure no one else has done
+	 * so more recently than our last rd_nblocks update.  (If we
+	 * blindly extend the relation here, then probably most of the
+	 * page the other guy added will end up going to waste.)
+	 *
+	 * We have to use a lock to ensure no one else is extending the
+	 * rel at the same time, else we will both try to initialize the
+	 * same new page.
+	 */
 	if (!relation->rd_myxactonly)
 		LockPage(relation, 0, ExclusiveLock);
 
+	oldnblocks = relation->rd_nblocks;
 	/*
-	 * XXX This does an lseek - VERY expensive - but at the moment it is
+	 * XXX This does an lseek - rather expensive - but at the moment it is
 	 * the only way to accurately determine how many blocks are in a
-	 * relation.  A good optimization would be to get this to actually
-	 * work properly.
+	 * relation.  Is it worth keeping an accurate file length in shared
+	 * memory someplace, rather than relying on the kernel to do it for us?
 	 */
-	lastblock = RelationGetNumberOfBlocks(relation);
+	relation->rd_nblocks = RelationGetNumberOfBlocks(relation);
 
-	/*
-	 * Get the last existing page --- may need to create the first one if
-	 * this is a virgin relation.
-	 */
-	if (lastblock == 0)
+	if (relation->rd_nblocks > oldnblocks)
 	{
-		buffer = ReadBuffer(relation, P_NEW);
+		/*
+		 * Someone else has indeed extended the relation recently.
+		 * Try to fit our tuple into the new last page.
+		 */
+		lastblock = relation->rd_nblocks - 1;
+		buffer = ReleaseAndReadBuffer(buffer, relation, lastblock, false);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		pageHeader = (Page) BufferGetPage(buffer);
-		Assert(PageIsNew((PageHeader) pageHeader));
-		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
-	}
-	else
-	{
-		buffer = ReadBuffer(relation, lastblock - 1);
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		pageHeader = (Page) BufferGetPage(buffer);
-	}
-
-	/*
-	 * Is there room on the last existing page?
-	 */
-	if (len > PageGetFreeSpace(pageHeader))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		buffer = ReleaseAndReadBuffer(buffer, relation, P_NEW);
-		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
-		pageHeader = (Page) BufferGetPage(buffer);
-		Assert(PageIsNew((PageHeader) pageHeader));
-		PageInit(pageHeader, BufferGetPageSize(buffer), 0);
-
-		if (len > PageGetFreeSpace(pageHeader))
+		if (len <= PageGetFreeSpace(pageHeader))
 		{
-			/* We should not get here given the test at the top */
-			elog(STOP, "Tuple is too big: size %lu",
-				 (unsigned long) len);
+			/* OK, we don't need to extend again. */
+			if (!relation->rd_myxactonly)
+				UnlockPage(relation, 0, ExclusiveLock);
+			return buffer;
 		}
+		/*
+		 * Doesn't fit, so we'll have to extend the relation (again).
+		 */
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		/* buffer release will happen below... */
 	}
 
+	/*
+	 * Extend the relation by one page and update rd_nblocks for next time.
+	 */
+	lastblock = relation->rd_nblocks;
+	buffer = ReleaseAndReadBuffer(buffer, relation, lastblock, true);
+	relation->rd_nblocks = lastblock + 1;
+
+	/*
+	 * We need to initialize the empty new page.
+	 */
+	LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	pageHeader = (Page) BufferGetPage(buffer);
+	Assert(PageIsNew((PageHeader) pageHeader));
+	PageInit(pageHeader, BufferGetPageSize(buffer), 0);
+
+	/*
+	 * Release the file-extension lock; it's now OK for someone else
+	 * to extend the relation some more.
+	 */
 	if (!relation->rd_myxactonly)
 		UnlockPage(relation, 0, ExclusiveLock);
 
-	return (buffer);
+	if (len > PageGetFreeSpace(pageHeader))
+	{
+		/* We should not get here given the test at the top */
+		elog(STOP, "Tuple is too big: size %lu",
+			 (unsigned long) len);
+	}
 
+	return buffer;
 }

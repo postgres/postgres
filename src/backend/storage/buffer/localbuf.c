@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.40 2001/03/22 03:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.41 2001/05/12 19:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,12 +53,6 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 {
 	int			i;
 	BufferDesc *bufHdr = (BufferDesc *) NULL;
-
-	if (blockNum == P_NEW)
-	{
-		blockNum = reln->rd_nblocks;
-		reln->rd_nblocks++;
-	}
 
 	/* a low tech search for now -- not optimized for scans */
 	for (i = 0; i < NLocBuffer; i++)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.110 2001/05/10 20:38:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.111 2001/05/12 19:58:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,10 @@ extern void AbortBufferIO(void);
 */
 #define BUFFER_IS_BROKEN(buf) ((buf->flags & BM_IO_ERROR) && !(buf->flags & BM_DIRTY))
 
-static Buffer ReadBufferWithBufferLock(Relation relation, BlockNumber blockNum,
-						 bool bufferLockHeld);
+static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
+								 bool isExtend, bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
-			bool *foundPtr, bool bufferLockHeld);
+							   bool *foundPtr);
 static int	ReleaseBufferWithBufferLock(Buffer buffer);
 static int	BufferReplace(BufferDesc *bufHdr);
 void		PrintBufferDescs(void);
@@ -121,7 +121,7 @@ RelationGetBufferWithBuffer(Relation relation,
 				SpinRelease(BufMgrLock);
 				return buffer;
 			}
-			return ReadBufferWithBufferLock(relation, blockNumber, true);
+			return ReadBufferInternal(relation, blockNumber, false, true);
 		}
 		else
 		{
@@ -131,7 +131,7 @@ RelationGetBufferWithBuffer(Relation relation,
 				return buffer;
 		}
 	}
-	return ReadBuffer(relation, blockNumber);
+	return ReadBufferInternal(relation, blockNumber, false, false);
 }
 
 /*
@@ -152,38 +152,44 @@ RelationGetBufferWithBuffer(Relation relation,
 
 /*
  * ReadBuffer
- *
  */
 Buffer
 ReadBuffer(Relation reln, BlockNumber blockNum)
 {
-	return ReadBufferWithBufferLock(reln, blockNum, false);
+	return ReadBufferInternal(reln, blockNum, false, false);
 }
 
 /*
- * ReadBufferWithBufferLock -- does the work of
- *		ReadBuffer() but with the possibility that
- *		the buffer lock has already been held. this
- *		is yet another effort to reduce the number of
- *		semops in the system.
+ * ReadBufferInternal -- internal version of ReadBuffer with more options
+ *
+ * isExtend: if true, assume that we are extending the file and the caller
+ * is passing the current EOF block number (ie, caller already called
+ * smgrnblocks()).
+ *
+ * bufferLockHeld: if true, caller already acquired the bufmgr spinlock.
+ * (This is assumed never to be true if dealing with a local buffer!)
  */
 static Buffer
-ReadBufferWithBufferLock(Relation reln,
-						 BlockNumber blockNum,
-						 bool bufferLockHeld)
+ReadBufferInternal(Relation reln, BlockNumber blockNum,
+				   bool isExtend, bool bufferLockHeld)
 {
 	BufferDesc *bufHdr;
 	int			status;
 	bool		found;
-	bool		extend;			/* extending the file by one block */
 	bool		isLocalBuf;
 
-	extend = (blockNum == P_NEW);
 	isLocalBuf = reln->rd_myxactonly;
 
 	if (isLocalBuf)
 	{
 		ReadLocalBufferCount++;
+		/* Substitute proper block number if caller asked for P_NEW */
+		if (blockNum == P_NEW)
+		{
+			blockNum = reln->rd_nblocks;
+			reln->rd_nblocks++;
+			isExtend = true;
+		}
 		bufHdr = LocalBufferAlloc(reln, blockNum, &found);
 		if (found)
 			LocalBufferHitCount++;
@@ -191,15 +197,24 @@ ReadBufferWithBufferLock(Relation reln,
 	else
 	{
 		ReadBufferCount++;
-
+		/* Substitute proper block number if caller asked for P_NEW */
+		if (blockNum == P_NEW)
+		{
+			blockNum = smgrnblocks(DEFAULT_SMGR, reln);
+			isExtend = true;
+		}
 		/*
 		 * lookup the buffer.  IO_IN_PROGRESS is set if the requested
 		 * block is not currently in memory.
 		 */
-		bufHdr = BufferAlloc(reln, blockNum, &found, bufferLockHeld);
+		if (!bufferLockHeld)
+			SpinAcquire(BufMgrLock);
+		bufHdr = BufferAlloc(reln, blockNum, &found);
 		if (found)
 			BufferHitCount++;
 	}
+
+	/* At this point we do NOT hold the bufmgr spinlock. */
 
 	if (!bufHdr)
 		return InvalidBuffer;
@@ -208,11 +223,11 @@ ReadBufferWithBufferLock(Relation reln,
 	if (found)
 	{
 		/*
-		 * Could see found && extend if a buffer was already created for
+		 * Could have found && isExtend if a buffer was already created for
 		 * the next page position, but then smgrextend failed to write
 		 * the page.  Must fall through and try to extend file again.
 		 */
-		if (!extend)
+		if (!isExtend)
 			return BufferDescriptorGetBuffer(bufHdr);
 	}
 
@@ -220,16 +235,16 @@ ReadBufferWithBufferLock(Relation reln,
 	 * if we have gotten to this point, the reln pointer must be ok and
 	 * the relation file must be open.
 	 */
-	if (extend)
+	if (isExtend)
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-		status = smgrextend(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
+		status = smgrextend(DEFAULT_SMGR, reln, blockNum,
 							(char *) MAKE_PTR(bufHdr->data));
 	}
 	else
 	{
-		status = smgrread(DEFAULT_SMGR, reln, bufHdr->tag.blockNum,
+		status = smgrread(DEFAULT_SMGR, reln, blockNum,
 						  (char *) MAKE_PTR(bufHdr->data));
 	}
 
@@ -290,13 +305,13 @@ ReadBufferWithBufferLock(Relation reln,
  *
  * Returns: descriptor for buffer
  *
- * When this routine returns, the BufMgrLock is guaranteed NOT be held.
+ * BufMgrLock must be held at entry.  When this routine returns,
+ * the BufMgrLock is guaranteed NOT to be held.
  */
 static BufferDesc *
 BufferAlloc(Relation reln,
 			BlockNumber blockNum,
-			bool *foundPtr,
-			bool bufferLockHeld)
+			bool *foundPtr)
 {
 	BufferDesc *buf,
 			   *buf2;
@@ -305,15 +320,7 @@ BufferAlloc(Relation reln,
 
 	/* create a new tag so we can lookup the buffer */
 	/* assume that the relation is already open */
-	if (blockNum == P_NEW)
-	{
-		blockNum = smgrnblocks(DEFAULT_SMGR, reln);
-	}
-
 	INIT_BUFFERTAG(&newTag, reln, blockNum);
-
-	if (!bufferLockHeld)
-		SpinAcquire(BufMgrLock);
 
 	/* see if the block is in the buffer pool already */
 	buf = BufTableLookup(&newTag);
@@ -666,25 +673,34 @@ WriteNoReleaseBuffer(Buffer buffer)
 #undef ReleaseAndReadBuffer
 /*
  * ReleaseAndReadBuffer -- combine ReleaseBuffer() and ReadBuffer()
- *		so that only one semop needs to be called.
+ *		to save a spinlock release/acquire.
  *
+ * An additional frammish of this routine is that the caller may perform
+ * file extension (as if blockNum = P_NEW) by passing the actual current
+ * EOF block number as blockNum and setting isExtend true.  This hack
+ * allows us to avoid calling smgrnblocks() again when the caller has
+ * already done it.
+ *
+ * Note: it is OK to pass buffer = InvalidBuffer, indicating that no old
+ * buffer actually needs to be released.  This case is the same as ReadBuffer
+ * except for the isExtend option.
  */
 Buffer
 ReleaseAndReadBuffer(Buffer buffer,
 					 Relation relation,
-					 BlockNumber blockNum)
+					 BlockNumber blockNum,
+					 bool isExtend)
 {
 	BufferDesc *bufHdr;
-	Buffer		retbuf;
 
-	if (BufferIsLocal(buffer))
+	if (BufferIsValid(buffer))
 	{
-		Assert(LocalRefCount[-buffer - 1] > 0);
-		LocalRefCount[-buffer - 1]--;
-	}
-	else
-	{
-		if (BufferIsValid(buffer))
+		if (BufferIsLocal(buffer))
+		{
+			Assert(LocalRefCount[-buffer - 1] > 0);
+			LocalRefCount[-buffer - 1]--;
+		}
+		else
 		{
 			bufHdr = &BufferDescriptors[buffer - 1];
 			Assert(PrivateRefCount[buffer - 1] > 0);
@@ -701,13 +717,14 @@ ReleaseAndReadBuffer(Buffer buffer,
 					AddBufferToFreelist(bufHdr);
 					bufHdr->flags |= BM_FREE;
 				}
-				retbuf = ReadBufferWithBufferLock(relation, blockNum, true);
-				return retbuf;
+				return ReadBufferInternal(relation, blockNum,
+										  isExtend, true);
 			}
 		}
 	}
 
-	return ReadBuffer(relation, blockNum);
+	return ReadBufferInternal(relation, blockNum,
+							  isExtend, false);
 }
 
 /*
@@ -1735,13 +1752,14 @@ ReleaseAndReadBuffer_Debug(char *file,
 						   int line,
 						   Buffer buffer,
 						   Relation relation,
-						   BlockNumber blockNum)
+						   BlockNumber blockNum,
+						   bool isExtend)
 {
 	bool		bufferValid;
 	Buffer		b;
 
 	bufferValid = BufferIsValid(buffer);
-	b = ReleaseAndReadBuffer(buffer, relation, blockNum);
+	b = ReleaseAndReadBuffer(buffer, relation, blockNum, isExtend);
 	if (ShowPinTrace && bufferValid && BufferIsLocal(buffer)
 		&& is_userbuffer(buffer))
 	{

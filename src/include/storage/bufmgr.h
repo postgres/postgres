@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.50 2001/03/22 04:01:05 momjian Exp $
+ * $Id: bufmgr.h,v 1.51 2001/05/12 19:58:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,7 +164,7 @@ extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
 extern int	WriteBuffer(Buffer buffer);
 extern int	WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,
-					 BlockNumber blockNum);
+								   BlockNumber blockNum, bool isExtend);
 extern int	FlushBuffer(Buffer buffer, bool sync, bool release);
 
 extern void InitBufferPool(void);
