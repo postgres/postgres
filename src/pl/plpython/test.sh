@@ -4,15 +4,24 @@ DBNAME=pltest
 
 echo -n "*** Destroy $DBNAME."
 dropdb $DBNAME > test.log 2>&1
+# drop failure is ok...
 echo " Done. ***"
 
 echo -n "*** Create $DBNAME."
-createdb $DBNAME >> test.log 2>&1
-echo " Done. ***"
+if createdb $DBNAME >> test.log 2>&1 ; then
+  echo " Done. ***"
+else
+  echo " Failed!  See test.log. ***"
+  exit 1
+fi
 
 echo -n "*** Create plpython."
-createlang plpythonu $DBNAME >> test.log 2>&1
-echo " Done. ***"
+if createlang plpythonu $DBNAME >> test.log 2>&1 ; then
+  echo " Done. ***"
+else
+  echo " Failed!  See test.log. ***"
+  exit 1
+fi
 
 echo -n "*** Create tables"
 psql -q $DBNAME < plpython_schema.sql >> test.log 2>&1
