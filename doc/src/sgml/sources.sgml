@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.12 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.13 2004/02/17 02:53:03 neilc Exp $
 -->
 
  <chapter id="source">
@@ -23,8 +23,8 @@ $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.12 2003/11/29 19:51:37 pgsql Ex
    </para>
 
    <para>
-    For Emacs, add the following (or something similar)
-    to your <filename>~/.emacs</filename> 
+    For <productname>Emacs</productname>, add the following (or
+    something similar) to your <filename>~/.emacs</filename> 
     initialization file:
 
 <programlisting>
@@ -56,7 +56,7 @@ $PostgreSQL: pgsql/doc/src/sgml/sources.sgml,v 2.12 2003/11/29 19:51:37 pgsql Ex
 set tabstop=4
 </programlisting>
 
-    or equivalently from within vi, try
+    or equivalently from within <application>vi</application>, try
 
 <programlisting>
 :set ts=4
@@ -423,7 +423,7 @@ write
    <para>
     Use lower case for message wording, including the first letter of a
     primary error message.  Use upper case for SQL commands and key words if
-    they appear in the message. 
+    they appear in the message.
    </para>
 
    <para>
@@ -497,7 +497,8 @@ and
    </para>
 
    <para>
-    Rationale: Else no one will know what <quote>foo.bar.baz</quote> is.
+    Rationale: Otherwise no one will know what <quote>foo.bar.baz</>
+    refers to.
    </para>
 
   </simplesect>

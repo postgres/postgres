@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.49 2003/12/13 20:09:15 momjian Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/docguide.sgml,v 1.50 2004/02/17 02:53:03 neilc Exp $ -->
 
 <appendix id="docguide">
  <title>Documentation</title>
@@ -51,8 +51,8 @@
    languages are applications of the <firstterm>Standard Generalized
    Markup Language</firstterm>, <acronym>SGML</acronym>, which is
    essentially a language for describing other languages.  In what
-   follows, the terms DocBook and SGML are both used, but technically
-   they are not interchangeable.
+   follows, the terms DocBook and <acronym>SGML</acronym> are both
+   used, but technically they are not interchangeable.
   </para>
 
   <para>
@@ -1017,13 +1017,13 @@ End:
     <para>
      The <productname>PostgreSQL</productname> distribution includes a
      parsed DTD definitions file <filename>reference.ced</filename>.
-     You may find that when using PSGML, a comfortable way of working
-     with these separate files of book parts is to insert a proper
-     <literal>DOCTYPE</literal> declaration while you're editing them.
-     If you are working on this source, for instance, it is an
-     appendix chapter, so you would specify the document as an
-     <quote>appendix</quote> instance of a DocBook document by making
-     the first line look like this:
+     You may find that when using <productname>PSGML</productname>, a
+     comfortable way of working with these separate files of book
+     parts is to insert a proper <literal>DOCTYPE</literal>
+     declaration while you're editing them.  If you are working on
+     this source, for instance, it is an appendix chapter, so you
+     would specify the document as an <quote>appendix</quote> instance
+     of a DocBook document by making the first line look like this:
 
 <programlisting>
 &lt;!DOCTYPE appendix PUBLIC "-//OASIS//DTD DocBook V4.2//EN"&gt;
@@ -1041,8 +1041,8 @@ End:
     <title>Other Emacs modes</title>
 
     <para>
-     <productname>GNU Emacs</productname> ships with a different SGML
-     mode, which is not quite as powerful as
+     <productname>GNU Emacs</productname> ships with a different
+     <acronym>SGML</acronym> mode, which is not quite as powerful as
      <productname>PSGML</productname>, but it's less confusing and
      lighter weight.  Also, it offers syntax highlighting (font lock),
      which can be very helpful.
