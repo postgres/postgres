@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.1 2002/11/21 23:31:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.73.2.2 2003/01/09 01:07:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,12 +630,12 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 	};
 
 	static const int64 TimeOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
-		INT64CONST(-500000),
-		INT64CONST(-50000),
-		INT64CONST(-5000),
-		INT64CONST(-500),
-		INT64CONST(-50),
-		INT64CONST(-5),
+		INT64CONST(500000),
+		INT64CONST(50000),
+		INT64CONST(5000),
+		INT64CONST(500),
+		INT64CONST(50),
+		INT64CONST(5),
 		INT64CONST(0)
 	};
 
@@ -649,52 +649,33 @@ AdjustTimeForTypmod(TimeADT *time, int32 typmod)
 		100000,
 		1000000
 	};
-
-	static const double TimeOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
-		0.5,
-		0.05,
-		0.005,
-		0.0005,
-		0.00005,
-		0.000005,
-		0.0000005
-	};
 #endif
 
 	if ((typmod >= 0) && (typmod <= MAX_TIME_PRECISION))
 	{
+		/*
+		 * Note: this round-to-nearest code is not completely consistent
+		 * about rounding values that are exactly halfway between integral
+		 * values.  On most platforms, rint() will implement round-to-nearest,
+		 * but the integer code always rounds up (away from zero).  Is it
+		 * worth trying to be consistent?
+		 */
 #ifdef HAVE_INT64_TIMESTAMP
-		/* we have different truncation behavior depending on sign */
 		if (*time >= INT64CONST(0))
-		{
-			*time = ((*time / TimeScales[typmod])
-					 * TimeScales[typmod]);
-		}
-		else
 		{
 			*time = (((*time + TimeOffsets[typmod]) / TimeScales[typmod])
 					 * TimeScales[typmod]);
 		}
-#else
-		/* we have different truncation behavior depending on sign */
-		if (*time >= 0)
-		{
-			*time = (rint(((double) *time) * TimeScales[typmod])
-					 / TimeScales[typmod]);
-		}
 		else
 		{
-			/*
-			 * Scale and truncate first, then add to help the rounding
-			 * behavior
-			 */
-			*time = (rint((((double) *time) * TimeScales[typmod]) + TimeOffsets[typmod])
-					 / TimeScales[typmod]);
+			*time = - ((((- *time) + TimeOffsets[typmod]) / TimeScales[typmod])
+					   * TimeScales[typmod]);
 		}
+#else
+		*time = (rint(((double) *time) * TimeScales[typmod])
+				 / TimeScales[typmod]);
 #endif
 	}
-
-	return;
 }
 
 

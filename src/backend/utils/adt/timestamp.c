@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.74.2.1 2002/11/12 00:39:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.74.2.2 2003/01/09 01:07:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,12 +175,12 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 	};
 
 	static const int64 TimestampOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
-		INT64CONST(-500000),
-		INT64CONST(-50000),
-		INT64CONST(-5000),
-		INT64CONST(-500),
-		INT64CONST(-50),
-		INT64CONST(-5),
+		INT64CONST(500000),
+		INT64CONST(50000),
+		INT64CONST(5000),
+		INT64CONST(500),
+		INT64CONST(50),
+		INT64CONST(5),
 		INT64CONST(0)
 	};
 
@@ -194,16 +194,6 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 		100000,
 		1000000
 	};
-
-	static const double TimestampOffsets[MAX_TIMESTAMP_PRECISION + 1] = {
-		0.5,
-		0.05,
-		0.005,
-		0.0005,
-		0.00005,
-		0.000005,
-		0.0000005
-	};
 #endif
 
 	if (!TIMESTAMP_NOT_FINITE(*time)
@@ -213,34 +203,27 @@ AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
 			elog(ERROR, "TIMESTAMP(%d) precision must be between %d and %d",
 				 typmod, 0, MAX_TIMESTAMP_PRECISION);
 
+		/*
+		 * Note: this round-to-nearest code is not completely consistent
+		 * about rounding values that are exactly halfway between integral
+		 * values.  On most platforms, rint() will implement round-to-nearest,
+		 * but the integer code always rounds up (away from zero).  Is it
+		 * worth trying to be consistent?
+		 */
 #ifdef HAVE_INT64_TIMESTAMP
-		/* we have different truncation behavior depending on sign */
 		if (*time >= INT64CONST(0))
-		{
-			*time = ((*time / TimestampScales[typmod])
-					 * TimestampScales[typmod]);
-		}
-		else
 		{
 			*time = (((*time + TimestampOffsets[typmod]) / TimestampScales[typmod])
 					 * TimestampScales[typmod]);
 		}
-#else
-		/* we have different truncation behavior depending on sign */
-		if (*time >= 0)
-		{
-			*time = (rint(((double) *time) * TimestampScales[typmod])
-					 / TimestampScales[typmod]);
-		}
 		else
 		{
-			/*
-			 * Scale and truncate first, then add to help the rounding
-			 * behavior
-			 */
-			*time = (rint((((double) *time) * TimestampScales[typmod]) + TimestampOffsets[typmod])
-					 / TimestampScales[typmod]);
+			*time = - ((((- *time) + TimestampOffsets[typmod]) / TimestampScales[typmod])
+					   * TimestampScales[typmod]);
 		}
+#else
+		*time = (rint(((double) *time) * TimestampScales[typmod])
+				 / TimestampScales[typmod]);
 #endif
 	}
 }
@@ -474,12 +457,12 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 	};
 
 	static const int64 IntervalOffsets[MAX_INTERVAL_PRECISION + 1] = {
-		INT64CONST(-500000),
-		INT64CONST(-50000),
-		INT64CONST(-5000),
-		INT64CONST(-500),
-		INT64CONST(-50),
-		INT64CONST(-5),
+		INT64CONST(500000),
+		INT64CONST(50000),
+		INT64CONST(5000),
+		INT64CONST(500),
+		INT64CONST(50),
+		INT64CONST(5),
 		INT64CONST(0)
 	};
 
@@ -492,16 +475,6 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 		10000,
 		100000,
 		1000000
-	};
-
-	static const double IntervalOffsets[MAX_INTERVAL_PRECISION + 1] = {
-		0.5,
-		0.05,
-		0.005,
-		0.0005,
-		0.00005,
-		0.000005,
-		0.0000005
 	};
 #endif
 
@@ -701,30 +674,27 @@ AdjustIntervalForTypmod(Interval *interval, int32 typmod)
 				elog(ERROR, "INTERVAL(%d) precision must be between %d and %d",
 					 precision, 0, MAX_INTERVAL_PRECISION);
 
+			/*
+			 * Note: this round-to-nearest code is not completely consistent
+			 * about rounding values that are exactly halfway between integral
+			 * values.  On most platforms, rint() will implement round-to-nearest,
+			 * but the integer code always rounds up (away from zero).  Is it
+			 * worth trying to be consistent?
+			 */
 #ifdef HAVE_INT64_TIMESTAMP
-			/* we have different truncation behavior depending on sign */
 			if (interval->time >= INT64CONST(0))
-			{
-				interval->time = ((interval->time / IntervalScales[precision])
-								  * IntervalScales[precision]);
-			}
-			else
 			{
 				interval->time = (((interval->time + IntervalOffsets[precision]) / IntervalScales[precision])
 								  * IntervalScales[precision]);
 			}
-#else
-			/* we have different truncation behavior depending on sign */
-			if (interval->time >= 0)
-			{
-				interval->time = (rint(((double) interval->time) * IntervalScales[precision])
-								  / IntervalScales[precision]);
-			}
 			else
 			{
-				interval->time = (rint((((double) interval->time) + IntervalOffsets[precision])
-				* IntervalScales[precision]) / IntervalScales[precision]);
+				interval->time = - (((-interval->time + IntervalOffsets[precision]) / IntervalScales[precision])
+									* IntervalScales[precision]);
 			}
+#else
+			interval->time = (rint(((double) interval->time) * IntervalScales[precision])
+							  / IntervalScales[precision]);
 #endif
 		}
 	}
