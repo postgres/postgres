@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 12 20:14:51 EST 2001
+Last updated:		Wed Nov 14 11:31:35 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -380,6 +380,7 @@ SOURCE CODE
 * -Decide on spelling of indexes/indices (Peter E)
 * -Add mention of VACUUM, log rotation to Administrator's Guide (Tom, Bruce)
 * Make one version of simple_prompt() in code (Bruce, Tom)
+* Compile in syslog functionaility by default(?)
 
 ---------------------------------------------------------------------------
 
