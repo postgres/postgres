@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.100 1997/11/03 04:21:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.101 1997/11/07 06:27:52 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,9 +545,19 @@ tableDesc(PsqlSettings *pset, char *table, FILE *fout)
 	
 	/* Build the query */
 
-	for (i = strlen(table); i >= 0; i--)
-		if (isupper(table[i]))
-			table[i] = tolower(table[i]);
+	/* if the table name is surrounded by double-quotes, then don't convert case */
+	if (*table == '"')
+	{
+		table++;
+		if (*(table+strlen(table)-1) == '"')
+			*(table+strlen(table)-1) = '\0';
+	}
+	else
+	{
+		for (i = strlen(table); i >= 0; i--)
+			if (isupper(table[i]))
+				table[i] = tolower(table[i]);
+	}
 
 	descbuf[0] = '\0';
 	strcat(descbuf, "SELECT a.attnum, a.attname, t.typname, a.attlen, a.attnotnull");

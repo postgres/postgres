@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.31 1997/10/16 06:59:23 vadim Exp $
+ * $Id: psqlHelp.h,v 1.32 1997/11/07 06:27:55 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,14 +52,14 @@ static struct _helpStruct QL_HELP[] = {
 		"copy data to and from a table",
 	"copy [binary] <class_name> [with oids]\n\t{to|from} {<filename>|stdin|stdout} [using delimiters <delim>];"},
 	{"create",
-		"Please more be specific:",
+		"Please be more specific:",
 	"\tcreate aggregate\n\tcreate database\n\tcreate function\n\tcreate index\n\tcreate operator\n\tcreate rule\n\tcreate sequence\n\tcreate table\n\tcreate trigger\n\tcreate type\n\tcreate view"},
 	{"create aggregate",
 		"define an aggregate function",
 	"create aggregate <agg_name> [as] (basetype = <data_type>, \n\t[sfunc1 = <sfunc_1>, stype1 = <sfunc1_return_type>]\n\t[sfunc2 = <sfunc_2>, stype2 = <sfunc2_return_type>]\n\t[,finalfunc = <final-function>]\n\t[,initcond1 = <initial-cond1>][,initcond2 = <initial-cond2>]);"},
 	{"create database",
 		"create a database",
-	"create database <dbname>"},
+	"create database <dbname> [with location = '<dbpath>']"},
 	{"create function",
 		"create a user-defined function",
 	"create function <function_name> ([<type1>,...<typeN>]) returns <return_type>\n\tas '<object_filename>'|'<sql-queries>'\n\tlanguage 'c'|'sql'|'internal';"},
@@ -94,7 +94,7 @@ static struct _helpStruct QL_HELP[] = {
 		"delete tuples",
 	"delete from <class_name> [where <qual>];"},
 	{"drop",
-		"Please more be specific:",
+		"Please be more specific:",
 	"\tdrop aggregate\n\tdrop database\n\tdrop function\n\tdrop index\n\tdrop operator\n\tdrop rule\n\tdrop sequence\n\tdrop table\n\tdrop trigger\n\tdrop type\n\tdrop view"},
 	{"drop aggregate",
 		"remove an aggregate function",
