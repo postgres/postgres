@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 15 19:34:22 EDT 2002
+Last updated:		Wed Jul 17 18:14:22 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -479,7 +479,7 @@ Source Code
 * Modify regression tests to prevent failures do to minor numeric rounding
 * Add OpenBSD's getpeereid() call for local socket authentication (Bruce)
 * Improve access-permissions check on data directory in Cygwin (Tom)
-* Report failure to find readline or zlib at end of configure run
+* -Report failure to find readline or zlib at end of configure run
 * Add --port flag to regression tests
 * Increase identifier length (NAMEDATALEN) if small performance hit,
   perhaps to standard length of 128;  change struct pgNotify to use pid 
