@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.2 1997/02/19 14:52:06 scrappy Exp $
+ * $Id: geqo_paths.c,v 1.3 1997/06/10 07:53:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,16 +102,17 @@ geqo_rel_paths(Rel *rel)
     Path *path = (Path*)NULL;
     JoinPath *cheapest = (JoinPath*)NULL;
     
-	foreach(y, rel->pathlist) {
-		path = (Path*)lfirst(y);
+    rel->size = 0;
+    foreach(y, rel->pathlist)
+    {
+	path = (Path*)lfirst(y);
 
-	   if(!path->p_ordering.ord.sortop) {
+	if(!path->p_ordering.ord.sortop)
 			break;
-		    }	    
-		}
+    }
 
-	cheapest = (JoinPath*)set_paths(rel, path);
-	rel->size = compute_joinrel_size(cheapest);
+    cheapest = (JoinPath*)set_paths(rel, path);
+    rel->size = compute_joinrel_size(cheapest);
 }
 
 
