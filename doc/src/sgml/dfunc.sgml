@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.20 2002/01/20 22:19:55 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/dfunc.sgml,v 1.21 2002/08/26 23:22:47 momjian Exp $
 -->
 
 <sect2 id="dfunc">
@@ -184,6 +184,20 @@ gcc -shared -o foo.so foo.o
 <programlisting>
 gcc -fpic -c foo.c
 ld -Bshareable -o foo.so foo.o
+</programlisting>
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><productname>OS X</productname></term>
+    <indexterm><primary>OS X</></>
+    <listitem>
+     <para>
+      Here is a sample.  It assumes the developer tools are installed.
+<programlisting>
+cc -c foo.c 
+cc -bundle -flat_namespace -undefined suppress -o foo.so foo.o
 </programlisting>
      </para>
     </listitem>
