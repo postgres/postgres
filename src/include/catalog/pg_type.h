@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.149 2004/02/12 23:41:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_type.h,v 1.150 2004/02/24 22:59:10 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -531,7 +531,7 @@ DATA(insert OID = 2275 ( cstring		PGNSP PGUID -2 f p t \054 0 0 cstring_in cstri
 #define CSTRINGOID		2275
 DATA(insert OID = 2276 ( any			PGNSP PGUID  4 t p t \054 0 0 any_in any_out - - - i p f 0 -1 0 _null_ _null_ ));
 #define ANYOID			2276
-DATA(insert OID = 2277 ( anyarray		PGNSP PGUID -1 f p t \054 0 0 anyarray_in anyarray_out anyarray_recv anyarray_send - i x f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 2277 ( anyarray		PGNSP PGUID -1 f p t \054 0 0 anyarray_in anyarray_out anyarray_recv anyarray_send - d x f 0 -1 0 _null_ _null_ ));
 #define ANYARRAYOID		2277
 DATA(insert OID = 2278 ( void			PGNSP PGUID  4 t p t \054 0 0 void_in void_out - - - i p f 0 -1 0 _null_ _null_ ));
 #define VOIDOID			2278
