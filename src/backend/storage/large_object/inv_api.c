@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.9 1997/01/18 16:14:04 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.10 1997/06/05 22:59:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,8 +109,8 @@ inv_create(int flags)
     file_oid = newoid()+1;
     
     /* come up with some table names */
-    sprintf(objname, "Xinv%d", file_oid);
-    sprintf(indname, "Xinx%d", file_oid);
+    sprintf(objname, "xinv%d", file_oid);
+    sprintf(indname, "xinx%d", file_oid);
 
     if (SearchSysCacheTuple(RELNAME, PointerGetDatum(objname),
 			    0,0,0) != NULL) {
