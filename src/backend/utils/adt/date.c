@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.58 2001/09/28 08:09:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.59 2001/10/03 05:29:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@
 #include "utils/nabstime.h"
 #include "utils/timestamp.h"
 
+
+static void
+AdjustTimeForTypmod(TimeADT *time, int32 typmod);
 
 /*****************************************************************************
  *	 Date ADT
@@ -425,7 +428,11 @@ Datum
 time_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	TimeADT		time;
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
+	TimeADT		result;
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -439,9 +446,11 @@ time_in(PG_FUNCTION_ARGS)
 	 || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, NULL) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
-	time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
 
-	PG_RETURN_TIMEADT(time);
+	AdjustTimeForTypmod(&result, typmod);
+
+	PG_RETURN_TIMEADT(result);
 }
 
 Datum
@@ -452,18 +461,56 @@ time_out(PG_FUNCTION_ARGS)
 	struct tm	tt,
 			   *tm = &tt;
 	double		fsec;
+	double		trem;
 	char		buf[MAXDATELEN + 1];
 
-	tm->tm_hour = (time / (60 * 60));
-	tm->tm_min = (((int) (time / 60)) % 60);
-	tm->tm_sec = (((int) time) % 60);
-
-	fsec = 0;
+	trem = time;
+	TMODULO(trem, tm->tm_hour, 3600e0);
+	TMODULO(trem, tm->tm_min, 60e0);
+	TMODULO(trem, tm->tm_sec, 1e0);
+	fsec = trem;
 
 	EncodeTimeOnly(tm, fsec, NULL, DateStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/* time_scale()
+ * Adjust time type for specified scale factor.
+ * Used by PostgreSQL type system to stuff columns.
+ */
+Datum
+time_scale(PG_FUNCTION_ARGS)
+{
+	TimeADT		time = PG_GETARG_TIMEADT(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	TimeADT		result;
+
+	result = time;
+	AdjustTimeForTypmod(&result, typmod);
+
+	PG_RETURN_TIMEADT(result);
+}
+
+static void
+AdjustTimeForTypmod(TimeADT *time, int32 typmod)
+{
+	if ((typmod >= 0) && (typmod <= 13))
+	{
+		static double TimeScale = 1;
+		static int32 TimeTypmod = 0;
+
+		if (typmod != TimeTypmod)
+			TimeScale = pow(10, typmod);
+
+		*time = (rint(((double) *time)*TimeScale)/TimeScale);
+
+		if (*time >= 86400)
+			*time -= 86400;
+	}
+
+	return;
 }
 
 
@@ -882,12 +929,15 @@ text_time(PG_FUNCTION_ARGS)
  *	 Time With Time Zone ADT
  *****************************************************************************/
 
-
 Datum
 timetz_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	TimeTzADT  *time;
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
+	TimeTzADT  *result;
 	double		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -902,12 +952,14 @@ timetz_in(PG_FUNCTION_ARGS)
 	  || (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
 		elog(ERROR, "Bad time external representation '%s'", str);
 
-	time = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
 
-	time->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
-	time->zone = tz;
+	result->time = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec + fsec);
+	result->zone = tz;
 
-	PG_RETURN_TIMETZADT_P(time);
+	AdjustTimeForTypmod(&(result->time), typmod);
+
+	PG_RETURN_TIMETZADT_P(result);
 }
 
 Datum
@@ -919,19 +971,42 @@ timetz_out(PG_FUNCTION_ARGS)
 			   *tm = &tt;
 	double		fsec;
 	int			tz;
+	double		trem;
 	char		buf[MAXDATELEN + 1];
 
-	tm->tm_hour = (time->time / (60 * 60));
-	tm->tm_min = (((int) (time->time / 60)) % 60);
-	tm->tm_sec = (((int) time->time) % 60);
+	trem = time->time;
+	TMODULO(trem, tm->tm_hour, 3600e0);
+	TMODULO(trem, tm->tm_min, 60e0);
+	TMODULO(trem, tm->tm_sec, 1e0);
+	fsec = trem;
 
-	fsec = 0;
 	tz = time->zone;
 
 	EncodeTimeOnly(tm, fsec, &tz, DateStyle, buf);
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/* timetz_scale()
+ * Adjust time type for specified scale factor.
+ * Used by PostgreSQL type system to stuff columns.
+ */
+Datum
+timetz_scale(PG_FUNCTION_ARGS)
+{
+	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	TimeTzADT  *result;
+
+	result = (TimeTzADT *) palloc(sizeof(TimeTzADT));
+
+	result->time = time->time;
+	result->zone = time->zone;
+
+	AdjustTimeForTypmod(&(result->time), typmod);
+
+	PG_RETURN_TIMETZADT_P(result);
 }
 
 

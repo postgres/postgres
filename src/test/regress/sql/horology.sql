@@ -35,10 +35,13 @@ SELECT (timestamp without time zone 'today' = (timestamp without time zone 'tomo
 SELECT (timestamp without time zone 'tomorrow' = (timestamp without time zone 'yesterday' + interval '2 days')) as "True";
 SELECT (timestamp without time zone 'tomorrow' > 'now') as "True";
 
-SELECT timestamp(date '1994-01-01', time '11:00') AS "Jan_01_1994_11am";
-SELECT timestamp(date '1994-01-01', time '10:00') AS "Jan_01_1994_10am";
-SELECT timestamp(date '1994-01-01', time '11:00-5') AS "Jan_01_1994_8am";
-SELECT timestamp(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_11am";
+-- Convert from date and time to timestamp
+-- This test used to be timestamp(date,time) but no longer allowed by grammar
+-- to enable support for SQL99 timestamp type syntax.
+SELECT date '1994-01-01' + time '11:00' AS "Jan_01_1994_11am";
+SELECT date '1994-01-01' + time '10:00' AS "Jan_01_1994_10am";
+SELECT date '1994-01-01' + time '11:00-5' AS "Jan_01_1994_8am";
+SELECT "timestamp"(date '1994-01-01', time with time zone '11:00-5') AS "Jan_01_1994_11am";
 
 SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMP_TBL;
 SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMP_TBL;
@@ -170,20 +173,20 @@ INSERT INTO TEMP_TIMESTAMP (f1)
   WHERE d1 BETWEEN '13-jun-1957' AND '1-jan-1997'
    OR d1 BETWEEN '1-jan-1999' AND '1-jan-2010';
 
-SELECT '' AS "16", f1 AS timestamp
+SELECT '' AS "16", f1 AS "timestamp"
   FROM TEMP_TIMESTAMP
-  ORDER BY timestamp;
+  ORDER BY "timestamp";
 
-SELECT '' AS "160", d.f1 AS timestamp, t.f1 AS interval, d.f1 + t.f1 AS plus
+SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 + t.f1 AS plus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
-  ORDER BY plus, timestamp, interval;
+  ORDER BY plus, "timestamp", interval;
 
-SELECT '' AS "160", d.f1 AS timestamp, t.f1 AS interval, d.f1 - t.f1 AS minus
+SELECT '' AS "160", d.f1 AS "timestamp", t.f1 AS interval, d.f1 - t.f1 AS minus
   FROM TEMP_TIMESTAMP d, INTERVAL_TBL t
   WHERE isfinite(d.f1)
-  ORDER BY minus, timestamp, interval;
+  ORDER BY minus, "timestamp", interval;
 
-SELECT '' AS "16", d.f1 AS timestamp, timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
+SELECT '' AS "16", d.f1 AS "timestamp", timestamp '1980-01-06 00:00 GMT' AS gpstime_zero,
    d.f1 - timestamp '1980-01-06 00:00 GMT' AS difference
   FROM TEMP_TIMESTAMP d
   ORDER BY difference;
@@ -191,14 +194,6 @@ SELECT '' AS "16", d.f1 AS timestamp, timestamp '1980-01-06 00:00 GMT' AS gpstim
 SELECT '' AS "226", d1.f1 AS timestamp1, d2.f1 AS timestamp2, d1.f1 - d2.f1 AS difference
   FROM TEMP_TIMESTAMP d1, TEMP_TIMESTAMP d2
   ORDER BY timestamp1, timestamp2, difference;
-
-SELECT '' as "55", d1 as timestamp,
-  date_part('year', d1) AS year, date_part('month', d1) AS month,
-  date_part('day',d1) AS day, date_part('hour', d1) AS hour,
-  date_part('minute', d1) AS minute, date_part('second', d1) AS second
-  FROM TIMESTAMP_TBL
-  WHERE isfinite(d1) and d1 >= '1-jan-1900 GMT'
-  ORDER BY timestamp;
 
 --
 -- abstime, reltime arithmetic
@@ -232,12 +227,12 @@ SELECT '' AS three, ABSTIME_TBL.*
 -- Conversions
 --
 
-SELECT '' AS "16", f1 AS timestamp, date(f1) AS date
+SELECT '' AS "16", f1 AS "timestamp", date(f1) AS date
   FROM TEMP_TIMESTAMP
   WHERE f1 <> timestamp 'current'
-  ORDER BY date, timestamp;
+  ORDER BY date, "timestamp";
 
-SELECT '' AS "16", f1 AS timestamp, abstime(f1) AS abstime
+SELECT '' AS "16", f1 AS "timestamp", abstime(f1) AS abstime
   FROM TEMP_TIMESTAMP
   ORDER BY abstime;
 
@@ -246,10 +241,10 @@ SELECT '' AS four, f1 AS abstime, date(f1) AS date
   WHERE isfinite(f1) AND f1 <> abstime 'current'
   ORDER BY date, abstime;
 
-SELECT '' AS two, d1 AS timestamp, abstime(d1) AS abstime
+SELECT '' AS two, d1 AS "timestamp", abstime(d1) AS abstime
   FROM TIMESTAMP_TBL WHERE NOT isfinite(d1);
 
-SELECT '' AS three, f1 as abstime, timestamp(f1) AS timestamp
+SELECT '' AS three, f1 as abstime, cast(f1 as timestamp) AS "timestamp"
   FROM ABSTIME_TBL WHERE NOT isfinite(f1);
 
 SELECT '' AS ten, f1 AS interval, reltime(f1) AS reltime

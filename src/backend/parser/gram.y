@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.256 2001/10/02 21:39:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.257 2001/10/03 05:29:12 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4075,10 +4075,10 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
 						elog(ERROR,"NUMERIC precision %d must be beween 1 and %d",
-									$2, NUMERIC_MAX_PRECISION);
+							 $2, NUMERIC_MAX_PRECISION);
 					if ($4 < 0 || $4 > $2)
 						elog(ERROR,"NUMERIC scale %d must be between 0 and precision %d",
-									$4,$2);
+							 $4,$2);
 
 					$$ = (($2 << 16) | $4) + VARHDRSZ;
 				}
@@ -4086,7 +4086,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				{
 					if ($2 < 1 || $2 > NUMERIC_MAX_PRECISION)
 						elog(ERROR,"NUMERIC precision %d must be beween 1 and %d",
-									$2, NUMERIC_MAX_PRECISION);
+							 $2, NUMERIC_MAX_PRECISION);
 
 					$$ = ($2 << 16) + VARHDRSZ;
 				}
@@ -4163,7 +4163,7 @@ bit:  BIT opt_varying
  * SQL92 character data types
  * The following implements CHAR() and VARCHAR().
  */
-Character:  character '(' Iconst ')'
+Character:  character '(' Iconst ')' opt_charset
 				{
 					$$ = makeNode(TypeName);
 					$$->name = $1;
@@ -4180,34 +4180,37 @@ Character:  character '(' Iconst ')'
 					 * truncate where necessary)
 					 */
 					$$->typmod = VARHDRSZ + $3;
+
+					if (($5 != NULL) && (strcmp($5, "sql_text") != 0)) {
+						char *type;
+
+						type = palloc(strlen($$->name) + 1 + strlen($5) + 1);
+						strcpy(type, $$->name);
+						strcat(type, "_");
+						strcat(type, $5);
+						$$->name = xlateSqlType(type);
+					};
 				}
-		| character
+		| character opt_charset
 				{
 					$$ = makeNode(TypeName);
 					$$->name = $1;
 					/* default length, if needed, will be inserted later */
 					$$->typmod = -1;
+
+					if (($2 != NULL) && (strcmp($2, "sql_text") != 0)) {
+						char *type;
+
+						type = palloc(strlen($$->name) + 1 + strlen($2) + 1);
+						strcpy(type, $$->name);
+						strcat(type, "_");
+						strcat(type, $2);
+						$$->name = xlateSqlType(type);
+					};
 				}
 		;
 
-character:  CHARACTER opt_varying opt_charset
-				{
-					char *type, *c;
-					if (($3 == NULL) || (strcmp($3, "sql_text") == 0)) {
-						if ($2) type = xlateSqlType("varchar");
-						else type = xlateSqlType("bpchar");
-					} else {
-						if ($2) {
-							c = palloc(strlen("var") + strlen($3) + 1);
-							strcpy(c, "var");
-							strcat(c, $3);
-							type = xlateSqlType(c);
-						} else {
-							type = xlateSqlType($3);
-						}
-					};
-					$$ = type;
-				}
+character:  CHARACTER opt_varying				{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
 		| CHAR opt_varying						{ $$ = xlateSqlType($2 ? "varchar": "bpchar"); }
 		| VARCHAR								{ $$ = xlateSqlType("varchar"); }
 		| NATIONAL CHARACTER opt_varying		{ $$ = xlateSqlType($3 ? "varchar": "bpchar"); }
@@ -4233,6 +4236,22 @@ ConstDatetime:  datetime
 					$$->name = xlateSqlType($1);
 					$$->typmod = -1;
 				}
+		| TIMESTAMP '(' Iconst ')' opt_timezone_x
+				{
+					$$ = makeNode(TypeName);
+					if ($5)
+						$$->name = xlateSqlType("timestamptz");
+					else
+						$$->name = xlateSqlType("timestamp");
+					/* XXX the timezone field seems to be unused
+					 * - thomas 2001-09-06
+					 */
+					$$->timezone = $5;
+					if (($3 < 0) || ($3 > 13))
+						elog(ERROR,"TIMESTAMP %s precision %d must be beween 0 and %d",
+							 ($5? " WITH TIME ZONE": ""), 0, 13);
+					$$->typmod = $3;
+				}
 		| TIMESTAMP opt_timezone_x
 				{
 					$$ = makeNode(TypeName);
@@ -4244,7 +4263,19 @@ ConstDatetime:  datetime
 					 * - thomas 2001-09-06
 					 */
 					$$->timezone = $2;
-					$$->typmod = -1;
+					$$->typmod = 0;
+				}
+		| TIME '(' Iconst ')' opt_timezone
+				{
+					$$ = makeNode(TypeName);
+					if ($5)
+						$$->name = xlateSqlType("timetz");
+					else
+						$$->name = xlateSqlType("time");
+					if (($3 < 0) || ($3 > 13))
+						elog(ERROR,"TIME %s precision %d must be beween 0 and %d",
+							 ($5? " WITH TIME ZONE": ""), 0, 13);
+					$$->typmod = $3;
 				}
 		| TIME opt_timezone
 				{
@@ -4253,7 +4284,10 @@ ConstDatetime:  datetime
 						$$->name = xlateSqlType("timetz");
 					else
 						$$->name = xlateSqlType("time");
-					$$->typmod = -1;
+					/* SQL99 specified a default precision of zero.
+					 * - thomas 2001-09-30
+					 */
+					$$->typmod = 0;
 				}
 		;
 
@@ -5586,8 +5620,6 @@ ColId:  IDENT							{ $$ = $1; }
 		| NATIONAL						{ $$ = "national"; }
 		| NONE							{ $$ = "none"; }
 		| PATH_P						{ $$ = "path"; }
-		| TIME							{ $$ = "time"; }
-		| TIMESTAMP						{ $$ = "timestamp"; }
 		;
 
 /* Parser tokens to be used as identifiers.
@@ -5839,6 +5871,8 @@ ColLabel:  ColId						{ $$ = $1; }
 		| SUBSTRING						{ $$ = "substring"; }
 		| TABLE							{ $$ = "table"; }
 		| THEN							{ $$ = "then"; }
+		| TIME							{ $$ = "time"; }
+		| TIMESTAMP						{ $$ = "timestamp"; }
 		| TO							{ $$ = "to"; }
 		| TRAILING						{ $$ = "trailing"; }
 		| TRANSACTION					{ $$ = "transaction"; }

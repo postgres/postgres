@@ -1,7 +1,7 @@
 --
 -- TIME
 --
-CREATE TABLE TIME_TBL (f1 time);
+CREATE TABLE TIME_TBL (f1 time(2));
 INSERT INTO TIME_TBL VALUES ('00:00');
 INSERT INTO TIME_TBL VALUES ('01:00');
 INSERT INTO TIME_TBL VALUES ('02:03');
@@ -15,8 +15,8 @@ INSERT INTO TIME_TBL VALUES ('12:01');
 INSERT INTO TIME_TBL VALUES ('23:59');
 INSERT INTO TIME_TBL VALUES ('11:59:59.99 PM');
 SELECT f1 AS "Time" FROM TIME_TBL;
-   Time   
-----------
+    Time     
+-------------
  00:00:00
  01:00:00
  02:03:00
@@ -24,7 +24,7 @@ SELECT f1 AS "Time" FROM TIME_TBL;
  12:00:00
  12:01:00
  23:59:00
- 23:59:59
+ 23:59:59.99
 (8 rows)
 
 SELECT f1 AS "Three" FROM TIME_TBL WHERE f1 < '05:06:07';
@@ -36,13 +36,13 @@ SELECT f1 AS "Three" FROM TIME_TBL WHERE f1 < '05:06:07';
 (3 rows)
 
 SELECT f1 AS "Five" FROM TIME_TBL WHERE f1 > '05:06:07';
-   Five   
-----------
+    Five     
+-------------
  11:59:00
  12:00:00
  12:01:00
  23:59:00
- 23:59:59
+ 23:59:59.99
 (5 rows)
 
 SELECT f1 AS "None" FROM TIME_TBL WHERE f1 < '00:00';
@@ -51,8 +51,8 @@ SELECT f1 AS "None" FROM TIME_TBL WHERE f1 < '00:00';
 (0 rows)
 
 SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
-  Eight   
-----------
+    Eight    
+-------------
  00:00:00
  01:00:00
  02:03:00
@@ -60,7 +60,7 @@ SELECT f1 AS "Eight" FROM TIME_TBL WHERE f1 >= '00:00';
  12:00:00
  12:01:00
  23:59:00
- 23:59:59
+ 23:59:59.99
 (8 rows)
 
 --

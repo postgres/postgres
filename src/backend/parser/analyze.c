@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.198 2001/09/07 21:57:53 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.199 2001/10/03 05:29:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -510,11 +510,10 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 			 * No user-supplied value, so add a targetentry with DEFAULT
 			 * expr and correct data for the target column.
 			 */
-			te = makeTargetEntry(
-								 makeResdom(attrno,
+			te = makeTargetEntry(makeResdom(attrno,
 											thisatt->atttypid,
 											thisatt->atttypmod,
-									  pstrdup(NameStr(thisatt->attname)),
+											pstrdup(NameStr(thisatt->attname)),
 											false),
 								 stringToNode(defval[ndef].adbin));
 			qry->targetList = lappend(qry->targetList, te);

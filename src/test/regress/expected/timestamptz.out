@@ -3,7 +3,7 @@
 --
 -- needed so tests pass even in Australia
 SET australian_timezones = 'off';
-CREATE TABLE TIMESTAMPTZ_TBL ( d1 timestamp with time zone);
+CREATE TABLE TIMESTAMPTZ_TBL ( d1 timestamp(2) with time zone);
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('now');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('current');
 INSERT INTO TIMESTAMPTZ_TBL VALUES ('today');
@@ -140,8 +140,8 @@ SELECT '' AS "64", d1 FROM TIMESTAMPTZ_TBL;
     | infinity
     | Wed Dec 31 16:00:00 1969 PST
     | Mon Feb 10 17:32:01 1997 PST
-    | Mon Feb 10 17:32:01.00 1997 PST
-    | Mon Feb 10 17:32:02.00 1997 PST
+    | Mon Feb 10 17:32:01 1997 PST
+    | Mon Feb 10 17:32:02 1997 PST
     | Mon Feb 10 17:32:01.40 1997 PST
     | Mon Feb 10 17:32:01.50 1997 PST
     | Mon Feb 10 17:32:01.60 1997 PST
@@ -209,8 +209,8 @@ SELECT '' AS "48", d1 FROM TIMESTAMPTZ_TBL
 ----+---------------------------------
     | infinity
     | Mon Feb 10 17:32:01 1997 PST
-    | Mon Feb 10 17:32:01.00 1997 PST
-    | Mon Feb 10 17:32:02.00 1997 PST
+    | Mon Feb 10 17:32:01 1997 PST
+    | Mon Feb 10 17:32:02 1997 PST
     | Mon Feb 10 17:32:01.40 1997 PST
     | Mon Feb 10 17:32:01.50 1997 PST
     | Mon Feb 10 17:32:01.60 1997 PST
@@ -293,8 +293,8 @@ SELECT '' AS "63", d1 FROM TIMESTAMPTZ_TBL
     | infinity
     | Wed Dec 31 16:00:00 1969 PST
     | Mon Feb 10 17:32:01 1997 PST
-    | Mon Feb 10 17:32:01.00 1997 PST
-    | Mon Feb 10 17:32:02.00 1997 PST
+    | Mon Feb 10 17:32:01 1997 PST
+    | Mon Feb 10 17:32:02 1997 PST
     | Mon Feb 10 17:32:01.40 1997 PST
     | Mon Feb 10 17:32:01.50 1997 PST
     | Mon Feb 10 17:32:01.60 1997 PST
@@ -382,8 +382,8 @@ SELECT '' AS "49", d1 FROM TIMESTAMPTZ_TBL
 ----+---------------------------------
     | infinity
     | Mon Feb 10 17:32:01 1997 PST
-    | Mon Feb 10 17:32:01.00 1997 PST
-    | Mon Feb 10 17:32:02.00 1997 PST
+    | Mon Feb 10 17:32:01 1997 PST
+    | Mon Feb 10 17:32:02 1997 PST
     | Mon Feb 10 17:32:01.40 1997 PST
     | Mon Feb 10 17:32:01.50 1997 PST
     | Mon Feb 10 17:32:01.60 1997 PST
@@ -437,8 +437,8 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
 ----+----------------------------------------
     | @ 9863 days 8 hours ago
     | @ 39 days 17 hours 32 mins 1 sec
-    | @ 39 days 17 hours 32 mins 1.00 secs
-    | @ 39 days 17 hours 32 mins 2.00 secs
+    | @ 39 days 17 hours 32 mins 1 sec
+    | @ 39 days 17 hours 32 mins 2 secs
     | @ 39 days 17 hours 32 mins 1.40 secs
     | @ 39 days 17 hours 32 mins 1.50 secs
     | @ 39 days 17 hours 32 mins 1.60 secs
@@ -499,8 +499,8 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
 ----+----------------------------------------
     | @ 9863 days 8 hours ago
     | @ 39 days 17 hours 32 mins 1 sec
-    | @ 39 days 17 hours 32 mins 1.00 secs
-    | @ 39 days 17 hours 32 mins 2.00 secs
+    | @ 39 days 17 hours 32 mins 1 sec
+    | @ 39 days 17 hours 32 mins 2 secs
     | @ 39 days 17 hours 32 mins 1.40 secs
     | @ 39 days 17 hours 32 mins 1.50 secs
     | @ 39 days 17 hours 32 mins 1.60 secs
@@ -553,127 +553,129 @@ SELECT '' AS "54", d1 - timestamp with time zone '1997-01-02' AS diff
     | @ 1460 days 17 hours 32 mins 1 sec
 (54 rows)
 
-SELECT '' AS "54", date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
+SELECT '' AS "54", d1 as timestamptz,
+   date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
    date_part( 'day', d1) AS day, date_part( 'hour', d1) AS hour,
    date_part( 'minute', d1) AS minute, date_part( 'second', d1) AS second
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
- 54 | year | month | day | hour | minute |  second  
-----+------+-------+-----+------+--------+----------
-    | 1969 |    12 |  31 |   16 |      0 |        0
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 | 1.000001
-    | 1997 |     2 |  10 |   17 |     32 | 1.999999
-    | 1997 |     2 |  10 |   17 |     32 |      1.4
-    | 1997 |     2 |  10 |   17 |     32 |      1.5
-    | 1997 |     2 |  10 |   17 |     32 |      1.6
-    | 1997 |     1 |   2 |    0 |      0 |        0
-    | 1997 |     1 |   2 |    3 |      4 |        5
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     6 |  10 |   17 |     32 |        1
-    | 2001 |     9 |  22 |   11 |     19 |       20
-    | 2000 |     3 |  15 |    8 |     14 |        1
-    | 2000 |     3 |  15 |    4 |     14 |        2
-    | 2000 |     3 |  15 |    2 |     14 |        3
-    | 2000 |     3 |  15 |    3 |     14 |        4
-    | 2000 |     3 |  15 |    1 |     14 |        5
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        0
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  10 |    9 |     32 |        1
-    | 1997 |     2 |  10 |    9 |     32 |        1
-    | 1997 |     2 |  10 |    9 |     32 |        1
-    | 1997 |     6 |  10 |   18 |     32 |        1
-    | 1997 |     2 |  10 |   17 |     32 |        1
-    | 1997 |     2 |  11 |   17 |     32 |        1
-    | 1997 |     2 |  12 |   17 |     32 |        1
-    | 1997 |     2 |  13 |   17 |     32 |        1
-    | 1997 |     2 |  14 |   17 |     32 |        1
-    | 1997 |     2 |  15 |   17 |     32 |        1
-    | 1997 |     2 |  16 |   17 |     32 |        1
-    | 1997 |     2 |  16 |   17 |     32 |        1
-    | 1996 |     2 |  28 |   17 |     32 |        1
-    | 1996 |     2 |  29 |   17 |     32 |        1
-    | 1996 |     3 |   1 |   17 |     32 |        1
-    | 1996 |    12 |  30 |   17 |     32 |        1
-    | 1996 |    12 |  31 |   17 |     32 |        1
-    | 1997 |     1 |   1 |   17 |     32 |        1
-    | 1997 |     2 |  28 |   17 |     32 |        1
-    | 1997 |     3 |   1 |   17 |     32 |        1
-    | 1997 |    12 |  30 |   17 |     32 |        1
-    | 1997 |    12 |  31 |   17 |     32 |        1
-    | 1999 |    12 |  31 |   17 |     32 |        1
-    | 2000 |     1 |   1 |   17 |     32 |        1
-    | 2000 |    12 |  31 |   17 |     32 |        1
-    | 2001 |     1 |   1 |   17 |     32 |        1
+ 54 |           timestamptz           | year | month | day | hour | minute | second 
+----+---------------------------------+------+-------+-----+------+--------+--------
+    | Wed Dec 31 16:00:00 1969 PST    | 1969 |    12 |  31 |   16 |      0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:02 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      2
+    | Mon Feb 10 17:32:01.40 1997 PST | 1997 |     2 |  10 |   17 |     32 |    1.4
+    | Mon Feb 10 17:32:01.50 1997 PST | 1997 |     2 |  10 |   17 |     32 |    1.5
+    | Mon Feb 10 17:32:01.60 1997 PST | 1997 |     2 |  10 |   17 |     32 |    1.6
+    | Thu Jan 02 00:00:00 1997 PST    | 1997 |     1 |   2 |    0 |      0 |      0
+    | Thu Jan 02 03:04:05 1997 PST    | 1997 |     1 |   2 |    3 |      4 |      5
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Tue Jun 10 17:32:01 1997 PDT    | 1997 |     6 |  10 |   17 |     32 |      1
+    | Sat Sep 22 11:19:20 2001 PDT    | 2001 |     9 |  22 |   11 |     19 |     20
+    | Wed Mar 15 08:14:01 2000 PST    | 2000 |     3 |  15 |    8 |     14 |      1
+    | Wed Mar 15 04:14:02 2000 PST    | 2000 |     3 |  15 |    4 |     14 |      2
+    | Wed Mar 15 02:14:03 2000 PST    | 2000 |     3 |  15 |    2 |     14 |      3
+    | Wed Mar 15 03:14:04 2000 PST    | 2000 |     3 |  15 |    3 |     14 |      4
+    | Wed Mar 15 01:14:05 2000 PST    | 2000 |     3 |  15 |    1 |     14 |      5
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:00 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      0
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Mon Feb 10 09:32:01 1997 PST    | 1997 |     2 |  10 |    9 |     32 |      1
+    | Mon Feb 10 09:32:01 1997 PST    | 1997 |     2 |  10 |    9 |     32 |      1
+    | Mon Feb 10 09:32:01 1997 PST    | 1997 |     2 |  10 |    9 |     32 |      1
+    | Tue Jun 10 18:32:01 1997 PDT    | 1997 |     6 |  10 |   18 |     32 |      1
+    | Mon Feb 10 17:32:01 1997 PST    | 1997 |     2 |  10 |   17 |     32 |      1
+    | Tue Feb 11 17:32:01 1997 PST    | 1997 |     2 |  11 |   17 |     32 |      1
+    | Wed Feb 12 17:32:01 1997 PST    | 1997 |     2 |  12 |   17 |     32 |      1
+    | Thu Feb 13 17:32:01 1997 PST    | 1997 |     2 |  13 |   17 |     32 |      1
+    | Fri Feb 14 17:32:01 1997 PST    | 1997 |     2 |  14 |   17 |     32 |      1
+    | Sat Feb 15 17:32:01 1997 PST    | 1997 |     2 |  15 |   17 |     32 |      1
+    | Sun Feb 16 17:32:01 1997 PST    | 1997 |     2 |  16 |   17 |     32 |      1
+    | Sun Feb 16 17:32:01 1997 PST    | 1997 |     2 |  16 |   17 |     32 |      1
+    | Wed Feb 28 17:32:01 1996 PST    | 1996 |     2 |  28 |   17 |     32 |      1
+    | Thu Feb 29 17:32:01 1996 PST    | 1996 |     2 |  29 |   17 |     32 |      1
+    | Fri Mar 01 17:32:01 1996 PST    | 1996 |     3 |   1 |   17 |     32 |      1
+    | Mon Dec 30 17:32:01 1996 PST    | 1996 |    12 |  30 |   17 |     32 |      1
+    | Tue Dec 31 17:32:01 1996 PST    | 1996 |    12 |  31 |   17 |     32 |      1
+    | Wed Jan 01 17:32:01 1997 PST    | 1997 |     1 |   1 |   17 |     32 |      1
+    | Fri Feb 28 17:32:01 1997 PST    | 1997 |     2 |  28 |   17 |     32 |      1
+    | Sat Mar 01 17:32:01 1997 PST    | 1997 |     3 |   1 |   17 |     32 |      1
+    | Tue Dec 30 17:32:01 1997 PST    | 1997 |    12 |  30 |   17 |     32 |      1
+    | Wed Dec 31 17:32:01 1997 PST    | 1997 |    12 |  31 |   17 |     32 |      1
+    | Fri Dec 31 17:32:01 1999 PST    | 1999 |    12 |  31 |   17 |     32 |      1
+    | Sat Jan 01 17:32:01 2000 PST    | 2000 |     1 |   1 |   17 |     32 |      1
+    | Sun Dec 31 17:32:01 2000 PST    | 2000 |    12 |  31 |   17 |     32 |      1
+    | Mon Jan 01 17:32:01 2001 PST    | 2001 |     1 |   1 |   17 |     32 |      1
 (54 rows)
 
-SELECT '' AS "54", date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
+SELECT '' AS "54", d1 as timestamptz,
+   date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
    date_part( 'usec', d1) AS usec
    FROM TIMESTAMPTZ_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
- 54 | quarter |         msec         |       usec        
-----+---------+----------------------+-------------------
-    |       4 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 | 0.000999999999917733 | 0.999999999917733
-    |       1 |              999.999 |            999999
-    |       1 |                  400 |            400000
-    |       1 |                  500 |            500000
-    |       1 |                  600 |            600000
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       2 |                    0 |                 0
-    |       3 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       2 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       4 |                    0 |                 0
-    |       4 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       4 |                    0 |                 0
-    |       4 |                    0 |                 0
-    |       4 |                    0 |                 0
-    |       1 |                    0 |                 0
-    |       4 |                    0 |                 0
-    |       1 |                    0 |                 0
+ 54 |           timestamptz           | quarter | msec |  usec  
+----+---------------------------------+---------+------+--------
+    | Wed Dec 31 16:00:00 1969 PST    |       4 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:02 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01.40 1997 PST |       1 |  400 | 400000
+    | Mon Feb 10 17:32:01.50 1997 PST |       1 |  500 | 500000
+    | Mon Feb 10 17:32:01.60 1997 PST |       1 |  600 | 600000
+    | Thu Jan 02 00:00:00 1997 PST    |       1 |    0 |      0
+    | Thu Jan 02 03:04:05 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Tue Jun 10 17:32:01 1997 PDT    |       2 |    0 |      0
+    | Sat Sep 22 11:19:20 2001 PDT    |       3 |    0 |      0
+    | Wed Mar 15 08:14:01 2000 PST    |       1 |    0 |      0
+    | Wed Mar 15 04:14:02 2000 PST    |       1 |    0 |      0
+    | Wed Mar 15 02:14:03 2000 PST    |       1 |    0 |      0
+    | Wed Mar 15 03:14:04 2000 PST    |       1 |    0 |      0
+    | Wed Mar 15 01:14:05 2000 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:00 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 09:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 09:32:01 1997 PST    |       1 |    0 |      0
+    | Mon Feb 10 09:32:01 1997 PST    |       1 |    0 |      0
+    | Tue Jun 10 18:32:01 1997 PDT    |       2 |    0 |      0
+    | Mon Feb 10 17:32:01 1997 PST    |       1 |    0 |      0
+    | Tue Feb 11 17:32:01 1997 PST    |       1 |    0 |      0
+    | Wed Feb 12 17:32:01 1997 PST    |       1 |    0 |      0
+    | Thu Feb 13 17:32:01 1997 PST    |       1 |    0 |      0
+    | Fri Feb 14 17:32:01 1997 PST    |       1 |    0 |      0
+    | Sat Feb 15 17:32:01 1997 PST    |       1 |    0 |      0
+    | Sun Feb 16 17:32:01 1997 PST    |       1 |    0 |      0
+    | Sun Feb 16 17:32:01 1997 PST    |       1 |    0 |      0
+    | Wed Feb 28 17:32:01 1996 PST    |       1 |    0 |      0
+    | Thu Feb 29 17:32:01 1996 PST    |       1 |    0 |      0
+    | Fri Mar 01 17:32:01 1996 PST    |       1 |    0 |      0
+    | Mon Dec 30 17:32:01 1996 PST    |       4 |    0 |      0
+    | Tue Dec 31 17:32:01 1996 PST    |       4 |    0 |      0
+    | Wed Jan 01 17:32:01 1997 PST    |       1 |    0 |      0
+    | Fri Feb 28 17:32:01 1997 PST    |       1 |    0 |      0
+    | Sat Mar 01 17:32:01 1997 PST    |       1 |    0 |      0
+    | Tue Dec 30 17:32:01 1997 PST    |       4 |    0 |      0
+    | Wed Dec 31 17:32:01 1997 PST    |       4 |    0 |      0
+    | Fri Dec 31 17:32:01 1999 PST    |       4 |    0 |      0
+    | Sat Jan 01 17:32:01 2000 PST    |       1 |    0 |      0
+    | Sun Dec 31 17:32:01 2000 PST    |       4 |    0 |      0
+    | Mon Jan 01 17:32:01 2001 PST    |       1 |    0 |      0
 (54 rows)
 
 -- TO_CHAR()
@@ -969,7 +971,7 @@ SELECT '' AS to_char_5, to_char(d1, 'HH HH12 HH24 MI SS SSSS')
            | 04 04 16 00 00 57600
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
-           | 05 05 17 32 01 63121
+           | 05 05 17 32 02 63122
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
            | 05 05 17 32 01 63121
@@ -1039,7 +1041,7 @@ SELECT '' AS to_char_6, to_char(d1, '"HH:MI:SS is" HH:MI:SS "\\"text between quo
            | HH:MI:SS is 04:00:00 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
-           | HH:MI:SS is 05:32:01 "text between quote marks"
+           | HH:MI:SS is 05:32:02 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
            | HH:MI:SS is 05:32:01 "text between quote marks"
@@ -1110,7 +1112,7 @@ SELECT '' AS to_char_7, to_char(d1, 'HH24--text--MI--text--SS')
            | 16--text--00--text--00
            | 17--text--32--text--01
            | 17--text--32--text--01
-           | 17--text--32--text--01
+           | 17--text--32--text--02
            | 17--text--32--text--01
            | 17--text--32--text--01
            | 17--text--32--text--01
@@ -1251,7 +1253,7 @@ SELECT '' AS to_char_9, to_char(d1, 'YYYY A.D. YYYY a.d. YYYY bc HH:MI:SS P.M. H
            | 1969 A.D. 1969 a.d. 1969 ad 04:00:00 P.M. 04:00:00 p.m. 04:00:00 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
-           | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
+           | 1997 A.D. 1997 a.d. 1997 ad 05:32:02 P.M. 05:32:02 p.m. 05:32:02 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm
            | 1997 A.D. 1997 a.d. 1997 ad 05:32:01 P.M. 05:32:01 p.m. 05:32:01 pm

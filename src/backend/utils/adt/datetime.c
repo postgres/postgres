@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.67 2001/09/28 08:09:10 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.68 2001/10/03 05:29:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,8 +25,6 @@
 #include "utils/guc.h"
 #include "utils/datetime.h"
 
-
-#define ROUND_ALL 1
 
 static int DecodeNumber(int flen, char *field,
 						int fmask, int *tmask,
@@ -2173,8 +2171,27 @@ EncodeTimeOnly(struct tm * tm, double fsec, int *tzp, int style, char *str)
 
 	sec = (tm->tm_sec + fsec);
 
-	sprintf(str, "%02d:%02d:", tm->tm_hour, tm->tm_min);
-	sprintf((str + 6), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
+	sprintf(str, "%02d:%02d", tm->tm_hour, tm->tm_min);
+
+	/* If we have fractional seconds, then include a decimal point
+	 * We will do up to 6 fractional digits, and we have rounded any inputs
+	 * to eliminate anything to the right of 6 digits anyway.
+	 * If there are no fractional seconds, then do not bother printing
+	 * a decimal point at all. - thomas 2001-09-29
+	 */
+	if (fsec != 0) {
+		sprintf((str + strlen(str)), ":%013.10f", sec);
+		/* chop off trailing pairs of zeros... */
+		while ((strcmp((str + strlen(str) - 2), "00") == 0)
+			   && (*(str + strlen(str) - 3) != '.'))
+		{
+			*(str + strlen(str) - 2) = '\0';
+		}
+	}
+	else
+	{
+		sprintf((str + strlen(str)), ":%02.0f", sec);
+	}
 
 	if (tzp != NULL)
 	{
@@ -2221,9 +2238,28 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 		case USE_ISO_DATES:
 			if (tm->tm_year > 0)
 			{
-				sprintf(str, "%04d-%02d-%02d %02d:%02d:",
+				sprintf(str, "%04d-%02d-%02d %02d:%02d",
 						tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min);
-				sprintf((str + strlen(str)), ((fsec != 0) ? "%05.2f" : "%02.0f"), sec);
+
+				/* If we have fractional seconds, then include a decimal point
+				 * We will do up to 6 fractional digits, and we have rounded any inputs
+				 * to eliminate anything to the right of 6 digits anyway.
+				 * If there are no fractional seconds, then do not bother printing
+				 * a decimal point at all. - thomas 2001-09-29
+				 */
+				if (fsec != 0) {
+					sprintf((str + strlen(str)), ":%013.10f", sec);
+					/* chop off trailing pairs of zeros... */
+					while ((strcmp((str + strlen(str) - 2), "00") == 0)
+						   && (*(str + strlen(str) - 3) != '.'))
+					{
+						*(str + strlen(str) - 2) = '\0';
+					}
+				}
+				else
+				{
+					sprintf((str + strlen(str)), ":%02.0f", sec);
+				}
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 				{
@@ -2261,8 +2297,28 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 
 			if (tm->tm_year > 0)
 			{
-				sprintf((str + 5), "/%04d %02d:%02d:%05.2f",
-						tm->tm_year, tm->tm_hour, tm->tm_min, sec);
+				sprintf((str + 5), "/%04d %02d:%02d",
+						tm->tm_year, tm->tm_hour, tm->tm_min);
+
+				/* If we have fractional seconds, then include a decimal point
+				 * We will do up to 6 fractional digits, and we have rounded any inputs
+				 * to eliminate anything to the right of 6 digits anyway.
+				 * If there are no fractional seconds, then do not bother printing
+				 * a decimal point at all. - thomas 2001-09-29
+				 */
+				if (fsec != 0) {
+					sprintf((str + strlen(str)), ":%013.10f", sec);
+					/* chop off trailing pairs of zeros... */
+					while ((strcmp((str + strlen(str) - 2), "00") == 0)
+						   && (*(str + strlen(str) - 3) != '.'))
+					{
+						*(str + strlen(str) - 2) = '\0';
+					}
+				}
+				else
+				{
+					sprintf((str + strlen(str)), ":%02.0f", sec);
+				}
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
@@ -2277,8 +2333,28 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 			sprintf(str, "%02d.%02d", tm->tm_mday, tm->tm_mon);
 			if (tm->tm_year > 0)
 			{
-				sprintf((str + 5), ".%04d %02d:%02d:%05.2f",
-						tm->tm_year, tm->tm_hour, tm->tm_min, sec);
+				sprintf((str + 5), ".%04d %02d:%02d",
+						tm->tm_year, tm->tm_hour, tm->tm_min);
+
+				/* If we have fractional seconds, then include a decimal point
+				 * We will do up to 6 fractional digits, and we have rounded any inputs
+				 * to eliminate anything to the right of 6 digits anyway.
+				 * If there are no fractional seconds, then do not bother printing
+				 * a decimal point at all. - thomas 2001-09-29
+				 */
+				if (fsec != 0) {
+					sprintf((str + strlen(str)), ":%013.10f", sec);
+					/* chop off trailing pairs of zeros... */
+					while ((strcmp((str + strlen(str) - 2), "00") == 0)
+						   && (*(str + strlen(str) - 3) != '.'))
+					{
+						*(str + strlen(str) - 2) = '\0';
+					}
+				}
+				else
+				{
+					sprintf((str + strlen(str)), ":%02.0f", sec);
+				}
 
 				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
 					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
@@ -2305,18 +2381,30 @@ EncodeDateTime(struct tm * tm, double fsec, int *tzp, char **tzn, int style, cha
 			if (tm->tm_year > 0)
 			{
 				sprintf((str + 10), " %02d:%02d", tm->tm_hour, tm->tm_min);
-				if (fsec != 0)
-				{
-					sprintf((str + 16), ":%05.2f %04d", sec, tm->tm_year);
-					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+
+				/* If we have fractional seconds, then include a decimal point
+				 * We will do up to 6 fractional digits, and we have rounded any inputs
+				 * to eliminate anything to the right of 6 digits anyway.
+				 * If there are no fractional seconds, then do not bother printing
+				 * a decimal point at all. - thomas 2001-09-29
+				 */
+				if (fsec != 0) {
+					sprintf((str + strlen(str)), ":%013.10f", sec);
+					/* chop off trailing pairs of zeros... */
+					while ((strcmp((str + strlen(str) - 2), "00") == 0)
+						   && (*(str + strlen(str) - 3) != '.'))
+					{
+						*(str + strlen(str) - 2) = '\0';
+					}
 				}
 				else
 				{
-					sprintf((str + 16), ":%02.0f %04d", sec, tm->tm_year);
-					if ((*tzn != NULL) && (tm->tm_isdst >= 0))
-						sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
+					sprintf((str + strlen(str)), ":%02.0f", sec);
 				}
+
+				sprintf((str + strlen(str)), " %04d", tm->tm_year);
+				if ((*tzn != NULL) && (tm->tm_isdst >= 0))
+					sprintf((str + strlen(str)), " %.*s", MAXTZLEN, *tzn);
 			}
 			else
 			{

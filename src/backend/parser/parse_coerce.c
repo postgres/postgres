@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.61 2001/09/28 08:09:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.62 2001/10/03 05:29:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -287,8 +287,7 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	 * We assume that only typmod values greater than 0 indicate a forced
 	 * conversion is necessary.
 	 */
-	if (atttypmod <= 0 ||
-		atttypmod == exprTypmod(node))
+	if ((atttypmod <= 0) || (atttypmod == exprTypmod(node)))
 		return node;
 
 	funcname = typeidTypeName(targetTypeId);
@@ -376,9 +375,9 @@ select_common_type(List *typeids, const char *context)
 		Oid			ntype = (Oid) lfirsti(l);
 
 		/* move on to next one if no new information... */
-		if (ntype && (ntype != UNKNOWNOID) && (ntype != ptype))
+		if ((ntype != InvalidOid) && (ntype != UNKNOWNOID) && (ntype != ptype))
 		{
-			if (!ptype || ptype == UNKNOWNOID)
+			if ((ptype == InvalidOid) || ptype == UNKNOWNOID)
 			{
 				/* so far, only nulls so take anything... */
 				ptype = ntype;
@@ -456,6 +455,9 @@ coerce_to_common_type(ParseState *pstate, Node *node,
 
 /* TypeCategory()
  * Assign a category to the specified OID.
+ * XXX This should be moved to system catalog lookups
+ * to allow for better type extensibility.
+ * - thomas 2001-09-30
  */
 CATEGORY
 TypeCategory(Oid inType)
@@ -538,16 +540,22 @@ TypeCategory(Oid inType)
 
 /* IsPreferredType()
  * Check if this type is a preferred type.
+ * XXX This should be moved to system catalog lookups
+ * to allow for better type extensibility.
+ * - thomas 2001-09-30
  */
 bool
 IsPreferredType(CATEGORY category, Oid type)
 {
-	return type == PreferredType(category, type);
+	return (type == PreferredType(category, type));
 }	/* IsPreferredType() */
 
 
 /* PreferredType()
  * Return the preferred type OID for the specified category.
+ * XXX This should be moved to system catalog lookups
+ * to allow for better type extensibility.
+ * - thomas 2001-09-30
  */
 static Oid
 PreferredType(CATEGORY category, Oid type)
@@ -603,210 +611,3 @@ PreferredType(CATEGORY category, Oid type)
 	}
 	return result;
 }	/* PreferredType() */
-
-
-#ifdef NOT_USED
-Oid
-PromoteTypeToNext(Oid inType)
-{
-	Oid			result;
-
-	switch (inType)
-	{
-		case (CHAROID):
-		case (BPCHAROID):
-			result = VARCHAROID;
-			break;
-
-		case (VARCHAROID):
-			result = TEXTOID;
-			break;
-
-		case (INT2OID):
-		case (CASHOID):
-			result = INT4OID;
-			break;
-
-		case (INT4OID):
-		case (INT8OID):
-		case (FLOAT4OID):
-			result = FLOAT8OID;
-			break;
-
-		case (NUMERICOID):
-			result = NUMERICOID;
-			break;
-
-		case (DATEOID):
-			result = TIMESTAMPOID;
-			break;
-
-		case (ABSTIMEOID):
-		case (TIMESTAMPOID):
-			result = TIMESTAMPTZOID;
-			break;
-
-		case (TIMEOID):
-		case (RELTIMEOID):
-			result = INTERVALOID;
-			break;
-
-		case (BOOLOID):
-		case (TEXTOID):
-		case (FLOAT8OID):
-		case (TIMESTAMPTZOID):
-		case (INTERVALOID):
-		default:
-			result = inType;
-			break;
-	}
-	return result;
-}	/* PromoteTypeToNext() */
-
-
-Oid
-DemoteType(Oid inType)
-{
-	Oid			result;
-
-	switch (inType)
-	{
-		case (FLOAT4OID):
-		case (FLOAT8OID):
-			result = INT4OID;
-			break;
-
-		default:
-			result = inType;
-			break;
-	}
-	return result;
-}	/* DemoteType() */
-
-
-Oid
-PromoteLesserType(Oid inType1, Oid inType2, Oid *newType1, Oid *newType2)
-{
-	Oid			result;
-
-	if (inType1 == inType2)
-	{
-		result = PromoteTypeToNext(inType1);
-		inType1 = result;
-		*arg2 = result;
-		return result;
-	}
-
-	kind1 = ClassifyType(inType1);
-	kind2 = ClassifyType(*arg2);
-	if (kind1 != kind2)
-	{
-		*newType1 = inType1;
-		*newType2 = inType2;
-		result = InvalidOid;
-	}
-
-	isBuiltIn1 = IS_BUILTIN_TYPE(inType1);
-	isBuiltIn2 = IS_BUILTIN_TYPE(*arg2);
-
-	if (isBuiltIn1 && isBuiltIn2)
-	{
-		switch (*arg1)
-		{
-			case (CHAROID):
-				switch (*arg2)
-				{
-					case (BPCHAROID):
-					case (VARCHAROID):
-					case (TEXTOID):
-
-					case (INT2OID):
-					case (INT4OID):
-					case (FLOAT4OID):
-					case (FLOAT8OID):
-					case (CASHOID):
-
-					case (POINTOID):
-					case (LSEGOID):
-					case (LINEOID):
-					case (BOXOID):
-					case (PATHOID):
-					case (CIRCLEOID):
-					case (POLYGONOID):
-
-					case (InvalidOid):
-					case (UNKNOWNOID):
-					case (BOOLOID):
-					default:
-						*arg1 = InvalidOid;
-						*arg2 = InvalidOid;
-						result = InvalidOid;
-				}
-		}
-	}
-	else if (isBuiltIn1 && !isBuiltIn2)
-	{
-		if ((promotedType = PromoteBuiltInType(*arg1)) != *arg1)
-		{
-			*arg1 = promotedType;
-			return promotedType;
-		}
-		else if (CanCoerceType(*arg1, *arg2))
-		{
-			*arg1 = *arg2;
-			return *arg2;
-		}
-	}
-	else if (!isBuiltIn1 && isBuiltIn2)
-	{
-		if ((promotedType = PromoteBuiltInType(*arg2)) != *arg2)
-		{
-			*arg2 = promotedType;
-			return promotedType;
-		}
-		else if (CanCoerceType(*arg2, *arg1))
-		{
-			*arg2 = *arg1;
-			return *arg1;
-		}
-	}
-
-
-	if (*arg2 == InvalidOid)
-		return InvalidOid;
-
-	switch (*arg1)
-	{
-		case (CHAROID):
-			switch (*arg2)
-			{
-				case (BPCHAROID):
-				case (VARCHAROID):
-				case (TEXTOID):
-
-				case (INT2OID):
-				case (INT4OID):
-				case (FLOAT4OID):
-				case (FLOAT8OID):
-				case (CASHOID):
-
-				case (POINTOID):
-				case (LSEGOID):
-				case (LINEOID):
-				case (BOXOID):
-				case (PATHOID):
-				case (CIRCLEOID):
-				case (POLYGONOID):
-
-				case (InvalidOid):
-				case (UNKNOWNOID):
-				case (BOOLOID):
-				default:
-					*arg1 = InvalidOid;
-					*arg2 = InvalidOid;
-					result = InvalidOid;
-			}
-	}
-}
-
-#endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.51 2001/09/28 08:09:11 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.52 2001/10/03 05:29:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,6 +32,8 @@
 static double time2t(const int hour, const int min, const double sec);
 static int	EncodeSpecialTimestamp(Timestamp dt, char *str);
 static Timestamp dt2local(Timestamp dt, int timezone);
+static void
+AdjustTimestampForTypmod(Timestamp *time, int32 typmod);
 
 
 /*****************************************************************************
@@ -45,6 +47,10 @@ Datum
 timestamp_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	Timestamp	result;
 	double		fsec;
 	struct tm	tt,
@@ -89,6 +95,8 @@ timestamp_in(PG_FUNCTION_ARGS)
 			TIMESTAMP_NOEND(result);
 	}
 
+	AdjustTimestampForTypmod(&result, typmod);
+
 	PG_RETURN_TIMESTAMP(result);
 }
 
@@ -98,7 +106,7 @@ timestamp_in(PG_FUNCTION_ARGS)
 Datum
 timestamp_out(PG_FUNCTION_ARGS)
 {
-	Timestamp	dt = PG_GETARG_TIMESTAMP(0);
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	char	   *result;
 	struct tm	tt,
 			   *tm = &tt;
@@ -106,15 +114,51 @@ timestamp_out(PG_FUNCTION_ARGS)
 	char	   *tzn = NULL;
 	char		buf[MAXDATELEN + 1];
 
-	if (TIMESTAMP_NOT_FINITE(dt))
-		EncodeSpecialTimestamp(dt, buf);
-	else if (timestamp2tm(dt, NULL, tm, &fsec, NULL) == 0)
+	if (TIMESTAMP_NOT_FINITE(timestamp))
+		EncodeSpecialTimestamp(timestamp, buf);
+	else if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0)
 		EncodeDateTime(tm, fsec, NULL, &tzn, DateStyle, buf);
 	else
 		elog(ERROR, "Unable to format timestamp; internal coding error");
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/* timestamp_scale()
+ * Adjust time type for specified scale factor.
+ * Used by PostgreSQL type system to stuff columns.
+ */
+Datum
+timestamp_scale(PG_FUNCTION_ARGS)
+{
+	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	Timestamp	result;
+
+	result = timestamp;
+
+	if (! TIMESTAMP_NOT_FINITE(result))
+		AdjustTimestampForTypmod(&result, typmod);
+
+	PG_RETURN_TIMESTAMP(result);
+}
+
+static void
+AdjustTimestampForTypmod(Timestamp *time, int32 typmod)
+{
+	if ((typmod >= 0) && (typmod <= 13))
+	{
+		static double TimestampScale = 1;
+		static int32 TimestampTypmod = 0;
+
+		if (typmod != TimestampTypmod)
+			TimestampScale = pow(10, typmod);
+
+		*time = (rint(((double) *time)*TimestampScale)/TimestampScale);
+	}
+
+	return;
 }
 
 
@@ -125,6 +169,10 @@ Datum
 timestamptz_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
+#ifdef NOT_USED
+	Oid			typelem = PG_GETARG_OID(1);
+#endif
+	int32		typmod = PG_GETARG_INT32(2);
 	TimestampTz	result;
 	double		fsec;
 	struct tm	tt,
@@ -169,6 +217,8 @@ timestamptz_in(PG_FUNCTION_ARGS)
 			TIMESTAMP_NOEND(result);
 	}
 
+	AdjustTimestampForTypmod(&result, typmod);
+
 	PG_RETURN_TIMESTAMPTZ(result);
 }
 
@@ -196,6 +246,25 @@ timestamptz_out(PG_FUNCTION_ARGS)
 
 	result = pstrdup(buf);
 	PG_RETURN_CSTRING(result);
+}
+
+/* timestamptz_scale()
+ * Adjust time type for specified scale factor.
+ * Used by PostgreSQL type system to stuff columns.
+ */
+Datum
+timestamptz_scale(PG_FUNCTION_ARGS)
+{
+	TimestampTz	timestamp = PG_GETARG_TIMESTAMP(0);
+	int32		typmod = PG_GETARG_INT32(1);
+	TimestampTz	result;
+
+	result = timestamp;
+
+	if (! TIMESTAMP_NOT_FINITE(result))
+		AdjustTimestampForTypmod(&result, typmod);
+
+	PG_RETURN_TIMESTAMPTZ(result);
 }
 
 
@@ -2119,16 +2188,13 @@ timestamp_part(PG_FUNCTION_ARGS)
 	text	   *units = PG_GETARG_TEXT_P(0);
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(1);
 	float8		result;
-	int			tz;
 	int			type,
 				val;
 	int			i;
 	char	   *up,
 			   *lp,
 				lowunits[MAXDATELEN + 1];
-	double		dummy;
 	double		fsec;
-	char	   *tzn;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -2152,24 +2218,10 @@ timestamp_part(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(result);
 	}
 
-	if ((type == UNITS) && (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) == 0))
+	if ((type == UNITS) && (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) == 0))
 	{
 		switch (val)
 		{
-			case DTK_TZ:
-				result = tz;
-				break;
-
-			case DTK_TZ_MINUTE:
-				result = tz / 60;
-				TMODULO(result, dummy, 60e0);
-				break;
-
-			case DTK_TZ_HOUR:
-				dummy = tz;
-				TMODULO(dummy, result, 3600e0);
-				break;
-
 			case DTK_MICROSEC:
 				result = (fsec * 1000000);
 				break;
@@ -2222,11 +2274,13 @@ timestamp_part(PG_FUNCTION_ARGS)
 				result = (tm->tm_year / 1000);
 				break;
 
+			case DTK_TZ:
+			case DTK_TZ_MINUTE:
+			case DTK_TZ_HOUR:
 			default:
 				elog(ERROR, "Timestamp units '%s' not supported", lowunits);
 				result = 0;
 		}
-
 	}
 	else if (type == RESERV)
 	{
@@ -2237,14 +2291,14 @@ timestamp_part(PG_FUNCTION_ARGS)
 				break;
 
 			case DTK_DOW:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
 					elog(ERROR, "Unable to encode timestamp");
 
 				result = j2day(date2j(tm->tm_year, tm->tm_mon, tm->tm_mday));
 				break;
 
 			case DTK_DOY:
-				if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+				if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
 					elog(ERROR, "Unable to encode timestamp");
 
 				result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday)

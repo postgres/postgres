@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.43 2001/08/14 22:21:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.44 2001/10/03 05:29:24 thomas Exp $
  *
  * ----------
  */
@@ -193,10 +193,8 @@ Datum
 numeric_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-
 #ifdef NOT_USED
 	Oid			typelem = PG_GETARG_OID(1);
-
 #endif
 	int32		typmod = PG_GETARG_INT32(2);
 	NumericVar	value;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.213 2001/10/02 21:39:36 tgl Exp $
+ * $Id: pg_proc.h,v 1.214 2001/10/03 05:29:24 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1256,7 +1256,7 @@ DESCR("horizontal?");
 DATA(insert OID = 999 (  lseg_eq		   PGUID 12 f t t t 2 f 16 "601 601" 100 0 0 100  lseg_eq - ));
 DESCR("equal");
 
-DATA(insert OID =  748 (  date			   PGUID 12 f t t t 1 f 1082 "25" 100 0 0 100 text_date - ));
+DATA(insert OID =  748 (  date			   PGUID 12 f t f t 1 f 1082 "25" 100 0 0 100 text_date - ));
 DESCR("convert text to date");
 DATA(insert OID =  749 (  text			   PGUID 12 f t t t 1 f 25 "1082" 100 0 0 100 date_text - ));
 DESCR("convert date to text");
@@ -1264,14 +1264,14 @@ DATA(insert OID =  837 (  time			   PGUID 12 f t t t 1 f 1083 "25" 100 0 0 100 t
 DESCR("convert text to time");
 DATA(insert OID =  948 (  text			   PGUID 12 f t t t 1 f 25 "1083" 100 0 0 100 time_text - ));
 DESCR("convert time to text");
-DATA(insert OID =  938 (  timetz		   PGUID 12 f t t t 1 f 1266 "25" 100 0 0 100 text_timetz - ));
+DATA(insert OID =  938 (  timetz		   PGUID 12 f t f t 1 f 1266 "25" 100 0 0 100 text_timetz - ));
 DESCR("convert text to timetz");
 DATA(insert OID =  939 (  text			   PGUID 12 f t t t 1 f 25 "1266" 100 0 0 100 timetz_text - ));
 DESCR("convert timetz to text");
 
 /* OIDS 1000 - 1999 */
 
-DATA(insert OID = 1026 (  timezone		   PGUID 12 f t t t 2 f 25 "1186 1184" 100 0 0 100  timestamptz_izone - ));
+DATA(insert OID = 1026 (  timezone		   PGUID 12 f t f t 2 f 25 "1186 1184" 100 0 0 100  timestamptz_izone - ));
 DESCR("time zone");
 
 DATA(insert OID = 1029 (  nullvalue		   PGUID 12 f t t f 1 f 16 "0" 100 0 0 100  nullvalue - ));
@@ -1430,7 +1430,7 @@ DATA(insert OID = 1169 (  interval_pl	   PGUID 12 f t t t 2 f 1186 "1186 1186" 1
 DESCR("add");
 DATA(insert OID = 1170 (  interval_mi	   PGUID 12 f t t t 2 f 1186 "1186 1186" 100 0 0 100  interval_mi - ));
 DESCR("subtract");
-DATA(insert OID = 1171 (  date_part		   PGUID 12 f t t t 2 f  701 "25 1184" 100 0 0 100  timestamptz_part - ));
+DATA(insert OID = 1171 (  date_part		   PGUID 12 f t f t 2 f  701 "25 1184" 100 0 0 100  timestamptz_part - ));
 DESCR("extract field from timestamp with time zone");
 DATA(insert OID = 1172 (  date_part		   PGUID 12 f t t t 2 f  701 "25 1186" 100 0 0 100  interval_part - ));
 DESCR("extract field from interval");
@@ -1458,9 +1458,9 @@ DATA(insert OID = 1189 (  timestamptz_pl_span PGUID 12 f t t t 2 f 1184 "1184 11
 DESCR("plus");
 DATA(insert OID = 1190 (  timestamptz_mi_span PGUID 12 f t t t 2 f 1184 "1184 1186" 100 0 0 100  timestamp_mi_span - ));
 DESCR("minus");
-DATA(insert OID = 1191 (  timestamptz		PGUID 12 f t t t 1 f 1184 "25" 100 0 0 100  text_timestamptz - ));
+DATA(insert OID = 1191 (  timestamptz		PGUID 12 f t f t 1 f 1184 "25" 100 0 0 100  text_timestamptz - ));
 DESCR("convert text to timestamp with time zone");
-DATA(insert OID = 1192 (  text				PGUID 12 f t t t 1 f	 25 "1184" 100 0 0 100  timestamptz_text - ));
+DATA(insert OID = 1192 (  text				PGUID 12 f t f t 1 f	 25 "1184" 100 0 0 100  timestamptz_text - ));
 DESCR("convert timestamp to text");
 DATA(insert OID = 1193 (  text				PGUID 12 f t t t 1 f	 25 "1186" 100 0 0 100  interval_text - ));
 DESCR("convert interval to text");
@@ -1558,11 +1558,11 @@ DESCR("latest tid of a tuple");
 DATA(insert OID = 1294 ( currtid2		   PGUID 12 f t f t 2 f 27 "25 27" 100 0 0 100  currtid_byrelname - ));
 DESCR("latest tid of a tuple");
 
-DATA(insert OID = 1296 (  timedate_pl	   PGUID 14 f t t t 2 f 1114 "1083 1082" 100 0 0 100  "select datetime_pl($2, $1)" - ));
+DATA(insert OID = 1296 (  timedate_pl	   PGUID 14 f t t t 2 f 1114 "1083 1082" 100 0 0 100  "select ($2 + $1)" - ));
 DESCR("convert time and date to timestamp");
 DATA(insert OID = 1297 (  datetimetz_pl    PGUID 12 f t t t 2 f 1184 "1082 1266" 100 0 0 100  datetimetz_timestamptz - ));
 DESCR("convert date and time with time zone to timestamp with time zone");
-DATA(insert OID = 1298 (  timetzdate_pl    PGUID 14 f t t t 2 f 1184 "1266 1082" 100 0 0 100  "select datetimetz_pl($2, $1)" - ));
+DATA(insert OID = 1298 (  timetzdate_pl    PGUID 14 f t t t 2 f 1184 "1266 1082" 100 0 0 100  "select ($2 + $1)" - ));
 DESCR("convert time with time zone and date to timestamp");
 DATA(insert OID = 1299 (  now			   PGUID 12 f t f t 0 f 1184 "0" 100 0 0 100  now - ));
 DESCR("current transaction time");
@@ -1669,7 +1669,7 @@ DESCR("convert date and time with time zone to timestamp with time zone");
 
 DATA(insert OID = 1362 (  time				 PGUID 14 f t t t 1 f 1083 "1083" 100 0 0 100  "select $1" - ));
 DESCR("convert (noop)");
-DATA(insert OID = 1364 (  time				 PGUID 14 f t t t 1 f 1083 "702" 100 0 0 100  "select time(timestamp($1))" - ));
+DATA(insert OID = 1364 (  time				 PGUID 14 f t t t 1 f 1083 "702" 100 0 0 100  "select time(cast($1 as timestamp without time zone))" - ));
 DESCR("convert abstime to time");
 DATA(insert OID = 1365 (  abstime			 PGUID 14 f t f t 1 f  702 "702" 100 0 0 100  "select $1" - ));
 DESCR("convert (noop)");
@@ -1711,7 +1711,7 @@ DATA(insert OID = 1382 (  date_part    PGUID 14 f t f t 2 f  701 "25 702" 100 0 
 DESCR("extract field from abstime");
 DATA(insert OID = 1383 (  date_part    PGUID 14 f t f t 2 f  701 "25 703" 100 0 0 100  "select date_part($1, interval($2))" - ));
 DESCR("extract field from reltime");
-DATA(insert OID = 1384 (  date_part    PGUID 14 f t t t 2 f  701 "25 1082" 100 0 0 100  "select date_part($1, timestamptz($2))" - ));
+DATA(insert OID = 1384 (  date_part    PGUID 14 f t t t 2 f  701 "25 1082" 100 0 0 100  "select date_part($1, cast($2 as timestamp without time zone))" - ));
 DESCR("extract field from date");
 DATA(insert OID = 1385 (  date_part    PGUID 14 f t t t 2 f  701 "25 1083" 100 0 0 100  "select date_part($1, interval($2))" - ));
 DESCR("extract field from time");
@@ -1720,7 +1720,7 @@ DESCR("date difference from today preserving months and years");
 
 DATA(insert OID = 1387 (  timetz		   PGUID 14 f t t t 1 f 1266 "1266" 100 0 0 100  "select $1" - ));
 DESCR("noop conversion");
-DATA(insert OID = 1388 (  timetz		   PGUID 12 f t t t 1 f 1266 "1184" 100 0 0 100  timestamptz_timetz - ));
+DATA(insert OID = 1388 (  timetz		   PGUID 12 f t f t 1 f 1266 "1184" 100 0 0 100  timestamptz_timetz - ));
 DESCR("convert timestamp to timetz");
 
 DATA(insert OID = 1389 (  isfinite	   PGUID 12 f t t t 1 f 16 "1184" 100 0 0 100  timestamp_finite - ));
@@ -2471,24 +2471,24 @@ DESCR("(internal)");
 
 /* formatting */
 DATA(insert OID = 1770 ( to_char			PGUID 12 f t f t 2 f	25 "1184 25" 100 0 0 100  timestamptz_to_char - ));
-DESCR("format timestamp to text");
-DATA(insert OID = 1772 ( to_char			PGUID 12 f t f t 2 f	25 "1700 25" 100 0 0 100  numeric_to_char - ));
+DESCR("format timestamp with time zone to text");
+DATA(insert OID = 1772 ( to_char			PGUID 12 f t t t 2 f	25 "1700 25" 100 0 0 100  numeric_to_char - ));
 DESCR("format numeric to text");
-DATA(insert OID = 1773 ( to_char			PGUID 12 f t f t 2 f	25 "23 25" 100 0 0 100  int4_to_char - ));
+DATA(insert OID = 1773 ( to_char			PGUID 12 f t t t 2 f	25 "23 25" 100 0 0 100  int4_to_char - ));
 DESCR("format int4 to text");
-DATA(insert OID = 1774 ( to_char			PGUID 12 f t f t 2 f	25 "20 25" 100 0 0 100  int8_to_char - ));
+DATA(insert OID = 1774 ( to_char			PGUID 12 f t t t 2 f	25 "20 25" 100 0 0 100  int8_to_char - ));
 DESCR("format int8 to text");
-DATA(insert OID = 1775 ( to_char			PGUID 12 f t f t 2 f	25 "700 25" 100 0 0 100  float4_to_char - ));
+DATA(insert OID = 1775 ( to_char			PGUID 12 f t t t 2 f	25 "700 25" 100 0 0 100  float4_to_char - ));
 DESCR("format float4 to text");
-DATA(insert OID = 1776 ( to_char			PGUID 12 f t f t 2 f	25 "701 25" 100 0 0 100  float8_to_char - ));
+DATA(insert OID = 1776 ( to_char			PGUID 12 f t t t 2 f	25 "701 25" 100 0 0 100  float8_to_char - ));
 DESCR("format float8 to text");
-DATA(insert OID = 1777 ( to_number			PGUID 12 f t f t 2 f	1700 "25 25" 100 0 0 100  numeric_to_number - ));
+DATA(insert OID = 1777 ( to_number			PGUID 12 f t t t 2 f	1700 "25 25" 100 0 0 100  numeric_to_number - ));
 DESCR("convert text to numeric");
 DATA(insert OID = 1778 ( to_timestamp		PGUID 12 f t f t 2 f	1184 "25 25" 100 0 0 100  to_timestamp - ));
 DESCR("convert text to timestamp");
-DATA(insert OID = 1780 ( to_date			PGUID 12 f t f t 2 f	1082 "25 25" 100 0 0 100  to_date - ));
+DATA(insert OID = 1780 ( to_date			PGUID 12 f t t t 2 f	1082 "25 25" 100 0 0 100  to_date - ));
 DESCR("convert text to date");
-DATA(insert OID = 1768 ( to_char			PGUID 12 f t f t 2 f	25 "1186 25" 100 0 0 100  interval_to_char - ));
+DATA(insert OID = 1768 ( to_char			PGUID 12 f t t t 2 f	25 "1186 25" 100 0 0 100  interval_to_char - ));
 DESCR("format interval to text");
 
 DATA(insert OID =  1282 ( quote_ident	   PGUID 12 f t t t 1 f 25 "25" 100 0 0 100 quote_ident - ));
@@ -2741,10 +2741,20 @@ DESCR("not equal");
 DATA(insert OID = 1954 (  byteacmp		   PGUID 12 f t t t 2 f 23 "17 17" 100 0 0 100  byteacmp - ));
 DESCR("less-equal-greater");
 
+DATA(insert OID = 1961 (  timestamp		   PGUID 12 f t f t 2 f 1114 "1114 23" 100 0 0 100  timestamp_scale - ));
+DESCR("adjust time precision");
+
 DATA(insert OID = 1965 (  oidlarger		   PGUID 12 f t t t 2 f 26 "26 26" 100 0 0 100  oidlarger - ));
 DESCR("larger of two");
 DATA(insert OID = 1966 (  oidsmaller	   PGUID 12 f t t t 2 f 26 "26 26" 100 0 0 100  oidsmaller - ));
 DESCR("smaller of two");
+
+DATA(insert OID = 1967 (  timestamptz	   PGUID 12 f t t t 2 f 1184 "1184 23" 100 0 0 100  timestamptz_scale - ));
+DESCR("adjust time precision");
+DATA(insert OID = 1968 (  time			   PGUID 12 f t t t 2 f 1083 "1083 23" 100 0 0 100  time_scale - ));
+DESCR("adjust time precision");
+DATA(insert OID = 1969 (  timetz		   PGUID 12 f t t t 2 f 1266 "1266 23" 100 0 0 100  timetz_scale - ));
+DESCR("adjust time with time zone precision");
 
 DATA(insert OID = 2005 (  bytealike		   PGUID 12 f t t t 2 f 16 "17 17" 100 0 0 100 bytealike - ));
 DESCR("matches LIKE expression");
@@ -2823,10 +2833,11 @@ DATA(insert OID = 2047 (  timetz			PGUID 12 f t f t 1 f 1266 "1083" 100 0 0 100 
 DESCR("convert time to timetz");
 DATA(insert OID = 2048 (  isfinite			PGUID 12 f t t t 1 f   16 "1114" 100 0 0 100  timestamp_finite - ));
 DESCR("boolean test");
-
-DATA(insert OID = 2050 ( interval_mi_time	PGUID 14 f t t t 2 f 1083 "1186 1083" 100 0 0 100  "select $2 - $1 + (interval \'24 hours\')" - ));
+DATA(insert OID = 2049 ( to_char			PGUID 12 f t f t 2 f	25 "1114 25" 100 0 0 100  timestamp_to_char - ));
+DESCR("format timestamp to text");
+DATA(insert OID = 2050 ( interval_mi_time	PGUID 14 f t t t 2 f 1083 "1186 1083" 100 0 0 100  "select $2 - $1" - ));
 DESCR("minus");
-DATA(insert OID = 2051 ( interval_mi_timetz	PGUID 14 f t t t 2 f 1266 "1186 1266" 100 0 0 100  "select $2 - $1 + (interval \'24 hours\')" - ));
+DATA(insert OID = 2051 ( interval_mi_timetz	PGUID 14 f t t t 2 f 1266 "1186 1266" 100 0 0 100  "select $2 - $1" - ));
 DESCR("minus");
 DATA(insert OID = 2052 (  timestamp_eq		PGUID 12 f t t t 2 f 16 "1114 1114" 100 0 0 100  timestamp_eq - ));
 DESCR("equal");
@@ -2844,9 +2855,9 @@ DATA(insert OID = 2058 (  age				PGUID 12 f t t t 2 f 1186 "1114 1114" 100 0 0 1
 DESCR("date difference preserving months and years");
 DATA(insert OID = 2059 (  age				PGUID 14 f t t t 1 f 1186 "1114" 100 0 0 100  "select age(\'today\', $1)" - ));
 DESCR("date difference from today preserving months and years");
-DATA(insert OID = 2069 (  timezone			PGUID 12 f t t t 2 f 1184 "25 1114" 100 0 0 100  timestamp_zone - ));
+DATA(insert OID = 2069 (  timezone			PGUID 12 f t f t 2 f 1184 "25 1114" 100 0 0 100  timestamp_zone - ));
 DESCR("time zone");
-DATA(insert OID = 2070 (  timezone			PGUID 12 f t t t 2 f 1184 "1186 1114" 100 0 0 100  timestamp_izone - ));
+DATA(insert OID = 2070 (  timezone			PGUID 12 f t f t 2 f 1184 "1186 1114" 100 0 0 100  timestamp_izone - ));
 DESCR("time zone");
 
 

@@ -4,7 +4,7 @@
 -- needed so tests pass even in Australia
 SET australian_timezones = 'off';
 
-CREATE TABLE TIMESTAMP_TBL ( d1 timestamp without time zone);
+CREATE TABLE TIMESTAMP_TBL ( d1 timestamp(2) without time zone);
 
 -- Shorthand values
 -- Not directly usable for regression testing since these are not constants.
@@ -153,12 +153,14 @@ SELECT '' AS "54", d1 - timestamp without time zone '1997-01-02' AS diff
   WHERE d1 BETWEEN timestamp without time zone '1902-01-01'
    AND timestamp without time zone '2038-01-01';
 
-SELECT '' AS "54", date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
+SELECT '' AS "54", d1 as "timestamp",
+   date_part( 'year', d1) AS year, date_part( 'month', d1) AS month,
    date_part( 'day', d1) AS day, date_part( 'hour', d1) AS hour,
    date_part( 'minute', d1) AS minute, date_part( 'second', d1) AS second
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 
-SELECT '' AS "54", date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
+SELECT '' AS "54", d1 as "timestamp",
+   date_part( 'quarter', d1) AS quarter, date_part( 'msec', d1) AS msec,
    date_part( 'usec', d1) AS usec
    FROM TIMESTAMP_TBL WHERE d1 BETWEEN '1902-01-01' AND '2038-01-01';
 

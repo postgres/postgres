@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.82 2001/09/11 05:18:59 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.83 2001/10/03 05:29:24 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@
  * at CREATE TABLE time.
  *
  * It's hard to implement these types because we cannot figure out
- * the length of the type from the type itself. I change (hopefully all) the
+ * the length of the type from the type itself. I changed (hopefully all) the
  * fmgr calls that invoke input functions of a data type to supply the
  * length also. (eg. in INSERTs, we have the tupleDescriptor which contains
  * the length of the attributes and hence the exact length of the char() or
