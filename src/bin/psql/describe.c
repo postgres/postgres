@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.53 2002/04/25 02:56:56 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.54 2002/05/13 17:45:30 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -210,7 +210,8 @@ describeOperators(const char *name)
 			 "  CASE WHEN o.oprkind='l' THEN NULL ELSE format_type(o.oprleft, NULL) END AS \"%s\",\n"
 			 "  CASE WHEN o.oprkind='r' THEN NULL ELSE format_type(o.oprright, NULL) END AS \"%s\",\n"
 			 "  format_type(o.oprresult, NULL) AS \"%s\",\n"
-			 "  obj_description(o.oprcode, 'pg_proc') AS \"%s\"\n"
+			 "  coalesce(obj_description(o.oid, 'pg_operator'),"
+			 "           obj_description(o.oprcode, 'pg_proc')) AS \"%s\"\n"
 			 "FROM pg_operator o\n",
 			 _("Name"), _("Left arg type"), _("Right arg type"),
 			 _("Result type"), _("Description"));
@@ -359,10 +360,9 @@ objectDescription(const char *object)
 			 "  FROM pg_proc p\n"
 		"  WHERE (p.pronargs = 0 or oidvectortypes(p.proargtypes) <> '') AND NOT p.proisagg\n"
 
-	/* Operator descriptions (must get comment via associated function) */
+	/* Operator descriptions (only if operator has its own comment) */
 			 "UNION ALL\n"
-			 "  SELECT CAST(o.oprcode AS oid) as oid,\n"
-			 "  (SELECT oid FROM pg_class WHERE relname = 'pg_proc') as tableoid,\n"
+			 "  SELECT o.oid as oid, o.tableoid as tableoid,\n"
 	  "  CAST(o.oprname AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_operator o\n"
 

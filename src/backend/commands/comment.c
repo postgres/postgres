@@ -7,7 +7,7 @@
  * Copyright (c) 1999-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.45 2002/04/27 03:45:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.46 2002/05/13 17:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,7 @@
 static void CommentRelation(int objtype, List *relname, char *comment);
 static void CommentAttribute(List *qualname, char *comment);
 static void CommentDatabase(List *qualname, char *comment);
+static void CommentNamespace(List *qualname, char *comment);
 static void CommentRule(List *qualname, char *comment);
 static void CommentType(List *typename, char *comment);
 static void CommentAggregate(List *aggregate, List *arguments, char *comment);
@@ -98,6 +99,9 @@ CommentObject(CommentStmt *stmt)
 			break;
 		case TRIGGER:
 			CommentTrigger(stmt->objname, stmt->comment);
+			break;
+		case SCHEMA:
+			CommentNamespace(stmt->objname, stmt->comment);
 			break;
 		default:
 			elog(ERROR, "An attempt was made to comment on a unknown type: %d",
@@ -332,22 +336,22 @@ CommentRelation(int objtype, List *relname, char *comment)
 	{
 		case INDEX:
 			if (relation->rd_rel->relkind != RELKIND_INDEX)
-				elog(ERROR, "relation '%s' is not an index",
+				elog(ERROR, "relation \"%s\" is not an index",
 					 RelationGetRelationName(relation));
 			break;
 		case TABLE:
 			if (relation->rd_rel->relkind != RELKIND_RELATION)
-				elog(ERROR, "relation '%s' is not a table",
+				elog(ERROR, "relation \"%s\" is not a table",
 					 RelationGetRelationName(relation));
 			break;
 		case VIEW:
 			if (relation->rd_rel->relkind != RELKIND_VIEW)
-				elog(ERROR, "relation '%s' is not a view",
+				elog(ERROR, "relation \"%s\" is not a view",
 					 RelationGetRelationName(relation));
 			break;
 		case SEQUENCE:
 			if (relation->rd_rel->relkind != RELKIND_SEQUENCE)
-				elog(ERROR, "relation '%s' is not a sequence",
+				elog(ERROR, "relation \"%s\" is not a sequence",
 					 RelationGetRelationName(relation));
 			break;
 	}
@@ -400,7 +404,7 @@ CommentAttribute(List *qualname, char *comment)
 
 	attnum = get_attnum(RelationGetRelid(relation), attrname);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "'%s' is not an attribute of class '%s'",
+		elog(ERROR, "\"%s\" is not an attribute of class \"%s\"",
 			 attrname, RelationGetRelationName(relation));
 
 	/* Create the comment using the relation's oid */
@@ -451,13 +455,13 @@ CommentDatabase(List *qualname, char *comment)
 	/* Validate database exists, and fetch the db oid */
 
 	if (!HeapTupleIsValid(dbtuple))
-		elog(ERROR, "database '%s' does not exist", database);
+		elog(ERROR, "database \"%s\" does not exist", database);
 	oid = dbtuple->t_data->t_oid;
 
 	/* Allow if the user matches the database dba or is a superuser */
 
 	if (!(superuser() || is_dbadmin(oid)))
-		elog(ERROR, "you are not permitted to comment on database '%s'",
+		elog(ERROR, "you are not permitted to comment on database \"%s\"",
 			 database);
 
 	/* Create the comments with the pg_database oid */
@@ -468,6 +472,51 @@ CommentDatabase(List *qualname, char *comment)
 
 	heap_endscan(scan);
 	heap_close(pg_database, AccessShareLock);
+}
+
+/*
+ * CommentNamespace --
+ *
+ * This routine is used to add/drop any user-comments a user might
+ * have regarding the specified namespace. The routine will check
+ * security for owner permissions, and, if succesful, will then
+ * attempt to find the oid of the namespace specified. Once found,
+ * a comment is added/dropped using the CreateComments() routine.
+ */
+static void
+CommentNamespace(List *qualname, char *comment)
+{
+	Oid			oid;
+	Oid			classoid;
+	HeapTuple	tp;
+	char	   *namespace;
+
+	if (length(qualname) != 1)
+		elog(ERROR, "CommentSchema: schema name may not be qualified");
+	namespace = strVal(lfirst(qualname));
+
+	tp = SearchSysCache(NAMESPACENAME,
+						CStringGetDatum(namespace),
+						0, 0, 0);
+	if (!HeapTupleIsValid(tp))
+		elog(ERROR, "CommentSchema: Schema \"%s\" could not be found",
+			 namespace);
+
+	oid = tp->t_data->t_oid;
+
+	/* Check object security */
+	if (!pg_namespace_ownercheck(oid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, namespace);
+
+	/* pg_namespace doesn't have a hard-coded OID, so must look it up */
+	classoid = get_relname_relid(NamespaceRelationName, PG_CATALOG_NAMESPACE);
+	Assert(OidIsValid(classoid));
+
+	/* Call CreateComments() to create/drop the comments */
+	CreateComments(oid, classoid, 0, comment);
+
+	/* Cleanup */
+	ReleaseSysCache(tp);
 }
 
 /*
@@ -528,12 +577,12 @@ CommentRule(List *qualname, char *comment)
 		}
 		else
 		{
-			elog(ERROR, "rule '%s' does not exist", rulename);
+			elog(ERROR, "rule \"%s\" does not exist", rulename);
 			reloid = ruleoid = 0; /* keep compiler quiet */
 		}
 
 		if (HeapTupleIsValid(tuple = heap_getnext(scanDesc, 0)))
-			elog(ERROR, "There are multiple rules '%s'"
+			elog(ERROR, "There are multiple rules \"%s\""
 				 "\n\tPlease specify a relation name as well as a rule name",
 				 rulename);
 
@@ -561,7 +610,7 @@ CommentRule(List *qualname, char *comment)
 							   PointerGetDatum(rulename),
 							   0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ERROR, "rule '%s' does not exist", rulename);
+			elog(ERROR, "rule \"%s\" does not exist", rulename);
 		Assert(reloid == ((Form_pg_rewrite) GETSTRUCT(tuple))->ev_class);
 		ruleoid = tuple->t_data->t_oid;
 		ReleaseSysCache(tuple);
@@ -574,7 +623,6 @@ CommentRule(List *qualname, char *comment)
 		aclcheck_error(aclcheck, rulename);
 
 	/* pg_rewrite doesn't have a hard-coded OID, so must look it up */
-
 	classoid = get_relname_relid(RewriteRelationName, PG_CATALOG_NAMESPACE);
 	Assert(OidIsValid(classoid));
 
@@ -689,12 +737,7 @@ CommentProc(List *function, List *arguments, char *comment)
  * its name and its argument list which defines the left and right
  * hand types the operator will operate on. The argument list is
  * expected to be a couple of parse nodes pointed to be a List
- * object. If the comments string is empty, the associated comment
- * is dropped.
- *
- * NOTE: we actually attach the comment to the procedure that underlies
- * the operator.  This is a feature, not a bug: we want the same comment
- * to be visible for both operator and function.
+ * object.
  */
 static void
 CommentOperator(List *opername, List *arguments, char *comment)
@@ -702,27 +745,22 @@ CommentOperator(List *opername, List *arguments, char *comment)
 	TypeName   *typenode1 = (TypeName *) lfirst(arguments);
 	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
 	Oid			oid;
+	Oid			classoid;
 
 	/* Look up the operator */
-
 	oid = LookupOperNameTypeNames(opername, typenode1, typenode2,
 								  "CommentOperator");
 
 	/* Valid user's ability to comment on this operator */
-
 	if (!pg_oper_ownercheck(oid, GetUserId()))
 		aclcheck_error(ACLCHECK_NOT_OWNER, NameListToString(opername));
 
-	/* Get the procedure associated with the operator */
-
-	oid = get_opcode(oid);
-	if (oid == InvalidOid)
-		elog(ERROR, "operator '%s' does not have an underlying function",
-			 NameListToString(opername));
+	/* pg_operator doesn't have a hard-coded OID, so must look it up */
+	classoid = get_relname_relid(OperatorRelationName, PG_CATALOG_NAMESPACE);
+	Assert(OidIsValid(classoid));
 
 	/* Call CreateComments() to create/drop the comments */
-
-	CreateComments(oid, RelOid_pg_proc, 0, comment);
+	CreateComments(oid, classoid, 0, comment);
 }
 
 /*
@@ -784,7 +822,7 @@ CommentTrigger(List *qualname, char *comment)
 	/* If no trigger exists for the relation specified, notify user */
 
 	if (!HeapTupleIsValid(triggertuple))
-		elog(ERROR, "trigger '%s' for relation '%s' does not exist",
+		elog(ERROR, "trigger \"%s\" for relation \"%s\" does not exist",
 			 trigname, RelationGetRelationName(relation));
 
 	oid = triggertuple->t_data->t_oid;

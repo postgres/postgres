@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.259 2002/05/10 22:36:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.260 2002/05/13 17:45:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2686,7 +2686,6 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 					 nsinfo[i].usename, "SCHEMA", NULL,
 					 q->data, delq->data, NULL, NULL, NULL);
 
-#ifdef NOTYET					/* suppress till COMMENT ON SCHEMA works */
 		/*** Dump Schema Comments ***/
 		resetPQExpBuffer(q);
 		appendPQExpBuffer(q, "SCHEMA %s",
@@ -2694,7 +2693,6 @@ dumpNamespaces(Archive *fout, NamespaceInfo *nsinfo, int numNamespaces)
 		dumpComment(fout, q->data,
 					NULL, nsinfo[i].usename,
 					nsinfo[i].oid, "pg_namespace", 0, NULL);
-#endif
 	}
 
 	destroyPQExpBuffer(q);
@@ -3396,7 +3394,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	/*** Dump Function Comments ***/
 
 	resetPQExpBuffer(q);
-	appendPQExpBuffer(q, "FUNCTION %s ", fn->data);
+	appendPQExpBuffer(q, "FUNCTION %s", fn->data);
 	dumpComment(fout, q->data,
 				finfo->pronamespace->nspname, finfo->usename,
 				finfo->oid, "pg_proc", 0, NULL);
@@ -3655,11 +3653,13 @@ dumpOneOpr(Archive *fout, OprInfo *oprinfo,
 				 q->data, delq->data,
 				 NULL, NULL, NULL);
 
-	/*
-	 * Note: no need to dump operator comment; we expect that the comment
-	 * is attached to the underlying function instead.  (If the function
-	 * isn't getting dumped ... you lose.)
-	 */
+	/*** Dump Operator Comments ***/
+
+	resetPQExpBuffer(q);
+	appendPQExpBuffer(q, "OPERATOR %s", oprid->data);
+	dumpComment(fout, q->data,
+				oprinfo->oprnamespace->nspname, oprinfo->usename,
+				oprinfo->oid, "pg_operator", 0, NULL);
 
 	PQclear(res);
 

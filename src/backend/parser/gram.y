@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.314 2002/05/12 20:10:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.315 2002/05/13 17:45:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2278,6 +2278,7 @@ CommentStmt:	COMMENT ON comment_type any_name IS comment_text
 
 comment_type:	COLUMN { $$ = COLUMN; }
 		| DATABASE { $$ = DATABASE; }
+		| SCHEMA { $$ = SCHEMA; }
 		| INDEX { $$ = INDEX; }
 		| SEQUENCE { $$ = SEQUENCE; }
 		| TABLE { $$ = TABLE; }

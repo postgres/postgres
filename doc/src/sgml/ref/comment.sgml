@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.18 2002/04/23 02:07:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/comment.sgml,v 1.19 2002/05/13 17:45:30 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,13 +23,20 @@ PostgreSQL documentation
   <synopsis>
 COMMENT ON
 [
-  [ DATABASE | DOMAIN | INDEX | SEQUENCE | TABLE | TYPE | VIEW ] <replaceable class="PARAMETER">object_name</replaceable> |
+  TABLE <replaceable class="PARAMETER">object_name</replaceable> |
   COLUMN <replaceable class="PARAMETER">table_name</replaceable>.<replaceable class="PARAMETER">column_name</replaceable> |
   AGGREGATE <replaceable class="PARAMETER">agg_name</replaceable> (<replaceable class="PARAMETER">agg_type</replaceable>) |
-  FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1</replaceable>, <replaceable class="PARAMETER">arg2</replaceable>, ...) |
-  OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable> <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
+  DATABASE <replaceable class="PARAMETER">object_name</replaceable> |
+  DOMAIN <replaceable class="PARAMETER">object_name</replaceable> |
+  FUNCTION <replaceable class="PARAMETER">func_name</replaceable> (<replaceable class="PARAMETER">arg1_type</replaceable>, <replaceable class="PARAMETER">arg2_type</replaceable>, ...) |
+  INDEX <replaceable class="PARAMETER">object_name</replaceable> |
+  OPERATOR <replaceable class="PARAMETER">op</replaceable> (<replaceable class="PARAMETER">leftoperand_type</replaceable>, <replaceable class="PARAMETER">rightoperand_type</replaceable>) |
   RULE <replaceable class="PARAMETER">rule_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
-  TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable>
+  SCHEMA <replaceable class="PARAMETER">object_name</replaceable> |
+  SEQUENCE <replaceable class="PARAMETER">object_name</replaceable> |
+  TRIGGER <replaceable class="PARAMETER">trigger_name</replaceable> ON <replaceable class="PARAMETER">table_name</replaceable> |
+  TYPE <replaceable class="PARAMETER">object_name</replaceable> |
+  VIEW <replaceable class="PARAMETER">object_name</replaceable>
 ] IS <replaceable class="PARAMETER">'text'</replaceable>
   </synopsis>
 
@@ -49,8 +56,9 @@ COMMENT ON
       <listitem>
        <para>
 	The name of the object to be be commented.  Names of tables,
-	indexes, sequences, views, types, domains, functions, aggregates,
-	and operators may be schema-qualified.
+	aggregates, domains, functions, indexes, operators, sequences, types,
+	and views
+	may be schema-qualified.
        </para>
       </listitem>
      </varlistentry>
@@ -116,13 +124,15 @@ COMMENT
     Comments are automatically dropped when the object is dropped.
   </para>
 
+  <note>
   <para>
-    It should be noted that there is presently no security mechanism
+    There is presently no security mechanism
     for comments: any user connected to a database can see all the comments
     for objects in that database (although only superusers can change
     comments for objects that they don't own).  Therefore, don't put
     security-critical information in comments.
   </para>
+  </note>
  </refsect1>
 
  <refsect1 id="R1-SQL-COMMENT-2">
@@ -130,10 +140,16 @@ COMMENT
    Usage
   </title>
   <para>
-   Comment the table <literal>mytable</literal>:
+   Attach a comment to the table <literal>mytable</literal>:
 
    <programlisting>
-COMMENT ON mytable IS 'This is my table.';
+COMMENT ON TABLE mytable IS 'This is my table.';
+   </programlisting>
+
+   Remove it again:
+
+   <programlisting>
+COMMENT ON TABLE mytable IS NULL;
    </programlisting>
   </para>
 
@@ -141,19 +157,21 @@ COMMENT ON mytable IS 'This is my table.';
    Some more examples:
 
    <programlisting>
+COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
+COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
 COMMENT ON DATABASE my_database IS 'Development Database';
 COMMENT ON DOMAIN my_domain IS 'Email Address Domain';
-COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
-COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
-COMMENT ON TABLE my_table IS 'Employee Information';
-COMMENT ON TYPE my_type IS 'Complex Number support';
-COMMENT ON VIEW my_view IS 'View of departmental costs';
-COMMENT ON COLUMN my_table.my_field IS 'Employee ID number';
-COMMENT ON AGGREGATE my_aggregate (double precision) IS 'Computes sample variance';
 COMMENT ON FUNCTION my_function (timestamp) IS 'Returns Roman Numeral';
-COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two text';
+COMMENT ON INDEX my_index IS 'Enforces uniqueness on employee id';
+COMMENT ON OPERATOR ^ (text, text) IS 'Performs intersection of two texts';
+COMMENT ON OPERATOR ^ (NONE, text) IS 'This is a prefix operator on text';
 COMMENT ON RULE my_rule ON my_table IS 'Logs UPDATES of employee records';
+COMMENT ON SCHEMA my_schema IS 'Departmental data';
+COMMENT ON SEQUENCE my_sequence IS 'Used to generate primary keys';
+COMMENT ON TABLE my_schema.my_table IS 'Employee Information';
 COMMENT ON TRIGGER my_trigger ON my_table IS 'Used for R.I.';
+COMMENT ON TYPE complex IS 'Complex Number datatype';
+COMMENT ON VIEW my_view IS 'View of departmental costs';
    </programlisting>
   </para>
  </refsect1>
