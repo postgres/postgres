@@ -87,7 +87,8 @@ SELECT count(DISTINCT four) AS cnt_4 FROM onek;
      4
 (1 row)
 
-select ten, count(*), sum(four) from onek group by ten;
+select ten, count(*), sum(four) from onek
+group by ten order by ten;
  ten | count | sum 
 -----+-------+-----
    0 |   100 | 100
@@ -102,7 +103,8 @@ select ten, count(*), sum(four) from onek group by ten;
    9 |   100 | 200
 (10 rows)
 
-select ten, count(four), sum(DISTINCT four) from onek group by ten;
+select ten, count(four), sum(DISTINCT four) from onek
+group by ten order by ten;
  ten | count | sum 
 -----+-------+-----
    0 |   100 |   2

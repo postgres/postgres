@@ -7,14 +7,16 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: cost.h,v 1.47 2002/09/04 20:31:44 momjian Exp $
+ * $Id: cost.h,v 1.48 2002/11/21 00:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef COST_H
 #define COST_H
 
+#include "nodes/plannodes.h"
 #include "nodes/relation.h"
+
 
 /* defaults for costsize.c's Cost parameters */
 /* NB: cost-estimation code should use the variables, not these constants! */
@@ -42,6 +44,7 @@ extern bool enable_seqscan;
 extern bool enable_indexscan;
 extern bool enable_tidscan;
 extern bool enable_sort;
+extern bool enable_hashagg;
 extern bool enable_nestloop;
 extern bool enable_mergejoin;
 extern bool enable_hashjoin;
@@ -56,7 +59,16 @@ extern void cost_tidscan(Path *path, Query *root,
 extern void cost_functionscan(Path *path, Query *root,
 				  RelOptInfo *baserel);
 extern void cost_sort(Path *path, Query *root,
-		  List *pathkeys, double tuples, int width);
+		  List *pathkeys, Cost input_cost, double tuples, int width);
+extern void cost_agg(Path *path, Query *root,
+					 AggStrategy aggstrategy, int numAggs,
+					 int numGroupCols, double numGroups,
+					 Cost input_startup_cost, Cost input_total_cost,
+					 double input_tuples);
+extern void cost_group(Path *path, Query *root,
+					   int numGroupCols, double numGroups,
+					   Cost input_startup_cost, Cost input_total_cost,
+					   double input_tuples);
 extern void cost_nestloop(Path *path, Query *root,
 			  Path *outer_path, Path *inner_path,
 			  List *restrictlist);

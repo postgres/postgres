@@ -21,10 +21,10 @@ INSERT INTO test_missing_target VALUES (9, 4, 'CCCC', 'j');
 
 
 --   w/ existing GROUP BY target
-SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c;
+SELECT c, count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER BY c;
 
 --   w/o existing GROUP BY target using a relation name in GROUP BY clause
-SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c;
+SELECT count(*) FROM test_missing_target GROUP BY test_missing_target.c ORDER BY c;
 
 --   w/o existing GROUP BY target and w/o existing a different ORDER BY target
 --   failure expected
@@ -47,7 +47,7 @@ SELECT count(*) FROM test_missing_target GROUP BY b ORDER BY b desc;
 SELECT count(*) FROM test_missing_target ORDER BY 1 desc;
 
 --   order using reference number
-SELECT c, count(*) FROM test_missing_target GROUP BY 1;
+SELECT c, count(*) FROM test_missing_target GROUP BY 1 ORDER BY 1;
 
 --   group using reference number out of range
 --   failure expected
@@ -72,34 +72,38 @@ SELECT a/2, a/2 FROM test_missing_target
 --   group expression w/ target under ambiguous condition
 --   failure NOT expected
 SELECT a/2, a/2 FROM test_missing_target
-	GROUP BY a/2;
+	GROUP BY a/2 ORDER BY a/2;
 
 --   group w/ existing GROUP BY target under ambiguous condition
 SELECT x.b, count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
-	GROUP BY x.b;
+	GROUP BY x.b ORDER BY x.b;
 
 --   group w/o existing GROUP BY target under ambiguous condition
 SELECT count(*) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
-	GROUP BY x.b;
+	GROUP BY x.b ORDER BY x.b;
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   into a table
 SELECT count(*) INTO TABLE test_missing_target2 
 FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
-	GROUP BY x.b;
+	GROUP BY x.b ORDER BY x.b;
 SELECT * FROM test_missing_target2;
 
 
 --  Functions and expressions
 
 --   w/ existing GROUP BY target
-SELECT a%2, count(b) FROM test_missing_target GROUP BY test_missing_target.a%2;
+SELECT a%2, count(b) FROM test_missing_target
+GROUP BY test_missing_target.a%2
+ORDER BY test_missing_target.a%2;
 
 --   w/o existing GROUP BY target using a relation name in GROUP BY clause
-SELECT count(c) FROM test_missing_target GROUP BY lower(test_missing_target.c);
+SELECT count(c) FROM test_missing_target
+GROUP BY lower(test_missing_target.c)
+ORDER BY lower(test_missing_target.c);
 
 --   w/o existing GROUP BY target and w/o existing a different ORDER BY target
 --   failure expected
@@ -128,7 +132,7 @@ SELECT count(x.a) FROM test_missing_target x, test_missing_target y
 --   group w/ existing GROUP BY target under ambiguous condition
 SELECT x.b/2, count(x.b) FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
-	GROUP BY x.b/2;
+	GROUP BY x.b/2 ORDER BY x.b/2;
 
 --   group w/o existing GROUP BY target under ambiguous condition
 --   failure expected due to ambiguous b in count(b)
@@ -141,7 +145,7 @@ SELECT count(b) FROM test_missing_target x, test_missing_target y
 SELECT count(x.b) INTO TABLE test_missing_target3 
 FROM test_missing_target x, test_missing_target y 
 	WHERE x.a = y.a
-	GROUP BY x.b/2;
+	GROUP BY x.b/2 ORDER BY x.b/2;
 SELECT * FROM test_missing_target3;
 
 --   Cleanup

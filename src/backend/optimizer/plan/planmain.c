@@ -14,19 +14,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.71 2002/11/06 00:00:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.72 2002/11/21 00:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include "optimizer/clauses.h"
+#include "optimizer/cost.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/planmain.h"
-#include "optimizer/tlist.h"
-#include "parser/parsetree.h"
-#include "utils/memutils.h"
 
 
 /*--------------------
@@ -36,11 +34,12 @@
  *
  * Since query_planner does not handle the toplevel processing (grouping,
  * sorting, etc) it cannot select the best path by itself.  It selects
- * two paths: the cheapest path that produces the required tuples, independent
- * of any ordering considerations, and the cheapest path that produces the
- * required tuples in the required ordering, if there is a path that
- * can produce them without an explicit top-level sort step.  The caller
- * (grouping_planner) will make the final decision about which to use.
+ * two paths: the cheapest path that produces all the required tuples,
+ * independent of any ordering considerations, and the cheapest path that
+ * produces the expected fraction of the required tuples in the required
+ * ordering, if there is a path that is cheaper for this than just sorting
+ * the output of the cheapest overall path.  The caller (grouping_planner)
+ * will make the final decision about which to use.
  *
  * Input parameters:
  * root is the query to plan
@@ -50,7 +49,7 @@
  * Output parameters:
  * *cheapest_path receives the overall-cheapest path for the query
  * *sorted_path receives the cheapest presorted path for the query,
- *				if any (it may be NULL, or the same as cheapest_path)
+ *				if any (NULL if there is no useful presorted path)
  *
  * Note: the Query node also includes a query_pathkeys field, which is both
  * an input and an output of query_planner().  The input value signals
@@ -78,6 +77,8 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 {
 	List	   *constant_quals;
 	RelOptInfo *final_rel;
+	Path	   *cheapestpath;
+	Path	   *sortedpath;
 
 	/*
 	 * If the query has an empty join tree, then it's something easy like
@@ -166,34 +167,76 @@ query_planner(Query *root, List *tlist, double tuple_fraction,
 
 	/*
 	 * Pick out the cheapest-total path and the cheapest presorted path
-	 * for the requested pathkeys (if there is one).  We can take the
+	 * for the requested pathkeys (if there is one).  We should take the
 	 * tuple fraction into account when selecting the cheapest presorted
 	 * path, but not when selecting the cheapest-total path, since if we
 	 * have to sort then we'll have to fetch all the tuples.  (But there's
 	 * a special case: if query_pathkeys is NIL, meaning order doesn't
 	 * matter, then the "cheapest presorted" path will be the cheapest
 	 * overall for the tuple fraction.)
+	 *
+	 * The cheapest-total path is also the one to use if grouping_planner
+	 * decides to use hashed aggregation, so we return it separately even
+	 * if this routine thinks the presorted path is the winner.
 	 */
-	*cheapest_path = final_rel->cheapest_total_path;
+	cheapestpath = final_rel->cheapest_total_path;
 
-	*sorted_path =
+	sortedpath =
 		get_cheapest_fractional_path_for_pathkeys(final_rel->pathlist,
 												  root->query_pathkeys,
 												  tuple_fraction);
+
+	/* Don't return same path in both guises; just wastes effort */
+	if (sortedpath == cheapestpath)
+		sortedpath = NULL;
+
+	/*
+	 * Forget about the presorted path if it would be cheaper to sort the
+	 * cheapest-total path.  Here we need consider only the behavior at
+	 * the tuple fraction point.
+	 */
+	if (sortedpath)
+	{
+		Path		sort_path;	/* dummy for result of cost_sort */
+
+		if (root->query_pathkeys == NIL ||
+			pathkeys_contained_in(root->query_pathkeys,
+								  cheapestpath->pathkeys))
+		{
+			/* No sort needed for cheapest path */
+			sort_path.startup_cost = cheapestpath->startup_cost;
+			sort_path.total_cost = cheapestpath->total_cost;
+		}
+		else
+		{
+			/* Figure cost for sorting */
+			cost_sort(&sort_path, root, root->query_pathkeys,
+					  cheapestpath->total_cost,
+					  final_rel->rows, final_rel->width);
+		}
+
+		if (compare_fractional_path_costs(sortedpath, &sort_path,
+										  tuple_fraction) > 0)
+		{
+			/* Presorted path is a loser */
+			sortedpath = NULL;
+		}
+	}
 
 	/*
 	 * If we have constant quals, add a toplevel Result step to process them.
 	 */
 	if (constant_quals)
 	{
-		*cheapest_path = (Path *)
-			create_result_path((*cheapest_path)->parent,
-							   *cheapest_path,
-							   constant_quals);
-		if (*sorted_path)
-			*sorted_path = (Path *)
-				create_result_path((*sorted_path)->parent,
-								   *sorted_path,
-								   constant_quals);
+		cheapestpath = (Path *) create_result_path(final_rel,
+												   cheapestpath,
+												   constant_quals);
+		if (sortedpath)
+			sortedpath = (Path *) create_result_path(final_rel,
+													 sortedpath,
+													 constant_quals);
 	}
+
+	*cheapest_path = cheapestpath;
+	*sorted_path = sortedpath;
 }

@@ -451,7 +451,7 @@ insert into rtest_view2 values (7);
 select * from rtest_vview1;
 select * from rtest_vview2;
 select * from rtest_vview3;
-select * from rtest_vview4;
+select * from rtest_vview4 order by a, b;
 select * from rtest_vview5;
 
 insert into rtest_view3 select * from rtest_vview1 where a < 7;
@@ -471,7 +471,7 @@ select * from rtest_view4;
 delete from rtest_view4;
 
 insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
-select * from rtest_view4;
+select * from rtest_view4 order by a, b;
 delete from rtest_view4;
 --
 -- Test for computations in views

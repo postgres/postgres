@@ -83,6 +83,7 @@
 #enable_indexscan = true
 #enable_tidscan = true
 #enable_sort = true
+#enable_hashagg = true
 #enable_nestloop = true
 #enable_mergejoin = true
 #enable_hashjoin = true

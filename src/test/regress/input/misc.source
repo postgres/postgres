@@ -105,7 +105,7 @@ SELECT * FROM f_star* x WHERE x.c ISNULL;
 
 SELECT sum(a) FROM a_star*;
 
-SELECT class, sum(a) FROM a_star* GROUP BY class;
+SELECT class, sum(a) FROM a_star* GROUP BY class ORDER BY class;
 
 
 ALTER TABLE f_star RENAME COLUMN f TO ff;

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.106 2002/11/15 02:44:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.107 2002/11/21 00:42:19 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -321,6 +321,10 @@ static struct config_bool
 	},
 	{
 		{"enable_sort", PGC_USERSET}, &enable_sort,
+		true, NULL, NULL
+	},
+	{
+		{"enable_hashagg", PGC_USERSET}, &enable_hashagg,
 		true, NULL, NULL
 	},
 	{

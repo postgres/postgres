@@ -804,7 +804,7 @@ select * from rtest_vview3;
  7 | item 7
 (3 rows)
 
-select * from rtest_vview4;
+select * from rtest_vview4 order by a, b;
  a |   b    | refcount 
 ---+--------+----------
  2 | item 2 |        2
@@ -868,7 +868,7 @@ select * from rtest_view4;
 
 delete from rtest_view4;
 insert into rtest_view4 select * from rtest_vview5 where a > 2 and refcount = 0;
-select * from rtest_view4;
+select * from rtest_view4 order by a, b;
  a |   b    | c 
 ---+--------+---
  3 | item 3 | 0

@@ -158,7 +158,7 @@ SELECT '' AS eight, ss.f1 AS "Correlated Field", ss.f3 AS "Second Field"
 (6 rows)
 
 select q1, float8(count(*)) / (select count(*) from int8_tbl)
-from int8_tbl group by q1;
+from int8_tbl group by q1 order by q1;
         q1        | ?column? 
 ------------------+----------
               123 |      0.4

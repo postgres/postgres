@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.68 2002/11/15 03:07:52 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.69 2002/11/21 00:42:19 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -251,6 +251,7 @@ psql_completion(char *text, int start, int end)
 		"enable_nestloop",
 		"enable_seqscan",
 		"enable_sort",
+		"enable_hashagg",
 		"enable_tidscan",
 		"explain_pretty_print",
 		"extra_float_digits",

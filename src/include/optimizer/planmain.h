@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.62 2002/11/19 23:22:00 tgl Exp $
+ * $Id: planmain.h,v 1.63 2002/11/21 00:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,12 +34,14 @@ extern Sort *make_sort(Query *root, List *tlist,
 		  Plan *lefttree, int keycount);
 extern Sort *make_sort_from_pathkeys(Query *root, List *tlist,
 						Plan *lefttree, List *pathkeys);
-extern Agg *make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
-					 int ngrp, AttrNumber *grpColIdx,
+extern Agg *make_agg(Query *root, List *tlist, List *qual,
+					 AggStrategy aggstrategy,
+					 int numGroupCols, AttrNumber *grpColIdx,
 					 long numGroups, int numAggs,
 					 Plan *lefttree);
-extern Group *make_group(List *tlist,
-						 int ngrp, AttrNumber *grpColIdx, double numGroups,
+extern Group *make_group(Query *root, List *tlist,
+						 int numGroupCols, AttrNumber *grpColIdx,
+						 double numGroups,
 						 Plan *lefttree);
 extern Material *make_material(List *tlist, Plan *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, List *distinctList);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.129 2002/11/19 23:21:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.130 2002/11/21 00:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -933,11 +933,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 		List	   *sub_tlist;
 		List	   *group_pathkeys;
 		AttrNumber *groupColIdx = NULL;
+		double		sub_tuple_fraction;
 		Path	   *cheapest_path;
 		Path	   *sorted_path;
 		double		dNumGroups = 0;
 		long		numGroups = 0;
 		int			numAggs = 0;
+		int			numGroupCols = length(parse->groupClause);
 		bool		use_hashed_grouping = false;
 
 		/* Preprocess targetlist in case we are inside an INSERT/UPDATE. */
@@ -1169,6 +1171,12 @@ grouping_planner(Query *parse, double tuple_fraction)
 			}
 		}
 
+		/*
+		 * With grouping or aggregation, the tuple fraction to pass to
+		 * query_planner() may be different from what it is at top level.
+		 */
+		sub_tuple_fraction = tuple_fraction;
+
 		if (parse->groupClause)
 		{
 			/*
@@ -1182,8 +1190,8 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 * amounts to assuming that all the groups are about the same
 			 * size).
 			 */
-			if (tuple_fraction >= 1.0)
-				tuple_fraction = 0.25;
+			if (sub_tuple_fraction >= 1.0)
+				sub_tuple_fraction = 0.25;
 
 			/*
 			 * If both GROUP BY and ORDER BY are specified, we will need
@@ -1195,7 +1203,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 			if (parse->groupClause && parse->sortClause &&
 				!noncanonical_pathkeys_contained_in(sort_pathkeys,
 													group_pathkeys))
-				tuple_fraction = 0.0;
+				sub_tuple_fraction = 0.0;
 		}
 		else if (parse->hasAggs)
 		{
@@ -1203,7 +1211,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 * Ungrouped aggregate will certainly want all the input
 			 * tuples.
 			 */
-			tuple_fraction = 0.0;
+			sub_tuple_fraction = 0.0;
 		}
 		else if (parse->distinctClause)
 		{
@@ -1212,15 +1220,15 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 * number of input tuples per output tuple.  Handle the same
 			 * way.
 			 */
-			if (tuple_fraction >= 1.0)
-				tuple_fraction = 0.25;
+			if (sub_tuple_fraction >= 1.0)
+				sub_tuple_fraction = 0.25;
 		}
 
 		/*
 		 * Generate the best unsorted and presorted paths for this Query
 		 * (but note there may not be any presorted path).
 		 */
-		query_planner(parse, sub_tlist, tuple_fraction,
+		query_planner(parse, sub_tlist, sub_tuple_fraction,
 					  &cheapest_path, &sorted_path);
 
 		/*
@@ -1236,11 +1244,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 		if (parse->groupClause)
 		{
 			/*
-			 * Always estimate the number of groups.
+			 * Always estimate the number of groups.  We can't do this until
+			 * after running query_planner(), either.
 			 */
 			dNumGroups = estimate_num_groups(parse,
 											 parse->groupClause,
 											 cheapest_path->parent->rows);
+			/* Also want it as a long int --- but 'ware overflow! */
 			numGroups = (long) Min(dNumGroups, (double) LONG_MAX);
 
 			/*
@@ -1248,9 +1258,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 			 * aggregates.  (Doing so would imply storing *all* the input
 			 * values in the hash table, which seems like a certain loser.)
 			 */
-			if (parse->hasAggs &&
-				(contain_distinct_agg_clause((Node *) tlist) ||
-				 contain_distinct_agg_clause(parse->havingQual)))
+			if (!enable_hashagg)
+				use_hashed_grouping = false;
+			else if (parse->hasAggs &&
+					 (contain_distinct_agg_clause((Node *) tlist) ||
+					  contain_distinct_agg_clause(parse->havingQual)))
 				use_hashed_grouping = false;
 			else
 			{
@@ -1272,11 +1284,96 @@ grouping_planner(Query *parse, double tuple_fraction)
 
 				if (hashentrysize * dNumGroups <= SortMem * 1024L)
 				{
-					/* much more to do here */
-#if 0
-					/* TEMPORARY HOTWIRE FOR TESTING */
-					use_hashed_grouping = true;
-#endif
+					/*
+					 * Okay, do the cost comparison.  We need to consider
+					 *	cheapest_path + hashagg [+ final sort]
+					 * versus either
+					 *	cheapest_path [+ sort] + group or agg [+ final sort]
+					 * or
+					 *	presorted_path + group or agg [+ final sort]
+					 * where brackets indicate a step that may not be needed.
+					 * We assume query_planner() will have returned a
+					 * presorted path only if it's a winner compared to
+					 * cheapest_path for this purpose.
+					 *
+					 * These path variables are dummies that just hold cost
+					 * fields; we don't make actual Paths for these steps.
+					 */
+					Path		hashed_p;
+					Path		sorted_p;
+
+					cost_agg(&hashed_p, parse,
+							 AGG_HASHED, numAggs,
+							 numGroupCols, dNumGroups,
+							 cheapest_path->startup_cost,
+							 cheapest_path->total_cost,
+							 cheapest_path->parent->rows);
+					/* Result of hashed agg is always unsorted */
+					if (sort_pathkeys)
+						cost_sort(&hashed_p, parse, sort_pathkeys,
+								  hashed_p.total_cost,
+								  dNumGroups,
+								  cheapest_path->parent->width);
+
+					if (sorted_path)
+					{
+						sorted_p.startup_cost = sorted_path->startup_cost;
+						sorted_p.total_cost = sorted_path->total_cost;
+						current_pathkeys = sorted_path->pathkeys;
+					}
+					else
+					{
+						sorted_p.startup_cost = cheapest_path->startup_cost;
+						sorted_p.total_cost = cheapest_path->total_cost;
+						current_pathkeys = cheapest_path->pathkeys;
+					}
+					if (!pathkeys_contained_in(group_pathkeys,
+											   current_pathkeys))
+					{
+						cost_sort(&sorted_p, parse, group_pathkeys,
+								  sorted_p.total_cost,
+								  cheapest_path->parent->rows,
+								  cheapest_path->parent->width);
+						current_pathkeys = group_pathkeys;
+					}
+					if (parse->hasAggs)
+						cost_agg(&sorted_p, parse,
+								 AGG_SORTED, numAggs,
+								 numGroupCols, dNumGroups,
+								 sorted_p.startup_cost,
+								 sorted_p.total_cost,
+								 cheapest_path->parent->rows);
+					else
+						cost_group(&sorted_p, parse,
+								   numGroupCols, dNumGroups,
+								   sorted_p.startup_cost,
+								   sorted_p.total_cost,
+								   cheapest_path->parent->rows);
+					/* The Agg or Group node will preserve ordering */
+					if (sort_pathkeys &&
+						!pathkeys_contained_in(sort_pathkeys,
+											   current_pathkeys))
+					{
+						cost_sort(&sorted_p, parse, sort_pathkeys,
+								  sorted_p.total_cost,
+								  dNumGroups,
+								  cheapest_path->parent->width);
+					}
+
+					/*
+					 * Now make the decision using the top-level tuple
+					 * fraction.  First we have to convert an absolute
+					 * count (LIMIT) into fractional form.
+					 */
+					if (tuple_fraction >= 1.0)
+						tuple_fraction /= dNumGroups;
+
+					if (compare_fractional_path_costs(&hashed_p, &sorted_p,
+													  tuple_fraction) <= 0)
+					{
+						/* Hashed is cheaper, so use it */
+						use_hashed_grouping = true;
+					}
 				}
 			}
 		}
@@ -1284,50 +1381,17 @@ grouping_planner(Query *parse, double tuple_fraction)
 		/*
 		 * Select the best path and create a plan to execute it.
 		 *
-		 * If no special sort order is wanted, or if the cheapest path is
-		 * already appropriately ordered, use the cheapest path.
-		 * Otherwise, look to see if we have an already-ordered path that is
-		 * cheaper than doing an explicit sort on the cheapest-total-cost
-		 * path.
+		 * If we are doing hashed grouping, we will always read all the
+		 * input tuples, so use the cheapest-total path.  Otherwise,
+		 * trust query_planner's decision about which to use.
 		 */
-		if (parse->query_pathkeys == NIL ||
-			pathkeys_contained_in(parse->query_pathkeys,
-								  cheapest_path->pathkeys))
+		if (sorted_path && !use_hashed_grouping)
 		{
-			result_plan = create_plan(parse, cheapest_path);
-			current_pathkeys = cheapest_path->pathkeys;
-		}
-		else if (sorted_path)
-		{
-			Path		sort_path;	/* dummy for result of cost_sort */
-
-			cost_sort(&sort_path, parse, parse->query_pathkeys,
-					  sorted_path->parent->rows, sorted_path->parent->width);
-			sort_path.startup_cost += cheapest_path->total_cost;
-			sort_path.total_cost += cheapest_path->total_cost;
-			/* Convert absolute-count tuple_fraction into a fraction */
-			if (tuple_fraction >= 1.0)
-				tuple_fraction /= sorted_path->parent->rows;
-			if (compare_fractional_path_costs(sorted_path, &sort_path,
-											  tuple_fraction) <= 0)
-			{
-				/* Presorted path is cheaper, use it */
-				result_plan = create_plan(parse, sorted_path);
-				current_pathkeys = sorted_path->pathkeys;
-			}
-			else
-			{
-				/* otherwise, doing it the hard way is still cheaper */
-				result_plan = create_plan(parse, cheapest_path);
-				current_pathkeys = cheapest_path->pathkeys;
-			}
+			result_plan = create_plan(parse, sorted_path);
+			current_pathkeys = sorted_path->pathkeys;
 		}
 		else
 		{
-			/*
-			 * No sorted path, so we must use the cheapest-total path.
-			 * The actual sort step will be generated below.
-			 */
 			result_plan = create_plan(parse, cheapest_path);
 			current_pathkeys = cheapest_path->pathkeys;
 		}
@@ -1362,10 +1426,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 		if (use_hashed_grouping)
 		{
 			/* Hashed aggregate plan --- no sort needed */
-			result_plan = (Plan *) make_agg(tlist,
+			result_plan = (Plan *) make_agg(parse,
+											tlist,
 											(List *) parse->havingQual,
 											AGG_HASHED,
-											length(parse->groupClause),
+											numGroupCols,
 											groupColIdx,
 											numGroups,
 											numAggs,
@@ -1401,10 +1466,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 				current_pathkeys = NIL;
 			}
 
-			result_plan = (Plan *) make_agg(tlist,
+			result_plan = (Plan *) make_agg(parse,
+											tlist,
 											(List *) parse->havingQual,
 											aggstrategy,
-											length(parse->groupClause),
+											numGroupCols,
 											groupColIdx,
 											numGroups,
 											numAggs,
@@ -1436,11 +1502,13 @@ grouping_planner(Query *parse, double tuple_fraction)
 					current_pathkeys = group_pathkeys;
 				}
 
-				result_plan = (Plan *) make_group(tlist,
-												  length(parse->groupClause),
+				result_plan = (Plan *) make_group(parse,
+												  tlist,
+												  numGroupCols,
 												  groupColIdx,
 												  dNumGroups,
 												  result_plan);
+				/* The Group node won't change sort ordering */
 			}
 		}
 	} /* end of if (setOperations) */

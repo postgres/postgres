@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.123 2002/11/19 23:21:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.124 2002/11/21 00:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1573,9 +1573,11 @@ make_sort(Query *root, List *tlist, Plan *lefttree, int keycount)
 
 	copy_plan_costsize(plan, lefttree); /* only care about copying size */
 	cost_sort(&sort_path, root, NIL,
-			  lefttree->plan_rows, lefttree->plan_width);
-	plan->startup_cost = sort_path.startup_cost + lefttree->total_cost;
-	plan->total_cost = sort_path.total_cost + lefttree->total_cost;
+			  lefttree->total_cost,
+			  lefttree->plan_rows,
+			  lefttree->plan_width);
+	plan->startup_cost = sort_path.startup_cost;
+	plan->total_cost = sort_path.total_cost;
 	plan->state = (EState *) NULL;
 	plan->targetlist = tlist;
 	plan->qual = NIL;
@@ -1683,39 +1685,39 @@ make_material(List *tlist, Plan *lefttree)
 }
 
 Agg *
-make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
-		 int ngrp, AttrNumber *grpColIdx, long numGroups, int numAggs,
+make_agg(Query *root, List *tlist, List *qual,
+		 AggStrategy aggstrategy,
+		 int numGroupCols, AttrNumber *grpColIdx,
+		 long numGroups, int numAggs,
 		 Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 	Plan	   *plan = &node->plan;
+	Path		agg_path;		/* dummy for result of cost_agg */
 
 	node->aggstrategy = aggstrategy;
-	node->numCols = ngrp;
+	node->numCols = numGroupCols;
 	node->grpColIdx = grpColIdx;
 	node->numGroups = numGroups;
 
-	copy_plan_costsize(plan, lefttree);
-
-	/*
-	 * Charge one cpu_operator_cost per aggregate function per input
-	 * tuple.
-	 */
-	plan->total_cost += cpu_operator_cost * plan->plan_rows * numAggs;
+	copy_plan_costsize(plan, lefttree); /* only care about copying size */
+	cost_agg(&agg_path, root,
+			 aggstrategy, numAggs,
+			 numGroupCols, numGroups,
+			 lefttree->startup_cost,
+			 lefttree->total_cost,
+			 lefttree->plan_rows);
+	plan->startup_cost = agg_path.startup_cost;
+	plan->total_cost = agg_path.total_cost;
 
 	/*
 	 * We will produce a single output tuple if not grouping,
 	 * and a tuple per group otherwise.
 	 */
 	if (aggstrategy == AGG_PLAIN)
-	{
 		plan->plan_rows = 1;
-		plan->startup_cost = plan->total_cost;
-	}
 	else
-	{
 		plan->plan_rows = numGroups;
-	}
 
 	plan->state = (EState *) NULL;
 	plan->qual = qual;
@@ -1727,22 +1729,28 @@ make_agg(List *tlist, List *qual, AggStrategy aggstrategy,
 }
 
 Group *
-make_group(List *tlist,
-		   int ngrp,
+make_group(Query *root,
+		   List *tlist,
+		   int numGroupCols,
 		   AttrNumber *grpColIdx,
 		   double numGroups,
 		   Plan *lefttree)
 {
 	Group	   *node = makeNode(Group);
 	Plan	   *plan = &node->plan;
+	Path		group_path;		/* dummy for result of cost_group */
 
-	copy_plan_costsize(plan, lefttree);
+	node->numCols = numGroupCols;
+	node->grpColIdx = grpColIdx;
 
-	/*
-	 * Charge one cpu_operator_cost per comparison per input tuple. We
-	 * assume all columns get compared at most of the tuples.
-	 */
-	plan->total_cost += cpu_operator_cost * plan->plan_rows * ngrp;
+	copy_plan_costsize(plan, lefttree); /* only care about copying size */
+	cost_group(&group_path, root,
+			   numGroupCols, numGroups,
+			   lefttree->startup_cost,
+			   lefttree->total_cost,
+			   lefttree->plan_rows);
+	plan->startup_cost = group_path.startup_cost;
+	plan->total_cost = group_path.total_cost;
 
 	/* One output tuple per estimated result group */
 	plan->plan_rows = numGroups;
@@ -1752,8 +1760,6 @@ make_group(List *tlist,
 	plan->targetlist = tlist;
 	plan->lefttree = lefttree;
 	plan->righttree = (Plan *) NULL;
-	node->numCols = ngrp;
-	node->grpColIdx = grpColIdx;
 
 	return node;
 }

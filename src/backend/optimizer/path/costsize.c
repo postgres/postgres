@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.90 2002/09/04 20:31:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.91 2002/11/21 00:42:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,7 @@ bool		enable_seqscan = true;
 bool		enable_indexscan = true;
 bool		enable_tidscan = true;
 bool		enable_sort = true;
+bool		enable_hashagg = true;
 bool		enable_nestloop = true;
 bool		enable_mergejoin = true;
 bool		enable_hashjoin = true;
@@ -423,10 +424,8 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
 
 /*
  * cost_sort
- *	  Determines and returns the cost of sorting a relation.
- *
- * The cost of supplying the input data is NOT included; the caller should
- * add that cost to both startup and total costs returned from this routine!
+ *	  Determines and returns the cost of sorting a relation, including
+ *	  the cost of reading the input data.
  *
  * If the total volume of data to sort is less than SortMem, we will do
  * an in-memory sort, which requires no I/O and about t*log2(t) tuple
@@ -449,6 +448,7 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
  * the right ballpark in most cases.
  *
  * 'pathkeys' is a list of sort keys
+ * 'input_cost' is the total cost for reading the input data
  * 'tuples' is the number of tuples in the relation
  * 'width' is the average tuple width in bytes
  *
@@ -456,12 +456,14 @@ cost_functionscan(Path *path, Query *root, RelOptInfo *baserel)
  * can't conveniently supply the sort keys.  Since this routine doesn't
  * currently do anything with pathkeys anyway, that doesn't matter...
  * but if it ever does, it should react gracefully to lack of key data.
+ * (Actually, the thing we'd most likely be interested in is just the number
+ * of sort keys, which all callers *could* supply.)
  */
 void
 cost_sort(Path *path, Query *root,
-		  List *pathkeys, double tuples, int width)
+		  List *pathkeys, Cost input_cost, double tuples, int width)
 {
-	Cost		startup_cost = 0;
+	Cost		startup_cost = input_cost;
 	Cost		run_cost = 0;
 	double		nbytes = relation_byte_size(tuples, width);
 	long		sortmembytes = SortMem * 1024L;
@@ -511,6 +513,92 @@ cost_sort(Path *path, Query *root,
 	path->total_cost = startup_cost + run_cost;
 }
 
+/*
+ * cost_agg
+ *		Determines and returns the cost of performing an Agg plan node,
+ *		including the cost of its input.
+ *
+ * Note: when aggstrategy == AGG_SORTED, caller must ensure that input costs
+ * are for appropriately-sorted input.
+ */
+void
+cost_agg(Path *path, Query *root,
+		 AggStrategy aggstrategy, int numAggs,
+		 int numGroupCols, double numGroups,
+		 Cost input_startup_cost, Cost input_total_cost,
+		 double input_tuples)
+{
+	Cost		startup_cost;
+	Cost		total_cost;
+
+	/*
+	 * We charge one cpu_operator_cost per aggregate function per input
+	 * tuple, and another one per output tuple (corresponding to transfn
+	 * and finalfn calls respectively).  If we are grouping, we charge an
+	 * additional cpu_operator_cost per grouping column per input tuple
+	 * for grouping comparisons.
+	 *
+	 * We will produce a single output tuple if not grouping,
+	 * and a tuple per group otherwise.
+	 */
+	if (aggstrategy == AGG_PLAIN)
+	{
+		startup_cost = input_total_cost;
+		startup_cost += cpu_operator_cost * (input_tuples + 1) * numAggs;
+		/* we aren't grouping */
+		total_cost = startup_cost;
+	}
+	else if (aggstrategy == AGG_SORTED)
+	{
+		/* Here we are able to deliver output on-the-fly */
+		startup_cost = input_startup_cost;
+		total_cost = input_total_cost;
+		total_cost += cpu_operator_cost * (input_tuples + numGroups) * numAggs;
+		total_cost += cpu_operator_cost * input_tuples * numGroupCols;
+	}
+	else
+	{
+		/* must be AGG_HASHED */
+		startup_cost = input_total_cost;
+		startup_cost += cpu_operator_cost * input_tuples * numAggs;
+		startup_cost += cpu_operator_cost * input_tuples * numGroupCols;
+		total_cost = startup_cost;
+		total_cost += cpu_operator_cost * numGroups * numAggs;
+	}
+
+	path->startup_cost = startup_cost;
+	path->total_cost = total_cost;
+}
+
+/*
+ * cost_group
+ *		Determines and returns the cost of performing a Group plan node,
+ *		including the cost of its input.
+ *
+ * Note: caller must ensure that input costs are for appropriately-sorted
+ * input.
+ */
+void
+cost_group(Path *path, Query *root,
+		   int numGroupCols, double numGroups,
+		   Cost input_startup_cost, Cost input_total_cost,
+		   double input_tuples)
+{
+	Cost		startup_cost;
+	Cost		total_cost;
+
+	startup_cost = input_startup_cost;
+	total_cost = input_total_cost;
+
+	/*
+	 * Charge one cpu_operator_cost per comparison per input tuple. We
+	 * assume all columns get compared at most of the tuples.
+	 */
+	total_cost += cpu_operator_cost * input_tuples * numGroupCols;
+
+	path->startup_cost = startup_cost;
+	path->total_cost = total_cost;
+}
 
 /*
  * cost_nestloop
@@ -658,10 +746,10 @@ cost_mergejoin(Path *path, Query *root,
 	 */
 	if (outersortkeys)			/* do we need to sort outer? */
 	{
-		startup_cost += outer_path->total_cost;
 		cost_sort(&sort_path,
 				  root,
 				  outersortkeys,
+				  outer_path->total_cost,
 				  outer_path->parent->rows,
 				  outer_path->parent->width);
 		startup_cost += sort_path.startup_cost;
@@ -677,10 +765,10 @@ cost_mergejoin(Path *path, Query *root,
 
 	if (innersortkeys)			/* do we need to sort inner? */
 	{
-		startup_cost += inner_path->total_cost;
 		cost_sort(&sort_path,
 				  root,
 				  innersortkeys,
+				  inner_path->total_cost,
 				  inner_path->parent->rows,
 				  inner_path->parent->width);
 		startup_cost += sort_path.startup_cost;

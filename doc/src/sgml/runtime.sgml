@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.156 2002/11/15 03:22:30 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.157 2002/11/21 00:42:18 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -666,6 +666,17 @@ env PGOPTIONS='-c geqo=off' psql
         will be used for <productname>PostgreSQL</productname> data
         files). This is measured in disk pages, which are normally 8 kB
         each.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>ENABLE_HASHAGG</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        Enables or disables the query planner's use of hashed aggregation
+	plan types. The default is on. This is used for debugging the query
+	planner.
        </para>
       </listitem>
      </varlistentry>
