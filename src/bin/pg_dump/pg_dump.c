@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.8 1996/09/16 06:05:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.9 1996/10/02 21:38:35 scrappy Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1410,13 +1410,13 @@ dumpClasses(TableInfo *tblinfo, int numTables, FILE *fout, char *onlytable, int 
 			copybuf[2] == '\0') {
 	  	        copydone = true;	/* don't print this... */
 	            } else {
-	    	        fputs(copybuf, stdout);
+	    	        fputs(copybuf, fout);
 		        switch (ret) {
 		        case EOF:
 		            copydone = true;
 		            /*FALLTHROUGH*/
 		        case 0:
-		            fputc('\n', stdout);
+		            fputc('\n', fout);
 		            break;
 		        case 1:
 		            break;
