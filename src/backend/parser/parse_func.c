@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.101 2001/03/22 03:59:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.102 2001/04/18 22:25:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -250,6 +250,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	char	   *refname;
 	Relation	rd;
 	int			nargs = length(fargs);
+	int			argn;
 	Func	   *funcnode;
 	Oid			oid_array[FUNC_MAX_ARGS];
 	Oid		   *true_oid_array;
@@ -260,6 +261,15 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	bool		attisset = false;
 	Oid			toid = InvalidOid;
 	Expr	   *expr;
+
+	/*
+	 * Most of the rest of the parser just assumes that functions do
+	 * not have more than FUNC_MAX_ARGS parameters.  We have to test
+	 * here to protect against array overruns, etc.
+	 */
+	if (nargs > FUNC_MAX_ARGS)
+		elog(ERROR, "Cannot pass more than %d arguments to a function",
+			 FUNC_MAX_ARGS);
 
 	if (fargs)
 	{
@@ -419,7 +429,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	 */
 	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
-	nargs = 0;
+	argn = 0;
 	foreach(i, fargs)
 	{
 		Node	   *arg = lfirst(i);
@@ -447,14 +457,31 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			{
 
 				/*
-				 * We have f(x) or more likely x.f where x is a join and f
-				 * is not one of the attribute names of the join (else
-				 * we'd have recognized it above).  We don't support
+				 * The relation name refers to a join.  We can't support
 				 * functions on join tuples (since we don't have a named
 				 * type for the join tuples), so error out.
 				 */
-				elog(ERROR, "No such attribute or function %s.%s",
-					 refname, funcname);
+				if (nargs == 1)
+				{
+					/*
+					 * We have f(x) or more likely x.f where x is a join
+					 * and f is not one of the attribute names of the join
+					 * (else we'd have recognized it above).  Give an
+					 * appropriately vague error message.  Would be nicer
+					 * to know which syntax was used...
+					 */
+					elog(ERROR, "No such attribute or function %s.%s",
+						 refname, funcname);
+				}
+				else
+				{
+					/*
+					 * There are multiple arguments, so it must be a function
+					 * call.
+					 */
+					elog(ERROR, "Cannot pass result of join %s to a function",
+						 refname);
+				}
 				rte = NULL;		/* keep compiler quiet */
 			}
 			else
@@ -467,8 +494,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
 			/*
-			 * for func(relname), the param to the function is the tuple
-			 * under consideration.  We build a special VarNode to reflect
+			 * The parameter to be passed to the function is the whole tuple
+			 * from the relation.  We build a special VarNode to reflect
 			 * this -- it has varno set to the correct range table entry,
 			 * but has varattno == 0 to signal that the whole tuple is the
 			 * argument.  Also, it has typmod set to sizeof(Pointer) to
@@ -477,9 +504,23 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			if (rte->relname == NULL)
 			{
-				/* Here, we have an unrecognized attribute of a sub-select */
-				elog(ERROR, "No such attribute or function %s.%s",
-					 refname, funcname);
+				/*
+				 * RTE is a subselect; must fail for lack of a specific type
+				 */
+				if (nargs == 1)
+				{
+					/*
+					 * Here, we probably have an unrecognized attribute of a
+					 * sub-select; again can't tell if it was x.f or f(x)
+					 */
+					elog(ERROR, "No such attribute or function %s.%s",
+						 refname, funcname);
+				}
+				else
+				{
+					elog(ERROR, "Cannot pass result of sub-select %s to a function",
+						 refname);
+				}
 			}
 
 			toid = typenameTypeId(rte->relname);
@@ -498,16 +539,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			/* if attisset is true, we already set toid for the single arg */
 		}
 
-		/*
-		 * Most of the rest of the parser just assumes that functions do
-		 * not have more than FUNC_MAX_ARGS parameters.  We have to test
-		 * here to protect against array overruns, etc.
-		 */
-		if (nargs >= FUNC_MAX_ARGS)
-			elog(ERROR, "Cannot pass more than %d arguments to a function",
-				 FUNC_MAX_ARGS);
-
-		oid_array[nargs++] = toid;
+		oid_array[argn++] = toid;
 	}
 
 	/*
