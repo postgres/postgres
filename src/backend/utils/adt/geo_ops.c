@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.18 1997/09/05 19:32:44 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.19 1997/09/05 20:20:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1962,7 +1962,7 @@ Point *close_ps(Point *pt, LSEG *lseg)
     if (result)
 	return(result);
 #if FALSE
-    if (FPeq(lseg->p[0].x, lseg->p[1].x)) {	/* vertical */
+    if (FPeq(lseg->p[0].x, lseg->p[1].x)) /* vertical */
 #endif
     if (lseg_vertical(lseg)) {
 	result->x = lseg->p[0].x;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.5 1997/09/05 19:59:11 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.6 1997/09/05 20:20:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -392,11 +392,9 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 		tletype = (Oid) get_functype((Func*)thenode);
 	    else
 		elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
-#endif
-/*
-	} else
+ 	} else
 	    elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
-*/
+#endif
 	/* reach right in there, why don't you? */
 	if (tletype != reln->rd_att->attrs[i-1]->atttypid)
 	    elog(WARN, "function declared to return type %s does not retrieve (%s.all)", tname(typ), tname(typ));
