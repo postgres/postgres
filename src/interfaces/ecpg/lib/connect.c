@@ -411,17 +411,6 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 
 	this->connection = PQsetdbLogin(host, port, options, NULL, realname, user, passwd);
 
-	if (host)
-		free(host);
-	if (port)
-		free(port);
-	if (options)
-		free(options);
-	if (realname)
-		free(realname);
-	if (dbname)
-		free(dbname);
-
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
 		ecpg_finish(this);
@@ -433,8 +422,29 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 				user ? "for user " : "", user ? user : "",
 				lineno);
 		ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
+		if (host)
+			free(host);
+		if (port)
+			free(port);
+		if (options)
+			free(options);
+		if (realname)
+			free(realname);
+		if (dbname)
+			free(dbname);
 		return false;
 	}
+
+	if (host)
+		free(host);
+	if (port)
+		free(port);
+	if (options)
+		free(options);
+	if (realname)
+		free(realname);
+	if (dbname)
+		free(dbname);
 
 	this->committed = true;
 	this->autocommit = autocommit;
