@@ -11,6 +11,7 @@
 #define HAVE_VALUES_H
 #define HAVE_MEMMOVE
 #define HAVE_TERMIOS_H
+#define HAVE_SIGSETJMP
 
 #if defined(aix)
 #  undef HAVE_TERMIOS_H
@@ -143,7 +144,7 @@
 #  define NO_SIGACTION
 #  define NO_SETSID
 #  define NO_SIGPROCMASK
-#  define NEED_SIG_JMP
+#  undef HAVE_SIGSETJMP
 # endif
 
 # define HAVE_LIMITS_H
@@ -189,7 +190,7 @@ typedef unsigned char slock_t;
 
 #if defined(win32)
 #  define JMP_BUF
-#  define NEED_SIG_JMP
+#  undef HAVE_SIGSETJMP
 #  define NO_UNISTD_H
 #  define USES_WINSOCK 
 #  define NOFILE	100

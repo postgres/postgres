@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.14 1997/01/14 08:04:42 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.15 1997/01/24 22:42:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,7 +191,7 @@ static char     *values[MAXATTR];       /* cooresponding attribute values */
 int             numattr;                /* number of attributes for cur. rel */
 extern int    fsyncOff;                 /* do not fsync the database */
 
-#ifdef NEED_SIG_JMP
+#ifndef HAVE_SIGSETJMP
 static jmp_buf    Warn_restart;
 #define sigsetjmp(x,y)  setjmp(x)
 #define siglongjmp longjmp
