@@ -1003,7 +1003,7 @@ fi
 
 echo "$ac_t""$ac_cv_prog_gcc" 1>&6
 
-if test $ac_cv_prog_gcc = yes; then
+if test "$ac_cv_prog_gcc" = "yes"; then
   GCC=yes
   ac_test_CFLAGS="${CFLAGS+set}"
   ac_save_CFLAGS="$CFLAGS"
