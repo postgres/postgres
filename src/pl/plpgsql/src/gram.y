@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.32 2002/05/01 12:40:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.33 2002/05/21 18:50:16 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1346,17 +1346,44 @@ stmt_open		: K_OPEN lno cursor_varptr
 								if (tok != '(')
 								{
 									plpgsql_error_lineno = yylineno;
-									elog(ERROR, "cursor %s has arguments", $3->refname);
+									elog(ERROR, "cursor %s has arguments",
+										 $3->refname);
 								}
 
+								/*
+								 * Push back the '(', else read_sql_stmt
+								 * will complain about unbalanced parens.
+								 */
+								plpgsql_push_back_token(tok);
+
 								new->argquery = read_sql_stmt("SELECT ");
-								/* Remove the trailing right paren,
-                                 * because we want "select 1, 2", not
-                                 * "select (1, 2)".
+
+								/*
+								 * Now remove the leading and trailing parens,
+								 * because we want "select 1, 2", not
+								 * "select (1, 2)".
 								 */
 								cp = new->argquery->query;
-								cp += strlen(cp);
-								--cp;
+
+								if (strncmp(cp, "SELECT", 6) != 0)
+								{
+									plpgsql_error_lineno = yylineno;
+									elog(ERROR, "expected 'SELECT (', got '%s' (internal error)",
+										 new->argquery->query);
+								}
+								cp += 6;
+								while (*cp == ' ') /* could be more than 1 space here */
+									cp++;
+								if (*cp != '(')
+								{
+									plpgsql_error_lineno = yylineno;
+									elog(ERROR, "expected 'SELECT (', got '%s' (internal error)",
+										 new->argquery->query);
+								}
+								*cp = ' ';
+
+								cp += strlen(cp) - 1;
+
 								if (*cp != ')')
 								{
 									plpgsql_error_lineno = yylineno;
