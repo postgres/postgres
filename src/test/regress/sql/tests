@@ -37,4 +37,6 @@ select_into
 select_distinct
 select_distinct_on
 errors
+btree_index
+hash_index
 misc
