@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.277 2004/08/13 16:29:55 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.278 2004/08/16 02:12:29 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -2675,8 +2675,8 @@ archive_command = 'copy "%p" /mnt/server/archivedir/"%f"'  # Win32
 
      <variablelist>
 
-     <varlistentry id="guc-datestyle" xreflabel="datestyle">
-      <term><varname>datestyle</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-datestyle" xreflabel="DateStyle">
+      <term><varname>DateStyle</varname> (<type>string</type>)</term>
       <indexterm><primary>date style</></>
       <listitem>
        <para>
@@ -3091,13 +3091,13 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
     </sect3>
    </sect2>
 
-   <sect2 id="runtime-config-compiler">
-    <title>Compiled-in Options</title>
+   <sect2 id="runtime-config-preset">
+    <title>Preset Options</title>
 
     <para>
      The following <quote>parameters</> are read-only, and are determined
-     when <productname>PostgreSQL</productname> is compiled. As such,
-     they have been excluded from the sample
+     when <productname>PostgreSQL</productname> is compiled or when it is
+     installed. As such, they have been excluded from the sample
      <filename>postgresql.conf</> file.  These options determine
      various aspects of <productname>PostgreSQL</productname> behavior
      that may be of interest to certain applications, particularly
@@ -3125,10 +3125,34 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
       <listitem>
        <para>
         Shows whether <productname>PostgreSQL</productname> was built
-        with support for 64-bit integer dates and times.  It is set by
+        with support for 64-bit-integer dates and times.  It is set by
         configuring with <literal>--enable-integer-datetimes</literal>
         when building <productname>PostgreSQL</productname>.  The
         default value is <literal>off</literal>.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-lc-collate" xreflabel="lc_collate">
+      <term><varname>lc_collate</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Shows the locale in which sorting of textual data is done.
+	See <xref linkend="locale"> for more information.
+	The value is determined when the database cluster is initialized.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-lc-ctype" xreflabel="lc_ctype">
+      <term><varname>lc_ctype</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Shows the locale that determines character classifications.
+	See <xref linkend="locale"> for more information.
+	The value is determined when the database cluster is initialized.
+	Ordinarily this will be the same as <varname>lc_collate</varname>,
+	but for special applications it might be set differently.
        </para>
       </listitem>
      </varlistentry>
@@ -3164,6 +3188,29 @@ dynamic_library_path = 'C:\tools\postgresql;H:\my_project\lib;$libdir'
         Shows the maximum number of index keys. It is determined by
         the value of <literal>INDEX_MAX_KEYS</> when building the server. The
         default value is 32.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-server-encoding" xreflabel="server_encoding">
+      <term><varname>server_encoding</varname> (<type>string</type>)</term>
+      <indexterm><primary>character set</></>
+      <listitem>
+       <para>
+        Shows the database encoding (character set).
+        It is determined when the database is created.  Ordinarily,
+        clients need only be concerned with the value of <xref
+        linkend="guc-client-encoding">.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-server-version" xreflabel="server_version">
+      <term><varname>server_version</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Shows the version number of the server. It is determined by the
+        value of <literal>PG_VERSION</> when building the server.
        </para>
       </listitem>
      </varlistentry>

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.52 2004/06/11 01:08:33 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.53 2004/08/16 02:12:29 tgl Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -1046,12 +1046,20 @@
    <para>
     At present there is a hard-wired set of parameters for which
     ParameterStatus will be generated: they are
-    <literal>server_version</> (a pseudo-parameter that cannot change after
-    startup);
+    <literal>server_version</>,
+    <literal>server_encoding</>,
     <literal>client_encoding</>,
     <literal>is_superuser</>,
-    <literal>session_authorization</literal>, and
-    <literal>DateStyle</>.
+    <literal>session_authorization</>,
+    <literal>DateStyle</>, and
+    <literal>integer_datetimes</>.
+    (<literal>server_encoding</> and <literal>integer_datetimes</> were not
+    reported by releases before 8.0.)
+    Note that
+    <literal>server_version</>,
+    <literal>server_encoding</> and
+    <literal>integer_datetimes</>
+    are pseudo-parameters that cannot change after startup.
     This set might change in the future, or even become configurable.
     Accordingly, a frontend should simply ignore ParameterStatus for
     parameters that it does not understand or care about.

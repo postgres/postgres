@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.231 2004/08/11 21:10:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.232 2004/08/16 02:12:29 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -828,7 +828,7 @@ static struct config_bool ConfigureNamesBool[] =
 		{"integer_datetimes", PGC_INTERNAL, COMPILE_OPTIONS,
 			gettext_noop("Datetimes are integer based"),
 			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&integer_datetimes,
 #ifdef HAVE_INT64_TIMESTAMP
@@ -1624,7 +1624,7 @@ static struct config_string ConfigureNamesString[] =
 		{"server_encoding", PGC_INTERNAL, CLIENT_CONN_LOCALE,
 			gettext_noop("Sets the server (database) character set encoding."),
 			NULL,
-			GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
+			GUC_REPORT | GUC_NOT_IN_SAMPLE | GUC_DISALLOW_IN_FILE
 		},
 		&server_encoding_string,
 		"SQL_ASCII", NULL, NULL

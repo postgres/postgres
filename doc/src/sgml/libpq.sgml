@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.158 2004/08/11 18:06:00 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/libpq.sgml,v 1.159 2004/08/16 02:12:29 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -848,28 +848,45 @@ const char *PQparameterStatus(const PGconn *conn, const char *paramName);
 Certain parameter values are reported by the server automatically at
 connection startup or whenever their values change.
 <function>PQparameterStatus</> can be used to interrogate these settings.
-It returns the current value of a parameter if known, or <symbol>NULL</symbol> if the parameter
-is not known.
+It returns the current value of a parameter if known, or <symbol>NULL</symbol>
+if the parameter is not known.
 </para>
 
 <para>
 Parameters reported as of the current release include
-<literal>server_version</> (cannot change after startup);
+<literal>server_version</>,
+<literal>server_encoding</>,
 <literal>client_encoding</>,
 <literal>is_superuser</>,
-<literal>session_authorization</literal>, and
-<literal>DateStyle</>.
+<literal>session_authorization</>,
+<literal>DateStyle</>, and
+<literal>integer_datetimes</>.
+(<literal>server_encoding</> and <literal>integer_datetimes</> were not
+reported by releases before 8.0.)
+Note that
+<literal>server_version</>,
+<literal>server_encoding</> and
+<literal>integer_datetimes</>
+cannot change after startup.
 </para>
 
 <para>
 Pre-3.0-protocol servers do not report parameter settings, but
 <application>libpq</> includes logic to obtain values for
-<literal>server_version</>, and <literal>client_encoding</>.
+<literal>server_version</> and <literal>client_encoding</> anyway.
 Applications are encouraged to use <function>PQparameterStatus</>
 rather than ad-hoc code to determine these values.  (Beware however
 that on a pre-3.0 connection, changing <literal>client_encoding</> via
 <command>SET</> after connection startup will not be reflected by
-<function>PQparameterStatus</>.)
+<function>PQparameterStatus</>.)  For <literal>server_version</>,
+see also <function>PQserverVersion</>, which returns the information
+in a numeric form that is much easier to compare against.
+</para>
+
+<para>
+Although the returned pointer is declared <literal>const</>, it in fact
+points to mutable storage associated with the <literal>PGconn</> structure.
+It is unwise to assume the pointer will remain valid across queries.
 </para>
 </listitem>
 </varlistentry>
@@ -904,10 +921,10 @@ int PQserverVersion(const PGconn *conn);
 </synopsis>
 Applications may use this to determine the version of the database server they
 are connected to. The number is formed by converting the major, minor, and
-revision numbers into two digit numbers and appending them together. For
-example, version 7.4.2 will be returned as 70402, and version 8.1 will be
-returned as 80100 (leading zeroes are not shown).  Zero is returned if the
-connection is bad.
+revision numbers into two-decimal-digit numbers and appending them
+together. For example, version 7.4.2 will be returned as 70402, and version
+8.1 will be returned as 80100 (leading zeroes are not shown).  Zero is
+returned if the connection is bad.
 </para>
 </listitem>
 </varlistentry>
