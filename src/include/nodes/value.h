@@ -6,10 +6,13 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/include/nodes/value.h,v 1.1 2004/01/07 18:43:36 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/value.h,v 1.2 2004/07/12 01:00:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#ifndef VALUE_H
+#define VALUE_H
 
 #include "nodes/nodes.h"
 
@@ -54,3 +57,5 @@ extern Value *makeInteger(long i);
 extern Value *makeFloat(char *numericStr);
 extern Value *makeString(char *str);
 extern Value *makeBitString(char *str);
+
+#endif	/* VALUE_H */
