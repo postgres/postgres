@@ -1,2 +1,7 @@
+/* some platforms define __alpha, but not __alpha__ */
+#if defined(__alpha) && !defined(__alpha__)
+#define __alpha__
+#endif
+
 %.so:  %.o
 	$(LD) -shared -expect_unresolved '*' -o $@ $<
