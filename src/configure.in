@@ -14,6 +14,7 @@ case "$host_os" in
               AC_SUBST(TAS) ;;
         esac ;;
    sunos*) os=sunos4 ;;
+     aux*) os=aux ;;
    linux*) os=linux ;;
     bsdi*) os=bsdi ;;
  freebsd*|netbsd*|openbsd*) os=bsd ;;
