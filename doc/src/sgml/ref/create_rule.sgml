@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.30 2001/12/08 03:24:35 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.31 2002/01/24 18:28:15 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -109,8 +109,8 @@ NOTHING
     <replaceable class="parameter">object</replaceable>).
     <literal>new</literal> is valid in ON INSERT and ON UPDATE rules
     to refer to the new row being inserted or updated.
-    <literal>old</literal> is valid in ON SELECT, ON UPDATE, and ON DELETE
-    rules to refer to the existing row being selected, updated, or deleted.
+    <literal>old</literal> is valid in ON UPDATE and ON DELETE
+    rules to refer to the existing row being updated or deleted.
    </para>
   </refsect2>
 
