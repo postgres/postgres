@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.124 2002/08/12 00:36:11 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.125 2002/08/15 14:26:15 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1293,71 +1293,11 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
      </varlistentry>
 
      <varlistentry>
-      <term><varname>SEARCH_PATH</varname> (<type>string</type>)</term>
-      <indexterm><primary>search_path</></>
-      <indexterm><primary>namespaces</></>
+      <term><varname>KRB_SERVER_KEYFILE</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This variable specifies the order in which namespaces are searched
-	when an object (table, datatype, function, etc) is referenced by a
-	simple name with no schema component.  When there are objects of
-	identical names in different namespaces, the one found first
-	in the search path is used.  An object that is not in any of the
-	namespaces in the search path can only be referenced by specifying
-	its containing namespace with a qualified (dotted) name.
-       </para>
-
-       <para>
-        The value for search_path has to be a comma-separated
-        list of namespace (schema) names.  If one of the list items is
-        the special value <literal>$user</literal>, then the namespace
-	having the same name as the SESSION_USER is substituted, if there
-	is such a namespace.  (If not, <literal>$user</literal> is ignored.)
-       </para>
-
-       <para>
-        The system catalog namespace, <literal>pg_catalog</>, is always
-	searched, whether it is mentioned in the path or not.  If it is
-	mentioned in the path then it will be searched in the specified
-	order.  If <literal>pg_catalog</> is not in the path then it will
-	be searched <emphasis>before</> searching any of the path items.
-	It should also be noted that the temporary-table namespace,
-	<literal>pg_temp_nnn</>, is implicitly searched before any of
-	these.
-       </para>
-
-       <para>
-        When objects are created without specifying a particular target
-	namespace, they will be placed in the first namespace listed
-	in the search path.  An error is reported if the search path is
-	empty.
-       </para>
-
-       <para>
-        The default value for this parameter is
-        <literal>'$user, public'</literal> (where the second part will be
-	ignored if there is no namespace named <literal>public</>).
-	This supports shared use of a database (where no users
-	have private namespaces, and all share use of <literal>public</>),
-	private per-user namespaces, and combinations of these.  Other
-	effects can be obtained by altering the default search path
-	setting, either globally or per-user.
-       </para>
-
-       <para>
-        By default, a newly created database will contain a world-writable
-	namespace named <literal>public</>, but no private namespaces.
-	The administrator may choose to restrict permissions on
-	<literal>public</> or even remove it, if that suits his purposes.
-       </para>
-
-       <para>
-        The current effective value of the search path can be examined
-	via the SQL function <function>current_schemas()</>.  This is not
-	quite the same as examining the value of
-	<varname>search_path</varname>, since <function>current_schemas()</>
-	shows how the requests appearing in <varname>search_path</varname>
-	were resolved.
+        Sets the location of the Kerberos server key file. See
+        <xref linkend="kerberos-auth"> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -1412,16 +1352,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
 	This option can only be set at server start or in the
 	<filename>postgresql.conf</filename> file.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>KRB_SERVER_KEYFILE</varname> (<type>string</type>)</term>
-      <listitem>
-       <para>
-        Sets the location of the Kerberos server key file. See
-        <xref linkend="kerberos-auth"> for details.
        </para>
       </listitem>
      </varlistentry>
@@ -1594,6 +1524,76 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         The TCP port the server listens on; 5432 by default. This
         option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>SEARCH_PATH</varname> (<type>string</type>)</term>
+      <indexterm><primary>search_path</></>
+      <indexterm><primary>namespaces</></>
+      <listitem>
+       <para>
+        This variable specifies the order in which namespaces are searched
+	when an object (table, datatype, function, etc) is referenced by a
+	simple name with no schema component.  When there are objects of
+	identical names in different namespaces, the one found first
+	in the search path is used.  An object that is not in any of the
+	namespaces in the search path can only be referenced by specifying
+	its containing namespace with a qualified (dotted) name.
+       </para>
+
+       <para>
+        The value for search_path has to be a comma-separated
+        list of namespace (schema) names.  If one of the list items is
+        the special value <literal>$user</literal>, then the namespace
+	having the same name as the SESSION_USER is substituted, if there
+	is such a namespace.  (If not, <literal>$user</literal> is ignored.)
+       </para>
+
+       <para>
+        The system catalog namespace, <literal>pg_catalog</>, is always
+	searched, whether it is mentioned in the path or not.  If it is
+	mentioned in the path then it will be searched in the specified
+	order.  If <literal>pg_catalog</> is not in the path then it will
+	be searched <emphasis>before</> searching any of the path items.
+	It should also be noted that the temporary-table namespace,
+	<literal>pg_temp_nnn</>, is implicitly searched before any of
+	these.
+       </para>
+
+       <para>
+        When objects are created without specifying a particular target
+	namespace, they will be placed in the first namespace listed
+	in the search path.  An error is reported if the search path is
+	empty.
+       </para>
+
+       <para>
+        The default value for this parameter is
+        <literal>'$user, public'</literal> (where the second part will be
+	ignored if there is no namespace named <literal>public</>).
+	This supports shared use of a database (where no users
+	have private namespaces, and all share use of <literal>public</>),
+	private per-user namespaces, and combinations of these.  Other
+	effects can be obtained by altering the default search path
+	setting, either globally or per-user.
+       </para>
+
+       <para>
+        By default, a newly created database will contain a world-writable
+	namespace named <literal>public</>, but no private namespaces.
+	The administrator may choose to restrict permissions on
+	<literal>public</> or even remove it, if that suits his purposes.
+       </para>
+
+       <para>
+        The current effective value of the search path can be examined
+	via the SQL function <function>current_schemas()</>.  This is not
+	quite the same as examining the value of
+	<varname>search_path</varname>, since <function>current_schemas()</>
+	shows how the requests appearing in <varname>search_path</varname>
+	were resolved.
        </para>
       </listitem>
      </varlistentry>
