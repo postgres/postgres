@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.164 2002/03/22 02:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.165 2002/03/22 21:34:44 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -28,6 +28,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_index.h"
+#include "catalog/pg_namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_relcheck.h"
 #include "catalog/pg_type.h"
@@ -2008,12 +2009,10 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 				 owner_name, authId);
 	}
 
-	/* FIXME FENN: Create the schema here */
-	(void) schemaName;			/* suppress compiler warning for now... */
+	/* Create the schema's namespace */
+	NamespaceCreate(schemaName);
 
-	/*
-	 * Let commands in the schema-element-list know about the schema
-	 */
+	/* Let commands in the schema-element-list know about the schema */
 	CommandCounterIncrement();
 
 	/*

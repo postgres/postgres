@@ -7,13 +7,12 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catname.h,v 1.23 2001/11/05 17:46:31 momjian Exp $
+ * $Id: catname.h,v 1.24 2002/03/22 21:34:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef CATNAME_H
 #define CATNAME_H
-
 
 
 #define  AggregateRelationName "pg_aggregate"
@@ -29,6 +28,7 @@
 #define  LanguageRelationName "pg_language"
 #define  LargeObjectRelationName "pg_largeobject"
 #define  ListenerRelationName "pg_listener"
+#define  NamespaceRelationName "pg_namespace"
 #define  OperatorClassRelationName "pg_opclass"
 #define  OperatorRelationName "pg_operator"
 #define  ProcedureRelationName "pg_proc"

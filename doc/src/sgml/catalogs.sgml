@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.36 2002/03/22 19:20:03 petere Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.37 2002/03/22 21:34:43 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -109,6 +109,11 @@
      <row>
       <entry>pg_listener</entry>
       <entry>asynchronous notification</entry>
+     </row>
+
+     <row>
+      <entry>pg_namespace</entry>
+      <entry>namespaces (schemas)</entry>
      </row>
 
      <row>
@@ -1400,6 +1405,56 @@
        Zero if no event is pending for this listener.  If an event is
        pending, the PID of the backend that sent the notification.
       </entry>
+     </row>
+    </tbody>
+   </tgroup>
+  </table>
+
+ </sect1>
+
+
+ <sect1 id="catalog-pg-namespace">
+  <title>pg_namespace</title>
+
+  <para>
+   A namespace is the structure underlying SQL92 schemas: each namespace
+   can have a separate collection of relations, types, etc without name
+   conflicts.
+  </para>
+
+  <table>
+   <title>pg_namespace Columns</title>
+
+   <tgroup cols=4>
+    <thead>
+     <row>
+      <entry>Name</entry>
+      <entry>Type</entry>
+      <entry>References</entry>
+      <entry>Description</entry>
+     </row>
+    </thead>
+
+    <tbody>
+     <row>
+      <entry>nspname</entry>
+      <entry><type>name</type></entry>
+      <entry></entry>
+      <entry>Name of the namespace</entry>
+     </row>
+
+     <row>
+      <entry>nspowner</entry>
+      <entry><type>int4</type></entry>
+      <entry>pg_shadow.usesysid</entry>
+      <entry>Owner (creator) of the namespace</entry>
+     </row>
+
+     <row>
+      <entry>nspacl</entry>
+      <entry><type>aclitem[]</type></entry>
+      <entry></entry>
+      <entry>Access permissions</entry>
      </row>
     </tbody>
    </tgroup>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.57 2002/02/19 20:11:19 tgl Exp $
+ * $Id: indexing.h,v 1.58 2002/03/22 21:34:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@
 #define Num_pg_inherits_indices		1
 #define Num_pg_language_indices		2
 #define Num_pg_largeobject_indices	1
+#define Num_pg_namespace_indices	2
 #define Num_pg_opclass_indices		2
 #define Num_pg_operator_indices		2
 #define Num_pg_proc_indices			2
@@ -70,6 +71,8 @@
 #define LanguageNameIndex			"pg_language_name_index"
 #define LanguageOidIndex			"pg_language_oid_index"
 #define LargeObjectLOidPNIndex		"pg_largeobject_loid_pn_index"
+#define NamespaceNameIndex			"pg_namespace_nspname_index"
+#define NamespaceOidIndex			"pg_namespace_oid_index"
 #define OpclassAmNameIndex			"pg_opclass_am_name_index"
 #define OpclassOidIndex				"pg_opclass_oid_index"
 #define OperatorNameIndex			"pg_operator_oprname_l_r_k_index"
@@ -104,6 +107,7 @@ extern char *Name_pg_index_indices[];
 extern char *Name_pg_inherits_indices[];
 extern char *Name_pg_language_indices[];
 extern char *Name_pg_largeobject_indices[];
+extern char *Name_pg_namespace_indices[];
 extern char *Name_pg_opclass_indices[];
 extern char *Name_pg_operator_indices[];
 extern char *Name_pg_proc_indices[];
@@ -165,6 +169,8 @@ DECLARE_UNIQUE_INDEX(pg_inherits_relid_seqno_index on pg_inherits using btree(in
 DECLARE_UNIQUE_INDEX(pg_language_name_index on pg_language using btree(lanname name_ops));
 DECLARE_UNIQUE_INDEX(pg_language_oid_index on pg_language using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_largeobject_loid_pn_index on pg_largeobject using btree(loid oid_ops, pageno int4_ops));
+DECLARE_UNIQUE_INDEX(pg_namespace_nspname_index on pg_namespace using btree(nspname name_ops));
+DECLARE_UNIQUE_INDEX(pg_namespace_oid_index on pg_namespace using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_opclass_am_name_index on pg_opclass using btree(opcamid oid_ops, opcname name_ops));
 DECLARE_UNIQUE_INDEX(pg_opclass_oid_index on pg_opclass using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_operator_oid_index on pg_operator using btree(oid oid_ops));

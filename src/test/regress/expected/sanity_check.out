@@ -45,6 +45,7 @@ SELECT relname, relhasindex
  pg_inherits         | t
  pg_language         | t
  pg_largeobject      | t
+ pg_namespace        | t
  pg_opclass          | t
  pg_operator         | t
  pg_proc             | t
@@ -59,5 +60,5 @@ SELECT relname, relhasindex
  shighway            | t
  tenk1               | t
  tenk2               | t
-(49 rows)
+(50 rows)
 

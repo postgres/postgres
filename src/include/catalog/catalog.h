@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * catalog.h
- *	  prototypes for functions in lib/catalog/catalog.c
+ *	  prototypes for functions in backend/catalog/catalog.c
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catalog.h,v 1.21 2001/11/16 23:30:35 tgl Exp $
+ * $Id: catalog.h,v 1.22 2002/03/22 21:34:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
