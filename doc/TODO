@@ -288,6 +288,7 @@ Clients
 	o Fix nested C comments
 	o sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified
 	o Make SET CONNECTION thread-aware, non-standard?
+	o Allow multidimensional arrays
 
 * Python
 	o Allow users to register their own types with pg_
