@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.11 2001/05/12 22:51:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.12 2001/07/11 20:32:10 momjian Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -242,7 +242,10 @@ hostssl <replaceable>database</replaceable> <replaceable>IP-address</replaceable
           of the connecting user. <productname>Postgres</productname>
           then verifies whether the so identified operating system user
           is allowed to connect as the database user that is requested.
-	  This is only available for TCP/IP connections.
+	  This is only available for TCP/IP connections.  It can be used
+	  on the local machine by specifying the localhost address 127.0.0.1.
+         </para>
+         <para>
           The <replaceable>authentication option</replaceable> following
           the <literal>ident</> keyword specifies the name of an
           <firstterm>ident map</firstterm> that specifies which operating
@@ -553,7 +556,8 @@ host         all        192.168.0.0    255.255.0.0        ident     omicron
      <attribution>RFC 1413</attribution>
      <para>
       The Identification Protocol is not intended as an authorization
-      or access control protocol.
+      or access control protocol.  You must trust the machine running the
+      ident server.
      </para>
     </blockquote>
    </para>

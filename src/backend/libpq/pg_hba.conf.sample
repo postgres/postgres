@@ -1,5 +1,5 @@
 # 
-#                PostgreSQL HOST-BASED ACCESS (HBA) CONTROL FILE
+#		  PostgreSQL HOST-BASED ACCESS (HBA) CONTROL FILE
 # 
 # 
 # This file controls:
@@ -101,9 +101,9 @@
 # 		be use only for machines where all users are truested.
 # 
 #   password:	Authentication is done by matching a password supplied
-#   		in clear by the host. If no AUTH_ARGUMENT is used, the
-#   		password is compared with the user's entry in the
-#   		pg_shadow table.
+#		in clear by the host. If no AUTH_ARGUMENT is used, the
+#		password is compared with the user's entry in the
+#		pg_shadow table.
 # 
 # 		If AUTH_ARGUMENT is specified, the username is looked up
 # 		in that file in the $PGDATA directory. If the username
@@ -118,30 +118,30 @@
 # 		passwords.
 # 
 #   crypt:  	Same as "password", but authentication is done by
-#   		encrypting the password sent over the network. This is
-#   		always preferable to "password" except for old clients
-#   		that don't support "crypt". Also, crypt can use
-#   		usernames stored in secondary password files but not
-#   		secondary passwords.
+#		encrypting the password sent over the network. This is
+#		always preferable to "password" except for old clients
+#		that don't support "crypt". Also, crypt can use
+#		usernames stored in secondary password files but not
+#		secondary passwords.
 # 
-#   ident: Authentication is done by the ident server on the local 
-#   		or remote host. AUTH_ARGUMENT is required and maps names 
-#		found in the $PGDATA/pg_ident.conf file. The connection
-#   		is accepted if the file contains an entry for this map
-#   		name with the ident-supplied username and the requested
-#   		PostgreSQL username. The special map name "sameuser"
-#   		indicates an implied map (not in pg_ident.conf) that
-#   		maps each ident username to the identical PostgreSQL 
+#   ident:	Authentication is done by the ident server on the local
+#		(127.0.0.1) or remote host. AUTH_ARGUMENT is required and
+#		maps names found in the $PGDATA/pg_ident.conf file. The 
+#		connection is accepted if the file contains an entry for
+#		this map name with the ident-supplied username and the 
+#		requested PostgreSQL username. The special map name 
+#		"sameuser" indicates an implied map (not in pg_ident.conf)
+#		that maps each ident username to the identical PostgreSQL 
 #		username.
 # 
-#   krb4:   	Kerberos V4 authentication is used.
+#   krb4:	Kerberos V4 authentication is used.
 # 
-#   krb5:   	Kerberos V5 authentication is used.
+#   krb5:	Kerberos V5 authentication is used.
 # 
 #   reject: 	Reject the connection. This is used to reject certain hosts
-#   		that are part of a network specified later in the file.
-#   		To be effective, "reject" must appear before the later
-#   		entries.
+#		that are part of a network specified later in the file.
+#		To be effective, "reject" must appear before the later
+#		entries.
 # 
 # Local UNIX-domain socket connections support only the AUTH_TYPEs of
 # "trust", "password", "crypt", and "reject".
