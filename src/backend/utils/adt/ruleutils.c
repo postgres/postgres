@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.114 2002/08/08 17:00:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.115 2002/08/16 20:55:09 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2659,6 +2659,10 @@ get_opclass_name(Oid opclass, Oid actual_datatype,
 	Form_pg_opclass opcrec;
 	char	   *opcname;
 	char	   *nspname;
+
+	/* Domains use their base type's default opclass */
+	if (OidIsValid(actual_datatype))
+		actual_datatype = getBaseType(actual_datatype);
 
 	ht_opc = SearchSysCache(CLAOID,
 							ObjectIdGetDatum(opclass),

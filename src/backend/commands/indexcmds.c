@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.83 2002/08/15 03:04:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.84 2002/08/16 20:55:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -481,6 +481,9 @@ GetDefaultOpClass(Oid attrType, Oid accessMethodId)
 	int			ncompatible = 0;
 	Oid			exactOid = InvalidOid;
 	Oid			compatibleOid = InvalidOid;
+
+	/* If it's a domain, look at the base type instead */
+	attrType = getBaseType(attrType);
 
 	/*
 	 * We scan through all the opclasses available for the access method,
