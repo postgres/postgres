@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.41 2000/05/28 17:56:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.42 2000/11/07 16:01:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -443,8 +443,21 @@ oper_select_candidate(int nargs,
 				}
 				else if (current_category != slot_category)
 				{
-					/* punt if more than one category for this slot */
-					return NULL;
+					/* started out as unknown type, so give preference to string type, if available */
+					if (current_category == STRING_TYPE)
+					{
+						/* forget all previous candidates */
+						candidates = current_candidate;
+						last_candidate = current_candidate;
+					}
+					else if (slot_category == STRING_TYPE)
+					{
+						/* forget this candidate */
+						if (last_candidate)
+							last_candidate->next = current_candidate->next;
+						else
+							candidates = current_candidate->next;
+					}
 				}
 				else if (current_type != slot_type)
 				{
