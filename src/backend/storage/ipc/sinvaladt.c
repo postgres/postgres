@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.38 2001/03/22 03:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.39 2001/06/16 22:58:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,6 +79,11 @@ SIBufferInit(int maxBackends)
  * SIBackendInit
  *		Initialize a new backend to operate on the sinval buffer
  *
+ * Returns:
+ *	   >0	A-OK
+ *		0	Failed to find a free procState slot (ie, MaxBackends exceeded)
+ *	   <0	Some other failure (not currently used)
+ *
  * NB: this routine, and all following ones, must be executed with the
  * SInvalLock spinlock held, since there may be multiple backends trying
  * to access the buffer.
@@ -109,12 +114,7 @@ SIBackendInit(SISeg *segP)
 		}
 		else
 		{
-
-			/*
-			 * elog() with spinlock held is probably not too cool, but
-			 * this condition should never happen anyway.
-			 */
-			elog(NOTICE, "SIBackendInit: no free procState slot available");
+			/* out of procState slots */
 			MyBackendId = InvalidBackendId;
 			return 0;
 		}

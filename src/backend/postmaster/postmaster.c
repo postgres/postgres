@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.220 2001/06/14 19:59:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.221 2001/06/16 22:58:12 tgl Exp $
  *
  * NOTES
  *
@@ -1280,8 +1280,16 @@ canAcceptConnections(void)
 		return "The Data Base System is starting up";
 	if (FatalError)
 		return "The Data Base System is in recovery mode";
-	/* Can't start backend if max backend count is exceeded. */
-	if (CountChildren() >= MaxBackends)
+	/*
+	 * Don't start too many children.
+	 *
+	 * We allow more connections than we can have backends here because
+	 * some might still be authenticating; they might fail auth, or some
+	 * existing backend might exit before the auth cycle is completed.
+	 * The exact MaxBackends limit is enforced when a new backend tries
+	 * to join the shared-inval backend array.
+	 */
+	if (CountChildren() >= 2 * MaxBackends)
 		return "Sorry, too many clients already";
 
 	return NULL;
@@ -1738,12 +1746,6 @@ CleanupProc(int pid,
 				GetRedoRecPtr();
 			}
 		}
-		else
-		{
-			/* Why is this done here, and not by the backend itself? */
-			if (!FatalError)
-				ProcRemove(pid);
-		}
 
 		return;
 	}
@@ -1765,7 +1767,6 @@ CleanupProc(int pid,
 		bp = (Backend *) DLE_VAL(curr);
 		if (bp->pid != pid)
 		{
-
 			/*
 			 * This backend is still alive.  Unless we did so already,
 			 * tell it to commit hara-kiri.
@@ -1786,13 +1787,8 @@ CleanupProc(int pid,
 		}
 		else
 		{
-
 			/*
 			 * Found entry for freshly-dead backend, so remove it.
-			 *
-			 * Don't call ProcRemove() here, since shmem may be corrupted! We
-			 * are going to reinitialize shmem and semaphores anyway once
-			 * all the children are dead, so no need for it.
 			 */
 			DLRemove(curr);
 			free(bp);

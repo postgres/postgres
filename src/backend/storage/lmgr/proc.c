@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.102 2001/05/25 15:45:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.103 2001/06/16 22:58:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,45 +390,16 @@ ProcReleaseLocks(bool isCommit)
 				   !isCommit, GetCurrentTransactionId());
 }
 
-/*
- * ProcRemove -
- *	  called by the postmaster to clean up the global tables after a
- *	  backend exits.  This also frees up the proc's wait semaphore.
- */
-bool
-ProcRemove(int pid)
-{
-	SHMEM_OFFSET location;
-	PROC	   *proc;
-
-	location = ShmemPIDDestroy(pid);
-	if (location == INVALID_OFFSET)
-		return FALSE;
-	proc = (PROC *) MAKE_PTR(location);
-
-	SpinAcquire(ProcStructLock);
-
-	ProcFreeSem(proc->sem.semId, proc->sem.semNum);
-
-	/* Add PROC struct to freelist so space can be recycled in future */
-	proc->links.next = ProcGlobal->freeProcs;
-	ProcGlobal->freeProcs = MAKE_OFFSET(proc);
-
-	SpinRelease(ProcStructLock);
-
-	return TRUE;
-}
 
 /*
  * ProcKill() -- Destroy the per-proc data structure for
  *		this process. Release any of its held spin locks.
- *
- * This is done inside the backend process before it exits.
- * ProcRemove, above, will be done by the postmaster afterwards.
  */
 static void
 ProcKill(void)
 {
+	SHMEM_OFFSET location;
+
 	Assert(MyProc);
 
 	/* Release any spinlocks I am holding */
@@ -445,8 +416,25 @@ ProcKill(void)
 	LockReleaseAll(USER_LOCKMETHOD, MyProc, true, InvalidTransactionId);
 #endif
 
+	/* Remove my PROC struct from the shmem hash table */
+	location = ShmemPIDDestroy(MyProcPid);
+	Assert(location != INVALID_OFFSET);
+	Assert(MyProc == (PROC *) MAKE_PTR(location));
+
+	SpinAcquire(ProcStructLock);
+
+	/* Free up my wait semaphore */
+	ProcFreeSem(MyProc->sem.semId, MyProc->sem.semNum);
+
+	/* Add PROC struct to freelist so space can be recycled in future */
+	MyProc->links.next = ProcGlobal->freeProcs;
+	ProcGlobal->freeProcs = MAKE_OFFSET(MyProc);
+
+	SpinRelease(ProcStructLock);
+
 	MyProc = NULL;
 }
+
 
 /*
  * ProcQueue package: routines for putting processes to sleep

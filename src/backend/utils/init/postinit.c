@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.86 2001/05/30 20:52:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.87 2001/06/16 22:58:16 tgl Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -148,13 +148,11 @@ ReverifyMyDatabase(const char *name)
 static void
 InitCommunication(void)
 {
-
 	/*
 	 * initialize shared memory and semaphores appropriately.
 	 */
 	if (!IsUnderPostmaster)		/* postmaster already did this */
 	{
-
 		/*
 		 * we're running a postgres backend by itself with no front end or
 		 * postmaster.	Create private "shmem" and semaphores.	Setting
@@ -168,11 +166,16 @@ InitCommunication(void)
 /*
  * Early initialization of a backend (either standalone or under postmaster).
  * This happens even before InitPostgres.
+ *
+ * If you're wondering why this is separate from InitPostgres at all:
+ * the critical distinction is that this stuff has to happen before we can
+ * run XLOG-related initialization, which is done before InitPostgres --- in
+ * fact, for cases such as checkpoint creation processes, InitPostgres may
+ * never be done at all.
  */
 void
 BaseInit(void)
 {
-
 	/*
 	 * Attach to shared memory and semaphores, and initialize our
 	 * input/output/debugging file descriptors.
@@ -184,8 +187,6 @@ BaseInit(void)
 	smgrinit();
 	InitBufferPoolAccess();
 	InitLocalBuffer();
-
-	EnablePortalManager();		/* memory for portal/transaction stuff */
 }
 
 
@@ -202,16 +203,18 @@ InitPostgres(const char *dbname, const char *username)
 {
 	bool		bootstrap = IsBootstrapProcessingMode();
 
+	/*
+	 * Set up the global variables holding database name, id, and path.
+	 *
+	 * We take a shortcut in the bootstrap case, otherwise we have to look up
+	 * the db name in pg_database.
+	 */
 	SetDatabaseName(dbname);
 
-	/*
-	 * initialize the database id used for system caches and lock tables
-	 */
 	if (bootstrap)
 	{
 		MyDatabaseId = TemplateDbOid;
 		SetDatabasePath(GetDatabasePath(MyDatabaseId));
-		LockDisable(true);
 	}
 	else
 	{
@@ -260,6 +263,28 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 
 	/*
+	 * Set up my per-backend PROC struct in shared memory.  (We need to
+	 * know MyDatabaseId before we can do this, since it's entered into
+	 * the PROC struct.)
+	 */
+	InitProcess();
+
+	/*
+	 * Initialize my entry in the shared-invalidation manager's array of
+	 * per-backend data.  (Formerly this came before InitProcess, but now
+	 * it must happen after, because it uses MyProc.)  Once I have done
+	 * this, I am visible to other backends!
+	 *
+	 * Sets up MyBackendId, a unique backend identifier.
+	 */
+	MyBackendId = InvalidBackendId;
+
+	InitBackendSharedInvalidationState();
+
+	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
+		elog(FATAL, "InitPostgres: bad backend id %d", MyBackendId);
+
+	/*
 	 * Initialize the transaction system and the relation descriptor
 	 * cache. Note we have to make certain the lock manager is off while
 	 * we do this.
@@ -282,26 +307,6 @@ InitPostgres(const char *dbname, const char *username)
 	LockDisable(false);
 
 	/*
-	 * Set up my per-backend PROC struct in shared memory.
-	 */
-	InitProcess();
-
-	/*
-	 * Initialize my entry in the shared-invalidation manager's array of
-	 * per-backend data.  (Formerly this came before InitProcess, but now
-	 * it must happen after, because it uses MyProc.)  Once I have done
-	 * this, I am visible to other backends!
-	 *
-	 * Sets up MyBackendId, a unique backend identifier.
-	 */
-	MyBackendId = InvalidBackendId;
-
-	InitBackendSharedInvalidationState();
-
-	if (MyBackendId > MAXBACKENDS || MyBackendId <= 0)
-		elog(FATAL, "cinit2: bad backend id %d", MyBackendId);
-
-	/*
 	 * Initialize the access methods. Does not touch files (?) - thomas
 	 * 1997-11-01
 	 */
@@ -314,6 +319,9 @@ InitPostgres(const char *dbname, const char *username)
 	 * 1997-11-01
 	 */
 	InitCatalogCache();
+
+	/* Initialize portal manager */
+	EnablePortalManager();
 
 	/*
 	 * Initialize the deferred trigger manager --- must happen before

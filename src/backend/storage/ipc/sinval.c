@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.32 2001/06/01 20:07:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.33 2001/06/16 22:58:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,13 +43,15 @@ CreateSharedInvalidationState(int maxBackends)
 void
 InitBackendSharedInvalidationState(void)
 {
+	int		flag;
+
 	SpinAcquire(SInvalLock);
-	if (!SIBackendInit(shmInvalBuffer))
-	{
-		SpinRelease(SInvalLock);
-		elog(FATAL, "Backend cache invalidation initialization failed");
-	}
+	flag = SIBackendInit(shmInvalBuffer);
 	SpinRelease(SInvalLock);
+	if (flag < 0)				/* unexpected problem */
+		elog(FATAL, "Backend cache invalidation initialization failed");
+	if (flag == 0)				/* expected problem: MaxBackends exceeded */
+		elog(FATAL, "Sorry, too many clients already");
 }
 
 /*

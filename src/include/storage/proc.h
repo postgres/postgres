@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.43 2001/05/25 15:45:34 momjian Exp $
+ * $Id: proc.h,v 1.44 2001/06/16 22:58:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -129,7 +129,6 @@ typedef struct procglobal
 extern void InitProcGlobal(int maxBackends);
 extern void InitProcess(void);
 extern void ProcReleaseLocks(bool isCommit);
-extern bool ProcRemove(int pid);
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int ProcSleep(LOCKMETHODTABLE *lockMethodTable, LOCKMODE lockmode,
