@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan  9 10:37:25 EST 2001
+Last updated:		Tue Jan  9 13:05:49 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -46,7 +46,7 @@ MISC
 * -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
 * -SELECT ... UNION ... GROUP BY fails if column types disagree, no type
   promotion occurs
-* Modification  of  pg_class  can  happen while table in use by
+* -Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to DELETE table allows UPDATE also
 
