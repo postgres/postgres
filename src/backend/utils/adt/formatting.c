@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.24 2000/11/25 05:00:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.25 2000/12/01 05:17:19 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -2521,7 +2521,7 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 	tm->tm_yday = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(tm->tm_year, 1, 1) + 1;
 
 	/* ----------
-	 * Convert VARDATA() to string
+	 * Convert fmt to C string
 	 * ----------
 	 */
 	str = (char *) palloc(len + 1);
@@ -2623,15 +2623,17 @@ timestamp_to_char(PG_FUNCTION_ARGS)
 Datum
 to_timestamp(PG_FUNCTION_ARGS)
 {
-	text		*date_str = PG_GETARG_TEXT_P(0);
+	text		*date_txt = PG_GETARG_TEXT_P(0);
 	text		*fmt = PG_GETARG_TEXT_P(1);
 	FormatNode	*format;
 	int		flag = 0;
 	Timestamp	result;
 	char		*str;
-	int		len = 0,
-			fsec = 0,
-			tz = 0;
+	char		*date_str;
+	int			len,
+				date_len,
+				fsec = 0,
+				tz = 0;
 
 	ZERO_tm(tm);
 	ZERO_tmfc(tmfc);
@@ -2642,7 +2644,7 @@ to_timestamp(PG_FUNCTION_ARGS)
 	{
 
 		/* ----------
-		 * Convert VARDATA() to string
+		 * Convert fmt to C string
 		 * ----------
 		 */
 		str = (char *) palloc(len + 1);
@@ -2704,11 +2706,20 @@ to_timestamp(PG_FUNCTION_ARGS)
 #ifdef DEBUG_TO_FROM_CHAR
 		/* dump_node(format, len); */
 #endif
-		VARDATA(date_str)[VARSIZE(date_str) - VARHDRSZ] = '\0';
-		DCH_processor(format, VARDATA(date_str), FROM_CHAR);
 
+		/* ----------
+		 * Convert date to C string
+		 * ----------
+		 */
+		date_len = VARSIZE(date_txt) - VARHDRSZ;
+		date_str = (char *) palloc(date_len + 1);
+		memcpy(date_str, VARDATA(date_txt), date_len);
+		*(date_str + date_len) = '\0';
+
+		DCH_processor(format, date_str, FROM_CHAR);
+
+		pfree(date_str);
 		pfree(str);
-
 		if (flag)
 			pfree(format);
 	}
@@ -4325,13 +4336,13 @@ int4_to_char(PG_FUNCTION_ARGS)
 		{
 			int	i;
 
-			numstr = palloc(len + 1 + Num.post);
+			numstr = (char *) palloc(len + Num.post + 2);
 			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
 			*(numstr + len) = '.';
 
-			for (i = len + 1; i <= Num.post + len + 1; i++)
+			for (i = len + 1; i <= len + Num.post; i++)
 				*(numstr + i) = '0';
-			*(numstr + Num.post + len + 1) = '\0';
+			*(numstr + len + Num.post + 1) = '\0';
 			pfree(orgnum);
 			orgnum = numstr;
 		}
@@ -4413,13 +4424,13 @@ int8_to_char(PG_FUNCTION_ARGS)
 		{
 			int	i;
 
-			numstr = palloc(len + 1 + Num.post);
+			numstr = (char *) palloc(len + Num.post + 2);
 			strcpy(numstr, orgnum + (*orgnum == '-' ? 1 : 0));
 			*(numstr + len) = '.';
 
-			for (i = len + 1; i <= Num.post + len + 1; i++)
+			for (i = len + 1; i <= len + Num.post; i++)
 				*(numstr + i) = '0';
-			*(numstr + Num.post + len + 1) = '\0';
+			*(numstr + len + Num.post + 1) = '\0';
 			pfree(orgnum);
 			orgnum = numstr;
 		}
