@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.38 2002/08/27 18:57:26 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Makefile,v 1.39 2002/12/12 21:02:00 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -35,7 +35,7 @@ pg_dumpall: pg_dumpall.o $(libpq_builddir)/libpq.a
 
 .PHONY: submake-backend
 submake-backend:
-	$(MAKE) -C $(top_builddir)/src/backend/parser
+	$(MAKE) -C $(top_builddir)/src/backend/parser keywords.o
 
 
 install: all installdirs
