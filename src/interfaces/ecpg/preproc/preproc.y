@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.15 2004/06/11 17:32:55 momjian Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.263.2.16 2004/06/17 11:52:59 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -5301,6 +5301,7 @@ UsingConst: AllConst
 				add_variable_to_head(&argsinsert, new_variable($1, ECPGmake_simple_type(ECPGt_const, length), 0), &no_indicator);
 			}
 		}
+		| civarind { $$ = EMPTY; }
 		;
 
 /*
