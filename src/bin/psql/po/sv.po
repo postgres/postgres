@@ -2,7 +2,7 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.17 2004/01/14 12:14:01 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.18 2004/02/28 10:52:06 dennis Exp $
 #
 # Use these quotes: "%s"
 #
@@ -10,241 +10,235 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-11 07:42+0100\n"
-"PO-Revision-Date: 2004-01-14 13:12+0100\n"
+"POT-Creation-Date: 2004-02-28 11:48+0100\n"
+"PO-Revision-Date: 2004-02-28 11:51+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: command.c:150
+#: command.c:112
 msgid "Warning: This syntax is deprecated.\n"
 msgstr "Varning: Denna syntax är föråldrad.\n"
 
-#: command.c:157
+#: command.c:120
 #, c-format
 msgid "Invalid command \\%s. Try \\? for help.\n"
 msgstr "Ogiltigt kommando \\%s. Försök med \\? för hjälp.\n"
 
-#: command.c:159
+#: command.c:122
 #, c-format
 msgid "invalid command \\%s\n"
 msgstr "ogiltigt kommando \\%s\n"
 
-#: command.c:286
-#, c-format
-msgid "could not get home directory: %s\n"
-msgstr "kunde inte hämta hemkatalogen: %s\n"
-
-#: command.c:302
-#, c-format
-msgid "\\%s: could not change directory to \"%s\": %s\n"
-msgstr "\\%s: kunde inte byta katalog till \"%s\": %s\n"
-
-#: command.c:410 command.c:781
-msgid "no query buffer\n"
-msgstr "ingen frågebuffert\n"
-
-#: command.c:468
-#, c-format
-msgid "%s: invalid encoding name or conversion procedure not found\n"
-msgstr "%s: ogiltigt kodningsnamn eller konverteringsprocedur hittades inte\n"
-
-#: command.c:533 command.c:565 command.c:579 command.c:596 command.c:639
-#: command.c:761 command.c:791
-#, c-format
-msgid "\\%s: missing required argument\n"
-msgstr "\\%s: obligatoriskt argument saknas\n"
-
-#: command.c:627
-msgid "Query buffer is empty."
-msgstr "Frågebufferten är tom."
-
-#: command.c:660
-msgid "Query buffer reset (cleared)."
-msgstr "Frågebufferten har blivit borttagen."
-
-#: command.c:672
-#, c-format
-msgid "Wrote history to file \"%s\".\n"
-msgstr "Kommandohistorien har skrivits till \"%s\".\n"
-
-#: command.c:704 command.c:1162 command.c:1257 command.c:1965 common.c:86
-#: common.c:865 copy.c:87 copy.c:115 mainloop.c:78 mainloop.c:341
-#: describe.c:51
-msgid "out of memory\n"
-msgstr "minnet slut\n"
-
-#: command.c:719 command.c:766
-#, c-format
-msgid "\\%s: error\n"
-msgstr "\\%s: fel\n"
-
-#: command.c:748
-msgid "Timing is on."
-msgstr "Tidtagning är på."
-
-#: command.c:750
-msgid "Timing is off."
-msgstr "Tidtagning är av."
-
-#: command.c:806 command.c:826 command.c:1024 command.c:1037 command.c:1048
-#: command.c:1612 command.c:1625 command.c:1637 command.c:1650 command.c:1664
-#: command.c:1686 command.c:1716 common.c:135 copy.c:378
-#, c-format
-msgid "%s: %s\n"
-msgstr "%s: %s\n"
-
-#: command.c:892
+#: command.c:131
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s: extra argument \"%s\" ignorerat\n"
 
-#: command.c:985 command.c:1013 command.c:1135
-msgid "parse error at the end of line\n"
-msgstr "parsfel vid radslutet\n"
+#: command.c:240
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "kunde inte hämta hemkatalogen: %s\n"
 
-#: command.c:1362 command.c:1386 startup.c:177 startup.c:195
+#: command.c:256
+#, c-format
+msgid "\\%s: could not change directory to \"%s\": %s\n"
+msgstr "\\%s: kunde inte byta katalog till \"%s\": %s\n"
+
+#: command.c:367 command.c:754
+msgid "no query buffer\n"
+msgstr "ingen frågebuffert\n"
+
+#: command.c:428
+#, c-format
+msgid "%s: invalid encoding name or conversion procedure not found\n"
+msgstr "%s: ogiltigt kodningsnamn eller konverteringsprocedur hittades inte\n"
+
+#: command.c:496 command.c:530 command.c:544 command.c:561 command.c:607
+#: command.c:734 command.c:765
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: obligatoriskt argument saknas\n"
+
+#: command.c:593
+msgid "Query buffer is empty."
+msgstr "Frågebufferten är tom."
+
+#: command.c:627
+msgid "Query buffer reset (cleared)."
+msgstr "Frågebufferten har blivit borttagen."
+
+#: command.c:640
+#, c-format
+msgid "Wrote history to file \"%s\".\n"
+msgstr "Kommandohistorien har skrivits till \"%s\".\n"
+
+#: command.c:675 common.c:86 common.c:100 mainloop.c:70
+msgid "out of memory\n"
+msgstr "minnet slut\n"
+
+#: command.c:690 command.c:739
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: fel\n"
+
+#: command.c:720
+msgid "Timing is on."
+msgstr "Tidtagning är på."
+
+#: command.c:722
+msgid "Timing is off."
+msgstr "Tidtagning är av."
+
+#: command.c:780 command.c:800 command.c:1155 command.c:1162 command.c:1172
+#: command.c:1184 command.c:1197 command.c:1211 command.c:1233 command.c:1263
+#: common.c:171 copy.c:412 copy.c:457
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:907 command.c:931 startup.c:177 startup.c:195
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: command.c:1400 common.c:181 common.c:352 common.c:406 common.c:653
+#: command.c:945 common.c:217 common.c:388 common.c:442 common.c:684
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1404
+#: command.c:949
 msgid "Previous connection kept\n"
 msgstr "Föregående förbindelse bevarad\n"
 
-#: command.c:1416
+#: command.c:961
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1428
+#: command.c:973
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\".\n"
 
-#: command.c:1430
+#: command.c:975
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Du är nu uppkopplad som ny användare \"%s\".\n"
 
-#: command.c:1433
+#: command.c:978
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\" som användare \"%s\".\n"
 
-#: command.c:1550
+#: command.c:1093
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "kunde inte starta editorn \"%s\"\n"
 
-#: command.c:1552
+#: command.c:1095
 msgid "could not start /bin/sh\n"
 msgstr "kunde inte starta /bin/sh\n"
 
-#: command.c:1597
+#: command.c:1140
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "kunde inte öppna temporär fil \"%s\": %s\n"
 
-#: command.c:1784
+#: command.c:1331
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: tillåtna formaten är unaligned, aligned, html, latex\n"
 
-#: command.c:1789
+#: command.c:1336
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Utdataformatet är \"%s\".\n"
 
-#: command.c:1799
+#: command.c:1346
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Ramstil är %d.\n"
 
-#: command.c:1808
+#: command.c:1355
 msgid "Expanded display is on.\n"
 msgstr "Utökad visning är på.\n"
 
-#: command.c:1809
+#: command.c:1356
 msgid "Expanded display is off.\n"
 msgstr "Utökad visning är av.\n"
 
-#: command.c:1821
+#: command.c:1368
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null-visare är \"%s\".\n"
 
-#: command.c:1833
+#: command.c:1380
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Fältseparatorn är \"%s\".\n"
 
-#: command.c:1847
+#: command.c:1394
 msgid "Record separator is <newline>."
 msgstr "Postseparatorn är <nyrad>."
 
-#: command.c:1849
+#: command.c:1396
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Postseparatorn är \"%s\".\n"
 
-#: command.c:1860
+#: command.c:1407
 msgid "Showing only tuples."
 msgstr "Visar bara tupler."
 
-#: command.c:1862
+#: command.c:1409
 msgid "Tuples only is off."
 msgstr "Visa bara tupler är av."
 
-#: command.c:1878
+#: command.c:1425
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titeln är \"%s\".\n"
 
-#: command.c:1880
+#: command.c:1427
 msgid "Title is unset.\n"
 msgstr "Titeln är inte satt.\n"
 
-#: command.c:1896
+#: command.c:1443
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Tabellattribut är \"%s\".\n"
 
-#: command.c:1898
+#: command.c:1445
 msgid "Table attributes unset.\n"
 msgstr "Tabellattribut är ej satt.\n"
 
-#: command.c:1914
+#: command.c:1461
 msgid "Pager is used for long output."
 msgstr "Siduppdelare är på för lång utdata."
 
-#: command.c:1916
+#: command.c:1463
 msgid "Pager is always used."
 msgstr "Siduppdelare används alltid."
 
-#: command.c:1918
+#: command.c:1465
 msgid "Pager usage is off."
 msgstr "Siduppdelare är av."
 
-#: command.c:1929
+#: command.c:1476
 msgid "Default footer is on."
 msgstr "Standard sidfot är på."
 
-#: command.c:1931
+#: command.c:1478
 msgid "Default footer is off."
 msgstr "Standard sidfot är av."
 
-#: command.c:1937
+#: command.c:1484
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: okänd parameter: %s\n"
 
-#: command.c:1984
+#: command.c:1523
 msgid "\\!: failed\n"
 msgstr "\\!: misslyckades\n"
 
@@ -253,41 +247,37 @@ msgstr "\\!: misslyckades\n"
 msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
 msgstr "%s: xstrdup: kan inte kopiera null-pekare (internt fel)\n"
 
-#: common.c:263
+#: common.c:124
+msgid "out of memory"
+msgstr "minnet slut"
+
+#: common.c:299
 msgid "connection to server was lost\n"
 msgstr "förbindelsen till servern har brutits\n"
 
-#: common.c:267
+#: common.c:303
 msgid "The connection to the server was lost. Attempting reset: "
 msgstr "Förbindelsen till servern har brutits. Försöker starta om: "
 
-#: common.c:272
+#: common.c:308
 msgid "Failed.\n"
 msgstr "Misslyckades.\n"
 
-#: common.c:279
+#: common.c:315
 msgid "Succeeded.\n"
 msgstr "Lyckades.\n"
 
-#: common.c:382 common.c:621
+#: common.c:418 common.c:652
 msgid "You are currently not connected to a database.\n"
 msgstr "Du är för närvarande inte uppkopplad mot en databas.\n"
 
-#: common.c:437
+#: common.c:473
 #, c-format
 msgid ""
 "Asynchronous notification \"%s\" received from server process with PID %d.\n"
 msgstr "Asynkron notificering \"%s\" mottagen från serverprocess med PID %d.\n"
 
-#: common.c:517
-msgid ""
-"Enter data to be copied followed by a newline.\n"
-"End with a backslash and a period on a line by itself."
-msgstr ""
-"Mata in data som skall kopieras följt av en nyrad.\n"
-"Avsluta med bakstreck och en punkt ensamma på en rad."
-
-#: common.c:629
+#: common.c:660
 #, c-format
 msgid ""
 "***(Single step mode: verify command)"
@@ -302,38 +292,46 @@ msgstr ""
 "***(tryck return för att fortsätta eller skriv x och return för att avbryta)"
 "*****\n"
 
-#: common.c:680
+#: common.c:711
 #, c-format
 msgid "Time: %.3f ms\n"
 msgstr "Tid: %.3f ms\n"
 
-#: copy.c:109
+#: copy.c:114
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: argument krävs\n"
 
-#: copy.c:289
+#: copy.c:321
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: parsfel vid \"%s\"\n"
 
-#: copy.c:291
+#: copy.c:323
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: parsfel vid radslutet\n"
 
-#: copy.c:389
+#: copy.c:423
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: kan inte kopiera från/till en katalog\n"
 
-#: copy.c:410
+#: copy.c:444
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:414
+#: copy.c:448
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: oväntat svar (%d)\n"
+
+#: copy.c:549
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+"Mata in data som skall kopieras följt av en nyrad.\n"
+"Avsluta med bakstreck och en punkt ensamma på en rad."
 
 #: help.c:48
 msgid "on"
@@ -844,7 +842,7 @@ msgstr ""
 "Ingen hjälp tillgänglig för \"%-.*s\".\n"
 "Försök med \\h utan argument för att se den tillgängliga hjälpen.\n"
 
-#: input.c:217
+#: input.c:215
 #, c-format
 msgid "could not save history to file \"%s\": %s\n"
 msgstr "kunde inte skriva kommandohistorien till \"%s\": %s\n"
@@ -864,8 +862,8 @@ msgstr "%s: aktuell transaktion är avbruten\n"
 msgid "%s: unknown transaction status\n"
 msgstr "%s: okänd transaktionsstatus\n"
 
-#: large_obj.c:258 describe.c:106 describe.c:157 describe.c:230 describe.c:292
-#: describe.c:339 describe.c:438 describe.c:718 describe.c:1390
+#: large_obj.c:258 describe.c:80 describe.c:131 describe.c:204 describe.c:266
+#: describe.c:313 describe.c:412 describe.c:692 describe.c:1364
 msgid "Description"
 msgstr "Beskrivning"
 
@@ -873,7 +871,7 @@ msgstr "Beskrivning"
 msgid "Large objects"
 msgstr "Stora objekt"
 
-#: mainloop.c:206
+#: mainloop.c:173
 #, c-format
 msgid "Use \"\\q\" to leave %s.\n"
 msgstr "Använd \"\\q\" för att lämna %s.\n"
@@ -891,7 +889,7 @@ msgstr "(1 rad)"
 msgid "(%d rows)"
 msgstr "(%d rader)"
 
-#: startup.c:132 startup.c:574
+#: startup.c:132
 #, c-format
 msgid "%s: out of memory\n"
 msgstr "%s: minnet slut\n"
@@ -900,14 +898,14 @@ msgstr "%s: minnet slut\n"
 msgid "User name: "
 msgstr "Användarnamn: "
 
-#: startup.c:267
+#: startup.c:276
 #, c-format
 msgid ""
 "Welcome to %s %s, the PostgreSQL interactive terminal.\n"
 "\n"
 "Type:  \\copyright for distribution terms\n"
 "       \\h for help with SQL commands\n"
-"       \\? for help on internal slash commands\n"
+"       \\? for help with psql commands\n"
 "       \\g or terminate with semicolon to execute query\n"
 "       \\q to quit\n"
 "\n"
@@ -916,46 +914,46 @@ msgstr ""
 "\n"
 "Skriv:  \\copyright för upphovsrättsinformation\n"
 "        \\h för hjälp om SQL-kommandon\n"
-"        \\? för hjälp om interna bakstreck-kommandon\n"
-"        \\g eller avsluta semikolon för att köra en fråga\n"
+"        \\? för hjälp om psql-kommandon\n"
+"        \\g eller avsluta med semikolon för att köra en fråga\n"
 "        \\q för att avsluta\n"
 "\n"
 
-#: startup.c:428
+#: startup.c:437
 #, c-format
 msgid "%s: couldn't set printing parameter \"%s\"\n"
 msgstr "%s: kunde inte sätta utskriftsparameter \"%s\"\n"
 
-#: startup.c:474
+#: startup.c:483
 #, c-format
 msgid "%s: could not delete variable \"%s\"\n"
 msgstr "%s: kunde inte ta bort variabeln \"%s\"\n"
 
-#: startup.c:484
+#: startup.c:493
 #, c-format
 msgid "%s: could not set variable \"%s\"\n"
 msgstr "%s: kunde inte sätta variabeln \"%s\"\n"
 
-#: startup.c:515 startup.c:521
+#: startup.c:524 startup.c:530
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Försök med \"%s --help\" för mer information.\n"
 
-#: startup.c:539
+#: startup.c:548
 #, c-format
 msgid "%s: warning: extra command-line argument \"%s\" ignored\n"
 msgstr "%s: varning: extra kommandoradsargument \"%s\" ignorerad\n"
 
-#: startup.c:546
+#: startup.c:555
 #, c-format
 msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
 msgstr "%s: Varning: Flaggan -u är förlegad. Använd -U istället.\n"
 
-#: startup.c:603
+#: startup.c:607
 msgid "contains support for command-line editing"
 msgstr "innehåller stöd för kommandoradsredigering"
 
-#: startup.c:626
+#: startup.c:630
 #, c-format
 msgid ""
 "SSL connection (cipher: %s, bits: %i)\n"
@@ -964,231 +962,231 @@ msgstr ""
 "SSL-förbindelse (krypto: %s, bitar: %i)\n"
 "\n"
 
-#: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:384
-#: describe.c:438 describe.c:1383 describe.c:1489 describe.c:1537
+#: describe.c:79 describe.c:121 describe.c:191 describe.c:264 describe.c:358
+#: describe.c:412 describe.c:1357 describe.c:1463 describe.c:1511
 msgid "Schema"
 msgstr "Schema"
 
-#: describe.c:105 describe.c:147 describe.c:217 describe.c:290 describe.c:332
-#: describe.c:438 describe.c:1383 describe.c:1490 describe.c:1538
-#: describe.c:1635
+#: describe.c:79 describe.c:121 describe.c:191 describe.c:264 describe.c:306
+#: describe.c:412 describe.c:1357 describe.c:1464 describe.c:1512
+#: describe.c:1609
 msgid "Name"
 msgstr "Namn"
 
-#: describe.c:105
+#: describe.c:79
 msgid "(all types)"
 msgstr "(alla typer)"
 
-#: describe.c:106
+#: describe.c:80
 msgid "Data type"
 msgstr "Datatyp"
 
-#: describe.c:120
+#: describe.c:94
 msgid "List of aggregate functions"
 msgstr "Lista med aggregatfunktioner"
 
-#: describe.c:147
+#: describe.c:121
 msgid "Result data type"
 msgstr "Resultatdatatyp"
 
-#: describe.c:148
+#: describe.c:122
 msgid "Argument data types"
 msgstr "Argumentdatatyp"
 
-#: describe.c:156 describe.c:332 describe.c:1385 describe.c:1636
+#: describe.c:130 describe.c:306 describe.c:1359 describe.c:1610
 msgid "Owner"
 msgstr "Ägare"
 
-#: describe.c:156
+#: describe.c:130
 msgid "Language"
 msgstr "Språk"
 
-#: describe.c:157
+#: describe.c:131
 msgid "Source code"
 msgstr "Källkod"
 
-#: describe.c:191
+#: describe.c:165
 msgid "List of functions"
 msgstr "Lista med funktioner"
 
-#: describe.c:227
+#: describe.c:201
 msgid "Internal name"
 msgstr "Internt namn"
 
-#: describe.c:227
+#: describe.c:201
 msgid "Size"
 msgstr "Storlek"
 
-#: describe.c:259
+#: describe.c:233
 msgid "List of data types"
 msgstr "Lista med datatyper"
 
-#: describe.c:291
+#: describe.c:265
 msgid "Left arg type"
 msgstr "Vänster argumenttyp"
 
-#: describe.c:291
+#: describe.c:265
 msgid "Right arg type"
 msgstr "Höger argumenttyp"
 
-#: describe.c:292
+#: describe.c:266
 msgid "Result type"
 msgstr "Resultattyp"
 
-#: describe.c:306
+#: describe.c:280
 msgid "List of operators"
 msgstr "Lista med operatorer"
 
-#: describe.c:335
+#: describe.c:309
 msgid "Encoding"
 msgstr "Kodning"
 
-#: describe.c:351
+#: describe.c:325
 msgid "List of databases"
 msgstr "Lista med databaser"
 
-#: describe.c:384 describe.c:1400
+#: describe.c:358 describe.c:1374
 msgid "Table"
 msgstr "Tabell"
 
-#: describe.c:384
+#: describe.c:358
 msgid "Access privileges"
 msgstr "Åtkomsträttigheter"
 
-#: describe.c:406
+#: describe.c:380
 #, c-format
 msgid "Access privileges for database \"%s\""
 msgstr "Åtkomsträttigheter för databasen \"%s\""
 
-#: describe.c:438
+#: describe.c:412
 msgid "Object"
 msgstr "Objekt"
 
-#: describe.c:449
+#: describe.c:423
 msgid "aggregate"
 msgstr "aggregat"
 
-#: describe.c:467
+#: describe.c:441
 msgid "function"
 msgstr "funktion"
 
-#: describe.c:481
+#: describe.c:455
 msgid "operator"
 msgstr "operator"
 
-#: describe.c:495
+#: describe.c:469
 msgid "data type"
 msgstr "datatyp"
 
-#: describe.c:512 describe.c:1384
+#: describe.c:486 describe.c:1358
 msgid "table"
 msgstr "tabell"
 
-#: describe.c:512 describe.c:1384
+#: describe.c:486 describe.c:1358
 msgid "view"
 msgstr "vy"
 
-#: describe.c:512 describe.c:1384
+#: describe.c:486 describe.c:1358
 msgid "index"
 msgstr "index"
 
-#: describe.c:512 describe.c:1384
+#: describe.c:486 describe.c:1358
 msgid "sequence"
 msgstr "sekvens"
 
-#: describe.c:528
+#: describe.c:502
 msgid "rule"
 msgstr "rule"
 
-#: describe.c:544
+#: describe.c:518
 msgid "trigger"
 msgstr "trigger"
 
-#: describe.c:562
+#: describe.c:536
 msgid "Object descriptions"
 msgstr "Objektbeskrivningar"
 
-#: describe.c:608
+#: describe.c:582
 #, c-format
 msgid "Did not find any relation named \"%s\".\n"
 msgstr "Kunde inte hitta en relation med namn \"%s\".\n"
 
-#: describe.c:691
+#: describe.c:665
 #, c-format
 msgid "Did not find any relation with OID %s.\n"
 msgstr "Kunde inte hitta en relation med OID %s.\n"
 
-#: describe.c:704
+#: describe.c:678
 msgid "Column"
 msgstr "Kolumn"
 
-#: describe.c:705 describe.c:1385 describe.c:1491
+#: describe.c:679 describe.c:1359 describe.c:1465
 msgid "Type"
 msgstr "Typ"
 
-#: describe.c:712
+#: describe.c:686
 msgid "Modifiers"
 msgstr "Modifierare"
 
-#: describe.c:819
+#: describe.c:793
 #, c-format
 msgid "Table \"%s.%s\""
 msgstr "Tabell \"%s.%s\""
 
-#: describe.c:823
+#: describe.c:797
 #, c-format
 msgid "View \"%s.%s\""
 msgstr "Vy \"%s.%s\""
 
-#: describe.c:827
+#: describe.c:801
 #, c-format
 msgid "Sequence \"%s.%s\""
 msgstr "Sekvens \"%s.%s\""
 
-#: describe.c:831
+#: describe.c:805
 #, c-format
 msgid "Index \"%s.%s\""
 msgstr "Index \"%s.%s\""
 
-#: describe.c:835
+#: describe.c:809
 #, c-format
 msgid "Special relation \"%s.%s\""
 msgstr "Särskild relation \"%s.%s\""
 
-#: describe.c:839
+#: describe.c:813
 #, c-format
 msgid "TOAST table \"%s.%s\""
 msgstr "TOAST-tabell \"%s.%s\""
 
-#: describe.c:843
+#: describe.c:817
 #, c-format
 msgid "Composite type \"%s.%s\""
 msgstr "Sammansatt typ \"%s.%s\""
 
-#: describe.c:847
+#: describe.c:821
 #, c-format
 msgid "?%c? \"%s.%s\""
 msgstr "?%c? \"%s.%s\""
 
-#: describe.c:883
+#: describe.c:857
 msgid "PRIMARY KEY, "
 msgstr "PRIMÄRNYCKEL, "
 
-#: describe.c:885
+#: describe.c:859
 msgid "UNIQUE, "
 msgstr "UNIK, "
 
-#: describe.c:891
+#: describe.c:865
 #, c-format
 msgid "for table \"%s.%s\""
 msgstr "för tabell \"%s.%s\""
 
-#: describe.c:895
+#: describe.c:869
 #, c-format
 msgid ", predicate (%s)"
 msgstr ", predikat (%s)"
 
-#: describe.c:929
+#: describe.c:903
 #, c-format
 msgid ""
 "View definition:\n"
@@ -1197,169 +1195,169 @@ msgstr ""
 "Vydefinition:\n"
 "%s"
 
-#: describe.c:935 describe.c:1154
+#: describe.c:909 describe.c:1128
 msgid "Rules:"
 msgstr "Regler:"
 
-#: describe.c:1090
+#: describe.c:1064
 msgid "Indexes:"
 msgstr "Index:"
 
-#: describe.c:1098
+#: describe.c:1072
 #, c-format
 msgid "    \"%s\""
 msgstr "    \"%s\""
 
-#: describe.c:1104
+#: describe.c:1078
 msgid " PRIMARY KEY,"
 msgstr " PRIMÄRNYCKEL,"
 
-#: describe.c:1106
+#: describe.c:1080
 msgid " UNIQUE,"
 msgstr " UNIK,"
 
-#: describe.c:1124
+#: describe.c:1098
 msgid "Check constraints:"
 msgstr "Kontrollera integritetsvillkor:"
 
-#: describe.c:1128 describe.c:1143
+#: describe.c:1102 describe.c:1117
 #, c-format
 msgid "    \"%s\" %s"
 msgstr "    \"%s\" %s"
 
-#: describe.c:1139
+#: describe.c:1113
 msgid "Foreign-key constraints:"
 msgstr "Främmande nyckel-villkor:"
 
-#: describe.c:1173
+#: describe.c:1147
 msgid "Triggers:"
 msgstr "Utlösare:"
 
-#: describe.c:1195
+#: describe.c:1169
 msgid "Inherits"
 msgstr "Ärver"
 
-#: describe.c:1282
+#: describe.c:1256
 msgid "User name"
 msgstr "Användarnamn"
 
-#: describe.c:1282
+#: describe.c:1256
 msgid "User ID"
 msgstr "Användar-ID"
 
-#: describe.c:1283
+#: describe.c:1257
 msgid "superuser, create database"
 msgstr "superanvändare, skapa databas"
 
-#: describe.c:1284
+#: describe.c:1258
 msgid "superuser"
 msgstr "superanvändare"
 
-#: describe.c:1284
+#: describe.c:1258
 msgid "create database"
 msgstr "skapa databas"
 
-#: describe.c:1285
+#: describe.c:1259
 msgid "Attributes"
 msgstr "Attribut"
 
-#: describe.c:1285
+#: describe.c:1259
 msgid "Groups"
 msgstr "Grupper"
 
-#: describe.c:1298
+#: describe.c:1272
 msgid "List of database users"
 msgstr "Lista med databasanvändare"
 
-#: describe.c:1325
+#: describe.c:1299
 msgid "Group name"
 msgstr "Gruppnamn"
 
-#: describe.c:1325
+#: describe.c:1299
 msgid "Group ID"
 msgstr "Grupp-ID"
 
-#: describe.c:1338
+#: describe.c:1312
 msgid "List of database groups"
 msgstr "Lista med databasgrupper"
 
-#: describe.c:1385
+#: describe.c:1359
 msgid "special"
 msgstr "särskild"
 
-#: describe.c:1446
+#: describe.c:1420
 msgid "No matching relations found.\n"
 msgstr "Inga matchande relationer funna.\n"
 
-#: describe.c:1448
+#: describe.c:1422
 msgid "No relations found.\n"
 msgstr "Inga relationer funna.\n"
 
-#: describe.c:1453
+#: describe.c:1427
 msgid "List of relations"
 msgstr "Lista med relationer"
 
-#: describe.c:1492
+#: describe.c:1466
 msgid "Modifier"
 msgstr "Modifierare"
 
-#: describe.c:1506
+#: describe.c:1480
 msgid "List of domains"
 msgstr "Lista av domäner"
 
-#: describe.c:1539
+#: describe.c:1513
 msgid "Source"
 msgstr "Källa"
 
-#: describe.c:1540
+#: describe.c:1514
 msgid "Destination"
 msgstr "Mål"
 
-#: describe.c:1541 describe.c:1598
+#: describe.c:1515 describe.c:1572
 msgid "yes"
 msgstr "ja"
 
-#: describe.c:1542 describe.c:1596
+#: describe.c:1516 describe.c:1570
 msgid "no"
 msgstr "nej"
 
-#: describe.c:1543
+#: describe.c:1517
 msgid "Default?"
 msgstr "Standard?"
 
-#: describe.c:1557
+#: describe.c:1531
 msgid "List of conversions"
 msgstr "Lista med konverteringar"
 
-#: describe.c:1592
+#: describe.c:1566
 msgid "Source type"
 msgstr "Källtyp"
 
-#: describe.c:1593
+#: describe.c:1567
 msgid "Target type"
 msgstr "Måltyp"
 
-#: describe.c:1594
+#: describe.c:1568
 msgid "(binary compatible)"
 msgstr "(binärkompatibel)"
 
-#: describe.c:1595
+#: describe.c:1569
 msgid "Function"
 msgstr "Funktion"
 
-#: describe.c:1597
+#: describe.c:1571
 msgid "in assignment"
 msgstr "i tilldelning"
 
-#: describe.c:1599
+#: describe.c:1573
 msgid "Implicit?"
 msgstr "Implicit?"
 
-#: describe.c:1607
+#: describe.c:1581
 msgid "List of casts"
 msgstr "Lista med typomvandlingar"
 
-#: describe.c:1649
+#: describe.c:1623
 msgid "List of schemas"
 msgstr "Lista med scheman"
 
@@ -2145,6 +2143,7 @@ msgid ""
 "    OUTPUT = output_function\n"
 "    [ , RECEIVE = receive_function ]\n"
 "    [ , SEND = send_function ]\n"
+"    [ , ANALYZE = analyze_function ]\n"
 "    [ , INTERNALLENGTH = { internallength | VARIABLE } ]\n"
 "    [ , PASSEDBYVALUE ]\n"
 "    [ , ALIGNMENT = alignment ]\n"
@@ -2162,6 +2161,7 @@ msgstr ""
 "    OUTPUT = utmatningsfunktion\n"
 "    [ , RECEIVE = mottagarfunktion ]\n"
 "    [ , SEND = sändfunktion ]\n"
+"    [ , ANALYZE = analysfunktion ]\n"
 "    [ , INTERNALLENGTH = { internlängd | VARIABLE } ]\n"
 "    [ , PASSEDBYVALUE ]\n"
 "    [ , ALIGNMENT = justering ]\n"
@@ -2885,6 +2885,9 @@ msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ tabell ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabell [ (kolumn "
 "[, ...] ) ] ]"
+
+#~ msgid "parse error at the end of line\n"
+#~ msgstr "parsfel vid radslutet\n"
 
 #~ msgid "BEGIN [ WORK | TRANSACTION ]"
 #~ msgstr "BEGIN [ WORK | TRANSACTION ]"
