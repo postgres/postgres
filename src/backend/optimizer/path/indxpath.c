@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.70 1999/08/21 03:49:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.71 1999/09/13 00:17:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,9 @@ static void match_index_orclauses(RelOptInfo *rel, RelOptInfo *index, int indexk
 					  int xclass, List *restrictinfo_list);
 static List *match_index_orclause(RelOptInfo *rel, RelOptInfo *index, int indexkey,
 			 int xclass, List *or_clauses, List *other_matching_indices);
+static bool match_or_subclause_to_indexkey(RelOptInfo *rel, RelOptInfo *index,
+										   int indexkey, int xclass,
+										   Expr *clause);
 static List *group_clauses_by_indexkey(RelOptInfo *rel, RelOptInfo *index,
 				  int *indexkeys, Oid *classes, List *restrictinfo_list);
 static List *group_clauses_by_ikey_for_joins(RelOptInfo *rel, RelOptInfo *index,
@@ -327,8 +330,8 @@ match_index_orclause(RelOptInfo *rel,
 	{
 		Expr	   *clause = lfirst(clist);
 
-		if (match_clause_to_indexkey(rel, index, indexkey, xclass,
-									 clause, false))
+		if (match_or_subclause_to_indexkey(rel, index, indexkey, xclass,
+										   clause))
 		{
 			/* OK to add this index to sublist for this subclause */
 			lfirst(matching_indices) = lcons(index,
@@ -340,6 +343,38 @@ match_index_orclause(RelOptInfo *rel,
 
 	return index_list;
 }
+
+/*
+ * See if a subclause of an OR clause matches an index.
+ *
+ * We accept the subclause if it is an operator clause that matches the
+ * index, or if it is an AND clause all of whose members are operators
+ * that match the index.  (XXX Would accepting a single match be useful?)
+ */
+static bool
+match_or_subclause_to_indexkey(RelOptInfo *rel,
+							   RelOptInfo *index,
+							   int indexkey,
+							   int xclass,
+							   Expr *clause)
+{
+	if (and_clause((Node *) clause))
+	{
+		List	   *item;
+
+		foreach(item, clause->args)
+		{
+			if (! match_clause_to_indexkey(rel, index, indexkey, xclass,
+										   lfirst(item), false))
+				return false;
+		}
+		return true;
+	}
+	else
+		return match_clause_to_indexkey(rel, index, indexkey, xclass,
+										clause, false);
+}
+
 
 /****************************************************************************
  *				----  ROUTINES TO CHECK RESTRICTIONS  ----
@@ -559,7 +594,8 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  *
  * Returns true if the clause can be used with this index key.
  *
- * NOTE:  returns false if clause is an or_clause; that's handled elsewhere.
+ * NOTE:  returns false if clause is an OR or AND clause; to the extent
+ * we cope with those at all, it is done by higher-level routines.
  */
 static bool
 match_clause_to_indexkey(RelOptInfo *rel,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.19 1999/09/12 18:08:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepqual.c,v 1.20 1999/09/13 00:17:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,9 @@ static Expr *find_ors(Expr *qual);
 static Expr *or_normalize(List *orlist);
 static Expr *find_ands(Expr *qual);
 static Expr *and_normalize(List *andlist);
+static Expr *qual_cleanup(Expr *qual);
+static List *remove_duplicates(List *list);
+static int	count_bool_nodes(Expr *qual);
 
 /*****************************************************************************
  *
@@ -37,19 +40,123 @@ static Expr *and_normalize(List *andlist);
  *		These routines convert an arbitrary boolean expression into
  *		conjunctive normal form or disjunctive normal form.
  *
- *		The result of these routines differs from a "true" CNF/DNF in that
- *		we do not bother to detect common subexpressions; e.g., ("AND" A A)
- *		does not get simplified to A.  Testing for identical subexpressions
- *		is a waste of time if the query is written intelligently, and it
- *		takes an unreasonable amount of time if there are many subexpressions
- *		(since it's roughly O(N^2) in the number of subexpressions).
+ *		Normalization is only carried out in the top AND/OR/NOT portion
+ *		of the given tree; we do not attempt to normalize boolean expressions
+ *		that may appear as arguments of operators or functions in the tree.
  *
- *		Because of that restriction, it would be unwise to apply dnfify()
- *		to the result of cnfify() or vice versa.  Instead apply both to
- *		the original user-written qual expression.
+ *		Query qualifications (WHERE clauses) are ordinarily transformed into
+ *		CNF, ie, AND-of-ORs form, because then the optimizer can use any one
+ *		of the independent AND clauses as a filtering qualification.  However,
+ *		quals that are naturally expressed as OR-of-ANDs can suffer an
+ *		exponential growth in size in this transformation, so we also consider
+ *		converting to DNF (OR-of-ANDs), and we may also leave well enough alone
+ *		if both transforms cause unreasonable growth.  The OR-of-ANDs format
+ *		is useful for indexscan implementation, so we prefer that format when
+ *		there is just one relation involved.
  *
+ *		canonicalize_qual() does "smart" conversion to either CNF or DNF, per
+ *		the above considerations, while cnfify() and dnfify() simply perform
+ *		the demanded transformation.  The latter two may become dead code
+ *		eventually.
  *****************************************************************************/
 
+
+/*
+ * canonicalize_qual
+ *	  Convert a qualification to the most useful normalized form.
+ *
+ * Returns the modified qualification.
+ *
+ * If 'removeAndFlag' is true then it removes explicit AND at the top level,
+ * producing a list of implicitly-ANDed conditions.  Otherwise, a regular
+ * boolean expression is returned.  Since most callers pass 'true', we
+ * prefer to declare the result as List *, not Expr *.
+ *
+ * XXX This code could be much smarter, at the cost of also being slower,
+ * if we tried to compute selectivities and/or see whether there are
+ * actually indexes to support an indexscan implementation of a DNF qual.
+ * We could even try converting the CNF clauses that mention a single
+ * relation into a single DNF clause to see if that looks cheaper to
+ * implement.  For now, though, we just try to avoid doing anything
+ * quite as stupid as unconditionally converting to CNF was...
+ */
+List *
+canonicalize_qual(Expr *qual, bool removeAndFlag)
+{
+	Expr	   *newqual,
+			   *cnfqual,
+			   *dnfqual;
+	int			qualcnt,
+				cnfcnt,
+				dnfcnt;
+
+	if (qual == NULL)
+		return NIL;
+
+	/* Flatten AND and OR groups throughout the tree.
+	 * This improvement is always worthwhile, so do it unconditionally.
+	 */
+	qual = flatten_andors(qual);
+	/* Push down NOTs.  We do this only in the top-level boolean
+	 * expression, without examining arguments of operators/functions.
+	 * Even so, it might not be a win if we are unable to find negators
+	 * for all the operators involved; so we keep the flattened-but-not-
+	 * NOT-pushed qual as the reference point for comparsions.
+	 */
+	newqual = find_nots(qual);
+	/*
+	 * Generate both CNF and DNF forms from newqual.
+	 */
+	/* Normalize into conjunctive normal form, and clean up the result. */
+	cnfqual = qual_cleanup(find_ors(newqual));
+	/* Likewise for DNF */
+	dnfqual = qual_cleanup(find_ands(newqual));
+
+	/*
+	 * Now, choose whether to return qual, cnfqual, or dnfqual.
+	 *
+	 * First heuristic is to forget about either CNF or DNF if it shows
+	 * unreasonable growth compared to the original form of the qual,
+	 * where we define "unreasonable" a tad arbitrarily as 4x more
+	 * operators.
+	 */
+	qualcnt = count_bool_nodes(qual);
+	cnfcnt = count_bool_nodes(cnfqual);
+	dnfcnt = count_bool_nodes(dnfqual);
+	if (cnfcnt >= 4 * qualcnt)
+		cnfqual = NULL;			/* mark CNF not usable */
+	if (dnfcnt >= 4 * qualcnt)
+		dnfqual = NULL;			/* mark DNF not usable */
+
+	/*
+	 * Second heuristic is to prefer DNF if only one relation is mentioned
+	 * and it is smaller than the CNF representation.
+	 */
+	if (dnfqual && dnfcnt < cnfcnt && NumRelids((Node *) dnfqual) == 1)
+		cnfqual = NULL;
+
+	/*
+	 * Otherwise, we prefer CNF.
+	 *
+	 * XXX obviously, these rules could be improved upon.
+	 */
+
+	/* pick preferred survivor */
+	if (cnfqual)
+		newqual = cnfqual;
+	else if (dnfqual)
+		newqual = dnfqual;
+	else
+		newqual = qual;
+
+	/* Convert to implicit-AND list if requested */
+	if (removeAndFlag)
+	{
+		newqual = (Expr *) make_ands_implicit(newqual);
+	}
+
+	return (List *) newqual;
+}
 
 /*
  * cnfify
@@ -81,6 +188,8 @@ cnfify(Expr *qual, bool removeAndFlag)
 	newqual = find_nots(newqual);
 	/* Normalize into conjunctive normal form. */
 	newqual = find_ors(newqual);
+	/* Clean up the result. */
+	newqual = qual_cleanup(newqual);
 
 	if (removeAndFlag)
 	{
@@ -118,6 +227,8 @@ dnfify(Expr *qual)
 	newqual = find_nots(newqual);
 	/* Normalize into disjunctive normal form. */
 	newqual = find_ands(newqual);
+	/* Clean up the result. */
+	newqual = qual_cleanup(newqual);
 
 	return newqual;
 }
@@ -640,4 +751,103 @@ and_normalize(List *andlist)
 
 	/* pull_ors is needed in case any sub-and_normalize succeeded */
 	return make_orclause(pull_ors(orclauses));
+}
+
+/*
+ * qual_cleanup
+ *	  Fix up a qualification by removing duplicate entries (which could be
+ *	  created during normalization, if identical subexpressions from different
+ *	  parts of the tree are brought together).  Also, check for AND and OR
+ *	  clauses with only one remaining subexpression, and simplify.
+ *
+ * Returns the modified qualification.
+ */
+static Expr *
+qual_cleanup(Expr *qual)
+{
+	if (qual == NULL)
+		return NULL;
+
+	if (and_clause((Node *) qual))
+	{
+		List	   *andlist = NIL;
+		List	   *temp;
+
+		foreach(temp, qual->args)
+			andlist = lappend(andlist, qual_cleanup(lfirst(temp)));
+
+		andlist = remove_duplicates(pull_ands(andlist));
+
+		if (length(andlist) > 1)
+			return make_andclause(andlist);
+		else
+			return lfirst(andlist);
+	}
+	else if (or_clause((Node *) qual))
+	{
+		List	   *orlist = NIL;
+		List	   *temp;
+
+		foreach(temp, qual->args)
+			orlist = lappend(orlist, qual_cleanup(lfirst(temp)));
+
+		orlist = remove_duplicates(pull_ors(orlist));
+
+		if (length(orlist) > 1)
+			return make_orclause(orlist);
+		else
+			return lfirst(orlist);
+	}
+	else if (not_clause((Node *) qual))
+		return make_notclause(qual_cleanup(get_notclausearg(qual)));
+	else
+		return qual;
+}
+
+/*
+ * remove_duplicates
+ */
+static List *
+remove_duplicates(List *list)
+{
+	List	   *result = NIL;
+	List	   *i;
+
+	if (length(list) <= 1)
+		return list;
+
+	foreach(i, list)
+	{
+		if (! member(lfirst(i), result))
+			result = lappend(result, lfirst(i));
+	}
+	return result;
+}
+
+/*
+ * count_bool_nodes
+ *		Support for heuristics in canonicalize_qual(): count the
+ *		number of nodes in the top level AND/OR/NOT part of a qual tree
+ */
+static int
+count_bool_nodes(Expr *qual)
+{
+	if (qual == NULL)
+		return 0;
+
+	if (and_clause((Node *) qual) ||
+		or_clause((Node *) qual))
+	{
+		int			sum = 1;	/* for the and/or itself */
+		List	   *temp;
+
+		foreach(temp, qual->args)
+			sum += count_bool_nodes(lfirst(temp));
+
+		return sum;
+	}
+	else if (not_clause((Node *) qual))
+		return count_bool_nodes(get_notclausearg(qual)) + 1;
+	else
+		return 1;				/* anything else counts 1 for my purposes */
 }

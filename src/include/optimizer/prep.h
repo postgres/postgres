@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.18 1999/09/12 18:08:10 tgl Exp $
+ * $Id: prep.h,v 1.19 1999/09/13 00:17:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 /*
  * prototypes for prepqual.c
  */
+extern List *canonicalize_qual(Expr *qual, bool removeAndFlag);
 extern List *cnfify(Expr *qual, bool removeAndFlag);
 extern Expr *dnfify(Expr *qual);
 
