@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.57 1999/06/19 05:00:30 momjian Exp $
+ * $Id: c.h,v 1.58 1999/07/01 19:47:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,8 +71,12 @@ typedef char bool;
 
 #endif	 /* ndef bool */
 #endif	 /* not C++ */
-#define false	((bool) 0)
+#ifndef true
 #define true	((bool) 1)
+#endif
+#ifndef false
+#define false	((bool) 0)
+#endif
 typedef bool *BoolPtr;
 
 #ifndef TRUE
