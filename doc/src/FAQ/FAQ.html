@@ -103,15 +103,15 @@
     database?<BR>
      <A href="#4.7">4.7</A>) How much database disk space is required
     to store data from a typical text file?<BR>
-     <A href="#4.8">4.8</A>) How do I find out what indices or
-    operations are defined in the database?<BR>
+     <A href="#4.8">4.8</A>) How do I find out what tables or
+    indexes are defined in the database?<BR>
      <A href="#4.9">4.9</A>) My queries are slow or don't make use of
     the indexes. Why?<BR>
      <A href="#4.10">4.10</A>) How do I see how the query optimizer is
     evaluating my query?<BR>
      <A href="#4.11">4.11</A>) What is an R-tree index?<BR>
-     <A href="#4.12">4.12</A>) What is Genetic Query Optimization?<BR>
-     <A href="#4.13">4.13</A>) How do I do regular expression searches
+     <A href="#4.12">4.12</A>) What is the Genetic Query Optimizer?<BR>
+     <A href="#4.13">4.13</A>) How do I perform regular expression searches
     and case-insensitive regular expression searches?<BR>
      <A href="#4.14">4.14</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?<BR>
@@ -137,7 +137,7 @@
     default to the current time?<BR>
      <A href="#4.23">4.23</A>) Why are my subqueries using
     <CODE><SMALL>IN</SMALL></CODE> so slow?<BR>
-     <A href="#4.24">4.24</A>) How do I do an <I>outer</I> join?<BR>
+     <A href="#4.24">4.24</A>) How do I perform an <I>outer</I> join?<BR>
      
 
     <CENTER>
@@ -873,8 +873,8 @@ Maximum number of indexes on a table?    unlimited
     <P>Indexes do not require as much overhead, but do contain the data
     that is being indexed, so they can be large also.</P>
 
-    <H4><A name="4.8">4.8</A>) How do I find out what indices or
-    operations are defined in the database?</H4>
+    <H4><A name="4.8">4.8</A>) How do I find out what tables or
+    indexes are defined in the database?</H4>
 
     <P><I>psql</I> has a variety of backslash commands to show such
     information. Use \? to see them.</P>
@@ -943,25 +943,21 @@ Maximum number of indexes on a table?    unlimited
     practice, extending R-trees requires a bit of work and we don't
     currently have any documentation on how to do it.</P>
 
-    <H4><A name="4.12">4.12</A>) What is Genetic Query
-    Optimization?</H4>
+    <H4><A name="4.12">4.12</A>) What is the Genetic Query
+    Optimizer?</H4>
 
     <P>The <SMALL>GEQO</SMALL> module speeds query optimization when
     joining many tables by means of a Genetic Algorithm (GA). It allows
     the handling of large join queries through nonexhaustive
     search.</P>
 
-    <H4><A name="4.13">4.13</A>) How do I do regular expression
+    <H4><A name="4.13">4.13</A>) How do I perform regular expression
     searches and case-insensitive regular expression searches?</H4>
 
     <P>The <I>~</I> operator does regular expression matching, and
-    <I>~*</I> does case-insensitive regular expression matching. There
-    is no case-insensitive variant of the <SMALL>LIKE</SMALL> operator,
-    but you can get the effect of case-insensitive <SMALL>LIKE</SMALL>
-    with this:</P>
-<PRE>
-    WHERE lower(textfield) LIKE lower(pattern)
-</PRE>
+    <I>~*</I> does case-insensitive regular expression matching. The
+    case-insensitive variant of <SMALL>LIKE</SMALL>
+    is called <SMALL>ILIKE</SMALL>.</P>
 
     <H4><A name="4.14">4.14</A>) In a query, how do I detect if a field
     is <SMALL>NULL</SMALL>?</H4>
@@ -1147,11 +1143,7 @@ BYTEA           bytea           variable-length byte array (null-safe)
     Depending on your shell, only one of these may succeed, but it will
     set your process data segment limit much higher and perhaps allow
     the query to complete. This command applies to the current process,
-    and all subprocessesHTML & CSS specifications are available from http://www.w3.org/
-To learn more about Tidy see http://www.w3.org/People/Raggett/tidy/
-Please send bug reports to Dave Raggett care of <html-tidy@w3.org>
-Lobby your company to join W3C, see http://www.w3.org/Consortium
- created after the command is run. If you are
+    and all subprocesses created after the command is run. If you are
     having a problem with the <SMALL>SQL</SMALL> client because the
     backend is returning too much data, try it before starting the
     client. 
@@ -1212,7 +1204,7 @@ Lobby your company to join W3C, see http://www.w3.org/Consortium
 </PRE>
     We hope to fix this limitation in a future release. 
 
-    <H4><A name="4.24">4.24</A>) How do I do an <I>outer</I> join?<BR>
+    <H4><A name="4.24">4.24</A>) How do I perform an <I>outer</I> join?<BR>
     </H4>
 
     <P>PostgreSQL 7.1 and later supports outer joins using the SQL

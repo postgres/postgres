@@ -67,14 +67,14 @@
    4.6) What is the maximum size for a row, table, database?
    4.7) How much database disk space is required to store data from a
    typical text file?
-   4.8) How do I find out what indices or operations are defined in the
+   4.8) How do I find out what tables or indexes are defined in the
    database?
    4.9) My queries are slow or don't make use of the indexes. Why?
    4.10) How do I see how the query optimizer is evaluating my query?
    4.11) What is an R-tree index?
-   4.12) What is Genetic Query Optimization?
-   4.13) How do I do regular expression searches and case-insensitive
-   regular expression searches?
+   4.12) What is the Genetic Query Optimizer?
+   4.13) How do I perform regular expression searches and
+   case-insensitive regular expression searches?
    4.14) In a query, how do I detect if a field is NULL?
    4.15) What is the difference between the various character types?
    4.16.1) How do I create a serial/auto-incrementing field?
@@ -90,7 +90,7 @@
    Why?
    4.22) How do I create a column that will default to the current time?
    4.23) Why are my subqueries using IN so slow?
-   4.24) How do I do an outer join?
+   4.24) How do I perform an outer join?
    
                             Extending PostgreSQL
                                       
@@ -677,8 +677,7 @@ Maximum number of indexes on a table?    unlimited
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
    
-    4.8) How do I find out what indices or operations are defined in the
-    database?
+    4.8) How do I find out what tables or indexes are defined in the database?
     
    psql has a variety of backslash commands to show such information. Use
    \? to see them.
@@ -739,21 +738,19 @@ Maximum number of indexes on a table?    unlimited
    extending R-trees requires a bit of work and we don't currently have
    any documentation on how to do it.
    
-    4.12) What is Genetic Query Optimization?
+    4.12) What is the Genetic Query Optimizer?
     
    The GEQO module speeds query optimization when joining many tables by
    means of a Genetic Algorithm (GA). It allows the handling of large
    join queries through nonexhaustive search.
    
-    4.13) How do I do regular expression searches and case-insensitive regular
-    expression searches?
+    4.13) How do I perform regular expression searches and case-insensitive
+    regular expression searches?
     
    The ~ operator does regular expression matching, and ~* does
-   case-insensitive regular expression matching. There is no
-   case-insensitive variant of the LIKE operator, but you can get the
-   effect of case-insensitive LIKE with this:
-    WHERE lower(textfield) LIKE lower(pattern)
-
+   case-insensitive regular expression matching. The case-insensitive
+   variant of LIKE is called ILIKE.
+   
     4.14) In a query, how do I detect if a field is NULL?
     
    You test the column with IS NULLIS NOT NULL.
@@ -893,13 +890,9 @@ BYTEA           bytea           variable-length byte array (null-safe)
    Depending on your shell, only one of these may succeed, but it will
    set your process data segment limit much higher and perhaps allow the
    query to complete. This command applies to the current process, and
-   all subprocessesHTML & CSS specifications are available from
-   http://www.w3.org/ To learn more about Tidy see
-   http://www.w3.org/People/Raggett/tidy/ Please send bug reports to Dave
-   Raggett care of Lobby your company to join W3C, see
-   http://www.w3.org/Consortium created after the command is run. If you
-   are having a problem with the SQL client because the backend is
-   returning too much data, try it before starting the client.
+   all subprocesses created after the command is run. If you are having a
+   problem with the SQL client because the backend is returning too much
+   data, try it before starting the client.
    
     4.20) How do I tell what PostgreSQL version I am running?
     
@@ -940,7 +933,7 @@ SELECT *
 
    We hope to fix this limitation in a future release.
    
-    4.24) How do I do an outer join?
+    4.24) How do I perform an outer join?
     
    PostgreSQL 7.1 and later supports outer joins using the SQL standard
    syntax. Here are two examples:
