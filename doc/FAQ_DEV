@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Nov 5 16:49:16 EST 2002
+   Last updated: Tue Nov 5 16:52:46 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -325,7 +325,7 @@
    
    First, we support 15+ operating systems, so any new feature has to be
    well established before we will consider it. Second, most new
-   wizz-bang features don't provide dramatic improvements. Third, the
+   wizz-bang features don't provide dramatic improvements. Third, they
    usually have some downside, such as decreased reliability or
    additional code required. Therefore, we don't rush to use new features
    but rather wait for the feature to be established, then ask for
@@ -339,10 +339,9 @@
        remaining backend startup time.
      * The backend code would be more complex.
        
-   So, we are not "asleep at the switch" as they say with regard to new
-   features, it is just that we are cautious about their adoption. The
-   TODO list often contains links to discussions showing our reasoning in
-   these areas.
+   So, we are not ignorant of new features. It is just that we are
+   cautious about their adoption. The TODO list often contains links to
+   discussions showing our reasoning in these areas.
    
   1.10) How are RPM's packaged?
   
