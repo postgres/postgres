@@ -1,0 +1,190 @@
+<REFENTRY ID="SQL-UPDATE">
+<REFMETA>
+<REFENTRYTITLE>
+UPDATE
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+UPDATE
+</REFNAME>
+<REFPURPOSE>
+Replaces values of columns in a table
+</REFPURPOSE>
+
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-04-15</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+UPDATE <REPLACEABLE CLASS="PARAMETER">table</replaceable> SET <REPLACEABLE CLASS="PARAMETER">column</replaceable> = <REPLACEABLE CLASS="PARAMETER">expression</replaceable> [, ...]
+    [FROM <REPLACEABLE CLASS="PARAMETER">fromlist</REPLACEABLE>]
+    [WHERE <REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE>]
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-UPDATE-1">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">table</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+          The name of an existing table.
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">column</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+The name of a column in <REPLACEABLE CLASS="PARAMETER">table</replaceable>.
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">expression</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+          A valid expression or value to assign to column.
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">fromlist</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          A <productname>Postgres</productname>
+ non-standard extension to allow columns
+          from other tables to appear in the WHERE condition.
+</LISTITEM>
+</VARLISTENTRY>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">condition</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+          Refer to the SELECT statement for a further description
+          of the WHERE clause.
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-UPDATE-2">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+UPDATE <replaceable class="parameter">#</replaceable>
+</TERM>
+<LISTITEM>
+<PARA>
+          Message returned if successful.
+The <replaceable class="parameter">#</replaceable>
+          means the number of rows updated.
+If <replaceable class="parameter">#</replaceable>
+ is equal 0 no rows are updated.
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-UPDATE-1">
+<REFSECT1INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+   UPDATE changes the values of the columns specified for
+   all rows which satisfy condition. Only the columns 
+   to be modified need appear as column.
+
+<PARA>
+   Array references use the same syntax found in SELECT.
+   That is, either single array elements, a range of array
+   elements or the entire array may be replaced with a single
+   query.
+
+<PARA>
+   You must have write access to the table in order to modify
+   it, as well as read access to any table whose values are
+   mentioned in the WHERE condition.
+ 
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-UPDATE-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+</PARA>
+<ProgramListing>
+   --Change word "Drama" with "Dramatic" on column kind:
+   --
+   UPDATE films 
+      SET kind = 'Dramatic'
+      WHERE kind = 'Drama';
+
+   SELECT * FROM films WHERE kind = 'Dramatic' OR kind = 'Drama';
+
+   code |title        |did| date_prod|kind      |len
+   -----+-------------+---+----------+----------+------
+   BL101|The Third Man|101|1949-12-23|Dramatic  | 01:44
+   P_302|Becket       |103|1964-02-03|Dramatic  | 02:28
+   M_401|War and Peace|104|1967-02-12|Dramatic  | 05:57
+   T_601|Yojimbo      |106|1961-06-16|Dramatic  | 01:50
+   DA101|Das Boot     |110|1981-11-11|Dramatic  | 02:29
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-UPDATE-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-UPDATE-4">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   SQL92 defines a different syntax for positioned UPDATE statement:
+
+<programlisting>
+   UPDATE table SET column = expression [, ...]
+          WHERE CURRENT OF <replaceable class="parameter">cursor</replaceable>
+</programlisting>
+
+   where <replaceable class="parameter">cursor</replaceable>
+ identifies an open cursor.
+</REFENTRY>

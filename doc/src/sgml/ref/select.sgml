@@ -188,6 +188,9 @@ The count of rows returned by the query.
 Description
 </TITLE>
 <PARA>
+SELECT is the principal means to access information
+ in <productname>Postgres</productname>.
+
    SELECT will get all rows which satisfy the WHERE condition
    or all rows of a table if WHERE is omitted.
 
@@ -195,17 +198,14 @@ Description
    The GROUP BY clause allows a user to divide a table
    conceptually into groups. (See GROUP BY clause).
 
-<PARA>
    The HAVING clause specifies a grouped table derived by the
    elimination of groups from the result of the previously
    specified clause. (See HAVING clause).
 
-<PARA>
    The ORDER BY clause allows a user to specify that he/she
    wishes the rows sorted according to the ASCending or 
    DESCending mode operator. (See ORDER BY clause)
 
-<PARA>
    The UNION clause specifies a table derived from a Cartesian
    product union join. (See UNION clause).
 

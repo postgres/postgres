@@ -1,0 +1,321 @@
+<REFENTRY ID="SQL-CREATEUSER-1">
+ <REFMETA>
+  <REFENTRYTITLE>
+   CREATE USER
+  </REFENTRYTITLE>
+  <REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+ </REFMETA>
+ <REFNAMEDIV>
+  <REFNAME>
+   CREATE USER
+  </REFNAME>
+  <REFPURPOSE>
+   Creates account information for a new user
+  </REFPURPOSE>
+ <REFSYNOPSISDIV>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-04-15</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   
+   CREATE USER<REPLACEABLE CLASS="PARAMETER"> username</REPLACEABLE>
+         [WITH PASSWORD <REPLACEABLE CLASS="PARAMETER">password</REPLACEABLE>]
+         [CREATEDB   | NOCREATEDB]
+         [CREATEUSER | NOCREATEUSER]
+         [IN GROUP     <REPLACEABLE CLASS="PARAMETER">groupname</REPLACEABLE> [, ...] ]
+         [VALID UNTIL  '<REPLACEABLE CLASS="PARAMETER">abstime</REPLACEABLE>']
+   
+   
+  </SYNOPSIS>
+  
+  <REFSECT2 ID="R2-SQL-CREATEUSER-1">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">username</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The name of the user.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">password</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The WITH PASSWORD clause sets the user's password within
+	   the "<filename>pg_shadow</filename>" table. For this reason,
+	   <filename>"pg_shadow</filename>" is no
+	   longer accessible to the instance of PostgreSQL that the
+	   PostgreSQL user's password is initially set to NULL.
+	   <comment>The text here has got garbled.</comment> 
+	   When a
+	   user's password in the "<filename>pg_shadow</filename>"
+	   table is NULL, user
+	   authentication proceeds as it historically has (HBA,
+	   PG_PASSWORD, etc). However, if a password is set for a
+	   user, a new authentication system supplants any other
+	   configured for the PostgreSQL instance, and the password
+	   stored in the "<filename>pg_shadow</filename>" table is used
+	   for authentication.
+	   For more details on how this authentication system
+	   functions see pg_crypt(3). If the WITH PASSWORD clause is
+	   omitted, the user's password is set to the empty
+	   string with equates to a NULL value in the authentication
+	   system mentioned above.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue> CREATEDB/NOCREATEDB</ReturnValue>   
+	 </TERM>
+	 <LISTITEM>
+	  <PARA> 
+	   These clauses define a user's ability to create databases.
+	   If CREATEDB is specified, the user being defined will
+	   be allowed to create his own databases. Using NOCREATEDB
+	   will deny a user the ability to create databases. If this
+	   clause is omitted,  NOCREATEDB is used by default.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>CREATEUSER/NOCREATEUSER</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   These clauses determine whether a user will be permitted to
+	   create new
+	   users in an instance of PostgreSQL.
+	   Omitting this clause will set the user's value of this
+	   attribute to be NOCREATEUSER.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">groupname</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   A name of a group into which to insert the user as a new member.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue><replaceable class="parameter">abstime</replaceable></ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The VALID UNTIL clause sets an absolute time after which the
+	   user's PostgreSQL login is no longer valid. Please note that
+	   if a user does not have a password defined in the
+	   "<filename>pg_shadow</filename>"
+	   table, the valid until date will not be checked
+	   during user authentication. If this clause is omitted,
+	   a NULL value is stored in "<filename>pg_shadow</filename>" 
+	   for this attribute,
+	   and the login will be valid for all time.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+  
+  <REFSECT2 ID="R2-SQL-CREATEUSER-2">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Outputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>CREATE USER</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   Message returned if the command completes successfully.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>ERROR:  removeUser: user "<replaceable class="parameter">username</replaceable>" does not exist</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+           if "<replaceable class="parameter">username</replaceable>" not found.
+	  </PARA>
+	  <comment>I don't understand this and I don't know how to get
+this error message.</comment>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
+ <REFSECT1 ID="R1-SQL-CREATEUSER-1">
+  <REFSECT1INFO>
+   <DATE>1998-04-15</DATE>
+  </REFSECT1INFO>
+  <TITLE>
+   Description
+  </TITLE>
+  <PARA>
+   CREATE USER will add a new user to an instance of PostgreSQL.
+  </PARA>
+  <PARA>
+   The new user will be given a <filename>usesysid</filename> of:
+   '<command>SELECT MAX(usesysid) + 1 FROM pg_shadow</command>'.
+   This means that 
+   PostgreSQL users' <filename>usesysid</filename>s will not
+   correspond to their operating
+   system(OS) user ids. The exception to this rule is
+   the '<literal>postgres</literal>' user, whose OS user id
+   is used as the
+   <filename>usesysid</filename> during the initdb process. 
+   If you still want the
+   OS user id and the <filename>usesysid</filename> to match
+   for any given user,
+    use the "createuser" script provided with the PostgreSQL
+   distribution.
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CREATEUSER-3">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+   <PARA>
+    CREATE USER statement is a PostgreSQL language extension.
+   </PARA>
+   <para>
+   Use DROP USER or ALTER USER statements to remove or modify a user
+   account.</para>
+   <para>
+    Refer to the <filename>pg_shadow</filename> table for further information.
+   </para>
+   <programlisting>
+   Table    = pg_shadow
+   +--------------------------+--------------------------+-------+
+   |          Field           |          Type            | Length|
+   +--------------------------+--------------------------+-------+
+   | usename                  | name                     |    32 |
+   | usesysid                 | int4                     |     4 |
+   | usecreatedb              | bool                     |     1 |
+   | usetrace                 | bool                     |     1 |
+   | usesuper                 | bool                     |     1 |
+   | usecatupd                | bool                     |     1 |
+   | passwd                   | text                     |   var |
+   | valuntil                 | abstime                  |     4 |
+   +--------------------------+--------------------------+-------+
+   </programlisting>
+  </REFSECT2>
+  
+ <REFSECT1 ID="R1-SQL-CREATEUSER-2">
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>
+   Create a user with no password:
+  </PARA>
+  <ProgramListing>
+   CREATE USER jonathan
+  </ProgramListing>
+  <PARA>
+   Create a user with a password:
+  </PARA>
+  <ProgramListing>
+   CREATE USER davide WITH PASSWORD jw8s0F4
+  </ProgramListing>
+  <para>
+   Create a user with a password, whose account is valid until the end of 2001.
+   Note that after one second has ticked in 2002, the account is not
+   valid:
+  </para>
+  <ProgramListing>
+   CREATE USER miriam WITH PASSWORD jw8s0F4 VALID UNTIL 'Jan 1 2002'
+  </ProgramListing>
+  <para> 
+   Create an account where the user can create databases:
+  </para>
+  <ProgramListing>
+   CREATE USER manuel WITH PASSWORD jw8s0F4 CREATEDB
+  </ProgramListing>
+  
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-CREATEUSER-3">
+  <TITLE>
+   Compatibility
+  </TITLE>
+  <PARA>
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CREATEUSER-4">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+   There is no CREATE USER statement in SQL92.
+   </PARA>
+</REFENTRY>
+
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

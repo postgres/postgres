@@ -1,8 +1,8 @@
-<Chapter Id="commands">
-<Title>Commands</Title>
+<chapter Id="sql-commands">
+<title>Commands</title>
 
-<Para>
-</Para>
+<para>
+</para>
 
 &alterTable;
 &alterUser;
@@ -22,10 +22,33 @@
 &createTable;
 &createTrigger;
 &createType;
+&createUser;
+&createView;
+&declare;
+&delete;
 &dropFunction;
+&reset;
+&revoke;
+&rollback;
 &select;
+&set;
+&show;
+&update;
 
-</Chapter>
+</chapter>
+
+<chapter Id="sql-functions">
+<title>SQL Functions</title>
+
+<para>
+</para>
+
+&currentDate;
+&currentTime;
+&currentTimestamp;
+&currentUser;
+
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

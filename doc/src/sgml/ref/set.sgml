@@ -1,0 +1,581 @@
+<REFENTRY ID="SQL-SET">
+<REFMETA>
+<REFENTRYTITLE>
+SET
+</REFENTRYTITLE>
+<REFMISCINFO>SQL - Language Statements</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>
+SET
+</REFNAME>
+<REFPURPOSE>
+   Set run-time parameters for session
+</REFPURPOSE>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>1998-08-31</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+SET <REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE> { TO | = } { '<REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>' | DEFAULT }
+
+SET TIME ZONE { '<REPLACEABLE CLASS="PARAMETER">timezone</REPLACEABLE>' | LOCAL };
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SQL-SET-1">
+<REFSECT2INFO>
+<DATE>1998-08-31</DATE>
+</REFSECT2INFO>
+<TITLE>
+Inputs
+</TITLE>
+<PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+<REPLACEABLE CLASS="PARAMETER">variable</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<para>
+Settable global parameter.
+
+<varlistentry>
+<term>
+<REPLACEABLE CLASS="PARAMETER">value</REPLACEABLE>
+</term>
+<listitem>
+<PARA>
+New value of parameter.
+</variablelist>
+
+<para>
+         The possible variables and allowed values are:
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+DateStyle
+</TERM>
+<LISTITEM>
+<PARA>
+
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+ISO
+</TERM>
+<LISTITEM>
+<PARA>
+use ISO 8601-style dates and times
+<VARLISTENTRY>
+<TERM>
+SQL
+</TERM>
+<LISTITEM>
+<PARA>
+use Oracle/Ingres-style dates and times
+<VARLISTENTRY>
+<TERM>
+Postgres
+</TERM>
+<LISTITEM>
+<PARA>
+use traditional <productname>Postgres</productname> format
+<VARLISTENTRY>
+<TERM>
+European
+</TERM>
+<LISTITEM>
+<PARA>
+use dd/mm/yyyy for numeric date representations.
+<VARLISTENTRY>
+<TERM>
+NonEuropean
+</TERM>
+<LISTITEM>
+<PARA>
+use mm/dd/yyyy for numeric date representations.
+<VARLISTENTRY>
+<TERM>
+German
+</TERM>
+<LISTITEM>
+<PARA>
+use dd.mm.yyyy for numeric date representations.
+<VARLISTENTRY>
+<TERM>
+US
+</TERM>
+<LISTITEM>
+<PARA>
+same as 'NonEuropean'
+<VARLISTENTRY>
+<TERM>
+default
+</TERM>
+<LISTITEM>
+<PARA>
+restores the default values ('US,Postgres')
+</varlistentry>
+</variablelist>
+
+<para>
+                Date format initialization my be done by:
+<simplelist>
+<member>
+Setting PGDATESTYLE environment variable.
+
+<member>
+Running postmaster using -oe parameter to set
+                        dates to the 'European' convention.
+Note that this affects only the some combinations of date styles; for example
+the ISO style is not affected by this parameter.
+<member>
+Changing variables in 
+<filename>src/backend/utils/init/globals.c</filename>.
+</simplelist>
+
+<para>
+The variables in <filename>globals.c</filename> which can be changed are:
+<programlisting>
+bool EuroDates = false
+                 true
+int  DateStyle = USE_ISO_DATES
+                 USE_POSTGRES_DATES
+                 USE_ISO_DATES
+                 USE_SQL_DATES
+                 USE_GERMAN_DATES
+</programlisting>
+
+</varlistentry>
+
+<varlistentry>
+<term>
+TIMEZONE
+</term>
+<listitem>
+<para>
+                The possible values for timezone depends on your operating
+                system. For example on Linux /usr/lib/zoneinfo contains the
+                database of timezones.
+<para>
+                Here are some valid values for timezone:
+
+<variablelist>
+<varlistentry>
+<term>
+'PST8PDT'
+</term>
+<listitem>
+<para>
+set the timezone for California
+<varlistentry>
+<term>
+'Portugal'
+</term>
+<listitem>
+<para>
+set time zone for Portugal.
+<varlistentry>
+<term>
+'Europe/Rome'
+</term>
+<listitem>
+<para>
+set time zone for Italy.
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+set time zone to your local timezone
+(value of the TZ environment variable).
+</variablelist>
+
+<para>
+                If an invalid time zone is specified, the time zone
+                becomes GMT (on most systems anyway).
+<para>
+                A frontend which uses libpq may be initialized by setting the PGTZ
+                environment variable.
+<para>
+                The second syntax shown above, allows one to set the timezone
+                with a syntax similar to SQL92 <command>SET TIME ZONE</command>.
+                The LOCAL keyword is just an alternate form
+                of DEFAULT for SQL92 compatibility.
+
+</varlistentry>
+</variablelist>
+
+There are also several internal or optimization parameters which can be specified
+by the <command>SET</command> command:
+
+<variablelist>
+<varlistentry>
+<term>
+COST_HEAP
+</term>
+<listitem>
+<para>
+Sets the default cost of a heap scan for use by the optimizer.
+
+<variablelist>
+<varlistentry>
+<term>
+<replaceable class="parameter">float4</replaceable>
+</term>
+<listitem>
+<para>
+Set the cost of a heap scan to the specified floating point value.
+
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+Sets the cost of a heap scan to the default value.
+</variablelist>
+
+<para>
+                The frontend may be initialized by setting the PGCOSTHEAP
+                environment variable.
+
+<varlistentry>
+<term>
+COST_INDEX
+</term>
+<listitem>
+<para>
+Sets the default cost of an index scan for use by the optimizer.
+
+<variablelist>
+<varlistentry>
+<term>
+<replaceable class="parameter">float4</replaceable>
+</term>
+<listitem>
+<para>
+Set the cost of an index scan to the specified floating point value.
+
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+Sets the cost of an index scan to the default value.
+</variablelist>
+
+<para>
+                The frontend may be initialized by setting the PGCOSTINDEX
+                environment variable.
+
+<varlistentry>
+<term>
+GEQO
+</term>
+<listitem>
+<para>
+Sets the threshold for using the genetic optimizer algorithm.
+
+<variablelist>
+<varlistentry>
+<term>
+On
+</term>
+<listitem>
+<para>
+enables the genetic optimizer algorithm
+                           for statements with 8 or more tables.
+<varlistentry>
+<term>
+On=#
+</term>
+<listitem>
+<para>
+enables the genetic optimizer algorithm
+                           for statements with # or more tables.
+<varlistentry>
+<term>
+Off
+</term>
+<listitem>
+<para>
+disables the genetic optimizer algorithm.
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+Equivalent to specifying <command>SET GEQO=On</command>
+</varlistentry>
+</variablelist>
+
+<para>
+                This algorithm is on by default, which used GEQO for
+                statements of eight or more tables. 
+                (See the chapter on GEQO in the Programmer's Guide
+for more information).
+
+<para>
+                The frontend may be initialized by setting PGGEQO
+                environment variable.
+</varlistentry>
+
+<varlistentry>
+<term>
+R_PLANS
+</term>
+<listitem>
+<para>
+Determines whether right-hand plan evaluation is allowed:
+
+<variablelist>
+<varlistentry>
+<term>
+On
+</term>
+<listitem>
+<para>
+enables right-hand evaluation of plans.
+
+<varlistentry>
+<term>
+Off
+</term>
+<listitem>
+<para>
+disables right-hand evaluation of plans.
+
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+Equivalent to specifying <command>SET R_PLANS=Off</command>.
+</variablelist>
+
+<para>
+                It may be useful when joining big relations with
+                small ones. This algorithm is off by default.
+                It's not used by GEQO anyway.
+<para>
+                The frontend may be initialized by setting the PGRPLANS
+                environment variable.
+</varlistentry>
+
+<varlistentry>
+<term>
+R_PLANS
+</term>
+<listitem>
+<para>
+Determines whether right-hand plan evaluation is allowed:
+
+<variablelist>
+<varlistentry>
+<term>
+On
+</term>
+<listitem>
+<para>
+enables right-hand evaluation of plans.
+
+<varlistentry>
+<term>
+Off
+</term>
+<listitem>
+<para>
+disables right-hand evaluation of plans.
+
+<varlistentry>
+<term>
+DEFAULT
+</term>
+<listitem>
+<para>
+Equivalent to specifying <command>SET R_PLANS=Off</command>.
+</variablelist>
+
+<para>
+                It may be useful when joining big relations with
+                small ones. This algorithm is off by default.
+                It's not used by GEQO anyway.
+<para>
+                The frontend may be initialized by setting the PGRPLANS
+                environment variable.
+
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SQL-SET-2">
+<REFSECT2INFO>
+<DATE>1998-08-31</DATE>
+</REFSECT2INFO>
+<TITLE>
+Outputs
+</TITLE>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+   SET VARIABLE
+</TERM>
+<LISTITEM>
+<PARA>
+          Message returned if successfully.
+
+<VARLISTENTRY>
+<TERM>
+   WARN:  Bad value for <replaceable class="parameter">variable</replaceable> (<replaceable class="parameter">value</replaceable>)
+</TERM>
+<LISTITEM>
+<PARA>
+          If fails to set variable.
+</VARLISTENTRY>
+</VARIABLELIST>
+
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SQL-SET-1">
+<REFSECT1INFO>
+<DATE>1998-08-31</DATE>
+</REFSECT1INFO>
+<TITLE>
+Description
+</TITLE>
+<PARA>
+SET will modify configuration parameters for variable during
+   a session.
+
+<para>
+   Current values can be obtained using SHOW statement, and values
+   can be restored to the defaults using RESET statement.
+   Parameters and values are case-insensitive. Note that the value
+   field is always specified as a string, so is enclosed in
+   single-quotes.
+<para>
+   SET TIME ZONE changes the session's default time zone offset.
+   A SQL-session always begins with an initial default time zone
+   offset.
+   The SET TIME ZONE statement is used to change the default
+   time zone offset for the current SQL session.
+
+<REFSECT2 ID="R2-SQL-SET-3">
+<REFSECT2INFO>
+<DATE>1998-08-31</DATE>
+</REFSECT2INFO>
+<TITLE>
+Notes
+</TITLE>
+<PARA>
+The <command>SET <replaceable class="parameter">variable</replaceable></command>
+ statement is a <productname>Postgres</productname> language extension.
+
+<para>
+   Refer to SHOW/RESET statements to show/reset variable values.
+
+</REFSECT2>
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-SET-2">
+<TITLE>
+Usage
+</TITLE>
+<PARA>
+</PARA>
+<ProgramListing>
+   --Set the style of date to ISO:
+   --
+   SET DATESTYLE TO 'ISO';
+</programlisting>
+<programlisting> 
+   --Set GEQO to default:
+   --
+   SET GEQO = DEFAULT;
+</programlisting>
+<programlisting> 
+   --Turn on right-hand evaluation of plans:
+   --
+   SET R_PLANS TO 'on';
+</programlisting>
+<programlisting> 
+   --set the timezone for Berkeley, California:
+   SET TIME ZONE 'PST8PDT';
+
+   SELECT CURRENT_TIMESTAMP AS today;
+
+   today
+   ----------------------
+   1998-03-31 07:41:21-08
+</programlisting>
+<programlisting> 
+   --set the timezone for Italy:
+   SET TIME ZONE 'Europe/Rome';
+
+   SELECT CURRENT_TIMESTAMP AS today;
+
+   today
+   ----------------------
+   1998-03-31 17:41:31+02
+</ProgramListing>
+
+</REFSECT1>
+
+<REFSECT1 ID="R1-SQL-SET-3">
+<TITLE>
+Compatibility
+</TITLE>
+<PARA>
+</PARA>
+
+<REFSECT2 ID="R2-SQL-SET-4">
+<REFSECT2INFO>
+<DATE>1998-04-15</DATE>
+</REFSECT2INFO>
+<TITLE>
+SQL92
+</TITLE>
+<PARA>
+   There is no
+<command>SET <replaceable class="parameter">variable</replaceable></command>
+   in SQL92.
+
+   The SQL92 syntax for SET TIME ZONE is slightly different,
+ allowing only a single integer value for time zone specification:
+
+<programlisting>
+SET TIME ZONE { interval_value_expression | LOCAL }
+</programlisting>
+
+</REFENTRY>
+
+<!--
+<REPLACEABLE CLASS="PARAMETER">
+</REPLACEABLE>
+<ReturnValue></ReturnValue>
+<PARA>
+</PARA>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>&bull;
+</TERM>
+<LISTITEM>
+<PARA>
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+<PARA>
+</PARA>
+-->

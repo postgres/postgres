@@ -1,0 +1,171 @@
+<REFENTRY ID="SQL-CURRENT-DATE-1">
+ <REFMETA>
+  <REFENTRYTITLE>
+   SQL_CURRENT_DATE
+  </REFENTRYTITLE>
+  <REFMISCINFO>SQL - Functions</REFMISCINFO>
+ </REFMETA>
+ <REFNAMEDIV>
+  <REFNAME>
+   SQL_CURRENT_DATE
+  </REFNAME>
+  <REFPURPOSE>
+- returns the current date, (i.e "today").
+  </REFPURPOSE>
+ <REFSYNOPSISDIV>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-04-15</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   CURRENT_DATE
+  </SYNOPSIS>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-DATE-1">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
+   </PARA>
+<VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>None</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-DATE-2">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Outputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>Returns "<replaceable class="parameter">today</replaceable>"</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </variablelist>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
+ <REFSECT1 ID="R1-SQL-CURRENT-DATE-1">
+  <REFSECT1INFO>
+   <DATE>1998-04-15</DATE>
+  </REFSECT1INFO>
+  <TITLE>
+   Description
+  </TITLE>
+  <PARA>
+   The niladic CURRENT_DATE function has a data type of
+   DATE and returns the date at the time that it is run.
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-DATE-3">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+   <PARA>
+    Refer to SET DATESTYLE for further information about date format.
+   </PARA>
+  </REFSECT2>
+  
+ <REFSECT1 ID="R1-SQL-CURRENT-DATE-2">
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>
+   Insert the date of insertion into a row:
+  </PARA>
+  <ProgramListing>
+   INSERT INTO films
+         VALUES ('TM999','Ben Hur',105,CURRENT_DATE,'Action',NULL);
+  </ProgramListing>
+  
+  <PARA>
+   Display CURRENT-DATE:
+  </PARA>
+  <ProgramListing>
+   SELECT CURRENT_DATE AS today;
+
+   today
+   ------------
+   1998-03-31
+
+  </ProgramListing>
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-CURRENT-DATE-3">
+  <TITLE>
+   Compatibility
+  </TITLE>
+  <PARA>
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-DATE-4">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+    Full compatibility.
+   </PARA>
+  </refsect2>
+ </refsect1>
+</REFENTRY>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->

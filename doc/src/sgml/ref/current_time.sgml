@@ -1,0 +1,186 @@
+<REFENTRY ID="SQL-CURRENT-TIME-1">
+ <REFMETA>
+  <REFENTRYTITLE>
+   SQL_CURRENT_TIME
+  </REFENTRYTITLE>
+  <REFMISCINFO>SQL - Functions</REFMISCINFO>
+ </REFMETA>
+ <REFNAMEDIV>
+  <REFNAME>
+   SQL_CURRENT_TIME
+  </REFNAME>
+  <REFPURPOSE>
+    - returns the current local time, (i.e "now").
+  </REFPURPOSE>
+ <REFSYNOPSISDIV>
+  <REFSYNOPSISDIVINFO>
+   <DATE>1998-04-15</DATE>
+  </REFSYNOPSISDIVINFO>
+  <SYNOPSIS>
+   CURRENT_TIME 
+  </SYNOPSIS>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-TIME-1">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Inputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>None</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </VARIABLELIST>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+   
+  </REFSECT2>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-TIME-2">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Outputs
+   </TITLE>
+   <PARA>
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>Returns "<replaceable class="parameter">now</replaceable>"</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </VARIABLELIST>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+  </REFSECT2>
+ </REFSYNOPSISDIV>
+ 
+ <REFSECT1 ID="R1-SQL-CURRENT-TIME-1">
+  <REFSECT1INFO>
+   <DATE>1998-04-15</DATE>
+  </REFSECT1INFO>
+  <TITLE>
+   Description
+  </TITLE>
+  <PARA>
+   The niladic CURRENT_TIME function has a data type of
+   TIME and returns the local time when it is run.
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-TIME-3">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    Notes
+   </TITLE>
+   <PARA> Refer to the SET TIME ZONE statement for a further description
+    of local time.
+   </PARA>
+  </REFSECT2>
+  
+ <REFSECT1 ID="R1-SQL-CURRENT-TIME-2">
+  <TITLE>
+   Usage
+  </TITLE>
+  <PARA>Display CURRENT_TIME:
+  </PARA>
+  <ProgramListing>
+   SELECT CURRENT_TIME AS now;
+
+   now
+   -----------
+   17:41:31+02
+
+  </ProgramListing>
+ </REFSECT1>
+ 
+ <REFSECT1 ID="R1-SQL-CURRENT-TIME-3">
+  <TITLE>
+   Compatibility
+  </TITLE>
+  <PARA>
+  </PARA>
+  
+  <REFSECT2 ID="R2-SQL-CURRENT-TIME-4">
+   <REFSECT2INFO>
+    <DATE>1998-04-15</DATE>
+   </REFSECT2INFO>
+   <TITLE>
+    SQL92
+   </TITLE>
+   <PARA>
+    SQL92 specifies some additional capabilities for CURRENT_TIME:
+   </PARA>
+   <VARIABLELIST>
+    <VARLISTENTRY>
+     <TERM>
+     </TERM>
+     <LISTITEM>
+      <PARA>
+       <VARIABLELIST>
+	<VARLISTENTRY>
+	 <TERM>
+	  <ReturnValue>
+	   CURRENT_TIME [ (<replaceable class="parameter">scale</replaceable>) ]</ReturnValue>
+	 </TERM>
+	 <LISTITEM>
+	  <PARA>
+	   The optional scale for CURRENT_TIME, if specified, is an
+	   unsigned integer representing the number of digits in the
+	   optional seconds fraction of the time value represented
+	   by the function.
+	  </PARA>
+	 </LISTITEM>
+	</VARLISTENTRY>
+       </VARIABLELIST>
+     </LISTITEM>
+    </VARLISTENTRY>
+   </VARIABLELIST>
+</REFENTRY>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:t
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"../reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
