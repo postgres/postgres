@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.247 2004/03/09 16:57:47 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.248 2004/03/09 23:15:47 neilc Exp $
 -->
 
 <Chapter Id="runtime">
@@ -541,11 +541,12 @@ env PGOPTIONS='-c geqo=off' psql
 SET ENABLE_SEQSCAN TO OFF;
 </screen>
     If <command>SET</> is allowed, it overrides all other sources of
-    values for the parameter.  Superusers are allowed to
-    <command>SET</> more values than ordinary users.  Some parameters
-    cannot be <command>SET</command> even by superusers: for example,
-    if they control behavior that cannot reasonably be changed without
-    restarting <productname>PostgreSQL</productname>.
+    values for the parameter. Some parameters cannot be changed via
+    <command>SET</command>: for example, if they control behavior that
+    cannot reasonably be changed without restarting
+    <productname>PostgreSQL</productname>.  Also, some parameters can
+    be modified via <command>SET</command> by superusers, but not by
+    ordinary users.
    </para>
 
    <para>
