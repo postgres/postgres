@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.1 1998/12/30 19:56:35 wieck Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.2 1998/12/30 20:46:06 wieck Exp $
  *
  * ----------
  */
@@ -27,7 +27,7 @@
 #define	NUMERIC_MAX_DISPLAY_SCALE	NUMERIC_MAX_PRECISION
 #define	NUMERIC_MIN_DISPLAY_SCALE	NUMERIC_DEFAULT_SCALE + 4
 
-#define	NUMERIC_MAX_RESULT_SCALE	(NUMERIC_MAX_PRECISION + 4)
+#define	NUMERIC_MAX_RESULT_SCALE	(NUMERIC_MAX_PRECISION * 2)
 #define NUMERIC_MIN_RESULT_SCALE	(NUMERIC_DEFAULT_PRECISION + 4)
 
 #define NUMERIC_UNPACKED_DATASIZE	(NUMERIC_MAX_PRECISION * 2 + 4)
