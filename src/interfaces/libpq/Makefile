@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.21 1996/11/26 07:38:46 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.22 1996/12/10 07:05:09 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -40,7 +40,7 @@ shlib := libpq.so.1
 endif
 endif
 
-all: libpq.a $(shlib) postgres.h c.h
+all: libpq.a $(shlib) c.h
 
 libpq.a: $(OBJS)
 ifdef MK_NO_LORDER
@@ -64,16 +64,6 @@ fe-lobj.o: ../backend/fmgr.h
 libpq.so.1: $(OBJS)
 	$(CC) $(LDFLAGS) -shared $(OBJS) -o libpq.so.1
 
-postgres.h: ../include/postgres.h
-# Note: ../backend/include/postgres.h needs to be named something different
-# to avoid confusion with this thing we're building now.
-#
-# hardwire NAMEDATALEN and OIDNAMELEN into the postgres.h for this installation
-	rm -f postgres.h
-	echo "#define NAMEDATALEN $(NAMEDATALEN)" >> postgres.h
-	echo "#define OIDNAMELEN $(OIDNAMELEN)" >> postgres.h
-	cat ../include/postgres.h >> postgres.h
-
 c.h: ../include/c.h
 	rm -f c.h
 	echo "#undef PORTNAME" >  c.h
@@ -85,12 +75,20 @@ c.h: ../include/c.h
 
 install: install-headers install-libpq $(install-shlib-dep)
 
-install-headers: beforeinstall-headers postgres.h c.h \
+# Many of the headers we install below have nothing to do with libpq,
+# so should be installed by someone else.
+#
+install-headers: beforeinstall-headers c.h \
+                 ../include/postgres.h ../include/postgres_ext.h \
                  ../include/config.h ../include/libpq/pqcomm.h \
                  ../include/libpq/libpq-fs.h ../include/lib/dllist.h \
                  ../include/utils/geo-decls.h libpq-fe.h
 	$(INSTALL) $(INSTLOPTS) ../include/config.h \
           $(HEADERDIR)/config.h
+	$(INSTALL) $(INSTLOPTS) ../include/postgres.h \
+          $(HEADERDIR)/postgres.h
+	$(INSTALL) $(INSTLOPTS) ../include/postgres_ext.h \
+          $(HEADERDIR)/postgres_ext.h
 	$(INSTALL) $(INSTLOPTS) ../include/libpq/pqcomm.h \
           $(HEADERDIR)/libpq/pqcomm.h
 	$(INSTALL) $(INSTLOPTS) ../include/libpq/libpq-fs.h \
@@ -111,7 +109,6 @@ ifeq ($(PORTNAME), hpux)
           $(HEADERDIR)/port/hpux/fixade.h
 endif
 	$(INSTALL) $(INSTLOPTS) c.h $(HEADERDIR)/c.h
-	$(INSTALL) $(INSTLOPTS) postgres.h $(HEADERDIR)/postgres.h
 
 beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
@@ -146,7 +143,7 @@ depend dep:
 
 .PHONY: clean
 clean:
-	rm -f libpq.a libpq.so.1 $(OBJS) c.h postgres.h
+	rm -f libpq.a libpq.so.1 $(OBJS) c.h
 
 ifeq (depend,$(wildcard depend))
 include depend
