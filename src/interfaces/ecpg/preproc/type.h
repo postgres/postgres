@@ -148,9 +148,9 @@ struct descriptor
 
 struct assignment
 {	
-	char 	*variable;
-	char	*value;
-	struct assignment *next;
+	char 			*variable;
+	enum ECPGdtype		value;
+	struct assignment 	*next;
 };
 
 enum errortype {ET_WARN, ET_ERROR, ET_FATAL};

@@ -32,6 +32,8 @@
 /* dynamic SQL related */
 #define ECPG_UNKNOWN_DESCRIPTOR	-240
 #define ECPG_INVALID_DESCRIPTOR_INDEX	-241
+#define ECPG_UNKNOWN_DESCRIPTOR_ITEM	-242
+#define ECPG_VAR_NOT_NUMERIC	-243
 
 /* finally the backend error messages, they start at 400 */
 #define ECPG_PGSQL		-400

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.22 2000/02/15 12:15:54 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.23 2000/02/22 19:57:10 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -108,6 +108,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"fetch", FETCH},
 	{"float", FLOAT},
 	{"for", FOR},
+	{"force", FORCE},
 	{"foreign", FOREIGN},
 	{"forward", FORWARD},
 	{"from", FROM},
@@ -197,6 +198,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"public", PUBLIC},
 	{"read", READ},
 	{"references", REFERENCES},
+	{"reindex", REINDEX},
 	{"relative", RELATIVE},
 	{"rename", RENAME},
 	{"reset", RESET},

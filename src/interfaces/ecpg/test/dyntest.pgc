@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.2 2000/02/17 19:48:58 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.3 2000/02/22 19:57:12 meskes Exp $
  */
 
 #include <stdio.h>
@@ -30,6 +30,10 @@ int main(int argc,char **argv)
   char QUERY[1024];
   exec sql end declare section;
   int done=0;
+  FILE *dbgs;
+
+  if ((dbgs = fopen("log", "w")) != NULL)
+	ECPGdebug(1, dbgs);
   
   snprintf(QUERY,sizeof QUERY,"select * from %s",argc>1?argv[1]:"pg_tables");
 
@@ -123,5 +127,9 @@ int main(int argc,char **argv)
   exec sql close MYCURS;
   
   exec sql deallocate descriptor MYDESC;
+
+  if (dbgs != NULL)
+	fclose(dbgs);
+
   return 0;
 }

@@ -11,15 +11,14 @@
  
 struct assignment *assignments;
 
-void push_assignment(char *var, char *value)
+void push_assignment(char *var, enum ECPGdtype value)
 {
 	struct assignment *new = (struct assignment *)mm_alloc(sizeof(struct assignment));
 	
 	new->next = assignments;
-	new->variable = mm_alloc(strlen(var)+1);
-	strcpy(new->variable,var);
-	new->value = mm_alloc(strlen(value)+1);
-	strcpy(new->value,value);
+	new->variable = mm_alloc(strlen(var) + 1);
+	strcpy(new->variable, var);
+	new->value = value;
 	assignments = new;
 }
 
@@ -32,7 +31,6 @@ drop_assignments(void)
 
 		assignments = old_head->next;
 		free(old_head->variable);
-		free(old_head->value);
 		free(old_head);
 	}
 }
@@ -61,7 +59,7 @@ static void ECPGnumeric_lvalue(FILE *f,char *name)
 
 static void ECPGstring_buffer(FILE *f, char *name)
 { 
-	const struct variable *v=find_variable(name);
+	const struct variable *v = find_variable(name);
 
 	switch(v->type->typ)
 	{
@@ -177,17 +175,18 @@ static struct descriptor *descriptors;
 
 void add_descriptor(char *name,char *connection)
 {
-	struct descriptor *new=(struct descriptor *)mm_alloc(sizeof(struct descriptor));
+	struct descriptor *new = (struct descriptor *)mm_alloc(sizeof(struct descriptor));
 	
-	new->next=descriptors;
-	new->name=mm_alloc(strlen(name)+1);
+	new->next = descriptors;
+	new->name = mm_alloc(strlen(name) + 1);
 	strcpy(new->name,name);
 	if (connection) 
-	{	new->connection=mm_alloc(strlen(connection)+1);
-		strcpy(new->connection,connection);
+	{
+		new->connection = mm_alloc(strlen(connection) + 1);
+		strcpy(new->connection, connection);
 	}
-	else new->connection=connection;
-	descriptors=new;
+	else new->connection = connection;
+	descriptors = new;
 }
 
 void
@@ -217,13 +216,13 @@ drop_descriptor(char *name,char *connection)
 }
 
 struct descriptor
-*lookup_descriptor(char *name,char *connection)
+*lookup_descriptor(char *name, char *connection)
 {
 	struct descriptor *i;
 	
-	for (i=descriptors;i;i=i->next)
+	for (i = descriptors; i; i = i->next)
 	{
-		if (!strcmp(name,i->name))
+		if (!strcmp(name, i->name))
 		{
 			if ((!connection && !i->connection) 
 				|| (connection && i->connection 
@@ -233,8 +232,8 @@ struct descriptor
 			}
 		}
 	}
-	snprintf(errortext,sizeof errortext,"unknown descriptor %s",name);
-	mmerror(ET_WARN,errortext);
+	snprintf(errortext, sizeof errortext, "unknown descriptor %s", name);
+	mmerror(ET_WARN, errortext);
 	return NULL;
 }
 
@@ -246,10 +245,11 @@ output_get_descr_header(char *desc_name)
 	fprintf(yyout, "{ ECPGget_desc_header(%d, \"%s\", &(", yylineno, desc_name);
 	for (results = assignments; results != NULL; results = results->next)
 	{
-		if (!strcasecmp(results->value, "count"))
+		if (results->value == ECPGd_count)
 			ECPGnumeric_lvalue(yyout,results->variable);
 		else
-		{	snprintf(errortext, sizeof errortext, "unknown descriptor header item '%s'", results->value);
+		{
+			snprintf(errortext, sizeof errortext, "unknown descriptor header item '%d'", results->value);
 			mmerror(ET_WARN, errortext);
 		}
 	}
@@ -260,114 +260,31 @@ output_get_descr_header(char *desc_name)
 }
 
 void
-output_get_descr(char *desc_name)
+output_get_descr(char *desc_name, char *index)
 {
 	struct assignment *results;
-	int flags=0;
-	const int DATA_SEEN=1;
-	const int INDICATOR_SEEN=2;
-	
-	fprintf(yyout,"{\tPGresult *ECPGresult=ECPGresultByDescriptor(%d, \"%s\");\n"
-													,yylineno,desc_name);
-	fputs("\tif (ECPGresult)\n\t{",yyout);
-	fprintf(yyout,"\tif (PQntuples(ECPGresult)<1) ECPGraise(%d,ECPG_NOT_FOUND);\n",yylineno);
-	fprintf(yyout,"\t\telse if (%s<1 || %s>PQnfields(ECPGresult))\n"
-			"\t\t\tECPGraise(%d,ECPG_INVALID_DESCRIPTOR_INDEX);\n"
-				,descriptor_index,descriptor_index,yylineno);
-	fputs("\t\telse\n\t\t{\n",yyout);
-	for (results=assignments;results!=NULL;results=results->next)
+
+	fprintf(yyout, "{ ECPGget_desc(%d,\"%s\",%s,", yylineno, desc_name, index);	
+	for (results = assignments; results != NULL; results = results->next)
 	{
-		if (!strcasecmp(results->value,"type"))
+		const struct variable *v = find_variable(results->variable);
+		
+		switch (results->value)
 		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=ECPGDynamicType(PQftype(ECPGresult,(%s)-1));\n",descriptor_index);
+			case ECPGd_nullable:
+				mmerror(ET_WARN,"nullable is always 1");
+				break;
+			case ECPGd_key_member:
+				mmerror(ET_WARN,"key_member is always 0");
+				break;
+			default:
+				break; 
 		}
-		else if (!strcasecmp(results->value,"datetime_interval_code"))
-		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=ECPGDynamicType_DDT(PQftype(ECPGresult,(%s)-1));\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"length"))
-		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=PQfmod(ECPGresult,(%s)-1)-VARHDRSZ;\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"octet_length"))
-		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=PQfsize(ECPGresult,(%s)-1);\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"returned_length")
-			|| !strcasecmp(results->value,"returned_octet_length"))
-		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=PQgetlength(ECPGresult,0,(%s)-1);\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"precision"))
-		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=PQfmod(ECPGresult,(%s)-1)>>16;\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"scale"))
-		{
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=(PQfmod(ECPGresult,(%s)-1)-VARHDRSZ)&0xffff;\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"nullable"))
-		{
-			mmerror(ET_WARN,"nullable is always 1");
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=1;\n");
-		}
-		else if (!strcasecmp(results->value,"key_member"))
-		{
-			mmerror(ET_WARN,"key_member is always 0");
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=0;\n");
-		}
-		else if (!strcasecmp(results->value,"name"))
-		{
-			fputs("\t\t\tstrncpy(",yyout);
-			ECPGstring_buffer(yyout,results->variable);
-			fprintf(yyout,",PQfname(ECPGresult,(%s)-1),",descriptor_index);
-			ECPGstring_length(yyout,results->variable);
-			fputs(");\n",yyout);
-		}
-		else if (!strcasecmp(results->value,"indicator"))
-		{
-			flags|=INDICATOR_SEEN;
-			fputs("\t\t\t",yyout);
-			ECPGnumeric_lvalue(yyout,results->variable);
-			fprintf(yyout,"=-PQgetisnull(ECPGresult,0,(%s)-1);\n",descriptor_index);
-		}
-		else if (!strcasecmp(results->value,"data"))
-		{
-			flags|=DATA_SEEN;
-			ECPGdata_assignment(results->variable,descriptor_index);
-		}
-		else
-		{
-			snprintf(errortext,sizeof errortext,"unknown descriptor header item '%s'",results->value);
-			mmerror(ET_WARN,errortext);
-		}
-	}
-	if (flags==DATA_SEEN) /* no indicator */
-	{
-		fprintf(yyout,"\t\t\tif (PQgetisnull(ECPGresult,0,(%s)-1))\n"
-					"\t\t\t\tECPGraise(%d,ECPG_MISSING_INDICATOR);\n"
-				,descriptor_index,yylineno);
+		fprintf(yyout, "%s,", get_dtype(results->value));
+		ECPGdump_a_type(yyout, v->name, v->type, NULL, NULL, NULL, NULL);
 	}
 	drop_assignments();
-	fputs("\t\t}\n\t}\n",yyout);
+	fputs("ECPGd_EODT);\n",yyout);
 	
 	whenever_action(2|1);
 }

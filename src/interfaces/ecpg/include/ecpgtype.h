@@ -49,6 +49,26 @@ extern		"C"
 		ECPGt_EORT,				/* End of result types. */
 		ECPGt_NO_INDICATOR		/* no indicator */
 	};
+	
+	enum ECPGdtype
+	{
+		ECPGd_count,
+		ECPGd_data,
+		ECPGd_di_code,
+		ECPGd_di_precision,
+		ECPGd_indicator,
+		ECPGd_key_member,
+		ECPGd_length,
+		ECPGd_name,
+		ECPGd_nullable,
+		ECPGd_octet,
+		ECPGd_precision,
+		ECPGd_ret_length,
+		ECPGd_ret_octet,
+		ECPGd_scale,
+		ECPGd_type,
+		ECPGd_EODT,				/* End of descriptor types. */
+	};
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)
 

@@ -190,7 +190,7 @@ ecpg_alloc(long size, int lineno)
 	if (!new)
 	{
 		ECPGlog("out of memory\n");
-		ECPGraise(ECPG_OUT_OF_MEMORY, lineno, NULL);
+		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -206,7 +206,7 @@ ecpg_strdup(const char *string, int lineno)
 	if (!new)
 	{
 		ECPGlog("out of memory\n");
-		ECPGraise(ECPG_OUT_OF_MEMORY, lineno, NULL);
+		ECPGraise(lineno, ECPG_OUT_OF_MEMORY, NULL);
 		return NULL;
 	}
 
@@ -634,7 +634,7 @@ ECPGexecute(struct statement * stmt)
 
 				default:
 					/* Not implemented yet */
-					ECPGraise(ECPG_UNSUPPORTED, stmt->lineno, ECPGtype_name(var->type));
+					ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPGtype_name(var->type));
 					return false;
 					break;
 			}
@@ -657,7 +657,7 @@ ECPGexecute(struct statement * stmt)
 			 * We have an argument but we dont have the matched up string
 			 * in the string
 			 */
-			ECPGraise(ECPG_TOO_MANY_ARGUMENTS, stmt->lineno, NULL);
+			ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, NULL);
 			return false;
 		}
 		else
@@ -694,7 +694,7 @@ ECPGexecute(struct statement * stmt)
 	/* Check if there are unmatched things left. */
 	if (next_insert(copiedquery) != NULL)
 	{
-		ECPGraise(ECPG_TOO_FEW_ARGUMENTS, stmt->lineno, NULL);
+		ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
 		return false;
 	}
 
@@ -742,7 +742,7 @@ ECPGexecute(struct statement * stmt)
 				{
 					ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d\n",
 							stmt->lineno, ntuples);
-					ECPGraise(ECPG_NOT_FOUND, stmt->lineno, NULL);
+					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
 					status = false;
 					break;
 				}
@@ -756,7 +756,7 @@ ECPGexecute(struct statement * stmt)
 					if (var == NULL)
 					{
 						ECPGlog("ECPGexecute line %d: Too few arguments.\n", stmt->lineno);
-						ECPGraise(ECPG_TOO_FEW_ARGUMENTS, stmt->lineno, NULL);
+						ECPGraise(stmt->lineno, ECPG_TOO_FEW_ARGUMENTS, NULL);
 						return (false);
 					}
 
@@ -778,7 +778,7 @@ ECPGexecute(struct statement * stmt)
 					{
 						ECPGlog("ECPGexecute line %d: Incorrect number of matches: %d don't fit into array of %d\n",
 								stmt->lineno, ntuples, var->arrsize);
-						ECPGraise(ECPG_TOO_MANY_MATCHES, stmt->lineno, NULL);
+						ECPGraise(stmt->lineno, ECPG_TOO_MANY_MATCHES, NULL);
 						status = false;
 						break;
 					}
@@ -853,7 +853,7 @@ ECPGexecute(struct statement * stmt)
 								}
 								break;
 							default:
-								ECPGraise(ECPG_UNSUPPORTED, stmt->lineno, ECPGtype_name(var->ind_type));
+								ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPGtype_name(var->ind_type));
 								status = false;
 								break;
 						}
@@ -1057,7 +1057,7 @@ ECPGexecute(struct statement * stmt)
 								break;
 
 							default:
-								ECPGraise(ECPG_UNSUPPORTED, stmt->lineno, ECPGtype_name(var->type));
+								ECPGraise(stmt->lineno, ECPG_UNSUPPORTED, ECPGtype_name(var->type));
 								status = false;
 								break;
 						}
@@ -1067,7 +1067,7 @@ ECPGexecute(struct statement * stmt)
 
 				if (status && var != NULL)
 				{
-					ECPGraise(ECPG_TOO_MANY_ARGUMENTS, stmt->lineno, NULL);
+					ECPGraise(stmt->lineno, ECPG_TOO_MANY_ARGUMENTS, NULL);
 					status = false;
 				}
 
@@ -1123,7 +1123,7 @@ ECPGexecute(struct statement * stmt)
 }
 
 bool
-ECPGdo(int lineno, const char *connection_name, char *query,...)
+ECPGdo(int lineno, const char *connection_name, char *query, ...)
 {
 	va_list			args;
 	struct statement 	*stmt;

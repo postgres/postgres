@@ -163,7 +163,7 @@ get_type(enum ECPGttype typ)
 			return ("ECPGt_NO_INDICATOR");
 			break;
 		case ECPGt_char_variable:		/* string that should not be
-										 * quoted */
+							 * quoted */
 			return ("ECPGt_char_variable");
 			break;
 		default:
@@ -198,12 +198,13 @@ static void ECPGdump_a_struct(FILE *o, const char *name, const char *ind_name, l
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
+#if 0
 	if (ind_typ == NULL)
 	{
 		ind_typ = &ecpg_no_indicator;
 		ind_name = "no_indicator";
 	}
-
+#endif
 	switch (typ->typ)
 	{
 		case ECPGt_array:
@@ -248,7 +249,8 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *in
 			break;
 		default:
 			ECPGdump_a_simple(o, name, typ->typ, typ->size, -1, NULL, prefix);
-			ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
+			if (ind_typ != NULL)
+				ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, -1, NULL, ind_prefix);
 			break;
 	}
 }
@@ -398,4 +400,61 @@ ECPGfree_type(struct ECPGtype * typ)
 		}
 	}
 	free(typ);
+}
+
+const char *
+get_dtype(enum ECPGdtype typ)
+{
+	switch (typ)
+	{
+		case ECPGd_count:
+			return ("ECPGd_countr");
+			break;
+		case ECPGd_data:
+			return ("ECPGd_data");
+			break;
+		case ECPGd_di_code:
+			return ("ECPGd_di_code");
+			break;
+		case ECPGd_di_precision:
+			return ("ECPGd_di_precision");
+			break;
+		case ECPGd_indicator:
+			return ("ECPGd_indicator");
+			break;
+		case ECPGd_key_member:
+			return ("ECPGd_key_member");
+			break;
+		case ECPGd_length:
+			return ("ECPGd_length");
+			break;
+		case ECPGd_name:
+			return ("ECPGd_name");
+			break;
+		case ECPGd_nullable:
+			return ("ECPGd_nullable");
+			break;
+		case ECPGd_octet:
+			return ("ECPGd_octet");
+			break;
+		case ECPGd_precision:
+			return ("ECPGd_precision");
+			break;
+		case ECPGd_ret_length:
+			return ("ECPGd_ret_length");
+		case ECPGd_ret_octet:
+			return ("ECPGd_ret_octet");
+			break;
+		case ECPGd_scale:	
+			return ("ECPGd_scale");
+			break;
+		case ECPGd_type:	
+			return ("ECPGd_type");
+			break;
+		default:
+			sprintf(errortext, "illegal descriptor item %d\n", typ);
+			yyerror(errortext);
+	}
+
+	return NULL;
 }

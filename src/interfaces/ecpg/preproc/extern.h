@@ -35,6 +35,7 @@ extern struct descriptor *descriptors;
 
 /* functions */
 
+extern const char *get_dtype(enum ECPGdtype);
 extern void lex_init(void);
 extern char *make_str(const char *);
 extern void output_line_number(void);
@@ -50,8 +51,8 @@ extern void mmerror(enum errortype, char * );
 extern ScanKeyword *ScanECPGKeywordLookup(char *);
 extern ScanKeyword *ScanCKeywordLookup(char *);
 extern void output_get_descr_header(char *);
-extern void output_get_descr(char *);
-extern void push_assignment(char *, char *);
+extern void output_get_descr(char *, char *);
+extern void push_assignment(char *, enum ECPGdtype);
 extern struct variable * find_variable(char *);
 extern void whenever_action(int);
 extern void add_descriptor(char *,char *);

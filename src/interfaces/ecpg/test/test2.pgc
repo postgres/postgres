@@ -47,8 +47,8 @@ exec sql end declare section;
 
 	strcpy(msg, "insert");
 	exec sql insert into meskes(name, married, children) values ('Petra', '19900404', 3);
-	exec sql insert into meskes(name, born, age, married, children) values ('Michael', 19660117, 33, '19900404', 3);
-	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 8);
+	exec sql insert into meskes(name, born, age, married, children) values ('Michael', 19660117, 34, '19900404', 3);
+	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103,9);
 	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 6);
 	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 2);
 

@@ -2,7 +2,7 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.4 2000/02/18 16:02:49 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/dynamic.c,v 1.5 2000/02/22 19:57:05 meskes Exp $
  */
 
 /* I borrowed the include files from ecpglib.c, maybe we don't need all of them */
@@ -198,7 +198,7 @@ bool ECPGdo_descriptor(int line,const char *connection,
 
 			/* free previous result */
 			if (i->result) PQclear(i->result);
-	    	i->result=NULL;
+		    	i->result=NULL;
 	    	
 			status=do_descriptor2(line,connection,&i->result,query);
 			
@@ -206,7 +206,8 @@ bool ECPGdo_descriptor(int line,const char *connection,
 			return (status);
 	    }
 	}
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, NULL);
+	
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, descriptor);
 	return false;
 }
 							
@@ -219,7 +220,7 @@ PGresult *ECPGresultByDescriptor(int line,const char *name)
 		if (!strcmp(name, i->name)) return i->result;
 	}
 	
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, NULL);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, name);
 	
 	return NULL;
 } 
@@ -238,7 +239,7 @@ bool ECPGdeallocate_desc(int line,const char *name)
 			return true;
 		}
 	}
-	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, NULL);
+	ECPGraise(line, ECPG_UNKNOWN_DESCRIPTOR, name);
 	return false;
 } 
 
@@ -259,7 +260,7 @@ ECPGraise(int line, int code, const char *str)
 {
 	struct auto_mem *am;
 	       
-	sqlca.sqlcode=code;
+	sqlca.sqlcode = code;
 	switch (code)
 	{ 
 		case ECPG_NOT_FOUND: 
@@ -294,15 +295,25 @@ ECPGraise(int line, int code, const char *str)
 			
 		case ECPG_UNKNOWN_DESCRIPTOR: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
-				"descriptor not found, line %d.", line);
+				"descriptor %s not found, line %d.", str, line);
 			break;
 			
 		case ECPG_INVALID_DESCRIPTOR_INDEX: 
 			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
 				"descriptor index out of range, line %d.", line);
 			break;
+		
+		case ECPG_UNKNOWN_DESCRIPTOR_ITEM: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"unknown descriptor item %s, line %d.", str, line);
+			break;
+		
+		case ECPG_VAR_NOT_NUMERIC: 
+			snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
+				"variable is not a numeric type, line %d.", line);
+			break;
 			
-	    default:
+		default:
 		    	snprintf(sqlca.sqlerrm.sqlerrmc,sizeof(sqlca.sqlerrm.sqlerrmc),
 				"SQL error #%d, line %d.",code, line);
 			break;

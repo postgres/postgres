@@ -21,7 +21,6 @@
 int	struct_level = 0;
 int	braces_open; /* brace level counter */
 char	errortext[128];
-char	*descriptor_index= NULL;
 char	*connection = NULL;
 char 	*input_filename = NULL;
 
@@ -154,17 +153,23 @@ make_name(void)
 	int			tagname;
 	struct this_type	type;
 	enum ECPGttype		type_enum;
+	enum ECPGdtype		dtype_enum;
 	struct fetch_desc	descriptor;
 }
 
 /* special embedded SQL token */
 %token		SQL_ALLOCATE SQL_AT SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK 
-%token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE
+%token		SQL_CALL SQL_CONNECT SQL_CONNECTION SQL_CONTINUE SQL_COUNT
+%token		SQL_DATA SQL_DATETIME_INTERVAL_CODE SQL_DATETIME_INTERVAL_PRECISION
 %token		SQL_DEALLOCATE SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM 
 %token		SQL_FOUND SQL_FREE SQL_GET SQL_GO SQL_GOTO
-%token		SQL_IDENTIFIED SQL_INDICATOR SQL_INT SQL_LONG
-%token		SQL_OFF SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
-%token		SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQL 
+%token		SQL_IDENTIFIED SQL_INDICATOR SQL_INT SQL_KEY_MEMBER 
+%token		SQL_LENGTH SQL_LONG
+%token		SQL_NAME SQL_NULLABLE
+%token		SQL_OCTET_LENGTH SQL_OFF SQL_OPEN SQL_PREPARE
+%token		SQL_RELEASE SQL_REFERENCE SQL_RETURNED_LENGTH
+%token		SQL_RETURNED_OCTET_LENGTH
+%token		SQL_SCALE SQL_SECTION SQL_SHORT SQL_SIGNED SQL_SQL 
 %token		SQL_SQLERROR SQL_SQLPRINT
 %token		SQL_SQLWARNING SQL_START SQL_STOP SQL_STRUCT SQL_UNSIGNED
 %token		SQL_VALUE SQL_VAR SQL_WHENEVER
@@ -222,13 +227,13 @@ make_name(void)
 		CACHE, CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
                 DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
-                FORWARD, FUNCTION, HANDLER,
+                FORCE, FORWARD, FUNCTION, HANDLER,
                 INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
                 LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION, LOCK_P,
 		MAXVALUE, MINVALUE, MODE, MOVE,
                 NEW,  NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
 		OFFSET, OIDS, OPERATOR, PASSWORD, PROCEDURAL,
-                RENAME, RESET, RETURNS, ROW, RULE,
+                REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
                 SEQUENCE, SERIAL, SETOF, SHARE, SHOW, START, STATEMENT, STDIN, STDOUT, SYSID
 		TRUNCATE, TRUSTED,
                 UNLISTEN, UNTIL, VACUUM, VALID, VERBOSE, VERSION
@@ -270,11 +275,11 @@ make_name(void)
 
 %type  <str>	Iconst Fconst Sconst TransactionStmt CreateStmt UserId
 %type  <str>	CreateAsElement OptCreateAs CreateAsList CreateAsStmt
-%type  <str>	OptInherit key_reference key_action comment_text
+%type  <str>	OptInherit key_reference comment_text
 %type  <str>    key_match ColLabel SpecialRuleRelation ColId columnDef
 %type  <str>    ColConstraint ColConstraintElem NumericOnly FloatOnly
 %type  <str>    OptTableElementList OptTableElement TableConstraint
-%type  <str>    ConstraintElem key_actions ColPrimaryKey ColQualList
+%type  <str>    ConstraintElem key_actions ColQualList
 %type  <str>    target_list target_el update_target_list alias_clause
 %type  <str>    update_target_el opt_id relation_name database_name
 %type  <str>    access_method attr_name class index_name name func_name
@@ -304,7 +309,7 @@ make_name(void)
 %type  <str>    func_args_list func_args opt_with ProcedureStmt def_arg
 %type  <str>    def_elem def_list definition def_name def_type DefineStmt
 %type  <str>    opt_instead event event_object RuleActionList opt_using
-%type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as
+%type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
 %type  <str>    RuleStmt opt_column opt_name oper_argtypes sysid_clause
 %type  <str>    MathOp RemoveFuncStmt aggr_argtype for_update_clause
 %type  <str>    RemoveAggrStmt remove_type RemoveStmt ExtendStmt
@@ -324,18 +329,18 @@ make_name(void)
 %type  <str>	GrantStmt privileges operation_commalist operation
 %type  <str>	opt_cursor opt_lmode ConstraintsSetStmt comment_tg
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
-%type  <str>    select_clause opt_select_limit select_limit_value
-%type  <str>    select_offset_value using_expr join_expr
+%type  <str>    select_clause opt_select_limit select_limit_value TimeClause
+%type  <str>    select_offset_value using_expr join_expr ReindexStmt
 %type  <str>	using_list from_expr join_clause join_type
 %type  <str>	join_qual update_list join_clause join_clause_with_union
 %type  <str>	opt_level opt_lock lock_type users_in_new_group_clause
-%type  <str>    OptConstrFromTable comment_op ConstraintAttributeSpec
+%type  <str>    OptConstrFromTable comment_op ConstraintAttribute
 %type  <str>    constraints_set_list constraints_set_namelist comment_fn
 %type  <str>	constraints_set_mode comment_type comment_cl comment_ag
-%type  <str>	ConstraintDeferrabilitySpec ConstraintTimeSpec 
-%type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt
-%type  <str>	ColConstraintWithNull ColConstraintElemWithNull
-%type  <str>	join_expr_with_union
+%type  <str>	CreateGroupStmt AlterGroupStmt DropGroupStmt key_delete
+%type  <str>	ColConstraintWithNull ColConstraintElemWithNull NotNull
+%type  <str>	join_expr_with_union DefaultClause DefaultExpr PrimaryKey
+%type  <str>	DeferrabilityClause opt_force key_update
 /***
 #ifdef ENABLE_ORACLE_JOIN_SYNTAX
 %type  <str>   oracle_list oracle_expr oracle_outer
@@ -357,11 +362,13 @@ make_name(void)
 %type  <str>    struct_type s_struct declaration declarations variable_declarations
 %type  <str>    s_struct s_union union_type ECPGSetAutocommit on_off
 %type  <str>	ECPGAllocateDescr ECPGDeallocateDescr
-%type  <str>	ECPGGetDescriptor ECPGGetDescriptorHeader 
+%type  <str>	ECPGGetDescriptorHeader 
 
-%type  <descriptor> ECPGFetchDescStmt
+%type  <descriptor> ECPGFetchDescStmt ECPGGetDescriptor
 
 %type  <type_enum> simple_type signed_type unsigned_type varchar_type
+
+%type  <dtype_enum> descriptor_item desc_header_item
 
 %type  <type>	type
 
@@ -416,6 +423,7 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 		| UnlistenStmt		{ output_statement($1, 0, NULL); }
 		| LockStmt		{ output_statement($1, 0, NULL); }
 		| ProcedureStmt		{ output_statement($1, 0, NULL); }
+		| ReindexStmt		{ output_statement($1, 0, NULL); }
 		| RemoveAggrStmt	{ output_statement($1, 0, NULL); }
 		| RemoveOperStmt	{ output_statement($1, 0, NULL); }
 		| RemoveFuncStmt	{ output_statement($1, 0, NULL); }
@@ -483,7 +491,11 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 						free($1);
 					} 
 		| ECPGExecute		{	output_statement($1, 0, NULL); }
-		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name); }
+		| ECPGFetchDescStmt	{
+					 	output_statement($1.str, 1, $1.name);
+						free($1.str);
+						free($1.name);
+					}
 		| ECPGFree		{
 						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
 
@@ -491,12 +503,15 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL); }
 						free($1);
 					}
 		| ECPGGetDescriptor	{	
-						lookup_descriptor($1,connection);
-						output_get_descr($1);
+						lookup_descriptor($1.name, connection);
+						output_get_descr($1.name, $1.str);
+						free($1.name);
+						free($1.str);
 					}
 		| ECPGGetDescriptorHeader	{	
-						lookup_descriptor($1,connection);
+						lookup_descriptor($1, connection);
 						output_get_descr_header($1);
+						free($1);
 					}
 		| ECPGOpen		{	
 						struct cursor *ptr;
@@ -1013,42 +1028,64 @@ OptTableElement:  columnDef		{ $$ = $1; }
 			| TableConstraint	{ $$ = $1; }
 		;
 
-columnDef:  ColId Typename ColQualifier
+columnDef:  ColId Typename ColQualifier opt_collate
 				{
-					$$ = cat_str(3, $1, $2, $3);
+					if (strlen($4) > 0)
+					{
+						sprintf(errortext, "CREATE TABLE/COLLATE %s not yet implemented; clause ignored", $4);
+						mmerror(ET_WARN, errortext);
+					}
+					$$ = cat_str(4, $1, $2, $3, $4);
 				}
-	| ColId SERIAL ColPrimaryKey
+	| ColId SERIAL ColQualifier opt_collate
 		{
-			$$ = cat_str(3, $1, make_str(" serial "), $3);
+			if (strlen($4) > 0)
+			{
+				sprintf(errortext, "CREATE TABLE/COLLATE %s not yet implemented; clause ignored", $4);
+				mmerror(ET_WARN, errortext);
+			}
+			$$ = cat_str(4, $1, make_str(" serial "), $3, $4);
 		}
 		;
 
-ColQualifier:	ColQualList			{ $$ = $1; }
-		| NULL_P ColQualListWithNull    { $$ = cat2_str(make_str("null"), $2); }
-                | NULL_P			{ $$ = make_str("null"); }
-                | /*EMPTY*/           		{ $$ = EMPTY; }
+/*
+ * ColQualifier encapsulates an entire column qualification,
+ * including DEFAULT, constraints, and constraint attributes.
+ * Note that the DefaultClause handles the empty case.
+ */
+ColQualifier:	DefaultClause ColQualList			{ $$ = cat2_str($1, $2); }
+		| NotNull DefaultClause ColQualListWithNull	{ $$ = cat_str(3, $1, $2, $3); }
+		| DefaultExpr NotNull ColQualListWithNull	{ $$ = cat_str(3, $1, $2, $3); }
+                | DefaultExpr NotNull				{ $$ = cat2_str($1, $2); }
+                | NotNull DefaultClause				{ $$ = cat2_str($1, $2); }
+		| NULL_P DefaultClause ColQualListWithNull	{ $$ = cat_str(3, make_str("null"), $2, $3); }
+                | NULL_P DefaultClause				{ $$ = cat2_str(make_str("null"), $2); }
+                | DefaultClause		           		{ $$ = $1; }
+		;
+
+/*
+ * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
+ * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
+ * or be part of a_expr NOT LIKE or similar constructs).
+ */
+DefaultClause:  DefaultExpr     { $$ = $1; }
+		| /*EMPTY*/	{ $$ = EMPTY; }
+                ;
+
+DefaultExpr:  DEFAULT NULL_P		{ $$ = make_str("default null"); }
+		| DEFAULT b_expr	{ $$ = cat2_str(make_str("default"), $2); }
 		;
 
 ColQualList:  ColQualList ColConstraint	{ $$ = cat2_str($1,$2); }
 			| ColConstraint	{ $$ = $1; }
 		;
 
-ColQualListWithNull:  ColQualListWithNull ColConstraintWithNull
+ColQualListWithNull:  ColConstraintWithNull ColQualListWithNull
 			{ $$ = cat2_str($1, $2); }
 		|  ColConstraintWithNull
 			{ $$ = $1; }
-ColPrimaryKey:  PRIMARY KEY
-                {
-			$$ = make_str("primary key");
-                }
-              | /*EMPTY*/
-		{
-			$$ = EMPTY;
-		}
-                ;
 
-ColConstraint:
-		CONSTRAINT name ColConstraintElem
+ColConstraint:	CONSTRAINT name ColConstraintElem
 				{
 					$$ = cat_str(3, make_str("constraint"), $2, $3);
 				}
@@ -1056,8 +1093,7 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
-ColConstraintWithNull:
-		CONSTRAINT name ColConstraintElemWithNull
+ColConstraintWithNull:	CONSTRAINT name ColConstraintElemWithNull
 			{ $$ = cat_str(3, make_str("constraint"), $2, $3); }
 		| ColConstraintElemWithNull
 			{ $$ = $1; }
@@ -1073,26 +1109,18 @@ ColConstraintWithNull:
  * that a column may have that value. WITH NULL leads to
  * shift/reduce conflicts with WITH TIME ZONE anyway.
  * - thomas 1999-01-08
- *
- * DEFAULT expression must be b_expr not a_expr to prevent shift/reduce
- * conflict on NOT (since NOT might start a subsequent NOT NULL constraint,
- * or be part of a_expr NOT LIKE or similar constructs).
  */
 ColConstraintElem:  ColConstraintElemWithNull
                                 {
                                         $$ = $1;
                                 }
-                        | NOT NULL_P
-                                {
-                                        $$ = make_str("not null");
-                                }
                         | UNIQUE
 				{
 					$$ = make_str("unique");
 				}
-			| PRIMARY KEY
+			| PrimaryKey
 				{
-					$$ = make_str("primary key");
+					$$ = $1;
 				}
 			;
 
@@ -1101,19 +1129,21 @@ ColConstraintElemWithNull:  CHECK '(' a_expr ')'
 				{
 					$$ = cat_str(3, make_str("check("), $3, make_str(")"));
 				}
-			| DEFAULT NULL_P
+			| REFERENCES ColId opt_column_list
+				key_match key_actions ConstraintAttribute
 				{
-					$$ = make_str("default null");
+					$$ = cat_str(6, make_str("references"), $2, $3, $4, $5, $6);
 				}
-			| DEFAULT b_expr
-				{
-					$$ = cat2_str(make_str("default"), $2);
-				}
-			| REFERENCES ColId opt_column_list key_match key_actions
+			| REFERENCES ColId opt_column_list
+				key_match key_actions
 				{
 					$$ = cat_str(5, make_str("references"), $2, $3, $4, $5);
 				}
 		;
+
+PrimaryKey:  PRIMARY KEY	{ $$ = make_str("primary key"); }
+
+NotNull:  NOT NULL_P		{ $$ = make_str("not null"); }
 
 /* ConstraintElem specifies constraint syntax which is not embedded into
  *  a column definition. ColConstraintElem specifies the embedded form.
@@ -1135,11 +1165,17 @@ ConstraintElem:  CHECK '(' a_expr ')'
 				{
 					$$ = cat_str(3, make_str("unique("), $3, make_str(")"));
 				}
-		| PRIMARY KEY '(' columnList ')'
+		| PrimaryKey '(' columnList ')'
 				{
-					$$ = cat_str(3, make_str("primary key("), $4, make_str(")"));
+					$$ = cat_str(3, make_str("primary key("), $3, make_str(")"));
 				}
-		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
+			key_match key_actions ConstraintAttribute
+				{
+					$$ = cat_str(8, make_str("foreign key("), $4, make_str(") references"), $7, $8, $9, $10, $11);
+				}
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list
+			key_match key_actions
 				{
 					$$ = cat_str(7, make_str("foreign key("), $4, make_str(") references"), $7, $8, $9, $10);
 				}
@@ -1151,7 +1187,7 @@ key_match:  MATCH FULL
 		}
 		| MATCH PARTIAL		
 		{
-			mmerror(ET_WARN, "FOREIGN KEY match type PARTIAL not implemented yet");
+			mmerror(ET_WARN, "FOREIGN KEY/MATCH PARTIAL not yet implemented");
 			$$ = make_str("match partial");
 		}
 		| /*EMPTY*/
@@ -1160,14 +1196,16 @@ key_match:  MATCH FULL
 		}
 		;
 
-key_actions:  key_action key_action	{ $$ = cat2_str($1, $2); }
-		| key_action		{ $$ = $1; }
+key_actions:  key_delete		{ $$ = $1; }
+		| key_update		{ $$ = $1; }
+		| key_delete key_update	{ $$ = cat2_str($1, $2); }
+		| key_update key_delete	{ $$ = cat2_str($1, $2); }
 		| /*EMPTY*/		{ $$ = EMPTY; }
 		;
 
-key_action:  ON DELETE key_reference	{ $$ = cat2_str(make_str("on delete"), $3); }
-		| ON UPDATE key_reference		{ $$ = cat2_str(make_str("on update"), $3); }
-		;
+key_delete: ON DELETE key_reference	{ $$ = cat2_str(make_str("on delete"), $3); }
+
+key_update: ON UPDATE key_reference	{ $$ = cat2_str(make_str("on update"), $3); }
 
 key_reference:  NO ACTION	{ $$ = make_str("no action"); }
 		| RESTRICT	{ $$ = make_str("restrict"); }
@@ -1313,7 +1351,7 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 				}
 	|	CREATE CONSTRAINT TRIGGER name AFTER TriggerEvents ON
                                 relation_name OptConstrFromTable
-				ConstraintAttributeSpec
+				ConstraintAttribute
                                 FOR EACH ROW EXECUTE PROCEDURE
 				name '(' TriggerFuncArgs ')'
 				{
@@ -1388,46 +1426,32 @@ OptConstrFromTable:                     /* Empty */
                                 }
                 ;
 
-ConstraintAttributeSpec: ConstraintDeferrabilitySpec
+ConstraintAttribute: DeferrabilityClause
                 { 	$$ = $1; }
-	| ConstraintDeferrabilitySpec ConstraintTimeSpec
+	| TimeClause
+		{ 	$$ = $1; }
+	| DeferrabilityClause TimeClause
 		{
 			if (strcmp($1, "deferrable") != 0 && strcmp($2, "initially deferrable") == 0 )
 				mmerror(ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
 
                 	$$ = cat2_str($1, $2);
 		}
-	| ConstraintTimeSpec
-		{ 	$$ = $1; }
-	| ConstraintTimeSpec ConstraintDeferrabilitySpec
+	| TimeClause DeferrabilityClause
 		{
 			if (strcmp($2, "deferrable") != 0 && strcmp($1, "initially deferrable") == 0 )
 				mmerror(ET_ERROR, "INITIALLY DEFERRED constraint must be DEFERRABLE");
 
                 	$$ = cat2_str($1, $2);
 		}
-	| /* Empty */
-                       { $$ = 0; }
 	;
 
-ConstraintDeferrabilitySpec: NOT DEFERRABLE
-                                {
-                                        $$ = make_str("not deferrable");
-                                }
-                | DEFERRABLE
-                                {
-                                        $$ = make_str("deferrable");
-                                }
+DeferrabilityClause: NOT DEFERRABLE	{ $$ = make_str("not deferrable"); }
+	                | DEFERRABLE	{ $$ = make_str("deferrable"); }
                 ;
 
-ConstraintTimeSpec: INITIALLY IMMEDIATE
-                                {
-                                        $$ = make_str("initially immediate");
-                                }
-                | INITIALLY DEFERRED
-                                {
-                                        $$ = make_str("initially deferrable");
-                                }
+TimeClause: INITIALLY IMMEDIATE		{ $$ = make_str("initially immediate"); }
+                | INITIALLY DEFERRED	{ $$ = make_str("initially deferrable"); }
                 ;
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
@@ -1961,6 +1985,25 @@ oper_argtypes:	name
 				{ $$ = cat2_str($1, make_str(", none")); }
 		;
 
+/*****************************************************************************
+ *
+ *              QUERY:
+ *
+ *              REINDEX type <typename> [FORCE] [ALL]
+ *
+ *****************************************************************************/
+ReindexStmt:  REINDEX reindex_type name opt_force
+                                {
+					$$ = cat_str(4, make_str("reindex"), $2, $3, $4);
+				}
+
+reindex_type:   INDEX		{ $$ = make_str("index"); }
+                | TABLE		{ $$ = make_str("table"); }
+                | DATABASE	{ $$ = make_str("database"); }
+                ;
+opt_force:      FORCE		{ $$ = make_str("force"); }
+                | /* EMPTY */	{ $$ = EMPTY; }
+                ;
 
 /*****************************************************************************
  *
@@ -2864,6 +2907,10 @@ generic:  ident					{ $$ = $1; }
 		| SQL_CONNECT			{ $$ = make_str("connect"); }
 		| SQL_CONNECTION		{ $$ = make_str("connection"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
+		| SQL_COUNT			{ $$ = make_str("count"); }
+		| SQL_DATA			{ $$ = make_str("data"); }
+		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
+		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
 		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
 		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
 		| SQL_FOUND			{ $$ = make_str("found"); }
@@ -2872,11 +2919,19 @@ generic:  ident					{ $$ = $1; }
 		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
 		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
 		| SQL_INT			{ $$ = make_str("int"); }
+		| SQL_KEY_MEMBER		{ $$ = make_str("key_member"); }
+		| SQL_LENGTH			{ $$ = make_str("length"); }
 		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_NAME			{ $$ = make_str("name"); }
+		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
+		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
 		| SQL_OFF			{ $$ = make_str("off"); }
 		| SQL_OPEN			{ $$ = make_str("open"); }
 		| SQL_PREPARE			{ $$ = make_str("prepare"); }
 		| SQL_RELEASE			{ $$ = make_str("release"); }
+		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
+		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
+		| SQL_SCALE			{ $$ = make_str("scale"); }
 		| SQL_SECTION			{ $$ = make_str("section"); }
 		| SQL_SHORT			{ $$ = make_str("short"); }
 		| SQL_SIGNED			{ $$ = make_str("signed"); }
@@ -3019,15 +3074,9 @@ Character:  character '(' Iconst ')'
 				}
 		;
 
-character:  CHARACTER opt_varying opt_charset opt_collate
+character:  CHARACTER opt_varying opt_charset
 				{
-					if (strlen($4) > 0)
-					{
-						sprintf(errortext, "COLLATE %s not yet implemented", $4);
-						mmerror(ET_WARN, errortext);
-					}
-
-					$$ = cat_str(4, make_str("character"), $2, $3, $4);
+					$$ = cat_str(3, make_str("character"), $2, $3);
 				}
 		| CHAR opt_varying	{ $$ = cat2_str(make_str("char"), $2); }
 		| VARCHAR		{ $$ = make_str("varchar"); }
@@ -3401,6 +3450,8 @@ c_expr:  attr
 				{	$$ = cat2_str($1, make_str("()"));  }
 		| func_name '(' expr_list ')'
 				{	$$ = cat_str(4, $1, make_str("("), $3, make_str(")"));  }
+		| func_name '(' ALL expr_list ')'
+				{	$$ = cat_str(4, $1, make_str("( all"), $4, make_str(")"));  }
 		| func_name '(' DISTINCT expr_list ')'
 				{	$$ = cat_str(4, $1, make_str("( distinct"), $4, make_str(")"));  }
 		| func_name '(' '*' ')'
@@ -3870,6 +3921,10 @@ ColId:  ident					{ $$ = $1; }
 		| SQL_CALL			{ $$ = make_str("call"); }
 		| SQL_CONNECT			{ $$ = make_str("connect"); }
 		| SQL_CONTINUE			{ $$ = make_str("continue"); }
+		| SQL_COUNT			{ $$ = make_str("count"); }
+		| SQL_DATA			{ $$ = make_str("data"); }
+		| SQL_DATETIME_INTERVAL_CODE	{ $$ = make_str("datetime_interval_code"); }
+		| SQL_DATETIME_INTERVAL_PRECISION	{ $$ = make_str("datetime_interval_precision"); }
 		| SQL_DEALLOCATE		{ $$ = make_str("deallocate"); }
 		| SQL_DISCONNECT		{ $$ = make_str("disconnect"); }
 		| SQL_FOUND			{ $$ = make_str("found"); }
@@ -3878,11 +3933,19 @@ ColId:  ident					{ $$ = $1; }
 		| SQL_IDENTIFIED		{ $$ = make_str("identified"); }
 		| SQL_INDICATOR			{ $$ = make_str("indicator"); }
 		| SQL_INT			{ $$ = make_str("int"); }
+		| SQL_KEY_MEMBER		{ $$ = make_str("key_member"); }
+		| SQL_LENGTH			{ $$ = make_str("length"); }
 		| SQL_LONG			{ $$ = make_str("long"); }
+		| SQL_NAME			{ $$ = make_str("name"); }
+		| SQL_NULLABLE			{ $$ = make_str("nullable"); }
+		| SQL_OCTET_LENGTH		{ $$ = make_str("octet_length"); }
 		| SQL_OFF			{ $$ = make_str("off"); }
 		| SQL_OPEN			{ $$ = make_str("open"); }
 		| SQL_PREPARE			{ $$ = make_str("prepare"); }
 		| SQL_RELEASE			{ $$ = make_str("release"); }
+		| SQL_RETURNED_LENGTH		{ $$ = make_str("returned_length"); }
+		| SQL_RETURNED_OCTET_LENGTH	{ $$ = make_str("returned_octet_length"); }
+		| SQL_SCALE			{ $$ = make_str("scale"); }
 		| SQL_SECTION			{ $$ = make_str("section"); }
 		| SQL_SHORT			{ $$ = make_str("short"); }
 		| SQL_SIGNED			{ $$ = make_str("signed"); }
@@ -4586,22 +4649,31 @@ ECPGAllocateDescr:	SQL_ALLOCATE SQL_DESCRIPTOR ident
  * read from descriptor
  */
 
-ECPGGetDescHeaderItem: cvariable '=' ident  {
-		push_assignment($1,$3);
+ECPGGetDescHeaderItem: cvariable '=' desc_header_item  {
+		push_assignment($1, $3);
 }
 
-ECPGGetDescItem: cvariable '=' ident  {
-		push_assignment($1,$3);
+desc_header_item:	SQL_COUNT			{ $$ = ECPGd_count; }
+
+ECPGGetDescItem: cvariable '=' descriptor_item  {
+		push_assignment($1, $3);
 }
-	| cvariable '=' TYPE_P {
-		push_assignment($1,"type");
-}
-	| cvariable '=' PRECISION {
-		push_assignment($1,"precision");
-}
-	| cvariable '=' SQL_INDICATOR {
-		push_assignment($1,"indicator");
-}
+
+descriptor_item:	SQL_DATA			{ $$ = ECPGd_data; }
+		|	SQL_DATETIME_INTERVAL_CODE	{ $$ = ECPGd_di_code; }
+		| 	SQL_DATETIME_INTERVAL_PRECISION	{ $$ = ECPGd_di_precision; }
+		|	SQL_INDICATOR			{ $$ = ECPGd_indicator; }
+		|	SQL_KEY_MEMBER			{ $$ = ECPGd_key_member; }
+		|	SQL_LENGTH			{ $$ = ECPGd_length; }
+		|	SQL_NAME			{ $$ = ECPGd_name; }
+		|	SQL_NULLABLE			{ $$ = ECPGd_nullable; }
+		|	SQL_OCTET_LENGTH		{ $$ = ECPGd_octet; }
+		|	PRECISION			{ $$ = ECPGd_precision; }
+		|	SQL_RETURNED_LENGTH		{ $$ = ECPGd_length; }
+		|	SQL_RETURNED_OCTET_LENGTH	{ $$ = ECPGd_ret_octet; }
+		|	SQL_SCALE			{ $$ = ECPGd_scale; }
+		|	TYPE_P				{ $$ = ECPGd_type; }
+		;
 
 ECPGGetDescHeaderItems: ECPGGetDescHeaderItem
 	| ECPGGetDescHeaderItems ',' ECPGGetDescHeaderItem;
@@ -4613,9 +4685,9 @@ ECPGGetDescriptorHeader:	SQL_GET SQL_DESCRIPTOR ident ECPGGetDescHeaderItems
 		{  $$ = $3; }
 
 ECPGGetDescriptor:	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE cvariable ECPGGetDescItems
-		{  $$ = $3; descriptor_index = $5; }
+		{  $$.str = $5; $$.name = $3; }
 	|	SQL_GET SQL_DESCRIPTOR ident SQL_VALUE Iconst ECPGGetDescItems
-		{  $$ = $3; descriptor_index = $5; }
+		{  $$.str = $5; $$.name = $3; }
 
 /*****************************************************************************
  *
@@ -5049,7 +5121,7 @@ ident: IDENT	{ $$ = $1; }
  * C stuff
  */
 
-symbol: IDENT	{ $$ = $1; }
+symbol: ident	{ $$ = $1; }
 
 cpp_line: CPP_LINE	{ $$ = $1; }
 

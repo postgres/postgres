@@ -28,6 +28,8 @@ instead of libpq so we can write backend functions using ecpg.
 
 make ECPGnumeric_lvalue more accurate by using something like ECPGdump_a_*
 
+remove space_or_nl and line_end from pgc.l
+
 Missing statements:
  - exec sql ifdef
  - SQLSTATE
