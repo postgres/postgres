@@ -48,6 +48,8 @@ exec sql end declare section;
 	strcpy(msg, "open");
 	exec sql open cur;
 
+	exec sql whenever not found do break;
+
 	while (1) {
 		strcpy(msg, "fetch");
 		exec sql fetch cur into :personal:ind_personal, :married:ind_married;

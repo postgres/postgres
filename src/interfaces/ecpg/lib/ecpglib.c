@@ -38,7 +38,7 @@ static FILE *debugstream = NULL;
 static int	committed = true;
 
 static void
-register_error(int code, char *fmt,...)
+register_error(long code, char *fmt,...)
 {
 	va_list		args;
 
@@ -131,9 +131,9 @@ ECPGdo(int lineno, char *query,...)
 	long		offset, ind_offset;
 	enum ECPGttype ind_type;
 
+	memset((char *) &sqlca, 0, sizeof (sqlca));
 	va_start(ap, query);
 
-	sqlca.sqlcode = 0;
 	copiedquery = strdup(query);
 
 	type = va_arg(ap, enum ECPGttype);
@@ -666,6 +666,7 @@ ECPGdo(int lineno, char *query,...)
                                                                                          default:
                                                                                                  break;
                                                                                  }
+                                                                                 sqlca.sqlwarn[0] = sqlca.sqlwarn[1] = 'W';
                                                                          }
                                                                  }
                                                          }
@@ -702,6 +703,7 @@ ECPGdo(int lineno, char *query,...)
                                                                                  default:
                                                                                          break;
                                                                          }
+                                                                         sqlca.sqlwarn[0] = sqlca.sqlwarn[1] = 'W';
     
                                                                          var->len = varcharsize;
                                                                  }

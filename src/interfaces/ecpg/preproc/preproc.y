@@ -643,9 +643,9 @@ output_statement(char * stmt, int mode)
 %type  <str>	group_clause groupby_list groupby having_clause from_clause
 %type  <str>	from_list from_val join_expr join_outer join_spec join_list
 %type  <str> 	join_using where_clause relation_expr row_op sub_type
-%type  <str>	opt_column_list insert_rest InsertStmt
+%type  <str>	opt_column_list insert_rest InsertStmt OptimizableStmt
 %type  <str>    columnList DeleteStmt LockStmt UpdateStmt CursorStmt
-%type  <str>    NotifyStmt columnElem copy_dirn OptimizableStmt
+%type  <str>    NotifyStmt columnElem copy_dirn 
 %type  <str>    copy_delimiter ListenStmt CopyStmt copy_file_name opt_binary
 %type  <str>    opt_with_copy FetchStmt opt_direction fetch_how_many opt_portal_name
 %type  <str>    ClosePortalStmt DestroyStmt VacuumStmt opt_verbose
@@ -691,6 +691,7 @@ output_statement(char * stmt, int mode)
 %type  <action> action
 
 %type  <index>	opt_array_bounds nest_array_bounds
+
 %%
 prog: statements;
 
@@ -735,7 +736,16 @@ stmt:  AddAttrStmt			{ output_statement($1, 0); }
 		| RemoveStmt		{ output_statement($1, 0); }
 		| RenameStmt		{ output_statement($1, 0); }
 		| RevokeStmt		{ output_statement($1, 0); }
-                | OptimizableStmt	{ /* output already written */ }
+                | OptimizableStmt	{
+						if (strncmp($1, "/* declare" , sizeof("/* declare")-1) == 0)
+						{
+							fputs($1, yyout);
+							output_line_number();
+							free($1);
+						}
+						else
+							output_statement($1, 1);
+					}
 		| RuleStmt		{ output_statement($1, 0); }
 		| TransactionStmt	{
 						fprintf(yyout, "ECPGtrans(__LINE__, \"%s\");", $1);
@@ -1989,7 +1999,7 @@ OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
 		| OptStmtMulti OptimizableStmt
 				{  $$ = cat2_str($1, $2); }
 		| OptimizableStmt ';'
-				{ $$ = $1; }
+				{ $$ = cat2_str($1, make1_str(";")); }
 		;
 
 event_object:  relation_name '.' attr_name
@@ -2197,17 +2207,12 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
  *																			 *
  *****************************************************************************/
 
-OptimizableStmt:  SelectStmt 	{ output_statement($1, 1); }
-		| CursorStmt 	
-		    {
-		      fputs($1, yyout);
-		      output_line_number();
-		      free($1);
-		    }
-		| UpdateStmt  	{ output_statement($1, 0); }
-		| InsertStmt  	{ output_statement($1, 0); }
-		| NotifyStmt  	{ output_statement($1, 0); }
-		| DeleteStmt  	{ output_statement($1, 0); }
+OptimizableStmt:  SelectStmt
+		| CursorStmt
+		| UpdateStmt
+		| InsertStmt
+		| NotifyStmt
+		| DeleteStmt
 		;
 
 
@@ -2334,7 +2339,7 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 						cur = this;
 					}
 
-					$$ = cat5_str(make1_str("/* declare cursor\""), $2, make1_str("\"statement has been moved to location of open cursor \""), strdup($2), make1_str("\"statement. */"));
+					$$ = make5_str(make1_str("/* declare cursor \""), $2, make1_str("\" statement has been moved to location of open cursor \""), strdup($2), make1_str("\" statement. */"));
 				}
 		;
 
@@ -4584,7 +4589,7 @@ cinputvariable : cvariable indicator {
 		add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
 }
 
-civariableonly : cvariable name {
+civariableonly : cvariable {
 		add_variable(&argsinsert, find_variable($1), &no_indicator); 
 }
 

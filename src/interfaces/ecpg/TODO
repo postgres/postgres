@@ -3,6 +3,14 @@ section of the structure variable for ecpg to be able to understand it.
 
 Variable type bool has to be checked. I never used it so far.
 
+The error message for "no data" in an exec sql insert select from statement
+has to be 100.
+
+sqlwarn[6] should be 'W' if the PRECISION or SCALE value specified in a SET
+DESCRIPTOR statement will be ignored.
+
+it would be nice to be able to use :var[:index] as cvariable
+
 Missing statements:
  - exec sql type
  - exec sql define
@@ -10,3 +18,4 @@ Missing statements:
  - exec sql allocate
  - exqc sql free
  - SQLSTATE
+ - exec sql whenever sqlwarning
