@@ -226,6 +226,7 @@ char buf[128];
 
 		CheckDlgButton(hdlg, DS_SHOWOIDCOLUMN, atoi(ci->show_oid_column));
 		CheckDlgButton(hdlg, DS_FAKEOIDINDEX, atoi(ci->fake_oid_index));
+		CheckDlgButton(hdlg, DS_ROWVERSIONING, atoi(ci->row_versioning));
 		CheckDlgButton(hdlg, DS_SHOWSYSTEMTABLES, atoi(ci->show_system_tables));
 
 		EnableWindow(GetDlgItem(hdlg, DS_FAKEOIDINDEX), atoi(ci->show_oid_column));
@@ -273,6 +274,8 @@ char buf[128];
 
 			sprintf(ci->show_system_tables, "%d", IsDlgButtonChecked(hdlg, DS_SHOWSYSTEMTABLES));
 
+			sprintf(ci->row_versioning, "%d", IsDlgButtonChecked(hdlg, DS_ROWVERSIONING));
+
 			/*	OID Options*/
 			sprintf(ci->fake_oid_index, "%d", IsDlgButtonChecked(hdlg, DS_FAKEOIDINDEX));
 			sprintf(ci->show_oid_column, "%d", IsDlgButtonChecked(hdlg, DS_SHOWOIDCOLUMN));
@@ -297,7 +300,7 @@ makeConnectString(char *connect_string, ConnInfo *ci)
 {
 char got_dsn = (ci->dsn[0] != '\0');
 
-	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;READONLY=%s;PWD=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s", 
+	sprintf(connect_string, "%s=%s;DATABASE=%s;SERVER=%s;PORT=%s;UID=%s;READONLY=%s;PWD=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s", 
 		got_dsn ? "DSN" : "DRIVER", 
 		got_dsn ? ci->dsn : ci->driver,
 		ci->database,
@@ -310,6 +313,7 @@ char got_dsn = (ci->dsn[0] != '\0');
 //		ci->unknown_sizes,  -- currently only needed in Driver options.
 		ci->fake_oid_index,
 		ci->show_oid_column,
+		ci->row_versioning,
 		ci->show_system_tables,
 		ci->conn_settings);
 }
@@ -355,6 +359,9 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 	else if (stricmp(attribute, INI_FAKEOIDINDEX) == 0)
 		strcpy(ci->fake_oid_index, value);
 
+	else if (stricmp(attribute, INI_ROWVERSIONING) == 0)
+		strcpy(ci->row_versioning, value);
+
 	else if (stricmp(attribute, INI_SHOWSYSTEMTABLES) == 0)
 		strcpy(ci->show_system_tables, value);
 
@@ -398,6 +405,8 @@ getDSNdefaults(ConnInfo *ci)
 	if (ci->show_system_tables[0] == '\0')
 		sprintf(ci->show_system_tables, "%d", DEFAULT_SHOWSYSTEMTABLES);
 
+	if (ci->row_versioning[0] == '\0')
+		sprintf(ci->row_versioning, "%d", DEFAULT_ROWVERSIONING);
 }
 
 
@@ -447,6 +456,9 @@ char *DSN = ci->dsn;
 
 	if ( ci->fake_oid_index[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_FAKEOIDINDEX, "", ci->fake_oid_index, sizeof(ci->fake_oid_index), ODBC_INI);
+
+	if ( ci->row_versioning[0] == '\0' || overwrite)
+		SQLGetPrivateProfileString(DSN, INI_ROWVERSIONING, "", ci->row_versioning, sizeof(ci->row_versioning), ODBC_INI);
 
 	if ( ci->show_system_tables[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_SHOWSYSTEMTABLES, "", ci->show_system_tables, sizeof(ci->show_system_tables), ODBC_INI);
@@ -531,6 +543,11 @@ char *DSN = ci->dsn;
 		SQLWritePrivateProfileString(DSN,
 			INI_FAKEOIDINDEX,
 			ci->fake_oid_index,
+			ODBC_INI);
+
+		SQLWritePrivateProfileString(DSN,
+			INI_ROWVERSIONING,
+			ci->row_versioning,
 			ODBC_INI);
 
 		SQLWritePrivateProfileString(DSN,

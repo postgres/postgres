@@ -50,8 +50,8 @@ typedef UInt4 Oid;
 /* Driver stuff */
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.30.0244 PostgreSQL 6.3"
-#define POSTGRESDRIVERVERSION  "06.30.0244"
+#define DBMS_VERSION           "06.30.0246 PostgreSQL 6.3"
+#define POSTGRESDRIVERVERSION  "06.30.0246"
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
 
 

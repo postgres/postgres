@@ -58,6 +58,7 @@
 #define PG_TYPE_DATE       1082
 #define PG_TYPE_TIME       1083
 #define PG_TYPE_DATETIME   1184
+#define PG_TYPE_TIMESTAMP  1296
 
 extern Int4 pgtypes_defined[];
 

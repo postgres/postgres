@@ -46,11 +46,14 @@ static struct {
 RETCODE SQL_API SQLAllocStmt(HDBC      hdbc,
                              HSTMT FAR *phstmt)
 {
+char *func="SQLAllocStmt";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 StatementClass *stmt;
 
-	if( ! conn)
+	if( ! conn) {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	stmt = SC_Constructor();
 
@@ -60,12 +63,14 @@ StatementClass *stmt;
 		conn->errornumber = CONN_STMT_ALLOC_ERROR;
 		conn->errormsg = "No more memory to allocate a further SQL-statement";
 		*phstmt = SQL_NULL_HSTMT;
+		CC_log_error(func, "", conn);
 		return SQL_ERROR;
 	}
 
     if ( ! CC_add_statement(conn, stmt)) {
         conn->errormsg = "Maximum number of connections exceeded.";
         conn->errornumber = CONN_STMT_ALLOC_ERROR;
+		CC_log_error(func, "", conn);
         SC_Destructor(stmt);
 		*phstmt = SQL_NULL_HSTMT;
         return SQL_ERROR;
@@ -80,12 +85,15 @@ StatementClass *stmt;
 RETCODE SQL_API SQLFreeStmt(HSTMT     hstmt,
                             UWORD     fOption)
 {
+char *func="SQLFreeStmt";
 StatementClass *stmt = (StatementClass *) hstmt;
 
 	mylog("**** enter SQLFreeStmt: hstmt=%u, fOption=%d\n", hstmt, fOption);
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	if (fOption == SQL_DROP) {
 		ConnectionClass *conn = stmt->hdbc;
@@ -95,6 +103,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 			if ( ! CC_remove_statement(conn, stmt)) {
 				stmt->errornumber = STMT_SEQUENCE_ERROR;
 				stmt->errormsg = "Statement is currently executing a transaction.";
+				SC_log_error(func, "", stmt);
 				return SQL_ERROR;  /* stmt may be executing a transaction */
 			}
 
@@ -116,9 +125,11 @@ StatementClass *stmt = (StatementClass *) hstmt;
 
 		/* this should discard all the results, but leave the statement */
 		/* itself in place (it can be executed again) */
-        if (!SC_recycle_statement(stmt))
+        if (!SC_recycle_statement(stmt)) {
 			//	errormsg passed in above
+			SC_log_error(func, "", stmt);
             return SQL_ERROR;
+		}
 
     } else if(fOption == SQL_RESET_PARAMS) {
 		SC_free_params(stmt, STMT_FREE_PARAMS_ALL);
@@ -126,6 +137,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
     } else {
         stmt->errormsg = "Invalid option passed to SQLFreeStmt.";
         stmt->errornumber = STMT_OPTION_OUT_OF_RANGE_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
     
@@ -447,6 +459,7 @@ char rv;
 
 RETCODE SC_execute(StatementClass *self)
 {
+char *func="SC_execute";
 ConnectionClass *conn;
 QResultClass *res;
 char ok, was_ok, was_nonfatal;
@@ -466,6 +479,7 @@ Int2 oldstatus, numcols;
 		if ( ! res) {
 			self->errormsg = "Could not begin a transaction";
 			self->errornumber = STMT_EXEC_ERROR;
+			SC_log_error(func, "", self);
 			return SQL_ERROR;
 		}
 		
@@ -478,6 +492,7 @@ Int2 oldstatus, numcols;
 		if (!ok) {
 			self->errormsg = "Could not begin a transaction";
 			self->errornumber = STMT_EXEC_ERROR;
+			SC_log_error(func, "", self);
 			return SQL_ERROR;
 		}
 		else
@@ -554,6 +569,7 @@ Int2 oldstatus, numcols;
 			if (self->bindings == NULL) {
 				self->errornumber = STMT_NO_MEMORY_ERROR;
 				self->errormsg = "Could not get enough free memory to store the binding information";
+				SC_log_error(func, "", self);
 				return SQL_ERROR;
 			}
 		}
@@ -582,6 +598,43 @@ Int2 oldstatus, numcols;
 	else if (self->errornumber == STMT_INFO_ONLY)
 		return SQL_SUCCESS_WITH_INFO;
 
-	else 
+	else {
+		SC_log_error(func, "", self);
 		return SQL_ERROR;
+	}
 }
+
+void
+SC_log_error(char *func, char *desc, StatementClass *self)
+{
+	if (self) {
+		qlog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+		qlog("                 ------------------------------------------------------------\n");
+		qlog("                 hdbc=%u, stmt=%u, result=%u\n", self->hdbc, self, self->result);
+		qlog("                 manual_result=%d, prepare=%d, internal=%d\n", self->manual_result, self->prepare, self->internal);
+		qlog("                 bindings=%u, bindings_allocated=%d\n", self->bindings, self->bindings_allocated);
+		qlog("                 parameters=%u, parameters_allocated=%d\n", self->parameters, self->parameters_allocated);
+		qlog("                 statement_type=%d, statement='%s'\n", self->statement_type, self->statement);
+		qlog("                 stmt_with_params='%s'\n", self->stmt_with_params);
+		qlog("                 data_at_exec=%d, current_exec_param=%d, put_data=%d\n", self->data_at_exec, self->current_exec_param, self->put_data);
+		qlog("                 currTuple=%d, current_col=%d, lobj_fd=%d\n", self->currTuple, self->current_col, self->lobj_fd);
+		qlog("                 maxRows=%d, rowset_size=%d, keyset_size=%d, cursor_type=%d, scroll_concurrency=%d\n", self->maxRows, self->rowset_size, self->keyset_size, self->cursor_type, self->scroll_concurrency);
+		qlog("                 cursor_name='%s'\n", self->cursor_name);
+
+		qlog("                 ----------------QResult Info -------------------------------\n");
+
+		if (self->result) {
+		QResultClass *res = self->result;
+		qlog("                 fields=%u, manual_tuples=%u, backend_tuples=%u, tupleField=%d, conn=%u\n", res->fields, res->manual_tuples, res->backend_tuples, res->tupleField, res->conn);
+		qlog("                 fetch_count=%d, fcount=%d, num_fields=%d, cursor='%s'\n", res->fetch_count, res->fcount, res->num_fields, res->cursor);
+		qlog("                 message='%s', command='%s', notice='%s'\n", res->message, res->command, res->notice);
+		qlog("                 status=%d, inTuples=%d\n", res->status, res->inTuples);
+		}
+	
+		//	Log the connection error if there is one
+		CC_log_error(func, desc, self->hdbc);
+	}
+	else
+		qlog("INVALID STATEMENT HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+}
+

@@ -45,24 +45,19 @@ RETCODE SQL_API SQLGetInfo(
         SWORD     cbInfoValueMax,
         SWORD FAR *pcbInfoValue)
 {
+char *func = "SQLGetInfo";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 char *p;
 
-    if ( ! conn) 
-       return SQL_INVALID_HANDLE;
+	if ( ! conn) {
+		CC_log_error(func, "", NULL);
+		return SQL_INVALID_HANDLE;
+	}
 
-    /* CC: Some sanity checks */
-    if ((NULL == (char *)rgbInfoValue) ||
-        (cbInfoValueMax == 0))
-
-        /* removed: */
-        /* || (NULL == pcbInfoValue) */
-
-        /* pcbInfoValue is ignored for non-character output. */
-        /* some programs (at least Microsoft Query) seem to just send a NULL, */
-        /* so let them get away with it... */
-
+    if (NULL == (char *)rgbInfoValue) {
+		CC_log_error(func, "Bad rgbInfoValue", conn);
         return SQL_INVALID_HANDLE;
+	}
 
 
     switch (fInfoType) {
@@ -70,13 +65,13 @@ char *p;
         // can the user call all functions returned by SQLProcedures?
         // I assume access permissions could prevent this in some cases(?)
         // anyway, SQLProcedures doesn't exist yet.
-        *pcbInfoValue = 1;
+        if (pcbInfoValue) *pcbInfoValue = 1;
         strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
         break;
 
     case SQL_ACCESSIBLE_TABLES: /* ODBC 1.0 */
         // is the user guaranteed "SELECT" on every table?
-        *pcbInfoValue = 1;
+        if (pcbInfoValue) *pcbInfoValue = 1;
         strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
         break;
 
@@ -108,7 +103,7 @@ char *p;
 
     case SQL_COLUMN_ALIAS: /* ODBC 2.0 */
         // do we support column aliases?  guess not.
-        *pcbInfoValue = 1;
+        if (pcbInfoValue) *pcbInfoValue = 1;
         strncpy_null((char *)rgbInfoValue, "N", (size_t)cbInfoValueMax);
         break;
 
@@ -294,6 +289,7 @@ char *p;
         // do this later
         conn->errormsg = "SQL_KEYWORDS parameter to SQLGetInfo not implemented.";
         conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
+		CC_log_error(func, "", conn);
         return SQL_ERROR;
         break;
 
@@ -398,7 +394,7 @@ char *p;
     case SQL_MAX_ROW_SIZE_INCLUDES_LONG: /* ODBC 2.0 */
         // does the preceding value include LONGVARCHAR and LONGVARBINARY
         // fields?   Well, it does include longvarchar, but not longvarbinary.
-        *pcbInfoValue = 1;
+        if (pcbInfoValue) *pcbInfoValue = 1;
         strncpy_null((char *)rgbInfoValue, "Y", (size_t)cbInfoValueMax);
         break;
 
@@ -715,6 +711,7 @@ char *p;
         /* unrecognized key */
         conn->errormsg = "Unrecognized key passed to SQLGetInfo.";
         conn->errornumber = CONN_NOT_IMPLEMENTED_ERROR;
+		CC_log_error(func, "", conn);
         return SQL_ERROR;
     }
 
@@ -728,6 +725,7 @@ RETCODE SQL_API SQLGetTypeInfo(
         HSTMT   hstmt,
         SWORD   fSqlType)
 {
+char *func = "SQLGetTypeInfo";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 int i;
@@ -736,12 +734,14 @@ Int4 type;
 	mylog("**** in SQLGetTypeInfo: fSqlType = %d\n", fSqlType);
 
 	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
 
 	stmt->manual_result = TRUE;
 	stmt->result = QR_Constructor();
 	if( ! stmt->result) {
+		SC_log_error(func, "Error creating result.", stmt);
 		return SQL_ERROR;
 	}
 
@@ -976,6 +976,7 @@ RETCODE SQL_API SQLTables(
                           UCHAR FAR * szTableType,
                           SWORD       cbTableType)
 {
+char *func = "SQLTables";
 StatementClass *stmt = (StatementClass *) hstmt;
 StatementClass *tbl_stmt;
 TupleNode *row;
@@ -993,8 +994,10 @@ int i;
 
 mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
@@ -1005,6 +1008,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		stmt->errormsg = "Couldn't allocate statement for SQLTables result.";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 	tbl_stmt = (StatementClass *) htbl_stmt;
@@ -1086,6 +1090,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
@@ -1095,6 +1100,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1104,6 +1110,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1112,6 +1119,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1120,6 +1128,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	if(!stmt->result) {
 		stmt->errormsg = "Couldn't allocate memory for SQLTables result.";
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
@@ -1201,6 +1210,7 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	if(result != SQL_NO_DATA_FOUND) {
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
@@ -1229,6 +1239,7 @@ RETCODE SQL_API SQLColumns(
                            UCHAR FAR *  szColumnName,
                            SWORD        cbColumnName)
 {
+char *func = "SQLColumns";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 HSTMT hcol_stmt;
@@ -1238,6 +1249,7 @@ RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
 Int2 field_number, field_length, mod_length;
 Int4 field_type;
+Int2 the_type;
 char not_null[MAX_INFO_STRING];
 ConnInfo *ci;
 
@@ -1245,8 +1257,10 @@ ConnInfo *ci;
 
 mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
@@ -1273,6 +1287,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		stmt->errormsg = "Couldn't allocate statement for SQLColumns result.";
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 	col_stmt = (StatementClass *) hcol_stmt;
@@ -1282,6 +1297,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1291,6 +1307,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1300,6 +1317,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1309,6 +1327,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1318,6 +1337,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1327,6 +1347,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1336,6 +1357,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1345,6 +1367,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1354,6 +1377,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1363,6 +1387,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1371,6 +1396,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if(!stmt->result) {
 		stmt->errormsg = "Couldn't allocate memory for SQLColumns result.";
         stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1402,33 +1428,37 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 		Always show OID if its a system table
 	*/
 
-	if (result != SQL_ERROR && ! stmt->internal &&
-		(atoi(ci->show_oid_column) || strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0)) {
+	if (result != SQL_ERROR && ! stmt->internal) {
 
-		/*	For OID fields */
-		row = (TupleNode *)malloc(sizeof(TupleNode) +
-								  (12 - 1) * sizeof(TupleField));
+		if (atoi(ci->show_oid_column) || strncmp(table_name, POSTGRES_SYS_PREFIX, strlen(POSTGRES_SYS_PREFIX)) == 0) {
 
-		set_tuplefield_string(&row->tuple[0], "");
-		// see note in SQLTables()
-		//      set_tuplefield_string(&row->tuple[1], table_owner);
-		set_tuplefield_string(&row->tuple[1], "");
-		set_tuplefield_string(&row->tuple[2], table_name);
-		set_tuplefield_string(&row->tuple[3], "oid");
-		set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, PG_TYPE_OID));
-		set_tuplefield_string(&row->tuple[5], "OID");
+			/*	For OID fields */
+			the_type = PG_TYPE_OID;
+			row = (TupleNode *)malloc(sizeof(TupleNode) +
+									  (12 - 1) * sizeof(TupleField));
 
-		set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, PG_TYPE_OID, PG_STATIC,
-		PG_STATIC));
-		set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, PG_TYPE_OID, PG_STATIC,
-		PG_STATIC));
+			set_tuplefield_string(&row->tuple[0], "");
+			// see note in SQLTables()
+			//      set_tuplefield_string(&row->tuple[1], table_owner);
+			set_tuplefield_string(&row->tuple[1], "");
+			set_tuplefield_string(&row->tuple[2], table_name);
+			set_tuplefield_string(&row->tuple[3], "oid");
+			set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, the_type));
+			set_tuplefield_string(&row->tuple[5], "OID");
 
-		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, PG_TYPE_OID));
-		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, PG_TYPE_OID));
-		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
-		set_tuplefield_string(&row->tuple[11], "");
+			set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC,
+			PG_STATIC));
+			set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC,
+			PG_STATIC));
 
-		QR_add_tuple(stmt->result, row);
+			set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type));
+			set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
+			set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
+			set_tuplefield_string(&row->tuple[11], "");
+
+			QR_add_tuple(stmt->result, row);
+		}
+
 	}
 
     while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
@@ -1484,9 +1514,35 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     if(result != SQL_NO_DATA_FOUND) {
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
 		stmt->errornumber = col_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(hcol_stmt, SQL_DROP);
         return SQL_ERROR;
     }
+
+	//	Put the row version column at the end so it might not be
+	//	mistaken for a key field.
+	if ( ! stmt->internal && atoi(ci->row_versioning)) {
+		/*	For Row Versioning fields */
+		the_type = PG_TYPE_INT4;
+
+		row = (TupleNode *)malloc(sizeof(TupleNode) +
+								  (12 - 1) * sizeof(TupleField));
+
+		set_tuplefield_string(&row->tuple[0], "");
+		set_tuplefield_string(&row->tuple[1], "");
+		set_tuplefield_string(&row->tuple[2], table_name);
+		set_tuplefield_string(&row->tuple[3], "xmin");
+		set_tuplefield_int2(&row->tuple[4], pgtype_to_sqltype(stmt, the_type));
+		set_tuplefield_string(&row->tuple[5], pgtype_to_name(stmt, the_type));
+		set_tuplefield_int4(&row->tuple[6], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_tuplefield_int4(&row->tuple[7], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
+		set_nullfield_int2(&row->tuple[8], pgtype_scale(stmt, the_type));
+		set_nullfield_int2(&row->tuple[9], pgtype_radix(stmt, the_type));
+		set_tuplefield_int2(&row->tuple[10], SQL_NO_NULLS);
+		set_tuplefield_string(&row->tuple[11], "");
+
+		QR_add_tuple(stmt->result, row);
+	}
 
     // also, things need to think that this statement is finished so
     // the results can be retrieved.
@@ -1513,14 +1569,20 @@ RETCODE SQL_API SQLSpecialColumns(
                                   UWORD        fScope,
                                   UWORD        fNullable)
 {
+char *func = "SQLSpecialColumns";
 TupleNode *row;
 StatementClass *stmt = (StatementClass *) hstmt;
+ConnInfo *ci;
+
 
 mylog("**** SQLSpecialColumns(): ENTER,  stmt=%u\n", stmt);
 
     if( ! stmt) {
+		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
     }
+	ci = &stmt->hdbc->connInfo;
+
 	stmt->manual_result = TRUE;
     stmt->result = QR_Constructor();
     extend_bindings(stmt, 8);
@@ -1551,11 +1613,24 @@ mylog("**** SQLSpecialColumns(): ENTER,  stmt=%u\n", stmt);
         QR_add_tuple(stmt->result, row);
 
     } else if(fColType == SQL_ROWVER) {
-        /* can columns automatically update? */
-        /* for now assume no. */
-        /* return an empty result. */
-    }
 
+		Int2 the_type = PG_TYPE_INT4;
+
+		if (atoi(ci->row_versioning)) {
+			row = (TupleNode *)malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
+
+			set_tuplefield_null(&row->tuple[0]);
+			set_tuplefield_string(&row->tuple[1], "xmin");
+			set_tuplefield_int2(&row->tuple[2], pgtype_to_sqltype(stmt, the_type));
+			set_tuplefield_string(&row->tuple[3], pgtype_to_name(stmt, the_type));
+			set_tuplefield_int4(&row->tuple[4], pgtype_precision(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int4(&row->tuple[5], pgtype_length(stmt, the_type, PG_STATIC, PG_STATIC));
+			set_tuplefield_int2(&row->tuple[6], pgtype_scale(stmt, the_type));
+			set_tuplefield_int2(&row->tuple[7], SQL_PC_PSEUDO);
+
+			QR_add_tuple(stmt->result, row);
+		}
+	}
     stmt->status = STMT_FINISHED;
     stmt->currTuple = -1;
 	stmt->current_col = -1;
@@ -1575,6 +1650,7 @@ RETCODE SQL_API SQLStatistics(
                               UWORD         fUnique,
                               UWORD         fAccuracy)
 {
+char *func="SQLStatistics";
 StatementClass *stmt = (StatementClass *) hstmt;
 char index_query[MAX_STATEMENT_LEN];
 HSTMT hindx_stmt;
@@ -1599,6 +1675,7 @@ char buf[256];
 mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 
     if( ! stmt) {
+		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
     }
 
@@ -1611,6 +1688,7 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
     if(!stmt->result) {
         stmt->errormsg = "Couldn't allocate memory for SQLStatistics result.";
         stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -1641,6 +1719,7 @@ mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
 	if ( ! table_name) {
         stmt->errormsg = "No table name passed to SQLStatistics.";
         stmt->errornumber = STMT_INTERNAL_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -1887,8 +1966,10 @@ SEEYA:
 
 	mylog("SQLStatistics(): EXIT, %s, stmt=%u\n", error ? "error" : "success", stmt);
 
-	if (error)
+	if (error) {
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
+	}
 	else
 		return SQL_SUCCESS;
 }
@@ -1904,13 +1985,17 @@ RETCODE SQL_API SQLColumnPrivileges(
                                     UCHAR FAR *  szColumnName,
                                     SWORD        cbColumnName)
 {
+char *func="SQLColumnPrivileges";
 /*	Neither Access or Borland care about this. */
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
 }
 
 RETCODE
 getPrimaryKeyString(StatementClass *stmt, char *szTableName, SWORD cbTableName, char *svKey, int *nKey)
 {
+char *func = "getPrimaryKeyString";
 HSTMT htbl_stmt;
 StatementClass *tbl_stmt;
 RETCODE result;
@@ -1930,6 +2015,7 @@ int nk = 0;
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		stmt->errormsg = "Couldn't allocate statement for Primary Key result.";
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 	tbl_stmt = (StatementClass *) htbl_stmt;
@@ -1940,6 +2026,7 @@ int nk = 0;
 
 		stmt->errormsg = "No Table specified to getPrimaryKeyString.";
 	    stmt->errornumber = STMT_INTERNAL_ERROR;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
@@ -1950,6 +2037,7 @@ int nk = 0;
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1959,6 +2047,7 @@ int nk = 0;
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -1977,6 +2066,7 @@ int nk = 0;
     if(result != SQL_NO_DATA_FOUND) {
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -2034,6 +2124,7 @@ RETCODE SQL_API SQLPrimaryKeys(
                                UCHAR FAR *   szTableName,
                                SWORD         cbTableName)
 {
+char *func = "SQLPrimaryKeys";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 RETCODE result;
@@ -2043,6 +2134,7 @@ int seq = 1, nkeys = 0;
 mylog("**** SQLPrimaryKeys(): ENTER, stmt=%u\n", stmt);
 
     if( ! stmt) {
+		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
     }
 	stmt->manual_result = TRUE;
@@ -2068,6 +2160,7 @@ mylog("**** SQLPrimaryKeys(): ENTER, stmt=%u\n", stmt);
     if(!stmt->result) {
         stmt->errormsg = "Couldn't allocate memory for SQLPrimaryKeys result.";
         stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -2137,6 +2230,7 @@ RETCODE SQL_API SQLForeignKeys(
                                UCHAR FAR *   szFkTableName,
                                SWORD         cbFkTableName)
 {
+char *func = "SQLForeignKeys";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 HSTMT htbl_stmt;
@@ -2156,6 +2250,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
 	memset(primaryKey, 0, sizeof(primaryKey));
 
     if( ! stmt) {
+		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
     }
 	stmt->manual_result = TRUE;
@@ -2165,6 +2260,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys result.";
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -2224,6 +2320,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
 	else {
 		stmt->errormsg = "No tables specified to SQLForeignKeys.";
 		stmt->errornumber = STMT_INTERNAL_ERROR;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
@@ -2232,6 +2329,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
     	SQLFreeStmt(htbl_stmt, SQL_DROP);
 	    return SQL_ERROR;
     }
@@ -2241,6 +2339,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -2249,6 +2348,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -2258,6 +2358,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = tbl_stmt->errormsg;
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -2266,6 +2367,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if(!stmt->result) {
 		stmt->errormsg = "Couldn't allocate memory for SQLForeignKeys result.";
         stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -2356,6 +2458,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     if(result != SQL_NO_DATA_FOUND) {
 		stmt->errormsg = SC_create_errormsg(htbl_stmt);
 		stmt->errornumber = tbl_stmt->errornumber;
+		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
         return SQL_ERROR;
     }
@@ -2387,6 +2490,9 @@ RETCODE SQL_API SQLProcedureColumns(
                                     UCHAR FAR *   szColumnName,
                                     SWORD         cbColumnName)
 {
+char *func="SQLProcedureColumns";
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
 }
 
@@ -2399,6 +2505,9 @@ RETCODE SQL_API SQLProcedures(
                               UCHAR FAR *    szProcName,
                               SWORD          cbProcName)
 {
+char *func="SQLProcedures";
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
 }
 
@@ -2411,5 +2520,8 @@ RETCODE SQL_API SQLTablePrivileges(
                                    UCHAR FAR *     szTableName,
                                    SWORD           cbTableName)
 {
+char *func="SQLTablePrivileges";
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
 }

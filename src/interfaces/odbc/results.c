@@ -36,12 +36,15 @@ RETCODE SQL_API SQLRowCount(
         HSTMT      hstmt,
         SDWORD FAR *pcrow)
 {
+char *func="SQLRowCount";
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *res;
 char *msg, *ptr;
 
-	if ( ! stmt)
-		return SQL_ERROR;
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
+		return SQL_INVALID_HANDLE;
+	}
 
 	if(stmt->statement_type == STMT_TYPE_SELECT) {
 		if (stmt->status == STMT_FINISHED) {
@@ -74,6 +77,7 @@ char *msg, *ptr;
 		}
 	}
 
+	SC_log_error(func, "Bad return value", stmt);
 	return SQL_ERROR;     
 }
 
@@ -86,11 +90,14 @@ RETCODE SQL_API SQLNumResultCols(
         HSTMT     hstmt,
         SWORD FAR *pccol)
 {       
+char *func="SQLNumResultCols";
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *result;
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	SC_clear_error(stmt);    
 
@@ -109,6 +116,7 @@ QResultClass *result;
 		/* no query has been executed on this statement */
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		stmt->errormsg = "No query has been executed with that handle";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -133,6 +141,7 @@ RETCODE SQL_API SQLDescribeCol(
         SWORD  FAR *pibScale,
         SWORD  FAR *pfNullable)
 {
+char *func="SQLDescribeCol";
     /* gets all the information about a specific column */
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *result;
@@ -141,8 +150,10 @@ Int4 fieldtype;
 int p;
 ConnInfo *ci;
 
-    if ( ! stmt)
+    if ( ! stmt) {
+		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
+	}
 
 	ci = &(stmt->hdbc->connInfo);
 
@@ -162,6 +173,7 @@ ConnInfo *ci;
         /* no query has been executed on this statement */
         stmt->errornumber = STMT_SEQUENCE_ERROR;
         stmt->errormsg = "No query has been assigned to this statement.";
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -169,6 +181,7 @@ ConnInfo *ci;
         // we do not support bookmarks
         stmt->errormsg = "Bookmarks are not currently supported.";
         stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -255,14 +268,17 @@ RETCODE SQL_API SQLColAttributes(
         SWORD  FAR *pcbDesc,
         SDWORD FAR *pfDesc)
 {
+char *func = "SQLColAttributes";
 StatementClass *stmt = (StatementClass *) hstmt;
 char *value;
 Int4 field_type;
 ConnInfo *ci;
 int unknown_sizes;
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	ci = &(stmt->hdbc->connInfo);
 
@@ -277,6 +293,7 @@ int unknown_sizes;
 	if ( (NULL == stmt->result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE)) ) {
 		stmt->errormsg = "Can't get column attributes: no result found.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -284,6 +301,7 @@ int unknown_sizes;
 		// we do not support bookmarks
 		stmt->errormsg = "Bookmarks are not currently supported.";
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -436,6 +454,7 @@ RETCODE SQL_API SQLGetData(
         SDWORD     cbValueMax,
         SDWORD FAR *pcbValue)
 {
+char *func="SQLGetData";
 QResultClass *res;
 StatementClass *stmt = (StatementClass *) hstmt;
 int num_cols, num_rows;
@@ -448,6 +467,7 @@ char multiple;
 mylog("SQLGetData: enter, stmt=%u\n", stmt);
 
     if( ! stmt) {
+		SC_log_error(func, "", NULL);
         return SQL_INVALID_HANDLE;
     }
 	res = stmt->result;
@@ -455,18 +475,21 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
     if (STMT_EXECUTING == stmt->status) {
         stmt->errormsg = "Can't get data while statement is still executing.";
         stmt->errornumber = STMT_SEQUENCE_ERROR;
-        return 0;
+		SC_log_error(func, "", stmt);
+        return SQL_ERROR;
     }
 
     if (stmt->status != STMT_FINISHED) {
         stmt->errornumber = STMT_STATUS_ERROR;
         stmt->errormsg = "GetData can only be called after the successful execution on a SQL statement";
-        return 0;
+		SC_log_error(func, "", stmt);
+        return SQL_ERROR;
     }
 
     if (icol == 0) {
         stmt->errormsg = "Bookmarks are not currently supported.";
         stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -478,6 +501,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
     if (icol >= num_cols) {
         stmt->errormsg = "Invalid column number.";
         stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 
@@ -488,6 +512,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 		   (stmt->currTuple >= num_rows)) {
 			stmt->errormsg = "Not positioned on a valid row for GetData.";
 			stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;
+			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 		mylog("     num_rows = %d\n", num_rows);
@@ -503,6 +528,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 		if (stmt->currTuple == -1 || ! res || QR_end_tuples(res)) {
 			stmt->errormsg = "Not positioned on a valid row for GetData.";
 			stmt->errornumber = STMT_INVALID_CURSOR_STATE_ERROR;
+			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 
@@ -531,11 +557,13 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 	case COPY_UNSUPPORTED_TYPE:
 		stmt->errormsg = "Received an unsupported type from Postgres.";
 		stmt->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 
 	case COPY_UNSUPPORTED_CONVERSION:
 		stmt->errormsg = "Couldn't handle the necessary data type conversion.";
 		stmt->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 
 	case COPY_RESULT_TRUNCATED:
@@ -544,14 +572,17 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 		return SQL_SUCCESS_WITH_INFO;
 
 	case COPY_GENERAL_ERROR:	/* error msg already filled in */
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 
 	case COPY_NO_DATA_FOUND:
+		SC_log_error(func, "no data found", stmt);
 		return SQL_NO_DATA_FOUND;
 
     default:
         stmt->errormsg = "Unrecognized return value from copy_and_convert_field.";
         stmt->errornumber = STMT_INTERNAL_ERROR;
+		SC_log_error(func, "", stmt);
         return SQL_ERROR;
     }
 }
@@ -562,6 +593,7 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 RETCODE SQL_API SQLFetch(
         HSTMT   hstmt)
 {
+char *func = "SQLFetch";
 StatementClass *stmt = (StatementClass *) hstmt;   
 QResultClass *res;
 int retval;
@@ -571,14 +603,17 @@ char *value;
 ColumnInfoClass *ci;
 // TupleField *tupleField;
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	SC_clear_error(stmt);
 
 	if ( ! (res = stmt->result)) {
 		stmt->errormsg = "Null statement result in SQLFetch.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -587,6 +622,7 @@ ColumnInfoClass *ci;
 	if (stmt->status == STMT_EXECUTING) {
 		stmt->errormsg = "Can't fetch while statement is still executing.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -594,6 +630,7 @@ ColumnInfoClass *ci;
 	if (stmt->status != STMT_FINISHED) {
 		stmt->errornumber = STMT_STATUS_ERROR;
 		stmt->errormsg = "Fetch can only be called after the successful execution on a SQL statement";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -602,6 +639,7 @@ ColumnInfoClass *ci;
 		// function even if SQL_ExecDirect has reported an Error
 		stmt->errormsg = "Bindings were not allocated properly.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -638,6 +676,7 @@ ColumnInfoClass *ci;
 			mylog("SQLFetch: error\n");
 			stmt->errornumber = STMT_EXEC_ERROR;
 			stmt->errormsg = "Error fetching next row";
+			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 	}
@@ -675,11 +714,13 @@ ColumnInfoClass *ci;
 			if(retval == COPY_UNSUPPORTED_TYPE) {
 				stmt->errormsg = "Received an unsupported type from Postgres.";
 				stmt->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
+				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 
 			} else if(retval == COPY_UNSUPPORTED_CONVERSION) {
 				stmt->errormsg = "Couldn't handle the necessary data type conversion.";
 				stmt->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
+				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 
 			} else if(retval == COPY_RESULT_TRUNCATED) {
@@ -692,6 +733,7 @@ ColumnInfoClass *ci;
 			} else if(retval != COPY_OK) {
 				stmt->errormsg = "Unrecognized return value from copy_and_convert_field.";
 				stmt->errornumber = STMT_INTERNAL_ERROR;
+				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 
 			}
@@ -710,6 +752,7 @@ RETCODE SQL_API SQLExtendedFetch(
         UDWORD FAR *pcrow,
         UWORD  FAR *rgfRowStatus)
 {
+char *func = "SQLExtendedFetch";
 StatementClass *stmt = (StatementClass *) hstmt;
 int num_tuples;
 RETCODE result;
@@ -717,11 +760,15 @@ RETCODE result;
 
 mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
-	if ( globals.use_declarefetch)
+	if ( globals.use_declarefetch) {
+		SC_log_error(func, "SQLExtendedFetch with UseDeclareFetch not yet supported", stmt);
 		return SQL_ERROR;
+	}
 
 	/*	Initialize to no rows fetched */
 	if (rgfRowStatus)
@@ -776,6 +823,7 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 		break;
 
 	default:
+		SC_log_error(func, "Unsupported SQLExtendedFetch Direction", stmt);
 		return SQL_ERROR;   
 
 	}           
@@ -803,7 +851,7 @@ mylog("SQLExtendedFetch: stmt=%u\n", stmt);
 RETCODE SQL_API SQLMoreResults(
         HSTMT   hstmt)
 {
-          return SQL_NO_DATA_FOUND;
+	return SQL_NO_DATA_FOUND;
 }
 
 //      This positions the cursor within a block of data.
@@ -814,7 +862,10 @@ RETCODE SQL_API SQLSetPos(
         UWORD   fOption,
         UWORD   fLock)
 {
-        return SQL_ERROR;
+char *func = "SQLSetPos";
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+	return SQL_ERROR;
 }
 
 //      Sets options that control the behavior of cursors.
@@ -825,7 +876,10 @@ RETCODE SQL_API SQLSetScrollOptions(
         SDWORD  crowKeyset,
         UWORD      crowRowset)
 {
-        return SQL_ERROR;
+char *func = "SQLSetScrollOptions";
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
+	return SQL_ERROR;
 }
 
 
@@ -836,20 +890,24 @@ RETCODE SQL_API SQLSetCursorName(
         UCHAR FAR *szCursor,
         SWORD     cbCursor)
 {
+char *func="SQLSetCursorName";
 StatementClass *stmt = (StatementClass *) hstmt;
 int len;
 
 mylog("SQLSetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d\n",
 	  hstmt, szCursor, cbCursor);
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	len = (cbCursor == SQL_NTS) ? strlen(szCursor) : cbCursor;
 	mylog("cursor len = %d\n", len);
 	if (len <= 0 || len > sizeof(stmt->cursor_name) - 1) {
 		stmt->errornumber = STMT_INVALID_CURSOR_NAME;
 		stmt->errormsg = "Invalid Cursor Name";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 	strncpy_null(stmt->cursor_name, szCursor, cbCursor);
@@ -864,18 +922,22 @@ RETCODE SQL_API SQLGetCursorName(
         SWORD     cbCursorMax,
         SWORD FAR *pcbCursor)
 {
+char *func="SQLGetCursorName";
 StatementClass *stmt = (StatementClass *) hstmt;
 
 mylog("SQLGetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d, pcbCursor=%u\n",
 	  hstmt, szCursor, cbCursorMax, pcbCursor);
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 
 	if ( stmt->cursor_name[0] == '\0') {
 		stmt->errornumber = STMT_NO_CURSOR_NAME;
 		stmt->errormsg = "No Cursor name available";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 

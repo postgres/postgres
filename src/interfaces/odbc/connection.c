@@ -35,7 +35,7 @@ RETCODE SQL_API SQLAllocConnect(
 {
 EnvironmentClass *env = (EnvironmentClass *)henv;
 ConnectionClass *conn;
-
+char *func="SQLAllocConnect";
 
 	conn = CC_Constructor();
 	mylog("**** SQLAllocConnect: henv = %u, conn = %u\n", henv, conn);
@@ -44,6 +44,7 @@ ConnectionClass *conn;
         env->errormsg = "Couldn't allocate memory for Connection object.";
         env->errornumber = ENV_ALLOC_ERROR;
 		*phdbc = SQL_NULL_HDBC;
+		EN_log_error(func, "", env);
         return SQL_ERROR;
     }
 
@@ -52,6 +53,7 @@ ConnectionClass *conn;
         env->errornumber = ENV_ALLOC_ERROR;
         CC_Destructor(conn);
 		*phdbc = SQL_NULL_HDBC;
+		EN_log_error(func, "", env);
         return SQL_ERROR;
     }
 
@@ -74,9 +76,12 @@ RETCODE SQL_API SQLConnect(
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
+char *func = "SQLConnect";
 
-	if ( ! conn) 
+	if ( ! conn) {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	ci = &conn->connInfo;
 
@@ -96,9 +101,11 @@ ConnInfo *ci;
 
 	qlog("conn = %u, SQLConnect(DSN='%s', UID='%s', PWD='%s')\n", ci->dsn, ci->username, ci->password);
 
-	if ( CC_connect(conn, FALSE) <= 0)
+	if ( CC_connect(conn, FALSE) <= 0) {
 		//	Error messages are filled in
+		CC_log_error(func, "Error on CC_connect", conn);
 		return SQL_ERROR;
+	}
 
 	return SQL_SUCCESS;
 }
@@ -123,17 +130,21 @@ RETCODE SQL_API SQLDisconnect(
         HDBC      hdbc)
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+char *func = "SQLDisconnect";
 
 	mylog("**** in SQLDisconnect\n");
 
-	if ( ! conn) 
+	if ( ! conn) {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	qlog("conn=%u, SQLDisconnect\n", conn);
 
 	if (conn->status == CONN_EXECUTING) {
 		conn->errornumber = CONN_IN_USE;
 		conn->errormsg = "A transaction is currently being executed";
+		CC_log_error(func, "", conn);
 		return SQL_ERROR;
 	}
 
@@ -155,16 +166,20 @@ RETCODE SQL_API SQLFreeConnect(
         HDBC      hdbc)
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+char *func = "SQLFreeConnect";
 
 	mylog("**** in SQLFreeConnect: hdbc=%u\n", hdbc);
 
-	if ( ! conn) 
+	if ( ! conn) {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	/*  Remove the connection from the environment */
 	if ( ! EN_remove_connection(conn->henv, conn)) {
 		conn->errornumber = CONN_IN_USE;
 		conn->errormsg = "A transaction is currently being executed";
+		CC_log_error(func, "", conn);
 		return SQL_ERROR;
 	}
 
@@ -577,8 +592,9 @@ char salt[2];
 	/*******   Send any initial settings  *********/
 	/**********************************************/
 
-	if ( ! CC_send_settings(self))
-		return 0;
+	//	The Unix iodbc errors out on this call because it allocates a statement
+	//	before the connection is established.  Therefore, don't check for error here.
+	CC_send_settings(self);
 
 	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
 
@@ -1155,6 +1171,27 @@ RETCODE result;
 	result = SQLFreeStmt(hstmt, SQL_DROP);
 }
 
+void
+CC_log_error(char *func, char *desc, ConnectionClass *self)
+{
+	if (self) {
+		qlog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+		qlog("            ------------------------------------------------------------\n");
+		qlog("            henv=%u, conn=%u, status=%u, num_stmts=%d\n", self->henv, self, self->status, self->num_stmts);
+		qlog("            sock=%u, stmts=%u, lobj_type=%d\n", self->sock, self->stmts, self->lobj_type);
+
+		qlog("            ---------------- Socket Info -------------------------------\n");
+		if (self->sock) {
+		SocketClass *sock = self->sock;
+		qlog("            socket=%d, reverse=%d, errornumber=%d, errormsg='%s'\n", sock->socket, sock->reverse, sock->errornumber, sock->errormsg);
+		qlog("            buffer_in=%u, buffer_out=%u\n", sock->buffer_in, sock->buffer_out);
+		qlog("            buffer_filled_in=%d, buffer_filled_out=%d, buffer_read_in=%d\n", sock->buffer_filled_in, sock->buffer_filled_out, sock->buffer_read_in);
+		}
+	}
+	else
+		qlog("INVALID CONNECTION HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
+}
+
 /*
 void
 CC_test(ConnectionClass *self)
@@ -1165,23 +1202,28 @@ SDWORD pcbValue;
 UDWORD pcrow;
 UWORD rgfRowStatus;
 char buf[255];
+SDWORD buflen;
+DATE_STRUCT *ds;
 
 	result = SQLAllocStmt( self, &hstmt1);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return;
 	}
 
-	result = SQLExtendedFetch(hstmt1, SQL_FETCH_ABSOLUTE, -2, &pcrow, &rgfRowStatus);
-	SQLGetData(hstmt1, 1, SQL_C_CHAR, buf, sizeof(buf), &pcbValue);
-	qlog("FETCH_ABSOLUTE, -2: result=%d, Col1 = '%s'\n", result, buf);
+	result = SQLExecDirect(hstmt1, "select * from cpar", SQL_NTS);
+	qlog("exec result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 2, SQL_C_DATE, buf, 0, &buflen);
+	qlog("bind result = %d\n", result);
 
 	result = SQLFetch(hstmt1);
 	while (result != SQL_NO_DATA_FOUND) {
+		ds = (DATE_STRUCT *) buf;
+		qlog("fetch on stmt1: result=%d, buflen=%d: year=%d, month=%d, day=%d\n", result, buflen, ds->year, ds->month, ds->day);
+
 		result = SQLFetch(hstmt1);
-		qlog("fetch on stmt1\n");
 	}
 	SQLFreeStmt(hstmt1, SQL_DROP);
 
 }
 */
-

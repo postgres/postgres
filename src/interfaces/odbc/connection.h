@@ -133,6 +133,7 @@ typedef struct {
 //	char	unknown_sizes[SMALL_REGISTRY_LEN];
 	char	fake_oid_index[SMALL_REGISTRY_LEN];
 	char	show_oid_column[SMALL_REGISTRY_LEN];
+	char	row_versioning[SMALL_REGISTRY_LEN];
 	char	show_system_tables[SMALL_REGISTRY_LEN];
 	char	focus_password;
 } ConnInfo;
@@ -188,5 +189,6 @@ char *CC_create_errormsg(ConnectionClass *self);
 int CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
 char CC_send_settings(ConnectionClass *self);
 void CC_lookup_lo(ConnectionClass *conn);
+void CC_log_error(char *func, char *desc, ConnectionClass *self);
 
 #endif

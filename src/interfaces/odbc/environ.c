@@ -25,11 +25,14 @@ ConnectionClass *conns[MAX_CONNECTIONS];
 
 RETCODE SQL_API SQLAllocEnv(HENV FAR *phenv)
 {
+char *func = "SQLAllocEnv";
+
 mylog("**** in SQLAllocEnv ** \n");
 
 	*phenv = (HENV) EN_Constructor();
 	if ( ! *phenv) {
 		*phenv = SQL_NULL_HENV;
+		EN_log_error(func, "Error allocating environment", NULL);
 		return SQL_ERROR;
 	}
  
@@ -39,6 +42,7 @@ mylog("**** in SQLAllocEnv ** \n");
 
 RETCODE SQL_API SQLFreeEnv(HENV henv)
 {
+char *func = "SQLFreeEnv";
 EnvironmentClass *env = (EnvironmentClass *) henv;
 
 mylog("**** in SQLFreeEnv: env = %u ** \n", env);
@@ -49,6 +53,7 @@ mylog("**** in SQLFreeEnv: env = %u ** \n", env);
 	}
 
 	mylog("    error\n");
+	EN_log_error(func, "Error freeing environment", env);
 	return SQL_ERROR;
 }
 
@@ -72,9 +77,6 @@ int status;
     if (SQL_NULL_HSTMT != hstmt) {
         // CC: return an error of a hstmt 
         StatementClass *stmt = (StatementClass *) hstmt;
-        
-        if (NULL == stmt)
-            return SQL_INVALID_HANDLE;
         
         if (SC_get_error(stmt, &status, &msg)) {
 			mylog("SC_get_error: status = %d, msg = #%s#\n", status, msg);
@@ -423,4 +425,14 @@ int i;
 		}
 
 	return FALSE;
+}
+
+void
+EN_log_error(char *func, char *desc, EnvironmentClass *self)
+{
+	if (self) {
+		qlog("ENVIRON ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+	}
+	else
+		qlog("INVALID ENVIRON HANDLE ERROR: func=%s, desc='%s'\n", func, desc);
 }

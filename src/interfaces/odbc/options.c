@@ -31,10 +31,14 @@ RETCODE SQL_API SQLSetConnectOption(
         UWORD   fOption,
         UDWORD  vParam)
 {
+char *func="SQLSetConnectOption";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 
-	if ( ! conn) 
+	if ( ! conn)  {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
+
 
 	switch (fOption) {
 	case SQL_AUTOCOMMIT:
@@ -46,6 +50,7 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		if (CC_is_in_trans(conn)) {
 			conn->errormsg = "Cannot switch commit mode while a transaction is in progres";
 			conn->errornumber = CONN_TRANSACT_IN_PROGRES;
+			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
 		*/
@@ -64,6 +69,7 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		default:
 			conn->errormsg = "Illegal parameter value for SQL_AUTOCOMMIT";
 			conn->errornumber = CONN_INVALID_ARGUMENT_NO;
+			CC_log_error(func, "", conn);
 			return SQL_ERROR;
 		}
 
@@ -76,9 +82,14 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		break;
 
 	default:
+		{ 
+		char option[32];
 		conn->errormsg = "This option is currently unsupported by the driver";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
+		sprintf(option, "fOption=%d", fOption);
+		CC_log_error(func, option, conn);
 		return SQL_ERROR;
+		}
 
 	}    
 	return SQL_SUCCESS;
@@ -92,10 +103,13 @@ RETCODE SQL_API SQLGetConnectOption(
         UWORD   fOption,
         PTR     pvParam)
 {
+char *func="SQLGetConnectOption";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 
-	if (! conn) 
+	if (! conn)  {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	switch (fOption) {
 	case SQL_AUTOCOMMIT:
@@ -111,10 +125,15 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		break;
 
 	default:
+		{
+		char option[32];
 		conn->errormsg = "This option is currently unsupported by the driver";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
+		sprintf(option, "fOption=%d", fOption);
+		CC_log_error(func, option, conn);
 		return SQL_ERROR;
 		break;
+		}
 
 	}    
 
@@ -128,6 +147,7 @@ RETCODE SQL_API SQLSetStmtOption(
         UWORD   fOption,
         UDWORD  vParam)
 {
+char *func="SQLSetStmtOption";
 StatementClass *stmt = (StatementClass *) hstmt;
 char changed = FALSE;
 
@@ -135,8 +155,10 @@ char changed = FALSE;
     // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
     // and expects the driver to reduce it to the real value
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	switch(fOption) {
 	case SQL_QUERY_TIMEOUT:
@@ -170,6 +192,7 @@ char changed = FALSE;
 		else {
 			stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 			stmt->errormsg = "Driver does not support keyset size option";
+			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 		break;
@@ -214,12 +237,18 @@ char changed = FALSE;
 	case SQL_SIMULATE_CURSOR:
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 		stmt->errormsg = "Simulated positioned update/delete not supported.  Use the cursor library.";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 
     default:
+		{
+		char option[32];
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 		stmt->errormsg = "Driver does not support this statement option";
+		sprintf(option, "fOption=%d", fOption);
+		SC_log_error(func, option, stmt);
         return SQL_ERROR;
+		}
     }
 
 	if (changed) {
@@ -239,14 +268,17 @@ RETCODE SQL_API SQLGetStmtOption(
         UWORD   fOption,
         PTR     pvParam)
 {
+char *func="SQLGetStmtOption";
 StatementClass *stmt = (StatementClass *) hstmt;
 
     // thought we could fake Access out by just returning SQL_SUCCESS
     // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
     // and expects the driver to reduce it to the real value
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	switch(fOption) {
 	case SQL_QUERY_TIMEOUT:
@@ -289,12 +321,18 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	case SQL_SIMULATE_CURSOR:
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 		stmt->errormsg = "Simulated positioned update/delete not supported. Use the cursor library.";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 
 	default:
+		{
+		char option[32];
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 		stmt->errormsg = "Driver does not support this statement option";
+		sprintf(option, "fOption=%d", fOption);
+		SC_log_error(func, option, stmt);
 		return SQL_ERROR;
+		}
 	}
 
 	return SQL_SUCCESS;

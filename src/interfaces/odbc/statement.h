@@ -132,5 +132,6 @@ char SC_get_error(StatementClass *self, int *number, char **message);
 char *SC_create_errormsg(StatementClass *self);
 RETCODE SC_execute(StatementClass *stmt);
 void SC_free_params(StatementClass *self, char option);
+void SC_log_error(char *func, char *desc, StatementClass *self);
 
 #endif

@@ -45,6 +45,7 @@
 #define DRV_BOOLS_CHAR                  1050
 #define DS_SHOWSYSTEMTABLES             1051
 #define DRV_EXTRASYSTABLEPREFIXES       1051
+#define DS_ROWVERSIONING                1052
 
 // Next default values for new objects
 // 

@@ -137,6 +137,8 @@ BEGIN
                     WS_TABSTOP,130,10,60,14
     CONTROL         "Show System &Tables",DS_SHOWSYSTEMTABLES,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,25,30,85,10
+    CONTROL         "Row &Versioning",DS_ROWVERSIONING,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,130,30,85,10
     GROUPBOX        "OID Options",IDC_STATIC,15,50,180,25
     CONTROL         "Show &Column",DS_SHOWOIDCOLUMN,"Button",BS_AUTOCHECKBOX | 
                     WS_GROUP | WS_TABSTOP,25,60,59,10
@@ -198,8 +200,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 6,30,2,44
- PRODUCTVERSION 6,30,2,44
+ FILEVERSION 6,30,2,46
+ PRODUCTVERSION 6,30,2,46
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -217,12 +219,12 @@ BEGIN
             VALUE "Comments", "PostgreSQL ODBC driver for Windows 95\0"
             VALUE "CompanyName", "Insight Distribution Systems\0"
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 6.30.0244\0"
+            VALUE "FileVersion", " 6.30.0246\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 6.30.0244\0"
+            VALUE "ProductVersion", " 6.30.0246\0"
         END
     END
     BLOCK "VarFileInfo"

@@ -32,10 +32,13 @@ RETCODE SQL_API SQLPrepare(HSTMT     hstmt,
                            UCHAR FAR *szSqlStr,
                            SDWORD    cbSqlStr)
 {
+char *func = "SQLPrepare";
 StatementClass *self = (StatementClass *) hstmt;
 
-	if ( ! self)
+	if ( ! self) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
     
 	/*	According to the ODBC specs it is valid to call SQLPrepare mulitple times.
 		In that case, the bound SQL statement is replaced by the new one 
@@ -66,12 +69,14 @@ StatementClass *self = (StatementClass *) hstmt;
 
 		self->errornumber = STMT_SEQUENCE_ERROR;
 		self->errormsg = "SQLPrepare(): The handle does not point to a statement that is ready to be executed";
+		SC_log_error(func, "", self);
 
 		return SQL_ERROR;
 
 	default:
 		self->errornumber = STMT_INTERNAL_ERROR;
 		self->errormsg = "An Internal Error has occured -- Unknown statement status.";
+		SC_log_error(func, "", self);
 		return SQL_ERROR;
 	}
 
@@ -82,6 +87,7 @@ StatementClass *self = (StatementClass *) hstmt;
 	if ( ! self->statement) {
 		self->errornumber = STMT_NO_MEMORY_ERROR;
 		self->errormsg = "No memory available to store statement";
+		SC_log_error(func, "", self);
 		return SQL_ERROR;
 	}
 
@@ -92,6 +98,7 @@ StatementClass *self = (StatementClass *) hstmt;
 	if ( CC_is_readonly(self->hdbc) && STMT_UPDATE(self)) {
 		self->errornumber = STMT_EXEC_ERROR;
 		self->errormsg = "Connection is readonly, only select statements are allowed.";
+		SC_log_error(func, "", self);
 		return SQL_ERROR;
 	}
 
@@ -110,9 +117,12 @@ RETCODE SQL_API SQLExecDirect(
         SDWORD    cbSqlStr)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
+char *func = "SQLExecDirect";
     
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	if (stmt->statement)
 		free(stmt->statement);
@@ -123,6 +133,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	if ( ! stmt->statement) {
 		stmt->errornumber = STMT_NO_MEMORY_ERROR;
 		stmt->errormsg = "No memory available to store statement";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -135,6 +146,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 	if ( CC_is_readonly(stmt->hdbc) && STMT_UPDATE(stmt)) {
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "Connection is readonly, only select statements are allowed.";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 	
@@ -147,13 +159,16 @@ StatementClass *stmt = (StatementClass *) hstmt;
 RETCODE SQL_API SQLExecute(
         HSTMT   hstmt)
 {
+char *func="SQLExecute";
 StatementClass *stmt = (StatementClass *) hstmt;
 ConnectionClass *conn;
 int i, retval;
 
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	/*  If the statement is premature, it means we already executed
 		it from an SQLPrepare/SQLDescribeCol type of scenario.  So
@@ -161,7 +176,12 @@ int i, retval;
 	*/
 	if ( stmt->prepare && stmt->status == STMT_PREMATURE) {
 		stmt->status = STMT_FINISHED;       
-		return stmt->errormsg == NULL ? SQL_SUCCESS : SQL_ERROR;
+		if (stmt->errormsg == NULL)
+			return SQL_SUCCESS;
+		else {
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
 	}  
 
 	SC_clear_error(stmt);
@@ -170,12 +190,14 @@ int i, retval;
 	if (conn->status == CONN_EXECUTING) {
 		stmt->errormsg = "Connection is already in use.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
 	if ( ! stmt->statement) {
 		stmt->errornumber = STMT_NO_STMTSTRING;
 		stmt->errormsg = "This handle does not have a SQL statement stored in it";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -193,6 +215,7 @@ int i, retval;
 		
 		stmt->errornumber = STMT_STATUS_ERROR;
 		stmt->errormsg = "The handle does not point to a statement that is ready to be executed";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -240,6 +263,7 @@ RETCODE SQL_API SQLTransact(
         HDBC    hdbc,
         UWORD   fType)
 {
+char *func = "SQLTransact";
 extern ConnectionClass *conns[];
 ConnectionClass *conn;
 QResultClass *res;
@@ -248,8 +272,10 @@ int lf;
 
 mylog("**** SQLTransact: hdbc=%u, henv=%u\n", hdbc, henv);
 
-	if (hdbc == SQL_NULL_HDBC && henv == SQL_NULL_HENV)
+	if (hdbc == SQL_NULL_HDBC && henv == SQL_NULL_HENV) {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	/* If hdbc is null and henv is valid,
 	it means transact all connections on that henv.  
@@ -277,6 +303,7 @@ mylog("**** SQLTransact: hdbc=%u, henv=%u\n", hdbc, henv);
 	} else {
 		conn->errornumber = CONN_INVALID_ARGUMENT_NO;
 		conn->errormsg ="SQLTransact can only be called with SQL_COMMIT or SQL_ROLLBACK as parameter";
+		CC_log_error(func, "", conn);
 		return SQL_ERROR;
 	}    
 
@@ -288,15 +315,19 @@ mylog("**** SQLTransact: hdbc=%u, henv=%u\n", hdbc, henv);
 		res = CC_send_query(conn, stmt_string, NULL, NULL);
 		CC_set_no_trans(conn);
 
-		if ( ! res)
+		if ( ! res) {
 			//	error msg will be in the connection
+			CC_log_error(func, "", conn);
 			return SQL_ERROR;
+		}
 
 		ok = QR_command_successful(res);   
 		QR_Destructor(res);
 
-		if (!ok)
+		if (!ok) {
+			CC_log_error(func, "", conn);
 			return SQL_ERROR;
+		}
 	}    
 	return SQL_SUCCESS;
 }
@@ -307,11 +338,14 @@ mylog("**** SQLTransact: hdbc=%u, henv=%u\n", hdbc, henv);
 RETCODE SQL_API SQLCancel(
         HSTMT   hstmt)  // Statement to cancel.
 {
+char *func="SQLCancel";
 StatementClass *stmt = (StatementClass *) hstmt;
 
 	//	Check if this can handle canceling in the middle of a SQLPutData?
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	//	Not in the middle of SQLParamData/SQLPutData so cancel like a close.
 	if (stmt->data_at_exec < 0)
@@ -354,11 +388,14 @@ RETCODE SQL_API SQLParamData(
         HSTMT   hstmt,
         PTR FAR *prgbValue)
 {
+char *func = "SQLParamData";
 StatementClass *stmt = (StatementClass *) hstmt;
 int i, retval;
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	mylog("SQLParamData, enter: data_at_exec=%d, params_alloc=%d\n", 
 		stmt->data_at_exec, stmt->parameters_allocated);
@@ -366,12 +403,14 @@ int i, retval;
 	if (stmt->data_at_exec < 0) {
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		stmt->errormsg = "No execution-time parameters for this statement";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
 	if (stmt->data_at_exec > stmt->parameters_allocated) {
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		stmt->errormsg = "Too many execution-time parameters were present";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -422,19 +461,23 @@ RETCODE SQL_API SQLPutData(
         PTR     rgbValue,
         SDWORD  cbValue)
 {
+char *func = "SQLPutData";
 StatementClass *stmt = (StatementClass *) hstmt;
 int old_pos, retval;
 ParameterInfoClass *current_param;
 char *buffer;
 
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	
 	if (stmt->current_exec_param < 0) {
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		stmt->errormsg = "Previous call was not SQLPutData or SQLParamData";
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -450,6 +493,7 @@ char *buffer;
 		if ( ! current_param->EXEC_used) {
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
 			stmt->errormsg = "Out of memory in SQLPutData (1)";
+			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 
@@ -467,6 +511,7 @@ char *buffer;
 			if (current_param->lobj_oid == 0) {
 				stmt->errornumber = STMT_EXEC_ERROR;
 				stmt->errormsg = "Couldnt create large object.";
+				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 			}
 
@@ -479,6 +524,7 @@ char *buffer;
 			if ( stmt->lobj_fd < 0) {
 				stmt->errornumber = STMT_EXEC_ERROR;
 				stmt->errormsg = "Couldnt open large object for writing.";
+				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 			}
 
@@ -493,6 +539,7 @@ char *buffer;
 				if ( ! current_param->EXEC_buffer) {
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
 					stmt->errormsg = "Out of memory in SQLPutData (2)";
+					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
 			}
@@ -501,6 +548,7 @@ char *buffer;
 				if ( ! current_param->EXEC_buffer) {
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
 					stmt->errormsg = "Out of memory in SQLPutData (2)";
+					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
 				memcpy(current_param->EXEC_buffer, rgbValue, cbValue);
@@ -530,6 +578,7 @@ char *buffer;
 				if ( ! buffer) {
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
 					stmt->errormsg = "Out of memory in SQLPutData (3)";
+					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
 				strcat(buffer, rgbValue);
@@ -555,6 +604,7 @@ char *buffer;
 				if ( ! buffer) {
 					stmt->errornumber = STMT_NO_MEMORY_ERROR;
 					stmt->errormsg = "Out of memory in SQLPutData (3)";
+					SC_log_error(func, "", stmt);
 					return SQL_ERROR;
 				}
 
@@ -565,8 +615,10 @@ char *buffer;
 				current_param->EXEC_buffer = buffer;
 				
 			}
-			else
+			else {
+				SC_log_error(func, "bad cbValue", stmt);
 				return SQL_ERROR;
+			}
 
 		}
 	}

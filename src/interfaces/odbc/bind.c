@@ -37,9 +37,12 @@ RETCODE SQL_API SQLBindParameter(
         SDWORD FAR *pcbValue)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
+char *func="SQLBindParameter";
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	if(stmt->parameters_allocated < ipar) {
 		ParameterInfoClass *old_parameters;
@@ -52,6 +55,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
 		if ( ! stmt->parameters) {
 			stmt->errornumber = STMT_NO_MEMORY_ERROR;
 			stmt->errormsg = "Could not allocate memory for statement parameters";
+			SC_log_error(func, "", stmt);
 			return SQL_ERROR;
 		}
 
@@ -133,53 +137,51 @@ RETCODE SQL_API SQLBindCol(
         SDWORD FAR *pcbValue)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-Int2 numcols;
+Int2 numcols = 0;
+char *func="SQLBindCol";
     
 mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 
-	if ( ! stmt)
+	if ( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	if (icol < 1) {
 		/* currently we do not support bookmarks */
 		stmt->errormsg = "Bookmarks are not currently supported.";
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
-
-	icol--;		/* use zero based col numbers */
 
 	SC_clear_error(stmt);
     
-	if( ! stmt->result) {
-		stmt->errormsg = "Can't bind columns with a NULL query result structure.";
-		stmt->errornumber = STMT_SEQUENCE_ERROR;
-		return SQL_ERROR;
-	}
-
 	if( stmt->status == STMT_EXECUTING) {
 		stmt->errormsg = "Can't bind columns while statement is still executing.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
-	numcols = QR_NumResultCols(stmt->result);
+	//	allocate enough bindings if not already done
+	//	Most likely, execution of a statement would have setup the 
+	//	necessary bindings. But some apps call BindCol before any
+	//	statement is executed.
+	if ( icol > stmt->bindings_allocated)
+		extend_bindings(stmt, icol);
 
-	mylog("SQLBindCol: numcols = %d\n", numcols);
-
-	if (icol >= numcols) {
-		stmt->errornumber = STMT_COLNUM_ERROR;
-		stmt->errormsg = "Column number too big";
-		return SQL_ERROR;
-	}
-
+	//	check to see if the bindings were allocated
 	if ( ! stmt->bindings) {
-		stmt->errormsg = "Bindings were not allocated properly.";
-		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		stmt->errormsg = "Could not allocate memory for bindings.";
+		stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
-	if ((cbValueMax == 0) || (rgbValue == NULL)) {
+	icol--;		/* use zero based col numbers from here out */
+
+	if (rgbValue == NULL) {
 		/* we have to unbind the column */
 		stmt->bindings[icol].buflen = 0;
 		stmt->bindings[icol].buffer = NULL;
@@ -216,13 +218,17 @@ RETCODE SQL_API SQLDescribeParam(
         SWORD  FAR *pfNullable)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
+char *func = "SQLDescribeParam";
 
-	if( ! stmt)
+	if( ! stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	if( (ipar < 1) || (ipar > stmt->parameters_allocated) ) {
 		stmt->errormsg = "Invalid parameter number for SQLDescribeParam.";
 		stmt->errornumber = STMT_BAD_PARAMETER_NUMBER_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
 
@@ -254,6 +260,9 @@ RETCODE SQL_API SQLParamOptions(
         UDWORD     crow,
         UDWORD FAR *pirow)
 {
+char *func = "SQLParamOptions";
+
+	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
 }
 
@@ -273,21 +282,26 @@ RETCODE SQL_API SQLNumParams(
 StatementClass *stmt = (StatementClass *) hstmt;
 char in_quote = FALSE;
 unsigned int i;
+char *func = "SQLNumParams";
 
-
-	if(!stmt)
+	if(!stmt) {
+		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	if (pcpar)
 		*pcpar = 0;
-	else
+	else {
+		SC_log_error(func, "pcpar was null", stmt);
 		return SQL_ERROR;
+	}
 
 
 	if(!stmt->statement) {
 		// no statement has been allocated
 		stmt->errormsg = "SQLNumParams called with no statement ready.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
+		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	} else {
 
@@ -341,6 +355,14 @@ mylog("in extend_bindings: stmt=%u, bindings_allocated=%d, num_columns=%d\n", st
 	if(stmt->bindings_allocated < num_columns) {
 
 		new_bindings = create_empty_bindings(num_columns);
+		if ( ! new_bindings) {
+			if (stmt->bindings) {
+				free(stmt->bindings);
+				stmt->bindings = NULL;
+			}
+			stmt->bindings_allocated = 0;
+			return;
+		}
 
 		if(stmt->bindings) {
 			for(i=0; i<stmt->bindings_allocated; i++)
@@ -349,18 +371,17 @@ mylog("in extend_bindings: stmt=%u, bindings_allocated=%d, num_columns=%d\n", st
 			free(stmt->bindings);
 		}
 
-		stmt->bindings = new_bindings;		// null indicates error
+		stmt->bindings = new_bindings;
 		stmt->bindings_allocated = num_columns;
 
-    } else {
-	/* if we have too many, make sure the extra ones are emptied out */
-	/* so we don't accidentally try to use them for anything */
-		for(i = num_columns; i < stmt->bindings_allocated; i++) {
-			stmt->bindings[i].buflen = 0;
-			stmt->bindings[i].buffer = NULL;
-			stmt->bindings[i].used = NULL;
-		}
-	}
+    } 
+	//	There is no reason to zero out extra bindings if there are
+	//	more than needed.  If an app has allocated extra bindings, 
+	//	let it worry about it by unbinding those columns.
+
+	//	SQLBindCol(1..) ... SQLBindCol(10...)	# got 10 bindings
+	//	SQLExecDirect(...)  # returns 5 cols
+	//	SQLExecDirect(...)	# returns 10 cols  (now OK)
 
 	mylog("exit extend_bindings\n");
 }

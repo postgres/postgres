@@ -47,6 +47,7 @@ RETCODE SQL_API SQLDriverConnect(
                                  SWORD FAR *pcbConnStrOut,
                                  UWORD     fDriverCompletion)
 {
+char *func = "SQLDriverConnect";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
 RETCODE dialog_result;
@@ -56,8 +57,10 @@ char password_required = FALSE;
 
 	mylog("**** SQLDriverConnect: fDriverCompletion=%d, connStrIn='%s'\n", fDriverCompletion, szConnStrIn);
 
-	if ( ! conn) 
+	if ( ! conn) {
+		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
+	}
 
 	qlog("conn=%u, SQLDriverConnect( in)='%s'\n", conn, szConnStrIn);
 
@@ -135,8 +138,10 @@ dialog:
 	// do the actual connect
 	retval = CC_connect(conn, password_required);
 	if (retval < 0) {		/* need a password */
-		if (fDriverCompletion == SQL_DRIVER_NOPROMPT)
+		if (fDriverCompletion == SQL_DRIVER_NOPROMPT) {
+			CC_log_error(func, "Need password but Driver_NoPrompt", conn);
 			return SQL_ERROR;	/* need a password but not allowed to prompt so error */
+		}
 		else {
 			password_required = TRUE;
 			goto dialog;
@@ -144,6 +149,7 @@ dialog:
 	}
 	else if (retval == 0) {
 		//	error msg filled in above
+		CC_log_error(func, "Error from CC_Connect", conn);
 		return SQL_ERROR;
 	}
 

@@ -46,7 +46,9 @@ Int4 pgtypes_defined[]  = {
 			    PG_TYPE_BPCHAR,
 				PG_TYPE_DATE,
 				PG_TYPE_TIME,
+				PG_TYPE_DATETIME,
 				PG_TYPE_ABSTIME,	/* a timestamp, sort of */
+				PG_TYPE_TIMESTAMP,
 			    PG_TYPE_TEXT,
 			    PG_TYPE_INT2,
 			    PG_TYPE_INT4,
@@ -55,7 +57,6 @@ Int4 pgtypes_defined[]  = {
 			    PG_TYPE_OID,
 				PG_TYPE_MONEY,
 				PG_TYPE_BOOL,
-				PG_TYPE_DATETIME,
 				PG_TYPE_BYTEA,
 				PG_TYPE_LO,
 			    0 };
@@ -97,7 +98,8 @@ Int2 pgtype_to_sqltype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_DATE:			return SQL_DATE;
 	case PG_TYPE_TIME:			return SQL_TIME;
 	case PG_TYPE_ABSTIME:		
-	case PG_TYPE_DATETIME:		return SQL_TIMESTAMP;
+	case PG_TYPE_DATETIME:		
+	case PG_TYPE_TIMESTAMP:		return SQL_TIMESTAMP;
 	case PG_TYPE_MONEY:			return SQL_FLOAT;
 	case PG_TYPE_BOOL:			return globals.bools_as_char ? SQL_CHAR : SQL_BIT;
 
@@ -124,7 +126,8 @@ Int2 pgtype_to_ctype(StatementClass *stmt, Int4 type)
 	case PG_TYPE_DATE:			return SQL_C_DATE;
 	case PG_TYPE_TIME:			return SQL_C_TIME;
 	case PG_TYPE_ABSTIME:		
-	case PG_TYPE_DATETIME:		return SQL_C_TIMESTAMP;
+	case PG_TYPE_DATETIME:
+	case PG_TYPE_TIMESTAMP:		return SQL_C_TIMESTAMP;
 	case PG_TYPE_MONEY:			return SQL_C_FLOAT;
 	case PG_TYPE_BOOL:			return globals.bools_as_char ? SQL_C_CHAR : SQL_C_BIT;
 
@@ -161,6 +164,7 @@ char *pgtype_to_name(StatementClass *stmt, Int4 type)
 	case PG_TYPE_TIME:			return "time";
 	case PG_TYPE_ABSTIME:		return "abstime";
 	case PG_TYPE_DATETIME:		return "datetime";
+	case PG_TYPE_TIMESTAMP:		return "timestamp";
 	case PG_TYPE_MONEY:			return "money";
 	case PG_TYPE_BOOL:			return "bool";
 	case PG_TYPE_BYTEA:			return "bytea";
@@ -269,7 +273,8 @@ Int4 pgtype_precision(StatementClass *stmt, Int4 type, int col, int handle_unkno
 	case PG_TYPE_TIME:			return 8;
 
 	case PG_TYPE_ABSTIME:		
-	case PG_TYPE_DATETIME:		return 19;
+	case PG_TYPE_DATETIME:		
+	case PG_TYPE_TIMESTAMP:		return 19;
 
 	case PG_TYPE_BOOL:			return 1;
 
@@ -327,7 +332,8 @@ Int4 pgtype_length(StatementClass *stmt, Int4 type, int col, int handle_unknown_
 	case PG_TYPE_TIME:			return 6;
 
 	case PG_TYPE_ABSTIME:		
-	case PG_TYPE_DATETIME:		return 16;
+	case PG_TYPE_DATETIME:
+	case PG_TYPE_TIMESTAMP:		return 16;
 
 
 	/*	Character types use the default precision */
@@ -350,7 +356,8 @@ Int2 pgtype_scale(StatementClass *stmt, Int4 type)
 
 	/*	Number of digits to the right of the decimal point in "yyyy-mm=dd hh:mm:ss[.f...]" */
 	case PG_TYPE_ABSTIME:		
-	case PG_TYPE_DATETIME:		return 0;
+	case PG_TYPE_DATETIME:		
+	case PG_TYPE_TIMESTAMP:		return 0;
 
 	default:					return -1;
 	}
@@ -391,7 +398,8 @@ Int2 pgtype_auto_increment(StatementClass *stmt, Int4 type)
 	case PG_TYPE_DATE:
 	case PG_TYPE_TIME:			
 	case PG_TYPE_ABSTIME:		
-	case PG_TYPE_DATETIME:		return FALSE;
+	case PG_TYPE_DATETIME:		
+	case PG_TYPE_TIMESTAMP:		return FALSE;
 
 	default:					return -1;
 	}    
