@@ -8,7 +8,7 @@
 
 #include "executor/spi.h"		/* this is what you need to work with SPI */
 #include "commands/trigger.h"	/* -"- and triggers */
-#include "miscadmin.h"			/* for GetPgUserName() */
+#include "miscadmin.h"			/* for GetUserName() */
 
 extern Datum	insert_username(PG_FUNCTION_ARGS);
 
@@ -64,7 +64,8 @@ insert_username(PG_FUNCTION_ARGS)
 			 relname, args[0]);
 
 	/* create fields containing name */
-	newval = DirectFunctionCall1(textin, CStringGetDatum(GetPgUserName()));
+	newval = DirectFunctionCall1(textin,
+								 CStringGetDatum(GetUserName(GetUserId())));
 
 	/* construct new tuple */
 	rettuple = SPI_modifytuple(rel, rettuple, 1, &attnum, &newval, NULL);
