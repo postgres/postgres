@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.255 2004/02/13 04:40:06 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.256 2004/03/02 00:38:46 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1971,6 +1971,71 @@ DROP SCHEMA information_schema CASCADE;
   </sect2>
  </sect1>
 
+  <sect1 id="release-7-3-6">
+   <title>Release 7.3.6</title>
+
+   <note>
+   <title>Release date</title>
+   <simpara>2004-03-02</simpara>
+   </note>
+
+   <para>
+    This release contains a variety of fixes from 7.3.5.
+   </para>
+
+
+   <sect2>
+    <title>Migration to version 7.3.6</title>
+
+    <para>
+     A dump/restore is <emphasis>not</emphasis> required for those
+     running 7.3.*.
+    </para>
+
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+<itemizedlist>
+<listitem><para>Revert erroneous changes in rule permissions checking</para>
+<para>A patch applied in 7.3.3 to fix a corner case in rule permissions checks
+turns out to have disabled rule-related permissions checks in many
+not-so-corner cases.  This would for example allow users to insert into views
+they weren't supposed to have permission to insert into.  We have therefore
+reverted the 7.3.3 patch.  The original bug will be fixed in 7.5.
+</para></listitem>
+<listitem><para>Repair incorrect order of operations in
+GetNewTransactionId()</para>
+<para>
+This bug could result in failure under out-of-disk-space conditions, including
+inability to restart even after disk space is freed.
+</para></listitem>
+<listitem><para>Ensure configure selects -fno-strict-aliasing even when
+an external value for CFLAGS is supplied</para>
+<para>
+On some platforms, building with -fstrict-aliasing causes bugs.
+</para></listitem>
+<listitem><para>Make pg_restore handle 64-bit off_t correctly</para>
+<para>
+This bug prevented proper restoration from archive files exceeding 4Gb.
+</para></listitem>
+<listitem><para>Make contrib/dblink not assume that local and remote type OIDs
+match (Joe)</para></listitem>
+<listitem><para>Quote connectby()'s start_with argument properly (Joe)</para></listitem>
+<listitem><para>Don't crash when a rowtype argument to a plpgsql function is
+NULL</para></listitem>
+<listitem><para>Avoid generating invalid character encoding sequences in
+corner cases when planning LIKE operations</para></listitem>
+<listitem><para>Ensure text_position() cannot scan past end of source string
+in multibyte cases (Korea PostgreSQL Users' Group)</para></listitem>
+<listitem><para>Fix index optimization and selectivity estimates for LIKE
+operations on bytea columns (Joe)</para></listitem>
+</itemizedlist>
+
+  </sect2>
+ </sect1>
+
   <sect1 id="release-7-3-5">
    <title>Release 7.3.5</title>
 
@@ -2071,7 +2136,7 @@ DROP SCHEMA information_schema CASCADE;
   </note>
 
   <para>
-   This release contains of variety of fixes for version 7.3.2.
+   This release contains a variety of fixes for version 7.3.2.
   </para>
 
   <sect2>
