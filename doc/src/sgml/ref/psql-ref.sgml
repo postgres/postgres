@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.84 2003/01/07 20:56:06 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.85 2003/02/13 05:37:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1063,8 +1063,8 @@ Tue Oct 26 21:40:57 CEST 1999
 
         <listitem>
         <para>
-        Sets the client encoding, if you are using multibyte encodings.
-        Without an argument, this command shows the current encoding.
+        Sets the client encoding.  Without an argument, this command
+        shows the current encoding.
         </para>
 	<note>
 	<para>
@@ -1169,12 +1169,9 @@ Tue Oct 26 21:40:57 CEST 1999
         <term><literal>\l</literal> (or <literal>\list</literal>)</term>
         <listitem>
         <para>
-        List all the databases in the server as well as their owners.
-        Append a <quote>+</quote> to the command name to see any
-        descriptions for the databases as well. If your
-        <productname>PostgreSQL</productname> installation was compiled
-        with multibyte encoding support, the encoding scheme of each
-        database is shown as well.
+        List the names, owners, and encodings of all the databases in
+        the server.  Append a <quote>+</quote> to the command name to
+        see any descriptions for the databases as well.
         </para>
         </listitem>
       </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.29 2002/10/11 23:03:48 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.30 2003/02/13 05:37:43 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -227,7 +227,7 @@ PostgreSQL documentation
       <term><option>--username <replaceable class="parameter">username</replaceable></></term>
       <listitem>
        <para>
-        User name to connect as (not the user name to create)
+        User name to connect as (not the user name to create).
        </para>
       </listitem>
      </varlistentry>

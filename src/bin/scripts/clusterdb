@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.8 2002/10/21 20:32:33 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.9 2003/02/13 05:37:44 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -118,10 +118,9 @@ if [ "$usage" ]; then
 	echo "  -a, --all                 cluster all databases"
 	echo "  -d, --dbname=DBNAME       database to cluster"
 	echo "  -t, --table='TABLE'       cluster specific table only"
-	echo "  -e, --echo                show the command being sent to the backend"
+	echo "  -e, --echo                show the commands sent to the backend"
 	echo "  -q, --quiet               don't write any output"
-	echo "  -v, --verbose             write a lot of output"
-	echo " --help                     show this help, then exit"
+	echo "  --help                    show this help, then exit"
 	echo
 	echo "Connection options:"
 	echo "  -h, --host=HOSTNAME       database server host"

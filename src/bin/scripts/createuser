@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.29 2002/10/18 22:05:36 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.30 2003/02/13 05:37:44 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -153,8 +153,8 @@ if [ "$usage" ]; then
 	echo "  -N, --unencrypted         do no encrypt stored password"
 	echo "  -i, --sysid=SYSID         select sysid for new user"     
 	echo "  -e, --echo                show the query being sent to the backend"
-        echo "  -q, --quiet               don't write any messages"
-	echo " --help                     show this help, then exit"
+	echo "  -q, --quiet               don't write any messages"
+	echo "  --help                    show this help, then exit"
 	echo
 	echo "Connection options:"
 	echo "  -h, --host=HOSTNAME       database server host"

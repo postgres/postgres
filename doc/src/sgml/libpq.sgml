@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.107 2003/01/30 19:49:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.108 2003/02/13 05:37:43 momjian Exp $
 -->
 
  <chapter id="libpq">
@@ -2137,8 +2137,7 @@ sets the default time zone.
 <listitem>
 <para>
 <envar>PGCLIENTENCODING</envar>
-sets the default client encoding (if multibyte support was selected
-when configuring <productname>PostgreSQL</productname>).
+sets the default client encoding.
 </para>
 </listitem>
 </itemizedlist>
