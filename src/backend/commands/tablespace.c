@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.7 2004/08/01 20:30:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.8 2004/08/08 01:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -482,11 +482,20 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 				 errmsg("could not unlink file \"%s\": %m",
 						subfile)));
 
+#ifndef WIN32
 	if (unlink(location) < 0)
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not unlink symbolic link \"%s\": %m",
 						location)));
+#else
+	/* The junction is a directory, not a file */
+	if (rmdir(location) < 0)
+		ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not remove junction dir \"%s\": %m",
+				 		location)));
+#endif
 
 	pfree(subfile);
 	pfree(location);

@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.14 2004/08/07 21:48:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.15 2004/08/08 01:31:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -153,9 +153,9 @@ pgsymlink(const char *oldpath, const char *newpath)
 {
 	HANDLE dirhandle;
 	DWORD len;
-	char *p = nativeTarget;
 	char buffer[MAX_PATH*sizeof(WCHAR) + sizeof(REPARSE_JUNCTION_DATA_BUFFER)];
 	char nativeTarget[MAX_PATH];
+	char *p = nativeTarget;
 	REPARSE_JUNCTION_DATA_BUFFER *reparseBuf = (REPARSE_JUNCTION_DATA_BUFFER*)buffer;
     
 	CreateDirectory(newpath, 0);
@@ -203,9 +203,12 @@ pgsymlink(const char *oldpath, const char *newpath)
 					  NULL, GetLastError(), 
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 					  (LPSTR)&msg, 0, NULL );
+#ifdef FRONTEND
+		fprintf(stderr, "Error setting junction for %s: %s", nativeTarget, msg);
+#else
 		ereport(ERROR, (errcode_for_file_access(),
 			errmsg("Error setting junction for %s: %s", nativeTarget, msg)));
-	    
+#endif
 		LocalFree(msg);
 	    
 		CloseHandle(dirhandle);

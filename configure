@@ -12060,7 +12060,13 @@ LIBOBJS="$LIBOBJS copydir.$ac_objext"
 LIBOBJS="$LIBOBJS gettimeofday.$ac_objext"
 LIBOBJS="$LIBOBJS kill.$ac_objext"
 LIBOBJS="$LIBOBJS open.$ac_objext"
-LIBOBJS="$LIBOBJS rand.$ac_objext" ;;
+LIBOBJS="$LIBOBJS rand.$ac_objext"
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_SYMLINK 1
+_ACEOF
+
+;;
 esac
 
 if test "$with_readline" = yes; then
