@@ -5,13 +5,14 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-07-15 15:49+0200\n"
+"POT-Creation-Date: 2001-11-29 17:47+0100\n"
 "PO-Revision-Date: 2001-11-04 21:57-0500\n"
 "Last-Translator: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "Language-Team: Serguei A. Mokhov <stgunya@yahoo.com>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
+
 #: fe-auth.c:228
 #, c-format
 msgid "Kerberos 4 error: %s\n"
@@ -67,21 +68,22 @@ msgstr "неправильное имя сервиса аутентификации \"%s\", игнорируется\n"
 msgid "fe_getauthname: invalid authentication system: %d\n"
 msgstr "fe_getauthname: неправильная система аутентификации: %d\n"
 
-#: fe-connect.c:480
+#: fe-connect.c:483
 msgid "could not determine the PostgreSQL user name to use\n"
-msgstr "не получилось определить какое имя пользователя PostgreSQL использовать\n"
+msgstr ""
+"не получилось определить какое имя пользователя PostgreSQL использовать\n"
 
-#: fe-connect.c:700
+#: fe-connect.c:703
 #, c-format
 msgid "could not set socket to non-blocking mode: %s\n"
 msgstr "не получилось установить сокет в не блокирующий режим: %s\n"
 
-#: fe-connect.c:724
+#: fe-connect.c:727
 #, c-format
 msgid "could not set socket to TCP no delay mode: %s\n"
 msgstr "не получилось установить сокет в беспрерывный TCP режим: %s\n"
 
-#: fe-connect.c:744
+#: fe-connect.c:747
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -92,7 +94,7 @@ msgstr ""
 "\tРаботает ли сервер локально и принимает\n"
 "\tподсоединения по сокету Unix'овского домена \"%s\"?\n"
 
-#: fe-connect.c:753
+#: fe-connect.c:756
 #, c-format
 msgid ""
 "could not connect to server: %s\n"
@@ -103,117 +105,125 @@ msgstr ""
 "\tРаботает ли сервер на хосте %s и принимает\n"
 "\tподсоединения через TCP/IP протокол на порт %s?\n"
 
-#: fe-connect.c:817
+#: fe-connect.c:820
 #, c-format
 msgid "invalid host address: %s\n"
 msgstr "неправильный адрес хоста: %s\n"
 
-#: fe-connect.c:836
+#: fe-connect.c:839
 #, c-format
 msgid "unknown host name: %s\n"
 msgstr "неизвестное имя хоста: %s\n"
 
-#: fe-connect.c:878
+#: fe-connect.c:881
 #, c-format
 msgid "could not create socket: %s\n"
 msgstr "не получилось создать сокет: %s\n"
 
-#: fe-connect.c:941
+#: fe-connect.c:944
 #, c-format
 msgid "could not send SSL negotiation packet: %s\n"
 msgstr "не получилось отправить пакет согласования SSL: %s\n"
 
-#: fe-connect.c:949
+#: fe-connect.c:952
 #, c-format
 msgid "could not receive server response to SSL negotiation packet: %s\n"
 msgstr "не был получен ответ сервера на пакет согласования SSL: %s\n"
 
-#: fe-connect.c:963
+#: fe-connect.c:966
 #, c-format
 msgid "could not create SSL context: %s\n"
 msgstr "не получилось создать контекст SSL: %s\n"
 
-#: fe-connect.c:973
+#: fe-connect.c:976
 #, c-format
 msgid "could not establish SSL connection: %s\n"
 msgstr "не получилось установить подсоединение по каналу SSL: %s\n"
 
-#: fe-connect.c:991
+#: fe-connect.c:999
 #, c-format
 msgid "received invalid response to SSL negotiation: %c\n"
 msgstr "получен неправильный ответ на начальное согласование по SSL: %c\n"
 
-#: fe-connect.c:1000
+#: fe-connect.c:1008
 msgid "server does not support SSL, but SSL was required\n"
 msgstr "сервер не поддерживает SSL, но наличие SSL было необходимо\n"
 
-#: fe-connect.c:1166
+#: fe-connect.c:1174
 msgid "invalid connection state, probably indicative of memory corruption\n"
-msgstr "неправильное состояние подсоединения, возможный указатель на нарушение целостности памяти\n"
+msgstr ""
+"неправильное состояние подсоединения, возможный указатель на нарушение "
+"целостности памяти\n"
 
-#: fe-connect.c:1197
+#: fe-connect.c:1205
 #, c-format
 msgid "could not get socket error status: %s\n"
 msgstr "невозможно было получить статус ошибки сокета: %s\n"
 
-#: fe-connect.c:1217
+#: fe-connect.c:1225
 #, c-format
 msgid "could not get client address from socket: %s\n"
 msgstr "невозможно было получить адрес клиента из сокета: %s\n"
 
-#: fe-connect.c:1256
+#: fe-connect.c:1264
 #, c-format
 msgid "could not send startup packet: %s\n"
 msgstr "не получилось отправить начальный пакет: %s\n"
 
-#: fe-connect.c:1312
+#: fe-connect.c:1320
 #, c-format
 msgid "expected authentication request from server, but received %c\n"
 msgstr "ожидался запрос аутентификации от сервера, но было получено: %c\n"
 
-#: fe-connect.c:1424
+#: fe-connect.c:1432
 msgid "unexpected message from server during startup\n"
 msgstr "неожиданное сообщение от сервера при запуске\n"
 
-#: fe-connect.c:1483
+#: fe-connect.c:1491
 #, c-format
 msgid "invalid connection state %c, probably indicative of memory corruption\n"
-msgstr "неправильное состояние подсоединения %c, возможный указатель на нарушение целостности памяти\n"
+msgstr ""
+"неправильное состояние подсоединения %c, возможный указатель на нарушение "
+"целостности памяти\n"
 
-#: fe-connect.c:1582
+#: fe-connect.c:1590
 #, c-format
 msgid "invalid setenv state %c, probably indicative of memory corruption\n"
-msgstr "неправильное состояние setenv %c, возможный показатель нарушения целостности памяти\n"
+msgstr ""
+"неправильное состояние setenv %c, возможный показатель нарушения целостности "
+"памяти\n"
 
-#: fe-connect.c:1622
+#: fe-connect.c:1630
 #, c-format
 msgid "invalid encoding name in PGCLIENTENCODING: %s\n"
 msgstr "неправильное имя кодировки в PGCLIENTENCODING: %s\n"
 
-#: fe-connect.c:1747
+#: fe-connect.c:1755
 #, c-format
 msgid "invalid state %c, probably indicative of memory corruption\n"
-msgstr "неправильное состояние %c, возможный показатель нарушения целостности памяти\n"
+msgstr ""
+"неправильное состояние %c, возможный показатель нарушения целостности "
+"памяти\n"
 
-#: fe-connect.c:2366 fe-connect.c:2375 fe-exec.c:1184 fe-lobj.c:536
+#: fe-connect.c:2374 fe-connect.c:2383 fe-exec.c:1184 fe-lobj.c:536
 msgid "out of memory\n"
 msgstr "недостаточно памяти\n"
 
-#: fe-connect.c:2414
+#: fe-connect.c:2422
 #, c-format
 msgid "missing \"=\" after \"%s\" in connection info string\n"
 msgstr "отсутсвует \"=\" после \"%s\" в строке подсоединения\n"
 
-#: fe-connect.c:2463
+#: fe-connect.c:2471
 msgid "unterminated quoted string in connection info string\n"
 msgstr "неоконченная строка (не хватает кавычки) в строке подсоединения\n"
 
-#: fe-connect.c:2497
+#: fe-connect.c:2505
 #, c-format
 msgid "invalid connection option \"%s\"\n"
 msgstr "неправильная опция подсоединения \"%s\"\n"
 
-#: fe-connect.c:2682
+#: fe-connect.c:2720
 msgid "connection pointer is NULL\n"
 msgstr "указатель подсоединения является NULL'ом\n"
 
@@ -239,7 +249,8 @@ msgstr "пришло сообщение от сервера типа 0x%02x при холостом ходу\n"
 msgid ""
 "unexpected character %c following empty query response (\"I\" message)\n"
 msgstr ""
-"неожиданный символ %c следующий за пустым ответом на запрос (сообщение \"I\")\n"
+"неожиданный символ %c следующий за пустым ответом на запрос (сообщение \"I"
+"\")\n"
 
 #: fe-exec.c:945
 msgid ""
@@ -254,8 +265,8 @@ msgid ""
 "server sent binary data (\"B\" message) without prior row description (\"T\" "
 "message)\n"
 msgstr ""
-"сервер послал двоичные данные (сообщение \"B\") без предварительного описания ряда "
-"(сообщеие \"T\")\n"
+"сервер послал двоичные данные (сообщение \"B\") без предварительного "
+"описания ряда (сообщеие \"T\")\n"
 
 #: fe-exec.c:978
 #, c-format
@@ -338,7 +349,9 @@ msgstr "ошибка при записи в файл \"%s\"\n"
 
 #: fe-lobj.c:564
 msgid "query to initialize large object functions did not return data\n"
-msgstr "запрос о инициализации функций для больших объектов (LOs) не возвратил данных\n"
+msgstr ""
+"запрос о инициализации функций для больших объектов (LOs) не возвратил "
+"данных\n"
 
 #: fe-lobj.c:602
 msgid "cannot determine OID of function lo_open\n"
@@ -372,36 +385,38 @@ msgstr "не в состоянии определить OID функции loread\n"
 msgid "cannot determine OID of function lowrite\n"
 msgstr "не в состоянии определить OID функции lowrite\n"
 
-#: fe-misc.c:130
+#: fe-misc.c:132
 #, c-format
 msgid "could not flush enough data (space available: %d, space needed %d)\n"
-msgstr "не получилось заполнить достаточным количеством данных (места доступно: %d, места нужно: %d)\n"
+msgstr ""
+"не получилось заполнить достаточным количеством данных (места доступно: %d, "
+"места нужно: %d)\n"
 
-#: fe-misc.c:278
+#: fe-misc.c:281
 #, c-format
 msgid "integer of size %lu not supported by pqGetInt\n"
 msgstr "тип integer размером %lu байт не поддерживается функцией pqGetInt\n"
 
-#: fe-misc.c:316
+#: fe-misc.c:319
 #, c-format
 msgid "integer of size %lu not supported by pqPutInt\n"
 msgstr "тип integer размером %lu байт не поддерживается функцией pqPutInt\n"
 
-#: fe-misc.c:354 fe-misc.c:388 fe-misc.c:776
+#: fe-misc.c:357 fe-misc.c:391 fe-misc.c:779
 #, c-format
 msgid "select() failed: %s\n"
 msgstr "select() не удался: %s\n"
 
-#: fe-misc.c:415 fe-misc.c:615 fe-misc.c:755
+#: fe-misc.c:418 fe-misc.c:618 fe-misc.c:758
 msgid "connection not open\n"
 msgstr "соединение не открыто\n"
 
-#: fe-misc.c:486 fe-misc.c:572
+#: fe-misc.c:489 fe-misc.c:575
 #, c-format
 msgid "could not receive data from server: %s\n"
 msgstr "получить данные с сервера %s не удалось\n"
 
-#: fe-misc.c:589 fe-misc.c:673
+#: fe-misc.c:592 fe-misc.c:676
 msgid ""
 "server closed the connection unexpectedly\n"
 "\tThis probably means the server terminated abnormally\n"
@@ -411,7 +426,7 @@ msgstr ""
 "\tСкорее всего это означает что сервер завершил работу со сбоем\n"
 "\tдо или в течение обслуживания запроса.\n"
 
-#: fe-misc.c:683
+#: fe-misc.c:692
 #, c-format
 msgid "could not send data to server: %s\n"
 msgstr "не получилось послать данные серверу: %s\n"

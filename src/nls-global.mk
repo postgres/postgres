@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.3 2001/07/15 11:43:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/nls-global.mk,v 1.4 2001/11/29 18:59:28 petere Exp $
 
 # Common rules for Native Language Support (NLS)
 #
@@ -94,8 +94,7 @@ init-po: $(srcdir)/$(CATALOG_NAME).pot
 
 update-po: $(srcdir)/$(CATALOG_NAME).pot
 ifdef MSGMERGE
-#	XXX  should be $(LANGUAGES)?
-	@for lang in $(AVAIL_LANGUAGES); do \
+	@for lang in $(LANGUAGES); do \
 	  echo "merging $$lang:"; \
 	  if $(MSGMERGE) $(srcdir)/$$lang.po $< -o $$lang.po.new; \
 	  then \

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.2\n"
-"POT-Creation-Date: 2001-10-01 10:02+0800\n"
+"POT-Creation-Date: 2001-11-29 01:07+1100\n"
 "PO-Revision-Date: 2001-10-24 01:00:00+0800\n"
 "Last-Translator: Zhenbang Wei <forth@zbwei.net>\n"
 "Language-Team: Zhenbang Wei <forth@zbwei.net>\n"
@@ -24,7 +24,7 @@ msgstr ""
 
 #: pg_dump.c:137
 msgid "Usage:"
-msgstr "用法:"
+msgstr "使用法:"
 
 #: pg_dump.c:138
 #, c-format
@@ -42,7 +42,7 @@ msgstr "選項:"
 #: pg_dump.c:143
 msgid ""
 "  -a, --data-only          dump only the data, not the schema\n"
-"  -b, --blobs              include BLOB data in dump\n"
+"  -b, --blobs              include large objects in dump\n"
 "  -c, --clean              clean (drop) schema prior to create\n"
 "  -C, --create             include commands to create database in dump\n"
 "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
@@ -84,8 +84,8 @@ msgstr ""
 "  -F, --format {c|t|p}     輸出檔案格式(自定、tar、純文字)\n"
 "  -h, --host=主機名稱      資料庫伺服器主機名稱\n"
 "  -i, --ignore-version     即使伺服器版本和 pg_dump 版本不符合也繼續執行\n"
-"  -n, --no-quotes          抑制標示符號周圍的絕大部分引號\n"
-"  -N, --quotes             允許\標示符號周圍的絕大部分引號\n"
+"  -n, --no-quotes          抑制在標示符號周圍使用引號\n"
+"  -N, --quotes             可以在標示符號周圍使用引號\n"
 "  -o, --oids               在輸出中包括 oid\n"
 "  -O, --no-owner           在純文字格式中不要包括 \\connect 指令\n"
 "  -p, --port=埠號          資料庫伺服器埠號\n"
@@ -105,7 +105,7 @@ msgstr ""
 #: pg_dump.c:177
 msgid ""
 "  -a                       dump only the data, not the schema\n"
-"  -b                       include BLOB data in dump\n"
+"  -b                       include large objects in dump\n"
 "  -c                       clean (drop) schema prior to create\n"
 "  -C                       include commands to create database in dump\n"
 "  -d                       dump data as INSERT, rather than COPY, commands\n"
@@ -147,8 +147,8 @@ msgstr ""
 "  -F {c|t|p}               輸出檔案格式(自定、tar、純文字)\n"
 "  -h 主機名稱              資料庫伺服器主機名稱\n"
 "  -i                       即使伺服器版本和 pg_dump 版本不符合也繼續執行\n"
-"  -n                       抑制在大多數標示符號周圍的引號\n"
-"  -N                       允許\在大多數標示符號周圍的引號\n"
+"  -n                       抑制在標示符號周圍使用引號\n"
+"  -N                       可以在標示符號周圍使用引號\n"
 "  -o                       在輸出中包括 oid\n"
 "  -O                       在純文字格式中不輸出 \\connect 指令\n"
 "  -p 埠號                  資料庫伺服器埠號\n"
@@ -176,21 +176,21 @@ msgstr ""
 "\n"
 "向 <pgsql-bugs@postgresql.org> 報告臭蟲."
 
-#: pg_dump.c:874 pg_restore.c:258
+#: pg_dump.c:874 pg_restore.c:263
 msgid "User name: "
 msgstr "使用者名稱: "
 
-#: pg_dump.c:907 pg_restore.c:283
+#: pg_dump.c:906 pg_restore.c:288
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
 msgstr "%s: 無效的 -X 選項 -- %s\n"
 
-#: pg_dump.c:909 pg_dump.c:931 pg_restore.c:285 pg_restore.c:297
+#: pg_dump.c:908 pg_dump.c:930 pg_restore.c:290 pg_restore.c:302
 #, c-format
 msgid "Try '%s --help' for more information.\n"
 msgstr "輸入 '%s --help' 以顯示更多訊息。\n"
 
-#: pg_dump.c:920
+#: pg_dump.c:919
 #, c-format
 msgid ""
 "%s was compiled without support for long options.\n"
@@ -199,7 +199,7 @@ msgstr ""
 "%s 編譯時未加入長選項支援。\n"
 "用 --help 顯示選項的說明。\n"
 
-#: pg_dump.c:939
+#: pg_dump.c:938
 #, c-format
 msgid ""
 "%s: too many command line options (first is '%s')\n"
@@ -208,7 +208,7 @@ msgstr ""
 "%s: 指令參數過多 (第一個是 '%s')\n"
 "輸入 '%s --help' 顯示更多訊息。\n"
 
-#: pg_backup_archiver.c:94
+#: pg_backup_archiver.c:106
 msgid "archiver"
 msgstr "歸檔"
 
@@ -220,7 +220,7 @@ msgstr "自定歸檔"
 msgid "archiver (db)"
 msgstr "歸檔 (db)"
 
-#: pg_backup_db.c:299 pg_backup_db.c:332 pg_backup_db.c:393 pg_backup_db.c:422
+#: pg_backup_db.c:334 pg_backup_db.c:367 pg_backup_db.c:428 pg_backup_db.c:457
 msgid "Password: "
 msgstr "密碼: "
 
@@ -228,11 +228,11 @@ msgstr "密碼: "
 msgid "file archiver"
 msgstr "檔案歸檔"
 
-#: pg_backup_tar.c:104
+#: pg_backup_tar.c:103
 msgid "tar archiver"
 msgstr "tar 歸檔"
 
-#: pg_restore.c:378
+#: pg_restore.c:383
 #, c-format
 msgid ""
 "%s restores a PostgreSQL database from an archive created by pg_dump.\n"
@@ -249,21 +249,21 @@ msgstr ""
 "\n"
 "選項:\n"
 
-#: pg_restore.c:384
+#: pg_restore.c:389
 msgid ""
 "  -a, --data-only          restore only the data, no schema\n"
 "  -c, --clean              clean (drop) schema prior to create\n"
 "  -C, --create             issue commands to create the database\n"
-"  -d, --dbname=NAME        specify database name\n"
-"  -f, --file=FILENAME      TOC output file name (see -l)\n"
+"  -d, --dbname=NAME        output database name\n"
+"  -f, --file=FILENAME      output file name\n"
 "  -F, --format={c|t}       specify backup file format\n"
 "  -h, --host=HOSTNAME      server host name\n"
 "  -i, --index=NAME         restore named index\n"
-"  -l, --list               dump summarized TOC for of the archive\n"
+"  -l, --list               print summarized TOC of the archive\n"
 "  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 "                           output from this file\n"
 "  -N, --orig-order         restore in original dump order\n"
-"  -o, --oid-order          restore in oid order\n"
+"  -o, --oid-order          restore in OID order\n"
 "  -O, --no-owner           do not reconnect to database to match\n"
 "                           object owner\n"
 "  -p, --port=PORT          server port number\n"
@@ -314,22 +314,22 @@ msgstr ""
 "                           儘可能用 SET SESSION AUTHORIZATION 指令而不是\n"
 "                           重新連接\n"
 
-#: pg_restore.c:420
+#: pg_restore.c:425
 msgid ""
 "  -a                       restore only the data, no schema\n"
 "  -c                       clean (drop) schema prior to create\n"
 "  -C                       issue commands to create the database\n"
-"  -d NAME                  specify database name\n"
-"  -f FILENAME              TOC output file name (see -l)\n"
+"  -d NAME                  output database name\n"
+"  -f FILENAME              output file name\n"
 "  -F {c|t}                 specify backup file format\n"
 "  -h HOSTNAME              server host name\n"
 "  -i NAME                  restore named index\n"
-"  -l                       dump summarized TOC for this file\n"
+"  -l                       print summarized TOC of the archive\n"
 "  -L FILENAME              use specified table of contents for ordering\n"
 "                           output from this file\n"
 "  -N                       restore in original dump order\n"
-"  -o                       restore in oid order\n"
-"  -O                       do not output reconnect to database to match\n"
+"  -o                       restore in OID order\n"
+"  -O                       do not reconnect to database to match\n"
 "                           object owner\n"
 "  -p PORT                  server port number\n"
 "  -P NAME                  restore named function\n"
@@ -376,14 +376,15 @@ msgstr ""
 "  -W                       強制密碼詢問 (應該自動詢問)\n"
 "  -x                       忽略存取權限 (grant/reovke) 的還原\n"
 "  -X use-set-session-authorization\n"
-"                           儘可能使用 SET SESSION AUTHORIZATION 指令, 而不是\n"
+"                           儘可能使用 SET SESSION AUTHORIZATION "
+"指令，而不是\n"
 "                           重新連接\n"
 
-#: pg_restore.c:453
+#: pg_restore.c:458
 msgid "If no input file name is supplied, then standard input is used.\n"
 msgstr "如果沒有提供檔案名稱則使用標準輸入。\n"
 
-#: pg_restore.c:454
+#: pg_restore.c:459
 msgid "Report bugs to <pgsql-bugs@postgresql.org>."
 msgstr "向 <pgsql-bugs@postgresql.org> 回報錯誤。"
 
