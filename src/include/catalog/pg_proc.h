@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.160 2000/08/05 14:59:19 momjian Exp $
+ * $Id: pg_proc.h,v 1.161 2000/08/06 18:06:13 thomas Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2039,6 +2039,31 @@ DATA(insert OID = 1623 (  varchar			PGUID 12 f t t t 1 f 1043 "20" 100 0 0 100  
 DESCR("convert int8 to varchar");
 DATA(insert OID = 1624 (  mul_d_interval	PGUID 12 f t t t 2 f 1186 "701 1186" 100 0 0 100	mul_d_interval - ));
 
+DATA(insert OID = 1625 (  like				PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 1 0  namelike_escape - ));
+DESCR("matches LIKE expression");
+DATA(insert OID = 1626 (  notlike			PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 1 0  namenlike_escape - ));
+DESCR("does not match LIKE expression");
+DATA(insert OID = 1627 (  ilike				PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 1 0  inamelike_escape - ));
+DESCR("matches case-insensitive LIKE expression");
+DATA(insert OID = 1628 (  inotlike			PGUID 12 f t t t 3 f 16 "19 25 25" 100 0 1 0  inamenlike_escape - ));
+DESCR("does not match case-insensitive LIKE expression");
+DATA(insert OID = 1629 (  like				PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 1 0  textlike_escape - ));
+DESCR("matches LIKE expression");
+DATA(insert OID = 1630 (  notlike			PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 1 0  textnlike_escape - ));
+DESCR("does not match LIKE expression");
+DATA(insert OID = 1631 (  ilike				PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 1 0  itextlike_escape - ));
+DESCR("matches case-insensitive LIKE expression");
+DATA(insert OID = 1632 (  inotlike			PGUID 12 f t t t 3 f 16 "25 25 25" 100 0 1 0  itextnlike_escape - ));
+DESCR("does not match case-insensitive LIKE expression");
+DATA(insert OID = 1633 (  ilike				PGUID 12 f t t t 2 f 16 "25 25" 100 0 1 0  itextlike - ));
+DESCR("matches case-insensitive LIKE expression");
+DATA(insert OID = 1634 (  inotlike			PGUID 12 f t t t 2 f 16 "25 25" 100 0 1 0  itextnlike - ));
+DESCR("does not match case-insensitive LIKE expression");
+DATA(insert OID = 1635 (  ilike				PGUID 12 f t t t 2 f 16 "19 25" 100 0 0 100  inamelike - ));
+DESCR("matches case-insensitive LIKE expression");
+DATA(insert OID = 1636 (  inotlike			PGUID 12 f t t t 2 f 16 "19 25" 100 0 0 100  inamenlike - ));
+DESCR("does not match case-insensitive LIKE expression");
+
 DATA(insert OID = 1689 (  update_pg_pwd       PGUID 12 f t f t 0 f 0  ""  100 0 0 100  update_pg_pwd - ));
 DESCR("update pg_pwd file");
 
@@ -2291,9 +2316,9 @@ DESCR("greater-than");
 DATA(insert OID = 1721 ( numeric_ge				PGUID 12 f t t t 2 f 16 "1700 1700" 100 0 0 100  numeric_ge - ));
 DESCR("greater-than-or-equal");
 DATA(insert OID = 1722 ( numeric_lt				PGUID 12 f t t t 2 f 16 "1700 1700" 100 0 0 100  numeric_lt - ));
-DESCR("lower-than");
+DESCR("less-than");
 DATA(insert OID = 1723 ( numeric_le				PGUID 12 f t t t 2 f 16 "1700 1700" 100 0 0 100  numeric_le - ));
-DESCR("lower-than-or-equal");
+DESCR("less-than-or-equal");
 DATA(insert OID = 1724 ( numeric_add			PGUID 12 f t t t 2 f 1700 "1700 1700" 100 0 0 100  numeric_add - ));
 DESCR("add");
 DATA(insert OID = 1725 ( numeric_sub			PGUID 12 f t t t 2 f 1700 "1700 1700" 100 0 0 100  numeric_sub - ));

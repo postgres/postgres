@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.130 2000/08/03 23:07:51 tgl Exp $
+ * $Id: builtins.h,v 1.131 2000/08/06 18:06:44 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,8 +431,12 @@ extern Datum pgsql_version(PG_FUNCTION_ARGS);
 /* like.c */
 extern Datum namelike(PG_FUNCTION_ARGS);
 extern Datum namenlike(PG_FUNCTION_ARGS);
+extern Datum namelike_escape(PG_FUNCTION_ARGS);
+extern Datum namenlike_escape(PG_FUNCTION_ARGS);
 extern Datum textlike(PG_FUNCTION_ARGS);
 extern Datum textnlike(PG_FUNCTION_ARGS);
+extern Datum textlike_escape(PG_FUNCTION_ARGS);
+extern Datum textnlike_escape(PG_FUNCTION_ARGS);
 
 /* oracle_compat.c */
 extern Datum lower(PG_FUNCTION_ARGS);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.79 2000/07/14 15:43:32 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.80 2000/08/06 18:05:22 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"cascade", CASCADE},
 	{"case", CASE},
 	{"cast", CAST},
+	{"chain", CHAIN},
 	{"char", CHAR},
 	{"character", CHARACTER},
 	{"characteristics", CHARACTERISTICS},
@@ -101,6 +102,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"else", ELSE},
 	{"encoding", ENCODING},
 	{"end", END_TRANS},
+	{"escape", ESCAPE},
 	{"except", EXCEPT},
 	{"exclusive", EXCLUSIVE},
 	{"execute", EXECUTE},
@@ -124,6 +126,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"handler", HANDLER},
 	{"having", HAVING},
 	{"hour", HOUR_P},
+	{"ilike", ILIKE},
 	{"immediate", IMMEDIATE},
 	{"in", IN},
 	{"increment", INCREMENT},

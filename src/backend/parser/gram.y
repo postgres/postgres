@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.181 2000/07/30 22:13:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.182 2000/08/06 18:05:21 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -123,7 +123,7 @@ static void doNegateFloat(Value *v);
 		AlterSchemaStmt, AlterTableStmt, ClosePortalStmt,
 		CopyStmt, CreateStmt, CreateAsStmt, CreateSchemaStmt, CreateSeqStmt, DefineStmt, DropStmt,
 		TruncateStmt, CommentStmt,
-		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
+		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropSchemaStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, UnlistenStmt, LockStmt, OptimizableStmt,
 		ProcedureStmt, ReindexStmt, RemoveAggrStmt, RemoveOperStmt,
@@ -191,7 +191,7 @@ static void doNegateFloat(Value *v);
 %type <list>	for_update_clause, update_list
 %type <boolean>	opt_all
 %type <boolean>	opt_table
-%type <boolean>	opt_trans
+%type <boolean>	opt_chain, opt_trans
 
 %type <jexpr>	from_expr, join_clause, join_expr
 %type <jexpr>	join_clause_with_union, join_expr_with_union
@@ -252,7 +252,7 @@ static void doNegateFloat(Value *v);
 
 %type <typnam>	Typename, SimpleTypename, ConstTypename
 				Generic, Numeric, Geometric, Character, ConstDatetime, ConstInterval, Bit
-%type <str>		typename, generic, numeric, geometric, character, datetime, bit
+%type <str>		generic, character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -302,7 +302,7 @@ static void doNegateFloat(Value *v);
 		CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DELETE, DESC,
 		DISTINCT, DOUBLE, DROP,
-		ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
+		ELSE, END_TRANS, ESCAPE, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GLOBAL, GRANT, GROUP, HAVING, HOUR_P,
 		IN, INNER_P, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO, IS,
@@ -320,7 +320,7 @@ static void doNegateFloat(Value *v);
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
-%token	CHARACTERISTICS,
+%token	CHAIN, CHARACTERISTICS,
 		DEFERRABLE, DEFERRED,
 		IMMEDIATE, INITIALLY, INOUT,
 		OFF, OUT,
@@ -345,7 +345,7 @@ static void doNegateFloat(Value *v);
 		DATABASE, DELIMITERS, DO,
 		EACH, ENCODING, EXCLUSIVE, EXPLAIN, EXTEND,
 		FORCE, FORWARD, FUNCTION, HANDLER,
-		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
+		ILIKE, INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
 		LANCOMPILER, LIMIT, LISTEN, LOAD, LOCATION, LOCK_P,
 		MAXVALUE, MINVALUE, MODE, MOVE,
 		NEW, NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY, NOTNULL,
@@ -368,7 +368,7 @@ static void doNegateFloat(Value *v);
 %right		NOT
 %right		'='
 %nonassoc	'<' '>'
-%nonassoc	LIKE
+%nonassoc	LIKE ILIKE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
 %nonassoc	IN
@@ -382,13 +382,14 @@ static void doNegateFloat(Value *v);
 %left		'^'
 %left		'|'				/* this is the relation union op, not logical or */
 /* Unary Operators */
-%right		':'
-%left		';'				/* end of statement or natural log */
+%right		':'				/* delimiter for array ranges */
+%left		';'				/* end of statement */
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
 %left		TYPECAST
 %left		UNION INTERSECT EXCEPT
+%left		ESCAPE
 %%
 
 /*
@@ -432,6 +433,7 @@ stmt :	AlterSchemaStmt
 		| ClusterStmt
 		| DefineStmt
 		| DropStmt		
+		| DropSchemaStmt
 		| TruncateStmt
 		| CommentStmt
 		| DropGroupStmt
@@ -678,7 +680,16 @@ DropGroupStmt: DROP GROUP UserId
 
 CreateSchemaStmt:  CREATE SCHEMA UserId
 				{
-					elog(ERROR, "CREATE SCHEMA not yet supported");
+					/* for now, just make this the same as CREATE DATABASE */
+					CreatedbStmt *n = makeNode(CreatedbStmt);
+					n->dbname = $3;
+					n->dbpath = NULL;
+#ifdef MULTIBYTE
+					n->encoding = GetTemplateEncoding();
+#else
+					n->encoding = 0;
+#endif
+					$$ = (Node *)n;
 				}
 		;
 
@@ -687,6 +698,13 @@ AlterSchemaStmt:  ALTER SCHEMA UserId
 					elog(ERROR, "ALTER SCHEMA not yet supported");
 				}
 		;
+
+DropSchemaStmt:  DROP SCHEMA UserId
+				{
+					DropdbStmt *n = makeNode(DropdbStmt);
+					n->dbname = $3;
+					$$ = (Node *)n;
+				}
 
 
 /*****************************************************************************
@@ -2648,7 +2666,7 @@ opt_force:	FORCE									{  $$ = TRUE; }
  *****************************************************************************/
 
 RenameStmt:  ALTER TABLE relation_name opt_inh_star
-        /* "*" deprecated */
+				/* "*" deprecated */
 				  RENAME opt_column opt_name TO name
 				{
 					RenameStmt *n = makeNode(RenameStmt);
@@ -2823,6 +2841,12 @@ TransactionStmt: ABORT_TRANS opt_trans
 					n->command = COMMIT;
 					$$ = (Node *)n;
 				}
+		| COMMIT opt_trans opt_chain
+				{
+					TransactionStmt *n = makeNode(TransactionStmt);
+					n->command = COMMIT;
+					$$ = (Node *)n;
+				}
 		| END_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
@@ -2835,11 +2859,30 @@ TransactionStmt: ABORT_TRANS opt_trans
 					n->command = ROLLBACK;
 					$$ = (Node *)n;
 				}
+		| ROLLBACK opt_trans opt_chain
+				{
+					TransactionStmt *n = makeNode(TransactionStmt);
+					n->command = ROLLBACK;
+					$$ = (Node *)n;
+				}
 		;
 
 opt_trans: WORK									{ $$ = TRUE; }
 		| TRANSACTION							{ $$ = TRUE; }
 		| /*EMPTY*/								{ $$ = TRUE; }
+		;
+
+opt_chain: AND NO CHAIN
+				{ $$ = FALSE; }
+		| AND CHAIN
+				{
+					/* SQL99 asks that conforming dbs reject AND CHAIN
+					 * if they don't support it. So we can't just ignore it.
+					 * - thomas 2000-08-06
+					 */
+					elog(ERROR, "COMMIT/CHAIN not yet supported");
+					$$ = TRUE;
+				}
 		;
 
 
@@ -2891,11 +2934,11 @@ LoadStmt:  LOAD file_name
  *****************************************************************************/
 
 CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb_opt_encoding
-               {
-                   CreatedbStmt *n;
+				{
+					CreatedbStmt *n;
 
-                   if ($5 == NULL && $6 == -1)
-                       elog(ERROR, "CREATE DATABASE WITH requires at least one option.");
+					if ($5 == NULL && $6 == -1)
+						elog(ERROR, "CREATE DATABASE WITH requires at least one option.");
 
                     n = makeNode(CreatedbStmt);
 					n->dbname = $3;
@@ -2918,50 +2961,49 @@ CreatedbStmt:  CREATE DATABASE database_name WITH createdb_opt_location createdb
 		;
 
 createdb_opt_location:  LOCATION '=' Sconst		{ $$ = $3; }
-        | LOCATION '=' DEFAULT                  { $$ = NULL; }
+		| LOCATION '=' DEFAULT					{ $$ = NULL; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
-createdb_opt_encoding:
-        ENCODING '=' Sconst
-        {
+createdb_opt_encoding:  ENCODING '=' Sconst
+				{
 #ifdef MULTIBYTE
-            int i;
-            i = pg_char_to_encoding($3);
-            if (i == -1)
-                elog(ERROR, "%s is not a valid encoding name", $3);
-            $$ = i;
+					int i;
+					i = pg_char_to_encoding($3);
+					if (i == -1)
+						elog(ERROR, "%s is not a valid encoding name", $3);
+					$$ = i;
 #else
-            elog(ERROR, "Multi-byte support is not enabled");
+					elog(ERROR, "Multi-byte support is not enabled");
 #endif
-        }
-        | ENCODING '=' Iconst
-        {
+				}
+		| ENCODING '=' Iconst
+				{
 #ifdef MULTIBYTE
-            if (!pg_get_encent_by_encoding($3))
-                elog(ERROR, "%d is not a valid encoding code", $3);
-            $$ = $3;
+					if (!pg_get_encent_by_encoding($3))
+						elog(ERROR, "%d is not a valid encoding code", $3);
+					$$ = $3;
 #else
-            elog(ERROR, "Multi-byte support is not enabled");
+					elog(ERROR, "Multi-byte support is not enabled");
 #endif
-        }
-        | ENCODING '=' DEFAULT
-        {
+				}
+		| ENCODING '=' DEFAULT
+				{
 #ifdef MULTIBYTE
-            $$ = GetTemplateEncoding();
+					$$ = GetTemplateEncoding();
 #else
-            $$ = 0;
+					$$ = 0;
 #endif
-        }
-        | /*EMPTY*/
-        {
+				}
+		| /*EMPTY*/
+				{
 #ifdef MULTIBYTE
-            $$ = GetTemplateEncoding();
+					$$ = GetTemplateEncoding();
 #else
-            $$= 0;
+					$$= 0;
 #endif
-        }
-        ;
+				}
+		;
 
 
 /*****************************************************************************
@@ -3255,7 +3297,7 @@ UpdateStmt:  UPDATE opt_only relation_name
 			  where_clause
 				{
 					UpdateStmt *n = makeNode(UpdateStmt);
-                    n->inh = $2;
+					n->inh = $2;
 					n->relname = $3;
 					n->targetList = $5;
 					n->fromClause = $6;
@@ -3353,7 +3395,7 @@ SelectStmt:	  select_clause sort_clause for_update_clause opt_select_limit
 					List *select_list = NIL;
 					SelectStmt *first_select;
 					bool	intersect_present = FALSE,
-							unionall_present = FALSE;
+						unionall_present = FALSE;
 
 					/* Take the operator tree as an argument and create a
 					 * list of all SelectStmt Nodes found in the tree.
@@ -3429,21 +3471,21 @@ select_clause: '(' select_clause ')'
 		| select_clause EXCEPT select_clause
 			{
 				$$ = (Node *)makeA_Expr(AND,NULL,$1,
-							makeA_Expr(NOT,NULL,NULL,$3));
+										makeA_Expr(NOT,NULL,NULL,$3));
 			}
 		| select_clause UNION opt_all select_clause
 			{	
 				if (IsA($4, SelectStmt))
-				  {
-				     SelectStmt *n = (SelectStmt *)$4;
-				     n->unionall = $3;
-					 /* NOTE: if UNION ALL appears with a parenthesized set
-					  * operation to its right, the ALL is silently discarded.
-					  * Should we generate an error instead?  I think it may
-					  * be OK since ALL with UNION to its right is ignored
-					  * anyway...
-					  */
-				  }
+				{
+					SelectStmt *n = (SelectStmt *)$4;
+					n->unionall = $3;
+					/* NOTE: if UNION ALL appears with a parenthesized set
+					 * operation to its right, the ALL is silently discarded.
+					 * Should we generate an error instead?  I think it may
+					 * be OK since ALL with UNION to its right is ignored
+					 * anyway...
+					 */
+				}
 				$$ = (Node *)makeA_Expr(OR,NULL,$1,$4);
 			}
 		| select_clause INTERSECT select_clause
@@ -3899,21 +3941,21 @@ relation_expr:	relation_name
 					$$->relname = $1;
 					$$->inh = SQL_inheritance;
 				}
-		| relation_name '*'				  %prec '='
+		| relation_name '*'				%prec '='
 				{
 					/* inheritance query */
 					$$ = makeNode(RelExpr);
 					$$->relname = $1;
 					$$->inh = TRUE;
 				}
-        | ONLY relation_name               %prec '='
-                {
+		| ONLY relation_name			%prec '='
+				{
 					/* no inheritance */
 					$$ = makeNode(RelExpr);
 					$$->relname = $2;
 					$$->inh = FALSE;
                 }
-         ;
+		;
 
 opt_array_bounds:	'[' ']' opt_array_bounds
 				{  $$ = lcons(makeInteger(-1), $3); }
@@ -3975,14 +4017,6 @@ ConstTypename:  Generic
 		| ConstDatetime
 		;
 
-typename:  generic								{ $$ = $1; }
-		| numeric								{ $$ = $1; }
-		| geometric								{ $$ = $1; }
-		| bit									{ $$ = $1; }
-		| character								{ $$ = $1; }
-		| datetime								{ $$ = $1; }
-		;
-
 Generic:  generic
 				{
 					$$ = makeNode(TypeName);
@@ -4032,22 +4066,12 @@ Numeric:  FLOAT opt_float
 				}
 		;
 
-numeric:  FLOAT							{ $$ = xlateSqlType("float"); }
-		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
-		| DECIMAL 						{ $$ = xlateSqlType("decimal"); }
-		| DEC							{ $$ = xlateSqlType("decimal"); }
-		| NUMERIC 						{ $$ = xlateSqlType("numeric"); }
-		;
-
 Geometric:  PATH_P
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType("path");
 					$$->typmod = -1;
 				}
-		;
-
-geometric:  PATH_P						{ $$ = xlateSqlType("path"); }
 		;
 
 opt_float:  '(' Iconst ')'
@@ -4435,16 +4459,6 @@ a_expr:  c_expr
 				{	$$ = makeA_Expr(OP, "^", NULL, $2); }
 		| '|' a_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
-		| ':' a_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2);
-					elog(NOTICE, "The ':' operator is deprecated.  Use exp(x) instead."
-						 "\n\tThis operator will be removed in a future release.");
-				}
-		| ';' a_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2);
-					elog(NOTICE, "The ';' operator is deprecated.  Use ln(x) instead."
-						 "\n\tThis operator will be removed in a future release.");
-				}
 		| a_expr '%'
 				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| a_expr '^'
@@ -4499,9 +4513,77 @@ a_expr:  c_expr
 				{	$$ = makeA_Expr(NOT, NULL, NULL, $2); }
 
 		| a_expr LIKE a_expr
-				{	$$ = makeA_Expr(OP, "~~", $1, $3); }
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "like";
+					n->args = makeList($1, $3, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| a_expr LIKE a_expr ESCAPE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "like";
+					n->args = makeList($1, $3, $5, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
 		| a_expr NOT LIKE a_expr
-				{	$$ = makeA_Expr(OP, "!~~", $1, $4); }
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "notlike";
+					n->args = makeList($1, $4, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| a_expr NOT LIKE a_expr ESCAPE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "notlike";
+					n->args = makeList($1, $4, $6, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| a_expr ILIKE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "ilike";
+					n->args = makeList($1, $3, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| a_expr ILIKE a_expr ESCAPE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "ilike";
+					n->args = makeList($1, $3, $5, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| a_expr NOT ILIKE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "inotlike";
+					n->args = makeList($1, $4, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
+		| a_expr NOT ILIKE a_expr ESCAPE a_expr
+				{
+					FuncCall *n = makeNode(FuncCall);
+					n->funcname = "inotlike";
+					n->args = makeList($1, $4, $6, -1);
+					n->agg_star = FALSE;
+					n->agg_distinct = FALSE;
+					$$ = (Node *)n;
+				}
 
 		| a_expr ISNULL
 				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
@@ -4659,16 +4741,6 @@ b_expr:  c_expr
 				{	$$ = makeA_Expr(OP, "^", NULL, $2); }
 		| '|' b_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
-		| ':' b_expr
-				{	$$ = makeA_Expr(OP, ":", NULL, $2);
-					elog(NOTICE, "The ':' operator is deprecated.  Use exp(x) instead."
-						 "\n\tThis operator will be removed in a future release.");
-				}
-		| ';' b_expr
-				{	$$ = makeA_Expr(OP, ";", NULL, $2);
-					elog(NOTICE, "The ';' operator is deprecated.  Use ln(x) instead."
-						 "\n\tThis operator will be removed in a future release.");
-				}
 		| b_expr '%'
 				{	$$ = makeA_Expr(OP, "%", $1, NULL); }
 		| b_expr '^'
@@ -5496,6 +5568,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| BY							{ $$ = "by"; }
 		| CACHE							{ $$ = "cache"; }
 		| CASCADE						{ $$ = "cascade"; }
+		| CHAIN							{ $$ = "chain"; }
 		| CLOSE							{ $$ = "close"; }
 		| COMMENT						{ $$ = "comment"; }
 		| COMMIT						{ $$ = "commit"; }
@@ -5515,6 +5588,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| DROP							{ $$ = "drop"; }
 		| EACH							{ $$ = "each"; }
 		| ENCODING						{ $$ = "encoding"; }
+		| ESCAPE						{ $$ = "escape"; }
 		| EXCLUSIVE						{ $$ = "exclusive"; }
 		| EXECUTE						{ $$ = "execute"; }
 		| FETCH							{ $$ = "fetch"; }
@@ -5661,6 +5735,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| GLOBAL						{ $$ = "global"; }
 		| GROUP							{ $$ = "group"; }
 		| HAVING						{ $$ = "having"; }
+		| ILIKE							{ $$ = "ilike"; }
 		| INITIALLY						{ $$ = "initially"; }
 		| IN							{ $$ = "in"; }
 		| INNER_P						{ $$ = "inner"; }
