@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.97 2000/01/22 23:50:27 tgl Exp $
+ * $Id: builtins.h,v 1.98 2000/01/24 07:16:47 tgl Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -389,12 +389,13 @@ extern char *deparse_expression(Node *expr, List *rangetables,
 /* selfuncs.c */
 extern float64 eqsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
 extern float64 neqsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
-extern float64 intltsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
-extern float64 intgtsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
+extern float64 scalarltsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
+extern float64 scalargtsel(Oid opid, Oid relid, AttrNumber attno, Datum value, int32 flag);
 extern float64 eqjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid relid2, AttrNumber attno2);
 extern float64 neqjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid relid2, AttrNumber attno2);
-extern float64 intltjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid relid2, AttrNumber attno2);
-extern float64 intgtjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid relid2, AttrNumber attno2);
+extern float64 scalarltjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid relid2, AttrNumber attno2);
+extern float64 scalargtjoinsel(Oid opid, Oid relid1, AttrNumber attno1, Oid relid2, AttrNumber attno2);
+extern bool convert_to_scalar(Datum value, Oid typid, double *scaleval);
 
 extern void btcostestimate(Query *root, RelOptInfo *rel,
 						   IndexOptInfo *index, List *indexQuals,

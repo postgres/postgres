@@ -7,7 +7,7 @@
 --
 -- Copyright (c) 1994, Regents of the University of California
 --
--- $Id: complex.source,v 1.5 2000/01/22 23:50:30 tgl Exp $
+-- $Id: complex.source,v 1.6 2000/01/24 07:16:48 tgl Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -148,15 +148,13 @@ CREATE FUNCTION complex_abs_ge(complex, complex) RETURNS bool
 CREATE FUNCTION complex_abs_gt(complex, complex) RETURNS bool
    AS '_OBJWD_/complex.so' LANGUAGE 'c';
 
--- the restrict and join selectivity functions are bogus (notice we only
--- have intltsel, eqsel and intgtsel)
 CREATE OPERATOR < (
    leftarg = complex, rightarg = complex, procedure = complex_abs_lt,
-   restrict = intltsel, join = intltjoinsel
+   restrict = scalarltsel, join = scalarltjoinsel
 );
 CREATE OPERATOR <= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_le,
-   restrict = intltsel, join = intltjoinsel
+   restrict = scalarltsel, join = scalarltjoinsel
 );
 CREATE OPERATOR = (
    leftarg = complex, rightarg = complex, procedure = complex_abs_eq,
@@ -164,11 +162,11 @@ CREATE OPERATOR = (
 );
 CREATE OPERATOR >= (
    leftarg = complex, rightarg = complex, procedure = complex_abs_ge,
-   restrict = intgtsel, join = intgtjoinsel
+   restrict = scalargtsel, join = scalargtjoinsel
 );
 CREATE OPERATOR > (
    leftarg = complex, rightarg = complex, procedure = complex_abs_gt,
-   restrict = intgtsel, join = intgtjoinsel
+   restrict = scalargtsel, join = scalargtjoinsel
 );
 
 INSERT INTO pg_opclass VALUES ('complex_abs_ops');

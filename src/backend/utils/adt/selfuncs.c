@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.52 2000/01/24 02:12:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.53 2000/01/24 07:16:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,15 +47,13 @@
 /* default selectivity estimate for inequalities such as "A < b" */
 #define DEFAULT_INEQ_SEL  (1.0 / 3.0)
 
-static bool convert_to_scale(Datum value, Oid typid,
-							 double *scaleval);
 static void getattproperties(Oid relid, AttrNumber attnum,
 							 Oid *typid,
 							 int *typlen,
 							 bool *typbyval,
 							 int32 *typmod);
 static bool getattstatistics(Oid relid, AttrNumber attnum,
-							 Oid opid, Oid typid, int32 typmod,
+							 Oid typid, int32 typmod,
 							 double *nullfrac,
 							 double *commonfrac,
 							 Datum *commonval,
@@ -100,7 +98,7 @@ eqsel(Oid opid,
 						 &typid, &typlen, &typbyval, &typmod);
 
 		/* get stats for the attribute, if available */
-		if (getattstatistics(relid, attno, opid, typid, typmod,
+		if (getattstatistics(relid, attno, typid, typmod,
 							 &nullfrac, &commonfrac, &commonval,
 							 NULL, NULL))
 		{
@@ -212,19 +210,18 @@ neqsel(Oid opid,
 }
 
 /*
- *		intltsel		- Selectivity of "<" (also "<=") for integers.
+ *		scalarltsel		- Selectivity of "<" (also "<=") for scalars.
  *
- * Actually, this works and is used for all numeric types, so it should
- * be renamed.  In fact, it is also currently called for all manner of
- * non-numeric types, for which it is NOT very helpful.  That needs
- * to be fixed.
+ * This routine works for any datatype (or pair of datatypes) known to
+ * convert_to_scalar().  If it is applied to some other datatype,
+ * it will return a default estimate.
  */
 float64
-intltsel(Oid opid,
-		 Oid relid,
-		 AttrNumber attno,
-		 Datum value,
-		 int32 flag)
+scalarltsel(Oid opid,
+			Oid relid,
+			AttrNumber attno,
+			Datum value,
+			int32 flag)
 {
 	float64		result;
 
@@ -253,19 +250,19 @@ intltsel(Oid opid,
 		 */
 		oprtuple = get_operator_tuple(opid);
 		if (! HeapTupleIsValid(oprtuple))
-			elog(ERROR, "intltsel: no tuple for operator %u", opid);
+			elog(ERROR, "scalarltsel: no tuple for operator %u", opid);
 		ltype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprleft;
 		rtype = ((Form_pg_operator) GETSTRUCT(oprtuple))->oprright;
 
 		/* Convert the constant to a uniform comparison scale. */
-		if (! convert_to_scale(value,
-							   ((flag & SEL_RIGHT) ? rtype : ltype),
-							   &val))
+		if (! convert_to_scalar(value,
+								((flag & SEL_RIGHT) ? rtype : ltype),
+								&val))
 		{
-			/* Ideally we'd produce an error here, on the grounds that
-			 * the given operator shouldn't have intltsel registered as its
+			/* Ideally we'd produce an error here, on the grounds that the
+			 * given operator shouldn't have scalarltsel registered as its
 			 * selectivity func unless we can deal with its operand types.
-			 * But currently, all manner of stuff is invoking intltsel,
+			 * But currently, all manner of stuff is invoking scalarltsel,
 			 * so give a default estimate until that can be fixed.
 			 */
 			*result = DEFAULT_INEQ_SEL;
@@ -276,7 +273,7 @@ intltsel(Oid opid,
 		getattproperties(relid, attno,
 						 &typid, &typlen, &typbyval, &typmod);
 
-		if (! getattstatistics(relid, attno, opid, typid, typmod,
+		if (! getattstatistics(relid, attno, typid, typmod,
 							   NULL, NULL, NULL,
 							   &loval, &hival))
 		{
@@ -286,8 +283,8 @@ intltsel(Oid opid,
 		}
 
 		/* Convert the attribute's loval/hival to common scale. */
-		if (! convert_to_scale(loval, typid, &low) ||
-			! convert_to_scale(hival, typid, &high))
+		if (! convert_to_scalar(loval, typid, &low) ||
+			! convert_to_scalar(hival, typid, &high))
 		{
 			/* See above comments... */
 			if (! typbyval)
@@ -341,23 +338,23 @@ intltsel(Oid opid,
 }
 
 /*
- *		intgtsel		- Selectivity of ">" (also ">=") for integers.
+ *		scalargtsel		- Selectivity of ">" (also ">=") for integers.
  *
- * See above comments for intltsel.
+ * See above comments for scalarltsel.
  */
 float64
-intgtsel(Oid opid,
-		 Oid relid,
-		 AttrNumber attno,
-		 Datum value,
-		 int32 flag)
+scalargtsel(Oid opid,
+			Oid relid,
+			AttrNumber attno,
+			Datum value,
+			int32 flag)
 {
 	float64		result;
 
 	/* Compute selectivity of "<", then invert --- but only if we
 	 * were able to produce a non-default estimate.
 	 */
-	result = intltsel(opid, relid, attno, value, flag);
+	result = scalarltsel(opid, relid, attno, value, flag);
 	if (*result != DEFAULT_INEQ_SEL)
 		*result = 1.0 - *result;
 	return result;
@@ -429,14 +426,14 @@ neqjoinsel(Oid opid,
 }
 
 /*
- *		intltjoinsel	- Join selectivity of "<" and "<="
+ *		scalarltjoinsel	- Join selectivity of "<" and "<=" for scalars
  */
 float64
-intltjoinsel(Oid opid,
-			 Oid relid1,
-			 AttrNumber attno1,
-			 Oid relid2,
-			 AttrNumber attno2)
+scalarltjoinsel(Oid opid,
+				Oid relid1,
+				AttrNumber attno1,
+				Oid relid2,
+				AttrNumber attno2)
 {
 	float64		result;
 
@@ -446,14 +443,14 @@ intltjoinsel(Oid opid,
 }
 
 /*
- *		intgtjoinsel	- Join selectivity of ">" and ">="
+ *		scalargtjoinsel	- Join selectivity of ">" and ">=" for scalars
  */
 float64
-intgtjoinsel(Oid opid,
-			 Oid relid1,
-			 AttrNumber attno1,
-			 Oid relid2,
-			 AttrNumber attno2)
+scalargtjoinsel(Oid opid,
+				Oid relid1,
+				AttrNumber attno1,
+				Oid relid2,
+				AttrNumber attno2)
 {
 	float64		result;
 
@@ -463,21 +460,25 @@ intgtjoinsel(Oid opid,
 }
 
 /*
- * convert_to_scale
- *	  Convert a given value of the indicated type to the comparison
- *	  scale needed by intltsel().  Returns "true" if successful.
+ * convert_to_scalar
+ *	  Convert a non-NULL value of the indicated type to the comparison
+ *	  scale needed by scalarltsel()/scalargtsel().
+ *	  Returns "true" if successful.
  *
  * All numeric datatypes are simply converted to their equivalent
- * "double" values.
- * Future extension: convert string-like types to some suitable scale.
+ * "double" values.  String datatypes are converted to a crude scale
+ * using their first character (only if it is in the ASCII range,
+ * to try to avoid problems with non-ASCII collating sequences).
  */
-static bool
-convert_to_scale(Datum value, Oid typid,
-				 double *scaleval)
+bool
+convert_to_scalar(Datum value, Oid typid,
+				  double *scaleval)
 {
-	/* Fast-path conversions for some built-in types */
 	switch (typid)
 	{
+		/*
+		 * Built-in numeric types
+		 */
 		case BOOLOID:
 			*scaleval = (double) DatumGetUInt8(value);
 			return true;
@@ -504,18 +505,54 @@ convert_to_scale(Datum value, Oid typid,
 			/* we can treat OIDs as integers... */
 			*scaleval = (double) DatumGetObjectId(value);
 			return true;
-		case TEXTOID:
-			/*
-			 * Eventually this should get handled by somehow scaling as a
-			 * string value.  For now, we need to call it out to avoid
-			 * falling into the default case, because there is a float8(text)
-			 * function declared in pg_proc that will do the wrong thing :-(
-			 */
+
+		/*
+		 * Built-in string types
+		 */
+		case CHAROID:
+		{
+			char		ch = DatumGetChar(value);
+
+			if (ch >= 0 && ch < 127)
+			{
+				*scaleval = (double) ch;
+				return true;
+			}
 			break;
+		}
+		case BPCHAROID:
+		case VARCHAROID:
+		case TEXTOID:
+			if (VARSIZE(DatumGetPointer(value)) > VARHDRSZ)
+			{
+				char	ch = * (char *) VARDATA(DatumGetPointer(value));
+
+				if (ch >= 0 && ch < 127)
+				{
+					*scaleval = (double) ch;
+					return true;
+				}
+			}
+			break;
+		case NAMEOID:
+		{
+			NameData   *nm = (NameData *) DatumGetPointer(value);
+			char		ch = NameStr(*nm)[0];
+
+			if (ch >= 0 && ch < 127)
+			{
+				*scaleval = (double) ch;
+				return true;
+			}
+			break;
+		}
+
 		default:
 		{
-			/* See whether there is a registered type-conversion function,
+			/*
+			 * See whether there is a registered type-conversion function,
 			 * namely a procedure named "float8" with the right signature.
+			 * If so, assume we can convert the value to the numeric scale.
 			 */
 			Oid			oid_array[FUNC_MAX_ARGS];
 			HeapTuple	ftup;
@@ -589,7 +626,9 @@ getattproperties(Oid relid, AttrNumber attnum,
  * after use if the data type is not by-value.)
  */
 static bool
-getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
+getattstatistics(Oid relid,
+				 AttrNumber attnum,
+				 Oid typid,
 				 int32 typmod,
 				 double *nullfrac,
 				 double *commonfrac,
@@ -603,8 +642,15 @@ getattstatistics(Oid relid, AttrNumber attnum, Oid opid, Oid typid,
 	Oid			typelem;
 	bool		isnull;
 
-	/* We assume that there will only be one entry in pg_statistic
-	 * for the given rel/att.  Someday, VACUUM might store more than one...
+	/*
+	 * We assume that there will only be one entry in pg_statistic for
+	 * the given rel/att, so we search WITHOUT considering the staop
+	 * column.  Someday, VACUUM might store more than one entry per rel/att,
+	 * corresponding to more than one possible sort ordering defined for
+	 * the column type.  However, to make that work we will need to figure
+	 * out which staop to search for --- it's not necessarily the one we
+	 * have at hand!  (For example, we might have a '>' operator rather than
+	 * the '<' operator that will appear in staop.)
 	 */
 	tuple = SearchSysCacheTuple(STATRELID,
 								ObjectIdGetDatum(relid),

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.6 2000/01/22 23:50:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.7 2000/01/24 07:16:49 tgl Exp $
 Postgres documentation
 -->
 
@@ -542,25 +542,25 @@ CREATE OPERATOR = (
             oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
     
     UPDATE pg_operator
-        SET oprrest = 'intltsel'::regproc, oprjoin = 'intltjoinsel'
+        SET oprrest = 'scalarltsel'::regproc, oprjoin = 'scalarltjoinsel'
         WHERE oprname = '<' AND 
             oprleft = oprright AND
             oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
     
     UPDATE pg_operator
-        SET oprrest = 'intltsel'::regproc, oprjoin = 'intltjoinsel'
+        SET oprrest = 'scalarltsel'::regproc, oprjoin = 'scalarltjoinsel'
         WHERE oprname = '<=' AND
             oprleft = oprright AND
             oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
     
     UPDATE pg_operator
-        SET oprrest = 'intgtsel'::regproc, oprjoin = 'intgtjoinsel'
+        SET oprrest = 'scalargtsel'::regproc, oprjoin = 'scalargtjoinsel'
         WHERE oprname = '>' AND
             oprleft = oprright AND
             oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
     
     UPDATE pg_operator
-        SET oprrest = 'intgtsel'::regproc, oprjoin = 'intgtjoinsel'
+        SET oprrest = 'scalargtsel'::regproc, oprjoin = 'scalargtjoinsel'
         WHERE oprname = '>=' AND
             oprleft = oprright AND
             oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');</filename></filename>

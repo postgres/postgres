@@ -231,8 +231,8 @@ SELECT (a + b) AS c FROM test_complex;
    <ProgramListing>
 	eqsel		for =
 	neqsel		for &lt;&gt;
-	intltsel	for &lt; or &lt;=
-	intgtsel	for &gt; or &gt;=
+	scalarltsel	for &lt; or &lt;=
+	scalargtsel	for &gt; or &gt;=
    </ProgramListing>
     It might seem a little odd that these are the categories, but they
     make sense if you think about it.  '=' will typically accept only
@@ -253,6 +253,17 @@ SELECT (a + b) AS c FROM test_complex;
     aren't really equality or inequality.  For example, the regular expression
     matching operators (~, ~*, etc) use eqsel on the assumption that they'll
     usually only match a small fraction of the entries in a table.
+   </para>
+
+   <para>
+    You can use scalarltsel and scalargtsel for comparisons on datatypes that
+    have some sensible means of being converted into numeric scalars for
+    range comparisons.  If possible, add the datatype to those understood
+    by the routine convert_to_scalar() in src/backend/utils/adt/selfuncs.c.
+    (Eventually, this routine should be replaced by per-datatype functions
+    identified through a column of the pg_type table; but that hasn't happened
+    yet.)  If you do not do this, things will still work, but the optimizer's
+    estimates won't be as good as they could be.
    </para>
    </sect2>
 
@@ -281,8 +292,8 @@ SELECT (a + b) AS c FROM test_complex;
      <ProgramListing>
 	eqjoinsel	for =
 	neqjoinsel	for &lt;&gt;
-	intltjoinsel	for &lt; or &lt;=
-	intgtjoinsel	for &gt; or &gt;=
+	scalarltjoinsel	for &lt; or &lt;=
+	scalargtjoinsel	for &gt; or &gt;=
     </ProgramListing>
     </para>
    </sect2>

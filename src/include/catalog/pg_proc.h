@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.115 2000/01/22 23:50:23 tgl Exp $
+ * $Id: pg_proc.h,v 1.116 2000/01/24 07:16:52 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -219,21 +219,21 @@ DESCR("btree cost estimator");
 /* OIDS 100 - 199 */
 
 DATA(insert OID = 1272 (  eqsel			   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  eqsel - ));
-DESCR("general selectivity");
+DESCR("restriction selectivity of = and related operators");
 DATA(insert OID = 102 (  neqsel			   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  neqsel - ));
-DESCR("not-equal selectivity");
-DATA(insert OID = 103 (  intltsel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  intltsel - ));
-DESCR("selectivity");
-DATA(insert OID = 104 (  intgtsel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  intgtsel - ));
-DESCR("selectivity");
+DESCR("restriction selectivity of <> and related operators");
+DATA(insert OID = 103 (  scalarltsel	   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  scalarltsel - ));
+DESCR("restriction selectivity of < and related operators on scalar datatypes");
+DATA(insert OID = 104 (  scalargtsel	   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  scalargtsel - ));
+DESCR("restriction selectivity of > and related operators on scalar datatypes");
 DATA(insert OID = 105 (  eqjoinsel		   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	eqjoinsel - ));
-DESCR("selectivity");
+DESCR("join selectivity of = and related operators");
 DATA(insert OID = 106 (  neqjoinsel		   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	neqjoinsel - ));
-DESCR("selectivity");
-DATA(insert OID = 107 (  intltjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	intltjoinsel - ));
-DESCR("selectivity");
-DATA(insert OID = 108 (  intgtjoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	intgtjoinsel - ));
-DESCR("selectivity");
+DESCR("join selectivity of <> and related operators");
+DATA(insert OID = 107 (  scalarltjoinsel   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	scalarltjoinsel - ));
+DESCR("join selectivity of < and related operators on scalar datatypes");
+DATA(insert OID = 108 (  scalargtjoinsel   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	scalargtjoinsel - ));
+DESCR("join selectivity of > and related operators on scalar datatypes");
 
 DATA(insert OID = 112 (  int4_text		   PGUID 11 f t t 1 f  25 "23" 100 0 0 100	int4_text - ));
 DESCR("convert int4 to text");
@@ -292,9 +292,9 @@ DESCR("contained in");
 DATA(insert OID = 138 (  box_center		   PGUID 11 f t t 1 f 600 "603" 100 1 0 100  box_center - ));
 DESCR("center of");
 DATA(insert OID = 139 (  areasel		   PGUID 11 f t f 5 f 701 "26 26 21 0 23" 100 0 0 100  areasel - ));
-DESCR("selectivity");
+DESCR("restriction selectivity for operators on areas");
 DATA(insert OID = 140 (  areajoinsel	   PGUID 11 f t f 5 f 701 "26 26 21 26 21" 100 0 0 100	areajoinsel - ));
-DESCR("selectivity");
+DESCR("join selectivity for operators on areas");
 DATA(insert OID = 141 (  int4mul		   PGUID 11 f t t 2 f 23 "23 23" 100 0 0 100  int4mul - ));
 DESCR("multiply");
 DATA(insert OID = 142 (  int4fac		   PGUID 11 f t t 1 f 23 "23" 100 0 0 100  int4fac - ));
