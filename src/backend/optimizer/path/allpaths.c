@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.75 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.76 2001/06/05 17:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -232,7 +232,7 @@ set_plain_rel_pathlist(Query *root, RelOptInfo *rel, RangeTblEntry *rte)
 	create_index_paths(root, rel);
 
 	/* create_index_paths must be done before create_or_index_paths */
-	create_or_index_paths(root, rel, rel->baserestrictinfo);
+	create_or_index_paths(root, rel);
 
 	/* Now find the cheapest of the paths for this rel */
 	set_cheapest(rel);

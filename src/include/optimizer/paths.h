@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.53 2001/05/20 20:28:20 tgl Exp $
+ * $Id: paths.h,v 1.54 2001/06/05 17:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,8 +47,7 @@ extern List *expand_indexqual_conditions(List *indexquals);
  * orindxpath.c
  *	  additional routines for indexable OR clauses
  */
-extern void create_or_index_paths(Query *root, RelOptInfo *rel,
-					  List *clauses);
+extern void create_or_index_paths(Query *root, RelOptInfo *rel);
 
 /*
  * tidpath.h

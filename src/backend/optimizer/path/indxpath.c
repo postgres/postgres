@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.105 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.106 2001/06/05 17:13:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -397,7 +397,7 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
 										clause, false);
 }
 
-/*
+/*----------
  * Given an OR subclause that has previously been determined to match
  * the specified index, extract a list of specific opclauses that can be
  * used as indexquals.
@@ -406,10 +406,25 @@ match_or_subclause_to_indexkey(RelOptInfo *rel,
  * given opclause.	However, if the OR subclause is an AND, we have to
  * scan it to find the opclause(s) that match the index.  (There should
  * be at least one, if match_or_subclause_to_indexkey succeeded, but there
- * could be more.)	Also, we apply expand_indexqual_conditions() to convert
- * any special matching opclauses to indexable operators.
+ * could be more.)
+ *
+ * Also, we can look at other restriction clauses of the rel to discover
+ * additional candidate indexquals: for example, consider
+ *			... where (a = 11 or a = 12) and b = 42;
+ * If we are dealing with an index on (a,b) then we can include the clause
+ * b = 42 in the indexqual list generated for each of the OR subclauses.
+ * Essentially, we are making an index-specific transformation from CNF to
+ * DNF.  (NOTE: when we do this, we end up with a slightly inefficient plan
+ * because create_indexscan_plan is not very bright about figuring out which
+ * restriction clauses are implied by the generated indexqual condition.
+ * Currently we'll end up rechecking both the OR clause and the transferred
+ * restriction clause as qpquals.  FIXME someday.)
+ *
+ * Also, we apply expand_indexqual_conditions() to convert any special
+ * matching opclauses to indexable operators.
  *
  * The passed-in clause is not changed.
+ *----------
  */
 List *
 extract_or_indexqual_conditions(RelOptInfo *rel,
@@ -417,54 +432,72 @@ extract_or_indexqual_conditions(RelOptInfo *rel,
 								Expr *orsubclause)
 {
 	List	   *quals = NIL;
+	int		   *indexkeys = index->indexkeys;
+	Oid		   *classes = index->classlist;
 
-	if (and_clause((Node *) orsubclause))
+	/*
+	 * Extract relevant indexclauses in indexkey order.  This is essentially
+	 * just like group_clauses_by_indexkey() except that the input and
+	 * output are lists of bare clauses, not of RestrictInfo nodes.
+	 */
+	do
 	{
+		int			curIndxKey = indexkeys[0];
+		Oid			curClass = classes[0];
+		List	   *clausegroup = NIL;
+		List	   *item;
 
-		/*
-		 * Extract relevant sub-subclauses in indexkey order.  This is
-		 * just like group_clauses_by_indexkey() except that the input and
-		 * output are lists of bare clauses, not of RestrictInfo nodes.
-		 */
-		int		   *indexkeys = index->indexkeys;
-		Oid		   *classes = index->classlist;
-
-		do
+		if (and_clause((Node *) orsubclause))
 		{
-			int			curIndxKey = indexkeys[0];
-			Oid			curClass = classes[0];
-			List	   *clausegroup = NIL;
-			List	   *item;
-
 			foreach(item, orsubclause->args)
 			{
+				Expr   *subsubclause = (Expr *) lfirst(item);
+
 				if (match_clause_to_indexkey(rel, index,
 											 curIndxKey, curClass,
-											 lfirst(item), false))
-					clausegroup = lappend(clausegroup, lfirst(item));
+											 subsubclause, false))
+					clausegroup = lappend(clausegroup, subsubclause);
 			}
+		}
+		else if (match_clause_to_indexkey(rel, index,
+										  curIndxKey, curClass,
+										  orsubclause, false))
+		{
+			clausegroup = makeList1(orsubclause);
+		}
 
-			/*
-			 * If no clauses match this key, we're done; we don't want to
-			 * look at keys to its right.
-			 */
-			if (clausegroup == NIL)
-				break;
+		/*
+		 * If we found no clauses for this indexkey in the OR subclause
+		 * itself, try looking in the rel's top-level restriction list.
+		 */
+		if (clausegroup == NIL)
+		{
+			foreach(item, rel->baserestrictinfo)
+			{
+				RestrictInfo *rinfo = (RestrictInfo *) lfirst(item);
 
-			quals = nconc(quals, clausegroup);
+				if (match_clause_to_indexkey(rel, index,
+											 curIndxKey, curClass,
+											 rinfo->clause, false))
+					clausegroup = lappend(clausegroup, rinfo->clause);
+			}
+		}
 
-			indexkeys++;
-			classes++;
-		} while (!DoneMatchingIndexKeys(indexkeys, index));
+		/*
+		 * If still no clauses match this key, we're done; we don't want to
+		 * look at keys to its right.
+		 */
+		if (clausegroup == NIL)
+			break;
 
-		if (quals == NIL)
-			elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
-	}
-	else
-	{
-		/* we assume the caller passed a valid indexable qual */
-		quals = makeList1(orsubclause);
-	}
+		quals = nconc(quals, clausegroup);
+
+		indexkeys++;
+		classes++;
+	} while (!DoneMatchingIndexKeys(indexkeys, index));
+
+	if (quals == NIL)
+		elog(ERROR, "extract_or_indexqual_conditions: no matching clause");
 
 	return expand_indexqual_conditions(quals);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.43 2001/05/20 20:28:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.44 2001/06/05 17:13:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,20 +38,17 @@ static void best_or_subclause_index(Query *root, RelOptInfo *rel,
  *	  create_index_paths() must already have been called.
  *
  * 'rel' is the relation entry for which the paths are to be created
- * 'clauses' is the list of available restriction clause nodes
  *
  * Returns nothing, but adds paths to rel->pathlist via add_path().
  */
 void
-create_or_index_paths(Query *root,
-					  RelOptInfo *rel,
-					  List *clauses)
+create_or_index_paths(Query *root, RelOptInfo *rel)
 {
-	List	   *clist;
+	List	   *rlist;
 
-	foreach(clist, clauses)
+	foreach(rlist, rel->baserestrictinfo)
 	{
-		RestrictInfo *clausenode = (RestrictInfo *) lfirst(clist);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(rlist);
 
 		/*
 		 * Check to see if this clause is an 'or' clause, and, if so,
@@ -59,13 +56,13 @@ create_or_index_paths(Query *root,
 		 * has been matched by an index.  The information used was saved
 		 * by create_index_paths().
 		 */
-		if (restriction_is_or_clause(clausenode) &&
-			clausenode->subclauseindices)
+		if (restriction_is_or_clause(restrictinfo) &&
+			restrictinfo->subclauseindices)
 		{
 			bool		all_indexable = true;
 			List	   *temp;
 
-			foreach(temp, clausenode->subclauseindices)
+			foreach(temp, restrictinfo->subclauseindices)
 			{
 				if (lfirst(temp) == NIL)
 				{
@@ -75,7 +72,6 @@ create_or_index_paths(Query *root,
 			}
 			if (all_indexable)
 			{
-
 				/*
 				 * OK, build an IndexPath for this OR clause, using the
 				 * best available index for each subclause.
@@ -93,10 +89,7 @@ create_or_index_paths(Query *root,
 				 */
 				pathnode->path.pathkeys = NIL;
 
-				/*
-				 * We don't actually care what order the index scans in
-				 * ...
-				 */
+				/* We don't actually care what order the index scans in. */
 				pathnode->indexscandir = NoMovementScanDirection;
 
 				/* This isn't a nestloop innerjoin, so: */
@@ -106,8 +99,8 @@ create_or_index_paths(Query *root,
 
 				best_or_subclause_indices(root,
 										  rel,
-										  clausenode->clause->args,
-										  clausenode->subclauseindices,
+										  restrictinfo->clause->args,
+										  restrictinfo->subclauseindices,
 										  pathnode);
 
 				add_path(rel, (Path *) pathnode);
