@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.54 2004/09/02 17:58:41 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.55 2004/10/06 09:01:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,6 +147,9 @@ char		backend_exec[MAXPGPATH];
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
 static char **replace_token(char **lines, char *token, char *replacement);
+#ifdef WIN32
+static char **filter_lines_with_token(char **lines, char *token);
+#endif
 static char **readfile(char *path);
 static void writefile(char *path, char **lines);
 static int	mkdir_p(char *path, mode_t omode);
@@ -309,6 +312,34 @@ replace_token(char **lines, char *token, char *replacement)
 	return result;
 
 }
+
+/*
+ * make a copy of lines without any that contain the token
+ * a sort of poor man's grep -v
+ *
+ */
+#ifdef WIN32
+static char **
+filter_lines_with_token(char **lines, char *token)
+{
+	int			numlines = 1;
+	int			i, src, dst;
+	char	  **result;
+
+	for (i = 0; lines[i]; i++)
+		numlines++;
+
+	result = (char **) xmalloc(numlines * sizeof(char *));
+
+	for (src = 0, dst = 0; src < numlines; src++)
+	{
+		if (lines[src] == NULL || strstr(lines[src], token) == NULL)
+			result[dst++] = lines[src];
+	}
+
+	return result;
+}
+#endif
 
 /*
  * get the lines from a text file
@@ -1092,6 +1123,12 @@ setup_config(void)
 	/* pg_hba.conf */
 
 	conflines = readfile(hba_file);
+
+#ifdef WIN32
+	conflines = filter_lines_with_token(conflines,"@remove-line-for-win32@");
+#else
+	conflines = replace_token(conflines,"@remove-line-for-win32@","");
+#endif
 
 #ifndef HAVE_IPV6
 	conflines = replace_token(conflines,
