@@ -7,8 +7,27 @@
    branch of PostgreSQL since version 7.3. For a complete list of
    changes, consult the CVS logs.
    
+   Explicit JOINs no longer constrain query plan, unless
+	JOIN_COLLAPSE_LIMIT = 1
+   Performance of "foo IN (SELECT ...)" queries has been considerably
+	improved
+   FETCH 0 now re-fetches cursor's current row, per SQL spec
+   Revised executor state representation; plan trees are read-only
+	to executor now
    Information schema
    Domains now support CHECK constraints
+   psql backslash commands for listing conversions, casts, and schemas
+   TRUNCATE TABLE is transaction-safe
+   CLUSTER can re-cluster a previously clustered table, or all such tables
+   Statement-level triggers
+   System can use either hash- or sort-based strategy for grouped
+	aggregation
+   ON COMMIT options for temp tables
+   extra_float_digits option allows pg_dump to dump float data accurately
+   Long options for psql and pg_dump are now available on all platforms
+   Read-only transactions
+   Object owners can allow grantees to grant the privilege to others
+	(grant option)
      _________________________________________________________________
    
                                Release 7.3.1
@@ -571,6 +590,36 @@ Contrib
    Move /contrib/pg_controldata, pg_resetxlog into main tree (Bruce)
    Fixes to /contrib/cube (Bruno Wolff)
    Improve /contrib/fulltextindex (Christopher)
+     _________________________________________________________________
+
+                               Release 7.2.4
+
+     Release date: 2003-01-30
+
+   This  has  a  variety  of fixes from 7.2.3, including fixes to prevent
+   possible data loss.
+     _________________________________________________________________
+
+                         Migration to version 7.2.4
+
+   A dump/restore is *not* required for those running 7.2.X.
+     _________________________________________________________________
+
+                                  Changes
+
+   Fix some additional cases of VACUUM "No one parent tuple was found"
+	error
+   Prevent VACUUM from being called inside a function  (Bruce)
+   Ensure pg_clog updates are sync'd to disk before marking checkpoint
+	complete
+   Avoid integer overflow during large hash joins
+   Make GROUP commands work when pg_group.grolist is large enough
+	to be toasted
+   Fix errors in datetime tables; some timezone names weren't being
+	recognized
+   Fix integer overflows in circle_poly(), path_encode(), path_add()
+	(Neil)
+   Repair long-standing logic errors in lseg_eq(), lseg_ne(), lseg_center()
      _________________________________________________________________
    
                                Release 7.2.3
