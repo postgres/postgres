@@ -32,16 +32,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef FRONTEND
 #include "postgres.h"
-#else
-#include "postgres_fe.h"
-#endif
 
 #ifndef WIN32
 #include <sys/ioctl.h>
 #endif
 #include <sys/param.h>
+
 
 /*
 **	SNPRINTF, VSNPRINT -- counted versions of printf
@@ -65,7 +62,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.24 2005/03/17 03:18:14 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.25 2005/03/20 03:53:39 momjian Exp $";*/
 
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 
@@ -227,10 +224,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 	for (p = format; *p != '\0'; p++)
 		if (*p == '%')			/* counts %% as two, so overcounts */
 			percents++;
-#ifndef FRONTEND
-	fmtpar = pgport_palloc(sizeof(struct fmtpar) * percents);
-	fmtparptr = pgport_palloc(sizeof(struct fmtpar *) * percents);
-#else
+
 	if ((fmtpar = malloc(sizeof(struct fmtpar) * percents)) == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));
@@ -241,7 +235,6 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		fprintf(stderr, _("out of memory\n"));
 		exit(1);
 	}
-#endif
 
 	format_save = format;
 
@@ -586,13 +579,8 @@ nochar:
 	}
 	*output = '\0';
 
-#ifndef FRONTEND
-	pgport_pfree(fmtpar);
-	pgport_pfree(fmtparptr);
-#else
 	free(fmtpar);
 	free(fmtparptr);
-#endif
 }
 
 static void
