@@ -111,7 +111,7 @@ plperl : plperl.o SPI.o
 # Clean 
 #
 clean:
-	rm -f \$(INFILES) *.o
+	rm -f \$(INFILES) *.o xtmp.c
 	rm -rf .libs
 	rm -f Makefile
 
