@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.12 1996/07/31 18:40:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.12.2.1 1996/08/27 17:37:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,7 @@ struct winsize {
 #define TUPARR_GROW_BY 100
 
 /* keep this in same order as ExecStatusType in pgtclCmds.h */
-char* pgresStatus[] = {
+const char* pgresStatus[] = {
     "PGRES_EMPTY_QUERY",
     "PGRES_COMMAND_OK",
     "PGRES_TUPLES_OK",
@@ -130,8 +130,8 @@ getTuple(PGconn *conn, PGresult* result, int binary)
   char 	bmap;		   /*  One byte of the bitmap */
   int 	bitcnt = 0; 	   /* number of bits examined in current byte */
   int 	vlen;		   /* length of the current field value */
-  FILE *Pfin = conn->Pfin;
-  FILE *Pfdebug = conn->Pfdebug;
+  FILE *pfin = conn->Pfin;
+  FILE *pfdebug = conn->Pfdebug;
 
   PGresAttValue* tup;
 
@@ -145,7 +145,7 @@ getTuple(PGconn *conn, PGresult* result, int binary)
   if ( (nfields % BYTELEN) > 0)
     nbytes++;
 
-  if (pqGetnchar(bitmap, nbytes, Pfin, Pfdebug) == 1){
+  if (pqGetnchar(bitmap, nbytes, pfin, pfdebug) == 1){
       sprintf(conn->errorMessage,
 	      "Error reading null-values bitmap from tuple data stream\n");
       return NULL;
@@ -156,15 +156,13 @@ getTuple(PGconn *conn, PGresult* result, int binary)
   for (i=0;i<nfields;i++) {
     if (!(bmap & 0200)) {
 	/* if the field value is absent, make it '\0' */
-	/* XXX this makes it impossible to distinguish NULL 
-	   attributes from "".  Is that OK?   */
 	tup[i].value = (char*)malloc(1);
 	tup[i].value[0] = '\0';
-	tup[i].len = 0;
+	tup[i].len = NULL_LEN;
     }
     else {
       /* get the value length (the first four bytes are for length) */
-      pqGetInt(&vlen, VARHDRSZ, Pfin, Pfdebug);
+      pqGetInt(&vlen, VARHDRSZ, pfin, pfdebug);
       if (binary == 0) {
 	vlen = vlen - VARHDRSZ;
 	}
@@ -174,7 +172,7 @@ getTuple(PGconn *conn, PGresult* result, int binary)
       tup[i].value = (char*) malloc(vlen + 1);
       /* read in the value; */
       if (vlen > 0)
-	  pqGetnchar((char*)(tup[i].value), vlen, Pfin, Pfdebug);
+	  pqGetnchar((char*)(tup[i].value), vlen, pfin, pfdebug);
       tup[i].value[vlen] = '\0';
     }
     /* get the appropriate bitmap */
@@ -240,8 +238,8 @@ makePGresult(PGconn* conn, char* pname)
 
   PGresAttValue* newTup;
 
-  FILE* Pfin = conn->Pfin;
-  FILE* Pfdebug = conn->Pfdebug;
+  FILE* pfin = conn->Pfin;
+  FILE* pfdebug = conn->Pfdebug;
 
   result = makeEmptyPGresult(conn, PGRES_TUPLES_OK);
   
@@ -249,7 +247,7 @@ makePGresult(PGconn* conn, char* pname)
   /* id of the stream is 'T' to start with */
 
   /* the next two bytes are the number of fields  */
-  if (pqGetInt(&nfields, 2, Pfin, Pfdebug) == 1) {
+  if (pqGetInt(&nfields, 2, pfin, pfdebug) == 1) {
     sprintf(conn->errorMessage,
 	    "could not get the number of fields from the 'T' message\n");
     goto makePGresult_badResponse_return;
@@ -268,9 +266,9 @@ makePGresult(PGconn* conn, char* pname)
     int adtid;
     int adtsize;
     
-    if ( pqGets(typName, MAX_MESSAGE_LEN, Pfin, Pfdebug) ||
-	pqGetInt(&adtid, 4, Pfin, Pfdebug) ||
-	pqGetInt(&adtsize, 2, Pfin, Pfdebug)) {
+    if ( pqGets(typName, MAX_MESSAGE_LEN, pfin, pfdebug) ||
+	pqGetInt(&adtid, 4, pfin, pfdebug) ||
+	pqGetInt(&adtsize, 2, pfin, pfdebug)) {
       sprintf(conn->errorMessage,
 	      "error reading type information from the 'T' message\n");
       goto makePGresult_badResponse_return;
@@ -281,7 +279,7 @@ makePGresult(PGconn* conn, char* pname)
    result->attDescs[i].adtsize = adtsize; /* casting from int to int2 here */
   }
 
-  id = pqGetc(Pfin,Pfdebug);
+  id = pqGetc(pfin,pfdebug);
 
   /* process the data stream until we're finished */
   while(!done) {
@@ -306,12 +304,12 @@ makePGresult(PGconn* conn, char* pname)
     case 'C': /* end of portal tuple stream */
       {
       char command[MAX_MESSAGE_LEN];
-      pqGets(command,MAX_MESSAGE_LEN, Pfin, Pfdebug); /* read the command tag */
+      pqGets(command,MAX_MESSAGE_LEN, pfin, pfdebug); /* read the command tag */
       done = 1;
     }
       break;
     case 'E': /* errors */
-      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, Pfin, Pfdebug) == 1) {
+      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
 	sprintf(conn->errorMessage,
 		"Error return detected from backend, but error message cannot be read");
       }
@@ -319,7 +317,7 @@ makePGresult(PGconn* conn, char* pname)
       return result;
       break;
     case 'N': /* notices from the backend */
-      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, Pfin, Pfdebug) == 1) {
+      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
 	sprintf(conn->errorMessage,
 	"Notice return detected from backend, but error message cannot be read");
       }   else
@@ -336,7 +334,7 @@ makePGresult(PGconn* conn, char* pname)
       break;
     }
     if (!done)
-      id = getc(Pfin);
+      id = getc(pfin);
   } /* while (1) */
 
   result->resultStatus = PGRES_TUPLES_OK;
@@ -362,7 +360,7 @@ makePGresult_badResponse_return:
  */
 
 PGresult*
-PQexec(PGconn* conn, char* query)
+PQexec(PGconn* conn, const char* query)
 {
   PGresult *result;
   int id, clear;
@@ -370,7 +368,7 @@ PQexec(PGconn* conn, char* query)
   char cmdStatus[MAX_MESSAGE_LEN];
   char pname[MAX_MESSAGE_LEN]; /* portal name */
   PGnotify *newNotify;
-  FILE *Pfin, *Pfout, *Pfdebug;
+  FILE *pfin, *pfout, *pfdebug;
 
   pname[0]='\0';
 
@@ -380,26 +378,35 @@ PQexec(PGconn* conn, char* query)
     return NULL;
   }
 
-  Pfin = conn->Pfin;
-  Pfout = conn->Pfout;
-  Pfdebug = conn->Pfdebug;
+  pfin = conn->Pfin;
+  pfout = conn->Pfout;
+  pfdebug = conn->Pfdebug;
 
   /*clear the error string */
   conn->errorMessage[0] = '\0';
 
   /* check to see if the query string is too long */
   if (strlen(query) > MAX_MESSAGE_LEN) {
-    sprintf(conn->errorMessage, "PQexec() -- query is too long.  Maximum length is %d\n", MAX_MESSAGE_LEN -2 );
+    sprintf(conn->errorMessage, "PQexec() -- query is too long.  "
+            "Maximum length is %d\n", MAX_MESSAGE_LEN -2 );
     return NULL;
   }
 
+  /* Don't try to send if we know there's no live connection. */
+  if (conn->status != CONNECTION_OK) {
+    sprintf(conn->errorMessage, "PQexec() -- There is no connection "
+            "to the backend.\n");
+    return NULL;
+  }
+  
   /* the frontend-backend protocol uses 'Q' to designate queries */
   sprintf(buffer,"Q%s",query);
 
   /* send the query to the backend; */
-  if (pqPuts(buffer,Pfout, Pfdebug) == 1) {
+  if (pqPuts(buffer,pfout, pfdebug) == 1) {
       (void) sprintf(conn->errorMessage,
-		     "PQexec() -- while sending query:  %s\n-- fprintf to Pfout failed: errno=%d\n%s\n",
+		     "PQexec() -- while sending query:  %s\n"
+                     "-- fprintf to Pfout failed: errno=%d\n%s\n",
 		     query, errno,strerror(errno));
       return NULL;
     }
@@ -412,25 +419,30 @@ PQexec(PGconn* conn, char* query)
   while (1) {
 
     /* read the result id */
-    id = pqGetc(Pfin,Pfdebug);
+    id = pqGetc(pfin,pfdebug);
     if (id == EOF) {
       /* hmm,  no response from the backend-end, that's bad */
       (void) sprintf(conn->errorMessage,
-		     "PQexec() -- No response from backend\n");
+		     "PQexec() -- Request was sent to backend, but backend "
+                     "closed the channel before "
+                     "responding.  This probably means the backend "
+                     "terminated abnormally before or while processing "
+                     "the request.\n");
+      conn->status = CONNECTION_BAD;  /* No more connection to backend */
       return (PGresult*)NULL;
     }
 
     switch (id) {
     case 'A': 
 	newNotify = (PGnotify*)malloc(sizeof(PGnotify));
-	pqGetInt(&(newNotify->be_pid), 4, Pfin, Pfdebug);
-	pqGets(newNotify->relname, NAMEDATALEN, Pfin, Pfdebug);
+	pqGetInt(&(newNotify->be_pid), 4, pfin, pfdebug);
+	pqGets(newNotify->relname, NAMEDATALEN, pfin, pfdebug);
 	DLAddTail(conn->notifyList, DLNewElem(newNotify));
 	/* async messages are piggy'ed back on other messages,
 	   so we stay in the while loop for other messages */
 	break;
     case 'C': /* portal query command, no tuples returned */
-      if (pqGets(cmdStatus, MAX_MESSAGE_LEN, Pfin, Pfdebug) == 1) {
+      if (pqGets(cmdStatus, MAX_MESSAGE_LEN, pfin, pfdebug) == 1) {
 	sprintf(conn->errorMessage,
 		"PQexec() -- query command completed, but return message from backend cannot be read");
 	return (PGresult*)NULL;
@@ -444,10 +456,10 @@ PQexec(PGconn* conn, char* query)
 	*/
 	clear = 0;
 
-	pqPuts("Q ",Pfout,Pfdebug); /* send an empty query */
+	pqPuts("Q ",pfout,pfdebug); /* send an empty query */
 	while (!clear)
 	  {
-	    if (pqGets(buffer,ERROR_MSG_LENGTH,Pfin,Pfdebug) == 1)
+	    if (pqGets(buffer,ERROR_MSG_LENGTH,pfin,pfdebug) == 1)
 	      clear = 1;
 	    clear = (buffer[0] == 'I');
 	  }
@@ -457,7 +469,7 @@ PQexec(PGconn* conn, char* query)
       }
       break;
     case 'E': /* error return */
-      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, Pfin, Pfdebug) == 1) {
+      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
 	(void) sprintf(conn->errorMessage,
 		       "PQexec() -- error return detected from backend, but error message cannot be read");
       }
@@ -467,7 +479,7 @@ PQexec(PGconn* conn, char* query)
       /* read the throw away the closing '\0' */
       {
 	int c;
-	if ((c = pqGetc(Pfin,Pfdebug)) != '\0') {
+	if ((c = pqGetc(pfin,pfdebug)) != '\0') {
 	  fprintf(stderr,"error!, unexpected character %c following 'I'\n", c);
 	}
 	result = makeEmptyPGresult(conn, PGRES_EMPTY_QUERY);
@@ -475,7 +487,7 @@ PQexec(PGconn* conn, char* query)
       }
       break;
     case 'N': /* notices from the backend */
-      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, Pfin, Pfdebug) == 1) {
+      if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
 	sprintf(conn->errorMessage,
 		"PQexec() -- error return detected from backend, but error message cannot be read");
 	return (PGresult*)NULL;
@@ -484,7 +496,7 @@ PQexec(PGconn* conn, char* query)
 	fprintf(stderr,"%s", conn->errorMessage);
       break;
     case 'P': /* synchronous (normal) portal */
-      pqGets(pname,MAX_MESSAGE_LEN,Pfin, Pfdebug);  /* read in the portal name*/
+      pqGets(pname,MAX_MESSAGE_LEN,pfin, pfdebug);  /* read in the portal name*/
       break;
     case 'T': /* actual tuple results: */
       return makePGresult(conn, pname);
@@ -584,7 +596,7 @@ PQgetline(PGconn *conn, char *s, int maxlen)
  *
  */
 void
-PQputline(PGconn *conn, char *s)
+PQputline(PGconn *conn, const char *s)
 {
     if (conn && (conn->Pfout)) {
 	(void) fputs(s, conn->Pfout);
@@ -605,21 +617,21 @@ int
 PQendcopy(PGconn *conn)
 {
     char id;
-    FILE *Pfin, *Pfdebug;
+    FILE *pfin, *pfdebug;
 
     if (!conn) return (int)NULL;
 
-    Pfin = conn->Pfin;
-    Pfdebug = conn->Pfdebug;
+    pfin = conn->Pfin;
+    pfdebug = conn->Pfdebug;
 
-    if ( (id = pqGetc(Pfin,Pfdebug)) > 0)
+    if ( (id = pqGetc(pfin,pfdebug)) > 0)
 	return(0);
     switch (id) {
     case 'Z': /* backend finished the copy */
 	return(1);
     case 'E':
     case 'N':
-	if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, Pfin, Pfdebug) == 1) {
+	if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
 	    sprintf(conn->errorMessage,
 		    "Error return detected from backend, but error message cannot be read");
 	}
@@ -661,7 +673,7 @@ void
 PQdisplayTuples(PGresult *res,
 		FILE *fp,      /* where to send the output */
 		int fillAlign, /* pad the fields with spaces */
-		char *fieldSep,  /* field separator */
+		const char *fieldSep,  /* field separator */
 		int printHeader, /* display headers? */
 		int quiet
 		)
@@ -674,7 +686,7 @@ PQdisplayTuples(PGresult *res,
     int fLength[MAX_FIELDS];
 
     if (fieldSep == NULL)
-	fieldSep == DEFAULT_FIELD_SEP;
+	fieldSep = DEFAULT_FIELD_SEP;
 
     /* Get some useful info about the results */
     nFields = PQnfields(res);
@@ -987,7 +999,8 @@ PQprint(FILE *fout,
 		{
 			if ((fs_len==1 && (*p==*(po->fieldSep))) || *p=='\\')
 				*(o++)='\\';
-			if (po->align && !((*p >='0' && *p<='9') || *p=='.' || *p=='E' || *p=='e' || *p==' ' || *p=='-'))
+			if (po->align && (*pval=='E' || *pval=='e' ||
+				!((*p>='0' && *p<='9') || *p=='.' || *p=='E' || *p=='e' || *p==' ' || *p=='-')))
 				fieldNotNum[j]=1;
 		}
 		*o='\0';
@@ -1197,37 +1210,37 @@ PQfn(PGconn *conn,
      PQArgBlock *args,
      int nargs)
 {
-    FILE *Pfin, *Pfout, *Pfdebug;
+    FILE *pfin, *pfout, *pfdebug;
     int id;
     int i;
 
     if (!conn) return NULL;
 
-    Pfin = conn->Pfin;
-    Pfout = conn->Pfout;
-    Pfdebug = conn->Pfdebug;
+    pfin = conn->Pfin;
+    pfout = conn->Pfout;
+    pfdebug = conn->Pfdebug;
 
     /* clear the error string */
     conn->errorMessage[0] = '\0';
 
-    pqPuts("F ",Pfout,Pfdebug);           /* function */
-    pqPutInt(fnid, 4, Pfout, Pfdebug);    /* function id */
-    pqPutInt(nargs, 4, Pfout, Pfdebug);	     /*	# of args */
+    pqPuts("F ",pfout,pfdebug);           /* function */
+    pqPutInt(fnid, 4, pfout, pfdebug);    /* function id */
+    pqPutInt(nargs, 4, pfout, pfdebug);	     /*	# of args */
 
     for (i = 0; i < nargs; ++i) { /*	len.int4 + contents	*/
-	pqPutInt(args[i].len, 4, Pfout, Pfdebug);
+	pqPutInt(args[i].len, 4, pfout, pfdebug);
 	if (args[i].isint) {
-	    pqPutInt(args[i].u.integer, 4, Pfout, Pfdebug);
+	    pqPutInt(args[i].u.integer, 4, pfout, pfdebug);
 	} else {
-	    pqPutnchar((char *)args[i].u.ptr, args[i].len, Pfout, Pfdebug);
+	    pqPutnchar((char *)args[i].u.ptr, args[i].len, pfout, pfdebug);
 	}
     }
-    pqFlush(Pfout, Pfdebug);
+    pqFlush(pfout, pfdebug);
 
-    id = pqGetc(Pfin, Pfdebug);
+    id = pqGetc(pfin, pfdebug);
     if (id != 'V') {
 	if (id == 'E') {
-	    pqGets(conn->errorMessage,ERROR_MSG_LENGTH,Pfin,Pfdebug);
+	    pqGets(conn->errorMessage,ERROR_MSG_LENGTH,pfin,pfdebug);
 	} else
 	    sprintf(conn->errorMessage,
 		    "PQfn: expected a 'V' from the backend. Got '%c' instead",
@@ -1235,19 +1248,19 @@ PQfn(PGconn *conn,
 	return makeEmptyPGresult(conn,PGRES_FATAL_ERROR);
     }
 
-    id = pqGetc(Pfin, Pfdebug);
+    id = pqGetc(pfin, pfdebug);
     for (;;) {
 	int c;
 	switch (id) {
 	case 'G':		/* function returned properly */
-	    pqGetInt(actual_result_len,4,Pfin,Pfdebug);
+	    pqGetInt(actual_result_len,4,pfin,pfdebug);
 	    if (result_is_int) {
-		pqGetInt(result_buf,4,Pfin,Pfdebug);
+		pqGetInt(result_buf,4,pfin,pfdebug);
 	    } else {
 		pqGetnchar((char *) result_buf, *actual_result_len,
-			   Pfin, Pfdebug);
+			   pfin, pfdebug);
 	    }
-	    c = pqGetc(Pfin, Pfdebug); /* get the last '0'*/
+	    c = pqGetc(pfin, pfdebug); /* get the last '0'*/
 	    return makeEmptyPGresult(conn,PGRES_COMMAND_OK);
 	case 'E':
 	    sprintf(conn->errorMessage,
@@ -1255,7 +1268,7 @@ PQfn(PGconn *conn,
 	    return makeEmptyPGresult(conn,PGRES_FATAL_ERROR);
 	case 'N':
 	    /* print notice and go back to processing return values */
-	    if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, Pfin, Pfdebug) == 1) {
+	    if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, pfin, pfdebug) == 1) {
 		sprintf(conn->errorMessage,
 			"Notice return detected from backend, but error message cannot be read");
 	    }   else
@@ -1333,7 +1346,7 @@ PQfname(PGresult *res, int field_num)
    returns -1 on a bad field name
 */
 int
-PQfnumber(PGresult *res, char* field_name) 
+PQfnumber(PGresult *res, const char* field_name) 
 {
   int i;
 
@@ -1406,7 +1419,7 @@ char* PQcmdStatus(PGresult *res) {
     if the last command was an INSERT, return the oid string 
     if not, return ""
 */
-char* PQoidStatus(PGresult *res) {
+const char* PQoidStatus(PGresult *res) {
   if (!res) {
     fprintf(stderr, "PQoidStatus() -- pointer to PQresult is null");
     return NULL;
@@ -1469,6 +1482,35 @@ PQgetlength(PGresult *res, int tup_num, int field_num)
 		"PQgetlength: ERROR! field %d(of %d) of tuple %d(of %d) is not available", 
 		field_num, res->numAttributes - 1, tup_num, res->ntups);
     }
-	
-    return res->tuples[tup_num][field_num].len;
+
+    if (res->tuples[tup_num][field_num].len != NULL_LEN)
+	return res->tuples[tup_num][field_num].len;
+    else
+	return 0;
   }
+
+/* PQgetisnull:
+     returns the null status of a field value.
+*/
+int
+PQgetisnull(PGresult *res, int tup_num, int field_num)
+{
+    if (!res) {
+      fprintf(stderr, "PQgetisnull() -- pointer to PQresult is null");
+        return (int)NULL;
+    }
+
+    if (tup_num > (res->ntups - 1 )||
+	field_num > (res->numAttributes - 1))  {
+	fprintf(stderr,
+		"PQgetisnull: ERROR! field %d(of %d) of tuple %d(of %d) is not available", 
+		field_num, res->numAttributes - 1, tup_num, res->ntups);
+    }
+
+    if (res->tuples[tup_num][field_num].len == NULL_LEN)
+	return 1;
+    else
+	return 0;
+  }
+
+
