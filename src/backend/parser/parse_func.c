@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.71 2000/02/20 21:32:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.72 2000/02/20 23:04:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,9 +292,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		/* Is it a plain Relation name from the parser? */
 		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
 		{
+			Ident	   *ident = (Ident *) first_arg;
 			RangeTblEntry *rte;
 			AttrNumber attnum;
-			Ident	   *ident = (Ident *) first_arg;
 
 			/*
 			 * first arg is a relation. This could be a projection.
@@ -479,11 +479,13 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	/*
-	 * See if this is a single argument function with the function
-	 * name also a type name and the input argument and type name
-	 * binary compatible.  If so, we do not need to do any real
-	 * conversion, but we do need to build a RelabelType node
-	 * so that exprType() sees the result as being of the output type.
+	 * See if this is really a type-coercion request: single-argument
+	 * function call where the function name is a type name.  If so,
+	 * and if we can do the coercion trivially, just go ahead and do it
+	 * without requiring there to be a real function for it.  "Trivial"
+	 * coercions are ones that involve binary-compatible types and ones
+	 * that are coercing a previously-unknown-type literal constant
+	 * to a specific type.
 	 */
 	if (nargs == 1)
 	{
@@ -492,16 +494,21 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		tp = SearchSysCacheTuple(TYPENAME,
 								 PointerGetDatum(funcname),
 								 0, 0, 0);
-		if (HeapTupleIsValid(tp) &&
-			IS_BINARY_COMPATIBLE(typeTypeId(tp), exprType(lfirst(fargs))))
+		if (HeapTupleIsValid(tp))
 		{
-			RelabelType *relabel = makeNode(RelabelType);
+			Oid		targetType = typeTypeId(tp);
+			Node   *arg1 = lfirst(fargs);
+			Oid		sourceType = exprType(arg1);
 
-			relabel->arg = (Node *) lfirst(fargs);
-			relabel->resulttype = typeTypeId(tp);
-			relabel->resulttypmod = -1;
-
-			return (Node *) relabel;
+			if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
+				sourceType == targetType ||
+				IS_BINARY_COMPATIBLE(sourceType, targetType))
+			{
+				/*
+				 * coerce_type can handle these cases, so why duplicate code...
+				 */
+				return coerce_type(pstate, arg1, sourceType, targetType, -1);
+			}
 		}
 	}
 
@@ -516,17 +523,17 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	nargs = 0;
 	foreach(i, fargs)
 	{
-		int			vnum;
-		RangeTblEntry *rte;
-		Node	   *pair = lfirst(i);
+		Node	   *arg = lfirst(i);
 
-		if (nodeTag(pair) == T_Ident && ((Ident *) pair)->isRel)
+		if (IsA(arg, Ident) && ((Ident *) arg)->isRel)
 		{
+			RangeTblEntry *rte;
+			int			vnum;
 
 			/*
 			 * a relation
 			 */
-			refname = ((Ident *) pair)->name;
+			refname = ((Ident *) arg)->name;
 
 			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
@@ -554,22 +561,15 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			toid = typeTypeId(typenameType(relname));
 			/* replace it in the arg list */
-			lfirst(fargs) = makeVar(vnum, 0, toid, -1, 0);
+			lfirst(i) = makeVar(vnum, 0, toid, -1, 0);
 		}
 		else if (!attisset)
-		{						/* set functions don't have parameters */
-
-			/*
-			 * any function args which are typed "unknown", but aren't
-			 * constants, we don't know what to do with, because we can't
-			 * cast them	- jolly
-			 */
-			if (exprType(pair) == UNKNOWNOID && !IsA(pair, Const))
-				elog(ERROR, "There is no function '%s'"
-					 " with argument #%d of type UNKNOWN",
-					 funcname, nargs+1);
-			else
-				toid = exprType(pair);
+		{
+			toid = exprType(arg);
+		}
+		else
+		{
+			/* if attisset is true, we already set toid for the single arg */
 		}
 
 		/* Most of the rest of the parser just assumes that functions do not
