@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.386 2004/11/22 03:06:35 pgsql Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.387 2004/11/30 06:13:04 tgl Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -714,21 +714,34 @@ AC_CHECK_HEADERS(netinet/tcp.h, [], [],
 #endif
 ])
 
-if test "$with_readline" = yes; then
+if expr x"$pgac_cv_check_readline" : 'x-lreadline' >/dev/null ; then
   AC_CHECK_HEADERS(readline/readline.h, [],
-                   [AC_CHECK_HEADERS(editline/readline.h, [],
-                         [AC_CHECK_HEADERS(readline.h, [],
-                                     [AC_MSG_ERROR([readline header not found
+                   [AC_CHECK_HEADERS(readline.h, [],
+                                [AC_MSG_ERROR([readline header not found
 If you have readline already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
-Use --without-readline to disable readline support.])])])])
+Use --without-readline to disable readline support.])])])
   AC_CHECK_HEADERS(readline/history.h, [],
-                   [AC_CHECK_HEADERS(editline/history.h, [],
-                         [AC_CHECK_HEADERS(history.h, [],
-                                     [AC_MSG_ERROR([history header not found
+                   [AC_CHECK_HEADERS(history.h, [],
+                                [AC_MSG_ERROR([history header not found
 If you have readline already installed, see config.log for details on the
 failure.  It is possible the compiler isn't looking in the proper directory.
-Use --without-readline to disable readline support.])])])])
+Use --without-readline to disable readline support.])])])
+fi
+
+if expr x"$pgac_cv_check_readline" : 'x-ledit' >/dev/null ; then
+  AC_CHECK_HEADERS(editline/readline.h, [],
+                   [AC_CHECK_HEADERS(readline.h, [],
+                                [AC_MSG_ERROR([readline header not found
+If you have libedit already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
+Use --without-readline to disable libedit support.])])])
+  AC_CHECK_HEADERS(editline/history.h, [],
+                   [AC_CHECK_HEADERS(history.h, [],
+                                [AC_MSG_ERROR([history header not found
+If you have libedit already installed, see config.log for details on the
+failure.  It is possible the compiler isn't looking in the proper directory.
+Use --without-readline to disable libedit support.])])])
 fi
 
 if test "$with_zlib" = yes; then
