@@ -82,42 +82,48 @@ plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
 		* Get the attributes value
 		************************************************************/
 		attdata = SPI_getvalue(tuple, tupdesc, i+1);
+		if(attdata)
 		hv_store(array, attname, strlen(attname), newSVpv(attdata,0), 0);
+		else
+			hv_store(array, attname, strlen(attname), newSVpv("undef",0), 0);
 	}
 	return array;
 }
 
 static HV*
-plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int rows, int status)
+plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed, int status)
 {
 
 	HV *result;
+	 AV *rows;
 	int i;
 
 	result = newHV();
+	rows = newAV();
 
 	if (status == SPI_OK_UTILITY)
 	{
 		hv_store(result, "status", strlen("status"), newSVpv("SPI_OK_UTILITY",0), 0);
-		hv_store(result, "rows", strlen("rows"), newSViv(rows), 0);
+		hv_store(result, "processed", strlen("processed"), newSViv(processed), 0);
 	}
 	else if (status != SPI_OK_SELECT)
 	{
 		hv_store(result, "status", strlen("status"), newSVpv((char*)plperl_spi_status_string(status),0), 0);
-		hv_store(result, "rows", strlen("rows"), newSViv(rows), 0);
+		hv_store(result, "processed", strlen("processed"), newSViv(processed), 0);
 	}
 	else
 	{
-		if (rows)
+		hv_store(result, "status", strlen("status"), newSVpv((char*)plperl_spi_status_string(status),0), 0);
+		hv_store(result, "processed", strlen("processed"), newSViv(processed), 0);
+		if (processed)
 		{
-			char* key=palloc(sizeof(int));
 			HV *row;
-			for (i = 0; i < rows; i++)
+			for (i = 0; i < processed; i++)
 			{
 				row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
-				sprintf(key, "%i", i);
-				hv_store(result, key, strlen(key), newRV_noinc((SV*)row), 0);
+				 av_store(rows, i, newRV_noinc((SV*)row));
 			}
+			hv_store(result, "rows", strlen("rows"), newRV_noinc((SV*)rows), 0);
 			SPI_freetuptable(tuptable);
 		}
 	}

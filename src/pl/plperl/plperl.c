@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.45 2004/07/01 20:50:22 joe Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.46 2004/07/12 14:31:04 momjian Exp $
  *
  **********************************************************************/
 
@@ -80,6 +80,7 @@ typedef struct plperl_proc_desc
 	CommandId	fn_cmin;
 	bool		lanpltrusted;
 	bool		fn_retistuple;	/* true, if function returns tuple */
+	bool		fn_retisset;		/*true, if function returns set*/
 	Oid			ret_oid;		/* Oid of returning type */
 	FmgrInfo	result_in_func;
 	Oid			result_typioparam;
@@ -95,11 +96,13 @@ typedef struct plperl_proc_desc
  * Global data
  **********************************************************************/
 static int	plperl_firstcall = 1;
+static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
-AV		   *g_row_keys = NULL;
-AV		   *g_column_keys = NULL;
-int			g_attr_num = 0;
+static AV		   *g_row_keys = NULL;
+static AV		   *g_column_keys = NULL;
+static SV		   *srf_perlret=NULL; /*keep returned value*/
+static int			g_attr_num = 0;
 
 /**********************************************************************
  * Forward declarations
@@ -215,11 +218,7 @@ plperl_init_interp(void)
 		 * no commas between the next lines please. They are supposed to be
 		 * one string
 		 */
-		"require Safe; SPI::bootstrap(); use vars qw(%_SHARED);"
-		"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
-		"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
-		"$PLContainer->share(qw[&elog &spi_exec_query &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
-		"sub ::mksafefunc { return $PLContainer->reval(qq[sub { $_[0] $_[1]}]); }"
+		"SPI::bootstrap(); use vars qw(%_SHARED);"
 		"sub ::mkunsafefunc {return eval(qq[ sub { $_[0] $_[1] } ]); }"
 	};
 
@@ -236,6 +235,41 @@ plperl_init_interp(void)
 	 ************************************************************/
 	plperl_proc_hash = newHV();
 
+}
+
+
+static void
+plperl_safe_init(void)
+{
+	static char *safe_module  =
+		"require Safe; $Safe::VERSION";
+
+	static char * safe_ok =
+		"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
+		"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
+		"$PLContainer->share(qw[&elog &spi_exec_query &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
+		"sub ::mksafefunc { return $PLContainer->reval(qq[sub { $_[0] $_[1]}]); }"
+		;
+
+	static char * safe_bad = 
+		"use vars qw($PLContainer); $PLContainer = new Safe('PLPerl');"
+		"$PLContainer->permit_only(':default');$PLContainer->permit(':base_math');"
+		"$PLContainer->share(qw[&elog &DEBUG &LOG &INFO &NOTICE &WARNING &ERROR %SHARED ]);"
+		"sub ::mksafefunc { return $PLContainer->reval(qq[sub { "
+		"elog(ERROR,'trusted perl functions disabled - please upgrade perl Safe module to at least 2.09');}]); }"
+		;
+
+	SV * res;
+
+	float safe_version;
+
+	res = eval_pv(safe_module,FALSE); /* TRUE = croak if failure */
+
+	safe_version = SvNV(res);
+
+	eval_pv((safe_version < 2.09 ? safe_bad : safe_ok),FALSE);
+
+	plperl_safe_init_done = true;
 }
 
 /**********************************************************************
@@ -596,6 +630,9 @@ plperl_create_sub(char *s, bool trusted)
 	SV		   *subref;
 	int			count;
 
+	if(trusted && !plperl_safe_init_done)
+		plperl_safe_init();
+
 	ENTER;
 	SAVETMPS;
 	PUSHMARK(SP);
@@ -839,15 +876,22 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
 	/************************************************************
-	 * Call the Perl function
+	 * Call the Perl function if not returning set
 	 ************************************************************/
+	 if (!prodesc->fn_retisset)
 	perlret = plperl_call_perl_func(prodesc, fcinfo);
-	if (prodesc->fn_retistuple && SRF_IS_FIRSTCALL())
+	 else 
 	{
+		if (SRF_IS_FIRSTCALL()) /*call function only once*/
+			srf_perlret = plperl_call_perl_func(prodesc, fcinfo);
+		perlret = srf_perlret;
+	 }
 
+	 if (prodesc->fn_retisset && SRF_IS_FIRSTCALL())
+	 {
+		 if (prodesc->fn_retistuple) g_column_keys = newAV();
 		if (SvTYPE(perlret) != SVt_RV)
-			elog(ERROR, "plperl: this function must return a reference");
-		g_column_keys = newAV();
+			 elog(ERROR, "plperl: set-returning function must return reference");
 	}
 
 	/************************************************************
@@ -882,14 +926,15 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		char	  **values = NULL;
 		ReturnSetInfo  *rsinfo = (ReturnSetInfo *) fcinfo->resultinfo;
 
-		if (!rsinfo)
+		if (prodesc->fn_retisset && !rsinfo)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					errmsg("returning a composite type is not allowed in this context"),
 					errhint("This function is intended for use in the FROM clause.")));
 
 		if (SvTYPE(perlret) != SVt_RV)
-			elog(ERROR, "plperl: this function must return a reference");
+			elog(ERROR, "plperl: composite-returning function must return a reference");
+
 
 		isset = plperl_is_set(perlret);
 
@@ -997,6 +1042,53 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			SRF_RETURN_DONE(funcctx);
 		}
 	}
+	else if (prodesc->fn_retisset)
+	{
+		FuncCallContext	*funcctx;
+		
+		if (SRF_IS_FIRSTCALL())
+		{
+			MemoryContext oldcontext;
+			int i;
+
+			funcctx = SRF_FIRSTCALL_INIT();
+			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
+
+			if(SvTYPE(SvRV(perlret))!=SVt_PVAV) elog(ERROR, "plperl: set-returning function must return reference to array");
+				else funcctx->max_calls =  av_len((AV*)SvRV(perlret))+1;
+		}
+		
+		funcctx = SRF_PERCALL_SETUP();
+		
+		if (funcctx->call_cntr < funcctx->max_calls)
+		{
+			Datum		result;
+			AV* 		array;
+			SV** 		svp;
+			int 			i;
+
+			array = (AV*)SvRV(perlret);
+			svp = av_fetch(array, funcctx->call_cntr, FALSE);
+
+			if (SvTYPE(*svp) != SVt_NULL)
+				result = FunctionCall3(&prodesc->result_in_func,
+								   PointerGetDatum(SvPV(*svp, PL_na)),
+								   ObjectIdGetDatum(prodesc->result_typioparam),
+								   Int32GetDatum(-1));
+			else
+			{
+				fcinfo->isnull = true;
+				result = (Datum) 0;
+			}
+			SRF_RETURN_NEXT(funcctx, result);
+			fcinfo->isnull = false;
+		} 
+		else
+		{
+			if (perlret) SvREFCNT_dec(perlret);
+			SRF_RETURN_DONE(funcctx);
+		}
+	 }
 	else if (! fcinfo->isnull)
 	{
 		retval = FunctionCall3(&prodesc->result_in_func,
@@ -1248,6 +1340,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 								format_type_be(procStruct->prorettype))));
 				}
 			}
+
+			prodesc->fn_retisset = procStruct->proretset; /*true, if function returns set*/
 
 			if (typeStruct->typtype == 'c' || procStruct->prorettype == RECORDOID)
 			{
