@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL 7.3
 HP-UX Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2002/11/11 20:04:05 $
+last updated:           $Date: 2004/09/02 17:46:24 $
 
 current maintainer:     Tom Lane (tgl@sss.pgh.pa.us)
 original author:        Tom Lane (tgl@sss.pgh.pa.us)
@@ -33,16 +33,27 @@ you will also need flex (GNU lex) and bison (GNU yacc).
 
 I'd also recommend making sure you are fairly up-to-date on HP
 patches.  At a minimum, if you are building 64 bit binaries on on HPUX
-11.11 you may need PHSS_26263 (11.11) or a successor patch otherwise
+11.11 you may need PHSS_30966 (11.11) or a successor patch otherwise
 initdb may hang:
 
-    PHSS_26263  s700_800 11.11 ld(1) and linker tools cumulative patch
+    PHSS_30966  s700_800 ld(1) and linker tools cumulative patch
 
 On general principles you should be current on libc and ld/dld
 patches, as well as compiler patches if you are using HP's C compiler.
 See HP's support sites such as http://itrc.hp.com and
 ftp://us-ffs.external.hp.com/ for free copies of their latest patches.
 
+If you are building on a PA-RISC 2.0 machine and want to have 64-bit
+binaries using GCC, you must use GCC 64-bit version. GCC binaries for
+HP-UX PA-RISC and Itanium are available from http://www.hp.com/go/gcc.
+Don't forget to get and install binutils at the same time.
+
+If you are building on a HP-UX Itanium machine, you will need the
+latest HP ANSI C compiler with its dependent patch or successor
+patches:
+
+    PHSS_30848  s700_800 HP C Compiler (A.05.57)
+    PHSS_30849  s700_800 u2comp/be/plugin library Patch
 
 1.2)	Anything special about the build/install procedure?
 
@@ -75,10 +86,15 @@ on which compiler and math library versions you use.
 Any other error is cause for suspicion.
 
 The parallel regression test script (gmake check) is known to lock up
-when run under HP's Bourne shells: /usr/bin/sh and /sbin/sh.  This is a
-known defect JAGad84609, the fix for which is not yet in any released
-HP-UX version or shell patches.  To work around it, use ksh to run the
-regression script:
+on PA-RISC when run under HP's Bourne shells: /usr/bin/sh and
+/sbin/sh. To fix this problem, you will need PHCO_30269 with its
+dependent patch or successor patches:
+
+    PHCO_30269  s700_800 cumulative sh-posix(1) patch
+    PHCO_29816  s700_800 rc(1M) scripts cumulative patch 
+
+To work around this problem, use ksh to run the regression script:
+
 	gmake SHELL=/bin/ksh check
 
 If you see that the tests have stopped making progress and only a shell
