@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.26 2003/06/18 12:19:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/dropuser.sgml,v 1.27 2003/08/17 04:46:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -180,7 +180,7 @@ PostgreSQL documentation
       <term><computeroutput>DROP USER</computeroutput></term>
       <listitem>
        <para>
-        All is well.
+        The user was successfully removed.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.29 2003/06/18 12:19:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/vacuumdb.sgml,v 1.30 2003/08/17 04:46:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -59,10 +59,11 @@ PostgreSQL documentation
 
 
   <para>
-  <application>vacuumdb</application> might need to connect several
-  times to the <productname>PostgreSQL</productname> server, asking for
-  a password each time. It is convenient to have a
-  <filename>$HOME/.pgpass</> file in such cases.
+   <application>vacuumdb</application> might need to connect several
+   times to the <productname>PostgreSQL</productname> server, asking
+   for a password each time. It is convenient to have a
+   <filename>$HOME/.pgpass</> file in such cases. See <xref
+   linkend="libpq-pgpass"> for more information.
   </para>
 
  </refsect1>
@@ -234,7 +235,7 @@ PostgreSQL documentation
       <term><computeroutput>VACUUM</computeroutput></term>
       <listitem>
        <para>
-        Everything went well.
+        The database was successfully vacuumed.
        </para>
       </listitem>
      </varlistentry>

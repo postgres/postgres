@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.34 2003/06/06 15:31:46 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/createuser.sgml,v 1.35 2003/08/17 04:46:59 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -276,7 +276,7 @@ PostgreSQL documentation
       <term><computeroutput>CREATE USER</computeroutput></term>
       <listitem>
        <para>
-        All is well.
+        The user was successfully created.
        </para>
       </listitem>
      </varlistentry>
