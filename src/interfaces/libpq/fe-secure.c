@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.38 2004/03/24 03:44:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-secure.c,v 1.39 2004/03/27 03:08:42 tgl Exp $
  *
  * NOTES
  *	  The client *requires* a valid server certificate.  Since
@@ -145,6 +145,8 @@ static void SSLerrfree(char *buf);
 #endif
 
 #ifdef USE_SSL
+bool pq_initssllib = true;
+
 static SSL_CTX *SSL_context = NULL;
 #endif
 
@@ -856,9 +858,7 @@ pq_lockingcallback(int mode, int n, const char *file, int line)
 	}
 }
 
-bool pq_initssllib = true;
-
-#endif /* ENABLE_THRAD_SAFETY */
+#endif /* ENABLE_THREAD_SAFETY */
 
 static int
 init_ssl_system(PGconn *conn)
