@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.131 2004/10/08 01:36:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.132 2004/10/09 23:12:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,12 +44,6 @@
 /* Standard TCP port number for Ident service.	Assigned by IANA */
 #define IDENT_PORT 113
 
-/* Name of the config file	*/
-#define CONF_FILE "pg_hba.conf"
-
-/* Name of the usermap file */
-#define USERMAP_FILE "pg_ident.conf"
-
 /* This is used to separate values in multi-valued column strings */
 #define MULTI_VALUE_SEP "\001"
 
@@ -65,11 +59,11 @@
  * one token, since blank lines are not entered in the data structure.
  */
 
-/* pre-parsed content of CONF_FILE and corresponding line #s */
+/* pre-parsed content of HBA config file and corresponding line #s */
 static List *hba_lines = NIL;
 static List *hba_line_nums = NIL;
 
-/* pre-parsed content of USERMAP_FILE and corresponding line #s */
+/* pre-parsed content of ident usermap file and corresponding line #s */
 static List *ident_lines = NIL;
 static List *ident_line_nums = NIL;
 
@@ -743,8 +737,9 @@ parse_hba(List *line, int line_num, hbaPort *port,
 		{
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
-					 errmsg("invalid IP address \"%s\" in pg_hba.conf file line %d: %s",
-							token, line_num, gai_strerror(ret))));
+					 errmsg("invalid IP address \"%s\" in \"%s\" line %d: %s",
+							token, HbaFileName, line_num,
+							gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
@@ -777,8 +772,9 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("invalid IP mask \"%s\" in pg_hba.conf file line %d: %s",
-								token, line_num, gai_strerror(ret))));
+						 errmsg("invalid IP mask \"%s\" in \"%s\" line %d: %s",
+								token, HbaFileName, line_num,
+								gai_strerror(ret))));
 				if (gai_result)
 					freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_other_error;
@@ -791,8 +787,8 @@ parse_hba(List *line, int line_num, hbaPort *port,
 			{
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
-						 errmsg("IP address and mask do not match in pg_hba.conf file line %d",
-								line_num)));
+						 errmsg("IP address and mask do not match in \"%s\" line %d",
+								HbaFileName, line_num)));
 				goto hba_other_error;
 			}
 		}
@@ -849,13 +845,14 @@ hba_syntax:
 	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in pg_hba.conf file at line %d, token \"%s\"",
-						line_num, (char *) lfirst(line_item))));
+				 errmsg("invalid entry in \"%s\" at line %d, token \"%s\"",
+						HbaFileName, line_num,
+						(char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("missing field in pg_hba.conf file at end of line %d",
-				   line_num)));
+			errmsg("missing field in \"%s\" at end of line %d",
+				   HbaFileName, line_num)));
 
 	/* Come here if suitable message already logged */
 hba_other_error:
@@ -1030,42 +1027,25 @@ load_user(void)
 
 /*
  * Read the config file and create a List of Lists of tokens in the file.
- * If we find a file by the old name of the config file (pg_hba), we issue
- * an error message because it probably needs to be converted.	He didn't
- * follow directions and just installed his old hba file in the new database
- * system.
  */
 void
 load_hba(void)
 {
-	FILE	   *file;			/* The config file we have to read */
-	char	   *conf_file;		/* The name of the config file */
+	FILE	   *file;
 
 	if (hba_lines || hba_line_nums)
 		free_lines(&hba_lines, &hba_line_nums);
 
-	if (guc_hbafile)
-	{
-		/* HBA filename specified in config file */
-		conf_file = pstrdup(guc_hbafile);
-	}
-	else
-	{
-		/* put together the full pathname to the config file */
-		conf_file = palloc(strlen(ConfigDir) + strlen(CONF_FILE) + 2);
-		sprintf(conf_file, "%s/%s", ConfigDir, CONF_FILE);
-	}
-
-	file = AllocateFile(conf_file, "r");
+	file = AllocateFile(HbaFileName, "r");
+	/* Failure is fatal since with no HBA entries we can do nothing... */
 	if (file == NULL)
 		ereport(FATAL,
 				(errcode_for_file_access(),
 				 errmsg("could not open configuration file \"%s\": %m",
-						conf_file)));
+						HbaFileName)));
 
 	tokenize_file(file, &hba_lines, &hba_line_nums);
 	FreeFile(file);
-	pfree(conf_file);
 }
 
 
@@ -1121,13 +1101,14 @@ ident_syntax:
 	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-				 errmsg("invalid entry in pg_ident.conf file at line %d, token \"%s\"",
-						line_number, (const char *) lfirst(line_item))));
+				 errmsg("invalid entry in \"%s\" at line %d, token \"%s\"",
+						IdentFileName, line_number,
+						(const char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-		  errmsg("missing entry in pg_ident.conf file at end of line %d",
-				 line_number)));
+		  errmsg("missing entry in \"%s\" at end of line %d",
+				 IdentFileName, line_number)));
 
 	*error_p = true;
 }
@@ -1191,38 +1172,25 @@ check_ident_usermap(const char *usermap_name,
 void
 load_ident(void)
 {
-	FILE	   *file;			/* The map file we have to read */
-	char	   *map_file;		/* The name of the map file we have to
-								 * read */
+	FILE	   *file;
 
 	if (ident_lines || ident_line_nums)
 		free_lines(&ident_lines, &ident_line_nums);
 
-	if (guc_identfile)
-	{
-		/* IDENT filename specified in config file */
-		map_file = pstrdup(guc_identfile);
-	}
-	else
-	{
-		map_file = palloc(strlen(ConfigDir) + strlen(USERMAP_FILE) + 2);
-		sprintf(map_file, "%s/%s", ConfigDir, USERMAP_FILE);
-	}
-
-	file = AllocateFile(map_file, "r");
+	file = AllocateFile(IdentFileName, "r");
 	if (file == NULL)
 	{
+		/* not fatal ... we just won't do any special ident maps */
 		ereport(LOG,
 				(errcode_for_file_access(),
 				 errmsg("could not open Ident usermap file \"%s\": %m",
-						map_file)));
+						IdentFileName)));
 	}
 	else
 	{
 		tokenize_file(file, &ident_lines, &ident_line_nums);
 		FreeFile(file);
 	}
-	pfree(map_file);
 }
 
 

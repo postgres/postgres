@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.168 2004/09/06 23:55:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/miscadmin.h,v 1.169 2004/10/09 23:13:14 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to other files.
@@ -241,6 +241,7 @@ extern void InitializeSessionUserIdStandalone(void);
 extern void SetSessionAuthorization(AclId userid, bool is_superuser);
 
 extern void SetDataDir(const char *dir);
+extern char *make_absolute_path(const char *path);
 
 /* in utils/misc/superuser.c */
 extern bool superuser(void);	/* current user is superuser */

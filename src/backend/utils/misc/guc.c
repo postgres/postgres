@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.240 2004/10/08 01:36:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.241 2004/10/09 23:13:10 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -64,7 +64,9 @@
 #define PG_KRB_SRVTAB ""
 #endif
 
-#define CONFIG_FILENAME "postgresql.conf"
+#define CONFIG_FILENAME	"postgresql.conf"
+#define HBA_FILENAME	"pg_hba.conf"
+#define IDENT_FILENAME	"pg_ident.conf"
 
 #ifdef EXEC_BACKEND
 #define CONFIG_EXEC_PARAMS "global/config_exec_params"
@@ -114,13 +116,6 @@ static const char *assign_canonical_path(const char *newval, bool doit, GucSourc
 
 
 /*
- * These are initialized by SelectConfigFiles.
- */
-char	   *ConfigDir = NULL;
-char	   *ConfigFileName = NULL;
-
-
-/*
  * GUC option variables that are exported from this module
  */
 #ifdef USE_ASSERT_CHECKING
@@ -154,9 +149,10 @@ int			client_min_messages = NOTICE;
 
 int			log_min_duration_statement = -1;
 
-char	   *guc_hbafile;
-char	   *guc_identfile;
-char	   *external_pidfile;
+char	   *ConfigFileName;
+char	   *HbaFileName;
+char	   *IdentFileName;
+char	   *external_pid_file;
 
 
 /*
@@ -183,7 +179,7 @@ static char *server_encoding_string;
 static char *server_version_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
-static char *guc_pgdata;
+static char *data_directory;
 static char *custom_variable_classes;
 static int	max_function_args;
 static int	max_index_keys;
@@ -1685,11 +1681,11 @@ static struct config_string ConfigureNamesString[] =
 	{
 		{"log_directory", PGC_SIGHUP, LOGGING_WHERE,
 			gettext_noop("Sets the destination directory for log files."),
-			gettext_noop("May be specified as relative to the cluster directory "
+			gettext_noop("May be specified as relative to the data directory "
 						 "or as absolute path.")
 		},
 		&Log_directory,
-		"pg_log", NULL, NULL
+		"pg_log", assign_canonical_path, NULL
 	},
 	{
 		{"log_filename", PGC_SIGHUP, LOGGING_WHERE,
@@ -1789,38 +1785,48 @@ static struct config_string ConfigureNamesString[] =
 	},
 
 	{
-		{"pgdata", PGC_POSTMASTER, FILE_LOCATIONS,
-		 gettext_noop("Sets the location of the data directory"),
+		{"data_directory", PGC_POSTMASTER, FILE_LOCATIONS,
+		 gettext_noop("Sets the server's data directory"),
 		 NULL
 		},
-		&guc_pgdata,
-		NULL, assign_canonical_path, NULL
+		&data_directory,
+		NULL, NULL, NULL
 	},
 
 	{
-		{"hba_conf", PGC_SIGHUP, FILE_LOCATIONS,
-		 gettext_noop("Sets the location of the \"hba\" configuration file"),
-		 NULL
+		{"config_file", PGC_POSTMASTER, FILE_LOCATIONS,
+		 gettext_noop("Sets the server's main configuration file"),
+		 NULL,
+		 GUC_DISALLOW_IN_FILE
 		},
-		&guc_hbafile,
-		NULL, assign_canonical_path, NULL
+		&ConfigFileName,
+		NULL, NULL, NULL
 	},
 
 	{
-		{"ident_conf", PGC_SIGHUP, FILE_LOCATIONS,
-		 gettext_noop("Sets the location of the \"ident\" configuration file"),
+		{"hba_file", PGC_POSTMASTER, FILE_LOCATIONS,
+		 gettext_noop("Sets the server's \"hba\" configuration file"),
 		 NULL
 		},
-		&guc_identfile,
-		NULL, assign_canonical_path, NULL
+		&HbaFileName,
+		NULL, NULL, NULL
 	},
 
 	{
-		{"external_pidfile", PGC_POSTMASTER, FILE_LOCATIONS,
+		{"ident_file", PGC_POSTMASTER, FILE_LOCATIONS,
+		 gettext_noop("Sets the server's \"ident\" configuration file"),
+		 NULL
+		},
+		&IdentFileName,
+		NULL, NULL, NULL
+	},
+
+	{
+		{"external_pid_file", PGC_POSTMASTER, FILE_LOCATIONS,
 		 gettext_noop("Writes the postmaster PID to the specified file"),
 		 NULL
 		},
-		&external_pidfile,
+		&external_pid_file,
 		NULL, assign_canonical_path, NULL
 	},
 
@@ -2453,47 +2459,52 @@ InitializeGUCOptions(void)
 bool
 SelectConfigFiles(const char *userDoption, const char *progname)
 {
-	char   *Doption;
+	char	   *configdir;
+	char	   *fname;
 	struct stat stat_buf;
 
-	/* If user did not specify -D, it defaults to $PGDATA */
-	if (!userDoption)
-		userDoption = getenv("PGDATA");
+	/* configdir is -D option, or $PGDATA if no -D */
+	if (userDoption)
+		configdir = make_absolute_path(userDoption);
+	else
+		configdir = make_absolute_path(getenv("PGDATA"));
 
-	/* If no PGDATA either, we are completely lost */
-	if (!userDoption)
+	/*
+	 * Find the configuration file: if config_file was specified on the
+	 * command line, use it, else use configdir/postgresql.conf.  In any
+	 * case ensure the result is an absolute path, so that it will be
+	 * interpreted the same way by future backends.
+	 */
+	if (ConfigFileName)
+		fname = make_absolute_path(ConfigFileName);
+	else if (!configdir)
 	{
-		write_stderr("%s does not know where to find the database system data.\n"
-					 "You must specify the -D invocation option or set the "
-					 "PGDATA environment variable.\n",
+		write_stderr("%s does not know where to find the server configuration file.\n"
+					 "You must specify the --config_file or -D invocation "
+					 "option or set the PGDATA environment variable.\n",
 					 progname);
 		return false;
 	}
-
-	/* Get a writable copy and canonicalize the path */
-	Doption = guc_strdup(FATAL, userDoption);
-	canonicalize_path(Doption);
-
-	/*
-	 * If it is a directory, point ConfigDir to it, and expect to
-	 * find postgresql.conf within.  Otherwise it had better be
-	 * the actual config file, and the file had better set "pgdata".
-	 */
-	if (stat(Doption, &stat_buf) == 0 && S_ISDIR(stat_buf.st_mode))
-	{
-		ConfigDir = Doption;
-		ConfigFileName = guc_malloc(FATAL,
-							strlen(ConfigDir) + strlen(CONFIG_FILENAME) + 2);
-		sprintf(ConfigFileName, "%s/%s", ConfigDir, CONFIG_FILENAME);
-	}
 	else
 	{
-		ConfigFileName = Doption;
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(CONFIG_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, CONFIG_FILENAME);
 	}
 
+	/*
+	 * Set the ConfigFileName GUC variable to its final value, ensuring
+	 * that it can't be overridden later.
+	 */
+	SetConfigOption("config_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
+	free(fname);
+
+	/*
+	 * Now read the config file for the first time.
+	 */
 	if (stat(ConfigFileName, &stat_buf) != 0)
 	{
-		write_stderr("%s cannot access the data directory or configuration file \"%s\": %s\n",
+		write_stderr("%s cannot access the server configuration file \"%s\": %s\n",
 					 progname, ConfigFileName, strerror(errno));
 		return false;
 	}
@@ -2501,32 +2512,81 @@ SelectConfigFiles(const char *userDoption, const char *progname)
 	ProcessConfigFile(PGC_POSTMASTER);
 
 	/*
-	 * If the config file specified pgdata, use that as DataDir;
-	 * otherwise use ConfigDir (the original Doption) if set;
-	 * else punt.
+	 * If the data_directory GUC variable has been set, use that as DataDir;
+	 * otherwise use configdir if set; else punt.
 	 *
-	 * Note: SetDataDir will copy and canonicalize its argument,
+	 * Note: SetDataDir will copy and absolute-ize its argument,
 	 * so we don't have to.
 	 */
-	if (guc_pgdata)
-		SetDataDir(guc_pgdata);
-	else if (ConfigDir)
-		SetDataDir(ConfigDir);
+	if (data_directory)
+		SetDataDir(data_directory);
+	else if (configdir)
+		SetDataDir(configdir);
 	else
 	{
 		write_stderr("%s does not know where to find the database system data.\n"
-					 "This should be specified as \"pgdata\" in \"%s\".\n",
+					 "This can be specified as \"data_directory\" in \"%s\", "
+					 "or by the -D invocation option, or by the "
+					 "PGDATA environment variable.\n",
 					 progname, ConfigFileName);
 		return false;
 	}
 
 	/*
-	 * Set ConfigDir as DataDir unless we had another value (which is to say,
-	 * Doption pointed to a directory).  This determines the default location
-	 * of secondary configuration files that will be read later.
+	 * Reflect the final DataDir value back into the data_directory GUC var.
+	 * (If you are wondering why we don't just make them a single variable,
+	 * it's because the EXEC_BACKEND case needs DataDir to be transmitted to
+	 * child backends specially.)
 	 */
-	if (!ConfigDir)
-		ConfigDir = DataDir;
+	SetConfigOption("data_directory", DataDir, PGC_POSTMASTER, PGC_S_OVERRIDE);
+
+	/*
+	 * Figure out where pg_hba.conf is, and make sure the path is absolute.
+	 */
+	if (HbaFileName)
+		fname = make_absolute_path(HbaFileName);
+	else if (!configdir)
+	{
+		write_stderr("%s does not know where to find the \"hba\" configuration file.\n"
+					 "This can be specified as \"hba_file\" in \"%s\", "
+					 "or by the -D invocation option, or by the "
+					 "PGDATA environment variable.\n",
+					 progname, ConfigFileName);
+		return false;
+	}
+	else
+	{
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(HBA_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, HBA_FILENAME);
+	}
+	SetConfigOption("hba_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
+	free(fname);
+
+	/*
+	 * Likewise for pg_ident.conf.
+	 */
+	if (IdentFileName)
+		fname = make_absolute_path(IdentFileName);
+	else if (!configdir)
+	{
+		write_stderr("%s does not know where to find the \"ident\" configuration file.\n"
+					 "This can be specified as \"ident_file\" in \"%s\", "
+					 "or by the -D invocation option, or by the "
+					 "PGDATA environment variable.\n",
+					 progname, ConfigFileName);
+		return false;
+	}
+	else
+	{
+		fname = guc_malloc(FATAL,
+						   strlen(configdir) + strlen(IDENT_FILENAME) + 2);
+		sprintf(fname, "%s/%s", configdir, IDENT_FILENAME);
+	}
+	SetConfigOption("ident_file", fname, PGC_POSTMASTER, PGC_S_OVERRIDE);
+	free(fname);
+
+	free(configdir);
 
 	/* If timezone is not set, determine what the OS uses */
 	pg_timezone_initialize();
@@ -5703,7 +5763,6 @@ assign_canonical_path(const char *newval, bool doit, GucSource source)
 {
 	if (doit)
 	{
-		/* We have to create a new pointer to force the change */
 		char	   *canon_val = guc_strdup(ERROR, newval);
 
 		canonicalize_path(canon_val);
@@ -5712,5 +5771,6 @@ assign_canonical_path(const char *newval, bool doit, GucSource source)
 	else
 		return newval;
 }
+
 
 #include "guc-file.c"

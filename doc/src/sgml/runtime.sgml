@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.286 2004/10/08 01:36:31 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.287 2004/10/09 23:12:53 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -568,8 +568,8 @@ SET ENABLE_SEQSCAN TO OFF;
     <title>File Locations</title>
 
      <variablelist>
-     <varlistentry id="guc-pgdata" xreflabel="pgdata">
-      <term><varname>pgdata</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-data-directory" xreflabel="data-directory">
+      <term><varname>data_directory</varname> (<type>string</type>)</term>
       <listitem>
        <para>
          Specifies the directory to use for data storage.
@@ -578,36 +578,45 @@ SET ENABLE_SEQSCAN TO OFF;
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-hba-conf" xreflabel="hba-conf">
-      <term><varname>hba_conf</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-config-file" xreflabel="config-file">
+      <term><varname>config_file</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-         Specifies the file name to use for configuration of host-based 
-         authentication (HBA).
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         Specifies the main server configuration file
+	 (customarily called <filename>postgresql.conf</>).
+         This option can only be set on the postmaster command line.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry id="guc-ident-conf" xreflabel="ident-conf">
-      <term><varname>ident_conf</varname> (<type>string</type>)</term>
+     <varlistentry id="guc-hba-file" xreflabel="hba-file">
+      <term><varname>hba_file</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-         Specifies the file name to use for configuration of 
+         Specifies the configuration file for host-based authentication.
+         This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-ident-file" xreflabel="ident-file">
+      <term><varname>ident_file</varname> (<type>string</type>)</term>
+      <listitem>
+       <para>
+         Specifies the configuration file for
          <application>ident</> authentication.
-         This option can only be set at server start or in the
-         <filename>postgresql.conf</filename> file.
+         This option can only be set at server start.
        </para>
       </listitem>
      </varlistentry>
 
-     <varlistentry id="external-pidfile" xreflabel="external-pidfile">
-      <term><varname>external_pidfile</varname> (<type>string</type>)</term>
+     <varlistentry id="external-pid-file" xreflabel="external-pid-file">
+      <term><varname>external_pid_file</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-         Specifies the location of an additional <application>postmaster</>
-         process-id (PID) file for use by server administration programs.
+         Specifies that the <application>postmaster</> should create an
+	 additional process-id (PID) file for use by server administration
+	 programs.
          This option can only be set at server start.
        </para>
       </listitem>
@@ -616,11 +625,10 @@ SET ENABLE_SEQSCAN TO OFF;
 
      <para>
       In a default installation, none of the above options is set explicitly
-      in the <filename>postgresql.conf</filename> file.  In this case, the
+      in the <filename>postgresql.conf</filename> file.  Instead, the
       data directory is specified by the <option>-D</option> command-line
-      option or the <envar>PGDATA</envar> environment variable; there is no
-      default for it.  The configuration files are all placed within the
-      data directory.
+      option or the <envar>PGDATA</envar> environment variable, and the
+      configuration files are all placed within the data directory.
      </para>
 
      <para>
@@ -630,27 +638,29 @@ SET ENABLE_SEQSCAN TO OFF;
       when they are kept separate.)  To do this, the <option>-D</option>
       command-line option or <envar>PGDATA</envar> environment variable
       must point to the directory containing the configuration files,
-      and the <varname>pgdata</> option is set in
+      and the <varname>data_directory</> option is set in
       <filename>postgresql.conf</filename> (or on the command line) to show
-      where the data directory is actually located.
+      where the data directory is actually located.  Notice that
+      <varname>data_directory</> overrides <option>-D</option> for the location
+      of the data directory, but not for the location of the configuration
+      files.
      </para>
 
      <para>
-      If you wish, you can also make the <option>-D</option>
-      command-line option or <envar>PGDATA</envar> environment variable
-      point directly to the master configuration file (which then need not be
-      named <filename>postgresql.conf</filename>).  The <varname>pgdata</>
-      option must be set to determine the data directory location.
-      The other configuration files will by default be sought
-      in the data directory.
+      If you wish, you can specify the configuration file names and locations
+      individually using the options <varname>config_file</>,
+      <varname>hba_file</> and/or <varname>ident_file</>.
+      <varname>config_file</> can only be specified on the 
+      <command>postmaster</command> command line, but the others can be
+      set within the main configuration file.  If all three options plus
+      <varname>data_directory</> are explicitly set, then it is not necessary
+      to specify <option>-D</option> or <envar>PGDATA</envar>.
      </para>
 
      <para>
-      With any of these approaches, you can specify the locations of the
-      secondary configuration files (<filename>pg_hba.conf</> and
-      <filename>pg_ident.conf</>) by setting <varname>hba_conf</> and/or
-      <varname>ident_conf</> in the master configuration file.  These options
-      override the normal locations and names of the secondary files.
+      When setting any of these options, a relative path will be interpreted
+      with respect to the directory in which the <command>postmaster</command>
+      is started.
      </para>
    </sect2>
 

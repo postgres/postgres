@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.430 2004/10/08 01:36:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.431 2004/10/09 23:13:02 tgl Exp $
  *
  * NOTES
  *
@@ -537,10 +537,6 @@ PostmasterMain(int argc, char *argv[])
 	/* Verify that DataDir looks reasonable */
 	checkDataDir();
 
-#ifdef EXEC_BACKEND
-	write_nondefault_variables(PGC_POSTMASTER);
-#endif
-
 	/*
 	 * Check for invalid combinations of GUC settings.
 	 */
@@ -782,12 +778,16 @@ PostmasterMain(int argc, char *argv[])
 	if (!CreateOptsFile(argc, argv, my_exec_path))
 		ExitPostmaster(1);
 
+#ifdef EXEC_BACKEND
+	write_nondefault_variables(PGC_POSTMASTER);
+#endif
+
 	/*
 	 * Write the external PID file if requested
 	 */
-	if (external_pidfile)
+	if (external_pid_file)
 	{
-		FILE	   *fpidfile = fopen(external_pidfile, "w");
+		FILE	   *fpidfile = fopen(external_pid_file, "w");
 
 		if (fpidfile)
 		{
@@ -797,7 +797,7 @@ PostmasterMain(int argc, char *argv[])
 		}
 		else
 			write_stderr("%s: could not write external pid file \"%s\": %s\n",
-						 progname, external_pidfile, strerror(errno));
+						 progname, external_pid_file, strerror(errno));
 	}
 
 	/*
@@ -859,10 +859,6 @@ PostmasterMain(int argc, char *argv[])
 	 * We're ready to rock and roll...
 	 */
 	StartupPID = StartupDataBase();
-
-#ifdef EXEC_BACKEND
-	write_nondefault_variables(PGC_POSTMASTER);
-#endif
 
 	status = ServerLoop();
 
@@ -3390,12 +3386,6 @@ write_backend_variables(char *filename, Port *port)
 	StrNCpy(str_buf, DataDir, MAXPGPATH);
 	write_array_var(str_buf, fp);
 
-	StrNCpy(str_buf, ConfigDir, MAXPGPATH);
-	write_array_var(str_buf, fp);
-
-	StrNCpy(str_buf, ConfigFileName, MAXPGPATH);
-	write_array_var(str_buf, fp);
-
 	write_array_var(ListenSocket, fp);
 
 	write_var(MyCancelKey, fp);
@@ -3469,12 +3459,6 @@ read_backend_variables(char *filename, Port *port)
 
 	read_array_var(str_buf, fp);
 	SetDataDir(str_buf);
-
-	read_array_var(str_buf, fp);
-	ConfigDir = strdup(str_buf);
-
-	read_array_var(str_buf, fp);
-	ConfigFileName = strdup(str_buf);
 
 	read_array_var(ListenSocket, fp);
 

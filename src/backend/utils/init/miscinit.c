@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.134 2004/10/04 14:55:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/init/miscinit.c,v 1.135 2004/10/09 23:13:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,7 +171,34 @@ SetDataDir(const char *dir)
 	AssertArg(dir);
 
 	/* If presented path is relative, convert to absolute */
-	if (!is_absolute_path(dir))
+	new = make_absolute_path(dir);
+
+	if (DataDir)
+		free(DataDir);
+	DataDir = new;
+}
+
+/*
+ * If the given pathname isn't already absolute, make it so, interpreting
+ * it relative to the current working directory.
+ *
+ * Also canonicalizes the path.  The result is always a malloc'd copy.
+ *
+ * Note: it is probably unwise to use this in running backends, since they
+ * have chdir'd to a database-specific subdirectory; the results would not be
+ * consistent across backends.  Currently this is used only during postmaster
+ * or standalone-backend startup.
+ */
+char *
+make_absolute_path(const char *path)
+{
+	char	   *new;
+
+	/* Returning null for null input is convenient for some callers */
+	if (path == NULL)
+		return NULL;
+
+	if (!is_absolute_path(path))
 	{
 		char	   *buf;
 		size_t		buflen;
@@ -200,28 +227,27 @@ SetDataDir(const char *dir)
 			}
 		}
 
-		new = malloc(strlen(buf) + 1 + strlen(dir) + 1);
+		new = malloc(strlen(buf) + strlen(path) + 2);
 		if (!new)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
-		sprintf(new, "%s/%s", buf, dir);
+		sprintf(new, "%s/%s", buf, path);
 		free(buf);
 	}
 	else
 	{
-		new = strdup(dir);
+		new = strdup(path);
 		if (!new)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of memory")));
 	}
 
+	/* Make sure punctuation is canonical, too */
 	canonicalize_path(new);
 
-	if (DataDir)
-		free(DataDir);
-	DataDir = new;
+	return new;
 }
 
 

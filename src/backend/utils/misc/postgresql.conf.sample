@@ -30,13 +30,13 @@
 #---------------------------------------------------------------------------
 
 # The default values of these variables are driven from the -D command line
-# switch or PGDATA environment variable, represented here as $PGDATA.
-# pgdata = '$PGDATA'			# use data in another directory
-# hba_conf = '$PGDATA/pg_hba.conf'	# the host-based authentication file
-# ident_conf = '$PGDATA/pg_ident.conf'	# the IDENT configuration file
+# switch or PGDATA environment variable, represented here as ConfigDir.
+# data_directory = 'ConfigDir'		# use data in another directory
+# hba_file = 'ConfigDir/pg_hba.conf'	# the host-based authentication file
+# ident_file = 'ConfigDir/pg_ident.conf'  # the IDENT configuration file
 
-# If external_pidfile is not explicitly set, no extra pid file is written.
-# external_pidfile = '(none)'		# write an extra pid file
+# If external_pid_file is not explicitly set, no extra pid file is written.
+# external_pid_file = '(none)'		# write an extra pid file
 
 
 #---------------------------------------------------------------------------
