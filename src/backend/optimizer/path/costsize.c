@@ -34,15 +34,14 @@
  * Note that a relation's rows count (and, by extension, a Plan's plan_rows)
  * are set without regard to any LIMIT, so that this equation works properly.
  * (Also, these routines guarantee not to set the rows count to zero, so there
- * will be no zero divide.)  RelOptInfos, Paths, and Plans themselves never
- * account for LIMIT.
+ * will be no zero divide.)  The LIMIT is applied as a separate Plan node.
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.66 2001/01/24 19:42:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.67 2001/02/15 17:46:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -96,15 +95,10 @@ static double page_size(double tuples, int width);
  * cost_seqscan
  *	  Determines and returns the cost of scanning a relation sequentially.
  *
- * If the relation is a temporary to be materialized from a query
- * embedded within a data field (determined by 'relid' containing an
- * attribute reference), then a predetermined constant is returned (we
- * have NO IDEA how big the result of a POSTQUEL procedure is going to be).
- *
  * Note: for historical reasons, this routine and the others in this module
  * use the passed result Path only to store their startup_cost and total_cost
  * results into.  All the input data they need is passed as separate
- * parameters, even though much of it could be extracted from the result Path.
+ * parameters, even though much of it could be extracted from the Path.
  */
 void
 cost_seqscan(Path *path, RelOptInfo *baserel)
