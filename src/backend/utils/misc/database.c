@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.19 1998/09/01 04:33:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.20 1998/09/03 02:32:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@
 #include "mb/pg_wchar.h"
 #endif
 
-#ifdef 0
+#ifdef NOT_USED
 /* GetDatabaseInfo()
  * Pull database information from pg_database.
  */
