@@ -10,7 +10,39 @@ How PostgreSQL Processes a Query
 by Bruce Momjian
 </H2>
 <P>
+<CENTER>
+<EM><BIG>
+Click on an item to see more detail or look at the full
+<A HREF="backend_dirs.html">index.</A>
+</BIG></EM>
+<BR>
+<BR>
+<IMG src="flow.jpg" usemap="#flowmap" alt="flowchart">
+</CENTER>
+<MAP name="flowmap">
+<AREA COORDS="290,10,450,50" HREF="backend_dirs.html#main">
+<AREA COORDS="550,10,710,50" HREF="backend_dirs.html#bootstrap">
+<AREA COORDS="290,90,450,130," HREF="backend_dirs.html#postmaster">
+<AREA COORDS="550,90,710,130," HREF="backend_dirs.html#libpq">
+<AREA COORDS="290,170,450,210" HREF="backend_dirs.html#tcop">
+<AREA COORDS="550,170,710,210" HREF="backend_dirs.html#tcop">
+<AREA COORDS="290,270,450,310" HREF="backend_dirs.html#parser">
+<AREA COORDS="290,350,450,390" HREF="backend_dirs.html#tcop">
+<AREA COORDS="290,430,450,470" HREF="backend_dirs.html#optimizer">
+<AREA COORDS="290,510,450,550" HREF="backend_dirs.html#optimizer/plan">
+<AREA COORDS="290,570,450,630" HREF="backend_dirs.html#executor">
+<AREA COORDS="550,350,710,390" HREF="backend_dirs.html#commands">
+<AREA COORDS="10,330,170,370" HREF="backend_dirs.html#access">
+<AREA COORDS="10,390,170,430" HREF="backend_dirs.html#catalog">
+<AREA COORDS="10,450,170,490" HREF="backend_dirs.html#utils">
+<AREA COORDS="10,510,170,550" HREF="backend_dirs.html#nodes">
+<AREA COORDS="10,570,170,610" HREF="backend_dirs.html#storage">
+</MAP>
+<BR>
+<P>
 
+<HR>
+<P>
 A query comes to the backend via data packets arriving through TCP/IP
 or Unix Domain sockets.   It is loaded into a string, and passed to
 the
@@ -82,40 +114,6 @@ children.
 
 There are many other modules that support this basic functionality.
 They can be accessed by clicking on the flowchart.
-<P>
-
-<HR>
-<P>
-
-<CENTER>
-<EM><BIG>
-Click on an item to see more detail or look at the full
-<A HREF="backend_dirs.html">index.</A>
-</BIG></EM>
-<BR>
-<BR>
-<IMG src="flow.jpg" usemap="#flowmap" alt="flowchart">
-</CENTER>
-<MAP name="flowmap">
-<AREA COORDS="290,10,450,50" HREF="backend_dirs.html#main">
-<AREA COORDS="550,10,710,50" HREF="backend_dirs.html#bootstrap">
-<AREA COORDS="290,90,450,130," HREF="backend_dirs.html#postmaster">
-<AREA COORDS="550,90,710,130," HREF="backend_dirs.html#libpq">
-<AREA COORDS="290,170,450,210" HREF="backend_dirs.html#tcop">
-<AREA COORDS="550,170,710,210" HREF="backend_dirs.html#tcop">
-<AREA COORDS="290,270,450,310" HREF="backend_dirs.html#parser">
-<AREA COORDS="290,350,450,390" HREF="backend_dirs.html#tcop">
-<AREA COORDS="290,430,450,470" HREF="backend_dirs.html#optimizer">
-<AREA COORDS="290,510,450,550" HREF="backend_dirs.html#optimizer/plan">
-<AREA COORDS="290,570,450,630" HREF="backend_dirs.html#executor">
-<AREA COORDS="550,350,710,390" HREF="backend_dirs.html#commands">
-<AREA COORDS="10,330,170,370" HREF="backend_dirs.html#access">
-<AREA COORDS="10,390,170,430" HREF="backend_dirs.html#catalog">
-<AREA COORDS="10,450,170,490" HREF="backend_dirs.html#utils">
-<AREA COORDS="10,510,170,550" HREF="backend_dirs.html#nodes">
-<AREA COORDS="10,570,170,610" HREF="backend_dirs.html#storage">
-</MAP>
-<BR>
 <P>
 
 <HR>
