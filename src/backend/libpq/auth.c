@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.78 2002/03/05 06:52:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.79 2002/03/05 07:57:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -663,7 +663,9 @@ pam_passwd_conv_proc(int num_msg, const struct pam_message ** msg, struct pam_re
 
 		initStringInfo(&buf);
 		pq_getstr(&buf);
-		elog(DEBUG5, "received PAM packet with len=%d, pw=%s", len, buf.data);
+		
+		/* Do not echo failed password to logs, for security. */
+		elog(DEBUG5, "received PAM packet");
 
 		if (strlen(buf.data) == 0)
 		{
