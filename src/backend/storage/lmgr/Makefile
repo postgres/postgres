@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.18 2003/11/29 19:51:56 pgsql Exp $
+#    $PostgreSQL: pgsql/src/backend/storage/lmgr/Makefile,v 1.19 2004/06/19 19:43:11 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -19,14 +19,17 @@ all: SUBSYS.o
 SUBSYS.o: $(OBJS)
 	$(LD) $(LDREL) $(LDOUT) SUBSYS.o $(OBJS)
 
-s_lock_test: s_lock.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 s_lock.c -o s_lock_test
+s_lock_test: s_lock.c $(top_builddir)/src/port/libpgport.a
+	$(CC) $(CPPFLAGS) $(CFLAGS) -DS_LOCK_TEST=1 s_lock.c \
+		-L $(top_builddir)/src/port -lpgport -o s_lock_test
+
+check: s_lock_test
 	./s_lock_test
 
 depend dep:
 	$(CC) -MM $(CFLAGS) *.c >depend
 
-clean: 
+clean distclean maintainer-clean: 
 	rm -f SUBSYS.o $(OBJS) s_lock_test
 
 ifeq (depend,$(wildcard depend))
