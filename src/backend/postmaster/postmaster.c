@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.19 1996/10/30 00:36:59 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.20 1996/11/03 04:48:26 scrappy Exp $
  *
  * NOTES
  *
@@ -32,8 +32,9 @@
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
-#include "config.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -73,6 +74,7 @@
 #include "libpq/pqcomm.h"
 #include "miscadmin.h"
 #include "lib/dllist.h"
+#include "nodes/nodes.h"
 #include "utils/mcxt.h"
 #include "storage/proc.h"
 #include "utils/elog.h"
