@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.208 2004/12/11 19:01:46 petere Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/installation.sgml,v 1.209 2004/12/11 19:13:32 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -1555,8 +1555,9 @@ kill `cat /usr/local/pgsql/data/postmaster.pid`
         <entry><systemitem class="osname">FreeBSD</></entry>
         <entry><systemitem>x86</></entry>
         <entry>8.0.0</entry>
-        <entry>Build farm <systemitem class="systemname">cockatoo</systemitem>, snapshot 2004-12-06 14:10:01</entry>
-        <entry>4.10</entry>
+        <entry>Build farm <systemitem class="systemname">cockatoo</systemitem>, snapshot 2004-12-06 14:10:01 (4.10);
+         Marc Fournier <scrappy@postgresql.org>, 2004-12-07 (5.3)</entry>
+        <entry></entry>
        </row>
        <row>
         <entry><systemitem class="osname">HP-UX</></entry>
