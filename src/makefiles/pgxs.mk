@@ -1,6 +1,6 @@
 # PGXS: PostgreSQL extensions makefile
 
-# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.1 2004/07/30 12:26:40 petere Exp $ 
+# $PostgreSQL: pgsql/src/makefiles/pgxs.mk,v 1.2 2004/10/06 08:50:02 momjian Exp $ 
 
 # This file contains generic rules to build many kinds of simple
 # extension modules.  You only need to set a few variables and include
@@ -50,7 +50,7 @@ endif
 
 ifdef PGXS
 # We assume that we are in src/makefiles/, so top is ...
-top_builddir := $(dir $(PGXS))/../..
+top_builddir := $(dir $(PGXS))../..
 include $(top_builddir)/src/Makefile.global
 
 top_srcdir = $(top_builddir)

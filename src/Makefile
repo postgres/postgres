@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/Makefile,v 1.34 2004/08/20 20:13:10 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile,v 1.35 2004/10/06 08:49:59 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,10 +32,6 @@ install-local: installdirs-local
 	$(INSTALL_DATA) Makefile.port $(DESTDIR)$(pgxsdir)/$(subdir)/Makefile.port
 	$(INSTALL_DATA) $(srcdir)/Makefile.shlib $(DESTDIR)$(pgxsdir)/$(subdir)/Makefile.shlib
 	$(INSTALL_DATA) $(srcdir)/nls-global.mk $(DESTDIR)$(pgxsdir)/$(subdir)/nls-global.mk
-
-install-all-headers:
-	$(MAKE) -C include $@
-	$(MAKE) -C port $@
 
 installdirs: installdirs-local
 

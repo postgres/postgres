@@ -2,11 +2,9 @@
 #
 # Makefile for src/include
 #
-# 'make install' installs only those headers needed for client-side
-# programming.  'make install-all-headers' installs the whole contents
-# of src/include.
+# 'make install' installs whole contents of src/include.
 #
-# $PostgreSQL: pgsql/src/include/Makefile,v 1.12 2003/11/29 19:52:08 pgsql Exp $
+# $PostgreSQL: pgsql/src/include/Makefile,v 1.13 2004/10/06 08:50:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,8 +16,11 @@ include $(top_builddir)/src/Makefile.global
 all: pg_config.h pg_config_os.h
 
 
-# Install only selected headers
+# Subdirectories containing headers for server-side dev
+SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
+	nodes optimizer parser port regex rewrite storage tcop utils
 
+# Install all headers
 install: all installdirs remove-old-headers
 # These headers are needed by the public headers of the interfaces.
 	$(INSTALL_DATA) $(srcdir)/postgres_ext.h   $(DESTDIR)$(includedir)
@@ -33,18 +34,7 @@ install: all installdirs remove-old-headers
 	$(INSTALL_DATA) $(srcdir)/postgres_fe.h  $(DESTDIR)$(includedir_internal)
 	$(INSTALL_DATA) $(srcdir)/libpq/pqcomm.h $(DESTDIR)$(includedir_internal)/libpq
 	$(INSTALL_DATA) $(srcdir)/lib/dllist.h   $(DESTDIR)$(includedir_internal)/lib
-
-installdirs:
-	$(mkinstalldirs) $(DESTDIR)$(includedir)/libpq $(DESTDIR)$(includedir_internal)/libpq $(DESTDIR)$(includedir_internal)/lib
-
-
-# Install all headers
-
-# Subdirectories containing headers that install-all-headers should install
-SUBDIRS = access bootstrap catalog commands executor lib libpq mb \
-	nodes optimizer parser port regex rewrite storage tcop utils
-
-install-all-headers: all install-all-dirs
+# These headers are needed for server-side development
 	$(INSTALL_DATA) pg_config.h    $(DESTDIR)$(includedir_server)
 	$(INSTALL_DATA) pg_config_os.h $(DESTDIR)$(includedir_server)
 	for file in $(srcdir)/*.h; do \
@@ -56,7 +46,8 @@ install-all-headers: all install-all-dirs
 	  done \
 	done
 
-install-all-dirs:
+installdirs:
+	$(mkinstalldirs) $(DESTDIR)$(includedir)/libpq $(DESTDIR)$(includedir_internal)/libpq $(DESTDIR)$(includedir_internal)/lib
 	$(mkinstalldirs) $(addprefix $(DESTDIR)$(includedir_server)/, $(SUBDIRS))
 
 

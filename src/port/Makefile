@@ -15,7 +15,7 @@
 #		for use only by the backend binaries
 #
 # IDENTIFICATION
-#    $PostgreSQL: pgsql/src/port/Makefile,v 1.19 2004/10/04 13:43:58 momjian Exp $
+#    $PostgreSQL: pgsql/src/port/Makefile,v 1.20 2004/10/06 08:50:02 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -36,7 +36,7 @@ LIBOBJS_SRV := $(patsubst thread.o,thread_srv.o, $(LIBOBJS_SRV))
 all: libpgport.a libpgport_srv.a
 
 # libpgport is needed by some contrib
-install-all-headers: 
+install:
 	$(INSTALL_STLIB) libpgport.a $(DESTDIR)$(libdir)
 
 uninstall:
