@@ -19,7 +19,7 @@ then	echo "You appear to have GNU indent rather than BSD indent." >&2
 	echo "See the pgindent/README file for a description of its problems." >&2
 	EXTRA_OPTS="-ncdb -bli0 -npcs -cli4"
 else	echo "Hope you installed /src/tools/pgindent/indent.bsd.patch." >&2
-	EXTRA_OPTS="-cli1"
+	EXTRA_OPTS="-bbb -cli1"
 fi
 
 for FILE
@@ -1325,6 +1325,36 @@ do
 			    line3 ~ "		*}$")
 			{
 				print line2;
+				line1 = "";
+				line2 = "";
+				line3 = "";
+				skips = 3;
+			}
+			else
+	 			if (skips == 0 && NR >= 3)
+					print line1;
+			line1 = line2;
+			line2 = line3;
+			line3 = "";
+		}
+		END {
+			if (skips <= 1)
+				print line1;
+			if (skips <= 2)
+				print line2;
+	}' |
+# remove blank line between opening brace and block comment
+	awk '
+	{	
+			line3 = $0;  
+			if (skips > 0)
+				skips--;
+			if (line1 ~ "		*{$" &&
+			    line2 ~ "^$" &&
+			    line3 ~ "		*/\\*$")
+			{
+				print line1;
+				print line3;
 				line1 = "";
 				line2 = "";
 				line3 = "";
