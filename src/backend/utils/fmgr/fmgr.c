@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.85 2004/10/01 20:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.86 2004/10/25 00:46:42 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -515,10 +515,6 @@ record_C_func(HeapTuple procedureTuple,
 								100,
 								&hash_ctl,
 								HASH_ELEM | HASH_FUNCTION);
-		if (CFuncHash == NULL)
-			ereport(ERROR,
-					(errcode(ERRCODE_OUT_OF_MEMORY),
-					 errmsg("out of memory")));
 	}
 
 	entry = (CFuncHashTabEntry *)

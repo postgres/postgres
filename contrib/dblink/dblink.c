@@ -2043,19 +2043,11 @@ static HTAB *
 createConnHash(void)
 {
 	HASHCTL		ctl;
-	HTAB	   *ptr;
 
 	ctl.keysize = NAMEDATALEN;
 	ctl.entrysize = sizeof(remoteConnHashEnt);
 
-	ptr = hash_create("Remote Con hash", NUMCONN, &ctl, HASH_ELEM);
-
-	if (!ptr)
-		ereport(ERROR,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
-
-	return (ptr);
+	return hash_create("Remote Con hash", NUMCONN, &ctl, HASH_ELEM);
 }
 
 static void
