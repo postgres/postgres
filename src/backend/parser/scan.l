@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.81 2000/10/31 13:59:53 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.82 2000/11/02 23:20:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -433,7 +433,7 @@ other			.
 						 * that the "self" rule would have.
 						 */
 						if (nchars == 1 &&
-							strchr(",()[].;$:+-*/%^<>=|", yytext[0]))
+							strchr(",()[].;$:+-*/%^<>=", yytext[0]))
 							return yytext[0];
 					}
 
