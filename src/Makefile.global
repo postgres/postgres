@@ -8,7 +8,7 @@ X=$(shell sleep 4)
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.45 1996/11/01 01:45:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.46 1996/11/01 02:21:15 momjian Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -438,13 +438,13 @@ ifeq ($(PRE_BSDI_2_1), N)
 # gcc is gcc v2.7.2
   LEX=		lex
   LD_ADD+=	-ltermcap
-  CFLAGS_BE = -DPRE_BSDI_2_1
 else
 # cc is gcc v1.42
 # gcc is gcc v2.6.3
   LEX=		flex
 # use the regex library
   USE_REGEX = 1
+  CFLAGS_BE = -DPRE_BSDI_2_1
   LDADD_BE = -ldld -lcompat
 endif
 
