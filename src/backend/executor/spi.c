@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.50 2000/12/01 22:10:30 tgl Exp $
+ * $Id: spi.c,v 1.51 2001/01/04 02:36:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -695,8 +695,11 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		}
 	}
 
-	plan->qtlist = queryTree_list;
-	plan->ptlist = planTree_list;
+	if (plan)
+	{
+		plan->qtlist = queryTree_list;
+		plan->ptlist = planTree_list;
+	}
 
 	return res;
 }
