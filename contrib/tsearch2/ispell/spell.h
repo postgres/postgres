@@ -54,9 +54,9 @@ typedef struct aff_struct
 				isregis:1,
 				unused:1,
 				replen:16;
-	char		mask[32];
-	char		find[16];
-	char		repl[16];
+	char		*mask;
+	char		*find;
+	char		*repl;
 	union
 	{
 		regex_t		regex;

@@ -10,6 +10,8 @@
 #define MAX_NORM 1024
 #define MAXNORMLEN 256
 
+#define ERRSTRSIZE	1024
+
 #define STRNCASECMP(x,y)		pg_strncasecmp(x, y, strlen(y))
 #define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)==FF_PREFIX) ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
@@ -250,30 +252,35 @@ NIAddAffix(IspellDict * Conf, int flag, char flagflags, const char *mask, const 
 	{
 		Conf->Affix[Conf->naffixes].issimple = 1;
 		Conf->Affix[Conf->naffixes].isregis = 0;
-		*(Conf->Affix[Conf->naffixes].mask) = '\0';
+		Conf->Affix[Conf->naffixes].mask = strdup("");
 	}
 	else if (RS_isRegis(mask))
 	{
 		Conf->Affix[Conf->naffixes].issimple = 0;
 		Conf->Affix[Conf->naffixes].isregis = 1;
-		strcpy(Conf->Affix[Conf->naffixes].mask, mask);
+		Conf->Affix[Conf->naffixes].mask = strdup(mask);
 	}
 	else
 	{
 		Conf->Affix[Conf->naffixes].issimple = 0;
 		Conf->Affix[Conf->naffixes].isregis = 0;
+		Conf->Affix[Conf->naffixes].mask = (char*)malloc( strlen(mask) + 2 );
 		if (type == FF_SUFFIX)
 			sprintf(Conf->Affix[Conf->naffixes].mask, "%s$", mask);
 		else
 			sprintf(Conf->Affix[Conf->naffixes].mask, "^%s", mask);
 	}
+	MEMOUT(Conf->Affix[Conf->naffixes].mask);
+
 	Conf->Affix[Conf->naffixes].compile = 1;
 	Conf->Affix[Conf->naffixes].flagflags = flagflags;
 	Conf->Affix[Conf->naffixes].flag = flag;
 	Conf->Affix[Conf->naffixes].type = type;
 
-	strcpy(Conf->Affix[Conf->naffixes].find, find);
-	strcpy(Conf->Affix[Conf->naffixes].repl, repl);
+	Conf->Affix[Conf->naffixes].find = strdup(find);
+	MEMOUT(Conf->Affix[Conf->naffixes].find);
+	Conf->Affix[Conf->naffixes].repl = strdup(repl);
+	MEMOUT(Conf->Affix[Conf->naffixes].repl);
 	Conf->Affix[Conf->naffixes].replen = strlen(repl);
 	Conf->naffixes++;
 	return (0);
@@ -794,12 +801,9 @@ CheckAffix(const char *word, size_t len, AFFIX * Affix, char flagflags, char *ne
 			pfree(mask);
 			if (err)
 			{
-				/*
-				 * regerror(err, &(Affix->reg.regex), regerrstr,
-				 * ERRSTRSIZE);
-				 */
-				pg_regfree(&(Affix->reg.regex));
-				return (NULL);
+				char regerrstr[ERRSTRSIZE];	
+				pg_regerror(err, &(Affix->reg.regex), regerrstr, ERRSTRSIZE);
+				elog(ERROR, "Regex error in '%s': %s", Affix->mask, regerrstr);
 			}
 			Affix->compile = 0;
 		}
@@ -1239,6 +1243,9 @@ NIFree(IspellDict * Conf)
 			else
 				pg_regfree(&(Affix[i].reg.regex));
 		}
+		free(Affix[i].mask);
+		free(Affix[i].find);
+		free(Affix[i].repl);
 	}
 	if (Conf->Spell)
 	{
