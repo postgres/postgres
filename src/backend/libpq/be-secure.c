@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.23 2003/01/08 23:18:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.24 2003/01/08 23:34:22 momjian Exp $
  *
  *	  Since the server static private key ($DataDir/server.key)
  *	  will normally be stored unencrypted so that the database
@@ -116,7 +116,7 @@ void		secure_destroy(void);
 int			secure_open_server(Port *);
 void		secure_close(Port *);
 ssize_t		secure_read(Port *, void *ptr, size_t len);
-ssize_t		secure_write(Port *, const void *ptr, size_t len);
+ssize_t		secure_write(Port *, void *ptr, size_t len);
 
 #ifdef USE_SSL
 static DH  *load_dh_file(int keylength);
@@ -307,7 +307,7 @@ secure_read(Port *port, void *ptr, size_t len)
  *	Write data to a secure connection.
  */
 ssize_t
-secure_write(Port *port, const void *ptr, size_t len)
+secure_write(Port *port, void *ptr, size_t len)
 {
 	ssize_t		n;
 
