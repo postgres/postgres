@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.83 2001/03/22 03:59:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.84 2001/03/27 17:12:34 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -939,7 +939,6 @@ is_single_func(Node *node)
  *
  * If the clause is not of the form (var op var) or if any of the vars
  * refer to nested attributes, then zeroes are returned.
- *
  */
 void
 get_rels_atts(Node *clause,
@@ -1311,14 +1310,16 @@ eval_const_expressions_mutator(Node *node, void *context)
 	if (IsA(node, CaseExpr))
 	{
 
-		/*
+		/*----------
 		 * CASE expressions can be simplified if there are constant
-		 * condition clauses: FALSE (or NULL): drop the alternative TRUE:
-		 * drop all remaining alternatives If the first non-FALSE
-		 * alternative is a constant TRUE, we can simplify the entire CASE
-		 * to that alternative's expression. If there are no non-FALSE
-		 * alternatives, we simplify the entire CASE to the default result
-		 * (ELSE result).
+		 * condition clauses:
+		 *		FALSE (or NULL): drop the alternative
+		 *		TRUE: drop all remaining alternatives
+		 * If the first non-FALSE alternative is a constant TRUE, we can
+		 * simplify the entire CASE to that alternative's expression.
+		 * If there are no non-FALSE alternatives, we simplify the entire
+		 * CASE to the default result (ELSE result).
+		 *----------
 		 */
 		CaseExpr   *caseexpr = (CaseExpr *) node;
 		CaseExpr   *newcase;
