@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.33 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.34 2000/12/08 20:11:11 momjian Exp $
 Postgres documentation
 -->
 
@@ -760,7 +760,7 @@ SELECT actors.name
 the <command>FROM</command> clause from a query. This feature
 was retained from the original PostQuel query language:
   <programlisting>
-SELECT distributors.* WHERE name = 'Westwood';
+SELECT distributors.* WHERE name = 'Westward';
 
  did | name
 -----+----------
