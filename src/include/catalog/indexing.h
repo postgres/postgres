@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.22 1999/07/20 16:48:56 momjian Exp $
+ * $Id: indexing.h,v 1.23 1999/07/20 17:14:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,7 @@
 /*
  * Some definitions for indices on pg_attribute
  */
-#define Num_pg_amop_indices		2
 #define Num_pg_attr_indices		3
-#define Num_pg_index_indices	1
 #define Num_pg_proc_indices		3
 #define Num_pg_type_indices		2
 #define Num_pg_class_indices	2
@@ -34,27 +32,22 @@
 /*
  * Names of indices on system catalogs
  */
-#define AccessMethodOpidIndex "pg_amop_opid_index"
-#define AccessMethodStrategyIndex "pg_amop_strategy_index"
-#define AttributeNameIndex 	"pg_attribute_relid_attnam_index"
-#define AttributeNumIndex  	"pg_attribute_relid_attnum_index"
+#define AttributeNameIndex "pg_attribute_relid_attnam_index"
+#define AttributeNumIndex  "pg_attribute_relid_attnum_index"
 #define AttributeRelidIndex "pg_attribute_attrelid_index"
-#define IndexRelidIndex 	"pg_index_indexrelid_index"
-#define ProcedureOidIndex  	"pg_proc_oid_index"
-#define ProcedureNameIndex 	"pg_proc_proname_narg_type_index"
-#define ProcedureSrcIndex  	"pg_proc_prosrc_index"
-#define TypeOidIndex	   	"pg_type_oid_index"
-#define TypeNameIndex	   	"pg_type_typname_index"
-#define ClassOidIndex	   	"pg_class_oid_index"
-#define ClassNameIndex	   	"pg_class_relname_index"
-#define AttrDefaultIndex   	"pg_attrdef_adrelid_index"
-#define RelCheckIndex	   	"pg_relcheck_rcrelid_index"
-#define TriggerRelidIndex  	"pg_trigger_tgrelid_index"
+#define ProcedureOidIndex  "pg_proc_oid_index"
+#define ProcedureNameIndex "pg_proc_proname_narg_type_index"
+#define ProcedureSrcIndex  "pg_proc_prosrc_index"
+#define TypeOidIndex	   "pg_type_oid_index"
+#define TypeNameIndex	   "pg_type_typname_index"
+#define ClassOidIndex	   "pg_class_oid_index"
+#define ClassNameIndex	   "pg_class_relname_index"
+#define AttrDefaultIndex   "pg_attrdef_adrelid_index"
+#define RelCheckIndex	   "pg_relcheck_rcrelid_index"
+#define TriggerRelidIndex  "pg_trigger_tgrelid_index"
 #define DescriptionObjIndex "pg_description_objoid_index"
 
-extern char *Name_pg_amop_indices[];
 extern char *Name_pg_attr_indices[];
-extern char *Name_pg_index_indices[];
 extern char *Name_pg_proc_indices[];
 extern char *Name_pg_type_indices[];
 extern char *Name_pg_class_indices[];
@@ -62,7 +55,6 @@ extern char *Name_pg_attrdef_indices[];
 extern char *Name_pg_relcheck_indices[];
 extern char *Name_pg_trigger_indices[];
 extern char *Name_pg_description_indices[];
-
 
 extern char *IndexedCatalogNames[];
 
@@ -79,29 +71,21 @@ extern void CatalogIndexInsert(Relation *idescs,
 				   HeapTuple heapTuple);
 extern bool CatalogHasIndex(char *catName, Oid catId);
 
-
-
-extern HeapTuple AccessMethodOpidIndexScan(Relation heapRelation,
-				  Oid claid, Oid opopr, Oid opid);
-extern HeapTuple AccessMethodStrategyIndexScan(Relation heapRelation,
-				  Oid opid, Oid claid, int2 opstrategy);
 extern HeapTuple AttributeNameIndexScan(Relation heapRelation,
-				   Oid relid,
-				   char *attname);
+					   Oid relid,
+					   char *attname);
+
 extern HeapTuple AttributeNumIndexScan(Relation heapRelation,
-				  Oid relid,
-				  AttrNumber attnum);
-extern HeapTuple IndexRelidIndexScan(Relation heapRelation, Oid relid);
+					  Oid relid,
+					  AttrNumber attnum);
 extern HeapTuple ProcedureOidIndexScan(Relation heapRelation, Oid procId);
 extern HeapTuple ProcedureNameIndexScan(Relation heapRelation,
-				   char *procName, int2 nargs, Oid *argTypes);
+					   char *procName, int2 nargs, Oid *argTypes);
 extern HeapTuple ProcedureSrcIndexScan(Relation heapRelation, text *procSrc);
 extern HeapTuple TypeOidIndexScan(Relation heapRelation, Oid typeId);
 extern HeapTuple TypeNameIndexScan(Relation heapRelation, char *typeName);
 extern HeapTuple ClassNameIndexScan(Relation heapRelation, char *relName);
 extern HeapTuple ClassOidIndexScan(Relation heapRelation, Oid relId);
-
-
 
 
 /*
@@ -111,14 +95,9 @@ extern HeapTuple ClassOidIndexScan(Relation heapRelation, Oid relId);
  * The keyword is DECLARE_INDEX every thing after that is just like in a
  * normal specification of the 'define index' POSTQUEL command.
  */
-DECLARE_INDEX(pg_amop_opid_index on pg_amop using btree(amopclaid oid_ops, amopopr oid_ops, amopid oid_ops));
-DECLARE_INDEX(pg_amop_strategy_index on pg_amop using btree(amopid oid_ops, amopclaid oid_ops, amopstrategy int2_ops));
-
 DECLARE_INDEX(pg_attribute_relid_attnam_index on pg_attribute using btree(attrelid oid_ops, attname name_ops));
 DECLARE_INDEX(pg_attribute_relid_attnum_index on pg_attribute using btree(attrelid oid_ops, attnum int2_ops));
 DECLARE_INDEX(pg_attribute_attrelid_index on pg_attribute using btree(attrelid oid_ops));
-
-DECLARE_INDEX(pg_index_indexrelid_index on pg_index using btree(indrelid oid_ops));
 
 DECLARE_INDEX(pg_proc_oid_index on pg_proc using btree(oid oid_ops));
 DECLARE_INDEX(pg_proc_proname_narg_type_index on pg_proc using btree(proname name_ops, pronargs int2_ops, proargtypes oid8_ops));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.41 1999/07/20 16:48:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.42 1999/07/20 17:14:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,29 +28,38 @@
 
 /*
  * Names of indices on the following system catalogs:
+ *
+ *		pg_attribute
+ *		pg_proc
+ *		pg_type
+ *		pg_naming
+ *		pg_class
+ *		pg_attrdef
+ *		pg_relcheck
+ *		pg_trigger
  */
 
-char	   *Name_pg_amop_indices[Num_pg_amop_indices] = {AccessMethodOpidIndex,
-			AccessMethodStrategyIndex};
 char	   *Name_pg_attr_indices[Num_pg_attr_indices] = {AttributeNameIndex,
-			AttributeNumIndex, AttributeRelidIndex};
-char	   *Name_pg_index_indices[Num_pg_index_indices] = {IndexRelidIndex};
+	AttributeNumIndex,
+AttributeRelidIndex};
 char	   *Name_pg_proc_indices[Num_pg_proc_indices] = {ProcedureNameIndex,
-			ProcedureOidIndex, ProcedureSrcIndex};
+	ProcedureOidIndex,
+ProcedureSrcIndex};
 char	   *Name_pg_type_indices[Num_pg_type_indices] = {TypeNameIndex,
-			TypeOidIndex};
+TypeOidIndex};
 char	   *Name_pg_class_indices[Num_pg_class_indices] = {ClassNameIndex,
-			ClassOidIndex};
+ClassOidIndex};
 char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] = {AttrDefaultIndex};
 
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] = {RelCheckIndex};
 
 char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] = {TriggerRelidIndex};
-char	   *Name_pg_description_indices[Num_pg_description_indices] = {DescriptionObjIndex};
 
 
 static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,
-			Relation idesc, ScanKey skey, int16 num_keys);
+					   Relation idesc,
+					   ScanKey skey,
+					   int16 num_keys);
 
 
 /*
@@ -243,89 +252,12 @@ CatalogIndexFetchTuple(Relation heapRelation,
 }
 
 
-/*---------------------------------------------------------------------
- *                       Class-specific index lookups
- *---------------------------------------------------------------------
- */
-
 /*
  * The remainder of the file is for individual index scan routines.  Each
  * index should be scanned according to how it was defined during bootstrap
  * (that is, functional or normal) and what arguments the cache lookup
  * requires.  Each routine returns the heap tuple that qualifies.
  */
-HeapTuple
-AccessMethodOpidIndexScan(Relation heapRelation,
-						  Oid claid,
-						  Oid opopr,
-						  Oid opid)
-{
-	Relation	idesc;
-	ScanKeyData skey[3];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(claid));
-
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(opopr));
-
-	ScanKeyEntryInitialize(&skey[2],
-						   (bits16) 0x0,
-						   (AttrNumber) 3,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(opid));
-
-	idesc = index_openr(AccessMethodOpidIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 3);
-
-	index_close(idesc);
-
-	return tuple;
-}
-
-HeapTuple
-AccessMethodStrategyIndexScan(Relation heapRelation,
-							  Oid opid,
-							  Oid claid,
-							  int2 opstrategy)
-{
-	Relation	idesc;
-	ScanKeyData skey[3];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(opid));
-
-	ScanKeyEntryInitialize(&skey[1],
-						   (bits16) 0x0,
-						   (AttrNumber) 2,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(claid));
-
-	ScanKeyEntryInitialize(&skey[2],
-						   (bits16) 0x0,
-						   (AttrNumber) 3,
-						   (RegProcedure) F_INT2EQ,
-						   Int16GetDatum(opstrategy));
-
-	idesc = index_openr(AccessMethodStrategyIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 3);
-
-	index_close(idesc);
-
-	return tuple;
-}
- 
 HeapTuple
 AttributeNameIndexScan(Relation heapRelation,
 					   Oid relid,
@@ -384,28 +316,6 @@ AttributeNumIndexScan(Relation heapRelation,
 
 	return tuple;
 }
-
-HeapTuple
-IndexRelidIndexScan(Relation heapRelation, Oid relid)
-{
-	Relation	idesc;
-	ScanKeyData skey[1];
-	HeapTuple	tuple;
-
-	ScanKeyEntryInitialize(&skey[0],
-						   (bits16) 0x0,
-						   (AttrNumber) 1,
-						   (RegProcedure) F_OIDEQ,
-						   ObjectIdGetDatum(relid));
-
-	idesc = index_openr(IndexRelidIndex);
-	tuple = CatalogIndexFetchTuple(heapRelation, idesc, skey, 1);
-
-	index_close(idesc);
-
-	return tuple;
-}
-
 
 
 HeapTuple

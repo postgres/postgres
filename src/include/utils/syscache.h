@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: syscache.h,v 1.16 1999/07/20 16:48:58 momjian Exp $
+ * $Id: syscache.h,v 1.17 1999/07/20 17:14:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,18 +46,19 @@
 #define TYPOID			13
 #define AMNAME			14
 #define CLANAME			15
-#define INHRELID		16
-#define RULOID			17
-#define AGGNAME			18
-#define LISTENREL		19
-#define USENAME			20
-#define USESYSID		21
-#define GRONAME			22
-#define GROSYSID		23
-#define REWRITENAME		24
-#define PROSRC			25
-#define CLADEFTYPE		26
-#define LANOID			27
+#define INDRELIDKEY		16
+#define INHRELID		17
+#define RULOID			18
+#define AGGNAME			19
+#define LISTENREL		20
+#define USENAME			21
+#define USESYSID		22
+#define GRONAME			23
+#define GROSYSID		24
+#define REWRITENAME		25
+#define PROSRC			26
+#define CLADEFTYPE		27
+#define LANOID			28
 
 /* ----------------
  *		struct cachedesc:		information needed for a call to InitSysCache()
