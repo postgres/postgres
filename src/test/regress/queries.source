@@ -1,7 +1,7 @@
 --
 -- queries.source
 --
--- $Header: /cvsroot/pgsql/src/test/regress/Attic/queries.source,v 1.5 1996/12/02 06:31:20 momjian Exp $
+-- $Header: /cvsroot/pgsql/src/test/regress/Attic/queries.source,v 1.6 1996/12/02 14:17:59 momjian Exp $
 --
 -- The comments that contain sequences of UNIX commands generate the 
 -- desired output for the POSTQUEL statement(s).
@@ -222,7 +222,7 @@ SELECT '' AS five, ABSTIME_TBL.*
 	< 'Jan 14 14:00:00 1977'::abstime; 
 
 SELECT '' AS five, ABSTIME_TBL.*
-   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime) -- -3 years 
+   WHERE  (ABSTIME_TBL.f1 + '@ 3 year ago'::reltime)	-- -3 years 
 	< 'Jan 14 14:00:00 1971'::abstime;
 
 SELECT '' AS five, ABSTIME_TBL.*
