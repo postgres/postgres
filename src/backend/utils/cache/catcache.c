@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.69 2000/07/02 05:38:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.70 2000/08/06 04:17:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -506,6 +506,7 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
  *					   public functions
  *
  *		ResetSystemCache
+ *		SystemCacheAbort
  *		InitIndexedSysCache
  *		InitSysCache
  *		SearchSysCache
@@ -517,7 +518,7 @@ CatalogCacheIdInvalidate(int cacheId,	/* XXX */
  * --------------------------------
  */
 void
-ResetSystemCache()
+ResetSystemCache(void)
 {
 	CatCache *cache;
 
@@ -545,16 +546,41 @@ ResetSystemCache()
 			{
 				nextelt = DLGetSucc(elt);
 				CatCacheRemoveCTup(cache, elt);
-				if (cache->cc_ntup < 0)
-					elog(NOTICE,
-						 "ResetSystemCache: cc_ntup<0 (software error)");
 			}
 		}
-		cache->cc_ntup = 0;		/* in case of WARN error above */
-		cache->busy = false;	/* to recover from recursive-use error */
+
+		/* double-check that ntup is now zero */
+		if (cache->cc_ntup != 0)
+		{
+			elog(NOTICE,
+				 "ResetSystemCache: cache %d has cc_ntup = %d, should be 0",
+				 cache->id, cache->cc_ntup);
+			cache->cc_ntup = 0;
+		}
 	}
 
 	CACHE1_elog(DEBUG, "end of ResetSystemCache call");
+}
+
+/* --------------------------------
+ *		SystemCacheAbort
+ *
+ * This routine is called to clean up catcache state as needed during
+ * transaction abort.
+ * --------------------------------
+ */
+void
+SystemCacheAbort(void)
+{
+	CatCache *cache;
+
+	/* ----------------
+	 *	clear the "cache busy" flags, which may have been left set if we
+	 *	elog'd out during a cache lookup attempt.
+	 * ----------------
+	 */
+	for (cache = Caches; PointerIsValid(cache); cache = cache->cc_next)
+		cache->busy = false;
 }
 
 /* --------------------------------
