@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.82 2002/07/27 20:10:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.83 2002/08/08 07:47:42 ishii Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -30,6 +30,7 @@ endif
 ##########################################################################
 
 all: submake-libpgport postgres $(POSTGRES_IMP)
+	$(MAKE) -C utils/mb/conversion_procs $@
 ifeq ($(enable_nls), yes)
 	$(MAKE) -C po all
 endif
@@ -130,6 +131,7 @@ ifeq ($(enable_nls), yes)
 	$(MAKE) -C po $@
 endif
 	$(MAKE) -C utils/mb $@
+	$(MAKE) -C utils/mb/conversion_procs $@
 
 install-bin: postgres $(POSTGRES_IMP) installdirs
 	$(INSTALL_PROGRAM) postgres$(X) $(DESTDIR)$(bindir)/postgres$(X)
