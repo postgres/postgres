@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-dnl $PostgreSQL: pgsql/configure.in,v 1.367 2004/07/14 17:55:09 petere Exp $
+dnl $PostgreSQL: pgsql/configure.in,v 1.368 2004/07/17 18:53:56 petere Exp $
 dnl
 dnl Developers, please strive to achieve this order:
 dnl
@@ -525,7 +525,7 @@ AC_MSG_NOTICE([using LDFLAGS=$LDFLAGS])
 AC_PROG_AWK
 PGAC_PATH_FLEX
 AC_PROG_LN_S
-AC_PROG_LD
+PGAC_PROG_LD
 AC_SUBST(LD)
 AC_SUBST(with_gnu_ld)
 case $host_os in sysv5*)
