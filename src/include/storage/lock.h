@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.61 2002/06/20 20:29:52 momjian Exp $
+ * $Id: lock.h,v 1.62 2002/07/18 23:06:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,16 +62,13 @@ typedef int LOCKMETHOD;
  * There is normally only one lock method, the default one.
  * If user locks are enabled, an additional lock method is present.
  *
- * LOCKMETHODCTL and LOCKMETHODTABLE are split because the first lives
- * in shared memory.  (There isn't any really good reason for the split.)
- * LOCKMETHODTABLE exists in private memory.  Both are created by the
- * postmaster and should be the same in all backends.
- */
-
-/*
  * This is the control structure for a lock table.	It
  * lives in shared memory.	This information is the same
  * for all backends.
+ *
+ * lockHash -- hash table holding per-locked-object lock information
+ *
+ * holderHash -- hash table holding per-lock-holder lock information
  *
  * lockmethod -- the handle used by the lock table's clients to
  *		refer to the type of lock table being used.
@@ -88,28 +85,17 @@ typedef int LOCKMETHOD;
  *		starvation).  XXX this field is not actually used at present!
  *
  * masterLock -- synchronizes access to the table
- */
-typedef struct LOCKMETHODCTL
-{
-	LOCKMETHOD	lockmethod;
-	int			numLockModes;
-	int			conflictTab[MAX_LOCKMODES];
-	int			prio[MAX_LOCKMODES];
-	LWLockId	masterLock;
-} LOCKMETHODCTL;
-
-/*
- * Eack backend has a non-shared lock table header.
  *
- * lockHash -- hash table holding per-locked-object lock information
- * holderHash -- hash table holding per-lock-holder lock information
- * ctl - shared control structure described above.
  */
 typedef struct LOCKMETHODTABLE
 {
 	HTAB	   *lockHash;
 	HTAB	   *holderHash;
-	LOCKMETHODCTL *ctl;
+	LOCKMETHOD	lockmethod;
+	int			numLockModes;
+	int			conflictTab[MAX_LOCKMODES];
+	int			prio[MAX_LOCKMODES];
+	LWLockId	masterLock;
 } LOCKMETHODTABLE;
 
 

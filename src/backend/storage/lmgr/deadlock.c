@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.10 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.11 2002/07/18 23:06:19 momjian Exp $
  *
  *	Interface:
  *
@@ -170,10 +170,6 @@ InitDeadLockChecking(void)
  * only look at regular locks.
  *
  * We must have already locked the master lock before being called.
- * NOTE: although the lockctl structure appears to allow each lock
- * table to have a different LWLock, all locks that can block had
- * better use the same LWLock, else this code will not be adequately
- * interlocked!
  */
 bool
 DeadLockCheck(PGPROC *proc)
@@ -384,7 +380,6 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	HOLDER	   *holder;
 	SHM_QUEUE  *lockHolders;
 	LOCKMETHODTABLE *lockMethodTable;
-	LOCKMETHODCTL *lockctl;
 	PROC_QUEUE *waitQueue;
 	int			queue_size;
 	int			conflictMask;
@@ -423,9 +418,8 @@ FindLockCycleRecurse(PGPROC *checkProc,
 	if (lock == NULL)
 		return false;
 	lockMethodTable = GetLocksMethodTable(lock);
-	lockctl = lockMethodTable->ctl;
-	numLockModes = lockctl->numLockModes;
-	conflictMask = lockctl->conflictTab[checkProc->waitLockMode];
+	numLockModes = lockMethodTable->numLockModes;
+	conflictMask = lockMethodTable->conflictTab[checkProc->waitLockMode];
 
 	/*
 	 * Scan for procs that already hold conflicting locks.	These are

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.108 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.109 2002/07/18 23:06:19 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -213,12 +213,12 @@ LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 {
 	int			i;
 
-	lockMethodTable->ctl->numLockModes = numModes;
+	lockMethodTable->numLockModes = numModes;
 	numModes++;
 	for (i = 0; i < numModes; i++, prioP++, conflictsP++)
 	{
-		lockMethodTable->ctl->conflictTab[i] = *conflictsP;
-		lockMethodTable->ctl->prio[i] = *prioP;
+		lockMethodTable->conflictTab[i] = *conflictsP;
+		lockMethodTable->prio[i] = *prioP;
 	}
 }
 
@@ -263,23 +263,15 @@ LockMethodTableInit(char *tabName,
 
 	/* each lock table has a non-shared, permanent header */
 	lockMethodTable = (LOCKMETHODTABLE *)
-		MemoryContextAlloc(TopMemoryContext, sizeof(LOCKMETHODTABLE));
+		ShmemInitStruct(shmemName, sizeof(LOCKMETHODTABLE), &found);
+
+	if (!lockMethodTable)
+		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 
 	/*
 	 * Lock the LWLock for the table (probably not necessary here)
 	 */
 	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
-
-	/*
-	 * allocate a control structure from shared memory or attach to it if
-	 * it already exists.
-	 */
-	sprintf(shmemName, "%s (ctl)", tabName);
-	lockMethodTable->ctl = (LOCKMETHODCTL *)
-		ShmemInitStruct(shmemName, sizeof(LOCKMETHODCTL), &found);
-
-	if (!lockMethodTable->ctl)
-		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 
 	/*
 	 * no zero-th table
@@ -291,9 +283,9 @@ LockMethodTableInit(char *tabName,
 	 */
 	if (!found)
 	{
-		MemSet(lockMethodTable->ctl, 0, sizeof(LOCKMETHODCTL));
-		lockMethodTable->ctl->masterLock = LockMgrLock;
-		lockMethodTable->ctl->lockmethod = NumLockMethods;
+		MemSet(lockMethodTable, 0, sizeof(LOCKMETHODTABLE));
+		lockMethodTable->masterLock = LockMgrLock;
+		lockMethodTable->lockmethod = NumLockMethods;
 	}
 
 	/*
@@ -342,14 +334,14 @@ LockMethodTableInit(char *tabName,
 	if (!lockMethodTable->holderHash)
 		elog(FATAL, "LockMethodTableInit: couldn't initialize %s", tabName);
 
-	/* init ctl data structures */
+	/* init data structures */
 	LockMethodInit(lockMethodTable, conflictsP, prioP, numModes);
 
 	LWLockRelease(LockMgrLock);
 
 	pfree(shmemName);
 
-	return lockMethodTable->ctl->lockmethod;
+	return lockMethodTable->lockmethod;
 }
 
 /*
@@ -476,7 +468,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return FALSE;
 	}
 
-	masterLock = lockMethodTable->ctl->masterLock;
+	masterLock = lockMethodTable->masterLock;
 
 	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
@@ -576,7 +568,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		 * XXX Doing numeric comparison on the lockmodes is a hack; it'd be
 		 * better to use a table.  For now, though, this works.
 		 */
-		for (i = lockMethodTable->ctl->numLockModes; i > 0; i--)
+		for (i = lockMethodTable->numLockModes; i > 0; i--)
 		{
 			if (holder->holding[i] > 0)
 			{
@@ -631,7 +623,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * join wait queue.  Otherwise, check for conflict with already-held
 	 * locks.  (That's last because most complex check.)
 	 */
-	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
+	if (lockMethodTable->conflictTab[lockmode] & lock->waitMask)
 		status = STATUS_FOUND;
 	else
 		status = LockCheckConflicts(lockMethodTable, lockmode,
@@ -683,7 +675,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			int			tmpMask;
 
 			for (i = 1, tmpMask = 2;
-				 i <= lockMethodTable->ctl->numLockModes;
+				 i <= lockMethodTable->numLockModes;
 				 i++, tmpMask <<= 1)
 			{
 				if (myHolding[i] > 0)
@@ -749,8 +741,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 				   PGPROC *proc,
 				   int *myHolding)		/* myHolding[] array or NULL */
 {
-	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
-	int			numLockModes = lockctl->numLockModes;
+	int			numLockModes = lockMethodTable->numLockModes;
 	int			bitmask;
 	int			i,
 				tmpMask;
@@ -765,7 +756,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 	 * each type of lock that conflicts with request.	Bitwise compare
 	 * tells if there is a conflict.
 	 */
-	if (!(lockctl->conflictTab[lockmode] & lock->grantMask))
+	if (!(lockMethodTable->conflictTab[lockmode] & lock->grantMask))
 	{
 		HOLDER_PRINT("LockCheckConflicts: no conflict", holder);
 		return STATUS_OK;
@@ -798,7 +789,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 	 * locks held by other processes.  If one of these conflicts with the
 	 * kind of lock that I want, there is a conflict and I have to sleep.
 	 */
-	if (!(lockctl->conflictTab[lockmode] & bitmask))
+	if (!(lockMethodTable->conflictTab[lockmode] & bitmask))
 	{
 		/* no conflict. OK to get the lock */
 		HOLDER_PRINT("LockCheckConflicts: resolved", holder);
@@ -918,7 +909,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		 * needed, will happen in xact cleanup (see above for motivation).
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
-		LWLockRelease(lockMethodTable->ctl->masterLock);
+		LWLockRelease(lockMethodTable->masterLock);
 		elog(ERROR, "deadlock detected");
 		/* not reached */
 	}
@@ -1014,7 +1005,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 		return FALSE;
 	}
 
-	masterLock = lockMethodTable->ctl->masterLock;
+	masterLock = lockMethodTable->masterLock;
 	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	/*
@@ -1109,7 +1100,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 * granted locks might belong to some waiter, who could now be
 	 * awakened because he doesn't conflict with his own locks.
 	 */
-	if (lockMethodTable->ctl->conflictTab[lockmode] & lock->waitMask)
+	if (lockMethodTable->conflictTab[lockmode] & lock->waitMask)
 		wakeupNeeded = true;
 
 	if (lock->nRequested == 0)
@@ -1208,8 +1199,8 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 		return FALSE;
 	}
 
-	numLockModes = lockMethodTable->ctl->numLockModes;
-	masterLock = lockMethodTable->ctl->masterLock;
+	numLockModes = lockMethodTable->numLockModes;
+	masterLock = lockMethodTable->masterLock;
 
 	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
@@ -1264,7 +1255,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 					 * Read comments in LockRelease
 					 */
 					if (!wakeupNeeded &&
-					lockMethodTable->ctl->conflictTab[i] & lock->waitMask)
+					lockMethodTable->conflictTab[i] & lock->waitMask)
 						wakeupNeeded = true;
 				}
 			}
@@ -1355,8 +1346,8 @@ LockShmemSize(int maxBackends)
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
 	size += maxBackends * MAXALIGN(sizeof(PGPROC));		/* each MyProc */
-	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODCTL)); /* each
-																 * lockMethodTable->ctl */
+	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODTABLE)); /* each
+																 * lockMethodTable */
 
 	/* lockHash table */
 	size += hash_estimate_size(max_table_size, sizeof(LOCK));

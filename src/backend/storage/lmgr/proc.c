@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.122 2002/07/13 01:02:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.123 2002/07/18 23:06:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,8 +503,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		  LOCK *lock,
 		  HOLDER *holder)
 {
-	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
-	LWLockId	masterLock = lockctl->masterLock;
+	LWLockId	masterLock = lockMethodTable->masterLock;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
@@ -537,10 +536,10 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		for (i = 0; i < waitQueue->size; i++)
 		{
 			/* Must he wait for me? */
-			if (lockctl->conflictTab[proc->waitLockMode] & myHeldLocks)
+			if (lockMethodTable->conflictTab[proc->waitLockMode] & myHeldLocks)
 			{
 				/* Must I wait for him ? */
-				if (lockctl->conflictTab[lockmode] & proc->heldLocks)
+				if (lockMethodTable->conflictTab[lockmode] & proc->heldLocks)
 				{
 					/*
 					 * Yes, so we have a deadlock.	Easiest way to clean
@@ -553,7 +552,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 					break;
 				}
 				/* I must go before this waiter.  Check special case. */
-				if ((lockctl->conflictTab[lockmode] & aheadRequests) == 0 &&
+				if ((lockMethodTable->conflictTab[lockmode] & aheadRequests) == 0 &&
 					LockCheckConflicts(lockMethodTable,
 									   lockmode,
 									   lock,
@@ -725,7 +724,6 @@ ProcWakeup(PGPROC *proc, int errType)
 void
 ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 {
-	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
 	PGPROC	   *proc;
@@ -746,7 +744,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 		 * Waken if (a) doesn't conflict with requests of earlier waiters,
 		 * and (b) doesn't conflict with already-held locks.
 		 */
-		if ((lockctl->conflictTab[lockmode] & aheadRequests) == 0 &&
+		if ((lockMethodTable->conflictTab[lockmode] & aheadRequests) == 0 &&
 			LockCheckConflicts(lockMethodTable,
 							   lockmode,
 							   lock,
