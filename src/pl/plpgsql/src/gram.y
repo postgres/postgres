@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.5 1999/08/07 04:25:02 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.6 1999/08/09 00:08:52 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -39,6 +39,9 @@
 #include "stdio.h"
 #include "string.h"
 #include "plpgsql.h"
+#include "pl_scan.c"  /* BSD Yacc doesn't like it here.
+						 It wants it after the %% */
+
 
 
 static	PLpgSQL_expr	*read_sqlstmt(int until, char *s, char *sqlstart);
@@ -1078,8 +1081,6 @@ lno		:
 		;
 
 %%
-
-#include "pl_scan.c"
 
 PLpgSQL_expr *
 plpgsql_read_expression (int until, char *s)
