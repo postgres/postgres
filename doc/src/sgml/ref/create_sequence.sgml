@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.28 2002/05/18 15:44:47 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.29 2002/11/10 00:10:20 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -21,9 +21,9 @@ PostgreSQL documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT <replaceable class="parameter">increment</replaceable> ]
+CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</replaceable> [ INCREMENT [ BY ] <replaceable class="parameter">increment</replaceable> ]
     [ MINVALUE <replaceable class="parameter">minvalue</replaceable> ] [ MAXVALUE <replaceable class="parameter">maxvalue</replaceable> ]
-    [ START <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ CYCLE ]
+    [ START [ WITH ] <replaceable class="parameter">start</replaceable> ] [ CACHE <replaceable class="parameter">cache</replaceable> ] [ [ NO ] CYCLE ]
   </synopsis>
   
   <refsect2 id="R2-SQL-CREATESEQUENCE-1">
@@ -130,8 +130,8 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
       <term>CYCLE</term>
       <listitem>
        <para>
-	The optional CYCLE keyword may be used to enable the sequence
-	to wrap around when the
+	The optional <option>CYCLE</option> keyword may be used to enable
+	the sequence to wrap around when the
 	<replaceable class="parameter">maxvalue</replaceable> or
 	<replaceable class="parameter">minvalue</replaceable> has been
 	reached by
@@ -140,11 +140,22 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
 	<replaceable class="parameter">minvalue</replaceable> or
 	<replaceable class="parameter">maxvalue</replaceable>,
 	respectively.
-	Without CYCLE, after the limit is reached <function>nextval</> calls
-	will return an error.
        </para>
       </listitem>
      </varlistentry>
+
+	 <varlistentry>
+	  <term>NO CYCLE</term>
+	  <listitem>
+	   <para>
+	If the optional <option>NO CYCLE</option> keyword is specified, any
+	calls to <function>nextval</function> after the sequence has reached
+	its maximum value will return an error.  If neither
+	<option>CYCLE</option> or <option>NO CYCLE</option> are specified,
+	<option>NO CYCLE</option> is the default.
+	   </para>
+	  </listitem>
+	</varlistentry>
     </variablelist>
    </para>
   </refsect2>

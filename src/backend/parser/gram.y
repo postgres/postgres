@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.374 2002/11/09 23:56:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.375 2002/11/10 00:10:20 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1893,11 +1893,15 @@ OptSeqElem: CACHE NumericOnly
 				}
 			| CYCLE
 				{
-					$$ = makeDefElem("cycle", (Node *)NULL);
+					$$ = makeDefElem("cycle", (Node *)true);
 				}
-			| INCREMENT NumericOnly
+			| NO CYCLE
 				{
-					$$ = makeDefElem("increment", (Node *)$2);
+					$$ = makeDefElem("cycle", (Node *)false);
+				}
+			| INCREMENT opt_by NumericOnly
+				{
+					$$ = makeDefElem("increment", (Node *)$3);
 				}
 			| MAXVALUE NumericOnly
 				{
@@ -1907,11 +1911,15 @@ OptSeqElem: CACHE NumericOnly
 				{
 					$$ = makeDefElem("minvalue", (Node *)$2);
 				}
-			| START NumericOnly
+			| START opt_with NumericOnly
 				{
-					$$ = makeDefElem("start", (Node *)$2);
+					$$ = makeDefElem("start", (Node *)$3);
 				}
 		;
+
+opt_by:		BY				{}
+			| /* empty */	{}
+	  ;
 
 NumericOnly:
 			FloatOnly								{ $$ = $1; }

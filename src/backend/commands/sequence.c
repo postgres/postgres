@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.88 2002/09/22 19:42:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.89 2002/11/10 00:10:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -798,11 +798,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		else if (strcmp(defel->defname, "cache") == 0)
 			cache_value = defel;
 		else if (strcmp(defel->defname, "cycle") == 0)
-		{
-			if (defel->arg != (Node *) NULL)
-				elog(ERROR, "DefineSequence: CYCLE ??");
-			new->is_cycled = true;
-		}
+			new->is_cycled = (defel->arg != NULL);
 		else
 			elog(ERROR, "DefineSequence: option \"%s\" not recognized",
 				 defel->defname);
