@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88.2.2 1999/09/14 06:07:35 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88.2.3 1999/09/24 15:08:59 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -221,7 +221,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 				having_clause
 %type <list>	row_descriptor, row_list, c_list, c_expr
 %type <node>	row_expr
-%type <str>		row_op
 %type <node>	case_expr, case_arg, when_clause, case_default
 %type <list>	when_clause_list
 %type <ival>	sub_type
@@ -970,12 +969,14 @@ default_expr:  AexprConst
 				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
 			| default_expr '/' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
-			| default_expr '%' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
 			| default_expr '*' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
+			| default_expr '%' default_expr
+				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
 			| default_expr '^' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "^"), $3)); }
+			| default_expr '|' default_expr
+				{	$$ = nconc( $1, lcons( makeString( "|"), $3)); }
 			| default_expr '=' default_expr
 				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
 			| default_expr '<' default_expr
@@ -1120,12 +1121,14 @@ constraint_expr:  AexprConst
 				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
 			| constraint_expr '/' constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
-			| constraint_expr '%' constraint_expr
-				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
 			| constraint_expr '*' constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
+			| constraint_expr '%' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "%"), $3)); }
 			| constraint_expr '^' constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "^"), $3)); }
+			| constraint_expr '|' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "|"), $3)); }
 			| constraint_expr '=' constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "="), $3)); }
 			| constraint_expr '<' constraint_expr
@@ -2016,13 +2019,15 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 
 all_Op:  Op | MathOp;
 
-MathOp:	'+'				{ $$ = "+"; }
+MathOp:  '+'			{ $$ = "+"; }
 		| '-'			{ $$ = "-"; }
 		| '*'			{ $$ = "*"; }
 		| '/'			{ $$ = "/"; }
-		| '%'			{ $$ = "%"; }
 		| '<'			{ $$ = "<"; }
 		| '>'			{ $$ = ">"; }
+		| '%'			{ $$ = "%"; }
+		| '^'			{ $$ = "^"; }
+		| '|'			{ $$ = "|"; }
 		| '='			{ $$ = "="; }
 		;
 
@@ -3528,7 +3533,7 @@ a_expr_or_null:  a_expr
 /* Expressions using row descriptors
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
- * Eliminated lots of code by defining row_op and sub_type clauses.
+ * Eliminated lots of code by defining sub_type clauses.
  * However, can not consolidate EXPR_LINK case with others subselects
  *  due to shift/reduce conflict with the non-subselect clause (the parser
  *  would have to look ahead more than one token to resolve the conflict).
@@ -3554,7 +3559,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' row_op sub_type '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op sub_type '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -3567,7 +3572,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $7;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' row_op '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -3580,7 +3585,7 @@ row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
 					n->subselect = $6;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' row_op '(' row_descriptor ')'
+		| '(' row_descriptor ')' all_Op '(' row_descriptor ')'
 				{
 					$$ = makeRowExpr($4, $2, $6);
 				}
@@ -3600,17 +3605,6 @@ row_list:  row_list ',' a_expr
 				{
 					$$ = lcons($1, NIL);
 				}
-		;
-
-row_op:  Op									{ $$ = $1; }
-		| '<'								{ $$ = "<"; }
-		| '='								{ $$ = "="; }
-		| '>'								{ $$ = ">"; }
-		| '+'								{ $$ = "+"; }
-		| '-'								{ $$ = "-"; }
-		| '*'								{ $$ = "*"; }
-		| '/'								{ $$ = "/"; }
-		| '%'								{ $$ = "%"; }
 		;
 
 sub_type:  ANY								{ $$ = ANY_SUBLINK; }
@@ -3658,12 +3652,14 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "-", $1, $3); }
 		| a_expr '/' a_expr
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
-		| a_expr '%' a_expr
-				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| a_expr '*' a_expr
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+		| a_expr '%' a_expr
+				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| a_expr '^' a_expr
 				{	$$ = makeA_Expr(OP, "^", $1, $3); }
+		| a_expr '|' a_expr
+				{	$$ = makeA_Expr(OP, "|", $1, $3); }
 		| a_expr '<' a_expr
 				{	$$ = makeA_Expr(OP, "<", $1, $3); }
 		| a_expr '>' a_expr
@@ -4049,6 +4045,16 @@ a_expr:  attr opt_indirection
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
+		| a_expr '*' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
 		| a_expr '%' '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4059,11 +4065,21 @@ a_expr:  attr opt_indirection
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-		| a_expr '*' '(' SubSelect ')'
+		| a_expr '^' '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NULL);
-					n->oper = lcons("*",NIL);
+					n->oper = lcons("^",NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '|' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("|",NIL);
 					n->useor = false;
 					n->subLinkType = EXPR_SUBLINK;
 					n->subselect = $4;
@@ -4139,6 +4155,16 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '*' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr '%' ANY '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4149,11 +4175,21 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| a_expr '*' ANY '(' SubSelect ')'
+		| a_expr '^' ANY '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1,NIL);
-					n->oper = lcons("*",NIL);
+					n->oper = lcons("^",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '|' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("|",NIL);
 					n->useor = false;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $5;
@@ -4229,6 +4265,16 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '*' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr '%' ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4239,11 +4285,21 @@ a_expr:  attr opt_indirection
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| a_expr '*' ALL '(' SubSelect ')'
+		| a_expr '^' ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NULL);
-					n->oper = lcons("*",NIL);
+					n->oper = lcons("^",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '|' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("|",NIL);
 					n->useor = false;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $5;
@@ -4325,12 +4381,14 @@ b_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "-", $1, $3); }
 		| b_expr '/' b_expr
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
+		| b_expr '*' b_expr
+				{	$$ = makeA_Expr(OP, "*", $1, $3); }
 		| b_expr '%' b_expr
 				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| b_expr '^' b_expr
 				{	$$ = makeA_Expr(OP, "^", $1, $3); }
-		| b_expr '*' b_expr
-				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+		| b_expr '|' b_expr
+				{	$$ = makeA_Expr(OP, "|", $1, $3); }
 		| ':' b_expr
 				{	$$ = makeA_Expr(OP, ":", NULL, $2); }
 		| ';' b_expr
@@ -4602,10 +4660,14 @@ position_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "-", $1, $3); }
 		| position_expr '/' position_expr
 				{	$$ = makeA_Expr(OP, "/", $1, $3); }
-		| position_expr '%' position_expr
-				{	$$ = makeA_Expr(OP, "%", $1, $3); }
 		| position_expr '*' position_expr
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
+		| position_expr '%' position_expr
+				{	$$ = makeA_Expr(OP, "%", $1, $3); }
+		| position_expr '^' position_expr
+				{	$$ = makeA_Expr(OP, "^", $1, $3); }
+		| position_expr '|' position_expr
+				{	$$ = makeA_Expr(OP, "|", $1, $3); }
 		| '|' position_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
 		| position_expr TYPECAST Typename
