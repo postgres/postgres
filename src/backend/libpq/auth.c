@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.77 2002/03/04 01:46:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.78 2002/03/05 06:52:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -805,8 +805,8 @@ recv_and_check_password_packet(Port *port)
 		return STATUS_EOF;
 	}
 
-	elog(DEBUG5, "received password packet with len=%d, pw=%s",
-		 len, buf.data);
+	/* Do not echo failed password to logs, for security. */
+	elog(DEBUG5, "received password packet");
 
 	result = checkPassword(port, port->user, buf.data);
 	pfree(buf.data);
