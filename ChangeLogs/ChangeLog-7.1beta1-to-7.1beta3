@@ -1040,10 +1040,6 @@
 	build.xml and updated Driver.java.in and buildDriver to match how
 	Makefile and ANT operate.
 
-2000-12-20 11:43  momjian
-
-	* HISTORY, doc/src/sgml/release.sgml: Fix typo.
-
 2000-12-19 23:19  momjian
 
 	* doc/src/sgml/ref/alter_table.sgml: On Sunday 17 December 2000
@@ -1055,14 +1051,6 @@
 	Here it is.
 	
 	-- Mark Hollomon
-
-2000-12-19 23:02  momjian
-
-	* HISTORY, doc/src/sgml/release.sgml: Add mention of Alpha
-
-2000-12-19 22:15  momjian
-
-	* HISTORY, doc/src/sgml/release.sgml: Holloman -> Hollomon.  Sorry.
 
 2000-12-19 20:44  ishii
 
@@ -1166,19 +1154,6 @@
 	same joinrel.  Although make_rels_by_joins doesn't mind, GEQO has
 	an Assert that doesn't like this.
 
-2000-12-18 00:32  momjian
-
-	* HISTORY, doc/src/sgml/release.sgml: Large objects in single
-	"table".
-
-2000-12-18 00:20  momjian
-
-	* HISTORY, doc/src/sgml/release.sgml: Updates from Tom Lane.
-
-2000-12-18 00:07  momjian
-
-	* HISTORY: Fix upgrade mention to 7.1.
-
 2000-12-17 22:45  tgl
 
 	* src/test/regress/regressplans.sh: Tweak regressplans.sh to use
@@ -1242,10 +1217,6 @@
 2000-12-16 18:44  tgl
 
 	* doc/src/sgml/geqo.sgml: Update some obsolete info about GEQO.
-
-2000-12-16 16:12  momjian
-
-	* HISTORY, doc/src/sgml/release.sgml: Add 7.1 features list
 
 2000-12-16 15:33  tgl
 
