@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.111 2004/08/20 19:24:59 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.112 2004/08/21 18:45:59 momjian Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -647,7 +647,7 @@ psql_completion(char *text, int start, int end)
 	{
 		static const char *const list_ALTER[] =
 		{"AGGREGATE", "CONVERSATION", "DATABASE","DOMAIN", "FUNCTION",
-		"GROUP", "LANGUAGE", "OPERATOR", "SCHEMA", "SEQUENCE", "TABLE",
+		"GROUP", "INDEX", "LANGUAGE", "OPERATOR", "SCHEMA", "SEQUENCE", "TABLE",
 		"TABLESPACE", "TRIGGER", "TYPE", "USER", NULL};
 
 		COMPLETE_WITH_LIST(list_ALTER);
@@ -675,6 +675,7 @@ psql_completion(char *text, int start, int end)
 
 		COMPLETE_WITH_LIST(list_ALTERDATABASE);
 	}
+
 	/* ALTER INDEX <name> */
 	else if (pg_strcasecmp(prev3_wd, "ALTER") == 0 &&
 			 pg_strcasecmp(prev2_wd, "INDEX") == 0)
