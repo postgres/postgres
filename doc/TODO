@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Mar  7 23:22:59 EST 2003
+Last updated:		Fri Mar 14 14:27:40 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -37,6 +37,7 @@ Reporting
 * Add error codes (Peter E)
 * Make error messages more consistent [error]
 * Show location of syntax error in query [yacc]
+* Add GUC log_statement_duration to print statement and >= min duration
 
 
 Administration
