@@ -34,7 +34,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.13 1996/11/01 03:35:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.14 1996/11/03 09:05:30 bryanh Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -143,34 +143,34 @@ postgres: postgres_group1 postgres_group2 postgres_group3 postgres_group4
 	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LDADD)
 
 postgres_group1:
-	$(MAKE) -C access     SUBSYS.o   
-	$(MAKE) -C bootstrap  SUBSYS.o   
-	$(MAKE) -C catalog    SUBSYS.o   
-	$(MAKE) -C commands   SUBSYS.o   
+	$(MAKE) -C access     all   
+	$(MAKE) -C bootstrap  all   
+	$(MAKE) -C catalog    SUBSYS.o
+	$(MAKE) -C commands   all   
 postgres_group2:
-	$(MAKE) -C executor   SUBSYS.o   
-	$(MAKE) -C lib        SUBSYS.o   
-	$(MAKE) -C libpq      SUBSYS.o   
-	$(MAKE) -C main       SUBSYS.o   
-	$(MAKE) -C nodes      SUBSYS.o   
+	$(MAKE) -C executor   all   
+	$(MAKE) -C lib        all   
+	$(MAKE) -C libpq      all   
+	$(MAKE) -C main       all   
+	$(MAKE) -C nodes      all   
 postgres_group3:
-	$(MAKE) -C optimizer  SUBSYS.o   
-	$(MAKE) -C parser     SUBSYS.o   
-	$(MAKE) -C port       SUBSYS.o   PORTNAME=$(PORTNAME)
-	$(MAKE) -C postmaster SUBSYS.o   
-	$(MAKE) -C regex      SUBSYS.o   
+	$(MAKE) -C optimizer  all   
+	$(MAKE) -C parser     all   
+	$(MAKE) -C port       all   PORTNAME=$(PORTNAME)
+	$(MAKE) -C postmaster all   
+	$(MAKE) -C regex      all   
 postgres_group4:
-	$(MAKE) -C rewrite    SUBSYS.o   
-	$(MAKE) -C storage    SUBSYS.o   
-	$(MAKE) -C tcop       SUBSYS.o   
-	$(MAKE) -C utils      SUBSYS.o   
+	$(MAKE) -C rewrite    all   
+	$(MAKE) -C storage    all   
+	$(MAKE) -C tcop       all   
+	$(MAKE) -C utils      all   
 ifdef TIOGA
-	$(MAKE) -C tioga      SUBSYS.o   
+	$(MAKE) -C tioga      all   
 endif
 
 global1.bki.source local1_template1.bki.source: 
 	$(MAKE) -C catalog $@
-	cp catalog/$@ ../include
+	cp catalog/$@ .
 
 
 ############################################################################
@@ -179,11 +179,11 @@ global1.bki.source local1_template1.bki.source:
 
 parse.h: 
 	$(MAKE) -C parser parse.h
-	cp parser/parse.h ../include
+	cp parser/parse.h .
 
 fmgr.h:
 	$(MAKE) -C utils fmgr.h
-	cp utils/fmgr.h ../include
+	cp utils/fmgr.h .
 
 #############################################################################
 clean:
@@ -276,6 +276,11 @@ $(D_BINDIR) $(D_LIBDIR) $(HEADERDIR):
 #
 # Support for code development.
 #
+# Use target "quick" to build "postgres" when you know all the subsystems 
+# are up to date.  It saves the time of doing all the submakes.
+.PHONY: quick
+quick: $(OBJS)
+	$(CC) $(LDFLAGS) -o postgres $(OBJS) $(LDADD)
 
 #
 # Build the file, "./ID", used by the "gid" (grep-for-identifier) tool
