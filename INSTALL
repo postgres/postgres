@@ -50,6 +50,7 @@ PostgreSQL has been tested on the following platforms:
    irix5          SGI MIPS on IRIX 5.3
    linux          Intel x86 on Linux 2.0 and Linux ELF
                   SPARC on Linux ELF
+                  PPC on Linux ELF
                   (For non-ELF Linux, see LINUX_ELF below).
    sco            SCO 3.2v5
    sparc_solaris  SUN SPARC on Solaris 2.4, 2.5, 2.5.1

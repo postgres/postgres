@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jul 27 21:19:00 EDT 1997
+   Last updated: Tue Jul 29 10:09:15 EDT 1997
    Version: 6.1.1
    
    Current maintainer: Bruce Momjian (maillist@candle.pha.pa.us)
@@ -161,8 +161,8 @@ Section 1: General Questions
      * hpux - HP PA-RISC on HP-UX 9.0, 10
      * i386_solaris - i386 Solaris
      * irix5 - SGI MIPS on IRIX 5.3
-     * linux - Intel x86 on Linux 1.2 and Linux ELF (For non-ELF Linux,
-       see LINUX_ELF below).
+     * linux - Intel x86 on Linux 2.0 and Linux ELF SPARC on Linux ELF
+       PPC on Linux Elf (For non-ELF Linux, see LINUX_ELF below).
      * sco - SCO 3.2v5
      * sparc_solaris - SUN SPARC on Solaris 2.4, 2.5, 2.5.1
      * sunos4 - SUN SPARC on SunOS 4.1.3
