@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3 1996/08/01 19:46:46 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile,v 1.3.2.1 1996/08/19 18:35:17 scrappy Exp $
 #
 # NOTES
 #	objdir	- location of the objects and generated files (eg. obj)
@@ -23,7 +23,12 @@ ifeq ($(USE_TCL), true)
 SUBDIR += libpgtcl
 endif
 
-SUBDIR+= bin ../doc
+SUBDIR+= bin 
+
+DOC= $(shell ls -ld ../doc)
+ifeq ($(DOC), ../doc)
+SUBDIR+= ../doc
+endif
 
 FIND = find
 # assuming gnu tar and split here
