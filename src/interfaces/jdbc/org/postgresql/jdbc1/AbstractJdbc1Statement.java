@@ -26,7 +26,7 @@ import java.sql.Timestamp;
 import java.sql.Types;
 import java.util.Vector;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.38 2003/09/18 04:14:27 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.39 2003/09/23 06:13:52 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1245,14 +1245,21 @@ public abstract class AbstractJdbc1Statement implements BaseStatement
 				}
 				else
 				{
-					sbuf.append( -l_houros);
+					sbuf.append(-l_houros);
 				}
 				int l_minos = l_offset - (l_houros * 60);
 				if (l_minos != 0)
 				{
-					if (l_minos < 10)
+					if (l_minos > -10 && l_minos < 10)
 						sbuf.append('0');
-					sbuf.append(l_minos);
+					if (l_minos >= 0)
+					{
+						sbuf.append(l_minos);
+					}
+					else
+					{
+						sbuf.append(-l_minos);
+					}
 				}
 				sbuf.append("'");
 				bind(parameterIndex, sbuf.toString(), PG_TIMESTAMPTZ);
