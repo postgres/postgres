@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.9 1997/11/28 17:26:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.10 1997/12/17 18:21:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,11 +103,11 @@ TopLevel:
 		;
 
 Queries:
-		  Query
-		| Queries Query
+		  A_Query
+		| Queries A_Query
 		;
 
-Query :
+A_Query :
 		  OpenStmt
 		| CloseStmt
 		| CreateStmt
