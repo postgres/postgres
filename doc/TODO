@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 17 13:48:20 EST 2003
+Last updated:		Mon Feb 17 15:47:22 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -56,6 +56,7 @@ Administration
   so we can implement roles
 * Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow incremental backups
+* Allow CIDR format to be used in pg_hba.conf
 
 
 Data Types
