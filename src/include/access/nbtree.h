@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.12 1997/04/16 01:21:59 vadim Exp $
+ * $Id: nbtree.h,v 1.13 1997/05/30 18:40:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,6 +47,7 @@ typedef struct BTPageOpaqueData {
 #define BTP_ROOT	(1 << 1)
 #define BTP_FREE	(1 << 2)
 #define BTP_META	(1 << 3)
+#define BTP_CHAIN	(1 << 4)
 
 } BTPageOpaqueData;
 
