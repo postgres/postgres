@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.55 2000/04/12 17:16:24 momjian Exp $
+ * $Id: miscadmin.h,v 1.56 2000/05/29 19:16:55 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -85,7 +85,7 @@ extern int	DebugLvl;
  * CTZName is the timezone label.
  */
 
-#define MAXTZLEN		7
+#define MAXTZLEN		10		/* max TZ name len, not counting tr. null */
 
 #define USE_POSTGRES_DATES		0
 #define USE_ISO_DATES			1

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.13 2000/04/14 15:22:22 thomas Exp $
+ * $Id: datetime.h,v 1.14 2000/05/29 19:16:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,8 +163,8 @@
 #define DTK_DATE_M		(DTK_M(YEAR) | DTK_M(MONTH) | DTK_M(DAY))
 #define DTK_TIME_M		(DTK_M(HOUR) | DTK_M(MINUTE) | DTK_M(SECOND))
 
-#define MAXDATELEN		47		/* maximum possible length of an input
-								 * date string */
+#define MAXDATELEN		51		/* maximum possible length of an input
+								 * date string (not counting tr. null) */
 #define MAXDATEFIELDS	25		/* maximum possible number of fields in a
 								 * date string */
 #define TOKMAXLEN		10		/* only this many chars are stored in
