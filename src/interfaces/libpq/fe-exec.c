@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.148 2003/09/22 00:23:35 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.149 2003/10/02 14:47:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2331,12 +2331,15 @@ PQunescapeBytea(const unsigned char *strtext, size_t *retbuflen)
 	}
 	buflen = j;					/* buflen is the length of the unquoted
 								 * data */
+
+	/* Shrink the buffer to be no larger than necessary */
 	tmpbuf = realloc(buffer, buflen);
 
+	/* It would only be a very brain-dead realloc that could fail, but... */
 	if (!tmpbuf)
 	{
 		free(buffer);
-		return 0;
+		return NULL;
 	}
 
 	*retbuflen = buflen;
