@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.243 2004/03/01 17:58:39 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.244 2004/03/05 23:16:17 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -700,9 +700,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>virtual_host</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        Specifies the host name or IP address on which the server is
-        to listen for connections from client applications. The
-        default is to listen on all configured addresses (including
+        Specifies the IP address(es) on which the server is
+        to listen for connections from client applications.  If specified,
+        it takes the form of a space-separated list of host names and/or
+        numeric IP addresses.  If the list is empty, the server listens
+        on all available addresses (including
         <systemitem class="systemname">localhost</>).
        </para>
       </listitem>
