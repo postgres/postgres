@@ -203,54 +203,56 @@ dnl file.  We have a further option of using
 dnl	--disable-locale	to explicitly disable it 
 dnl	--enable-locale		to explicitly enable it 
 dnl It defaults to disabled
-if test "$enable_locale" = "yes" -o "$enable_locale" = "no"
-then
-	USE_LOCALE=$enable_locale
-else
-	USE_LOCALE=no
-fi
-export USE_LOCALE
+AC_MSG_CHECKING(setting USE_LOCALE)
+AC_ARG_ENABLE(
+   locale,
+   [   --enable-locale         enable locale support ],
+   AC_DEFINE(USE_LOCALE) AC_MSG_RESULT(enabled),
+   AC_MSG_RESULT(disabled)
+)
 
 dnl We exclude cyrillic recode support unless we override it with
 dnl --enable-recode
 dnl	--disable-recode	to explicitly disable it 
 dnl	--enable-recode		to explicitly enable it 
 dnl It defaults to disabled
-if test "$enable_recode" = "yes" -o "$enable_recode" = "no"
-then
-	CYR_RECODE=$enable_recode
-else
-	CYR_RECODE=no
-fi
-export CYR_RECODE
+AC_MSG_CHECKING(setting CYR_RECODE)
+AC_ARG_ENABLE(
+   recode,
+   [   --enable-recode         enable cyrillic recode support ],
+   AC_DEFINE(CYR_RECODE) AC_MSG_RESULT(enabled),
+   AC_MSG_RESULT(disabled)
+)
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.  If
 dnl we over-ride it with --with-pgport=port then we bypass this piece
-if test "X$with_pgport" != "X"
-then
-	DEF_PGPORT=$with_pgport
-else
-	DEF_PGPORT=5432
-fi
-export DEF_PGPORT
+AC_MSG_CHECKING(setting DEF_PGPORT)
+AC_ARG_WITH(
+   pgport,
+   [   --with-pgport=<portnum> change default startup port ],
+   AC_DEFINE_UNQUOTED(DEF_PGPORT, "${DEF_PGPORT}") AC_MSG_RESULT($with_pgport),
+   AC_DEFINE_UNQUOTED(DEF_PGPORT, "5432") AC_MSG_RESULT(5432)
+)
 
 dnl We exclude tcl support unless we override it with --with-tcl
-if test "X$with_tcl" = "Xyes"
-then
-	USE_TCL=true
-else
-	USE_TCL=
-fi
+AC_MSG_CHECKING(setting USE_TCL)
+AC_ARG_WITH(
+   tcl,
+   [   --with-tcl              use tcl ],
+   USE_TCL=true AC_MSG_RESULT(enabled),
+   USE_TCL=false AC_MSG_RESULT(disabled)
+)
 export USE_TCL
 USE_X=$USE_TCL
 
 dnl We exclude perl support unless we override it with --with-perl
-if test "X$with_perl" = "Xyes"
-then
-	USE_PERL=true
-else
-	USE_PERL=
-fi
+AC_MSG_CHECKING(setting USE_PERL)
+AC_ARG_WITH(
+   perl,
+   [   --with-perl             use perl ],
+   USE_PERL=true AC_MSG_RESULT(enabled),
+   USE_PERL=false AC_MSG_RESULT(disabled)
+)
 export USE_PERL
 
 dnl Unless we specify the command line options
@@ -259,19 +261,13 @@ dnl     --enable cassert        to explicitly enable it
 dnl If you do not explicitly do it, it defaults to disabled - we
 dnl should make the default enabled for the development cycle
 dnl We need some explanatory text here.
-echo ""
-
-if test "$enable_cassert" = "no"
-then
-	echo "-ASSERT CHECKING disabled"
-        AC_DEFINE(NO_ASSERT_CHECKING)
-elif test "$enable_cassert" = "yes"
-then
-	echo "-ASSERT CHECKING enabled"
-else
-	echo "-ASSERT CHECKING disabled"
-	AC_DEFINE(NO_ASSERT_CHECKING)
-fi
+AC_MSG_CHECKING(setting ASSERT CHECKING)
+AC_ARG_ENABLE(
+   cassert,
+   [   --enable-cassert        enable assertion checks (debugging) ],
+   AC_DEFINE(NO_ASSERT_CHECKING) AC_MSG_RESULT(enabled),
+   AC_MSG_RESULT(disabled)
+)
 
 if test "X$with_compiler" != "X"
 then
@@ -522,26 +518,6 @@ AC_CHECK_FUNC(cbrt,
 AC_CHECK_FUNC(rint, 
               AC_DEFINE(HAVE_RINT), 
               AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT)))
-
-AC_MSG_CHECKING(setting USE_LOCALE)
-if test "$USE_LOCALE" = "yes"
-then
-	AC_MSG_RESULT(enabled)
-	AC_DEFINE(USE_LOCALE)
-else
-	AC_MSG_RESULT(disabled)
-fi
-AC_MSG_CHECKING(setting CYR_RECODE)
-if test "$CYR_RECODE" = "yes"
-then
-	AC_MSG_RESULT(enabled)
-	AC_DEFINE(CYR_RECODE)
-else
-	AC_MSG_RESULT(disabled)
-fi
-AC_MSG_CHECKING(setting DEF_PGPORT)
-AC_DEFINE_UNQUOTED(DEF_PGPORT, "${DEF_PGPORT}")
-AC_MSG_RESULT($DEF_PGPORT)
 
 dnl Check for X libraries
 
