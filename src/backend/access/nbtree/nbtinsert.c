@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.8 1996/12/06 09:45:30 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.9 1997/01/10 10:06:20 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <utils/memutils.h>
 #include <storage/bufpage.h>
 #include <access/nbtree.h>
+#include <access/heapam.h>
 #include <storage/bufmgr.h>
 
 #ifndef HAVE_MEMMOVE
@@ -41,7 +42,7 @@ static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BT
  *	(xid, seqno) pair.
  */
 InsertIndexResult
-_bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, bool is_update)
+_bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel)
 {
     ScanKey itup_scankey;
     IndexTuple itup;
@@ -60,30 +61,6 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, bool is_update)
     /* find the page containing this key */
     stack = _bt_search(rel, natts, itup_scankey, &buf);
 
-    /* if we're not allowing duplicates, make sure the key isn't */
-    /* already in the node */
-    if(index_is_unique && !is_update) {
-	OffsetNumber offset;
-	TupleDesc itupdesc;
-	Page page;
-
-	itupdesc = RelationGetTupleDescriptor(rel);
-	page = BufferGetPage(buf);
-
-	offset = _bt_binsrch(rel, buf, natts, itup_scankey, BT_DESCENT);
-
-	/* make sure the offset we're given points to an actual */
-	/* key on the page before trying to compare it */
-	if(!PageIsEmpty(page) &&
-	   offset <= PageGetMaxOffsetNumber(page)) {
-	    if(!_bt_compare(rel, itupdesc, page, 
-			    natts, itup_scankey, offset)) {
-		/* it is a duplicate */
-		elog(WARN, "Cannot insert a duplicate key into a unique index.");
-	    }
-	}
-    }
-
     blkno = BufferGetBlockNumber(buf);
     
     /* trade in our read lock for a write lock */
@@ -99,6 +76,91 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, bool is_update)
      */
     
     buf = _bt_moveright(rel, buf, natts, itup_scankey, BT_WRITE);
+
+    /* if we're not allowing duplicates, make sure the key isn't */
+    /* already in the node */
+    if ( index_is_unique )
+    {
+	OffsetNumber offset, maxoff;
+	Page page;
+
+	page = BufferGetPage(buf);
+	maxoff = PageGetMaxOffsetNumber (page);
+
+	offset = _bt_binsrch(rel, buf, natts, itup_scankey, BT_DESCENT);
+
+	/* make sure the offset we're given points to an actual */
+	/* key on the page before trying to compare it */
+	if ( !PageIsEmpty (page) && offset <= maxoff )
+	{
+	    TupleDesc itupdesc;
+	    BTItem btitem;
+	    IndexTuple itup;
+	    HeapTuple htup;
+	    BTPageOpaque opaque;
+	    Buffer nbuf;
+	    BlockNumber blkno;
+	    
+	    itupdesc = RelationGetTupleDescriptor(rel);
+	    nbuf = InvalidBuffer;
+	    opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	    while ( !_bt_compare (rel, itupdesc, page, 
+			    	natts, itup_scankey, offset) )
+	    {	/* they're equal */
+		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
+		itup = &(btitem->bti_itup);
+		htup = heap_fetch (heapRel, SelfTimeQual, &(itup->t_tid), NULL);
+		if ( htup != (HeapTuple) NULL )
+		{	/* it is a duplicate */
+		    elog(WARN, "Cannot insert a duplicate key into a unique index.");
+		}
+	    	/* get next offnum */
+	    	if ( offset < maxoff )
+	    	{
+	    	    offset = OffsetNumberNext(offset);
+	    	}
+	    	else
+	    	{	/* move right ? */
+		    if ( P_RIGHTMOST (opaque) )
+		    	break;
+		    if ( _bt_compare (rel, itupdesc, page, 
+			    	natts, itup_scankey, P_HIKEY) )
+			break;
+		    /* 
+		     * min key of the right page is the same,
+		     * ooh - so many dead duplicates...
+		     */
+		    blkno = opaque->btpo_next;
+		    if ( nbuf != InvalidBuffer )
+		    	_bt_relbuf (rel, nbuf, BT_READ);
+		    for (nbuf = InvalidBuffer; ; )
+		    {
+		    	nbuf = _bt_getbuf (rel, blkno, BT_READ);
+		    	page = BufferGetPage (nbuf);
+		    	maxoff = PageGetMaxOffsetNumber(page);
+		    	opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+		    	offset = P_RIGHTMOST(opaque) ? P_HIKEY : P_FIRSTKEY;
+		    	if ( ! PageIsEmpty (page) && offset <= maxoff )
+		    	{	/* Found some key */
+			    break;
+			}
+			else
+			{	/* Empty or "pseudo"-empty page - get next */
+			    blkno = opaque->btpo_next;
+		    	    _bt_relbuf (rel, nbuf, BT_READ);
+		    	    nbuf = InvalidBuffer;
+		    	    if ( blkno == P_NONE )
+		    	    	break;
+			}
+		    }
+		    if ( nbuf == InvalidBuffer )
+		    	break;
+	    	}
+	    }
+	    if ( nbuf != InvalidBuffer )
+		_bt_relbuf(rel, nbuf, BT_READ);
+	}
+    }
     
     /* do the insertion */
     res = _bt_insertonpg(rel, buf, stack, natts, itup_scankey,
