@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.23 1997/09/24 15:40:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.24 1997/09/26 20:32:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1518,14 +1518,31 @@ double		x;
 #ifndef HAVE_ISINF
 
 #if defined(aix)
+
 #ifdef CLASS_CONFLICT
 /* we want the math symbol */
 #undef class
 #endif							/* CLASS_CONFICT */
 
+/* The gcc doesn't support isinf() (without libgcc?) so we 
+ * have to do it - Gerhard Reitofer 
+ */
+#ifdef __GNUC__
+
 static int
-isinf(x)
-double		x;
+isinf(double x)
+{
+    if (x == HUGE_VAL)
+        return(1);
+    if (x == -HUGE_VAL)
+        return(-1);
+    return(0);
+}
+
+#else /* __GNUC__ */
+
+static int
+isinf(double x)
 {
 	int			fpclass = class(x);
 
@@ -1535,6 +1552,8 @@ double		x;
 		return (-1);
 	return (0);
 }
+
+#endif /* __GNUC__ */
 
 #endif							/* aix */
 
