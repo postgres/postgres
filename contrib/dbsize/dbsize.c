@@ -4,10 +4,8 @@
  *
  * Copyright (c) 2004, PostgreSQL Global Development Group
  *
- * Author: Andreas Pflug <pgadmin@pse-consulting.de>
- *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.13 2004/09/02 00:55:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.14 2004/09/02 04:04:04 momjian Exp $
  *
  */
 
