@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.66 2005/01/11 06:08:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.67 2005/01/14 16:25:42 tgl Exp $
  *
  **********************************************************************/
 
@@ -338,35 +338,39 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
 	if (TRIGGER_FIRED_BY_INSERT(tdata->tg_event))
 	{
 		event = "INSERT";
-		hv_store(hv, "new", 3,
-				 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-				 0);
+		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
+			hv_store(hv, "new", 3,
+					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
+					 0);
 	}
 	else if (TRIGGER_FIRED_BY_DELETE(tdata->tg_event))
 	{
 		event = "DELETE";
-		hv_store(hv, "old", 3,
-				 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-				 0);
+		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
+			hv_store(hv, "old", 3,
+					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
+					 0);
 	}
 	else if (TRIGGER_FIRED_BY_UPDATE(tdata->tg_event))
 	{
 		event = "UPDATE";
-		hv_store(hv, "old", 3,
-				 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
-				 0);
-		hv_store(hv, "new", 3,
-				 plperl_hash_from_tuple(tdata->tg_newtuple, tupdesc),
-				 0);
+		if (TRIGGER_FIRED_FOR_ROW(tdata->tg_event))
+		{
+			hv_store(hv, "old", 3,
+					 plperl_hash_from_tuple(tdata->tg_trigtuple, tupdesc),
+					 0);
+			hv_store(hv, "new", 3,
+					 plperl_hash_from_tuple(tdata->tg_newtuple, tupdesc),
+					 0);
+		}
 	}
-	else {
+	else
 		event = "UNKNOWN";
-	}
 
 	hv_store(hv, "event", 5, newSVpv(event, 0), 0);
 	hv_store(hv, "argc", 4, newSViv(tdata->tg_trigger->tgnargs), 0);
 
-	if (tdata->tg_trigger->tgnargs != 0)
+	if (tdata->tg_trigger->tgnargs > 0)
 	{
 		AV *av = newAV();
 		for (i=0; i < tdata->tg_trigger->tgnargs; i++)
