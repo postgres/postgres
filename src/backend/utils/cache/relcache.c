@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.93 2000/03/17 02:36:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.94 2000/03/31 19:39:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include <sys/file.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 #include "postgres.h"
 
@@ -2266,14 +2267,26 @@ write_irels(void)
 	int			i;
 	int			relno;
 	RelationBuildDescInfo bi;
+	char		tempfilename[MAXPGPATH];
+	char		finalfilename[MAXPGPATH];
+
+	/*
+	 * We must write a temporary file and rename it into place.  Otherwise,
+	 * another backend starting at about the same time might crash trying to
+	 * read the partially-complete file.
+	 */
+	snprintf(tempfilename, sizeof(tempfilename), "%s%c%s.%d",
+			 DatabasePath, SEP_CHAR, RELCACHE_INIT_FILENAME, MyProcPid);
+	snprintf(finalfilename, sizeof(finalfilename), "%s%c%s",
+			 DatabasePath, SEP_CHAR, RELCACHE_INIT_FILENAME);
 
 #ifndef __CYGWIN32__
-	fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 #else
-	fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
+	fd = PathNameOpenFile(tempfilename, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
 #endif
 	if (fd < 0)
-		elog(FATAL, "cannot create init file %s", RELCACHE_INIT_FILENAME);
+		elog(FATAL, "cannot create init file %s", tempfilename);
 
 	FileSeek(fd, 0L, SEEK_SET);
 
@@ -2397,4 +2410,10 @@ write_irels(void)
 	}
 
 	FileClose(fd);
+
+    /*
+     * And rename the temp file to its final name, deleting any previously-
+	 * existing init file.
+     */
+    rename(tempfilename, finalfilename);
 }
