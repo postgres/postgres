@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-11-15 14:20+0000\n"
+"POT-Creation-Date: 2004-12-14 09:49+0000\n"
 "PO-Revision-Date: 2003-09-15 21:03+0000\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -365,7 +365,7 @@ msgstr "  -E, --encrypted           口令加密存储\n"
 
 #: createuser.c:249
 #, c-format
-msgid "  -N, --unencrypted         do not encrypt stored password\n"
+msgid "  -N, --unencrypted         do no encrypt stored password\n"
 msgstr "  -N, --unencrypted         口令不加密存储\n"
 
 #: createuser.c:250

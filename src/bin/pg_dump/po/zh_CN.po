@@ -1,12 +1,12 @@
 # simplified Chinese translation file for pg_dump and friends
 # Weiping He <laser@zhengmai.com.cn>, 2001.
-# $PostgreSQL: pgsql/src/bin/pg_dump/po/zh_CN.po,v 1.7 2004/12/11 19:09:05 petere Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/po/zh_CN.po,v 1.8 2005/01/06 09:07:15 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-02 09:55+0000\n"
+"POT-Creation-Date: 2004-12-05 12:19+0000\n"
 "PO-Revision-Date: 2004-01-10 13:46:59+0800\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -215,11 +215,10 @@ msgstr "  -o, --oids               在转储中包括 OID\n"
 #: pg_dump.c:685
 #, c-format
 msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
+"  -O, --no-owner           skip restoration of object ownership\n"
 "                           in plain text format\n"
 msgstr ""
-"  -O, --no-owner           在明文格式中, 设置对象所属者时不输出\n"
-"                           明令\n"
+"  -O, --no-owner           在明文格式中, 忽略恢复对象所属者\n\n"
 
 #: pg_dump.c:687 pg_dumpall.c:353
 #, c-format
@@ -1578,11 +1577,10 @@ msgstr ""
 "  -L, --use-list=文件名    从这个文件中使用指定的内容表排序\n"
 "                           输出\n"
 
-#: pg_restore.c:379
+#: pg_restore.c:379 pg_dumpall.c:352
 #, c-format
-msgid ""
-"  -O, --no-owner           do not issue commands to set object ownership\n"
-msgstr "  -O, --no-owner           设置对象的所属者时不输出命令\n"
+msgid "  -O, --no-owner           skip restoration of object ownership\n"
+msgstr "  -O, --no-owner           忽略恢复对象所属者\n"
 
 #: pg_restore.c:380
 #, c-format
@@ -1695,14 +1693,6 @@ msgstr "  -c, --clean              清除 (删除) 预先的数据库, 以便再创建\n"
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr "  -g, --globals-only       只转储全局对象, 不包括数据库\n"
 
-#: pg_dumpall.c:352
-#, c-format
-msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
-msgstr ""
-"  -O, --no-owner           设置对象的所属者时不输出\n"
-"                           命令\n"
-
 #: pg_dumpall.c:354
 #, c-format
 msgid ""
@@ -1810,3 +1800,10 @@ msgstr "子进程被信号 %d 终止"
 #, c-format
 msgid "child process exited with unrecognized status %d"
 msgstr "子进程已退出, 未知状态 %d"
+
+#~ msgid ""
+#~ "  -O, --no-owner           do not output commands to set object "
+#~ "ownership\n"
+#~ msgstr ""
+#~ "  -O, --no-owner           设置对象的所属者时不输出\n"
+#~ "                           命令\n"

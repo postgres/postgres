@@ -1,13 +1,13 @@
 # simplified Chinese translation file for PostgreSQL server
 # Weiping He <laser@zhengmai.com.cn>, 2001.
 #
-# $PostgreSQL: pgsql/src/backend/po/zh_CN.po,v 1.9 2004/12/11 19:08:56 petere Exp $
+# $PostgreSQL: pgsql/src/backend/po/zh_CN.po,v 1.10 2005/01/06 09:07:12 petere Exp $
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-12-02 10:00+0000\n"
+"POT-Creation-Date: 2004-12-14 10:09+0000\n"
 "PO-Revision-Date: 2003-09-15 13:49:24+0800\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -220,8 +220,8 @@ msgid "function with OID %u does not exist"
 msgstr "OID 为 %u 的函数不存在"
 
 #: tcop/fastpath.c:291 tcop/postgres.c:287 tcop/postgres.c:310
-#: commands/copy.c:403 commands/copy.c:421 commands/copy.c:425
-#: commands/copy.c:486 commands/copy.c:535
+#: commands/copy.c:404 commands/copy.c:422 commands/copy.c:426
+#: commands/copy.c:487 commands/copy.c:536
 msgid "unexpected EOF on client connection"
 msgstr "在客户端联接上的意外 EOF"
 
@@ -560,7 +560,7 @@ msgid "invalid DESCRIBE message subtype %d"
 msgstr "无效的 DESCRIBE 信息子类型 %d"
 
 #: tcop/postgres.c:3341 nodes/print.c:86 storage/lmgr/deadlock.c:888
-#: commands/vacuumlazy.c:517 commands/vacuumlazy.c:820 commands/vacuum.c:2257
+#: commands/vacuumlazy.c:517 commands/vacuumlazy.c:820 commands/vacuum.c:2273
 #, c-format
 msgid "%s"
 msgstr "%s"
@@ -656,7 +656,7 @@ msgstr "请使用 DROP TYPE 删除一个类型."
 msgid "permission denied: \"%s\" is a system catalog"
 msgstr "权限不够: \"%s\" 是一个系统表"
 
-#: tcop/utility.c:323 commands/copy.c:905 executor/execMain.c:443
+#: tcop/utility.c:323 commands/copy.c:906 executor/execMain.c:443
 msgid "transaction is read-only"
 msgstr "事务是只读"
 
@@ -2498,11 +2498,11 @@ msgstr "无效的外部 \"cidr\" 值"
 msgid "invalid mask length: %d"
 msgstr "无效掩码长度: %d"
 
-#: utils/adt/selfuncs.c:3370 utils/adt/selfuncs.c:3757
+#: utils/adt/selfuncs.c:3370 utils/adt/selfuncs.c:3775
 msgid "case insensitive matching not supported on type bytea"
 msgstr ""
 
-#: utils/adt/selfuncs.c:3475 utils/adt/selfuncs.c:3918
+#: utils/adt/selfuncs.c:3477 utils/adt/selfuncs.c:3936
 msgid "regular-expression matching not supported on type bytea"
 msgstr "在 bytea 类型上不支持正则表达式匹配"
 
@@ -2637,8 +2637,8 @@ msgstr "无效的大小值: %d"
 
 #: utils/adt/array_userfuncs.c:362 utils/adt/arrayfuncs.c:216
 #: utils/adt/arrayfuncs.c:472 utils/adt/arrayfuncs.c:1153
-#: utils/adt/arrayfuncs.c:2421 executor/execQual.c:257 executor/execQual.c:285
-#: executor/execQual.c:2065
+#: utils/adt/arrayfuncs.c:2421 executor/execQual.c:260 executor/execQual.c:288
+#: executor/execQual.c:2138
 #, c-format
 msgid "number of array dimensions (%d) exceeds the maximum allowed (%d)"
 msgstr ""
@@ -2683,7 +2683,7 @@ msgstr "缺少左边的大括号"
 msgid "malformed array literal: \"%s\""
 msgstr ""
 
-#: utils/adt/arrayfuncs.c:507 executor/execQual.c:2085
+#: utils/adt/arrayfuncs.c:507 executor/execQual.c:2158
 msgid ""
 "multidimensional arrays must have array expressions with matching dimensions"
 msgstr ""
@@ -2943,8 +2943,8 @@ msgstr ""
 msgid "function %u has too many arguments (%d, maximum is %d)"
 msgstr "函数 %u 参数太多 (%d, 最大个数为 %d)"
 
-#: utils/fmgr/funcapi.c:39 executor/execQual.c:866 executor/execQual.c:910
-#: executor/execQual.c:1086 executor/execQual.c:1211 executor/execQual.c:3445
+#: utils/fmgr/funcapi.c:39 executor/execQual.c:870 executor/execQual.c:914
+#: executor/execQual.c:1090 executor/execQual.c:1215 executor/execQual.c:3580
 #: executor/functions.c:666 executor/functions.c:705
 msgid "set-valued function called in context that cannot accept a set"
 msgstr ""
@@ -3044,7 +3044,7 @@ msgstr "无法读取文件 \"%s\": %m"
 #: utils/init/miscinit.c:832 utils/init/miscinit.c:841 utils/misc/guc.c:4798
 #: utils/misc/guc.c:4862 access/transam/xlog.c:1556 access/transam/xlog.c:1680
 #: access/transam/xlog.c:2975 access/transam/xlog.c:3013
-#: commands/tablespace.c:664 commands/tablespace.c:670 commands/copy.c:1117
+#: commands/tablespace.c:664 commands/tablespace.c:670 commands/copy.c:1118
 #: postmaster/postmaster.c:2917 postmaster/postmaster.c:2927
 #, c-format
 msgid "could not write to file \"%s\": %m"
@@ -3662,7 +3662,7 @@ msgstr "设置维护操作使用的最大内存数."
 
 #: utils/misc/guc.c:1006
 msgid "This includes operations such as VACUUM and CREATE INDEX."
-msgstr ""
+msgstr "此处动作包括 VACUUM 和 CREATE INDEX."
 
 #: utils/misc/guc.c:1014
 msgid "Sets the maximum stack depth, in kilobytes."
@@ -3705,11 +3705,11 @@ msgstr "值为 0 的时候关闭超时."
 msgid ""
 "Sets the maximum number of tables and indexes for which free space is "
 "tracked."
-msgstr ""
+msgstr "为被跟踪空闲空间的表和索引设置最大个数."
 
 #: utils/misc/guc.c:1115
 msgid "Sets the maximum number of disk pages for which free space is tracked."
-msgstr ""
+msgstr "为被跟踪空闲空间的磁盘页 (disk page) 设置最大个数."
 
 #: utils/misc/guc.c:1124
 msgid "Sets the maximum number of locks per transaction."
@@ -3750,13 +3750,13 @@ msgstr ""
 
 #: utils/misc/guc.c:1185
 msgid "Sets the number of disk-page buffers in shared memory for WAL."
-msgstr ""
+msgstr "为 WAL 设置共享内存中磁盘页缓冲区的个数."
 
 #: utils/misc/guc.c:1194
 msgid ""
 "Sets the delay in microseconds between transaction commit and flushing WAL "
 "to disk."
-msgstr ""
+msgstr "设置事物提交和刷新 WAL 到磁盘间的延迟时间, 单位微秒."
 
 #: utils/misc/guc.c:1204
 msgid ""
@@ -3877,11 +3877,11 @@ msgstr "设置生成随机数的种子."
 
 #: utils/misc/guc.c:1418
 msgid "WAL archiving command."
-msgstr ""
+msgstr "WAL 归档命令."
 
 #: utils/misc/guc.c:1419
 msgid "The shell command that will be called to archive a WAL file."
-msgstr ""
+msgstr "归档一个 WAL 文件将调用 shell 命令."
 
 #: utils/misc/guc.c:1427
 msgid "Sets the client's character set encoding."
@@ -3928,13 +3928,13 @@ msgstr "有效值为 \"none\", \"ddl\", \"mod\", 和 \"all\"."
 #: utils/misc/guc.c:1477
 msgid ""
 "Causes all statements generating error at or above this level to be logged."
-msgstr ""
+msgstr "在此级别或以上级别, 所有语句产生的错误将被记录."
 
 #: utils/misc/guc.c:1478
 msgid ""
 "All SQL statements that cause an error of the specified level or a higher "
 "level are logged."
-msgstr ""
+msgstr "在指定级别或更高级别, 所有 SQL 语句产生的错误将被记录."
 
 #: utils/misc/guc.c:1487
 msgid "Controls information prefixed to each log line"
@@ -5944,16 +5944,16 @@ msgstr "BEFORE STATEMENT 触发器不能返回一个值"
 msgid "could not serialize access due to concurrent update"
 msgstr ""
 
-#: commands/trigger.c:2723
+#: commands/trigger.c:2731
 msgid "unnamed constraints cannot be set explicitly"
 msgstr ""
 
-#: commands/trigger.c:2762
+#: commands/trigger.c:2770
 #, c-format
 msgid "constraint \"%s\" is not deferrable"
 msgstr "约束 \"%s\" 不可展缓"
 
-#: commands/trigger.c:2777 commands/tablecmds.c:4574
+#: commands/trigger.c:2785 commands/tablecmds.c:4574
 #, c-format
 msgid "constraint \"%s\" does not exist"
 msgstr "约束 \"%s\" 不存在"
@@ -6095,10 +6095,10 @@ msgstr "函数不能接收设定参数"
 #: commands/functioncmds.c:244 commands/functioncmds.c:252
 #: commands/functioncmds.c:260 commands/dbcommands.c:108
 #: commands/dbcommands.c:116 commands/dbcommands.c:124
-#: commands/dbcommands.c:132 commands/copy.c:720 commands/copy.c:728
-#: commands/copy.c:736 commands/copy.c:744 commands/copy.c:752
-#: commands/copy.c:760 commands/copy.c:768 commands/copy.c:776
-#: commands/copy.c:784 commands/user.c:576 commands/user.c:588
+#: commands/dbcommands.c:132 commands/copy.c:721 commands/copy.c:729
+#: commands/copy.c:737 commands/copy.c:745 commands/copy.c:753
+#: commands/copy.c:761 commands/copy.c:769 commands/copy.c:777
+#: commands/copy.c:785 commands/user.c:576 commands/user.c:588
 #: commands/user.c:596 commands/user.c:604 commands/user.c:612
 #: commands/user.c:620 commands/user.c:826 commands/user.c:838
 #: commands/user.c:846 commands/user.c:854 commands/user.c:1356
@@ -6353,113 +6353,113 @@ msgstr "目标编码 \"%s\" 不存在"
 msgid "conversion \"%s\" already exists in schema \"%s\""
 msgstr "约束 \"%s\" 已经存在于模式 \"%s\" 中"
 
-#: commands/prepare.c:61
+#: commands/prepare.c:62
 msgid "invalid statement name: must not be empty"
 msgstr "无效的语句名称: 不能为空"
 
-#: commands/prepare.c:80
+#: commands/prepare.c:81
 msgid "utility statements cannot be prepared"
 msgstr "不能准备好工具语句"
 
-#: commands/prepare.c:168 commands/prepare.c:173 commands/prepare.c:535
+#: commands/prepare.c:179 commands/prepare.c:184 commands/prepare.c:544
 msgid "prepared statement is not a SELECT"
 msgstr "准备好的语句不是一个 SELECT"
 
-#: commands/prepare.c:307
+#: commands/prepare.c:317
 #, c-format
 msgid "prepared statement \"%s\" already exists"
 msgstr "准备好的语句 \"%s\" 已经存在"
 
-#: commands/prepare.c:387
+#: commands/prepare.c:396
 #, c-format
 msgid "prepared statement \"%s\" does not exist"
 msgstr "准备好的语句 \"%s\" 不存在"
 
-#: commands/copy.c:204 commands/copy.c:216 commands/copy.c:249
-#: commands/copy.c:259
+#: commands/copy.c:205 commands/copy.c:217 commands/copy.c:250
+#: commands/copy.c:260
 msgid "COPY BINARY is not supported to stdout or from stdin"
 msgstr "COPOY BINARY 不支持输出到标准输出或来自标准输入"
 
-#: commands/copy.c:312
+#: commands/copy.c:313
 #, c-format
 msgid "could not write to COPY file: %m"
 msgstr "无法写入 COPY 文件: %m"
 
-#: commands/copy.c:320
+#: commands/copy.c:321
 msgid "connection lost during COPY to stdout"
 msgstr "COPY 到标准输出的过程中联接中断"
 
-#: commands/copy.c:437
+#: commands/copy.c:438
 #, c-format
 msgid "COPY from stdin failed: %s"
 msgstr "从标准输入上 COPY 失败: %s"
 
-#: commands/copy.c:453
+#: commands/copy.c:454
 #, c-format
 msgid "unexpected message type 0x%02X during COPY from stdin"
 msgstr "意外的信息类型 0x%02X, 在标准输入上 COPY 的过程中"
 
-#: commands/copy.c:795
+#: commands/copy.c:796
 msgid "cannot specify DELIMITER in BINARY mode"
 msgstr "在 BINARY 模式中你不能指定 DELIMITER"
 
-#: commands/copy.c:800
+#: commands/copy.c:801
 msgid "cannot specify CSV in BINARY mode"
 msgstr "在 BINARY 模式中不能指定 CSV"
 
-#: commands/copy.c:805
+#: commands/copy.c:806
 msgid "cannot specify NULL in BINARY mode"
 msgstr "在 BINARY 模式中你不能指定 NULL"
 
-#: commands/copy.c:828
+#: commands/copy.c:829
 msgid "COPY delimiter must be a single character"
 msgstr "COPY 的分隔符必需是单个字符"
 
-#: commands/copy.c:836
+#: commands/copy.c:837
 msgid "COPY quote available only in CSV mode"
 msgstr ""
 
-#: commands/copy.c:841
+#: commands/copy.c:842
 msgid "COPY quote must be a single character"
 msgstr "COPY 引号 (quote) 必需是单个字符"
 
-#: commands/copy.c:849
+#: commands/copy.c:850
 msgid "COPY escape available only in CSV mode"
 msgstr "COPY 转义 (escape) 只在 CSV 模式中有效"
 
-#: commands/copy.c:854
+#: commands/copy.c:855
 msgid "COPY escape must be a single character"
 msgstr "COPY 转义 (escape) 必需是单个字符"
 
-#: commands/copy.c:862
+#: commands/copy.c:863
 msgid "COPY force quote available only in CSV mode"
 msgstr ""
 
-#: commands/copy.c:866
+#: commands/copy.c:867
 msgid "COPY force quote only available using COPY TO"
 msgstr ""
 
-#: commands/copy.c:874
+#: commands/copy.c:875
 msgid "COPY force not null available only in CSV mode"
 msgstr ""
 
-#: commands/copy.c:878
+#: commands/copy.c:879
 msgid "COPY force not null only available using COPY FROM"
 msgstr ""
 
-#: commands/copy.c:886
+#: commands/copy.c:887
 msgid "COPY delimiter must not appear in the NULL specification"
 msgstr ""
 
-#: commands/copy.c:894
+#: commands/copy.c:895
 msgid "CSV quote character must not appear in the NULL specification"
 msgstr ""
 
-#: commands/copy.c:916
+#: commands/copy.c:917
 msgid "must be superuser to COPY to or from a file"
 msgstr "必须成为超级用户才能 COPY 到文件或从文件 COPY"
 
-#: commands/copy.c:917
+#: commands/copy.c:918
 msgid ""
 "Anyone can COPY to stdout or from stdin. psql's \\copy command also works "
 "for anyone."
@@ -6467,188 +6467,188 @@ msgstr ""
 "任何人可以 COPY 到标准输出或来自标准输入的 COPY. 任何人也可以使用 Psql 的 "
 "\\copy 命令."
 
-#: commands/copy.c:926
+#: commands/copy.c:927
 #, c-format
 msgid "table \"%s\" does not have OIDs"
 msgstr "表 \"%s\" 没有 OID"
 
-#: commands/copy.c:952
+#: commands/copy.c:953
 #, c-format
 msgid "FORCE QUOTE column \"%s\" not referenced by COPY"
 msgstr ""
 
-#: commands/copy.c:975
+#: commands/copy.c:976
 #, c-format
 msgid "FORCE NOT NULL column \"%s\" not referenced by COPY"
 msgstr ""
 
-#: commands/copy.c:1002
+#: commands/copy.c:1003
 #, c-format
 msgid "cannot copy to view \"%s\""
 msgstr "不可以拷贝到视图 \"%s\""
 
-#: commands/copy.c:1007
+#: commands/copy.c:1008
 #, c-format
 msgid "cannot copy to sequence \"%s\""
 msgstr "不可以拷贝到序列 \"%s\""
 
-#: commands/copy.c:1012
+#: commands/copy.c:1013
 #, c-format
 msgid "cannot copy to non-table relation \"%s\""
 msgstr "不可以拷贝到非表关系 \"%s\""
 
-#: commands/copy.c:1031
+#: commands/copy.c:1032
 #, c-format
 msgid "could not open file \"%s\" for reading: %m"
 msgstr "为了读取, 无法打开文件 \"%s\": %m"
 
-#: commands/copy.c:1040 commands/copy.c:1103
+#: commands/copy.c:1041 commands/copy.c:1104
 #, c-format
 msgid "\"%s\" is a directory"
 msgstr "\"%s\" 是一个目录"
 
-#: commands/copy.c:1053
+#: commands/copy.c:1054
 #, c-format
 msgid "cannot copy from view \"%s\""
 msgstr "不可以从视图 \"%s\" 拷贝"
 
-#: commands/copy.c:1058
+#: commands/copy.c:1059
 #, c-format
 msgid "cannot copy from sequence \"%s\""
 msgstr "不可以从序列 \"%s\" 拷贝"
 
-#: commands/copy.c:1063
+#: commands/copy.c:1064
 #, c-format
 msgid "cannot copy from non-table relation \"%s\""
 msgstr "不可以从非表关系 \"%s\" 拷贝"
 
-#: commands/copy.c:1085
+#: commands/copy.c:1086
 msgid "relative path not allowed for COPY to file"
 msgstr "COPY 到文件不允许相对路径"
 
-#: commands/copy.c:1094
+#: commands/copy.c:1095
 #, c-format
 msgid "could not open file \"%s\" for writing: %m"
 msgstr "为了写入, 无法打开文件 \"%s\": %m"
 
-#: commands/copy.c:1386
+#: commands/copy.c:1388
 #, c-format
 msgid "COPY %s, line %d, column %s"
 msgstr "COPY %s, 行 %d, 列 %s"
 
-#: commands/copy.c:1389 commands/copy.c:1422
+#: commands/copy.c:1391 commands/copy.c:1424
 #, c-format
 msgid "COPY %s, line %d"
 msgstr "COPY %s, 行 %d"
 
-#: commands/copy.c:1397
+#: commands/copy.c:1399
 #, c-format
 msgid "COPY %s, line %d, column %s: \"%s\""
 msgstr "COPY %s, 行 %d, 列 %s: \"%s\""
 
-#: commands/copy.c:1408
+#: commands/copy.c:1410
 #, c-format
 msgid "COPY %s, line %d: \"%s\""
 msgstr "COPY %s, 行 %d: \"%s\""
 
-#: commands/copy.c:1634
+#: commands/copy.c:1636
 msgid "COPY file signature not recognized"
 msgstr "文件签字不被认可"
 
-#: commands/copy.c:1640
+#: commands/copy.c:1642
 msgid "invalid COPY file header (missing flags)"
 msgstr "无效的 COPY 文件头 (缺少标志)"
 
-#: commands/copy.c:1646
+#: commands/copy.c:1648
 msgid "unrecognized critical flags in COPY file header"
 msgstr "在 COPY 文件头有不认可的危险标志"
 
-#: commands/copy.c:1652
+#: commands/copy.c:1654
 msgid "invalid COPY file header (missing length)"
 msgstr "无效的 COPY 文件头 (缺少长度)"
 
-#: commands/copy.c:1660
+#: commands/copy.c:1662
 msgid "invalid COPY file header (wrong length)"
 msgstr "无效的 COPY 文件头 (错误长度)"
 
-#: commands/copy.c:1739
+#: commands/copy.c:1741
 msgid "null OID in COPY data"
 msgstr "在 COPY 数据中没有 OID"
 
-#: commands/copy.c:1748 commands/copy.c:1845
+#: commands/copy.c:1750 commands/copy.c:1847
 msgid "invalid OID in COPY data"
 msgstr "在 COPY 数据中无效的 OID"
 
-#: commands/copy.c:1768
+#: commands/copy.c:1770
 #, c-format
 msgid "missing data for column \"%s\""
 msgstr "字段 \"%s\" 缺少数据"
 
-#: commands/copy.c:1778
+#: commands/copy.c:1780
 msgid "unterminated CSV quoted field"
 msgstr "CSV 引号域没有结束"
 
-#: commands/copy.c:1813
+#: commands/copy.c:1815
 msgid "extra data after last expected column"
 msgstr "最后期望字段后有额外数据"
 
-#: commands/copy.c:1831
+#: commands/copy.c:1833
 #, c-format
 msgid "row field count is %d, expected %d"
 msgstr "元组字段计数是 %d, 期望计数是 %d"
 
-#: commands/copy.c:2053 commands/copy.c:2071
+#: commands/copy.c:2055 commands/copy.c:2073
 msgid "literal carriage return found in data"
 msgstr ""
 
-#: commands/copy.c:2054 commands/copy.c:2072
+#: commands/copy.c:2056 commands/copy.c:2074
 msgid "Use \"\\r\" to represent carriage return."
 msgstr ""
 
-#: commands/copy.c:2089
+#: commands/copy.c:2091
 msgid "literal newline found in data"
 msgstr ""
 
-#: commands/copy.c:2090
+#: commands/copy.c:2092
 msgid "Use \"\\n\" to represent newline."
 msgstr "使用 \"\\n\" 表示新行."
 
-#: commands/copy.c:2110 commands/copy.c:2126
+#: commands/copy.c:2112 commands/copy.c:2128
 msgid "end-of-copy marker does not match previous newline style"
 msgstr ""
 
-#: commands/copy.c:2114 commands/copy.c:2120
+#: commands/copy.c:2116 commands/copy.c:2122
 msgid "end-of-copy marker corrupt"
 msgstr ""
 
-#: commands/copy.c:2485 commands/copy.c:2507
+#: commands/copy.c:2487 commands/copy.c:2509
 msgid "unexpected EOF in COPY data"
 msgstr "在 COPY 数据中意外的 EOF"
 
-#: commands/copy.c:2494
+#: commands/copy.c:2496
 msgid "invalid field size"
 msgstr "无效字段尺寸"
 
-#: commands/copy.c:2521
+#: commands/copy.c:2523
 msgid "incorrect binary data format"
 msgstr "不正确的二进制数据格式"
 
-#: commands/copy.c:2707 parser/parse_target.c:650 parser/parse_target.c:660
+#: commands/copy.c:2728 parser/parse_target.c:650 parser/parse_target.c:660
 #, c-format
 msgid "column \"%s\" specified more than once"
 msgstr "字段 \"%s\" 被指定多次"
 
-#: commands/vacuumlazy.c:221 commands/vacuum.c:1160
+#: commands/vacuumlazy.c:221 commands/vacuum.c:1181
 #, c-format
 msgid "vacuuming \"%s.%s\""
 msgstr "正在清理 (vacuum)  \"%s.%s\""
 
-#: commands/vacuumlazy.c:293 commands/vacuum.c:1208
+#: commands/vacuumlazy.c:293 commands/vacuum.c:1229
 #, c-format
 msgid "relation \"%s\" page %u is uninitialized --- fixing"
 msgstr "关系 \"%s\" 页 %u 没有初始化 --- 修复"
 
-#: commands/vacuumlazy.c:456 commands/vacuum.c:1498
+#: commands/vacuumlazy.c:456 commands/vacuum.c:1518
 #, c-format
 msgid ""
 "\"%s\": found %.0f removable, %.0f nonremovable row versions in %u pages"
@@ -6668,20 +6668,20 @@ msgstr ""
 msgid "\"%s\": removed %d row versions in %d pages"
 msgstr ""
 
-#: commands/vacuumlazy.c:630 commands/vacuumlazy.c:705 commands/vacuum.c:2859
-#: commands/vacuum.c:2926
+#: commands/vacuumlazy.c:630 commands/vacuumlazy.c:705 commands/vacuum.c:2900
+#: commands/vacuum.c:2967
 #, c-format
 msgid "index \"%s\" now contains %.0f row versions in %u pages"
 msgstr ""
 
-#: commands/vacuumlazy.c:634 commands/vacuum.c:2863
+#: commands/vacuumlazy.c:634 commands/vacuum.c:2904
 #, c-format
 msgid ""
 "%u index pages have been deleted, %u are currently reusable.\n"
 "%s"
 msgstr ""
 
-#: commands/vacuumlazy.c:709 commands/vacuum.c:2930
+#: commands/vacuumlazy.c:709 commands/vacuum.c:2971
 #, c-format
 msgid ""
 "%.0f index row versions were removed.\n"
@@ -6689,7 +6689,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: commands/vacuumlazy.c:817 commands/vacuum.c:2769
+#: commands/vacuumlazy.c:817 commands/vacuum.c:2810
 #, c-format
 msgid "\"%s\": truncated %u to %u pages"
 msgstr ""
@@ -7083,7 +7083,7 @@ msgstr "索引声明中不能使用聚集函数"
 msgid "functions in index predicate must be marked IMMUTABLE"
 msgstr "索引声明中函数必需标记为 IMMUTABLE"
 
-#: commands/indexcmds.c:475 commands/tablecmds.c:1329 parser/parse_expr.c:1084
+#: commands/indexcmds.c:475 commands/tablecmds.c:1329 parser/parse_expr.c:1085
 #, c-format
 msgid "column \"%s\" does not exist"
 msgstr "字段 \"%s\" 不存在"
@@ -7190,8 +7190,8 @@ msgid "inherited column \"%s\" has a type conflict"
 msgstr "继承属性 \"%s\" 类型冲突"
 
 #: commands/tablecmds.c:830 commands/tablecmds.c:975 parser/parse_coerce.c:239
-#: parser/parse_coerce.c:1125 parser/parse_coerce.c:1142
-#: parser/parse_coerce.c:1188
+#: parser/parse_coerce.c:1130 parser/parse_coerce.c:1147
+#: parser/parse_coerce.c:1193
 #, c-format
 msgid "%s versus %s"
 msgstr "%s 对 %s"
@@ -7687,68 +7687,76 @@ msgstr "只有有超级用户权限的用户才允许删除过程语言"
 msgid "must be superuser to rename procedural language"
 msgstr "只有有超级用户权限的用户才能对过程语言重命名"
 
-#: commands/vacuum.c:586
+#: commands/vacuum.c:286
+msgid "VACUUM FULL FREEZE is not supported"
+msgstr "VACUUM FULL FREEZE 不支持"
+
+#: commands/vacuum.c:287
+msgid "Use VACUUM FULL, then VACUUM FREEZE."
+msgstr "先使用 VACUUM FULL, 然后再使用 VACUUM FREEZE."
+
+#: commands/vacuum.c:607
 msgid "oldest xmin is far in the past"
 msgstr ""
 
-#: commands/vacuum.c:587
+#: commands/vacuum.c:608
 msgid "Close open transactions soon to avoid wraparound problems."
 msgstr "立即关闭已打开的事物, 以避免 wraparound 问题."
 
-#: commands/vacuum.c:804
+#: commands/vacuum.c:825
 msgid "some databases have not been vacuumed in over 2 billion transactions"
 msgstr "一些数据库在超过 20 亿笔事物后没有做清理 (vacuum)."
 
-#: commands/vacuum.c:805
+#: commands/vacuum.c:826
 msgid "You may have already suffered transaction-wraparound data loss."
 msgstr ""
 
-#: commands/vacuum.c:816
+#: commands/vacuum.c:837
 msgid "some databases have not been vacuumed in over 1 billion transactions"
 msgstr "一些数据库在超过 10 亿笔事物后没有做清理 (vacuum)."
 
-#: commands/vacuum.c:817
+#: commands/vacuum.c:838
 msgid "Better vacuum them soon, or you may have a wraparound failure."
 msgstr ""
 
-#: commands/vacuum.c:824
+#: commands/vacuum.c:845
 #, c-format
 msgid "some databases have not been vacuumed in %d transactions"
 msgstr "一些数据库在超过 %d 笔事物后没有做清理 (vacuum)."
 
-#: commands/vacuum.c:826
+#: commands/vacuum.c:847
 #, c-format
 msgid ""
 "Better vacuum them within %d transactions, or you may have a wraparound "
 "failure."
 msgstr ""
 
-#: commands/vacuum.c:922
+#: commands/vacuum.c:943
 #, c-format
 msgid "skipping \"%s\" --- only table or database owner can vacuum it"
 msgstr "忽略 \"%s\" --- 只有表或数据库属主能够清理 (vacuum)"
 
-#: commands/vacuum.c:937
+#: commands/vacuum.c:958
 #, c-format
 msgid ""
 "skipping \"%s\" --- cannot vacuum indexes, views, or special system tables"
 msgstr "忽略 \"%s\" --- 无法清理 (vacuum) 索引, 视图或特殊的系统表"
 
-#: commands/vacuum.c:1331
+#: commands/vacuum.c:1352
 #, c-format
 msgid ""
 "relation \"%s\" TID %u/%u: InsertTransactionInProgress %u --- can't shrink "
 "relation"
 msgstr ""
 
-#: commands/vacuum.c:1344
+#: commands/vacuum.c:1365
 #, c-format
 msgid ""
 "relation \"%s\" TID %u/%u: DeleteTransactionInProgress %u --- can't shrink "
 "relation"
 msgstr ""
 
-#: commands/vacuum.c:1501
+#: commands/vacuum.c:1521
 #, c-format
 msgid ""
 "%.0f dead row versions cannot be removed yet.\n"
@@ -7760,18 +7768,18 @@ msgid ""
 "%s"
 msgstr ""
 
-#: commands/vacuum.c:2254
+#: commands/vacuum.c:2270
 #, c-format
 msgid "\"%s\": moved %u row versions, truncated %u to %u pages"
 msgstr ""
 
-#: commands/vacuum.c:2877 commands/vacuum.c:2946
+#: commands/vacuum.c:2918 commands/vacuum.c:2987
 #, c-format
 msgid ""
 "index \"%s\" contains %.0f row versions, but table contains %.0f row versions"
 msgstr ""
 
-#: commands/vacuum.c:2880 commands/vacuum.c:2949
+#: commands/vacuum.c:2921 commands/vacuum.c:2990
 msgid "Rebuild the index with REINDEX."
 msgstr "使用 REINDEX 重建索引."
 
@@ -7970,7 +7978,7 @@ msgstr ""
 msgid "SELECT DISTINCT ON expressions must match initial ORDER BY expressions"
 msgstr ""
 
-#: parser/parse_agg.c:74 optimizer/util/clauses.c:428 executor/execQual.c:2804
+#: parser/parse_agg.c:74 optimizer/util/clauses.c:428 executor/execQual.c:2877
 msgid "aggregate function calls may not be nested"
 msgstr "聚集函数调用不允许嵌套"
 
@@ -8078,85 +8086,85 @@ msgstr "没有参数 $%d"
 msgid "inconsistent types deduced for parameter $%d"
 msgstr ""
 
-#: parser/parse_coerce.c:691 parser/parse_coerce.c:718
-#: parser/parse_coerce.c:734 parser/parse_coerce.c:748
-#: parser/parse_expr.c:1654
+#: parser/parse_coerce.c:696 parser/parse_coerce.c:723
+#: parser/parse_coerce.c:739 parser/parse_coerce.c:753
+#: parser/parse_expr.c:1658
 #, c-format
 msgid "cannot cast type %s to %s"
 msgstr "无法把类型 %s 转换为 %s"
 
-#: parser/parse_coerce.c:721
+#: parser/parse_coerce.c:726
 msgid "Input has too few columns."
 msgstr "输入字段太少"
 
-#: parser/parse_coerce.c:737
+#: parser/parse_coerce.c:742
 #, c-format
 msgid "Cannot cast type %s to %s in column %d."
 msgstr "不能把第 %3$d 个字段的类型 %1$s 转换为 %2$s."
 
-#: parser/parse_coerce.c:751
+#: parser/parse_coerce.c:756
 msgid "Input has too many columns."
 msgstr "输入字段太多"
 
 #. translator: first %s is name of a SQL construct, eg WHERE
-#: parser/parse_coerce.c:785
+#: parser/parse_coerce.c:790
 #, c-format
 msgid "argument of %s must be type boolean, not type %s"
 msgstr "%s 的参数必需是布尔类型, 而不是 %s 类型"
 
 #. translator: %s is name of a SQL construct, eg WHERE
 #. translator: %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:793 parser/parse_coerce.c:832
+#: parser/parse_coerce.c:798 parser/parse_coerce.c:837
 #, c-format
 msgid "argument of %s must not return a set"
 msgstr "%s 的参数不能返回一个组合"
 
 #. translator: first %s is name of a SQL construct, eg LIMIT
-#: parser/parse_coerce.c:824
+#: parser/parse_coerce.c:829
 #, c-format
 msgid "argument of %s must be type integer, not type %s"
 msgstr "%s 的参数必需是整数类型, 而不是 %s 类型"
 
-#: parser/parse_coerce.c:886
+#: parser/parse_coerce.c:891
 #, c-format
 msgid "%s types %s and %s cannot be matched"
 msgstr "%s 的类型 %s 和 %s 不匹配"
 
 #. translator: first %s is name of a SQL construct, eg CASE
-#: parser/parse_coerce.c:948
+#: parser/parse_coerce.c:953
 #, c-format
 msgid "%s could not convert type %s to %s"
 msgstr "%s 无法转换类型 %s 为 %s"
 
-#: parser/parse_coerce.c:1124
+#: parser/parse_coerce.c:1129
 msgid "arguments declared \"anyelement\" are not all alike"
 msgstr "参数声明的 \"anyelement\" 不全相同"
 
-#: parser/parse_coerce.c:1141
+#: parser/parse_coerce.c:1146
 msgid "arguments declared \"anyarray\" are not all alike"
 msgstr "参数声明的 \"anyarray\" 不全相同"
 
-#: parser/parse_coerce.c:1170 parser/parse_coerce.c:1282
-#: parser/parse_coerce.c:1309
+#: parser/parse_coerce.c:1175 parser/parse_coerce.c:1287
+#: parser/parse_coerce.c:1314
 #, c-format
 msgid "argument declared \"anyarray\" is not an array but type %s"
 msgstr "参数声明的 \"anyarray\" 不是一个数组, 但是类型为 %s"
 
-#: parser/parse_coerce.c:1187
+#: parser/parse_coerce.c:1192
 msgid ""
 "argument declared \"anyarray\" is not consistent with argument declared "
 "\"anyelement\""
 msgstr "参数声明的 \"anyarray\" 和参数声明的 \"anyelement\" 不一致"
 
-#: parser/parse_coerce.c:1198
+#: parser/parse_coerce.c:1203
 msgid ""
 "could not determine anyarray/anyelement type because input has type \"unknown"
 "\""
 msgstr "无法确定 anyarray/anyelement 类型, 因为输入类型为 \"unknown\""
 
-#: parser/parse_coerce.c:1223 parser/parse_coerce.c:1240
-#: parser/parse_coerce.c:1294 parser/parse_expr.c:794 parser/parse_expr.c:1350
-#: parser/parse_expr.c:1389 parser/parse_oper.c:920
+#: parser/parse_coerce.c:1228 parser/parse_coerce.c:1245
+#: parser/parse_coerce.c:1299 parser/parse_expr.c:794 parser/parse_expr.c:1351
+#: parser/parse_expr.c:1390 parser/parse_oper.c:920
 #, c-format
 msgid "could not find array type for data type %s"
 msgstr "无法为数据类型 %s 找到数组类型"
@@ -8195,7 +8203,7 @@ msgstr "CREATE ASSERTION 仍未实现"
 msgid "DROP ASSERTION is not yet implemented"
 msgstr "DROP ASSERTION 仍未实现"
 
-#: gram.y:2515 gram.y:7425 parser/parse_expr.c:1183 parser/parse_target.c:736
+#: gram.y:2515 gram.y:7425 parser/parse_expr.c:1184 parser/parse_target.c:736
 #: catalog/namespace.c:1201
 #, c-format
 msgid "improper qualified name (too many dotted names): %s"
@@ -8648,21 +8656,21 @@ msgstr "操作符 %s 不能返回一个组合"
 msgid "subquery has too few columns"
 msgstr "子查询字段太少"
 
-#: parser/parse_expr.c:1157 parser/parse_target.c:727 catalog/namespace.c:1195
+#: parser/parse_expr.c:1158 parser/parse_target.c:727 catalog/namespace.c:1195
 #, c-format
 msgid "cross-database references are not implemented: %s"
 msgstr "未实现跨数据库关联: %s"
 
-#: parser/parse_expr.c:1688 parser/parse_expr.c:1767
+#: parser/parse_expr.c:1692 parser/parse_expr.c:1771
 msgid "unequal number of entries in row expression"
 msgstr ""
 
-#: parser/parse_expr.c:1709
+#: parser/parse_expr.c:1713
 #, c-format
 msgid "operator %s is not supported for row expressions"
 msgstr "行表达式不支持操作符 %s"
 
-#: parser/parse_expr.c:1804
+#: parser/parse_expr.c:1808
 msgid "IS DISTINCT FROM requires = operator to yield boolean"
 msgstr ""
 
@@ -8825,7 +8833,8 @@ msgstr ""
 msgid ""
 "cannot assign to field \"%s\" of column \"%s\" because there is no such "
 "column in data type %s"
-msgstr "无法给字段 \"%2$s\" 的数据域 \"%1$s\" 赋值, 因为在数据类型 %3$s 中没有此列"
+msgstr ""
+"无法给字段 \"%2$s\" 的数据域 \"%1$s\" 赋值, 因为在数据类型 %3$s 中没有此列"
 
 #: parser/parse_target.c:567
 #, c-format
@@ -8894,62 +8903,62 @@ msgstr "类型 %s 和 %s 的等号操作符应该为可合并联合的, 但这个不是"
 msgid "SELECT FOR UPDATE is not allowed in subqueries"
 msgstr "SELECT FOR UPDATE 不允许在子查询中"
 
-#: optimizer/util/clauses.c:2348
+#: optimizer/util/clauses.c:2357
 #, c-format
 msgid "SQL function \"%s\" during inlining"
 msgstr "SQL 函数 \"%s\" 在内联 (inlining) 期间"
 
-#: executor/execQual.c:811
+#: executor/execQual.c:815
 msgid "functions and operators can take at most one set argument"
 msgstr "函数和操作符最多带一组参数"
 
-#: executor/execQual.c:1293
+#: executor/execQual.c:1297
 msgid "function returning set of rows cannot return null value"
 msgstr "函数返回值为多列时不能返回空值"
 
-#: executor/execQual.c:1377
+#: executor/execQual.c:1381
 msgid "table-function protocol for materialize mode was not followed"
 msgstr ""
 
-#: executor/execQual.c:1384
+#: executor/execQual.c:1388
 #, c-format
 msgid "unrecognized table-function returnMode: %d"
 msgstr "未认可的表函数返回模式 (returnMode): %d"
 
-#: executor/execQual.c:1530
+#: executor/execQual.c:1534
 msgid "IS DISTINCT FROM does not support set arguments"
 msgstr "IS DISTINCT FROM 不支持一组参数"
 
-#: executor/execQual.c:1604
+#: executor/execQual.c:1608
 msgid "op ANY/ALL (array) does not support set arguments"
 msgstr "操作符 ANY/ALL (数组) 不支持设置参数"
 
-#: executor/execQual.c:2051
+#: executor/execQual.c:2124
 msgid "cannot merge incompatible arrays"
 msgstr "无法合并不兼容的排列"
 
-#: executor/execQual.c:2052
+#: executor/execQual.c:2125
 #, c-format
 msgid ""
 "Array with element type %s cannot be included in ARRAY construct with "
 "element type %s."
 msgstr "元素类型为 %s 的 ARRAY 结构中不能包含带有元素类型为 %s 的数组."
 
-#: executor/execQual.c:2251
+#: executor/execQual.c:2324
 msgid "NULLIF does not support set arguments"
 msgstr "NULLIF 不支持一组参数"
 
-#: executor/execQual.c:2432
+#: executor/execQual.c:2505
 #, c-format
 msgid "domain %s does not allow null values"
 msgstr "域 %s 不允许空值"
 
-#: executor/execQual.c:2462
+#: executor/execQual.c:2535
 #, c-format
 msgid "value for domain %s violates check constraint \"%s\""
 msgstr "域 %s 的值违反了检查约束 \"%s\""
 
-#: executor/execQual.c:3066
+#: executor/execQual.c:3201
 #, c-format
 msgid "ROW() column has type %s instead of type %s"
 msgstr "ROW() 列类型 %s 替换为 %s"
