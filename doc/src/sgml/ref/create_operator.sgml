@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.16 2000/09/12 20:52:08 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.17 2000/10/10 04:42:43 momjian Exp $
 Postgres documentation
 -->
 
@@ -248,13 +248,13 @@ CREATE
    Hence, the query optimizer could freely  convert:
 
    <programlisting>
-box '((0,0),(1,1))'  &gt;&gt;&gt; MYBOXES.description
+box '((0,0), (1,1))'  &gt;&gt;&gt; MYBOXES.description
    </programlisting>
 
    to
 
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
+MYBOXES.description &lt;&lt;&lt; box '((0,0), (1,1))'
    </programlisting>
   </para>
   <para>
@@ -269,11 +269,11 @@ MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
    equal, !==.
    The negator link allows the query optimizer to simplify
    <programlisting>
-NOT MYBOXES.description === box '((0,0),(1,1))'
+NOT MYBOXES.description === box '((0,0), (1,1))'
    </programlisting>
    to
    <programlisting>
-MYBOXES.description !== box '((0,0),(1,1))'
+MYBOXES.description !== box '((0,0), (1,1))'
    </programlisting>
   </para>
   <para>
@@ -331,7 +331,7 @@ MYBOXES.description !== box '((0,0),(1,1))'
    The RESTRICT and JOIN options assist the query optimizer in estimating
    result sizes.  If a clause of the form:
    <programlisting>
-MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
+MYBOXES.description &lt;&lt;&lt; box '((0,0), (1,1))'
    </programlisting>
    is present in the qualification,
    then <productname>Postgres</productname> may have to
@@ -342,7 +342,7 @@ MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
    <command>CREATE FUNCTION</command>) which accepts arguments of the correct
    data types and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
-   parameter <literal>((0,0),(1,1))</literal> and multiplies the result by the relation
+   parameter <literal>((0,0), (1,1))</literal> and multiplies the result by the relation
    size to get the expected number of instances.
   </para>
   <para>
@@ -356,11 +356,11 @@ MYBOXES.description &lt;&lt;&lt; box '((0,0),(1,1))'
   <para>
    The difference between the function
    <programlisting>
-my_procedure_1 (MYBOXES.description, box '((0,0),(1,1))')
+my_procedure_1 (MYBOXES.description, box '((0,0), (1,1))')
    </programlisting>
    and the operator
    <programlisting>
-MYBOXES.description === box '((0,0),(1,1))'
+MYBOXES.description === box '((0,0), (1,1))'
    </programlisting>
    is  that  <productname>Postgres</productname>
    attempts to optimize operators and can
