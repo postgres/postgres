@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.31 2000/05/28 17:56:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.32 2000/06/06 17:44:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/heapam.h"
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
@@ -77,11 +78,13 @@ init_fcache(Oid foid,
 
 	/* ----------------
 	 *	 get the procedure tuple corresponding to the given functionOid
+	 *
+	 *	 NB: use SearchSysCacheTupleCopy to ensure tuple lives long enough
 	 * ----------------
 	 */
-	procedureTuple = SearchSysCacheTuple(PROCOID,
-										 ObjectIdGetDatum(foid),
-										 0, 0, 0);
+	procedureTuple = SearchSysCacheTupleCopy(PROCOID,
+											 ObjectIdGetDatum(foid),
+											 0, 0, 0);
 
 	if (!HeapTupleIsValid(procedureTuple))
 		elog(ERROR, "init_fcache: Cache lookup failed for procedure %u",
@@ -244,6 +247,8 @@ init_fcache(Oid foid,
 	}
 	else
 		retval->func.fn_addr = (PGFunction) NULL;
+
+	heap_freetuple(procedureTuple);
 
 	return retval;
 }
