@@ -1,5 +1,5 @@
 AROPT:crs
-CFLAGS:-W l,-E -Ae 
+CFLAGS:-Wl,-E -Ae 
 SHARED_LIB:+z
 ALL:
 SRCH_INC:
