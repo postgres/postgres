@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.18 1998/07/12 18:48:06 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.19 1998/07/12 19:20:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -122,7 +122,7 @@ doc:
 	$(MAKE) -C man install
 
 clean:
-	rm $(LIBNAME).a $(OBJS)
+	rm -f $(LIBNAME).a $(OBJS)
 	$(MAKE) -C examples clean
 
 dep depend:
