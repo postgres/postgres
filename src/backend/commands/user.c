@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.113 2002/10/21 19:46:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.113.2.1 2002/12/02 05:21:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -915,8 +915,10 @@ AlterUserSet(AlterUserSetStmt *stmt)
 
 	repl_repl[Anum_pg_shadow_useconfig - 1] = 'r';
 	if (strcmp(stmt->variable, "all") == 0 && valuestr == NULL)
+	{
 		/* RESET ALL */
 		repl_null[Anum_pg_shadow_useconfig - 1] = 'n';
+	}
 	else
 	{
 		Datum		datum;
@@ -935,7 +937,10 @@ AlterUserSet(AlterUserSetStmt *stmt)
 		else
 			array = GUCArrayDelete(array, stmt->variable);
 
-		repl_val[Anum_pg_shadow_useconfig - 1] = PointerGetDatum(array);
+		if (array)
+			repl_val[Anum_pg_shadow_useconfig - 1] = PointerGetDatum(array);
+		else
+			repl_null[Anum_pg_shadow_useconfig - 1] = 'n';
 	}
 
 	newtuple = heap_modifytuple(oldtuple, rel, repl_val, repl_null, repl_repl);
