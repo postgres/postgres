@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.13 1998/07/08 14:04:09 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.14 1998/07/15 15:56:36 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2444,6 +2444,7 @@ select_list:  select_list UNION opt_union SubSelect
 SubSelect:	SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
+			 union_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = $2;
@@ -2453,6 +2454,7 @@ SubSelect:	SELECT opt_unique res_target_list2
 					n->whereClause = $5;
 					n->groupClause = $6;
 					n->havingClause = $7;
+					n->unionClause = $8;
 					$$ = (Node *)n;
 				}
 		;
