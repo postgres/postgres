@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.19 2001/11/28 20:49:09 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.20 2002/01/08 05:45:19 momjian Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -967,7 +967,7 @@ April 21, 1998 some enhancements/fixes
 	* add octet_length()
 	* add --with-mb option to configure
 	* new regression tests for EUC_KR
-  	  (contributed by Soonmyung Hong <email>hong@lunaris.hanmesoft.co.kr</email>)
+  	  (contributed by Soonmyung Hong)
 	* add some test cases to the EUC_JP regression test
 	* fix problem in regress/regress.sh in case of System V
 	* fix toupper(), tolower() to handle 8bit chars
