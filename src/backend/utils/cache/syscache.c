@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.26 1999/05/25 22:42:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.27 1999/05/29 01:45:20 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -23,11 +23,7 @@
 #include "access/htup.h"
 #include "catalog/catname.h"
 #include "utils/catcache.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
 #include <string.h>
-#endif
 
 
 /* ----------------
@@ -386,8 +382,7 @@ static struct cachedesc cacheinfo[] = {
 	NULL}
 };
 
-static struct catcache *SysCache[
-								 lengthof(cacheinfo)];
+static struct catcache *SysCache[lengthof(cacheinfo)];
 static int32 SysCacheSize = lengthof(cacheinfo);
 
 
@@ -547,7 +542,7 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
 	tp = SearchSysCacheTuple(cacheId, key1, key2, key3, key4);
 	if (!HeapTupleIsValid(tp))
 		return 0;
-	memmove(returnStruct, (char *) GETSTRUCT(tp), cacheinfo[cacheId].size);
+	memcpy(returnStruct, (char *) GETSTRUCT(tp), cacheinfo[cacheId].size);
 	return 1;
 }
 
@@ -555,9 +550,12 @@ SearchSysCacheStruct(int cacheId,		/* cache selection code */
 /*
  * SearchSysCacheGetAttribute
  *	  Returns the attribute corresponding to 'attributeNumber' for
- *	  a given cached tuple.
+ *	  a given cached tuple.  This routine usually needs to be used for
+ *	  attributes that might be NULL or might be at a variable offset
+ *	  in the tuple.
  *
- * XXX This re-opens a relation, so this is slower.
+ * XXX This re-opens the relation, so this is slower than just pulling
+ * fixed-location fields out of the struct returned by SearchSysCacheTuple.
  *
  * [callers all assume this returns a (struct varlena *). -ay 10/94]
  */
@@ -638,7 +636,7 @@ SearchSysCacheGetAttribute(int cacheId,
 		: attributeLength;		/* fixed length */
 
 		tmp = (char *) palloc(size);
-		memmove(tmp, (void *) attributeValue, size);
+		memcpy(tmp, (void *) attributeValue, size);
 		returnValue = (void *) tmp;
 	}
 
@@ -650,11 +648,8 @@ SearchSysCacheGetAttribute(int cacheId,
  * TypeDefaultRetrieve
  *
  *	  Given a type OID, return the typdefault field associated with that
- *	  type.  The typdefault is returned as the car of a dotted pair which
- *	  is passed to TypeDefaultRetrieve by the calling routine.
- *
- * Returns a fixnum for types which are passed by value and a ppreserve'd
- * vectori for types which are not.
+ *	  type.  The result is a Datum, and points to palloc'd storage for
+ *	  non-pass-by-value types.
  *
  * [identical to get_typdefault, expecting a (struct varlena *) as ret val.
  *	some day, either of the functions should be removed		 -ay 10/94]
@@ -662,38 +657,24 @@ SearchSysCacheGetAttribute(int cacheId,
 void *
 TypeDefaultRetrieve(Oid typId)
 {
+	struct varlena *typDefault;
+	int32		dataSize;
 	HeapTuple	typeTuple;
 	Form_pg_type type;
 	int32		typByVal,
 				typLen;
-	struct varlena *typDefault;
-	int32		dataSize;
 	void	   *returnValue;
 
-	typeTuple = SearchSysCacheTuple(TYPOID,
-									ObjectIdGetDatum(typId),
-									0, 0, 0);
-
-	if (!HeapTupleIsValid(typeTuple))
-	{
-#ifdef	CACHEDEBUG
-		elog(DEBUG, "TypeDefaultRetrieve: Lookup in %s(%d) failed",
-			 cacheinfo[TYPOID].name, TYPOID);
-#endif	 /* defined(CACHEDEBUG) */
-		return NULL;
-	}
-
-	type = (Form_pg_type) GETSTRUCT(typeTuple);
-	typByVal = type->typbyval;
-	typLen = type->typlen;
-
+	/*
+	 * First, see if there is a non-null typdefault field (usually there isn't)
+	 */
 	typDefault = (struct varlena *)
 		SearchSysCacheGetAttribute(TYPOID,
 								   Anum_pg_type_typdefault,
 								   ObjectIdGetDatum(typId),
 								   0, 0, 0);
 
-	if (typDefault == (struct varlena *) NULL)
+	if (typDefault == NULL)
 	{
 #ifdef	CACHEDEBUG
 		elog(DEBUG, "TypeDefaultRetrieve: No extractable typdefault in %s(%d)",
@@ -704,26 +685,51 @@ TypeDefaultRetrieve(Oid typId)
 
 	dataSize = VARSIZE(typDefault) - VARHDRSZ;
 
+	/*
+	 * Need the type's length and byVal fields.
+	 *
+	 * XXX silly to repeat the syscache search that SearchSysCacheGetAttribute
+	 * just did --- but at present this path isn't taken often enough to
+	 * make it worth fixing.
+	 */
+	typeTuple = SearchSysCacheTuple(TYPOID,
+									ObjectIdGetDatum(typId),
+									0, 0, 0);
+
+	if (!HeapTupleIsValid(typeTuple))
+	{
+		/* should never get here, really... */
+#ifdef	CACHEDEBUG
+		elog(DEBUG, "TypeDefaultRetrieve: Lookup in %s(%d) failed",
+			 cacheinfo[TYPOID].name, TYPOID);
+#endif	 /* defined(CACHEDEBUG) */
+		return NULL;
+	}
+
+	type = (Form_pg_type) GETSTRUCT(typeTuple);
+	typLen = type->typlen;
+	typByVal = type->typbyval;
+
 	if (typByVal)
 	{
 		int8		i8;
 		int16		i16;
-		int32		i32;
+		int32		i32 = 0;
 
 		if (dataSize == typLen)
 		{
 			switch (typLen)
 			{
 				case sizeof(int8):
-					memmove((char *) &i8, VARDATA(typDefault), sizeof(int8));
+					memcpy((char *) &i8, VARDATA(typDefault), sizeof(int8));
 					i32 = i8;
 					break;
 				case sizeof(int16):
-					memmove((char *) &i16, VARDATA(typDefault), sizeof(int16));
+					memcpy((char *) &i16, VARDATA(typDefault), sizeof(int16));
 					i32 = i16;
 					break;
 				case sizeof(int32):
-					memmove((char *) &i32, VARDATA(typDefault), sizeof(int32));
+					memcpy((char *) &i32, VARDATA(typDefault), sizeof(int32));
 					break;
 			}
 			returnValue = (void *) i32;
@@ -738,9 +744,9 @@ TypeDefaultRetrieve(Oid typId)
 		else
 		{
 			returnValue = (void *) palloc(VARSIZE(typDefault));
-			memmove((char *) returnValue,
-					(char *) typDefault,
-					(int) VARSIZE(typDefault));
+			memcpy((char *) returnValue,
+				   (char *) typDefault,
+				   (int) VARSIZE(typDefault));
 		}
 	}
 
