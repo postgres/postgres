@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.10 1998/02/10 04:01:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.11 1998/02/13 03:40:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,6 +273,7 @@ match_varid(Var *test_var, List *tlist)
 
 	type_var = (Oid) test_var->vartype;
 
+	Assert (test_var->varlevelsup == 0);
 	foreach(tl, tlist)
 	{
 		TargetEntry *entry;
@@ -288,9 +289,9 @@ match_varid(Var *test_var, List *tlist)
 		 * we test the original varno (instead of varno which might be
 		 * changed to INNER/OUTER.
 		 */
+		Assert (tlvar->varlevelsup == 0);
 		if (tlvar->varnoold == test_var->varnoold &&
-			tlvar->varoattno == test_var->varoattno &&
-			tlvar->varlevelsup == test_var->varlevelsup)
+				tlvar->varoattno == test_var->varoattno)
 		{
 
 			if (tlvar->vartype == type_var)

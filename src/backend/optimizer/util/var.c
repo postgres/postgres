@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.9 1998/02/10 04:01:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.10 1998/02/13 03:40:23 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <nodes/relation.h>
 
 #include "nodes/primnodes.h"
+#include "nodes/plannodes.h"
 #include "nodes/nodeFuncs.h"
 
 #include "optimizer/internal.h"
@@ -85,7 +86,7 @@ contain_var_clause(Node *clause)
 		return contain_var_clause(((Iter *) clause)->iterexpr);
 	else if (single_node(clause))
 		return FALSE;
-	else if (or_clause(clause) || and_clause(clause))
+	else if (or_clause(clause) || and_clause(clause) || is_funcclause(clause))
 	{
 		List	   *temp;
 
@@ -96,13 +97,19 @@ contain_var_clause(Node *clause)
 		}
 		return FALSE;
 	}
-	else if (is_funcclause(clause))
+	else if (is_subplan(clause))
 	{
 		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 		{
 			if (contain_var_clause(lfirst(temp)))
+				return TRUE;
+		}
+		/* Ok - check left sides of Oper-s */
+		foreach(temp, ((SubPlan*) ((Expr *) clause)->oper)->sublink->oper)
+		{
+			if (contain_var_clause(lfirst(((Expr*) lfirst(temp))->args)))
 				return TRUE;
 		}
 		return FALSE;
@@ -156,19 +163,23 @@ pull_var_clause(Node *clause)
 		retval = pull_var_clause(((Iter *) clause)->iterexpr);
 	else if (single_node(clause))
 		retval = NIL;
-	else if (or_clause(clause) || and_clause(clause))
+	else if (or_clause(clause) || and_clause(clause) || is_funcclause(clause))
 	{
 		List	   *temp;
 
 		foreach(temp, ((Expr *) clause)->args)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));
 	}
-	else if (is_funcclause(clause))
+	else if (is_subplan(clause))
 	{
 		List	   *temp;
 
-		foreach(temp, ((Expr *) clause)->args)
+		foreach(temp, ((Expr*) clause)->args)
 			retval = nconc(retval, pull_var_clause(lfirst(temp)));
+		/* Ok - get Var-s from left sides of Oper-s */
+		foreach(temp, ((SubPlan*) ((Expr*) clause)->oper)->sublink->oper)
+			retval = nconc(retval, 
+				pull_var_clause(lfirst(((Expr*) lfirst(temp))->args)));
 	}
 	else if (IsA(clause, Aggreg))
 	{
@@ -213,7 +224,7 @@ var_equal(Var *var1, Var *var2)
 		(((Var *) var1)->varlevelsup == ((Var *) var2)->varlevelsup) &&
 		(((Var *) var1)->varattno == ((Var *) var2)->varattno))
 	{
-
+		Assert (((Var *) var1)->varlevelsup == 0);
 		return (true);
 	}
 	else

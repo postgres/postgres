@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.14 1998/01/20 22:11:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.15 1998/02/13 03:40:19 vadim Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -22,6 +22,7 @@
 #include "nodes/primnodes.h"
 #include "nodes/relation.h"
 #include "nodes/parsenodes.h"
+#include "nodes/plannodes.h"
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 
@@ -57,6 +58,7 @@ make_clause(int type, Node *oper, List *args)
 	}
 	else
 	{
+		elog (ERROR, "make_clause: unsupported type %d", type);
 		/* will this ever happen? translated from lispy C code - ay 10/94 */
 		return ((Expr *) args);
 	}
@@ -375,10 +377,10 @@ clause_relids_vars(Node *clause, List **relids, List **vars)
 		foreach(vi, var_list)
 		{
 			Var		   *in_list = (Var *) lfirst(vi);
-
+			
+			Assert (var->varlevelsup == 0);
 			if (in_list->varno == var->varno &&
-				in_list->varattno == var->varattno &&
-				in_list->varlevelsup == var->varlevelsup)
+				in_list->varattno == var->varattno)
 				break;
 		}
 		if (vi == NIL)
@@ -492,6 +494,7 @@ qual_clause_p(Node *clause)
 	if (!is_opclause(clause))
 		return false;
 
+	/* How about Param-s ?	- vadim 02/03/98 */
 	if (IsA(get_leftop((Expr *) clause), Var) &&
 		IsA(get_rightop((Expr *) clause), Const))
 	{
@@ -549,6 +552,17 @@ fix_opid(Node *clause)
 	else if (agg_clause(clause))
 	{
 		fix_opid(((Aggreg *) clause)->target);
+	}
+	else if (is_subplan(clause) && 
+		((SubPlan*) ((Expr*) clause)->oper)->sublink->subLinkType != EXISTS_SUBLINK)
+	{
+		List   *lst;
+		
+		foreach (lst, ((SubPlan*) ((Expr*) clause)->oper)->sublink->oper)
+		{
+			replace_opid((Oper*) ((Expr*) lfirst(lst))->oper);
+			fix_opid((Node*) get_leftop((Expr*) lfirst(lst)));
+		}
 	}
 
 }
@@ -627,16 +641,13 @@ get_relattval(Node *clause,
 			*flag = (_SELEC_CONSTANT_RIGHT_ | _SELEC_NOT_CONSTANT_);
 
 		}
-#ifdef INDEXSCAN_PATCH
 	}
-	else if (is_opclause(clause) && IsA(left, Var) &&IsA(right, Param))
+	else if (is_opclause(clause) && IsA(left, Var) && IsA(right, Param))
 	{
-		/* Function parameter used as index scan arg.  DZ - 27-8-1996 */
 		*relid = left->varno;
 		*attno = left->varattno;
 		*constval = 0;
 		*flag = (_SELEC_NOT_CONSTANT_);
-#endif
 	}
 	else if (is_opclause(clause) &&
 			 is_funcclause((Node *) left) &&
@@ -680,16 +691,13 @@ get_relattval(Node *clause,
 			*constval = 0;
 			*flag = (_SELEC_NOT_CONSTANT_);
 		}
-#ifdef INDEXSCAN_PATCH
 	}
-	else if (is_opclause(clause) && IsA(right, Var) &&IsA(left, Param))
+	else if (is_opclause(clause) && IsA(right, Var) && IsA(left, Param))
 	{
-		/* ...And here... - vadim 01/22/97 */
 		*relid = right->varno;
 		*attno = right->varattno;
 		*constval = 0;
 		*flag = (_SELEC_NOT_CONSTANT_);
-#endif
 	}
 	else
 	{
