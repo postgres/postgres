@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Tue Dec 21 12:30:20 EST 1999
+   Last updated: Fri Dec 24 11:43:42 EST 1999
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -100,6 +100,13 @@ s
                   (c-set-style "bsd")
                   (c-set-offset 'case-label '+)
                 )
+
+            and add this to your autoload list (modify file path in macro):
+
+                (setq auto-mode-alist
+                      (cons '("\\`/usr/local/src/pgsql/.*\\.[chyl]\\'" . pgsql-
+c-mode)
+                        auto-mode-alist))
             or
                 /*
                  * Local variables:
