@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.97 2003/08/08 21:42:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.98 2003/08/15 00:22:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2510,18 +2510,21 @@ array_cmp(FunctionCallInfo fcinfo)
 {
 	ArrayType  *array1 = PG_GETARG_ARRAYTYPE_P(0);
 	ArrayType  *array2 = PG_GETARG_ARRAYTYPE_P(1);
+	char	   *p1 = (char *) ARR_DATA_PTR(array1);
+	char	   *p2 = (char *) ARR_DATA_PTR(array2);
+	int			ndims1 = ARR_NDIM(array1);
+	int			ndims2 = ARR_NDIM(array2);
+	int		   *dims1 = ARR_DIMS(array1);
+	int		   *dims2 = ARR_DIMS(array2);
+	int			nitems1 = ArrayGetNItems(ndims1, dims1);
+	int			nitems2 = ArrayGetNItems(ndims2, dims2);
+	Oid			element_type = ARR_ELEMTYPE(array1);
 	FmgrInfo   *ac_fmgr_info = fcinfo->flinfo;
-	Datum		opresult;
 	int			result = 0;
-	Oid			element_type = InvalidOid;
 	int			typlen;
 	bool		typbyval;
 	char		typalign;
-	Datum	   *dvalues1;
-	int			nelems1;
-	Datum	   *dvalues2;
-	int			nelems2;
-	int			min_nelems;
+	int			min_nitems;
 	int			i;
 	typedef struct
 	{
@@ -2534,7 +2537,6 @@ array_cmp(FunctionCallInfo fcinfo)
 	} ac_extra;
 	ac_extra   *my_extra;
 
-	element_type = ARR_ELEMTYPE(array1);
 	if (element_type != ARR_ELEMTYPE(array2))
 		ereport(ERROR,
 				(errcode(ERRCODE_DATATYPE_MISMATCH),
@@ -2573,42 +2575,49 @@ array_cmp(FunctionCallInfo fcinfo)
 	typbyval = my_extra->typbyval;
 	typalign = my_extra->typalign;
 
-	/* extract a C array of arg array datums */
-	deconstruct_array(array1, element_type, typlen, typbyval, typalign,
-					  &dvalues1, &nelems1);
-
-	deconstruct_array(array2, element_type, typlen, typbyval, typalign,
-					  &dvalues2, &nelems2);
-
-	min_nelems = Min(nelems1, nelems2);
-	for (i = 0; i < min_nelems; i++)
+	/* Loop over source data */
+	min_nitems = Min(nitems1, nitems2);
+	for (i = 0; i < min_nitems; i++)
 	{
-		/* are they equal */
-		opresult = FunctionCall2(&my_extra->eqproc,
-								 dvalues1[i], dvalues2[i]);
+		Datum		elt1;
+		Datum		elt2;
+		Datum		opresult;
 
-		if (!DatumGetBool(opresult))
+		/* Get element pair */
+		elt1 = fetch_att(p1, typbyval, typlen);
+		elt2 = fetch_att(p2, typbyval, typlen);
+
+		p1 = att_addlength(p1, typlen, PointerGetDatum(p1));
+		p1 = (char *) att_align(p1, typalign);
+
+		p2 = att_addlength(p2, typlen, PointerGetDatum(p2));
+		p2 = (char *) att_align(p2, typalign);
+
+		/* Compare the pair of elements */
+
+		/* are they equal */
+		opresult = FunctionCall2(&my_extra->eqproc, elt1, elt2);
+		if (DatumGetBool(opresult))
+			continue;
+
+		/* nope, see if arg1 is less than arg2 */
+		opresult = FunctionCall2(&my_extra->ordproc, elt1, elt2);
+		if (DatumGetBool(opresult))
 		{
-			/* nope, see if arg1 is less than arg2 */
-			opresult = FunctionCall2(&my_extra->ordproc,
-									 dvalues1[i], dvalues2[i]);
-			if (DatumGetBool(opresult))
-			{
-				/* arg1 is less than arg2 */
-				result = -1;
-				break;
-			}
-			else
-			{
-				/* arg1 is greater than arg2 */
-				result = 1;
-				break;
-			}
+			/* arg1 is less than arg2 */
+			result = -1;
+			break;
+		}
+		else
+		{
+			/* arg1 is greater than arg2 */
+			result = 1;
+			break;
 		}
 	}
 
-	if ((result == 0) && (nelems1 != nelems2))
-		result = (nelems1 < nelems2) ? -1 : 1;
+	if ((result == 0) && (nitems1 != nitems2))
+		result = (nitems1 < nitems2) ? -1 : 1;
 
 	/* Avoid leaking memory when handed toasted input. */
 	PG_FREE_IF_COPY(array1, 0);
