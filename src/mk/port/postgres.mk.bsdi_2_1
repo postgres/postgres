@@ -26,6 +26,7 @@ AROPT=		cq
 USE_REGEX = 1
 
 LDADD_BE= -ldl -lcompat
+LD_ADD+=	-ltermcap
 
 #
 # for postgres.user.mk
