@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.47 1997/09/24 15:36:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.48 1997/09/24 16:20:04 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -1720,7 +1720,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			findTypeByOid(tinfo, numTypes, finfo[i].prorettype),
 			(finfo[i].lang == INTERNALlanguageId) ? finfo[i].prosrc :
 				(finfo[i].lang == ClanguageId) ? finfo[i].probin :
-					(finfo[i].lang == SQLlanguageId) ? finfo[i].prosrc : "unknown");
+					(finfo[i].lang == SQLlanguageId) ? finfo[i].prosrc : "unknown",
 			(finfo[i].lang == INTERNALlanguageId) ? "INTERNAL" :
 				(finfo[i].lang == ClanguageId) ? "C" :
 					(finfo[i].lang == SQLlanguageId) ? "SQL" : "unknown");
