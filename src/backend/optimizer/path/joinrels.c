@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.3 1997/05/20 10:37:26 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.4 1997/06/05 09:33:52 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,7 +110,8 @@ find_clause_joins(Query *root, Rel *outer_rel, List *joininfo_list)
 					get_base_rel(root, lfirsti(other_rels)),
 					joininfo);
 		    /* how about right-sided plan ? */
-		    if ( _use_right_sided_plans_ )
+		    if ( _use_right_sided_plans_ && 
+		    		length (outer_rel->relids) > 1 )
 		    {
 		    	if (rel != NULL)
 		    	    join_list = lappend(join_list, rel);
