@@ -2,8 +2,7 @@
 
 /* variables */
 
-extern int	debugging,
-			braces_open;
+extern int  braces_open;
 extern char *yytext;
 extern int	yylineno,
 			yyleng;
@@ -22,6 +21,18 @@ struct cursor {	char *name;
 	      };
 
 extern struct cursor *cur;
+
+/* This is a linked list of the variable names and types. */
+struct variable
+{
+    char * name;
+    struct ECPGtype * type;
+    int brace_level;
+    struct variable * next;
+};
+                
+extern struct ECPGtype ecpg_no_indicator;
+extern struct variable no_indicator;
 
 /* functions */
 

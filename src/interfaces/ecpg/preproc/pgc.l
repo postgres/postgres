@@ -70,6 +70,7 @@ struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 %x xb
 %x xc
 %x xd
+%x xdc
 %x xh
 %x xm
 %x xq
@@ -261,7 +262,7 @@ sql     [sS][qQ][lL]
 <xd>{xdstop}	{
 					BEGIN(SQL);
 					yylval.str = strdup(literal);
-					return (IDENT);
+					return (CSTRING);
 				}
 <xd>{xdinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
@@ -269,7 +270,22 @@ sql     [sS][qQ][lL]
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
-
+<C>{xdstart}		{
+					BEGIN(xdc);
+					llen = 0;
+					*literal = '\0';
+				}
+<xdc>{xdstop}	{
+					BEGIN(C);
+					yylval.str = strdup(literal);
+					return (CSTRING);
+				}
+<xdc>{xdinside}	{
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+						yyerror("ERROR: quoted string parse buffer exceeded");
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
 
 <xm>{space}*	{ /* ignore */ }
 <xm>{xmstop}	{
@@ -283,7 +299,7 @@ sql     [sS][qQ][lL]
 <SQL>{self}/-[\.0-9]		{
 					return (yytext[0]);
 				}
-<SQL>{self}			{ 	return (yytext[0]); }
+<SQL>{self}				{ 	return (yytext[0]); }
 <SQL>{operator}/-[\.0-9]	{
 					yylval.str = strdup((char*)yytext);
 					return (Op);
@@ -379,6 +395,10 @@ sql     [sS][qQ][lL]
 					return (FCONST);
 				}
 
+<SQL>:{identifier}	{
+					yylval.str = strdup((char*)yytext+1);
+					return(CVARIABLE);
+			}
 <SQL>{identifier}	{
 					int i;
 					ScanKeyword		*keyword;
@@ -423,12 +443,14 @@ sql     [sS][qQ][lL]
 					}
 				}
 <C>";"	      	        { return(';'); }
+<C>","	      	        { return(','); }
+<C>"*"	      	        { return('*'); }
 <C>{space}		{ ECHO; }
-\{			{ return('{'); }
-\}			{ return('}'); }
-\[			{ return('['); }
-\]			{ return(']'); }
-\=			{ return('='); }
+<C>\{			{ return('{'); }
+<C>\}			{ return('}'); }
+<C>\[			{ return('['); }
+<C>\]			{ return(']'); }
+<C>\=			{ return('='); }
 <C>{other}			{ return (S_ANYTHING); }
 <C>{exec}{space}{sql}{space}{include}	{ BEGIN(incl); }
 <incl>{space}		/* eat the whitespace */

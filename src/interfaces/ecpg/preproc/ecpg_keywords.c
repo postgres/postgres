@@ -21,6 +21,7 @@
  */
 static ScanKeyword ScanKeywords[] = {
 	/* name					value			*/
+	{"call", SQL_CALL},
 	{"connect", SQL_CONNECT},
 	{"continue", SQL_CONTINUE},
 	{"found", SQL_FOUND},

@@ -119,5 +119,7 @@ exec sql end declare section;
 
 	exec sql drop table perftest1;
 
+	exec sql commit;
+
 	return (0);
 }

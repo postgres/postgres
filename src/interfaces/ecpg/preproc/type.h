@@ -74,3 +74,9 @@ struct when
 	char		*command;
 	char	   	*str;
 };
+
+struct index
+{
+	int ival;
+	char *str;
+};

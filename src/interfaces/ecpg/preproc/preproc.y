@@ -12,15 +12,19 @@
  * Variables containing simple states.
  */
 static int	struct_level = 0;
-static char	*do_str = NULL, errortext[128];
-static int	do_length = 0;
+static char	errortext[128];
 static int      QueryIsRule = 0;
+static enum ECPGttype actual_type[128];
+static char     *actual_storage[128];
 
 /* temporarily store record members while creating the data structure */
 struct ECPGrecord_member *record_member_list[128] = { NULL };
 
 /* keep a list of cursors */
 struct cursor *cur = NULL;
+
+struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, {NULL}};
+struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
 
 /*
  * Handle the filename and line numbering.
@@ -82,15 +86,6 @@ whenever_action()
  */
 int braces_open;
 
-/* This is a linked list of the variable names and types. */
-struct variable
-{
-    char * name;
-    struct ECPGtype * type;
-    int brace_level;
-    struct variable * next;
-};
-
 static struct variable * allvariables = NULL;
 
 static struct variable *
@@ -105,7 +100,7 @@ find_variable(char * name)
 	    return p;
     }
 
-    sprintf(errorstring, "The variable :%s is not declared", name);
+    sprintf(errorstring, "The variable %s is not declared", name);
     yyerror(errorstring);
     free (errorstring);
 
@@ -167,9 +162,6 @@ struct arguments {
 static struct arguments * argsinsert = NULL;
 static struct arguments * argsresult = NULL;
 
-static struct ECPGtype ecpg_no_indicator = {ECPGt_NO_INDICATOR, 0L, {NULL}};
-static struct variable no_indicator = {"no_indicator", &ecpg_no_indicator, 0, NULL};
-
 static void
 reset_variables(void)
 {
@@ -209,7 +201,9 @@ dump_variables(struct arguments * list)
     dump_variables(list->next);
 
     /* Then the current element and its indicator */
-    ECPGdump_a_type(yyout, list->variable->name, list->variable->type, list->indicator->name, list->indicator->type, NULL, NULL);
+    ECPGdump_a_type(yyout, list->variable->name, list->variable->type,
+	(list->indicator->type->typ != ECPGt_NO_INDICATOR) ? list->indicator->name : NULL,
+	(list->indicator->type->typ != ECPGt_NO_INDICATOR) ? list->indicator->type : NULL, NULL, NULL);
 
     /* Then release the list element. */
     free(list);
@@ -360,7 +354,15 @@ make_name(void)
 static void
 output_statement(const char * stmt)
 {
-	fprintf(yyout, "ECPGdo(__LINE__, \"%s\", ", stmt);
+	int i, j=strlen(stmt);
+
+	fputs("ECPGdo(__LINE__, \"", yyout);
+
+	/* do this char by char as we have to filter '\"' */
+	for (i = 0;i < j; i++)
+		if (stmt[i] != '\"')
+			fputc(stmt[i], yyout);
+	fputs("\", ", yyout);
 
 	/* dump variables to C file*/
 	dump_variables(argsinsert);
@@ -375,14 +377,14 @@ output_statement(const char * stmt)
 	double                  dval;
         int                     ival;
 	char *                  str;
-	struct ECPGtemp_type    type;
 	struct when             action;
+	struct index		index;
 	int			tagname;
 	enum ECPGttype		type_enum;
 }
 
 /* special embedded SQL token */
-%token		SQL_CONNECT SQL_CONTINUE SQL_FOUND SQL_GO SQL_GOTO
+%token		SQL_CALL SQL_CONNECT SQL_CONTINUE SQL_FOUND SQL_GO SQL_GOTO
 %token		SQL_IMMEDIATE SQL_INDICATOR SQL_OPEN
 %token		SQL_SECTION SQL_SEMI SQL_SQLERROR SQL_SQLPRINT SQL_START
 %token		SQL_STOP SQL_WHENEVER
@@ -449,7 +451,7 @@ output_statement(const char * stmt)
 %token  USER, PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
 
 /* Special keywords, not in the query language - see the "lex" file */
-%token <str>    IDENT SCONST Op
+%token <str>    IDENT SCONST Op CSTRING CVARIABLE
 %token <ival>   ICONST PARAM
 %token <dval>   FCONST
 
@@ -538,11 +540,18 @@ output_statement(const char * stmt)
 %type  <str>	GrantStmt privileges operation_commalist operation
 
 %type  <str>	ECPGWhenever ECPGConnect db_name ECPGOpen open_opts
-%type  <str>	indicator ECPGExecute c_expr
+%type  <str>	indicator ECPGExecute c_expr variable_list dotext
+%type  <str>    storage_clause opt_initializer vartext c_anything blockstart
+%type  <str>    blockend variable_list variable var_anything sql_anything
+%type  <str>	opt_pointer ecpg_ident cvariable identlist
+
 %type  <str>	stmt symbol
+
+%type  <type_enum> simple_type type struct_type
 
 %type  <action> action
 
+%type  <index>	opt_index
 %%
 prog: statements;
 
@@ -551,9 +560,9 @@ statements: /* empty */
 
 statement: ecpgstart stmt SQL_SEMI
 	| ECPGDeclaration
-	| c_anything
-	| blockstart
-	| blockend
+	| c_anything			{ fputs($1, yyout); }
+	| blockstart			{ fputs($1, yyout); }
+	| blockend			{ fputs($1, yyout); }
 
 stmt:  AddAttrStmt			{ output_statement($1); }
 		| AlterUserStmt		{ output_statement($1); }
@@ -1332,7 +1341,7 @@ TriggerFuncArg:  Iconst
 					$$ = make_name();
 				}
 			| Sconst	{  $$ = $1; }
-			| IDENT		{  $$ = $1; }
+			| ecpg_ident		{  $$ = $1; }
 		;
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
@@ -1829,7 +1838,7 @@ OptStmtMulti:  OptStmtMulti OptimizableStmt ';'
 
 event_object:  relation_name '.' attr_name
 				{
-					$$ = make3_str($1, ",", $3);
+					$$ = cat3_str($1, ".", $3);
 				}
 		| relation_name
 				{
@@ -2243,7 +2252,7 @@ sortby:  ColId OptUseOp
 				}
 		| ColId '.' ColId OptUseOp
 				{
-					$$ = make4_str($1, ".", $3, $4);
+					$$ = make2_str(cat3_str($1, ".", $3), $4);
 				}
 		| Iconst OptUseOp
 				{
@@ -2292,7 +2301,7 @@ groupby:  ColId
 				}
 		| ColId '.' ColId
 				{
-					$$ = make3_str($1, ",", $3);
+					$$ = cat3_str($1, ",", $3);
 				}
 		| Iconst
 				{
@@ -2383,7 +2392,7 @@ join_using:  ColId
 				}
 		| ColId '.' ColId
 				{
-					$$ = make3_str($1, ".", $3);
+					$$ = cat3_str($1, ".", $3);
 				}
 		| Iconst
 				{
@@ -2455,7 +2464,7 @@ Generic:  generic
 				}
 		;
 
-generic:  IDENT					{ $$ = $1; }
+generic:  ecpg_ident					{ $$ = $1; }
 		| TYPE_P			{ $$ = "type"; }
 		;
 
@@ -3409,20 +3418,20 @@ not_in_expr_nodes:  AexprConst
 
 attr:  relation_name '.' attrs
 				{
-					$$ = make3_str($1, ".", $3);
+					$$ = cat3_str($1, ".", $3);
 				}
 		| ParamNo '.' attrs
 				{
-					$$ = make3_str($1, ".", $3);
+					$$ = cat3_str($1, ".", $3);
 				}
 		;
 
 attrs:	  attr_name
 				{ $$ = $1; }
 		| attrs '.' attr_name
-				{ $$ = make3_str($1, ".", $3); }
+				{ $$ = cat3_str($1, ".", $3); }
 		| attrs '.' '*'
-				{ $$ = make2_str($1, ".*"); }
+				{ $$ = cat2_str($1, ".*"); }
 		;
 
 
@@ -3449,7 +3458,7 @@ res_target_el:  ColId opt_indirection '=' a_expr_or_null
 				}
 		| relation_name '.' '*'
 				{
-					$$ = make2_str($1, ".*");
+					$$ = cat2_str($1, ".*");
 				}
 		;
 
@@ -3475,7 +3484,7 @@ res_target_el2:  a_expr_or_null AS ColLabel
 				}
 		| relation_name '.' '*'
 				{
-					$$ = make2_str($1, ".*");
+					$$ = cat2_str($1, ".*");
 				}
 		| '*'
 				{
@@ -3505,9 +3514,9 @@ relation_name:	SpecialRuleRelation
 		;
 
 database_name:			ColId			{ $$ = $1; };
-access_method:			IDENT			{ $$ = $1; };
+access_method:			ecpg_ident			{ $$ = $1; };
 attr_name:				ColId			{ $$ = $1; };
-class:					IDENT			{ $$ = $1; };
+class:					ecpg_ident			{ $$ = $1; };
 index_name:				ColId			{ $$ = $1; };
 
 /* Functions
@@ -3518,7 +3527,7 @@ name:					ColId			{ $$ = $1; };
 func_name:				ColId			{ $$ = $1; };
 
 file_name:				Sconst			{ $$ = $1; };
-recipe_name:			IDENT			{ $$ = $1; };
+recipe_name:			ecpg_ident			{ $$ = $1; };
 
 /* Constants
  * Include TRUE/FALSE for SQL3 support. - thomas 1997-10-24
@@ -3569,7 +3578,7 @@ Sconst:  SCONST                                 {
 							$$[strlen($1)+2]='\0';
 							$$[strlen($1)+1]='\'';
 						}
-UserId:  IDENT                                  { $$ = $1;};
+UserId:  ecpg_ident                                  { $$ = $1;};
 
 /* Column and type identifier
  * Does not include explicit datetime types
@@ -3591,7 +3600,7 @@ TypeId:  ColId
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
  */
-ColId:  IDENT							{ $$ = $1; }
+ColId:  ecpg_ident							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| ACTION						{ $$ = "action"; }
 		| CACHE							{ $$ = "cache"; }
@@ -3688,169 +3697,139 @@ sql_enddeclare: ecpgstart END_TRANS DECLARE SQL_SECTION SQL_SEMI {
     output_line_number();
 }
 
-variable_declarations : /* empty */
-                      | variable_declarations variable_declaration;
+variable_declarations: /* empty */
+	| declaration variable_declarations;
 
-/* Here is where we can enter support for typedef. */
-variable_declaration: type initializer ';'     { 
-    /* don't worry about our list when we're working on a struct */
-    if (struct_level == 0)
-    {
-        new_variable($<type>1.name, $<type>1.typ);
-        free((void *)$<type>1.name);
-    }
-    fputs(";", yyout); 
-}
+declaration: storage_clause type
+	{
+		actual_storage[struct_level] = $1;
+		actual_type[struct_level] = $2;
+		if ($2 != ECPGt_varchar && $2 != ECPGt_record)
+			fprintf(yyout, "%s %s", $1, ECPGtype_name($2));
+	}
+	variable_list ';' { fputc(';', yyout); }
 
-initializer : /*empty */
-            | '=' {fwrite(yytext, yyleng, 1, yyout);} vartext;
+storage_clause : S_EXTERN	{ $$ = "extern"; }
+       | S_STATIC		{ $$ = "static"; }
+       | S_SIGNED		{ $$ = "signed"; }
+       | S_CONST		{ $$ = "const"; }
+       | S_REGISTER		{ $$ = "register"; }
+       | S_AUTO			{ $$ = "auto"; }
+       | /* empty */		{ $$ = "" ; }
 
-type : maybe_storage_clause type_detailed { $<type>$ = $<type>2; };
-type_detailed : varchar_type { $<type>$ = $<type>1; }
-	      | simple_type { $<type>$ = $<type>1; }
-	      | string_type { $<type>$ = $<type>1; }
-/*	      | array_type {$<type>$ = $<type>1; }
-	      | pointer_type {$<type>$ = $<type>1; }*/
-	      | struct_type {$<type>$ = $<type>1; };
+type: simple_type
+	| struct_type
 
-varchar_type : varchar_tag symbol index {
-    if ($<ival>3 > 0L)
-	fprintf(yyout, "struct varchar_%s { int len; char arr[%d]; } %s", $2, $<ival>3, $2);
-    else
-	fprintf(yyout, "struct varchar_%s { int len; char arr[]; } %s", $2, $2);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $2;
-	$<type>$.typ = ECPGmake_varchar_type(ECPGt_varchar, $<ival>3);
-    }
-    else
-	ECPGmake_record_member($2, ECPGmake_varchar_type(ECPGt_varchar, $<ival>3), &(record_member_list[struct_level-1]));
-}
+struct_type: s_struct '{' variable_declarations '}'
+	{
+	    struct_level--;
+	    $$ = actual_type[struct_level] = ECPGt_record;
+	}
 
-varchar_tag: S_VARCHAR /*| S_VARCHAR2 */;
+s_struct : S_STRUCT symbol
+	{
+		struct_level++;
+		fprintf(yyout, "struct %s {", $2);
+	}
 
-simple_type : simple_tag symbol {
-    fprintf(yyout, "%s %s", ECPGtype_name($<type_enum>1), $2);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $2;
-	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, 1);
-    }
-    else
-        ECPGmake_record_member($2, ECPGmake_simple_type($<type_enum>1, 1), &(record_member_list[struct_level-1]));
-}
+simple_type: S_SHORT		{ $$ = ECPGt_short; }
+           | S_UNSIGNED S_SHORT { $$ = ECPGt_unsigned_short; }
+	   | S_INT 		{ $$ = ECPGt_int; }
+           | S_UNSIGNED S_INT	{ $$ = ECPGt_unsigned_int; }
+	   | S_LONG		{ $$ = ECPGt_long; }
+           | S_UNSIGNED S_LONG	{ $$ = ECPGt_unsigned_long; }
+           | S_FLOAT		{ $$ = ECPGt_float; }
+           | S_DOUBLE		{ $$ = ECPGt_double; }
+	   | S_BOOL		{ $$ = ECPGt_bool; };
+	   | S_CHAR		{ $$ = ECPGt_char; }
+           | S_UNSIGNED S_CHAR	{ $$ = ECPGt_unsigned_char; }
+	   | S_VARCHAR		{ $$ = ECPGt_varchar; }
 
-string_type : char_tag symbol index {
-    if ($<ival>3 > 0L)
-	    fprintf(yyout, "%s %s [%d]", ECPGtype_name($<type_enum>1), $2, $<ival>3);
-    else
-	    fprintf(yyout, "%s %s []", ECPGtype_name($<type_enum>1), $2);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $2;
-	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, $<ival>3);
-    }
-    else
-	ECPGmake_record_member($2, ECPGmake_simple_type($<type_enum>1, $<ival>3), &(record_member_list[struct_level-1]));
-}
-	|	char_tag '*' symbol {
-    fprintf(yyout, "%s *%s", ECPGtype_name($<type_enum>1), $3);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $3;
-	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, 0);
-    }
-    else
-	ECPGmake_record_member($3, ECPGmake_simple_type($<type_enum>1, 0), &(record_member_list[struct_level-1]));
-}
-	|	char_tag symbol {
-    fprintf(yyout, "%s %s", ECPGtype_name($<type_enum>1), $2);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $2;
-	$<type>$.typ = ECPGmake_simple_type($<type_enum>1, 1);
-    }
-    else
-        ECPGmake_record_member($2, ECPGmake_simple_type($<type_enum>1, 1), &(record_member_list[struct_level-1]));
-}
+variable_list: variable 
+	| variable_list ','
+	{
+		if (actual_type[struct_level] != ECPGt_varchar)
+			fputs(", ", yyout);
+		else
+			fputs(";\n ", yyout);
+	} variable
 
-char_tag : S_CHAR { $<type_enum>$ = ECPGt_char; }
-           | S_UNSIGNED S_CHAR { $<type_enum>$ = ECPGt_unsigned_char; }
+variable: opt_pointer symbol opt_index opt_initializer
+		{
+			int length = $3.ival;
 
-/*
-array_type : simple_tag symbol index {
-    if ($<ival>3 > 0)
-	    fprintf(yyout, "%s %s [%ld]", ECPGtype_name($<type_enum>1), $2, $<ival>3);
-    else
-	    fprintf(yyout, "%s %s []", ECPGtype_name($<type_enum>1), $2);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $2;
-	$<type>$.typ = ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<ival>3);
-    }
-    else
-	ECPGmake_record_member($2, ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), $<ival>3), &(record_member_list[struct_level-1]));
-}
+			/* pointer has to get length 0 */
+			if (strlen($1) > 0)
+				length = 0;
 
-pointer_type : simple_tag '*' symbol {
-    fprintf(yyout, "%s * %s", ECPGtype_name($<type_enum>1), $3);
-    if (struct_level == 0)
-    {
-	$<type>$.name = $3;
-	$<type>$.typ = ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), 0);
-    }
-    else
-	ECPGmake_record_member($3, ECPGmake_array_type(ECPGmake_simple_type($<type_enum>1), 0), &(record_member_list[struct_level-1]));
-}
-*/
+			switch (actual_type[struct_level])
+			{
+			   case ECPGt_record:
+				if (struct_level == 0)
+					new_variable($2, ECPGmake_record_type(record_member_list[struct_level]));
+				else
+				        ECPGmake_record_member($2, ECPGmake_record_type(record_member_list[struct_level]), &(record_member_list[struct_level-1]));
 
-s_struct : S_STRUCT symbol {
-    struct_level++;
-    fprintf(yyout, "struct %s {", $2);
-}
+				record_member_list[struct_level] = NULL;
+		 		fprintf(yyout, "} %s%s%s%s", $1, $2, $3.str, $4);
 
-struct_type : s_struct '{' variable_declarations '}' symbol {
-    struct_level--;
-    if (struct_level == 0)
-    {
-	$<type>$.name = $5;
-	$<type>$.typ = ECPGmake_record_type(record_member_list[struct_level]);
-    }
-    else
-	ECPGmake_record_member($5, ECPGmake_record_type(record_member_list[struct_level]), &(record_member_list[struct_level-1])); 
-    fprintf(yyout, "} %s", $5);
-    record_member_list[struct_level] = NULL;
-}
+				break;
+			   case ECPGt_varchar:
+				if (strlen($4) != 0)
+					yyerror("varchar initilization impossible");
 
-simple_tag : S_SHORT { $<type_enum>$ = ECPGt_short; }
-           | S_UNSIGNED S_SHORT { $<type_enum>$ = ECPGt_unsigned_short; }
-	   | S_INT { $<type_enum>$ = ECPGt_int; }
-           | S_UNSIGNED S_INT { $<type_enum>$ = ECPGt_unsigned_int; }
-	   | S_LONG { $<type_enum>$ = ECPGt_long; }
-           | S_UNSIGNED S_LONG { $<type_enum>$ = ECPGt_unsigned_long; }
-           | S_FLOAT { $<type_enum>$ = ECPGt_float; }
-           | S_DOUBLE { $<type_enum>$ = ECPGt_double; }
-	   | S_BOOL { $<type_enum>$ = ECPGt_bool; };
+				if (struct_level == 0) 
+					new_variable($2, ECPGmake_varchar_type(actual_type[struct_level], length));
+				else
+				        ECPGmake_record_member($2, ECPGmake_varchar_type(actual_type[struct_level], length), &(record_member_list[struct_level-1]));
+				
+				if (length > 0)
+					fprintf(yyout, "%s struct varchar_%s { int len; char arr[%d]; } %s", actual_storage[struct_level], $2, length, $2);
+				else
+					fprintf(yyout, "%s struct varchar_%s { int len; char arr[]; } %s", actual_storage[struct_level], $2, $2);
 
-maybe_storage_clause : S_EXTERN { fwrite(yytext, yyleng, 1, yyout); }
-		       | S_STATIC { fwrite(yytext, yyleng, 1, yyout); }
-		       | S_SIGNED { fwrite(yytext, yyleng, 1, yyout); }
-		       | S_CONST { fwrite(yytext, yyleng, 1, yyout); }
-		       | S_REGISTER { fwrite(yytext, yyleng, 1, yyout); }
-		       | S_AUTO { fwrite(yytext, yyleng, 1, yyout); }
-                       | /* empty */ { };
-  	 
-index : '[' Iconst ']' { $<ival>$ = atol($2); }
-	| '[' ']' { $<ival>$ = 0L; }
+				break;
+
+			   default:
+				if (struct_level == 0)
+					new_variable($2, ECPGmake_simple_type(actual_type[struct_level], length));
+				else
+				        ECPGmake_record_member($2, ECPGmake_simple_type(actual_type[struct_level], length), &(record_member_list[struct_level-1]));
+
+				fprintf(yyout, "%s%s%s%s", $1, $2, $3.str, $4);
+
+				break;
+			}
+		}
+
+opt_initializer: /* empty */		{ $$ = ""; }
+	| '=' vartext			{ $$ = cat2_str("=", $2); }
+
+opt_pointer: /* empty */	{ $$ = ""; }
+	| '*'			{ $$ = "*"; }
+
+opt_index: '[' Iconst ']'	{
+					$$.ival = atol($2);
+					$$.str = cat3_str("[", $2, "]");
+				}
+        | '[' ']'
+				{
+					$$.ival = 0;
+					$$.str = "[]";
+				}
+	| /* empty */		{
+					$$.ival = 1;
+					$$.str = "";
+				}
 
 /*
  * the exec sql connect statement: connect to the given database 
  */
-ECPGConnect : SQL_CONNECT db_name { $$ = $2; }
+ECPGConnect: SQL_CONNECT db_name { $$ = $2; }
 
-db_name : database_name { $$ = $1; }
-	| ':' name { /* check if we have a char variable */
-			struct variable *p = find_variable($2);
+db_name: database_name { $$ = $1; }
+	| cvariable { /* check if we have a char variable */
+			struct variable *p = find_variable($1);
 			enum ECPGttype typ = p->type->typ;
 
 			/* if array see what's inside */
@@ -3859,13 +3838,13 @@ db_name : database_name { $$ = $1; }
 
 			if (typ != ECPGt_char && typ != ECPGt_unsigned_char)
 				yyerror("invalid datatype");
-			$$ = $2;
+			$$ = $1;
 	}
 
 /*
  * execute a given string as sql command
  */
-ECPGExecute : EXECUTE SQL_IMMEDIATE  ':' name { $$ = $4; };
+ECPGExecute : EXECUTE SQL_IMMEDIATE cvariable { $$ = $3; };
 
 /*
  * open is an open cursor, at the moment this has to be removed
@@ -3890,12 +3869,15 @@ ECPGOpen: SQL_OPEN name open_opts {
 };
 
 open_opts: /* empty */		{ $$ = ""; }
-	| USING ':' name	{
+	| USING cvariable	{
 					yyerror ("open cursor with variables not implemented yet");
 				}
 
 /*
- * whenever statement: decide what to do in case of error/no dat
+ * whenever statement: decide what to do in case of error/no data found
+ * according to SQL standards we miss: SQLSTATE, CONSTRAINT, SQLEXCEPTION
+ * and SQLWARNING
+
  */
 ECPGWhenever: SQL_WHENEVER SQL_SQLERROR action {
 	when_error.code = $<action>3.code;
@@ -3933,17 +3915,15 @@ action : SQL_CONTINUE {
         $<action>$.command = $3;
 	$<action>$.str = make2_str("goto ", $3);
 }
-       | DO name '(' {
-	do_str = (char *) mm_alloc(do_length = strlen($2) + 4);
-	sprintf(do_str, "%s (", $2);
-} dotext ')' {
-	do_str[strlen(do_str)+1]='\0';
-	do_str[strlen(do_str)]=')';
+       | DO name '(' dotext ')' {
 	$<action>$.code = W_DO;
-	$<action>$.command = do_str;
-	$<action>$.str = make2_str("do ", do_str);
-	do_str = NULL;
-	do_length = 0;
+	$<action>$.command = cat4_str($2, "(", $4, ")");
+	$<action>$.str = make2_str("do", $<action>$.command);
+}
+       | SQL_CALL name '(' dotext ')' {
+	$<action>$.code = W_DO;
+	$<action>$.command = cat4_str($2, "(", $4, ")");
+	$<action>$.str = make2_str("call", $<action>$.command);
 }
 
 /* some other stuff for ecpg */
@@ -4231,59 +4211,94 @@ into_list : coutputvariable | into_list ',' coutputvariable;
 
 ecpgstart: SQL_START { reset_variables();}
 
-dotext: /* empty */
-	| dotext sql_anything {
-                if (strlen(do_str) + yyleng + 1 >= do_length)
-                        do_str = mm_realloc(do_str, do_length += yyleng);
+dotext: /* empty */		{ $$ = ""; }
+	| dotext sql_anything	{ $$ = cat2_str($1, $2); }
 
-                strcat(do_str, yytext);
+vartext: var_anything		{ $$ = $1; }
+        | vartext var_anything { $$ = cat2_str($1, $2); }
+
+coutputvariable : cvariable indicator {
+		add_variable(&argsresult, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
 }
 
-vartext: both_anything { fwrite(yytext, yyleng, 1, yyout); }
-        | vartext both_anything { fwrite(yytext, yyleng, 1, yyout); }
-
-coutputvariable : ':' name indicator {
-		add_variable(&argsresult, find_variable($2), ($3 == NULL) ? &no_indicator : find_variable($3)); 
+cinputvariable : cvariable indicator {
+		add_variable(&argsinsert, find_variable($1), ($2 == NULL) ? &no_indicator : find_variable($2)); 
 }
 
-cinputvariable : ':' name indicator {
-		add_variable(&argsinsert, find_variable($2), ($3 == NULL) ? &no_indicator : find_variable($3)); 
+civariableonly : cvariable name {
+		add_variable(&argsinsert, find_variable($1), &no_indicator); 
 }
 
-civariableonly : ':' name {
-		add_variable(&argsinsert, find_variable($2), &no_indicator); 
-}
+cvariable: CVARIABLE			{ $$ = $1; }
+	| CVARIABLE '.' identlist	{ $$ = $1; }
+	| CVARIABLE '-' '>' identlist	{ $$ = $1; }
+
+identlist: IDENT			{ $$ = $1; }
+	| IDENT '.' identlist		{ $$ = $1; }
+	| IDENT '-' '>' identlist   { $$ = $1; }
 
 indicator: /* empty */			{ $$ = NULL; }
-	| ':' name		 	{ check_indicator((find_variable($2))->type); $$ = $2; }
-	| SQL_INDICATOR ':' name 	{ check_indicator((find_variable($3))->type); $$ = $3; }
+	| cvariable		 	{ check_indicator((find_variable($1))->type); $$ = $1; }
+	| SQL_INDICATOR cvariable 	{ check_indicator((find_variable($2))->type); $$ = $2; }
 	| SQL_INDICATOR name		{ check_indicator((find_variable($2))->type); $$ = $2; }
 
+ecpg_ident: IDENT	{ $$ = $1; }
+	| CSTRING	{ $$ = cat3_str("\"", $1, "\""); }
 /*
  * C stuff
  */
 
-symbol: IDENT	{ $$ = $1; }
+symbol: ecpg_ident	{ $$ = $1; }
 
-c_anything: both_anything	{ fwrite(yytext, yyleng, 1, yyout); }
-	| ';'			{ fputc(';', yyout); }
+c_anything:  ecpg_ident 	{ $$ = $1; }
+	| Iconst	{ $$ = $1; }
+	| FCONST	{ $$ = make_name(); }
+	| '*'			{ $$ = "*"; }
+	| ';'			{ $$ = ";"; }
+	| S_AUTO	{ $$ = "auto"; }
+	| S_BOOL	{ $$ = "bool"; }
+	| S_CHAR	{ $$ = "char"; }
+	| S_CONST	{ $$ = "const"; }
+	| S_DOUBLE	{ $$ = "double"; }
+	| S_EXTERN	{ $$ = "extern"; }
+	| S_FLOAT	{ $$ = "float"; }
+        | S_INT		{ $$ = "int"; }
+	| S_LONG	{ $$ = "long"; }
+	| S_REGISTER	{ $$ = "register"; }
+	| S_SHORT	{ $$ = "short"; }
+	| S_SIGNED	{ $$ = "signed"; }
+	| S_STATIC	{ $$ = "static"; }
+        | S_STRUCT	{ $$ = "struct"; }
+	| S_UNSIGNED	{ $$ = "unsigned"; }
+	| S_VARCHAR	{ $$ = "varchar"; }
+	| S_ANYTHING	{ $$ = make_name(); }
+        | '['		{ $$ = "["; }
+	| ']'		{ $$ = "]"; }
+	| '('		{ $$ = "("; }
+	| ')'		{ $$ = ")"; }
+	| '='		{ $$ = "="; }
+	| ','		{ $$ = ","; }
 
-sql_anything: IDENT {} | ICONST {} | FCONST {}
+sql_anything: ecpg_ident	{ $$ = $1; }
+	| Iconst	{ $$ = $1; }
+	| FCONST	{ $$ = make_name(); }
+	| ','		{ $$ = ","; }
 
-both_anything: IDENT {} | ICONST {} | FCONST {}
-	| S_AUTO | S_BOOL | S_CHAR | S_CONST | S_DOUBLE | S_EXTERN | S_FLOAT
-	| S_INT	| S_LONG | S_REGISTER | S_SHORT	| S_SIGNED | S_STATIC
-	| S_STRUCT | S_UNSIGNED	| S_VARCHAR | S_ANYTHING
-	| '[' | ']' | '(' | ')' | '='
+var_anything: ecpg_ident 	{ $$ = $1; }
+	| Iconst	{ $$ = $1; }
+	| FCONST	{ $$ = make_name(); }
+/*FIXME:	| ','		{ $$ = ","; }*/
+	| '{'		{ $$ = "{"; }
+	| '}'		{ $$ = "}"; }
 
 blockstart : '{' {
     braces_open++;
-    fputc('{', yyout);
+    $$ = "{";
 }
 
 blockend : '}' {
     remove_variables(braces_open--);
-    fputc('}', yyout);
+    $$ = "}";
 }
 
 %%

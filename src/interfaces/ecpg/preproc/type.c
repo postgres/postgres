@@ -130,6 +130,12 @@ ECPGdump_a_record(FILE *o, const char *name, const char *ind_name, long arrsiz,
 void
 ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
+	if (ind_typ == NULL)
+	{
+		ind_typ = &ecpg_no_indicator;
+		ind_name = "no_indicator";
+	}
+	
 	if (IS_SIMPLE_TYPE(typ->typ))
 	{
 		ECPGdump_a_simple(o, name, typ->typ, typ->size, 0, 0, prefix);
@@ -267,7 +273,7 @@ ECPGdump_a_record(FILE *o, const char *name, const char * ind_name, long arrsiz,
 	 * then we are in a record in a record and the offset is used as
 	 * offset.
 	 */
-	struct ECPGrecord_member *p, *ind_p;
+	struct ECPGrecord_member *p, *ind_p = NULL;
 	char		obuf[BUFSIZ];
 	char		pbuf[BUFSIZ], ind_pbuf[BUFSIZ];
 	const char *offset;
@@ -288,9 +294,11 @@ ECPGdump_a_record(FILE *o, const char *name, const char * ind_name, long arrsiz,
 	sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
 	ind_prefix = ind_pbuf;
 
-	for (p = typ->u.members, ind_p = ind_typ->u.members; p; p = p->next, ind_p = ind_p->next)
+	if (ind_typ != NULL) ind_p = ind_typ->u.members;
+	for (p = typ->u.members; p; p = p->next)
 	{
-		ECPGdump_a_type(o, p->name, p->typ, ind_p->name, ind_p->typ, prefix, ind_prefix);
+		ECPGdump_a_type(o, p->name, p->typ, (ind_p != NULL) ? ind_p->name : NULL, (ind_p != NULL) ? ind_p->typ : NULL, prefix, ind_prefix);
+		if (ind_p != NULL) ind_p = ind_p->next;
 	}
 }
 

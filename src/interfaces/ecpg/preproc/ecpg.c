@@ -27,7 +27,7 @@ static void
 usage(char *progname)
 {
 	fprintf(stderr, "ecpg - the postgresql preprocessor, version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
-	fprintf(stderr, "Usage: %s: [-v] [-d] [-I include path] [ -o output file name] file1 [file2] ...\n", progname);
+	fprintf(stderr, "Usage: %s: [-v] [-I include path] [ -o output file name] file1 [file2] ...\n", progname);
 }
 
 static void
@@ -51,7 +51,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vdo:I:")) != EOF)
+	while ((c = getopt(argc, argv, "vo:I:")) != EOF)
 	{
 		switch (c)
 		{
@@ -61,9 +61,6 @@ main(int argc, char *const argv[])
 					perror(optarg);
 				else
 					out_option = 1;
-				break;
-			case 'd':
-				debugging = 1;
 				break;
 			case 'I':
 				add_include_path(optarg);

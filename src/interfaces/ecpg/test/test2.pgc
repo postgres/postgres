@@ -24,7 +24,7 @@ exec sql begin declare section;
 					} ind_birth;
 				  } ind_personal;
 	long ind_married;
-	char married[9]="a";
+	char married[9];
 exec sql end declare section;
 	char msg[128], command[128];
 	FILE *dbgs;
@@ -60,7 +60,7 @@ exec sql end declare section;
 
 	while (not_found == 0) {
 		strcpy(msg, "fetch");
-		exec sql fetch cur into :personal:ind_personal, :married:ind_married;
+		exec sql fetch cur into :personal:ind_personal, :married:ind_married, :personal.birth.born;
 		if (not_found == 0)
 			printf ("%8.8s was born %d (age = %d) %s%s\n", personal.name.arr, personal.birth.born, personal.birth.age, ind_married ? "" : "and married ", ind_married ? "" : married);
 	}

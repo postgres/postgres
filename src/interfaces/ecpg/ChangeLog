@@ -121,8 +121,24 @@ Mon Apr 20 16:13:25 CEST 1998
 Mon Apr 20 16:39:23 CEST 1998
 
 	- Cursor is opened when the open command is issued, not at declare time.
+	- Set version to 2.0.0
 
 Tue Apr 21 12:53:49 CEST 1998
 
 	- Set indicator to amount of data really written (truncation).
 
+Thu Apr 23 09:27:16 CEST 1998
+
+	- Also allow call in whenever statement with the same functionality
+	  as do.
+
+Thu Apr 23 12:29:28 CEST 1998
+
+	- Also rewrote variable declaration part. It is now possible to
+	  declare more than one variable per line.
+	- Set version to 2.1.0
+
+Fri Apr 24 13:50:15 CEST 1998
+
+	- Fixed some bugs.
+	- Set version to 2.1.1
