@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.77 2005/03/07 04:30:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.78 2005/03/11 15:36:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,62 +71,60 @@ int			optreset;
 /*
  * these values are passed in by makefile defines
  */
-char	   *share_path = NULL;
+static char	   *share_path = NULL;
 
 /* values to be obtained from arguments */
-char	   *pg_data = "";
-char	   *encoding = "";
-char	   *locale = "";
-char	   *lc_collate = "";
-char	   *lc_ctype = "";
-char	   *lc_monetary = "";
-char	   *lc_numeric = "";
-char	   *lc_time = "";
-char	   *lc_messages = "";
-char	   *username = "";
-bool		pwprompt = false;
-char	   *pwfilename = NULL;
-char	   *authmethod = "";
-bool		debug = false;
-bool		noclean = false;
-bool		show_setting = false;
+static char	   *pg_data = "";
+static char	   *encoding = "";
+static char	   *locale = "";
+static char	   *lc_collate = "";
+static char	   *lc_ctype = "";
+static char	   *lc_monetary = "";
+static char	   *lc_numeric = "";
+static char	   *lc_time = "";
+static char	   *lc_messages = "";
+static char	   *username = "";
+static bool		pwprompt = false;
+static char	   *pwfilename = NULL;
+static char	   *authmethod = "";
+static bool		debug = false;
+static bool		noclean = false;
+static bool		show_setting = false;
 
 
 /* internal vars */
-const char *progname;
-char	   *postgres;
-char	   *encodingid = "0";
-char	   *bki_file;
-char	   *desc_file;
-char	   *hba_file;
-char	   *ident_file;
-char	   *conf_file;
-char	   *conversion_file;
-char	   *info_schema_file;
-char	   *features_file;
-char	   *system_views_file;
-char	   *effective_user;
-bool		testpath = true;
-bool		made_new_pgdata = false;
-bool		found_existing_pgdata = false;
-char		infoversion[100];
-bool		caught_signal = false;
-bool		output_failed = false;
-int			output_errno = 0;
+static const char *progname;
+static char	   *encodingid = "0";
+static char	   *bki_file;
+static char	   *desc_file;
+static char	   *hba_file;
+static char	   *ident_file;
+static char	   *conf_file;
+static char	   *conversion_file;
+static char	   *info_schema_file;
+static char	   *features_file;
+static char	   *system_views_file;
+static char	   *effective_user;
+static bool		made_new_pgdata = false;
+static bool		found_existing_pgdata = false;
+static char		infoversion[100];
+static bool		caught_signal = false;
+static bool		output_failed = false;
+static int		output_errno = 0;
 
 /* defaults */
-int			n_connections = 10;
-int			n_buffers = 50;
+static int			n_connections = 10;
+static int			n_buffers = 50;
 
 /*
  * Warning messages for authentication methods
  */
-char	   *authtrust_warning = \
-"# CAUTION: Configuring the system for local \"trust\" authentication allows\n"
-"# any local user to connect as any PostgreSQL user, including the database\n"
-"# superuser. If you do not trust all your local users, use another\n"
-"# authentication method.\n";
-char	   *authwarning = NULL;
+#define AUTHTRUST_WARNING \
+"# CAUTION: Configuring the system for local \"trust\" authentication allows\n" \
+"# any local user to connect as any PostgreSQL user, including the database\n" \
+"# superuser. If you do not trust all your local users, use another\n" \
+"# authentication method.\n"
+static char	   *authwarning = NULL;
 
 /*
  * Centralized knowledge of switches to pass to backend
@@ -140,8 +138,8 @@ static const char *backend_options = "-F -O -c search_path=pg_catalog -c exit_on
 
 
 /* path to 'initdb' binary directory */
-char		bin_path[MAXPGPATH];
-char		backend_exec[MAXPGPATH];
+static char	bin_path[MAXPGPATH];
+static char	backend_exec[MAXPGPATH];
 
 static void *xmalloc(size_t size);
 static char *xstrdup(const char *s);
@@ -1210,7 +1208,7 @@ setup_config(void)
 
 	conflines = replace_token(conflines,
 							  "@authcomment@",
-				   strcmp(authmethod, "trust") ? "" : authtrust_warning);
+				   strcmp(authmethod, "trust") ? "" : AUTHTRUST_WARNING);
 
 	snprintf(path, sizeof(path), "%s/pg_hba.conf", pg_data);
 
