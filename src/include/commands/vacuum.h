@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.13 1998/02/26 04:41:12 momjian Exp $
+ * $Id: vacuum.h,v 1.14 1998/08/19 19:59:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,18 +33,18 @@ typedef struct VPageDescrData
 {
 	BlockNumber vpd_blkno;		/* BlockNumber of this Page */
 	Size		vpd_free;		/* FreeSpace on this Page */
-	uint16		vpd_nusd;		/* Number of OffNums used by vacuum */
-	uint16		vpd_noff;		/* Number of OffNums free or to be free */
-	OffsetNumber vpd_voff[1];	/* Array of its OffNums */
+	uint16		vpd_offsets_used;	/* Number of OffNums used by vacuum */
+	uint16		vpd_offsets_free;	/* Number of OffNums free or to be free */
+	OffsetNumber vpd_offsets[1];	/* Array of its OffNums */
 } VPageDescrData;
 
 typedef VPageDescrData *VPageDescr;
 
 typedef struct VPageListData
 {
-	int			vpl_nemend;		/* Number of "empty" end-pages */
-	int			vpl_npages;		/* Number of pages in vpl_pgdesc */
-	VPageDescr *vpl_pgdesc;		/* Descriptions of pages */
+	int			vpl_empty_end_pages;	/* Number of "empty" end-pages */
+	int			vpl_num_pages;		/* Number of pages in vpl_pagedesc */
+	VPageDescr *vpl_pagedesc;	/* Descriptions of pages */
 } VPageListData;
 
 typedef VPageListData *VPageList;
@@ -96,8 +96,8 @@ typedef VRelListData *VRelList;
 typedef struct VRelStats
 {
 	Oid			relid;
-	int			ntups;
-	int			npages;
+	int			num_tuples;
+	int			num_pages;
 	Size		min_tlen;
 	Size		max_tlen;
 	bool		hasindex;

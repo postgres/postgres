@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.46 1998/08/14 16:05:51 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.47 1998/08/19 19:59:45 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -317,7 +317,7 @@ fi
 BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
 echo "$CMDNAME: creating template database in $PGDATA/base/template1"
-echo "Running: postgres $BACKENDARGS template1"
+[ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1"
 
 cat $TEMPLATE \
 | sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
@@ -345,7 +345,7 @@ pg_version $PGDATA/base/template1
 
 if [ $template_only -eq 0 ]; then
     echo "Creating global classes in $PG_DATA/base"
-    echo "Running: postgres $BACKENDARGS template1"
+    [ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1"
 
     cat $GLOBAL \
     | sed -e "s/postgres PGUID/$POSTGRES_SUPERUSERNAME $POSTGRES_SUPERUID/" \
@@ -382,7 +382,7 @@ if [ $template_only -eq 0 ]; then
     #echo "show" >> /tmp/create.$$
     echo "close pg_database" >> /tmp/create.$$
 
-    echo "Running: postgres $BACKENDARGS template1 < /tmp/create.$$"
+    [ "$debug" -ne 0 ] && echo "Running: postgres $BACKENDARGS template1 < /tmp/create.$$"
 
     postgres $BACKENDARGS template1 < /tmp/create.$$ 
 

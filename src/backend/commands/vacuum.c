@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.71 1998/08/19 15:47:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.72 1998/08/19 19:59:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,7 @@ static void vc_vaconeind(VPageList vpl, Relation indrel, int nhtups);
 static void vc_scanoneind(Relation indrel, int nhtups);
 static void vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple tuple);
 static void vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_len);
-static void vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelstats);
+static void vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats);
 static void vc_delhilowstats(Oid relid, int attcnt, int *attnums);
 static void vc_setpagelock(Relation rel, BlockNumber blkno);
 static VPageDescr vc_tidreapped(ItemPointer itemptr, VPageList vpl);
@@ -258,10 +258,10 @@ vc_vacuum(NameData *VacRelP, bool analyze, List *va_cols)
 static VRelList
 vc_getrels(NameData *VacRelP)
 {
-	Relation	pgclass;
-	TupleDesc	pgcdesc;
-	HeapScanDesc pgcscan;
-	HeapTuple	pgctup;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
 	PortalVariableMemory portalmem;
 	MemoryContext old;
 	VRelList	vrl,
@@ -271,35 +271,35 @@ vc_getrels(NameData *VacRelP)
 	char		rkind;
 	bool		n;
 	bool		found = false;
-	ScanKeyData pgckey;
+	ScanKeyData key;
 
 	StartTransactionCommand();
 
 	if (VacRelP->data)
 	{
-		ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relname,
+		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relname,
 							   F_NAMEEQ,
 							   PointerGetDatum(VacRelP->data));
 	}
 	else
 	{
-		ScanKeyEntryInitialize(&pgckey, 0x0, Anum_pg_class_relkind,
+		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_class_relkind,
 						  F_CHAREQ, CharGetDatum('r'));
 	}
 
 	portalmem = PortalGetVariableMemory(vc_portal);
 	vrl = cur = (VRelList) NULL;
 
-	pgclass = heap_openr(RelationRelationName);
-	pgcdesc = RelationGetTupleDescriptor(pgclass);
+	rel = heap_openr(RelationRelationName);
+	tupdesc = RelationGetTupleDescriptor(rel);
 
-	pgcscan = heap_beginscan(pgclass, false, SnapshotNow, 1, &pgckey);
+	scan = heap_beginscan(rel, false, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(pgctup = heap_getnext(pgcscan, 0)))
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		found = true;
 
-		d = heap_getattr(pgctup, Anum_pg_class_relname, pgcdesc, &n);
+		d = heap_getattr(tuple, Anum_pg_class_relname, tupdesc, &n);
 		rname = (char *) d;
 
 		/*
@@ -316,7 +316,7 @@ vc_getrels(NameData *VacRelP)
 			continue;
 		}
 
-		d = heap_getattr(pgctup, Anum_pg_class_relkind, pgcdesc, &n);
+		d = heap_getattr(tuple, Anum_pg_class_relkind, tupdesc, &n);
 
 		rkind = DatumGetChar(d);
 
@@ -338,15 +338,15 @@ vc_getrels(NameData *VacRelP)
 		}
 		MemoryContextSwitchTo(old);
 
-		cur->vrl_relid = pgctup->t_oid;
+		cur->vrl_relid = tuple->t_oid;
 		cur->vrl_next = (VRelList) NULL;
 	}
 	if (found == false)
 		elog(NOTICE, "Vacuum: table not found");
 
 
-	heap_endscan(pgcscan);
-	heap_close(pgclass);
+	heap_endscan(scan);
+	heap_close(rel);
 
 	CommitTransactionCommand();
 
@@ -357,7 +357,7 @@ vc_getrels(NameData *VacRelP)
  *	vc_vacone() -- vacuum one heap relation
  *
  *		This routine vacuums a single heap, cleans out its indices, and
- *		updates its statistics npages and ntups statistics.
+ *		updates its statistics num_pages and num_tuples statistics.
  *
  *		Doing one heap at a time incurs extra overhead, since we need to
  *		check that the heap exists again just before we vacuum it.	The
@@ -368,10 +368,10 @@ vc_getrels(NameData *VacRelP)
 static void
 vc_vacone(Oid relid, bool analyze, List *va_cols)
 {
-	Relation	pgclass;
-	TupleDesc	pgcdesc;
-	HeapTuple	pgctup,
-				pgttup;
+	Relation	rel;
+	TupleDesc	tupdesc;
+	HeapTuple	tuple,
+				typetuple;
 	Relation	onerel;
 	VPageListData Vvpl;			/* List of pages to vacuum and/or clean
 								 * indices */
@@ -382,22 +382,22 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	int32		nindices,
 				i;
 	VRelStats  *vacrelstats;
-
+	
 	StartTransactionCommand();
 
-	pgclass = heap_openr(RelationRelationName);
-	pgcdesc = RelationGetTupleDescriptor(pgclass);
+	rel = heap_openr(RelationRelationName);
+	tupdesc = RelationGetTupleDescriptor(rel);
 
 	/*
 	 * Race condition -- if the pg_class tuple has gone away since the
 	 * last time we saw it, we don't need to vacuum it.
 	 */
-	pgctup = SearchSysCacheTuple(RELOID,
+	tuple = SearchSysCacheTuple(RELOID,
 								 ObjectIdGetDatum(relid),
 								 0, 0, 0);
-	if (!HeapTupleIsValid(pgctup))
+	if (!HeapTupleIsValid(tuple))
 	{
-		heap_close(pgclass);
+		heap_close(rel);
 		CommitTransactionCommand();
 		return;
 	}
@@ -407,7 +407,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 
 	vacrelstats = (VRelStats *) palloc(sizeof(VRelStats));
 	vacrelstats->relid = relid;
-	vacrelstats->npages = vacrelstats->ntups = 0;
+	vacrelstats->num_pages = vacrelstats->num_tuples = 0;
 	vacrelstats->hasindex = false;
 	if (analyze && !IsSystemRelationName((RelationGetRelationName(onerel))->data))
 	{
@@ -494,11 +494,11 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			else
 				stats->f_cmpgt.fn_addr = NULL;
 
-			pgttup = SearchSysCacheTuple(TYPOID,
+			typetuple = SearchSysCacheTuple(TYPOID,
 									 ObjectIdGetDatum(stats->attr->atttypid),
 										 0, 0, 0);
-			if (HeapTupleIsValid(pgttup))
-				stats->outfunc = ((TypeTupleForm) GETSTRUCT(pgttup))->typoutput;
+			if (HeapTupleIsValid(typetuple))
+				stats->outfunc = ((TypeTupleForm) GETSTRUCT(typetuple))->typoutput;
 			else
 				stats->outfunc = InvalidOid;
 		}
@@ -517,7 +517,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	RelationSetLockForWrite(onerel);
 
 	/* scan it */
-	Vvpl.vpl_npages = Fvpl.vpl_npages = 0;
+	Vvpl.vpl_num_pages = Fvpl.vpl_num_pages = 0;
 	vc_scanheap(vacrelstats, onerel, &Vvpl, &Fvpl);
 
 	/* Now open indices */
@@ -532,46 +532,46 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 	/* Clean/scan index relation(s) */
 	if (Irel != (Relation *) NULL)
 	{
-		if (Vvpl.vpl_npages > 0)
+		if (Vvpl.vpl_num_pages > 0)
 		{
 			for (i = 0; i < nindices; i++)
-				vc_vaconeind(&Vvpl, Irel[i], vacrelstats->ntups);
+				vc_vaconeind(&Vvpl, Irel[i], vacrelstats->num_tuples);
 		}
 		else
 /* just scan indices to update statistic */
 		{
 			for (i = 0; i < nindices; i++)
-				vc_scanoneind(Irel[i], vacrelstats->ntups);
+				vc_scanoneind(Irel[i], vacrelstats->num_tuples);
 		}
 	}
 
-	if (Fvpl.vpl_npages > 0)	/* Try to shrink heap */
+	if (Fvpl.vpl_num_pages > 0)	/* Try to shrink heap */
 		vc_rpfheap(vacrelstats, onerel, &Vvpl, &Fvpl, nindices, Irel);
 	else
 	{
 		if (Irel != (Relation *) NULL)
 			vc_clsindices(nindices, Irel);
-		if (Vvpl.vpl_npages > 0)/* Clean pages from Vvpl list */
+		if (Vvpl.vpl_num_pages > 0)/* Clean pages from Vvpl list */
 			vc_vacheap(vacrelstats, onerel, &Vvpl);
 	}
 
 	/* ok - free Vvpl list of reapped pages */
-	if (Vvpl.vpl_npages > 0)
+	if (Vvpl.vpl_num_pages > 0)
 	{
-		vpp = Vvpl.vpl_pgdesc;
-		for (i = 0; i < Vvpl.vpl_npages; i++, vpp++)
+		vpp = Vvpl.vpl_pagedesc;
+		for (i = 0; i < Vvpl.vpl_num_pages; i++, vpp++)
 			pfree(*vpp);
-		pfree(Vvpl.vpl_pgdesc);
-		if (Fvpl.vpl_npages > 0)
-			pfree(Fvpl.vpl_pgdesc);
+		pfree(Vvpl.vpl_pagedesc);
+		if (Fvpl.vpl_num_pages > 0)
+			pfree(Fvpl.vpl_pagedesc);
 	}
 
 	/* all done with this class */
 	heap_close(onerel);
-	heap_close(pgclass);
+	heap_close(rel);
 
 	/* update statistics in pg_class */
-	vc_updstats(vacrelstats->relid, vacrelstats->npages, vacrelstats->ntups,
+	vc_updstats(vacrelstats->relid, vacrelstats->num_pages, vacrelstats->num_tuples,
 				vacrelstats->hasindex, vacrelstats);
 
 	/* next command frees attribute stats */
@@ -609,26 +609,26 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	char	   *relname;
 	VPageDescr	vpc,
 				vp;
-	uint32		nvac,
-				ntups,
+	uint32		tups_vacuumed,
+				num_tuples,
 				nunused,
 				ncrash,
-				nempg,
-				nnepg,
-				nchpg,
+				empty_pages,
+				new_pages,
+				changed_pages,
 				nemend;
 	Size		frsize,
 				frsusf;
 	Size		min_tlen = MAXTUPLEN;
 	Size		max_tlen = 0;
-	int32		i /* , attr_cnt */ ;
+	int32		i;
 	struct rusage ru0,
 				ru1;
 	bool		do_shrinking = true;
 
 	getrusage(RUSAGE_SELF, &ru0);
 
-	nvac = ntups = nunused = ncrash = nempg = nnepg = nchpg = nemend = 0;
+	tups_vacuumed = num_tuples = nunused = ncrash = empty_pages = new_pages = changed_pages = nemend = 0;
 	frsize = frsusf = 0;
 
 	relname = (RelationGetRelationName(onerel))->data;
@@ -636,7 +636,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	nblocks = RelationGetNumberOfBlocks(onerel);
 
 	vpc = (VPageDescr) palloc(sizeof(VPageDescrData) + MaxOffsetNumber * sizeof(OffsetNumber));
-	vpc->vpd_nusd = 0;
+	vpc->vpd_offsets_used = 0;
 
 	elog(MESSAGE_LEVEL, "--Relation %s--", relname);
 	
@@ -645,7 +645,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		buf = ReadBuffer(onerel, blkno);
 		page = BufferGetPage(buf);
 		vpc->vpd_blkno = blkno;
-		vpc->vpd_noff = 0;
+		vpc->vpd_offsets_free = 0;
 
 		if (PageIsNew(page))
 		{
@@ -654,7 +654,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			PageInit(page, BufferGetPageSize(buf), 0);
 			vpc->vpd_free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 			frsize += (vpc->vpd_free - sizeof(ItemIdData));
-			nnepg++;
+			new_pages++;
 			nemend++;
 			vc_reappage(Vvpl, vpc);
 			WriteBuffer(buf);
@@ -665,7 +665,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		{
 			vpc->vpd_free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 			frsize += (vpc->vpd_free - sizeof(ItemIdData));
-			nempg++;
+			empty_pages++;
 			nemend++;
 			vc_reappage(Vvpl, vpc);
 			ReleaseBuffer(buf);
@@ -687,7 +687,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			 */
 			if (!ItemIdIsUsed(itemid))
 			{
-				vpc->vpd_voff[vpc->vpd_noff++] = offnum;
+				vpc->vpd_offsets[vpc->vpd_offsets_free++] = offnum;
 				nunused++;
 				continue;
 			}
@@ -808,13 +808,13 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 				/* mark it unused */
 				lpp->lp_flags &= ~LP_USED;
 
-				vpc->vpd_voff[vpc->vpd_noff++] = offnum;
-				nvac++;
+				vpc->vpd_offsets[vpc->vpd_offsets_free++] = offnum;
+				tups_vacuumed++;
 
 			}
 			else
 			{
-				ntups++;
+				num_tuples++;
 				notup = false;
 				if (tuple->t_len < min_tlen)
 					min_tlen = tuple->t_len;
@@ -828,7 +828,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 		{
 			WriteBuffer(buf);
 			dobufrel = false;
-			nchpg++;
+			changed_pages++;
 		}
 		else
 			dobufrel = true;
@@ -841,7 +841,7 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 			pfree(tempPage);
 			tempPage = (Page) NULL;
 		}
-		else if (vpc->vpd_noff > 0)
+		else if (vpc->vpd_offsets_free > 0)
 		{						/* there are only ~LP_USED line pointers */
 			vpc->vpd_free = ((PageHeader) page)->pd_upper - ((PageHeader) page)->pd_lower;
 			frsize += vpc->vpd_free;
@@ -858,32 +858,32 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 	pfree(vpc);
 
 	/* save stats in the rel list for use later */
-	vacrelstats->ntups = ntups;
-	vacrelstats->npages = nblocks;
+	vacrelstats->num_tuples = num_tuples;
+	vacrelstats->num_pages = nblocks;
 /*	  vacrelstats->natts = attr_cnt;*/
-	if (ntups == 0)
+	if (num_tuples == 0)
 		min_tlen = max_tlen = 0;
 	vacrelstats->min_tlen = min_tlen;
 	vacrelstats->max_tlen = max_tlen;
 
-	Vvpl->vpl_nemend = nemend;
-	Fvpl->vpl_nemend = nemend;
+	Vvpl->vpl_empty_end_pages = nemend;
+	Fvpl->vpl_empty_end_pages = nemend;
 
 	/*
 	 * Try to make Fvpl keeping in mind that we can't use free space of
 	 * "empty" end-pages and last page if it reapped.
 	 */
-	if (do_shrinking && Vvpl->vpl_npages - nemend > 0)
+	if (do_shrinking && Vvpl->vpl_num_pages - nemend > 0)
 	{
 		int			nusf;		/* blocks usefull for re-using */
 
-		nusf = Vvpl->vpl_npages - nemend;
-		if ((Vvpl->vpl_pgdesc[nusf - 1])->vpd_blkno == nblocks - nemend - 1)
+		nusf = Vvpl->vpl_num_pages - nemend;
+		if ((Vvpl->vpl_pagedesc[nusf - 1])->vpd_blkno == nblocks - nemend - 1)
 			nusf--;
 
 		for (i = 0; i < nusf; i++)
 		{
-			vp = Vvpl->vpl_pgdesc[i];
+			vp = Vvpl->vpl_pagedesc[i];
 			if (vc_enough_space(vp, min_tlen))
 			{
 				vc_vpinsert(Fvpl, vp);
@@ -896,9 +896,9 @@ vc_scanheap(VRelStats *vacrelstats, Relation onerel,
 
 	elog(MESSAGE_LEVEL, "Pages %u: Changed %u, Reapped %u, Empty %u, New %u; \
 Tup %u: Vac %u, Crash %u, UnUsed %u, MinLen %u, MaxLen %u; Re-using: Free/Avail. Space %u/%u; EndEmpty/Avail. Pages %u/%u. Elapsed %u/%u sec.",
-		 nblocks, nchpg, Vvpl->vpl_npages, nempg, nnepg,
-		 ntups, nvac, ncrash, nunused, min_tlen, max_tlen,
-		 frsize, frsusf, nemend, Fvpl->vpl_npages,
+		 nblocks, changed_pages, Vvpl->vpl_num_pages, empty_pages, new_pages,
+		 num_tuples, tups_vacuumed, ncrash, nunused, min_tlen, max_tlen,
+		 frsize, frsusf, nemend, Fvpl->vpl_num_pages,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
@@ -930,7 +930,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 	OffsetNumber offnum = 0,
 				maxoff = 0,
 				newoff,
-				moff;
+				max_offset;
 	ItemId		itemid,
 				newitemid;
 	HeapTuple	tuple,
@@ -953,10 +953,10 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				i;
 	Size		tlen;
 	int			nmoved,
-				Fnpages,
-				Vnpages;
-	int			nchkmvd,
-				ntups;
+				Fnum_pages,
+				Vnum_pages;
+	int			checked_moved,
+				num_tuples;
 	bool		isempty,
 				dowrite;
 	struct rusage ru0,
@@ -975,39 +975,39 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 		inulls = (char *) palloc(INDEX_MAX_KEYS * sizeof(*inulls));
 	}
 
-	Nvpl.vpl_npages = 0;
-	Fnpages = Fvpl->vpl_npages;
-	Fvplast = Fvpl->vpl_pgdesc[Fnpages - 1];
+	Nvpl.vpl_num_pages = 0;
+	Fnum_pages = Fvpl->vpl_num_pages;
+	Fvplast = Fvpl->vpl_pagedesc[Fnum_pages - 1];
 	Fblklast = Fvplast->vpd_blkno;
-	Assert(Vvpl->vpl_npages > Vvpl->vpl_nemend);
-	Vnpages = Vvpl->vpl_npages - Vvpl->vpl_nemend;
-	Vvplast = Vvpl->vpl_pgdesc[Vnpages - 1];
+	Assert(Vvpl->vpl_num_pages > Vvpl->vpl_empty_end_pages);
+	Vnum_pages = Vvpl->vpl_num_pages - Vvpl->vpl_empty_end_pages;
+	Vvplast = Vvpl->vpl_pagedesc[Vnum_pages - 1];
 	Vblklast = Vvplast->vpd_blkno;
 	Assert(Vblklast >= Fblklast);
 	ToBuf = InvalidBuffer;
 	nmoved = 0;
 
 	vpc = (VPageDescr) palloc(sizeof(VPageDescrData) + MaxOffsetNumber * sizeof(OffsetNumber));
-	vpc->vpd_nusd = vpc->vpd_noff = 0;
+	vpc->vpd_offsets_used = vpc->vpd_offsets_free = 0;
 
-	nblocks = vacrelstats->npages;
-	for (blkno = nblocks - Vvpl->vpl_nemend - 1;; blkno--)
+	nblocks = vacrelstats->num_pages;
+	for (blkno = nblocks - Vvpl->vpl_empty_end_pages - 1;; blkno--)
 	{
 		/* if it's reapped page and it was used by me - quit */
-		if (blkno == Fblklast && Fvplast->vpd_nusd > 0)
+		if (blkno == Fblklast && Fvplast->vpd_offsets_used > 0)
 			break;
 
 		buf = ReadBuffer(onerel, blkno);
 		page = BufferGetPage(buf);
 
-		vpc->vpd_noff = 0;
+		vpc->vpd_offsets_free = 0;
 
 		isempty = PageIsEmpty(page);
 
 		dowrite = false;
 		if (blkno == Vblklast)	/* it's reapped page */
 		{
-			if (Vvplast->vpd_noff > 0)	/* there are dead tuples */
+			if (Vvplast->vpd_offsets_free > 0)	/* there are dead tuples */
 			{					/* on this page - clean */
 				Assert(!isempty);
 				vc_vacpage(page, Vvplast);
@@ -1015,18 +1015,18 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 			}
 			else
 				Assert(isempty);
-			--Vnpages;
-			Assert(Vnpages > 0);
+			--Vnum_pages;
+			Assert(Vnum_pages > 0);
 			/* get prev reapped page from Vvpl */
-			Vvplast = Vvpl->vpl_pgdesc[Vnpages - 1];
+			Vvplast = Vvpl->vpl_pagedesc[Vnum_pages - 1];
 			Vblklast = Vvplast->vpd_blkno;
 			if (blkno == Fblklast)		/* this page in Fvpl too */
 			{
-				--Fnpages;
-				Assert(Fnpages > 0);
-				Assert(Fvplast->vpd_nusd == 0);
+				--Fnum_pages;
+				Assert(Fnum_pages > 0);
+				Assert(Fvplast->vpd_offsets_used == 0);
 				/* get prev reapped page from Fvpl */
-				Fvplast = Fvpl->vpl_pgdesc[Fnpages - 1];
+				Fvplast = Fvpl->vpl_pagedesc[Fnum_pages - 1];
 				Fblklast = Fvplast->vpd_blkno;
 			}
 			Assert(Fblklast <= Vblklast);
@@ -1072,27 +1072,27 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					if (ToVpd != Fvplast &&
 						!vc_enough_space(ToVpd, vacrelstats->min_tlen))
 					{
-						Assert(Fnpages > ToVpI + 1);
-						memmove(Fvpl->vpl_pgdesc + ToVpI,
-								Fvpl->vpl_pgdesc + ToVpI + 1,
-						   sizeof(VPageDescr *) * (Fnpages - ToVpI - 1));
-						Fnpages--;
-						Assert(Fvplast == Fvpl->vpl_pgdesc[Fnpages - 1]);
+						Assert(Fnum_pages > ToVpI + 1);
+						memmove(Fvpl->vpl_pagedesc + ToVpI,
+								Fvpl->vpl_pagedesc + ToVpI + 1,
+						   sizeof(VPageDescr *) * (Fnum_pages - ToVpI - 1));
+						Fnum_pages--;
+						Assert(Fvplast == Fvpl->vpl_pagedesc[Fnum_pages - 1]);
 					}
 				}
-				for (i = 0; i < Fnpages; i++)
+				for (i = 0; i < Fnum_pages; i++)
 				{
-					if (vc_enough_space(Fvpl->vpl_pgdesc[i], tlen))
+					if (vc_enough_space(Fvpl->vpl_pagedesc[i], tlen))
 						break;
 				}
-				if (i == Fnpages)
+				if (i == Fnum_pages)
 					break;		/* can't move item anywhere */
 				ToVpI = i;
-				ToVpd = Fvpl->vpl_pgdesc[ToVpI];
+				ToVpd = Fvpl->vpl_pagedesc[ToVpI];
 				ToBuf = ReadBuffer(onerel, ToVpd->vpd_blkno);
 				ToPage = BufferGetPage(ToBuf);
 				/* if this page was not used before - clean it */
-				if (!PageIsEmpty(ToPage) && ToVpd->vpd_nusd == 0)
+				if (!PageIsEmpty(ToPage) && ToVpd->vpd_offsets_used == 0)
 					vc_vacpage(ToPage, ToVpd);
 			}
 
@@ -1116,7 +1116,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 				elog(ERROR, "\
 failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 					 tlen, ToVpd->vpd_blkno, ToVpd->vpd_free,
-					 ToVpd->vpd_nusd, ToVpd->vpd_noff);
+					 ToVpd->vpd_offsets_used, ToVpd->vpd_offsets_free);
 			}
 			newitemid = PageGetItemId(ToPage, newoff);
 			pfree(newtup);
@@ -1129,10 +1129,10 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 			/* set xmax to unknown */
 			tuple->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_XMAX_COMMITTED);
 
-			ToVpd->vpd_nusd++;
+			ToVpd->vpd_offsets_used++;
 			nmoved++;
 			ToVpd->vpd_free = ((PageHeader) ToPage)->pd_upper - ((PageHeader) ToPage)->pd_lower;
-			vpc->vpd_voff[vpc->vpd_noff++] = offnum;
+			vpc->vpd_offsets[vpc->vpd_offsets_free++] = offnum;
 
 			/* insert index' tuples if needed */
 			if (Irel != (Relation *) NULL)
@@ -1160,7 +1160,7 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 
 		}						/* walk along page */
 
-		if (vpc->vpd_noff > 0)	/* some tuples were moved */
+		if (vpc->vpd_offsets_free > 0)	/* some tuples were moved */
 		{
 			vc_reappage(&Nvpl, vpc);
 			WriteBuffer(buf);
@@ -1201,29 +1201,29 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 	 * Clean uncleaned reapped pages from Vvpl list and set xmin committed
 	 * for inserted tuples
 	 */
-	nchkmvd = 0;
-	for (i = 0, vpp = Vvpl->vpl_pgdesc; i < Vnpages; i++, vpp++)
+	checked_moved = 0;
+	for (i = 0, vpp = Vvpl->vpl_pagedesc; i < Vnum_pages; i++, vpp++)
 	{
 		Assert((*vpp)->vpd_blkno < blkno);
 		buf = ReadBuffer(onerel, (*vpp)->vpd_blkno);
 		page = BufferGetPage(buf);
-		if ((*vpp)->vpd_nusd == 0)		/* this page was not used */
+		if ((*vpp)->vpd_offsets_used == 0)		/* this page was not used */
 		{
 
 			/*
 			 * noff == 0 in empty pages only - such pages should be
 			 * re-used
 			 */
-			Assert((*vpp)->vpd_noff > 0);
+			Assert((*vpp)->vpd_offsets_free > 0);
 			vc_vacpage(page, *vpp);
 		}
 		else
 /* this page was used */
 		{
-			ntups = 0;
-			moff = PageGetMaxOffsetNumber(page);
+			num_tuples = 0;
+			max_offset = PageGetMaxOffsetNumber(page);
 			for (newoff = FirstOffsetNumber;
-				 newoff <= moff;
+				 newoff <= max_offset;
 				 newoff = OffsetNumberNext(newoff))
 			{
 				itemid = PageGetItemId(page, newoff);
@@ -1233,15 +1233,15 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				if (TransactionIdEquals((TransactionId) tuple->t_xmin, myXID))
 				{
 					tuple->t_infomask |= HEAP_XMIN_COMMITTED;
-					ntups++;
+					num_tuples++;
 				}
 			}
-			Assert((*vpp)->vpd_nusd == ntups);
-			nchkmvd += ntups;
+			Assert((*vpp)->vpd_offsets_used == num_tuples);
+			checked_moved += num_tuples;
 		}
 		WriteBuffer(buf);
 	}
-	Assert(nmoved == nchkmvd);
+	Assert(nmoved == checked_moved);
 
 	getrusage(RUSAGE_SELF, &ru1);
 
@@ -1252,7 +1252,7 @@ Elapsed %u/%u sec.",
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
-	if (Nvpl.vpl_npages > 0)
+	if (Nvpl.vpl_num_pages > 0)
 	{
 		/* vacuum indices again if needed */
 		if (Irel != (Relation *) NULL)
@@ -1261,9 +1261,9 @@ Elapsed %u/%u sec.",
 					   *vpright,
 						vpsave;
 
-			/* re-sort Nvpl.vpl_pgdesc */
-			for (vpleft = Nvpl.vpl_pgdesc,
-				 vpright = Nvpl.vpl_pgdesc + Nvpl.vpl_npages - 1;
+			/* re-sort Nvpl.vpl_pagedesc */
+			for (vpleft = Nvpl.vpl_pagedesc,
+				 vpright = Nvpl.vpl_pagedesc + Nvpl.vpl_num_pages - 1;
 				 vpleft < vpright; vpleft++, vpright--)
 			{
 				vpsave = *vpleft;
@@ -1271,19 +1271,19 @@ Elapsed %u/%u sec.",
 				*vpright = vpsave;
 			}
 			for (i = 0; i < nindices; i++)
-				vc_vaconeind(&Nvpl, Irel[i], vacrelstats->ntups);
+				vc_vaconeind(&Nvpl, Irel[i], vacrelstats->num_tuples);
 		}
 
 		/*
 		 * clean moved tuples from last page in Nvpl list if some tuples
 		 * left there
 		 */
-		if (vpc->vpd_noff > 0 && offnum <= maxoff)
+		if (vpc->vpd_offsets_free > 0 && offnum <= maxoff)
 		{
 			Assert(vpc->vpd_blkno == blkno - 1);
 			buf = ReadBuffer(onerel, vpc->vpd_blkno);
 			page = BufferGetPage(buf);
-			ntups = 0;
+			num_tuples = 0;
 			maxoff = offnum;
 			for (offnum = FirstOffsetNumber;
 				 offnum < maxoff;
@@ -1295,18 +1295,18 @@ Elapsed %u/%u sec.",
 				tuple = (HeapTuple) PageGetItem(page, itemid);
 				Assert(TransactionIdEquals((TransactionId) tuple->t_xmax, myXID));
 				itemid->lp_flags &= ~LP_USED;
-				ntups++;
+				num_tuples++;
 			}
-			Assert(vpc->vpd_noff == ntups);
+			Assert(vpc->vpd_offsets_free == num_tuples);
 			PageRepairFragmentation(page);
 			WriteBuffer(buf);
 		}
 
 		/* now - free new list of reapped pages */
-		vpp = Nvpl.vpl_pgdesc;
-		for (i = 0; i < Nvpl.vpl_npages; i++, vpp++)
+		vpp = Nvpl.vpl_pagedesc;
+		for (i = 0; i < Nvpl.vpl_num_pages; i++, vpp++)
 			pfree(*vpp);
-		pfree(Nvpl.vpl_pgdesc);
+		pfree(Nvpl.vpl_pagedesc);
 	}
 
 	/* truncate relation */
@@ -1317,7 +1317,7 @@ Elapsed %u/%u sec.",
 			elog(FATAL, "VACUUM (vc_rpfheap): BlowawayRelationBuffers returned %d", i);
 		blkno = smgrtruncate(DEFAULT_SMGR, onerel, blkno);
 		Assert(blkno >= 0);
-		vacrelstats->npages = blkno;	/* set new number of blocks */
+		vacrelstats->num_pages = blkno;	/* set new number of blocks */
 	}
 
 	if (Irel != (Relation *) NULL)		/* pfree index' allocations */
@@ -1347,12 +1347,12 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 	int			nblocks;
 	int			i;
 
-	nblocks = Vvpl->vpl_npages;
-	nblocks -= Vvpl->vpl_nemend;/* nothing to do with them */
+	nblocks = Vvpl->vpl_num_pages;
+	nblocks -= Vvpl->vpl_empty_end_pages;/* nothing to do with them */
 
-	for (i = 0, vpp = Vvpl->vpl_pgdesc; i < nblocks; i++, vpp++)
+	for (i = 0, vpp = Vvpl->vpl_pagedesc; i < nblocks; i++, vpp++)
 	{
-		if ((*vpp)->vpd_noff > 0)
+		if ((*vpp)->vpd_offsets_free > 0)
 		{
 			buf = ReadBuffer(onerel, (*vpp)->vpd_blkno);
 			page = BufferGetPage(buf);
@@ -1362,13 +1362,13 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 	}
 
 	/* truncate relation if there are some empty end-pages */
-	if (Vvpl->vpl_nemend > 0)
+	if (Vvpl->vpl_empty_end_pages > 0)
 	{
-		Assert(vacrelstats->npages >= Vvpl->vpl_nemend);
-		nblocks = vacrelstats->npages - Vvpl->vpl_nemend;
+		Assert(vacrelstats->num_pages >= Vvpl->vpl_empty_end_pages);
+		nblocks = vacrelstats->num_pages - Vvpl->vpl_empty_end_pages;
 		elog(MESSAGE_LEVEL, "Rel %s: Pages: %u --> %u.",
 			 (RelationGetRelationName(onerel))->data,
-			 vacrelstats->npages, nblocks);
+			 vacrelstats->num_pages, nblocks);
 
 		/*
 		 * we have to flush "empty" end-pages (if changed, but who knows
@@ -1382,7 +1382,7 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 
 		nblocks = smgrtruncate(DEFAULT_SMGR, onerel, nblocks);
 		Assert(nblocks >= 0);
-		vacrelstats->npages = nblocks;	/* set new number of blocks */
+		vacrelstats->num_pages = nblocks;	/* set new number of blocks */
 	}
 
 }	/* vc_vacheap */
@@ -1397,10 +1397,10 @@ vc_vacpage(Page page, VPageDescr vpd)
 	ItemId		itemid;
 	int			i;
 
-	Assert(vpd->vpd_nusd == 0);
-	for (i = 0; i < vpd->vpd_noff; i++)
+	Assert(vpd->vpd_offsets_used == 0);
+	for (i = 0; i < vpd->vpd_offsets_free; i++)
 	{
-		itemid = &(((PageHeader) page)->pd_linp[vpd->vpd_voff[i] - 1]);
+		itemid = &(((PageHeader) page)->pd_linp[vpd->vpd_offsets[i] - 1]);
 		itemid->lp_flags &= ~LP_USED;
 	}
 	PageRepairFragmentation(page);
@@ -1471,7 +1471,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 	RetrieveIndexResult res;
 	IndexScanDesc iscan;
 	ItemPointer heapptr;
-	int			nvac;
+	int			tups_vacuumed;
 	int			nitups;
 	int			nipages;
 	VPageDescr	vp;
@@ -1482,7 +1482,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 
 	/* walk through the entire index */
 	iscan = index_beginscan(indrel, false, 0, (ScanKey) NULL);
-	nvac = 0;
+	tups_vacuumed = 0;
 	nitups = 0;
 
 	while ((res = index_getnext(iscan, ForwardScanDirection))
@@ -1499,13 +1499,13 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 				 ItemPointerGetBlockNumber(&(res->heap_iptr)),
 				 ItemPointerGetOffsetNumber(&(res->heap_iptr)));
 #endif
-			if (vp->vpd_noff == 0)
+			if (vp->vpd_offsets_free == 0)
 			{					/* this is EmptyPage !!! */
 				elog(NOTICE, "Ind %s: pointer to EmptyPage (blk %u off %u) - fixing",
 					 indrel->rd_rel->relname.data,
 					 vp->vpd_blkno, ItemPointerGetOffsetNumber(heapptr));
 			}
-			++nvac;
+			++tups_vacuumed;
 			index_delete(indrel, &res->index_iptr);
 		}
 		else
@@ -1523,7 +1523,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int nhtups)
 	getrusage(RUSAGE_SELF, &ru1);
 
 	elog(MESSAGE_LEVEL, "Ind %s: Pages %u; Tuples %u: Deleted %u. Elapsed %u/%u sec.",
-		 indrel->rd_rel->relname.data, nipages, nitups, nvac,
+		 indrel->rd_rel->relname.data, nipages, nitups, tups_vacuumed,
 		 ru1.ru_stime.tv_sec - ru0.ru_stime.tv_sec,
 		 ru1.ru_utime.tv_sec - ru0.ru_utime.tv_sec);
 
@@ -1551,8 +1551,8 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 	ioffno = ItemPointerGetOffsetNumber(itemptr);
 
 	vp = &vpd;
-	vpp = (VPageDescr *) vc_find_eq((char *) (vpl->vpl_pgdesc),
-					   vpl->vpl_npages, sizeof(VPageDescr), (char *) &vp,
+	vpp = (VPageDescr *) vc_find_eq((char *) (vpl->vpl_pagedesc),
+					   vpl->vpl_num_pages, sizeof(VPageDescr), (char *) &vp,
 									vc_cmp_blk);
 
 	if (vpp == (VPageDescr *) NULL)
@@ -1561,13 +1561,13 @@ vc_tidreapped(ItemPointer itemptr, VPageList vpl)
 
 	/* ok - we are on true page */
 
-	if (vp->vpd_noff == 0)
+	if (vp->vpd_offsets_free == 0)
 	{							/* this is EmptyPage !!! */
 		return (vp);
 	}
 
-	voff = (OffsetNumber *) vc_find_eq((char *) (vp->vpd_voff),
-					vp->vpd_noff, sizeof(OffsetNumber), (char *) &ioffno,
+	voff = (OffsetNumber *) vc_find_eq((char *) (vp->vpd_offsets),
+					vp->vpd_offsets_free, sizeof(OffsetNumber), (char *) &ioffno,
 									   vc_cmp_offno);
 
 	if (voff == (OffsetNumber *) NULL)
@@ -1723,14 +1723,14 @@ vc_bucketcpy(AttributeTupleForm attr, Datum value, Datum *bucket, int16 *bucket_
  *
  *		This routine works for both index and heap relation entries in
  *		pg_class.  We violate no-overwrite semantics here by storing new
- *		values for ntups, npages, and hasindex directly in the pg_class
+ *		values for num_tuples, num_pages, and hasindex directly in the pg_class
  *		tuple that's already on the page.  The reason for this is that if
  *		we updated these tuples in the usual way, then every tuple in pg_class
  *		would be replaced every day.  This would make planning and executing
  *		historical queries very expensive.
  */
 static void
-vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelstats)
+vc_updstats(Oid relid, int num_pages, int num_tuples, bool hasindex, VRelStats *vacrelstats)
 {
 	Relation	rd,
 				ad,
@@ -1742,24 +1742,28 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 	Form_pg_class pgcform;
 	ScanKeyData askey;
 	AttributeTupleForm attp;
-
+	Buffer		buffer;
+	
 	/*
 	 * update number of tuples and number of pages in pg_class
 	 */
-	rtup = SearchSysCacheTupleCopy(RELOID,
-									 ObjectIdGetDatum(relid),
-									 0, 0, 0);
+	rtup = SearchSysCacheTuple(RELOID,
+								 ObjectIdGetDatum(relid),
+								 0, 0, 0);
 	if (!HeapTupleIsValid(rtup))
 		elog(ERROR, "pg_class entry for relid %d vanished during vacuuming",
 				relid);
 
 	rd = heap_openr(RelationRelationName);
 
+	/* get the buffer cache tuple */
+	rtup = heap_fetch(rd, SnapshotNow, &rtup->t_ctid, &buffer);
+
 	/* overwrite the existing statistics in the tuple */
 	vc_setpagelock(rd, ItemPointerGetBlockNumber(&rtup->t_ctid));
 	pgcform = (Form_pg_class) GETSTRUCT(rtup);
-	pgcform->reltuples = ntups;
-	pgcform->relpages = npages;
+	pgcform->reltuples = num_tuples;
+	pgcform->relpages = num_pages;
 	pgcform->relhasindex = hasindex;
 
 	if (vacrelstats != NULL && vacrelstats->va_natts > 0)
@@ -1893,7 +1897,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 	if (!IsSystemRelationName(pgcform->relname.data))
 		RelationInvalidateHeapTuple(rd, rtup);
 
-	pfree(rtup);
+	ReleaseBuffer(buffer);
 	heap_close(rd);
 }
 
@@ -1905,27 +1909,27 @@ static void
 vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 {
 	Relation	pgstatistic;
-	HeapScanDesc pgsscan;
-	HeapTuple	pgstup;
-	ScanKeyData pgskey;
+	HeapScanDesc scan;
+	HeapTuple	tuple;
+	ScanKeyData key;
 
 	pgstatistic = heap_openr(StatisticRelationName);
 
 	if (relid != InvalidOid)
 	{
-		ScanKeyEntryInitialize(&pgskey, 0x0, Anum_pg_statistic_starelid,
+		ScanKeyEntryInitialize(&key, 0x0, Anum_pg_statistic_starelid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(relid));
-		pgsscan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &pgskey);
+		scan = heap_beginscan(pgstatistic, false, SnapshotNow, 1, &key);
 	}
 	else
-		pgsscan = heap_beginscan(pgstatistic, false, SnapshotNow, 0, NULL);
+		scan = heap_beginscan(pgstatistic, false, SnapshotNow, 0, NULL);
 
-	while (HeapTupleIsValid(pgstup = heap_getnext(pgsscan, 0)))
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
 		if (attcnt > 0)
 		{
-			Form_pg_statistic pgs = (Form_pg_statistic) GETSTRUCT(pgstup);
+			Form_pg_statistic pgs = (Form_pg_statistic) GETSTRUCT(tuple);
 			int			i;
 
 			for (i = 0; i < attcnt; i++)
@@ -1936,10 +1940,10 @@ vc_delhilowstats(Oid relid, int attcnt, int *attnums)
 			if (i >= attcnt)
 				continue;		/* don't delete it */
 		}
-		heap_delete(pgstatistic, &pgstup->t_ctid);
+		heap_delete(pgstatistic, &tuple->t_ctid);
 	}
 
-	heap_endscan(pgsscan);
+	heap_endscan(scan);
 	heap_close(pgstatistic);
 }
 
@@ -1966,15 +1970,15 @@ vc_reappage(VPageList vpl, VPageDescr vpc)
 	VPageDescr	newvpd;
 
 	/* allocate a VPageDescrData entry */
-	newvpd = (VPageDescr) palloc(sizeof(VPageDescrData) + vpc->vpd_noff * sizeof(OffsetNumber));
+	newvpd = (VPageDescr) palloc(sizeof(VPageDescrData) + vpc->vpd_offsets_free * sizeof(OffsetNumber));
 
 	/* fill it in */
-	if (vpc->vpd_noff > 0)
-		memmove(newvpd->vpd_voff, vpc->vpd_voff, vpc->vpd_noff * sizeof(OffsetNumber));
+	if (vpc->vpd_offsets_free > 0)
+		memmove(newvpd->vpd_offsets, vpc->vpd_offsets, vpc->vpd_offsets_free * sizeof(OffsetNumber));
 	newvpd->vpd_blkno = vpc->vpd_blkno;
 	newvpd->vpd_free = vpc->vpd_free;
-	newvpd->vpd_nusd = vpc->vpd_nusd;
-	newvpd->vpd_noff = vpc->vpd_noff;
+	newvpd->vpd_offsets_used = vpc->vpd_offsets_used;
+	newvpd->vpd_offsets_free = vpc->vpd_offsets_free;
 
 	/* insert this page into vpl list */
 	vc_vpinsert(vpl, newvpd);
@@ -1986,12 +1990,12 @@ vc_vpinsert(VPageList vpl, VPageDescr vpnew)
 {
 
 	/* allocate a VPageDescr entry if needed */
-	if (vpl->vpl_npages == 0)
-		vpl->vpl_pgdesc = (VPageDescr *) palloc(100 * sizeof(VPageDescr));
-	else if (vpl->vpl_npages % 100 == 0)
-		vpl->vpl_pgdesc = (VPageDescr *) repalloc(vpl->vpl_pgdesc, (vpl->vpl_npages + 100) * sizeof(VPageDescr));
-	vpl->vpl_pgdesc[vpl->vpl_npages] = vpnew;
-	(vpl->vpl_npages)++;
+	if (vpl->vpl_num_pages == 0)
+		vpl->vpl_pagedesc = (VPageDescr *) palloc(100 * sizeof(VPageDescr));
+	else if (vpl->vpl_num_pages % 100 == 0)
+		vpl->vpl_pagedesc = (VPageDescr *) repalloc(vpl->vpl_pagedesc, (vpl->vpl_num_pages + 100) * sizeof(VPageDescr));
+	vpl->vpl_pagedesc[vpl->vpl_num_pages] = vpnew;
+	(vpl->vpl_num_pages)++;
 
 }
 
@@ -2106,14 +2110,14 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 {
 	Relation	pgindex;
 	Relation	irel;
-	TupleDesc	pgidesc;
-	HeapTuple	pgitup;
-	HeapScanDesc pgiscan;
+	TupleDesc	tupdesc;
+	HeapTuple	tuple;
+	HeapScanDesc scan;
 	Datum		d;
 	int			i,
 				k;
 	bool		n;
-	ScanKeyData pgikey;
+	ScanKeyData key;
 	Oid		   *ioid;
 
 	*nindices = i = 0;
@@ -2122,25 +2126,25 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 
 	/* prepare a heap scan on the pg_index relation */
 	pgindex = heap_openr(IndexRelationName);
-	pgidesc = RelationGetTupleDescriptor(pgindex);
+	tupdesc = RelationGetTupleDescriptor(pgindex);
 
-	ScanKeyEntryInitialize(&pgikey, 0x0, Anum_pg_index_indrelid,
+	ScanKeyEntryInitialize(&key, 0x0, Anum_pg_index_indrelid,
 						   F_OIDEQ,
 						   ObjectIdGetDatum(relid));
 
-	pgiscan = heap_beginscan(pgindex, false, SnapshotNow, 1, &pgikey);
+	scan = heap_beginscan(pgindex, false, SnapshotNow, 1, &key);
 
-	while (HeapTupleIsValid(pgitup = heap_getnext(pgiscan, 0)))
+	while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 	{
-		d = heap_getattr(pgitup, Anum_pg_index_indexrelid,
-						 pgidesc, &n);
+		d = heap_getattr(tuple, Anum_pg_index_indexrelid,
+						 tupdesc, &n);
 		i++;
 		if (i % 10 == 0)
 			ioid = (Oid *) repalloc(ioid, (i + 10) * sizeof(Oid));
 		ioid[i - 1] = DatumGetObjectId(d);
 	}
 
-	heap_endscan(pgiscan);
+	heap_endscan(scan);
 	heap_close(pgindex);
 
 	if (i == 0)
@@ -2196,21 +2200,26 @@ static void
 vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 {
 	IndDesc    *idcur;
-	HeapTuple	pgIndexTup;
+	HeapTuple	tuple;
 	AttrNumber *attnumP;
 	int			natts;
 	int			i;
-
+	Buffer		buffer;
+	
 	*Idesc = (IndDesc *) palloc(nindices * sizeof(IndDesc));
 
 	for (i = 0, idcur = *Idesc; i < nindices; i++, idcur++)
 	{
-		pgIndexTup =
-			SearchSysCacheTuple(INDEXRELID,
-								ObjectIdGetDatum(RelationGetRelid(Irel[i])),
-								0, 0, 0);
-		Assert(pgIndexTup);
-		idcur->tform = (IndexTupleForm) GETSTRUCT(pgIndexTup);
+		tuple = SearchSysCacheTuple(INDEXRELID,
+									ObjectIdGetDatum(RelationGetRelid(Irel[i])),
+									0, 0, 0);
+		Assert(tuple);
+
+		/* get the buffer cache tuple */
+		tuple = heap_fetch(onerel, SnapshotNow, &tuple->t_ctid, &buffer);
+		Assert(tuple);
+
+		idcur->tform = (IndexTupleForm) GETSTRUCT(tuple);
 		for (attnumP = &(idcur->tform->indkey[0]), natts = 0;
 			 *attnumP != InvalidAttrNumber && natts != INDEX_MAX_KEYS;
 			 attnumP++, natts++);
@@ -2226,6 +2235,7 @@ vc_mkindesc(Relation onerel, int nindices, Relation *Irel, IndDesc **Idesc)
 			idcur->finfoP = (FuncIndexInfo *) NULL;
 
 		idcur->natts = natts;
+		ReleaseBuffer(buffer);
 	}
 
 }	/* vc_mkindesc */
@@ -2240,7 +2250,7 @@ vc_enough_space(VPageDescr vpd, Size len)
 	if (len > vpd->vpd_free)
 		return (false);
 
-	if (vpd->vpd_nusd < vpd->vpd_noff)	/* there are free itemid(s) */
+	if (vpd->vpd_offsets_used < vpd->vpd_offsets_free)	/* there are free itemid(s) */
 		return (true);			/* and len <= free_space */
 
 	/* ok. noff_usd >= noff_free and so we'll have to allocate new itemid */
