@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.54 2002/05/24 19:58:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.55 2002/05/24 21:04:34 tgl Exp $
  *
  **********************************************************************/
 
@@ -594,15 +594,17 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
-	UTF_BEGIN;
 	if (fcinfo->isnull)
 		retval = (Datum) 0;
 	else
+	{
+		UTF_BEGIN;
 		retval = FunctionCall3(&prodesc->result_in_func,
 							   PointerGetDatum(UTF_U2E(interp->result)),
 							   ObjectIdGetDatum(prodesc->result_in_elem),
 							   Int32GetDatum(-1));
-	UTF_END;
+		UTF_END;
+	}
 
 	/************************************************************
 	 * Finally we may restore normal error handling.
