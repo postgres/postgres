@@ -1,0 +1,90 @@
+<!-- $Header -->
+
+<refentry id="app-pg-config">
+ <refmeta>
+  <refentrytitle id="app-pg-config-title">pg-config</>
+  <refmiscinfo>Application</>
+ </refmeta>
+
+ <refnamediv>
+  <refname>pg-config</>
+  <refpurpose>Provides information about the installed version of <productname>PostgreSQL</></>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+pg-config --bindir | --includedir | --libdir | --configure | --version
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</>
+  <para>
+   The <application>pg-config</> stores and provides configuration parameters
+   of the currently installed version of <productname>PostgreSQL</>. It is
+   intended, for example, to be used by software packages that want to interface
+   to <productname>PostgreSQL</> in order to find the respective header files
+   and libraries.
+  </para>
+
+  <para>
+   To use <application>pg-config</>, supply one or more of the following options:
+   <variablelist>
+    <varlistentry>
+     <term>--bindir</>
+     <listitem>
+      <para>
+       Print the location of user executables. Use this, for example, to find
+       the <application>psql</> program. This is normally also the location
+       where the <filename>pg-config</> program resides.       
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>--includedir</>
+     <listitem>
+      <para>
+       Print the location of C and C++ header files.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>--libdir</>
+     <listitem>
+      <para>
+       Print the location of object code libraries.
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>--configure</>
+     <listitem>
+      <para>
+       Print the options that were given to the <filename>configure</>
+       script when <productname>PostgreSQL</> was configured for building.
+       This can be used to reproduce the identical configuration, or
+       to find out with what options a binary package was built. (Note
+       however that binary packages often contain vendor-specific custom
+       patches.)
+      </para>
+     </listitem>
+    </varlistentry>
+
+    <varlistentry>
+     <term>--version</>
+     <listitem>
+      <para>
+       Print the version of <productname>PostgreSQL</> and exit.
+      </para>
+     </listitem>
+    </varlistentry>
+   </variablelist>
+
+   If more than one option (except for <option>--version</>) is given, the
+   information is printed in that order, one item per line.
+  </para>
+ </refsect1>
+</refentry>
