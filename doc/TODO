@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Sep 29 17:52:37 EDT 1999
+Last updated:		Fri Oct  1 11:45:36 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -172,6 +172,7 @@ EXOTIC FEATURES
 * Add the concept of dataspaces
 * Add replication of distributed databases
 * Allow queries across multiple databases
+* Allow nested transactions
 
 MISC
 
