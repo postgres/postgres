@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.18 1998/04/06 17:27:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.19 1998/05/26 17:29:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -367,18 +367,14 @@ ShmemInitHash(char *name,		/* table string name for binding */
 	 * message since they have more information
 	 */
 	if (location == NULL)
-	{
 		return (0);
-	}
 
 	/*
 	 * it already exists, attach to it rather than allocate and initialize
 	 * new space
 	 */
 	if (found)
-	{
 		hash_flags |= HASH_ATTACH;
-	}
 
 	/* these structures were allocated or bound in ShmemInitStruct */
 	/* control information and parameters */
