@@ -637,17 +637,6 @@ j2date(int jd, int *year, int *month, int *day)
 	return;
 }	/* j2date() */
 
-int
-j2day(int date)
-{
-	unsigned int day;
-
-	day = date;
-	day += 1;
-	day %= 7;
-	return (int) day;
-}	/* j2day() */
-
 /* DecodeSpecial()
  * Decode text string using lookup table.
  * Implement a cache lookup since it is likely that dates
@@ -931,7 +920,7 @@ EncodeDateTime(struct tm * tm, fsec_t fsec, int *tzp, char **tzn, int style, cha
 			/* Backward-compatible with traditional Postgres abstime dates */
 
 			day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday);
-			tm->tm_wday = j2day(day);
+			tm->tm_wday = (int) ((day + date2j(2000, 1, 1) + 1) % 7);
 
 			strncpy(str, days[tm->tm_wday], 3);
 			strcpy((str + 3), " ");

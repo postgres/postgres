@@ -300,8 +300,6 @@ int			tm2timestamp(struct tm *, fsec_t, int *, timestamp *);
 int			DecodeUnits(int field, char *lowtoken, int *val);
 bool		ClearDateCache(bool, bool, bool);
 
-int			j2day(int jd);
-
 bool		CheckDateTokenTables(void);
 
 int			EncodeDateOnly(struct tm *, int, char *, bool);

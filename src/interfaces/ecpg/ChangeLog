@@ -1665,6 +1665,10 @@ Fri Sep 26 17:14:07 CEST 2003
 Fri Oct  3 12:04:57 CEST 2003
 
 	- Hide Informix datatypes in PostgreSQL built process.
+	
+Sun Oct  5 13:08:47 CEST 2003
+
+	- Fixed bug in day of week calculation.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

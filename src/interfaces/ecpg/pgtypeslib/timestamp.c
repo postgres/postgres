@@ -11,7 +11,6 @@
 #include "dt.h"
 #include "pgtypes_timestamp.h"
 #include "pgtypes_date.h"
-#include "datetime.h"
 
 int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int *,
 							int *, int *, int *, int *);
