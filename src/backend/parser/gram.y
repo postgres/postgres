@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.47 1997/09/18 03:46:18 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.48 1997/09/20 16:11:42 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -207,27 +207,31 @@ static char *FlattenStringList(List *list);
 /* Keywords */
 %token	ABORT_TRANS, ACL, ADD, AFTER, AGGREGATE, ALL, ALTER, ANALYZE,
 		AND, APPEND, ARCHIVE, ARCH_STORE, AS, ASC,
-		BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BOTH, BY,
+		BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BINARY, BY,
 		CAST, CHANGE, CHECK, CLOSE, CLUSTER, COLUMN,
 		COMMIT, CONSTRAINT, COPY, CREATE, CROSS, CURRENT, CURSOR,
-		DATABASE, DAYINTERVAL, DECLARE, DEFAULT, DELETE, DELIMITERS, DESC,
+		DATABASE, DECLARE, DEFAULT, DELETE, DELIMITERS, DESC,
 		DISTINCT, DO, DROP, END_TRANS, EXISTS, EXTEND,
-		FETCH, FOR, FORWARD, FROM, FULL, FUNCTION, GRANT, GROUP, HAVING, HEAVY, HOURINTERVAL,
-		IN, INDEX, INHERITS, INNERJOIN, INSERT, INTERVAL, INSTEAD, INTO, IS, ISNULL,
-		JOIN, LANGUAGE, LEADING, LEFT, LIGHT, LISTEN, LOAD, LOCAL, MERGE, MINUTEINTERVAL, MONTHINTERVAL, MOVE,
+		FETCH, FOR, FORWARD, FROM, FULL, FUNCTION, GRANT, GROUP, HAVING, HEAVY,
+		IN, INDEX, INHERITS, INNERJOIN, INSERT, INSTEAD, INTO, IS, ISNULL,
+		JOIN, LANGUAGE, LEFT, LIGHT, LISTEN, LOAD, LOCAL, MERGE, MOVE,
 		NATURAL, NEW, NONE, NOT, NOTHING, NOTIFY, NOTNULL,
 		OIDS, ON, OPERATOR, OPTION, OR, ORDER, OUTERJOIN,
 		PNULL, PRIVILEGES, PROCEDURE, PUBLIC, PURGE, P_TYPE,
 		RENAME, REPLACE, RESET, RETRIEVE, RETURNS, REVOKE, RIGHT, ROLLBACK, RULE,
-		SECONDINTERVAL, SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE,
-		TABLE, TIME, TO, TRAILING, TRANSACTION, TRIGGER,
+		SELECT, SET, SETOF, SHOW, STDIN, STDOUT, STORE,
+		TABLE, TO, TRANSACTION, TRIGGER,
 		UNION, UNIQUE, UPDATE, USING, VACUUM, VALUES,
-		VERBOSE, VERSION, VIEW, WHERE, WITH, WORK, YEARINTERVAL, ZONE
+		VERBOSE, VERSION, VIEW, WHERE, WITH, WORK
 %token	EXECUTE, RECIPE, EXPLAIN, LIKE, SEQUENCE
 
 /* SQL-92 support */
+%token	INTERVAL, TIME, ZONE
+%token	DAYINTERVAL, HOURINTERVAL, MINUTEINTERVAL, MONTHINTERVAL,
+		SECONDINTERVAL, YEARINTERVAL
+%token	BOTH, LEADING, TRAILING, 
 %token	EXTRACT, POSITION, SUBSTRING, TRIM
-%token	DOUBLE, PRECISION
+%token	DOUBLE, PRECISION, FLOAT
 %token	CHARACTER, VARYING
 
 /* Special keywords, not in the query language - see the "lex" file */
@@ -390,6 +394,17 @@ AddAttrStmt:  ALTER TABLE relation_name opt_inh_star alter_clause
 alter_clause:  ADD opt_column columnDef
 				{
 					$$ = $3;
+				}
+			| ADD '(' tableElementList ')'
+				{
+					ColumnDef *lp = lfirst($3);
+
+					if (length($3) != 1)
+						elog(WARN,"ALTER TABLE/ADD() allows one column only",NULL);
+#ifdef PARSEDEBUG
+printf( "list has %d elements\n", length($3));
+#endif
+					$$ = lp;
 				}
 			| DROP opt_column Id
 				{	elog(WARN,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
@@ -2299,10 +2314,21 @@ nest_array_bounds:	'[' ']' nest_array_bounds
 				{  $$ = NIL; }
 		;
 
+/*
+ * typname handles types without trailing parens for size specification.
+ * Typename uses either typname or explicit txname(size).
+ * So, must handle float in both places. - thomas 1997-09-20
+ */
+
 typname:  txname
 				{
-					char *tname = xlateSqlType($1);
+					char *tname;
 					$$ = makeNode(TypeName);
+
+					if (!strcasecmp($1, "float"))
+						tname = xlateSqlType("float8");
+					else
+						tname = xlateSqlType($1);
 					$$->name = tname;
 
 					/* Is this the name of a complex type? If so, implement
@@ -2336,6 +2362,7 @@ txname:  Id								{ $$ = $1; }
 		| INTERVAL interval_opts		{ $$ = xlateSqlType("interval"); }
 		| CHARACTER char_type			{ $$ = $2; }
 		| DOUBLE PRECISION				{ $$ = xlateSqlType("float8"); }
+		| FLOAT							{ $$ = xlateSqlType("float"); }
 		;
 
 char_type:  VARYING						{ $$ = xlateSqlType("varchar"); }
@@ -2362,34 +2389,34 @@ Typename:  typname opt_array_bounds
 					$$ = $1;
 					$$->arrayBounds = $2;
 					if (!strcasecmp($1->name, "varchar"))
-					{
 						$$->typlen = 4 + 1;
-					}
 				}
 		| txname '(' Iconst ')'
 				{
 					/*
-					 * This block gets hit when the parser is passed a query
-					 * which contains only spaces (e.g. from psql type "  \g").
-					 * Let's check explicitly for a zero-length argument
-					 * here, and do nothing if so. This seems to fix the problem.
-					 * - thomas 1997-07-13
+					 * The following implements CHAR() and VARCHAR().
+					 * We do it here instead of the 'typname:' production
+					 * because we don't want to allow arrays of VARCHAR().
+					 * I haven't thought about whether that will work or not.
+					 *							   - ay 6/95
+					 * Also implements FLOAT() - thomas 1997-09-18
 					 */
-					if (strlen($1) > 0)
-					{
+					$$ = makeNode(TypeName);
+					if (!strcasecmp($1, "float")) {
+						if ($3 < 1)
+							elog(WARN,"precision for '%s' type must be at least 1",$1);
+						else if ($3 <= 7)
+							$$->name = xlateSqlType("float4");
+						else if ($3 < 14)
+							$$->name = xlateSqlType("float8");
+						else
+							elog(WARN,"precision for '%s' type must be less than 14",$1);
 
-						/*
-						 * The following implements char() and varchar().
-						 * We do it here instead of the 'typname:' production
-						 * because we don't want to allow arrays of varchar().
-						 * I haven't thought about whether that will work or not.
-						 *							   - ay 6/95
-						 */
-						$$ = makeNode(TypeName);
+					} else {
 						if (!strcasecmp($1, "char"))
-							$$->name = "bpchar"; /*  strdup("bpchar"); */
+							$$->name = xlateSqlType("bpchar");
 						else if (!strcasecmp($1, "varchar"))
-							$$->name = "varchar"; /* strdup("varchar"); */
+							$$->name = xlateSqlType("varchar");
 						else
 							yyerror("parse error");
 						if ($3 < 1)
@@ -2408,7 +2435,6 @@ Typename:  typname opt_array_bounds
 						 * truncate where necessary
 						 */
 						$$->typlen = 4 + $3;
-
 					}
 				}
 		;
@@ -3069,6 +3095,8 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 
 /* xlateSqlType()
  * Convert alternate type names to internal Postgres types.
+ * Do not convert "float", since that is handled elsewhere
+ *  for FLOAT(p) syntax.
  */
 static char *
 xlateSqlType(char *name)
@@ -3078,8 +3106,7 @@ xlateSqlType(char *name)
 		return "int4"; /* strdup("int4") --   strdup leaks memory here */
 	else if (!strcasecmp(name, "smallint"))
 		return "int2";
-	else if (!strcasecmp(name, "float") ||
-			 !strcasecmp(name, "real"))
+	else if (!strcasecmp(name, "real"))
 		return "float8";
 	else if (!strcasecmp(name, "interval"))
 		return "timespan";
