@@ -2,24 +2,123 @@
  * All the code for the pg_autovacuum program
  * (c) 2003 Matthew T. O'Connor
  * Revisions by Christopher B. Browne, Liberty RMS
+ * Win32 Service code added by Dave Page
  */
 
 #include "pg_autovacuum.h"
+
+#ifdef WIN32
+#include <windows.h>
+
+unsigned int sleep();
+
+SERVICE_STATUS ServiceStatus;
+SERVICE_STATUS_HANDLE hStatus;
+int			appMode = 0;
+#endif
 
 FILE	   *LOGOUTPUT;
 char		logbuffer[4096];
 
 static void
-log_entry(const char *logentry)
+log_entry(const char *logentry, int level)
 {
+	/*
+	 * Note: Under Windows we dump the log entries to the normal
+	 * stderr/logfile
+	 */
+
+	/*
+	 * as well, otherwise it can be a pain to debug service install
+	 * failures etc.
+	 */
+
 	time_t		curtime;
 	struct tm  *loctime;
-	char		timebuffer[128];
+	char		timebuffer[128],
+				slevel[10];
+
+
+#ifdef WIN32
+	static HANDLE evtHandle = INVALID_HANDLE_VALUE;
+	static int	last_level;
+	WORD		elevel;
+#endif
+
+	switch (level)
+	{
+		case LVL_DEBUG:
+			sprintf(slevel, "DEBUG:   ");
+			break;
+
+		case LVL_INFO:
+			sprintf(slevel, "INFO:    ");
+			break;
+
+		case LVL_WARNING:
+			sprintf(slevel, "WARNING: ");
+			break;
+
+		case LVL_ERROR:
+			sprintf(slevel, "ERROR:   ");
+			break;
+
+		case LVL_EXTRA:
+			sprintf(slevel, "         ");
+			break;
+
+		default:
+			sprintf(slevel, "         ");
+			break;
+	}
 
 	curtime = time(NULL);
 	loctime = localtime(&curtime);
 	strftime(timebuffer, sizeof(timebuffer), "%Y-%m-%d %H:%M:%S %Z", loctime);
-	fprintf(LOGOUTPUT, "[%s] %s\n", timebuffer, logentry);
+	fprintf(LOGOUTPUT, "[%s] %s%s\n", timebuffer, slevel, logentry);
+
+#ifdef WIN32
+
+	/* Restore the previous level if this is extra info */
+	if (level == LVL_EXTRA)
+		level = last_level;
+	last_level = level;
+
+	switch (level)
+	{
+		case LVL_DEBUG:
+			elevel = EVENTLOG_INFORMATION_TYPE;
+			break;
+
+		case LVL_INFO:
+			elevel = EVENTLOG_SUCCESS;
+			break;
+
+		case LVL_WARNING:
+			elevel = EVENTLOG_WARNING_TYPE;
+			break;
+
+		case LVL_ERROR:
+			elevel = EVENTLOG_ERROR_TYPE;
+			break;
+
+		default:
+			elevel = EVENTLOG_SUCCESS;
+			break;
+	}
+
+	if (evtHandle == INVALID_HANDLE_VALUE)
+	{
+		evtHandle = RegisterEventSource(NULL, "PostgreSQL Auto Vacuum");
+		if (evtHandle == NULL)
+		{
+			evtHandle = INVALID_HANDLE_VALUE;
+			return;
+		}
+	}
+
+	ReportEvent(evtHandle, elevel, 0, 1, NULL, 1, 0, &logentry, NULL);
+#endif
 }
 
 /*
@@ -29,6 +128,7 @@ log_entry(const char *logentry)
  * This code is mostly ripped directly from pm_dameonize in postmaster.c with
  * unneeded code removed.
  */
+#ifndef WIN32
 static void
 daemonize()
 {
@@ -37,7 +137,7 @@ daemonize()
 	pid = fork();
 	if (pid == (pid_t) -1)
 	{
-		log_entry("Error: cannot disassociate from controlling TTY");
+		log_entry("cannot disassociate from controlling TTY", LVL_ERROR);
 		fflush(LOGOUTPUT);
 		_exit(1);
 	}
@@ -52,13 +152,14 @@ daemonize()
 #ifdef HAVE_SETSID
 	if (setsid() < 0)
 	{
-		log_entry("Error: cannot disassociate from controlling TTY");
+		log_entry("cannot disassociate from controlling TTY", LVL_ERROR);
 		fflush(LOGOUTPUT);
 		_exit(1);
 	}
 #endif
 
 }
+#endif   /* WIN32 */
 
 /* Create and return tbl_info struct with initialized to values from row or res */
 static tbl_info *
@@ -68,7 +169,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 
 	if (!new_tbl)
 	{
-		log_entry("init_table_info: Cannot get memory");
+		log_entry("init_table_info: Cannot get memory", LVL_ERROR);
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
@@ -82,7 +183,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 		malloc(strlen(PQgetvalue(res, row, PQfnumber(res, "schemaname"))) + 1);
 	if (!new_tbl->schema_name)
 	{
-		log_entry("init_table_info: malloc failed on new_tbl->schema_name");
+		log_entry("init_table_info: malloc failed on new_tbl->schema_name", LVL_ERROR);
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
@@ -94,7 +195,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 			   strlen(new_tbl->schema_name) + 6);
 	if (!new_tbl->table_name)
 	{
-		log_entry("init_table_info: malloc failed on new_tbl->table_name");
+		log_entry("init_table_info: malloc failed on new_tbl->table_name", LVL_ERROR);
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
@@ -287,7 +388,7 @@ update_table_list(db_info * dbi)
 					{
 						sprintf(logbuffer, "added table: %s.%s", dbi->dbname,
 								((tbl_info *) DLE_VAL(DLGetTail(dbi->table_list)))->table_name);
-						log_entry(logbuffer);
+						log_entry(logbuffer, LVL_DEBUG);
 					}
 				}
 			}					/* end of for loop that adds tables */
@@ -311,7 +412,7 @@ remove_table_from_list(Dlelem *tbl_to_remove)
 	if (args->debug >= 1)
 	{
 		sprintf(logbuffer, "Removing table: %s from list.", tbl->table_name);
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_DEBUG);
 		fflush(LOGOUTPUT);
 	}
 	DLRemove(tbl_to_remove);
@@ -366,20 +467,20 @@ static void
 print_table_info(tbl_info * tbl)
 {
 	sprintf(logbuffer, "  table name: %s.%s", tbl->dbi->dbname, tbl->table_name);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "     relid: %u;   relisshared: %i", tbl->relid, tbl->relisshared);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "     reltuples: %f;  relpages: %u", tbl->reltuples, tbl->relpages);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "     curr_analyze_count: %li; curr_vacuum_count: %li",
 			tbl->curr_analyze_count, tbl->curr_vacuum_count);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "     last_analyze_count: %li; last_vacuum_count: %li",
 			tbl->CountAtLastAnalyze, tbl->CountAtLastVacuum);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "     analyze_threshold: %li; vacuum_threshold: %li",
 			tbl->analyze_threshold, tbl->vacuum_threshold);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	fflush(LOGOUTPUT);
 }
 
@@ -398,7 +499,7 @@ init_db_list()
 	DLAddHead(db_list, DLNewElem(init_dbinfo((char *) "template1", 0, 0)));
 	if (DLGetHead(db_list) == NULL)
 	{							/* Make sure init_dbinfo was successful */
-		log_entry("init_db_list(): Error creating db_list for db: template1.");
+		log_entry("init_db_list(): Error creating db_list for db: template1.", LVL_ERROR);
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
@@ -478,7 +579,7 @@ update_db_list(Dllist *db_list)
 
 	if (args->debug >= 2)
 	{
-		log_entry("updating the database list");
+		log_entry("updating the database list", LVL_DEBUG);
 		fflush(LOGOUTPUT);
 	}
 
@@ -566,7 +667,7 @@ update_db_list(Dllist *db_list)
 					if (args->debug >= 1)
 					{
 						sprintf(logbuffer, "added database: %s", ((db_info *) DLE_VAL(DLGetTail(db_list)))->dbname);
-						log_entry(logbuffer);
+						log_entry(logbuffer, LVL_DEBUG);
 					}
 				}
 			}					/* end of for loop that adds tables */
@@ -626,7 +727,7 @@ remove_db_from_list(Dlelem *db_to_remove)
 	if (args->debug >= 1)
 	{
 		sprintf(logbuffer, "Removing db: %s from list.", dbi->dbname);
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_DEBUG);
 		fflush(LOGOUTPUT);
 	}
 	DLRemove(db_to_remove);
@@ -694,27 +795,27 @@ static void
 print_db_info(db_info * dbi, int print_tbl_list)
 {
 	sprintf(logbuffer, "dbname: %s", (dbi->dbname) ? dbi->dbname : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	sprintf(logbuffer, "  oid: %u", dbi->oid);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	sprintf(logbuffer, "  username: %s", (dbi->username) ? dbi->username : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	sprintf(logbuffer, "  password: %s", (dbi->password) ? dbi->password : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	if (dbi->conn != NULL)
-		log_entry("  conn is valid, (connected)");
+		log_entry("  conn is valid, (connected)", LVL_INFO);
 	else
-		log_entry("  conn is null, (not connected)");
+		log_entry("  conn is null, (not connected)", LVL_INFO);
 
 	sprintf(logbuffer, "  default_analyze_threshold: %li", dbi->analyze_threshold);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	sprintf(logbuffer, "  default_vacuum_threshold: %li", dbi->vacuum_threshold);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	fflush(LOGOUTPUT);
 	if (print_tbl_list > 0)
@@ -737,7 +838,7 @@ db_connect(db_info * dbi)
 	{
 		sprintf(logbuffer, "Failed connection to database %s with error: %s.",
 				dbi->dbname, PQerrorMessage(db_conn));
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_ERROR);
 		fflush(LOGOUTPUT);
 		PQfinish(db_conn);
 		db_conn = NULL;
@@ -779,7 +880,7 @@ send_query(const char *query, db_info * dbi)
 		return NULL;
 
 	if (args->debug >= 4)
-		log_entry(query);
+		log_entry(query, LVL_DEBUG);
 
 	res = PQexec(dbi->conn, query);
 
@@ -788,9 +889,9 @@ send_query(const char *query, db_info * dbi)
 		sprintf(logbuffer,
 		   "Fatal error occured while sending query (%s) to database %s",
 				query, dbi->dbname);
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_ERROR);
 		sprintf(logbuffer, "The error is [%s]", PQresultErrorMessage(res));
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_EXTRA);
 		fflush(LOGOUTPUT);
 		return NULL;
 	}
@@ -800,9 +901,9 @@ send_query(const char *query, db_info * dbi)
 		sprintf(logbuffer,
 		  "Can not refresh statistics information from the database %s.",
 				dbi->dbname);
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_ERROR);
 		sprintf(logbuffer, "The error is [%s]", PQresultErrorMessage(res));
-		log_entry(logbuffer);
+		log_entry(logbuffer, LVL_EXTRA);
 		fflush(LOGOUTPUT);
 		PQclear(res);
 		return NULL;
@@ -837,7 +938,14 @@ get_cmd_args(int argc, char *argv[])
 	args->analyze_base_threshold = -1;
 	args->analyze_scaling_factor = -1;
 	args->debug = AUTOVACUUM_DEBUG;
+#ifndef WIN32
 	args->daemonize = 0;
+#else
+	args->install_as_service = 0;
+	args->remove_as_service = 0;
+	args->service_user = 0;
+	args->service_password = 0;
+#endif
 	args->user = 0;
 	args->password = 0;
 	args->host = 0;
@@ -848,7 +956,11 @@ get_cmd_args(int argc, char *argv[])
 	 * Fixme: Should add some sanity checking such as positive integer
 	 * values etc
 	 */
+#ifndef WIN32
 	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD")) != -1)
+#else
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:")) != -1)
+#endif
 	{
 		switch (c)
 		{
@@ -870,9 +982,11 @@ get_cmd_args(int argc, char *argv[])
 			case 'A':
 				args->analyze_scaling_factor = atof(optarg);
 				break;
+#ifndef WIN32
 			case 'D':
 				args->daemonize++;
 				break;
+#endif
 			case 'd':
 				args->debug = atoi(optarg);
 				break;
@@ -894,6 +1008,20 @@ get_cmd_args(int argc, char *argv[])
 			case 'h':
 				usage();
 				exit(0);
+#ifdef WIN32
+			case 'I':
+				args->install_as_service++;
+				break;
+			case 'R':
+				args->remove_as_service++;
+				break;
+			case 'N':
+				args->service_user = optarg;
+				break;
+			case 'W':
+				args->service_password = optarg;
+				break;
+#endif
 			default:
 
 				/*
@@ -925,7 +1053,14 @@ usage()
 	float		f = 0;
 
 	fprintf(stderr, "usage: pg_autovacuum \n");
+#ifndef WIN32
 	fprintf(stderr, "   [-D] Daemonize (Detach from tty and run in the background)\n");
+#else
+	fprintf(stderr, "   [-I] Install as a Windows service\n");
+	fprintf(stderr, "   [-R] Remove as a Windows service (all other options will be ignored)\n");
+	fprintf(stderr, "   [-N] Username to run service as (only useful when installing as a Windows service)\n");
+	fprintf(stderr, "   [-W] Password to run service with (only useful when installing as a Windows service)\n");
+#endif
 	i = AUTOVACUUM_DEBUG;
 	fprintf(stderr, "   [-d] debug (debug level=0,1,2,3; default=%i)\n", i);
 
@@ -957,41 +1092,226 @@ static void
 print_cmd_args()
 {
 	sprintf(logbuffer, "Printing command_args");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->host=%s", (args->host) ? args->host : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->port=%s", (args->port) ? args->port : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->username=%s", (args->user) ? args->user : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->password=%s", (args->password) ? args->password : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->logfile=%s", (args->logfile) ? args->logfile : "(null)");
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
+#ifndef WIN32
 	sprintf(logbuffer, "  args->daemonize=%i", args->daemonize);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
+#else
+	sprintf(logbuffer, "  args->install_as_service=%i", args->install_as_service);
+	log_entry(logbuffer, LVL_INFO);
+	sprintf(logbuffer, "  args->remove_as_service=%i", args->remove_as_service);
+	log_entry(logbuffer, LVL_INFO);
+	sprintf(logbuffer, "  args->service_user=%s", (args->service_user) ? args->service_user : "(null)");
+	log_entry(logbuffer, LVL_INFO);
+	sprintf(logbuffer, "  args->service_password=%s", (args->service_password) ? args->service_password : "(null)");
+	log_entry(logbuffer, LVL_INFO);
+#endif
 
 	sprintf(logbuffer, "  args->sleep_base_value=%i", args->sleep_base_value);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->sleep_scaling_factor=%f", args->sleep_scaling_factor);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->vacuum_base_threshold=%i", args->vacuum_base_threshold);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->vacuum_scaling_factor=%f", args->vacuum_scaling_factor);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->analyze_base_threshold=%i", args->analyze_base_threshold);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->analyze_scaling_factor=%f", args->analyze_scaling_factor);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->debug=%i", args->debug);
-	log_entry(logbuffer);
+	log_entry(logbuffer, LVL_INFO);
 
 	fflush(LOGOUTPUT);
 }
 
-/* Beginning of AutoVacuum Main Program */
+#ifdef WIN32
+
+/* Handle control requests from the Service Control Manager */
+static void
+ControlHandler(DWORD request)
+{
+	switch (request)
+	{
+		case SERVICE_CONTROL_STOP:
+		case SERVICE_CONTROL_SHUTDOWN:
+			log_entry("pg_autovacuum service stopping...", LVL_INFO);
+			fflush(LOGOUTPUT);
+			ServiceStatus.dwWin32ExitCode = 0;
+			ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+			SetServiceStatus(hStatus, &ServiceStatus);
+			return;
+
+		default:
+			break;
+	}
+
+	/* Report current status */
+	SetServiceStatus(hStatus, &ServiceStatus);
+
+	return;
+}
+
+/* Register with the Service Control Manager */
+static int
+InstallService()
+{
+	SC_HANDLE	schService = NULL;
+	SC_HANDLE	schSCManager = NULL;
+	char		szFilename[MAX_PATH],
+				szKey[MAX_PATH],
+				szCommand[MAX_PATH + 1024],
+				szMsgDLL[MAX_PATH];
+	HKEY		hk = NULL;
+	DWORD		dwData = 0;
+
+	/*
+	 * Register the service with the SCM
+	 */
+	GetModuleFileName(NULL, szFilename, MAX_PATH);
+
+	/* Open the Service Control Manager on the local computer. */
+	schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (!schSCManager)
+		return -1;
+
+	schService = CreateService(
+							   schSCManager,	/* SCManager database */
+							   TEXT("pg_autovacuum"),	/* Name of service */
+							   TEXT("PostgreSQL Auto Vacuum"),	/* Name to display */
+							   SERVICE_ALL_ACCESS,		/* Desired access */
+							   SERVICE_WIN32_OWN_PROCESS,		/* Service type */
+							   SERVICE_AUTO_START,		/* Start type */
+							   SERVICE_ERROR_NORMAL,	/* Error control type */
+							   szFilename,		/* Service binary */
+							   NULL,	/* No load ordering group */
+							   NULL,	/* No tag identifier */
+							   NULL,	/* Dependencies */
+							   args->service_user,		/* Service account */
+							   args->service_password); /* Account password */
+
+	if (!schService)
+		return -2;
+
+	/*
+	 * Rewrite the command line for the service
+	 */
+	sprintf(szKey, "SYSTEM\\CurrentControlSet\\Services\\pg_autovacuum");
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, szKey, 0, KEY_ALL_ACCESS, &hk))
+		return -3;
+
+	/* Build the command line */
+	sprintf(szCommand, "\"%s\"", szFilename);
+	if (args->host)
+		sprintf(szCommand, "%s -H %s", szCommand, args->host);
+	if (args->port)
+		sprintf(szCommand, "%s -p %s", szCommand, args->port);
+	if (args->user)
+		sprintf(szCommand, "%s -U %s", szCommand, args->user);
+	if (args->password)
+		sprintf(szCommand, "%s -p %s", szCommand, args->password);
+	if (args->logfile)
+		sprintf(szCommand, "%s -L %s", szCommand, args->logfile);
+	if (args->sleep_base_value != (int) SLEEPBASEVALUE)
+		sprintf(szCommand, "%s -s %i", szCommand, args->sleep_base_value);
+	if (args->sleep_scaling_factor != (float) SLEEPSCALINGFACTOR)
+		sprintf(szCommand, "%s -S %f", szCommand, args->sleep_scaling_factor);
+	if (args->vacuum_base_threshold != (int) VACBASETHRESHOLD)
+		sprintf(szCommand, "%s -v %i", szCommand, args->vacuum_base_threshold);
+	if (args->vacuum_scaling_factor != (float) VACSCALINGFACTOR)
+		sprintf(szCommand, "%s -V %f", szCommand, args->vacuum_scaling_factor);
+	if (args->analyze_base_threshold != (int) (VACBASETHRESHOLD / 2))
+		sprintf(szCommand, "%s -a %i", szCommand, args->analyze_base_threshold);
+	if (args->analyze_scaling_factor != (float) (VACSCALINGFACTOR / 2))
+		sprintf(szCommand, "%s -A %f", szCommand, args->analyze_scaling_factor);
+	if (args->debug != (int) AUTOVACUUM_DEBUG)
+		sprintf(szCommand, "%s -d %i", szCommand, args->debug);
+
+	/* And write the new value */
+	if (RegSetValueEx(hk, "ImagePath", 0, REG_EXPAND_SZ, (LPBYTE) szCommand, (DWORD) strlen(szCommand) + 1))
+		return -4;
+	RegCloseKey(hk);
+
+	/*
+	 * Set the Event source for the application log
+	 */
+	sprintf(szKey, "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application\\PostgreSQL Auto Vacuum");
+	if (RegCreateKeyEx(HKEY_LOCAL_MACHINE, szKey, 0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hk, NULL))
+		return -5;
+
+	/* TODO Create an actual message file! */
+	/* Message count */
+	sprintf(szMsgDLL, "pgmessages.dll");
+	if (RegSetValueEx(hk, "EventMessageFile", 0, REG_EXPAND_SZ, (LPBYTE) szMsgDLL, (DWORD) strlen(szMsgDLL) + 1))
+		return -6;
+
+	/* Category message file */
+	if (RegSetValueEx(hk, "CategoryMessageFile", 0, REG_EXPAND_SZ, (LPBYTE) szMsgDLL, (DWORD) strlen(szMsgDLL) + 1))
+		return -7;
+
+	/* Category message count */
+	dwData = 0;
+	if (RegSetValueEx(hk, "CategoryCount", 0, REG_DWORD, (LPBYTE) & dwData, sizeof(DWORD)))
+		return -8;
+
+	/* Set the event types supported */
+	dwData = EVENTLOG_ERROR_TYPE | EVENTLOG_WARNING_TYPE | EVENTLOG_INFORMATION_TYPE | EVENTLOG_SUCCESS;
+	if (RegSetValueEx(hk, "TypesSupported", 0, REG_DWORD, (LPBYTE) & dwData, sizeof(DWORD)))
+		return -9;
+
+	RegCloseKey(hk);
+	return 0;
+}
+
+/* Unregister from the Service Control Manager */
+static int
+RemoveService()
+{
+	SC_HANDLE	schService = NULL;
+	SC_HANDLE	schSCManager = NULL;
+	char		szKey[MAX_PATH];
+	HKEY		hk = NULL;
+
+	/* Open the SCM */
+	schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (!schSCManager)
+		return -1;
+
+	/* Open the service */
+	schService = OpenService(schSCManager, TEXT("pg_autovacuum"), SC_MANAGER_ALL_ACCESS);
+	if (!schService)
+		return -2;
+
+	/* Now delete the service */
+	if (!DeleteService(schService))
+		return -3;
+
+	/*
+	 * Remove the Event source from the application log
+	 */
+	sprintf(szKey, "SYSTEM\\CurrentControlSet\\Services\\EventLog\\Application");
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, szKey, 0, KEY_ALL_ACCESS, &hk))
+		return -4;
+	if (RegDeleteKey(hk, "PostgreSQL Auto Vacuum"))
+		return -5;
+
+	return 0;
+}
+#endif   /* WIN32 */
+
+static
 int
-main(int argc, char *argv[])
+VacuumLoop(int argc, char **argv)
 {
 	char		buf[256];
 	int			j = 0,
@@ -1006,29 +1326,32 @@ main(int argc, char *argv[])
 	tbl_info   *tbl;
 	PGresult   *res = NULL;
 	double		diff;
+
 	struct timeval now,
 				then;
 
-	args = get_cmd_args(argc, argv);	/* Get Command Line Args and put
-										 * them in the args struct */
+#ifdef WIN32
 
-	/* Dameonize if requested */
-	if (args->daemonize == 1)
-		daemonize();
-
-	if (args->logfile)
-	{
-		LOGOUTPUT = fopen(args->logfile, "a");
-		if (!LOGOUTPUT)
-		{
-			fprintf(stderr, "Could not open log file - [%s]\n", args->logfile);
-			exit(-1);
-		}
-	}
+	if (appMode)
+		log_entry("pg_autovacuum starting in Windows Application mode", LVL_INFO);
 	else
-		LOGOUTPUT = stderr;
-	if (args->debug >= 2)
-		print_cmd_args();
+		log_entry("pg_autovacuum starting in Windows Service mode", LVL_INFO);
+
+	ServiceStatus.dwServiceType = SERVICE_WIN32;
+	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;
+	ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+	ServiceStatus.dwWin32ExitCode = 0;
+	ServiceStatus.dwServiceSpecificExitCode = 0;
+	ServiceStatus.dwCheckPoint = 0;
+	ServiceStatus.dwWaitHint = 0;
+
+	if (!appMode)
+	{
+		hStatus = RegisterServiceCtrlHandler("pg_autovacuum", (LPHANDLER_FUNCTION) ControlHandler);
+		if (hStatus == (SERVICE_STATUS_HANDLE) 0)
+			return -1;
+	}
+#endif   /* WIN32 */
 
 	/* Init the db list with template1 */
 	db_list = init_db_list();
@@ -1037,8 +1360,8 @@ main(int argc, char *argv[])
 
 	if (check_stats_enabled(((db_info *) DLE_VAL(DLGetHead(db_list)))) != 0)
 	{
-		log_entry("Error: GUC variable stats_row_level must be enabled.");
-		log_entry("       Please fix the problems and try again.");
+		log_entry("GUC variable stats_row_level must be enabled.", LVL_ERROR);
+		log_entry("       Please fix the problems and try again.", LVL_EXTRA);
 		fflush(LOGOUTPUT);
 
 		exit(1);
@@ -1046,8 +1369,19 @@ main(int argc, char *argv[])
 
 	gettimeofday(&then, 0);		/* for use later to caluculate sleep time */
 
+#ifndef WIN32
 	while (1)
-	{							/* Main Loop */
+#else
+	/* We can now report the running status to SCM. */
+	ServiceStatus.dwCurrentState = SERVICE_RUNNING;
+	if (!appMode)
+		SetServiceStatus(hStatus, &ServiceStatus);
+
+	while (ServiceStatus.dwCurrentState == SERVICE_RUNNING)
+#endif
+	{
+		/* Main Loop */
+
 		db_elem = DLGetHead(db_list);	/* Reset cur_db_node to the
 										 * beginning of the db_list */
 
@@ -1059,9 +1393,16 @@ main(int argc, char *argv[])
 			if (dbs->conn == NULL)
 			{					/* Serious problem: We can't connect to
 								 * template1 */
-				log_entry("Error: Cannot connect to template1, exiting.");
+				log_entry("Cannot connect to template1, exiting.", LVL_ERROR);
 				fflush(LOGOUTPUT);
 				fclose(LOGOUTPUT);
+#ifdef WIN32
+				ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+				ServiceStatus.dwWin32ExitCode = ERROR_SERVICE_SPECIFIC_ERROR;
+				ServiceStatus.dwServiceSpecificExitCode = -1;
+				if (!appMode)
+					SetServiceStatus(hStatus, &ServiceStatus);
+#endif
 				exit(1);
 			}
 		}
@@ -1135,7 +1476,7 @@ main(int argc, char *argv[])
 										if (args->debug >= 1)
 										{
 											sprintf(logbuffer, "Performing: %s", buf);
-											log_entry(logbuffer);
+											log_entry(logbuffer, LVL_DEBUG);
 											fflush(LOGOUTPUT);
 										}
 										send_query(buf, dbs);
@@ -1149,7 +1490,7 @@ main(int argc, char *argv[])
 										if (args->debug >= 1)
 										{
 											sprintf(logbuffer, "Performing: %s", buf);
-											log_entry(logbuffer);
+											log_entry(logbuffer, LVL_DEBUG);
 											fflush(LOGOUTPUT);
 										}
 										send_query(buf, dbs);
@@ -1193,7 +1534,7 @@ main(int argc, char *argv[])
 			sprintf(logbuffer,
 			 "%i All DBs checked in: %.0f usec, will sleep for %i secs.",
 					loops, diff, sleep_secs);
-			log_entry(logbuffer);
+			log_entry(logbuffer, LVL_DEBUG);
 			fflush(LOGOUTPUT);
 		}
 
@@ -1209,5 +1550,99 @@ main(int argc, char *argv[])
 	 */
 	free_db_list(db_list);
 	free_cmd_args();
+	return 0;
+}
+
+/* Beginning of AutoVacuum Main Program */
+int
+main(int argc, char *argv[])
+{
+
+#ifdef WIN32
+	LPVOID		lpMsgBuf;
+	SERVICE_TABLE_ENTRY ServiceTable[2];
+#endif
+
+	args = get_cmd_args(argc, argv);	/* Get Command Line Args and put
+										 * them in the args struct */
+#ifndef WIN32
+	/* Dameonize if requested */
+	if (args->daemonize == 1)
+		daemonize();
+#endif
+
+	if (args->logfile)
+	{
+		LOGOUTPUT = fopen(args->logfile, "a");
+		if (!LOGOUTPUT)
+		{
+			fprintf(stderr, "Could not open log file - [%s]\n", args->logfile);
+			exit(-1);
+		}
+	}
+	else
+		LOGOUTPUT = stderr;
+	if (args->debug >= 2)
+		print_cmd_args();
+
+#ifdef WIN32
+	/* Install as a Windows service if required */
+	if (args->install_as_service)
+	{
+		if (InstallService() != 0)
+		{
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & lpMsgBuf, 0, NULL);
+			sprintf(logbuffer, "%s", (char *) lpMsgBuf);
+			log_entry(logbuffer, LVL_ERROR);
+			fflush(LOGOUTPUT);
+			exit(-1);
+		}
+		else
+		{
+			log_entry("Successfully installed Windows service", LVL_INFO);
+			fflush(LOGOUTPUT);
+			exit(0);
+		}
+	}
+
+	/* Remove as a Windows service if required */
+	if (args->remove_as_service)
+	{
+		if (RemoveService() != 0)
+		{
+			FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & lpMsgBuf, 0, NULL);
+			sprintf(logbuffer, "%s", (char *) lpMsgBuf);
+			log_entry(logbuffer, LVL_ERROR);
+			fflush(LOGOUTPUT);
+			exit(-1);
+		}
+		else
+		{
+			log_entry("Successfully removed Windows service", LVL_INFO);
+			fflush(LOGOUTPUT);
+			exit(0);
+		}
+	}
+
+	/* Normal service startup */
+	ServiceTable[0].lpServiceName = "pg_autovacuum";
+	ServiceTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION) VacuumLoop;
+
+	ServiceTable[1].lpServiceName = NULL;
+	ServiceTable[1].lpServiceProc = NULL;
+
+	/* Start the control dispatcher thread for our service */
+	if (!StartServiceCtrlDispatcher(ServiceTable))
+	{
+		appMode = 1;
+		VacuumLoop(0, NULL);
+	}
+
+#else							/* Unix */
+
+	/* Call the main program loop. */
+	VacuumLoop(0, NULL);
+#endif   /* WIN32 */
+
 	return EXIT_SUCCESS;
 }

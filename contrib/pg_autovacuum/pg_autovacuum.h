@@ -1,7 +1,9 @@
-/* pg_autovacuum.h
+/* pg_autovacuum.hszCmdline
  * Header file for pg_autovacuum.c
  * (c) 2003 Matthew T. O'Connor
  */
+
+#define FRONTEND
 
 #include "postgres_fe.h"
 
@@ -23,7 +25,7 @@
 #include "/usr/include/pgsql/server/lib/dllist.h"
 */
 
-#define AUTOVACUUM_DEBUG	1
+#define AUTOVACUUM_DEBUG	0
 #define VACBASETHRESHOLD	1000
 #define VACSCALINGFACTOR	2
 #define SLEEPBASEVALUE		300
@@ -34,15 +36,25 @@
 #define VACUUM_ANALYZE		0
 #define ANALYZE_ONLY		1
 
-#define TABLE_STATS_QUERY	"select a.oid,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.oid=b.relid and a.relkind = 'r' and schemaname not like 'pg_temp_%'"
 
-#define FRONTEND
+#define TABLE_STATS_QUERY	"select a.oid,a.relname,a.relnamespace,a.relpages,a.relisshared,a.reltuples,b.schemaname,b.n_tup_ins,b.n_tup_upd,b.n_tup_del from pg_class a, pg_stat_all_tables b where a.oid=b.relid and a.relkind = 'r'"
+
 #define PAGES_QUERY "select oid,reltuples,relpages from pg_class where oid=%u"
 #define FROZENOID_QUERY "select oid,age(datfrozenxid) from pg_database where datname = 'template1'"
 #define FROZENOID_QUERY2 "select oid,datname,age(datfrozenxid) from pg_database where datname!='template0'"
 
 /* define atooid */
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
+
+/* Log levels */
+enum
+{
+	LVL_DEBUG = 1,
+	LVL_INFO,
+	LVL_WARNING,
+	LVL_ERROR,
+	LVL_EXTRA
+};
 
 /* define cmd_args stucture */
 struct cmdargs
@@ -51,17 +63,27 @@ struct cmdargs
 				analyze_base_threshold,
 				sleep_base_value,
 				debug,
+#ifndef WIN32
 				daemonize;
+#else
+				install_as_service,
+				remove_as_service;
+#endif
 	float		vacuum_scaling_factor,
 				analyze_scaling_factor,
 				sleep_scaling_factor;
 	char	   *user,
 			   *password,
+#ifdef WIN32
+			   *service_user,
+			   *service_password,
+#endif
 			   *host,
 			   *logfile,
 			   *port;
 };
 typedef struct cmdargs cmd_args;
+
 
 /* define cmd_args as global so we can get to them everywhere */
 cmd_args   *args;
@@ -106,6 +128,9 @@ struct tableinfo
 };
 typedef struct tableinfo tbl_info;
 
+/* The main program loop function */
+static int	VacuumLoop(int argc, char **argv);
+
 /* Functions for dealing with command line arguements */
 static cmd_args *get_cmd_args(int argc, char *argv[]);
 static void print_cmd_args(void);
@@ -138,5 +163,15 @@ static void db_disconnect(db_info * dbi);
 static PGresult *send_query(const char *query, db_info * dbi);
 
 /* Other Generally needed Functions */
+#ifndef WIN32
 static void daemonize(void);
-static void log_entry(const char *logentry);
+#endif
+static void log_entry(const char *logentry, int level);
+
+#ifdef WIN32
+/* Windows Service related functions */
+static void ControlHandler(DWORD request);
+static int	InstallService();
+static int	RemoveService();
+
+#endif
