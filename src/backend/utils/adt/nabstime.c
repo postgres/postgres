@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.46 1998/10/08 18:30:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.47 1998/12/13 23:34:17 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,23 +61,31 @@ GetCurrentAbsoluteTime(void)
 	if (!HasCTZSet)
 	{
 #ifdef USE_POSIX_TIME
-#if defined(HAVE_TZSET) && defined(HAVE_INT_TIMEZONE)
-		tm = localtime(&now);
-
-		CDayLight = tm->tm_isdst;
-		CTimeZone = (tm->tm_isdst ? (timezone - 3600) : timezone);
-		strcpy(CTZName, tzname[tm->tm_isdst]);
-#else							/* !HAVE_TZSET */
+#ifdef HAVE_TM_ZONE
 		tm = localtime(&now);
 
 		CTimeZone = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
 		CDayLight = (tm->tm_isdst > 0);
 
+#if 0
 		/*
 		 * XXX is there a better way to get local timezone string w/o
 		 * tzname? - tgl 97/03/18
 		 */
 		strftime(CTZName, MAXTZLEN, "%Z", tm);
+#endif
+		/* XXX FreeBSD man pages indicate that this should work - thomas 1998-12-12 */
+		if (tzn != NULL)
+		strcpy(tzn, tm->tm_zone);
+
+#elif defined(HAVE_INT_TIMEZONE)
+		tm = localtime(&now);
+
+		CDayLight = tm->tm_isdst;
+		CTimeZone = (tm->tm_isdst ? (timezone - 3600) : timezone);
+		strcpy(CTZName, tzname[tm->tm_isdst]);
+#else
+#error USE_POSIX_TIME defined but no time zone available
 #endif
 #else							/* ! USE_POSIX_TIME */
 		CTimeZone = tb.timezone * 60;
@@ -133,7 +141,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 #endif
 
 #if defined(DATEDEBUG)
-#if defined(HAVE_INT_TIMEZONE)
+#if (! defined(HAVE_TM_ZONE)) && defined(HAVE_INT_TIMEZONE)
 	printf("datetime2tm- (localtime) %d.%02d.%02d %02d:%02d:%02d %s %s dst=%d\n",
 		   tx->tm_year, tx->tm_mon, tx->tm_mday, tx->tm_hour, tx->tm_min, tx->tm_sec,
 		   tzname[0], tzname[1], tx->tm_isdst);
@@ -154,12 +162,7 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	tm->tm_sec = tx->tm_sec;
 	tm->tm_isdst = tx->tm_isdst;
 
-#ifdef HAVE_INT_TIMEZONE
-	if (tzp != NULL)
-		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
-	if (tzn != NULL)
-		strcpy(tzn, tzname[tm->tm_isdst]);
-#else							/* !HAVE_INT_TIMEZONE */
+#ifdef HAVE_TM_ZONE
 	tm->tm_gmtoff = tx->tm_gmtoff;
 	tm->tm_zone = tx->tm_zone;
 
@@ -168,6 +171,13 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm * tm, char *tzn)
 	/* XXX FreeBSD man pages indicate that this should work - tgl 97/04/23 */
 	if (tzn != NULL)
 		strcpy(tzn, tm->tm_zone);
+#elif defined(HAVE_INT_TIMEZONE)
+	if (tzp != NULL)
+		*tzp = (tm->tm_isdst ? (timezone - 3600) : timezone);
+	if (tzn != NULL)
+		strcpy(tzn, tzname[tm->tm_isdst]);
+#else							/* !HAVE_INT_TIMEZONE */
+#error POSIX time support is broken
 #endif
 #else							/* ! USE_POSIX_TIME */
 	if (tzp != NULL)
