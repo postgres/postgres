@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.4 2000/03/25 14:25:31 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/pl/Makefile,v 1.5 2000/03/25 19:26:49 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,29 +21,9 @@ ifeq ($(USE_TCL), true)
 	$(MAKE) -C tcl $@
 endif
 ifeq ($(USE_PERL), true)
-	-@if [ "$@" = "install" ]; then \
-		$(MAKE) $(MFLAGS) install-plperl; \
-	else \
-		$(MAKE) $(MFLAGS) plperl/Makefile; \
-		$(MAKE) $(MFLAGS) -C plperl $@; \
-	fi
+	$(MAKE) $(MFLAGS) plperl/Makefile
+	$(MAKE) $(MFLAGS) -C plperl $@
 endif
 
 plperl/Makefile: plperl/Makefile.PL
 	cd plperl && $(PERL) Makefile.PL POLLUTE=1
-
-install-plperl: plperl/Makefile
-	$(MAKE) -C plperl clean
-	cd plperl && POSTGRES_HOME="$(POSTGRESDIR)" $(PERL) Makefile.PL POLLUTE=1
-	$(MAKE) -C plperl all
-	-@if [ -w `sed -n -e 's/^ *INSTALLSITELIB *= *//p' plperl/Makefile` ]; then \
-		$(MAKE) $(MFLAGS) -C plperl install; \
-		rm -f plperl/Makefile; \
-	else \
-		echo "Skipping install of Perl module for lack of permissions."; \
-		echo "To install it, cd into interfaces/plperl, su to become the"; \
-		echo "appropriate user, and do '$(MAKE) install'."; \
-	fi
-
-.PHONY: install-plperl
-
