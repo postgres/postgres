@@ -1,0 +1,9 @@
+# MAKE_EXPORTS is required for svr4 loaders that want a file of
+# symbol names to tell them what to export/import.
+MAKE_EXPORTS= true
+
+LDFLAGS+= /usr/ucblib/libucb.a -LD-Blargedynsym
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $<
+

@@ -1,0 +1,21 @@
+# MAKE_EXPORTS is required for svr4 loaders that want a file of
+# symbol names to tell them what to export/import.
+MAKE_EXPORTS= true
+
+EXPSUFF= .exp
+
+POSTGRES_EXP= $(SRCDIR)/backend/postgres$(EXPSUFF)
+
+MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
+
+%$(EXPSUFF):  %.o
+	$(MKLDEXPORT) $< `pwd` > $@
+
+$(POSTGRES_EXP): 
+	$(MAKE) -C $(SRCDIR)/backend postgres.exp
+
+%.so: %.o %$(EXPSUFF) $(POSTGRES_EXP)
+	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and postgres.exp
+	$(LD) -H512 -T512 -o $@ -e _nostart \
+	  -bI:$(POSTGRES_EXP) -bE:$*$(EXPSUFF) \
+	  $*.o @MATH_LIB@ -lc 2>/dev/null

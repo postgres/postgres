@@ -1,0 +1,7 @@
+
+# RANLIB is not used on IRIX 5
+RANLIB= touch
+
+%.so: %.o
+	$(LD) -G -Bdynamic -o $@ $< $(LDFLAGS)
+

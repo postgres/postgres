@@ -1,0 +1,23 @@
+
+#ifdef ENFORCE_ALIGNMENT
+#   CFLAGS_BE= -DNOFIXADE
+#else
+#   HPUX_VERS:= $(shell uname -r)
+#   HPUX_MAJOR= ${HPUX_VERS:R:E}
+#   HPUX_MINOR= ${HPUX_VERS:E}
+#   ifeq ($(HPUX_MAJOR), 08)
+#      CFLAGS_BE+= +u -DHP_S500_ALIGN
+#      LDFLAGS_BE+= +u
+#   else
+#   ifeq ($(HPUX_MAJOR), 09)
+#      ifeq ($(CC), cc)
+#         CFLAGS_BE+= +u4 
+#         LDFLAGS_BE+= +u4
+#      endif
+#   endif
+#   endif
+#endif
+
+%.sl: %.o
+	$(LD) -b -o $@ $<
+

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.19 1997/04/04 11:21:39 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.20 1997/04/12 10:32:03 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -227,16 +227,6 @@ DASH_N= @DASH_N@
 BACKSLASH_C= @BACKSLASH_C@ 
 
 
-##############################################################################
-#
-# Customization.
-#
-# This includes your local customizations if Makefile.custom exists
-# in the source directory.  This file doesn't exist in the original
-# distribution so that it doesn't get overwritten when you upgrade.
-ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
-include $(SRCDIR)/Makefile.custom
-endif
 
 #-------------------------------------------------------------
 # See the subdirectory template for default settings for these
@@ -251,171 +241,17 @@ CFLAGS_SL= @SHARED_LIB@
 LDFLAGS= @LDFLAGS@ @LIBS@
 DLSUFFIX= @DLSUFFIX@
 
-#----------------------------------------------------------------------
-ifeq ($(PORTNAME), BSD44_derived)
-%.so: %.o
-	$(LD) -x -r -o $<.obj $<
-	@echo building shared object $@
-	@rm -f $@.pic
-	@${AR} cq $@.pic `lorder $<.obj | tsort`
-	${RANLIB} $@.pic
-	@rm -f $@
-	$(LD) -x -Bshareable -Bforcearchive \
-	  -o $@ $@.pic
-endif
+include $(SRCDIR)/Makefile.port
 
-#--------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), aix)
-
-# MAKE_EXPORTS is required for svr4 loaders that want a file of
-# symbol names to tell them what to export/import.
-MAKE_EXPORTS= true
-
-EXPSUFF= .exp
-
-POSTGRES_EXP= $(SRCDIR)/backend/postgres$(EXPSUFF)
-
-MKLDEXPORT=$(SRCDIR)/backend/port/aix/mkldexport.sh
-
-%$(EXPSUFF):  %.o
-	$(MKLDEXPORT) $< `pwd` > $@
-
-$(POSTGRES_EXP): 
-	$(MAKE) -C $(SRCDIR)/backend postgres.exp
-
-%.so: %.o %$(EXPSUFF) $(POSTGRES_EXP)
-	@echo Making share library $@ from $*.o, $*$(EXPSUFF), and postgres.exp
-	$(LD) -H512 -T512 -o $@ -e _nostart \
-	  -bI:$(POSTGRES_EXP) -bE:$*$(EXPSUFF) \
-	  $*.o @MATH_LIB@ -lc 2>/dev/null
-endif
-
-#---------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), alpha)
-%.so:  %.o
-	$(LD) -shared -expect_unresolved '*' -o $@ $<
-endif
-
-#--------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), dgux)
-%.so: %.o
-	$(CC) -shared -o $@ $<
-endif
-
-#----------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), hpux)
-
-#ifdef ENFORCE_ALIGNMENT
-#   CFLAGS_BE= -DNOFIXADE
-#else
-#   HPUX_VERS:= $(shell uname -r)
-#   HPUX_MAJOR= ${HPUX_VERS:R:E}
-#   HPUX_MINOR= ${HPUX_VERS:E}
-#   ifeq ($(HPUX_MAJOR), 08)
-#      CFLAGS_BE+= +u -DHP_S500_ALIGN
-#      LDFLAGS_BE+= +u
-#   else
-#   ifeq ($(HPUX_MAJOR), 09)
-#      ifeq ($(CC), cc)
-#         CFLAGS_BE+= +u4 
-#         LDFLAGS_BE+= +u4
-#      endif
-#   endif
-#   endif
-#endif
-
-%.sl: %.o
-	$(LD) -b -o $@ $<
-
-endif
-
-#--------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), i386_solaris)
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
-endif
-
-#----------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), irix5)
-
-# RANLIB is not used on IRIX 5
-RANLIB= touch
-
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $< $(LDFLAGS)
-
-endif
-
-#---------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), linux)
-ifdef LINUX_ELF
-LDFLAGS+= -rdynamic
-endif
-MK_NO_LORDER= true
-
-%.so: %.o
-	$(CC) -shared -o $@ $<
-
-endif
-
-#---------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), sunos4)
-%.so: %.o
-	$(LD) -dc -dp -Bdynamic -o $@ $<
-endif
-
-#----------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), sparc_solaris)
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
-endif
-
-#-----------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), svr4)
-# MAKE_EXPORTS is required for svr4 loaders that want a file of
-# symbol names to tell them what to export/import.
-MAKE_EXPORTS= true
-
-LDFLAGS+= /usr/ucblib/libucb.a -LD-Blargedynsym
-
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
-
-endif
-
-#---------------------------------------------------------------------------
-
-ifeq ($(PORTNAME), ultrix4)
-# install creates intermediate directories
-NO_BEFOREINSTL= true
-endif
-
-
-#-----------------------------------------------------------------------------
-
+##############################################################################
 #
-#	The univel port is almost guaranteed NOT to work yet.
+# Customization.
 #
-ifeq ($(PORTNAME), univel)
-# MAKE_EXPORTS is required for svr4 loaders that want a file of
-# symbol names to tell them what to export/import.
-#MAKE_EXPORTS= true
-
-%.so: %.o
-	$(LD) -G -Bdynamic -o $@ $<
-
-INSTALL= /usr/ucb/install
-
+# This includes your local customizations if Makefile.custom exists
+# in the source directory.  This file doesn't exist in the original
+# distribution so that it doesn't get overwritten when you upgrade.
+ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
+include $(SRCDIR)/Makefile.custom
 endif
 
 # This goes here so that customization in Makefile.custom is effective
