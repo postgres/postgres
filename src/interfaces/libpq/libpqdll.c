@@ -1,7 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <winsock.h>
 #include "win32.h"
+
 
 BOOL		WINAPI
 DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
@@ -20,12 +20,8 @@ DllMain(HINSTANCE hinstDLL, DWORD fdwReason,
 				 */
 				return FALSE;
 			}
-			if (netmsgModule == NULL)
-				netmsgModule = LoadLibraryEx("netmsg.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
 			break;
 		case DLL_PROCESS_DETACH:
-			if (netmsgModule != NULL)
-				FreeLibrary(netmsgModule);
 			WSACleanup();
 			break;
 	}

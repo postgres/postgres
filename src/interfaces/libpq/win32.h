@@ -31,9 +31,6 @@
 #define EINPROGRESS WSAEINPROGRESS
 
 /*
- * Windows network messaging stuff:
+ * support for handling Windows Socket errors
  */
-static HINSTANCE netmsgModule = NULL;
-
-static char winsock_strerror_buf[512];
-const char *winsock_strerror(DWORD eno);
+extern const char *winsock_strerror(int eno);

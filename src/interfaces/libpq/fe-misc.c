@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.63 2001/11/27 18:21:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.64 2001/11/28 19:40:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,8 @@
 #include <time.h>
 
 #ifdef WIN32
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
 #include "win32.h"
 #else
 #include <unistd.h>
@@ -858,41 +860,59 @@ libpq_gettext(const char *msgid)
  * If you can verify this working on win9x or have a solution, let us know, ok?
  */
 const char *
-winsock_strerror(DWORD eno)
+winsock_strerror(int eno)
 {
-#define WSSE_MAXLEN (sizeof(winsock_strerror_buf)-1-12) /* 12 == "(0x00000000)" */
+	static char	err_buf[512];
+#define WSSE_MAXLEN (sizeof(err_buf)-1-13)	/* 13 == " (0x00000000)" */
+	HINSTANCE	netmsgModule;
 	int			length;
 
 	/* First try the "system table", this works on Win2k pro */
 
 	if (FormatMessage(
-			  FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
-					  0, eno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					  winsock_strerror_buf, WSSE_MAXLEN, NULL
-					  ))
+				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+					  0,
+					  eno,
+					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+					  err_buf,
+					  WSSE_MAXLEN,
+					  NULL))
 		goto WSSE_GOODEXIT;
 
 	/* That didn't work, let's try the netmsg.dll */
 
-	if (netmsgModule &&
-		FormatMessage(
-			 FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE,
-					  0, eno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-					  winsock_strerror_buf, WSSE_MAXLEN, NULL
-					  ))
-		goto WSSE_GOODEXIT;
+	netmsgModule = LoadLibraryEx("netmsg.dll",
+								 NULL,
+								 LOAD_LIBRARY_AS_DATAFILE);
+
+	if (netmsgModule != NULL)
+	{
+		if (FormatMessage(
+				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_HMODULE,
+						  netmsgModule,
+						  eno,
+						  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+						  err_buf,
+						  WSSE_MAXLEN,
+						  NULL))
+		{
+			FreeLibrary(netmsgModule);
+			goto WSSE_GOODEXIT;
+		}
+		FreeLibrary(netmsgModule);
+	}
 
 	/* Everything failed, just tell the user that we don't know the desc */
 
-	strcpy(winsock_strerror_buf, "Socket error, no description available.");
+	strcpy(err_buf, "Socket error, no description available.");
 
 WSSE_GOODEXIT:
 
-	length = strlen(winsock_strerror_buf);
-	sprintf(winsock_strerror_buf + (length < WSSE_MAXLEN ? length : WSSE_MAXLEN),
-			"(0x%08X)", eno);
+	length = strlen(err_buf);
+	sprintf(err_buf + (length < WSSE_MAXLEN ? length : WSSE_MAXLEN),
+			" (0x%08X)", eno);
 
-	return winsock_strerror_buf;
+	return err_buf;
 }
 
 #endif
