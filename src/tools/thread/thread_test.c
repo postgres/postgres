@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.8 2004/03/27 23:02:44 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.9 2004/03/28 02:37:31 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -93,15 +93,13 @@ defines to your template/$port file before compiling this program.\n\n"
 void func_call_1(void) {
 	void *p;
 	
-	if (open("/tmp/thread_test.1", O_RDWR | O_CREAT, 0600) < 0)
+	unlink("/tmp/thread_test.1");
+	/* create, then try to fail on exclusive create open */
+	if (open("/tmp/thread_test.1", O_RDWR | O_CREAT, 0600) < 0 ||
+		open("/tmp/thread_test.1", O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
 	{
-			fprintf(stderr, "Could not create file in /tmp, exiting\n");
-			exit(1);
-	}
-		
-	if (open("/tmp/thread_test.1", O_RDWR | O_CREAT | O_EXCL, 0600) >= 0)
-	{
-			fprintf(stderr, "Could not generate failure for create file in /tmp, exiting\n");
+			fprintf(stderr, "Could not create file in /tmp or\n");
+			fprintf(stderr, "could not generate failure for create file in /tmp, exiting\n");
 			exit(1);
 	}
 	/* wait for other thread to set errno */
@@ -144,6 +142,7 @@ void func_call_2(void) {
 	void *p;
 
 	unlink("/tmp/thread_test.2");
+	/* open non-existant file */
 	if (open("/tmp/thread_test.2", O_RDONLY, 0600) >= 0)
 	{
 			fprintf(stderr, "Read-only open succeeded without create, exiting\n");
@@ -159,6 +158,7 @@ void func_call_2(void) {
 			unlink("/tmp/thread_test.A");
 			exit(1);
 	}
+	unlink("/tmp/thread_test.2");
 	
 	strerror_p2 = strerror(EINVAL);
 	/*
