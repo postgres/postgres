@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.47 2003/06/11 16:29:42 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_restore.c,v 1.48 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,7 +273,7 @@ main(int argc, char **argv)
 					fprintf(stderr,
 							_("%s: invalid -X option -- %s\n"),
 							progname, optarg);
-					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				break;
@@ -283,7 +283,7 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}

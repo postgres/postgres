@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.22 2003/06/22 00:56:58 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.23 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,17 +189,17 @@ main(int argc, char *argv[])
 				break;
 
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
 
 	if (optind < argc)
 	{
-		fprintf(stderr,
-				_("%s: too many command line options (first is '%s')\n"
-				  "Try '%s --help' for more information.\n"),
-				progname, argv[optind], progname);
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
 		exit(1);
 	}
 
@@ -494,7 +494,7 @@ dumpCreateDB(PGconn *conn)
 			!buildACLCommands(fdbname, "DATABASE", dbacl, dbowner,
 							  server_version, buf))
 		{
-			fprintf(stderr, _("%s: could not parse ACL list (%s) for database %s\n"),
+			fprintf(stderr, _("%s: could not parse ACL list (%s) for database \"%s\"\n"),
 					progname, dbacl, fdbname);
 			PQfinish(conn);
 			exit(1);
@@ -641,7 +641,7 @@ dumpDatabases(PGconn *conn)
 		ret = runPgDump(dbname);
 		if (ret != 0)
 		{
-			fprintf(stderr, _("%s: pg_dump failed on %s, exiting\n"), progname, dbname);
+			fprintf(stderr, _("%s: pg_dump failed on database \"%s\", exiting\n"), progname, dbname);
 			exit(1);
 		}
 	}
@@ -676,7 +676,7 @@ runPgDump(const char *dbname)
 	appendPQExpBufferChar(cmd, '\'');
 
 	if (verbose)
-		fprintf(stderr, _("%s: running %s\n"), progname, cmd->data);
+		fprintf(stderr, _("%s: running \"%s\"\n"), progname, cmd->data);
 
 	fflush(stdout);
 	fflush(stderr);
@@ -717,7 +717,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 
 		if (!conn)
 		{
-			fprintf(stderr, _("%s: could not connect to database %s\n"),
+			fprintf(stderr, _("%s: could not connect to database \"%s\"\n"),
 					progname, dbname);
 			exit(1);
 		}
@@ -740,7 +740,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, _("%s: could not connect to database %s: %s\n"),
+		fprintf(stderr, _("%s: could not connect to database \"%s\": %s\n"),
 				progname, dbname, PQerrorMessage(conn));
 		exit(1);
 	}

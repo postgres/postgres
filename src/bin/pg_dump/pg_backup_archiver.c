@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.72 2003/05/14 03:26:02 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.73 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ CloseArchive(Archive *AHX)
 		res = fclose(AH->OF);
 
 	if (res != 0)
-		die_horribly(AH, modulename, "could not close the output file in CloseArchive\n");
+		die_horribly(AH, modulename, "could not close output archive file\n");
 }
 
 /* Public */
@@ -259,7 +259,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			/* If we created a DB, connect to it... */
 			if (strcmp(te->desc, "DATABASE") == 0)
 			{
-				ahlog(AH, 1, "connecting to new database %s as user %s\n", te->tag, te->owner);
+				ahlog(AH, 1, "connecting to new database \"%s\" as user \"%s\"\n", te->tag, te->owner);
 				_reconnectAsUser(AH, te->tag, te->owner);
 			}
 		}
@@ -284,7 +284,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 				{
 #ifndef HAVE_LIBZ
 					if (AH->compression != 0)
-						die_horribly(AH, modulename, "unable to restore from compressed archive (not configured for compression support)\n");
+						die_horribly(AH, modulename, "cannot restore from compressed archive (not configured for compression support)\n");
 #endif
 
 					_printTocEntry(AH, te, ropt, true);
@@ -304,7 +304,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						 * we don't want warnings.
 						 */
 						if (!AH->CustomOutPtr)
-							write_msg(modulename, "WARNING: skipping large object restoration\n");
+							write_msg(modulename, "WARNING: skipping large-object restoration\n");
 					}
 					else
 					{
@@ -317,7 +317,7 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 						_reconnectAsOwner(AH, NULL, te);
 						_selectOutputSchema(AH, te->namespace);
 
-						ahlog(AH, 1, "restoring data for table %s\n", te->tag);
+						ahlog(AH, 1, "restoring data for table \"%s\"\n", te->tag);
 
 						/*
 						 * If we have a copy statement, use it. As of
@@ -364,18 +364,18 @@ RestoreArchive(Archive *AHX, RestoreOptions *ropt)
 			/* Is it table data? */
 			if (strcmp(te->desc, "TABLE DATA") == 0)
 			{
-				ahlog(AH, 2, "checking whether we loaded %s\n", te->tag);
+				ahlog(AH, 2, "checking whether we loaded \"%s\"\n", te->tag);
 
 				reqs = _tocEntryRequired(te, ropt);
 
 				if ((reqs & REQ_DATA) != 0)		/* We loaded the data */
 				{
-					ahlog(AH, 1, "fixing up large object cross-reference for %s\n", te->tag);
+					ahlog(AH, 1, "fixing up large-object cross-reference for \"%s\"\n", te->tag);
 					FixupBlobRefs(AH, te);
 				}
 			}
 			else
-				ahlog(AH, 2, "ignoring large object cross-references for %s %s\n", te->desc, te->tag);
+				ahlog(AH, 2, "ignoring large-object cross-references for %s %s\n", te->desc, te->tag);
 
 			te = te->next;
 		}
@@ -584,7 +584,7 @@ WriteData(Archive *AHX, const void *data, size_t dLen)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	if (!AH->currToc)
-		die_horribly(AH, modulename, "WriteData cannot be called outside the context of a DataDumper routine\n");
+		die_horribly(AH, modulename, "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n");
 
 	return (*AH->WriteDataPtr) (AH, data, dLen);
 }
@@ -708,7 +708,7 @@ StartBlob(Archive *AHX, Oid oid)
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 
 	if (!AH->StartBlobPtr)
-		die_horribly(AH, modulename, "large object output not supported in chosen format\n");
+		die_horribly(AH, modulename, "large-object output not supported in chosen format\n");
 
 	(*AH->StartBlobPtr) (AH, AH->currToc, oid);
 
@@ -748,7 +748,7 @@ EndRestoreBlobs(ArchiveHandle *AH)
 {
 	if (AH->txActive)
 	{
-		ahlog(AH, 2, "committing large object transactions\n");
+		ahlog(AH, 2, "committing large-object transactions\n");
 		CommitTransaction(AH);
 	}
 
@@ -786,7 +786,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	 */
 	if (!AH->txActive)
 	{
-		ahlog(AH, 2, "starting large object transactions\n");
+		ahlog(AH, 2, "starting large-object transactions\n");
 		StartTransaction(AH);
 	}
 	if (!AH->blobTxActive)
@@ -796,7 +796,7 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 	if (loOid == 0)
 		die_horribly(AH, modulename, "could not create large object\n");
 
-	ahlog(AH, 2, "restoring large object with oid %u as %u\n", oid, loOid);
+	ahlog(AH, 2, "restoring large object with OID %u as %u\n", oid, loOid);
 
 	InsertBlobXref(AH, oid, loOid);
 
@@ -817,7 +817,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 
 		res = lo_write(AH->connection, AH->loFd, (void *) AH->lo_buf, AH->lo_buf_used);
 
-		ahlog(AH, 5, "wrote remaining %lu bytes of large object data (result = %lu)\n",
+		ahlog(AH, 5, "wrote remaining %lu bytes of large-object data (result = %lu)\n",
 			  (unsigned long) AH->lo_buf_used, (unsigned long) res);
 		if (res != AH->lo_buf_used)
 			die_horribly(AH, modulename, "could not write to large object (result: %lu, expected: %lu)\n",
@@ -833,7 +833,7 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 	 */
 	if (((AH->blobCount / BLOB_BATCH_SIZE) * BLOB_BATCH_SIZE) == AH->blobCount)
 	{
-		ahlog(AH, 2, "committing large object transactions\n");
+		ahlog(AH, 2, "committing large-object transactions\n");
 		CommitTransaction(AH);
 		CommitTransactionXref(AH);
 	}
@@ -985,7 +985,7 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 		/* Find TOC entry */
 		te = _getTocEntry(AH, id);
 		if (!te)
-			die_horribly(AH, modulename, "could not find entry for id %d\n", id);
+			die_horribly(AH, modulename, "could not find entry for ID %d\n", id);
 
 		ropt->idWanted[id - 1] = 1;
 
@@ -1775,7 +1775,7 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 			break;
 
 		default:
-			die_horribly(AH, modulename, "unrecognized file format '%d'\n", fmt);
+			die_horribly(AH, modulename, "unrecognized file format \"%d\"\n", fmt);
 	}
 
 	return AH;
@@ -1888,7 +1888,7 @@ ReadToc(ArchiveHandle *AH)
 
 		/* Sanity check */
 		if (te->id <= 0 || te->id > AH->tocCount)
-			die_horribly(AH, modulename, "entry id %d out of range - perhaps a corrupt TOC\n", te->id);
+			die_horribly(AH, modulename, "entry ID %d out of range -- perhaps a corrupt TOC\n", te->id);
 
 		te->hadDumper = ReadInt(AH);
 		te->oid = ReadStr(AH);
@@ -1945,7 +1945,7 @@ ReadToc(ArchiveHandle *AH)
 		if (AH->ReadExtraTocPtr)
 			(*AH->ReadExtraTocPtr) (AH, te);
 
-		ahlog(AH, 3, "read TOC entry %d (id %d) for %s %s\n", i, te->id, te->desc, te->tag);
+		ahlog(AH, 3, "read TOC entry %d (ID %d) for %s %s\n", i, te->id, te->desc, te->tag);
 
 		te->prev = AH->toc->prev;
 		AH->toc->prev->next = te;
@@ -2071,7 +2071,7 @@ _doSetSessionAuth(ArchiveHandle *AH, const char *user)
 		res = PQexec(AH->connection, cmd->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			die_horribly(AH, modulename, "could not set session user to %s: %s",
+			die_horribly(AH, modulename, "could not set session user to \"%s\": %s",
 						 user, PQerrorMessage(AH->connection));
 
 		PQclear(res);
@@ -2185,7 +2185,7 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 		res = PQexec(AH->connection, qry->data);
 
 		if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
-			die_horribly(AH, modulename, "could not set search_path to %s: %s",
+			die_horribly(AH, modulename, "could not set search_path to \"%s\": %s",
 						 schemaName, PQerrorMessage(AH->connection));
 
 		PQclear(res);
@@ -2246,7 +2246,7 @@ WriteHead(ArchiveHandle *AH)
 #ifndef HAVE_LIBZ
 	if (AH->compression != 0)
 		write_msg(modulename, "WARNING: requested compression not available in this "
-				  "installation - archive will be uncompressed\n");
+				  "installation -- archive will be uncompressed\n");
 
 	AH->compression = 0;
 #endif
@@ -2327,7 +2327,7 @@ ReadHead(ArchiveHandle *AH)
 
 #ifndef HAVE_LIBZ
 	if (AH->compression != 0)
-		write_msg(modulename, "WARNING: archive is compressed, but this installation does not support compression - no data will be available\n");
+		write_msg(modulename, "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n");
 #endif
 
 	if (AH->version >= K_VERS_1_4)

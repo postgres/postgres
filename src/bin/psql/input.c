@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.23 2003/03/20 06:43:35 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/input.c,v 1.24 2003/07/23 08:47:39 petere Exp $
  */
 #include "postgres_fe.h"
 #include "input.h"
@@ -204,7 +204,7 @@ saveHistory(char *fname)
 		if (write_history(fname) == 0)
 		return true;
 
-		psql_error("could not save history to %s: %s\n", fname, strerror(errno));
+		psql_error("could not save history to file \"%s\": %s\n", fname, strerror(errno));
 	}
 #endif
 

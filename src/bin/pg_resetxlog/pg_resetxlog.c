@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.9 2003/04/04 20:42:13 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.10 2003/07/23 08:47:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,8 +138,8 @@ main(int argc, char *argv[])
 				set_xid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for -x option\n"), progname);
-					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option -x\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				if (set_xid == 0)
@@ -153,8 +153,8 @@ main(int argc, char *argv[])
 				set_oid = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for -o option\n"), progname);
-					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option -o\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				if (set_oid == 0)
@@ -168,21 +168,21 @@ main(int argc, char *argv[])
 				minXlogId = strtoul(optarg, &endptr, 0);
 				if (endptr == optarg || *endptr != ',')
 				{
-					fprintf(stderr, _("%s: invalid argument for -l option\n"), progname);
-					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				minXlogSeg = strtoul(endptr+1, &endptr2, 0);
 				if (endptr2 == endptr+1 || *endptr2 != '\0')
 				{
-					fprintf(stderr, _("%s: invalid argument for -l option\n"), progname);
-					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("%s: invalid argument for option -l\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				break;
 
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -190,7 +190,7 @@ main(int argc, char *argv[])
 	if (optind == argc)
 	{
 		fprintf(stderr, _("%s: no data directory specified\n"), progname);
-		fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 		exit(1);
 	}
 
@@ -209,14 +209,14 @@ main(int argc, char *argv[])
 	{
 		if (errno != ENOENT)
 		{
-			fprintf(stderr, _("%s: could not open %s for reading: %s\n"), progname, path, strerror(errno));
+			fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"), progname, path, strerror(errno));
 			exit(1);
 		}
 	}
 	else
 	{
-		fprintf(stderr, _("%s: lock file %s exists\n"
-						  "Is a server running? If not, delete the lock file and try again.\n"),
+		fprintf(stderr, _("%s: lock file \"%s\" exists\n"
+						  "Is a server running?  If not, delete the lock file and try again.\n"),
 				progname, path);
 		exit(1);
 	}
@@ -305,10 +305,10 @@ ReadControlFile(void)
 		 * odds are we've been handed a bad DataDir path, so give up. User
 		 * can do "touch pg_control" to force us to proceed.
 		 */
-		fprintf(stderr, _("%s: could not open %s for reading: %s\n"),
+		fprintf(stderr, _("%s: could not open file \"%s\" for reading: %s\n"),
 				progname, ControlFilePath, strerror(errno));
 		if (errno == ENOENT)
-			fprintf(stderr, _("If you are sure the data directory path is correct, do\n"
+			fprintf(stderr, _("If you are sure the data directory path is correct, execute\n"
 							  "  touch %s\n"
 							  "and try again.\n"),
 					ControlFilePath);
@@ -321,7 +321,7 @@ ReadControlFile(void)
 	len = read(fd, buffer, BLCKSZ);
 	if (len < 0)
 	{
-		fprintf(stderr, _("%s: could not read %s: %s\n"),
+		fprintf(stderr, _("%s: could not read file \"%s\": %s\n"),
 				progname, ControlFilePath, strerror(errno));
 		exit(1);
 	}
@@ -449,7 +449,7 @@ PrintControlValues(bool guessed)
 	printf(_("Maximum length of identifiers:        %u\n"), ControlFile.nameDataLen);
 	printf(_("Maximum number of function arguments: %u\n"), ControlFile.funcMaxArgs);
 	printf(_("Date/time type storage:               %s\n"),
-		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("Floating point")));
+		   (ControlFile.enableIntTimes ? _("64-bit integers") : _("floating-point numbers")));
 	printf(_("Maximum length of locale name:        %u\n"), ControlFile.localeBuflen);
 	printf(_("LC_COLLATE:                           %s\n"), ControlFile.lc_collate);
 	printf(_("LC_CTYPE:                             %s\n"), ControlFile.lc_ctype);
@@ -557,7 +557,7 @@ KillExistingXLOG(void)
 	xldir = opendir(XLogDir);
 	if (xldir == NULL)
 	{
-		fprintf(stderr, _("%s: could not open directory %s: %s\n"),
+		fprintf(stderr, _("%s: could not open directory \"%s\": %s\n"),
 				progname, XLogDir, strerror(errno));
 		exit(1);
 	}
@@ -571,7 +571,7 @@ KillExistingXLOG(void)
 			snprintf(path, MAXPGPATH, "%s/%s", XLogDir, xlde->d_name);
 			if (unlink(path) < 0)
 			{
-				fprintf(stderr, _("%s: could not delete file %s: %s\n"),
+				fprintf(stderr, _("%s: could not delete file \"%s\": %s\n"),
 						progname, path, strerror(errno));
 				exit(1);
 			}
@@ -581,7 +581,7 @@ KillExistingXLOG(void)
 
 	if (errno)
 	{
-		fprintf(stderr, _("%s: could not read from directory %s: %s\n"),
+		fprintf(stderr, _("%s: could not read from directory \"%s\": %s\n"),
 				progname, XLogDir, strerror(errno));
 		exit(1);
 	}
@@ -644,7 +644,7 @@ WriteEmptyXLOG(void)
 			  S_IRUSR | S_IWUSR);
 	if (fd < 0)
 	{
-		fprintf(stderr, _("%s: could not open %s: %s\n"),
+		fprintf(stderr, _("%s: could not open file \"%s\": %s\n"),
 				progname, path, strerror(errno));
 		exit(1);
 	}
@@ -655,7 +655,7 @@ WriteEmptyXLOG(void)
 		/* if write didn't set errno, assume problem is no disk space */
 		if (errno == 0)
 			errno = ENOSPC;
-		fprintf(stderr, _("%s: could not write %s: %s\n"),
+		fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
 				progname, path, strerror(errno));
 		exit(1);
 	}
@@ -669,7 +669,7 @@ WriteEmptyXLOG(void)
 		{
 			if (errno == 0)
 				errno = ENOSPC;
-			fprintf(stderr, _("%s: could not write %s: %s\n"),
+			fprintf(stderr, _("%s: could not write file \"%s\": %s\n"),
 					progname, path, strerror(errno));
 			exit(1);
 		}

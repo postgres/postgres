@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/dropuser.c,v 1.4 2003/06/11 05:13:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/dropuser.c,v 1.5 2003/07/23 08:47:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ main(int argc, char *argv[])
 				interactive = true;
 				break;
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -93,9 +93,9 @@ main(int argc, char *argv[])
 			dropuser = argv[optind];
 			break;
 		default:
-			fprintf(stderr, _("%s: too many command-line arguments (first is '%s')\n"),
+			fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
 					progname, argv[optind + 1]);
-			fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 	}
 
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
 	{
 		char	   *reply;
 
-		printf(_("User \"%s\" will be permanently deleted.\n"), dropuser);
+		printf(_("User \"%s\" will be permanently removed.\n"), dropuser);
 		reply = simple_prompt("Are you sure? (y/n) ", 1, true);
 		if (check_yesno_response(reply) != 1)
 			exit(0);
@@ -123,7 +123,7 @@ main(int argc, char *argv[])
 
 	if (PQresultStatus(result) != PGRES_COMMAND_OK)
 	{
-		fprintf(stderr, _("%s: deletion of user %s failed: %s"),
+		fprintf(stderr, _("%s: removal of user \"%s\" failed: %s"),
 				progname, dropuser, PQerrorMessage(conn));
 		PQfinish(conn);
 		exit(1);

@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.335 2003/06/25 04:08:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.336 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,7 +379,7 @@ main(int argc, char **argv)
 					fprintf(stderr,
 							_("%s: invalid -X option -- %s\n"),
 							progname, optarg);
-					fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+					fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 					exit(1);
 				}
 				break;
@@ -393,17 +393,17 @@ main(int argc, char **argv)
 				break;
 
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
 
 	if (optind < (argc - 1))
 	{
-		fprintf(stderr,
-				_("%s: too many command line options (first is '%s')\n"
-				  "Try '%s --help' for more information.\n"),
-				progname, argv[optind + 1], progname);
+		fprintf(stderr, _("%s: too many command-line arguments (first is \"%s\")\n"),
+				progname, argv[optind + 1]);
+		fprintf(stderr, _("Try \"%s --help\" for more information.\n"),
+				progname);
 		exit(1);
 	}
 
@@ -413,40 +413,40 @@ main(int argc, char **argv)
 
 	if (dataOnly && schemaOnly)
 	{
-		write_msg(NULL, "The options \"schema only\" (-s) and \"data only\" (-a) cannot be used together.\n");
+		write_msg(NULL, "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n");
 		exit(1);
 	}
 
 	if (dataOnly && outputClean)
 	{
-		write_msg(NULL, "The options \"clean\" (-c) and \"data only\" (-a) cannot be used together.\n");
+		write_msg(NULL, "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n");
 		exit(1);
 	}
 
 	if (outputBlobs && selectTableName != NULL)
 	{
-		write_msg(NULL, "Large object output is not supported for a single table.\n");
-		write_msg(NULL, "Use a full dump instead.\n");
+		write_msg(NULL, "large-object output not supported for a single table\n");
+		write_msg(NULL, "use a full dump instead\n");
 		exit(1);
 	}
 
 	if (outputBlobs && selectSchemaName != NULL)
 	{
-		write_msg(NULL, "Large object output is not supported for a single schema.\n");
-		write_msg(NULL, "Use a full dump instead.\n");
+		write_msg(NULL, "large-object output not supported for a single schema\n");
+		write_msg(NULL, "use a full dump instead\n");
 		exit(1);
 	}
 
 	if (dumpData == true && oids == true)
 	{
-		write_msg(NULL, "INSERT (-d, -D) and OID (-o) options cannot be used together.\n");
+		write_msg(NULL, "INSERT (-d, -D) and OID (-o) options cannot be used together\n");
 		write_msg(NULL, "(The INSERT command cannot set OIDs.)\n");
 		exit(1);
 	}
 
 	if (outputBlobs == true && (format[0] == 'p' || format[0] == 'P'))
 	{
-		write_msg(NULL, "large object output is not supported for plain text dump files.\n");
+		write_msg(NULL, "large-object output is not supported for plain-text dump files\n");
 		write_msg(NULL, "(Use a different output format.)\n");
 		exit(1);
 	}
@@ -482,7 +482,7 @@ main(int argc, char **argv)
 
 	if (g_fout == NULL)
 	{
-		write_msg(NULL, "could not open output file %s for writing\n", filename);
+		write_msg(NULL, "could not open output file \"%s\" for writing\n", filename);
 		exit(1);
 	}
 
@@ -493,7 +493,7 @@ main(int argc, char **argv)
 	g_fout->maxRemoteVersion = parse_version(PG_VERSION);
 	if (g_fout->maxRemoteVersion < 0)
 	{
-		write_msg(NULL, "unable to parse version string \"%s\"\n", PG_VERSION);
+		write_msg(NULL, "could not parse version string \"%s\"\n", PG_VERSION);
 		exit(1);
 	}
 
@@ -679,7 +679,7 @@ help(const char *progname)
 	printf(_("  -U, --username=NAME      connect as specified database user\n"));
 	printf(_("  -W, --password           force password prompt (should happen automatically)\n"));
 
-	printf(_("\nIf no database name is not supplied, then the PGDATABASE environment\n"
+	printf(_("\nIf no database name is supplied, then the PGDATABASE environment\n"
 			 "variable value is used.\n\n"));
 	printf(_("Report bugs to <pgsql-bugs@postgresql.org>.\n"));
 }
@@ -1420,7 +1420,7 @@ getNamespaces(int *numNamespaces)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain list of namespaces failed: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "query to obtain list of schemas failed: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 
@@ -1444,7 +1444,7 @@ getNamespaces(int *numNamespaces)
 		selectDumpableNamespace(&nsinfo[i]);
 
 		if (strlen(nsinfo[i].usename) == 0)
-			write_msg(NULL, "WARNING: owner of namespace %s appears to be invalid\n",
+			write_msg(NULL, "WARNING: owner of schema \"%s\" appears to be invalid\n",
 					  nsinfo[i].nspname);
 	}
 
@@ -1461,7 +1461,7 @@ getNamespaces(int *numNamespaces)
 		/* Didn't find a match */
 		if (i == ntups)
 		{
-			write_msg(NULL, "Specified schema \"%s\" does not exist.\n",
+			write_msg(NULL, "specified schema \"%s\" does not exist\n",
 					  selectSchemaName);
 			exit_nicely();
 		}
@@ -1498,7 +1498,7 @@ findNamespace(const char *nsoid, const char *objoid)
 			if (strcmp(nsoid, nsinfo->oid) == 0)
 				return nsinfo;
 		}
-		write_msg(NULL, "could not find namespace with OID %s\n", nsoid);
+		write_msg(NULL, "schema with OID %s does not exist\n", nsoid);
 		exit_nicely();
 	}
 	else
@@ -1623,7 +1623,7 @@ getTypes(int *numTypes)
 			tinfo[i].isDefined = false;
 
 		if (strlen(tinfo[i].usename) == 0 && tinfo[i].isDefined)
-			write_msg(NULL, "WARNING: owner of data type %s appears to be invalid\n",
+			write_msg(NULL, "WARNING: owner of data type \"%s\" appears to be invalid\n",
 					  tinfo[i].typname);
 	}
 
@@ -2255,7 +2255,7 @@ getTables(int *numTables)
 			lres = PQexec(g_conn, lockquery->data);
 			if (!lres || PQresultStatus(lres) != PGRES_COMMAND_OK)
 			{
-				write_msg(NULL, "Attempt to lock table \"%s\" failed.  %s",
+				write_msg(NULL, "attempt to lock table \"%s\" failed: %s",
 						  tblinfo[i].relname, PQerrorMessage(g_conn));
 				exit_nicely();
 			}
@@ -2283,7 +2283,7 @@ getTables(int *numTables)
 		/* Didn't find a match */
 		if (i == ntups)
 		{
-			write_msg(NULL, "Specified table \"%s\" does not exist.\n",
+			write_msg(NULL, "specified table \"%s\" does not exist\n",
 					  selectTableName);
 			exit_nicely();
 		}
@@ -2414,7 +2414,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		 * pg_attribute_relid_attnum_index.
 		 */
 		if (g_verbose)
-			write_msg(NULL, "finding the columns and types of table %s\n",
+			write_msg(NULL, "finding the columns and types of table \"%s\"\n",
 					  tbinfo->relname);
 
 		resetPQExpBuffer(q);
@@ -2527,7 +2527,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			int			numDefaults;
 
 			if (g_verbose)
-				write_msg(NULL, "finding DEFAULT expressions of table %s\n",
+				write_msg(NULL, "finding default expressions of table \"%s\"\n",
 						  tbinfo->relname);
 
 			resetPQExpBuffer(q);
@@ -2570,7 +2570,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 
 				if (adnum <= 0 || adnum > ntups)
 				{
-					write_msg(NULL, "invalid adnum value %d for table %s\n",
+					write_msg(NULL, "invalid adnum value %d for table \"%s\"\n",
 							  adnum, tbinfo->relname);
 					exit_nicely();
 				}
@@ -2687,7 +2687,7 @@ dumpComment(Archive *fout, const char *target,
 	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to get comment on oid %s failed: %s",
+		write_msg(NULL, "query to get comment on OID %s failed: %s",
 				  oid, PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -2854,7 +2854,7 @@ dumpDBComment(Archive *fout)
 	res = PQexec(g_conn, query->data);
 	if (!res || PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to get database oid failed: %s",
+		write_msg(NULL, "query to get database OID failed: %s",
 				  PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -3051,7 +3051,7 @@ dumpOneBaseType(Archive *fout, TypeInfo *tinfo,
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain information on type %s failed: %s",
+		write_msg(NULL, "query to obtain information on data type \"%s\" failed: %s",
 				  tinfo->typname, PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -3397,7 +3397,7 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain type information failed: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "query to obtain data type information failed: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 
@@ -3405,7 +3405,7 @@ dumpOneCompositeType(Archive *fout, TypeInfo *tinfo)
 	ntups = PQntuples(res);
 	if (ntups < 1)
 	{
-		write_msg(NULL, "Got no rows from: %s", query->data);
+		write_msg(NULL, "query yielded no rows: %s\n", query->data);
 		exit_nicely();
 	}
 
@@ -3571,7 +3571,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		fidx = findFuncByOid(finfo, numFuncs, lanplcallfoid);
 		if (fidx < 0)
 		{
-			write_msg(NULL, "handler procedure for procedural language %s not found\n",
+			write_msg(NULL, "handler procedure for procedural language \"%s\" not found\n",
 					  lanname);
 			exit_nicely();
 		}
@@ -3581,7 +3581,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 			vidx = findFuncByOid(finfo, numFuncs, lanvalidator);
 			if (vidx < 0)
 			{
-				write_msg(NULL, "validator procedure for procedural language %s not found\n",
+				write_msg(NULL, "validator procedure for procedural language \"%s\" not found\n",
 						  lanname);
 				exit_nicely();
 			}
@@ -3799,7 +3799,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain information on function %s failed: %s",
+		write_msg(NULL, "query to obtain information on function \"%s\" failed: %s",
 				  finfo->proname, PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -3875,7 +3875,7 @@ dumpOneFunc(Archive *fout, FuncInfo *finfo)
 			appendPQExpBuffer(q, " STABLE");
 		else if (provolatile[0] != PROVOLATILE_VOLATILE)
 		{
-			write_msg(NULL, "Unexpected provolatile value for function %s\n",
+			write_msg(NULL, "unrecognized provolatile value for function \"%s\"\n",
 					  finfo->proname);
 			exit_nicely();
 		}
@@ -4932,7 +4932,7 @@ dumpACL(Archive *fout, const char *type, const char *name,
 
 	if (!buildACLCommands(name, type, acls, owner, fout->remoteVersion, sql))
 	{
-		write_msg(NULL, "could not parse ACL list (%s) for object %s (%s)\n",
+		write_msg(NULL, "could not parse ACL list (%s) for object \"%s\" (%s)\n",
 				  acls, name, type);
 		exit_nicely();
 	}
@@ -5113,7 +5113,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 
 		if (PQgetisnull(res, 0, 1))
 		{
-			write_msg(NULL, "query to obtain definition of view \"%s\" returned NULL oid\n",
+			write_msg(NULL, "query to obtain definition of view \"%s\" returned null OID\n",
 					  tbinfo->relname);
 			exit_nicely();
 		}
@@ -5260,7 +5260,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 			int			ntups2;
 
 			if (g_verbose)
-				write_msg(NULL, "finding CHECK constraints for table %s\n",
+				write_msg(NULL, "finding check constraints for table \"%s\"\n",
 						  tbinfo->relname);
 
 			resetPQExpBuffer(query);
@@ -5487,7 +5487,7 @@ getAttrName(int attrnum, TableInfo *tblInfo)
 		case TableOidAttributeNumber:
 			return "tableoid";
 	}
-	write_msg(NULL, "getAttrName(): invalid column number %d for table %s\n",
+	write_msg(NULL, "invalid column number %d for table \"%s\"\n",
 			  attrnum, tblInfo->relname);
 	exit_nicely();
 	return NULL;				/* keep compiler quiet */
@@ -5748,7 +5748,7 @@ setMaxOid(Archive *fout)
 	max_oid = PQoidValue(res);
 	if (max_oid == 0)
 	{
-		write_msg(NULL, "inserted invalid oid\n");
+		write_msg(NULL, "inserted invalid OID\n");
 		exit_nicely();
 	}
 	PQclear(res);
@@ -5761,7 +5761,7 @@ setMaxOid(Archive *fout)
 	}
 	PQclear(res);
 	if (g_verbose)
-		write_msg(NULL, "maximum system oid is %u\n", max_oid);
+		write_msg(NULL, "maximum system OID is %u\n", max_oid);
 	snprintf(sql, sizeof(sql),
 			 "CREATE TEMPORARY TABLE pgdump_oid (dummy integer);\n"
 			 "COPY pgdump_oid WITH OIDS FROM stdin;\n"
@@ -5798,7 +5798,7 @@ findLastBuiltinOid_V71(const char *dbname)
 	if (res == NULL ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "error in finding the last system oid: %s", PQerrorMessage(g_conn));
+		write_msg(NULL, "error in finding the last system OID: %s", PQerrorMessage(g_conn));
 		exit_nicely();
 	}
 	ntups = PQntuples(res);
@@ -5843,12 +5843,12 @@ findLastBuiltinOid_V70(void)
 	ntups = PQntuples(res);
 	if (ntups < 1)
 	{
-		write_msg(NULL, "could not find template1 database entry in the pg_database table\n");
+		write_msg(NULL, "could not find entry for database template1 in table pg_database\n");
 		exit_nicely();
 	}
 	if (ntups > 1)
 	{
-		write_msg(NULL, "found more than one template1 database entry in the pg_database table\n");
+		write_msg(NULL, "found more than one entry for database template1 in table pg_database\n");
 		exit_nicely();
 	}
 	last_oid = atooid(PQgetvalue(res, 0, PQfnumber(res, "oid")));
@@ -6051,7 +6051,7 @@ dumpConstraints(Archive *fout, TableInfo *tblinfo, int numTables)
 			continue;
 
 		if (g_verbose)
-			write_msg(NULL, "dumping foreign key constraints for table %s\n",
+			write_msg(NULL, "dumping foreign key constraints for table \"%s\"\n",
 					  tbinfo->relname);
 
 		/*
@@ -6162,7 +6162,7 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 			continue;
 
 		if (g_verbose)
-			write_msg(NULL, "dumping triggers for table %s\n",
+			write_msg(NULL, "dumping triggers for table \"%s\"\n",
 					  tbinfo->relname);
 
 		/*
@@ -6332,7 +6332,7 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 
 					if (PQgetisnull(res, j, i_tgconstrrelname))
 					{
-						write_msg(NULL, "query produced NULL referenced table name for foreign key trigger \"%s\" on table \"%s\" (oid of table: %s)\n",
+						write_msg(NULL, "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %s)\n",
 								  tgname, tbinfo->relname, tgconstrrelid);
 						exit_nicely();
 					}
@@ -6376,7 +6376,7 @@ dumpTriggers(Archive *fout, TableInfo *tblinfo, int numTables)
 					p = strchr(p, '\\');
 					if (p == NULL)
 					{
-						write_msg(NULL, "bad argument string (%s) for trigger \"%s\" on table \"%s\"\n",
+						write_msg(NULL, "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n",
 								  PQgetvalue(res, j, i_tgargs),
 								  tgname,
 								  tbinfo->relname);
@@ -6582,7 +6582,7 @@ selectSourceSchema(const char *schemaName)
 	if (!res ||
 		PQresultStatus(res) != PGRES_COMMAND_OK)
 	{
-		write_msg(NULL, "query to set search_path failed: %s",
+		write_msg(NULL, "command to set search_path failed: %s",
 				  PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -6644,7 +6644,7 @@ getFormattedTypeName(const char *oid, OidOptions opts)
 	if (!res ||
 		PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
-		write_msg(NULL, "query to obtain name of type %s failed: %s",
+		write_msg(NULL, "query to obtain name of data type %s failed: %s",
 				  oid, PQerrorMessage(g_conn));
 		exit_nicely();
 	}
@@ -6653,7 +6653,7 @@ getFormattedTypeName(const char *oid, OidOptions opts)
 	ntups = PQntuples(res);
 	if (ntups != 1)
 	{
-		write_msg(NULL, "Got %d rows instead of one from: %s",
+		write_msg(NULL, "query yielded %d rows instead of one: %s\n",
 				  ntups, query->data);
 		exit_nicely();
 	}

@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.23 2002/10/25 01:33:17 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.24 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 			AH->FH = stdout;
 
 		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
+			die_horribly(AH, modulename, "could not open archive file \"%s\": %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = checkSeek(AH->FH);
 	}
@@ -188,7 +188,7 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 		else
 			AH->FH = stdin;
 		if (!AH->FH)
-			die_horribly(AH, modulename, "could not open archive file %s: %s\n", AH->fSpec, strerror(errno));
+			die_horribly(AH, modulename, "could not open archive file \"%s\": %s\n", AH->fSpec, strerror(errno));
 
 		ctx->hasSeek = checkSeek(AH->FH);
 
@@ -444,7 +444,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 			if ((TocIDRequired(AH, id, ropt) & 2) != 0)
 				die_horribly(AH, modulename,
 							 "Dumping a specific TOC data block out of order is not supported"
-				  " without id on this input stream (fseek required)\n");
+				  " without ID on this input stream (fseek required)\n");
 
 			switch (blkType)
 			{
@@ -476,7 +476,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 	/* Are we sane? */
 	if (id != te->id)
-		die_horribly(AH, modulename, "found unexpected block ID (%d) when reading data - expected %d\n",
+		die_horribly(AH, modulename, "found unexpected block ID (%d) when reading data -- expected %d\n",
 					 id, te->id);
 
 	switch (blkType)
@@ -551,7 +551,7 @@ _PrintData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-				   "could not read data block - expected %lu, got %lu\n",
+				   "could not read data block -- expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;
@@ -569,7 +569,7 @@ _PrintData(ArchiveHandle *AH)
 				zp->avail_out = zlibOutSize;
 				res = inflate(zp, 0);
 				if (res != Z_OK && res != Z_STREAM_END)
-					die_horribly(AH, modulename, "unable to uncompress data: %s\n", zp->msg);
+					die_horribly(AH, modulename, "could not uncompress data: %s\n", zp->msg);
 
 				out[zlibOutSize - zp->avail_out] = '\0';
 				ahwrite(out, 1, zlibOutSize - zp->avail_out, AH);
@@ -599,7 +599,7 @@ _PrintData(ArchiveHandle *AH)
 			zp->avail_out = zlibOutSize;
 			res = inflate(zp, 0);
 			if (res != Z_OK && res != Z_STREAM_END)
-				die_horribly(AH, modulename, "unable to uncompress data: %s\n", zp->msg);
+				die_horribly(AH, modulename, "could not uncompress data: %s\n", zp->msg);
 
 			out[zlibOutSize - zp->avail_out] = '\0';
 			ahwrite(out, 1, zlibOutSize - zp->avail_out, AH);
@@ -674,7 +674,7 @@ _skipData(ArchiveHandle *AH)
 		cnt = fread(in, 1, blkLen, AH->FH);
 		if (cnt != blkLen)
 			die_horribly(AH, modulename,
-				   "could not read data block - expected %lu, got %lu\n",
+				   "could not read data block -- expected %lu, got %lu\n",
 						 (unsigned long) blkLen, (unsigned long) cnt);
 
 		ctx->filePos += blkLen;

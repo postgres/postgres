@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.197 2003/07/22 00:02:55 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.198 2003/07/23 08:46:54 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -39,14 +39,14 @@
 exit_nicely(){
     stty echo > /dev/null 2>&1
     echo 1>&2
-    echo "$CMDNAME failed." 1>&2
+    echo "$CMDNAME: failed" 1>&2
     if [ "$noclean" != yes ]; then
         if [ "$made_new_pgdata" = yes ]; then
-            echo "Removing $PGDATA." 1>&2
-            rm -rf "$PGDATA" || echo "Failed." 1>&2
+            echo "$CMDNAME: removing data directory \"$PGDATA\"" 1>&2
+            rm -rf "$PGDATA" || echo "$CMDNAME: failed" 1>&2
         fi
     else
-        echo "Data directory $PGDATA will not be removed at user's request." 1>&2
+        echo "$CMDNAME: data directory \"$PGDATA\" not removed at user's request" 1>&2
     fi
     exit 1
 }
@@ -135,7 +135,7 @@ elif [ -x "$bindir/postgres" ]; then
         errormsg=`$bindir/postgres -V 2>&1 >/dev/null`
       (
         echo "The program "
-        echo "    '$bindir/postgres'"
+        echo "    $bindir/postgres"
         echo "needed by $CMDNAME does not belong to PostgreSQL version $VERSION, or"
         echo "there may be a configuration problem."
         if test x"$errormsg" != x""; then
@@ -147,8 +147,8 @@ elif [ -x "$bindir/postgres" ]; then
         exit 1
     fi
 else
-    echo "The program 'postgres' is needed by $CMDNAME but was not found in" 1>&2
-    echo "the directory '$bindir'.  Check your installation." 1>&2
+    echo "The program \"postgres\" is needed by $CMDNAME but was not found in" 1>&2
+    echo "the directory \"$bindir\".  Check your installation." 1>&2
     exit 1
 fi
 
@@ -156,8 +156,8 @@ fi
 # Now we can assume that 'pg_id' belongs to the same version as the
 # verified 'postgres' in the same directory.
 if [ ! -x "$PGPATH/pg_id" ]; then
-    echo "The program 'pg_id' is needed by $CMDNAME but was not found in" 1>&2
-    echo "the directory '$PGPATH'.  Check your installation." 1>&2
+    echo "The program \"pg_id\" is needed by $CMDNAME but was not found in" 1>&2
+    echo "the directory \"$PGPATH\".  Check your installation." 1>&2
     exit 1
 fi
 
@@ -170,8 +170,9 @@ fi
 
 if [ `$PGPATH/pg_id -u` -eq 0 ]
 then
-    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')" 1>&2
-    echo "as the (unprivileged) user that will own the server process." 1>&2
+    echo "$CMDNAME: cannot be run as root" 1>&2
+    echo "Please log in (using, e.g., \"su\") as the (unprivileged) user that will" 1>&2
+    echo "own the server process." 1>&2
     exit 1
 fi
 
@@ -215,14 +216,14 @@ do
                 ;;
         --debug|-d)
                 debug=yes
-                echo "Running with debug mode on."
+                echo "Running in debug mode."
                 ;;
         --show|-s)
         	show_setting=yes
         	;;        
         --noclean|-n)
                 noclean=yes
-                echo "Running with noclean mode on. Mistakes will not be cleaned up."
+                echo "Running in noclean mode.  Mistakes will not be cleaned up."
                 ;;
 # The name of the database superuser. Can be freely changed.
         --username|-U)
@@ -319,7 +320,7 @@ do
 
 	-*)
 		echo "$CMDNAME: invalid option: $1"
-		echo "Try '$CMDNAME --help' for more information."
+		echo "Try \"$CMDNAME --help\" for more information."
 		exit 1
 		;;
 
@@ -381,7 +382,7 @@ then
         fi
 	if [ -z "$ENCODINGID" ]
 	then
-		echo "$CMDNAME: $ENCODING is not a valid backend encoding name" 1>&2
+		echo "$CMDNAME: \"$ENCODING\" is not a valid server encoding name" 1>&2
 		exit 1
 	fi
 fi
@@ -394,9 +395,10 @@ fi
 if [ -z "$PGDATA" ]
 then
   (
-    echo "$CMDNAME: You must identify where the the data for this database"
-    echo "system will reside.  Do this with either a -D invocation"
-    echo "option or a PGDATA environment variable."
+    echo "$CMDNAME: no data directory specified"
+    echo "You must identify the directory where the data for this database system"
+    echo "will reside.  Do this with either the invocation option -D or the"
+    echo "environment variable PGDATA."
   ) 1>&2
     exit 1
 fi
@@ -417,7 +419,7 @@ if [ "$show_setting" = yes ] || [ "$debug" = yes ]
 then
   (
     echo
-    echo "initdb variables:"
+    echo "$CMDNAME: internal variables:"
     for var in PGDATA datadir PGPATH ENCODING ENCODINGID \
         POSTGRES_SUPERUSERNAME POSTGRES_BKI \
         POSTGRES_DESCR POSTGRESQL_CONF_SAMPLE \
@@ -436,9 +438,9 @@ for PREREQ_FILE in "$POSTGRES_BKI" "$POSTGRES_DESCR" \
 do
     if [ ! -f "$PREREQ_FILE" ] ; then
       (
-        echo "$CMDNAME does not find the file '$PREREQ_FILE'."
+        echo "$CMDNAME: file \"$PREREQ_FILE\" not found"
         echo "This means you have a corrupted installation or identified the"
-        echo "wrong directory with the -L invocation option."
+        echo "wrong directory with the invocation option -L."
       ) 1>&2
         exit 1
     fi
@@ -448,9 +450,8 @@ for file in "$POSTGRES_BKI"
 do
      if [ x"`sed 1q $file`" != x"# PostgreSQL $short_version" ]; then
        (
-         echo "The input file '$file' needed by $CMDNAME does not"
-         echo "belong to PostgreSQL $VERSION.  Check your installation or specify the"
-         echo "correct path using the -L option."
+         echo "$CMDNAME: input file \"$file\" does not belong to PostgreSQL $VERSION"
+         echo "Check your installation or specify the correct path using the option -L."
        ) 1>&2
          exit 1
      fi
@@ -493,10 +494,10 @@ pgdata_contents=`ls -A "$PGDATA" 2>/dev/null`
 if [ x"$pgdata_contents" != x ]
 then
     (
-      echo "$CMDNAME: The directory $PGDATA exists but is not empty."
+      echo "$CMDNAME: directory \"$PGDATA\" exists but is not empty"
       echo "If you want to create a new database system, either remove or empty"
-      echo "the directory $PGDATA or run initdb with"
-      echo "an argument other than $PGDATA."
+      echo "the directory \"$PGDATA\" or run $CMDNAME with an argument other than"
+      echo "\"$PGDATA\"."
     ) 1>&2
     exit 1
 else
@@ -505,7 +506,7 @@ else
         mkdir -p "$PGDATA" >/dev/null 2>&1 || mkdir "$PGDATA" || exit_nicely
         made_new_pgdata=yes
     else
-        $ECHO_N "Fixing permissions on existing directory $PGDATA... "$ECHO_C
+        $ECHO_N "fixing permissions on existing directory $PGDATA... "$ECHO_C
 	chmod go-rwx "$PGDATA" || exit_nicely
     fi
     echo "ok"
@@ -685,7 +686,7 @@ EOF
     fi
     if [ ! -f "$PGDATA"/global/pg_pwd ]; then
         echo
-        echo "The password file wasn't generated. Please report this problem." 1>&2
+        echo "$CMDNAME: The password file wasn't generated. Please report this problem." 1>&2
         exit_nicely
     fi
     echo "ok"

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/vacuumdb.c,v 1.1 2003/06/18 12:19:11 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/vacuumdb.c,v 1.2 2003/07/23 08:47:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ main(int argc, char *argv[])
 				verbose = true;
 				break;
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -120,9 +120,9 @@ main(int argc, char *argv[])
 			dbname = argv[optind];
 			break;
 		default:
-			fprintf(stderr,	_("%s: too many command-line arguments (first is '%s')\n"),
+			fprintf(stderr,	_("%s: too many command-line arguments (first is \"%s\")\n"),
 					progname, argv[optind + 1]);
-			fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 	}
 

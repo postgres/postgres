@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.65 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.66 2003/07/23 08:47:39 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -425,7 +425,7 @@ PrintNotifications(void)
 
 	while ((notify = PQnotifies(pset.db)))
 	{
-		fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid %d received.\n"),
+		fprintf(pset.queryFout, gettext("Asynchronous notification \"%s\" received from server process with PID %d.\n"),
 				notify->relname, notify->be_pid);
 		PQfreemem(notify);
 		fflush(pset.queryFout);
@@ -585,7 +585,7 @@ SendQuery(const char *query)
 	{
 		char		buf[3];
 
-		printf(gettext("***(Single step mode: Verify query)*********************************************\n"
+		printf(gettext("***(Single step mode: verify command)*******************************************\n"
 					   "%s\n"
 					   "***(press return to proceed or enter x and return to cancel)********************\n"),
 			   query);

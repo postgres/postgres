@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.32 2003/03/20 05:00:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.33 2003/07/23 08:47:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -54,7 +54,7 @@ Shutdown modes are:
 Report bugs to <pgsql-bugs@postgresql.org>."
 
 advice="\
-Try '$CMDNAME --help' for more information."
+Try \"$CMDNAME --help\" for more information."
 
 
 # Placed here during build
@@ -103,8 +103,8 @@ if [ -x "$self_path/postmaster" ] && [ -x "$self_path/psql" ]; then
 elif [ -x "$bindir/postmaster" ] && [ -x "$bindir/psql" ]; then
     PGPATH="$bindir"
 else
-    echo "The programs 'postmaster' and 'psql' are needed by $CMDNAME but" 1>&2
-    echo "were not found in the directory '$bindir'." 1>&2
+    echo "The programs \"postmaster\" and \"psql\" are needed by $CMDNAME but" 1>&2
+    echo "were not found in the directory \"$bindir\"." 1>&2
     echo "Check your installation." 1>&2
     exit 1
 fi
@@ -202,7 +202,7 @@ if [ x"$op" = x"" ];then
 fi
 
 if [ -z "$PGDATA" ];then
-    echo "$CMDNAME: no database directory or environment variable \$PGDATA is specified" 1>&2
+    echo "$CMDNAME: no database directory specified and environment variable PGDATA unset" 1>&2
     echo "$advice" 1>&2
     exit 1
 fi
@@ -248,15 +248,15 @@ if [ "$op" = "status" ];then
 	PID=`sed -n 1p $PIDFILE`
 	if [ "$PID" -lt 0 ];then
 	    PID=`expr 0 - $PID`
-	    echo "$CMDNAME: postgres is running (pid: $PID)"
+	    echo "$CMDNAME: postgres is running (PID: $PID)"
 	else
-	    echo "$CMDNAME: postmaster is running (pid: $PID)"
+	    echo "$CMDNAME: postmaster is running (PID: $PID)"
 	    echo "Command line was:"
 	    cat "$POSTOPTSFILE"
 	fi
 	exit 0
     else
-	echo "$CMDNAME: postmaster or postgres is not running"
+	echo "$CMDNAME: postmaster or postgres not running"
 	exit 1
     fi
 fi
@@ -266,7 +266,7 @@ if [ "$op" = "stop" -o "$op" = "restart" -o "$op" = "reload" ];then
 	PID=`sed -n 1p $PIDFILE`
 	if [ "$PID" -lt 0 ];then
 	    PID=`expr 0 - $PID`
-	    echo "$CMDNAME: Cannot restart postmaster.  postgres is running (pid: $PID)" 1>&2
+	    echo "$CMDNAME: cannot restart postmaster; postgres is running (PID: $PID)" 1>&2
 	    echo "Please terminate postgres and try again." 1>&2
 	    exit 1
 	fi

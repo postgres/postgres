@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.78 2003/06/27 16:55:22 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.79 2003/07/23 08:47:39 petere Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -678,7 +678,7 @@ describeOneTableDetails(const char *schemaname,
 	if (PQntuples(res) == 0)
 	{
 		if (!QUIET())
-			fprintf(stderr, _("Did not find any relation with oid %s.\n"),
+			fprintf(stderr, _("Did not find any relation with OID %s.\n"),
 					oid);
 		goto error_return;
 	}
@@ -1049,16 +1049,16 @@ describeOneTableDetails(const char *schemaname,
 				const char *indexdef;
 				const char *usingpos;
 
-				/* Output index/constraint name */
-				printfPQExpBuffer(&buf, "    \"%s\"",
+				/* Output index name */
+				printfPQExpBuffer(&buf, _("    \"%s\""),
 								  PQgetvalue(result1, i, 0));
 
 				/* Label as primary key or unique (but not both) */
 				appendPQExpBuffer(&buf,
 								  strcmp(PQgetvalue(result1, i, 1), "t") == 0
-								  ? _(" PRIMARY KEY") :
+								  ? _(" primary key,") :
 								  (strcmp(PQgetvalue(result1, i, 2), "t") == 0
-								   ? _(" UNIQUE")
+								   ? _(" unique,")
 								   : ""));
 
 				/* Everything after "USING" is echoed verbatim */
@@ -1069,24 +1069,19 @@ describeOneTableDetails(const char *schemaname,
 
 				appendPQExpBuffer(&buf, " %s", indexdef);
 
-				if (i < index_count - 1)
-					appendPQExpBuffer(&buf, ",");
-
 				footers[count_footers++] = xstrdup(buf.data);
 			}
 		}
 
 		/* print check constraints */
 		if (check_count > 0) {
-			printfPQExpBuffer(&buf, _("Check Constraints:"));
+			printfPQExpBuffer(&buf, _("Check constraints:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < check_count; i++)
 			{
 				printfPQExpBuffer(&buf, _("    \"%s\" CHECK %s"),
 								  PQgetvalue(result2, i, 1),
 								  PQgetvalue(result2, i, 0));
-				if (i < check_count - 1)
-					appendPQExpBuffer(&buf, ",");
 
 				footers[count_footers++] = xstrdup(buf.data);
 			}
@@ -1094,15 +1089,13 @@ describeOneTableDetails(const char *schemaname,
 
 		/* print foreign key constraints */
 		if (foreignkey_count > 0) {
-			printfPQExpBuffer(&buf, _("Foreign Key Constraints:"));
+			printfPQExpBuffer(&buf, _("Foreign-key constraints:"));
 			footers[count_footers++] = xstrdup(buf.data);
 			for (i = 0; i < foreignkey_count; i++)
 			{
 				printfPQExpBuffer(&buf, _("    \"%s\" %s"),
 								  PQgetvalue(result5, i, 0),
 								  PQgetvalue(result5, i, 1));
-				if (i < foreignkey_count - 1)
-					appendPQExpBuffer(&buf, ",");
 
 				footers[count_footers++] = xstrdup(buf.data);
 			}
@@ -1121,9 +1114,6 @@ describeOneTableDetails(const char *schemaname,
 				ruledef += 12;
 
 				printfPQExpBuffer(&buf, "    %s", ruledef);
-
-				if (i < rule_count - 1)
-					appendPQExpBuffer(&buf, ",");
 
 				footers[count_footers++] = xstrdup(buf.data);
 			}
@@ -1145,9 +1135,6 @@ describeOneTableDetails(const char *schemaname,
 					tgdef = usingpos + 9;
 
 				printfPQExpBuffer(&buf, "    %s", tgdef);
-
-				if (i < trigger_count - 1)
-					appendPQExpBuffer(&buf, ",");
 
 				footers[count_footers++] = xstrdup(buf.data);
 			}
@@ -1496,9 +1483,9 @@ listCasts(const char *pattern)
 					  "FROM pg_catalog.pg_cast c LEFT JOIN pg_catalog.pg_proc p\n"
 					  "     ON c.castfunc = p.oid\n"
 					  "ORDER BY 1, 2",
-					  _("Source"),
-					  _("Target"),
-					  _("BINARY"),
+					  _("Source type"),
+					  _("Target type"),
+					  _("(binary compatible)"),
 					  _("Function"),
 					  _("no"),
 					  _("in assignment"),

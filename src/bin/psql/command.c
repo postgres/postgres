@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.97 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.98 2003/07/23 08:47:38 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -303,7 +303,7 @@ exec_command(const char *cmd,
 
 		if (chdir(dir) == -1)
 		{
-			psql_error("\\%s: could not change directory to '%s': %s\n",
+			psql_error("\\%s: could not change directory to \"%s\": %s\n",
 					   cmd, dir, strerror(errno));
 			success = false;
 		}
@@ -665,7 +665,7 @@ exec_command(const char *cmd,
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
-			printf(gettext("Wrote history to %s.\n"), fname);
+			printf(gettext("Wrote history to file \"%s\".\n"), fname);
 		free(fname);
 	}
 
@@ -887,7 +887,7 @@ exec_command(const char *cmd,
 	while ((val = scan_option(&string, OT_NORMAL, NULL, false)))
 	{
 		if (status != CMD_UNKNOWN)
-			psql_error("\\%s: extra argument '%s' ignored\n", cmd, val);
+			psql_error("\\%s: extra argument \"%s\" ignored\n", cmd, val);
 		if (val)
 			free(val);
 	}
@@ -1425,12 +1425,12 @@ do_connect(const char *new_dbname, const char *new_user)
 		if (!QUIET())
 		{
 			if (userparam != new_user)	/* no new user */
-				printf(gettext("You are now connected to database %s.\n"), dbparam);
+				printf(gettext("You are now connected to database \"%s\".\n"), dbparam);
 			else if (dbparam != new_dbname)		/* no new db */
-				printf(gettext("You are now connected as new user %s.\n"), new_user);
+				printf(gettext("You are now connected as new user \"%s\".\n"), new_user);
 			else
 /* both new */
-				printf(gettext("You are now connected to database %s as user %s.\n"),
+				printf(gettext("You are now connected to database \"%s\" as user \"%s\".\n"),
 					   PQdb(pset.db), PQuser(pset.db));
 		}
 
@@ -1552,7 +1552,7 @@ editFile(const char *fname)
 		"%s '%s'", editorName, fname);
 	result = system(sys);
 	if (result == -1)
-		psql_error("could not start editor %s\n", editorName);
+		psql_error("could not start editor \"%s\"\n", editorName);
 	else if (result == 127)
 		psql_error("could not start /bin/sh\n");
 	free(sys);
@@ -1599,7 +1599,7 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 
 		if (fd == -1 || !stream)
 		{
-			psql_error("could not open temporary file %s: %s\n", fname, strerror(errno));
+			psql_error("could not open temporary file \"%s\": %s\n", fname, strerror(errno));
 			error = true;
 		}
 		else
@@ -1828,7 +1828,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->nullPrint = xstrdup(value);
 		}
 		if (!quiet)
-			printf(gettext("Null display is '%s'.\n"), popt->nullPrint ? popt->nullPrint : "");
+			printf(gettext("Null display is \"%s\".\n"), popt->nullPrint ? popt->nullPrint : "");
 	}
 
 	/* field separator for unaligned text */
@@ -1840,7 +1840,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.fieldSep = xstrdup(value);
 		}
 		if (!quiet)
-			printf(gettext("Field separator is '%s'.\n"), popt->topt.fieldSep);
+			printf(gettext("Field separator is \"%s\".\n"), popt->topt.fieldSep);
 	}
 
 	/* record separator for unaligned text */
@@ -1856,7 +1856,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			if (strcmp(popt->topt.recordSep, "\n") == 0)
 				printf(gettext("Record separator is <newline>."));
 			else
-				printf(gettext("Record separator is '%s'.\n"), popt->topt.recordSep);
+				printf(gettext("Record separator is \"%s\".\n"), popt->topt.recordSep);
 		}
 	}
 
@@ -1921,11 +1921,11 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.pager == 1)
-				puts(gettext("Pager is on (for long output)."));
+				puts(gettext("Pager is used for long output."));
 			else if (popt->topt.pager == 2)
-				puts(gettext("Pager is always (used)."));
+				puts(gettext("Pager is always used."));
 			else
-				puts(gettext("Pager is off."));
+				puts(gettext("Pager usage is off."));
 		}
 	}
 

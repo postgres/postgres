@@ -7,7 +7,7 @@
 # Author:  Peter Eisentraut <peter_e@gmx.net> 
 # Public domain
 
-# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.7 2002/10/18 22:05:35 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_config/Attic/pg_config.sh,v 1.8 2003/07/23 08:47:25 petere Exp $
 
 me=`basename $0`
 
@@ -41,7 +41,7 @@ Options:
 Report bugs to <pgsql-bugs@postgresql.org>."
 
 advice="\
-Try '$me --help' for more information."
+Try \"$me --help\" for more information."
 
 if test "$#" -eq 0 ; then
     echo "$me: argument required" 1>&2

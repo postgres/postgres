@@ -9,12 +9,12 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.15 2002/10/18 22:05:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initlocation/Attic/initlocation.sh,v 1.16 2003/07/23 08:46:57 petere Exp $
 #
 #-------------------------------------------------------------------------
 
 exit_nicely(){
-    echo "$CMDNAME failed."
+    echo "$CMDNAME: failed" 1>&2
     rm -rf "$PGALTDATA"
     exit 1
 }
@@ -25,8 +25,9 @@ EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
 
 if [ "$USER" = 'root' -o "$LOGNAME" = 'root' ]
 then
-    echo "You cannot run $CMDNAME as root. Please log in (using, e.g., 'su')"
-    echo "as the (unprivileged) user that will own the server process."
+    echo "$CMDNAME: cannot be run as root" 1>&2
+    echo "Please log in (using, e.g., \"su\") as the (unprivileged) user that will" 1>&2
+    echo "own the server process." 1>&2
     exit 1
 fi
 
@@ -52,7 +53,7 @@ do
 
 	-*)
             echo "$CMDNAME: invalid option: $1" 1>&2
-            echo "Try '$CMDNAME --help' for more information." 1>&2
+            echo "Try \"$CMDNAME --help\" for more information." 1>&2
             exit 1
             ;;
 	*)
@@ -79,7 +80,7 @@ fi
 
 if [ -z "$Location" ]; then
 	echo "$CMDNAME: missing required argument LOCATION" 1>&2
-        echo "Try '$CMDNAME -?' for help." 1>&2
+        echo "Try \"$CMDNAME --help\" for more information." 1>&2
 	exit 1
 fi
 
@@ -112,8 +113,8 @@ else
     haveenv=f
 fi
 
-echo "The location will be initialized with username \"$EffectiveUser\"."
-echo "This user will own all the files and must also own the server process."
+echo "The files belonging to this location will be owned by user \"$EffectiveUser\"."
+echo "This user must also own the server process."
 echo
 
 # -----------------------------------------------------------------------
@@ -127,29 +128,29 @@ trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 umask 077
 
 if [ ! -d "$PGALTDATA" ]; then
-	echo "Creating directory $PGALTDATA"
+	echo "creating directory $PGALTDATA"
 	mkdir "$PGALTDATA"
 	if [ "$?" -ne 0 ]; then
-            echo "$CMDNAME: could not create $PGALTDATA" 1>&2
-            echo "Make sure $PGALTDATA is a valid path and that you have permission to access it." 1>&2
+            echo "$CMDNAME: could not create directory \"$PGALTDATA\"" 1>&2
+            echo "Make sure \"$PGALTDATA\" is a valid path and that you have permission to access it." 1>&2
             exit_nicely
         fi
 else
-        echo "Fixing permissions on pre-existing directory $PGALTDATA"
+        echo "fixing permissions on pre-existing directory $PGALTDATA"
 	chmod go-rwx "$PGALTDATA" || exit_nicely
 fi
 
 
 if [ ! -d "$PGALTDATA"/base ]; then
-	echo "Creating directory $PGALTDATA/base"
+	echo "creating directory $PGALTDATA/base"
 	mkdir "$PGALTDATA/base"
 	if [ "$?" -ne 0 ]; then
             echo "$CMDNAME: could not create $PGALTDATA/base" 1>&2
-            echo "Make sure $PGALTDATA/base is a valid path and that you have permission to access it." 1>&2
+            echo "Make sure \"$PGALTDATA/base\" is a valid path and that you have permission to access it." 1>&2
             exit_nicely
         fi
 else
-        echo "Fixing permissions on pre-existing directory $PGALTDATA/base"
+        echo "fixing permissions on pre-existing directory $PGALTDATA/base"
 	chmod go-rwx "$PGALTDATA/base" || exit_nicely
 fi
 

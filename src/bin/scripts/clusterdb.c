@@ -4,7 +4,7 @@
  *
  * Portions Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/clusterdb.c,v 1.1 2003/06/18 12:19:11 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/clusterdb.c,v 1.2 2003/07/23 08:47:41 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ main(int argc, char *argv[])
 				table = optarg;
 				break;
 			default:
-				fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+				fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 				exit(1);
 		}
 	}
@@ -104,9 +104,9 @@ main(int argc, char *argv[])
 			dbname = argv[optind];
 			break;
 		default:
-			fprintf(stderr,	_("%s: too many command-line arguments (first is '%s')\n"),
+			fprintf(stderr,	_("%s: too many command-line arguments (first is \"%s\")\n"),
 					progname, argv[optind + 1]);
-			fprintf(stderr, _("Try '%s --help' for more information.\n"), progname);
+			fprintf(stderr, _("Try \"%s --help\" for more information.\n"), progname);
 			exit(1);
 	}
 
@@ -224,13 +224,13 @@ void cluster_all_databases(const char *host, const char *port, const char *usern
 static void
 help(const char *progname)
 {
-	printf(_("%s clusters all previously clustered tables in a database.\n"), progname);
+	printf(_("%s clusters all previously clustered tables in a database.\n\n"), progname);
 	printf(_("Usage:\n"));
 	printf(_("  %s [OPTION]... [DBNAME]\n"), progname);
 	printf(_("\nOptions:\n"));
 	printf(_("  -a, --all                 cluster all databases\n"));
 	printf(_("  -d, --dbname=DBNAME       database to cluster\n"));
-	printf(_("  -t, --table=TABLE         cluster specific table only"));
+	printf(_("  -t, --table=TABLE         cluster specific table only\n"));
 	printf(_("  -e, --echo                show the commands being sent to the server\n"));
 	printf(_("  -q, --quiet               don't write any messages\n"));
 	printf(_("  --help                    show this help, then exit\n"));

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.30 2003/06/28 00:12:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/copy.c,v 1.31 2003/07/23 08:47:39 petere Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -287,7 +287,7 @@ parse_slash_copy(const char *args)
 
 error:
 	if (token)
-		psql_error("\\copy: parse error at '%s'\n", token);
+		psql_error("\\copy: parse error at \"%s\"\n", token);
 	else
 		psql_error("\\copy: parse error at end of line\n");
 	free_copy_options(result);

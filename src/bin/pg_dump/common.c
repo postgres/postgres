@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.72 2002/10/25 01:33:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.73 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ dumpSchema(Archive *fout,
 	OpclassInfo *opcinfo;
 
 	if (g_verbose)
-		write_msg(NULL, "reading namespaces\n");
+		write_msg(NULL, "reading schemas\n");
 	nsinfo = getNamespaces(&numNamespaces);
 
 	if (g_verbose)
@@ -125,7 +125,7 @@ dumpSchema(Archive *fout,
 	if (!dataOnly)
 	{
 		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined namespaces\n");
+			write_msg(NULL, "dumping out user-defined schemas\n");
 		dumpNamespaces(fout, nsinfo, numNamespaces);
 	}
 
@@ -449,7 +449,7 @@ findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
 	}
 
 	/* should never get here */
-	write_msg(NULL, "failed sanity check, operator with oid %s not found\n", oid);
+	write_msg(NULL, "failed sanity check, operator with OID %s not found\n", oid);
 
 	/* no suitable operator name was found */
 	return (NULL);
@@ -499,12 +499,12 @@ findParentsByOid(TableInfo *tblinfo, int numTables,
 				{
 					selfInd = findTableByOid(tblinfo, numTables, oid);
 					if (selfInd >= 0)
-						write_msg(NULL, "failed sanity check, parent oid %s of table %s (oid %s) not found\n",
+						write_msg(NULL, "failed sanity check, parent OID %s of table \"%s\" (OID %s) not found\n",
 								  inhinfo[i].inhparent,
 								  tblinfo[selfInd].relname,
 								  oid);
 					else
-						write_msg(NULL, "failed sanity check, parent oid %s of table (oid %s) not found\n",
+						write_msg(NULL, "failed sanity check, parent OID %s of table (OID %s) not found\n",
 								  inhinfo[i].inhparent,
 								  oid);
 
@@ -542,7 +542,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 			{
 				if (argNum >= arraysize)
 				{
-					write_msg(NULL, "parseNumericArray: too many numbers\n");
+					write_msg(NULL, "could not parse numeric array: too many numbers\n");
 					exit_nicely();
 				}
 				temp[j] = '\0';
@@ -557,7 +557,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 			if (!(isdigit((unsigned char) s) || s == '-') ||
 				j >= sizeof(temp) - 1)
 			{
-				write_msg(NULL, "parseNumericArray: bogus number\n");
+				write_msg(NULL, "could not parse numeric array: invalid character in number\n");
 				exit_nicely();
 			}
 			temp[j++] = s;

@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.35 2003/03/20 03:34:56 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.36 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ tarOpen(ArchiveHandle *AH, const char *filename, char mode)
 			sprintf(fmode, "wb%d", AH->compression);
 			tm->zFH = gzdopen(dup(fileno(tm->tmpFH)), fmode);
 			if (tm->zFH == NULL)
-				die_horribly(AH, modulename, "could not gzdopen temporary file\n");
+				die_horribly(AH, modulename, "could not open temporary file\n");
 
 		}
 		else
@@ -504,7 +504,7 @@ _tarReadRaw(ArchiveHandle *AH, void *buf, size_t len, TAR_MEMBER *th, FILE *fh)
 				res = fread(&((char *) buf)[used], 1, len, th->nFH);
 		}
 		else
-			die_horribly(AH, modulename, "neither th nor fh specified in tarReadRaw() (internal error)\n");
+			die_horribly(AH, modulename, "internal error -- neither th nor fh specified in tarReadRaw()\n");
 	}
 
 #if 0
@@ -636,7 +636,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		 */
 		if (strncmp(tmpCopy, "copy ", 5) != 0)
 			die_horribly(AH, modulename,
-						 "bad COPY statement - could not find \"copy\" in string \"%s\"\n", tmpCopy);
+						 "invalid COPY statement -- could not find \"copy\" in string \"%s\"\n", tmpCopy);
 
 		pos1 = 5;
 		for (pos1 = 5; pos1 < strlen(tmpCopy); pos1++)
@@ -654,7 +654,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 		if (pos2 >= strlen(tmpCopy))
 			die_horribly(AH, modulename,
-						 "bad COPY statement - could not find \"from stdin\" in string \"%s\" starting at position %lu\n",
+						 "invalid COPY statement -- could not find \"from stdin\" in string \"%s\" starting at position %lu\n",
 						 tmpCopy, (unsigned long) pos1);
 
 		ahwrite(tmpCopy, 1, pos2, AH);	/* 'copy "table" [with oids]' */
@@ -1316,6 +1316,6 @@ _tarWriteHeader(TAR_MEMBER *th)
 	}
 
 	if (fwrite(h, 1, 512, th->tarFH) != 512)
-		die_horribly(th->AH, modulename, "unable to write tar header\n");
+		die_horribly(th->AH, modulename, "could not write tar header\n");
 
 }

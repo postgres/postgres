@@ -5,7 +5,7 @@
  *	Implements the basic DB functions used by the archiver.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.48 2003/06/22 00:56:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_db.c,v 1.49 2003/07/23 08:47:30 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ _parse_version(ArchiveHandle *AH, const char *versionString)
 
 	v = parse_version(versionString);
 	if (v < 0)
-		die_horribly(AH, modulename, "unable to parse version string \"%s\"\n", versionString);
+		die_horribly(AH, modulename, "could not parse version string \"%s\"\n", versionString);
 
 	return v;
 }
@@ -148,7 +148,7 @@ _connectDB(ArchiveHandle *AH, const char *reqdb, const char *requser)
 	else
 		newuser = (char *) requser;
 
-	ahlog(AH, 1, "connecting to database %s as user %s\n", newdb, newuser);
+	ahlog(AH, 1, "connecting to database \"%s\" as user \"%s\"\n", newdb, newuser);
 
 	if (AH->requirePassword)
 	{
@@ -585,7 +585,7 @@ FixupBlobRefs(ArchiveHandle *AH, TocEntry *te)
 
 	res = PQexec(AH->blobConnection, tblQry->data);
 	if (!res)
-		die_horribly(AH, modulename, "could not find oid columns of table \"%s\": %s",
+		die_horribly(AH, modulename, "could not find OID columns of table \"%s\": %s",
 					 te->tag, PQerrorMessage(AH->connection));
 
 	if ((n = PQntuples(res)) == 0)
