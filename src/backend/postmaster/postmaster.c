@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.187 2000/11/14 18:37:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.188 2000/11/15 18:36:04 petere Exp $
  *
  * NOTES
  *
@@ -115,7 +115,7 @@ static Dllist *PortList;
 /* The socket number we are listening for connections on */
 int PostPortNumber;
 char * UnixSocketName;
-char * HostName;
+char * Virtual_host;
 
 /*
  * This is a sequence number that indicates how many times we've had to
@@ -453,7 +453,7 @@ PostmasterMain(int argc, char *argv[])
 				enableFsync = false;
 				break;
 			case 'h':
-				HostName = optarg;
+				Virtual_host = optarg;
 				break;
 			case 'i':
 				NetServer = true;
@@ -609,7 +609,7 @@ PostmasterMain(int argc, char *argv[])
 
 	if (NetServer)
 	{
-		status = StreamServerPort(AF_INET, HostName,
+		status = StreamServerPort(AF_INET, Virtual_host,
 						(unsigned short) PostPortNumber, UnixSocketName,
 						&ServerSock_INET);
 		if (status != STATUS_OK)
@@ -621,7 +621,7 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 #ifdef HAVE_UNIX_SOCKETS
-	status = StreamServerPort(AF_UNIX, HostName,
+	status = StreamServerPort(AF_UNIX, Virtual_host,
 						(unsigned short) PostPortNumber, UnixSocketName, 
 						&ServerSock_UNIX);
 	if (status != STATUS_OK)
@@ -794,7 +794,7 @@ usage(const char *progname)
 	printf("  -d 1-5          debugging level\n");
 	printf("  -D DATADIR      database directory\n");
 	printf("  -F              turn fsync off\n");
-	printf("  -h HOSTNAME     host name or IP address to listen to\n");
+	printf("  -h HOSTNAME     host name or IP address to listen on\n");
 	printf("  -i              enable TCP/IP connections\n");
 	printf("  -k FILENAME     Unix domain socket location\n");
 #ifdef USE_SSL
@@ -1311,7 +1311,7 @@ ConnFree(Port *conn)
 
 /*
  * get_host_port -- return a pseudo port number (16 bits)
- * derived from the primary IP address of HostName.
+ * derived from the primary IP address of Virtual_host.
  */
 static unsigned short
 get_host_port(void)
@@ -1323,13 +1323,13 @@ get_host_port(void)
 		SockAddr	saddr;
 		struct hostent *hp;
 
-		hp = gethostbyname(HostName);
+		hp = gethostbyname(Virtual_host);
 		if ((hp == NULL) || (hp->h_addrtype != AF_INET))
 		{
 			char msg[1024];
 			snprintf(msg, sizeof(msg),
 				 "FATAL: get_host_port: gethostbyname(%s) failed\n",
-				 HostName);
+				 Virtual_host);
 			fputs(msg, stderr);
 			pqdebug("%s", msg);
 			exit(1);
@@ -1362,7 +1362,7 @@ reset_shared(unsigned short port)
 	 * the -h option, or set PGHOST, to a value other than the internal
 	 * default.
 	 *
-	 * If HostName is set, then we generate the IPC keys using the
+	 * If Virtual_host is set, then we generate the IPC keys using the
 	 * last two octets of the IP address instead of the port number.
 	 * This algorithm assumes that no one will run multiple PostgreSQL
 	 * instances on one host using two IP addresses that have the same two
@@ -1376,7 +1376,7 @@ reset_shared(unsigned short port)
 	 * host.
 	 */
 
-	if (HostName[0] != '\0')
+	if (Virtual_host[0] != '\0')
 		port = get_host_port();
 
 	ipc_key = port * 1000 + shmem_seq * 100;

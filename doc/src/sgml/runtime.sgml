@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.36 2000/11/14 19:13:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.37 2000/11/15 18:36:03 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -933,33 +933,6 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>HOSTNAME (<type>string</type>)</term>
-      <listitem>
-       <para>
-	Specifies the TCP/IP hostname or address on which the
-	<application>postmaster</application> is to listen for
-	connections from client applications.  Defaults to the value
-	of the <envar>PGHOST</envar> environment variable, or if
-	<envar>PGHOST</envar> is not set, it defaults to listening on
-	all configured addresses (including localhost).
-       </para>
-       <para>
-	If you use a hostname do not try to run multiple instances of
-	<application>postmaster</application> on the same IP address
-	but different ports.  Doing so will result in them attempting
-	(incorrectly) to use the same shared memory segments.  Also,
-	if you use a hostname, all of the host's IP addresses on which
-	<application>postmaster</application> instances are listening
-	must be distinct in the two last octets.
-       </para>
-       <para>
-	If you do not use this option, then each instance must listen
-	on a different port.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term>KRB_SERVER_KEYFILE (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1151,6 +1124,33 @@ env PGOPTIONS='-c geqo=off' psql
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term>VIRTUAL_HOST (<type>string</type>)</term>
+      <listitem>
+       <para>
+	Specifies the TCP/IP hostname or address on which the
+	<application>postmaster</application> is to listen for
+	connections from client applications.  Defaults to the value
+	of the <envar>PGHOST</envar> environment variable, or if
+	<envar>PGHOST</envar> is not set, it defaults to listening on
+	all configured addresses (including localhost).
+       </para>
+       <para>
+	If you use a hostname do not try to run multiple instances of
+	<application>postmaster</application> on the same IP address
+	but different ports.  Doing so will result in them attempting
+	(incorrectly) to use the same shared memory segments.  Also,
+	if you use a hostname, all of the host's IP addresses on which
+	<application>postmaster</application> instances are listening
+	must be distinct in the two last octets.
+       </para>
+       <para>
+	If you do not use this option, then each instance must listen
+	on a different port.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
    </sect2>
@@ -1187,6 +1187,11 @@ env PGOPTIONS='-c geqo=off' psql
        <row>
         <entry>-F</entry>
         <entry>fsync = off</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-h <replaceable>x</replaceable></entry>
+        <entry>virtual_host = <replaceable>x</replaceable></entry>
         <entry></entry>
        </row>
        <row>
