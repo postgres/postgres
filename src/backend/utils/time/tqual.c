@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.26 1999/03/28 20:32:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/time/tqual.c,v 1.27 1999/04/05 10:55:49 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,6 +411,12 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 
 		if (tuple->t_infomask & HEAP_MOVED_OFF)
 		{
+			/*
+			 * HeapTupleSatisfiesDirty is used by unique btree-s and so
+			 * may be used while vacuuming.
+			 */
+			if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_cmin))
+				return false;
 			if (TransactionIdDidCommit((TransactionId)tuple->t_cmin))
 			{
 				tuple->t_infomask |= HEAP_XMIN_INVALID;
@@ -419,6 +425,8 @@ HeapTupleSatisfiesDirty(HeapTupleHeader tuple)
 		}
 		else if (tuple->t_infomask & HEAP_MOVED_IN)
 		{
+			if (TransactionIdIsCurrentTransactionId((TransactionId)tuple->t_cmin))
+				return true;
 			if (!TransactionIdDidCommit((TransactionId)tuple->t_cmin))
 			{
 				tuple->t_infomask |= HEAP_XMIN_INVALID;
