@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.105 2004/08/11 18:06:01 tgl Exp $
+ * $PostgreSQL: pgsql/src/interfaces/libpq/libpq-fe.h,v 1.106 2004/08/18 19:27:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,8 +286,7 @@ typedef void (pgthreadlock_t)(int acquire);
 
 extern pgthreadlock_t * PQregisterThreadLock(pgthreadlock_t *newhandler);
 
-void
-PQinitSSL(int do_init);
+extern void PQinitSSL(int do_init);
 
 /* === in fe-exec.c === */
 
@@ -418,24 +417,21 @@ extern unsigned char *PQunescapeBytea(const unsigned char *strtext,
 
 /* === in fe-print.c === */
 
-extern void
-PQprint(FILE *fout,				/* output stream */
-		const PGresult *res,
-		const PQprintOpt *ps);	/* option structure */
+extern void PQprint(FILE *fout,				/* output stream */
+					const PGresult *res,
+					const PQprintOpt *ps);	/* option structure */
 
 /*
  * really old printing routines
  */
-extern void
-PQdisplayTuples(const PGresult *res,
+extern void PQdisplayTuples(const PGresult *res,
 				FILE *fp,		/* where to send the output */
 				int fillAlign,	/* pad the fields with spaces */
 				const char *fieldSep,	/* field separator */
 				int printHeader,	/* display headers? */
 				int quiet);
 
-extern void
-PQprintTuples(const PGresult *res,
+extern void PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
 			  int printAttName, /* print attribute names */
 			  int terseOutput,	/* delimiter bars */
@@ -474,7 +470,7 @@ extern int	PQenv2encoding(void);
  *	Indicates whether the libpq thread is in send().
  *	Used to ignore SIGPIPE if thread is in send().
  */
-pqbool PQinSend(void);
+extern pqbool PQinSend(void);
 
 #ifdef __cplusplus
 }
