@@ -6,9 +6,9 @@
 --  
 --  foreign[blank]key[blank]([blank]keyname,..,keyname[blank])[blank]references[blank]table[blank][ending] 
 --
---  step1.e < example.sql | step2.pl > foreign_key_triggers.sql
+--  step1 < example.sql | step2.pl > foreign_key_triggers.sql
 --   
---  step1.e is a simple program that UPPERCASE ALL . I know that is simple implementing in Perl
+--  step1.c is a simple program that UPPERCASE ALL . I know that is simple implementing in Perl
 --  bu i haven't time
 
 
