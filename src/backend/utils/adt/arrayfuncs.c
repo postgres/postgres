@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.63 2000/07/23 01:35:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.64 2000/07/27 03:50:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,12 @@
  *	  <dim_lower>	- lower boundary of each dimension
  *	  <actual data> - whatever is the stored data
  * The actual data starts on a MAXALIGN boundary.
+ *
+ * NOTE: it is important that array elements of toastable datatypes NOT be
+ * toasted, since the tupletoaster won't know they are there.  (We could
+ * support compressed toasted items; only out-of-line items are dangerous.
+ * However, it seems preferable to store such items uncompressed and allow
+ * the toaster to compress the whole array as one input.)
  */
 
 
@@ -459,6 +465,8 @@ ReadArrayStr(char *arrayStr,
 		{
 			if (values[i] != (Datum) 0)
 			{
+				/* let's just make sure data is not toasted */
+				values[i] = PointerGetDatum(PG_DETOAST_DATUM(values[i]));
 				if (typalign == 'd')
 					*nbytes += MAXALIGN(VARSIZE(DatumGetPointer(values[i])));
 				else
@@ -485,6 +493,10 @@ ReadArrayStr(char *arrayStr,
  * typbyval, typlen, typalign: info about element datatype
  * freedata: if TRUE and element type is pass-by-ref, pfree data values
  * referenced by Datums after copying them.
+ *
+ * If the input data is of varlena type, the caller must have ensured that
+ * the values are not toasted.  (Doing it here doesn't work since the 
+ * caller has already allocated space for the array...)
  *----------
  */
 static void
@@ -961,6 +973,10 @@ array_set(ArrayType *array,
 		return newarray;
 	}
 
+	/* make sure item to be inserted is not toasted */
+	if (elmlen < 0)
+		dataValue = PointerGetDatum(PG_DETOAST_DATUM(dataValue));
+
 	/* detoast input if necessary */
 	array = DatumGetArrayTypeP(PointerGetDatum(array));
 
@@ -1119,6 +1135,8 @@ array_set_slice(ArrayType *array,
 	/* detoast arrays if necessary */
 	array = DatumGetArrayTypeP(PointerGetDatum(array));
 	srcArray = DatumGetArrayTypeP(PointerGetDatum(srcArray));
+
+	/* note: we assume srcArray contains no toasted elements */
 
 	ndim = ARR_NDIM(array);
 	if (ndim != nSubscripts || ndim <= 0 || ndim > MAXDIM)
@@ -1368,12 +1386,14 @@ array_map(FunctionCallInfo fcinfo, Oid inpType, Oid retType)
 		if (fcinfo->isnull)
 			elog(ERROR, "array_map: cannot handle NULL in array");
 
-		/* Update total result size */
-		if (typbyval)
+		/* Ensure data is not toasted, and update total result size */
+		if (typbyval || typlen > 0)
 			nbytes += typlen;
 		else
-			nbytes += ((typlen > 0) ? typlen :
-					   INTALIGN(VARSIZE(DatumGetPointer(values[i]))));
+		{
+			values[i] = PointerGetDatum(PG_DETOAST_DATUM(values[i]));
+			nbytes += INTALIGN(VARSIZE(DatumGetPointer(values[i])));
+		}
 	}
 
 	/* Allocate and initialize the result array */
@@ -1420,10 +1440,13 @@ construct_array(Datum *elems, int nelems,
 	}
 	else
 	{
-		/* varlena type */
+		/* varlena type ... make sure it is untoasted */
 		nbytes = 0;
 		for (i = 0; i < nelems; i++)
+		{
+			elems[i] = PointerGetDatum(PG_DETOAST_DATUM(elems[i]));
 			nbytes += INTALIGN(VARSIZE(DatumGetPointer(elems[i])));
+		}
 	}
 
 	/* Allocate and initialize 1-D result array */
