@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.74 2000/11/30 08:46:25 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.75 2000/12/14 23:51:35 wieck Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -115,8 +115,12 @@ ReverifyMyDatabase(const char *name)
 	 */
 	dbform = (Form_pg_database) GETSTRUCT(tup);
 	if (! dbform->datallowconn)
+	{
+		heap_endscan(pgdbscan);
+		heap_close(pgdbrel, AccessShareLock);
 		elog(FATAL, "Database \"%s\" is not currently accepting connections",
 			 name);
+	}
 
 	/*
 	 * OK, we're golden.  Only other to-do item is to save the MULTIBYTE
