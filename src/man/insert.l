@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.5 1997/09/27 03:14:19 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/insert.l,v 1.6 1998/01/11 03:41:57 momjian Exp $
 .TH INSERT SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 insert \(em insert tuples to a relation
@@ -11,6 +11,8 @@ insert \(em insert tuples to a relation
 	{\fBvalues\fR (expression1 [,expression-i] ) |
     \fBselect\fR expression1 [,expression-i]
 	[\fBfrom\fR from-list] [\fBwhere\fR qual] 
+    [\fBgroup by\fR attr_name1 {, attr_name-i....}]
+	[\fBunion {all} select\fR ...]
 .fi
 .SH DESCRIPTION
 .BR Insert

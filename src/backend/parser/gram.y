@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.88 1998/01/10 04:29:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.89 1998/01/11 03:41:38 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2146,16 +2146,27 @@ InsertStmt:  INSERT INTO relation_name opt_column_list insert_rest
 insert_rest:  VALUES '(' res_target_list2 ')'
 				{
 					$$ = makeNode(InsertStmt);
+					$$->unique = NULL;
 					$$->targetList = $3;
 					$$->fromClause = NIL;
-					$$->whereClause = NULL;
+					$$->whereClause = NIL;
+					$$->groupClause = NIL;
+					$$->havingClause = NIL;
+					$$->unionClause = NIL;
 				}
-		| SELECT res_target_list2 from_clause where_clause
+		| SELECT opt_unique res_target_list2
+			 from_clause where_clause
+			 group_clause having_clause
+			 union_clause
 				{
 					$$ = makeNode(InsertStmt);
-					$$->targetList = $2;
-					$$->fromClause = $3;
-					$$->whereClause = $4;
+					$$->unique = $2;
+					$$->targetList = $3;
+					$$->fromClause = $4;
+					$$->whereClause = $5;
+					$$->groupClause = $6;
+					$$->havingClause = $7;
+					$$->unionClause = $8;
 				}
 		;
 

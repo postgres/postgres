@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.63 1998/01/10 04:29:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.64 1998/01/11 03:41:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -241,7 +241,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* set up a range table */
 	makeRangeTable(pstate, stmt->relname, stmt->fromClause);
 
-	qry->uniqueFlag = NULL;
+	qry->uniqueFlag = stmt->unique;
 
 	/* fix the target list */
 	icolumns = pstate->p_insert_columns = makeTargetNames(pstate, stmt->cols);
@@ -315,12 +315,30 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	/* fix where clause */
 	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
+	/* check having clause */
+	if (stmt->havingClause)
+		elog(NOTICE, "HAVING not yet supported; ignore clause", NULL);
+
 	/* now the range table will not change */
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
+	qry->groupClause = transformGroupClause(pstate,
+											stmt->groupClause,
+											qry->targetList);
+
+	/* fix order clause */
+	qry->sortClause = transformSortClause(pstate,
+										  NIL,
+										  NIL,
+										  qry->targetList,
+										  qry->uniqueFlag);
+
 	if (pstate->p_numAgg > 0)
 		finalizeAggregates(pstate, qry);
+
+	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
+	qry->unionClause = transformUnionClause(stmt->unionClause, qry->targetList);
 
 	return (Query *) qry;
 }
