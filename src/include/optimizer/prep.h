@@ -6,15 +6,15 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: prep.h,v 1.1 1996/08/28 07:23:27 scrappy Exp $
+ * $Id: prep.h,v 1.2 1996/11/06 09:17:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PREP_H
 #define	PREP_H
 
-#include "nodes/primnodes.h"
-#include "nodes/plannodes.h"
+#include <nodes/plannodes.h>
+#include <nodes/parsenodes.h>
 
 /*
  * prototypes for archive.h
