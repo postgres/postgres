@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.62 1998/01/30 15:03:35 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.63 1998/02/18 15:33:37 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -55,6 +55,7 @@
 #include <unistd.h>				/* for getopt() */
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifdef sparc_solaris
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */
@@ -119,7 +120,7 @@ static void
 usage(const char *progname)
 {
 	fprintf(stderr,
-			"usage:  %s [options] [dbname]\n", progname);
+			"usage:  %s [options] dbname\n", progname);
 	fprintf(stderr,
 			"\t -a          \t\t dump out only the data, no schema\n");
 	fprintf(stderr,
@@ -531,7 +532,7 @@ main(int argc, char **argv)
 	const char *dbname = NULL;
 	const char *pghost = NULL;
 	const char *pgport = NULL;
-	const char *tablename = NULL;
+	char *tablename = NULL;
 	int			oids = 0,
 				acls = 0;
 	TableInfo  *tblinfo;
@@ -583,7 +584,14 @@ main(int argc, char **argv)
 				schemaOnly = 1;
 				break;
 			case 't':			/* Dump data for this table only */
-				tablename = optarg;
+				{
+					int i;
+
+					tablename = strdup(optarg);
+					for (i = 0; tablename[i]; i++)
+						if (isupper(tablename[i]))
+							tablename[i] = tolower(tablename[i]);
+				}
 				break;
 			case 'v':			/* verbose */
 				g_verbose = true;
