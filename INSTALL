@@ -802,7 +802,7 @@ tests pass.
 |____________|_________|_______|(<peter_e@gmx.net>)___________|_______________|
 |Linux       |x86      |7.4    |2003-10-24, Peter Eisentraut  |2.4            |
 |____________|_________|_______|(<peter_e@gmx.net>)___________|_______________|
-|MacOS X     |PPC      |7.4    |2003-10-24, 10.2.8, Adam      |               |
+|Mac OS X    |PPC      |7.4    |2003-10-24, 10.2.8, Adam      |               |
 |            |         |       |Witney                        |               |
 |            |         |       |(<awitney@sghms.ac.uk>), 10.3,|               |
 |            |         |       |Marko Karppinen               |               |
@@ -817,7 +817,7 @@ tests pass.
 |____________|_________|_______|(<peter_e@gmx.net>)___________|_______________|
 |Solaris     |Sparc    |7.4    |2003-10-26, Christopher Browne|2.8; see also  |
 |____________|_________|_______|(<cbbrowne@libertyrms.info>)__|doc/FAQ_Solaris|
-|Solaris     |x86      |7.4    |2003-10-26, Kurt Roeckx       |2.6 see also   |
+|Solaris     |x86      |7.4    |2003-10-26, Kurt Roeckx       |2.6; see also  |
 |____________|_________|_______|(<Q@ping.be>)_________________|doc/FAQ_Solaris|
 |Tru64 UNIX  |Alpha    |7.4    |2003-10-25, 5.1b, Peter       |               |
 |            |         |       |Eisentraut                    |               |
