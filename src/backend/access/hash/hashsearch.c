@@ -7,17 +7,15 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.6 1996/11/03 12:34:42 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.7 1996/11/05 09:40:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
  
-#include "access/relscan.h"
-#include "access/hash.h"
-#include "utils/palloc.h"
-#include "storage/bufmgr.h"
+#include <access/hash.h>
+#include <storage/bufmgr.h>
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"

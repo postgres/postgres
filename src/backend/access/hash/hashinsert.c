@@ -7,24 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.6 1996/11/03 12:34:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashinsert.c,v 1.7 1996/11/05 09:40:18 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <time.h>
-
-#include "postgres.h"
+#include <postgres.h>
  
-#include "access/relscan.h"
-#include "access/hash.h"
-
-#include "storage/bufmgr.h"
-
-#include "utils/palloc.h"
-
-#include "utils/memutils.h"
+#include <access/hash.h>
+#include <storage/bufmgr.h>
+#include <utils/memutils.h>
 
 static InsertIndexResult _hash_insertonpg(Relation rel, Buffer buf, int keysz, ScanKey scankey, HashItem hitem, Buffer metabuf);
 static OffsetNumber _hash_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, HashItem hitem);

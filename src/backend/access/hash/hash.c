@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.9 1996/11/03 12:34:33 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.10 1996/11/05 09:40:17 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -15,32 +15,21 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "access/relscan.h"
-#include "access/hash.h"
-
-#include "nodes/execnodes.h"
-
-#include "executor/executor.h"
-
-#include "access/heapam.h"
-
-#include "access/genam.h"
-
-#include "utils/palloc.h"
-
-#include "catalog/index.h"
+#include <access/hash.h>
+#include <executor/executor.h>
+#include <access/heapam.h>
+#include <access/genam.h>
+#include <catalog/index.h>
+#include <storage/bufmgr.h>
+#include <miscadmin.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif
-
-#include "storage/bufmgr.h"
-
-#include "miscadmin.h"
 
 bool	BuildingHash = false;
 

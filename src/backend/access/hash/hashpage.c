@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.6 1996/11/03 12:34:40 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.7 1996/11/05 09:40:21 scrappy Exp $
  *
  * NOTES
  *    Postgres hash pages look like ordinary relation pages.  The opaque
@@ -23,23 +23,17 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
  
-#include "access/relscan.h"
-#include "access/hash.h"
-
-#include "storage/bufmgr.h"
-
-#include "miscadmin.h"
-
-#include "utils/memutils.h"
-
-#include "storage/lmgr.h"
-
-#include "access/genam.h"
+#include <access/hash.h>
+#include <storage/bufmgr.h>
+#include <miscadmin.h>
+#include <utils/memutils.h>
+#include <storage/lmgr.h>
+#include <access/genam.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif

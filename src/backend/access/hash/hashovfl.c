@@ -7,22 +7,21 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.7 1996/11/03 12:34:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.8 1996/11/05 09:40:20 scrappy Exp $
  *
  * NOTES
  *    Overflow pages look like ordinary relation pages.
  *
  *-------------------------------------------------------------------------
  */
-#include "postgres.h"
+#include <postgres.h>
  
-#include "access/relscan.h"
-#include "access/hash.h"
-#include "storage/bufmgr.h"
-#include "utils/memutils.h"
+#include <access/hash.h>
+#include <storage/bufmgr.h>
+#include <utils/memutils.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif
