@@ -1,6 +1,10 @@
 #  define USE_POSIX_TIME
 #  define NEED_STRDUP
 
+#ifndef		BYTE_ORDER
+#define		BYTE_ORDER	LITTLE_ENDIAN
+#endif
+
 /*
  * Except for those system calls and library functions that are either
  * - covered by the C standard library and Posix.1
@@ -54,5 +58,6 @@ extern int gettimeofday(struct timeval *, struct timezone *);
 extern int fsync(int);
 extern int ftruncate(int, off_t);
 
-/* End of ultrix4.h */
+extern char *crypt(char *, char *);
 
+/* End of ultrix4.h */
