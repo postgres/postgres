@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.31 2003/11/29 19:52:07 pgsql Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/prompt.c,v 1.32 2004/01/20 19:49:34 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -12,6 +12,7 @@
 
 #include "settings.h"
 #include "common.h"
+#include "input.h"
 #include "variables.h"
 
 #ifdef WIN32
@@ -57,7 +58,9 @@
  * %:name:		   - The value of the psql variable 'name'
  * (those will not be rescanned for more escape sequences!)
  *
- * If the application-wide prompts became NULL somehow, the returned string
+ * %[ ... %]	   - tell readline that the contained text is invisible
+ *
+ * If the application-wide prompts become NULL somehow, the returned string
  * will be empty (not NULL!).
  *--------------------------
  */
@@ -282,10 +285,23 @@ get_prompt(promptStatus_t status)
 						break;
 					}
 
+			    case '[':
+			    case ']':
+#if defined(USE_READLINE) && defined(RL_PROMPT_START_IGNORE)
+				  /*
+				   * readline >=4.0 undocumented feature: non-printing
+				   * characters in prompt strings must be marked as such,
+				   * in order to properly display the line during editing.
+				   */
+				  buf[0] = '\001';
+				  buf[1] = (*p == '[') ? RL_PROMPT_START_IGNORE : RL_PROMPT_END_IGNORE;
+#endif /* USE_READLINE */
+				  break;
 
 				default:
 					buf[0] = *p;
 					buf[1] = '\0';
+					break;
 
 			}
 			esc = false;

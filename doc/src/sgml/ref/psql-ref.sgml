@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.102 2003/12/23 23:13:14 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.103 2004/01/20 19:49:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -2313,6 +2313,28 @@ testdb=> <userinput>\set content '\'' `sed -e "s/'/\\\\\\'/g" < my_file.txt` '\'
 	<quote>back-tick</quote> substitution.
 	</para>
 	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><literal>%[</literal> ... <literal>%]</literal></term>
+	<listitem>
+         <para>
+         Prompts may contain terminal control characters which, for
+         example, change the color, background, or style of the prompt
+         text, or change the title of the terminal window. In order for
+         the line editing features of readline to work properly, these
+         non-printing control characters must be designated as invisible
+         by surrounding them with <literal>%[</literal> and
+         <literal>%]</literal>. Multiple pairs of these may occur within
+         the prompt.  For example,
+<programlisting>
+testdb=> \set PROMPT1 '%[%033[1;33;40m%]%n@%/%R%[%033[0m%#%] '
+</programlisting>
+         results in a boldfaced (<literal>1;</literal>) yellow-on-black
+         (<literal>33;40</literal>) prompt on VT100-compatible, color-capable
+	 terminals.
+    	</para>
+        </listitem>
       </varlistentry>
 
     </variablelist>
