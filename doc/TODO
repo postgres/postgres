@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri May  5 00:05:54 EDT 2000
+Last updated:		Fri May  5 18:24:10 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -181,6 +181,7 @@ MISC
 * redesign UNION structures to have separarate target lists
 * Allow multi-level query trees for INSERT INTO ... SELECT
 * Use IPC_EXCL when creating shared memory and semaphores
+* have pg_upgrade use pg_ctl to stop/start postmaster
 
 PERFORMANCE
 -----------
