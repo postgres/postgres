@@ -292,7 +292,7 @@ int main(int argc, char **argv)
 		MoveToEnd(AH, "INDEX");
 		MoveToEnd(AH, "TRIGGER");
 		MoveToEnd(AH, "RULE");
-		MoveToEnd(AH, "ACL");
+		MoveToEnd(AH, "SEQUENCE SET");
     }
 
 	/* Database MUST be at start */

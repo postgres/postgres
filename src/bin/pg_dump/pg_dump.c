@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.169 2000/10/10 13:55:28 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.170 2000/10/13 00:43:31 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -992,6 +992,7 @@ main(int argc, char **argv)
 	MoveToEnd(g_fout, "INDEX");
 	MoveToEnd(g_fout, "TRIGGER");
 	MoveToEnd(g_fout, "RULE");
+	MoveToEnd(g_fout, "SEQUENCE SET");
 
 	if (plainText) 
 	{
@@ -4015,19 +4016,31 @@ dumpSequence(Archive *fout, TableInfo tbinfo)
 	resetPQExpBuffer(delqry);
 	appendPQExpBuffer(delqry, "DROP SEQUENCE %s;\n", fmtId(tbinfo.relname, force_quotes));
 
+	/*
+	 * The logic we use for restoring sequences is as follows:
+	 *		- 	Add a basic CREATE SEQUENCE statement 
+	 *			(use last_val for start if called == 'f', else use min_val for start_val).
+	 *		-	Add a 'SETVAL(seq, last_val, iscalled)' at restore-time iff we load data
+	 */
 	resetPQExpBuffer(query);
 	appendPQExpBuffer(query,
 				  "CREATE SEQUENCE %s start %d increment %d maxvalue %d "
 					  "minvalue %d  cache %d %s;\n",
-					fmtId(tbinfo.relname, force_quotes), last, incby, maxv, minv, cache,
+					fmtId(tbinfo.relname, force_quotes), 
+					  (called == 't') ? minv : last,
+					  incby, maxv, minv, cache,
 					  (cycled == 't') ? "cycle" : "");
-
-	if (called != 'f') {
-		appendPQExpBuffer(query, "SELECT nextval ('%s');\n", fmtId(tbinfo.relname, force_quotes));
-	}
 
 	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE", NULL,
 					query->data, delqry->data, "", tbinfo.usename, NULL, NULL);
+
+
+	resetPQExpBuffer(query);
+	appendPQExpBuffer(query, "SELECT setval ('%s', %d, '%c');\n", 
+						fmtId(tbinfo.relname, force_quotes), last, called);
+
+	ArchiveEntry(fout, tbinfo.oid, fmtId(tbinfo.relname, force_quotes), "SEQUENCE SET", NULL,
+					query->data, "" /* Del */, "", "", NULL, NULL);
 
 	/* Dump Sequence Comments */
 

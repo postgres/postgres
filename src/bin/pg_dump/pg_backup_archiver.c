@@ -1483,12 +1483,16 @@ static int _tocEntryRequired(TocEntry* te, RestoreOptions *ropt)
 		}
 	}
 
+	/* Special Case: If 'SEQUENCE SET' and schemaOnly, then not needed */
+	if (ropt->schemaOnly && (strcmp(te->desc, "SEQUENCE SET") == 0) )
+		return 0;
+
     /* Mask it if we only want schema */
     if (ropt->schemaOnly)
 		res = res & 1;
 
     /* Mask it we only want data */
-    if (ropt->dataOnly) 
+    if (ropt->dataOnly && (strcmp(te->desc, "SEQUENCE SET") != 0) ) 
        res = res & 2;
 
     /* Mask it if we don't have a schema contribition */
