@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.6 1999/05/30 15:17:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgconnection.cc,v 1.7 2000/03/16 15:34:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,7 @@ PgConnection::PgConnection(const char* conninfo)
 PgConnection::~PgConnection()
 {
   // Terminate the debugging output if it was turned on
-  #if defined(DEBUG)
+  #if defined(DEBUGFILE)
   	PQuntrace(pgConn);
   #endif
   
@@ -68,7 +68,7 @@ ConnStatusType PgConnection::Connect(const char* conninfo)
 {
 ConnStatusType cst;
   // Turn the trace on
-#if defined(DEBUG)
+#if defined(DEBUGFILE)
   FILE *debug = fopen("/tmp/trace.out","w");
   PQtrace(pgConn, debug);
 #endif

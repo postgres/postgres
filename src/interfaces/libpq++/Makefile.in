@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.21 2000/03/08 01:58:37 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.22 2000/03/16 15:34:36 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -34,7 +34,7 @@ CXXFLAGS+=   -I$(SRCDIR)/backend \
              -I$(SRCHEADERDIR) \
              -I$(LIBPQDIR)
 
-#CXXFLAGS+= -DDEBUG
+#CXXFLAGS+= -DDEBUGFILE
 
 ifdef KRBVERS
 CXXFLAGS+= $(KRBFLAGS)
