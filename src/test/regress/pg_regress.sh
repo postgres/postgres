@@ -1,5 +1,5 @@
 #! /bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.32 2003/07/29 00:03:19 tgl Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/pg_regress.sh,v 1.33 2003/07/30 17:08:47 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -652,6 +652,7 @@ done | tee "$result_summary_file" 2>&1
 if [ -n "$postmaster_pid" ]; then
     message "shutting down postmaster"
     kill -15 "$postmaster_pid"
+    wait "$postmaster_pid"
     unset postmaster_pid
 fi
 
