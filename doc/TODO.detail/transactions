@@ -919,3 +919,137 @@ Http://www.rhyme.com.au          |                /           \|
 PGP key available upon request,  |  /
 and from pgp5.ai.mit.edu:11371   |/
 
+From pgsql-hackers-owner+M3501@postgresql.org Sat Jan 20 03:42:19 2001
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id DAA12652
+	for <pgman@candle.pha.pa.us>; Sat, 20 Jan 2001 03:42:18 -0500 (EST)
+Received: from mail.postgresql.org (webmail.postgresql.org [216.126.85.28])
+	by mail.postgresql.org (8.11.1/8.11.1) with SMTP id f0K8ZG020426;
+	Sat, 20 Jan 2001 03:35:16 -0500 (EST)
+	(envelope-from pgsql-hackers-owner+M3501@postgresql.org)
+Received: from store.z.zembu.com (nat.zembu.com [209.128.96.253])
+	by mail.postgresql.org (8.11.1/8.11.1) with ESMTP id f0K8TU016385
+	for <pgsql-hackers@postgresql.org>; Sat, 20 Jan 2001 03:29:30 -0500 (EST)
+	(envelope-from ncm@zembu.com)
+Received: by store.z.zembu.com (Postfix, from userid 509)
+	id B33D9A782; Sat, 20 Jan 2001 00:29:24 -0800 (PST)
+Date: Sat, 20 Jan 2001 00:29:24 -0800
+To: pgsql-hackers@postgresql.org
+Subject: Re: [HACKERS] Transaction ID wraparound: problem and proposed solution
+Message-ID: <20010120002924.A2797@store.zembu.com>
+Reply-To: pgsql-hackers@postgresql.org
+References: <8382.973291660@sss.pgh.pa.us> <200101200500.AAA05265@candle.pha.pa.us>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.2.5i
+In-Reply-To: <200101200500.AAA05265@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Sat, Jan 20, 2001 at 12:00:09AM -0500
+From: ncm@zembu.com (Nathan Myers)
+Precedence: bulk
+Sender: pgsql-hackers-owner@postgresql.org
+Status: OR
+
+I think the XID wraparound matter might be handled a bit more simply.
+
+Given a global variable X which is the earliest XID value in use at 
+some event (e.g. startup) you can compare two XIDs x and y, using
+unsigned arithmetic, with just (x-X < y-X).  This has the further 
+advantage that old transaction IDs need be "frozen" only every 4G 
+transactions, rather than Tom's suggested 256M or 512M transactions.  
+"Freezing", in this scheme, means to set all older XIDs to equal the 
+chosen X, rather than setting them to some constant reserved value.  
+No special cases are required for the comparison, even for folded 
+values; it is (x-X < y-X) for all valid x and y.
+
+I don't know the role of the "bootstrap" XID, or how it must be
+fitted into the above.
+
+Nathan Myers
+ncm@zembu.com
+
+------------------------------------------------------------
+> We've expended a lot of worry and discussion in the past about what
+> happens if the OID generator wraps around.  However, there is another
+> 4-byte counter in the system: the transaction ID (XID) generator.
+> While OID wraparound is survivable, if XIDs wrap around then we really
+> do have a Ragnarok scenario.  The tuple validity checks do ordered
+> comparisons on XIDs, and will consider tuples with xmin > current xact
+> to be invalid.  Result: after wraparound, your whole database would
+> instantly vanish from view.
+> 
+> The first thought that comes to mind is that XIDs should be promoted to
+> eight bytes.  However there are several practical problems with this:
+> * portability --- I don't believe long long int exists on all the
+> platforms we support.
+> * performance --- except on true 64-bit platforms, widening Datum to
+> eight bytes would be a system-wide performance hit, which is a tad
+> unpleasant to fix a scenario that's not yet been reported from the
+> field.
+> * disk space --- letting pg_log grow without bound isn't a pleasant
+> prospect either.
+> 
+> I believe it is possible to fix these problems without widening XID,
+> by redefining XIDs in a way that allows for wraparound.  Here's my
+> plan:
+> 
+> 1. Allow XIDs to range from 0 to WRAPLIMIT-1 (WRAPLIMIT is not
+> necessarily 4G, see discussion below).  Ordered comparisons on XIDs
+> are no longer simply "x < y", but need to be expressed as a macro.
+> We consider x < y if (y - x) % WRAPLIMIT < WRAPLIMIT/2.
+> This comparison will work as long as the range of interesting XIDs
+> never exceeds WRAPLIMIT/2.  Essentially, we envision the actual value
+> of XID as being the low-order bits of a logical XID that always
+> increases, and we assume that no extant XID is more than WRAPLIMIT/2
+> transactions old, so we needn't keep track of the high-order bits.
+> 
+> 2. To keep the system from having to deal with XIDs that are more than
+> WRAPLIMIT/2 transactions old, VACUUM should "freeze" known-good old
+> tuples.  To do this, we'll reserve a special XID, say 1, that is always
+> considered committed and is always less than any ordinary XID.  (So the
+> ordered-comparison macro is really a little more complicated than I said
+> above.  Note that there is already a reserved XID just like this in the
+> system, the "bootstrap" XID.  We could simply use the bootstrap XID, but
+> it seems better to make another one.)  When VACUUM finds a tuple that
+> is committed good and has xmin < XmaxRecent (the oldest XID that might
+> be considered uncommitted by any open transaction), it will replace that
+> tuple's xmin by the special always-good XID.  Therefore, as long as
+> VACUUM is run on all tables in the installation more often than once per
+> WRAPLIMIT/2 transactions, there will be no tuples with ordinary XIDs
+> older than WRAPLIMIT/2.
+> 
+> 3. At wraparound, the XID counter has to be advanced to skip over the
+> InvalidXID value (zero) and the reserved XIDs, so that no real transaction
+> is generated with those XIDs.  No biggie here.
+> 
+> 4. With the wraparound behavior, pg_log will have a bounded size: it
+> will never exceed WRAPLIMIT*2 bits = WRAPLIMIT/4 bytes.  Since we will
+> recycle pg_log entries every WRAPLIMIT xacts, during transaction start
+> the xact manager will have to take care to actively clear its pg_log
+> entry to zeroes (I'm not sure if it does that already, or just assumes
+> that new pg_log entries will start out zero).  As long as that happens
+> before the xact makes any data changes, it's OK to recycle the entry.
+> Note we are assuming that no tuples will remain in the database with
+> xmin or xmax equal to that XID from a prior cycle of the universe.
+> 
+> This scheme allows us to survive XID wraparound at the cost of slight
+> additional complexity in ordered comparisons of XIDs (which is not a
+> really performance-critical task AFAIK), and at the cost that the
+> original insertion XIDs of all but recent tuples will be lost by
+> VACUUM.  The system doesn't particularly care about that, but old XIDs
+> do sometimes come in handy for debugging purposes.  A possible
+> compromise is to overwrite only XIDs that are older than, say,
+> WRAPLIMIT/4 instead of doing so as soon as possible.  This would mean
+> the required VACUUM frequency is every WRAPLIMIT/4 xacts instead of
+> every WRAPLIMIT/2 xacts.
+> 
+> We have a straightforward tradeoff between the maximum size of pg_log
+> (WRAPLIMIT/4 bytes) and the required frequency of VACUUM (at least
+> every WRAPLIMIT/2 or WRAPLIMIT/4 transactions).  This could be made
+> configurable in config.h for those who're intent on customization,
+> but I'd be inclined to set the default value at WRAPLIMIT = 1G.
+> 
+> Comments?  Vadim, is any of this about to be superseded by WAL?
+> If not, I'd like to fix it for 7.1.
+> 
+> 			regards, tom lane
+
