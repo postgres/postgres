@@ -5,16 +5,18 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.7 1997/04/21 04:26:47 vadim Exp $
+# $Id: Makefile,v 1.8 1997/12/19 02:05:51 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../port/$(PORTNAME) \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
+
+ifdef PORTNAME
+INCLUDE_OPT+=-I../../port/$(PORTNAME) 
+endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

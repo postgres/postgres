@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.10 1997/09/08 21:48:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.11 1997/12/19 02:07:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,9 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 
-#include "port-protos.h"		/* For random(), sometimes */
+#ifndef HAVE_RANDOM
+#  include "port-protos.h"		/* For random(), sometimes */
+#endif
 
 
 /*-------------------------------------------------------------------------

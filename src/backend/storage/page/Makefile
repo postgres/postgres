@@ -4,16 +4,18 @@
 #    Makefile for storage/page
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.3 1996/11/09 06:22:14 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/page/Makefile,v 1.4 1997/12/19 02:07:28 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../../..
 include ../../../Makefile.global
 
-INCLUDE_OPT = -I../.. \
-              -I../../port/$(PORTNAME) \
-              -I../../../include
+INCLUDE_OPT = -I../.. 
+
+ifdef PORTNAME
+INCLUDE+=-I../../port/$(PORTNAME)    
+endif
 
 CFLAGS+=$(INCLUDE_OPT)
 

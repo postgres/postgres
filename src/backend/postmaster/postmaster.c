@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.67 1997/12/15 22:03:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.68 1997/12/19 02:06:37 scrappy Exp $
  *
  * NOTES
  *
@@ -87,7 +87,9 @@
 #include "utils/mcxt.h"
 #include "storage/proc.h"
 #include "utils/elog.h"
-#include "port-protos.h"		/* For gethostname() */
+#ifndef HAVE_GETHOSTNAME
+#  include "port-protos.h" 		/* For gethostname() */
+#endif
 #include "storage/fd.h"
 
 #if defined(DBX_VERSION)

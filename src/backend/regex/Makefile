@@ -4,20 +4,21 @@
 #    Makefile for regex
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.2 1996/11/09 06:20:58 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/regex/Makefile,v 1.3 1997/12/19 02:06:41 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR = ../..
 include ../../Makefile.global
 
-INCLUDE_OPT = -I.. \
-              -I../port/$(PORTNAME) \
-              -I../../include
+INCLUDE_OPT = -I.. 
+
+ifdef PORTNAME
+INCLUDE_OPT+=-I../port/$(PORTNAME) 
+endif
 
 CFLAGS+=$(INCLUDE_OPT)
 CFLAGS+=-DPOSIX_MISTAKE 
-
 
 OBJS = regcomp.o regerror.o regexec.o regfree.o
 

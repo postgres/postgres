@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.17 1997/11/17 16:26:27 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.18 1997/12/19 02:08:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,10 @@
 #else
 #include <string.h>
 #endif
-#include <port-protos.h>		/* ecvt(), fcvt() */
+
+#ifndef HAVE_FCVT
+#  include <port-protos.h>		/* ecvt(), fcvt() */
+#endif
 
 #ifndef INT_MAX
 #define INT_MAX (0x7FFFFFFFL)
@@ -334,7 +337,7 @@ frac_out:
 	*a = 0;
 	avail = a - ascii;
 	return (avail);
-#endif							/* !BSD44_derived */
+#endif	
 }
 
 #endif
