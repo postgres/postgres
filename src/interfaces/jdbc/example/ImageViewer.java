@@ -26,6 +26,9 @@ import postgresql.largeobject.*;
  * It's only if you use the non jdbc facilities, do you have to take this into
  * account.
  *
+ * Note: For PostgreSQL 6.4, the driver is now Thread safe, so this example
+ * application has been updated to use multiple threads, especially in the
+ * image storing and retrieving methods.
  */
 
 public class ImageViewer implements ItemListener
@@ -42,7 +45,14 @@ public class ImageViewer implements ItemListener
   // This is a simple component to display our image
   public class imageCanvas extends Canvas
   {
+    // holds the image
     private Image image;
+    
+    // holds the background buffer
+    private Image bkg;
+    
+    // the size of the buffer
+    private Dimension size;
     
     public imageCanvas()
     {
@@ -71,14 +81,35 @@ public class ImageViewer implements ItemListener
       paint(g);
     }
     
-    public void paint(Graphics g)
+    /**
+     * Paints the image, using double buffering to prevent screen flicker
+     */
+    public void paint(Graphics gr)
     {
-      g.setColor(Color.gray);
-      g.fillRect(0,0,getSize().width,getSize().height);
+      Dimension s = getSize();
       
+      if(size==null || bkg==null || !s.equals(size)) {
+	size = s;
+	bkg = createImage(size.width,size.height);
+      }
+      
+      // now set the background
+      Graphics g = bkg.getGraphics();
+      g.setColor(Color.gray);
+      g.fillRect(0,0,s.width,s.height);
+      
+      // now paint the image over the background
       if(image!=null)
 	g.drawImage(image,0,0,this);
+      
+      // dispose the graphics instance
+      g.dispose();
+      
+      // paint the image onto the component
+      gr.drawImage(bkg,0,0,this);
+      
     }
+    
   }
   
   public ImageViewer(Frame f,String url,String user,String password) throws ClassNotFoundException, FileNotFoundException, IOException, SQLException
@@ -197,9 +228,8 @@ public class ImageViewer implements ItemListener
   }
   
   /**
-   * This imports an image into the database.
-   *
-   * This is the most efficient method, using the large object extension.
+   * This imports an image into the database, using a Thread to do this in the
+   * background.
    */
   public void importImage()
   {
@@ -209,51 +239,92 @@ public class ImageViewer implements ItemListener
     String dir = d.getDirectory();
     d.dispose();
     
-    // Now the real import stuff
-    if(name!=null && dir!=null) {
-      try {
-	System.out.println("Importing file");
-	// A temporary buffer - this can be as large as you like
-	byte buf[] = new byte[2048];
+    // now start the true importer
+    Thread t = new importer(db,name,dir);
+    //t.setPriority(Thread.MAX_PRIORITY);
+    t.start();
+  }
+  
+  /**
+   * This is an example of using a thread to import a file into a Large Object.
+   * It uses the Large Object extension, to write blocks of the file to the
+   * database.
+   */
+  class importer extends Thread
+  {
+    String name,dir;
+    Connection db;
+    
+    public importer(Connection db,String name,String dir) {
+      this.db = db;
+      this.name = name;
+      this.dir = dir;
+    }
+    
+    public void run() {
+      
+      // Now the real import stuff
+      if(name!=null && dir!=null) {
+	Statement stat = null;
 	
-	// Open the file
-	System.out.println("Opening file "+dir+"/"+name);
-	FileInputStream fis = new FileInputStream(new File(dir,name));
-	
-	// Gain access to large objects
-	System.out.println("Gaining LOAPI");
-	
-	// Now create the large object
-	System.out.println("creating blob");
-	int oid = lom.create();
-	
-	System.out.println("Opening "+oid);
-	LargeObject blob = lom.open(oid);
-	
-	// Now copy the file into the object.
-	//
-	// Note: we dont use write(buf), as the last block is rarely the same
-	// size as our buffer, so we have to use the amount read.
-	System.out.println("Importing file");
-	int s,t=0;
-	while((s=fis.read(buf,0,buf.length))>0) {
-	  System.out.println("Block s="+s+" t="+t);t+=s;
-	  blob.write(buf,0,s);
+	try {
+	  // fetch the large object manager
+	  LargeObjectManager lom = ((postgresql.Connection)db).getLargeObjectAPI();
+	  
+	  System.out.println("Importing file");
+	  // A temporary buffer - this can be as large as you like
+	  byte buf[] = new byte[2048];
+	  
+	  // Open the file
+	  System.out.println("Opening file "+dir+"/"+name);
+	  FileInputStream fis = new FileInputStream(new File(dir,name));
+	  
+	  // Gain access to large objects
+	  System.out.println("Gaining LOAPI");
+	  
+	  // Now create the large object
+	  System.out.println("creating blob");
+	  int oid = lom.create();
+	  
+	  System.out.println("Opening "+oid);
+	  LargeObject blob = lom.open(oid);
+	  
+	  // Now copy the file into the object.
+	  //
+	  // Note: we dont use write(buf), as the last block is rarely the same
+	  // size as our buffer, so we have to use the amount read.
+	  System.out.println("Importing file");
+	  int s,t=0;
+	  while((s=fis.read(buf,0,buf.length))>0) {
+	    System.out.println("Block s="+s+" t="+t);t+=s;
+	    blob.write(buf,0,s);
+	  }
+	  
+	  // Close the object
+	  System.out.println("Closing blob");
+	  blob.close();
+	  
+	  // Now store the entry into the table
+	  
+	  // As we are a different thread to the other window, we must use
+	  // our own thread
+	  stat = db.createStatement();
+	  stat.executeUpdate("insert into images values ('"+name+"',"+oid+")");
+	  
+	  // Finally refresh the names list, and display the current image
+	  ImageViewer.this.refreshList();
+	  ImageViewer.this.displayImage(name);
+	} catch(Exception ex) {
+	  label.setText(ex.toString());
+	} finally {
+	  // ensure the statement is closed after us
+	  try {
+	    if(stat != null)
+	      stat.close();
+	  } catch(SQLException se) {
+	    System.err.println("closing of Statement failed");
+	  }
 	}
-	
-	// Close the object
-	System.out.println("Closing blob");
-	blob.close();
-	
-	// Now store the entry into the table
-	stat.executeUpdate("insert into images values ('"+name+"',"+oid+")");
-	stat.close();
-	
-	// Finally refresh the names list, and display the current image
-	refreshList();
-	displayImage(name);
-      } catch(Exception ex) {
-	label.setText(ex.toString());
       }
     }
   }
@@ -364,7 +435,7 @@ public class ImageViewer implements ItemListener
     }
     
     try {
-      Frame frame = new Frame("PostgreSQL ImageViewer v6.3 rev 1");
+      Frame frame = new Frame("PostgreSQL ImageViewer v6.4 rev 1");
       frame.setLayout(new BorderLayout());
       ImageViewer viewer = new ImageViewer(frame,args[0],args[1],args[2]);
       frame.pack();
