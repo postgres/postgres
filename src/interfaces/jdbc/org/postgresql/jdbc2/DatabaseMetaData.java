@@ -1722,7 +1722,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   // IMPORTANT: the query must be enclosed in ( )
   private static final String getTableTypes[][] = {
     {"TABLE",		"(relkind='r' and relhasrules='f' and relname !~ '^pg_' and relname !~ '^xinv')"},
-    {"VIEW",		"(relkind='r' and relhasrules='t' and relname !~ '^pg_' and relname !~ '^xinv')"},
+    {"VIEW",        "(relkind='v' and relname !~ '^pg_' and relname !~ '^xinv')"},
     {"INDEX",		"(relkind='i' and relname !~ '^pg_' and relname !~ '^xinx')"},
     {"LARGE OBJECT",	"(relkind='r' and relname ~ '^xinv')"},
     {"SEQUENCE",	"(relkind='S' and relname !~ '^pg_')"},
