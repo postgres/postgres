@@ -4,7 +4,7 @@
 #    Makefile for utils
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.1 1996/11/11 13:51:55 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/utils/Attic/Makefile,v 1.2 1996/11/11 16:30:07 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,6 +16,8 @@ INCLUDE_OPT = -I../include
 CFLAGS+=$(INCLUDE_OPT)
 
 all: version.o
+
+install:
 
 depend dep:
 	$(CC) -MM $(INCLUDE_OPT) *.c >depend
