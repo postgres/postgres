@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.237 2004/08/31 19:28:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.238 2004/08/31 22:43:58 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -116,7 +116,6 @@ static bool assign_log_stats(bool newval, bool doit, GucSource source);
 static bool assign_transaction_read_only(bool newval, bool doit, GucSource source);
 static const char *assign_canonical_path(const char *newval, bool doit, GucSource source);
 
-static void ReadConfigFile(char *filename, GucContext context);
 
 /*
  * Debugging options
@@ -3079,7 +3078,13 @@ set_config_option(const char *name, const char *value,
 				changeValOrig = changeVal;
 
 	if (context == PGC_SIGHUP || source == PGC_S_DEFAULT)
-		elevel = DEBUG2;
+	{
+		/*
+		 * To avoid cluttering the log, only the postmaster bleats loudly
+		 * about problems with the config file.
+		 */
+		elevel = IsUnderPostmaster ? DEBUG2 : LOG;
+	}
 	else if (source == PGC_S_DATABASE || source == PGC_S_USER)
 		elevel = INFO;
 	else
@@ -4715,7 +4720,8 @@ write_nondefault_variables(GucContext context)
 
 	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
 	Assert(DataDir);
-	elevel = (context == PGC_SIGHUP) ? DEBUG4 : ERROR;
+
+	elevel = (context == PGC_SIGHUP) ? LOG : ERROR;
 
 	/*
 	 * Open file

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.24 2004/08/29 04:13:00 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/misc/guc-file.l,v 1.25 2004/08/31 22:43:58 tgl Exp $
  */
 
 %{
@@ -13,7 +13,6 @@
 
 #include <sys/stat.h>
 #include <unistd.h>
-#include <errno.h>
 #include <ctype.h>
 
 #include "miscadmin.h"
@@ -39,11 +38,9 @@ enum {
 	GUC_ERROR = 100
 };
 
-#define YY_USER_INIT (ConfigFileLineno = 1)
-
 /* prototype, so compiler is happy with our high warnings setting */
 int GUC_yylex(void);
-char *GUC_scanstr(char *);
+static char *GUC_scanstr(char *);
 %}
 
 %option 8bit
@@ -98,7 +95,6 @@ struct name_value_pair
 };
 
 
-
 /*
  * Free a list of name/value pairs, including the names and the values
  */
@@ -113,9 +109,9 @@ free_name_value_list(struct name_value_pair * list)
 		struct name_value_pair *save;
 
 		save = item->next;
-		free(item->name);
-		free(item->value);
-		free(item);
+		pfree(item->name);
+		pfree(item->value);
+		pfree(item);
 		item = save;
 	}
 }
@@ -123,30 +119,74 @@ free_name_value_list(struct name_value_pair * list)
 
 /*
  * Official function to read and process the configuration file. The
- * parameter indicates in what context the file is being read
- * (postmaster startup, backend startup, or SIGHUP). All options
- * mentioned in the configuration file are set to new values. This
- * function does not return if an error occurs. If an error occurs, no
- * values will be changed.
+ * parameter indicates in what context the file is being read --- either
+ * postmaster startup (including standalone-backend startup) or SIGHUP.
+ * All options mentioned in the configuration file are set to new values.
+ * If an error occurs, no values will be changed.
  */
-static void
-ReadConfigFile(char *filename, GucContext context)
+void
+ProcessConfigFile(GucContext context)
 {
-	int token, parse_state;
-	char *opt_name, *opt_value;
+	int			elevel;
+	char	   *filename;
+	int			token, parse_state;
+	char	   *opt_name, *opt_value;
 	struct name_value_pair *item, *head, *tail;
-	int elevel;
-	FILE * fp;
+	FILE	   *fp;
 
-	elevel = (context == PGC_SIGHUP) ? DEBUG4 : ERROR;
+	Assert(context == PGC_POSTMASTER || context == PGC_SIGHUP);
+
+	if (context == PGC_SIGHUP)
+	{
+		/*
+		 * To avoid cluttering the log, only the postmaster bleats loudly
+		 * about problems with the config file.
+		 */
+		elevel = IsUnderPostmaster ? DEBUG2 : LOG;
+	}
+	else
+		elevel = ERROR;
+
+	/*
+	 * Handle the various possibilities for config file location
+	 */
+	if (user_pgconfig)
+	{
+		struct stat sb;
+
+		if (stat(user_pgconfig, &sb) != 0)
+		{
+			ereport(elevel,
+					(errcode_for_file_access(),
+					 errmsg("could not access configuration file \"%s\": %m",
+							user_pgconfig)));
+			return;
+		}
+
+		if (S_ISDIR(sb.st_mode))
+		{
+			filename = palloc(strlen(user_pgconfig) + strlen(CONFIG_FILENAME) + 2);
+			sprintf(filename, "%s/%s", user_pgconfig, CONFIG_FILENAME);
+			user_pgconfig_is_dir = true;
+		}
+		else
+			filename = pstrdup(user_pgconfig);	/* Use explicit file */
+	}
+	else
+	{
+		/* Find config in datadir */
+		filename = palloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
+		sprintf(filename, "%s/%s", DataDir, CONFIG_FILENAME);
+	}
 
     fp = AllocateFile(filename, "r");
     if (!fp)
     {
-		free(filename);
 		ereport(elevel,
-			(errcode_for_file_access(),
-			 errmsg("could not open configuration file \"%s\": %m", filename)));
+				(errcode_for_file_access(),
+				 errmsg("could not open configuration file \"%s\": %m",
+						filename)));
+		pfree(filename);
 		return;
     }
 
@@ -157,8 +197,10 @@ ReadConfigFile(char *filename, GucContext context)
     parse_state = 0;
 	head = tail = NULL;
 	opt_name = opt_value = NULL;
+	ConfigFileLineno = 1;
 
     while ((token = yylex()))
+	{
         switch(parse_state)
         {
             case 0: /* no previous input */
@@ -166,9 +208,7 @@ ReadConfigFile(char *filename, GucContext context)
                     continue;
                 if (token != GUC_ID && token != GUC_QUALIFIED_ID)
                     goto parse_error;
-                opt_name = strdup(yytext);
-				if (opt_name == NULL)
-					goto out_of_memory;
+                opt_name = pstrdup(yytext);
                 parse_state = 1;
                 break;
 
@@ -182,18 +222,16 @@ ReadConfigFile(char *filename, GucContext context)
 					token != GUC_REAL && 
 					token != GUC_UNQUOTED_STRING)
                     goto parse_error;
-                opt_value = strdup(yytext);
-				if (opt_value == NULL)
-					goto out_of_memory;
+                opt_value = pstrdup(yytext);
 				if (token == GUC_STRING)
 				{
 					/* remove the beginning and ending quote/apostrophe */
 					/* first: shift the whole thing down one character */
-					memmove(opt_value,opt_value+1,strlen(opt_value)-1);
+					memmove(opt_value, opt_value+1, strlen(opt_value)-1);
 					/* second: null out the 2 characters we shifted */
-					opt_value[strlen(opt_value)-2]='\0';
-					/* do the escape thing.  free()'s the strdup above */
-					opt_value=GUC_scanstr(opt_value);
+					opt_value[strlen(opt_value)-2] = '\0';
+					/* do the escape thing.  pfree()'s the pstrdup above */
+					opt_value = GUC_scanstr(opt_value);
 				}
                 parse_state = 2;
                 break;
@@ -202,45 +240,40 @@ ReadConfigFile(char *filename, GucContext context)
 				if (token != GUC_EOL)
 					goto parse_error;
 
-				if (strcmp(opt_name, "custom_variable_classes") == 0)
-				{
-					/* This variable must be added first as it controls the validity
-					 * of other variables
-					 */
-					if (!set_config_option(opt_name, opt_value, context,
-										   PGC_S_FILE, false, true))
-					{
-						FreeFile(fp);
-						free(filename);
-						goto cleanup_exit;
-					}
-
-					/* Don't include in list */
-					parse_state = 0;
-					break;
-				}
-
-				/* append to list */
-				item = malloc(sizeof *item);
-				if (item == NULL)
-					goto out_of_memory;
+				item = palloc(sizeof *item);
 				item->name = opt_name;
 				item->value = opt_value;
-				item->next = NULL;
 
-				if (!head)
-					tail = head = item;
+				if (strcmp(opt_name, "custom_variable_classes") == 0)
+				{
+					/*
+					 * This variable must be processed first as it controls
+					 * the validity of other variables; so prepend to
+					 * the list instead of appending.
+					 */
+					item->next = head;
+					head = item;
+					if (!tail)
+						tail = item;
+				}
 				else
 				{
-					tail->next = item;
+					/* append to list */
+					item->next = NULL;
+					if (!head)
+						head = item;
+					else
+						tail->next = item;
 					tail = item;
 				}
 
                 parse_state = 0;
                 break;
         }
+	}
 
 	FreeFile(fp);
+	pfree(filename);
 
 	/*
 	 * Check if all options are valid
@@ -252,10 +285,12 @@ ReadConfigFile(char *filename, GucContext context)
 			goto cleanup_exit;
 	}
 
-    /* If we got here all the options parsed okay. */
+    /* If we got here all the options parsed okay, so apply them. */
 	for(item = head; item; item=item->next)
+	{
 		set_config_option(item->name, item->value, context,
 						  PGC_S_FILE, false, true);
+	}
 
  cleanup_exit:
 	free_name_value_list(head);
@@ -264,79 +299,17 @@ ReadConfigFile(char *filename, GucContext context)
  parse_error:
 	FreeFile(fp);
 	free_name_value_list(head);
-	ereport(elevel,
-			(errcode(ERRCODE_SYNTAX_ERROR),
-			 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
-					filename, ConfigFileLineno, yytext)));
-	return;
-
- out_of_memory:
-	FreeFile(fp);
-	free(filename);
-	free_name_value_list(head);
-	ereport(elevel,
-			(errcode(ERRCODE_OUT_OF_MEMORY),
-			 errmsg("out of memory")));
-	return;
-}
-
-/*
- * Function to read and process the configuration file. The
- * parameter indicates the context that the file is being read
- * (postmaster startup, backend startup, or SIGHUP). All options
- * mentioned in the configuration file are set to new values. This
- * function does not return if an error occurs. If an error occurs, no
- * values will be changed.
- */
-void
-ProcessConfigFile(GucContext context)
-{
-	char *filename;
-
-	Assert(context == PGC_POSTMASTER || context == PGC_BACKEND || context == PGC_SIGHUP);
-
-	/* Added for explicit config file */
-	if (user_pgconfig)
-	{
-		struct stat sb;
-
-		if (stat(user_pgconfig, &sb) != 0)
-		{
-			int elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
-			elog(elevel, "Configuration file \"%s\" does not exist", user_pgconfig);
-			return;
-		}
-
-		if (S_ISDIR(sb.st_mode))
-		{
-			/* This will cause a small one time memory leak
-			 * if the user also specifies hba_conf,
-			 * ident_conf, and data_dir
-			 */
-			filename = malloc(strlen(user_pgconfig) + strlen(CONFIG_FILENAME) + 2);
-			sprintf(filename, "%s/%s", user_pgconfig, CONFIG_FILENAME);
-			user_pgconfig_is_dir = true;
-		}
-		else
-			filename = strdup(user_pgconfig);	/* Use explicit file */
-	}
+	if (token == GUC_EOL)
+		ereport(elevel,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error in file \"%s\" line %u, near end of line",
+						filename, ConfigFileLineno - 1)));
 	else
-	{
-		/* Use datadir for config */
-		filename = malloc(strlen(DataDir) + strlen(CONFIG_FILENAME) + 2);
-		sprintf(filename, "%s/%s", DataDir, CONFIG_FILENAME);
-	}
-
-	if (filename == NULL)
-	{
-		int elevel = (context == PGC_SIGHUP) ? DEBUG3 : ERROR;
-		elog(elevel, "out of memory");
-		return;
-	}
-
-	ReadConfigFile(filename, context);
-
-	free(filename);
+		ereport(elevel,
+				(errcode(ERRCODE_SYNTAX_ERROR),
+				 errmsg("syntax error in file \"%s\" line %u, near token \"%s\"", 
+						filename, ConfigFileLineno, yytext)));
+	pfree(filename);
 }
 
 
@@ -347,12 +320,12 @@ ProcessConfigFile(GucContext context)
  * if the string passed in has escaped codes, map the escape codes to actual
  * chars
  *
- * the string returned is malloc'd and should eventually be free'd by the
- * caller!
+ * the string returned is palloc'd and should eventually be pfree'd by the
+ * caller; also we assume we should pfree the input string.
  * ----------------
  */
 
-char *
+static char *
 GUC_scanstr(char *s)
 {
 	char	   *newStr;
@@ -363,16 +336,12 @@ GUC_scanstr(char *s)
 	if (s == NULL || s[0] == '\0')
 	{
 		if (s != NULL)
-			free(s);
-		return strdup("");
+			pfree(s);
+		return pstrdup("");
 	}
 	len = strlen(s);
 
-	newStr = malloc(len + 1);	/* string cannot get longer */
-	if (newStr == NULL)
-		ereport(FATAL,
-				(errcode(ERRCODE_OUT_OF_MEMORY),
-				 errmsg("out of memory")));
+	newStr = palloc(len + 1);	/* string cannot get longer */
 
 	for (i = 0, j = 0; i < len; i++)
 	{
@@ -426,6 +395,6 @@ GUC_scanstr(char *s)
 		j++;
 	}
 	newStr[j] = '\0';
-	free(s);
+	pfree(s);
 	return newStr;
 }
