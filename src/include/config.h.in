@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.164 2001/05/11 23:38:06 petere Exp $
+ * $Id: config.h.in,v 1.165 2001/06/02 18:25:18 petere Exp $
  */
 
 #ifndef CONFIG_H
@@ -84,6 +84,11 @@
 /* --enable-pltcl-unknown */
 #undef ENABLE_PLTCL_UNKNOWN
 
+/* --enable-nls */
+#undef ENABLE_NLS
+
+/* location of locale files */
+#undef LOCALEDIR
 
 /*
  *------------------------------------------------------------------------

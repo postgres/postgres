@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.12 2001/05/12 22:51:34 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/filelist.sgml,v 1.13 2001/06/02 18:25:16 petere Exp $ -->
 
 <!entity history    SYSTEM "history.sgml">
 <!entity info       SYSTEM "info.sgml">
@@ -96,6 +96,7 @@
 <!entity page       SYSTEM "page.sgml">
 <!entity protocol   SYSTEM "protocol.sgml">
 <!entity sources    SYSTEM "sources.sgml">
+<!entity nls        SYSTEM "nls.sgml">
 
 <!-- see standalone-install.sgml about these -->
 <!entity % flattext-install-ignore  "INCLUDE">

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.32 2001/04/15 00:43:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.33 2001/06/02 18:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -47,7 +47,7 @@ xstrdup(const char *string)
 
 	if (!string)
 	{
-		fprintf(stderr, "%s: xstrdup: cannot duplicate null pointer (internal error)\n",
+		fprintf(stderr, gettext("%s: xstrdup: cannot duplicate null pointer (internal error)\n"),
 				pset.progname);
 		exit(EXIT_FAILURE);
 	}
@@ -139,7 +139,7 @@ psql_error(const char *fmt,...)
 	if (pset.inputfile)
 		fprintf(stderr, "%s:%s:%u: ", pset.progname, pset.inputfile, pset.lineno);
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	vfprintf(stderr, gettext(fmt), ap);
 	va_end(ap);
 }
 
@@ -187,7 +187,7 @@ simple_prompt(const char *prompt, int maxlen, bool echo)
 	if (!destination)
 		return NULL;
 	if (prompt)
-		fputs(prompt, stderr);
+		fputs(gettext(prompt), stderr);
 
 	prompt_state = true;
 
@@ -303,7 +303,9 @@ PSQLexec(const char *query)
 	var = GetVariable(pset.vars, "ECHO_HIDDEN");
 	if (var)
 	{
-		printf("********* QUERY *********\n%s\n*************************\n\n", query);
+		printf("********* QUERY **********\n"
+			   "%s\n"
+			   "**************************\n\n", query);
 		fflush(stdout);
 	}
 
@@ -336,11 +338,11 @@ PSQLexec(const char *query)
 				psql_error("connection to server was lost\n");
 				exit(EXIT_BADCONN);
 			}
-			fputs("The connection to the server was lost. Attempting reset: ", stderr);
+			fputs(gettext("The connection to the server was lost. Attempting reset: "), stderr);
 			PQreset(pset.db);
 			if (PQstatus(pset.db) == CONNECTION_BAD)
 			{
-				fputs("Failed.\n", stderr);
+				fputs(gettext("Failed.\n"), stderr);
 				PQfinish(pset.db);
 				pset.db = NULL;
 				SetVariable(pset.vars, "DBNAME", NULL);
@@ -350,7 +352,7 @@ PSQLexec(const char *query)
 				SetVariable(pset.vars, "ENCODING", NULL);
 			}
 			else
-				fputs("Succeeded.\n", stderr);
+				fputs(gettext("Succeeded.\n"), stderr);
 		}
 
 		return NULL;
@@ -388,9 +390,9 @@ SendQuery(const char *query)
 	{
 		char		buf[3];
 
-		printf("***(Single step mode: Verify query)*********************************************\n"
-			   "%s\n"
-			   "***(press return to proceed or enter x and return to cancel)********************\n",
+		printf(gettext("***(Single step mode: Verify query)*********************************************\n"
+					   "%s\n"
+					   "***(press return to proceed or enter x and return to cancel)********************\n"),
 			   query);
 		fflush(stdout);
 		if (fgets(buf, sizeof(buf), stdin) != NULL)
@@ -480,8 +482,8 @@ SendQuery(const char *query)
 
 			case PGRES_COPY_IN:
 				if (pset.cur_cmd_interactive && !QUIET())
-					puts("Enter data to be copied followed by a newline.\n"
-						 "End with a backslash and a period on a line by itself.");
+					puts(gettext("Enter data to be copied followed by a newline.\n"
+						 "End with a backslash and a period on a line by itself."));
 
 				success = handleCopyIn(pset.db, pset.cur_cmd_source,
 									   pset.cur_cmd_interactive ? get_prompt(PROMPT_COPY) : NULL);
@@ -504,11 +506,11 @@ SendQuery(const char *query)
 				psql_error("connection to server was lost\n");
 				exit(EXIT_BADCONN);
 			}
-			fputs("The connection to the server was lost. Attempting reset: ", stderr);
+			fputs(gettext("The connection to the server was lost. Attempting reset: "), stderr);
 			PQreset(pset.db);
 			if (PQstatus(pset.db) == CONNECTION_BAD)
 			{
-				fputs("Failed.\n", stderr);
+				fputs(gettext("Failed.\n"), stderr);
 				PQfinish(pset.db);
 				PQclear(results);
 				pset.db = NULL;
@@ -520,13 +522,13 @@ SendQuery(const char *query)
 				return false;
 			}
 			else
-				fputs("Succeeded.\n", stderr);
+				fputs(gettext("Succeeded.\n"), stderr);
 		}
 
 		/* check for asynchronous notification returns */
 		while ((notify = PQnotifies(pset.db)) != NULL)
 		{
-			fprintf(pset.queryFout, "Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n",
+			fprintf(pset.queryFout, gettext("Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n"),
 					notify->relname, notify->be_pid);
 			free(notify);
 			fflush(pset.queryFout);

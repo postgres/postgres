@@ -1,0 +1,486 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/nls.sgml,v 1.1 2001/06/02 18:25:16 petere Exp $ -->
+
+<chapter id="nls">
+ <docinfo>
+  <author>
+   <firstname>Peter</firstname>
+   <surname>Eisentraut</surname>
+  </author>
+ </docinfo>
+
+ <title>Native Language Support</title>
+
+ <sect1 id="nls-translator">
+  <title>For the Translator</title>
+
+  <para>
+   PostgreSQL programs (server and client) can issue their messages in
+   your favorite language -- if the messages have been translated.
+   Creating and maintaining translated message sets needs the help of
+   people who speak their own language well and want to contribute to
+   the PostgreSQL effort.  You do not have to be a programmer at all
+   to do this.  This section explains how to help.
+  </para>
+
+  <sect2>
+   <title>Requirements</title>
+
+   <para>
+    We won't judge your language skills -- this section is about
+    software tools.  Theoretically, you only need a text editor.  But
+    this is only in the unlikely event that you do not want to try out
+    your translated messages.  When you configure your source tree, be
+    sure to use the <option>--enable-nls</option> option.  This will
+    also check for the libintl library and the
+    <filename>msgfmt</filename> program, which all end users will need
+    anyway.  To try out your work, follow the applicable portions of
+    the installation instructions.
+   </para>
+
+   <para>
+    If you want to start a new translation effort or want to do a
+    message catalog merge (described later), you will need the
+    programs <filename>xgettext</filename> and
+    <filename>msgmerge</filename>, respectively, in a GNU-compatible
+    implementation.  Later, we will try to arrange it so that if you
+    use a packaged source distribution, you won't need
+    <filename>xgettext</filename>.  (From CVS, you will still need
+    it.)  GNU gettext 0.10.36 or later is currently recommended.
+   </para>
+
+   <para>
+    Your local gettext implementation should come with its own
+    documentation.  Some of that is probably duplicated in what
+    follows, but for additional details you should look there.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Concepts</title>
+
+   <para>
+    The pairs of original (English) messages and their (possibly)
+    translated equivalents are kept in <firstterm>message
+    catalogs</firstterm>, one for each program (although related
+    programs can share a message catalog) and for each target
+    language.  There are two file formats for message catalogs:  The
+    first is the <quote>PO</quote> file (for Portable Object), which
+    is a plain text file with special syntax that translators edit.
+    The second is the <quote>MO</quote> file (for Machine Object),
+    which is a binary file generated from the respective PO file and
+    is used while the internationalized program is run.  Translators
+    do not deal with MO files; in fact hardly anyone does.
+   </para>
+
+   <para>
+    The extension of the message catalog file is to no surprise either
+    <filename>.po</filename> or <filename>.mo</filename>.  The base
+    name is either the name of the program it accompanies, or the
+    language the file is for, depending on the situation.  This is a
+    bit confusing.  Examples are <filename>psql.po</filename> (PO file
+    for psql) or <filename>fr.mo</filename> (MO file in French).
+   </para>
+
+   <para>
+    The file format of the PO files is illustrated here:
+<programlisting>
+# comment
+
+msgid "original string"
+msgstr "translated string"
+
+msgid "more original"
+msgstr "another translated"
+"string can be broken up like this"
+
+...
+</programlisting>
+    The msgid's are extracted from the program source.  (They need not
+    be, but this is the most common way.)  The msgstr lines are
+    initially empty and are filled in with useful strings by the
+    translator.  The strings can contain C-style escape characters and
+    can be continued across lines as illustrated.  (The next line must
+    start at the beginning of the line.)
+   </para>
+
+   <para>
+    The # character introduces a comment.  If whitespace immediately
+    follows the # character, then this is a comment maintained by the
+    translator.  There may also be automatic comments, which have a
+    non-whitespace character immediately following the #.  These are
+    maintained by the various tools that operate on the PO files and
+    are intended to aid the translator.
+<programlisting>
+#. automatic comment
+#: filename.c:1023
+#, flags, flags
+</programlisting>
+    The #. style comments are extracted from the source file where the
+    message is used.  Possibly the programmer has inserted information
+    for the translator, such as about expected alignment.  The #:
+    comment indicates the exact location(s) where the message is used
+    in the source.  The translator need not look at the program
+    source, but he can if there is doubt about the correct
+    translation.  The #, comments contain flags that describe the
+    message in some way.  There are currently two flags:
+    <literal>fuzzy</literal> is set if the message has possibly been
+    outdated because of changes in the program source.  The translator
+    can then verify this and possibly remove the fuzzy flag.  Note
+    that fuzzy messages are not made available to the end user.  The
+    other flag is <literal>c-format</literal>, which indicates that
+    the message is a <function>printf</function>-style format
+    template.  This means that the translation should also be a format
+    string with the same number and type of placeholders.  There are
+    tools that can verify this, which key off the c-format flag.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Creating and maintaining message catalogs</title>
+
+   <para>
+    Okay, so how does one create a <quote>blank</quote> message
+    catalog?  First, go into the directory that contains the program
+    whose messages you want to translate.  If there is a file
+    <filename>nls.mk</filename>, then this program has been prepared
+    for translation.
+   </para>
+
+   <para>
+    If there are already some <filename>.po</filename> files, then
+    someone has already done some translation work.  The files are
+    named <filename><replaceable>language</replaceable>.po</filename>,
+    where <replaceable>language</replaceable> is the <ulink
+    url="http://lcweb.loc.gov/standards/iso639-2/englangn.html">ISO
+    639-1</ulink> two-letter language code (in lower case), e.g.,
+    <filename>fr.po</filename> for French.  If there is really a need
+    for more than one translation effort per language then the files
+    may also be named
+    <filename><replaceable>language</replaceable>_<replaceable>region</replaceable>.po</filename>
+    where <replaceable>region</replaceable> is the <ulink
+    url="http://www.din.de/gremien/nas/nabd/iso3166ma/codlstp1/en_listp1.html">ISO
+    3166-1</ulink> two-letter country code (in upper case), e.g.,
+    <filename>pt_BR.po</filename> for Portuguese in Brazil.  If you
+    find the language you wanted you can just start working on that
+    file.
+   </para>
+
+   <para>
+    If you need to start a new translation effort, then first run the
+    command
+<programlisting>
+gmake init-po
+</programlisting>
+    This will create a file
+    <filename><replaceable>progname</replaceable>.pot</filename>.
+    (<filename>.pot</filename> to distinguish it from PO files that
+    are <quote>in production</quote>.  What does the T stand for?  I
+    don't know.)  Copy this file to
+    <filename><replaceable>language</replaceable>.po</filename> and
+    edit it.  To make it known that the new language is available,
+    also edit the file <filename>nls.mk</filename> and add the
+    language (or language and country) code to the line that looks like:
+<programlisting>
+AVAIL_LANGUAGES := de fr
+</programlisting>
+    (Other languages may appear, of course.)
+   </para>
+
+   <para>
+    As the underlying program or library changes, messages may be
+    changed or added by the programmers.  In this case you do not need
+    to start from scratch.  Instead, run the command
+<programlisting>
+gmake update-po
+</programlisting>
+    which will create a new blank message catalog file (the pot file
+    you started with) and will merge it with the existing PO files.
+    If the merge algorithm is not sure about a particular message it
+    marks it <quote>fuzzy</quote> as explained above.  For the case
+    where something went really wrong, the old PO file is saved with a
+    <filename>.po.old</filename> extension.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Editing the PO files</title>
+
+   <para>
+    The PO files can be edited with a regular text editor.  The
+    translator should only change the area between the quotes after
+    the msgstr directive, may add comments and alter the fuzzy flag.
+    There is (unsurprisingly) a PO mode for Emacs, which I find quite
+    useful.
+   </para>
+
+   <para>
+    The PO files need not be completely filled in.  The software will
+    automatically fall back to the original string if no translation
+    (or an empty translation) is available.  It is no problem to
+    submit incomplete translations for inclusions in the source tree;
+    that gives room for other people to pick up your work.  However,
+    you are encouraged to give priority to removing fuzzy entries
+    after doing a merge.  Remember that fuzzy entries will not be
+    installed; they only serve as reference what might be the right
+    translation.
+   </para>
+
+   <para>
+    Here are some things to keep in mind while editing the
+    translations:
+    <itemizedlist>
+     <listitem>
+      <para>
+       Make sure that if the original ends with a newline, the
+       translation does, too.  Similarly for tabs, etc.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If the original is a printf format string, the translation also
+       needs to be.  The translation also needs to have the same
+       format specifiers in the same order.  Sometimes the natural
+       rules of the language make this impossible or at least awkward.
+       In this case you can use this format:
+<programlisting>
+msgstr "Die Datei %2$s hat %1$u Zeichen."
+</programlisting>
+       Then the first placeholder will actually use the second
+       argument from the list.  The
+       <literal><replaceable>digits</replaceable>$</literal> needs to
+       follow the % and come before any other format manipulators.
+       (This feature really exists in the <function>printf</function>
+       family of functions.  You may not have heard of it because
+       there is little use for it outside of message
+       internationalization.)
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If the original string contains a linguistic mistake, report
+       that (or fix it yourself in the program source) and translate
+       normally.  The corrected string can be merged in when the
+       program sources have been updated.  If the original string
+       contains a factual mistake, report that (or fix it yourself)
+       and do not translate it.  Instead, you may mark the string with
+       a comment in the PO file.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Maintain the style and tone of the original string.
+       Specifically, messages that are not sentences (<literal>cannot
+       open file %s</literal>) should probably not start with a
+       capital letter (if your language distinguishes letter case) or
+       end with a period (if your language uses punctuation marks).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       If you don't know what a message means, or if it is ambiguous,
+       ask on the developers' mailing list.  Chances are that English
+       speaking end users might also not understand it or find it
+       ambiguous, so it's best to improve the message.
+      </para>
+     </listitem>
+
+    </itemizedlist>
+   </para>
+  </sect2>
+
+ </sect1>
+
+
+ <sect1 id="nls-programmer">
+  <title>For the Programmer</title>
+
+  <para>
+   This section describes how to support native language support in a
+   program or library that is part of the PostgreSQL distribution.
+   Currently, it only applies to C programs.
+  </para>
+
+  <procedure>
+   <title>Adding NLS support to a program</title>
+
+   <step>
+    <para>
+     Insert this code into the startup sequence of the program:
+<programlisting>
+#ifdef ENABLE_NLS
+#include &lt;locale.h&gt;
+#endif
+
+...
+
+#ifdef ENABLE_NLS
+setlocale(LC_ALL, "");
+bindtextdomain("<replaceable>progname</replaceable>", LOCALEDIR);
+textdomain("<replaceable>progname</replaceable>");
+#endif
+</programlisting>
+     (The <replaceable>progname</replaceable> can actually be chosen
+     freely.)
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Whereever a message that is a candidate for translation is found,
+     a call to <function>gettext()</function> needs to be inserted.  E.g.,
+<programlisting>
+fprintf(stderr, "panic level %d\n", lvl);
+</programlisting>
+     would be changed to
+<programlisting>
+fprintf(stderr, gettext("panic level %d\n"), lvl);
+</programlisting>
+     (<symbol>gettext</symbol> is defined as a no-op if no NLS is
+     configured.)
+    </para>
+
+    <para>
+     This may tend to add a lot of clutter.  One common shortcut is to
+<programlisting>
+#define _(x) gettext((x))
+</programlisting>
+     Another solution is feasible if the program does much of its
+     communication through one or a few functions, such as
+     <function>elog()</function> in the backend.  Then you make this
+     function call <function>gettext</function> internally on all
+     input values.
+    </para>
+   </step>
+
+   <step>
+    <para>
+     Add a file <filename>nls.mk</filename> in the directory with the
+     program sources.  This file will be read as a makefile.  The
+     following variable assignments need to be made here:
+
+     <variablelist>
+      <varlistentry>
+       <term>CATALOG_NAME</term>
+
+       <listitem>
+        <para>
+         The program name, as provided in the
+         <function>textdomain()</function> call.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>AVAIL_LANGUAGES</term>
+
+       <listitem>
+        <para>
+         List of provided translations -- empty in the beginning.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>GETTEXT_FILES</term>
+
+       <listitem>
+        <para>
+         List of files that contain translatable strings, i.e., those
+         marked with <function>gettext</function> or an alternative
+         solution.  Eventually, this will include nearly all source
+         files of the program.  If this list gets too long you can
+         make the first <quote>file</quote> be a <literal>+</literal>
+         and the second word be a file that contains one file name per
+         line.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>GETTEXT_TRIGGERS</term>
+
+       <listitem>
+        <para>
+         The tools that generate message catalogs for the translators
+         to work on need to know what function calls contain
+         translatable strings.  By default, only
+         <function>gettext()</function> calls are known.  If you used
+         <function>_</function> or other identifiers you need to list
+         them here.  If the translatable string is not the first
+         argument, the item needs to be of the form
+         <literal>func:2</literal> (for the second argument).
+        </para>
+       </listitem>
+      </varlistentry>
+     </variablelist>
+    </para>
+   </step>
+
+  </procedure>
+
+  <para>
+   The build system will automatically take care of building and
+   installing the message catalogs.
+  </para>
+
+  <para>
+   To ease the translation of messages, here are some guidelines:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      Do not construct sentences at run-time out of laziness, like
+<programlisting>
+printf("Files where %s.\n", flag ? "copied" : "removed");
+</programlisting>
+      The word order within the sentence may be different in other
+      languages.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      For similar reasons, this won't work:
+<programlisting>
+printf("copied %d file%s", n, n!=1 ? "s" : "");
+</programlisting>
+      because it assumes how the plural is formed.  If you figured you
+      could solve it like this
+<programlisting>
+if (n==1)
+    printf("copied 1 file");
+else
+    printf("copied %d files", n):
+</programlisting>
+      then be disappointed.  Some languages have more than two forms,
+      with some peculiar rules.  We may have a solution for this in
+      the future, but for now this is best avoided altogether.  You
+      could write:
+<programlisting>
+printf("number of copied files: %d", n);
+</programlisting>
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      If you want to communicate something to the translator, such as
+      about how a message is intended to line up with other output,
+      precede the occurance of the string with a comment that starts
+      with <literal>translator</literal>, e.g.,
+<programlisting>
+/* translator: This message is not what it seems to be. */
+</programlisting>
+      These comments are copied to the message catalog files so that
+      the translators can see them.
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
+ </sect1>
+
+</chapter>

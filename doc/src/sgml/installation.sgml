@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.49 2001/05/14 16:16:52 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.50 2001/06/02 18:25:16 petere Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -533,6 +533,44 @@ su - postgres
          <![%flattext-install-ignore[<xref linkend="multibyte">]]>
          for details.
         </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>--enable-nls<optional>=<replaceable>LANGUAGES</replaceable></optional></term>
+       <listitem>
+        <para>
+         Enables Native Language Support (NLS), that is, the ability
+         to display a program's message in a language other than
+         English.  <replaceable>LANGUAGES</replaceable> is a space
+         separated list of codes of the languages that you want
+         supported.  (The intersection between your list and the set
+         of actually provided translations will be computed
+         automatically.)  If you do not specify it, then all available
+         translations are installed.
+        </para>
+
+        <comment>
+         The list of provided translations should be shown somewhere.
+        </comment>
+
+        <para>
+         To use this option, you will need an implementation of the
+         gettext API.  Some operating systems have this built-in
+         (e.g., Linux, NetBSD, Solaris), for other systems you can download
+         an add-on package from here:  <ulink
+         url="http://www.postgresql.org/~petere/gettext.html"
+         >http://www.postgresql.org/~petere/gettext.html</ulink>.  If
+         you are using the gettext implementation in the GNU C library
+         then you will additionally need the GNU gettext package for
+         some utility programs.  For any of the other implementations
+         you will not need it.
+        </para>
+
+        <comment>
+         The download location should be moved.
+        </comment>
+
        </listitem>
       </varlistentry>
 

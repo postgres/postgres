@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.84 2001/05/30 14:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.85 2001/06/02 18:25:17 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,6 +207,7 @@ elog(int lev, const char *fmt,...)
 	if (Log_pid)
 		timestamp_size += PID_SIZE;
 
+	fmt = gettext(fmt);
 	/*
 	 * Set up the expanded format, consisting of the prefix string plus
 	 * input format, with any %m replaced by strerror() string (since

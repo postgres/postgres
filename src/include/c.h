@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.93 2001/05/30 14:15:27 momjian Exp $
+ * $Id: c.h,v 1.94 2001/06/02 18:25:18 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,6 +68,11 @@
 #include <SupportDefs.h>
 #endif
 
+#ifdef ENABLE_NLS
+#include <libintl.h>
+#else
+#define gettext(x) (x)
+#endif
 
 /* ----------------------------------------------------------------
  *				Section 1: hacks to cope with non-ANSI C compilers

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.49 2001/05/30 14:15:27 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.50 2001/06/02 18:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -19,6 +19,10 @@
 
 #ifdef HAVE_GETOPT_H
 #include <getopt.h>
+#endif
+
+#ifdef ENABLE_NLS
+#include <locale.h>
 #endif
 
 #include "libpq-fe.h"
@@ -102,6 +106,12 @@ main(int argc, char *argv[])
 	char	   *password = NULL;
 	bool		need_pass;
 
+#ifdef ENABLE_NLS
+	setlocale(LC_ALL, "");
+	bindtextdomain("psql", LOCALEDIR);
+	textdomain("psql");
+#endif
+
 	if (!strrchr(argv[0], '/'))
 		pset.progname = argv[0];
 	else
@@ -128,7 +138,7 @@ main(int argc, char *argv[])
 	pset.vars = CreateVariableSpace();
 	if (!pset.vars)
 	{
-		fprintf(stderr, "%s: out of memory\n", pset.progname);
+		fprintf(stderr, gettext("%s: out of memory\n"), pset.progname);
 		exit(EXIT_FAILURE);
 	}
 	pset.popt.topt.format = PRINT_ALIGNED;
@@ -273,12 +283,13 @@ main(int argc, char *argv[])
 		pset.issuper = test_superuser(PQuser(pset.db));
 		if (!QUIET() && !pset.notty)
 		{
-			printf("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
-				   "Type:  \\copyright for distribution terms\n"
-				   "       \\h for help with SQL commands\n"
-				   "       \\? for help on internal slash commands\n"
-			  "       \\g or terminate with semicolon to execute query\n"
-				   "       \\q to quit\n\n", pset.progname);
+			printf(gettext("Welcome to %s, the PostgreSQL interactive terminal.\n\n"
+						   "Type:  \\copyright for distribution terms\n"
+						   "       \\h for help with SQL commands\n"
+						   "       \\? for help on internal slash commands\n"
+						   "       \\g or terminate with semicolon to execute query\n"
+						   "       \\q to quit\n\n"),
+				   pset.progname);
 #ifdef USE_SSL
 			printSSLInfo();
 #endif
@@ -447,7 +458,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 
 					if (!result)
 					{
-						fprintf(stderr, "%s: couldn't set printing parameter %s\n", pset.progname, value);
+						fprintf(stderr, gettext("%s: couldn't set printing parameter %s\n"), pset.progname, value);
 						exit(EXIT_FAILURE);
 					}
 
@@ -493,7 +504,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 					{
 						if (!DeleteVariable(pset.vars, value))
 						{
-							fprintf(stderr, "%s: could not delete variable %s\n",
+							fprintf(stderr, gettext("%s: could not delete variable %s\n"),
 									pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
@@ -503,7 +514,7 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 						*equal_loc = '\0';
 						if (!SetVariable(pset.vars, value, equal_loc + 1))
 						{
-							fprintf(stderr, "%s: could not set variable %s\n",
+							fprintf(stderr, gettext("%s: could not set variable %s\n"),
 									pset.progname, value);
 							exit(EXIT_FAILURE);
 						}
@@ -534,20 +545,22 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 				/* unknown option reported by getopt */
 				else
 				{
-					fprintf(stderr, "Try '%s --help' for more information.\n",
+					fprintf(stderr, gettext("Try '%s --help' for more information.\n"),
 							pset.progname);
 					exit(EXIT_FAILURE);
 				}
 				break;
 #ifndef HAVE_GETOPT_LONG
 			case '-':
-				fprintf(stderr, "%s was compiled without support for long options.\n"
-						"Use --help for help on invocation options.\n", pset.progname);
+				fprintf(stderr,
+						gettext("%s was compiled without support for long options.\n"
+								"Use --help for help on invocation options.\n"),
+						pset.progname);
 				exit(EXIT_FAILURE);
 				break;
 #endif
 			default:
-				fprintf(stderr, "Try '%s --help' for more information.\n",
+				fprintf(stderr, gettext("Try '%s --help' for more information.\n"),
 						pset.progname);
 				exit(EXIT_FAILURE);
 				break;
@@ -565,14 +578,14 @@ parse_psql_options(int argc, char *argv[], struct adhoc_opts * options)
 		else if (!options->username)
 			options->username = argv[optind];
 		else if (!QUIET())
-			fprintf(stderr, "%s: warning: extra option %s ignored\n",
+			fprintf(stderr, gettext("%s: warning: extra option %s ignored\n"),
 					pset.progname, argv[optind]);
 
 		optind++;
 	}
 
 	if (used_old_u_option && !QUIET())
-		fprintf(stderr, "%s: Warning: The -u option is deprecated. Use -U.\n", pset.progname);
+		fprintf(stderr, gettext("%s: Warning: The -u option is deprecated. Use -U.\n"), pset.progname);
 
 }
 
@@ -599,7 +612,7 @@ process_psqlrc(void)
 		psqlrc = malloc(strlen(home) + 20);
 		if (!psqlrc)
 		{
-			fprintf(stderr, "%s: out of memory\n", pset.progname);
+			fprintf(stderr, gettext("%s: out of memory\n"), pset.progname);
 			exit(EXIT_FAILURE);
 		}
 
@@ -628,10 +641,10 @@ showVersion(void)
 	puts("psql (PostgreSQL) " PG_VERSION);
 
 #if defined(USE_READLINE) || defined (USE_HISTORY) || defined(MULTIBYTE)
-	fputs("contains ", stdout);
+	fputs(gettext("contains support for: "), stdout);
 
 #ifdef USE_READLINE
-	fputs("readline", stdout);
+	fputs(gettext("readline"), stdout);
 #define _Feature
 #endif
 
@@ -641,7 +654,7 @@ showVersion(void)
 #else
 #define _Feature
 #endif
-	fputs("history", stdout);
+	fputs(gettext("history"), stdout);
 #endif
 
 #ifdef MULTIBYTE
@@ -650,18 +663,18 @@ showVersion(void)
 #else
 #define _Feature
 #endif
-	fputs("multibyte", stdout);
+	fputs(gettext("multibyte"), stdout);
 #endif
 
 #undef _Feature
 
-	puts(" support");
+	puts("");
 #endif
 
-	puts("Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group");
-	puts("Portions Copyright (c) 1996 Regents of the University of California");
-	puts("Read the file COPYRIGHT or use the command \\copyright to see the");
-	puts("usage and distribution terms.");
+	puts(gettext("Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+				 "Portions Copyright (c) 1996, Regents of the University of California\n"
+				 "Read the file COPYRIGHT or use the command \\copyright to see the\n"
+				 "usage and distribution terms."));
 }
 
 
@@ -683,7 +696,7 @@ printSSLInfo(void)
 		return;					/* no SSL */
 
 	SSL_get_cipher_bits(ssl, &sslbits);
-	printf("SSL enabled connection. Chiper: %s, bits: %i\n\n",
+	printf(gettext("SSL connection (cipher: %s, bits: %i)\n\n"),
 		   SSL_get_cipher(ssl), sslbits);
 }
 

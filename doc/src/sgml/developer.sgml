@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.4 2001/02/03 19:03:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/Attic/developer.sgml,v 1.5 2001/06/02 18:25:16 petere Exp $ -->
 <!-- PostgreSQL Developer's Guide -->
 
 <book id="developer">
@@ -24,6 +24,7 @@
  &bki;
  &page;
  &geqo;
+ &nls;
 <![%single-book;[
  &biblio;
 ]]>

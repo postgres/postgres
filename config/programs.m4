@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/programs.m4,v 1.4 2001/02/10 22:31:42 petere Exp $
+# $Header: /cvsroot/pgsql/config/programs.m4,v 1.5 2001/06/02 18:25:16 petere Exp $
 
 
 # PGAC_PATH_FLEX
@@ -99,3 +99,34 @@ if test "$pgac_cv_check_readline" != no ; then
 else
   AC_MSG_RESULT(no)
 fi])# PGAC_CHECK_READLINE
+
+
+
+# PGAC_CHECK_GETTEXT
+# ------------------
+
+AC_DEFUN([PGAC_CHECK_GETTEXT],
+[
+  AC_SEARCH_LIBS(gettext, intl, [],
+                 [AC_MSG_ERROR([a gettext implementation is required for NLS])])
+  AC_CHECK_HEADER([libintl.h], [],
+                  [AC_MSG_ERROR([header file <libintl.h> is required for NLS])])
+  AC_CHECK_PROGS(MSGFMT, msgfmt)
+  if test -z "$MSGFMT"; then
+    AC_MSG_ERROR([msgfmt is required for NLS])
+  fi
+  AC_CHECK_PROGS(MSGMERGE, msgmerge)
+dnl FIXME: We should probably check for version >=0.10.36.
+  AC_CHECK_PROGS(XGETTEXT, xgettext)
+
+  # Note: share/locale is always the default, independent of $datadir
+  if test x"$prefix" = x"NONE"; then
+    localedir="$ac_default_prefix/share/locale"
+  else
+    localedir="$prefix/share/locale"
+  fi
+
+  AC_SUBST(localedir)
+  AC_DEFINE_UNQUOTED(LOCALEDIR, ["$localedir"],
+                     [location of locale files])
+])# PGAC_CHECK_GETTEXT

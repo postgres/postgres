@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.54 2001/05/12 19:44:46 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.55 2001/06/02 18:25:17 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -156,7 +156,7 @@ HandleSlashCmds(const char *line,
 	if (status == CMD_UNKNOWN)
 	{
 		if (pset.cur_cmd_interactive)
-			fprintf(stderr, "Invalid command \\%s. Try \\? for help.\n", my_line);
+			fprintf(stderr, gettext("Invalid command \\%s. Try \\? for help.\n"), my_line);
 		else
 			psql_error("invalid command \\%s\n", my_line);
 		status = CMD_ERROR;
@@ -582,7 +582,7 @@ exec_command(const char *cmd,
 		if (query_buf && query_buf->len > 0)
 			puts(query_buf->data);
 		else if (!quiet)
-			puts("Query buffer is empty.");
+			puts(gettext("Query buffer is empty."));
 		fflush(stdout);
 	}
 
@@ -613,7 +613,7 @@ exec_command(const char *cmd,
 	{
 		resetPQExpBuffer(query_buf);
 		if (!quiet)
-			puts("Query buffer reset (cleared).");
+			puts(gettext("Query buffer reset (cleared)."));
 	}
 
 	/* \s save history in a file or show it on the screen */
@@ -624,7 +624,7 @@ exec_command(const char *cmd,
 		success = saveHistory(fname ? fname : "/dev/tty");
 
 		if (success && !quiet && fname)
-			printf("Wrote history to %s.\n", fname);
+			printf(gettext("Wrote history to %s.\n"), fname);
 		free(fname);
 	}
 
@@ -1314,7 +1314,7 @@ do_connect(const char *new_dbname, const char *new_user)
 			PQfinish(pset.db);
 			if (oldconn)
 			{
-				fputs("Previous connection kept\n", stderr);
+				fputs(gettext("Previous connection kept\n"), stderr);
 				pset.db = oldconn;
 			}
 			else
@@ -1339,12 +1339,12 @@ do_connect(const char *new_dbname, const char *new_user)
 		if (!QUIET())
 		{
 			if (userparam != new_user)	/* no new user */
-				printf("You are now connected to database %s.\n", dbparam);
+				printf(gettext("You are now connected to database %s.\n"), dbparam);
 			else if (dbparam != new_dbname)		/* no new db */
-				printf("You are now connected as new user %s.\n", new_user);
+				printf(gettext("You are now connected as new user %s.\n"), new_user);
 			else
 /* both new */
-				printf("You are now connected to database %s as user %s.\n",
+				printf(gettext("You are now connected to database %s as user %s.\n"),
 					   PQdb(pset.db), PQuser(pset.db));
 		}
 
@@ -1672,7 +1672,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		}
 
 		if (!quiet)
-			printf("Output format is %s.\n", _align2string(popt->topt.format));
+			printf(gettext("Output format is %s.\n"), _align2string(popt->topt.format));
 	}
 
 	/* set border style/width */
@@ -1682,7 +1682,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.border = atoi(value);
 
 		if (!quiet)
-			printf("Border style is %d.\n", popt->topt.border);
+			printf(gettext("Border style is %d.\n"), popt->topt.border);
 	}
 
 	/* set expanded/vertical mode */
@@ -1690,7 +1690,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		popt->topt.expanded = !popt->topt.expanded;
 		if (!quiet)
-			printf("Expanded display is %s.\n", popt->topt.expanded ? "on" : "off");
+			printf(popt->topt.expanded
+				   ? gettext("Expanded display is on.\n")
+				   : gettext("Expanded display is off.\n"));
 	}
 
 	/* null display */
@@ -1702,7 +1704,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->nullPrint = xstrdup(value);
 		}
 		if (!quiet)
-			printf("Null display is '%s'.\n", popt->nullPrint ? popt->nullPrint : "");
+			printf(gettext("Null display is '%s'.\n"), popt->nullPrint ? popt->nullPrint : "");
 	}
 
 	/* field separator for unaligned text */
@@ -1714,7 +1716,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 			popt->topt.fieldSep = xstrdup(value);
 		}
 		if (!quiet)
-			printf("Field separator is '%s'.\n", popt->topt.fieldSep);
+			printf(gettext("Field separator is '%s'.\n"), popt->topt.fieldSep);
 	}
 
 	/* record separator for unaligned text */
@@ -1728,9 +1730,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (strcmp(popt->topt.recordSep, "\n") == 0)
-				printf("Record separator is <newline>.");
+				printf(gettext("Record separator is <newline>."));
 			else
-				printf("Record separator is '%s'.\n", popt->topt.recordSep);
+				printf(gettext("Record separator is '%s'.\n"), popt->topt.recordSep);
 		}
 	}
 
@@ -1741,9 +1743,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.tuples_only)
-				puts("Showing only tuples.");
+				puts(gettext("Showing only tuples."));
 			else
-				puts("Tuples only is off.");
+				puts(gettext("Tuples only is off."));
 		}
 	}
 
@@ -1759,9 +1761,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->title)
-				printf("Title is \"%s\".\n", popt->title);
+				printf(gettext("Title is \"%s\".\n"), popt->title);
 			else
-				printf("Title is unset.\n");
+				printf(gettext("Title is unset.\n"));
 		}
 	}
 
@@ -1777,9 +1779,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.tableAttr)
-				printf("Table attribute is \"%s\".\n", popt->topt.tableAttr);
+				printf(gettext("Table attribute is \"%s\".\n"), popt->topt.tableAttr);
 			else
-				printf("Table attributes unset.\n");
+				printf(gettext("Table attributes unset.\n"));
 		}
 	}
 
@@ -1790,9 +1792,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->topt.pager)
-				puts("Using pager is on.");
+				puts(gettext("Using pager is on."));
 			else
-				puts("Using pager is off.");
+				puts(gettext("Using pager is off."));
 		}
 	}
 
@@ -1803,9 +1805,9 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 		if (!quiet)
 		{
 			if (popt->default_footer)
-				puts("Default footer is on.");
+				puts(gettext("Default footer is on."));
 			else
-				puts("Default footer is off.");
+				puts(gettext("Default footer is off."));
 		}
 	}
 

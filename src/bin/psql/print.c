@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.19 2001/05/12 19:44:46 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.20 2001/06/02 18:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 #include "print.h"
@@ -364,7 +364,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 
 	if (cells[0] == NULL)
 	{
-		puts("(No rows)\n");
+		puts(gettext("(No rows)\n"));
 		return;
 	}
 
@@ -1069,9 +1069,9 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 
 		footers[0] = malloc(100);
 		if (PQntuples(result) == 1)
-			strcpy(footers[0], "(1 row)");
+			snprintf(footers[0], 100, gettext("(1 row)"));
 		else
-			sprintf(footers[0], "(%d rows)", PQntuples(result));
+			snprintf(footers[0], 100, gettext("(%d rows)"), PQntuples(result));
 	}
 	else
 		footers = NULL;

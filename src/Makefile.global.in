@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.128 2001/05/25 14:28:58 momjian Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.129 2001/06/02 18:25:16 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -18,7 +18,7 @@
 #
 # Meta configuration
 
-.PHONY: all install installdirs uninstall clean distclean maintainer-clean distprep check installcheck
+.PHONY: all install installdirs uninstall clean distclean maintainer-clean distprep check installcheck maintainer-check
 .SILENT: installdirs
 
 # make `all' the default target
@@ -100,6 +100,7 @@ endif
 odbcinst_ini_dir = @odbcinst_ini_dir@
 
 javadir := $(DESTDIR)$(datadir)/java
+localedir := @localedir@
 
 
 ##########################################################################
@@ -119,6 +120,7 @@ enable_odbc	= @enable_odbc@
 MULTIBYTE	= @MULTIBYTE@
 enable_shared	= @enable_shared@
 enable_rpath	= @enable_rpath@
+enable_nls	= @enable_nls@
 
 python_version		= @python_version@
 python_includedir	= @python_includedir@
@@ -186,10 +188,13 @@ X = @EXEEXT@
 ANT	= @ANT@
 AWK	= @AWK@
 LN_S	= @LN_S@
+MSGFMT  = @MSGFMT@
+MSGMERGE = @MSGMERGE@
 PERL	= @PERL@
 PYTHON	= @PYTHON@
 TAR	= @TAR@
 WISH	= @WISH@
+XGETTEXT = @XGETTEXT@
 
 # Installation.
 
@@ -214,6 +219,7 @@ SGMLSPL	= @SGMLSPL@
 # Feature settings
 
 DEF_PGPORT = @default_port@
+WANTED_LANGUAGES = @WANTED_LANGUAGES@
 
 
 ##########################################################################
@@ -411,3 +417,16 @@ clean-deps:
 	@rm -rf $(DEPDIR) *.d
 
 endif # autodepend
+
+
+##########################################################################
+#
+# Native language support
+
+ifeq ($(enable_nls), yes)
+ifneq (,$(wildcard $(srcdir)/nls.mk))
+
+include $(top_srcdir)/src/nls-global.mk
+
+endif # nls.mk
+endif # enable_nls

@@ -1,0 +1,827 @@
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/de.po,v 1.1 2001/06/02 18:25:18 petere Exp $
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.2\n"
+"POT-Creation-Date: 2001-06-02 18:26+0200\n"
+"PO-Revision-Date: 2001-06-02 15:52+0200\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: German <de@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: command.c:152
+msgid "Warning: this syntax is deprecated\n"
+msgstr "Warnung: Dieser Syntax is veraltet.\n"
+
+#: command.c:159
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "Ungültiges Kommando \\%s.  Versuchen Sie \\? für Hilfe.\n"
+
+#: command.c:161
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "ungültiges Kommando \\%s\n"
+
+#: command.c:278
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "konnte Home-Verzeichnis nicht ermitteln: %s\n"
+
+#: command.c:292
+#, c-format
+msgid "\\%s: could not change directory to '%s': %s\n"
+msgstr "\\%s: konnte nicht in Verzeichnis »%s« wechseln: %s\n"
+
+#: command.c:380 command.c:726
+msgid "no query buffer\n"
+msgstr "kein Abfragepuffer\n"
+
+#: command.c:436
+#, c-format
+msgid "%s: invalid encoding name\n"
+msgstr ""
+
+#: command.c:445
+#, c-format
+msgid "\\%s: multi-byte support is not enabled\n"
+msgstr ""
+
+#: command.c:499 command.c:530 command.c:541 command.c:555 command.c:597
+#: command.c:706 command.c:735
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: notwendiges Argument fehlt\n"
+
+#: command.c:585
+msgid "Query buffer is empty."
+msgstr "Abfragepuffer ist leer."
+
+#: command.c:616
+msgid "Query buffer reset (cleared)."
+msgstr "Abfragepuffer wurde gelöscht."
+
+#: command.c:627
+#, c-format
+msgid "Wrote history to %s.\n"
+msgstr "History nach %s geschrieben.\n"
+
+#: command.c:668 command.c:900 command.c:1114 command.c:1160 command.c:1844
+#: common.c:57 copy.c:87 mainloop.c:80 mainloop.c:384
+msgid "out of memory\n"
+msgstr "Speicher aufgebraucht\n"
+
+#: command.c:677 command.c:711
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: Fehler\n"
+
+#: command.c:750 command.c:770 command.c:1005 command.c:1018 command.c:1028
+#: command.c:1501 command.c:1514 command.c:1526 command.c:1539 command.c:1553
+#: command.c:1567 command.c:1597 common.c:106 copy.c:290
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:835
+#, c-format
+msgid "\\%s: extra argument '%s' ignored\n"
+msgstr "\\%s: überflüssiges Argument »%s« ignoriert\n"
+
+#: command.c:892 command.c:966 command.c:994
+msgid "parse error at end of line\n"
+msgstr "Parse-Fehler am Zeilenende\n"
+
+#: command.c:1275 command.c:1299 startup.c:183 startup.c:201
+msgid "Password: "
+msgstr "Paßwort: "
+
+#: command.c:1313 common.c:155 common.c:331 common.c:496
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1317
+msgid "Previous connection kept\n"
+msgstr "Vorherige Verbindung wurde behalten\n"
+
+#: command.c:1330
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\connect: %s"
+
+#: command.c:1342
+#, c-format
+msgid "You are now connected to database %s.\n"
+msgstr "Sie sind jetzt mit der Datenbank %s verbunden.\n"
+
+#: command.c:1344
+#, c-format
+msgid "You are now connected as new user %s.\n"
+msgstr "Sie sind jetzt als neuer Benutzer %s verbunden.\n"
+
+#: command.c:1347
+#, c-format
+msgid "You are now connected to database %s as user %s.\n"
+msgstr "Sie sind jetzt mit der Datenbank %s als Benutzer %s verbunden.\n"
+
+#: command.c:1438
+#, c-format
+msgid "could not start editor %s\n"
+msgstr "konnte Editor %s nicht starten\n"
+
+#: command.c:1440
+msgid "could not start /bin/sh\n"
+msgstr "konnte /bin/sh nicht starten\n"
+
+#: command.c:1486
+#, c-format
+msgid "couldn't open temp file %s: %s\n"
+msgstr ""
+
+#: command.c:1670
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: zulässige Formate sind unaligned, aligned, html, latex\n"
+
+#: command.c:1675
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Ausgabeformat ist »%s«.\n"
+
+#: command.c:1685
+#, c-format
+msgid "Border style is %d.\n"
+msgstr "Rahmenstil ist %d.\n"
+
+#: command.c:1694
+msgid "Expanded display is on.\n"
+msgstr "Erweiterte Anzeige ist an.\n"
+
+#: command.c:1695
+msgid "Expanded display is off.\n"
+msgstr "Erweiterte Anzeige ist aus.\n"
+
+#: command.c:1707
+#, c-format
+msgid "Null display is '%s'.\n"
+msgstr "Null-Anzeige ist »%s«.\n"
+
+#: command.c:1719
+#, c-format
+msgid "Field separator is '%s'.\n"
+msgstr ""
+
+#: command.c:1733
+msgid "Record separator is <newline>."
+msgstr ""
+
+#: command.c:1735
+#, c-format
+msgid "Record separator is '%s'.\n"
+msgstr ""
+
+#: command.c:1746
+msgid "Showing only tuples."
+msgstr ""
+
+#: command.c:1748
+msgid "Tuples only is off."
+msgstr ""
+
+#: command.c:1764
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Titel ist »%s«.\n"
+
+#: command.c:1766
+msgid "Title is unset.\n"
+msgstr "Titel ist nicht gesetzt.\n"
+
+#: command.c:1782
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr "Tabellenattribut ist »%s«.\n"
+
+#: command.c:1784
+msgid "Table attributes unset.\n"
+msgstr "Tabellenattribute sind nicht gesetzt.\n"
+
+#: command.c:1795
+msgid "Using pager is on."
+msgstr "Pager-Verwendung is an."
+
+#: command.c:1797
+msgid "Using pager is off."
+msgstr "Pager-Verwendung ist aus."
+
+#: command.c:1808
+msgid "Default footer is on."
+msgstr "Standardfußzeile ist an."
+
+#: command.c:1810
+msgid "Default footer is off."
+msgstr "Standardfußzeile ist aus."
+
+#: command.c:1816
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: unbekannte Option: %s\n"
+
+#: command.c:1859
+msgid "\\!: failed\n"
+msgstr "\\!: fehlgeschlagen\n"
+
+#: common.c:50
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr ""
+
+#: common.c:299 common.c:385
+msgid "You are currently not connected to a database.\n"
+msgstr "Sie sind gegenwärtig nicht mit einer Datenbank verbunden.\n"
+
+#: common.c:338 common.c:506
+msgid "connection to server was lost\n"
+msgstr "Verbindung zum Server wurde verloren\n"
+
+#: common.c:341 common.c:509
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Die Verbindung zum Server wurde verloren.  Versuche Reset: "
+
+#: common.c:345 common.c:513
+msgid "Failed.\n"
+msgstr "Fehlgeschlagen.\n"
+
+#: common.c:355 common.c:525
+msgid "Succeeded.\n"
+msgstr "Erfolgreich.\n"
+
+#: common.c:393
+#, c-format
+msgid ""
+"***(Single step mode: Verify query)"
+"*********************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
+msgstr ""
+"***(Einzelschrittmodus: Abfrage bestätigen)"
+"*************************************\n"
+"%s\n"
+"***(Drücken Sie die Eingabetaste um fortzufahren oder »x« um abzubrechen)"
+"*******\n"
+
+#: common.c:485
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+
+#: common.c:531
+#, c-format
+msgid "Asynchronous NOTIFY '%s' from backend with pid '%d' received.\n"
+msgstr ""
+
+#: copy.c:81
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: benötigt Argumente\n"
+
+#: copy.c:211
+#, c-format
+msgid "\\copy: parse error at '%s'\n"
+msgstr "\\copy: Parse-Fehler bei '%s'\n"
+
+#: copy.c:213
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: Parse-Fehler am Zeilenende\n"
+
+#: copy.c:310
+#, c-format
+msgid "\\copy: %s"
+msgstr "\\copy: %s"
+
+#: copy.c:314
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: unerwartete Antwort (%d)\n"
+
+#: help.c:47
+msgid "on"
+msgstr "an"
+
+#: help.c:47
+msgid "off"
+msgstr "aus"
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "konnte aktuellen Benutzernamen nicht ermitteln: %s\n"
+
+#: help.c:79
+msgid "This is psql, the PostgreSQL interactive terminal.\n"
+msgstr "Dies ist psql, das interaktive PostgreSQL-Terminal.\n"
+
+#: help.c:80
+msgid "Usage:"
+msgstr "Benutzung:"
+
+#: help.c:81
+msgid "  psql [options] [dbname [username]]\n"
+msgstr "  psql [Optionen] [DB-Name [Benutzername]]\n"
+
+#: help.c:82
+msgid "Options:"
+msgstr "Optionen:"
+
+#: help.c:83
+msgid "  -a              Echo all input from script"
+msgstr "  -a              Gib Skript-Inhalt wieder"
+
+#: help.c:84
+msgid "  -A              Unaligned table output mode (-P format=unaligned)"
+msgstr ""
+
+#: help.c:85
+msgid "  -c <query>      Run only single query (or slash command) and exit"
+msgstr "  -c <Kommando>   Führe einzelnes Kommando aus und beende"
+
+#: help.c:91
+#, c-format
+msgid "  -d <dbname>     Specify database name to connect to (default: %s)\n"
+msgstr ""
+"  -d <Dbname>     Datenbank, zu der verbunden werden soll (Standard: %s)\n"
+
+#: help.c:93
+msgid "  -e              Echo queries sent to backend"
+msgstr "  -e              Zeige Abfragen an den Server"
+
+#: help.c:94
+msgid "  -E              Display queries that internal commands generate"
+msgstr ""
+"  -E              Zeige Abfragen, die von internen Kommandos erzeugt werden"
+
+#: help.c:95
+msgid "  -f <filename>   Execute queries from file, then exit"
+msgstr "  -f <Dateiname>  Führe Abfragen von Datei aus und beende danach"
+
+#: help.c:96
+#, c-format
+msgid ""
+"  -F <string>     Set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr ""
+
+#: help.c:101
+#, c-format
+msgid "  -h <host>       Specify database server host (default: %s)\n"
+msgstr "  -h <Host>       Hostname des Datenbankservers (Standard: %s)\n"
+
+#: help.c:102
+msgid "local socket"
+msgstr "lokales Socket"
+
+#: help.c:104
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr ""
+
+#: help.c:105
+msgid "  -l              List available databases, then exit"
+msgstr "  -l              Zeige verfügbare Datenbanken und beende"
+
+#: help.c:106
+msgid "  -n              Disable readline"
+msgstr "  -n              Schalte Readline aus"
+
+#: help.c:107
+msgid "  -o <filename>   Send query output to filename (or |pipe)"
+msgstr ""
+
+#: help.c:111
+#, c-format
+msgid "  -p <port>       Specify database server port (default: %s)\n"
+msgstr ""
+
+#: help.c:114
+msgid ""
+"  -P var[=arg]    Set printing option 'var' to 'arg' (see \\pset command)"
+msgstr ""
+
+#: help.c:115
+msgid "  -q              Run quietly (no messages, only query output)"
+msgstr ""
+
+#: help.c:116
+msgid ""
+"  -R <string>     Set record separator (default: newline) (-P recordsep=)"
+msgstr ""
+
+#: help.c:117
+msgid "  -s              Single step mode (confirm each query)"
+msgstr ""
+
+#: help.c:118
+msgid "  -S              Single line mode (newline terminates query)"
+msgstr ""
+
+#: help.c:119
+msgid "  -t              Print rows only (-P tuples_only)"
+msgstr ""
+
+#: help.c:120
+msgid ""
+"  -T text         Set HTML table tag options (width, border) (-P tableattr=)"
+msgstr ""
+
+#: help.c:126
+#, c-format
+msgid "  -U <username>   Specify database username (default: %s)\n"
+msgstr "  -U <Benutzer>   Datenbank-Benutzername (Standard: %s)\n"
+
+#: help.c:128
+msgid "  -v name=val     Set psql variable 'name' to 'value'"
+msgstr "  -v Name=Wert    Setze psql-Variable »Name« auf »Wert«"
+
+#: help.c:129
+msgid "  -V              Show version information and exit"
+msgstr "  -V              Zeige Versionsinformationen und beende"
+
+#: help.c:130
+msgid "  -W              Prompt for password (should happen automatically)"
+msgstr "  -W              Frage nach Paßwort (sollte automatisch passieren)"
+
+#: help.c:131
+msgid "  -x              Turn on expanded table output (-P expanded)"
+msgstr "  -x              Schalte erweiterte Tabellenausgabe ein (-P expanded)"
+
+#: help.c:132
+msgid "  -X              Do not read startup file (~/.psqlrc)"
+msgstr "  -X              Lese die Startdatei nicht (~/.psqlrc)"
+
+# XXX Da fehlt noch was.
+#: help.c:135
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL manual, which accompanies the distribution and is also\n"
+"available at <http://www.postgresql.org>.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+"\n"
+"Für mehr Informationen, geben Sie »\\?« (für interne Kommandos) oder\n"
+"»\\help« (für SQL-Kommandos) in psql ein oder schauen Sie in den psql-\n"
+"Abschnitt der PostgreSQL-Dokumentation.\n"
+"\n"
+"Berichten Sie Fehler an <pgsql-bugs@postgresql.org>."
+
+#: help.c:195
+msgid " \\a             toggle between unaligned and aligned mode\n"
+msgstr ""
+
+#: help.c:196
+#, c-format
+msgid ""
+" \\c[onnect] [dbname|- [user]]\n"
+"                connect to new database (currently '%s')\n"
+msgstr ""
+
+#: help.c:199
+msgid " \\C <title>     table title\n"
+msgstr ""
+
+#: help.c:200
+msgid " \\cd [<dir>]    change the current working directory\n"
+msgstr ""
+
+#: help.c:201
+msgid ""
+" \\copy ...      perform SQL COPY with data stream to the client machine\n"
+msgstr ""
+
+#: help.c:202
+msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr ""
+
+#: help.c:203
+msgid " \\d <table>     describe table (or view, index, sequence)\n"
+msgstr ""
+
+#: help.c:204
+msgid " \\d{t|i|s|v}    list tables/indices/sequences/views\n"
+msgstr ""
+
+#: help.c:205
+msgid " \\d{p|S|l}      list permissions/system tables/lobjects\n"
+msgstr ""
+
+#: help.c:206
+msgid " \\da            list aggregates\n"
+msgstr ""
+
+#: help.c:207
+msgid " \\dd [object]   list comment for table, type, function, or operator\n"
+msgstr ""
+
+#: help.c:208
+msgid " \\df            list functions\n"
+msgstr ""
+
+#: help.c:209
+msgid " \\do            list operators\n"
+msgstr ""
+
+#: help.c:210
+msgid " \\dT            list data types\n"
+msgstr ""
+
+#: help.c:211
+msgid ""
+" \\e [file]      edit the current query buffer or [file] with external "
+"editor\n"
+msgstr ""
+
+#: help.c:212
+msgid " \\echo <text>   write text to stdout\n"
+msgstr ""
+
+#: help.c:213
+msgid " \\encoding <encoding>  set client encoding\n"
+msgstr ""
+
+#: help.c:214
+msgid " \\f <sep>       change field separator\n"
+msgstr ""
+
+#: help.c:215
+msgid ""
+" \\g [file]      send query to backend (and results in [file] or |pipe)\n"
+msgstr ""
+
+#: help.c:216
+msgid " \\h [cmd]       help on syntax of sql commands, * for all commands\n"
+msgstr ""
+
+#: help.c:217
+#, c-format
+msgid " \\H             toggle HTML mode (currently %s)\n"
+msgstr ""
+
+#: help.c:219
+msgid " \\i <file>      read and execute queries from <file>\n"
+msgstr ""
+
+#: help.c:220
+msgid " \\l             list all databases\n"
+msgstr ""
+
+#: help.c:221
+msgid ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                large object operations\n"
+msgstr ""
+
+#: help.c:223
+msgid " \\o [file]      send all query results to [file], or |pipe\n"
+msgstr ""
+
+#: help.c:224
+msgid " \\p             show the content of the current query buffer\n"
+msgstr ""
+
+#: help.c:225
+msgid ""
+" \\pset <opt>    set table output  <opt> = {format|border|expanded|"
+"fieldsep|\n"
+"                null|recordsep|tuples_only|title|tableattr|pager}\n"
+msgstr ""
+
+#: help.c:227
+msgid " \\q             quit psql\n"
+msgstr ""
+
+#: help.c:228
+msgid " \\qecho <text>  write text to query output stream (see \\o)\n"
+msgstr ""
+
+#: help.c:229
+msgid " \\r             reset (clear) the query buffer\n"
+msgstr ""
+
+#: help.c:230
+msgid " \\s [file]      print history or save it in [file]\n"
+msgstr ""
+
+#: help.c:231
+msgid " \\set <var> <value>  set internal variable\n"
+msgstr ""
+
+#: help.c:232
+#, c-format
+msgid " \\t             show only rows (currently %s)\n"
+msgstr ""
+
+#: help.c:234
+msgid " \\T <tags>      HTML table tags\n"
+msgstr ""
+
+#: help.c:235
+msgid " \\unset <var>   unset (delete) internal variable\n"
+msgstr ""
+
+#: help.c:236
+msgid " \\w <file>      write current query buffer to a <file>\n"
+msgstr ""
+
+#: help.c:237
+#, c-format
+msgid " \\x             toggle expanded output (currently %s)\n"
+msgstr ""
+
+#: help.c:239
+msgid " \\z             list table access permissions\n"
+msgstr ""
+
+#: help.c:240
+msgid " \\! [cmd]       shell escape or command\n"
+msgstr ""
+
+#: help.c:267
+msgid "Available help:"
+msgstr "Verfügbare Hilfe:"
+
+#: help.c:298
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+
+#: help.c:309
+#, c-format
+msgid ""
+"No help available for '%-.*s'.\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"Keine Hilfe verfügbar für  »%-.*s«.\n"
+"Versuchen Sie \\h ohne Argumente, um die verfügbare Hilfe zu sehen.\n"
+
+#: input.c:171
+#, c-format
+msgid "could not save history to %s: %s\n"
+msgstr "konnte History nicht in %s speichern: %s\n"
+
+#: large_obj.c:66
+msgid "Warning: Your transaction in progress has been committed."
+msgstr "Warnung: Die angefangene Transaktion wurde beendet (COMMIT)."
+
+#: large_obj.c:68
+msgid "Warning: Your transaction in progress has been rolled back."
+msgstr "Warnung: Die angefangene Transaktion wurde abgebrochen."
+
+#: large_obj.c:95
+msgid "\\lo_export: not connected to a database\n"
+msgstr "\\lo_export: nicht mit einer Datenbank verbunden\n"
+
+#: large_obj.c:162
+msgid "\\lo_import: not connected to a database\n"
+msgstr "\\lo_import: nicht mit einer Datenbank verbunden\n"
+
+#: large_obj.c:253
+msgid "\\lo_unlink: not connected to a database\n"
+msgstr "\\lo_unlink: nicht mit einer Datenbank verbunden\n"
+
+#: large_obj.c:328
+msgid "Description"
+msgstr "Beschreibung"
+
+#: large_obj.c:336
+msgid "Large objects"
+msgstr ""
+
+#: mainloop.c:242
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "Verwenden Sie »\\q«, um %s zu verlassen.\n"
+
+#: print.c:367
+msgid "(No rows)\n"
+msgstr "(Keine Zeilen)\n"
+
+#: print.c:1072
+msgid "(1 row)"
+msgstr "(1 Zeile)"
+
+#: print.c:1074
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d Zeilen)"
+
+#: startup.c:141 startup.c:615
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: Speicher aufgebraucht\n"
+
+#: startup.c:177
+msgid "Username: "
+msgstr "Benutzername: "
+
+#: startup.c:286
+#, c-format
+msgid ""
+"Welcome to %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help on internal slash commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+"Willkommen bei %s, dem interaktiven PostgreSQL-Terminal.\n"
+"\n"
+"Geben Sie ein:  \\copyright für Urheberrechtsinformationen\n"
+"                \\h für Hilfe über SQL-Kommandos\n"
+"                \\? für Hilfe über interne Kommandos\n"
+"                \\g oder Semikolon, um eine Abfrage auszuführen\n"
+"                \\q um zu beenden\n"
+"\n"
+
+#: startup.c:461
+#, c-format
+msgid "%s: couldn't set printing parameter %s\n"
+msgstr "%s: konnte Ausgabeparameter %s nicht setzen\n"
+
+#: startup.c:507
+#, c-format
+msgid "%s: could not delete variable %s\n"
+msgstr "%s: konnte Variable %s nicht löschen\n"
+
+#: startup.c:517
+#, c-format
+msgid "%s: could not set variable %s\n"
+msgstr "%s: konnte Variable %s nicht setzen\n"
+
+#: startup.c:548 startup.c:563
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Versuchen sie »%s --help« für weitere Informationen.\n"
+
+#: startup.c:556
+#, c-format
+msgid ""
+"%s was compiled without support for long options.\n"
+"Use --help for help on invocation options.\n"
+msgstr ""
+
+#: startup.c:581
+#, c-format
+msgid "%s: warning: extra option %s ignored\n"
+msgstr "%s: Warnung: überflüssige Option %s ignoriert\n"
+
+#: startup.c:588
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr "%s: Warnung: The Option -u is veraltet. Verwenden Sie -U.\n"
+
+#: startup.c:644
+msgid "contains support for: "
+msgstr "enthält Unterstützung für: "
+
+#: startup.c:647
+msgid "readline"
+msgstr "readline"
+
+#: startup.c:657
+msgid "history"
+msgstr "history"
+
+#: startup.c:666
+msgid "multibyte"
+msgstr "multibyte"
+
+#: startup.c:674
+msgid ""
+"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996, Regents of the University of California\n"
+"Read the file COPYRIGHT or use the command \\copyright to see the\n"
+"usage and distribution terms."
+msgstr ""
+"Teile Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Teile Copyright (c) 1996, Regents of the University of California\n"
+"Lesen Sie die Datei COPYRIGHT oder verwenden Sie das Kommando \\copyright\n"
+"um Urheberrechtsinformationen zu sehen."
+
+#: startup.c:699
+#, c-format
+msgid ""
+"SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr ""
+"SSL-Verbindung (Verschlüsslungsmethode: %s, Bits: %i)\n"
+"\n"

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.39 2001/03/26 15:18:51 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.40 2001/06/02 18:25:18 petere Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -19,7 +19,6 @@
 #ifndef WIN32
 #include <setjmp.h>
 sigjmp_buf	main_loop_jmp;
-
 #endif
 
 
@@ -240,7 +239,7 @@ MainLoop(FILE *source)
 				else
 				{
 					if (!QUIET())
-						printf("Use \"\\q\" to leave %s.\n", pset.progname);
+						printf(gettext("Use \"\\q\" to leave %s.\n"), pset.progname);
 					continue;
 				}
 			}
