@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.3 2000/01/26 05:55:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.4 2000/06/15 18:55:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <stdlib.h>
-#include <strings.h>
+#include <string.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>

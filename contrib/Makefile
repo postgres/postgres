@@ -1,27 +1,59 @@
-# Makefile for contrib code
 #
-# The following subdirs don't have a Makefile:
+# The PostgreSQL contrib tree Makefile
 #
-#   apache_logging
-#   linux
-#   mSQL-interface
-#   noupdate
-#   unixdate
+#	Portions Copyright (c) 1999-2000, PostgreSQL, Inc
 #
-# The following subdirs give make errors:
+# $Header: /cvsroot/pgsql/contrib/Makefile,v 1.4 2000/06/15 18:54:29 momjian Exp $
 #
-#   earthdistance
-#   os2client
+
+TOPDIR = ..
+include Makefile.global
+
+WANTED_DIRS =	array		\
+		earthdistance	\
+		findoidjoins	\
+		fulltextindex	\
+		isbn_issn	\
+		likeplanning	\
+		linux		\
+		lo		\
+		mSQL-interface	\
+		miscutil	\
+		noupdate	\
+		pg_dumplo	\
+		pgbench		\
+		soundex		\
+		spi		\
+		string		\
+		tips		\
+		tools		\
+		unixdate	\
+		userlock	\
+		vacuumlo	
+	#	odbc
+	#	os2client	
+
 
 all:
-	for dir in *; do \
+	for dir in $(WANTED_DIRS); do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
 	    fi; \
 	done
 
+
+install:
+	../config/mkinstalldirs $(CONTRIB_BINDIR) $(CONTRIB_MODDIR) $(CONTRIB_DOCDIR) $(CONTRIB_SQLDIR) $(CONTRIB_EXAMPLESDIR)
+	for dir in $(WANTED_DIRS); do \
+	    if [ -e $$dir/Makefile ]; then \
+		$(MAKE) -C $$dir $@ ; \
+	    fi; \
+	done
+	$(INSTALL) $(INSTL_LIB_OPTS) Contrib.index $(CONTRIB_DOCDIR);
+
+
 .DEFAULT:
-	for dir in *; do \
+	for dir in $(WANTED_DIRS); do \
 	    if [ -e $$dir/Makefile ]; then \
 		$(MAKE) -C $$dir $@ ; \
 	    fi; \

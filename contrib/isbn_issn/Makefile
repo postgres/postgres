@@ -1,18 +1,54 @@
 #
-#	PostgreSQL types for ISBN and ISSN identifiers.
+# $Header: /cvsroot/pgsql/contrib/isbn_issn/Attic/Makefile,v 1.3 2000/06/15 18:54:53 momjian Exp $
 #
-#	$Id: Makefile,v 1.2 2000/05/29 05:44:26 tgl Exp $
 
-SRCDIR= ../../src
+TOPDIR=../..
 
-include $(SRCDIR)/Makefile.global
+include ../Makefile.global
 
-CFLAGS+= $(CFLAGS_SL)
+NAME	= isbn_issn
 
-all: isbn$(DLSUFFIX) issn$(DLSUFFIX)
+PROGRAM	= 
+OBJS	= $(NAME).o
+DOCS	= $(NAME).doc
+SQLS	= $(NAME).sql
+BINS	=
+EXAMPLES=
+MODS	= $(NAME)$(DLSUFFIX)
 
-install: isbn$(DLSUFFIX) issn$(DLSUFFIX)
-	install -c isbn$(DLSUFFIX) issn$(DLSUFFIX) /usr/local/pgsql/modules
+CFLAGS += -I. $(CFLAGS_SL)
+
+OTHER_CLEAN = $(SQLS)
+
+all: $(MODS) $(SQLS)
+
+
+%.sql: %.sql.in
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
+
+install: install_doc install_sql install_mod 
+
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
+
+install_sql:
+	for inst_file in $(SQLS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
+	done
+
+install_mod:
+	for inst_file in $(MODS); do \
+		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
+	done
+
+depend dep:
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
 clean:
-	rm -f isbn$(DLSUFFIX) issn$(DLSUFFIX) *.o
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
+
+ifeq (depend,$(wildcard depend))
+include depend
+endif

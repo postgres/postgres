@@ -1,23 +1,50 @@
 #
-# Makefile, requires src/interfaces/libpgeasy
+# $Header: /cvsroot/pgsql/contrib/findoidjoins/Attic/Makefile,v 1.5 2000/06/15 18:54:49 momjian Exp $
 #
-#
-INSTALLDIR = /usr/local/pgsql
 
-TARGET = findoidjoins
-PGEASY = ../../src/interfaces/libpgeasy
-CFLAGS = -g -Wall -I. -I$(PGEASY) -I$(INSTALLDIR)/include
-LIBPGEASY = $(PGEASY)/libpgeasy.a
-LDFLAGS = -L$(INSTALLDIR)/lib -lpq
+TOPDIR=../..
 
-all : $(TARGET)
+include ../Makefile.global
 
-findoidjoins:	findoidjoins.c $(LIBPGEASY)
-	gcc -o $@ $(CFLAGS) $^ $(LDFLAGS)
+NAME	= findoidjoins
+
+PROGRAM	= $(NAME)
+OBJS	= $(NAME).o
+DOCS	= $(NAME).doc
+SQLS	= 
+BINS    = $(PROGRAM) make_oidjoins_check
+EXAMPLES=
+MODS	= 
+
+CFLAGS += -I$(LIBPGEASYDIR) -I$(LIBPQDIR)
+
+OTHER_CLEAN = 
+
+
+all: $(PROGRAM)
+
+$(PROGRAM): $(OBJS) $(LIBPGEASYDIR)/libpgeasy.a 
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPGEASY) 
+
+
+install: install_doc nstall_bin
+
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
+
+install_bin:
+	for inst_file in $(BINS); do \
+		$(INSTALL) $(INSTL_EXE_OPTS) $$inst_file $(CONTRIB_BINDIR); \
+	done
+
+depend dep:
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
 clean:
-	rm -f *.o $(TARGET) log core
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
-install:
-	install -s -o bin -g bin $(TARGET) $(INSTALLDIR)/bin
-
+ifeq (depend,$(wildcard depend))
+include depend
+endif

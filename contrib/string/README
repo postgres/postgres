@@ -1,0 +1,23 @@
+String io module for postgresql.
+Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
+
+This software is distributed under the GNU General Public License
+either version 2, or (at your option) any later version.
+
+
+These output functions can be used as substitution of the standard text
+output functions to get the value of text fields printed in the format
+used for C strings. This allows the output of queries or the exported
+files to be processed more easily using standard unix filter programs
+like perl or awk.
+
+If you use the standard functions instead you could find a single tuple
+splitted into many lines and the tabs embedded in the values could be
+confused with those used as field delimters.
+
+My function translates all non-printing characters into corresponding
+esacape sequences as defined by the C syntax. All you need to reconstruct
+the exact value in your application is a corresponding unescape function
+like the string_input defined in the source code.
+
+Massimo Dal Zotto <dz@cs.unitn.it>

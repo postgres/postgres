@@ -1,3 +1,7 @@
+
+ISBN (books) and ISSN (serials)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 This directory contains definitions for a couple of PostgreSQL
 external types, for a couple of international-standard namespaces:
 ISBN (books) and ISSN (serials).  Rather than just using a char()

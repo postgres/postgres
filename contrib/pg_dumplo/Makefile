@@ -1,26 +1,50 @@
+#
+# $Header: /cvsroot/pgsql/contrib/pg_dumplo/Attic/Makefile,v 1.2 2000/06/15 18:55:10 momjian Exp $
+#
 
-PROGRAM	= pg_dumplo
-	
-OBJECTS	= pg_dumplo.o
+TOPDIR=../..
 
-CFLAGS 	= -Wall -fpic -g
-CC	= gcc
-RM	= rm -f
-INCLUDE = -I/usr/include/postgresql
-LIBS	=-lpq
+include ../Makefile.global
 
-COMPILE = $(CC) $(CPPFLAGS) $(CFLAGS) $(INCLUDE)
-LINK    = $(CC) $(CFLAGS) -o $@ $(LIBS)
+NAME	= pg_dumplo
 
+PROGRAM	= $(NAME)
+OBJS	= main.o lo_export.o lo_import.o utils.o
+DOCS	= $(NAME).doc
+SQLS	= 
+BINS	= $(PROGRAM)
+EXAMPLES=
+MODS	= 
 
-all: $(PROGRAM) 	
+CFLAGS += -I$(LIBPQDIR)
 
-$(PROGRAM): $(OBJECTS)
-	$(LINK) $(OBJECTS)
+OTHER_CLEAN = 
 
-.c.o: $<
-	$(COMPILE) -c $<
+all: $(PROGRAM)
+
+$(PROGRAM): $(OBJS) $(LIBPQDIR)/libpq.a
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPQ) 
+
+install: install_doc install_bin
+
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
+
+install_bin:
+	for inst_file in $(BINS); do \
+		$(INSTALL) $(INSTL_EXE_OPTS) $$inst_file $(CONTRIB_BINDIR); \
+	done
+
+depend dep:
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
 clean:
-	$(RM) -f *~ $(OBJECTS) $(PROGRAM)
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
+ifeq (depend,$(wildcard depend))
+include depend
+endif
+
+ 

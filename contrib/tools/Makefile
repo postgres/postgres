@@ -1,21 +1,21 @@
-#-------------------------------------------------------------------------
 #
-# Makefile --
+# $Header: /cvsroot/pgsql/contrib/tools/Attic/Makefile,v 1.2 2000/06/15 18:55:22 momjian Exp $
 #
-#    Makefile for contrib tools.
-#
-#-------------------------------------------------------------------------
 
-PGDIR = ../..
-SRCDIR = $(PGDIR)/src
+TOPDIR=../..
 
-include $(SRCDIR)/Makefile.global
+include ../Makefile.global
 
-all:		
+NAME	= 
 
-install:	
+PROGRAM	= 
+OBJS	= 
+DOCS	= 
+SQLS	= 
+BINS	=
+EXAMPLES=
+MODS	= 
 
 clean:
-		rm -f *~
+	$(RM) *~ 
 
-distclean:	clean

@@ -1,23 +1,48 @@
-# $Header: /cvsroot/pgsql/contrib/pgbench/Makefile,v 1.1 2000/01/15 12:38:09 ishii Exp $
+#
+# $Header: /cvsroot/pgsql/contrib/pgbench/Makefile,v 1.2 2000/06/15 18:55:12 momjian Exp $
+#
 
-SRCDIR= ../../src
+TOPDIR=../..
 
-include $(SRCDIR)/Makefile.global
+include ../Makefile.global
 
-CFLAGS:= -I$(LIBPQDIR) $(CFLAGS)
+NAME	= pgbench
 
-TARGET = pgbench
-OBJS = pgbench.o
+PROGRAM	= $(NAME)
+OBJS	= $(NAME).o
+DOCS	= $(NAME).doc $(NAME)_jis.doc
+SQLS	= 
+BINS    = $(PROGRAM) 
+EXAMPLES=
+MODS	= 
 
-all:: $(TARGET)
+CFLAGS += -I$(LIBPQDIR)
 
-$(TARGET): $(OBJS)
-	$(CC) -o $(TARGET) $(OBJS) -L$(LIBPQDIR) -lpq $(LDFLAGS)
+OTHER_CLEAN = 
 
-install: $(TARGET)
-	$(INSTALL) $(INSTL_EXE_OPTS) $(TARGET)$(X) $(BINDIR)/$(TARGET)$(X)
+all: $(PROGRAM)
+
+$(PROGRAM): $(OBJS) $(LIBPQDIR)/libpq.a
+	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPQ)
+
+install: install_doc install_bin
+
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
+
+install_bin:
+	for inst_file in $(BINS); do \
+		$(INSTALL) $(INSTL_EXE_OPTS) $$inst_file $(CONTRIB_BINDIR); \
+	done
+
+depend dep:
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
 clean:
-	$(RM) $(TARGET)$(X) $(OBJS)
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
-distclean: clean
+ifeq (depend,$(wildcard depend))
+include depend
+endif

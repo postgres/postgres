@@ -1,65 +1,52 @@
-#-------------------------------------------------------------------------
 #
-# Makefile --
+# $Header: /cvsroot/pgsql/contrib/userlock/Attic/Makefile,v 1.8 2000/06/15 18:55:28 momjian Exp $
 #
-#    Makefile for the user_locks module.
-#
-#-------------------------------------------------------------------------
 
-PGDIR = ../..
-SRCDIR = $(PGDIR)/src
+TOPDIR=../..
 
-include $(SRCDIR)/Makefile.global
+include ../Makefile.global
+
+NAME	= user_locks
+
+PROGRAM	= 
+OBJS	= $(NAME).o
+DOCS	= $(NAME).doc
+SQLS	= $(NAME).sql
+BINS	=
+EXAMPLES=
+MODS	= $(NAME)$(DLSUFFIX)
 
 CFLAGS += -I. $(CFLAGS_SL)
 
-MODNAME =	user_locks
+OTHER_CLEAN = $(SQLS)
 
-SQLDEFS =	$(MODNAME).sql
-
-MODULE =	$(MODNAME)$(DLSUFFIX)
-
-MODDIR =	$(LIBDIR)/modules
-
-SQLDIR =	$(LIBDIR)/sql
-
-all:		module sql
-
-module:		$(MODULE)
-
-sql:		$(SQLDEFS)
-
-install:	$(MODULE) $(SQLDEFS) $(MODDIR) $(SQLDIR)
-		cp -p $(MODULE) $(MODDIR)/
-		strip $(MODDIR)/$(MODULE)
-		cp -p $(SQLDEFS) $(SQLDIR)/
-
-install-doc:	
-		if [ -d "$(DOCDIR)" ]; then \
-		    cp -p *.doc $(DOCDIR); \
-		else \
-		    cp -p *.doc $(SQLDIR); \
-		fi
-
-$(MODDIR):
-		mkdir -p $@
-
-$(SQLDIR):
-		mkdir -p $@
+all: $(MODS) $(SQLS)
 
 %.sql: %.sql.in
-		sed "s|MODULE_PATHNAME|$(MODDIR)/$(MODULE)|" < $< > $@
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
 
-.SUFFIXES: $(DLSUFFIX)
+install: install_doc install_sql install_mod
 
-%$(DLSUFFIX): %.c
-		$(CC) $(CFLAGS) -shared -o $@ $<
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
+
+install_sql:
+	for inst_file in $(SQLS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
+	done
+
+install_mod:
+	for inst_file in $(MODS); do \
+		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
+	done
 
 depend dep:
-		$(CC) -MM $(CFLAGS) *.c >depend
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
 clean:
-		rm -f *~ $(MODULE) $(MODNAME).sql
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
 ifeq (depend,$(wildcard depend))
 include depend

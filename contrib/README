@@ -1,94 +1,81 @@
-This directory contains the contribution functions or tools.
 
----------------------------------------------------------------------------
+ The PostgreSQL contrib tree
+ ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-apache_logging -
-	Getting Apache to log to PostgreSQL
-	by Terry Mackintosh <terry@terrym.com>
+	FIXME:
+		os2client	
+		odbc
+		spi/preprocessor
+		tools		
+	
 
-array -
-	Array iterator functions
-	by Massimo Dal Zotto <dz@cs.unitn.it>
+ - in each directory must be Makefile, possible Makefile template
+   is below this text,
 
-bit -
-	Bit type
-	by Adriaan Joubert <a.joubert@albourne.com>
+--------
+#
+# $Header: /cvsroot/pgsql/contrib/README,v 1.18 2000/06/15 18:54:29 momjian Exp $
+#
 
-datetime -
-	Date & time functions
-	by Massimo Dal Zotto <dz@cs.unitn.it>
+TOPDIR=../..
 
-earthdistance -
-	Operator for computing earth distance for two points
-	by Hal Snyder <hal@vailsys.com>
+include ../Makefile.global
 
-findoidjoins -
-	Finds the joins used by oid columns by examining the actual
-	values in the oid columns and row oids.
-	by Bruce Momjian <root@candle.pha.pa.us>
+NAME	= some_name
 
-fulltextindex -
-	Full text indexing using triggers
-	by Maarten Boekhold <maartenb@dutepp0.et.tudelft.nl>
+PROGRAM	= 
+OBJS	= $(NAME).o
+DOCS	= $(NAME).doc
+SQLS	= $(NAME).sql
+BINS	=
+EXAMPLES=
+MODS	= $(NAME)$(DLSUFFIX)
 
-isbn_issn -
-	PostgreSQL type extensions for ISBN (books) and ISSN (serials)
-	by Garrett A. Wollman <wollman@khavrinen.lcs.mit.edu>
+CFLAGS += -I. $(CFLAGS_SL)
 
-likeplanning -
-	Scripts to enable/disable new planning code for LIKE and regexp
-	pattern match operators.  These will go away again once the code
-	is mature enough to enable by default.
-	by Tom Lane <tgl@sss.pgh.pa.us>
+OTHER_CLEAN = $(SQLS)
 
-linux -
-	Start postgres back end system
-	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+all: $(MODS) $(SQLS)
 
-lo -
-	Large Object maintenance
-	by Peter Mount <peter@retep.org.uk> 
+%.sql: %.sql.in
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
 
-miscutil -
-	Postgres assert checking and various utility functions
-	by Dal Zotto <dz@cs.unitn.it>
 
-mSQL-interface -
-	mSQL API translation library
-	by Aldrin Leal <aldrin@americasnet.com>
+install: install_doc install_sql install_mod install_bin install_example
 
-noupdate -
-	trigger to prevent updates on single columns
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
 
-pg_dumplo -
-	Dump large objects
+install_sql:
+	for inst_file in $(SQLS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
+	done
 
-soundex -
-	Prototype for soundex function
+install_mod:
+	for inst_file in $(MODS); do \
+		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
+	done
 
-spi -
-	A general trigger function autoinc() and so on.
+install_bin:
+	for inst_file in $(BINS); do \
+		$(INSTALL) $(INSTL_EXE_OPTS) $$inst_file $(CONTRIB_BINDIR); \
+	done
 
-string -
-	C-like input/output conversion routines for strings
-	by Massimo Dal Zotto <dz@cs.unitn.it>
+install_example:
+	for inst_file in $(EXAMPLES); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_EXAMPLESDIR); \
+	done
 
-tools -
-	Assorted developer tools
-	by Massimo Dal Zotto <dz@cs.unitn.it>
+depend dep:
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
-unixdate -
-	Conversions from integer to datetime
-	by Thomas Lockhart <lockhart@alumni.caltech.edu>
+clean:
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
-userlock -
-	User locks
-	by Massimo Dal Zotto <dz@cs.unitn.it>
-
-vacuumlo -
-	Remove orphaned large objects
-	by Peter T Mount <peter@retep.org.uk>
-
-pgbench -
-	TPC-B like benchmarking tool
-	by Tatsuo Ishii <t-ishii@sra.co.jp>
+ifeq (depend,$(wildcard depend))
+include depend
+endif
+-----------
+  

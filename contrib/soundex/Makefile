@@ -1,44 +1,53 @@
-#-------------------------------------------------------------------------
 #
-# Makefile--
-#    Makefile for soundex
+# $Header: /cvsroot/pgsql/contrib/soundex/Attic/Makefile,v 1.3 2000/06/15 18:55:15 momjian Exp $
 #
-#-------------------------------------------------------------------------
 
-PGDIR = ../..
-SRCDIR = $(PGDIR)/src
+TOPDIR=../..
 
-include $(SRCDIR)/Makefile.global
+include ../Makefile.global
+
+NAME	= soundex
+
+PROGRAM	= 
+OBJS	= $(NAME).o
+DOCS	= $(NAME).doc
+SQLS	= $(NAME).sql
+BINS	=
+EXAMPLES=
+MODS	= $(NAME)$(DLSUFFIX)
 
 CFLAGS += -I. $(CFLAGS_SL)
 
-MODNAME =	soundex
+OTHER_CLEAN = $(SQLS)
 
-MODULE =	$(MODNAME)$(DLSUFFIX)
+all: $(MODS) $(SQLS)
 
-all:		module sql
-
-module:		$(MODULE)
-
-sql:		$(MODNAME).sql
-
-install:	$(MODULE)
-		cp -p $(MODULE) $(LIBDIR)/modules
-		cd $(LIBDIR)/modules; strip $(MODULE)
 
 %.sql: %.sql.in
-		sed "s|MODULE_PATHNAME|$(LIBDIR)/modules/$(MODULE)|" < $< > $@
+	$(SED) "s|MODULE_PATHNAME|$(CONTRIB_MODDIR)/$@|" < $< > $@
 
-.SUFFIXES: $(DLSUFFIX)
+install: install_doc install_sql install_mod 
 
-%$(DLSUFFIX): %.c
-		$(CC) $(CFLAGS) -shared -o $@ $<
+install_doc:
+	for inst_file in $(DOCS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_DOCDIR); \
+	done
+
+install_sql:
+	for inst_file in $(SQLS); do \
+		$(INSTALL) $(INSTL_LIB_OPTS) $$inst_file $(CONTRIB_SQLDIR); \
+	done
+
+install_mod:
+	for inst_file in $(MODS); do \
+		$(INSTALL) $(INSTL_SHLIB_OPTS) $$inst_file $(CONTRIB_MODDIR); \
+	done
 
 depend dep:
-		$(CC) -MM $(CFLAGS) *.c >depend
+	$(CC) -MM -MG $(CFLAGS) *.c > depend
 
 clean:
-		rm -f $(MODULE) $(MODNAME).sql
+	$(RM) *~ $(OBJS) $(MODS) $(PROGRAM) depend $(OTHER_CLEAN) core log
 
 ifeq (depend,$(wildcard depend))
 include depend

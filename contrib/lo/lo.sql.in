@@ -1,11 +1,8 @@
 --
 --	PostgreSQL code for LargeObjects
 --
---	$Id: lo.sql.in,v 1.2 2000/05/29 01:59:02 tgl Exp $
+--	$Id: lo.sql.in,v 1.3 2000/06/15 18:54:56 momjian Exp $
 --
-
-load '_OBJWD_/lo_DLSUFFIX_';
-
 --
 --	Create the data type
 --
@@ -13,13 +10,13 @@ load '_OBJWD_/lo_DLSUFFIX_';
 -- used by the lo type, it takes an oid and returns an lo object
 create function lo_in(opaque)
 	returns opaque
-	as '_OBJWD_/lo_DLSUFFIX_'
+	as 'MODULE_PATHNAME'
 	language 'c';
 
 -- used by the lo type, it returns the oid of the object
 create function lo_out(opaque)
 	returns opaque
-	as '_OBJWD_/lo_DLSUFFIX_'
+	as 'MODULE_PATHNAME'
 	language 'c';
 
 -- finally the type itself
@@ -33,20 +30,20 @@ create type lo (
 -- this returns the oid associated with a lo object
 create function lo_oid(lo)
 	returns oid
-	as '_OBJWD_/lo_DLSUFFIX_'
+	as 'MODULE_PATHNAME'
 	language 'c';
 
 -- this allows us to convert an oid to a managed lo object
 -- ie: insert into test values (lo_import('/fullpath/file')::lo);
 create function lo(oid)
 	returns lo
-	as '_OBJWD_/lo_DLSUFFIX_'
+	as 'MODULE_PATHNAME'
 	language 'c';
 
 -- This is used in triggers
 create function lo_manage()
 	returns opaque
-	as '_OBJWD_/lo_DLSUFFIX_'
+	as 'MODULE_PATHNAME'
 	language 'newC';
 
 -- This allows us to map lo to oid

@@ -7,8 +7,11 @@
 #include <utils/palloc.h>		/* for palloc */
 
 /* Earth's radius is in statute miles. */
-const		EARTH_RADIUS = 3958.747716;
-const		TWO_PI = 2.0 * M_PI;
+const int	EARTH_RADIUS = 3958.747716;
+const int	TWO_PI = 2.0 * M_PI;
+
+double *geo_distance(Point *pt1, Point *pt2);
+
 
 /******************************************************
  *

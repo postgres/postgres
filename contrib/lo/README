@@ -1,8 +1,6 @@
 PostgreSQL type extension for managing Large Objects
 ----------------------------------------------------
 
-$Id: README,v 1.1 1998/06/16 07:07:11 momjian Exp $
-
 Overview
 
 One of the problems with the JDBC driver (and this affects the ODBC driver

@@ -1,7 +1,0 @@
-DROP FUNCTION noup ();
-
-CREATE FUNCTION noup ()
-	RETURNS opaque
-	AS '_OBJWD_/noup_DLSUFFIX_'
-	LANGUAGE 'newC'
-;
