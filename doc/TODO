@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Dec  9 18:25:43 EST 2000
+Last updated:		Sun Dec 10 20:44:26 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -184,6 +184,7 @@ REFERENTIAL INTEGRITY
   exists on referenced primary key attributes
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
+* Implement dirty reads and use them in RI triggers
 
 EXOTIC FEATURES
 
