@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov  6 00:56:27 EST 2002
+Last updated:		Wed Nov  6 01:20:47 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -371,7 +371,7 @@ Optimizer / Executor
 
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
-* -Add hash for evaluating GROUP BY aggregates (Tom)
+* Add hash for evaluating GROUP BY aggregates (Tom)
 * Allow merge and hash joins on expressions not just simple variables (Tom)
 * Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS [exists]
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
