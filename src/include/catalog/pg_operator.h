@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.9 1997/04/22 17:31:49 scrappy Exp $
+ * $Id: pg_operator.h,v 1.10 1997/04/27 19:22:41 thomas Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -87,6 +87,8 @@ typedef FormData_pg_operator	*OperatorTupleForm;
  * ----------------
  */
 
+DATA(insert OID = 58 (  "<"        PGUID 0 b t f  16  16  16  85   91  0  0 boollt intltsel intltjoinsel ));
+DATA(insert OID = 59 (  ">"        PGUID 0 b t f  16  16  16  85   91  0  0 boolgt intltsel intltjoinsel ));
 DATA(insert OID = 85 (  "<>"       PGUID 0 b t f  16  16  16  85   91  0  0 boolne neqsel neqjoinsel ));
 DATA(insert OID = 91 (  "="        PGUID 0 b t t  16  16  16  91   85  0  0 booleq eqsel eqjoinsel ));
 #define BooleanEqualOperator   91

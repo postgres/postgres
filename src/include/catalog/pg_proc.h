@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.18 1997/04/22 17:32:12 scrappy Exp $
+ * $Id: pg_proc.h,v 1.19 1997/04/27 19:22:45 thomas Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -123,6 +123,8 @@ DATA(insert OID =  52 (  cidin             PGUID 11 f t f 1 f 29 "0" 100 0 0 100
 DATA(insert OID =  53 (  cidout            PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  54 (  oid8in            PGUID 11 f t f 1 f 30 "0" 100 0 0 100  foo bar ));
 DATA(insert OID =  55 (  oid8out           PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  56 (  boollt            PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
+DATA(insert OID =  57 (  boolgt            PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
 DATA(insert OID =  60 (  booleq            PGUID 11 f t f 2 f 16 "16 16" 100 0 0 100  foo bar ));
 DATA(insert OID =  61 (  chareq            PGUID 11 f t f 2 f 16 "18 18" 100 0 0 100  foo bar ));
 #define       CharacterEqualRegProcedure      61
@@ -529,7 +531,7 @@ DATA(insert OID = 699 (  char2regexeq      PGUID 11 f t f 2 f 16 "409 25" 100 0 
 DATA(insert OID = 1288 (  char16regexeq    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DATA(insert OID = 1289 (  char16regexne    PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 710 (  GetPgUserName     PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 710 (  getpgusername     PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 711 (  userfntest        PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
 DATA(insert OID = 713 (  oidrand           PGUID 11 f t f 2 f 16 "26 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 715 (  oidsrand          PGUID 11 f t f 1 f 16 "23" 100 0 0 100  foo bar ));
@@ -678,7 +680,7 @@ DATA(insert OID = 957 (  lo_creat          PGUID 11 f t f 1 f 26 "23" 100 0 0 10
 DATA(insert OID = 958 (  lo_tell           PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
 DATA(insert OID = 964 (  lo_unlink         PGUID 11 f t f 1 f 23 "23" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 972 (  RegprocToOid      PGUID 11 f t f 1 f 26 "24" 100 0 0 100  foo bar ));
+DATA(insert OID = 972 (  regproctooid      PGUID 11 f t f 1 f 26 "24" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 973 (  path_inter        PGUID 11 f t f 2 f 16 "602 602" 100 0 10 100  foo bar ));
 DATA(insert OID = 974 (  box_copy          PGUID 11 f t f 1 f 603 "603" 100 0 0 100  foo bar ));
@@ -709,9 +711,9 @@ DATA(insert OID = 999 (  lseg_eq           PGUID 11 f t f 2 f 16 "601 601" 100 0
 
 /* OIDS 1000 - 1999 */
 
-DATA(insert OID = 1029 (  NullValue        PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1029 (  nullvalue        PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
 #define NullValueRegProcedure 1029
-DATA(insert OID = 1030 (  NonNullValue     PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 1030 (  nonnullvalue     PGUID 11 f t f 1 f 16 "0" 100 0 0 100  foo bar ));
 #define NonNullValueRegProcedure 1030
 DATA(insert OID = 1031 (  aclitemin        PGUID 11 f t f 1 f 1033 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1032 (  aclitemout       PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
@@ -778,7 +780,7 @@ DATA(insert OID = 1155 (  datetime_le      PGUID 11 f t f 2 f 16 "1184 1184" 100
 DATA(insert OID = 1156 (  datetime_ge      PGUID 11 f t f 2 f 16 "1184 1184" 100 0 0 100  foo bar ));
 DATA(insert OID = 1157 (  datetime_gt      PGUID 11 f t f 2 f 16 "1184 1184" 100 0 0 100  foo bar ));
 DATA(insert OID = 1158 (  datetime_finite  PGUID 11 f t f 1 f 16 "1184" 100 0 0 100  foo bar ));
-/* reserve OIDs 1158 for additional date/time conversion routines! tgl 97/03/19 */
+/* reserve OIDs 1159 for additional date/time conversion routines! tgl 97/03/19 */
 
 DATA(insert OID = 1160 (  timespan_in      PGUID 11 f t f 1 f 1186 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 1161 (  timespan_out     PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
@@ -810,7 +812,11 @@ DATA(insert OID = 1191 (  text_datetime      PGUID 11 f t f 1 f 1184 "25" 100 0 
 DATA(insert OID = 1192 (  datetime_text      PGUID 11 f t f 1 f   25 "1184" 100 0 0 100  foo bar ));
 DATA(insert OID = 1193 (  timespan_text      PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
 DATA(insert OID = 1194 (  timespan_reltime   PGUID 11 f t f 1 f  703 "1186" 100 0 0 100  foo bar ));
-/* reserve OIDs 1195-1199 for additional date/time conversion routines! tgl 97/03/19 */
+DATA(insert OID = 1195 (  datetime_smaller   PGUID 11 f t f 2 f 1184 "1184 1184" 100 0 0 100  foo bar ));
+DATA(insert OID = 1196 (  datetime_larger    PGUID 11 f t f 2 f 1184 "1184 1184" 100 0 0 100  foo bar ));
+DATA(insert OID = 1197 (  timespan_smaller   PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1198 (  timespan_larger    PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
+/* reserve OIDs 1199 for additional date/time conversion routines! tgl 97/03/19 */
 
 /* OIDS 1200 - 1299 */
 
@@ -971,7 +977,7 @@ DATA(insert OID = 1552 (  points            PGUID 14 f t f 1 f  23 "602" 100 0 0
 DATA(insert OID = 1553 (  pclose            PGUID 14 f t f 1 f 602 "602" 100 0 0 100  "select path_close($1)" - ));
 DATA(insert OID = 1554 (  popen             PGUID 14 f t f 1 f 602 "602" 100 0 0 100  "select path_open($1)" - ));
 DATA(insert OID = 1555 (  isopen            PGUID 14 f t f 1 f  16 "602" 100 0 0 100  "select path_isopen($1)" - ));
-DATA(insert OID = 1555 (  isclosed          PGUID 14 f t f 1 f  16 "602" 100 0 0 100  "select path_isclosed($1)" - ));
+DATA(insert OID = 1556 (  isclosed          PGUID 14 f t f 1 f  16 "602" 100 0 0 100  "select path_isclosed($1)" - ));
 
 DATA(insert OID = 1560 (  box               PGUID 14 f t f 2 f 603 "603 603" 100 0 0 100  "select box_intersect($1, $2)" - ));
 DATA(insert OID = 1561 (  box               PGUID 14 f t f 1 f 603 "604" 100 0 0 100  "select poly_box($1)" - ));
