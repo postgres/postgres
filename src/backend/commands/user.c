@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.43 1999/12/14 00:12:06 momjian Exp $
+ * $Id: user.c,v 1.44 1999/12/14 00:17:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,20 +44,12 @@ static void CheckPgUserAclNotNull(void);
  *---------------------------------------------------------------------
  */
 
-static void UpdatePgPwdFile(void);
+/* This is the old name. Now uses a lower case name to be able to call this
+   from SQL. */
+#define UpdatePgPwdFile() update_pg_pwd()
 
-/* This is a wrapper, so the below function can be called from a trigger
-   (used to update pg_pwd from pg_shadow) */
-HeapTuple update_pg_pwd()
-{
-    UpdatePgPwdFile();
-    return NULL;
-}
-
-
-
-static void
-UpdatePgPwdFile(void)
+void
+update_pg_pwd()
 {
 	char	   *filename,
 			   *tempname;
