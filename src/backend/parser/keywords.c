@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.18 1997/09/20 16:11:44 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.19 1997/09/24 17:49:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,9 +66,13 @@ static ScanKeyword ScanKeywords[] = {
 	{"create", CREATE},
 	{"cross", CROSS},
 	{"current", CURRENT},
+	{"current_date", CURRENT_DATE},
+	{"current_time", CURRENT_TIME},
+	{"current_timestamp", CURRENT_TIMESTAMP},
 	{"cursor", CURSOR},
 	{"database", DATABASE},
 	{"day", DAYINTERVAL},
+	{"decimal", DECIMAL},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
 	{"delete", DELETE},
@@ -127,6 +131,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"notify", NOTIFY},
 	{"notnull", NOTNULL},
 	{"null", PNULL},
+	{"numeric", NUMERIC},
 	{"oids", OIDS},
 	{"on", ON},
 	{"operator", OPERATOR},
