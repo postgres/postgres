@@ -5,11 +5,11 @@ all clean::
 	@echo Nothing to be done.
 
 install::
-	install ecpglib.h $(HEADERDIR)	
-	install ecpgtype.h $(HEADERDIR)	
-	install sqlca.h $(HEADERDIR)	
+	install ecpglib.h $(DESTDIR)$(HEADERDIR)	
+	install ecpgtype.h $(DESTDIR)$(HEADERDIR)	
+	install sqlca.h $(DESTDIR)$(HEADERDIR)	
 
 uninstall::
-	rm -f $(HEADERDIR)/ecpglib.h
-	rm -f $(HEADERDIR)/ecpgtype.h
-	rm -f $(HEADERDIR)/sqlca.h
+	rm -f $(DESTDIR)$(HEADERDIR)/ecpglib.h
+	rm -f $(DESTDIR)$(HEADERDIR)/ecpgtype.h
+	rm -f $(DESTDIR)$(HEADERDIR)/sqlca.h

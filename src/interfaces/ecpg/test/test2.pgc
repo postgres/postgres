@@ -1,6 +1,10 @@
+#include <stdio.h>
+
 exec sql include sqlca;
 
 #define       SQLCODE    sqlca.sqlcode
+
+extern void ECPGdebug(int n, FILE *dbgs);
 
 void
 db_error (char *msg)
@@ -14,17 +18,20 @@ int
 main ()
 {
 exec sql begin declare section;
-	varchar text[8];
-	int count;
-	double control;
+	varchar name[8];
+	long born;
 exec sql end declare section;
+	FILE *dbgs;
+
+	if ((dbgs = fopen("log", "w")) != NULL)
+		ECPGdebug(1, dbgs);
 
 	exec sql connect 'mm';
 	if (SQLCODE)
 		db_error ("connect");
 
 	exec sql declare cur cursor for 
-		select text, control, count from test;
+		select name, born from meskes;
 	if (SQLCODE) db_error ("declare");
 
 	exec sql open cur;
@@ -32,10 +39,10 @@ exec sql end declare section;
 		db_error ("open");
 
 	while (1) {
-		exec sql fetch in cur into :text, :control, :count;
+		exec sql fetch in cur into :name, :born;
 		if (SQLCODE)
 			break;
-		printf ("%8.8s %d %f\n", text.arr, count, control);
+		printf ("%8.8s was born %d\n", name.arr, born);
 	}
 
 	if (SQLCODE < 0)
@@ -45,6 +52,9 @@ exec sql end declare section;
 	if (SQLCODE) db_error ("close");
 	exec sql commit;
 	if (SQLCODE) db_error ("commit");
+
+	if (dbgs != NULL)
+		fclose(dbgs);
 
 	return (0);
 }

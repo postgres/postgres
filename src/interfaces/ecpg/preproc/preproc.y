@@ -3,13 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "type.h"
 
-void yyerror(char *);
-extern FILE * yyout;
-extern char * yytext;
-extern int yylineno;
-extern int yyleng;
+#include "type.h"
+#include "extern.h"
+
+static void yyerror(char *);
 
 /*
  * Variables containing simple states.
@@ -65,7 +63,7 @@ find_variable(char * name)
     {
 	char * errorstring = (char *) malloc(strlen(name) + 100);
 
-	sprintf(errorstring, "The variabel :%s is not declared.", name);
+	sprintf(errorstring, "The variable :%s is not declared.", name);
 
 	yyerror(errorstring);
     }
@@ -87,7 +85,7 @@ new_variable(const char * name, struct ECPGtype * type)
 
 
 /*
- * Here is the variables that need to be handled on every request.
+ * Here are the variables that need to be handled on every request.
  * These are of two kinds: input and output.
  * I will make two lists for them.
  */
@@ -359,7 +357,7 @@ both_anything : S_LENGTH | S_VARCHAR | S_VARCHAR2
 	  | S_ANYTHING;
 
 %%
-void yyerror(char * error)
+static void yyerror(char * error)
 {
     fprintf(stderr, "%s\n", error);
     exit(1);
