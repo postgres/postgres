@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.1.1.1 1996/07/09 06:21:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.2 1996/08/26 06:30:51 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -523,6 +523,19 @@ _equalEState(EState *a, EState *b)
     return (true);
 }
 
+static bool
+_equalTargetEntry(TargetEntry *a, TargetEntry *b)
+{
+    if (!equal(a->resdom,b->resdom))
+      return(false);
+    if (!equal(a->fjoin,b->fjoin))
+      return(false);
+    if (!equal(a->expr,b->expr))
+      return(false);
+  
+    return(true);
+}
+
 
 /*
  *  equal -- are two lists equal?
@@ -581,6 +594,9 @@ equal(void *a, void *b)
 	break;
     case T_Expr:
 	retval = _equalExpr(a, b);
+	break;
+    case T_TargetEntry:
+	retval = _equalTargetEntry(a,b);
 	break;
     case T_Iter:
 	retval = _equalIter(a, b);

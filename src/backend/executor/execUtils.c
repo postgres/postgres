@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.1.1.1 1996/07/09 06:21:25 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.2 1996/08/26 06:30:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1025,11 +1025,17 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
     RelationPtr		    	relationDescs;
     Relation			heapRelation;
     IndexInfo			**indexInfoArray;
+    IndexInfo			*indexInfo;
     Node			*predicate;
     bool			satisfied;
     ExprContext			*econtext;
-    IndexTuple		     	indexTuple;
     InsertIndexResult 		result;
+    int				numberOfAttributes;
+    AttrNumber	     		*keyAttributeNumbers;
+    FuncIndexInfoPtr		fInfoP;
+    TupleDesc			heapDescriptor;
+    Datum			*datum;
+    char			*nulls;
 
     heapTuple = slot->val;
 
@@ -1050,8 +1056,9 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
     econtext = NULL;
     for (i=0; i<numIndices; i++) {
 	if (relationDescs[i] == NULL) continue;
-	
-	predicate = indexInfoArray[i]->ii_Predicate;
+
+ 	indexInfo = indexInfoArray[i];	
+	predicate = indexInfo->ii_Predicate;
 	if (predicate != NULL) {
 	    if (econtext == NULL) {
 		econtext = makeNode(ExprContext);
@@ -1063,16 +1070,32 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	    if (satisfied == false)
 		continue;
 	}
+
+	/* ----------------
+	 *	get information from index info structure
+	 * ----------------
+	 */
+	numberOfAttributes =  indexInfo->ii_NumKeyAttributes;
+	keyAttributeNumbers = indexInfo->ii_KeyAttributeNumbers;
+	fInfoP =              indexInfo->ii_FuncIndexInfo;
+	datum = (Datum *)	palloc(numberOfAttributes * sizeof *datum);
+	nulls =  (char *)	palloc(numberOfAttributes * sizeof *nulls);
+	heapDescriptor =  (TupleDesc)RelationGetTupleDescriptor(heapRelation);
+ 
+	FormIndexDatum(numberOfAttributes,  /* num attributes */
+		       keyAttributeNumbers, /* array of att nums to extract */
+		       heapTuple,	    /* tuple from base relation */
+		       heapDescriptor,	/* heap tuple's descriptor */
+		       InvalidBuffer,	/* buffer associated with heap tuple */
+		       datum,		/* return: array of attributes */
+		       nulls,		/* return: array of char's */
+		       fInfoP);		/* functional index information */
 	
-	indexTuple = ExecFormIndexTuple(heapTuple,
-					heapRelation,
-					relationDescs[i],
-					indexInfoArray[i]);
-	
-	indexTuple->t_tid = (*tupleid);     /* structure assignment */
 	
 	result = index_insert(relationDescs[i], /* index relation */
-			      indexTuple); 	/* index tuple */
+			      datum,  /* array of heaptuple Datums */
+			      nulls, /* info on nulls */
+ 			      &(heapTuple->t_ctid)); /* oid of heap tuple */
 	
 	/* ----------------
 	 *	keep track of index inserts for debugging
@@ -1085,7 +1108,6 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 	 * ----------------
 	 */
 	if (result) pfree(result);
-	pfree(indexTuple);
     }
     if (econtext != NULL) pfree(econtext);
 }

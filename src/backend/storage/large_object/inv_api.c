@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.1.1.1 1996/07/09 06:21:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.2 1996/08/26 06:31:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,9 +157,9 @@ inv_create(int flags)
 
     attNums[0] = 1;
     classObjectId[0] = INT4_OPS_OID;
-    index_create(objname, indname, NULL, BTREE_AM_OID,
+    index_create(objname, indname, NULL, NULL, BTREE_AM_OID,
 		 1, &attNums[0], &classObjectId[0],
-		 0, (Datum) NULL, NULL);
+		 0, (Datum) NULL, NULL, FALSE);
 
     /* make the index visible in this transaction */
     CommandCounterIncrement();
@@ -996,23 +996,16 @@ inv_newtuple(LargeObjectDesc *obj_desc,
 static void
 inv_indextup(LargeObjectDesc *obj_desc, HeapTuple htup)
 {
-    IndexTuple itup;
     InsertIndexResult res;
     Datum v[1];
     char n[1];
 
     n[0] = ' ';
     v[0] = Int32GetDatum(obj_desc->highbyte);
-    itup = index_formtuple(obj_desc->idesc, &v[0], &n[0]);
-    memmove((char *)&(itup->t_tid),
-	    (char *)&(htup->t_ctid),
-	    sizeof(ItemPointerData)); 
-    res = index_insert(obj_desc->index_r, itup);
+    res = index_insert(obj_desc->index_r, &v[0], &n[0], &(htup->t_ctid));
 
     if (res)
 	pfree(res);
-
-    pfree(itup);
 }
 
 /*

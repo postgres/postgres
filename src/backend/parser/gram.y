@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.8 1996/08/24 20:48:44 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.9 1996/08/26 06:31:31 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -140,7 +140,7 @@ static Node *makeA_Expr(int op, char *opname, Node *lexpr, Node *rexpr);
 %type <pstmt>	purge_quals
 %type <astmt>	insert_rest
 
-%type <typnam>	Typename, typname
+%type <typnam>	Typename, typname, opt_type
 %type <coldef>	columnDef
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, exprElem, where_clause, 
@@ -658,7 +658,7 @@ opt_portal_name: IN name			{ $$ = $2;}
  *****************************************************************************/
 
 IndexStmt:  CREATE INDEX index_name ON relation_name
-	    access_method_clause '(' index_params ')'
+	    access_method_clause '(' index_params ')' opt_with
 		{
 		    /* should check that access_method is valid,
 		       etc ... but doesn't */
@@ -667,7 +667,7 @@ IndexStmt:  CREATE INDEX index_name ON relation_name
 		    n->relname = $5;
 		    n->accessMethod = $6;
 		    n->indexParams = $8;
-		    n->withClause = NIL;
+		    n->withClause = $11;
 		    n->whereClause = NULL;
 		    $$ = (Node *)n;
 		}
@@ -1473,23 +1473,29 @@ index_params: index_elem			{ $$ = lcons($1,NIL); }
 		{ $$ = lcons($1, NIL); }
 	;*/
 
-func_index: name '(' name_list ')' opt_class
+func_index: name '(' name_list ')' opt_type opt_class
 		{
 		    $$ = makeNode(IndexElem);
 		    $$->name = $1;
 		    $$->args = $3;
-		    $$->class = $5;
+		    $$->class = $6;
+	            $$->tname = $5;
 		}
 	  ;
 
-index_elem:  attr_name opt_class
+index_elem:  attr_name opt_type opt_class
 		{
 		    $$ = makeNode(IndexElem);
 		    $$->name = $1;
 		    $$->args = NIL;
-		    $$->class = $2;
+		    $$->class = $3;
+ 	            $$->tname = $2;
 		}
 	;
+
+opt_type: ':' Typename                          { $$ = $2;}
+        |  /*EMPTY*/                            { $$ = NULL;}
+        ;
 
 opt_class:  class
 	|  WITH class				{ $$ = $2; }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.1.1.1 1996/07/09 06:21:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.2 1996/08/26 06:27:48 scrappy Exp $
  *
  * INTERFACE ROUTINES
  *	index_open 	- open an index relation by relationId
@@ -179,7 +179,9 @@ index_close(Relation relation)
  */
 InsertIndexResult
 index_insert(Relation relation,
-	     IndexTuple indexTuple)
+	     Datum *datum,
+	     char *nulls,
+	     ItemPointer heap_t_ctid)
 {
     RegProcedure		procedure;
     InsertIndexResult		specificResult;
@@ -192,7 +194,7 @@ index_insert(Relation relation,
      * ----------------
      */
     specificResult = (InsertIndexResult)
-	fmgr(procedure, relation, indexTuple, NULL);
+	fmgr(procedure, relation, datum, nulls, heap_t_ctid, NULL);
     
     /* ----------------
      *	the insert proc is supposed to return a "specific result" and

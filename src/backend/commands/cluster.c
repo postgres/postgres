@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.2 1996/08/15 07:39:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.3 1996/08/26 06:30:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,11 +316,12 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
     index_create((NewHeap->rd_rel->relname).data,
 		 NewIndexName, 
 		 finfo,
+- 		 NULL, /* type info is in the old index */
 		 Old_pg_index_relation_Form->relam,
 		 natts, 
 		 Old_pg_index_Form->indkey,
 		 Old_pg_index_Form->indclass,
-		 (uint16)0, (Datum) NULL, NULL);
+		 (uint16)0, (Datum) NULL, NULL, Old_pg_index_Form->indislossy);
 
     heap_close(OldIndex);
     heap_close(NewHeap);

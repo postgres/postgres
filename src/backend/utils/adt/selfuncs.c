@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.2 1996/07/31 18:48:16 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.3 1996/08/26 06:32:06 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,6 +579,32 @@ rtnpage(Oid operatorObjectId,
 	int32 constFlag,
 	int32 nIndexKeys,
 	Oid indexrelid)
+{
+    return (btreenpage(operatorObjectId, indrelid, attributeNumber,
+		       constValue, constFlag, nIndexKeys, indexrelid));
+}
+
+float64
+gistsel(Oid operatorObjectId,
+      Oid indrelid,
+      AttrNumber attributeNumber,
+      char *constValue,
+      int32 constFlag,
+      int32 nIndexKeys,
+      Oid indexrelid)
+{
+    return (btreesel(operatorObjectId, indrelid, attributeNumber,
+		     constValue, constFlag, nIndexKeys, indexrelid));
+}
+
+float64
+gistnpage(Oid operatorObjectId,
+	  Oid indrelid,
+	  AttrNumber attributeNumber,
+	  char *constValue,
+	  int32 constFlag,
+	  int32 nIndexKeys,
+	  Oid indexrelid)
 {
     return (btreenpage(operatorObjectId, indrelid, attributeNumber,
 		       constValue, constFlag, nIndexKeys, indexrelid));

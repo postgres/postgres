@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.2 1996/07/30 07:55:10 scrappy Exp $
+ * $Id: nbtree.h,v 1.3 1996/08/26 06:26:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,8 @@ extern bool BuildingBtree;	/* in nbtree.c */
 extern void btbuild(Relation heap, Relation index, int natts,
 	AttrNumber *attnum, IndexStrategy istrat, uint16 pcount,
 	Datum *params, FuncIndexInfo *finfo, PredInfo *predInfo);
-extern InsertIndexResult btinsert(Relation rel, IndexTuple itup);
+extern InsertIndexResult btinsert(Relation rel, Datum *datum, char *nulls,
+				  ItemPointer ht_ctid);
 extern char *btgettuple(IndexScanDesc scan, ScanDirection dir);
 extern char *btbeginscan(Relation rel, bool fromEnd, uint16 keysz,
 			 ScanKey scankey);

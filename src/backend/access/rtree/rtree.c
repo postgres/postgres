@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.1.1.1 1996/07/09 06:21:13 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.2 1996/08/26 06:29:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -273,11 +273,15 @@ rtbuild(Relation heap,
  *    It doesn't do any work; just locks the relation and passes the buck.
  */
 InsertIndexResult
-rtinsert(Relation r, IndexTuple itup)
+rtinsert(Relation r, Datum *datum, char *nulls, ItemPointer ht_ctid)
 {
     InsertIndexResult res;
+    IndexTuple itup;
     RTSTATE rtState;
 
+    /* generate an index tuple */
+    itup = index_formtuple(RelationGetTupleDescriptor(r), datum, nulls);
+    itup->t_tid = *ht_ctid;
     initRtstate(&rtState, r);
     
     RelationSetLockForWrite(r);

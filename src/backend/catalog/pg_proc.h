@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.1.1.1 1996/07/09 06:21:18 scrappy Exp $
+ * $Id: pg_proc.h,v 1.2 1996/08/26 06:29:46 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -385,7 +385,7 @@ DATA(insert OID = 313 (  i2toi4            PGUID 11 f t f 2 f 23 "21" 100 0 0 10
 DATA(insert OID = 314 (  i4toi2            PGUID 11 f t f 2 f 21 "23" 100 0 0 100  foo bar ));
 DATA(insert OID = 315 (  keyfirsteq        PGUID 11 f t f 2 f 16 "0 21" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 320 (  rtinsert          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 320 (  rtinsert          PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 321 (  rtdelete          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 322 (  rtgettuple        PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 323 (  rtbuild           PGUID 11 f t f 9 f 23 "0" 100 0 0 100  foo bar ));
@@ -396,7 +396,7 @@ DATA(insert OID = 327 (  rtrestrpos        PGUID 11 f t f 1 f 23 "0" 100 0 0 100
 DATA(insert OID = 328 (  rtrescan          PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 330 (  btgettuple        PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID = 331 (  btinsert          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 331 (  btinsert          PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 332 (  btdelete          PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 333 (  btbeginscan       PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 334 (  btrescan          PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
@@ -448,7 +448,7 @@ DATA(insert OID =  438 (  hashsel          PGUID 11 f t t 7 f 701 "26 26 21 0 23
 DATA(insert OID =  439 (  hashnpage        PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
 
 DATA(insert OID = 440 (  hashgettuple     PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
-DATA(insert OID = 441 (  hashinsert       PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 441 (  hashinsert       PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 442 (  hashdelete       PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 443 (  hashbeginscan    PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
 DATA(insert OID = 444 (  hashrescan       PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
@@ -574,6 +574,17 @@ DATA(insert OID = 768 (  int4larger        PGUID 11 f t f 2 f 23 "23 23" 100 0 0
 DATA(insert OID = 769 (  int4smaller       PGUID 11 f t f 2 f 23 "23 23" 100 0 0 100  foo bar ));
 DATA(insert OID = 770 (  int2larger        PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100  foo bar ));
 DATA(insert OID = 771 (  int2smaller       PGUID 11 f t f 2 f 23 "21 21" 100 0 0 100  foo bar ));
+DATA(insert OID =  772 (  gistsel          PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
+DATA(insert OID =  773 (  gistnpage        PGUID 11 f t t 7 f 701 "26 26 21 0 23 23 26" 100 0 0 100  foo bar ));
+DATA(insert OID = 774 (  gistgettuple     PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 775 (  gistinsert       PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 776 (  gistdelete       PGUID 11 f t f 2 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 777 (  gistbeginscan    PGUID 11 f t f 4 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 778 (  gistrescan       PGUID 11 f t f 3 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 779 (  gistendscan      PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 780 (  gistmarkpos      PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 781 (  gistrestrpos     PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID = 782 (  gistbuild        PGUID 11 f t f 9 f 23 "0" 100 0 0 100  foo bar ));
 
 /* OIDS 800 - 899 */
 DATA(insert OID = 820 (  oidint2in	   PGUID 11 f t f 1 f 810 "0" 100 0 0 100  foo bar));

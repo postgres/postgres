@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.4 1996/08/24 20:48:31 scrappy Exp $
+ * $Id: parsenodes.h,v 1.5 1996/08/26 06:30:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,7 @@ typedef struct IndexStmt {
     Node		*whereClause;	/* qualifications */
     List		*rangetable;	/* range table, filled in
 					   by transformStmt() */
+    bool                *lossy;         /* is index lossy? */
 } IndexStmt;
 
 /* ----------------------
@@ -655,6 +656,7 @@ typedef struct IndexElem {
     char		*name;		/* name of index */
     List		*args;		/* if not NULL, function index */
     char 		*class;
+    TypeName            *tname;         /* type of index's keys (optional) */
 } IndexElem;
 
 /*

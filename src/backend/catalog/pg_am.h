@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.1.1.1 1996/07/09 06:21:16 scrappy Exp $
+ * $Id: pg_am.h,v 1.2 1996/08/26 06:29:40 scrappy Exp $
  *
  * NOTES
  *	the genbki.sh script reads this file and generates .bki
@@ -103,6 +103,7 @@ DATA(insert OID = 405 (  hash PGUID "o"  1 1 hashgettuple hashinsert hashdelete 
 DATA(insert OID = 402 (  rtree PGUID "o" 8 3 rtgettuple rtinsert rtdelete - - - - rtbeginscan rtrescan rtendscan rtmarkpos rtrestrpos - - rtbuild - - ));
 DATA(insert OID = 403 (  btree PGUID "o" 5 1 btgettuple btinsert btdelete - - - - btbeginscan btrescan btendscan btmarkpos btrestrpos - - btbuild - - ));
 #define BTREE_AM_OID 403
+DATA(insert OID = 783 (  gist PGUID "o" 100 7 gistgettuple gistinsert gistdelete - - - - gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos - - gistbuild - - ));
 
 BKI_BEGIN
 #ifdef NOBTREE

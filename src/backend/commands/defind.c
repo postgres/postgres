@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.3 1996/08/19 01:53:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.4 1996/08/26 06:30:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,8 +86,9 @@ DefineIndex(char *heapRelationName,
     Datum	*parameterA = NULL;
     FuncIndexInfo fInfo;
     List 	*cnfPred = NULL;
-    
-    
+    bool        lossy = FALSE;
+    List		*pl;
+        
     /*
      * Handle attributes
      */
@@ -123,7 +124,19 @@ DefineIndex(char *heapRelationName,
     /*
      * Handle parameters
      * [param list is now different (NOT USED, really) - ay 10/94]
+     *
+     * WITH clause reinstated to handle lossy indices.
+     *  -- JMH, 7/22/96
      */
+    foreach(pl, parameterList) {
+        int count;
+	char *ptr;
+	ParamString *param = (ParamString*)lfirst(pl);
+	
+	if (!strcasecmp(param->name, "islossy"))
+	    lossy = TRUE;
+    }
+  
 
     
     /*
@@ -167,9 +180,10 @@ DefineIndex(char *heapRelationName,
 	
 	index_create(heapRelationName, 
 		     indexRelationName,
-		     &fInfo, accessMethodId, 
+		     &fInfo, NULL, accessMethodId, 
 		     numberOfAttributes, attributeNumberA,
-		     classObjectId, parameterCount, parameterA, (Node*)cnfPred);
+		     classObjectId, parameterCount, parameterA, (Node*)cnfPred,
+		     lossy);
     }else {
 	attributeNumberA =
 	    (AttrNumber *)palloc(numberOfAttributes *
@@ -182,8 +196,10 @@ DefineIndex(char *heapRelationName,
 		       classObjectId, relationId);
 	
 	index_create(heapRelationName, indexRelationName, NULL,
+		     ((IndexElem*)lfirst(attributeList))->tname,
 		     accessMethodId, numberOfAttributes, attributeNumberA,
-		     classObjectId, parameterCount, parameterA, (Node*)cnfPred);
+		     classObjectId, parameterCount, parameterA, (Node*)cnfPred,
+		     lossy);
     }
 }
 

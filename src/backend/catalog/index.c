@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.2 1996/08/19 13:32:07 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.3 1996/08/26 06:29:32 scrappy Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -86,6 +86,7 @@ static Oid RelationNameGetObjectId(char *relationName, Relation pg_class,
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
+					  TypeName *IndexKeyType,
 					  int numatts, AttrNumber attNums[]);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
@@ -97,7 +98,8 @@ static void
 AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
 	FuncIndexInfo *funcInfo, int natts,
-	AttrNumber attNums[], Oid classOids[], Node *predicate);
+	AttrNumber attNums[], Oid classOids[], Node *predicate,
+	TypeName *indexKeyType, bool islossy);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
 	int numberOfAttributes, AttrNumber attributeNumber[],
 	IndexStrategy indexStrategy, uint16 parameterCount,
@@ -341,6 +343,7 @@ BuildFuncTupleDesc(FuncIndexInfo *funcInfo)
 static TupleDesc
 ConstructTupleDescriptor(Oid heapoid,
 			 Relation heapRelation,
+			 TypeName *IndexKeyType,
 			 int numatts,
 			 AttrNumber attNums[])
 {
@@ -424,7 +427,28 @@ ConstructTupleDescriptor(Oid heapoid,
 	
 	to =   (char *) (indexTupDesc->attrs[ i ]);
 	memcpy(to, from, ATTRIBUTE_TUPLE_SIZE);
-	
+
+	/* if the keytype is defined, we need to change the tuple form's
+	   atttypid & attlen field to match that of the key's type */
+	if (IndexKeyType != NULL) {
+	    HeapTuple tup;
+
+	    tup = SearchSysCacheTuple(TYPNAME,
+				      PointerGetDatum(IndexKeyType->name),
+				      0,0,0);
+	    if(!HeapTupleIsValid(tup))
+	        elog(WARN, "create index: type '%s' undefined",
+		     IndexKeyType->name);
+	    ((AttributeTupleForm) to)->atttypid = tup->t_oid;
+	    ((AttributeTupleForm) to)->attbyval = 
+	         ((TypeTupleForm) ((char *)tup + tup->t_hoff))->typbyval;
+	    if (IndexKeyType->typlen > 0)
+	      ((AttributeTupleForm) to)->attlen = IndexKeyType->typlen;
+	    else ((AttributeTupleForm) to)->attlen = 
+		   ((TypeTupleForm) ((char *)tup + tup->t_hoff))->typlen;
+	}
+	   
+
 	/* ----------------
 	 *    now we have to drop in the proper relation descriptor
 	 *    into the copied tuple form's attrelid and we should be
@@ -734,7 +758,9 @@ UpdateIndexRelation(Oid indexoid,
 		    int natts,
 		    AttrNumber attNums[],
 		    Oid classOids[],
-		    Node *predicate)
+		    Node *predicate,
+		    TypeName *indexKeyType,
+		    bool islossy)
 {
     IndexTupleForm	indexForm;
     char		*predString;
@@ -770,6 +796,11 @@ UpdateIndexRelation(Oid indexoid,
     indexForm->indexrelid = indexoid;
     indexForm->indproc = (PointerIsValid(funcInfo)) ?
 	FIgetProcOid(funcInfo) : InvalidOid;
+    indexForm->indislossy = islossy;
+    if (indexKeyType != NULL)
+        indexForm->indhaskeytype = 1;
+    else
+        indexForm->indhaskeytype = 0;
     
     memset((char *)& indexForm->indkey[0], 0, sizeof indexForm->indkey);
     memset((char *)& indexForm->indclass[0], 0, sizeof indexForm->indclass);
@@ -987,13 +1018,15 @@ void
 index_create(char *heapRelationName,
 	     char *indexRelationName,
 	     FuncIndexInfo *funcInfo,
+	     TypeName *IndexKeyType,
 	     Oid accessMethodObjectId,
 	     int numatts,
 	     AttrNumber attNums[],
 	     Oid classObjectId[],
 	     uint16 parameterCount,
 	     Datum *parameter,
-	     Node *predicate)
+	     Node *predicate,
+ 	     bool islossy)
 {
     Relation		heapRelation;
     Relation		indexRelation;
@@ -1034,6 +1067,7 @@ index_create(char *heapRelationName,
     else
 	indexTupDesc = ConstructTupleDescriptor(heapoid,
 						heapRelation,
+						IndexKeyType,
 						numatts,
 						attNums);
     
@@ -1105,7 +1139,8 @@ index_create(char *heapRelationName,
      * ----------------
      */
     UpdateIndexRelation(indexoid, heapoid, funcInfo,
-			numatts, attNums, classObjectId, predicate);
+			numatts, attNums, classObjectId, predicate,
+			IndexKeyType, islossy);
     
     predInfo = (PredInfo*)palloc(sizeof(PredInfo));
     predInfo->pred = predicate;
@@ -1568,7 +1603,8 @@ DefaultBuild(Relation heapRelation,
 	
 	indexTuple->t_tid = heapTuple->t_ctid;
 	
-	insertResult = index_insert(indexRelation, indexTuple);
+	insertResult = index_insert(indexRelation, datum, nullv, 
+				    &(heapTuple->t_ctid));
 
 	if (insertResult) pfree(insertResult);
 	pfree(indexTuple);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.2 1996/07/30 07:56:00 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.3 1996/08/26 06:28:21 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -285,11 +285,16 @@ btbuild(Relation heap,
  *	return an InsertIndexResult to the caller.
  */
 InsertIndexResult
-btinsert(Relation rel, IndexTuple itup)
+btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid)
 {
     BTItem btitem;
+    IndexTuple itup;
     InsertIndexResult res;
     
+    /* generate an index tuple */
+    itup = index_formtuple(RelationGetTupleDescriptor(rel), datum, nulls);
+    itup->t_tid = *ht_ctid;
+
     if (itup->t_info & INDEX_NULL_MASK)
 	return ((InsertIndexResult) NULL);
     
@@ -297,6 +302,7 @@ btinsert(Relation rel, IndexTuple itup)
     
     res = _bt_doinsert(rel, btitem);
     pfree(btitem);
+    pfree(itup);
     
     return (res);
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.2 1996/08/19 13:32:08 scrappy Exp $
+ * $Id: index.h,v 1.3 1996/08/26 06:29:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "access/funcindex.h"
 #include "access/itup.h"
 #include "nodes/execnodes.h"
+#include "nodes/parsenodes.h"
 
 
 extern Form_pg_am
@@ -31,13 +32,15 @@ extern void InitIndexStrategy(int numatts,
 extern void index_create(char *heapRelationName, 
 			 char* indexRelationName,
 			 FuncIndexInfo *funcInfo, 
+			 TypeName *IndexKeyType,
 			 Oid accessMethodObjectId,
 			 int numatts, 
 			 AttrNumber attNums[],
 			 Oid classObjectId[], 
 			 uint16 parameterCount,
 			 Datum *parameter, 
-			 Node *predicate);
+			 Node *predicate,
+			 bool islossy);
 
 extern void index_destroy(Oid indexId);
 
