@@ -4,6 +4,9 @@ PostgreSQL 6.3               Sun Mar  1 14:57:30 EST 1998
 A dump/restore is required for those wishing to migrate data from
 previous releases of PostgreSQL.
 
+* The migration/6.2.1_to_6.3 file contains a detailed description 
+* of the feature changes in this release, and is recommended reading.
+
 CHANGES IN THE 6.3 RELEASE
 --------------------------
 
