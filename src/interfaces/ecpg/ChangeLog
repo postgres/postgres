@@ -1578,7 +1578,15 @@ Mon Jul 14 09:34:04 CEST 2003
 	
 Tue Jul 15 14:28:53 CEST 2003
 
-	_ Started to add error codes for backend error messages.
+	- Started to add error codes for backend error messages.
+	
+Thu Jul 17 09:15:59 CEST 2003
+
+	- Fixed some bugs in informix compat functions.
+	
+Fri Jul 18 16:31:10 CEST 2003
+
+	- Added some more compatibility features to the parser.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.248 2003/07/14 12:18:25 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.249 2003/07/18 14:32:56 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -1818,12 +1818,24 @@ TruncateStmt:  TRUNCATE opt_table qualified_name
  *
  *****************************************************************************/
 
+/* This is different from the backend as we try to be compatible with many other
+ * embedded SQL implementations. So we accept their syntax as well and 
+ * translate it to the PGSQL syntax. */
+ 
 FetchStmt: FETCH fetch_direction from_in name ecpg_into_using
 			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
+		| FETCH fetch_direction name ecpg_into_using
+			{ $$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3); }
+		| FETCH from_in name ecpg_into_using
+			{ $$ = cat_str(3, make_str("fetch"), $2, $3); }
 		| FETCH name ecpg_into_using
 			{ $$ = cat2_str(make_str("fetch"), $2); }
 		| FETCH fetch_direction from_in name
 			{ $$ = cat_str(4, make_str("fetch"), $2, $3, $4); }
+		| FETCH fetch_direction name
+			{ $$ = cat_str(4, make_str("fetch"), $2, make_str("from"), $3); }
+		| FETCH from_in name 
+			{ $$ = cat_str(3, make_str("fetch"), $2, $3); }
 		| FETCH name 
 			{ $$ = cat2_str(make_str("fetch"), $2); }
 		| MOVE fetch_direction from_in name
@@ -1832,8 +1844,7 @@ FetchStmt: FETCH fetch_direction from_in name ecpg_into_using
 			{ $$ = cat2_str(make_str("move"), $2); }
 		;
 
-fetch_direction: /* EMPTY */			{ $$ = EMPTY; }
-		| NEXT				{ $$ = make_str("next"); }
+fetch_direction:  NEXT				{ $$ = make_str("next"); }
 		| PRIOR				{ $$ = make_str("prior"); }
 		| FIRST_P			{ $$ = make_str("first"); }
 		| LAST_P			{ $$ = make_str("last"); }
@@ -1853,7 +1864,7 @@ fetch_count: IntConst	{ $$ = $1; }
 	;
 
 from_in: IN_P				{ $$ = make_str("in"); }
-		| FROM				{ $$ = make_str("from"); }
+		| FROM			{ $$ = make_str("from"); }
 		;
 
 /*****************************************************************************

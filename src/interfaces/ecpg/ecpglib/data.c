@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.12 2003/07/17 11:27:55 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.13 2003/07/18 14:32:56 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -354,17 +354,14 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 							{
 								case ECPGt_short:
 								case ECPGt_unsigned_short:
-	/*								((short *) ind)[act_tuple] = variable->len;*/
 									*((short *) (ind + offset * act_tuple)) = variable->len;
 									break;
 								case ECPGt_int:
 								case ECPGt_unsigned_int:
-	/*								((int *) ind)[act_tuple] = variable->len;*/
 									*((int *) (ind + offset * act_tuple)) = variable->len;
 									break;
 								case ECPGt_long:
 								case ECPGt_unsigned_long:
-	/*								((long *) ind)[act_tuple] = variable->len;*/
 									*((long *) (ind + offset * act_tuple)) = variable->len;
 									break;
 #ifdef HAVE_LONG_LONG_INT_64
