@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2005, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.81 2005/01/01 05:43:07 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.82 2005/04/04 23:50:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2462,17 +2462,24 @@ typedef struct Int8TransTypeData
 Datum
 int2_avg_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *transarray;
 	int16		newval = PG_GETARG_INT16(1);
 	Int8TransTypeData *transdata;
 
 	/*
-	 * We copied the input array, so it's okay to scribble on it directly.
+	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * parameter in-place to reduce palloc overhead. Otherwise we need
+	 * to make a copy of it before scribbling on it.
 	 */
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+		transarray = PG_GETARG_ARRAYTYPE_P(0);
+	else
+		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
+
 	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
 		elog(ERROR, "expected 2-element int8 array");
-	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
+	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 	transdata->count++;
 	transdata->sum += newval;
 
@@ -2482,17 +2489,24 @@ int2_avg_accum(PG_FUNCTION_ARGS)
 Datum
 int4_avg_accum(PG_FUNCTION_ARGS)
 {
-	ArrayType  *transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
+	ArrayType  *transarray;
 	int32		newval = PG_GETARG_INT32(1);
 	Int8TransTypeData *transdata;
 
 	/*
-	 * We copied the input array, so it's okay to scribble on it directly.
+	 * If we're invoked by nodeAgg, we can cheat and modify our first
+	 * parameter in-place to reduce palloc overhead. Otherwise we need
+	 * to make a copy of it before scribbling on it.
 	 */
+	if (fcinfo->context && IsA(fcinfo->context, AggState))
+		transarray = PG_GETARG_ARRAYTYPE_P(0);
+	else
+		transarray = PG_GETARG_ARRAYTYPE_P_COPY(0);
+
 	if (ARR_SIZE(transarray) != ARR_OVERHEAD(1) + sizeof(Int8TransTypeData))
 		elog(ERROR, "expected 2-element int8 array");
-	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 
+	transdata = (Int8TransTypeData *) ARR_DATA_PTR(transarray);
 	transdata->count++;
 	transdata->sum += newval;
 
