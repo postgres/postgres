@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.28 2003/09/09 18:28:53 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_user.sgml,v 1.29 2003/09/11 17:31:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -98,7 +98,7 @@ where <replaceable class="PARAMETER">option</replaceable> can be:
 	These key words control whether the password is stored
 	encrypted in the system catalogs.  (If neither is specified,
 	the default behavior is determined by the configuration
-	parameter <varname>password_encryption</varname>.)  If the
+	parameter <varname>PASSWORD_ENCRYPTION</varname>.)  If the
 	presented password string is already in MD5-encrypted format,
 	then it is stored encrypted as-is, regardless of whether
 	<literal>ENCRYPTED</> or <literal>UNENCRYPTED</> is specified

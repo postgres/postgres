@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.22 2003/09/03 22:17:07 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.23 2003/09/11 17:31:45 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1350,7 +1350,7 @@ SELECT * FROM some_func();
        allow users to allow users to define set-returning functions
        that do not have this limitation.  Currently, the point at
        which data begins being written to disk is controlled by the
-       <varname>sort_mem</> configuration variable.  Administrators
+       <varname>SORT_MEM</> configuration variable.  Administrators
        who have sufficient memory to store larger result sets in
        memory should consider increasing this parameter.
       </para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.14 2003/09/09 18:28:52 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/analyze.sgml,v 1.15 2003/09/11 17:31:45 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -28,10 +28,10 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
   <title>Description</title>
 
   <para>
-   <command>ANALYZE</command> collects statistics about the contents of
-   tables in the database, and stores the results in
-   the system table <literal>pg_statistic</literal>.  Subsequently,
-   the query planner uses the statistics to help determine the most efficient
+   <command>ANALYZE</command> collects statistics about the contents
+   of tables in the database, and stores the results in the system
+   table <literal>pg_statistic</literal>.  Subsequently, the query
+   planner uses these statistics to help determine the most efficient
    execution plans for queries.
   </para>
 
@@ -90,49 +90,56 @@ ANALYZE [ VERBOSE ] [ <replaceable class="PARAMETER">table</replaceable> [ (<rep
   </para>
 
   <para>
-   Unlike <command>VACUUM FULL</command>,
-   <command>ANALYZE</command> requires
-   only a read lock on the target table, so it can run in parallel with
-   other activity on the table.
+   Unlike <command>VACUUM FULL</command>, <command>ANALYZE</command>
+   requires only a read lock on the target table, so it can run in
+   parallel with other activity on the table.
   </para>
 
   <para>
-   For large tables, <command>ANALYZE</command> takes a random sample of the
-   table contents, rather than examining every row.  This allows even very
-   large tables to be analyzed in a small amount of time.  Note, however,
-   that the statistics are only approximate, and will change slightly each
-   time <command>ANALYZE</command> is run, even if the actual table contents
-   did not change.  This may result in small changes in the planner's
-   estimated costs shown by <command>EXPLAIN</command>.
+   The statistics collected by <command>ANALYZE</command> usually
+   include a list of some of the most common values in each column and
+   a histogram showing the approximate data distribution in each
+   column.  One or both of these may be omitted if
+   <command>ANALYZE</command> deems them uninteresting (for example,
+   in a unique-key column, there are no common values) or if the
+   column data type does not support the appropriate operators.  There
+   is more information about the statistics in <xref
+   linkend="maintenance">.
   </para>
 
   <para>
-   The collected statistics usually include a list of some of the most common
-   values in each column and a histogram showing the approximate data
-   distribution in each column.  One or both of these may be omitted if
-   <command>ANALYZE</command> deems them uninteresting (for example, in
-   a unique-key column, there are no common values) or if the column
-   data type does not support the appropriate operators.  There is more
-   information about the statistics in <xref linkend="maintenance">.
+   For large tables, <command>ANALYZE</command> takes a random sample
+   of the table contents, rather than examining every row.  This
+   allows even very large tables to be analyzed in a small amount of
+   time.  Note, however, that the statistics are only approximate, and
+   will change slightly each time <command>ANALYZE</command> is run,
+   even if the actual table contents did not change.  This may result
+   in small changes in the planner's estimated costs shown by
+   <command>EXPLAIN</command>. In rare situations, this
+   non-determinism will cause the query optimizer to choose a
+   different query plan between runs of <command>ANALYZE</command>. To
+   avoid this, raise the amount of statistics collected by
+   <command>ANALYZE</command>, as described below.
   </para>
 
   <para>
    The extent of analysis can be controlled by adjusting the
-   <literal>default_statistics_target</> parameter variable, or on a
-   column-by-column basis by setting the per-column
-   statistics target with <command>ALTER TABLE ... ALTER COLUMN ... SET
-   STATISTICS</command> (see
-   <xref linkend="sql-altertable" endterm="sql-altertable-title">).  The
-   target value sets the maximum number of entries in the most-common-value
-   list and the maximum number of bins in the histogram.  The default
-   target value is 10, but this can be adjusted up or down to trade off
-   accuracy of planner estimates against the time taken for
-   <command>ANALYZE</command> and the amount of space occupied
-   in <literal>pg_statistic</literal>.
-   In particular, setting the statistics target to zero disables collection of
-   statistics for that column.  It may be useful to do that for columns that
-   are never used as part of the <literal>WHERE</>, <literal>GROUP BY</>, or <literal>ORDER BY</> clauses of
-   queries, since the planner will have no use for statistics on such columns.
+   <varname>DEFAULT_STATISTICS_TARGET</varname> parameter variable, or
+   on a column-by-column basis by setting the per-column statistics
+   target with <command>ALTER TABLE ... ALTER COLUMN ... SET
+   STATISTICS</command> (see <xref linkend="sql-altertable"
+   endterm="sql-altertable-title">).  The target value sets the
+   maximum number of entries in the most-common-value list and the
+   maximum number of bins in the histogram.  The default target value
+   is 10, but this can be adjusted up or down to trade off accuracy of
+   planner estimates against the time taken for
+   <command>ANALYZE</command> and the amount of space occupied in
+   <literal>pg_statistic</literal>.  In particular, setting the
+   statistics target to zero disables collection of statistics for
+   that column.  It may be useful to do that for columns that are
+   never used as part of the <literal>WHERE</>, <literal>GROUP BY</>,
+   or <literal>ORDER BY</> clauses of queries, since the planner will
+   have no use for statistics on such columns.
   </para>
 
   <para>
