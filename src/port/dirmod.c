@@ -10,7 +10,7 @@
  *	Win32 (NT, Win2k, XP).	replace() doesn't work on Win95/98/Me.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.15 2004/08/08 01:31:15 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/dirmod.c,v 1.16 2004/08/08 03:51:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,73 +224,33 @@ pgsymlink(const char *oldpath, const char *newpath)
 #endif
 
 
-/* ----------------
- *	rmtree routines
- * ----------------
- */
-
-
-/* We undefined these above, so we redefine them */
+/* We undefined this above, so we redefine it */
 #if defined(WIN32) || defined(__CYGWIN__)
 #define unlink(path)	pgunlink(path)
 #endif
 
-#ifdef FRONTEND
-
-static void *
-xmalloc(size_t size)
-{
-    void       *result;
-
-    result = malloc(size);
-    if (!result)
-    {
-        fprintf(stderr, _("out of memory\n"));
-        exit(1);
-    }
-    return result;
-}
-
-static char *
-xstrdup(const char *s)
-{
-    char       *result;
-
-    result = strdup(s);
-    if (!result)
-    {
-        fprintf(stderr, _("out of memory\n"));
-        exit(1);
-    }
-    return result;
-}
-
-#define xfree(n) free(n)
-
-#else
-
-/* on the backend, use palloc and friends */
-
-#define xmalloc(n)	palloc(n)
-#define xstrdup(n)	pstrdup(n)
-#define xfree(n)	pfree(n)
-
-#endif
-
 /*
- * deallocate memory used for filenames
+ *	rmt_cleanup
+ *
+ *	deallocate memory used for filenames
  */
-
 static void
 rmt_cleanup(char ** filenames)
 {
 	char ** fn;
 
 	for (fn = filenames; *fn; fn++)
-		xfree(*fn);
+#ifdef FRONTEND
+		free(*fn);
 
-	xfree(filenames);
+	free(filenames);
+#else
+		pfree(*fn);
+
+	pfree(filenames);
+#endif
 }
+
 
 /*
  *	rmtree
@@ -329,13 +289,30 @@ rmtree(char *path, bool rmtopdir)
 
 	rewinddir(dir);
 
-	filenames = xmalloc((numnames + 2) * sizeof(char *));
+#ifdef FRONTEND
+	if ((filenames = malloc((numnames + 2) * sizeof(char *))) == NULL)
+	{
+		fprintf(stderr, _("out of memory\n"));
+		exit(1);
+	}
+#else
+	filenames = palloc((numnames + 2) * sizeof(char *));
+#endif
+
 	numnames = 0;
 
 	while ((file = readdir(dir)) != NULL)
 	{
 		if (strcmp(file->d_name, ".") != 0 && strcmp(file->d_name, "..") != 0)
-			filenames[numnames++] = xstrdup(file->d_name);
+#ifdef FRONTEND
+			if ((filenames[numnames++] = strdup(file->d_name)) == NULL)
+		    {
+				fprintf(stderr, _("out of memory\n"));
+				exit(1);
+			}
+#else
+			filenames[numnames++] = pstrdup(file->d_name);
+#endif
 	}
 
 	filenames[numnames] = NULL;
