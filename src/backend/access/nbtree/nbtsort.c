@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.11 1997/02/22 10:04:16 vadim Exp $
+ *    $Id: nbtsort.c,v 1.12 1997/02/25 03:38:23 scrappy Exp $
  *
  * NOTES
  *
@@ -171,7 +171,7 @@ _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
     if ( _bt_inspool->isunique )
     {
     	_bt_spooldestroy ((void*)_bt_inspool);
-    	elog (WARN, "Cannot insert a duplicate key into a unique index.");
+    	elog (WARN, "Cannot create unique index. Table contains non-unique values");
     }
     return(0);		/* 1 = 2 */
 }
