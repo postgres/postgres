@@ -9,7 +9,7 @@
 FILE	   *LOGOUTPUT;
 char		logbuffer[4096];
 
-void
+static void
 log_entry(const char *logentry)
 {
 	time_t		curtime;
@@ -22,10 +22,14 @@ log_entry(const char *logentry)
 	fprintf(LOGOUTPUT, "[%s] %s\n", timebuffer, logentry);
 }
 
-/* Function used to detatch the pg_autovacuum daemon from the tty and go into the background *
-*	  This code is mostly ripped directly from pm_dameonize in postmaster.c				  *
-*	  with unneeded code removed.														  */
-void
+/*
+ * Function used to detach the pg_autovacuum daemon from the tty and go into
+ * the background.
+ *
+ * This code is mostly ripped directly from pm_dameonize in postmaster.c with
+ * unneeded code removed.
+ */
+static void
 daemonize()
 {
 	pid_t		pid;
@@ -57,7 +61,7 @@ daemonize()
 }
 
 /* Create and return tbl_info struct with initialized to values from row or res */
-tbl_info *
+static tbl_info *
 init_table_info(PGresult *res, int row, db_info * dbi)
 {
 	tbl_info   *new_tbl = (tbl_info *) malloc(sizeof(tbl_info));
@@ -138,7 +142,7 @@ init_table_info(PGresult *res, int row, db_info * dbi)
 
 /* Set thresholds = base_value + scaling_factor * reltuples
    Should be called after a vacuum since vacuum updates values in pg_class */
-void
+static void
 update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 {
 	PGresult   *res = NULL;
@@ -196,7 +200,7 @@ update_table_thresholds(db_info * dbi, tbl_info * tbl, int vacuum_type)
 		db_disconnect(dbi);
 }
 
-void
+static void
 update_table_list(db_info * dbi)
 {
 	int			disconnect = 0;
@@ -296,7 +300,7 @@ update_table_list(db_info * dbi)
 }
 
 /* Free memory, and remove the node from the list */
-void
+static void
 remove_table_from_list(Dlelem *tbl_to_remove)
 {
 	tbl_info   *tbl = ((tbl_info *) DLE_VAL(tbl_to_remove));
@@ -328,7 +332,7 @@ remove_table_from_list(Dlelem *tbl_to_remove)
 }
 
 /* Free the entire table list */
-void
+static void
 free_tbl_list(Dllist *tbl_list)
 {
 	Dlelem	   *tbl_elem = DLGetHead(tbl_list);
@@ -343,7 +347,7 @@ free_tbl_list(Dllist *tbl_list)
 	DLFreeList(tbl_list);
 }
 
-void
+static void
 print_table_list(Dllist *table_list)
 {
 	Dlelem	   *table_elem = DLGetHead(table_list);
@@ -355,7 +359,7 @@ print_table_list(Dllist *table_list)
 	}
 }
 
-void
+static void
 print_table_info(tbl_info * tbl)
 {
 	sprintf(logbuffer, "  table name: %s.%s", tbl->dbi->dbname, tbl->table_name);
@@ -381,7 +385,7 @@ print_table_info(tbl_info * tbl)
 /* Beginning of DB Management Functions */
 
 /* init_db_list() creates the db_list and initalizes template1 */
-Dllist *
+static Dllist *
 init_db_list()
 {
 	Dllist	   *db_list = DLNewList();
@@ -419,7 +423,7 @@ init_db_list()
 
 /* Simple function to create an instance of the dbinfo struct
 	Initalizes all the pointers and connects to the database  */
-db_info *
+static db_info *
 init_dbinfo(char *dbname, Oid oid, long age)
 {
 	db_info    *newdbinfo = (db_info *) malloc(sizeof(db_info));
@@ -452,7 +456,7 @@ init_dbinfo(char *dbname, Oid oid, long age)
 }
 
 /* Function adds and removes databases from the db_list as appropriate */
-void
+static void
 update_db_list(Dllist *db_list)
 {
 	int			disconnect = 0;
@@ -580,7 +584,7 @@ So we do a full database vacuum if age > 1.5billion
 return 0 if nothing happened,
 return 1 if the database needed a database wide vacuum
 */
-int
+static int
 xid_wraparound_check(db_info * dbi)
 {
 	/*
@@ -602,7 +606,7 @@ xid_wraparound_check(db_info * dbi)
 }
 
 /* Close DB connection, free memory, and remove the node from the list */
-void
+static void
 remove_db_from_list(Dlelem *db_to_remove)
 {
 	db_info    *dbi = ((db_info *) DLE_VAL(db_to_remove));
@@ -646,7 +650,7 @@ remove_db_from_list(Dlelem *db_to_remove)
 
 /* Function is called before program exit to free all memory
 		mostly it's just to keep valgrind happy */
-void
+static void
 free_db_list(Dllist *db_list)
 {
 	Dlelem	   *db_elem = DLGetHead(db_list);
@@ -662,7 +666,7 @@ free_db_list(Dllist *db_list)
 	DLFreeList(db_list);
 }
 
-void
+static void
 print_db_list(Dllist *db_list, int print_table_lists)
 {
 	Dlelem	   *db_elem = DLGetHead(db_list);
@@ -674,7 +678,7 @@ print_db_list(Dllist *db_list, int print_table_lists)
 	}
 }
 
-void
+static void
 print_db_info(db_info * dbi, int print_tbl_list)
 {
 	sprintf(logbuffer, "dbname: %s", (dbi->dbname) ? dbi->dbname : "(null)");
@@ -710,7 +714,7 @@ print_db_info(db_info * dbi, int print_tbl_list)
 /* Beginning of misc Functions */
 
 /* Perhaps add some test to this function to make sure that the stats we need are available */
-PGconn *
+static PGconn *
 db_connect(db_info * dbi)
 {
 	PGconn	   *db_conn =
@@ -729,7 +733,7 @@ db_connect(db_info * dbi)
 	return db_conn;
 }	/* end of db_connect() */
 
-void
+static void
 db_disconnect(db_info * dbi)
 {
 	if (dbi->conn != NULL)
@@ -739,7 +743,7 @@ db_disconnect(db_info * dbi)
 	}
 }
 
-int
+static int
 check_stats_enabled(db_info * dbi)
 {
 	PGresult   *res;
@@ -754,7 +758,7 @@ check_stats_enabled(db_info * dbi)
 	return ret;
 }
 
-PGresult *
+static PGresult *
 send_query(const char *query, db_info * dbi)
 {
 	PGresult   *res;
@@ -795,7 +799,7 @@ send_query(const char *query, db_info * dbi)
 }	/* End of send_query() */
 
 
-void
+static void
 free_cmd_args()
 {
 	if (args != NULL)
@@ -808,7 +812,7 @@ free_cmd_args()
 	}
 }
 
-cmd_args *
+static cmd_args *
 get_cmd_args(int argc, char *argv[])
 {
 	int			c;
@@ -902,7 +906,7 @@ get_cmd_args(int argc, char *argv[])
 	return args;
 }
 
-void
+static void
 usage()
 {
 	int			i = 0;
@@ -937,7 +941,7 @@ usage()
 	fprintf(stderr, "   [-h] help (Show this output)\n");
 }
 
-void
+static void
 print_cmd_args()
 {
 	sprintf(logbuffer, "Printing command_args");
