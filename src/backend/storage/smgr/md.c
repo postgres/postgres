@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.60 1999/11/16 04:13:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.61 2000/01/10 06:30:51 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "catalog/catalog.h"
 #include "miscadmin.h"
 #include "storage/smgr.h"
+#include "utils/inval.h"	/* ImmediateSharedRelationCacheInvalidate() */
 
 #undef DIAGNOSTIC
 
@@ -203,6 +204,15 @@ mdunlink(Relation reln)
 	 */
 	if (reln->rd_unlinked && reln->rd_fd < 0)
 		return SM_SUCCESS;
+	/*
+	 * This call isn't good for independency of md stuff,but 
+	 * mdunlink() unlinks the base file immediately and couldn't
+	 * be rollbacked in case of abort. We must guarantee all
+	 * backends' relation cache invalidation here.
+	 * This would be unnecessary if unlinking is postponed
+	 * till end of transaction.
+	 */
+	ImmediateSharedRelationCacheInvalidate(reln);
 	/*
 	 * Force all segments of the relation to be opened, so that we
 	 * won't miss deleting any of them.
@@ -779,6 +789,7 @@ mdtruncate(Relation reln, int nblocks)
 #ifndef LET_OS_MANAGE_FILESIZE
 	MemoryContext oldcxt;
 	int			priorblocks;
+	bool	invalregistered = false;
 #endif
 
 	/* NOTE: mdnblocks makes sure we have opened all existing segments,
@@ -810,6 +821,20 @@ mdtruncate(Relation reln, int nblocks)
 			 * a big file...
 			 */
 			FileTruncate(v->mdfd_vfd, 0);
+			/*
+	 		 * To call ImmediateSharedRelationCacheInvalidate() here
+			 * isn't good for independency of md stuff,but smgrunlink()
+			 * removes the base file immediately and couldn't be
+			 * rollbacked in case of abort. We must guarantee
+	 		 * all backends' relation cache invalidation here.
+	 		 * This would be unnecessary if the truncation is postponed
+	 		 * till end of transaction.
+	 		 */
+			if (!invalregistered)
+			{
+				ImmediateSharedRelationCacheInvalidate(reln);
+				invalregistered = true;
+			}
 			FileUnlink(v->mdfd_vfd);
 			v = v->mdfd_chain;
 			Assert(ov != &Md_fdvec[fd]); /* we never drop the 1st segment */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.14 1999/11/21 01:58:20 tgl Exp $
+ * $Id: inval.h,v 1.15 2000/01/10 06:30:56 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,14 @@ extern void DiscardInvalid(void);
 
 extern void RegisterInvalid(bool send);
 
+extern void ImmediateLocalInvalidation(bool send);
+
 extern void RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple);
+
+extern void RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple);
+
+extern void ImmediateInvalidateSharedHeapTuple(Relation relation, HeapTuple tuple);
+
+extern void ImmediateSharedRelationCacheInvalidate(Relation relation);
 
 #endif	 /* INVAL_H */

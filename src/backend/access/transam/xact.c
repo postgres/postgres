@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.57 2000/01/05 18:23:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.58 2000/01/10 06:30:50 inoue Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -165,6 +165,7 @@ static void AtAbort_Cache(void);
 static void AtAbort_Locks(void);
 static void AtAbort_Memory(void);
 static void AtCommit_Cache(void);
+static void AtCommit_LocalCache(void);
 static void AtCommit_Locks(void);
 static void AtCommit_Memory(void);
 static void AtStart_Cache(void);
@@ -512,8 +513,11 @@ CommandCounterIncrement()
 
 	CurrentTransactionStateData.scanCommandId = CurrentTransactionStateData.commandId;
 
-	/* make cache changes visible to me */
-	AtCommit_Cache();
+	/*
+	 * make cache changes visible to me.  AtCommit_LocalCache()
+	 * instead of AtCommit_Cache() is called here.
+	 */
+	AtCommit_LocalCache();
 	AtStart_Cache();
 
 }
@@ -663,13 +667,24 @@ static void
 AtCommit_Cache()
 {
 	/* ----------------
-	 * Make catalog changes visible to me for the next command.
-	 * Other backends will not process my invalidation messages until
-	 * after I commit and free my locks--though they will do
-	 * unnecessary work if I abort.
+	 * Make catalog changes visible to all backend.
 	 * ----------------
 	 */
 	RegisterInvalid(true);
+}
+
+/* --------------------------------
+ *		AtCommit_LocalCache
+ * --------------------------------
+ */
+static void
+AtCommit_LocalCache()
+{
+	/* ----------------
+	 * Make catalog changes visible to me for the next command.
+	 * ----------------
+	 */
+	ImmediateLocalInvalidation(true);
 }
 
 /* --------------------------------

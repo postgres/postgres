@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.62 1999/12/21 00:06:40 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.63 2000/01/10 06:30:50 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1262,7 +1262,7 @@ heap_insert(Relation relation, HeapTuple tup)
 	RelationPutHeapTupleAtEnd(relation, tup);
 
 	if (IsSystemRelationName(RelationGetRelationName(relation)))
-		RelationInvalidateHeapTuple(relation, tup);
+		RelationMark4RollbackHeapTuple(relation, tup);
 
 	return tup->t_data->t_oid;
 }
@@ -1473,6 +1473,8 @@ l2:
 		RelationPutHeapTupleAtEnd(relation, newtup);
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 	}
+	/* mark for rollback caches */
+	RelationMark4RollbackHeapTuple(relation, newtup);
 
 	/*
 	 * New item in place, now record address of new tuple in t_ctid of old
