@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.20 2001/02/10 16:39:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.21 2001/02/10 16:41:30 momjian Exp $
 Postgres documentation
 -->
 
@@ -35,7 +35,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    ADD CONSTRAINT<replaceable class="PARAMETER">table constraint definition</replaceable>
+    ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 	OWNER TO <replaceable class="PARAMETER">new owner</replaceable> 
   </synopsis>
@@ -167,7 +167,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    the affected table. Thus, the table or column will
    remain of the same type and size after this command is
    executed.
-   The ADD CONSTRAINT<replaceable class="PARAMETER">table constraint definition</replaceable> clause 
+   The ADD <replaceable class="PARAMETER">table constraint definition</replaceable> clause 
    adds a new constraint to the table using the same syntax as <xref
    linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">. 
    The OWNER clause chnages the owner of the table to the user <replaceable class="PARAMETER">
