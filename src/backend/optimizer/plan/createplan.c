@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.139 2003/05/06 00:20:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.140 2003/05/11 15:03:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,6 +294,12 @@ use_physical_tlist(RelOptInfo *rel)
 	 * doesn't project).
 	 */
 	if (rel->reloptkind != RELOPT_BASEREL)
+		return false;
+	/*
+	 * Can't do it if relation contains dropped columns.  This is detected
+	 * in plancat.c, see notes there.
+	 */
+	if (rel->varlist == NIL)
 		return false;
 	/*
 	 * Can't do it if any system columns are requested, either.  (This could
