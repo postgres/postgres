@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.108 2002/08/06 05:40:44 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.109 2002/08/08 14:29:07 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -3868,7 +3868,7 @@ SELECT TIMESTAMP 'now';
        </row>
        <row>
 	<entry> # </entry>
-	<entry>Number of points in polygon</entry>
+	<entry>Number of points in path or polygon</entry>
 	<entry><literal># '((1,0),(0,1),(-1,0))'</literal></entry>
        </row>
        <row>
@@ -4026,6 +4026,18 @@ SELECT TIMESTAMP 'now';
 	<entry><literal>length(path '((-1,0),(1,0))')</literal></entry>
        </row>
        <row>
+	<entry><function>npoints</function>(path)</entry>
+	<entry><type>integer</type></entry>
+	<entry>number of points</entry>
+	<entry><literal>npoints(path '[(0,0),(1,1),(2,0)]')</literal></entry>
+       </row>
+       <row>
+	<entry><function>npoints</function>(polygon)</entry>
+	<entry><type>integer</type></entry>
+	<entry>number of points</entry>
+	<entry><literal>npoints(polygon '((1,1),(0,0))')</literal></entry>
+       </row>
+       <row>
 	<entry><function>pclose</function>(path)</entry>
 	<entry><type>path</type></entry>
 	<entry>convert path to closed</entry>
@@ -4040,12 +4052,6 @@ SELECT TIMESTAMP 'now';
 	<entry><literal>point(lseg '((-1,0),(1,0))',lseg '((-2,-2),(2,2))')</literal></entry>
        </row>
 ]]>
-       <row>
-	<entry><function>npoint</function>(path)</entry>
-	<entry><type>integer</type></entry>
-	<entry>number of points</entry>
-	<entry><literal>npoints(path '[(0,0),(1,1),(2,0)]')</literal></entry>
-       </row>
        <row>
 	<entry><function>popen</function>(path)</entry>
 	<entry><type>path</type></entry>
@@ -4150,7 +4156,7 @@ SELECT TIMESTAMP 'now';
        <row>
 	<entry><function>polygon</function>(<type>box</type>)</entry>
 	<entry><type>polygon</type></entry>
-	<entry>12 point polygon</entry>
+	<entry>4-point polygon</entry>
 	<entry><literal>polygon(box '((0,0),(1,1))')</literal></entry>
        </row>
        <row>
@@ -4174,6 +4180,16 @@ SELECT TIMESTAMP 'now';
       </tbody>
      </tgroup>
    </table>
+
+    <para>
+     It is possible to access the two component numbers of a <type>point</>
+     as though it were an array with subscripts 0,1.  For example, if
+     <literal>t.p</> is a <type>point</> column then
+     <literal>SELECT p[0] FROM t</> retrieves the X coordinate;
+     <literal>UPDATE t SET p[1] = ...</> changes the Y coordinate.
+     In the same way, a <type>box</> or an <type>lseg</> may be treated
+     as an array of two <type>point</>s.
+    </para>
 
   </sect1>
 
