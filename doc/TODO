@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jan 26 16:16:06 EST 2001
+Last updated:		Fri Jan 26 16:17:17 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -324,6 +324,7 @@ SOURCE CODE
 * Remove unused pg_variable, pg_inheritproc, pg_ipl tables
 * Experiment with multi-threaded backend [thread]
 * Fix problems with libpq non-blocking/async code [async]
+* Merge global and template BKI files
 
 ---------------------------------------------------------------------------
 
