@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.15 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_view.sgml,v 1.16 2002/11/21 23:34:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -122,7 +122,7 @@ ERROR: view <replaceable class="parameter">name</replaceable> does not exist
     Notes
    </title>
    <para>
-    Refer to <xref linkend="sql-createview">
+    Refer to <xref linkend="sql-createview" endterm="sql-createview-title">
     for information on how to create views.
    </para>
   </refsect2>

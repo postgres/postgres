@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.20 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_view.sgml,v 1.21 2002/11/21 23:34:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -61,7 +61,7 @@ class="PARAMETER">column name list</replaceable> ) ] AS SELECT <replaceable clas
 	which will provide the columns and rows of the view.
        </para>
        <para>
-	Refer to <xref linkend="sql-select"> for more information
+	Refer to <xref linkend="sql-select" endterm="sql-select-title"> for more information
 	about valid arguments.
        </para>
       </listitem>
@@ -169,7 +169,7 @@ CREATE VIEW vista AS SELECT text 'Hello World'
     update, or delete on a view.  You can get the effect of an updatable
     view by creating rules that rewrite inserts, etc. on the view into
     appropriate actions on other tables.  For more information see
-    <xref linkend="sql-createrule">.
+    <xref linkend="sql-createrule" endterm="sql-createrule-title">.
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.13 2002/07/12 18:43:13 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_trigger.sgml,v 1.14 2002/11/21 23:34:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -166,7 +166,7 @@ DROP TRIGGER if_dist_exists ON films;
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createtrigger"></member>
+   <member><xref linkend="sql-createtrigger" endterm="sql-createtrigger-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

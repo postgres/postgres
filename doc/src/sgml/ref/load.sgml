@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.13 2002/11/15 03:11:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/load.sgml,v 1.14 2002/11/21 23:34:43 petere Exp $
 -->
 
 <refentry id="SQL-LOAD">
@@ -56,7 +56,7 @@ LOAD '<replaceable class="PARAMETER">filename</replaceable>'
   <title>See Also</title>
 
   <para>
-   <xref linkend="sql-createfunction">,
+   <xref linkend="sql-createfunction" endterm="sql-createfunction-title">,
    <citetitle>PostgreSQL Programmer's Guide</citetitle>
   </para>
  </refsect1>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.22 2002/07/14 22:47:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.23 2002/11/21 23:34:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -128,7 +128,7 @@ WARNING:  RemoveFunction: Function "<replaceable class="parameter">name</replace
 
    <para>
     Refer to
-    <xref linkend="sql-createfunction">
+    <xref linkend="sql-createfunction" endterm="sql-createfunction-title">
     for information on creating functions.
    </para>
  </refsect1>
@@ -158,7 +158,7 @@ DROP FUNCTION sqrt(integer);
   <title>See Also</title>
 
   <simplelist type="inline">
-   <member><xref linkend="sql-createfunction"></member>
+   <member><xref linkend="sql-createfunction" endterm="sql-createfunction-title"></member>
   </simplelist>
  </refsect1>
 </refentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.37 2002/09/02 20:04:39 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.38 2002/11/21 23:34:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -227,7 +227,7 @@ CREATE RULE
    </para>
 
    <para>
-    <xref linkend="sql-createview"> creates a dummy table (with no underlying
+    <xref linkend="sql-createview" endterm="sql-createview-title"> creates a dummy table (with no underlying
     storage) and associates an ON SELECT rule with it.  The system will not
     allow updates to the view, since it knows there is no real table there.
     You can create the

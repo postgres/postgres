@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.22 2002/04/21 00:26:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/revoke.sgml,v 1.23 2002/11/21 23:34:43 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -71,7 +71,7 @@ REVOKE { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
   <para>
    Use <xref linkend="app-psql">'s <command>\z</command> command to
    display the privileges granted on existing objects.  See also <xref
-   linkend="sql-grant"> for information about the format.
+   linkend="sql-grant" endterm="sql-grant-title"> for information about the format.
   </para>
  </refsect1>
 
@@ -130,7 +130,7 @@ REVOKE [ GRANT OPTION FOR ] { SELECT | INSERT | UPDATE | DELETE | REFERENCES }
   <title>See Also</title>
 
   <simpara>
-   <xref linkend="sql-grant">
+   <xref linkend="sql-grant" endterm="sql-grant-title">
   </simpara>
  </refsect1>
 

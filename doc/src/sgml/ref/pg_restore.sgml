@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.32 2002/11/15 03:11:18 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.33 2002/11/21 23:34:43 petere Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -395,7 +395,7 @@
         which might require manual interaction (e.g., passwords).  If
         you use the <option>-X use-set-session-authorization</option> option,
         then <application>pg_restore</application> will instead use the <xref
-        linkend="sql-set-session-authorization"> command.  This has
+        linkend="sql-set-session-authorization" endterm="sql-set-session-authorization-title"> command.  This has
         the same effect, but it requires that the user restoring the
         archive is a database superuser.  This option effectively
         overrides the <option>-R</option> option.
