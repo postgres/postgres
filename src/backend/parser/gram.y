@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.20.2.1 1996/12/11 23:06:40 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.20.2.2 1996/12/22 03:21:58 scrappy Exp $
  *
  * HISTORY
  *    AUTHOR		DATE		MAJOR EVENT
@@ -82,7 +82,7 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
     TypeName		*typnam;
     DefElem		*defelt;
     ParamString		*param;
-    SortBy		*sortby;
+    SortGroupBy		*sortgroupby;
     IndexElem		*ielem;
     RangeVar		*range;
     RelExpr		*relexp;
@@ -146,10 +146,11 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause, 
 		a_expr, AexprConst, in_expr_nodes, not_in_expr_nodes,
-		having_clause, groupby
+		having_clause
 %type <value>	NumConst
 %type <attr>	event_object, attr
-%type <sortby>	sortby
+%type <sortgroupby>	groupby
+%type <sortgroupby>	sortby
 %type <ielem>	index_elem, func_index
 %type <range>	from_val
 %type <relexp>	relation_expr
@@ -1359,7 +1360,7 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 		    n->fromClause = $9;
 		    n->whereClause = $10;
 		    n->groupClause = $11;
-		    n->orderClause = $12;
+		    n->sortClause = $12;
 		    $$ = (Node *)n;
 		}
 	;
@@ -1385,7 +1386,7 @@ RetrieveStmt:  SELECT opt_unique res_target_list2
 		    n->whereClause = $6;
 		    n->groupClause = $7;
 		    n->havingClause = $8;
-		    n->orderClause = $9;
+		    n->sortClause = $9;
 		    $$ = (Node *)n;
 		}
 	;
@@ -1413,22 +1414,28 @@ sortby_list:  sortby
 
 sortby:  Id OptUseOp
 		{ 
-		    $$ = makeNode(SortBy);
+		    $$ = makeNode(SortGroupBy);
+		    $$->resno = 0;
 		    $$->range = NULL;
 		    $$->name = $1;
 		    $$->useOp = $2;
 		}
 	| Id '.' Id OptUseOp
 		{
-		    $$ = makeNode(SortBy);
+		    $$ = makeNode(SortGroupBy);
+		    $$->resno = 0;
 		    $$->range = $1;
 		    $$->name = $3;
 		    $$->useOp = $4;
 		}
-        | /*EMPTY*/
-                { 
-                  yyerror("parse error: use 'order by attribute_name'");
-                }
+	| Iconst OptUseOp
+		{
+		    $$ = makeNode(SortGroupBy);
+		    $$->resno = $1;
+		    $$->range = NULL;
+		    $$->name = NULL;
+		    $$->useOp = $2;
+		}
 	;
 
 OptUseOp:  USING Op				{ $$ = $2; }
@@ -1509,16 +1516,29 @@ groupby_list: groupby				{ $$ = lcons($1, NIL); }
 	| groupby_list ',' groupby		{ $$ = lappend($1, $3); }
 	;
 
-groupby: Id					
-		{ 
-		   Ident *n = makeNode(Ident);
-		   n->name = $1;
-		   n->indirection = NULL;
-		   $$ = (Node*)n;
-		}
-	| attr
+groupby:  Id
 		{
-		   $$ = (Node*)$1;
+		    $$ = makeNode(SortGroupBy);
+		    $$->resno = 0;
+		    $$->range = NULL;
+		    $$->name = $1;
+		    $$->useOp = NULL;
+		}
+	| Id '.' Id
+		{
+		    $$ = makeNode(SortGroupBy);
+		    $$->resno = 0;
+		    $$->range = $1;
+		    $$->name = $3;
+		    $$->useOp = NULL;
+		}
+	| Iconst
+		{
+		    $$ = makeNode(SortGroupBy);
+		    $$->resno = $1;
+		    $$->range = NULL;
+		    $$->name = NULL;
+		    $$->useOp = NULL;
 		}
 	;
 
