@@ -1,5 +1,5 @@
 <!-- reference.sgml
-$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.34 2002/08/16 20:34:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/reference.sgml,v 1.35 2002/08/17 03:38:43 tgl Exp $
 
 PostgreSQL Reference Manual
 -->
@@ -202,6 +202,7 @@ Disable this chapter until we have more functions documented.
    &ipcclean;
    &pgCtl;
    &pgControldata;
+   &pgResetxlog;
    &postgres;
    &postmaster;
 

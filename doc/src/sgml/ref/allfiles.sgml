@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.45 2002/08/16 20:34:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.46 2002/08/17 03:38:43 tgl Exp $
 PostgreSQL documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -113,7 +113,7 @@ Complete list of usable sgml source files in this directory.
 <!entity setSessionAuth     system "set_session_auth.sgml">
 <!entity setTransaction     system "set_transaction.sgml">
 <!entity show               system "show.sgml">
-<!entity startTransaction	system "start_transaction.sgml">
+<!entity startTransaction   system "start_transaction.sgml">
 <!entity truncate           system "truncate.sgml">
 <!entity unlisten           system "unlisten.sgml">
 <!entity update             system "update.sgml">
@@ -136,6 +136,7 @@ Complete list of usable sgml source files in this directory.
 <!entity pgCtl              system "pg_ctl-ref.sgml">
 <!entity pgDump             system "pg_dump.sgml">
 <!entity pgDumpall          system "pg_dumpall.sgml">
+<!entity pgResetxlog        system "pg_resetxlog.sgml">
 <!entity pgRestore          system "pg_restore.sgml">
 <!entity pgTclSh            system "pgtclsh.sgml">
 <!entity pgTkSh             system "pgtksh.sgml">
