@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.67 2001/05/21 18:42:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.68 2001/06/23 22:23:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ transformTargetEntry(ParseState *pstate,
 		expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
 
 	if (IsA(expr, Ident) && ((Ident *)expr)->isRel)
-		elog(ERROR,"You can't use relation names alone in the target list, try relation.*.");	
+		elog(ERROR,"You can't use relation names alone in the target list, try relation.*.");
 
 	type_id = exprType(expr);
 	type_mod = exprTypmod(expr);
@@ -311,7 +311,9 @@ CoerceTargetExpr(ParseState *pstate,
 	 * string hacks to get transparent conversions w/o explicit
 	 * conversions
 	 */
-	else if ((attrtype == BPCHAROID) || (attrtype == VARCHAROID))
+	else if (attrtype == BPCHAROID ||
+			 attrtype == VARCHAROID ||
+			 attrtype == BYTEAOID)
 	{
 		Oid			text_id = TEXTOID;
 

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.41 2001/06/19 23:40:10 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.42 2001/06/23 22:23:49 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -196,7 +196,7 @@ static struct config_bool
 	{"fsync", PGC_SIGHUP, &enableFsync, true, NULL},
 	{"silent_mode", PGC_POSTMASTER, &SilentMode, false, NULL},
 
-	{"log_connections", PGC_SIGHUP, &Log_connections, false, NULL},
+	{"log_connections", PGC_BACKEND, &Log_connections, false, NULL},
 	{"log_timestamp", PGC_SIGHUP, &Log_timestamp, false, NULL},
 	{"log_pid", PGC_SIGHUP, &Log_pid, false, NULL},
 
@@ -276,7 +276,7 @@ static struct config_int
 	DEF_PGPORT, 1, 65535, NULL, NULL},
 
 	{"sort_mem", PGC_USERSET, &SortMem,
-	512, 1, INT_MAX, NULL, NULL},
+	512, 4*BLCKSZ/1024, INT_MAX, NULL, NULL},
 
 	{"debug_level", PGC_USERSET, &DebugLvl,
 	0, 0, 16, NULL, NULL},
