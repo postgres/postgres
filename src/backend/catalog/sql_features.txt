@@ -325,7 +325,7 @@ T231	SENSITIVE cursors			YES
 T241	START TRANSACTION statement			YES	
 T251	SET TRANSACTION statement: LOCAL option			NO	
 T261	Chained transactions			NO	
-T271	Savepoints			NO	
+T271	Savepoints			YES	
 T281	SELECT privilege with column granularity			NO	
 T301	Functional Dependencies			NO	
 T312	OVERLAY function			YES	
