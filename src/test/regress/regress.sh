@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.36 2000/01/05 17:30:05 thomas Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.37 2000/01/06 06:40:18 thomas Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -41,9 +41,8 @@ SYSTEM=`../../config.guess | awk -F\- '{ split($3,a,/[0-9]/); printf"%s-%s", $1,
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
-echo "The time zone is now set to PST8PDT explicitly by this regression test"
-echo " client frontend. Please report any apparent problems to"
-echo "   ports@postgresql.org"
+echo "The time zone is set to PST8PDT for these tests by the client frontend."
+echo "Please report any apparent problems to ports@postgresql.org"
 echo "See regress/README for more information."
 echo ""
 
