@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Jan 30 21:16:28 EST 2005
+   Last updated: Sun Jan 30 21:18:36 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -188,7 +188,7 @@
    http://www.postgresql.org/support/submitbug.
    
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
-   there is a more recent PostgreSQL version or patches.
+   there is a more recent PostgreSQL version.
    
     1.7) What is the latest release?
     
