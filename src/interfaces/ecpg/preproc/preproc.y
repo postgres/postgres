@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.274 2004/02/16 07:41:54 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.275 2004/02/18 08:42:02 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -551,7 +551,7 @@ add_additional_variables(char *name, bool insert)
 
 %type  <dtype_enum> descriptor_item desc_header_item
 
-%type  <type>	var_type single_vt_type 
+%type  <type>	var_type 
 
 %type  <action> action
 
@@ -4416,7 +4416,7 @@ single_vt_declaration: type_declaration		{ $$ = $1; }
 		;
 	
 single_var_declaration: storage_declaration 
-		single_vt_type
+		var_type
 		{
 			actual_type[struct_level].type_enum = $2.type_enum;
 			actual_type[struct_level].type_dimension = $2.type_dimension;
@@ -4427,7 +4427,7 @@ single_var_declaration: storage_declaration
 		{
 			$$ = cat_str(5, actual_startline[struct_level], $1, $2.type_str, $4, make_str(";\n"));
 		}
-		| single_vt_type
+		| var_type
 		{
 			actual_type[struct_level].type_enum = $1.type_enum;
 			actual_type[struct_level].type_dimension = $1.type_dimension;
@@ -4458,17 +4458,6 @@ ecpg_interval:	opt_interval	{ $$ = $1; }
 		| YEAR_P TO SECOND_P	{ $$ = make_str("year to second"); }
 		| DAY_P TO DAY_P	{ $$ = make_str("day to day"); }
 		| MONTH_P TO MONTH_P	{ $$ = make_str("month to month"); }
-		;
-
-single_vt_type: var_type
-		| DOUBLE_P
-		{
-			$$.type_enum = ECPGt_double;
-			$$.type_str = make_str("double");
-			$$.type_dimension = make_str("-1");
-			$$.type_index = make_str("-1");
-			$$.type_sizeof = NULL;
-		}
 		;
 
 /*
@@ -4960,6 +4949,7 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 		}
 		| SQL_BOOL					{ $$ = ECPGt_bool; }
 		| CHAR_P					{ $$ = ECPGt_char; }
+		| DOUBLE_P					{ $$ = ECPGt_double; }
 		;
 
 opt_signed: SQL_SIGNED
