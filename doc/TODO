@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Oct  5 17:11:29 EDT 1999
+Last updated:		Wed Oct  6 09:35:16 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -20,7 +20,7 @@ RESOURCES
 
 * Elog() does not free all its memory(Jan)
 * spinlock stuck problem when elog(FATAL) and elog(ERROR) inside bufmgr
-* Recover or force failure when disk space is exhausted
+* -Recover or force failure when disk space is exhausted(Hiroshi)
 
 PARSER
 
@@ -29,13 +29,13 @@ PARSER
 * SELECT pg_class FROM pg_class generates strange error
 * Alter TABLE ADD COLUMN does not honor DEFAULT, add CONSTRAINT
 * Do not allow bpchar column creation without length
-* -Select a[1] FROM test fails, it needs test.a[1]
-* -Array index references without table name cause problems [array]
+* -Select a[1] FROM test fails, it needs test.a[1](Tom)
+* -Array index references without table name cause problems [array](Tom)
 * Update table SET table.value = 3 fails(SQL standard says this is OK)
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
-* -INSERT ... SELECT ... GROUP BY groups by target columns not source columns
-* -CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
+* -INSERT ... SELECT ... GROUP BY groups by target columns not source columns(Tom)
+* -CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT(Tom)
 * UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
@@ -52,7 +52,7 @@ PARSER
 * prevent primary key of nine columns [primary]
 * SELECT COUNT('asdf') FROM pg_class WHERE oid=12 crashes
 * SELECT DISTINCT ON col1 col1 col2 FROM tab1 is broken [distinct]
-* -When using aggregates + GROUP BY, no rows in should yield no rows out
+* -When using aggregates + GROUP BY, no rows in should yield no rows out(Tom)
 
 VIEWS
 
@@ -79,8 +79,8 @@ URGENT
 * Add OUTER joins, left and right[outer](Thomas, Bruce)
 * Allow long tuples by chaining or auto-storing outside db (chaining,large objs)
 * Eliminate limits on query length
-* Fix memory leak for expressions?[memory](Tom?) 
-* -Fix memory leak for aggregates?
+* Fix memory leak for expressions[memory](Tom?) 
+* -Fix memory leak for aggregates(Tom)
 
 ADMIN
 
@@ -118,7 +118,7 @@ TYPES
 * Remove Money type, add money formatting for decimal type
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
-* -Add index on NUMERIC/DECIMAL type
+* -Add index on NUMERIC/DECIMAL type(Jan)
 * Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 * Functions returning sets don't really work right[function]
 
@@ -133,7 +133,7 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Allow creation of functional indexes to use default types
-* Permissions on indexes - prevent them?
+* Permissions on indexes, prevent them?
 * Allow SQL function indexes
 * Add FILLFACTOR to index creation
 * Allow indexing of LIKE with localle character sets
@@ -152,7 +152,7 @@ COMMANDS
 * Allow ESCAPE '\' at the end of LIKE for ANSI compliance [like]
 * Rewrite the LIKE handling by rewriting the user string with the 
   supplied ESCAPE [like]
-* -Move LIKE index optimization handling to the optimizer
+* -Move LIKE index optimization handling to the optimizer(Tom)
 * Allow RULE recompilation
 * Support UNION/INTERSECT/EXCEPT in sub-selects
 * Allow DELETE and UPDATE to use inheritance using tablename*
@@ -182,14 +182,14 @@ MISC
 * Create a background process for each database that runs while
   database is idle, finding superceeded rows, gathering stats and vacuuming
 * Add UNIQUE capability to non-btree indexes
-* -Certain indexes will not shrink, i.e. oid indexes with many inserts
+* -Certain indexes will not shrink, i.e. oid indexes with many inserts(Vadim)
 * Restore unused oid's on backend exit if no one else has gotten oids
 * Have UPDATE/DELETE clean out indexes
 * Allow WHERE restriction on ctid
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * -Transaction log, so re-do log can be on a separate disk by
-  with after-row images(Vadim) [logging]
+  with after-row images(Vadim) [logging](Vadim)
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
 * Allow subqueries in target list
@@ -213,8 +213,8 @@ PERFORMANCE
 
 FSYNC
 
-* -Allow transaction commits with rollback with no-fsync performance [fsync]
-* -Prevent fsync in SELECT-only queries
+* -Allow transaction commits with rollback with no-fsync performance [fsync](Vadim)
+* -Prevent fsync in SELECT-only queries(Vadim)
 
 INDEXES
 
@@ -222,7 +222,7 @@ INDEXES
 * Pull requested data directly from indexes, bypassing heap data
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
-* -Convert function(constant) into a constant for index use
+* -Convert function(constant) into a constant for index use(Tom)
 * Allow LIMIT ability on single-table queries that have no ORDER BY to use
   a matching index [limit]
 * Improve LIMIT processing by using index to limit rows processed [limit]
@@ -234,7 +234,7 @@ INDEXES
 * Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
 * Allow SELECT * FROM tab WHERE int2col = 4 use int2col index, int8,
   float4, numeric/decimal too [optimizer]
-* -Allow optimizer to prefer plans that match ORDER BY
+* -Allow optimizer to prefer plans that match ORDER BY(Tom)
 
 CACHE
 
@@ -249,11 +249,11 @@ MISC
 * Allow compression of log and meta data
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
-* -Fix memory exhaustion when using many OR's [cnfify]
+* -Fix memory exhaustion when using many OR's [cnfify](Tom)
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?)
-* -Process const = const parts of OR clause in separate pass
+* -Process const = const parts of OR clause in separate pass(Tom)
 * Make oid use oidin/oidout not int4in/int4out in pg_type.h
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
