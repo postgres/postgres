@@ -1,15 +1,15 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Feb 13 23:07:35 EST 2003
+   Last updated: Fri Feb 14 08:58:51 EST 2003
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at
-   http://www.PostgreSQL.org/docs/faq-english.html.
+   http://www.ca.PostgreSQL.org/docs/faq-english.html.
    
    Platform-specific questions are answered at
-   http://www.PostgreSQL.org/users-lounge/docs/faq.html.
+   http://www.ca.PostgreSQL.org/users-lounge/docs/faq.html.
      _________________________________________________________________
    
                              General Questions
@@ -242,7 +242,7 @@
    Unix command irc -c '#PostgreSQL' "$USER" irc.phoenix.net.
    
    A list of commercial support companies is available at
-   http://www.PostgreSQL.org/users-lounge/commercial-support.html.
+   http://www.ca.PostgreSQL.org/users-lounge/commercial-support.html.
    
     1.7) What is the latest release?
     
@@ -255,7 +255,7 @@
    Several manuals, manual pages, and some small test examples are
    included in the distribution. See the /doc directory. You can also
    browse the manual online at
-   http://www.PostgreSQL.org/users-lounge/docs/.
+   http://www.ca.PostgreSQL.org/users-lounge/docs/.
    
    There are two PostgreSQL books available online at
    http://www.PostgreSQL.org/docs/awbook.html and
