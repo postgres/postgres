@@ -4,7 +4,7 @@
  *
  * Copyright 2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.19 2003/12/07 19:43:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/catalog/information_schema.sql,v 1.20 2003/12/16 14:57:20 petere Exp $
  */
 
 /*
@@ -445,10 +445,9 @@ CREATE VIEW constraint_column_usage AS
                pg_constraint c, _pg_keypositions() AS pos(n)
           WHERE nr.oid = r.relnamespace
             AND r.oid = a.attrelid
-            AND r.oid = c.conrelid
             AND nc.oid = c.connamespace
-            AND (CASE WHEN c.contype = 'f' THEN c.confkey[pos.n] = a.attnum
-                      ELSE c.conkey[pos.n] = a.attnum END)
+            AND (CASE WHEN c.contype = 'f' THEN r.oid = c.confrelid AND c.confkey[pos.n] = a.attnum
+                      ELSE r.oid = c.conrelid AND c.conkey[pos.n] = a.attnum END)
             AND a.attnum > 0
             AND NOT a.attisdropped
             AND c.contype IN ('p', 'u', 'f')
