@@ -1,16 +1,8 @@
-# This file is an interface from the Autoconf world to Perl's
-# MakeMaker world, so that the latter behaves (kind of) like the
-# former would prefer. Internally, we call Perl to create another
-# Makefile according to its own ideas and then invoke the rules from
-# that file.
-#
-# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.6 2001/08/26 22:28:04 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/perl5/Attic/GNUmakefile,v 1.7 2002/05/28 16:57:53 petere Exp $
 
 subdir = src/interfaces/perl5
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
-
-.NOTPARALLEL:
 
 # This would allow a non-root install of the Perl module, but it's not
 # quite implemented yet.
@@ -20,30 +12,48 @@ perl_installsitelib	= $(pkglibdir)
 perl_installman3dir	= $(mandir)/man3
 endif
 
+override CPPFLAGS := -I$(libpq_srcdir) -I$(top_srcdir)/src/include $(CPPFLAGS) -I$(perl_archlibexp)/CORE
+override CFLAGS += $(CFLAGS_SL)
+override CPPFLAGS += -DXS_VERSION=\"$(shell sed -n "s/\$$.*::VERSION.*=.*'\(.*\)';/\1/p" $(srcdir)/Pg.pm)\"
 
-all: Makefile libpq-all
-	$(MAKE) -f $< all VPATH=$(VPATH)
+# The code isn't clean with regard to these warnings.
+ifeq ($(GCC),yes)
+override CFLAGS := $(filter-out -Wall -Wmissing-declarations -Wmissing-prototypes, $(CFLAGS))
+endif
 
-# We need to run Makefile.PL in the source directory because it scans
-# the directory for files to build with.  If we ran it in the build
-# dir it would miss all the files and not build half the stuff!
-Makefile: Makefile.PL Pg.pm
-	abs_builddir=`pwd`; \
-	abs_libpq_builddir=`cd $(libpq_builddir) && pwd`; \
-	cd $(srcdir) && \
-	SRCDIR=$(srcdir) \
-	PGLIBDIR=$(libdir) \
-	$(PERL) $< \
-	  INC='-I$(srcdir) -I$(libpq_srcdir) $(filter -I%, $(CPPFLAGS))' \
-	  LIBS="-L$$abs_libpq_builddir -lpq" \
-	  INSTALLSITEARCH='$$(DESTDIR)$(perl_installsitearch)' \
-	  INSTALLSITELIB='$$(DESTDIR)$(perl_installsitelib)' \
-	  INSTALLMAN3DIR='$$(DESTDIR)$(perl_installman3dir)' \
-	  MAKEFILE="$$abs_builddir/Makefile"
+POD2MAN = pod2man
+
+
+NAME = Pg
+OBJS = Pg.o
+SO_MAJOR_VERSION = 0
+SO_MINOR_VERSION = 0
+SHLIB_LINK = -L$(libpq_builddir) -lpq
+
+include $(top_srcdir)/src/Makefile.shlib
+
+
+all: all-lib Pg.pm Pg.bs auto/Pg/autosplit.ix Pg.$(perl_man3ext)
+
+all-lib: libpq-all
 
 .PHONY: libpq-all
 libpq-all:
 	$(MAKE) -C $(libpq_builddir) all
+
+Pg.c: Pg.xs typemap
+	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap -typemap $(srcdir)/typemap $(srcdir)/Pg.xs >$@
+
+auto/Pg/autosplit.ix: Pg.pm
+	@$(mkinstalldirs) auto
+	$(PERL) -MAutoSplit -e 'autosplit($$ARGV[0], $$ARGV[1], 0, 1, 1);' $< auto
+
+Pg.bs:
+	$(PERL) -MExtUtils::Mkbootstrap -e "Mkbootstrap('Pg', '');"
+	touch $@
+
+Pg.$(perl_man3ext): Pg.pm
+	$(POD2MAN) $< $@
 
 
 # During install, we must guard against the likelihood that we don't
@@ -58,38 +68,24 @@ echo "***     `pwd`,"; \
 echo "*** become the appropriate user, and enter '$(MAKE) install'."; \
 echo ""; }
 
-# We need to massage the packlist after installation to get the
-# DESTDIR out of there.
 install: all installdirs
 	@if test -w $(DESTDIR)$(perl_installsitearch); then \
-	  $(MAKE) -f Makefile pure_install DESTDIR=$(DESTDIR) && \
-	  mv $(DESTDIR)$(perl_installsitearch)/auto/Pg/.packlist fake-packlist && \
-	  sed 's,^$(DESTDIR),,' fake-packlist >$(DESTDIR)$(perl_installsitearch)/auto/Pg/.packlist && \
-	  rm fake-packlist; \
+	  $(INSTALL_DATA) Pg.pm $(DESTDIR)$(perl_installsitearch); \
+	  $(INSTALL_DATA) Pg.bs $(DESTDIR)$(perl_installsitearch)/auto/Pg; \
+	  $(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(perl_installsitearch)/auto/Pg/Pg$(DLSUFFIX); \
+	  $(INSTALL_DATA) auto/Pg/autosplit.ix $(DESTDIR)$(perl_installsitearch)/auto/Pg; \
+	  $(INSTALL_DATA) $(srcdir)/Pg.$(perl_man3ext) $(DESTDIR)$(perl_installman3dir); \
 	else \
 	  $(install-warning-msg); \
 	fi
 
-# Try to make the directories ourselves, otherwise the writability
-# test above may fail because of mere non-existence.
 installdirs:
-	-$(mkinstalldirs) $(DESTDIR)$(perl_installsitearch)/auto/Pg \
-	                  $(DESTDIR)$(perl_installsitelib) \
-	                  $(DESTDIR)$(perl_installman3dir)
+	-$(mkinstalldirs) $(DESTDIR)$(perl_installsitearch)/auto/Pg $(DESTDIR)$(perl_installman3dir)
 
 uninstall:
-	for file in `cat $(DESTDIR)$(perl_installsitearch)/auto/Pg/.packlist`; do \
-	  rm -f $(DESTDIR)$$file || exit; \
-	done
-	rm -f $(DESTDIR)$(perl_installsitearch)/auto/Pg/.packlist
-	-rmdir $(DESTDIR)$(perl_installsitearch)/auto/Pg
+	rm -f $(addprefix $(DESTDIR)$(perl_installsitearch)/, Pg.pm auto/Pg/Pg.bs auto/Pg/Pg$(DLSUFFIX) auto/Pg/autosplit.ix) $(DESTDIR)$(perl_installman3dir)/Pg.$(perl_man3ext)
 
 
-clean distclean maintainer-clean:
-	-[ -f Makefile ] && $(MAKE) -f Makefile clean
-	rm -f Makefile Makefile.old
-	@rm -f fake-packlist
-
-
-installcheck test: Makefile
-	$(MAKE) -f $< test
+clean distclean maintainer-clean: clean-lib
+	rm -f $(OBJS) Pg.c Pg.bs Pg.$(perl_man3ext)
+	rm -rf auto

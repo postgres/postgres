@@ -1,24 +1,43 @@
-# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.9 2002/02/23 21:49:10 momjian Exp $
+# Makefile for PL/Perl
+# $Header: /cvsroot/pgsql/src/pl/plperl/GNUmakefile,v 1.10 2002/05/28 16:57:53 petere Exp $
 
 subdir = src/pl/plperl
 top_builddir = ../../..
 include $(top_builddir)/src/Makefile.global
 
-ifeq ($(allow_nonpic_in_shlib),yes)
-makefile_pl_flags = --force
+ifeq ($(perl_useshrplib),true)
+shared_libperl = yes
 endif
 
+# If we don't have a shared library and the platform doesn't allow it
+# to work without, we have to skip it.
+ifneq (,$(findstring yes, $(shared_libperl)$(allow_nonpic_in_shlib)))
 
-all: Makefile
-	$(MAKE) -f $< all VPATH=$(VPATH)
+# The code isn't clean with regard to these warnings.
+ifeq ($(GCC),yes)
+override CFLAGS := $(filter-out -Wall -Wmissing-declarations -Wmissing-prototypes, $(CFLAGS))
+endif
 
-Makefile: Makefile.PL
-	plperl_installdir='$$(DESTDIR)$(pkglibdir)' \
-	$(PERL) $< $(makefile_pl_flags) LIBS='$(BE_DLLLIBS)' \
-	INC='-I$(srcdir) $(filter -I%, $(CPPFLAGS))'
+override CPPFLAGS := -I$(srcdir) -I$(perl_archlibexp)/CORE $(CPPFLAGS)
+
+
+NAME = plperl
+SO_MAJOR_VERSION = 0
+SO_MINOR_VERSION = 0
+
+OBJS = plperl.o eloglvl.o SPI.o
+SHLIB_LINK = $(perl_embed_ldflags) $(BE_DLLLIBS)
+
+include $(top_srcdir)/src/Makefile.shlib
+
+
+all: all-lib
+
+SPI.c: SPI.xs
+	$(PERL) $(perl_privlibexp)/ExtUtils/xsubpp -typemap $(perl_privlibexp)/ExtUtils/typemap $< >$@
 
 install: all installdirs
-	$(MAKE) -f Makefile install DESTDIR='$(DESTDIR)'
+	$(INSTALL_SHLIB) $(shlib) $(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)
 
 installdirs:
 	$(mkinstalldirs) $(DESTDIR)$(pkglibdir)
@@ -26,6 +45,16 @@ installdirs:
 uninstall:
 	rm -f $(DESTDIR)$(pkglibdir)/plperl$(DLSUFFIX)
 
-clean distclean maintainer-clean:
-	-[ -f Makefile ] && $(MAKE) -f Makefile clean
-	rm -f Makefile Makefile.old
+clean distclean maintainer-clean: clean-lib
+	rm -f SPI.c $(OBJS)
+
+else # can't build
+
+all:
+	@echo ""; \
+	 echo "*** Cannot build PL/Perl because libperl is not a shared library."; \
+	 echo "*** You might have to rebuild your Perl installation.  Refer to"; \
+	 echo "*** the documentation for details."; \
+	 echo ""
+
+endif # can't build

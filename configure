@@ -4956,19 +4956,44 @@ fi
 
 if test "$with_perl" = yes; then
 
-
-echo "$as_me:$LINENO: checking Perl installation directories" >&5
-echo $ECHO_N "checking Perl installation directories... $ECHO_C" >&6
-
-# These are the ones we currently need.  Others can be added easily.
+echo "$as_me:$LINENO: checking for Perl installsitearch" >&5
+echo $ECHO_N "checking for Perl installsitearch... $ECHO_C" >&6
 perl_installsitearch=`$PERL -MConfig -e 'print $Config{installsitearch}'`
-perl_installsitelib=`$PERL -MConfig -e 'print $Config{installsitelib}'`
+echo "$as_me:$LINENO: result: $perl_installsitearch" >&5
+echo "${ECHO_T}$perl_installsitearch" >&6
+echo "$as_me:$LINENO: checking for Perl installman3dir" >&5
+echo $ECHO_N "checking for Perl installman3dir... $ECHO_C" >&6
 perl_installman3dir=`$PERL -MConfig -e 'print $Config{installman3dir}'`
+echo "$as_me:$LINENO: result: $perl_installman3dir" >&5
+echo "${ECHO_T}$perl_installman3dir" >&6
+echo "$as_me:$LINENO: checking for Perl archlibexp" >&5
+echo $ECHO_N "checking for Perl archlibexp... $ECHO_C" >&6
+perl_archlibexp=`$PERL -MConfig -e 'print $Config{archlibexp}'`
+echo "$as_me:$LINENO: result: $perl_archlibexp" >&5
+echo "${ECHO_T}$perl_archlibexp" >&6
+echo "$as_me:$LINENO: checking for Perl privlibexp" >&5
+echo $ECHO_N "checking for Perl privlibexp... $ECHO_C" >&6
+perl_privlibexp=`$PERL -MConfig -e 'print $Config{privlibexp}'`
+echo "$as_me:$LINENO: result: $perl_privlibexp" >&5
+echo "${ECHO_T}$perl_privlibexp" >&6
+echo "$as_me:$LINENO: checking for Perl useshrplib" >&5
+echo $ECHO_N "checking for Perl useshrplib... $ECHO_C" >&6
+perl_useshrplib=`$PERL -MConfig -e 'print $Config{useshrplib}'`
+echo "$as_me:$LINENO: result: $perl_useshrplib" >&5
+echo "${ECHO_T}$perl_useshrplib" >&6
+echo "$as_me:$LINENO: checking for Perl man3ext" >&5
+echo $ECHO_N "checking for Perl man3ext... $ECHO_C" >&6
+perl_man3ext=`$PERL -MConfig -e 'print $Config{man3ext}'`
+echo "$as_me:$LINENO: result: $perl_man3ext" >&5
+echo "${ECHO_T}$perl_man3ext" >&6
 
-
-echo "$as_me:$LINENO: result: done" >&5
-echo "${ECHO_T}done" >&6
-
+echo "$as_me:$LINENO: checking for flags to link embedded Perl" >&5
+echo $ECHO_N "checking for flags to link embedded Perl... $ECHO_C" >&6
+pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
+pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
+perl_embed_ldflags=`echo X"$pgac_tmp1" | sed "s/^X//;s%$pgac_tmp2%%"`
+echo "$as_me:$LINENO: result: $perl_embed_ldflags" >&5
+echo "${ECHO_T}$perl_embed_ldflags" >&6
 fi
 
 if test "$with_python" = yes; then
@@ -17414,8 +17439,12 @@ s,@YFLAGS@,$YFLAGS,;t t
 s,@WISH@,$WISH,;t t
 s,@PERL@,$PERL,;t t
 s,@perl_installsitearch@,$perl_installsitearch,;t t
-s,@perl_installsitelib@,$perl_installsitelib,;t t
 s,@perl_installman3dir@,$perl_installman3dir,;t t
+s,@perl_archlibexp@,$perl_archlibexp,;t t
+s,@perl_privlibexp@,$perl_privlibexp,;t t
+s,@perl_useshrplib@,$perl_useshrplib,;t t
+s,@perl_man3ext@,$perl_man3ext,;t t
+s,@perl_embed_ldflags@,$perl_embed_ldflags,;t t
 s,@PYTHON@,$PYTHON,;t t
 s,@python_version@,$python_version,;t t
 s,@python_prefix@,$python_prefix,;t t

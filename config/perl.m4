@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/config/perl.m4,v 1.1 2001/08/26 22:28:04 petere Exp $
+# $Header: /cvsroot/pgsql/config/perl.m4,v 1.2 2002/05/28 16:57:53 petere Exp $
 
 
 # PGAC_PATH_PERL
@@ -7,21 +7,29 @@ AC_DEFUN([PGAC_PATH_PERL],
 [AC_PATH_PROG(PERL, perl)])
 
 
-# PGAC_CHECK_PERL_DIRS
-# ---------------------
-AC_DEFUN([PGAC_CHECK_PERL_DIRS],
-[
-AC_REQUIRE([PGAC_PATH_PERL])
-AC_MSG_CHECKING([Perl installation directories])
+# PGAC_CHECK_PERL_CONFIG(NAME)
+# ----------------------------
+AC_DEFUN([PGAC_CHECK_PERL_CONFIG],
+[AC_REQUIRE([PGAC_PATH_PERL])
+AC_MSG_CHECKING([for Perl $1])
+perl_$1=`$PERL -MConfig -e 'print $Config{$1}'`
+AC_SUBST(perl_$1)dnl
+AC_MSG_RESULT([$perl_$1])])
 
-# These are the ones we currently need.  Others can be added easily.
-perl_installsitearch=`$PERL -MConfig -e 'print $Config{installsitearch}'`
-perl_installsitelib=`$PERL -MConfig -e 'print $Config{installsitelib}'`
-perl_installman3dir=`$PERL -MConfig -e 'print $Config{installman3dir}'`
 
-AC_SUBST(perl_installsitearch)[]dnl
-AC_SUBST(perl_installsitelib)[]dnl
-AC_SUBST(perl_installman3dir)[]dnl
+# PGAC_CHECK_PERL_CONFIGS(NAMES)
+# ------------------------------
+AC_DEFUN([PGAC_CHECK_PERL_CONFIGS],
+[m4_foreach([pgac_item], [$1], [PGAC_CHECK_PERL_CONFIG(pgac_item)])])
 
-AC_MSG_RESULT(done)
-])
+
+# PGAC_CHECK_PERL_EMBED_LDFLAGS
+# -----------------------------
+AC_DEFUN([PGAC_CHECK_PERL_EMBED_LDFLAGS],
+[AC_REQUIRE([PGAC_PATH_PERL])
+AC_MSG_CHECKING(for flags to link embedded Perl)
+pgac_tmp1=`$PERL -MExtUtils::Embed -e ldopts`
+pgac_tmp2=`$PERL -MConfig -e 'print $Config{ccdlflags}'`
+perl_embed_ldflags=`echo X"$pgac_tmp1" | sed "s/^X//;s%$pgac_tmp2%%"`
+AC_SUBST(perl_embed_ldflags)dnl
+AC_MSG_RESULT([$perl_embed_ldflags])])

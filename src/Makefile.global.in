@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.147 2002/05/24 18:10:17 petere Exp $
+# $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.148 2002/05/28 16:57:53 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -214,8 +214,12 @@ X = @EXEEXT@
 
 PERL			= @PERL@
 perl_installsitearch	= @perl_installsitearch@
-perl_installsitelib	= @perl_installsitelib@
 perl_installman3dir	= @perl_installman3dir@
+perl_archlibexp		= @perl_archlibexp@
+perl_privlibexp		= @perl_privlibexp@
+perl_useshrplib		= @perl_useshrplib@
+perl_embed_ldflags	= @perl_embed_ldflags@
+perl_man3ext		= @perl_man3ext@
 
 # Miscellaneous
 
