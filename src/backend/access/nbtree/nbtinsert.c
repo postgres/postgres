@@ -7,41 +7,20 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.5 1996/11/03 12:35:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.6 1996/11/05 10:35:29 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <time.h>
+#include <postgres.h>
 
-#include "postgres.h"
-
-#include "utils/rel.h"
-
-#include "storage/buf.h"
-
-#include "storage/block.h"
-#include "storage/off.h"
-#include "storage/itemptr.h"
-#include "access/itup.h"
-#include "access/funcindex.h"
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/bufpage.h"
-#include "utils/nabstime.h"
-#include "utils/palloc.h"
-#include "access/htup.h"
-#include "utils/tqual.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/nbtree.h"
-
-#include "storage/ipc.h"
-#include "storage/bufmgr.h"
+#include <utils/memutils.h>
+#include <storage/bufpage.h>
+#include <access/nbtree.h>
+#include <storage/bufmgr.h>
 
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif

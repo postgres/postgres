@@ -7,22 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.3 1996/11/03 22:57:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtstrat.c,v 1.4 1996/11/05 10:35:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "utils/rel.h"
-
-#include "access/itup.h"
-#include "access/funcindex.h"
-#include "storage/bufpage.h"
-#include "access/htup.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/nbtree.h"
+#include <access/istrat.h>
+#include <storage/bufpage.h>
+#include <access/nbtree.h>
 
 /*
  * Note:

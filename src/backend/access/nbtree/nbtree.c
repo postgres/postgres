@@ -8,34 +8,30 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.8 1996/11/03 22:57:54 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.9 1996/11/05 10:35:32 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <time.h>
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "utils/rel.h"
-#include "access/genam.h"
+#include <access/genam.h>
+#include <storage/bufpage.h>
+#include <storage/bufmgr.h>
+#include <access/nbtree.h>
+#include <executor/executor.h>
+#include <access/heapam.h>
+#include <catalog/index.h>
+#include <miscadmin.h>
 
-#include "storage/bufpage.h"
-#include "storage/bufmgr.h"
-#include "access/htup.h"
-#include "utils/palloc.h"
-#include "access/nbtree.h"
-
-#include "executor/executor.h"
-
-#include "access/heapam.h"
-
-#include "catalog/index.h"
-
-#include "miscadmin.h"
+#ifndef HAVE_MEMMOVE
+# include <regex/utils.h>
+#else
+# include <string.h>
+#endif
 
 bool	BuildingBtree = false;
 bool	FastBuild = false; /* turn this on to make bulk builds work*/

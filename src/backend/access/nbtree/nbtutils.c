@@ -7,30 +7,25 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.6 1996/11/03 22:57:59 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.7 1996/11/05 10:35:38 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <time.h>
+#include <postgres.h>
 
-#include "postgres.h"
+#include <access/genam.h>
+#include <fmgr.h>
+#include <storage/bufpage.h>
+#include <access/nbtree.h>
+#include <access/istrat.h>
+#include <access/iqual.h>
 
-#include "utils/rel.h"
-#include "access/genam.h"
-
-#include "storage/bufpage.h"
-#include "access/htup.h"
-#include "utils/palloc.h"
-#include "access/nbtree.h"
-#include "access/istrat.h"
-#include "access/iqual.h"
 #ifndef HAVE_MEMMOVE
-# include "regex/utils.h"
+# include <regex/utils.h>
 #else
 # include <string.h>
 #endif
-#include "fmgr.h"
 
 ScanKey 
 _bt_mkscankey(Relation rel, IndexTuple itup)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.4 1996/11/03 22:57:55 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.5 1996/11/05 10:35:33 scrappy Exp $
  *
  *
  * NOTES
@@ -27,19 +27,10 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <postgres.h>
 
-#include "utils/rel.h"
-
-#include "access/itup.h"
-#include "access/funcindex.h"
-#include "storage/bufpage.h"
-#include "access/htup.h"
-#include "utils/palloc.h"
-#include "access/relscan.h"
-#include "access/sdir.h"
-#include "access/nbtree.h"
-
+#include <storage/bufpage.h>
+#include <access/nbtree.h>
 
 typedef struct BTScanListData {
     IndexScanDesc		btsl_scan;
