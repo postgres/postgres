@@ -29,8 +29,10 @@ PARSER
 * Select a[1] FROM test fails, it needs test.a[1]
 * Array index references without table name cause problems
 * Update table SET table.value = 3 fails
-* Creating index of timestamp fails
+* Creating index of TIMESTAMP fails, rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
+* INSERT ... SELECT ... GROUP BY groups by target columns not source columns
+* CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
 
 VIEWS
 
@@ -80,7 +82,8 @@ TYPES
 * Large objects
 	o Fix large object mapping scheme, own typeid or reltype(Peter)
 	o Allow large text type to use large objects(Peter)
-	o Not to stuff everything as files in a single directory
+	o Not to stuff everything as files in a single directory, hash dirs
+	o Allow large object vacuuming
 * Allow pg_descriptions when creating types, tables, columns, and functions
 * Add IPv6 capability to INET/CIDR types
 * Make a separate SERIAL type?
@@ -90,6 +93,7 @@ TYPES
 * Allow LOCALE on a per-column basis, default to ASCII
 * Allow array on int8[]
 * Remove Money type, add money formatting for decimal type
+* Fix typein/out functions to not be user-callable
 
 VIEWS
 
@@ -132,6 +136,7 @@ CLIENTS
 * Allow psql \copy to allow delimiters
 * Add a function to return the last inserted oid, for use in psql scripts
 * Allow psql to print nulls as distinct from ""(?)
+* PQrequestCancel() be able to terminate backend waiting for lock
 
 MISC
 
@@ -182,17 +187,23 @@ INDEXES
   a matching index
 * Improve LIMIT processing by using index to limit rows processed
 * Have optimizer take LIMIT into account when considering index scans
+* Make index creation use psort code, because it is now faster(Vadim)
+* Create more system table indexes for faster cache lookups
+* fix indexscan() so it does leak memory by not requiring caller to free
+* Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
 
 CACHE
 
 * Cache most recent query plan(s?)
 * Shared catalog cache, reduce lseek()'s by caching table size in shared area
+* elog() flushes cache, try invalidating just entries from current xact,
+  perhaps using invalidation cache
+
 
 MISC
 
 * Allow compression of log and meta data
 * Update pg_statistic table to remove operator column
-* Make index creation use psort code, because it is now faster(Vadim)
 * Allow char() not to use variable-sized header to reduce disk size
 * Do async I/O to do better read-ahead of data
 * Fix memory exhaustion when using many OR's
@@ -201,15 +212,15 @@ MISC
 * Use mmap() rather than SYSV shared memory(?)
 * Process const = const parts of OR clause in separate pass
 * Make oid use oidin/oidout not int4in/int4out in pg_type.h
-* Create more system table indexes for faster cache lookups
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
 * use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory
   allocation
-* fix indexscan() so it does leak memory by not requiring caller to free
-* fix memory leak in cache code when non-existant table is refer
+* fix memory leak in cache code when non-existant table is referenced
+* In WHERE x=3 AND x=y, add y=3
+* pass atttypmod through parser in more cases(Bruce)
 
 SOURCE CODE
 -----------
