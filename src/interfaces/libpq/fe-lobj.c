@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.38 2001/08/21 20:39:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.39 2001/09/17 20:05:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,9 +18,6 @@
 #include <sys/stat.h>
 #include <errno.h>
 
-#include "libpq-fe.h"
-#include "libpq-int.h"
-
 #ifdef WIN32
 #include "win32.h"
 #include "io.h"
@@ -28,11 +25,15 @@
 #include <unistd.h>
 #endif
 
+#include "libpq-fe.h"
+#include "libpq-int.h"
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
+
 
 #define LO_BUFSIZE		  8192
 
 static int	lo_initialize(PGconn *conn);
+
 
 /*
  * lo_open
@@ -123,7 +124,7 @@ lo_close(PGconn *conn, int fd)
  * lo_read
  *	  read len bytes of the large object into buf
  *
- * returns the length of bytes read.
+ * returns the number of bytes read, or -1 on failure.
  * the CALLER must have allocated enough space to hold the result returned
  */
 
@@ -166,6 +167,7 @@ lo_read(PGconn *conn, int fd, char *buf, size_t len)
  * lo_write
  *	  write len bytes of buf into the large object fd
  *
+ * returns the number of bytes written, or -1 on failure.
  */
 int
 lo_write(PGconn *conn, int fd, char *buf, size_t len)
@@ -273,7 +275,7 @@ lo_creat(PGconn *conn, int mode)
 	if (conn->lobjfuncs == (PGlobjfuncs *) NULL)
 	{
 		if (lo_initialize(conn) < 0)
-			return -1;
+			return InvalidOid;
 	}
 
 	argv[0].isint = 1;
@@ -373,9 +375,9 @@ lo_unlink(PGconn *conn, Oid lobjId)
 /*
  * lo_import -
  *	  imports a file as an (inversion) large object.
- *		returns the oid of that object upon success,
- * returns InvalidOid upon failure
  *
+ * returns the oid of that object upon success,
+ * returns InvalidOid upon failure
  */
 
 Oid
@@ -409,6 +411,7 @@ lo_import(PGconn *conn, const char *filename)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not create large object for file \"%s\"\n"),
 						  filename);
+		(void) close(fd);
 		return InvalidOid;
 	}
 
@@ -418,6 +421,7 @@ lo_import(PGconn *conn, const char *filename)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open large object %u\n"),
 						  lobjOid);
+		(void) close(fd);
 		return InvalidOid;
 	}
 
@@ -432,6 +436,8 @@ lo_import(PGconn *conn, const char *filename)
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("error while reading file \"%s\"\n"),
 							  filename);
+			(void) close(fd);
+			(void) lo_close(conn, lobj);
 			return InvalidOid;
 		}
 	}
@@ -457,7 +463,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	int			lobj;
 
 	/*
-	 * create an inversion "object"
+	 * open the large object.
 	 */
 	lobj = lo_open(conn, lobjId, INV_READ);
 	if (lobj == -1)
@@ -468,7 +474,7 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 	}
 
 	/*
-	 * open the file to be written to
+	 * create the file to be written to
 	 */
 	fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	if (fd < 0)
@@ -476,7 +482,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("could not open file \"%s\": %s\n"),
 						  filename, strerror(errno));
-		return 0;
+		(void) lo_close(conn, lobj);
+		return -1;
 	}
 
 	/*
@@ -490,6 +497,8 @@ lo_export(PGconn *conn, Oid lobjId, const char *filename)
 			printfPQExpBuffer(&conn->errorMessage,
 							  libpq_gettext("error while writing to file \"%s\"\n"),
 							  filename);
+			(void) lo_close(conn, lobj);
+			(void) close(fd);
 			return -1;
 		}
 	}
