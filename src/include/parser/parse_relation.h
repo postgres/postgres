@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.43 2004/04/02 19:07:02 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parse_relation.h,v 1.44 2004/04/18 18:12:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ extern RangeTblEntry *GetRTEByRangeTablePosn(ParseState *pstate,
 											 int sublevels_up);
 extern Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 							  char *colname);
-extern Node *colnameToVar(ParseState *pstate, char *colname);
+extern Node *colNameToVar(ParseState *pstate, char *colname, bool localonly);
 extern Node *qualifiedNameToVar(ParseState *pstate,
 				   char *schemaname,
 				   char *refname,

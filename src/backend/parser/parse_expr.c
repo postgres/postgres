@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.168 2004/04/02 19:06:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.169 2004/04/18 18:12:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -966,7 +966,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 				char	   *name = strVal(lfirst(cref->fields));
 
 				/* Try to identify as an unqualified column */
-				node = colnameToVar(pstate, name);
+				node = colNameToVar(pstate, name, false);
 
 				if (node == NULL)
 				{
