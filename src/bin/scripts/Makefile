@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.2 1999/12/05 20:02:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Makefile,v 1.3 1999/12/08 10:29:55 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -32,7 +32,7 @@ droplang:
 vacuumdb:
 
 install: $(SCRIPTS)
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$(X)$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $+ $(BINDIR)
 
 clean:
 	rm -f createlang

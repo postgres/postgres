@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.13 1999/05/20 16:50:05 wieck Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Makefile,v 1.14 1999/12/08 10:29:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,7 +21,7 @@ initdb: initdb.sh
 			initdb.sh > initdb
 
 install: initdb
-	$(INSTALL) $(INSTL_EXE_OPTS) $< $(BINDIR)/$<
+	$(INSTALL) $(INSTL_EXE_OPTS) $+ $(BINDIR)
 
 clean:
 	rm -f initdb
