@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.156 2004/08/04 21:33:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.157 2004/08/08 03:22:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2187,6 +2187,15 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
  * Restore the backup blocks present in an XLOG record, if any.
  *
  * We assume all of the record has been read into memory at *record.
+ *
+ * Note: when a backup block is available in XLOG, we restore it
+ * unconditionally, even if the page in the database appears newer.
+ * This is to protect ourselves against database pages that were partially
+ * or incorrectly written during a crash.  We assume that the XLOG data
+ * must be good because it has passed a CRC check, while the database
+ * page might not be.  This will force us to replay all subsequent
+ * modifications of the page that appear in XLOG, rather than possibly
+ * ignoring them as already applied, but that's not a huge drawback.
  */
 static void
 RestoreBkpBlocks(XLogRecord *record, XLogRecPtr lsn)
