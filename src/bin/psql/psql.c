@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.44 1997/01/02 06:45:25 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.45 1997/01/02 07:07:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1378,11 +1378,9 @@ MainLoop(PsqlSettings * settings, FILE * source)
 						 query);
 		if (slashCmdStatus == 1) {
 		    if (query[0] == '\0')
-		    {
 			paren_level = 0;
-		    	free(line);
-			continue;
-		    }
+		    free(line);
+		    continue;
 		}
 		if (slashCmdStatus == 2) {
 		    free(line);
