@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.19 1996/12/27 23:12:54 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.20 1996/12/28 22:44:58 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -287,7 +287,8 @@ dumpClasses(const TableInfo tblinfo[], const int numTables, FILE *fout,
     int i;
     char *all_only;
 
-    if (onlytable = NULL) all_only = "all";
+    if (onlytable == NULL)
+	all_only = "all";
     else all_only = "one";
     
     if (g_verbose)
