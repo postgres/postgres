@@ -138,8 +138,7 @@ Allow functions to be executed with the privilege of the function owner (Peter)
 
 Client Authentication
 =====================
-Add file to hold passwords using PGPASSWORDFILE environment variable 
-  (Alvaro Herrera)
+Allow $HOME/.pgpass to store host/user password combinations (Alvaro Herrera)
 
 Server Configuration
 ====================
