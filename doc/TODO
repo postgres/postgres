@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Oct  8 20:33:19 EDT 2004
+Last updated:		Fri Oct  8 21:28:58 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -800,6 +800,7 @@ Source Code
 * Allow binaries to be statically linked so they are more easily relocated
 * Move some /contrib modules out to their own project sites
 * Remove Win32 rename/unlink looping if unnecessary
+
 * Win32
 	o Remove per-backend parameter file and move into shared memory?
 	o Remove configure.in check for link failure when cause is found
@@ -809,6 +810,8 @@ Source Code
 	  extra newline
 	o Allow psql to use readline once non-US code pages work with
 	  backslashes
+	o Re-enable timezone output on log_line_prefix '%t' when a
+	  shorter timezone string is available
 
 * Wire Protocol Changes
 	o Allow dynamic character set handling
