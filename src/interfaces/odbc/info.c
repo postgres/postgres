@@ -1201,10 +1201,12 @@ ConnInfo *ci;
 	// **********************************************************************
 	//	Create the query to find out the columns (Note: pre 6.3 did not have the atttypmod field)
 	// **********************************************************************
-	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid,t.typname, a.attnum, a.attlen, %s, a.attnotnull, c.relhasrules "
-		"from pg_user u, pg_class c, pg_attribute a, pg_type t where "
-		"int4out(u.usesysid) = int4out(c.relowner) and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
-		PROTOCOL_62(ci) ? "a.attlen" : "a.atttypmod");
+	sprintf(columns_query, "select u.usename, c.relname, a.attname, a.atttypid"
+			", t.typname, a.attnum, a.attlen, %s, a.attnotnull, c.relhasrules"
+			" from pg_user u, pg_class c, pg_attribute a, pg_type t"
+			" where u.usesysid = c.relowner"
+			" and c.oid= a.attrelid and a.atttypid = t.oid and (a.attnum > 0)",
+			PROTOCOL_62(ci) ? "a.attlen" : "a.atttypmod");
 
 	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
 	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
@@ -1593,7 +1595,7 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
 	// **********************************************************************
 	sprintf(columns_query, "select c.relhasrules "
 		"from pg_user u, pg_class c where "
-		"int4out(u.usesysid) = int4out(c.relowner) ");
+		"u.usesysid = c.relowner");
 
 	my_strcat(columns_query, " and c.relname like '%.*s'", szTableName, cbTableName);
 	my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
@@ -1848,8 +1850,11 @@ mylog("%s: entering...stmt=%u\n", func, stmt);
     }
 	indx_stmt = (StatementClass *) hindx_stmt;
 
-	sprintf(index_query, "select c.relname, i.indkey, i.indisunique, i.indisclustered, c.relhasrules from pg_index i, pg_class c, pg_class d where c.oid = i.indexrelid and d.relname = '%s' and d.oid = i.indrelid", 
-		table_name);
+	sprintf(index_query, "select c.relname, i.indkey, i.indisunique"
+			", i.indisclustered, c.relhasrules"
+			" from pg_index i, pg_class c, pg_class d"
+			" where c.oid = i.indexrelid and d.relname = '%s'"
+			" and d.oid = i.indrelid", table_name);
 
     result = SQLExecDirect(hindx_stmt, index_query, strlen(index_query));
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
@@ -2061,7 +2066,9 @@ static char *func="SQLColumnPrivileges";
 }
 
 
-
+/* SQLPrimaryKeys()
+ * Retrieve the primary key columns for the specified table.
+ */
 RETCODE SQL_API SQLPrimaryKeys(
                                HSTMT         hstmt,
                                UCHAR FAR *   szTableQualifier,
@@ -2135,7 +2142,23 @@ Int2 result_cols;
 		return SQL_ERROR;
 	}
 
+#if 0
 	sprintf(tables_query, "select distinct on (attnum) a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum", pktab);
+#else
+	/* Simplified query to remove assumptions about
+	 * number of possible index columns.
+	 * Courtesy of Tom Lane - thomas 2000-03-21
+	 */
+	sprintf(tables_query, "select ta.attname, ia.attnum"
+			" from pg_attribute ta, pg_attribute ia, pg_class c, pg_index i"
+			" where c.relname = '%s_pkey'"
+			" AND c.oid = i.indexrelid"
+			" AND ia.attrelid = i.indexrelid"
+			" AND ta.attrelid = i.indrelid"
+			" AND ta.attnum = i.indkey[ia.attnum-1]"
+			" order by ia.attnum", pktab);
+#endif
+
 
 	mylog("SQLPrimaryKeys: tables_query='%s'\n", tables_query);
 
@@ -2166,11 +2189,11 @@ Int2 result_cols;
 
         set_tuplefield_null(&row->tuple[0]);
 
-        // I have to hide the table owner from Access, otherwise it
-        // insists on referring to the table as 'owner.table'.
-        // (this is valid according to the ODBC SQL grammar, but
-        // Postgres won't support it.)
-
+		/* I have to hide the table owner from Access, otherwise it
+		 * insists on referring to the table as 'owner.table'.
+		 * (this is valid according to the ODBC SQL grammar, but
+		 * Postgres won't support it.)
+		 */
         set_tuplefield_string(&row->tuple[1], "");
         set_tuplefield_string(&row->tuple[2], pktab);
         set_tuplefield_string(&row->tuple[3], attname);
@@ -2312,8 +2335,11 @@ Int2 result_cols;
 	*/
 	if (fktab[0] != '\0') {
 
-		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs, pg_trigger.tgname from pg_proc, pg_trigger, pg_class where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid AND pg_proc.proname = 'check_primary_key' AND pg_class.relname = '%s'",
-			fktab);
+		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs, pg_trigger.tgname"
+				" from pg_proc, pg_trigger, pg_class"
+				" where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid"
+				" AND pg_proc.proname = 'check_primary_key' AND pg_class.relname = '%s'",
+				fktab);
 
 		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
@@ -2487,8 +2513,12 @@ Int2 result_cols;
 	*/
     else if (pktab[0] != '\0') {
 
-		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs, pg_trigger.tgtype, pg_trigger.tgname from pg_proc, pg_trigger, pg_class where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid AND pg_proc.proname = 'check_foreign_key' AND pg_class.relname = '%s'",
-			pktab);
+		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs"
+				", pg_trigger.tgtype, pg_trigger.tgname"
+				" from pg_proc, pg_trigger, pg_class"
+				" where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid"
+				" AND pg_proc.proname = 'check_foreign_key' AND pg_class.relname = '%s'",
+				pktab);
 
 		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
 		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {

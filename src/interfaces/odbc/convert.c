@@ -110,16 +110,16 @@ int
 copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType, 
 					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
 {
-Int4 len = 0, copy_len = 0;
-SIMPLE_TIME st;
-time_t t = time(NULL);
-struct tm *tim;
-int pcbValueOffset, rgbValueOffset;
-char *rgbValueBindRow, *ptr;
-int bind_row = stmt->bind_row;
-int bind_size = stmt->options.bind_size;
-int result = COPY_OK;
-char tempBuf[TEXT_FIELD_SIZE+5];
+	Int4 len = 0, copy_len = 0;
+	SIMPLE_TIME st;
+	time_t t = time(NULL);
+	struct tm *tim;
+	int pcbValueOffset, rgbValueOffset;
+	char *rgbValueBindRow, *ptr;
+	int bind_row = stmt->bind_row;
+	int bind_size = stmt->options.bind_size;
+	int result = COPY_OK;
+	char tempBuf[TEXT_FIELD_SIZE+5];
 
 /*	rgbValueOffset is *ONLY* for character and binary data */
 /*	pcbValueOffset is for computing any pcbValue location */
@@ -211,11 +211,35 @@ char tempBuf[TEXT_FIELD_SIZE+5];
 
 	/* This is for internal use by SQLStatistics() */
 	case PG_TYPE_INT2VECTOR: {
+		int nval, i;
+		char *vp;
 		// this is an array of eight integers
 		short *short_array = (short *) ( (char *) rgbValue + rgbValueOffset);
 
 		len = 16;
+		vp = value;
+		nval = 0;
+		for (i = 0; i < 8; i++)
+		{
+			if (sscanf(vp, "%hd", &short_array[i]) != 1)
+				break;
 
+			nval++;
+
+			/* skip the current token */
+			while ((*vp != '\0') && (! isspace(*vp))) vp++;
+			/* and skip the space to the next token */
+			while ((*vp != '\0') && (isspace(*vp))) vp++;
+			if (*vp == '\0')
+				break;
+		}
+
+		for (i = nval; i < 8; i++)
+		{
+			short_array[i] = 0;
+		}
+
+#if 0
 		sscanf(value, "%hd %hd %hd %hd %hd %hd %hd %hd",
 			&short_array[0],
 			&short_array[1],
@@ -225,13 +249,14 @@ char tempBuf[TEXT_FIELD_SIZE+5];
 			&short_array[5],
 			&short_array[6],
 			&short_array[7]);
+#endif
 
 		/*  There is no corresponding fCType for this. */
 		if(pcbValue)
 			*(SDWORD *) ((char *) pcbValue + pcbValueOffset) = len;
 
 		return COPY_OK;		/* dont go any further or the data will be trashed */
-						}
+	}
 
 	/* This is a large object OID, which is used to store LONGVARBINARY objects. */
 	case PG_TYPE_LO:
