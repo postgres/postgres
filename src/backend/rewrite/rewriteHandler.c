@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.96 2001/07/06 13:40:47 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.97 2001/07/09 23:50:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -831,7 +831,7 @@ deepRewriteQuery(Query *parsetree)
 			 numQueryRewriteInvoked - 1);
 	}
 
-	instead = FALSE;
+	instead = false;
 	result = RewriteQuery(parsetree, &instead, &qual_products);
 
 	foreach(n, result)
@@ -845,25 +845,41 @@ deepRewriteQuery(Query *parsetree)
 	}
 
 	/*
-	 * qual_products are the original query with the negated rule
-	 * qualification of an instead rule
+	 * For INSERTs, the original query is done first; for UPDATE/DELETE, it is
+	 * done last.  This is needed because update and delete rule actions might
+	 * not do anything if they are invoked after the update or delete is
+	 * performed. The command counter increment between the query execution
+	 * makes the deleted (and maybe the updated) tuples disappear so the scans
+	 * for them in the rule actions cannot find them.
 	 */
-	if (qual_products != NIL)
-		rewritten = nconc(rewritten, qual_products);
-
-	/*
-	 * The original query is appended last (if no "instead" rule) because
-	 * update and delete rule actions might not do anything if they are
-	 * invoked after the update or delete is performed. The command
-	 * counter increment between the query execution makes the deleted
-	 * (and maybe the updated) tuples disappear so the scans for them in
-	 * the rule actions cannot find them.
-	 */
-	if (!instead)
-		if (parsetree->commandType == CMD_INSERT)
+	if (parsetree->commandType == CMD_INSERT)
+	{
+		/*
+		 * qual_products are the original query with the negated rule
+		 * qualification of an INSTEAD rule
+		 */
+		if (qual_products != NIL)
+			rewritten = nconc(qual_products, rewritten);
+		/*
+		 * Add the unmodified original query, if no INSTEAD rule was seen.
+		 */
+		if (!instead)
 			rewritten = lcons(parsetree, rewritten);
-		else
+	}
+	else
+	{
+		/*
+		 * qual_products are the original query with the negated rule
+		 * qualification of an INSTEAD rule
+		 */
+		if (qual_products != NIL)
+			rewritten = nconc(rewritten, qual_products);
+		/*
+		 * Add the unmodified original query, if no INSTEAD rule was seen.
+		 */
+		if (!instead)
 			rewritten = lappend(rewritten, parsetree);
+	}
 
 	return rewritten;
 }

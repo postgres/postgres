@@ -131,7 +131,7 @@ create table rtest_nothn3 (a int4, b text);
 create table rtest_nothn4 (a int4, b text);
 
 create rule rtest_nothn_r1 as on insert to rtest_nothn1
-	where new.a >= 10 and new.a < 20 do instead (select 1);
+	where new.a >= 10 and new.a < 20 do instead nothing;
 
 create rule rtest_nothn_r2 as on insert to rtest_nothn1
 	where new.a >= 30 and new.a < 40 do instead nothing;

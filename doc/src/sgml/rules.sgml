@@ -1,3 +1,5 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.14 2001/07/09 23:50:32 tgl Exp $ -->
+
 <Chapter Id="rules">
 <Title>The <ProductName>Postgres</ProductName> Rule System</Title>
 
@@ -1015,6 +1017,16 @@
 </Para>
 
 <Para>
+    For ON INSERT rules, the original query (if not suppressed by INSTEAD)
+    is done before any actions added by rules.  This allows the actions to
+    see the inserted row(s).  But for ON UPDATE and ON
+    DELETE rules, the original query is done after the actions added by rules.
+    This ensures that the actions can see the to-be-updated or to-be-deleted
+    rows; otherwise, the actions might do nothing because they find no rows
+    matching their qualifications.
+</Para>
+
+<Para>
     The parsetrees generated from rule actions are thrown into the
     rewrite system again and maybe more rules get applied resulting
     in more or less parsetrees.
@@ -1022,8 +1034,8 @@
     or another resultrelation. Otherwise this recursive process will end up in a loop.
     There is a compiled in recursion limit of currently 10 iterations.
     If after 10 iterations there are still update rules to apply the
-    rule system assumes a loop over multiple rule definitions and aborts the
-    transaction.
+    rule system assumes a loop over multiple rule definitions and reports
+    an error.
 </Para>
 
 <Para>
@@ -1262,10 +1274,8 @@
 </Para>
 
 <Para>
-    It is important, that the original parsetree is executed last.
-    The <ProductName>Postgres</ProductName> "traffic cop" does
-    a command counter increment between the execution of the two
-    parsetrees so the second one can see changes made by the first.
+    Here we can see why it is important that the original parsetree is
+    executed last.
     If the UPDATE would have been executed first, all the rows
     are already set to zero, so the logging INSERT
     would not find any row where 0 != shoelace_data.sl_avail.

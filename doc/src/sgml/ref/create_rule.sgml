@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.23 2001/05/27 09:59:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.24 2001/07/09 23:50:31 tgl Exp $
 Postgres documentation
 -->
 
@@ -167,7 +167,8 @@ CREATE
    <replaceable class="parameter">action</replaceable> part of the rule is
    executed.  The <replaceable class="parameter">action</replaceable> is
    done instead of the original query if INSTEAD is specified; otherwise
-   it is done before the original query is performed.
+   it is done after the original query in the case of ON INSERT, or before
+   the original query in the case of ON UPDATE or ON DELETE.
    Within both the <replaceable class="parameter">condition</replaceable>
    and <replaceable class="parameter">action</replaceable>, values from
    fields in the old instance and/or the new instance are substituted for
