@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19 1996/07/31 18:55:49 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.20 1996/08/06 16:05:56 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -273,7 +273,7 @@ endif
 
 # Globally pass PORTNAME
 CFLAGS+= -DPORTNAME_$(PORTNAME)
-CFLAGS += -I ../../backend/port/$(PORTNAME)
+CFLAGS += -I../../backend/port/$(PORTNAME)
 
 # Globally pass the default TCP port for postmaster(1).
 CFLAGS+= -DPOSTPORT='"5432"'
