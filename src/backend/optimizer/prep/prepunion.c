@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.65 2001/06/05 05:26:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.66 2001/08/14 17:12:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,12 +275,14 @@ generate_nonunion_plan(SetOperationStmt *op, Query *parse,
 	 *
 	 * The tlist for an Append plan isn't important as far as the Append is
 	 * concerned, but we must make it look real anyway for the benefit of
-	 * the next plan level up.
+	 * the next plan level up.  In fact, it has to be real enough that the
+	 * flag column is shown as a variable not a constant, else setrefs.c
+	 * will get confused.
 	 */
 	plan = (Plan *)
 		make_append(makeList2(lplan, rplan),
 					false,
-					generate_setop_tlist(op->colTypes, 0, false,
+					generate_setop_tlist(op->colTypes, 2, false,
 										 lplan->targetlist,
 										 refnames_tlist));
 
@@ -353,6 +355,13 @@ recurse_union_children(Node *setOp, Query *parse,
 
 /*
  * Generate targetlist for a set-operation plan node
+ *
+ * colTypes: column datatypes for non-junk columns
+ * flag: -1 if no flag column needed, 0 or 1 to create a const flag column,
+ *       2 to create a variable flag column
+ * hack_constants: true to copy up constants (see comments in code)
+ * input_tlist: targetlist of this node's input node
+ * refnames_tlist: targetlist to take column names from
  */
 static List *
 generate_setop_tlist(List *colTypes, int flag,
@@ -414,19 +423,32 @@ generate_setop_tlist(List *colTypes, int flag,
 
 	if (flag >= 0)
 	{
-		/* Add a resjunk column yielding specified flag value */
+		/* Add a resjunk flag column */
 		resdom = makeResdom((AttrNumber) resno++,
 							INT4OID,
 							-1,
 							pstrdup("flag"),
 							true);
-		expr = (Node *) makeConst(INT4OID,
-								  sizeof(int4),
-								  Int32GetDatum(flag),
-								  false,
-								  true,
-								  false,
-								  false);
+		if (flag <= 1)
+		{
+			/* flag value is the given constant */
+			expr = (Node *) makeConst(INT4OID,
+									  sizeof(int4),
+									  Int32GetDatum(flag),
+									  false,
+									  true,
+									  false,
+									  false);
+		}
+		else
+		{
+			/* flag value is being copied up from subplan */
+			expr = (Node *) makeVar(0,
+									resdom->resno,
+									INT4OID,
+									-1,
+									0);
+		}
 		tlist = lappend(tlist, makeTargetEntry(resdom, expr));
 	}
 
