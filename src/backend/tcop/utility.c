@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.84 2000/02/19 02:29:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.85 2000/04/04 21:44:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,6 +136,8 @@ ProcessUtility(Node *parsetree,
 				PS_SET_STATUS(commandTag = (stmt->ismove) ? "MOVE" : "FETCH");
 				CHECK_IF_ABORTED();
 
+				SetQuerySnapshot();
+
 				forward = (bool) (stmt->direction == FORWARD);
 
 				/*
@@ -254,6 +256,9 @@ ProcessUtility(Node *parsetree,
 
 				PS_SET_STATUS(commandTag = "COPY");
 				CHECK_IF_ABORTED();
+
+				if (stmt->direction != FROM)
+					SetQuerySnapshot();
 
 				DoCopy(stmt->relname,
 					   stmt->binary,

@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.44 1999/12/16 22:19:44 wieck Exp $
+ * $Id: spi.c,v 1.45 2000/04/04 21:44:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -622,7 +622,6 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 	List	   *queryTree_list;
 	List	   *planTree_list;
 	List	   *queryTree_list_item;
-	List	   *ptlist;
 	QueryDesc  *qdesc;
 	Query	   *queryTree;
 	Plan	   *planTree;
@@ -645,18 +644,20 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		nargs = plan->nargs;
 		argtypes = plan->argtypes;
 	}
-	ptlist = planTree_list =
-		pg_parse_and_plan(src, argtypes, nargs, &queryTree_list, None, FALSE);
+
+	queryTree_list = pg_parse_and_rewrite(src, argtypes, nargs, FALSE);
 
 	_SPI_current->qtlist = queryTree_list;
+
+	planTree_list = NIL;
 
 	foreach(queryTree_list_item, queryTree_list)
 	{
 		queryTree = (Query *) lfirst(queryTree_list_item);
-		planTree = lfirst(planTree_list);
-		planTree_list = lnext(planTree_list);
-		islastquery = (planTree_list == NIL);	/* assume lists are same
-												 * len */
+		islastquery = (lnext(queryTree_list_item) == NIL);
+
+		planTree = pg_plan_query(queryTree);
+		planTree_list = lappend(planTree_list, planTree);
 
 		if (queryTree->commandType == CMD_UTILITY)
 		{
@@ -707,7 +708,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 	}
 
 	plan->qtlist = queryTree_list;
-	plan->ptlist = ptlist;
+	plan->ptlist = planTree_list;
 
 	return res;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.148 2000/03/23 23:16:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.149 2000/04/04 21:44:39 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -377,22 +377,23 @@ ReadCommand(StringInfo inBuf)
 	return result;
 }
 
+
+/*
+ * Parse a query string and pass it through the rewriter.
+ *
+ * A list of Query nodes is returned, since the string might contain
+ * multiple queries and/or the rewriter might expand one query to several.
+ */
 List *
-pg_parse_and_plan(char *query_string,	/* string to execute */
-				  Oid *typev,	/* argument types */
-				  int nargs,	/* number of arguments */
-				  List **queryListP,	/* returned pointer to the parse
-										 * trees */
-				  CommandDest dest,		/* where results should go */
-				  bool aclOverride)
+pg_parse_and_rewrite(char *query_string,	/* string to execute */
+					 Oid *typev,			/* argument types */
+					 int nargs,				/* number of arguments */
+					 bool aclOverride)
 {
-	List	   *querytree_list = NIL;
-	List	   *plan_list = NIL;
+	List	   *querytree_list;
 	List	   *querytree_list_item;
 	Query	   *querytree;
-	Plan	   *plan;
 	List	   *new_list;
-	List	   *rewritten;
 
 	if (DebugPrintQuery)
 	{
@@ -448,15 +449,16 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		else
 		{
 			/* rewrite regular queries */
-			rewritten = QueryRewrite(querytree);
+			List *rewritten = QueryRewrite(querytree);
 			new_list = nconc(new_list, rewritten);
 		}
 	}
 
 	querytree_list = new_list;
 
-	/*
-	 * Override ACL checking if requested
+	/* ----------------
+	 *	(3) If ACL override is requested, mark queries for no ACL check.
+	 * ----------------
 	 */
 	if (aclOverride)
 	{
@@ -503,86 +505,53 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		}
 	}
 
-	foreach(querytree_list_item, querytree_list)
+	return querytree_list;
+}
+
+
+/* Generate a plan for a single query. */
+Plan *
+pg_plan_query(Query *querytree)
+{
+	Plan	   *plan;
+
+	/* Utility commands have no plans. */
+	if (querytree->commandType == CMD_UTILITY)
+		return NULL;
+
+	if (ShowPlannerStats)
+		ResetUsage();
+
+	/* call that optimizer */
+	plan = planner(querytree);
+
+	if (ShowPlannerStats)
 	{
-		querytree = (Query *) lfirst(querytree_list_item);
-
-		/*
-		 * For each query that isn't a utility invocation, generate a
-		 * plan.
-		 */
-
-		if (querytree->commandType != CMD_UTILITY)
-		{
-
-			if (IsAbortedTransactionBlockState())
-			{
-				/* ----------------
-				 *	 the EndCommand() stuff is to tell the frontend
-				 *	 that the command ended. -cim 6/1/90
-				 * ----------------
-				 */
-				char	   *tag = "*ABORT STATE*";
-
-				EndCommand(tag, dest);
-
-				elog(NOTICE, "(transaction aborted): %s",
-					 "queries ignored until END");
-
-				if (queryListP)
-					*queryListP = NIL;
-				return NIL;
-			}
-
-			if (ShowPlannerStats)
-				ResetUsage();
-
-			/* call that optimizer */
-			plan = planner(querytree);
-
-			if (ShowPlannerStats)
-			{
-				fprintf(stderr, "! Planner Stats:\n");
-				ShowUsage();
-			}
-			plan_list = lappend(plan_list, plan);
-#ifdef INDEXSCAN_PATCH
-			/* ----------------
-			 *	Print plan if debugging.
-			 *	This has been moved here to get debugging output
-			 *	also for queries in functions.	DZ - 27-8-1996
-			 * ----------------
-			 */
-			if (DebugPrintPlan || DebugPPrintPlan)
-			{
-				if (DebugPPrintPlan)
-				{
-					TPRINTF(TRACE_PRETTY_PLAN, "plan:");
-					nodeDisplay(plan);
-				}
-				else
-				{
-					TPRINTF(TRACE_PLAN, "plan:");
-					printf("\n%s\n\n", nodeToString(plan));
-				}
-			}
-#endif
-		}
-
-		/*
-		 * If the command is an utility append a null plan. This is needed
-		 * to keep the plan_list aligned with the querytree_list or the
-		 * function executor will crash.  DZ - 30-8-1996
-		 */
-		else
-			plan_list = lappend(plan_list, NULL);
+		fprintf(stderr, "! Planner Stats:\n");
+		ShowUsage();
 	}
 
-	if (queryListP)
-		*queryListP = querytree_list;
+	/* ----------------
+	 *	Print plan if debugging.
+	 * ----------------
+	 */
+	if (DebugPrintPlan || DebugPPrintPlan)
+	{
+		if (DebugPPrintPlan)
+		{
+			TPRINTF(TRACE_PRETTY_PLAN, "plan:");
+			nodeDisplay(plan);
+		}
+		else
+		{
+			TPRINTF(TRACE_PLAN, "plan:");
+			printf("\n%s\n\n", nodeToString(plan));
+		}
+	}
 
-	return plan_list;
+	return plan;
 }
+
 
 /* ----------------------------------------------------------------
  *		pg_exec_query()
@@ -620,39 +589,31 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 										 * of superusers */
 {
 	List	   *querytree_list;
-	List	   *plan_list;
-	Query	   *querytree;
-	Plan	   *plan;
-	int			j;
 
-	/* plan the queries */
-	plan_list = pg_parse_and_plan(query_string, NULL, 0,
-								  &querytree_list, dest, aclOverride);
-
-	/* if we got a cancel signal whilst planning, quit */
-	if (QueryCancel)
-		CancelQuery();
-
-	/* OK, do it to it! */
+	/* parse and rewrite the queries */
+	querytree_list = pg_parse_and_rewrite(query_string, NULL, 0,
+										  aclOverride);
 
 	/*
 	 * NOTE: we do not use "foreach" here because we want to be sure the
-	 * list pointers have been advanced before the query is executed. We
+	 * list pointer has been advanced before the query is executed. We
 	 * need to do that because VACUUM has a nasty little habit of doing
 	 * CommitTransactionCommand at startup, and that will release the
-	 * memory holding our parse/plan lists :-(.  This needs a better
+	 * memory holding our parse list :-(.  This needs a better
 	 * solution --- currently, the code will crash if someone submits
 	 * "vacuum; something-else" in a single query string.  But memory
 	 * allocation needs redesigned anyway, so this will have to do for
 	 * now.
 	 */
-
 	while (querytree_list)
 	{
-		querytree = (Query *) lfirst(querytree_list);
+		Query	   *querytree = (Query *) lfirst(querytree_list);
+
 		querytree_list = lnext(querytree_list);
-		plan = (Plan *) lfirst(plan_list);
-		plan_list = lnext(plan_list);
+
+		/* if we got a cancel signal in parsing or prior command, quit */
+		if (QueryCancel)
+			CancelQuery();
 
 		if (querytree->commandType == CMD_UTILITY)
 		{
@@ -668,42 +629,38 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 			else if (Verbose)
 				TPRINTF(TRACE_VERBOSE, "ProcessUtility");
 
-			/*
-			 * We have to set query SnapShot in the case of FETCH or COPY TO.
-			 */
-			if (nodeTag(querytree->utilityStmt) == T_FetchStmt ||
-				(nodeTag(querytree->utilityStmt) == T_CopyStmt && 
-				((CopyStmt *)(querytree->utilityStmt))->direction != FROM))
-				SetQuerySnapshot();
 			ProcessUtility(querytree->utilityStmt, dest);
 		}
 		else
 		{
-#ifdef INDEXSCAN_PATCH
+			Plan	   *plan;
+			int			j;
 
-			/*
-			 * Print moved in pg_parse_and_plan.	DZ - 27-8-1996
-			 */
-#else
-			/* ----------------
-			 *	print plan if debugging
-			 * ----------------
-			 */
-			if (DebugPrintPlan || DebugPPrintPlan)
+			/* If aborted transaction, quit now */
+			if (IsAbortedTransactionBlockState())
 			{
-				if (DebugPPrintPlan)
-				{
-					TPRINTF(TRACE_PRETTY_PLAN, "plan:");
-					nodeDisplay(plan);
-				}
-				else
-				{
-					TPRINTF(TRACE_PLAN, "plan:");
-					printf("\n%s\n\n", nodeToString(plan));
-				}
-			}
-#endif
+				/* ----------------
+				 *	 the EndCommand() stuff is to tell the frontend
+				 *	 that the command ended. -cim 6/1/90
+				 * ----------------
+				 */
+				char	   *tag = "*ABORT STATE*";
 
+				elog(NOTICE, "current transaction is aborted, "
+					 "queries ignored until end of transaction block");
+
+				EndCommand(tag, dest);
+
+				break;
+			}
+
+			plan = pg_plan_query(querytree);
+
+			/* if we got a cancel signal whilst planning, quit */
+			if (QueryCancel)
+				CancelQuery();
+
+			/* Initialize snapshot state for query */
 			SetQuerySnapshot();
 
 			/*
@@ -1505,7 +1462,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.148 $ $Date: 2000/03/23 23:16:48 $\n");
+		puts("$Revision: 1.149 $ $Date: 2000/04/04 21:44:39 $\n");
 	}
 
 	/*

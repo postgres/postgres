@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.40 2000/01/26 05:56:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.41 2000/04/04 21:44:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,6 @@ ProcedureCreate(char *procedureName,
 	Oid			typeObjectId;
 	List	   *x;
 	List	   *querytree_list;
-	List	   *plan_list;
 	Oid			typev[FUNC_MAX_ARGS];
 	Oid			relid;
 	Oid			toid;
@@ -222,9 +221,8 @@ ProcedureCreate(char *procedureName,
 
 	if (strcmp(languageName, "sql") == 0)
 	{
-		plan_list = pg_parse_and_plan(prosrc, typev, parameterCount,
-									  &querytree_list, dest, FALSE);
-
+		querytree_list = pg_parse_and_rewrite(prosrc, typev, parameterCount,
+											  FALSE);
 		/* typecheck return value */
 		pg_checkretval(typeObjectId, querytree_list);
 	}

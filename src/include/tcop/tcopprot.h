@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.25 2000/02/20 14:28:28 petere Exp $
+ * $Id: tcopprot.h,v 1.26 2000/04/04 21:44:37 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -29,12 +29,15 @@ extern bool InError;
 extern bool	ExitAfterAbort;
 
 #ifndef BOOTSTRAP_INCLUDE
-extern List *pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
-				  List **queryListP, CommandDest dest,
-				  bool aclOverride);
+
+extern List *pg_parse_and_rewrite(char *query_string,
+								  Oid *typev, int nargs,
+								  bool aclOverride);
+extern Plan *pg_plan_query(Query *querytree);
 extern void pg_exec_query_acl_override(char *query_string);
-extern void
-			pg_exec_query_dest(char *query_string, CommandDest dest, bool aclOverride);
+extern void pg_exec_query_dest(char *query_string,
+							   CommandDest dest,
+							   bool aclOverride);
 
 #endif	 /* BOOTSTRAP_INCLUDE */
 

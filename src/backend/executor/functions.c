@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.31 2000/01/26 05:56:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.32 2000/04/04 21:44:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,6 @@ init_execution_state(FunctionCachePtr fcache,
 	execution_state *nextes;
 	execution_state *preves;
 	List	   *queryTree_list,
-			   *planTree_list,
 			   *qtl_item;
 	int			nargs = fcache->nargs;
 
@@ -92,14 +91,16 @@ init_execution_state(FunctionCachePtr fcache,
 	nextes = newes;
 	preves = (execution_state *) NULL;
 
-	planTree_list = pg_parse_and_plan(fcache->src, fcache->argOidVect,
-									nargs, &queryTree_list, None, FALSE);
+	queryTree_list = pg_parse_and_rewrite(fcache->src, fcache->argOidVect,
+										  nargs, FALSE);
 
 	foreach(qtl_item, queryTree_list)
 	{
 		Query	   *queryTree = lfirst(qtl_item);
-		Plan	   *planTree = lfirst(planTree_list);
+		Plan	   *planTree;
 		EState	   *estate;
+
+		planTree = pg_plan_query(queryTree);
 
 		if (!nextes)
 			nextes = (execution_state *) palloc(sizeof(execution_state));
@@ -141,8 +142,6 @@ init_execution_state(FunctionCachePtr fcache,
 		nextes->estate = estate;
 		preves = nextes;
 		nextes = (execution_state *) NULL;
-
-		planTree_list = lnext(planTree_list);
 	}
 
 	return newes;
@@ -151,15 +150,12 @@ init_execution_state(FunctionCachePtr fcache,
 static TupleDesc
 postquel_start(execution_state *es)
 {
-#ifdef FUNC_UTIL_PATCH
-
 	/*
 	 * Do nothing for utility commands. (create, destroy...)  DZ -
 	 * 30-8-1996
 	 */
 	if (es->qd->operation == CMD_UTILITY)
 		return (TupleDesc) NULL;
-#endif
 	return ExecutorStart(es->qd, es->estate);
 }
 
@@ -168,12 +164,10 @@ postquel_getnext(execution_state *es)
 {
 	int			feature;
 
-#ifdef FUNC_UTIL_PATCH
 	if (es->qd->operation == CMD_UTILITY)
 	{
-
 		/*
-		 * Process an utility command. (create, destroy...)  DZ -
+		 * Process a utility command. (create, destroy...)  DZ -
 		 * 30-8-1996
 		 */
 		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->dest);
@@ -181,7 +175,6 @@ postquel_getnext(execution_state *es)
 			CommandCounterIncrement();
 		return (TupleTableSlot *) NULL;
 	}
-#endif
 
 	feature = (LAST_POSTQUEL_COMMAND(es)) ? EXEC_RETONE : EXEC_RUN;
 
@@ -191,15 +184,12 @@ postquel_getnext(execution_state *es)
 static void
 postquel_end(execution_state *es)
 {
-#ifdef FUNC_UTIL_PATCH
-
 	/*
 	 * Do nothing for utility commands. (create, destroy...)  DZ -
 	 * 30-8-1996
 	 */
 	if (es->qd->operation == CMD_UTILITY)
 		return;
-#endif
 	ExecutorEnd(es->qd, es->estate);
 }
 
