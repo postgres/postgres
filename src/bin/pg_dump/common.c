@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.16 1997/09/08 21:49:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.17 1997/10/02 13:57:03 vadim Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -262,7 +262,7 @@ dumpSchema(FILE *fout,
 	if (g_verbose)
 		fprintf(stderr, "%s reading user-defined tables %s\n",
 				g_comment_start, g_comment_end);
-	tblinfo = getTables(&numTables);
+	tblinfo = getTables(&numTables, finfo, numFuncs);
 
 	if (g_verbose)
 		fprintf(stderr, "%s reading table inheritance information %s\n",
@@ -336,7 +336,7 @@ dumpSchema(FILE *fout,
  */
 
 extern void
-dumpSchemaIdx(FILE *fout, int *numTablesPtr, const char *tablename,
+dumpSchemaIdx(FILE *fout, const char *tablename,
 			  TableInfo *tblinfo, int numTables)
 {
 	int			numIndices;

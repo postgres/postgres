@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.24 1997/09/24 15:36:36 momjian Exp $
+ * $Id: pg_dump.h,v 1.25 1997/10/02 13:57:07 vadim Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -76,6 +76,7 @@ typedef struct _tableInfo
 	char	  **attnames;		/* the attribute names */
 	char	  **typnames;		/* fill out attributes */
 	bool	   *notnull;		/* Not null constraints of an attribute */
+	char	  **adef_expr;		/* DEFAULT expressions */
 	int			numParents;		/* number of (immediate) parent
 								 * supertables */
 	char	  **parentRels;		/* names of parent relations, NULL if
@@ -88,7 +89,10 @@ typedef struct _tableInfo
 								 * the POSTQUEL tables */
 	int		   *attlen;			/* attribute lengths */
 	char	   *usename;
-
+	int			ncheck;			/* # of CHECK expressions */
+	char	  **check_expr;		/* [CONSTRAINT name] CHECK expressions */
+	int			ntrig;			/* # of triggers */
+	char	  **triggers;		/* CREATE TRIGGER ... */
 } TableInfo;
 
 typedef struct _inhInfo
@@ -176,7 +180,6 @@ dumpSchema(FILE *fout,
 		   const bool acls);
 extern void
 dumpSchemaIdx(FILE *fout,
-			  int *numTablesPtr,
 			  const char *tablename,
 			  TableInfo *tblinfo,
 			  int numTables);
@@ -205,7 +208,7 @@ extern void clearOprInfo(OprInfo *, int);
 extern void clearTypeInfo(TypeInfo *, int);
 
 extern OprInfo *getOperators(int *numOperators);
-extern TableInfo *getTables(int *numTables);
+extern TableInfo *getTables(int *numTables, FuncInfo *finfo, int numFuncs);
 extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndices(int *numIndices);
