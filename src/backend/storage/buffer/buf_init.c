@@ -8,41 +8,29 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.62 2004/02/12 15:06:56 wieck Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.63 2004/04/19 23:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <sys/file.h>
-#include <math.h>
-#include <signal.h>
-
-#include "catalog/catalog.h"
-#include "executor/execdebug.h"
-#include "miscadmin.h"
-#include "storage/buf.h"
-#include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
-#include "storage/fd.h"
-#include "storage/ipc.h"
-#include "storage/lmgr.h"
-#include "storage/shmem.h"
-#include "storage/smgr.h"
-#include "storage/lwlock.h"
-#include "utils/builtins.h"
-#include "utils/hsearch.h"
-#include "utils/memutils.h"
+#include "storage/buf_internals.h"
 
-int			ShowPinTrace = 0;
-
-int			Data_Descriptors;
 
 BufferDesc *BufferDescriptors;
 Block	   *BufferBlockPointers;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
+
+/* statistics counters */
+long int	ReadBufferCount;
+long int	ReadLocalBufferCount;
+long int	BufferHitCount;
+long int	LocalBufferHitCount;
+long int	BufferFlushCount;
+long int	LocalBufferFlushCount;
 
 
 /*
@@ -61,47 +49,34 @@ bits8	   *BufferLocks;		/* flag bits showing locks I have set */
  *		see freelist.c.  A buffer cannot be replaced while in
  *		use either by data manager or during IO.
  *
- * WriteBufferBack:
- *		currently, a buffer is only written back at the time
- *		it is selected for replacement.  It should
- *		be done sooner if possible to reduce latency of
- *		BufferAlloc().	Maybe there should be a daemon process.
  *
  * Synchronization/Locking:
  *
  * BufMgrLock lock -- must be acquired before manipulating the
- *		buffer queues (lookup/freelist).  Must be released
+ *		buffer search datastructures (lookup/freelist, as well as the
+ *		flag bits of any buffer).  Must be released
  *		before exit and before doing any IO.
  *
  * IO_IN_PROGRESS -- this is a flag in the buffer descriptor.
  *		It must be set when an IO is initiated and cleared at
- *		the end of	the IO.  It is there to make sure that one
+ *		the end of the IO.  It is there to make sure that one
  *		process doesn't start to use a buffer while another is
  *		faulting it in.  see IOWait/IOSignal.
  *
- * refcount --	A buffer is pinned during IO and immediately
- *		after a BufferAlloc().	A buffer is always either pinned
- *		or on the freelist but never both.	The buffer must be
- *		released, written, or flushed before the end of
- *		transaction.
+ * refcount --	Counts the number of processes holding pins on a buffer.
+ *		A buffer is pinned during IO and immediately after a BufferAlloc().
+ *		Pins must be released before end of transaction.
  *
- * PrivateRefCount -- Each buffer also has a private refcount the keeps
+ * PrivateRefCount -- Each buffer also has a private refcount that keeps
  *		track of the number of times the buffer is pinned in the current
- *		processes.	This is used for two purposes, first, if we pin a
+ *		process.	This is used for two purposes: first, if we pin a
  *		a buffer more than once, we only need to change the shared refcount
- *		once, thus only lock the buffer pool once, second, when a transaction
+ *		once, thus only lock the shared state once; second, when a transaction
  *		aborts, it should only unpin the buffers exactly the number of times it
  *		has pinned them, so that it will not blow away buffers of another
  *		backend.
  *
  */
-
-long int	ReadBufferCount;
-long int	ReadLocalBufferCount;
-long int	BufferHitCount;
-long int	LocalBufferHitCount;
-long int	BufferFlushCount;
-long int	LocalBufferFlushCount;
 
 
 /*
@@ -118,8 +93,6 @@ InitBufferPool(void)
 				foundDescs;
 	int			i;
 
-	Data_Descriptors = NBuffers;
-
 	/*
 	 * It's probably not really necessary to grab the lock --- if there's
 	 * anyone else attached to the shmem at this point, we've got
@@ -131,7 +104,7 @@ InitBufferPool(void)
 
 	BufferDescriptors = (BufferDesc *)
 		ShmemInitStruct("Buffer Descriptors",
-					  Data_Descriptors * sizeof(BufferDesc), &foundDescs);
+						NBuffers * sizeof(BufferDesc), &foundDescs);
 
 	BufferBlocks = (char *)
 		ShmemInitStruct("Buffer Blocks",
@@ -152,9 +125,9 @@ InitBufferPool(void)
 
 		/*
 		 * link the buffers into a single linked list. This will become the
-		 * LiFo list of unused buffers returned by StragegyGetBuffer().
+		 * LIFO list of unused buffers returned by StrategyGetBuffer().
 		 */
-		for (i = 0; i < Data_Descriptors; block += BLCKSZ, buf++, i++)
+		for (i = 0; i < NBuffers; block += BLCKSZ, buf++, i++)
 		{
 			Assert(ShmemIsValid((unsigned long) block));
 
@@ -173,7 +146,7 @@ InitBufferPool(void)
 		}
 
 		/* Correct last entry */
-		BufferDescriptors[Data_Descriptors - 1].bufNext = -1;
+		BufferDescriptors[NBuffers - 1].bufNext = -1;
 	}
 
 	/* Init other shared buffer-management stuff */
@@ -215,35 +188,31 @@ InitBufferPoolAccess(void)
 		BufferBlockPointers[i] = (Block) MAKE_PTR(BufferDescriptors[i].data);
 }
 
-/* -----------------------------------------------------
+/*
  * BufferShmemSize
  *
  * compute the size of shared memory for the buffer pool including
  * data pages, buffer descriptors, hash tables, etc.
- * ----------------------------------------------------
  */
 int
 BufferShmemSize(void)
 {
 	int			size = 0;
 
-	/* size of shmem index hash table */
-	size += hash_estimate_size(SHMEM_INDEX_SIZE, sizeof(ShmemIndexEnt));
-
 	/* size of buffer descriptors */
 	size += MAXALIGN(NBuffers * sizeof(BufferDesc));
-
-	/* size of the shared replacement strategy control block */
-	size += MAXALIGN(sizeof(BufferStrategyControl));
-
-	/* size of the ARC directory blocks */
-	size += MAXALIGN(NBuffers * 2 * sizeof(BufferStrategyCDB));
 
 	/* size of data pages */
 	size += NBuffers * MAXALIGN(BLCKSZ);
 
 	/* size of buffer hash table */
 	size += hash_estimate_size(NBuffers * 2, sizeof(BufferLookupEnt));
+
+	/* size of the shared replacement strategy control block */
+	size += MAXALIGN(sizeof(BufferStrategyControl));
+
+	/* size of the ARC directory blocks */
+	size += MAXALIGN(NBuffers * 2 * sizeof(BufferStrategyCDB));
 
 	return size;
 }

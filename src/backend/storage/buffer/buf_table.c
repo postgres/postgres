@@ -3,46 +3,42 @@
  * buf_table.c
  *	  routines for finding buffers in the buffer pool.
  *
+ * NOTE: these days, what this table actually provides is a mapping from
+ * BufferTags to CDB indexes, not directly to buffers.  The function names
+ * are thus slight misnomers.
+ *
+ * Note: all routines in this file assume that the BufMgrLock is held
+ * by the caller, so no synchronization is needed.
+ *
+ *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.34 2003/12/14 00:34:47 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_table.c,v 1.35 2004/04/19 23:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-/*
- * OLD COMMENTS
- *
- * Data Structures:
- *
- *		Buffers are identified by their BufferTag (buf.h).	This
- * file contains routines for allocating a shmem hash table to
- * map buffer tags to buffer descriptors.
- *
- * Synchronization:
- *
- *	All routines in this file assume BufMgrLock is held by their caller.
- */
-
 #include "postgres.h"
 
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
+
 
 static HTAB *SharedBufHash;
 
 
 /*
  * Initialize shmem hash table for mapping buffers
+ *		size is the desired hash table size (2*NBuffers for ARC algorithm)
  */
 void
 InitBufTable(int size)
 {
 	HASHCTL		info;
 
-	/* assume lock is held */
+	/* assume no locking is needed yet */
 
 	/* BufferTag maps to Buffer */
 	info.keysize = sizeof(BufferTag);
@@ -60,6 +56,7 @@ InitBufTable(int size)
 
 /*
  * BufTableLookup
+ *		Lookup the given BufferTag; return CDB index, or -1 if not found
  */
 int
 BufTableLookup(BufferTag *tagPtr)
@@ -78,10 +75,11 @@ BufTableLookup(BufferTag *tagPtr)
 }
 
 /*
- * BufTableDelete
+ * BufTableInsert
+ *		Insert a hashtable entry for given tag and CDB index
  */
-bool
-BufTableInsert(BufferTag *tagPtr, Buffer buf_id)
+void
+BufTableInsert(BufferTag *tagPtr, int cdb_id)
 {
 	BufferLookupEnt *result;
 	bool		found;
@@ -97,14 +95,14 @@ BufTableInsert(BufferTag *tagPtr, Buffer buf_id)
 	if (found)					/* found something else in the table? */
 		elog(ERROR, "shared buffer hash table corrupted");
 
-	result->id = buf_id;
-	return TRUE;
+	result->id = cdb_id;
 }
 
 /*
  * BufTableDelete
+ *		Delete the hashtable entry for given tag
  */
-bool
+void
 BufTableDelete(BufferTag *tagPtr)
 {
 	BufferLookupEnt *result;
@@ -114,6 +112,4 @@ BufTableDelete(BufferTag *tagPtr)
 
 	if (!result)				/* shouldn't happen */
 		elog(ERROR, "shared buffer hash table corrupted");
-
-	return TRUE;
 }

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.68 2004/02/12 15:06:56 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.69 2004/04/19 23:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,15 +20,6 @@
 #include "storage/lmgr.h"
 #include "storage/lwlock.h"
 
-
-/* Buf Mgr constants */
-/* in bufmgr.c */
-extern int	Data_Descriptors;
-extern int	Free_List_Descriptor;
-extern int	Lookup_List_Descriptor;
-extern int	Num_Descriptors;
-
-extern int	ShowPinTrace;
 
 /*
  * Flags for buffer descriptors
@@ -51,10 +42,13 @@ typedef bits16 BufFlags;
  * that the backend flushing the buffer doesn't even believe the relation is
  * visible yet (its xact may have started before the xact that created the
  * rel).  The storage manager must be able to cope anyway.
+ *
+ * Note: if there's any pad bytes in the struct, INIT_BUFFERTAG will have
+ * to be fixed to zero them, since this struct is used as a hash key.
  */
 typedef struct buftag
 {
-	RelFileNode rnode;
+	RelFileNode rnode;			/* physical relation identifier */
 	BlockNumber blockNum;		/* blknum relative to begin of reln */
 } BufferTag;
 
@@ -71,12 +65,6 @@ typedef struct buftag
 	(a)->rnode = (xx_reln)->rd_node \
 )
 
-#define BUFFERTAG_EQUALS(a,xx_reln,xx_blockNum) \
-( \
-	(a)->rnode.tblNode == (xx_reln)->rd_node.tblNode && \
-	(a)->rnode.relNode == (xx_reln)->rd_node.relNode && \
-	(a)->blockNum == (xx_blockNum) \
-)
 #define BUFFERTAGS_EQUAL(a,b) \
 ( \
 	(a)->rnode.tblNode == (b)->rnode.tblNode && \
@@ -93,7 +81,7 @@ typedef struct sbufdesc
 	Buffer		bufNext;		/* link in freelist chain */
 	SHMEM_OFFSET data;			/* pointer to data in buf pool */
 
-	/* tag and id must be together for table lookup */
+	/* tag and id must be together for table lookup (still true?) */
 	BufferTag	tag;			/* file/block identifier */
 	int			buf_id;			/* buffer's index number (from 0) */
 
@@ -108,7 +96,7 @@ typedef struct sbufdesc
 	/*
 	 * We can't physically remove items from a disk page if another
 	 * backend has the buffer pinned.  Hence, a backend may need to wait
-	 * for all other pins to go away.  This is signaled by setting its own
+	 * for all other pins to go away.  This is signaled by storing its own
 	 * backend ID into wait_backend_id and setting flag bit
 	 * BM_PIN_COUNT_WAITER. At present, there can be only one such waiter
 	 * per buffer.
@@ -128,17 +116,17 @@ typedef struct sbufdesc
 #define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
 #define BL_PIN_COUNT_LOCK	(1 << 1)
 
-/* entry for buffer hashtable */
+/* entry for buffer lookup hashtable */
 typedef struct
 {
-	BufferTag	key;
-	Buffer		id;
+	BufferTag	key;			/* Tag of a disk page */
+	int			id;				/* CDB id of associated CDB */
 } BufferLookupEnt;
 
 /*
  * Definitions for the buffer replacement strategy
  */
-#define STRAT_LIST_UNUSED	-1
+#define STRAT_LIST_UNUSED	(-1)
 #define STRAT_LIST_B1		0
 #define STRAT_LIST_T1		1
 #define STRAT_LIST_T2		2
@@ -150,12 +138,13 @@ typedef struct
  */
 typedef struct
 {
-	int				prev;		/* links in the queue */
+	int				prev;		/* list links */
 	int				next;
-	int				list;		/* current list */
-	BufferTag		buf_tag;	/* buffer key */
-	Buffer			buf_id;		/* currently assigned data buffer */
+	short			list;		/* ID of list it is currently in */
+	bool			t1_vacuum;	/* t => present only because of VACUUM */
 	TransactionId	t1_xid;		/* the xid this entry went onto T1 */
+	BufferTag		buf_tag;	/* page identifier */
+	int				buf_id;		/* currently assigned data buffer, or -1 */
 } BufferStrategyCDB;
 
 /*
@@ -163,7 +152,6 @@ typedef struct
  */
 typedef struct
 {
-
 	int		target_T1_size;				/* What T1 size are we aiming for */
 	int		listUnusedCDB;				/* All unused StrategyCDB */
 	int		listHead[STRAT_NUM_LISTS];	/* ARC lists B1, T1, T2 and B2 */
@@ -175,8 +163,10 @@ typedef struct
 	long	num_hit[STRAT_NUM_LISTS];
 	time_t	stat_report;
 
-	BufferStrategyCDB	cdb[1];			/* The cache directory */
+	/* Array of CDB's starts here */
+	BufferStrategyCDB	cdb[1];			/* VARIABLE SIZE ARRAY */
 } BufferStrategyControl;
+
  
 /* counters in buf_init.c */
 extern long int ReadBufferCount;
@@ -191,24 +181,25 @@ extern long int LocalBufferFlushCount;
  * Bufmgr Interface:
  */
 
-/* Internal routines: only called by buf.c */
+/* Internal routines: only called by bufmgr */
 
-/*freelist.c*/
-extern void PinBuffer(BufferDesc *buf);
-extern void UnpinBuffer(BufferDesc *buf);
-extern BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck);
-extern BufferDesc *StrategyGetBuffer(void);
-extern void StrategyReplaceBuffer(BufferDesc *buf, Relation rnode, BlockNumber blockNum);
+/* freelist.c */
+extern BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
+										int *cdb_found_index);
+extern BufferDesc *StrategyGetBuffer(int *cdb_replace_index);
+extern void StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
+								  int cdb_found_index, int cdb_replace_index);
 extern void StrategyInvalidateBuffer(BufferDesc *buf);
 extern void StrategyHintVacuum(bool vacuum_active);
-extern int StrategyDirtyBufferList(int *buffer_dirty, int max_buffers);
+extern int StrategyDirtyBufferList(BufferDesc **buffers, BufferTag *buftags,
+								   int max_buffers);
 extern void StrategyInitialize(bool init);
 
 /* buf_table.c */
 extern void InitBufTable(int size);
 extern int BufTableLookup(BufferTag *tagPtr);
-extern bool BufTableInsert(BufferTag *tagPtr, Buffer buf_id);
-extern bool BufTableDelete(BufferTag *tagPtr);
+extern void BufTableInsert(BufferTag *tagPtr, int cdb_id);
+extern void BufTableDelete(BufferTag *tagPtr);
 
 /* bufmgr.c */
 extern BufferDesc *BufferDescriptors;

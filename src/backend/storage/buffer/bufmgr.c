@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.160 2004/02/12 20:07:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.161 2004/04/19 23:27:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,8 @@
 #include "storage/proc.h"
 #include "storage/smgr.h"
 #include "utils/relcache.h"
-
 #include "pgstat.h"
+
 
 #define BufferGetLSN(bufHdr)	\
 	(*((XLogRecPtr*) MAKE_PTR((bufHdr)->data)))
@@ -64,15 +64,17 @@
 /* GUC variable */
 bool		zero_damaged_pages = false;
 
+#ifdef NOT_USED
+int			ShowPinTrace = 0;
+#endif
+
 int			BgWriterDelay = 200;
 int			BgWriterPercent = 1;
 int			BgWriterMaxpages = 100;
 
-static void WaitIO(BufferDesc *buf);
-static void StartBufferIO(BufferDesc *buf, bool forInput);
-static void TerminateBufferIO(BufferDesc *buf);
-static void ContinueBufferIO(BufferDesc *buf, bool forInput);
-static void buffer_write_error_callback(void *arg);
+long		NDirectFileRead;	/* some I/O's are direct file access.
+								 * bypass bufmgr */
+long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
 
 /*
  * Macro : BUFFER_IS_BROKEN
@@ -80,17 +82,21 @@ static void buffer_write_error_callback(void *arg);
 */
 #define BUFFER_IS_BROKEN(buf) ((buf->flags & BM_IO_ERROR) && !(buf->flags & BM_DIRTY))
 
+
+static void PinBuffer(BufferDesc *buf);
+static void UnpinBuffer(BufferDesc *buf);
+static void WaitIO(BufferDesc *buf);
+static void StartBufferIO(BufferDesc *buf, bool forInput);
+static void TerminateBufferIO(BufferDesc *buf);
+static void ContinueBufferIO(BufferDesc *buf, bool forInput);
+static void buffer_write_error_callback(void *arg);
 static Buffer ReadBufferInternal(Relation reln, BlockNumber blockNum,
 				   bool bufferLockHeld);
 static BufferDesc *BufferAlloc(Relation reln, BlockNumber blockNum,
 			bool *foundPtr);
 static void BufferReplace(BufferDesc *bufHdr);
-
-#ifdef NOT_USED
-void		PrintBufferDescs(void);
-#endif
-
 static void write_buffer(Buffer buffer, bool unpin);
+
 
 /*
  * ReadBuffer -- returns a buffer containing the requested
@@ -282,14 +288,15 @@ BufferAlloc(Relation reln,
 	BufferDesc *buf,
 			   *buf2;
 	BufferTag	newTag;			/* identity of requested block */
+	int			cdb_found_index,
+				cdb_replace_index;
 	bool		inProgress;		/* buffer undergoing IO */
 
-	/* create a new tag so we can lookup the buffer */
-	/* assume that the relation is already open */
+	/* create a tag so we can lookup the buffer */
 	INIT_BUFFERTAG(&newTag, reln, blockNum);
 
 	/* see if the block is in the buffer pool already */
-	buf = StrategyBufferLookup(&newTag, false);
+	buf = StrategyBufferLookup(&newTag, false, &cdb_found_index);
 	if (buf != NULL)
 	{
 		/*
@@ -332,6 +339,13 @@ BufferAlloc(Relation reln,
 		}
 
 		LWLockRelease(BufMgrLock);
+
+		/*
+		 * Do the cost accounting for vacuum
+		 */
+		if (VacuumCostActive)
+			VacuumCostBalance += VacuumCostPageHit;
+
 		return buf;
 	}
 
@@ -345,16 +359,16 @@ BufferAlloc(Relation reln,
 	inProgress = FALSE;
 	for (buf = NULL; buf == NULL;)
 	{
-		buf = StrategyGetBuffer();
+		buf = StrategyGetBuffer(&cdb_replace_index);
 
-		/* GetFreeBuffer will abort if it can't find a free buffer */
+		/* StrategyGetBuffer will elog if it can't find a free buffer */
 		Assert(buf);
 
 		/*
 		 * There should be exactly one pin on the buffer after it is
 		 * allocated -- ours.  If it had a pin it wouldn't have been on
 		 * the free list.  No one else could have pinned it between
-		 * GetFreeBuffer and here because we have the BufMgrLock.
+		 * StrategyGetBuffer and here because we have the BufMgrLock.
 		 */
 		Assert(buf->refcount == 0);
 		buf->refcount = 1;
@@ -438,7 +452,7 @@ BufferAlloc(Relation reln,
 			 * we haven't gotten around to insert the new tag into the
 			 * buffer table. So we need to check here.		-ay 3/95
 			 */
-			buf2 = StrategyBufferLookup(&newTag, true);
+			buf2 = StrategyBufferLookup(&newTag, true, &cdb_found_index);
 			if (buf2 != NULL)
 			{
 				/*
@@ -471,6 +485,15 @@ BufferAlloc(Relation reln,
 				}
 
 				LWLockRelease(BufMgrLock);
+
+				/*
+				 * Do the cost accounting for vacuum.  (XXX perhaps better
+				 * to consider this a miss?  We didn't have to do the read,
+				 * but we did have to write ...)
+				 */
+				if (VacuumCostActive)
+					VacuumCostBalance += VacuumCostPageHit;
+
 				return buf2;
 			}
 		}
@@ -485,8 +508,8 @@ BufferAlloc(Relation reln,
 	 * Tell the buffer replacement strategy that we are replacing the
 	 * buffer content. Then rename the buffer.
 	 */
-	StrategyReplaceBuffer(buf, reln, blockNum);
-	INIT_BUFFERTAG(&(buf->tag), reln, blockNum);
+	StrategyReplaceBuffer(buf, &newTag, cdb_found_index, cdb_replace_index);
+	buf->tag = newTag;
 
 	/*
 	 * Buffer contents are currently invalid.  Have to mark IO IN PROGRESS
@@ -500,6 +523,12 @@ BufferAlloc(Relation reln,
 		ContinueBufferIO(buf, true);
 
 	LWLockRelease(BufMgrLock);
+
+	/*
+	 * Do the cost accounting for vacuum
+	 */
+	if (VacuumCostActive)
+		VacuumCostBalance += VacuumCostPageMiss;
 
 	return buf;
 }
@@ -624,20 +653,93 @@ ReleaseAndReadBuffer(Buffer buffer,
 }
 
 /*
- * BufferSync -- Write all dirty buffers in the pool.
+ * PinBuffer -- make buffer unavailable for replacement.
  *
- * This is called at checkpoint time and writes out all dirty shared buffers,
+ * This should be applied only to shared buffers, never local ones.
+ * Bufmgr lock must be held by caller.
+ */
+static void
+PinBuffer(BufferDesc *buf)
+{
+	int			b = BufferDescriptorGetBuffer(buf) - 1;
+
+	if (PrivateRefCount[b] == 0)
+		buf->refcount++;
+	PrivateRefCount[b]++;
+	Assert(PrivateRefCount[b] > 0);
+}
+
+/*
+ * UnpinBuffer -- make buffer available for replacement.
+ *
+ * This should be applied only to shared buffers, never local ones.
+ * Bufmgr lock must be held by caller.
+ */
+static void
+UnpinBuffer(BufferDesc *buf)
+{
+	int			b = BufferDescriptorGetBuffer(buf) - 1;
+
+	Assert(buf->refcount > 0);
+	Assert(PrivateRefCount[b] > 0);
+	PrivateRefCount[b]--;
+	if (PrivateRefCount[b] == 0)
+		buf->refcount--;
+
+	if ((buf->flags & BM_PIN_COUNT_WAITER) != 0 &&
+		buf->refcount == 1)
+	{
+		/* we just released the last pin other than the waiter's */
+		buf->flags &= ~BM_PIN_COUNT_WAITER;
+		ProcSendSignal(buf->wait_backend_id);
+	}
+	else
+	{
+		/* do nothing */
+	}
+}
+
+/*
+ * BufferSync -- Write out dirty buffers in the pool.
+ *
+ * This is called at checkpoint time to write out all dirty shared buffers,
  * and by the background writer process to write out some of the dirty blocks.
+ * percent/maxpages should be zero in the former case, and nonzero limit
+ * values in the latter.
  */
 int
 BufferSync(int percent, int maxpages)
 {
+	BufferDesc **dirty_buffers;
+	BufferTag  *buftags;
+	int			num_buffer_dirty;
 	int			i;
-	BufferDesc *bufHdr;
 	ErrorContextCallback errcontext;
 
-	int			num_buffer_dirty;
-	int		   *buffer_dirty;
+	/*
+	 * Get a list of all currently dirty buffers and how many there are.
+	 * We do not flush buffers that get dirtied after we started. They
+	 * have to wait until the next checkpoint.
+	 */
+	dirty_buffers = (BufferDesc **) palloc(NBuffers * sizeof(BufferDesc *));
+	buftags = (BufferTag *) palloc(NBuffers * sizeof(BufferTag));
+	
+	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
+	num_buffer_dirty = StrategyDirtyBufferList(dirty_buffers, buftags,
+											   NBuffers);
+
+	/*
+	 * If called by the background writer, we are usually asked to
+	 * only write out some portion of dirty buffers now, to prevent
+	 * the IO storm at checkpoint time.
+	 */
+	if (percent > 0)
+	{
+		Assert(percent <= 100);
+		num_buffer_dirty = (num_buffer_dirty * percent + 99) / 100;
+	}
+	if (maxpages > 0 && num_buffer_dirty > maxpages)
+		num_buffer_dirty = maxpages;
 
 	/* Setup error traceback support for ereport() */
 	errcontext.callback = buffer_write_error_callback;
@@ -646,47 +748,22 @@ BufferSync(int percent, int maxpages)
 	error_context_stack = &errcontext;
 
 	/*
-	 * Get a list of all currently dirty buffers and how many there are.
-	 * We do not flush buffers that get dirtied after we started. They
-	 * have to wait until the next checkpoint.
+	 * Loop over buffers to be written.  Note the BufMgrLock is held at
+	 * loop top, but is released and reacquired intraloop, so we aren't
+	 * holding it long.
 	 */
-	buffer_dirty = (int *)palloc(NBuffers * sizeof(int));
-	
-	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-	num_buffer_dirty = StrategyDirtyBufferList(buffer_dirty, NBuffers);
-	LWLockRelease(BufMgrLock);
-
-	/*
-	 * If called by the background writer, we are usually asked to
-	 * only write out some percentage of dirty buffers now, to prevent
-	 * the IO storm at checkpoint time.
-	 */
-	if (percent > 0 && num_buffer_dirty > 10)
-	{
-		Assert(percent <= 100);
-		num_buffer_dirty = (num_buffer_dirty * percent) / 100;
-		if (maxpages > 0 && num_buffer_dirty > maxpages)
-			num_buffer_dirty = maxpages;
-	}
-
 	for (i = 0; i < num_buffer_dirty; i++)
 	{
+		BufferDesc *bufHdr = dirty_buffers[i];
 		Buffer		buffer;
 		XLogRecPtr	recptr;
 		SMgrRelation reln;
 
-		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
-
-		bufHdr = &BufferDescriptors[buffer_dirty[i]];
 		errcontext.arg = bufHdr;
 
-		if (!(bufHdr->flags & BM_VALID))
-		{
-			LWLockRelease(BufMgrLock);
-			continue;
-		}
-
 		/*
+		 * Check it is still the same page and still needs writing.
+		 *
 		 * We can check bufHdr->cntxDirty here *without* holding any lock
 		 * on buffer context as long as we set this flag in access methods
 		 * *before* logging changes with XLogInsert(): if someone will set
@@ -694,11 +771,12 @@ BufferSync(int percent, int maxpages)
 		 * checkpoint.redo points before log record for upcoming changes
 		 * and so we are not required to write such dirty buffer.
 		 */
-		if (!(bufHdr->flags & BM_DIRTY) && !(bufHdr->cntxDirty))
-		{
-			LWLockRelease(BufMgrLock);
+		if (!(bufHdr->flags & BM_VALID))
 			continue;
-		}
+		if (!BUFFERTAGS_EQUAL(&bufHdr->tag, &buftags[i]))
+			continue;
+		if (!(bufHdr->flags & BM_DIRTY) && !(bufHdr->cntxDirty))
+			continue;
 
 		/*
 		 * IO synchronization. Note that we do it with unpinned buffer to
@@ -707,12 +785,13 @@ BufferSync(int percent, int maxpages)
 		if (bufHdr->flags & BM_IO_IN_PROGRESS)
 		{
 			WaitIO(bufHdr);
-			if (!(bufHdr->flags & BM_VALID) ||
-				(!(bufHdr->flags & BM_DIRTY) && !(bufHdr->cntxDirty)))
-			{
-				LWLockRelease(BufMgrLock);
+			/* Still need writing? */
+			if (!(bufHdr->flags & BM_VALID))
 				continue;
-			}
+			if (!BUFFERTAGS_EQUAL(&bufHdr->tag, &buftags[i]))
+				continue;
+			if (!(bufHdr->flags & BM_DIRTY) && !(bufHdr->cntxDirty))
+				continue;
 		}
 
 		/*
@@ -723,9 +802,10 @@ BufferSync(int percent, int maxpages)
 		PinBuffer(bufHdr);
 		StartBufferIO(bufHdr, false);	/* output IO start */
 
-		buffer = BufferDescriptorGetBuffer(bufHdr);
-
+		/* Release BufMgrLock while doing xlog work */
 		LWLockRelease(BufMgrLock);
+
+		buffer = BufferDescriptorGetBuffer(bufHdr);
 
 		/*
 		 * Protect buffer content against concurrent update
@@ -740,8 +820,12 @@ BufferSync(int percent, int maxpages)
 
 		/*
 		 * Now it's safe to write buffer to disk. Note that no one else
-		 * should not be able to write it while we were busy with locking
-		 * and log flushing because of we setted IO flag.
+		 * should have been able to write it while we were busy with
+		 * locking and log flushing because we set the IO flag.
+		 *
+		 * Before we issue the actual write command, clear the just-dirtied
+		 * flag.  This lets us recognize concurrent changes (note that only
+		 * hint-bit changes are possible since we hold the buffer shlock).
 		 */
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 		Assert(bufHdr->flags & BM_DIRTY || bufHdr->cntxDirty);
@@ -767,12 +851,12 @@ BufferSync(int percent, int maxpages)
 		 * Release the per-buffer readlock, reacquire BufMgrLock.
 		 */
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		BufferFlushCount++;
 
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 		bufHdr->flags &= ~BM_IO_IN_PROGRESS;	/* mark IO finished */
 		TerminateBufferIO(bufHdr);		/* Sync IO finished */
+		BufferFlushCount++;
 
 		/*
 		 * If this buffer was marked by someone as DIRTY while we were
@@ -781,13 +865,15 @@ BufferSync(int percent, int maxpages)
 		if (!(bufHdr->flags & BM_JUST_DIRTIED))
 			bufHdr->flags &= ~BM_DIRTY;
 		UnpinBuffer(bufHdr);
-		LWLockRelease(BufMgrLock);
 	}
 
-	pfree(buffer_dirty);
+	LWLockRelease(BufMgrLock);
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;
+
+	pfree(dirty_buffers);
+	pfree(buftags);
 
 	return num_buffer_dirty;
 }
@@ -816,11 +902,6 @@ WaitIO(BufferDesc *buf)
 		LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 	}
 }
-
-
-long		NDirectFileRead;	/* some I/O's are direct file access.
-								 * bypass bufmgr */
-long		NDirectFileWrite;	/* e.g., I/O in psort and hashjoin. */
 
 
 /*
@@ -892,9 +973,9 @@ AtEOXact_Buffers(bool isCommit)
 
 			if (isCommit)
 				elog(WARNING,
-				"buffer refcount leak: [%03d] (bufNext=%d, "
-				  "rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
-					 i, buf->bufNext,
+					 "buffer refcount leak: [%03d] "
+					 "(rel=%u/%u, blockNum=%u, flags=0x%x, refcount=%d %ld)",
+					 i,
 					 buf->tag.rnode.tblNode, buf->tag.rnode.relNode,
 					 buf->tag.blockNum, buf->flags,
 					 buf->refcount, PrivateRefCount[i]);
@@ -1019,6 +1100,26 @@ BufferGetBlockNumber(Buffer buffer)
 		return LocalBufferDescriptors[-buffer - 1].tag.blockNum;
 	else
 		return BufferDescriptors[buffer - 1].tag.blockNum;
+}
+
+/*
+ * BufferGetFileNode
+ *		Returns the relation ID (RelFileNode) associated with a buffer.
+ *
+ * This should make the same checks as BufferGetBlockNumber, but since the
+ * two are generally called together, we don't bother.
+ */
+RelFileNode
+BufferGetFileNode(Buffer buffer)
+{
+	BufferDesc *bufHdr;
+
+	if (BufferIsLocal(buffer))
+		bufHdr = &(LocalBufferDescriptors[-buffer - 1]);
+	else
+		bufHdr = &BufferDescriptors[buffer - 1];
+
+	return (bufHdr->tag.rnode);
 }
 
 /*
@@ -1663,7 +1764,11 @@ refcount = %ld, file: %s, line: %d\n",
  *
  * This routine might get called many times on the same page, if we are making
  * the first scan after commit of an xact that added/deleted many tuples.
- * So, be as quick as we can if the buffer is already dirty.
+ * So, be as quick as we can if the buffer is already dirty.  We do this by
+ * not acquiring BufMgrLock if it looks like the status bits are already OK.
+ * (Note it is okay if someone else clears BM_JUST_DIRTIED immediately after
+ * we look, because the buffer content update is already done and will be
+ * reflected in the I/O.)
  */
 void
 SetBufferCommitInfoNeedsSave(Buffer buffer)
@@ -2006,19 +2111,6 @@ AbortBufferIO(void)
 		TerminateBufferIO(buf);
 		LWLockRelease(BufMgrLock);
 	}
-}
-
-RelFileNode
-BufferGetFileNode(Buffer buffer)
-{
-	BufferDesc *bufHdr;
-
-	if (BufferIsLocal(buffer))
-		bufHdr = &(LocalBufferDescriptors[-buffer - 1]);
-	else
-		bufHdr = &BufferDescriptors[buffer - 1];
-
-	return (bufHdr->tag.rnode);
 }
 
 /*

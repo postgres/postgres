@@ -1,4 +1,4 @@
-$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.6 2003/11/29 19:51:56 pgsql Exp $
+$PostgreSQL: pgsql/src/backend/storage/buffer/README,v 1.7 2004/04/19 23:27:17 tgl Exp $
 
 Notes about shared buffer access rules
 --------------------------------------
@@ -97,153 +97,149 @@ for VACUUM's use, since we don't allow multiple VACUUMs concurrently on a
 single relation anyway.
 
 
-Buffer replacement strategy interface:
+Buffer replacement strategy interface
+-------------------------------------
 
-The two files freelist.c and buf_table.c contain the buffer cache
-replacement strategy. The interface to the strategy is:
+The file freelist.c contains the buffer cache replacement strategy.
+The interface to the strategy is:
 
-    BufferDesc *
-	StrategyBufferLookup(BufferTag *tagPtr, bool recheck)
+	BufferDesc *StrategyBufferLookup(BufferTag *tagPtr, bool recheck,
+	                                 int *cdb_found_index)
 
-		This is allways the first call made by the buffer manager
-		to check if a disk page is in memory. If so, the function
-		returns the buffer descriptor and no further action is
-		required.
+This is always the first call made by the buffer manager to check if a disk
+page is in memory. If so, the function returns the buffer descriptor and no
+further action is required. If the page is not in memory,
+StrategyBufferLookup() returns NULL.
 
-		If the page is not in memory, StrategyBufferLookup()
-		returns NULL.
+The flag recheck tells the strategy that this is a second lookup after
+flushing a dirty block. If the buffer manager has to evict another buffer,
+it will release the bufmgr lock while doing the write IO. During this time,
+another backend could possibly fault in the same page this backend is after,
+so we have to check again after the IO is done if the page is in memory now.
 
-		The flag recheck tells the strategy that this is a second
-		lookup after flushing a dirty block. If the buffer manager
-		has to evict another buffer, he will release the bufmgr lock
-		while doing the write IO. During this time, another backend
-		could possibly fault in the same page this backend is after,
-		so we have to check again after the IO is done if the page
-		is in memory now.
+*cdb_found_index is set to the index of the found CDB, or -1 if none.
+This is not intended to be used by the caller, except to pass to
+StrategyReplaceBuffer().
 
-	BufferDesc *
-	StrategyGetBuffer(void)
+	BufferDesc *StrategyGetBuffer(int *cdb_replace_index)
 
-		The buffer manager calls this function to get an unpinned
-		cache buffer who's content can be evicted. The returned
-		buffer might be empty, clean or dirty.
+The buffer manager calls this function to get an unpinned cache buffer whose
+content can be evicted. The returned buffer might be empty, clean or dirty.
 
-		The returned buffer is only a cadidate for replacement.
-		It is possible that while the buffer is written, another
-		backend finds and modifies it, so that it is dirty again.
-		The buffer manager will then call StrategyGetBuffer()
-		again to ask for another candidate.
+The returned buffer is only a candidate for replacement.  It is possible that
+while the buffer is being written, another backend finds and modifies it, so
+that it is dirty again.  The buffer manager will then have to call
+StrategyGetBuffer() again to ask for another candidate.
 
-	void
-	StrategyReplaceBuffer(BufferDesc *buf, Relation rnode, 
-			BlockNumber blockNum)
-		
-		Called by the buffer manager at the time it is about to
-		change the association of a buffer with a disk page.
+*cdb_replace_index is set to the index of the candidate CDB, or -1 if none
+(meaning we are using a previously free buffer).  This is not intended to be
+used by the caller, except to pass to StrategyReplaceBuffer().
 
-		Before this call, StrategyBufferLookup() still has to find
-		the buffer even if it was returned by StrategyGetBuffer()
-		as a candidate for replacement.
+	void StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
+	                           int cdb_found_index, int cdb_replace_index)
 
-		After this call, this buffer must be returned for a
-		lookup of the new page identified by rnode and blockNum.
+Called by the buffer manager at the time it is about to change the association
+of a buffer with a disk page.
 
-	void
-	StrategyInvalidateBuffer(BufferDesc *buf)
+Before this call, StrategyBufferLookup() still has to find the buffer under
+its old tag, even if it was returned by StrategyGetBuffer() as a candidate
+for replacement.
 
-		Called from various parts to inform that the content of
-		this buffer has been thrown away. This happens for example
-		in the case of dropping a relation.
+After this call, this buffer must be returned for a lookup of the new page
+identified by *newTag.
 
-		The buffer must be clean and unpinned on call.
+cdb_found_index and cdb_replace_index must be the auxiliary values
+returned by previous calls to StrategyBufferLookup and StrategyGetBuffer.
 
-		If the buffer associated with a disk page, StrategyBufferLookup()
-		must not return it for this page after the call.
+	void StrategyInvalidateBuffer(BufferDesc *buf)
 
-	void
-	StrategyHintVacuum(bool vacuum_active)
+Called by the buffer manager to inform the strategy that the content of this
+buffer is being thrown away. This happens for example in the case of dropping
+a relation.  The buffer must be clean and unpinned on call.
 
-		Because vacuum reads all relations of the entire database
-		through the buffer manager, it can greatly disturb the
-		buffer replacement strategy. This function is used by vacuum
-		to inform that all subsequent buffer lookups are caused
-		by vacuum scanning relations.
+If the buffer was associated with a disk page, StrategyBufferLookup()
+must not return it for this page after the call.
 
-		
-Buffer replacement strategy:
+	void StrategyHintVacuum(bool vacuum_active)
 
-The buffer replacement strategy actually used in freelist.c is a
-version of the Adaptive Replacement Cache (ARC) special tailored for
-PostgreSQL.
+Because VACUUM reads all relations of the entire database through the buffer
+manager, it can greatly disturb the buffer replacement strategy. This function
+is used by VACUUM to inform the strategy that subsequent buffer lookups are
+(or are not) caused by VACUUM scanning relations.
+
+
+Buffer replacement strategy
+---------------------------
+
+The buffer replacement strategy actually used in freelist.c is a version of
+the Adaptive Replacement Cache (ARC) specially tailored for PostgreSQL.
 
 The algorithm works as follows:
 
-    C is the size of the cache in number of pages (conf: shared_buffers)
-	ARC uses 2*C Cache Directory Blocks (CDB). A cache directory block
-	is allwayt associated with one unique file page and "can" point to
-	one shared buffer.
+C is the size of the cache in number of pages (a/k/a shared_buffers or
+NBuffers).  ARC uses 2*C Cache Directory Blocks (CDB). A cache directory block
+is always associated with one unique file page.  It may point to one shared
+buffer, or may indicate that the file page is not in a buffer but has been
+accessed recently.
 
-	All file pages known in by the directory are managed in 4 LRU lists
-	named B1, T1, T2 and B2. The T1 and T2 lists are the "real" cache
-	entries, linking a file page to a memory buffer where the page is
-	currently cached. Consequently T1len+T2len <= C. B1 and B2 are
-	ghost cache directories that extend T1 and T2 so that the strategy
-	remembers pages longer. The strategy tries to keep B1len+T1len and
-	B2len+T2len both at C. T1len and T2 len vary over the runtime
-	depending on the lookup pattern and its resulting cache hits. The
-	desired size of T1len is called T1target.
+All CDB entries are managed in 4 LRU lists named T1, T2, B1 and B2. The T1 and
+T2 lists are the "real" cache entries, linking a file page to a memory buffer
+where the page is currently cached. Consequently T1len+T2len <= C. B1 and B2
+are ghost cache directories that extend T1 and T2 so that the strategy
+remembers pages longer. The strategy tries to keep B1len+T1len and B2len+T2len
+both at C. T1len and T2len vary over the runtime depending on the lookup
+pattern and its resulting cache hits. The desired size of T1len is called
+T1target.
 
-	Assuming we have a full cache, one of 5 cases happens on a lookup:
+Assuming we have a full cache, one of 5 cases happens on a lookup:
 
-	MISS	On a cache miss, depending on T1target and the actual T1len
-			the LRU buffer of T1 or T2 is evicted. Its CDB is removed
-			from the T list and added as MRU of the corresponding B list.
-			The now free buffer is replaced with the requested page
-			and added as MRU of T1.
+MISS	On a cache miss, depending on T1target and the actual T1len
+	the LRU buffer of either T1 or T2 is evicted. Its CDB is removed
+	from the T list and added as MRU of the corresponding B list.
+	The now free buffer is replaced with the requested page
+	and added as MRU of T1.
 
-	T1 hit	The T1 CDB is moved to the MRU position of the T2 list.
+T1 hit	The T1 CDB is moved to the MRU position of the T2 list.
 
-	T2 hit	The T2 CDB is moved to the MRU position of the T2 list.
+T2 hit	The T2 CDB is moved to the MRU position of the T2 list.
 
-	B1 hit	This means that a buffer that was evicted from the T1
-			list is now requested again, indicating that T1target is
-			too small (otherwise it would still be in T1 and thus in
-			memory). The strategy raises T1target, evicts a buffer
-			depending on T1target and T1len and places the CDB at
-			MRU of T2.
+B1 hit	This means that a buffer that was evicted from the T1
+	list is now requested again, indicating that T1target is
+	too small (otherwise it would still be in T1 and thus in
+	memory). The strategy raises T1target, evicts a buffer
+	depending on T1target and T1len and places the CDB at
+	MRU of T2.
 
-	B2 hit	This means the opposite of B1, the T2 list is probably too
-			small. So the strategy lowers T1target, evicts a buffer
-			and places the CDB at MRU of T2.
+B2 hit	This means the opposite of B1, the T2 list is probably too
+	small. So the strategy lowers T1target, evicts a buffer
+	and places the CDB at MRU of T2.
 
-	Thus, every page that is found on lookup in any of the four lists
-	ends up as the MRU of the T2 list. The T2 list therefore is the
-	"frequency" cache, holding frequently requested pages.
+Thus, every page that is found on lookup in any of the four lists
+ends up as the MRU of the T2 list. The T2 list therefore is the
+"frequency" cache, holding frequently requested pages.
 
-	Every page that is seen for the first time ends up as the MRU of
-	the T1 list. The T1 list is the "recency" cache, holding recent
-	newcomers.
+Every page that is seen for the first time ends up as the MRU of the T1
+list. The T1 list is the "recency" cache, holding recent newcomers.
 
-	The tailoring done for PostgreSQL has to do with the way, the
-	query executor works. A typical UPDATE or DELETE first scans the 
-	relation, searching for the tuples and then calls heap_update() or
-	heap_delete(). This causes at least 2 lookups for the block in the
-	same statement. In the case of multiple matches in one block even
-	more often. As a result, every block touched in an UPDATE or DELETE
-	would directly jump into the T2 cache, which is wrong. To prevent
-	this the strategy remembers which transaction added a buffer to the
-	T1 list and will not promote it from there into the T2 cache during
-	the same transaction.
-	
-	Another specialty is the change of the strategy during VACUUM.
-	Lookups during VACUUM do not represent application needs, so it
-	would be wrong to change the cache balance T1target due to that
-	or to cause massive cache evictions. Therefore, a page read in to
-	satisfy vacuum (not those that actually cause a hit on any list)
-	is placed at the LRU position of the T1 list, for immediate
-	reuse. Since Vacuum usually requests many pages very fast, the
-	natural side effect of this is that it will get back the very
-	buffers it filled and possibly modified on the next call and will
-	therefore do it's work in a few shared memory buffers, while using
-	whatever it finds in the cache already.
+The tailoring done for PostgreSQL has to do with the way the query executor
+works. A typical UPDATE or DELETE first scans the relation, searching for the
+tuples and then calls heap_update() or heap_delete(). This causes at least 2
+lookups for the block in the same statement. In the case of multiple matches
+in one block even more often. As a result, every block touched in an UPDATE or
+DELETE would directly jump into the T2 cache, which is wrong. To prevent this
+the strategy remembers which transaction added a buffer to the T1 list and
+will not promote it from there into the T2 cache during the same transaction.
 
+Another specialty is the change of the strategy during VACUUM.  Lookups during
+VACUUM do not represent application needs, and do not suggest that the page
+will be hit again soon, so it would be wrong to change the cache balance
+T1target due to that or to cause massive cache evictions. Therefore, a page
+read in to satisfy vacuum is placed at the LRU position of the T1 list, for
+immediate reuse.  Also, if we happen to get a hit on a CDB entry during
+VACUUM, we do not promote the page above its current position in the list.
+Since VACUUM usually requests many pages very fast, the effect of this is that
+it will get back the very buffers it filled and possibly modified on the next
+call and will therefore do its work in a few shared memory buffers, while
+being able to use whatever it finds in the cache already.  This also implies
+that most of the write traffic caused by a VACUUM will be done by the VACUUM
+itself and not pushed off onto other processes.
