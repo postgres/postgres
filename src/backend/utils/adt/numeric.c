@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.39 2001/03/22 06:16:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.40 2001/04/14 02:10:57 tgl Exp $
  *
  * ----------
  */
@@ -1134,7 +1134,6 @@ numeric_mod(PG_FUNCTION_ARGS)
 
 	mod_var(&arg1, &arg2, &result);
 
-	result.dscale = result.rscale;
 	res = make_result(&result);
 
 	free_var(&result);
@@ -3281,28 +3280,41 @@ mod_var(NumericVar *var1, NumericVar *var2, NumericVar *result)
 {
 	NumericVar	tmp;
 	int			save_global_rscale;
+	int			div_dscale;
 
 	init_var(&tmp);
 
 	/* ---------
 	 * We do this using the equation
 	 *		mod(x,y) = x - trunc(x/y)*y
-	 * We fiddle a bit with global_rscale to control result precision.
+	 * We set global_rscale the same way numeric_div and numeric_mul do
+	 * to get the right answer from the equation.  The final result,
+	 * however, need not be displayed to more precision than the inputs.
 	 * ----------
 	 */
 	save_global_rscale = global_rscale;
-	global_rscale = var2->rscale + 2;
+
+	div_dscale = MAX(var1->dscale + var2->dscale, NUMERIC_MIN_DISPLAY_SCALE);
+	div_dscale = MIN(div_dscale, NUMERIC_MAX_DISPLAY_SCALE);
+	global_rscale = MAX(var1->rscale + var2->rscale,
+						NUMERIC_MIN_RESULT_SCALE);
+	global_rscale = MAX(global_rscale, div_dscale + 4);
+	global_rscale = MIN(global_rscale, NUMERIC_MAX_RESULT_SCALE);
 
 	div_var(var1, var2, &tmp);
 
+	tmp.dscale = div_dscale;
+
 	/* do trunc() by forgetting digits to the right of the decimal point */
 	tmp.ndigits = MAX(0, MIN(tmp.ndigits, tmp.weight + 1));
-	tmp.rscale = var2->rscale;
 
-	global_rscale = var2->rscale;
+	global_rscale = var2->rscale + tmp.rscale;
+
 	mul_var(var2, &tmp, &tmp);
 
 	sub_var(var1, &tmp, result);
+
+	result->dscale = MAX(var1->dscale, var2->dscale);
 
 	global_rscale = save_global_rscale;
 	free_var(&tmp);
