@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Feb 22 09:07:16 EST 2000
+Last updated:		Tue Feb 22 09:15:39 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -71,7 +71,7 @@ MISC
 * -User who can create databases can modify pg_database table(Peter E)
 * Plpgsql does not handle quoted mixed-case identifiers
 * -Fix btree to give a useful elog when key > 1/2 (page - overhead)(Tom)
-* -pg_dump should preserve primary key information
+* -pg_dump should preserve primary key information(Peter E)
 * plpgsql regression tests fails on BSD/OS
 * -database names with spaces fail
 * -insert of 0.0 into DECIMAL(4,4) field fails(Tom)
@@ -139,6 +139,7 @@ TYPES
 * Add non-large-object binary field
 * -Add index on NUMERIC/DECIMAL type(Jan)
 * -Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
+  (Peter E)
 * Functions returning sets don't really work right[function]
 * Make type equivalency apply to aggregates(Peter E.)
 
@@ -181,12 +182,12 @@ CLIENTS
 
 * Make NULL's come out at the beginning or end depending on the 
   ORDER BY direction
-* -Allow flag to control COPY input/output of NULLs
+* -Allow flag to control COPY input/output of NULLs(Peter E)
 * Update reltuples from COPY command
-* -Allow psql \copy to allow delimiters
+* -Allow psql \copy to allow delimiters(Peter E)
 * -Add a function to return the last inserted oid, for use in psql
 	scripts (Peter E)
-* -Allow psql to print nulls as distinct from "" [null]
+* -Allow psql to print nulls as distinct from "" [null](Peter E)
 * fix array handling for ECPG
 * add pg_dump option to dump type names as standard ANSI types
 
@@ -299,10 +300,10 @@ SOURCE CODE
 * Add use of 'const' for variables in source tree
 * Fix C optimizer problem where fmgr_ptr calls return different types [alpha]
 * -Add needed includes and removed unneeded include files(Bruce)
-* -Make configure --enable-debug add -g on compile line
+* -Make configure --enable-debug add -g on compile line(Peter E)
 * Does Mariposa source contain any other bug fixes?
 * Remove SET KSQO option if OR processing is improved(Tom)
-* -Pre-generate lex and yacc output so not required for install
+* -Pre-generate lex and yacc output so not required for install(Peter E)
 
 ---------------------------------------------------------------------------
 
