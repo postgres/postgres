@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.7 2001/01/25 16:32:25 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/ipcclean/Attic/ipcclean.sh,v 1.8 2001/02/10 05:55:17 momjian Exp $
 #
 
 CMDNAME=`basename $0`
@@ -62,9 +62,9 @@ if [ `uname` = 'Linux' ]; then
         # Don't do anything if process still running.
         # (This check is conceptually phony, but it's
         # useful anyway in practice.)
-        ps hj$ipcs_pid >/dev/null 2>&1
+        ps hj$ipcs_lpid >/dev/null 2>&1
         if [ $? -eq 0 ]; then
-            echo "skipped. Process still exists (pid $ipcs_pid)."
+            echo "skipped. Process still exists (pid $ipcs_lpid)."
         else
             # try remove
             ipcrm shm $ipcs_id
