@@ -5,9 +5,7 @@ case $host_cpu in
 esac
 
 case $host_os in
-  bsdi2.0 | bsdi2.1 | bsdi3*)
-    CC=gcc2
-    ;;
+  bsdi2.0 | bsdi2.1 | bsdi3*) CC=gcc2;;
 esac
 
 THREAD_SUPPORT=yes

@@ -1,6 +1,4 @@
-if test "$GCC" = yes ; then
-  CFLAGS=
-else
+if test "$GCC" != yes ; then
   CC="$CC -std"
   CFLAGS='-O4 -Olimit 2000'
 fi

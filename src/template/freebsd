@@ -1,17 +1,11 @@
-CFLAGS='-pipe'
-
 case $host_cpu in
-  alpha*)   CFLAGS="$CFLAGS -O" ;;
+  alpha*)   CFLAGS="-O";;
 esac
 
 THREAD_SUPPORT=yes
 NEED_REENTRANT_FUNCS=yes
 THREAD_CPPFLAGS="-D_THREAD_SAFE"
 case $host_os in
-		freebsd2*|freebsd3*|freebsd4*)
-			THREAD_LIBS="-pthread"
-			;;
-		*)
-			THREAD_LIBS="-lc_r"
-			;;
+	freebsd2*|freebsd3*|freebsd4*) THREAD_LIBS="-pthread";;
+	*) THREAD_LIBS="-lc_r";;
 esac

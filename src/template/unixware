@@ -1,5 +1,4 @@
 if test "$GCC" = yes; then
-  CFLAGS=-O2
   THREAD_CPPFLAGS="-pthread"
 else
 # the -Kno_host is temporary for a bug in the compiler.  See -hackers

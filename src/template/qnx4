@@ -1,2 +1,2 @@
-CFLAGS=-I/usr/local/include
-LIBS=-lunix
+CFLAGS="-O2 -I/usr/local/include"
+LIBS="-lunix"
