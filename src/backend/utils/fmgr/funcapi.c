@@ -7,7 +7,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.10 2003/09/09 23:22:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/funcapi.c,v 1.11 2003/09/15 20:03:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,7 +34,7 @@ init_MultiFuncCall(PG_FUNCTION_ARGS)
 	 */
 	if (fcinfo->resultinfo == NULL || !IsA(fcinfo->resultinfo, ReturnSetInfo))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that cannot accept a set")));
 
 	if (fcinfo->flinfo->fn_extra == NULL)

@@ -187,7 +187,7 @@ pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 	if (fcinfo->resultinfo == NULL ||
 		!IsA(fcinfo->resultinfo, ReturnSetInfo))
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
 				 errmsg("set-valued function called in context that "
 						"cannot accept a set")));
 

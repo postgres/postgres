@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.9 2003/09/09 23:22:21 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/array_userfuncs.c,v 1.10 2003/09/15 20:03:37 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ array_push(PG_FUNCTION_ARGS)
 		indx = 1;
 	else
 		ereport(ERROR,
-				(errcode(ERRCODE_SYNTAX_ERROR),
+				(errcode(ERRCODE_DATA_EXCEPTION),
 				 errmsg("argument must be empty or one-dimensional array")));
 
 	/*
