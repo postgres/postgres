@@ -205,6 +205,7 @@ public class JDBC2Tests extends TestSuite
 		// Connectivity/Protocols
 
 		// ResultSet
+		suite.addTestSuite(ResultSetTest.class);
 
 		// Time, Date, Timestamp
 		suite.addTestSuite(DateTest.class);

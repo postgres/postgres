@@ -836,6 +836,7 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 		//if index<0, count from the end of the result set, but check
 		//to be sure that it is not beyond the first index
 		if (index < 0)
+		{
 			if (index >= -rows_size)
 				internalIndex = rows_size + index;
 			else
@@ -843,16 +844,19 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 				beforeFirst();
 				return false;
 			}
-
-		//must be the case that index>0,
-		//find the correct place, assuming that
-		//the index is not too large
-		if (index <= rows_size)
-			internalIndex = index - 1;
+		}
 		else
 		{
-			afterLast();
-			return false;
+			//must be the case that index>0,
+			//find the correct place, assuming that
+			//the index is not too large
+			if (index <= rows_size)
+				internalIndex = index - 1;
+			else
+			{
+				afterLast();
+				return false;
+			}
 		}
 
 		current_row = internalIndex;
@@ -1074,6 +1078,11 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
 
 	public int getRow() throws SQLException
 	{
+		final int rows_size = rows.size();
+
+		if (current_row < 0 || current_row >= rows_size)
+			return 0;
+		
 		return current_row + 1;
 	}
 
