@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.12 1997/01/10 09:46:33 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.13 1997/02/12 05:04:17 scrappy Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -33,8 +33,8 @@
 # include <string.h>
 #endif
 
-bool	BuildingBtree = false;
-bool	FastBuild = false; /* turn this on to make bulk builds work*/
+bool	BuildingBtree = false;	/* see comment in btbuild() */
+bool	FastBuild = true;	/* use sort/build instead of insertion build */
 
 /*
  *  btbuild() -- build a new btree index.
@@ -67,20 +67,33 @@ btbuild(Relation heap,
     int i;
     BTItem btitem;
 #ifndef OMIT_PARTIAL_INDEX
-    ExprContext *econtext;
-    TupleTable tupleTable;
-    TupleTableSlot *slot;
+    ExprContext *econtext = (ExprContext *) NULL;
+    TupleTable tupleTable = (TupleTable) NULL;
+    TupleTableSlot *slot = (TupleTableSlot *) NULL;
 #endif
     Oid hrelid, irelid;
     Node *pred, *oldPred;
-    void *spool;
+    void *spool = (void *) NULL;
     bool isunique;
-    
+    bool usefast;
+
+#if 0
+    ResetBufferUsage();
+#endif
+
     /* note that this is a new btree */
     BuildingBtree = true;
     
     pred = predInfo->pred;
     oldPred = predInfo->oldPred;
+
+    /*
+     * bootstrap processing does something strange, so don't use
+     * sort/build for initial catalog indices.  at some point i need
+     * to look harder at this.  (there is some kind of incremental
+     * processing going on there.) -- pma 08/29/95
+     */
+    usefast = (FastBuild && IsNormalProcessingMode());
 
     /* see if index is unique */
     isunique = IndexIsUniqueNoCache(RelationGetRelationId(index));
@@ -110,13 +123,16 @@ btbuild(Relation heap,
 	slot = ExecAllocTableSlot(tupleTable);
 	econtext = makeNode(ExprContext);
 	FillDummyExprContext(econtext, slot, htupdesc, InvalidBuffer);
+
+	/*
+	 * we never want to use sort/build if we are extending an
+	 * existing partial index -- it works by inserting the
+	 * newly-qualifying tuples into the existing index.
+	 * (sort/build would overwrite the existing index with one
+	 * consisting of the newly-qualifying tuples.)
+	 */
+	usefast = false;
     }
-	else
-	{
-		econtext = NULL;
-		tupleTable = NULL;
-		slot = NULL;
-	}
 #endif /* OMIT_PARTIAL_INDEX */
     
     /* start a heap scan */
@@ -126,12 +142,10 @@ btbuild(Relation heap,
     /* build the index */
     nhtups = nitups = 0;
     
-    if (FastBuild) {
+    if (usefast) {
 	spool = _bt_spoolinit(index, 7);
 	res = (InsertIndexResult) NULL;
     }
-	else
-		spool = NULL;
 
     for (; HeapTupleIsValid(htup); htup = heap_getnext(hscan, 0, &buffer)) {
 	
@@ -219,7 +233,7 @@ btbuild(Relation heap,
 	 * into a spool page for subsequent processing.  otherwise, we
 	 * insert into the btree.
 	 */
-	if (FastBuild) {
+	if (usefast) {
 	    _bt_spool(index, btitem, spool);
 	} else {
 	    res = _bt_doinsert(index, btitem, isunique, heap);
@@ -248,11 +262,23 @@ btbuild(Relation heap,
      * merging the runs, (2) inserting the sorted tuples into btree
      * pages and (3) building the upper levels.
      */
-    if (FastBuild) {
-	_bt_spool(index, (BTItem) NULL, spool);	/* flush spool */
+    if (usefast) {
+	_bt_spool(index, (BTItem) NULL, spool);	/* flush the spool */
 	_bt_leafbuild(index, spool);
 	_bt_spooldestroy(spool);
     }
+
+#if 0
+    {
+	extern int ReadBufferCount, BufferHitCount, BufferFlushCount;
+	extern long NDirectFileRead, NDirectFileWrite;
+
+	printf("buffer(%d): r=%d w=%d\n", heap->rd_rel->relblocksz,
+	       ReadBufferCount - BufferHitCount, BufferFlushCount);
+	printf("direct(%d): r=%d w=%d\n", LocalBlockSize,
+	       NDirectFileRead, NDirectFileWrite);
+    }
+#endif
 
     /*
      *  Since we just counted the tuples in the heap, we update its
@@ -312,7 +338,10 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 
     pfree(btitem);
     pfree(itup);
-    
+
+    /* adjust any active scans that will be affected by this insertion */
+    _bt_adjscans(rel, &(res->pointerData), BT_INSERT);
+
     return (res);
 }
 
@@ -533,7 +562,7 @@ void
 btdelete(Relation rel, ItemPointer tid)
 {
     /* adjust any active scans that will be affected by this deletion */
-    _bt_adjscans(rel, tid);
+    _bt_adjscans(rel, tid, BT_DELETE);
     
     /* delete the data from the page */
     _bt_pagedel(rel, tid);

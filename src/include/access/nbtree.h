@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.5 1997/01/10 09:36:33 vadim Exp $
+ * $Id: nbtree.h,v 1.6 1997/02/12 05:04:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,6 +132,13 @@ typedef BTStackData	*BTStack;
 #define BT_DESCENT	1
 
 /*
+ *  We must classify index modification types for the benefit of
+ *  _bt_adjscans.
+ */
+#define BT_INSERT	0
+#define	BT_DELETE	1
+
+/*
  *  In general, the btree code tries to localize its knowledge about
  *  page layout to a couple of routines.  However, we need a special
  *  value to indicate "no page number" in those places where we expect
@@ -220,11 +227,7 @@ extern void btdelete(Relation rel, ItemPointer tid);
  */
 extern void _bt_regscan(IndexScanDesc scan);
 extern void _bt_dropscan(IndexScanDesc scan);
-extern void _bt_adjscans(Relation rel, ItemPointer tid);
-extern void _bt_scandel(IndexScanDesc scan, BlockNumber blkno,
-			OffsetNumber offno);
-extern bool _bt_scantouched(IndexScanDesc scan, BlockNumber blkno,
-			    OffsetNumber offno);
+extern void _bt_adjscans(Relation rel, ItemPointer tid, int op);
 
 /*
  * prototypes for functions in nbtsearch.c
@@ -267,7 +270,7 @@ extern BTItem _bt_formitem(IndexTuple itup);
 extern void *_bt_spoolinit(Relation index, int ntapes);
 extern void _bt_spooldestroy(void *spool);
 extern void _bt_spool(Relation index, BTItem btitem, void *spool);
-extern void _bt_upperbuild(Relation index, BlockNumber blk, int level);
+extern void _bt_upperbuild(Relation index);
 extern void _bt_leafbuild(Relation index, void *spool);
 
 #endif	/* NBTREE_H */
