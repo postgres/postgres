@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.66 2004/01/24 00:37:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.67 2004/03/08 17:20:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -483,35 +483,45 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
 			/*
-			 * Cannot join if proposed join contains part, but only part,
-			 * of the RHS, *and* it contains rels not in the RHS.
+			 * This IN clause is not relevant unless its RHS overlaps the
+			 * proposed join.  (Check this first as a fast path for dismissing
+			 * most irrelevant INs quickly.)
 			 */
-			if (bms_overlap(ininfo->righthand, joinrelids) &&
-				!bms_is_subset(ininfo->righthand, joinrelids) &&
-				!bms_is_subset(joinrelids, ininfo->righthand))
+			if (!bms_overlap(ininfo->righthand, joinrelids))
+				continue;
+
+			/*
+			 * If we are still building the IN clause's RHS, then this IN
+			 * clause isn't relevant yet.
+			 */
+			if (bms_is_subset(joinrelids, ininfo->righthand))
+				continue;
+
+			/*
+			 * Cannot join if proposed join contains rels not in the RHS
+			 * *and* contains only part of the RHS.  We must build the
+			 * complete RHS (subselect's join) before it can be joined to
+			 * rels outside the subselect.
+			 */
+			if (!bms_is_subset(ininfo->righthand, joinrelids))
 			{
 				bms_free(joinrelids);
 				return NULL;
 			}
 
 			/*
-			 * No issue unless we are looking at a join of the IN's RHS to
-			 * other stuff.
+			 * At this point we are considering a join of the IN's RHS to
+			 * some other rel(s).
+			 *
+			 * If we already joined IN's RHS to any other rels in either
+			 * input path, then this join is not constrained (the necessary
+			 * work was done at the lower level where that join occurred).
 			 */
-			if (!(bms_is_subset(ininfo->righthand, joinrelids) &&
-				  !bms_equal(ininfo->righthand, joinrelids)))
+			if (bms_is_subset(ininfo->righthand, rel1->relids) &&
+				!bms_equal(ininfo->righthand, rel1->relids))
 				continue;
-
-			/*
-			 * If we already joined IN's RHS to any part of its LHS in
-			 * either input path, then this join is not constrained (the
-			 * necessary work was done at a lower level).
-			 */
-			if (bms_overlap(ininfo->lefthand, rel1->relids) &&
-				bms_is_subset(ininfo->righthand, rel1->relids))
-				continue;
-			if (bms_overlap(ininfo->lefthand, rel2->relids) &&
-				bms_is_subset(ininfo->righthand, rel2->relids))
+			if (bms_is_subset(ininfo->righthand, rel2->relids) &&
+				!bms_equal(ininfo->righthand, rel2->relids))
 				continue;
 
 			/*
