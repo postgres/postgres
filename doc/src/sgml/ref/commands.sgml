@@ -1,43 +1,109 @@
-<Chapter>
-<Title>Commands</Title>
+<!-- allfiles.sgml
+-
+- Complete list of usable sgml source files in this directory.
+-
+- -->
 
-<Para>
-</Para>
+<!entity intro-ref          system "intro-ref.sgml">
+<!entity commands           system "commands.sgml">
 
-&alterTable;
-&alterUser;
-&begin;
-&close;
-&cluster;
-&commit;
-&copy;
-&createAggregate;
-&createDatabase;
-&createFunction;
-&createIndex;
-&createLanguage;
-&createOperator;
-&createRule;
-&createSequence;
-&createTable;
-&dropFunction;
-&select;
+<!-- these will go into the "operators" reference chapter -->
+<!entity all                system "all.sgml">
+<!entity any                system "any.sgml">
+<!entity between            system "between.sgml">
+<!entity in                 system "in.sgml">
+<!entity like               system "like.sgml">
 
-</Chapter>
+<!-- these will go into the "functions" reference chapter -->
+<!entity avg                system "avg.sgml">
+<!entity cast               system "cast.sgml">
+<!entity charLength         system "char_length.sgml">
+<!entity count              system "count.sgml">
+<!entity currentDate        system "current_date.sgml">
+<!entity currentTime        system "current_time.sgml">
+<!entity currentTimestamp   system "current_timestamp.sgml">
+<!entity currentUser        system "current_user.sgml">
+<!entity exists             system "exists.sgml">
+<!entity extract            system "extract.sgml">
+<!entity initcap            system "initcap.sgml">
+<!entity lower              system "lower.sgml">
+<!entity lpad               system "lpad.sgml">
+<!entity max                system "max.sgml">
+<!entity min                system "min.sgml">
+<!entity position           system "position.sgml">
+<!entity rpad               system "rpad.sgml">
+<!entity substring          system "substring.sgml">
+<!entity sum                system "sum.sgml">
+<!entity translate          system "translate.sgml">
+<!entity trim               system "trim.sgml">
+<!entity upper              system "upper.sgml">
 
-<!-- Keep this comment at the end of the file
-Local variables:
-mode: sgml
-sgml-omittag:t
-sgml-shorttag:t
-sgml-minimize-attributes:nil
-sgml-always-quote-attributes:t
-sgml-indent-step:1
-sgml-indent-data:t
-sgml-parent-document:nil
-sgml-default-dtd-file:"../reference.ced"
-sgml-exposed-tags:nil
-sgml-local-catalogs:"/usr/lib/sgml/catalog"
-sgml-local-ecat-files:nil
-End:
+<!-- these are folded into create_table.sgml
+<!entity check              system "check.sgml">
+<!entity constraints        system "constraint.sgml">
+<!entity default            system "default.sgml">
+<!entity notNull            system "not_null.sgml">
+<!entity primaryKey         system "primary_key.sgml">
+<!entity unique             system "unique.sgml">
 -->
+
+<!-- these are folded into select.sgml
+<!entity groupBy            system "group_by.sgml">
+<!entity having             system "having.sgml">
+<!entity orderBy            system "order_by.sgml">
+<!entity union              system "union.sgml">
+-->
+
+<!-- these are in the "commands" reference chapter -->
+<!entity alterTable         system "alter_table.sgml">
+<!entity alterUser          system "alter_user.sgml">
+<!entity begin              system "begin.sgml">
+<!entity close              system "close.sgml">
+<!entity cluster            system "cluster.sgml">
+<!entity commit             system "commit.sgml">
+<!entity copy               system "copy.sgml">
+<!entity createAggregate    system "create_aggregate.sgml">
+<!entity createDatabase     system "create_database.sgml">
+<!entity createFunction     system "create_function.sgml">
+<!entity createIndex        system "create_index.sgml">
+<!entity createLanguage     system "create_language.sgml">
+<!entity createOperator     system "create_operator.sgml">
+<!entity createRule         system "create_rule.sgml">
+<!entity createSequence     system "create_sequence.sgml">
+<!entity createTable        system "create_table.sgml">
+<!entity createTrigger      system "create_trigger.sgml">
+<!entity createType         system "create_type.sgml">
+<!entity createUser         system "create_user.sgml">
+<!entity createView         system "create_view.sgml">
+<!entity declare            system "declare.sgml">
+<!entity delete             system "delete.sgml">
+<!entity dropAggregate      system "drop_aggregate.sgml">
+<!entity dropDatabase       system "drop_database.sgml">
+<!entity dropFunction       system "drop_function.sgml">
+<!entity dropIndex          system "drop_index.sgml">
+<!entity dropLanguage       system "drop_language.sgml">
+<!entity dropOperator       system "drop_operator.sgml">
+<!entity dropRule           system "drop_rule.sgml">
+<!entity dropSequence       system "drop_sequence.sgml">
+<!entity dropTable          system "drop_table.sgml">
+<!entity dropTrigger        system "drop_trigger.sgml">
+<!entity dropType           system "drop_type.sgml">
+<!entity dropUser           system "drop_user.sgml">
+<!entity dropView           system "drop_view.sgml">
+<!entity explain            system "explain.sgml">
+<!entity fetch              system "fetch.sgml">
+<!entity grant              system "grant.sgml">
+<!entity insert             system "insert.sgml">
+<!entity listen             system "listen.sgml">
+<!entity load               system "load.sgml">
+<!entity lock               system "lock.sgml">
+<!entity move               system "move.sgml">
+<!entity notify             system "notify.sgml">
+<!entity reset              system "reset.sgml">
+<!entity revoke             system "revoke.sgml">
+<!entity rollback           system "rollback.sgml">
+<!entity select             system "select.sgml">
+<!entity set                system "set.sgml">
+<!entity show               system "show.sgml">
+<!entity update             system "update.sgml">
+<!entity vacuum             system "vacuum.sgml">
