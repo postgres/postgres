@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.80 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.81 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,10 @@ typedef enum _teReqs_
 	REQ_ALL = REQ_SCHEMA + REQ_DATA
 } teReqs;
 
-static void _SortToc(ArchiveHandle *AH, TocSortCompareFn fn);
-static int	_tocSortCompareByOIDNum(const void *p1, const void *p2);
-static int	_tocSortCompareByIDNum(const void *p1, const void *p2);
+const char *progname;
+static char *modulename = gettext_noop("archiver");
+
+
 static ArchiveHandle *_allocAH(const char *FileSpec, const ArchiveFormat fmt,
 		 const int compression, ArchiveMode mode);
 static int	_printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData);
@@ -57,21 +58,16 @@ static void _selectOutputSchema(ArchiveHandle *AH, const char *schemaName);
 static teReqs _tocEntryRequired(TocEntry *te, RestoreOptions *ropt);
 static void _disableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void _enableTriggersIfNecessary(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
-static TocEntry *_getTocEntry(ArchiveHandle *AH, int id);
+static TocEntry *getTocEntryByDumpId(ArchiveHandle *AH, DumpId id);
 static void _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
-static void _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te);
 static int	_discoverArchiveFormat(ArchiveHandle *AH);
-static void _fixupOidInfo(TocEntry *te);
-static Oid	_findMaxOID(const char *((*deps)[]));
-
-const char *progname;
-static char *modulename = gettext_noop("archiver");
 
 static void _write_msg(const char *modulename, const char *fmt, va_list ap);
 static void _die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt, va_list ap);
 
 static int	_canRestoreBlobs(ArchiveHandle *AH);
 static int	_restoringToDB(ArchiveHandle *AH);
+
 
 /*
  *	Wrapper functions.
@@ -534,29 +530,33 @@ WriteData(Archive *AHX, const void *data, size_t dLen)
 
 /* Public */
 void
-ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
+ArchiveEntry(Archive *AHX,
+			 CatalogId catalogId, DumpId dumpId,
+			 const char *tag,
 			 const char *namespace, const char *owner,
-			 const char *desc, const char *((*deps)[]),
-			 const char *defn, const char *dropStmt,
-			 const char *copyStmt,
+			 const char *desc, const char *defn,
+			 const char *dropStmt, const char *copyStmt,
+			 const DumpId *deps, int nDeps,
 			 DataDumperPtr dumpFn, void *dumpArg)
 {
 	ArchiveHandle *AH = (ArchiveHandle *) AHX;
 	TocEntry   *newToc;
 
-	AH->lastID++;
-	AH->tocCount++;
-
 	newToc = (TocEntry *) calloc(1, sizeof(TocEntry));
 	if (!newToc)
 		die_horribly(AH, modulename, "out of memory\n");
+
+	AH->tocCount++;
+	if (dumpId > AH->maxDumpId)
+		AH->maxDumpId = dumpId;
 
 	newToc->prev = AH->toc->prev;
 	newToc->next = AH->toc;
 	AH->toc->prev->next = newToc;
 	AH->toc->prev = newToc;
 
-	newToc->id = AH->lastID;
+	newToc->catalogId = catalogId;
+	newToc->dumpId = dumpId;
 
 	newToc->tag = strdup(tag);
 	newToc->namespace = namespace ? strdup(namespace) : NULL;
@@ -566,24 +566,26 @@ ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
 	newToc->dropStmt = strdup(dropStmt);
 	newToc->copyStmt = copyStmt ? strdup(copyStmt) : NULL;
 
-	newToc->oid = strdup(oid);
-	newToc->depOid = deps;		/* NB: not copied */
-	_fixupOidInfo(newToc);
+	if (nDeps > 0)
+	{
+		newToc->dependencies = (DumpId *) malloc(nDeps * sizeof(DumpId));
+		memcpy(newToc->dependencies, deps, nDeps * sizeof(DumpId));
+		newToc->nDeps = nDeps;
+	}
+	else
+	{
+		newToc->dependencies = NULL;
+		newToc->nDeps = 0;
+	}
 
-	newToc->printed = 0;
-	newToc->formatData = NULL;
 	newToc->dataDumper = dumpFn;
 	newToc->dataDumperArg = dumpArg;
+	newToc->hadDumper = dumpFn ? true : false;
 
-	newToc->hadDumper = dumpFn ? 1 : 0;
+	newToc->formatData = NULL;
 
-	if (AH->ArchiveEntryPtr !=NULL)
+	if (AH->ArchiveEntryPtr != NULL)
 		(*AH->ArchiveEntryPtr) (AH, newToc);
-
-	/*
-	 * printf("New toc owned by '%s', oid %u\n", newToc->owner,
-	 * newToc->oidVal);
-	 */
 }
 
 /* Public */
@@ -627,7 +629,9 @@ PrintTOCSummary(Archive *AHX, RestoreOptions *ropt)
 	while (te != AH->toc)
 	{
 		if (_tocEntryRequired(te, ropt) != 0)
-			ahprintf(AH, "%d; %d %s %s %s\n", te->id, te->oidVal, te->desc, te->tag, te->owner);
+			ahprintf(AH, "%d; %u %u %s %s %s\n", te->dumpId,
+					 te->catalogId.tableoid, te->catalogId.oid,
+					 te->desc, te->tag, te->owner);
 		te = te->next;
 	}
 
@@ -781,127 +785,6 @@ EndRestoreBlob(ArchiveHandle *AH, Oid oid)
  * Sorting and Reordering
  ***********/
 
-/*
- * Move TOC entries of the specified type to the START of the TOC.
- *
- * This is public, but if you use it anywhere but SortTocByObjectType,
- * you are risking breaking things.
- */
-void
-MoveToStart(Archive *AHX, const char *oType)
-{
-	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	TocEntry   *te = AH->toc->next;
-	TocEntry   *newTe;
-
-	while (te != AH->toc)
-	{
-		te->_moved = 0;
-		te = te->next;
-	}
-
-	te = AH->toc->prev;
-	while (te != AH->toc && !te->_moved)
-	{
-		newTe = te->prev;
-		if (strcmp(te->desc, oType) == 0)
-			_moveAfter(AH, AH->toc, te);
-		te = newTe;
-	}
-}
-
-
-/*
- * Move TOC entries of the specified type to the end of the TOC.
- *
- * This is public, but if you use it anywhere but SortTocByObjectType,
- * you are risking breaking things.
- */
-void
-MoveToEnd(Archive *AHX, const char *oType)
-{
-	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-	TocEntry   *te = AH->toc->next;
-	TocEntry   *newTe;
-
-	while (te != AH->toc)
-	{
-		te->_moved = 0;
-		te = te->next;
-	}
-
-	te = AH->toc->next;
-	while (te != AH->toc && !te->_moved)
-	{
-		newTe = te->next;
-		if (strcmp(te->desc, oType) == 0)
-			_moveBefore(AH, AH->toc, te);
-		te = newTe;
-	}
-}
-
-/*
- * Sort TOC by object type (items of same type keep same relative order)
- *
- * This is factored out to ensure that pg_dump and pg_restore stay in sync
- * about the standard ordering.
- */
-void
-SortTocByObjectType(Archive *AH)
-{
-	/*
-	 * Procedural languages have to be declared just after database and
-	 * schema creation, before they are used.
-	 */
-	MoveToStart(AH, "ACL LANGUAGE");
-	MoveToStart(AH, "PROCEDURAL LANGUAGE");
-	MoveToStart(AH, "FUNC PROCEDURAL LANGUAGE");
-	MoveToStart(AH, "SCHEMA");
-	MoveToStart(AH, "<Init>");
-	/* Database entries *must* be at front (see also pg_restore.c) */
-	MoveToStart(AH, "DATABASE");
-
-	MoveToEnd(AH, "TABLE DATA");
-	MoveToEnd(AH, "BLOBS");
-	MoveToEnd(AH, "INDEX");
-	MoveToEnd(AH, "CONSTRAINT");
-	MoveToEnd(AH, "FK CONSTRAINT");
-	MoveToEnd(AH, "TRIGGER");
-	MoveToEnd(AH, "RULE");
-	MoveToEnd(AH, "SEQUENCE SET");
-
-	/*
-	 * Moving all comments to end is annoying, but must do it for comments
-	 * on stuff we just moved, and we don't seem to have quite enough
-	 * dependency structure to get it really right...
-	 */
-	MoveToEnd(AH, "COMMENT");
-}
-
-/*
- * Sort TOC by OID
- */
-/* Public */
-void
-SortTocByOID(Archive *AHX)
-{
-	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-
-	_SortToc(AH, _tocSortCompareByOIDNum);
-}
-
-/*
- * Sort TOC by ID
- */
-/* Public */
-void
-SortTocByID(Archive *AHX)
-{
-	ArchiveHandle *AH = (ArchiveHandle *) AHX;
-
-	_SortToc(AH, _tocSortCompareByIDNum);
-}
-
 void
 SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 {
@@ -910,25 +793,14 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 	char		buf[1024];
 	char	   *cmnt;
 	char	   *endptr;
-	int			id;
+	DumpId		id;
 	TocEntry   *te;
 	TocEntry   *tePrev;
-	int			i;
 
 	/* Allocate space for the 'wanted' array, and init it */
-	ropt->idWanted = (int *) malloc(sizeof(int) * AH->tocCount);
-	for (i = 0; i < AH->tocCount; i++)
-		ropt->idWanted[i] = 0;
-
-	ropt->limitToList = 1;
-
-	/* Mark all entries as 'not moved' */
-	te = AH->toc->next;
-	while (te != AH->toc)
-	{
-		te->_moved = 0;
-		te = te->next;
-	}
+	ropt->idWanted = (bool *) malloc(sizeof(bool) * AH->maxDumpId);
+	memset(ropt->idWanted, 0, sizeof(bool) * AH->maxDumpId);
+	ropt->limitToList = true;
 
 	/* Set prev entry as head of list */
 	tePrev = AH->toc;
@@ -955,25 +827,27 @@ SortTocFromFile(Archive *AHX, RestoreOptions *ropt)
 
 		/* Get an ID */
 		id = strtol(buf, &endptr, 10);
-		if (endptr == buf)
+		if (endptr == buf || id <= 0 || id > AH->maxDumpId)
 		{
 			write_msg(modulename, "WARNING: line ignored: %s\n", buf);
 			continue;
 		}
 
 		/* Find TOC entry */
-		te = _getTocEntry(AH, id);
+		te = getTocEntryByDumpId(AH, id);
 		if (!te)
-			die_horribly(AH, modulename, "could not find entry for ID %d\n", id);
+			die_horribly(AH, modulename, "could not find entry for ID %d\n",
+						 id);
 
-		ropt->idWanted[id - 1] = 1;
+		ropt->idWanted[id - 1] = true;
 
 		_moveAfter(AH, tePrev, te);
 		tePrev = te;
 	}
 
 	if (fclose(fh) != 0)
-		die_horribly(AH, modulename, "could not close TOC file: %s\n", strerror(errno));
+		die_horribly(AH, modulename, "could not close TOC file: %s\n",
+					 strerror(errno));
 }
 
 /**********************
@@ -990,13 +864,6 @@ archputs(const char *s, Archive *AH)
 
 /* Public */
 int
-archputc(const char c, Archive *AH)
-{
-	return WriteData(AH, &c, 1);
-}
-
-/* Public */
-int
 archprintf(Archive *AH, const char *fmt,...)
 {
 	char	   *p = NULL;
@@ -1007,9 +874,6 @@ archprintf(Archive *AH, const char *fmt,...)
 	/*
 	 * This is paranoid: deal with the possibility that vsnprintf is
 	 * willing to ignore trailing null
-	 */
-
-	/*
 	 * or returns > 0 even if string does not fit. It may be the case that
 	 * it returns cnt = bufsize
 	 */
@@ -1287,6 +1151,7 @@ exit_horribly(Archive *AH, const char *modulename, const char *fmt,...)
 
 	va_start(ap, fmt);
 	_die_horribly((ArchiveHandle *) AH, modulename, fmt, ap);
+	va_end(ap);
 }
 
 /* Archiver use (just different arg declaration) */
@@ -1297,6 +1162,7 @@ die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...)
 
 	va_start(ap, fmt);
 	_die_horribly(AH, modulename, fmt, ap);
+	va_end(ap);
 }
 
 
@@ -1311,9 +1177,9 @@ _moveAfter(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 
 	pos->next->prev = te;
 	pos->next = te;
-
-	te->_moved = 1;
 }
+
+#ifdef NOT_USED
 
 static void
 _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
@@ -1325,19 +1191,19 @@ _moveBefore(ArchiveHandle *AH, TocEntry *pos, TocEntry *te)
 	te->next = pos;
 	pos->prev->next = te;
 	pos->prev = te;
-
-	te->_moved = 1;
 }
 
+#endif
+
 static TocEntry *
-_getTocEntry(ArchiveHandle *AH, int id)
+getTocEntryByDumpId(ArchiveHandle *AH, DumpId id)
 {
 	TocEntry   *te;
 
 	te = AH->toc->next;
 	while (te != AH->toc)
 	{
-		if (te->id == id)
+		if (te->dumpId == id)
 			return te;
 		te = te->next;
 	}
@@ -1345,9 +1211,9 @@ _getTocEntry(ArchiveHandle *AH, int id)
 }
 
 int
-TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt)
+TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt)
 {
-	TocEntry   *te = _getTocEntry(AH, id);
+	TocEntry   *te = getTocEntryByDumpId(AH, id);
 
 	if (!te)
 		return 0;
@@ -1685,7 +1551,6 @@ _allocAH(const char *FileSpec, const ArchiveFormat fmt,
 
 	AH->intSize = sizeof(int);
 	AH->offSize = sizeof(off_t);
-	AH->lastID = 0;
 	if (FileSpec)
 	{
 		AH->fSpec = strdup(FileSpec);
@@ -1795,7 +1660,7 @@ WriteDataChunks(ArchiveHandle *AH)
 			 * The user-provided DataDumper routine needs to call
 			 * AH->WriteData
 			 */
-			(*te->dataDumper) ((Archive *) AH, te->oid, te->dataDumperArg);
+			(*te->dataDumper) ((Archive *) AH, te->dataDumperArg);
 
 			if (endPtr != NULL)
 				(*endPtr) (AH, te);
@@ -1808,18 +1673,24 @@ WriteDataChunks(ArchiveHandle *AH)
 void
 WriteToc(ArchiveHandle *AH)
 {
-	TocEntry   *te = AH->toc->next;
-	const char *dep;
+	TocEntry   *te;
+	char		workbuf[32];
 	int			i;
 
 	/* printf("%d TOC Entries to save\n", AH->tocCount); */
 
 	WriteInt(AH, AH->tocCount);
-	while (te != AH->toc)
+
+	for (te = AH->toc->next; te != AH->toc; te = te->next)
 	{
-		WriteInt(AH, te->id);
+		WriteInt(AH, te->dumpId);
 		WriteInt(AH, te->dataDumper ? 1 : 0);
-		WriteStr(AH, te->oid);
+
+		/* OID is recorded as a string for historical reasons */
+		sprintf(workbuf, "%u", te->catalogId.tableoid);
+		WriteStr(AH, workbuf);
+		sprintf(workbuf, "%u", te->catalogId.oid);
+		WriteStr(AH, workbuf);
 
 		WriteStr(AH, te->tag);
 		WriteStr(AH, te->desc);
@@ -1830,17 +1701,15 @@ WriteToc(ArchiveHandle *AH)
 		WriteStr(AH, te->owner);
 
 		/* Dump list of dependencies */
-		if (te->depOid != NULL)
+		for (i = 0; i < te->nDeps; i++)
 		{
-			i = 0;
-			while ((dep = (*te->depOid)[i++]) != NULL)
-				WriteStr(AH, dep);
+			sprintf(workbuf, "%d", te->dependencies[i]);
+			WriteStr(AH, workbuf);
 		}
 		WriteStr(AH, NULL);		/* Terminate List */
 
 		if (AH->WriteExtraTocPtr)
 			(*AH->WriteExtraTocPtr) (AH, te);
-		te = te->next;
 	}
 }
 
@@ -1848,27 +1717,43 @@ void
 ReadToc(ArchiveHandle *AH)
 {
 	int			i;
-	char	   *((*deps)[]);
+	char	   *tmp;
+	DumpId	   *deps;
 	int			depIdx;
 	int			depSize;
 
 	TocEntry   *te = AH->toc->next;
 
 	AH->tocCount = ReadInt(AH);
+	AH->maxDumpId = 0;
 
 	for (i = 0; i < AH->tocCount; i++)
 	{
-
 		te = (TocEntry *) calloc(1, sizeof(TocEntry));
-		te->id = ReadInt(AH);
+		te->dumpId = ReadInt(AH);
+
+		if (te->dumpId > AH->maxDumpId)
+			AH->maxDumpId = te->dumpId;
 
 		/* Sanity check */
-		if (te->id <= 0 || te->id > AH->tocCount)
-			die_horribly(AH, modulename, "entry ID %d out of range -- perhaps a corrupt TOC\n", te->id);
+		if (te->dumpId <= 0)
+			die_horribly(AH, modulename,
+						 "entry ID %d out of range -- perhaps a corrupt TOC\n",
+						 te->dumpId);
 
 		te->hadDumper = ReadInt(AH);
-		te->oid = ReadStr(AH);
-		te->oidVal = atooid(te->oid);
+
+		if (AH->version >= K_VERS_1_8)
+		{
+			tmp = ReadStr(AH);
+			sscanf(tmp, "%u", &te->catalogId.tableoid);
+			free(tmp);
+		}
+		else
+			te->catalogId.tableoid = InvalidOid;
+		tmp = ReadStr(AH);
+		sscanf(tmp, "%u", &te->catalogId.oid);
+		free(tmp);
 
 		te->tag = ReadStr(AH);
 		te->desc = ReadStr(AH);
@@ -1887,41 +1772,47 @@ ReadToc(ArchiveHandle *AH)
 		if (AH->version >= K_VERS_1_5)
 		{
 			depSize = 100;
-			deps = malloc(sizeof(char *) * depSize);
+			deps = (DumpId *) malloc(sizeof(DumpId) * depSize);
 			depIdx = 0;
-			do
+			for (;;)
 			{
+				tmp = ReadStr(AH);
+				if (!tmp)
+					break;		/* end of list */
 				if (depIdx >= depSize)
 				{
 					depSize *= 2;
-					deps = realloc(deps, sizeof(char *) * depSize);
+					deps = (DumpId *) realloc(deps, sizeof(DumpId) * depSize);
 				}
-				(*deps)[depIdx] = ReadStr(AH);
-#if 0
-				if ((*deps)[depIdx])
-					write_msg(modulename, "read dependency for %s -> %s\n",
-							  te->tag, (*deps)[depIdx]);
-#endif
-			} while ((*deps)[depIdx++] != NULL);
+				sscanf(tmp, "%d", &deps[depIdx]);
+				free(tmp);
+				depIdx++;
+			}
 
-			if (depIdx > 1)		/* We have a non-null entry */
-				te->depOid = realloc(deps, sizeof(char *) * depIdx);	/* trim it */
+			if (depIdx > 0)		/* We have a non-null entry */
+			{
+				deps = (DumpId *) realloc(deps, sizeof(DumpId) * depIdx);
+				te->dependencies = deps;
+				te->nDeps = depIdx;
+			}
 			else
 			{
 				free(deps);
-				te->depOid = NULL;		/* no deps */
+				te->dependencies = NULL;
+				te->nDeps = 0;
 			}
 		}
 		else
-			te->depOid = NULL;
-
-		/* Set maxOidVal etc for use in sorting */
-		_fixupOidInfo(te);
+		{
+			te->dependencies = NULL;
+			te->nDeps = 0;
+		}
 
 		if (AH->ReadExtraTocPtr)
 			(*AH->ReadExtraTocPtr) (AH, te);
 
-		ahlog(AH, 3, "read TOC entry %d (ID %d) for %s %s\n", i, te->id, te->desc, te->tag);
+		ahlog(AH, 3, "read TOC entry %d (ID %d) for %s %s\n",
+			  i, te->dumpId, te->desc, te->tag);
 
 		te->prev = AH->toc->prev;
 		AH->toc->prev->next = te;
@@ -2013,7 +1904,7 @@ _tocEntryRequired(TocEntry *te, RestoreOptions *ropt)
 		res = res & ~REQ_SCHEMA;
 
 	/* Finally, if we used a list, limit based on that as well */
-	if (ropt->limitToList && !ropt->idWanted[te->id - 1])
+	if (ropt->limitToList && !ropt->idWanted[te->dumpId - 1])
 		return 0;
 
 	return res;
@@ -2190,7 +2081,7 @@ _selectOutputSchema(ArchiveHandle *AH, const char *schemaName)
 static int
 _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isData)
 {
-	char	   *pfx;
+	const char	   *pfx;
 
 	/* Select owner and schema as necessary */
 	_becomeOwner(AH, te);
@@ -2208,8 +2099,23 @@ _printTocEntry(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt, bool isDat
 	else
 		pfx = "";
 
-	ahprintf(AH, "--\n-- %sTOC entry %d (OID %s)\n-- Name: %s; Type: %s; Schema: %s; Owner: %s\n",
-			 pfx, te->id, te->oid, te->tag, te->desc,
+	ahprintf(AH, "--\n");
+	if (AH->public.verbose)
+	{
+		ahprintf(AH, "-- TOC entry %d (class %u OID %u)\n",
+				 te->dumpId, te->catalogId.tableoid, te->catalogId.oid);
+		if (te->nDeps > 0)
+		{
+			int		i;
+
+			ahprintf(AH, "-- Dependencies:");
+			for (i = 0; i < te->nDeps; i++)
+				ahprintf(AH, " %d", te->dependencies[i]);
+			ahprintf(AH, "\n");
+		}
+	}
+	ahprintf(AH, "-- %sName: %s; Type: %s; Schema: %s; Owner: %s\n",
+			 pfx, te->tag, te->desc,
 			 te->namespace ? te->namespace : "-",
 			 te->owner);
 	if (AH->PrintExtraTocPtr !=NULL)
@@ -2381,181 +2287,3 @@ checkSeek(FILE *fp)
 	else
 		return true;
 }
-
-
-static void
-_SortToc(ArchiveHandle *AH, TocSortCompareFn fn)
-{
-	TocEntry  **tea;
-	TocEntry   *te;
-	int			i;
-
-	/* Allocate an array for quicksort (TOC size + head & foot) */
-	tea = (TocEntry **) malloc(sizeof(TocEntry *) * (AH->tocCount + 2));
-
-	/* Build array of toc entries, including header at start and end */
-	te = AH->toc;
-	for (i = 0; i <= AH->tocCount + 1; i++)
-	{
-		/*
-		 * printf("%d: %x (%x, %x) - %u\n", i, te, te->prev, te->next,
-		 * te->oidVal);
-		 */
-		tea[i] = te;
-		te = te->next;
-	}
-
-	/* Sort it, but ignore the header entries */
-	qsort(&(tea[1]), AH->tocCount, sizeof(TocEntry *), fn);
-
-	/* Rebuild list: this works because we have headers at each end */
-	for (i = 1; i <= AH->tocCount; i++)
-	{
-		tea[i]->next = tea[i + 1];
-		tea[i]->prev = tea[i - 1];
-	}
-
-
-	te = AH->toc;
-	for (i = 0; i <= AH->tocCount + 1; i++)
-	{
-		/*
-		 * printf("%d: %x (%x, %x) - %u\n", i, te, te->prev, te->next,
-		 * te->oidVal);
-		 */
-		te = te->next;
-	}
-
-
-	AH->toc->next = tea[1];
-	AH->toc->prev = tea[AH->tocCount];
-}
-
-static int
-_tocSortCompareByOIDNum(const void *p1, const void *p2)
-{
-	TocEntry   *te1 = *(TocEntry **) p1;
-	TocEntry   *te2 = *(TocEntry **) p2;
-	Oid			id1 = te1->maxOidVal;
-	Oid			id2 = te2->maxOidVal;
-	int			cmpval;
-
-	/* printf("Comparing %u to %u\n", id1, id2); */
-
-	cmpval = oidcmp(id1, id2);
-
-	/* If we have a deterministic answer, return it. */
-	if (cmpval != 0)
-		return cmpval;
-
-	/* More comparisons required */
-	if (oideq(id1, te1->maxDepOidVal))	/* maxOid1 came from deps */
-	{
-		if (oideq(id2, te2->maxDepOidVal))		/* maxOid2 also came from
-												 * deps */
-		{
-			cmpval = oidcmp(te1->oidVal, te2->oidVal);	/* Just compare base
-														 * OIDs */
-		}
-		else
-/* MaxOid2 was entry OID */
-		{
-			return 1;			/* entry1 > entry2 */
-		};
-	}
-	else
-/* must have oideq(id1, te1->oidVal) => maxOid1 = Oid1 */
-	{
-		if (oideq(id2, te2->maxDepOidVal))		/* maxOid2 came from deps */
-		{
-			return -1;			/* entry1 < entry2 */
-		}
-		else
-/* MaxOid2 was entry OID - deps don't matter */
-		{
-			cmpval = 0;
-		};
-	};
-
-	/*
-	 * If we get here, then we've done another comparison Once again, a 0
-	 * result means we require even more
-	 */
-	if (cmpval != 0)
-		return cmpval;
-
-	/*
-	 * Entire OID details match, so use ID number (ie. original pg_dump
-	 * order)
-	 */
-	return _tocSortCompareByIDNum(te1, te2);
-}
-
-static int
-_tocSortCompareByIDNum(const void *p1, const void *p2)
-{
-	TocEntry   *te1 = *(TocEntry **) p1;
-	TocEntry   *te2 = *(TocEntry **) p2;
-	int			id1 = te1->id;
-	int			id2 = te2->id;
-
-	/* printf("Comparing %d to %d\n", id1, id2); */
-
-	if (id1 < id2)
-		return -1;
-	else if (id1 > id2)
-		return 1;
-	else
-		return 0;
-}
-
-/*
- * Assuming Oid and depOid are set, work out the various
- * Oid values used in sorting.
- */
-static void
-_fixupOidInfo(TocEntry *te)
-{
-	te->oidVal = atooid(te->oid);
-	te->maxDepOidVal = _findMaxOID(te->depOid);
-
-	/* For the purpose of sorting, find the max OID. */
-	if (oidcmp(te->oidVal, te->maxDepOidVal) >= 0)
-		te->maxOidVal = te->oidVal;
-	else
-		te->maxOidVal = te->maxDepOidVal;
-}
-
-/*
- * Find the max OID value for a given list of string Oid values
- */
-static Oid
-_findMaxOID(const char *((*deps)[]))
-{
-	const char *dep;
-	int			i;
-	Oid			maxOid = (Oid) 0;
-	Oid			currOid;
-
-	if (!deps)
-		return maxOid;
-
-	i = 0;
-	while ((dep = (*deps)[i++]) != NULL)
-	{
-		currOid = atooid(dep);
-		if (oidcmp(maxOid, currOid) < 0)
-			maxOid = currOid;
-	}
-
-	return maxOid;
-}
-
-/*
- * Maybe I can use this somewhere...
- *
- *create table pgdump_blob_path(p text);
- *insert into pgdump_blob_path values('/home/pjw/work/postgresql-cvs/pgsql/src/bin/pg_dump_140');
- *
- *insert into dump_blob_xref select 12345,lo_import(p || '/q.q') from pgdump_blob_path;
- */

@@ -15,18 +15,21 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.27 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup.h,v 1.28 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#ifndef PG_BACKUP__
-#define PG_BACKUP__
+#ifndef PG_BACKUP_H
+#define PG_BACKUP_H
 
 #include "postgres_fe.h"
 
+#include "pg_dump.h"
+
 #include "libpq-fe.h"
 #include "pqexpbuffer.h"
+
 
 #define atooid(x)  ((Oid) strtoul((x), NULL, 10))
 #define oidcmp(x,y) ( ((x) < (y) ? -1 : ((x) > (y)) ?  1 : 0) )
@@ -45,7 +48,7 @@ typedef enum _archiveFormat
 } ArchiveFormat;
 
 /*
- *	We may want to have so user-readbale data, but in the mean
+ *	We may want to have some more user-readable data, but in the mean
  *	time this gives us some abstraction and type checking.
  */
 typedef struct _Archive
@@ -57,7 +60,7 @@ typedef struct _Archive
 	/* The rest is private */
 } Archive;
 
-typedef int (*DataDumperPtr) (Archive *AH, char *oid, void *userArg);
+typedef int (*DataDumperPtr) (Archive *AH, void *userArg);
 
 typedef struct _restoreOptions
 {
@@ -74,9 +77,6 @@ typedef struct _restoreOptions
 	int			aclsSkip;
 	int			tocSummary;
 	char	   *tocFile;
-	int			oidOrder;
-	int			origOrder;
-	int			rearrange;
 	int			format;
 	char	   *formatName;
 
@@ -98,8 +98,8 @@ typedef struct _restoreOptions
 	int			ignoreVersion;
 	int			requirePassword;
 
-	int		   *idWanted;
-	int			limitToList;
+	bool	   *idWanted;
+	bool		limitToList;
 	int			compression;
 
 	int			suppressDumpWarnings;	/* Suppress output of WARNING
@@ -127,11 +127,13 @@ PGconn *ConnectDatabase(Archive *AH,
 
 
 /* Called to add a TOC entry */
-extern void ArchiveEntry(Archive *AHX, const char *oid, const char *tag,
+extern void ArchiveEntry(Archive *AHX,
+			 CatalogId catalogId, DumpId dumpId,
+			 const char *tag,
 			 const char *namespace, const char *owner,
-			 const char *desc, const char *((*deps)[]),
-			 const char *defn, const char *dropStmt,
-			 const char *copyStmt,
+			 const char *desc, const char *defn,
+			 const char *dropStmt, const char *copyStmt,
+			 const DumpId *deps, int nDeps,
 			 DataDumperPtr dumpFn, void *dumpArg);
 
 /* Called to write *data* to the archive */
@@ -161,19 +163,13 @@ extern void PrintTOCSummary(Archive *AH, RestoreOptions *ropt);
 extern RestoreOptions *NewRestoreOptions(void);
 
 /* Rearrange TOC entries */
-extern void MoveToStart(Archive *AH, const char *oType);
-extern void MoveToEnd(Archive *AH, const char *oType);
-extern void SortTocByObjectType(Archive *AH);
-extern void SortTocByOID(Archive *AH);
-extern void SortTocByID(Archive *AH);
 extern void SortTocFromFile(Archive *AH, RestoreOptions *ropt);
 
 /* Convenience functions used only when writing DATA */
 extern int	archputs(const char *s, Archive *AH);
-extern int	archputc(const char c, Archive *AH);
 extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
 
-#endif
+#endif /* PG_BACKUP_H */

@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.44 2003/11/29 19:51:39 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.45 2003/12/06 03:00:10 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <refmeta>
@@ -228,35 +228,6 @@
      </varlistentry>
 
      <varlistentry>
-      <term><option>-N</option></term>
-      <term><option>--orig-order</option></term>
-      <listitem>
-       <para>
-        Restore items in the order they were originally generated within
-        <application>pg_dump</application>.  This option has no known
-	practical use, since <application>pg_dump</application> generates
-	the items in an order convenient to it, which is unlikely to be a
-	safe order for restoring them.  (This is <emphasis>not</> the order
-	in which the items are ultimately listed in the archive's table of
-	contents.)  See also <option>-r</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-o</option></term>
-      <term><option>--oid-order</option></term>
-      <listitem>
-       <para>
-        Restore items in order by OID.  This option is of limited usefulness,
-	since OID is only an approximate indication of original creation
-	order.  This option overrides <option>-N</> if both are specified.
-	See also <option>-r</>.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><option>-O</option></term>
       <term><option>--no-owner</option></term>
       <listitem>
@@ -283,31 +254,6 @@
         Restore the named function only.  Be careful to spell the function
 	name and arguments exactly as they appear in the dump file's table
 	of contents.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><option>-r</option></term>
-      <term><option>--rearrange</option></term>
-      <listitem>
-       <para>
-        Rearrange items by object type (this occurs after the sorting
-	specified by <option>-N</option> or <option>-o</option>, if
-	given).  The rearrangement is intended to give the best possible
-	restore performance.
-       </para>
-
-       <para>
-        When none of <option>-N</option>, <option>-o</option>, and
-	<option>-r</> appear, <application>pg_restore</application> restores
-	items in the order they appear in the dump's table of contents,
-	or in the order they appear in the  <REPLACEABLE
-        CLASS="PARAMETER">list-file</REPLACEABLE> if <option>-L</> is
-	given.  The combination of <option>-o</> and <option>-r</>
-	duplicates the sorting done by <application>pg_dump</application>
-	before creating the dump's table of contents,
-	and so it is normally unnecessary to specify it.
        </para>
       </listitem>
      </varlistentry>

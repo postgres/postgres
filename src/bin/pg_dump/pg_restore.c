@@ -34,7 +34,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.54 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_restore.c,v 1.55 2003/12/06 03:00:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,10 +101,7 @@ main(int argc, char **argv)
 		{"no-owner", 0, NULL, 'O'},
 		{"no-reconnect", 0, NULL, 'R'},
 		{"port", 1, NULL, 'p'},
-		{"oid-order", 0, NULL, 'o'},
-		{"orig-order", 0, NULL, 'N'},
 		{"password", 0, NULL, 'W'},
-		{"rearrange", 0, NULL, 'r'},
 		{"schema-only", 0, NULL, 's'},
 		{"superuser", 1, NULL, 'S'},
 		{"table", 1, NULL, 't'},
@@ -147,7 +144,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:iI:lL:NoOp:P:rRsS:t:T:uU:vWxX:",
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:iI:lL:Op:P:RsS:t:T:uU:vWxX:",
 							cmdopts, NULL)) != -1)
 	{
 		switch (c)
@@ -188,21 +185,12 @@ main(int argc, char **argv)
 				opts->tocFile = strdup(optarg);
 				break;
 
-			case 'N':
-				opts->origOrder = 1;
-				break;
-			case 'o':
-				opts->oidOrder = 1;
-				break;
 			case 'O':
 				opts->noOwner = 1;
 				break;
 			case 'p':
 				if (strlen(optarg) != 0)
 					opts->pgport = strdup(optarg);
-				break;
-			case 'r':
-				opts->rearrange = 1;
 				break;
 			case 'R':
 				/* no-op, still accepted for backwards compatibility */
@@ -338,19 +326,6 @@ main(int argc, char **argv)
 	if (opts->tocFile)
 		SortTocFromFile(AH, opts);
 
-	if (opts->oidOrder)
-		SortTocByOID(AH);
-	else if (opts->origOrder)
-		SortTocByID(AH);
-
-	if (opts->rearrange)
-		SortTocByObjectType(AH);
-	else
-	{
-		/* Database MUST be at start (see also SortTocByObjectType) */
-		MoveToStart(AH, "DATABASE");
-	}
-
 	if (opts->tocSummary)
 		PrintTOCSummary(AH, opts);
 	else
@@ -385,12 +360,9 @@ usage(const char *progname)
 	printf(_("  -I, --index=NAME         restore named index\n"));
 	printf(_("  -L, --use-list=FILENAME  use specified table of contents for ordering\n"
 			 "                           output from this file\n"));
-	printf(_("  -N, --orig-order         restore in original dump order\n"));
-	printf(_("  -o, --oid-order          restore in OID order\n"));
 	printf(_("  -O, --no-owner           do not output commands to set object ownership\n"));
 	printf(_("  -P, --function=NAME(args)\n"
 			 "                           restore named function\n"));
-	printf(_("  -r, --rearrange          rearrange output to put indexes etc. at end\n"));
 	printf(_("  -s, --schema-only        restore only the schema, no data\n"));
 	printf(_("  -S, --superuser=NAME     specify the superuser user name to use for\n"
 			 "                           disabling triggers\n"));

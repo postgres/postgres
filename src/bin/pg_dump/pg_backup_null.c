@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.12 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.13 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,7 +91,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	if (te->dataDumper)
 	{
 		AH->currToc = te;
-		(*te->dataDumper) ((Archive *) AH, te->oid, te->dataDumperArg);
+		(*te->dataDumper) ((Archive *) AH, te->dataDumperArg);
 		AH->currToc = NULL;
 	}
 }

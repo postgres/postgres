@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.27 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.28 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -303,7 +303,7 @@ _StartData(ArchiveHandle *AH, TocEntry *te)
 	tctx->dataState = K_OFFSET_POS_SET;
 
 	_WriteByte(AH, BLK_DATA);	/* Block type */
-	WriteInt(AH, te->id);		/* For sanity check */
+	WriteInt(AH, te->dumpId);	/* For sanity check */
 
 	_StartDataCompressor(AH, te);
 }
@@ -371,7 +371,7 @@ _StartBlobs(ArchiveHandle *AH, TocEntry *te)
 	tctx->dataState = K_OFFSET_POS_SET;
 
 	_WriteByte(AH, BLK_BLOBS);	/* Block type */
-	WriteInt(AH, te->id);		/* For sanity check */
+	WriteInt(AH, te->dumpId);	/* For sanity check */
 }
 
 /*
@@ -439,7 +439,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 
 		_readBlockHeader(AH, &blkType, &id);
 
-		while (id != te->id)
+		while (id != te->dumpId)
 		{
 			if ((TocIDRequired(AH, id, ropt) & 2) != 0)
 				die_horribly(AH, modulename,
@@ -475,9 +475,9 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 	}
 
 	/* Are we sane? */
-	if (id != te->id)
+	if (id != te->dumpId)
 		die_horribly(AH, modulename, "found unexpected block ID (%d) when reading data -- expected %d\n",
-					 id, te->id);
+					 id, te->dumpId);
 
 	switch (blkType)
 	{
@@ -863,7 +863,7 @@ _readBlockHeader(ArchiveHandle *AH, int *type, int *id)
 	if (AH->version < K_VERS_1_3)
 		*type = BLK_DATA;
 	else
-		*type = _ReadByte(AH);;
+		*type = _ReadByte(AH);
 
 	*id = ReadInt(AH);
 }

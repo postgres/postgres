@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.53 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.54 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ typedef z_stream *z_streamp;
 #include "libpq-fe.h"
 
 #define K_VERS_MAJOR 1
-#define K_VERS_MINOR 7
+#define K_VERS_MINOR 8
 #define K_VERS_REV 0
 
 /* Data block types */
@@ -76,7 +76,9 @@ typedef z_stream *z_streamp;
 #define K_VERS_1_6 (( (1 * 256 + 6) * 256 + 0) * 256 + 0)		/* Schema field in TOCs */
 #define K_VERS_1_7 (( (1 * 256 + 7) * 256 + 0) * 256 + 0)		/* File Offset size in
 																 * header */
-#define K_VERS_MAX (( (1 * 256 + 7) * 256 + 255) * 256 + 0)
+#define K_VERS_1_8 (( (1 * 256 + 8) * 256 + 0) * 256 + 0)		/* change interpretation of ID numbers and dependencies */
+
+#define K_VERS_MAX (( (1 * 256 + 8) * 256 + 255) * 256 + 0)
 
 /* No of BLOBs to restore in 1 TX */
 #define BLOB_BATCH_SIZE 100
@@ -113,8 +115,6 @@ typedef void (*PrintExtraTocPtr) (struct _archiveHandle * AH, struct _tocEntry *
 typedef void (*PrintTocDataPtr) (struct _archiveHandle * AH, struct _tocEntry * te, RestoreOptions *ropt);
 
 typedef size_t (*CustomOutPtr) (struct _archiveHandle * AH, const void *buf, size_t len);
-
-typedef int (*TocSortCompareFn) (const void *te1, const void *te2);
 
 typedef enum _archiveMode
 {
@@ -222,7 +222,6 @@ typedef struct _archiveHandle
 	int			createdBlobXref;	/* Flag */
 	int			blobCount;		/* # of blobs restored */
 
-	int			lastID;			/* Last internal ID for a TOC entry */
 	char	   *fSpec;			/* Archive File Spec */
 	FILE	   *FH;				/* General purpose file handle */
 	void	   *OF;
@@ -230,6 +229,8 @@ typedef struct _archiveHandle
 
 	struct _tocEntry *toc;		/* List of TOC entries */
 	int			tocCount;		/* Number of TOC entries */
+	DumpId		maxDumpId;		/* largest DumpId among all TOC entries */
+
 	struct _tocEntry *currToc;	/* Used when dumping data */
 	int			compression;	/* Compression requested on open */
 	ArchiveMode mode;			/* File mode - r or w */
@@ -252,8 +253,9 @@ typedef struct _tocEntry
 {
 	struct _tocEntry *prev;
 	struct _tocEntry *next;
-	int			id;
-	int			hadDumper;		/* Archiver was passed a dumper routine
+	CatalogId	catalogId;
+	DumpId		dumpId;
+	bool		hadDumper;		/* Archiver was passed a dumper routine
 								 * (used in restore) */
 	char	   *tag;			/* index tag */
 	char	   *namespace;		/* null or empty string if not in a schema */
@@ -262,23 +264,17 @@ typedef struct _tocEntry
 	char	   *defn;
 	char	   *dropStmt;
 	char	   *copyStmt;
-	char	   *oid;			/* Oid of source of entry */
-	Oid			oidVal;			/* Value of above */
-	const char *((*depOid)[]);
-	Oid			maxDepOidVal;	/* Value of largest OID in deps */
-	Oid			maxOidVal;		/* Max of entry OID and max dep OID */
+	DumpId	   *dependencies;	/* dumpIds of objects this one depends on */
+	int			nDeps;			/* number of dependencies */
 
-	int			printed;		/* Indicates if entry defn has been dumped */
 	DataDumperPtr dataDumper;	/* Routine to dump data for object */
 	void	   *dataDumperArg;	/* Arg for above routine */
 	void	   *formatData;		/* TOC Entry data specific to file format */
-
-	int			_moved;			/* Marker used when rearranging TOC */
-
 } TocEntry;
 
 /* Used everywhere */
 extern const char *progname;
+
 extern void die_horribly(ArchiveHandle *AH, const char *modulename, const char *fmt,...) __attribute__((format(printf, 3, 4)));
 extern void write_msg(const char *modulename, const char *fmt,...) __attribute__((format(printf, 2, 3)));
 
@@ -290,7 +286,7 @@ extern void WriteToc(ArchiveHandle *AH);
 extern void ReadToc(ArchiveHandle *AH);
 extern void WriteDataChunks(ArchiveHandle *AH);
 
-extern int	TocIDRequired(ArchiveHandle *AH, int id, RestoreOptions *ropt);
+extern int	TocIDRequired(ArchiveHandle *AH, DumpId id, RestoreOptions *ropt);
 extern bool checkSeek(FILE *fp);
 
 /*

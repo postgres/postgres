@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.23 2003/11/29 19:52:05 pgsql Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.24 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,11 +172,11 @@ _ArchiveEntry(ArchiveHandle *AH, TocEntry *te)
 	{
 #ifdef HAVE_LIBZ
 		if (AH->compression == 0)
-			sprintf(fn, "%d.dat", te->id);
+			sprintf(fn, "%d.dat", te->dumpId);
 		else
-			sprintf(fn, "%d.dat.gz", te->id);
+			sprintf(fn, "%d.dat.gz", te->dumpId);
 #else
-		sprintf(fn, "%d.dat", te->id);
+		sprintf(fn, "%d.dat", te->dumpId);
 #endif
 		ctx->filename = strdup(fn);
 	}

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.77 2003/11/29 19:52:04 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/common.c,v 1.78 2003/12/06 03:00:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,30 @@
 #include "strdup.h"
 #endif
 
-static void findParentsByOid(TableInfo *tblinfo, int numTables,
-				 InhInfo *inhinfo, int numInherits,
-				 const char *oid,
-				 int *numParentsPtr, int **parentIndexes);
+
+/*
+ * Variables for mapping DumpId to DumpableObject
+ */
+static DumpableObject **dumpIdMap = NULL;
+static int	allocedDumpIds = 0;
+static DumpId lastDumpId = 0;
+
+/*
+ * These variables are static to avoid the notational cruft of having to pass
+ * them into findTableByOid() and friends.
+ */
+static TableInfo  *tblinfo;
+static TypeInfo   *tinfo;
+static FuncInfo   *finfo;
+static OprInfo    *oprinfo;
+static int		numTables;
+static int		numTypes;
+static int		numFuncs;
+static int		numOperators;
+
+
+static void findParentsByOid(TableInfo *self,
+							 InhInfo *inhinfo, int numInherits);
 static void flagInhTables(TableInfo *tbinfo, int numTables,
 			  InhInfo *inhinfo, int numInherits);
 static void flagInhAttrs(TableInfo *tbinfo, int numTables,
@@ -41,48 +61,48 @@ static int	strInArray(const char *pattern, char **arr, int arr_size);
 
 
 /*
- * dumpSchema:
- *	  we have a valid connection, we are now going to dump the schema
- * into the file
+ * getSchemaData
+ *	  Collect information about all potentially dumpable objects
  */
-
 TableInfo *
-dumpSchema(Archive *fout,
-		   int *numTablesPtr,
-		   const bool aclsSkip,
-		   const bool schemaOnly,
-		   const bool dataOnly)
+getSchemaData(int *numTablesPtr,
+			  const bool schemaOnly,
+			  const bool dataOnly)
 {
+	NamespaceInfo *nsinfo;
+	AggInfo    *agginfo;
+	InhInfo    *inhinfo;
+	RuleInfo   *ruleinfo;
+	ProcLangInfo *proclanginfo;
+	CastInfo   *castinfo;
+	OpclassInfo *opcinfo;
+	ConvInfo   *convinfo;
 	int			numNamespaces;
-	int			numTypes;
-	int			numFuncs;
-	int			numTables;
-	int			numInherits;
 	int			numAggregates;
-	int			numOperators;
+	int			numInherits;
+	int			numRules;
+	int			numProcLangs;
+	int			numCasts;
 	int			numOpclasses;
 	int			numConversions;
-	NamespaceInfo *nsinfo;
-	TypeInfo   *tinfo;
-	FuncInfo   *finfo;
-	AggInfo    *agginfo;
-	TableInfo  *tblinfo;
-	InhInfo    *inhinfo;
-	OprInfo    *oprinfo;
-	OpclassInfo *opcinfo;
-	ConvInfo *convinfo;
 
 	if (g_verbose)
 		write_msg(NULL, "reading schemas\n");
 	nsinfo = getNamespaces(&numNamespaces);
 
 	if (g_verbose)
+		write_msg(NULL, "reading user-defined functions\n");
+	finfo = getFuncs(&numFuncs);
+
+	/* this must be after getFuncs */
+	if (g_verbose)
 		write_msg(NULL, "reading user-defined types\n");
 	tinfo = getTypes(&numTypes);
 
+	/* this must be after getFuncs, too */
 	if (g_verbose)
-		write_msg(NULL, "reading user-defined functions\n");
-	finfo = getFuncs(&numFuncs);
+		write_msg(NULL, "reading procedural languages\n");
+	proclanginfo = getProcLangs(&numProcLangs);
 
 	if (g_verbose)
 		write_msg(NULL, "reading user-defined aggregate functions\n");
@@ -108,6 +128,14 @@ dumpSchema(Archive *fout,
 		write_msg(NULL, "reading table inheritance information\n");
 	inhinfo = getInherits(&numInherits);
 
+	if (g_verbose)
+		write_msg(NULL, "reading rewrite rules\n");
+	ruleinfo = getRules(&numRules);
+
+	if (g_verbose)
+		write_msg(NULL, "reading type casts\n");
+	castinfo = getCasts(&numCasts);
+
 	/* Link tables to parents, mark parents of target tables interesting */
 	if (g_verbose)
 		write_msg(NULL, "finding inheritance relationships\n");
@@ -121,94 +149,24 @@ dumpSchema(Archive *fout,
 		write_msg(NULL, "flagging inherited columns in subtables\n");
 	flagInhAttrs(tblinfo, numTables, inhinfo, numInherits);
 
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out database comment\n");
-		dumpDBComment(fout);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined schemas\n");
-		dumpNamespaces(fout, nsinfo, numNamespaces);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined types\n");
-		dumpTypes(fout, finfo, numFuncs, tinfo, numTypes);
-	}
+	if (g_verbose)
+		write_msg(NULL, "reading indexes\n");
+	getIndexes(tblinfo, numTables);
 
 	if (g_verbose)
-		write_msg(NULL, "dumping out tables\n");
-	dumpTables(fout, tblinfo, numTables,
-			   aclsSkip, schemaOnly, dataOnly);
+		write_msg(NULL, "reading constraints\n");
+	getConstraints(tblinfo, numTables);
 
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out indexes\n");
-		dumpIndexes(fout, tblinfo, numTables);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined procedural languages\n");
-		dumpProcLangs(fout, finfo, numFuncs);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined functions\n");
-		dumpFuncs(fout, finfo, numFuncs);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined aggregate functions\n");
-		dumpAggs(fout, agginfo, numAggregates);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined operators\n");
-		dumpOprs(fout, oprinfo, numOperators);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined operator classes\n");
-		dumpOpclasses(fout, opcinfo, numOpclasses);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined casts\n");
-		dumpCasts(fout, finfo, numFuncs, tinfo, numTypes);
-	}
-
-	if (!dataOnly)
-	{
-		if (g_verbose)
-			write_msg(NULL, "dumping out user-defined conversions\n");
-		dumpConversions(fout, convinfo, numConversions);
-	}
+	if (g_verbose)
+		write_msg(NULL, "reading triggers\n");
+	getTriggers(tblinfo, numTables);
 
 	*numTablesPtr = numTables;
 	return tblinfo;
 }
 
 /* flagInhTables -
- *	 Fill in parentIndexes fields of every target table, and mark
+ *	 Fill in parent link fields of every target table, and mark
  *	 parents of target tables as interesting
  *
  * Note that only direct ancestors of targets are marked interesting.
@@ -224,7 +182,7 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 	int			i,
 				j;
 	int			numParents;
-	int		   *parentIndexes;
+	TableInfo **parents;
 
 	for (i = 0; i < numTables; i++)
 	{
@@ -238,21 +196,13 @@ flagInhTables(TableInfo *tblinfo, int numTables,
 			continue;
 
 		/* Find all the immediate parent tables */
-		findParentsByOid(tblinfo, numTables,
-						 inhinfo, numInherits,
-						 tblinfo[i].oid,
-						 &tblinfo[i].numParents,
-						 &tblinfo[i].parentIndexes);
-		numParents = tblinfo[i].numParents;
-		parentIndexes = tblinfo[i].parentIndexes;
+		findParentsByOid(&tblinfo[i], inhinfo, numInherits);
 
 		/* Mark the parents as interesting for getTableAttrs */
+		numParents = tblinfo[i].numParents;
+		parents = tblinfo[i].parents;
 		for (j = 0; j < numParents; j++)
-		{
-			int			parentInd = parentIndexes[j];
-
-			tblinfo[parentInd].interesting = true;
-		}
+			parents[j]->interesting = true;
 	}
 }
 
@@ -269,30 +219,25 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 	int			i,
 				j,
 				k;
-	int			parentInd;
-	int			inhAttrInd;
-	int			numParents;
-	int		   *parentIndexes;
-	bool		foundAttr;		/* Attr was found in a parent */
-	bool		foundNotNull;	/* Attr was NOT NULL in a parent */
-	bool		defaultsMatch;	/* All non-empty defaults match */
-	bool		defaultsFound;	/* Found a default in a parent */
-	char	   *attrDef;
-	char	   *inhDef;
 
 	for (i = 0; i < numTables; i++)
 	{
+		TableInfo  *tbinfo = &(tblinfo[i]);
+		int			numParents;
+		TableInfo **parents;
+		TableInfo  *parent;
+
 		/* Sequences and views never have parents */
-		if (tblinfo[i].relkind == RELKIND_SEQUENCE ||
-			tblinfo[i].relkind == RELKIND_VIEW)
+		if (tbinfo->relkind == RELKIND_SEQUENCE ||
+			tbinfo->relkind == RELKIND_VIEW)
 			continue;
 
 		/* Don't bother computing anything for non-target tables, either */
-		if (!tblinfo[i].dump)
+		if (!tbinfo->dump)
 			continue;
 
-		numParents = tblinfo[i].numParents;
-		parentIndexes = tblinfo[i].parentIndexes;
+		numParents = tbinfo->numParents;
+		parents = tbinfo->parents;
 
 		if (numParents == 0)
 			continue;			/* nothing to see here, move along */
@@ -310,35 +255,45 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 		 * See discussion on -hackers around 2-Apr-2001.
 		 *----------------------------------------------------------------
 		 */
-		for (j = 0; j < tblinfo[i].numatts; j++)
+		for (j = 0; j < tbinfo->numatts; j++)
 		{
+			bool		foundAttr;		/* Attr was found in a parent */
+			bool		foundNotNull;	/* Attr was NOT NULL in a parent */
+			bool		defaultsMatch;	/* All non-empty defaults match */
+			bool		defaultsFound;	/* Found a default in a parent */
+			AttrDefInfo *attrDef;
+
 			foundAttr = false;
 			foundNotNull = false;
 			defaultsMatch = true;
 			defaultsFound = false;
 
-			attrDef = tblinfo[i].adef_expr[j];
+			attrDef = tbinfo->attrdefs[j];
 
 			for (k = 0; k < numParents; k++)
 			{
-				parentInd = parentIndexes[k];
-				inhAttrInd = strInArray(tblinfo[i].attnames[j],
-										tblinfo[parentInd].attnames,
-										tblinfo[parentInd].numatts);
+				int			inhAttrInd;
+
+				parent = parents[k];
+				inhAttrInd = strInArray(tbinfo->attnames[j],
+										parent->attnames,
+										parent->numatts);
 
 				if (inhAttrInd != -1)
 				{
 					foundAttr = true;
-					foundNotNull |= tblinfo[parentInd].notnull[inhAttrInd];
+					foundNotNull |= parent->notnull[inhAttrInd];
 					if (attrDef != NULL)		/* If we have a default,
 												 * check parent */
 					{
-						inhDef = tblinfo[parentInd].adef_expr[inhAttrInd];
+						AttrDefInfo *inhDef;
 
+						inhDef = parent->attrdefs[inhAttrInd];
 						if (inhDef != NULL)
 						{
 							defaultsFound = true;
-							defaultsMatch &= (strcmp(attrDef, inhDef) == 0);
+							defaultsMatch &= (strcmp(attrDef->adef_expr,
+													 inhDef->adef_expr) == 0);
 						}
 					}
 				}
@@ -351,9 +306,9 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 			if (foundAttr)		/* Attr was inherited */
 			{
 				/* Set inherited flag by default */
-				tblinfo[i].inhAttrs[j] = true;
-				tblinfo[i].inhAttrDef[j] = true;
-				tblinfo[i].inhNotNull[j] = true;
+				tbinfo->inhAttrs[j] = true;
+				tbinfo->inhAttrDef[j] = true;
+				tbinfo->inhNotNull[j] = true;
 
 				/*
 				 * Clear it if attr had a default, but parents did not, or
@@ -361,181 +316,377 @@ flagInhAttrs(TableInfo *tblinfo, int numTables,
 				 */
 				if ((attrDef != NULL) && (!defaultsFound || !defaultsMatch))
 				{
-					tblinfo[i].inhAttrs[j] = false;
-					tblinfo[i].inhAttrDef[j] = false;
+					tbinfo->inhAttrs[j] = false;
+					tbinfo->inhAttrDef[j] = false;
 				}
 
 				/*
 				 * Clear it if NOT NULL and none of the parents were NOT
 				 * NULL
 				 */
-				if (tblinfo[i].notnull[j] && !foundNotNull)
+				if (tbinfo->notnull[j] && !foundNotNull)
 				{
-					tblinfo[i].inhAttrs[j] = false;
-					tblinfo[i].inhNotNull[j] = false;
+					tbinfo->inhAttrs[j] = false;
+					tbinfo->inhNotNull[j] = false;
 				}
 
 				/* Clear it if attr has local definition */
-				if (g_fout->remoteVersion >= 70300 && tblinfo[i].attislocal[j])
-					tblinfo[i].inhAttrs[j] = false;
+				if (tbinfo->attislocal[j])
+					tbinfo->inhAttrs[j] = false;
+			}
+		}
+
+		/*
+		 * Check for inherited CHECK constraints.  We assume a constraint
+		 * is inherited if its expression matches the parent and the name
+		 * is the same, *or* both names start with '$'.
+		 */
+		for (j = 0; j < tbinfo->ncheck; j++)
+		{
+			ConstraintInfo *constr;
+
+			constr = &(tbinfo->checkexprs[j]);
+
+			for (k = 0; k < numParents; k++)
+			{
+				int		l;
+
+				parent = parents[k];
+				for (l = 0; l < parent->ncheck; l++)
+				{
+					ConstraintInfo *pconstr;
+
+					pconstr = &(parent->checkexprs[l]);
+					if (strcmp(pconstr->condef, constr->condef) != 0)
+						continue;
+					if (strcmp(pconstr->conname, constr->conname) == 0 ||
+						(pconstr->conname[0] == '$' &&
+						 constr->conname[0] == '$'))
+					{
+						constr->coninherited = true;
+						break;
+					}
+				}
+				if (constr->coninherited)
+					break;
 			}
 		}
 	}
+}
+
+/*
+ * AssignDumpId
+ *		Given a newly-created dumpable object, assign a dump ID,
+ *		and enter the object into the lookup table.
+ *
+ * The caller is expected to have filled in objType and catalogId,
+ * but not any of the other standard fields of a DumpableObject.
+ */
+void
+AssignDumpId(DumpableObject *dobj)
+{
+	dobj->dumpId = ++lastDumpId;
+	dobj->dependencies = NULL;
+	dobj->nDeps = 0;
+	dobj->allocDeps = 0;
+
+	while (dobj->dumpId >= allocedDumpIds)
+	{
+		int		newAlloc;
+
+		if (allocedDumpIds <= 0)
+		{
+			newAlloc = 256;
+			dumpIdMap = (DumpableObject **)
+				malloc(newAlloc * sizeof(DumpableObject *));
+		}
+		else
+		{
+			newAlloc = allocedDumpIds * 2;
+			dumpIdMap = (DumpableObject **)
+				realloc(dumpIdMap, newAlloc * sizeof(DumpableObject *));
+		}
+		if (dumpIdMap == NULL)
+			exit_horribly(NULL, NULL, "out of memory\n");
+		memset(dumpIdMap + allocedDumpIds, 0,
+			   (newAlloc - allocedDumpIds) * sizeof(DumpableObject *));
+		allocedDumpIds = newAlloc;
+	}
+	dumpIdMap[dobj->dumpId] = dobj;
+}
+
+/*
+ * Assign a DumpId that's not tied to a DumpableObject.
+ *
+ * This is used when creating a "fixed" ArchiveEntry that doesn't need to
+ * participate in the sorting logic.
+ */
+DumpId
+createDumpId(void)
+{
+	return ++lastDumpId;
+}
+
+/*
+ * Return the largest DumpId so far assigned
+ */
+DumpId
+getMaxDumpId(void)
+{
+	return lastDumpId;
+}
+
+/*
+ * Find a DumpableObject by dump ID
+ *
+ * Returns NULL for invalid ID
+ */
+DumpableObject *
+findObjectByDumpId(DumpId dumpId)
+{
+	if (dumpId <= 0 || dumpId >= allocedDumpIds)
+		return NULL;			/* out of range? */
+	return dumpIdMap[dumpId];
+}
+
+/*
+ * Find a DumpableObject by catalog ID
+ *
+ * Returns NULL for unknown ID
+ *
+ * NOTE:  should hash this, but just do linear search for now
+ */
+DumpableObject *
+findObjectByCatalogId(CatalogId catalogId)
+{
+	DumpId		i;
+
+	for (i = 1; i < allocedDumpIds; i++)
+	{
+		DumpableObject *dobj = dumpIdMap[i];
+
+		if (dobj &&
+			dobj->catId.tableoid == catalogId.tableoid &&
+			dobj->catId.oid == catalogId.oid)
+			return dobj;
+	}
+	return NULL;
+}
+
+/*
+ * Build an array of pointers to all known dumpable objects
+ *
+ * This simply creates a modifiable copy of the internal map.
+ */
+void
+getDumpableObjects(DumpableObject ***objs, int *numObjs)
+{
+	int			i,
+				j;
+
+	*objs = (DumpableObject **)
+		malloc(allocedDumpIds * sizeof(DumpableObject *));
+	if (*objs == NULL)
+		exit_horribly(NULL, NULL, "out of memory\n");
+	j = 0;
+	for (i = 1; i < allocedDumpIds; i++)
+	{
+		if (dumpIdMap[i])
+			(*objs)[j++] = dumpIdMap[i];
+	}
+	*numObjs = j;
+}
+
+/*
+ * Add a dependency link to a DumpableObject
+ *
+ * Note: duplicate dependencies are currently not eliminated
+ */
+void
+addObjectDependency(DumpableObject *dobj, DumpId refId)
+{
+	if (dobj->nDeps >= dobj->allocDeps)
+	{
+		if (dobj->allocDeps <= 0)
+		{
+			dobj->allocDeps = 16;
+			dobj->dependencies = (DumpId *)
+				malloc(dobj->allocDeps * sizeof(DumpId));
+		}
+		else
+		{
+			dobj->allocDeps *= 2;
+			dobj->dependencies = (DumpId *)
+				realloc(dobj->dependencies,
+						dobj->allocDeps * sizeof(DumpId));
+		}
+		if (dobj->dependencies == NULL)
+			exit_horribly(NULL, NULL, "out of memory\n");
+	}
+	dobj->dependencies[dobj->nDeps++] = refId;
+}
+
+/*
+ * Remove a dependency link from a DumpableObject
+ *
+ * If there are multiple links, all are removed
+ */
+void
+removeObjectDependency(DumpableObject *dobj, DumpId refId)
+{
+	int			i;
+	int			j = 0;
+
+	for (i = 0; i < dobj->nDeps; i++)
+	{
+		if (dobj->dependencies[i] != refId)
+			dobj->dependencies[j++] = dobj->dependencies[i];
+	}
+	dobj->nDeps = j;
 }
 
 
 /*
  * findTableByOid
- *	  finds the index (in tblinfo) of the table with the given oid
- *	returns -1 if not found
+ *	  finds the entry (in tblinfo) of the table with the given oid
+ *	  returns NULL if not found
  *
  * NOTE:  should hash this, but just do linear search for now
  */
-int
-findTableByOid(TableInfo *tblinfo, int numTables, const char *oid)
+TableInfo *
+findTableByOid(Oid oid)
 {
 	int			i;
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (strcmp(tblinfo[i].oid, oid) == 0)
-			return i;
+		if (tblinfo[i].dobj.catId.oid == oid)
+			return &tblinfo[i];
 	}
-	return -1;
+	return NULL;
 }
 
-
 /*
- * findFuncByOid
- *	  finds the index (in finfo) of the function with the given OID
- *	returns -1 if not found
+ * findTypeByOid
+ *	  finds the entry (in tinfo) of the type with the given oid
+ *	  returns NULL if not found
  *
  * NOTE:  should hash this, but just do linear search for now
  */
-int
-findFuncByOid(FuncInfo *finfo, int numFuncs, const char *oid)
-{
-	int			i;
-
-	for (i = 0; i < numFuncs; i++)
-	{
-		if (strcmp(finfo[i].oid, oid) == 0)
-			return i;
-	}
-	return -1;
-}
-
-/*
- * Finds the index (in tinfo) of the type with the given OID.  Returns
- * -1 if not found.
- */
-int
-findTypeByOid(TypeInfo *tinfo, int numTypes, const char *oid)
+TypeInfo *
+findTypeByOid(Oid oid)
 {
 	int			i;
 
 	for (i = 0; i < numTypes; i++)
 	{
-		if (strcmp(tinfo[i].oid, oid) == 0)
-			return i;
+		if (tinfo[i].dobj.catId.oid == oid)
+			return &tinfo[i];
 	}
-	return -1;
+	return NULL;
+}
+
+/*
+ * findFuncByOid
+ *	  finds the entry (in finfo) of the function with the given oid
+ *	  returns NULL if not found
+ *
+ * NOTE:  should hash this, but just do linear search for now
+ */
+FuncInfo *
+findFuncByOid(Oid oid)
+{
+	int			i;
+
+	for (i = 0; i < numFuncs; i++)
+	{
+		if (finfo[i].dobj.catId.oid == oid)
+			return &finfo[i];
+	}
+	return NULL;
 }
 
 /*
  * findOprByOid
- *	  given the oid of an operator, return the name of the operator
+ *	  finds the entry (in oprinfo) of the operator with the given oid
+ *	  returns NULL if not found
  *
  * NOTE:  should hash this, but just do linear search for now
  */
-char *
-findOprByOid(OprInfo *oprinfo, int numOprs, const char *oid)
+OprInfo *
+findOprByOid(Oid oid)
 {
 	int			i;
 
-	for (i = 0; i < numOprs; i++)
+	for (i = 0; i < numOperators; i++)
 	{
-		if (strcmp(oprinfo[i].oid, oid) == 0)
-			return oprinfo[i].oprname;
+		if (oprinfo[i].dobj.catId.oid == oid)
+			return &oprinfo[i];
 	}
-
-	/* should never get here */
-	write_msg(NULL, "failed sanity check, operator with OID %s not found\n", oid);
-
-	/* no suitable operator name was found */
-	return (NULL);
+	return NULL;
 }
 
 
 /*
  * findParentsByOid
- *	  given the oid of a class, find its parent classes in tblinfo[]
- *
- * Returns the number of parents and their array indexes into the
- * last two arguments.
+ *	  find a table's parents in tblinfo[]
  */
-
 static void
-findParentsByOid(TableInfo *tblinfo, int numTables,
-				 InhInfo *inhinfo, int numInherits,
-				 const char *oid,
-				 int *numParentsPtr, int **parentIndexes)
+findParentsByOid(TableInfo *self,
+				 InhInfo *inhinfo, int numInherits)
 {
+	Oid			oid = self->dobj.catId.oid;
 	int			i,
 				j;
-	int			parentInd,
-				selfInd;
 	int			numParents;
 
 	numParents = 0;
 	for (i = 0; i < numInherits; i++)
 	{
-		if (strcmp(inhinfo[i].inhrelid, oid) == 0)
+		if (inhinfo[i].inhrelid == oid)
 			numParents++;
 	}
 
-	*numParentsPtr = numParents;
+	self->numParents = numParents;
 
 	if (numParents > 0)
 	{
-		*parentIndexes = (int *) malloc(sizeof(int) * numParents);
+		self->parents = (TableInfo **) malloc(sizeof(TableInfo *) * numParents);
 		j = 0;
 		for (i = 0; i < numInherits; i++)
 		{
-			if (strcmp(inhinfo[i].inhrelid, oid) == 0)
+			if (inhinfo[i].inhrelid == oid)
 			{
-				parentInd = findTableByOid(tblinfo, numTables,
-										   inhinfo[i].inhparent);
-				if (parentInd < 0)
-				{
-					selfInd = findTableByOid(tblinfo, numTables, oid);
-					if (selfInd >= 0)
-						write_msg(NULL, "failed sanity check, parent OID %s of table \"%s\" (OID %s) not found\n",
-								  inhinfo[i].inhparent,
-								  tblinfo[selfInd].relname,
-								  oid);
-					else
-						write_msg(NULL, "failed sanity check, parent OID %s of table (OID %s) not found\n",
-								  inhinfo[i].inhparent,
-								  oid);
+				TableInfo  *parent;
 
+				parent = findTableByOid(inhinfo[i].inhparent);
+				if (parent == NULL)
+				{
+					write_msg(NULL, "failed sanity check, parent OID %u of table \"%s\" (OID %u) not found\n",
+							  inhinfo[i].inhparent,
+							  self->relname,
+							  oid);
 					exit_nicely();
 				}
-				(*parentIndexes)[j++] = parentInd;
+				self->parents[j++] = parent;
 			}
 		}
 	}
 	else
-		*parentIndexes = NULL;
+		self->parents = NULL;
 }
 
 /*
- * parseNumericArray
+ * parseOidArray
  *	  parse a string of numbers delimited by spaces into a character array
+ *
+ * Note: actually this is used for both Oids and potentially-signed
+ * attribute numbers.  This should cause no trouble, but we could split
+ * the function into two functions with different argument types if it does.
  */
 
 void
-parseNumericArray(const char *str, char **array, int arraysize)
+parseOidArray(const char *str, Oid *array, int arraysize)
 {
 	int			j,
 				argNum;
@@ -557,7 +708,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 					exit_nicely();
 				}
 				temp[j] = '\0';
-				array[argNum++] = strdup(temp);
+				array[argNum++] = atooid(temp);
 				j = 0;
 			}
 			if (s == '\0')
@@ -576,7 +727,7 @@ parseNumericArray(const char *str, char **array, int arraysize)
 	}
 
 	while (argNum < arraysize)
-		array[argNum++] = strdup("0");
+		array[argNum++] = InvalidOid;
 }
 
 

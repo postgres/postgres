@@ -5,7 +5,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.41 2003/11/29 19:52:04 pgsql Exp $
+# $PostgreSQL: pgsql/src/bin/pg_dump/Makefile,v 1.42 2003/12/06 03:00:11 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,8 +24,8 @@ override CPPFLAGS := -I$(libpq_srcdir) $(CPPFLAGS) -DBINDIR=\"$(bindir)\"
 
 all: submake-libpq submake-libpgport submake-backend pg_dump pg_restore pg_dumpall
 
-pg_dump: pg_dump.o common.o $(OBJS) $(libpq_builddir)/libpq.a 
-	$(CC) $(CFLAGS) pg_dump.o common.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
+pg_dump: pg_dump.o common.o pg_dump_sort.o $(OBJS) $(libpq_builddir)/libpq.a 
+	$(CC) $(CFLAGS) pg_dump.o common.o pg_dump_sort.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
 
 pg_restore: pg_restore.o $(OBJS) $(libpq_builddir)/libpq.a
 	$(CC) $(CFLAGS) pg_restore.o $(OBJS) $(EXTRA_OBJS) $(libpq) $(LDFLAGS) $(LIBS) -o $@
@@ -50,4 +50,4 @@ uninstall:
 	rm -f $(addprefix $(DESTDIR)$(bindir)/, pg_dump$(X) pg_restore$(X) pg_dumpall$(X))
 
 clean distclean maintainer-clean:
-	rm -f pg_dump$(X) pg_restore$(X) pg_dumpall$(X) $(OBJS) pg_dump.o common.o pg_restore.o pg_dumpall.o
+	rm -f pg_dump$(X) pg_restore$(X) pg_dumpall$(X) $(OBJS) pg_dump.o common.o pg_dump_sort.o pg_restore.o pg_dumpall.o
