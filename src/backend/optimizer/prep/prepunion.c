@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.17 1997/12/29 04:31:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.18 1998/01/15 18:59:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,8 +185,7 @@ plan_union_queries(Query *parse)
 		parse->uniqueFlag = NULL;
 
 	parse->havingQual = NULL;
-	parse->qry_numAgg = 0;
-	parse->qry_aggs = NULL;
+	parse->hasAggs = false;
 
 	return (make_append(union_plans,
 						union_rts,
@@ -267,11 +266,9 @@ plan_inherit_query(List *relids,
 		new_root->uniqueFlag = NULL;
 		new_root->sortClause = NULL;
 		new_root->groupClause = NULL;
-		if (new_root->qry_numAgg != 0)
+		if (new_root->hasAggs)
 		{
-			new_root->qry_numAgg = 0;
-			pfree(new_root->qry_aggs);
-			new_root->qry_aggs = NULL;
+			new_root->hasAggs = false;
 			del_agg_tlist_references(new_root->targetList);
 		}
 		fix_parsetree_attnums(rt_index,

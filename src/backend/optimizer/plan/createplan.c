@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.22 1998/01/07 21:04:01 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.23 1998/01/15 18:59:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1106,7 +1106,7 @@ make_material(List *tlist,
 }
 
 Agg		   *
-make_agg(List *tlist, int nagg, Aggreg **aggs, Plan *lefttree)
+make_agg(List *tlist, Plan *lefttree)
 {
 	Agg		   *node = makeNode(Agg);
 
@@ -1116,8 +1116,7 @@ make_agg(List *tlist, int nagg, Aggreg **aggs, Plan *lefttree)
 	node->plan.targetlist = tlist;
 	node->plan.lefttree = lefttree;
 	node->plan.righttree = (Plan *) NULL;
-	node->numAgg = nagg;
-	node->aggs = aggs;
+	node->aggs = NIL;
 
 	return (node);
 }

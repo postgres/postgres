@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.43 1998/01/11 03:41:49 momjian Exp $
+ * $Id: parsenodes.h,v 1.44 1998/01/15 19:00:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@ typedef struct Query
 	bool		isPortal;		/* is this a retrieve into portal? */
 	bool		isBinary;		/* binary portal? */
 	bool		unionall;		/* union without unique sort */
+	bool		hasAggs;		/* has aggregates in target list */
 	
 	char	   *uniqueFlag;		/* NULL, '*', or Unique attribute name */
 	List	   *sortClause;		/* a list of SortClause's */
@@ -55,9 +56,6 @@ typedef struct Query
 	List	   *groupClause;	/* list of columns to specified in GROUP
 								 * BY */
 	Node	   *havingQual;		/* qualification of each group */
-
-	int			qry_numAgg;		/* number of aggregates in the target list */
-	Aggreg	  **qry_aggs;		/* the aggregates */
 
 	List	   *unionClause;	/* unions are linked under the previous query */
 

@@ -105,6 +105,7 @@ ExecAgg(Agg *node)
 	ProjectionInfo *projInfo;
 	TupleTableSlot *resultSlot;
 	HeapTuple	oneTuple;
+	List	   *alist;
 	char	   *nulls;
 	bool		isDone;
 	bool		isNull = FALSE,
@@ -121,8 +122,17 @@ ExecAgg(Agg *node)
 
 	estate = node->plan.state;
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
-	aggregates = node->aggs;
-	nagg = node->numAgg;
+	nagg = length(node->aggs);
+
+	aggregates = (Aggreg **)palloc(sizeof(Aggreg *) * nagg);
+
+	/* take List* and make it an array that can be quickly indexed */
+	alist = node->aggs;
+	for (i = 0; i < nagg; i++)
+	{
+		aggregates[i] = lfirst(alist);
+		alist = lnext(alist);
+	}
 
 	value1 = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_values;
 	nulls = node->aggstate->csstate.cstate.cs_ExprContext->ecxt_nulls;
@@ -540,10 +550,10 @@ ExecInitAgg(Agg *node, EState *estate, Plan *parent)
 
 	econtext = aggstate->csstate.cstate.cs_ExprContext;
 	econtext->ecxt_values =
-		(Datum *) palloc(sizeof(Datum) * node->numAgg);
-	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * node->numAgg);
-	econtext->ecxt_nulls = (char *) palloc(node->numAgg);
-	MemSet(econtext->ecxt_nulls, 0, node->numAgg);
+		(Datum *) palloc(sizeof(Datum) * length(node->aggs));
+	MemSet(econtext->ecxt_values, 0, sizeof(Datum) * length(node->aggs));
+	econtext->ecxt_nulls = (char *) palloc(length(node->aggs));
+	MemSet(econtext->ecxt_nulls, 0, length(node->aggs));
 
 	/*
 	 * initializes child nodes

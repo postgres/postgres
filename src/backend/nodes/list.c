@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.10 1998/01/07 21:03:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.11 1998/01/15 18:59:23 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -87,6 +87,48 @@ List	   *
 lappendi(List *list, int datum)
 {
 	return nconc(list, lconsi(datum, NIL));
+}
+
+List	   *
+nconc(List *l1, List *l2)
+{
+	List	   *temp;
+
+	if (l1 == NIL)
+		return l2;
+	if (l2 == NIL)
+		return l1;
+	if (l1 == l2)
+		elog(ERROR, "tryout to nconc a list to itself");
+
+	for (temp = l1; lnext(temp) != NULL; temp = lnext(temp))
+		;
+
+	lnext(temp) = l2;
+	return (l1);				/* list1 is now list1[]list2  */
+}
+
+
+List	   *
+nreverse(List *list)
+{
+	List	   *rlist = NIL;
+	List	   *p = NIL;
+
+	if (list == NULL)
+		return (NIL);
+
+	if (length(list) == 1)
+		return (list);
+
+	for (p = list; p != NULL; p = lnext(p))
+	{
+		rlist = lcons(lfirst(p), rlist);
+	}
+
+	lfirst(list) = lfirst(rlist);
+	lnext(list) = lnext(rlist);
+	return (list);
 }
 
 Value	   *
@@ -225,48 +267,6 @@ intAppend(List *l1, List *l2)
 		;
 	lnext(p) = newlist2;
 	return newlist;
-}
-
-List	   *
-nconc(List *l1, List *l2)
-{
-	List	   *temp;
-
-	if (l1 == NIL)
-		return l2;
-	if (l2 == NIL)
-		return l1;
-	if (l1 == l2)
-		elog(ERROR, "tryout to nconc a list to itself");
-
-	for (temp = l1; lnext(temp) != NULL; temp = lnext(temp))
-		;
-
-	lnext(temp) = l2;
-	return (l1);				/* list1 is now list1[]list2  */
-}
-
-
-List	   *
-nreverse(List *list)
-{
-	List	   *rlist = NIL;
-	List	   *p = NIL;
-
-	if (list == NULL)
-		return (NIL);
-
-	if (length(list) == 1)
-		return (list);
-
-	for (p = list; p != NULL; p = lnext(p))
-	{
-		rlist = lcons(lfirst(p), rlist);
-	}
-
-	lfirst(list) = lfirst(rlist);
-	lnext(list) = lnext(rlist);
-	return (list);
 }
 
 /*

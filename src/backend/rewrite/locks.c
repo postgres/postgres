@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.6 1998/01/04 04:31:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/Attic/locks.c,v 1.7 1998/01/15 19:00:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,6 @@ thisLockWasTriggered(int varno,
 					 AttrNumber attnum,
 					 Query *parsetree)
 {
-	int i;
 	
 	if (nodeThisLockWasTriggered(parsetree->qual, varno, attnum))
 		return true;
@@ -103,10 +102,6 @@ thisLockWasTriggered(int varno,
 	if (nodeThisLockWasTriggered((Node *) parsetree->targetList, varno, attnum))
 		return true;
 
-	for(i=0; i < parsetree->qry_numAgg; i++)
-		if (nodeThisLockWasTriggered(parsetree->qry_aggs[i]->target,
-					varno, attnum))
-			return true;
 	return false;
 		
 }

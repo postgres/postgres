@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.29 1998/01/11 20:01:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.30 1998/01/15 18:59:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -493,15 +493,10 @@ static Agg *
 _copyAgg(Agg *from)
 {
 	Agg		   *newnode = makeNode(Agg);
-	int			i;
 
 	CopyPlanFields((Plan *) from, (Plan *) newnode);
 
-	newnode->numAgg = from->numAgg;
-    newnode->aggs = palloc(sizeof(Aggreg *));
-	for (i = 0; i < from->numAgg; i++)
-		newnode->aggs[i] = copyObject(from->aggs[i]);
-
+	Node_Copy(from, newnode, aggs);
 	Node_Copy(from, newnode, aggstate);
 
 	return newnode;
@@ -1495,7 +1490,6 @@ static Query *
 _copyQuery(Query *from)
 {
 	Query	   *newnode = makeNode(Query);
-	int i;
 	
 	newnode->commandType = from->commandType;
 	if (from->utilityStmt && nodeTag(from->utilityStmt) == T_NotifyStmt)
@@ -1522,14 +1516,7 @@ _copyQuery(Query *from)
 	Node_Copy(from, newnode, groupClause);
 	Node_Copy(from, newnode, havingQual);
 
-	newnode->qry_numAgg = from->qry_numAgg;
-	if (from->qry_numAgg > 0)
-	{
-		newnode->qry_aggs =
-			(Aggreg **) palloc(sizeof(Aggreg *) * from->qry_numAgg);
-		for (i=0; i < from->qry_numAgg; i++)
-			newnode->qry_aggs[i] = _copyAggreg(from->qry_aggs[i]);
-	}
+	newnode->hasAggs = from->hasAggs;
 
 	if (from->unionClause)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.14 1998/01/14 19:55:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.15 1998/01/15 18:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,7 @@ static Var *replace_joinvar_refs(Var *var, List *outer_tlist, List *inner_tlist)
 static List *tlist_temp_references(Oid tempid, List *tlist);
 static void replace_result_clause(Node *clause, List *subplanTargetList);
 static bool OperandIsInner(Node *opnd, int inner_relid);
-static void replace_agg_clause(Node *expr, List *targetlist);
+static List *replace_agg_clause(Node *expr, List *targetlist);
 static Node *del_agg_clause(Node *clause);
 
 /*****************************************************************************
@@ -536,13 +536,9 @@ set_result_tlist_references(Result *resultNode)
 	 */
 	subplan = ((Plan *) resultNode)->lefttree;
 	if (subplan != NULL)
-	{
 		subplanTargetList = subplan->targetlist;
-	}
 	else
-	{
 		subplanTargetList = NIL;
-	}
 
 	/*
 	 * now for traverse all the entris of the target list. These should be
@@ -695,13 +691,16 @@ OperandIsInner(Node *opnd, int inner_relid)
  *	  changes the target list of an Agg node so that it points to
  *	  the tuples returned by its left tree subplan.
  *
+ *	We now also generate a linked list of Aggreg pointers for Agg.
+ *
  */
-void
+List *
 set_agg_tlist_references(Agg *aggNode)
 {
 	List	   *aggTargetList;
 	List	   *subplanTargetList;
 	List	   *tl;
+	List	   *aggreg_list = NIL;
 
 	aggTargetList = aggNode->plan.targetlist;
 	subplanTargetList = aggNode->plan.lefttree->targetlist;
@@ -710,30 +709,18 @@ set_agg_tlist_references(Agg *aggNode)
 	{
 		TargetEntry *tle = lfirst(tl);
 
-		replace_agg_clause(tle->expr, subplanTargetList);
+		aggreg_list = nconc(
+			replace_agg_clause(tle->expr, subplanTargetList),aggreg_list);
 	}
+	return aggreg_list;
 }
 
-void
-set_agg_agglist_references(Agg *aggNode)
-{
-	List	   *subplanTargetList;
-	Aggreg	  **aggs;
-	int			i;
-
-	aggs = aggNode->aggs;
-	subplanTargetList = aggNode->plan.lefttree->targetlist;
-
-	for (i = 0; i < aggNode->numAgg; i++)
-	{
-		replace_agg_clause(aggs[i]->target, subplanTargetList);
-	}
-}
-
-static void
+static List *
 replace_agg_clause(Node *clause, List *subplanTargetList)
 {
 	List	   *t;
+	List *agg_list = NIL;
+
 	if (IsA(clause, Var))
 	{
 		TargetEntry *subplanVar;
@@ -748,41 +735,51 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		 *
 		 */
 		((Var *) clause)->varattno = subplanVar->resdom->resno;
+
+		return NIL;
 	}
 	else if (is_funcclause(clause))
 	{
-
 		/*
 		 * This is a function. Recursively call this routine for its
 		 * arguments...
 		 */
 		foreach(t, ((Expr *) clause)->args)
 		{
-			replace_agg_clause(lfirst(t), subplanTargetList);
+			agg_list = nconc(agg_list,
+				replace_agg_clause(lfirst(t), subplanTargetList));
 		}
+		return agg_list;
 	}
 	else if (IsA(clause, Aggreg))
 	{
-		replace_agg_clause(((Aggreg *) clause)->target, subplanTargetList);
+		return lcons(clause,
+			replace_agg_clause(((Aggreg *) clause)->target, subplanTargetList));
 	}
 	else if (IsA(clause, ArrayRef))
 	{
 		ArrayRef   *aref = (ArrayRef *) clause;
-
+		
 		/*
 		 * This is an arrayref. Recursively call this routine for its
 		 * expression and its index expression...
 		 */
 		foreach(t, aref->refupperindexpr)
 		{
-			replace_agg_clause(lfirst(t), subplanTargetList);
+			agg_list = nconc(agg_list,
+				replace_agg_clause(lfirst(t), subplanTargetList));
 		}
 		foreach(t, aref->reflowerindexpr)
 		{
-			replace_agg_clause(lfirst(t), subplanTargetList);
+			agg_list = nconc(agg_list,
+				replace_agg_clause(lfirst(t), subplanTargetList));
 		}
-		replace_agg_clause(aref->refexpr, subplanTargetList);
-		replace_agg_clause(aref->refassgnexpr, subplanTargetList);
+		agg_list = nconc(agg_list,
+			replace_agg_clause(aref->refexpr, subplanTargetList));
+		agg_list = nconc(agg_list,
+			replace_agg_clause(aref->refassgnexpr, subplanTargetList));
+
+		return agg_list;
 	}
 	else if (is_opclause(clause))
 	{
@@ -792,15 +789,20 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		 */
 		Node	   *left = (Node *) get_leftop((Expr *) clause);
 		Node	   *right = (Node *) get_rightop((Expr *) clause);
-
+		
 		if (left != (Node *) NULL)
-			replace_agg_clause(left, subplanTargetList);
+			agg_list = nconc(agg_list,
+				replace_agg_clause(left, subplanTargetList));
 		if (right != (Node *) NULL)
-			replace_agg_clause(right, subplanTargetList);
+			agg_list = nconc(agg_list,
+				replace_agg_clause(right, subplanTargetList));
+
+		return agg_list;
 	}
 	else if (IsA(clause, Param) ||IsA(clause, Const))
 	{
 		/* do nothing! */
+		return NIL;
 	}
 	else
 	{
@@ -809,8 +811,8 @@ replace_agg_clause(Node *clause, List *subplanTargetList)
 		 * Ooops! we can not handle that!
 		 */
 		elog(ERROR, "replace_agg_clause: Can not handle this tlist!\n");
+		return NIL;
 	}
-
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.64 1998/01/11 03:41:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.65 1998/01/15 18:59:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,7 +219,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
 	/* make sure we don't have aggregates in the where clause */
-	if (pstate->p_numAgg > 0)
+	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
 	return (Query *) qry;
@@ -334,7 +334,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 										  qry->targetList,
 										  qry->uniqueFlag);
 
-	if (pstate->p_numAgg > 0)
+	if (pstate->p_hasAggs)
 		finalizeAggregates(pstate, qry);
 
 	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
@@ -796,8 +796,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 		pstate->p_last_resno = 1;
 		pstate->p_is_rule = true;		/* for expand all */
-		pstate->p_numAgg = 0;
-		pstate->p_aggs = NULL;
+		pstate->p_hasAggs = false;
 
 		lfirst(actions) = transformStmt(pstate, lfirst(actions));
 		actions = lnext(actions);
@@ -853,7 +852,7 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 											qry->targetList);
 	qry->rtable = pstate->p_rtable;
 
-	if (pstate->p_numAgg > 0)
+	if (pstate->p_hasAggs)
 		finalizeAggregates(pstate, qry);
 
 	qry->unionall = stmt->unionall;	/* in child, so unionClause may be false */
@@ -890,11 +889,11 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate->p_rtable, stmt->relname);
 
-	if (pstate->p_numAgg > 0)
+	if (pstate->p_hasAggs)
 		finalizeAggregates(pstate, qry);
 
 	/* make sure we don't have aggregates in the where clause */
-	if (pstate->p_numAgg > 0)
+	if (pstate->p_hasAggs)
 		parseCheckAggregates(pstate, qry);
 
 	return (Query *) qry;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.6 1998/01/05 03:32:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.7 1998/01/15 18:59:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,63 +35,16 @@ static bool exprIsAggOrGroupCol(Node *expr, List *groupClause);
 static bool tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause);
 
 /*
- * AddAggToParseState -
- *	  add the aggregate to the list of unique aggregates in pstate.
- *
- * SIDE EFFECT: aggno in target list entry will be modified
- */
-void
-AddAggToParseState(ParseState *pstate, Aggreg *aggreg)
-{
-	List	   *ag;
-	int			i;
-
-	/*
-	 * see if we have the aggregate already (we only need to record the
-	 * aggregate once)
-	 */
-	i = 0;
-	foreach(ag, pstate->p_aggs)
-	{
-		Aggreg	   *a = lfirst(ag);
-
-		if (!strcmp(a->aggname, aggreg->aggname) &&
-			equal(a->target, aggreg->target))
-		{
-
-			/* fill in the aggno and we're done */
-			aggreg->aggno = i;
-			return;
-		}
-		i++;
-	}
-
-	/* not found, new aggregate */
-	aggreg->aggno = i;
-	pstate->p_numAgg++;
-	pstate->p_aggs = lappend(pstate->p_aggs, aggreg);
-	return;
-}
-
-/*
  * finalizeAggregates -
- *	  fill in qry_aggs from pstate. Also checks to make sure that aggregates
+ *	  fill in hasAggs from pstate. Also checks to make sure that aggregates
  *	  are used in the proper place.
  */
 void
 finalizeAggregates(ParseState *pstate, Query *qry)
 {
-	List	   *l;
-	int			i;
-
 	parseCheckAggregates(pstate, qry);
 
-	qry->qry_numAgg = pstate->p_numAgg;
-	qry->qry_aggs =
-		(Aggreg **) palloc(sizeof(Aggreg *) * qry->qry_numAgg);
-	i = 0;
-	foreach(l, pstate->p_aggs)
-		qry->qry_aggs[i++] = (Aggreg *) lfirst(l);
+	qry->hasAggs = pstate->p_hasAggs;
 }
 
 /*
@@ -240,7 +193,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *tl;
 
-	Assert(pstate->p_numAgg > 0);
+	Assert(pstate->p_hasAggs);
 
 	/*
 	 * aggregates never appear in WHERE clauses. (we have to check where
@@ -392,6 +345,8 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	aggreg->target = lfirst(target);
 	if (usenulls)
 		aggreg->usenulls = true;
+
+	pstate->p_hasAggs = true;
 
 	return aggreg;
 }

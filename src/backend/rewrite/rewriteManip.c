@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.9 1998/01/04 04:31:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.10 1998/01/15 19:00:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,16 +420,12 @@ HandleRIRAttributeRule(Query *parsetree,
 					   int *modified,
 					   int *badsql)
 {
-	int i;
 	
 	nodeHandleRIRAttributeRule((Node **) (&(parsetree->targetList)), rtable,
 							   targetlist, rt_index, attr_num,
 							   modified, badsql);
 	nodeHandleRIRAttributeRule(&parsetree->qual, rtable, targetlist,
 							   rt_index, attr_num, modified, badsql);
-	for(i=0; i < parsetree->qry_numAgg; i++)
-		nodeHandleRIRAttributeRule(&parsetree->qry_aggs[i]->target, rtable,
-					targetlist, rt_index, attr_num, modified, badsql);
 }
 
 
@@ -521,13 +517,9 @@ HandleViewRule(Query *parsetree,
 			   int rt_index,
 			   int *modified)
 {
-	int i;
-	
+
 	nodeHandleViewRule(&parsetree->qual, rtable, targetlist, rt_index,
 					   modified);
 	nodeHandleViewRule((Node **) (&(parsetree->targetList)), rtable, targetlist,
 					   rt_index, modified);
-	for(i=0; i < parsetree->qry_numAgg; i++)
-		nodeHandleViewRule(&parsetree->qry_aggs[i]->target, rtable, targetlist, rt_index,
-					   modified);
 }

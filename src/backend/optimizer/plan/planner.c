@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.20 1998/01/07 21:04:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.21 1998/01/15 18:59:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ planner(Query *parse)
 	 * If we have a GROUP BY clause, insert a group node (with the
 	 * appropriate sort node.)
 	 */
-	if (parse->groupClause != NULL)
+	if (parse->groupClause)
 	{
 		bool		tuplePerGroup;
 
@@ -127,7 +127,7 @@ planner(Query *parse)
 		 * present. Otherwise, need every tuple from the group to do the
 		 * aggregation.)
 		 */
-		tuplePerGroup = (parse->qry_aggs) ? TRUE : FALSE;
+		tuplePerGroup = parse->hasAggs;
 
 		result_plan =
 			make_groupPlan( &tlist,
@@ -140,22 +140,16 @@ planner(Query *parse)
 	/*
 	 * If aggregate is present, insert the agg node
 	 */
-	if (parse->qry_aggs)
+	if (parse->hasAggs)
 	{
-		result_plan = (Plan *)make_agg(tlist,
-							parse->qry_numAgg,
-							parse->qry_aggs,
-							result_plan);
+		result_plan = (Plan *)make_agg(tlist, result_plan);
 
 		/*
 		 * set the varno/attno entries to the appropriate references to
-		 * the result tuple of the subplans. (We need to set those in the
-		 * array of aggreg's in the Agg node also. Even though they're
-		 * pointers, after a few dozen's of copying, they're not the same
-		 * as those in the target list.)
+		 * the result tuple of the subplans.
 		 */
-		set_agg_tlist_references((Agg *)result_plan);
-		set_agg_agglist_references((Agg *)result_plan);
+		((Agg *)result_plan)->aggs =
+			set_agg_tlist_references((Agg *)result_plan);
 	}
 
 	/*

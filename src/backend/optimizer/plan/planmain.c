@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.15 1998/01/07 21:04:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.16 1998/01/15 18:59:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ query_planner(Query *root,
 	List	   *constant_qual = NIL;
 	List	   *var_only_tlist = NIL;
 	List	   *level_tlist = NIL;
-	Plan	   *subplan = (Plan *) NULL;
+	Plan	   *subplan = NULL;
 
 	/*
 	 * A command without a target list or qualification is an error,
@@ -174,20 +174,19 @@ query_planner(Query *root,
 	 */
 	if (constant_qual)
 	{
-		Plan	   *plan;
-
-		plan = (Plan *) make_result(tlist,
-									(Node *) constant_qual,
-									subplan);
+		subplan = (Plan *)make_result((!root->hasAggs && !root->groupClause)
+											? tlist : subplan->targetlist,
+										(Node *) constant_qual,
+										subplan);
 
 		/*
 		 * Change all varno's of the Result's node target list.
 		 */
-		set_result_tlist_references((Result *) plan);
+		if (!root->hasAggs && !root->groupClause)
+			set_tlist_references(subplan);
 
-		return (plan);
+		return subplan;
 	}
-
 	/*
 	 * fix up the flattened target list of the plan root node so that
 	 * expressions are evaluated.  this forces expression evaluations that
@@ -201,12 +200,14 @@ query_planner(Query *root,
 	 * aggregates fixing only other entries (i.e. - GroupBy-ed and so
 	 * fixed by make_groupPlan).	 - vadim 04/05/97
 	 */
-	if (root->groupClause == NULL && root->qry_aggs == NULL)
-	{
-		subplan->targetlist = flatten_tlist_vars(tlist,
+	 else
+	 {
+		if (!root->hasAggs && !root->groupClause)
+			subplan->targetlist = flatten_tlist_vars(tlist,
 												 subplan->targetlist);
-	}
-
+		return subplan;
+	 }
+	 
 #ifdef NOT_USED
 	/*
 	 * Destructively modify the query plan's targetlist to add fjoin lists
@@ -215,7 +216,6 @@ query_planner(Query *root,
 	subplan->targetlist = generate_fjoin(subplan->targetlist);
 #endif
 
-	return (subplan);
 }
 
 /*

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.20 1998/01/07 15:32:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.21 1998/01/15 18:59:26 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -163,7 +163,6 @@ static void
 _outQuery(StringInfo str, Query *node)
 {
 	char		buf[500];
-	int i;
 	
 	appendStringInfo(str, "QUERY");
 
@@ -229,12 +228,8 @@ _outQuery(StringInfo str, Query *node)
 	_outNode(str, node->groupClause);
 	appendStringInfo(str, " :havingQual ");
  	_outNode(str, node->havingQual);
-	appendStringInfo(str, " :qry_numAgg ");
-	sprintf(buf, " %d ", node->qry_numAgg);
-	appendStringInfo(str, buf);
-	appendStringInfo(str, " :qry_aggs ");
-	for (i=0; i < node->qry_numAgg; i++)
-	 	_outNode(str, node->qry_aggs[i]);
+	appendStringInfo(str, " :hasAggs ");
+	appendStringInfo(str, (node->hasAggs ? "true" : "false"));
 	appendStringInfo(str, " :unionClause ");
  	_outNode(str, node->unionClause);
 }
@@ -505,14 +500,12 @@ _outSort(StringInfo str, Sort *node)
 static void
 _outAgg(StringInfo str, Agg *node)
 {
-	char		buf[500];
 
 	appendStringInfo(str, "AGG");
 	_outPlanInfo(str, (Plan *) node);
 
-	/* the actual Agg fields */
-	sprintf(buf, " :numagg %d ", node->numAgg);
-	appendStringInfo(str, buf);
+	appendStringInfo(str, " :aggs ");
+	_outNode(str, node->aggs);
 }
 
 static void

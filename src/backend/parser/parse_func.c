@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.5 1998/01/05 03:32:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.6 1998/01/15 19:00:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,13 +221,8 @@ ParseFunc(ParseState *pstate, char *funcname, List *fargs,
 									PointerGetDatum(funcname),
 									ObjectIdGetDatum(basetype),
 									0, 0))
-			{
-				Aggreg	   *aggreg = ParseAgg(pstate, funcname, basetype,
+				return (Node *)ParseAgg(pstate, funcname, basetype,
 										fargs, precedence);
-
-				AddAggToParseState(pstate, aggreg);
-				return (Node *) aggreg;
-			}
 		}
 	}
 

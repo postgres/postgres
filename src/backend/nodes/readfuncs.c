@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.17 1998/01/07 21:03:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.18 1998/01/15 18:59:31 momjian Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -76,7 +76,6 @@ _readQuery()
 	Query	   *local_node;
 	char	   *token;
 	int			length;
-	int			i;
 	
 	local_node = makeNode(Query);
 
@@ -153,19 +152,9 @@ _readQuery()
 	token = lsptok(NULL, &length);		/* skip :havingQual */
 	local_node->havingQual = nodeRead(true);
 
-	token = lsptok(NULL, &length);		/* skip the :qry_numAgg */
-	token = lsptok(NULL, &length);		/* get qry_numAgg */
-	local_node->qry_numAgg = atoi(token);
-
-	token = lsptok(NULL, &length);		/* skip the :qry_Aggs */
-	if (local_node->qry_numAgg == 0)
-		local_node->qry_aggs = NULL;
-	else
-	{
-		local_node->qry_aggs = palloc(sizeof(Aggreg *) * local_node->qry_numAgg);
-		for (i=0; i < local_node->qry_numAgg; i++)
-			local_node->qry_aggs[i] = nodeRead(true);
-	}
+	token = lsptok(NULL, &length);		/* skip the :hasAggs */
+	token = lsptok(NULL, &length);		/* get hasAggs */
+	local_node->hasAggs = (token[0] == 't') ? true : false;
 
 	token = lsptok(NULL, &length);		/* skip :unionClause */
 	local_node->unionClause = nodeRead(true);
@@ -618,9 +607,8 @@ _readAgg()
 	local_node = makeNode(Agg);
 	_getPlan((Plan *) local_node);
 
-	token = lsptok(NULL, &length);		/* eat :numagg */
-	token = lsptok(NULL, &length);		/* get numagg */
-	local_node->numAgg = atoi(token);
+	token = lsptok(NULL, &length);		/* eat :agg */
+	local_node->aggs = nodeRead(true);	/* now read it */
 
 	return (local_node);
 }
