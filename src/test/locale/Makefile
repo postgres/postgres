@@ -30,4 +30,4 @@ clean:
 	done
 
 test-%: all
-	@cd `echo $@ | sed s/^test-//` && $(MAKE) test
+	@cd `echo $@ | sed 's/^test-//'` && $(MAKE) test
