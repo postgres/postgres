@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.19 1998/09/22 20:28:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.20 1998/09/22 21:48:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -453,31 +453,23 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 {
 	if (tlistentry == NULL)
 	{
-
 		return NULL;
-
 	}
 	else if (IsA(tlistentry, Var))
 	{
-
-		return
-			((Node *) get_expr(match_varid((Var *) tlistentry,
+		return ((Node *) get_expr(match_varid((Var *) tlistentry,
 										   flat_tlist)));
 	}
 	else if (IsA(tlistentry, Iter))
 	{
-
 		((Iter *) tlistentry)->iterexpr =
 			flatten_tlistentry((Node *) ((Iter *) tlistentry)->iterexpr,
 							   flat_tlist);
 		return tlistentry;
-
 	}
 	else if (single_node(tlistentry))
 	{
-
 		return tlistentry;
-
 	}
 	else if (is_funcclause(tlistentry))
 	{
@@ -489,15 +481,12 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 			temp_result = lappend(temp_result,
 							flatten_tlistentry(lfirst(elt), flat_tlist));
 
-		return
-			((Node *) make_funcclause((Func *) expr->oper, temp_result));
+		return ((Node *) make_funcclause((Func *) expr->oper, temp_result));
 
 	}
 	else if (IsA(tlistentry, Aggreg))
 	{
-
 		return tlistentry;
-
 	}
 	else if (IsA(tlistentry, ArrayRef))
 	{
@@ -514,26 +503,26 @@ flatten_tlistentry(Node *tlistentry, List *flat_tlist)
 			temp = lappend(temp, flatten_tlistentry(lfirst(elt), flat_tlist));
 		aref->reflowerindexpr = temp;
 
-		aref->refexpr =
-			flatten_tlistentry(aref->refexpr, flat_tlist);
+		aref->refexpr = flatten_tlistentry(aref->refexpr, flat_tlist);
 
-		aref->refassgnexpr =
-			flatten_tlistentry(aref->refassgnexpr, flat_tlist);
+		aref->refassgnexpr = flatten_tlistentry(aref->refassgnexpr, flat_tlist);
 
 		return tlistentry;
 	}
 	else
 	{
 		Expr	   *expr = (Expr *) tlistentry;
-		Var		   *left =
-		(Var *) flatten_tlistentry((Node *) get_leftop(expr),
-								   flat_tlist);
-		Var		   *right =
-		(Var *) flatten_tlistentry((Node *) get_rightop(expr),
-								   flat_tlist);
 
-		return ((Node *)
-				make_opclause((Oper *) expr->oper, left, right));
+		Var 	   *left = (Var *) flatten_tlistentry((Node *) get_leftop(expr),
+								   flat_tlist);
+		Var		   *right = (Var *) flatten_tlistentry((Node *) get_rightop(expr),
+								   flat_tlist);
+		Expr	   *final = make_opclause((Oper *) expr->oper, left, right);
+
+		Assert(IsA(tlistentry, Expr));
+		final->opType = expr->opType;
+		final->typeOid = expr->typeOid;
+		return (Node *)final;
 	}
 }
 
