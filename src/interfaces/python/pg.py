@@ -17,7 +17,7 @@ def _quote(d, t):
 
 	if t in ['int', 'seq']:
 		if d == "": return "NULL"
-		return "%d" % int(d)
+		return "%d" % long(d)
 
 	if t == 'decimal':
 		if d == "": return "NULL"
