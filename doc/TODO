@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Aug 13 00:32:10 EDT 2002
+Last updated:		Tue Aug 13 22:24:31 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -484,10 +484,8 @@ Source Code
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * -Report failure to find readline or zlib at end of configure run
 * Add --port flag to regression tests
-* Increase identifier length (NAMEDATALEN) if small performance hit,
-  perhaps to standard length of 128;  change struct pgNotify to use pid 
-  first, breaks notify API;  [namedatalen]
-* Increase maximum number of function parameters if little wasted space
+* -Increase identifier length (NAMEDATALEN) if small performance hit,
+* -Increase maximum number of function parameters if little wasted space
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Add optional CRC checksum to heap and index pages
 * Change representation of whole-tuple parameters to functions
