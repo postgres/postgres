@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.14 1997/03/20 18:21:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.15 1997/04/16 06:25:13 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <arpa/inet.h>
 
 #if defined(linux)
@@ -630,6 +631,23 @@ StreamConnection(int server_fd, Port *port)
 		    &addrlen) < 0) {
 	elog(WARN, "postmaster: StreamConnection: getsockname: %m");
 	return(STATUS_ERROR);
+    }
+    {
+    	struct protoent *pe;
+    	int on=1;
+    	
+    	pe = getprotobyname ("TCP");
+    	if ( pe == NULL )
+    	{
+	    elog(WARN, "postmaster: getprotobyname failed");
+	    return(STATUS_ERROR);
+	}
+    	if ( setsockopt (port->sock, pe->p_proto, TCP_NODELAY, 
+    						&on, sizeof (on)) < 0 )
+    	{
+	    elog(WARN, "postmaster: setsockopt failed");
+	    return(STATUS_ERROR);
+	}
     }
     
     port->mask = 1 << port->sock;
