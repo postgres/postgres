@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.34 2001/01/04 02:38:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.35 2001/01/06 01:43:01 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2210,6 +2210,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	int			natts;
 	Datum	   *values;
 	char	   *nulls;
+	Datum		newvalue;
 	bool		attisnull;
 	Oid			atttype;
 	int32		atttypmod;
@@ -2225,15 +2226,16 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 * ----------
 			 */
 			var = (PLpgSQL_var *) target;
-			var->value = exec_cast_value(value, valtype, var->datatype->typoid,
-										 &(var->datatype->typinput),
-										 var->datatype->typelem,
-										 var->datatype->atttypmod,
-										 isNull);
+			newvalue = exec_cast_value(value, valtype, var->datatype->typoid,
+									   &(var->datatype->typinput),
+									   var->datatype->typelem,
+									   var->datatype->atttypmod,
+									   isNull);
 
-			if (isNull && var->notnull)
+			if (*isNull && var->notnull)
 				elog(ERROR, "NULL assignment to variable '%s' declared NOT NULL", var->refname);
 
+			var->value = newvalue;
 			var->isnull = *isNull;
 			break;
 
