@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.19 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.20 2005/03/22 06:17:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -411,12 +411,7 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		unused = (OffsetNumber *) ((char *) xlrec + SizeOfBtreeDelete);
 		unend = (OffsetNumber *) ((char *) xlrec + record->xl_len);
 
-		/* be careful to delete from back to front */
-		while (unused < unend)
-		{
-			unend--;
-			PageIndexTupleDelete(page, *unend);
-		}
+		PageIndexMultiDelete(page, unused, unend - unused);
 	}
 
 	PageSetLSN(page, lsn);

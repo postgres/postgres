@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.81 2004/12/31 21:59:22 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.82 2005/03/22 06:17:03 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -639,17 +639,12 @@ _bt_delitems(Relation rel, Buffer buf,
 			 OffsetNumber *itemnos, int nitems)
 {
 	Page		page = BufferGetPage(buf);
-	int			i;
 
 	/* No ereport(ERROR) until changes are logged */
 	START_CRIT_SECTION();
 
-	/*
-	 * Delete the items in reverse order so we don't have to think about
-	 * adjusting item numbers for previous deletions.
-	 */
-	for (i = nitems - 1; i >= 0; i--)
-		PageIndexTupleDelete(page, itemnos[i]);
+	/* Fix the page */
+	PageIndexMultiDelete(page, itemnos, nitems);
 
 	/* XLOG stuff */
 	if (!rel->rd_istemp)
