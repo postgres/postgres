@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.90 2001/02/18 04:39:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.91 2001/03/25 17:52:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,13 +83,6 @@
 #define S_LOCK_H
 
 #include "storage/ipc.h"
-
-/* Platform-independent out-of-line support routines */
-extern void s_lock(volatile slock_t *lock,
-	   const char *file, const int line);
-extern void s_lock_sleep(unsigned spins, int timeout, int microsec,
-			 volatile slock_t *lock,
-			 const char *file, const int line);
 
 
 #if defined(HAS_TEST_AND_SET)
@@ -547,5 +540,15 @@ extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 #define TAS(lock)		tas(lock)
 #endif	 /* TAS */
 
+
+/****************************************************************************
+ * Platform-independent out-of-line support routines
+ */
+
+extern void s_lock(volatile slock_t *lock,
+	   const char *file, const int line);
+extern void s_lock_sleep(unsigned spins, int timeout, int microsec,
+			 volatile slock_t *lock,
+			 const char *file, const int line);
 
 #endif	 /* S_LOCK_H */
