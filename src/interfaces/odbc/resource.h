@@ -55,6 +55,16 @@
 #define DS_LFCONVERSION			1062
 #define DS_TRUEISMINUS1			1063
 #define DS_UPDATABLECURSORS		1064
+#define IDNEXTPAGE			1065
+#define IDPREVPAGE			1066
+#define DS_INT8_AS_DEFAULT		1067
+#define DS_INT8_AS_BIGINT		1068
+#define DS_INT8_AS_NUMERIC		1069
+#define DS_INT8_AS_VARCHAR		1070
+#define DS_INT8_AS_DOUBLE		1071
+#define DS_INT8_AS_INT4			1072
+#define DRV_MSG_LABEL2			1073
+#define IDAPPLY				1074
 
 /*	Next default values for new objects */
 /* */
@@ -62,7 +72,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE		105
 #define _APS_NEXT_COMMAND_VALUE			40001
-#define _APS_NEXT_CONTROL_VALUE			1065
+#define _APS_NEXT_CONTROL_VALUE			1075
 #define _APS_NEXT_SYMED_VALUE			101
 #endif   /* */
 

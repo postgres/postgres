@@ -46,13 +46,13 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			break;
 		case SQL_KEYSET_CURSOR_ATTRIBUTES1:
 			len = 4;
-			value = 0;
-			if (ci->updatable_cursors || ci->drivers.lie)
-				value |= (SQL_CA1_NEXT | SQL_CA1_ABSOLUTE
+			value = SQL_CA1_NEXT | SQL_CA1_ABSOLUTE
 				| SQL_CA1_RELATIVE | SQL_CA1_BOOKMARK
 				| SQL_CA1_LOCK_NO_CHANGE | SQL_CA1_POS_POSITION
-				| SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE
-				| SQL_CA1_POS_REFRESH | SQL_CA1_BULK_ADD
+				| SQL_CA1_POS_REFRESH;
+			if (ci->updatable_cursors || ci->drivers.lie)
+				value |= (SQL_CA1_POS_UPDATE | SQL_CA1_POS_DELETE
+				| SQL_CA1_BULK_ADD
 				| SQL_CA1_BULK_UPDATE_BY_BOOKMARK
 				| SQL_CA1_BULK_DELETE_BY_BOOKMARK
 				| SQL_CA1_BULK_FETCH_BY_BOOKMARK
@@ -67,7 +67,7 @@ PGAPI_GetInfo30(HDBC hdbc, UWORD fInfoType, PTR rgbInfoValue,
 			break;
 		case SQL_KEYSET_CURSOR_ATTRIBUTES2:
 			len = 4;
-			value = 0;
+			value = SQL_CA2_READ_ONLY_CONCURRENCY;
 			if (ci->updatable_cursors || ci->drivers.lie)
 				value |= (SQL_CA2_OPT_ROWVER_CONCURRENCY
 				/*| SQL_CA2_CRC_APPROXIMATE*/

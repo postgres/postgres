@@ -850,7 +850,7 @@ PGAPI_GetData(
 				break;
 			default:
 				stmt->errormsg = "Column 0 is not of type SQL_C_BOOKMARK";
-inolog("Column 0 is type %d not of type SQL_C_BOOKMARK", fCType);
+				inolog("Column 0 is type %d not of type SQL_C_BOOKMARK", fCType);
 				stmt->errornumber = STMT_PROGRAM_TYPE_OUT_OF_RANGE;
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
@@ -1720,6 +1720,8 @@ static void UndoRollback(StatementClass *stmt, QResultClass *res)
 		{
 			if (0 != (status & CURS_SELF_DELETING))
 				DiscardDeleted(res, index);
+			keyset[index].blocknum = rollback[i].blocknum;
+			keyset[index].offset = rollback[i].offset;
 			if (0 != (keyset[index].status & CURS_SELF_UPDATING))
 				keyset[index].status |= CURS_NEEDS_REREAD;
 			keyset[index].status &= ~(CURS_SELF_DELETING | CURS_SELF_UPDATING | CURS_SELF_ADDING | KEYSET_INFO_PUBLIC);

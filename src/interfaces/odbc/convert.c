@@ -497,7 +497,6 @@ copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 
 				 */
 				bZone = FALSE;	/* time zone stuff is unreliable */
 				timestamp2stime(value, &st, &bZone, &zone);
-inolog("2stime fr=%d\n", st.fr);
 			}
 			else
 			{
@@ -1096,7 +1095,6 @@ inolog("2stime fr=%d\n", st.fr);
 
 			case SQL_C_ULONG:
 				len = 4;
-inolog("rgb=%x + %d, pcb=%x, set %s\n", rgbValue, bind_row * bind_size, pcbValue, neut_str);
 				if (bind_size > 0)
 					*(UDWORD *) ((char *) rgbValue + (bind_row * bind_size)) = atol(neut_str);
 				else

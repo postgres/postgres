@@ -287,6 +287,8 @@ pgtype_to_concise_type(StatementClass *stmt, Int4 type)
 
 			/* Change this to SQL_BIGINT for ODBC v3 bjm 2001-01-23 */
 		case PG_TYPE_INT8:
+			if (ci->int8_as != 0) 
+				return ci->int8_as;
 			if (conn->ms_jet) 
 				return SQL_NUMERIC; /* maybe a little better than SQL_VARCHAR */
 #if (ODBCVER >= 0x0300)
@@ -625,7 +627,8 @@ getCharColumnSize(StatementClass *stmt, Int4 type, int col, int handle_unknown_s
 				maxsize;
 	QResultClass *result;
 	ColumnInfoClass *flds;
-	ConnInfo   *ci = &(SC_get_conn(stmt)->connInfo);
+	ConnectionClass	*conn = SC_get_conn(stmt);
+	ConnInfo   *ci = &(conn->connInfo);
 
 	mylog("getCharColumnSize: type=%d, col=%d, unknown = %d\n", type, col, handle_unknown_size_as);
 
@@ -684,8 +687,24 @@ getCharColumnSize(StatementClass *stmt, Int4 type, int col, int handle_unknown_s
 	p = QR_get_display_size(result, col); /* longest */
 	attlen = QR_get_atttypmod(result, col);
 	/* Size is unknown -- handle according to parameter */
-	if (attlen >= p && attlen > 0)	/* maybe the length is known */
-		return attlen;
+	if (attlen > 0)	/* maybe the length is known */
+	{
+		if (attlen >= p)
+			return attlen;
+		switch (type)
+		{
+			case PG_TYPE_VARCHAR:
+			case PG_TYPE_BPCHAR:
+				if (conn->unicode || conn->ms_jet)
+					return attlen;
+#if (ODBCVER >= 0x0300)
+#ifdef MULTIBYTE
+				return attlen;
+#endif /* MULTIBYTE */
+#endif /* ODBCVER */
+				return p;
+		}
+	}
 
 	/* The type is really unknown */
 	if (type == PG_TYPE_BPCHAR || handle_unknown_size_as == UNKNOWNS_AS_LONGEST)

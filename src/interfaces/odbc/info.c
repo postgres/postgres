@@ -1231,7 +1231,7 @@ PGAPI_Tables(
 	}
 
 	if (conn->schema_support)
-		schema_strcat(tables_query, " and nspname like '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName);
+		schema_strcat(tables_query, " and nspname like '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 	else
 		my_strcat(tables_query, " and usename like '%.*s'", szTableOwner, cbTableOwner);
 	my_strcat(tables_query, " and relname like '%.*s'", szTableName, cbTableName);
@@ -1627,7 +1627,7 @@ PGAPI_Columns(
 	{
 		my_strcat(columns_query, " and c.relname = '%.*s'", szTableName, cbTableName);
 		if (conn->schema_support)
-			schema_strcat(columns_query, " and u.nspname = '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName);
+			schema_strcat(columns_query, " and u.nspname = '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 		else
 			my_strcat(columns_query, " and u.usename = '%.*s'", szTableOwner, cbTableOwner);
 		my_strcat(columns_query, " and a.attname = '%.*s'", szColumnName, cbColumnName);
@@ -1640,7 +1640,7 @@ PGAPI_Columns(
 		escTbnamelen = reallyEscapeCatalogEscapes(szTableName, cbTableName, esc_table_name, sizeof(esc_table_name), conn->ccsc);
 		my_strcat(columns_query, " and c.relname like '%.*s'", esc_table_name, escTbnamelen);
 		if (conn->schema_support)
-			schema_strcat(columns_query, " and u.nspname like '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName);
+			schema_strcat(columns_query, " and u.nspname like '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 		else
 			my_strcat(columns_query, " and u.usename like '%.*s'", szTableOwner, cbTableOwner);
 		my_strcat(columns_query, " and a.attname like '%.*s'", szColumnName, cbColumnName);
@@ -2130,7 +2130,7 @@ PGAPI_SpecialColumns(
 	my_strcat(columns_query, " and c.relname = '%.*s'", szTableName, cbTableName);
 	/* SchemaName cannot contain a string search pattern */
 	if (conn->schema_support)
-		schema_strcat(columns_query, " and u.nspname = '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName);
+		schema_strcat(columns_query, " and u.nspname = '%.*s'", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 	else
 		my_strcat(columns_query, " and u.usename = '%.*s'", szTableOwner, cbTableOwner);
 
@@ -2377,7 +2377,7 @@ PGAPI_Statistics(
 	}
 	table_qualifier[0] = '\0';
 	if (conn->schema_support)
-		schema_strcat(table_qualifier, "%.*s", szTableOwner, cbTableOwner, szTableName, cbTableName);
+		schema_strcat(table_qualifier, "%.*s", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 
 	/*
 	 * we need to get a list of the field names first, so we can return
@@ -2843,7 +2843,7 @@ PGAPI_PrimaryKeys(
 	}
 	pkscm[0] = '\0';
 	if (conn->schema_support)
-		schema_strcat(pkscm, "%.*s", szTableOwner, cbTableOwner, szTableName, cbTableName);
+		schema_strcat(pkscm, "%.*s", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 
 	result = PGAPI_BindCol(htbl_stmt, 1, SQL_C_CHAR,
 						   attname, MAX_INFO_STRING, &attname_len);
@@ -3379,7 +3379,7 @@ char		schema_fetched[MAX_SCHEMA_LEN + 1];
 		mylog("%s: entering Foreign Key Case #2", func);
 		if (conn->schema_support)
 		{
-			schema_strcat(schema_needed, "%.*s", szFkTableOwner, cbFkTableOwner, szFkTableName, cbFkTableName); 	
+			schema_strcat(schema_needed, "%.*s", szFkTableOwner, cbFkTableOwner, szFkTableName, cbFkTableName, conn); 	
 			sprintf(tables_query, "SELECT	pt.tgargs, "
 				"		pt.tgnargs, "
 				"		pt.tgdeferrable, "
@@ -3781,7 +3781,7 @@ if (conn->schema_support)
 	{
 		if (conn->schema_support)
 		{
-			schema_strcat(schema_needed, "%.*s", szPkTableOwner, cbPkTableOwner, szPkTableName, cbPkTableName); 	
+			schema_strcat(schema_needed, "%.*s", szPkTableOwner, cbPkTableOwner, szPkTableName, cbPkTableName, conn); 	
 			sprintf(tables_query, "SELECT	pt.tgargs, "
 				"		pt.tgnargs, "
 				"		pt.tgdeferrable, "
@@ -4191,7 +4191,7 @@ PGAPI_Procedures(
 	if (conn->schema_support)
 	{
 		strcat(proc_query, " where pg_proc.pronamespace = pg_namespace.oid");
-		schema_strcat(proc_query, " and nspname like '%.*s'", szProcOwner, cbProcOwner, szProcName, cbProcName);
+		schema_strcat(proc_query, " and nspname like '%.*s'", szProcOwner, cbProcOwner, szProcName, cbProcName, conn);
 		my_strcat(proc_query, " and proname like '%.*s'", szProcName, cbProcName);
 	}
 	else
@@ -4330,7 +4330,7 @@ PGAPI_TablePrivileges(
 	{
 		if (conn->schema_support)
 		{ 
-			schema_strcat(proc_query, " nspname = '%.*s' and", szTableOwner, cbTableOwner, szTableName, cbTableName);
+			schema_strcat(proc_query, " nspname = '%.*s' and", szTableOwner, cbTableOwner, szTableName, cbTableName, conn);
 		}
 		my_strcat(proc_query, " relname = '%.*s' and", szTableName, cbTableName);
 	}
@@ -4342,7 +4342,7 @@ PGAPI_TablePrivileges(
 		if (conn->schema_support)
 		{
 			escTbnamelen = reallyEscapeCatalogEscapes(szTableOwner, cbTableOwner, esc_table_name, sizeof(esc_table_name), conn->ccsc);
-			schema_strcat(proc_query, " nspname like '%.*s' and", esc_table_name, escTbnamelen, szTableName, cbTableName);
+			schema_strcat(proc_query, " nspname like '%.*s' and", esc_table_name, escTbnamelen, szTableName, cbTableName, conn);
 		}
 		escTbnamelen = reallyEscapeCatalogEscapes(szTableName, cbTableName, esc_table_name, sizeof(esc_table_name), conn->ccsc);
 		my_strcat(proc_query, " relname like '%.*s' and", esc_table_name, escTbnamelen);

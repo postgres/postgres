@@ -240,6 +240,7 @@ CC_conninfo_init(ConnInfo *conninfo)
 		conninfo->allow_keyset = -1;
 		conninfo->lf_conversion = -1;
 		conninfo->true_is_minus1 = -1;
+		conninfo->int8_as = -101;
 		memcpy(&(conninfo->drivers), &globals, sizeof(globals));
 }
 /*
@@ -298,6 +299,7 @@ CC_Constructor()
 		rv->client_encoding = NULL;
 		rv->server_encoding = NULL;
 #endif   /* MULTIBYTE */
+		rv->current_schema = NULL;
 
 
 		/* Initialize statement options to defaults */
@@ -503,6 +505,9 @@ CC_cleanup(ConnectionClass *self)
 		free(self->server_encoding);
 	self->server_encoding = NULL;
 #endif   /* MULTIBYTE */
+	if (self->current_schema)
+		free(self->current_schema);
+	self->current_schema = NULL;
 	/* Free cached table info */
 	if (self->col_info)
 	{
@@ -513,6 +518,8 @@ CC_cleanup(ConnectionClass *self)
 			if (self->col_info[i]->result)	/* Free the SQLColumns result structure */
 				QR_Destructor(self->col_info[i]->result);
 
+			if (self->col_info[i]->schema)
+				free(self->col_info[i]->schema);
 			free(self->col_info[i]);
 		}
 		free(self->col_info);
@@ -985,6 +992,9 @@ another_version_retry:
 					
 				}
 			}
+		}
+#else
+		{
 		}
 #endif /* UNICODE_SUPPORT */
 	}
@@ -2044,6 +2054,27 @@ CC_get_max_query_len(const ConnectionClass *conn)
 		/* Prior to 6.5 we used BLCKSZ */
 		value = BLCKSZ;
 	return value;
+}
+
+/*
+ *	This deosn't really return the CURRENT SCHEMA
+ *	but there's no alternative.
+ */
+const char *
+CC_get_current_schema(ConnectionClass *conn)
+{
+	if (!conn->current_schema && conn->schema_support)
+	{
+		QResultClass	*res;
+
+		if (res = CC_send_query(conn, "select current_schema()", NULL, CLEAR_RESULT_ON_ABORT), res)
+		{
+			if (QR_get_num_total_tuples(res) == 1)
+				conn->current_schema = strdup(QR_get_value_backend_row(res, 0, 0));
+			QR_Destructor(res);
+		}
+	}
+	return (const char *) conn->current_schema;
 }
 
 int

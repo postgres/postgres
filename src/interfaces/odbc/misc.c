@@ -28,6 +28,7 @@
 #include <process.h>			/* Byron: is this where Windows keeps def.
 								 * of getpid ? */
 #endif
+#include "connection.h"
 
 extern GLOBAL_VALUES globals;
 void		generate_filename(const char *, const char *, char *);
@@ -280,17 +281,17 @@ my_strcat(char *buf, const char *fmt, const char *s, int len)
 }
 
 char *
-schema_strcat(char *buf, const char *fmt, const char *s, int len, const char *tbname, int tbnmlen)
+schema_strcat(char *buf, const char *fmt, const char *s, int len, const char *tbname, int tbnmlen, ConnectionClass *conn)
 {
 	if (!s || 0 == len)
 	{
 		/*
-		 *	I can find no appropriate way to find
-		 *	the CURRENT SCHEMA. If you are lucky
-		 *	you can get expected result.
+		 * Note that this driver assumes the implicit schema is
+		 * the CURRENT_SCHEMA() though it doesn't worth the
+		 * naming.
 		 */
-		/***** if (tbname && (tbnmlen > 0 || tbnmlen == SQL_NTS))
-			return my_strcat(buf, fmt, "public", 6); *****/
+		if (conn->schema_support && tbname && (tbnmlen > 0 || tbnmlen == SQL_NTS))
+			return my_strcat(buf, fmt, CC_get_current_schema(conn), SQL_NTS);
 		return NULL;
 	}
 	return my_strcat(buf, fmt, s, len);

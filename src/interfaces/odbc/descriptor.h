@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: descriptor.h,v 1.5 2002/05/22 05:51:03 inoue Exp $
+ * $Id: descriptor.h,v 1.6 2002/06/06 04:50:47 inoue Exp $
  *
  */
 
@@ -41,6 +41,7 @@ typedef struct
 	char		dot[MAX_TABLE_LEN + 1];
 	char		name[MAX_COLUMN_LEN + 1];
 	char		alias[MAX_COLUMN_LEN + 1];
+	char		*schema;
 } FIELD_INFO;
 Int4 FI_precision(const FIELD_INFO *);
 Int4 FI_scale(const FIELD_INFO *);

@@ -170,6 +170,7 @@ typedef struct
 	char		updatable_cursors;
 	char		lf_conversion;
 	char		true_is_minus1;
+	char		int8_as;
 	GLOBAL_VALUES drivers;		/* moved from driver's option */
 } ConnInfo;
 
@@ -219,6 +220,7 @@ typedef struct
 struct col_info
 {
 	QResultClass *result;
+	char		*schema;
 	char		name[MAX_TABLE_LEN + 1];
 };
 
@@ -298,6 +300,7 @@ struct ConnectionClass_
 	int		be_pid;	/* pid returned by backend */
 	int		be_key; /* auth code needed to send cancel */
 	UInt4		isolation;
+	char		*current_schema;
 };
 
 
@@ -343,6 +346,7 @@ int		CC_send_cancel_request(const ConnectionClass *conn);
 void		CC_on_commit(ConnectionClass *conn);
 void		CC_on_abort(ConnectionClass *conn, UDWORD opt);
 void		ProcessRollback(ConnectionClass *conn, BOOL undo);
+const char	*CC_get_current_schema(ConnectionClass *conn);
 
 /* CC_send_query options */
 #define	CLEAR_RESULT_ON_ABORT	1L

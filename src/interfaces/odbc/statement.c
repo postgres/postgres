@@ -337,8 +337,14 @@ void IRDFields_free(IRDFields * self)
 		int			i;
 
 		for (i = 0; i < (int) self->nfields; i++)
+		{
 			if (self->fi[i])
+			{
+				if (self->fi[i]->schema)
+					free(self->fi[i]->schema);
 				free(self->fi[i]);
+			}
+		}
 		free(self->fi);
 		self->fi = NULL;
 	}

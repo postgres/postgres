@@ -1,4 +1,3 @@
-
 #
 # File:			win32_30.mak
 #
@@ -63,6 +62,7 @@ CLEAN :
 	-@erase "$(INTDIR)\connection.obj"
 	-@erase "$(INTDIR)\convert.obj"
 	-@erase "$(INTDIR)\dlg_specific.obj"
+	-@erase "$(INTDIR)\dlg_wingui.obj"
 	-@erase "$(INTDIR)\drvconn.obj"
 	-@erase "$(INTDIR)\environ.obj"
 	-@erase "$(INTDIR)\execute.obj"
@@ -93,6 +93,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\psqlodbc30.dll"
 	-@erase "$(OUTDIR)\psqlodbc.exp"
 	-@erase "$(OUTDIR)\psqlodbc.lib"
+	-@erase "$(OUTDIR)\psqlodbc.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -151,6 +152,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\connection.obj" \
 	"$(INTDIR)\convert.obj" \
 	"$(INTDIR)\dlg_specific.obj" \
+	"$(INTDIR)\dlg_wingui.obj" \
 	"$(INTDIR)\drvconn.obj" \
 	"$(INTDIR)\environ.obj" \
 	"$(INTDIR)\execute.obj" \
@@ -202,6 +204,7 @@ CLEAN :
 	-@erase "$(INTDIR)\connection.obj"
 	-@erase "$(INTDIR)\convert.obj"
 	-@erase "$(INTDIR)\dlg_specific.obj"
+	-@erase "$(INTDIR)\dlg_wingui.obj"
 	-@erase "$(INTDIR)\drvconn.obj"
 	-@erase "$(INTDIR)\environ.obj"
 	-@erase "$(INTDIR)\execute.obj"
@@ -235,6 +238,7 @@ CLEAN :
 	-@erase "$(OUTDIR)\psqlodbc.ilk"
 	-@erase "$(OUTDIR)\psqlodbc.lib"
 	-@erase "$(OUTDIR)\psqlodbc.pdb"
+	-@erase "$(OUTDIR)\psqlodbc.pch"
 
 "$(OUTDIR)" :
     if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
@@ -293,6 +297,7 @@ LINK32_OBJS= \
 	"$(INTDIR)\connection.obj" \
 	"$(INTDIR)\convert.obj" \
 	"$(INTDIR)\dlg_specific.obj" \
+	"$(INTDIR)\dlg_wingui.obj" \
 	"$(INTDIR)\drvconn.obj" \
 	"$(INTDIR)\environ.obj" \
 	"$(INTDIR)\execute.obj" \
@@ -356,6 +361,12 @@ SOURCE=convert.c
 SOURCE=dlg_specific.c
 
 "$(INTDIR)\dlg_specific.obj" : $(SOURCE) "$(INTDIR)"
+	$(CPP) $(CPP_PROJ) $(SOURCE)
+
+
+SOURCE=dlg_wingui.c
+
+"$(INTDIR)\dlg_wingui.obj" : $(SOURCE) "$(INTDIR)"
 	$(CPP) $(CPP_PROJ) $(SOURCE)
 
 

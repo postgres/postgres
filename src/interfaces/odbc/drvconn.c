@@ -293,6 +293,7 @@ dconn_FDriverConnectProc(
 			ShowWindow(GetDlgItem(hdlg, IDC_DSNAME), SW_HIDE);
 			ShowWindow(GetDlgItem(hdlg, IDC_DESCTEXT), SW_HIDE);
 			ShowWindow(GetDlgItem(hdlg, IDC_DESC), SW_HIDE);
+			ShowWindow(GetDlgItem(hdlg, IDC_DRIVER), SW_HIDE);
 
 			SetWindowLong(hdlg, DWL_USER, lParam);		/* Save the ConnInfo for
 														 * the "OK" */
@@ -322,16 +323,16 @@ dconn_FDriverConnectProc(
 					EndDialog(hdlg, GET_WM_COMMAND_ID(wParam, lParam) == IDOK);
 					return TRUE;
 
+				case IDC_DATASOURCE:
+					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
+					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
+								   hdlg, ds_options1Proc, (LPARAM) ci);
+					break;
+
 				case IDC_DRIVER:
 					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
 								   hdlg, driver_optionsProc, (LPARAM) ci);
-					break;
-
-				case IDC_DATASOURCE:
-					ci = (ConnInfo *) GetWindowLong(hdlg, DWL_USER);
-					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
-								   hdlg, ds_optionsProc, (LPARAM) ci);
 					break;
 			}
 	}

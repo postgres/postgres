@@ -91,6 +91,7 @@
 #define INI_UPDATABLECURSORS			"UpdatableCursors"
 #define INI_LFCONVERSION			"LFConversion"
 #define INI_TRUEISMINUS1			"TrueIsMinus1"
+#define INI_INT8AS				"BI"
 /* Bit representaion for abbreviated connection strings */
 #define BIT_LFCONVERSION			(1L)
 #define BIT_UPDATABLECURSORS			(1L<<1)
@@ -160,6 +161,7 @@
 #else
 #define DEFAULT_LFCONVERSION		0
 #endif	/* WIN32 */
+#define DEFAULT_INT8AS			0
 
 /*	prototypes */
 void		getCommonDefaults(const char *section, const char *filename, ConnInfo *ci);
@@ -172,13 +174,18 @@ int CALLBACK driver_optionsProc(HWND hdlg,
 				   UINT wMsg,
 				   WPARAM wParam,
 				   LPARAM lParam);
-int CALLBACK ds_optionsProc(HWND hdlg,
+int CALLBACK ds_options1Proc(HWND hdlg,
+			   UINT wMsg,
+			   WPARAM wParam,
+			   LPARAM lParam);
+int CALLBACK ds_options2Proc(HWND hdlg,
 			   UINT wMsg,
 			   WPARAM wParam,
 			   LPARAM lParam);
 #endif   /* WIN32 */
 
 void		updateGlobals(void);
+void		writeDriverCommoninfo(const ConnInfo *ci);
 void		writeDSNinfo(const ConnInfo *ci);
 void		getDSNdefaults(ConnInfo *ci);
 void		getDSNinfo(ConnInfo *ci, char overwrite);

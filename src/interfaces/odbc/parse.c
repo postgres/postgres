@@ -597,11 +597,9 @@ parse_statement(StatementClass *stmt)
 
 				if (fi[ifld]->dot[0])
 				{
-					strcat(fi[ifld]->dot, ".");
-					strcat(fi[ifld]->dot, fi[ifld]->name);
+					fi[ifld]->schema = strdup(fi[ifld]->dot);
 				}
-				else
-					strcpy(fi[ifld]->dot, fi[ifld]->name);
+				strcpy(fi[ifld]->dot, fi[ifld]->name);
 				strcpy(fi[ifld]->name, token);
 
 				if (delim == ',')
@@ -820,17 +818,49 @@ parse_statement(StatementClass *stmt)
 			fi[i]->length = fi[i]->column_size;
 			continue;
 		}
+		/* field name contains the schema name */
+		else if (fi[i]->schema)
+		{
+			int	matchidx = -1;
+
+			for (k = 0; k < stmt->ntab; k++)
+			{
+				if (!stricmp(ti[k]->name, fi[i]->dot))
+				{
+					if (!stricmp(ti[k]->schema, fi[i]->schema))
+					{
+						fi[i]->ti = ti[k];
+						break;
+					}
+					else if (!ti[k]->schema[0])
+					{
+						if (matchidx < 0)
+							matchidx = k;
+						else
+						{
+							stmt->parse_status = STMT_PARSE_FATAL;
+							stmt->errornumber = STMT_EXEC_ERROR;
+							stmt->errormsg = "duplicated Table name";
+							stmt->updatable = FALSE;
+							return FALSE;
+						}
+					}
+				}
+			}
+			if (matchidx >= 0)
+				fi[i]->ti = ti[matchidx];
+		}
 		/* it's a dot, resolve to table or alias */
 		else if (fi[i]->dot[0])
 		{
 			for (k = 0; k < stmt->ntab; k++)
 			{
-				if (!stricmp(ti[k]->name, fi[i]->dot))
+				if (!stricmp(ti[k]->alias, fi[i]->dot))
 				{
 					fi[i]->ti = ti[k];
 					break;
 				}
-				else if (!stricmp(ti[k]->alias, fi[i]->dot))
+				else if (!stricmp(ti[k]->name, fi[i]->dot))
 				{
 					fi[i]->ti = ti[k];
 					break;
@@ -869,13 +899,84 @@ parse_statement(StatementClass *stmt)
 		/* See if already got it */
 		char		found = FALSE;
 
-		for (k = 0; k < conn->ntables; k++)
+		if (conn->schema_support)
 		{
-			if (!stricmp(conn->col_info[k]->name, ti[i]->name))
+			if (!ti[i]->schema[0])
 			{
-				mylog("FOUND col_info table='%s'\n", ti[i]->name);
-				found = TRUE;
-				break;
+				const char *curschema = CC_get_current_schema(conn);
+				/*
+			 	 * Though current_schema() doesn't have
+			 	 * much sense in PostgreSQL, we first
+			 	 * check the current_schema() when no
+				 * explicit schema name was specified.
+			 	 */
+				for (k = 0; k < conn->ntables; k++)
+				{
+					if (!stricmp(conn->col_info[k]->name, ti[i]->name) &&
+					    !stricmp(conn->col_info[k]->schema, curschema))
+					{
+						mylog("FOUND col_info table='%s' current schema='%s'\n", ti[i]->name, curschema);
+						found = TRUE;
+						strcpy(ti[i]->schema, curschema);
+						break;
+					}
+				}
+				if (!found)
+				{
+					QResultClass	*res;
+					BOOL		tblFound = FALSE;
+
+					/*
+			 	 	 * We also have to check as follows.
+			 	 	 */
+					sprintf(token, "select nspname from pg_namespace n, pg_class c"
+						" where c.relnamespace=n.oid and c.oid='%s'::regclass", ti[i]->name);
+					res = CC_send_query(conn, token, NULL, CLEAR_RESULT_ON_ABORT);
+					if (res)
+					{
+						if (QR_get_num_total_tuples(res) == 1)
+						{
+							tblFound = TRUE;
+							strcpy(ti[i]->schema, QR_get_value_backend_row(res, 0, 0));
+						}
+						QR_Destructor(res);
+					}
+					else
+						CC_abort(conn);
+					if (!tblFound)
+					{
+						stmt->parse_status = STMT_PARSE_FATAL;
+						stmt->errornumber = STMT_EXEC_ERROR;
+						stmt->errormsg = "Table not found";
+						stmt->updatable = FALSE;
+						return FALSE;
+					}
+				}
+			}
+			if (!found && ti[i]->schema[0])
+			{
+				for (k = 0; k < conn->ntables; k++)
+				{
+					if (!stricmp(conn->col_info[k]->name, ti[i]->name) &&
+					    !stricmp(conn->col_info[k]->schema, ti[i]->schema))
+					{
+						mylog("FOUND col_info table='%s' schema='%s'\n", ti[i]->name, ti[i]->schema);
+						found = TRUE;
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (k = 0; k < conn->ntables; k++)
+			{
+				if (!stricmp(conn->col_info[k]->name, ti[i]->name))
+				{
+					mylog("FOUND col_info table='%s'\n", ti[i]->name);
+					found = TRUE;
+					break;
+				}
 			}
 		}
 
@@ -895,37 +996,6 @@ parse_statement(StatementClass *stmt)
 			col_stmt = (StatementClass *) hcol_stmt;
 			col_stmt->internal = TRUE;
 
-			if (!ti[i]->schema[0] && conn->schema_support)
-			{
-				QResultClass	*res;
-				BOOL		tblFound = FALSE;
-
-				/* Unfortunately CURRENT_SCHEMA doesn't exist
-				 * in PostgreSQL and we have to check as follows.
-				 */
-				sprintf(token, "select nspname from pg_namespace n, pg_class c"
-					" where c.relnamespace=n.oid and c.oid='%s'::regclass", ti[i]->name);
-				res = CC_send_query(conn, token, NULL, CLEAR_RESULT_ON_ABORT);
-				if (res)
-				{
-					if (QR_get_num_total_tuples(res) == 1)
-					{
-						tblFound = TRUE;
-						strcpy(ti[i]->schema, QR_get_value_backend_row(res, 0, 0));
-					}
-					QR_Destructor(res);
-				}
-				else
-					CC_abort(conn);
-				if (!tblFound)
-				{
-					stmt->parse_status = STMT_PARSE_FATAL;
-					stmt->errornumber = STMT_EXEC_ERROR;
-					stmt->errormsg = "Table not found";
-					stmt->updatable = FALSE;
-					return FALSE;
-				}
-			}
 			result = PGAPI_Columns(hcol_stmt, "", 0, ti[i]->schema,
 					 SQL_NTS, ti[i]->name, SQL_NTS, "", 0, PODBC_NOT_SEARCH_PATTERN);
 
@@ -957,6 +1027,10 @@ parse_statement(StatementClass *stmt)
 				 * Store the table name and the SQLColumns result
 				 * structure
 				 */
+				if (ti[i]->schema[0])
+					conn->col_info[conn->ntables]->schema = strdup(ti[i]->schema);
+				else
+					conn->col_info[conn->ntables]->schema = NULL;
 				strcpy(conn->col_info[conn->ntables]->name, ti[i]->name);
 				conn->col_info[conn->ntables]->result = SC_get_Curres(col_stmt);
 

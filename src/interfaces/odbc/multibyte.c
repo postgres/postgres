@@ -351,6 +351,44 @@ CC_lookup_characterset(ConnectionClass *self)
 		encstr = CC_lookup_cs_new(self);
 	if (self->client_encoding)
 		free(self->client_encoding);
+#ifndef	UNICODE_SUPPORT
+#ifdef	WIN32
+	else
+	{
+		const char *wenc = NULL;
+		switch (GetACP())
+		{
+			case 932:
+				wenc = "SJIS";
+				break;
+			case 936:
+				wenc = "GBK";
+				break;
+			case 949:
+				wenc = "UHC";
+				break;
+			case 950:
+				wenc = "BIG5";
+				break;
+		}
+		if (wenc && stricmp(encstr, wenc))
+		{
+			QResultClass	*res;
+			char		query[64];
+
+			sprintf(query, "set client_encoding to '%s'", wenc);
+			res = CC_send_query(self, query, NULL, CLEAR_RESULT_ON_ABORT);
+			if (res)
+			{
+				self->client_encoding = strdup(wenc);
+				QR_Destructor(res);
+				free(encstr);
+				return;
+			}
+		}
+	}
+#endif /* WIN32 */
+#endif /* UNICODE_SUPPORT */
 	if (encstr)
 	{
 		self->client_encoding = encstr;

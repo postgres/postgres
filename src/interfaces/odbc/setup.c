@@ -21,6 +21,7 @@
 #include  <stdlib.h>
 #include  "resource.h"
 #include  "dlg_specific.h"
+#include  "win_setup.h"
 
 
 #define INTFUNC  __stdcall
@@ -37,28 +38,6 @@ extern HINSTANCE NEAR s_hModule;	/* Saved module handle. */
 #define MAXKEYLEN		(15+1)	/* Max keyword length */
 #define MAXDESC			(255+1) /* Max description length */
 #define MAXDSNAME		(32+1)	/* Max data source name length */
-
-
-/* Globals */
-/* NOTE:  All these are used by the dialog procedures */
-typedef struct tagSETUPDLG
-{
-	HWND		hwndParent;		/* Parent window handle */
-	LPCSTR		lpszDrvr;		/* Driver description */
-	ConnInfo	ci;
-	char		szDSN[MAXDSNAME];		/* Original data source name */
-	BOOL		fNewDSN;		/* New data source flag */
-	BOOL		fDefault;		/* Default data source flag */
-
-}	SETUPDLG, FAR * LPSETUPDLG;
-
-
-
-/* Prototypes */
-void INTFUNC CenterDialog(HWND hdlg);
-int CALLBACK ConfigDlgProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-void INTFUNC ParseAttributes(LPCSTR lpszAttributes, LPSETUPDLG lpsetupdlg);
-BOOL INTFUNC SetDSNAttributes(HWND hwnd, LPSETUPDLG lpsetupdlg);
 
 
 /*--------
@@ -217,6 +196,7 @@ ConfigDlgProc(HWND hdlg,
 {
 	LPSETUPDLG	lpsetupdlg;
 	ConnInfo   *ci;
+	DWORD		cmd;
 
 	switch (wMsg)
 	{
@@ -227,6 +207,7 @@ ConfigDlgProc(HWND hdlg,
 
 			/* Hide the driver connect message */
 			ShowWindow(GetDlgItem(hdlg, DRV_MSG_LABEL), SW_HIDE);
+			SetWindowText(GetDlgItem(hdlg, IDOK), "Save");
 
 			SetWindowLong(hdlg, DWL_USER, lParam);
 			CenterDialog(hdlg); /* Center dialog */
@@ -260,7 +241,7 @@ ConfigDlgProc(HWND hdlg,
 
 			/* Process buttons */
 		case WM_COMMAND:
-			switch (GET_WM_COMMAND_ID(wParam, lParam))
+			switch (cmd = GET_WM_COMMAND_ID(wParam, lParam))
 			{
 					/*
 					 * Ensure the OK button is enabled only when a data
@@ -282,6 +263,7 @@ ConfigDlgProc(HWND hdlg,
 
 					/* Accept results */
 				case IDOK:
+				case IDAPPLY:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 					/* Retrieve dialog values */
 					if (!lpsetupdlg->fDefault)
@@ -293,23 +275,24 @@ ConfigDlgProc(HWND hdlg,
 
 					/* Update ODBC.INI */
 					SetDSNAttributes(hdlg, lpsetupdlg);
-
+					if (IDAPPLY == cmd)
+						break;
 					/* Return to caller */
 				case IDCANCEL:
 					EndDialog(hdlg, wParam);
 					return TRUE;
 
-				case IDC_DRIVER:
-					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
-					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-					 hdlg, driver_optionsProc, (LPARAM) &lpsetupdlg->ci);
-					return TRUE;
-
 				case IDC_DATASOURCE:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
+					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
+					 hdlg, ds_options1Proc, (LPARAM) &lpsetupdlg->ci);
+					return TRUE;
 
-					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
-						 hdlg, ds_optionsProc, (LPARAM) &lpsetupdlg->ci);
+				case IDC_DRIVER:
+					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
+
+					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
+						 hdlg, driver_optionsProc, (LPARAM) &lpsetupdlg->ci);
 
 					return TRUE;
 			}
@@ -415,6 +398,7 @@ SetDSNAttributes(HWND hwndParent, LPSETUPDLG lpsetupdlg)
 	}
 
 	/* Update ODBC.INI */
+	writeDriverCommoninfo(&lpsetupdlg->ci);
 	writeDSNinfo(&lpsetupdlg->ci);
 
 	/* If the data source name has changed, remove the old name */

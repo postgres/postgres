@@ -92,7 +92,7 @@ char	   *trim(char *string);
 char	   *make_string(const char *s, int len, char *buf);
 char	   *my_strcat(char *buf, const char *fmt, const char *s, int len);
 char	   *schema_strcat(char *buf, const char *fmt, const char *s, int len,
-			const char *, int);
+		const char *, int, ConnectionClass *conn);
 /* #define	GET_SCHEMA_NAME(nspname) 	(stricmp(nspname, "public") ? nspname : "") */
 #define	GET_SCHEMA_NAME(nspname) 	(nspname)
 
