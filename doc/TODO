@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Nov 22 13:02:03 EST 1999
+Last updated:		Thu Nov 25 23:38:01 EST 1999
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -171,7 +171,7 @@ CLIENTS
 * Allow flag to control COPY input/output of NULLs
 * Update reltuples from COPY command
 * -Allow psql \copy to allow delimiters
-* Add a function to return the last inserted oid, for use in psql scripts
+* -Add a function to return the last inserted oid, for use in psql scripts
 * -Allow psql to print nulls as distinct from "" [null]
 
 EXOTIC FEATURES
