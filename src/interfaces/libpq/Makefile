@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.24 1997/01/06 00:24:24 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq/Makefile,v 1.25 1997/01/10 04:01:09 vadim Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -29,8 +29,11 @@ VPATH:= $(VPATH):../backend/lib
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-lobj.o \
          ../backend/lib/dllist.o pqsignal.o 
 
+
 shlib := 
+install-shlib-dep :=
 ifdef LINUX_ELF
+install-shlib-dep := install-shlib
 ifeq ($(PORTNAME), linux)
 shlib := libpq.so.1
 endif
@@ -62,7 +65,7 @@ fe-lobj.o: ../backend/fmgr.h
 ../backend/lib/dllist.o:
 	$(MAKE) -C ../backend/lib dllist.o
 
-libpq.so.1: $(OBJS)
+$(shlib): $(OBJS)
 	$(LD) $(LDFLAGS) -shared $(OBJS) -o $(shlib)
 
 c.h: ../include/c.h
@@ -127,16 +130,10 @@ beforeinstall-headers:
 	@if [ ! -d $(HEADERDIR)/access ]; \
 		then mkdir $(HEADERDIR)/access; fi
 
-ifdef LINUX_ELF
-install-shlib-dep := install-shlib
-else
-install-shlib-dep :=
-endif
-
 install-libpq: libpq.a
 	$(INSTALL) $(INSTL_LIB_OPTS) libpq.a $(DESTDIR)$(LIBDIR)/libpq.a
 
-install-shlib: libpq.so.1
+install-shlib: $(shlib)
 	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(DESTDIR)$(LIBDIR)/$(shlib)
 
 depend dep:
@@ -144,7 +141,7 @@ depend dep:
 
 .PHONY: clean
 clean:
-	rm -f libpq.a libpq.so.1 $(OBJS) c.h
+	rm -f libpq.a $(shlib) $(OBJS) c.h
 
 ifeq (depend,$(wildcard depend))
 include depend
