@@ -720,3 +720,9 @@ Mon Nov 22 18:26:34 CET 1999
 	- Clean up parser.
 	- Set library version to 3.0.6.
         - Set ecpg version to 2.6.10.
+
+Tue Nov 23 07:59:01 CET 1999
+
+	- Ignore locale setting in ECPGdo.
+	- Set library version to 3.0.7.
+

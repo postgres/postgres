@@ -18,6 +18,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include <locale.h>
 
 #include <libpq-fe.h>
 #include <libpq/pqcomm.h>
@@ -656,7 +657,6 @@ ECPGexecute(struct statement * stmt)
 	}
 	else
 	{
-/*		sqlca.sqlerrd[2] = 0;*/
 		var = stmt->outlist;
 		switch (PQresultStatus(results))
 		{
@@ -1050,6 +1050,11 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 	struct statement *stmt;
 	struct connection *con = get_connection(connection_name);
 	bool		status;
+	char *locale = setlocale(LC_NUMERIC, NULL);
+
+	/* Make sure we do NOT honor the locale for numeric input/output */
+	/* since the database wants teh standard decimal point */
+	setlocale(LC_NUMERIC, "C");
 
 	if (!ecpg_init(con, connection_name, lineno))
 		return(false);
@@ -1069,6 +1074,9 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
 
 	status = ECPGexecute(stmt);
 	free_statement(stmt);
+
+	/* and reser value so our application is not affected */
+	setlocale(LC_NUMERIC, locale);
 	return (status);
 }
 
