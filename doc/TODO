@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 12 13:09:32 EST 2004
+Last updated:		Thu Feb 12 13:11:14 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -26,12 +26,6 @@ Urgent
 * Point-in-time data recovery using backup and write-ahead log,
   http://momjian.postgresql.org/main/writings/pgsql/project/pitr.html
 * Create native Win32 port, http://momjian.postgresql.org/main/writings/pgsql/project/win32.html
-
-
-Reporting
-=========
-
-* Show location of syntax error in query [yacc]
 
 
 Administration
@@ -462,7 +456,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * -Add checks for fclose() failure (Tom)
-* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1210 2004/02/12 18:09:43 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1210 2004/02/12 18:09:43 momjian Exp $
+* Change CVS $PostgreSQL: pgsql/doc/TODO,v 1.1211 2004/02/12 18:11:16 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1211 2004/02/12 18:11:16 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
