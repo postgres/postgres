@@ -769,14 +769,6 @@ init_des()
 	static unsigned char perm[64], tmp32[32];	/* "static" for speed */
 	static volatile long init_start = 0;
 
-	if (InterlockedCompareExchange((PVOID *)&init_start,
-		(PVOID)1, (PVOID)0) == (PVOID)1)
-	{
-		while (!des_ready)
-			Sleep(0);
-		return;
-	}
-
 	/*
 	 * table that converts chars "./0-9A-Za-z"to integers 0-63.
 	 */
