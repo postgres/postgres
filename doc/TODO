@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Apr  7 15:14:17 EDT 2004
+Last updated:		Wed Apr 14 14:32:57 EDT 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -40,7 +40,7 @@ Administration
 * Allow limits on per-db/user connections
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
-* Add the concept of dataspaces/tablespaces [tablespaces]
+* Add the concept of dataspaces/tablespaces [tablespaces] (Gavin)
 * -Allow logging of only data definition(DDL), or DDL and modification statements
 * -Allow log lines to include session-level information, like database and user
 * Allow server log information to be output as INSERT statements
@@ -164,7 +164,7 @@ Commands
 * Allow REINDEX to rebuild all indexes, remove /contrib/reindex
 * Add ROLLUP, CUBE, GROUPING SETS options to GROUP BY
 * Add schema option to createlang
-* Allow savepoints / nested transactions [transactions] (Bruce)
+* Allow savepoints / nested transactions [transactions] (Alvaro)
 * Use nested transactions to prevent syntax errors from aborting a transaction
 * Allow UPDATE tab SET ROW (col, ...) = (...) for updating multiple columns
 * Allow SET CONSTRAINTS to be qualified by schema/table
@@ -237,7 +237,7 @@ Commands
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions
 	o Change PL/PgSQL to use palloc() instead of malloc()
-	o Allow Java server-side programming [java]
+	o Allow Java server-side programming [java] (Dave)
 	o Fix problems with complex temporary table creation/destruction
 	  without using PL/PgSQL EXECUTE, needs cache prevention/invalidation
         o Fix PL/pgSQL RENAME to work on variables other than OLD/NEW
@@ -494,6 +494,7 @@ Source Code
 
 Developers who have claimed items are:
 --------------------------------------
+* Alvaro Herrera <alvherre@dcc.uchile.cl>
 * Barry is Barry Lind <barry@xythos.com>
 * Billy is Billy G. Allie <Bill.Allie@mug.org>
 * Bruce is Bruce Momjian <pgman@candle.pha.pa.us> of Software Research Assoc.
