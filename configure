@@ -2389,17 +2389,27 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 #
 . "$srcdir/src/template/$template" || exit
 
-# adjust CFLAGS per template
+# The template may have supplied a default setting for CFLAGS.
+# Override this if CFLAGS was set in the original environment.
 if test "$ac_env_CFLAGS_set" = set; then
   CFLAGS=$ac_env_CFLAGS_value
-fi
-if test "$enable_debug" = yes && test "$ac_cv_prog_cc_g" = yes; then
-  CFLAGS="$CFLAGS -g"
 else
-  # configure sets CFLAGS to -O2 for gcc, so this is only for non-gcc
-  if test x"$CFLAGS" = x""; then
-    CFLAGS="-O"
+  # autoconf already set the default CFLAGS for gcc to be -O2, but we
+  # need to specify -fno-strict-aliasing too in case it's gcc 3.3 or later.
+  if test "$GCC" = yes; then
+    CFLAGS="$CFLAGS -fno-strict-aliasing"
   fi
+fi
+# supply -g if --enable-debug
+if test "$enable_debug" = yes -a "$ac_cv_prog_cc_g" = yes; then
+  CFLAGS="$CFLAGS -g"
+fi
+# default to -O rather than empty CFLAGS; this path will not be taken for
+# gcc (since autoconf supplies -O2), nor if --enable-debug (because -O -g
+# doesn't work on most non-gcc compilers), nor if the template provided
+# some CFLAGS.
+if test "$ac_env_CFLAGS_set" != set -a x"$CFLAGS" = x""; then
+  CFLAGS="-O"
 fi
 { echo "$as_me:$LINENO: using CFLAGS=$CFLAGS" >&5
 echo "$as_me: using CFLAGS=$CFLAGS" >&6;}
@@ -2457,7 +2467,7 @@ echo "$as_me: error: cannot proceed" >&2;}
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 
-# Defend against gcc -ffastmath
+# Defend against gcc -ffast-math
 if test "$GCC" = yes; then
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
