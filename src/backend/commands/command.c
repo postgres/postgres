@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.110 2000/11/12 00:36:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.111 2000/11/14 01:57:30 inoue Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -1447,14 +1447,13 @@ AlterTableOwner(const char *relationName, const char *newOwnerName)
 		elog(ERROR, "ALTER TABLE: user \"%s\" not found", newOwnerName);
 
 	newOwnerSysid = ((Form_pg_shadow) GETSTRUCT(tuple))->usesysid;
-	heap_freetuple(tuple);
 
 	/*
 	 * find the table's entry in pg_class and lock it for writing
 	 */
 	class_rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheTuple(RELNAME, PointerGetDatum(relationName),
+	tuple = SearchSysCacheTupleCopy(RELNAME, PointerGetDatum(relationName),
 								 0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
