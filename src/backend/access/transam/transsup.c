@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.6 1996/11/05 11:12:30 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/transsup.c,v 1.6.2.1 1996/12/14 05:19:12 vadim Exp $
  *
  * NOTES
  *    This file contains support functions for the high
@@ -119,8 +119,8 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
      * ----------------
      */
     maxIndex = TP_NumXidStatusPerBlock;
-    for (index = maxIndex-1; index>=0; index--) {
-	offset =  BitIndexOf(index);
+    for (index = maxIndex; index > 0; index--) {
+	offset =  BitIndexOf(index-1);
 	bit1 =    ((bits8) BitArrayBitIsSet((BitArray) tblock, offset++)) << 1;
 	bit2 =    (bits8)  BitArrayBitIsSet((BitArray) tblock, offset);
 	
@@ -135,7 +135,7 @@ TransBlockGetLastTransactionIdStatus(Block tblock,
 	if (xstatus != XID_INPROGRESS) {
 	    if (returnXidP != NULL) {
 		TransactionIdStore(baseXid, returnXidP);
-		TransactionIdAdd(returnXidP, index);
+		TransactionIdAdd(returnXidP, index - 1);
 	    }
 	    break;
 	}
