@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.10 1997/03/15 06:13:12 scrappy Exp $
+ * $Id: pg_proc.h,v 1.11 1997/03/16 01:16:31 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -777,11 +777,6 @@ DATA(insert OID =  875 (  LTRIM             PGUID 11 f t f 2 f 25 "25 25" 100 0 
 DATA(insert OID =  876 (  RTRIM             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  877 (  SUBSTR            PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
 DATA(insert OID =  878 (  TRANSLATE         PGUID 11 f t f 3 f 25 "25 18 18" 100 0 0 100  foo bar ));
-DATA(insert OID =  879 (  lpad              PGUID 11 f t f 2 f 25 "25 23" 100 0 0 100  foo bar ));
-DATA(insert OID =  880 (  rpad              PGUID 11 f t f 2 f 25 "25 23" 100 0 0 100  foo bar ));
-DATA(insert OID =  881 (  ltrim             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
-DATA(insert OID =  882 (  rtrim             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
-DATA(insert OID =  883 (  substr            PGUID 11 f t f 2 f 25 "25 23" 100 0 0 100  foo bar ));
 
 /* 
  * prototypes for functions pg_proc.c 
