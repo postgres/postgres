@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.15 1997/04/05 02:51:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.16 1997/04/22 17:36:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1400,8 +1400,23 @@ int
 datetime2tm( DateTime dt, int *tzp, struct tm *tm, double *fsec)
 {
     double date, time, sec;
+    time_t utime;
 
-    if (tzp != NULL) dt = dt2local( dt, *tzp);
+    if (tzp != NULL) {
+	/* XXX HACK to get time behavior compatible with Postgres v6.0 - tgl 97/04/07 */
+	if ((tm->tm_year > 1902) && (tm->tm_year < 2038)) {
+	    utime = ((date2j(2000,1,1)-date2j(1970,1,1))*86400+dt);
+	    localtime((time_t *) &utime);
+#ifdef DATEDEBUG
+printf( "datetime2tm- use system time zone = %ld (CTimeZone = %d)\n", (long int) utime, CTimeZone);
+#endif
+	    dt = dt2local( dt, timezone);
+
+	} else {
+	    dt = dt2local( dt, *tzp);
+	};
+    };
+
     time = (modf( dt/86400, &date)*86400);
     date += date2j(2000,1,1);
     if (time < 0) {
@@ -1529,9 +1544,9 @@ printf( "tm2timespan- %d %f = %04d-%02d-%02d %02d:%02d:%02d %.2f\n", span->month
 } /* tm2timespan() */
 
 
-DateTime dt2local(DateTime dt, int timezone)
+DateTime dt2local(DateTime dt, int tz)
 {
-    dt -= timezone;
+    dt -= tz;
     dt = JROUND(dt);
     return(dt);
 } /* dt2local() */
@@ -1711,6 +1726,8 @@ printf( "DecodeDateTime- field[%d] is %s (type %d)\n", i, field[i], ftype[i]);
 
 	case DTK_TIME:
 	    if (DecodeTime(field[i], fmask, &tmask, tm, fsec) != 0) return -1;
+	    /* check upper limit on hours; other limits checked in DecodeTime() */
+	    if (tm->tm_hour > 23) return -1;
 	    break;
 
 	case DTK_TZ:
@@ -1862,6 +1879,20 @@ printf( " %02d:%02d:%02d\n", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
     if ((*dtype == DTK_DATE) && ((fmask & DTK_DATE_M) != DTK_DATE_M))
 	return(((fmask & DTK_TIME_M) == DTK_TIME_M)? 1: -1);
+
+    /* timezone not specified? then find local timezone if possible */
+    /* XXX HACK to get correct behavior relative to Postgres v6.0 - tgl 97/04/07 */
+    if ((*dtype == DTK_DATE) && ((fmask & DTK_DATE_M) == DTK_DATE_M)
+      && (tzp != NULL) && (! (fmask & DTK_M(TZ)))
+      && (tm->tm_year > 1902) && (tm->tm_year < 2038)) {
+	tm->tm_year -= 1900;
+	tm->tm_mon -= 1;
+	mktime(tm);
+	tm->tm_year += 1900;
+	tm->tm_mon += 1;
+
+	*tzp = timezone;
+    };
 
     return 0;
 } /* DecodeDateTime() */
@@ -2066,6 +2097,8 @@ printf( "DecodeDate- illegal field %s value is %d\n", field[i], val);
 
 /* DecodeTime()
  * Decode time string which includes delimiters.
+ * Only check the lower limit on hours, since this same code
+ *  can be used to represent time spans.
  */
 int
 DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
@@ -2098,6 +2131,11 @@ DecodeTime(char *str, int fmask, int *tmask, struct tm *tm, double *fsec)
 	    return -1;
 	};
     };
+
+    /* do a sanity check */
+    if ((tm->tm_hour < 0)
+     || (tm->tm_min < 0) || (tm->tm_min > 59)
+     || (tm->tm_sec < 0) || (tm->tm_sec > 59)) return -1;
 
     return 0;
 } /* DecodeTime() */
@@ -2654,6 +2692,9 @@ printf( "EncodeSpecialDateTime- unrecognized date\n");
 } /* EncodeSpecialDateTime() */
 
 
+/* EncodeDateTime()
+ * Encode date and time interpreted as local time.
+ */
 int EncodeDateTime(struct tm *tm, double fsec, int style, char *str)
 {
     char mabbrev[4], dabbrev[4];
@@ -2668,8 +2709,8 @@ int EncodeDateTime(struct tm *tm, double fsec, int style, char *str)
     tm->tm_isdst = -1;
 
 #ifdef DATEDEBUG
-printf( "EncodeDateTime- timezone is %s; offset is %d; daylight is %d\n",
- CTZName, CTimeZone, CDayLight);
+printf( "EncodeDateTime- timezone is %s (%s); offset is %ld (%d); daylight is %d (%d)\n",
+ tzname[0], CTZName, (long int) timezone, CTimeZone, daylight, CDayLight);
 #endif
 
     day = date2j( tm->tm_year, tm->tm_mon, tm->tm_mday);
@@ -2723,10 +2764,8 @@ printf( "EncodeDateTime- day is %d\n", day);
 	    sprintf( str, "%02d/%02d", tm->tm_mon, tm->tm_mday);
 	};
 	if (tm->tm_year > 0) {
-	    sprintf( (str+5), "/%04d %02d:%02d:%5.2f %s",
+	    sprintf( (str+5), "/%04d %02d:%02d:%05.2f %s",
 	      tm->tm_year, tm->tm_hour, tm->tm_min, sec, CTZName);
-	    /* XXX brute-force fill in leading zero on seconds */
-	    if (*(str+17) == ' ') *(str+17) = '0';
 
 	} else {
 	    sprintf( (str+5), "/%04d %02d:%02d %s",
@@ -2742,10 +2781,12 @@ printf( "EncodeDateTime- day is %d\n", day);
 	    sprintf( (str+4), "%3s %02d", mabbrev, tm->tm_mday);
 	};
 	if (tm->tm_year > 0) {
-	    sprintf( (str+10), " %02d:%02d:%5.2f %04d %s",
+#if FALSE
+	    sprintf( (str+10), " %02d:%02d:%05.2f %04d %s",
 	      tm->tm_hour, tm->tm_min, sec, tm->tm_year, CTZName);
-	    /* XXX brute-force fill in leading zero on seconds */
-	    if (*(str+17) == ' ') *(str+17) = '0';
+#endif
+	    sprintf( (str+10), " %02d:%02d:%05.2f %04d %s",
+	      tm->tm_hour, tm->tm_min, sec, tm->tm_year, (daylight? tzname[1]: tzname[0]));
 
 	} else {
 	    sprintf( (str+10), " %02d:%02d %04d %s",

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.23 1997/04/15 17:46:52 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.24 1997/04/22 17:36:57 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,8 +102,16 @@ abstime2tm(AbsoluteTime time, int *tzp, struct tm *tm)
 {
     struct tm *tt;
 
+#if FALSE
     if (tzp != NULL) time -= *tzp;
     tt = gmtime((time_t *) &time);
+#endif
+    /* XXX HACK to get time behavior compatible with Postgres v6.0 - tgl 97/04/07 */
+    if (tzp != NULL) {
+	tt = localtime((time_t *) &time);
+    } else {
+	tt = gmtime((time_t *) &time);
+    };
 
     tm->tm_year = tt->tm_year+1900;
     tm->tm_mon = tt->tm_mon+1;
@@ -160,7 +168,7 @@ tm2abstime( struct tm *tm, int tz)
     if (!AbsoluteTimeIsReal(sec))
 	return(INVALID_ABSTIME);
 
-    return sec;
+    return(sec);
 } /* tm2abstime() */
 
 
@@ -530,27 +538,27 @@ abstime_datetime(AbsoluteTime abstime)
 
     switch (abstime) {
     case INVALID_ABSTIME:
-        DATETIME_INVALID(*result);
+	DATETIME_INVALID(*result);
 	break;
 
     case NOSTART_ABSTIME:
-        DATETIME_NOBEGIN(*result);
+	DATETIME_NOBEGIN(*result);
 	break;
 
     case NOEND_ABSTIME:
-        DATETIME_NOEND(*result);
+	DATETIME_NOEND(*result);
 	break;
 
     case EPOCH_ABSTIME:
-        DATETIME_EPOCH(*result);
+	DATETIME_EPOCH(*result);
 	break;
 
     case CURRENT_ABSTIME:
-        DATETIME_CURRENT(*result);
+	DATETIME_CURRENT(*result);
 	break;
 
     default:
-        *result = abstime + ((date2j( 1970, 1, 1) - date2j( 2000, 1, 1))*86400);
+	*result = abstime + ((date2j( 1970, 1, 1) - date2j( 2000, 1, 1))*86400);
 	break;
     };
 
