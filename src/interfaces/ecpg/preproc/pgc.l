@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.90 2002/04/05 11:39:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.91 2002/05/19 20:00:53 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,7 +49,10 @@ static int		literalalloc;			/* current allocated buffer size */
 
 #define startlit()	(literalbuf[0] = '\0', literallen = 0)
 static void addlit(char *ytext, int yleng);
+static void addlitchar (unsigned char);
+static unsigned char unescape_single_char(unsigned char);
 
+static char        *token_start;
 int state_before;
 
 struct _yy_buffer 
@@ -131,10 +134,11 @@ xqstart			{quote}
 xqstop			{quote}
 xqdouble		{quote}{quote}
 xqinside		[^\\']+
-xqliteral		[\\](.|\n)
+xqescape                [\\][^0-7]
+xqoctesc                [\\][0-7]{1,3}
 xqcat			{quote}{whitespace_with_newline}{quote}
 
-/* Delimited quote
+/* Double quote
  * Allows embedded spaces and other special characters into identifiers.
  */
 dquote			\"
@@ -229,7 +233,7 @@ non_newline		[^\n\r]
 
 comment			("--"{non_newline}*)
 
-whitespace		({space}|{comment})
+whitespace		({space}+|{comment})
 
 /*
  * SQL92 requires at least one newline in the whitespace separating
@@ -262,10 +266,7 @@ ip			{ipdigit}\.{ipdigit}\.{ipdigit}\.{ipdigit}
 /* Take care of cpp continuation lines */
 cppline			{space}*#(.*\\{space})*.*
 
-/* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
- * AT&T lex does not properly handle C-style comments in this second lex block.
- * So, put comments here. thomas - 1997-09-08
- *
+/*
  * Quoted strings must allow some special characters such as single-quote
  *	and newline.
  * Embedded single-quotes are implemented both in the SQL92-standard
@@ -278,9 +279,16 @@ cppline			{space}*#(.*\\{space})*.*
  */
 
 %%
+
+%{
+                                       /* code to execute during start of each call of yylex() */
+                                       token_start = NULL;
+%}
+
 <SQL>{whitespace}	{ /* ignore */ }
 
 {xcstart}			{
+						token_start = yytext;
 						state_before = YYSTATE;
 						xcdepth = 0;
 						BEGIN(xc);
@@ -298,7 +306,10 @@ cppline			{space}*#(.*\\{space})*.*
 <xc>{xcstop}		{
 						ECHO;
 						if (xcdepth <= 0)
-							BEGIN(state_before);
+						{
+							BEGIN(INITIAL);
+							token_start = NULL;
+						}
 						else
 							xcdepth--;
 					}
@@ -309,8 +320,10 @@ cppline			{space}*#(.*\\{space})*.*
 <xc><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated /* comment"); }
 
 <SQL>{xbitstart}	{
+						token_start = yytext;
 						BEGIN(xbit);
 						startlit();
+						addlitchar('b');
 					}
 <xbit>{xbitstop}	{
 						BEGIN(SQL);
@@ -327,6 +340,7 @@ cppline			{space}*#(.*\\{space})*.*
 <xbit><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated bit string"); }
 
 <SQL>{xhstart}		{
+						token_start = yytext;
 						BEGIN(xh);
 						startlit();
 					}
@@ -351,6 +365,7 @@ cppline			{space}*#(.*\\{space})*.*
 <xh><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated hexadecimal integer"); }
 
 <C,SQL>{xqstart}	{
+						token_start = yytext;
 						state_before = YYSTATE;
 						BEGIN(xq);
 						startlit();
@@ -360,9 +375,11 @@ cppline			{space}*#(.*\\{space})*.*
 						yylval.str = mm_strdup(literalbuf);
 						return SCONST;
 					}
-<xq>{xqdouble}	|
-<xq>{xqinside}	|
-<xq>{xqliteral}		{ addlit(yytext, yyleng); }
+<xq>{xqdouble}		{ addlitchar('\''); }
+<xq>{xqinside}		{ addlit(yytext, yyleng); }
+<xq>{xqescape}  	{ addlitchar(unescape_single_char(yytext[1])); }
+<xq>{xqoctesc}		{ unsigned char c = strtoul(yytext+1, NULL, 8);
+                          addlitchar(c); }
 <xq>{xqcat}			{ /* ignore */ }
 
 <xq><<EOF>>			{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted string"); }
@@ -374,20 +391,13 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 <xd>{xdstop}		{
 						BEGIN(state_before);
-						if (strlen(literalbuf) >= NAMEDATALEN)
+						if (literallen == 0)
+							mmerror(PARSE_ERROR, ET_ERROR, "zero-length delimited identifier");
+						if (literallen >= NAMEDATALEN)
 						{
-#ifdef MULTIBYTE_NOTUSED
-							int len;
-
-							len = pg_mbcliplen(literalbuf,strlen(literalbuf),NAMEDATALEN-1);
-							sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
-									literalbuf, len, literalbuf);
-							literalbuf[len] = '\0';
-#else
 							sprintf(errortext, "identifier \"%s\" will be truncated to \"%.*s\"",
 									literalbuf, NAMEDATALEN-1, literalbuf);
 							literalbuf[NAMEDATALEN-1] = '\0';
-#endif
 							mmerror(PARSE_ERROR, ET_WARNING, errortext);
 						}
 					
@@ -399,7 +409,7 @@ cppline			{space}*#(.*\\{space})*.*
 						yylval.str = mm_strdup(literalbuf);
 						return CSTRING;
 					}
-<xd>{xddouble}		{ addlit(yytext, yyleng-1); }
+<xd>{xddouble}		{ addlitchar('"'); }
 <xd>{xdinside}		{ addlit(yytext, yyleng); }
 <xd,xdc><<EOF>>		{ mmerror(PARSE_ERROR, ET_ERROR, "Unterminated quoted identifier"); }
 <C,SQL>{xdstart}	{
@@ -426,8 +436,8 @@ cppline			{space}*#(.*\\{space})*.*
 						 * character will match a prior rule, not this one.
 						 */
 						int		nchars = yyleng;
-						char   *slashstar = strstr((char*)yytext, "/*");
-						char   *dashdash = strstr((char*)yytext, "--");
+						char   *slashstar = strstr(yytext, "/*");
+						char   *dashdash = strstr(yytext, "--");
 
 						if (slashstar && dashdash)
 						{
@@ -438,7 +448,7 @@ cppline			{space}*#(.*\\{space})*.*
 						else if (!slashstar)
 							slashstar = dashdash;
 						if (slashstar)
-							nchars = slashstar - ((char*)yytext);
+							nchars = slashstar - yytext;
 
 						/*
 						 * For SQL92 compatibility, '+' and '-' cannot be the
@@ -480,14 +490,14 @@ cppline			{space}*#(.*\\{space})*.*
 						}
 
 						/* Convert "!=" operator to "<>" for compatibility */
-						if (strcmp((char*)yytext, "!=") == 0)
+						if (strcmp(yytext, "!=") == 0)
 							yylval.str = mm_strdup("<>");
 						else
-							yylval.str = mm_strdup((char*)yytext);
+							yylval.str = mm_strdup(yytext);
 						return Op;
 					}
 <SQL>{param}		{
-						yylval.ival = atol((char*)&yytext[1]);
+						yylval.ival = atol(yytext+1);
 						return PARAM;
 					}
 <C,SQL>{integer}	{
@@ -504,26 +514,26 @@ cppline			{space}*#(.*\\{space})*.*
 							)
 						{
 							errno = 0;
-							yylval.str = mm_strdup((char*)yytext);
+							yylval.str = mm_strdup(yytext);
 							return FCONST;
 						}
 						yylval.ival = val;
 						return ICONST;
 					}
 <SQL>{ip}			{
-						yylval.str = mm_strdup((char*)yytext);
+						yylval.str = mm_strdup(yytext);
 						return IP;
 					}
 {decimal}			{
-						yylval.str = mm_strdup((char*)yytext);
+						yylval.str = mm_strdup(yytext);
 						return FCONST;
 					}
 <C,SQL>{real}		{
-						yylval.str = mm_strdup((char*)yytext);
+						yylval.str = mm_strdup(yytext);
 						return FCONST;
 					}
 <SQL>:{identifier}(("->"|\.){identifier})*	{
-						yylval.str = mm_strdup((char*)yytext+1);
+						yylval.str = mm_strdup(yytext+1);
 						return(CVARIABLE);
 					}
 <SQL>{identifier}	{
@@ -531,12 +541,12 @@ cppline			{space}*#(.*\\{space})*.*
 						struct _defines *ptr;
 
 						/* Is it an SQL keyword? */
-						keyword = ScanKeywordLookup((char*) yytext);
+						keyword = ScanKeywordLookup(yytext);
 						if (keyword != NULL)
 							return keyword->value;
 
 						/* Is it an ECPG keyword? */
-						keyword = ScanECPGKeywordLookup((char*) yytext);
+						keyword = ScanECPGKeywordLookup( yytext);
 						if (keyword != NULL)
 							return keyword->value;
 
@@ -571,7 +581,7 @@ cppline			{space}*#(.*\\{space})*.*
 						 */
 						if (ptr == NULL)
 						{
-							yylval.str = mm_strdup((char*) yytext);
+							yylval.str = mm_strdup( yytext);
 							return IDENT;
 						}
 					}
@@ -586,19 +596,19 @@ cppline			{space}*#(.*\\{space})*.*
 						if (*endptr != '\0' || errno == ERANGE)
 						{
 							errno = 0;
-							yylval.str = mm_strdup((char*)yytext);
+							yylval.str = mm_strdup(yytext);
 							return SCONST;
 						}
 						return ICONST;
 					}
 <C>{cppline}		{
-						yylval.str = mm_strdup((char*)yytext);
+						yylval.str = mm_strdup(yytext);
 						return(CPP_LINE);
 					}
 <C>{identifier} 	{
 						ScanKeyword		*keyword;
 
-						keyword = ScanCKeywordLookup((char*)yytext);
+						keyword = ScanCKeywordLookup(yytext);
 						if (keyword != NULL) {
 							return keyword->value;
 						}
@@ -627,7 +637,7 @@ cppline			{space}*#(.*\\{space})*.*
 							}
 							if (ptr == NULL)
 							{
-								yylval.str = mm_strdup((char*)yytext);
+								yylval.str = mm_strdup(yytext);
 								return IDENT;
 							}
 						}
@@ -731,7 +741,7 @@ cppline			{space}*#(.*\\{space})*.*
 							yytext[i+1] = '\0';
 
 							for ( defptr = defines; defptr != NULL &&
-								  ( strcmp((char*)yytext, defptr->old) != 0 ); defptr = defptr->next );
+								  ( strcmp(yytext, defptr->old) != 0 ); defptr = defptr->next );
 
 							preproc_tos++;
 							stacked_if_value[preproc_tos].else_branch = FALSE;
@@ -911,7 +921,37 @@ addlit(char *ytext, int yleng)
 	literalbuf[literallen] = '\0';
 }
 
-int yywrap(void)
+static void
+addlitchar(unsigned char ychar)
 {
-	return 1;
+	/* enlarge buffer if needed */
+        if ((literallen+1) >= literalalloc)
+        {
+                literalalloc *= 2;
+                literalbuf = (char *) realloc(literalbuf, literalalloc);
+        }
+	/* append new data, add trailing null */
+	literalbuf[literallen] = ychar;
+	literallen += 1;
+	literalbuf[literallen] = '\0';
+}
+
+unsigned char
+unescape_single_char(unsigned char c)
+{
+        switch (c)
+        {
+                case 'b':
+                        return '\b';
+                case 'f':
+                        return '\f';
+                case 'n':
+                        return '\n';
+                case 'r':
+                        return '\r';
+                case 't':
+                        return '\t';
+                default:
+                        return c;
+	}
 }

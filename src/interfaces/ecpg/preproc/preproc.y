@@ -1,3 +1,5 @@
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.188 2002/05/19 20:00:53 meskes Exp $ */
+
 /* Copyright comment */
 %{
 #include "postgres_fe.h"
@@ -151,12 +153,12 @@ make_name(void)
 /* special embedded SQL token */
 %token	SQL_ALLOCATE SQL_AUTOCOMMIT SQL_BOOL SQL_BREAK
 		SQL_CALL SQL_CARDINALITY SQL_CONNECT SQL_CONNECTION
-		SQL_CONTINUE SQL_COUNT SQL_DATA
+		SQL_CONTINUE SQL_COUNT SQL_CURRENT SQL_DATA
 		SQL_DATETIME_INTERVAL_CODE
 		SQL_DATETIME_INTERVAL_PRECISION SQL_DEALLOCATE
 		SQL_DESCRIPTOR SQL_DISCONNECT SQL_ENUM SQL_FOUND
 		SQL_FREE SQL_GET SQL_GO SQL_GOTO SQL_IDENTIFIED
-		SQL_INDICATOR SQL_INT SQL_KEY_MEMBER SQL_LENGTH
+		SQL_INDICATOR SQL_KEY_MEMBER SQL_LENGTH
 		SQL_LONG SQL_NAME SQL_NULLABLE SQL_OCTET_LENGTH
 		SQL_OPEN SQL_PREPARE SQL_RELEASE SQL_REFERENCE
 		SQL_RETURNED_LENGTH SQL_RETURNED_OCTET_LENGTH SQL_SCALE
@@ -174,63 +176,70 @@ make_name(void)
 /* I need this and don't know where it is defined inside the backend */
 %token	TYPECAST
 
-/* Keywords (in SQL92 reserved words) */
-%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY, AS, ASC,
-		AT, AUTHORIZATION, BEGIN_TRANS, BETWEEN, BOTH, BY,
-		CASCADE, CASE, CAST, CHAR, CHARACTER,
-		CHECK, CLOSE, COALESCE, COLLATE,
-		COLUMN, COMMIT, CONSTRAINT, CONSTRAINTS, CREATE, CROSS,
-		CURRENT, CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP,
-		CURRENT_USER, CURSOR, DAY_P, DEC, DECIMAL, DECLARE,
-		DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP, ELSE,
-		ENCRYPTED, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
-		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
-		GLOBAL, GRANT, GROUP, HAVING, HOUR_P, IN, INNER_P,
-		INOUT, INSENSITIVE, INSERT, INTERSECT, INTERVAL, INTO,
-		IS, ISOLATION, JOIN, KEY, LANGUAGE, LEADING, LEFT,
-		LEVEL, LIKE, LOCAL, MATCH, MINUTE_P, MONTH_P, NAMES,
-		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NULLIF,
-		NULL_P, NUMERIC, OF, OFF, OLD, ON, ONLY, OPTION, OR,
-		ORDER, OUT, OUTER_P, OVERLAPS, PARTIAL, PATH_P,
-		POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES,
-		PROCEDURE, READ, REFERENCES, RELATIVE, REVOKE,
-		RIGHT, ROLLBACK, SCHEMA, SCROLL, SECOND_P, SELECT,
-		SESSION, SESSION_USER, SET, SOME, SUBSTRING, TABLE,
-		TEMPORARY, THEN, TIME, TIMESTAMP TO, TRAILING,
-		TRANSACTION, TRIM, TRUE_P, UNENCRYPTED, UNION, UNIQUE,
-		UNKNOWN, UPDATE, USAGE, USER, USING, VALUES, VARCHAR,
-		VARYING, VIEW, WHEN, WHERE, WITH, WITHOUT, WORK,
-		YEAR_P, ZONE
+/* ordinary key words in alphabetical order */
+%token <keyword> ABORT_TRANS, ABSOLUTE, ACCESS, ACTION, ADD, AFTER,
+        AGGREGATE, ALL, ALTER, ANALYSE, ANALYZE, AND, ANY, AS, ASC, ASSERTION,
+        AT, AUTHORIZATION,
 
-/* Keywords (in SQL99 reserved words) */
-%token	ASSERTION, CHAIN, CHARACTERISTICS,
-		DEFERRABLE, DEFERRED, IMMEDIATE, INITIALLY, PENDANT,
-		REPLACE, RESTRICT, TRIGGER
+        BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
+        BOOLEAN, BY,
 
-/* Keywords (in SQL92 non-reserved words) */
-%token	COMMITTED, SERIALIZABLE, TYPE_P, DOMAIN_P
+        CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR, CHARACTER,
+        CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE, CLUSTER, COALESCE, COLLATE,
+        COLUMN, COMMENT, COMMIT, COMMITTED, CONSTRAINT, CONSTRAINTS, COPY,
+        CREATE, CREATEDB, CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
+        CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
-/* Keywords for Postgres support (not in SQL92 reserved words)
- *
- * The CREATEDB and CREATEUSER tokens should go away
- * when some sort of pg_privileges relation is introduced.
- * - Todd A. Brandys 1998-01-01?
- */
-%token	ABORT_TRANS, ACCESS, AFTER, AGGREGATE, ANALYSE, ANALYZE,
-		BACKWARD, BEFORE, BINARY, BIT, CACHE, CHECKPOINT,
-		CLUSTER, COMMENT, COPY, CREATEDB, CREATEUSER, CYCLE,
-		DATABASE, DELIMITERS, DO, EACH, ENCODING, EXCLUSIVE,
-		EXPLAIN, FORCE, FORWARD, FREEZE, FUNCTION, HANDLER,
-		INCREMENT, INDEX, INHERITS, INSTEAD, ISNULL,
-		LANCOMPILER, LIMIT, LISTEN, UNLISTEN, LOAD, LOCATION,
-		LOCK_P, MAXVALUE, MINVALUE, MODE, MOVE, NEW,
-		NOCREATEDB, NOCREATEUSER, NONE, NOTHING, NOTIFY,
-		NOTNULL, OFFSET, OIDS, OPERATOR, OWNER, PASSWORD,
-		PROCEDURAL, REINDEX, RENAME, RESET, RETURNS, ROW, RULE,
-		SEQUENCE, SETOF, SHARE, SHOW, START, STATEMENT,
-		STATISTICS, STDIN, STDOUT, STORAGE, SYSID, TEMP,
-		TEMPLATE, TOAST, TRUNCATE, TRUSTED, UNLISTEN, UNTIL,
-		VACUUM, VALID, VERBOSE, VERSION
+        DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DEFERRABLE, DEFERRED,
+        DEFINER, DELETE, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+        EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXCLUSIVE,
+        EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
+
+        FALSE_P, FETCH, FLOAT, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
+        FULL, FUNCTION,
+
+	GLOBAL, GRANT, GROUP,
+        HANDLER, HAVING, HOUR_P,
+
+	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN, INCREMENT, INDEX, INHERITS,
+        INITIALLY, INNER_P, INOUT, INPUT, INSENSITIVE, INSERT, INSTEAD, INT,
+        INTEGER, INTERSECT, INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
+			
+        JOIN,
+        KEY,
+
+	LANCOMPILER, LANGUAGE, LEADING, LEFT, LEVEL, LIKE, LIMIT, LISTEN,
+        LOAD, LOCAL, LOCATION, LOCK_P,
+
+	MATCH, MAXVALUE, MINUTE_P, MINVALUE, MODE, MONTH_P, MOVE,
+
+	NAMES, NATIONAL, NATURAL, NCHAR, NEW, NEXT, NO, NOCREATEDB,
+        NOCREATEUSER, NONE, NOT, NOTHING, NOTIFY, NOTNULL, NULL_P, NULLIF,
+        NUMERIC,
+
+	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR, ORDER,
+        OUT, OUTER_P, OVERLAPS, OWNER,
+
+	PARTIAL, PASSWORD, PATH_P, PENDANT, POSITION, PRECISION, PRIMARY,
+	PRIOR, PRIVILEGES, PROCEDURE, PROCEDURAL,
+
+	READ, REAL, REFERENCES, REINDEX, RELATIVE, RENAME, REPLACE, RESET,
+        RESTRICT, RETURNS, REVOKE, RIGHT, ROLLBACK, ROW, RULE,
+
+	SCHEMA, SCROLL, SECOND_P, SECURITY, SELECT, SEQUENCE, SERIALIZABLE,
+        SESSION, SESSION_USER, SET, SETOF, SHARE, SHOW, SMALLINT, SOME,
+        STABLE, START, STATEMENT, STATISTICS, STDIN, STDOUT, STORAGE, STRICT,
+        SUBSTRING, SYSID,
+
+        TABLE, TEMP, TEMPLATE, TEMPORARY, THEN, TIME, TIMESTAMP, TO, TOAST,
+        TRAILING, TRANSACTION, TRIGGER, TRIM, TRUE_P, TRUNCATE, TRUSTED, TYPE_P,
+        UNENCRYPTED, UNION, UNIQUE, UNKNOWN, UNLISTEN, UNTIL, UPDATE, USAGE,
+        USER, USING,
+
+        VACUUM, VALID, VALUES, VARCHAR, VARYING, VERBOSE, VERSION, VIEW, VOLATILE,
+	WHEN, WHERE, WITH, WITHOUT, WORK,
+        YEAR_P,
+        ZONE
 
 /* The grammar thinks these are keywords, but they are not in the keywords.c
  * list and so can never be entered directly.  The filter in parser.c
@@ -310,7 +319,7 @@ make_name(void)
 %type  <str>	analyze_keyword opt_name_list ExplainStmt index_params
 %type  <str>	index_list func_index index_elem opt_class access_method_clause
 %type  <str>	index_opt_unique IndexStmt func_return ConstInterval
-%type  <str>	func_args_list func_args opt_with ProcedureStmt def_arg
+%type  <str>	func_args_list func_args opt_with def_arg
 %type  <str>	def_elem def_list definition DefineStmt select_with_parens
 %type  <str>	opt_instead event RuleActionList opt_using CreateAssertStmt
 %type  <str>	RuleActionStmtOrEmpty RuleActionMulti func_as reindex_type
@@ -331,7 +340,7 @@ make_name(void)
 %type  <str>	AlterUserSetStmt privilege_list privilege privilege_target
 %type  <str>	opt_grant_grant_option opt_revoke_grant_option
 %type  <str>	function_with_argtypes_list function_with_argtypes
-%type  <str>	DropdbStmt ClusterStmt grantee RevokeStmt Bit bit
+%type  <str>	DropdbStmt ClusterStmt grantee RevokeStmt Bit 
 %type  <str>	GrantStmt privileges PosAllConst constraints_set_list
 %type  <str>	opt_cursor ConstraintsSetStmt AllConst CreateDomainStmt
 %type  <str>	case_expr when_clause_list case_default case_arg when_clause
@@ -350,6 +359,8 @@ make_name(void)
 %type  <str>	handler_name any_name_list any_name opt_as insert_column_list
 %type  <str>	columnref dotted_name function_name insert_target_el
 %type  <str>	insert_target_list insert_column_item DropRuleStmt
+%type  <str>	createfunc_opt_item set_rest var_list_or_default
+%type  <str>	CreateFunctionStmt createfunc_opt_list func_table
 
 %type  <str>	ECPGWhenever ECPGConnect connection_target ECPGOpen
 %type  <str>	indicator ECPGExecute ECPGPrepare ecpg_using ecpg_into
@@ -428,6 +439,7 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| CreateStmt		{ output_statement($1, 0, connection); }
 		| CreateAsStmt		{ output_statement($1, 0, connection); }
 		| CreateDomainStmt	{ output_statement($1, 0, connection); }
+		| CreateFunctionStmt	{ output_statement($1, 0, connection); }
 		| CreateSchemaStmt	{ output_statement($1, 0, connection); }
 		| CreateGroupStmt	{ output_statement($1, 0, connection); }
 		| CreateSeqStmt		{ output_statement($1, 0, connection); }
@@ -454,7 +466,6 @@ stmt:  AlterDatabaseSetStmt { output_statement($1, 0, connection); }
 		| UnlistenStmt		{ output_statement($1, 0, connection); }
 		| LockStmt		{ output_statement($1, 0, connection); }
 		| NotifyStmt		{ output_statement($1, 0, connection); }
-		| ProcedureStmt		{ output_statement($1, 0, connection); }
 		| ReindexStmt		{ output_statement($1, 0, connection); }
 		| RemoveAggrStmt	{ output_statement($1, 0, connection); }
 		| RemoveOperStmt	{ output_statement($1, 0, connection); }
@@ -666,8 +677,8 @@ AlterUserStmt: ALTER USER UserId OptUserList
 			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("with"), $5); }
 		;
 
-AlterUserSetStmt: ALTER USER UserId VariableSetStmt
-			{ $$ = cat_str(3, make_str("alter user"), $3, $4); }
+AlterUserSetStmt: ALTER USER UserId SET set_rest 
+			{ $$ = cat_str(4, make_str("alter user"), $3, make_str("set"), $5); }
 		| ALTER USER UserId VariableResetStmt
 			{ $$ = cat_str(3, make_str("alter user"), $3, $4); }
 		;
@@ -812,28 +823,42 @@ schema_stmt: CreateStmt		{ $$ = $1; }
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET ColId TO var_list
-			{ $$ = cat_str(4, make_str("set"), $2, make_str("to"), $4); }
-		| SET ColId '=' var_list
-			{ $$ = cat_str(4, make_str("set"), $2, make_str("="), $4); }
-		| SET TIME ZONE zone_value
-			{ $$ = cat2_str(make_str("set time zone"), $4); }
-		| SET TRANSACTION ISOLATION LEVEL opt_level
-			{ $$ = cat2_str(make_str("set transaction isolation level"), $5); }
-		| SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
-			{ $$ = cat2_str(make_str("set session characteristics as transaction isolation level"), $8); }
-		| SET NAMES opt_encoding
-			{ $$ = cat2_str(make_str("set names"), $3); }
-		| SET SESSION AUTHORIZATION ColId_or_Sconst
-			{ $$ = cat2_str(make_str("set session authorization"), $4); }
+VariableSetStmt:  SET set_rest
+			{ $$ = cat2_str(make_str("set"), $2 ); }
+		| SET LOCAL set_rest
+			{ $$ = cat2_str(make_str("set local"), $2 ); }
+		| SET SESSION set_rest
+			{ $$ = cat2_str(make_str("set session"), $2 ); }
+		;
+
+set_rest:	ColId TO var_list_or_default
+			{ $$ = cat_str(3, $1, make_str("to"), $3); }
+		| ColId "=" var_list_or_default
+                        { $$ = cat_str(3, $1, make_str("="), $3); }
+		| TIME ZONE zone_value
+			{ $$ = cat2_str(make_str("time zone"), $3); }
+		| TRANSACTION ISOLATION LEVEL opt_level
+			{ $$ = cat2_str(make_str("transaction isolation level"), $4); }
+		| SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
+			{ $$ = cat2_str(make_str("session characteristics as transaction isolation level"), $7); }
+		| NAMES opt_encoding
+			{ $$ = cat2_str(make_str("names"), $2); }
+		| SESSION AUTHORIZATION ColId_or_Sconst
+			{ $$ = cat2_str(make_str("session authorization"), $3); }
+		| SESSION AUTHORIZATION DEFAULT 
+			{ $$ = make_str("session authorization default"); }
+		;
+
+var_list_or_default:  var_list
+			{ $$ = $1; }
+		| DEFAULT
+			{ $$ = make_str("default"); }
 		;
 
 var_list:  var_value
 			{ $$ = $1; }
 		| var_list ',' var_value
 			{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| DEFAULT
-			{ $$ = make_str("default"); }
 		;
 		
 opt_level:	READ COMMITTED	{ $$ = make_str("read committed"); }
@@ -842,8 +867,8 @@ opt_level:	READ COMMITTED	{ $$ = make_str("read committed"); }
 
 
 var_value:	opt_boolean		{ $$ = $1; }
-		| NumConst			{ $$ = $1; }
-		| ColId_or_Sconst	{ $$ = $1; }	
+		| AllConst		{ $$ = $1; }
+		| ColId			{ $$ = $1; }	
 		;
 
 opt_boolean:  TRUE_P		{ $$ = make_str("true"); }
@@ -885,10 +910,12 @@ VariableShowStmt:  SHOW ColId
 			{ $$ = cat2_str(make_str("show"), $2); }
 		| SHOW TIME ZONE
 			{ $$ = make_str("show time zone"); }
-		| SHOW ALL
-			{ $$ = make_str("show all"); }
 		| SHOW TRANSACTION ISOLATION LEVEL
 			{ $$ = make_str("show transaction isolation level"); }
+		| SHOW SESSION AUTHORIZATION
+			{ $$ = make_str("show session authorization"); }
+		| SHOW ALL
+			{ $$ = make_str("show all"); }
 		;
 
 VariableResetStmt:	RESET ColId
@@ -897,6 +924,8 @@ VariableResetStmt:	RESET ColId
 			{ $$ = make_str("reset time zone"); }
 		| RESET TRANSACTION ISOLATION LEVEL
 			{ $$ = make_str("reset transaction isolation level"); }
+		| RESET SESSION AUTHORIZATION
+			{ $$ = make_str("reset session authorization"); }
 		| RESET ALL
 			{ $$ = make_str("reset all"); }
 		;
@@ -1603,10 +1632,6 @@ from_in: IN					{ $$ = make_str("in"); }
  *****************************************************************************/
 CommentStmt:   COMMENT ON comment_type name IS comment_text
 			{ $$ = cat_str(5, make_str("comment on"), $3, $4, make_str("is"), $6); }
-		| COMMENT ON COLUMN ColId '.' attr_name IS comment_text
-			{ $$ = cat_str(6, make_str("comment on column"), $4, make_str("."), $6, make_str("is"), $8); }
-		| COMMENT ON COLUMN ColId '.' ColId '.' attr_name IS comment_text
-			{ $$ = cat_str(8, make_str("comment on column"), $4, make_str("("), $6, make_str("."), $8, make_str("is"), $10); }
 		| COMMENT ON AGGREGATE func_name '(' aggr_argtype ')' IS comment_text
 			{ $$ = cat_str(6, make_str("comment on aggregate"), $4, make_str("("), $6, make_str(") is"), $9); }
 		| COMMENT ON FUNCTION func_name func_args IS comment_text
@@ -1621,7 +1646,9 @@ CommentStmt:   COMMENT ON comment_type name IS comment_text
 			{ $$ = cat_str(4, make_str("comment on rule"), $4, make_str("is"), $6); }
 		;
 
-comment_type:  DATABASE		{ $$ = make_str("database"); }
+comment_type:  COLUMN		{ $$ = make_str("column"); }
+		| DATABASE	{ $$ = make_str("database"); }
+		| SCHEMA	{ $$ = make_str("schema"); }
 		| INDEX		{ $$ = make_str("idnex"); }
 		| SEQUENCE	{ $$ = make_str("sequence"); }
 		| TABLE		{ $$ = make_str("table"); }
@@ -1794,9 +1821,9 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
  *
  *****************************************************************************/
 
-ProcedureStmt:	CREATE opt_or_replace FUNCTION func_name func_args
-					RETURNS func_return AS func_as LANGUAGE ColId_or_Sconst opt_with
-			{ $$ = cat_str(12, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns"), $7, make_str("as"), $9, make_str("language"), $11, $12); }
+CreateFunctionStmt:	CREATE opt_or_replace FUNCTION func_name func_args
+					RETURNS func_return createfunc_opt_list opt_with
+			{ $$ = cat_str(8, make_str("create"), $2, make_str("function"), $4, $5, make_str("returns"), $7, $8); }
 		;
 
 opt_or_replace:  OR REPLACE		{ $$ = make_str("or replace"); }
@@ -1865,6 +1892,41 @@ func_type:	Typename
 			{ $$ = $1; }
 		| type_name attrs '%' TYPE_P
 			{ $$ = cat_str(3, $1, $2, make_str("% type")); }
+		;
+
+
+createfunc_opt_list: createfunc_opt_item
+			{ $$ = $1; }
+		| createfunc_opt_list createfunc_opt_item
+			{ $$ = cat2_str($1, $2); }
+		;
+
+createfunc_opt_item: AS func_as	
+				{ $$ = cat2_str(make_str("as"), $2); }
+		| LANGUAGE ColId_or_Sconst
+				{ $$ = cat2_str(make_str("language"), $2); }
+		| IMMUTABLE
+				{ $$ = make_str("immutable"); }
+		| STABLE
+				{ $$ = make_str("stable"); }
+		| VOLATILE
+				{ $$ = make_str("volatile"); }
+		| CALLED ON NULL_P INPUT
+				{ $$ = make_str("called on null input"); }
+		| RETURNS NULL_P ON NULL_P INPUT
+				{ $$ = make_str("returns null on null input"); }
+		| STRICT
+				{ $$ = make_str("strict"); }
+		| EXTERNAL SECURITY DEFINER
+				{ $$ = make_str("external security definer"); }
+		| EXTERNAL SECURITY INVOKER
+				{ $$ = make_str("external security invoker"); }
+		| SECURITY DEFINER
+				{ $$ = make_str("security definer"); }
+		| SECURITY INVOKER
+				{ $$ = make_str("security invoker"); }
+		| IMPLICIT CAST
+				{ $$ = make_str("implicit cast"); }
 		;
 
 /*****************************************************************************
@@ -2130,8 +2192,8 @@ opt_equal: '='					{ $$ = make_str("="); }
  *
  *****************************************************************************/
 
-AlterDatabaseSetStmt: ALTER DATABASE database_name VariableSetStmt
-			{ $$ = cat_str(3, make_str("alter database"), $3, $4); }
+AlterDatabaseSetStmt: ALTER DATABASE database_name SET set_rest
+			{ $$ = cat_str(4, make_str("alter database"), $3, make_Str("set"), $5); }
 		| ALTER DATABASE database_name VariableResetStmt
 			{ $$ = cat_str(3, make_str("alter database"), $3, $4); }
 		;
@@ -2594,6 +2656,10 @@ table_ref:	relation_expr
 			{ $$ = $1; }
 		| relation_expr alias_clause
 			{ $$= cat2_str($1, $2); }
+		| func_table
+			{ $$ = $1; }
+		| func_table alias_clause
+			{ $$= cat2_str($1, $2); }
 		| select_with_parens
 			{mmerror(PARSE_ERROR, ET_ERROR, "sub-SELECT in FROM must have an alias");}
 		| select_with_parens alias_clause
@@ -2679,6 +2745,12 @@ relation_expr:	qualified_name
 			{ /* inheritance query */ $$ = cat2_str(make_str("ONLY "), $2); }
 		;
 
+func_table:  func_name '(' ')'
+		{ $$ = cat2_str($1, make_str("()")); }
+	| func_name '(' expr_list ')'
+		{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")")); }
+	;
+
 where_clause:  WHERE a_expr		{ $$ = cat2_str(make_str("where"), $2); }
 		| /*EMPTY*/				{ $$ = EMPTY;  /* no qualifiers */ }
 		;
@@ -2758,7 +2830,17 @@ Generic:  type_name			{ $$ = $1; }
  * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
  */
-Numeric:  FLOAT opt_float
+Numeric:  INT
+			{ $$ = make_str("int"); }
+		| INTEGER
+			{ $$ = make_str("integer"); }
+		| SMALLINT
+			{ $$ = make_str("smallint"); }
+		| BIGINT
+			{ $$ = make_str("bigint"); }
+		| REAL
+			{ $$ = make_str("real"); }
+		| FLOAT opt_float
 			{ $$ = cat2_str(make_str("float"), $2); }
 		| DOUBLE PRECISION
 			{ $$ = make_str("double precision"); }
@@ -2768,6 +2850,8 @@ Numeric:  FLOAT opt_float
 			{ $$ = cat2_str(make_str("dec"), $2); }
 		| NUMERIC opt_numeric
 			{ $$ = cat2_str(make_str("numeric"), $2); }
+		| BOOLEAN
+			{ $$ = make_str("boolean"); }
 		;
 
 opt_float:	'(' PosIntConst ')'
@@ -2796,13 +2880,9 @@ opt_decimal:  '(' PosIntConst ',' PosIntConst ')'
  * SQL92 bit-field data types
  * The following implements BIT() and BIT VARYING().
  */
-Bit:  bit '(' PosIntConst ')'
-			{ $$ = cat_str(4, $1, make_str("("), $3, make_str(")")); }
-		| bit
-			{ $$ = $1; }
-		;
-
-bit:  BIT opt_varying
+Bit:  BIT opt_varying '(' PosIntConst ')'
+			{ $$ = cat_str(5, $1, $2, make_str("("), $4, make_str(")")); }
+		| BIT opt_varying
 			{ $$ = cat2_str(make_str("bit"), $2); }
 		;
 
@@ -3406,12 +3486,10 @@ qualified_name_list:  qualified_name
 				{ $$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-qualified_name: ColId
+qualified_name: relation_name
 		{ $$ = $1; }
-		| ColId '.' ColId
-		{ $$ = cat_str(3, $1, make_str("."), $3); }
-		| ColId '.' ColId '.' ColId
-		{ $$ = cat_str(5, $1, make_str("."), $3, make_str("."), $5); }
+		| dotted_name
+		{ $$ = $1; }
 		;
 
 name_list:  name
@@ -4050,11 +4128,11 @@ simple_type: unsigned_type					{ $$=$1; }
 		;
 
 unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
-		| SQL_UNSIGNED SQL_SHORT SQL_INT	{ $$ = ECPGt_unsigned_short; }
+		| SQL_UNSIGNED SQL_SHORT INT	{ $$ = ECPGt_unsigned_short; }
 		| SQL_UNSIGNED						{ $$ = ECPGt_unsigned_int; }
-		| SQL_UNSIGNED SQL_INT				{ $$ = ECPGt_unsigned_int; }
+		| SQL_UNSIGNED INT				{ $$ = ECPGt_unsigned_int; }
 		| SQL_UNSIGNED SQL_LONG				{ $$ = ECPGt_unsigned_long; }
-		| SQL_UNSIGNED SQL_LONG SQL_INT		{ $$ = ECPGt_unsigned_long; }
+		| SQL_UNSIGNED SQL_LONG INT		{ $$ = ECPGt_unsigned_long; }
 		| SQL_UNSIGNED SQL_LONG SQL_LONG
 		{
 #ifdef HAVE_LONG_LONG_INT_64
@@ -4063,7 +4141,7 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 			$$ = ECPGt_unsigned_long;
 #endif
 		}
-		| SQL_UNSIGNED SQL_LONG SQL_LONG SQL_INT
+		| SQL_UNSIGNED SQL_LONG SQL_LONG INT
 		{
 #ifdef HAVE_LONG_LONG_INT_64
 			$$ = ECPGt_unsigned_long_long;
@@ -4075,10 +4153,10 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 		;
 
 signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
-		| SQL_SHORT SQL_INT			{ $$ = ECPGt_short; }
-		| SQL_INT					{ $$ = ECPGt_int; }
+		| SQL_SHORT INT			{ $$ = ECPGt_short; }
+		| INT					{ $$ = ECPGt_int; }
 		| SQL_LONG					{ $$ = ECPGt_long; }
-		| SQL_LONG SQL_INT			{ $$ = ECPGt_long; }
+		| SQL_LONG INT			{ $$ = ECPGt_long; }
 		| SQL_LONG SQL_LONG
 		{
 #ifdef HAVE_LONG_LONG_INT_64
@@ -4087,7 +4165,7 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 			$$ = ECPGt_long;
 #endif
 		}
-		| SQL_LONG SQL_LONG SQL_INT
+		| SQL_LONG SQL_LONG INT
 		{
 #ifdef HAVE_LONG_LONG_INT_64
 			$$ = ECPGt_long_long;
@@ -4218,7 +4296,7 @@ ECPGDisconnect: SQL_DISCONNECT dis_name { $$ = $2; }
 		;
 
 dis_name: connection_object				{ $$ = $1; }
-		| CURRENT						{ $$ = make_str("\"CURRENT\""); }
+		| SQL_CURRENT						{ $$ = make_str("\"CURRENT\""); }
 		| ALL							{ $$ = make_str("\"ALL\""); }
 		| /*EMPTY*/						{ $$ = make_str("\"CURRENT\""); }
 		;
@@ -4412,20 +4490,20 @@ ECPGRelease: TransactionStmt SQL_RELEASE
  * set/reset the automatic transaction mode, this needs a differnet handling
  * as the other set commands
  */
-ECPGSetAutocommit:	SET SQL_AUTOCOMMIT to_equal on_off	{ $$ = $4; }
+ECPGSetAutocommit:	SET SQL_AUTOCOMMIT '=' on_off	{ $$ = $4; }
+		|  SET SQL_AUTOCOMMIT TO on_off   { $$ = $4; }
 		;
 
 on_off: ON				{ $$ = make_str("on"); }
 		| OFF			{ $$ = make_str("off"); }
 		;
 
-to_equal:	TO | '=';
-
 /*
  * set the actual connection, this needs a differnet handling as the other
  * set commands
  */
-ECPGSetConnection:	SET SQL_CONNECTION to_equal connection_object { $$ = $4; }
+ECPGSetConnection:	SET SQL_CONNECTION TO connection_object { $$ = $4; }
+		| SET SQL_CONNECTION '=' connection_object { $$ = $4; }
 		;
 
 /*
@@ -4717,7 +4795,6 @@ ECPGKeywords:  SQL_BREAK		{ $$ = make_str("break"); }
 
 /* additional keywords that can be SQL type names (but not ECPGColLabels) */
 ECPGTypeName:  SQL_BOOL				{ $$ = make_str("bool"); }
-		| SQL_INT			{ $$ = make_str("int"); }
 		| SQL_LONG			{ $$ = make_str("long"); }
 		| SQL_SHORT			{ $$ = make_str("short"); }
 		| SQL_STRUCT			{ $$ = make_str("struct"); }
@@ -5222,7 +5299,7 @@ c_anything:  IDENT					{ $$ = $1; }
 		| S_TYPEDEF				{ $$ = make_str("typedef"); }
 		| SQL_BOOL					{ $$ = make_str("bool"); }
 		| SQL_ENUM					{ $$ = make_str("enum"); }
-		| SQL_INT					{ $$ = make_str("int"); }
+		| INT					{ $$ = make_str("int"); }
 		| SQL_LONG					{ $$ = make_str("long"); }
 		| SQL_SHORT					{ $$ = make_str("short"); }
 		| SQL_SIGNED				{ $$ = make_str("signed"); }

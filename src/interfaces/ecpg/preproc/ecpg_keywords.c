@@ -4,7 +4,7 @@
  *	  lexical token lookup for reserved words in postgres embedded SQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.25 2001/09/19 14:09:32 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg_keywords.c,v 1.26 2002/05/19 20:00:53 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,6 +34,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"connection", SQL_CONNECTION},
 	{"continue", SQL_CONTINUE},
 	{"count", SQL_COUNT},
+	{"current", SQL_CURRENT},
 	{"data", SQL_DATA},
 	{"datetime_interval_code", SQL_DATETIME_INTERVAL_CODE},
 	{"datetime_interval_precision", SQL_DATETIME_INTERVAL_PRECISION},
@@ -48,7 +49,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"goto", SQL_GOTO},
 	{"identified", SQL_IDENTIFIED},
 	{"indicator", SQL_INDICATOR},
-	{"int", SQL_INT},
 	{"key_member", SQL_KEY_MEMBER},
 	{"length", SQL_LENGTH},
 	{"long", SQL_LONG},

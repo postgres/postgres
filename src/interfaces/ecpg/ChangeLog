@@ -1247,6 +1247,13 @@ Sun Apr 28 19:16:40 CEST 2002
 
 	- Synced preproc.y with gram.y.
 	- Fixed typo in comment printed by ecpg.
+
+Sun May 19 19:21:34 CEST 2002
+
+	- Fixed reduce/reduce conflict in parser.
+	- Synced preproc.y with gram.y.
+	- Synced pgc.l with scan.l.
+	- Synced keywords.c.
 	- Set ecpg version to 2.10.0.
 	- Set library version to 3.4.0.
 
