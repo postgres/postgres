@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.189 2003/05/15 15:50:19 petere Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.190 2003/05/28 17:25:02 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -546,9 +546,7 @@ PGSQL_OPT="-F -D$PGDATA"
 
 if [ "$debug" = yes ]
 then
-    BACKEND_TALK_ARG="-d 5"
-else
-    PGSQL_OPT="$PGSQL_OPT -o /dev/null"
+    BOOTSTRAP_TALK_ARG="-d 5"
 fi
 
 
@@ -570,7 +568,7 @@ cat "$POSTGRES_BKI" \
   export LC_COLLATE
   export LC_CTYPE
   unset LC_ALL
-  "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BACKEND_TALK_ARG template1
+  "$PGPATH"/postgres -boot -x1 $PGSQL_OPT $BOOTSTRAP_TALK_ARG template1
 ) \
 || exit_nicely
 

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.109 2003/04/24 21:16:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.110 2003/05/28 17:25:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -189,25 +189,33 @@ errstart(int elevel, const char *filename, int lineno,
 	}
 
 	/* Determine whether message is enabled for server log output */
-	/* Complicated because LOG is sorted out-of-order for this purpose */
-	if (elevel == LOG || elevel == COMMERROR)
+	if (IsPostmasterEnvironment)
 	{
-		if (log_min_messages == LOG)
-			output_to_server = true;
-		else if (log_min_messages < FATAL)
-			output_to_server = true;
+		/* Complicated because LOG is sorted out-of-order for this purpose */
+		if (elevel == LOG || elevel == COMMERROR)
+		{
+			if (log_min_messages == LOG)
+				output_to_server = true;
+			else if (log_min_messages < FATAL)
+				output_to_server = true;
+		}
+		else
+		{
+			/* elevel != LOG */
+			if (log_min_messages == LOG)
+			{
+				if (elevel >= FATAL)
+					output_to_server = true;
+			}
+			/* Neither is LOG */
+			else if (elevel >= log_min_messages)
+				output_to_server = true;
+		}
 	}
 	else
 	{
-		/* elevel != LOG */
-		if (log_min_messages == LOG)
-		{
-			if (elevel >= FATAL)
-				output_to_server = true;
-		}
-		/* Neither is LOG */
-		else if (elevel >= log_min_messages)
-			output_to_server = true;
+		/* In bootstrap/standalone case, do not sort LOG out-of-order */
+		output_to_server = (elevel >= log_min_messages);
 	}
 
 	/* Determine whether message is enabled for client output */

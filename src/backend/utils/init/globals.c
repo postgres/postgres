@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.69 2003/02/22 05:57:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.70 2003/05/28 17:25:02 tgl Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -57,6 +57,8 @@ char	   *DatabasePath = NULL;
 
 Oid			MyDatabaseId = InvalidOid;
 
+/* these are initialized for the bootstrap/standalone case: */
+bool		IsPostmasterEnvironment = false;
 bool		IsUnderPostmaster = false;
 
 int			DateStyle = USE_ISO_DATES;

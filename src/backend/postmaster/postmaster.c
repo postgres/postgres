@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.329 2003/05/27 17:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.330 2003/05/28 17:25:02 tgl Exp $
  *
  * NOTES
  *
@@ -378,6 +378,8 @@ PostmasterMain(int argc, char *argv[])
 	*original_extraoptions = '\0';
 
 	progname = argv[0];
+
+	IsPostmasterEnvironment = true;
 
 	/*
 	 * Catch standard options before doing much else.  This even works on
