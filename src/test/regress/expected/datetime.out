@@ -36,13 +36,26 @@ one
   1
 (1 row)
 
-QUERY: INSERT INTO DATETIME_TBL VALUES ('current');
-QUERY: BEGIN;
-QUERY: INSERT INTO DATETIME_TBL VALUES ('now');
+QUERY: SELECT 'now'::datetime - 'current'::datetime AS ZeroSecs;
+zerosecs
+--------
+@ 0     
+(1 row)
+
 QUERY: SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
 one
 ---
   1
+(1 row)
+
+QUERY: DELETE FROM DATETIME_TBL;
+QUERY: INSERT INTO DATETIME_TBL VALUES ('current');
+QUERY: BEGIN;
+QUERY: INSERT INTO DATETIME_TBL VALUES ('now');
+QUERY: SELECT count(*) AS two FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
+two
+---
+  2
 (1 row)
 
 QUERY: END;

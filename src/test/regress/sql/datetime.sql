@@ -3,7 +3,7 @@
 CREATE TABLE DATETIME_TBL( d1 datetime);
 
 -- Shorthand values
--- Not testable since these are not constant for regression testing.
+-- Not directly testable since these are not constant for regression testing.
 -- So, just try to test parser and hope for the best - tgl 97/04/26
 INSERT INTO DATETIME_TBL VALUES ('current');
 INSERT INTO DATETIME_TBL VALUES ('now');
@@ -19,10 +19,15 @@ SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'yesterday'::datetime;
 SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime + '1 day'::timespan;
 SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'today'::datetime - '1 day'::timespan;
 
+SELECT 'now'::datetime - 'current'::datetime AS ZeroSecs;
+SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
+DELETE FROM DATETIME_TBL;
+
+-- verify uniform transaction time within transaction block
 INSERT INTO DATETIME_TBL VALUES ('current');
 BEGIN;
 INSERT INTO DATETIME_TBL VALUES ('now');
-SELECT count(*) AS one FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
+SELECT count(*) AS two FROM DATETIME_TBL WHERE d1 = 'now'::datetime;
 END;
 DELETE FROM DATETIME_TBL;
 
