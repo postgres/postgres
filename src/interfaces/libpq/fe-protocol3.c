@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.2 2003/06/21 21:51:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.3 2003/06/21 23:25:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1113,7 +1113,15 @@ pqEndcopy3(PGconn *conn)
 	 * error status from the PGconn object.
 	 */
 	if (conn->errorMessage.len > 0)
+	{
+		/* We have to strip the trailing newline ... pain in neck... */
+		char	svLast = conn->errorMessage.data[conn->errorMessage.len-1];
+
+		if (svLast == '\n')
+			conn->errorMessage.data[conn->errorMessage.len-1] = '\0';
 		PGDONOTICE(conn, conn->errorMessage.data);
+		conn->errorMessage.data[conn->errorMessage.len-1] = svLast;
+	}
 
 	PQclear(result);
 

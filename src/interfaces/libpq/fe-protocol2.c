@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.2 2003/06/21 21:51:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.3 2003/06/21 23:25:38 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1183,15 +1183,30 @@ pqEndcopy2(PGconn *conn)
 	}
 
 	/*
-	 * Trouble. The worst case is that we've lost sync with the backend
+	 * Trouble. For backwards-compatibility reasons, we issue the error
+	 * message as if it were a notice (would be nice to get rid of this
+	 * silliness, but too many apps probably don't handle errors from
+	 * PQendcopy reasonably).  Note that the app can still obtain the
+	 * error status from the PGconn object.
+	 */
+	if (conn->errorMessage.len > 0)
+	{
+		/* We have to strip the trailing newline ... pain in neck... */
+		char	svLast = conn->errorMessage.data[conn->errorMessage.len-1];
+
+		if (svLast == '\n')
+			conn->errorMessage.data[conn->errorMessage.len-1] = '\0';
+		PGDONOTICE(conn, conn->errorMessage.data);
+		conn->errorMessage.data[conn->errorMessage.len-1] = svLast;
+	}
+
+	PQclear(result);
+
+	/*
+	 * The worst case is that we've lost sync with the backend
 	 * entirely due to application screwup of the copy in/out protocol. To
 	 * recover, reset the connection (talk about using a sledgehammer...)
 	 */
-	PQclear(result);
-
-	if (conn->errorMessage.len > 0)
-		PGDONOTICE(conn, conn->errorMessage.data);
-
 	PGDONOTICE(conn, libpq_gettext("lost synchronization with server, resetting connection"));
 
 	/*
