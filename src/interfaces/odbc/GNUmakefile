@@ -2,7 +2,7 @@
 #
 # GNUMakefile for psqlodbc (Postgres ODBC driver)
 #
-# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.6 2000/10/23 21:43:58 petere Exp $
+# $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile,v 1.7 2000/10/28 15:10:36 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ OBJS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
         pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
         gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
 
-SHLIB_LINK= -lm
+SHLIB_LINK = $(filter -lm, $(LIBS))
 
 all: all-lib
 

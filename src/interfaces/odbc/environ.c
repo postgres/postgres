@@ -18,6 +18,7 @@
 #include "statement.h"
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 
 /* The one instance of the handles */
 ConnectionClass *conns[MAX_CONNECTIONS];

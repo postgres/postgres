@@ -24,6 +24,7 @@
 #include "pgtypes.h"
 #include <stdlib.h>
 #include <malloc.h>
+#include <string.h>
 
 #ifndef WIN32
 #include "iodbc.h"
