@@ -2,7 +2,7 @@
 TODO list for PostgreSQL
 ========================
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Mon Feb 14 22:17:35 EST 2005
+Last updated:		Mon Feb 14 22:51:18 EST 2005
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -45,6 +45,11 @@ Administration
 * Have SHOW ALL and pg_settings show descriptions for server-side variables
 * Allow GRANT/REVOKE permissions to be applied to all schema objects with one
   command
+
+  The agreed syntax is:
+	GRANT SELECT ON ALL TABLES IN public TO phpuser;
+	GRANT SELECT ON NEW TABLES IN public TO phpuser;
+
 * Allow GRANT/REVOKE permissions to be inherited by objects based on
   schema permissions
 * Remove unreferenced table files created by transactions that were
