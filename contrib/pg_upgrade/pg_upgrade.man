@@ -1,23 +1,23 @@
 .TH PG_UPGRADE 1 "PG_UPGRADE(1)" "14 Jan 2002" "PostgreSQL Client Applications" ""
 .SH NAME
-pg_upgrade \- upgrade tool
+pg_upgrade \- upgrading from a previous release without reloading
 .SH SYNOPSIS
-Allows upgrading from a previous release without reloading data
+pg_upgrade [-D \fIdata_dir\fP] -1 | -2
 .SH DESCRIPTION
-pg_upgrade is a utility for upgrading from a previous PostgreSQL release
-without reloading all the data. Not all PostgreSQL releases can be
-handled this way.  Check the release notes for details about your
+\fBpg_upgrade\fP is a utility for upgrading from a previous PostgreSQL release
+without reloading all the data. Not all PostgreSQL releases can use
+this utility.  Check the release notes for details about your
 version.
 .LP
-pg_upgrade must be run in two stages.  In phase one you must run
-pg_upgrade with your old database installation in place.  In phase two, 
-pg_upgrade must be run on a freshly initdb'ed current install. 
-In both phases, the same pg_upgrade script matching the newly installed
+\fBpg_upgrade\fP must be run in two stages.  In phase one you must run
+\fBpg_upgrade\fP with your old database installation in place.  In phase two, 
+\fBpg_upgrade\fP must be run on a freshly \fBinitdb\fP'ed current install. 
+In both phases, the same \fBpg_upgrade\fP script matching the newly installed
 version must be used.
 .SH Upgrading PostgreSQL with pg_upgrade
 .LP
 1) Back up your existing data directory, preferably by making a complete
-dump with pg_dumpall.
+dump with \fBpg_dumpall.\fP
 .LP
 2) Copy the program \fIpgsql/contrib/pg_upgrade/pg_upgrade\fP from the current
 PostgreSQL distribution somewhere into your path.
@@ -27,6 +27,7 @@ PostgreSQL distribution somewhere into your path.
 .B $ pg_upgrade -1
 .sp
 to collect information about the old database needed for the upgrade.
+You may use \fI-D\fP to specify the data directory, or use PGDATA.
 .LP
 4) Do:
 .LP
@@ -41,7 +42,7 @@ to install the new binaries.
 .B $ make install
 .sp
 to install the \fIpg_resetxlog\fP utility which is needed by
-pg_upgrade.
+\fBpg_upgrade\fP.
 .LP
 6) Run initdb to create a new template1 database containing the system
 tables for the new release.  Make sure you use settings similar to those
@@ -51,7 +52,7 @@ used in your previous version.
 to the server until the upgrade is complete.  You may wish to start the
 postmaster without -i or alter pg_hba.conf temporarily.)
 .LP
-8)  Change your working directory to the pgsql main directory, and type: 
+8)  Change your working directory to the pgsql main directory again, and type: 
 .LP
 .B $ pg_upgrade -2
 .sp
@@ -66,10 +67,10 @@ subdirectories.
 .LP
 10)  Carefully examine the contents of the upgraded databases.  If you
 detect problems, you'll need to recover by restoring from your full
-pg_dump backup. You can delete the \fIpg_upgrade_info/\fP directory when you
+\fBpg_dumpall\fP backup. You can delete the \fIpg_upgrade_info/\fP directory when you
 are satisfied.
 .LP
 The upgraded databases will be in an un-vacuumed state.  You will
-probably want to run a \fIVACUUM ANALYZE\fB before beginning production work.
+probably want to run a \fIVACUUM ANALYZE\fP before beginning production work.
 .SH SEE ALSO
 initdb(1), postmaster(1), pg_dump(1), pg_dumpall(1), vacuumdb(1)

@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.1 2002/01/14 17:32:07 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.2 2002/01/14 22:54:44 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -30,6 +30,7 @@ CUR_VERSION="7.2"
 trap "rm -f /tmp/$$.*" 0 1 2 3 15
 
 PHASE=""
+
 if [ "$#" -eq 1 ]
 then
 	if [ "X$1" = "X-1" ]
@@ -38,26 +39,41 @@ then
 	elif [ "X$1" = "X-2" ]
 	then	PHASE="2"
 		shift
+	elif [ "X$1" = "X-D" ]
+	then	DATADIR="$2"
+		shift
 	fi
 fi
 
 if [ "$PHASE" = "" ]
 then	echo "You must run $0 in either mode 1 or mode 2." 1>&2
-	echo "Usage:  $0 [ -1 | -2 ]" 1>&2
+	echo "Usage:  $0 [-D datadir] -1 | -2" 1>&2
 	exit 1
 fi
 
-if [ ! -e data ]
-then	echo "$0 must be run from the directory above your /data directory.
+if [ "$DATADIR" = "" ]
+then	echo "You must set the DATADIR environment variable or specify it with -D." 1>&2
+	echo "Usage:  $0 [-D datadir] -1 | -2" 1>&2
+	exit 1
+fi
+
+if [ ! -d "$DATADIR" ]
+then	echo "$DATADIR does not exist.
 $0 aborted." 1>&2
 	if [ "$PHASE" -eq 2 ]
-	then	echo "You must run initdb to create a template1 database." 1>&2
+	then	echo "Perhaps you didn't run initdb." 1>&2
 	fi
 	exit 1
 fi
 
+if [ "$USER" = "root" -o ! -r "$DATADIR"/PG_VERSION ]
+then	echo "You must run this as the PostgreSQL superuser.
+$0 aborted." 1>&2
+	exit 1
+fi
+
 INFODIR="pg_upgrade_info"
-OLDDIR="$INFODIR/data"
+SAVEDATA="$INFODIR"/"`basename \"$DATADIR\"`"
 
 make_dbobjoidmap()
 {
@@ -99,13 +115,15 @@ move_objfiles()
 {
 	# Test to make sure there is a matching file in each place
 
-	if [ ! -e "$OLDDIR"/base/"$SRC_DBOID"/"$SRC_OID" ]
+	if [ ! -f "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID" -a \
+	     ! -h "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID" ]
 	then	echo "Move of database $DB, OID $SRC_OID, object $OBJ failed.
 File not found;  exiting" 1>&2
 		exit 1
 	fi
 
-	if [ ! -e data/base/"$DST_DBOID"/"$DST_OID" ]
+	if [ ! -f "$DATADIR"/base/"$DST_DBOID"/"$DST_OID" -a \
+	     ! -h "$DATADIR"/base/"$DST_DBOID"/"$DST_OID" ]
 	then	echo "Move of database $DB, OID $DST_OID, object $OBJ failed.
 File not found;  exiting" 1>&2
 		exit 1
@@ -113,7 +131,7 @@ File not found;  exiting" 1>&2
 
 	# Move files
 
-	mv -f "$OLDDIR"/base/"$SRC_DBOID"/"$SRC_OID" data/base/"$DST_DBOID"/"$DST_OID"
+	mv -f "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID" "$DATADIR"/base/"$DST_DBOID"/"$DST_OID"
 	if [ "$?" -ne 0 ]
 	then	echo "Move of database $DB, OID $SRC_OID, object $OBJ
 to $DST_OID failed.;  exiting" 1>&2
@@ -122,10 +140,10 @@ to $DST_OID failed.;  exiting" 1>&2
 
 	# handle table extents
 
-	ls "$OLDDIR"/base/"$SRC_DBOID"/"$SRC_OID".* 2>/dev/null | while read FILE
+	ls "$SAVEDATA"/base/"$SRC_DBOID"/"$SRC_OID".* 2>/dev/null | while read FILE
 	do
 		EXT=`basename "$FILE" | sed 's/^.*\.\(.*\)$/\1/'`
-		mv -f "$FILE" data/base/"$DST_DBOID"/"$DST_OID"."$EXT"
+		mv -f "$FILE" "$DATADIR"/base/"$DST_DBOID"/"$DST_OID"."$EXT"
 		if [ "$?" -ne 0 ]
 		then	echo "Move of database $DB, OID $SRC_OID, object $OBJ
 to $DST_OID failed.;  exiting" 1>&2
@@ -142,15 +160,15 @@ then
 	##########################
 
 
-	if [ ! -d data/base/1 ]
-	then	echo "There is no database template1 in data/base." 1>&2
+	if [ ! -d "$DATADIR"/base/1 ]
+	then	echo "There is no database template1 in $DATADIR/base." 1>&2
 		exit 1
 	fi
 
 	# get version
-	SRC_VERSION="`cat data/PG_VERSION`"
+	SRC_VERSION=`cat "$DATADIR"/PG_VERSION`
 	if [ "$SRC_VERSION" = "" ]
-	then	echo "$0 can not find PostgreSQL version file 'data/PG_VERSION'.
+	then	echo "$0 can not find PostgreSQL version file '$DATADIR/PG_VERSION'.
 $0 aborted." 1>&2
 		exit 1
 	fi
@@ -258,9 +276,9 @@ $0 aborted." 1>&2
 		exit 1
 	fi
 
-	mv data "$INFODIR"
+	mv "$DATADIR" "$INFODIR"
 	if [ $? -ne 0 ]
-	then	echo "Can not move old /data out of the way.
+	then	echo "Can not move old /$DATADIR out of the way.
 $0 aborted." 1>&2
 		exit 1
 	fi
@@ -283,38 +301,38 @@ then	echo "There is no '$INFODIR' directory from a phase 1 run of $0." 1>&2
 	exit 1	
 fi
 
-if [ ! -e "$OLDDIR" ]
-then	echo "There is no '$OLDDIR' directory from the phase 1 run of $0." 1>&2
+if [ ! -d "$SAVEDATA" ]
+then	echo "There is no '$SAVEDATA' directory from the phase 1 run of $0." 1>&2
 	exit 1	
 fi
 
-if [ ! -f "$OLDDIR/PG_VERSION" ]
-then	echo "Cannot read '$OLDDIR/PG_VERSION' --- something is wrong." 1>&2
+if [ ! -f "$SAVEDATA/PG_VERSION" ]
+then	echo "Cannot read '$SAVEDATA/PG_VERSION' --- something is wrong." 1>&2
 	exit 1
 fi
 
-if [ ! -f "data/PG_VERSION" ]
-then	echo "Cannot read 'data/PG_VERSION' --- something is wrong." 1>&2
+if [ ! -f "$DATADIR/PG_VERSION" ]
+then	echo "Cannot read '$DATADIR/PG_VERSION' --- something is wrong." 1>&2
 	exit 1
 fi
 
-if [ ! -d "data/base/1" ]
-then	echo "Cannot find database template1 in 'data/base'." 1>&2
+if [ ! -d "$DATADIR/base/1" ]
+then	echo "Cannot find database template1 in '$DATADIR/base'." 1>&2
 	echo "Are you running $0 as the postgres superuser?" 1>&2
 	exit 1
 fi
 
 # Get the actual versions seen in the data dirs.
 
-SRC_VERSION=`cat "$OLDDIR"/PG_VERSION`
-DST_VERSION=`cat data/PG_VERSION`
+SRC_VERSION=`cat "$SAVEDATA"/PG_VERSION`
+DST_VERSION=`cat "$DATADIR"/PG_VERSION`
 
 # Check for version compatibility.
 # This code will need to be updated/reviewed for each new PostgreSQL release.
 
 if [ "$DST_VERSION" != "$CUR_VERSION" ]
 then	echo "$0 is for PostgreSQL version $CUR_VERSION
-but data/PG_VERSION contains $DST_VERSION." 1>&2
+but $DATADIR/PG_VERSION contains $DST_VERSION." 1>&2
 	echo "Did you run initdb for version $UPGRADE_VERSION by mistake?" 1>&2
 	exit 1
 fi
@@ -349,17 +367,17 @@ fi
 # If the XID is > 2 billion, 7.1 database will have non-frozen XID's in 
 # low numbers, and 7.2 will think they are in the future --- bad.
 
-SRC_XID=`pg_resetxlog -n "$OLDDIR" | grep "NextXID" | awk -F'  *' '{print $4}'`
+SRC_XID=`pg_resetxlog -n "$SAVEDATA" | grep "NextXID" | awk -F'  *' '{print $4}'`
 if [ "$SRC_VERSION" = "7.1" -a "$SRC_XID" -gt 2000000000 ]
 then	echo "XID too high for $0.;  exiting" 1>&2
 	exit 1
 fi
-DST_XID=`pg_resetxlog -n data | grep "NextXID" | awk -F'  *' '{print $4}'`
+DST_XID=`pg_resetxlog -n "$DATADIR" | grep "NextXID" | awk -F'  *' '{print $4}'`
 
 # compare locales to make sure they match
 
-pg_resetxlog -n "$OLDDIR" | grep "^LC_" > /tmp/$$.0
-pg_resetxlog -n data | grep "^LC_" > /tmp/$$.1
+pg_resetxlog -n "$SAVEDATA" | grep "^LC_" > /tmp/$$.0
+pg_resetxlog -n "$DATADIR" | grep "^LC_" > /tmp/$$.1
 if ! diff /tmp/$$.0 /tmp/$$.1 >/dev/null
 then	echo "Locales do not match between the two versions.;  exiting" 1>&2
 	exit 1
@@ -470,7 +488,7 @@ then	MAX_XID="$SRC_XID"
 else	MAX_XID="$DST_XID"
 fi
 
-pg_resetxlog -x "$MAX_XID" data
+pg_resetxlog -x "$MAX_XID" "$DATADIR"
 if [ "$?" -ne 0 ]
 then	echo "Unable to set new XID.;  exiting" 1>&2
 	exit 1
@@ -478,18 +496,18 @@ fi
 
 # Move over old WAL
 
-rm -r data/pg_xlog
-mv -f "$OLDDIR"/pg_xlog data
+rm -r "$DATADIR"/pg_xlog
+mv -f "$SAVEDATA"/pg_xlog "$DATADIR"
 
 # Set last log file id and segment from old database
 
-LOG_ID=`pg_resetxlog -n "$OLDDIR" | grep "Current log file id:" |
+LOG_ID=`pg_resetxlog -n "$SAVEDATA" | grep "Current log file id:" |
 	awk -F'  *' '{print $5}'`
 if [ "$LOG_ID" = "" ]
 then	echo "Unable to get old log file id.;  exiting" 1>&2
 	exit 1
 fi
-SEG_ID=`pg_resetxlog -n "$OLDDIR" | grep "Next log file segment:" |
+SEG_ID=`pg_resetxlog -n "$SAVEDATA" | grep "Next log file segment:" |
 	awk -F'  *' '{print $5}'`
 if [ "$SEG_ID" = "" ]
 then	echo "Unable to get old log segment id.;  exiting" 1>&2
@@ -498,7 +516,7 @@ fi
 
 # Set checkpoint location of new database
 
-pg_resetxlog -l "$LOG_ID" "$SEG_ID" data
+pg_resetxlog -l "$LOG_ID" "$SEG_ID" "$DATADIR"
 if [ "$?" -ne 0 ]
 then	echo "Unable to set new log file/segment id.;  exiting" 1>&2
 	exit 1
