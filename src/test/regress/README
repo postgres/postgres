@@ -1,17 +1,3 @@
-From scrappy@ki.net Wed Jul 31 18:12:17 1996
-Status: RO
-X-Status: 
-Received: from daemun.ilt.com ([204.247.102.21]) by ki.net (8.7.5/8.7.5) with ESMTP id SAA22940 for <scrappy@ki.net>; Wed, 31 Jul 1996 18:12:13 -0400 (EDT)
-Received: from venus (venus [199.26.203.13]) by daemun.ilt.com (8.7.5/8.7.3) with SMTP id PAA27566 for <scrappy@ki.net>; Wed, 31 Jul 1996 15:11:27 -0700 (PDT)
-Received: by venus (4.1/ILT-1.1)
-	id AA01608; Wed, 31 Jul 96 15:11:22 PDT
-Date: Wed, 31 Jul 96 15:11:22 PDT
-From: drgeorge@ilt.com (Dr_George_D_Detlefsen)
-Message-Id: <9607312211.AA01608@venus>
-To: scrappy@ki.net
-Subject: src/test/regress/README
-
-src/test/regress/README
 
 Introduction
 
