@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.40 1997/08/12 20:15:49 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.41 1997/08/14 16:11:15 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -107,10 +107,7 @@ extern int      lockDebug;
 extern int      lockingOff;
 extern int      NBuffers;
 
-int     fsyncOff = 0;
-int	SortMem = 512;
-
-int     dontExecute = 0;
+int             dontExecute = 0;
 static int      ShowStats;
 static bool     IsEmptyQuery = false;
 
@@ -782,7 +779,7 @@ static void usage(char* progname)
     fprintf(stderr, "    p: backend started by postmaster\n");
     fprintf(stderr, "    P: set port file descriptor\n");
     fprintf(stderr, "    Q: suppress informational messages\n");
-    fprintf(stderr, "    S: assume stable main memory\n");
+    fprintf(stderr, "    S: set amount of sort memory available\n");
     fprintf(stderr, "    s: show stats after each query\n");
     fprintf(stderr, "    t: trace component execution times\n");
     fprintf(stderr, "    T: execute all possible plans for each query\n");
@@ -800,7 +797,6 @@ PostgresMain(int argc, char *argv[])
 {
     int    flagC;
     int    flagQ;
-    int    flagS;
     int    flagE;
     int    flagEu;
     int    flag;
@@ -855,7 +851,7 @@ PostgresMain(int argc, char *argv[])
      *  parse command line arguments
      * ----------------
      */
-    flagC = flagQ = flagS = flagE = flagEu = ShowStats = 0;
+    flagC = flagQ = flagE = flagEu = ShowStats = 0;
     ShowParserStats = ShowPlannerStats = ShowExecutorStats = 0;
 #ifdef LOCK_MGR_DEBUG
     lockDebug = 0;
@@ -1047,18 +1043,6 @@ PostgresMain(int argc, char *argv[])
              */
             SortMem = atoi(optarg);
             break;
-
-#ifdef NOT_USED
-        case 'S':
-            /* ----------------
-             *  S - assume stable main memory
-             *      (don't flush all pages at end transaction)
-             * ----------------
-             */
-            flagS = 1;
-            SetTransactionFlushEnabled(false);
-            break;
-#endif
             
         case 's':
             /* ----------------
@@ -1180,7 +1164,6 @@ PostgresMain(int argc, char *argv[])
         puts("\t---debug info---");
         printf("\tQuiet =        %c\n", Quiet     ? 't' : 'f');
         printf("\tNoversion =    %c\n", Noversion ? 't' : 'f');
-        printf("\tstable    =    %c\n", flagS     ? 't' : 'f');
         printf("\ttimings   =    %c\n", ShowStats ? 't' : 'f');
         printf("\tdates     =    %s\n", EuroDates ? "European" : "Normal");
         printf("\tbufsize   =    %d\n", NBuffers);
@@ -1292,11 +1275,11 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.40 $ $Date: 1997/08/12 20:15:49 $");
+        puts("$Revision: 1.41 $ $Date: 1997/08/14 16:11:15 $");
     }
     
     /* ----------------
-     * if stable main memory is assumed (-S flag is set), it is necessary
+     * if stable main memory is assumed (-S(old) flag is set), it is necessary
      * to flush all dirty shared buffers before exit
      * plai 8/7/90
      * ----------------

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.14 1997/08/14 05:04:38 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/psort.c,v 1.15 1997/08/14 16:11:28 momjian Exp $
  *
  * NOTES
  *      Sorts the first relation into the second relation.
@@ -61,11 +61,11 @@
 #include "utils/lselect.h"
 #include "utils/psort.h"
 
+#include "miscadmin.h"
 #include "storage/fd.h"
 
 #define	TEMPDIR	"./"
 
-extern 		int	SortMem;	/* defined as postgres option */
 static  	long	shortzero = 0;	/* used to delimit runs */
 
 /*

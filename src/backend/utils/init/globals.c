@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.9 1997/03/28 07:18:06 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.10 1997/08/14 16:11:21 momjian Exp $
  *
  * NOTES
  *    Globals used all over the place should be declared here and not
@@ -74,6 +74,9 @@ char		CTZName[MAXTZLEN+1] = "";
 
 char DateFormat[20] 	= "%d-%m-%Y";	/* mjl: sizes! or better malloc? XXX */
 char FloatFormat[20] = "%f";
+
+int     	fsyncOff = 0;
+int		SortMem = 512;
 
 char *IndexedCatalogNames[] = {
     AttributeRelationName,
