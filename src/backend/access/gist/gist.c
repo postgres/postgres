@@ -11,17 +11,21 @@
  *-------------------------------------------------------------------------
  */
 
-#include "postgres.h"
+#include <stdio.h>
+#include <time.h>
+#include <sys/types.h>
+#include <string.h>
 
+#include "postgres.h"
  
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"  
 #include "storage/fd.h"  
 #include "catalog/pg_am.h"
 #include "catalog/pg_class.h"
-#include "nodes/nodes.h" 
 #include "rewrite/prs2lock.h"
 #include "access/skey.h"
 #include "access/strat.h"
@@ -35,12 +39,12 @@
 #include "storage/itemid.h"
 #include "storage/item.h"
 #include "storage/buf.h"
+#include "storage/page.h"
 #include "storage/bufpage.h"
 #include "access/gist.h"
 
 #include "access/funcindex.h"
 
-#include <time.h>
 #include "utils/nabstime.h"
 #include "access/htup.h"
 
@@ -51,13 +55,15 @@
 
 #include "nodes/params.h"
 #include "access/sdir.h"
+#include "storage/ipc.h"
 #include "executor/hashjoin.h"
+#include "utils/fcache.h"
 #include "nodes/primnodes.h"
+#include "utils/memutils.h"
+#include "lib/fstack.h"
 #include "nodes/memnodes.h"  
 #include "nodes/execnodes.h"
 
-#include <stdio.h>
-#include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
 #include "catalog/pg_index.h"
@@ -84,7 +90,6 @@
 
 #include "access/genam.h"
 
-#include <string.h>
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"
 #endif

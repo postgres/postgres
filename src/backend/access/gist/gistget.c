@@ -11,10 +11,14 @@
  *-------------------------------------------------------------------------
  */
 
+#include <stdio.h>
+#include <time.h>
+
 #include "postgres.h"
 
 #include "catalog/pg_attribute.h"
 #include "access/attnum.h"
+#include "nodes/nodes.h"
 #include "nodes/pg_list.h"
 #include "access/tupdesc.h"
 #include "storage/fd.h"
@@ -29,7 +33,6 @@
 #include "storage/block.h"
 #include "storage/off.h"
 #include "storage/itemptr.h"
-#include <time.h>
 #include "utils/nabstime.h"
 #include "access/htup.h"
  
@@ -39,6 +42,7 @@
  
 #include "storage/itemid.h"
 #include "storage/item.h" 
+#include "storage/page.h"
 #include "storage/bufpage.h"
 
 #include "access/sdir.h"
@@ -57,7 +61,6 @@
 # include <string.h>
 #endif
 
-#include <stdio.h>
 #include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
