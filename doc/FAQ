@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jul 29 19:56:45 EDT 2002
+   Last updated: Mon Jul 29 21:35:23 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -433,6 +433,9 @@
      * TCL (libpgtcl)
      * C Easy API (libpgeasy)
      * Embedded HTML (PHP from http://www.php.net)
+       
+   Additional interfaces are available at
+   http://www.postgresql.org/interfaces.html.
      _________________________________________________________________
    
                           Administrative Questions
