@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.58 2001/09/10 14:51:33 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.59 2001/10/05 19:01:13 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -58,7 +58,7 @@ enum option_type
 {
 	OT_NORMAL, OT_SQLID, OT_FILEPIPE
 };
-static char *scan_option(char **string, enum option_type type, char *quote);
+static char *scan_option(char **string, enum option_type type, char *quote, bool semicolon);
 static char *unescape(const unsigned char *source, size_t len);
 
 static bool do_edit(const char *filename_arg, PQExpBuffer query_buf);
@@ -219,7 +219,7 @@ exec_command(const char *cmd,
 	/* \C -- override table title (formerly change HTML caption) */
 	else if (strcmp(cmd, "C") == 0)
 	{
-		char	   *opt = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt = scan_option(&string, OT_NORMAL, NULL, true);
 
 		success = do_pset("title", opt, &pset.popt, quiet);
 		free(opt);
@@ -241,8 +241,8 @@ exec_command(const char *cmd,
 		char		opt1q,
 					opt2q;
 
-		opt1 = scan_option(&string, OT_SQLID, &opt1q);
-		opt2 = scan_option(&string, OT_SQLID, &opt2q);
+		opt1 = scan_option(&string, OT_SQLID, &opt1q, true);
+		opt2 = scan_option(&string, OT_SQLID, &opt2q, true);
 
 		if (opt2)
 			/* gave username */
@@ -262,7 +262,7 @@ exec_command(const char *cmd,
 	/* \cd */
 	else if (strcmp(cmd, "cd") == 0)
 	{
-		char   *opt = scan_option(&string, OT_NORMAL, NULL);
+		char   *opt = scan_option(&string, OT_NORMAL, NULL, true);
 		char   *dir;
 
 		if (opt)
@@ -315,8 +315,8 @@ exec_command(const char *cmd,
 	{
 		char	   *name;
 		bool		show_verbose;
+		name = scan_option(&string, OT_SQLID, NULL, true);
 
-		name = scan_option(&string, OT_SQLID, NULL);
 		show_verbose = strchr(cmd, '+') ? true : false;
 
 		switch (cmd[1])
@@ -382,7 +382,7 @@ exec_command(const char *cmd,
 		}
 		else
 		{
-			fname = scan_option(&string, OT_NORMAL, NULL);
+			fname = scan_option(&string, OT_NORMAL, NULL, true);
 			status = do_edit(fname, query_buf) ? CMD_NEWEDIT : CMD_ERROR;
 			free(fname);
 		}
@@ -401,8 +401,8 @@ exec_command(const char *cmd,
 			fout = pset.queryFout;
 		else
 			fout = stdout;
-
-		while ((value = scan_option(&string, OT_NORMAL, &quoted)))
+	
+		while ((value = scan_option(&string, OT_NORMAL, &quoted, false)))
 		{
 			if (!quoted && strcmp(value, "-n") == 0)
 				no_newline = true;
@@ -423,7 +423,7 @@ exec_command(const char *cmd,
 	/* \encoding -- set/show client side encoding */
 	else if (strcmp(cmd, "encoding") == 0)
 	{
-		char	   *encoding = scan_option(&string, OT_NORMAL, NULL);
+		char	   *encoding = scan_option(&string, OT_NORMAL, NULL, false);
 
 		if (!encoding)
 			/* show encoding */
@@ -451,7 +451,7 @@ exec_command(const char *cmd,
 	/* \f -- change field separator */
 	else if (strcmp(cmd, "f") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL, false);
 
 		success = do_pset("fieldsep", fname, &pset.popt, quiet);
 		free(fname);
@@ -460,7 +460,7 @@ exec_command(const char *cmd,
 	/* \g means send query */
 	else if (strcmp(cmd, "g") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL);
+		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL, false);
 
 		if (!fname)
 			pset.gfname = NULL;
@@ -492,7 +492,7 @@ exec_command(const char *cmd,
 	/* \i is include file */
 	else if (strcmp(cmd, "i") == 0 || strcmp(cmd, "include") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL, true);
 
 		if (!fname)
 		{
@@ -520,8 +520,8 @@ exec_command(const char *cmd,
 		char	   *opt1,
 				   *opt2;
 
-		opt1 = scan_option(&string, OT_NORMAL, NULL);
-		opt2 = scan_option(&string, OT_NORMAL, NULL);
+		opt1 = scan_option(&string, OT_NORMAL, NULL, true);
+		opt2 = scan_option(&string, OT_NORMAL, NULL, true);
 
 		if (strcmp(cmd + 3, "export") == 0)
 		{
@@ -570,7 +570,7 @@ exec_command(const char *cmd,
 	/* \o -- set query output */
 	else if (strcmp(cmd, "o") == 0 || strcmp(cmd, "out") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL);
+		char	   *fname = scan_option(&string, OT_FILEPIPE, NULL, true);
 
 		success = setQFout(fname);
 		free(fname);
@@ -589,8 +589,8 @@ exec_command(const char *cmd,
 	/* \pset -- set printing parameters */
 	else if (strcmp(cmd, "pset") == 0)
 	{
-		char	   *opt0 = scan_option(&string, OT_NORMAL, NULL);
-		char	   *opt1 = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt0 = scan_option(&string, OT_NORMAL, NULL, false);
+		char	   *opt1 = scan_option(&string, OT_NORMAL, NULL, false);
 
 		if (!opt0)
 		{
@@ -619,7 +619,7 @@ exec_command(const char *cmd,
 	/* \s save history in a file or show it on the screen */
 	else if (strcmp(cmd, "s") == 0)
 	{
-		char	   *fname = scan_option(&string, OT_NORMAL, NULL);
+		char	   *fname = scan_option(&string, OT_NORMAL, NULL, true);
 
 		success = saveHistory(fname ? fname : "/dev/tty");
 
@@ -631,7 +631,7 @@ exec_command(const char *cmd,
 	/* \set -- generalized set variable/option command */
 	else if (strcmp(cmd, "set") == 0)
 	{
-		char	   *opt0 = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt0 = scan_option(&string, OT_NORMAL, NULL, false);
 
 		if (!opt0)
 		{
@@ -656,11 +656,11 @@ exec_command(const char *cmd,
 			char	   *newval = NULL;
 			char	   *opt;
 
-			opt = scan_option(&string, OT_NORMAL, NULL);
+			opt = scan_option(&string, OT_NORMAL, NULL, false);
 			newval = xstrdup(opt ? opt : "");
 			free(opt);
 
-			while ((opt = scan_option(&string, OT_NORMAL, NULL)))
+			while ((opt = scan_option(&string, OT_NORMAL, NULL, false)))
 			{
 				newval = realloc(newval, strlen(newval) + strlen(opt) + 1);
 				if (!newval)
@@ -690,7 +690,7 @@ exec_command(const char *cmd,
 	/* \T -- define html <table ...> attributes */
 	else if (strcmp(cmd, "T") == 0)
 	{
-		char	   *value = scan_option(&string, OT_NORMAL, NULL);
+		char	   *value = scan_option(&string, OT_NORMAL, NULL, false);
 
 		success = do_pset("tableattr", value, &pset.popt, quiet);
 		free(value);
@@ -699,7 +699,7 @@ exec_command(const char *cmd,
 	/* \unset */
 	else if (strcmp(cmd, "unset") == 0)
 	{
-		char	   *opt = scan_option(&string, OT_NORMAL, NULL);
+		char	   *opt = scan_option(&string, OT_NORMAL, NULL, false);
 
 		if (!opt)
 		{
@@ -728,7 +728,7 @@ exec_command(const char *cmd,
 		}
 		else
 		{
-			fname = scan_option(&string, OT_FILEPIPE, NULL);
+			fname = scan_option(&string, OT_FILEPIPE, NULL, true);
 
 			if (!fname)
 			{
@@ -783,7 +783,7 @@ exec_command(const char *cmd,
 	/* \z -- list table rights (grant/revoke) */
 	else if (strcmp(cmd, "z") == 0)
 	{
-		char	   *opt = scan_option(&string, OT_SQLID, NULL);
+		char	   *opt = scan_option(&string, OT_SQLID, NULL, true);
 
 		success = permissionsList(opt);
 		free(opt);
@@ -814,7 +814,7 @@ exec_command(const char *cmd,
 		char	   *value;
 
 		fprintf(stderr, "+ optstr = |%s|\n", options_string);
-		while ((value = scan_option(&string, OT_NORMAL, NULL)))
+		while ((value = scan_option(&string, OT_NORMAL, NULL, true)))
 		{
 			fprintf(stderr, "+ opt(%d) = |%s|\n", i++, value);
 			free(value);
@@ -829,7 +829,7 @@ exec_command(const char *cmd,
 		status = CMD_ERROR;
 
 	/* eat the rest of the options string */
-	while ((val = scan_option(&string, OT_NORMAL, NULL)))
+	while ((val = scan_option(&string, OT_NORMAL, NULL, false)))
 	{
 		if (status != CMD_UNKNOWN)
 			psql_error("\\%s: extra argument '%s' ignored\n", cmd, val);
@@ -848,7 +848,7 @@ exec_command(const char *cmd,
  * scan_option()
  */
 static char *
-scan_option(char **string, enum option_type type, char *quote)
+scan_option(char **string, enum option_type type, char *quote, bool semicolon)
 {
 	unsigned int pos = 0;
 	char	   *options_string;
@@ -905,6 +905,7 @@ scan_option(char **string, enum option_type type, char *quote)
 				 * If this is expected to be an SQL identifier like option
 				 * then we strip out the double quotes
 				 */
+
 				if (type == OT_SQLID)
 				{
 					unsigned int k,
@@ -936,7 +937,7 @@ scan_option(char **string, enum option_type type, char *quote)
 				*string = options_string + jj + 1;
 				if (quote)
 					*quote = '"';
-
+			
 				return return_val;
 			}
 
@@ -1116,6 +1117,13 @@ scan_option(char **string, enum option_type type, char *quote)
 				}
 				strncpy(return_val, &options_string[pos], token_end);
 				return_val[token_end] = 0;
+
+				/* Strip any trailing semi-colons for some types */
+				if (semicolon) {
+					int i;
+					for (i = strlen(return_val)-1; i && return_val[i]==';'; i--);
+					if (i<strlen(return_val)-1) return_val[i+1]='\0';
+				}
 
 				if (type == OT_SQLID)
 					for (cp = return_val; *cp; cp += PQmblen(cp, pset.encoding))
