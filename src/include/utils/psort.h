@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psort.h,v 1.2 1996/11/04 11:51:23 scrappy Exp $
+ * $Id: psort.h,v 1.3 1997/05/20 11:37:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 #define	SORTMEM		(1 << 18)		/* 1/4 M - any static memory */
 #define	MAXTAPES	7			/* 7--See Fig. 70, p273 */
 #define	TAPEEXT		"pg_psort.XXXXXX"	/* TEMPDIR/TAPEEXT */
-#define	FREE(x)		free((char *) x)
+#define	FREE(x)		pfree((char *) x)
 
 struct	tape {
     int		tp_dummy;	/* (D) */
