@@ -132,9 +132,9 @@ int main(int argc, char **argv)
 	progname = *argv;
 
 #ifdef HAVE_GETOPT_LONG
-	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lNoOp:rRsS:t:T:uU:vx", cmdopts, NULL)) != EOF)
+	while ((c = getopt_long(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx", cmdopts, NULL)) != EOF)
 #else
-	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lNoOp:rRsS:t:T:uU:vx")) != -1)
+	while ((c = getopt(argc, argv, "acCd:f:F:h:i:lNoOp:P:rRsS:t:T:uU:vx")) != -1)
 #endif
 	{
 		switch (c)
@@ -192,7 +192,7 @@ int main(int argc, char **argv)
 			case 'P': /* Function */
 				opts->selTypes = 1;
 				opts->selFunction = 1;
-				opts->functionNames = _cleanupName(optarg);
+				opts->functionNames = optarg ? strdup(optarg) : NULL;
 				break;
 			case 'I': /* Index */
 				opts->selTypes = 1;
