@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun 28 14:56:54 EDT 2002
+Last updated:		Fri Jun 28 15:28:15 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -122,7 +122,7 @@ Views / Rules
 =============
 
 * Automatically create rules on views so they are updateable, per SQL92 [view]
-* -Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
+* Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
 * Allow NOTIFY in rules involving conditionals
 * Allow temporary views
 * Require view using temporary tables to be temporary views
