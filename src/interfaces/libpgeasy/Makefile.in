@@ -4,7 +4,7 @@
 #    Makefile for pgeasy library
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/pgeasy/Attic/Makefile.in,v 1.1 1999/10/11 17:47:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgeasy/Attic/Makefile.in,v 1.1 1999/10/11 18:03:00 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
