@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.7 2001/08/29 19:14:40 petere Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Makefile.solaris,v 1.8 2001/11/11 19:20:53 momjian Exp $
 
 AROPT = crs
 
@@ -6,7 +6,7 @@ ifeq ($(with_gnu_ld), yes)
 export_dynamic = -Wl,-E
 rpath = -Wl,-rpath,$(libdir)
 else
-rpath = -Wl,-R$(libdir)
+rpath = -R$(libdir)
 endif
 shlib_symbolic = -Wl,-Bsymbolic
 
