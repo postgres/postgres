@@ -1,13 +1,13 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/update.l,v 1.2 1996/12/11 00:28:13 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/update.l,v 1.3 1997/09/27 03:14:20 momjian Exp $
 .TH UPDATE SQL 11/05/95 PostgreSQL PostgreSQL
 .SH NAME
 update \(em replace values of attributes in a class
 .SH SYNOPSIS
 .nf
-\fBupdate\fR classname \fBset\fR attname-1 = expression-1,
-	{attname-i = expression-i}
+\fBupdate\fR classname \fBset\fR attname-1 = expression-1
+	[, attname-i = expression-i]
 	[\fBfrom\fR from-list]
 	[\fBwhere\fR qual]
 .fi
