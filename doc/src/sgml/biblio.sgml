@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.17 2002/01/07 02:29:11 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.18 2002/01/08 18:03:25 petere Exp $
 -->
 
  <bibliography id="biblio">
@@ -12,7 +12,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.17 2002/01/07 02:29:11 pete
 
   <para>
    Some white papers and technical reports from the original
-   <productname>Postgres</productname> development team
+   <productname>POSTGRES</productname> development team
    are available at
    <ulink url="http://s2k-ftp.CS.Berkeley.EDU:8000/postgres/papers/">
     the University of California, Berkeley, Computer Science
@@ -99,6 +99,26 @@ $Header: /cvsroot/pgsql/doc/src/sgml/biblio.sgml,v 1.17 2002/01/07 02:29:11 pete
      <holder>Addison-Wesley Longman, Inc.</holder>
     </copyright>
    </biblioentry>
+
+  <biblioentry id="ELMA99">
+   <title>Fundamentals of Database Systems</title>
+   <edition>3rd Edition</edition>
+   <authorgroup>
+    <author>
+     <firstname>Ramez</firstname>
+     <surname>Elmasri</surname>
+    </author>
+    <author>
+     <firstname>Shamkant</firstname>
+     <surname>Navathe</surname>
+    </author>
+   </authorgroup>
+   <isbn>0-805-31755-4</isbn>
+   <pubdate>August 1999</pubdate>
+   <publisher>
+    <publishername>Addison-Wesley</publishername>
+   </publisher>
+  </biblioentry>
 
    <biblioentry id="MELT93">
     <title>Understanding the New <acronym>SQL</acronym></title>
@@ -475,6 +495,21 @@ ssimkovi@ag.or.at
      <confdates>June 1990</confdates>
     </confgroup>
    </biblioentry>
+
+  <biblioentry id="FONG">
+   <biblioset relation="article">
+    <title>The Design and Implementation of the Postgres Query Optimizer</title>
+    <author>
+     <firstname>Z.</firstname>
+     <surname>Fong</surname>
+    </author>
+    <publisher>
+     <publishername>University of California, Berkeley Computer Science Department</publishername>
+    </publisher>
+
+    <bibliomisc>file <filename>planner/Report.ps</filename> in the <quote>postgres-papers</quote> distribution</bibliomisc>
+   </biblioset>
+  </biblioentry>
 
   </bibliodiv>
  </bibliography>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.21 2002/01/08 05:39:26 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/geqo.sgml,v 1.22 2002/01/08 18:03:26 petere Exp $
 Genetic Optimizer
 -->
 
@@ -259,113 +259,46 @@ Genetic Optimizer
    </sect2>
   </sect1>
 
-   <bibliography id="geqo-biblio">
-    <title>
-     References
-    </title>
-    <para>Reference information for <acronym>GEQ</acronym> algorithms.
-    </para>
-    <biblioentry>
+ <sect1 id="geqo-biblio">
+  <title>Further Readings</title>
 
-     <bookbiblio>
-      <title>
-       The Hitch-Hiker's Guide to Evolutionary Computation
-      </title>
-      <authorgroup>
-       <author>
-	<firstname>J&ouml;rg</firstname>
-	<surname>Heitk&ouml;tter</surname>
-       </author>
-       <author>
-	<firstname>David</firstname>
-	<surname>Beasley</surname>
-       </author>
-      </authorgroup>
-      <publisher>
-       <publishername>
-	InterNet resource
-       </publishername>
-      </publisher>
-      <abstract>
-       <para>
-	FAQ in <ulink url="news://comp.ai.genetic">comp.ai.genetic</ulink>
-	is available at <ulink
-	url="http://surf.de.uu.net/encore/www/">here</ulink>.
-       </para>
-      </abstract>
-     </bookbiblio>
+  <para>
+   The following resources contain additional information about
+   genetic algorithms:
 
-     <bookbiblio>
-      <title>
-       Evolutionary Computation and its application to art and design
+   <itemizedlist>
+    <listitem>
+     <para>
+      <ulink url="http://surf.de.uu.net/encore/www/">The Hitch-Hiker's
+      Guide to Evolutionary Computation</ulink> (FAQ for <ulink
+      url="news://comp.ai.genetic">comp.ai.genetic</ulink>)
+     </para>
+    </listitem>
+   
+    <listitem>
+     <para>
+      <ulink url="http://www.red3d.com/cwr/evolve.html">Evolutionary
+       Computation and its application to art and design</ulink> by
+      Craig Reynolds
+     </para>
+    </listitem>
 
-      </title>
-      <authorgroup>
-       <author>
-	<firstname>Craig</firstname>
-	<surname>Reynolds</surname>
-       </author>
-      </authorgroup>
-      <publisher>
-       <publishername>
-	InterNet resource
-       </publishername>
-      </publisher>
-      <abstract>
-       <para>
-	The URL is <ulink
-	url="http://www.red3d.com/cwr/evolve.html">here</ulink>.
-       </para>
-      </abstract>
-     </bookbiblio>
+    <listitem>
+     <para>
+      <xref linkend="ELMA99">
+     </para>
+    </listitem>
 
-     <bookbiblio>
-      <title>
-       The Design and Implementation of the Postgres Query Optimizer
-      </title>
-      <authorgroup>
-       <author>
-	<firstname>Z.</firstname>
-	<surname>Fong</surname>
-       </author>
-      </authorgroup>
-      <publisher>
-       <publishername>
-	University of California, Berkeley Computer Science Department
-       </publishername>
-      </publisher>
-      <abstract>
-       <para>
-	File <filename>planner/Report.ps</filename> in the 'postgres-papers' distribution.
-       </para>
-      </abstract>
-     </bookbiblio>
+    <listitem>
+     <para>
+      <xref linkend="FONG">
+     </para>
+    </listitem>
+   </itemizedlist>
+  </para>
 
-     <bookbiblio>
-      <title>
-       Fundamentals of Database Systems
-      </title>
-      <authorgroup>
-       <author>
-	<firstname>R.</firstname>
-	<surname>Elmasri</surname>
-       </author>
-       <author>
-	<firstname>S.</firstname>
-	<surname>Navathe</surname>
-       </author>
-      </authorgroup>
-      <publisher>
-       <publishername>
-	The Benjamin/Cummings Pub., Inc.
-       </publishername>
-      </publisher>
-     </bookbiblio>
-
-    </biblioentry>
-   </bibliography>
-
- </chapter>
+ </sect1>
+</chapter>
 
 <!-- Keep this comment at the end of the file
 Local variables:

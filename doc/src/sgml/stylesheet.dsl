@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.16 2001/11/08 23:46:29 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/stylesheet.dsl,v 1.17 2002/01/08 18:03:26 petere Exp $ -->
 <!DOCTYPE style-sheet PUBLIC "-//James Clark//DTD DSSSL Style Sheet//EN" [
 
 <!-- must turn on one of these with -i on the jade command line -->
@@ -71,6 +71,7 @@
 
 (define (biblioentry-inline-elements)
   (list
+   (normalize "author")
    (normalize "authorgroup")
    (normalize "title")
    (normalize "subtitle")   
@@ -87,7 +88,8 @@
    (normalize "pubsnumber")
    (normalize "date")
    (normalize "pubdate")
-   (normalize "pagenums")))
+   (normalize "pagenums")
+   (normalize "bibliomisc")))
 
 (mode biblioentry-inline-mode
 
