@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Mon Jul 19 16:28:37 EDT 2004</P>
+    <P>Last updated: Mon Jul 26 23:27:08 EDT 2004</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -927,23 +927,23 @@
     The size of the PostgreSQL database file containing this data can
     be estimated as 6.4 MB:</P>
 <PRE>
-    36 bytes: each row header (approximate)
+    32 bytes: each row header (approximate)
     24 bytes: one int field and one text field
    + 4 bytes: pointer on page to tuple
    ----------------------------------------
-    64 bytes per row
+    60 bytes per row
 
    The data page size in PostgreSQL is 8192 bytes (8 KB), so:
 
    8192 bytes per page
-   -------------------   =  128 rows per database page (rounded down)
-     64 bytes per row
+   -------------------   =  136 rows per database page (rounded down)
+     60 bytes per row
 
    100000 data rows
-   --------------------  =  782 database pages (rounded up)
+   --------------------  =  735 database pages (rounded up)
       128 rows per page
 
-782 database pages * 8192 bytes per page  =  6,406,144 bytes (6.4 MB)
+735 database pages * 8192 bytes per page  =  6,021,120 bytes (6 MB)
 </PRE>
 
     <P>Indexes do not require as much overhead, but do contain the data
