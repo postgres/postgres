@@ -1,0 +1,12 @@
+AROPT:cq
+CFLAGS:
+SHARED_LIB:-K PIC
+ALL:
+SRCH_INC:
+SRCH_LIB:
+USE_LOCALE:no
+DLSUFFIX:.so
+YFLAGS:-d
+YACC:yacc
+LEX:lex
+CC:cc -b elf
