@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.31 2000/07/21 06:42:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.32 2000/10/20 11:28:39 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,6 +80,9 @@ PageAddItem(Page page,
 	ItemId		itemId;
 	OffsetNumber limit;
 	bool		needshuffle = false;
+	bool		overwritemode = flags & OverwritePageMode;
+
+	flags &= ~OverwritePageMode;
 
 	/*
 	 * Find first unallocated offsetNumber
@@ -89,8 +92,28 @@ PageAddItem(Page page,
 	/* was offsetNumber passed in? */
 	if (OffsetNumberIsValid(offsetNumber))
 	{
-		needshuffle = true;		/* need to increase "lower" */
-		/* don't actually do the shuffle till we've checked free space! */
+		if (overwritemode)
+		{
+			if (offsetNumber > limit)
+			{
+				elog(NOTICE, "PageAddItem: tried overwrite after maxoff");
+				return InvalidOffsetNumber;
+			}
+			itemId = &((PageHeader) page)->pd_linp[offsetNumber - 1];
+			if (((*itemId).lp_flags & LP_USED) ||
+				((*itemId).lp_len != 0))
+			{
+				elog(NOTICE, "PageAddItem: tried overwrite of used ItemId");
+				return InvalidOffsetNumber;
+			}
+		}
+		else
+		{
+			/*
+			 * Don't actually do the shuffle till we've checked free space!
+			 */
+			needshuffle = true;		/* need to increase "lower" */
+		}
 	}
 	else
 	{
