@@ -1,1194 +1,1855 @@
-PostgreSQL 6.5               Fri Apr 23 17:40:19 EDT 1999
-=========================================================
-
-A dump/restore is required.
-
-PLACE HOLDER
-
-PostgreSQL 6.4.2             Sat Jan  2 11:04:05 EST 1999
-=========================================================
-
-Repackaged release to fix packaging problem of 6.4.1.
-A dump/restore is NOT required for those running 6.4.*.
-
-Changes
--------
-Fix for datetime constant problem on some platforms(Thomas)
-
-
-
-PostgreSQL 6.4.1             Fri Dec 18 00:29:11 EST 1998
-=========================================================
-
-A dump/restore is NOT required for those running 6.4. Those running
-pre-6.4 require a dump/restore, or for 6.3.* users, the use of the
-pg_upgrade utility.
-
-Changes
--------
-Add pg_dump -N flag to force double quotes around identifiers.  This is
-	the default(Thomas)
-Fix for NOT in where clause causing crash(Bruce)
-EXPLAIN VERBOSE coredump fix(Vadim)
-Fix shared-library problems on Linux
-Fix test for table existance to allow mixed-case and whitespace in
-	the table name(Thomas)
-Fix a couple of pg_dump bugs
-Configure matches template/.similar entries better(Tom)
-Change builtin function names from SPI_* to spi_*
-OR WHERE clause fix(Vadim)
-Fixes for mixed-case table names(Billy)
-contrib/linux/postgres.init.csh/sh fix(Thomas)
-libpq memory overrun fix
-SunOS fixes(Tom)
-Change exp() behavior to generate error on underflow(Thomas)
-pg_dump fixes for memory leak, inheritance constraints, layout change
-update pgaccess to 0.93
-Fix prototype for 64-bit platforms
-Multi-byte fixes(Tatsuo)
-New ecpg man page
-Fix memory overruns(Tatsuo)
-Fix for lo_import() crash(Bruce)
-Better search for install program(Tom)
-Timezone fixes(Tom)
-HPUX fixes(Tom)
-Use implicit type coersion for matching DEFAULT values(Thomas)
-Add routines to help with single-byte (internal) character type(Thomas)
-Compilation of libpq for Win32 fixes(Magnus)
-Upgrade to PyGreSQL 2.2(D'Arcy)
-
-
-
-PostgreSQL 6.4               Mon Oct 26 11:40:42 EST 1998
-=========================================================
-
-A dump/restore is required for those wishing to migrate data from
-previous releases of PostgreSQL.  You may also use the new pg_upgrade
-utility to avoid a dump/reload.
-
-Bug Fixes
----------
-Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
-Remove char2-16 data types, use char/varchar(Darren)
-Pqfn not handles a NOTICE message(Anders)
-Reduced busywaiting overhead for spinlocks with many backends (dg)
-Stuck spinlock detection (dg)
-Fix up "ISO-style" timespan decoding and encoding(Thomas)
-Fix problem with table drop after rollback of transaction(Vadim)
-Change error message and remove non-functional update message(Vadim)
-Fix for COPY array checking
-Fix for SELECT 1 UNION SELECT NULL
-Fix for buffer leaks in large object calls(Pascal)
-Change owner from oid to int4 type(Bruce)
-Fix a bug in the oracle compatibility functions btrim() ltrim() and rtrim()
-Fix for shared invalidation cache overflow(Massimo)
-Prevent file descriptor leaks in failed COPY's(Bruce)
-Fix memory leak in libpgtcl's pg_select(Constantin)
-Fix problems with username/passwords over 8 characters(Tom)
-Fix problems with handling of asynchronous NOTIFY in backend(Tom)
-Fix of many bad system table entries(Tom)
-
-Enhancements
-------------
-Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
-Show the index used in an EXPLAIN(Zeugswetter)
-EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
-Multi-byte awareness of many data types and functions, via configure(Tatsuo)
-New configure --with-mb option(Tatsuo)
-New initdb --pgencoding option(Tatsuo)
-New createdb -E multibyte option(Tatsuo)
-Select version(); now returns PostgreSQL version(Jeroen)
-Libpq now allows asynchronous clients(Tom)
-Allow cancel from client of backend query(Tom)
-Psql now cancels query with Control-C(Tom)
-Libpq users need not issue dummy queries to get NOTIFY messages(Tom)
-NOTIFY now sends sender's PID, so you can tell whether it was your own(Tom)
-PGresult struct now includes associated error message, if any(Tom)
-Define "tz_hour" and "tz_minute" arguments to date_part()(Thomas)
-Add routines to convert between varchar and bpchar(Thomas)
-Add routines to allow sizing of varchar and bpchar into target columns(Thomas)
-Add bit flags to support timezonehour and minute in data retrieval(Thomas)
-Allow more variations on valid floating point numbers (e.g. ".1", "1e6")(Thomas)
-Fixes for unary minus parsing with leading spaces(Thomas)
-Implement TIMEZONE_HOUR, TIMEZONE_MINUTE per SQL92 specs(Thomas)
-Check for and properly ignore FOREIGN KEY column constraints(Thomas)
-Define USER as synonym for CURRENT_USER per SQL92 specs(Thomas)
-Enable HAVING clause but no fixes elsewhere yet.
-Make "char" type a synonym for "char(1)" (actually implemented as bpchar)(Thomas)
-Save string type if specified for DEFAULT clause handling(Thomas)
-Coerce operations involving different data types(Thomas)
-Allow some index use for columns of different types(Thomas)
-Add capabilities for automatic type conversion(Thomas)
-Cleanups for large objects, so file is truncated on open(Peter)
-Readline cleanups(Tom)
-Allow psql  \f \ to make spaces as delimiter(Bruce)
-Pass pg_attribute.atttypmod to the frontend for column field lengths(Tom,Bruce)
-Msql compatibility library in /contrib(Aldrin)
-Remove the requirement that ORDER/GROUP BY clause identifiers be 
-included in the target list(David)
-Convert columns to match columns in UNION clauses(Thomas)
-Remove fork()/exec() and only do fork()(Bruce)
-Jdbc cleanups(Peter)
-Show backend status on ps command line(only works on some platforms)(Bruce)
-Pg_hba.conf now has a sameuser option in the database field
-Make lo_unlink take oid param, not int4
-New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
-Libpgtcl now handles NOTIFY as a Tcl event, need not send dummy queries(Tom)
-libpgtcl cleanups(Tom)
-Add -error option to libpgtcl's pg_result command(Tom)
-New locale patch, see docs/README/locale(Oleg)
-Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
-New contrib/lo code for large object orphan removal(Peter)
-New psql command "SET CLIENT_ENCODING TO 'encoding'" for multi-bytes
-feature, see /doc/README.mb(Tatsuo)
-/contrib/noupdate code to revoke update permission on a column
-Libpq can now be compiled on win32(Magnus)
-Add PQsetdbLogin() in libpq
-New 8-byte integer type, checked by configure for OS support(Thomas)
-Better support for quoted table/column names(Thomas)
-Surround table and column names with double-quotes in pg_dump(Thomas)
-PQreset() now works with passwords(Tom)
-Handle case of GROUP BY target list column number out of range(David)
-Allow UNION in subselects
-Add auto-size to screen to \d? commands(Bruce)
-Use UNION to show all \d? results in one query(Bruce)
-Add \d? field search feature(Bruce)
-Pg_dump issues fewer \connect requests(Tom)
-Make pg_dump -z flag work better, document it in manual page(Tom)
-Add HAVING clause with full support for subselects and unions(Stephan)
-Full text indexing routines in contrib/fulltextindex(Maarten)
-Transaction ids now stored in shared memory(Vadim)
-New PGCLIENTENCODING when issuing COPY command(Tatsuo)
-Support for SQL92 syntax "SET NAMES"(Tatsuo)
-Support for LATIN2-5(Tatsuo)
-Add UNICODE regression test case(Tatsuo)
-Lock manager cleanup, new locking modes for LLL(Vadim)
-Allow index use with OR clauses(Bruce)
-Allows "SELECT NULL ORDER BY 1;"
-Explain VERBOSE prints the plan, and now pretty-prints the plan to
-the postmaster log file(Bruce)
-Add Indices display to \d command(Bruce)
-Allow GROUP BY on functions(David)
-New pg_class.relkind for large objects(Bruce)
-New way to send libpq NOTICE messages to a different location(Tom)
-New \w write command to psql(Bruce)
-New /contrib/findoidjoins scans oid columns to find join relationships(Bruce)
-Allow binary-compatible indices to be considered when checking for valid
-indices for restriction clauses containing a constant(Thomas)
-New ISBN/ISSN code in /contrib/isbn_issn
-Allow NOT LIKE, IN, NOT IN, BETWEEN, and NOT BETWEEN constraint(Thomas)
-New rewrite system fixes many problems with rules and views(Jan)
-	* Rules on relations work
-	* Event qualifications on insert/update/delete work
-	* New OLD variable to reference CURRENT, CURRENT will be remove in future
-	* Update rules can reference NEW and OLD in rule qualifications/actions
-	* Insert/update/delete rules on views work
-	* Multiple rule actions are now supported, surrounded by parentheses
-	* Regular users can create views/rules on tables they have RULE permits
-	* Rules and views inherit the permissions on the creator
-	* No rules at the column level
-	* No UPDATE NEW/OLD rules
-	* New pg_tables, pg_indexes, pg_rules and pg_views system views
-	* Only a single action on SELECT rules
-	* Total rewrite overhaul, perhaps for 6.5
-	* handle subselects
-	* handle aggregates on views
-	* handle insert into select from view works
-System indexes are now multi-key(Bruce)
-Oidint2, oidint4, and oidname types are removed(Bruce)
-Use system cache for more system table lookups(Bruce)
-New backend programming language PL/pgSQL in backend/pl(Jan)
-New SERIAL data type, auto-creates sequence/index(Thomas)
-Enable assert checking without a recompile(Massimo)
-User lock enhancements(Massimo)
-New setval() command to set sequence value(Massimo)
-Auto-remove unix socket file on startup if no postmaster running(Massimo)
-Conditional trace package(Massimo)
-New UNLISTEN command(Massimo)
-Psql and libpq now compile under win32 using win32.mak(Magnus)
-Lo_read no longer stores trailing NULL(Bruce)
-Identifiers are now truncated to 31 characters internally(Bruce)
-Createuser options now availble on the command line
-Code for 64-bit integer supported added, configure tested, int8 type(Thomas)
-Prevent file descriptor leaf from failed COPY(Bruce)
-New pg_upgrade command(Bruce)
-Updated /contrib directories(Massimo)
-New CREATE TABLE DEFAULT VALUES statement available(Thomas)
-New INSERT INTO TABLE DEFAULT VALUES statement available(Thomas)
-New DECLARE and FETCH feature(Thomas)
-libpq's internal structures now not exported(Tom)
-Allow up to 8 key indexes(Bruce)
-Remove ARCHIVE keyword, that is no longer used(Thomas)
-pg_dump -n flag to supress quotes around indentifiers
-disable system columns for views(Jan)
-new INET and CIDR types for network addresses(TomH, Paul)
-no more double quotes in psql output
-pg_dump now dumps views(Terry)
-new SET QUERY_LIMIT(Tatsuo,Jan)
-
-Source Tree Changes
--------------------
-/contrib cleanup(Jun)
-Inline some small functions called for every row(Bruce)
-Alpha/linux fixes
-Hp/UX cleanups(Tom)
-Multi-byte regression tests(Soonmyung.)
-Remove --disabled options from configure
-Define PGDOC to use POSTGRESDIR by default
-Make regression optional
-Remove extra braces code to pgindent(Bruce)
-Add bsdi shared library support(Bruce)
-New --without-CXX support configure option(Brook)
-New FAQ_CVS
-Update backend flowchart in tools/backend(Bruce)
-Change atttypmod from int16 to int32(Bruce, Tom)
-Getrusage() fix for platforms that do not have it(Tom)
-Add PQconnectdb, PGUSER, PGPASSWORD to libpq man page
-NS32K platform fixes(Phil Nelson, John Buller)
-Sco 7/UnixWare 2.x fixes(Billy,others)
-Sparc/Solaris 2.5 fixes(Ryan)
-Pgbuiltin.3 is obsolete, move to doc files(Thomas)
-Even more documention(Thomas)
-Nextstep support(Jacek)
-Aix support(David)
-pginterface manual page(Bruce)
-shared libraries all have version numbers
-merged all OS-specific shared library defines into one file
-smarter TCL/TK configuration checking(Billy)
-smarter perl configuration(Brook)
-configure uses supplied install-sh if no install script found(Tom)
-new Makefile.shlib for shared library configuration(Tom)
-
-
-
-PostgreSQL 6.3.2             Tue Apr  7 16:53:16 EDT 1998
-=========================================================
-
-A dump/restore is NOT required for those running 6.3.1.  A 
-'make distclean', 'make', and 'make install' is all that is required.
-This last step should be performed while the postmaster is not running.
-You should re-link any custom applications that use PostgreSQL libraries.
-
-Changes
--------
-configure detection improvements for tcl/tk(Brook Milligan, Alvin)
-Manual page improvements(Bruce)
-BETWEEN and LIKE fix(Thomas)
-fix for psql \connect used by pg_dump(Oliver Elphick)
-New odbc driver
-pgaccess, version 0.86
-qsort removed, now uses libc version, cleanups(Jeroen)
-fix for buffer over-runs detected(Maurice Gittens)
-fix for buffer overrun in libpgtcl(Randy Kunkee)
-fix for UNION with DISTINCT or ORDER BY(Bruce)
-gettimeofday configure check(Doug Winterburn)
-Fix "indexes not used" bug(Vadim)
-docs additions(Thomas)
-Fix for backend memory leak(Bruce)
-libreadline cleanup(Erwan MAS)
-Remove DISTDIR(Bruce)
-Makefile dependency cleanup(Jeroen van Vianen)
-ASSERT fixes(Bruce)
-
-
-
-PostgreSQL 6.3.1             Mon Mar 23 10:21:52 EST 1998
-=========================================================
-
-A dump/restore is NOT required for those running 6.3.  A 
-'make distclean', 'make', and 'make install' is all that is required.
-This last step should be performed while the postmaster is not running.
-You should re-link any custom applications that use PostgreSQL libraries.
-
-Changes
--------
-ecpg cleanup/fixes, now version 1.1(Michael Meskes)
-pg_user cleanup(Bruce)
-large object fix for pg_dump and tclsh(alvin@camberlo.demon.co.uk)
-LIKE fix for multiple adjacent underscores
-LIKE/BETWEEN fix for having function call as target(Thomas)
-fix for redefining builtin functions(Thomas)
-ultrix4 cleanup
-upgrade to pg_access 0.83
-updated CLUSTER manual page
-multi-byte character set support, see doc/README.mb(Tatsuo)
-configure --with-pgport fix
-pg_ident fix
-big-endian fix for backend communications(Kataoka)
-SUBSTR() and substring() fix(Jan)
-several jdbc fixes(Peter)
-libpgtcl improvements, see libptcl/README(Randy Kunkee)
-Fix for "Datasize = 0" error(Vadim)
-Prevent \do from wrapping(Bruce)
-Remove duplicate Russian character set entries
-Sunos4 cleanup
-Allow optional TABLE keyword in LOCK and SELECT INTO(Thomas)
-CREATE SEQUENCE options to allow a negative integer(Thomas)
-Add "PASSWORD" as an allowed column identifier(Thomas)
-Add checks for UNION target fields(Bruce)
-Fix Alpha port(Dwayne Bailey)
-Fix for text arrays containing quotes(Doug Gibson)
-Solaris compile fix(Albert Chin-A-Young)
-Better identify tcl and tk libs and includes(Bruce)
-
-
-
-PostgreSQL 6.3               Sun Mar  1 14:57:30 EST 1998
-=========================================================
-
-A dump/restore is required for those wishing to migrate data from
-previous releases of PostgreSQL.
-
-* The migration/6.2.1_to_6.3 file contains a detailed description 
-* of the feature changes in this release, and is recommended reading.
-
-Bug Fixes
----------
-Fix binary cursors broken by MOVE implementation(Vadim)
-Fix for tcl library crash(Jan)
-Fix for array handling, from Gerhard Hintermayer
-Fix acl error, and remove duplicate pqtrace(Bruce)
-Fix psql \e for empty file(Bruce)
-Fix for textcat on varchar() fields(Bruce)
-Fix for DBT Sendproc (Zeugswetter Andres)
-Fix vacuum analyze syntax problem(Bruce)
-Fix for international identifiers(Tatsuo)
-Fix aggregates on inherited tables(Bruce)
-Fix substr() for out-of-bounds data
-Fix for select 1=1 or 2=2, select 1=1 and 2=2, and select sum(2+2)(Bruce)
-Fix notty output to show status result.  -q option still turns it off(Bruce)
-Fix for count(*), aggs with views and multiple tables and sum(3)(Bruce)
-Fix cluster(Bruce)
-Fix for PQtrace start/stop several times(Bruce)
-Fix a variety of locking problems like newer lock waiters getting
-	lock before older waiters, and having readlock people not share
-	locks if a writer is waiting for a lock, and waiting writers not
-	getting priority over waiting readers(Bruce)
-Fix crashes in psql when executing queries from external files(James)
-Fix problem with multiple order by columns, with the first one having
-	NULL values(Jeroen)
-Use correct hash table support functions for float8 and int4(Thomas)
-Re-enable JOIN= option in CREATE OPERATOR statement (Thomas)
-Change precedence for boolean operators to match expected behavior(Thomas)
-Generate elog(ERROR) on over-large integer(Bruce)
-Allow multiple-argument functions in constraint clauses(Thomas)
-Check boolean input literals for 'true','false','yes','no','1','0'
-	and throw elog(ERROR) if unrecognized(Thomas)
-Major large objects fix
-Fix for GROUP BY showing duplicates(Vadim)
-Fix for index scans in MergeJion(Vadim)
-
-Enhancements
-------------
-Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
-New User Manual(Thomas, others)
-Speedup by inlining some frequently-called functions
-Real deadlock detection, no more timeouts(Bruce)
-Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
-	CURRENT_USER(Thomas)
-Modify constraint syntax to be SQL92-compliant(Thomas)
-Implement SQL92 PRIMARY KEY and UNIQUE clauses using indices(Thomas)
-Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
-Allow NOT NULL UNIQUE constraint clause (each allowed separately before)(Thomas)
-Allow Postgres-style casting ("::") of non-constants(Thomas)
-Add support for SQL3 TRUE and FALSE boolean constants(Thomas)
-Support SQL92 syntax for IS TRUE/IS FALSE/IS NOT TRUE/IS NOT FALSE(Thomas)
-Allow shorter strings for boolean literals (e.g. "t", "tr", "tru")(Thomas)
-Allow SQL92 delimited identifiers(Thomas)
-Implement SQL92 binary and hexadecimal string decoding (b'10' and x'1F')(Thomas)
-Support SQL92 syntax for type coercion of literal strings
-	(e.g. "DATETIME 'now'")(Thomas)
-Add conversions for int2, int4, and OID types to and from text(Thomas)
-Use shared lock when building indices(Vadim)
-Free memory allocated for an user query inside transaction block after
-	this query is done, was turned off in <= 6.2.1(Vadim)
-New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
-New PostgreSQL Procedural Language (PL) backend interface(Jan)
-Rename pg_dump -H option to -h(Bruce)
-Add Java support for passwords, European dates(Peter)
-Use indices for LIKE and ~, !~ operations(Bruce)
-Add hash functions for datetime and timespan(Thomas)
-Time Travel removed(Vadim, Bruce)
-Add paging for \d and \z, and fix \i(Bruce)
-Add Unix domain socket support to backend and to frontend library(Goran)
-Implement CREATE DATABASE/WITH LOCATION and initlocation utility(Thomas)
-Allow more SQL92 and/or Postgres reserved words as column identifiers(Thomas)
-Augment support for SQL92 SET TIME ZONE...(Thomas)
-SET/SHOW/RESET TIME ZONE uses TZ backend environment variable(Thomas)
-Implement SET keyword = DEFAULT and SET TIME ZONE DEFAULT(Thomas)
-Enable SET TIME ZONE using TZ environment variable(Thomas)
-Add PGDATESTYLE environment variable to frontend and backend initialization(Thomas)
-Add PGTZ, PGCOSTHEAP, PGCOSTINDEX, PGRPLANS, PGGEQO
-	frontend library initialization environment variables(Thomas)
-Regression tests time zone automatically set with "setenv PGTZ PST8PDT"(Thomas)
-Add pg_description table for info on tables, columns, operators, types, and
-	aggregates(Bruce)
-Increase 16 char limit on system table/index names to 32 characters(Bruce)
-Rename system indices(Bruce)
-Add 'GERMAN' option to SET DATESTYLE(Thomas)
-Define an "ISO-style" timespan output format with "hh:mm:ss" fields(Thomas)
-Allow fractional values for delta times (e.g. '2.5 days')(Thomas)
-Validate numeric input more carefully for delta times(Thomas)
-Implement day of year as possible input to date_part()(Thomas)
-Define timespan_finite() and text_timespan() functions(Thomas)
-Remove archive stuff(Bruce)
-Allow for a pg_password authentication database that is separate from
-	the system password file(Todd)
-Dump ACLs, GRANT, REVOKE permissions(Matt)
-Define text, varchar, and bpchar string length functions(Thomas)
-Fix Query handling for inheritance, and cost computations(Bruce)
-Implement CREATE TABLE/AS SELECT (alternative to SELECT/INTO)(Thomas)
-Allow NOT, IS NULL, IS NOT NULL in constraints(Thomas)
-Implement UNIONs for SELECT(Bruce)
-Add UNION, GROUP, DISTINCT to INSERT(Bruce)
-varchar() stores only necessary bytes on disk(Bruce)
-Fix for BLOBs(Peter)
-Mega-Patch for JDBC...see README_6.3 for list of changes(Peter)
-Remove unused "option" from PQconnectdb()
-New LOCK command and lock manual page describing deadlocks(Bruce)
-Add new psql \da, \dd, \df, \do, \dS, and \dT commands(Bruce)
-Enhance psql \z to show sequences(Bruce)
-Show NOT NULL and DEFAULT in psql \d table(Bruce)
-New psql .psqlrc file startup(Andrew)
-Modify sample startup script in contrib/linux to show syslog(Thomas)
-New types for IP and MAC addresses in contrib/ip_and_mac(TomH)
-Unix system time conversions with date/time types in contrib/unixdate(Thomas)
-Update of contrib stuff(Massimo)
-Add Unix socket support to DBD::Pg(Goran)
-New python interface (PyGreSQL 2.0)(D'Arcy)
-New frontend/backend protocol has a version number, network byte order(Phil)
-Security features in pg_hba.conf enhanced and documented, many cleanups(Phil)
-CHAR() now faster access than VARCHAR() or TEXT
-ecpg embedded SQL preprocessor
-Reduce system column overhead(Vadmin)
-Remove pg_time table(Vadim)
-Add pg_type attribute to identify types that need length (bpchar, varchar)
-Add report of offending line when COPY command fails
-Allow VIEW permissions to be set separately from the underlying tables. 
-	For security, use GRANT/REVOKE on views as appropriate(Jan)
-Tables now have no default GRANT SELECT TO PUBLIC.  You must
-	explicitly grant such permissions.
-Clean up tutorial examples(Darren)
-
-Source Tree Changes
--------------------
-Add new html development tools, and flow chart in /tools/backend
-Fix for SCO compiles
-Stratus computer port "Gillies, Robert" <GilliesR@Nichols.com>
-Added support for shlib for BSD44_derived & i386_solaris
-Make configure more automated(Brook)
-Add script to check regression test results
-Break parser functions into smaller files, group together(Bruce)
-Rename heap_create to heap_create_and_catalog, rename heap_creatr
-	to heap_create()(Bruce)
-Sparc/Linux patch for locking(TomS)
-Remove PORTNAME and reorganize port-specific stuff(Marc)
-Add optimizer README file(Bruce)
-Remove some recursion in optimizer and clean up some code there(Bruce)
-Fix for NetBSD locking(Henry)
-Fix for libptcl make(Tatsuo)
-AIX patch(Darren)
-Change IS TRUE, IS FALSE, ... to expressions using "=" rather than
-	function calls to istrue() or isfalse() to allow optimization(Thomas)
-Various fixes NetBSD/Sparc related(TomH)
-Alpha linux locking(Travis,Ryan)
-Change elog(WARN) to elog(ERROR)(Bruce)
-FAQ for FreeBSD(Marc)
-Bring in the PostODBC source tree as part of our standard distribution(Marc)
-A minor patch for HP/UX 10 vs 9(Stan)
-New pg_attribute.atttypmod for type-specific info like varchar length(Bruce)
-Unixware patches(Billy)
-New i386 'lock' for spin lock asm(Billy)
-Support for multiplexed backends is removed
-Start an OpenBSD port
-Start an AUX port
-Start a Cygnus port
-Add string functions to regression suite(Thomas)
-Expand a few function names formerly truncated to 16 characters(Thomas)
-Remove un-needed malloc() calls and replace with palloc()(Bruce)
-
-
-
-PostgreSQL 6.2.1                 Fri Oct 17 00:01:27 EDT 1997
-=========================================================
-
-This release does NOT require a dump/restore for those running 6.2, but
-there is an SQL query in /migration/6.2_to_6.2.1 that should be run. See
-that file for more information.
-
-Changes in this release
------------------------
-Allow TIME and TYPE column names(Thomas)
-Allow larger range of true/false as boolean values(Thomas)
-Support output of "now" and "current"(Thomas)
-Handle DEFAULT with INSERT of NULL properly(Vadim)
-Fix for relation reference counts problem in buffer manager(Vadim)
-Allow strings to span lines, like ANSI(Thomas)
-Fix for backward cursor with ORDER BY(Vadim)
-Fix avg(cash) computation(Thomas)
-Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
-Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
-Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
-
-
-
-PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
-=========================================================
-
-A dump/restore is required for those wishing to migrate data from
-previous releases of PostgreSQL.
-
-Bug Fixes
----------
-Fix problems with pg_dump for inheritance, sequences, archive tables(Bruce)
-Fix compile errors on overflow due to shifts, unsigned, and bad prototypes
-	 from Solaris(Diab Jerius)
-Fix bugs in geometric line arithmetic (bad intersection calculations)(Thomas)
-Check for geometric intersections at endpoints to avoid rounding ugliness(Thomas)
-Catch non-functional delete attempts(Vadim)
-Change time function names to be more consistent(Michael Reifenberg)
-Check for zero divides(Michael Reifenberg)
-Fix very old bug which made tuples changed/inserted by a commnd
-	visible to the command itself (so we had multiple update of 
-	updated tuples, etc)(Vadim)
-Fix for SELECT null, 'fail' FROM pg_am (Patrick)
-SELECT NULL as EMPTY_FIELD now allowed(Patrick)
-Remove un-needed signal stuff from contrib/pginterface
-Fix OR (where x <> 1 or x isnull didn't return tuples with x NULL) (Vadim)
-Fix time_cmp function (Vadim)
-Fix handling of functions with non-attribute first argument in 
-	WHERE clauses (Vadim)
-Fix GROUP BY when order of entries is different from order
-	in target list (Vadim)
-Fix pg_dump for aggregates without sfunc1 (Vadim)
-
-Enhancements
-------------
-Default genetic optimizer GEQO parameter is now 8(Bruce)
-Allow use parameters in target list having aggregates in functions(Vadim)
-Added JDBC driver as an interface(Adrian & Peter)
-pg_password utility
-Return number of tuples inserted/affected by INSERT/UPDATE/DELETE etc.(Vadim)
-Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
-SPI (Server Programming Interface) allows execution of queries inside 
-	C-functions (Vadim)
-NOT NULL implemented (SQL92)(Robson Paniago de Miranda)
-Include reserved words for string handling, outer joins, and unions(Thomas)
-Implement extended comments ("/* ... */") using exclusive states(Thomas)
-Add "//" single-line comments(Bruce)
-Remove some restrictions on characters in operator names(Thomas)
-DEFAULT and CONSTRAINT for tables implemented (SQL92)(Vadim & Thomas)
-Add text concatenation operator and function (SQL92)(Thomas)
-Support WITH TIME ZONE syntax (SQL92)(Thomas)
-Support INTERVAL <unit> TO <unit> syntax (SQL92)(Thomas)
-Define types DOUBLE PRECISION, INTERVAL, CHARACTER,
-	and CHARACTER VARYING (SQL92)(Thomas)
-Define type FLOAT(p) and rudimentary DECIMAL(p,s), NUMERIC(p,s) (SQL92)(Thomas)
-Define EXTRACT(), POSITION(), SUBSTRING(), and TRIM() (SQL92)(Thomas)
-Define CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP (SQL92)(Thomas)
-Add syntax and warnings for UNION, HAVING, INNER and OUTER JOIN (SQL92)(Thomas)
-Add more reserved words, mostly for SQL92 compliance(Thomas)
-Allow hh:mm:ss time entry for timespan/reltime types(Thomas)
-Add center() routines for lseg, path, polygon(Thomas)
-Add distance() routines for circle-polygon, polygon-polygon(Thomas)
-Check explicitly for points and polygons contained within polygons
-	using an axis-crossing algorithm(Thomas)
-Add routine to convert circle-box(Thomas)
-Merge conflicting operators for different geometric data types(Thomas)
-Replace distance operator "<===>" with "<->"(Thomas)
-Replace "above" operator "!^" with ">^" and "below" operator "!|" with "<^"(Thomas)
-Add routines for text trimming on both ends, substring, and string position(Thomas)
-Added conversion routines circle(box) and poly(circle)(Thomas)
-Allow internal sorts to be stored in memory rather than in files(Bruce & Vadim)
-Allow functions and operators on internally-identical types to succeed(Bruce)
-Speed up backend startup after profiling analysis(Bruce)
-Inline frequently called functions for performance(Bruce)
-Reduce open() calls(Bruce)
-psql:  Add PAGER for \h and \?,\C fix
-Fix for psql pager when no tty(Bruce)
-New entab utility(Bruce)
-General trigger functions for referential integrity (Vadim)
-General trigger functions for time travel (Vadim)
-General trigger functions for AUTOINCREMENT/IDENTITY feature (Vadim)
-MOVE implementation (Vadim)
-
-Source Tree Changes
--------------------
-HPUX 10 patches (Vladimir Turin)
-Added SCO support, (Daniel Harris)
-mkLinux patches (Tatsuo Ishii)
-Change geometric box terminology from "length" to "width"(Thomas)
-Deprecate temporary unstored slope fields in geometric code(Thomas)
-Remove restart instructions from INSTALL(Bruce)
-Look in /usr/ucb first for install(Bruce)
-Fix c++ copy example code(Thomas)
-Add -o to psql manual page(Bruce)
-Prevent relname unallocated string length from being copied into database(Bruce)
-Cleanup for NAMEDATALEN use(Bruce)
-Fix pg_proc names over 15 chars in output(Bruce)
-Add strNcpy() function(Bruce)
-remove some (void) casts that are unnecessary(Bruce)
-new interfaces directory(Marc)
-Replace fopen() calls with calls to fd.c functions(Bruce)
-Make functions static where possible(Bruce)
-enclose unused functions in #ifdef NOT_USED(Bruce)
-Remove call to difftime() in timestamp support to fix SunOS(Bruce & Thomas)
-Changes for Digital Unix
-Portability fix for pg_dumpall(Bruce)
-Rename pg_attribute.attnvals to attdisbursion(Bruce)
-"intro/unix" manual page now "pgintro"(Bruce)
-"built-in" manual page now "pgbuiltin"(Bruce)
-"drop" manual page now "drop_table"(Bruce)
-Add "create_trigger", "drop_trigger" manual pages(Thomas)
-Add constraints regression test(Vadim & Thomas)
-Add comments syntax regression test(Thomas)
-Add PGINDENT and support program(Bruce)
-Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
-Files moved to /src/tools directory(Bruce)
-SPI and Trigger programming guides (Vadim & D'Arcy)
-
-
-
-PostgreSQL 6.1.1             Mon Jul 22 18:04:49 EDT 1997
-=========================================================
-
-This release does NOT require a dump/restore for those running 6.1.
-
-Changes in this release
------------------------
-fix for SET with options (Thomas)
-allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
-new psql \connect option allows changing usernames without chaning databases
-fix for initdb --debug option(Yoshihiko Ichikawa))
-lextest cleanup(Bruce)
-hash fixes(Vadim)
-fix date/time month boundary arithmetic(Thomas)
-fix timezone daylight handling for some ports(Thomas, Bruce, Tatsuo)
-timestamp overhauled to use standard functions(Thomas)
-other code cleanup in date/time routines(Thomas)
-psql's \d now case-insensitive(Bruce)
-psql's backslash commands can now have trailing semicolon(Bruce)
-fix memory leak in psql when using \g(Bruce)
-major fix for endian handling of communication to server(Thomas, Tatsuo)
-Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
-allow underscores in usernames(Bruce)
-pg_dumpall now returns proper status, portability fix(Bruce)
-
-
-
-PostgreSQL 6.1               Sun Jun  8 14:41:13 EDT 1997
-=========================================================
-
-A dump/restore is required for those wishing to migrate data from
-previous releases of PostgreSQL.
-
-Bug Fixes
----------
-packet length checking in library routines
-lock manager priority patch
-check for under/over flow of float8(Bruce)
-multi-table join fix(Vadim)
-SIGPIPE crash fix(Darren)
-large object fixes(Sven)
-allow btree indexes to handle NULLs(Vadim)
-timezone fixes(D'Arcy)
-select SUM(x) can return NULL on no rows(Thomas)
-internal optimizer, executor bug fixes(Vadim)
-fix problem where inner loop in < or <= has no rows(Vadim)
-prevent re-commuting join index clauses(Vadim)
-fix join clauses for multiple tables(Vadim)
-fix hash, hashjoin for arrays(Vadim)
-fix btree for abstime type(Vadim)
-large object fixes(Raymond)
-fix buffer leak in hash indices (Vadim)
-fix rtree for use in inner scan (Vadim)
-fix gist for use in inner scan, cleanups (Vadim, Andrea)
-avoid unnecessary local buffers allocation (Vadim, Massimo)
-fix local buffers leak in transaction aborts (Vadim)
-fix file manager memmory leaks, cleanups (Vadim, Massimo)
-fix storage manager memmory leaks (Vadim)
-fix btree duplicates handling (Vadim)
-fix deleted tuples re-incarnation caused by vacuum (Vadim)
-fix SELECT varchar()/char() INTO TABLE made zero-length fields(Bruce)
-many psql, pg_dump, and libpq memory leaks fixed using Purify (Igor)
-
-Enhancements
-------------
-attribute optimization statistics(Bruce)
-much faster new btree bulk load code(Paul)
-BTREE UNIQUE added to bulk load code(Vadim) 
-new lock debug code(Massimo)
-massive changes to libpg++(Leo)
-new GEQO optimizer speeds table multi-table optimization(Martin)
-new WARN message for non-unique insert into unique key(Marc)
-update x=-3, no spaces, now valid(Bruce)
-remove case-sensitive identifier handling(Bruce,Thomas,Dan)
-debug backend now pretty-prints tree(Darren)
-new Oracle character functions(Edmund)
-new plaintext password functions(Dan)
-no such class or insufficient privilege changed to distinct messages(Dan)
-new ANSI timestamp function(Dan)
-new ANSI Time and Date types (Thomas)
-move large chunks of data in backend(Martin)
-multi-column btree indexes(Vadim)
-new SET var TO value command(Martin)
-update transaction status on reads(Dan)
-new locale settings for character types(Oleg)
-new SEQUENCE serial number generator(Vadim)
-GROUP BY function now possible(Vadim)
-re-organize regression test(Thomas,Marc)
-new optimizer operation weights(Vadim)
-new psql \z grant/permit option(Marc)
-new MONEY data type(D'Arcy,Thomas)
-tcp socket communication speed improved(Vadim)
-new VACUUM option for attribute statistics, and for certain columns (Vadim)
-many geometric type improvements(Thomas,Keith)
-additional regression tests(Thomas)
-new datestyle variable(Thomas,Vadim,Martin)
-more comparison operators for sorting types(Thomas)
-new conversion functions(Thomas)
-new more compact btree format(Vadim)
-allow pg_dumpall to preserve database ownership(Bruce)
-new SET GEQO=# and R_PLANS variable(Vadim)
-old (!GEQO) optimizer can use right-sided plans (Vadim)
-typechecking improvement in SQL parser(Bruce)
-new SET, SHOW, RESET commands(Thomas,Vadim)
-new \connect database USER option
-new destroydb -i option (Igor)
-new \dt and \di psql commands (Darren)
-SELECT "\n" now escapes newline (A. Duursma)
-new geometry conversion functions from old format (Thomas)
-
-Source tree changes
--------------------
-new configuration script(Marc)
-readline configuration option added(Marc)
-OS-specific configuration options removed(Marc)
-new OS-specific template files(Marc)
-no more need to edit Makefile.global(Marc)
-re-arrange include files(Marc)
-nextstep patches (Gregor Hoffleit)
-removed WIN32-specific code(Bruce)
-removed postmaster -e option, now only postgres -e option (Bruce)
-merge duplicate library code in front/backends(Martin)
-now works with eBones, international Kerberos(Jun)
-more shared library support
-c++ include file cleanup(Bruce)
-warn about buggy flex(Bruce)
-DG-UX, Ultrix, Irix, AIX portability fixes
-
-
-
-PostgreSQL 6.0               Wed Jan 29 00:19:54 EST 1997
-=========================================================
-
-A dump/restore is required for those wishing to migrate data from
-previous releases of PostgreSQL.
-
-Bug Fixes
----------
-ALTER TABLE bug - running postgress process needs to re-read table definition
-Allow vacuum to be run on one table or entire database(Bruce)
-Array fixes
-Fix array over-runs of memory writes(Kurt)
-Fix elusive btree range/non-range bug(Dan)
-Fix for hash indexes on some types like time and date
-Fix for pg_log size explosion
-Fix permissions on lo_export()(Bruce)
-Fix unitialized reads of memory(Kurt)
-Fixed ALTER TABLE ... char(3) bug(Bruce)
-Fixed a few small memory leaks
-Fixed EXPLAIN handling of options and changed full_path option name
-Fixed output of group acl permissions
-Memory leaks (hunt and destroy with tools like Purify(Kurt)
-Minor improvements to rules system
-NOTIFY fixes
-New asserts for run-checking
-Overhauled parser/analyze code to properly report errors and increase speed
-Pg_dump -d now handles NULL's properly(Bruce)
-Prevent SELECT NULL from crashing server (Bruce)
-Properly report errors when INSERT ... SELECT columns did not match
-Properly report errors when insert column names were not correct
-Psql \g filename now works(Bruce)
-Psql fixed problem with multiple statements on one line with multiple outputs
-Removed duplicate system oid's
-SELECT * INTO TABLE . GROUP/ORDER BY gives unlink error if table exists(Bruce)
-Several fixes for queries that crashed the backend
-Starting quote in insert string errors(Bruce)
-Submiting an empty query now returns empty status, not just " " query(Bruce)
-
-Enhancements
-------------
-Add EXPLAIN manual page(Bruce)
-Add UNIQUE index capability(Dan)
-Add hostname/user level access control rather than just hostname and user
-Add synonym of != for <>(Bruce)
-Allow "select oid,* from table"
-Allow BY,ORDER BY to specify columns by number, or by non-alias table.column(Bruce)
-Allow COPY from the frontend(Bryan)
-Allow GROUP BY to use alias column name(Bruce)
-Allow actual compression, not just reuse on the same page(Vadim)
-Allow installation-configuration option to auto-add all local users(Bryan)
-Allow libpq to distinguish between text value '' and null(Bruce)
-Allow non-postgres users with createdb privs to destroydb's
-Allow restriction on who can create C functions(Bryan)
-Allow restriction on who can do backend COPY(Bryan)
-Can shrink tables, pg_time and pg_log(Vadim & Erich)
-Change debug level 2 to print queries only, changed debug heading layout(Bruce)
-Change default decimal constant representation from float4 to float8(Bruce)
-European date format now set when postmaster is started
-Execute lowercase function names if not found with exact case
-Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) from z'
-Gist now included in the distrubution(Marc)
-Idend authentication of local users(Bryan)
-Implement BETWEEN qualifier(Bruce)
-Implement IN qualifier(Bruce)
-Libpq has PQgetisnull()(Bruce)
-Libpq++ improvements
-New options to initdb(Bryan)
-Pg_dump allow dump of oid's(Bruce)
-Pg_dump create indexes after tables are loaded for speed(Bruce)
-Pg_dumpall dumps all databases, and the user table
-Pginterface additions for NULL values(Bruce)
-Prevent postmaster from being run as root
-Psql \h and \? is now readable(Bruce)
-Psql allow backslashed, semicolons anywhere on the line(Bruce)
-Psql changed command prompt for lines in query or in quotes(Bruce)
-Psql char(3) now displays as (bp)char in \d output(Bruce)
-Psql return code now more accurate(Bryan?)
-Psql updated help syntax(Bruce)
-Re-visit and fix vacuum(Vadim)
-Reduce size of regression diffs, remove timezone name difference(Bruce)
-Remove compile-time parameters to enable binary distributions(Bryan)
-Reverse meaning of HBA masks(Bryan)
-Secure Authentication of local users(Bryan)
-Speed up vacuum(Vadim)
-Vacuum now had VERBOSE option(Bruce)
-
-Source tree changes
--------------------
-All functions now have prototypes that are compared against the calls
-Allow asserts to be disabled easly from Makefile.global(Bruce)
-Change oid constants used in code to #define names
-Decoupled sparc and solaris defines(Kurt)
-Gcc -Wall compiles cleanly with warnings only from unfixable constructs
-Major include file reorganization/reduction(Marc)
-Make now stops on compile failure(Bryan)
-Makefile restructuring(Bryan, Marc)
-Merge bsdi_2_1 to bsdi(Bruce)
-Monitor program removed
-Name change from Postgres95 to PostgreSQL
-New config.h file(Marc, Bryan)
-PG_VERSION now set to 6.0 and used by postmaster
-Portability additions, including Ultrix, DG/UX, AIX, and Solaris
-Reduced the number of #define's, centeralized #define's
-Remove duplicate OIDS in system tables(Dan)
-Remove duplicate system catalog info or report mismatches(Dan)
-Removed many os-specific #define's
-Restructured object file generation/location(Bryan, Marc)
-Restructured port-specific file locations(Bryan, Marc)
-Unused/uninialized variables corrected
-
-
-
-PostgreSQL 1.09                 ???
-=========================================================
-
-Sorry, we stopped keeping track of changes from 1.02 to 1.09.  Some of
-the changes listed in 6.0 were actually included in the 1.02.1 to 1.09
-releases.
-
-
-
-Postgres95 1.02              Thu Aug  1 18:00:00 EDT 1996
-=========================================================
-
-Source code maintainenance and development
- * worldwide team of volunteers
- * the source tree now in CVS at ftp.ki.net
- * developers mailing list - pg95-dev@ki.net
-
-Enhancements
- * psql (and underlying libpq library) now has many more options for
-   formatting output, including HTML
- * pg_dump now output the schema and/or the data, with many fixes to
-   enhance completeness.
- * psql used in place of monitor in administration shell scripts.
-   monitor to be depreciated in next release.
- * date/time functions enhanced
- * NULL insert/update/comparison fixed/enhanced
- * TCL/TK lib and shell fixed to work with both tck7.4/tk4.0 and tcl7.5/tk4.1
-
-Bug Fixes (almost too numerous to mention)
- * indexes
- * storage management
- * check for NULL pointer before dereferencing
- * Makefile fixes
-
-New Ports
- * added SolarisX86 port
- * added BSDI 2.1 port
- * added DGUX port
-
-Contributors (appologies to any missed)
- * Kurt J. Lidl <lidl@va.pubnix.com> 
-	(missed in first run, but no less important)
- * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
- * Jason Wright <jason@shiloh.vnet.net>
- * Cees de Groot <C.deGroot@inter.NL.net>
- * ernst.molitor@uni-bonn.de
- * michael.siebenborn@ae3.Hypo.DE (Michael Siebenborn (6929))
- * Brian E. Gallew <geek+@cmu.edu>
- * Vadim B. Mikheev <vadim@sable.krasnoyarsk.su>
- * Adam Sussman <myddryn@vidya.com>
- * Chris Dunlop <chris@onthe.net.au>
- * Marc G. Fournier <scrappy@ki.net>
- * Dan McGuirk <mcguirk@indirect.com>
- * Dr_George_D_Detlefsen <drgeorge@ilt.com>
- * Erich Stamberger <eberger@gewi.kfunigraz.ac.at>
- * Massimo Dal Zotto <dz@cs.unitn.it>
- * Randy Kunkee <kunkee@Starbase.NeoSoft.COM>
- * Rick Weldon <rick@wisetech.com>
- * Thomas van Reimersdahl <reimersd@dali.techinfo.rwth-aachen.de>
- * david bennett <dave@bensoft.com>
- * ernst.molitor@uni-bonn.de
- * Julian Assange <proff@suburbia.net>
- * Bruce Momjian <maillist@candle.pha.pa.us>
- * Paul "Shag" Walmsley <ccshag@cclabs.missouri.edu>
- * "Alistair G. Crooks" <azcb0@sde.uts.amdahl.com>
-
-
-
-Postgres95 1.01              Fri Feb 23 18:20:36 PST 1996
-=========================================================
-Incompatibilities:
- * 1.01 is backwards compatible with 1.0 database provided the user
-   follow the steps outlined in the MIGRATION_from_1.0_to_1.01 file.
-   If those steps are not taken, 1.01 is not compatible with 1.0 database.
-
-Enhancements:
- * added PQdisplayTuples() to libpq and changed monitor and psql to use it
- * added NeXT port (requires SysVIPC implementation)
- * added CAST .. AS ... syntax
- * added ASC and DESC keywords
- * added 'internal' as a possible language for CREATE FUNCTION
-   internal functions are C functions which have been statically linked
-   into the postgres backend.
- * a new type "name" has been added for system identifiers (table names,
-   attribute names, etc.)  This replaces the old char16 type.   The
-   of name is set by the NAMEDATALEN #define in src/Makefile.global
- * a readable reference manual that describes the query language.
- * added host-based access control.  A configuration file ($PGDATA/pg_hba)
-   is used to hold the configuration data.  If host-based access control
-   is not desired, comment out HBA=1 in src/Makefile.global.
- * changed regex handling to be uniform use of Henry Spencer's regex code
-   regardless of platform.  The regex code is included in the distribution
- * added functions and operators for case-insensitive regular expressions. 
-   The operators are ~* and !~*.
- * pg_dump uses COPY instead of SELECT loop for better performance
-
-Bug fixes:
- * fixed an optimizer bug that was causing core dumps when 
-   functions calls were used in comparisons in the WHERE clause
- * changed all uses of getuid to geteuid so that effective uids are used
- * psql now returns non-zero status on errors when using -c
- * applied public patches 1-14
-
-
-
-Postgres95 1.0               Tue Sep  5 11:24:11 PDT 1995
-=========================================================
-
-Copyright change:
- * The copyright of Postgres 1.0 has been loosened to be freely modifiable
-   and modifiable for any purpose.  Please read the COPYRIGHT file.
-   Thanks to Professor Michael Stonebraker for making this possible.
-
-Incompatibilities:
- *  date formats have to be MM-DD-YYYY (or DD-MM-YYYY if you're using
-   EUROPEAN STYLE).  This follows SQL-92 specs.
- *  "delimiters" is now a keyword
-
-Enhancements:
- *  sql LIKE syntax has been added
- *  copy command now takes an optional USING DELIMITER specification.
-   delimiters can be any single-character string. 
- *  IRIX 5.3 port has been added.
-   Thanks to Paul Walmsley (ccshag@everest.cclabs.missouri.edu) and others.
- *  updated pg_dump to work with new libpq
- *  \d has been added psql 
-   Thanks to Keith Parks (emkxp01@mtcc.demon.co.uk)
- *  regexp performance for architectures that use POSIX regex has been
-   improved due to caching of precompiled patterns.
-   Thanks to Alistair Crooks (agc@uts.amdahl.com) 
- *  a new version of libpq++
-   Thanks to William Wanders (wwanders@sci.kun.nl)
-
-Bug fixes:
- *  arbitrary userids can be specified in the createuser script
- *  \c to connect to other databases in psql now works.
- *  bad pg_proc entry for float4inc() is fixed
- *  users with usecreatedb field set can now create databases without
-   having to be usesuper
- *  remove access control entries when the entry no longer has any
-   permissions
- *  fixed non-portable datetimes implementation
- *  added kerberos flags to the src/backend/Makefile
- *  libpq now works with kerberos
- *  typographic errors in the user manual have been corrected.
- *  btrees with multiple index never worked, now we tell you they don't
-   work when you try to use them
-
-
-
-Postgres95 Beta 0.03         Fri Jul 21 14:49:31 PDT 1995
-=========================================================
-Incompatible changes:
- * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
-   (due to system catalog changes and indexing structure changes).
- * double-quote (") is deprecated as a quoting character for string literals;
-   you need to convert them to single quotes (').
- * name of aggregates (eg. int4sum) are renamed in accordance with the
-   SQL standard (eg. sum).
- * CHANGE ACL syntax is replaced by GRANT/REVOKE syntax.
- * float literals (eg. 3.14) are now of type float4 (instead of float8 in
-   previous releases); you might have to do typecasting if you depend on it
-   being of type float8.  If you neglect to do the typecasting and you assign
-   a float literal to a field of type float8, you may get incorrect values
-   stored!
- * LIBPQ has been totally revamped so that frontend applications
-   can connect to multiple backends
- * the usesysid field in pg_user has been changed from int2 to int4 to
-   allow wider range of Unix user ids.
- * the netbsd/freebsd/bsd o/s ports have been consolidated into a
-   single BSD44_derived port.  (thanks to Alistair Crooks)
-
-SQL standard-compliance (the following details changes that makes postgres95
-more compliant to the SQL-92 standard):
- * the following SQL types are now built-in: smallint, int(eger), float, real,
-   char(N), varchar(N), date and time.
-
-   The following are aliases to existing postgres types:
-		smallint -> int2
-		integer, int -> int4
-		float, real  -> float4
-   char(N) and varchar(N) are implemented as truncated text types. In
-   addition, char(N) does blank-padding. 
- * single-quote (') is used for quoting string literals; '' (in addition to
-   \') is supported as means of inserting a single quote in a string
- * SQL standard aggregate names (MAX, MIN, AVG, SUM, COUNT) are used
-   (Also, aggregates can now be overloaded, i.e. you can define your
-   own MAX aggregate to take in a user-defined type.)
- * CHANGE ACL removed. GRANT/REVOKE syntax added.  
-   - Privileges can be given to a group using the "GROUP" keyword.
-	For example:
-		GRANT SELECT ON foobar TO GROUP my_group;
-	The keyword 'PUBLIC' is also supported to mean all users.	
-
-	Privileges can only be granted or revoked to one user or group
-	at a time.  
-
-	"WITH GRANT OPTION" is not supported.  Only class owners can change
-	access control
-   - The default access control is to to grant users readonly access.
-     You must explicitly grant insert/update access to users.  To change
-     this, modify the line in 
-		src/backend/utils/acl.h 
-     that defines ACL_WORLD_DEFAULT 
-
-Bug fixes:
- * the bug where aggregates of empty tables were not run has been fixed. Now,
-   aggregates run on empty tables will return the initial conditions of the
-   aggregates. Thus, COUNT of an empty	table will now properly return 0.
-   MAX/MIN of an empty table will return a tuple of value NULL. 
- * allow the use of \; inside the monitor
- * the LISTEN/NOTIFY asynchronous notification mechanism now work
- * NOTIFY in rule action bodies now work
- * hash indices work, and access methods in general should perform better.
-   creation of large btree indices should be much faster.  (thanks to Paul
-   Aoki)
-
-Other changes and enhancements:
- * addition of an EXPLAIN statement used for explaining the query execution
-   plan (eg. "EXPLAIN SELECT * FROM EMP" prints out the execution plan for
-   the query).
- * WARN and NOTICE messages no longer have timestamps on them. To turn on
-   timestamps of error messages, uncomment the line in
-   src/backend/utils/elog.h:
-	/* define ELOG_TIMESTAMPS */ 
- * On an access control violation, the message
-	"Either no such class or insufficient privilege"
-   will be given.  This is the same message that is returned when
-   a class is not found.  This dissuades non-privileged users from
-   guessing the existence of privileged classes.
- * some additional system catalog changes have been made that are not
-   visible to the user.
-
-libpgtcl changes:
- * The -oid option has been added to the "pg_result" tcl command.
-   pg_result -oid returns oid of the last tuple inserted.   If the
-   last command was not an INSERT, then pg_result -oid returns "".
- * the large object interface is available as pg_lo* tcl commands:
-   pg_lo_open, pg_lo_close, pg_lo_creat, etc.
-
-Portability enhancements and New Ports:
- * flex/lex problems have been cleared up.  Now, you should be able to use
-   flex instead of lex on any platforms.  We no longer make assumptions of
-   what lexer you use based on the platform you use. 
- * The Linux-ELF port is now supported.  Various configuration have been 
-   tested:  The following configuration is known to work:
-	kernel 1.2.10, gcc 2.6.3, libc 4.7.2, flex 2.5.2, bison 1.24
-   with everything in ELF format,
-
-New utilities:
- * ipcclean added to the distribution
-   ipcclean usually does not need to be run, but if your backend crashes
-   and leaves shared memory segments hanging around, ipcclean will
-   clean them up for you.
-
-New documentation:
- * the user manual has been revised and libpq documentation added.
-
-
-
-Postgres95 Beta 0.02         Thu May 25 16:54:46 PDT 1995
-=========================================================
-Incompatible changes:
- * The SQL statement for creating a database is 'CREATE DATABASE' instead
-   of 'CREATEDB'. Similarly, dropping a database is 'DROP DATABASE' instead
-   of 'DESTROYDB'. However, the names of the executables 'createdb' and 
-   'destroydb' remain the same.
- 
-New tools:
- * pgperl - a Perl (4.036) interface to Postgres95
- * pg_dump - a utility for dumping out a postgres database into a
-	script file containing query commands. The script files are in a ASCII
-	format and can be used to reconstruct the database, even on other
-	machines and other architectures. (Also good for converting
-	a Postgres 4.2 database to Postgres95 database.)
-
-The following ports have been incorporated into postgres95-beta-0.02:
- * the NetBSD port by Alistair Crooks
- * the AIX port by Mike Tung
- * the Windows NT port by Jon Forrest (more stuff but not done yet)
- * the Linux ELF port by Brian Gallew
-
-The following bugs have been fixed in postgres95-beta-0.02:
- * new lines not escaped in COPY OUT and problem with COPY OUT when first
-   attribute is a '.' 
- * cannot type return to use the default user id in createuser
- * SELECT DISTINCT on big tables crashes
- * Linux installation problems
- * monitor doesn't allow use of 'localhost' as PGHOST
- * psql core dumps when doing \c or \l
- * the "pgtclsh" target missing from src/bin/pgtclsh/Makefile
- * libpgtcl has a hard-wired default port number
- * SELECT DISTINCT INTO TABLE hangs
- * CREATE TYPE doesn't accept 'variable' as the internallength
- * wrong result using more than 1 aggregate in a SELECT
-
-
-
-Postgres95 Beta 0.01          Mon May 1 19:03:10 PDT 1995
-=========================================================
-Initial release.
+
+PostgreSQL History
+by The PostgreSQL Development Team
+Edited by Thomas Lockhart
+PostgreSQL is © 1996-9 by the Postgres Global Development Group.
+
+Release 6.5
+
+        This release marks a major step in the development team's mastery of the 
+       source code we inherited from Berkeley. You will see we are now easily 
+       adding major features, thanks to the increasing size and experience of our 
+       world-wide development team. 
+        Here is a brief summary of some of the more noticable changes: 
+
+        Multi-version concurrency control(MVCC) 
+          This removes our old table-level locking, and replaces it with a locking 
+         system that is superior to most commercial database systems. In a 
+         traditional system, each row that is modified is locked until committed, 
+         preventing reads by other users. MVCC uses the natural multi-version 
+         nature of PostgreSQL to allow readers to continue reading consistent data 
+         during writer activity. Writers continue to use the compact pg_log 
+         transaction system. This is all performed without having to allocate a 
+         lock for every row like traditional database systems. So, basically, we 
+         no longer are restricted by simple table-level locking; we have something 
+         better than row-level locking. 
+
+        Numeric data type 
+          We now have a true numeric data type, with user-specified precision. 
+
+        Temporary tables 
+          Temporary tables are guaranteed to have unique names within a database 
+         session, and are destroyed on session exit. 
+
+        New SQL features 
+          We now have CASE, INTERSECT, and EXCEPT statement support. We have new 
+         LIMIT/OFFSET, SET TRANSACTION ISOLATION LEVEL, SELECT ... FOR UPDATE, and 
+         an improved LOCK command. 
+
+        Speedups 
+          We continue to speed up PostgreSQL, thanks to the variety of talents 
+         within our team. We have sped up memory allocation, optimization, table 
+         joins, and row transfer routines. 
+
+        Ports 
+          We continue to expand our port list, this time including WinNT/ix86 and 
+         NetBSD/arm32. 
+
+        Interfaces 
+          Most interfaces have new versions, and existing functionality has been 
+         improved. 
+
+        Documentation 
+          New and updated material is present throughout the documentation. New 
+         FAQs have been contributed for SGI and AIX platforms. The Tutorial has 
+         introductory information on SQL from Stefan Simkovics. For the User's 
+         Guide, there are reference pages covering the postmaster and more utility 
+         programs, and a new appendix contains details on date/time behavior. The 
+         Administrator's Guide has a new chapter on troubleshooting from Tom Lane. 
+         And the Programmer's Guide has a description of query processing, also 
+         from Stefan, and details on obtaining the Postgres source tree via 
+         anonymous CVS and CVSup. 
+        
+
+Migration to v6.5
+
+        A dump/restore using pg_dump or pg_dumpall is required for those wishing 
+       to migrate data from any previous release of Postgres. 
+        The new Multi-Version Concurrency Control (MVCC) features can give 
+       somewhat different behaviors in multi-user environments. Read and 
+       understand the following section to ensure that your existing applications 
+       will give you the behavior you need. 
+
+       Multi-Version Concurrency Control
+        Because readers in 6.5 don't lock data, regardless of transaction 
+       isolation level, data read by one transaction can be overwritten by 
+       another. In the other words, if a row is returned by SELECT it doesn't mean 
+       that this row really exists at the time it is returned (i.e. sometime after 
+       the statement or transaction began) nor that the row is protected from 
+       deletion or updation by concurrent transactions before the current 
+       transaction does a commit or rollback. 
+        To ensure the actual existance of a row and protect it against concurrent 
+       updates one must use SELECT FOR UPDATE or an appropriate LOCK TABLE 
+       statement. This should be taken into account when porting applications from 
+       previous releases of Postgres and other environments. 
+        Keep above in mind if you are using contrib/refint.* triggers for 
+       referential integrity. Additional technics are required now. One way is to 
+       use LOCK parent_table IN SHARE ROW EXCLUSIVE MODE command if a transaction 
+       is going to update/delete a primary key and use LOCK parent_table IN SHARE 
+       MODE command if a transaction is going to update/insert a foreign key. 
+
+         Note: Note that if you run a transaction in SERIALIZABLE mode then you 
+         must execute the LOCK commands above before execution of any DML 
+         statement (SELECT/INSERT/DELETE/UPDATE/FETCH/COPY_TO) in the transaction.
+
+        
+        These inconveniences will disappear in the future when the ability to read 
+       dirty (uncommitted) data (regardless of isolation level) and true 
+       referential integrity will be implemented. 
+
+Detailed Change List
+
+        
+
+       Bug Fixes
+       ---------
+       Fix text<->float8 and text<->float4 conversion functions(Thomas)
+       Fix for creating tables with mixed-case constraints(Billy)
+       Change exp()/pow() behavior to generate error on underflow/overflow(Jan)
+       Fix bug in pg_dump -z
+       Memory overrun cleanups(Tatsuo)
+       Fix for lo_import crash(Tatsuo)
+       Adjust handling of data type names to suppress double quotes(Thomas)
+       Use type coersion for matching columns and DEFAULT(Thomas)
+       Fix deadlock so it only checks once after one second of sleep(Bruce)
+       Fixes for aggregates and PL/pgsql(Hiroshi)
+       Fix for subquery crash(Vadim)
+       Fix for libpq function PQfnumber and case-insensitive names(Bahman 
+       Rafatjoo)
+       Fix for large object write-in-middle, no extra block, memory 
+       consumption(Tatsuo)
+       Fix for pg_dump -d or -D and  quote special characters in INSERT
+       Repair serious problems with dynahash(Tom)
+       Fix INET/CIDR portability problems
+       Fix problem with selectivity error in ALTER TABLE ADD COLUMN(Bruce)
+       Fix executor so mergejoin of different column types works(Tom)
+       Fix for Alpha OR selectivity bug
+       Fix OR index selectivity problem(Bruce)
+       Fix so \d shows proper length for char()/varchar()(Ryan)
+       Fix tutorial code(Clark)
+       Improve destroyuser checking(Oliver)
+       Fix for Kerberos(Rodney McDuff)
+       Fix for dropping database while dirty buffers(Bruce)
+       Fix so sequence nextval() can be case-sensitive(Bruce)
+       Fix !!= operator
+       Drop buffers before destroying database files(Bruce)
+       Fix case where executor evaluates functions twice(Tatsuo)
+       Allow sequence nextval actions to be case-sensitive(Bruce)
+       Fix optimizer indexing not working for negative numbers(Bruce)
+       Fix for memory leak in executor with fjIsNull
+       Fix for aggregate memory leaks(Erik Riedel)
+       Allow username containing a dash GRANT permissions
+       Cleanup of NULL in inet types
+       Clean up system table bugs(Tom)
+       Fix problems of PAGER and \? command(Masaaki Sakaida)
+       Reduce default multi-segment file size limit to 1GB(Peter)
+       Fix for dumping of CREATE OPERATOR(Tom)
+       Fix for backward scanning of cursors(Hiroshi Inoue)
+       Fix for COPY FROM STDIN when using \i(Tom)
+       Fix for subselect is compared inside an expression(Jan)
+       Fix handling of error reporting while returning rows(Tom)
+       Fix problems with reference to array types(Tom,Jan)
+       Prevent UPDATE SET oid(Jan)
+       Fix pg_dump so -t option can handle case-sensitive tablenames
+       Fixes for GROUP BY in special cases(Tom, Jan)
+       Fix for memory leak in failed queries(Tom)
+       DEFAULT now supports mixed-case identifiers(Tom)
+       Fix for multi-segment uses of DROP/RENAME table, indexes(Ole Gjerde)
+       Disable use of pg_dump with both -o and -d options(Bruce)
+       Allow pg_dump to properly dump GROUP permissions(Bruce)
+
+       Enhancements
+       ------------
+       Add "vacuumdb" utility
+       Speed up libpq by allocating memory better(Tom)
+       EXPLAIN all indices used(Tom)
+       Implement CASE, COALESCE, NULLIF  expression(Thomas)
+       New pg_dump table output format(Constantin)
+       Add string min()/max() functions(Thomas)
+       Extend new type coersion techniques to aggregates(Thomas)
+       New moddatetime contrib(Terry)
+       Update to pgaccess 0.96(Constantin)
+       Add routines for single-byte "char" type(Thomas)
+       Improved substr() function(Thomas)
+       Improved multi-byte handling(Tatsuo)
+       Multi-version concurrency control/MVCC(Vadim)
+       New Serialized mode(Vadim)
+       Fix for tables over 2gigs(Peter)
+       New SET TRANSACTION ISOLATION LEVEL(Vadim)
+       New LOCK TABLE IN ... MODE(Vadim)
+       Update ODBC driver(Byron)
+       New NUMERIC data type(Jan)
+       New SELECT FOR UPDATE(Vadim)
+       Handle "NaN" and "Infinity" for input values(Jan)
+       Improved date/year handling(Thomas)
+       Improved handling of backend connections(Magnus)
+       New options ELOG_TIMESTAMPS and USE_SYSLOG options for log files(Massimo)
+       New TCL_ARRAYS option(Massimo)
+       New INTERSECT and EXCEPT(Stefan)
+       New pg_index.indisprimary for primary key tracking(D'Arcy)
+       New pg_dump option to allow dropping of tables before creation(Brook)
+       Speedup of row output routines(Tom)
+       New READ COMMITTED isolation level(Vadim)
+       New TEMP tables/indexes(Bruce)
+       Prevent sorting if result is already sorted(Jan)
+       New memory allocation optimization(Jan)
+       Allow psql to do \p\g(Bruce)
+       Allow multiple rule actions(Jan)
+       Added LIMIT/OFFSET functionality(Jan)
+       Improve optimizer when joining a large number of tables(Bruce)
+       New intro to SQL from S. Simkovics' Master's Thesis (Stefan, Thomas)
+       New intro to backend processing from S. Simkovics' Master's Thesis (Stefan)
+       Improved int8 support(Ryan Bradetich, Thomas, Tom)
+       New routines to convert between int8 and text/varchar types(Thomas)
+       New bushy plans, where meta-tables are joined(Bruce)
+       Enable right-hand queries by default(Bruce)
+       Allow reliable maximum number of backends to be set at configure time
+             (--with-maxbackends and postmaster switch (-N backends))(Tom)
+       GEQO default now 10 tables because of optimizer speedups(Tom)
+       Allow NULL=Var for MS-SQL portability(Michael, Bruce)
+       Modify contrib check_primary_key() so either "automatic" or 
+       "dependent"(Anand)
+       Allow psql \d on a view show query(Ryan)
+       Speedup for LIKE(Bruce)
+       Ecpg fixes/features, see src/interfaces/ecpg/ChangeLog file(Michael)
+       JDBC fixes/features, see src/interfaces/jdbc/CHANGELOG(Peter)
+       Make % operator have precedence like /(Bruce)
+       Add new postgres -O option to allow system table structure changes(Bruce)
+       Update contrib/pginterface/findoidjoins script(Tom)
+       Major speedup in vacuum of deleted rows with indexes(Vadim) 
+       Allow non-SQL functions to run different versions based on arguments(Tom)
+       Add -E option that shows actual queries sent by \dt and friends(Masaaki 
+       Sakaida)
+       Add version number in startup banners for psql(Masaaki Sakaida)
+       New contrib/vacuumlo removes large objects not referenced(Peter)
+       New initialization for table sizes so non-vacuumed tables perform 
+       better(Tom)
+       Improve error messages when a connection is rejected(Tom)
+       Support for arrays of char() and varchar() fields(Massimo)
+       Overhaul of hash code to increase reliability and performance(Tom)
+       Update to PyGreSQL 2.4(D'Arcy)
+       Changed debug options so -d4 and -d5 produce different node displays(Jan)
+       New pg_options: pretty_plan, pretty_parse, pretty_rewritten(Jan)
+       Better optimization statistics for system table access(Tom)
+       Better handling of non-default block sizes(Massimo)
+       Improve GEQO optimizer memory consumption(Tom)
+       UNION now suppports ORDER BY of columns not in target list(Jan)
+       Major libpq++ improvements(Vince Vielhaber)
+       pg_dump now uses -z(ACL's) as default(Bruce)
+       backend cache, memory speedups(Tom)
+       have pg_dump do everything in one snapshot transaction(Vadim)
+       fix for large object memory leakage, fix for pg_dumping(Tom)
+       INET type now respects netmask for comparisons
+
+       Source Tree Changes
+       -------------------
+       Improve port matching(Tom)
+       Portability fixes for SunOS
+       Add NT/Win32 backend port and enable dynamic loading(Magnus and Daniel 
+       Horak)
+       New port to Cobalt Qube(Mips) running Linux(Tatsuo)
+       Port to NetBSD/m68k(Mr. Mutsuki Nakajima)
+       Port to NetBSD/sun3(Mr. Mutsuki Nakajima)
+       Port to NetBSD/macppc(Toshimi Aoki)
+       Fix for tcl/tk configuration(Vince)
+       Removed CURRENT keyword for rule queries(Jan)
+       NT dynamic loading now works(Daniel Horak)
+       Add ARM32 support(Andrew McMurry)
+       Better support for HPUX 11 and Unixware
+       Improve file handling to be more uniform, prevent file descriptor leak(Tom)
+       New install commands for plpgsql(Jan)
+            
+
+        
+
+Release 6.4.2
+
+       The 6.4.1 release was improperly packaged. This also has one additional bug 
+       fix.
+
+Migration to v6.4.2
+
+       A dump/restore is not required for those running 6.4.*.
+
+Detailed Change List
+
+       Fix for datetime constant problem on some platforms(Thomas)
+
+Release 6.4.1
+
+       This is basically a cleanup release for 6.4. We have fixed a variety of 
+       problems reported by 6.4 users.
+
+Migration to v6.4.1
+
+       A dump/restore is not required for those running 6.4.
+
+Detailed Change List
+
+       Add pg_dump -N flag to force double quotes around identifiers.  This is
+               the default(Thomas)
+       Fix for NOT in where clause causing crash(Bruce)
+       EXPLAIN VERBOSE coredump fix(Vadim)
+       Fix shared-library problems on Linux
+       Fix test for table existance to allow mixed-case and whitespace in
+               the table name(Thomas)
+       Fix a couple of pg_dump bugs
+       Configure matches template/.similar entries better(Tom)
+       Change builtin function names from SPI_* to spi_*
+       OR WHERE clause fix(Vadim)
+       Fixes for mixed-case table names(Billy)
+       contrib/linux/postgres.init.csh/sh fix(Thomas)
+       libpq memory overrun fix
+       SunOS fixes(Tom)
+       Change exp() behavior to generate error on underflow(Thomas)
+       pg_dump fixes for memory leak, inheritance constraints, layout change
+       update pgaccess to 0.93
+       Fix prototype for 64-bit platforms
+       Multi-byte fixes(Tatsuo)
+       New ecpg man page
+       Fix memory overruns(Tatsuo)
+       Fix for lo_import() crash(Bruce)
+       Better search for install program(Tom)
+       Timezone fixes(Tom)
+       HPUX fixes(Tom)
+       Use implicit type coersion for matching DEFAULT values(Thomas)
+       Add routines to help with single-byte (internal) character type(Thomas)
+       Compilation of libpq for Win32 fixes(Magnus)
+       Upgrade to PyGreSQL 2.2(D'Arcy)
+
+Release 6.4
+
+       There are many new features and improvements in this release. Thanks to our 
+       developers and maintainers, nearly every aspect of the system has received 
+       some attention since the previous release. Here is a brief, incomplete 
+       summary: 
+       o Views and rules are now functional thanks to extensive new code in the 
+        rewrite rules system from Jan Wieck. He also wrote a chapter on it for the 
+        Programmer's Guide.
+       o Jan also contributed a second procedural language, PL/pgSQL, to go with 
+        the original PL/pgTCL procedural language he contributed last release.
+       o We have optional multiple-byte character set support from Tatsuo Iishi to 
+        complement our existing locale support.
+       o Client/server communications has been cleaned up, with better support for 
+        asynchronous messages and interrupts thanks to Tom Lane.
+       o The parser will now perform automatic type coersion to match arguments to 
+        available operators and functions, and to match columns and expressions 
+        with target columns. This uses a generic mechanism which supports the type 
+        extensibility features of Postgres. There is a new chapter in the User's 
+        Guide which covers this topic.
+       o Three new data types have been added. Two types, inet and cidr, support 
+        various forms of IP network, subnet, and machine addressing. There is now 
+        an 8-byte integer type available on some platforms. See the chapter on 
+        data types in the User's Guide for details. A fourth type, serial, is now 
+        supported by the parser as an amalgam of the int4 type, a sequence, and a 
+        unique index.
+       o Several more SQL92-compatible syntax features have been added, including 
+        INSERT DEFAULT VALUES
+       o The automatic configuration and installation system has received some 
+        attention, and should be more robust for more platforms than it has ever 
+        been.
+
+Migration to v6.4
+
+       A dump/restore using pg_dump or pg_dumpall is required for those wishing to 
+       migrate data from any previous release of Postgres.
+
+Detailed Change List
+
+       Bug Fixes
+       ---------
+       Fix for a tiny memory leak in PQsetdb/PQfinish(Bryan)
+       Remove char2-16 data types, use char/varchar(Darren)
+       Pqfn not handles a NOTICE message(Anders)
+       Reduced busywaiting overhead for spinlocks with many backends (dg)
+       Stuck spinlock detection (dg)
+       Fix up "ISO-style" timespan decoding and encoding(Thomas)
+       Fix problem with table drop after rollback of transaction(Vadim)
+       Change error message and remove non-functional update message(Vadim)
+       Fix for COPY array checking
+       Fix for SELECT 1 UNION SELECT NULL
+       Fix for buffer leaks in large object calls(Pascal)
+       Change owner from oid to int4 type(Bruce)
+       Fix a bug in the oracle compatibility functions btrim() ltrim() and rtrim()
+       Fix for shared invalidation cache overflow(Massimo)
+       Prevent file descriptor leaks in failed COPY's(Bruce)
+       Fix memory leak in libpgtcl's pg_select(Constantin)
+       Fix problems with username/passwords over 8 characters(Tom)
+       Fix problems with handling of asynchronous NOTIFY in backend(Tom)
+       Fix of many bad system table entries(Tom)
+
+       Enhancements
+       ------------
+       Upgrade ecpg and ecpglib,see src/interfaces/ecpc/ChangeLog(Michael)
+       Show the index used in an EXPLAIN(Zeugswetter)
+       EXPLAIN  invokes  rule system and shows plan(s) for rewritten queries(Jan)
+       Multi-byte awareness of many data types and functions, via 
+       configure(Tatsuo)
+       New configure --with-mb option(Tatsuo)
+       New initdb --pgencoding option(Tatsuo)
+       New createdb -E multibyte option(Tatsuo)
+       Select version(); now returns PostgreSQL version(Jeroen)
+       Libpq now allows asynchronous clients(Tom)
+       Allow cancel from client of backend query(Tom)
+       Psql now cancels query with Control-C(Tom)
+       Libpq users need not issue dummy queries to get NOTIFY messages(Tom)
+       NOTIFY now sends sender's PID, so you can tell whether it was your own(Tom)
+       PGresult struct now includes associated error message, if any(Tom)
+       Define "tz_hour" and "tz_minute" arguments to date_part()(Thomas)
+       Add routines to convert between varchar and bpchar(Thomas)
+       Add routines to allow sizing of varchar and bpchar into target 
+       columns(Thomas)
+       Add bit flags to support timezonehour and minute in data retrieval(Thomas)
+       Allow more variations on valid floating point numbers (e.g. ".1", 
+       "1e6")(Thomas)
+       Fixes for unary minus parsing with leading spaces(Thomas)
+       Implement TIMEZONE_HOUR, TIMEZONE_MINUTE per SQL92 specs(Thomas)
+       Check for and properly ignore FOREIGN KEY column constraints(Thomas)
+       Define USER as synonym for CURRENT_USER per SQL92 specs(Thomas)
+       Enable HAVING clause but no fixes elsewhere yet.
+       Make "char" type a synonym for "char(1)" (actually implemented as 
+       bpchar)(Thomas)
+       Save string type if specified for DEFAULT clause handling(Thomas)
+       Coerce operations involving different data types(Thomas)
+       Allow some index use for columns of different types(Thomas)
+       Add capabilities for automatic type conversion(Thomas)
+       Cleanups for large objects, so file is truncated on open(Peter)
+       Readline cleanups(Tom)
+       Allow psql  \f \ to make spaces as delimiter(Bruce)
+       Pass pg_attribute.atttypmod to the frontend for column field 
+       lengths(Tom,Bruce)
+       Msql compatibility library in /contrib(Aldrin)
+       Remove the requirement that ORDER/GROUP BY clause identifiers be 
+       included in the target list(David)
+       Convert columns to match columns in UNION clauses(Thomas)
+       Remove fork()/exec() and only do fork()(Bruce)
+       Jdbc cleanups(Peter)
+       Show backend status on ps command line(only works on some platforms)(Bruce)
+       Pg_hba.conf now has a sameuser option in the database field
+       Make lo_unlink take oid param, not int4
+       New DISABLE_COMPLEX_MACRO for compilers that can't handle our macros(Bruce)
+       Libpgtcl now handles NOTIFY as a Tcl event, need not send dummy 
+       queries(Tom)
+       libpgtcl cleanups(Tom)
+       Add -error option to libpgtcl's pg_result command(Tom)
+       New locale patch, see docs/README/locale(Oleg)
+       Fix for pg_dump so CONSTRAINT and CHECK syntax is correct(ccb)
+       New contrib/lo code for large object orphan removal(Peter)
+       New psql command "SET CLIENT_ENCODING TO 'encoding'" for multi-bytes
+       feature, see /doc/README.mb(Tatsuo)
+       /contrib/noupdate code to revoke update permission on a column
+       Libpq can now be compiled on win32(Magnus)
+       Add PQsetdbLogin() in libpq
+       New 8-byte integer type, checked by configure for OS support(Thomas)
+       Better support for quoted table/column names(Thomas)
+       Surround table and column names with double-quotes in pg_dump(Thomas)
+       PQreset() now works with passwords(Tom)
+       Handle case of GROUP BY target list column number out of range(David)
+       Allow UNION in subselects
+       Add auto-size to screen to \d? commands(Bruce)
+       Use UNION to show all \d? results in one query(Bruce)
+       Add \d? field search feature(Bruce)
+       Pg_dump issues fewer \connect requests(Tom)
+       Make pg_dump -z flag work better, document it in manual page(Tom)
+       Add HAVING clause with full support for subselects and unions(Stephan)
+       Full text indexing routines in contrib/fulltextindex(Maarten)
+       Transaction ids now stored in shared memory(Vadim)
+       New PGCLIENTENCODING when issuing COPY command(Tatsuo)
+       Support for SQL92 syntax "SET NAMES"(Tatsuo)
+       Support for LATIN2-5(Tatsuo)
+       Add UNICODE regression test case(Tatsuo)
+       Lock manager cleanup, new locking modes for LLL(Vadim)
+       Allow index use with OR clauses(Bruce)
+       Allows "SELECT NULL ORDER BY 1;"
+       Explain VERBOSE prints the plan, and now pretty-prints the plan to
+       the postmaster log file(Bruce)
+       Add Indices display to \d command(Bruce)
+       Allow GROUP BY on functions(David)
+       New pg_class.relkind for large objects(Bruce)
+       New way to send libpq NOTICE messages to a different location(Tom)
+       New \w write command to psql(Bruce)
+       New /contrib/findoidjoins scans oid columns to find join 
+       relationships(Bruce)
+       Allow binary-compatible indices to be considered when checking for valid
+       indices for restriction clauses containing a constant(Thomas)
+       New ISBN/ISSN code in /contrib/isbn_issn
+       Allow NOT LIKE, IN, NOT IN, BETWEEN, and NOT BETWEEN constraint(Thomas)
+       New rewrite system fixes many problems with rules and views(Jan)
+               * Rules on relations work
+               * Event qualifications on insert/update/delete work
+               * New OLD variable to reference CURRENT, CURRENT will be remove in 
+       future
+               * Update rules can reference NEW and OLD in rule 
+       qualifications/actions
+               * Insert/update/delete rules on views work
+               * Multiple rule actions are now supported, surrounded by 
+       parentheses
+               * Regular users can create views/rules on tables they have RULE 
+       permits
+               * Rules and views inherit the permissions on the creator
+               * No rules at the column level
+               * No UPDATE NEW/OLD rules
+               * New pg_tables, pg_indexes, pg_rules and pg_views system views
+               * Only a single action on SELECT rules
+               * Total rewrite overhaul, perhaps for 6.5
+               * handle subselects
+               * handle aggregates on views
+               * handle insert into select from view works
+       System indexes are now multi-key(Bruce)
+       Oidint2, oidint4, and oidname types are removed(Bruce)
+       Use system cache for more system table lookups(Bruce)
+       New backend programming language PL/pgSQL in backend/pl(Jan)
+       New SERIAL data type, auto-creates sequence/index(Thomas)
+       Enable assert checking without a recompile(Massimo)
+       User lock enhancements(Massimo)
+       New setval() command to set sequence value(Massimo)
+       Auto-remove unix socket file on startup if no postmaster running(Massimo)
+       Conditional trace package(Massimo)
+       New UNLISTEN command(Massimo)
+       Psql and libpq now compile under win32 using win32.mak(Magnus)
+       Lo_read no longer stores trailing NULL(Bruce)
+       Identifiers are now truncated to 31 characters internally(Bruce)
+       Createuser options now availble on the command line
+       Code for 64-bit integer supported added, configure tested, int8 
+       type(Thomas)
+       Prevent file descriptor leaf from failed COPY(Bruce)
+       New pg_upgrade command(Bruce)
+       Updated /contrib directories(Massimo)
+       New CREATE TABLE DEFAULT VALUES statement available(Thomas)
+       New INSERT INTO TABLE DEFAULT VALUES statement available(Thomas)
+       New DECLARE and FETCH feature(Thomas)
+       libpq's internal structures now not exported(Tom)
+       Allow up to 8 key indexes(Bruce)
+       Remove ARCHIVE keyword, that is no longer used(Thomas)
+       pg_dump -n flag to supress quotes around indentifiers
+       disable system columns for views(Jan)
+       new INET and CIDR types for network addresses(TomH, Paul)
+       no more double quotes in psql output
+       pg_dump now dumps views(Terry)
+       new SET QUERY_LIMIT(Tatsuo,Jan)
+
+       Source Tree Changes
+       -------------------
+       /contrib cleanup(Jun)
+       Inline some small functions called for every row(Bruce)
+       Alpha/linux fixes
+       Hp/UX cleanups(Tom)
+       Multi-byte regression tests(Soonmyung.)
+       Remove --disabled options from configure
+       Define PGDOC to use POSTGRESDIR by default
+       Make regression optional
+       Remove extra braces code to pgindent(Bruce)
+       Add bsdi shared library support(Bruce)
+       New --without-CXX support configure option(Brook)
+       New FAQ_CVS
+       Update backend flowchart in tools/backend(Bruce)
+       Change atttypmod from int16 to int32(Bruce, Tom)
+       Getrusage() fix for platforms that do not have it(Tom)
+       Add PQconnectdb, PGUSER, PGPASSWORD to libpq man page
+       NS32K platform fixes(Phil Nelson, John Buller)
+       Sco 7/UnixWare 2.x fixes(Billy,others)
+       Sparc/Solaris 2.5 fixes(Ryan)
+       Pgbuiltin.3 is obsolete, move to doc files(Thomas)
+       Even more documention(Thomas)
+       Nextstep support(Jacek)
+       Aix support(David)
+       pginterface manual page(Bruce)
+       shared libraries all have version numbers
+       merged all OS-specific shared library defines into one file
+       smarter TCL/TK configuration checking(Billy)
+       smarter perl configuration(Brook)
+       configure uses supplied install-sh if no install script found(Tom)
+       new Makefile.shlib for shared library configuration(Tom)
+
+Release 6.3.2
+
+       This is a bugfix release for 6.3.x. Refer to the release notes for v6.3 for 
+       a more complete summary of new features.
+       Summary: 
+       o Repairs automatic configuration support for some platforms, including 
+        Linux, from breakage inadvertently introduced in v6.3.1.
+       o Correctly handles function calls on the left side of BETWEEN and LIKE 
+        clauses.
+       A dump/restore is NOT required for those running 6.3 or 6.3.1. A 'make 
+       distclean', 'make', and 'make install' is all that is required. This last 
+       step should be performed while the postmaster is not running. You should 
+       re-link any custom applications that use Postgres libraries.
+       For upgrades from pre-v6.3 installations, refer to the installation and 
+       migration instructions for v6.3.
+
+Detailed Change List
+
+       Changes
+       -------
+       Configure detection improvements for tcl/tk(Brook Milligan, Alvin)
+       Manual page improvements(Bruce)
+       BETWEEN and LIKE fix(Thomas)
+       fix for psql \connect used by pg_dump(Oliver Elphick)
+       New odbc driver
+       pgaccess, version 0.86
+       qsort removed, now uses libc version, cleanups(Jeroen)
+       fix for buffer over-runs detected(Maurice Gittens)
+       fix for buffer overrun in libpgtcl(Randy Kunkee)
+       fix for UNION with DISTINCT or ORDER BY(Bruce)
+       gettimeofday configure check(Doug Winterburn)
+       Fix "indexes not used" bug(Vadim)
+       docs additions(Thomas)
+       Fix for backend memory leak(Bruce)
+       libreadline cleanup(Erwan MAS)
+       Remove DISTDIR(Bruce)
+       Makefile dependency cleanup(Jeroen van Vianen)
+       ASSERT fixes(Bruce)
+
+Release 6.3.1
+
+       Summary: 
+       o Additional support for multi-byte character sets.
+       o Repair byte ordering for mixed-endian clients and servers.
+       o Minor updates to allowed SQL syntax.
+       o Improvements to the configuration autodetection for installation.
+       A dump/restore is NOT required for those running 6.3. A 'make distclean', 
+       'make', and 'make install' is all that is required. This last step should 
+       be performed while the postmaster is not running. You should re-link any 
+       custom applications that use Postgres libraries.
+       For upgrades from pre-v6.3 installations, refer to the installation and 
+       migration instructions for v6.3.
+
+Detailed Change List
+
+       Changes
+       -------
+       ecpg cleanup/fixes, now version 1.1(Michael Meskes)
+       pg_user cleanup(Bruce)
+       large object fix for pg_dump and tclsh (alvin)
+       LIKE fix for multiple adjacent underscores
+       fix for redefining builtin functions(Thomas)
+       ultrix4 cleanup
+       upgrade to pg_access 0.83
+       updated CLUSTER manual page
+       multi-byte character set support, see doc/README.mb(Tatsuo)
+       configure --with-pgport fix
+       pg_ident fix
+       big-endian fix for backend communications(Kataoka)
+       SUBSTR() and substring() fix(Jan)
+       several jdbc fixes(Peter)
+       libpgtcl improvements, see libptcl/README(Randy Kunkee)
+       Fix for "Datasize = 0" error(Vadim)
+       Prevent \do from wrapping(Bruce)
+       Remove duplicate Russian character set entries
+       Sunos4 cleanup
+       Allow optional TABLE keyword in LOCK and SELECT INTO(Thomas)
+       CREATE SEQUENCE options to allow a negative integer(Thomas)
+       Add "PASSWORD" as an allowed column identifier(Thomas)
+       Add checks for UNION target fields(Bruce)
+       Fix Alpha port(Dwayne Bailey)
+       Fix for text arrays containing quotes(Doug Gibson)
+       Solaris compile fix(Albert Chin-A-Young)
+       Better identify tcl and tk libs and includes(Bruce)
+
+Release 6.3
+
+       There are many new features and improvements in this release. Here is a 
+       brief, incomplete summary: 
+       o Many new SQL features, including full SQL92 subselect capability 
+        (everything is here but target-list subselects).
+       o Support for client-side environment variables to specify time zone and 
+        date style.
+       o Socket interface for client/server connection. This is the default now so 
+        you may need to start postmaster with the ?-i? flag.
+       o Better password authorization mechanisms. Default table permissions have 
+        changed.
+       o Old-style ?time travel? has been removed. Performance has been improved.
+
+         Note: Bruce Momjian wrote the following notes to introduce the new 
+         release.
+
+       There are some general 6.3 issues that I want to mention. These are only 
+       the big items that can not be described in one sentence. A review of the 
+       detailed changes list is still needed.
+       First, we now have subselects. Now that we have them, I would like to 
+       mention that without subselects, SQL is a very limited language. Subselects 
+       are a major feature, and you should review your code for places where 
+       subselects provide a better solution for your queries. I think you will 
+       find that there are more uses for subselects than you may think. Vadim has 
+       put us on the big SQL map with subselects, and fully functional ones too. 
+       The only thing you can't do with subselects is to use them in the target 
+       list.
+       Second, 6.3 uses unix domain sockets rather than TCP/IP by default. To 
+       enable connections from other machines, you have to use the new postmaster 
+       -i option, and of course edit pg_hba.conf. Also, for this reason, the 
+       format of pg_hba.conf has changed.
+       Third, char() fields will now allow faster access than varchar() or text. 
+       Specifically, the text and varchar() have a penalty for access to any 
+       columns after the first column of this type. char() used to also have this 
+       access penalty, but it no longer does. This may suggest that you redesign 
+       some of your tables, especially if you have short character columns that 
+       you have defined as varchar() or text. This and other changes make 6.3 even 
+       faster than earlier releases.
+       We now have passwords definable independent of any Unix file. There are new 
+       SQL USER commands. See the pg_hba.conf manual page for more information. 
+       There is a new table, pg_shadow, which is used to store user information 
+       and user passwords, and it by default only SELECT-able by the postgres 
+       super-user. pg_user is now a view of pg_shadow, and is SELECT-able by 
+       PUBLIC. You should keep using pg_user in your application without changes.
+       User-created tables now no longer have SELECT permission to PUBLIC by 
+       default. This was done because the ANSI standard requires it. You can of 
+       course GRANT any permissions you want after the table is created. System 
+       tables continue to be SELECT-able by PUBLIC.
+       We also have real deadlock detection code. No more sixty-second timeouts. 
+       And the new locking code implements a FIFO better, so there should be less 
+       resource starvation during heavy use.
+       Many complaints have been made about inadequate documenation in previous 
+       releases. Thomas has put much effort into many new manuals for this 
+       release. Check out the doc/ directory.
+       For performance reasons, time travel is gone, but can be implemented using 
+       triggers (see pgsql/contrib/spi/README). Please check out the new \d 
+       command for types, operators, etc. Also, views have their own permissions 
+       now, not based on the underlying tables, so permissions on them have to be 
+       set separately. Check /pgsql/interfaces for some new ways to talk to 
+       Postgres.
+       This is the first release that really required an explanation for existing 
+       users. In many ways, this was necessary because the new release removes 
+       many limitations, and the work-arounds people were using are no longer 
+       needed.
+
+Migration to v6.3
+
+       A dump/restore using pg_dump or pg_dumpall is required for those wishing to 
+       migrate data from any previous release of Postgres.
+
+Detailed Change List
+
+       Bug Fixes
+       ---------
+       Fix binary cursors broken by MOVE implementation(Vadim)
+       Fix for tcl library crash(Jan)
+       Fix for array handling, from Gerhard Hintermayer
+       Fix acl error, and remove duplicate pqtrace(Bruce)
+       Fix psql \e for empty file(Bruce)
+       Fix for textcat on varchar() fields(Bruce)
+       Fix for DBT Sendproc (Zeugswetter Andres)
+       Fix vacuum analyze syntax problem(Bruce)
+       Fix for international identifiers(Tatsuo)
+       Fix aggregates on inherited tables(Bruce)
+       Fix substr() for out-of-bounds data
+       Fix for select 1=1 or 2=2, select 1=1 and 2=2, and select sum(2+2)(Bruce)
+       Fix notty output to show status result.  -q option still turns it 
+       off(Bruce)
+       Fix for count(*), aggs with views and multiple tables and sum(3)(Bruce)
+       Fix cluster(Bruce)
+       Fix for PQtrace start/stop several times(Bruce)
+       Fix a variety of locking problems like newer lock waiters getting
+               lock before older waiters, and having readlock people not share
+               locks if a writer is waiting for a lock, and waiting writers not
+               getting priority over waiting readers(Bruce)
+       Fix crashes in psql when executing queries from external files(James)
+       Fix problem with multiple order by columns, with the first one having
+               NULL values(Jeroen)
+       Use correct hash table support functions for float8 and int4(Thomas)
+       Re-enable JOIN= option in CREATE OPERATOR statement (Thomas)
+       Change precedence for boolean operators to match expected behavior(Thomas)
+       Generate elog(ERROR) on over-large integer(Bruce)
+       Allow multiple-argument functions in constraint clauses(Thomas)
+       Check boolean input literals for 'true','false','yes','no','1','0'
+               and throw elog(ERROR) if unrecognized(Thomas)
+       Major large objects fix
+       Fix for GROUP BY showing duplicates(Vadim)
+       Fix for index scans in MergeJion(Vadim)
+
+       Enhancements
+       ------------
+       Subselects with EXISTS, IN, ALL, ANY keywords (Vadim, Bruce, Thomas)
+       New User Manual(Thomas, others)
+       Speedup by inlining some frequently-called functions
+       Real deadlock detection, no more timeouts(Bruce)
+       Add SQL92 "constants" CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP, 
+               CURRENT_USER(Thomas)
+       Modify constraint syntax to be SQL92-compliant(Thomas)
+       Implement SQL92 PRIMARY KEY and UNIQUE clauses using indices(Thomas)
+       Recognize SQL92 syntax for FOREIGN KEY. Throw elog notice(Thomas)
+       Allow NOT NULL UNIQUE constraint clause (each allowed separately 
+       before)(Thomas)
+       Allow Postgres-style casting ("::") of non-constants(Thomas)
+       Add support for SQL3 TRUE and FALSE boolean constants(Thomas)
+       Support SQL92 syntax for IS TRUE/IS FALSE/IS NOT TRUE/IS NOT FALSE(Thomas)
+       Allow shorter strings for boolean literals (e.g. "t", "tr", "tru")(Thomas)
+       Allow SQL92 delimited identifiers(Thomas)
+       Implement SQL92 binary and hexadecimal string decoding (b'10' and 
+       x'1F')(Thomas)
+       Support SQL92 syntax for type coercion of literal strings
+               (e.g. "DATETIME 'now'")(Thomas)
+       Add conversions for int2, int4, and OID types to and from text(Thomas)
+       Use shared lock when building indices(Vadim)
+       Free memory allocated for an user query inside transaction block after
+               this query is done, was turned off in <= 6.2.1(Vadim)
+       New SQL statement CREATE PROCEDURAL LANGUAGE(Jan)
+       New Postgres Procedural Language (PL) backend interface(Jan)
+       Rename pg_dump -H option to -h(Bruce)
+       Add Java support for passwords, European dates(Peter)
+       Use indices for LIKE and ~, !~ operations(Bruce)
+       Add hash functions for datetime and timespan(Thomas)
+       Time Travel removed(Vadim, Bruce)
+       Add paging for \d and \z, and fix \i(Bruce)
+       Add Unix domain socket support to backend and to frontend library(Goran)
+       Implement CREATE DATABASE/WITH LOCATION and initlocation utility(Thomas)
+       Allow more SQL92 and/or Postgres reserved words as column 
+       identifiers(Thomas)
+       Augment support for SQL92 SET TIME ZONE...(Thomas)
+       SET/SHOW/RESET TIME ZONE uses TZ backend environment variable(Thomas)
+       Implement SET keyword = DEFAULT and SET TIME ZONE DEFAULT(Thomas)
+       Enable SET TIME ZONE using TZ environment variable(Thomas)
+       Add PGDATESTYLE environment variable to frontend and backend 
+       initialization(Thomas)
+       Add PGTZ, PGCOSTHEAP, PGCOSTINDEX, PGRPLANS, PGGEQO
+               frontend library initialization environment variables(Thomas)
+       Regression tests time zone automatically set with "setenv PGTZ 
+       PST8PDT"(Thomas)
+       Add pg_description table for info on tables, columns, operators, types, and
+               aggregates(Bruce)
+       Increase 16 char limit on system table/index names to 32 characters(Bruce)
+       Rename system indices(Bruce)
+       Add 'GERMAN' option to SET DATESTYLE(Thomas)
+       Define an "ISO-style" timespan output format with "hh:mm:ss" fields(Thomas)
+       Allow fractional values for delta times (e.g. '2.5 days')(Thomas)
+       Validate numeric input more carefully for delta times(Thomas)
+       Implement day of year as possible input to date_part()(Thomas)
+       Define timespan_finite() and text_timespan() functions(Thomas)
+       Remove archive stuff(Bruce)
+       Allow for a pg_password authentication database that is separate from
+               the system password file(Todd)
+       Dump ACLs, GRANT, REVOKE permissions(Matt)
+       Define text, varchar, and bpchar string length functions(Thomas)
+       Fix Query handling for inheritance, and cost computations(Bruce)
+       Implement CREATE TABLE/AS SELECT (alternative to SELECT/INTO)(Thomas)
+       Allow NOT, IS NULL, IS NOT NULL in constraints(Thomas)
+       Implement UNIONs for SELECT(Bruce)
+       Add UNION, GROUP, DISTINCT to INSERT(Bruce)
+       varchar() stores only necessary bytes on disk(Bruce)
+       Fix for BLOBs(Peter)
+       Mega-Patch for JDBC...see README_6.3 for list of changes(Peter)
+       Remove unused "option" from PQconnectdb()
+       New LOCK command and lock manual page describing deadlocks(Bruce)
+       Add new psql \da, \dd, \df, \do, \dS, and \dT commands(Bruce)
+       Enhance psql \z to show sequences(Bruce)
+       Show NOT NULL and DEFAULT in psql \d table(Bruce)
+       New psql .psqlrc file startup(Andrew)
+       Modify sample startup script in contrib/linux to show syslog(Thomas)
+       New types for IP and MAC addresses in contrib/ip_and_mac(TomH)
+       Unix system time conversions with date/time types in 
+       contrib/unixdate(Thomas)
+       Update of contrib stuff(Massimo)
+       Add Unix socket support to DBD::Pg(Goran)
+       New python interface (PyGreSQL 2.0)(D'Arcy)
+       New frontend/backend protocol has a version number, network byte 
+       order(Phil)
+       Security features in pg_hba.conf enhanced and documented, many 
+       cleanups(Phil)
+       CHAR() now faster access than VARCHAR() or TEXT
+       ecpg embedded SQL preprocessor
+       Reduce system column overhead(Vadmin)
+       Remove pg_time table(Vadim)
+       Add pg_type attribute to identify types that need length (bpchar, varchar)
+       Add report of offending line when COPY command fails
+       Allow VIEW permissions to be set separately from the underlying tables. 
+               For security, use GRANT/REVOKE on views as appropriate(Jan)
+       Tables now have no default GRANT SELECT TO PUBLIC.  You must
+               explicitly grant such permissions.
+       Clean up tutorial examples(Darren)
+
+       Source Tree Changes
+       -------------------
+       Add new html development tools, and flow chart in /tools/backend
+       Fix for SCO compiles
+       Stratus computer port Robert Gillies
+       Added support for shlib for BSD44_derived & i386_solaris
+       Make configure more automated(Brook)
+       Add script to check regression test results
+       Break parser functions into smaller files, group together(Bruce)
+       Rename heap_create to heap_create_and_catalog, rename heap_creatr
+               to heap_create()(Bruce)
+       Sparc/Linux patch for locking(TomS)
+       Remove PORTNAME and reorganize port-specific stuff(Marc)
+       Add optimizer README file(Bruce)
+       Remove some recursion in optimizer and clean up some code there(Bruce)
+       Fix for NetBSD locking(Henry)
+       Fix for libptcl make(Tatsuo)
+       AIX patch(Darren)
+       Change IS TRUE, IS FALSE, ... to expressions using "=" rather than
+               function calls to istrue() or isfalse() to allow 
+       optimization(Thomas)
+       Various fixes NetBSD/Sparc related(TomH)
+       Alpha linux locking(Travis,Ryan)
+       Change elog(WARN) to elog(ERROR)(Bruce)
+       FAQ for FreeBSD(Marc)
+       Bring in the PostODBC source tree as part of our standard 
+       distribution(Marc)
+       A minor patch for HP/UX 10 vs 9(Stan)
+       New pg_attribute.atttypmod for type-specific info like varchar 
+       length(Bruce)
+       Unixware patches(Billy)
+       New i386 'lock' for spin lock asm(Billy)
+       Support for multiplexed backends is removed
+       Start an OpenBSD port
+       Start an AUX port
+       Start a Cygnus port
+       Add string functions to regression suite(Thomas)
+       Expand a few function names formerly truncated to 16 characters(Thomas)
+       Remove un-needed malloc() calls and replace with palloc()(Bruce)
+
+Release 6.2.1
+
+       v6.2.1 is a bug-fix and usability release on v6.2.
+       Summary: 
+       o Allow strings to span lines, per SQL92.
+       o Include example trigger function for inserting user names on table 
+        updates.
+       This is a minor bug-fix release on v6.2. For upgrades from pre-v6.2 
+       systems, a full dump/reload is required. Refer to the v6.2 release notes 
+       for instructions.
+
+Migration from v6.2 to v6.2.1
+
+       This is a minor bug-fix release. A dump/reload is not required from v6.2, 
+       but is required from any release prior to v6.2.
+       In upgrading from v6.2, if you choose to dump/reload you will find that 
+       avg(money) is now calculated correctly. All other bug fixes take effect 
+       upon updating the executables.
+       Another way to avoid dump/reload is to use the following SQL command from 
+       psql to update the existing system table: 
+
+         update pg_aggregate set aggfinalfn = 'cash_div_flt8'
+          where aggname = 'avg' and aggbasetype = 790;
+
+       This will need to be done to every existing database, including template1.
+
+Detailed Change List
+
+       Changes in this release
+       -----------------------
+       Allow TIME and TYPE column names(Thomas)
+       Allow larger range of true/false as boolean values(Thomas)
+       Support output of "now" and "current"(Thomas)
+       Handle DEFAULT with INSERT of NULL properly(Vadim)
+       Fix for relation reference counts problem in buffer manager(Vadim)
+       Allow strings to span lines, like ANSI(Thomas)
+       Fix for backward cursor with ORDER BY(Vadim)
+       Fix avg(cash) computation(Thomas)
+       Fix for specifying a column twice in ORDER/GROUP BY(Vadim)
+       Documented new libpq function to return affected rows, PQcmdTuples(Bruce)
+       Trigger function for inserting user names for INSERT/UPDATE(Brook Milligan)
+
+Release 6.2
+
+       A dump/restore is required for those wishing to migrate data from previous 
+       releases of Postgres.
+
+Migration from v6.1 to v6.2
+
+       This migration requires a complete dump of the 6.1 database and a restore 
+       of the database in 6.2.
+       Note that the pg_dump and pg_dumpall utility from 6.2 should be used to 
+       dump the 6.1 database.
+
+Migration from v1.x to v6.2
+
+       Those migrating from earlier 1.* releases should first upgrade to 1.09 
+       because the COPY output format was improved from the 1.02 release.
+
+Detailed Change List
+
+       Bug Fixes
+       ---------
+       Fix problems with pg_dump for inheritance, sequences, archive tables(Bruce)
+       Fix compile errors on overflow due to shifts, unsigned, and bad prototypes
+                from Solaris(Diab Jerius)
+       Fix bugs in geometric line arithmetic (bad intersection 
+       calculations)(Thomas)
+       Check for geometric intersections at endpoints to avoid rounding 
+       ugliness(Thomas)
+       Catch non-functional delete attempts(Vadim)
+       Change time function names to be more consistent(Michael Reifenberg)
+       Check for zero divides(Michael Reifenberg)
+       Fix very old bug which made tuples changed/inserted by a commnd
+               visible to the command itself (so we had multiple update of 
+               updated tuples, etc)(Vadim)
+       Fix for SELECT null, 'fail' FROM pg_am (Patrick)
+       SELECT NULL as EMPTY_FIELD now allowed(Patrick)
+       Remove un-needed signal stuff from contrib/pginterface
+       Fix OR (where x <> 1 or x isnull didn't return tuples with x NULL) (Vadim)
+       Fix time_cmp function (Vadim)
+       Fix handling of functions with non-attribute first argument in 
+               WHERE clauses (Vadim)
+       Fix GROUP BY when order of entries is different from order
+               in target list (Vadim)
+       Fix pg_dump for aggregates without sfunc1 (Vadim)
+
+       Enhancements
+       ------------
+       Default genetic optimizer GEQO parameter is now 8(Bruce)
+       Allow use parameters in target list having aggregates in functions(Vadim)
+       Added JDBC driver as an interface(Adrian & Peter)
+       pg_password utility
+       Return number of tuples inserted/affected by INSERT/UPDATE/DELETE 
+       etc.(Vadim)
+       Triggers implemented with CREATE TRIGGER (SQL3)(Vadim)
+       SPI (Server Programming Interface) allows execution of queries inside 
+               C-functions (Vadim)
+       NOT NULL implemented (SQL92)(Robson Paniago de Miranda)
+       Include reserved words for string handling, outer joins, and unions(Thomas)
+       Implement extended comments ("/* ... */") using exclusive states(Thomas)
+       Add "//" single-line comments(Bruce)
+       Remove some restrictions on characters in operator names(Thomas)
+       DEFAULT and CONSTRAINT for tables implemented (SQL92)(Vadim & Thomas)
+       Add text concatenation operator and function (SQL92)(Thomas)
+       Support WITH TIME ZONE syntax (SQL92)(Thomas)
+       Support INTERVAL unit TO unit syntax (SQL92)(Thomas)
+       Define types DOUBLE PRECISION, INTERVAL, CHARACTER,
+               and CHARACTER VARYING (SQL92)(Thomas)
+       Define type FLOAT(p) and rudimentary DECIMAL(p,s), NUMERIC(p,s) 
+       (SQL92)(Thomas)
+       Define EXTRACT(), POSITION(), SUBSTRING(), and TRIM() (SQL92)(Thomas)
+       Define CURRENT_DATE, CURRENT_TIME, CURRENT_TIMESTAMP (SQL92)(Thomas)
+       Add syntax and warnings for UNION, HAVING, INNER and OUTER JOIN 
+       (SQL92)(Thomas)
+       Add more reserved words, mostly for SQL92 compliance(Thomas)
+       Allow hh:mm:ss time entry for timespan/reltime types(Thomas)
+       Add center() routines for lseg, path, polygon(Thomas)
+       Add distance() routines for circle-polygon, polygon-polygon(Thomas)
+       Check explicitly for points and polygons contained within polygons
+               using an axis-crossing algorithm(Thomas)
+       Add routine to convert circle-box(Thomas)
+       Merge conflicting operators for different geometric data types(Thomas)
+       Replace distance operator "<===>" with "<->"(Thomas)
+       Replace "above" operator "!^" with ">^" and "below" operator "!|" with 
+       "<^"(Thomas)
+       Add routines for text trimming on both ends, substring, and string 
+       position(Thomas)
+       Added conversion routines circle(box) and poly(circle)(Thomas)
+       Allow internal sorts to be stored in memory rather than in files(Bruce & 
+       Vadim)
+       Allow functions and operators on internally-identical types to 
+       succeed(Bruce)
+       Speed up backend startup after profiling analysis(Bruce)
+       Inline frequently called functions for performance(Bruce)
+       Reduce open() calls(Bruce)
+       psql:  Add PAGER for \h and \?,\C fix
+       Fix for psql pager when no tty(Bruce)
+       New entab utility(Bruce)
+       General trigger functions for referential integrity (Vadim)
+       General trigger functions for time travel (Vadim)
+       General trigger functions for AUTOINCREMENT/IDENTITY feature (Vadim)
+       MOVE implementation (Vadim)
+
+       Source Tree Changes
+       -------------------
+       HPUX 10 patches (Vladimir Turin)
+       Added SCO support, (Daniel Harris)
+       mkLinux patches (Tatsuo Ishii)
+       Change geometric box terminology from "length" to "width"(Thomas)
+       Deprecate temporary unstored slope fields in geometric code(Thomas)
+       Remove restart instructions from INSTALL(Bruce)
+       Look in /usr/ucb first for install(Bruce)
+       Fix c++ copy example code(Thomas)
+       Add -o to psql manual page(Bruce)
+       Prevent relname unallocated string length from being copied into 
+       database(Bruce)
+       Cleanup for NAMEDATALEN use(Bruce)
+       Fix pg_proc names over 15 chars in output(Bruce)
+       Add strNcpy() function(Bruce)
+       remove some (void) casts that are unnecessary(Bruce)
+       new interfaces directory(Marc)
+       Replace fopen() calls with calls to fd.c functions(Bruce)
+       Make functions static where possible(Bruce)
+       enclose unused functions in #ifdef NOT_USED(Bruce)
+       Remove call to difftime() in timestamp support to fix SunOS(Bruce & Thomas)
+       Changes for Digital Unix
+       Portability fix for pg_dumpall(Bruce)
+       Rename pg_attribute.attnvals to attdisbursion(Bruce)
+       "intro/unix" manual page now "pgintro"(Bruce)
+       "built-in" manual page now "pgbuiltin"(Bruce)
+       "drop" manual page now "drop_table"(Bruce)
+       Add "create_trigger", "drop_trigger" manual pages(Thomas)
+       Add constraints regression test(Vadim & Thomas)
+       Add comments syntax regression test(Thomas)
+       Add PGINDENT and support program(Bruce)
+       Massive commit to run PGINDENT on all *.c and *.h files(Bruce)
+       Files moved to /src/tools directory(Bruce)
+       SPI and Trigger programming guides (Vadim & D'Arcy)
+
+Release 6.1.1
+
+Migration from v6.1 to v6.1.1
+
+       This is a minor bug-fix release. A dump/reload is not required from v6.1, 
+       but is required from any release prior to v6.1. Refer to the release notes 
+       for v6.1 for more details.
+
+Detailed Change List
+
+       Changes in this release
+       -----------------------
+       fix for SET with options (Thomas)
+       allow pg_dump/pg_dumpall to preserve ownership of all tables/objects(Bruce)
+       new psql \connect option allows changing usernames without changing 
+       databases
+       fix for initdb --debug option(Yoshihiko Ichikawa))
+       lextest cleanup(Bruce)
+       hash fixes(Vadim)
+       fix date/time month boundary arithmetic(Thomas)
+       fix timezone daylight handling for some ports(Thomas, Bruce, Tatsuo)
+       timestamp overhauled to use standard functions(Thomas)
+       other code cleanup in date/time routines(Thomas)
+       psql's \d now case-insensitive(Bruce)
+       psql's backslash commands can now have trailing semicolon(Bruce)
+       fix memory leak in psql when using \g(Bruce)
+       major fix for endian handling of communication to server(Thomas, Tatsuo)
+       Fix for Solaris assembler and include files(Yoshihiko Ichikawa)
+       allow underscores in usernames(Bruce)
+       pg_dumpall now returns proper status, portability fix(Bruce)
+
+Release 6.1
+
+        The regression tests have been adapted and extensively modified for the 
+       v6.1 release of Postgres.
+        Three new data types (datetime, timespan, and circle) have been added to 
+       the native set of Postgres types. Points, boxes, paths, and polygons have 
+       had their output formats made consistant across the data types. The polygon 
+       output in misc.out has only been spot-checked for correctness relative to 
+       the original regression output.
+        Postgres v6.1 introduces a new, alternate optimizer which uses genetic 
+       algorithms. These algorithms introduce a random behavior in the ordering of 
+       query results when the query contains multiple qualifiers or multiple 
+       tables (giving the optimizer a choice on order of evaluation). Several 
+       regression tests have been modified to explicitly order the results, and 
+       hence are insensitive to optimizer choices. A few regression tests are for 
+       data types which are inherently unordered (e.g. points and time intervals) 
+       and tests involving those types are explicitly bracketed with set geqo to 
+       'off' and reset geqo.
+        The interpretation of array specifiers (the curly braces around atomic 
+       values) appears to have changed sometime after the original regression 
+       tests were generated. The current ./expected/*.out files reflect this new 
+       interpretation, which may not be correct!
+        The float8 regression test fails on at least some platforms. This is due 
+       to differences in implementations of pow() and exp() and the signaling 
+       mechanisms used for overflow and underflow conditions.
+        The "random" results in the random test should cause the "random" test to 
+       be "failed", since the regression tests are evaluated using a simple diff. 
+       However, "random" does not seem to produce random results on my test 
+       machine (Linux/gcc/i686).
+
+Migration to v6.1
+
+       This migration requires a complete dump of the 6.0 database and a restore 
+       of the database in 6.1.
+       Those migrating from earlier 1.* releases should first upgrade to 1.09 
+       because the COPY output format was improved from the 1.02 release.
+
+Detailed Change List
+
+       Bug Fixes
+       ---------
+       packet length checking in library routines
+       lock manager priority patch
+       check for under/over flow of float8(Bruce)
+       multi-table join fix(Vadim)
+       SIGPIPE crash fix(Darren)
+       large object fixes(Sven)
+       allow btree indexes to handle NULLs(Vadim)
+       timezone fixes(D'Arcy)
+       select SUM(x) can return NULL on no rows(Thomas)
+       internal optimizer, executor bug fixes(Vadim)
+       fix problem where inner loop in < or <= has no rows(Vadim)
+       prevent re-commuting join index clauses(Vadim)
+       fix join clauses for multiple tables(Vadim)
+       fix hash, hashjoin for arrays(Vadim)
+       fix btree for abstime type(Vadim)
+       large object fixes(Raymond)
+       fix buffer leak in hash indices (Vadim)
+       fix rtree for use in inner scan (Vadim)
+       fix gist for use in inner scan, cleanups (Vadim, Andrea)
+       avoid unnecessary local buffers allocation (Vadim, Massimo)
+       fix local buffers leak in transaction aborts (Vadim)
+       fix file manager memmory leaks, cleanups (Vadim, Massimo)
+       fix storage manager memmory leaks (Vadim)
+       fix btree duplicates handling (Vadim)
+       fix deleted tuples re-incarnation caused by vacuum (Vadim)
+       fix SELECT varchar()/char() INTO TABLE made zero-length fields(Bruce)
+       many psql, pg_dump, and libpq memory leaks fixed using Purify (Igor)
+
+       Enhancements
+       ------------
+       attribute optimization statistics(Bruce)
+       much faster new btree bulk load code(Paul)
+       BTREE UNIQUE added to bulk load code(Vadim) 
+       new lock debug code(Massimo)
+       massive changes to libpg++(Leo)
+       new GEQO optimizer speeds table multi-table optimization(Martin)
+       new WARN message for non-unique insert into unique key(Marc)
+       update x=-3, no spaces, now valid(Bruce)
+       remove case-sensitive identifier handling(Bruce,Thomas,Dan)
+       debug backend now pretty-prints tree(Darren)
+       new Oracle character functions(Edmund)
+       new plaintext password functions(Dan)
+       no such class or insufficient privilege changed to distinct messages(Dan)
+       new ANSI timestamp function(Dan)
+       new ANSI Time and Date types (Thomas)
+       move large chunks of data in backend(Martin)
+       multi-column btree indexes(Vadim)
+       new SET var TO value command(Martin)
+       update transaction status on reads(Dan)
+       new locale settings for character types(Oleg)
+       new SEQUENCE serial number generator(Vadim)
+       GROUP BY function now possible(Vadim)
+       re-organize regression test(Thomas,Marc)
+       new optimizer operation weights(Vadim)
+       new psql \z grant/permit option(Marc)
+       new MONEY data type(D'Arcy,Thomas)
+       tcp socket communication speed improved(Vadim)
+       new VACUUM option for attribute statistics, and for certain columns (Vadim)
+       many geometric type improvements(Thomas,Keith)
+       additional regression tests(Thomas)
+       new datestyle variable(Thomas,Vadim,Martin)
+       more comparison operators for sorting types(Thomas)
+       new conversion functions(Thomas)
+       new more compact btree format(Vadim)
+       allow pg_dumpall to preserve database ownership(Bruce)
+       new SET GEQO=# and R_PLANS variable(Vadim)
+       old (!GEQO) optimizer can use right-sided plans (Vadim)
+       typechecking improvement in SQL parser(Bruce)
+       new SET, SHOW, RESET commands(Thomas,Vadim)
+       new \connect database USER option
+       new destroydb -i option (Igor)
+       new \dt and \di psql commands (Darren)
+       SELECT "\n" now escapes newline (A. Duursma)
+       new geometry conversion functions from old format (Thomas)
+
+       Source tree changes
+       -------------------
+       new configuration script(Marc)
+       readline configuration option added(Marc)
+       OS-specific configuration options removed(Marc)
+       new OS-specific template files(Marc)
+       no more need to edit Makefile.global(Marc)
+       re-arrange include files(Marc)
+       nextstep patches (Gregor Hoffleit)
+       removed WIN32-specific code(Bruce)
+       removed postmaster -e option, now only postgres -e option (Bruce)
+       merge duplicate library code in front/backends(Martin)
+       now works with eBones, international Kerberos(Jun)
+       more shared library support
+       c++ include file cleanup(Bruce)
+       warn about buggy flex(Bruce)
+       DG-UX, Ultrix, Irix, AIX portability fixes
+
+Release v6.0
+
+       A dump/restore is required for those wishing to migrate data from previous 
+       releases of Postgres.
+
+Migration from v1.09 to v6.0
+
+       This migration requires a complete dump of the 1.09 database and a restore 
+       of the database in 6.0.
+
+Migration from pre-v1.09 to v6.0
+
+       Those migrating from earlier 1.* releases should first upgrade to 1.09 
+       because the COPY output format was improved from the 1.02 release.
+
+Detailed Change List
+
+       Bug Fixes
+       ---------
+       ALTER TABLE bug - running postgress process needs to re-read table 
+       definition
+       Allow vacuum to be run on one table or entire database(Bruce)
+       Array fixes
+       Fix array over-runs of memory writes(Kurt)
+       Fix elusive btree range/non-range bug(Dan)
+       Fix for hash indexes on some types like time and date
+       Fix for pg_log size explosion
+       Fix permissions on lo_export()(Bruce)
+       Fix unitialized reads of memory(Kurt)
+       Fixed ALTER TABLE ... char(3) bug(Bruce)
+       Fixed a few small memory leaks
+       Fixed EXPLAIN handling of options and changed full_path option name
+       Fixed output of group acl permissions
+       Memory leaks (hunt and destroy with tools like Purify(Kurt)
+       Minor improvements to rules system
+       NOTIFY fixes
+       New asserts for run-checking
+       Overhauled parser/analyze code to properly report errors and increase speed
+       Pg_dump -d now handles NULL's properly(Bruce)
+       Prevent SELECT NULL from crashing server (Bruce)
+       Properly report errors when INSERT ... SELECT columns did not match
+       Properly report errors when insert column names were not correct
+       Psql \g filename now works(Bruce)
+       Psql fixed problem with multiple statements on one line with multiple 
+       outputs
+       Removed duplicate system oid's
+       SELECT * INTO TABLE . GROUP/ORDER BY gives unlink error if table 
+       exists(Bruce)
+       Several fixes for queries that crashed the backend
+       Starting quote in insert string errors(Bruce)
+       Submitting an empty query now returns empty status, not just " " 
+       query(Bruce)
+
+       Enhancements
+       ------------
+       Add EXPLAIN manual page(Bruce)
+       Add UNIQUE index capability(Dan)
+       Add hostname/user level access control rather than just hostname and user
+       Add synonym of != for <>(Bruce)
+       Allow "select oid,* from table"
+       Allow BY,ORDER BY to specify columns by number, or by non-alias 
+       table.column(Bruce)
+       Allow COPY from the frontend(Bryan)
+       Allow GROUP BY to use alias column name(Bruce)
+       Allow actual compression, not just reuse on the same page(Vadim)
+       Allow installation-configuration option to auto-add all local users(Bryan)
+       Allow libpq to distinguish between text value '' and null(Bruce)
+       Allow non-postgres users with createdb privs to destroydb's
+       Allow restriction on who can create C functions(Bryan)
+       Allow restriction on who can do backend COPY(Bryan)
+       Can shrink tables, pg_time and pg_log(Vadim & Erich)
+       Change debug level 2 to print queries only, changed debug heading 
+       layout(Bruce)
+       Change default decimal constant representation from float4 to float8(Bruce)
+       European date format now set when postmaster is started
+       Execute lowercase function names if not found with exact case
+       Fixes for aggregate/GROUP processing, allow 'select sum(func(x),sum(x+y) 
+       from z'
+       Gist now included in the distrubution(Marc)
+       Idend authentication of local users(Bryan)
+       Implement BETWEEN qualifier(Bruce)
+       Implement IN qualifier(Bruce)
+       Libpq has PQgetisnull()(Bruce)
+       Libpq++ improvements
+       New options to initdb(Bryan)
+       Pg_dump allow dump of oid's(Bruce)
+       Pg_dump create indexes after tables are loaded for speed(Bruce)
+       Pg_dumpall dumps all databases, and the user table
+       Pginterface additions for NULL values(Bruce)
+       Prevent postmaster from being run as root
+       Psql \h and \? is now readable(Bruce)
+       Psql allow backslashed, semicolons anywhere on the line(Bruce)
+       Psql changed command prompt for lines in query or in quotes(Bruce)
+       Psql char(3) now displays as (bp)char in \d output(Bruce)
+       Psql return code now more accurate(Bryan?)
+       Psql updated help syntax(Bruce)
+       Re-visit and fix vacuum(Vadim)
+       Reduce size of regression diffs, remove timezone name difference(Bruce)
+       Remove compile-time parameters to enable binary distributions(Bryan)
+       Reverse meaning of HBA masks(Bryan)
+       Secure Authentication of local users(Bryan)
+       Speed up vacuum(Vadim)
+       Vacuum now had VERBOSE option(Bruce)
+
+       Source tree changes
+       -------------------
+       All functions now have prototypes that are compared against the calls
+       Allow asserts to be disabled easly from Makefile.global(Bruce)
+       Change oid constants used in code to #define names
+       Decoupled sparc and solaris defines(Kurt)
+       Gcc -Wall compiles cleanly with warnings only from unfixable constructs
+       Major include file reorganization/reduction(Marc)
+       Make now stops on compile failure(Bryan)
+       Makefile restructuring(Bryan, Marc)
+       Merge bsdi_2_1 to bsdi(Bruce)
+       Monitor program removed
+       Name change from Postgres95 to PostgreSQL
+       New config.h file(Marc, Bryan)
+       PG_VERSION now set to 6.0 and used by postmaster
+       Portability additions, including Ultrix, DG/UX, AIX, and Solaris
+       Reduced the number of #define's, centeralized #define's
+       Remove duplicate OIDS in system tables(Dan)
+       Remove duplicate system catalog info or report mismatches(Dan)
+       Removed many os-specific #define's
+       Restructured object file generation/location(Bryan, Marc)
+       Restructured port-specific file locations(Bryan, Marc)
+       Unused/uninialized variables corrected
+
+Release v1.09
+
+       Sorry, we stopped keeping track of changes from 1.02 to 1.09. Some of the 
+       changes listed in 6.0 were actually included in the 1.02.1 to 1.09 
+       releases.
+
+Release v1.02
+
+Migration from v1.02 to v1.02.1
+
+       Here is a new migration file for 1.02.1. It includes the 'copy' change and 
+       a script to convert old ascii files.
+
+         Note: The following notes are for the benefit of users who want to 
+         migrate databases from postgres95 1.01 and 1.02 to postgres95 1.02.1.
+         If you are starting afresh with postgres95 1.02.1 and do not need to 
+         migrate old databases, you do not need to read any further.
+
+       In order to upgrade older postgres95 version 1.01 or 1.02 databases to 
+       version 1.02.1, the following steps are required:
+
+       1. Start up a new 1.02.1 postmaster
+       2. Add the new built-in functions and operators of 1.02.1 to 1.01 or 1.02 
+         databases. This is done by running the new 1.02.1 server against your own 
+         1.01 or 1.02 database and applying the queries attached at the end of 
+         thie file. This can be done easily through psql. If your 1.01 or 1.02 
+         database is named "testdb" and you have cut the commands from the end of 
+         this file and saved them in addfunc.sql: 
+                % psql testdb -f addfunc.sql
+         Those upgrading 1.02 databases will get a warning when executing the last 
+         two statements in the file because they are already present in 1.02. This 
+         is not a cause for concern.
+
+Dump/Reload Procedure
+
+       If you are trying to reload a pg_dump or text-mode 'copy tablename to 
+       stdout' generated with a previous version, you will need to run the 
+       attached sed script on the ASCII file before loading it into the database. 
+       The old format used '.' as end-of-data, while '\.' is now the end-of-data 
+       marker. Also, empty strings are now loaded in as '' rather than NULL. See 
+       the copy manual page for full details. 
+
+               sed 's/^\.$/\\./g' <in_file >out_file
+
+       If you are loading an older binary copy or non-stdout copy, there is no 
+       end-of-data character, and hence no conversion necessary. 
+
+       -- following lines added by agc to reflect the case-insensitive
+       -- regexp searching for varchar (in 1.02), and bpchar (in 1.02.1)
+       create operator ~* (leftarg = bpchar, rightarg = text, procedure = 
+       texticregexeq);
+       create operator !~* (leftarg = bpchar, rightarg = text, procedure = 
+       texticregexne);
+       create operator ~* (leftarg = varchar, rightarg = text, procedure = 
+       texticregexeq);
+       create operator !~* (leftarg = varchar, rightarg = text, procedure = 
+       texticregexne);
+
+Detailed Change List
+
+       Source code maintenance and development
+        * worldwide team of volunteers
+        * the source tree now in CVS at ftp.ki.net
+
+       Enhancements
+        * psql (and underlying libpq library) now has many more options for
+          formatting output, including HTML
+        * pg_dump now output the schema and/or the data, with many fixes to
+          enhance completeness.
+        * psql used in place of monitor in administration shell scripts.
+          monitor to be depreciated in next release.
+        * date/time functions enhanced
+        * NULL insert/update/comparison fixed/enhanced
+        * TCL/TK lib and shell fixed to work with both tck7.4/tk4.0 and 
+       tcl7.5/tk4.1
+
+       Bug Fixes (almost too numerous to mention)
+        * indexes
+        * storage management
+        * check for NULL pointer before dereferencing
+        * Makefile fixes
+
+       New Ports
+        * added SolarisX86 port
+        * added BSDI 2.1 port
+        * added DGUX port
+
+Release v1.01
+
+Migration from v1.0 to v1.01
+
+       The following notes are for the benefit of users who want to migrate 
+       databases from postgres95 1.0 to postgres95 1.01. 
+       If you are starting afresh with postgres95 1.01 and do not need to migrate 
+       old databases, you do not need to read any further.
+       In order to postgres95 version 1.01 with databases created with postgres95 
+       version 1.0, the following steps are required: 
+
+       1. Set the definition of NAMEDATALEN in src/Makefile.global to 16 and 
+         OIDNAMELEN to 20.
+       2. Decide whether you want to use Host based authentication. 
+            a. If you do, you must create a file name "pg_hba" in your top-level 
+              data directory (typically the value of your $PGDATA). 
+              src/libpq/pg_hba shows an example syntax.
+            b. If you do not want host-based authentication, you can comment out 
+              the line 
+                      HBA = 1
+               in src/Makefile.global
+               Note that host-based authentication is turned on by default, and if 
+              you do not take steps A or B above, the out-of-the-box 1.01 will not 
+              allow you to connect to 1.0 databases.
+       3. Compile and install 1.01, but DO NOT do the initdb step.
+       4. Before doing anything else, terminate your 1.0 postmaster, and backup 
+         your existing $PGDATA directory. 
+       5. Set your PGDATA environment variable to your 1.0 databases, but set up 
+         path up so that 1.01 binaries are being used.
+       6. Modify the file $PGDATA/PG_VERSION from 5.0 to 5.1
+       7. Start up a new 1.01 postmaster
+       8. Add the new built-in functions and operators of 1.01 to 1.0 databases. 
+         This is done by running the new 1.01 server against your own 1.0 database 
+         and applying the queries attached and saving in the file 1.0_to_1.01.sql. 
+         This can be done easily through psql. If your 1.0 database is name 
+         "testdb": 
+              % psql testdb -f 1.0_to_1.01.sql
+         and then execute the following commands (cut and paste from here): 
+         -- add builtin functions that are new to 1.01
+
+         create function int4eqoid (int4, oid) returns bool as 'foo'
+         language 'internal';
+         create function oideqint4 (oid, int4) returns bool as 'foo'
+         language 'internal';
+         create function char2icregexeq (char2, text) returns bool as 'foo'
+         language 'internal';
+         create function char2icregexne (char2, text) returns bool as 'foo'
+         language 'internal';
+         create function char4icregexeq (char4, text) returns bool as 'foo'
+         language 'internal';
+         create function char4icregexne (char4, text) returns bool as 'foo'
+         language 'internal';
+         create function char8icregexeq (char8, text) returns bool as 'foo'
+         language 'internal';
+         create function char8icregexne (char8, text) returns bool as 'foo'
+         language 'internal';
+         create function char16icregexeq (char16, text) returns bool as 'foo'
+         language 'internal';
+         create function char16icregexne (char16, text) returns bool as 'foo'
+         language 'internal';
+         create function texticregexeq (text, text) returns bool as 'foo'
+         language 'internal';
+         create function texticregexne (text, text) returns bool as 'foo'
+         language 'internal';
+
+         -- add builtin functions that are new to 1.01
+
+         create operator = (leftarg = int4, rightarg = oid, procedure = 
+         int4eqoid);
+         create operator = (leftarg = oid, rightarg = int4, procedure = 
+         oideqint4);
+         create operator ~* (leftarg = char2, rightarg = text, procedure = 
+         char2icregexeq);
+         create operator !~* (leftarg = char2, rightarg = text, procedure = 
+         char2icregexne);
+         create operator ~* (leftarg = char4, rightarg = text, procedure = 
+         char4icregexeq);
+         create operator !~* (leftarg = char4, rightarg = text, procedure = 
+         char4icregexne);
+         create operator ~* (leftarg = char8, rightarg = text, procedure = 
+         char8icregexeq);
+         create operator !~* (leftarg = char8, rightarg = text, procedure = 
+         char8icregexne);
+         create operator ~* (leftarg = char16, rightarg = text, procedure = 
+         char16icregexeq);
+         create operator !~* (leftarg = char16, rightarg = text, procedure = 
+         char16icregexne);
+         create operator ~* (leftarg = text, rightarg = text, procedure = 
+         texticregexeq);
+         create operator !~* (leftarg = text, rightarg = text, procedure = 
+         texticregexne);
+
+Detailed Change List
+
+       Incompatibilities:
+        * 1.01 is backwards compatible with 1.0 database provided the user
+          follow the steps outlined in the MIGRATION_from_1.0_to_1.01 file.
+          If those steps are not taken, 1.01 is not compatible with 1.0 database.
+
+       Enhancements:
+        * added PQdisplayTuples() to libpq and changed monitor and psql to use it
+        * added NeXT port (requires SysVIPC implementation)
+        * added CAST .. AS ... syntax
+        * added ASC and DESC keywords
+        * added 'internal' as a possible language for CREATE FUNCTION
+          internal functions are C functions which have been statically linked
+          into the postgres backend.
+        * a new type "name" has been added for system identifiers (table names,
+          attribute names, etc.)  This replaces the old char16 type.   The
+          of name is set by the NAMEDATALEN #define in src/Makefile.global
+        * a readable reference manual that describes the query language.
+        * added host-based access control.  A configuration file ($PGDATA/pg_hba)
+          is used to hold the configuration data.  If host-based access control
+          is not desired, comment out HBA=1 in src/Makefile.global.
+        * changed regex handling to be uniform use of Henry Spencer's regex code
+          regardless of platform.  The regex code is included in the distribution
+        * added functions and operators for case-insensitive regular expressions. 
+          The operators are ~* and !~*.
+        * pg_dump uses COPY instead of SELECT loop for better performance
+
+       Bug fixes:
+        * fixed an optimizer bug that was causing core dumps when 
+          functions calls were used in comparisons in the WHERE clause
+        * changed all uses of getuid to geteuid so that effective uids are used
+        * psql now returns non-zero status on errors when using -c
+        * applied public patches 1-14
+
+Release v1.0
+
+Detailed Change List
+
+       Copyright change:
+        * The copyright of Postgres 1.0 has been loosened to be freely modifiable
+          and modifiable for any purpose.  Please read the COPYRIGHT file.
+          Thanks to Professor Michael Stonebraker for making this possible.
+
+       Incompatibilities:
+        *  date formats have to be MM-DD-YYYY (or DD-MM-YYYY if you're using
+          EUROPEAN STYLE).  This follows SQL-92 specs.
+        *  "delimiters" is now a keyword
+
+       Enhancements:
+        *  sql LIKE syntax has been added
+        *  copy command now takes an optional USING DELIMITER specification.
+          delimiters can be any single-character string. 
+        *  IRIX 5.3 port has been added.
+          Thanks to Paul Walmsley and others.
+        *  updated pg_dump to work with new libpq
+        *  \d has been added psql 
+          Thanks to Keith Parks
+        *  regexp performance for architectures that use POSIX regex has been
+          improved due to caching of precompiled patterns.
+          Thanks to Alistair Crooks
+        *  a new version of libpq++
+          Thanks to William Wanders
+
+       Bug fixes:
+        *  arbitrary userids can be specified in the createuser script
+        *  \c to connect to other databases in psql now works.
+        *  bad pg_proc entry for float4inc() is fixed
+        *  users with usecreatedb field set can now create databases without
+          having to be usesuper
+        *  remove access control entries when the entry no longer has any
+          permissions
+        *  fixed non-portable datetimes implementation
+        *  added kerberos flags to the src/backend/Makefile
+        *  libpq now works with kerberos
+        *  typographic errors in the user manual have been corrected.
+        *  btrees with multiple index never worked, now we tell you they don't
+          work when you try to use them
+
+Postgres95 Beta 0.03
+
+Detailed Change List
+
+       Incompatible changes:
+        * BETA-0.3 IS INCOMPATIBLE WITH DATABASES CREATED WITH PREVIOUS VERSIONS
+          (due to system catalog changes and indexing structure changes).
+        * double-quote (") is deprecated as a quoting character for string 
+       literals;
+          you need to convert them to single quotes (').
+        * name of aggregates (eg. int4sum) are renamed in accordance with the
+          SQL standard (eg. sum).
+        * CHANGE ACL syntax is replaced by GRANT/REVOKE syntax.
+        * float literals (eg. 3.14) are now of type float4 (instead of float8 in
+          previous releases); you might have to do typecasting if you depend on it
+          being of type float8.  If you neglect to do the typecasting and you 
+       assign
+          a float literal to a field of type float8, you may get incorrect values
+          stored!
+        * LIBPQ has been totally revamped so that frontend applications
+          can connect to multiple backends
+        * the usesysid field in pg_user has been changed from int2 to int4 to
+          allow wider range of Unix user ids.
+        * the netbsd/freebsd/bsd o/s ports have been consolidated into a
+          single BSD44_derived port.  (thanks to Alistair Crooks)
+
+       SQL standard-compliance (the following details changes that makes 
+       postgres95
+       more compliant to the SQL-92 standard):
+        * the following SQL types are now built-in: smallint, int(eger), float, 
+       real,
+          char(N), varchar(N), date and time.
+
+          The following are aliases to existing postgres types:
+                       smallint -> int2
+                       integer, int -> int4
+                       float, real  -> float4
+          char(N) and varchar(N) are implemented as truncated text types. In
+          addition, char(N) does blank-padding. 
+        * single-quote (') is used for quoting string literals; '' (in addition to
+          \') is supported as means of inserting a single quote in a string
+        * SQL standard aggregate names (MAX, MIN, AVG, SUM, COUNT) are used
+          (Also, aggregates can now be overloaded, i.e. you can define your
+          own MAX aggregate to take in a user-defined type.)
+        * CHANGE ACL removed. GRANT/REVOKE syntax added.  
+          - Privileges can be given to a group using the "GROUP" keyword.
+               For example:
+                       GRANT SELECT ON foobar TO GROUP my_group;
+               The keyword 'PUBLIC' is also supported to mean all users.       
+
+               Privileges can only be granted or revoked to one user or group
+               at a time.  
+
+               "WITH GRANT OPTION" is not supported.  Only class owners can change
+               access control
+          - The default access control is to to grant users readonly access.
+            You must explicitly grant insert/update access to users.  To change
+            this, modify the line in 
+                       src/backend/utils/acl.h 
+            that defines ACL_WORLD_DEFAULT 
+
+       Bug fixes:
+        * the bug where aggregates of empty tables were not run has been fixed. 
+       Now,
+          aggregates run on empty tables will return the initial conditions of the
+          aggregates. Thus, COUNT of an empty  table will now properly return 0.
+          MAX/MIN of an empty table will return a tuple of value NULL. 
+        * allow the use of \; inside the monitor
+        * the LISTEN/NOTIFY asynchronous notification mechanism now work
+        * NOTIFY in rule action bodies now work
+        * hash indices work, and access methods in general should perform better.
+          creation of large btree indices should be much faster.  (thanks to Paul
+          Aoki)
+
+       Other changes and enhancements:
+        * addition of an EXPLAIN statement used for explaining the query execution
+          plan (eg. "EXPLAIN SELECT * FROM EMP" prints out the execution plan for
+          the query).
+        * WARN and NOTICE messages no longer have timestamps on them. To turn on
+          timestamps of error messages, uncomment the line in
+          src/backend/utils/elog.h:
+               /* define ELOG_TIMESTAMPS */ 
+        * On an access control violation, the message
+               "Either no such class or insufficient privilege"
+          will be given.  This is the same message that is returned when
+          a class is not found.  This dissuades non-privileged users from
+          guessing the existence of privileged classes.
+        * some additional system catalog changes have been made that are not
+          visible to the user.
+
+       libpgtcl changes:
+        * The -oid option has been added to the "pg_result" tcl command.
+          pg_result -oid returns oid of the last tuple inserted.   If the
+          last command was not an INSERT, then pg_result -oid returns "".
+        * the large object interface is available as pg_lo* tcl commands:
+          pg_lo_open, pg_lo_close, pg_lo_creat, etc.
+
+       Portability enhancements and New Ports:
+        * flex/lex problems have been cleared up.  Now, you should be able to use
+          flex instead of lex on any platforms.  We no longer make assumptions of
+          what lexer you use based on the platform you use. 
+        * The Linux-ELF port is now supported.  Various configuration have been 
+          tested:  The following configuration is known to work:
+               kernel 1.2.10, gcc 2.6.3, libc 4.7.2, flex 2.5.2, bison 1.24
+          with everything in ELF format,
+
+       New utilities:
+        * ipcclean added to the distribution
+          ipcclean usually does not need to be run, but if your backend crashes
+          and leaves shared memory segments hanging around, ipcclean will
+          clean them up for you.
+
+       New documentation:
+        * the user manual has been revised and libpq documentation added.
+
+Postgres95 Beta 0.02
+
+Detailed Change List
+
+       Incompatible changes:
+        * The SQL statement for creating a database is 'CREATE DATABASE' instead
+          of 'CREATEDB'. Similarly, dropping a database is 'DROP DATABASE' instead
+          of 'DESTROYDB'. However, the names of the executables 'createdb' and 
+          'destroydb' remain the same.
+        
+       New tools:
+        * pgperl - a Perl (4.036) interface to Postgres95
+        * pg_dump - a utility for dumping out a postgres database into a
+               script file containing query commands. The script files are in a 
+       ASCII
+               format and can be used to reconstruct the database, even on other
+               machines and other architectures. (Also good for converting
+               a Postgres 4.2 database to Postgres95 database.)
+
+       The following ports have been incorporated into postgres95-beta-0.02:
+        * the NetBSD port by Alistair Crooks
+        * the AIX port by Mike Tung
+        * the Windows NT port by Jon Forrest (more stuff but not done yet)
+        * the Linux ELF port by Brian Gallew
+
+       The following bugs have been fixed in postgres95-beta-0.02:
+        * new lines not escaped in COPY OUT and problem with COPY OUT when first
+          attribute is a '.' 
+        * cannot type return to use the default user id in createuser
+        * SELECT DISTINCT on big tables crashes
+        * Linux installation problems
+        * monitor doesn't allow use of 'localhost' as PGHOST
+        * psql core dumps when doing \c or \l
+        * the "pgtclsh" target missing from src/bin/pgtclsh/Makefile
+        * libpgtcl has a hard-wired default port number
+        * SELECT DISTINCT INTO TABLE hangs
+        * CREATE TYPE doesn't accept 'variable' as the internallength
+        * wrong result using more than 1 aggregate in a SELECT
+
+Postgres95 Beta 0.01
+
+       Initial release.
+
+Timing Results
+
+        These timing results are from running the regression test with the 
+       commands 
+
+       % cd src/test/regress
+       % make all
+       % time make runtest
+           
+
+        
+        Timing under Linux 2.0.27 seems to have a roughly 5% variation from run to 
+       run, presumably due to the scheduling vagaries of multitasking systems. 
+
+v6.5
+
+        As has been the case for previous releases, timing between releases is not 
+       directly comparable since new regression tests have been added. In general, 
+       v6.5 is faster than previous releases. 
+        Timing with fsync() disabled: 
+
+         Time   System
+         02:00  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 
+       -O2 -m486
+            
+
+        
+        Timing with fsync() enabled: 
+
+         Time   System
+         04:21  Dual Pentium Pro 180, 224MB, UW-SCSI, Linux 2.0.36, gcc 2.7.2.3 
+       -O2 -m486
+            
+
+        For the linux system above, using UW-SCSI disks rather than (older) IDE 
+       disks leads to a 50% improvement in speed on the regression test. 
+
+v6.4beta
+
+       The times for this release are not directly comparable to those for 
+       previous releases since some additional regression tests have been 
+       included. In general, however, v6.4 should be slightly faster than the 
+       previous release (thanks, Bruce!).
+
+         Time   System
+         02:26  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 
+       -m486
+
+v6.3
+
+       The times for this release are not directly comparable to those for 
+       previous releases since some additional regression tests have been included 
+       and some obsolete tests involving time travel have been removed. In 
+       general, however, v6.3 is substantially faster than previous releases 
+       (thanks, Bruce!).
+
+         Time   System
+         02:30  Dual Pentium Pro 180, 96MB, UW-SCSI, Linux 2.0.30, gcc 2.7.2.1 -O2 
+       -m486
+         04:12  Dual Pentium Pro 180, 96MB, EIDE, Linux 2.0.30, gcc 2.7.2.1 -O2 
+       -m486
+
+v6.1
+
+         Time   System
+         06:12  Pentium Pro 180, 32MB, EIDE, Linux 2.0.30, gcc 2.7.2 -O2 -m486
+         12:06  P-100, 48MB, Linux 2.0.29, gcc
+         39:58  Sparc IPC 32MB, Solaris 2.5, gcc 2.7.2.1 -O -g
