@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * xact.h
- *	  postgres transaction system header
+ *	  postgres transaction system definitions
  *
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xact.h,v 1.26 2000/06/08 22:37:38 momjian Exp $
+ * $Id: xact.h,v 1.27 2000/07/28 01:04:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,17 @@
 
 #include "access/transam.h"
 #include "utils/nabstime.h"
+
+/*
+ * Xact isolation levels
+ */
+#define XACT_DIRTY_READ			0		/* not implemented */
+#define XACT_READ_COMMITTED		1
+#define XACT_REPEATABLE_READ	2		/* not implemented */
+#define XACT_SERIALIZABLE		3
+
+extern int	DefaultXactIsoLevel;
+extern int	XactIsoLevel;
 
 /* ----------------
  *		transaction state structure
@@ -31,16 +42,7 @@ typedef struct TransactionStateData
 	int			blockState;
 } TransactionStateData;
 
-/*
- * Xact isolation levels
- */
-#define XACT_DIRTY_READ			0		/* not implemented */
-#define XACT_READ_COMMITTED		1
-#define XACT_REPEATABLE_READ	2		/* not implemented */
-#define XACT_SERIALIZABLE		3
-
-extern int	DefaultXactIsoLevel;
-extern int	XactIsoLevel;
+typedef TransactionStateData *TransactionState;
 
 /* ----------------
  *		transaction states
@@ -64,23 +66,16 @@ extern int	XactIsoLevel;
 #define TBLOCK_ABORT			4
 #define TBLOCK_ENDABORT			5
 
-typedef TransactionStateData *TransactionState;
-
-#define TransactionIdIsValid(xid)		((bool) (xid != NullTransactionId))
-#define TransactionIdStore(xid, dest)	\
-	(*((TransactionId*)dest) = (TransactionId)xid)
-#define StoreInvalidTransactionId(dest) \
-	(*((TransactionId*)dest) = NullTransactionId)
-
-
-/* ----------------------------------------------------------------
- *		TransactionIdEquals
- * ----------------------------------------------------------------
+/* ----------------
+ *		transaction ID manipulation macros
+ * ----------------
  */
-#define TransactionIdEquals(id1, id2) \
-( \
-	((bool) ((id1) == (id2))) \
-)
+#define TransactionIdIsValid(xid)		((bool) ((xid) != NullTransactionId))
+#define TransactionIdEquals(id1, id2)	((bool) ((id1) == (id2)))
+#define TransactionIdStore(xid, dest)	\
+	(*((TransactionId*) (dest)) = (TransactionId) (xid))
+#define StoreInvalidTransactionId(dest) \
+	(*((TransactionId*) (dest)) = NullTransactionId)
 
 
 /* ----------------
