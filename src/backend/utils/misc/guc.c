@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.230 2004/08/08 20:17:36 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.231 2004/08/11 21:10:37 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -175,7 +175,6 @@ static char *locale_ctype;
 static char *regex_flavor_string;
 static char *server_encoding_string;
 static char *server_version_string;
-static char *session_authorization_string;
 static char *timezone_string;
 static char *XactIsoLevel_string;
 static char *custom_variable_classes;
@@ -184,6 +183,8 @@ static int	max_index_keys;
 static int	max_identifier_length;
 static int	block_size;
 static bool integer_datetimes;
+/* should be static, but commands/variable.c needs to get at it */
+char *session_authorization_string;
 
 
 /*
