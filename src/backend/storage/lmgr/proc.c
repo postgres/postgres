@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.146 2004/02/08 22:28:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/lmgr/proc.c,v 1.147 2004/02/18 16:25:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -972,9 +972,6 @@ ProcSendSignal(BackendId procId)
 bool
 enable_sig_alarm(int delayms, bool is_statement_timeout)
 {
-#ifdef WIN32
-#warning add Win32 timer
-#else
 	struct timeval fin_time;
 
 #ifndef __BEOS__
@@ -1045,7 +1042,6 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 	if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
 		return false;
 #endif
-#endif
 	return true;
 }
 
@@ -1059,10 +1055,6 @@ enable_sig_alarm(int delayms, bool is_statement_timeout)
 bool
 disable_sig_alarm(bool is_statement_timeout)
 {
-#ifdef WIN32
-#warning add Win32 timer
-#else
-
 	/*
 	 * Always disable the interrupt if it is active; this avoids being
 	 * interrupted by the signal handler and thereby possibly getting
@@ -1102,7 +1094,6 @@ disable_sig_alarm(bool is_statement_timeout)
 		if (!CheckStatementTimeout())
 			return false;
 	}
-#endif
 	return true;
 }
 
@@ -1135,9 +1126,6 @@ CheckStatementTimeout(void)
 	else
 	{
 		/* Not time yet, so (re)schedule the interrupt */
-#ifdef WIN32
-#warning add win32 timer
-#else
 #ifndef __BEOS__
 		struct itimerval timeval;
 
@@ -1160,7 +1148,6 @@ CheckStatementTimeout(void)
 			(statement_fin_time.tv_usec - now.tv_usec);
 		if (set_alarm(time_interval, B_ONE_SHOT_RELATIVE_ALARM) < 0)
 			return false;
-#endif
 #endif
 	}
 
