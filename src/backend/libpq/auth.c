@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.34 1999/03/14 16:06:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.35 1999/04/16 04:59:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -390,13 +390,53 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 
 
 /*
- * Tell the user the authentication failed, but not why.
+ * Tell the user the authentication failed, but not (much about) why.
+ *
+ * There is a tradeoff here between security concerns and making life
+ * unnecessarily difficult for legitimate users.  We would not, for example,
+ * want to report the password we were expecting to receive...
+ * But it seems useful to report the username and authorization method
+ * in use, and these are items that must be presumed known to an attacker
+ * anyway.
+ * Note that many sorts of failure report additional information in the
+ * postmaster log, which we hope is only readable by good guys.
  */
 
 void
 auth_failed(Port *port)
 {
-	PacketSendError(&port->pktInfo, "User authentication failed");
+	char	buffer[512];
+	const char *authmethod = "Unknown auth method:";
+
+	switch (port->auth_method)
+	{
+		case uaReject:
+			authmethod = "Rejected host:";
+			break;
+		case uaKrb4:
+			authmethod = "Kerberos4";
+			break;
+		case uaKrb5:
+			authmethod = "Kerberos5";
+			break;
+		case uaTrust:
+			authmethod = "Trusted";
+			break;
+		case uaIdent:
+			authmethod = "IDENT";
+			break;
+		case uaPassword:
+			authmethod = "Password";
+			break;
+		case uaCrypt:
+			authmethod = "Password";
+			break;
+	}
+
+	sprintf(buffer, "%s authentication failed for user '%s'",
+			authmethod, port->user);
+
+	PacketSendError(&port->pktInfo, buffer);
 }
 
 
@@ -409,12 +449,15 @@ be_recvauth(Port *port)
 
 	/*
 	 * Get the authentication method to use for this frontend/database
-	 * combination.
+	 * combination.  Note: a failure return indicates a problem with
+	 * the hba config file, not with the request.  hba.c should have
+	 * dropped an error message into the postmaster logfile if it failed.
 	 */
 
 	if (hba_getauthmethod(&port->raddr, port->user, port->database,
 						port->auth_arg, &port->auth_method) != STATUS_OK)
-		PacketSendError(&port->pktInfo, "Missing or mis-configured pg_hba.conf file");
+		PacketSendError(&port->pktInfo,
+						"Missing or erroneous pg_hba.conf file, see postmaster log for details");
 
 	else if (PG_PROTOCOL_MAJOR(port->proto) == 0)
 	{
@@ -425,20 +468,39 @@ be_recvauth(Port *port)
 	}
 	else
 	{
-		AuthRequest areq;
-		PacketDoneProc auth_handler;
-
-		/* Keep the compiler quiet. */
-
-		areq = AUTH_REQ_OK;
-
 		/* Handle new style authentication. */
 
-		auth_handler = NULL;
+		AuthRequest		areq = AUTH_REQ_OK;
+		PacketDoneProc	auth_handler = NULL;
 
 		switch (port->auth_method)
 		{
 			case uaReject:
+				/*
+				 * This could have come from an explicit "reject" entry
+				 * in pg_hba.conf, but more likely it means there was no
+				 * matching entry.  Take pity on the poor user and issue
+				 * a helpful error message.  NOTE: this is not a security
+				 * breach, because all the info reported here is known
+				 * at the frontend and must be assumed known to bad guys.
+				 * We're merely helping out the less clueful good guys.
+				 * NOTE 2: libpq-be.h defines the maximum error message
+				 * length as 99 characters.  It probably wouldn't hurt
+				 * anything to increase it, but there might be some
+				 * client out there that will fail.  So, be terse.
+				 */
+				{
+					char buffer[512];
+					const char *hostinfo = "localhost";
+
+					if (port->raddr.sa.sa_family == AF_INET)
+						hostinfo = inet_ntoa(port->raddr.in.sin_addr);
+					sprintf(buffer,
+							"No pg_hba.conf entry for host %s, user %s, database %s",
+							hostinfo, port->user, port->database);
+					PacketSendError(&port->pktInfo, buffer);
+					return;
+				}
 				break;
 
 			case uaKrb4:

@@ -5,7 +5,7 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *  $Id: hba.c,v 1.39 1999/02/13 23:15:43 momjian Exp $
+ *  $Id: hba.c,v 1.40 1999/04/16 04:59:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -298,55 +298,42 @@ syntax:
 
 static void
 process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
-						 const char *database, bool *host_ok_p,
+						 const char *database, bool *hba_ok_p,
 						 UserAuth *userauth_p, char *auth_arg)
 {
 /*---------------------------------------------------------------------------
   This function does the same thing as find_hba_entry, only with
   the config file already open on stream descriptor "file".
 ----------------------------------------------------------------------------*/
-	bool		found_entry;
+	bool	found_entry = false; /* found an applicable entry? */
+	bool	error = false;		/* found an erroneous entry? */
+	bool	eof = false;		/* end of hba file */
 
-	/* We've processed a record that applies to our connection */
-	bool		error;
-
-	/* Said record has invalid syntax. */
-	bool		eof;			/* We've reached the end of the file we're
-								 * reading */
-
-	found_entry = false;		/* initial value */
-	error = false;				/* initial value */
-	eof = false;				/* initial value */
 	while (!eof && !found_entry && !error)
 	{
 		/* Process a line from the config file */
-
-		int			c;			/* a character read from the file */
-
-		c = getc(file);
-		ungetc(c, file);
+		int		c = getc(file);
 		if (c == EOF)
 			eof = true;
 		else
 		{
+			ungetc(c, file);
 			if (c == '#')
 				read_through_eol(file);
 			else
-			{
 				process_hba_record(file, raddr, user, database,
 							 &found_entry, &error, userauth_p, auth_arg);
-			}
 		}
 	}
 
 	if (!error)
 	{
-		/* If no entry was found then force a rejection. */
+		/* If no matching entry was found, synthesize 'reject' entry. */
 
 		if (!found_entry)
 			*userauth_p = uaReject;
 
-		*host_ok_p = true;
+		*hba_ok_p = true;
 	}
 }
 
@@ -354,25 +341,23 @@ process_open_config_file(FILE *file, SockAddr *raddr, const char *user,
 
 static void
 find_hba_entry(SockAddr *raddr, const char *user, const char *database,
-			   bool *host_ok_p, UserAuth *userauth_p, char *auth_arg)
+			   bool *hba_ok_p, UserAuth *userauth_p, char *auth_arg)
 {
 /*
  * Read the config file and find an entry that allows connection from
- * host "*raddr" to database "database".  If found, return *host_ok_p == true
- * and *userauth_p and *auth_arg representing the contents of that entry.
+ * host "raddr", user "user", to database "database".  If found,
+ * return *hba_ok_p = true and *userauth_p and *auth_arg representing
+ * the contents of that entry.  If there is no matching entry, we
+ * set *hba_ok_p = true, *userauth_p = uaReject.
  *
- * When a record has invalid syntax, we either ignore it or reject the
- * connection (depending on where it's invalid).  No message or anything.
- * We need to fix that some day.
- *
- * If we don't find or can't access the config file, we issue an error
- * message and deny the connection.
+ * If the config file is unreadable or contains invalid syntax, we
+ * issue a diagnostic message to stderr (ie, the postmaster log file)
+ * and return without changing *hba_ok_p.
  *
  * If we find a file by the old name of the config file (pg_hba), we issue
  * an error message because it probably needs to be converted.  He didn't
  * follow directions and just installed his old hba file in the new database
  * system.
- *
  */
 
 	int		fd,
@@ -431,14 +416,13 @@ find_hba_entry(SockAddr *raddr, const char *user, const char *database,
 		}
 		else
 		{
-			process_open_config_file(file, raddr, user, database, host_ok_p, 
+			process_open_config_file(file, raddr, user, database, hba_ok_p, 
 					userauth_p, auth_arg);
 			FreeFile(file);
 		}
 		pfree(conf_file);
 	}
 	pfree(old_conf_file);
-	return;
 }
 
 
@@ -1079,20 +1063,21 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 
 #endif
 
-extern int
+int
 hba_getauthmethod(SockAddr *raddr, char *user, char *database,
 				  char *auth_arg, UserAuth *auth_method)
 {
 /*---------------------------------------------------------------------------
   Determine what authentication method should be used when accessing database
-  "database" from frontend "raddr".  Return the method, an optional argument,
-  and STATUS_OK.
+  "database" from frontend "raddr", user "user".  Return the method,
+  an optional argument, and STATUS_OK.
+  Note that STATUS_ERROR indicates a problem with the hba config file.
+  If the file is OK but does not contain any entry matching the request,
+  we return STATUS_OK and method = uaReject.
 ----------------------------------------------------------------------------*/
-	bool		host_ok;
+	bool		hba_ok = false;
 
-	host_ok = false;
+	find_hba_entry(raddr, user, database, &hba_ok, auth_method, auth_arg);
 
-	find_hba_entry(raddr, user, database, &host_ok, auth_method, auth_arg);
-
-	return host_ok ? STATUS_OK : STATUS_ERROR;
+	return hba_ok ? STATUS_OK : STATUS_ERROR;
 }
