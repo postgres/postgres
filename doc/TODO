@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Dec 28 14:47:30 EST 2001
+Last updated:		Fri Dec 28 23:55:22 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -394,6 +394,7 @@ MISCELLANEOUS
 * Allow merge and hash joins on expressions not just simple variables (Tom)
 * Add new pg_proc cachable settings to specify whether function can be
   evaluated only once or once per query
+* Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
 
 SOURCE CODE
 -----------
