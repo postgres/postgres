@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.145 2004/08/04 20:58:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.146 2004/08/05 23:32:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,6 +57,7 @@
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "postmaster/postmaster.h"
+#include "postmaster/syslogger.h"
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
 #include "utils/memutils.h"
@@ -71,7 +72,7 @@ sigjmp_buf *PG_exception_stack = NULL;
 /* GUC parameters */
 PGErrorVerbosity Log_error_verbosity = PGERROR_VERBOSE;
 char       *Log_line_prefix = NULL; /* format for extra log line info */
-unsigned int Log_destination = LOG_DESTINATION_STDERR;
+int			Log_destination = LOG_DESTINATION_STDERR;
 
 #ifdef HAVE_SYSLOG
 char	   *Syslog_facility;	/* openlog() parameters */
@@ -1588,6 +1589,10 @@ send_message_to_server_log(ErrorData *edata)
 	{
 		fprintf(stderr, "%s", buf.data);
 	}
+
+	/* If in the syslogger process, try to write messages direct to file */
+	if (am_syslogger)
+		write_syslogger_file(buf.data, buf.len);
 
 	pfree(buf.data);
 }

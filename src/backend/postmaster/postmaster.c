@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.419 2004/08/04 20:09:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.420 2004/08/05 23:32:10 tgl Exp $
  *
  * NOTES
  *
@@ -104,6 +104,7 @@
 #include "nodes/nodes.h"
 #include "postmaster/postmaster.h"
 #include "postmaster/pgarch.h"
+#include "postmaster/syslogger.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
@@ -199,7 +200,8 @@ char	   *preload_libraries_string = NULL;
 static pid_t StartupPID = 0,
 			BgWriterPID = 0,
 			PgArchPID = 0,
-			PgStatPID = 0;
+			PgStatPID = 0,
+			SysLoggerPID = 0;
 
 /* Startup/shutdown state */
 #define			NoShutdown		0
@@ -828,7 +830,7 @@ PostmasterMain(int argc, char *argv[])
 	 * CAUTION: when changing this list, check for side-effects on the signal
 	 * handling setup of child processes.  See tcop/postgres.c,
 	 * bootstrap/bootstrap.c, postmaster/bgwriter.c, postmaster/pgarch.c,
-	 * and postmaster/pgstat.c.
+	 * postmaster/pgstat.c, and postmaster/syslogger.c.
 	 */
 	pqinitmask();
 	PG_SETMASK(&BlockSig);
@@ -849,6 +851,11 @@ PostmasterMain(int argc, char *argv[])
 #ifdef SIGXFSZ
 	pqsignal(SIGXFSZ, SIG_IGN); /* ignored */
 #endif
+
+	/*
+	 * If enabled, start up syslogger collection subprocess
+	 */
+	SysLoggerPID = SysLogger_Start();
 
 	/*
 	 * Reset whereToSendOutput from Debug (its starting state) to None.
@@ -933,8 +940,8 @@ checkDataDir(const char *checkdir)
 	{
 		write_stderr("%s does not know where to find the database system data.\n"
 					 "You must specify the directory that contains the database system\n"
-					 "or configuration files by either specifying the -D invocation option\n"
-					 "or by setting the PGDATA environment variable.\n",
+					 "either by specifying the -D invocation option or by setting the\n"
+					 "PGDATA environment variable.\n",
 					 progname);
 		ExitPostmaster(2);
 	}
@@ -944,12 +951,12 @@ checkDataDir(const char *checkdir)
 		if (errno == ENOENT)
 			ereport(FATAL,
 					(errcode_for_file_access(),
-					 errmsg("data or configuration location \"%s\" does not exist",
+					 errmsg("data directory \"%s\" does not exist",
 							checkdir)));
 		else
 			ereport(FATAL,
 					(errcode_for_file_access(),
-			 errmsg("could not read permissions of \"%s\": %m",
+			 errmsg("could not read permissions of directory \"%s\": %m",
 					checkdir)));
 	}
 
@@ -1050,7 +1057,7 @@ pmdaemonize(void)
 		ExitPostmaster(1);
 	}
 #endif
-	i = open(NULL_DEV, O_RDWR | PG_BINARY);
+	i = open(NULL_DEV, O_RDWR);
 	dup2(i, 0);
 	dup2(i, 1);
 	dup2(i, 2);
@@ -1206,6 +1213,10 @@ ServerLoop(void)
 				}
 			}
 		}
+
+		/* If we have lost the system logger, try to start a new one */
+		if (SysLoggerPID == 0 && Redirect_stderr)
+			SysLoggerPID = SysLogger_Start();
 
 		/*
 		 * If no background writer process is running, and we are not in
@@ -1714,9 +1725,12 @@ ConnFree(Port *conn)
  * This is called during child process startup to release file descriptors
  * that are not needed by that child process.  The postmaster still has
  * them open, of course.
+ *
+ * Note: we pass am_syslogger as a boolean because we don't want to set
+ * the global variable yet when this is called.
  */
 void
-ClosePostmasterPorts(void)
+ClosePostmasterPorts(bool am_syslogger)
 {
 	int			i;
 
@@ -1728,6 +1742,20 @@ ClosePostmasterPorts(void)
 			StreamClose(ListenSocket[i]);
 			ListenSocket[i] = -1;
 		}
+	}
+
+	/* If using syslogger, close the read side of the pipe */
+	if (!am_syslogger)
+	{
+#ifndef WIN32
+		if (syslogPipe[0] >= 0)
+			close(syslogPipe[0]);
+		syslogPipe[0] = -1;
+#else
+		if (syslogPipe[0])
+			CloseHandle(syslogPipe[0]);
+		syslogPipe[0] = 0;
+#endif
 	}
 }
 
@@ -1770,6 +1798,8 @@ SIGHUP_handler(SIGNAL_ARGS)
 			kill(BgWriterPID, SIGHUP);
 		if (PgArchPID != 0)
 			kill(PgArchPID, SIGHUP);
+		if (SysLoggerPID != 0)
+			kill(SysLoggerPID, SIGHUP);
 		/* PgStatPID does not currently need SIGHUP */
 		load_hba();
 		load_ident();
@@ -2063,6 +2093,18 @@ reaper(SIGNAL_ARGS)
 			continue;
 		}
 
+		/* Was it the system logger? try to start a new one */
+		if (SysLoggerPID != 0 && pid == SysLoggerPID)
+		{
+			SysLoggerPID = 0;
+			/* for safety's sake, launch new logger *first* */
+			SysLoggerPID = SysLogger_Start();
+			if (exitstatus != 0)
+				LogChildExit(LOG, gettext("system logger process"),
+							 pid, exitstatus);
+			continue;
+		}
+
 		/*
 		 * Else do standard backend child cleanup.
 		 */
@@ -2257,6 +2299,8 @@ HandleChildCrash(int pid, int exitstatus, const char *procname)
 								 (int) PgStatPID)));
 		kill(PgStatPID, SIGQUIT);
 	}
+
+	/* We do NOT restart the syslogger */
 
 	FatalError = true;
 }
@@ -2528,7 +2572,7 @@ BackendRun(Port *port)
 	 * Let's clean up ourselves as the postmaster child, and close the
 	 * postmaster's listen sockets
 	 */
-	ClosePostmasterPorts();
+	ClosePostmasterPorts(false);
 
 	/* We don't want the postmaster's proc_exit() handlers */
 	on_exit_reset();
@@ -2921,7 +2965,7 @@ SubPostmasterMain(int argc, char *argv[])
 	if (strcmp(argv[1], "-forkboot") == 0)
 	{
 		/* Close the postmaster's sockets */
-		ClosePostmasterPorts();
+		ClosePostmasterPorts(false);
 
 		/* Attach process to shared segments */
 		CreateSharedMemoryAndSemaphores(false, MaxBackends, 0);
@@ -2932,7 +2976,7 @@ SubPostmasterMain(int argc, char *argv[])
 	if (strcmp(argv[1], "-forkarch") == 0)
 	{
 		/* Close the postmaster's sockets */
-		ClosePostmasterPorts();
+		ClosePostmasterPorts(false);
 
 		/* Do not want to attach to shared memory */
 
@@ -2942,7 +2986,7 @@ SubPostmasterMain(int argc, char *argv[])
 	if (strcmp(argv[1], "-forkbuf") == 0)
 	{
 		/* Close the postmaster's sockets */
-		ClosePostmasterPorts();
+		ClosePostmasterPorts(false);
 
 		/* Do not want to attach to shared memory */
 
@@ -2959,6 +3003,16 @@ SubPostmasterMain(int argc, char *argv[])
 		/* Do not want to attach to shared memory */
 
 		PgstatCollectorMain(argc, argv);
+		proc_exit(0);
+	}
+	if (strcmp(argv[1], "-forklog") == 0)
+	{
+		/* Close the postmaster's sockets */
+		ClosePostmasterPorts(true);
+
+		/* Do not want to attach to shared memory */
+
+		SysLoggerMain(argc, argv);
 		proc_exit(0);
 	}
 
@@ -3017,7 +3071,7 @@ sigusr1_handler(SIGNAL_ARGS)
 		if (Shutdown <= SmartShutdown)
 			SignalChildren(SIGUSR1);
 	}
- 
+
 	if (PgArchPID != 0 && Shutdown == NoShutdown)
 	{
 		if (CheckPostmasterSignal(PMSIGNAL_WAKEN_ARCHIVER))
@@ -3214,7 +3268,7 @@ StartChildProcess(int xlop)
 		IsUnderPostmaster = true;	/* we are a postmaster subprocess now */
 
 		/* Close the postmaster's sockets */
-		ClosePostmasterPorts();
+		ClosePostmasterPorts(false);
 
 		/* Lose the postmaster's on-exit routines and port connections */
 		on_exit_reset();
@@ -3400,6 +3454,9 @@ write_backend_variables(char *filename, Port *port)
 	write_var(PostmasterHandle, fp);
 #endif
 
+	write_var(syslogPipe[0], fp);
+	write_var(syslogPipe[1], fp);
+
 	StrNCpy(str_buf, my_exec_path, MAXPGPATH);
 	write_array_var(str_buf, fp);
 
@@ -3470,6 +3527,9 @@ read_backend_variables(char *filename, Port *port)
 #ifdef WIN32
 	read_var(PostmasterHandle, fp);
 #endif
+
+	read_var(syslogPipe[0], fp);
+	read_var(syslogPipe[1], fp);
 
 	read_array_var(str_buf, fp);
 	StrNCpy(my_exec_path, str_buf, MAXPGPATH);

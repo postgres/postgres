@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.72 2004/07/31 23:04:55 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/elog.h,v 1.73 2004/08/05 23:32:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -272,7 +272,7 @@ typedef enum
 
 extern PGErrorVerbosity Log_error_verbosity;
 extern char *Log_line_prefix;
-extern unsigned int Log_destination;
+extern int Log_destination;
 
 /* Log destination bitmap */
 #define LOG_DESTINATION_STDERR   1

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.271 2004/08/03 23:42:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/runtime.sgml,v 1.272 2004/08/05 23:32:10 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1800,15 +1800,91 @@ SET ENABLE_SEQSCAN TO OFF;
 	 option to a list of desired log destinations separated by
 	 commas. The default is to log to <systemitem>stderr</systemitem> 
 	 only.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> configuration file.
        </para>
       </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-redirect-stderr" xreflabel="redirect_stderr">
+      <term><varname>redirect_stderr</varname> (<type>boolean</type>)</term>
+       <listitem>
+        <para>
+	  This option allows messages sent to <application>stderr</> to be
+	  captured and redirected into log files.
+	  This option, in combination with logging to <application>stderr</>,
+	  is often more useful than
+	  logging to <application>syslog</>, since some types of messages
+	  may not appear in <application>syslog</> output (a common example
+	  is dynamic-linker failure messages).
+	  This option can only be set at server start.
+        </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-directory" xreflabel="log_directory">
+      <term><varname>log_directory</varname> (<type>string</type>)</term>
+       <listitem>
+        <para>
+	  When <varname>redirect_stderr</> is enabled, this option
+          determines the directory in which log files will be created.
+	  It may be specified as an absolute path, or relative to the
+	  cluster data directory.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> configuration file.
+        </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-filename-prefix" xreflabel="log_filename_prefix">
+      <term><varname>log_filename_prefix</varname> (<type>string</type>)</term>
+       <listitem>
+        <para>
+	  When <varname>redirect_stderr</> is enabled, this option
+          sets the prefix of the file names of the created log files.
+	  The postmaster PID and the current time are appended to this
+	  prefix to form an exact log file name.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> configuration file.
+        </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-rotation-age" xreflabel="log_rotation_age">
+      <term><varname>log_rotation_age</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+	  When <varname>redirect_stderr</> is enabled, this option
+	  determines the maximum lifetime of an individual log file.
+	  After this many minutes have elapsed, a new log file will
+	  be created.  Set to zero to disable time-based creation of
+	  new log files.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> configuration file.
+        </para>
+       </listitem>
+     </varlistentry>
+
+     <varlistentry id="guc-log-rotation-size" xreflabel="log_rotation_size">
+      <term><varname>log_rotation_size</varname> (<type>integer</type>)</term>
+       <listitem>
+        <para>
+	  When <varname>redirect_stderr</> is enabled, this option
+	  determines the maximum size of an individual log file.
+	  After this many kilobytes have been emitted into a log file,
+	  a new log file will be created.  Set to zero to disable size-based
+	  creation of new log files.
+         This option can only be set at server start or in the
+         <filename>postgresql.conf</filename> configuration file.
+        </para>
+       </listitem>
      </varlistentry>
 
      <varlistentry id="guc-syslog-facility" xreflabel="syslog_facility">
       <term><varname>syslog_facility</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-          If logging to <application>syslog</> is enabled, this option
+          When logging to <application>syslog</> is enabled, this option
           determines the <application>syslog</application>
           <quote>facility</quote> to be used.  You may choose
           from <literal>LOCAL0</>, <literal>LOCAL1</>,
@@ -1826,7 +1902,7 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>syslog_ident</varname> (<type>string</type>)</term>
        <listitem>
         <para>
-         If logging to <application>syslog</> is enabled, this option
+         When logging to <application>syslog</> is enabled, this option
          determines the program name used to identify
          <productname>PostgreSQL</productname> messages in
          <application>syslog</application> logs. The default is

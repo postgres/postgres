@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.225 2004/07/28 14:23:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.226 2004/08/05 23:32:12 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "postmaster/bgwriter.h"
+#include "postmaster/syslogger.h"
 #include "postmaster/postmaster.h"
 #include "storage/bufmgr.h"
 #include "storage/fd.h"
@@ -801,6 +802,26 @@ static struct config_bool ConfigureNamesBool[] =
 		&default_with_oids,
 		true, NULL, NULL
 	},
+	{
+		{"redirect_stderr", PGC_POSTMASTER, LOGGING_WHERE,
+		 gettext_noop("Start a subprocess to capture stderr output into log files"),
+		 NULL
+		},
+		&Redirect_stderr,
+		false, NULL, NULL
+	},
+
+#ifdef WAL_DEBUG
+	{
+		{"wal_debug", PGC_SUSET, DEVELOPER_OPTIONS,
+			gettext_noop("Emit WAL-related debugging output."),
+			NULL,
+			GUC_NOT_IN_SAMPLE
+		},
+		&XLOG_DEBUG,
+		false, NULL, NULL
+	},
+#endif
 
 	{
 		{"integer_datetimes", PGC_INTERNAL, COMPILE_OPTIONS,
@@ -815,18 +836,6 @@ static struct config_bool ConfigureNamesBool[] =
 		false, NULL, NULL
 #endif
 	},
-
-#ifdef WAL_DEBUG
-	{
-		{"wal_debug", PGC_SUSET, DEVELOPER_OPTIONS,
-			gettext_noop("Emit WAL-related debugging output."),
-			NULL,
-			GUC_NOT_IN_SAMPLE
-		},
-		&XLOG_DEBUG,
-		false, NULL, NULL
-	},
-#endif
 
 	/* End-of-list marker */
 	{
@@ -1246,6 +1255,24 @@ static struct config_int ConfigureNamesInt[] =
 	},
 
 	{
+		{"log_rotation_age", PGC_SIGHUP, LOGGING_WHERE,
+		 gettext_noop("Automatic logfile rotation will occur after N minutes"),
+		 NULL
+		},
+		&Log_RotationAge,
+		24*60, 0, INT_MAX, NULL, NULL
+	},
+
+	{
+		{"log_rotation_size", PGC_SIGHUP, LOGGING_WHERE,
+		 gettext_noop("Automatic logfile rotation will occur after N kilobytes"),
+		 NULL
+		},
+		&Log_RotationSize,
+		10*1024, 0, INT_MAX, NULL, NULL
+	},
+
+	{
 		{"max_function_args", PGC_INTERNAL, COMPILE_OPTIONS,
 			gettext_noop("Shows the maximum number of function arguments"),
 			NULL,
@@ -1633,6 +1660,23 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&log_destination_string,
 		"stderr", assign_log_destination, NULL
+	},
+	{
+		{"log_directory", PGC_SIGHUP, LOGGING_WHERE,
+		 gettext_noop("Sets the destination directory for logfiles."),
+		 gettext_noop("May be specified as relative to the cluster directory "
+					  "or as absolute path.")
+		},
+		&Log_directory,
+		"pg_log", NULL, NULL
+	},
+	{
+		{"log_filename_prefix", PGC_SIGHUP, LOGGING_WHERE,
+		 gettext_noop("Prefix for file names created in the log_directory."),
+		 NULL
+		},
+		&Log_filename_prefix,
+		"postgresql-", NULL, NULL
 	},
 
 #ifdef HAVE_SYSLOG
@@ -5055,7 +5099,7 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 	char *rawstring;
 	List *elemlist;
 	ListCell *l;
-	unsigned int  newlogdest = 0;
+	int  newlogdest = 0;
  
 	/* Need a modifiable copy of string */
 	rawstring = pstrdup(value);

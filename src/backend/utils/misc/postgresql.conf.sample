@@ -170,8 +170,22 @@
 #log_destination = 'stderr'	# Valid values are combinations of stderr,
                                 # syslog and eventlog, depending on
                                 # platform.
+
+# This is relevant when logging to stderr:
+#redirect_stderr = false    # Enable capturing of stderr into log files.
+# These are only relevant if redirect_stderr is true:
+#log_directory = 'pg_log'   # Directory where logfiles are written.
+                            # May be specified absolute or relative to PGDATA
+#log_filename_prefix = 'postgresql_' # Prefix for logfile names.
+#log_rotation_age = 1440    # Automatic rotation of logfiles will happen after
+                            # so many minutes.  0 to disable.
+#log_rotation_size = 10240  # Automatic rotation of logfiles will happen after
+                            # so many kilobytes of log output.  0 to disable.
+
+# These are relevant when logging to syslog:
 #syslog_facility = 'LOCAL0'
 #syslog_ident = 'postgres'
+
 
 # - When to Log -
 
