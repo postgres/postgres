@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.3 1996/07/25 19:45:24 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.4 1996/08/14 05:01:53 scrappy Exp $
  *
  * NOTES
  *
@@ -60,6 +60,7 @@ static struct ONEXIT {
 } onexit_list[ MAX_ON_EXITS ];
 
 static int onexit_index;
+static void IpcConfigTip();
 
 typedef struct _PrivateMemStruct {
     int id;
@@ -272,6 +273,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 
 	if (semId < 0) {
 	    perror("semget");
+	    IpcConfigTip();
 	    exitpg(3);
 	}
 	for (i = 0; i < semNum; i++) {
@@ -281,6 +283,7 @@ IpcSemaphoreCreate(IpcSemaphoreKey semKey,
 	errStatus = semctl(semId, 0, SETALL, semun);
 	if (errStatus == -1) {
 	    perror("semctl");
+	    IpcConfigTip();
 	}
 	
 	if (removeOnExit)
@@ -320,7 +323,10 @@ IpcSemaphoreSet(int semId, int semno, int value)
     IpcSemaphoreSet_return = errStatus;
     
     if (errStatus == -1)
+    {
 	perror("semctl");
+	IpcConfigTip();
+    }
 }
 
 /****************************************************************************/
@@ -377,6 +383,7 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, int lock)
     
     if (errStatus == -1) {
 	perror("semop");
+	IpcConfigTip();
 	exitpg(255);
     }
 }
@@ -419,6 +426,7 @@ IpcSemaphoreUnlock(IpcSemaphoreId semId, int sem, int lock)
     
     if (errStatus == -1) {
 	perror("semop");
+	IpcConfigTip();
 	exitpg(255);
     }
 }
@@ -466,6 +474,7 @@ IpcMemoryCreate(IpcMemoryKey memKey, uint32 size, int permission)
 	fprintf(stderr,"IpcMemoryCreate: memKey=%d , size=%d , permission=%d", 
 		memKey, size , permission );
 	perror("IpcMemoryCreate: shmget(..., create, ...) failed");
+	IpcConfigTip();
 	return(IpcMemCreationFailed);
     }
     
@@ -490,6 +499,7 @@ IpcMemoryIdGet(IpcMemoryKey memKey, uint32 size)
 	fprintf(stderr,"IpcMemoryIdGet: memKey=%d , size=%d , permission=%d", 
 		memKey, size , 0 );
 	perror("IpcMemoryIdGet:  shmget() failed");
+	IpcConfigTip();
 	return(IpcMemIdGetFailed);
     }
     
@@ -530,6 +540,7 @@ IpcMemoryAttach(IpcMemoryId memId)
     /*	if ( *memAddress == -1) { XXX ??? */
     if ( memAddress == (char *)-1) {
 	perror("IpcMemoryAttach: shmat() failed");
+	IpcConfigTip();
 	return(IpcMemAttachFailed);
     }
     
@@ -706,3 +717,11 @@ LockIsFree(int lockid)
 }
 
 #endif /* HAS_TEST_AND_SET */
+
+static void
+IpcConfigTip()
+{
+	fprintf(stderr,"This type of error is usually caused by improper\n");
+	fprintf(stderr,"shared memory or System V IPC semaphore configuration.\n");
+	fprintf(stderr,"See the FAQ for more detailed information\n");
+}
