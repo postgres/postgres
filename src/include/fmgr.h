@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.24 2002/09/04 20:31:36 momjian Exp $
+ * $Id: fmgr.h,v 1.25 2002/09/12 00:26:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,6 +114,11 @@ extern void fmgr_info_copy(FmgrInfo *dstinfo, FmgrInfo *srcinfo,
 
 /* Standard parameter list for fmgr-compatible functions */
 #define PG_FUNCTION_ARGS	FunctionCallInfo fcinfo
+
+/*
+ * Get number of arguments passed to function.
+ */
+#define PG_NARGS() (fcinfo->nargs)
 
 /*
  * If function is not marked "proisstrict" in pg_proc, it must check for
