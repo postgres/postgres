@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.26 1998/03/01 08:10:34 thomas Exp $
+ * $Id: pg_operator.h,v 1.27 1998/03/02 06:12:10 scrappy Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -284,7 +284,7 @@ DATA(insert OID = 610 (  ">"	   PGUID 0 b t f  26  26  16 609 611  0  0 int4gt i
 DATA(insert OID = 611 (  "<="	   PGUID 0 b t f  26  26  16 612 610  0  0 int4le intltsel intltjoinsel ));
 DATA(insert OID = 612 (  ">="	   PGUID 0 b t f  26  26  16 611 609  0  0 int4ge intgtsel intgtjoinsel ));
 
-DATA(insert OID = 613 (  "<->"	   PGUID 0 b t f 600 603 701   0   0  0  0 dist_pl - - ));
+DATA(insert OID = 613 (  "<->"	   PGUID 0 b t f 600 628 701   0   0  0  0 dist_pl - - ));
 DATA(insert OID = 614 (  "<->"	   PGUID 0 b t f 600 601 701   0   0  0  0 dist_ps - - ));
 DATA(insert OID = 615 (  "<->"	   PGUID 0 b t f 600 603 701   0   0  0  0 dist_pb - - ));
 DATA(insert OID = 616 (  "<->"	   PGUID 0 b t f 601 628 701   0   0  0  0 dist_sl - - ));
