@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.53 1998/10/02 15:38:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.54 1998/10/27 17:47:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,7 +175,7 @@ static __inline__ int
 tas(volatile slock_t *lock)
 {
   register _res;
-  __asm__("sbitb 0, %0
+  __asm__("sbitb 0, %0 \
 	sfsd %1"
 	: "=m"(*lock), "=r"(_res));
   return (int) _res; 
