@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.196 2002/09/02 06:11:43 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.197 2002/09/02 14:43:14 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -3628,7 +3628,8 @@ connection_target: database_name opt_server opt_port
 			/* old style: dbname[@server][:port] */
 			if (strlen($2) > 0 && *($2) != '@')
 			{
-				sprintf(errortext, sizeof(errortext), "Expected '@', found '%s'", $2);
+				snprintf(errortext, sizeof(errortext),
+						 "Expected '@', found '%s'", $2);
 				mmerror(PARSE_ERROR, ET_ERROR, errortext);
 			}
 
