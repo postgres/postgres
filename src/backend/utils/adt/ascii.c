@@ -1,31 +1,31 @@
-/* -----------------------------------------------------------------------
+/*-----------------------------------------------------------------------
  * ascii.c
- *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.14 2003/04/02 21:07:59 tgl Exp $
- *
- *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
- *
- *
- *	 TO_ASCII()
- *
  *	 The PostgreSQL routine for string to ascii conversion.
  *
- * -----------------------------------------------------------------------
+ *	 Portions Copyright (c) 1999-2002, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.15 2003/07/14 16:41:38 tgl Exp $
+ *
+ *-----------------------------------------------------------------------
  */
-
 #include "postgres.h"
+
 #include "utils/builtins.h"
 #include "mb/pg_wchar.h"
 #include "utils/ascii.h"
 
+static void pg_to_ascii(unsigned char *src, unsigned char *src_end,
+						unsigned char *dest, int enc);
 static text *encode_to_ascii(text *data, int enc);
+
 
 /* ----------
  * to_ascii
  * ----------
  */
-char *
-pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int enc)
+static void
+pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *dest, int enc)
 {
 	unsigned char *x;
 	unsigned char *ascii;
@@ -36,7 +36,6 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	 */
 #define RANGE_128	128
 #define RANGE_160	160
-
 
 	if (enc == PG_LATIN1)
 	{
@@ -64,9 +63,9 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	}
 	else
 	{
-		elog(ERROR, "pg_to_ascii(): unsupported encoding from %s",
+		elog(ERROR, "unsupported encoding conversion from %s to ASCII",
 			 pg_encoding_to_char(enc));
-		return NULL;			/* keep compiler quiet */
+		return;					/* keep compiler quiet */
 	}
 
 	/*
@@ -75,27 +74,27 @@ pg_to_ascii(unsigned char *src, unsigned char *src_end, unsigned char *desc, int
 	for (x = src; x < src_end; x++)
 	{
 		if (*x < 128)
-			*desc++ = *x;
+			*dest++ = *x;
 		else if (*x < range)
-			*desc++ = ' ';		/* bogus 128 to 'range' */
+			*dest++ = ' ';		/* bogus 128 to 'range' */
 		else
-			*desc++ = ascii[*x - range];
+			*dest++ = ascii[*x - range];
 	}
-
-	return desc;
 }
 
 /* ----------
  * encode text
+ *
+ * The text datum is overwritten in-place, therefore this coding method
+ * cannot support conversions that change the string length!
  * ----------
  */
 static text *
 encode_to_ascii(text *data, int enc)
 {
-	pg_to_ascii(
-				(unsigned char *) VARDATA(data),		/* src */
-				VARDATA(data) + VARSIZE(data),	/* src end */
-				(unsigned char *) VARDATA(data),		/* desc */
+	pg_to_ascii((unsigned char *) VARDATA(data),		/* src */
+				(unsigned char *) (data) + VARSIZE(data),	/* src end */
+				(unsigned char *) VARDATA(data),		/* dest */
 				enc);			/* encoding */
 
 	return data;
@@ -108,14 +107,10 @@ encode_to_ascii(text *data, int enc)
 Datum
 to_ascii_encname(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P
-		(
-		 encode_to_ascii
-		 (
-		  PG_GETARG_TEXT_P_COPY(0),
-		  pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)))
-		  )
-		);
+	text   *data = PG_GETARG_TEXT_P_COPY(0);
+	int		enc = pg_char_to_encoding(NameStr(*PG_GETARG_NAME(1)));
+
+	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }
 
 /* ----------
@@ -125,14 +120,10 @@ to_ascii_encname(PG_FUNCTION_ARGS)
 Datum
 to_ascii_enc(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P
-		(
-		 encode_to_ascii
-		 (
-		  PG_GETARG_TEXT_P_COPY(0),
-		  PG_GETARG_INT32(1)
-		  )
-		);
+	text   *data = PG_GETARG_TEXT_P_COPY(0);
+	int		enc = PG_GETARG_INT32(1);
+
+	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }
 
 /* ----------
@@ -142,12 +133,8 @@ to_ascii_enc(PG_FUNCTION_ARGS)
 Datum
 to_ascii_default(PG_FUNCTION_ARGS)
 {
-	PG_RETURN_TEXT_P
-		(
-		 encode_to_ascii
-		 (
-		  PG_GETARG_TEXT_P_COPY(0),
-		  GetDatabaseEncoding()
-		  )
-		);
+	text   *data = PG_GETARG_TEXT_P_COPY(0);
+	int		enc = GetDatabaseEncoding();
+
+	PG_RETURN_TEXT_P(encode_to_ascii(data, enc));
 }
