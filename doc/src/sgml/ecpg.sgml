@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.47 2003/08/01 13:53:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ecpg.sgml,v 1.48 2003/08/07 04:17:21 momjian Exp $
 -->
 
 <chapter id="ecpg">
@@ -703,7 +703,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
 
    <variablelist>
     <varlistentry>
-     <term><literal>CARDINALITY</literal> (integer)<term>
+     <term><literal>CARDINALITY</literal> (integer)</term>
      <listitem>
       <para>
        number of rows in the result set
@@ -712,7 +712,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>DATA</literal><term>
+     <term><literal>DATA</literal></term>
      <listitem>
       <para>
        actual data item (therefore, the data type of this field
@@ -722,7 +722,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>DATETIME_INTERVAL_CODE</literal> (integer)<term>
+     <term><literal>DATETIME_INTERVAL_CODE</literal> (integer)</term>
      <listitem>
       <para>
        ?
@@ -731,7 +731,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>DATETIME_INTERVAL_PRECISION</literal> (integer)<term>
+     <term><literal>DATETIME_INTERVAL_PRECISION</literal> (integer)</term>
      <listitem>
       <para>
        not implemented
@@ -740,7 +740,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>INDICATOR</literal> (integer)<term>
+     <term><literal>INDICATOR</literal> (integer)</term>
      <listitem>
       <para>
        the indicator (indicating a null value or a value truncation)
@@ -749,7 +749,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>KEY_MEMBER</literal> (integer)<term>
+     <term><literal>KEY_MEMBER</literal> (integer)</term>
      <listitem>
       <para>
        not implemented
@@ -758,7 +758,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>LENGTH</literal> (integer)<term>
+     <term><literal>LENGTH</literal> (integer)</term>
      <listitem>
       <para>
        length of the datum in characters
@@ -767,7 +767,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>NAME</literal> (string)<term>
+     <term><literal>NAME</literal> (string)</term>
      <listitem>
       <para>
        name of the column
@@ -776,7 +776,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>NULLABLE</literal> (integer)<term>
+     <term><literal>NULLABLE</literal> (integer)</term>
      <listitem>
       <para>
        not implemented
@@ -785,7 +785,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>OCTET_LENGTH</literal> (integer)<term>
+     <term><literal>OCTET_LENGTH</literal> (integer)</term>
      <listitem>
       <para>
        length of the character representation of the datum in bytes
@@ -794,7 +794,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>PRECISION</literal> (integer)<term>
+     <term><literal>PRECISION</literal> (integer)</term>
      <listitem>
       <para>
        precision (for type <type>numeric</type>)
@@ -803,7 +803,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>RETURNED_LENGTH</literal> (integer)<term>
+     <term><literal>RETURNED_LENGTH</literal> (integer)</term>
      <listitem>
       <para>
        length of the datum in characters
@@ -812,7 +812,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>RETURNED_OCTET_LENGTH</literal> (integer)<term>
+     <term><literal>RETURNED_OCTET_LENGTH</literal> (integer)</term>
      <listitem>
       <para>
        length of the character representation of the datum in bytes
@@ -821,7 +821,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>SCALE</literal> (integer)<term>
+     <term><literal>SCALE</literal> (integer)</term>
      <listitem>
       <para>
        scale (for type <type>numeric</type>)
@@ -830,7 +830,7 @@ EXEC SQL GET DESCRIPTOR <replaceable>name</replaceable> VALUE <replaceable>num</
     </varlistentry>
 
     <varlistentry>
-     <term><literal>TYPE</literal> (integer)<term>
+     <term><literal>TYPE</literal> (integer)</term>
      <listitem>
       <para>
        numeric code of the data type of the column
