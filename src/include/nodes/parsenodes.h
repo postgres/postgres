@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.102 2000/03/14 23:06:47 thomas Exp $
+ * $Id: parsenodes.h,v 1.103 2000/03/24 23:26:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,7 +196,7 @@ typedef struct Constraint
 	char	   *name;			/* name, or NULL if unnamed */
 	Node	   *raw_expr;		/* expr, as untransformed parse tree */
 	char	   *cooked_expr;	/* expr, as nodeToString representation */
-	List	   *keys;			/* list of primary keys (or unique columns) */
+	List	   *keys;			/* Ident nodes naming referenced column(s) */
 } Constraint;
 
 
