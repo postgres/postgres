@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.400 2005/01/11 17:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.401 2005/01/23 00:30:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -6899,7 +6899,7 @@ dumpIndex(Archive *fout, IndxInfo *indxinfo)
 		ArchiveEntry(fout, indxinfo->dobj.catId, indxinfo->dobj.dumpId,
 					 indxinfo->dobj.name,
 					 tbinfo->dobj.namespace->dobj.name,
-					 tbinfo->reltablespace,
+					 indxinfo->tablespace,
 					 tbinfo->usename, false,
 					 "INDEX", q->data, delq->data, NULL,
 					 indxinfo->dobj.dependencies, indxinfo->dobj.nDeps,
