@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.29 2004/04/27 19:51:12 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.30 2004/05/28 18:37:10 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -64,8 +64,8 @@ main(int argc, char *argv[])
 void		func_call_1(void);
 void		func_call_2(void);
 
-#define		TEMP_FILENAME_1	"/tmp/thread_test.1.XXXXX"
-#define		TEMP_FILENAME_2	"/tmp/thread_test.2.XXXXX"
+#define		TEMP_FILENAME_1	"/tmp/thread_test.1.XXXXXX"
+#define		TEMP_FILENAME_2	"/tmp/thread_test.2.XXXXXX"
 
 char	   *temp_filename_1;
 char	   *temp_filename_2;
