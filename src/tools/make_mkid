@@ -1,5 +1,6 @@
 #!/bin/sh
-find `pwd`/ -type f -name '*.[chyl]' -print|sed 's;//;/;g' | mkid -S.gen=C -
+find `pwd`/ \( -name _deadcode -a -prune \) -o \
+	-type f -name '*.[chyl]' -print|sed 's;//;/;g' | mkid -S.gen=C -
 
 find . -type d -print |while read DIR
 do

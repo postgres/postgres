@@ -1,7 +1,9 @@
 #!/bin/sh
 trap "rm -f /tmp/$$" 0 1 2 3 15
 rm -f ./tags
-find `pwd`/ -type f -name '*.[chyl]' -print|xargs ctags -d -t -a -f tags
+find `pwd`/ \( -name _deadcode -a -prune \) -o \
+	-type f -name '*.[chyl]' -print|xargs ctags -d -t -a -f tags
+
 sort tags >/tmp/$$ && mv /tmp/$$ tags
 
 find . -type d -print |while read DIR
