@@ -93,7 +93,7 @@ From owner-pgsql-hackers@hub.org Wed Dec 16 15:46:41 1998
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id PAA00521
 	for <maillist@candle.pha.pa.us>; Wed, 16 Dec 1998 15:46:40 -0500 (EST)
-Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.5 $) with ESMTP id PAA08772 for <maillist@candle.pha.pa.us>; Wed, 16 Dec 1998 15:10:01 -0500 (EST)
+Received: from hub.org (majordom@hub.org [209.47.145.100]) by renoir.op.net (o1/$Revision: 1.6 $) with ESMTP id PAA08772 for <maillist@candle.pha.pa.us>; Wed, 16 Dec 1998 15:10:01 -0500 (EST)
 Received: from localhost (majordom@localhost)
 	by hub.org (8.9.1/8.9.1) with SMTP id PAA01254;
 	Wed, 16 Dec 1998 15:06:56 -0500 (EST)
@@ -203,5 +203,83 @@ Jan
 #======================================== jwieck@debis.com (Jan Wieck) #
 
 
+
+
+From owner-pgsql-hackers@hub.org Wed Jun 16 09:29:31 1999
+Received: from hub.org (hub.org [209.167.229.1])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id JAA22504
+	for <maillist@candle.pha.pa.us>; Wed, 16 Jun 1999 09:29:29 -0400 (EDT)
+Received: from hub.org (hub.org [209.167.229.1])
+	by hub.org (8.9.3/8.9.3) with ESMTP id JAA02132;
+	Wed, 16 Jun 1999 09:18:20 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@hub.org)
+Received: by hub.org (TLB v0.10a (1.23 tibbs 1997/01/09 00:29:32)); Wed, 16 Jun 1999 09:14:07 +0000 (EDT)
+Received: (from majordom@localhost)
+	by hub.org (8.9.3/8.9.3) id JAA01318
+	for pgsql-hackers-outgoing; Wed, 16 Jun 1999 09:14:06 -0400 (EDT)
+	(envelope-from owner-pgsql-hackers@postgreSQL.org)
+X-Authentication-Warning: hub.org: majordom set sender to owner-pgsql-hackers@postgreSQL.org using -f
+Received: from sunpine.krs.ru (SunPine.krs.ru [195.161.16.37])
+	by hub.org (8.9.3/8.9.3) with ESMTP id JAA01278
+	for <hackers@postgreSQL.org>; Wed, 16 Jun 1999 09:13:48 -0400 (EDT)
+	(envelope-from vadim@krs.ru)
+Received: from krs.ru (dune.krs.ru [195.161.16.38])
+	by sunpine.krs.ru (8.8.8/8.8.8) with ESMTP id VAA06276
+	for <hackers@postgreSQL.org>; Wed, 16 Jun 1999 21:12:49 +0800 (KRSS)
+Message-ID: <3767A2CF.E6E4A5F9@krs.ru>
+Date: Wed, 16 Jun 1999 21:12:47 +0800
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
+X-Accept-Language: ru, en
+MIME-Version: 1.0
+To: PostgreSQL Developers List <hackers@postgreSQL.org>
+Subject: [HACKERS] Savepoints...
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Sender: owner-pgsql-hackers@postgreSQL.org
+Precedence: bulk
+Status: ROr
+
+To have them I need to add tuple id (6 bytes) to heap tuple
+header. Are there objections? Though it's not good to increase 
+tuple header size, subj is, imho, very nice feature...
+
+Implementation is , hm, "easy":
+
+- heap_insert/heap_delete/heap_replace/heap_mark4update will
+  remember updated tid (and current command id) in relation cache
+  and store previously updated tid (remembered in relation cache)
+  in additional heap header tid;
+- lmgr will remember command id when lock was acquired;
+- for a savepoint we will just store command id when
+  the savepoint was setted;
+- when going to sleep due to concurrent the-same-row update,
+  backend will store MyProc and tuple id in shmem hash table.
+
+When rolling back to a savepoint, backend will:
+
+- release locks acquired after savepoint;
+- for a relation updated after savepoint, get last updated tid 
+  from relation cache, walk through relation, set 
+  HEAP_XMIN_INVALID/HEAP_XMAX_INVALID in all tuples updated 
+  after savepoint and wake up concurrent writers blocked
+  on these tuples (using shmem hash table mentioned above).
+
+The last feature (waking up of concurrent writers) is most hard
+part to implement. AFAIK, Oracle 7.3 was not able to do it.
+Can someone comment is this feature implemented in Oracle 8.X,
+other DBMSes?
+
+Now about implicit savepoints. Backend will place them before
+user statements execution. In the case of failure, transaction
+state will be rolled back to the one before execution of query.
+As side-effect, this means that we'll get rid of complaints
+about entire transaction abort in the case of mistyping
+causing abort due to parser errors...
+
+Comments?
+
+Vadim
 
 
