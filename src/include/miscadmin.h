@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.5 1997/01/26 15:32:06 scrappy Exp $
+ * $Id: miscadmin.h,v 1.6 1997/03/18 16:36:23 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -57,7 +57,18 @@ extern bool	    IsPostmaster;
 
 extern short	    DebugLvl;
 
-extern int          EuroDates;
+/* Date/Time Configuration
+ * HasCTZSet if client timezone is specified by client.
+ * EuroDates if client prefers dates interpreted and written w/European conventions.
+ * CTimeZone is the timezone offset in seconds.
+ * CTZName is the timezone label.
+ */
+
+extern bool	    EuroDates;
+extern bool	    HasCTZSet;
+extern bool	    CDayLight;
+extern int	    CTimeZone;
+extern char	    CTZName[];
 
 extern Oid	    LastOidProcessed;	/* for query rewrite */
 

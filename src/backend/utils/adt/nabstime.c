@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.14 1997/03/14 23:20:31 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.15 1997/03/18 16:35:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,34 +17,23 @@
 #include <sys/types.h>
 
 #include "postgres.h"
+#include <miscadmin.h>
 #ifndef USE_POSIX_TIME
 #include <sys/timeb.h>
 #endif
 #include "access/xact.h"
 
-#if USE_EURODATES
-extern int EuroDates;
-#endif
-
-#if FALSE
-#define MAXDATELEN	47
-#define MAXDATEFIELDS	25
-#endif
 
 #define MIN_DAYNUM -24856			/* December 13, 1901 */
 #define MAX_DAYNUM 24854			/* January 18, 2038 */
 
 
-/*
- * parse and convert absolute date in timestr (the normal interface)
+/* GetCurrentAbsoluteTime()
+ * Get the current system time. Set timezone parameters if not specified elsewhere.
+ * Define HasTZSet to allow clients to specify the default timezone.
  *
  * Returns the number of seconds since epoch (January 1 1970 GMT)
  */
-
-#ifndef USE_POSIX_TIME
-long int timezone;
-long int daylight;
-#endif
 
 AbsoluteTime
 GetCurrentAbsoluteTime(void)
@@ -53,24 +42,40 @@ GetCurrentAbsoluteTime(void)
 
 #ifdef USE_POSIX_TIME
     now = time(NULL);
-
-#if defined(HAVE_TZSET) && defined(HAVE_INT_TIMEZONE)
-    tzset();
-#else /* !HAVE_TZSET */
-    struct tm *tmnow = localtime(&now);
-
-    timezone = - tmnow->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
-    daylight = (tmnow->tm_isdst > 0);
-#endif
-
 #else /* ! USE_POSIX_TIME */
     struct timeb tbnow;		/* the old V7-ism */
 
     (void) ftime(&tbnow);
     now = tbnow.time;
-    timezone = tbnow.timezone * 60;
-    daylight = (tbnow.dstflag != 0);
+#endif
+
+    if (! HasCTZSet) {
+#ifdef USE_POSIX_TIME
+#if defined(HAVE_TZSET) && defined(HAVE_INT_TIMEZONE)
+	tzset();
+	CTimeZone = timezone;
+	CDayLight = daylight;
+	strcpy( CTZName, tzname[0]);
+#else /* !HAVE_TZSET */
+	struct tm *tmnow = localtime(&now);
+
+	CTimeZone = - tmnow->tm_gmtoff;	/* tm_gmtoff is Sun/DEC-ism */
+	CDayLight = (tmnow->tm_isdst > 0);
+	/* XXX is there a better way to get local timezone string in V7? - tgl 97/03/18 */
+	strftime( CTZName, "%Z", localtime(&now));
+#endif
+#else /* ! USE_POSIX_TIME */
+	CTimeZone = tbnow.timezone * 60;
+	CDayLight = (tbnow.dstflag != 0);
+	/* XXX does this work to get the local timezone string in V7? - tgl 97/03/18 */
+	strftime( CTZName, "%Z", localtime(&now));
 #endif 
+    };
+
+#ifdef DATEDEBUG
+printf( "GetCurrentAbsoluteTime- timezone is %s -> %d seconds from UTC\n",
+ CTZName, CTimeZone);
+#endif
 
     return((AbsoluteTime) now);
 } /* GetCurrentAbsoluteTime() */
@@ -157,7 +162,7 @@ printf( "nabstimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE
 
 	/* daylight correction */
 	if (tm->tm_isdst < 0) {		/* unknown; find out */
-	    tm->tm_isdst = (daylight > 0);
+	    tm->tm_isdst = (CDayLight > 0);
 	};
 	if (tm->tm_isdst > 0)
 	    sec -= 60*60;
@@ -298,7 +303,7 @@ qmktime(struct tm *tm)
 
     /* daylight correction */
     if (tm->tm_isdst < 0) {		/* unknown; find out */
-	tm->tm_isdst = (daylight > 0);
+	tm->tm_isdst = (CDayLight > 0);
     };
     if (tm->tm_isdst > 0)
 	sec -= 60*60;

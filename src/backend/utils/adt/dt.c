@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.6 1997/03/16 19:03:20 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.7 1997/03/18 16:35:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,27 +17,15 @@
 #include <string.h>
 #include <sys/types.h>
 #include <errno.h>
-#ifdef HAVE_VALUES_H
-# include <values.h>
-#else
-# include <float.h>
-# ifndef MINDOUBLE
-#  define MINDOUBLE DBL_MIN
-# endif
-#endif
 
 #include "postgres.h"
+#include <miscadmin.h>
+#ifndef USE_POSIX_TIME
+#include <sys/timeb.h>
+#endif
 #include "utils/builtins.h"
 
-extern int EuroDates;
-
-#define MAXDATEFIELDS 25
-
 #define USE_DATE_CACHE 1
-
-extern char *tzname[2];
-extern long int timezone;
-extern int daylight;
 
 #define JTIME_INVALID		(NAN)
 #define DATETIME_INVALID(j)	{*j = JTIME_INVALID;}
@@ -114,7 +102,7 @@ printf( "datetime_in- time is %f %02d:%02d:%02d %f\n", time, tm->tm_hour, tm->tm
 	if (tzp != 0) {
 	    *result = dt2local(*result, -tzp);
 	} else {
-	    *result = dt2local(*result, -timezone);
+	    *result = dt2local(*result, -CTimeZone);
 	};
 #ifdef DATEDEBUG
 printf( "datetime_in- date is %f\n", *result);
@@ -168,7 +156,7 @@ datetime_out(DateTime *dt)
 
     } else {
 
-	time = (modf( dt2local( *dt, timezone)/86400, &date)*86400);
+	time = (modf( dt2local( *dt, CTimeZone)/86400, &date)*86400);
 	date += date2j(2000,1,1);
 	if (time < 0) {
 	    time += 86400;
@@ -197,8 +185,8 @@ printf( "datetime_out- time is %02d:%02d:%02d %.7f\n", tm->tm_hour, tm->tm_min, 
 	tm->tm_isdst = -1;
 
 #ifdef DATEDEBUG
-printf( "datetime_out- timezone is %s/%s; offset is %ld; daylight is %d\n",
- tzname[0], tzname[1], timezone, daylight);
+printf( "datetime_out- timezone is %s; offset is %ld; daylight is %d\n",
+ CTZName, CTimeZone, CDayLight);
 #endif
 
 	EncodePostgresDate(tm, fsec, buf);
@@ -705,12 +693,6 @@ void dt2time(DateTime jd, int *hour, int *min, double *sec)
  * Returns the number of seconds since epoch (J2000)
  */
 
-#ifndef USE_POSIX_TIME
-long int timezone;
-long int daylight;
-#endif
-
-
 /* ParseDateTime()
  * Break string into tokens based on a date/time context.
  */
@@ -845,7 +827,7 @@ DecodeDateTime( char *field[], int ftype[], int nf,
     tm->tm_min = 0;
     tm->tm_sec = 0;
     tm->tm_isdst = -1;	/* don't know daylight savings time status apriori */
-    if (tzp != NULL) *tzp = timezone;
+    if (tzp != NULL) *tzp = CTimeZone;
 
     for (i = 0; i < nf; i++) {
 #ifdef DATEDEBUG
@@ -1828,8 +1810,8 @@ int EncodePostgresDate(struct tm *tm, double fsec, char *str)
     tm->tm_isdst = -1;
 
 #ifdef DATEDEBUG
-printf( "EncodePostgresDate- timezone is %s/%s; offset is %ld; daylight is %d\n",
- tzname[0], tzname[1], timezone, daylight);
+printf( "EncodePostgresDate- timezone is %s; offset is %ld; daylight is %d\n",
+ CTZName, CTimeZone, CDayLight);
 #endif
 
     day = date2j( tm->tm_year, tm->tm_mon, tm->tm_mday);
@@ -1848,15 +1830,15 @@ printf( "EncodePostgresDate- day is %d\n", day);
 
     if (EuroDates) {
 	sprintf( str, "%3s %02d/%02d/%04d %02d:%02d:%02d %s", dabbrev,
-	  tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_hour, tm->tm_min, (int) rint(sec), tzname[0]);
+	  tm->tm_mday, tm->tm_mon, tm->tm_year, tm->tm_hour, tm->tm_min, (int) rint(sec), CTZName);
 
     } else if (tm->tm_year > 0) {
 #if FALSE
 	sprintf( str, "%3s %3s %02d %02d:%02d:%02d %04d %s", dabbrev,
-	  mabbrev, tm->tm_mday, tm->tm_hour, tm->tm_min, (int) rint(sec), tm->tm_year, tzname[0]);
+	  mabbrev, tm->tm_mday, tm->tm_hour, tm->tm_min, (int) rint(sec), tm->tm_year, CTZName);
 #endif
 	sprintf( str, "%3s %3s %02d %02d:%02d:%5.2f %04d %s", dabbrev,
-	  mabbrev, tm->tm_mday, tm->tm_hour, tm->tm_min, sec, tm->tm_year, tzname[0]);
+	  mabbrev, tm->tm_mday, tm->tm_hour, tm->tm_min, sec, tm->tm_year, CTZName);
 	/* XXX brute-force fill in leading zero on seconds */
 	if (*(str+17) == ' ') *(str+17) = '0';
 

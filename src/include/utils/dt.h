@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.1 1997/03/14 23:33:23 scrappy Exp $
+ * $Id: dt.h,v 1.2 1997/03/18 16:36:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,8 +174,6 @@ typedef struct {
     char value;		/* this may be unsigned, alas */
 } datetkn;
 
-
-extern int EuroDates;
 extern void GetCurrentTime(struct tm *tm);
 
 /*
