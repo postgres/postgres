@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.45 1998/12/08 06:19:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.46 1998/12/13 23:35:48 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -313,9 +313,8 @@ textcat(text *t1, text *t2)
  *	- starting position (is one-based)
  *	- string length
  *
- * If the starting position is zero or less, then return the entire string.
- * XXX Note that this may not be the right behavior:
- *	if we are calculating the starting position we might want it to start at one.
+ * If the starting position is zero or less, then return from the start of the string
+ *  adjusting the length to be consistant with the "negative start" per SQL92.
  * If the length is less than zero, return the remaining string.
  *
  * Note that the arguments operate on octet length,
@@ -323,6 +322,9 @@ textcat(text *t1, text *t2)
  *
  * Added multi-byte support.
  * - Tatsuo Ishii 1998-4-21
+ * Changed behavior if starting position is less than one to conform to SQL92 behavior.
+ * Formerly returned the entire string; now returns a portion.
+ * - Thomas Lockhart 1998-12-10
  */
 text *
 text_substr(text *string, int32 m, int32 n)
@@ -336,7 +338,7 @@ text_substr(text *string, int32 m, int32 n)
 
 #endif
 
-	if ((string == (text *) NULL) || (m <= 0))
+	if (string == (text *) NULL)
 		return string;
 
 	len = VARSIZE(string) - VARHDRSZ;
@@ -344,18 +346,24 @@ text_substr(text *string, int32 m, int32 n)
 	len = pg_mbstrlen_with_len(VARDATA(string), len);
 #endif
 
-	/* m will now become a zero-based starting position */
+	/* starting position after the end of the string? */
 	if (m > len)
 	{
-		m = 0;
+		m = 1;
 		n = 0;
 	}
-	else
+	/* starting position before the start of the string?
+	 * then offset into the string per SQL92 spec... */
+	else if (m < 1)
 	{
-		m--;
-		if (((m + n) > len) || (n < 0))
-			n = (len - m);
+		n += (m-1);
+		m = 1;
 	}
+
+	/* m will now become a zero-based starting position */
+	m--;
+	if (((m + n) > len) || (n < 0))
+		n = (len - m);
 
 #ifdef MULTIBYTE
 	p = VARDATA(string);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.71 1998/12/08 06:18:34 thomas Exp $
+ * $Id: builtins.h,v 1.72 1998/12/13 23:36:48 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -60,6 +60,8 @@ extern int8 charmi(int8 arg1, int8 arg2);
 extern int8 charmul(int8 arg1, int8 arg2);
 extern int8 chardiv(int8 arg1, int8 arg2);
 extern bool cideq(int8 arg1, int8 arg2);
+extern int8 text_char(text *arg1);
+extern text* char_text(int8 arg1);
 
 /* int.c */
 extern int32 int2in(char *num);
