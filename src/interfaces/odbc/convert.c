@@ -796,7 +796,7 @@ static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
  *----------
  */
 #define	CVT_INIT(size) \
-{ \
+do { \
 	if (stmt->stmt_with_params) \
 		free(stmt->stmt_with_params); \
 	if (stmt->stmt_size_limit > 0) \
@@ -811,7 +811,8 @@ static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
 	stmt->stmt_with_params = new_statement; \
 	npos = 0; \
 	new_statement[0] = '\0'; \
-}
+} while (0)
+
 /*----------
  *	Terminate the stmt_with_params string with NULL.
  *----------
@@ -823,55 +824,59 @@ static int enlarge_statement(StatementClass *stmt, unsigned int newsize)
  *----------
  */
 #define	CVT_APPEND_DATA(s, len) \
-{ \
+do { \
 	unsigned int	newpos = npos + len; \
 	ENLARGE_NEWSTATEMENT(newpos) \
 	memcpy(&new_statement[npos], s, len); \
 	npos = newpos; \
 	new_statement[npos] = '\0'; \
-}
+} while (0)
+
 /*----------
  *	Append a string.
  *----------
  */
 #define	CVT_APPEND_STR(s) \
-{ \
+do { \
 	unsigned int len = strlen(s); \
 	CVT_APPEND_DATA(s, len); \
-}
+} while (0)
+
 /*----------
  *	Append a char.	
  *----------
  */
 #define	CVT_APPEND_CHAR(c) \
-{ \
+do { \
 	ENLARGE_NEWSTATEMENT(npos + 1); \
 	new_statement[npos++] = c; \
-}
+} while (0)
+
 /*----------
  *	Append a binary data.
  *	Newly reqeuired size may be overestimated currently. 
  *----------
  */
 #define	CVT_APPEND_BINARY(buf, used) \
-{ \
+do { \
 	unsigned int	newlimit = npos + 5 * used; \
 	ENLARGE_NEWSTATEMENT(newlimit); \
 	npos += convert_to_pgbinary(buf, &new_statement[npos], used); \
-}
+} while (0)
+
 /*----------
  *
  *----------
  */
 #define	CVT_SPECIAL_CHARS(buf, used) \
-{ \
+do { \
 	int	cnvlen = convert_special_chars(buf, NULL, used); \
 	unsigned int	newlimit = npos + cnvlen; \
 \
 	ENLARGE_NEWSTATEMENT(newlimit); \
 	convert_special_chars(buf, &new_statement[npos], used); \
 	npos += cnvlen; \
-}
+} while (0)
 
 /*----------
  *	Check if the statement is	
