@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.4 2001/07/19 21:25:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.5 2001/09/29 04:02:23 tgl Exp $
  *
  *
  * NOTES:
@@ -56,6 +56,7 @@
 
 #include "storage/freespace.h"
 #include "storage/itemid.h"
+#include "storage/lwlock.h"
 #include "storage/shmem.h"
 
 
@@ -121,9 +122,6 @@ struct FSMChunk
 	ItemLength	bytes[CHUNKPAGES]; /* free space available on each page */
 };
 
-
-SPINLOCK	FreeSpaceLock;		/* in Shmem or created in
-								 * CreateSpinlocks() */
 
 int		MaxFSMRelations;		/* these are set by guc.c */
 int		MaxFSMPages;
@@ -256,7 +254,7 @@ GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded)
 	FSMRelation *fsmrel;
 	BlockNumber	freepage;
 
-	SpinAcquire(FreeSpaceLock);
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	/*
 	 * We always add a rel to the hashtable when it is inquired about.
 	 */
@@ -279,7 +277,7 @@ GetPageWithFreeSpace(RelFileNode *rel, Size spaceNeeded)
 		fsmrel->threshold = (Size) cur_avg;
 	}
 	freepage = find_free_space(fsmrel, spaceNeeded);
-	SpinRelease(FreeSpaceLock);
+	LWLockRelease(FreeSpaceLock);
 	return freepage;
 }
 
@@ -299,7 +297,7 @@ RecordFreeSpace(RelFileNode *rel, BlockNumber page, Size spaceAvail)
 	/* Sanity check: ensure spaceAvail will fit into ItemLength */
 	AssertArg(spaceAvail < BLCKSZ);
 
-	SpinAcquire(FreeSpaceLock);
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	/*
 	 * We choose not to add rels to the hashtable unless they've been
 	 * inquired about with GetPageWithFreeSpace.  Also, a Record operation
@@ -308,11 +306,11 @@ RecordFreeSpace(RelFileNode *rel, BlockNumber page, Size spaceAvail)
 	fsmrel = lookup_fsm_rel(rel);
 	if (fsmrel)
 		fsm_record_free_space(fsmrel, page, spaceAvail);
-	SpinRelease(FreeSpaceLock);
+	LWLockRelease(FreeSpaceLock);
 }
 
 /*
- * RecordAndGetPageWithFreeSpace - combo form to save one spinlock and
+ * RecordAndGetPageWithFreeSpace - combo form to save one lock and
  *		hash table lookup cycle.
  */
 BlockNumber
@@ -327,7 +325,7 @@ RecordAndGetPageWithFreeSpace(RelFileNode *rel,
 	/* Sanity check: ensure spaceAvail will fit into ItemLength */
 	AssertArg(oldSpaceAvail < BLCKSZ);
 
-	SpinAcquire(FreeSpaceLock);
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	/*
 	 * We always add a rel to the hashtable when it is inquired about.
 	 */
@@ -351,7 +349,7 @@ RecordAndGetPageWithFreeSpace(RelFileNode *rel,
 	fsm_record_free_space(fsmrel, oldPage, oldSpaceAvail);
 	/* Do the Get */
 	freepage = find_free_space(fsmrel, spaceNeeded);
-	SpinRelease(FreeSpaceLock);
+	LWLockRelease(FreeSpaceLock);
 	return freepage;
 }
 
@@ -378,7 +376,7 @@ MultiRecordFreeSpace(RelFileNode *rel,
 	FSMRelation *fsmrel;
 	int			i;
 
-	SpinAcquire(FreeSpaceLock);
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	fsmrel = lookup_fsm_rel(rel);
 	if (fsmrel)
 	{
@@ -437,7 +435,7 @@ MultiRecordFreeSpace(RelFileNode *rel,
 				fsm_record_free_space(fsmrel, page, avail);
 		}
 	}
-	SpinRelease(FreeSpaceLock);
+	LWLockRelease(FreeSpaceLock);
 }
 
 /*
@@ -452,11 +450,11 @@ FreeSpaceMapForgetRel(RelFileNode *rel)
 {
 	FSMRelation *fsmrel;
 
-	SpinAcquire(FreeSpaceLock);
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	fsmrel = lookup_fsm_rel(rel);
 	if (fsmrel)
 		delete_fsm_rel(fsmrel);
-	SpinRelease(FreeSpaceLock);
+	LWLockRelease(FreeSpaceLock);
 }
 
 /*
@@ -474,14 +472,14 @@ FreeSpaceMapForgetDatabase(Oid dbid)
 	FSMRelation *fsmrel,
 			   *nextrel;
 
-	SpinAcquire(FreeSpaceLock);
+	LWLockAcquire(FreeSpaceLock, LW_EXCLUSIVE);
 	for (fsmrel = FreeSpaceMap->relList; fsmrel; fsmrel = nextrel)
 	{
 		nextrel = fsmrel->nextRel; /* in case we delete it */
 		if (fsmrel->key.tblNode == dbid)
 			delete_fsm_rel(fsmrel);
 	}
-	SpinRelease(FreeSpaceLock);
+	LWLockRelease(FreeSpaceLock);
 }
 
 

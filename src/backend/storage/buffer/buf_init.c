@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.43 2001/07/06 21:04:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.44 2001/09/29 04:02:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,10 +28,9 @@
 #include "storage/fd.h"
 #include "storage/ipc.h"
 #include "storage/lmgr.h"
-#include "storage/s_lock.h"
 #include "storage/shmem.h"
 #include "storage/smgr.h"
-#include "storage/spin.h"
+#include "storage/lwlock.h"
 #include "utils/builtins.h"
 #include "utils/hsearch.h"
 #include "utils/memutils.h"
@@ -117,8 +116,6 @@ bool	   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
  *
  */
 
-SPINLOCK	BufMgrLock;
-
 long int	ReadBufferCount;
 long int	ReadLocalBufferCount;
 long int	BufferHitCount;
@@ -151,7 +148,7 @@ InitBufferPool(void)
 	 * anyone else attached to the shmem at this point, we've got
 	 * problems.
 	 */
-	SpinAcquire(BufMgrLock);
+	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 
 #ifdef BMTRACE
 	CurTraceBuf = (long *) ShmemInitStruct("Buffer trace",
@@ -186,8 +183,8 @@ InitBufferPool(void)
 
 		/*
 		 * link the buffers into a circular, doubly-linked list to
-		 * initialize free list.  Still don't know anything about
-		 * replacement strategy in this file.
+		 * initialize free list, and initialize the buffer headers.
+		 * Still don't know anything about replacement strategy in this file.
 		 */
 		for (i = 0; i < Data_Descriptors; block += BLCKSZ, buf++, i++)
 		{
@@ -197,12 +194,15 @@ InitBufferPool(void)
 			buf->freePrev = i - 1;
 
 			CLEAR_BUFFERTAG(&(buf->tag));
+			buf->buf_id = i;
+
 			buf->data = MAKE_OFFSET(block);
 			buf->flags = (BM_DELETED | BM_FREE | BM_VALID);
 			buf->refcount = 0;
-			buf->buf_id = i;
-			S_INIT_LOCK(&(buf->io_in_progress_lock));
-			S_INIT_LOCK(&(buf->cntx_lock));
+			buf->io_in_progress_lock = LWLockAssign();
+			buf->cntx_lock = LWLockAssign();
+			buf->cntxDirty = false;
+			buf->wait_backend_id = 0;
 		}
 
 		/* close the circular queue */
@@ -214,7 +214,7 @@ InitBufferPool(void)
 	InitBufTable();
 	InitFreeList(!foundDescs);
 
-	SpinRelease(BufMgrLock);
+	LWLockRelease(BufMgrLock);
 }
 
 /*

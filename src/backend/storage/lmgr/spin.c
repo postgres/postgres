@@ -1,197 +1,45 @@
 /*-------------------------------------------------------------------------
  *
  * spin.c
- *	  routines for managing spin locks
+ *	   Hardware-independent implementation of spinlocks.
  *
- * POSTGRES has two kinds of locks: semaphores (which put the
- * process to sleep) and spinlocks (which are supposed to be
- * short term locks).  Spinlocks are implemented via test-and-set (TAS)
- * instructions if possible, else via semaphores.  The semaphore method
- * is too slow to be useful :-(
+ *
+ * For machines that have test-and-set (TAS) instructions, s_lock.h/.c
+ * define the spinlock implementation.  This file contains only a stub
+ * implementation for spinlocks using SysV semaphores.  The semaphore method
+ * is too slow to be very useful :-(
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.1 2001/09/27 19:10:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/spin.c,v 1.2 2001/09/29 04:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <errno.h>
-#if !defined(HAS_TEST_AND_SET) && defined(HAVE_SYS_SEM_H)
+#ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
 #endif
 
-#include "miscadmin.h"
+#include "storage/lwlock.h"
 #include "storage/proc.h"
-#include "storage/s_lock.h"
-
-
-/* Probably should move these to an appropriate header file */
-extern SPINLOCK BufMgrLock;
-extern SPINLOCK OidGenLockId;
-extern SPINLOCK XidGenLockId;
-extern SPINLOCK ControlFileLockId;
-extern SPINLOCK ShmemLock;
-extern SPINLOCK ShmemIndexLock;
-extern SPINLOCK LockMgrLock;
-extern SPINLOCK SInvalLock;
-extern SPINLOCK ProcStructLock;
-extern SPINLOCK FreeSpaceLock;
-#ifdef STABLE_MEMORY_STORAGE
-extern SPINLOCK MMCacheLock;
-#endif
-
-
-/*
- * Initialize identifiers for permanent spinlocks during startup
- *
- * The same identifiers are used for both TAS and semaphore implementations,
- * although in one case they are indexes into a shmem array and in the other
- * they are semaphore numbers.
- */
-static void
-InitSpinLockIDs(void)
-{
-	BufMgrLock = (SPINLOCK) BUFMGRLOCKID;
-	OidGenLockId = (SPINLOCK) OIDGENLOCKID;
-	XidGenLockId = (SPINLOCK) XIDGENLOCKID;
-	ControlFileLockId = (SPINLOCK) CNTLFILELOCKID;
-	ShmemLock = (SPINLOCK) SHMEMLOCKID;
-	ShmemIndexLock = (SPINLOCK) SHMEMINDEXLOCKID;
-	LockMgrLock = (SPINLOCK) LOCKMGRLOCKID;
-	SInvalLock = (SPINLOCK) SINVALLOCKID;
-	ProcStructLock = (SPINLOCK) PROCSTRUCTLOCKID;
-	FreeSpaceLock = (SPINLOCK) FREESPACELOCKID;
-#ifdef STABLE_MEMORY_STORAGE
-	MMCacheLock = (SPINLOCK) MMCACHELOCKID;
-#endif
-}
+#include "storage/spin.h"
 
 
 #ifdef HAS_TEST_AND_SET
-
-/* real spin lock implementation */
-
-typedef struct slock
-{
-	slock_t		shlock;
-} SLock;
-
-#ifdef LOCK_DEBUG
-bool		Trace_spinlocks = false;
-
-inline static void
-PRINT_SLDEBUG(const char *where, SPINLOCK lockid, const SLock *lock)
-{
-	if (Trace_spinlocks)
-		elog(DEBUG, "%s: id=%d", where, lockid);
-}
-
-#else							/* not LOCK_DEBUG */
-#define PRINT_SLDEBUG(a,b,c)
-#endif	 /* not LOCK_DEBUG */
-
-
-static SLock *SLockArray = NULL;
-
-#define SLOCKMEMORYSIZE		((int) MAX_SPINS * sizeof(SLock))
-
-/*
- * SLockShmemSize --- return shared-memory space needed
- */
-int
-SLockShmemSize(void)
-{
-	return MAXALIGN(SLOCKMEMORYSIZE);
-}
 
 /*
  * CreateSpinlocks --- create and initialize spinlocks during startup
  */
 void
-CreateSpinlocks(PGShmemHeader *seghdr)
+CreateSpinlocks(void)
 {
-	int			id;
-
-	/*
-	 * We must allocate the space "by hand" because shmem.c isn't up yet
-	 */
-	SLockArray = (SLock *) (((char *) seghdr) + seghdr->freeoffset);
-	seghdr->freeoffset += MAXALIGN(SLOCKMEMORYSIZE);
-	Assert(seghdr->freeoffset <= seghdr->totalsize);
-
-	/*
-	 * Initialize all spinlocks to "unlocked" state
-	 */
-	for (id = 0; id < (int) MAX_SPINS; id++)
-	{
-		SLock	   *slckP = &(SLockArray[id]);
-
-		S_INIT_LOCK(&(slckP->shlock));
-	}
-
-	/*
-	 * Assign indexes for fixed spinlocks
-	 */
-	InitSpinLockIDs();
-}
-
-void
-SpinAcquire(SPINLOCK lockid)
-{
-	SLock	   *slckP = &(SLockArray[lockid]);
-
-	PRINT_SLDEBUG("SpinAcquire", lockid, slckP);
-
-	/*
-	 * Acquire the lock, then record that we have done so (for recovery in
-	 * case of elog(ERROR) while holding the lock).  Note we assume here
-	 * that S_LOCK will not accept cancel/die interrupts once it has
-	 * acquired the lock.  However, interrupts should be accepted while
-	 * waiting, if InterruptHoldoffCount is zero.
-	 */
-	S_LOCK(&(slckP->shlock));
-	PROC_INCR_SLOCK(lockid);
-
-	/*
-	 * Lock out cancel/die interrupts until we exit the code section
-	 * protected by the spinlock.  This ensures that interrupts will not
-	 * interfere with manipulations of data structures in shared memory.
-	 */
-	HOLD_INTERRUPTS();
-
-	PRINT_SLDEBUG("SpinAcquire/done", lockid, slckP);
-}
-
-void
-SpinRelease(SPINLOCK lockid)
-{
-	SLock	   *slckP = &(SLockArray[lockid]);
-
-	PRINT_SLDEBUG("SpinRelease", lockid, slckP);
-
-	/*
-	 * Check that we are actually holding the lock we are releasing. This
-	 * can be done only after MyProc has been initialized.
-	 */
-	Assert(!MyProc || MyProc->sLocks[lockid] > 0);
-
-	/*
-	 * Record that we no longer hold the spinlock, and release it.
-	 */
-	PROC_DECR_SLOCK(lockid);
-	S_UNLOCK(&(slckP->shlock));
-
-	/*
-	 * Exit the interrupt holdoff entered in SpinAcquire().
-	 */
-	RESUME_INTERRUPTS();
-
-	PRINT_SLDEBUG("SpinRelease/done", lockid, slckP);
+	/* no-op when we have TAS spinlocks */
 }
 
 #else							/* !HAS_TEST_AND_SET */
@@ -199,11 +47,7 @@ SpinRelease(SPINLOCK lockid)
 /*
  * No TAS, so spinlocks are implemented using SysV semaphores.
  *
- * We support two slightly different APIs here: SpinAcquire/SpinRelease
- * work with SPINLOCK integer indexes for the permanent spinlocks, which
- * are all assumed to live in the first spinlock semaphore set.  There
- * is also an emulation of the s_lock.h TAS-spinlock macros; for that case,
- * typedef slock_t stores the semId and sem number of the sema to use.
+ * Typedef slock_t stores the semId and sem number of the sema to use.
  * The semas needed are created by CreateSpinlocks and doled out by
  * s_init_lock_sema.
  *
@@ -228,35 +72,26 @@ static int	nextSpinLock = 0;	/* next free spinlock index */
 
 static void SpinFreeAllSemaphores(void);
 
-/*
- * SLockShmemSize --- return shared-memory space needed
- */
-int
-SLockShmemSize(void)
-{
-	return 0;
-}
 
 /*
  * CreateSpinlocks --- create and initialize spinlocks during startup
  */
 void
-CreateSpinlocks(PGShmemHeader *seghdr)
+CreateSpinlocks(void)
 {
 	int			i;
 
 	if (SpinLockIds == NULL)
 	{
-
 		/*
-		 * Compute number of spinlocks needed.	If this logic gets any
-		 * more complicated, it should be distributed into the affected
-		 * modules, similar to the way shmem space estimation is handled.
+		 * Compute number of spinlocks needed.	It would be cleaner to
+		 * distribute this logic into the affected modules,
+		 * similar to the way shmem space estimation is handled.
 		 *
-		 * For now, though, we just need the fixed spinlocks (MAX_SPINS), two
-		 * spinlocks per shared disk buffer, and four spinlocks for XLOG.
+		 * For now, though, we just need a few spinlocks (10 should be
+		 * plenty) plus one for each LWLock.
 		 */
-		numSpinLocks = (int) MAX_SPINS + 2 * NBuffers + 4;
+		numSpinLocks = NumLWLocks() + 10;
 
 		/* might as well round up to a multiple of SPINLOCKS_PER_SET */
 		numSpinSets = (numSpinLocks - 1) / SPINLOCKS_PER_SET + 1;
@@ -288,14 +123,8 @@ CreateSpinlocks(PGShmemHeader *seghdr)
 											false);
 	}
 
-	/*
-	 * Assign indexes for fixed spinlocks
-	 */
-	Assert(MAX_SPINS <= SPINLOCKS_PER_SET);
-	InitSpinLockIDs();
-
 	/* Init counter for allocating dynamic spinlocks */
-	nextSpinLock = MAX_SPINS;
+	nextSpinLock = 0;
 }
 
 /*
@@ -316,49 +145,6 @@ SpinFreeAllSemaphores(void)
 	}
 	free(SpinLockIds);
 	SpinLockIds = NULL;
-}
-
-/*
- * SpinAcquire -- grab a fixed spinlock
- *
- * FAILS if the semaphore is corrupted.
- */
-void
-SpinAcquire(SPINLOCK lock)
-{
-
-	/*
-	 * See the TAS() version of this routine for primary commentary.
-	 *
-	 * NOTE we must pass interruptOK = false to IpcSemaphoreLock, to ensure
-	 * that a cancel/die interrupt cannot prevent us from recording
-	 * ownership of a lock we have just acquired.
-	 */
-	IpcSemaphoreLock(SpinLockIds[0], lock, false);
-	PROC_INCR_SLOCK(lock);
-	HOLD_INTERRUPTS();
-}
-
-/*
- * SpinRelease -- release a fixed spin lock
- *
- * FAILS if the semaphore is corrupted
- */
-void
-SpinRelease(SPINLOCK lock)
-{
-	/* See the TAS() version of this routine for commentary */
-#ifdef USE_ASSERT_CHECKING
-	/* Check it's locked */
-	int			semval;
-
-	semval = IpcSemaphoreGetValue(SpinLockIds[0], lock);
-	Assert(semval < 1);
-#endif
-	Assert(!MyProc || MyProc->sLocks[lockid] > 0);
-	PROC_DECR_SLOCK(lock);
-	IpcSemaphoreUnlock(SpinLockIds[0], lock);
-	RESUME_INTERRUPTS();
 }
 
 /*

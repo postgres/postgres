@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.58 2001/09/07 00:27:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.59 2001/09/29 04:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,9 @@
 #include "postgres.h"
 
 #include "access/transam.h"
+#include "storage/spin.h"
 #include "utils/tqual.h"
+
 
 /* shared memory global variables */
 
@@ -71,9 +73,7 @@ SHMEM_OFFSET ShmemBase;			/* start address of shared memory */
 
 static SHMEM_OFFSET ShmemEnd;	/* end+1 address of shared memory */
 
-SPINLOCK	ShmemLock;			/* lock for shared memory allocation */
-
-SPINLOCK	ShmemIndexLock;		/* lock for shmem index access */
+static slock_t *ShmemLock;		/* spinlock for shared memory allocation */
 
 static HTAB *ShmemIndex = NULL; /* primary index hashtable for shmem */
 
@@ -81,63 +81,33 @@ static bool ShmemBootstrap = false;		/* bootstrapping shmem index? */
 
 
 /*
- *	InitShmemAllocation() --- set up shared-memory allocation and index table.
+ *	InitShmemAllocation() --- set up shared-memory allocation.
+ *
+ * Note: the argument should be declared "PGShmemHeader *seghdr",
+ * but we use void to avoid having to include ipc.h in shmem.h.
  */
 void
-InitShmemAllocation(PGShmemHeader *seghdr)
+InitShmemAllocation(void *seghdr)
 {
-	HASHCTL		info;
-	int			hash_flags;
-	ShmemIndexEnt *result,
-				item;
-	bool		found;
+	PGShmemHeader *shmhdr = (PGShmemHeader *) seghdr;
 
 	/* Set up basic pointers to shared memory */
-	ShmemSegHdr = seghdr;
-	ShmemBase = (SHMEM_OFFSET) seghdr;
-	ShmemEnd = ShmemBase + seghdr->totalsize;
+	ShmemSegHdr = shmhdr;
+	ShmemBase = (SHMEM_OFFSET) shmhdr;
+	ShmemEnd = ShmemBase + shmhdr->totalsize;
 
 	/*
-	 * Since ShmemInitHash calls ShmemInitStruct, which expects the
-	 * ShmemIndex hashtable to exist already, we have a bit of a
-	 * circularity problem in initializing the ShmemIndex itself.  We set
-	 * ShmemBootstrap to tell ShmemInitStruct to fake it.
+	 * Initialize the spinlock used by ShmemAlloc.  We have to do the
+	 * space allocation the hard way, since ShmemAlloc can't be called yet.
 	 */
+	ShmemLock = (slock_t *) (((char *) shmhdr) + shmhdr->freeoffset);
+	shmhdr->freeoffset += MAXALIGN(sizeof(slock_t));
+	Assert(shmhdr->freeoffset <= shmhdr->totalsize);
+
+	SpinLockInit(ShmemLock);
+
+	/* ShmemIndex can't be set up yet (need LWLocks first) */
 	ShmemIndex = (HTAB *) NULL;
-	ShmemBootstrap = true;
-
-	/* create the shared memory shmem index */
-	info.keysize = SHMEM_INDEX_KEYSIZE;
-	info.datasize = SHMEM_INDEX_DATASIZE;
-	hash_flags = HASH_ELEM;
-
-	/* This will acquire the shmem index lock, but not release it. */
-	ShmemIndex = ShmemInitHash("ShmemIndex",
-							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
-							   &info, hash_flags);
-	if (!ShmemIndex)
-		elog(FATAL, "InitShmemAllocation: couldn't initialize Shmem Index");
-
-	/*
-	 * Now, create an entry in the hashtable for the index itself.
-	 */
-	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
-	strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
-
-	result = (ShmemIndexEnt *)
-		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, &found);
-	if (!result)
-		elog(FATAL, "InitShmemAllocation: corrupted shmem index");
-
-	Assert(ShmemBootstrap && !found);
-
-	result->location = MAKE_OFFSET(ShmemIndex->hctl);
-	result->size = SHMEM_INDEX_SIZE;
-
-	ShmemBootstrap = false;
-
-	/* now release the lock acquired in ShmemInitStruct */
-	SpinRelease(ShmemIndexLock);
 
 	/*
 	 * Initialize ShmemVariableCache for transaction manager.
@@ -167,9 +137,9 @@ ShmemAlloc(Size size)
 	 */
 	size = MAXALIGN(size);
 
-	Assert(ShmemSegHdr);
+	Assert(ShmemSegHdr != NULL);
 
-	SpinAcquire(ShmemLock);
+	SpinLockAcquire(ShmemLock);
 
 	newFree = ShmemSegHdr->freeoffset + size;
 	if (newFree <= ShmemSegHdr->totalsize)
@@ -180,7 +150,7 @@ ShmemAlloc(Size size)
 	else
 		newSpace = NULL;
 
-	SpinRelease(ShmemLock);
+	SpinLockRelease(ShmemLock);
 
 	if (!newSpace)
 		elog(NOTICE, "ShmemAlloc: out of memory");
@@ -200,6 +170,60 @@ ShmemIsValid(unsigned long addr)
 }
 
 /*
+ *	InitShmemIndex() --- set up shmem index table.
+ */
+void
+InitShmemIndex(void)
+{
+	HASHCTL		info;
+	int			hash_flags;
+	ShmemIndexEnt *result,
+				item;
+	bool		found;
+
+	/*
+	 * Since ShmemInitHash calls ShmemInitStruct, which expects the
+	 * ShmemIndex hashtable to exist already, we have a bit of a
+	 * circularity problem in initializing the ShmemIndex itself.  We set
+	 * ShmemBootstrap to tell ShmemInitStruct to fake it.
+	 */
+	ShmemBootstrap = true;
+
+	/* create the shared memory shmem index */
+	info.keysize = SHMEM_INDEX_KEYSIZE;
+	info.datasize = SHMEM_INDEX_DATASIZE;
+	hash_flags = HASH_ELEM;
+
+	/* This will acquire the shmem index lock, but not release it. */
+	ShmemIndex = ShmemInitHash("ShmemIndex",
+							   SHMEM_INDEX_SIZE, SHMEM_INDEX_SIZE,
+							   &info, hash_flags);
+	if (!ShmemIndex)
+		elog(FATAL, "InitShmemIndex: couldn't initialize Shmem Index");
+
+	/*
+	 * Now, create an entry in the hashtable for the index itself.
+	 */
+	MemSet(item.key, 0, SHMEM_INDEX_KEYSIZE);
+	strncpy(item.key, "ShmemIndex", SHMEM_INDEX_KEYSIZE);
+
+	result = (ShmemIndexEnt *)
+		hash_search(ShmemIndex, (char *) &item, HASH_ENTER, &found);
+	if (!result)
+		elog(FATAL, "InitShmemIndex: corrupted shmem index");
+
+	Assert(ShmemBootstrap && !found);
+
+	result->location = MAKE_OFFSET(ShmemIndex->hctl);
+	result->size = SHMEM_INDEX_SIZE;
+
+	ShmemBootstrap = false;
+
+	/* now release the lock acquired in ShmemInitStruct */
+	LWLockRelease(ShmemIndexLock);
+}
+
+/*
  * ShmemInitHash -- Create/Attach to and initialize
  *		shared memory hash table.
  *
@@ -207,8 +231,7 @@ ShmemIsValid(unsigned long addr)
  *
  * assume caller is doing some kind of synchronization
  * so that two people dont try to create/initialize the
- * table at once.  Use SpinAlloc() to create a spinlock
- * for the structure before creating the structure itself.
+ * table at once.
  */
 HTAB *
 ShmemInitHash(char *name,		/* table string name for shmem index */
@@ -283,7 +306,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 	strncpy(item.key, name, SHMEM_INDEX_KEYSIZE);
 	item.location = BAD_LOCATION;
 
-	SpinAcquire(ShmemIndexLock);
+	LWLockAcquire(ShmemIndexLock, LW_EXCLUSIVE);
 
 	if (!ShmemIndex)
 	{
@@ -306,7 +329,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 
 	if (!result)
 	{
-		SpinRelease(ShmemIndexLock);
+		LWLockRelease(ShmemIndexLock);
 		elog(ERROR, "ShmemInitStruct: Shmem Index corrupted");
 		return NULL;
 	}
@@ -320,7 +343,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 		 */
 		if (result->size != size)
 		{
-			SpinRelease(ShmemIndexLock);
+			LWLockRelease(ShmemIndexLock);
 
 			elog(NOTICE, "ShmemInitStruct: ShmemIndex entry size is wrong");
 			/* let caller print its message too */
@@ -337,7 +360,7 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 			/* out of memory */
 			Assert(ShmemIndex);
 			hash_search(ShmemIndex, (char *) &item, HASH_REMOVE, foundPtr);
-			SpinRelease(ShmemIndexLock);
+			LWLockRelease(ShmemIndexLock);
 			*foundPtr = FALSE;
 
 			elog(NOTICE, "ShmemInitStruct: cannot allocate '%s'",
@@ -349,6 +372,6 @@ ShmemInitStruct(char *name, Size size, bool *foundPtr)
 	}
 	Assert(ShmemIsValid((unsigned long) structPtr));
 
-	SpinRelease(ShmemIndexLock);
+	LWLockRelease(ShmemIndexLock);
 	return structPtr;
 }

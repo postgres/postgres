@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.110 2001/09/28 08:08:57 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.111 2001/09/29 04:02:21 tgl Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -965,7 +965,7 @@ CommitTransaction(void)
 	 * this must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionCommit.
 	 *
-	 * SpinAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked
+	 * LWLockAcquire(SInvalLock) is required: UPDATE with xid 0 is blocked
 	 * by xid 1' UPDATE, xid 1 is doing commit while xid 2 gets snapshot -
 	 * if xid 2' GetSnapshotData sees xid 1 as running then it must see
 	 * xid 0 as running as well or it will see two tuple versions - one
@@ -975,10 +975,10 @@ CommitTransaction(void)
 	if (MyProc != (PROC *) NULL)
 	{
 		/* Lock SInvalLock because that's what GetSnapshotData uses. */
-		SpinAcquire(SInvalLock);
+		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
-		SpinRelease(SInvalLock);
+		LWLockRelease(SInvalLock);
 	}
 
 	/*
@@ -1030,12 +1030,15 @@ AbortTransaction(void)
 	HOLD_INTERRUPTS();
 
 	/*
-	 * Release any spinlocks or buffer context locks we might be holding
-	 * as quickly as possible.	(Real locks, however, must be held till we
-	 * finish aborting.)  Releasing spinlocks is critical since we might
-	 * try to grab them again while cleaning up!
+	 * Release any LW locks we might be holding as quickly as possible.
+	 * (Regular locks, however, must be held till we finish aborting.)
+	 * Releasing LW locks is critical since we might try to grab them again
+	 * while cleaning up!
 	 */
-	ProcReleaseSpins(NULL);
+	LWLockReleaseAll();
+
+	/* Clean up buffer I/O and buffer context locks, too */
+	AbortBufferIO();
 	UnlockBuffers();
 
 	/*
@@ -1081,10 +1084,10 @@ AbortTransaction(void)
 	if (MyProc != (PROC *) NULL)
 	{
 		/* Lock SInvalLock because that's what GetSnapshotData uses. */
-		SpinAcquire(SInvalLock);
+		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 		MyProc->xid = InvalidTransactionId;
 		MyProc->xmin = InvalidTransactionId;
-		SpinRelease(SInvalLock);
+		LWLockRelease(SInvalLock);
 	}
 
 	RelationPurgeLocalRelation(false);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: smgr.h,v 1.30 2001/06/27 23:31:39 tgl Exp $
+ * $Id: smgr.h,v 1.31 2001/09/29 04:02:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,8 @@
 #include "access/xlog.h"
 #include "storage/relfilenode.h"
 #include "storage/block.h"
-#include "storage/spin.h"
 #include "utils/rel.h"
+
 
 #define SM_FAIL			0
 #define SM_SUCCESS		1
@@ -79,8 +79,6 @@ extern int	mdabort(void);
 extern int	mdsync(void);
 
 /* mm.c */
-extern SPINLOCK MMCacheLock;
-
 extern int	mminit(void);
 extern int	mmcreate(Relation reln);
 extern int	mmunlink(RelFileNode rnode);

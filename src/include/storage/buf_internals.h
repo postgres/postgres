@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.49 2001/07/06 21:04:26 tgl Exp $
+ * $Id: buf_internals.h,v 1.50 2001/09/29 04:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,7 @@
 #include "storage/backendid.h"
 #include "storage/buf.h"
 #include "storage/lmgr.h"
-#include "storage/s_lock.h"
+#include "storage/lwlock.h"
 
 
 /* Buf Mgr constants */
@@ -89,12 +89,8 @@ typedef struct sbufdesc
 	BufFlags	flags;			/* see bit definitions above */
 	unsigned	refcount;		/* # of backends holding pins on buffer */
 
-	slock_t		io_in_progress_lock;	/* to wait for I/O to complete */
-	slock_t		cntx_lock;		/* to lock access to page context */
-
-	unsigned	r_locks;		/* # of shared locks */
-	bool		ri_lock;		/* read-intent lock */
-	bool		w_lock;			/* context exclusively locked */
+	LWLockId	io_in_progress_lock;	/* to wait for I/O to complete */
+	LWLockId	cntx_lock;		/* to lock access to page context */
 
 	bool		cntxDirty;		/* new way to mark block as dirty */
 
@@ -117,10 +113,7 @@ typedef struct sbufdesc
  * We have to free these locks in elog(ERROR)...
  */
 #define BL_IO_IN_PROGRESS	(1 << 0)	/* unimplemented */
-#define BL_R_LOCK			(1 << 1)
-#define BL_RI_LOCK			(1 << 2)
-#define BL_W_LOCK			(1 << 3)
-#define BL_PIN_COUNT_LOCK	(1 << 4)
+#define BL_PIN_COUNT_LOCK	(1 << 1)
 
 /*
  *	mao tracing buffer allocation
@@ -173,7 +166,6 @@ extern bits8 *BufferLocks;
 extern BufferTag *BufferTagLastDirtied;
 extern LockRelId *BufferRelidLastDirtied;
 extern bool *BufferDirtiedByMe;
-extern SPINLOCK BufMgrLock;
 
 /* localbuf.c */
 extern BufferDesc *LocalBufferDescriptors;

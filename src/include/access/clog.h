@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clog.h,v 1.1 2001/08/25 18:52:42 tgl Exp $
+ * $Id: clog.h,v 1.2 2001/09/29 04:02:26 tgl Exp $
  */
 #ifndef CLOG_H
 #define CLOG_H
@@ -23,6 +23,9 @@ typedef int XidStatus;
 #define TRANSACTION_STATUS_COMMITTED		0x01
 #define TRANSACTION_STATUS_ABORTED			0x02
 /* 0x03 is available without changing commit log space allocation */
+
+/* exported because lwlock.c needs it */
+#define NUM_CLOG_BUFFERS	8
 
 
 extern void TransactionIdSetStatus(TransactionId xid, XidStatus status);

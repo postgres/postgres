@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.38 2001/08/21 16:36:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.39 2001/09/29 04:02:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@
 #include "storage/itemptr.h"
 #include "storage/off.h"
 #include "storage/smgr.h"
-#include "storage/spin.h"
 #include "tcop/dest.h"
 #include "utils/nabstime.h"
 #include "utils/rel.h"

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.52 2001/09/23 21:52:36 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.53 2001/09/29 04:02:25 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -240,7 +240,7 @@ static struct config_bool
 #ifdef LOCK_DEBUG
 	{"trace_locks", PGC_SUSET, &Trace_locks, false, NULL},
 	{"trace_userlocks", PGC_SUSET, &Trace_userlocks, false, NULL},
-	{"trace_spinlocks", PGC_SUSET, &Trace_spinlocks, false, NULL},
+	{"trace_lwlocks", PGC_SUSET, &Trace_lwlocks, false, NULL},
 	{"debug_deadlocks", PGC_SUSET, &Debug_deadlocks, false, NULL},
 #endif
 

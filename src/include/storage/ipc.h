@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.50 2001/06/27 23:31:39 tgl Exp $
+ * $Id: ipc.h,v 1.51 2001/09/29 04:02:26 tgl Exp $
  *
  * Some files that would normally need to include only sys/ipc.h must
  * instead include this file because on Ultrix, sys/ipc.h is not designed
@@ -30,8 +30,8 @@ union semun
 	struct semid_ds *buf;
 	unsigned short *array;
 };
-
 #endif
+
 
 /* generic IPC definitions */
 
@@ -51,7 +51,7 @@ typedef int IpcSemaphoreId;		/* semaphore ID returned by semget(2) */
 typedef uint32 IpcMemoryKey;	/* shared memory key passed to shmget(2) */
 typedef int IpcMemoryId;		/* shared memory ID returned by shmget(2) */
 
-typedef struct					/* standard header for all Postgres shmem */
+typedef struct PGShmemHeader	/* standard header for all Postgres shmem */
 {
 	int32		magic;			/* magic # to identify Postgres segments */
 #define PGShmemMagic  679834892
@@ -59,29 +59,6 @@ typedef struct					/* standard header for all Postgres shmem */
 	uint32		totalsize;		/* total size of segment */
 	uint32		freeoffset;		/* offset to first free space */
 } PGShmemHeader;
-
-
-/* spinlock definitions */
-
-typedef enum _LockId_
-{
-	BUFMGRLOCKID,
-	OIDGENLOCKID,
-	XIDGENLOCKID,
-	CNTLFILELOCKID,
-	SHMEMLOCKID,
-	SHMEMINDEXLOCKID,
-	LOCKMGRLOCKID,
-	SINVALLOCKID,
-	PROCSTRUCTLOCKID,
-	FREESPACELOCKID,
-
-#ifdef STABLE_MEMORY_STORAGE
-	MMCACHELOCKID,
-#endif
-
-	MAX_SPINS					/* must be last item! */
-} _LockId_;
 
 
 /* ipc.c */

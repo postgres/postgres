@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.92 2001/09/27 16:29:13 tgl Exp $
+ * $Id: miscadmin.h,v 1.93 2001/09/29 04:02:26 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -46,8 +46,8 @@
  * will be held off until the last matching RESUME_INTERRUPTS() occurs.
  *
  * Special mechanisms are used to let an interrupt be accepted when we are
- * waiting for a lock or spinlock, and when we are waiting for command input
- * (but, of course, only if the interrupt holdoff counter is zero).  See the
+ * waiting for a lock or when we are waiting for command input (but, of
+ * course, only if the interrupt holdoff counter is zero).  See the
  * related code for details.
  *
  * A related, but conceptually distinct, mechanism is the "critical section"

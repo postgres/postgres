@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.21 2001/03/22 03:59:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.22 2001/09/29 04:02:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,7 @@
  *
  * Synchronization:
  *
- *	All routines in this file assume buffer manager spinlock is
- *	held by their caller.
+ *	All routines in this file assume BufMgrLock is held by their caller.
  */
 
 #include "postgres.h"

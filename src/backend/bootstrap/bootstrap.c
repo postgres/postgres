@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.116 2001/09/27 16:29:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.117 2001/09/29 04:02:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "catalog/pg_type.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
 #include "utils/exc.h"
@@ -360,29 +361,39 @@ BootstrapMain(int argc, char *argv[])
 	 * XLOG operations
 	 */
 	SetProcessingMode(NormalProcessing);
-	if (xlogop == BS_XLOG_NOP)
-		StartupXLOG();
-	else if (xlogop == BS_XLOG_BOOTSTRAP)
+
+	switch (xlogop)
 	{
-		BootStrapXLOG();
-		StartupXLOG();
-	}
-	else
-	{
-		if (xlogop == BS_XLOG_CHECKPOINT)
-		{
+		case BS_XLOG_NOP:
+			StartupXLOG();
+			break;
+
+		case BS_XLOG_BOOTSTRAP:
+			BootStrapXLOG();
+			StartupXLOG();
+			break;
+
+		case BS_XLOG_CHECKPOINT:
+			if (IsUnderPostmaster)
+				InitDummyProcess(); /* needed to get LWLocks */
 			CreateDummyCaches();
 			CreateCheckPoint(false);
 			SetRedoRecPtr();
-		}
-		else if (xlogop == BS_XLOG_STARTUP)
+			proc_exit(0);		/* done */
+
+		case BS_XLOG_STARTUP:
 			StartupXLOG();
-		else if (xlogop == BS_XLOG_SHUTDOWN)
+			proc_exit(0);		/* done */
+
+		case BS_XLOG_SHUTDOWN:
 			ShutdownXLOG();
-		else
+			proc_exit(0);		/* done */
+
+		default:
 			elog(STOP, "Unsupported XLOG op %d", xlogop);
-		proc_exit(0);
+			proc_exit(0);
 	}
+
 	SetProcessingMode(BootstrapProcessing);
 
 	/*

@@ -8,15 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.108 2001/09/21 17:06:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.109 2001/09/29 04:02:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
- *	Each postgres backend gets one of these.  We'll use it to
- *	clean up after the process should the process suddenly die.
- *
- *
  * Interface (a):
  *		ProcSleep(), ProcWakeup(),
  *		ProcQueueAlloc() -- create a shm queue for sleeping processes
@@ -75,27 +71,31 @@
 #include "access/xact.h"
 #include "storage/proc.h"
 #include "storage/sinval.h"
+#include "storage/spin.h"
 
 
 int			DeadlockTimeout = 1000;
 
-/* --------------------
- * Spin lock for manipulating the shared process data structure:
- * ProcGlobal.... Adding an extra spin lock seemed like the smallest
- * hack to get around reading and updating this structure in shared
- * memory. -mer 17 July 1991
- * --------------------
+PROC	   *MyProc = NULL;
+
+/*
+ * This spinlock protects the freelist of recycled PROC structures and the
+ * bitmap of free semaphores.  We cannot use an LWLock because the LWLock
+ * manager depends on already having a PROC and a wait semaphore!  But these
+ * structures are touched relatively infrequently (only at backend startup
+ * or shutdown) and not for very long, so a spinlock is okay.
  */
-SPINLOCK	ProcStructLock;
+static slock_t *ProcStructLock = NULL;
 
 static PROC_HDR *ProcGlobal = NULL;
 
-PROC	   *MyProc = NULL;
+static PROC *DummyProc = NULL;
 
 static bool waitingForLock = false;
 static bool waitingForSignal = false;
 
 static void ProcKill(void);
+static void DummyProcKill(void);
 static void ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum);
 static void ProcFreeSem(IpcSemaphoreId semId, int semNum);
 static void ZeroProcSemaphore(PROC *proc);
@@ -128,9 +128,12 @@ InitProcGlobal(int maxBackends)
 	Size		procGlobalSize;
 	bool		found = false;
 
-	/* Compute size for ProcGlobal structure */
+	/*
+	 * Compute size for ProcGlobal structure.  Note we need one more sema
+	 * besides those used for regular backends.
+	 */
 	Assert(maxBackends > 0);
-	semMapEntries = PROC_SEM_MAP_ENTRIES(maxBackends);
+	semMapEntries = PROC_SEM_MAP_ENTRIES(maxBackends+1);
 	procGlobalSize = sizeof(PROC_HDR) + (semMapEntries-1) * sizeof(SEM_MAP_ENTRY);
 
 	/* Create or attach to the ProcGlobal shared structure */
@@ -178,13 +181,26 @@ InitProcGlobal(int maxBackends)
 									   false);
 			ProcGlobal->procSemMap[i].procSemId = semId;
 		}
+
+		/*
+		 * Pre-allocate a PROC structure for dummy (checkpoint) processes,
+		 * and reserve the last sema of the precreated semas for it.
+		 */
+		DummyProc = (PROC *) ShmemAlloc(sizeof(PROC));
+		DummyProc->pid = 0;		/* marks DummyProc as not in use */
+		i = semMapEntries-1;
+		ProcGlobal->procSemMap[i].freeSemMap |= 1 << (PROC_NSEMS_PER_SET-1);
+		DummyProc->sem.semId = ProcGlobal->procSemMap[i].procSemId;
+		DummyProc->sem.semNum = PROC_NSEMS_PER_SET-1;
+
+		/* Create ProcStructLock spinlock, too */
+		ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
+		SpinLockInit(ProcStructLock);
 	}
 }
 
-/* ------------------------
- * InitProc -- create a per-process data structure for this process
- * used by the lock manager on semaphore queues.
- * ------------------------
+/*
+ * InitProcess -- create a per-process data structure for this backend
  */
 void
 InitProcess(void)
@@ -202,39 +218,27 @@ InitProcess(void)
 		elog(ERROR, "InitProcess: you already exist");
 
 	/*
-	 * ProcStructLock protects the freelist of PROC entries and the map
-	 * of free semaphores.  Note that when we acquire it here, we do not
-	 * have a PROC entry and so the ownership of the spinlock is not
-	 * recorded anywhere; even if it was, until we register ProcKill as
-	 * an on_shmem_exit callback, there is no exit hook that will cause
-	 * owned spinlocks to be released.  Upshot: during the first part of
-	 * this routine, be careful to release the lock manually before any
-	 * elog(), else you'll have a stuck spinlock to add to your woes.
+	 * try to get a proc struct from the free list first
 	 */
-	SpinAcquire(ProcStructLock);
+	SpinLockAcquire(ProcStructLock);
 
-	/* try to get a proc struct from the free list first */
 	myOffset = ProcGlobal->freeProcs;
 
 	if (myOffset != INVALID_OFFSET)
 	{
 		MyProc = (PROC *) MAKE_PTR(myOffset);
 		ProcGlobal->freeProcs = MyProc->links.next;
+		SpinLockRelease(ProcStructLock);
 	}
 	else
 	{
 		/*
-		 * have to allocate one.  We can't use the normal shmem index
-		 * table mechanism because the proc structure is stored by PID
-		 * instead of by a global name (need to look it up by PID when we
-		 * cleanup dead processes).
+		 * have to allocate a new one.
 		 */
+		SpinLockRelease(ProcStructLock);
 		MyProc = (PROC *) ShmemAlloc(sizeof(PROC));
 		if (!MyProc)
-		{
-			SpinRelease(ProcStructLock);
 			elog(FATAL, "cannot create new proc: out of memory");
-		}
 	}
 
 	/*
@@ -246,39 +250,30 @@ InitProcess(void)
 	MyProc->errType = STATUS_OK;
 	MyProc->xid = InvalidTransactionId;
 	MyProc->xmin = InvalidTransactionId;
-	MyProc->logRec.xrecoff = 0;
-	MyProc->waitLock = NULL;
-	MyProc->waitHolder = NULL;
 	MyProc->pid = MyProcPid;
 	MyProc->databaseId = MyDatabaseId;
+	MyProc->logRec.xrecoff = 0;
+	MyProc->lwWaiting = false;
+	MyProc->lwExclusive = false;
+	MyProc->lwWaitLink = NULL;
+	MyProc->waitLock = NULL;
+	MyProc->waitHolder = NULL;
 	SHMQueueInit(&(MyProc->procHolders));
-	/*
-	 * Zero out the spin lock counts and set the sLocks field for
-	 * ProcStructLock to 1 as we have acquired this spinlock above but
-	 * didn't record it since we didn't have MyProc until now.
-	 */
-	MemSet(MyProc->sLocks, 0, sizeof(MyProc->sLocks));
-	MyProc->sLocks[ProcStructLock] = 1;
 
 	/*
-	 * Arrange to clean up at backend exit.  Once we do this, owned
-	 * spinlocks will be released on exit, and so we can be a lot less
-	 * tense about errors.
+	 * Arrange to clean up at backend exit.
 	 */
 	on_shmem_exit(ProcKill, 0);
 
 	/*
 	 * Set up a wait-semaphore for the proc.  (We rely on ProcKill to clean
-	 * up if this fails.)
+	 * up MyProc if this fails.)
 	 */
 	if (IsUnderPostmaster)
 		ProcGetNewSemIdAndNum(&MyProc->sem.semId, &MyProc->sem.semNum);
 
-	/* Done with freelist and sem map */
-	SpinRelease(ProcStructLock);
-
 	/*
-	 * We might be reusing a semaphore that belongs to a dead backend.
+	 * We might be reusing a semaphore that belonged to a failed process.
 	 * So be careful and reinitialize its value here.
 	 */
 	if (MyProc->sem.semId >= 0)
@@ -289,6 +284,65 @@ InitProcess(void)
 	 * initialize the deadlock checker.
 	 */
 	InitDeadLockChecking();
+}
+
+/*
+ * InitDummyProcess -- create a dummy per-process data structure
+ *
+ * This is called by checkpoint processes so that they will have a MyProc
+ * value that's real enough to let them wait for LWLocks.  The PROC and
+ * sema that are assigned are the extra ones created during InitProcGlobal.
+ */
+void
+InitDummyProcess(void)
+{
+	/*
+	 * ProcGlobal should be set by a previous call to InitProcGlobal
+	 * (we inherit this by fork() from the postmaster).
+	 */
+	if (ProcGlobal == NULL || DummyProc == NULL)
+		elog(STOP, "InitDummyProcess: Proc Header uninitialized");
+
+	if (MyProc != NULL)
+		elog(ERROR, "InitDummyProcess: you already exist");
+
+	/*
+	 * DummyProc should not presently be in use by anyone else
+	 */
+	if (DummyProc->pid != 0)
+		elog(FATAL, "InitDummyProcess: DummyProc is in use by PID %d",
+			 DummyProc->pid);
+	MyProc = DummyProc;
+
+	/*
+	 * Initialize all fields of MyProc, except MyProc->sem which was
+	 * set up by InitProcGlobal.
+	 */
+	MyProc->pid = MyProcPid;	/* marks DummyProc as in use by me */
+	SHMQueueElemInit(&(MyProc->links));
+	MyProc->errType = STATUS_OK;
+	MyProc->xid = InvalidTransactionId;
+	MyProc->xmin = InvalidTransactionId;
+	MyProc->databaseId = MyDatabaseId;
+	MyProc->logRec.xrecoff = 0;
+	MyProc->lwWaiting = false;
+	MyProc->lwExclusive = false;
+	MyProc->lwWaitLink = NULL;
+	MyProc->waitLock = NULL;
+	MyProc->waitHolder = NULL;
+	SHMQueueInit(&(MyProc->procHolders));
+
+	/*
+	 * Arrange to clean up at process exit.
+	 */
+	on_shmem_exit(DummyProcKill, 0);
+
+	/*
+	 * We might be reusing a semaphore that belonged to a failed process.
+	 * So be careful and reinitialize its value here.
+	 */
+	if (MyProc->sem.semId >= 0)
+		ZeroProcSemaphore(MyProc);
 }
 
 /*
@@ -330,10 +384,10 @@ LockWaitCancel(void)
 	disable_sigalrm_interrupt();
 
 	/* Unlink myself from the wait queue, if on it (might not be anymore!) */
-	LockLockTable();
+	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
 	if (MyProc->links.next != INVALID_OFFSET)
 		RemoveFromWaitQueue(MyProc);
-	UnlockLockTable();
+	LWLockRelease(LockMgrLock);
 
 	/*
 	 * Reset the proc wait semaphore to zero.  This is necessary in the
@@ -381,15 +435,18 @@ ProcReleaseLocks(bool isCommit)
 
 /*
  * ProcKill() -- Destroy the per-proc data structure for
- *		this process. Release any of its held spin locks.
+ *		this process. Release any of its held LW locks.
  */
 static void
 ProcKill(void)
 {
 	Assert(MyProc != NULL);
 
-	/* Release any spinlocks I am holding */
-	ProcReleaseSpins(MyProc);
+	/* Release any LW locks I am holding */
+	LWLockReleaseAll();
+
+	/* Abort any buffer I/O in progress */
+	AbortBufferIO();
 
 	/* Get off any wait queue I might be on */
 	LockWaitCancel();
@@ -402,7 +459,7 @@ ProcKill(void)
 	LockReleaseAll(USER_LOCKMETHOD, MyProc, true, InvalidTransactionId);
 #endif
 
-	SpinAcquire(ProcStructLock);
+	SpinLockAcquire(ProcStructLock);
 
 	/* Free up my wait semaphore, if I got one */
 	if (MyProc->sem.semId >= 0)
@@ -412,10 +469,35 @@ ProcKill(void)
 	MyProc->links.next = ProcGlobal->freeProcs;
 	ProcGlobal->freeProcs = MAKE_OFFSET(MyProc);
 
-	/* PROC struct isn't mine anymore; stop tracking spinlocks with it! */
+	/* PROC struct isn't mine anymore */
 	MyProc = NULL;
 
-	SpinRelease(ProcStructLock);
+	SpinLockRelease(ProcStructLock);
+}
+
+/*
+ * DummyProcKill() -- Cut-down version of ProcKill for dummy (checkpoint)
+ *		processes.  The PROC and sema are not released, only marked
+ *		as not-in-use.
+ */
+static void
+DummyProcKill(void)
+{
+	Assert(MyProc != NULL && MyProc == DummyProc);
+
+	/* Release any LW locks I am holding */
+	LWLockReleaseAll();
+
+	/* Abort any buffer I/O in progress */
+	AbortBufferIO();
+
+	/* I can't be on regular lock queues, so needn't check */
+
+	/* Mark DummyProc no longer in use */
+	MyProc->pid = 0;
+
+	/* PROC struct isn't mine anymore */
+	MyProc = NULL;
 }
 
 
@@ -464,13 +546,13 @@ ProcQueueInit(PROC_QUEUE *queue)
  * Caller must have set MyProc->heldLocks to reflect locks already held
  * on the lockable object by this process (under all XIDs).
  *
- * Locktable's spinlock must be held at entry, and will be held
+ * Locktable's masterLock must be held at entry, and will be held
  * at exit.
  *
  * Result: STATUS_OK if we acquired the lock, STATUS_ERROR if not (deadlock).
  *
  * ASSUME: that no one will fiddle with the queue until after
- *		we release the spin lock.
+ *		we release the masterLock.
  *
  * NOTES: The process queue is now a priority queue for locking.
  *
@@ -484,7 +566,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		  HOLDER *holder)
 {
 	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
-	SPINLOCK	spinlock = lockctl->masterLock;
+	LWLockId	masterLock = lockctl->masterLock;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
@@ -595,14 +677,14 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	waitingForLock = true;
 
 	/*
-	 * Release the locktable's spin lock.
+	 * Release the locktable's masterLock.
 	 *
 	 * NOTE: this may also cause us to exit critical-section state, possibly
 	 * allowing a cancel/die interrupt to be accepted. This is OK because
 	 * we have recorded the fact that we are waiting for a lock, and so
 	 * LockWaitCancel will clean up if cancel/die happens.
 	 */
-	SpinRelease(spinlock);
+	LWLockRelease(masterLock);
 
 	/*
 	 * Set timer so we can wake up after awhile and check for a deadlock.
@@ -617,7 +699,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 		elog(FATAL, "ProcSleep: Unable to set timer for process wakeup");
 
 	/*
-	 * If someone wakes us between SpinRelease and IpcSemaphoreLock,
+	 * If someone wakes us between LWLockRelease and IpcSemaphoreLock,
 	 * IpcSemaphoreLock will not block.  The wakeup is "saved" by the
 	 * semaphore implementation.  Note also that if HandleDeadLock is
 	 * invoked but does not detect a deadlock, IpcSemaphoreLock() will
@@ -644,12 +726,9 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	waitingForLock = false;
 
 	/*
-	 * Re-acquire the locktable's spin lock.
-	 *
-	 * We could accept a cancel/die interrupt here.  That's OK because the
-	 * lock is now registered as being held by this process.
+	 * Re-acquire the locktable's masterLock.
 	 */
-	SpinAcquire(spinlock);
+	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	/*
 	 * We don't have to do anything else, because the awaker did all the
@@ -674,7 +753,7 @@ ProcWakeup(PROC *proc, int errType)
 {
 	PROC	   *retProc;
 
-	/* assume that spinlock has been acquired */
+	/* assume that masterLock has been acquired */
 
 	/* Proc should be sleeping ... */
 	if (proc->links.prev == INVALID_OFFSET ||
@@ -777,11 +856,11 @@ HandleDeadLock(SIGNAL_ARGS)
 	/*
 	 * Acquire locktable lock.	Note that the SIGALRM interrupt had better
 	 * not be enabled anywhere that this process itself holds the
-	 * locktable lock, else this will wait forever.  Also note that this
-	 * calls SpinAcquire which creates a critical section, so that this
+	 * locktable lock, else this will wait forever.  Also note that
+	 * LWLockAcquire creates a critical section, so that this
 	 * routine cannot be interrupted by cancel/die interrupts.
 	 */
-	LockLockTable();
+	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
 
 	/*
 	 * Check to see if we've been awoken by anyone in the interim.
@@ -799,7 +878,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	if (MyProc->links.prev == INVALID_OFFSET ||
 		MyProc->links.next == INVALID_OFFSET)
 	{
-		UnlockLockTable();
+		LWLockRelease(LockMgrLock);
 		errno = save_errno;
 		return;
 	}
@@ -812,7 +891,7 @@ HandleDeadLock(SIGNAL_ARGS)
 	if (!DeadLockCheck(MyProc))
 	{
 		/* No deadlock, so keep waiting */
-		UnlockLockTable();
+		LWLockRelease(LockMgrLock);
 		errno = save_errno;
 		return;
 	}
@@ -846,30 +925,10 @@ HandleDeadLock(SIGNAL_ARGS)
 	 * wakable because we're not in front of them anymore.  However,
 	 * RemoveFromWaitQueue took care of waking up any such processes.
 	 */
-	UnlockLockTable();
+	LWLockRelease(LockMgrLock);
 	errno = save_errno;
 }
 
-void
-ProcReleaseSpins(PROC *proc)
-{
-	int			i;
-
-	if (!proc)
-		proc = MyProc;
-
-	if (!proc)
-		return;
-	for (i = 0; i < (int) MAX_SPINS; i++)
-	{
-		if (proc->sLocks[i])
-		{
-			Assert(proc->sLocks[i] == 1);
-			SpinRelease(i);
-		}
-	}
-	AbortBufferIO();
-}
 
 /*
  * ProcWaitForSignal - wait for a signal from another backend.
@@ -994,10 +1053,7 @@ ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 	SEM_MAP_ENTRY  *procSemMap = ProcGlobal->procSemMap;
 	int32		fullmask = (1 << PROC_NSEMS_PER_SET) - 1;
 
-	/*
-	 * we hold ProcStructLock when entering this routine. We scan through
-	 * the bitmap to look for a free semaphore.
-	 */
+	SpinLockAcquire(ProcStructLock);
 
 	for (i = 0; i < semMapEntries; i++)
 	{
@@ -1018,11 +1074,16 @@ ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 
 				*semId = procSemMap[i].procSemId;
 				*semNum = j;
+
+				SpinLockRelease(ProcStructLock);
+
 				return;
 			}
 			mask <<= 1;
 		}
 	}
+
+	SpinLockRelease(ProcStructLock);
 
 	/*
 	 * If we reach here, all the semaphores are in use.  This is one of the
@@ -1036,6 +1097,8 @@ ProcGetNewSemIdAndNum(IpcSemaphoreId *semId, int *semNum)
 /*
  * ProcFreeSem -
  *	  free up our semaphore in the semaphore set.
+ *
+ * Caller is assumed to hold ProcStructLock.
  */
 static void
 ProcFreeSem(IpcSemaphoreId semId, int semNum)
@@ -1054,6 +1117,7 @@ ProcFreeSem(IpcSemaphoreId semId, int semNum)
 			return;
 		}
 	}
+	/* can't elog here!!! */
 	fprintf(stderr, "ProcFreeSem: no ProcGlobal entry for semId %d\n", semId);
 }
 

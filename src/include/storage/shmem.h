@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: shmem.h,v 1.30 2001/09/07 00:27:30 tgl Exp $
+ * $Id: shmem.h,v 1.31 2001/09/29 04:02:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SHMEM_H
 #define SHMEM_H
 
-#include "storage/spin.h"
 #include "utils/hsearch.h"
 
 
@@ -55,9 +54,6 @@ extern DLLIMPORT SHMEM_OFFSET ShmemBase;
   (((xx_offs) != 0) && ((xx_offs) != INVALID_OFFSET))
 
 
-extern SPINLOCK ShmemLock;
-extern SPINLOCK ShmemIndexLock;
-
 /* shmemqueue.c */
 typedef struct SHM_QUEUE
 {
@@ -66,15 +62,14 @@ typedef struct SHM_QUEUE
 } SHM_QUEUE;
 
 /* shmem.c */
-extern void InitShmemAllocation(PGShmemHeader *seghdr);
+extern void InitShmemAllocation(void *seghdr);
 extern void *ShmemAlloc(Size size);
 extern bool ShmemIsValid(unsigned long addr);
+extern void InitShmemIndex(void);
 extern HTAB *ShmemInitHash(char *name, long init_size, long max_size,
 			  HASHCTL *infoP, int hash_flags);
 extern void *ShmemInitStruct(char *name, Size size, bool *foundPtr);
 
-
-typedef int TableID;
 
 /* size constants for the shmem index table */
  /* max size of data structure string name */

@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.16 2001/09/27 19:10:02 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.17 2001/09/29 04:02:24 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,7 +12,7 @@ subdir = src/backend/storage/lmgr
 top_builddir = ../../../..
 include $(top_builddir)/src/Makefile.global
 
-OBJS = lmgr.o lock.o proc.o deadlock.o spin.o s_lock.o
+OBJS = lmgr.o lock.o proc.o deadlock.o lwlock.o spin.o s_lock.o
 
 all: SUBSYS.o
 

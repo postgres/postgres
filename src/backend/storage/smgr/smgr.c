@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.52 2001/07/02 20:50:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.53 2001/09/29 04:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 
 #include "storage/bufmgr.h"
 #include "storage/freespace.h"
+#include "storage/ipc.h"
 #include "storage/smgr.h"
 #include "utils/memutils.h"
 

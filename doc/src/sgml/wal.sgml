@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.10 2001/09/22 03:59:17 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.11 2001/09/29 04:02:19 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -146,7 +146,7 @@
   <para>
    The <acronym>WAL</acronym> buffers and control structure are in
    shared memory, and are handled by the backends; they are protected
-   by spinlocks.  The demand on shared memory is dependent on the
+   by lightweight locks.  The demand on shared memory is dependent on the
    number of buffers; the default size of the <acronym>WAL</acronym>
    buffers is 64 kB.
   </para>

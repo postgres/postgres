@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.47 2001/09/21 17:06:12 tgl Exp $
+ * $Id: proc.h,v 1.48 2001/09/29 04:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,9 @@
 
 #include "access/xlog.h"
 #include "storage/backendid.h"
+#include "storage/ipc.h"
 #include "storage/lock.h"
 
-/* configurable option */
-extern int	DeadlockTimeout;
 
 typedef struct
 {
@@ -35,10 +34,9 @@ typedef struct
  * the PROC is linked into that lock's waitProcs queue.  A recycled PROC
  * is linked into ProcGlobal's freeProcs list.
  */
-struct proc
+struct PROC
 {
 	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
-
 	SHM_QUEUE	links;			/* list link if process is in a list */
 
 	SEMA		sem;			/* ONE semaphore to sleep on */
@@ -51,12 +49,20 @@ struct proc
 								 * were starting our xact: vacuum must not
 								 * remove tuples deleted by xid >= xmin ! */
 
+	int			pid;			/* This backend's process id */
+	Oid			databaseId;		/* OID of database this backend is using */
+
 	/*
 	 * XLOG location of first XLOG record written by this backend's
 	 * current transaction.  If backend is not in a transaction or hasn't
 	 * yet modified anything, logRec.xrecoff is zero.
 	 */
 	XLogRecPtr	logRec;
+
+	/* Info about LWLock the process is currently waiting for, if any. */
+	bool		lwWaiting;		/* true if waiting for an LW lock */
+	bool		lwExclusive;	/* true if waiting for exclusive access */
+	struct PROC *lwWaitLink;	/* next waiter for same LW lock */
 
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitHolder are NULL if not currently waiting. */
@@ -66,31 +72,14 @@ struct proc
 	LOCKMASK	heldLocks;		/* bitmask for lock types already held on
 								 * this lock object by this backend */
 
-	int			pid;			/* This backend's process id */
-	Oid			databaseId;		/* OID of database this backend is using */
-
-	short		sLocks[MAX_SPINS];		/* Spin lock stats */
 	SHM_QUEUE	procHolders;	/* list of HOLDER objects for locks held
 								 * or awaited by this backend */
 };
 
-/* NOTE: "typedef struct proc PROC" appears in storage/lock.h. */
+/* NOTE: "typedef struct PROC PROC" appears in storage/lock.h. */
 
 
 extern PROC *MyProc;
-
-extern SPINLOCK ProcStructLock;
-
-
-#define PROC_INCR_SLOCK(lock) \
-do { \
-	if (MyProc) (MyProc->sLocks[(lock)])++; \
-} while (0)
-
-#define PROC_DECR_SLOCK(lock) \
-do { \
-	if (MyProc) (MyProc->sLocks[(lock)])--; \
-} while (0)
 
 
 /*
@@ -120,7 +109,7 @@ typedef struct
 	 */
 } SEM_MAP_ENTRY;
 
-typedef struct procglobal
+typedef struct PROC_HDR
 {
 	/* Head of list of free PROC structures */
 	SHMEM_OFFSET freeProcs;
@@ -134,11 +123,17 @@ typedef struct procglobal
 	SEM_MAP_ENTRY	procSemMap[1];
 } PROC_HDR;
 
+
+/* configurable option */
+extern int	DeadlockTimeout;
+
+
 /*
  * Function Prototypes
  */
 extern void InitProcGlobal(int maxBackends);
 extern void InitProcess(void);
+extern void InitDummyProcess(void);
 extern void ProcReleaseLocks(bool isCommit);
 
 extern void ProcQueueInit(PROC_QUEUE *queue);
@@ -146,7 +141,6 @@ extern int ProcSleep(LOCKMETHODTABLE *lockMethodTable, LOCKMODE lockmode,
 		  LOCK *lock, HOLDER *holder);
 extern PROC *ProcWakeup(PROC *proc, int errType);
 extern void ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock);
-extern void ProcReleaseSpins(PROC *proc);
 extern bool LockWaitCancel(void);
 extern void HandleDeadLock(SIGNAL_ARGS);
 

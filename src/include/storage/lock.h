@@ -7,15 +7,15 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.52 2001/09/27 16:29:13 tgl Exp $
+ * $Id: lock.h,v 1.53 2001/09/29 04:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LOCK_H_
 #define LOCK_H_
 
-#include "storage/ipc.h"
 #include "storage/itemptr.h"
+#include "storage/lwlock.h"
 #include "storage/shmem.h"
 
 
@@ -26,11 +26,9 @@ typedef struct PROC_QUEUE
 	int			size;			/* number of entries in list */
 } PROC_QUEUE;
 
-/* struct proc is declared in storage/proc.h, but must forward-reference it */
-typedef struct proc PROC;
+/* struct PROC is declared in storage/proc.h, but must forward-reference it */
+typedef struct PROC PROC;
 
-
-extern SPINLOCK LockMgrLock;
 
 extern int	max_locks_per_xact;
 
@@ -51,11 +49,7 @@ typedef int LOCKMETHOD;
 /* MAX_LOCKMODES cannot be larger than the # of bits in LOCKMASK */
 #define MAX_LOCKMODES		10
 
-/*
- * MAX_LOCK_METHODS corresponds to the number of spin locks allocated in
- * CreateSpinLocks() or the number of shared memory locations allocated
- * for lock table spin locks in the case of machines with TAS instructions.
- */
+/* MAX_LOCK_METHODS is the number of distinct lock control tables allowed */
 #define MAX_LOCK_METHODS	3
 
 #define INVALID_TABLEID		0
@@ -69,7 +63,7 @@ typedef int LOCKMETHOD;
  * If user locks are enabled, an additional lock method is present.
  *
  * LOCKMETHODCTL and LOCKMETHODTABLE are split because the first lives
- * in shared memory.  This is because it contains a spinlock.
+ * in shared memory.  (There isn't any really good reason for the split.)
  * LOCKMETHODTABLE exists in private memory.  Both are created by the
  * postmaster and should be the same in all backends.
  */
@@ -93,7 +87,7 @@ typedef int LOCKMETHOD;
  *		writers can be given priority over readers (to avoid
  *		starvation).  XXX this field is not actually used at present!
  *
- * masterlock -- synchronizes access to the table
+ * masterLock -- synchronizes access to the table
  */
 typedef struct LOCKMETHODCTL
 {
@@ -101,7 +95,7 @@ typedef struct LOCKMETHODCTL
 	int			numLockModes;
 	int			conflictTab[MAX_LOCKMODES];
 	int			prio[MAX_LOCKMODES];
-	SPINLOCK	masterLock;
+	LWLockId	masterLock;
 } LOCKMETHODCTL;
 
 /*
@@ -235,11 +229,6 @@ typedef struct HOLDER
 		(((LOCK *) MAKE_PTR((holder).tag.lock))->tag.lockmethod)
 
 
-
-#define LockLockTable() SpinAcquire(LockMgrLock)
-#define UnlockLockTable() SpinRelease(LockMgrLock)
-
-
 /*
  * function prototypes
  */
@@ -267,7 +256,6 @@ extern void InitDeadLockChecking(void);
 #ifdef LOCK_DEBUG
 extern void DumpLocks(void);
 extern void DumpAllLocks(void);
-
 #endif
 
 #endif	 /* LOCK_H */

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.3 2001/08/26 16:55:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.4 2001/09/29 04:02:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 #include <unistd.h>
 
 #include "access/clog.h"
-#include "storage/s_lock.h"
+#include "storage/lwlock.h"
 #include "miscadmin.h"
 
 
@@ -74,8 +74,8 @@
  * The management algorithm is straight LRU except that we will never swap
  * out the latest page (since we know it's going to be hit again eventually).
  *
- * We use an overall spinlock to protect the shared data structures, plus
- * per-buffer spinlocks that synchronize I/O for each buffer.  A process
+ * We use an overall LWLock to protect the shared data structures, plus
+ * per-buffer LWLocks that synchronize I/O for each buffer.  A process
  * that is reading in or writing out a page buffer does not hold the control
  * lock, only the per-buffer lock for the buffer it is working on.
  *
@@ -105,10 +105,6 @@
  * by setting the page's state from WRITE_IN_PROGRESS to DIRTY.  The writing
  * process must notice this and not mark the page CLEAN when it's done.
  *
- * XXX it's probably okay to use a spinlock for the control lock, since
- * that lock is only held for very short operations.  It'd be nice to use
- * some other form of lock for the per-buffer I/O locks, however.
- *
  * XLOG interactions: this module generates an XLOG record whenever a new
  * CLOG page is initialized to zeroes.  Other writes of CLOG come from
  * recording of transaction commit or abort in xact.c, which generates its
@@ -121,7 +117,6 @@
  * synchronization already.
  *----------
  */
-#define NUM_CLOG_BUFFERS	8
 
 typedef enum
 {
@@ -153,12 +148,16 @@ typedef struct ClogCtlData
 	 * swapping out the latest page.
 	 */
 	int			latest_page_number;
-
-	slock_t		control_lck;	/* Lock for ClogCtlData itself */
-	slock_t		buffer_lck[NUM_CLOG_BUFFERS]; /* Per-buffer I/O locks */
 } ClogCtlData;
 
 static ClogCtlData *ClogCtl = NULL;
+
+/*
+ * ClogBufferLocks is set during CLOGShmemInit and does not change thereafter.
+ * The value is automatically inherited by backends via fork, and
+ * doesn't need to be in shared memory.
+ */
+static LWLockId ClogBufferLocks[NUM_CLOG_BUFFERS]; /* Per-buffer I/O locks */
 
 /*
  * ClogDir is set during CLOGShmemInit and does not change thereafter.
@@ -211,7 +210,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 	Assert(status == TRANSACTION_STATUS_COMMITTED ||
 		   status == TRANSACTION_STATUS_ABORTED);
 
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	slotno = ReadCLOGPage(pageno);
 	byteptr = ClogCtl->page_buffer[slotno] + byteno;
@@ -224,7 +223,7 @@ TransactionIdSetStatus(TransactionId xid, XidStatus status)
 
 	ClogCtl->page_status[slotno] = CLOG_PAGE_DIRTY;
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 }
 
 /*
@@ -243,14 +242,14 @@ TransactionIdGetStatus(TransactionId xid)
 	char	   *byteptr;
 	XidStatus	status;
 
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	slotno = ReadCLOGPage(pageno);
 	byteptr = ClogCtl->page_buffer[slotno] + byteno;
 
 	status = (*byteptr >> bshift) & CLOG_XACT_BITMASK;
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 
 	return status;
 }
@@ -283,15 +282,13 @@ CLOGShmemInit(void)
 
 	memset(ClogCtl, 0, sizeof(ClogCtlData));
 
-	S_INIT_LOCK(&(ClogCtl->control_lck));
-
 	bufptr = ((char *) ClogCtl) + sizeof(ClogCtlData);
 
 	for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 	{
 		ClogCtl->page_buffer[slotno] = bufptr;
 		ClogCtl->page_status[slotno] = CLOG_PAGE_EMPTY;
-		S_INIT_LOCK(&(ClogCtl->buffer_lck[slotno]));
+		ClogBufferLocks[slotno] = LWLockAssign();
 		bufptr += CLOG_BLCKSZ;
 	}
 
@@ -312,7 +309,7 @@ BootStrapCLOG(void)
 {
 	int			slotno;
 
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	/* Create and zero the first page of the commit log */
 	slotno = ZeroCLOGPage(0, false);
@@ -321,7 +318,7 @@ BootStrapCLOG(void)
 	WriteCLOGPage(slotno);
 	Assert(ClogCtl->page_status[slotno] == CLOG_PAGE_CLEAN);
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 }
 
 /*
@@ -411,8 +408,8 @@ ReadCLOGPage(int pageno)
 		ClogCtl->page_lru_count[slotno] = 0;
 
 		/* Release shared lock, grab per-buffer lock instead */
-		S_UNLOCK(&(ClogCtl->control_lck));
-		S_LOCK(&(ClogCtl->buffer_lck[slotno]));
+		LWLockRelease(CLogControlLock);
+		LWLockAcquire(ClogBufferLocks[slotno], LW_EXCLUSIVE);
 
 		/*
 		 * Check to see if someone else already did the read, or took the
@@ -421,8 +418,8 @@ ReadCLOGPage(int pageno)
 		if (ClogCtl->page_number[slotno] != pageno ||
 			ClogCtl->page_status[slotno] != CLOG_PAGE_READ_IN_PROGRESS)
 		{
-			S_UNLOCK(&(ClogCtl->buffer_lck[slotno]));
-			S_LOCK(&(ClogCtl->control_lck));
+			LWLockRelease(ClogBufferLocks[slotno]);
+			LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 			continue;
 		}
 
@@ -430,14 +427,14 @@ ReadCLOGPage(int pageno)
 		CLOGPhysicalReadPage(pageno, slotno);
 
 		/* Re-acquire shared control lock and update page state */
-		S_LOCK(&(ClogCtl->control_lck));
+		LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 		Assert(ClogCtl->page_number[slotno] == pageno &&
 			   ClogCtl->page_status[slotno] == CLOG_PAGE_READ_IN_PROGRESS);
 
 		ClogCtl->page_status[slotno] = CLOG_PAGE_CLEAN;
 
-		S_UNLOCK(&(ClogCtl->buffer_lck[slotno]));
+		LWLockRelease(ClogBufferLocks[slotno]);
 
 		ClogRecentlyUsed(slotno);
 		return slotno;
@@ -468,8 +465,8 @@ WriteCLOGPage(int slotno)
 	pageno = ClogCtl->page_number[slotno];
 
 	/* Release shared lock, grab per-buffer lock instead */
-	S_UNLOCK(&(ClogCtl->control_lck));
-	S_LOCK(&(ClogCtl->buffer_lck[slotno]));
+	LWLockRelease(CLogControlLock);
+	LWLockAcquire(ClogBufferLocks[slotno], LW_EXCLUSIVE);
 
 	/*
 	 * Check to see if someone else already did the write, or took the
@@ -482,8 +479,8 @@ WriteCLOGPage(int slotno)
 		(ClogCtl->page_status[slotno] != CLOG_PAGE_DIRTY &&
 		 ClogCtl->page_status[slotno] != CLOG_PAGE_WRITE_IN_PROGRESS))
 	{
-		S_UNLOCK(&(ClogCtl->buffer_lck[slotno]));
-		S_LOCK(&(ClogCtl->control_lck));
+		LWLockRelease(ClogBufferLocks[slotno]);
+		LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 		return;
 	}
 
@@ -504,7 +501,7 @@ WriteCLOGPage(int slotno)
 	CLOGPhysicalWritePage(pageno, slotno);
 
 	/* Re-acquire shared control lock and update page state */
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	Assert(ClogCtl->page_number[slotno] == pageno &&
 		   (ClogCtl->page_status[slotno] == CLOG_PAGE_WRITE_IN_PROGRESS ||
@@ -514,7 +511,7 @@ WriteCLOGPage(int slotno)
 	if (ClogCtl->page_status[slotno] == CLOG_PAGE_WRITE_IN_PROGRESS)
 		ClogCtl->page_status[slotno] = CLOG_PAGE_CLEAN;
 
-	S_UNLOCK(&(ClogCtl->buffer_lck[slotno]));
+	LWLockRelease(ClogBufferLocks[slotno]);
 }
 
 /*
@@ -714,7 +711,7 @@ ShutdownCLOG(void)
 {
 	int			slotno;
 
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 	{
@@ -723,7 +720,7 @@ ShutdownCLOG(void)
 			   ClogCtl->page_status[slotno] == CLOG_PAGE_CLEAN);
 	}
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 }
 
 /*
@@ -734,7 +731,7 @@ CheckPointCLOG(void)
 {
 	int			slotno;
 
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	for (slotno = 0; slotno < NUM_CLOG_BUFFERS; slotno++)
 	{
@@ -745,7 +742,7 @@ CheckPointCLOG(void)
 		 */
 	}
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 }
 
 
@@ -772,12 +769,12 @@ ExtendCLOG(TransactionId newestXact)
 
 	pageno = TransactionIdToPage(newestXact);
 
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 	/* Zero the page and make an XLOG entry about it */
 	ZeroCLOGPage(pageno, true);
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 }
 
 
@@ -819,7 +816,7 @@ TruncateCLOG(TransactionId oldestXact)
 	 * should have been flushed already during the checkpoint, we're
 	 * just being extra careful here.)
 	 */
-	S_LOCK(&(ClogCtl->control_lck));
+	LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 restart:;
 	/*
@@ -830,7 +827,7 @@ restart:;
 	 */
 	if (CLOGPagePrecedes(ClogCtl->latest_page_number, cutoffPage))
 	{
-		S_UNLOCK(&(ClogCtl->control_lck));
+		LWLockRelease(CLogControlLock);
 		elog(LOG, "unable to truncate commit log: apparent wraparound");
 		return;
 	}
@@ -861,7 +858,7 @@ restart:;
 		goto restart;
 	}
 
-	S_UNLOCK(&(ClogCtl->control_lck));
+	LWLockRelease(CLogControlLock);
 
 	/* Now we can remove the old CLOG segment(s) */
 	(void) ScanCLOGDirectory(cutoffPage, true);
@@ -974,13 +971,13 @@ clog_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		memcpy(&pageno, XLogRecGetData(record), sizeof(int));
 
-		S_LOCK(&(ClogCtl->control_lck));
+		LWLockAcquire(CLogControlLock, LW_EXCLUSIVE);
 
 		slotno = ZeroCLOGPage(pageno, false);
 		WriteCLOGPage(slotno);
 		Assert(ClogCtl->page_status[slotno] == CLOG_PAGE_CLEAN);
 
-		S_UNLOCK(&(ClogCtl->control_lck));
+		LWLockRelease(CLogControlLock);
 	}
 }
 

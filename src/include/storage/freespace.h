@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: freespace.h,v 1.2 2001/07/02 20:50:46 tgl Exp $
+ * $Id: freespace.h,v 1.3 2001/09/29 04:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,7 @@
 
 #include "storage/block.h"
 #include "storage/relfilenode.h"
-#include "storage/spin.h"
 
-
-extern SPINLOCK FreeSpaceLock;
 
 extern int	MaxFSMRelations;
 extern int	MaxFSMPages;

@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.45 2001/08/25 18:52:41 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.46 2001/09/29 04:02:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,15 +15,12 @@
 
 #include "access/clog.h"
 #include "access/transam.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 
 
 /* Number of OIDs to prefetch (preallocate) per XLOG write */
 #define VAR_OID_PREFETCH		8192
-
-/* Spinlocks for serializing generation of XIDs and OIDs, respectively */
-SPINLOCK	XidGenLockId;
-SPINLOCK	OidGenLockId;
 
 /* pointer to "variable cache" in shared memory (set up by shmem.c) */
 VariableCache ShmemVariableCache = NULL;
@@ -44,7 +41,7 @@ GetNewTransactionId(void)
 	if (AMI_OVERRIDE)
 		return BootstrapTransactionId;
 
-	SpinAcquire(XidGenLockId);
+	LWLockAcquire(XidGenLock, LW_EXCLUSIVE);
 
 	xid = ShmemVariableCache->nextXid;
 
@@ -83,7 +80,7 @@ GetNewTransactionId(void)
 	if (MyProc != (PROC *) NULL)
 		MyProc->xid = xid;
 
-	SpinRelease(XidGenLockId);
+	LWLockRelease(XidGenLock);
 
 	return xid;
 }
@@ -103,9 +100,9 @@ ReadNewTransactionId(void)
 	if (AMI_OVERRIDE)
 		return BootstrapTransactionId;
 
-	SpinAcquire(XidGenLockId);
+	LWLockAcquire(XidGenLock, LW_SHARED);
 	xid = ShmemVariableCache->nextXid;
-	SpinRelease(XidGenLockId);
+	LWLockRelease(XidGenLock);
 
 	return xid;
 }
@@ -122,7 +119,7 @@ GetNewObjectId(void)
 {
 	Oid		result;
 
-	SpinAcquire(OidGenLockId);
+	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 
 	/*
 	 * Check for wraparound of the OID counter.  We *must* not return 0
@@ -149,7 +146,7 @@ GetNewObjectId(void)
 	(ShmemVariableCache->nextOid)++;
 	(ShmemVariableCache->oidCount)--;
 
-	SpinRelease(OidGenLockId);
+	LWLockRelease(OidGenLock);
 
 	lastSeenOid = result;
 
@@ -162,12 +159,12 @@ CheckMaxObjectId(Oid assigned_oid)
 	if (lastSeenOid != InvalidOid && assigned_oid < lastSeenOid)
 		return;
 
-	SpinAcquire(OidGenLockId);
+	LWLockAcquire(OidGenLock, LW_EXCLUSIVE);
 
 	if (assigned_oid < ShmemVariableCache->nextOid)
 	{
 		lastSeenOid = ShmemVariableCache->nextOid - 1;
-		SpinRelease(OidGenLockId);
+		LWLockRelease(OidGenLock);
 		return;
 	}
 
@@ -178,7 +175,7 @@ CheckMaxObjectId(Oid assigned_oid)
 		ShmemVariableCache->oidCount -=
 			assigned_oid - ShmemVariableCache->nextOid + 1;
 		ShmemVariableCache->nextOid = assigned_oid + 1;
-		SpinRelease(OidGenLockId);
+		LWLockRelease(OidGenLock);
 		return;
 	}
 
@@ -192,5 +189,5 @@ CheckMaxObjectId(Oid assigned_oid)
 	ShmemVariableCache->nextOid = assigned_oid + 1;
 	ShmemVariableCache->oidCount = VAR_OID_PREFETCH - 1;
 
-	SpinRelease(OidGenLockId);
+	LWLockRelease(OidGenLock);
 }

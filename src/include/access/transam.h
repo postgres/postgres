@@ -7,14 +7,12 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.40 2001/08/26 16:56:00 tgl Exp $
+ * $Id: transam.h,v 1.41 2001/09/29 04:02:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef TRANSAM_H
 #define TRANSAM_H
-
-#include "storage/spin.h"
 
 
 /* ----------------
@@ -122,8 +120,6 @@ extern void CheckMaxObjectId(Oid assigned_oid);
 extern bool AMI_OVERRIDE;
 
 /* in varsup.c */
-extern SPINLOCK OidGenLockId;
-extern SPINLOCK XidGenLockId;
 extern VariableCache ShmemVariableCache;
 
 #endif	 /* TRAMSAM_H */

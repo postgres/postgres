@@ -1,22 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * s_lock.h
- *	   This file contains the in-line portion of the implementation
- *	   of spinlocks.
+ *	   Hardware-dependent implementation of spinlocks.
  *
- * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
- * Portions Copyright (c) 1994, Regents of the University of California
+ *	NOTE: none of the macros in this file are intended to be called directly.
+ *	Call them through the hardware-independent macros in spin.h.
  *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.94 2001/09/24 20:10:44 petere Exp $
- *
- *-------------------------------------------------------------------------
- */
-
-/*----------
- * DESCRIPTION
- *	The public macros that must be provided are:
+ *	The following hardware-dependent macros must be provided for each
+ *	supported platform:
  *
  *	void S_INIT_LOCK(slock_t *lock)
  *		Initialize a spinlock (to the unlocked state).
@@ -33,51 +24,43 @@
  *		Tests if the lock is free. Returns TRUE if free, FALSE if locked.
  *		This does *not* change the state of the lock.
  *
+ *	Note to implementors: there are default implementations for all these
+ *	macros at the bottom of the file.  Check if your platform can use
+ *	these or needs to override them.
+ *
+ *  Usually, S_LOCK() is implemented in terms of an even lower-level macro
+ *	TAS():
+ *
  *	int TAS(slock_t *lock)
  *		Atomic test-and-set instruction.  Attempt to acquire the lock,
  *		but do *not* wait.	Returns 0 if successful, nonzero if unable
  *		to acquire the lock.
  *
- *	TAS() is a lower-level part of the API, but is used directly in a
- *	few places that want to do other things while waiting for a lock.
- *	The S_LOCK() macro is equivalent to
+ *	TAS() is NOT part of the API, and should never be called directly.
  *
- *	void
- *	S_LOCK(slock_t *lock)
- *	{
- *		unsigned	spins = 0;
- *
- *		while (TAS(lock))
- *			S_LOCK_SLEEP(lock, spins++, timeout);
- *	}
- *
- *	where S_LOCK_SLEEP() checks for timeout and sleeps for a short
- *	interval.  (The timeout is expressed in microseconds, or can be 0 for
- *	"infinity".)  Callers that want to perform useful work while waiting
- *	can write out this entire loop and insert the "useful work" inside
- *	the loop.
- *
- *	CAUTION to TAS() callers: on some platforms TAS() may sometimes
- *	report failure to acquire a lock even when the lock is not locked.
- *	For example, on Alpha TAS() will "fail" if interrupted.  Therefore
- *	TAS() must *always* be invoked in a retry loop as depicted, even when
- *	you are certain the lock is free.
+ *	CAUTION: on some platforms TAS() may sometimes report failure to acquire
+ *	a lock even when the lock is not locked.  For example, on Alpha TAS()
+ *	will "fail" if interrupted.  Therefore TAS() should always be invoked
+ *	in a retry loop, even if you are certain the lock is free.
  *
  *	On most supported platforms, TAS() uses a tas() function written
  *	in assembly language to execute a hardware atomic-test-and-set
  *	instruction.  Equivalent OS-supplied mutex routines could be used too.
  *
  *	If no system-specific TAS() is available (ie, HAS_TEST_AND_SET is not
- *	defined), then we fall back on an emulation that uses SysV semaphores.
- *	This emulation will be MUCH MUCH MUCH slower than a proper TAS()
+ *	defined), then we fall back on an emulation that uses SysV semaphores
+ *	(see spin.c).  This emulation will be MUCH MUCH slower than a proper TAS()
  *	implementation, because of the cost of a kernel call per lock or unlock.
  *	An old report is that Postgres spends around 40% of its time in semop(2)
  *	when using the SysV semaphore code.
  *
- *	Note to implementors: there are default implementations for all these
- *	macros at the bottom of the file.  Check if your platform can use
- *	these or needs to override them.
- *----------
+ *
+ * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *	  $Id: s_lock.h,v 1.95 2001/09/29 04:02:26 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
  */
 #ifndef S_LOCK_H
 #define S_LOCK_H
@@ -476,7 +459,7 @@ extern slock_t wc_tas(volatile slock_t *lock);
 /*
  * Fake spinlock implementation using SysV semaphores --- slow and prone
  * to fall foul of kernel limits on number of semaphores, so don't use this
- * unless you must!
+ * unless you must!  The subroutines appear in spin.c.
  */
 
 typedef struct
@@ -500,7 +483,7 @@ extern int	tas_sema(volatile slock_t *lock);
 
 
 
-/****************************************************************************
+/*
  * Default Definitions - override these above as needed.
  */
 
@@ -511,16 +494,6 @@ extern int	tas_sema(volatile slock_t *lock);
 			s_lock((lock), __FILE__, __LINE__); \
 	} while (0)
 #endif	 /* S_LOCK */
-
-#if !defined(S_LOCK_SLEEP)
-#define S_LOCK_SLEEP(lock,spins,timeout) \
-	s_lock_sleep((spins), (timeout), 0, (lock), __FILE__, __LINE__)
-#endif	 /* S_LOCK_SLEEP */
-
-#if !defined(S_LOCK_SLEEP_INTERVAL)
-#define S_LOCK_SLEEP_INTERVAL(lock,spins,timeout,microsec) \
-	s_lock_sleep((spins), (timeout), (microsec), (lock), __FILE__, __LINE__)
-#endif	 /* S_LOCK_SLEEP_INTERVAL */
 
 #if !defined(S_LOCK_FREE)
 #define S_LOCK_FREE(lock)	(*(lock) == 0)
@@ -542,13 +515,9 @@ extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 #endif	 /* TAS */
 
 
-/****************************************************************************
+/*
  * Platform-independent out-of-line support routines
  */
-extern void s_lock(volatile slock_t *lock,
-	   const char *file, const int line);
-extern void s_lock_sleep(unsigned spins, int timeout, int microsec,
-			 volatile slock_t *lock,
-			 const char *file, const int line);
+extern void s_lock(volatile slock_t *lock, const char *file, int line);
 
 #endif	 /* S_LOCK_H */

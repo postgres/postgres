@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.95 2001/09/27 16:29:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.96 2001/09/29 04:02:24 tgl Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -78,8 +78,8 @@ static char *lock_mode_names[] =
  *	   TRACE_LOCK_TABLE -- trace locks on this table (oid) unconditionally
  *	   DEBUG_DEADLOCKS	-- currently dumps locks at untimely occasions ;)
  *
- * Furthermore, but in storage/ipc/spin.c:
- *	   TRACE_SPINLOCKS	-- trace spinlocks (pretty useless)
+ * Furthermore, but in storage/lmgr/lwlock.c:
+ *	   TRACE_LWLOCKS	-- trace lightweight locks (pretty useless)
  *
  * Define LOCK_DEBUG at compile time to get all these enabled.
  * --------
@@ -150,10 +150,6 @@ HOLDER_PRINT(const char *where, const HOLDER *holderP)
 
 #endif	 /* not LOCK_DEBUG */
 
-
-
-SPINLOCK	LockMgrLock;		/* in Shmem or created in
-								 * CreateSpinlocks() */
 
 /*
  * These are to simplify/speed up some bit arithmetic.
@@ -230,12 +226,6 @@ LockMethodInit(LOCKMETHODTABLE *lockMethodTable,
 /*
  * LockMethodTableInit -- initialize a lock table structure
  *
- * Notes:
- *		(a) a lock table has four separate entries in the shmem index
- *		table.	This is because every shared hash table and spinlock
- *		has its name stored in the shmem index at its creation.  It
- *		is wasteful, in this case, but not much space is involved.
- *
  * NOTE: data structures allocated here are allocated permanently, using
  * TopMemoryContext and shared memory.	We don't ever release them anyway,
  * and in normal multi-backend operation the lock table structures set up
@@ -277,9 +267,9 @@ LockMethodTableInit(char *tabName,
 		MemoryContextAlloc(TopMemoryContext, sizeof(LOCKMETHODTABLE));
 
 	/*
-	 * find/acquire the spinlock for the table
+	 * Lock the LWLock for the table (probably not necessary here)
 	 */
-	SpinAcquire(LockMgrLock);
+	LWLockAcquire(LockMgrLock, LW_EXCLUSIVE);
 
 	/*
 	 * allocate a control structure from shared memory or attach to it if
@@ -356,7 +346,7 @@ LockMethodTableInit(char *tabName,
 	/* init ctl data structures */
 	LockMethodInit(lockMethodTable, conflictsP, prioP, numModes);
 
-	SpinRelease(LockMgrLock);
+	LWLockRelease(LockMgrLock);
 
 	pfree(shmemName);
 
@@ -464,7 +454,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	HTAB	   *holderTable;
 	bool		found;
 	LOCK	   *lock;
-	SPINLOCK	masterLock;
+	LWLockId	masterLock;
 	LOCKMETHODTABLE *lockMethodTable;
 	int			status;
 	int			myHolding[MAX_LOCKMODES];
@@ -489,7 +479,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 
 	masterLock = lockMethodTable->ctl->masterLock;
 
-	SpinAcquire(masterLock);
+	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	/*
 	 * Find or create a lock with this tag
@@ -499,7 +489,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 								HASH_ENTER, &found);
 	if (!lock)
 	{
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		elog(FATAL, "LockAcquire: lock table %d is corrupted", lockmethod);
 		return FALSE;
 	}
@@ -544,7 +534,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 									HASH_ENTER, &found);
 	if (!holder)
 	{
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		elog(FATAL, "LockAcquire: holder table corrupted");
 		return FALSE;
 	}
@@ -617,7 +607,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	{
 		GrantLock(lock, holder, lockmode);
 		HOLDER_PRINT("LockAcquire: owning", holder);
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		return TRUE;
 	}
 
@@ -630,7 +620,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	{
 		GrantLock(lock, holder, lockmode);
 		HOLDER_PRINT("LockAcquire: my other XID owning", holder);
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		return TRUE;
 	}
 
@@ -677,7 +667,7 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			LOCK_PRINT("LockAcquire: conditional lock failed", lock, lockmode);
 			Assert((lock->nRequested > 0) && (lock->requested[lockmode] >= 0));
 			Assert(lock->nGranted <= lock->nRequested);
-			SpinRelease(masterLock);
+			LWLockRelease(masterLock);
 			return FALSE;
 		}
 
@@ -719,14 +709,14 @@ LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			HOLDER_PRINT("LockAcquire: INCONSISTENT", holder);
 			LOCK_PRINT("LockAcquire: INCONSISTENT", lock, lockmode);
 			/* Should we retry ? */
-			SpinRelease(masterLock);
+			LWLockRelease(masterLock);
 			return FALSE;
 		}
 		HOLDER_PRINT("LockAcquire: granted", holder);
 		LOCK_PRINT("LockAcquire: granted", lock, lockmode);
 	}
 
-	SpinRelease(masterLock);
+	LWLockRelease(masterLock);
 
 	return status == STATUS_OK;
 }
@@ -879,7 +869,7 @@ GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode)
  * Caller must have set MyProc->heldLocks to reflect locks already held
  * on the lockable object by this process (under all XIDs).
  *
- * The locktable spinlock must be held at entry.
+ * The locktable's masterLock must be held at entry.
  */
 static int
 WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
@@ -925,7 +915,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		 * needed, will happen in xact cleanup (see above for motivation).
 		 */
 		LOCK_PRINT("WaitOnLock: aborting on lock", lock, lockmode);
-		SpinRelease(lockMethodTable->ctl->masterLock);
+		LWLockRelease(lockMethodTable->ctl->masterLock);
 		elog(ERROR, "deadlock detected");
 		/* not reached */
 	}
@@ -998,7 +988,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode)
 {
 	LOCK	   *lock;
-	SPINLOCK	masterLock;
+	LWLockId	masterLock;
 	bool		found;
 	LOCKMETHODTABLE *lockMethodTable;
 	HOLDER	   *holder;
@@ -1023,7 +1013,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	}
 
 	masterLock = lockMethodTable->ctl->masterLock;
-	SpinAcquire(masterLock);
+	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	/*
 	 * Find a lock with this tag
@@ -1038,14 +1028,14 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	 */
 	if (!lock)
 	{
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		elog(NOTICE, "LockRelease: locktable corrupted");
 		return FALSE;
 	}
 
 	if (!found)
 	{
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		elog(NOTICE, "LockRelease: no such lock");
 		return FALSE;
 	}
@@ -1065,7 +1055,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 									HASH_FIND_SAVE, &found);
 	if (!holder || !found)
 	{
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 #ifdef USER_LOCKS
 		if (!found && lockmethod == USER_LOCKMETHOD)
 			elog(NOTICE, "LockRelease: no lock with this tag");
@@ -1084,7 +1074,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	{
 		HOLDER_PRINT("LockRelease: WRONGTYPE", holder);
 		Assert(holder->holding[lockmode] >= 0);
-		SpinRelease(masterLock);
+		LWLockRelease(masterLock);
 		elog(NOTICE, "LockRelease: you don't own a lock of type %s",
 			 lock_mode_names[lockmode]);
 		return FALSE;
@@ -1139,7 +1129,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 									&found);
 		if (!lock || !found)
 		{
-			SpinRelease(masterLock);
+			LWLockRelease(masterLock);
 			elog(NOTICE, "LockRelease: remove lock, table corrupted");
 			return FALSE;
 		}
@@ -1167,7 +1157,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 										HASH_REMOVE_SAVED, &found);
 		if (!holder || !found)
 		{
-			SpinRelease(masterLock);
+			LWLockRelease(masterLock);
 			elog(NOTICE, "LockRelease: remove holder, table corrupted");
 			return FALSE;
 		}
@@ -1179,7 +1169,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 	if (wakeupNeeded)
 		ProcLockWakeup(lockMethodTable, lock);
 
-	SpinRelease(masterLock);
+	LWLockRelease(masterLock);
 	return TRUE;
 }
 
@@ -1201,7 +1191,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
 	HOLDER	   *holder;
 	HOLDER	   *nextHolder;
-	SPINLOCK	masterLock;
+	LWLockId	masterLock;
 	LOCKMETHODTABLE *lockMethodTable;
 	int			i,
 				numLockModes;
@@ -1225,7 +1215,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 	numLockModes = lockMethodTable->ctl->numLockModes;
 	masterLock = lockMethodTable->ctl->masterLock;
 
-	SpinAcquire(masterLock);
+	LWLockAcquire(masterLock, LW_EXCLUSIVE);
 
 	holder = (HOLDER *) SHMQueueNext(procHolders, procHolders,
 									 offsetof(HOLDER, procLink));
@@ -1321,7 +1311,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 										&found);
 		if (!holder || !found)
 		{
-			SpinRelease(masterLock);
+			LWLockRelease(masterLock);
 			elog(NOTICE, "LockReleaseAll: holder table corrupted");
 			return FALSE;
 		}
@@ -1340,7 +1330,7 @@ LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
 										HASH_REMOVE, &found);
 			if (!lock || !found)
 			{
-				SpinRelease(masterLock);
+				LWLockRelease(masterLock);
 				elog(NOTICE, "LockReleaseAll: cannot remove lock from HTAB");
 				return FALSE;
 			}
@@ -1352,7 +1342,7 @@ next_item:
 		holder = nextHolder;
 	}
 
-	SpinRelease(masterLock);
+	LWLockRelease(masterLock);
 
 #ifdef LOCK_DEBUG
 	if (lockmethod == USER_LOCKMETHOD ? Trace_userlocks : Trace_locks)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.40 2001/08/26 16:56:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.41 2001/09/29 04:02:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,6 @@
 #include "miscadmin.h"
 
 
-SPINLOCK	SInvalLock = (SPINLOCK) NULL;
-
 /****************************************************************************/
 /*	CreateSharedInvalidationState()		 Initialize SI buffer				*/
 /*																			*/
@@ -33,7 +31,7 @@ SPINLOCK	SInvalLock = (SPINLOCK) NULL;
 void
 CreateSharedInvalidationState(int maxBackends)
 {
-	/* SInvalLock must be initialized already, during spinlock init */
+	/* SInvalLock must be initialized already, during LWLock init */
 	SIBufferInit(maxBackends);
 }
 
@@ -46,9 +44,9 @@ InitBackendSharedInvalidationState(void)
 {
 	int		flag;
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 	flag = SIBackendInit(shmInvalBuffer);
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 	if (flag < 0)				/* unexpected problem */
 		elog(FATAL, "Backend cache invalidation initialization failed");
 	if (flag == 0)				/* expected problem: MaxBackends exceeded */
@@ -64,9 +62,9 @@ SendSharedInvalidMessage(SharedInvalidationMessage *msg)
 {
 	bool		insertOK;
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 	insertOK = SIInsertDataEntry(shmInvalBuffer, msg);
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 	if (!insertOK)
 		elog(DEBUG, "SendSharedInvalidMessage: SI buffer overflow");
 }
@@ -86,9 +84,25 @@ ReceiveSharedInvalidMessages(
 
 	for (;;)
 	{
-		SpinAcquire(SInvalLock);
+		/*
+		 * We can run SIGetDataEntry in parallel with other backends running
+		 * SIGetDataEntry for themselves, since each instance will modify
+		 * only fields of its own backend's ProcState, and no instance will
+		 * look at fields of other backends' ProcStates.  We express this
+		 * by grabbing SInvalLock in shared mode.  Note that this is not
+		 * exactly the normal (read-only) interpretation of a shared lock!
+		 * Look closely at the interactions before allowing SInvalLock to
+		 * be grabbed in shared mode for any other reason!
+		 *
+		 * The routines later in this file that use shared mode are okay
+		 * with this, because they aren't looking at the ProcState fields
+		 * associated with SI message transfer; they only use the ProcState
+		 * array as an easy way to find all the PROC structures.
+		 */
+		LWLockAcquire(SInvalLock, LW_SHARED);
 		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
-		SpinRelease(SInvalLock);
+		LWLockRelease(SInvalLock);
+
 		if (getResult == 0)
 			break;				/* nothing more to do */
 		if (getResult < 0)
@@ -108,9 +122,9 @@ ReceiveSharedInvalidMessages(
 	/* If we got any messages, try to release dead messages */
 	if (gotMessage)
 	{
-		SpinAcquire(SInvalLock);
+		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
 		SIDelExpiredDataEntries(shmInvalBuffer);
-		SpinRelease(SInvalLock);
+		LWLockRelease(SInvalLock);
 	}
 }
 
@@ -149,7 +163,7 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 	ProcState  *stateP = segP->procState;
 	int			index;
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_SHARED);
 
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -170,7 +184,7 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 		}
 	}
 
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 
 	return result;
 }
@@ -186,7 +200,7 @@ TransactionIdIsInProgress(TransactionId xid)
 	ProcState  *stateP = segP->procState;
 	int			index;
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_SHARED);
 
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -206,7 +220,7 @@ TransactionIdIsInProgress(TransactionId xid)
 		}
 	}
 
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 
 	return result;
 }
@@ -237,7 +251,7 @@ GetOldestXmin(bool allDbs)
 
 	result = GetCurrentTransactionId();
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_SHARED);
 
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -265,7 +279,7 @@ GetOldestXmin(bool allDbs)
 		}
 	}
 
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 
 	return result;
 }
@@ -298,7 +312,7 @@ GetSnapshotData(bool serializable)
 
 	snapshot->xmin = GetCurrentTransactionId();
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_SHARED);
 
 	/*
 	 * There can be no more than lastBackend active transactions, so this
@@ -307,15 +321,12 @@ GetSnapshotData(bool serializable)
 	snapshot->xip = (TransactionId *)
 		malloc(segP->lastBackend * sizeof(TransactionId));
 	if (snapshot->xip == NULL)
-	{
-		SpinRelease(SInvalLock);
 		elog(ERROR, "Memory exhausted in GetSnapshotData");
-	}
 
 	/*--------------------
 	 * Unfortunately, we have to call ReadNewTransactionId() after acquiring
 	 * SInvalLock above.  It's not good because ReadNewTransactionId() does
-	 * SpinAcquire(XidGenLockId), but *necessary*.  We need to be sure that
+	 * LWLockAcquire(XidGenLock), but *necessary*.  We need to be sure that
 	 * no transactions exit the set of currently-running transactions
 	 * between the time we fetch xmax and the time we finish building our
 	 * snapshot.  Otherwise we could have a situation like this:
@@ -373,7 +384,7 @@ GetSnapshotData(bool serializable)
 	if (serializable)
 		MyProc->xmin = snapshot->xmin;
 
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 
 	/* Serializable snapshot must be computed before any other... */
 	Assert(TransactionIdIsValid(MyProc->xmin));
@@ -439,7 +450,7 @@ GetUndoRecPtr(void)
 	XLogRecPtr	tempr;
 	int			index;
 
-	SpinAcquire(SInvalLock);
+	LWLockAcquire(SInvalLock, LW_SHARED);
 
 	for (index = 0; index < segP->lastBackend; index++)
 	{
@@ -458,7 +469,7 @@ GetUndoRecPtr(void)
 		}
 	}
 
-	SpinRelease(SInvalLock);
+	LWLockRelease(SInvalLock);
 
 	return (urec);
 }
@@ -470,7 +481,7 @@ GetUndoRecPtr(void)
  * knows that the backend isn't going to go away, so we do not bother with
  * locking.
  */
-struct proc *
+struct PROC *
 BackendIdGetProc(BackendId procId)
 {
 	SISeg	   *segP = shmInvalBuffer;

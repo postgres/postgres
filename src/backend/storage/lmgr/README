@@ -1,4 +1,49 @@
-$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.8 2001/01/26 18:23:12 tgl Exp $
+$Header: /cvsroot/pgsql/src/backend/storage/lmgr/README,v 1.9 2001/09/29 04:02:24 tgl Exp $
+
+
+LOCKING OVERVIEW
+
+Postgres uses three types of interprocess locks:
+
+* Spinlocks.  These are intended for *very* short-term locks.  If a lock
+is to be held more than a few dozen instructions, or across any sort of
+kernel call (or even a call to a nontrivial subroutine), don't use a spinlock.
+Spinlocks are primarily used as infrastructure for lightweight locks.
+They are implemented using a hardware atomic-test-and-set instruction,
+if available.  Waiting processes busy-loop until they can get the lock.
+There is no provision for deadlock detection, automatic release on error,
+or any other nicety.  There is a timeout if the lock cannot be gotten after
+a minute or so (which is approximately forever in comparison to the intended
+lock hold time, so this is certainly an error condition).
+
+* Lightweight locks (LWLocks).  These locks are typically used to interlock
+access to datastructures in shared memory.  LWLocks support both exclusive
+and shared lock modes (for read/write and read-only access to a shared object).
+There is no provision for deadlock detection, but the LWLock manager will
+automatically release held LWLocks during elog() recovery, so it is safe to
+raise an error while holding LWLocks.  Obtaining or releasing an LWLock is
+quite fast (a few dozen instructions) when there is no contention for the
+lock.  When a process has to wait for an LWLock, it blocks on a SysV semaphore
+so as to not consume CPU time.  Waiting processes will be granted the lock
+in arrival order.  There is no timeout.
+
+* Regular locks (a/k/a heavyweight locks).  The regular lock manager supports
+a variety of lock modes with table-driven semantics, and it has full deadlock
+detection and automatic release at transaction end.  Regular locks should be
+used for all user-driven lock requests.
+
+Acquisition of either a spinlock or a lightweight lock causes query cancel
+and die() interrupts to be held off until all such locks are released.
+No such restriction exists for regular locks, however.  Also note that we
+can accept query cancel and die() interrupts while waiting for a regular
+lock, but we will not accept them while waiting for spinlocks or LW locks.
+It is therefore not a good idea to use LW locks when the wait time might
+exceed a few seconds.
+
+The rest of this README file discusses the regular lock manager in detail.
+
+
+LOCK DATA STRUCTURES
 
 There are two fundamental lock structures: the per-lockable-object LOCK
 struct, and the per-lock-holder HOLDER struct.  A LOCK object exists

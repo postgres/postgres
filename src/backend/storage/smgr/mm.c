@@ -11,17 +11,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.24 2001/06/27 23:31:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/Attic/mm.c,v 1.25 2001/09/29 04:02:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#include "miscadmin.h"
-
-#ifdef STABLE_MEMORY_STORAGE
 
 #include <math.h>
 
+#include "storage/smgr.h"
+#include "miscadmin.h"
+
+
+#ifdef STABLE_MEMORY_STORAGE
 
 /*
  *	MMCacheTag -- Unique triplet for blocks stored by the main memory
@@ -71,8 +73,6 @@ typedef struct MMRelHashEntry
 #define MMNBUFFERS		10
 #define MMNRELATIONS	2
 
-SPINLOCK	MMCacheLock;
-
 static int *MMCurTop;
 static int *MMCurRelno;
 static MMCacheTag *MMBlockTags;
@@ -88,7 +88,7 @@ mminit()
 	bool		found;
 	HASHCTL		info;
 
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 
 	mmsize += MAXALIGN(BLCKSZ * MMNBUFFERS);
 	mmsize += MAXALIGN(sizeof(*MMCurTop));
@@ -98,7 +98,7 @@ mminit()
 
 	if (mmcacheblk == (char *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
 	}
 
@@ -112,7 +112,7 @@ mminit()
 
 	if (MMCacheHT == (HTAB *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
 	}
 
@@ -126,18 +126,18 @@ mminit()
 
 	if (MMRelCacheHT == (HTAB *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
 	}
 
 	if (IsUnderPostmaster)		/* was IsPostmaster bjm */
 	{
 		MemSet(mmcacheblk, 0, mmsize);
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		return SM_SUCCESS;
 	}
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 
 	MMCurTop = (int *) mmcacheblk;
 	mmcacheblk += sizeof(int);
@@ -163,11 +163,11 @@ mmcreate(Relation reln)
 	bool		found;
 	MMRelTag	tag;
 
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 
 	if (*MMCurRelno == MMNRELATIONS)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
 	}
 
@@ -184,20 +184,20 @@ mmcreate(Relation reln)
 
 	if (entry == (MMRelHashEntry *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "main memory storage mgr rel cache hash table corrupt");
 	}
 
 	if (found)
 	{
 		/* already exists */
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		return SM_FAIL;
 	}
 
 	entry->mmrhe_nblocks = 0;
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 
 	return SM_SUCCESS;
 }
@@ -211,30 +211,24 @@ int
 mmunlink(RelFileNode rnode)
 {
 	int			i;
-	Oid			reldbid;
 	MMHashEntry *entry;
 	MMRelHashEntry *rentry;
 	bool		found;
 	MMRelTag	rtag;
 
-	if (reln->rd_rel->relisshared)
-		reldbid = (Oid) 0;
-	else
-		reldbid = MyDatabaseId;
-
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 
 	for (i = 0; i < MMNBUFFERS; i++)
 	{
-		if (MMBlockTags[i].mmct_dbid == reldbid
-			&& MMBlockTags[i].mmct_relid == RelationGetRelid(reln))
+		if (MMBlockTags[i].mmct_dbid == rnode.tblNode
+			&& MMBlockTags[i].mmct_relid == rnode.relNode)
 		{
 			entry = (MMHashEntry *) hash_search(MMCacheHT,
 												(char *) &MMBlockTags[i],
 												HASH_REMOVE, &found);
 			if (entry == (MMHashEntry *) NULL || !found)
 			{
-				SpinRelease(MMCacheLock);
+				LWLockRelease(MMCacheLock);
 				elog(FATAL, "mmunlink: cache hash table corrupted");
 			}
 			MMBlockTags[i].mmct_dbid = (Oid) 0;
@@ -242,21 +236,21 @@ mmunlink(RelFileNode rnode)
 			MMBlockTags[i].mmct_blkno = (BlockNumber) 0;
 		}
 	}
-	rtag.mmrt_dbid = reldbid;
-	rtag.mmrt_relid = RelationGetRelid(reln);
+	rtag.mmrt_dbid = rnode.tblNode;
+	rtag.mmrt_relid = rnode.relNode;
 
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
 											HASH_REMOVE, &found);
 
 	if (rentry == (MMRelHashEntry *) NULL || !found)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmunlink: rel cache hash table corrupted");
 	}
 
 	(*MMCurRelno)--;
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 	return 1;
 }
 
@@ -286,7 +280,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 	tag.mmct_dbid = rtag.mmrt_dbid = reldbid;
 	tag.mmct_relid = rtag.mmrt_relid = RelationGetRelid(reln);
 
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 
 	if (*MMCurTop == MMNBUFFERS)
 	{
@@ -298,7 +292,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 		}
 		if (i == MMNBUFFERS)
 		{
-			SpinRelease(MMCacheLock);
+			LWLockRelease(MMCacheLock);
 			return SM_FAIL;
 		}
 	}
@@ -312,7 +306,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 											HASH_FIND, &found);
 	if (rentry == (MMRelHashEntry *) NULL || !found)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmextend: rel cache hash table corrupt");
 	}
 
@@ -322,7 +316,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 										HASH_ENTER, &found);
 	if (entry == (MMHashEntry *) NULL || found)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmextend: cache hash table corrupt");
 	}
 
@@ -338,7 +332,7 @@ mmextend(Relation reln, BlockNumber blocknum, char *buffer)
 	offset = (i * BLCKSZ);
 	memmove(&(MMBlockCache[offset]), buffer, BLCKSZ);
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 
 	return SM_SUCCESS;
 }
@@ -386,20 +380,20 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 	tag.mmct_relid = RelationGetRelid(reln);
 	tag.mmct_blkno = blocknum;
 
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 	entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
 										HASH_FIND, &found);
 
 	if (entry == (MMHashEntry *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmread: hash table corrupt");
 	}
 
 	if (!found)
 	{
 		/* reading nonexistent pages is defined to fill them with zeroes */
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		MemSet(buffer, 0, BLCKSZ);
 		return SM_SUCCESS;
 	}
@@ -407,7 +401,7 @@ mmread(Relation reln, BlockNumber blocknum, char *buffer)
 	offset = (entry->mmhe_bufno * BLCKSZ);
 	memmove(buffer, &MMBlockCache[offset], BLCKSZ);
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 
 	return SM_SUCCESS;
 }
@@ -433,26 +427,26 @@ mmwrite(Relation reln, BlockNumber blocknum, char *buffer)
 	tag.mmct_relid = RelationGetRelid(reln);
 	tag.mmct_blkno = blocknum;
 
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 	entry = (MMHashEntry *) hash_search(MMCacheHT, (char *) &tag,
 										HASH_FIND, &found);
 
 	if (entry == (MMHashEntry *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmread: hash table corrupt");
 	}
 
 	if (!found)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmwrite: hash table missing requested page");
 	}
 
 	offset = (entry->mmhe_bufno * BLCKSZ);
 	memmove(&MMBlockCache[offset], buffer, BLCKSZ);
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 
 	return SM_SUCCESS;
 }
@@ -506,14 +500,14 @@ mmnblocks(Relation reln)
 
 	rtag.mmrt_relid = RelationGetRelid(reln);
 
-	SpinAcquire(MMCacheLock);
+	LWLockAcquire(MMCacheLock, LW_EXCLUSIVE);
 
 	rentry = (MMRelHashEntry *) hash_search(MMRelCacheHT, (char *) &rtag,
 											HASH_FIND, &found);
 
 	if (rentry == (MMRelHashEntry *) NULL)
 	{
-		SpinRelease(MMCacheLock);
+		LWLockRelease(MMCacheLock);
 		elog(FATAL, "mmnblocks: rel cache hash table corrupt");
 	}
 
@@ -522,7 +516,7 @@ mmnblocks(Relation reln)
 	else
 		nblocks = InvalidBlockNumber;
 
-	SpinRelease(MMCacheLock);
+	LWLockRelease(MMCacheLock);
 
 	return nblocks;
 }

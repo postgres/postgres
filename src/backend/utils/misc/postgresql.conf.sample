@@ -164,7 +164,7 @@
 #ifdef LOCK_DEBUG
 #trace_locks = false
 #trace_userlocks = false
-#trace_spinlocks = false
+#trace_lwlocks = false
 #debug_deadlocks = false
 #trace_lock_oidmin = 16384
 #trace_lock_table = 0

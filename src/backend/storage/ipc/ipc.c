@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.68 2001/09/04 00:22:34 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.69 2001/09/29 04:02:23 tgl Exp $
  *
  * NOTES
  *
@@ -34,7 +34,6 @@
 #include <unistd.h>
 
 #include "storage/ipc.h"
-#include "storage/s_lock.h"
 /* In Ultrix, sem.h and shm.h must be included AFTER ipc.h */
 #ifdef HAVE_SYS_SEM_H
 #include <sys/sem.h>
@@ -306,7 +305,7 @@ InternalIpcSemaphoreCreate(IpcSemaphoreKey semKey,
 		if (errno == ENOSPC)
 			fprintf(stderr,
 					"\nThis error does *not* mean that you have run out of disk space.\n\n"
-					"It occurs either because system limit for the maximum number of\n"
+					"It occurs because either the system limit for the maximum number of\n"
 					"semaphore sets (SEMMNI), or the system wide maximum number of\n"
 					"semaphores (SEMMNS), would be exceeded.  You need to raise the\n"
 					"respective kernel parameter.  Look into the PostgreSQL documentation\n"
@@ -416,8 +415,8 @@ IpcSemaphoreLock(IpcSemaphoreId semId, int sem, bool interruptOK)
 	 * record acquiring the lock.  (This is currently true for lockmanager
 	 * locks, since the process that granted us the lock did all the
 	 * necessary state updates. It's not true for SysV semaphores used to
-	 * emulate spinlocks --- but our performance on such platforms is so
-	 * horrible anyway that I'm not going to worry too much about it.)
+	 * implement LW locks or emulate spinlocks --- but the wait time for
+	 * such locks should not be very long, anyway.)
 	 */
 	do
 	{

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.24 2001/07/06 21:04:26 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.25 2001/09/29 04:02:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,7 @@
 
 #include "storage/buf_internals.h"
 #include "storage/bufmgr.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 
 
