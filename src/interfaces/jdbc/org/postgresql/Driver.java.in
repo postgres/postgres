@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/Driver.java.in,v 1.38 2003/11/29 19:52:09 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/jdbc/org/postgresql/Driver.java.in,v 1.39 2003/12/10 18:30:44 davec Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,6 +508,6 @@ public class Driver implements java.sql.Driver
 
 
 	//The build number should be incremented for every new build
-	private static int m_buildNumber = 209;
+	private static int m_buildNumber = 211;
 
 }
