@@ -634,3 +634,21 @@ SELECT t1.id1, t1.result, t2.expected
     WHERE t1.id1 = t2.id
     AND t1.result != t2.expected;
 
+-- ******************************
+-- * miscellaneous checks for things that have been broken in the past...
+-- ******************************
+-- numeric AVG used to fail on some platforms
+SELECT AVG(val) FROM num_data;
+
+-- Check for appropriate rounding and overflow
+CREATE TABLE fract_only (id int, val numeric(4,4));
+INSERT INTO fract_only VALUES (1, '0.0');
+INSERT INTO fract_only VALUES (2, '0.1');
+INSERT INTO fract_only VALUES (3, '1.0');	-- should fail
+INSERT INTO fract_only VALUES (4, '-0.9999');
+INSERT INTO fract_only VALUES (5, '0.99994');
+INSERT INTO fract_only VALUES (6, '0.99995');  -- should fail
+INSERT INTO fract_only VALUES (7, '0.00001');
+INSERT INTO fract_only VALUES (8, '0.00017');
+SELECT * FROM fract_only;
+DROP TABLE fract_only;
