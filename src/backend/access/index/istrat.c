@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.23 1998/08/11 19:32:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/Attic/istrat.c,v 1.24 1998/08/11 20:55:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -580,7 +580,6 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	/* if support routines exist for this access method, load them */
 	if (maxSupportNumber > 0)
 	{
-
 		ScanKeyEntryInitialize(&entry[0], 0, Anum_pg_amproc_amid,
 							   F_OIDEQ,
 							   ObjectIdGetDatum(accessMethodObjectId));
@@ -590,8 +589,8 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 		relation = heap_openr(AccessMethodProcedureRelationName);
 
-		for (attributeNumber = maxAttributeNumber; attributeNumber > 0;
-			 attributeNumber--)
+		for (attributeNumer = 1; attributeNumber <= maxAttributeNumber;
+			attributeNumber++)
 		{
 			int16		support;
 			Form_pg_amproc form;
@@ -599,7 +598,7 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 
 			loc = &indexSupport[((attributeNumber - 1) * maxSupportNumber)];
 
-			for (support = maxSupportNumber; --support >= 0;)
+			for (support = 0; support < maxSupportNumber; ++support)
 				loc[support] = InvalidOid;
 
 			entry[1].sk_argument =
@@ -610,7 +609,6 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			while (tuple = heap_getnext(scan, 0, (Buffer *) NULL),
 				   HeapTupleIsValid(tuple))
 			{
-
 				form = (Form_pg_amproc) GETSTRUCT(tuple);
 				loc[(form->amprocnum - 1)] = form->amproc;
 			}
@@ -635,7 +633,6 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 	for (attributeNumber = maxAttributeNumber; attributeNumber > 0;
 		 attributeNumber--)
 	{
-
 		StrategyNumber strategy;
 
 		entry[1].sk_argument =
@@ -656,7 +653,6 @@ IndexSupportInitialize(IndexStrategy indexStrategy,
 			Form_pg_amop form;
 
 			form = (Form_pg_amop) GETSTRUCT(tuple);
-
 			OperatorRelationFillScanKeyEntry(operatorRelation,
 											 form->amopopr,
 					StrategyMapGetScanKeyEntry(map, form->amopstrategy));
