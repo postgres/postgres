@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.10 2000/10/05 19:48:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/insert.sgml,v 1.11 2000/10/20 14:02:12 thomas Exp $
 Postgres documentation
 -->
 
@@ -168,7 +168,7 @@ INSERT INTO films VALUES
   </para>
 
   <para>
-   In this second example the column <literal>date_prod</literal> is
+   In this second example the last column <literal>len</literal> is
    omitted and therefore it will have the default value of NULL:
 
    <programlisting>
