@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.93 2003/07/28 00:14:42 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.94 2003/08/02 02:44:38 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1070,13 +1070,6 @@ Tue Oct 26 21:40:57 CEST 1999
         Sets the client character set encoding.  Without an argument, this command
         shows the current encoding.
         </para>
-	<note>
-	<para>
-	This command will not notice changes made directly by <command>SET
-        client_encoding</>.  If you use <command>\encoding</command>,
-	be sure to use it to set as well as examine the encoding.
-	</para>
-	</note>	
         </listitem>
       </varlistentry>
 
