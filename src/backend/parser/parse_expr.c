@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.55 1999/07/19 00:26:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.56 1999/08/05 02:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -631,16 +631,16 @@ exprTypmod(Node *expr)
 	return -1;
 }
 
+/*
+ * Produce an appropriate Const node from a constant value produced
+ * by the parser and an explicit type name to cast to.
+ */
 static Node *
 parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 {
-	/* check for passing non-ints */
 	Const	   *adt;
 	Datum		lcp;
 	Type		tp;
-	char		type_string[NAMEDATALEN];
-	int32		len;
-	char	   *cp = NULL;
 	char	   *const_string = NULL;
 	bool		string_palloced = false;
 
@@ -659,180 +659,30 @@ parser_typecast(Value *expr, TypeName *typename, int32 atttypmod)
 			break;
 		default:
 			elog(ERROR,
-			 "parser_typecast: cannot cast this expression to type '%s'",
+				 "parser_typecast: cannot cast this expression to type '%s'",
 				 typename->name);
 	}
 
 	if (typename->arrayBounds != NIL)
 	{
+		char		type_string[NAMEDATALEN+2];
+
 		sprintf(type_string, "_%s", typename->name);
 		tp = (Type) typenameType(type_string);
 	}
 	else
 		tp = (Type) typenameType(typename->name);
 
-	len = typeLen(tp);
-
-	cp = stringTypeString(tp, const_string, atttypmod);
-
-	if (!typeByVal(tp))
-		lcp = PointerGetDatum(cp);
-	else
-	{
-		switch (len)
-		{
-			case 1:
-				lcp = Int8GetDatum(cp);
-				break;
-			case 2:
-				lcp = Int16GetDatum(cp);
-				break;
-			case 4:
-				lcp = Int32GetDatum(cp);
-				break;
-			default:
-				lcp = PointerGetDatum(cp);
-				break;
-		}
-	}
+	lcp = stringTypeDatum(tp, const_string, atttypmod);
 
 	adt = makeConst(typeTypeId(tp),
-					len,
+					typeLen(tp),
 					(Datum) lcp,
 					false,
 					typeByVal(tp),
 					false,		/* not a set */
 					true /* is cast */ );
 
-	if (string_palloced)
-		pfree(const_string);
-
-	return (Node *) adt;
-}
-
-
-/* parser_typecast2()
- * Convert (only) constants to specified type.
- */
-Node *
-parser_typecast2(Node *expr, Oid exprType, Type tp, int32 atttypmod)
-{
-	/* check for passing non-ints */
-	Const	   *adt;
-	Datum		lcp;
-	int32		len = typeLen(tp);
-	char	   *cp = NULL;
-
-	char	   *const_string = NULL;
-	bool		string_palloced = false;
-
-	Assert(IsA(expr, Const));
-
-	switch (exprType)
-	{
-		case 0:			/* NULL */
-			break;
-		case INT4OID:			/* int4 */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%d",
-					(int) ((Const *) expr)->constvalue);
-			break;
-		case NAMEOID:			/* name */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%s",
-					(char *) ((Const *) expr)->constvalue);
-			break;
-		case CHAROID:			/* char */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%c",
-					(char) ((Const *) expr)->constvalue);
-			break;
-		case FLOAT4OID: /* float4 */
-			{
-				float32		floatVal = DatumGetFloat32(((Const *) expr)->constvalue);
-
-				const_string = (char *) palloc(256);
-				string_palloced = true;
-				sprintf(const_string, "%f", *floatVal);
-				break;
-			}
-		case FLOAT8OID: /* float8 */
-			{
-				float64		floatVal = DatumGetFloat64(((Const *) expr)->constvalue);
-
-				const_string = (char *) palloc(256);
-				string_palloced = true;
-				sprintf(const_string, "%f", *floatVal);
-				break;
-			}
-		case CASHOID:			/* money */
-			const_string = (char *) palloc(256);
-			string_palloced = true;
-			sprintf(const_string, "%ld",
-					(long) ((Const *) expr)->constvalue);
-			break;
-		case TEXTOID:			/* text */
-			const_string = DatumGetPointer(((Const *) expr)->constvalue);
-			const_string = (char *) textout((struct varlena *) const_string);
-			break;
-		case UNKNOWNOID:		/* unknown */
-			const_string = DatumGetPointer(((Const *) expr)->constvalue);
-			const_string = (char *) textout((struct varlena *) const_string);
-			break;
-		default:
-			elog(ERROR, "unknown type %u", exprType);
-	}
-
-	if (!exprType)
-	{
-		adt = makeConst(typeTypeId(tp),
-						(Size) 0,
-						(Datum) NULL,
-						true,	/* isnull */
-						false,	/* was omitted */
-						false,	/* not a set */
-						true /* is cast */ );
-		return (Node *) adt;
-	}
-
-	cp = stringTypeString(tp, const_string, atttypmod);
-
-	if (!typeByVal(tp))
-		lcp = PointerGetDatum(cp);
-	else
-	{
-		switch (len)
-		{
-			case 1:
-				lcp = Int8GetDatum(cp);
-				break;
-			case 2:
-				lcp = Int16GetDatum(cp);
-				break;
-			case 4:
-				lcp = Int32GetDatum(cp);
-				break;
-			default:
-				lcp = PointerGetDatum(cp);
-				break;
-		}
-	}
-
-	adt = makeConst(typeTypeId(tp),
-					(Size) len,
-					(Datum) lcp,
-					false,
-					typeByVal(tp),
-					false,		/* not a set */
-					true /* is cast */ );
-
-	/*
-	 * printf("adt %s : %u %d %d\n",CString(expr),typeTypeId(tp) ,
-	 * len,cp);
-	 */
 	if (string_palloced)
 		pfree(const_string);
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.14 1999/07/19 00:26:16 tgl Exp $
+ * $Id: parse_expr.h,v 1.15 1999/08/05 02:33:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,5 @@
 extern Node *transformExpr(ParseState *pstate, Node *expr, int precedence);
 extern Oid	exprType(Node *expr);
 extern int32 exprTypmod(Node *expr);
-extern Node *parser_typecast2(Node *expr, Oid exprType, Type tp, int32 attypmod);
 
 #endif	 /* PARSE_EXPR_H */

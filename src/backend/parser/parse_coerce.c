@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.21 1999/07/17 20:17:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.22 1999/08/05 02:33:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,74 +35,101 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId, Oid targetTypeId,
 			int32 atttypmod)
 {
 	Node	   *result = NULL;
-	Type		targetType;
-	Oid			infunc;
-	Datum		val;
 
-	if (targetTypeId == InvalidOid)
-		result = node;
-	else if (inputTypeId != targetTypeId)
+	if (targetTypeId == InvalidOid ||
+		targetTypeId == inputTypeId)
 	{
-
-		/*
-		 * one of the known-good transparent conversions? then drop
-		 * through...
+		/* no conversion needed */
+		result = node;
+	}
+	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
+	{
+		/* no work if one of the known-good transparent conversions */
+		result = node;
+	}
+	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
+	{
+		/* Input is a string constant with previously undetermined type.
+		 * Apply the target type's typinput function to it to produce
+		 * a constant of the target type.
+		 *
+		 * NOTE: this case cannot be folded together with the other
+		 * constant-input case, since the typinput function does not
+		 * necessarily behave the same as a type conversion function.
+		 * For example, int4's typinput function will reject "1.2",
+		 * whereas float-to-int type conversion will round to integer.
 		 */
-		if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
-			result = node;
+		Const	   *con = (Const *) node;
+		Type		targetType = typeidType(targetTypeId);
+		char	   *val;
 
-		/*
-		 * if not unknown input type, try for explicit conversion using
-		 * functions...
-		 */
-		else if (inputTypeId != UNKNOWNOID)
-		{
+		/* We know the source constant is really of type 'text' */
+		val = textout((text *) con->constvalue);
 
-			/*
-			 * We already know there is a function which will do this, so
-			 * let's use it
-			 */
-			FuncCall   *n = makeNode(FuncCall);
+		/* now make a new const node */
+		con = makeNode(Const);
+		con->consttype = targetTypeId;
+		con->constlen = typeLen(targetType);
+		con->constvalue = stringTypeDatum(targetType, val, atttypmod);
+		con->constisnull = false;
+		con->constbyval = typeByVal(targetType);
+		con->constisset = false;
 
-			n->funcname = typeidTypeName(targetTypeId);
-			n->args = lcons(node, NIL);
+		pfree(val);
 
-			result = transformExpr(pstate, (Node *) n, EXPR_COLUMN_FIRST);
-		}
-		else
-		{
-			if (nodeTag(node) == T_Const)
-			{
-				Const	   *con = (Const *) node;
-
-				val = (Datum) textout((struct varlena *) con->constvalue);
-				targetType = typeidType(targetTypeId);
-				infunc = typeInfunc(targetType);
-				con = makeNode(Const);
-				con->consttype = targetTypeId;
-				con->constlen = typeLen(targetType);
-
-				/*
-				 * Use "-1" for varchar() type. For char(), we need to pad
-				 * out the type with the proper number of spaces.  This
-				 * was a major problem for DEFAULT string constants to
-				 * char() types.
-				 */
-				con->constvalue = (Datum) fmgr(infunc,
-											   val,
-											   typeTypElem(targetType),
-						   (targetTypeId != BPCHAROID) ? -1 : atttypmod);
-				con->constisnull = false;
-				con->constbyval = typeByVal(targetType);
-				con->constisset = false;
-				result = (Node *) con;
-			}
-			else
-				result = node;
-		}
+		result = (Node *) con;
 	}
 	else
-		result = node;
+	{
+		/*
+		 * Otherwise, find the appropriate type conversion function
+		 * (caller should have determined that there is one), and
+		 * generate an expression tree representing run-time
+		 * application of the conversion function.
+		 */
+		FuncCall   *n = makeNode(FuncCall);
+		Type		targetType = typeidType(targetTypeId);
+
+		n->funcname = typeTypeName(targetType);
+		n->args = lcons(node, NIL);
+
+		result = transformExpr(pstate, (Node *) n, EXPR_COLUMN_FIRST);
+
+		/*
+		 * If the input is a constant, apply the type conversion function
+		 * now instead of delaying to runtime.  (This could someday be
+		 * done in a downstream constant-expression-simplifier, but we
+		 * can save cycles in the rewriter if we do it here.)
+		 *
+		 * XXX there are cases where we probably shouldn't do this,
+		 * such as coercing text 'now' to datetime?  Need a way to
+		 * know whether type conversion function is cacheable...
+		 */
+		if (IsA(node, Const))
+		{
+			Const	   *con = (Const *) node;
+			Oid			convertFuncid;
+			Datum		val;
+
+			Assert(IsA(result, Expr) &&
+				   ((Expr *) result)->opType == FUNC_EXPR);
+
+			/* Convert the given constant */
+			convertFuncid = ((Func *) (((Expr *) result)->oper))->funcid;
+			val = (Datum) fmgr(convertFuncid, con->constvalue);
+
+			/* now make a new const node */
+			con = makeNode(Const);
+			con->consttype = targetTypeId;
+			con->constlen = typeLen(targetType);
+			con->constvalue = val;
+			con->constisnull = false;
+			con->constbyval = typeByVal(targetType);
+			con->constisset = false;
+
+			result = (Node *) con;
+		}
+	}
 
 	return result;
 }
