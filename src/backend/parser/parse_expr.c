@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.22 1998/02/26 04:33:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.23 1998/02/27 16:07:02 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -266,7 +266,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					if (length(left_expr) !=
 						length(right_expr))
 						elog(ERROR, "parser: Subselect has too many or too few fields.");
-
+					
+					if (length(left_expr) > 1 && 
+						strcmp (op, "=") != 0 && strcmp (op, "<>") != 0)
+						elog(ERROR, "parser: '%s' is not relational operator", op);
+					
 					sublink->oper = NIL;
 					foreach(elist, left_expr)
 					{
