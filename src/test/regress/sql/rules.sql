@@ -585,7 +585,7 @@ INSERT INTO shoelace_data VALUES ('sl8', 1, 'brown', 40 , 'inch');
 
 -- SELECTs in doc
 SELECT * FROM shoelace ORDER BY sl_name;
-SELECT * FROM shoe_ready WHERE total_avail >= 2;
+SELECT * FROM shoe_ready WHERE total_avail >= 2 ORDER BY 1;
 
     CREATE TABLE shoelace_log (
         sl_name    char(10),      -- shoelace changed

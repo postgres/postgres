@@ -1002,7 +1002,7 @@ SELECT * FROM shoelace ORDER BY sl_name;
  sl8        |        1 | brown      |     40 | inch     |     101.6
 (8 rows)
 
-SELECT * FROM shoe_ready WHERE total_avail >= 2;
+SELECT * FROM shoe_ready WHERE total_avail >= 2 ORDER BY 1;
   shoename  | sh_avail |  sl_name   | sl_avail | total_avail 
 ------------+----------+------------+----------+-------------
  sh1        |        2 | sl1        |        5 |           2
