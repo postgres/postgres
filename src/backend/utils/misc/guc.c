@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.95 2002/09/12 14:03:45 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.96 2002/09/22 19:52:38 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -102,15 +102,15 @@ bool		Australian_timezones = false;
 
 bool		Password_encryption = true;
 
-int			log_min_error_statement;
+int			log_min_error_statement = ERROR;
 char	   *log_min_error_statement_str = NULL;
 const char	log_min_error_statement_str_default[] = "error";
 
-int			server_min_messages;
+int			server_min_messages = NOTICE;
 char	   *server_min_messages_str = NULL;
 const char	server_min_messages_str_default[] = "notice";
 
-int			client_min_messages;
+int			client_min_messages = NOTICE;
 char	   *client_min_messages_str = NULL;
 const char	client_min_messages_str_default[] = "notice";
 
