@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.35 2001/01/06 01:43:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.36 2001/01/22 00:50:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -112,8 +112,6 @@ static void exec_prepare_plan(PLpgSQL_execstate * estate,
 				  PLpgSQL_expr * expr);
 static bool exec_simple_check_node(Node *node);
 static void exec_simple_check_plan(PLpgSQL_expr * expr);
-static void exec_eval_clear_fcache(Node *node);
-static bool exec_eval_clear_fcache_walker(Node *node, void *context);
 static Datum exec_eval_simple_expr(PLpgSQL_execstate * estate,
 					  PLpgSQL_expr * expr,
 					  bool *isNull,
@@ -2530,10 +2528,17 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	ParamListInfo paramLI;
 
 	/* ----------
-	 * Create a simple expression context to hold the arguments
+	 * Create a simple expression context to hold the arguments.
+	 *
+	 * NOTE: we pass TopMemoryContext as the query-lifetime context for
+	 * function cache nodes and suchlike allocations.  This is necessary
+	 * because that's where the expression tree itself is (it'll never be
+	 * freed in this backend, and the function cache nodes must live as
+	 * long as it does).  The memory allocation for plpgsql's plan trees
+	 * really needs to be redesigned...
 	 * ----------
 	 */
-	econtext = MakeExprContext(NULL, TransactionCommandContext);
+	econtext = MakeExprContext(NULL, TopMemoryContext);
 	paramLI = (ParamListInfo) palloc((expr->nparams + 1) *
 									 sizeof(ParamListInfoData));
 	econtext->ecxt_param_list_info = paramLI;
@@ -2600,12 +2605,6 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 * ----------
 	 */
 	*rettype = expr->plan_simple_type;
-
-	/* ----------
-	 * Clear any function cache entries in the expression tree
-	 * ----------
-	 */
-	exec_eval_clear_fcache(expr->plan_simple_expr);
 
 	/* ----------
 	 * Now call the executor to evaluate the expression
@@ -2900,46 +2899,6 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	 */
 	expr->plan_simple_expr = tle->expr;
 	expr->plan_simple_type = exprType(tle->expr);
-}
-
-
-/* ----------
- * exec_eval_clear_fcache -		The function cache is palloc()'d by
- *								the executor, and contains call specific
- *								data based on the arguments. This has
- *								to be recalculated.
- * ----------
- */
-static void
-exec_eval_clear_fcache(Node *node)
-{
-	/* This tree walk requires no special setup, so away we go... */
-	exec_eval_clear_fcache_walker(node, NULL);
-}
-
-static bool
-exec_eval_clear_fcache_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Expr))
-	{
-		Expr   *expr = (Expr *) node;
-
-		switch (expr->opType)
-		{
-			case OP_EXPR:
-				((Oper *) (expr->oper))->op_fcache = NULL;
-				break;
-			case FUNC_EXPR:
-				((Func *) (expr->oper))->func_fcache = NULL;
-				break;
-			default:
-				break;
-		}
-	}
-	return expression_tree_walker(node, exec_eval_clear_fcache_walker,
-								  context);
 }
 
 /* ----------

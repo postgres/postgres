@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.22 2000/12/18 00:44:48 tgl Exp $
+ * $Id: trigger.h,v 1.23 2001/01/22 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,13 +89,16 @@ extern void FreeTriggerDesc(TriggerDesc *trigdesc);
 
 extern bool equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2);
 
-extern HeapTuple ExecBRInsertTriggers(Relation rel, HeapTuple tuple);
-extern void ExecARInsertTriggers(Relation rel, HeapTuple tuple);
+extern HeapTuple ExecBRInsertTriggers(EState *estate,
+									  Relation rel, HeapTuple tuple);
+extern void ExecARInsertTriggers(EState *estate,
+								 Relation rel, HeapTuple tuple);
 extern bool ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid);
 extern void ExecARDeleteTriggers(EState *estate, ItemPointer tupleid);
-extern HeapTuple ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple tuple);
-extern void ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple tuple);
-
+extern HeapTuple ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid,
+									  HeapTuple tuple);
+extern void ExecARUpdateTriggers(EState *estate, ItemPointer tupleid,
+								 HeapTuple tuple);
 
 
 /* ----------

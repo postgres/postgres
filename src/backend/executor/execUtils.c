@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.70 2000/12/27 23:59:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.71 2001/01/22 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -228,6 +228,26 @@ FreeExprContext(ExprContext *econtext)
 {
 	MemoryContextDelete(econtext->ecxt_per_tuple_memory);
 	pfree(econtext);
+}
+
+/*
+ * Build a per-output-tuple ExprContext for an EState.
+ *
+ * This is normally invoked via GetPerTupleExprContext() macro.
+ */
+ExprContext *
+MakePerTupleExprContext(EState *estate)
+{
+	if (estate->es_per_tuple_exprcontext == NULL)
+	{
+		MemoryContext oldContext;
+
+		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
+		estate->es_per_tuple_exprcontext =
+			MakeExprContext(NULL, estate->es_query_cxt);
+		MemoryContextSwitchTo(oldContext);
+	}
+	return estate->es_per_tuple_exprcontext;
 }
 
 /* ----------------------------------------------------------------
@@ -836,21 +856,9 @@ ExecInsertIndexTuples(TupleTableSlot *slot,
 
 	/*
 	 * We will use the EState's per-tuple context for evaluating predicates
-	 * and functional-index functions.  Create it if it's not already there;
-	 * if it is, reset it to free previously-used storage.
+	 * and functional-index functions (creating it if it's not already there).
 	 */
-	econtext = estate->es_per_tuple_exprcontext;
-	if (econtext == NULL)
-	{
-		MemoryContext	oldContext;
-
-		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-		estate->es_per_tuple_exprcontext = econtext =
-			MakeExprContext(NULL, estate->es_query_cxt);
-		MemoryContextSwitchTo(oldContext);
-	}
-	else
-		ResetExprContext(econtext);
+	econtext = GetPerTupleExprContext(estate);
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;

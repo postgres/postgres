@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.82 2000/12/18 00:44:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.83 2001/01/22 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,7 +36,8 @@ static void DescribeTrigger(TriggerDesc *trigdesc, Trigger *trigger);
 static HeapTuple GetTupleForTrigger(EState *estate, ItemPointer tid,
 				   TupleTableSlot **newSlot);
 static HeapTuple ExecCallTriggerFunc(Trigger *trigger,
-									 TriggerData *trigdata);
+									 TriggerData *trigdata,
+									 MemoryContext per_tuple_context);
 static void DeferredTriggerSaveEvent(Relation rel, int event,
 						 HeapTuple oldtup, HeapTuple newtup);
 
@@ -831,10 +832,13 @@ equalTriggerDescs(TriggerDesc *trigdesc1, TriggerDesc *trigdesc2)
 }
 
 static HeapTuple
-ExecCallTriggerFunc(Trigger *trigger, TriggerData *trigdata)
+ExecCallTriggerFunc(Trigger *trigger,
+					TriggerData *trigdata,
+					MemoryContext per_tuple_context)
 {
 	FunctionCallInfoData	fcinfo;
 	Datum					result;
+	MemoryContext			oldContext;
 
 	/*
 	 * Fmgr lookup info is cached in the Trigger structure,
@@ -842,6 +846,14 @@ ExecCallTriggerFunc(Trigger *trigger, TriggerData *trigdata)
 	 */
 	if (trigger->tgfunc.fn_oid == InvalidOid)
 		fmgr_info(trigger->tgfoid, &trigger->tgfunc);
+
+	/*
+	 * Do the function evaluation in the per-tuple memory context,
+	 * so that leaked memory will be reclaimed once per tuple.
+	 * Note in particular that any new tuple created by the trigger function
+	 * will live till the end of the tuple cycle.
+	 */
+	oldContext = MemoryContextSwitchTo(per_tuple_context);
 
 	/*
 	 * Call the function, passing no arguments but setting a context.
@@ -852,6 +864,8 @@ ExecCallTriggerFunc(Trigger *trigger, TriggerData *trigdata)
 	fcinfo.context = (Node *) trigdata;
 
 	result = FunctionCallInvoke(&fcinfo);
+
+	MemoryContextSwitchTo(oldContext);
 
 	/*
 	 * Trigger protocol allows function to return a null pointer,
@@ -865,7 +879,7 @@ ExecCallTriggerFunc(Trigger *trigger, TriggerData *trigdata)
 }
 
 HeapTuple
-ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
+ExecBRInsertTriggers(EState *estate, Relation rel, HeapTuple trigtuple)
 {
 	int			ntrigs = rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT];
 	Trigger   **trigger = rel->trigdesc->tg_before_row[TRIGGER_EVENT_INSERT];
@@ -884,20 +898,20 @@ ExecBRInsertTriggers(Relation rel, HeapTuple trigtuple)
 			continue;
 		LocTriggerData.tg_trigtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigger = trigger[i];
-		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData);
+		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData,
+									   GetPerTupleMemoryContext(estate));
+		if (oldtuple != newtuple && oldtuple != trigtuple)
+			heap_freetuple(oldtuple);
 		if (newtuple == NULL)
 			break;
-		else if (oldtuple != newtuple && oldtuple != trigtuple)
-			heap_freetuple(oldtuple);
 	}
 	return newtuple;
 }
 
 void
-ExecARInsertTriggers(Relation rel, HeapTuple trigtuple)
+ExecARInsertTriggers(EState *estate, Relation rel, HeapTuple trigtuple)
 {
 	DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_INSERT, NULL, trigtuple);
-	return;
 }
 
 bool
@@ -926,7 +940,8 @@ ExecBRDeleteTriggers(EState *estate, ItemPointer tupleid)
 			continue;
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_trigger = trigger[i];
-		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData);
+		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData,
+									   GetPerTupleMemoryContext(estate));
 		if (newtuple == NULL)
 			break;
 		if (newtuple != trigtuple)
@@ -944,7 +959,7 @@ ExecARDeleteTriggers(EState *estate, ItemPointer tupleid)
 	HeapTuple	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
 
 	DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_DELETE, trigtuple, NULL);
-	return;
+	heap_freetuple(trigtuple);
 }
 
 HeapTuple
@@ -981,11 +996,12 @@ ExecBRUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 		LocTriggerData.tg_trigtuple = trigtuple;
 		LocTriggerData.tg_newtuple = oldtuple = newtuple;
 		LocTriggerData.tg_trigger = trigger[i];
-		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData);
+		newtuple = ExecCallTriggerFunc(trigger[i], &LocTriggerData,
+									   GetPerTupleMemoryContext(estate));
+		if (oldtuple != newtuple && oldtuple != intuple)
+			heap_freetuple(oldtuple);
 		if (newtuple == NULL)
 			break;
-		else if (oldtuple != newtuple && oldtuple != intuple)
-			heap_freetuple(oldtuple);
 	}
 	heap_freetuple(trigtuple);
 	return newtuple;
@@ -998,7 +1014,7 @@ ExecARUpdateTriggers(EState *estate, ItemPointer tupleid, HeapTuple newtuple)
 	HeapTuple	trigtuple = GetTupleForTrigger(estate, tupleid, NULL);
 
 	DeferredTriggerSaveEvent(rel, TRIGGER_EVENT_UPDATE, trigtuple, newtuple);
-	return;
+	heap_freetuple(trigtuple);
 }
 
 
@@ -1236,7 +1252,7 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
 	}
 
 	elog(ERROR,
-		 "deferredTriggerGetPreviousEvent(): event for tuple %s not found",
+		 "deferredTriggerGetPreviousEvent: event for tuple %s not found",
 		 DatumGetCString(DirectFunctionCall1(tidout, PointerGetDatum(ctid))));
 	return NULL;
 }
@@ -1250,7 +1266,8 @@ deferredTriggerGetPreviousEvent(Oid relid, ItemPointer ctid)
  * ----------
  */
 static void
-deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
+deferredTriggerExecute(DeferredTriggerEvent event, int itemno,
+					   MemoryContext per_tuple_context)
 {
 	Relation	rel;
 	TriggerData LocTriggerData;
@@ -1271,7 +1288,7 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 		ItemPointerCopy(&(event->dte_oldctid), &(oldtuple.t_self));
 		heap_fetch(rel, SnapshotAny, &oldtuple, &oldbuffer);
 		if (!oldtuple.t_data)
-			elog(ERROR, "deferredTriggerExecute(): failed to fetch old tuple");
+			elog(ERROR, "deferredTriggerExecute: failed to fetch old tuple");
 	}
 
 	if (ItemPointerIsValid(&(event->dte_newctid)))
@@ -1279,7 +1296,7 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 		ItemPointerCopy(&(event->dte_newctid), &(newtuple.t_self));
 		heap_fetch(rel, SnapshotAny, &newtuple, &newbuffer);
 		if (!newtuple.t_data)
-			elog(ERROR, "deferredTriggerExecute(): failed to fetch new tuple");
+			elog(ERROR, "deferredTriggerExecute: failed to fetch new tuple");
 	}
 
 	/* ----------
@@ -1320,7 +1337,9 @@ deferredTriggerExecute(DeferredTriggerEvent event, int itemno)
 	 * updated tuple.
 	 * ----------
 	 */
-	rettuple = ExecCallTriggerFunc(LocTriggerData.tg_trigger, &LocTriggerData);
+	rettuple = ExecCallTriggerFunc(LocTriggerData.tg_trigger,
+								   &LocTriggerData,
+								   per_tuple_context);
 	if (rettuple != NULL && rettuple != &oldtuple && rettuple != &newtuple)
 		heap_freetuple(rettuple);
 
@@ -1359,6 +1378,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	int			still_deferred_ones;
 	int			eventno = -1;
 	int			i;
+	MemoryContext per_tuple_context;
 
 	/* ----------
 	 * For now we process all events - to speedup transaction blocks
@@ -1369,9 +1389,20 @@ deferredTriggerInvokeEvents(bool immediate_only)
 	 * SET CONSTRAINTS ... command finishes and calls EndQuery.
 	 * ----------
 	 */
+
+	/* Make a per-tuple memory context for trigger function calls */
+	per_tuple_context =
+		AllocSetContextCreate(CurrentMemoryContext,
+							  "DeferredTriggerTupleContext",
+							  0,
+							  ALLOCSET_DEFAULT_INITSIZE,
+							  ALLOCSET_DEFAULT_MAXSIZE);
+
 	foreach(el, deftrig_events)
 	{
 		eventno++;
+
+		MemoryContextReset(per_tuple_context);
 
 		/* ----------
 		 * Get the event and check if it is completely done.
@@ -1409,7 +1440,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 			 * So let's fire it...
 			 * ----------
 			 */
-			deferredTriggerExecute(event, i);
+			deferredTriggerExecute(event, i, per_tuple_context);
 			event->dte_item[i].dti_state |= TRIGGER_DEFERRED_DONE;
 		}
 
@@ -1421,6 +1452,8 @@ deferredTriggerInvokeEvents(bool immediate_only)
 		if (!still_deferred_ones)
 			event->dte_event |= TRIGGER_DEFERRED_DONE;
 	}
+
+	MemoryContextDelete(per_tuple_context);
 }
 
 
@@ -1866,13 +1899,10 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	 * Check if we're interested in this row at all
 	 * ----------
 	 */
-	if (rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] == 0 &&
-		rel->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] == 0 &&
-		rel->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] == 0 &&
-		rel->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] == 0 &&
-		rel->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] == 0 &&
-		rel->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] == 0)
+	ntriggers = rel->trigdesc->n_after_row[event];
+	if (ntriggers <= 0)
 		return;
+	triggers = rel->trigdesc->tg_after_row[event];
 
 	/* ----------
 	 * Get the CTID's of OLD and NEW
@@ -1892,9 +1922,6 @@ DeferredTriggerSaveEvent(Relation rel, int event,
 	 * ----------
 	 */
 	oldcxt = MemoryContextSwitchTo(deftrig_cxt);
-
-	ntriggers = rel->trigdesc->n_after_row[event];
-	triggers = rel->trigdesc->tg_after_row[event];
 
 	new_size = sizeof(DeferredTriggerEventData) +
 		ntriggers * sizeof(DeferredTriggerEventItem);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.53 2000/11/12 00:37:01 tgl Exp $
+ * $Id: execnodes.h,v 1.54 2001/01/22 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ typedef struct EState
 	MemoryContext es_query_cxt;	/* per-query context in which EState lives */
 	/*
 	 * this ExprContext is for per-output-tuple operations, such as
-	 * constraint checks and index-value computations.  It can be reset
+	 * constraint checks and index-value computations.  It will be reset
 	 * for each output tuple.  Note that it will be created only if needed.
 	 */
 	ExprContext *es_per_tuple_exprcontext;

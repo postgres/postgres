@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.134 2001/01/01 21:22:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.135 2001/01/22 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -941,11 +941,13 @@ ExecutePlan(EState *estate,
 
 	/*
 	 * Loop until we've processed the proper number of tuples from the
-	 * plan..
+	 * plan.
 	 */
 
 	for (;;)
 	{
+		/* Reset the per-output-tuple exprcontext */
+		ResetPerTupleExprContext(estate);
 
 		/*
 		 * Execute the plan and obtain a tuple
@@ -1213,20 +1215,25 @@ ExecAppend(TupleTableSlot *slot,
 
 	/* BEFORE ROW INSERT Triggers */
 	if (resultRelationDesc->trigdesc &&
-	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
+		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_INSERT] > 0)
 	{
 		HeapTuple	newtuple;
 
-		newtuple = ExecBRInsertTriggers(resultRelationDesc, tuple);
+		newtuple = ExecBRInsertTriggers(estate, resultRelationDesc, tuple);
 
 		if (newtuple == NULL)	/* "do nothing" */
 			return;
 
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
-			Assert(slot->ttc_shouldFree);
-			heap_freetuple(tuple);
-			slot->val = tuple = newtuple;
+			/*
+			 * Insert modified tuple into tuple table slot, replacing the
+			 * original.  We assume that it was allocated in per-tuple
+			 * memory context, and therefore will go away by itself.
+			 * The tuple table slot should not try to clear it.
+			 */
+			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
+			tuple = newtuple;
 		}
 	}
 
@@ -1257,8 +1264,9 @@ ExecAppend(TupleTableSlot *slot,
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, false);
 
 	/* AFTER ROW INSERT Triggers */
-	if (resultRelationDesc->trigdesc)
-		ExecARInsertTriggers(resultRelationDesc, tuple);
+	if (resultRelationDesc->trigdesc &&
+		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
+		ExecARInsertTriggers(estate, resultRelationDesc, tuple);
 }
 
 /* ----------------------------------------------------------------
@@ -1286,7 +1294,7 @@ ExecDelete(TupleTableSlot *slot,
 
 	/* BEFORE ROW DELETE Triggers */
 	if (resultRelationDesc->trigdesc &&
-	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
+		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_DELETE] > 0)
 	{
 		bool		dodelete;
 
@@ -1343,9 +1351,9 @@ ldelete:;
 	 */
 
 	/* AFTER ROW DELETE Triggers */
-	if (resultRelationDesc->trigdesc)
+	if (resultRelationDesc->trigdesc &&
+		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_DELETE] > 0)
 		ExecARDeleteTriggers(estate, tupleid);
-
 }
 
 /* ----------------------------------------------------------------
@@ -1393,7 +1401,7 @@ ExecReplace(TupleTableSlot *slot,
 
 	/* BEFORE ROW UPDATE Triggers */
 	if (resultRelationDesc->trigdesc &&
-	resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
+		resultRelationDesc->trigdesc->n_before_row[TRIGGER_EVENT_UPDATE] > 0)
 	{
 		HeapTuple	newtuple;
 
@@ -1404,9 +1412,14 @@ ExecReplace(TupleTableSlot *slot,
 
 		if (newtuple != tuple)	/* modified by Trigger(s) */
 		{
-			Assert(slot->ttc_shouldFree);
-			heap_freetuple(tuple);
-			slot->val = tuple = newtuple;
+			/*
+			 * Insert modified tuple into tuple table slot, replacing the
+			 * original.  We assume that it was allocated in per-tuple
+			 * memory context, and therefore will go away by itself.
+			 * The tuple table slot should not try to clear it.
+			 */
+			ExecStoreTuple(newtuple, slot, InvalidBuffer, false);
+			tuple = newtuple;
 		}
 	}
 
@@ -1478,7 +1491,8 @@ lreplace:;
 		ExecInsertIndexTuples(slot, &(tuple->t_self), estate, true);
 
 	/* AFTER ROW UPDATE Triggers */
-	if (resultRelationDesc->trigdesc)
+	if (resultRelationDesc->trigdesc &&
+		resultRelationDesc->trigdesc->n_after_row[TRIGGER_EVENT_UPDATE] > 0)
 		ExecARUpdateTriggers(estate, tupleid, tuple);
 }
 
@@ -1514,19 +1528,9 @@ ExecRelCheck(ResultRelInfo *resultRelInfo,
 
 	/*
 	 * We will use the EState's per-tuple context for evaluating constraint
-	 * expressions.  Create it if it's not already there; if it is, reset it
-	 * to free previously-used storage.
+	 * expressions (creating it if it's not already there).
 	 */
-	econtext = estate->es_per_tuple_exprcontext;
-	if (econtext == NULL)
-	{
-		oldContext = MemoryContextSwitchTo(estate->es_query_cxt);
-		estate->es_per_tuple_exprcontext = econtext =
-			MakeExprContext(NULL, estate->es_query_cxt);
-		MemoryContextSwitchTo(oldContext);
-	}
-	else
-		ResetExprContext(econtext);
+	econtext = GetPerTupleExprContext(estate);
 
 	/* Arrange for econtext's scan tuple to be the tuple under test */
 	econtext->ecxt_scantuple = slot;

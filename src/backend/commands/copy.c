@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.130 2001/01/19 06:54:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.131 2001/01/22 00:50:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -705,6 +705,9 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 
 		lineno++;
 
+		/* Reset the per-output-tuple exprcontext */
+		ResetPerTupleExprContext(estate);
+
 		/* Initialize all values for row to NULL */
 		MemSet(values, 0, attr_count * sizeof(Datum));
 		MemSet(nulls, 'n', attr_count * sizeof(char));
@@ -861,7 +864,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 		{
 			HeapTuple	newtuple;
 
-			newtuple = ExecBRInsertTriggers(rel, tuple);
+			newtuple = ExecBRInsertTriggers(estate, rel, tuple);
 
 			if (newtuple == NULL)		/* "do nothing" */
 				skip_tuple = true;
@@ -895,7 +898,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp,
 			/* AFTER ROW INSERT Triggers */
 			if (rel->trigdesc &&
 				rel->trigdesc->n_after_row[TRIGGER_EVENT_INSERT] > 0)
-				ExecARInsertTriggers(rel, tuple);
+				ExecARInsertTriggers(estate, rel, tuple);
 		}
 
 		for (i = 0; i < attr_count; i++)
