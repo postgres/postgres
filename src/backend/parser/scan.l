@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.15 1997/09/01 05:51:52 thomas Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.16 1997/09/02 02:32:35 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,7 +132,6 @@ other		.
 
 {comment}	{ /* ignore */	}
 
-    /* allow extended comments using C-style delimiters - tgl 1997-07-12 */
 {xcline}	{ /* ignore */ }
 
 <xc>{xcstar}	|
