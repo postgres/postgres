@@ -4,7 +4,7 @@ use Getopt::Std;
 use locale;
 
 my %opt; 
-getopts('l:he:s:ap:om:f', \%opt);
+getopts('l:he:s:ap:o:m:f', \%opt);
 
 if ( $opt{h} || ! ($opt{e}||$opt{s}) || !$opt{l} ) {
 	print<<EOT;
@@ -94,6 +94,8 @@ print {$fh} <<EOT;
  */
 
 #ifdef DICT_BODY
+#include <ctype.h>
+
 typedef struct {
 	uint8	val;
 	uint8	flag;
