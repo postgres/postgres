@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.11 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/lobj.sgml,v 1.12 2000/05/15 12:42:23 momjian Exp $
 -->
 
  <chapter id="largeObjects">
@@ -238,6 +238,21 @@ int lo_close(PGconn *conn, int fd)
       returns zero.  On error, the return value is negative.
 </para>
 </sect2>
+
+   <sect2>
+    <title>Removing a Large Object</title>
+
+    <para>
+     To remove a large object from the database, call
+<synopsis>
+Oid lo_unlink(PGconn *<replaceable class="parameter">conn</replaceable>, Oid lobjId)
+</synopsis>
+     The lobjId argument specifies  the  Oid  of  the  large
+     object  to  remove.
+    </para>
+   </sect2>
+
+
 </sect1>
 
 <sect1>
