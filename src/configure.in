@@ -121,6 +121,7 @@ AC_CHECK_LIB(bsd,      main)
 AC_CHECK_LIB(ld,       main)
 AC_CHECK_LIB(compat,   main)
 AC_CHECK_LIB(BSD,      main)
+AC_CHECK_LIB(crypt,      main)
 
 dnl Checks for header files.
 AC_HEADER_STDC
