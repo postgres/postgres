@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: joininfo.h,v 1.13 1999/07/15 15:21:22 momjian Exp $
+ * $Id: joininfo.h,v 1.14 1999/08/16 02:17:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,5 @@
 
 extern JoinInfo *joininfo_member(List *join_relids, List *joininfo_list);
 extern JoinInfo *find_joininfo_node(RelOptInfo *this_rel, List *join_relids);
-extern Var *other_join_clause_var(Var *var, Expr *clause);
 
 #endif	 /* JOININFO_H */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.19 1999/07/15 15:21:23 momjian Exp $
+ * $Id: tlist.h,v 1.20 1999/08/16 02:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,5 +29,8 @@ extern List *copy_vars(List *target, List *source);
 extern List *flatten_tlist(List *tlist);
 extern List *flatten_tlist_vars(List *full_tlist,
 				   List *flat_tlist);
+
+extern Var *get_expr(TargetEntry *tle);
+extern Var *get_groupclause_expr(GroupClause *groupClause, List *targetList);
 
 #endif	 /* TLIST_H */

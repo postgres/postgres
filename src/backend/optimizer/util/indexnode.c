@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.19 1999/07/16 04:59:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/indexnode.c,v 1.20 1999/08/16 02:17:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,21 +39,20 @@ find_relation_indices(Query *root, RelOptInfo *rel)
 
 /*
  * find_secondary_index
- *	  Creates a list of index path nodes containing information for each
+ *	  Creates a list of RelOptInfo nodes containing information for each
  *	  secondary index defined on a relation by searching through the index
  *	  catalog.
  *
  * 'relid' is the OID of the relation for which indices are being located
  *
- * Returns a list of new index nodes.
- *
+ * Returns a list of new index RelOptInfo nodes.
  */
 static List *
 find_secondary_index(Query *root, Oid relid)
 {
 	IdxInfoRetval indexinfo;
 	List	   *indexes = NIL;
-	bool		first = TRUE;
+	bool		first = true;
 
 	while (index_info(root, first, relid, &indexinfo))
 	{
@@ -63,9 +62,9 @@ find_secondary_index(Query *root, Oid relid)
 		indexnode->relam = indexinfo.relam;
 		indexnode->pages = indexinfo.pages;
 		indexnode->tuples = indexinfo.tuples;
+		indexnode->classlist = indexinfo.classlist;
 		indexnode->indexkeys = indexinfo.indexkeys;
 		indexnode->ordering = indexinfo.orderOprs;
-		indexnode->classlist = indexinfo.classlist;
 		indexnode->indproc = indexinfo.indproc;
 		indexnode->indpred = (List *) indexinfo.indpred;
 
@@ -81,7 +80,7 @@ find_secondary_index(Query *root, Oid relid)
 		indexnode->innerjoin = NIL;
 
 		indexes = lcons(indexnode, indexes);
-		first = FALSE;
+		first = false;
 	}
 
 	return indexes;

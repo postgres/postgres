@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.46 1999/08/09 06:20:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.47 1999/08/16 02:17:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -264,15 +264,15 @@ _equalRelOptInfo(RelOptInfo *a, RelOptInfo *b)
 	/* We treat RelOptInfos as equal if they refer to the same base rels
 	 * joined in the same order.  Is this sufficient?
 	 */
-	return equal(a->relids, b->relids);
+	return equali(a->relids, b->relids);
 }
 
 static bool
-_equalJoinMethod(JoinMethod *a, JoinMethod *b)
+_equalPathKeyItem(PathKeyItem *a, PathKeyItem *b)
 {
-	if (!equal(a->jmkeys, b->jmkeys))
+	if (a->sortop != b->sortop)
 		return false;
-	if (!equal(a->clauses, b->clauses))
+	if (!equal(a->key, b->key))
 		return false;
 	return true;
 }
@@ -282,47 +282,12 @@ _equalPath(Path *a, Path *b)
 {
 	if (a->pathtype != b->pathtype)
 		return false;
-	if (a->parent != b->parent)	/* should this use equal() ? */
+	if (!equal(a->parent, b->parent))
 		return false;
 	/* do not check path_cost, since it may not be set yet, and being
 	 * a float there are roundoff error issues anyway...
 	 */
-
-	/* XXX this should probably be in an _equalPathOrder function... */
-	if (a->pathorder->ordtype != b->pathorder->ordtype)
-		return false;
-	if (a->pathorder->ordtype == SORTOP_ORDER)
-	{
-		if (a->pathorder->ord.sortop == NULL ||
-			b->pathorder->ord.sortop == NULL)
-		{
-			if (a->pathorder->ord.sortop != b->pathorder->ord.sortop)
-				return false;
-		}
-		else
-		{
-			int			i = 0;
-
-			while (a->pathorder->ord.sortop[i] != 0)
-			{
-				if (a->pathorder->ord.sortop[i] != b->pathorder->ord.sortop[i])
-					return false;
-				i++;
-			}
-			if (b->pathorder->ord.sortop[i] != 0)
-				return false;
-		}
-	}
-	else
-	{
-		if (!equal(a->pathorder->ord.merge, b->pathorder->ord.merge))
-			return false;
-	}
-
 	if (!equal(a->pathkeys, b->pathkeys))
-		return false;
-	/* do not check outerjoincost either */
-	if (!equali(a->joinid, b->joinid))
 		return false;
 	return true;
 }
@@ -336,12 +301,13 @@ _equalIndexPath(IndexPath *a, IndexPath *b)
 		return false;
 	if (!equal(a->indexqual, b->indexqual))
 		return false;
-	/* We do not need to check indexkeys */
+	if (!equali(a->joinrelids, b->joinrelids))
+		return false;
 	return true;
 }
 
 static bool
-_equalNestPath(NestPath *a, NestPath *b)
+_equalJoinPath(JoinPath *a, JoinPath *b)
 {
 	if (!_equalPath((Path *) a, (Path *) b))
 		return false;
@@ -355,9 +321,17 @@ _equalNestPath(NestPath *a, NestPath *b)
 }
 
 static bool
+_equalNestPath(NestPath *a, NestPath *b)
+{
+	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
+		return false;
+	return true;
+}
+
+static bool
 _equalMergePath(MergePath *a, MergePath *b)
 {
-	if (!_equalNestPath((NestPath *) a, (NestPath *) b))
+	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
 		return false;
 	if (!equal(a->path_mergeclauses, b->path_mergeclauses))
 		return false;
@@ -371,49 +345,9 @@ _equalMergePath(MergePath *a, MergePath *b)
 static bool
 _equalHashPath(HashPath *a, HashPath *b)
 {
-	if (!_equalNestPath((NestPath *) a, (NestPath *) b))
+	if (!_equalJoinPath((JoinPath *) a, (JoinPath *) b))
 		return false;
 	if (!equal(a->path_hashclauses, b->path_hashclauses))
-		return false;
-	if (!equal(a->outerhashkeys, b->outerhashkeys))
-		return false;
-	if (!equal(a->innerhashkeys, b->innerhashkeys))
-		return false;
-	return true;
-}
-
-static bool
-_equalJoinKey(JoinKey *a, JoinKey *b)
-{
-	if (!equal(a->outer, b->outer))
-		return false;
-	if (!equal(a->inner, b->inner))
-		return false;
-	return true;
-}
-
-static bool
-_equalMergeOrder(MergeOrder *a, MergeOrder *b)
-{
-	if (a->join_operator != b->join_operator)
-		return false;
-	if (a->left_operator != b->left_operator)
-		return false;
-	if (a->right_operator != b->right_operator)
-		return false;
-	if (a->left_type != b->left_type)
-		return false;
-	if (a->right_type != b->right_type)
-		return false;
-	return true;
-}
-
-static bool
-_equalHashInfo(HashInfo *a, HashInfo *b)
-{
-	if (!_equalJoinMethod((JoinMethod *) a, (JoinMethod *) b))
-		return false;
-	if (a->hashop != b->hashop)
 		return false;
 	return true;
 }
@@ -458,30 +392,32 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 }
 
 static bool
-_equalJoinInfo(JoinInfo *a, JoinInfo *b)
-{
-	if (!equal(a->unjoined_relids, b->unjoined_relids))
-		return false;
-	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
-		return false;
-	if (a->mergejoinable != b->mergejoinable)
-		return false;
-	if (a->hashjoinable != b->hashjoinable)
-		return false;
-	return true;
-}
-
-static bool
 _equalRestrictInfo(RestrictInfo *a, RestrictInfo *b)
 {
 	if (!equal(a->clause, b->clause))
 		return false;
 	/* do not check selectivity because of roundoff error worries */
-	if (!equal(a->mergejoinorder, b->mergejoinorder))
+	if (!equal(a->subclauseindices, b->subclauseindices))
+		return false;
+	if (a->mergejoinoperator != b->mergejoinoperator)
+		return false;
+	if (a->left_sortop != b->left_sortop)
+		return false;
+	if (a->right_sortop != b->right_sortop)
 		return false;
 	if (a->hashjoinoperator != b->hashjoinoperator)
 		return false;
-	return equal(a->indexids, b->indexids);
+	return true;
+}
+
+static bool
+_equalJoinInfo(JoinInfo *a, JoinInfo *b)
+{
+	if (!equali(a->unjoined_relids, b->unjoined_relids))
+		return false;
+	if (!equal(a->jinfo_restrictinfo, b->jinfo_restrictinfo))
+		return false;
+	return true;
 }
 
 static bool
@@ -778,8 +714,8 @@ equal(void *a, void *b)
 		case T_RelOptInfo:
 			retval = _equalRelOptInfo(a, b);
 			break;
-		case T_JoinMethod:
-			retval = _equalJoinMethod(a, b);
+		case T_PathKeyItem:
+			retval = _equalPathKeyItem(a, b);
 			break;
 		case T_Path:
 			retval = _equalPath(a, b);
@@ -795,15 +731,6 @@ equal(void *a, void *b)
 			break;
 		case T_HashPath:
 			retval = _equalHashPath(a, b);
-			break;
-		case T_JoinKey:
-			retval = _equalJoinKey(a, b);
-			break;
-		case T_MergeOrder:
-			retval = _equalMergeOrder(a, b);
-			break;
-		case T_HashInfo:
-			retval = _equalHashInfo(a, b);
 			break;
 		case T_IndexScan:
 			retval = _equalIndexScan(a, b);

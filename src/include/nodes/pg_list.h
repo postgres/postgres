@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.12 1999/07/15 23:03:55 momjian Exp $
+ * $Id: pg_list.h,v 1.13 1999/08/16 02:17:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,9 @@ typedef struct Value
 	}			val;
 } Value;
 
-#define intVal(v)		(((Value *)v)->val.ival)
-#define floatVal(v)		(((Value *)v)->val.dval)
-#define strVal(v)		(((Value *)v)->val.str)
+#define intVal(v)		(((Value *)(v))->val.ival)
+#define floatVal(v)		(((Value *)(v))->val.dval)
+#define strVal(v)		(((Value *)(v))->val.str)
 
 
 /*----------------------
@@ -66,7 +66,7 @@ typedef struct List
 /* pointer version of the list (where it makes a difference)		  */
 #define lfirst(l)								((l)->elem.ptr_value)
 #define lnext(l)								((l)->next)
-#define lsecond(l)								(lfirst(lnext(l)))
+#define lsecond(l)								lfirst(lnext(l))
 
 #define lfirsti(l)								((l)->elem.int_value)
 
@@ -75,7 +75,7 @@ typedef struct List
  *	  a convenience macro which loops through the list
  */
 #define foreach(_elt_,_list_)	\
-	for(_elt_=_list_; _elt_!=NIL;_elt_=lnext(_elt_))
+	for(_elt_=(_list_); _elt_!=NIL; _elt_=lnext(_elt_))
 
 
 /*
@@ -84,34 +84,34 @@ typedef struct List
 extern int	length(List *list);
 extern List *nconc(List *list1, List *list2);
 extern List *lcons(void *datum, List *list);
-extern bool member(void *foo, List *bar);
+extern List *lconsi(int datum, List *list);
+extern bool member(void *datum, List *list);
+extern bool intMember(int datum, List *list);
 extern Value *makeInteger(long i);
 extern Value *makeFloat(double d);
 extern Value *makeString(char *str);
 extern List *makeList(void *elem,...);
-extern List *lappend(List *list, void *obj);
+extern List *lappend(List *list, void *datum);
+extern List *lappendi(List *list, int datum);
 extern List *lremove(void *elem, List *list);
-extern void freeList(List *list);
 extern List *LispRemove(void *elem, List *list);
+extern List *ltruncate(int n, List *list);
 
 extern void *nth(int n, List *l);
+extern int	nthi(int n, List *l);
 extern void set_nth(List *l, int n, void *elem);
 
-List	   *lconsi(int datum, List *list);
-List	   *lappendi(List *list, int datum);
-extern bool intMember(int, List *);
+extern List *set_difference(List *list1, List *list2);
+extern List *set_differencei(List *list1, List *list2);
+extern List *LispUnion(List *list1, List *list2);
+extern List *LispUnioni(List *list1, List *list2);
+extern bool same(List *list1, List *list2);
 
-extern int	nthi(int n, List *l);
-
-extern List *set_difference(List *, List *);
-extern List *set_differencei(List *, List *);
-extern List *LispUnion(List *foo, List *bar);
-extern List *LispUnioni(List *foo, List *bar);
-extern bool same(List *foo, List *bar);
+extern void freeList(List *list);
 
 /* should be in nodes.h but needs List */
 
 /* in copyfuncs.c */
-extern List *listCopy(List *);
+extern List *listCopy(List *list);
 
 #endif	 /* PG_LIST_H */

@@ -4,7 +4,7 @@
 #    Makefile for optimizer/util
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.8 1999/02/05 19:59:28 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Makefile,v 1.9 1999/08/16 02:17:56 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ include ../../../Makefile.global
 CFLAGS += -I../..
 
 OBJS = restrictinfo.o clauses.o indexnode.o plancat.o \
-       joininfo.o keys.o ordering.o pathnode.o relnode.o tlist.o var.o
+       joininfo.o pathnode.o relnode.o tlist.o var.o
 
 # not ready yet: predmig.o xfunc.o
 

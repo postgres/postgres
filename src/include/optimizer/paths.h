@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.33 1999/07/27 06:23:11 tgl Exp $
+ * $Id: paths.h,v 1.34 1999/08/16 02:17:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,35 +43,28 @@ extern void update_rels_pathlist_for_joins(Query *root, List *joinrels);
 extern List *create_or_index_paths(Query *root, RelOptInfo *rel, List *clauses);
 
 /*
- * hashutils.c
- *	  routines to deal with hash keys and clauses
+ * pathkeys.c
+ *	  utilities for matching and building path keys
  */
-extern List *group_clauses_by_hashop(List *restrictinfo_list,
-						Relids inner_relids);
+typedef enum
+{
+	PATHKEYS_EQUAL,				/* pathkeys are identical */
+	PATHKEYS_BETTER1,			/* pathkey 1 is a superset of pathkey 2 */
+	PATHKEYS_BETTER2,			/* vice versa */
+	PATHKEYS_DIFFERENT			/* neither pathkey includes the other */
+} PathKeysComparison;
 
-/*
- * joinutils.c
- *	  generic join method key/clause routines
- */
-extern bool order_joinkeys_by_pathkeys(List *pathkeys,
-				   List *joinkeys, List *joinclauses, int outer_or_inner,
-						   List **matchedJoinKeysPtr,
-						   List **matchedJoinClausesPtr);
-extern List *make_pathkeys_from_joinkeys(List *joinkeys, List *tlist,
-							int outer_or_inner);
-extern Path *get_cheapest_path_for_joinkeys(List *joinkeys,
-				   PathOrder *ordering, List *paths, int outer_or_inner);
-extern List *new_join_pathkeys(List *outer_pathkeys,
-				  List *join_rel_tlist, List *joinclauses);
-
-/*
- * mergeutils.c
- *	  routines to deal with merge keys and clauses
- */
-extern List *group_clauses_by_order(List *restrictinfo_list,
-					   Relids inner_relids);
-extern MergeInfo *match_order_mergeinfo(PathOrder *ordering,
-					  List *mergeinfo_list);
+extern PathKeysComparison compare_pathkeys(List *keys1, List *keys2);
+extern bool pathkeys_contained_in(List *keys1, List *keys2);
+extern Path *get_cheapest_path_for_pathkeys(List *paths, List *pathkeys);
+extern List *build_index_pathkeys(Query *root, RelOptInfo *rel,
+								  RelOptInfo *index);
+extern List *build_join_pathkeys(List *outer_pathkeys,
+								 List *join_rel_tlist, List *joinclauses);
+extern List *find_mergeclauses_for_pathkeys(List *pathkeys,
+											List *restrictinfos);
+extern List *make_pathkeys_for_mergeclauses(List *mergeclauses,
+											List *tlist);
 
 /*
  * joinrels.c

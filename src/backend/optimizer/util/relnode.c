@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.18 1999/07/16 03:13:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.19 1999/08/16 02:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,10 +29,9 @@
 RelOptInfo *
 get_base_rel(Query *root, int relid)
 {
-	Relids		relids;
+	Relids		relids = lconsi(relid, NIL);
 	RelOptInfo *rel;
 
-	relids = lconsi(relid, NIL);
 	rel = rel_member(relids, root->base_rel_list);
 	if (rel == NULL)
 	{
@@ -41,28 +40,26 @@ get_base_rel(Query *root, int relid)
 		rel->indexed = false;
 		rel->pages = 0;
 		rel->tuples = 0;
+		rel->size = 0;
 		rel->width = 0;
 		rel->targetlist = NIL;
 		rel->pathlist = NIL;
 		rel->cheapestpath = (Path *) NULL;
 		rel->pruneable = true;
 		rel->classlist = NULL;
+		rel->indexkeys = NULL;
 		rel->ordering = NULL;
 		rel->relam = InvalidOid;
+		rel->indproc = InvalidOid;
+		rel->indpred = NIL;
 		rel->restrictinfo = NIL;
 		rel->joininfo = NIL;
 		rel->innerjoin = NIL;
 
 		root->base_rel_list = lcons(rel, root->base_rel_list);
 
-		/*
-		 * ??? the old lispy C code (get_rel) do a listp(relid) here but
-		 * that can never happen since we already established relid is not
-		 * a list.								-ay 10/94
-		 */
 		if (relid < 0)
 		{
-
 			/*
 			 * If the relation is a materialized relation, assume
 			 * constants for sizes.
@@ -72,18 +69,12 @@ get_base_rel(Query *root, int relid)
 		}
 		else
 		{
-			bool		hasindex;
-			int			pages,
-						tuples;
-
 			/*
-			 * Otherwise, retrieve relation characteristics from the
+			 * Otherwise, retrieve relation statistics from the
 			 * system catalogs.
 			 */
-			relation_info(root, relid, &hasindex, &pages, &tuples);
-			rel->indexed = hasindex;
-			rel->pages = pages;
-			rel->tuples = tuples;
+			relation_info(root, relid,
+						  &rel->indexed, &rel->pages, &rel->tuples);
 		}
 	}
 	return rel;
@@ -111,16 +102,16 @@ get_join_rel(Query *root, Relids relid)
 RelOptInfo *
 rel_member(Relids relids, List *rels)
 {
-	List	   *temp = NIL;
-	List	   *temprelid = NIL;
-
 	if (relids != NIL && rels != NIL)
 	{
+		List	   *temp;
+
 		foreach(temp, rels)
 		{
-			temprelid = ((RelOptInfo *) lfirst(temp))->relids;
-			if (same(temprelid, relids))
-				return (RelOptInfo *) (lfirst(temp));
+			RelOptInfo *rel = (RelOptInfo *) lfirst(temp);
+
+			if (same(rel->relids, relids))
+				return rel;
 		}
 	}
 	return NULL;

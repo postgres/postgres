@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.52 1999/07/30 22:34:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.53 1999/08/16 02:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,32 +331,14 @@ print_path(Query *root, Path *path, int indent)
 		int			size = path->parent->size;
 		int			relid = lfirsti(path->parent->relids);
 
-		printf("%s(%d) size=%d cost=%f",
+		printf("%s(%d) size=%d cost=%f\n",
 			   ptype, relid, size, path->path_cost);
 
-		if (nodeTag(path) == T_IndexPath)
+		if (IsA(path, IndexPath))
 		{
-			List	   *k,
-					   *l;
-
-			printf(" pathkeys=");
-			foreach(k, path->pathkeys)
-			{
-				printf("(");
-				foreach(l, lfirst(k))
-				{
-					Var		   *var = lfirst(l);
-
-					printf("%d.%d", var->varnoold, var->varoattno);
-					if (lnext(l))
-						printf(", ");
-				}
-				printf(")");
-				if (lnext(k))
-					printf(", ");
-			}
+			printf("  pathkeys=");
+			print_pathkeys(path->pathkeys, root->rtable);
 		}
-		printf("\n");
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.53 1999/08/06 04:00:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.54 1999/08/16 02:17:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,15 +18,11 @@
 
 
 #include "optimizer/cost.h"
-#include "optimizer/keys.h"
-#include "optimizer/ordering.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
 #include "optimizer/restrictinfo.h"
 #include "parser/parsetree.h"
-
-static Path *better_path(Path *new_path, List *unique_paths, bool *is_new);
 
 
 /*****************************************************************************
@@ -84,184 +80,102 @@ set_cheapest(RelOptInfo *parent_rel, List *pathlist)
 
 /*
  * add_pathlist
- *	  For each path in the list 'new_paths', add to the list 'unique_paths'
- *	  only those paths that are unique (i.e., unique ordering and ordering
- *	  keys).  Should a conflict arise, the more expensive path is thrown out,
- *	  thereby pruning the plan space.  But we don't prune if xfunc
- *	  told us not to.
+ *	  Construct an output path list by adding to old_paths each path in
+ *	  new_paths that is worth considering --- that is, it has either a
+ *	  better sort order (better pathkeys) or cheaper cost than any of the
+ *	  existing old paths.
+ *
+ *	  Unless parent_rel->pruneable is false, we also remove from the output
+ *	  pathlist any old paths that are dominated by added path(s) --- that is,
+ *	  some new path is both cheaper and at least as well ordered.
+ *
+ *	  Note: the list old_paths is destructively modified, and in fact is
+ *	  turned into the output list.
  *
  * 'parent_rel' is the relation entry to which these paths correspond.
+ * 'old_paths' is the list of previously accepted paths for parent_rel.
+ * 'new_paths' is a list of potential new paths.
  *
- * Returns the list of unique pathnodes.
- *
+ * Returns the updated list of interesting pathnodes.
  */
 List *
-add_pathlist(RelOptInfo *parent_rel, List *unique_paths, List *new_paths)
+add_pathlist(RelOptInfo *parent_rel, List *old_paths, List *new_paths)
 {
 	List	   *p1;
 
 	foreach(p1, new_paths)
 	{
 		Path	   *new_path = (Path *) lfirst(p1);
-		Path	   *old_path;
-		bool		is_new;
+		bool		accept_new = true; /* unless we find a superior old path */
+		List	   *p2_prev = NIL;
+		List	   *p2;
 
-		/* Is this new path already in unique_paths? */
-		if (member(new_path, unique_paths))
-			continue;
-
-		/* Find best matching path */
-		old_path = better_path(new_path, unique_paths, &is_new);
-
-		if (is_new)
+		/*
+		 * Loop to check proposed new path against old paths.  Note it is
+		 * possible for more than one old path to be tossed out because
+		 * new_path dominates it.
+		 */
+		foreach(p2, old_paths)
 		{
-			/* This is a brand new path.  */
-			new_path->parent = parent_rel;
-			unique_paths = lcons(new_path, unique_paths);
-		}
-		else if (old_path == NULL)
-		{
-			;					/* do nothing if path is not cheaper */
-		}
-		else if (old_path != NULL)
-		{						/* (IsA(old_path,Path)) { */
-			new_path->parent = parent_rel;
-			if (!parent_rel->pruneable)
-				unique_paths = lcons(new_path, unique_paths);
-			else
-				unique_paths = lcons(new_path,
-									 LispRemove(old_path, unique_paths));
-		}
-	}
-	return unique_paths;
-}
+			Path	   *old_path = (Path *) lfirst(p2);
+			bool		remove_old = false;	/* unless new proves superior */
 
-/*
- * better_path
- *	  Determines whether 'new_path' has the same ordering and keys as some
- *	  path in the list 'unique_paths'.	If there is a redundant path,
- *	  eliminate the more expensive path.
- *
- * Returns:
- *	  The old path - if 'new_path' matches some path in 'unique_paths' and is
- *				cheaper
- *	  nil - if 'new_path' matches but isn't cheaper
- *	  t - if there is no path in the list with the same ordering and keys
- *
- */
-static Path *
-better_path(Path *new_path, List *unique_paths, bool *is_new)
-{
-	Path	   *path = (Path *) NULL;
-	List	   *temp = NIL;
-	int			better_key;
-	int			better_sort;
-
-#ifdef OPTDUP_DEBUG
-	printf("better_path entry\n");
-	printf("new\n");
-	pprint(new_path);
-	printf("unique_paths\n");
-	pprint(unique_paths);
-#endif
-
-	foreach(temp, unique_paths)
-	{
-		path = (Path *) lfirst(temp);
-
-#ifdef OPTDUP_DEBUG
-		if (!pathkeys_match(new_path->pathkeys, path->pathkeys, &better_key) ||
-			better_key != 0)
-		{
-			printf("betterkey = %d\n", better_key);
-			printf("newpath\n");
-			pprint(new_path->pathkeys);
-			printf("oldpath\n");
-			pprint(path->pathkeys);
-			if (path->pathkeys && new_path->pathkeys &&
-				length(lfirst(path->pathkeys)) >= 2		/* &&
-														 * length(lfirst(path->pa
-														 * thkeys)) <
-														 * length(lfirst(new_path
-					->pathkeys)) */ )
-				sleep(0);		/* set breakpoint here */
-		}
-		if (!pathorder_match(new_path->pathorder, path->pathorder,
-							 &better_sort) ||
-			better_sort != 0)
-		{
-			printf("neword\n");
-			pprint(new_path->pathorder);
-			printf("oldord\n");
-			pprint(path->pathorder);
-		}
-#endif
-
-		if (pathkeys_match(new_path->pathkeys, path->pathkeys,
-						   &better_key) &&
-			pathorder_match(new_path->pathorder, path->pathorder,
-							&better_sort))
-		{
+			switch (compare_pathkeys(new_path->pathkeys, old_path->pathkeys))
+			{
+				case PATHKEYS_EQUAL:
+					if (new_path->path_cost < old_path->path_cost)
+						remove_old = true; /* new dominates old */
+					else
+						accept_new = false;	/* old equals or dominates new */
+					break;
+				case PATHKEYS_BETTER1:
+					if (new_path->path_cost <= old_path->path_cost)
+						remove_old = true; /* new dominates old */
+					break;
+				case PATHKEYS_BETTER2:
+					if (new_path->path_cost >= old_path->path_cost)
+						accept_new = false;	/* old dominates new */
+					break;
+				case PATHKEYS_DIFFERENT:
+					/* keep both paths, since they have different ordering */
+					break;
+			}
 
 			/*
-			 * Replace pathkeys that match exactly, {{1,2}}, {{1,2}}
-			 * Replace pathkeys {{1,2}} with {{1,2,3}}} if the latter is
-			 * not more expensive and replace unordered path with ordered
-			 * path if it is not more expensive.  Favor sorted keys over
-			 * unsorted keys in the same way.
+			 * Remove current element from old_list if dominated by new,
+			 * unless xfunc told us not to remove any paths.
 			 */
-			/* same keys, and new is cheaper, use it */
-			if ((better_key == 0 && better_sort == 0 &&
-				 new_path->path_cost < path->path_cost) ||
-
-			/* new is better, and cheaper, use it */
-				(((better_key == 1 && better_sort != 2) ||
-				  (better_key != 2 && better_sort == 1)) &&
-				 new_path->path_cost <= path->path_cost))
+			if (remove_old && parent_rel->pruneable)
 			{
-#ifdef OPTDUP_DEBUG
-				printf("replace with new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
-				printf("new\n");
-				pprint(new_path);
-				printf("old\n");
-				pprint(path);
-#endif
-				*is_new = false;
-				return path;
+				if (p2_prev)
+					lnext(p2_prev) = lnext(p2);
+				else
+					old_paths = lnext(p2);
 			}
+			else
+				p2_prev = p2;
 
-			/* same keys, new is more expensive, stop */
-			if ((better_key == 0 && better_sort == 0 &&
-				 new_path->path_cost >= path->path_cost) ||
+			/*
+			 * If we found an old path that dominates new_path, we can quit
+			 * scanning old_paths; we will not add new_path, and we assume
+			 * new_path cannot dominate any other elements of old_paths.
+			 */
+			if (! accept_new)
+				break;
+		}
 
-			/* old is better, and less expensive, stop */
-				(((better_key == 2 && better_sort != 1) ||
-				  (better_key != 1 && better_sort == 2)) &&
-				 new_path->path_cost >= path->path_cost))
-			{
-#ifdef OPTDUP_DEBUG
-				printf("skip new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
-				printf("new\n");
-				pprint(new_path);
-				printf("old\n");
-				pprint(path);
-#endif
-				*is_new = false;
-				return NULL;
-			}
+		if (accept_new)
+		{
+			/* Accept the path.  Note that it will now be eligible to be
+			 * compared against the additional elements of new_paths...
+			 */
+			new_path->parent = parent_rel; /* not redundant, see prune.c */
+			old_paths = lcons(new_path, old_paths);
 		}
 	}
 
-#ifdef OPTDUP_DEBUG
-	printf("add new %p old %p better key %d better sort %d\n", &new_path, &path, better_key, better_sort);
-	printf("new\n");
-	pprint(new_path);
-#endif
-
-	*is_new = true;
-	return NULL;
+	return old_paths;
 }
-
 
 
 /*****************************************************************************
@@ -277,19 +191,15 @@ better_path(Path *new_path, List *unique_paths, bool *is_new)
 Path *
 create_seqscan_path(RelOptInfo *rel)
 {
-	int			relid = 0;
-
 	Path	   *pathnode = makeNode(Path);
+	int			relid = 0;
 
 	pathnode->pathtype = T_SeqScan;
 	pathnode->parent = rel;
 	pathnode->path_cost = 0.0;
-	pathnode->pathorder = makeNode(PathOrder);
-	pathnode->pathorder->ordtype = SORTOP_ORDER;
-	pathnode->pathorder->ord.sortop = NULL;
-	pathnode->pathkeys = NIL;
+	pathnode->pathkeys = NIL;	/* seqscan has unordered result */
 
-	if (rel->relids != NULL)
+	if (rel->relids != NIL)		/* can this happen? */
 		relid = lfirsti(rel->relids);
 
 	pathnode->path_cost = cost_seqscan(relid,
@@ -319,12 +229,10 @@ create_index_path(Query *root,
 
 	pathnode->path.pathtype = T_IndexScan;
 	pathnode->path.parent = rel;
-	pathnode->path.pathorder = makeNode(PathOrder);
-	pathnode->path.pathorder->ordtype = SORTOP_ORDER;
-	pathnode->path.pathorder->ord.sortop = index->ordering;
-	pathnode->path.pathkeys = NIL;
+	pathnode->path.pathkeys = build_index_pathkeys(root, rel, index);
 
-	/* Note that we are making a pathnode for a single-scan indexscan;
+	/*
+	 * Note that we are making a pathnode for a single-scan indexscan;
 	 * therefore, both indexid and indexqual should be single-element
 	 * lists.  We initialize indexqual to contain one empty sublist,
 	 * representing a single index traversal with no index restriction
@@ -334,29 +242,7 @@ create_index_path(Query *root,
 	Assert(length(index->relids) == 1);
 	pathnode->indexid = index->relids;
 	pathnode->indexqual = lcons(NIL, NIL);
-
-	pathnode->indexkeys = index->indexkeys;
-
-	/*
-	 * The index must have an ordering for the path to have (ordering)
-	 * keys, and vice versa.
-	 */
-	if (pathnode->path.pathorder->ord.sortop)
-	{
-		pathnode->path.pathkeys = collect_index_pathkeys(index->indexkeys,
-														 rel->targetlist);
-
-		/*
-		 * Check that the keys haven't 'disappeared', since they may no
-		 * longer be in the target list (i.e., index keys that are not
-		 * relevant to the scan are not applied to the scan path node, so
-		 * if no index keys were found, we can't order the path).
-		 */
-		if (pathnode->path.pathkeys == NULL)
-			pathnode->path.pathorder->ord.sortop = NULL;
-	}
-	else
-		pathnode->path.pathkeys = NULL;
+	pathnode->joinrelids = NIL;	/* no join clauses here */
 
 	if (restriction_clauses == NIL)
 	{
@@ -377,7 +263,7 @@ create_index_path(Query *root,
 	{
 		/*
 		 * Compute scan cost for the case when 'index' is used with
-		 * restriction clause(s).
+		 * restriction clause(s).  Also, place indexqual in path node.
 		 */
 		List	   *indexquals;
 		float		npages;
@@ -439,9 +325,9 @@ create_index_path(Query *root,
  *
  * 'joinrel' is the join relation.
  * 'outer_rel' is the outer join relation
- * 'outer_path' is the outer join path.
- * 'inner_path' is the inner join path.
- * 'pathkeys' are the keys of the path
+ * 'outer_path' is the outer path
+ * 'inner_path' is the inner path
+ * 'pathkeys' are the path keys of the new join path
  *
  * Returns the resulting path node.
  *
@@ -461,23 +347,6 @@ create_nestloop_path(RelOptInfo *joinrel,
 	pathnode->innerjoinpath = inner_path;
 	pathnode->pathinfo = joinrel->restrictinfo;
 	pathnode->path.pathkeys = pathkeys;
-	pathnode->path.joinid = NIL;
-	pathnode->path.outerjoincost = (Cost) 0.0;
-	pathnode->path.pathorder = makeNode(PathOrder);
-
-	if (pathkeys)
-	{
-		pathnode->path.pathorder->ordtype = outer_path->pathorder->ordtype;
-		if (outer_path->pathorder->ordtype == SORTOP_ORDER)
-			pathnode->path.pathorder->ord.sortop = outer_path->pathorder->ord.sortop;
-		else
-			pathnode->path.pathorder->ord.merge = outer_path->pathorder->ord.merge;
-	}
-	else
-	{
-		pathnode->path.pathorder->ordtype = SORTOP_ORDER;
-		pathnode->path.pathorder->ord.sortop = NULL;
-	}
 
 	pathnode->path.path_cost = cost_nestloop(outer_path->path_cost,
 											 inner_path->path_cost,
@@ -502,8 +371,7 @@ create_nestloop_path(RelOptInfo *joinrel,
  * 'innerwidth' is the number of bytes per tuple in the inner relation
  * 'outer_path' is the outer path
  * 'inner_path' is the inner path
- * 'pathkeys' are the new keys of the join relation
- * 'order' is the sort order required for the merge
+ * 'pathkeys' are the path keys of the new join path
  * 'mergeclauses' are the applicable join/restriction clauses
  * 'outersortkeys' are the sort varkeys for the outer relation
  * 'innersortkeys' are the sort varkeys for the inner relation
@@ -518,12 +386,22 @@ create_mergejoin_path(RelOptInfo *joinrel,
 					  Path *outer_path,
 					  Path *inner_path,
 					  List *pathkeys,
-					  MergeOrder *order,
 					  List *mergeclauses,
 					  List *outersortkeys,
 					  List *innersortkeys)
 {
 	MergePath  *pathnode = makeNode(MergePath);
+
+	/*
+	 * If the given paths are already well enough ordered, we can skip
+	 * doing an explicit sort.
+	 */
+	if (outersortkeys &&
+		pathkeys_contained_in(outersortkeys, outer_path->pathkeys))
+		outersortkeys = NIL;
+	if (innersortkeys &&
+		pathkeys_contained_in(innersortkeys, inner_path->pathkeys))
+		innersortkeys = NIL;
 
 	pathnode->jpath.path.pathtype = T_MergeJoin;
 	pathnode->jpath.path.parent = joinrel;
@@ -531,9 +409,6 @@ create_mergejoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
 	pathnode->jpath.path.pathkeys = pathkeys;
-	pathnode->jpath.path.pathorder = makeNode(PathOrder);
-	pathnode->jpath.path.pathorder->ordtype = MERGE_ORDER;
-	pathnode->jpath.path.pathorder->ord.merge = order;
 	pathnode->path_mergeclauses = mergeclauses;
 	pathnode->outersortkeys = outersortkeys;
 	pathnode->innersortkeys = innersortkeys;
@@ -560,15 +435,11 @@ create_mergejoin_path(RelOptInfo *joinrel,
  * 'innerwidth' is the number of bytes per tuple in the inner relation
  * 'outer_path' is the cheapest outer path
  * 'inner_path' is the cheapest inner path
- * 'pathkeys' are the path keys of the new join path
- * 'operator' is the hashjoin operator
  * 'hashclauses' is a list of the hash join clause (always a 1-element list)
- * 'outerkeys' are the sort varkeys for the outer relation
- * 'innerkeys' are the sort varkeys for the inner relation
  * 'innerdisbursion' is an estimate of the disbursion of the inner hash key
  *
  */
-HashPath   *
+HashPath *
 create_hashjoin_path(RelOptInfo *joinrel,
 					 int outersize,
 					 int innersize,
@@ -576,11 +447,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 					 int innerwidth,
 					 Path *outer_path,
 					 Path *inner_path,
-					 List *pathkeys,
-					 Oid operator,
 					 List *hashclauses,
-					 List *outerkeys,
-					 List *innerkeys,
 					 Cost innerdisbursion)
 {
 	HashPath   *pathnode = makeNode(HashPath);
@@ -590,16 +457,9 @@ create_hashjoin_path(RelOptInfo *joinrel,
 	pathnode->jpath.outerjoinpath = outer_path;
 	pathnode->jpath.innerjoinpath = inner_path;
 	pathnode->jpath.pathinfo = joinrel->restrictinfo;
-	pathnode->jpath.path.pathkeys = pathkeys;
-	pathnode->jpath.path.pathorder = makeNode(PathOrder);
-	pathnode->jpath.path.pathorder->ordtype = SORTOP_ORDER;
-	pathnode->jpath.path.pathorder->ord.sortop = NULL;
-	pathnode->jpath.path.outerjoincost = (Cost) 0.0;
-	pathnode->jpath.path.joinid = (Relids) NULL;
-	/* pathnode->hashjoinoperator = operator;  */
+	/* A hashjoin never has pathkeys, since its ordering is unpredictable */
+	pathnode->jpath.path.pathkeys = NIL;
 	pathnode->path_hashclauses = hashclauses;
-	pathnode->outerhashkeys = outerkeys;
-	pathnode->innerhashkeys = innerkeys;
 	pathnode->jpath.path.path_cost = cost_hashjoin(outer_path->path_cost,
 												   inner_path->path_cost,
 												   outersize, innersize,

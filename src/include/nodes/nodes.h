@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.50 1999/07/15 15:21:17 momjian Exp $
+ * $Id: nodes.h,v 1.51 1999/08/16 02:17:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,27 +64,21 @@ typedef enum NodeTag
 	T_Func,
 	T_Array,
 	T_ArrayRef,
+	T_Iter,
 
 	/*---------------------
-	 * TAGS FOR INNER PLAN NODES (relation.h)
+	 * TAGS FOR PLANNER NODES (relation.h)
 	 *---------------------
 	 */
 	T_RelOptInfo = 200,
-	T_PathOrder,
 	T_Path,
 	T_IndexPath,
 	T_NestPath,
 	T_MergePath,
 	T_HashPath,
-	T_OrderKey,
-	T_JoinKey,
-	T_MergeOrder,
+	T_PathKeyItem,
 	T_RestrictInfo,
-	T_JoinMethod,
-	T_HashInfo,
-	T_MergeInfo,
 	T_JoinInfo,
-	T_Iter,
 	T_Stream,
 
 	/*---------------------
@@ -229,28 +223,27 @@ typedef struct Node
 	NodeTag		type;
 } Node;
 
-#define nodeTag(_node_)			((Node*)_node_)->type
+#define nodeTag(nodeptr)		(((Node*)(nodeptr))->type)
 
-#define makeNode(_node_)		(_node_*)newNode(sizeof(_node_),T_##_node_)
-#define NodeSetTag(n, t)		((Node *)n)->type = t
+#define makeNode(_type_)		((_type_ *) newNode(sizeof(_type_),T_##_type_))
+#define NodeSetTag(nodeptr,t)	(((Node*)(nodeptr))->type = (t))
 
-#define IsA(_node_,_tag_)		(nodeTag(_node_) == T_##_tag_)
+#define IsA(nodeptr,_type_)		(nodeTag(nodeptr) == T_##_type_)
 
 /* ----------------------------------------------------------------
- *					  IsA functions (no inheritence any more)
+ *					  IsA functions (no inheritance any more)
  * ----------------------------------------------------------------
  */
 #define IsA_JoinPath(jp) \
-	(nodeTag(jp)==T_NestPath || nodeTag(jp)==T_MergePath || \
-	 nodeTag(jp)==T_HashPath)
+	(IsA(jp, NestPath) || IsA(jp, MergePath) || IsA(jp, HashPath))
 
-#define IsA_Join(j) \
-	(nodeTag(j)==T_Join || nodeTag(j)==T_NestLoop || \
-	 nodeTag(j)==T_MergeJoin || nodeTag(j)==T_HashJoin)
+#define IsA_Join(jp) \
+	(IsA(jp, Join) || IsA(jp, NestLoop) || \
+	 IsA(jp, MergeJoin) || IsA(jp, HashJoin))
 
 #define IsA_Noname(t) \
-	(nodeTag(t)==T_Noname || nodeTag(t)==T_Material || nodeTag(t)==T_Sort || \
-	 nodeTag(t)==T_Unique)
+	(IsA(t, Noname) || IsA(t, Material) || IsA(t, Sort) || \
+	 IsA(t, Unique))
 
 /* ----------------------------------------------------------------
  *					  extern declarations follow
@@ -262,6 +255,9 @@ typedef struct Node
  */
 extern Node *newNode(Size size, NodeTag tag);
 
+/*
+ * nodes/{outfuncs.c,print.c}
+ */
 extern char *nodeToString(void *obj);
 
 /*

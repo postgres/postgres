@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.42 1999/07/16 04:59:08 momjian Exp $
+ * $Id: geqo_eval.c,v 1.43 1999/08/16 02:17:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,9 +23,6 @@
 #include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
-#ifndef MAXINT
-#define MAXINT INT_MAX
-#endif
 #else
 #include <values.h>
 #endif

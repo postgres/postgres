@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.70 1999/08/12 04:32:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.71 1999/08/16 02:17:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,12 +27,8 @@
 #include "utils/syscache.h"
 
 
-#define NONAME_SORT		1
-#define NONAME_MATERIAL 2
-
 static List *switch_outer(List *clauses);
-static Oid *generate_merge_input_sortorder(List *pathkeys,
-							   MergeOrder *mergeorder);
+static List *set_tlist_sort_info(List *tlist, List *pathkeys);
 static Scan *create_scan_node(Path *best_path, List *tlist);
 static Join *create_join_node(JoinPath *best_path, List *tlist);
 static SeqScan *create_seqscan_node(Path *best_path, List *tlist,
@@ -53,8 +49,7 @@ static List *fix_indxqual_sublist(List *indexqual, IndexPath *index_path,
 								  Form_pg_index index);
 static Node *fix_indxqual_operand(Node *node, IndexPath *index_path,
 								  Form_pg_index index);
-static Noname *make_noname(List *tlist, List *pathkeys, Oid *operators,
-			Plan *plan_node, int nonametype);
+static Noname *make_noname(List *tlist, List *pathkeys, Plan *plan_node);
 static IndexScan *make_indexscan(List *qptlist, List *qpqual, Index scanrelid,
 			   List *indxid, List *indxqual, List *indxqualorig);
 static NestLoop *make_nestloop(List *qptlist, List *qpqual, Plan *lefttree,
@@ -482,9 +477,7 @@ create_nestloop_node(NestPath *best_path,
 		/* Materialize the inner join for speed reasons */
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  NIL,
-										  NULL,
-										  inner_node,
-										  NONAME_MATERIAL);
+										  inner_node);
 	}
 
 	join_node = make_nestloop(tlist,
@@ -531,34 +524,18 @@ create_mergejoin_node(MergePath *best_path,
 												inner_tlist));
 
 	/*
-	 * Create explicit sort paths for the outer and inner join paths if
+	 * Create explicit sort nodes for the outer and inner join paths if
 	 * necessary.  The sort cost was already accounted for in the path.
 	 */
 	if (best_path->outersortkeys)
-	{
-		Oid		   *outer_order = generate_merge_input_sortorder(
-												best_path->outersortkeys,
-							 best_path->jpath.path.pathorder->ord.merge);
-
 		outer_node = (Plan *) make_noname(outer_tlist,
 										  best_path->outersortkeys,
-										  outer_order,
-										  outer_node,
-										  NONAME_SORT);
-	}
+										  outer_node);
 
 	if (best_path->innersortkeys)
-	{
-		Oid		   *inner_order = generate_merge_input_sortorder(
-												best_path->innersortkeys,
-							 best_path->jpath.path.pathorder->ord.merge);
-
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  best_path->innersortkeys,
-										  inner_order,
-										  inner_node,
-										  NONAME_SORT);
-	}
+										  inner_node);
 
 	join_node = make_mergejoin(tlist,
 							   qpqual,
@@ -589,7 +566,7 @@ create_hashjoin_node(HashPath *best_path,
 	/*
 	 * NOTE: there will always be exactly one hashclause in the list
 	 * best_path->path_hashclauses (cf. hash_inner_and_outer()).
-	 * We represent it as a list anyway for convenience with routines
+	 * We represent it as a list anyway, for convenience with routines
 	 * that want to work on lists of clauses.
 	 */
 
@@ -782,9 +759,9 @@ fix_indxqual_operand(Node *node, IndexPath *index_path,
 
 /*
  * switch_outer
- *	  Given a list of merge clauses, rearranges the elements within the
- *	  clauses so the outer join variable is on the left and the inner is on
- *	  the right.  The original list is not touched; a modified list
+ *	  Given a list of merge or hash joinclauses, rearrange the elements within
+ *	  the clauses so the outer join variable is on the left and the inner is
+ *	  on the right.  The original list is not touched; a modified list
  *	  is returned.
  */
 static List *
@@ -796,15 +773,12 @@ switch_outer(List *clauses)
 	foreach(i, clauses)
 	{
 		Expr	   *clause = (Expr *) lfirst(i);
-		Node	   *op;
+		Var		   *op;
 
 		Assert(is_opclause((Node *) clause));
-		op = (Node *) get_rightop(clause);
-		Assert(op != (Node *) NULL);
-		if (IsA(op, ArrayRef))	/* I think this test is dead code ... tgl */
-			op = ((ArrayRef *) op)->refexpr;
-		Assert(IsA(op, Var));
-		if (var_is_outer((Var *) op))
+		op = get_rightop(clause);
+		Assert(op && IsA(op, Var));
+		if (var_is_outer(op))
 		{
 			/*
 			 * Duplicate just enough of the structure to allow commuting
@@ -826,80 +800,42 @@ switch_outer(List *clauses)
 }
 
 /*
- * generate_merge_input_sortorder
+ * set_tlist_sort_info
+ *	  Sets the reskey and reskeyop fields of resdom nodes in a target list
+ *	  for a sort node.
  *
- * Generate the list of sort ops needed to sort one of the input paths for
- * a merge.  We may have to use either left or right sortop for each item,
- * since the original mergejoin clause may or may not have been commuted
- * (compare switch_outer above).
+ * 'tlist' is the target list
+ * 'pathkeys' is the desired pathkeys for the sort.  NIL means no sort.
  *
- * XXX This is largely a crock.  It works only because group_clauses_by_order
- * only groups together mergejoin clauses that have identical MergeOrder info,
- * which means we can safely use a single MergeOrder input to deal with all
- * the data.  There should be a more general data structure that allows coping
- * with groups of mergejoin clauses that have different join operators.
- */
-static Oid *
-generate_merge_input_sortorder(List *pathkeys, MergeOrder *mergeorder)
-{
-	int			listlength = length(pathkeys);
-	Oid		   *result = (Oid *) palloc(sizeof(Oid) * (listlength + 1));
-	Oid		   *nextsortop = result;
-	List	   *p;
-
-	foreach(p, pathkeys)
-	{
-		Var		   *pkey = (Var *) lfirst((List *) lfirst(p));
-
-		Assert(IsA(pkey, Var));
-		if (pkey->vartype == mergeorder->left_type)
-			*nextsortop++ = mergeorder->left_operator;
-		else if (pkey->vartype == mergeorder->right_type)
-			*nextsortop++ = mergeorder->right_operator;
-		else
-			elog(ERROR,
-			 "generate_merge_input_sortorder: can't handle data type %d",
-				 pkey->vartype);
-	}
-	*nextsortop++ = InvalidOid;
-	return result;
-}
-
-/*
- * set_noname_tlist_operators
- *	  Sets the key and keyop fields of resdom nodes in a target list.
- *
- *	  'tlist' is the target list
- *	  'pathkeys' is a list of N keys in the form((key1) (key2)...(keyn)),
- *				corresponding to vars in the target list that are to
- *				be sorted or hashed
- *	  'operators' is the corresponding list of N sort or hash operators
- *
- *	  Returns the modified-in-place target list.
+ * Returns the modified-in-place target list.
  */
 static List *
-set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
+set_tlist_sort_info(List *tlist, List *pathkeys)
 {
 	int			keyno = 1;
-	Node	   *pathkey;
-	Resdom	   *resdom;
 	List	   *i;
 
 	foreach(i, pathkeys)
 	{
-		pathkey = lfirst((List *) lfirst(i));
-		resdom = tlist_member((Var *) pathkey, tlist);
-		if (resdom)
-		{
+		List		   *keysublist = (List *) lfirst(i);
+		PathKeyItem	   *pathkey;
+		Resdom		   *resdom;
 
-			/*
-			 * Order the resdom pathkey and replace the operator OID for
-			 * each key with the regproc OID.
-			 */
-			resdom->reskey = keyno;
-			resdom->reskeyop = get_opcode(operators[keyno - 1]);
-		}
-		keyno += 1;
+		/*
+		 * We can sort by any one of the sort key items listed in this
+		 * sublist.  For now, we always take the first one --- is there
+		 * any way of figuring out which might be cheapest to execute?
+		 * (For example, int4lt is likely much cheaper to execute than
+		 * numericlt, but both might appear in the same pathkey sublist...)
+		 */
+		pathkey = lfirst(keysublist);
+		Assert(IsA(pathkey, PathKeyItem));
+		resdom = tlist_member((Var *) pathkey->key, tlist);
+		if (!resdom)
+			elog(ERROR, "set_tlist_sort_info: cannot find tlist item to sort");
+		resdom->reskey = keyno;
+		resdom->reskeyop = get_opcode(pathkey->sortop);
+		keyno++;
 	}
 	return tlist;
 }
@@ -909,7 +845,6 @@ set_noname_tlist_operators(List *tlist, List *pathkeys, Oid *operators)
  * This is not critical, since the decisions have already been made,
  * but it helps produce more reasonable-looking EXPLAIN output.
  */
-
 static void
 copy_costsize(Plan *dest, Plan *src)
 {
@@ -939,52 +874,44 @@ copy_costsize(Plan *dest, Plan *src)
  *	  result returned for a sort will look like (SEQSCAN(SORT(plan_node)))
  *	  or (SEQSCAN(MATERIAL(plan_node)))
  *
- *	  'tlist' is the target list of the scan to be sorted or hashed
- *	  'pathkeys' is the list of keys which the sort or hash will be done on
- *	  'operators' is the operators with which the sort or hash is to be done
- *		(a list of operator OIDs)
- *	  'plan_node' is the node which yields tuples for the sort
- *	  'nonametype' indicates which operation(sort or hash) to perform
+ *	  'tlist' is the target list of the scan to be sorted or materialized
+ *	  'pathkeys' is the list of pathkeys by which the result is to be sorted
+ *			(NIL implies no sort needed, just materialize it)
+ *	  'plan_node' is the node which yields input tuples
  */
 static Noname *
 make_noname(List *tlist,
 			List *pathkeys,
-			Oid *operators,
-			Plan *plan_node,
-			int nonametype)
+			Plan *plan_node)
 {
 	List	   *noname_tlist;
-	Noname	   *retval = NULL;
+	Noname	   *retval;
 
-	/* Create a new target list for the noname, with keys set. */
-	noname_tlist = set_noname_tlist_operators(new_unsorted_tlist(tlist),
-											  pathkeys,
-											  operators);
-	switch (nonametype)
+	/* Create a new target list for the noname, with sort keys set. */
+	noname_tlist = set_tlist_sort_info(new_unsorted_tlist(tlist),
+									   pathkeys);
+
+	if (pathkeys != NIL)
 	{
-		case NONAME_SORT:
-			retval = (Noname *) make_seqscan(tlist,
-											 NIL,
-											 _NONAME_RELATION_ID_,
+		/* need to sort */
+		retval = (Noname *) make_seqscan(tlist,
+										 NIL,
+										 _NONAME_RELATION_ID_,
 										 (Plan *) make_sort(noname_tlist,
 													_NONAME_RELATION_ID_,
 															plan_node,
-													  length(pathkeys)));
-			break;
-
-		case NONAME_MATERIAL:
-			retval = (Noname *) make_seqscan(tlist,
-											 NIL,
-											 _NONAME_RELATION_ID_,
-									 (Plan *) make_material(noname_tlist,
+															length(pathkeys)));
+	}
+	else
+	{
+		/* no sort */
+		retval = (Noname *) make_seqscan(tlist,
+										 NIL,
+										 _NONAME_RELATION_ID_,
+										 (Plan *) make_material(noname_tlist,
 													_NONAME_RELATION_ID_,
-															plan_node,
-													  length(pathkeys)));
-			break;
-
-		default:
-			elog(ERROR, "make_noname: unknown noname type %d", nonametype);
-
+																plan_node,
+																0));
 	}
 	return retval;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.68 1999/08/12 04:32:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.69 1999/08/16 02:17:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,8 +27,6 @@
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/cost.h"
-#include "optimizer/keys.h"
-#include "optimizer/ordering.h"
 #include "optimizer/pathnode.h"
 #include "optimizer/paths.h"
 #include "optimizer/plancat.h"
@@ -70,7 +68,8 @@ static void indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
 								  List **clausegroups, List **outerrelids);
 static List *index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 							 List *clausegroup_list, List *outerrelids_list);
-static bool useful_for_mergejoin(RelOptInfo *index, List *clausegroup_list);
+static bool useful_for_mergejoin(RelOptInfo *rel, RelOptInfo *index,
+								 List *joininfo_list);
 static bool match_index_to_operand(int indexkey, Var *operand,
 								   RelOptInfo *rel, RelOptInfo *index);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
@@ -189,36 +188,34 @@ create_index_paths(Query *root,
 											   restrictclauses));
 
 		/*
-		 * 3. If this index can be used with any join clause, then create
-		 * an index path for it even if there were no restriction clauses.
+		 * 3. If this index can be used for a mergejoin, then create an
+		 * index path for it even if there were no restriction clauses.
 		 * (If there were, there is no need to make another index path.)
 		 * This will allow the index to be considered as a base for a
 		 * mergejoin in later processing.
-		 * Also, create an innerjoin index path for each combination of
+		 */
+		if (restrictclauses == NIL &&
+			useful_for_mergejoin(rel, index, joininfo_list))
+		{
+			retval = lappend(retval,
+							 create_index_path(root, rel, index, NIL));
+		}
+
+		/*
+		 * 4. Create an innerjoin index path for each combination of
 		 * other rels used in available join clauses.  These paths will
 		 * be considered as the inner side of nestloop joins against
-		 * those sets of other rels.
-		 * indexable_joinclauses() finds clauses that are potentially
-		 * applicable to either case.  useful_for_mergejoin() tests to
-		 * see whether any of the join clauses might support a mergejoin.
-		 * index_innerjoin() builds an innerjoin index path for each
-		 * potential set of outer rels, which we add to the rel's
-		 * innerjoin list.
+		 * those sets of other rels.  indexable_joinclauses() finds sets
+		 * of clauses that can be used with each combination of outer rels,
+		 * and index_innerjoin builds the paths themselves.  We add the
+		 * paths to the rel's innerjoin list, NOT to the result list.
 		 */
 		indexable_joinclauses(rel, index,
 							  joininfo_list, restrictinfo_list,
 							  &joinclausegroups,
 							  &joinouterrelids);
-
 		if (joinclausegroups != NIL)
 		{
-			/* no need to create a plain path if we already did */
-			if (restrictclauses == NIL &&
-				useful_for_mergejoin(index, joinclausegroups))
-				retval = lappend(retval,
-								 create_index_path(root, rel, index,
-												   NIL));
-
 			rel->innerjoin = nconc(rel->innerjoin,
 								   index_innerjoin(root, rel, index,
 												   joinclausegroups,
@@ -272,11 +269,11 @@ match_index_orclauses(RelOptInfo *rel,
 			 * Add this index to the subclause index list for each
 			 * subclause that it matches.
 			 */
-			restrictinfo->indexids =
+			restrictinfo->subclauseindices =
 				match_index_orclause(rel, index,
 									 indexkey, xclass,
 									 restrictinfo->clause->args,
-									 restrictinfo->indexids);
+									 restrictinfo->subclauseindices);
 		}
 	}
 }
@@ -439,7 +436,8 @@ group_clauses_by_indexkey(RelOptInfo *rel,
 
 /*
  * group_clauses_by_ikey_for_joins
- *    Generates a list of join clauses that can be used with an index.
+ *    Generates a list of join clauses that can be used with an index
+ *	  to scan the inner side of a nestloop join.
  *
  * This is much like group_clauses_by_indexkey(), but we consider both
  * join and restriction clauses.  For each indexkey in the index, we
@@ -447,7 +445,7 @@ group_clauses_by_indexkey(RelOptInfo *rel,
  * will make useful indexquals if the index is being used to scan the
  * inner side of a nestloop join.  But there must be at least one matching
  * join clause, or we return NIL indicating that this index isn't useful
- * for joining.
+ * for nestloop joining.
  */
 static List *
 group_clauses_by_ikey_for_joins(RelOptInfo *rel,
@@ -1156,7 +1154,7 @@ clause_pred_clause_test(Expr *predicate, Node *clause)
 /*
  * indexable_joinclauses
  *	  Finds all groups of join clauses from among 'joininfo_list' that can
- *	  be used in conjunction with 'index'.
+ *	  be used in conjunction with 'index' for the inner scan of a nestjoin.
  *
  *	  Each clause group comes from a single joininfo node plus the current
  *	  rel's restrictinfo list.  Therefore, every clause in the group references
@@ -1224,7 +1222,7 @@ indexable_joinclauses(RelOptInfo *rel, RelOptInfo *index,
  * 'rel' is the relation for which 'index' is defined
  * 'clausegroup_list' is a list of lists of restrictinfo nodes which can use
  * 'index'.  Each sublist refers to the same set of outer rels.
- * 'outerrelids_list' is a list of the required outer rels for each group
+ * 'outerrelids_list' is a list of the required outer rels for each sublist
  * of join clauses.
  *
  * Returns a list of index pathnodes.
@@ -1255,14 +1253,11 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 						  &npages,
 						  &selec);
 
-		/* XXX this code ought to be merged with create_index_path */
+		/* XXX this code ought to be merged with create_index_path? */
 
 		pathnode->path.pathtype = T_IndexScan;
 		pathnode->path.parent = rel;
-		pathnode->path.pathorder = makeNode(PathOrder);
-		pathnode->path.pathorder->ordtype = SORTOP_ORDER;
-		pathnode->path.pathorder->ord.sortop = index->ordering;
-		pathnode->path.pathkeys = NIL;
+		pathnode->path.pathkeys = build_index_pathkeys(root, rel, index);
 
 		/* Note that we are making a pathnode for a single-scan indexscan;
 		 * therefore, both indexid and indexqual should be single-element
@@ -1272,10 +1267,8 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 		pathnode->indexid = index->relids;
 		pathnode->indexqual = lcons(indexquals, NIL);
 
-		pathnode->indexkeys = index->indexkeys;
-
-		/* joinid saves the rels needed on the outer side of the join */
-		pathnode->path.joinid = lfirst(outerrelids_list);
+		/* joinrelids saves the rels needed on the outer side of the join */
+		pathnode->joinrelids = lfirst(outerrelids_list);
 
 		pathnode->path.path_cost = cost_index((Oid) lfirsti(index->relids),
 											  (int) npages,
@@ -1295,33 +1288,53 @@ index_innerjoin(Query *root, RelOptInfo *rel, RelOptInfo *index,
 /*
  * useful_for_mergejoin
  *	  Determine whether the given index can support a mergejoin based
- *	  on any join clause within the given list.  The clauses have already
- *	  been found to be relevant to the index by indexable_joinclauses.
- *	  We just need to check whether any are mergejoin material.
+ *	  on any available join clause.
  *
- * 'index' is the index of interest.
- * 'clausegroup_list' is a list of clause groups (sublists of restrictinfo
- *				nodes)
+ *	  We look to see whether the first indexkey of the index matches the
+ *	  left or right sides of any of the mergejoinable clauses and provides
+ *	  the ordering needed for that side.  If so, the index is useful.
+ *	  Matching a second or later indexkey is not useful unless there is
+ *	  also a mergeclause for the first indexkey, so we need not consider
+ *	  secondary indexkeys at this stage.
+ *
+ * 'rel' is the relation for which 'index' is defined
+ * 'joininfo_list' is the list of JoinInfo nodes for 'rel'
  */
 static bool
-useful_for_mergejoin(RelOptInfo *index,
-					 List *clausegroup_list)
+useful_for_mergejoin(RelOptInfo *rel,
+					 RelOptInfo *index,
+					 List *joininfo_list)
 {
+	int		   *indexkeys = index->indexkeys;
+	Oid		   *ordering = index->ordering;
 	List	   *i;
 
-	foreach(i, clausegroup_list)
+	if (!indexkeys || indexkeys[0] == 0 ||
+		!ordering || ordering[0] == InvalidOid)
+		return false;			/* unordered index is not useful */
+
+	foreach(i, joininfo_list)
 	{
-		List	   *clausegroup = lfirst(i);
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 		List	   *j;
 
-		foreach(j, clausegroup)
+		foreach(j, joininfo->jinfo_restrictinfo)
 		{
 			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
 
-			if (is_joinable((Node *) restrictinfo->clause) &&
-				equal_path_merge_ordering(index->ordering,
-										  restrictinfo->mergejoinorder))
-				return true;
+			if (restrictinfo->mergejoinoperator)
+			{
+				if (restrictinfo->left_sortop == ordering[0] &&
+					match_index_to_operand(indexkeys[0],
+										   get_leftop(restrictinfo->clause),
+										   rel, index))
+					return true;
+				if (restrictinfo->right_sortop == ordering[0] &&
+					match_index_to_operand(indexkeys[0],
+										   get_rightop(restrictinfo->clause),
+										   rel, index))
+					return true;
+			}
 		}
 	}
 	return false;
@@ -1348,7 +1361,12 @@ match_index_to_operand(int indexkey,
 		/*
 		 * Normal index.
 		 */
-		return match_indexkey_operand(indexkey, operand, rel);
+		if (IsA(operand, Var) &&
+			lfirsti(rel->relids) == operand->varno &&
+			indexkey == operand->varattno)
+			return true;
+		else
+			return false;
 	}
 
 	/*
@@ -1384,7 +1402,7 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 	/*
 	 * Check that the arguments correspond to the same arguments used to
 	 * create the functional index.  To do this we must check that 1.
-	 * refer to the right relatiion. 2. the args have the right attr.
+	 * refer to the right relation. 2. the args have the right attr.
 	 * numbers in the right order.
 	 */
 	i = 0;
@@ -1401,6 +1419,9 @@ function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index)
 
 		i++;
 	}
+
+	if (indexKeys[i] != 0)
+		return false;			/* not enough arguments */
 
 	return true;
 }

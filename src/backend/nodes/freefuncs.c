@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.24 1999/07/27 03:51:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.25 1999/08/16 02:17:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -706,6 +706,9 @@ _freeRelOptInfo(RelOptInfo *node)
 
 	freeObject(node->targetlist);
 	freeObject(node->pathlist);
+	/* is this right? cheapestpath will typically be a pointer into
+	 * pathlist, won't it?
+	 */
 	freeObject(node->cheapestpath);
 
 	if (node->classlist)
@@ -714,10 +717,10 @@ _freeRelOptInfo(RelOptInfo *node)
 	if (node->indexkeys)
 		pfree(node->indexkeys);
 
-	freeObject(node->indpred);
-
 	if (node->ordering)
 		pfree(node->ordering);
+
+	freeObject(node->indpred);
 
 	freeObject(node->restrictinfo);
 	freeObject(node->joininfo);
@@ -736,20 +739,9 @@ _freeRelOptInfo(RelOptInfo *node)
 static void
 FreePathFields(Path *node)
 {
-	if (node->pathorder->ordtype == SORTOP_ORDER)
-	{
-		if (node->pathorder->ord.sortop)
-			pfree(node->pathorder->ord.sortop);
-	}
-	else
-		freeObject(node->pathorder->ord.merge);
-
-	pfree(node->pathorder);		/* is it an object, but we don't have
-								 * separate free for it */
+	/* we do NOT free the parent; it doesn't belong to the Path */
 
 	freeObject(node->pathkeys);
-
-	freeList(node->joinid);
 }
 
 /* ----------------
@@ -783,22 +775,20 @@ _freeIndexPath(IndexPath *node)
 	 */
 	freeList(node->indexid);
 	freeObject(node->indexqual);
-
-	if (node->indexkeys)
-		pfree(node->indexkeys);
+	freeList(node->joinrelids);
 
 	pfree(node);
 }
 
 /* ----------------
- *		FreeNestPathFields
+ *		FreeJoinPathFields
  *
- *		This function frees the fields of the NestPath node.  It is used by
- *		all the free functions for classes which inherit node NestPath.
+ *		This function frees the fields of the JoinPath node.  It is used by
+ *		all the free functions for classes which inherit node JoinPath.
  * ----------------
  */
 static void
-FreeNestPathFields(NestPath *node)
+FreeJoinPathFields(JoinPath *node)
 {
 	freeObject(node->pathinfo);
 	freeObject(node->outerjoinpath);
@@ -817,7 +807,7 @@ _freeNestPath(NestPath *node)
 	 * ----------------
 	 */
 	FreePathFields((Path *) node);
-	FreeNestPathFields(node);
+	FreeJoinPathFields((JoinPath *) node);
 
 	pfree(node);
 }
@@ -834,7 +824,7 @@ _freeMergePath(MergePath *node)
 	 * ----------------
 	 */
 	FreePathFields((Path *) node);
-	FreeNestPathFields((NestPath *) node);
+	FreeJoinPathFields((JoinPath *) node);
 
 	/* ----------------
 	 *	free the remainder of the node
@@ -859,60 +849,33 @@ _freeHashPath(HashPath *node)
 	 * ----------------
 	 */
 	FreePathFields((Path *) node);
-	FreeNestPathFields((NestPath *) node);
+	FreeJoinPathFields((JoinPath *) node);
 
 	/* ----------------
 	 *	free remainder of node
 	 * ----------------
 	 */
 	freeObject(node->path_hashclauses);
-	freeObject(node->outerhashkeys);
-	freeObject(node->innerhashkeys);
 
 	pfree(node);
 }
 
 /* ----------------
- *		_freeOrderKey
+ *		_freePathKeyItem
  * ----------------
  */
 static void
-_freeOrderKey(OrderKey *node)
-{
-	pfree(node);
-}
-
-
-/* ----------------
- *		_freeJoinKey
- * ----------------
- */
-static void
-_freeJoinKey(JoinKey *node)
+_freePathKeyItem(PathKeyItem *node)
 {
 	/* ----------------
 	 *	free remainder of node
 	 * ----------------
 	 */
-	freeObject(node->outer);
-	freeObject(node->inner);
+	freeObject(node->key);
 
 	pfree(node);
 }
 
-/* ----------------
- *		_freeMergeOrder
- * ----------------
- */
-static void
-_freeMergeOrder(MergeOrder *node)
-{
-	/* ----------------
-	 *	free remainder of node
-	 * ----------------
-	 */
-	pfree(node);
-}
 
 /* ----------------
  *		_freeRestrictInfo
@@ -926,68 +889,10 @@ _freeRestrictInfo(RestrictInfo *node)
 	 * ----------------
 	 */
 	freeObject(node->clause);
-	freeObject(node->indexids);
-	freeObject(node->mergejoinorder);
-
-	pfree(node);
-}
-
-/* ----------------
- *		FreeJoinMethodFields
- *
- *		This function frees the fields of the JoinMethod node.	It is used by
- *		all the free functions for classes which inherit node JoinMethod.
- * ----------------
- */
-static void
-FreeJoinMethodFields(JoinMethod *node)
-{
-	freeObject(node->jmkeys);
-	freeObject(node->clauses);
-	return;
-}
-
-/* ----------------
- *		_freeJoinMethod
- * ----------------
- */
-static void
-_freeJoinMethod(JoinMethod *node)
-{
-	FreeJoinMethodFields(node);
-
-	pfree(node);
-}
-
-/* ----------------
- *		_freeHInfo
- * ----------------
- */
-static void
-_freeHashInfo(HashInfo *node)
-{
-	/* ----------------
-	 *	free remainder of node
-	 * ----------------
+	/* this is certainly wrong?  index RelOptInfos don't belong to
+	 * RestrictInfo...
 	 */
-	FreeJoinMethodFields((JoinMethod *) node);
-
-	pfree(node);
-}
-
-/* ----------------
- *		_freeMInfo
- * ----------------
- */
-static void
-_freeMergeInfo(MergeInfo *node)
-{
-	/* ----------------
-	 *	free remainder of node
-	 * ----------------
-	 */
-	FreeJoinMethodFields((JoinMethod *) node);
-	freeObject(node->m_ordering);
+	freeObject(node->subclauseindices);
 
 	pfree(node);
 }
@@ -1279,26 +1184,11 @@ freeObject(void *node)
 		case T_HashPath:
 			_freeHashPath(node);
 			break;
-		case T_OrderKey:
-			_freeOrderKey(node);
-			break;
-		case T_JoinKey:
-			_freeJoinKey(node);
-			break;
-		case T_MergeOrder:
-			_freeMergeOrder(node);
+		case T_PathKeyItem:
+			_freePathKeyItem(node);
 			break;
 		case T_RestrictInfo:
 			_freeRestrictInfo(node);
-			break;
-		case T_JoinMethod:
-			_freeJoinMethod(node);
-			break;
-		case T_HashInfo:
-			_freeHashInfo(node);
-			break;
-		case T_MergeInfo:
-			_freeMergeInfo(node);
 			break;
 		case T_JoinInfo:
 			_freeJoinInfo(node);

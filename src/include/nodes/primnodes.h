@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.32 1999/07/18 03:45:01 tgl Exp $
+ * $Id: primnodes.h,v 1.33 1999/08/16 02:17:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,20 @@ typedef struct Func
 	List	   *func_tlist;
 	List	   *func_planlist;
 } Func;
+
+/* ----------------
+ * Iter
+ *		can anyone explain what this is for?  Seems to have something to do
+ *		with evaluation of functions that return sets...
+ * ----------------
+ */
+typedef struct Iter
+{
+	NodeTag		type;
+	Node	   *iterexpr;
+	Oid			itertype;		/* type of the iter expr (use for type
+								 * checking) */
+} Iter;
 
 /* ----------------
  * Aggref

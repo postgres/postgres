@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.36 1999/08/10 03:00:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.37 1999/08/16 02:17:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,10 @@
 
 static void add_restrict_and_join_to_rel(Query *root, Node *clause);
 static void add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
-					  Relids join_relids);
+								  Relids join_relids);
 static void add_vars_to_targetlist(Query *root, List *vars);
-
-static MergeOrder *mergejoinop(Expr *clause);
-static Oid	hashjoinop(Expr *clause);
+static void check_mergejoinable(RestrictInfo *restrictinfo);
+static void check_hashjoinable(RestrictInfo *restrictinfo);
 
 
 /*****************************************************************************
@@ -123,8 +122,8 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 
 
 /*
- * add_restrict_and_join_to_rels-
- *	  Initializes RestrictInfo and JoinInfo fields of relation entries for all
+ * add_restrict_and_join_to_rels
+ *	  Fill RestrictInfo and JoinInfo lists of relation entries for all
  *	  relations appearing within clauses.  Creates new relation entries if
  *	  necessary, adding them to *query_relation_list*.
  *
@@ -140,11 +139,11 @@ add_restrict_and_join_to_rels(Query *root, List *clauses)
 }
 
 /*
- * add_restrict_and_join_to_rel-
+ * add_restrict_and_join_to_rel
  *	  Add clause information to either the 'RestrictInfo' or 'JoinInfo' field
- *	  of a relation entry (depending on whether or not the clause is a join)
- *	  by creating a new RestrictInfo node and setting appropriate fields
- *	  within the nodes.
+ *	  (depending on whether the clause is a join) of each base relation
+ *	  mentioned in the clause.  A RestrictInfo node is created and added to
+ *	  the appropriate list for each rel.
  */
 static void
 add_restrict_and_join_to_rel(Query *root, Node *clause)
@@ -154,9 +153,11 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 	List	   *vars;
 
 	restrictinfo->clause = (Expr *) clause;
-	restrictinfo->indexids = NIL;
-	restrictinfo->mergejoinorder = (MergeOrder *) NULL;
-	restrictinfo->hashjoinoperator = (Oid) 0;
+	restrictinfo->subclauseindices = NIL;
+	restrictinfo->mergejoinoperator = InvalidOid;
+	restrictinfo->left_sortop = InvalidOid;
+	restrictinfo->right_sortop = InvalidOid;
+	restrictinfo->hashjoinoperator = InvalidOid;
 
 	/*
 	 * The selectivity of the clause must be computed regardless of
@@ -196,7 +197,7 @@ add_restrict_and_join_to_rel(Query *root, Node *clause)
 /*
  * add_join_info_to_rels
  *	  For every relation participating in a join clause, add 'restrictinfo' to
- *	  the appropriate joininfo node (creating a new one and adding it to the
+ *	  the appropriate joininfo list (creating a new one and adding it to the
  *	  appropriate rel node if necessary).
  *
  * 'restrictinfo' describes the join clause
@@ -211,21 +212,22 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 	/* For every relid, find the joininfo, and add the proper join entries */
 	foreach(join_relid, join_relids)
 	{
+		int			cur_relid = lfirsti(join_relid);
 		JoinInfo   *joininfo;
 		Relids		unjoined_relids = NIL;
-		List	   *rel;
+		List	   *otherrel;
 
 		/* Get the relids not equal to the current relid */
-		foreach(rel, join_relids)
+		foreach(otherrel, join_relids)
 		{
-			if (lfirsti(rel) != lfirsti(join_relid))
-				unjoined_relids = lappendi(unjoined_relids, lfirsti(rel));
+			if (lfirsti(otherrel) != cur_relid)
+				unjoined_relids = lappendi(unjoined_relids, lfirsti(otherrel));
 		}
 
 		/*
 		 * Find or make the joininfo node for this combination of rels
 		 */
-		joininfo = find_joininfo_node(get_base_rel(root, lfirsti(join_relid)),
+		joininfo = find_joininfo_node(get_base_rel(root, cur_relid),
 									  unjoined_relids);
 
 		/*
@@ -247,12 +249,8 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 
 /*
  * set_joininfo_mergeable_hashable
- *	  Set the MergeJoinable or HashJoinable field for every joininfo node
- *	  (within a rel node) and the mergejoinorder or hashjoinop field for
- *	  each restrictinfo node (within a joininfo node) for all relations in a
- *	  query.
- *
- *	  Returns nothing.
+ *	  Examine each join clause used in a query and set the merge and hash
+ *	  info fields in those that are mergejoinable or hashjoinable.
  */
 void
 set_joininfo_mergeable_hashable(List *rel_list)
@@ -272,111 +270,102 @@ set_joininfo_mergeable_hashable(List *rel_list)
 			foreach(z, joininfo->jinfo_restrictinfo)
 			{
 				RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(z);
-				Expr	   *clause = restrictinfo->clause;
 
-				if (is_joinable((Node *) clause))
-				{
-					if (_enable_mergejoin_)
-					{
-						MergeOrder *sortop = mergejoinop(clause);
-						if (sortop)
-						{
-							restrictinfo->mergejoinorder = sortop;
-							joininfo->mergejoinable = true;
-						}
-					}
-
-					if (_enable_hashjoin_)
-					{
-						Oid			hashop = hashjoinop(clause);
-						if (hashop)
-						{
-							restrictinfo->hashjoinoperator = hashop;
-							joininfo->hashjoinable = true;
-						}
-					}
-				}
+				if (_enable_mergejoin_)
+					check_mergejoinable(restrictinfo);
+				if (_enable_hashjoin_)
+					check_hashjoinable(restrictinfo);
 			}
 		}
 	}
 }
 
 /*
- * mergejoinop
- *	  Returns a MergeOrder node for 'clause' iff 'clause' is mergejoinable,
- *	  i.e., both operands are single vars and the operator is
- *	  a mergejoinable operator.
+ * check_mergejoinable
+ *	  If the restrictinfo's clause is mergejoinable, set the mergejoin
+ *	  info fields in the restrictinfo.
+ *
+ *	  Currently, we support mergejoin for binary opclauses where
+ *	  both operands are simple Vars and the operator is a mergejoinable
+ *	  operator.  (Note: since we are only examining clauses that were
+ *	  classified as joins, it is certain that the two Vars belong to
+ *	  different relations... if we accepted more general clause structures
+ *	  we might need to check that the two sides refer to different rels...)
  */
-static MergeOrder *
-mergejoinop(Expr *clause)
+static void
+check_mergejoinable(RestrictInfo *restrictinfo)
 {
+	Expr	   *clause = restrictinfo->clause;
 	Var		   *left,
 			   *right;
 	Oid			opno,
 				leftOp,
 				rightOp;
-	bool		sortable;
 
-	if (!is_opclause((Node *) clause))
-		return NULL;
+	if (! is_opclause((Node *) clause))
+		return;
 
 	left = get_leftop(clause);
 	right = get_rightop(clause);
 
 	/* caution: is_opclause accepts more than I do, so check it */
-	if (!right)
-		return NULL;			/* unary opclauses need not apply */
+	if (! right)
+		return;					/* unary opclauses need not apply */
 	if (!IsA(left, Var) || !IsA(right, Var))
-		return NULL;
+		return;
 
 	opno = ((Oper *) clause->oper)->opno;
 
-	sortable = op_mergejoinable(opno,
-								left->vartype,
-								right->vartype,
-								&leftOp,
-								&rightOp);
-
-	if (sortable)
+	if (op_mergejoinable(opno,
+						 left->vartype,
+						 right->vartype,
+						 &leftOp,
+						 &rightOp))
 	{
-		MergeOrder *morder = makeNode(MergeOrder);
-
-		morder->join_operator = opno;
-		morder->left_operator = leftOp;
-		morder->right_operator = rightOp;
-		morder->left_type = left->vartype;
-		morder->right_type = right->vartype;
-		return morder;
+		restrictinfo->mergejoinoperator = opno;
+		restrictinfo->left_sortop = leftOp;
+		restrictinfo->right_sortop = rightOp;
 	}
-	else
-		return NULL;
 }
 
 /*
- * hashjoinop
- *	  Returns the hashjoin operator iff 'clause' is hashjoinable,
- *	  i.e., both operands are single vars and the operator is
- *	  a hashjoinable operator.
+ * check_hashjoinable
+ *	  If the restrictinfo's clause is hashjoinable, set the hashjoin
+ *	  info fields in the restrictinfo.
+ *
+ *	  Currently, we support hashjoin for binary opclauses where
+ *	  both operands are simple Vars and the operator is a hashjoinable
+ *	  operator.  (Note: since we are only examining clauses that were
+ *	  classified as joins, it is certain that the two Vars belong to
+ *	  different relations... if we accepted more general clause structures
+ *	  we might need to check that the two sides refer to different rels...)
  */
-static Oid
-hashjoinop(Expr *clause)
+static void
+check_hashjoinable(RestrictInfo *restrictinfo)
 {
+	Expr	   *clause = restrictinfo->clause;
 	Var		   *left,
 			   *right;
+	Oid			opno;
 
-	if (!is_opclause((Node *) clause))
-		return InvalidOid;
+	if (! is_opclause((Node *) clause))
+		return;
 
 	left = get_leftop(clause);
 	right = get_rightop(clause);
 
 	/* caution: is_opclause accepts more than I do, so check it */
-	if (!right)
-		return InvalidOid;		/* unary opclauses need not apply */
+	if (! right)
+		return;					/* unary opclauses need not apply */
 	if (!IsA(left, Var) || !IsA(right, Var))
-		return InvalidOid;
+		return;
 
-	return op_hashjoinable(((Oper *) clause->oper)->opno,
-						   left->vartype,
-						   right->vartype);
+	opno = ((Oper *) clause->oper)->opno;
+
+	if (op_hashjoinable(opno,
+						left->vartype,
+						right->vartype))
+	{
+		restrictinfo->hashjoinoperator = opno;
+	}
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.90 1999/08/09 06:20:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.91 1999/08/16 02:17:41 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1030,10 +1030,6 @@ _copyRelOptInfo(RelOptInfo *from)
 		newnode->indexkeys[len] = 0;
 	}
 
-	newnode->relam = from->relam;
-	newnode->indproc = from->indproc;
-	Node_Copy(from, newnode, indpred);
-
 	if (from->ordering)
 	{
 		for (len = 0; from->ordering[len] != 0; len++)
@@ -1043,6 +1039,10 @@ _copyRelOptInfo(RelOptInfo *from)
 			newnode->ordering[i] = from->ordering[i];
 		newnode->ordering[len] = 0;
 	}
+
+	newnode->relam = from->relam;
+	newnode->indproc = from->indproc;
+	Node_Copy(from, newnode, indpred);
 
 	Node_Copy(from, newnode, restrictinfo);
 	Node_Copy(from, newnode, joininfo);
@@ -1061,8 +1061,6 @@ _copyRelOptInfo(RelOptInfo *from)
 static void
 CopyPathFields(Path *from, Path *newnode)
 {
-	newnode->pathtype = from->pathtype;
-
 	/*
 	 * Modify the next line, since it causes the copying to cycle (i.e.
 	 * the parent points right back here! -- JMH, 7/7/92. Old version:
@@ -1072,32 +1070,9 @@ CopyPathFields(Path *from, Path *newnode)
 
 	newnode->path_cost = from->path_cost;
 
-	newnode->pathorder = makeNode(PathOrder);
-	newnode->pathorder->ordtype = from->pathorder->ordtype;
-	if (from->pathorder->ordtype == SORTOP_ORDER)
-	{
-		int			len,
-					i;
-		Oid		   *ordering = from->pathorder->ord.sortop;
-
-		if (ordering)
-		{
-			for (len = 0; ordering[len] != 0; len++)
-				;
-			newnode->pathorder->ord.sortop = (Oid *) palloc(sizeof(Oid) * (len + 1));
-			for (i = 0; i < len; i++)
-				newnode->pathorder->ord.sortop[i] = ordering[i];
-			newnode->pathorder->ord.sortop[len] = 0;
-		}
-	}
-	else
-		Node_Copy(from, newnode, pathorder->ord.merge);
+	newnode->pathtype = from->pathtype;
 
 	Node_Copy(from, newnode, pathkeys);
-
-	newnode->outerjoincost = from->outerjoincost;
-
-	newnode->joinid = listCopy(from->joinid);
 }
 
 /* ----------------
@@ -1135,32 +1110,20 @@ _copyIndexPath(IndexPath *from)
 	 */
 	newnode->indexid = listCopy(from->indexid);
 	Node_Copy(from, newnode, indexqual);
-
-	if (from->indexkeys)
-	{
-		int			i,
-					len;
-
-		for (len = 0; from->indexkeys[len] != 0; len++)
-			;
-		newnode->indexkeys = (int *) palloc(sizeof(int) * (len + 1));
-		for (i = 0; i < len; i++)
-			newnode->indexkeys[i] = from->indexkeys[i];
-		newnode->indexkeys[len] = 0;
-	}
+	newnode->joinrelids = listCopy(from->joinrelids);
 
 	return newnode;
 }
 
 /* ----------------
- *		CopyNestPathFields
+ *		CopyJoinPathFields
  *
- *		This function copies the fields of the NestPath node.  It is used by
- *		all the copy functions for classes which inherit from NestPath.
+ *		This function copies the fields of the JoinPath node.  It is used by
+ *		all the copy functions for classes which inherit from JoinPath.
  * ----------------
  */
 static void
-CopyNestPathFields(NestPath *from, NestPath *newnode)
+CopyJoinPathFields(JoinPath *from, JoinPath *newnode)
 {
 	Node_Copy(from, newnode, pathinfo);
 	Node_Copy(from, newnode, outerjoinpath);
@@ -1181,7 +1144,7 @@ _copyNestPath(NestPath *from)
 	 * ----------------
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
-	CopyNestPathFields(from, newnode);
+	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
 
 	return newnode;
 }
@@ -1200,7 +1163,7 @@ _copyMergePath(MergePath *from)
 	 * ----------------
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
-	CopyNestPathFields((NestPath *) from, (NestPath *) newnode);
+	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
 
 	/* ----------------
 	 *	copy the remainder of the node
@@ -1227,76 +1190,32 @@ _copyHashPath(HashPath *from)
 	 * ----------------
 	 */
 	CopyPathFields((Path *) from, (Path *) newnode);
-	CopyNestPathFields((NestPath *) from, (NestPath *) newnode);
+	CopyJoinPathFields((JoinPath *) from, (JoinPath *) newnode);
 
 	/* ----------------
 	 *	copy remainder of node
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, path_hashclauses);
-	Node_Copy(from, newnode, outerhashkeys);
-	Node_Copy(from, newnode, innerhashkeys);
 
 	return newnode;
 }
 
 /* ----------------
- *		_copyOrderKey
+ *		_copyPathKeyItem
  * ----------------
  */
-static OrderKey *
-_copyOrderKey(OrderKey *from)
+static PathKeyItem *
+_copyPathKeyItem(PathKeyItem *from)
 {
-	OrderKey   *newnode = makeNode(OrderKey);
+	PathKeyItem   *newnode = makeNode(PathKeyItem);
 
 	/* ----------------
 	 *	copy remainder of node
 	 * ----------------
 	 */
-	newnode->attribute_number = from->attribute_number;
-	newnode->array_index = from->array_index;
-
-	return newnode;
-}
-
-
-/* ----------------
- *		_copyJoinKey
- * ----------------
- */
-static JoinKey *
-_copyJoinKey(JoinKey *from)
-{
-	JoinKey    *newnode = makeNode(JoinKey);
-
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	Node_Copy(from, newnode, outer);
-	Node_Copy(from, newnode, inner);
-
-	return newnode;
-}
-
-/* ----------------
- *		_copyMergeOrder
- * ----------------
- */
-static MergeOrder *
-_copyMergeOrder(MergeOrder *from)
-{
-	MergeOrder *newnode = makeNode(MergeOrder);
-
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	newnode->join_operator = from->join_operator;
-	newnode->left_operator = from->left_operator;
-	newnode->right_operator = from->right_operator;
-	newnode->left_type = from->left_type;
-	newnode->right_type = from->right_type;
+	Node_Copy(from, newnode, key);
+	newnode->sortop = from->sortop;
 
 	return newnode;
 }
@@ -1315,79 +1234,12 @@ _copyRestrictInfo(RestrictInfo *from)
 	 * ----------------
 	 */
 	Node_Copy(from, newnode, clause);
-
 	newnode->selectivity = from->selectivity;
-
-	Node_Copy(from, newnode, indexids);
-	Node_Copy(from, newnode, mergejoinorder);
+	Node_Copy(from, newnode, subclauseindices);
+	newnode->mergejoinoperator = from->mergejoinoperator;
+	newnode->left_sortop = from->left_sortop;
+	newnode->right_sortop = from->right_sortop;
 	newnode->hashjoinoperator = from->hashjoinoperator;
-
-	return newnode;
-}
-
-/* ----------------
- *		CopyJoinMethodFields
- *
- *		This function copies the fields of the JoinMethod node.  It is used by
- *		all the copy functions for classes which inherit from JoinMethod.
- * ----------------
- */
-static void
-CopyJoinMethodFields(JoinMethod *from, JoinMethod *newnode)
-{
-	Node_Copy(from, newnode, jmkeys);
-	Node_Copy(from, newnode, clauses);
-	return;
-}
-
-/* ----------------
- *		_copyJoinMethod
- * ----------------
- */
-static JoinMethod *
-_copyJoinMethod(JoinMethod *from)
-{
-	JoinMethod *newnode = makeNode(JoinMethod);
-
-	CopyJoinMethodFields(from, newnode);
-
-	return newnode;
-}
-
-/* ----------------
- *		_copyHashInfo
- * ----------------
- */
-static HashInfo *
-_copyHashInfo(HashInfo *from)
-{
-	HashInfo   *newnode = makeNode(HashInfo);
-
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	CopyJoinMethodFields((JoinMethod *) from, (JoinMethod *) newnode);
-	newnode->hashop = from->hashop;
-
-	return newnode;
-}
-
-/* ----------------
- *		_copyMergeInfo
- * ----------------
- */
-static MergeInfo *
-_copyMergeInfo(MergeInfo *from)
-{
-	MergeInfo  *newnode = makeNode(MergeInfo);
-
-	/* ----------------
-	 *	copy remainder of node
-	 * ----------------
-	 */
-	CopyJoinMethodFields((JoinMethod *) from, (JoinMethod *) newnode);
-	Node_Copy(from, newnode, m_ordering);
 
 	return newnode;
 }
@@ -1407,9 +1259,6 @@ _copyJoinInfo(JoinInfo *from)
 	 */
 	newnode->unjoined_relids = listCopy(from->unjoined_relids);
 	Node_Copy(from, newnode, jinfo_restrictinfo);
-
-	newnode->mergejoinable = from->mergejoinable;
-	newnode->hashjoinable = from->hashjoinable;
 
 	return newnode;
 }
@@ -1756,26 +1605,11 @@ copyObject(void *from)
 		case T_HashPath:
 			retval = _copyHashPath(from);
 			break;
-		case T_OrderKey:
-			retval = _copyOrderKey(from);
-			break;
-		case T_JoinKey:
-			retval = _copyJoinKey(from);
-			break;
-		case T_MergeOrder:
-			retval = _copyMergeOrder(from);
+		case T_PathKeyItem:
+			retval = _copyPathKeyItem(from);
 			break;
 		case T_RestrictInfo:
 			retval = _copyRestrictInfo(from);
-			break;
-		case T_JoinMethod:
-			retval = _copyJoinMethod(from);
-			break;
-		case T_HashInfo:
-			retval = _copyHashInfo(from);
-			break;
-		case T_MergeInfo:
-			retval = _copyMergeInfo(from);
 			break;
 		case T_JoinInfo:
 			retval = _copyJoinInfo(from);

@@ -1,37 +1,63 @@
 Summary
 -------
 
-The optimizer generates optimial query plans by doing several steps:
+The optimizer generates optimal query plans by doing a more-or-less
+exhaustive search through the ways of executing the query.  During
+the planning/optimizing process, we build "Path" trees representing
+the different ways of doing a query.  We select the cheapest Path
+that generates the desired relation and turn it into a Plan to pass
+to the executor.  (There is pretty much a one-to-one correspondence
+between the Path and Plan trees, but Path nodes omit info that won't
+be needed during planning, and include info needed for planning that
+won't be needed by the executor.)
 
-1) Take each relation in a query, and make a RelOptInfo structure for
-it.  Find each way of accessing the relation, called a Path, including
-sequential and index scans, and add it to RelOptInfo.pathlist.  Also
-create RelOptInfo.joininfo that lists all the joins that involve this
-relation.  For example, the WHERE clause "tab1.col1 = tab2.col1"
-generates a JoinInfo for tab1 listing tab2 as an unjoined relation, and
-tab2's joininfo shows tab1 as an unjoined relation.
+The best Path tree is found by a recursive process:
 
-2) Join each RelOptInfo to other RelOptInfo as specified in
-RelOptInfo.joininfo.  At this point each RelOptInfo is a single
-relation, so you are joining every relation to the other relations as
-joined in the WHERE clause.
+1) Take each base relation in the query, and make a RelOptInfo structure
+for it.  Find each potentially useful way of accessing the relation,
+including sequential and index scans, and make a Path representing that
+way.  All the Paths made for a given relation are placed in its
+RelOptInfo.pathlist.  (Actually, we discard Paths that are obviously
+inferior alternatives before they ever get into the pathlist --- what
+ends up in the pathlist is the cheapest way of generating each potentially
+useful sort ordering of the relation.)  Also create RelOptInfo.joininfo
+nodes that list all the joins that involve this relation.  For example,
+the WHERE clause "tab1.col1 = tab2.col1" generates a JoinInfo for tab1
+listing tab2 as an unjoined relation, and also one for tab2 showing tab1
+as an unjoined relation.
 
-Joins occur using two RelOptInfos.  One is outer, the other inner. 
-Outers drive lookups of values in the inner.  In a nested loop, lookups
-of values in the inner occur by scanning to find each matching inner
-row.  In a mergejoin, inner and outer rows are ordered, and are accessed
-in order, so only one scan of inner is required to perform the entire
-join.  In a hashjoin, inner rows are hashed for lookups.
+2) Consider joining each RelOptInfo to each other RelOptInfo specified in
+its RelOptInfo.joininfo, and generate a Path for each possible join method.
+At this stage each input RelOptInfo is a single relation, so we are joining
+every relation to the other relations as joined in the WHERE clause.  We
+generate a new "join" RelOptInfo for each possible combination of two
+"base" RelOptInfos, and put all the plausible paths for that combination
+into the join RelOptInfo's pathlist.  (As before, we keep only the cheapest
+alternative that generates any one sort ordering of the result.)
 
-Each unique join combination becomes a new RelOptInfo.  The RelOptInfo
-is now the joining of two relations.  RelOptInfo.pathlist are various
-paths to create the joined result, having different orderings depending
-on the join method used.
+Joins always occur using two RelOptInfos.  One is outer, the other inner.
+Outers drive lookups of values in the inner.  In a nested loop, lookups of
+values in the inner occur by scanning the inner path once per outer tuple
+to find each matching inner row.  In a mergejoin, inner and outer rows are
+ordered, and are accessed in order, so only one scan is required to perform
+the entire join: both inner and outer paths are scanned in-sync.  (There's
+not a lot of difference between inner and outer in a mergejoin...)  In a
+hashjoin, the inner is scanned first and all its rows are entered in a
+hashtable, then the outer is scanned and for each row we lookup the join
+key in the hashtable.
 
-3) At this point, every RelOptInfo is joined to each other again, with
-a new relation added to each RelOptInfo.  This continues until all
-relations have been joined into one RelOptInfo, and the cheapest Path is
-chosen.
+A Path for a join relation is actually a tree structure, with the top
+Path node representing the join method.  It has left and right subpaths
+that represent the scan methods used for the two input relations.
+
+3) If we only had two base relations, we are done: we just pick the
+cheapest path for the join RelOptInfo.  If we had more than two, we now
+need to consider ways of joining join RelOptInfos to each other to make
+join RelOptInfos that represent more than two base relations.  This process
+is repeated until we have finally built a RelOptInfo that represents all
+the base relations in the query.  Then we pick its cheapest Path.
+
+For example:
 
     SELECT  *
     FROM    tab1, tab2, tab3, tab4
@@ -67,8 +93,11 @@ Optimizer Functions
 
 These directories take the Query structure returned by the parser, and
 generate a plan used by the executor.  The /plan directory generates the
-plan, the /path generates all possible ways to join the tables, and
-/prep handles special cases like inheritance.  /utils is utility stuff.
+actual output plan, the /path code generates all possible ways to join the
+tables, and /prep handles special cases like inheritance.  /util is utility
+stuff.  /geqo is the separate "genetic optimization" planner --- it does
+a semi-random search rather than exhaustively considering all possible
+join trees.
 
 planner()
  handle inheritance by processing separately
@@ -136,8 +165,8 @@ planner()
 
 
 
-Optimizer Structures
---------------------
+Optimizer Data Structures
+-------------------------
 
 RelOptInfo      - a relation or joined relations
 
@@ -145,9 +174,39 @@ RelOptInfo      - a relation or joined relations
  JoinInfo       - join clauses, including the relids needed for the join
 
  Path           - every way to generate a RelOptInfo(sequential,index,joins)
+  SeqScan	- a plain Path node with nodeTag = T_SeqScan
   IndexPath     - index scans
-  NestPath      - nested joins
+  NestPath      - nested-loop joins
   MergePath     - merge joins
   HashPath      - hash joins
 
- PathOrder      - every ordering type (sort, merge of relations)
+ PathKeys	- a data structure representing the ordering of a path
+
+The optimizer spends a good deal of its time worrying about the ordering
+of the tuples returned by a path.  The reason this is useful is that by
+knowing the sort ordering of a path, we may be able to use that path as
+the left or right input of a mergejoin and avoid an explicit sort step.
+Nestloops and hash joins don't really care what the order of their inputs
+is, but mergejoin needs suitably ordered inputs.  Therefore, all paths
+generated during the optimization process are marked with their sort order
+(to the extent that it is known) for possible use by a higher-level merge.
+
+It is also possible to avoid an explicit sort step to implement a user's
+ORDER BY clause if the final path has the right ordering already.
+Currently, this is not very well implemented: we avoid generating a
+redundant sort if the chosen path has the desired order, but we do not do
+anything to encourage the selection of such a path --- so we only avoid the
+sort if the path that would be chosen anyway (because it is cheapest
+without regard to its ordering) is properly sorted.  The path winnowing
+process needs to be aware of the desired output order and account for the
+cost of doing an explicit sort while it is choosing the best path.
+
+When we are generating paths for a particular RelOptInfo, we discard a path
+if it is more expensive than another known path that has the same or better
+sort order.  We will never discard a path that is the only known way to
+achieve a given sort order.  In this way, the next level up will have the
+maximum freedom to build mergejoins without sorting, since it can pick from
+any of the paths retained for its inputs.
+
+See path/pathkeys.c for an explanation of the PathKeys data structure that
+represents what is known about the sort order of a particular Path.

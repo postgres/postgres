@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.23 1999/07/17 20:17:09 momjian Exp $
+ * $Id: geqo_misc.c,v 1.24 1999/08/16 02:17:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,10 @@
 
 
 #include "postgres.h"
+
 #include "optimizer/geqo_misc.h"
+#include "nodes/print.h"
+
 
 static float avg_pool(Pool *pool);
 
@@ -213,32 +216,14 @@ geqo_print_path(Query *root, Path *path, int indent)
 		int			size = path->parent->size;
 		int			relid = lfirsti(path->parent->relids);
 
-		printf("%s(%d) size=%d cost=%f",
+		printf("%s(%d) size=%d cost=%f\n",
 			   ptype, relid, size, path->path_cost);
 
-		if (nodeTag(path) == T_IndexPath)
+		if (IsA(path, IndexPath))
 		{
-			List	   *k,
-					   *l;
-
-			printf(" pathkeys=");
-			foreach(k, path->pathkeys)
-			{
-				printf("(");
-				foreach(l, lfirst(k))
-				{
-					Var		   *var = lfirst(l);
-
-					printf("%d.%d", var->varnoold, var->varoattno);
-					if (lnext(l))
-						printf(", ");
-				}
-				printf(")");
-				if (lnext(k))
-					printf(", ");
-			}
+			printf("  pathkeys=");
+			print_pathkeys(path->pathkeys, root->rtable);
 		}
-		printf("\n");
 	}
 }
 

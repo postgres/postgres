@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.92 1999/08/09 06:20:24 momjian Exp $
+ *	$Id: outfuncs.c,v 1.93 1999/08/16 02:17:42 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -884,44 +884,12 @@ _outRowMark(StringInfo str, RowMark *node)
  *	Path is a subclass of Node.
  */
 static void
-_outPathOrder(StringInfo str, PathOrder *node)
-{
-	appendStringInfo(str, " PATHORDER :ordtype %d ",
-					 node->ordtype);
-	if (node->ordtype == SORTOP_ORDER)
-	{
-		int			i;
-
-		appendStringInfo(str, " :sortop ");
-		if (node->ord.sortop == NULL)
-			appendStringInfo(str, "<>");
-		else
-		{
-			for (i = 0; node->ord.sortop[i] != 0; i++)
-				appendStringInfo(str, " %d ", node->ord.sortop[i]);
-			appendStringInfo(str, " %d ", 0);
-		}
-	}
-	else
-	{
-		appendStringInfo(str, " :merge ");
-		_outNode(str, node->ord.merge);
-	}
-}
-
-/*
- *	Path is a subclass of Node.
- */
-static void
 _outPath(StringInfo str, Path *node)
 {
 	appendStringInfo(str, " PATH :pathtype %d :cost %f :pathkeys ",
 					 node->pathtype,
 					 node->path_cost);
 	_outNode(str, node->pathkeys);
-
-	appendStringInfo(str, " :pathorder ");
-	_outNode(str, node->pathorder);
 }
 
 /*
@@ -936,14 +904,14 @@ _outIndexPath(StringInfo str, IndexPath *node)
 					 node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
 
-	appendStringInfo(str, " :pathorder ");
-	_outNode(str, node->path.pathorder);
-
 	appendStringInfo(str, " :indexid ");
 	_outIntList(str, node->indexid);
 
 	appendStringInfo(str, " :indexqual ");
 	_outNode(str, node->indexqual);
+
+	appendStringInfo(str, " :joinrelids ");
+	_outIntList(str, node->joinrelids);
 }
 
 /*
@@ -958,9 +926,6 @@ _outNestPath(StringInfo str, NestPath *node)
 					 node->path.path_cost);
 	_outNode(str, node->path.pathkeys);
 
-	appendStringInfo(str, " :pathorder ");
-	_outNode(str, node->path.pathorder);
-
 	appendStringInfo(str, " :pathinfo ");
 	_outNode(str, node->pathinfo);
 
@@ -970,11 +935,9 @@ _outNestPath(StringInfo str, NestPath *node)
 	 */
 
 	appendStringInfo(str,
-					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x :outjoincost %f :joinid ",
+					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x ",
 					 (int) node->outerjoinpath,
-					 (int) node->innerjoinpath,
-					 node->path.outerjoincost);
-	_outIntList(str, node->path.joinid);
+					 (int) node->innerjoinpath);
 }
 
 /*
@@ -989,9 +952,6 @@ _outMergePath(StringInfo str, MergePath *node)
 					 node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.pathkeys);
 
-	appendStringInfo(str, " :pathorder ");
-	_outNode(str, node->jpath.path.pathorder);
-
 	appendStringInfo(str, " :pathinfo ");
 	_outNode(str, node->jpath.pathinfo);
 
@@ -1001,11 +961,9 @@ _outMergePath(StringInfo str, MergePath *node)
 	 */
 
 	appendStringInfo(str,
-					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x :outerjoincost %f :joinid ",
+					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x ",
 					 (int) node->jpath.outerjoinpath,
-					 (int) node->jpath.innerjoinpath,
-					 (int) node->jpath.path.outerjoincost);
-	_outIntList(str, node->jpath.path.joinid);
+					 (int) node->jpath.innerjoinpath);
 
 	appendStringInfo(str, " :path_mergeclauses ");
 	_outNode(str, node->path_mergeclauses);
@@ -1029,9 +987,6 @@ _outHashPath(StringInfo str, HashPath *node)
 					 node->jpath.path.path_cost);
 	_outNode(str, node->jpath.path.pathkeys);
 
-	appendStringInfo(str, " :pathorder ");
-	_outNode(str, node->jpath.path.pathorder);
-
 	appendStringInfo(str, " :pathinfo ");
 	_outNode(str, node->jpath.pathinfo);
 
@@ -1041,64 +996,23 @@ _outHashPath(StringInfo str, HashPath *node)
 	 */
 
 	appendStringInfo(str,
-					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x :outerjoincost %f :joinid ",
+					 " :outerjoinpath @ 0x%x :innerjoinpath @ 0x%x ",
 					 (int) node->jpath.outerjoinpath,
-					 (int) node->jpath.innerjoinpath,
-					 node->jpath.path.outerjoincost);
-	_outIntList(str, node->jpath.path.joinid);
+					 (int) node->jpath.innerjoinpath);
 
 	appendStringInfo(str, " :path_hashclauses ");
 	_outNode(str, node->path_hashclauses);
-
-	appendStringInfo(str, " :outerhashkeys ");
-	_outNode(str, node->outerhashkeys);
-
-	appendStringInfo(str, " :innerhashkeys ");
-	_outNode(str, node->innerhashkeys);
 }
 
 /*
- *	OrderKey is a subclass of Node.
+ *	PathKeyItem is a subclass of Node.
  */
 static void
-_outOrderKey(StringInfo str, OrderKey *node)
+_outPathKeyItem(StringInfo str, PathKeyItem *node)
 {
-	appendStringInfo(str,
-					 " ORDERKEY :attribute_number %d :array_index %d ",
-					 node->attribute_number,
-					 node->array_index);
-}
-
-/*
- *	JoinKey is a subclass of Node.
- */
-static void
-_outJoinKey(StringInfo str, JoinKey *node)
-{
-	appendStringInfo(str, " JOINKEY :outer ");
-	_outNode(str, node->outer);
-
-	appendStringInfo(str, " :inner ");
-	_outNode(str, node->inner);
-
-}
-
-/*
- *	MergeOrder is a subclass of Node.
- */
-static void
-_outMergeOrder(StringInfo str, MergeOrder *node)
-{
-	appendStringInfo(str,
-	" MERGEORDER :join_operator %u :left_operator %u :right_operator %u ",
-					 node->join_operator,
-					 node->left_operator,
-					 node->right_operator);
-
-	appendStringInfo(str,
-					 " :left_type %u :right_type %u ",
-					 node->left_type,
-					 node->right_type);
+	appendStringInfo(str, " PATHKEYITEM :sortop %u :key ",
+					 node->sortop);
+	_outNode(str, node->key);
 }
 
 /*
@@ -1111,41 +1025,14 @@ _outRestrictInfo(StringInfo str, RestrictInfo *node)
 	_outNode(str, node->clause);
 
 	appendStringInfo(str,
-					 " :selectivity %f :indexids ",
+					 " :selectivity %f :subclauseindices ",
 					 node->selectivity);
-	_outNode(str, node->indexids);
+	_outNode(str, node->subclauseindices);
 
-	appendStringInfo(str, " :mergejoinorder ");
-	_outNode(str, node->mergejoinorder);
-
+	appendStringInfo(str, " :mergejoinoperator %u ", node->mergejoinoperator);
+	appendStringInfo(str, " :left_sortop %u ", node->left_sortop);
+	appendStringInfo(str, " :right_sortop %u ", node->right_sortop);
 	appendStringInfo(str, " :hashjoinoperator %u ", node->hashjoinoperator);
-
-}
-
-/*
- *	JoinMethod is a subclass of Node.
- */
-static void
-_outJoinMethod(StringInfo str, JoinMethod *node)
-{
-	appendStringInfo(str, " JOINMETHOD :jmkeys ");
-	_outNode(str, node->jmkeys);
-
-	appendStringInfo(str, " :clauses ");
-	_outNode(str, node->clauses);
-}
-
-/*
- * HashInfo is a subclass of JoinMethod.
- */
-static void
-_outHashInfo(StringInfo str, HashInfo *node)
-{
-	appendStringInfo(str, " HASHINFO :hashop %u :jmkeys ", node->hashop);
-	_outNode(str, node->jmethod.jmkeys);
-
-	appendStringInfo(str, " :clauses ");
-	_outNode(str, node->jmethod.clauses);
 }
 
 /*
@@ -1159,10 +1046,6 @@ _outJoinInfo(StringInfo str, JoinInfo *node)
 
 	appendStringInfo(str, " :jinfo_restrictinfo ");
 	_outNode(str, node->jinfo_restrictinfo);
-
-	appendStringInfo(str, " :mergejoinable %s :hashjoinable %s ",
-					 node->mergejoinable ? "true" : "false",
-					 node->hashjoinable ? "true" : "false");
 }
 
 /*
@@ -1541,9 +1424,6 @@ _outNode(StringInfo str, void *obj)
 			case T_RowMark:
 				_outRowMark(str, obj);
 				break;
-			case T_PathOrder:
-				_outPathOrder(str, obj);
-				break;
 			case T_Path:
 				_outPath(str, obj);
 				break;
@@ -1559,23 +1439,11 @@ _outNode(StringInfo str, void *obj)
 			case T_HashPath:
 				_outHashPath(str, obj);
 				break;
-			case T_OrderKey:
-				_outOrderKey(str, obj);
-				break;
-			case T_JoinKey:
-				_outJoinKey(str, obj);
-				break;
-			case T_MergeOrder:
-				_outMergeOrder(str, obj);
+			case T_PathKeyItem:
+				_outPathKeyItem(str, obj);
 				break;
 			case T_RestrictInfo:
 				_outRestrictInfo(str, obj);
-				break;
-			case T_JoinMethod:
-				_outJoinMethod(str, obj);
-				break;
-			case T_HashInfo:
-				_outHashInfo(str, obj);
 				break;
 			case T_JoinInfo:
 				_outJoinInfo(str, obj);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.37 1999/07/17 20:17:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.38 1999/08/16 02:17:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,34 +318,29 @@ find_all_inheritors(Relids unexamined_relids,
 					Relids examined_relids)
 {
 	List	   *new_inheritors = NIL;
-	List	   *new_examined_relids = NIL;
-	List	   *new_unexamined_relids = NIL;
+	List	   *new_examined_relids;
+	List	   *new_unexamined_relids;
+	List	   *rels;
 
 	/*
 	 * Find all relations which inherit from members of
 	 * 'unexamined_relids' and store them in 'new_inheritors'.
 	 */
-	List	   *rels = NIL;
-	List	   *newrels = NIL;
-
 	foreach(rels, unexamined_relids)
 	{
-		newrels = (List *) LispUnioni(find_inheritance_children(lfirsti(rels)),
-									  newrels);
+		new_inheritors = LispUnioni(new_inheritors,
+									find_inheritance_children(lfirsti(rels)));
 	}
-	new_inheritors = newrels;
 
-	new_examined_relids = (List *) LispUnioni(examined_relids, unexamined_relids);
+	new_examined_relids = LispUnioni(examined_relids, unexamined_relids);
 	new_unexamined_relids = set_differencei(new_inheritors,
 											new_examined_relids);
 
-	if (new_unexamined_relids == NULL)
+	if (new_unexamined_relids == NIL)
 		return new_examined_relids;
 	else
-	{
-		return (find_all_inheritors(new_unexamined_relids,
-									new_examined_relids));
-	}
+		return find_all_inheritors(new_unexamined_relids,
+								   new_examined_relids);
 }
 
 /*

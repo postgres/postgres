@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.71 1999/08/09 06:20:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.72 1999/08/16 02:17:43 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1414,55 +1414,6 @@ _readRowMark()
 }
 
 /* ----------------
- *		_readPathOrder
- *
- *	PathOrder is part of Path and it's subclasses.
- * ----------------
- */
-static PathOrder *
-_readPathOrder()
-{
-	PathOrder  *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(PathOrder);
-
-	token = lsptok(NULL, &length);		/* get :ordtype */
-	token = lsptok(NULL, &length);		/* now read it */
-	local_node->ordtype = atol(token);
-
-	if (local_node->ordtype == SORTOP_ORDER)
-	{
-		token = lsptok(NULL, &length);	/* get :sortop */
-
-		if (length == 0)
-			local_node->ord.sortop = NULL;
-		else
-		{
-			int			i = -1;
-
-			local_node->ord.sortop = palloc(sizeof(Oid) * (INDEX_MAX_KEYS + 1));
-
-			do
-			{
-				i++;
-				Assert(i <= INDEX_MAX_KEYS);
-				token = lsptok(NULL, &length);	/* now read it */
-				local_node->ord.sortop[i] = strtoul(token, NULL, 10);
-			} while (local_node->ord.sortop[i] != 0);
-		}
-	}
-	else
-	{
-		token = lsptok(NULL, &length);	/* get :merge */
-		local_node->ord.merge = nodeRead(true); /* now read it */
-	}
-
-	return local_node;
-}
-
-/* ----------------
  *		_readPath
  *
  *	Path is a subclass of Node.
@@ -1484,9 +1435,6 @@ _readPath()
 	token = lsptok(NULL, &length);		/* get :cost */
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path_cost = (Cost) atof(token);
-
-	token = lsptok(NULL, &length);		/* get :pathorder */
-	local_node->pathorder = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->pathkeys = nodeRead(true);		/* now read it */
@@ -1517,9 +1465,6 @@ _readIndexPath()
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathorder */
-	local_node->path.pathorder = nodeRead(true);		/* now read it */
-
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
 
@@ -1528,6 +1473,9 @@ _readIndexPath()
 
 	token = lsptok(NULL, &length);		/* get :indexqual */
 	local_node->indexqual = nodeRead(true);		/* now read it */
+
+	token = lsptok(NULL, &length);		/* get :joinrelids */
+	local_node->joinrelids = toIntList(nodeRead(true));
 
 	return local_node;
 }
@@ -1545,7 +1493,6 @@ _readNestPath()
 	char	   *token;
 	int			length;
 
-
 	local_node = makeNode(NestPath);
 
 	token = lsptok(NULL, &length);		/* get :pathtype */
@@ -1555,9 +1502,6 @@ _readNestPath()
 	token = lsptok(NULL, &length);		/* get :cost */
 	token = lsptok(NULL, &length);		/* now read it */
 	local_node->path.path_cost = (Cost) atof(token);
-
-	token = lsptok(NULL, &length);		/* get :pathorder */
-	local_node->path.pathorder = nodeRead(true);		/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->path.pathkeys = nodeRead(true); /* now read it */
@@ -1584,14 +1528,6 @@ _readNestPath()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	local_node->innerjoinpath = NULL;
-
-	token = lsptok(NULL, &length);		/* get :outerjoincost */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->path.outerjoincost = (Cost) atof(token);
-
-	token = lsptok(NULL, &length);		/* get :joinid */
-	local_node->path.joinid = toIntList(nodeRead(true));		/* now read it */
 
 	return local_node;
 }
@@ -1621,9 +1557,6 @@ _readMergePath()
 
 	local_node->jpath.path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathorder */
-	local_node->jpath.path.pathorder = nodeRead(true);	/* now read it */
-
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
@@ -1649,14 +1582,6 @@ _readMergePath()
 	token = lsptok(NULL, &length);		/* now read it */
 
 	local_node->jpath.innerjoinpath = NULL;
-
-	token = lsptok(NULL, &length);		/* get :outerjoincost */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->jpath.path.outerjoincost = (Cost) atof(token);
-
-	token = lsptok(NULL, &length);		/* get :joinid */
-	local_node->jpath.path.joinid = toIntList(nodeRead(true));	/* now read it */
 
 	token = lsptok(NULL, &length);		/* get :path_mergeclauses */
 	local_node->path_mergeclauses = nodeRead(true);		/* now read it */
@@ -1695,9 +1620,6 @@ _readHashPath()
 
 	local_node->jpath.path.path_cost = (Cost) atof(token);
 
-	token = lsptok(NULL, &length);		/* get :pathorder */
-	local_node->jpath.path.pathorder = nodeRead(true);	/* now read it */
-
 	token = lsptok(NULL, &length);		/* get :pathkeys */
 	local_node->jpath.path.pathkeys = nodeRead(true);	/* now read it */
 
@@ -1724,116 +1646,34 @@ _readHashPath()
 
 	local_node->jpath.innerjoinpath = NULL;
 
-	token = lsptok(NULL, &length);		/* get :outerjoincost */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->jpath.path.outerjoincost = (Cost) atof(token);
-
-	token = lsptok(NULL, &length);		/* get :joinid */
-	local_node->jpath.path.joinid = toIntList(nodeRead(true));	/* now read it */
-
 	token = lsptok(NULL, &length);		/* get :path_hashclauses */
 	local_node->path_hashclauses = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :outerhashkeys */
-	local_node->outerhashkeys = nodeRead(true); /* now read it */
-
-	token = lsptok(NULL, &length);		/* get :innerhashkeys */
-	local_node->innerhashkeys = nodeRead(true); /* now read it */
-
 	return local_node;
 }
 
 /* ----------------
- *		_readOrderKey
+ *		_readPathKeyItem
  *
- *	OrderKey is a subclass of Node.
+ *	PathKeyItem is a subclass of Node.
  * ----------------
  */
-static OrderKey *
-_readOrderKey()
+static PathKeyItem *
+_readPathKeyItem()
 {
-	OrderKey   *local_node;
+	PathKeyItem *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(OrderKey);
+	local_node = makeNode(PathKeyItem);
 
-	token = lsptok(NULL, &length);		/* get :attribute_number */
+	token = lsptok(NULL, &length);		/* get :sortop */
 	token = lsptok(NULL, &length);		/* now read it */
 
-	local_node->attribute_number = atoi(token);
+	local_node->sortop = atol(token);
 
-	token = lsptok(NULL, &length);		/* get :array_index */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->array_index = strtoul(token, NULL, 10);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readJoinKey
- *
- *	JoinKey is a subclass of Node.
- * ----------------
- */
-static JoinKey *
-_readJoinKey()
-{
-	JoinKey    *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(JoinKey);
-
-	token = lsptok(NULL, &length);		/* get :outer */
-	local_node->outer = nodeRead(true); /* now read it */
-
-	token = lsptok(NULL, &length);		/* get :inner */
-	local_node->inner = nodeRead(true); /* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readMergeOrder
- *
- *	MergeOrder is a subclass of Node.
- * ----------------
- */
-static MergeOrder *
-_readMergeOrder()
-{
-	MergeOrder *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(MergeOrder);
-	token = lsptok(NULL, &length);		/* get :join_operator */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->join_operator = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :left_operator */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->left_operator = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :right_operator */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->right_operator = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :left_type */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->left_type = atol(token);
-
-	token = lsptok(NULL, &length);		/* get :right_type */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->right_type = atol(token);
+	token = lsptok(NULL, &length);		/* get :key */
+	local_node->key = nodeRead(true);	/* now read it */
 
 	return local_node;
 }
@@ -1858,72 +1698,26 @@ _readRestrictInfo()
 
 	token = lsptok(NULL, &length);		/* get :selectivity */
 	token = lsptok(NULL, &length);		/* now read it */
-
 	local_node->selectivity = atof(token);
 
-	token = lsptok(NULL, &length);		/* get :indexids */
-	local_node->indexids = nodeRead(true);		/* now read it */
+	token = lsptok(NULL, &length);		/* get :subclauseindices */
+	local_node->subclauseindices = nodeRead(true);		/* now read it */
 
-	token = lsptok(NULL, &length);		/* get :mergejoinorder */
-	local_node->mergejoinorder = (MergeOrder *) nodeRead(true);
+	token = lsptok(NULL, &length);		/* get :mergejoinoperator */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->mergejoinoperator = atol(token);
+
+	token = lsptok(NULL, &length);		/* get :left_sortop */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->left_sortop = atol(token);
+
+	token = lsptok(NULL, &length);		/* get :right_sortop */
+	token = lsptok(NULL, &length);		/* now read it */
+	local_node->right_sortop = atol(token);
 
 	token = lsptok(NULL, &length);		/* get :hashjoinoperator */
 	token = lsptok(NULL, &length);		/* now read it */
-
 	local_node->hashjoinoperator = atol(token);
-
-	return local_node;
-}
-
-/* ----------------
- *		_readJoinMethod
- *
- *	JoinMethod is a subclass of Node.
- * ----------------
- */
-static JoinMethod *
-_readJoinMethod()
-{
-	JoinMethod *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(JoinMethod);
-
-	token = lsptok(NULL, &length);		/* get :jmkeys */
-	local_node->jmkeys = nodeRead(true);		/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :clauses */
-	local_node->clauses = nodeRead(true);		/* now read it */
-
-	return local_node;
-}
-
-/* ----------------
- *		_readHashInfo
- *
- * HashInfo is a subclass of JoinMethod.
- * ----------------
- */
-static HashInfo *
-_readHashInfo()
-{
-	HashInfo   *local_node;
-	char	   *token;
-	int			length;
-
-	local_node = makeNode(HashInfo);
-
-	token = lsptok(NULL, &length);		/* get :hashop */
-	token = lsptok(NULL, &length);		/* now read it */
-
-	local_node->hashop = strtoul(token, NULL, 10);
-
-	token = lsptok(NULL, &length);		/* get :jmkeys */
-	local_node->jmethod.jmkeys = nodeRead(true);		/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :clauses */
-	local_node->jmethod.clauses = nodeRead(true);		/* now read it */
 
 	return local_node;
 }
@@ -1948,20 +1742,6 @@ _readJoinInfo()
 
 	token = lsptok(NULL, &length);		/* get :jinfo_restrictinfo */
 	local_node->jinfo_restrictinfo = nodeRead(true);	/* now read it */
-
-	token = lsptok(NULL, &length);		/* get :mergejoinable */
-
-	if (!strncmp(token, "true", 4))
-		local_node->mergejoinable = true;
-	else
-		local_node->mergejoinable = false;
-
-	token = lsptok(NULL, &length);		/* get :hashjoinable */
-
-	if (!strncmp(token, "true", 4))
-		local_node->hashjoinable = true;
-	else
-		local_node->hashjoinable = false;
 
 	return local_node;
 }
@@ -2065,8 +1845,6 @@ parsePlanString(void)
 		return_value = _readTargetEntry();
 	else if (!strncmp(token, "RTE", length))
 		return_value = _readRangeTblEntry();
-	else if (!strncmp(token, "PATHORDER", length))
-		return_value = _readPathOrder();
 	else if (!strncmp(token, "PATH", length))
 		return_value = _readPath();
 	else if (!strncmp(token, "INDEXPATH", length))
@@ -2077,20 +1855,12 @@ parsePlanString(void)
 		return_value = _readMergePath();
 	else if (!strncmp(token, "HASHPATH", length))
 		return_value = _readHashPath();
-	else if (!strncmp(token, "ORDERKEY", length))
-		return_value = _readOrderKey();
-	else if (!strncmp(token, "JOINKEY", length))
-		return_value = _readJoinKey();
-	else if (!strncmp(token, "MERGEORDER", length))
-		return_value = _readMergeOrder();
-	else if (!strncmp(token, "RETRICTINFO", length))
+	else if (!strncmp(token, "PATHKEYITEM", length))
+		return_value = _readPathKeyItem();
+	else if (!strncmp(token, "RESTRICTINFO", length))
 		return_value = _readRestrictInfo();
-	else if (!strncmp(token, "JOINMETHOD", length))
-		return_value = _readJoinMethod();
 	else if (!strncmp(token, "JOININFO", length))
 		return_value = _readJoinInfo();
-	else if (!strncmp(token, "HASHINFO", length))
-		return_value = _readHashInfo();
 	else if (!strncmp(token, "ITER", length))
 		return_value = _readIter();
 	else if (!strncmp(token, "QUERY", length))

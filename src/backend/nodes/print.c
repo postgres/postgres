@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.31 1999/07/17 20:17:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/print.c,v 1.32 1999/08/16 02:17:43 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -204,7 +204,7 @@ print_expr(Node *expr, List *rtable)
 
 /*
  * print_pathkeys -
- *	  pathkeys list of list of Var's
+ *	  pathkeys list of list of PathKeyItems
  */
 void
 print_pathkeys(List *pathkeys, List *rtable)
@@ -220,9 +220,9 @@ print_pathkeys(List *pathkeys, List *rtable)
 		printf("(");
 		foreach(k, pathkey)
 		{
-			Node	   *var = lfirst(k);
+			PathKeyItem	*item = lfirst(k);
 
-			print_expr(var, rtable);
+			print_expr(item->key, rtable);
 			if (lnext(k))
 				printf(", ");
 		}

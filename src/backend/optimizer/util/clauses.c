@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.46 1999/08/12 04:32:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.47 1999/08/16 02:17:56 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -164,7 +164,7 @@ make_funcclause(Func *func, List *funcargs)
 {
 	Expr	   *expr = makeNode(Expr);
 
-	expr->typeOid = InvalidOid; /* assume type checking done */
+	expr->typeOid = func->functype;
 	expr->opType = FUNC_EXPR;
 	expr->oper = (Node *) func;
 	expr->args = funcargs;
@@ -414,43 +414,6 @@ NumRelids(Node *clause)
 
 	freeList(varno_list);
 	return result;
-}
-
-/*
- * is_joinable
- *
- * Returns t iff 'clause' is a valid join clause.
- *
- */
-bool
-is_joinable(Node *clause)
-{
-	Node	   *leftop,
-			   *rightop;
-
-	if (!is_opclause(clause))
-		return false;
-
-	leftop = (Node *) get_leftop((Expr *) clause);
-	rightop = (Node *) get_rightop((Expr *) clause);
-
-	if (!rightop)
-		return false;			/* unary opclauses need not apply */
-
-	/*
-	 * One side of the clause (i.e. left or right operands) must either be
-	 * a var node ...
-	 */
-	if (IsA(leftop, Var) || IsA(rightop, Var))
-		return true;
-
-	/*
-	 * ... or a func node.
-	 */
-	if (is_funcclause(leftop) || is_funcclause(rightop))
-		return true;
-
-	return false;
 }
 
 /*

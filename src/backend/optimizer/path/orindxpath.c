@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.31 1999/07/27 03:51:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.32 1999/08/16 02:17:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,12 +66,12 @@ create_or_index_paths(Query *root,
 		 * saved by create_index_paths().
 		 */
 		if (restriction_is_or_clause(clausenode) &&
-			clausenode->indexids)
+			clausenode->subclauseindices)
 		{
 			bool		all_indexable = true;
 			List	   *temp;
 
-			foreach(temp, clausenode->indexids)
+			foreach(temp, clausenode->subclauseindices)
 			{
 				if (lfirst(temp) == NIL)
 				{
@@ -94,7 +94,7 @@ create_or_index_paths(Query *root,
 				best_or_subclause_indices(root,
 										  rel,
 										  clausenode->clause->args,
-										  clausenode->indexids,
+										  clausenode->subclauseindices,
 										  &indexquals,
 										  &indexids,
 										  &cost,
@@ -102,20 +102,17 @@ create_or_index_paths(Query *root,
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
-				pathnode->path.pathorder = makeNode(PathOrder);
-				pathnode->path.pathorder->ordtype = SORTOP_ORDER;
-
 				/*
 				 * This is an IndexScan, but the overall result will consist
 				 * of tuples extracted in multiple passes (one for each
 				 * subclause of the OR), so the result cannot be claimed
 				 * to have any particular ordering.
 				 */
-				pathnode->path.pathorder->ord.sortop = NULL;
 				pathnode->path.pathkeys = NIL;
 
-				pathnode->indexqual = indexquals;
 				pathnode->indexid = indexids;
+				pathnode->indexqual = indexquals;
+				pathnode->joinrelids = NIL;	/* no join clauses here */
 				pathnode->path.path_cost = cost;
 				clausenode->selectivity = (Cost) selec;
 
