@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.40 2000/02/13 21:45:15 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/regress.sh,v 1.41 2000/02/15 03:30:57 thomas Exp $
 #
 if [ $# -eq 0 ]
 then
@@ -57,6 +57,7 @@ fi
 
 echo "=============== Notes...                              ================="
 echo "postmaster must already be running for the regression tests to succeed."
+echo "The time zone is set to PST8PDT for these tests by the client frontend."
 echo "Please report any apparent problems to ports@postgresql.org"
 echo "See regress/README for more information."
 echo ""
