@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.50 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.51 2002/04/19 23:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,10 +19,6 @@
 #include "catalog/indexing.h"
 #include "rewrite/rewriteSupport.h"
 #include "utils/syscache.h"
-
-#ifdef MULTIBYTE
-#include "mb/pg_wchar.h"
-#endif
 
 
 /*
@@ -37,35 +33,6 @@ IsDefinedRewriteRule(Oid owningRel, const char *ruleName)
 								0, 0);
 }
 
-/*
- * makeViewRetrieveRuleName
- *
- * Given a view name, returns the name for the associated ON SELECT rule.
- *
- * XXX this is not the only place in the backend that knows about the _RET
- * name-forming convention.
- */
-char *
-MakeRetrieveViewRuleName(const char *viewName)
-{
-	char	   *buf;
-	int			buflen,
-				maxlen;
-
-	buflen = strlen(viewName) + 5;
-	buf = palloc(buflen);
-	snprintf(buf, buflen, "_RET%s", viewName);
-	/* clip to less than NAMEDATALEN bytes, if necessary */
-#ifdef MULTIBYTE
-	maxlen = pg_mbcliplen(buf, strlen(buf), NAMEDATALEN - 1);
-#else
-	maxlen = NAMEDATALEN - 1;
-#endif
-	if (maxlen < buflen)
-		buf[maxlen] = '\0';
-
-	return buf;
-}
 
 /*
  * SetRelationRuleStatus

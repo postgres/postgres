@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.67 2002/04/18 20:01:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.68 2002/04/19 23:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 	{
 		List	   *tllist;
 		int			i;
-		char	   *expected_name;
 
 		/*
 		 * So there cannot be INSTEAD NOTHING, ...
@@ -265,15 +264,26 @@ DefineQueryRewrite(RuleStmt *stmt)
 		}
 
 		/*
-		 * ... and finally the rule must be named _RETviewname.
+		 * ... and finally the rule must be named _RETURN.
 		 */
-		expected_name = MakeRetrieveViewRuleName(event_obj->relname);
-		if (strcmp(expected_name, stmt->rulename) != 0)
+		if (strcmp(stmt->rulename, ViewSelectRuleName) != 0)
 		{
-			elog(ERROR, "view rule for \"%s\" must be named \"%s\"",
-				 event_obj->relname, expected_name);
+			/*
+			 * In versions before 7.3, the expected name was _RETviewname.
+			 * For backwards compatibility with old pg_dump output, accept
+			 * that and silently change it to _RETURN.  Since this is just
+			 * a quick backwards-compatibility hack, limit the number of
+			 * characters checked to a few less than NAMEDATALEN; this
+			 * saves having to worry about where a multibyte character might
+			 * have gotten truncated.
+			 */
+			if (strncmp(stmt->rulename, "_RET", 4) != 0 ||
+				strncmp(stmt->rulename + 4, event_obj->relname,
+						NAMEDATALEN - 4 - 4) != 0)
+				elog(ERROR, "view rule for \"%s\" must be named \"%s\"",
+					 event_obj->relname, ViewSelectRuleName);
+			stmt->rulename = pstrdup(ViewSelectRuleName);
 		}
-		pfree(expected_name);
 
 		/*
 		 * Are we converting a relation to a view?
@@ -418,9 +428,7 @@ setRuleCheckAsUser_walker(Node *node, Oid *context)
 /*
  * Rename an existing rewrite rule.
  *
- * There is not currently a user command to invoke this directly
- * (perhaps there should be).  But we need it anyway to rename the
- * ON SELECT rule associated with a view, when the view is renamed.
+ * This is unused code at the moment.
  */
 void
 RenameRewriteRule(Oid owningRel, const char *oldName,

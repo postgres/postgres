@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.22 2002/03/22 19:20:26 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/rules.sgml,v 1.23 2002/04/19 23:13:53 tgl Exp $ -->
 
 <Chapter Id="rules">
 <Title>The Rule System</Title>
@@ -289,7 +289,7 @@ CREATE VIEW myview AS SELECT * FROM mytab;
 
 <ProgramListing>
 CREATE TABLE myview (<Replaceable>same attribute list as for mytab</Replaceable>);
-CREATE RULE "_RETmyview" AS ON SELECT TO myview DO INSTEAD
+CREATE RULE "_RETURN" AS ON SELECT TO myview DO INSTEAD
     SELECT * FROM mytab;
 </ProgramListing>
     
@@ -517,7 +517,7 @@ SELECT shoelace.sl_name, shoelace.sl_avail,
     range table and checks if there are rules in <Filename>pg_rewrite</Filename>
     for any relation. When processing the range table entry for
     <Filename>shoelace</Filename> (the only one up to now) it finds the
-    rule <literal>_RETshoelace</literal> with the parse tree
+    <literal>_RETURN</literal> rule with the parse tree
 
 <ProgramListing>
 <emphasis>SELECT s.sl_name, s.sl_avail,
@@ -1494,7 +1494,7 @@ UPDATE shoelace_data SET
     Again it's an INSTEAD rule and the previous parse tree is trashed.
     Note that this query still uses the view <Filename>shoelace</Filename>.
     But the rule system isn't finished with this loop so it continues
-    and applies the rule <literal>_RETshoelace</literal> on it and we get
+    and applies the <literal>_RETURN</literal> rule on it and we get
 
 <ProgramListing>
 UPDATE shoelace_data SET

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.4 2002/04/19 16:36:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.5 2002/04/19 23:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,8 +40,6 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
-#include "rewrite/rewriteDefine.h"
-#include "rewrite/rewriteSupport.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -2813,19 +2811,6 @@ renamerel(Oid relid, const char *newrelname)
 	 */
 	if (relkind != RELKIND_INDEX)
 		TypeRename(oldrelname, namespaceId, newrelname);
-
-	/*
-	 * If it's a view, must also rename the associated ON SELECT rule.
-	 */
-	if (relkind == RELKIND_VIEW)
-	{
-		char	   *oldrulename,
-				   *newrulename;
-
-		oldrulename = MakeRetrieveViewRuleName(oldrelname);
-		newrulename = MakeRetrieveViewRuleName(newrelname);
-		RenameRewriteRule(relid, oldrulename, newrulename);
-	}
 
 	/*
 	 * Update rel name in any RI triggers associated with the relation.

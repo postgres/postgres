@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.34 2002/04/19 16:36:08 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_rule.sgml,v 1.35 2002/04/19 23:13:53 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -268,12 +268,12 @@ CREATE
     report an error because the query cycled too many times:
 
 <programlisting>
-CREATE RULE "_RETemp" AS
+CREATE RULE "_RETURN" AS
     ON SELECT TO emp
     DO INSTEAD 
 	SELECT * FROM toyemp;
 
-CREATE RULE "_RETtoyemp" AS
+CREATE RULE "_RETURN" AS
     ON SELECT TO toyemp
     DO INSTEAD 
 	SELECT * FROM emp;

@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.149 2002/04/18 20:01:10 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.150 2002/04/19 23:13:54 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -695,7 +695,7 @@ CREATE VIEW pg_rules AS \
         pg_get_ruledef(R.oid) AS definition \
     FROM (pg_rewrite R JOIN pg_class C ON (C.oid = R.ev_class)) \
         LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
-    WHERE R.rulename !~ '^_RET';
+    WHERE R.rulename != '_RETURN';
 
 CREATE VIEW pg_views AS \
     SELECT \

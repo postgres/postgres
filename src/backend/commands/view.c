@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.62 2002/04/15 05:22:03 tgl Exp $
+ *	$Id: view.c,v 1.63 2002/04/19 23:13:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,17 +99,14 @@ static RuleStmt *
 FormViewRetrieveRule(const RangeVar *view, Query *viewParse)
 {
 	RuleStmt   *rule;
-	char	   *rname;
 
 	/*
 	 * Create a RuleStmt that corresponds to the suitable rewrite rule
 	 * args for DefineQueryRewrite();
 	 */
-	rname = MakeRetrieveViewRuleName(view->relname);
-
 	rule = makeNode(RuleStmt);
 	rule->relation = copyObject((RangeVar *) view);
-	rule->rulename = pstrdup(rname);
+	rule->rulename = pstrdup(ViewSelectRuleName);
 	rule->whereClause = NULL;
 	rule->event = CMD_SELECT;
 	rule->instead = true;

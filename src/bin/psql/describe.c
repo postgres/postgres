@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.49 2002/04/11 20:00:08 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.50 2002/04/19 23:13:54 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -385,9 +385,9 @@ objectDescription(const char *object)
 	/* Rule description (ignore rules for views) */
 			 "UNION ALL\n"
 			 "  SELECT r.oid as oid, r.tableoid as tableoid,\n"
-	 "  CAST(r.rulename AS text) as name, CAST('%s' AS text) as object\n"
+			 "  CAST(r.rulename AS text) as name, CAST('%s' AS text) as object\n"
 			 "  FROM pg_rewrite r\n"
-			 "  WHERE r.rulename !~ '^_RET'\n"
+			 "  WHERE r.rulename != '_RETURN'\n"
 
 	/* Trigger description */
 			 "UNION ALL\n"
@@ -704,8 +704,8 @@ describeTableDetails(const char *name, bool desc)
 			sprintf(buf,
 					"SELECT r.rulename\n"
 					"FROM pg_rewrite r, pg_class c\n"
-					"WHERE c.relname='%s' AND c.oid = r.ev_class\n"
-					"AND r.rulename NOT LIKE '_RET%%'",
+					"WHERE c.relname = '%s' AND c.oid = r.ev_class\n"
+					"AND r.rulename != '_RETURN'",
 					name);
 			result = PSQLexec(buf);
 			if (!result)
