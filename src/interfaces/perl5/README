@@ -1,0 +1,105 @@
+#-------------------------------------------------------
+#
+# $Id: README,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+#
+# Copyright (c) 1997  Edmund Mergl
+#
+#-------------------------------------------------------
+
+DESCRIPTION:
+------------
+
+This is version 1.6 of pgsql_perl5 (previously called pg95perl5).
+
+Pgsql_perl5 is an interface between Larry Wall's language perl version 5 and the
+database PostgreSQL (previously Postgres95). This has been done by using the 
+Perl5 application programming interface for C extensions which calls the 
+Postgres programmer's interface LIBQ. Pgsql_perl5 tries to implement the LIBPQ-
+interface as close, as possible.
+
+You have the choice between two different interfaces: the old C-style like
+interface and a new one, using a more Perl-ish like style. The old style 
+has the benefit, that existing Libpq applications can easily be ported to 
+perl. The new style uses class packages and might be more familiar for C++-
+programmers.
+
+
+
+COPYRIGHT INFO
+--------------
+
+This Postgres-Perl interface is copyright 1996, 1997 Edmund Mergl. You are 
+free to use it for any purpose, commercial or noncommercial, provided 
+that if you redistribute the source code, this statement of copyright 
+remains attached.
+
+
+IF YOU HAVE PROBLEMS:
+---------------------
+
+Please send comments and bug-reports to <E.Mergl@bawue.de>
+
+Please include the output of perl -v,
+                         and perl -V,
+           the version of PostgreSQL,
+           and the version of pgsql_perl5
+in your bug-report.
+
+
+REQUIREMENTS:
+-------------
+
+  - perl5.003
+  - PostgreSQL-6.1
+
+
+PLATFORMS:
+----------
+
+  This release of pgsql_perl5 has been developed using Linux 2.0 with 
+  dynamic loading for the perl extensions. Let me know, if there are 
+  any problems with other platforms.
+
+
+INSTALLATION:
+-------------
+
+Using dynamic loading for perl extensions, the preferred method is to unpack
+the tar file outside the perl source tree. This assumes, that you already
+have installed perl5.
+
+The Makefile checks the environment variable POSTGRESHOME as well some 
+standard locations, to find the root directory of your Postgres installation.
+ 
+1.   perl Makefile.PL
+2.   make
+3.   make test
+4.   make install
+
+( 1. to 3. as normal user, not as root ! )
+
+
+TESTING:
+--------
+
+Run 'make test'.
+Note, that the user running this script must have been created with
+the access rights to create databases *AND* users ! Do not run this
+script as root !
+
+If you are using the shared library libpq.so, make sure, your dynamic loader 
+is able to find libpq.so. With Linux the command /sbin/ldconfig -v should tell 
+you, where it finds libpq.so. If not, you need to add an appropriate entry to 
+/etc/ld.so.conf or to the environment variable LD_LIBRARY_PATH.
+
+Some linux distributions (eg slackware) have an incomplete perl installation.
+If you have compile errors like "XS_VERSION_BOOTCHECK undeclared", make a
+          'find /usr/lib/perl5 -name XSUB.h -print'
+If this file is not present, you need to recompile and reinstall perl.
+
+
+---------------------------------------------------------------------------
+
+   Edmund Mergl <E.Mergl@bawue.de>                       April 29, 1997
+
+---------------------------------------------------------------------------

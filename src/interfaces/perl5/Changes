@@ -1,0 +1,58 @@
+Revision history for Perl extension Pg.
+
+1.0   Mar 24, 1995
+	- creation
+
+1.1   Jun  6, 1995
+	- Bug fix in PQgetline.
+
+1.1.1 Aug  5, 95
+	- adapted to postgres95-beta0.03
+	- Note: the libpq interface has changed completely !
+
+1.2.0 Oct 15, 1995
+        - adapted to Postgres95-1.0
+	- README updated
+	- doQuery() in Pg.pm now returns 0 upon success
+	- testlibpq.pl: added test for PQgetline()
+
+1.3.1 Oct 22, 1996
+        - adapted to Postgres95-1.08
+	- large-object interface added, thanks to
+	  Sven Verdoolaege (skimo@breughel.ufsia.ac.be)
+	- PQgetline() changed. This breaks old scripts !
+	- PQexec now returns in any case a valid pointer.
+	  This fixes the annoying message: 
+	  'res is not of type PGresultPtr at ...'
+	- testsuite completely rewritten, contains
+	  now examples for almost all functions
+	- resturn codes are now available as constants (PGRES_xxx)
+	- PQnotifies() works now
+	- enhanced doQuery()
+
+1.3.2  Nov 11, 1996
+        - adapted to Postgres95-1.09
+	- test.pl adapted to postgres95-1.0.9:
+	  PQputline expects now '\.' as last input
+	  and PQgetline outputs '\.' as last line.
+
+
+1.4.2  Nov 21, 1996
+	- added a more Perl-like syntax
+
+
+1.5.3  Jan  2, 1997
+	- adapted to PostgreSQL-6.0
+        - new functions PQconnectdb, PQuser
+        - changed name of method 'new' to 'setdb'
+
+
+1.5.4  Feb 12, 1997
+        - changed test.pl for large objects:
+          test only lo_import and lo_export
+
+1.6.0  Apr 29, 1997
+	- renamed to pgsql_perl5
+	- adapted to PostgreSQL-6.1
+	- test only functions, which are also
+	  tested in pgsql regression tests

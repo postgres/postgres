@@ -1,0 +1,343 @@
+#-------------------------------------------------------
+#
+# $Id: test.pl.oldstyle,v 1.1.1.1 1997/04/29 19:37:10 mergl Exp $
+#
+# Copyright (c) 1997  Edmund Mergl
+#
+#-------------------------------------------------------
+
+# Before `make install' is performed this script should be runnable with
+# `make test'. After `make install' it should work as `perl test.pl'
+
+######################### We start with some black magic to print on failure.
+
+BEGIN { $| = 1; print "1..60\n"; }
+END {print "not ok 1\n" unless $loaded;}
+use Pg;
+$loaded = 1;
+print "ok 1\n";
+
+######################### End of black magic.
+
+$dbmain = 'template1';
+$dbname = 'pgperltest';
+$trace  = '/tmp/pgtrace.out';
+$cnt    = 2;
+$DEBUG  = 0; # set this to 1 for traces
+
+$| = 1;
+
+######################### the following functions will be tested
+
+#	PQsetdb()
+#	PQdb()
+#	PQhost()
+#	PQport()
+#	PQfinish()
+#	PQstatus()
+#	PQerrorMessage()
+#	PQtrace()
+#	PQuntrace()
+#	PQexec()
+#	PQgetline()
+#	PQendcopy()
+#	PQputline()
+#	PQresultStatus()
+#	PQntuples()
+#	PQnfields()
+#	PQfname()
+#	PQfnumber()
+#	PQftype()
+#	PQfsize()
+#	PQcmdStatus()
+#	PQoidStatus()
+#	PQgetvalue()
+#	PQclear()
+#	PQprint()
+#	PQnotifies()
+#	PQlo_import()
+#	PQlo_export()
+#	PQlo_unlink()
+
+######################### the following functions will not be tested
+
+#	PQconnectdb()
+#	PQconndefaults()
+#	PQreset()
+#	PQoptions()
+#	PQtty()
+#	PQgetlength()
+#	PQgetisnull()
+#	PQprintTuples()
+#	PQlo_open()
+#	PQlo_close()
+#	PQlo_read()
+#	PQlo_write()
+#	PQlo_creat()
+#	PQlo_lseek()
+#	PQlo_tell()
+
+######################### handles error condition
+
+$SIG{PIPE} = sub { print "broken pipe\n" };
+
+######################### create and connect to test database
+# 2-4
+
+$conn = PQsetdb('', '', '', '', $dbmain);
+cmp_eq(PGRES_CONNECTION_OK, PQstatus($conn));
+
+# might fail if $dbname doesn't exist => don't check resultStatus
+$result = PQexec($conn, "DROP DATABASE $dbname");
+PQclear($result);
+
+$result = PQexec($conn, "CREATE DATABASE $dbname");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+PQclear($result);
+
+PQfinish($conn);
+
+$conn = PQsetdb('', '', '', '', $dbname);
+cmp_eq(PGRES_CONNECTION_OK, PQstatus($conn));
+
+######################### debug, PQtrace
+
+if ($DEBUG) {
+    open(TRACE, ">$trace") || die "can not open $trace: $!";
+    PQtrace($conn, TRACE);
+}
+
+######################### check PGconn
+# 5-8
+
+$db = PQdb($conn);
+cmp_eq($dbname, $db);
+
+$user = PQuser($conn);
+cmp_ne("", $user);
+
+$host = PQhost($conn);
+cmp_ne("", $host);
+
+$port = PQport($conn);
+cmp_ne("", $port);
+
+######################### create and insert into table
+# 9-20
+
+$result = PQexec($conn, "CREATE TABLE person (id int4, name char16)");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+cmp_eq("CREATE", PQcmdStatus($result));
+PQclear($result);
+
+for ($i = 1; $i <= 5; $i++) {
+    $result = PQexec($conn, "INSERT INTO person VALUES ($i, 'Edmund Mergl')");
+    cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+    cmp_ne(0, PQoidStatus($result));
+    PQclear($result);
+}
+
+######################### copy to stdout, PQgetline
+# 21-27
+
+$result = PQexec($conn, "COPY person TO STDOUT");
+cmp_eq(PGRES_COPY_OUT, PQresultStatus($result));
+PQclear($result);
+
+$i = 1;
+while (-1 != $ret) {
+    $ret = PQgetline($conn, $string, 256);
+    last if $string eq "\\.";
+    cmp_eq("$i	Edmund Mergl", $string);
+    $i++;
+}
+
+cmp_eq(0, PQendcopy($conn));
+
+######################### delete and copy from stdin, PQputline
+# 28-33
+
+$result = PQexec($conn, "BEGIN");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+PQclear($result);
+
+$result = PQexec($conn, "DELETE FROM person");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+cmp_eq("DELETE", PQcmdStatus($result));
+PQclear($result);
+
+$result = PQexec($conn, "COPY person FROM STDIN");
+cmp_eq(PGRES_COPY_IN, PQresultStatus($result));
+PQclear($result);
+
+for ($i = 1; $i <= 5; $i++) {
+    # watch the tabs and do not forget the newlines
+    PQputline($conn, "$i	Edmund Mergl\n");
+}
+PQputline($conn, "\\.\n");
+
+cmp_eq(0, PQendcopy($conn));
+
+$result = PQexec($conn, "END");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+PQclear($result);
+
+######################### select from person, PQgetvalue
+# 34-47
+
+$result = PQexec($conn, "SELECT * FROM person");
+cmp_eq(PGRES_TUPLES_OK, PQresultStatus($result));
+
+for ($k = 0; $k < PQnfields($result); $k++) {
+    $fname = PQfname($result, $k);
+    $ftype = PQftype($result, $k);
+    $fsize = PQfsize($result, $k);
+    if (0 == $k) {
+        cmp_eq("id", $fname);
+        cmp_eq(23, $ftype);
+        cmp_eq(4, $fsize);
+    } else { 
+        cmp_eq("name", $fname);
+        cmp_eq(20, $ftype);
+        cmp_eq(16, $fsize);
+    }
+    $fnumber = PQfnumber($result, $fname);
+    cmp_eq($k, $fnumber);
+}
+
+for ($k = 0; $k < PQntuples($result); $k++) {
+    $string = "";
+    for ($l = 0; $l < PQnfields($result); $l++) {
+        $string .= PQgetvalue($result, $k, $l) . " ";
+    }
+    $i = $k + 1;
+    cmp_eq("$i Edmund Mergl ", $string);
+}
+
+PQclear($result);
+
+######################### PQnotifies
+# 48-50
+
+if (! defined($pid = fork)) {
+    die "can not fork: $!";
+} elsif (! $pid) {
+    # i'm the child
+    sleep 2;
+    $conn = PQsetdb('', '', '', '', $dbname);
+    $result = PQexec($conn, "NOTIFY person");
+    PQclear($result);
+    PQfinish($conn);
+    exit;
+}
+
+$result = PQexec($conn, "LISTEN person");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+cmp_eq("LISTEN", PQcmdStatus($result));
+PQclear($result);
+
+while (1) {
+    $result = PQexec($conn, " ");
+    ($table, $pid) = PQnotifies($conn);
+    PQclear($result);
+    last if $pid;
+}
+
+cmp_eq("person", $table);
+
+######################### PQprint
+# 51-52
+
+$result = PQexec($conn, "SELECT name FROM person WHERE id = 2");
+cmp_eq(PGRES_TUPLES_OK, PQresultStatus($result));
+open(PRINT, "| read IN; read IN; if [ \"\$IN\" = \"myName Edmund Mergl\" ]; then echo \"ok $cnt\"; else echo \"not ok $cnt\"; fi ") || die "can not fork: $|";
+$cnt ++;
+PQprint(PRINT, $result, 0, 0, 0, 0, 1, 0, " ", "", "", "myName");
+PQclear($result);
+close(PRINT) || die "bad PRINT: $!";
+
+######################### PQlo_import, PQlo_export, PQlo_unlink
+# 53-59
+
+$filename = 'typemap';
+$cwd = `pwd`;
+chop $cwd;
+
+$result = PQexec($conn, "BEGIN");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+PQclear($result);
+
+$lobjOid = PQlo_import($conn, "$cwd/$filename");
+cmp_ne( 0, $lobjOid);
+
+cmp_ne(-1, PQlo_export($conn, $lobjOid, "/tmp/$filename"));
+
+cmp_eq(-s "$cwd/$filename", -s "/tmp/$filename");
+
+$result = PQexec($conn, "END");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+PQclear($result);
+
+cmp_ne(-1, PQlo_unlink($conn, $lobjOid));
+unlink "/tmp/$filename";
+
+######################### debug, PQuntrace
+
+if ($DEBUG) {
+    close(TRACE) || die "bad TRACE: $!";
+    PQuntrace($conn);
+}
+
+######################### disconnect and drop test database
+# 59-60
+
+PQfinish($conn);
+
+$conn = PQsetdb('', '', '', '', $dbmain);
+cmp_eq(PGRES_CONNECTION_OK, PQstatus($conn));
+
+$result = PQexec($conn, "DROP DATABASE $dbname");
+cmp_eq(PGRES_COMMAND_OK, PQresultStatus($result));
+PQclear($result);
+
+PQfinish($conn);
+
+######################### hopefully
+
+print "all tests passed.\n" if 61 == $cnt;
+
+######################### utility functions
+
+sub cmp_eq {
+
+    my $cmp = shift;
+    my $ret = shift;
+    my $msg;
+
+    if ("$cmp" eq "$ret") {
+	print "ok $cnt\n";
+    } else {
+        $msg = PQerrorMessage($conn);
+	print "not ok $cnt: $cmp, $ret\n$msg\n";
+        exit;
+    }
+    $cnt++;
+}
+
+sub cmp_ne {
+
+    my $cmp = shift;
+    my $ret = shift;
+    my $msg;
+
+    if ("$cmp" ne "$ret") {
+	print "ok $cnt\n";
+    } else {
+        $msg = PQerrorMessage($conn);
+	print "not ok $cnt: $cmp, $ret\n$msg\n";
+        exit;
+    }
+    $cnt++;
+}
+
+######################### EOF
