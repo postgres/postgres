@@ -10,7 +10,7 @@
    BEGIN WORK
   </REFNAME>
   <REFPURPOSE>
-   Begins a transaction
+   Begins a transaction in chained mode
   </REFPURPOSE>
   
   </refnamediv>
@@ -78,15 +78,31 @@ BEGIN [ WORK | TRANSACTION ]
    Description
   </TITLE>
   <para>
-   <command>BEGIN</command> initiates a user transaction
- which <productname>Postgres</productname> will
-   guarantee is serializable with respect to all concurrently
-   executing transactions. <productname>Postgres</productname> uses two-phase
- locking
-   to perform this task. If the transaction is committed,
-   <productname>Postgres</productname> will ensure either that all updates are
- done or else
-   that none of
+   By default, <productname>Postgres</productname> executes transactions
+   in unchained mode (also known as autocommit feature in other DBMSes).
+   In other words, each user statement is executed in its own transaction
+   and commit is implicit (if execution was successfull).
+   <command>BEGIN</command> initiates a user transaction in chained mode,
+   i.e. all user statements after <command>BEGIN</command> command will
+   be executed in single transaction untill explicit COMMIT, ROLLBACK
+   or execution abort. Statements in chained mode are executed much faster, 
+   because of transaction start/commit requires significant CPU and disk 
+   activity. This mode is also required for consistency when changing 
+   one of related tables.
+  </para>
+  <para>
+   Default transaction isolation level in <productname>Postgres</productname>
+   is READ COMMITTED one, when queries inside transaction see only changes
+   committed before query execution. So, you have to use 
+   <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
+   command just after BEGIN if you need in better transaction isolation. 
+   In SERIALIZABLE mode queries will see only changes committed before entire
+   transaction began (actually, before execution of first DML statement
+   in serializable transaction).
+  </para>
+  <para>
+   If the transaction is committed, <productname>Postgres</productname> 
+   will ensure either that all updates are done or else that none of
    them are done. Transactions have the standard ACID
    (atomic, consistent, isolatable, and durable) property.
   </para>
@@ -105,12 +121,12 @@ BEGIN [ WORK | TRANSACTION ]
 
    <PARA>
     Refer to the <command>LOCK</command> statement for further information
- about locking tables inside a transaction.
+    about locking tables inside a transaction.
    </PARA>
    
    <PARA>
     Use <command>COMMIT</command> or <command>ROLLBACK</command>
- to terminate a transaction.
+    to terminate a transaction.
    </PARA>
   </REFSECT2>
  </refsect1>
@@ -133,7 +149,7 @@ BEGIN WORK;
   </TITLE>
   <PARA>
     <command>BEGIN</command>
- is a <productname>Postgres</productname> language extension.
+    is a <productname>Postgres</productname> language extension.
   </para>
   <REFSECT2 ID="R2-SQL-BEGINWORK-4">
      <REFSECT2INFO>
@@ -144,9 +160,12 @@ BEGIN WORK;
    </TITLE>
    <PARA> 
     There is no explicit BEGIN WORK command in <acronym>SQL92</acronym>;
- transaction initiation
-    is always implicit and it terminates either with a COMMIT or with
-    a ROLLBACK statement.
+    transaction initiation is always implicit and it terminates either 
+    with a COMMIT or with a ROLLBACK statement.
+   </PARA>
+   <PARA>
+    <acronym>SQL92</acronym> also requires SERIALIZABLE to be default
+    transaction isolation level.
    </PARA>
   </refsect2>
  </refsect1>
