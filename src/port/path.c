@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.23 2004/07/11 21:34:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.24 2004/07/12 19:15:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,18 +88,17 @@ last_dir_separator(const char *filename)
 
 
 /*
- * make all paths look like unix, with forward slashes
- * also strip any trailing slash.
- *
- * The Windows command processor will accept suitably quoted paths
- * with forward slashes, but barfs badly with mixed forward and back
- * slashes. Removing the trailing slash on a path means we never get
- * ugly double slashes.  Don't remove a leading slash, though.
+ * Make all paths look like Unix
  */
 void
 canonicalize_path(char *path)
 {
 #ifdef WIN32
+	/*
+	 * The Windows command processor will accept suitably quoted paths
+	 * with forward slashes, but barfs badly with mixed forward and back
+	 * slashes.
+	 */
 	char	   *p;
 
 	for (p = path; *p; p++)
@@ -107,8 +106,19 @@ canonicalize_path(char *path)
 		if (*p == '\\')
 			*p = '/';
 	}
+	/*	In Win32, if you do:
+	 *		prog.exe "a b" "\c\d\"
+	 *	the system will pass \c\d" as argv[2].
+	 */
+	if (p > path && *(p-1) == '"')
+		*(p-1) = '/';
 #endif
 
+	/*
+	 *	Removing the trailing slash on a path means we never get
+	 *	ugly double slashes.  Don't remove a leading slash, though.
+	 *	Also, Win32 can't stat() a directory with a trailing slash.
+	 */
 	trim_trailing_separator(path);
 }
 
