@@ -4,7 +4,7 @@
 #    Makefile for utils/adt
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.24 1999/07/20 16:48:55 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/adt/Makefile,v 1.25 1999/07/22 18:30:08 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include ../../../Makefile.global
 
 CFLAGS += -I../..
 
-# seems to be required for some date/time stuff 07/19/1999 bjm
+# seems to be required for some date/time stuff 1999/07/22 bjm
 ifeq ($(CPU),alpha)
 ifeq ($(CC), gcc)
 CFLAGS+= -mieee
