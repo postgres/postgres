@@ -2658,7 +2658,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 				"WHERE ((c.relname = '" + tableName.toLowerCase() + "') " +
 				" AND (c.oid = x.indrelid) " +
 				" AND (i.oid = x.indexrelid) " +
-				" AND (c.relam = a.oid)) " +
+				" AND (i.relam = a.oid)) " +
 				"ORDER BY x.indisunique DESC, " +
 				" x.indisclustered, a.amname, i.relname");  
     while (r.next()) {
