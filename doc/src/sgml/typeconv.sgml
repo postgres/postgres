@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.41 2003/12/02 00:26:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/typeconv.sgml,v 1.42 2003/12/14 00:10:32 neilc Exp $
 -->
 
 <chapter Id="typeconv">
@@ -122,9 +122,9 @@ with, and perhaps converted to, the types of the target columns.
 </term>
 <listitem>
 <para>
-Since all query results from a unionized <literal>SELECT</literal> statement
+Since all query results from a unionized <command>SELECT</command> statement
 must appear in a single set of columns, the types of the results of each
-<literal>SELECT</> clause must be matched up and converted to a uniform set.
+<command>SELECT</> clause must be matched up and converted to a uniform set.
 Similarly, the branch expressions of a <literal>CASE</> construct must be
 converted to a common type so that the <literal>CASE</> expression as a whole
 has a known output type.  The same holds for <literal>ARRAY</> constructs.

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.29 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.30 2003/12/14 00:10:32 neilc Exp $
 -->
 
 <chapter id="maintenance">
@@ -87,7 +87,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.29 2003/11/29 19:51:37 pgsq
    of <command>VACUUM</> can run in parallel with normal database operations
    (selects, inserts, updates, deletes, but not changes to table definitions).
    Routine vacuuming is therefore not nearly as intrusive as it was in prior
-   releases, and it's not as critical to try to schedule it at low-usage
+   releases, and it is not as critical to try to schedule it at low-usage
    times of day.
   </para>
 
@@ -115,7 +115,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.29 2003/11/29 19:51:37 pgsq
     Clearly, a table that receives frequent updates or deletes will need
     to be vacuumed more often than tables that are seldom updated. It
     may be useful to set up periodic <application>cron</> tasks that
-    vacuum only selected tables, skipping tables that are known not to
+    <command>VACUUM</command> only selected tables, skipping tables that are known not to
     change often. This is only likely to be helpful if you have both
     large heavily-updated tables and large seldom-updated tables --- the
     extra cost of vacuuming a small table isn't enough to be worth
@@ -123,39 +123,69 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.29 2003/11/29 19:51:37 pgsq
    </para>
 
    <para>
-    The standard form of <command>VACUUM</> is best used with the goal of
-    maintaining a fairly level steady-state usage of disk space.  The standard
-    form finds old row versions and makes their space available for re-use within
-    the table, but it does not try very hard to shorten the table file and
-    return disk space to the operating system.  If you need to return disk
-    space to the operating system you can use <command>VACUUM FULL</> ---
-    but what's the point of releasing disk space that will only have to be
-    allocated again soon?  Moderately frequent standard <command>VACUUM</> runs
-    are a better approach than infrequent <command>VACUUM FULL</> runs for
-    maintaining heavily-updated tables.
+    There are two variants of the <command>VACUUM</command>
+    command. The first form, known as <quote>lazy vacuum</quote> or
+    just <command>VACUUM</command>, marks expired data in tables and
+    indexes for future reuse; it does <emphasis>not</emphasis> attempt
+    to reclaim the space used by this expired data
+    immediately. Therefore, the table file is not shortened, and any
+    unused space in the file is not returned to the operating
+    system. This variant of <command>VACUUM</command> can be run
+    concurrently with normal database operations.
+   </para>
+
+   <para>
+    The second form is the <command>VACUUM FULL</command>
+    command. This uses a more aggressive algorithm for reclaiming the
+    space consumed by expired row versions. Any space that is freed by
+    <command>VACUUM FULL</command> is immediately returned to the
+    operating system. Unfortunately, this variant of the
+    <command>VACUUM</command> command acquires an exclusive lock on
+    each table while <command>VACUUM FULL</command> is processing
+    it. Therefore, frequently using <command>VACUUM FULL</command> can
+    have an extremely negative effect on the performance of concurrent
+    database queries.
+   </para>
+
+   <para>
+    The standard form of <command>VACUUM</> is best used with the goal
+    of maintaining a fairly level steady-state usage of disk space. If
+    you need to return disk space to the operating system you can use
+    <command>VACUUM FULL</> --- but what's the point of releasing disk
+    space that will only have to be allocated again soon?  Moderately
+    frequent standard <command>VACUUM</> runs are a better approach
+    than infrequent <command>VACUUM FULL</> runs for maintaining
+    heavily-updated tables.
    </para>
 
    <para>
     Recommended practice for most sites is to schedule a database-wide
-    <command>VACUUM</> once a day at a low-usage time of day, supplemented
-    by more frequent vacuuming of heavily-updated tables if necessary.
-    (If you have multiple databases in a cluster, don't forget to
-    vacuum each one; the program <filename>vacuumdb</> may be helpful.)
-    Use plain <command>VACUUM</>, not <command>VACUUM FULL</>, for routine
+    <command>VACUUM</> once a day at a low-usage time of day,
+    supplemented by more frequent vacuuming of heavily-updated tables
+    if necessary. In fact, some installations with an extremely high
+    rate of data modification <command>VACUUM</command> some tables as
+    often as once very five minutes.  (If you have multiple databases
+    in a cluster, don't forget to <command>VACUUM</command> each one;
+    the program <filename>vacuumdb</> may be helpful.)
+   </para>
+
+   <para>
+    <command>VACUUM FULL</> is recommended for cases where you know
+    you have deleted the majority of rows in a table, so that the
+    steady-state size of the table can be shrunk substantially with
+    <command>VACUUM FULL</>'s more aggressive approach.  Use plain
+    <command>VACUUM</>, not <command>VACUUM FULL</>, for routine
     vacuuming for space recovery.
    </para>
 
    <para>
-    <command>VACUUM FULL</> is recommended for cases where you know you have
-    deleted the majority of rows in a table, so that the steady-state size
-    of the table can be shrunk substantially with <command>VACUUM FULL</>'s
-    more aggressive approach.
-   </para>
-
-   <para>
-    If you have a table whose contents are deleted completely every so often,
-    consider doing it with <command>TRUNCATE</> rather than using
-    <command>DELETE</> followed by <command>VACUUM</>.
+    If you have a table whose contents are deleted on a periodic
+    basis, consider doing it with <command>TRUNCATE</command> rather
+    than using <command>DELETE</command> followed by
+    <command>VACUUM</command>. <command>TRUNCATE</command> removes the
+    entire content of the table immediately, without recquiring a
+    subsequent <command>VACUUM</command> or <command>VACUUM
+    FULL</command> to reclaim the now-unused disk space.
    </para>
   </sect2>
 
@@ -319,7 +349,7 @@ $PostgreSQL: pgsql/doc/src/sgml/maintenance.sgml,v 1.29 2003/11/29 19:51:37 pgsq
     statistics in the system table <literal>pg_database</>.  In particular,
     the <literal>datfrozenxid</> column of a database's
     <literal>pg_database</> row is updated at the completion of any
-    database-wide vacuum operation (i.e., <command>VACUUM</> that does not
+    database-wide <command>VACUUM</command> operation (i.e., <command>VACUUM</> that does not
     name a specific table).  The value stored in this field is the freeze
     cutoff XID that was used by that <command>VACUUM</> command.  All normal
     XIDs older than this cutoff XID are guaranteed to have been replaced by
@@ -338,7 +368,7 @@ SELECT datname, age(datfrozenxid) FROM pg_database;
     With the standard freezing policy, the <literal>age</> column will start
     at one billion for a freshly-vacuumed database.  When the <literal>age</>
     approaches two billion, the database must be vacuumed again to avoid
-    risk of wraparound failures.  Recommended practice is to vacuum each
+    risk of wraparound failures.  Recommended practice is to <command>VACUUM</command> each
     database at least once every half-a-billion (500 million) transactions,
     so as to provide plenty of safety margin.  To help meet this rule,
     each database-wide <command>VACUUM</> automatically delivers a warning
@@ -366,7 +396,7 @@ VACUUM
     It should also be used to prepare any user-created databases that
     are to be marked <literal>datallowconn</> = <literal>false</> in
     <literal>pg_database</>, since there isn't any convenient way to
-    vacuum a database that you can't connect to. Note that
+    <command>VACUUM</command> a database that you can't connect to. Note that
     <command>VACUUM</command>'s automatic warning message about
     unvacuumed databases will ignore <literal>pg_database</> entries
     with <literal>datallowconn</> = <literal>false</>, so as to avoid
@@ -404,20 +434,22 @@ VACUUM
   </indexterm>
 
   <para>
-   It's a good idea to save the database server's log output somewhere,
-   rather than just routing it to <filename>/dev/null</>.  The log output
-   is invaluable when it comes time to diagnose problems.  However, the
-   log output tends to be voluminous (especially at higher debug levels)
-   and you won't want to save it indefinitely.  You need to <quote>rotate</>
-   the log files so that new log files are started and old ones thrown
-   away every so often.
+   It is a good idea to save the database server's log output
+   somewhere, rather than just routing it to <filename>/dev/null</>.
+   The log output is invaluable when it comes time to diagnose
+   problems.  However, the log output tends to be voluminous
+   (especially at higher debug levels) and you won't want to save it
+   indefinitely.  You need to <quote>rotate</> the log files so that
+   new log files are started and old ones removed after a reasonable
+   period of time.
   </para>
 
   <para>
    If you simply direct the <systemitem>stderr</> of the <command>postmaster</command> into a
    file, the only way to truncate the log file is to stop and restart
-   the <command>postmaster</command>. This may be OK for development setups but you won't
-   want to run a production server that way.
+   the <command>postmaster</command>. This may be OK if you are using
+   <productname>PostgreSQL</productname> in a development environment,
+   but few production servers would find this behavior acceptable.
   </para>
 
   <para>
@@ -444,14 +476,16 @@ VACUUM
    <command>pg_ctl</>, then the <systemitem>stderr</> of the <command>postmaster</command>
    is already redirected to <systemitem>stdout</>, so you just need a
    pipe command:
-   
+
 <programlisting>
 pg_ctl start | logrotate
 </programlisting>
 
-   The <productname>PostgreSQL</> distribution doesn't include a suitable
-   log rotation program, but there are many available on the Internet;
-   one is included in the Apache distribution, for example.
+   The <productname>PostgreSQL</> distribution doesn't include a
+   suitable log rotation program, but there are many available on the
+   Internet. For example, the <application>logrotate</application>
+   tool included in the <productname>Apache</productname> distribution
+   can be used with <productname>PostgreSQL</productname>.
   </para>
  </sect1>
 </chapter>

@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.21 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.22 2003/12/14 00:10:32 neilc Exp $
 -->
 
  <chapter id="plperl">
@@ -152,7 +152,7 @@ SELECT name, empcomp(employee) FROM employee;
   <para>
    The argument values supplied to a PL/Perl function's code are
    simply the input arguments converted to text form (just as if they
-   had been displayed by a <literal>SELECT</literal> statement).
+   had been displayed by a <command>SELECT</command> statement).
    Conversely, the <literal>return</> command will accept any string
    that is acceptable input format for the function's declared return
    type.  So, the PL/Perl programmer can manipulate data values as if

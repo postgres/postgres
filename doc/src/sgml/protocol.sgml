@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.48 2003/11/29 19:51:37 pgsql Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/protocol.sgml,v 1.49 2003/12/14 00:10:32 neilc Exp $ -->
 
 <chapter id="protocol">
  <title>Frontend/Backend Protocol</title>
@@ -200,13 +200,13 @@
   <para>
    This section describes the message flow and the semantics of each
    message type.  (Details of the exact representation of each message
-   appear in <xref linkend="protocol-message-formats">.)
-   There are several different sub-protocols
-   depending on the state of the connection: start-up,
-   query, function call, COPY, and termination.  There are also special
-   provisions for asynchronous operations (including
-   notification responses and command cancellation),
-   which can occur at any time after the start-up phase.
+   appear in <xref linkend="protocol-message-formats">.)  There are
+   several different sub-protocols depending on the state of the
+   connection: start-up, query, function call,
+   <command>COPY</command>, and termination.  There are also special
+   provisions for asynchronous operations (including notification
+   responses and command cancellation), which can occur at any time
+   after the start-up phase.
   </para>
 
   <sect2>
@@ -989,15 +989,17 @@
    </para>
 
    <para>
-    ParameterStatus messages will be generated whenever the active value
-    changes for any of the parameters the backend believes the frontend
-    should know about.  Most commonly this occurs in response to a
-    <command>SET</> SQL command executed by the frontend, and this case
-    is effectively synchronous --- but it is also possible for parameter
-    status changes to occur because the administrator changed a configuration
-    file and then sent the <systemitem>SIGHUP</systemitem> signal to the postmaster.  Also, if a SET command is
-    rolled back, an appropriate ParameterStatus message will be generated
-    to report the current effective value.
+    ParameterStatus messages will be generated whenever the active
+    value changes for any of the parameters the backend believes the
+    frontend should know about.  Most commonly this occurs in response
+    to a <command>SET</> SQL command executed by the frontend, and
+    this case is effectively synchronous --- but it is also possible
+    for parameter status changes to occur because the administrator
+    changed a configuration file and then sent the
+    <systemitem>SIGHUP</systemitem> signal to the postmaster.  Also,
+    if a <command>SET</command> command is rolled back, an appropriate
+    ParameterStatus message will be generated to report the current
+    effective value.
    </para>
 
    <para>
@@ -1129,46 +1131,53 @@
    <para>
     For either normal or abnormal termination, any open transaction is
     rolled back, not committed.  One should note however that if a
-    frontend disconnects while a non-SELECT query is being processed,
-    the backend will probably finish the query before noticing the
-    disconnection.
-    If the query is outside any transaction block (<command>BEGIN</>
-    ... <command>COMMIT</> sequence) then its results may be committed
-    before the disconnection is recognized.
+    frontend disconnects while a non-<command>SELECT</command> query
+    is being processed, the backend will probably finish the query
+    before noticing the disconnection.  If the query is outside any
+    transaction block (<command>BEGIN</> ... <command>COMMIT</>
+    sequence) then its results may be committed before the
+    disconnection is recognized.
    </para>
   </sect2>
 
   <Sect2>
-   <Title>SSL Session Encryption</Title>
+   <Title><acronym>SSL</acronym> Session Encryption</Title>
 
    <Para>
-    If <productname>PostgreSQL</> was built with SSL support, frontend/backend
-    communications can be encrypted using SSL.  This provides communication
-    security in environments where attackers might be able to capture the
-    session traffic.
+    If <productname>PostgreSQL</> was built with
+    <acronym>SSL</acronym> support, frontend/backend communications
+    can be encrypted using <acronym>SSL</acronym>.  This provides
+    communication security in environments where attackers might be
+    able to capture the session traffic. For more information on
+    encrypting <productname>PostgreSQL</productname> sessions with
+    <acronym>SSL</acronym>, see <xref linkend="ssl-tcp">.
    </para>
 
    <para>
-    To initiate an SSL-encrypted connection, the frontend initially sends
-    an SSLRequest message rather than a StartupMessage.  The server then
-    responds with a single byte containing <literal>S</> or <literal>N</>,
-    indicating that it is willing or unwilling to perform SSL, respectively.
-    The frontend may close the connection at this point if it is dissatisfied
-    with the response.  To continue after <literal>S</>, perform an SSL
-    startup handshake (not described here, part of the SSL specification)
-    with the server.  If this is successful, continue with
-    sending the usual StartupMessage.  In this case the StartupMessage and
-    all subsequent data will be SSL-encrypted.  To continue after
+    To initiate an <acronym>SSL</acronym>-encrypted connection, the
+    frontend initially sends an SSLRequest message rather than a
+    StartupMessage.  The server then responds with a single byte
+    containing <literal>S</> or <literal>N</>, indicating that it is
+    willing or unwilling to perform <acronym>SSL</acronym>,
+    respectively.  The frontend may close the connection at this point
+    if it is dissatisfied with the response.  To continue after
+    <literal>S</>, perform an <acronym>SSL</acronym> startup handshake
+    (not described here, part of the <acronym>SSL</acronym>
+    specification) with the server.  If this is successful, continue
+    with sending the usual StartupMessage.  In this case the
+    StartupMessage and all subsequent data will be
+    <acronym>SSL</acronym>-encrypted.  To continue after
     <literal>N</>, send the usual StartupMessage and proceed without
     encryption.
    </para>
 
    <para>
-    The frontend should also be prepared to handle an ErrorMessage response
-    to SSLRequest from the server.  This would only occur if the server
-    predates the addition of SSL support to <productname>PostgreSQL</>.
-    In this case the connection must be closed, but the frontend may choose
-    to open a fresh connection and proceed without requesting SSL.
+    The frontend should also be prepared to handle an ErrorMessage
+    response to SSLRequest from the server.  This would only occur if
+    the server predates the addition of <acronym>SSL</acronym> support
+    to <productname>PostgreSQL</>.  In this case the connection must
+    be closed, but the frontend may choose to open a fresh connection
+    and proceed without requesting <acronym>SSL</acronym>.
    </para>
 
    <para>
@@ -1178,8 +1187,9 @@
 
    <para>
     While the protocol itself does not provide a way for the server to
-    force SSL encryption, the administrator may configure the server to
-    reject unencrypted sessions as a byproduct of authentication checking.
+    force <acronym>SSL</acronym> encryption, the administrator may
+    configure the server to reject unencrypted sessions as a byproduct
+    of authentication checking.
    </para>
   </sect2>
  </sect1>
@@ -2106,7 +2116,7 @@ CopyData (F &amp; B)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as COPY data.
+                Identifies the message as <command>COPY</command> data.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2153,7 +2163,7 @@ CopyDone (F &amp; B)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as a COPY-complete indicator.
+                Identifies the message as a <command>COPY</command>-complete indicator.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2188,7 +2198,7 @@ CopyFail (F)
 </Term>
 <ListItem>
 <Para>
-                Identifies the message as a COPY-failure indicator.
+                Identifies the message as a <command>COPY</command>-failure indicator.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -2255,7 +2265,7 @@ CopyInResponse (B)
 </Term>
 <ListItem>
 <Para>
-                0 indicates the overall copy format is textual (rows
+                0 indicates the overall <command>COPY</command> format is textual (rows
 		separated by newlines, columns separated by separator
 		characters, etc).
 		1 indicates the overall copy format is binary (similar
@@ -2330,13 +2340,12 @@ CopyOutResponse (B)
 </Term>
 <ListItem>
 <Para>
-                0 indicates the overall copy format is textual (rows
-		separated by newlines, columns separated by separator
-		characters, etc).
-		1 indicates the overall copy format is binary (similar
-		to DataRow format).
-		See <xref linkend="sql-copy" endterm="sql-copy-title">
-		for more information.
+                0 indicates the overall <command>COPY</command> format
+                is textual (rows separated by newlines, columns
+                separated by separator characters, etc). 1 indicates
+                the overall copy format is binary (similar to DataRow
+                format). See <xref linkend="sql-copy"
+                endterm="sql-copy-title"> for more information. 
 </Para>
 </ListItem>
 </VarListEntry>
@@ -3602,7 +3611,7 @@ SSLRequest (F)
 </Term>
 <ListItem>
 <Para>
-                The SSL request code.  The value is chosen to contain
+                The <acronym>SSL</acronym> request code.  The value is chosen to contain
                 <literal>1234</> in the most significant 16 bits, and <literal>5679</> in the
                 least 16 significant bits.  (To avoid confusion, this code
                 must not be the same as any protocol version number.)
@@ -3899,8 +3908,9 @@ message.
 <ListItem>
 <Para>
         Where: an indication of the context in which the error occurred.
-	Presently this includes a call stack traceback of active PL functions.
-	The trace is one entry per line, most recent first.
+	Presently this includes a call stack traceback of active
+	procedural language functions.  The trace is one entry per line,
+	most recent first.
 </Para>
 </ListItem>
 </VarListEntry>
@@ -4006,12 +4016,12 @@ may allow improvements in performance or functionality.
 </para>
 
 <para>
-COPY data is now encapsulated into CopyData and CopyDone messages.  There
-is a well-defined way to recover from errors during COPY.  The special
+<command>COPY</command> data is now encapsulated into CopyData and CopyDone messages.  There
+is a well-defined way to recover from errors during <command>COPY</command>.  The special
 <quote><literal>\.</></quote> last line is not needed anymore, and is not sent
-during COPY OUT.
-(It is still recognized as a terminator during COPY IN, but its use is
-deprecated and will eventually be removed.)  Binary COPY is supported.
+during <command>COPY OUT</command>.
+(It is still recognized as a terminator during <command>COPY IN</command>, but its use is
+deprecated and will eventually be removed.)  Binary <command>COPY</command> is supported.
 The CopyInResponse and CopyOutResponse messages include fields indicating
 the number of columns and the format of each column.
 </para>
@@ -4046,7 +4056,7 @@ the backend.
 <para>
 The NotificationResponse ('<literal>A</>') message has an additional string
 field, which is presently empty but may someday carry additional data passed
-from the NOTIFY event sender.
+from the <command>NOTIFY</command> event sender.
 </para>
 
 <para>

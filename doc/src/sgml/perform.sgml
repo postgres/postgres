@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.38 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.39 2003/12/14 00:10:32 neilc Exp $
 -->
 
  <chapter id="performance-tips">
@@ -100,7 +100,7 @@ $PostgreSQL: pgsql/doc/src/sgml/perform.sgml,v 1.38 2003/11/29 19:51:37 pgsql Ex
 
    <para>
     Here are some examples (using the regression test database after a
-    <literal>VACUUM ANALYZE</>, and 7.3 development sources):
+    <command>VACUUM ANALYZE</>, and 7.3 development sources):
 
 <programlisting>
 EXPLAIN SELECT * FROM tenk1;

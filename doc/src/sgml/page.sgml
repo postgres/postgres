@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/page.sgml,v 1.16 2003/11/29 19:51:37 pgsql Exp $
+$PostgreSQL: pgsql/doc/src/sgml/page.sgml,v 1.17 2003/12/14 00:10:32 neilc Exp $
 -->
 
 <chapter id="page">
@@ -151,7 +151,8 @@ data. Empty in ordinary tables.</entry>
  </table>
 
  <para>
-  All the details may be found in src/include/storage/bufpage.h.
+  All the details may be found in
+  <filename>src/include/storage/bufpage.h</filename>.
  </para>
 
  <para>  
@@ -305,7 +306,8 @@ data. Empty in ordinary tables.</entry>
  </table>
 
  <para>
-   All the details may be found in src/include/access/htup.h.
+   All the details may be found in
+   <filename>src/include/access/htup.h</filename>.
  </para>
 
  <para>
