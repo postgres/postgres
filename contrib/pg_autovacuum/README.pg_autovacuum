@@ -133,6 +133,17 @@ pg_autovacuum has the following optional arguments:
 -p port: port used for connection.
 -h help: list of command line options.
 
+The following 5 autovacuum command line options correspond to the various
+cost-based vacuum settings.  If not given, then the cluster default values
+will be used.
+
+-c	vacuum_cost_delay
+-C	vacuum_cost_page_hit
+-m	vacuum_cost_page_miss
+-n	vacuum_cost_page_dirty
+-N	vacuum_cost_limit
+
+
 Numerous arguments have default values defined in pg_autovacuum.h.  At
 the time of writing they are:
 

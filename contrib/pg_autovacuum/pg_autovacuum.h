@@ -2,7 +2,7 @@
  * Header file for pg_autovacuum.c
  * (c) 2003 Matthew T. O'Connor
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.h,v 1.12 2004/10/16 21:50:02 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.h,v 1.13 2004/11/17 16:54:15 tgl Exp $
  */
 
 #ifndef _PG_AUTOVACUUM_H
@@ -46,6 +46,16 @@ typedef struct cmdargs
 				analyze_base_threshold,
 				sleep_base_value,
 				debug,
+				
+				/*
+				 * Cost-Based Vacuum Delay Settings for pg_autovacuum
+				 */
+				av_vacuum_cost_delay,
+				av_vacuum_cost_page_hit,
+				av_vacuum_cost_page_miss,
+				av_vacuum_cost_page_dirty,
+				av_vacuum_cost_limit,
+				
 #ifndef WIN32
 				daemonize;
 #else

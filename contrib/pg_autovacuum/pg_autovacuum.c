@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.23 2004/10/25 02:14:59 tgl Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.24 2004/11/17 16:54:15 tgl Exp $
  */
 
 #include "postgres_fe.h"
@@ -530,7 +530,7 @@ print_table_info(tbl_info * tbl)
 {
 	sprintf(logbuffer, "  table name: %s.%s", tbl->dbi->dbname, tbl->table_name);
 	log_entry(logbuffer, LVL_INFO);
-	sprintf(logbuffer, "     relid: %u;   relisshared: %i", tbl->relid, tbl->relisshared);
+	sprintf(logbuffer, "     relid: %u;   relisshared: %d", tbl->relid, tbl->relisshared);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "     reltuples: %f;  relpages: %u", tbl->reltuples, tbl->relpages);
 	log_entry(logbuffer, LVL_INFO);
@@ -905,6 +905,7 @@ db_connect(db_info * dbi)
 		PQfinish(db_conn);
 		db_conn = NULL;
 	}
+		
 	return db_conn;
 }	/* end of db_connect() */
 
@@ -973,6 +974,75 @@ send_query(const char *query, db_info * dbi)
 	return res;
 }	/* End of send_query() */
 
+/*
+ * Perform either a vacuum or a vacuum analyze
+ */
+static void
+perform_maintenance_command(db_info * dbi, tbl_info * tbl, int operation)
+{
+	char		buf[256];
+	
+	/* 
+	 * Set the vacuum_cost variables if supplied on command line
+	 */	
+	if (args->av_vacuum_cost_delay != -1)
+	{	
+		snprintf(buf, sizeof(buf), "set vacuum_cost_delay = %d",
+				 args->av_vacuum_cost_delay);
+		send_query(buf, dbi);
+	}
+	if (args->av_vacuum_cost_page_hit != -1)
+	{	
+		snprintf(buf, sizeof(buf), "set vacuum_cost_page_hit = %d",
+				 args->av_vacuum_cost_page_hit);
+		send_query(buf, dbi);
+	}
+	if (args->av_vacuum_cost_page_miss != -1)
+	{	
+		snprintf(buf, sizeof(buf), "set vacuum_cost_page_miss = %d",
+				 args->av_vacuum_cost_page_miss);
+		send_query(buf, dbi);
+	}
+	if (args->av_vacuum_cost_page_dirty != -1)
+	{	
+		snprintf(buf, sizeof(buf), "set vacuum_cost_page_dirty = %d",
+				 args->av_vacuum_cost_page_dirty);
+		send_query(buf, dbi);
+	}
+	if (args->av_vacuum_cost_limit != -1)
+	{	
+		snprintf(buf, sizeof(buf), "set vacuum_cost_limit = %d",
+				 args->av_vacuum_cost_limit);
+		send_query(buf, dbi);
+	}
+	
+	/*
+	 * if ((relisshared = t and database != template1) or 
+	 * if operation = ANALYZE_ONLY) 
+	 * then only do an analyze
+	 */
+	if ((tbl->relisshared > 0 && strcmp("template1", dbi->dbname) != 0) ||
+		(operation == ANALYZE_ONLY))
+		snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
+	else if (operation == VACUUM_ANALYZE)
+		snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
+	else
+		return;
+			
+	if (args->debug >= 1)
+	{
+		sprintf(logbuffer, "Performing: %s", buf);
+		log_entry(logbuffer, LVL_DEBUG);
+		fflush(LOGOUTPUT);
+	}
+	
+	send_query(buf, dbi);
+
+	update_table_thresholds(dbi, tbl, operation);
+
+	if (args->debug >= 2)
+		print_table_info(tbl);
+}
 
 static void
 free_cmd_args(void)
@@ -1015,13 +1085,22 @@ get_cmd_args(int argc, char *argv[])
 	args->port = 0;
 
 	/*
+	 * Cost-Based Vacuum Delay Settings for pg_autovacuum 
+	 */
+	args->av_vacuum_cost_delay = -1;
+	args->av_vacuum_cost_page_hit = -1;
+	args->av_vacuum_cost_page_miss = -1;
+	args->av_vacuum_cost_page_dirty = -1;
+	args->av_vacuum_cost_limit = -1;
+
+	/*
 	 * Fixme: Should add some sanity checking such as positive integer
 	 * values etc
 	 */
 #ifndef WIN32
-	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD")) != -1)
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hD:c:C:m:n:N:")) != -1)
 #else
-	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:")) != -1)
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:c:C:m:n:N:")) != -1)
 #endif
 	{
 		switch (c)
@@ -1043,6 +1122,21 @@ get_cmd_args(int argc, char *argv[])
 				break;
 			case 'A':
 				args->analyze_scaling_factor = atof(optarg);
+				break;
+			case 'c':
+				args->av_vacuum_cost_delay = atoi(optarg);
+				break;
+			case 'C':
+				args->av_vacuum_cost_page_hit = atoi(optarg);
+				break;
+			case 'm':
+				args->av_vacuum_cost_page_miss = atoi(optarg);
+				break;
+			case 'n':
+				args->av_vacuum_cost_page_dirty = atoi(optarg);
+				break;
+			case 'N':
+				args->av_vacuum_cost_limit = atoi(optarg);
 				break;
 #ifndef WIN32
 			case 'D':
@@ -1124,24 +1218,30 @@ usage(void)
 	fprintf(stderr, "   [-W] Password to run service with (only useful when installing as a Windows service)\n");
 #endif
 	i = AUTOVACUUM_DEBUG;
-	fprintf(stderr, "   [-d] debug (debug level=0,1,2,3; default=%i)\n", i);
+	fprintf(stderr, "   [-d] debug (debug level=0,1,2,3; default=%d)\n", i);
 
 	i = SLEEPBASEVALUE;
-	fprintf(stderr, "   [-s] sleep base value (default=%i)\n", i);
+	fprintf(stderr, "   [-s] sleep base value (default=%d)\n", i);
 	f = SLEEPSCALINGFACTOR;
 	fprintf(stderr, "   [-S] sleep scaling factor (default=%f)\n", f);
 
 	i = VACBASETHRESHOLD;
-	fprintf(stderr, "   [-v] vacuum base threshold (default=%i)\n", i);
+	fprintf(stderr, "   [-v] vacuum base threshold (default=%d)\n", i);
 	f = VACSCALINGFACTOR;
 	fprintf(stderr, "   [-V] vacuum scaling factor (default=%f)\n", f);
 	i = i / 2;
-	fprintf(stderr, "   [-a] analyze base threshold (default=%i)\n", i);
+	fprintf(stderr, "   [-a] analyze base threshold (default=%d)\n", i);
 	f = f / 2;
 	fprintf(stderr, "   [-A] analyze scaling factor (default=%f)\n", f);
 
 	fprintf(stderr, "   [-L] logfile (default=none)\n");
 
+	fprintf(stderr, "   [-c] vacuum_cost_delay (default=none)\n");
+	fprintf(stderr, "   [-C] vacuum_cost_page_hit (default=none)\n");
+	fprintf(stderr, "   [-m] vacuum_cost_page_miss (default=none)\n");
+	fprintf(stderr, "   [-n] vacuum_cost_page_dirty (default=none)\n");
+	fprintf(stderr, "   [-N] vacuum_cost_limit (default=none)\n");
+	
 	fprintf(stderr, "   [-U] username (libpq default)\n");
 	fprintf(stderr, "   [-P] password (libpq default)\n");
 	fprintf(stderr, "   [-H] host (libpq default)\n");
@@ -1166,12 +1266,12 @@ print_cmd_args(void)
 	sprintf(logbuffer, "  args->logfile=%s", (args->logfile) ? args->logfile : "(null)");
 	log_entry(logbuffer, LVL_INFO);
 #ifndef WIN32
-	sprintf(logbuffer, "  args->daemonize=%i", args->daemonize);
+	sprintf(logbuffer, "  args->daemonize=%d", args->daemonize);
 	log_entry(logbuffer, LVL_INFO);
 #else
-	sprintf(logbuffer, "  args->install_as_service=%i", args->install_as_service);
+	sprintf(logbuffer, "  args->install_as_service=%d", args->install_as_service);
 	log_entry(logbuffer, LVL_INFO);
-	sprintf(logbuffer, "  args->remove_as_service=%i", args->remove_as_service);
+	sprintf(logbuffer, "  args->remove_as_service=%d", args->remove_as_service);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->service_user=%s", (args->service_user) ? args->service_user : "(null)");
 	log_entry(logbuffer, LVL_INFO);
@@ -1179,19 +1279,46 @@ print_cmd_args(void)
 	log_entry(logbuffer, LVL_INFO);
 #endif
 
-	sprintf(logbuffer, "  args->sleep_base_value=%i", args->sleep_base_value);
+	sprintf(logbuffer, "  args->sleep_base_value=%d", args->sleep_base_value);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->sleep_scaling_factor=%f", args->sleep_scaling_factor);
 	log_entry(logbuffer, LVL_INFO);
-	sprintf(logbuffer, "  args->vacuum_base_threshold=%i", args->vacuum_base_threshold);
+	sprintf(logbuffer, "  args->vacuum_base_threshold=%d", args->vacuum_base_threshold);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->vacuum_scaling_factor=%f", args->vacuum_scaling_factor);
 	log_entry(logbuffer, LVL_INFO);
-	sprintf(logbuffer, "  args->analyze_base_threshold=%i", args->analyze_base_threshold);
+	sprintf(logbuffer, "  args->analyze_base_threshold=%d", args->analyze_base_threshold);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->analyze_scaling_factor=%f", args->analyze_scaling_factor);
 	log_entry(logbuffer, LVL_INFO);
-	sprintf(logbuffer, "  args->debug=%i", args->debug);
+	
+	if (args->av_vacuum_cost_delay != -1)
+		sprintf(logbuffer, "  args->av_vacuum_cost_delay=%d", args->av_vacuum_cost_delay);
+	else 
+		sprintf(logbuffer, "  args->av_vacuum_cost_delay=(default)");
+	log_entry(logbuffer, LVL_INFO);
+	if (args->av_vacuum_cost_page_hit != -1)
+		sprintf(logbuffer, "  args->av_vacuum_cost_page_hit=%d", args->av_vacuum_cost_page_hit);
+	else
+		sprintf(logbuffer, "  args->av_vacuum_cost_page_hit=(default)");
+	log_entry(logbuffer, LVL_INFO);
+	if (args->av_vacuum_cost_page_miss != -1)
+		sprintf(logbuffer, "  args->av_vacuum_cost_page_miss=%d", args->av_vacuum_cost_page_miss);
+	else
+		sprintf(logbuffer, "  args->av_vacuum_cost_page_miss=(default)");
+	log_entry(logbuffer, LVL_INFO);
+	if (args->av_vacuum_cost_page_dirty != -1)
+		sprintf(logbuffer, "  args->av_vacuum_cost_page_dirty=%d", args->av_vacuum_cost_page_dirty);
+	else
+		sprintf(logbuffer, "  args->av_vacuum_cost_page_dirty=(default)");
+	log_entry(logbuffer, LVL_INFO);
+	if (args->av_vacuum_cost_limit != -1)
+		sprintf(logbuffer, "  args->av_vacuum_cost_limit=%d", args->av_vacuum_cost_limit);
+	else
+		sprintf(logbuffer, "  args->av_vacuum_cost_limit=(default)");
+	log_entry(logbuffer, LVL_INFO);
+	
+	sprintf(logbuffer, "  args->debug=%d", args->debug);
 	log_entry(logbuffer, LVL_INFO);
 
 	fflush(LOGOUTPUT);
@@ -1285,20 +1412,30 @@ InstallService()
 	if (args->logfile)
 		sprintf(szCommand, "%s -L %s", szCommand, args->logfile);
 	if (args->sleep_base_value != (int) SLEEPBASEVALUE)
-		sprintf(szCommand, "%s -s %i", szCommand, args->sleep_base_value);
+		sprintf(szCommand, "%s -s %d", szCommand, args->sleep_base_value);
 	if (args->sleep_scaling_factor != (float) SLEEPSCALINGFACTOR)
 		sprintf(szCommand, "%s -S %f", szCommand, args->sleep_scaling_factor);
 	if (args->vacuum_base_threshold != (int) VACBASETHRESHOLD)
-		sprintf(szCommand, "%s -v %i", szCommand, args->vacuum_base_threshold);
+		sprintf(szCommand, "%s -v %d", szCommand, args->vacuum_base_threshold);
 	if (args->vacuum_scaling_factor != (float) VACSCALINGFACTOR)
 		sprintf(szCommand, "%s -V %f", szCommand, args->vacuum_scaling_factor);
 	if (args->analyze_base_threshold != (int) (VACBASETHRESHOLD / 2))
-		sprintf(szCommand, "%s -a %i", szCommand, args->analyze_base_threshold);
+		sprintf(szCommand, "%s -a %d", szCommand, args->analyze_base_threshold);
 	if (args->analyze_scaling_factor != (float) (VACSCALINGFACTOR / 2))
 		sprintf(szCommand, "%s -A %f", szCommand, args->analyze_scaling_factor);
 	if (args->debug != (int) AUTOVACUUM_DEBUG)
-		sprintf(szCommand, "%s -d %i", szCommand, args->debug);
-
+		sprintf(szCommand, "%s -d %d", szCommand, args->debug);
+	if (args->av_vacuum_cost_delay != -1)
+		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_delay);
+	if (args->av_vacuum_cost_page_hit != -1)
+		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_page_hit);
+	if (args->av_vacuum_cost_page_miss != -1)
+		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_page_miss);
+	if (args->av_vacuum_cost_page_dirty != -1)
+		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_page_dirty);
+	if (args->av_vacuum_cost_limit != -1)
+		sprintf(szCommand, "%s -d %d", szCommand, args->av_vacuum_cost_limit);		
+		
 	/* And write the new value */
 	if (RegSetValueEx(hk, "ImagePath", 0, REG_EXPAND_SZ, (LPBYTE) szCommand, (DWORD) strlen(szCommand) + 1))
 		return -4;
@@ -1366,7 +1503,6 @@ static
 int
 VacuumLoop(int argc, char **argv)
 {
-	char		buf[256];
 	int			j = 0,
 				loops = 0;
 
@@ -1516,45 +1652,11 @@ VacuumLoop(int argc, char **argv)
 									 * analyze
 									 */
 									if (tbl->curr_vacuum_count - tbl->CountAtLastVacuum >= tbl->vacuum_threshold)
-									{
-										/*
-										 * if relisshared = t and database
-										 * != template1 then only do an
-										 * analyze
-										 */
-										if (tbl->relisshared > 0 && strcmp("template1", dbs->dbname))
-											snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
-										else
-											snprintf(buf, sizeof(buf), "VACUUM ANALYZE %s", tbl->table_name);
-										if (args->debug >= 1)
-										{
-											sprintf(logbuffer, "Performing: %s", buf);
-											log_entry(logbuffer, LVL_DEBUG);
-											fflush(LOGOUTPUT);
-										}
-										send_query(buf, dbs);
-										update_table_thresholds(dbs, tbl, VACUUM_ANALYZE);
-										if (args->debug >= 2)
-											print_table_info(tbl);
-									}
+										perform_maintenance_command(dbs, tbl, VACUUM_ANALYZE);
 									else if (tbl->curr_analyze_count - tbl->CountAtLastAnalyze >= tbl->analyze_threshold)
-									{
-										snprintf(buf, sizeof(buf), "ANALYZE %s", tbl->table_name);
-										if (args->debug >= 1)
-										{
-											sprintf(logbuffer, "Performing: %s", buf);
-											log_entry(logbuffer, LVL_DEBUG);
-											fflush(LOGOUTPUT);
-										}
-										send_query(buf, dbs);
-										update_table_thresholds(dbs, tbl, ANALYZE_ONLY);
-										if (args->debug >= 2)
-											print_table_info(tbl);
-									}
+										perform_maintenance_command(dbs, tbl, ANALYZE_ONLY);
 
-									break;		/* once we have found a
-												 * match, no need to keep
-												 * checking. */
+									break;		/* We found a match, no need to keep looping. */
 								}
 
 								/*
@@ -1566,7 +1668,7 @@ VacuumLoop(int argc, char **argv)
 							}	/* end for table while loop */
 						}		/* end for j loop (tuples in PGresult) */
 					}			/* end if (res != NULL) */
-				}				/* close of if(xid_wraparound_check()) */
+				}				/* close of if (xid_wraparound_check()) */
 				/* Done working on this db, Clean up, then advance cur_db */
 				PQclear(res);
 				res = NULL;
@@ -1585,7 +1687,7 @@ VacuumLoop(int argc, char **argv)
 		if (args->debug >= 2)
 		{
 			sprintf(logbuffer,
-			 "%i All DBs checked in: %.0f usec, will sleep for %i secs.",
+			 "%d All DBs checked in: %.0f usec, will sleep for %d secs.",
 					loops, diff, sleep_secs);
 			log_entry(logbuffer, LVL_DEBUG);
 			fflush(LOGOUTPUT);
