@@ -1,15 +1,15 @@
-=======================================================
-Frequently Asked Questions (FAQ) for PostgreSQL  V7.0
-SCO UnixWare and OpenServer Specific
-TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
-=======================================================
-last updated:           $Date: 2000/10/09 03:49:42 $
+============================================================
+Frequently Asked Questions (FAQ) for PostgreSQL  V7.1
+SCO UnixWare and OpenServer specific
+to be read in conjunction with the installation instructions
+============================================================
+last updated:           $Date: 2001/03/13 20:52:04 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
 
 
-PostgreSQL 7.0 can be built on SCO UnixWare 7 and SCO OpenServer 5.
+PostgreSQL 7.1 can be built on SCO UnixWare 7 and SCO OpenServer 5.
 On OpenServer, you can use either the OpenServer Development Kit or 
 the Universal Development Kit.
 
@@ -18,7 +18,6 @@ However, some tweaking may be needed, as described below.
 Topics:
 *) Skunkware
 *) GNU Make
-*) C++ and libpq++
 *) Readline
 *) Using the UDK on OpenServer
 *) Compiling PostgreSQL using the UDK
@@ -44,30 +43,13 @@ Skunkware has different versions for UnixWare and OpenServer.  Make sure
 you install the correct version for your operating system, except as noted
 below.
 
+
 ***************************************************************************
 *) GNU Make
 
 You need to use the GNU make program, which is on the Skunkware CD.  By
 default, it installs as /usr/local/bin/make.  To avoid confusion with the
 SCO make program, you may want to rename GNU make to gmake.
-
-
-***************************************************************************
-*) C++ and libpq++
-
-I have not been able to build libpq++, the PostgreSQL C++ interface, with
-the UnixWare or OpenServer C++ compilers.  By default, building PostgreSQL
-also builds the libpq++ interface.  When that fails, it causes the entire
-build of PostgreSQL to fail.
-
-This is the problem if you see the following error message:
-
-"pgenv.cc", line 47: error: no default constructor exists for class "string"
-
-If you have this problem, you can disable building of libpq++ with the 
-following configure option:
-
-configure --without-CXX
 
 
 ***************************************************************************
@@ -89,31 +71,22 @@ configure:
 
 configure --with-libs=/usr/local/lib --with-includes=/usr/local/include
 
-Putting this together with the no-C++ option above yields:
-
-configure --with-libs=/usr/local/lib --with-includes=/usr/local/include --without-CXX
-
 
 ***************************************************************************
 *) Using the UDK on OpenServer
 
 If you are using the new Universal Development Kit (UDK) compiler on
-OpenServer, you need to use different arguments to the configure program.
+OpenServer, you need to specify the locations of the UDK libraries:
 
-First, you need to specify the "unixware" template instead of the default.
+configure --with-libs=/udk/usr/lib --with-includes=/udk/usr/include
 
-Second, you need to specify the locations of the UDK libraries.
+Putting these together with the readline options from above:
 
-Putting these together:
+./configure --with-libs="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include"
 
-configure --with-template=unixware --with-libs=/udk/usr/lib --with-includes=/udk/usr/include
-
-Putting these together with the no-C++ and readline options from above:
-
-./configure --with-template=unixware --with-libs="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include" --without-CXX
 
 ***************************************************************************
-*) Compiling PostgreSQL 7.0 with the UDK
+*) Compiling PostgreSQL 7.1 with the UDK
 
 The program, backend/utils/adt/int8.c, tickles a compiler bug with in the
 following versions (and probably others as well) of the C compiler:
@@ -146,30 +119,10 @@ the following patch:
   	PG_RETURN_INT64(result);
 ------------------------------8< CUT HERE >8------------------------------
 
-The bind function in UnixWare 7.1+ has a problem when used with the AF_UNIX
-family.  The following patch provides a work-around for the problem (thanks
-go to Oliver PRENANT <ohp@pyrenet.fre> for this patch).
+This compiler bug seems to be fixed at least in
 
-------------------------------8< CUT HERE >8------------------------------
-*** src/backend/libpq/pqcomm.c.orig	Sun Oct  8 02:21:25 2000
---- src/backend/libpq/pqcomm.c	Sun Oct  8 02:42:57 2000
-***************
-*** 329,334 ****
---- 329,341 ----
-  		return STATUS_ERROR;
-  	}
-  
-+ 	/* Work around a bug in UnixWare 7.1.x - accept is not returning the
-+ 	 * correct family when the family is AF_UNIX.
-+ 	 */
-+ 
-+ 	if (port->raddr.sa.sa_family == 0)
-+ 		port->raddr.sa.sa_family = AF_UNIX;
-+ 
-  	/* fill in the server (local) address */
-  	addrlen = sizeof(port->laddr);
-  	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
-------------------------------8< CUT HERE >8------------------------------
+	Optimizing C Compilation System  (CCS) 4.0  10/23/00 (UDK FS 7.1.1b) 
+
 
 ***************************************************************************
 *) Reading the PostgreSQL man pages on UnixWare
@@ -221,4 +174,3 @@ generate a PostgreSQL package for UnixWare 7.x, the man pages will be
 integrated into the scohelp system.
 
 I have not tried using the PostgreSQL man pages on OpenServer.  Volunteers??
-
