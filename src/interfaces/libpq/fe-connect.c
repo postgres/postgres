@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.142 2000/10/23 14:50:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.143 2000/10/30 10:31:46 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2694,3 +2694,70 @@ defaultNoticeProcessor(void *arg, const char *message)
 	/* Note: we expect the supplied string to end with a newline already. */
 	fprintf(stderr, "%s", message);
 }
+
+#ifdef MULTIBYTE
+/*
+ * convert an encoding string to encoding symbol value.
+ * case is ignored.
+ * if there's no valid encoding, returns -1
+ */
+
+typedef struct {
+	int encoding;	/* encoding symbol value */
+	char *name;	/* encoding string */
+} PQ_encoding_conv_tbl;
+
+static PQ_encoding_conv_tbl pq_conv_tbl[] = {
+		{SQL_ASCII, "SQL_ASCII"},
+		{EUC_JP, "EUC_JP"},
+		{EUC_CN, "EUC_CN"},
+		{EUC_KR, "EUC_KR"},
+		{UNICODE, "UNICODE"},
+		{MULE_INTERNAL, "MULE_INTERNAL"},
+		{LATIN1, "LATIN1"},
+		{LATIN2, "LATIN2"},
+		{LATIN3, "LATIN3"},
+		{LATIN4, "LATIN4"},
+		{LATIN5, "LATIN5"},
+		{KOI8, "KOI8"},
+		{WIN, "WIN"},
+		{ALT, "ALT"},
+		{SJIS, "SJIS"},
+		{BIG5, "BIG5"},
+		{WIN1250, "WIN1250"},
+		{-1, ""}
+};
+
+int
+pg_char_to_encoding(const char *s)
+{
+	PQ_encoding_conv_tbl *p = pq_conv_tbl;
+
+	if (!s)
+		return (-1);
+
+	for (; p->encoding >= 0; p++)
+	{
+		if (!strcasecmp(s, p->name))
+			break;
+	}
+	return (p->encoding);
+}
+
+/*
+ * convert encoding symbol to encoding char.
+ * if there's no valid encoding symbol, returns ""
+ */
+const char *
+pg_encoding_to_char(int encoding)
+{
+	PQ_encoding_conv_tbl *p = pq_conv_tbl;
+
+	for (; p->encoding >= 0; p++)
+	{
+		if (p->encoding == encoding)
+			return (p->name);
+	}
+	return ("");
+}
+#endif
