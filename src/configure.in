@@ -79,12 +79,10 @@ AC_ARG_WITH(template,
                               see template directory],
     [  TEMPLATE=$withval ],
     [  host_no_ver=`echo "$host" | sed 's/[[0-9.]]*$//'`
-       GUESS=`grep "$host_no_ver" template/.similar | sed 's/.*=//' 2>/dev/null`
+       GUESS=`grep "$host_no_ver" template/.similar | sed 's/.*=//' | tail -1`
        if test "$GUESS"
-       then
-         TEMPLATE=$GUESS
-       else
-         TEMPLATE=`uname -s | tr A-Z a-z` 
+       then	TEMPLATE="$GUESS"
+       else	TEMPLATE=`uname -s | tr A-Z a-z` 
        fi
     ])
 AC_MSG_RESULT($TEMPLATE)
