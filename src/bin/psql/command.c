@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.115 2004/03/27 18:01:40 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/command.c,v 1.116 2004/05/07 00:24:58 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -263,7 +263,7 @@ exec_command(const char *cmd,
 	}
 
 	/* \copy */
-	else if (strcasecmp(cmd, "copy") == 0)
+	else if (pg_strcasecmp(cmd, "copy") == 0)
 	{
 		char	   *opt = psql_scan_slash_option(scan_state,
 												 OT_WHOLE_LINE, NULL, false);
@@ -1321,13 +1321,13 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	{
 		if (!value)
 			;
-		else if (strncasecmp("unaligned", value, vallen) == 0)
+		else if (pg_strncasecmp("unaligned", value, vallen) == 0)
 			popt->topt.format = PRINT_UNALIGNED;
-		else if (strncasecmp("aligned", value, vallen) == 0)
+		else if (pg_strncasecmp("aligned", value, vallen) == 0)
 			popt->topt.format = PRINT_ALIGNED;
-		else if (strncasecmp("html", value, vallen) == 0)
+		else if (pg_strncasecmp("html", value, vallen) == 0)
 			popt->topt.format = PRINT_HTML;
-		else if (strncasecmp("latex", value, vallen) == 0)
+		else if (pg_strncasecmp("latex", value, vallen) == 0)
 			popt->topt.format = PRINT_LATEX;
 		else
 		{
@@ -1452,7 +1452,7 @@ do_pset(const char *param, const char *value, printQueryOpt *popt, bool quiet)
 	/* toggle use of pager */
 	else if (strcmp(param, "pager") == 0)
 	{
-		if (value && strcasecmp(value, "always") == 0)
+		if (value && pg_strcasecmp(value, "always") == 0)
 			popt->topt.pager = 2;
 		else if (popt->topt.pager == 1)
 			popt->topt.pager = 0;

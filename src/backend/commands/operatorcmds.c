@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.13 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.14 2004/05/07 00:24:57 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -97,7 +97,7 @@ DefineOperator(List *names, List *parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (strcasecmp(defel->defname, "leftarg") == 0)
+		if (pg_strcasecmp(defel->defname, "leftarg") == 0)
 		{
 			typeName1 = defGetTypeName(defel);
 			if (typeName1->setof)
@@ -105,7 +105,7 @@ DefineOperator(List *names, List *parameters)
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				errmsg("setof type not allowed for operator argument")));
 		}
-		else if (strcasecmp(defel->defname, "rightarg") == 0)
+		else if (pg_strcasecmp(defel->defname, "rightarg") == 0)
 		{
 			typeName2 = defGetTypeName(defel);
 			if (typeName2->setof)
@@ -113,27 +113,27 @@ DefineOperator(List *names, List *parameters)
 						(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 				errmsg("setof type not allowed for operator argument")));
 		}
-		else if (strcasecmp(defel->defname, "procedure") == 0)
+		else if (pg_strcasecmp(defel->defname, "procedure") == 0)
 			functionName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "commutator") == 0)
+		else if (pg_strcasecmp(defel->defname, "commutator") == 0)
 			commutatorName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "negator") == 0)
+		else if (pg_strcasecmp(defel->defname, "negator") == 0)
 			negatorName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "restrict") == 0)
+		else if (pg_strcasecmp(defel->defname, "restrict") == 0)
 			restrictionName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "join") == 0)
+		else if (pg_strcasecmp(defel->defname, "join") == 0)
 			joinName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "hashes") == 0)
+		else if (pg_strcasecmp(defel->defname, "hashes") == 0)
 			canHash = TRUE;
-		else if (strcasecmp(defel->defname, "merges") == 0)
+		else if (pg_strcasecmp(defel->defname, "merges") == 0)
 			canMerge = TRUE;
-		else if (strcasecmp(defel->defname, "sort1") == 0)
+		else if (pg_strcasecmp(defel->defname, "sort1") == 0)
 			leftSortName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "sort2") == 0)
+		else if (pg_strcasecmp(defel->defname, "sort2") == 0)
 			rightSortName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "ltcmp") == 0)
+		else if (pg_strcasecmp(defel->defname, "ltcmp") == 0)
 			ltCompareName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "gtcmp") == 0)
+		else if (pg_strcasecmp(defel->defname, "gtcmp") == 0)
 			gtCompareName = defGetQualifiedName(defel);
 		else
 			ereport(WARNING,

@@ -2,18 +2,11 @@
 #define __win32_h_included
 
 /*
- * strcasecmp() is not in Windows, stricmp is, though
- */
-#define strcasecmp(a,b) stricmp(a,b)
-#define strncasecmp(a,b,c) _strnicmp(a,b,c)
-
-/*
- * Some other compat functions
+ * Some compatibility functions
  */
 #ifdef __BORLANDC__
 #define _timeb timeb
 #define _ftime(a) ftime(a)
-#define _strnicmp(a,b,c) strnicmp(a,b,c)
 #define _errno errno
 #else
 /* open provided elsewhere */

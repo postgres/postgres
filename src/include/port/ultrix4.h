@@ -26,9 +26,6 @@
 #include <sys/types.h>			/* Declare various types, e.g. size_t,
 								 * fd_set */
 
-extern int	strcasecmp(const char *, const char *);
-extern void bzero(void *, size_t);
-
 extern int	fp_class_d(double);
 extern long random(void);
 

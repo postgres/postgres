@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.95 2004/02/14 20:16:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.96 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "access/hash.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
@@ -1627,23 +1628,11 @@ time_part(PG_FUNCTION_ARGS)
 	float8		result;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"time\" units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -2390,23 +2379,11 @@ timetz_part(PG_FUNCTION_ARGS)
 	float8		result;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("\"time with time zone\" units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -2523,23 +2500,11 @@ timetz_zone(PG_FUNCTION_ARGS)
 	int			tz;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowzone[MAXDATELEN + 1];
+	char	   *lowzone;
 
-	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											  PointerGetDatum(zone))))));
-
-	up = VARDATA(zone);
-	lp = lowzone;
-	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
+	lowzone = downcase_truncate_identifier(VARDATA(zone),
+										   VARSIZE(zone) - VARHDRSZ,
+										   false);
 
 	type = DecodeSpecial(0, lowzone, &val);
 

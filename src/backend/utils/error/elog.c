@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.135 2004/04/22 03:51:09 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.136 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1010,21 +1010,21 @@ write_syslog(int level, const char *line)
 
 	if (!openlog_done)
 	{
-		if (strcasecmp(Syslog_facility, "LOCAL0") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL0") == 0)
 			syslog_fac = LOG_LOCAL0;
-		if (strcasecmp(Syslog_facility, "LOCAL1") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL1") == 0)
 			syslog_fac = LOG_LOCAL1;
-		if (strcasecmp(Syslog_facility, "LOCAL2") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL2") == 0)
 			syslog_fac = LOG_LOCAL2;
-		if (strcasecmp(Syslog_facility, "LOCAL3") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL3") == 0)
 			syslog_fac = LOG_LOCAL3;
-		if (strcasecmp(Syslog_facility, "LOCAL4") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL4") == 0)
 			syslog_fac = LOG_LOCAL4;
-		if (strcasecmp(Syslog_facility, "LOCAL5") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL5") == 0)
 			syslog_fac = LOG_LOCAL5;
-		if (strcasecmp(Syslog_facility, "LOCAL6") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL6") == 0)
 			syslog_fac = LOG_LOCAL6;
-		if (strcasecmp(Syslog_facility, "LOCAL7") == 0)
+		if (pg_strcasecmp(Syslog_facility, "LOCAL7") == 0)
 			syslog_fac = LOG_LOCAL7;
 		openlog(Syslog_ident, LOG_PID | LOG_NDELAY, syslog_fac);
 		openlog_done = true;

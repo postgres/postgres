@@ -498,7 +498,7 @@ findTTStatus(char *name)
 	TTOffList  *pp;
 
 	for (pp = TTOff.next; pp; pp = pp->next)
-		if (strcasecmp(name, pp->name) == 0)
+		if (pg_strcasecmp(name, pp->name) == 0)
 			return 0;
 	return 1;
 }

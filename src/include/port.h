@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.27 2004/04/30 17:52:07 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.28 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,6 +29,12 @@ extern char *get_progname(char *argv0);
 
 /* Portable delay handling */
 extern void pg_usleep(long microsec);
+
+/* Portable SQL-like case-independent comparisons and conversions */
+extern int	pg_strcasecmp(const char *s1, const char *s2);
+extern int	pg_strncasecmp(const char *s1, const char *s2, size_t n);
+extern unsigned char pg_toupper(unsigned char ch);
+extern unsigned char pg_tolower(unsigned char ch);
 
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
@@ -130,16 +136,16 @@ extern double rint(double x);
 extern int	inet_aton(const char *cp, struct in_addr * addr);
 #endif
 
-#ifndef HAVE_STRCASECMP
-extern int	strcasecmp(char *s1, char *s2);
-#endif
-
 #ifndef HAVE_STRDUP
 extern char *strdup(char const *);
 #endif
 
 #ifndef HAVE_RANDOM
 extern long random(void);
+#endif
+
+#ifndef HAVE_UNSETENV
+extern void unsetenv(const char *name);
 #endif
 
 #ifndef HAVE_SRANDOM

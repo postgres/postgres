@@ -1,4 +1,4 @@
-/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.10 2003/11/29 22:39:28 pgsql Exp $	*/
+/*	$PostgreSQL: pgsql/contrib/pgcrypto/md5.c,v 1.11 2004/05/07 00:24:57 tgl Exp $	*/
 /*	   $KAME: md5.c,v 1.3 2000/02/22 14:01:17 itojun Exp $	   */
 
 /*
@@ -141,7 +141,7 @@ md5_init(md5_ctxt * ctxt)
 	ctxt->md5_stb = MD5_B0;
 	ctxt->md5_stc = MD5_C0;
 	ctxt->md5_std = MD5_D0;
-	bzero(ctxt->md5_buf, sizeof(ctxt->md5_buf));
+	memset(ctxt->md5_buf, 0, sizeof(ctxt->md5_buf));
 }
 
 void

@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.180 2004/04/30 15:01:25 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.181 2004/05/07 00:24:57 tgl Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -339,7 +339,7 @@ endif
 #
 # substitute implementations of the C library
 
-LIBOBJS = @LIBOBJS@ noblock.o path.o pgsleep.o sprompt.o thread.o
+LIBOBJS = @LIBOBJS@ noblock.o path.o pgsleep.o pgstrcasecmp.o sprompt.o thread.o
 
 ifneq (,$(LIBOBJS))
 LIBS += -lpgport

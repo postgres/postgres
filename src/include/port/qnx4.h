@@ -7,8 +7,6 @@
 
 #undef HAVE_GETRUSAGE
 
-#define strncasecmp strnicmp
-
 typedef u_short ushort;
 
 extern int	isnan(double dsrc);

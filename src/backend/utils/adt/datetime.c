@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.126 2004/03/30 15:53:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.127 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -794,7 +794,7 @@ ParseDateTime(const char *timestr, char *lowstr,
 				{
 					ftype[nf] = DTK_DATE;
 					while (isalnum((unsigned char) *cp) || (*cp == delim))
-						*lp++ = tolower((unsigned char) *cp++);
+						*lp++ = pg_tolower((unsigned char) *cp++);
 				}
 			}
 
@@ -822,9 +822,9 @@ ParseDateTime(const char *timestr, char *lowstr,
 		else if (isalpha((unsigned char) *cp))
 		{
 			ftype[nf] = DTK_STRING;
-			*lp++ = tolower((unsigned char) *cp++);
+			*lp++ = pg_tolower((unsigned char) *cp++);
 			while (isalpha((unsigned char) *cp))
-				*lp++ = tolower((unsigned char) *cp++);
+				*lp++ = pg_tolower((unsigned char) *cp++);
 
 			/*
 			 * Full date string with leading text month? Could also be a
@@ -860,9 +860,9 @@ ParseDateTime(const char *timestr, char *lowstr,
 			else if (isalpha((unsigned char) *cp))
 			{
 				ftype[nf] = DTK_SPECIAL;
-				*lp++ = tolower((unsigned char) *cp++);
+				*lp++ = pg_tolower((unsigned char) *cp++);
 				while (isalpha((unsigned char) *cp))
-					*lp++ = tolower((unsigned char) *cp++);
+					*lp++ = pg_tolower((unsigned char) *cp++);
 			}
 			/* otherwise something wrong... */
 			else

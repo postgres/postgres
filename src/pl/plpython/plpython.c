@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.46 2004/04/01 21:28:46 tgl Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.47 2004/05/07 00:24:59 tgl Exp $
  *
  *********************************************************************
  */
@@ -443,9 +443,9 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			elog(ERROR, "expected trigger to return None or a String");
 
 		srv = PyString_AsString(plrv);
-		if (strcasecmp(srv, "SKIP") == 0)
+		if (pg_strcasecmp(srv, "SKIP") == 0)
 			rv = NULL;
-		else if (strcasecmp(srv, "MODIFY") == 0)
+		else if (pg_strcasecmp(srv, "MODIFY") == 0)
 		{
 			TriggerData *tdata = (TriggerData *) fcinfo->context;
 
@@ -455,7 +455,7 @@ PLy_trigger_handler(FunctionCallInfo fcinfo, PLyProcedure * proc)
 			else
 				elog(WARNING, "ignoring modified tuple in DELETE trigger");
 		}
-		else if (strcasecmp(srv, "OK"))
+		else if (pg_strcasecmp(srv, "OK") != 0)
 		{
 			/*
 			 * hmmm, perhaps they only read the pltcl page, not a

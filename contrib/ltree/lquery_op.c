@@ -91,7 +91,7 @@ checkLevel(lquery_level * curq, ltree_level * curt)
 
 	for (i = 0; i < curq->numvar; i++)
 	{
-		cmpptr = (curvar->flag & LVAR_INCASE) ? strncasecmp : strncmp;
+		cmpptr = (curvar->flag & LVAR_INCASE) ? pg_strncasecmp : strncmp;
 
 		if (curvar->flag & LVAR_SUBLEXEM)
 		{

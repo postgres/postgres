@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.86 2004/02/21 00:34:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/define.c,v 1.87 2004/05/07 00:24:57 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -240,12 +240,12 @@ defGetTypeLength(DefElem *def)
 							def->defname)));
 			break;
 		case T_String:
-			if (strcasecmp(strVal(def->arg), "variable") == 0)
+			if (pg_strcasecmp(strVal(def->arg), "variable") == 0)
 				return -1;		/* variable length */
 			break;
 		case T_TypeName:
 			/* cope if grammar chooses to believe "variable" is a typename */
-			if (strcasecmp(TypeNameToString((TypeName *) def->arg),
+			if (pg_strcasecmp(TypeNameToString((TypeName *) def->arg),
 						   "variable") == 0)
 				return -1;		/* variable length */
 			break;

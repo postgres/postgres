@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.42 2004/03/03 21:28:54 tgl Exp $
+ *		$PostgreSQL: pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.43 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -627,7 +627,7 @@ _PrintTocData(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt)
 		/* Get a copy of the COPY statement and clean it up */
 		tmpCopy = strdup(te->copyStmt);
 		for (i = 0; i < strlen(tmpCopy); i++)
-			tmpCopy[i] = tolower((unsigned char) tmpCopy[i]);
+			tmpCopy[i] = pg_tolower((unsigned char) tmpCopy[i]);
 
 		/*
 		 * This is very nasty; we don't know if the archive used WITH

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.10 2004/03/05 01:53:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.11 2004/05/07 00:24:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -117,7 +117,7 @@ pqSetenvPoll(PGconn *conn)
 
 						if ((val = getenv(conn->next_eo->envName)))
 						{
-							if (strcasecmp(val, "default") == 0)
+							if (pg_strcasecmp(val, "default") == 0)
 								sprintf(setQuery, "SET %s = DEFAULT",
 										conn->next_eo->pgName);
 							else

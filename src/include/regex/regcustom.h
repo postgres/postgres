@@ -25,7 +25,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.3 2003/11/29 22:41:10 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/regex/regcustom.h,v 1.4 2004/05/07 00:24:58 tgl Exp $
  */
 
 /* headers if any */
@@ -59,10 +59,10 @@ typedef int celt;				/* type to hold chr, MCCE number, or
 #define CHR_MAX 0xfffffffe		/* CHR_MAX-CHR_MIN+1 should fit in uchr */
 
 /* functions operating on chr */
-#define iscalnum(x) pg_isalnum(x)
-#define iscalpha(x) pg_isalpha(x)
-#define iscdigit(x) pg_isdigit(x)
-#define iscspace(x) pg_isspace(x)
+#define iscalnum(x) pg_wc_isalnum(x)
+#define iscalpha(x) pg_wc_isalpha(x)
+#define iscdigit(x) pg_wc_isdigit(x)
+#define iscspace(x) pg_wc_isspace(x)
 
 /* and pick up the standard header */
 #include "regex.h"

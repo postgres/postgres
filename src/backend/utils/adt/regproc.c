@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.86 2004/01/31 05:09:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.87 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1259,7 +1259,7 @@ parseNameAndArgTypes(const char *string, const char *caller,
 			*ptr2 = '\0';
 		}
 
-		if (allowNone && strcasecmp(typename, "none") == 0)
+		if (allowNone && pg_strcasecmp(typename, "none") == 0)
 		{
 			/* Special case for NONE */
 			typeid = InvalidOid;

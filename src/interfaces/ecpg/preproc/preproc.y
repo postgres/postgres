@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.279 2004/05/05 15:03:04 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.280 2004/05/07 00:24:59 tgl Exp $ */
 
 /* Copyright comment */
 %{
@@ -609,7 +609,7 @@ stmt:  AlterDatabaseSetStmt		{ output_statement($1, 0, connection); }
 				/* Informix also has a CLOSE DATABASE command that
 				   essantially works like a DISCONNECT CURRENT 
 				   as far as I know. */
-				if (strcasecmp($1+strlen("close "), "database") == 0)
+				if (pg_strcasecmp($1+strlen("close "), "database") == 0)
 				{
 					if (connection)
 		                                mmerror(PARSE_ERROR, ET_ERROR, "no at option for close database statement.\n");

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.104 2004/05/06 16:10:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.105 2004/05/07 00:24:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3126,13 +3126,13 @@ ATExecSetStorage(Relation rel, const char *colName, Node *newValue)
 	Assert(IsA(newValue, String));
 	storagemode = strVal(newValue);
 
-	if (strcasecmp(storagemode, "plain") == 0)
+	if (pg_strcasecmp(storagemode, "plain") == 0)
 		newstorage = 'p';
-	else if (strcasecmp(storagemode, "external") == 0)
+	else if (pg_strcasecmp(storagemode, "external") == 0)
 		newstorage = 'e';
-	else if (strcasecmp(storagemode, "extended") == 0)
+	else if (pg_strcasecmp(storagemode, "extended") == 0)
 		newstorage = 'x';
-	else if (strcasecmp(storagemode, "main") == 0)
+	else if (pg_strcasecmp(storagemode, "main") == 0)
 		newstorage = 'm';
 	else
 	{

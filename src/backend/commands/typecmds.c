@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.54 2004/05/05 17:06:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.55 2004/05/07 00:24:57 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -142,28 +142,28 @@ DefineType(List *names, List *parameters)
 	{
 		DefElem    *defel = (DefElem *) lfirst(pl);
 
-		if (strcasecmp(defel->defname, "internallength") == 0)
+		if (pg_strcasecmp(defel->defname, "internallength") == 0)
 			internalLength = defGetTypeLength(defel);
-		else if (strcasecmp(defel->defname, "externallength") == 0)
+		else if (pg_strcasecmp(defel->defname, "externallength") == 0)
 			;					/* ignored -- remove after 7.3 */
-		else if (strcasecmp(defel->defname, "input") == 0)
+		else if (pg_strcasecmp(defel->defname, "input") == 0)
 			inputName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "output") == 0)
+		else if (pg_strcasecmp(defel->defname, "output") == 0)
 			outputName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "receive") == 0)
+		else if (pg_strcasecmp(defel->defname, "receive") == 0)
 			receiveName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "send") == 0)
+		else if (pg_strcasecmp(defel->defname, "send") == 0)
 			sendName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "analyze") == 0 ||
-				 strcasecmp(defel->defname, "analyse") == 0)
+		else if (pg_strcasecmp(defel->defname, "analyze") == 0 ||
+				 pg_strcasecmp(defel->defname, "analyse") == 0)
 			analyzeName = defGetQualifiedName(defel);
-		else if (strcasecmp(defel->defname, "delimiter") == 0)
+		else if (pg_strcasecmp(defel->defname, "delimiter") == 0)
 		{
 			char	   *p = defGetString(defel);
 
 			delimiter = p[0];
 		}
-		else if (strcasecmp(defel->defname, "element") == 0)
+		else if (pg_strcasecmp(defel->defname, "element") == 0)
 		{
 			elemType = typenameTypeId(defGetTypeName(defel));
 			/* disallow arrays of pseudotypes */
@@ -173,11 +173,11 @@ DefineType(List *names, List *parameters)
 						 errmsg("array element type cannot be %s",
 								format_type_be(elemType))));
 		}
-		else if (strcasecmp(defel->defname, "default") == 0)
+		else if (pg_strcasecmp(defel->defname, "default") == 0)
 			defaultValue = defGetString(defel);
-		else if (strcasecmp(defel->defname, "passedbyvalue") == 0)
+		else if (pg_strcasecmp(defel->defname, "passedbyvalue") == 0)
 			byValue = true;
-		else if (strcasecmp(defel->defname, "alignment") == 0)
+		else if (pg_strcasecmp(defel->defname, "alignment") == 0)
 		{
 			char	   *a = defGetString(defel);
 
@@ -187,35 +187,35 @@ DefineType(List *names, List *parameters)
 			 * recognize translated type names as well as the nominal
 			 * form.
 			 */
-			if (strcasecmp(a, "double") == 0 ||
-				strcasecmp(a, "float8") == 0 ||
-				strcasecmp(a, "pg_catalog.float8") == 0)
+			if (pg_strcasecmp(a, "double") == 0 ||
+				pg_strcasecmp(a, "float8") == 0 ||
+				pg_strcasecmp(a, "pg_catalog.float8") == 0)
 				alignment = 'd';
-			else if (strcasecmp(a, "int4") == 0 ||
-					 strcasecmp(a, "pg_catalog.int4") == 0)
+			else if (pg_strcasecmp(a, "int4") == 0 ||
+					 pg_strcasecmp(a, "pg_catalog.int4") == 0)
 				alignment = 'i';
-			else if (strcasecmp(a, "int2") == 0 ||
-					 strcasecmp(a, "pg_catalog.int2") == 0)
+			else if (pg_strcasecmp(a, "int2") == 0 ||
+					 pg_strcasecmp(a, "pg_catalog.int2") == 0)
 				alignment = 's';
-			else if (strcasecmp(a, "char") == 0 ||
-					 strcasecmp(a, "pg_catalog.bpchar") == 0)
+			else if (pg_strcasecmp(a, "char") == 0 ||
+					 pg_strcasecmp(a, "pg_catalog.bpchar") == 0)
 				alignment = 'c';
 			else
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 						 errmsg("alignment \"%s\" not recognized", a)));
 		}
-		else if (strcasecmp(defel->defname, "storage") == 0)
+		else if (pg_strcasecmp(defel->defname, "storage") == 0)
 		{
 			char	   *a = defGetString(defel);
 
-			if (strcasecmp(a, "plain") == 0)
+			if (pg_strcasecmp(a, "plain") == 0)
 				storage = 'p';
-			else if (strcasecmp(a, "external") == 0)
+			else if (pg_strcasecmp(a, "external") == 0)
 				storage = 'e';
-			else if (strcasecmp(a, "extended") == 0)
+			else if (pg_strcasecmp(a, "extended") == 0)
 				storage = 'x';
-			else if (strcasecmp(a, "main") == 0)
+			else if (pg_strcasecmp(a, "main") == 0)
 				storage = 'm';
 			else
 				ereport(ERROR,

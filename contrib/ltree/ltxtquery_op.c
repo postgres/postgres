@@ -54,7 +54,7 @@ checkcondition_str(void *checkval, ITEM * val)
 	char	   *op = ((CHKVAL *) checkval)->operand + val->distance;
 	int			(*cmpptr) (const char *, const char *, size_t);
 
-	cmpptr = (val->flag & LVAR_INCASE) ? strncasecmp : strncmp;
+	cmpptr = (val->flag & LVAR_INCASE) ? pg_strncasecmp : strncmp;
 	while (tlen > 0)
 	{
 		if (val->flag & LVAR_SUBLEXEM)

@@ -47,7 +47,7 @@
  * permission to use and distribute the software in accordance with the
  * terms specified in this license.
  *
- * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.5 2003/11/29 19:51:55 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/regex/regc_locale.c,v 1.6 2004/05/07 00:24:57 tgl Exp $
  */
 
 /* ASCII character-name table */
@@ -353,61 +353,61 @@ static struct cname
  * some ctype functions with non-ascii-char guard
  */
 static int
-pg_isdigit(pg_wchar c)
+pg_wc_isdigit(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isdigit((unsigned char) c));
 }
 
 static int
-pg_isalpha(pg_wchar c)
+pg_wc_isalpha(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isalpha((unsigned char) c));
 }
 
 static int
-pg_isalnum(pg_wchar c)
+pg_wc_isalnum(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isalnum((unsigned char) c));
 }
 
 static int
-pg_isupper(pg_wchar c)
+pg_wc_isupper(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isupper((unsigned char) c));
 }
 
 static int
-pg_islower(pg_wchar c)
+pg_wc_islower(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && islower((unsigned char) c));
 }
 
 static int
-pg_isgraph(pg_wchar c)
+pg_wc_isgraph(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isgraph((unsigned char) c));
 }
 
 static int
-pg_isprint(pg_wchar c)
+pg_wc_isprint(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
 }
 
 static int
-pg_ispunct(pg_wchar c)
+pg_wc_ispunct(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && ispunct((unsigned char) c));
 }
 
 static int
-pg_isspace(pg_wchar c)
+pg_wc_isspace(pg_wchar c)
 {
 	return (c >= 0 && c <= UCHAR_MAX && isspace((unsigned char) c));
 }
 
 static pg_wchar
-pg_toupper(pg_wchar c)
+pg_wc_toupper(pg_wchar c)
 {
 	if (c >= 0 && c <= UCHAR_MAX)
 		return toupper((unsigned char) c);
@@ -415,7 +415,7 @@ pg_toupper(pg_wchar c)
 }
 
 static pg_wchar
-pg_tolower(pg_wchar c)
+pg_wc_tolower(pg_wchar c)
 {
 	if (c >= 0 && c <= UCHAR_MAX)
 		return tolower((unsigned char) c);
@@ -534,10 +534,10 @@ range(struct vars * v,			/* context */
 	for (c = a; c <= b; c++)
 	{
 		addchr(cv, c);
-		lc = pg_tolower((chr) c);
+		lc = pg_wc_tolower((chr) c);
 		if (c != lc)
 			addchr(cv, lc);
-		uc = pg_toupper((chr) c);
+		uc = pg_wc_toupper((chr) c);
 		if (c != uc)
 			addchr(cv, uc);
 	}
@@ -668,7 +668,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isprint((chr) i))
+					if (pg_wc_isprint((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -679,7 +679,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isalnum((chr) i))
+					if (pg_wc_isalnum((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -690,7 +690,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isalpha((chr) i))
+					if (pg_wc_isalpha((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -721,7 +721,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_ispunct((chr) i))
+					if (pg_wc_ispunct((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -741,7 +741,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isspace((chr) i))
+					if (pg_wc_isspace((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -752,7 +752,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_islower((chr) i))
+					if (pg_wc_islower((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -763,7 +763,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isupper((chr) i))
+					if (pg_wc_isupper((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -774,7 +774,7 @@ cclass(struct vars * v,			/* context */
 			{
 				for (i = 0; i <= UCHAR_MAX; i++)
 				{
-					if (pg_isgraph((chr) i))
+					if (pg_wc_isgraph((chr) i))
 						addchr(cv, (chr) i);
 				}
 			}
@@ -800,8 +800,8 @@ allcases(struct vars * v,		/* context */
 	chr			lc,
 				uc;
 
-	lc = pg_tolower((chr) c);
-	uc = pg_toupper((chr) c);
+	lc = pg_wc_tolower((chr) c);
+	uc = pg_wc_toupper((chr) c);
 
 	cv = getcvec(v, 2, 0, 0);
 	addchr(cv, lc);
@@ -839,7 +839,7 @@ casecmp(const chr *x, const chr *y,		/* strings to compare */
 {
 	for (; len > 0; len--, x++, y++)
 	{
-		if ((*x != *y) && (pg_tolower(*x) != pg_tolower(*y)))
+		if ((*x != *y) && (pg_wc_tolower(*x) != pg_wc_tolower(*y)))
 			return 1;
 	}
 	return 0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.104 2004/04/10 18:02:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.105 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "catalog/pg_type.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "parser/scansup.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -2699,31 +2700,19 @@ timestamp_trunc(PG_FUNCTION_ARGS)
 	Timestamp	result;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
-
-	type = DecodeUnits(0, lowunits, &val);
-
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMP(timestamp);
+
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
+
+	type = DecodeUnits(0, lowunits, &val);
 
 	if (type == UNITS)
 	{
@@ -2814,31 +2803,20 @@ timestamptz_trunc(PG_FUNCTION_ARGS)
 	int			tz;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 	fsec_t		fsec;
 	char	   *tzn;
 	struct tm	tt,
 			   *tm = &tt;
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("timestamp with time zone units \"%s\" not recognized",
-				  DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
-
-	type = DecodeUnits(0, lowunits, &val);
-
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
+
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
+
+	type = DecodeUnits(0, lowunits, &val);
 
 	if (type == UNITS)
 	{
@@ -2929,27 +2907,16 @@ interval_trunc(PG_FUNCTION_ARGS)
 	Interval   *result;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
 	result = (Interval *) palloc(sizeof(Interval));
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("interval units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
 
 	type = DecodeUnits(0, lowunits, &val);
 
@@ -3173,35 +3140,24 @@ timestamp_part(PG_FUNCTION_ARGS)
 	float8		result;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
-
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("timestamp units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
-
-	type = DecodeUnits(0, lowunits, &val);
-	if (type == UNKNOWN_FIELD)
-		type = DecodeSpecial(0, lowunits, &val);
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
 		result = 0;
 		PG_RETURN_FLOAT8(result);
 	}
+
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
+
+	type = DecodeUnits(0, lowunits, &val);
+	if (type == UNKNOWN_FIELD)
+		type = DecodeSpecial(0, lowunits, &val);
 
 	if (type == UNITS)
 	{
@@ -3395,37 +3351,26 @@ timestamptz_part(PG_FUNCTION_ARGS)
 	int			tz;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 	double		dummy;
 	fsec_t		fsec;
 	char	   *tzn;
 	struct tm	tt,
 			   *tm = &tt;
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-		   errmsg("timestamp with time zone units \"%s\" not recognized",
-				  DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
-
-	type = DecodeUnits(0, lowunits, &val);
-	if (type == UNKNOWN_FIELD)
-		type = DecodeSpecial(0, lowunits, &val);
-
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 	{
 		result = 0;
 		PG_RETURN_FLOAT8(result);
 	}
+
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
+
+	type = DecodeUnits(0, lowunits, &val);
+	if (type == UNKNOWN_FIELD)
+		type = DecodeSpecial(0, lowunits, &val);
 
 	if (type == UNITS)
 	{
@@ -3597,25 +3542,14 @@ interval_part(PG_FUNCTION_ARGS)
 	float8		result;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowunits[MAXDATELEN + 1];
+	char	   *lowunits;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
 
-	if (VARSIZE(units) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("interval units \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(units))))));
-	up = VARDATA(units);
-	lp = lowunits;
-	for (i = 0; i < (VARSIZE(units) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
+	lowunits = downcase_truncate_identifier(VARDATA(units),
+											VARSIZE(units) - VARHDRSZ,
+											false);
 
 	type = DecodeUnits(0, lowunits, &val);
 	if (type == UNKNOWN_FIELD)
@@ -3744,26 +3678,14 @@ timestamp_zone(PG_FUNCTION_ARGS)
 	int			tz;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowzone[MAXDATELEN + 1];
-
-	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											  PointerGetDatum(zone))))));
+	char	   *lowzone;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_TIMESTAMPTZ(timestamp);
 
-	up = VARDATA(zone);
-	lp = lowzone;
-	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
+	lowzone = downcase_truncate_identifier(VARDATA(zone),
+										   VARSIZE(zone) - VARHDRSZ,
+										   false);
 
 	type = DecodeSpecial(0, lowzone, &val);
 
@@ -3903,27 +3825,16 @@ timestamptz_zone(PG_FUNCTION_ARGS)
 	int			tz;
 	int			type,
 				val;
-	int			i;
-	char	   *up,
-			   *lp,
-				lowzone[MAXDATELEN + 1];
-
-	if (VARSIZE(zone) - VARHDRSZ > MAXDATELEN)
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("time zone \"%s\" not recognized",
-						DatumGetCString(DirectFunctionCall1(textout,
-											  PointerGetDatum(zone))))));
-	up = VARDATA(zone);
-	lp = lowzone;
-	for (i = 0; i < (VARSIZE(zone) - VARHDRSZ); i++)
-		*lp++ = tolower((unsigned char) *up++);
-	*lp = '\0';
-
-	type = DecodeSpecial(0, lowzone, &val);
+	char	   *lowzone;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
+
+	lowzone = downcase_truncate_identifier(VARDATA(zone),
+										   VARSIZE(zone) - VARHDRSZ,
+										   false);
+
+	type = DecodeSpecial(0, lowzone, &val);
 
 	if ((type == TZ) || (type == DTZ))
 	{

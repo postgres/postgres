@@ -210,15 +210,15 @@ prsd_headline(PG_FUNCTION_ARGS)
 
 		while (mptr && mptr->key)
 		{
-			if (strcasecmp(mptr->key, "MaxWords") == 0)
+			if (pg_strcasecmp(mptr->key, "MaxWords") == 0)
 				max_words = pg_atoi(mptr->value, 4, 1);
-			else if (strcasecmp(mptr->key, "MinWords") == 0)
+			else if (pg_strcasecmp(mptr->key, "MinWords") == 0)
 				min_words = pg_atoi(mptr->value, 4, 1);
-			else if (strcasecmp(mptr->key, "ShortWord") == 0)
+			else if (pg_strcasecmp(mptr->key, "ShortWord") == 0)
 				shortword = pg_atoi(mptr->value, 4, 1);
-			else if (strcasecmp(mptr->key, "StartSel") == 0)
+			else if (pg_strcasecmp(mptr->key, "StartSel") == 0)
 				prs->startsel = pstrdup(mptr->value);
-			else if (strcasecmp(mptr->key, "StopSel") == 0)
+			else if (pg_strcasecmp(mptr->key, "StopSel") == 0)
 				prs->stopsel = pstrdup(mptr->value);
 
 			pfree(mptr->key);

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.201 2004/04/19 21:22:14 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.202 2004/05/07 00:24:58 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -2443,45 +2443,45 @@ parse_bool(const char *value, bool *result)
 {
 	size_t		len = strlen(value);
 
-	if (strncasecmp(value, "true", len) == 0)
+	if (pg_strncasecmp(value, "true", len) == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strncasecmp(value, "false", len) == 0)
+	else if (pg_strncasecmp(value, "false", len) == 0)
 	{
 		if (result)
 			*result = false;
 	}
 
-	else if (strncasecmp(value, "yes", len) == 0)
+	else if (pg_strncasecmp(value, "yes", len) == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strncasecmp(value, "no", len) == 0)
+	else if (pg_strncasecmp(value, "no", len) == 0)
 	{
 		if (result)
 			*result = false;
 	}
 
-	else if (strcasecmp(value, "on") == 0)
+	else if (pg_strcasecmp(value, "on") == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strcasecmp(value, "off") == 0)
+	else if (pg_strcasecmp(value, "off") == 0)
 	{
 		if (result)
 			*result = false;
 	}
 
-	else if (strcasecmp(value, "1") == 0)
+	else if (pg_strcasecmp(value, "1") == 0)
 	{
 		if (result)
 			*result = true;
 	}
-	else if (strcasecmp(value, "0") == 0)
+	else if (pg_strcasecmp(value, "0") == 0)
 	{
 		if (result)
 			*result = false;
@@ -3463,7 +3463,7 @@ set_config_by_name(PG_FUNCTION_ARGS)
 void
 GetPGVariable(const char *name, DestReceiver *dest)
 {
-	if (strcasecmp(name, "all") == 0)
+	if (pg_strcasecmp(name, "all") == 0)
 		ShowAllGUCConfig(dest);
 	else
 		ShowGUCConfigOption(name, dest);
@@ -3474,7 +3474,7 @@ GetPGVariableResultDesc(const char *name)
 {
 	TupleDesc	tupdesc;
 
-	if (strcasecmp(name, "all") == 0)
+	if (pg_strcasecmp(name, "all") == 0)
 	{
 		/* need a tuple descriptor representing two TEXT columns */
 		tupdesc = CreateTemplateTupleDesc(2, false);
@@ -3504,7 +3504,7 @@ GetPGVariableResultDesc(const char *name)
 void
 ResetPGVariable(const char *name)
 {
-	if (strcasecmp(name, "all") == 0)
+	if (pg_strcasecmp(name, "all") == 0)
 		ResetAllOptions();
 	else
 		set_config_option(name,
@@ -4455,14 +4455,14 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 	{
 		char *tok = (char *) lfirst(l);
 	
-		if (strcasecmp(tok,"stderr") == 0)
+		if (pg_strcasecmp(tok,"stderr") == 0)
 			newlogdest |= LOG_DESTINATION_STDERR;
 #ifdef HAVE_SYSLOG
-		else if (strcasecmp(tok,"syslog") == 0)
+		else if (pg_strcasecmp(tok,"syslog") == 0)
 			newlogdest |= LOG_DESTINATION_SYSLOG;
 #endif
 #ifdef WIN32
-		else if (strcasecmp(tok,"eventlog") == 0)
+		else if (pg_strcasecmp(tok,"eventlog") == 0)
 			newlogdest |= LOG_DESTINATION_EVENTLOG;
 #endif
 		else {
@@ -4494,21 +4494,21 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 static const char *
 assign_facility(const char *facility, bool doit, GucSource source)
 {
-	if (strcasecmp(facility, "LOCAL0") == 0)
+	if (pg_strcasecmp(facility, "LOCAL0") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL1") == 0)
+	if (pg_strcasecmp(facility, "LOCAL1") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL2") == 0)
+	if (pg_strcasecmp(facility, "LOCAL2") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL3") == 0)
+	if (pg_strcasecmp(facility, "LOCAL3") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL4") == 0)
+	if (pg_strcasecmp(facility, "LOCAL4") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL5") == 0)
+	if (pg_strcasecmp(facility, "LOCAL5") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL6") == 0)
+	if (pg_strcasecmp(facility, "LOCAL6") == 0)
 		return facility;
-	if (strcasecmp(facility, "LOCAL7") == 0)
+	if (pg_strcasecmp(facility, "LOCAL7") == 0)
 		return facility;
 	return NULL;
 }
@@ -4518,22 +4518,22 @@ assign_facility(const char *facility, bool doit, GucSource source)
 static const char *
 assign_defaultxactisolevel(const char *newval, bool doit, GucSource source)
 {
-	if (strcasecmp(newval, "serializable") == 0)
+	if (pg_strcasecmp(newval, "serializable") == 0)
 	{
 		if (doit)
 			DefaultXactIsoLevel = XACT_SERIALIZABLE;
 	}
-	else if (strcasecmp(newval, "repeatable read") == 0)
+	else if (pg_strcasecmp(newval, "repeatable read") == 0)
 	{
 		if (doit)
 			DefaultXactIsoLevel = XACT_REPEATABLE_READ;
 	}
-	else if (strcasecmp(newval, "read committed") == 0)
+	else if (pg_strcasecmp(newval, "read committed") == 0)
 	{
 		if (doit)
 			DefaultXactIsoLevel = XACT_READ_COMMITTED;
 	}
-	else if (strcasecmp(newval, "read uncommitted") == 0)
+	else if (pg_strcasecmp(newval, "read uncommitted") == 0)
 	{
 		if (doit)
 			DefaultXactIsoLevel = XACT_READ_UNCOMMITTED;
@@ -4566,68 +4566,68 @@ assign_min_error_statement(const char *newval, bool doit, GucSource source)
 static const char *
 assign_msglvl(int *var, const char *newval, bool doit, GucSource source)
 {
-	if (strcasecmp(newval, "debug") == 0)
+	if (pg_strcasecmp(newval, "debug") == 0)
 	{
 		if (doit)
 			(*var) = DEBUG2;
 	}
-	else if (strcasecmp(newval, "debug5") == 0)
+	else if (pg_strcasecmp(newval, "debug5") == 0)
 	{
 		if (doit)
 			(*var) = DEBUG5;
 	}
-	else if (strcasecmp(newval, "debug4") == 0)
+	else if (pg_strcasecmp(newval, "debug4") == 0)
 	{
 		if (doit)
 			(*var) = DEBUG4;
 	}
-	else if (strcasecmp(newval, "debug3") == 0)
+	else if (pg_strcasecmp(newval, "debug3") == 0)
 	{
 		if (doit)
 			(*var) = DEBUG3;
 	}
-	else if (strcasecmp(newval, "debug2") == 0)
+	else if (pg_strcasecmp(newval, "debug2") == 0)
 	{
 		if (doit)
 			(*var) = DEBUG2;
 	}
-	else if (strcasecmp(newval, "debug1") == 0)
+	else if (pg_strcasecmp(newval, "debug1") == 0)
 	{
 		if (doit)
 			(*var) = DEBUG1;
 	}
-	else if (strcasecmp(newval, "log") == 0)
+	else if (pg_strcasecmp(newval, "log") == 0)
 	{
 		if (doit)
 			(*var) = LOG;
 	}
-	else if (strcasecmp(newval, "info") == 0)
+	else if (pg_strcasecmp(newval, "info") == 0)
 	{
 		if (doit)
 			(*var) = INFO;
 	}
-	else if (strcasecmp(newval, "notice") == 0)
+	else if (pg_strcasecmp(newval, "notice") == 0)
 	{
 		if (doit)
 			(*var) = NOTICE;
 	}
-	else if (strcasecmp(newval, "warning") == 0)
+	else if (pg_strcasecmp(newval, "warning") == 0)
 	{
 		if (doit)
 			(*var) = WARNING;
 	}
-	else if (strcasecmp(newval, "error") == 0)
+	else if (pg_strcasecmp(newval, "error") == 0)
 	{
 		if (doit)
 			(*var) = ERROR;
 	}
 	/* We allow FATAL/PANIC for client-side messages too. */
-	else if (strcasecmp(newval, "fatal") == 0)
+	else if (pg_strcasecmp(newval, "fatal") == 0)
 	{
 		if (doit)
 			(*var) = FATAL;
 	}
-	else if (strcasecmp(newval, "panic") == 0)
+	else if (pg_strcasecmp(newval, "panic") == 0)
 	{
 		if (doit)
 			(*var) = PANIC;
@@ -4640,17 +4640,17 @@ assign_msglvl(int *var, const char *newval, bool doit, GucSource source)
 static const char *
 assign_log_error_verbosity(const char *newval, bool doit, GucSource source)
 {
-	if (strcasecmp(newval, "terse") == 0)
+	if (pg_strcasecmp(newval, "terse") == 0)
 	{
 		if (doit)
 			Log_error_verbosity = PGERROR_TERSE;
 	}
-	else if (strcasecmp(newval, "default") == 0)
+	else if (pg_strcasecmp(newval, "default") == 0)
 	{
 		if (doit)
 			Log_error_verbosity = PGERROR_DEFAULT;
 	}
-	else if (strcasecmp(newval, "verbose") == 0)
+	else if (pg_strcasecmp(newval, "verbose") == 0)
 	{
 		if (doit)
 			Log_error_verbosity = PGERROR_VERBOSE;
@@ -4669,22 +4669,22 @@ assign_log_statement(const char *newval, bool doit, GucSource source)
 static const char *
 assign_log_stmtlvl(int *var, const char *newval, bool doit, GucSource source)
 {
-	if (strcasecmp(newval, "none") == 0)
+	if (pg_strcasecmp(newval, "none") == 0)
 	{
 		if (doit)
 			(*var) = LOGSTMT_NONE;
 	}
-	else if (strcasecmp(newval, "mod") == 0)
+	else if (pg_strcasecmp(newval, "mod") == 0)
 	{
 		if (doit)
 			(*var) = LOGSTMT_MOD;
 	}
-	else if (strcasecmp(newval, "ddl") == 0)
+	else if (pg_strcasecmp(newval, "ddl") == 0)
 	{
 		if (doit)
 			(*var) = LOGSTMT_DDL;
 	}
-	else if (strcasecmp(newval, "all") == 0)
+	else if (pg_strcasecmp(newval, "all") == 0)
 	{
 		if (doit)
 			(*var) = LOGSTMT_ALL;

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.85 2004/03/21 22:29:11 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/common.c,v 1.86 2004/05/07 00:24:58 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -985,17 +985,17 @@ is_transact_command(const char *query)
 	while (isalpha((unsigned char) query[wordlen]))
 		wordlen++;
 
-	if (wordlen == 5 && strncasecmp(query, "begin", 5) == 0)
+	if (wordlen == 5 && pg_strncasecmp(query, "begin", 5) == 0)
 		return true;
-	if (wordlen == 6 && strncasecmp(query, "commit", 6) == 0)
+	if (wordlen == 6 && pg_strncasecmp(query, "commit", 6) == 0)
 		return true;
-	if (wordlen == 8 && strncasecmp(query, "rollback", 8) == 0)
+	if (wordlen == 8 && pg_strncasecmp(query, "rollback", 8) == 0)
 		return true;
-	if (wordlen == 5 && strncasecmp(query, "abort", 5) == 0)
+	if (wordlen == 5 && pg_strncasecmp(query, "abort", 5) == 0)
 		return true;
-	if (wordlen == 3 && strncasecmp(query, "end", 3) == 0)
+	if (wordlen == 3 && pg_strncasecmp(query, "end", 3) == 0)
 		return true;
-	if (wordlen == 5 && strncasecmp(query, "start", 5) == 0)
+	if (wordlen == 5 && pg_strncasecmp(query, "start", 5) == 0)
 		return true;
 
 	return false;

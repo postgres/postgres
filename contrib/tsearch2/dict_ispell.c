@@ -62,7 +62,7 @@ spell_init(PG_FUNCTION_ARGS)
 	pcfg = cfg;
 	while (pcfg->key)
 	{
-		if (strcasecmp("DictFile", pcfg->key) == 0)
+		if (pg_strcasecmp("DictFile", pcfg->key) == 0)
 		{
 			if (dictloaded)
 			{
@@ -81,7 +81,7 @@ spell_init(PG_FUNCTION_ARGS)
 			}
 			dictloaded = true;
 		}
-		else if (strcasecmp("AffFile", pcfg->key) == 0)
+		else if (pg_strcasecmp("AffFile", pcfg->key) == 0)
 		{
 			if (affloaded)
 			{
@@ -100,7 +100,7 @@ spell_init(PG_FUNCTION_ARGS)
 			}
 			affloaded = true;
 		}
-		else if (strcasecmp("StopFile", pcfg->key) == 0)
+		else if (pg_strcasecmp("StopFile", pcfg->key) == 0)
 		{
 			text	   *tmp = char2text(pcfg->value);
 

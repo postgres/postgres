@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.8 2003/11/29 22:39:28 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/px.c,v 1.9 2004/05/07 00:24:57 tgl Exp $
  */
 
 #include <postgres.h>
@@ -39,7 +39,7 @@ px_resolve_alias(const PX_Alias * list, const char *name)
 {
 	while (list->name)
 	{
-		if (!strcasecmp(list->alias, name))
+		if (pg_strcasecmp(list->alias, name) == 0)
 			return list->name;
 		list++;
 	}

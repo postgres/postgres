@@ -1847,7 +1847,7 @@ ParseDateTime(char *timestr, char *lowstr,
 				{
 					ftype[nf] = DTK_DATE;
 					while (isalnum((unsigned char) *(*endstr)) || (*(*endstr) == *dp))
-						*lp++ = tolower((unsigned char) *(*endstr)++);
+						*lp++ = pg_tolower((unsigned char) *(*endstr)++);
 				}
 			}
 
@@ -1875,9 +1875,9 @@ ParseDateTime(char *timestr, char *lowstr,
 		else if (isalpha((unsigned char) *(*endstr)))
 		{
 			ftype[nf] = DTK_STRING;
-			*lp++ = tolower((unsigned char) *(*endstr)++);
+			*lp++ = pg_tolower((unsigned char) *(*endstr)++);
 			while (isalpha((unsigned char) *(*endstr)))
-				*lp++ = tolower((unsigned char) *(*endstr)++);
+				*lp++ = pg_tolower((unsigned char) *(*endstr)++);
 
 			/*
 			 * Full date string with leading text month? Could also be a
@@ -1919,9 +1919,9 @@ ParseDateTime(char *timestr, char *lowstr,
 			else if (isalpha((unsigned char) *(*endstr)))
 			{
 				ftype[nf] = DTK_SPECIAL;
-				*lp++ = tolower((unsigned char) *(*endstr)++);
+				*lp++ = pg_tolower((unsigned char) *(*endstr)++);
 				while (isalpha((unsigned char) *(*endstr)))
-					*lp++ = tolower((unsigned char) *(*endstr)++);
+					*lp++ = pg_tolower((unsigned char) *(*endstr)++);
 			}
 			/* otherwise something wrong... */
 			else
@@ -3115,7 +3115,7 @@ PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
 				 */
 				for (j = 0; !err && j < szdatetktbl; j++)
 				{
-					if (strcasecmp(datetktbl[j].token, scan_val.str_val) == 0)
+					if (pg_strcasecmp(datetktbl[j].token, scan_val.str_val) == 0)
 					{
 						/*
 						 * tz calculates the offset for the seconds, the

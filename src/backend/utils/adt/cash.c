@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.62 2003/11/29 19:51:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/cash.c,v 1.63 2004/05/07 00:24:58 tgl Exp $
  */
 
 #include "postgres.h"
@@ -745,7 +745,7 @@ cash_words(PG_FUNCTION_ARGS)
 	strcat(buf, m0 == 1 ? " cent" : " cents");
 
 	/* capitalize output */
-	buf[0] = toupper((unsigned char) buf[0]);
+	buf[0] = pg_toupper((unsigned char) buf[0]);
 
 	/* make a text type for output */
 	result = (text *) palloc(strlen(buf) + VARHDRSZ);

@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.46 2004/04/21 00:34:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.47 2004/05/07 00:24:58 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -27,7 +27,6 @@
 #include "stringutils.h"
 
 #if defined(WIN32) && (!defined(__MINGW32__))
-#define strcasecmp(x,y) stricmp(x,y)
 #define __S_ISTYPE(mode, mask)	(((mode) & S_IFMT) == (mask))
 #define S_ISDIR(mode)	 __S_ISTYPE((mode), S_IFDIR)
 #endif
@@ -133,7 +132,7 @@ parse_slash_copy(const char *args)
 
 #ifdef NOT_USED
 	/* this is not implemented yet */
-	if (strcasecmp(token, "binary") == 0)
+	if (pg_strcasecmp(token, "binary") == 0)
 	{
 		result->binary = true;
 		token = strtokx(NULL, whitespace, ".,()", "\"",
@@ -200,11 +199,11 @@ parse_slash_copy(const char *args)
 	/*
 	 * Allows old COPY syntax for backward compatibility 2002-06-19
 	 */
-	if (strcasecmp(token, "with") == 0)
+	if (pg_strcasecmp(token, "with") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, NULL,
 						0, false, pset.encoding);
-		if (!token || strcasecmp(token, "oids") != 0)
+		if (!token || pg_strcasecmp(token, "oids") != 0)
 			goto error;
 		result->oids = true;
 
@@ -214,9 +213,9 @@ parse_slash_copy(const char *args)
 			goto error;
 	}
 
-	if (strcasecmp(token, "from") == 0)
+	if (pg_strcasecmp(token, "from") == 0)
 		result->from = true;
-	else if (strcasecmp(token, "to") == 0)
+	else if (pg_strcasecmp(token, "to") == 0)
 		result->from = false;
 	else
 		goto error;
@@ -226,14 +225,14 @@ parse_slash_copy(const char *args)
 	if (!token)
 		goto error;
 
-	if (strcasecmp(token, "stdin") == 0 ||
-		strcasecmp(token, "stdout") == 0)
+	if (pg_strcasecmp(token, "stdin") == 0 ||
+		pg_strcasecmp(token, "stdout") == 0)
 	{
 		result->psql_inout = false;
 		result->file = NULL;
 	}
-	else if (strcasecmp(token, "pstdin") == 0 ||
-		strcasecmp(token, "pstdout") == 0)
+	else if (pg_strcasecmp(token, "pstdin") == 0 ||
+		pg_strcasecmp(token, "pstdout") == 0)
 	{
 		result->psql_inout = true;
 		result->file = NULL;
@@ -251,14 +250,14 @@ parse_slash_copy(const char *args)
 	/*
 	 * Allows old COPY syntax for backward compatibility 2002-06-19
 	 */
-	if (token && strcasecmp(token, "using") == 0)
+	if (token && pg_strcasecmp(token, "using") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, NULL,
 						0, false, pset.encoding);
-		if (!(token && strcasecmp(token, "delimiters") == 0))
+		if (!(token && pg_strcasecmp(token, "delimiters") == 0))
 			goto error;
 	}
-	if (token && strcasecmp(token, "delimiters") == 0)
+	if (token && pg_strcasecmp(token, "delimiters") == 0)
 	{
 		token = strtokx(NULL, whitespace, NULL, "'",
 						'\\', false, pset.encoding);
@@ -275,7 +274,7 @@ parse_slash_copy(const char *args)
 		 * WITH is optional.  Also, the backend will allow WITH followed by
 		 * nothing, so we do too.
 		 */
-		if (strcasecmp(token, "with") == 0)
+		if (pg_strcasecmp(token, "with") == 0)
 			token = strtokx(NULL, whitespace, NULL, NULL,
 							0, false, pset.encoding);
 
@@ -286,19 +285,19 @@ parse_slash_copy(const char *args)
 			fetch_next = true;
 			
 			/* someday allow BINARY here */
-			if (strcasecmp(token, "oids") == 0)
+			if (pg_strcasecmp(token, "oids") == 0)
 			{
 				result->oids = true;
 			}
-			else if (strcasecmp(token, "csv") == 0)
+			else if (pg_strcasecmp(token, "csv") == 0)
 			{
 				result->csv_mode = true;
 			}
-			else if (strcasecmp(token, "delimiter") == 0)
+			else if (pg_strcasecmp(token, "delimiter") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
 								'\\', false, pset.encoding);
-				if (token && strcasecmp(token, "as") == 0)
+				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
 									'\\', false, pset.encoding);
 				if (token)
@@ -306,11 +305,11 @@ parse_slash_copy(const char *args)
 				else
 					goto error;
 			}
-			else if (strcasecmp(token, "null") == 0)
+			else if (pg_strcasecmp(token, "null") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
 								'\\', false, pset.encoding);
-				if (token && strcasecmp(token, "as") == 0)
+				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
 									'\\', false, pset.encoding);
 				if (token)
@@ -318,11 +317,11 @@ parse_slash_copy(const char *args)
 				else
 					goto error;
 			}
-			else if (strcasecmp(token, "quote") == 0)
+			else if (pg_strcasecmp(token, "quote") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
 								'\\', false, pset.encoding);
-				if (token && strcasecmp(token, "as") == 0)
+				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
 									'\\', false, pset.encoding);
 				if (token)
@@ -330,11 +329,11 @@ parse_slash_copy(const char *args)
 				else
 					goto error;
 			}
-			else if (strcasecmp(token, "escape") == 0)
+			else if (pg_strcasecmp(token, "escape") == 0)
 			{
 				token = strtokx(NULL, whitespace, NULL, "'",
 								'\\', false, pset.encoding);
-				if (token && strcasecmp(token, "as") == 0)
+				if (token && pg_strcasecmp(token, "as") == 0)
 					token = strtokx(NULL, whitespace, NULL, "'",
 									'\\', false, pset.encoding);
 				if (token)
@@ -342,11 +341,11 @@ parse_slash_copy(const char *args)
 				else
 					goto error;
 			}
-			else if (strcasecmp(token, "force") == 0)
+			else if (pg_strcasecmp(token, "force") == 0)
 			{
 				token = strtokx(NULL, whitespace, ",", "\"",
 								0, false, pset.encoding);
-				if (strcasecmp(token, "quote") == 0)
+				if (pg_strcasecmp(token, "quote") == 0)
 				{
 					/* handle column list */
 					fetch_next = false;
@@ -367,11 +366,11 @@ parse_slash_copy(const char *args)
 						xstrcat(&result->force_quote_list, token);
 					}
 				}
-				else if (strcasecmp(token, "not") == 0)
+				else if (pg_strcasecmp(token, "not") == 0)
 				{
 					token = strtokx(NULL, whitespace, ",", "\"",
 									0, false, pset.encoding);
-					if (strcasecmp(token, "null") != 0)
+					if (pg_strcasecmp(token, "null") != 0)
 						goto error;
 					/* handle column list */
 					fetch_next = false;

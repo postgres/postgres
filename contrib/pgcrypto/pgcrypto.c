@@ -26,12 +26,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.15 2003/11/29 22:39:28 pgsql Exp $
+ * $PostgreSQL: pgsql/contrib/pgcrypto/pgcrypto.c,v 1.16 2004/05/07 00:24:57 tgl Exp $
  */
 
-#include <postgres.h>
-#include <fmgr.h>
+#include "postgres.h"
+
 #include <ctype.h>
+
+#include "fmgr.h"
+#include "parser/scansup.h"
 
 #include "px.h"
 #include "px-crypt.h"
@@ -554,26 +557,12 @@ find_provider(text *name,
 			  char *desc, int silent)
 {
 	void	   *res;
-	char		buf[PX_MAX_NAMELEN + 1],
-			   *p;
-	unsigned	len;
-	unsigned	i;
+	char	   *buf;
 	int			err;
 
-	len = VARSIZE(name) - VARHDRSZ;
-	if (len > PX_MAX_NAMELEN)
-	{
-		if (silent)
-			return NULL;
-		ereport(ERROR,
-				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
-				 errmsg("%s type does not exist (name too long)", desc)));
-	}
-
-	p = VARDATA(name);
-	for (i = 0; i < len; i++)
-		buf[i] = tolower((unsigned char) p[i]);
-	buf[len] = 0;
+	buf = downcase_truncate_identifier(VARDATA(name),
+									   VARSIZE(name) - VARHDRSZ,
+									   false);
 
 	err = provider_lookup(buf, &res);
 
@@ -581,6 +570,8 @@ find_provider(text *name,
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("%s type does not exist: \"%s\"", desc, buf)));
+
+	pfree(buf);
 
 	return err ? NULL : res;
 }

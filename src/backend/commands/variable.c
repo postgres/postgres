@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.93 2004/01/19 19:04:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.94 2004/05/07 00:24:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "catalog/pg_shadow.h"
 #include "commands/variable.h"
 #include "miscadmin.h"
+#include "parser/scansup.h"
 #include "utils/builtins.h"
 #include "utils/guc.h"
 #include "utils/syscache.h"
@@ -82,22 +83,22 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 
 		/* Ugh. Somebody ought to write a table driven version -- mjl */
 
-		if (strcasecmp(tok, "ISO") == 0)
+		if (pg_strcasecmp(tok, "ISO") == 0)
 		{
 			newDateStyle = USE_ISO_DATES;
 			scnt++;
 		}
-		else if (strcasecmp(tok, "SQL") == 0)
+		else if (pg_strcasecmp(tok, "SQL") == 0)
 		{
 			newDateStyle = USE_SQL_DATES;
 			scnt++;
 		}
-		else if (strncasecmp(tok, "POSTGRES", 8) == 0)
+		else if (pg_strncasecmp(tok, "POSTGRES", 8) == 0)
 		{
 			newDateStyle = USE_POSTGRES_DATES;
 			scnt++;
 		}
-		else if (strcasecmp(tok, "GERMAN") == 0)
+		else if (pg_strcasecmp(tok, "GERMAN") == 0)
 		{
 			newDateStyle = USE_GERMAN_DATES;
 			scnt++;
@@ -105,25 +106,25 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 			if (ocnt == 0)
 				newDateOrder = DATEORDER_DMY;
 		}
-		else if (strcasecmp(tok, "YMD") == 0)
+		else if (pg_strcasecmp(tok, "YMD") == 0)
 		{
 			newDateOrder = DATEORDER_YMD;
 			ocnt++;
 		}
-		else if (strcasecmp(tok, "DMY") == 0 ||
-				 strncasecmp(tok, "EURO", 4) == 0)
+		else if (pg_strcasecmp(tok, "DMY") == 0 ||
+				 pg_strncasecmp(tok, "EURO", 4) == 0)
 		{
 			newDateOrder = DATEORDER_DMY;
 			ocnt++;
 		}
-		else if (strcasecmp(tok, "MDY") == 0 ||
-				 strcasecmp(tok, "US") == 0 ||
-				 strncasecmp(tok, "NONEURO", 7) == 0)
+		else if (pg_strcasecmp(tok, "MDY") == 0 ||
+				 pg_strcasecmp(tok, "US") == 0 ||
+				 pg_strncasecmp(tok, "NONEURO", 7) == 0)
 		{
 			newDateOrder = DATEORDER_MDY;
 			ocnt++;
 		}
-		else if (strcasecmp(tok, "DEFAULT") == 0)
+		else if (pg_strcasecmp(tok, "DEFAULT") == 0)
 		{
 			/*
 			 * Easiest way to get the current DEFAULT state is to fetch
@@ -321,8 +322,7 @@ clear_tz(void)
 static bool
 tzset_succeeded(const char *tz)
 {
-	char		tztmp[TZBUF_LEN];
-	char	   *cp;
+	char	   *tztmp;
 	int			tzval;
 
 	/*
@@ -339,9 +339,7 @@ tzset_succeeded(const char *tz)
 	 * Check for known spellings of "UTC".	Note we must downcase the
 	 * input before passing it to DecodePosixTimezone().
 	 */
-	StrNCpy(tztmp, tz, sizeof(tztmp));
-	for (cp = tztmp; *cp; cp++)
-		*cp = tolower((unsigned char) *cp);
+	tztmp = downcase_truncate_identifier(tz, strlen(tz), false);
 	if (DecodePosixTimezone(tztmp, &tzval) == 0)
 		if (tzval == 0)
 			return true;
@@ -410,7 +408,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 	/*
 	 * Check for INTERVAL 'foo'
 	 */
-	if (strncasecmp(value, "interval", 8) == 0)
+	if (pg_strncasecmp(value, "interval", 8) == 0)
 	{
 		const char *valueptr = value;
 		char	   *val;
@@ -474,7 +472,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 				HasCTZSet = true;
 			}
 		}
-		else if (strcasecmp(value, "UNKNOWN") == 0)
+		else if (pg_strcasecmp(value, "UNKNOWN") == 0)
 		{
 			/*
 			 * UNKNOWN is the value shown as the "default" for TimeZone in

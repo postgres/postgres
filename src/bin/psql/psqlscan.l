@@ -31,7 +31,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.2 2004/02/24 21:45:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/bin/psql/psqlscan.l,v 1.3 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1374,10 +1374,7 @@ psql_scan_slash_option(PsqlScanState state,
 					else
 					{
 						if (!inquotes && type == OT_SQLID)
-						{
-							if (isupper((unsigned char) *cp))
-								*cp = tolower((unsigned char) *cp);
-						}
+							*cp = pg_tolower((unsigned char) *cp);
 						cp += PQmblen(cp, pset.encoding);
 					}
 				}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.52 2004/02/03 17:52:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regexp.c,v 1.53 2004/05/07 00:24:58 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -233,17 +233,17 @@ const char *
 assign_regex_flavor(const char *value,
 					bool doit, GucSource source)
 {
-	if (strcasecmp(value, "advanced") == 0)
+	if (pg_strcasecmp(value, "advanced") == 0)
 	{
 		if (doit)
 			regex_flavor = REG_ADVANCED;
 	}
-	else if (strcasecmp(value, "extended") == 0)
+	else if (pg_strcasecmp(value, "extended") == 0)
 	{
 		if (doit)
 			regex_flavor = REG_EXTENDED;
 	}
-	else if (strcasecmp(value, "basic") == 0)
+	else if (pg_strcasecmp(value, "basic") == 0)
 	{
 		if (doit)
 			regex_flavor = REG_BASIC;

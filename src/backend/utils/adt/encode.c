@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.10 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/encode.c,v 1.11 2004/05/07 00:24:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -549,7 +549,7 @@ pg_find_encoding(const char *name)
 	int			i;
 
 	for (i = 0; enclist[i].name; i++)
-		if (strcasecmp(enclist[i].name, name) == 0)
+		if (pg_strcasecmp(enclist[i].name, name) == 0)
 			return &enclist[i].enc;
 
 	return NULL;

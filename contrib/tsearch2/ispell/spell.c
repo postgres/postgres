@@ -10,7 +10,7 @@
 #define MAX_NORM 1024
 #define MAXNORMLEN 256
 
-#define STRNCASECMP(x,y)		(strncasecmp(x,y,strlen(y)))
+#define STRNCASECMP(x,y)		pg_strncasecmp(x, y, strlen(y))
 #define GETWCHAR(W,L,N,T) ( ((uint8*)(W))[ ((T)=='p') ? (N) : ( (L) - 1 - (N) ) ] )
 #define GETCHAR(A,N,T)	  GETWCHAR( (A)->repl, (A)->replen, N, T )
 
@@ -304,19 +304,19 @@ NIImportAffixes(IspellDict * Conf, const char *filename)
 				continue; 
 			}
 		}
-		if (!STRNCASECMP(str, "suffixes"))
+		if (STRNCASECMP(str, "suffixes")==0)
 		{
 			suffixes = 1;
 			prefixes = 0;
 			continue;
 		}
-		if (!STRNCASECMP(str, "prefixes"))
+		if (STRNCASECMP(str, "prefixes")==0)
 		{
 			suffixes = 0;
 			prefixes = 1;
 			continue;
 		}
-		if (!STRNCASECMP(str, "flag "))
+		if (STRNCASECMP(str, "flag ")==0)
 		{
 			s = str + 5;
 			flagflags=0;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.103 2004/05/02 13:38:27 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/acl.c,v 1.104 2004/05/07 00:24:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -882,29 +882,29 @@ convert_priv_string(text *priv_type_text)
 	priv_type = DatumGetCString(DirectFunctionCall1(textout,
 									   PointerGetDatum(priv_type_text)));
 
-	if (strcasecmp(priv_type, "SELECT") == 0)
+	if (pg_strcasecmp(priv_type, "SELECT") == 0)
 		return ACL_SELECT;
-	if (strcasecmp(priv_type, "INSERT") == 0)
+	if (pg_strcasecmp(priv_type, "INSERT") == 0)
 		return ACL_INSERT;
-	if (strcasecmp(priv_type, "UPDATE") == 0)
+	if (pg_strcasecmp(priv_type, "UPDATE") == 0)
 		return ACL_UPDATE;
-	if (strcasecmp(priv_type, "DELETE") == 0)
+	if (pg_strcasecmp(priv_type, "DELETE") == 0)
 		return ACL_DELETE;
-	if (strcasecmp(priv_type, "RULE") == 0)
+	if (pg_strcasecmp(priv_type, "RULE") == 0)
 		return ACL_RULE;
-	if (strcasecmp(priv_type, "REFERENCES") == 0)
+	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;
-	if (strcasecmp(priv_type, "TRIGGER") == 0)
+	if (pg_strcasecmp(priv_type, "TRIGGER") == 0)
 		return ACL_TRIGGER;
-	if (strcasecmp(priv_type, "EXECUTE") == 0)
+	if (pg_strcasecmp(priv_type, "EXECUTE") == 0)
 		return ACL_EXECUTE;
-	if (strcasecmp(priv_type, "USAGE") == 0)
+	if (pg_strcasecmp(priv_type, "USAGE") == 0)
 		return ACL_USAGE;
-	if (strcasecmp(priv_type, "CREATE") == 0)
+	if (pg_strcasecmp(priv_type, "CREATE") == 0)
 		return ACL_CREATE;
-	if (strcasecmp(priv_type, "TEMP") == 0)
+	if (pg_strcasecmp(priv_type, "TEMP") == 0)
 		return ACL_CREATE_TEMP;
-	if (strcasecmp(priv_type, "TEMPORARY") == 0)
+	if (pg_strcasecmp(priv_type, "TEMPORARY") == 0)
 		return ACL_CREATE_TEMP;
 
 	ereport(ERROR,
@@ -1097,39 +1097,39 @@ convert_table_priv_string(text *priv_type_text)
 	/*
 	 * Return mode from priv_type string
 	 */
-	if (strcasecmp(priv_type, "SELECT") == 0)
+	if (pg_strcasecmp(priv_type, "SELECT") == 0)
 		return ACL_SELECT;
-	if (strcasecmp(priv_type, "SELECT WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "SELECT WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_SELECT);
 
-	if (strcasecmp(priv_type, "INSERT") == 0)
+	if (pg_strcasecmp(priv_type, "INSERT") == 0)
 		return ACL_INSERT;
-	if (strcasecmp(priv_type, "INSERT WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "INSERT WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_INSERT);
 
-	if (strcasecmp(priv_type, "UPDATE") == 0)
+	if (pg_strcasecmp(priv_type, "UPDATE") == 0)
 		return ACL_UPDATE;
-	if (strcasecmp(priv_type, "UPDATE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "UPDATE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_UPDATE);
 
-	if (strcasecmp(priv_type, "DELETE") == 0)
+	if (pg_strcasecmp(priv_type, "DELETE") == 0)
 		return ACL_DELETE;
-	if (strcasecmp(priv_type, "DELETE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "DELETE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_DELETE);
 
-	if (strcasecmp(priv_type, "RULE") == 0)
+	if (pg_strcasecmp(priv_type, "RULE") == 0)
 		return ACL_RULE;
-	if (strcasecmp(priv_type, "RULE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "RULE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_RULE);
 
-	if (strcasecmp(priv_type, "REFERENCES") == 0)
+	if (pg_strcasecmp(priv_type, "REFERENCES") == 0)
 		return ACL_REFERENCES;
-	if (strcasecmp(priv_type, "REFERENCES WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "REFERENCES WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_REFERENCES);
 
-	if (strcasecmp(priv_type, "TRIGGER") == 0)
+	if (pg_strcasecmp(priv_type, "TRIGGER") == 0)
 		return ACL_TRIGGER;
-	if (strcasecmp(priv_type, "TRIGGER WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "TRIGGER WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_TRIGGER);
 
 	ereport(ERROR,
@@ -1329,19 +1329,19 @@ convert_database_priv_string(text *priv_type_text)
 	/*
 	 * Return mode from priv_type string
 	 */
-	if (strcasecmp(priv_type, "CREATE") == 0)
+	if (pg_strcasecmp(priv_type, "CREATE") == 0)
 		return ACL_CREATE;
-	if (strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_CREATE);
 
-	if (strcasecmp(priv_type, "TEMPORARY") == 0)
+	if (pg_strcasecmp(priv_type, "TEMPORARY") == 0)
 		return ACL_CREATE_TEMP;
-	if (strcasecmp(priv_type, "TEMPORARY WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "TEMPORARY WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP);
 
-	if (strcasecmp(priv_type, "TEMP") == 0)
+	if (pg_strcasecmp(priv_type, "TEMP") == 0)
 		return ACL_CREATE_TEMP;
-	if (strcasecmp(priv_type, "TEMP WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "TEMP WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_CREATE_TEMP);
 
 	ereport(ERROR,
@@ -1543,9 +1543,9 @@ convert_function_priv_string(text *priv_type_text)
 	/*
 	 * Return mode from priv_type string
 	 */
-	if (strcasecmp(priv_type, "EXECUTE") == 0)
+	if (pg_strcasecmp(priv_type, "EXECUTE") == 0)
 		return ACL_EXECUTE;
-	if (strcasecmp(priv_type, "EXECUTE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "EXECUTE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_EXECUTE);
 
 	ereport(ERROR,
@@ -1747,9 +1747,9 @@ convert_language_priv_string(text *priv_type_text)
 	/*
 	 * Return mode from priv_type string
 	 */
-	if (strcasecmp(priv_type, "USAGE") == 0)
+	if (pg_strcasecmp(priv_type, "USAGE") == 0)
 		return ACL_USAGE;
-	if (strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
 
 	ereport(ERROR,
@@ -1951,14 +1951,14 @@ convert_schema_priv_string(text *priv_type_text)
 	/*
 	 * Return mode from priv_type string
 	 */
-	if (strcasecmp(priv_type, "CREATE") == 0)
+	if (pg_strcasecmp(priv_type, "CREATE") == 0)
 		return ACL_CREATE;
-	if (strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "CREATE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_CREATE);
 
-	if (strcasecmp(priv_type, "USAGE") == 0)
+	if (pg_strcasecmp(priv_type, "USAGE") == 0)
 		return ACL_USAGE;
-	if (strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
+	if (pg_strcasecmp(priv_type, "USAGE WITH GRANT OPTION") == 0)
 		return ACL_GRANT_OPTION_FOR(ACL_USAGE);
 
 	ereport(ERROR,

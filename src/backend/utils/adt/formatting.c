@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.73 2004/03/30 15:53:18 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/formatting.c,v 1.74 2004/05/07 00:24:58 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2003, PostgreSQL Global Development Group
@@ -1477,7 +1477,7 @@ str_toupper(char *buff)
 
 	while (*p_buff)
 	{
-		*p_buff = toupper((unsigned char) *p_buff);
+		*p_buff = pg_toupper((unsigned char) *p_buff);
 		++p_buff;
 	}
 	return buff;
@@ -1497,7 +1497,7 @@ str_tolower(char *buff)
 
 	while (*p_buff)
 	{
-		*p_buff = tolower((unsigned char) *p_buff);
+		*p_buff = pg_tolower((unsigned char) *p_buff);
 		++p_buff;
 	}
 	return buff;
@@ -1523,9 +1523,9 @@ seq_search(char *name, char **array, int type, int max, int *len)
 
 	/* set first char */
 	if (type == ONE_UPPER || type == ALL_UPPER)
-		*name = toupper((unsigned char) *name);
+		*name = pg_toupper((unsigned char) *name);
 	else if (type == ALL_LOWER)
-		*name = tolower((unsigned char) *name);
+		*name = pg_tolower((unsigned char) *name);
 
 	for (last = 0, a = array; *a != NULL; a++)
 	{
@@ -1559,9 +1559,9 @@ seq_search(char *name, char **array, int type, int max, int *len)
 			if (i > last)
 			{
 				if (type == ONE_UPPER || type == ALL_LOWER)
-					*n = tolower((unsigned char) *n);
+					*n = pg_tolower((unsigned char) *n);
 				else if (type == ALL_UPPER)
-					*n = toupper((unsigned char) *n);
+					*n = pg_toupper((unsigned char) *n);
 				last = i;
 			}
 
@@ -2192,7 +2192,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 		case DCH_month:
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, months_full[tm->tm_mon - 1]);
-			*inout = tolower((unsigned char) *inout);
+			*inout = pg_tolower((unsigned char) *inout);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
@@ -2209,7 +2209,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 		case DCH_mon:
 			strcpy(inout, months[tm->tm_mon - 1]);
-			*inout = tolower((unsigned char) *inout);
+			*inout = pg_tolower((unsigned char) *inout);
 			return 2;
 
 		case DCH_MM:
@@ -2255,7 +2255,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 		case DCH_day:
 			sprintf(inout, "%*s", S_FM(suf) ? 0 : -9, days[tm->tm_wday]);
-			*inout = tolower((unsigned char) *inout);
+			*inout = pg_tolower((unsigned char) *inout);
 			if (S_FM(suf))
 				return strlen(p_inout) - 1;
 			else
@@ -2272,7 +2272,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 
 		case DCH_dy:
 			strcpy(inout, days[tm->tm_wday]);
-			*inout = tolower((unsigned char) *inout);
+			*inout = pg_tolower((unsigned char) *inout);
 			return 2;
 
 		case DCH_DDD:

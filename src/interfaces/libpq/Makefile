@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.103 2004/04/25 20:57:32 momjian Exp $
+# $PostgreSQL: pgsql/src/interfaces/libpq/Makefile,v 1.104 2004/05/07 00:24:59 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ override CFLAGS += $(PTHREAD_CFLAGS)
 OBJS= fe-auth.o fe-connect.o fe-exec.o fe-misc.o fe-print.o fe-lobj.o \
       fe-protocol2.o fe-protocol3.o pqexpbuffer.o pqsignal.o fe-secure.o \
       dllist.o md5.o ip.o wchar.o encnames.o \
-      $(filter crypt.o getaddrinfo.o inet_aton.o noblock.o snprintf.o strerror.o open.o path.o thread.o, $(LIBOBJS))
+      $(filter crypt.o getaddrinfo.o inet_aton.o noblock.o pgstrcasecmp.o snprintf.o strerror.o open.o path.o thread.o, $(LIBOBJS))
 ifeq ($(PORTNAME), win32)
 OBJS+=win32.o
 endif
@@ -53,7 +53,7 @@ backend_src = $(top_srcdir)/src/backend
 # For port modules, this only happens if configure decides the module
 # is needed (see filter hack in OBJS, above).
 
-crypt.c getaddrinfo.c inet_aton.c noblock.c snprintf.c strerror.c open.c path.c thread.c: % : $(top_srcdir)/src/port/%
+crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c path.c thread.c: % : $(top_srcdir)/src/port/%
 	rm -f $@ && $(LN_S) $< .
 
 md5.c ip.c: % : $(backend_src)/libpq/%
@@ -79,4 +79,4 @@ uninstall: uninstall-lib
 	rm -f $(DESTDIR)$(includedir)/libpq-fe.h $(DESTDIR)$(includedir_internal)/libpq-int.h $(DESTDIR)$(includedir_internal)/pqexpbuffer.h
 
 clean distclean maintainer-clean: clean-lib
-	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c snprintf.c strerror.c open.c path.c thread.c dllist.c md5.c ip.c encnames.c wchar.c
+	rm -f $(OBJS) crypt.c getaddrinfo.c inet_aton.c noblock.c pgstrcasecmp.c snprintf.c strerror.c open.c path.c thread.c dllist.c md5.c ip.c encnames.c wchar.c
