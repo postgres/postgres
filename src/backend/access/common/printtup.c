@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.38 1999/01/24 05:40:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.39 1999/01/24 22:50:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,27 +91,24 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	pq_putnchar("D", 1);
 
 	/* ----------------
-	 *	send a bitmap of which attributes are null
+	 *	send a bitmap of which attributes are not null
 	 * ----------------
 	 */
 	j = 0;
 	k = 1 << 7;
-	for (i = 0; i < tuple->t_data->t_natts;)
+	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
-		i++;					/* heap_getattr is a macro, so no
-								 * increment */
-		attr = heap_getattr(tuple, i, typeinfo, &isnull);
-		if (!isnull)
-			j |= k;
+		if (! heap_attisnull(tuple, i + 1))
+			j |= k;				/* set bit if not null */
 		k >>= 1;
-		if (!(i & 7))
+		if (k == 0)				/* end of byte? */
 		{
 			pq_putint(j, 1);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
-	if (i & 7)
+	if (k != (1 << 7))			/* flush last partial byte */
 		pq_putint(j, 1);
 
 	/* ----------------
@@ -243,27 +240,24 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	pq_putnchar("B", 1);
 
 	/* ----------------
-	 *	send a bitmap of which attributes are null
+	 *	send a bitmap of which attributes are not null
 	 * ----------------
 	 */
 	j = 0;
 	k = 1 << 7;
-	for (i = 0; i < tuple->t_data->t_natts;)
+	for (i = 0; i < tuple->t_data->t_natts; ++i)
 	{
-		i++;					/* heap_getattr is a macro, so no
-								 * increment */
-		attr = heap_getattr(tuple, i, typeinfo, &isnull);
-		if (!isnull)
-			j |= k;
+		if (! heap_attisnull(tuple, i + 1))
+			j |= k;				/* set bit if not null */
 		k >>= 1;
-		if (!(i & 7))
+		if (k == 0)				/* end of byte? */
 		{
 			pq_putint(j, 1);
 			j = 0;
 			k = 1 << 7;
 		}
 	}
-	if (i & 7)
+	if (k != (1 << 7))			/* flush last partial byte */
 		pq_putint(j, 1);
 
 	/* ----------------
