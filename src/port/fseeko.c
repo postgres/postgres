@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.5 2002/10/24 04:33:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.6 2002/10/24 04:48:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,9 @@
 
 #include "c.h"
 
+#ifdef bsdi
 #include <pthread.h>
+#endif
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
