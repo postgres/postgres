@@ -1,80 +1,83 @@
 /*-------------------------------------------------------------------------
  *
  * btstrat.c--
- *    Srategy map entries for the btree indexed access method
+ *	  Srategy map entries for the btree indexed access method
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.9 1997/08/20 02:01:42 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.10 1997/09/07 04:38:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <postgres.h>
- 
+
 #include <access/hash.h>
 #include <access/istrat.h>
 
-/* 
- *  only one valid strategy for hash tables: equality. 
+/*
+ *	only one valid strategy for hash tables: equality.
  */
 
 #ifdef NOT_USED
-static StrategyNumber	HTNegate[1] = {
-    InvalidStrategy
+static StrategyNumber HTNegate[1] = {
+	InvalidStrategy
 };
 
-static StrategyNumber	HTCommute[1] = {
-    HTEqualStrategyNumber
+static StrategyNumber HTCommute[1] = {
+	HTEqualStrategyNumber
 };
 
-static StrategyNumber	HTNegateCommute[1] = {
-    InvalidStrategy
+static StrategyNumber HTNegateCommute[1] = {
+	InvalidStrategy
 };
 
-static StrategyEvaluationData	HTEvaluationData = {
-    /* XXX static for simplicity */
+static StrategyEvaluationData HTEvaluationData = {
+	/* XXX static for simplicity */
 
-    HTMaxStrategyNumber,
-    (StrategyTransformMap)HTNegate,
-    (StrategyTransformMap)HTCommute,
-    (StrategyTransformMap)HTNegateCommute,
-    {NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL}
+	HTMaxStrategyNumber,
+	(StrategyTransformMap) HTNegate,
+	(StrategyTransformMap) HTCommute,
+	(StrategyTransformMap) HTNegateCommute,
+	{NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL}
 };
+
 #endif
 
 /* ----------------------------------------------------------------
- *	RelationGetHashStrategy
+ *		RelationGetHashStrategy
  * ----------------------------------------------------------------
  */
 
 #ifdef NOT_USED
-static StrategyNumber
+static			StrategyNumber
 _hash_getstrat(Relation rel,
-	       AttrNumber attno,
-	       RegProcedure proc)
+			   AttrNumber attno,
+			   RegProcedure proc)
 {
-    StrategyNumber	strat;
+	StrategyNumber	strat;
 
-    strat = RelationGetStrategy(rel, attno, &HTEvaluationData, proc);
+	strat = RelationGetStrategy(rel, attno, &HTEvaluationData, proc);
 
-    Assert(StrategyNumberIsValid(strat));
+	Assert(StrategyNumberIsValid(strat));
 
-    return (strat);
+	return (strat);
 }
+
 #endif
 
 #ifdef NOT_USED
-static bool
+static			bool
 _hash_invokestrat(Relation rel,
-		  AttrNumber attno,
-		  StrategyNumber strat,
-		  Datum left,
-		  Datum right)
+				  AttrNumber attno,
+				  StrategyNumber strat,
+				  Datum left,
+				  Datum right)
 {
-    return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat, 
-				   left, right));
+	return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat,
+								   left, right));
 }
+
 #endif

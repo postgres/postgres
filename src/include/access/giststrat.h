@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * giststrat.h--
- *    routines defined in access/gist/giststrat.c
+ *	  routines defined in access/gist/giststrat.c
  *
  *
  *
@@ -15,7 +15,8 @@
 #include <access/strat.h>
 #include <utils/rel.h>
 
-extern StrategyNumber RelationGetGISTStrategy(Relation r,
-		AttrNumber attnum, RegProcedure proc);
+extern StrategyNumber
+RelationGetGISTStrategy(Relation r,
+						AttrNumber attnum, RegProcedure proc);
 
-#endif /* GISTSTRAT_H */
+#endif							/* GISTSTRAT_H */

@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * hashfunc.c--
- *    Comparison functions for hash access method.
+ *	  Comparison functions for hash access method.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.3 1996/11/10 02:57:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashfunc.c,v 1.4 1997/09/07 04:37:53 momjian Exp $
  *
  * NOTES
- *    These functions are stored in pg_amproc.  For each operator class
- *    defined on hash tables, they compute the hash value of the argument.
+ *	  These functions are stored in pg_amproc.	For each operator class
+ *	  defined on hash tables, they compute the hash value of the argument.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,206 +20,223 @@
 
 #include "access/hash.h"
 
-uint32 hashint2(int16 key)
+uint32
+hashint2(int16 key)
 {
-    return ((uint32) ~key);
+	return ((uint32) ~ key);
 }
 
-uint32 hashint4(uint32 key)
+uint32
+hashint4(uint32 key)
 {
-    return (~key);
+	return (~key);
 }
 
 /* Hash function from Chris Torek. */
-uint32 hashfloat4(float32 keyp)
+uint32
+hashfloat4(float32 keyp)
 {
-    int len;
-    int loop;
-    uint32 h;
-    char *kp = (char *) keyp;
+	int				len;
+	int				loop;
+	uint32			h;
+	char		   *kp = (char *) keyp;
 
-    len = sizeof(float32data);
+	len = sizeof(float32data);
 
-#define HASH4a   h = (h << 5) - h + *kp++;
-#define HASH4b   h = (h << 5) + h + *kp++;
+#define HASH4a	 h = (h << 5) - h + *kp++;
+#define HASH4b	 h = (h << 5) + h + *kp++;
 #define HASH4 HASH4b
 
 
-    h = 0;
-    if (len > 0) {
-	loop = (len + 8 - 1) >> 3;
-	
-	switch (len & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASH4;
-	    case 7:
-		HASH4;
-	    case 6:
-		HASH4;
-	    case 5:
-		HASH4;
-	    case 4:
-		HASH4;
-	    case 3:
-		HASH4;
-	    case 2:
-		HASH4;
-	    case 1:
-		HASH4;
-	    } while (--loop);
+	h = 0;
+	if (len > 0)
+	{
+		loop = (len + 8 - 1) >> 3;
+
+		switch (len & (8 - 1))
+		{
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASH4;
+		case 7:
+				HASH4;
+		case 6:
+				HASH4;
+		case 5:
+				HASH4;
+		case 4:
+				HASH4;
+		case 3:
+				HASH4;
+		case 2:
+				HASH4;
+		case 1:
+				HASH4;
+			} while (--loop);
+		}
 	}
-    }
-    return (h);
-}	
+	return (h);
+}
 
 
-uint32 hashfloat8(float64 keyp)
+uint32
+hashfloat8(float64 keyp)
 {
-    int len;
-    int loop;
-    uint32 h;
-    char *kp = (char *) keyp;
+	int				len;
+	int				loop;
+	uint32			h;
+	char		   *kp = (char *) keyp;
 
-    len = sizeof(float64data);
+	len = sizeof(float64data);
 
-#define HASH4a   h = (h << 5) - h + *kp++;
-#define HASH4b   h = (h << 5) + h + *kp++;
+#define HASH4a	 h = (h << 5) - h + *kp++;
+#define HASH4b	 h = (h << 5) + h + *kp++;
 #define HASH4 HASH4b
 
 
-    h = 0;
-    if (len > 0) {
-	loop = (len + 8 - 1) >> 3;
-	
-	switch (len & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASH4;
-	    case 7:
-		HASH4;
-	    case 6:
-		HASH4;
-	    case 5:
-		HASH4;
-	    case 4:
-		HASH4;
-	    case 3:
-		HASH4;
-	    case 2:
-		HASH4;
-	    case 1:
-		HASH4;
-	    } while (--loop);
+	h = 0;
+	if (len > 0)
+	{
+		loop = (len + 8 - 1) >> 3;
+
+		switch (len & (8 - 1))
+		{
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASH4;
+		case 7:
+				HASH4;
+		case 6:
+				HASH4;
+		case 5:
+				HASH4;
+		case 4:
+				HASH4;
+		case 3:
+				HASH4;
+		case 2:
+				HASH4;
+		case 1:
+				HASH4;
+			} while (--loop);
+		}
 	}
-    }
-    return (h);
-}	
-
-
-uint32 hashoid(Oid key)
-{
-    return ((uint32) ~key);
+	return (h);
 }
 
 
-uint32 hashchar(char key)
+uint32
+hashoid(Oid key)
 {
-    int len;
-    uint32 h;
-
-    len = sizeof(char);
-
-#define PRIME1		37
-#define PRIME2		1048583
-
-    h = 0;
-    /* Convert char to integer */
-    h = h * PRIME1 ^ (key - ' ');
-    h %= PRIME2;
-    
-    return (h);
-}
-
-uint32 hashchar2(uint16 intkey)
-{
-    uint32 h;
-    int len;
-    char *key = (char *) &intkey;
- 
-    h = 0;
-    len = sizeof(uint16);
-    /* Convert string to integer */
-    while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
-    h %= PRIME2;
-	
-    return (h);
-}
-
-uint32 hashchar4(uint32 intkey)
-{
-    uint32 h;
-    int len;
-    char *key = (char *) &intkey;
- 
-    h = 0;
-    len = sizeof(uint32);
-    /* Convert string to integer */
-    while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
-    h %= PRIME2;
-	
-    return (h);
-}
-
-uint32 hashchar8(char *key)
-{
-    uint32 h;
-    int len;
- 
-    h = 0;
-    len = sizeof(char8);
-    /* Convert string to integer */
-    while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
-    h %= PRIME2;
-	
-    return (h);
-}
-
-uint32 hashname(NameData *n)
-{
-    uint32 h;
-    int len;
-    char *key;
-
-    key = n->data;
- 
-    h = 0;
-    len = NAMEDATALEN;
-    /* Convert string to integer */
-    while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
-    h %= PRIME2;
-	
-    return (h);
+	return ((uint32) ~ key);
 }
 
 
-uint32 hashchar16(char *key)
+uint32
+hashchar(char key)
 {
-    uint32 h;
-    int len;
- 
-    h = 0;
-    len = sizeof(char16);
-    /* Convert string to integer */
-    while (len--)
-	h = h * PRIME1 ^ (*key++ - ' ');
-    h %= PRIME2;
-	
-    return (h);
+	int				len;
+	uint32			h;
+
+	len = sizeof(char);
+
+#define PRIME1			37
+#define PRIME2			1048583
+
+	h = 0;
+	/* Convert char to integer */
+	h = h * PRIME1 ^ (key - ' ');
+	h %= PRIME2;
+
+	return (h);
+}
+
+uint32
+hashchar2(uint16 intkey)
+{
+	uint32			h;
+	int				len;
+	char		   *key = (char *) &intkey;
+
+	h = 0;
+	len = sizeof(uint16);
+	/* Convert string to integer */
+	while (len--)
+		h = h * PRIME1 ^ (*key++ - ' ');
+	h %= PRIME2;
+
+	return (h);
+}
+
+uint32
+hashchar4(uint32 intkey)
+{
+	uint32			h;
+	int				len;
+	char		   *key = (char *) &intkey;
+
+	h = 0;
+	len = sizeof(uint32);
+	/* Convert string to integer */
+	while (len--)
+		h = h * PRIME1 ^ (*key++ - ' ');
+	h %= PRIME2;
+
+	return (h);
+}
+
+uint32
+hashchar8(char *key)
+{
+	uint32			h;
+	int				len;
+
+	h = 0;
+	len = sizeof(char8);
+	/* Convert string to integer */
+	while (len--)
+		h = h * PRIME1 ^ (*key++ - ' ');
+	h %= PRIME2;
+
+	return (h);
+}
+
+uint32
+hashname(NameData * n)
+{
+	uint32			h;
+	int				len;
+	char		   *key;
+
+	key = n->data;
+
+	h = 0;
+	len = NAMEDATALEN;
+	/* Convert string to integer */
+	while (len--)
+		h = h * PRIME1 ^ (*key++ - ' ');
+	h %= PRIME2;
+
+	return (h);
+}
+
+
+uint32
+hashchar16(char *key)
+{
+	uint32			h;
+	int				len;
+
+	h = 0;
+	len = sizeof(char16);
+	/* Convert string to integer */
+	while (len--)
+		h = h * PRIME1 ^ (*key++ - ' ');
+	h %= PRIME2;
+
+	return (h);
 }
 
 
@@ -234,45 +251,49 @@ uint32 hashchar16(char *key)
  *
  * "OZ's original sdbm hash"
  */
-uint32 hashtext(struct varlena *key)
+uint32
+hashtext(struct varlena * key)
 {
-    int keylen;
-    char *keydata;
-    uint32 n;
-    int loop;
+	int				keylen;
+	char		   *keydata;
+	uint32			n;
+	int				loop;
 
-    keydata = VARDATA(key);
-    keylen = VARSIZE(key);
+	keydata = VARDATA(key);
+	keylen = VARSIZE(key);
 
-    /* keylen includes the four bytes in which string keylength is stored */
-    keylen -= sizeof(VARSIZE(key));
+	/* keylen includes the four bytes in which string keylength is stored */
+	keylen -= sizeof(VARSIZE(key));
 
-#define HASHC   n = *keydata++ + 65599 * n
+#define HASHC	n = *keydata++ + 65599 * n
 
-    n = 0;
-    if (keylen > 0) {
-	loop = (keylen + 8 - 1) >> 3;
-	
-	switch (keylen & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASHC;
-	    case 7:
-		HASHC;
-	    case 6:
-		HASHC;
-	    case 5:
-		HASHC;
-	    case 4:
-		HASHC;
-	    case 3:
-		HASHC;
-	    case 2:
-		HASHC;
-	    case 1:
-		HASHC;
-	    } while (--loop);
+	n = 0;
+	if (keylen > 0)
+	{
+		loop = (keylen + 8 - 1) >> 3;
+
+		switch (keylen & (8 - 1))
+		{
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASHC;
+		case 7:
+				HASHC;
+		case 6:
+				HASHC;
+		case 5:
+				HASHC;
+		case 4:
+				HASHC;
+		case 3:
+				HASHC;
+		case 2:
+				HASHC;
+		case 1:
+				HASHC;
+			} while (--loop);
+		}
 	}
-    }
-    return (n);
-}	
+	return (n);
+}

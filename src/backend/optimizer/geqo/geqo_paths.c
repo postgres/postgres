@@ -1,11 +1,11 @@
 /*-------------------------------------------------------------------------
  *
  * geqo_paths.c--
- *    Routines to process redundant paths and relations
+ *	  Routines to process redundant paths and relations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_paths.c,v 1.4 1997/06/11 02:44:12 vadim Exp $
+ * $Id: geqo_paths.c,v 1.5 1997/09/07 04:43:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,120 +28,128 @@
 #include "optimizer/geqo_paths.h"
 
 
-static List *geqo_prune_rel(Rel *rel, List *other_rels);
-static Path *set_paths(Rel *rel, Path *unorderedpath);
+static List    *geqo_prune_rel(Rel * rel, List * other_rels);
+static Path    *set_paths(Rel * rel, Path * unorderedpath);
 
-/*    
+/*
  * geqo-prune-rels--
- *    Removes any redundant relation entries from a list of rel nodes
- *    'rel-list'.
- *    
- * Returns the resulting list. 
- *    
+ *	  Removes any redundant relation entries from a list of rel nodes
+ *	  'rel-list'.
+ *
+ * Returns the resulting list.
+ *
  */
-List *geqo_prune_rels(List *rel_list)
+List		   *
+geqo_prune_rels(List * rel_list)
 {
-    List *temp_list = NIL;
+	List		   *temp_list = NIL;
 
-    if (rel_list != NIL) {
-	temp_list = lcons(lfirst(rel_list),
-			 geqo_prune_rels(geqo_prune_rel((Rel*)lfirst(rel_list),
-						      lnext(rel_list))));
-    } 
-    return(temp_list);
+	if (rel_list != NIL)
+	{
+		temp_list = lcons(lfirst(rel_list),
+				 geqo_prune_rels(geqo_prune_rel((Rel *) lfirst(rel_list),
+												lnext(rel_list))));
+	}
+	return (temp_list);
 }
 
-/*    
+/*
  * geqo-prune-rel--
- *    Prunes those relations from 'other-rels' that are redundant with
- *    'rel'.  A relation is redundant if it is built up of the same
- *    relations as 'rel'.  Paths for the redundant relation are merged into
- *    the pathlist of 'rel'.
- *    
+ *	  Prunes those relations from 'other-rels' that are redundant with
+ *	  'rel'.  A relation is redundant if it is built up of the same
+ *	  relations as 'rel'.  Paths for the redundant relation are merged into
+ *	  the pathlist of 'rel'.
+ *
  * Returns a list of non-redundant relations, and sets the pathlist field
  * of 'rel' appropriately.
- *    
+ *
  */
-static List *
-geqo_prune_rel(Rel *rel, List *other_rels) 
+static List    *
+geqo_prune_rel(Rel * rel, List * other_rels)
 {
-    List *i = NIL;
-    List *t_list = NIL;
-    List *temp_node = NIL;
-    Rel *other_rel = (Rel *)NULL;
-    
-    foreach(i, other_rels) {
-	other_rel = (Rel*)lfirst(i);
-	if(same(rel->relids, other_rel->relids)) {
-	    rel->pathlist = add_pathlist(rel,
-					 rel->pathlist,
-					 other_rel->pathlist);
-	    t_list = nconc(t_list, NIL);  /* XXX is this right ? */
-	} else {
-	    temp_node = lcons(other_rel, NIL);
-	    t_list = nconc(t_list,temp_node);
-	} 
-    }
-    return(t_list);
+	List		   *i = NIL;
+	List		   *t_list = NIL;
+	List		   *temp_node = NIL;
+	Rel			   *other_rel = (Rel *) NULL;
+
+	foreach(i, other_rels)
+	{
+		other_rel = (Rel *) lfirst(i);
+		if (same(rel->relids, other_rel->relids))
+		{
+			rel->pathlist = add_pathlist(rel,
+										 rel->pathlist,
+										 other_rel->pathlist);
+			t_list = nconc(t_list, NIL);		/* XXX is this right ? */
+		}
+		else
+		{
+			temp_node = lcons(other_rel, NIL);
+			t_list = nconc(t_list, temp_node);
+		}
+	}
+	return (t_list);
 }
 
-/*    
+/*
  * geqo-rel-paths--
- *    For a relation 'rel' (which corresponds to a join
- *    relation), set pointers to the unordered path and cheapest paths
- *    (if the unordered path isn't the cheapest, it is pruned), and
- *    reset the relation's size field to reflect the join.
- *    
+ *	  For a relation 'rel' (which corresponds to a join
+ *	  relation), set pointers to the unordered path and cheapest paths
+ *	  (if the unordered path isn't the cheapest, it is pruned), and
+ *	  reset the relation's size field to reflect the join.
+ *
  * Returns nothing of interest.
- *    
+ *
  */
 void
-geqo_rel_paths(Rel *rel)
+geqo_rel_paths(Rel * rel)
 {
-    List *y = NIL;
-    Path *path = (Path*)NULL;
-    JoinPath *cheapest = (JoinPath*)NULL;
-    
-    rel->size = 0;
-    foreach(y, rel->pathlist)
-    {
-	path = (Path*)lfirst(y);
+	List		   *y = NIL;
+	Path		   *path = (Path *) NULL;
+	JoinPath	   *cheapest = (JoinPath *) NULL;
 
-	if(!path->p_ordering.ord.sortop)
+	rel->size = 0;
+	foreach(y, rel->pathlist)
+	{
+		path = (Path *) lfirst(y);
+
+		if (!path->p_ordering.ord.sortop)
 			break;
-    }
+	}
 
-    cheapest = (JoinPath*)set_paths(rel, path);
-    if ( IsA_JoinPath (cheapest) )
-    	rel->size = compute_joinrel_size(cheapest);
+	cheapest = (JoinPath *) set_paths(rel, path);
+	if (IsA_JoinPath(cheapest))
+		rel->size = compute_joinrel_size(cheapest);
 }
 
 
-/*    
+/*
  * set-path--
- *    Compares the unordered path for a relation with the cheapest path. If
- *    the unordered path is not cheapest, it is pruned.
- *    
- *    Resets the pointers in 'rel' for unordered and cheapest paths.
- *    
+ *	  Compares the unordered path for a relation with the cheapest path. If
+ *	  the unordered path is not cheapest, it is pruned.
+ *
+ *	  Resets the pointers in 'rel' for unordered and cheapest paths.
+ *
  * Returns the cheapest path.
- *    
+ *
  */
-static Path *
-set_paths(Rel *rel, Path *unorderedpath)
+static Path    *
+set_paths(Rel * rel, Path * unorderedpath)
 {
-    Path *cheapest = set_cheapest(rel, rel->pathlist);
-    
-    /* don't prune if not pruneable  -- JMH, 11/23/92 */
-    if(unorderedpath != cheapest 
-       && rel->pruneable) {
-	
-	rel->unorderedpath = (Path *)NULL;
-	rel->pathlist = lremove(unorderedpath, rel->pathlist);
-    } else {
-	rel->unorderedpath = (Path *)unorderedpath;
-    } 
-    
-    return(cheapest);
-}
+	Path		   *cheapest = set_cheapest(rel, rel->pathlist);
 
+	/* don't prune if not pruneable  -- JMH, 11/23/92 */
+	if (unorderedpath != cheapest
+		&& rel->pruneable)
+	{
+
+		rel->unorderedpath = (Path *) NULL;
+		rel->pathlist = lremove(unorderedpath, rel->pathlist);
+	}
+	else
+	{
+		rel->unorderedpath = (Path *) unorderedpath;
+	}
+
+	return (cheapest);
+}

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * datetime.h--
- *    Definitions for the datetime
+ *	  Definitions for the datetime
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.3 1997/06/23 15:03:41 thomas Exp $
+ * $Id: datetime.h,v 1.4 1997/09/07 05:02:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,4 +19,4 @@ typedef int32	DateADT;
 
 typedef float8	TimeADT;
 
-#endif /* DATETIME_H */
+#endif							/* DATETIME_H */

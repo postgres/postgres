@@ -1,26 +1,27 @@
 /*-------------------------------------------------------------------------
  *
  * funcindex.h--
- *    
+ *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: funcindex.h,v 1.2 1996/08/28 01:56:16 scrappy Exp $
+ * $Id: funcindex.h,v 1.3 1997/09/07 04:55:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef _FUNC_INDEX_INCLUDED_
 #define _FUNC_INDEX_INCLUDED_
 
-typedef struct {
-	int	nargs;
-	Oid	arglist[8];
-	Oid	procOid;
-	NameData funcName;
-} FuncIndexInfo;
+typedef struct
+{
+	int				nargs;
+	Oid				arglist[8];
+	Oid				procOid;
+	NameData		funcName;
+}				FuncIndexInfo;
 
-typedef FuncIndexInfo	*FuncIndexInfoPtr;
+typedef FuncIndexInfo *FuncIndexInfoPtr;
 
 /*
  * some marginally useful macro definitions
@@ -38,4 +39,4 @@ typedef FuncIndexInfo	*FuncIndexInfoPtr;
 
 #define FIisFunctionalIndex(FINFO) (FINFO->procOid != InvalidOid)
 
-#endif /* FUNCINDEX_H */
+#endif							/* FUNCINDEX_H */

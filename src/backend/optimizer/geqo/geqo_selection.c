@@ -1,36 +1,36 @@
 /*-------------------------------------------------------------------------
  *
  * geqo_selection.c--
- *    linear selection scheme for the genetic query optimizer
+ *	  linear selection scheme for the genetic query optimizer
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_selection.c,v 1.1 1997/02/19 12:57:46 scrappy Exp $
+ * $Id: geqo_selection.c,v 1.2 1997/09/07 04:43:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 /* contributed by:
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch              * Institute of Automatic Control      *
-   =                             = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany                   *
+   *  Martin Utesch				 * Institute of Automatic Control	   *
+   =							 = University of Mining and Technology =
+   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
 /* this is adopted from D. Whitley's Genitor algorithm */
 
 /*************************************************************/
-/*                                                           */
-/*  Copyright (c) 1990                                       */
-/*  Darrell L. Whitley                                       */
-/*  Computer Science Department                              */
-/*  Colorado State University                                */
-/*                                                           */
-/*  Permission is hereby granted to copy all or any part of  */
-/*  this program for free distribution.   The author's name  */
-/*  and this copyright notice must be included in any copy.  */
-/*                                                           */
+/*															 */
+/*	Copyright (c) 1990										 */
+/*	Darrell L. Whitley										 */
+/*	Computer Science Department								 */
+/*	Colorado State University								 */
+/*															 */
+/*	Permission is hereby granted to copy all or any part of  */
+/*	this program for free distribution.   The author's name  */
+/*	and this copyright notice must be included in any copy.  */
+/*															 */
 /*************************************************************/
 
 #include <math.h>
@@ -55,49 +55,51 @@
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_random.h"
 
-static int linear(int max, double bias);
+static int		linear(int max, double bias);
 
 /* geqo_selection--
  *
- *   according to bias described by input parameters,
- *   second genes are selected from the pool
+ *	 according to bias described by input parameters,
+ *	 second genes are selected from the pool
  */
 void
-geqo_selection (Chromosome *momma, Chromosome *daddy, Pool *pool, double bias)
+geqo_selection(Chromosome * momma, Chromosome * daddy, Pool * pool, double bias)
 {
- int first, second;
- 
- first  = (int) linear(pool->size, bias);
- second = (int) linear(pool->size, bias);
+	int				first,
+					second;
 
- if (pool->size > 1) {
- 	while(first==second)
- 		second = (int) linear(pool->size, bias);
- 	}
+	first = (int) linear(pool->size, bias);
+	second = (int) linear(pool->size, bias);
 
- geqo_copy (momma, &pool->data[first],  pool->string_length);
- geqo_copy (daddy, &pool->data[second], pool->string_length);
+	if (pool->size > 1)
+	{
+		while (first == second)
+			second = (int) linear(pool->size, bias);
+	}
+
+	geqo_copy(momma, &pool->data[first], pool->string_length);
+	geqo_copy(daddy, &pool->data[second], pool->string_length);
 }
 
 /* linear--
- *    generates random integer between 0 and input max number
- *    using input linear bias
+ *	  generates random integer between 0 and input max number
+ *	  using input linear bias
  *
- *    probability distribution function is: f(x) = bias - 2(bias - 1)x
- *           bias = (prob of first rule) / (prob of middle rule)
+ *	  probability distribution function is: f(x) = bias - 2(bias - 1)x
+ *			 bias = (prob of first rule) / (prob of middle rule)
  *
  */
 
 static int
-linear(int pool_size, double bias) /* bias is y-intercept of linear distribution */
+linear(int pool_size, double bias)		/* bias is y-intercept of linear
+										 * distribution */
 {
- double index; /* index between 0 and pop_size */
- double max = (double) pool_size;
+	double			index;		/* index between 0 and pop_size */
+	double			max = (double) pool_size;
 
- index =
- max*(  bias - sqrt ( (bias*bias) - 4.0*(bias-1.0)*geqo_rand() )  )
- / 2.0 / (bias-1.0);
+	index =
+		max * (bias - sqrt((bias * bias) - 4.0 * (bias - 1.0) * geqo_rand()))
+		/ 2.0 / (bias - 1.0);
 
- return((int) index);
+	return ((int) index);
 }
-

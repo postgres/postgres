@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * tuptable.h--
- *    tuple table support stuff
+ *	  tuple table support stuff
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuptable.h,v 1.4 1996/11/04 08:52:47 scrappy Exp $
+ * $Id: tuptable.h,v 1.5 1997/09/07 04:58:03 momjian Exp $
  *
  * NOTES
- *    The tuple table interface is getting pretty ugly.
- *    It should be redesigned soon.
+ *	  The tuple table interface is getting pretty ugly.
+ *	  It should be redesigned soon.
  *
  *-------------------------------------------------------------------------
  */
@@ -22,55 +22,57 @@
 #include <access/htup.h>
 
 /* ----------------
- *	Note:  the executor tuple table is managed and manipulated by special
- *	code and macros in executor/execTuples.c and tupTable.h
+ *		Note:  the executor tuple table is managed and manipulated by special
+ *		code and macros in executor/execTuples.c and tupTable.h
  *
- *	TupleTableSlot information
+ *		TupleTableSlot information
  *
- *	    shouldFree		boolean - should we call pfree() on tuple
- *	    descIsNew		boolean - true when tupleDescriptor changes
- *	    tupleDescriptor	type information kept regarding the tuple data
- *	    buffer		the buffer for tuples pointing to disk pages
+ *			shouldFree			boolean - should we call pfree() on tuple
+ *			descIsNew			boolean - true when tupleDescriptor changes
+ *			tupleDescriptor		type information kept regarding the tuple data
+ *			buffer				the buffer for tuples pointing to disk pages
  *
- *	The executor stores pointers to tuples in a ``tuple table''
- *	which is composed of TupleTableSlot's.  Some of the tuples
- *	are pointers to buffer pages and others are pointers to
- *	palloc'ed memory and the shouldFree variable tells us when
- *	we may call pfree() on a tuple.  -cim 9/23/90
+ *		The executor stores pointers to tuples in a ``tuple table''
+ *		which is composed of TupleTableSlot's.  Some of the tuples
+ *		are pointers to buffer pages and others are pointers to
+ *		palloc'ed memory and the shouldFree variable tells us when
+ *		we may call pfree() on a tuple.  -cim 9/23/90
  *
- *	In the implementation of nested-dot queries such as
- *	"retrieve (EMP.hobbies.all)", a single scan may return tuples
- *	of many types, so now we return pointers to tuple descriptors
- *	along with tuples returned via the tuple table.  -cim 1/18/90
+ *		In the implementation of nested-dot queries such as
+ *		"retrieve (EMP.hobbies.all)", a single scan may return tuples
+ *		of many types, so now we return pointers to tuple descriptors
+ *		along with tuples returned via the tuple table.  -cim 1/18/90
  * ----------------
  */
-typedef struct TupleTableSlot {
-    NodeTag		type;
-    HeapTuple		val;
-    bool		ttc_shouldFree;
-    bool		ttc_descIsNew;
-    TupleDesc		ttc_tupleDescriptor;
-    Buffer		ttc_buffer;
-    int			ttc_whichplan;
-} TupleTableSlot;
+typedef struct TupleTableSlot
+{
+	NodeTag			type;
+	HeapTuple		val;
+	bool			ttc_shouldFree;
+	bool			ttc_descIsNew;
+	TupleDesc		ttc_tupleDescriptor;
+	Buffer			ttc_buffer;
+	int				ttc_whichplan;
+}				TupleTableSlot;
 
 /* ----------------
- *	tuple table data structure
+ *		tuple table data structure
  * ----------------
  */
-typedef struct TupleTableData {
-    int		size;		/* size of the table */
-    int		next;		/* next available slot number */
-    TupleTableSlot *array;	/* array of TupleTableSlot's */
-} TupleTableData;
+typedef struct TupleTableData
+{
+	int				size;		/* size of the table */
+	int				next;		/* next available slot number */
+	TupleTableSlot *array;		/* array of TupleTableSlot's */
+}				TupleTableData;
 
 typedef TupleTableData *TupleTable;
 
-/* 
+/*
   tuple table macros are all excised from the system now
   see executor.h for decls of functions defined in execTuples.c
 
   - jolly
 */
 
-#endif /* TUPTABLE_H */
+#endif							/* TUPTABLE_H */

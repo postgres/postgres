@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * block.h--
- *    POSTGRES disk block definitions.
+ *	  POSTGRES disk block definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: block.h,v 1.2 1996/10/31 09:49:40 scrappy Exp $
+ * $Id: block.h,v 1.3 1997/09/07 05:00:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BLOCK_H
+#ifndef BLOCK_H
 #define BLOCK_H
 
 /*
@@ -29,12 +29,12 @@
  */
 typedef uint32	BlockNumber;
 
-#define InvalidBlockNumber	((BlockNumber) 0xFFFFFFFF)
+#define InvalidBlockNumber		((BlockNumber) 0xFFFFFFFF)
 
 /*
  * BlockId:
  *
- * this is a storage type for BlockNumber.  in other words, this type
+ * this is a storage type for BlockNumber.	in other words, this type
  * is used for on-disk structures (e.g., in HeapTupleData) whereas
  * BlockNumber is the type on which calculations are performed (e.g.,
  * in access method code).
@@ -47,66 +47,67 @@ typedef uint32	BlockNumber;
  * page and the header of each heap or index tuple, so it doesn't seem
  * wise to change this without good reason.
  */
-typedef struct BlockIdData {
-    uint16	bi_hi;
-    uint16	bi_lo;
-} BlockIdData;
+typedef struct BlockIdData
+{
+	uint16			bi_hi;
+	uint16			bi_lo;
+}				BlockIdData;
 
-typedef BlockIdData	*BlockId;	/* block identifier */
+typedef BlockIdData *BlockId;	/* block identifier */
 
 /* ----------------
- *	support macros
+ *		support macros
  * ----------------
  */
 
 /*
  * BlockNumberIsValid --
- *	True iff blockNumber is valid.
+ *		True iff blockNumber is valid.
  */
 #define BlockNumberIsValid(blockNumber) \
-    ((bool) ((int32) (blockNumber) != InvalidBlockNumber))
+	((bool) ((int32) (blockNumber) != InvalidBlockNumber))
 
 /*
  * BlockIdIsValid --
- *	True iff the block identifier is valid.
+ *		True iff the block identifier is valid.
  */
 #define BlockIdIsValid(blockId) \
-    ((bool) PointerIsValid(blockId))
+	((bool) PointerIsValid(blockId))
 
 /*
  * BlockIdSet --
- *	Sets a block identifier to the specified value.
+ *		Sets a block identifier to the specified value.
  */
 #define BlockIdSet(blockId, blockNumber) \
-    Assert(PointerIsValid(blockId)); \
-    (blockId)->bi_hi = (blockNumber) >> 16; \
-    (blockId)->bi_lo = (blockNumber) & 0xffff
+	Assert(PointerIsValid(blockId)); \
+	(blockId)->bi_hi = (blockNumber) >> 16; \
+	(blockId)->bi_lo = (blockNumber) & 0xffff
 
 /*
  * BlockIdCopy --
- *	Copy a block identifier.
+ *		Copy a block identifier.
  */
 #define BlockIdCopy(toBlockId, fromBlockId) \
-    Assert(PointerIsValid(toBlockId)); \
-    Assert(PointerIsValid(fromBlockId)); \
-    (toBlockId)->bi_hi = (fromBlockId)->bi_hi; \
-    (toBlockId)->bi_lo = (fromBlockId)->bi_lo
+	Assert(PointerIsValid(toBlockId)); \
+	Assert(PointerIsValid(fromBlockId)); \
+	(toBlockId)->bi_hi = (fromBlockId)->bi_hi; \
+	(toBlockId)->bi_lo = (fromBlockId)->bi_lo
 
 /*
  * BlockIdEquals --
- *	Check for block number equality.
+ *		Check for block number equality.
  */
 #define BlockIdEquals(blockId1, blockId2) \
-    ((blockId1)->bi_hi == (blockId2)->bi_hi && \
-     (blockId1)->bi_lo == (blockId2)->bi_lo)
+	((blockId1)->bi_hi == (blockId2)->bi_hi && \
+	 (blockId1)->bi_lo == (blockId2)->bi_lo)
 
 /*
  * BlockIdGetBlockNumber --
- *	Retrieve the block number from a block identifier.
+ *		Retrieve the block number from a block identifier.
  */
 #define BlockIdGetBlockNumber(blockId) \
-    (AssertMacro(BlockIdIsValid(blockId)) ? \
-     (BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) : \
-     (BlockNumber) InvalidBlockNumber)
+	(AssertMacro(BlockIdIsValid(blockId)) ? \
+	 (BlockNumber) (((blockId)->bi_hi << 16) | ((uint16) (blockId)->bi_lo)) : \
+	 (BlockNumber) InvalidBlockNumber)
 
-#endif	/* BLOCK_H */
+#endif							/* BLOCK_H */

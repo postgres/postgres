@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * fstack.c--
- *    Fixed format stack definitions.
+ *	  Fixed format stack definitions.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.4 1997/06/06 22:02:37 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/fstack.c,v 1.5 1997/09/07 04:42:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,25 +21,25 @@
 
 /*
  * FixedItemIsValid --
- *	True iff item is valid.
+ *		True iff item is valid.
  */
 #define FixedItemIsValid(item)	PointerIsValid(item)
 
 /*
  * FixedStackGetItemBase --
- *	Returns base of enclosing structure.
+ *		Returns base of enclosing structure.
  */
 #define FixedStackGetItemBase(stack, item) \
-	((Pointer)((char *)(item) - (stack)->offset))
+		((Pointer)((char *)(item) - (stack)->offset))
 
 /*
  * FixedStackGetItem --
- *	Returns item of given pointer to enclosing structure.
+ *		Returns item of given pointer to enclosing structure.
  */
 #define FixedStackGetItem(stack, pointer) \
-	((FixedItem)((char *)(pointer) + (stack)->offset))
+		((FixedItem)((char *)(pointer) + (stack)->offset))
 
-#define	FixedStackIsValid(stack) ((bool)PointerIsValid(stack))
+#define FixedStackIsValid(stack) ((bool)PointerIsValid(stack))
 
 /*
  * External functions
@@ -48,99 +48,105 @@
 void
 FixedStackInit(FixedStack stack, Offset offset)
 {
-    AssertArg(PointerIsValid(stack));
-    
-    stack->top = NULL;
-    stack->offset = offset;
+	AssertArg(PointerIsValid(stack));
+
+	stack->top = NULL;
+	stack->offset = offset;
 }
 
 Pointer
 FixedStackPop(FixedStack stack)
 {
-    Pointer	pointer;
-    
-    AssertArg(FixedStackIsValid(stack));
-    
-    if (!PointerIsValid(stack->top)) {
-	return (NULL);
-    }
-    
-    pointer = FixedStackGetItemBase(stack, stack->top);
-    stack->top = stack->top->next;
-    
-    return (pointer);
+	Pointer			pointer;
+
+	AssertArg(FixedStackIsValid(stack));
+
+	if (!PointerIsValid(stack->top))
+	{
+		return (NULL);
+	}
+
+	pointer = FixedStackGetItemBase(stack, stack->top);
+	stack->top = stack->top->next;
+
+	return (pointer);
 }
 
 void
 FixedStackPush(FixedStack stack, Pointer pointer)
 {
-    FixedItem	item = FixedStackGetItem(stack, pointer);
-    
-    AssertArg(FixedStackIsValid(stack));
-    AssertArg(PointerIsValid(pointer));
-    
-    item->next = stack->top;
-    stack->top = item;
+	FixedItem		item = FixedStackGetItem(stack, pointer);
+
+	AssertArg(FixedStackIsValid(stack));
+	AssertArg(PointerIsValid(pointer));
+
+	item->next = stack->top;
+	stack->top = item;
 }
 
-#ifndef	NO_ASSERT_CHECKING
+#ifndef NO_ASSERT_CHECKING
 /*
  * FixedStackContains --
- *	True iff ordered stack contains given element.
+ *		True iff ordered stack contains given element.
  *
  * Note:
- *	This is inefficient.  It is intended for debugging use only.
+ *		This is inefficient.  It is intended for debugging use only.
  *
  * Exceptions:
- *	BadArg if stack is invalid.
- *	BadArg if pointer is invalid.
+ *		BadArg if stack is invalid.
+ *		BadArg if pointer is invalid.
  */
-static bool
+static			bool
 FixedStackContains(FixedStack stack, Pointer pointer)
 {
-    FixedItem	next;
-    FixedItem	item;
-    
-    AssertArg(FixedStackIsValid(stack));
-    AssertArg(PointerIsValid(pointer));
-    
-    item = FixedStackGetItem(stack, pointer);
-    
-    for (next = stack->top; FixedItemIsValid(next); next = next->next) {
-	if (next == item) {
-	    return (true);
+	FixedItem		next;
+	FixedItem		item;
+
+	AssertArg(FixedStackIsValid(stack));
+	AssertArg(PointerIsValid(pointer));
+
+	item = FixedStackGetItem(stack, pointer);
+
+	for (next = stack->top; FixedItemIsValid(next); next = next->next)
+	{
+		if (next == item)
+		{
+			return (true);
+		}
 	}
-    }
-    return (false);
+	return (false);
 }
+
 #endif
 
 Pointer
 FixedStackGetTop(FixedStack stack)
 {
-    AssertArg(FixedStackIsValid(stack));
-    
-    if (!PointerIsValid(stack->top)) {
-	return (NULL);
-    }
-    
-    return (FixedStackGetItemBase(stack, stack->top));
+	AssertArg(FixedStackIsValid(stack));
+
+	if (!PointerIsValid(stack->top))
+	{
+		return (NULL);
+	}
+
+	return (FixedStackGetItemBase(stack, stack->top));
 }
 
 Pointer
 FixedStackGetNext(FixedStack stack, Pointer pointer)
 {
-    FixedItem	item;
-    
-    /* AssertArg(FixedStackIsValid(stack)); */
-    /* AssertArg(PointerIsValid(pointer)); */
-    AssertArg(FixedStackContains(stack, pointer));
-    
-    item = FixedStackGetItem(stack, pointer)->next;
-    
-    if (!PointerIsValid(item)) {
-	return (NULL);
-    }
-    
-    return(FixedStackGetItemBase(stack, item));
+	FixedItem		item;
+
+	/* AssertArg(FixedStackIsValid(stack)); */
+	/* AssertArg(PointerIsValid(pointer)); */
+	AssertArg(FixedStackContains(stack, pointer));
+
+	item = FixedStackGetItem(stack, pointer)->next;
+
+	if (!PointerIsValid(item))
+	{
+		return (NULL);
+	}
+
+	return (FixedStackGetItemBase(stack, item));
 }

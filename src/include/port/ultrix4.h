@@ -1,17 +1,17 @@
-#  define USE_POSIX_TIME
-#  define NEED_STRDUP
+#define USE_POSIX_TIME
+#define NEED_STRDUP
 
-#ifndef		BIG_ENDIAN
-#define		BIG_ENDIAN	4321
+#ifndef			BIG_ENDIAN
+#define			BIG_ENDIAN		4321
 #endif
-#ifndef		LITTLE_ENDIAN
-#define		LITTLE_ENDIAN	1234
+#ifndef			LITTLE_ENDIAN
+#define			LITTLE_ENDIAN	1234
 #endif
-#ifndef		PDP_ENDIAN
-#define		PDP_ENDIAN	3412
+#ifndef			PDP_ENDIAN
+#define			PDP_ENDIAN		3412
 #endif
-#ifndef		BYTE_ORDER
-#define		BYTE_ORDER	LITTLE_ENDIAN
+#ifndef			BYTE_ORDER
+#define			BYTE_ORDER		LITTLE_ENDIAN
 #endif
 
 /*
@@ -23,50 +23,51 @@
  * warning-free compilation.
  */
 
-#include <sys/types.h> /* Declare various types, e.g. size_t, fd_set */
+#include <sys/types.h>			/* Declare various types, e.g. size_t,
+								 * fd_set */
 
-extern int strcasecmp(const char *, const char *);
-extern void bzero(void *, size_t);
+extern int		strcasecmp(const char *, const char *);
+extern void		bzero(void *, size_t);
 
-extern int fp_class_d(double);
-extern long random(void);
+extern int		fp_class_d(double);
+extern long		random(void);
 
 struct rusage;
-extern int getrusage(int, struct rusage *);
+extern int		getrusage(int, struct rusage *);
 
-extern int ioctl(int, unsigned long, ...);
+extern int		ioctl(int, unsigned long,...);
 
-extern int socket(int, int, int);
+extern int		socket(int, int, int);
 struct sockaddr;
-extern int connect(int, const struct sockaddr *, int);
-typedef int ssize_t;
-extern ssize_t send(int, const void *, size_t, int);
-extern ssize_t recv(int, void*, size_t, int);
-extern int setsockopt(int, int, int, const void *, int);
-extern int bind(int, const struct sockaddr *, int);
-extern int listen(int, int);
-extern int accept(int, struct sockaddr *, int *);
-extern int getsockname(int, struct sockaddr *, int *);
-extern ssize_t recvfrom(int, void *, size_t, int, struct sockaddr *, int *);
-extern ssize_t sendto(int, const void *, size_t, int, const struct sockaddr *, int);
+extern int		connect(int, const struct sockaddr *, int);
+typedef int		ssize_t;
+extern ssize_t	send(int, const void *, size_t, int);
+extern ssize_t	recv(int, void *, size_t, int);
+extern int		setsockopt(int, int, int, const void *, int);
+extern int		bind(int, const struct sockaddr *, int);
+extern int		listen(int, int);
+extern int		accept(int, struct sockaddr *, int *);
+extern int		getsockname(int, struct sockaddr *, int *);
+extern ssize_t	recvfrom(int, void *, size_t, int, struct sockaddr *, int *);
+extern ssize_t	sendto(int, const void *, size_t, int, const struct sockaddr *, int);
 struct timeval;
-extern int select(int, fd_set*, fd_set*, fd_set*, struct timeval *);
+extern int		select(int, fd_set *, fd_set *, fd_set *, struct timeval *);
 
-extern int gethostname(char *, int);
+extern int		gethostname(char *, int);
 
-extern int getopt(int, char * const *, const char *);
-extern int putenv(const char *);
+extern int		getopt(int, char *const *, const char *);
+extern int		putenv(const char *);
 
-extern pid_t vfork(void);
+extern pid_t	vfork(void);
 
 struct itimerval;
-extern int setitimer(int, const struct itimerval*, struct itimerval *);
+extern int		setitimer(int, const struct itimerval *, struct itimerval *);
 struct timezone;
-extern int gettimeofday(struct timeval *, struct timezone *);
+extern int		gettimeofday(struct timeval *, struct timezone *);
 
-extern int fsync(int);
-extern int ftruncate(int, off_t);
+extern int		fsync(int);
+extern int		ftruncate(int, off_t);
 
-extern char *crypt(char *, char *);
+extern char    *crypt(char *, char *);
 
 /* End of ultrix4.h */

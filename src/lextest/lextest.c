@@ -4,13 +4,15 @@
 ** tests for flex 2.5.3 bug
 */
 
-int main()
+int
+main()
 {
 	yylex();
 	return 0;
 }
 
-int yywrap()
+int
+yywrap()
 {
 	return 1;
 };

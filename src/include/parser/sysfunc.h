@@ -1,10 +1,9 @@
 /*-------------------------------------------------------------------------
- * 
+ *
  * sysfunc.h--
- *    support for system functions
- * 
+ *	  support for system functions
+ *
  * -------------------------------------------------------------------------
  */
 
-extern	char	*SystemFunctionHandler(char *funct);
-
+extern char    *SystemFunctionHandler(char *funct);

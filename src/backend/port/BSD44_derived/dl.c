@@ -6,22 +6,22 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ *	  notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *	  notice, this list of conditions and the following disclaimer in the
+ *	  documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
+ *	  must display the following acknowledgement:
+ *		This product includes software developed by the University of
+ *		California, Berkeley and its contributors.
  * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	  may be used to endorse or promote products derived from this software
+ *	  without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -32,8 +32,9 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
-#endif /* LIBC_SCCS and not lint */
+static char		sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
+
+#endif							/* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <nlist.h>
@@ -45,52 +46,55 @@ static char sccsid[] = "@(#)dl.c	5.4 (Berkeley) 2/23/91";
 
 #include "port-protos.h"
 
-static char	error_message[BUFSIZ];
+static char		error_message[BUFSIZ];
 
-char *
+char		   *
 BSD44_derived_dlerror(void)
 {
-	static char	ret[BUFSIZ];
+	static char		ret[BUFSIZ];
 
 	strcpy(ret, error_message);
 	error_message[0] = 0;
-	return((ret[0] == 0) ? (char *) NULL : ret);
+	return ((ret[0] == 0) ? (char *) NULL : ret);
 }
 
-void *
+void		   *
 BSD44_derived_dlopen(const char *file, int num)
 {
 #ifdef __mips__
-        sprintf(error_message, "dlopen (%s) not supported", file);
+	sprintf(error_message, "dlopen (%s) not supported", file);
 	return NULL;
 #else
-	void	*vp;
+	void		   *vp;
 
-	if ((vp = dlopen((char *) file, num)) == (void *) NULL) {
+	if ((vp = dlopen((char *) file, num)) == (void *) NULL)
+	{
 		sprintf(error_message, "dlopen (%s) failed", file);
 	}
-	return(vp);
+	return (vp);
 #endif
 }
 
-void *
+void		   *
 BSD44_derived_dlsym(void *handle, const char *name)
 {
 #ifdef __mips__
 	sprintf(error_message, "dlsym (%s) failed", name);
 	return NULL;
 #else
-	void	*vp;
-	char	buf[BUFSIZ];
+	void		   *vp;
+	char			buf[BUFSIZ];
 
-	if (*name != '_') {
+	if (*name != '_')
+	{
 		sprintf(buf, "_%s", name);
 		name = buf;
 	}
-	if ((vp = dlsym(handle, (char *) name)) == (void *) NULL) {
+	if ((vp = dlsym(handle, (char *) name)) == (void *) NULL)
+	{
 		sprintf(error_message, "dlsym (%s) failed", name);
 	}
-	return(vp);
+	return (vp);
 #endif
 }
 

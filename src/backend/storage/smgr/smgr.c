@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * smgr.c--
- *    public interface routines to storage manager switch.
+ *	  public interface routines to storage manager switch.
  *
- *    All file system operations in POSTGRES dispatch through these
- *    routines.
+ *	  All file system operations in POSTGRES dispatch through these
+ *	  routines.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.8 1997/08/19 21:33:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgr.c,v 1.9 1997/09/07 04:49:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,380 +23,390 @@
 #include "utils/rel.h"
 #include "utils/palloc.h"
 
-static void smgrshutdown(int dummy);
+static void		smgrshutdown(int dummy);
 
-typedef struct f_smgr {
-    int		(*smgr_init)();		/* may be NULL */
-    int		(*smgr_shutdown)();	/* may be NULL */
-    int		(*smgr_create)();
-    int		(*smgr_unlink)();
-    int		(*smgr_extend)();
-    int		(*smgr_open)();
-    int		(*smgr_close)();
-    int		(*smgr_read)();
-    int		(*smgr_write)();
-    int		(*smgr_flush)();
-    int		(*smgr_blindwrt)();
-    int		(*smgr_nblocks)();
-    int		(*smgr_truncate)();
-    int		(*smgr_commit)();	/* may be NULL */
-    int		(*smgr_abort)();	/* may be NULL */
-} f_smgr;
+typedef struct f_smgr
+{
+	int				(*smgr_init) ();	/* may be NULL */
+	int				(*smgr_shutdown) ();		/* may be NULL */
+	int				(*smgr_create) ();
+	int				(*smgr_unlink) ();
+	int				(*smgr_extend) ();
+	int				(*smgr_open) ();
+	int				(*smgr_close) ();
+	int				(*smgr_read) ();
+	int				(*smgr_write) ();
+	int				(*smgr_flush) ();
+	int				(*smgr_blindwrt) ();
+	int				(*smgr_nblocks) ();
+	int				(*smgr_truncate) ();
+	int				(*smgr_commit) ();	/* may be NULL */
+	int				(*smgr_abort) ();	/* may be NULL */
+}				f_smgr;
 
 /*
- *  The weird placement of commas in this init block is to keep the compiler
- *  happy, regardless of what storage managers we have (or don't have).
+ *	The weird placement of commas in this init block is to keep the compiler
+ *	happy, regardless of what storage managers we have (or don't have).
  */
 
-static f_smgr smgrsw[] = {
+static f_smgr	smgrsw[] = {
 
-    /* magnetic disk */
-    { mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
-      mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdtruncate, 
-      mdcommit, mdabort },
+	/* magnetic disk */
+	{mdinit, NULL, mdcreate, mdunlink, mdextend, mdopen, mdclose,
+		mdread, mdwrite, mdflush, mdblindwrt, mdnblocks, mdtruncate,
+	mdcommit, mdabort},
 
 #ifdef MAIN_MEMORY
-    /* main memory */
-    { mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
-      mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, NULL, 
-      mmcommit, mmabort },
+	/* main memory */
+	{mminit, mmshutdown, mmcreate, mmunlink, mmextend, mmopen, mmclose,
+		mmread, mmwrite, mmflush, mmblindwrt, mmnblocks, NULL,
+	mmcommit, mmabort},
 
-#endif /* MAIN_MEMORY */
+#endif							/* MAIN_MEMORY */
 };
 
 /*
- *  This array records which storage managers are write-once, and which
- *  support overwrite.  A 'true' entry means that the storage manager is
- *  write-once.  In the best of all possible worlds, there would be no
- *  write-once storage managers.
+ *	This array records which storage managers are write-once, and which
+ *	support overwrite.	A 'true' entry means that the storage manager is
+ *	write-once.  In the best of all possible worlds, there would be no
+ *	write-once storage managers.
  */
 
-static bool smgrwo[] = {
-    false,		/* magnetic disk */
+static bool		smgrwo[] = {
+	false,						/* magnetic disk */
 #ifdef MAIN_MEMORY
-    false,		/* main memory*/
-#endif /* MAIN_MEMORY */
+	false,						/* main memory */
+#endif							/* MAIN_MEMORY */
 };
-static int NSmgr = lengthof(smgrsw);
+static int		NSmgr = lengthof(smgrsw);
 
 /*
- *  smgrinit(), smgrshutdown() -- Initialize or shut down all storage
- *				  managers.
+ *	smgrinit(), smgrshutdown() -- Initialize or shut down all storage
+ *								  managers.
  *
  */
 int
 smgrinit()
 {
-    int i;
+	int				i;
 
-    for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_init) {
-	    if ((*(smgrsw[i].smgr_init))() == SM_FAIL)
-		elog(FATAL, "initialization failed on %s", smgrout(i));
+	for (i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_init)
+		{
+			if ((*(smgrsw[i].smgr_init)) () == SM_FAIL)
+				elog(FATAL, "initialization failed on %s", smgrout(i));
+		}
 	}
-    }
 
-    /* register the shutdown proc */
-    on_exitpg(smgrshutdown, 0);
+	/* register the shutdown proc */
+	on_exitpg(smgrshutdown, 0);
 
-    return (SM_SUCCESS);
+	return (SM_SUCCESS);
 }
 
 static void
 smgrshutdown(int dummy)
 {
-    int i;
+	int				i;
 
-    for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_shutdown) {
-	    if ((*(smgrsw[i].smgr_shutdown))() == SM_FAIL)
-		elog(FATAL, "shutdown failed on %s", smgrout(i));
+	for (i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_shutdown)
+		{
+			if ((*(smgrsw[i].smgr_shutdown)) () == SM_FAIL)
+				elog(FATAL, "shutdown failed on %s", smgrout(i));
+		}
 	}
-    }
 }
 
 /*
- *  smgrcreate() -- Create a new relation.
+ *	smgrcreate() -- Create a new relation.
  *
- *	This routine takes a reldesc, creates the relation on the appropriate
- *	device, and returns a file descriptor for it.
+ *		This routine takes a reldesc, creates the relation on the appropriate
+ *		device, and returns a file descriptor for it.
  */
 int
 smgrcreate(int16 which, Relation reln)
 {
-    int fd;
+	int				fd;
 
-    if ((fd = (*(smgrsw[which].smgr_create))(reln)) < 0)
-	elog(WARN, "cannot open %s",
-	    &(reln->rd_rel->relname.data[0]));
+	if ((fd = (*(smgrsw[which].smgr_create)) (reln)) < 0)
+		elog(WARN, "cannot open %s",
+			 &(reln->rd_rel->relname.data[0]));
 
-    return (fd);
+	return (fd);
 }
 
 /*
- *  smgrunlink() -- Unlink a relation.
+ *	smgrunlink() -- Unlink a relation.
  *
- *	The relation is removed from the store.
+ *		The relation is removed from the store.
  */
 int
 smgrunlink(int16 which, Relation reln)
 {
-    int status;
+	int				status;
 
-    if ((status = (*(smgrsw[which].smgr_unlink))(reln)) == SM_FAIL)
-	elog(WARN, "cannot unlink %s",
-	     &(reln->rd_rel->relname.data[0]));
+	if ((status = (*(smgrsw[which].smgr_unlink)) (reln)) == SM_FAIL)
+		elog(WARN, "cannot unlink %s",
+			 &(reln->rd_rel->relname.data[0]));
 
-    return (status);
+	return (status);
 }
 
 /*
- *  smgrextend() -- Add a new block to a file.
+ *	smgrextend() -- Add a new block to a file.
  *
- *	Returns SM_SUCCESS on success; aborts the current transaction on
- *	failure.
+ *		Returns SM_SUCCESS on success; aborts the current transaction on
+ *		failure.
  */
 int
 smgrextend(int16 which, Relation reln, char *buffer)
 {
-    int status;
+	int				status;
 
-    status = (*(smgrsw[which].smgr_extend))(reln, buffer);
+	status = (*(smgrsw[which].smgr_extend)) (reln, buffer);
 
-    if (status == SM_FAIL)
-	elog(WARN, "%s: cannot extend",
-	    &(reln->rd_rel->relname.data[0]));
+	if (status == SM_FAIL)
+		elog(WARN, "%s: cannot extend",
+			 &(reln->rd_rel->relname.data[0]));
 
-    return (status);
+	return (status);
 }
 
 /*
- *  smgropen() -- Open a relation using a particular storage manager.
+ *	smgropen() -- Open a relation using a particular storage manager.
  *
- *	Returns the fd for the open relation on success, aborts the
- *	transaction on failure.
+ *		Returns the fd for the open relation on success, aborts the
+ *		transaction on failure.
  */
 int
 smgropen(int16 which, Relation reln)
 {
-    int fd;
+	int				fd;
 
-    if ((fd = (*(smgrsw[which].smgr_open))(reln)) < 0)
-	elog(WARN, "cannot open %s",
-	     &(reln->rd_rel->relname.data[0]));
+	if ((fd = (*(smgrsw[which].smgr_open)) (reln)) < 0)
+		elog(WARN, "cannot open %s",
+			 &(reln->rd_rel->relname.data[0]));
 
-    return (fd);
+	return (fd);
 }
 
 /*
- *  smgrclose() -- Close a relation.
+ *	smgrclose() -- Close a relation.
  *
- *      NOTE: mdclose frees fd vector! It may be re-used for other relation!
- *      reln should be flushed from cache after closing !..
- *	Currently, smgrclose is calling by 
- *	relcache.c:RelationPurgeLocalRelation() only.
- *	It would be nice to have smgrfree(), but because of
- *	smgrclose is called from single place...	- vadim 05/22/97
+ *		NOTE: mdclose frees fd vector! It may be re-used for other relation!
+ *		reln should be flushed from cache after closing !..
+ *		Currently, smgrclose is calling by
+ *		relcache.c:RelationPurgeLocalRelation() only.
+ *		It would be nice to have smgrfree(), but because of
+ *		smgrclose is called from single place...		- vadim 05/22/97
  *
- *	Returns SM_SUCCESS on success, aborts on failure.
+ *		Returns SM_SUCCESS on success, aborts on failure.
  */
 int
 smgrclose(int16 which, Relation reln)
 {
-    if ((*(smgrsw[which].smgr_close))(reln) == SM_FAIL)
-	elog(WARN, "cannot close %s",
-	     &(reln->rd_rel->relname.data[0]));
+	if ((*(smgrsw[which].smgr_close)) (reln) == SM_FAIL)
+		elog(WARN, "cannot close %s",
+			 &(reln->rd_rel->relname.data[0]));
 
-    return (SM_SUCCESS);
+	return (SM_SUCCESS);
 }
 
 /*
- *  smgrread() -- read a particular block from a relation into the supplied
- *		  buffer.
+ *	smgrread() -- read a particular block from a relation into the supplied
+ *				  buffer.
  *
- *	This routine is called from the buffer manager in order to
- *	instantiate pages in the shared buffer cache.  All storage managers
- *	return pages in the format that POSTGRES expects.  This routine
- *	dispatches the read.  On success, it returns SM_SUCCESS.  On failure,
- *	the current transaction is aborted.
+ *		This routine is called from the buffer manager in order to
+ *		instantiate pages in the shared buffer cache.  All storage managers
+ *		return pages in the format that POSTGRES expects.  This routine
+ *		dispatches the read.  On success, it returns SM_SUCCESS.  On failure,
+ *		the current transaction is aborted.
  */
 int
 smgrread(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
-    int status;
+	int				status;
 
-    status = (*(smgrsw[which].smgr_read))(reln, blocknum, buffer);
+	status = (*(smgrsw[which].smgr_read)) (reln, blocknum, buffer);
 
-    if (status == SM_FAIL)
-	elog(WARN, "cannot read block %d of %s",
-	     blocknum, &(reln->rd_rel->relname.data[0]));
+	if (status == SM_FAIL)
+		elog(WARN, "cannot read block %d of %s",
+			 blocknum, &(reln->rd_rel->relname.data[0]));
 
-    return (status);
+	return (status);
 }
 
 /*
- *  smgrwrite() -- Write the supplied buffer out.
+ *	smgrwrite() -- Write the supplied buffer out.
  *
- *	This is not a synchronous write -- the interface for that is
- *	smgrflush().  The buffer is written out via the appropriate
- *	storage manager.  This routine returns SM_SUCCESS or aborts
- *	the current transaction.
+ *		This is not a synchronous write -- the interface for that is
+ *		smgrflush().  The buffer is written out via the appropriate
+ *		storage manager.  This routine returns SM_SUCCESS or aborts
+ *		the current transaction.
  */
 int
 smgrwrite(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
-    int status;
+	int				status;
 
-    status = (*(smgrsw[which].smgr_write))(reln, blocknum, buffer);
+	status = (*(smgrsw[which].smgr_write)) (reln, blocknum, buffer);
 
-    if (status == SM_FAIL)
-	elog(WARN, "cannot write block %d of %s",
-	     blocknum, &(reln->rd_rel->relname.data[0]));
+	if (status == SM_FAIL)
+		elog(WARN, "cannot write block %d of %s",
+			 blocknum, &(reln->rd_rel->relname.data[0]));
 
-    return (status);
+	return (status);
 }
 
 /*
- *  smgrflush() -- A synchronous smgrwrite().
+ *	smgrflush() -- A synchronous smgrwrite().
  */
 int
 smgrflush(int16 which, Relation reln, BlockNumber blocknum, char *buffer)
 {
-    int status;
+	int				status;
 
-    status = (*(smgrsw[which].smgr_flush))(reln, blocknum, buffer);
+	status = (*(smgrsw[which].smgr_flush)) (reln, blocknum, buffer);
 
-    if (status == SM_FAIL)
-	elog(WARN, "cannot flush block %d of %s to stable store",
-	     blocknum, &(reln->rd_rel->relname.data[0]));
+	if (status == SM_FAIL)
+		elog(WARN, "cannot flush block %d of %s to stable store",
+			 blocknum, &(reln->rd_rel->relname.data[0]));
 
-    return (status);
+	return (status);
 }
 
 /*
- *  smgrblindwrt() -- Write a page out blind.
+ *	smgrblindwrt() -- Write a page out blind.
  *
- *	In some cases, we may find a page in the buffer cache that we
- *	can't make a reldesc for.  This happens, for example, when we
- *	want to reuse a dirty page that was written by a transaction
- *	that has not yet committed, which created a new relation.  In
- *	this case, the buffer manager will call smgrblindwrt() with
- *	the name and OID of the database and the relation to which the
- *	buffer belongs.  Every storage manager must be able to force
- *	this page down to stable storage in this circumstance.
+ *		In some cases, we may find a page in the buffer cache that we
+ *		can't make a reldesc for.  This happens, for example, when we
+ *		want to reuse a dirty page that was written by a transaction
+ *		that has not yet committed, which created a new relation.  In
+ *		this case, the buffer manager will call smgrblindwrt() with
+ *		the name and OID of the database and the relation to which the
+ *		buffer belongs.  Every storage manager must be able to force
+ *		this page down to stable storage in this circumstance.
  */
 int
 smgrblindwrt(int16 which,
-	     char *dbname,
-	     char *relname,
-	     Oid dbid,
-	     Oid relid,
-	     BlockNumber blkno,
-	     char *buffer)
+			 char *dbname,
+			 char *relname,
+			 Oid dbid,
+			 Oid relid,
+			 BlockNumber blkno,
+			 char *buffer)
 {
-    char *dbstr;
-    char *relstr;
-    int status;
+	char		   *dbstr;
+	char		   *relstr;
+	int				status;
 
-    dbstr = pstrdup(dbname);
-    relstr = pstrdup(relname);
+	dbstr = pstrdup(dbname);
+	relstr = pstrdup(relname);
 
-    status = (*(smgrsw[which].smgr_blindwrt))(dbstr, relstr, dbid, relid,
-					      blkno, buffer);
+	status = (*(smgrsw[which].smgr_blindwrt)) (dbstr, relstr, dbid, relid,
+											   blkno, buffer);
 
-    if (status == SM_FAIL)
-	elog(WARN, "cannot write block %d of %s [%s] blind",
-	     blkno, relstr, dbstr);
+	if (status == SM_FAIL)
+		elog(WARN, "cannot write block %d of %s [%s] blind",
+			 blkno, relstr, dbstr);
 
-    pfree(dbstr);
-    pfree(relstr);
+	pfree(dbstr);
+	pfree(relstr);
 
-    return (status);
+	return (status);
 }
 
 /*
- *  smgrnblocks() -- Calculate the number of POSTGRES blocks in the
- *		     supplied relation.
+ *	smgrnblocks() -- Calculate the number of POSTGRES blocks in the
+ *					 supplied relation.
  *
- *	Returns the number of blocks on success, aborts the current
- *	transaction on failure.
+ *		Returns the number of blocks on success, aborts the current
+ *		transaction on failure.
  */
 int
 smgrnblocks(int16 which, Relation reln)
 {
-    int nblocks;
+	int				nblocks;
 
-    if ((nblocks = (*(smgrsw[which].smgr_nblocks))(reln)) < 0)
-	elog(WARN, "cannot count blocks for %s",
-	     &(reln->rd_rel->relname.data[0]));
+	if ((nblocks = (*(smgrsw[which].smgr_nblocks)) (reln)) < 0)
+		elog(WARN, "cannot count blocks for %s",
+			 &(reln->rd_rel->relname.data[0]));
 
-    return (nblocks);
+	return (nblocks);
 }
 
 /*
- *  smgrtruncate() -- Truncate supplied relation to a specified number
- *			of blocks
+ *	smgrtruncate() -- Truncate supplied relation to a specified number
+ *						of blocks
  *
- *	Returns the number of blocks on success, aborts the current
- *	transaction on failure.
+ *		Returns the number of blocks on success, aborts the current
+ *		transaction on failure.
  */
 int
 smgrtruncate(int16 which, Relation reln, int nblocks)
 {
-    int newblks;
-    
-    newblks = nblocks;
-    if (smgrsw[which].smgr_truncate)
-    {
-    	if ((newblks = (*(smgrsw[which].smgr_truncate))(reln, nblocks)) < 0)
-	    elog(WARN, "cannot truncate %s to %d blocks",
-		&(reln->rd_rel->relname.data[0]), nblocks);
-    }
+	int				newblks;
 
-    return (newblks);
+	newblks = nblocks;
+	if (smgrsw[which].smgr_truncate)
+	{
+		if ((newblks = (*(smgrsw[which].smgr_truncate)) (reln, nblocks)) < 0)
+			elog(WARN, "cannot truncate %s to %d blocks",
+				 &(reln->rd_rel->relname.data[0]), nblocks);
+	}
+
+	return (newblks);
 }
 
 /*
- *  smgrcommit(), smgrabort() -- Commit or abort changes made during the
- *				 current transaction.
+ *	smgrcommit(), smgrabort() -- Commit or abort changes made during the
+ *								 current transaction.
  */
 int
 smgrcommit()
 {
-    int i;
+	int				i;
 
-    for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_commit) {
-	    if ((*(smgrsw[i].smgr_commit))() == SM_FAIL)
-		elog(FATAL, "transaction commit failed on %s", smgrout(i));
+	for (i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_commit)
+		{
+			if ((*(smgrsw[i].smgr_commit)) () == SM_FAIL)
+				elog(FATAL, "transaction commit failed on %s", smgrout(i));
+		}
 	}
-    }
 
-    return (SM_SUCCESS);
+	return (SM_SUCCESS);
 }
 
 #ifdef NOT_USED
 int
 smgrabort()
 {
-    int i;
+	int				i;
 
-    for (i = 0; i < NSmgr; i++) {
-	if (smgrsw[i].smgr_abort) {
-	    if ((*(smgrsw[i].smgr_abort))() == SM_FAIL)
-		elog(FATAL, "transaction abort failed on %s", smgrout(i));
+	for (i = 0; i < NSmgr; i++)
+	{
+		if (smgrsw[i].smgr_abort)
+		{
+			if ((*(smgrsw[i].smgr_abort)) () == SM_FAIL)
+				elog(FATAL, "transaction abort failed on %s", smgrout(i));
+		}
 	}
-    }
 
-    return (SM_SUCCESS);
+	return (SM_SUCCESS);
 }
+
 #endif
 
 bool
 smgriswo(int16 smgrno)
 {
-    if (smgrno < 0 || smgrno >= NSmgr)
-	elog(WARN, "illegal storage manager number %d", smgrno);
+	if (smgrno < 0 || smgrno >= NSmgr)
+		elog(WARN, "illegal storage manager number %d", smgrno);
 
-    return (smgrwo[smgrno]);
+	return (smgrwo[smgrno]);
 }

@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_opclass.h--
- *    definition of the system "opclass" relation (pg_opclass)
- *    along with the relation's initial contents.
+ *	  definition of the system "opclass" relation (pg_opclass)
+ *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.3 1997/09/04 18:43:58 thomas Exp $
+ * $Id: pg_opclass.h,v 1.4 1997/09/07 04:56:58 momjian Exp $
  *
  * NOTES
- *    the genbki.sh script reads this file and generates .bki
- *    information from the DATA() statements.
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
@@ -19,40 +19,41 @@
 #define PG_OPCLASS_H
 
 /* ----------------
- *	postgres.h contains the system type definintions and the
- *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *	can be read by both genbki.sh and the C compiler.
+ *		postgres.h contains the system type definintions and the
+ *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
 
 /* ----------------
- *	pg_opclass definition.  cpp turns this into
- *	typedef struct FormData_pg_opclass
+ *		pg_opclass definition.	cpp turns this into
+ *		typedef struct FormData_pg_opclass
  * ----------------
- */ 
+ */
 
-CATALOG(pg_opclass) {
-    NameData opcname;
-    Oid opcdeftype;
+CATALOG(pg_opclass)
+{
+	NameData		opcname;
+	Oid				opcdeftype;
 } FormData_pg_opclass;
 
 /* ----------------
- *	Form_pg_opclass corresponds to a pointer to a tuple with
- *	the format of pg_opclass relation.
+ *		Form_pg_opclass corresponds to a pointer to a tuple with
+ *		the format of pg_opclass relation.
  * ----------------
  */
-typedef FormData_pg_opclass	*Form_pg_opclass;
+typedef FormData_pg_opclass *Form_pg_opclass;
 
 /* ----------------
- *	compiler constants for pg_opclass
+ *		compiler constants for pg_opclass
  * ----------------
  */
-#define Natts_pg_opclass		2
-#define Anum_pg_opclass_opcname		1
-#define Anum_pg_opclass_opcdeftype      2
+#define Natts_pg_opclass				2
+#define Anum_pg_opclass_opcname			1
+#define Anum_pg_opclass_opcdeftype		2
 
 /* ----------------
- *	initial contents of pg_opclass
+ *		initial contents of pg_opclass
  * ----------------
  */
 
@@ -61,34 +62,34 @@ typedef FormData_pg_opclass	*Form_pg_opclass;
  * (see the README in this directory), so just put zeros
  * in, which are invalid OID's anyway.  --djm
  */
-DATA(insert OID =  406 (    char2_ops       409   ));
-DATA(insert OID =  407 (    char4_ops       410   ));
-DATA(insert OID =  408 (    char8_ops       411   ));
-DATA(insert OID = 1181 (    name_ops         19   ));
-DATA(insert OID =  421 (    int2_ops         21   ));
-DATA(insert OID =  422 (    box_ops         603   ));
-DATA(insert OID =  423 (    float8_ops      701   ));
-DATA(insert OID =  424 (    int24_ops         0   ));
-DATA(insert OID =  425 (    int42_ops         0   ));
-DATA(insert OID =  426 (    int4_ops         23   ));
+DATA(insert OID =  406 (	char2_ops		409   ));
+DATA(insert OID =  407 (	char4_ops		410   ));
+DATA(insert OID =  408 (	char8_ops		411   ));
+DATA(insert OID = 1181 (	name_ops		 19   ));
+DATA(insert OID =  421 (	int2_ops		 21   ));
+DATA(insert OID =  422 (	box_ops			603   ));
+DATA(insert OID =  423 (	float8_ops		701   ));
+DATA(insert OID =  424 (	int24_ops		  0   ));
+DATA(insert OID =  425 (	int42_ops		  0   ));
+DATA(insert OID =  426 (	int4_ops		 23   ));
 #define INT4_OPS_OID 426
-DATA(insert OID =  427 (    oid_ops          26   ));
-DATA(insert OID =  428 (    float4_ops      700   ));
-DATA(insert OID =  429 (    char_ops         18   ));
-DATA(insert OID =  430 (    char16_ops       20   ));
-DATA(insert OID =  431 (    text_ops         25   ));
-DATA(insert OID =  432 (    abstime_ops     702   ));
-DATA(insert OID =  433 (    bigbox_ops        0   ));
-DATA(insert OID =  434 (    poly_ops        604   ));
-DATA(insert OID =  435 (    oidint4_ops     910   ));
-DATA(insert OID =  436 (    oidname_ops     911   ));
-DATA(insert OID =  437 (    oidint2_ops     810   ));
-DATA(insert OID =  714 (    circle_ops      718   ));
-DATA(insert OID = 1076 (    bpchar_ops     1042   ));
-DATA(insert OID = 1077 (    varchar_ops    1043   ));
-DATA(insert OID = 1114 (    date_ops       1082   ));
-DATA(insert OID = 1115 (    time_ops       1083   ));
-DATA(insert OID = 1312 (    datetime_ops   1184   ));
-DATA(insert OID = 1313 (    timespan_ops   1186   ));
+DATA(insert OID =  427 (	oid_ops			 26   ));
+DATA(insert OID =  428 (	float4_ops		700   ));
+DATA(insert OID =  429 (	char_ops		 18   ));
+DATA(insert OID =  430 (	char16_ops		 20   ));
+DATA(insert OID =  431 (	text_ops		 25   ));
+DATA(insert OID =  432 (	abstime_ops		702   ));
+DATA(insert OID =  433 (	bigbox_ops		  0   ));
+DATA(insert OID =  434 (	poly_ops		604   ));
+DATA(insert OID =  435 (	oidint4_ops		910   ));
+DATA(insert OID =  436 (	oidname_ops		911   ));
+DATA(insert OID =  437 (	oidint2_ops		810   ));
+DATA(insert OID =  714 (	circle_ops		718   ));
+DATA(insert OID = 1076 (	bpchar_ops	   1042   ));
+DATA(insert OID = 1077 (	varchar_ops    1043   ));
+DATA(insert OID = 1114 (	date_ops	   1082   ));
+DATA(insert OID = 1115 (	time_ops	   1083   ));
+DATA(insert OID = 1312 (	datetime_ops   1184   ));
+DATA(insert OID = 1313 (	timespan_ops   1186   ));
 
-#endif /* PG_OPCLASS_H */
+#endif							/* PG_OPCLASS_H */

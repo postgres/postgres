@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_language.h--
- *    definition of the system "language" relation (pg_language)
- *    along with the relation's initial contents.
+ *	  definition of the system "language" relation (pg_language)
+ *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_language.h,v 1.2 1996/10/31 09:47:38 scrappy Exp $
+ * $Id: pg_language.h,v 1.3 1997/09/07 04:56:53 momjian Exp $
  *
  * NOTES
- *    the genbki.sh script reads this file and generates .bki
- *    information from the DATA() statements.
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
@@ -19,39 +19,40 @@
 #define PG_LANGUAGE_H
 
 /* ----------------
- *	postgres.h contains the system type definintions and the
- *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *	can be read by both genbki.sh and the C compiler.
+ *		postgres.h contains the system type definintions and the
+ *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
 
 /* ----------------
- *	pg_language definition.  cpp turns this into
- *	typedef struct FormData_pg_language
+ *		pg_language definition.  cpp turns this into
+ *		typedef struct FormData_pg_language
  * ----------------
- */ 
-CATALOG(pg_language) {
-    NameData 	lanname;
-    text 	lancompiler;	/* VARIABLE LENGTH FIELD */
+ */
+CATALOG(pg_language)
+{
+	NameData		lanname;
+	text			lancompiler;/* VARIABLE LENGTH FIELD */
 } FormData_pg_language;
 
 /* ----------------
- *	Form_pg_language corresponds to a pointer to a tuple with
- *	the format of pg_language relation.
+ *		Form_pg_language corresponds to a pointer to a tuple with
+ *		the format of pg_language relation.
  * ----------------
  */
-typedef FormData_pg_language	*Form_pg_language;
+typedef FormData_pg_language *Form_pg_language;
 
 /* ----------------
- *	compiler constants for pg_language
+ *		compiler constants for pg_language
  * ----------------
  */
-#define Natts_pg_language		2
-#define Anum_pg_language_lanname	1
+#define Natts_pg_language				2
+#define Anum_pg_language_lanname		1
 #define Anum_pg_language_lancompiler	2
 
 /* ----------------
- *	initial contents of pg_language
+ *		initial contents of pg_language
  * ----------------
  */
 
@@ -63,12 +64,5 @@ DATA(insert OID = 13 ( "C" "/bin/cc" ));
 DATA(insert OID = 14 ( "sql" "postgres"));
 #define SQLlanguageId 14
 
-    
-#endif /* PG_LANGUAGE_H */
 
-
-
-
-
-
-
+#endif							/* PG_LANGUAGE_H */

@@ -1,78 +1,77 @@
 /*-------------------------------------------------------------------------
  *
  * parsetree.h--
- *    Routines to access various components and subcomponents of
- *    parse trees.  
+ *	  Routines to access various components and subcomponents of
+ *	  parse trees.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.2 1996/11/06 10:30:39 scrappy Exp $
+ * $Id: parsetree.h,v 1.3 1997/09/07 04:59:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PARSETREE_H
-#define PARSETREE_H		/* include once only */
+#define PARSETREE_H				/* include once only */
 
 /* ----------------
- *	need pg_list.h for definitions of CAR(), etc. macros
+ *		need pg_list.h for definitions of CAR(), etc. macros
  * ----------------
  */
 
 /* ----------------
- *	range table macros
+ *		range table macros
  *
- *  parse tree:
- *	(root targetlist qual)
- *	 ^^^^
- *  parse root:
- *	(numlevels cmdtype resrel rangetable priority ruleinfo nestdotinfo)
- *			          ^^^^^^^^^^
- *  range table:
- *	(rtentry ...)
+ *	parse tree:
+ *		(root targetlist qual)
+ *		 ^^^^
+ *	parse root:
+ *		(numlevels cmdtype resrel rangetable priority ruleinfo nestdotinfo)
+ *								  ^^^^^^^^^^
+ *	range table:
+ *		(rtentry ...)
  *
- *  rtentry:
- *	note: this might be wrong, I don't understand how
- *	rt_time / rt_archive_time work together.  anyways it
- *      looks something like:
+ *	rtentry:
+ *		note: this might be wrong, I don't understand how
+ *		rt_time / rt_archive_time work together.  anyways it
+ *		looks something like:
  *
- *	   (relname ?       relid timestuff flags rulelocks)
- *	or (new/cur relname relid timestuff flags rulelocks)
+ *		   (relname ?		relid timestuff flags rulelocks)
+ *		or (new/cur relname relid timestuff flags rulelocks)
  *
- *	someone who knows more should correct this -cim 6/9/91
+ *		someone who knows more should correct this -cim 6/9/91
  * ----------------
  */
 
 #define rt_relname(rt_entry) \
-      ((!strcmp(((rt_entry)->refname),"*CURRENT*") ||\
-        !strcmp(((rt_entry)->refname),"*NEW*")) ? ((rt_entry)->refname) : \
-        ((char *)(rt_entry)->relname))
+	  ((!strcmp(((rt_entry)->refname),"*CURRENT*") ||\
+		!strcmp(((rt_entry)->refname),"*NEW*")) ? ((rt_entry)->refname) : \
+		((char *)(rt_entry)->relname))
 
 /*
- *	rt_fetch
- *	rt_store
+ *		rt_fetch
+ *		rt_store
  *
- *	Access and (destructively) replace rangetable entries.
+ *		Access and (destructively) replace rangetable entries.
  *
  */
 #define rt_fetch(rangetable_index, rangetable) \
-    ((RangeTblEntry*)nth((rangetable_index)-1, rangetable))
+	((RangeTblEntry*)nth((rangetable_index)-1, rangetable))
 
 #define rt_store(rangetable_index, rangetable, rt) \
-    set_nth(rangetable, (rangetable_index)-1, rt)
+	set_nth(rangetable, (rangetable_index)-1, rt)
 
 /*
- *	getrelid
- *	getrelname
+ *		getrelid
+ *		getrelname
  *
- *	Given the range index of a relation, return the corresponding
- *	relation id or relation name.
+ *		Given the range index of a relation, return the corresponding
+ *		relation id or relation name.
  */
 #define getrelid(rangeindex,rangetable) \
-    ((RangeTblEntry*)nth((rangeindex)-1, rangetable))->relid
+	((RangeTblEntry*)nth((rangeindex)-1, rangetable))->relid
 
 #define getrelname(rangeindex, rangetable) \
-    rt_relname((RangeTblEntry*)nth((rangeindex)-1, rangetable))
+	rt_relname((RangeTblEntry*)nth((rangeindex)-1, rangetable))
 
-#endif /* PARSETREE_H */
-	     
+#endif							/* PARSETREE_H */

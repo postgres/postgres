@@ -1,60 +1,60 @@
 /*-------------------------------------------------------------------------
  *
  * attnum.h--
- *    POSTGRES attribute number definitions.
+ *	  POSTGRES attribute number definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: attnum.h,v 1.4 1996/10/31 09:46:35 scrappy Exp $
+ * $Id: attnum.h,v 1.5 1997/09/07 04:55:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ATTNUM_H
+#ifndef ATTNUM_H
 #define ATTNUM_H
 
 
 /*
  * user defined attribute numbers start at 1.	-ay 2/95
  */
-typedef int16		AttrNumber;
+typedef int16	AttrNumber;
 
-#define InvalidAttrNumber	0
+#define InvalidAttrNumber		0
 
 /* ----------------
- *	support macros
+ *		support macros
  * ----------------
  */
 /*
  * AttributeNumberIsValid --
- *	True iff the attribute number is valid.
+ *		True iff the attribute number is valid.
  */
 #define AttributeNumberIsValid(attributeNumber) \
-    ((bool) ((attributeNumber) != InvalidAttrNumber))
+	((bool) ((attributeNumber) != InvalidAttrNumber))
 
 /*
  * AttrNumberIsForUserDefinedAttr --
- *	True iff the attribute number corresponds to an user defined attribute.
+ *		True iff the attribute number corresponds to an user defined attribute.
  */
 #define AttrNumberIsForUserDefinedAttr(attributeNumber) \
-    ((bool) ((attributeNumber) > 0))
+	((bool) ((attributeNumber) > 0))
 
 /*
  * AttrNumberGetAttrOffset --
- *	Returns the attribute offset for an attribute number.
+ *		Returns the attribute offset for an attribute number.
  *
  * Note:
- *	Assumes the attribute number is for an user defined attribute.
+ *		Assumes the attribute number is for an user defined attribute.
  */
 #define AttrNumberGetAttrOffset(attNum) \
-     (AssertMacro(AttrNumberIsForUserDefinedAttr(attNum)) ? \
-      ((attNum - 1)) : 0)
+	 (AssertMacro(AttrNumberIsForUserDefinedAttr(attNum)) ? \
+	  ((attNum - 1)) : 0)
 
 /*
  * AttributeOffsetGetAttributeNumber --
- *	Returns the attribute number for an attribute offset.
+ *		Returns the attribute number for an attribute offset.
  */
 #define AttrOffsetGetAttrNumber(attributeOffset) \
-     ((AttrNumber) (1 + attributeOffset))
+	 ((AttrNumber) (1 + attributeOffset))
 
-#endif /* ATTNUM_H */
+#endif							/* ATTNUM_H */

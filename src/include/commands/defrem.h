@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * defrem.h--
- *    POSTGRES define and remove utility definitions.
+ *	  POSTGRES define and remove utility definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.7 1997/05/22 00:15:47 scrappy Exp $
+ * $Id: defrem.h,v 1.8 1997/09/07 04:57:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	DEFREM_H
+#ifndef DEFREM_H
 #define DEFREM_H
 
 #include <tcop/dest.h>
@@ -19,35 +19,38 @@
 /*
  * prototypes in defind.c
  */
-extern void DefineIndex(char *heapRelationName, 
+extern void
+DefineIndex(char *heapRelationName,
 			char *indexRelationName,
 			char *accessMethodName,
-			List *attributeList,
-			List *parameterList, 
+			List * attributeList,
+			List * parameterList,
 			bool unique,
-			Expr *predicate,
-			List *rangetable);
-extern void ExtendIndex(char *indexRelationName,
-			Expr *predicate,
-			List *rangetable);
-extern void RemoveIndex(char *name);
+			Expr * predicate,
+			List * rangetable);
+extern void
+ExtendIndex(char *indexRelationName,
+			Expr * predicate,
+			List * rangetable);
+extern void		RemoveIndex(char *name);
 
 /*
  * prototypes in define.c
  */
-extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
-extern void DefineOperator(char *name, List *parameters);
-extern void DefineAggregate(char *name, List *parameters);
-extern void DefineType(char *name, List *parameters);
-extern void CreateFunction(ProcedureStmt *stmt, CommandDest dest);
+extern void		CreateFunction(ProcedureStmt * stmt, CommandDest dest);
+extern void		DefineOperator(char *name, List * parameters);
+extern void		DefineAggregate(char *name, List * parameters);
+extern void		DefineType(char *name, List * parameters);
+extern void		CreateFunction(ProcedureStmt * stmt, CommandDest dest);
 
 /*
  * prototypes in remove.c
  */
-extern void RemoveFunction(char *functionName, int nargs, List *argNameList);
-extern void RemoveOperator(char *operatorName, 
+extern void		RemoveFunction(char *functionName, int nargs, List * argNameList);
+extern void
+RemoveOperator(char *operatorName,
 			   char *typeName1, char *typeName2);
-extern void RemoveType(char *typeName);
-extern void RemoveAggregate(char *aggName, char *aggType);
+extern void		RemoveType(char *typeName);
+extern void		RemoveAggregate(char *aggName, char *aggType);
 
-#endif	/* DEFREM_H */
+#endif							/* DEFREM_H */

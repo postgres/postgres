@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- *   FILE
- *	fe-misc.c
+ *	 FILE
+ *		fe-misc.c
  *
- *   DESCRIPTION
- *       miscellaneous useful functions
- *   these routines are analogous to the ones in libpq/pqcomm.c
+ *	 DESCRIPTION
+ *		 miscellaneous useful functions
+ *	 these routines are analogous to the ones in libpq/pqcomm.c
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.5 1997/03/16 18:51:29 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.6 1997/09/07 05:03:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,80 +29,84 @@
 
    if debug is set, also echo the character fetched
 */
-int pqGetc(FILE* fin, FILE* debug)
+int
+pqGetc(FILE * fin, FILE * debug)
 {
-  int c;
+	int				c;
 
-  c = getc(fin);
+	c = getc(fin);
 
-  if (debug && c != EOF)
-    fprintf(debug, "From backend> %c\n", c);
-    
-  return c;
+	if (debug && c != EOF)
+		fprintf(debug, "From backend> %c\n", c);
+
+	return c;
 }
 
 /* --------------------------------------------------------------------- */
 /* pqPutnchar:
-   send a string of exactly len length into stream f 
+   send a string of exactly len length into stream f
 
    returns 1 if there was an error, 0 otherwise.
 */
-int pqPutnchar(const char* s, int len, FILE *f, FILE *debug)
+int
+pqPutnchar(const char *s, int len, FILE * f, FILE * debug)
 {
-    if (f == NULL)
-	return 1;
+	if (f == NULL)
+		return 1;
 
-   if(debug)
-      fprintf(debug, "To backend> %s\n", s);
+	if (debug)
+		fprintf(debug, "To backend> %s\n", s);
 
-   if(fwrite(s, 1, len, f) != len)
-	    return 1;
+	if (fwrite(s, 1, len, f) != len)
+		return 1;
 
-    return 0;
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
 /* pqGetnchar:
-   get a string of exactly len length from stream f 
+   get a string of exactly len length from stream f
 */
-int pqGetnchar(char* s, int len, FILE *f, FILE *debug)
+int
+pqGetnchar(char *s, int len, FILE * f, FILE * debug)
 {
-   int cnt;
+	int				cnt;
 
-  if (f == NULL)
-    return 1;
-  
-   cnt = fread(s, 1, len, f);
-   s[cnt] = '\0';
-   /* mjl: actually needs up to len+1 bytes, is this okay? XXX */
+	if (f == NULL)
+		return 1;
 
-   if (debug)
-      fprintf(debug, "From backend (%d)> %s\n", len, s);
+	cnt = fread(s, 1, len, f);
+	s[cnt] = '\0';
+	/* mjl: actually needs up to len+1 bytes, is this okay? XXX */
 
-  return 0;
+	if (debug)
+		fprintf(debug, "From backend (%d)> %s\n", len, s);
+
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
 /* pqGets:
    get a string of up to length len from stream f
 */
-int pqGets(char* s, int len, FILE *f, FILE *debug)
+int
+pqGets(char *s, int len, FILE * f, FILE * debug)
 {
-  int c;
-   const char *str = s;
+	int				c;
+	const char	   *str = s;
 
-  if (f == NULL)
-    return 1;
-  
-  while (len-- && (c = getc(f)) != EOF && c)
-    *s++ = c;
-  *s = '\0';
-   /* mjl: actually needs up to len+1 bytes, is this okay? XXX */
+	if (f == NULL)
+		return 1;
 
-   if (debug)
-      fprintf(debug, "From backend> \"%s\"\n", str);
+	while (len-- && (c = getc(f)) != EOF && c)
+		*s++ = c;
+	*s = '\0';
+	/* mjl: actually needs up to len+1 bytes, is this okay? XXX */
 
-  return 0;
+	if (debug)
+		fprintf(debug, "From backend> \"%s\"\n", str);
+
+	return 0;
 }
 
 /* --------------------------------------------------------------------- */
@@ -111,84 +115,91 @@ int pqGets(char* s, int len, FILE *f, FILE *debug)
    for host endianness.
    returns 0 if successful, 1 otherwise
 */
-int pqPutInt(const int integer, int bytes, FILE* f, FILE *debug)
+int
+pqPutInt(const int integer, int bytes, FILE * f, FILE * debug)
 {
-    int retval = 0;
+	int				retval = 0;
 
-    switch(bytes)
-    	{
-    	case 2:
-      	    retval = pqPutShort(integer, f);
-      	    break;
-    	case 4:
-      	    retval = pqPutLong(integer, f);
-      	    break;
-    	default:
-    	    fprintf(stderr, "** int size %d not supported\n", bytes);
-    	    retval = 1;
-    	}
+	switch (bytes)
+	{
+	case 2:
+		retval = pqPutShort(integer, f);
+		break;
+	case 4:
+		retval = pqPutLong(integer, f);
+		break;
+	default:
+		fprintf(stderr, "** int size %d not supported\n", bytes);
+		retval = 1;
+	}
 
-    if (debug) fprintf(debug, "To backend (%d#)> %d\n", bytes, integer);
+	if (debug)
+		fprintf(debug, "To backend (%d#)> %d\n", bytes, integer);
 
-    return retval;
+	return retval;
 }
 
 /* --------------------------------------------------------------------- */
-/* pgGetInt 
+/* pgGetInt
    read a 2 or 4 byte integer from the stream and swab it around
    to compensate for different endianness
-   returns 0 if successful 
+   returns 0 if successful
 */
-int pqGetInt(int* result, int bytes, FILE* f, FILE *debug)
+int
+pqGetInt(int *result, int bytes, FILE * f, FILE * debug)
 {
-    int retval = 0;
-  
-    switch(bytes)
-    {
-      	case 2:
-      	    retval = pqGetShort(result, f);
-    	    break;
-    	case 4:
-    	    retval = pqGetLong(result, f);
-    	    break;
-    	 default:
-    	    fprintf(stderr, "** int size %d not supported\n", bytes);
-    	    retval = 1;
-    }
+	int				retval = 0;
 
-  if (debug)
-    	fprintf(debug,"From backend (#%d)> %d\n", bytes, *result);
+	switch (bytes)
+	{
+	case 2:
+		retval = pqGetShort(result, f);
+		break;
+	case 4:
+		retval = pqGetLong(result, f);
+		break;
+	default:
+		fprintf(stderr, "** int size %d not supported\n", bytes);
+		retval = 1;
+	}
 
-    return retval;
+	if (debug)
+		fprintf(debug, "From backend (#%d)> %d\n", bytes, *result);
+
+	return retval;
 }
 
 /* --------------------------------------------------------------------- */
-int pqPuts(const char* s, FILE *f, FILE *debug)
+int
+pqPuts(const char *s, FILE * f, FILE * debug)
 {
-  if (f == NULL)
-    return 1;
-  
-   if (fputs(s, f) == EOF)
-    return 1;
+	if (f == NULL)
+		return 1;
 
-   fputc('\0', f); /* important to send an ending \0 since backend expects it */
-  fflush(f);
+	if (fputs(s, f) == EOF)
+		return 1;
 
-  if (debug) {
-      fprintf(debug, "To backend> %s\n", s);
-  }
-  
-  return 0;
-}
-
-/* --------------------------------------------------------------------- */
-void pqFlush(FILE *f, FILE *debug)
-{
-    if (f)
+	fputc('\0', f);				/* important to send an ending \0 since
+								 * backend expects it */
 	fflush(f);
 
-    if (debug)
-	fflush(debug);
+	if (debug)
+	{
+		fprintf(debug, "To backend> %s\n", s);
+	}
+
+	return 0;
+}
+
+/* --------------------------------------------------------------------- */
+void
+pqFlush(FILE * f, FILE * debug)
+{
+	if (f)
+		fflush(f);
+
+	if (debug)
+		fflush(debug);
 }
 
 /* --------------------------------------------------------------------- */

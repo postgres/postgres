@@ -1,31 +1,32 @@
 /*-------------------------------------------------------------------------
  *
  * rewriteManip.h--
- *    
+ *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rewriteManip.h,v 1.1 1996/08/28 07:24:08 scrappy Exp $
+ * $Id: rewriteManip.h,v 1.2 1997/09/07 05:00:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	REWRITEMANIP_H
-#define	REWRITEMANIP_H
+#ifndef REWRITEMANIP_H
+#define REWRITEMANIP_H
 
 /* RewriteManip.c */
-void OffsetVarNodes(Node *node, int offset);
-void ChangeVarNodes(Node *node, int old_varno, int new_varno);
-void AddQual(Query *parsetree, Node *qual);
-void AddNotQual(Query *parsetree, Node *qual);
-void FixResdomTypes(List *user_tlist);
-void FixNew(RewriteInfo *info, Query *parsetree);
+void			OffsetVarNodes(Node * node, int offset);
+void			ChangeVarNodes(Node * node, int old_varno, int new_varno);
+void			AddQual(Query * parsetree, Node * qual);
+void			AddNotQual(Query * parsetree, Node * qual);
+void			FixResdomTypes(List * user_tlist);
+void			FixNew(RewriteInfo * info, Query * parsetree);
 
-void HandleRIRAttributeRule(Query *parsetree, List *rtable, List *targetlist,
-			    int rt_index, int attr_num, int *modified,
-			    int *badpostquel);
-void HandleViewRule(Query *parsetree, List *rtable, List *targetlist,
-		    int rt_index, int *modified);
+void
+HandleRIRAttributeRule(Query * parsetree, List * rtable, List * targetlist,
+					   int rt_index, int attr_num, int *modified,
+					   int *badpostquel);
+void
+HandleViewRule(Query * parsetree, List * rtable, List * targetlist,
+			   int rt_index, int *modified);
 
-#endif	/* REWRITEMANIP_H */
-
+#endif							/* REWRITEMANIP_H */

@@ -1,55 +1,55 @@
 /*-------------------------------------------------------------------------
  *
  * miscinit.c--
- *    miscellanious initialization support stuff
+ *	  miscellanious initialization support stuff
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.6 1997/08/19 21:35:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.7 1997/09/07 04:53:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
-#include <sys/param.h>		/* for MAXPATHLEN */
+#include <sys/param.h>			/* for MAXPATHLEN */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
 #include <stdio.h>
 #include <unistd.h>
-#include <grp.h>		/* for getgrgid */
-#include <pwd.h>		/* for getpwuid */
+#include <grp.h>				/* for getgrgid */
+#include <pwd.h>				/* for getpwuid */
 
 #include "postgres.h"
 
-#include "utils/portal.h"	/* for EnablePortalManager, etc. */
-#include "utils/exc.h"		/* for EnableExceptionHandling, etc. */
-#include "utils/mcxt.h"		/* for EnableMemoryContext, etc. */
+#include "utils/portal.h"		/* for EnablePortalManager, etc. */
+#include "utils/exc.h"			/* for EnableExceptionHandling, etc. */
+#include "utils/mcxt.h"			/* for EnableMemoryContext, etc. */
 #include "utils/elog.h"
 #include "utils/builtins.h"
 
-#include "miscadmin.h"		/* where the declarations go */
+#include "miscadmin.h"			/* where the declarations go */
 
 #include "catalog/catname.h"
 #include "catalog/pg_user.h"
 #include "catalog/pg_proc.h"
 #include "utils/syscache.h"
 
-#include "storage/fd.h"		/* for O_ */
+#include "storage/fd.h"			/* for O_ */
 
 /*
  * EnableAbortEnvVarName --
- *	Enables system abort iff set to a non-empty string in environment.
+ *		Enables system abort iff set to a non-empty string in environment.
  */
 #define EnableAbortEnvVarName	"POSTGRESABORT"
 
-extern	char *getenv(const char *name);	/* XXX STDLIB */
+extern char    *getenv(const char *name);		/* XXX STDLIB */
 
-/*  from globals.c */
-extern char *DatabaseName;
-extern char *UserName;
-extern char *DatabasePath;
+/*	from globals.c */
+extern char    *DatabaseName;
+extern char    *UserName;
+extern char    *DatabasePath;
 
 
 /*
@@ -59,282 +59,286 @@ extern char *DatabasePath;
 #define USE_ENVIRONMENT
 
 /* ----------------------------------------------------------------
- *		some of the 19 ways to leave postgres
+ *				some of the 19 ways to leave postgres
  * ----------------------------------------------------------------
  */
 
 /*
  * ExitPostgres --
- *	Exit POSTGRES with a status code.
+ *		Exit POSTGRES with a status code.
  *
  * Note:
- *	This function never returns.
- *	...
+ *		This function never returns.
+ *		...
  *
  * Side effects:
- *	...
+ *		...
  *
  * Exceptions:
- *	none
+ *		none
  */
 void
 ExitPostgres(ExitStatus status)
 {
 #ifdef	__SABER__
-    saber_stop();
+	saber_stop();
 #endif
-    exitpg(status);
+	exitpg(status);
 }
 
 /*
  * AbortPostgres --
- *	Abort POSTGRES dumping core.
+ *		Abort POSTGRES dumping core.
  *
  * Note:
- *	This function never returns.
- *	...
+ *		This function never returns.
+ *		...
  *
  * Side effects:
- *	Core is dumped iff EnableAbortEnvVarName is set to a non-empty string.
- *	...
+ *		Core is dumped iff EnableAbortEnvVarName is set to a non-empty string.
+ *		...
  *
  * Exceptions:
- *	none
+ *		none
  */
 #ifdef NOT_USED
 void
 AbortPostgres()
 {
-    char *abortValue = getenv(EnableAbortEnvVarName);
-    
+	char		   *abortValue = getenv(EnableAbortEnvVarName);
+
 #ifdef	__SABER__
-    saber_stop();
+	saber_stop();
 #endif
-    
-    if (PointerIsValid(abortValue) && abortValue[0] != '\0')
-	abort();
-    else
-	exitpg(FatalExitStatus);
+
+	if (PointerIsValid(abortValue) && abortValue[0] != '\0')
+		abort();
+	else
+		exitpg(FatalExitStatus);
 }
+
 #endif
 
 /* ----------------
- *	StatusBackendExit
+ *		StatusBackendExit
  * ----------------
  */
 void
 StatusBackendExit(int status)
 {
-    /* someday, do some real cleanup and then call the LISP exit */
-    /* someday, call StatusPostmasterExit if running without postmaster */
-    exitpg(status);
+	/* someday, do some real cleanup and then call the LISP exit */
+	/* someday, call StatusPostmasterExit if running without postmaster */
+	exitpg(status);
 }
 
 /* ----------------
- *	StatusPostmasterExit
+ *		StatusPostmasterExit
  * ----------------
  */
 void
 StatusPostmasterExit(int status)
 {
-    /* someday, do some real cleanup and then call the LISP exit */
-    exitpg(status);
+	/* someday, do some real cleanup and then call the LISP exit */
+	exitpg(status);
 }
 
 /* ----------------------------------------------------------------
- *	processing mode support stuff (used to be in pmod.c)
+ *		processing mode support stuff (used to be in pmod.c)
  * ----------------------------------------------------------------
  */
-static ProcessingMode	Mode = NoProcessing;
+static ProcessingMode Mode = NoProcessing;
 
 /*
  * IsNoProcessingMode --
- *	True iff processing mode is NoProcessing.
+ *		True iff processing mode is NoProcessing.
  */
 bool
 IsNoProcessingMode()
 {
-    return ((bool)(Mode == NoProcessing));
+	return ((bool) (Mode == NoProcessing));
 }
 
 /*
  * IsBootstrapProcessingMode --
- *	True iff processing mode is BootstrapProcessing.
+ *		True iff processing mode is BootstrapProcessing.
  */
 bool
 IsBootstrapProcessingMode()
 {
-    return ((bool)(Mode == BootstrapProcessing));
+	return ((bool) (Mode == BootstrapProcessing));
 }
 
 /*
  * IsInitProcessingMode --
- *	True iff processing mode is InitProcessing.
+ *		True iff processing mode is InitProcessing.
  */
 bool
 IsInitProcessingMode()
 {
-    return ((bool)(Mode == InitProcessing));
+	return ((bool) (Mode == InitProcessing));
 }
 
 /*
  * IsNormalProcessingMode --
- *	True iff processing mode is NormalProcessing.
+ *		True iff processing mode is NormalProcessing.
  */
 bool
 IsNormalProcessingMode()
 {
-    return ((bool)(Mode == NormalProcessing));
+	return ((bool) (Mode == NormalProcessing));
 }
 
 /*
  * SetProcessingMode --
- *	Sets mode of processing as specified.
+ *		Sets mode of processing as specified.
  *
  * Exceptions:
- *	BadArg if called with invalid mode.
+ *		BadArg if called with invalid mode.
  *
  * Note:
- *	Mode is NoProcessing before the first time this is called.
+ *		Mode is NoProcessing before the first time this is called.
  */
 void
 SetProcessingMode(ProcessingMode mode)
 {
-    AssertArg(mode == NoProcessing || mode == BootstrapProcessing ||
-	      mode == InitProcessing || mode == NormalProcessing);
-    
-    Mode = mode;
+	AssertArg(mode == NoProcessing || mode == BootstrapProcessing ||
+			  mode == InitProcessing || mode == NormalProcessing);
+
+	Mode = mode;
 }
 
 ProcessingMode
 GetProcessingMode()
 {
-    return (Mode);
+	return (Mode);
 }
 
 /* ----------------------------------------------------------------
- *		database path / name support stuff
+ *				database path / name support stuff
  * ----------------------------------------------------------------
  */
 
 /*
  * GetDatabasePath --
- *	Returns path to database.
+ *		Returns path to database.
  *
  */
-char*
+char		   *
 GetDatabasePath()
 {
-    return DatabasePath;
+	return DatabasePath;
 }
 
 /*
  * GetDatabaseName --
- *	Returns name of database.
+ *		Returns name of database.
  */
-char*
+char		   *
 GetDatabaseName()
 {
-    return DatabaseName;
+	return DatabaseName;
 }
 
 void
 SetDatabasePath(char *path)
 {
-    /* use malloc since this is done before memory contexts are set up */
-    if (DatabasePath)
-	free(DatabasePath);
-    DatabasePath = malloc(strlen(path)+1);
-    strcpy(DatabasePath, path);
+	/* use malloc since this is done before memory contexts are set up */
+	if (DatabasePath)
+		free(DatabasePath);
+	DatabasePath = malloc(strlen(path) + 1);
+	strcpy(DatabasePath, path);
 }
 
 void
 SetDatabaseName(char *name)
 {
-    if (DatabaseName)
-	free (DatabaseName);
-    DatabaseName = malloc(strlen(name)+1);
-    strcpy(DatabaseName, name);
+	if (DatabaseName)
+		free(DatabaseName);
+	DatabaseName = malloc(strlen(name) + 1);
+	strcpy(DatabaseName, name);
 }
 
 /* ----------------
- *	GetPgUserName and SetPgUserName
+ *		GetPgUserName and SetPgUserName
  *
- *	SetPgUserName must be called before InitPostgres, since the setuid()
- *	is done there.
+ *		SetPgUserName must be called before InitPostgres, since the setuid()
+ *		is done there.
  *
- *	Replace GetPgUserName() with a lower-case version
- *	to allow use in new case-insensitive SQL (referenced
- *	in pg_proc.h). Define GetPgUserName() as a macro - tgl 97/04/26
+ *		Replace GetPgUserName() with a lower-case version
+ *		to allow use in new case-insensitive SQL (referenced
+ *		in pg_proc.h). Define GetPgUserName() as a macro - tgl 97/04/26
  * ----------------
  */
-char*
+char		   *
 getpgusername()
 {
-    return UserName;
+	return UserName;
 }
 
 void
 SetPgUserName()
 {
 #ifndef NO_SECURITY
-    char *p;
-    struct passwd *pw;
-    
-    if (IsUnderPostmaster) {
-	/* use the (possibly) authenticated name that's provided */
-	if (!(p = getenv("PG_USER")))
-	    elog(FATAL, "SetPgUserName: PG_USER environment variable unset");
-    } else {
-	/* setuid() has not yet been done, see above comment */
-	if (!(pw = getpwuid(geteuid())))
-	    elog(FATAL, "SetPgUserName: no entry in passwd file");
-	p = pw->pw_name;
-    }
-    if (UserName)
-	free(UserName);
-    UserName = malloc(strlen(p)+1);
-    strcpy(UserName, p);
-#endif /* NO_SECURITY */
+	char		   *p;
+	struct passwd  *pw;
+
+	if (IsUnderPostmaster)
+	{
+		/* use the (possibly) authenticated name that's provided */
+		if (!(p = getenv("PG_USER")))
+			elog(FATAL, "SetPgUserName: PG_USER environment variable unset");
+	}
+	else
+	{
+		/* setuid() has not yet been done, see above comment */
+		if (!(pw = getpwuid(geteuid())))
+			elog(FATAL, "SetPgUserName: no entry in passwd file");
+		p = pw->pw_name;
+	}
+	if (UserName)
+		free(UserName);
+	UserName = malloc(strlen(p) + 1);
+	strcpy(UserName, p);
+#endif							/* NO_SECURITY */
 }
 
 /* ----------------------------------------------------------------
- *	GetUserId and SetUserId
+ *		GetUserId and SetUserId
  * ----------------------------------------------------------------
  */
-static Oid	UserId = InvalidOid;
+static Oid		UserId = InvalidOid;
 
 Oid
 GetUserId()
 {
-    Assert(OidIsValid(UserId));
-    return(UserId);
+	Assert(OidIsValid(UserId));
+	return (UserId);
 }
 
 void
 SetUserId()
 {
-    HeapTuple	userTup;
-    char *userName;
-    
-    Assert(!OidIsValid(UserId));	/* only once */
-    
-    /*
-     * Don't do scans if we're bootstrapping, none of the system
-     * catalogs exist yet, and they should be owned by postgres
-     * anyway.
-     */
-    if (IsBootstrapProcessingMode()) {
-	UserId = geteuid();
-	return;
-    }
-    
-    userName = GetPgUserName();
-    userTup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
-				  0,0,0);
-    if (!HeapTupleIsValid(userTup))
-	elog(FATAL, "SetUserId: user \"%s\" is not in \"%s\"",
-	     userName, 
-	     UserRelationName);
-    UserId = (Oid) ((Form_pg_user) GETSTRUCT(userTup))->usesysid;
+	HeapTuple		userTup;
+	char		   *userName;
+
+	Assert(!OidIsValid(UserId));/* only once */
+
+	/*
+	 * Don't do scans if we're bootstrapping, none of the system catalogs
+	 * exist yet, and they should be owned by postgres anyway.
+	 */
+	if (IsBootstrapProcessingMode())
+	{
+		UserId = geteuid();
+		return;
+	}
+
+	userName = GetPgUserName();
+	userTup = SearchSysCacheTuple(USENAME, PointerGetDatum(userName),
+								  0, 0, 0);
+	if (!HeapTupleIsValid(userTup))
+		elog(FATAL, "SetUserId: user \"%s\" is not in \"%s\"",
+			 userName,
+			 UserRelationName);
+	UserId = (Oid) ((Form_pg_user) GETSTRUCT(userTup))->usesysid;
 }

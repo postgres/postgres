@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * varchar.c--
- *    Functions for the built-in type char() and varchar().
+ *	  Functions for the built-in type char() and varchar().
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.8 1997/08/12 20:16:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.9 1997/09/07 04:52:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>		/* for sprintf() */
+#include <stdio.h>				/* for sprintf() */
 #include <string.h>
 #include "postgres.h"
 #include "utils/builtins.h"
@@ -35,488 +35,524 @@
  * the length for the comparison functions. (The difference between "text"
  * is that we truncate and possibly blank-pad the string at insertion time.)
  *
- *                                                            - ay 6/95
+ *															  - ay 6/95
  */
 
 
-/***************************************************************************** 
- *   bpchar - char()                                                         *
+/*****************************************************************************
+ *	 bpchar - char()														 *
  *****************************************************************************/
 
 /*
  * bpcharin -
- *    converts a string of char() type to the internal representation.
- *    len is the length specified in () plus 4 bytes. (XXX dummy is here
- *    because we pass typelem as the second argument for array_in.)
+ *	  converts a string of char() type to the internal representation.
+ *	  len is the length specified in () plus 4 bytes. (XXX dummy is here
+ *	  because we pass typelem as the second argument for array_in.)
  */
-char *
+char		   *
 bpcharin(char *s, int dummy, int typlen)
 {
-    char *result, *r;
-    int	len = typlen - 4;
-    int i;
-    
-    if (s == NULL)
-	return((char *) NULL);
+	char		   *result,
+				   *r;
+	int				len = typlen - 4;
+	int				i;
 
-    if (typlen == -1) {
-	/*
-	 * this is here because some functions can't supply the typlen
-	 */
-	len = strlen(s);
-	typlen = len + 4;
-    }
-    
-    if (len > 4096)
-	elog(WARN, "bpcharin: length of char() must be less than 4096");
-    
-    result = (char *) palloc(typlen);
-    *(int32*)result = typlen;
-    r = result + 4;
-    for(i=0; i < len; i++, r++, s++) {
-	*r = *s;
-	if (*r == '\0')
-	    break;
-    }
-    /* blank pad the string if necessary */
-    for(; i < len; i++) {
-	*r++ = ' ';
-    }
-    return(result);
+	if (s == NULL)
+		return ((char *) NULL);
+
+	if (typlen == -1)
+	{
+
+		/*
+		 * this is here because some functions can't supply the typlen
+		 */
+		len = strlen(s);
+		typlen = len + 4;
+	}
+
+	if (len > 4096)
+		elog(WARN, "bpcharin: length of char() must be less than 4096");
+
+	result = (char *) palloc(typlen);
+	*(int32 *) result = typlen;
+	r = result + 4;
+	for (i = 0; i < len; i++, r++, s++)
+	{
+		*r = *s;
+		if (*r == '\0')
+			break;
+	}
+	/* blank pad the string if necessary */
+	for (; i < len; i++)
+	{
+		*r++ = ' ';
+	}
+	return (result);
 }
 
-char *
+char		   *
 bpcharout(char *s)
 {
-    char *result;
-    int len;
+	char		   *result;
+	int				len;
 
-    if (s == NULL) {
-	result = (char *) palloc(2);
-	result[0] = '-';
-	result[1] = '\0';
-    } else {
-	len = *(int32*)s - 4;
-	result = (char *) palloc(len+1);
-	strNcpy(result, s+4, len);	/* these are blank-padded */
-    }
-    return(result);
+	if (s == NULL)
+	{
+		result = (char *) palloc(2);
+		result[0] = '-';
+		result[1] = '\0';
+	}
+	else
+	{
+		len = *(int32 *) s - 4;
+		result = (char *) palloc(len + 1);
+		strNcpy(result, s + 4, len);	/* these are blank-padded */
+	}
+	return (result);
 }
 
-/***************************************************************************** 
- *   varchar - varchar()                                                     *
+/*****************************************************************************
+ *	 varchar - varchar()													 *
  *****************************************************************************/
 
 /*
  * vcharin -
- *    converts a string of varchar() type to the internal representation.
- *    len is the length specified in () plus 4 bytes. (XXX dummy is here
- *    because we pass typelem as the second argument for array_in.)
+ *	  converts a string of varchar() type to the internal representation.
+ *	  len is the length specified in () plus 4 bytes. (XXX dummy is here
+ *	  because we pass typelem as the second argument for array_in.)
  */
-char *
+char		   *
 varcharin(char *s, int dummy, int typlen)
 {
-    char *result;
-    int	len = typlen - 4;
-    
-    if (s == NULL)
-	return((char *) NULL);
+	char		   *result;
+	int				len = typlen - 4;
 
-    if (typlen == -1) {
-	/*
-	 * this is here because some functions can't supply the typlen
-	 */
-	len = strlen(s);
-	typlen = len + 4;
-    }
-    
-    if (len > 4096)
-	elog(WARN, "varcharin: length of char() must be less than 4096");
-    
-    result = (char *) palloc(typlen);
-    *(int32*)result = typlen;
-    strncpy(result+4, s, len);
+	if (s == NULL)
+		return ((char *) NULL);
 
-    return(result);
+	if (typlen == -1)
+	{
+
+		/*
+		 * this is here because some functions can't supply the typlen
+		 */
+		len = strlen(s);
+		typlen = len + 4;
+	}
+
+	if (len > 4096)
+		elog(WARN, "varcharin: length of char() must be less than 4096");
+
+	result = (char *) palloc(typlen);
+	*(int32 *) result = typlen;
+	strncpy(result + 4, s, len);
+
+	return (result);
 }
 
-char *
+char		   *
 varcharout(char *s)
 {
-    char *result;
-    int len;
+	char		   *result;
+	int				len;
 
-    if (s == NULL) {
-	result = (char *) palloc(2);
-	result[0] = '-';
-	result[1] = '\0';
-    } else {
-	len = *(int32*)s - 4;
-	result = (char *) palloc(len+1);
-	strNcpy(result, s+4, len);
-    }
-    return(result);
+	if (s == NULL)
+	{
+		result = (char *) palloc(2);
+		result[0] = '-';
+		result[1] = '\0';
+	}
+	else
+	{
+		len = *(int32 *) s - 4;
+		result = (char *) palloc(len + 1);
+		strNcpy(result, s + 4, len);
+	}
+	return (result);
 }
 
 /*****************************************************************************
- *  Comparison Functions used for bpchar 
+ *	Comparison Functions used for bpchar
  *****************************************************************************/
 
 static int
 bcTruelen(char *arg)
 {
-    char *s = arg + 4;
-    int i;
-    int len;
+	char		   *s = arg + 4;
+	int				i;
+	int				len;
 
-    len = *(int32*)arg - 4;
-    for(i=len-1; i >= 0; i--) {
-	if (s[i] != ' ')
-	    break;
-    }
-    return (i+1);
+	len = *(int32 *) arg - 4;
+	for (i = len - 1; i >= 0; i--)
+	{
+		if (s[i] != ' ')
+			break;
+	}
+	return (i + 1);
 }
 
 bool
 bpchareq(char *arg1, char *arg2)
 {
-    int len1, len2;
+	int				len1,
+					len2;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
-    if (len1!=len2)
-	return 0;
-    
-    return(strncmp(arg1+4, arg2+4, len1) == 0);
+	if (len1 != len2)
+		return 0;
+
+	return (strncmp(arg1 + 4, arg2 + 4, len1) == 0);
 }
 
 bool
 bpcharne(char *arg1, char *arg2)
 {
-    int len1, len2;
+	int				len1,
+					len2;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
-    if (len1!=len2)
-	return 1;
+	if (len1 != len2)
+		return 1;
 
-    return(strncmp(arg1+4, arg2+4, len1) != 0);
+	return (strncmp(arg1 + 4, arg2 + 4, len1) != 0);
 }
 
 bool
 bpcharlt(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
-    
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	int				len1,
+					len2;
+	int				cmp;
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (cmp == 0)
-	return (len1<len2);
-    else 
-	return (cmp < 0);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
+
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (cmp == 0)
+		return (len1 < len2);
+	else
+		return (cmp < 0);
 }
 
 bool
 bpcharle(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (0 == cmp)
-      return (bool)(len1 <= len2 ? 1 : 0);
-    else
-      return (bool)(cmp <= 0);
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (0 == cmp)
+		return (bool) (len1 <= len2 ? 1 : 0);
+	else
+		return (bool) (cmp <= 0);
 }
 
 bool
 bpchargt(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (cmp == 0)
-	return (len1 > len2);
-    else
-	return (cmp > 0);
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (cmp == 0)
+		return (len1 > len2);
+	else
+		return (cmp > 0);
 }
 
 bool
 bpcharge(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (0 == cmp)
-      return (bool)(len1 >= len2 ? 1 : 0);
-    else
-      return (bool)(cmp >= 0);
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (0 == cmp)
+		return (bool) (len1 >= len2 ? 1 : 0);
+	else
+		return (bool) (cmp >= 0);
 }
 
 int32
 bpcharcmp(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    len1 = bcTruelen(arg1);
-    len2 = bcTruelen(arg2);
+	len1 = bcTruelen(arg1);
+	len2 = bcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if ((0 == cmp) && (len1 != len2))
-      return (int32)(len1 < len2 ? -1 : 1);
-    else
-      return cmp;
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if ((0 == cmp) && (len1 != len2))
+		return (int32) (len1 < len2 ? -1 : 1);
+	else
+		return cmp;
 }
 
 /*****************************************************************************
- *  Comparison Functions used for varchar 
+ *	Comparison Functions used for varchar
  *****************************************************************************/
 
 static int
 vcTruelen(char *arg)
 {
-    char *s = arg + 4;
-    int i;
-    int len;
+	char		   *s = arg + 4;
+	int				i;
+	int				len;
 
-    len = *(int32*)arg - 4;
-    for(i=0; i < len; i++) {
-	if (*s++ == '\0')
-	    break;
-    }
-    return i;
+	len = *(int32 *) arg - 4;
+	for (i = 0; i < len; i++)
+	{
+		if (*s++ == '\0')
+			break;
+	}
+	return i;
 }
 
 bool
 varchareq(char *arg1, char *arg2)
 {
-    int len1, len2;
+	int				len1,
+					len2;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
 
-    if (len1!=len2)
-	return 0;
-    
-    return(strncmp(arg1+4, arg2+4, len1) == 0);
+	if (len1 != len2)
+		return 0;
+
+	return (strncmp(arg1 + 4, arg2 + 4, len1) == 0);
 }
 
 bool
 varcharne(char *arg1, char *arg2)
 {
-    int len1, len2;
+	int				len1,
+					len2;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
 
-    if (len1!=len2)
-	return 1;
+	if (len1 != len2)
+		return 1;
 
-    return(strncmp(arg1+4, arg2+4, len1) != 0);
+	return (strncmp(arg1 + 4, arg2 + 4, len1) != 0);
 }
 
 bool
 varcharlt(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
-    
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
+	int				len1,
+					len2;
+	int				cmp;
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (cmp == 0)
-	return (len1<len2);
-    else 
-	return (cmp < 0);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
+
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (cmp == 0)
+		return (len1 < len2);
+	else
+		return (cmp < 0);
 }
 
 bool
 varcharle(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (0 == cmp)
-      return (bool)( len1 <= len2 ? 1 : 0);
-    else
-      return (bool)(cmp <= 0);
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (0 == cmp)
+		return (bool) (len1 <= len2 ? 1 : 0);
+	else
+		return (bool) (cmp <= 0);
 }
 
 bool
 varchargt(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (cmp == 0)
-	return (len1 > len2);
-    else
-	return (cmp > 0);
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (cmp == 0)
+		return (len1 > len2);
+	else
+		return (cmp > 0);
 }
 
 bool
 varcharge(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    if (arg1 == NULL || arg2 == NULL)
-	return((bool) 0);
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
+	if (arg1 == NULL || arg2 == NULL)
+		return ((bool) 0);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
 
-    cmp = strncmp(arg1+4, arg2+4, Min(len1,len2));
-    if (0 == cmp)
-      return (bool)(len1 >= len2 ? 1 : 0);
-    else 
-      return (bool)(cmp >= 0);
+	cmp = strncmp(arg1 + 4, arg2 + 4, Min(len1, len2));
+	if (0 == cmp)
+		return (bool) (len1 >= len2 ? 1 : 0);
+	else
+		return (bool) (cmp >= 0);
 
 }
 
 int32
 varcharcmp(char *arg1, char *arg2)
 {
-    int len1, len2;
-    int cmp;
+	int				len1,
+					len2;
+	int				cmp;
 
-    len1 = vcTruelen(arg1);
-    len2 = vcTruelen(arg2);
-    cmp = (strncmp(arg1+4, arg2+4, Min(len1,len2)));
-    if ((0 == cmp) && (len1 != len2))
-      return (int32)(len1 < len2 ? -1 : 1);
-    else
-      return (int32)(cmp);
+	len1 = vcTruelen(arg1);
+	len2 = vcTruelen(arg2);
+	cmp = (strncmp(arg1 + 4, arg2 + 4, Min(len1, len2)));
+	if ((0 == cmp) && (len1 != len2))
+		return (int32) (len1 < len2 ? -1 : 1);
+	else
+		return (int32) (cmp);
 }
 
 /*****************************************************************************
  * Hash functions (modified from hashtext in access/hash/hashfunc.c)
  *****************************************************************************/
 
-uint32 hashbpchar(struct varlena *key)
+uint32
+hashbpchar(struct varlena * key)
 {
-    int keylen;
-    char *keydata;
-    uint32 n;
-    int loop;
+	int				keylen;
+	char		   *keydata;
+	uint32			n;
+	int				loop;
 
-    keydata = VARDATA(key);
-    keylen = bcTruelen((char*)key);
+	keydata = VARDATA(key);
+	keylen = bcTruelen((char *) key);
 
-#define HASHC   n = *keydata++ + 65599 * n
+#define HASHC	n = *keydata++ + 65599 * n
 
-    n = 0;
-    if (keylen > 0) {
-	loop = (keylen + 8 - 1) >> 3;
-	
-	switch (keylen & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASHC;
-	    case 7:
-		HASHC;
-	    case 6:
-		HASHC;
-	    case 5:
-		HASHC;
-	    case 4:
-		HASHC;
-	    case 3:
-		HASHC;
-	    case 2:
-		HASHC;
-	    case 1:
-		HASHC;
-	    } while (--loop);
+	n = 0;
+	if (keylen > 0)
+	{
+		loop = (keylen + 8 - 1) >> 3;
+
+		switch (keylen & (8 - 1))
+		{
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASHC;
+		case 7:
+				HASHC;
+		case 6:
+				HASHC;
+		case 5:
+				HASHC;
+		case 4:
+				HASHC;
+		case 3:
+				HASHC;
+		case 2:
+				HASHC;
+		case 1:
+				HASHC;
+			} while (--loop);
+		}
 	}
-    }
-    return (n);
-}	
+	return (n);
+}
 
-uint32 hashvarchar(struct varlena *key)
+uint32
+hashvarchar(struct varlena * key)
 {
-    int keylen;
-    char *keydata;
-    uint32 n;
-    int loop;
+	int				keylen;
+	char		   *keydata;
+	uint32			n;
+	int				loop;
 
-    keydata = VARDATA(key);
-    keylen = vcTruelen((char*)key);
+	keydata = VARDATA(key);
+	keylen = vcTruelen((char *) key);
 
-#define HASHC   n = *keydata++ + 65599 * n
+#define HASHC	n = *keydata++ + 65599 * n
 
-    n = 0;
-    if (keylen > 0) {
-	loop = (keylen + 8 - 1) >> 3;
-	
-	switch (keylen & (8 - 1)) {
-	case 0:
-	    do {	/* All fall throughs */
-		HASHC;
-	    case 7:
-		HASHC;
-	    case 6:
-		HASHC;
-	    case 5:
-		HASHC;
-	    case 4:
-		HASHC;
-	    case 3:
-		HASHC;
-	    case 2:
-		HASHC;
-	    case 1:
-		HASHC;
-	    } while (--loop);
+	n = 0;
+	if (keylen > 0)
+	{
+		loop = (keylen + 8 - 1) >> 3;
+
+		switch (keylen & (8 - 1))
+		{
+		case 0:
+			do
+			{					/* All fall throughs */
+				HASHC;
+		case 7:
+				HASHC;
+		case 6:
+				HASHC;
+		case 5:
+				HASHC;
+		case 4:
+				HASHC;
+		case 3:
+				HASHC;
+		case 2:
+				HASHC;
+		case 1:
+				HASHC;
+			} while (--loop);
+		}
 	}
-    }
-    return (n);
-}	
-
+	return (n);
+}

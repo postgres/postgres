@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.4 1997/08/19 21:31:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.5 1997/09/07 04:42:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,38 +24,41 @@
 
 #ifdef NOT_USED
 /*
-** lisp_qsort: Takes a lisp list as input, copies it into an array of lisp 
-**             nodes which it sorts via qsort() with the comparison function
-**             as passed into lisp_qsort(), and returns a new list with 
-**             the nodes sorted.  The old list is *not* freed or modified (?)
+** lisp_qsort: Takes a lisp list as input, copies it into an array of lisp
+**			   nodes which it sorts via qsort() with the comparison function
+**			   as passed into lisp_qsort(), and returns a new list with
+**			   the nodes sorted.  The old list is *not* freed or modified (?)
 */
-List *lisp_qsort(List *the_list,    /* the list to be sorted */
-		 int (*compare)())      /* function to compare two nodes */
+List		   *
+lisp_qsort(List * the_list,		/* the list to be sorted */
+		   int (*compare) ())	/* function to compare two nodes */
 {
-    int i;
-    size_t num;
-    List **nodearray;
-    List *tmp, *output;
-    
-    /* find size of list */
-    num = length(the_list);
-    if (num < 2)
-	return(copyObject(the_list));
-    
-    /* copy elements of the list into an array */
-    nodearray = (List **) palloc(num * sizeof(List *));
-    
-    for (tmp = the_list, i = 0; tmp != NIL; tmp = lnext(tmp), i++)
-	nodearray[i] = copyObject(lfirst(tmp));
-    
-    /* sort the array */
-    pg_qsort(nodearray, num, sizeof(List *), compare);
-    
-    /* lcons together the array elements */
-    output = NIL;
-    for (i = num - 1; i >= 0; i--)
-	output = lcons(nodearray[i], output);
-    
-    return(output);
+	int				i;
+	size_t			num;
+	List		  **nodearray;
+	List		   *tmp,
+				   *output;
+
+	/* find size of list */
+	num = length(the_list);
+	if (num < 2)
+		return (copyObject(the_list));
+
+	/* copy elements of the list into an array */
+	nodearray = (List **) palloc(num * sizeof(List *));
+
+	for (tmp = the_list, i = 0; tmp != NIL; tmp = lnext(tmp), i++)
+		nodearray[i] = copyObject(lfirst(tmp));
+
+	/* sort the array */
+	pg_qsort(nodearray, num, sizeof(List *), compare);
+
+	/* lcons together the array elements */
+	output = NIL;
+	for (i = num - 1; i >= 0; i--)
+		output = lcons(nodearray[i], output);
+
+	return (output);
 }
+
 #endif

@@ -1,40 +1,40 @@
 /*-------------------------------------------------------------------------
  *
  * s_lock.c--
- *     This file contains the implementation (if any) for spinlocks.
+ *	   This file contains the implementation (if any) for spinlocks.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.21 1997/09/05 18:10:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/Attic/s_lock.c,v 1.22 1997/09/07 04:48:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
- *   DESCRIPTION
- *	The following code fragment should be written (in assembly 
- *	language) on machines that have a native test-and-set instruction:
+ *	 DESCRIPTION
+ *		The following code fragment should be written (in assembly
+ *		language) on machines that have a native test-and-set instruction:
  *
- *	void
- *	S_LOCK(char_address)
- *	    char *char_address;
- *	{
- *	    while (test_and_set(char_address))
- *		;
- *	}
+ *		void
+ *		S_LOCK(char_address)
+ *			char *char_address;
+ *		{
+ *			while (test_and_set(char_address))
+ *				;
+ *		}
  *
- *	If this is not done, POSTGRES will default to using System V
- *	semaphores (and take a large performance hit -- around 40% of
- *	its time on a DS5000/240 is spent in semop(3)...).
+ *		If this is not done, POSTGRES will default to using System V
+ *		semaphores (and take a large performance hit -- around 40% of
+ *		its time on a DS5000/240 is spent in semop(3)...).
  *
- *   NOTES
- *	AIX has a test-and-set but the recommended interface is the cs(3)
- *	system call.  This provides an 8-instruction (plus system call 
- *	overhead) uninterruptible compare-and-set operation.  True 
- *	spinlocks might be faster but using cs(3) still speeds up the 
- *	regression test suite by about 25%.  I don't have an assembler
- *	manual for POWER in any case.
+ *	 NOTES
+ *		AIX has a test-and-set but the recommended interface is the cs(3)
+ *		system call.  This provides an 8-instruction (plus system call
+ *		overhead) uninterruptible compare-and-set operation.  True
+ *		spinlocks might be faster but using cs(3) still speeds up the
+ *		regression test suite by about 25%.  I don't have an assembler
+ *		manual for POWER in any case.
  *
  */
 #include "postgres.h"
@@ -50,71 +50,71 @@
  * slock_t is defined as a struct mutex.
  */
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
 	mutex_lock(lock);
 }
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
 	mutex_unlock(lock);
 }
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
- 	mutex_init(lock);	
+	mutex_init(lock);
 }
 
  /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 int
- S_LOCK_FREE(slock_t *lock)
+S_LOCK_FREE(slock_t * lock)
 {
 /* For Mach, we have to delve inside the entrails of `struct mutex'.  Ick! */
- 	return (lock->lock == 0);
+	return (lock->lock == 0);
 }
 
-#endif /* next */
+#endif							/* next */
 
 
 
 #if defined(irix5)
 /*
  * SGI IRIX 5
- * slock_t is defined as a struct abilock_t, which has a single unsigned long 
+ * slock_t is defined as a struct abilock_t, which has a single unsigned long
  * member.
- * 
+ *
  * This stuff may be supplemented in the future with Masato Kataoka's MIPS-II
  * assembly from his NECEWS SVR4 port, but we probably ought to retain this
  * for the R3000 chips out there.
  */
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
 	/* spin_lock(lock); */
 	while (!acquire_lock(lock))
-	    ;
+		;
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
 	release_lock(lock);
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-	init_lock(lock);	
+	init_lock(lock);
 }
 
 /* S_LOCK_FREE should return 1 if lock is free; 0 if lock is locked */
 int
-S_LOCK_FREE(slock_t *lock)
+S_LOCK_FREE(slock_t * lock)
 {
-	return(stat_lock(lock)==UNLOCKED); 
+	return (stat_lock(lock) == UNLOCKED);
 }
 
-#endif /* irix5 */
+#endif							/* irix5 */
 
 
 /*
@@ -127,62 +127,62 @@ S_LOCK_FREE(slock_t *lock)
 #if defined(__alpha__) || defined(__alpha)
 
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    while (msem_lock(lock, MSEM_IF_NOWAIT) < 0)
-	;
+	while (msem_lock(lock, MSEM_IF_NOWAIT) < 0)
+		;
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    msem_unlock(lock, 0);
+	msem_unlock(lock, 0);
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    msem_init(lock, MSEM_UNLOCKED);
+	msem_init(lock, MSEM_UNLOCKED);
 }
 
 int
-S_LOCK_FREE(slock_t *lock)
+S_LOCK_FREE(slock_t * lock)
 {
-    return(lock->msem_state ? 0 : 1);
+	return (lock->msem_state ? 0 : 1);
 }
 
-#endif /* alpha */
+#endif							/* alpha */
 
 /*
  * Solaris 2
  */
 
 #if defined(i386_solaris) || \
-    defined(sparc_solaris)
+	defined(sparc_solaris)
 /* for xxxxx_solaris, this is defined in port/.../tas.s */
 
-static int tas(slock_t *lock);
+static int		tas(slock_t * lock);
 
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    while (tas(lock))
-	;
+	while (tas(lock))
+		;
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = 0;
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
-#endif /* i86pc_solaris || sparc_solaris */
+#endif							/* i86pc_solaris || sparc_solaris */
 
 /*
  * AIX (POWER)
@@ -194,25 +194,25 @@ S_INIT_LOCK(slock_t *lock)
 #if defined(aix)
 
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    while (cs((int *) lock, 0, 1))
-	;
+	while (cs((int *) lock, 0, 1))
+		;
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = 0;
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
-#endif /* aix */
+#endif							/* aix */
 
 /*
  * HP-UX (PA-RISC)
@@ -224,90 +224,90 @@ S_INIT_LOCK(slock_t *lock)
 #if defined(hpux)
 
 /*
-* a "set" slock_t has a single word cleared.  a "clear" slock_t has 
+* a "set" slock_t has a single word cleared.  a "clear" slock_t has
 * all words set to non-zero.
 */
-static slock_t clear_lock = { -1, -1, -1, -1 };
+static slock_t	clear_lock = {-1, -1, -1, -1};
 
-static int tas(slock_t *lock);
+static int		tas(slock_t * lock);
 
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    while (tas(lock))
-	;
+	while (tas(lock))
+		;
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = clear_lock;	/* struct assignment */
+	*lock = clear_lock;			/* struct assignment */
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
 int
-S_LOCK_FREE(slock_t *lock)
+S_LOCK_FREE(slock_t * lock)
 {
-    register int *lock_word = (int *) (((long) lock + 15) & ~15);
+	register int   *lock_word = (int *) (((long) lock + 15) & ~15);
 
-    return(*lock_word != 0);
+	return (*lock_word != 0);
 }
 
-#endif /* hpux */
+#endif							/* hpux */
 
 /*
  * sun3
  */
- 
+
 #if defined(sun3)
 
-static int tas(slock_t *lock);
+static int		tas(slock_t * lock);
 
-void    
-S_LOCK(slock_t *lock)
+void
+S_LOCK(slock_t * lock)
 {
-    while (tas(lock));
+	while (tas(lock));
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = 0;
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
 static int
 tas_dummy()
 {
-    asm("LLA0:");
-    asm("	.data");
-    asm("	.text");
-    asm("|#PROC# 04");
-    asm("	.globl	_tas");
-    asm("_tas:");
-    asm("|#PROLOGUE# 1");
-    asm("	movel   sp@(0x4),a0");
-    asm("	tas	a0@");
-    asm("	beq	LLA1");
-    asm("	moveq   #-128,d0");
-    asm("	rts");
-    asm("LLA1:");
-    asm("	moveq   #0,d0");
-    asm("	rts");
-    asm("	.data");
+	asm("LLA0:");
+	asm("	.data");
+	asm("	.text");
+	asm("|#PROC# 04");
+	asm("	.globl	_tas");
+	asm("_tas:");
+	asm("|#PROLOGUE# 1");
+	asm("	movel   sp@(0x4),a0");
+	asm("	tas	a0@");
+	asm("	beq	LLA1");
+	asm("	moveq   #-128,d0");
+	asm("	rts");
+	asm("LLA1:");
+	asm("	moveq   #0,d0");
+	asm("	rts");
+	asm("	.data");
 }
 
-#endif /* sun3 */
+#endif							/* sun3 */
 
 /*
  * sparc machines
@@ -317,48 +317,48 @@ tas_dummy()
 
 /* if we're using -ansi w/ gcc, use __asm__ instead of asm */
 #if defined(__STRICT_ANSI__)
-#define asm(x)  __asm__(x)
-#endif 
+#define asm(x)	__asm__(x)
+#endif
 
-static int tas(slock_t *lock);
+static int		tas(slock_t * lock);
 
 static int
 tas_dummy()
 {
-    asm(".seg \"data\"");
-    asm(".seg \"text\"");
-    asm(".global _tas");
-    asm("_tas:");
-    
-    /*
-     * Sparc atomic test and set (sparc calls it "atomic load-store")
-     */
-    
-    asm("ldstub [%r8], %r8");
-    
-    /*
-     * Did test and set actually do the set?
-     */
-    
-    asm("tst %r8");
-    
-    asm("be,a ReturnZero");
-    
-    /*
-     * otherwise, just return.
-     */
-    
-    asm("clr %r8");
-    asm("mov 0x1, %r8");
-    asm("ReturnZero:");
-    asm("retl");
-    asm("nop");
+	asm(".seg \"data\"");
+	asm(".seg \"text\"");
+	asm(".global _tas");
+	asm("_tas:");
+
+	/*
+	 * Sparc atomic test and set (sparc calls it "atomic load-store")
+	 */
+
+	asm("ldstub [%r8], %r8");
+
+	/*
+	 * Did test and set actually do the set?
+	 */
+
+	asm("tst %r8");
+
+	asm("be,a ReturnZero");
+
+	/*
+	 * otherwise, just return.
+	 */
+
+	asm("clr %r8");
+	asm("mov 0x1, %r8");
+	asm("ReturnZero:");
+	asm("retl");
+	asm("nop");
 }
 
 void
 S_LOCK(unsigned char *addr)
 {
-    while (tas(addr));
+	while (tas(addr));
 }
 
 
@@ -368,16 +368,16 @@ S_LOCK(unsigned char *addr)
 void
 S_UNLOCK(unsigned char *addr)
 {
-    *addr = 0;
+	*addr = 0;
 }
 
 void
 S_INIT_LOCK(unsigned char *addr)
 {
-    *addr = 0;
+	*addr = 0;
 }
 
-#endif /* NEED_SPARC_TAS_ASM */
+#endif							/* NEED_SPARC_TAS_ASM */
 
 /*
  * i386 based things
@@ -386,39 +386,41 @@ S_INIT_LOCK(unsigned char *addr)
 #if defined(NEED_I386_TAS_ASM)
 
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    slock_t res;
+	slock_t			res;
 
-    do{
-	__asm__("xchgb %0,%1":"=q" (res),"=m" (*lock):"0" (0x1));
-    }while(res != 0);
+	do
+	{
+__asm__("xchgb %0,%1": "=q"(res), "=m"(*lock):"0"(0x1));
+	} while (res != 0);
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = 0;
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
-#endif /* NEED_I386_TAS_ASM */
+#endif							/* NEED_I386_TAS_ASM */
 
 
 #if defined(__alpha__) && defined(linux)
 
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    slock_t res;
+	slock_t			res;
 
-    do{
-	__asm__("    ldq   $0, %0	     \n\
+	do
+	{
+__asm__("    ldq   $0, %0	     \n\
 		     bne   $0, already_set   \n\
 		     ldq_l $0, %0	     \n\
 		     bne   $0, already_set   \n\
@@ -430,56 +432,58 @@ S_LOCK(slock_t *lock)
 		     jmp   $31, end	     \n\
 	stqc_fail:   or    $31, 1, $0	     \n\
 	already_set: bis   $0, $0, %1	     \n\
-	end:	     nop      " : "=m" (*lock), "=r" (res) :: "0" );
-    }while(res != 0);
+	end:	     nop      ": "=m"(*lock), "=r"(res): :"0");
+	} while (res != 0);
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    __asm__("mb");
-    *lock = 0;
+	__asm__("mb");
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
-#endif /* defined(__alpha__) && defined(linux) */
+#endif							/* defined(__alpha__) && defined(linux) */
 
 #if defined(linux) && defined(sparc)
- 
-void
-S_LOCK(slock_t *lock)
-{
-    slock_t res;
 
-    do{
-	__asm__("ldstub [%1], %0"
-		  : "=&r" (res)
-		  : "r" (lock));
-    }while(!res != 0);
+void
+S_LOCK(slock_t * lock)
+{
+	slock_t			res;
+
+	do
+	{
+		__asm__("ldstub [%1], %0"
+:				"=&r"(res)
+:				"r"(lock));
+	} while (!res != 0);
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = 0;
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
-#endif /* defined(linux) && defined(sparc) */
+#endif							/* defined(linux) && defined(sparc) */
 
 #if defined(linux) && defined(PPC)
 
-static int tas_dummy()
+static int
+tas_dummy()
 {
 	__asm__("	\n\
 tas:			\n\
@@ -496,26 +500,26 @@ success:		\n\
         blr		\n\
 	");
 }
- 
+
 void
-S_LOCK(slock_t *lock)
+S_LOCK(slock_t * lock)
 {
-    while (tas(lock))
-	;
+	while (tas(lock))
+		;
 }
 
 void
-S_UNLOCK(slock_t *lock)
+S_UNLOCK(slock_t * lock)
 {
-    *lock = 0;
+	*lock = 0;
 }
 
 void
-S_INIT_LOCK(slock_t *lock)
+S_INIT_LOCK(slock_t * lock)
 {
-    S_UNLOCK(lock);
+	S_UNLOCK(lock);
 }
 
-#endif /* defined(linux) && defined(PPC) */
+#endif							/* defined(linux) && defined(PPC) */
 
-#endif /* HAS_TEST_AND_SET */
+#endif							/* HAS_TEST_AND_SET */

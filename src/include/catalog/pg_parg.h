@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
  * pg_parg.h--
- *    definition of the system "parg" relation (pg_parg)
- *    along with the relation's initial contents.
+ *	  definition of the system "parg" relation (pg_parg)
+ *	  along with the relation's initial contents.
  *
  * [whatever this relation was, it doesn't seem to be used anymore --djm]
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_parg.h,v 1.3 1996/11/13 20:51:00 scrappy Exp $
+ * $Id: pg_parg.h,v 1.4 1997/09/07 04:57:01 momjian Exp $
  *
  * NOTES
- *    the genbki.sh script reads this file and generates .bki
- *    information from the DATA() statements.
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
@@ -20,43 +20,44 @@
 #define PG_PARG_H
 
 /* ----------------
- *	postgres.h contains the system type definintions and the
- *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *	can be read by both genbki.sh and the C compiler.
+ *		postgres.h contains the system type definintions and the
+ *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
 
 /* ----------------
- *	pg_parg definition.  cpp turns this into
- *	typedef struct FormData_pg_parg
+ *		pg_parg definition.  cpp turns this into
+ *		typedef struct FormData_pg_parg
  * ----------------
- */ 
-CATALOG(pg_parg) {
-    Oid 	parproid;
-    int2 	parnum;
-    char 	parbound;
-    Oid 	partype;
+ */
+CATALOG(pg_parg)
+{
+	Oid				parproid;
+	int2			parnum;
+	char			parbound;
+	Oid				partype;
 } FormData_pg_parg;
 
 /* ----------------
- *	Form_pg_parg corresponds to a pointer to a tuple with
- *	the format of pg_parg relation.
+ *		Form_pg_parg corresponds to a pointer to a tuple with
+ *		the format of pg_parg relation.
  * ----------------
  */
-typedef FormData_pg_parg	*Form_pg_parg;
+typedef FormData_pg_parg *Form_pg_parg;
 
 /* ----------------
- *	compiler constants for pg_parg
+ *		compiler constants for pg_parg
  * ----------------
  */
-#define Natts_pg_parg			4
-#define Anum_pg_parg_parproid		1
-#define Anum_pg_parg_parnum		2
-#define Anum_pg_parg_parbound		3
-#define Anum_pg_parg_partype		4
+#define Natts_pg_parg					4
+#define Anum_pg_parg_parproid			1
+#define Anum_pg_parg_parnum				2
+#define Anum_pg_parg_parbound			3
+#define Anum_pg_parg_partype			4
 
 /* ----------------
- *	initial contents of pg_parg
+ *		initial contents of pg_parg
  * ----------------
  */
 
@@ -113,4 +114,4 @@ DATA(insert OID = 0 (  66 2 - 23 ));
 DATA(insert OID = 0 (  67 1 - 25 ));
 DATA(insert OID = 0 (  67 2 - 25 ));
 
-#endif /* PG_PARG_H */
+#endif							/* PG_PARG_H */

@@ -1,22 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * lmgr.c--
- *    POSTGRES lock manager code
+ *	  POSTGRES lock manager code
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.5 1997/08/19 21:33:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.6 1997/09/07 04:48:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-/* #define LOCKDEBUGALL	1 */
+/* #define LOCKDEBUGALL 1 */
 /* #define LOCKDEBUG	1 */
 
 #ifdef	LOCKDEBUGALL
-#define LOCKDEBUG	1
-#endif /*  LOCKDEBUGALL */
+#define LOCKDEBUG		1
+#endif							/* LOCKDEBUGALL */
 
 #include <string.h>
 
@@ -46,239 +46,246 @@
 
 #include "nodes/memnodes.h"
 #include "storage/bufmgr.h"
-#include "access/transam.h"	/* for AmiTransactionId */
+#include "access/transam.h"		/* for AmiTransactionId */
 
-static void LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId);
+static void		LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId);
 
 /* ----------------
- *	
+ *
  * ----------------
  */
-#define MaxRetries	4	/* XXX about 1/4 minute--a hack */
+#define MaxRetries		4		/* XXX about 1/4 minute--a hack */
 
 #define IntentReadRelationLock	0x0100
-#define ReadRelationLock	0x0200
-#define IntentWriteRelationLock	0x0400
-#define WriteRelationLock	0x0800
-#define IntentReadPageLock	0x1000
-#define ReadTupleLock		0x2000
+#define ReadRelationLock		0x0200
+#define IntentWriteRelationLock 0x0400
+#define WriteRelationLock		0x0800
+#define IntentReadPageLock		0x1000
+#define ReadTupleLock			0x2000
 
-#define TupleLevelLockCountMask	0x000f
+#define TupleLevelLockCountMask 0x000f
 
-#define TupleLevelLockLimit	10
+#define TupleLevelLockLimit		10
 
-extern Oid	MyDatabaseId;
+extern Oid		MyDatabaseId;
 
 static LRelId	VariableRelationLRelId = {
-    RelOid_pg_variable,
-    InvalidOid
+	RelOid_pg_variable,
+	InvalidOid
 };
 
 /* ----------------
- *	RelationGetLRelId
+ *		RelationGetLRelId
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_10 \
 elog(NOTICE, "RelationGetLRelId(%s) invalid lockInfo", \
-     RelationGetRelationName(relation));
+	 RelationGetRelationName(relation));
 #else
 #define LOCKDEBUG_10
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationGetLRelId --
- *	Returns "lock" relation identifier for a relation.
+ *		Returns "lock" relation identifier for a relation.
  */
 LRelId
 RelationGetLRelId(Relation relation)
 {
-    LockInfo	linfo;
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    linfo = (LockInfo) relation->lockInfo;
-    
-    /* ----------------
-     *	initialize lock info if necessary
-     * ----------------
-     */
-    if (! LockInfoIsValid(linfo)) {
-	LOCKDEBUG_10;
-	RelationInitLockInfo(relation);
+	LockInfo		linfo;
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
 	linfo = (LockInfo) relation->lockInfo;
-    }
-    
-    /* ----------------
-     * XXX hack to prevent problems during
-     * VARIABLE relation initialization
-     * ----------------
-     */
-    if (strcmp(RelationGetRelationName(relation)->data,
-	       VariableRelationName) == 0) {
-	return (VariableRelationLRelId);
-    }
-    
-    return (linfo->lRelId);
+
+	/* ----------------
+	 *	initialize lock info if necessary
+	 * ----------------
+	 */
+	if (!LockInfoIsValid(linfo))
+	{
+		LOCKDEBUG_10;
+		RelationInitLockInfo(relation);
+		linfo = (LockInfo) relation->lockInfo;
+	}
+
+	/* ----------------
+	 * XXX hack to prevent problems during
+	 * VARIABLE relation initialization
+	 * ----------------
+	 */
+	if (strcmp(RelationGetRelationName(relation)->data,
+			   VariableRelationName) == 0)
+	{
+		return (VariableRelationLRelId);
+	}
+
+	return (linfo->lRelId);
 }
 
 /*
  * LRelIdGetDatabaseId --
- *	Returns database identifier for a "lock" relation identifier.
+ *		Returns database identifier for a "lock" relation identifier.
  */
 /* ----------------
- *	LRelIdGetDatabaseId
+ *		LRelIdGetDatabaseId
  *
  * Note: The argument may not be correct, if it is not used soon
- *	 after it is created.
+ *		 after it is created.
  * ----------------
  */
 #ifdef NOT_USED
 Oid
 LRelIdGetDatabaseId(LRelId lRelId)
 {
-    return (lRelId.dbId);
+	return (lRelId.dbId);
 }
+
 #endif
 
 /*
  * LRelIdGetRelationId --
- *	Returns relation identifier for a "lock" relation identifier.
+ *		Returns relation identifier for a "lock" relation identifier.
  */
-Oid 
+Oid
 LRelIdGetRelationId(LRelId lRelId)
 {
-    return (lRelId.relId);
+	return (lRelId.relId);
 }
 
 /*
  * DatabaseIdIsMyDatabaseId --
- *	True iff database object identifier is valid in my present database.
+ *		True iff database object identifier is valid in my present database.
  */
 #ifdef NOT_USED
 bool
 DatabaseIdIsMyDatabaseId(Oid databaseId)
 {
-    return (bool)
-	(!OidIsValid(databaseId) || databaseId == MyDatabaseId);
+	return (bool)
+		(!OidIsValid(databaseId) || databaseId == MyDatabaseId);
 }
+
 #endif
 
 /*
  * LRelIdContainsMyDatabaseId --
- *	True iff "lock" relation identifier is valid in my present database.
+ *		True iff "lock" relation identifier is valid in my present database.
  */
 #ifdef NOT_USED
 bool
 LRelIdContainsMyDatabaseId(LRelId lRelId)
 {
-    return (bool)
-	(!OidIsValid(lRelId.dbId) || lRelId.dbId == MyDatabaseId);
+	return (bool)
+		(!OidIsValid(lRelId.dbId) || lRelId.dbId == MyDatabaseId);
 }
+
 #endif
 
 /*
  * RelationInitLockInfo --
- *	Initializes the lock information in a relation descriptor.
+ *		Initializes the lock information in a relation descriptor.
  */
 /* ----------------
- *	RelationInitLockInfo
+ *		RelationInitLockInfo
  *
- * 	XXX processingVariable is a hack to prevent problems during
- * 	VARIABLE relation initialization.
+ *		XXX processingVariable is a hack to prevent problems during
+ *		VARIABLE relation initialization.
  * ----------------
  */
 void
 RelationInitLockInfo(Relation relation)
 {
-    LockInfo		info;
-    char 		*relname;
-    Oid		relationid;
-    bool		processingVariable;
-    extern Oid	MyDatabaseId;		/* XXX use include */
-    extern GlobalMemory CacheCxt;
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    Assert(OidIsValid(RelationGetRelationId(relation)));
-    
-    /* ----------------
-     *	get information from relation descriptor
-     * ----------------
-     */
-    info = (LockInfo) relation->lockInfo;
-    relname = (char *) RelationGetRelationName(relation);
-    relationid = RelationGetRelationId(relation);
-    processingVariable = (strcmp(relname, VariableRelationName) == 0);
-    
-    /* ----------------
-     *	create a new lockinfo if not already done
-     * ----------------
-     */
-    if (! PointerIsValid(info)) 
+	LockInfo		info;
+	char		   *relname;
+	Oid				relationid;
+	bool			processingVariable;
+	extern Oid		MyDatabaseId;		/* XXX use include */
+	extern GlobalMemory CacheCxt;
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	Assert(OidIsValid(RelationGetRelationId(relation)));
+
+	/* ----------------
+	 *	get information from relation descriptor
+	 * ----------------
+	 */
+	info = (LockInfo) relation->lockInfo;
+	relname = (char *) RelationGetRelationName(relation);
+	relationid = RelationGetRelationId(relation);
+	processingVariable = (strcmp(relname, VariableRelationName) == 0);
+
+	/* ----------------
+	 *	create a new lockinfo if not already done
+	 * ----------------
+	 */
+	if (!PointerIsValid(info))
 	{
-	    MemoryContext oldcxt;
-	    
-	    oldcxt = MemoryContextSwitchTo((MemoryContext)CacheCxt);
-	    info = (LockInfo)palloc(sizeof(LockInfoData));
-	    MemoryContextSwitchTo(oldcxt);
+		MemoryContext	oldcxt;
+
+		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		info = (LockInfo) palloc(sizeof(LockInfoData));
+		MemoryContextSwitchTo(oldcxt);
 	}
-    else if (processingVariable) {
-	if (IsTransactionState()) {
-	    TransactionIdStore(GetCurrentTransactionId(),
-			       &info->transactionIdData);
+	else if (processingVariable)
+	{
+		if (IsTransactionState())
+		{
+			TransactionIdStore(GetCurrentTransactionId(),
+							   &info->transactionIdData);
+		}
+		info->flags = 0x0;
+		return;					/* prevent an infinite loop--still true? */
 	}
+	else if (info->initialized)
+	{
+		/* ------------
+		 *	If we've already initialized we're done.
+		 * ------------
+		 */
+		return;
+	}
+
+	/* ----------------
+	 *	initialize lockinfo.dbId and .relId appropriately
+	 * ----------------
+	 */
+	if (IsSharedSystemRelationName(relname))
+		LRelIdAssign(&info->lRelId, InvalidOid, relationid);
+	else
+		LRelIdAssign(&info->lRelId, MyDatabaseId, relationid);
+
+	/* ----------------
+	 *	store the transaction id in the lockInfo field
+	 * ----------------
+	 */
+	if (processingVariable)
+		TransactionIdStore(AmiTransactionId,
+						   &info->transactionIdData);
+	else if (IsTransactionState())
+		TransactionIdStore(GetCurrentTransactionId(),
+						   &info->transactionIdData);
+	else
+		StoreInvalidTransactionId(&(info->transactionIdData));
+
+	/* ----------------
+	 *	initialize rest of lockinfo
+	 * ----------------
+	 */
 	info->flags = 0x0;
-	return;		/* prevent an infinite loop--still true? */
-    }
-    else if (info->initialized)
-	{
-	    /* ------------
-	     *  If we've already initialized we're done.
-	     * ------------
-	     */
-	    return;
-	}
-    
-    /* ----------------
-     *	initialize lockinfo.dbId and .relId appropriately
-     * ----------------
-     */
-    if (IsSharedSystemRelationName(relname))
-	LRelIdAssign(&info->lRelId, InvalidOid, relationid);
-    else
-	LRelIdAssign(&info->lRelId, MyDatabaseId, relationid);
-    
-    /* ----------------
-     *	store the transaction id in the lockInfo field
-     * ----------------
-     */
-    if (processingVariable)
-	TransactionIdStore(AmiTransactionId,
-			   &info->transactionIdData);
-    else if (IsTransactionState()) 
-	TransactionIdStore(GetCurrentTransactionId(),
-			   &info->transactionIdData);
-    else
-	StoreInvalidTransactionId(&(info->transactionIdData));
-    
-    /* ----------------
-     *	initialize rest of lockinfo
-     * ----------------
-     */
-    info->flags = 0x0;
-    info->initialized =	(bool)true;
-    relation->lockInfo = (Pointer) info;
+	info->initialized = (bool) true;
+	relation->lockInfo = (Pointer) info;
 }
 
 /* ----------------
- *	RelationDiscardLockInfo
+ *		RelationDiscardLockInfo
  * ----------------
  */
 #ifdef	LOCKDEBUG
@@ -286,456 +293,464 @@ RelationInitLockInfo(Relation relation)
 elog(DEBUG, "DiscardLockInfo: NULL relation->lockInfo")
 #else
 #define LOCKDEBUG_20
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationDiscardLockInfo --
- *	Discards the lock information in a relation descriptor.
+ *		Discards the lock information in a relation descriptor.
  */
 #ifdef NOT_USED
 void
 RelationDiscardLockInfo(Relation relation)
 {
-    if (! LockInfoIsValid(relation->lockInfo)) {
-	LOCKDEBUG_20;
-	return;
-    }
-    
-    pfree(relation->lockInfo);
-    relation->lockInfo = NULL;
+	if (!LockInfoIsValid(relation->lockInfo))
+	{
+		LOCKDEBUG_20;
+		return;
+	}
+
+	pfree(relation->lockInfo);
+	relation->lockInfo = NULL;
 }
+
 #endif
 
 /*
  * RelationSetLockForDescriptorOpen --
- *	Sets read locks for a relation descriptor.
+ *		Sets read locks for a relation descriptor.
  */
 #ifdef	LOCKDEBUGALL
 #define LOCKDEBUGALL_30 \
 elog(DEBUG, "RelationSetLockForDescriptorOpen(%s[%d,%d]) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
 #else
 #define LOCKDEBUGALL_30
-#endif	/* LOCKDEBUGALL*/
-     
+#endif							/* LOCKDEBUGALL */
+
 void
 RelationSetLockForDescriptorOpen(Relation relation)
 {
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    LOCKDEBUGALL_30;
-    
-    /* ----------------
-     * read lock catalog tuples which compose the relation descriptor
-     * XXX race condition? XXX For now, do nothing.
-     * ----------------
-     */
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	LOCKDEBUGALL_30;
+
+	/* ----------------
+	 * read lock catalog tuples which compose the relation descriptor
+	 * XXX race condition? XXX For now, do nothing.
+	 * ----------------
+	 */
 }
 
 /* ----------------
- *	RelationSetLockForRead
+ *		RelationSetLockForRead
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_40 \
 elog(DEBUG, "RelationSetLockForRead(%s[%d,%d]) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
 #else
 #define LOCKDEBUG_40
-#endif	/* LOCKDEBUG*/
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationSetLockForRead --
- *	Sets relation level read lock.
+ *		Sets relation level read lock.
  */
 void
 RelationSetLockForRead(Relation relation)
 {
-    LockInfo	linfo;
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    LOCKDEBUG_40;
-    
-    /* ----------------
-     * If we don't have lock info on the reln just go ahead and
-     * lock it without trying to short circuit the lock manager.
-     * ----------------
-     */
-    if (!LockInfoIsValid(relation->lockInfo))
+	LockInfo		linfo;
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	LOCKDEBUG_40;
+
+	/* ----------------
+	 * If we don't have lock info on the reln just go ahead and
+	 * lock it without trying to short circuit the lock manager.
+	 * ----------------
+	 */
+	if (!LockInfoIsValid(relation->lockInfo))
 	{
-	    RelationInitLockInfo(relation);
-	    linfo = (LockInfo) relation->lockInfo;
-	    linfo->flags |= ReadRelationLock;
-	    MultiLockReln(linfo, READ_LOCK);
-	    return;
+		RelationInitLockInfo(relation);
+		linfo = (LockInfo) relation->lockInfo;
+		linfo->flags |= ReadRelationLock;
+		MultiLockReln(linfo, READ_LOCK);
+		return;
 	}
-    else
-        linfo = (LockInfo) relation->lockInfo;
-    
-    MultiLockReln(linfo, READ_LOCK);
+	else
+		linfo = (LockInfo) relation->lockInfo;
+
+	MultiLockReln(linfo, READ_LOCK);
 }
 
 /* ----------------
- *	RelationUnsetLockForRead
+ *		RelationUnsetLockForRead
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_50 \
 elog(DEBUG, "RelationUnsetLockForRead(%s[%d,%d]) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
 #else
 #define LOCKDEBUG_50
-#endif	/* LOCKDEBUG*/
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationUnsetLockForRead --
- *	Unsets relation level read lock.
+ *		Unsets relation level read lock.
  */
 void
 RelationUnsetLockForRead(Relation relation)
 {
-    LockInfo	linfo;
-    
-    /* ----------------
-     *	sanity check
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    linfo = (LockInfo) relation->lockInfo;
-    
-    /* ----------------
-     * If we don't have lock info on the reln just go ahead and
-     * release it.
-     * ----------------
-     */
-    if (!LockInfoIsValid(linfo))
+	LockInfo		linfo;
+
+	/* ----------------
+	 *	sanity check
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	linfo = (LockInfo) relation->lockInfo;
+
+	/* ----------------
+	 * If we don't have lock info on the reln just go ahead and
+	 * release it.
+	 * ----------------
+	 */
+	if (!LockInfoIsValid(linfo))
 	{
-	    elog(WARN, 
-		 "Releasing a lock on %s with invalid lock information",
-		 RelationGetRelationName(relation));
+		elog(WARN,
+			 "Releasing a lock on %s with invalid lock information",
+			 RelationGetRelationName(relation));
 	}
-    
-    MultiReleaseReln(linfo, READ_LOCK);
+
+	MultiReleaseReln(linfo, READ_LOCK);
 }
 
 /* ----------------
- *	RelationSetLockForWrite(relation)
+ *		RelationSetLockForWrite(relation)
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_60 \
 elog(DEBUG, "RelationSetLockForWrite(%s[%d,%d]) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId)
 #else
 #define LOCKDEBUG_60
-#endif	/* LOCKDEBUG*/
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationSetLockForWrite --
- *	Sets relation level write lock.
+ *		Sets relation level write lock.
  */
 void
 RelationSetLockForWrite(Relation relation)
 {
-    LockInfo	linfo;
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    LOCKDEBUG_60;
-    
-    /* ----------------
-     * If we don't have lock info on the reln just go ahead and
-     * lock it without trying to short circuit the lock manager.
-     * ----------------
-     */
-    if (!LockInfoIsValid(relation->lockInfo))
+	LockInfo		linfo;
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	LOCKDEBUG_60;
+
+	/* ----------------
+	 * If we don't have lock info on the reln just go ahead and
+	 * lock it without trying to short circuit the lock manager.
+	 * ----------------
+	 */
+	if (!LockInfoIsValid(relation->lockInfo))
 	{
-	    RelationInitLockInfo(relation);
-	    linfo = (LockInfo) relation->lockInfo;
-	    linfo->flags |= WriteRelationLock;
-	    MultiLockReln(linfo, WRITE_LOCK);
-	    return;
+		RelationInitLockInfo(relation);
+		linfo = (LockInfo) relation->lockInfo;
+		linfo->flags |= WriteRelationLock;
+		MultiLockReln(linfo, WRITE_LOCK);
+		return;
 	}
-    else
-        linfo = (LockInfo) relation->lockInfo;
-    
-    MultiLockReln(linfo, WRITE_LOCK);
+	else
+		linfo = (LockInfo) relation->lockInfo;
+
+	MultiLockReln(linfo, WRITE_LOCK);
 }
 
 /* ----------------
- *	RelationUnsetLockForWrite
+ *		RelationUnsetLockForWrite
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_70 \
 elog(DEBUG, "RelationUnsetLockForWrite(%s[%d,%d]) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId);
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId);
 #else
 #define LOCKDEBUG_70
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationUnsetLockForWrite --
- *	Unsets relation level write lock.
+ *		Unsets relation level write lock.
  */
 void
 RelationUnsetLockForWrite(Relation relation)
 {
-    LockInfo	linfo;
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled()) {
-	return;
-    }
-    
-    linfo = (LockInfo) relation->lockInfo;
-    
-    if (!LockInfoIsValid(linfo))
+	LockInfo		linfo;
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
 	{
-	    elog(WARN, 
-		 "Releasing a lock on %s with invalid lock information",
-		 RelationGetRelationName(relation));
+		return;
 	}
-    
-    MultiReleaseReln(linfo, WRITE_LOCK);
+
+	linfo = (LockInfo) relation->lockInfo;
+
+	if (!LockInfoIsValid(linfo))
+	{
+		elog(WARN,
+			 "Releasing a lock on %s with invalid lock information",
+			 RelationGetRelationName(relation));
+	}
+
+	MultiReleaseReln(linfo, WRITE_LOCK);
 }
 
 /* ----------------
- *	RelationSetLockForTupleRead
+ *		RelationSetLockForTupleRead
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_80 \
 elog(DEBUG, "RelationSetLockForTupleRead(%s[%d,%d], 0x%x) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, \
-     itemPointer)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, \
+	 itemPointer)
 #define LOCKDEBUG_81 \
-     elog(DEBUG, "RelationSetLockForTupleRead() escalating");
+	 elog(DEBUG, "RelationSetLockForTupleRead() escalating");
 #else
 #define LOCKDEBUG_80
 #define LOCKDEBUG_81
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationSetLockForTupleRead --
- *	Sets tuple level read lock.
+ *		Sets tuple level read lock.
  */
 #ifdef NOT_USED
 void
 RelationSetLockForTupleRead(Relation relation, ItemPointer itemPointer)
 {
-    LockInfo	linfo;
-    TransactionId curXact;
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    LOCKDEBUG_80;
-    
-    /* ---------------------
-     * If our lock info is invalid don't bother trying to short circuit
-     * the lock manager.
-     * ---------------------
-     */
-    if (!LockInfoIsValid(relation->lockInfo))
+	LockInfo		linfo;
+	TransactionId	curXact;
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	LOCKDEBUG_80;
+
+	/* ---------------------
+	 * If our lock info is invalid don't bother trying to short circuit
+	 * the lock manager.
+	 * ---------------------
+	 */
+	if (!LockInfoIsValid(relation->lockInfo))
 	{
-	    RelationInitLockInfo(relation);
-	    linfo = (LockInfo) relation->lockInfo;
-	    linfo->flags |=
-                IntentReadRelationLock |
-		    IntentReadPageLock |
+		RelationInitLockInfo(relation);
+		linfo = (LockInfo) relation->lockInfo;
+		linfo->flags |=
+			IntentReadRelationLock |
+			IntentReadPageLock |
 			ReadTupleLock;
-	    MultiLockTuple(linfo, itemPointer, READ_LOCK);
-	    return;
+		MultiLockTuple(linfo, itemPointer, READ_LOCK);
+		return;
 	}
-    else
-        linfo = (LockInfo) relation->lockInfo;
-    
-    /* ----------------
-     *	no need to set a lower granularity lock
-     * ----------------
-     */
-    curXact = GetCurrentTransactionId();
-    if ((linfo->flags & ReadRelationLock) &&
-	TransactionIdEquals(curXact, linfo->transactionIdData))
+	else
+		linfo = (LockInfo) relation->lockInfo;
+
+	/* ----------------
+	 *	no need to set a lower granularity lock
+	 * ----------------
+	 */
+	curXact = GetCurrentTransactionId();
+	if ((linfo->flags & ReadRelationLock) &&
+		TransactionIdEquals(curXact, linfo->transactionIdData))
 	{
-	    return;
+		return;
 	}
-    
-    /* ----------------
-     * If we don't already have a tuple lock this transaction
-     * ----------------
-     */
-    if (!( (linfo->flags & ReadTupleLock) &&
-	  TransactionIdEquals(curXact, linfo->transactionIdData) )) {
-	
-	linfo->flags |=
-	    IntentReadRelationLock |
-		IntentReadPageLock |
-		    ReadTupleLock;
-	
-	/* clear count */
-	linfo->flags &= ~TupleLevelLockCountMask;
-	
-    } else {
-	if (TupleLevelLockLimit == (TupleLevelLockCountMask &
-				    linfo->flags)) {
-	    LOCKDEBUG_81;
-	    
-	    /* escalate */
-	    MultiLockReln(linfo, READ_LOCK);
-	    
-	    /* clear count */
-	    linfo->flags &= ~TupleLevelLockCountMask;
-	    return;
+
+	/* ----------------
+	 * If we don't already have a tuple lock this transaction
+	 * ----------------
+	 */
+	if (!((linfo->flags & ReadTupleLock) &&
+		  TransactionIdEquals(curXact, linfo->transactionIdData)))
+	{
+
+		linfo->flags |=
+			IntentReadRelationLock |
+			IntentReadPageLock |
+			ReadTupleLock;
+
+		/* clear count */
+		linfo->flags &= ~TupleLevelLockCountMask;
+
 	}
-	
-	/* increment count */
-	linfo->flags =
-	    (linfo->flags & ~TupleLevelLockCountMask) |
-		(1 + (TupleLevelLockCountMask & linfo->flags));
-    }
-    
-    TransactionIdStore(curXact, &linfo->transactionIdData);
-    
-    /* ----------------
-     * Lock the tuple.
-     * ----------------
-     */
-    MultiLockTuple(linfo, itemPointer, READ_LOCK);
+	else
+	{
+		if (TupleLevelLockLimit == (TupleLevelLockCountMask &
+									linfo->flags))
+		{
+			LOCKDEBUG_81;
+
+			/* escalate */
+			MultiLockReln(linfo, READ_LOCK);
+
+			/* clear count */
+			linfo->flags &= ~TupleLevelLockCountMask;
+			return;
+		}
+
+		/* increment count */
+		linfo->flags =
+			(linfo->flags & ~TupleLevelLockCountMask) |
+			(1 + (TupleLevelLockCountMask & linfo->flags));
+	}
+
+	TransactionIdStore(curXact, &linfo->transactionIdData);
+
+	/* ----------------
+	 * Lock the tuple.
+	 * ----------------
+	 */
+	MultiLockTuple(linfo, itemPointer, READ_LOCK);
 }
+
 #endif
 
 /* ----------------
- *	RelationSetLockForReadPage
+ *		RelationSetLockForReadPage
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_90 \
 elog(DEBUG, "RelationSetLockForReadPage(%s[%d,%d], @%d) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page);
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page);
 #else
 #define LOCKDEBUG_90
-#endif	/* LOCKDEBUG*/
-     
+#endif							/* LOCKDEBUG */
+
 /* ----------------
- *	RelationSetLockForWritePage
+ *		RelationSetLockForWritePage
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_100 \
 elog(DEBUG, "RelationSetLockForWritePage(%s[%d,%d], @%d) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page);
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page);
 #else
 #define LOCKDEBUG_100
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /*
  * RelationSetLockForWritePage --
- *	Sets write lock on a page.
+ *		Sets write lock on a page.
  */
-void 
+void
 RelationSetLockForWritePage(Relation relation,
-			    ItemPointer itemPointer)
+							ItemPointer itemPointer)
 {
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    /* ---------------
-     * Make sure linfo is initialized
-     * ---------------
-     */
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    /* ----------------
-     *	attempt to set lock
-     * ----------------
-     */
-    MultiLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK);
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	/* ---------------
+	 * Make sure linfo is initialized
+	 * ---------------
+	 */
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	/* ----------------
+	 *	attempt to set lock
+	 * ----------------
+	 */
+	MultiLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK);
 }
 
 /* ----------------
- *	RelationUnsetLockForReadPage
+ *		RelationUnsetLockForReadPage
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_110 \
 elog(DEBUG, "RelationUnsetLockForReadPage(%s[%d,%d], @%d) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page)
 #else
 #define LOCKDEBUG_110
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /* ----------------
- *	RelationUnsetLockForWritePage
+ *		RelationUnsetLockForWritePage
  * ----------------
  */
 #ifdef	LOCKDEBUG
 #define LOCKDEBUG_120 \
 elog(DEBUG, "RelationUnsetLockForWritePage(%s[%d,%d], @%d) called", \
-     RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page)
+	 RelationGetRelationName(relation), lRelId.dbId, lRelId.relId, page)
 #else
 #define LOCKDEBUG_120
-#endif	/* LOCKDEBUG */
-     
+#endif							/* LOCKDEBUG */
+
 /*
- * Set a single level write page lock.  Assumes that you already
+ * Set a single level write page lock.	Assumes that you already
  * have a write intent lock on the relation.
  */
 void
 RelationSetSingleWLockPage(Relation relation,
-			   ItemPointer itemPointer)
+						   ItemPointer itemPointer)
 {
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    SingleLockPage((LockInfo)relation->lockInfo, itemPointer, WRITE_LOCK, !UNLOCK);
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK, !UNLOCK);
 }
 
 /*
@@ -743,23 +758,23 @@ RelationSetSingleWLockPage(Relation relation,
  */
 void
 RelationUnsetSingleWLockPage(Relation relation,
-			     ItemPointer itemPointer)
+							 ItemPointer itemPointer)
 {
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-        elog(WARN, 
-	     "Releasing a lock on %s with invalid lock information",
-	     RelationGetRelationName(relation));
-    
-    SingleLockPage((LockInfo)relation->lockInfo, itemPointer, WRITE_LOCK, UNLOCK);
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		elog(WARN,
+			 "Releasing a lock on %s with invalid lock information",
+			 RelationGetRelationName(relation));
+
+	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, WRITE_LOCK, UNLOCK);
 }
 
 /*
@@ -768,45 +783,45 @@ RelationUnsetSingleWLockPage(Relation relation,
  */
 void
 RelationSetSingleRLockPage(Relation relation,
-			   ItemPointer itemPointer)
+						   ItemPointer itemPointer)
 {
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    SingleLockPage((LockInfo)relation->lockInfo, itemPointer, READ_LOCK, !UNLOCK);
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, READ_LOCK, !UNLOCK);
 }
 
-/* 
+/*
  * Unset a single level read page lock.
  */
 void
 RelationUnsetSingleRLockPage(Relation relation,
-			     ItemPointer itemPointer)
+							 ItemPointer itemPointer)
 {
-    
-    /* ----------------
-     *	sanity checks
-     * ----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-        elog(WARN, 
-	     "Releasing a lock on %s with invalid lock information",
-	     RelationGetRelationName(relation));
-    
-    SingleLockPage((LockInfo)relation->lockInfo, itemPointer, READ_LOCK, UNLOCK);
+
+	/* ----------------
+	 *	sanity checks
+	 * ----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		elog(WARN,
+			 "Releasing a lock on %s with invalid lock information",
+			 RelationGetRelationName(relation));
+
+	SingleLockPage((LockInfo) relation->lockInfo, itemPointer, READ_LOCK, UNLOCK);
 }
 
 /*
@@ -821,18 +836,18 @@ RelationUnsetSingleRLockPage(Relation relation,
 void
 RelationSetRIntentLock(Relation relation)
 {
-    /* -----------------
-     * Sanity check
-     * -----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    SingleLockReln((LockInfo)relation->lockInfo, READ_LOCK+INTENT, !UNLOCK);
+	/* -----------------
+	 * Sanity check
+	 * -----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	SingleLockReln((LockInfo) relation->lockInfo, READ_LOCK + INTENT, !UNLOCK);
 }
 
 /*
@@ -841,18 +856,18 @@ RelationSetRIntentLock(Relation relation)
 void
 RelationUnsetRIntentLock(Relation relation)
 {
-    /* -----------------
-     * Sanity check
-     * -----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    SingleLockReln((LockInfo)relation->lockInfo, READ_LOCK+INTENT, UNLOCK);
+	/* -----------------
+	 * Sanity check
+	 * -----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	SingleLockReln((LockInfo) relation->lockInfo, READ_LOCK + INTENT, UNLOCK);
 }
 
 /*
@@ -862,18 +877,18 @@ RelationUnsetRIntentLock(Relation relation)
 void
 RelationSetWIntentLock(Relation relation)
 {
-    /* -----------------
-     * Sanity check
-     * -----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    SingleLockReln((LockInfo)relation->lockInfo, WRITE_LOCK+INTENT, !UNLOCK);
+	/* -----------------
+	 * Sanity check
+	 * -----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	SingleLockReln((LockInfo) relation->lockInfo, WRITE_LOCK + INTENT, !UNLOCK);
 }
 
 /*
@@ -882,69 +897,71 @@ RelationSetWIntentLock(Relation relation)
 void
 RelationUnsetWIntentLock(Relation relation)
 {
-    /* -----------------
-     * Sanity check
-     * -----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    SingleLockReln((LockInfo)relation->lockInfo, WRITE_LOCK+INTENT, UNLOCK);
+	/* -----------------
+	 * Sanity check
+	 * -----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	SingleLockReln((LockInfo) relation->lockInfo, WRITE_LOCK + INTENT, UNLOCK);
 }
 
 /*
  * Extend locks are used primarily in tertiary storage devices such as
- * a WORM disk jukebox.  Sometimes need exclusive access to extend a 
+ * a WORM disk jukebox.  Sometimes need exclusive access to extend a
  * file by a block.
  */
 #ifdef NOT_USED
 void
 RelationSetLockForExtend(Relation relation)
 {
-    /* -----------------
-     * Sanity check
-     * -----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    MultiLockReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
+	/* -----------------
+	 * Sanity check
+	 * -----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	MultiLockReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
 }
+
 #endif
 
 #ifdef NOT_USED
 void
 RelationUnsetLockForExtend(Relation relation)
 {
-    /* -----------------
-     * Sanity check
-     * -----------------
-     */
-    Assert(RelationIsValid(relation));
-    if (LockingDisabled())
-	return;
-    
-    if (!LockInfoIsValid(relation->lockInfo))
-	RelationInitLockInfo(relation);
-    
-    MultiReleaseReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
+	/* -----------------
+	 * Sanity check
+	 * -----------------
+	 */
+	Assert(RelationIsValid(relation));
+	if (LockingDisabled())
+		return;
+
+	if (!LockInfoIsValid(relation->lockInfo))
+		RelationInitLockInfo(relation);
+
+	MultiReleaseReln((LockInfo) relation->lockInfo, EXTEND_LOCK);
 }
+
 #endif
 
-/* 
+/*
  * Create an LRelid --- Why not just pass in a pointer to the storage?
  */
 static void
-LRelIdAssign(LRelId *lRelId, Oid dbId, Oid relId)
-{   
-    lRelId->dbId = dbId;
-    lRelId->relId = relId;
+LRelIdAssign(LRelId * lRelId, Oid dbId, Oid relId)
+{
+	lRelId->dbId = dbId;
+	lRelId->relId = relId;
 }

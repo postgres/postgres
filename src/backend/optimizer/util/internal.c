@@ -1,24 +1,24 @@
 /*-------------------------------------------------------------------------
  *
  * internal.c--
- *    Definitions required throughout the query optimizer.
+ *	  Definitions required throughout the query optimizer.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/internal.c,v 1.3 1997/08/20 14:53:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/Attic/internal.c,v 1.4 1997/09/07 04:44:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-/*    
- *    	---------- SHARED MACROS
- *    
- *     	Macros common to modules for creating, accessing, and modifying
- *    	query tree and query plan components.
- *    	Shared with the executor.
- *    
+/*
+ *		---------- SHARED MACROS
+ *
+ *		Macros common to modules for creating, accessing, and modifying
+ *		query tree and query plan components.
+ *		Shared with the executor.
+ *
  */
 #include <sys/types.h>
 
@@ -31,32 +31,30 @@
 #include "nodes/primnodes.h"
 #include "utils/palloc.h"
 
-#ifdef NOT_USED 
+#ifdef NOT_USED
 /*****************************************************************************
  *
  *****************************************************************************/
 
 /* the following should probably be moved elsewhere -ay */
 
-TargetEntry *
-MakeTLE(Resdom *resdom, Node *expr)
+TargetEntry    *
+MakeTLE(Resdom * resdom, Node * expr)
 {
-    TargetEntry *rt = makeNode(TargetEntry);
-    rt->resdom = resdom;
-    rt->expr = expr;
-    return rt;
+	TargetEntry    *rt = makeNode(TargetEntry);
+
+	rt->resdom = resdom;
+	rt->expr = expr;
+	return rt;
 }
 
-Var *
-get_expr(TargetEntry *tle)
+Var			   *
+get_expr(TargetEntry * tle)
 {
-    Assert(tle!=NULL);
-    Assert(tle->expr!=NULL);
+	Assert(tle != NULL);
+	Assert(tle->expr != NULL);
 
-    return ((Var *)tle->expr); 
+	return ((Var *) tle->expr);
 }
 
-#endif /* 0 */
-
-
-
+#endif							/* 0 */

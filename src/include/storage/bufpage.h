@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * bufpage.h--
- *    Standard POSTGRES buffer page definitions.
+ *	  Standard POSTGRES buffer page definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.10 1997/08/26 23:31:58 momjian Exp $
+ * $Id: bufpage.h,v 1.11 1997/09/07 05:01:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	BUFPAGE_H
+#ifndef BUFPAGE_H
 #define BUFPAGE_H
 
 #include <storage/off.h>
@@ -27,19 +27,19 @@
  * disk page is always a slotted page of the form:
  *
  * +----------------+---------------------------------+
- * | PageHeaderData | linp0 linp1 linp2 ...           |
+ * | PageHeaderData | linp0 linp1 linp2 ...			  |
  * +-----------+----+---------------------------------+
- * | ... linpN |                                      |
+ * | ... linpN |									  |
  * +-----------+--------------------------------------+
- * |           ^ pd_lower                             |
- * |                                                  |
- * |             v pd_upper                           |
+ * |		   ^ pd_lower							  |
+ * |												  |
+ * |			 v pd_upper							  |
  * +-------------+------------------------------------+
- * |             | tupleN ...                         |
+ * |			 | tupleN ...						  |
  * +-------------+------------------+-----------------+
- * |       ... tuple2 tuple1 tuple0 | "special space" |
+ * |	   ... tuple2 tuple1 tuple0 | "special space" |
  * +--------------------------------+-----------------+
- *                                  ^ pd_special
+ *									^ pd_special
  *
  * a page is full when nothing can be added between pd_lower and
  * pd_upper.
@@ -66,19 +66,19 @@
  * whenever the need arises.
  *
  * AM-generic per-page information is kept in the pd_opaque field of
- * the PageHeaderData.  (this is currently only the page size.)
+ * the PageHeaderData.	(this is currently only the page size.)
  * AM-specific per-page data is kept in the area marked "special
  * space"; each AM has an "opaque" structure defined somewhere that is
- * stored as the page trailer.  an access method should always
+ * stored as the page trailer.	an access method should always
  * initialize its pages with PageInit and then set its own opaque
  * fields.
  */
 
 /*
  * PageIsValid --
- *	True iff page is valid.
+ *		True iff page is valid.
  */
-#define	PageIsValid(page) PointerIsValid(page)
+#define PageIsValid(page) PointerIsValid(page)
 
 
 /*
@@ -93,39 +93,42 @@ typedef uint16	LocationIndex;
 /*
  * space management information generic to any page
  *
- *	od_pagesize	- size in bytes.
- *			  in reality, we need at least 64B to fit the 
- *			  page header, opaque space and a minimal tuple;
- *			  on the high end, we can only support pages up
- *			  to 8KB because lp_off/lp_len are 13 bits.
+ *		od_pagesize		- size in bytes.
+ *						  in reality, we need at least 64B to fit the
+ *						  page header, opaque space and a minimal tuple;
+ *						  on the high end, we can only support pages up
+ *						  to 8KB because lp_off/lp_len are 13 bits.
  */
-typedef struct OpaqueData {
-    uint16 od_pagesize;
-} OpaqueData;
-    
-typedef OpaqueData	*Opaque;
+typedef struct OpaqueData
+{
+	uint16			od_pagesize;
+}				OpaqueData;
+
+typedef OpaqueData *Opaque;
 
 
 /*
  * disk page organization
  */
-typedef struct PageHeaderData {
-    LocationIndex	pd_lower;	/* offset to start of free space */
-    LocationIndex	pd_upper;	/* offset to end of free space */
-    LocationIndex	pd_special;	/* offset to start of special space */
-    OpaqueData       	pd_opaque;	/* AM-generic information */
-    ItemIdData		pd_linp[1];	/* line pointers */
-} PageHeaderData;
+typedef struct PageHeaderData
+{
+	LocationIndex	pd_lower;	/* offset to start of free space */
+	LocationIndex	pd_upper;	/* offset to end of free space */
+	LocationIndex	pd_special; /* offset to start of special space */
+	OpaqueData		pd_opaque;	/* AM-generic information */
+	ItemIdData		pd_linp[1]; /* line pointers */
+}				PageHeaderData;
 
-typedef PageHeaderData	*PageHeader;
+typedef PageHeaderData *PageHeader;
 
-typedef enum {
-    ShufflePageManagerMode,
-    OverwritePageManagerMode
-} PageManagerMode;
+typedef enum
+{
+	ShufflePageManagerMode,
+	OverwritePageManagerMode
+}				PageManagerMode;
 
 /* ----------------
- *	misc support macros
+ *		misc support macros
  * ----------------
  */
 
@@ -134,10 +137,10 @@ typedef enum {
  * AM-specific opaque space at the end of the page (as in btrees), ...
  * however, it at least serves as an upper bound for heap pages.
  */
-#define MAXTUPLEN	(BLCKSZ - sizeof (PageHeaderData))
+#define MAXTUPLEN		(BLCKSZ - sizeof (PageHeaderData))
 
 /* ----------------------------------------------------------------
- *			page support macros
+ *						page support macros
  * ----------------------------------------------------------------
  */
 /*
@@ -146,146 +149,147 @@ typedef enum {
 
 /*
  * PageIsUsed --
- *	True iff the page size is used.
+ *		True iff the page size is used.
  *
  * Note:
- *	Assumes page is valid.
+ *		Assumes page is valid.
  */
 #define PageIsUsed(page) \
-    (AssertMacro(PageIsValid(page)) ? \
-     ((bool) (((PageHeader) (page))->pd_lower != 0)) : false)
+	(AssertMacro(PageIsValid(page)) ? \
+	 ((bool) (((PageHeader) (page))->pd_lower != 0)) : false)
 
 /*
  * PageIsEmpty --
- *	returns true iff no itemid has been allocated on the page
+ *		returns true iff no itemid has been allocated on the page
  */
 #define PageIsEmpty(page) \
-    (((PageHeader) (page))->pd_lower == \
-     (sizeof(PageHeaderData) - sizeof(ItemIdData)) ? true : false)
+	(((PageHeader) (page))->pd_lower == \
+	 (sizeof(PageHeaderData) - sizeof(ItemIdData)) ? true : false)
 
 /*
- * PageIsNew -- 
- *	returns true iff page is not initialized (by PageInit)
+ * PageIsNew --
+ *		returns true iff page is not initialized (by PageInit)
  */
 
-#define PageIsNew(page)	(((PageHeader) (page))->pd_upper == 0)
+#define PageIsNew(page) (((PageHeader) (page))->pd_upper == 0)
 
 /*
  * PageGetItemId --
- *	Returns an item identifier of a page.
+ *		Returns an item identifier of a page.
  */
 #define PageGetItemId(page, offsetNumber) \
-    ((ItemId) (&((PageHeader) (page))->pd_linp[(-1) + (offsetNumber)]))
+	((ItemId) (&((PageHeader) (page))->pd_linp[(-1) + (offsetNumber)]))
 
 /* ----------------
- *	macros to access opaque space
+ *		macros to access opaque space
  * ----------------
  */
 
 /*
  * PageSizeIsValid --
- *	True iff the page size is valid.
+ *		True iff the page size is valid.
  *
  * XXX currently all page sizes are "valid" but we only actually
- *     use BLCKSZ.
+ *	   use BLCKSZ.
  */
 #define PageSizeIsValid(pageSize) 1
 
 /*
  * PageGetPageSize --
- *	Returns the page size of a page.
+ *		Returns the page size of a page.
  *
  * this can only be called on a formatted page (unlike
  * BufferGetPageSize, which can be called on an unformatted page).
  * however, it can be called on a page for which there is no buffer.
  */
 #define PageGetPageSize(page) \
-    ((Size) ((PageHeader) (page))->pd_opaque.od_pagesize)
+	((Size) ((PageHeader) (page))->pd_opaque.od_pagesize)
 
 /*
  * PageSetPageSize --
- *	Sets the page size of a page.
+ *		Sets the page size of a page.
  */
 #define PageSetPageSize(page, size) \
-    ((PageHeader) (page))->pd_opaque.od_pagesize = (size)
+	((PageHeader) (page))->pd_opaque.od_pagesize = (size)
 
 /* ----------------
- *	page special data macros
+ *		page special data macros
  * ----------------
  */
 /*
  * PageGetSpecialSize --
- *	Returns size of special space on a page.
+ *		Returns size of special space on a page.
  *
  * Note:
- *	Assumes page is locked.
+ *		Assumes page is locked.
  */
 #define PageGetSpecialSize(page) \
-    ((uint16) (PageGetPageSize(page) - ((PageHeader)(page))->pd_special))
+	((uint16) (PageGetPageSize(page) - ((PageHeader)(page))->pd_special))
 
 /*
  * PageGetSpecialPointer --
- *	Returns pointer to special space on a page.
+ *		Returns pointer to special space on a page.
  *
  * Note:
- *	Assumes page is locked.
+ *		Assumes page is locked.
  */
 #define PageGetSpecialPointer(page) \
-    (AssertMacro(PageIsValid(page)) ? \
-     (char *) ((char *) (page) + ((PageHeader) (page))->pd_special) \
-     : (char *)0 )
+	(AssertMacro(PageIsValid(page)) ? \
+	 (char *) ((char *) (page) + ((PageHeader) (page))->pd_special) \
+	 : (char *)0 )
 
 /*
  * PageGetItem --
- *	Retrieves an item on the given page.
+ *		Retrieves an item on the given page.
  *
  * Note:
- *	This does change the status of any of the resources passed.
- *	The semantics may change in the future.
+ *		This does change the status of any of the resources passed.
+ *		The semantics may change in the future.
  */
 #define PageGetItem(page, itemId) \
-    (AssertMacro(PageIsValid(page)) ? \
-     AssertMacro((itemId)->lp_flags & LP_USED) ? \
-    (Item)(((char *)(page)) + (itemId)->lp_off) : false : false)
+	(AssertMacro(PageIsValid(page)) ? \
+	 AssertMacro((itemId)->lp_flags & LP_USED) ? \
+	(Item)(((char *)(page)) + (itemId)->lp_off) : false : false)
 
 /*
  * BufferGetPageSize --
- *	Returns the page size within a buffer.
+ *		Returns the page size within a buffer.
  *
  * Notes:
- *	Assumes buffer is valid.
+ *		Assumes buffer is valid.
  *
- *	The buffer can be a raw disk block and need not contain a valid
- *	(formatted) disk page.
+ *		The buffer can be a raw disk block and need not contain a valid
+ *		(formatted) disk page.
  */
 /* XXX dig out of buffer descriptor */
 #define BufferGetPageSize(buffer) \
-    (AssertMacro(BufferIsValid(buffer)) ? \
-     AssertMacro(PageSizeIsValid(pageSize)) ? \
-     ((Size)BLCKSZ) : false : false)
+	(AssertMacro(BufferIsValid(buffer)) ? \
+	 AssertMacro(PageSizeIsValid(pageSize)) ? \
+	 ((Size)BLCKSZ) : false : false)
 
 /*
  * BufferGetPage --
- *	Returns the page associated with a buffer.
+ *		Returns the page associated with a buffer.
  */
 #define BufferGetPage(buffer) ((Page)BufferGetBlock(buffer))
 
-     
+
 /* ----------------------------------------------------------------
- *	extern declarations
+ *		extern declarations
  * ----------------------------------------------------------------
  */
 
-extern void PageInit(Page page, Size pageSize, Size specialSize);
-extern OffsetNumber PageAddItem(Page page, Item item, Size size,
-			 OffsetNumber offsetNumber, ItemIdFlags flags);
-extern Page PageGetTempPage(Page page, Size specialSize);
-extern void PageRestoreTempPage(Page tempPage, Page oldPage);
+extern void		PageInit(Page page, Size pageSize, Size specialSize);
+extern OffsetNumber
+PageAddItem(Page page, Item item, Size size,
+			OffsetNumber offsetNumber, ItemIdFlags flags);
+extern Page		PageGetTempPage(Page page, Size specialSize);
+extern void		PageRestoreTempPage(Page tempPage, Page oldPage);
 extern OffsetNumber PageGetMaxOffsetNumber(Page page);
-extern void PageRepairFragmentation(Page page);
-extern Size PageGetFreeSpace(Page page);
-extern void PageManagerModeSet(PageManagerMode mode);
-extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
+extern void		PageRepairFragmentation(Page page);
+extern Size		PageGetFreeSpace(Page page);
+extern void		PageManagerModeSet(PageManagerMode mode);
+extern void		PageIndexTupleDelete(Page page, OffsetNumber offset);
 
 
-#endif	/* BUFPAGE_H */
+#endif							/* BUFPAGE_H */

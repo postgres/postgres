@@ -1,28 +1,29 @@
 /*-------------------------------------------------------------------------
  *
  * nodeHashjoin.h--
- *    
+ *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeHashjoin.h,v 1.2 1997/08/19 21:38:22 momjian Exp $
+ * $Id: nodeHashjoin.h,v 1.3 1997/09/07 04:57:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	NODEHASHJOIN_H
-#define	NODEHASHJOIN_H
+#ifndef NODEHASHJOIN_H
+#define NODEHASHJOIN_H
 
-extern TupleTableSlot *ExecHashJoin(HashJoin *node);
+extern TupleTableSlot *ExecHashJoin(HashJoin * node);
 
-extern bool ExecInitHashJoin(HashJoin *node, EState *estate, Plan *parent);
+extern bool		ExecInitHashJoin(HashJoin * node, EState * estate, Plan * parent);
 
-extern int ExecCountSlotsHashJoin(HashJoin *node);
+extern int		ExecCountSlotsHashJoin(HashJoin * node);
 
-extern void ExecEndHashJoin(HashJoin *node);
+extern void		ExecEndHashJoin(HashJoin * node);
 
-extern char *ExecHashJoinSaveTuple(HeapTuple heapTuple, char *buffer,
-				   File file, char *position);
+extern char    *
+ExecHashJoinSaveTuple(HeapTuple heapTuple, char *buffer,
+					  File file, char *position);
 
 
-#endif	/* NODEHASHJOIN_H */
+#endif							/* NODEHASHJOIN_H */

@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * pg_am.h--
- *    definition of the system "am" relation (pg_am)
- *    along with the relation's initial contents.
+ *	  definition of the system "am" relation (pg_am)
+ *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.2 1996/10/31 09:47:07 scrappy Exp $
+ * $Id: pg_am.h,v 1.3 1997/09/07 04:56:37 momjian Exp $
  *
  * NOTES
- *	the genbki.sh script reads this file and generates .bki
- *	information from the DATA() statements.
+ *		the genbki.sh script reads this file and generates .bki
+ *		information from the DATA() statements.
  *
- *	XXX do NOT break up DATA() statements into multiple lines!
- *	    the scripts are not as smart as you might think...
+ *		XXX do NOT break up DATA() statements into multiple lines!
+ *			the scripts are not as smart as you might think...
  *
  *-------------------------------------------------------------------------
  */
@@ -22,79 +22,80 @@
 #define PG_AM_H
 
 /* ----------------
- *	postgres.h contains the system type definintions and the
- *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *	can be read by both genbki.sh and the C compiler.
+ *		postgres.h contains the system type definintions and the
+ *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
 
 /* ----------------
- *	pg_am definition.  cpp turns this into
- *	typedef struct FormData_pg_am
+ *		pg_am definition.  cpp turns this into
+ *		typedef struct FormData_pg_am
  * ----------------
- */ 
-CATALOG(pg_am) {
-    NameData	amname;
-    Oid 	amowner;
-    char	amkind;
-    int2 	amstrategies;
-    int2 	amsupport;
-    regproc 	amgettuple;
-    regproc	aminsert;
-    regproc 	amdelete;
-    regproc 	amgetattr;
-    regproc 	amsetlock;
-    regproc 	amsettid;
-    regproc	amfreetuple;
-    regproc 	ambeginscan;
-    regproc 	amrescan;
-    regproc 	amendscan;
-    regproc 	ammarkpos;
-    regproc 	amrestrpos;
-    regproc 	amopen;
-    regproc 	amclose;
-    regproc 	ambuild;
-    regproc 	amcreate; 
-    regproc 	amdestroy;
+ */
+CATALOG(pg_am)
+{
+	NameData		amname;
+	Oid				amowner;
+	char			amkind;
+	int2			amstrategies;
+	int2			amsupport;
+	regproc			amgettuple;
+	regproc			aminsert;
+	regproc			amdelete;
+	regproc			amgetattr;
+	regproc			amsetlock;
+	regproc			amsettid;
+	regproc			amfreetuple;
+	regproc			ambeginscan;
+	regproc			amrescan;
+	regproc			amendscan;
+	regproc			ammarkpos;
+	regproc			amrestrpos;
+	regproc			amopen;
+	regproc			amclose;
+	regproc			ambuild;
+	regproc			amcreate;
+	regproc			amdestroy;
 } FormData_pg_am;
 
 /* ----------------
- *	Form_pg_am corresponds to a pointer to a tuple with
- *	the format of pg_am relation.
+ *		Form_pg_am corresponds to a pointer to a tuple with
+ *		the format of pg_am relation.
  * ----------------
  */
-typedef FormData_pg_am	*Form_pg_am;
+typedef FormData_pg_am *Form_pg_am;
 
 /* ----------------
- *	compiler constants for pg_am
+ *		compiler constants for pg_am
  * ----------------
  */
-#define Natts_pg_am			22
-#define Anum_pg_am_amname		1
-#define Anum_pg_am_amowner		2
-#define Anum_pg_am_amkind		3
-#define Anum_pg_am_amstrategies		4
-#define Anum_pg_am_amsupport		5
-#define Anum_pg_am_amgettuple		6
-#define Anum_pg_am_aminsert		7
-#define Anum_pg_am_amdelete		8
-#define Anum_pg_am_amgetattr		9
-#define Anum_pg_am_amsetlock		10
-#define Anum_pg_am_amsettid		11
-#define Anum_pg_am_amfreetuple		12
-#define Anum_pg_am_ambeginscan		13
-#define Anum_pg_am_amrescan		14
-#define Anum_pg_am_amendscan		15
-#define Anum_pg_am_ammarkpos		16
-#define Anum_pg_am_amrestrpos		17
-#define Anum_pg_am_amopen		18
-#define Anum_pg_am_amclose		19
-#define Anum_pg_am_ambuild		20
-#define Anum_pg_am_amcreate		21
-#define Anum_pg_am_amdestroy		22
+#define Natts_pg_am						22
+#define Anum_pg_am_amname				1
+#define Anum_pg_am_amowner				2
+#define Anum_pg_am_amkind				3
+#define Anum_pg_am_amstrategies			4
+#define Anum_pg_am_amsupport			5
+#define Anum_pg_am_amgettuple			6
+#define Anum_pg_am_aminsert				7
+#define Anum_pg_am_amdelete				8
+#define Anum_pg_am_amgetattr			9
+#define Anum_pg_am_amsetlock			10
+#define Anum_pg_am_amsettid				11
+#define Anum_pg_am_amfreetuple			12
+#define Anum_pg_am_ambeginscan			13
+#define Anum_pg_am_amrescan				14
+#define Anum_pg_am_amendscan			15
+#define Anum_pg_am_ammarkpos			16
+#define Anum_pg_am_amrestrpos			17
+#define Anum_pg_am_amopen				18
+#define Anum_pg_am_amclose				19
+#define Anum_pg_am_ambuild				20
+#define Anum_pg_am_amcreate				21
+#define Anum_pg_am_amdestroy			22
 
 /* ----------------
- *	initial contents of pg_am
+ *		initial contents of pg_am
  * ----------------
  */
 
@@ -109,7 +110,7 @@ BKI_BEGIN
 BKI_END
 DATA(insert OID = 404 (  nobtree PGUID "o" 5 1 nobtgettuple nobtinsert nobtdelete - - - - nobtbeginscan nobtrescan nobtendscan nobtmarkpos nobtrestrpos - - nobtbuild - - ));
 BKI_BEGIN
-#endif /* NOBTREE */
+#endif							/* NOBTREE */
 BKI_END
 
-#endif /* PG_AM_H */
+#endif							/* PG_AM_H */

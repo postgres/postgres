@@ -13,86 +13,99 @@
 #include "utils/datetime.h"
 
 
-TimeADT *time_difference(TimeADT * time1, TimeADT * time2)
+TimeADT		   *
+time_difference(TimeADT * time1, TimeADT * time2)
 {
-    TimeADT *result = (TimeADT *) palloc(sizeof(TimeADT));
-    *result = *time1 - *time2;
-    return (result);
+	TimeADT		   *result = (TimeADT *) palloc(sizeof(TimeADT));
+
+	*result = *time1 - *time2;
+	return (result);
 }
 
-TimeADT *currenttime()
+TimeADT		   *
+currenttime()
 {
-    time_t current_time;
-    struct tm *tm;
-    TimeADT *result = (TimeADT *) palloc(sizeof(TimeADT));
+	time_t			current_time;
+	struct tm	   *tm;
+	TimeADT		   *result = (TimeADT *) palloc(sizeof(TimeADT));
 
-    current_time = time(NULL);
-    tm = localtime(&current_time);
-    *result = ((((tm->tm_hour*60)+tm->tm_min)*60)+tm->tm_sec);
-    return (result);
+	current_time = time(NULL);
+	tm = localtime(&current_time);
+	*result = ((((tm->tm_hour * 60) + tm->tm_min) * 60) + tm->tm_sec);
+	return (result);
 }
-DateADT currentdate()
+DateADT
+currentdate()
 {
-    time_t current_time;
-    struct tm *tm;
-    DateADT result;
-    current_time = time(NULL);
-    tm = localtime(&current_time);
+	time_t			current_time;
+	struct tm	   *tm;
+	DateADT			result;
 
-    result = date2j(tm->tm_year,tm->tm_mon + 1,tm->tm_mday) -
-	 date2j(100,1,1);
-    return (result);
-}
-int4 hours(TimeADT * time)
-{
-    return(*time / (60*60));
-}
+	current_time = time(NULL);
+	tm = localtime(&current_time);
 
-int4 minutes(TimeADT * time)
+	result = date2j(tm->tm_year, tm->tm_mon + 1, tm->tm_mday) -
+		date2j(100, 1, 1);
+	return (result);
+}
+int4
+hours(TimeADT * time)
 {
-    return(((int) (*time / 60)) % 60);
+	return (*time / (60 * 60));
 }
 
-int4 seconds(TimeADT * time)
+int4
+minutes(TimeADT * time)
 {
-    return(((int) *time) % 60);
+	return (((int) (*time / 60)) % 60);
 }
-int4 day(DateADT *date)
+
+int4
+seconds(TimeADT * time)
 {
-    struct tm tm;
-
-    j2date( (*date + date2j(2000,1,1)),
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
-
-    return (tm.tm_mday);
+	return (((int) *time) % 60);
 }
-int4 month(DateADT *date)
+int4
+day(DateADT * date)
 {
-    struct tm tm;
+	struct tm		tm;
 
-    j2date( (*date + date2j(2000,1,1)),
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+	j2date((*date + date2j(2000, 1, 1)),
+		   &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
 
-    return (tm.tm_mon);
+	return (tm.tm_mday);
 }
-int4 year(DateADT *date)
+int4
+month(DateADT * date)
 {
-    struct tm tm;
+	struct tm		tm;
 
-    j2date( (*date + date2j(2000,1,1)),
-      &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+	j2date((*date + date2j(2000, 1, 1)),
+		   &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
 
-    return (tm.tm_year);
+	return (tm.tm_mon);
 }
-int4 asminutes(TimeADT * time)
+int4
+year(DateADT * date)
 {
-    int seconds = (int) *time;
+	struct tm		tm;
 
-    return (seconds / 60);
+	j2date((*date + date2j(2000, 1, 1)),
+		   &tm.tm_year, &tm.tm_mon, &tm.tm_mday);
+
+	return (tm.tm_year);
 }
-int4 asseconds(TimeADT * time)
+int4
+asminutes(TimeADT * time)
 {
-    int seconds = (int) *time;
+	int				seconds = (int) *time;
 
-    return (seconds);
+	return (seconds / 60);
+}
+int4
+asseconds(TimeADT * time)
+{
+	int				seconds = (int) *time;
+
+	return (seconds);
 }

@@ -1,15 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * dllist.c--
- *    this is a simple doubly linked list implementation
- *    replaces the old simplelists stuff
- *    the elements of the lists are void*
+ *	  this is a simple doubly linked list implementation
+ *	  replaces the old simplelists stuff
+ *	  the elements of the lists are void*
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.5 1997/08/19 21:31:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/dllist.c,v 1.6 1997/09/07 04:41:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,191 +18,197 @@
 
 #include <lib/dllist.h>
 
-Dllist*
+Dllist		   *
 DLNewList(void)
 {
-  Dllist* l;
+	Dllist		   *l;
 
-  l = malloc(sizeof(Dllist));
-  l->dll_head = 0;
-  l->dll_tail = 0;
+	l = malloc(sizeof(Dllist));
+	l->dll_head = 0;
+	l->dll_tail = 0;
 
-  return l;
+	return l;
 }
 
- /* free up a list and all the nodes in it*/
+ /* free up a list and all the nodes in it */
 void
-DLFreeList(Dllist* l)
+DLFreeList(Dllist * l)
 {
-  Dlelem* curr;
+	Dlelem		   *curr;
 
-  while ( (curr = DLRemHead(l)) != 0)
-      free(curr);
+	while ((curr = DLRemHead(l)) != 0)
+		free(curr);
 
-  free(l);
+	free(l);
 }
 
-Dlelem* 
-DLNewElem(void* val)
+Dlelem		   *
+DLNewElem(void *val)
 {
- Dlelem* e;
- e = malloc(sizeof(Dlelem));
- e->dle_next = 0;
- e->dle_prev = 0;
- e->dle_val = val;
- e->dle_list = 0;
- return e;
+	Dlelem		   *e;
+
+	e = malloc(sizeof(Dlelem));
+	e->dle_next = 0;
+	e->dle_prev = 0;
+	e->dle_val = val;
+	e->dle_list = 0;
+	return e;
 }
 
 void
-DLFreeElem(Dlelem* e)
+DLFreeElem(Dlelem * e)
 {
-  free(e);
+	free(e);
 }
 
-Dlelem*
-DLGetHead(Dllist* l)
+Dlelem		   *
+DLGetHead(Dllist * l)
 {
-  return (l ? l->dll_head : 0);
+	return (l ? l->dll_head : 0);
 }
 
 /* get the value stored in the first element */
 #ifdef NOT_USED
-void*
-DLGetHeadVal(Dllist* l)
+void		   *
+DLGetHeadVal(Dllist * l)
 {
-  Dlelem* e = DLGetHead(l);
-  
-  return (e ? e->dle_val : 0);
+	Dlelem		   *e = DLGetHead(l);
+
+	return (e ? e->dle_val : 0);
 }
+
 #endif
 
-Dlelem* 
-DLGetTail(Dllist* l)
+Dlelem		   *
+DLGetTail(Dllist * l)
 {
-  return (l ? l->dll_tail : 0);
+	return (l ? l->dll_tail : 0);
 }
 
 /* get the value stored in the first element */
 #ifdef NOT_USED
-void*
-DLGetTailVal(Dllist* l)
+void		   *
+DLGetTailVal(Dllist * l)
 {
-  Dlelem* e = DLGetTail(l);
-  
-  return (e ? e->dle_val : 0);
+	Dlelem		   *e = DLGetTail(l);
+
+	return (e ? e->dle_val : 0);
 }
+
 #endif
 
-Dlelem* 
-DLGetPred(Dlelem* e) /* get predecessor */
+Dlelem		   *
+DLGetPred(Dlelem * e)			/* get predecessor */
 {
-  return (e ? e->dle_prev : 0);
+	return (e ? e->dle_prev : 0);
 }
 
-Dlelem* 
-DLGetSucc(Dlelem* e) /* get successor */
+Dlelem		   *
+DLGetSucc(Dlelem * e)			/* get successor */
 {
-    return (e ? e->dle_next : 0);
-}
-
-void
-DLRemove(Dlelem* e)
-{
-  Dllist* l;
-
-  if (e->dle_prev)
-    e->dle_prev->dle_next = e->dle_next;
-  if (e->dle_next)
-    e->dle_next->dle_prev = e->dle_prev;
-
-  /* check to see if we're removing the head or tail */
-  l = e->dle_list;
-  if (e == l->dll_head)
-    DLRemHead(l);
-  if (e == l->dll_tail)
-    DLRemTail(l);
-
-}
-
-void    
-DLAddHead(Dllist* l, Dlelem* e)
-{
-  e->dle_list = l;
-
-  if (l->dll_head)  {
-    l->dll_head->dle_prev = e;
-    e->dle_next = l->dll_head;
-  }
-  e->dle_prev = 0;
-  l->dll_head = e;
-
-  if (l->dll_tail == 0) /* if this is first element added */
-    l->dll_tail = l->dll_head;
+	return (e ? e->dle_next : 0);
 }
 
 void
-DLAddTail(Dllist* l, Dlelem* e)
+DLRemove(Dlelem * e)
 {
-  e->dle_list = l;
+	Dllist		   *l;
 
-  if (l->dll_tail)   {
-    l->dll_tail->dle_next = e;
-    e->dle_prev = l->dll_tail;
-  }
-  e->dle_next = 0;
-  l->dll_tail = e;
+	if (e->dle_prev)
+		e->dle_prev->dle_next = e->dle_next;
+	if (e->dle_next)
+		e->dle_next->dle_prev = e->dle_prev;
 
-  if (l->dll_head == 0) /* if this is first element added */
-    l->dll_head = l->dll_tail;
+	/* check to see if we're removing the head or tail */
+	l = e->dle_list;
+	if (e == l->dll_head)
+		DLRemHead(l);
+	if (e == l->dll_tail)
+		DLRemTail(l);
+
 }
 
-Dlelem* 
-DLRemHead(Dllist* l) 
+void
+DLAddHead(Dllist * l, Dlelem * e)
 {
- /* remove and return the head */
-  Dlelem* result;
+	e->dle_list = l;
 
-  if (l->dll_head == 0)
-    return 0;
+	if (l->dll_head)
+	{
+		l->dll_head->dle_prev = e;
+		e->dle_next = l->dll_head;
+	}
+	e->dle_prev = 0;
+	l->dll_head = e;
 
-  result = l->dll_head;
-  if (l->dll_head->dle_next) {
-    l->dll_head->dle_next->dle_prev = 0;
-  }
-
-  l->dll_head = l->dll_head->dle_next;
-
-  result->dle_next = 0;
-  result->dle_list = 0;
-    
-  if (result == l->dll_tail) /* if the head is also the tail */
-    l->dll_tail = 0;
-
-  return result;
+	if (l->dll_tail == 0)		/* if this is first element added */
+		l->dll_tail = l->dll_head;
 }
 
-Dlelem* 
-DLRemTail(Dllist* l)
+void
+DLAddTail(Dllist * l, Dlelem * e)
 {
- /* remove and return the tail */
-  Dlelem* result;
+	e->dle_list = l;
 
-  if (l->dll_tail == 0 )
-    return 0;
+	if (l->dll_tail)
+	{
+		l->dll_tail->dle_next = e;
+		e->dle_prev = l->dll_tail;
+	}
+	e->dle_next = 0;
+	l->dll_tail = e;
 
-  result = l->dll_tail;
-  if (l->dll_tail->dle_prev) {
-    l->dll_tail->dle_prev->dle_next = 0;
-  }
-    l->dll_tail = l->dll_tail->dle_prev;
-
-  result->dle_prev = 0;
-  result->dle_list = 0;
-
-  if (result == l->dll_head) /* if the tail is also the head */
-    l->dll_head = 0;
-
-  return result;
+	if (l->dll_head == 0)		/* if this is first element added */
+		l->dll_head = l->dll_tail;
 }
 
+Dlelem		   *
+DLRemHead(Dllist * l)
+{
+	/* remove and return the head */
+	Dlelem		   *result;
+
+	if (l->dll_head == 0)
+		return 0;
+
+	result = l->dll_head;
+	if (l->dll_head->dle_next)
+	{
+		l->dll_head->dle_next->dle_prev = 0;
+	}
+
+	l->dll_head = l->dll_head->dle_next;
+
+	result->dle_next = 0;
+	result->dle_list = 0;
+
+	if (result == l->dll_tail)	/* if the head is also the tail */
+		l->dll_tail = 0;
+
+	return result;
+}
+
+Dlelem		   *
+DLRemTail(Dllist * l)
+{
+	/* remove and return the tail */
+	Dlelem		   *result;
+
+	if (l->dll_tail == 0)
+		return 0;
+
+	result = l->dll_tail;
+	if (l->dll_tail->dle_prev)
+	{
+		l->dll_tail->dle_prev->dle_next = 0;
+	}
+	l->dll_tail = l->dll_tail->dle_prev;
+
+	result->dle_prev = 0;
+	result->dle_list = 0;
+
+	if (result == l->dll_head)	/* if the tail is also the head */
+		l->dll_head = 0;
+
+	return result;
+}

@@ -1,18 +1,18 @@
 /*-------------------------------------------------------------------------
  *
  * xid.c--
- *    POSTGRES transaction identifier code.
+ *	  POSTGRES transaction identifier code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.7 1997/08/19 21:30:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/Attic/xid.c,v 1.8 1997/09/07 04:39:40 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
- *	Much of this file will change when we change our representation
- *	of transaction ids -cim 3/23/90
+ *		Much of this file will change when we change our representation
+ *		of transaction ids -cim 3/23/90
  *
  * It is time to make the switch from 5 byte to 4 byte transaction ids
  * This file was totally reworked. -mer 5/22/92
@@ -31,127 +31,127 @@ extern TransactionId AmiTransactionId;
 extern TransactionId FirstTransactionId;
 
 /* ----------------------------------------------------------------
- * 	TransactionIdIsValid
+ *		TransactionIdIsValid
  *
- *	Macro-ize me.
+ *		Macro-ize me.
  * ----------------------------------------------------------------
  */
 bool
 TransactionIdIsValid(TransactionId transactionId)
 {
-    return ((bool) (transactionId != NullTransactionId) );
+	return ((bool) (transactionId != NullTransactionId));
 }
 
 /* XXX char16 name for catalogs */
 TransactionId
 xidin(char *representation)
 {
-    return (atol(representation));
+	return (atol(representation));
 }
 
 /* XXX char16 name for catalogs */
-char*
+char		   *
 xidout(TransactionId transactionId)
 {
-/*    return(TransactionIdFormString(transactionId)); */
-    char 			*representation;
-    
-    /* maximum 32 bit unsigned integer representation takes 10 chars */
-    representation = palloc(11);
-    
-    sprintf(representation, "%u", transactionId);
-    
-    return (representation);
+/*	  return(TransactionIdFormString(transactionId)); */
+	char		   *representation;
+
+	/* maximum 32 bit unsigned integer representation takes 10 chars */
+	representation = palloc(11);
+
+	sprintf(representation, "%u", transactionId);
+
+	return (representation);
 
 }
 
 /* ----------------------------------------------------------------
- *	StoreInvalidTransactionId
+ *		StoreInvalidTransactionId
  *
- *	Maybe do away with Pointer types in these routines.
- *      Macro-ize this one.
+ *		Maybe do away with Pointer types in these routines.
+ *		Macro-ize this one.
  * ----------------------------------------------------------------
  */
 void
-StoreInvalidTransactionId(TransactionId *destination)
+StoreInvalidTransactionId(TransactionId * destination)
 {
-    *destination = NullTransactionId;
+	*destination = NullTransactionId;
 }
 
 /* ----------------------------------------------------------------
- *	TransactionIdStore
+ *		TransactionIdStore
  *
- *      Macro-ize this one.
+ *		Macro-ize this one.
  * ----------------------------------------------------------------
  */
 void
 TransactionIdStore(TransactionId transactionId,
-		   TransactionId *destination)
+				   TransactionId * destination)
 {
-    *destination = transactionId;
+	*destination = transactionId;
 }
 
 /* ----------------------------------------------------------------
- *	TransactionIdEquals
+ *		TransactionIdEquals
  * ----------------------------------------------------------------
  */
 bool
 TransactionIdEquals(TransactionId id1, TransactionId id2)
 {
-    return ((bool) (id1 == id2));
+	return ((bool) (id1 == id2));
 }
 
 /* ----------------------------------------------------------------
- *	TransactionIdIsLessThan
+ *		TransactionIdIsLessThan
  * ----------------------------------------------------------------
  */
 bool
 TransactionIdIsLessThan(TransactionId id1, TransactionId id2)
 {
-    return ((bool)(id1 < id2));
+	return ((bool) (id1 < id2));
 }
 
 /* ----------------------------------------------------------------
- *	xideq
+ *		xideq
  * ----------------------------------------------------------------
  */
 
 /*
- *	xideq		- returns 1, iff xid1 == xid2
- *				  0  else;
+ *		xideq			- returns 1, iff xid1 == xid2
+ *								  0  else;
  */
 bool
 xideq(TransactionId xid1, TransactionId xid2)
 {
-    return( (bool) (xid1 == xid2) );
+	return ((bool) (xid1 == xid2));
 }
 
 
 
 /* ----------------------------------------------------------------
- *	TransactionIdIncrement
+ *		TransactionIdIncrement
  * ----------------------------------------------------------------
  */
 #ifdef NOT_USED
 void
-TransactionIdIncrement(TransactionId *transactionId)
+TransactionIdIncrement(TransactionId * transactionId)
 {
-    
-    (*transactionId)++;
-    if (*transactionId == DisabledTransactionId)
-	elog(FATAL, "TransactionIdIncrement: exhausted XID's");
-    return;
+
+	(*transactionId)++;
+	if (*transactionId == DisabledTransactionId)
+		elog(FATAL, "TransactionIdIncrement: exhausted XID's");
+	return;
 }
+
 #endif
 
 /* ----------------------------------------------------------------
- *	TransactionIdAdd
+ *		TransactionIdAdd
  * ----------------------------------------------------------------
  */
 void
-TransactionIdAdd(TransactionId *xid, int value)
+TransactionIdAdd(TransactionId * xid, int value)
 {
-    *xid += value;
-    return;
+	*xid += value;
+	return;
 }
-

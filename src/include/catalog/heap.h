@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * heap.h--
- *    prototypes for functions in lib/catalog/heap.c
+ *	  prototypes for functions in lib/catalog/heap.c
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heap.h,v 1.4 1997/08/19 21:37:47 momjian Exp $
+ * $Id: heap.h,v 1.5 1997/09/07 04:56:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,15 +17,16 @@
 
 extern Relation heap_creatr(char *relname, unsigned smgr, TupleDesc att);
 
-extern Oid heap_create(char relname[], 
-		       char *typename,
-		       int arch, 
-		       unsigned smgr, TupleDesc tupdesc);
+extern Oid
+heap_create(char relname[],
+			char *typename,
+			int arch,
+			unsigned smgr, TupleDesc tupdesc);
 
-extern void heap_destroy(char relname[]);
-extern void heap_destroyr(Relation r);
- 
-extern void InitTempRelList(void);
-extern void DestroyTempRels(void);
+extern void		heap_destroy(char relname[]);
+extern void		heap_destroyr(Relation r);
 
-#endif	/* HEAP_H */
+extern void		InitTempRelList(void);
+extern void		DestroyTempRels(void);
+
+#endif							/* HEAP_H */

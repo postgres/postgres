@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * strdup.c--
- *    copies a null-terminated string.
+ *	  copies a null-terminated string.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.2 1996/11/28 03:32:18 bryanh Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/strdup.c,v 1.3 1997/09/07 05:04:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,11 @@
 #include <stdlib.h>
 #include "strdup.h"
 
-char *
-strdup(char const *string)
+char		   *
+strdup(char const * string)
 {
-    char *nstr;
+	char		   *nstr;
 
-    nstr = strcpy((char *)malloc(strlen(string)+1), string);
-    return nstr;
+	nstr = strcpy((char *) malloc(strlen(string) + 1), string);
+	return nstr;
 }

@@ -1,7 +1,7 @@
 /*-------------------------------------------------------------------------
  *
  * rusagestub.h--
- *    Stubs for getrusage(3).
+ *	  Stubs for getrusage(3).
  *
  *
  * Copyright (c) 1994, Regents of the University of California
@@ -13,18 +13,19 @@
 #ifndef RUSAGESTUB_H
 #define RUSAGESTUB_H
 
-#include <sys/time.h>	/* for struct timeval */
-#include <sys/times.h>	/* for struct tms */
-#include <limits.h>	/* for CLK_TCK */
+#include <sys/time.h>			/* for struct timeval */
+#include <sys/times.h>			/* for struct tms */
+#include <limits.h>				/* for CLK_TCK */
 
-#define	RUSAGE_SELF	0
-#define	RUSAGE_CHILDREN	-1
+#define RUSAGE_SELF		0
+#define RUSAGE_CHILDREN -1
 
-struct rusage {
-    struct timeval ru_utime;		/* user time used */
-    struct timeval ru_stime;		/* system time used */
+struct rusage
+{
+	struct timeval	ru_utime;	/* user time used */
+	struct timeval	ru_stime;	/* system time used */
 };
 
-extern int getrusage(int who, struct rusage *rusage);
+extern int		getrusage(int who, struct rusage * rusage);
 
-#endif /* RUSAGESTUB_H */
+#endif							/* RUSAGESTUB_H */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * port.c--
- *    Ultrix-specific routines
+ *	  Ultrix-specific routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/port.c,v 1.2 1997/02/13 09:53:59 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/ultrix4/Attic/port.c,v 1.3 1997/09/07 04:47:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,6 @@ void
 init_address_fixup()
 {
 #ifdef NOFIXADE
-    syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
-#endif /* NOFIXADE */
+	syscall(SYS_sysmips, MIPS_FIXADE, 0, NULL, NULL, NULL);
+#endif							/* NOFIXADE */
 }

@@ -1,19 +1,19 @@
 /*-------------------------------------------------------------------------
  *
  * pg_amproc.h--
- *    definition of the system "amproc" relation (pg_amproce)
- *    along with the relation's initial contents.  The amproc
- *    catalog is used to store procedures used by indexed access
- *    methods that aren't associated with operators.
+ *	  definition of the system "amproc" relation (pg_amproce)
+ *	  along with the relation's initial contents.  The amproc
+ *	  catalog is used to store procedures used by indexed access
+ *	  methods that aren't associated with operators.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_amproc.h,v 1.4 1997/09/04 18:43:57 thomas Exp $
+ * $Id: pg_amproc.h,v 1.5 1997/09/07 04:56:39 momjian Exp $
  *
  * NOTES
- *    the genbki.sh script reads this file and generates .bki
- *    information from the DATA() statements.
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
@@ -21,43 +21,44 @@
 #define PG_AMPROC_H
 
 /* ----------------
- *	postgres.h contains the system type definintions and the
- *	CATALOG(), BOOTSTRAP and DATA() sugar words so this file
- *	can be read by both genbki.sh and the C compiler.
+ *		postgres.h contains the system type definintions and the
+ *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
+ *		can be read by both genbki.sh and the C compiler.
  * ----------------
  */
 
 /* ----------------
- *	pg_amproc definition.  cpp turns this into
- *	typedef struct FormData_pg_amproc
+ *		pg_amproc definition.  cpp turns this into
+ *		typedef struct FormData_pg_amproc
  * ----------------
- */ 
-CATALOG(pg_amproc) {
-    Oid 	amid;
-    Oid 	amopclaid;
-    Oid 	amproc;
-    int2 	amprocnum;
+ */
+CATALOG(pg_amproc)
+{
+	Oid				amid;
+	Oid				amopclaid;
+	Oid				amproc;
+	int2			amprocnum;
 } FormData_pg_amproc;
 
 /* ----------------
- *	Form_pg_amproc corresponds to a pointer to a tuple with
- *	the format of pg_amproc relation.
+ *		Form_pg_amproc corresponds to a pointer to a tuple with
+ *		the format of pg_amproc relation.
  * ----------------
  */
-typedef FormData_pg_amproc	*Form_pg_amproc;
+typedef FormData_pg_amproc *Form_pg_amproc;
 
 /* ----------------
- *	compiler constants for pg_amproc
+ *		compiler constants for pg_amproc
  * ----------------
  */
-#define Natts_pg_amproc			4
-#define Anum_pg_amproc_amid		1
-#define Anum_pg_amproc_amopclaid	2
-#define Anum_pg_amproc_amproc		3
-#define Anum_pg_amproc_amprocnum	4
+#define Natts_pg_amproc					4
+#define Anum_pg_amproc_amid				1
+#define Anum_pg_amproc_amopclaid		2
+#define Anum_pg_amproc_amproc			3
+#define Anum_pg_amproc_amprocnum		4
 
 /* ----------------
- *	initial contents of pg_amproc
+ *		initial contents of pg_amproc
  * ----------------
  */
 
@@ -114,7 +115,7 @@ DATA(insert OID = 0 (404  430 1274 1));
 DATA(insert OID = 0 (404  431  360 1));
 DATA(insert OID = 0 (404  432  357 1));
 BKI_BEGIN
-#endif /* NOBTREE */
+#endif							/* NOBTREE */
 BKI_END
 
 DATA(insert OID = 0 (405  421  449 1));
@@ -134,4 +135,4 @@ DATA(insert OID = 0 (405 1077 1081 1));
 DATA(insert OID = 0 (405 1114  450 1));
 DATA(insert OID = 0 (405 1115  694 1));
 
-#endif /* PG_AMPROC_H */
+#endif							/* PG_AMPROC_H */

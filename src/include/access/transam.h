@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * transam.h--
- *    postgres transaction access method support code header
+ *	  postgres transaction access method support code header
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: transam.h,v 1.7 1997/08/19 21:37:38 momjian Exp $
+ * $Id: transam.h,v 1.8 1997/09/07 04:56:14 momjian Exp $
  *
- *   NOTES
- *	Transaction System Version 101 now support proper oid
- *	generation and recording in the variable relation.
+ *	 NOTES
+ *		Transaction System Version 101 now support proper oid
+ *		generation and recording in the variable relation.
  *
  *-------------------------------------------------------------------------
  */
@@ -21,119 +21,122 @@
 #include <utils/nabstime.h>
 
 /* ----------------
- *	transaction system version id
+ *		transaction system version id
  *
- *	this is stored on the first page of the log, time and variable
- *	relations on the first 4 bytes.  This is so that if we improve
- *	the format of the transaction log after postgres version 2, then
- *	people won't have to rebuild their databases.
+ *		this is stored on the first page of the log, time and variable
+ *		relations on the first 4 bytes.  This is so that if we improve
+ *		the format of the transaction log after postgres version 2, then
+ *		people won't have to rebuild their databases.
  *
- *	TRANS_SYSTEM_VERSION 100 means major version 1 minor version 0.
- *	Two databases with the same major version should be compatible,
- *	even if their minor versions differ.
+ *		TRANS_SYSTEM_VERSION 100 means major version 1 minor version 0.
+ *		Two databases with the same major version should be compatible,
+ *		even if their minor versions differ.
  * ----------------
  */
 #define TRANS_SYSTEM_VERSION	101
 
 /* ----------------
- *	transaction id status values
+ *		transaction id status values
  *
- *	someday we will use "11" = 3 = XID_INVALID to mean the
- *	starting of run-length encoded log data.
+ *		someday we will use "11" = 3 = XID_INVALID to mean the
+ *		starting of run-length encoded log data.
  * ----------------
  */
-#define XID_COMMIT      2       		/* transaction commited */
-#define XID_ABORT       1       		/* transaction aborted */
-#define XID_INPROGRESS  0       		/* transaction in progress */
-#define XID_INVALID     3       		/* other */
+#define XID_COMMIT		2		/* transaction commited */
+#define XID_ABORT		1		/* transaction aborted */
+#define XID_INPROGRESS	0		/* transaction in progress */
+#define XID_INVALID		3		/* other */
 
-typedef unsigned char XidStatus; 		/* (2 bits) */
+typedef unsigned char XidStatus;/* (2 bits) */
 
 /* ----------
- *      note: we reserve the first 16384 object ids for internal use.
- *      oid's less than this appear in the .bki files.  the choice of
- *      16384 is completely arbitrary.
+ *		note: we reserve the first 16384 object ids for internal use.
+ *		oid's less than this appear in the .bki files.  the choice of
+ *		16384 is completely arbitrary.
  * ----------
  */
 #define BootstrapObjectIdData 16384
 
 /* ----------------
- *   	BitIndexOf computes the index of the Nth xid on a given block
+ *		BitIndexOf computes the index of the Nth xid on a given block
  * ----------------
  */
-#define BitIndexOf(N)   ((N) * 2)
+#define BitIndexOf(N)	((N) * 2)
 
 /* ----------------
- *	transaction page definitions
+ *		transaction page definitions
  * ----------------
  */
-#define TP_DataSize		BLCKSZ
-#define TP_NumXidStatusPerBlock	(TP_DataSize * 4)
-#define TP_NumTimePerBlock	(TP_DataSize / 4)
+#define TP_DataSize				BLCKSZ
+#define TP_NumXidStatusPerBlock (TP_DataSize * 4)
+#define TP_NumTimePerBlock		(TP_DataSize / 4)
 
 /* ----------------
- *	LogRelationContents structure
+ *		LogRelationContents structure
  *
- *	This structure describes the storage of the data in the
- *	first 128 bytes of the log relation.  This storage is never
- *	used for transaction status because transaction id's begin
- *	their numbering at 512.
+ *		This structure describes the storage of the data in the
+ *		first 128 bytes of the log relation.  This storage is never
+ *		used for transaction status because transaction id's begin
+ *		their numbering at 512.
  *
- *	The first 4 bytes of this relation store the version
- *	number of the transction system.
+ *		The first 4 bytes of this relation store the version
+ *		number of the transction system.
  * ----------------
  */
-typedef struct LogRelationContentsData {
-    int			TransSystemVersion;
-} LogRelationContentsData;
+typedef struct LogRelationContentsData
+{
+	int				TransSystemVersion;
+}				LogRelationContentsData;
 
 typedef LogRelationContentsData *LogRelationContents;
 
 /* ----------------
- *	TimeRelationContents structure
+ *		TimeRelationContents structure
  *
- *	This structure describes the storage of the data in the
- *	first 2048 bytes of the time relation.  This storage is never
- *	used for transaction commit times because transaction id's begin
- *	their numbering at 512.
+ *		This structure describes the storage of the data in the
+ *		first 2048 bytes of the time relation.	This storage is never
+ *		used for transaction commit times because transaction id's begin
+ *		their numbering at 512.
  *
- *	The first 4 bytes of this relation store the version
- *	number of the transction system.
+ *		The first 4 bytes of this relation store the version
+ *		number of the transction system.
  * ----------------
  */
-typedef struct TimeRelationContentsData {
-    int			TransSystemVersion;
-} TimeRelationContentsData;
+typedef struct TimeRelationContentsData
+{
+	int				TransSystemVersion;
+}				TimeRelationContentsData;
 
 typedef TimeRelationContentsData *TimeRelationContents;
 
 /* ----------------
- *	VariableRelationContents structure
+ *		VariableRelationContents structure
  *
- *	The variable relation is a special "relation" which
- *	is used to store various system "variables" persistantly.
- *	Unlike other relations in the system, this relation
- *	is updated in place whenever the variables change.
+ *		The variable relation is a special "relation" which
+ *		is used to store various system "variables" persistantly.
+ *		Unlike other relations in the system, this relation
+ *		is updated in place whenever the variables change.
  *
- *	The first 4 bytes of this relation store the version
- *	number of the transction system.
+ *		The first 4 bytes of this relation store the version
+ *		number of the transction system.
  *
- *	Currently, the relation has only one page and the next
- *	available xid, the last committed xid and the next
- *	available oid are stored there.
+ *		Currently, the relation has only one page and the next
+ *		available xid, the last committed xid and the next
+ *		available oid are stored there.
  * ----------------
  */
-typedef struct VariableRelationContentsData {
-    int			TransSystemVersion;
-    TransactionId	nextXidData;
-    TransactionId	lastXidData;
-    Oid			nextOid;
-} VariableRelationContentsData;
+typedef struct VariableRelationContentsData
+{
+	int				TransSystemVersion;
+	TransactionId	nextXidData;
+	TransactionId	lastXidData;
+	Oid				nextOid;
+}				VariableRelationContentsData;
 
 typedef VariableRelationContentsData *VariableRelationContents;
 
 /* ----------------
- *	extern declarations
+ *		extern declarations
  * ----------------
  */
 
@@ -141,59 +144,64 @@ typedef VariableRelationContentsData *VariableRelationContents;
  * prototypes for functions in transam/transam.c
  */
 extern AbsoluteTime TransactionIdGetCommitTime(TransactionId transactionId);
-extern void InitializeTransactionLog(void);
-extern bool TransactionIdDidCommit(TransactionId transactionId);
-extern bool TransactionIdDidAbort(TransactionId transactionId);
-extern void TransactionIdCommit(TransactionId transactionId);
-extern void TransactionIdAbort(TransactionId transactionId);
+extern void		InitializeTransactionLog(void);
+extern bool		TransactionIdDidCommit(TransactionId transactionId);
+extern bool		TransactionIdDidAbort(TransactionId transactionId);
+extern void		TransactionIdCommit(TransactionId transactionId);
+extern void		TransactionIdAbort(TransactionId transactionId);
 
 /* in transam/transsup.c */
-extern void AmiTransactionOverride(bool flag);
-extern void TransComputeBlockNumber(Relation relation,
-	TransactionId transactionId, BlockNumber *blockNumberOutP);
-extern XidStatus TransBlockNumberGetXidStatus(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, bool *failP);
-extern void TransBlockNumberSetXidStatus(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
-	bool *failP);
-extern AbsoluteTime TransBlockNumberGetCommitTime(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, bool *failP);
-extern void TransBlockNumberSetCommitTime(Relation relation,
-	BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
-	bool *failP);
+extern void		AmiTransactionOverride(bool flag);
+extern void
+TransComputeBlockNumber(Relation relation,
+			 TransactionId transactionId, BlockNumber * blockNumberOutP);
+extern XidStatus
+TransBlockNumberGetXidStatus(Relation relation,
+			   BlockNumber blockNumber, TransactionId xid, bool * failP);
+extern void
+TransBlockNumberSetXidStatus(Relation relation,
+		   BlockNumber blockNumber, TransactionId xid, XidStatus xstatus,
+							 bool * failP);
+extern AbsoluteTime
+TransBlockNumberGetCommitTime(Relation relation,
+			   BlockNumber blockNumber, TransactionId xid, bool * failP);
+extern void
+TransBlockNumberSetCommitTime(Relation relation,
+		  BlockNumber blockNumber, TransactionId xid, AbsoluteTime xtime,
+							  bool * failP);
 
 /* in transam/varsup.c */
-extern void VariableRelationPutNextXid(TransactionId xid);
-extern void GetNewTransactionId(TransactionId *xid);
-extern void UpdateLastCommittedXid(TransactionId xid);
-extern void GetNewObjectId(Oid *oid_return);
-extern void CheckMaxObjectId(Oid assigned_oid);
+extern void		VariableRelationPutNextXid(TransactionId xid);
+extern void		GetNewTransactionId(TransactionId * xid);
+extern void		UpdateLastCommittedXid(TransactionId xid);
+extern void		GetNewObjectId(Oid * oid_return);
+extern void		CheckMaxObjectId(Oid assigned_oid);
 
 /* ----------------
- *	global variable extern declarations
+ *		global variable extern declarations
  * ----------------
  */
 
 /* in transam.c */
-extern Relation	LogRelation;
-extern Relation	TimeRelation;
-extern Relation	VariableRelation;
+extern Relation LogRelation;
+extern Relation TimeRelation;
+extern Relation VariableRelation;
 
-extern TransactionId	cachedGetCommitTimeXid;
-extern AbsoluteTime	cachedGetCommitTime;
-extern TransactionId	cachedTestXid;
-extern XidStatus	cachedTestXidStatus;
+extern TransactionId cachedGetCommitTimeXid;
+extern AbsoluteTime cachedGetCommitTime;
+extern TransactionId cachedTestXid;
+extern XidStatus cachedTestXidStatus;
 
 extern TransactionId NullTransactionId;
 extern TransactionId AmiTransactionId;
 extern TransactionId FirstTransactionId;
 
-extern int RecoveryCheckingEnableState;
+extern int		RecoveryCheckingEnableState;
 
 /* in transsup.c */
-extern bool AMI_OVERRIDE;	
+extern bool		AMI_OVERRIDE;
 
 /* in varsup.c */
-extern int OidGenLockId;
+extern int		OidGenLockId;
 
-#endif /* TRAMSAM_H */
+#endif							/* TRAMSAM_H */

@@ -1,20 +1,20 @@
 /*-------------------------------------------------------------------------
  *
  * geqo_recombination.h--
- *    prototypes for recombination in the genetic query optimizer
+ *	  prototypes for recombination in the genetic query optimizer
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_recombination.h,v 1.1 1997/02/19 12:59:04 scrappy Exp $
+ * $Id: geqo_recombination.h,v 1.2 1997/09/07 04:59:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 /* contributed by:
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
-   *  Martin Utesch              * Institute of Automatic Control      *
-   =                             = University of Mining and Technology =
-   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany                   *
+   *  Martin Utesch				 * Institute of Automatic Control	   *
+   =							 = University of Mining and Technology =
+   *  utesch@aut.tu-freiberg.de  * Freiberg, Germany				   *
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
@@ -24,54 +24,56 @@
 #define GEQO_RECOMBINATION_H
 
 
-extern void init_tour(Gene *tour, int num_gene);
+extern void		init_tour(Gene * tour, int num_gene);
 
 
 /* edge recombination crossover [ERX] */
 
-typedef struct Edge {
-  Gene edge_list[4]; /* list of edges */
-  int  total_edges;
-  int  unused_edges;
-} Edge;
+typedef struct Edge
+{
+	Gene			edge_list[4];		/* list of edges */
+	int				total_edges;
+	int				unused_edges;
+}				Edge;
 
-extern Edge *alloc_edge_table(int num_gene);
-extern void free_edge_table(Edge *edge_table);
+extern Edge    *alloc_edge_table(int num_gene);
+extern void		free_edge_table(Edge * edge_table);
 
-extern float gimme_edge_table (Gene *tour1, Gene *tour2, int num_gene, Edge *edge_table);
+extern float	gimme_edge_table(Gene * tour1, Gene * tour2, int num_gene, Edge * edge_table);
 
-extern int gimme_tour(Edge *edge_table, Gene *new_gene, int num_gene);
+extern int		gimme_tour(Edge * edge_table, Gene * new_gene, int num_gene);
 
 
 /* partially matched crossover [PMX] */
 
-#define DAD 1                 /* indicator for gene from dad */
-#define MOM 0                 /* indicator for gene from mom */
- 
-extern void pmx(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene);
+#define DAD 1					/* indicator for gene from dad */
+#define MOM 0					/* indicator for gene from mom */
+
+extern void		pmx(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene);
 
 
-typedef struct City {
-  int	tour2_position;
-  int	tour1_position;
-  int	used;
-  int	select_list;
-} City;
+typedef struct City
+{
+	int				tour2_position;
+	int				tour1_position;
+	int				used;
+	int				select_list;
+}				City;
 
-extern City *alloc_city_table(int num_gene);
-extern void free_city_table(City *city_table);
+extern City    *alloc_city_table(int num_gene);
+extern void		free_city_table(City * city_table);
 
 /* cycle crossover [CX] */
-extern int cx(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table);
+extern int		cx(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table);
 
 /* position crossover [PX] */
-extern void px(Gene *tour1, Gene *tour2, Gene *offspring, int num_gene, City *city_table);
+extern void		px(Gene * tour1, Gene * tour2, Gene * offspring, int num_gene, City * city_table);
 
 /* order crossover [OX1] according to Davis */
-extern void ox1(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_table);
+extern void		ox1(Gene * mom, Gene * dad, Gene * offspring, int num_gene, City * city_table);
 
 /* order crossover [OX2] according to Syswerda */
-extern void ox2(Gene *mom, Gene *dad, Gene *offspring, int num_gene, City *city_table);
+extern void		ox2(Gene * mom, Gene * dad, Gene * offspring, int num_gene, City * city_table);
 
 
-#endif /* GEQO_RECOMBINATION_H */
+#endif							/* GEQO_RECOMBINATION_H */

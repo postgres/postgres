@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * itemid.h--
- *    Standard POSTGRES buffer page item identifier definitions.
+ *	  Standard POSTGRES buffer page item identifier definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itemid.h,v 1.1 1996/08/28 01:58:08 scrappy Exp $
+ * $Id: itemid.h,v 1.2 1997/09/07 05:01:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	ITEMID_H
+#ifndef ITEMID_H
 #define ITEMID_H
 
 typedef uint16	ItemOffset;
@@ -20,56 +20,57 @@ typedef bits16	ItemIdFlags;
 
 
 
-typedef struct ItemIdData {		/* line pointers */
-	unsigned	lp_off:13,	/* offset to find tup */
-					/* can be reduced by 2 if necc. */
-			lp_flags:6,	/* flags on tuple */
-			lp_len:13;	/* length of tuple */
-} ItemIdData;
+typedef struct ItemIdData
+{								/* line pointers */
+	unsigned		lp_off:13,	/* offset to find tup */
+	/* can be reduced by 2 if necc. */
+					lp_flags:6, /* flags on tuple */
+					lp_len:13;	/* length of tuple */
+}				ItemIdData;
 
-typedef struct ItemIdData	*ItemId;
+typedef struct ItemIdData *ItemId;
 
-#ifndef	LP_USED
-#define LP_USED		0x01	/* this line pointer is being used */
+#ifndef LP_USED
+#define LP_USED			0x01	/* this line pointer is being used */
 #endif
 
 /* ----------------
- *	support macros
+ *		support macros
  * ----------------
  */
-/* 
- *	ItemIdGetLength
+/*
+ *		ItemIdGetLength
  */
 #define ItemIdGetLength(itemId) \
    ((itemId)->lp_len)
 
-/* 
- *	ItemIdGetOffset
+/*
+ *		ItemIdGetOffset
  */
 #define ItemIdGetOffset(itemId) \
    ((itemId)->lp_off)
 
-/* 
- *	ItemIdGetFlags
+/*
+ *		ItemIdGetFlags
  */
 #define ItemIdGetFlags(itemId) \
    ((itemId)->lp_flags)
 
 /*
  * ItemIdIsValid --
- *	True iff disk item identifier is valid.
+ *		True iff disk item identifier is valid.
  */
-#define	ItemIdIsValid(itemId)	PointerIsValid(itemId)
+#define ItemIdIsValid(itemId)	PointerIsValid(itemId)
 
 /*
  * ItemIdIsUsed --
- *	True iff disk item identifier is in use.
+ *		True iff disk item identifier is in use.
  *
  * Note:
- *	Assumes disk item identifier is valid.
+ *		Assumes disk item identifier is valid.
  */
 #define ItemIdIsUsed(itemId) \
-    (AssertMacro(ItemIdIsValid(itemId)) ? \
-     (bool) (((itemId)->lp_flags & LP_USED) != 0) : false)
+	(AssertMacro(ItemIdIsValid(itemId)) ? \
+	 (bool) (((itemId)->lp_flags & LP_USED) != 0) : false)
 
-#endif	/* ITEMID_H */
+#endif							/* ITEMID_H */

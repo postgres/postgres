@@ -1,2 +1,2 @@
 int
-inet_aton(const char *cp, struct in_addr *addr);
+				inet_aton(const char *cp, struct in_addr * addr);

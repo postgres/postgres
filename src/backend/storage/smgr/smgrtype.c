@@ -1,81 +1,83 @@
 /*-------------------------------------------------------------------------
  *
  * smgrtype.c--
- *    storage manager type
+ *	  storage manager type
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.2 1996/11/03 05:08:01 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.3 1997/09/07 04:49:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include "postgres.h"
 
-#include "utils/builtins.h"	/* where the declarations go */
+#include "utils/builtins.h"		/* where the declarations go */
 #include "utils/palloc.h"
 #include "storage/smgr.h"
 
-typedef struct smgrid {
-    char *smgr_name;
-} smgrid;
+typedef struct smgrid
+{
+	char		   *smgr_name;
+}				smgrid;
 
 /*
- *  StorageManager[] -- List of defined storage managers.
+ *	StorageManager[] -- List of defined storage managers.
  *
- *	The weird comma placement is to keep compilers happy no matter
- *	which of these is (or is not) defined.
+ *		The weird comma placement is to keep compilers happy no matter
+ *		which of these is (or is not) defined.
  */
 
-static smgrid StorageManager[] = {
+static smgrid	StorageManager[] = {
 	{"magnetic disk"},
 #ifdef MAIN_MEMORY
 	{"main memory"}
-#endif /* MAIN_MEMORY */
+#endif							/* MAIN_MEMORY */
 };
 
-static int NStorageManagers = lengthof(StorageManager);
+static int		NStorageManagers = lengthof(StorageManager);
 
 int2
 smgrin(char *s)
 {
-    int i;
+	int				i;
 
-    for (i = 0; i < NStorageManagers; i++) {
-	if (strcmp(s, StorageManager[i].smgr_name) == 0)
-	    return((int2) i);
-    }
-    elog(WARN, "smgrin: illegal storage manager name %s", s);
-    return 0;
+	for (i = 0; i < NStorageManagers; i++)
+	{
+		if (strcmp(s, StorageManager[i].smgr_name) == 0)
+			return ((int2) i);
+	}
+	elog(WARN, "smgrin: illegal storage manager name %s", s);
+	return 0;
 }
 
-char *
+char		   *
 smgrout(int2 i)
 {
-    char *s;
+	char		   *s;
 
-    if (i >= NStorageManagers || i < 0)
-	elog(WARN, "Illegal storage manager id %d", i);
+	if (i >= NStorageManagers || i < 0)
+		elog(WARN, "Illegal storage manager id %d", i);
 
-    s = (char *) palloc(strlen(StorageManager[i].smgr_name) + 1);
-    strcpy(s, StorageManager[i].smgr_name);
-    return (s);
+	s = (char *) palloc(strlen(StorageManager[i].smgr_name) + 1);
+	strcpy(s, StorageManager[i].smgr_name);
+	return (s);
 }
 
 bool
 smgreq(int2 a, int2 b)
 {
-    if (a == b)
-	return (true);
-    return (false);
+	if (a == b)
+		return (true);
+	return (false);
 }
 
 bool
 smgrne(int2 a, int2 b)
 {
-    if (a == b)
-	return (false);
-    return (true);
+	if (a == b)
+		return (false);
+	return (true);
 }

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * planner.h--
- *    prototypes for planner.c.
+ *	  prototypes for planner.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.2 1996/11/06 10:30:20 scrappy Exp $
+ * $Id: planner.h,v 1.3 1997/09/07 04:59:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 /*
 */
 
-extern Plan *planner(Query *parse);
-extern void pg_checkretval(Oid rettype, QueryTreeList *querytree_list);
+extern Plan    *planner(Query * parse);
+extern void		pg_checkretval(Oid rettype, QueryTreeList * querytree_list);
 
-#endif	/* PLANNER_H */
+#endif							/* PLANNER_H */

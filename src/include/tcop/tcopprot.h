@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * tcopprot.h--
- *    prototypes for postgres.c.
+ *	  prototypes for postgres.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.4 1997/08/19 21:40:10 momjian Exp $
+ * $Id: tcopprot.h,v 1.5 1997/09/07 05:01:56 momjian Exp $
  *
  * OLD COMMENTS
- *    This file was created so that other c files could get the two
- *    function prototypes without having to include tcop.h which single
- *    handedly includes the whole f*cking tree -- mer 5 Nov. 1991
+ *	  This file was created so that other c files could get the two
+ *	  function prototypes without having to include tcop.h which single
+ *	  handedly includes the whole f*cking tree -- mer 5 Nov. 1991
  *
  *-------------------------------------------------------------------------
  */
@@ -22,17 +22,20 @@
 #include <parser/parse_query.h>
 
 #ifndef BOOTSTRAP_INCLUDE
-extern List *pg_plan(char *query_string, Oid *typev, int nargs,
-		     QueryTreeList **queryListP, CommandDest dest);
-extern void pg_eval(char *query_string, char **argv, Oid *typev, int nargs);
-extern void pg_eval_dest(char *query_string, char **argv, Oid *typev,
+extern List    *
+pg_plan(char *query_string, Oid * typev, int nargs,
+		QueryTreeList ** queryListP, CommandDest dest);
+extern void		pg_eval(char *query_string, char **argv, Oid * typev, int nargs);
+extern void
+pg_eval_dest(char *query_string, char **argv, Oid * typev,
 			 int nargs, CommandDest dest);
-#endif /* BOOTSTRAP_HEADER */
 
-extern void handle_warn(SIGNAL_ARGS);
-extern void die(SIGNAL_ARGS);
-extern int PostgresMain(int argc, char *argv[]);
-extern void ResetUsage(void);
-extern void ShowUsage(void);
+#endif							/* BOOTSTRAP_HEADER */
 
-#endif /* tcopprotIncluded */
+extern void		handle_warn(SIGNAL_ARGS);
+extern void		die(SIGNAL_ARGS);
+extern int		PostgresMain(int argc, char *argv[]);
+extern void		ResetUsage(void);
+extern void		ShowUsage(void);
+
+#endif							/* tcopprotIncluded */

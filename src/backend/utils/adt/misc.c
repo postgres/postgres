@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * misc.c--
- *    
+ *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.7 1997/07/28 00:55:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/misc.c,v 1.8 1997/09/07 04:50:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,70 +18,73 @@
 #include "catalog/pg_type.h"
 #include "utils/builtins.h"
 
-#include "port-protos.h"  /* For random(), sometimes */
+#include "port-protos.h"		/* For random(), sometimes */
 
 
 /*-------------------------------------------------------------------------
- * Check if data is Null 
+ * Check if data is Null
  */
 bool
-nullvalue(Datum value, bool *isNull)
+nullvalue(Datum value, bool * isNull)
 {
-    if (*isNull) {
-	*isNull = false;
-	return(true);
-    }
-    return(false);
-    
+	if (*isNull)
+	{
+		*isNull = false;
+		return (true);
+	}
+	return (false);
+
 }
 
 /*----------------------------------------------------------------------*
- *     check if data is not Null                                        *
+ *	   check if data is not Null										*
  *--------------------------------------------------------------------- */
 bool
-nonnullvalue(Datum value, bool *isNull)
+nonnullvalue(Datum value, bool * isNull)
 {
-    if (*isNull) {
-	*isNull = false;
-	return(false);
-    }
-    return(true);
-    
+	if (*isNull)
+	{
+		*isNull = false;
+		return (false);
+	}
+	return (true);
+
 }
 
 /*
  * oidrand (oid o, int4 X)-
- *    takes in an oid and a int4 X, and will return 'true'
- *  about 1/X of the time.
- *    Useful for doing random sampling or subsetting.
- *  if X == 0, this will always return true;
+ *	  takes in an oid and a int4 X, and will return 'true'
+ *	about 1/X of the time.
+ *	  Useful for doing random sampling or subsetting.
+ *	if X == 0, this will always return true;
  *
  * Example use:
- *     select * from TEMP where oidrand(TEMP.oid, 10)
+ *	   select * from TEMP where oidrand(TEMP.oid, 10)
  * will return about 1/10 of the tuples in TEMP
  *
  */
-bool 
+bool
 oidrand(Oid o, int32 X)
 {
-    bool result;
+	bool			result;
 
-    if (X == 0) return true;
+	if (X == 0)
+		return true;
 
-    result = (random() % X == 0);
-    return result;
+	result = (random() % X == 0);
+	return result;
 }
 
 /*
    oidsrand(int32 X) -
-      seeds the random number generator
-      always return true
-*/ 
+	  seeds the random number generator
+	  always return true
+*/
 bool
 oidsrand(int32 X)
 {
-    srand(X);
-    return true;
+	srand(X);
+	return true;
 }
 
 
@@ -89,5 +92,5 @@ oidsrand(int32 X)
 int32
 userfntest(int i)
 {
-    return (i);
+	return (i);
 }

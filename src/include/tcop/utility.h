@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * utility.h--
- *    prototypes for utility.c.
+ *	  prototypes for utility.c.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: utility.h,v 1.2 1996/11/04 12:07:05 scrappy Exp $
+ * $Id: utility.h,v 1.3 1997/09/07 05:01:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,6 +15,6 @@
 
 #include <executor/execdesc.h>
 
-extern void ProcessUtility(Node *parsetree, CommandDest dest);
+extern void		ProcessUtility(Node * parsetree, CommandDest dest);
 
-#endif	/* UTILITY_H */
+#endif							/* UTILITY_H */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * port.c--
- *    OSF/1-specific routines
+ *	  OSF/1-specific routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/alpha/Attic/port.c,v 1.1.1.1 1996/07/09 06:21:42 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/alpha/Attic/port.c,v 1.2 1997/09/07 04:45:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,14 +21,17 @@ void
 init_address_fixup()
 {
 #ifdef NOFIXADE
-    int buffer[] = { SSIN_UACPROC, UAC_SIGBUS };
-#endif /* NOFIXADE */
-#ifdef NOPRINTADE
-    int buffer[] = { SSIN_UACPROC, UAC_NOPRINT };
-#endif /* NOPRINTADE */
+	int				buffer[] = {SSIN_UACPROC, UAC_SIGBUS};
 
-    if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
-		   (unsigned long) NULL) < 0) {
-	elog(NOTICE, "setsysinfo failed: %d\n", errno);
-    }
+#endif							/* NOFIXADE */
+#ifdef NOPRINTADE
+	int				buffer[] = {SSIN_UACPROC, UAC_NOPRINT};
+
+#endif							/* NOPRINTADE */
+
+	if (setsysinfo(SSI_NVPAIRS, buffer, 1, (caddr_t) NULL,
+				   (unsigned long) NULL) < 0)
+	{
+		elog(NOTICE, "setsysinfo failed: %d\n", errno);
+	}
 }

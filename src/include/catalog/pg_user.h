@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * pg_user.h--
- *    definition of the system "user" relation (pg_user)
- *    along with the relation's initial contents.
+ *	  definition of the system "user" relation (pg_user)
+ *	  along with the relation's initial contents.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_user.h,v 1.3 1996/11/03 23:49:07 scrappy Exp $
+ * $Id: pg_user.h,v 1.4 1997/09/07 04:57:13 momjian Exp $
  *
  * NOTES
- *    the genbki.sh script reads this file and generates .bki
- *    information from the DATA() statements.
+ *	  the genbki.sh script reads this file and generates .bki
+ *	  information from the DATA() statements.
  *
  *-------------------------------------------------------------------------
  */
@@ -21,43 +21,44 @@
 
 /* Prototype required for superuser() from superuser.c */
 
-bool superuser(void);
+bool			superuser(void);
 
 /* ----------------
- *	pg_user definition.  cpp turns this into
- *	typedef struct FormData_pg_user
+ *		pg_user definition.  cpp turns this into
+ *		typedef struct FormData_pg_user
  * ----------------
- */ 
-CATALOG(pg_user) BOOTSTRAP {
-    NameData 	usename;
-    int4 	usesysid;
-    bool 	usecreatedb;
-    bool 	usetrace;
-    bool 	usesuper;
-    bool 	usecatupd;  
+ */
+CATALOG(pg_user) BOOTSTRAP
+{
+	NameData		usename;
+	int4			usesysid;
+	bool			usecreatedb;
+	bool			usetrace;
+	bool			usesuper;
+	bool			usecatupd;
 } FormData_pg_user;
 
 /* ----------------
- *	Form_pg_user corresponds to a pointer to a tuple with
- *	the format of pg_user relation.
+ *		Form_pg_user corresponds to a pointer to a tuple with
+ *		the format of pg_user relation.
  * ----------------
  */
-typedef FormData_pg_user	*Form_pg_user;
+typedef FormData_pg_user *Form_pg_user;
 
 /* ----------------
- *	compiler constants for pg_user
+ *		compiler constants for pg_user
  * ----------------
  */
-#define Natts_pg_user			6
-#define Anum_pg_user_usename		1
-#define Anum_pg_user_usesysid		2
-#define Anum_pg_user_usecreatedb	3
-#define Anum_pg_user_usetrace		4
-#define Anum_pg_user_usesuper		5
-#define Anum_pg_user_usecatupd		6
+#define Natts_pg_user					6
+#define Anum_pg_user_usename			1
+#define Anum_pg_user_usesysid			2
+#define Anum_pg_user_usecreatedb		3
+#define Anum_pg_user_usetrace			4
+#define Anum_pg_user_usesuper			5
+#define Anum_pg_user_usecatupd			6
 
 /* ----------------
- *	initial contents of pg_user
+ *		initial contents of pg_user
  * ----------------
  */
 DATA(insert OID = 0 ( postgres PGUID t t t t ));
@@ -88,9 +89,9 @@ DATA(insert OID = 0 ( marcel 31113 t t t t ));
 DATA(insert OID = 0 ( ginger 3692 t t t t ));
 DATA(insert OID = 0 ( woodruff 31026 t t t t ));
 DATA(insert OID = 0 ( searcher 8261 t t t t ));
-     
+
 BKI_BEGIN
-#endif /* ALLOW_PG_GROUP */
+#endif							/* ALLOW_PG_GROUP */
 BKI_END
 
-#endif /* PG_USER_H */
+#endif							/* PG_USER_H */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * rel.c--
- *    POSTGRES relation descriptor code.
+ *	  POSTGRES relation descriptor code.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.1.1.1 1996/07/09 06:22:06 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/rel.c,v 1.2 1997/09/07 04:53:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,57 +21,56 @@
 #include "storage/fd.h"
 
 
-/* 
- *	RelationIsValid is now a macro in rel.h -cim 4/27/91
+/*
+ *		RelationIsValid is now a macro in rel.h -cim 4/27/91
  *
- *      Many of the RelationGet...() functions are now macros in rel.h
- *		-mer 3/2/92
+ *		Many of the RelationGet...() functions are now macros in rel.h
+ *				-mer 3/2/92
  */
 
 /*
  * RelationGetIndexStrategy --
- *	Returns index strategy for a relation.
+ *		Returns index strategy for a relation.
  *
  * Note:
- *	Assumes relation descriptor is valid.
- *	Assumes relation descriptor is for an index relation.
+ *		Assumes relation descriptor is valid.
+ *		Assumes relation descriptor is for an index relation.
  */
 IndexStrategy
 RelationGetIndexStrategy(Relation relation)
 {
-  return relation->rd_istrat;
+	return relation->rd_istrat;
 }
 
 /*
  * RelationSetIndexSupport --
- *	Sets index strategy and support info for a relation.
+ *		Sets index strategy and support info for a relation.
  *
  * Note:
- *	Assumes relation descriptor is a valid pointer to sufficient space.
- *	Assumes index strategy is valid.  Assumes support is valid if non-
- *	NULL.
+ *		Assumes relation descriptor is a valid pointer to sufficient space.
+ *		Assumes index strategy is valid.  Assumes support is valid if non-
+ *		NULL.
  */
 /* ----------------
- *	RelationSetIndexSupport
+ *		RelationSetIndexSupport
  *
- *	This routine saves two pointers -- one to the IndexStrategy, and
- *	one to the RegProcs that support the indexed access method.  These
- *	pointers are stored in the space following the attribute data in the
- *	reldesc.
+ *		This routine saves two pointers -- one to the IndexStrategy, and
+ *		one to the RegProcs that support the indexed access method.  These
+ *		pointers are stored in the space following the attribute data in the
+ *		reldesc.
  *
- *   NEW:  the index strategy and support are now stored in real fields
- *         at the end of the structure                    - jolly
+ *	 NEW:  the index strategy and support are now stored in real fields
+ *		   at the end of the structure					  - jolly
  * ----------------
  */
 void
 RelationSetIndexSupport(Relation relation,
-			IndexStrategy strategy,
-			RegProcedure *support)
+						IndexStrategy strategy,
+						RegProcedure * support)
 {
-    Assert(PointerIsValid(relation));
-    Assert(IndexStrategyIsValid(strategy));
-    
-    relation->rd_istrat = strategy;
-    relation->rd_support = support;
-}
+	Assert(PointerIsValid(relation));
+	Assert(IndexStrategyIsValid(strategy));
 
+	relation->rd_istrat = strategy;
+	relation->rd_support = support;
+}

@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * nodes.h--
- *    Definitions for tagged nodes.
+ *	  Definitions for tagged nodes.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.11 1997/09/01 06:04:57 thomas Exp $
+ * $Id: nodes.h,v 1.12 1997/09/07 04:58:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NODES_H
-#define	NODES_H
+#define NODES_H
 
 /*
  * The first field of every node is NodeTag. Each node created (with makeNode)
@@ -20,195 +20,196 @@
  * Note that the number of the node tags are not contiguous. We left holes
  * here so that we can add more tags without changing the existing enum's.
  */
-typedef enum NodeTag {
-    T_Invalid = 0,
+typedef enum NodeTag
+{
+	T_Invalid = 0,
 
-    /*---------------------
-     * TAGS FOR PLAN NODES (plannodes.h)
-     *---------------------
-     */
-    T_Plan = 10,
-    T_Existential,
-    T_Result,
-    T_Append,
-    T_Scan,
-    T_SeqScan,
-    T_IndexScan,
-    T_Join,
-    T_NestLoop,
-    T_MergeJoin,
-    T_HashJoin,
-    T_Temp,
-    T_Material,
-    T_Sort,
-    T_Agg,
-    T_Unique,
-    T_Hash,
-    T_Choose,
-    T_Tee,
-    T_Group,
+	/*---------------------
+	 * TAGS FOR PLAN NODES (plannodes.h)
+	 *---------------------
+	 */
+	T_Plan = 10,
+	T_Existential,
+	T_Result,
+	T_Append,
+	T_Scan,
+	T_SeqScan,
+	T_IndexScan,
+	T_Join,
+	T_NestLoop,
+	T_MergeJoin,
+	T_HashJoin,
+	T_Temp,
+	T_Material,
+	T_Sort,
+	T_Agg,
+	T_Unique,
+	T_Hash,
+	T_Choose,
+	T_Tee,
+	T_Group,
 
-    /*---------------------
-     * TAGS FOR PRIMITIVE NODES (primnodes.h)
-     *---------------------
-     */
-    T_Resdom = 100,
-    T_Fjoin,
-    T_Expr,
-    T_Var,
-    T_Oper,
-    T_Const,
-    T_Param,
-    T_Aggreg,
-    T_Func,
-    T_Array,
-    T_ArrayRef,
+	/*---------------------
+	 * TAGS FOR PRIMITIVE NODES (primnodes.h)
+	 *---------------------
+	 */
+	T_Resdom = 100,
+	T_Fjoin,
+	T_Expr,
+	T_Var,
+	T_Oper,
+	T_Const,
+	T_Param,
+	T_Aggreg,
+	T_Func,
+	T_Array,
+	T_ArrayRef,
 
-    /*---------------------
-     * TAGS FOR INNER PLAN NODES (relation.h)
-     *---------------------
-     */
-    T_Rel = 200,
-    T_Path,
-    T_IndexPath,
-    T_JoinPath,
-    T_MergePath,
-    T_HashPath,
-    T_OrderKey,
-    T_JoinKey,
-    T_MergeOrder,
-    T_CInfo,
-    T_JoinMethod,
-    T_HInfo,
-    T_MInfo,
-    T_JInfo,
-    T_Iter,
-    T_Stream,
+	/*---------------------
+	 * TAGS FOR INNER PLAN NODES (relation.h)
+	 *---------------------
+	 */
+	T_Rel = 200,
+	T_Path,
+	T_IndexPath,
+	T_JoinPath,
+	T_MergePath,
+	T_HashPath,
+	T_OrderKey,
+	T_JoinKey,
+	T_MergeOrder,
+	T_CInfo,
+	T_JoinMethod,
+	T_HInfo,
+	T_MInfo,
+	T_JInfo,
+	T_Iter,
+	T_Stream,
 
-    /*---------------------
-     * TAGS FOR EXECUTOR NODES (execnodes.h)
-     *---------------------
-     */
-    T_IndexInfo = 300,
-    T_RelationInfo,
-    T_TupleCount,
-    T_TupleTableSlot,
-    T_ExprContext,
-    T_ProjectionInfo,
-    T_JunkFilter,
-    T_EState,
-    T_BaseNode,
-    T_CommonState,
-    T_ResultState,
-    T_AppendState,
-    T_CommonScanState,
-    T_ScanState,
-    T_IndexScanState,
-    T_JoinState,
-    T_NestLoopState,
-    T_MergeJoinState,
-    T_HashJoinState,
-    T_MaterialState,
-    T_AggState,
-    T_GroupState,
-    T_SortState,
-    T_UniqueState,
-    T_HashState,
-    T_TeeState,
+	/*---------------------
+	 * TAGS FOR EXECUTOR NODES (execnodes.h)
+	 *---------------------
+	 */
+	T_IndexInfo = 300,
+	T_RelationInfo,
+	T_TupleCount,
+	T_TupleTableSlot,
+	T_ExprContext,
+	T_ProjectionInfo,
+	T_JunkFilter,
+	T_EState,
+	T_BaseNode,
+	T_CommonState,
+	T_ResultState,
+	T_AppendState,
+	T_CommonScanState,
+	T_ScanState,
+	T_IndexScanState,
+	T_JoinState,
+	T_NestLoopState,
+	T_MergeJoinState,
+	T_HashJoinState,
+	T_MaterialState,
+	T_AggState,
+	T_GroupState,
+	T_SortState,
+	T_UniqueState,
+	T_HashState,
+	T_TeeState,
 
-    /*---------------------
-     * TAGS FOR MEMORY NODES (memnodes.h)
-     *---------------------
-     */
-    T_MemoryContext = 400,
-    T_GlobalMemory,
-    T_PortalMemoryContext,
-    T_PortalVariableMemory,
-    T_PortalHeapMemory,
+	/*---------------------
+	 * TAGS FOR MEMORY NODES (memnodes.h)
+	 *---------------------
+	 */
+	T_MemoryContext = 400,
+	T_GlobalMemory,
+	T_PortalMemoryContext,
+	T_PortalVariableMemory,
+	T_PortalHeapMemory,
 
-    /*---------------------
-     * TAGS FOR VALUE NODES (pg_list.h)
-     *---------------------
-     */
-    T_Value = 500,
-    T_List,
-    T_Integer,
-    T_Float,
-    T_String,
-    T_Null,
-    
-    /*---------------------
-     * TAGS FOR PARSE TREE NODES (parsenode.h)
-     *---------------------
-     */
-    T_Query = 600,
-    T_AppendStmt,
-    T_DeleteStmt,
-    T_ReplaceStmt,
-    T_CursorStmt,
-    T_RetrieveStmt,
-    T_AddAttrStmt,
-    T_AggregateStmt,
-    T_ChangeACLStmt,
-    T_ClosePortalStmt,
-    T_ClusterStmt,
-    T_CopyStmt,
-    T_CreateStmt,
-    T_VersionStmt,
-    T_DefineStmt,
-    T_DestroyStmt,
-    T_ExtendStmt,
-    T_FetchStmt,
-    T_IndexStmt,
-    T_MoveStmt,
-    T_ProcedureStmt,
-    T_PurgeStmt,
-    T_RecipeStmt,
-    T_RemoveAggrStmt,
-    T_RemoveFuncStmt,
-    T_RemoveOperStmt,
-    T_RemoveStmt,
-    T_RenameStmt,
-    T_RuleStmt,
-    T_NotifyStmt,
-    T_ListenStmt,
-    T_TransactionStmt,
-    T_ViewStmt,
-    T_LoadStmt,
-    T_CreatedbStmt,
-    T_DestroydbStmt,
-    T_VacuumStmt,
-    T_ExplainStmt,
-    T_CreateSeqStmt,
-    T_VariableSetStmt,
-    T_VariableShowStmt,
-    T_VariableResetStmt,
-    T_CreateTrigStmt,
-    T_DropTrigStmt,
+	/*---------------------
+	 * TAGS FOR VALUE NODES (pg_list.h)
+	 *---------------------
+	 */
+	T_Value = 500,
+	T_List,
+	T_Integer,
+	T_Float,
+	T_String,
+	T_Null,
 
-    T_A_Expr = 700,
-    T_Attr,
-    T_A_Const,
-    T_ParamNo,
-    T_Ident,
-    T_FuncCall,
-    T_A_Indices,
-    T_ResTarget,
-    T_ParamString,
-    T_TimeRange,
-    T_RelExpr,
-    T_SortGroupBy,
-    T_RangeVar,
-    T_TypeName,
-    T_IndexElem,
-    T_ColumnDef,
-    T_DefElem,
-    T_TargetEntry,
-    T_RangeTblEntry,
-    T_SortClause,
-    T_GroupClause,
-    T_SubSelect
-} NodeTag;
+	/*---------------------
+	 * TAGS FOR PARSE TREE NODES (parsenode.h)
+	 *---------------------
+	 */
+	T_Query = 600,
+	T_AppendStmt,
+	T_DeleteStmt,
+	T_ReplaceStmt,
+	T_CursorStmt,
+	T_RetrieveStmt,
+	T_AddAttrStmt,
+	T_AggregateStmt,
+	T_ChangeACLStmt,
+	T_ClosePortalStmt,
+	T_ClusterStmt,
+	T_CopyStmt,
+	T_CreateStmt,
+	T_VersionStmt,
+	T_DefineStmt,
+	T_DestroyStmt,
+	T_ExtendStmt,
+	T_FetchStmt,
+	T_IndexStmt,
+	T_MoveStmt,
+	T_ProcedureStmt,
+	T_PurgeStmt,
+	T_RecipeStmt,
+	T_RemoveAggrStmt,
+	T_RemoveFuncStmt,
+	T_RemoveOperStmt,
+	T_RemoveStmt,
+	T_RenameStmt,
+	T_RuleStmt,
+	T_NotifyStmt,
+	T_ListenStmt,
+	T_TransactionStmt,
+	T_ViewStmt,
+	T_LoadStmt,
+	T_CreatedbStmt,
+	T_DestroydbStmt,
+	T_VacuumStmt,
+	T_ExplainStmt,
+	T_CreateSeqStmt,
+	T_VariableSetStmt,
+	T_VariableShowStmt,
+	T_VariableResetStmt,
+	T_CreateTrigStmt,
+	T_DropTrigStmt,
+
+	T_A_Expr = 700,
+	T_Attr,
+	T_A_Const,
+	T_ParamNo,
+	T_Ident,
+	T_FuncCall,
+	T_A_Indices,
+	T_ResTarget,
+	T_ParamString,
+	T_TimeRange,
+	T_RelExpr,
+	T_SortGroupBy,
+	T_RangeVar,
+	T_TypeName,
+	T_IndexElem,
+	T_ColumnDef,
+	T_DefElem,
+	T_TargetEntry,
+	T_RangeTblEntry,
+	T_SortClause,
+	T_GroupClause,
+	T_SubSelect
+}				NodeTag;
 
 /*
  * The first field of a node of any type is gauranteed to be the NodeTag.
@@ -216,90 +217,93 @@ typedef enum NodeTag {
  * a variable to be of Node * (instead of void *) can also facilitate
  * debugging.
  */
-typedef struct Node {
-    NodeTag	type;	
-} Node;
+typedef struct Node
+{
+	NodeTag			type;
+}				Node;
 
-#define	nodeTag(_node_)		((Node*)_node_)->type
+#define nodeTag(_node_)			((Node*)_node_)->type
 
-#define	makeNode(_node_)	(_node_*)newNode(sizeof(_node_),T_##_node_)
-#define NodeSetTag(n, t)	((Node *)n)->type = t
+#define makeNode(_node_)		(_node_*)newNode(sizeof(_node_),T_##_node_)
+#define NodeSetTag(n, t)		((Node *)n)->type = t
 
-#define IsA(_node_,_tag_)	(nodeTag(_node_) == T_##_tag_)
+#define IsA(_node_,_tag_)		(nodeTag(_node_) == T_##_tag_)
 
 /* ----------------------------------------------------------------
- *		      IsA functions (no inheritence any more)
+ *					  IsA functions (no inheritence any more)
  * ----------------------------------------------------------------
  */
 #define IsA_JoinPath(jp) \
-    (nodeTag(jp)==T_JoinPath || nodeTag(jp)==T_MergePath || \
-     nodeTag(jp)==T_HashPath)
+	(nodeTag(jp)==T_JoinPath || nodeTag(jp)==T_MergePath || \
+	 nodeTag(jp)==T_HashPath)
 
 #define IsA_Join(j) \
-    (nodeTag(j)==T_Join || nodeTag(j)==T_NestLoop || \
-     nodeTag(j)==T_MergeJoin || nodeTag(j)==T_HashJoin)
+	(nodeTag(j)==T_Join || nodeTag(j)==T_NestLoop || \
+	 nodeTag(j)==T_MergeJoin || nodeTag(j)==T_HashJoin)
 
 #define IsA_Temp(t) \
-    (nodeTag(t)==T_Temp || nodeTag(t)==T_Material || nodeTag(t)==T_Sort || \
-     nodeTag(t)==T_Unique)
+	(nodeTag(t)==T_Temp || nodeTag(t)==T_Material || nodeTag(t)==T_Sort || \
+	 nodeTag(t)==T_Unique)
 
 /* ----------------------------------------------------------------
- *		      extern declarations follow
+ *					  extern declarations follow
  * ----------------------------------------------------------------
  */
 
 /*
  * nodes/nodes.c
  */
-extern Node *newNode(Size size, NodeTag tag);
+extern Node    *newNode(Size size, NodeTag tag);
 
 /*
  * nodes/{outfuncs.c,print.c}
  */
-#define nodeDisplay	pprint
+#define nodeDisplay		pprint
 
-extern char *nodeToString(void *obj);
-extern void print(void *obj);
+extern char    *nodeToString(void *obj);
+extern void		print(void *obj);
 
 /*
  * nodes/{readfuncs.c,read.c}
  */
-extern void *stringToNode(char *str);
+extern void    *stringToNode(char *str);
 
 /*
  * nodes/copyfuncs.c
  */
-extern void *copyObject(void *obj);
+extern void    *copyObject(void *obj);
 
 /*
  * nodes/equalfuncs.c
  */
-extern bool equal(void *a, void *b);
+extern bool		equal(void *a, void *b);
 
 
 /* ----------------
- *      I don't know why this is here.  Most likely a hack..
- *      -cim 6/3/90
+ *		I don't know why this is here.  Most likely a hack..
+ *		-cim 6/3/90
  * ----------------
  */
-typedef float Cost;
+typedef float	Cost;
 
 /*
  * CmdType -
- *    enums for type of operation to aid debugging
+ *	  enums for type of operation to aid debugging
  *
  * ??? could have put this in parsenodes.h but many files not in the
- *    optimizer also need this...
+ *	  optimizer also need this...
  */
-typedef enum CmdType {
-    CMD_UNKNOWN,
-    CMD_SELECT,		/* select stmt (formerly retrieve) */
-    CMD_UPDATE,		/* update stmt (formerly replace) */
-    CMD_INSERT,		/* insert stmt (formerly append) */
-    CMD_DELETE,
-    CMD_NOTIFY, 
-    CMD_UTILITY /* cmds like create, destroy, copy, vacuum, etc. */
-} CmdType;
-    
+typedef enum CmdType
+{
+	CMD_UNKNOWN,
+	CMD_SELECT,					/* select stmt (formerly retrieve) */
+	CMD_UPDATE,					/* update stmt (formerly replace) */
+	CMD_INSERT,					/* insert stmt (formerly append) */
+	CMD_DELETE,
+	CMD_NOTIFY,
+	CMD_UTILITY					/* cmds like create, destroy, copy,
+								 * vacuum, etc. */
+}				CmdType;
 
-#endif /* NODES_H */
+
+#endif							/* NODES_H */

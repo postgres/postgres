@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * lock.h--
- *    
+ *
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.5 1997/08/19 21:39:55 momjian Exp $
+ * $Id: lock.h,v 1.6 1997/09/07 05:01:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,16 +17,16 @@
 #include <storage/itemptr.h>
 
 extern SPINLOCK LockMgrLock;
-typedef int MASK;
+typedef int		MASK;
 
-#define INIT_TABLE_SIZE		100
-#define MAX_TABLE_SIZE 		1000
+#define INIT_TABLE_SIZE			100
+#define MAX_TABLE_SIZE			1000
 
 
 /* ----------------------
  * The following defines are used to estimate how much shared
- * memory the lock manager is going to require.  
- * 
+ * memory the lock manager is going to require.
+ *
  * NBACKENDS - The number of concurrently running backends
  * NLOCKS_PER_XACT - The number of unique locks acquired in a transaction
  * NLOCKENTS - The maximum number of lock entries in the lock table.
@@ -36,9 +36,9 @@ typedef int MASK;
 #define NLOCKS_PER_XACT 40
 #define NLOCKENTS NLOCKS_PER_XACT*NBACKENDS
 
-typedef int LOCK_TYPE;
-typedef int LOCKT;
-typedef int LockTableId;
+typedef int		LOCK_TYPE;
+typedef int		LOCKT;
+typedef int		LockTableId;
 
 /* MAX_LOCKTYPES cannot be larger than the bits in MASK */
 #define MAX_LOCKTYPES 6
@@ -55,53 +55,56 @@ typedef int LockTableId;
 /*typedef struct LOCK LOCK; */
 
 
-typedef struct ltag {
-    Oid			relId;
-    Oid			dbId;
-    ItemPointerData	tupleId;
-} LOCKTAG;
+typedef struct ltag
+{
+	Oid				relId;
+	Oid				dbId;
+	ItemPointerData tupleId;
+}				LOCKTAG;
 
 #define TAGSIZE (sizeof(LOCKTAG))
 
-/* This is the control structure for a lock table.  It
+/* This is the control structure for a lock table.	It
  * lives in shared memory:
  *
  * tableID -- the handle used by the lock table's clients to
- *	refer to the table.
+ *		refer to the table.
  *
  * nLockTypes -- number of lock types (READ,WRITE,etc) that
- *	are defined on this lock table
+ *		are defined on this lock table
  *
  * conflictTab -- this is an array of bitmasks showing lock
- *	type conflicts. conflictTab[i] is a mask with the j-th bit
- *	turned on if lock types i and j conflict.
+ *		type conflicts. conflictTab[i] is a mask with the j-th bit
+ *		turned on if lock types i and j conflict.
  *
  * prio -- each locktype has a priority, so, for example, waiting
- *	writers can be given priority over readers (to avoid
- *	starvation).
+ *		writers can be given priority over readers (to avoid
+ *		starvation).
  *
  * masterlock -- synchronizes access to the table
  *
  */
-typedef struct lockctl {
-  LockTableId	tableId;
-  int		nLockTypes;
-  int		conflictTab[MAX_LOCKTYPES];
-  int		prio[MAX_LOCKTYPES];
-  SPINLOCK	masterLock;
-} LOCKCTL;
+typedef struct lockctl
+{
+	LockTableId		tableId;
+	int				nLockTypes;
+	int				conflictTab[MAX_LOCKTYPES];
+	int				prio[MAX_LOCKTYPES];
+	SPINLOCK		masterLock;
+}				LOCKCTL;
 
 /*
  * lockHash -- hash table on lock Ids,
  * xidHash -- hash on xid and lockId in case
- *	multiple processes are holding the lock
+ *		multiple processes are holding the lock
  * ctl - control structure described above.
  */
-typedef struct ltable {
-    HTAB	*lockHash;
-    HTAB	*xidHash;
-    LOCKCTL	*ctl;
-} LOCKTAB;
+typedef struct ltable
+{
+	HTAB		   *lockHash;
+	HTAB		   *xidHash;
+	LOCKCTL		   *ctl;
+}				LOCKTAB;
 
 /* -----------------------
  * A transaction never conflicts with its own locks.  Hence, if
@@ -132,29 +135,32 @@ typedef struct ltable {
  * -----------------------
  */
 
-typedef struct XIDTAG {
-    SHMEM_OFFSET	lock;
-    int			pid;
-    TransactionId	xid;
-} XIDTAG;
+typedef struct XIDTAG
+{
+	SHMEM_OFFSET	lock;
+	int				pid;
+	TransactionId	xid;
+}				XIDTAG;
 
-typedef struct XIDLookupEnt {
-    /* tag */
-    XIDTAG tag;
+typedef struct XIDLookupEnt
+{
+	/* tag */
+	XIDTAG			tag;
 
-    /* data */
-    int			holders[MAX_LOCKTYPES];
-    int			nHolding;
-    SHM_QUEUE		queue;
-} XIDLookupEnt;
+	/* data */
+	int				holders[MAX_LOCKTYPES];
+	int				nHolding;
+	SHM_QUEUE		queue;
+}				XIDLookupEnt;
 
 #define XID_TAGSIZE (sizeof(XIDTAG))
 
 /* originally in procq.h */
-typedef struct procQueue {
-    SHM_QUEUE	links;
-    int		size;
-} PROC_QUEUE;
+typedef struct procQueue
+{
+	SHM_QUEUE		links;
+	int				size;
+}				PROC_QUEUE;
 
 
 /*
@@ -162,24 +168,25 @@ typedef struct procQueue {
  *
  * tag -- uniquely identifies the object being locked
  * mask -- union of the conflict masks of all lock types
- *	currently held on this object.
+ *		currently held on this object.
  * waitProcs -- queue of processes waiting for this lock
  * holders -- count of each lock type currently held on the
- *	lock.
+ *		lock.
  * nHolding -- total locks of all types.
  */
-typedef struct Lock {
-    /* hash key */
-    LOCKTAG		tag;
+typedef struct Lock
+{
+	/* hash key */
+	LOCKTAG			tag;
 
-    /* data */
-    int			mask;
-    PROC_QUEUE		waitProcs;
-    int			holders[MAX_LOCKTYPES];
-    int			nHolding;
-    int			activeHolders[MAX_LOCKTYPES];
-    int			nActive;
-} LOCK;
+	/* data */
+	int				mask;
+	PROC_QUEUE		waitProcs;
+	int				holders[MAX_LOCKTYPES];
+	int				nHolding;
+	int				activeHolders[MAX_LOCKTYPES];
+	int				nActive;
+}				LOCK;
 
 #define LockGetLock_nHolders(l) l->nHolders
 
@@ -195,21 +202,24 @@ extern SPINLOCK LockMgrLock;
 /*
  * function prototypes
  */
-extern void InitLocks(void);
-extern void LockDisable(int status);
-extern LockTableId LockTabInit(char *tabName, MASK *conflictsP, int *prioP,
-			       int ntypes);
-extern bool LockAcquire(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
-extern int LockResolveConflicts(LOCKTAB *ltable, LOCK *lock, LOCKT lockt,
-			    TransactionId xid);
-extern bool LockRelease(LockTableId tableId, LOCKTAG *lockName, LOCKT lockt);
-extern void GrantLock(LOCK *lock, LOCKT lockt);
-extern bool LockReleaseAll(LockTableId tableId, SHM_QUEUE *lockQueue);
-extern int LockShmemSize(void);
-extern bool LockingDisabled(void);
+extern void		InitLocks(void);
+extern void		LockDisable(int status);
+extern LockTableId
+LockTabInit(char *tabName, MASK * conflictsP, int *prioP,
+			int ntypes);
+extern bool		LockAcquire(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt);
+extern int
+LockResolveConflicts(LOCKTAB * ltable, LOCK * lock, LOCKT lockt,
+					 TransactionId xid);
+extern bool		LockRelease(LockTableId tableId, LOCKTAG * lockName, LOCKT lockt);
+extern void		GrantLock(LOCK * lock, LOCKT lockt);
+extern bool		LockReleaseAll(LockTableId tableId, SHM_QUEUE * lockQueue);
+extern int		LockShmemSize(void);
+extern bool		LockingDisabled(void);
 
 #ifdef DEADLOCK_DEBUG
-extern void DumpLocks(void);
+extern void		DumpLocks(void);
+
 #endif
 
-#endif /* LOCK_H */
+#endif							/* LOCK_H */

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * port.c--
- *    Linux-specific routines
+ *	  Linux-specific routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/port/linux/Attic/port.c,v 1.1.1.1 1996/07/09 06:21:44 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/linux/Attic/port.c,v 1.2 1997/09/07 04:46:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

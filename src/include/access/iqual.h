@@ -1,16 +1,16 @@
 /*-------------------------------------------------------------------------
  *
  * iqual.h--
- *    Index scan key qualification definitions.
+ *	  Index scan key qualification definitions.
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: iqual.h,v 1.4 1996/11/05 10:37:03 scrappy Exp $
+ * $Id: iqual.h,v 1.5 1997/09/07 04:56:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef	IQUAL_H
+#ifndef IQUAL_H
 #define IQUAL_H
 
 #include <access/skey.h>
@@ -18,13 +18,14 @@
 
 
 /* ----------------
- *	index tuple qualification support
+ *		index tuple qualification support
  * ----------------
  */
 
-extern int NIndexTupleProcessed;
+extern int		NIndexTupleProcessed;
 
-extern bool index_keytest(IndexTuple tuple, TupleDesc tupdesc,
+extern bool
+index_keytest(IndexTuple tuple, TupleDesc tupdesc,
 			  int scanKeySize, ScanKey key);
 
-#endif	/* IQUAL_H */
+#endif							/* IQUAL_H */

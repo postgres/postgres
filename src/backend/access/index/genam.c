@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * genam.c--
- *    general index access method routines
+ *	  general index access method routines
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.7 1997/08/19 21:29:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.8 1997/09/07 04:38:17 momjian Exp $
  *
  * NOTES
- *    many of the old access method routines have been turned into
- *    macros and moved to genam.h -cim 4/30/91
+ *	  many of the old access method routines have been turned into
+ *	  macros and moved to genam.h -cim 4/30/91
  *
  *-------------------------------------------------------------------------
  */
@@ -29,18 +29,18 @@
  * previous, current, next.  Note that the case of reverse scans works
  * identically.
  *
- *	State	Result
- * (1)	+ + -	+ 0 0		(if the next item pointer is invalid)
- * (2)		+ X -		(otherwise)
- * (3)	* 0 0	* 0 0		(no change)
- * (4)	+ X 0	X 0 0		(shift)
- * (5)	* + X	+ X -		(shift, add unknown)
+ *		State	Result
+ * (1)	+ + -	+ 0 0			(if the next item pointer is invalid)
+ * (2)			+ X -			(otherwise)
+ * (3)	* 0 0	* 0 0			(no change)
+ * (4)	+ X 0	X 0 0			(shift)
+ * (5)	* + X	+ X -			(shift, add unknown)
  *
  * All other states cannot occur.
  *
  * Note:
  *It would be possible to cache the status of the previous and
- *	next item pointer using the flags.
+ *		next item pointer using the flags.
  * ----------------------------------------------------------------
  */
 
@@ -51,220 +51,234 @@
 #include <storage/bufmgr.h>
 
 #ifndef HAVE_MEMMOVE
-# include <regex/utils.h>
+#include <regex/utils.h>
 #else
-# include <string.h>
+#include <string.h>
 #endif
 
 /* ----------------------------------------------------------------
- *	general access method routines
+ *		general access method routines
  *
- *	All indexed access methods use an identical scan structure.
- *	We don't know how the various AMs do locking, however, so we don't
- *	do anything about that here.
+ *		All indexed access methods use an identical scan structure.
+ *		We don't know how the various AMs do locking, however, so we don't
+ *		do anything about that here.
  *
- *	The intent is that an AM implementor will define a front-end routine
- *	that calls this one, to fill in the scan, and then does whatever kind
- *	of locking he wants.
+ *		The intent is that an AM implementor will define a front-end routine
+ *		that calls this one, to fill in the scan, and then does whatever kind
+ *		of locking he wants.
  * ----------------------------------------------------------------
  */
 
 /* ----------------
- *  RelationGetIndexScan -- Create and fill an IndexScanDesc.
+ *	RelationGetIndexScan -- Create and fill an IndexScanDesc.
  *
- *	This routine creates an index scan structure and sets its contents
- *	up correctly. This routine calls AMrescan to set up the scan with
- *	the passed key.
+ *		This routine creates an index scan structure and sets its contents
+ *		up correctly. This routine calls AMrescan to set up the scan with
+ *		the passed key.
  *
- *	Parameters:
- *		relation -- index relation for scan.
- *		scanFromEnd -- if true, begin scan at one of the index's
- *			       endpoints.
- *		numberOfKeys -- count of scan keys (more than one won't
- *				necessarily do anything useful, yet).
- *		key -- the ScanKey for the starting position of the scan.
+ *		Parameters:
+ *				relation -- index relation for scan.
+ *				scanFromEnd -- if true, begin scan at one of the index's
+ *							   endpoints.
+ *				numberOfKeys -- count of scan keys (more than one won't
+ *								necessarily do anything useful, yet).
+ *				key -- the ScanKey for the starting position of the scan.
  *
- *	Returns:
- *		An initialized IndexScanDesc.
+ *		Returns:
+ *				An initialized IndexScanDesc.
  *
- *	Side Effects:
- *		Bumps the ref count on the relation to keep it in the cache.
- *	
+ *		Side Effects:
+ *				Bumps the ref count on the relation to keep it in the cache.
+ *
  * ----------------
  */
 IndexScanDesc
 RelationGetIndexScan(Relation relation,
-		     bool scanFromEnd,
-		     uint16 numberOfKeys,
-		     ScanKey key)
+					 bool scanFromEnd,
+					 uint16 numberOfKeys,
+					 ScanKey key)
 {
-    IndexScanDesc	scan;
-    
-    if (! RelationIsValid(relation))
-	elog(WARN, "RelationGetIndexScan: relation invalid");
-    
-    scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
-    
-    scan->relation = relation;
-    scan->opaque = NULL;
-    scan->numberOfKeys = numberOfKeys;
-    
-    ItemPointerSetInvalid(&scan->previousItemData);
-    ItemPointerSetInvalid(&scan->currentItemData);
-    ItemPointerSetInvalid(&scan->nextItemData);
-    ItemPointerSetInvalid(&scan->previousMarkData);
-    ItemPointerSetInvalid(&scan->currentMarkData);
-    ItemPointerSetInvalid(&scan->nextMarkData);
+	IndexScanDesc	scan;
 
-    if (numberOfKeys > 0) {
-	scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * numberOfKeys);
-    } else {
-	scan->keyData = NULL;
-    }
+	if (!RelationIsValid(relation))
+		elog(WARN, "RelationGetIndexScan: relation invalid");
 
-    index_rescan(scan, scanFromEnd, key);
-    
-    return (scan);
+	scan = (IndexScanDesc) palloc(sizeof(IndexScanDescData));
+
+	scan->relation = relation;
+	scan->opaque = NULL;
+	scan->numberOfKeys = numberOfKeys;
+
+	ItemPointerSetInvalid(&scan->previousItemData);
+	ItemPointerSetInvalid(&scan->currentItemData);
+	ItemPointerSetInvalid(&scan->nextItemData);
+	ItemPointerSetInvalid(&scan->previousMarkData);
+	ItemPointerSetInvalid(&scan->currentMarkData);
+	ItemPointerSetInvalid(&scan->nextMarkData);
+
+	if (numberOfKeys > 0)
+	{
+		scan->keyData = (ScanKey) palloc(sizeof(ScanKeyData) * numberOfKeys);
+	}
+	else
+	{
+		scan->keyData = NULL;
+	}
+
+	index_rescan(scan, scanFromEnd, key);
+
+	return (scan);
 }
 
 #ifdef NOT_USED
 /* ----------------
- *  IndexScanRestart -- Restart an index scan.
+ *	IndexScanRestart -- Restart an index scan.
  *
- *	This routine isn't used by any existing access method.  It's
- *	appropriate if relation level locks are what you want.
+ *		This routine isn't used by any existing access method.  It's
+ *		appropriate if relation level locks are what you want.
  *
- *  Returns:
- *	None.
+ *	Returns:
+ *		None.
  *
- *  Side Effects:
- *	None.
+ *	Side Effects:
+ *		None.
  * ----------------
  */
 void
 IndexScanRestart(IndexScanDesc scan,
-		 bool scanFromEnd,
-		 ScanKey key)
+				 bool scanFromEnd,
+				 ScanKey key)
 {
-    if (! IndexScanIsValid(scan))
-	elog(WARN, "IndexScanRestart: invalid scan");
-    
-    ItemPointerSetInvalid(&scan->previousItemData);
-    ItemPointerSetInvalid(&scan->currentItemData);
-    ItemPointerSetInvalid(&scan->nextItemData);
-    
-    if (RelationGetNumberOfBlocks(scan->relation) == 0) 
-	scan->flags = ScanUnmarked;
-    else if (scanFromEnd)
-	scan->flags = ScanUnmarked | ScanUncheckedPrevious;
-    else
-	scan->flags = ScanUnmarked | ScanUncheckedNext;
-    
-    scan->scanFromEnd = (bool) scanFromEnd;
-    
-    if (scan->numberOfKeys > 0)
-	memmove(scan->keyData,
-		key,
-		scan->numberOfKeys * sizeof(ScanKeyData));
+	if (!IndexScanIsValid(scan))
+		elog(WARN, "IndexScanRestart: invalid scan");
+
+	ItemPointerSetInvalid(&scan->previousItemData);
+	ItemPointerSetInvalid(&scan->currentItemData);
+	ItemPointerSetInvalid(&scan->nextItemData);
+
+	if (RelationGetNumberOfBlocks(scan->relation) == 0)
+		scan->flags = ScanUnmarked;
+	else if (scanFromEnd)
+		scan->flags = ScanUnmarked | ScanUncheckedPrevious;
+	else
+		scan->flags = ScanUnmarked | ScanUncheckedNext;
+
+	scan->scanFromEnd = (bool) scanFromEnd;
+
+	if (scan->numberOfKeys > 0)
+		memmove(scan->keyData,
+				key,
+				scan->numberOfKeys * sizeof(ScanKeyData));
 }
+
 #endif
 
 #ifdef NOT_USED
 /* ----------------
- *  IndexScanEnd -- End and index scan.
+ *	IndexScanEnd -- End and index scan.
  *
- *	This routine is not used by any existing access method, but is
- *	suitable for use if you don't want to do sophisticated locking.
+ *		This routine is not used by any existing access method, but is
+ *		suitable for use if you don't want to do sophisticated locking.
  *
- *  Returns:
- *	None.
+ *	Returns:
+ *		None.
  *
- *  Side Effects:
- *	None.
+ *	Side Effects:
+ *		None.
  * ----------------
  */
 void
 IndexScanEnd(IndexScanDesc scan)
 {
-    if (! IndexScanIsValid(scan))
-	elog(WARN, "IndexScanEnd: invalid scan");
-    
-    pfree(scan);
+	if (!IndexScanIsValid(scan))
+		elog(WARN, "IndexScanEnd: invalid scan");
+
+	pfree(scan);
 }
+
 #endif
 
 /* ----------------
- *  IndexScanMarkPosition -- Mark current position in a scan.
+ *	IndexScanMarkPosition -- Mark current position in a scan.
  *
- *	This routine isn't used by any existing access method, but is the
- *	one that AM implementors should use, if they don't want to do any
- *	special locking.  If relation-level locking is sufficient, this is
- *	the routine for you.
+ *		This routine isn't used by any existing access method, but is the
+ *		one that AM implementors should use, if they don't want to do any
+ *		special locking.  If relation-level locking is sufficient, this is
+ *		the routine for you.
  *
- *  Returns:
- *	None.
+ *	Returns:
+ *		None.
  *
- *  Side Effects:
- *	None.
+ *	Side Effects:
+ *		None.
  * ----------------
  */
 void
 IndexScanMarkPosition(IndexScanDesc scan)
 {
-    RetrieveIndexResult	result;
-    
-    if (scan->flags & ScanUncheckedPrevious) {
-	result = 
-	    index_getnext(scan, BackwardScanDirection);
-	
-	if (result != NULL) {
-	    scan->previousItemData = result->index_iptr;
-	} else {
-	    ItemPointerSetInvalid(&scan->previousItemData);
+	RetrieveIndexResult result;
+
+	if (scan->flags & ScanUncheckedPrevious)
+	{
+		result =
+			index_getnext(scan, BackwardScanDirection);
+
+		if (result != NULL)
+		{
+			scan->previousItemData = result->index_iptr;
+		}
+		else
+		{
+			ItemPointerSetInvalid(&scan->previousItemData);
+		}
+
 	}
-	
-    } else if (scan->flags & ScanUncheckedNext) {
-	result = (RetrieveIndexResult)
-	    index_getnext(scan, ForwardScanDirection);
-	
-	if (result != NULL) {
-	    scan->nextItemData = result->index_iptr;
-	} else {
-	    ItemPointerSetInvalid(&scan->nextItemData);
+	else if (scan->flags & ScanUncheckedNext)
+	{
+		result = (RetrieveIndexResult)
+			index_getnext(scan, ForwardScanDirection);
+
+		if (result != NULL)
+		{
+			scan->nextItemData = result->index_iptr;
+		}
+		else
+		{
+			ItemPointerSetInvalid(&scan->nextItemData);
+		}
 	}
-    }
-    
-    scan->previousMarkData = scan->previousItemData;
-    scan->currentMarkData = scan->currentItemData;
-    scan->nextMarkData = scan->nextItemData;
-    
-    scan->flags = 0x0;	/* XXX should have a symbolic name */
+
+	scan->previousMarkData = scan->previousItemData;
+	scan->currentMarkData = scan->currentItemData;
+	scan->nextMarkData = scan->nextItemData;
+
+	scan->flags = 0x0;			/* XXX should have a symbolic name */
 }
 
 /* ----------------
- *  IndexScanRestorePosition -- Restore position on a marked scan.
+ *	IndexScanRestorePosition -- Restore position on a marked scan.
  *
- *	This routine isn't used by any existing access method, but is the
- *	one that AM implementors should use if they don't want to do any
- *	special locking.  If relation-level locking is sufficient, then
- *	this is the one you want.
+ *		This routine isn't used by any existing access method, but is the
+ *		one that AM implementors should use if they don't want to do any
+ *		special locking.  If relation-level locking is sufficient, then
+ *		this is the one you want.
  *
- *  Returns:
- *	None.
+ *	Returns:
+ *		None.
  *
- *  Side Effects:
- *	None.
+ *	Side Effects:
+ *		None.
  * ----------------
  */
 void
 IndexScanRestorePosition(IndexScanDesc scan)
-{	
-    if (scan->flags & ScanUnmarked) 
-	elog(WARN, "IndexScanRestorePosition: no mark to restore");
-    
-    scan->previousItemData = scan->previousMarkData;
-    scan->currentItemData = scan->currentMarkData;
-    scan->nextItemData = scan->nextMarkData;
-    
-    scan->flags = 0x0;	/* XXX should have a symbolic name */
+{
+	if (scan->flags & ScanUnmarked)
+		elog(WARN, "IndexScanRestorePosition: no mark to restore");
+
+	scan->previousItemData = scan->previousMarkData;
+	scan->currentItemData = scan->currentMarkData;
+	scan->nextItemData = scan->nextMarkData;
+
+	scan->flags = 0x0;			/* XXX should have a symbolic name */
 }

@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * strat.h--
- *    index strategy type definitions
- *    (separated out from original istrat.h to avoid circular refs)
+ *	  index strategy type definitions
+ *	  (separated out from original istrat.h to avoid circular refs)
  *
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: strat.h,v 1.4 1996/11/04 07:45:27 scrappy Exp $
+ * $Id: strat.h,v 1.5 1997/09/07 04:56:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,67 +18,76 @@
 
 typedef uint16	StrategyNumber;
 
-#define InvalidStrategy	0
+#define InvalidStrategy 0
 
-typedef struct StrategyTransformMapData {
-    StrategyNumber	strategy[1];	/* VARIABLE LENGTH ARRAY */
-} StrategyTransformMapData;	/* VARIABLE LENGTH STRUCTURE */
+typedef struct StrategyTransformMapData
+{
+	StrategyNumber	strategy[1];/* VARIABLE LENGTH ARRAY */
+}				StrategyTransformMapData;		/* VARIABLE LENGTH
 
-typedef StrategyTransformMapData	*StrategyTransformMap;
+												 * STRUCTURE */
 
-typedef struct StrategyOperatorData {
-    StrategyNumber	strategy;
-    bits16		flags;		/* scan qualification flags h/skey.h */
-} StrategyOperatorData;
+typedef StrategyTransformMapData *StrategyTransformMap;
 
-typedef StrategyOperatorData	*StrategyOperator;
+typedef struct StrategyOperatorData
+{
+	StrategyNumber	strategy;
+	bits16			flags;		/* scan qualification flags h/skey.h */
+}				StrategyOperatorData;
 
-typedef struct StrategyTermData {	/* conjunctive term */
-    uint16			degree;
-    StrategyOperatorData	operatorData[1];	/* VARIABLE LENGTH */
-} StrategyTermData;	/* VARIABLE LENGTH STRUCTURE */
+typedef StrategyOperatorData *StrategyOperator;
 
-typedef StrategyTermData	*StrategyTerm;
+typedef struct StrategyTermData
+{								/* conjunctive term */
+	uint16			degree;
+	StrategyOperatorData operatorData[1];		/* VARIABLE LENGTH */
+}				StrategyTermData;		/* VARIABLE LENGTH STRUCTURE */
 
-typedef struct StrategyExpressionData {	/* disjunctive normal form */
-    StrategyTerm	term[1];	/* VARIABLE LENGTH ARRAY */
-} StrategyExpressionData;	/* VARIABLE LENGTH STRUCTURE */
+typedef StrategyTermData *StrategyTerm;
 
-typedef StrategyExpressionData	*StrategyExpression;
+typedef struct StrategyExpressionData
+{								/* disjunctive normal form */
+	StrategyTerm	term[1];	/* VARIABLE LENGTH ARRAY */
+}				StrategyExpressionData; /* VARIABLE LENGTH STRUCTURE */
 
-typedef struct StrategyEvaluationData {
-    StrategyNumber		maxStrategy;
-    StrategyTransformMap	negateTransform;
-    StrategyTransformMap	commuteTransform;
-    StrategyTransformMap	negateCommuteTransform;
-    StrategyExpression	expression[12];	/* XXX VARIABLE LENGTH */
-} StrategyEvaluationData;	/* VARIABLE LENGTH STRUCTURE */
+typedef StrategyExpressionData *StrategyExpression;
 
-typedef StrategyEvaluationData	*StrategyEvaluation;
+typedef struct StrategyEvaluationData
+{
+	StrategyNumber	maxStrategy;
+	StrategyTransformMap negateTransform;
+	StrategyTransformMap commuteTransform;
+	StrategyTransformMap negateCommuteTransform;
+	StrategyExpression expression[12];	/* XXX VARIABLE LENGTH */
+}				StrategyEvaluationData; /* VARIABLE LENGTH STRUCTURE */
+
+typedef StrategyEvaluationData *StrategyEvaluation;
 
 /*
  * StrategyTransformMapIsValid --
- *	Returns true iff strategy transformation map is valid.
+ *		Returns true iff strategy transformation map is valid.
  */
-#define	StrategyTransformMapIsValid(transform) PointerIsValid(transform)
+#define StrategyTransformMapIsValid(transform) PointerIsValid(transform)
 
 
-#ifndef	CorrectStrategies		/* XXX this should be removable */
-#define AMStrategies(foo)	12
-#else	/* !defined(CorrectStrategies) */
-#define AMStrategies(foo)	(foo)
-#endif	/* !defined(CorrectStrategies) */
+#ifndef CorrectStrategies		/* XXX this should be removable */
+#define AMStrategies(foo)		12
+#else							/* !defined(CorrectStrategies) */
+#define AMStrategies(foo)		(foo)
+#endif							/* !defined(CorrectStrategies) */
 
-typedef struct StrategyMapData {
+typedef struct StrategyMapData
+{
 	ScanKeyData		entry[1];	/* VARIABLE LENGTH ARRAY */
-} StrategyMapData;	/* VARIABLE LENGTH STRUCTURE */
+}				StrategyMapData;/* VARIABLE LENGTH STRUCTURE */
 
-typedef StrategyMapData	*StrategyMap;
+typedef StrategyMapData *StrategyMap;
 
-typedef struct IndexStrategyData {
-	StrategyMapData	strategyMapData[1];	/* VARIABLE LENGTH ARRAY */
-} IndexStrategyData;	/* VARIABLE LENGTH STRUCTURE */
+typedef struct IndexStrategyData
+{
+	StrategyMapData strategyMapData[1]; /* VARIABLE LENGTH ARRAY */
+}				IndexStrategyData;		/* VARIABLE LENGTH STRUCTURE */
 
-typedef IndexStrategyData	*IndexStrategy;
+typedef IndexStrategyData *IndexStrategy;
 
-#endif /*STRAT_H */
+#endif							/* STRAT_H */

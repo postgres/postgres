@@ -1,8 +1,8 @@
-/* 
+/*
  * pgtclAppInit.c --
  *
- *	a skeletal Tcl_AppInit that provides pgtcl initialization
- *    to create a tclsh that can talk to pglite backends
+ *		a skeletal Tcl_AppInit that provides pgtcl initialization
+ *	  to create a tclsh that can talk to pglite backends
  *
  * Copyright (c) 1993 The Regents of the University of California.
  * Copyright (c) 1994 Sun Microsystems, Inc.
@@ -21,23 +21,25 @@
  */
 
 #ifdef NEED_MATHERR
-extern int matherr();
-int *tclDummyMathPtr = (int *) matherr;
+extern int		matherr();
+int			   *tclDummyMathPtr = (int *) matherr;
+
 #endif
-
+
+
 /*
  *----------------------------------------------------------------------
  *
  * main --
  *
- *	This is the main program for the application.
+ *		This is the main program for the application.
  *
  * Results:
- *	None: Tcl_Main never returns here, so this procedure never
- *	returns either.
+ *		None: Tcl_Main never returns here, so this procedure never
+ *		returns either.
  *
  * Side effects:
- *	Whatever the application does.
+ *		Whatever the application does.
  *
  *----------------------------------------------------------------------
  */
@@ -45,68 +47,71 @@ int *tclDummyMathPtr = (int *) matherr;
 int
 main(int argc, char **argv)
 {
-    Tcl_Main(argc, argv, Tcl_AppInit);
-    return 0;			/* Needed only to prevent compiler warning. */
+	Tcl_Main(argc, argv, Tcl_AppInit);
+	return 0;					/* Needed only to prevent compiler
+								 * warning. */
 }
-
+
+
 /*
  *----------------------------------------------------------------------
  *
  * Tcl_AppInit --
  *
- *	This procedure performs application-specific initialization.
- *	Most applications, especially those that incorporate additional
- *	packages, will have their own version of this procedure.
+ *		This procedure performs application-specific initialization.
+ *		Most applications, especially those that incorporate additional
+ *		packages, will have their own version of this procedure.
  *
  * Results:
- *	Returns a standard Tcl completion code, and leaves an error
- *	message in interp->result if an error occurs.
+ *		Returns a standard Tcl completion code, and leaves an error
+ *		message in interp->result if an error occurs.
  *
  * Side effects:
- *	Depends on the startup script.
+ *		Depends on the startup script.
  *
  *----------------------------------------------------------------------
  */
 
 int
-Tcl_AppInit(Tcl_Interp *interp)
+Tcl_AppInit(Tcl_Interp * interp)
 {
-    if (Tcl_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
+	if (Tcl_Init(interp) == TCL_ERROR)
+	{
+		return TCL_ERROR;
+	}
 
-    /*
-     * Call the init procedures for included packages.  Each call should
-     * look like this:
-     *
-     * if (Mod_Init(interp) == TCL_ERROR) {
-     *     return TCL_ERROR;
-     * }
-     *
-     * where "Mod" is the name of the module.
-     */
+	/*
+	 * Call the init procedures for included packages.	Each call should
+	 * look like this:
+	 *
+	 * if (Mod_Init(interp) == TCL_ERROR) { return TCL_ERROR; }
+	 *
+	 * where "Mod" is the name of the module.
+	 */
 
-    if (Pgtcl_Init(interp) == TCL_ERROR) { 
-      return TCL_ERROR;
-    }
+	if (Pgtcl_Init(interp) == TCL_ERROR)
+	{
+		return TCL_ERROR;
+	}
 
-    /*
-     * Call Tcl_CreateCommand for application-specific commands, if
-     * they weren't already created by the init procedures called above.
-     */
+	/*
+	 * Call Tcl_CreateCommand for application-specific commands, if they
+	 * weren't already created by the init procedures called above.
+	 */
 
-    /*
-     * Specify a user-specific startup file to invoke if the application
-     * is run interactively.  Typically the startup file is "~/.apprc"
-     * where "app" is the name of the application.  If this line is deleted
-     * then no user-specific startup file will be run under any conditions.
-     */
+	/*
+	 * Specify a user-specific startup file to invoke if the application
+	 * is run interactively.  Typically the startup file is "~/.apprc"
+	 * where "app" is the name of the application.	If this line is
+	 * deleted then no user-specific startup file will be run under any
+	 * conditions.
+	 */
 
 #if (TCL_MAJOR_VERSION <= 7) && (TCL_MINOR_VERSION < 5)
-    tcl_RcFileName = "~/.tclshrc";
+	tcl_RcFileName = "~/.tclshrc";
 #else
-    Tcl_SetVar(interp, "tcl_rcFileName", "~/.tclshrc", TCL_GLOBAL_ONLY);
+	Tcl_SetVar(interp, "tcl_rcFileName", "~/.tclshrc", TCL_GLOBAL_ONLY);
 #endif
 
-    return TCL_OK;
+	return TCL_OK;
 }

@@ -7,24 +7,23 @@
  * modified for ANSI by D'Arcy J.M. Cain
  */
 
-#include        <string.h>
-#include        <stdio.h>
-#include        <errno.h>
+#include		<string.h>
+#include		<stdio.h>
+#include		<errno.h>
 
-extern const char * const sys_errlist[];
-extern int sys_nerr;
+extern const char *const sys_errlist[];
+extern int		sys_nerr;
 
-const char *
+const char	   *
 strerror(int errnum)
 {
-        static char     buf[24];
+	static char		buf[24];
 
-        if (errnum < 0 || errnum > sys_nerr)
-        {
-                sprintf(buf, "unknown error %d", errnum);
-                return(buf);
-        }
+	if (errnum < 0 || errnum > sys_nerr)
+	{
+		sprintf(buf, "unknown error %d", errnum);
+		return (buf);
+	}
 
-        return(sys_errlist[errnum]);
+	return (sys_errlist[errnum]);
 }
-

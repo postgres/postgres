@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
  * globals.c--
- *    global variable declarations
+ *	  global variable declarations
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.10 1997/08/14 16:11:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.11 1997/09/07 04:53:48 momjian Exp $
  *
  * NOTES
- *    Globals used all over the place should be declared here and not
- *    in other modules.  
+ *	  Globals used all over the place should be declared here and not
+ *	  in other modules.
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,7 @@
 #include <unistd.h>
 
 #include "postgres.h"
-#include "miscadmin.h"		/* where the declarations go */
+#include "miscadmin.h"			/* where the declarations go */
 
 #include <storage/backendid.h>
 #include "access/heapam.h"
@@ -36,83 +36,86 @@
 
 #include "catalog/catname.h"
 
-int		Portfd = -1;
-int		Noversion = 0;
-int             Quiet = 1;
+int				Portfd = -1;
+int				Noversion = 0;
+int				Quiet = 1;
 
-int		MasterPid;
-char            *DataDir;
-  /* The PGDATA directory user says to use, or defaults to via environment
-     variable.  NULL if no option given and no environment variable set 
+int				MasterPid;
+char		   *DataDir;
+
+ /*
+  * The PGDATA directory user says to use, or defaults to via environment
+  * variable.  NULL if no option given and no environment variable set
   */
-Relation        reldesc;                /* current relation descriptor */
-    
-char		OutputFileName[MAXPGPATH] = "";
+Relation		reldesc;		/* current relation descriptor */
 
-BackendId	MyBackendId;
-BackendTag	MyBackendTag;
+char			OutputFileName[MAXPGPATH] = "";
 
-char            *UserName = NULL;
-char            *DatabaseName = NULL;
-char 		*DatabasePath = NULL;
+BackendId		MyBackendId;
+BackendTag		MyBackendTag;
 
-bool		MyDatabaseIdIsInitialized = false;
-Oid		MyDatabaseId = InvalidOid;
-bool		TransactionInitWasProcessed = false;
+char		   *UserName = NULL;
+char		   *DatabaseName = NULL;
+char		   *DatabasePath = NULL;
 
-bool		IsUnderPostmaster = false;
-bool		IsPostmaster = false;
+bool			MyDatabaseIdIsInitialized = false;
+Oid				MyDatabaseId = InvalidOid;
+bool			TransactionInitWasProcessed = false;
 
-short		DebugLvl = 0;
+bool			IsUnderPostmaster = false;
+bool			IsPostmaster = false;
 
-int		DateStyle = USE_POSTGRES_DATES;
-bool		EuroDates = false;
-bool		HasCTZSet = false;
-bool		CDayLight = false;
-int		CTimeZone = 0;
-char		CTZName[MAXTZLEN+1] = "";
+short			DebugLvl = 0;
 
-char DateFormat[20] 	= "%d-%m-%Y";	/* mjl: sizes! or better malloc? XXX */
-char FloatFormat[20] = "%f";
+int				DateStyle = USE_POSTGRES_DATES;
+bool			EuroDates = false;
+bool			HasCTZSet = false;
+bool			CDayLight = false;
+int				CTimeZone = 0;
+char			CTZName[MAXTZLEN + 1] = "";
 
-int     	fsyncOff = 0;
-int		SortMem = 512;
+char			DateFormat[20] = "%d-%m-%Y";	/* mjl: sizes! or better
+												 * malloc? XXX */
+char			FloatFormat[20] = "%f";
 
-char *IndexedCatalogNames[] = {
-    AttributeRelationName,
-    ProcedureRelationName,
-    TypeRelationName,
-    RelationRelationName,
-    0
+int				fsyncOff = 0;
+int				SortMem = 512;
+
+char		   *IndexedCatalogNames[] = {
+	AttributeRelationName,
+	ProcedureRelationName,
+	TypeRelationName,
+	RelationRelationName,
+	0
 };
 
 
 /* ----------------
  * we just do a linear search now so there's no requirement that the list
- * be ordered.  The list is so small it shouldn't make much difference.
+ * be ordered.	The list is so small it shouldn't make much difference.
  * make sure the list is null-terminated
- *              - jolly 8/19/95
- *                                  
+ *				- jolly 8/19/95
+ *
  * OLD COMMENT
- *	WARNING  WARNING  WARNING  WARNING  WARNING  WARNING
+ *		WARNING  WARNING  WARNING  WARNING	WARNING  WARNING
  *
- *	keep SharedSystemRelationNames[] in SORTED order!  A binary search
- *	is done on it in catalog.c!
+ *		keep SharedSystemRelationNames[] in SORTED order!  A binary search
+ *		is done on it in catalog.c!
  *
- *	XXX this is a serious hack which should be fixed -cim 1/26/90
+ *		XXX this is a serious hack which should be fixed -cim 1/26/90
  * ----------------
  */
-char *SharedSystemRelationNames[] = {
-    DatabaseRelationName, 
-    DefaultsRelationName,
-    DemonRelationName,
-    GroupRelationName,
-    HostsRelationName,
-    LogRelationName,
-    MagicRelationName,
-    ServerRelationName,
-    TimeRelationName,
-    UserRelationName,
-    VariableRelationName,
-    0
+char		   *SharedSystemRelationNames[] = {
+	DatabaseRelationName,
+	DefaultsRelationName,
+	DemonRelationName,
+	GroupRelationName,
+	HostsRelationName,
+	LogRelationName,
+	MagicRelationName,
+	ServerRelationName,
+	TimeRelationName,
+	UserRelationName,
+	VariableRelationName,
+	0
 };

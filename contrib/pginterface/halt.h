@@ -3,5 +3,4 @@
 **
 */
 
-void halt();
-
+void			halt();
