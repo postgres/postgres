@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep 27 11:20:02 EDT 1999
+Last updated:		Mon Sep 27 13:02:57 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -250,6 +250,7 @@ MISC
 * Make oid use oidin/oidout not int4in/int4out in pg_type.h
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
+  [subquery]
 * use fmgr_info()/fmgr_faddr() instead of fmgr() calls in high-traffic
   places, like GROUP BY, UNIQUE, index processing, etc.
 * improve dynamic memory allocation by introducing tuple-context memory

@@ -1,0 +1,76 @@
+From vadim@krs.ru Fri Aug  6 00:02:02 1999
+Received: from sunpine.krs.ru (SunPine.krs.ru [195.161.16.37])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA22890
+	for <maillist@candle.pha.pa.us>; Fri, 6 Aug 1999 00:02:00 -0400 (EDT)
+Received: from krs.ru (dune.krs.ru [195.161.16.38])
+	by sunpine.krs.ru (8.8.8/8.8.8) with ESMTP id MAA23302;
+	Fri, 6 Aug 1999 12:01:59 +0800 (KRSS)
+Sender: root@sunpine.krs.ru
+Message-ID: <37AA5E35.66C03F2E@krs.ru>
+Date: Fri, 06 Aug 1999 12:01:57 +0800
+From: Vadim Mikheev <vadim@krs.ru>
+Organization: OJSC Rostelecom (Krasnoyarsk)
+X-Mailer: Mozilla 4.5 [en] (X11; I; FreeBSD 3.0-RELEASE i386)
+X-Accept-Language: ru, en
+MIME-Version: 1.0
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+CC: Tom Lane <tgl@sss.pgh.pa.us>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] Idea for speeding up uncorrelated subqueries
+References: <199908060331.XAA22277@candle.pha.pa.us>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Status: RO
+
+Bruce Momjian wrote:
+> 
+> Isn't it something that takes only a few hours to implement.  We can't
+> keep telling people to us EXISTS, especially because most SQL people
+> think correlated queries are slower that non-correlated ones.  Can we
+> just on-the-fly rewrite the query to use exists?
+
+This seems easy to implement. We could look does subquery have
+aggregates or not before calling union_planner() in
+subselect.c:_make_subplan() and rewrite it (change 
+slink->subLinkType from IN to EXISTS and add quals).
+
+Without caching implemented IN-->EXISTS rewriting always
+has sence.
+
+After implementation of caching we probably should call union_planner()
+for both original/modified subqueries and compare costs/sizes
+of EXISTS/IN_with_caching plans and maybe even make
+decision what plan to use after parent query is planned
+and we know for how many parent rows subplan will be executed.
+
+Vadim
+
+From tgl@sss.pgh.pa.us Fri Aug  6 00:15:23 1999
+Received: from sss.sss.pgh.pa.us (sss.pgh.pa.us [209.114.166.2])
+	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id AAA23058
+	for <maillist@candle.pha.pa.us>; Fri, 6 Aug 1999 00:15:22 -0400 (EDT)
+Received: from sss.sss.pgh.pa.us (localhost [127.0.0.1])
+	by sss.sss.pgh.pa.us (8.9.1/8.9.1) with ESMTP id AAA06786;
+	Fri, 6 Aug 1999 00:14:50 -0400 (EDT)
+To: Bruce Momjian <maillist@candle.pha.pa.us>
+cc: Vadim Mikheev <vadim@krs.ru>, pgsql-hackers@postgreSQL.org
+Subject: Re: [HACKERS] Idea for speeding up uncorrelated subqueries 
+In-reply-to: Your message of Thu, 5 Aug 1999 23:31:01 -0400 (EDT) 
+             <199908060331.XAA22277@candle.pha.pa.us> 
+Date: Fri, 06 Aug 1999 00:14:50 -0400
+Message-ID: <6783.933912890@sss.pgh.pa.us>
+From: Tom Lane <tgl@sss.pgh.pa.us>
+Status: RO
+
+Bruce Momjian <maillist@candle.pha.pa.us> writes:
+> Isn't it something that takes only a few hours to implement.  We can't
+> keep telling people to us EXISTS, especially because most SQL people
+> think correlated queries are slower that non-correlated ones.  Can we
+> just on-the-fly rewrite the query to use exists?
+
+I was just about to suggest exactly that.  The "IN (subselect)"
+notation seems to be a lot more intuitive --- at least, people
+keep coming up with it --- so why not rewrite it to the EXISTS
+form, if we can handle that more efficiently?
+
+			regards, tom lane
+
