@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.81 2003/03/09 02:19:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.82 2003/03/25 00:34:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -130,6 +130,12 @@ static void exec_assign_expr(PLpgSQL_execstate * estate,
 static void exec_assign_value(PLpgSQL_execstate * estate,
 				  PLpgSQL_datum * target,
 				  Datum value, Oid valtype, bool *isNull);
+static void exec_eval_datum(PLpgSQL_execstate *estate,
+							PLpgSQL_datum *datum,
+							Oid expectedtypeid,
+							Oid *typeid,
+							Datum *value,
+							bool *isnull);
 static Datum exec_eval_expr(PLpgSQL_execstate * estate,
 			   PLpgSQL_expr * expr,
 			   bool *isNull,
@@ -1766,6 +1772,9 @@ exec_init_tuple_store(PLpgSQL_execstate * estate)
 static int
 exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 {
+	Oid			paramtypeid;
+	Datum		paramvalue;
+	bool		paramisnull;
 	HeapTuple	typetup;
 	Form_pg_type typeStruct;
 	FmgrInfo	finfo_output;
@@ -1774,10 +1783,6 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 	char		c[2] = {0, 0};
 	char	   *cp;
 	PLpgSQL_dstring ds;
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	int			fno;
 
 	plpgsql_dstring_init(&ds);
 
@@ -1804,83 +1809,31 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 				plpgsql_dstring_append(&ds, c);
 				continue;
 			}
-			switch (estate->datums[stmt->params[pidx]]->dtype)
+			exec_eval_datum(estate, estate->datums[stmt->params[pidx]],
+							InvalidOid,
+							&paramtypeid, &paramvalue, &paramisnull);
+			if (paramisnull)
 			{
-				case PLPGSQL_DTYPE_VAR:
-					var = (PLpgSQL_var *)
-						(estate->datums[stmt->params[pidx]]);
-					if (var->isnull)
-						extval = "<NULL>";
-					else
-					{
-						typetup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(var->datatype->typoid),
-												 0, 0, 0);
-						if (!HeapTupleIsValid(typetup))
-							elog(ERROR, "cache lookup for type %u failed",
-								 var->datatype->typoid);
-						typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-
-						fmgr_info(typeStruct->typoutput, &finfo_output);
-						extval = DatumGetCString(FunctionCall3(&finfo_output,
-															   var->value,
-								   ObjectIdGetDatum(typeStruct->typelem),
-							   Int32GetDatum(var->datatype->atttypmod)));
-						ReleaseSysCache(typetup);
-					}
-					plpgsql_dstring_append(&ds, extval);
-					break;
-
-				case PLPGSQL_DTYPE_RECFIELD:
-					recfield = (PLpgSQL_recfield *)
-						(estate->datums[stmt->params[pidx]]);
-					rec = (PLpgSQL_rec *)
-						(estate->datums[recfield->recno]);
-					if (!HeapTupleIsValid(rec->tup))
-						extval = "<NULL>";
-					else
-					{
-						fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-						if (fno == SPI_ERROR_NOATTRIBUTE)
-							elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
-						extval = SPI_getvalue(rec->tup, rec->tupdesc, fno);
-						if (extval == NULL)
-							extval = "<NULL>";
-					}
-					plpgsql_dstring_append(&ds, extval);
-					break;
-
-				case PLPGSQL_DTYPE_TRIGARG:
-					{
-						PLpgSQL_trigarg *trigarg;
-						int			value;
-						Oid			valtype;
-						bool		valisnull = false;
-
-						trigarg = (PLpgSQL_trigarg *)
-							(estate->datums[stmt->params[pidx]]);
-						value = (int) exec_eval_expr(estate, trigarg->argnum,
-												   &valisnull, &valtype);
-						exec_eval_cleanup(estate);
-						if (valisnull)
-							extval = "<INDEX_IS_NULL>";
-						else
-						{
-							if (value < 0 || value >= estate->trig_nargs)
-								extval = "<OUT_OF_RANGE>";
-							else
-								extval = DatumGetCString(DirectFunctionCall1(textout,
-											  estate->trig_argv[value]));
-						}
-						plpgsql_dstring_append(&ds, extval);
-					}
-					break;
-
-				default:
-					c[0] = '?';
-					plpgsql_dstring_append(&ds, c);
-					break;
+				extval = "<NULL>";
 			}
+			else
+			{
+				typetup = SearchSysCache(TYPEOID,
+										 ObjectIdGetDatum(paramtypeid),
+										 0, 0, 0);
+				if (!HeapTupleIsValid(typetup))
+					elog(ERROR, "cache lookup for type %u failed",
+						 paramtypeid);
+				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+
+				fmgr_info(typeStruct->typoutput, &finfo_output);
+				extval = DatumGetCString(FunctionCall3(&finfo_output,
+													   paramvalue,
+													   ObjectIdGetDatum(typeStruct->typelem),
+													   Int32GetDatum(-1)));
+				ReleaseSysCache(typetup);
+			}
+			plpgsql_dstring_append(&ds, extval);
 			pidx++;
 			continue;
 		}
@@ -1985,11 +1938,7 @@ static void
 exec_prepare_plan(PLpgSQL_execstate * estate,
 				  PLpgSQL_expr * expr)
 {
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
 	int			i;
-	int			fno;
 	_SPI_plan  *spi_plan;
 	void	   *plan;
 	Oid		   *argtypes;
@@ -2004,33 +1953,12 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
 
 	for (i = 0; i < expr->nparams; i++)
 	{
-		switch (estate->datums[expr->params[i]]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
-				argtypes[i] = var->datatype->typoid;
-				break;
+		Datum	paramval;
+		bool	paramisnull;
 
-			case PLPGSQL_DTYPE_RECFIELD:
-				recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
-				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
-				argtypes[i] = SPI_gettypeid(rec->tupdesc, fno);
-				break;
-
-			case PLPGSQL_DTYPE_TRIGARG:
-				argtypes[i] = (Oid) TEXTOID;
-				break;
-
-			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_run_select()",
-					 estate->datums[expr->params[i]]->dtype);
-		}
+		exec_eval_datum(estate, estate->datums[expr->params[i]],
+						InvalidOid,
+						&argtypes[i], &paramval, &paramisnull);
 	}
 
 	/*
@@ -2059,19 +1987,11 @@ static int
 exec_stmt_execsql(PLpgSQL_execstate * estate,
 				  PLpgSQL_stmt_execsql * stmt)
 {
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	PLpgSQL_trigarg *trigarg;
-	int			tgargno;
-	Oid			tgargoid;
-	int			fno;
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
 	int			rc;
 	PLpgSQL_expr *expr = stmt->sqlstmt;
-	bool		isnull;
 
 	/*
 	 * On the first call for this expression generate the plan
@@ -2087,59 +2007,17 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
 
 	for (i = 0; i < expr->nparams; i++)
 	{
-		switch (estate->datums[expr->params[i]]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
-				values[i] = var->value;
-				if (var->isnull)
-					nulls[i] = 'n';
-				else
-					nulls[i] = ' ';
-				break;
+		PLpgSQL_datum *datum = estate->datums[expr->params[i]];
+		Oid			paramtypeid;
+		bool		paramisnull;
 
-			case PLPGSQL_DTYPE_RECFIELD:
-				recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
-				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
-
-				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
-					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
-
-				values[i] = SPI_getbinval(rec->tup, rec->tupdesc, fno, &isnull);
-				if (isnull)
-					nulls[i] = 'n';
-				else
-					nulls[i] = ' ';
-				break;
-
-			case PLPGSQL_DTYPE_TRIGARG:
-				trigarg = (PLpgSQL_trigarg *) (estate->datums[expr->params[i]]);
-				tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
-											   &isnull, &tgargoid);
-				exec_eval_cleanup(estate);
-				if (isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
-				{
-					values[i] = 0;
-					nulls[i] = 'n';
-				}
-				else
-				{
-					values[i] = estate->trig_argv[tgargno];
-					nulls[i] = ' ';
-				}
-				break;
-
-			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_stmt_execsql()", estate->datums[expr->params[i]]->dtype);
-		}
+		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
+						&paramtypeid, &values[i], &paramisnull);
+		if (paramisnull)
+			nulls[i] = 'n';
+		else
+			nulls[i] = ' ';
 	}
-	nulls[i] = '\0';
 
 	/*
 	 * Execute the plan
@@ -2485,17 +2363,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 	char	   *curname = NULL;
 	PLpgSQL_expr *query = NULL;
 	Portal		portal;
-
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	PLpgSQL_trigarg *trigarg;
-	int			tgargno;
-	Oid			tgargoid;
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
-	int			fno;
 	bool		isnull;
 
 
@@ -2654,60 +2524,17 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 
 	for (i = 0; i < query->nparams; i++)
 	{
-		switch (estate->datums[query->params[i]]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				var = (PLpgSQL_var *) (estate->datums[query->params[i]]);
-				values[i] = var->value;
-				if (var->isnull)
-					nulls[i] = 'n';
-				else
-					nulls[i] = ' ';
-				break;
+		PLpgSQL_datum *datum = estate->datums[query->params[i]];
+		Oid			paramtypeid;
+		bool		paramisnull;
 
-			case PLPGSQL_DTYPE_RECFIELD:
-				recfield = (PLpgSQL_recfield *) (estate->datums[query->params[i]]);
-				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
-
-				if (query->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
-					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
-
-				values[i] = SPI_getbinval(rec->tup, rec->tupdesc, fno, &isnull);
-				if (isnull)
-					nulls[i] = 'n';
-				else
-					nulls[i] = ' ';
-				break;
-
-			case PLPGSQL_DTYPE_TRIGARG:
-				trigarg = (PLpgSQL_trigarg *) (estate->datums[query->params[i]]);
-				tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
-											   &isnull, &tgargoid);
-				exec_eval_cleanup(estate);
-				if (isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
-				{
-					values[i] = 0;
-					nulls[i] = 'n';
-				}
-				else
-				{
-					values[i] = estate->trig_argv[tgargno];
-					nulls[i] = ' ';
-				}
-				break;
-
-			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_stmt_open()",
-					 estate->datums[query->params[i]]->dtype);
-		}
+		exec_eval_datum(estate, datum, query->plan_argtypes[i],
+						&paramtypeid, &values[i], &paramisnull);
+		if (paramisnull)
+			nulls[i] = 'n';
+		else
+			nulls[i] = ' ';
 	}
-	nulls[i] = '\0';
 
 	/* ----------
 	 * Open the cursor
@@ -2892,7 +2719,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 		case PLPGSQL_DTYPE_VAR:
 
 			/*
-			 * Target field is a variable
+			 * Target is a variable
 			 */
 			var = (PLpgSQL_var *) target;
 
@@ -2936,10 +2763,10 @@ exec_assign_value(PLpgSQL_execstate * estate,
 		case PLPGSQL_DTYPE_RECFIELD:
 
 			/*
-			 * Target field is a record
+			 * Target is a field of a record
 			 */
 			recfield = (PLpgSQL_recfield *) target;
-			rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
+			rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
 
 			/*
 			 * Check that there is already a tuple in the record. We need
@@ -3035,6 +2862,89 @@ exec_assign_value(PLpgSQL_execstate * estate,
 	}
 }
 
+/*
+ * exec_eval_datum				Get current value of a PLpgSQL_datum
+ *
+ * The type oid, value in Datum format, and null flag are returned.
+ *
+ * If expectedtypeid isn't InvalidOid, it is checked against the actual type.
+ *
+ * This obviously only handles scalar datums (not whole records or rows);
+ * at present it doesn't need to handle PLpgSQL_expr datums, either.
+ *
+ * NOTE: caller must not modify the returned value, since it points right
+ * at the stored value in the case of pass-by-reference datatypes.
+ */
+static void
+exec_eval_datum(PLpgSQL_execstate *estate,
+				PLpgSQL_datum *datum,
+				Oid expectedtypeid,
+				Oid *typeid,
+				Datum *value,
+				bool *isnull)
+{
+	PLpgSQL_var *var;
+	PLpgSQL_rec *rec;
+	PLpgSQL_recfield *recfield;
+	PLpgSQL_trigarg *trigarg;
+	int			tgargno;
+	Oid			tgargoid;
+	int			fno;
+
+	switch (datum->dtype)
+	{
+		case PLPGSQL_DTYPE_VAR:
+			var = (PLpgSQL_var *) datum;
+			*typeid = var->datatype->typoid;
+			*value = var->value;
+			*isnull = var->isnull;
+			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
+				elog(ERROR, "type of %s doesn't match that when preparing the plan",
+					 var->refname);
+			break;
+
+		case PLPGSQL_DTYPE_RECFIELD:
+			recfield = (PLpgSQL_recfield *) datum;
+			rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
+			if (!HeapTupleIsValid(rec->tup))
+				elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
+			fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
+			if (fno == SPI_ERROR_NOATTRIBUTE)
+				elog(ERROR, "record \"%s\" has no field named \"%s\"",
+					 rec->refname, recfield->fieldname);
+			*typeid = SPI_gettypeid(rec->tupdesc, fno);
+			*value = SPI_getbinval(rec->tup, rec->tupdesc, fno, isnull);
+			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
+				elog(ERROR, "type of %s.%s doesn't match that when preparing the plan",
+					 rec->refname, recfield->fieldname);
+			break;
+
+		case PLPGSQL_DTYPE_TRIGARG:
+			trigarg = (PLpgSQL_trigarg *) datum;
+			*typeid = TEXTOID;
+			tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
+										   isnull, &tgargoid);
+			exec_eval_cleanup(estate);
+			if (*isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
+			{
+				*value = (Datum) 0;
+				*isnull = true;
+			}
+			else
+			{
+				*value = estate->trig_argv[tgargno];
+				*isnull = false;
+			}
+			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
+				elog(ERROR, "type of tgargv[%d] doesn't match that when preparing the plan",
+					 tgargno);
+			break;
+
+		default:
+			elog(ERROR, "unknown datum dtype %d in exec_eval_datum()",
+				 datum->dtype);
+	}
+}
 
 /* ----------
  * exec_eval_expr			Evaluate an expression and return
@@ -3103,18 +3013,10 @@ static int
 exec_run_select(PLpgSQL_execstate * estate,
 				PLpgSQL_expr * expr, int maxtuples, Portal *portalP)
 {
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	PLpgSQL_trigarg *trigarg;
-	int			tgargno;
-	Oid			tgargoid;
 	int			i;
 	Datum	   *values;
 	char	   *nulls;
 	int			rc;
-	int			fno;
-	bool		isnull;
 
 	/*
 	 * On the first call for this expression generate the plan
@@ -3130,60 +3032,17 @@ exec_run_select(PLpgSQL_execstate * estate,
 
 	for (i = 0; i < expr->nparams; i++)
 	{
-		switch (estate->datums[expr->params[i]]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
-				values[i] = var->value;
-				if (var->isnull)
-					nulls[i] = 'n';
-				else
-					nulls[i] = ' ';
-				break;
+		PLpgSQL_datum *datum = estate->datums[expr->params[i]];
+		Oid			paramtypeid;
+		bool		paramisnull;
 
-			case PLPGSQL_DTYPE_RECFIELD:
-				recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
-				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
-
-				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
-					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
-
-				values[i] = SPI_getbinval(rec->tup, rec->tupdesc, fno, &isnull);
-				if (isnull)
-					nulls[i] = 'n';
-				else
-					nulls[i] = ' ';
-				break;
-
-			case PLPGSQL_DTYPE_TRIGARG:
-				trigarg = (PLpgSQL_trigarg *) (estate->datums[expr->params[i]]);
-				tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
-											   &isnull, &tgargoid);
-				exec_eval_cleanup(estate);
-				if (isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
-				{
-					values[i] = 0;
-					nulls[i] = 'n';
-				}
-				else
-				{
-					values[i] = estate->trig_argv[tgargno];
-					nulls[i] = ' ';
-				}
-				break;
-
-			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_eval_expr()",
-					 estate->datums[expr->params[i]]->dtype);
-		}
+		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
+						&paramtypeid, &values[i], &paramisnull);
+		if (paramisnull)
+			nulls[i] = 'n';
+		else
+			nulls[i] = ' ';
 	}
-	nulls[i] = '\0';
 
 	/*
 	 * If a portal was requested, put the query into the portal
@@ -3231,15 +3090,7 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 					  Oid *rettype)
 {
 	Datum		retval;
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	PLpgSQL_trigarg *trigarg;
-	int			tgargno;
-	Oid			tgargoid;
-	int			fno;
 	int			i;
-	bool		isnull;
 	ExprContext *econtext;
 	ParamListInfo paramLI;
 
@@ -3264,54 +3115,13 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
 	 */
 	for (i = 0; i < expr->nparams; i++, paramLI++)
 	{
+		PLpgSQL_datum *datum = estate->datums[expr->params[i]];
+		Oid			paramtypeid;
+
 		paramLI->kind = PARAM_NUM;
 		paramLI->id = i + 1;
-
-		switch (estate->datums[expr->params[i]]->dtype)
-		{
-			case PLPGSQL_DTYPE_VAR:
-				var = (PLpgSQL_var *) (estate->datums[expr->params[i]]);
-				paramLI->isnull = var->isnull;
-				paramLI->value = var->value;
-				break;
-
-			case PLPGSQL_DTYPE_RECFIELD:
-				recfield = (PLpgSQL_recfield *) (estate->datums[expr->params[i]]);
-				rec = (PLpgSQL_rec *) (estate->datums[recfield->recno]);
-
-				if (!HeapTupleIsValid(rec->tup))
-					elog(ERROR, "record \"%s\" is unassigned yet", rec->refname);
-				fno = SPI_fnumber(rec->tupdesc, recfield->fieldname);
-				if (fno == SPI_ERROR_NOATTRIBUTE)
-					elog(ERROR, "record \"%s\" has no field named \"%s\"", rec->refname, recfield->fieldname);
-
-				if (expr->plan_argtypes[i] != SPI_gettypeid(rec->tupdesc, fno))
-					elog(ERROR, "type of %s.%s doesn't match that when preparing the plan", rec->refname, recfield->fieldname);
-
-				paramLI->value = SPI_getbinval(rec->tup, rec->tupdesc, fno, &isnull);
-				paramLI->isnull = isnull;
-				break;
-
-			case PLPGSQL_DTYPE_TRIGARG:
-				trigarg = (PLpgSQL_trigarg *) (estate->datums[expr->params[i]]);
-				tgargno = (int) exec_eval_expr(estate, trigarg->argnum,
-											   &isnull, &tgargoid);
-				exec_eval_cleanup(estate);
-				if (isnull || tgargno < 0 || tgargno >= estate->trig_nargs)
-				{
-					paramLI->value = 0;
-					paramLI->isnull = TRUE;
-				}
-				else
-				{
-					paramLI->value = estate->trig_argv[tgargno];
-					paramLI->isnull = FALSE;
-				}
-				break;
-
-			default:
-				elog(ERROR, "unknown parameter dtype %d in exec_eval_simple_expr()", estate->datums[expr->params[i]]->dtype);
-		}
+		exec_eval_datum(estate, datum, expr->plan_argtypes[i],
+						&paramtypeid, &paramLI->value, &paramLI->isnull);
 	}
 	paramLI->kind = PARAM_INVALID;
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.54 2003/01/31 00:31:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.55 2003/03/25 00:34:23 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -696,7 +696,7 @@ plpgsql_parse_dblword(char *word)
 				new = malloc(sizeof(PLpgSQL_recfield));
 				new->dtype = PLPGSQL_DTYPE_RECFIELD;
 				new->fieldname = strdup(cp[1]);
-				new->recno = ns->itemno;
+				new->recparentno = ns->itemno;
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
 
@@ -799,7 +799,7 @@ plpgsql_parse_tripword(char *word)
 				new = malloc(sizeof(PLpgSQL_recfield));
 				new->dtype = PLPGSQL_DTYPE_RECFIELD;
 				new->fieldname = strdup(cp[2]);
-				new->recno = ns->itemno;
+				new->recparentno = ns->itemno;
 
 				plpgsql_adddatum((PLpgSQL_datum *) new);
 

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.31 2002/12/15 16:17:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.32 2003/03/25 00:34:24 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -152,6 +152,10 @@ typedef struct
 }	PLpgSQL_type;
 
 
+/*
+ * PLpgSQL_datum is the common supertype for PLpgSQL_expr, PLpgSQL_var,
+ * PLpgSQL_row, PLpgSQL_rec, PLpgSQL_recfield, PLpgSQL_trigarg
+ */
 typedef struct
 {								/* Generic datum array item		*/
 	int			dtype;
@@ -209,7 +213,7 @@ typedef struct
 
 
 typedef struct
-{								/* Record of undefined structure	*/
+{								/* Record of non-fixed structure */
 	int			dtype;
 	int			recno;
 	char	   *refname;
@@ -223,11 +227,11 @@ typedef struct
 
 
 typedef struct
-{								/* Field in record			*/
+{								/* Field in record */
 	int			dtype;
 	int			rfno;
 	char	   *fieldname;
-	int			recno;
+	int			recparentno;	/* recno of parent record */
 }	PLpgSQL_recfield;
 
 
