@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.7 1996/11/14 10:23:53 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.8 1996/11/15 09:54:28 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #else
 #include <winsock.h>
