@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.7 1996/11/16 08:08:44 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.8 1996/12/07 04:36:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,9 @@ Async_NotifyAtCommit()
 		}
 		ReleaseBuffer(b);
 	    }
+	    heap_endscan(sRel);
+	    heap_close(lRel);
+
 	    CommitTransactionCommand();
 	    ClearPendingNotify();
 	}
