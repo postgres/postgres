@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.109 2004/03/30 15:54:33 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.110 2004/04/12 15:58:52 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -706,7 +706,7 @@ testdb=>
         <term><literal>\copy <replaceable class="parameter">table</replaceable>
 	[ ( <replaceable class="parameter">column_list</replaceable> ) ]
         { <literal>from</literal> | <literal>to</literal> }
-	{ <replaceable class="parameter">filename</replaceable> | stdin | stdout | - }
+	{ <replaceable class="parameter">filename</replaceable> | stdin | stdout | pstdin | pstdout }
         [ <literal>with</literal> ] 
             [ <literal>oids</literal> ] 
             [ <literal>delimiter [as] </literal> '<replaceable class="parameter">character</replaceable>' ]
@@ -736,18 +736,17 @@ testdb=>
 	</para>
 
 	<para>
-	For <literal>\copy <replaceable
+	<literal>\copy <replaceable
 	class="parameter">table</replaceable> from <replaceable
-	class="parameter">filename</replaceable></literal> operations,
-	<application>psql</application> adds the option of using a
-	hyphen instead of <replaceable
-	class="parameter">filename</replaceable>.  This causes
-	<literal>\copy</literal> to read rows from the same source that
-	issued the command, continuing until <literal>\.</literal> is
-	read or the stream reaches <acronym>EOF</>.  This option is
-	useful for populating tables in-line within a SQL script file.
-	In contrast, <literal>\copy from stdin</> always reads from
-	<application>psql</application>'s standard input.
+	class="parameter">stdin | stdout</replaceable></literal>
+	reads/writes based on the command input and output respectively.
+	All rows are read from the same source that issued the command,
+	continuing until <literal>\.</literal> is read or the stream
+	reaches <acronym>EOF</>. Output is sent to the same place as
+	command output. To read/write from
+	<application>psql</application>'s standard input or output, use
+	<literal>pstdin</> or <literal>pstdout</>. This option is useful
+	for populating tables in-line within a SQL script file.
 	</para>
 
         <tip>
@@ -759,20 +758,6 @@ testdb=>
         </para>
         </tip>
 
-        <note>
-        <para>
-        Note the difference in interpretation of
-        <literal>stdin</literal> and <literal>stdout</literal> between
-	<literal>\copy</literal> and <command>COPY</command>.
-	In <literal>\copy</literal> these always
-        refer to <application>psql</application>'s input and output
-        streams. In <command>COPY</command>, <literal>stdin</literal> comes
-	from wherever the <command>COPY</command> itself came from (for
-        example, a script run with the <option>-f</option> option), while
-        <literal>stdout</literal> refers to the query output stream (see
-        <command>\o</command> meta-command below).
-        </para>
-        </note>
         </listitem>
       </varlistentry>
 

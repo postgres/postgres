@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.42 2004/01/29 12:34:59 neilc Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/copy.c,v 1.43 2004/04/12 15:58:52 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "copy.h"
@@ -62,7 +62,7 @@ struct copy_options
 	char	   *table;
 	char	   *column_list;
 	char	   *file;			/* NULL = stdin/stdout */
-	bool		in_dash;		/* true = use src stream not true stdin */
+	bool		psql_inout;		/* true = use psql stdin/stdout */
 	bool		from;
 	bool		binary;
 	bool		oids;
@@ -220,21 +220,18 @@ parse_slash_copy(const char *args)
 	if (strcasecmp(token, "stdin") == 0 ||
 		strcasecmp(token, "stdout") == 0)
 	{
-		result->in_dash = false;
+		result->psql_inout = false;
 		result->file = NULL;
 	}
-	else if (strcmp(token, "-") == 0)
+	else if (strcasecmp(token, "pstdin") == 0 ||
+		strcasecmp(token, "pstdout") == 0)
 	{
-		/* Can't do this on output */
-		if (!result->from)
-			goto error;
-
-		result->in_dash = true;
+		result->psql_inout = true;
 		result->file = NULL;
 	}
 	else
 	{
-		result->in_dash = false;
+		result->psql_inout = false;
 		result->file = pg_strdup(token);
 		expand_tilde(&result->file);
 	}
@@ -394,7 +391,7 @@ do_copy(const char *args)
 	{
 		if (options->file)
 			copystream = fopen(options->file, "r");
-		else if (options->in_dash)
+		else if (!options->psql_inout)
  			copystream = pset.cur_cmd_source;
 		else
  			copystream = stdin;
@@ -403,6 +400,8 @@ do_copy(const char *args)
 	{
 		if (options->file)
 			copystream = fopen(options->file, "w");
+		else if (!options->psql_inout)
+ 			copystream = pset.queryFout;
 		else
 			copystream = stdout;
 	}
