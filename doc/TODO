@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Fri Aug  6 11:24:17 EDT 2004
+Last updated:		Fri Aug  6 13:52:36 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -79,10 +79,10 @@ Administration
   though the postmaster has paniced and shared memory might not be
   cleaned up properly.  A new signal is needed for safe termination.
 
-* Remove comments on postgresql.conf variables
+* Un-comment all variables in postgresql.conf
 
-  By removing comments we prevent the confusion that commenting a line
-  returns a modified value to its default, which it does not.
+  By not showing commented-out variables, we discourage people from 
+  thinking that re-commenting a variable returns it to its default.
 
 * Allow point-in-time recovery to archive partially filled write-ahead 
   logs
