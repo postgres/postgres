@@ -1,7 +1,7 @@
 # ru.po
 # PSQL Translated Messages into the Russian Language (KOI8-R)
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.14 2004/08/14 19:16:07 petere Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/ru.po,v 1.15 2004/08/24 21:35:19 petere Exp $
 #
 # ChangeLog:
 #   - March 27 - August 14, 2004: Updates for 8.0; <mokhov@cs.concordia.ca>
@@ -13,8 +13,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-07-17 13:09-0300\n"
-"PO-Revision-Date: 2004-08-14 02:14-0500\n"
+"POT-Creation-Date: 2004-08-14 19:07-0300\n"
+"PO-Revision-Date: 2004-08-14 19:56-0500\n"
 "Last-Translator: Serguei A. Mokhov <mokhov@cs.concordia.ca>\n"
 "Language-Team: pgsql-rus <pgsql-rus@yahoogroups.com>\n"
 "MIME-Version: 1.0\n"
@@ -51,85 +51,85 @@ msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: не получилось поменять директорию на \"%s\": %s\n"
 
 #: command.c:370
-#: command.c:759
+#: command.c:760
 msgid "no query buffer\n"
 msgstr "нет буфера запросов\n"
 
-#: command.c:432
+#: command.c:433
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: неправильное название кодировки символов или функция конверсии не найдена\n"
 
-#: command.c:500
-#: command.c:534
-#: command.c:548
-#: command.c:565
-#: command.c:611
-#: command.c:739
-#: command.c:770
+#: command.c:501
+#: command.c:535
+#: command.c:549
+#: command.c:566
+#: command.c:612
+#: command.c:740
+#: command.c:771
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: отсутствует необходимый аргумент\n"
 
-#: command.c:597
+#: command.c:598
 msgid "Query buffer is empty."
 msgstr "Буфер запросов пуст."
 
-#: command.c:631
+#: command.c:632
 msgid "Query buffer reset (cleared)."
 msgstr "Буфер запросов сброшен (очищен)."
 
-#: command.c:645
+#: command.c:646
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "История записана в файл \"%s\".\n"
 
-#: command.c:680
+#: command.c:681
 #: common.c:86
 #: common.c:100
 #: mainloop.c:70
 msgid "out of memory\n"
 msgstr "недостаточно памяти\n"
 
-#: command.c:695
-#: command.c:744
+#: command.c:696
+#: command.c:745
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: ошибка\n"
 
-#: command.c:725
+#: command.c:726
 msgid "Timing is on."
 msgstr "Cекундомер включен."
 
-#: command.c:727
+#: command.c:728
 msgid "Timing is off."
 msgstr "Cекундомер выключен."
 
-#: command.c:787
-#: command.c:807
-#: command.c:1163
-#: command.c:1170
-#: command.c:1180
-#: command.c:1192
-#: command.c:1205
-#: command.c:1219
-#: command.c:1241
-#: command.c:1272
+#: command.c:788
+#: command.c:808
+#: command.c:1164
+#: command.c:1171
+#: command.c:1181
+#: command.c:1193
+#: command.c:1206
+#: command.c:1220
+#: command.c:1242
+#: command.c:1273
 #: common.c:171
-#: copy.c:539
-#: copy.c:584
+#: copy.c:540
+#: copy.c:585
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:914
-#: command.c:938
+#: command.c:915
+#: command.c:939
 #: startup.c:184
 #: startup.c:202
 msgid "Password: "
 msgstr "Пароль: "
 
-#: command.c:952
+#: command.c:953
 #: common.c:217
 #: common.c:599
 #: common.c:654
@@ -138,137 +138,137 @@ msgstr "Пароль: "
 msgid "%s"
 msgstr "%s"
 
-#: command.c:956
+#: command.c:957
 msgid "Previous connection kept\n"
 msgstr "Предыдущее подсоединение сохранено\n"
 
-#: command.c:968
+#: command.c:969
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:980
+#: command.c:981
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Вы теперь подсоединены к базе данных \"%s\".\n"
 
-#: command.c:982
+#: command.c:983
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Вы теперь подсоединены как новый пользователь \"%s\".\n"
 
-#: command.c:985
+#: command.c:986
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Вы теперь подсоединены к базе данных \"%s\" как пользователь \"%s\".\n"
 
-#: command.c:1102
+#: command.c:1103
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "не получилось запустить редактор \"%s\"\n"
 
-#: command.c:1104
+#: command.c:1105
 msgid "could not start /bin/sh\n"
 msgstr "не получилось запустить /bin/sh\n"
 
-#: command.c:1148
+#: command.c:1149
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "не получилось открыть временный файл \"%s\": %s\n"
 
-#: command.c:1340
+#: command.c:1341
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: дозволенные форматы: unaligned, aligned, html и latex\n"
 
-#: command.c:1345
+#: command.c:1346
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Формат вывода: %s.\n"
 
-#: command.c:1355
+#: command.c:1356
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Стиль бордюра: %d.\n"
 
-#: command.c:1364
+#: command.c:1365
 msgid "Expanded display is on.\n"
 msgstr "Расширенный дисплей включен.\n"
 
-#: command.c:1365
+#: command.c:1366
 msgid "Expanded display is off.\n"
 msgstr "Расширенный дисплей выключен.\n"
 
-#: command.c:1377
+#: command.c:1378
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Нуль-дисплей: \"%s\".\n"
 
-#: command.c:1389
+#: command.c:1390
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Разделитель полей: \"%s\".\n"
 
-#: command.c:1403
+#: command.c:1404
 msgid "Record separator is <newline>."
 msgstr "Разделитель записей: <newline>."
 
-#: command.c:1405
+#: command.c:1406
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Разделитель записей: \"%s\".\n"
 
-#: command.c:1416
+#: command.c:1417
 msgid "Showing only tuples."
 msgstr "Показываются только записи."
 
-#: command.c:1418
+#: command.c:1419
 msgid "Tuples only is off."
 msgstr "Режим \"только записи\" выключен."
 
-#: command.c:1434
+#: command.c:1435
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Название: \"%s\".\n"
 
-#: command.c:1436
+#: command.c:1437
 msgid "Title is unset.\n"
 msgstr "Название не указано.\n"
 
-#: command.c:1452
+#: command.c:1453
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Атрибут таблицы: \"%s\".\n"
 
-#: command.c:1454
+#: command.c:1455
 msgid "Table attributes unset.\n"
 msgstr "Атрибуты таблицы не указаны.\n"
 
-#: command.c:1470
+#: command.c:1471
 msgid "Pager is used for long output."
 msgstr "Использовать пейджер для длинного вывода."
 
-#: command.c:1472
+#: command.c:1473
 msgid "Pager is always used."
 msgstr "Всегда использовать пейджер."
 
-#: command.c:1474
+#: command.c:1475
 msgid "Pager usage is off."
 msgstr "Использование пейджера выключено."
 
-#: command.c:1485
+#: command.c:1486
 msgid "Default footer is on."
 msgstr "Нижний колонтитул по умолчанию включен."
 
-#: command.c:1487
+#: command.c:1488
 msgid "Default footer is off."
 msgstr "Нижний колонтитул по умолчанию выключен."
 
-#: command.c:1493
+#: command.c:1494
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: неизвестная опция: %s\n"
 
-#: command.c:1532
+#: command.c:1533
 msgid "\\!: failed\n"
 msgstr "\\!: неудачно\n"
 
@@ -352,22 +352,22 @@ msgstr "\\copy: ошибка при анализе синтаксиса в \"%s\"\n"
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: ошибка при анализе синтаксиса в конце строки\n"
 
-#: copy.c:550
+#: copy.c:551
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: нельзя использовать COPY TO/FROM для директорий\n"
 
-#: copy.c:571
+#: copy.c:572
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:575
+#: copy.c:576
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: неожидаемый ответ (%d)\n"
 
-#: copy.c:676
+#: copy.c:678
 msgid ""
 "Enter data to be copied followed by a newline.\n"
 "End with a backslash and a period on a line by itself."
@@ -901,11 +901,11 @@ msgstr "Используйте \"\\q\" чтобы выйти из %s.\n"
 msgid "(No rows)\n"
 msgstr "(Нет записей)\n"
 
-#: print.c:1193
+#: print.c:1196
 msgid "(1 row)"
 msgstr "(1 запись)"
 
-#: print.c:1195
+#: print.c:1198
 #, c-format
 msgid "(%d rows)"
 msgstr "(записей: %d)"
@@ -1448,7 +1448,7 @@ msgid "List of schemas"
 msgstr "Список схем"
 
 #: sql_help.h:25
-#: sql_help.h:365
+#: sql_help.h:369
 msgid "abort the current transaction"
 msgstr "отменть текущую транзакцию (abort)"
 
@@ -1737,19 +1737,25 @@ msgid "ANALYZE [ VERBOSE ] [ table [ (column [, ...] ) ] ]"
 msgstr "ANALYZE [ VERBOSE ] [ таблицв [ (колонка [, ...] ) ] ]"
 
 #: sql_help.h:97
-#: sql_help.h:397
+#: sql_help.h:409
 msgid "start a transaction block"
 msgstr "начать новый блок транзакций"
 
 #: sql_help.h:98
 msgid ""
-"BEGIN [ WORK | TRANSACTION ]\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"BEGIN [ WORK | TRANSACTION ] [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 msgstr ""
-"BEGIN [ WORK | TRANSACTION ]\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"BEGIN [ WORK | TRANSACTION ] [ режим_транзакций [, ...] ]\n"
+"\n"
+"где режим_транзакций один из следующих:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 
 #: sql_help.h:101
 msgid "force a transaction log checkpoint"
@@ -2187,7 +2193,10 @@ msgid ""
 "where column_constraint is:\n"
 "\n"
 "[ CONSTRAINT constraint_name ]\n"
-"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY [ USING INDEX TABLESPACE tablespace ] |\n"
 "  CHECK (expression) |\n"
 "  REFERENCES reftable [ ( refcolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
@@ -2196,15 +2205,15 @@ msgid ""
 "and table_constraint is:\n"
 "\n"
 "[ CONSTRAINT constraint_name ]\n"
-"{ UNIQUE ( column_name [, ... ] ) |\n"
-"  PRIMARY KEY ( column_name [, ... ] ) |\n"
+"{ UNIQUE ( column_name [, ... ] ) [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY ( column_name [, ... ] ) [ USING INDEX TABLESPACE tablespace ] |\n"
 "  CHECK ( expression ) |\n"
 "  FOREIGN KEY ( column_name [, ... ] ) REFERENCES reftable [ ( refcolumn [, ... ] ) ]\n"
 "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE имя_таблицы (\n"
-"    { имя_колонки тип_данных [ DEFAULT выр_по_умолчанию ] [ констрейнт_на_колонку [ ... ] ]\n"
+"  { имя_колонки тип_данных [ DEFAULT выр_по_умолчанию ] [ констрейнт_на_колонку [ ... ] ]\n"
 "    | констрейнт_на_таблицу\n"
 "    | LIKE таблица_родитель [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
 ")\n"
@@ -2216,7 +2225,10 @@ msgstr ""
 "где констрейнт_на_колонку:\n"
 "\n"
 "[ CONSTRAINT имя_констрейнта ]\n"
-"{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
+"{ NOT NULL | \n"
+"  NULL | \n"
+"  UNIQUE [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY [ USING INDEX TABLESPACE tablespace ] |\n"
 "  CHECK (выражение) |\n"
 "  REFERENCES реф_таблица [ ( реф_колонка ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
 "    [ ON DELETE действие ] [ ON UPDATE действие ] }\n"
@@ -2225,15 +2237,15 @@ msgstr ""
 "и констрейнт_на_таблицу:\n"
 "\n"
 "[ CONSTRAINT имя_констрейнта ]\n"
-"{ UNIQUE ( имя_колонки [, ... ] ) |\n"
-"  PRIMARY KEY ( имя_колонки [, ... ] ) |\n"
+"{ UNIQUE ( имя_колонки [, ... ] ) [ USING INDEX TABLESPACE tablespace ] |\n"
+"  PRIMARY KEY ( имя_колонки [, ... ] ) [ USING INDEX TABLESPACE tablespace ] |\n"
 "  CHECK ( выражение ) |\n"
 "  FOREIGN KEY ( имя_колонки [, ... ] ) REFERENCES реф_таблица [ ( реф_колонка [, ... ] ) ]\n"
 "    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE действие ] [ ON UPDATE действие ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:189
-#: sql_help.h:373
+#: sql_help.h:385
 msgid "create a new table from the results of a query"
 msgstr "создать таблицу из результатов запроса"
 
@@ -2736,10 +2748,18 @@ msgid "REINDEX { DATABASE | TABLE | INDEX } name [ FORCE ]"
 msgstr "REINDEX { DATABASE | TABLE | INDEX } имя [ FORCE ]"
 
 #: sql_help.h:357
+msgid "destroy a previously defined savepoint"
+msgstr "удалить ранее определённую точку сохранения"
+
+#: sql_help.h:358
+msgid "RELEASE [ SAVEPOINT ] savepoint_name"
+msgstr "RELEASE [ SAVEPOINT ] имя_сохранточки"
+
+#: sql_help.h:361
 msgid "restore the value of a run-time parameter to the default value"
 msgstr "восстановить значение параметра выполнения в начальное значение"
 
-#: sql_help.h:358
+#: sql_help.h:362
 msgid ""
 "RESET name\n"
 "RESET ALL"
@@ -2747,11 +2767,11 @@ msgstr ""
 "RESET имя\n"
 "RESET ALL"
 
-#: sql_help.h:361
+#: sql_help.h:365
 msgid "remove access privileges"
 msgstr "удалить привилегии доступа"
 
-#: sql_help.h:362
+#: sql_help.h:366
 msgid ""
 "REVOKE [ GRANT OPTION FOR ]\n"
 "    { { SELECT | INSERT | UPDATE | DELETE | RULE | REFERENCES | TRIGGER }\n"
@@ -2827,15 +2847,31 @@ msgstr ""
 "    FROM { пользователь | GROUP имя_группы | PUBLIC } [, ...]\n"
 "    [ CASCADE | RESTRICT ]"
 
-#: sql_help.h:366
+#: sql_help.h:370
 msgid "ROLLBACK [ WORK | TRANSACTION ]"
 msgstr "ROLLBACK [ WORK | TRANSACTION ]"
 
-#: sql_help.h:369
+#: sql_help.h:373
+msgid "roll back to a savepoint"
+msgstr "откатиться к точке сохранения"
+
+#: sql_help.h:374
+msgid "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] savepoint_name"
+msgstr "ROLLBACK [ WORK | TRANSACTION ] TO [ SAVEPOINT ] имя_savepoint"
+
+#: sql_help.h:377
+msgid "define a new savepoint within the current transaction"
+msgstr "определить новую точку сохранения в текущей транзакции"
+
+#: sql_help.h:378
+msgid "SAVEPOINT savepoint_name"
+msgstr "SAVEPOINT имя_сохранточки"
+
+#: sql_help.h:381
 msgid "retrieve rows from a table or view"
 msgstr "извлечь записи из таблицы"
 
-#: sql_help.h:370
+#: sql_help.h:382
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2877,7 +2913,7 @@ msgstr ""
 "    имя_функции ( [ аргумент [, ...] ] ) AS ( определение_колонки [, ...] )\n"
 "    элемент_из [ NATURAL ] тип_join элемент_из [ ON условие_join | USING ( колонка_join [, ...] ) ]"
 
-#: sql_help.h:374
+#: sql_help.h:386
 msgid ""
 "SELECT [ ALL | DISTINCT [ ON ( expression [, ...] ) ] ]\n"
 "    * | expression [ AS output_name ] [, ...]\n"
@@ -2905,11 +2941,11 @@ msgstr ""
 "    [ OFFSET начало ]\n"
 "    [ FOR UPDATE [ OF имя_таблицы [, ...] ] ]"
 
-#: sql_help.h:377
+#: sql_help.h:389
 msgid "change a run-time parameter"
 msgstr "изменение параметра среды выполнения"
 
-#: sql_help.h:378
+#: sql_help.h:390
 msgid ""
 "SET [ SESSION | LOCAL ] name { TO | = } { value | 'value' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { timezone | LOCAL | DEFAULT }"
@@ -2917,19 +2953,19 @@ msgstr ""
 "SET [ SESSION | LOCAL ] имя { TO | = } { значение | 'значение' | DEFAULT }\n"
 "SET [ SESSION | LOCAL ] TIME ZONE { временная_зона | LOCAL | DEFAULT }"
 
-#: sql_help.h:381
+#: sql_help.h:393
 msgid "set the constraint mode of the current transaction"
 msgstr "установить режим ограничений текущей транзанции"
 
-#: sql_help.h:382
+#: sql_help.h:394
 msgid "SET CONSTRAINTS { ALL | name [, ...] } { DEFERRED | IMMEDIATE }"
 msgstr "SET CONSTRAINTS { ALL | имя [, ...] } { DEFERRED | IMMEDIATE }"
 
-#: sql_help.h:385
+#: sql_help.h:397
 msgid "set the session user identifier and the current user identifier of the current session"
 msgstr "установить идентификатор пользователя сессии и текущий идентификатор пользователя текущей сессии"
 
-#: sql_help.h:386
+#: sql_help.h:398
 msgid ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION username\n"
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
@@ -2939,33 +2975,33 @@ msgstr ""
 "SET [ SESSION | LOCAL ] SESSION AUTHORIZATION DEFAULT\n"
 "RESET SESSION AUTHORIZATION"
 
-#: sql_help.h:389
+#: sql_help.h:401
 msgid "set the characteristics of the current transaction"
 msgstr "установить характеристики текущей транзакции"
 
-#: sql_help.h:390
+#: sql_help.h:402
 msgid ""
-"SET TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]\n"
+"SET TRANSACTION transaction_mode [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION transaction_mode [, ...]\n"
 "\n"
-"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 msgstr ""
-"SET TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]\n"
+"SET TRANSACTION режим_транзакций [, ...]\n"
+"SET SESSION CHARACTERISTICS AS TRANSACTION режим_транзакций [, ...]\n"
 "\n"
-"SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"где режим_транзакций один из следующих:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 
-#: sql_help.h:393
+#: sql_help.h:405
 msgid "show the value of a run-time parameter"
 msgstr "показать значение параметра среды выполнения"
 
-#: sql_help.h:394
+#: sql_help.h:406
 msgid ""
 "SHOW name\n"
 "SHOW ALL"
@@ -2973,37 +3009,43 @@ msgstr ""
 "SHOW имя\n"
 "SHOW ALL"
 
-#: sql_help.h:398
+#: sql_help.h:410
 msgid ""
-"START TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"START TRANSACTION [ transaction_mode [, ...] ]\n"
+"\n"
+"where transaction_mode is one of:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 msgstr ""
-"START TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
-"    [ READ WRITE | READ ONLY ]"
+"START TRANSACTION [ режим_транзакций [, ...] ]\n"
+"\n"
+"где режим_транзакций один из следующих:\n"
+"\n"
+"    ISOLATION LEVEL { SERIALIZABLE | REPEATABLE READ | READ COMMITTED | READ UNCOMMITTED }\n"
+"    READ WRITE | READ ONLY"
 
-#: sql_help.h:401
+#: sql_help.h:413
 msgid "empty a table"
 msgstr "очистить таблицу"
 
-#: sql_help.h:402
+#: sql_help.h:414
 msgid "TRUNCATE [ TABLE ] name"
 msgstr "TRUNCATE [ TABLE ] имя"
 
-#: sql_help.h:405
+#: sql_help.h:417
 msgid "stop listening for a notification"
 msgstr "прекратить прослушивание в ожидании оповещения"
 
-#: sql_help.h:406
+#: sql_help.h:418
 msgid "UNLISTEN { name | * }"
 msgstr "UNLISTEN { имя | * }"
 
-#: sql_help.h:409
+#: sql_help.h:421
 msgid "update rows of a table"
 msgstr "обновить записи таблицы"
 
-#: sql_help.h:410
+#: sql_help.h:422
 msgid ""
 "UPDATE [ ONLY ] table SET column = { expression | DEFAULT } [, ...]\n"
 "    [ FROM fromlist ]\n"
@@ -3013,11 +3055,11 @@ msgstr ""
 "    [ FROM список_from ]\n"
 "    [ WHERE условие ]"
 
-#: sql_help.h:413
+#: sql_help.h:425
 msgid "garbage-collect and optionally analyze a database"
 msgstr "произвести сборку мусора и опционально собрать статистику о базе"
 
-#: sql_help.h:414
+#: sql_help.h:426
 msgid ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
