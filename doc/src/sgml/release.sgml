@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.165 2002/11/11 20:05:59 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.166 2002/11/23 02:41:03 tgl Exp $
 -->
 
 <appendix id="release">
@@ -47,7 +47,7 @@ worries about funny characters.
       <term>Schemas</term>
       <listitem>
        <para>
-        Schemas allow users to create objects in their own namespace
+        Schemas allow users to create objects in separate namespaces,
         so two people or applications can have tables with the same
         name. There is also a public schema for shared tables.
         Table/index creation can be restricted by removing permissions
@@ -148,7 +148,10 @@ worries about funny characters.
       <listitem>
        <para>
         By default, functions can now take up to 32 parameters, and
-        identifiers can be up to 63 bytes long.
+        identifiers can be up to 63 bytes long.  Also, <literal>OPAQUE</>
+        is now deprecated: there are specific <quote>pseudo-datatypes</>
+        to represent each of the former meanings of <literal>OPAQUE</>
+        in function argument and result types.
        </para>
       </listitem>
      </varlistentry>
@@ -191,7 +194,7 @@ worries about funny characters.
      <listitem>
       <para>
        Several <filename>postgresql.conf</filename> logging parameters
-       have been renamed and improved.
+       have been renamed.
       </para>
      </listitem>
 
@@ -205,14 +208,18 @@ worries about funny characters.
      <listitem>
       <para>
        <command>INSERT</command> statements with column lists must
-       specify all values; e.g., <literal>INSERT INTO tab (col1, col2)
-       VALUES ('val1')</literal> is now invalid.
+       specify a value for each specified column. For example,
+       <literal>INSERT INTO tab (col1, col2) VALUES ('val1')</literal>
+       is now invalid.  It's still allowed to supply fewer columns than
+       expected if the <command>INSERT</command> does not have a column list.
       </para>
      </listitem>
 
      <listitem>
       <para>
-       An index is now not automatically created for <type>serial</type> columns.
+       <type>serial</type> columns are no longer automatically
+       <literal>UNIQUE</>; thus, an index will not automatically be
+       created.
       </para>
      </listitem>
 
@@ -227,14 +234,16 @@ worries about funny characters.
       <para>
        <command>COPY</command> no longer considers missing trailing
        columns to be null.  All columns need to be specified.
+       (However, one may achieve a similar effect by specifying a
+       column list in the <command>COPY</command> command.)
       </para>
      </listitem>
 
      <listitem>
       <para>
        The data type <type>timestamp</type> is now equivalent to
-       <type>timestamp without timezone</type>, instead of
-       <type>timestamp with timezone</type>.
+       <type>timestamp without time zone</type>, instead of
+       <type>timestamp with time zone</type>.
       </para>
      </listitem>
 
@@ -244,7 +253,15 @@ worries about funny characters.
        dependencies for <type>serial</type> columns, unique
        constraints, and foreign keys. See the directory
        <filename>contrib/adddepend/</filename> for a detailed
-       description and a script that will add the such dependencies.
+       description and a script that will add such dependencies.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       An empty string (<literal>''</literal>) is no longer allowed as
+       the input into an integer field.  Formerly, it was silently
+       interpreted as 0.
       </para>
      </listitem>
 
@@ -282,7 +299,7 @@ Improve performance of query tokenization and network handling (Peter)
 Speed improvement for large object restore (Mario Weilguni)
 Mark expired index entries on first lookup, saving later heap fetches
   (Tom)
-Eliminate NULL bitmap padding when not required (Manfred)
+Avoid excessive NULL bitmap padding (Manfred Koizar)
 Add BSD-licensed qsort() for Solaris, for performance (Bruce)
 Reduce per-row overhead by four bytes (Manfred Koizar)
 Fix GEQO optimizer bug (Neil Conway)
@@ -348,7 +365,7 @@ Make cursors insensitive, meaning their contents do not change (Tom)
 Disable LIMIT #,# syntax; now only LIMIT # OFFSET # supported (Bruce)
 Increase identifier length to 63 (Neil, Bruce)
 UNION fixes for merging >= 3 columns of different lengths (Tom)
-Add DEFAULT keyword to INSERT, e.g., INSERT ... (..., DEFAULT, )
+Add DEFAULT keyword to INSERT, e.g., INSERT ... (..., DEFAULT, ...)
   (Rod)
 Allow views to have default values using ALTER COLUMN ... SET DEFAULT
   (Neil)
@@ -372,7 +389,7 @@ Add variable autocommit (Tom, David Van Wie)
     <title>Object Manipulation</title>
 <literallayout>
 Make equals signs optional in CREATE DATABASE (Gavin Sherry)
-Make ALTER TABLE OWNER to change index ownership (Neil)
+Make ALTER TABLE OWNER change index ownership too (Neil)
 New ALTER TABLE tabname ALTER COLUMN colname SET STORAGE controls
   TOAST storage, compression (John Gray)
 Add schema support, CREATE/DROP SCHEMA (Tom)
@@ -424,7 +441,7 @@ Allow comments on operators, independent of the underlying function
   (Rod)
 Rollback SET commands in aborted transactions (Tom)
 EXPLAIN now outputs as a query (Tom)
-Display sort keys in EXPLAIN (Tom)
+Display condition expressions and sort keys in EXPLAIN (Tom)
 Add 'SET LOCAL var = value' to set configuration variables for a
   single transaction (Tom)
 Allow ANALYZE to run in a transaction (Bruce)
@@ -518,7 +535,7 @@ Fix trigger/type/language functions returning OPAQUE to return
    <sect3>
     <title>Internationalization</title>
 <literallayout>
-Add additional encodings (Korean (JOHAB), Thai (WIN874), Vietnamese
+Add additional encodings: Korean (JOHAB), Thai (WIN874), Vietnamese
   (TCVN), Arabic (WIN1256), Simplified Chinese (GBK), Korean (UHC)
   (Eiji Tokuya)
 Enable locale support by default (Peter)
@@ -545,7 +562,7 @@ Allow recursive SQL function (Peter)
 Change PL/Tcl build to use configured compiler and Makefile.shlib
   (Peter)
 Overhaul the PL/pgSQL FOUND variable to be more Oracle-compatible
-  (Tom, Neil)
+  (Neil, Tom)
 Allow PL/pgSQL to handle quoted identifiers (Tom)
 Allow set-returning PL/pgSQL functions (Neil)
 Make PL/pgSQL schema-aware (Joe)
@@ -711,7 +728,7 @@ Improve /contrib/pgbench (Neil)
 Add /contrib/tablefunc table function examples (Joe)
 Add /contrib/ltree data type for tree structures (Teodor Sigaev,
   Oleg Bartunov)
-Move /contrib/pg_controldata into main tree (Bruce)
+Move /contrib/pg_controldata, pg_resetxlog into main tree (Bruce)
 Fixes to /contrib/cube (Bruno Wolff)
 Improve /contrib/fulltextindex (Christopher)
 </literallayout>
