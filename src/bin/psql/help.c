@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.28 2000/05/11 01:37:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.29 2000/05/11 18:41:00 momjian Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -117,7 +117,7 @@ usage(void)
 	puts("  -R <string>     Set record separator (default: newline) (-P recordsep=)");
 	puts("  -s              Single step mode (confirm each query)");
 	puts("  -S              Single line mode (newline terminates query)");
-	puts("  -t              Don't print headings and row count (-P tuples_only)");
+	puts("  -t              Print rows only (-P tuples_only)");
 	puts("  -T text         Set HTML table tag options (width, border) (-P tableattr=)");
 
 	/* Display default user */
@@ -232,7 +232,7 @@ slashUsage(void)
 	fprintf(fout, " \\r             reset (clear) the query buffer\n");
 	fprintf(fout, " \\s [file]      print history or save it in [file]\n");
 	fprintf(fout, " \\set <var> <value>  set internal variable\n");
-	fprintf(fout, " \\t             don't show table headers or footers (currently %s)\n", ON(pset.popt.topt.tuples_only));
+	fprintf(fout, " \\t             show only rows (currently %s)\n", ON(pset.popt.topt.tuples_only));
 	fprintf(fout, " \\T <tags>      HTML table tags\n");
 	fprintf(fout, " \\unset <var>   unset (delete) internal variable\n");
 	fprintf(fout, " \\w <file>      write current query buffer to a <file>\n");
