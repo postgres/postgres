@@ -1,5 +1,6 @@
 AROPT:crs
 CFLAGS:
+LIBS:-lsocket -lnsl
 SHARED_LIB:-fpic
 ALL:
 SRCH_INC:
@@ -8,3 +9,4 @@ USE_LOCALE:no
 DLSUFFIX:.so
 YFLAGS:-d
 YACC:bison -y
+
