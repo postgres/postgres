@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.30 2002/10/18 22:05:35 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_ctl/Attic/pg_ctl.sh,v 1.31 2003/02/14 22:18:25 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -115,6 +115,8 @@ wait_seconds=60
 logfile=
 silence_echo=
 shutdown_mode=smart
+PGDATAOPTS=""
+POSTOPTS=""
 
 while [ "$#" -gt 0 ]
 do
@@ -129,7 +131,8 @@ do
 	    ;;
 	-D)
 	    shift
-	    # pass environment into new postmaster
+	    # we need to do this so -D datadir shows in ps display
+	    PGDATAOPTS="-D $1"
 	    PGDATA="$1"
 	    export PGDATA
 	    ;;
@@ -333,12 +336,12 @@ if [ "$op" = "start" -o "$op" = "restart" ];then
     fi
 
     if [ -n "$logfile" ]; then
-        "$po_path" ${1+"$@"} </dev/null >>$logfile 2>&1 &
+        "$po_path" ${1+"$@"} ${PGDATAOPTS+$PGDATAOPTS} </dev/null >>$logfile 2>&1 &
     else
         # when starting without log file, redirect stderr to stdout, so
         # pg_ctl can be invoked with >$logfile and still have pg_ctl's
         # stderr on the terminal.
-        "$po_path" ${1+"$@"} </dev/null 2>&1 &
+        "$po_path" ${1+"$@"} ${PGDATAOPTS+$PGDATAOPTS} </dev/null 2>&1 &
     fi
 
     # if had an old lockfile, check to see if we were able to start
