@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.114 2003/05/07 03:47:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.115 2003/05/15 17:59:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,11 +311,10 @@ createdb(const CreatedbStmt *stmt)
 	/* Copy the template database to the new location */
 #ifndef WIN32
 	snprintf(buf, sizeof(buf), "cp -r '%s' '%s'", src_loc, target_dir);
-#else
-	snprintf(buf, sizeof(buf), "xcopy /e /i /q '%s' '%s'", src_loc, target_dir);
-#endif
-
 	if (system(buf) != 0)
+#else
+	if (copydir(src_loc, target_dir) != 0)
+#endif
 	{
 		if (remove_dbdirs(nominal_loc, alt_loc))
 			elog(ERROR, "CREATE DATABASE: could not initialize database directory");

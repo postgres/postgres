@@ -11395,8 +11395,9 @@ LIBOBJS="$LIBOBJS qsort.$ac_objext" ;;
 esac
 
 # Win32 can't to rename or unlink on an open file
-case $host_os in win32*|mingw*)
-LIBOBJS="$LIBOBJS dirmod.$ac_objext" ;;
+case $host_os in mingw*)
+LIBOBJS="$LIBOBJS dirmod.$ac_objext"
+LIBOBJS="$LIBOBJS copydir.$ac_objext" ;;
 esac
 
 if test "$with_readline" = yes; then
