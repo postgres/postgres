@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.70 2001/09/09 17:21:58 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.71 2001/09/10 02:46:18 ishii Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -2769,7 +2769,7 @@ date_part('<replaceable>field</replaceable>', <replaceable>source</replaceable>)
 SELECT date_part('day', TIMESTAMP '2001-02-16 20:38:40');
 <lineannotation>Result: </lineannotation><computeroutput>16</computeroutput>
 
-SELECT date_part('hour', INTERVAL '4 hours 3 minutes')
+SELECT date_part('hour', INTERVAL '4 hours 3 minutes');
 <lineannotation>Result: </lineannotation><computeroutput>4</computeroutput>
 </screen>
    </informalexample>
