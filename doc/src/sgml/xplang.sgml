@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.19 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.20 2003/01/31 00:10:51 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -112,7 +112,7 @@ CREATE <optional>TRUSTED</optional> <optional>PROCEDURAL</optional> LANGUAGE <re
       <application>PL/Python</application> are known to be trusted;
       the languages <application>PL/TclU</application> and
       <application>PL/PerlU</application> are designed to provide
-      unlimited functionality should <emphasis>not</emphasis> be
+      unlimited functionality and should <emphasis>not</emphasis> be
       marked trusted.
      </para>
     </step>
