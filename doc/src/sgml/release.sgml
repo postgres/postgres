@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.167 2002/11/23 03:59:06 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.168 2002/11/26 22:04:03 momjian Exp $
 -->
 
 <appendix id="release">
@@ -33,7 +33,7 @@ worries about funny characters.
 
   <note>
    <title>Release date</title>
-   <simpara>2002-11-??</simpara>
+   <simpara>2002-11-27</simpara>
   </note>
 
   <sect2>
