@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.2 1996/10/20 06:34:21 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.3 1996/10/20 08:31:46 scrappy Exp $
  *
  * NOTES
  *    Postgres hash pages look like ordinary relation pages.  The opaque
@@ -24,8 +24,38 @@
  */
 
 #include "postgres.h"
+ 
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
+#include "storage/fd.h" 
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h"
+#include "rewrite/prs2lock.h" 
+#include "access/skey.h"
+#include "access/strat.h"
 #include "utils/rel.h"
+ 
+#include "storage/block.h"
+#include "storage/off.h"  
+#include "storage/itemptr.h"
+#include <time.h>
+#include "utils/nabstime.h"
+#include "access/htup.h"
+#include "access/itup.h"   
+#include "storage/itemid.h"
+#include "storage/item.h"
+#include "storage/buf.h"
+#include "storage/bufpage.h"
+#include "access/sdir.h"
+#include "access/funcindex.h"
+#include "utils/tqual.h"
+#include "storage/buf.h"
+#include "access/relscan.h"
 #include "access/hash.h"
+
 #include "storage/bufmgr.h"
 
 static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);

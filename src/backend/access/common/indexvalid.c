@@ -7,15 +7,26 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.3 1996/10/19 04:51:39 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/Attic/indexvalid.c,v 1.4 1996/10/20 08:31:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "storage/block.h"
+#include "storage/off.h"
+#include "storage/itemptr.h"
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"
 #include "access/itup.h"
+
 #include "access/skey.h"
+
+#include <time.h>
+#include "utils/nabstime.h"
 #include "access/htup.h"
 
 /* ----------------------------------------------------------------

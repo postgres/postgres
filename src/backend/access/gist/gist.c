@@ -13,18 +13,63 @@
 
 #include "postgres.h"
 
+ 
+#include "catalog/pg_attribute.h"
+#include "access/attnum.h"
+#include "nodes/pg_list.h"
+#include "access/tupdesc.h"  
+#include "storage/fd.h"  
+#include "catalog/pg_am.h"
+#include "catalog/pg_class.h"
+#include "nodes/nodes.h" 
+#include "rewrite/prs2lock.h"
+#include "access/skey.h"
+#include "access/strat.h"
 #include "utils/rel.h"
+ 
+#include "storage/block.h" 
+#include "storage/off.h" 
+#include "storage/itemptr.h"
 #include "access/itup.h"
+ 
+#include "storage/itemid.h"
+#include "storage/item.h"
+#include "storage/buf.h"
+#include "storage/bufpage.h"
 #include "access/gist.h"
+
 #include "access/funcindex.h"
+
+#include <time.h>
+#include "utils/nabstime.h"
 #include "access/htup.h"
+
 #include "executor/tuptable.h"
+
+#include "utils/tqual.h"
 #include "access/relscan.h"
+
+#include "nodes/params.h"
+#include "access/sdir.h"
+#include "executor/hashjoin.h"
+#include "nodes/primnodes.h"
+#include "nodes/memnodes.h"  
 #include "nodes/execnodes.h"
+
 #include "storage/bufmgr.h"
+
 #include "catalog/pg_index.h"
+
 #include "utils/syscache.h"
 
+#include "nodes/plannodes.h"
+#include "nodes/parsenodes.h"
+#include "tcop/dest.h"  
+#include "executor/execdesc.h"
+#include <stdio.h>
+#include "executor/executor.h"
+
+#include "access/heapam.h"
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
