@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.43 1997/11/07 20:52:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.44 1997/11/10 05:10:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,8 +340,9 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 
 		if (!pghost || pghost[0] == '\0')
 		{
-		  conn->pghost = NULL;
-		  if (tmp = getenv("PGHOST")) conn->pghost = strdup(tmp);
+			conn->pghost = NULL;
+			if (tmp = getenv("PGHOST"))
+				conn->pghost = strdup(tmp);
 		}
 		else
 			conn->pghost = strdup(pghost);
@@ -413,14 +414,23 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 		{
 			if (((tmp = (char *) dbName) && (dbName[0] != '\0')) ||
 				((tmp = getenv("PGDATABASE"))))
-			{
 				conn->dbName = strdup(tmp);
-			}
 			else
 				conn->dbName = strdup(conn->pguser);
-			for (i = 0; conn->dbName[i]; i++)
-				if (isupper(conn->dbName[i]))
-					conn->dbName[i] = tolower(conn->dbName[i]);
+
+			/*
+			 * if the table name is surrounded by double-quotes, then
+			 * don't convert case
+			 */
+			if (*conn->dbName == '"')
+			{
+				strcpy(conn->dbName, conn->dbName + 1);
+				*(conn->dbName + strlen(conn->dbName) - 1) = '\0';
+			}
+			else
+				for (i = 0; conn->dbName[i]; i++)
+					if (isupper(conn->dbName[i]))
+						conn->dbName[i] = tolower(conn->dbName[i]);
 		}
 		else
 			conn->dbName = NULL;
@@ -470,7 +480,9 @@ connectDB(PGconn *conn)
 	MsgType		msgtype;
 	int			laddrlen = sizeof(struct sockaddr);
 	Port	   *port = conn->port;
-	int			portno, family, len;
+	int			portno,
+				family,
+				len;
 
 	/*
 	 * Initialize the startup packet.
@@ -498,8 +510,8 @@ connectDB(PGconn *conn)
 	port = (Port *) malloc(sizeof(Port));
 	MemSet((char *) port, 0, sizeof(Port));
 
-	if (conn->pghost && 
-	    (!(hp = gethostbyname(conn->pghost)) || hp->h_addrtype != AF_INET))
+	if (conn->pghost &&
+	  (!(hp = gethostbyname(conn->pghost)) || hp->h_addrtype != AF_INET))
 	{
 		(void) sprintf(conn->errorMessage,
 					   "connectDB() --  unknown hostname: %s\n",
@@ -510,17 +522,17 @@ connectDB(PGconn *conn)
 	portno = atoi(conn->pgport);
 	port->raddr.in.sin_family = family = conn->pghost ? AF_INET : AF_UNIX;
 	if (family == AF_INET)
-	  {
-	    memmove((char *) &(port->raddr.in.sin_addr),
-		    (char *) hp->h_addr,
-		    hp->h_length);
-	    port->raddr.in.sin_port = htons((unsigned short) (portno));
-	    len = sizeof(struct sockaddr_in);
-	  }
+	{
+		memmove((char *) &(port->raddr.in.sin_addr),
+				(char *) hp->h_addr,
+				hp->h_length);
+		port->raddr.in.sin_port = htons((unsigned short) (portno));
+		len = sizeof(struct sockaddr_in);
+	}
 	else
-	  {
-	    len = UNIXSOCK_PATH(port->raddr.un,portno);
-	  }
+	{
+		len = UNIXSOCK_PATH(port->raddr.un, portno);
+	}
 	/* connect to the server  */
 	if ((port->sock = socket(family, SOCK_STREAM, 0)) < 0)
 	{
@@ -529,12 +541,12 @@ connectDB(PGconn *conn)
 					   errno, strerror(errno));
 		goto connect_errReturn;
 	}
-	if (connect(port->sock, (struct sockaddr *) &port->raddr, len) < 0)
+	if (connect(port->sock, (struct sockaddr *) & port->raddr, len) < 0)
 	{
 		(void) sprintf(conn->errorMessage,
-			       "connectDB() failed: Is the postmaster running at '%s' on port '%s'?\n",
-			       conn->pghost ? conn->pghost : "UNIX Socket", 
-			       conn->pgport);
+					   "connectDB() failed: Is the postmaster running at '%s' on port '%s'?\n",
+					   conn->pghost ? conn->pghost : "UNIX Socket",
+					   conn->pgport);
 		goto connect_errReturn;
 	}
 	if (family == AF_INET)
@@ -779,7 +791,8 @@ packetSend(Port *port,
 		   PacketLen len,
 		   bool nonBlocking)
 {
-	PacketLen doneLen = write(port->sock,  buf, len);
+	PacketLen	doneLen = write(port->sock, buf, len);
+
 	if (doneLen < len)
 	{
 		return (STATUS_ERROR);

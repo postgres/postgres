@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.60 1997/11/07 20:51:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.61 1997/11/10 05:10:21 momjian Exp $
  *
  * NOTES
  *
@@ -131,8 +131,8 @@ static char *progname = (char *) NULL;
  */
 static char Execfile[MAXPATHLEN] = "";
 
-static int ServerSock_INET = INVALID_SOCK;	/* stream socket server */
-static int ServerSock_UNIX = INVALID_SOCK;	/* stream socket server */
+static int	ServerSock_INET = INVALID_SOCK;		/* stream socket server */
+static int	ServerSock_UNIX = INVALID_SOCK;		/* stream socket server */
 
 /*
  * Set by the -o option
@@ -149,8 +149,8 @@ static char ExtraOptions[ARGV_SIZE] = "";
 static int	Reinit = 1;
 static int	SendStop = 0;
 
-static int      NetServer = 0; /* if not zero, postmaster listen for
-				  non-local connections */
+static int	NetServer = 0;		/* if not zero, postmaster listen for
+								 * non-local connections */
 static int	MultiplexedBackends = 0;
 static int	MultiplexedBackendPort;
 
@@ -318,8 +318,8 @@ PostmasterMain(int argc, char *argv[])
 				else
 					DebugLvl = 1;
 				break;
-		        case 'i':
-			        NetServer = 1;
+			case 'i':
+				NetServer = 1;
 				break;
 			case 'm':
 				MultiplexedBackends = 1;
@@ -394,15 +394,15 @@ PostmasterMain(int argc, char *argv[])
 	}
 
 	if (NetServer)
-	  {
-	    status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
-	    if (status != STATUS_OK)
-	      {
-		fprintf(stderr, "%s: cannot create INET stream port\n",
-			progname);
-		exit(1);
-	      }
-	  }
+	{
+		status = StreamServerPort(hostName, PostPortName, &ServerSock_INET);
+		if (status != STATUS_OK)
+		{
+			fprintf(stderr, "%s: cannot create INET stream port\n",
+					progname);
+			exit(1);
+		}
+	}
 	status = StreamServerPort(NULL, PostPortName, &ServerSock_UNIX);
 	if (status != STATUS_OK)
 	{
@@ -487,11 +487,13 @@ usage(const char *progname)
 static int
 ServerLoop(void)
 {
-	fd_set		rmask, basemask;
+	fd_set		rmask,
+				basemask;
 	int			nSockets,
 				nSelected,
 				status,
-				oldFd, newFd;
+				oldFd,
+				newFd;
 	Dlelem	   *next,
 			   *curr;
 
@@ -511,11 +513,11 @@ ServerLoop(void)
 	FD_SET(ServerSock_UNIX, &basemask);
 	nSockets = ServerSock_UNIX;
 	if (ServerSock_INET != INVALID_SOCK)
-	  {
-	    FD_SET(ServerSock_INET, &basemask);
-	    if (ServerSock_INET > ServerSock_UNIX) 
-	      nSockets = ServerSock_INET;
-	  }
+	{
+		FD_SET(ServerSock_INET, &basemask);
+		if (ServerSock_INET > ServerSock_UNIX)
+			nSockets = ServerSock_INET;
+	}
 	nSockets++;
 
 #ifdef HAVE_SIGPROCMASK
@@ -563,14 +565,14 @@ ServerLoop(void)
 
 		/* new connection pending on our well-known port's socket */
 		oldFd = -1;
-		if (FD_ISSET(ServerSock_UNIX, &rmask)) 
-		  oldFd = ServerSock_UNIX;
-		else if (ServerSock_INET != INVALID_SOCK && 
-			 FD_ISSET(ServerSock_INET, &rmask))
-		  oldFd = ServerSock_INET;
+		if (FD_ISSET(ServerSock_UNIX, &rmask))
+			oldFd = ServerSock_UNIX;
+		else if (ServerSock_INET != INVALID_SOCK &&
+				 FD_ISSET(ServerSock_INET, &rmask))
+			oldFd = ServerSock_INET;
 		if (oldFd >= 0)
 		{
-		  
+
 			/*
 			 * connect and make an addition to PortList.  If the
 			 * connection dies and we notice it, just forget about the
@@ -587,9 +589,9 @@ ServerLoop(void)
 							progname, newFd);
 			}
 			else if (DebugLvl)
-			  fprintf(stderr, 
-				  "%s: ServerLoop: connect failed: (%d) %s\n",
-				  progname, errno, strerror(errno));
+				fprintf(stderr,
+						"%s: ServerLoop: connect failed: (%d) %s\n",
+						progname, errno, strerror(errno));
 			--nSelected;
 			FD_CLR(oldFd, &rmask);
 		}
@@ -823,7 +825,7 @@ ConnStartup(Port *port, int *status,
 static void
 send_error_reply(Port *port, const char *errormsg)
 {
-	int			rc;	/* return code from write */
+	int			rc;				/* return code from write */
 	char	   *reply;
 
 	/*
@@ -1299,8 +1301,10 @@ ExitPostmaster(int status)
 	 * Not sure of the semantics here.	When the Postmaster dies, should
 	 * the backends all be killed? probably not.
 	 */
-	if (ServerSock_INET != INVALID_SOCK) close(ServerSock_INET);
-	if (ServerSock_UNIX != INVALID_SOCK) close(ServerSock_UNIX);
+	if (ServerSock_INET != INVALID_SOCK)
+		close(ServerSock_INET);
+	if (ServerSock_UNIX != INVALID_SOCK)
+		close(ServerSock_UNIX);
 	exitpg(status);
 }
 
@@ -1315,10 +1319,9 @@ dumpstatus(SIGNAL_ARGS)
 
 		fprintf(stderr, "%s: dumpstatus:\n", progname);
 		fprintf(stderr, "\tsock %d: nBytes=%d, laddr=0x%lx, raddr=0x%lx\n",
-			port->sock, port->nBytes,
-			(long int) port->laddr.in.sin_addr.s_addr,
-			(long int) port->raddr.in.sin_addr.s_addr);
+				port->sock, port->nBytes,
+				(long int) port->laddr.in.sin_addr.s_addr,
+				(long int) port->raddr.in.sin_addr.s_addr);
 		curr = DLGetSucc(curr);
 	}
 }
-

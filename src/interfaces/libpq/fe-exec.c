@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.39 1997/11/03 04:21:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.40 1997/11/10 05:10:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include "postgres.h"
 #include "libpq/pqcomm.h"
 #include "libpq/pqsignal.h"
@@ -31,12 +32,14 @@
 
 #ifdef TIOCGWINSZ
 struct winsize screen_size;
+
 #else
 struct winsize
 {
 	int			ws_row;
 	int			ws_col;
 }			screen_size;
+
 #endif
 
 /* the rows array in a PGresGroup  has to grow to accommodate the rows */
@@ -1674,6 +1677,7 @@ int
 PQfnumber(PGresult *res, const char *field_name)
 {
 	int			i;
+	char	   *field_case;
 
 	if (!res)
 	{
@@ -1686,13 +1690,27 @@ PQfnumber(PGresult *res, const char *field_name)
 		res->attDescs == NULL)
 		return -1;
 
+	field_case = strdup(field_name);
+	if (*field_case == '"')
+	{
+		strcpy(field_case, field_case + 1);
+		*(field_case + strlen(field_case) - 1) = '\0';
+	}
+	else
+		for (i = 0; field_case; i++)
+			if (isupper(field_case[i]))
+				field_case[i] = tolower(field_case[i]);
+
 	for (i = 0; i < res->numAttributes; i++)
 	{
-		if (strcasecmp(field_name, res->attDescs[i].name) == 0)
+		if (strcmp(field_name, res->attDescs[i].name) == 0)
+		{
+			free(field_case);
 			return i;
+		}
 	}
+	free(field_case);
 	return -1;
-
 }
 
 Oid
