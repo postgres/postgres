@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.54 1998/08/24 01:13:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.55 1998/08/29 04:09:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim, int *newline
 static char *CopyReadAttribute(FILE *fp, bool *isnull, char *delim);
 
 #endif
-static void CopyAttributeOut(FILE *fp, unsigned char *string, char *delim, int is_array);
+static void CopyAttributeOut(FILE *fp, char *string, char *delim, int is_array);
 static int	CountTuples(Relation relation);
 
 extern FILE *Pfout,
@@ -1146,9 +1146,9 @@ CopyReadAttribute(FILE *fp, bool *isnull, char *delim)
 }
 
 static void
-CopyAttributeOut(FILE *fp, unsigned char *server_string, char *delim, int is_array)
+CopyAttributeOut(FILE *fp, char *server_string, char *delim, int is_array)
 {
-        unsigned char           *string;
+        char           *string;
 	char		c;
 
 #ifdef MULTIBYTE

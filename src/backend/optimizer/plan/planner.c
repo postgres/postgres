@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.29 1998/07/20 21:18:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.30 1998/08/29 04:09:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -244,16 +244,15 @@ union_planner(Query *parse)
                      * using the same function as for a subselect in 'where' */
 		    if (parse->hasSubLinks)
 		      {
-			(List *) parse->havingQual = 
-			  (List *) SS_process_sublinks((Node *) parse->havingQual);
+			parse->havingQual = SS_process_sublinks((Node *) parse->havingQual);
 		      }
 		    		    
 		    /* convert the havingQual to conjunctive normal form (cnf) */
-		    (List *) parse->havingQual=cnfify((Expr *)(Node *) parse->havingQual,true);
+		    parse->havingQual = (Node * ) cnfify((Expr *)(Node *) parse->havingQual,true);
 		    
 		    /* Calculate the opfids from the opnos (=select the correct functions for
 		     * the used VAR datatypes) */
-		    (List *) parse->havingQual=fix_opids((List *) parse->havingQual);
+		    parse->havingQual = (Node * ) fix_opids((List *) parse->havingQual);
 		    
 		    ((Agg *) result_plan)->plan.qual=(List *) parse->havingQual;
 

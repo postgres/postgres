@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.39 1998/07/24 03:31:43 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.40 1998/08/29 04:09:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -475,10 +475,10 @@ textne(text *arg1, text *arg2)
  * Returns -1, 0 or 1
  */
 int
-varstr_cmp(unsigned char *arg1, int len1, unsigned char *arg2, int len2)
+varstr_cmp(char *arg1, int len1, char *arg2, int len2)
 {
 	int		result;
-	unsigned char *a1p, *a2p;
+	char *a1p, *a2p;
 
 #ifdef USE_LOCALE
 	a1p = (unsigned char *) palloc(len1 + 1);
@@ -518,14 +518,14 @@ varstr_cmp(unsigned char *arg1, int len1, unsigned char *arg2, int len2)
 int
 text_cmp(text *arg1, text *arg2)
 {
-	unsigned char *a1p, *a2p;
-	int			len1, len2;
+	char 		*a1p, *a2p;
+	int		len1, len2;
 
 	if (arg1 == NULL || arg2 == NULL)
 		return ((bool) FALSE);
 
-	a1p = (unsigned char *) VARDATA(arg1);
-	a2p = (unsigned char *) VARDATA(arg2);
+	a1p = VARDATA(arg1);
+	a2p = VARDATA(arg2);
 
 	len1 = VARSIZE(arg1) - VARHDRSZ;
 	len2 = VARSIZE(arg2) - VARHDRSZ;
