@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.31 1999/08/08 20:12:49 tgl Exp $
+ * $Id: nbtree.h,v 1.32 1999/10/17 22:15:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,9 +288,12 @@ extern BTItem _bt_formitem(IndexTuple itup);
 /*
  * prototypes for functions in nbtsort.c
  */
-extern void *_bt_spoolinit(Relation index, int ntapes, bool isunique);
-extern void _bt_spooldestroy(void *spool);
-extern void _bt_spool(Relation index, BTItem btitem, void *spool);
-extern void _bt_leafbuild(Relation index, void *spool);
+
+typedef struct BTSpool BTSpool;	/* opaque type known only within nbtsort.c */
+
+extern BTSpool *_bt_spoolinit(Relation index, bool isunique);
+extern void _bt_spooldestroy(BTSpool *btspool);
+extern void _bt_spool(BTItem btitem, BTSpool *btspool);
+extern void _bt_leafbuild(BTSpool *btspool);
 
 #endif	 /* NBTREE_H */

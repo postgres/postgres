@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.36 1999/09/26 21:21:04 tgl Exp $
+ * $Id: execnodes.h,v 1.37 1999/10/17 22:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -597,17 +597,9 @@ typedef struct GroupState
 /* ----------------
  *	 SortState information
  *
- *|		sort nodes are really just a kind of a scan since
- *|		we implement sorts by retrieving the entire subplan
- *|		into a temp relation, sorting the temp relation into
- *|		another sorted relation, and then preforming a simple
- *|		unqualified sequential scan on the sorted relation..
- *|		-cim 10/15/89
- *
- *		Flag			indicated whether relation has been sorted
- *		Keys			scan key structures used to keep info on sort keys
- *		TempRelation	temporary relation containing result of executing
- *						the subplan.
+ *		sort_Done		indicates whether sort has been performed yet
+ *		sort_Keys		scan key structures describing the sort keys
+ *		tuplesortstate	private state of tuplesort.c
  *
  *	 CommonScanState information
  *
@@ -628,9 +620,9 @@ typedef struct GroupState
 typedef struct SortState
 {
 	CommonScanState csstate;	/* its first field is NodeTag */
-	bool		sort_Flag;
+	bool		sort_Done;
 	ScanKey		sort_Keys;
-	bool		cleaned;
+	void	   *tuplesortstate;
 } SortState;
 
 /* ----------------

@@ -1,17 +1,17 @@
 /*-------------------------------------------------------------------------
  *
- * btree.c
+ * nbtree.c
  *	  Implementation of Lehman and Yao's btree management algorithm for
  *	  Postgres.
  *
- * Copyright (c) 1994, Regents of the University of California
- *
- *
- * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.46 1999/09/18 19:06:10 tgl Exp $
- *
  * NOTES
  *	  This file contains only the public interface routines.
+ *
+ *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.47 1999/10/17 22:15:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -76,7 +76,7 @@ btbuild(Relation heap,
 #endif
 	Node	   *pred,
 			   *oldPred;
-	void	   *spool = (void *) NULL;
+	BTSpool	   *spool = NULL;
 	bool		isunique;
 	bool		usefast;
 
@@ -147,7 +147,7 @@ btbuild(Relation heap,
 
 	if (usefast)
 	{
-		spool = _bt_spoolinit(index, 7, isunique);
+		spool = _bt_spoolinit(index, isunique);
 		res = (InsertIndexResult) NULL;
 	}
 
@@ -249,11 +249,11 @@ btbuild(Relation heap,
 
 		/*
 		 * if we are doing bottom-up btree build, we insert the index into
-		 * a spool page for subsequent processing.	otherwise, we insert
+		 * a spool file for subsequent processing.	otherwise, we insert
 		 * into the btree.
 		 */
 		if (usefast)
-			_bt_spool(index, btitem, spool);
+			_bt_spool(btitem, spool);
 		else
 			res = _bt_doinsert(index, btitem, isunique, heap);
 
@@ -275,15 +275,13 @@ btbuild(Relation heap,
 	}
 
 	/*
-	 * if we are doing bottom-up btree build, we now have a bunch of
-	 * sorted runs in the spool pages.	finish the build by (1) merging
-	 * the runs, (2) inserting the sorted tuples into btree pages and (3)
-	 * building the upper levels.
+	 * if we are doing bottom-up btree build, finish the build by
+	 * (1) completing the sort of the spool file, (2) inserting the
+	 * sorted tuples into btree pages and (3) building the upper levels.
 	 */
 	if (usefast)
 	{
-		_bt_spool(index, (BTItem) NULL, spool); /* flush the spool */
-		_bt_leafbuild(index, spool);
+		_bt_leafbuild(spool);
 		_bt_spooldestroy(spool);
 	}
 

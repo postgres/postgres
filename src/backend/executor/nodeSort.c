@@ -7,16 +7,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.23 1999/07/17 20:16:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.24 1999/10/17 22:15:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "executor/executor.h"
 #include "executor/execdebug.h"
 #include "executor/nodeSort.h"
-#include "utils/psort.h"
+#include "utils/tuplesort.h"
 
 /* ----------------------------------------------------------------
  *		FormSortKeys(node)
@@ -83,11 +84,9 @@ FormSortKeys(Sort *sortnode)
 /* ----------------------------------------------------------------
  *		ExecSort
  *
- * old comments
- *		Sorts tuples from the outer subtree of the node in psort,
+ *		Sorts tuples from the outer subtree of the node using tuplesort,
  *		which saves the results in a temporary file or memory. After the
  *		initial call, returns a tuple from the file with each call.
- *		Assumes that heap access method is used.
  *
  *		Conditions:
  *		  -- none.
@@ -101,10 +100,8 @@ ExecSort(Sort *node)
 {
 	EState	   *estate;
 	SortState  *sortstate;
-	Plan	   *outerNode;
 	ScanDirection dir;
-	int			keycount;
-	ScanKey		sortkeys;
+	Tuplesortstate *tuplesortstate;
 	HeapTuple	heapTuple;
 	TupleTableSlot *slot;
 	bool		should_free;
@@ -119,42 +116,70 @@ ExecSort(Sort *node)
 	sortstate = node->sortstate;
 	estate = node->plan.state;
 	dir = estate->es_direction;
+	tuplesortstate = (Tuplesortstate *) sortstate->tuplesortstate;
 
 	/* ----------------
-	 *	the first time we call this, psort sorts this into a file.
-	 *	Subsequent calls return tuples from psort.
+	 *	If first time through, read all tuples from outer plan and
+	 *	pass them to tuplesort.c.
+	 *	Subsequent calls just fetch tuples from tuplesort.
 	 * ----------------
 	 */
 
-	if (sortstate->sort_Flag == false)
+	if (! sortstate->sort_Done)
 	{
+		Plan	   *outerNode;
+		TupleDesc	tupDesc;
+		int			keycount;
+		ScanKey		sortkeys;
+
 		SO1_printf("ExecSort: %s\n",
-				   "sortstate == false -> sorting subplan");
+				   "sorting subplan");
 		/* ----------------
-		 *	set all relations to be scanned in the forward direction
-		 *	while creating the temporary relation.
+		 *	Want to scan subplan in the forward direction while creating
+		 *	the sorted data.  (Does setting my direction actually affect
+		 *	the subplan?  I bet this is useless code...)
 		 * ----------------
 		 */
 		estate->es_direction = ForwardScanDirection;
 
 		/* ----------------
-		 *	 prepare information for psort_begin()
+		 *	 Initialize tuplesort module.
 		 * ----------------
 		 */
-		outerNode = outerPlan((Plan *) node);
+		SO1_printf("ExecSort: %s\n",
+				   "calling tuplesort_begin");
 
+		outerNode = outerPlan((Plan *) node);
+		tupDesc = ExecGetTupType(outerNode);
 		keycount = node->keycount;
 		sortkeys = (ScanKey) sortstate->sort_Keys;
-		SO1_printf("ExecSort: %s\n",
-				   "calling psort_begin");
 
-		if (!psort_begin(node,	/* this node */
-						 keycount,		/* number keys */
-						 sortkeys))		/* keys */
+		tuplesortstate = tuplesort_begin_heap(tupDesc, keycount, sortkeys,
+											  true /* randomAccess */);
+
+		sortstate->tuplesortstate = (void *) tuplesortstate;
+
+		/* ----------------
+		 *	 Scan the subplan and feed all the tuples to tuplesort.
+		 * ----------------
+		 */
+
+		for (;;)
 		{
-			/* Psort says, there are no tuples to be sorted */
-			return NULL;
+			slot = ExecProcNode(outerNode, (Plan *) node);
+
+			if (TupIsNull(slot))
+				break;
+
+			tuplesort_puttuple(tuplesortstate, (void *) slot->val);
+			ExecClearTuple(slot);
 		}
+
+		/* ----------------
+		 *	 Complete the sort.
+		 * ----------------
+		 */
+		tuplesort_performsort(tuplesortstate);
 
 		/* ----------------
 		 *	 restore to user specified direction
@@ -167,25 +192,29 @@ ExecSort(Sort *node)
 		 * ----------------
 		 */
 		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
-		slot->ttc_tupleDescriptor = ExecGetTupType(outerNode);
+		slot->ttc_tupleDescriptor = tupDesc;
+
 		/* ----------------
 		 *	finally set the sorted flag to true
 		 * ----------------
 		 */
-		sortstate->sort_Flag = true;
+		sortstate->sort_Done = true;
 		SO1_printf(stderr, "ExecSort: sorting done.\n");
 	}
 	else
 		slot = (TupleTableSlot *) sortstate->csstate.cstate.cs_ResultTupleSlot;
 
 	SO1_printf("ExecSort: %s\n",
-			   "retrieving tuple from sorted relation");
+			   "retrieving tuple from tuplesort");
 
 	/* ----------------
-	 *	at this point we grab a tuple from psort
+	 *	Get the first or next tuple from tuplesort.
+	 *	Returns NULL if no more tuples.
 	 * ----------------
 	 */
-	heapTuple = psort_grabtuple(node, &should_free);
+	heapTuple = tuplesort_getheaptuple(tuplesortstate,
+									   ScanDirectionIsForward(dir),
+									   &should_free);
 
 	return ExecStoreTuple(heapTuple, slot, InvalidBuffer, should_free);
 }
@@ -193,7 +222,6 @@ ExecSort(Sort *node)
 /* ----------------------------------------------------------------
  *		ExecInitSort
  *
- * old comments
  *		Creates the run-time state information for the sort node
  *		produced by the planner and initailizes its outer subtree.
  * ----------------------------------------------------------------
@@ -203,7 +231,6 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 {
 	SortState  *sortstate;
 	Plan	   *outerPlan;
-	ScanKey		sortkeys;
 
 	SO1_printf("ExecInitSort: %s\n",
 			   "initializing sort node");
@@ -219,14 +246,14 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	 * ----------------
 	 */
 	sortstate = makeNode(SortState);
-	sortstate->sort_Flag = 0;
+	sortstate->sort_Done = false;
 	sortstate->sort_Keys = NULL;
-	node->cleaned = FALSE;
+	sortstate->tuplesortstate = NULL;
 
 	node->sortstate = sortstate;
 
 	/* ----------------
-	 *	Miscellanious initialization
+	 *	Miscellaneous initialization
 	 *
 	 *		 +	assign node's base_id
 	 *		 +	assign debugging hooks
@@ -259,9 +286,7 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	 *	initialize sortstate information
 	 * ----------------
 	 */
-	sortkeys = FormSortKeys(node);
-	sortstate->sort_Keys = sortkeys;
-	sortstate->sort_Flag = false;
+	sortstate->sort_Keys = FormSortKeys(node);
 
 	/* ----------------
 	 *	initialize tuple type.	no need to initialize projection
@@ -275,11 +300,6 @@ ExecInitSort(Sort *node, EState *estate, Plan *parent)
 	SO1_printf("ExecInitSort: %s\n",
 			   "sort node initialized");
 
-	/* ----------------
-	 *	return relation oid of temporary sort relation in a list
-	 *	(someday -- for now we return LispTrue... cim 10/12/89)
-	 * ----------------
-	 */
 	return TRUE;
 }
 
@@ -293,8 +313,6 @@ ExecCountSlotsSort(Sort *node)
 
 /* ----------------------------------------------------------------
  *		ExecEndSort(node)
- *
- * old comments
  * ----------------------------------------------------------------
  */
 void
@@ -325,8 +343,13 @@ ExecEndSort(Sort *node)
 	 */
 	ExecClearTuple(sortstate->csstate.css_ScanTupleSlot);
 
-	/* Clean up after psort */
-	psort_end(node);
+	/* ----------------
+	 *	Release tuplesort resources
+	 * ----------------
+	 */
+	if (sortstate->tuplesortstate != NULL)
+		tuplesort_end((Tuplesortstate *) sortstate->tuplesortstate);
+	sortstate->tuplesortstate = NULL;
 
 	SO1_printf("ExecEndSort: %s\n",
 			   "sort node shutdown");
@@ -335,51 +358,47 @@ ExecEndSort(Sort *node)
 /* ----------------------------------------------------------------
  *		ExecSortMarkPos
  *
- *		Calls psort to save the current position in the sorted file.
+ *		Calls tuplesort to save the current position in the sorted file.
  * ----------------------------------------------------------------
  */
 void
 ExecSortMarkPos(Sort *node)
 {
-	SortState  *sortstate;
+	SortState  *sortstate = node->sortstate;
 
 	/* ----------------
 	 *	if we haven't sorted yet, just return
 	 * ----------------
 	 */
-	sortstate = node->sortstate;
-	if (sortstate->sort_Flag == false)
+	if (! sortstate->sort_Done)
 		return;
 
-	psort_markpos(node);
-
-	return;
+	tuplesort_markpos((Tuplesortstate *) sortstate->tuplesortstate);
 }
 
 /* ----------------------------------------------------------------
  *		ExecSortRestrPos
  *
- *		Calls psort to restore the last saved sort file position.
+ *		Calls tuplesort to restore the last saved sort file position.
  * ----------------------------------------------------------------
  */
 void
 ExecSortRestrPos(Sort *node)
 {
-	SortState  *sortstate;
+	SortState  *sortstate = node->sortstate;
 
 	/* ----------------
 	 *	if we haven't sorted yet, just return.
 	 * ----------------
 	 */
-	sortstate = node->sortstate;
-	if (sortstate->sort_Flag == false)
+	if (! sortstate->sort_Done)
 		return;
 
 	/* ----------------
 	 *	restore the scan to the previously marked position
 	 * ----------------
 	 */
-	psort_restorepos(node);
+	tuplesort_restorepos((Tuplesortstate *) sortstate->tuplesortstate);
 }
 
 void
@@ -392,17 +411,25 @@ ExecReScanSort(Sort *node, ExprContext *exprCtxt, Plan *parent)
 	 * not NULL then it will be re-scanned by ExecProcNode, else - no
 	 * reason to re-scan it at all.
 	 */
-	if (sortstate->sort_Flag == false)
+	if (! sortstate->sort_Done)
 		return;
 
 	ExecClearTuple(sortstate->csstate.cstate.cs_ResultTupleSlot);
 
-	psort_rescan(node);
-
 	/*
-	 * If subnode is to be rescanned then we aren't sorted
+	 * If subnode is to be rescanned then we forget previous sort
+	 * results; we have to re-read the subplan and re-sort.
+	 *
+	 * Otherwise we can just rewind and rescan the sorted output.
 	 */
 	if (((Plan *) node)->lefttree->chgParam != NULL)
-		sortstate->sort_Flag = false;
-
+	{
+		sortstate->sort_Done = false;
+		tuplesort_end((Tuplesortstate *) sortstate->tuplesortstate);
+		sortstate->tuplesortstate = NULL;
+	}
+	else
+	{
+		tuplesort_rescan((Tuplesortstate *) sortstate->tuplesortstate);
+	}
 }

@@ -4,8 +4,8 @@
  *	  Management of "logical tapes" within temporary files.
  *
  * This module exists to support sorting via multiple merge passes (see
- * psort.c).  Merging is an ideal algorithm for tape devices, but if we
- * implement it on disk by creating a separate file for each "tape",
+ * tuplesort.c).  Merging is an ideal algorithm for tape devices, but if
+ * we implement it on disk by creating a separate file for each "tape",
  * there is an annoying problem: the peak space usage is at least twice
  * the volume of actual data to be sorted.  (This must be so because each
  * datum will appear in both the input and output tapes of the final
@@ -23,7 +23,7 @@
  * Few OSes allow arbitrary parts of a file to be released back to the OS,
  * so we have to implement this space-recycling ourselves within a single
  * logical file.  logtape.c exists to perform this bookkeeping and provide
- * the illusion of N independent tape devices to psort.c.  Note that
+ * the illusion of N independent tape devices to tuplesort.c.  Note that
  * logtape.c itself depends on buffile.c to provide a "logical file" of
  * larger size than the underlying OS may support.
  *
@@ -63,7 +63,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.1 1999/10/16 19:49:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/logtape.c,v 1.2 1999/10/17 22:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */

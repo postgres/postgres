@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.30 1999/08/21 03:49:09 tgl Exp $
+ * $Id: plannodes.h,v 1.31 1999/10/17 22:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -288,8 +288,6 @@ typedef struct Sort
 	Oid			nonameid;
 	int			keycount;
 	SortState  *sortstate;
-	void	   *psortstate;
-	bool		cleaned;
 } Sort;
 
 /* ----------------

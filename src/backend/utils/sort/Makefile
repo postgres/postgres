@@ -4,7 +4,7 @@
 #    Makefile for utils/sort
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.6 1999/10/16 19:49:27 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/sort/Makefile,v 1.7 1999/10/17 22:15:05 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -13,7 +13,7 @@ include ../../../Makefile.global
 
 CFLAGS += -I../..
 
-OBJS = logtape.o lselect.o psort.o
+OBJS = logtape.o tuplesort.o
 
 all: SUBSYS.o
 
