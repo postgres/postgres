@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.174 2002/04/12 20:38:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.175 2002/04/14 16:47:16 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -62,9 +62,8 @@ static bool needs_toast_table(Relation rel);
 static void CheckTupleType(Form_pg_class tuple_class);
 
 
-/* --------------------------------
+/*
  *		PortalCleanup
- * --------------------------------
  */
 void
 PortalCleanup(Portal portal)
@@ -243,9 +242,8 @@ PerformPortalFetch(char *name,
 	MemoryContextSwitchTo(oldcontext);
 }
 
-/* --------------------------------
+/*
  *		PerformPortalClose
- * --------------------------------
  */
 void
 PerformPortalClose(char *name, CommandDest dest)
