@@ -108,8 +108,8 @@ StatementClass *self = (StatementClass *) hstmt;
 	self->prepare = TRUE;
 	self->statement_type = statement_type(self->statement);
 
-	//	Check if connection is readonly (only selects are allowed)
-	if ( CC_is_readonly(self->hdbc) && STMT_UPDATE(self)) {
+	//	Check if connection is onlyread (only selects are allowed)
+	if ( CC_is_onlyread(self->hdbc) && STMT_UPDATE(self)) {
 		self->errornumber = STMT_EXEC_ERROR;
 		self->errormsg = "Connection is readonly, only select statements are allowed.";
 		SC_log_error(func, "", self);
@@ -159,8 +159,8 @@ static char *func = "SQLExecDirect";
 	stmt->prepare = FALSE;
 	stmt->statement_type = statement_type(stmt->statement);
 
-	//	Check if connection is readonly (only selects are allowed)
-	if ( CC_is_readonly(stmt->hdbc) && STMT_UPDATE(stmt)) {
+	//	Check if connection is onlyread (only selects are allowed)
+	if ( CC_is_onlyread(stmt->hdbc) && STMT_UPDATE(stmt)) {
 		stmt->errornumber = STMT_EXEC_ERROR;
 		stmt->errormsg = "Connection is readonly, only select statements are allowed.";
 		SC_log_error(func, "", stmt);
@@ -727,5 +727,3 @@ char *buffer;
 
 	return SQL_SUCCESS;
 }
-
-

@@ -113,7 +113,7 @@ typedef struct GlobalValues_
 	char				disable_optimizer;
 	char				ksqo;
 	char				unique_index;
-	char				readonly;
+	char				onlyread; /* readonly is reserved on Digital C++ compiler */
 	char				use_declarefetch;
 	char				text_as_longvarchar;
 	char				unknowns_as_longvarchar;

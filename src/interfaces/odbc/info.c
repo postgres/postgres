@@ -173,7 +173,7 @@ RETCODE result;
         break;
 
     case SQL_DATA_SOURCE_READ_ONLY: /* ODBC 1.0 */
-		p = CC_is_readonly(conn) ? "Y" : "N";
+		p = CC_is_onlyread(conn) ? "Y" : "N";
         break;
 
     case SQL_DATABASE_NAME: /* Support for old ODBC 1.0 Apps */

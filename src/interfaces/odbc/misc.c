@@ -61,7 +61,7 @@ mylog(va_alist)
 va_dcl
 {
 char *fmt;
-char *args;
+va_list args;
 char filebuf[80];
 	FILE* LOGFP = globals.mylogFP;
 
@@ -95,7 +95,7 @@ void qlog(va_alist)
 va_dcl
 {
 char *fmt;
-char *args;
+va_list args;
 char filebuf[80];
 FILE* LOGFP = globals.qlogFP;
 

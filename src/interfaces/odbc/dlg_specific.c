@@ -89,7 +89,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 		CheckDlgButton(hdlg, DRV_OPTIMIZER, globals.disable_optimizer);
 		CheckDlgButton(hdlg, DRV_KSQO, globals.ksqo);
 		CheckDlgButton(hdlg, DRV_UNIQUEINDEX, globals.unique_index);
-		CheckDlgButton(hdlg, DRV_READONLY, globals.readonly);
+		CheckDlgButton(hdlg, DRV_READONLY, globals.onlyread);
 		CheckDlgButton(hdlg, DRV_USEDECLAREFETCH, globals.use_declarefetch);
 
 		/*	Unknown (Default) Data Type sizes */
@@ -133,7 +133,7 @@ int CALLBACK driver_optionsProc(HWND   hdlg,
 			globals.disable_optimizer = IsDlgButtonChecked(hdlg, DRV_OPTIMIZER);
 			globals.ksqo = IsDlgButtonChecked(hdlg, DRV_KSQO);
 			globals.unique_index = IsDlgButtonChecked(hdlg, DRV_UNIQUEINDEX);
-			globals.readonly = IsDlgButtonChecked(hdlg, DRV_READONLY);
+			globals.onlyread = IsDlgButtonChecked(hdlg, DRV_READONLY);
 			globals.use_declarefetch = IsDlgButtonChecked(hdlg, DRV_USEDECLAREFETCH);
 
 			/*	Unknown (Default) Data Type sizes */
@@ -241,7 +241,7 @@ char buf[128];
 		}
 
 		/*	Readonly */
-		CheckDlgButton(hdlg, DS_READONLY, atoi(ci->readonly));
+		CheckDlgButton(hdlg, DS_READONLY, atoi(ci->onlyread));
 
 		/*	Protocol */
 		if (strncmp(ci->protocol, PG62, strlen(PG62)) == 0)
@@ -279,7 +279,7 @@ char buf[128];
 			mylog("IDOK: got ci = %u\n", ci);
 
 			/*	Readonly */
-			sprintf(ci->readonly, "%d", IsDlgButtonChecked(hdlg, DS_READONLY));
+			sprintf(ci->onlyread, "%d", IsDlgButtonChecked(hdlg, DS_READONLY));
 
 			/*	Protocol */
 			if ( IsDlgButtonChecked(hdlg, DS_PG62))
@@ -335,7 +335,7 @@ char encoded_conn_settings[LARGE_REGISTRY_LEN];
 	/*	extra info */
 	sprintf(&connect_string[strlen(connect_string)], 
 		";READONLY=%s;PROTOCOL=%s;FAKEOIDINDEX=%s;SHOWOIDCOLUMN=%s;ROWVERSIONING=%s;SHOWSYSTEMTABLES=%s;CONNSETTINGS=%s", 
-		ci->readonly,
+		ci->onlyread,
 		ci->protocol,
 		ci->fake_oid_index,
 		ci->show_oid_column,
@@ -370,7 +370,7 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 		strcpy(ci->port, value);
 
 	else if (stricmp(attribute, INI_READONLY) == 0)
-		strcpy(ci->readonly, value);
+		strcpy(ci->onlyread, value);
 
 	else if (stricmp(attribute, INI_PROTOCOL) == 0)
 		strcpy(ci->protocol, value);
@@ -392,7 +392,7 @@ copyAttributes(ConnInfo *ci, char *attribute, char *value)
 		// strcpy(ci->conn_settings, value);
 	}
 
-	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',readonly='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server,ci->database,ci->username,ci->password,ci->port,ci->readonly,ci->protocol,ci->conn_settings);
+	mylog("copyAttributes: DSN='%s',server='%s',dbase='%s',user='%s',passwd='%s',port='%s',onlyread='%s',protocol='%s', conn_settings='%s')\n", ci->dsn, ci->server,ci->database,ci->username,ci->password,ci->port,ci->onlyread,ci->protocol,ci->conn_settings);
 
 }
 
@@ -402,8 +402,8 @@ getDSNdefaults(ConnInfo *ci)
 	if (ci->port[0] == '\0')
 		strcpy(ci->port, DEFAULT_PORT);
 
-	if (ci->readonly[0] == '\0')
-		sprintf(ci->readonly, "%d", globals.readonly);
+	if (ci->onlyread[0] == '\0')
+		sprintf(ci->onlyread, "%d", globals.onlyread);
 
 	if (ci->protocol[0] == '\0')
 		strcpy(ci->protocol, globals.protocol);
@@ -460,8 +460,8 @@ char encoded_conn_settings[LARGE_REGISTRY_LEN];
 	if ( ci->port[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_PORT, "", ci->port, sizeof(ci->port), ODBC_INI);
 
-	if ( ci->readonly[0] == '\0' || overwrite)
-		SQLGetPrivateProfileString(DSN, INI_READONLY, "", ci->readonly, sizeof(ci->readonly), ODBC_INI);
+	if ( ci->onlyread[0] == '\0' || overwrite)
+		SQLGetPrivateProfileString(DSN, INI_READONLY, "", ci->onlyread, sizeof(ci->onlyread), ODBC_INI);
 
 	if ( ci->show_oid_column[0] == '\0' || overwrite)
 		SQLGetPrivateProfileString(DSN, INI_SHOWOIDCOLUMN, "", ci->show_oid_column, sizeof(ci->show_oid_column), ODBC_INI);
@@ -501,8 +501,8 @@ char encoded_conn_settings[LARGE_REGISTRY_LEN];
 		ci->database,
 		ci->username,
 		ci->password);
-	qlog("          readonly='%s',protocol='%s',showoid='%s',fakeoidindex='%s',showsystable='%s'\n",
-		ci->readonly,
+	qlog("          onlyread='%s',protocol='%s',showoid='%s',fakeoidindex='%s',showsystable='%s'\n",
+		ci->onlyread,
 		ci->protocol,
 		ci->show_oid_column,
 		ci->fake_oid_index,
@@ -557,7 +557,7 @@ char encoded_conn_settings[LARGE_REGISTRY_LEN];
 
 		SQLWritePrivateProfileString(DSN,
 			INI_READONLY,
-			ci->readonly,
+			ci->onlyread,
 			ODBC_INI);
 
 		SQLWritePrivateProfileString(DSN,
@@ -772,9 +772,9 @@ char temp[256];
 		SQLGetPrivateProfileString(section, INI_READONLY, "", 
 					temp, sizeof(temp), filename);
 		if ( temp[0] ) 
-			globals.readonly = atoi(temp);
+			globals.onlyread = atoi(temp);
 		else
-			globals.readonly = DEFAULT_READONLY;
+			globals.onlyread = DEFAULT_READONLY;
 
 		/*	Default state for future DSN's protocol attribute
 			This isn't a real driver option YET.  This is more
@@ -818,7 +818,7 @@ char tmp[128];
 	SQLWritePrivateProfileString(DBMS_NAME,
 		INI_UNIQUEINDEX, tmp, ODBCINST_INI);
 
-	sprintf(tmp, "%d", globals.readonly);
+	sprintf(tmp, "%d", globals.onlyread);
 	SQLWritePrivateProfileString(DBMS_NAME,
 		INI_READONLY, tmp, ODBCINST_INI);
 

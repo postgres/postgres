@@ -147,7 +147,7 @@ typedef struct {
 	char	conn_settings[LARGE_REGISTRY_LEN];
 	char	protocol[SMALL_REGISTRY_LEN];
 	char	port[SMALL_REGISTRY_LEN];
-	char	readonly[SMALL_REGISTRY_LEN];	
+	char	onlyread[SMALL_REGISTRY_LEN];	
 	char	fake_oid_index[SMALL_REGISTRY_LEN];
 	char	show_oid_column[SMALL_REGISTRY_LEN];
 	char	row_versioning[SMALL_REGISTRY_LEN];
@@ -230,7 +230,7 @@ struct ConnectionClass_ {
 #define CC_get_server(x)	(x->connInfo.server)
 #define CC_get_DSN(x)		(x->connInfo.dsn)
 #define CC_get_username(x)	(x->connInfo.username)
-#define CC_is_readonly(x)	(x->connInfo.readonly[0] == '1')
+#define CC_is_onlyread(x)	(x->connInfo.onlyread[0] == '1')
 
 
 /*  for CC_DSN_info */
