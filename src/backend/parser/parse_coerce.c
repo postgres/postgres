@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.50 2000/11/17 19:57:47 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.51 2000/12/15 18:02:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,7 +174,6 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
  * This uses the same mechanism as the CAST() SQL construct in gram.y.
  * We should also check the function return type on candidate conversion
  *	routines just to be safe but we do not do that yet...
- * We need to have a zero-filled OID array here, otherwise the cache lookup fails.
  * - thomas 1998-03-31
  */
 bool
@@ -448,14 +447,6 @@ TypeCategory(Oid inType)
 			result = STRING_TYPE;
 			break;
 
-			/*
-			 * Kluge added 4/8/00 by tgl: treat the new BIT types as
-			 * strings, so that 'unknown' || 'unknown' continues to
-			 * resolve as textcat rather than generating an
-			 * ambiguous-operator error.  Probably BIT types should have
-			 * their own type category, or maybe they should be numeric?
-			 * Need a better way of handling unknown types first.
-			 */
 		case (ZPBITOID):
 		case (VARBITOID):
 			result = BITSTRING_TYPE;
