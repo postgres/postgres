@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.112 2003/09/29 00:05:24 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.113 2003/09/29 16:37:29 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@ DefineIndex(RangeVar *heapRelation,
 		rel->rd_rel->relkind != RELKIND_UNCATALOGED)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not a table",
+				 errmsg("\"%s\" is not a table",
 						heapRelation->relname)));
 
 	relationId = RelationGetRelid(rel);
@@ -636,7 +636,7 @@ ReindexTable(RangeVar *relation, bool force /* currently unused */ )
 		((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_TOASTVALUE)
 		ereport(ERROR,
 				(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-				 errmsg("relation \"%s\" is not a table",
+				 errmsg("\"%s\" is not a table",
 						relation->relname)));
 
 	/* Check permissions */
