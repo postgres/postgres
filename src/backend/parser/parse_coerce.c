@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.51 2000/12/15 18:02:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.52 2000/12/17 04:32:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,6 +364,7 @@ select_common_type(List *typeids, const char *context)
 					 context, typeidTypeName(ptype), typeidTypeName(ntype));
 			}
 			else if (IsPreferredType(pcategory, ntype)
+					 && !IsPreferredType(pcategory, ptype)
 					 && can_coerce_type(1, &ptype, &ntype))
 			{
 				/*
