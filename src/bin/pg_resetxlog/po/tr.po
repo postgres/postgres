@@ -6,66 +6,83 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pg_resetxlog-tr1\n"
 "POT-Creation-Date: 2004-11-08 07:13+0000\n"
-"PO-Revision-Date: 2004-11-08 20:07+0200\n"
-"Last-Translator: Devrim GUNDUZ <devrim@PostgreSQL.org>\n"
+"PO-Revision-Date: 2004-12-14 13:36+0200\n"
+"Last-Translator: Nicolai Tufar <ntufar@tdmsoft.com>\n"
 "Language-Team: Turkish <pgsql-tr-genel@PostgreSQL.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: KBabel 1.3.1\n"
+"X-Poedit-Language: Turkish\n"
+"X-Poedit-Country: TURKEY\n"
 
-#: pg_resetxlog.c:120
+#: pg_resetxlog.c:123
 #, c-format
 msgid "%s: invalid argument for option -x\n"
 msgstr "%s: -x seçeneği için geçersiz argüman\n"
 
-#: pg_resetxlog.c:121 pg_resetxlog.c:136 pg_resetxlog.c:151 pg_resetxlog.c:158
-#: pg_resetxlog.c:164 pg_resetxlog.c:172
+#: pg_resetxlog.c:124
+#: pg_resetxlog.c:139
+#: pg_resetxlog.c:154
+#: pg_resetxlog.c:161
+#: pg_resetxlog.c:167
+#: pg_resetxlog.c:175
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Daha fazla bilgi için \"%s --help\" parametresini kullanınız.\n"
 
-#: pg_resetxlog.c:126
+#: pg_resetxlog.c:129
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: transaction ID (-x) 0 olamaz\n"
 
-#: pg_resetxlog.c:135
+#: pg_resetxlog.c:138
 #, c-format
 msgid "%s: invalid argument for option -o\n"
 msgstr "%s: -o seçeneği için geçersiz argüman\n"
 
-#: pg_resetxlog.c:141
+#: pg_resetxlog.c:144
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) 0 olamaz\n"
 
-#: pg_resetxlog.c:150 pg_resetxlog.c:157
+#: pg_resetxlog.c:153
+#: pg_resetxlog.c:160
 #, c-format
 msgid "%s: invalid argument for option -l\n"
 msgstr "%s: -l seçeneği için geçersiz argüman\n"
 
-#: pg_resetxlog.c:171
+#: pg_resetxlog.c:174
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: veri dizini belirtilmedi\n"
 
-#: pg_resetxlog.c:191 pg_resetxlog.c:287
+#: pg_resetxlog.c:189
+#, c-format
+msgid "%s: cannot be executed by \"root\"\n"
+msgstr "%s: \"root\" tarafından çalıştırılamaz\n"
+
+#: pg_resetxlog.c:191
+#, c-format
+msgid "You must run %s as the PostgreSQL superuser.\n"
+msgstr "%s komutunu PostgreSQL superuser olarak çalıştırmalısınız.\n"
+
+#: pg_resetxlog.c:213
+#: pg_resetxlog.c:309
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: \"%s\" dosyası okunmak için açılamadı: %s\n"
 
-#: pg_resetxlog.c:197
+#: pg_resetxlog.c:219
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
 "Is a server running?  If not, delete the lock file and try again.\n"
 msgstr ""
 "%s: \"%s\" lock dosyası mevcut\n"
-"Bir sunucu çalışıyor mu? Eğer çalışmıyorsa, lock dosyasını silin ve yeniden "
-"deneyin.\n"
+"Bir sunucu çalışıyor mu? Eğer çalışmıyorsa, lock dosyasını silin ve yeniden deneyin.\n"
 
-#: pg_resetxlog.c:236
+#: pg_resetxlog.c:258
 msgid ""
 "\n"
 "If these values seem acceptable, use -f to force reset.\n"
@@ -73,7 +90,7 @@ msgstr ""
 "\n"
 "Eğer bu değerler kabul edilebilir görünüyorsa, reset işlemini zorlamak için -f yi kullanınız.\n"
 
-#: pg_resetxlog.c:248
+#: pg_resetxlog.c:270
 msgid ""
 "The database server was not shut down cleanly.\n"
 "Resetting the transaction log may cause data to be lost.\n"
@@ -81,14 +98,13 @@ msgid ""
 msgstr ""
 "Veritabanı sunucusu düzgün olarak kapatılmadı.\n"
 "Transaction kayıt dosyasını sıfırlamak veri kaybına neden olabilir.\n"
-"Yine de devam etmek istiyorsanız, sıfırlama işlemini zorlamak için -f "
-"parametresini kullanınız.\n"
+"Yine de devam etmek istiyorsanız, sıfırlama işlemini zorlamak için -f parametresini kullanınız.\n"
 
-#: pg_resetxlog.c:261
+#: pg_resetxlog.c:283
 msgid "Transaction log reset\n"
 msgstr "Transaction kayıt dosyası sıfırlandı\n"
 
-#: pg_resetxlog.c:290
+#: pg_resetxlog.c:312
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -99,36 +115,32 @@ msgstr ""
 "  touch %s\n"
 "komutunu çalıştırın ve tekrar deneyin.\n"
 
-#: pg_resetxlog.c:303
+#: pg_resetxlog.c:325
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası okunamadı: %s\n"
 
-#: pg_resetxlog.c:326
+#: pg_resetxlog.c:348
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
-msgstr ""
-"%s: pg_control mevcut ancak geçersiz CRC'ye sahip, dikkat ederek devam "
-"ediniz\n"
+msgstr "%s: pg_control mevcut ancak geçersiz CRC'ye sahip, dikkat ederek devam ediniz\n"
 
-#: pg_resetxlog.c:335
+#: pg_resetxlog.c:357
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
-msgstr ""
-"%s: pg_control mevcut ama bozuk ya da bilinmeyen bir sürüme sahip; gözardı "
-"ediliyor\n"
+msgstr "%s: pg_control mevcut ama bozuk ya da bilinmeyen bir sürüme sahip; gözardı ediliyor\n"
 
-#: pg_resetxlog.c:399
+#: pg_resetxlog.c:421
 #, c-format
 msgid "%s: invalid LC_COLLATE setting\n"
 msgstr "%s: Geçersiz LC_COLLATE ayarı\n"
 
-#: pg_resetxlog.c:406
+#: pg_resetxlog.c:428
 #, c-format
 msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: geçersiz LC_CTYPE ayarı\n"
 
-#: pg_resetxlog.c:430
+#: pg_resetxlog.c:452
 msgid ""
 "Guessed pg_control values:\n"
 "\n"
@@ -136,7 +148,7 @@ msgstr ""
 "Tahmin edilen pg_control değerleri:\n"
 "\n"
 
-#: pg_resetxlog.c:432
+#: pg_resetxlog.c:454
 msgid ""
 "pg_control values:\n"
 "\n"
@@ -144,140 +156,142 @@ msgstr ""
 "pg_control değerleri:\n"
 "\n"
 
-#: pg_resetxlog.c:441
+#: pg_resetxlog.c:463
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control sürüm numarası:            %u\n"
 
-#: pg_resetxlog.c:442
+#: pg_resetxlog.c:464
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Katalog sürüm numarası:               %u\n"
 
-#: pg_resetxlog.c:443
+#: pg_resetxlog.c:465
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "Veritabanı sistem tanımlayıcısı:           %s\n"
 
-#: pg_resetxlog.c:444
+#: pg_resetxlog.c:466
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "Mevcut kayıt dosyası dosya numarası:                  %u\n"
 
-#: pg_resetxlog.c:445
+#: pg_resetxlog.c:467
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "Sıradaki kayıt dosyası bölümü:                %u\n"
 
-#: pg_resetxlog.c:446
+#: pg_resetxlog.c:468
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "Son checkpoint''in TimeLineID değeri:          %u\n"
 
-#: pg_resetxlog.c:447
+#: pg_resetxlog.c:469
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u\n"
 msgstr "Son checkpoint''in NextXID değeri:          %u\n"
 
-#: pg_resetxlog.c:448
+#: pg_resetxlog.c:470
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "Son checkpoint''in NextOID değeri:          %u\n"
 
-#: pg_resetxlog.c:449
+#: pg_resetxlog.c:471
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "Veritabanı blok büyüklüğü:                  %u\n"
 
-#: pg_resetxlog.c:450
+#: pg_resetxlog.c:472
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "büyük nesnenin bölümü başına blok sayısı: %u\n"
 
-#: pg_resetxlog.c:451
+#: pg_resetxlog.c:473
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "Tanımlayıcıların en yüksek sayısı:        %u\n"
 
-#: pg_resetxlog.c:452
+#: pg_resetxlog.c:474
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "Fonksiyon argümanları için en yüksek sayı: %u\n"
 
-#: pg_resetxlog.c:453
+#: pg_resetxlog.c:475
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "Tarih/zaman tipi saklanması:               %s\n"
 
-#: pg_resetxlog.c:454
+#: pg_resetxlog.c:476
 msgid "64-bit integers"
 msgstr "64-bit tamsayılar"
 
-#: pg_resetxlog.c:454
+#: pg_resetxlog.c:476
 msgid "floating-point numbers"
 msgstr "kayan nokta sayılar"
 
-#: pg_resetxlog.c:455
+#: pg_resetxlog.c:477
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "Yerel adının en büyük uzunluğu:        %u\n"
 
-#: pg_resetxlog.c:456
+#: pg_resetxlog.c:478
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_resetxlog.c:457
+#: pg_resetxlog.c:479
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
 
-#: pg_resetxlog.c:518
+#: pg_resetxlog.c:540
 #, c-format
 msgid "%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"
 msgstr "%s: iç hata -- sizeof(ControlFileData) çok büyük ... xlog.c dosyasını düzeltiniz\n"
 
-#: pg_resetxlog.c:531
+#: pg_resetxlog.c:553
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
 msgstr "%s: pg_control dosyası yaratılamadı: %s\n"
 
-#: pg_resetxlog.c:542
+#: pg_resetxlog.c:564
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: pg_control dosyasına yazılamadı: %s\n"
 
-#: pg_resetxlog.c:549 pg_resetxlog.c:705
+#: pg_resetxlog.c:571
+#: pg_resetxlog.c:727
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: fsync hatası: %s\n"
 
-#: pg_resetxlog.c:570
+#: pg_resetxlog.c:592
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s:  \"%s\" dizini açılamadı: %s\n"
 
-#: pg_resetxlog.c:584
+#: pg_resetxlog.c:606
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s:  \"%s\" dosyası silinemedi: %s\n"
 
-#: pg_resetxlog.c:603
+#: pg_resetxlog.c:625
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
 msgstr "%s:  \"%s\" dizini okunamadı: %s\n"
 
-#: pg_resetxlog.c:672
+#: pg_resetxlog.c:694
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyası açılamadı: %s\n"
 
-#: pg_resetxlog.c:683 pg_resetxlog.c:697
+#: pg_resetxlog.c:705
+#: pg_resetxlog.c:719
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: \"%s\" dosyasına yazılamadı: %s\n"
 
-#: pg_resetxlog.c:716
+#: pg_resetxlog.c:738
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -286,7 +300,7 @@ msgstr ""
 "%s PostgreSQL transaction kayıt dosyasını sıfırlar.\n"
 "\n"
 
-#: pg_resetxlog.c:717
+#: pg_resetxlog.c:739
 #, c-format
 msgid ""
 "Usage:\n"
@@ -297,47 +311,39 @@ msgstr ""
 "  %s [SEÇENEK]... VERİ_DİZİNİ\n"
 "\n"
 
-#: pg_resetxlog.c:718
+#: pg_resetxlog.c:740
 msgid "Options:\n"
 msgstr "Seçenekler:\n"
 
-#: pg_resetxlog.c:719
+#: pg_resetxlog.c:741
 msgid "  -f              force update to be done\n"
 msgstr "  -f              güncellemenin yapılmasını sağla\n"
 
-#: pg_resetxlog.c:720
-msgid ""
-"  -l FILEID,SEG   force minimum WAL starting location for new transaction "
-"log\n"
-msgstr ""
-"  -l FILEID,SEG   Yeni transaction kayıt dosyası için en düşük WAL başlama "
-"yerini belirt\n"
+#: pg_resetxlog.c:742
+msgid "  -l FILEID,SEG   force minimum WAL starting location for new transaction log\n"
+msgstr "  -l FILEID,SEG   Yeni transaction kayıt dosyası için en düşük WAL başlama yerini belirt\n"
 
-#: pg_resetxlog.c:721
-msgid ""
-"  -n              no update, just show extracted control values (for "
-"testing)\n"
-msgstr ""
-"  -n              güncelleme yapma, sadece extract edilmiş kontrol "
-"değerlerini göster (denemek için)\n"
+#: pg_resetxlog.c:743
+msgid "  -n              no update, just show extracted control values (for testing)\n"
+msgstr "  -n              güncelleme yapma, sadece extract edilmiş kontrol değerlerini göster (denemek için)\n"
 
-#: pg_resetxlog.c:722
+#: pg_resetxlog.c:744
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID          sıradaki OID'i ayarla\n"
 
-#: pg_resetxlog.c:723
+#: pg_resetxlog.c:745
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID          sıradaki transaction ID'sini ayarla\n"
 
-#: pg_resetxlog.c:724
+#: pg_resetxlog.c:746
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help          bu yardımı göster ve çık\n"
 
-#: pg_resetxlog.c:725
+#: pg_resetxlog.c:747
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version       sürüm bilgisini göster ve çık\n"
 
-#: pg_resetxlog.c:726
+#: pg_resetxlog.c:748
 msgid ""
 "\n"
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
