@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.98 2001/01/24 19:43:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.99 2001/02/06 02:00:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2035,7 +2035,7 @@ PQoidStatus(const PGresult *res)
 	if (len > 23)
 		len = 23;
 	strncpy(buf, res->cmdStatus + 7, len);
-	buf[23] = '\0';
+	buf[len] = '\0';
 
 	return buf;
 }
