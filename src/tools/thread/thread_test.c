@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.11 2004/04/05 01:27:58 momjian Exp $
+ *	$PostgreSQL: pgsql/src/tools/thread/thread_test.c,v 1.12 2004/04/05 02:22:14 momjian Exp $
  *
  *	This program tests to see if your standard libc functions use
  *	pthread_setspecific()/pthread_getspecific() to be thread-safe.
@@ -37,8 +37,8 @@ void func_call_2(void);
 
 char myhostname[MAXHOSTNAMELEN];
 
-int errno1_set = 0;
-int errno2_set = 0;
+volatile int errno1_set = 0;
+volatile int errno2_set = 0;
 
 char *strerror_p1;
 char *strerror_p2;
