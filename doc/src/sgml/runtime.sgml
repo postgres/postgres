@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.197 2003/07/29 00:03:17 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.198 2003/07/31 18:36:17 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1004,29 +1004,35 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are
-        to be preloaded at server start. An initialization function
-        can also be optionally specified by adding a colon followed by
-        the name of the initialization function after the library
-        name. For example
-        <literal>'$libdir/mylib:init_mylib'</literal> would cause
-        <literal>mylib</> to be preloaded and <literal>init_mylib</>
-        to be executed. If more than one library is to be loaded, they
-        must be delimited with a comma.
+        to be preloaded at server start. A parameterless initialization
+	function can optionally be called for each library.  To specify
+	that, add a colon and the name of the initialization function after
+	the library name. For example
+        <literal>'$libdir/mylib:mylib_init'</literal> would cause
+        <literal>mylib</> to be preloaded and <literal>mylib_init</>
+        to be executed. If more than one library is to be loaded, separate
+	their names with commas.
        </para>
 
        <para>
-        If <literal>mylib</> is not found, the server will fail to
-        start.  However, if <literal>init_mylib</> is not found,
-        <literal>mylib</> will still be preloaded without executing
-        the initialization function.
+        If <literal>mylib</> or <literal>mylib_init</> are not found, the
+        server will fail to start.
+       </para>
+
+       <para>
+        PostgreSQL procedural language libraries may be preloaded in this way,
+        typically by using the syntax
+	<literal>'$libdir/plXXX:plXXX_init'</literal>
+	where <literal>XXX</literal> is <literal>pgsql</>, 
+        <literal>perl</>, <literal>tcl</>, or <literal>python</>.
        </para>
 
        <para>
         By preloading a shared library (and initializing it if
         applicable), the library startup time is avoided when the
         library is first used.  However, the time to start each new
-	server process may increase, even if that process never
-	uses the library.
+        server process may increase, even if that process never
+        uses the library.
        </para>
       </listitem>
      </varlistentry>

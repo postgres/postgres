@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.108 2003/07/28 00:09:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.109 2003/07/31 18:36:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1165,7 +1165,7 @@ process_preload_libraries(char *preload_libraries_string)
 		}
 
 		initfunc = (func_ptr) load_external_function(filename, funcname,
-													 false, NULL);
+													 true, NULL);
 		if (initfunc)
 			(*initfunc)();
 

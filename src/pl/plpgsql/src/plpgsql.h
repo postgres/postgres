@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.37 2003/07/01 21:47:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.38 2003/07/31 18:36:35 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -613,6 +613,7 @@ extern PLpgSQL_row *plpgsql_build_rowtype(Oid classOid);
 extern void plpgsql_adddatum(PLpgSQL_datum * new);
 extern int	plpgsql_add_initdatums(int **varnos);
 extern void plpgsql_yyerror(const char *s);
+extern void plpgsql_HashTableInit(void);
 
 /* ----------
  * Functions in pl_handler.c

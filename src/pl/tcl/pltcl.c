@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.72 2003/07/25 23:37:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.73 2003/07/31 18:36:46 tgl Exp $
  *
  **********************************************************************/
 
@@ -128,7 +128,8 @@ typedef struct pltcl_query_desc
 /**********************************************************************
  * Global data
  **********************************************************************/
-static int	pltcl_firstcall = 1;
+static bool	pltcl_pm_init_done = false;
+static bool	pltcl_be_init_done = false;
 static int	pltcl_call_level = 0;
 static int	pltcl_restart_in_progress = 0;
 static Tcl_Interp *pltcl_hold_interp = NULL;
@@ -149,6 +150,7 @@ static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
 Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
+void		pltcl_init(void);
 
 static Datum pltcl_func_handler(PG_FUNCTION_ARGS);
 
@@ -197,17 +199,18 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 	fmgr_info_cxt(functionId, finfo, TopMemoryContext);
 }
 
-
 /**********************************************************************
- * pltcl_init_all()		- Initialize all
+ * pltcl_init()		- Initialize all that's safe to do in the postmaster
+ *
+ * DO NOT make this static --- it has to be callable by preload
  **********************************************************************/
-static void
-pltcl_init_all(void)
+void
+pltcl_init(void)
 {
 	/************************************************************
 	 * Do initialization only once
 	 ************************************************************/
-	if (!pltcl_firstcall)
+	if (pltcl_pm_init_done)
 		return;
 
 	/************************************************************
@@ -240,8 +243,36 @@ pltcl_init_all(void)
 	Tcl_InitHashTable(pltcl_norm_query_hash, TCL_STRING_KEYS);
 	Tcl_InitHashTable(pltcl_safe_query_hash, TCL_STRING_KEYS);
 
-	pltcl_firstcall = 0;
-	return;
+	pltcl_pm_init_done = true;
+}
+
+/**********************************************************************
+ * pltcl_init_all()		- Initialize all
+ **********************************************************************/
+static void
+pltcl_init_all(void)
+{
+	/************************************************************
+	 * Execute postmaster-startup safe initialization
+	 ************************************************************/
+	if (!pltcl_pm_init_done)
+		pltcl_init();
+
+	/************************************************************
+	 * Any other initialization that must be done each time a new
+	 * backend starts:
+	 * - Try to load the unknown procedure from pltcl_modules
+	 ************************************************************/
+	if (!pltcl_be_init_done)
+	{
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "SPI_connect failed");
+		pltcl_init_load_unknown(pltcl_norm_interp);
+		pltcl_init_load_unknown(pltcl_safe_interp);
+		if (SPI_finish() != SPI_OK_FINISH)
+			elog(ERROR, "SPI_finish failed");
+		pltcl_be_init_done = true;
+	}
 }
 
 
@@ -271,15 +302,6 @@ pltcl_init_interp(Tcl_Interp *interp)
 					  pltcl_SPI_execp, NULL, NULL);
 	Tcl_CreateCommand(interp, "spi_lastoid",
 					  pltcl_SPI_lastoid, NULL, NULL);
-
-	/************************************************************
-	 * Try to load the unknown procedure from pltcl_modules
-	 ************************************************************/
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "SPI_connect failed");
-	pltcl_init_load_unknown(interp);
-	if (SPI_finish() != SPI_OK_FINISH)
-		elog(ERROR, "SPI_finish failed");
 }
 
 
@@ -373,10 +395,9 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 	FunctionCallInfo save_fcinfo;
 
 	/************************************************************
-	 * Initialize interpreters on first call
+	 * Initialize interpreters
 	 ************************************************************/
-	if (pltcl_firstcall)
-		pltcl_init_all();
+	pltcl_init_all();
 
 	/************************************************************
 	 * Connect to SPI manager

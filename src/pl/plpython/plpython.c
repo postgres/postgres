@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.35 2003/07/25 23:37:30 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.36 2003/07/31 18:36:39 tgl Exp $
  *
  *********************************************************************
  */
@@ -170,10 +170,12 @@ typedef struct PLyResultObject
 /* function declarations
  */
 
-/* the only exported function, with the magic telling Postgresql
- * what function call interface it implements.
+/* Two exported functions: first is the magic telling Postgresql
+ * what function call interface it implements. Second allows
+ * preinitialization of the interpreter during postmaster startup.
  */
 Datum		plpython_call_handler(PG_FUNCTION_ARGS);
+void		plpython_init(void);
 
 PG_FUNCTION_INFO_V1(plpython_call_handler);
 
@@ -329,8 +331,7 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 
 	enter();
 
-	if (PLy_first_call)
-		PLy_init_all();
+	PLy_init_all();
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
@@ -2302,10 +2303,21 @@ PLy_spi_error_string(int code)
 /* language handler and interpreter initialization
  */
 
+/*
+ * plpython_init()			- Initialize everything that can be
+ *							  safely initialized during postmaster
+ *							  startup.
+ *
+ * DO NOT make this static --- it has to be callable by preload
+ */
 void
-PLy_init_all(void)
+plpython_init(void)
 {
 	static volatile int init_active = 0;
+
+	/* Do initialization only once */
+	if (!PLy_first_call)
+		return;
 
 	enter();
 
@@ -2325,6 +2337,20 @@ PLy_init_all(void)
 	PLy_first_call = 0;
 
 	leave();
+}
+
+static void
+PLy_init_all(void)
+{
+	/* Execute postmaster-startup safe initialization */
+	if (PLy_first_call)
+		plpython_init();
+
+	/*
+	 * Any other initialization that must be done each time a new
+	 * backend starts -- currently none
+	 */
+
 }
 
 void

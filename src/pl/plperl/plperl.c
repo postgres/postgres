@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.37 2003/07/25 23:37:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.38 2003/07/31 18:36:28 tgl Exp $
  *
  **********************************************************************/
 
@@ -101,6 +101,7 @@ static void plperl_init_all(void);
 static void plperl_init_interp(void);
 
 Datum		plperl_call_handler(PG_FUNCTION_ARGS);
+void		plperl_init(void);
 
 static Datum plperl_func_handler(PG_FUNCTION_ARGS);
 
@@ -128,12 +129,15 @@ perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
 }
 
 /**********************************************************************
- * plperl_init_all()		- Initialize all
+ * plperl_init()			- Initialize everything that can be
+ *							  safely initialized during postmaster
+ *							  startup.
+ *
+ * DO NOT make this static --- it has to be callable by preload
  **********************************************************************/
-static void
-plperl_init_all(void)
+void
+plperl_init(void)
 {
-
 	/************************************************************
 	 * Do initialization only once
 	 ************************************************************/
@@ -166,6 +170,26 @@ plperl_init_all(void)
 	plperl_init_interp();
 
 	plperl_firstcall = 0;
+}
+
+/**********************************************************************
+ * plperl_init_all()		- Initialize all
+ **********************************************************************/
+static void
+plperl_init_all(void)
+{
+
+	/************************************************************
+	 * Execute postmaster-startup safe initialization
+	 ************************************************************/
+	if (plperl_firstcall)
+		plperl_init();
+
+	/************************************************************
+	 * Any other initialization that must be done each time a new
+	 * backend starts -- currently none
+	 ************************************************************/
+
 }
 
 
@@ -222,10 +246,9 @@ plperl_call_handler(PG_FUNCTION_ARGS)
 	Datum		retval;
 
 	/************************************************************
-	 * Initialize interpreter on first call
+	 * Initialize interpreter
 	 ************************************************************/
-	if (plperl_firstcall)
-		plperl_init_all();
+	plperl_init_all();
 
 	/************************************************************
 	 * Connect to SPI manager
