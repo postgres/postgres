@@ -22,8 +22,10 @@
 #include "qresult.h"
 #include "convert.h"
 #include "environ.h"
+
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifndef WIN32
 #include "iodbc.h"
@@ -352,6 +354,10 @@ int
 statement_type(char *statement)
 {
 int i;
+
+	/* ignore leading whitespace in query string */
+	while (*statement && isspace((unsigned char) *statement))
+		statement++;
 
 	for (i = 0; Statement_Type[i].s; i++)
 		if ( ! strnicmp(statement, Statement_Type[i].s, strlen(Statement_Type[i].s)))
