@@ -1,3 +1,6 @@
+Mon Nov 20 08:12:00 GMT 2000 peter@retep.org.uk
+	- Encoding patch to Connection by wrobell@posexperts.com.pl
+
 Tue Oct 17 15:35:00 BST 2000 petermount@maidstone.gov.uk
 	- Changed getTimestamp() again. This time Michael Stephenson's
 	  <mstephenson@tirin.openworld.co.uk> solution looked far better

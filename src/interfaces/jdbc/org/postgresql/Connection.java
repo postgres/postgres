@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.9 2000/10/12 08:55:24 peter Exp $
+ * $Id: Connection.java,v 1.10 2000/11/20 08:15:30 peter Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -363,8 +363,7 @@ public abstract class Connection
 	    try
 		{
 		    pg_stream.SendChar('Q');
-		    buf = sql.getBytes();
-		    pg_stream.Send(sql.getBytes());
+		    pg_stream.Send(buf);
 		    pg_stream.SendChar(0);
 		    pg_stream.flush();
 		} catch (IOException e) {
