@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.37 1999/09/30 10:31:43 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.38 1999/11/01 02:29:25 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -59,8 +59,8 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		sizeof(FormData_pg_amop),
-		NULL,
-	(ScanFunc) NULL},
+		AccessMethodOpidIndex,
+	(ScanFunc) AccessMethodOpidIndexScan},
 	{AccessMethodOperatorRelationName,	/* AMOPSTRATEGY */
 		3,
 		{
@@ -70,8 +70,8 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		sizeof(FormData_pg_amop),
-		NULL,
-	(ScanFunc) NULL},
+		AccessMethodStrategyIndex,
+	(ScanFunc) AccessMethodStrategyIndexScan},
 	{AttributeRelationName,		/* ATTNAME */
 		2,
 		{
@@ -103,8 +103,8 @@ static struct cachedesc cacheinfo[] = {
 			0
 		},
 		offsetof(FormData_pg_index, indpred),
-		NULL,
-	NULL},
+		IndexRelidIndex,
+	(ScanFunc) IndexRelidIndexScan},
 	{LanguageRelationName,		/* LANNAME */
 		1,
 		{
@@ -226,17 +226,6 @@ static struct cachedesc cacheinfo[] = {
 		sizeof(FormData_pg_opclass),
 		NULL,
 	NULL},
-	{IndexRelationName,			/* INDRELIDKEY *//* never used */
-		2,
-		{
-			Anum_pg_index_indrelid,
-			Anum_pg_index_indkey,
-			0,
-			0
-		},
-		offsetof(FormData_pg_index, indpred),
-		NULL,
-	(ScanFunc) NULL},
 	{InheritsRelationName,		/* INHRELID */
 		2,
 		{

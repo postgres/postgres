@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.92 1999/10/26 03:12:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.93 1999/11/01 02:29:24 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -54,26 +54,23 @@
 
 /* non-export function prototypes */
 static Oid GetHeapRelationOid(char *heapRelationName, char *indexRelationName,
-				   bool istemp);
+		bool istemp);
 static TupleDesc BuildFuncTupleDesc(FuncIndexInfo *funcInfo);
 static TupleDesc ConstructTupleDescriptor(Oid heapoid, Relation heapRelation,
-						 List *attributeList,
-						 int numatts, AttrNumber *attNums);
+		List *attributeList, int numatts, AttrNumber *attNums);
 
 static void ConstructIndexReldesc(Relation indexRelation, Oid amoid);
 static Oid	UpdateRelationRelation(Relation indexRelation, char *temp_relname);
 static void InitializeAttributeOids(Relation indexRelation,
-						int numatts,
-						Oid indexoid);
-static void
-			AppendAttributeTuples(Relation indexRelation, int numatts);
+		int numatts, Oid indexoid);
+static void AppendAttributeTuples(Relation indexRelation, int numatts);
 static void UpdateIndexRelation(Oid indexoid, Oid heapoid,
-					FuncIndexInfo *funcInfo, int natts,
-					AttrNumber *attNums, Oid *classOids, Node *predicate,
-		   List *attributeList, bool islossy, bool unique, bool primary);
+		FuncIndexInfo *funcInfo, int natts,
+		AttrNumber *attNums, Oid *classOids, Node *predicate,
+		List *attributeList, bool islossy, bool unique, bool primary);
 static void DefaultBuild(Relation heapRelation, Relation indexRelation,
-			 int numberOfAttributes, AttrNumber *attributeNumber,
-			 IndexStrategy indexStrategy, uint16 parameterCount,
+		int numberOfAttributes, AttrNumber *attributeNumber,
+		IndexStrategy indexStrategy, uint16 parameterCount,
 		Datum *parameter, FuncIndexInfoPtr funcInfo, PredInfo *predInfo);
 
 /* ----------------------------------------------------------------
@@ -661,6 +658,7 @@ UpdateIndexRelation(Oid indexoid,
 	Relation	pg_index;
 	HeapTuple	tuple;
 	int			i;
+	Relation	idescs[Num_pg_index_indices];
 
 	/* ----------------
 	 *	allocate an Form_pg_index big enough to hold the
@@ -752,6 +750,16 @@ UpdateIndexRelation(Oid indexoid,
 	 */
 	heap_insert(pg_index, tuple);
 
+	/* ----------------
+	 *	insert the index tuple into the pg_index
+	 * ----------------
+	 */
+	if (!IsBootstrapProcessingMode())
+	{
+		CatalogOpenIndices(Num_pg_index_indices, Name_pg_index_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_index_indices, pg_index, tuple);
+		CatalogCloseIndices(Num_pg_index_indices, idescs);
+	}
 	/* ----------------
 	 *	close the relation and free the tuple
 	 * ----------------

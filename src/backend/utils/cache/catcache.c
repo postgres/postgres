@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.49 1999/09/18 19:07:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.50 1999/11/01 02:29:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,9 +16,12 @@
 #include "access/heapam.h"
 #include "access/valid.h"
 #include "catalog/pg_type.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/catcache.h"
+#include "utils/syscache.h"
 
 static void CatCacheRemoveCTup(CatCache *cache, Dlelem *e);
 static Index CatalogCacheComputeHashIndex(struct catcache * cacheInP);
@@ -806,6 +809,62 @@ InitSysCache(char *relname,
 
 
 /* --------------------------------
+ *		SearchSelfReferences
+ *
+ *		This call searches a self referencing information,
+ *
+ *		which causes a cycle in system catalog cache
+ *
+ *		cache should already be initailized
+ * --------------------------------
+ */
+static HeapTuple
+SearchSelfReferences(const struct catcache * cache)
+{
+	HeapTuple		ntp;
+	Relation		rel;
+	static Oid		indexSelfOid = 0;
+	static HeapTuple	indexSelfTuple = 0;
+
+	if (cache->id != INDEXRELID)
+		return (HeapTuple)0;
+
+	if (!indexSelfOid)
+	{
+		rel = heap_openr(RelationRelationName, AccessShareLock);
+		ntp = ClassNameIndexScan(rel, IndexRelidIndex);
+		if (!HeapTupleIsValid(ntp))
+			elog(ERROR, "SearchSelfRefernces: %s not found in %s",
+				IndexRelidIndex, RelationRelationName);
+		indexSelfOid = ntp->t_data->t_oid;
+		pfree(ntp);
+		heap_close(rel, AccessShareLock);
+	}
+	if ((Oid)cache->cc_skey[0].sk_argument != indexSelfOid)
+		return (HeapTuple)0;
+	if (!indexSelfTuple)
+	{
+		HeapScanDesc	sd;
+		MemoryContext	oldcxt;
+
+		if (!CacheCxt)
+			CacheCxt = CreateGlobalMemory("Cache");
+		rel = heap_open(cache->relationId, AccessShareLock);
+		sd = heap_beginscan(rel, false, SnapshotNow, 1, cache->cc_skey);
+		ntp = heap_getnext(sd, 0);
+		if (!HeapTupleIsValid(ntp))
+			elog(ERROR, "SearchSelfRefernces: tuple not found");
+		oldcxt = MemoryContextSwitchTo((MemoryContext) CacheCxt);
+		indexSelfTuple = heap_copytuple(ntp);
+		MemoryContextSwitchTo(oldcxt);
+		heap_endscan(sd);
+		heap_close(rel, AccessShareLock);
+	}
+
+	return indexSelfTuple;
+}
+
+/* --------------------------------
  *		SearchSysCache
  *
  *		This call searches a system cache for a tuple, opening the relation
@@ -844,6 +903,14 @@ SearchSysCache(struct catcache * cache,
 	cache->cc_skey[1].sk_argument = v2;
 	cache->cc_skey[2].sk_argument = v3;
 	cache->cc_skey[3].sk_argument = v4;
+
+	/*
+	 *	resolve self referencing informtion
+	 */
+	if (ntp = SearchSelfReferences(cache), ntp)
+	{
+			return heap_copytuple(ntp);
+	}
 
 	/* ----------------
 	 *	find the hash bucket in which to look for the tuple
