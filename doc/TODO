@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Jan 24 22:50:01 EST 2001
+Last updated:		Wed Jan 24 22:50:22 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -57,7 +57,7 @@ URGENT
 
 * -Add OUTER joins, left and right[outer] (Tom, Thomas)
 * -Allow long tuples by chaining or auto-storing outside db (TOAST) (Jan)
-* -Fix memory leak for expressions[memory] (Tom) 
+* -Fix memory leak for expressions (Tom) 
 * Add replication of distributed databases [replication]
 	o automatic fallover
 	o load balancing
