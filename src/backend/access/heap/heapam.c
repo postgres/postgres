@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.94 2000/11/14 21:04:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.95 2000/11/20 21:14:13 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2088,7 +2088,7 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	Buffer			buffer;
 	Page			page;
 	OffsetNumber	offnum;
-	ItemId			lp;
+	ItemId			lp = NULL;
 	HeapTupleHeader	htup;
 
 	if (!RelationIsValid(reln))
@@ -2288,7 +2288,7 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		ItemPointerGetBlockNumber(&(xlrec->target.tid)));
 	Page			page;
 	OffsetNumber	offnum;
-	ItemId			lp;
+	ItemId			lp = NULL;
 	HeapTupleHeader	htup;
 
 	if (!RelationIsValid(reln))
