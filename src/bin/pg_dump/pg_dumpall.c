@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.26 2003/08/04 02:40:09 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.27 2003/08/07 21:11:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,16 +17,14 @@
 #ifdef ENABLE_NLS
 #include <locale.h>
 #endif
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
 #ifndef HAVE_STRDUP
 #include "strdup.h"
 #endif
 #include <errno.h>
 
-#ifndef HAVE_GETOPT_LONG
 #include "getopt_long.h"
+
+#ifndef HAVE_OPTRESET
 int			optreset;
 #endif
 

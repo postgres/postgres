@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2003, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.78 2003/08/04 23:59:40 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.79 2003/08/07 21:11:58 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -17,12 +17,9 @@
 #include <win32.h>
 #endif   /* WIN32 */
 
-#ifdef HAVE_GETOPT_H
-#include <getopt.h>
-#endif
-
-#ifndef HAVE_GETOPT_LONG
 #include "getopt_long.h"
+
+#ifndef HAVE_OPTRESET
 int			optreset;
 #endif
 

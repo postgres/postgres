@@ -6,7 +6,7 @@
 #include "postgres_fe.h"
 
 #include <unistd.h>
-#ifdef __GLIBC__
+#ifdef HAVE_GETOPT_H
 #include <getopt.h>
 #endif
 #include <time.h>

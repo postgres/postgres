@@ -417,6 +417,9 @@
 /* Define to 1 if the system has the type `struct fcred'. */
 #undef HAVE_STRUCT_FCRED
 
+/* Define to 1 if the system has the type `struct option'. */
+#undef HAVE_STRUCT_OPTION
+
 /* Define to 1 if `sa_len' is member of `struct sockaddr'. */
 #undef HAVE_STRUCT_SOCKADDR_SA_LEN
 
