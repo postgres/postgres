@@ -1229,6 +1229,121 @@ TBD
 <!-- *********************************************** -->
 <!-- *********************************************** -->
 
+<REFENTRY ID="SPI-SPICOPYTUPLEDESC">
+<REFMETA>
+<REFENTRYTITLE>SPI_copytupledesc</REFENTRYTITLE>
+<REFMISCINFO>SPI - Tuple Descriptor Copy</REFMISCINFO>
+</REFMETA>
+<REFNAMEDIV>
+<REFNAME>SPI_copytupledesc
+</REFNAME>
+<REFPURPOSE>
+Makes copy of tuple descriptor in upper Executor context
+</REFPURPOSE>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEDESC-1"><PRIMARY>SPI</PRIMARY><SECONDARY>copying tuple descriptors</SECONDARY></INDEXTERM>
+<INDEXTERM ID="IX-SPI-SPICOPYTUPLEDESC-2"><PRIMARY>SPI_copytupledesc</PRIMARY></INDEXTERM>
+</REFNAMEDIV>
+<REFSYNOPSISDIV>
+<REFSYNOPSISDIVINFO>
+<DATE>2001-08-02</DATE>
+</REFSYNOPSISDIVINFO>
+<SYNOPSIS>
+SPI_copytupledesc(<REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>)
+</SYNOPSIS>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEDESC-1">
+<REFSECT2INFO>
+<DATE>2001-08-02</DATE>
+</REFSECT2INFO>
+<TITLE>Inputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+TupleDesc <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+</TERM>
+<LISTITEM>
+<PARA>
+Input tuple descriptor to be copied
+</PARA>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+
+<REFSECT2 ID="R2-SPI-SPICOPYTUPLEDESC-2">
+<REFSECT2INFO>
+<DATE>2001-08-02</DATE>
+</REFSECT2INFO>
+<TITLE>Outputs
+</TITLE>
+<VARIABLELIST>
+<VARLISTENTRY>
+<TERM>
+TupleDesc
+</TERM>
+<LISTITEM>
+<PARA>
+Copied tuple descriptor
+<SimpleList>
+<Member>
+ <ReturnValue>non-NULL</ReturnValue>
+ if <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ is not NULL and the copy was successful
+</Member>
+<Member>
+   <ReturnValue>NULL</ReturnValue>
+ only if <REPLACEABLE CLASS="PARAMETER">tupdesc</REPLACEABLE>
+ is NULL
+</Member>
+</SimpleList>
+</para>
+</LISTITEM>
+</VARLISTENTRY>
+</VARIABLELIST>
+</REFSECT2>
+</REFSYNOPSISDIV>
+
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-1">
+<REFSECT1INFO>
+<DATE>2001-08-02</DATE>
+</REFSECT1INFO>
+<TITLE>Description
+</TITLE>
+<PARA>
+<FUNCTION>SPI_copytupledesc</FUNCTION> 
+   makes a copy of tupdesc in upper Executor context. See the section on Memory Management.
+</PARA>
+</REFSECT1>
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-2">
+<TITLE>Usage
+</TITLE>
+<Para>
+TBD
+</PARA>
+</REFSECT1>
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-3">
+<TITLE>Algorithm
+</TITLE>
+<PARA>
+</PARA>
+</REFSECT1>
+-->
+<!--
+<REFSECT1 ID="R1-SPI-SPICOPYTUPLEDESC-4">
+<TITLE>Structures
+</TITLE>
+<PARA>None
+</PARA>
+</REFSECT1>
+-->
+</REFENTRY>
+
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+<!-- *********************************************** -->
+
 <REFENTRY ID="SPI-SPIMODIFYTUPLE">
 <REFMETA>
 <REFENTRYTITLE>SPI_modifytuple</REFENTRYTITLE>
@@ -2647,10 +2762,13 @@ made in this context.
 
 <Para>
 
-   After <Function>SPI_connect</Function> is called current context is the procedure's one.  All
-allocations made via <Function>palloc</Function>/<Function>repalloc</Function> or by SPI utility functions (except
-for <Function>SPI_copytuple</Function>, <Function>SPI_modifytuple</Function>,
- <Function>SPI_palloc</Function> and <Function>SPI_repalloc</Function>) are
+   After <Function>SPI_connect</Function> is called current context is the
+   procedure's one.  All allocations made via
+<Function>palloc</Function>/<Function>repalloc</Function> or by SPI utility
+functions (except for <Function>SPI_copytuple</Function>,
+<Function>SPI_copytupledesc</Function>,
+<Function>SPI_modifytuple</Function>,
+<Function>SPI_palloc</Function> and <Function>SPI_repalloc</Function>) are
 made in this context.
 </Para>
 

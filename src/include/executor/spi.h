@@ -2,6 +2,7 @@
  *
  * spi.h
  *
+ * $Id: spi.h,v 1.28 2001/08/02 18:08:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,17 +49,17 @@ typedef struct
 	HeapTuple  *vals;			/* tuples */
 } SPITupleTable;
 
-#define SPI_ERROR_CONNECT		-1
-#define SPI_ERROR_COPY			-2
-#define SPI_ERROR_OPUNKNOWN		-3
-#define SPI_ERROR_UNCONNECTED	-4
-#define SPI_ERROR_CURSOR		-5
-#define SPI_ERROR_ARGUMENT		-6
-#define SPI_ERROR_PARAM			-7
-#define SPI_ERROR_TRANSACTION	-8
-#define SPI_ERROR_NOATTRIBUTE	-9
-#define SPI_ERROR_NOOUTFUNC		-10
-#define SPI_ERROR_TYPUNKNOWN	-11
+#define SPI_ERROR_CONNECT		(-1)
+#define SPI_ERROR_COPY			(-2)
+#define SPI_ERROR_OPUNKNOWN		(-3)
+#define SPI_ERROR_UNCONNECTED	(-4)
+#define SPI_ERROR_CURSOR		(-5)
+#define SPI_ERROR_ARGUMENT		(-6)
+#define SPI_ERROR_PARAM			(-7)
+#define SPI_ERROR_TRANSACTION	(-8)
+#define SPI_ERROR_NOATTRIBUTE	(-9)
+#define SPI_ERROR_NOOUTFUNC		(-10)
+#define SPI_ERROR_TYPUNKNOWN	(-11)
 
 #define SPI_OK_CONNECT			1
 #define SPI_OK_FINISH			2
@@ -87,6 +88,7 @@ extern void *SPI_saveplan(void *plan);
 extern int  SPI_freeplan(void *plan);
 
 extern HeapTuple SPI_copytuple(HeapTuple tuple);
+extern TupleDesc SPI_copytupledesc(TupleDesc tupdesc);
 extern HeapTuple SPI_modifytuple(Relation rel, HeapTuple tuple, int natts,
 				int *attnum, Datum *Values, char *Nulls);
 extern int	SPI_fnumber(TupleDesc tupdesc, char *fname);
