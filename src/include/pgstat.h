@@ -5,7 +5,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$Id: pgstat.h,v 1.14 2003/04/26 02:57:14 tgl Exp $
+ *	$Id: pgstat.h,v 1.15 2003/04/27 20:09:44 tgl Exp $
  * ----------
  */
 #ifndef PGSTAT_H
@@ -359,7 +359,7 @@ extern void pgstat_beterm(int pid);
 extern void pgstat_bestart(void);
 
 extern void pgstat_ping(void);
-extern void pgstat_report_activity(char *what);
+extern void pgstat_report_activity(const char *what);
 extern void pgstat_report_tabstat(void);
 extern int	pgstat_vacuum_tabstat(void);
 

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.104 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.105 2003/04/27 20:09:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -595,18 +595,23 @@ yyerror(const char *message)
  * Called before any actual parsing is done
  */
 void
-scanner_init(StringInfo str)
+scanner_init(const char *str)
 {
+	Size	slen = strlen(str);
+
 	/*
 	 * Might be left over after ereport()
 	 */
 	if (YY_CURRENT_BUFFER)
 		yy_delete_buffer(YY_CURRENT_BUFFER);
 
-	scanbuf = palloc(str->len + 2);
-	memcpy(scanbuf, str->data, str->len);
-	scanbuf[str->len] = scanbuf[str->len + 1] = YY_END_OF_BUFFER_CHAR;
-	scanbufhandle = yy_scan_buffer(scanbuf, str->len + 2);
+	/*
+	 * Make a scan buffer with special termination needed by flex.
+	 */
+	scanbuf = palloc(slen + 2);
+	memcpy(scanbuf, str, slen);
+	scanbuf[slen] = scanbuf[slen + 1] = YY_END_OF_BUFFER_CHAR;
+	scanbufhandle = yy_scan_buffer(scanbuf, slen + 2);
 
 	/* initialize literal buffer to a reasonable but expansible size */
 	literalalloc = 128;

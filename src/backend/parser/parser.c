@@ -14,7 +14,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.55 2002/09/04 20:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.56 2003/04/27 20:09:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,7 +45,7 @@ static bool have_lookahead;		/* lookahead_token set? */
  * Returns a list of raw (un-analyzed) parse trees.
  */
 List *
-parser(StringInfo str, Oid *typev, int nargs)
+parser(const char *str, Oid *typev, int nargs)
 {
 	int			yyresult;
 

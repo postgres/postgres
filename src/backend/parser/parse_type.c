@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.55 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.56 2003/04/27 20:09:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -437,7 +437,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	initStringInfo(&buf);
 	appendStringInfo(&buf, "SELECT (NULL::%s)", str);
 
-	raw_parsetree_list = parser(&buf, NULL, 0);
+	raw_parsetree_list = parser(buf.data, NULL, 0);
 
 	/*
 	 * Make sure we got back exactly what we expected and no more;

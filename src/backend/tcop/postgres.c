@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.324 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.325 2003/04/27 20:09:44 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -60,16 +60,15 @@
 
 #include "pgstat.h"
 
+extern int	optind;
+extern char *optarg;
+
 
 /* ----------------
  *		global variables
  * ----------------
  */
-
-extern int	optind;
-extern char *optarg;
-
-char	   *debug_query_string; /* for pgmonitor and
+const char *debug_query_string; /* for pgmonitor and
 								 * log_min_error_statement */
 
 /* Note: whereToSendOutput is initialized for the bootstrap/standalone case */
@@ -339,22 +338,18 @@ ReadCommand(StringInfo inBuf)
  * but it is still needed for parsing of SQL function bodies.
  */
 List *
-pg_parse_and_rewrite(char *query_string,		/* string to execute */
+pg_parse_and_rewrite(const char *query_string, /* string to execute */
 					 Oid *typev,	/* parameter types */
 					 int nargs) /* number of parameters */
 {
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
 	List	   *list_item;
-	StringInfoData stri;
-
-	initStringInfo(&stri);
-	appendStringInfoString(&stri, query_string);
 
 	/*
 	 * (1) parse the request string into a list of raw parse trees.
 	 */
-	raw_parsetree_list = pg_parse_query(&stri, typev, nargs);
+	raw_parsetree_list = pg_parse_query(query_string, typev, nargs);
 
 	/*
 	 * (2) Do parse analysis and rule rewrite.
@@ -385,12 +380,12 @@ pg_parse_and_rewrite(char *query_string,		/* string to execute */
  * commands are not processed any further than the raw parse stage.
  */
 List *
-pg_parse_query(StringInfo query_string, Oid *typev, int nargs)
+pg_parse_query(const char *query_string, Oid *typev, int nargs)
 {
 	List	   *raw_parsetree_list;
 
 	if (log_statement)
-		elog(LOG, "query: %s", query_string->data);
+		elog(LOG, "query: %s", query_string);
 
 	if (log_parser_stats)
 		ResetUsage();
@@ -569,7 +564,7 @@ pg_plan_query(Query *querytree)
  */
 
 void
-pg_exec_query_string(StringInfo query_string,	/* string to execute */
+pg_exec_query_string(const char *query_string,	/* string to execute */
 					 CommandDest dest,	/* where results should go */
 					 MemoryContext parse_context)		/* context for
 														 * parsetrees */
@@ -582,7 +577,7 @@ pg_exec_query_string(StringInfo query_string,	/* string to execute */
 				stop_t;
 	bool		save_log_duration = log_duration;
 
-	debug_query_string = query_string->data;
+	debug_query_string = query_string;
 
 	/*
 	 * We use save_log_duration so "SET log_duration = true" doesn't
@@ -1248,7 +1243,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	GucSource	gucsource;
 	char	   *tmp;
 	int			firstchar;
-	StringInfo	parser_input;
+	StringInfo	input_message;
 	bool		send_rfq;
 
 	/*
@@ -1831,7 +1826,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.324 $ $Date: 2003/04/24 21:16:43 $\n");
+		puts("$Revision: 1.325 $ $Date: 2003/04/27 20:09:44 $\n");
 	}
 
 	/*
@@ -1933,7 +1928,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		MemoryContextSwitchTo(QueryContext);
 		MemoryContextResetAndDeleteChildren(QueryContext);
 
-		parser_input = makeStringInfo();
+		input_message = makeStringInfo();
 
 		/*
 		 * (1) tell the frontend we're ready for a new query.
@@ -1983,7 +1978,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * (3) read a command (loop blocks here)
 		 */
-		firstchar = ReadCommand(parser_input);
+		firstchar = ReadCommand(input_message);
 
 		/*
 		 * (4) disable async signal conditions again.
@@ -2009,25 +2004,29 @@ PostgresMain(int argc, char *argv[], const char *username)
 		switch (firstchar)
 		{
 			case 'Q':			/* simple query */
-				/*
-				 * Process the query string.
-				 *
-				 * Note: transaction command start/end is now done within
-				 * pg_exec_query_string(), not here.
-				 */
-				if (log_statement_stats)
-					ResetUsage();
+				{
+					/*
+					 * Process the query string.
+					 *
+					 * Note: transaction command start/end is now done within
+					 * pg_exec_query_string(), not here.
+					 */
+					const char *query_string = pq_getmsgstring(input_message);
 
-				pgstat_report_activity(parser_input->data);
+					if (log_statement_stats)
+						ResetUsage();
 
-				pg_exec_query_string(parser_input,
-									 whereToSendOutput,
-									 QueryContext);
+					pgstat_report_activity(query_string);
 
-				if (log_statement_stats)
-					ShowUsage("QUERY STATISTICS");
+					pg_exec_query_string(query_string,
+										 whereToSendOutput,
+										 QueryContext);
 
-				send_rfq = true;
+					if (log_statement_stats)
+						ShowUsage("QUERY STATISTICS");
+
+					send_rfq = true;
+				}
 				break;
 
 			case 'F':			/* fastpath function call */
@@ -2037,7 +2036,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 				/* start an xact for this function invocation */
 				start_xact_command();
 
-				if (HandleFunctionRequest(parser_input) == EOF)
+				if (HandleFunctionRequest(input_message) == EOF)
 				{
 					/* lost frontend connection during F message input */
 

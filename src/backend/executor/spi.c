@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.90 2003/04/24 21:16:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.91 2003/04/27 20:09:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -967,7 +967,6 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
 static int
 _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 {
-	StringInfoData stri;
 	List	   *raw_parsetree_list;
 	List	   *query_list_list;
 	List	   *plan_list;
@@ -994,10 +993,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	/*
 	 * Parse the request string into a list of raw parse trees.
 	 */
-	initStringInfo(&stri);
-	appendStringInfoString(&stri, src);
-
-	raw_parsetree_list = pg_parse_query(&stri, argtypes, nargs);
+	raw_parsetree_list = pg_parse_query(src, argtypes, nargs);
 
 	/*
 	 * Do parse analysis and rule rewrite for each raw parsetree.
