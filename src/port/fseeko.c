@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.7 2002/10/28 00:00:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/port/fseeko.c,v 1.8 2003/01/02 06:00:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ fseeko(FILE *stream, off_t offset, int whence)
 			if (fsetpos(stream, &floc) != 0)
 				goto failure;
 #ifdef bsdi
-			flockfile(stream);
+			funlockfile(stream);
 #endif
 			return 0;
 			break;
