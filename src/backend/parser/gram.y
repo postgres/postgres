@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.75 1997/12/02 16:09:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.76 1997/12/04 00:26:57 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -40,6 +40,7 @@
 #include "nodes/print.h"
 #include "parser/gramparse.h"
 #include "utils/acl.h"
+#include "utils/palloc.h"
 #include "catalog/catname.h"
 #include "utils/elog.h"
 #include "access/xact.h"
@@ -83,6 +84,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 	char				chr;
 	char				*str;
 	bool				boolean;
+	bool*				pboolean;	/* for pg_user privileges */
 	List				*list;
 	Node				*node;
 	Value				*value;
@@ -119,9 +121,15 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DestroydbStmt, VacuumStmt, RetrieveStmt, CursorStmt,
 		ReplaceStmt, AppendStmt, NotifyStmt, DeleteStmt, ClusterStmt,
-		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt
+		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
+		CreateUserStmt, AlterUserStmt, DropUserStmt
 
 %type <str>		opt_database, location
+
+%type <pboolean> user_createdb_clause, user_createuser_clause
+%type <str>   user_passwd_clause
+%type <str>   user_valid_clause
+%type <list>  user_group_list, user_group_clause
 
 %type <node>	SubSelect
 %type <str>		join_expr, join_outer, join_spec
@@ -268,6 +276,14 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
 
+/*
+ * Tokens for pg_passwd support.  The CREATEDB and CREATEUSER tokens should go away
+ * when some sort of pg_privileges relation is introduced.
+ *
+ *                                    Todd A. Brandys
+ */
+%token  USER, PASSWORD, CREATEDB, NOCREATEDB, CREATEUSER, NOCREATEUSER, VALID, UNTIL
+
 /* Special keywords, not in the query language - see the "lex" file */
 %token <str>	IDENT, SCONST, Op
 %token <ival>	ICONST, PARAM
@@ -318,17 +334,20 @@ stmtmulti:  stmtmulti stmt ';'
 		;
 
 stmt :	  AddAttrStmt
+		| AlterUserStmt
 		| ClosePortalStmt
 		| CopyStmt
 		| CreateStmt
 		| CreateSeqStmt
 		| CreatePLangStmt
 		| CreateTrigStmt
+		| CreateUserStmt
 		| ClusterStmt
 		| DefineStmt
 		| DestroyStmt
 		| DropPLangStmt
 		| DropTrigStmt
+		| DropUserStmt
 		| ExtendStmt
 		| ExplainStmt
 		| FetchStmt
@@ -356,6 +375,105 @@ stmt :	  AddAttrStmt
 		| VariableResetStmt
 		;
 
+/*****************************************************************************
+ *
+ * Create a new postresql DBMS user
+ *
+ *
+ *****************************************************************************/
+
+CreateUserStmt:   CREATE USER Id
+                      user_passwd_clause
+                      user_createdb_clause
+                      user_createuser_clause
+                      user_group_clause
+                      user_valid_clause
+              { CreateUserStmt *n = makeNode(CreateUserStmt);
+                n->user = $3;
+                n->password = $4;
+                n->createdb = $5;
+                n->createuser = $6;
+                  n->groupElts = $7;
+                n->validUntil = $8;
+                $$ = (Node *)n;
+              }
+      ;
+
+/*****************************************************************************
+ *
+ * Alter a postresql DBMS user
+ *
+ *
+ *****************************************************************************/
+
+AlterUserStmt:   ALTER USER Id
+                      user_passwd_clause
+                      user_createdb_clause
+                      user_createuser_clause
+                      user_group_clause
+                      user_valid_clause
+              { AlterUserStmt *n = makeNode(AlterUserStmt);
+                n->user = $3;
+                n->password = $4;
+                n->createdb = $5;
+                n->createuser = $6;
+                  n->groupElts = $7;
+                n->validUntil = $8;
+                $$ = (Node *)n;
+              }
+      ;
+
+/*****************************************************************************
+ *
+ * Drop a postresql DBMS user
+ *
+ *
+ *****************************************************************************/
+
+DropUserStmt:  DROP USER Id
+              { DropUserStmt *n = makeNode(DropUserStmt);
+                n->user = $3;
+                  $$ = (Node *)n;
+              }
+      ;
+
+user_passwd_clause:  WITH PASSWORD Id         { $$ = $3; }
+                      | /*EMPTY*/             { $$ = NULL; }
+                      ;
+
+user_createdb_clause:  CREATEDB               { bool*  b;
+                                        $$ = (b = (bool*)palloc(sizeof(bool)));
+                                        *b = true;
+                                      }
+                      | NOCREATEDB    { bool*  b;
+                                        $$ = (b = (bool*)palloc(sizeof(bool)));
+                                        *b = false;
+                                      }
+                      | /*EMPTY*/     { $$ = NULL; }
+                      ;
+
+user_createuser_clause:  CREATEUSER   { bool*  b;
+                                        $$ = (b = (bool*)palloc(sizeof(bool)));
+                                        *b = true;
+                                      }
+                      | NOCREATEUSER  { bool*  b;
+                                        $$ = (b = (bool*)palloc(sizeof(bool)));
+                                        *b = false;
+                                      }
+                      | /*EMPTY*/     { $$ = NULL; }
+                      ;
+
+user_group_list:  user_group_list ','  Id { $$ = lcons((void*)makeString($3), $1); }
+                      | Id            { $$ = makeList((void*)makeString($1), NULL); }
+                      ;
+
+user_group_clause:  IN GROUP user_group_list  { $$ = $3; }
+                      | /*EMPTY*/             { $$ = NULL; }
+                      ;
+
+user_valid_clause:  VALID UNTIL SCONST        { $$ = $3; }
+                      | /*EMPTY*/             { $$ = NULL; }
+                      ;
 
 /*****************************************************************************
  *

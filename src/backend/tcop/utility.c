@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.31 1997/11/24 05:32:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.32 1997/12/04 00:27:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -720,6 +720,32 @@ ProcessUtility(Node * parsetree,
 
 			DropProceduralLanguage((DropPLangStmt *) parsetree);
 			break;
+
+                      /*
+                       * ******************************** USER statements ****
+                       *
+                       */
+                case T_CreateUserStmt:
+                        commandTag = "CREATE USER";
+                        CHECK_IF_ABORTED();
+
+                        DefineUser((CreateUserStmt*)parsetree);
+                        break;
+
+                case T_AlterUserStmt:
+                        commandTag = "ALTER USER";
+                        CHECK_IF_ABORTED();
+
+                        AlterUser((AlterUserStmt*)parsetree);
+                        break;
+
+                case T_DropUserStmt:
+                        commandTag = "DROP USER";
+                        CHECK_IF_ABORTED();
+
+                        RemoveUser(((DropUserStmt*)parsetree)->user);
+                        break;
+
 
 			/*
 			 * ******************************** default ********************************

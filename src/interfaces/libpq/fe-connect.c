@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.49 1997/12/01 22:02:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.50 1997/12/04 00:28:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,9 @@
 
 #ifndef HAVE_STRDUP
 #include "strdup.h"
+#endif
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
 #endif
 
 
@@ -284,7 +287,7 @@ PQconndefaults(void)
 }
 
 /* ----------------
- *		PQsetdb
+ *		PQsetdbLogin
  *
  * establishes a connection to a postgres backend through the postmaster
  * at the specified host and port.
@@ -324,7 +327,7 @@ PQconndefaults(void)
  * ----------------
  */
 PGconn	   *
-PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const char *pgtty, const char *dbName)
+PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, const char *pgtty, const char *dbName, const char *login, const char *pwd)
 {
 	PGconn	   *conn;
 	char	   *tmp;
@@ -386,7 +389,12 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 		else
 			conn->pgoptions = strdup(pgoptions);
 
-		if ((tmp = getenv("PGUSER")) != NULL)
+		if (login)
+		{
+			error = FALSE;
+			conn->pguser = strdup(login);
+		}
+		else if ((tmp = getenv("PGUSER")) != NULL)
 		{
 			error = FALSE;
 			conn->pguser = strdup(tmp);
@@ -407,8 +415,14 @@ PQsetdb(const char *pghost, const char *pgport, const char *pgoptions, const cha
 			}
 		}
 
-		if ((tmp = getenv("PGPASSWORD")) != NULL)
+		if (pwd)
+		{
+			conn->pgpass = strdup(pwd);
+		}
+		else if ((tmp = getenv("PGPASSWORD")) != NULL)
+		{
 			conn->pgpass = strdup(tmp);
+		}
 		else
 			conn->pgpass = 0;
 
@@ -479,6 +493,7 @@ connectDB(PGconn *conn)
 
 	StartupInfo startup;
 	PacketBuf	pacBuf;
+	PacketLen	pacLen;
 	int			status;
 	MsgType		msgtype;
 	int			laddrlen = sizeof(struct sockaddr);
@@ -486,6 +501,8 @@ connectDB(PGconn *conn)
 	int			portno,
 				family,
 				len;
+	bool			salted = false;
+	char*			tmp;
 
 	/*
 	 * Initialize the startup packet.
@@ -592,7 +609,57 @@ connectDB(PGconn *conn)
 	}
 
 	/* by this point, connection has been opened */
-	msgtype = fe_getauthsvc(conn->errorMessage);
+
+        /* This section of code is new as of Nov 19, 1997.  It sends just the
+         * user's login to the backend.  This allows the backend to search
+         * pg_user to see if the user has a password defined.  If the user
+         * does have a password in pg_user, then the backend will send a
+         * packet back with a randomly generated salt, so the user's password
+         * can be encrypted.
+         */
+        pacLen = sizeof(pacBuf.len) + sizeof(pacBuf.msgtype) + strlen(startup.user) + 1;
+        pacBuf.len = htonl(pacLen);
+        pacBuf.msgtype = htonl(STARTUP_USER_MSG);
+        strcpy(pacBuf.data, startup.user);
+        status = packetSend(port, &pacBuf, pacLen, BLOCKING);
+        if (status == STATUS_ERROR) {
+          sprintf(conn->errorMessage, "connectDB() --  couldn't send complete packet: errno=%d\n%s\n", errno, strerror(errno));
+          goto connect_errReturn;
+        }
+
+        /* Check to see if the server sent us a salt back to encrypt the
+         * password to send for authentication. --TAB
+         */
+        status = packetReceive(port, &pacBuf, BLOCKING);
+
+        if (status != STATUS_OK) {
+          sprintf(conn->errorMessage, "connectDB() -- couldn't receive un/salt packet: errno=%d\n%s\n", errno, strerror(errno));
+          goto connect_errReturn;
+        }
+        pacBuf.msgtype = ntohl(pacBuf.msgtype);
+        switch (pacBuf.msgtype) {
+          case STARTUP_SALT_MSG:
+            salted = true;
+            if (!conn->pgpass) {
+              sprintf(conn->errorMessage, "connectDB() -- backend requested a password, but none was given\n");
+              goto connect_errReturn;
+            }
+            tmp = crypt(conn->pgpass, pacBuf.data);
+            free((void*)conn->pgpass);
+            conn->pgpass = strdup(tmp);
+            break;
+          case STARTUP_UNSALT_MSG:
+            salted = false;
+            break;
+          default:
+            sprintf(conn->errorMessage, "connectDB() -- backend did not supply a salt packet\n");
+            goto connect_errReturn;
+        }
+
+        if (salted)
+          msgtype = STARTUP_CRYPT_MSG;
+        else
+        msgtype = fe_getauthsvc(conn->errorMessage);
 
 /*	  pacBuf = startup2PacketBuf(&startup);*/
 	startup2PacketBuf(&startup, &pacBuf);
@@ -818,6 +885,63 @@ packetSend(Port *port,
 		return (STATUS_ERROR);
 	}
 	return (STATUS_OK);
+}
+
+/*
+ * packetReceive()
+ *
+ This is a less stringent PacketReceive(), defined in backend/libpq/pqpacket.c
+ We define it here to avoid linking in all of libpq.a
+
+ * packetReceive -- receive a packet on a port
+ *
+ * RETURNS: STATUS_ERROR if the read fails, STATUS_OK otherwise.
+ * SIDE_EFFECTS: may block.
+ * NOTES: Non-blocking reads would significantly complicate
+ *            buffer management.      For now, we're not going to do it.
+ *
+*/
+int
+packetReceive(Port *port, PacketBuf *buf, bool nonBlocking) {
+
+  PacketLen     max_size = sizeof(PacketBuf);
+  PacketLen     cc;                           /* character count -- recvd */
+  PacketLen     packetLen;
+  int           addrLen = sizeof(struct sockaddr_in);
+  int         hdrLen;
+  int           msgLen;
+
+  /* Read the packet length into the PacketBuf
+   */
+  hdrLen = sizeof(PacketLen);
+  cc = recvfrom(port->sock, (char*)&packetLen, hdrLen, 0, (struct sockaddr*)&port->raddr, &addrLen);
+  if (cc < 0)
+    return STATUS_ERROR;
+  else if (!cc)
+    return STATUS_INVALID;
+  else if (cc < hdrLen)
+    return STATUS_NOT_DONE;
+
+  /* convert to local form of integer and check for oversized packet
+   */
+  buf->len = packetLen;
+  if ((packetLen = ntohl(packetLen)) > max_size) {
+    port->nBytes = packetLen;
+    return STATUS_INVALID;
+  }
+
+  /* fetch the rest of the message
+   */
+  msgLen = packetLen - cc;
+  cc = recvfrom(port->sock, (char*)&buf->msgtype, msgLen, 0, (struct sockaddr*)&port->raddr, &addrLen);
+  if (cc < 0)
+    return STATUS_ERROR;
+  else if (!cc)
+    return STATUS_INVALID;
+  else if (cc < msgLen)
+    return STATUS_NOT_DONE;
+
+  return STATUS_OK;
 }
 
 /*

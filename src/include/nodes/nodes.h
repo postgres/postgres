@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.17 1997/11/21 18:12:25 momjian Exp $
+ * $Id: nodes.h,v 1.18 1997/12/04 00:28:01 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,6 +186,9 @@ typedef enum NodeTag
 	T_DropTrigStmt,
 	T_CreatePLangStmt,
 	T_DropPLangStmt,
+	T_CreateUserStmt,
+	T_AlterUserStmt,
+	T_DropUserStmt,
 
 	T_A_Expr = 700,
 	T_Attr,

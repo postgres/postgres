@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.33 1997/11/21 18:11:46 momjian Exp $
+ * $Id: psqlHelp.h,v 1.34 1997/12/04 00:27:37 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"alter table",
 		"add/rename attributes, rename tables",
 	"\talter table <class_name> [*] add column <attr> <type>;\n\talter table <class_name> [*] rename [column] <attr1> to <attr2>;\n\talter table <class_name1> rename to <class_name2>"},
+	{"alter user",
+		"alter system information for a user",
+	"alter user <user_name>\n\t[with password <password>]\n\t[createdb | noccreatedb]\n\t[createuser | nocreateuser]\n\t[in group <group_1>, ..., <group_n>]\n\t[valid until '<abstime>'];"},
 	{"begin",
 		"begin a new transaction",
 	"begin [transaction|work];"},
@@ -84,6 +87,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"create type",
 		"create a new user-defined base data type",
 	"create type <typename> (\n\tinternallength = (<number> | variable),\n\t[externallength = (<number>|variable),]\n\tinput=<input_function>, output = <output_function>\n\t[,element = <typename>][,delimiter=<character>][,default=\'<string>\']\n\t[,send = <send_function>][,receive = <receive_function>][,passedbyvalue]);"},
+	{"create user",
+		"create a new user",
+	"create user <user_name>\n\t[with password <password>]\n\t[createdb | nocreatedb]\n\t[createuser | nocreateuser]\n\t[in group <group_1>, ..., <group_n>]\n\t[valid until '<abstime>'];"},
 	{"create view",
 		"create a view",
 	"create view <view_name> as select <expr1>[as <attr1>][,... <exprN>[as <attrN>]] [from <from_list>] [where <qual>];"},
@@ -126,6 +132,9 @@ static struct _helpStruct QL_HELP[] = {
 	{"drop type",
 		"remove a user-defined base type",
 	"drop type <typename>;"},
+	{"drop user",
+		"remove a user from the system",
+	"drop user <user_name>;"},
 	{"drop view",
 		"remove a view",
 	"drop view <view_name>"},

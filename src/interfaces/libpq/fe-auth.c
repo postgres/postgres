@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.11 1997/09/08 21:55:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-auth.c,v 1.12 1997/12/04 00:28:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -511,6 +511,7 @@ fe_sendauth(MsgType msgtype, Port *port, const char *hostname,
 		case STARTUP_MSG:
 			break;
 		case STARTUP_PASSWORD_MSG:
+		case STARTUP_CRYPT_MSG:
 			pg_password_sendauth(port, user, password);
 		default:
 			break;

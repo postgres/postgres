@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.62 1997/11/17 03:47:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.63 1997/12/04 00:27:17 scrappy Exp $
  *
  * NOTES
  *
@@ -47,6 +47,7 @@
 #include <signal.h>
 #include <string.h>
 #include <stdlib.h>
+#include <time.h>
 
 #if !defined(NO_UNISTD_H)
 #include <unistd.h>
@@ -78,6 +79,7 @@
 #include "libpq/auth.h"
 #include "libpq/pqcomm.h"
 #include "libpq/pqsignal.h"
+#include "libpq/crypt.h"
 #include "miscadmin.h"
 #include "version.h"
 #include "lib/dllist.h"
@@ -199,6 +201,7 @@ static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(StartupInfo *packet, Port *port, int *pidPtr);
 static void send_error_reply(Port *port, const char *errormsg);
+static void RandomSalt(char* salt);
 
 extern char *optarg;
 extern int	optind,
@@ -663,7 +666,27 @@ ServerLoop(void)
 				switch (status)
 				{
 					case STATUS_OK:
-						{
+						/* Here is where we check for a USER login packet.  If there is one, then
+						 * we must deterine whether the login has a password in pg_user.  If so, send
+						 * back a salt to crypt() the password with.  Otherwise, send an unsalt packet
+						 * back and read the real startup packet.
+						 */
+						if (ntohl(port->buf.msgtype) == STARTUP_USER_MSG) {
+						  PacketLen     plen;
+
+						  port->buf.msgtype = htonl(crypt_salt(port->buf.data));
+						  plen = sizeof(port->buf.len) + sizeof(port->buf.msgtype) + 2;
+						  port->buf.len = htonl(plen);
+						  RandomSalt(port->salt);
+						  memcpy((void*)port->buf.data, (void*)port->salt, 2);
+
+						  status = PacketSend(port, &port->buf, plen, BLOCKING);
+						  if (status != STATUS_OK)
+						    break;
+
+						  /* port->nBytes = 0; */
+						    continue;
+						} else {
 							int			CSstatus;		/* Completion status of
 														 * ConnStartup */
 							char		errormsg[200];	/* error msg from
@@ -1354,4 +1377,45 @@ dumpstatus(SIGNAL_ARGS)
 				(long int) port->raddr.in.sin_addr.s_addr);
 		curr = DLGetSucc(curr);
 	}
+}
+
+/*
+ * CharRemap
+ */
+static char
+CharRemap(long int ch) {
+
+  if (ch < 0)
+    ch = -ch;
+
+  ch = ch % 62;
+  if (ch < 26)
+    return ('A' + ch);
+
+  ch -= 26;
+  if (ch < 26)
+    return ('a' + ch);
+
+  ch -= 26;
+  return ('0' + ch);
+}
+
+/*
+ * RandomSalt
+ */
+static void
+RandomSalt(char* salt) {
+
+  static bool     initialized = false;
+
+  if (!initialized) {
+    time_t     now;
+
+    now = time(NULL);
+    srandom((unsigned int)now);
+    initialized = true;
+  }
+
+  *salt = CharRemap(random());
+  *(salt + 1) = CharRemap(random());
 }

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.20 1997/11/21 18:12:01 momjian Exp $
+ * $Id: pg_attribute.h,v 1.21 1997/12/04 00:27:47 scrappy Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -275,12 +275,14 @@ DATA(insert OID = 0 ( 1255 cmax				29 0  4  -6 0 -1 t f i f f));
  *		pg_user
  * ----------------
  */
-DATA(insert OID = 0 ( 1260 usename			19 0 NAMEDATALEN   1 0 -1 f f i f f));
-DATA(insert OID = 0 ( 1260 usesysid			23 0  4   2 0 -1 t f s f f));
-DATA(insert OID = 0 ( 1260 usecreatedb		16 0  1   3 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 usetrace			16 0  1   4 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 usesuper			16 0  1   5 0 -1 t f c f f));
-DATA(insert OID = 0 ( 1260 usecatupd		16 0  1   6 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usename		19  0 NAMEDATALEN   1 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1260 usesysid		23  0   4   2 0 -1 t f s f f));
+DATA(insert OID = 0 ( 1260 usecreatedb		16  0   1   3 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usetrace		16  0   1   4 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usesuper		16  0   1   5 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 usecatupd		16  0   1   6 0 -1 t f c f f));
+DATA(insert OID = 0 ( 1260 passwd		25  0  -1   7 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1260 valuntil		702 0   4   8 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 ctid				27 0  6  -1 0 -1 f f i f f));
 DATA(insert OID = 0 ( 1260 oid				26 0  4  -2 0 -1 t f i f f));
 DATA(insert OID = 0 ( 1260 xmin				28 0  4  -3 0 -1 f f i f f));

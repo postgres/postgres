@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.23 1997/09/08 21:55:45 momjian Exp $
+ * $Id: libpq-fe.h,v 1.24 1997/12/04 00:28:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -221,8 +221,9 @@ extern		"C"
 	/* make a new client connection to the backend */
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PQconninfoOption *PQconndefaults(void);
-	extern PGconn *PQsetdb(const char *pghost, const char *pgport, const char *pgoptions,
-								  const char *pgtty, const char *dbName);
+	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions,
+					  const char *pgtty, const char *dbName, const char *login, const char *pwd);
+#define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)   PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 	/* close the current connection and free the PGconn data structure */
 	extern void PQfinish(PGconn *conn);
 

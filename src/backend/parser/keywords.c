@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.26 1997/11/26 01:11:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.27 1997/12/04 00:27:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,6 +64,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"constraint", CONSTRAINT},
 	{"copy", COPY},
 	{"create", CREATE},
+	{"createdb", CREATEDB},
+	{"createuser", CREATEUSER},
 	{"cross", CROSS},
 	{"current", CURRENT},
 	{"current_date", CURRENT_DATE},
@@ -133,6 +135,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"natural", NATURAL},
 	{"nchar", NCHAR},
 	{"new", NEW},
+	{"nocreatedb", NOCREATEDB},
+	{"nocreateuser", NOCREATEUSER},
 	{"none", NONE},
 	{"no", NO},
 	{"not", NOT},
@@ -149,6 +153,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"order", ORDER},
 	{"outer", OUTER_P},
 	{"partial", PARTIAL},
+	{"password", PASSWORD},
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
@@ -188,9 +193,12 @@ static ScanKeyword ScanKeywords[] = {
 	{"type", TYPE_P},
 	{"union", UNION},
 	{"unique", UNIQUE},
+	{"until", UNTIL},
 	{"update", UPDATE},
+	{"user", USER},
 	{"using", USING},
 	{"vacuum", VACUUM},
+	{"valid", VALID},
 	{"values", VALUES},
 	{"varchar", VARCHAR},
 	{"varying", VARYING},

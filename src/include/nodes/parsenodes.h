@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.35 1997/11/24 05:09:50 momjian Exp $
+ * $Id: parsenodes.h,v 1.36 1997/12/04 00:28:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,6 +195,30 @@ typedef struct DropPLangStmt
 	NodeTag		type;
 	char	   *plname;			/* PL name */
 }			DropPLangStmt;
+
+
+/* ----------------------
+ *              Create/Alter/Drop User Statements
+ * ----------------------
+ */
+typedef struct CreateUserStmt
+{
+        NodeTag         type;
+        char*           user;           /* PostgreSQL user login              */
+        char*           password;       /* PostgreSQL user password           */
+        bool*           createdb;       /* Can the user create databases?     */
+        bool*           createuser;     /* Can this user create users?        */
+        List*           groupElts;      /* The groups the user is a member of */
+        char*           validUntil;     /* The time the login is valid until  */
+} CreateUserStmt;
+
+typedef CreateUserStmt        AlterUserStmt;
+
+typedef struct DropUserStmt
+{
+        NodeTag         type;
+        char*           user;           /* PostgreSQL user login              */
+} DropUserStmt;
 
 
 /* ----------------------

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fe-connect.h,v 1.4 1997/09/08 21:55:39 momjian Exp $
+ * $Id: fe-connect.h,v 1.5 1997/12/04 00:28:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,13 @@
  */
 
 extern int	packetSend(Port *port, PacketBuf *buf, PacketLen len, bool nonBlocking);
+extern int	packetReceive(Port *port, PacketBuf *buf, bool nonBlocking);
 
 #endif							/* FE_CONNECT_H */
 #ifndef FE_CONNECT_H
 #define FE_CONNECT_H
 
 int			packetSend(Port *port, PacketBuf *buf, PacketLen len, bool nonBlocking);
+int			packetReceive(Port *port, PacketBuf *buf, bool nonBlocking);
 
 #endif

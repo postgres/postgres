@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqcomm.h,v 1.16 1997/11/07 20:52:06 momjian Exp $
+ * $Id: pqcomm.h,v 1.17 1997/12/04 00:27:56 scrappy Exp $
  *
  * NOTES
  *	  Some of this should move to libpq.h
@@ -59,7 +59,16 @@ typedef enum _MsgType
 	STARTUP_KRB5_MSG = 11,		/* krb5 session follows startup packet */
 	STARTUP_HBA_MSG = 12,		/* use host-based authentication */
 	STARTUP_UNAUTH_MSG = 13,	/* use unauthenticated connection */
-	STARTUP_PASSWORD_MSG = 14	/* use plaintext password authentication */
+	STARTUP_PASSWORD_MSG = 14,	/* use plaintext password authentication */
+        /* The following three are not really a named authentication method
+           * since the front end has no choice in choosing the method.  The
+           * backend sends the SALT/UNSALT messages back to the frontend after
+           * the USER login has been given to the backend.
+           */
+	STARTUP_CRYPT_MSG = 15,               /* use crypt()'ed password authentication */
+	STARTUP_USER_MSG = 16,          /* send user name to check pg_user for password */
+	STARTUP_SALT_MSG = 17,          /* frontend should crypt the password it sends */
+	STARTUP_UNSALT_MSG = 18         /* frontend should NOT crypt the password it sends */
 	/* insert new values here -- DO NOT REORDER OR DELETE ENTRIES */
 	/* also change LAST_AUTHENTICATION_TYPE below and add to the */
 	/* authentication_type_name[] array in pqcomm.c */
@@ -119,6 +128,7 @@ typedef struct Port
 	 * PacketBufId				id;
 *//* id of packet buf currently in use */
 	PacketBuf	buf;			/* stream implementation (curr pack buf) */
+	char		salt[2];
 } Port;
 
 /* invalid socket descriptor */
