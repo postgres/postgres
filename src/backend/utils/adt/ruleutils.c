@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.84 2001/10/04 22:00:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.85 2001/10/08 19:55:07 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -130,6 +130,7 @@ static bool find_alias_in_namespace(Node *nsnode, Node *expr,
 static bool phony_equal(Node *expr1, Node *expr2, int levelsup);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
+static Node *strip_type_coercion(Node *expr, Oid resultType);
 static void get_tle_expr(TargetEntry *tle, deparse_context *context);
 static void get_const_expr(Const *constval, deparse_context *context);
 static void get_sublink_expr(Node *node, deparse_context *context);
@@ -2038,49 +2039,31 @@ get_func_expr(Expr *expr, deparse_context *context)
 	if (exprIsLengthCoercion((Node *) expr, &coercedTypmod))
 	{
 		Node	   *arg = lfirst(expr->args);
+		char	   *typdesc;
 
 		/*
-		 * Strip off any RelabelType on the input, so we don't print
-		 * redundancies like x::bpchar::char(8).
+		 * Strip off any type coercions on the input, so we don't print
+		 * redundancies like x::bpchar::character(8).
 		 *
 		 * XXX Are there any cases where this is a bad idea?
 		 */
-		if (IsA(arg, RelabelType))
-			arg = ((RelabelType *) arg)->arg;
+		arg = strip_type_coercion(arg, procStruct->prorettype);
+
 		appendStringInfoChar(buf, '(');
 		get_rule_expr(arg, context);
-		appendStringInfo(buf, ")::");
-
 		/*
 		 * Show typename with appropriate length decoration. Note that
-		 * since exprIsLengthCoercion succeeded, the function name is the
-		 * same as its output type name.
+		 * since exprIsLengthCoercion succeeded, the function's output
+		 * type is the right thing to use.
+		 *
+		 * XXX In general it is incorrect to quote the result of
+		 * format_type_with_typemod, but are there any special cases
+		 * where we should do so?
 		 */
-		if (strcmp(proname, "bpchar") == 0)
-		{
-			if (coercedTypmod > (int32) VARHDRSZ)
-				appendStringInfo(buf, "char(%d)", coercedTypmod - VARHDRSZ);
-			else
-				appendStringInfo(buf, "char");
-		}
-		else if (strcmp(proname, "varchar") == 0)
-		{
-			if (coercedTypmod > (int32) VARHDRSZ)
-				appendStringInfo(buf, "varchar(%d)", coercedTypmod - VARHDRSZ);
-			else
-				appendStringInfo(buf, "varchar");
-		}
-		else if (strcmp(proname, "numeric") == 0)
-		{
-			if (coercedTypmod >= (int32) VARHDRSZ)
-				appendStringInfo(buf, "numeric(%d,%d)",
-							 ((coercedTypmod - VARHDRSZ) >> 16) & 0xffff,
-								 (coercedTypmod - VARHDRSZ) & 0xffff);
-			else
-				appendStringInfo(buf, "numeric");
-		}
-		else
-			appendStringInfo(buf, "%s", quote_identifier(proname));
+		typdesc = format_type_with_typemod(procStruct->prorettype,
+										   coercedTypmod);
+		appendStringInfo(buf, ")::%s", typdesc);
+		pfree(typdesc);
 
 		ReleaseSysCache(proctup);
 		return;
@@ -2100,6 +2083,79 @@ get_func_expr(Expr *expr, deparse_context *context)
 	appendStringInfoChar(buf, ')');
 
 	ReleaseSysCache(proctup);
+}
+
+
+/*
+ * strip_type_coercion
+ *		Strip any type coercions at the top of the given expression tree,
+ *		as long as they are coercions to the given datatype.
+ *
+ * A RelabelType node is always a type coercion.  A function call is also
+ * considered a type coercion if it has one argument and the function name
+ * is the same as the (internal) name of its result type.
+ *
+ * XXX It'd be better if the parsetree retained some explicit indication
+ * of the coercion, so we didn't need these heuristics.
+ */
+static Node *
+strip_type_coercion(Node *expr, Oid resultType)
+{
+	if (expr == NULL || exprType(expr) != resultType)
+		return expr;
+
+	if (IsA(expr, RelabelType))
+		return strip_type_coercion(((RelabelType *) expr)->arg, resultType);
+
+	if (IsA(expr, Expr) && ((Expr *) expr)->opType == FUNC_EXPR)
+	{
+		Func	   *func;
+		HeapTuple	procTuple;
+		HeapTuple	typeTuple;
+		Form_pg_proc procStruct;
+		Form_pg_type typeStruct;
+
+		func = (Func *) (((Expr *) expr)->oper);
+		Assert(IsA(func, Func));
+		if (length(((Expr *) expr)->args) != 1)
+			return expr;
+		/* Lookup the function in pg_proc */
+		procTuple = SearchSysCache(PROCOID,
+								   ObjectIdGetDatum(func->funcid),
+								   0, 0, 0);
+		if (!HeapTupleIsValid(procTuple))
+			elog(ERROR, "cache lookup for proc %u failed", func->funcid);
+		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
+		/* Double-check func has one arg and correct result type */
+		if (procStruct->pronargs != 1 ||
+			procStruct->prorettype != resultType)
+		{
+			ReleaseSysCache(procTuple);
+			return expr;
+		}
+		/* See if function has same name as its result type */
+		typeTuple = SearchSysCache(TYPEOID,
+								   ObjectIdGetDatum(procStruct->prorettype),
+								   0, 0, 0);
+		if (!HeapTupleIsValid(typeTuple))
+			elog(ERROR, "cache lookup for type %u failed",
+				 procStruct->prorettype);
+		typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
+		if (strncmp(NameStr(procStruct->proname),
+					NameStr(typeStruct->typname),
+					NAMEDATALEN) != 0)
+		{
+			ReleaseSysCache(procTuple);
+			ReleaseSysCache(typeTuple);
+			return expr;
+		}
+		/* Okay, it is indeed a type-coercion function */
+		ReleaseSysCache(procTuple);
+		ReleaseSysCache(typeTuple);
+		return strip_type_coercion(lfirst(((Expr *) expr)->args), resultType);
+	}
+
+	return expr;
 }
 
 

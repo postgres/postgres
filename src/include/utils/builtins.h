@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.165 2001/09/28 08:09:14 thomas Exp $
+ * $Id: builtins.h,v 1.166 2001/10/08 19:55:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,6 +598,7 @@ extern Datum pg_convert2(PG_FUNCTION_ARGS);
 /* format_type.c */
 extern Datum format_type(PG_FUNCTION_ARGS);
 extern char * format_type_be(Oid type_oid);
+extern char * format_type_with_typemod(Oid type_oid, int32 typemod);
 extern Datum oidvectortypes(PG_FUNCTION_ARGS);
 extern int32 type_maximum_size(Oid type_oid, int32 typemod);
 
