@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.2 1996/07/23 02:23:15 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.3 1996/08/14 05:33:04 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ DoCopy(char *relname, bool binary, bool from, bool pipe, char *filename,
     if (!pipe) {
 	fclose(fp);
     }else if (!from && !binary) {
-	fputs(".\n", fp);
+	fputs("\\.\n", fp);
 	if (IsUnderPostmaster) fflush(Pfout);
     }
 }
@@ -169,6 +169,9 @@ CopyTo(Relation rel, bool binary, FILE *fp, char *delim)
 		    CopyAttributeOut(fp, string, delim);
 		    pfree(string);
 		}
+		else
+		    fputs("\\N", fp);	/* null indicator */
+
 		if (i == attr_count - 1) {
 		    fputc('\n', fp);
 		}else {
@@ -703,40 +706,22 @@ CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
     int done = 0;
     int i = 0;
     
-    if (feof(fp)) {
-	*isnull = (bool) false;
+    *isnull = (bool) false;	/* set default */
+    if (feof(fp))
 	return(NULL);
-    }
     
     while (!done) {
 	c = getc(fp);
 	    
-	if (feof(fp)) {
-	    *isnull = (bool) false;
+	if (feof(fp))
 	    return(NULL);
-	}else if (reading_from_input && attno == 0 && i == 0 && c == '.') {
-	    attribute[0] = c;
-	    c = getc(fp);
-	    if (c == '\n') {
-		*isnull = (bool) false;
-		return(NULL);
-	    }else if (inString(c,delim)) {
-		attribute[1] = 0;
-		*isnull = (bool) false;
-		return(&attribute[0]);
-	    }else {
-		attribute[1] = c;
-		i = 2;
-	    }
-	}else if (c == '\\') {
+	else if (c == '\\') {
 	    c = getc(fp);
 #ifdef ESCAPE_PATCH
 #define ISOCTAL(c)    (((c) >= '0') && ((c) <= '7'))
 #define       VALUE(c)        ((c) - '0')
-            if (feof(fp)) {
-                *isnull = (bool) false;
+            if (feof(fp))
                 return(NULL);
-            }
             switch (c) {
               case '0':
               case '1':
@@ -755,21 +740,17 @@ CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
                     if (ISOCTAL(c)) {
                         val = (val<<3) + VALUE(c);
                     } else {
-                        if (feof(fp)) {
-                            *isnull = (bool) false;
+                        if (feof(fp))
                             return(NULL);
-                        }
                         ungetc(c, fp);
                     }
                 } else {
-                    if (feof(fp)) {
-                        *isnull = (bool) false;
+                    if (feof(fp))
                         return(NULL);
-                    }
                     ungetc(c, fp);
                 }
                 c = val & 0377;
-            }
+              }
                 break;
               case 'b':
                 c = '\b';
@@ -789,6 +770,16 @@ CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
               case 'v':
                 c = '\v';
                 break;
+              case 'N':
+	        attribute[0] = '\0'; /* just to be safe */
+	        *isnull = (bool) true;
+	        break;
+              case '.':
+                c = getc(fp);
+	        if (c != '\n')
+		    elog(WARN, "CopyReadAttribute - end of record marker corrupted");
+		return(NULL);
+		break;
             }
 #endif
 	}else if (inString(c,delim) || c == '\n') {
@@ -799,13 +790,7 @@ CopyReadAttribute(int attno, FILE *fp, bool *isnull, char *delim)
 	    elog(WARN, "CopyReadAttribute - attribute length too long");
     }
     attribute[i] = '\0';
-    if (i == 0) {
-	*isnull = (bool) true;
-	return(NULL);
-    }else {
-	*isnull = (bool) false;
-	return(&attribute[0]);
-    }
+    return(&attribute[0]);
 }
 
 #ifdef ESCAPE_PATCH
@@ -817,26 +802,26 @@ CopyAttributeOut(FILE *fp, char *string, char *delim)
     int len = strlen(string);
 
     /* XXX - This is a kludge, we should check the data type */
-    if (len && (string[0] == '{') && (string[len-1] == '}')) {
+    if (len && (string[0] == '{') && (string[len-1] == '}'))
       is_array = true;
-    }
 
     for ( ; c = *string; string++) {
-      if ((c == delim[0]) || (c == '\n')) {
+      if (c == delim[0] || c == '\n' ||
+          (c == '\\' && !is_array))
           fputc('\\', fp);
-      } else if ((c == '\\') && is_array) {
-          if (*(string+1) == '\\') {
-              /* translate \\ to \\\\ */
-              fputc('\\', fp);
-              fputc('\\', fp);
-              fputc('\\', fp);
-              string++;
-          } else if (*(string+1) == '"') {
-              /* translate \" to \\\" */
-              fputc('\\', fp);
-              fputc('\\', fp);
-          }
-      }
+      else
+          if (c == '\\' && is_array)
+              if (*(string+1) == '\\') {
+                  /* translate \\ to \\\\ */
+                  fputc('\\', fp);
+                  fputc('\\', fp);
+                  fputc('\\', fp);
+                  string++;
+              } else if (*(string+1) == '"') {
+                  /* translate \" to \\\" */
+                  fputc('\\', fp);
+                  fputc('\\', fp);
+              }
       fputc(*string, fp);
     }
 }
