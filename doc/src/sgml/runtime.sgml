@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.112 2002/04/03 05:39:29 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.113 2002/04/15 22:33:20 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1231,10 +1231,8 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         When objects are created without specifying a particular target
 	namespace, they will be placed in the first namespace listed
-	in the search path, or in <literal>pg_catalog</> if the search
-	path list is empty.  (Note that users do not normally have
-	permission to write in <literal>pg_catalog</>, so an empty search
-	path is not a very useful setting.)
+	in the search path.  An error is reported if the search path is
+	empty.
        </para>
 
        <para>

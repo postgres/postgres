@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.8 2002/04/12 20:38:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/namespace.c,v 1.9 2002/04/15 22:33:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,12 +54,15 @@
  * thereby making it the default creation target namespace.)
  *
  * The default creation target namespace is kept equal to the first element
- * of the explicit list, or is the system namespace if the list is empty.
+ * of the (explicit) list.  If the list is empty, there is no default target.
  *
- * In bootstrap mode or a standalone backend, the default search path is
- * empty, so that the system namespace is the only one searched or inserted
- * into.  In multiuser mode, the default search path contains the PG_PUBLIC
- * namespace, preceded by the user's own namespace if one exists.
+ * In bootstrap mode, the search path is set equal to 'pg_catalog', so that
+ * the system namespace is the only one searched or inserted into.
+ * The initdb script is also careful to set search_path to 'pg_catalog' for
+ * its post-bootstrap standalone backend runs.  Otherwise the default search
+ * path is determined by GUC.  The factory default path contains the PUBLIC
+ * namespace (if it exists), preceded by the user's personal namespace
+ * (if one exists).
  */
 
 static List *namespaceSearchPath = NIL;
@@ -67,8 +70,8 @@ static List *namespaceSearchPath = NIL;
 /* this flag must be updated correctly when namespaceSearchPath is changed */
 static bool pathContainsSystemNamespace = false;
 
-/* default place to create stuff */
-static Oid	defaultCreationNamespace = PG_CATALOG_NAMESPACE;
+/* default place to create stuff; if InvalidOid, no default */
+static Oid	defaultCreationNamespace = InvalidOid;
 
 /*
  * myTempNamespace is InvalidOid until and unless a TEMP namespace is set up
@@ -205,6 +208,8 @@ RangeVarGetCreationNamespace(const RangeVar *newRelation)
 	{
 		/* use the default creation namespace */
 		namespaceId = defaultCreationNamespace;
+		if (!OidIsValid(namespaceId))
+			elog(ERROR, "No namespace has been selected to create in");
 	}
 
 	return namespaceId;
@@ -529,6 +534,8 @@ QualifiedNameGetCreationNamespace(List *names, char **objname_p)
 	{
 		/* use the default creation namespace */
 		namespaceId = defaultCreationNamespace;
+		if (!OidIsValid(namespaceId))
+			elog(ERROR, "No namespace has been selected to create in");
 	}
 
 	*objname_p = objname;
@@ -1063,7 +1070,7 @@ assign_search_path(const char *newval)
 											namespaceSearchPath);
 
 	if (namespaceSearchPath == NIL)
-		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
+		defaultCreationNamespace = InvalidOid;
 	else
 		defaultCreationNamespace = (Oid) lfirsti(namespaceSearchPath);
 
@@ -1081,26 +1088,28 @@ assign_search_path(const char *newval)
 void
 InitializeSearchPath(void)
 {
-	/*
-	 * In normal multi-user mode, we want the default search path to be
-	 * '$user,public' (or as much of that as exists, anyway; see the
-	 * error handling in assign_search_path); which is what guc.c has as
-	 * the wired-in default value.  But in bootstrap or standalone-backend
-	 * mode, the default search path must be empty so that initdb correctly
-	 * creates everything in PG_CATALOG_NAMESPACE.  Accordingly, adjust the
-	 * default setting if we are not running under postmaster.  (If a
-	 * non-default setting has been supplied, this will not overwrite it.)
-	 */
-	if (!IsUnderPostmaster)
+	if (IsBootstrapProcessingMode())
 	{
-		SetConfigOption("search_path", "",
-						PGC_POSTMASTER, PGC_S_DEFAULT);
+		/*
+		 * In bootstrap mode, the search path must be 'pg_catalog' so that
+		 * tables are created in the proper namespace; ignore the GUC setting.
+		 */
+		MemoryContext oldcxt;
+
+		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
+		namespaceSearchPath = makeListi1(PG_CATALOG_NAMESPACE);
+		MemoryContextSwitchTo(oldcxt);
+		pathContainsSystemNamespace = true;
+		defaultCreationNamespace = PG_CATALOG_NAMESPACE;
 	}
-	/*
-	 * If a search path setting was provided before we were able to execute
-	 * lookups, establish the internal search path now.
-	 */
-	if (namespace_search_path && *namespace_search_path &&
-		namespaceSearchPath == NIL)
-		assign_search_path(namespace_search_path);
+	else
+	{
+		/*
+		 * If a search path setting was provided before we were able to
+		 * execute lookups, establish the internal search path now.
+		 */
+		if (namespace_search_path && *namespace_search_path &&
+			namespaceSearchPath == NIL)
+			assign_search_path(namespace_search_path);
+	}
 }
