@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.20 1998/08/01 22:12:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.21 1998/08/01 22:44:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -305,7 +305,7 @@ ExecIndexReScan(IndexScan *node, ExprContext *exprCtxt, Plan *parent)
 			skey = scanKeys[i];
 			index_rescan(sdesc, direction, skey);
 		}
-
+	}
 	/* ----------------
 	 *	perhaps return something meaningful
 	 * ----------------
@@ -328,12 +328,14 @@ ExecEndIndexScan(IndexScan *node)
 	IndexScanState *indexstate;
 	Pointer    *runtimeKeyInfo;
 	ScanKey    *scanKeys;
+  	List	   *indxqual;
 	int		   *numScanKeys;
 	int			numIndices;
 	int			i;
 
 	scanstate = node->scan.scanstate;
 	indexstate = node->indxstate;
+	indxqual = node->indxqual;
 	runtimeKeyInfo = (Pointer *) indexstate->iss_RuntimeKeyInfo;
 	
 	/* ----------------

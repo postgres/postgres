@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.20 1998/08/01 22:12:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.21 1998/08/01 22:44:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,7 +143,6 @@ find_index_paths(Query *root,
 								  index->indexkeys[0],
 								  index->classlist[0],
 								  clauseinfo_list);
-		}
 	
 		/*
 		 * 2. If the keys of this index match any of the available restriction
