@@ -1,7 +1,7 @@
 
           Developer's Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Jan 5 17:36:58 EST 2005
+   Last updated: Mon Mar 7 20:15:31 EST 2005
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -96,6 +96,12 @@
    not advisable: others may be working on the same TODO item; you may
    have misunderstood the TODO item; your approach may benefit from the
    review of others.
+   
+   A web site is maintained for patches that are ready to be applied,
+   href="http://momjian.postgresql.org/cgi-bin/pgpatches">
+   http://momjian.postgresql.org/cgi-bin/pgpatches
+   and those that are being kept for the next release,
+   http://momjian.postgresql.org/cgi-bin/pgpatches2.
    
   1.5) Where can I learn more about the code?
   
