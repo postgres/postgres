@@ -139,10 +139,12 @@ pthread.h: pthread.h.win32
 	copy pthread.h.win32 pthread.h
 
 pg_config_paths.h: win32.mak
-	echo #define SYSCONFDIR "" >pg_config_paths.h
+	echo #define SYSCONFDIR "" > pg_config_paths.h
 
 "$(OUTDIR)" :
 	@if not exist "$(OUTDIR)/$(NULL)" mkdir "$(OUTDIR)"
+
+/* @&&! is a Response file, http://users.deltacomm.com/edmulroy/howto8.htm */
 
 "$(OUTDIR)\blibpq.dll": "$(OUTDIR)\blibpq.lib" $(LINK32_OBJS) "$(INTDIR)\libpq.res" blibpqdll.def 
 	$(LINK32) @&&!
@@ -155,7 +157,7 @@ pg_config_paths.h: win32.mak
 	implib -w "$(OUTDIR)\blibpqdll.lib" blibpqdll.def $@
 
 "$(INTDIR)\libpq.res" : "$(INTDIR)" libpq.rc
-    $(RSC) $(RSC_PROJ) libpq.rc
+	$(RSC) $(RSC_PROJ) libpq.rc
 
 "$(OUTDIR)\blibpq.lib": $(LIB32_OBJS)
 	$(LIB32) $@ @&&!
@@ -165,55 +167,55 @@ pg_config_paths.h: win32.mak
 
 
 "$(INTDIR)\getaddrinfo.obj" : ..\..\port\getaddrinfo.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\port\getaddrinfo.c
-<<
+!
 
 "$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\port\pgstrcasecmp.c
-<<
+!
 
 "$(INTDIR)\thread.obj" : ..\..\port\thread.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\port\thread.c
-<<
+!
 
 "$(INTDIR)\inet_aton.obj" : ..\..\port\inet_aton.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\port\inet_aton.c
-<<
+!
 
 "$(INTDIR)\crypt.obj" : ..\..\port\crypt.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\port\crypt.c
-<<
+!
 
 "$(INTDIR)\noblock.obj" : ..\..\port\noblock.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\port\noblock.c
-<<
+!
 
 "$(INTDIR)\md5.obj" : ..\..\backend\libpq\md5.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\backend\libpq\md5.c
-<<
+!
 
 "$(INTDIR)\ip.obj" : ..\..\backend\libpq\ip.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) ..\..\backend\libpq\ip.c
-<<
+!
 
 "$(INTDIR)\wchar.obj" : ..\..\backend\utils\mb\wchar.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) /I "." ..\..\backend\utils\mb\wchar.c
-<<
+!
 
 
 "$(INTDIR)\encnames.obj" : ..\..\backend\utils\mb\encnames.c
-	$(CPP) @<<
+	$(CPP) @&&!
 	$(CPP_PROJ) /I "." ..\..\backend\utils\mb\encnames.c
-<<
+!
 
 .c.obj:
 	$(CPP) -o"$(INTDIR)\$&" $(CPP_PROJ) $<
