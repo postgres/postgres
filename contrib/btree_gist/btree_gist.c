@@ -86,6 +86,8 @@ Datum		gts_same(PG_FUNCTION_ARGS);
 static void gts_binary_union(Datum *r1, char *r2);
 static int	tskey_cmp(const void *a, const void *b);
 
+#define TimestampGetDatumFast(X) Float8GetDatumFast(X)
+
 /* define for comparison */
 #define TSGE( ts1, ts2 ) (DatumGetBool(DirectFunctionCall2( \
 		timestamp_ge, \
@@ -297,23 +299,11 @@ gts_compress(PG_FUNCTION_ARGS)
 	if (entry->leafkey)
 	{
 		TSKEY	   *r = (TSKEY *) palloc(sizeof(TSKEY));
-
 		retval = palloc(sizeof(GISTENTRY));
-		if (entry->key)
-		{
-			r->lower = r->upper = *(Timestamp *) (entry->key);
-
-			gistentryinit(*retval, PointerGetDatum(r),
-						  entry->rel, entry->page,
-						  entry->offset, sizeof(TSKEY), FALSE);
-
-		}
-		else
-		{
-			gistentryinit(*retval, PointerGetDatum(NULL),
-						  entry->rel, entry->page,
-						  entry->offset, 0, FALSE);
-		}
+		r->lower = r->upper = *(Timestamp *) (entry->key);
+		gistentryinit(*retval, PointerGetDatum(r),
+			  entry->rel, entry->page,
+			  entry->offset, sizeof(TSKEY), FALSE);
 	}
 	else
 		retval = entry;
@@ -408,8 +398,8 @@ gts_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 timestamp_mi,
-									  TimestampGetDatum(newentry->upper),
-								   TimestampGetDatum(origentry->upper)));
+									  TimestampGetDatumFast(newentry->upper),
+								   TimestampGetDatumFast(origentry->upper)));
 
 	/* see interval_larger */
 	*result = Max(intr->time + intr->month * (30.0 * 86400), 0);
@@ -417,8 +407,8 @@ gts_penalty(PG_FUNCTION_ARGS)
 
 	intr = DatumGetIntervalP(DirectFunctionCall2(
 												 timestamp_mi,
-									 TimestampGetDatum(origentry->lower),
-									TimestampGetDatum(newentry->lower)));
+									 TimestampGetDatumFast(origentry->lower),
+									TimestampGetDatumFast(newentry->lower)));
 
 	/* see interval_larger */
 	*result += Max(intr->time + intr->month * (30.0 * 86400), 0);
@@ -483,8 +473,8 @@ tskey_cmp(const void *a, const void *b)
 	return DatumGetInt32(
 						 DirectFunctionCall2(
 											 timestamp_cmp,
-				  TimestampGetDatum(((TSKEY *) (((RIX *) a)->r))->lower),
-				   TimestampGetDatum(((TSKEY *) (((RIX *) b)->r))->lower)
+				  TimestampGetDatumFast(((TSKEY *) (((RIX *) a)->r))->lower),
+				   TimestampGetDatumFast(((TSKEY *) (((RIX *) b)->r))->lower)
 											 )
 		);
 }
