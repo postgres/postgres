@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.23 1998/01/19 02:37:45 momjian Exp $
+ * $Id: pg_attribute.h,v 1.24 1998/02/05 19:50:55 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -306,7 +306,7 @@ DATA(insert OID = 0 ( 1260 cmax			29 0  4  -6 0 -1 0 t f i f f));
  */
 DATA(insert OID = 0 ( 1261 groname			19 0 NAMEDATALEN  1 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1261 grosysid			23 0  4   2 0 -1 0 t f s f f));
-DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1261 grolist		  1007 0 -1   3 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1261 ctid				27 0  6  -1 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1261 oid				26 0  4  -2 0 -1 0 t f i f f));
 DATA(insert OID = 0 ( 1261 xmin				28 0  4  -3 0 -1 0 f f i f f));
@@ -337,7 +337,7 @@ DATA(insert OID = 0 ( 1261 cmax				29 0  4  -6 0 -1 0 t f i f f));
 DATA(insert OID = 0 ( 1249 attrelid			26 0  4   1 0 -1 0 t f i f f));
 DATA(insert OID = 0 ( 1249 attname			19 0 NAMEDATALEN  2 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1249 atttypid			26 0  4   3 0 -1 0 t f i f f));
-DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1249 attdisbursion   700 0  4   4 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1249 attlen			21 0  2   5 0 -1 0 t f s f f));
 DATA(insert OID = 0 ( 1249 attnum			21 0  2   6 0 -1 0 t f s f f));
 DATA(insert OID = 0 ( 1249 attnelems		23 0  4   7 0 -1 0 t f i f f));
@@ -388,7 +388,7 @@ DATA(insert OID = 0 ( 1259 relnatts			21 0  2  10 0 -1 0 t f s f f));
 DATA(insert OID = 0 ( 1259 relchecks		21 0  2  11 0 -1 0 t f s f f));
 DATA(insert OID = 0 ( 1259 reltriggers		21 0  2  12 0 -1 0 t f s f f));
 DATA(insert OID = 0 ( 1259 relhasrules		16 0  1  13 0 -1 0 t f c f f));
-DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  14 0 0 -1 f f i f f));
+DATA(insert OID = 0 ( 1259 relacl		  1034 0 -1  14 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1259 ctid				27 0  6  -1 0 -1 0 f f i f f));
 DATA(insert OID = 0 ( 1259 oid				26 0  4  -2 0 -1 0 t f i f f));
 DATA(insert OID = 0 ( 1259 xmin				28 0  4  -3 0 -1 0 f f i f f));
