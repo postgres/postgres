@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.149 2004/01/06 23:55:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.150 2004/01/07 18:43:36 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -175,15 +175,19 @@ typedef enum NodeTag
 	T_AllocSetContext,
 
 	/*
-	 * TAGS FOR VALUE NODES (pg_list.h)
+	 * TAGS FOR VALUE NODES (value.h)
 	 */
 	T_Value = 650,
-	T_List,
 	T_Integer,
 	T_Float,
 	T_String,
 	T_BitString,
 	T_Null,
+
+	/*
+	 * TAGS FOR LIST NODES (pg_list.h)
+	 */
+	T_List,
 
 	/*
 	 * TAGS FOR PARSE TREE NODES (parsenodes.h)
