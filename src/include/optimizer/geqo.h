@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo.h,v 1.29 2002/07/20 04:59:10 momjian Exp $
+ * $Id: geqo.h,v 1.30 2002/12/16 21:30:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,7 +74,6 @@ extern RelOptInfo *geqo(Query *root, int number_of_rels, List *initial_rels);
 extern Cost geqo_eval(Query *root, List *initial_rels,
 		  Gene *tour, int num_gene);
 extern RelOptInfo *gimme_tree(Query *root, List *initial_rels,
-		   Gene *tour, int num_gene,
-		   int rel_count, RelOptInfo *old_rel);
+		   Gene *tour, int num_gene);
 
 #endif   /* GEQO_H */

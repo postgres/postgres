@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.62 2002/12/12 15:49:41 tgl Exp $
+ * $Id: paths.h,v 1.63 2002/12/16 21:30:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,13 +74,10 @@ extern void add_paths_to_joinrel(Query *root, RelOptInfo *joinrel,
  *	  routines to determine which relations to join
  */
 extern List *make_rels_by_joins(Query *root, int level, List **joinrels);
-extern List *make_rels_by_clause_joins(Query *root,
-						  RelOptInfo *old_rel,
-						  List *other_rels);
-extern List *make_rels_by_clauseless_joins(Query *root,
-							  RelOptInfo *old_rel,
-							  List *other_rels);
 extern RelOptInfo *make_jointree_rel(Query *root, Node *jtnode);
+extern RelOptInfo *make_join_rel(Query *root,
+								 RelOptInfo *rel1, RelOptInfo *rel2,
+								 JoinType jointype);
 
 /*
  * pathkeys.c

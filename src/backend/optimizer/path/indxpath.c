@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.129 2002/12/15 16:17:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.130 2002/12/16 21:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1398,6 +1398,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	List	   *ilist;
 	List	   *jlist;
 	InnerIndexscanInfo *info;
+	MemoryContext oldcontext;
 
 	/*
 	 * Nestloop only supports inner and left joins.
@@ -1415,15 +1416,27 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	}
 	/*
 	 * If there are no indexable joinclauses for this rel, exit quickly.
-	 * Otherwise, intersect the given outer_relids with index_outer_relids
-	 * to find the set of outer relids actually relevant for this index.
-	 * If there are none, again we can fail immediately.
 	 */
 	if (!rel->index_outer_relids)
 		return NULL;
+	/*
+	 * Otherwise, we have to do path selection in the memory context of
+	 * the given rel, so that any created path can be safely attached to
+	 * the rel's cache of best inner paths.  (This is not currently an
+	 * issue for normal planning, but it is an issue for GEQO planning.)
+	 */
+	oldcontext = MemoryContextSwitchTo(GetMemoryChunkContext(rel));
+	/*
+	 * Intersect the given outer_relids with index_outer_relids
+	 * to find the set of outer relids actually relevant for this index.
+	 * If there are none, again we can fail immediately.
+	 */
 	outer_relids = set_intersecti(rel->index_outer_relids, outer_relids);
 	if (!outer_relids)
+	{
+		MemoryContextSwitchTo(oldcontext);
 		return NULL;
+	}
 	/*
 	 * Look to see if we already computed the result for this set of
 	 * relevant outerrels.  (We include the isouterjoin status in the
@@ -1437,6 +1450,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 			info->isouterjoin == isouterjoin)
 		{
 			freeList(outer_relids);
+			MemoryContextSwitchTo(oldcontext);
 			return info->best_innerpath;
 		}
 	}
@@ -1516,6 +1530,8 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 	info->isouterjoin = isouterjoin;
 	info->best_innerpath = cheapest;
 	rel->index_inner_paths = lcons(info, rel->index_inner_paths);
+
+	MemoryContextSwitchTo(oldcontext);
 
 	return cheapest;
 }

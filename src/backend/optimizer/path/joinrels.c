@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.57 2002/06/20 20:29:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.58 2002/12/16 21:30:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,8 +18,12 @@
 #include "optimizer/paths.h"
 
 
-static RelOptInfo *make_join_rel(Query *root, RelOptInfo *rel1,
-			  RelOptInfo *rel2, JoinType jointype);
+static List *make_rels_by_clause_joins(Query *root,
+									   RelOptInfo *old_rel,
+									   List *other_rels);
+static List *make_rels_by_clauseless_joins(Query *root,
+										   RelOptInfo *old_rel,
+										   List *other_rels);
 
 
 /*
@@ -246,7 +250,7 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
  * no extra test for overlap for initial rels, since the is_subset test can
  * only succeed when other_rel is not already part of old_rel.)
  */
-List *
+static List *
 make_rels_by_clause_joins(Query *root,
 						  RelOptInfo *old_rel,
 						  List *other_rels)
@@ -297,7 +301,7 @@ make_rels_by_clause_joins(Query *root,
  * Currently, this is only used with initial rels in other_rels, but it would
  * work for joining to joinrels too.
  */
-List *
+static List *
 make_rels_by_clauseless_joins(Query *root,
 							  RelOptInfo *old_rel,
 							  List *other_rels)
@@ -392,7 +396,7 @@ make_jointree_rel(Query *root, Node *jtnode)
  *	   (The join rel may already contain paths generated from other
  *	   pairs of rels that add up to the same set of base rels.)
  */
-static RelOptInfo *
+RelOptInfo *
 make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 			  JoinType jointype)
 {

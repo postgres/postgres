@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.35 2002/11/06 00:00:44 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_misc.c,v 1.36 2002/12/16 21:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,19 +31,25 @@
 /*
  * avg_pool
  */
-static float
+static double
 avg_pool(Pool *pool)
 {
 	int			i;
 	double		cumulative = 0.0;
 
-	if (pool->size == 0)
+	if (pool->size <= 0)
 		elog(ERROR, "avg_pool: pool_size of zero");
 
+	/*
+	 * Since the pool may contain multiple occurrences of DBL_MAX, divide
+	 * by pool->size before summing, not after, to avoid overflow.  This
+	 * loses a little in speed and accuracy, but this routine is only used
+	 * for debug printouts, so we don't care that much.
+	 */
 	for (i = 0; i < pool->size; i++)
-		cumulative = cumulative + pool->data[i].worth;
+		cumulative += pool->data[i].worth / pool->size;
 
-	return (float) cumulative / pool->size;
+	return cumulative;
 }
 
 /* print_pool
@@ -72,8 +78,10 @@ print_pool(FILE *fp, Pool *pool, int start, int stop)
 		fprintf(fp, "%d)\t", i);
 		for (j = 0; j < pool->string_length; j++)
 			fprintf(fp, "%d ", pool->data[i].string[j]);
-		fprintf(fp, "%f\n", pool->data[i].worth);
+		fprintf(fp, "%g\n", pool->data[i].worth);
 	}
+
+	fflush(fp);
 }
 
 /* print_gen
@@ -90,12 +98,14 @@ print_gen(FILE *fp, Pool *pool, int generation)
 	lowest = pool->size > 1 ? pool->size - 2 : 0;
 
 	fprintf(fp,
-			"%5d | Best: %f  Worst: %f  Mean: %f  Avg: %f\n",
+			"%5d | Best: %g  Worst: %g  Mean: %g  Avg: %g\n",
 			generation,
 			pool->data[0].worth,
 			pool->data[lowest].worth,
 			pool->data[pool->size / 2].worth,
 			avg_pool(pool));
+
+	fflush(fp);
 }
 
 
@@ -116,6 +126,8 @@ print_edge_table(FILE *fp, Edge *edge_table, int num_gene)
 	}
 
 	fprintf(fp, "\n");
+
+	fflush(fp);
 }
 
 #endif   /* GEQO_DEBUG */

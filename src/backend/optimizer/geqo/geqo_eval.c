@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_eval.c,v 1.59 2002/06/20 20:29:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/optimizer/geqo/geqo_eval.c,v 1.60 2002/12/16 21:30:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 
 #include "postgres.h"
 
+#include <float.h>
 #include <math.h>
 #include <limits.h>
 
@@ -45,6 +46,20 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 	List	   *savelist;
 
 	/*
+	 * Because gimme_tree considers both left- and right-sided trees,
+	 * there is no difference between a tour (a,b,c,d,...) and a tour
+	 * (b,a,c,d,...) --- the same join orders will be considered.
+	 * To avoid redundant cost calculations, we simply reject tours where
+	 * tour[0] > tour[1], assigning them an artificially bad fitness.
+	 *
+	 * (It would be better to tweak the GEQO logic to not generate such tours
+	 * in the first place, but I'm not sure of all the implications in the
+	 * mutation logic.)
+	 */
+	if (num_gene >= 2 && tour[0] > tour[1])
+		return DBL_MAX;
+
+	/*
 	 * Create a private memory context that will hold all temp storage
 	 * allocated inside gimme_tree().
 	 *
@@ -60,11 +75,15 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 									  ALLOCSET_DEFAULT_MAXSIZE);
 	oldcxt = MemoryContextSwitchTo(mycontext);
 
-	/* preserve root->join_rel_list, which gimme_tree changes */
+	/*
+	 * preserve root->join_rel_list, which gimme_tree changes; without this,
+	 * it'll be pointing at recycled storage after the MemoryContextDelete
+	 * below.
+	 */
 	savelist = root->join_rel_list;
 
 	/* construct the best path for the given combination of relations */
-	joinrel = gimme_tree(root, initial_rels, tour, num_gene, 0, NULL);
+	joinrel = gimme_tree(root, initial_rels, tour, num_gene);
 
 	/*
 	 * compute fitness
@@ -86,70 +105,61 @@ geqo_eval(Query *root, List *initial_rels, Gene *tour, int num_gene)
 
 /*
  * gimme_tree
- *	  this routine considers only LEFT-SIDED TREES!
+ *	  Form planner estimates for a join tree constructed in the specified
+ *	  order.
  *
  *	 'root' is the Query
  *	 'initial_rels' is the list of initial relations (FROM-list items)
  *	 'tour' is the proposed join order, of length 'num_gene'
- *	 'rel_count' is number of initial_rels items already joined (initially 0)
- *	 'old_rel' is the preceding join (initially NULL)
  *
- * Returns a new join relation incorporating all joins in a left-sided tree.
+ * Returns a new join relation whose cheapest path is the best plan for
+ * this join order.
+ *
+ * Note that at each step we consider using the next rel as both left and
+ * right side of a join.  However, we cannot build general ("bushy") plan
+ * trees this way, only left-sided and right-sided trees.
  */
 RelOptInfo *
 gimme_tree(Query *root, List *initial_rels,
-		   Gene *tour, int num_gene,
-		   int rel_count, RelOptInfo *old_rel)
+		   Gene *tour, int num_gene)
 {
-	RelOptInfo *inner_rel;		/* current relation */
-	int			init_rel_index;
+	RelOptInfo *joinrel;
+	int			cur_rel_index;
+	int			rel_count;
 
-	if (rel_count < num_gene)
+	/*
+	 * Start with the first relation ...
+	 */
+	cur_rel_index = (int) tour[0];
+
+	joinrel = (RelOptInfo *) nth(cur_rel_index - 1, initial_rels);
+
+	/*
+	 * And add on each relation in the specified order ...
+	 */
+	for (rel_count = 1; rel_count < num_gene; rel_count++)
 	{
-		/* tree not yet finished */
-		init_rel_index = (int) tour[rel_count];
+		RelOptInfo *inner_rel;
+		RelOptInfo *new_rel;
 
-		inner_rel = (RelOptInfo *) nth(init_rel_index - 1, initial_rels);
+		cur_rel_index = (int) tour[rel_count];
 
-		if (rel_count == 0)
-		{
-			/* processing first join with init_rel_index = (int) tour[0] */
-			rel_count++;
-			return gimme_tree(root, initial_rels,
-							  tour, num_gene,
-							  rel_count, inner_rel);
-		}
-		else
-		{
-			/* tree main part */
-			List	   *acceptable_rels = makeList1(inner_rel);
-			List	   *new_rels;
-			RelOptInfo *new_rel;
+		inner_rel = (RelOptInfo *) nth(cur_rel_index - 1, initial_rels);
 
-			new_rels = make_rels_by_clause_joins(root, old_rel,
-												 acceptable_rels);
-			/* Shouldn't get more than one result */
-			Assert(length(new_rels) <= 1);
-			if (new_rels == NIL)
-			{
-				new_rels = make_rels_by_clauseless_joins(root, old_rel,
-														 acceptable_rels);
-				Assert(length(new_rels) <= 1);
-				if (new_rels == NIL)
-					elog(ERROR, "gimme_tree: failed to construct join rel");
-			}
-			new_rel = (RelOptInfo *) lfirst(new_rels);
+		/*
+		 * Construct a RelOptInfo representing the previous joinrel joined
+		 * to inner_rel.  These are always inner joins.  Note that we expect
+		 * the joinrel not to exist in root->join_rel_list yet, and so the
+		 * paths constructed for it will only include the ones we want.
+		 */
+		new_rel = make_join_rel(root, joinrel, inner_rel, JOIN_INNER);
 
-			/* Find and save the cheapest paths for this rel */
-			set_cheapest(new_rel);
+		/* Find and save the cheapest paths for this rel */
+		set_cheapest(new_rel);
 
-			/* and recurse... */
-			rel_count++;
-			return gimme_tree(root, initial_rels,
-							  tour, num_gene,
-							  rel_count, new_rel);
-		}
+		/* and repeat... */
+		joinrel = new_rel;
 	}
 
-	return old_rel;				/* tree finished ... */
+	return joinrel;
 }
