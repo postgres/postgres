@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.11 1996/11/10 03:00:26 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/hba.c,v 1.12 1996/11/16 08:09:16 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,12 +17,10 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <sys/types.h>    /* needed by in.h on Ultrix */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-#if defined(sparc_solaris)
-#include <inet_aton.h> /* after I copied it into port/sparc_solaris */
-#endif
 
 #include <postgres.h>
 #include <miscadmin.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.6 1996/11/06 08:21:26 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.7 1996/11/16 08:08:44 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@
 #include <signal.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/types.h>    /* Needed by in.h on Ultrix */
 #include <netinet/in.h>
 
 #include <postgres.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.7 1996/11/06 08:48:23 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.8 1996/11/16 08:09:15 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@
 #include <pwd.h>
 #include <ctype.h>		        /* isspace() declaration */
 
+#include <sys/types.h>    /* needed by in.h on Ultrix */
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
