@@ -5,6 +5,8 @@
  *
  * Copyright (C) 1999, Massimo Dal Zotto <dz@cs.unitn.it>
  *
+ * Date2mjd code contributed by Reiner Dassing <dassing@wettzell.ifag.de>
+ *
  * This software is distributed under the GNU General Public License
  * either version 2, or (at your option) any later version.
  */
@@ -73,7 +75,7 @@ decode_24h_time(char *str, struct tm *tm, double *fsec)
 	if (   (tm->tm_hour < 0) || (tm->tm_hour > 24)
 		|| (tm->tm_min  < 0) || (tm->tm_min  > 59)
 		|| (tm->tm_sec  < 0) || (tm->tm_sec  > 59)
-		|| (fsec        < 0) )
+		|| (*fsec       < 0) )
 		return -1;
 
 	return 0;
@@ -258,6 +260,16 @@ currentdate()
 	GetCurrentTime(tm);
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - JDATE_2000);
 	return (date);
+}
+
+int4
+date2mjd(DateADT val)
+{
+	int result;
+
+	result = val + JDATE_2000 - 2400000.5;
+
+	return result;
 }
 
 /* end of file */

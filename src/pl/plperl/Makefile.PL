@@ -107,7 +107,7 @@ plperl : plperl.o SPI.o
 	\$(CC) -c \$(CFLAGS) \$<
 
 %.o : %.xs
-	\$(XSUBPP} \$(TYPEMAP) \$< > xtmp.c
+	\$(XSUBPP) \$(TYPEMAP) \$< > xtmp.c
 	\$(CC) -c \$(CFLAGS) -o \$@ xtmp.c
 
 

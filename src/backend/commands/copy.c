@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.100 2000/02/09 00:10:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.101 2000/02/13 18:59:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -64,7 +64,7 @@ static int	CountTuples(Relation relation);
  * Static communication variables ... pretty grotty, but COPY has
  * never been reentrant...
  */
-static int	lineno;
+int		lineno = 0;		/* used by elog() -- dz */
 static bool	fe_eof;
 
 /*
@@ -726,8 +726,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 
 	while (!done)
 	{
-		if (QueryCancel)
+		if (QueryCancel) {
+			lineno = 0;
 			CancelQuery();
+		}
 
 		if (!binary)
 		{
@@ -931,6 +933,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim, char *null
 		if (!reading_to_eof && ntuples == tuples_read)
 			done = true;
 	}
+	lineno = 0;
 	pfree(values);
 	pfree(nulls);
 	pfree(index_nulls);

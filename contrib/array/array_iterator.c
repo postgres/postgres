@@ -66,7 +66,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	}
 
 	/* Lookup element type information */
-	typ_tuple = SearchSysCacheTuple(TYPOID, ObjectIdGetDatum(elemtype), 0, 0, 0);
+	typ_tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(elemtype), 0, 0, 0);
 	if (!HeapTupleIsValid(typ_tuple))
 	{
 		elog(ERROR, "array_iterator: cache lookup failed for type %d", elemtype);
@@ -183,7 +183,7 @@ array_all_textregexeq(ArrayType *array, char *value)
 int32
 array_varchareq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* varchar */
+	return array_iterator((Oid) 1043,	/* varchar */
 						  (Oid) 1070,	/* varchareq */
 						  0,			/* logical or */
 						  array, (Datum) value);
@@ -192,7 +192,7 @@ array_varchareq(ArrayType *array, char *value)
 int32
 array_all_varchareq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* varchar */
+	return array_iterator((Oid) 1043,	/* varchar */
 						  (Oid) 1070,	/* varchareq */
 						  1,			/* logical and */
 						  array, (Datum) value);
@@ -201,7 +201,7 @@ array_all_varchareq(ArrayType *array, char *value)
 int32
 array_varcharregexeq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* varchar */
+	return array_iterator((Oid) 1043,	/* varchar */
 						  (Oid) 1254,	/* textregexeq */
 						  0,			/* logical or */
 						  array, (Datum) value);
@@ -210,7 +210,7 @@ array_varcharregexeq(ArrayType *array, char *value)
 int32
 array_all_varcharregexeq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* varchar */
+	return array_iterator((Oid) 1043,	/* varchar */
 						  (Oid) 1254,	/* textregexeq */
 						  1,			/* logical and */
 						  array, (Datum) value);
@@ -224,7 +224,7 @@ array_all_varcharregexeq(ArrayType *array, char *value)
 int32
 array_bpchareq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* bpchar */
+	return array_iterator((Oid) 1042,	/* bpchar */
 						  (Oid) 1048,	/* bpchareq */
 						  0,			/* logical or */
 						  array, (Datum) value);
@@ -233,7 +233,7 @@ array_bpchareq(ArrayType *array, char *value)
 int32
 array_all_bpchareq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* bpchar */
+	return array_iterator((Oid) 1042,	/* bpchar */
 						  (Oid) 1048,	/* bpchareq */
 						  1,			/* logical and */
 						  array, (Datum) value);
@@ -242,7 +242,7 @@ array_all_bpchareq(ArrayType *array, char *value)
 int32
 array_bpcharregexeq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* bpchar */
+	return array_iterator((Oid) 1042,	/* bpchar */
 						  (Oid) 1254,	/* textregexeq */
 						  0,			/* logical or */
 						  array, (Datum) value);
@@ -251,7 +251,7 @@ array_bpcharregexeq(ArrayType *array, char *value)
 int32
 array_all_bpcharregexeq(ArrayType *array, char *value)
 {
-	return array_iterator((Oid) 20,		/* bpchar */
+	return array_iterator((Oid) 1042,	/* bpchar */
 						  (Oid) 1254,	/* textregexeq */
 						  1,			/* logical and */
 						  array, (Datum) value);

@@ -11,10 +11,10 @@ SRCDIR = $(PGDIR)/src
 
 include $(SRCDIR)/Makefile.global
 
-INCLUDE_OPT =	-I ./ \
-		-I $(SRCDIR)/ \
-		-I $(SRCDIR)/include \
-		-I $(SRCDIR)/port/$(PORTNAME)
+INCLUDE_OPT =	-I./ \
+		-I$(SRCDIR)/ \
+		-I$(SRCDIR)/include \
+		-I$(SRCDIR)/port/$(PORTNAME)
 
 CFLAGS += $(INCLUDE_OPT) $(CFLAGS_SL)
 

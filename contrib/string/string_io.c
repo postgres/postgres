@@ -50,8 +50,8 @@
  *	representation of data.
  */
 
-char *
-string_output(char *data, int size)
+unsigned char *
+string_output(unsigned char *data, int size)
 {
 	register unsigned char c,
 			   *p,
@@ -79,8 +79,6 @@ string_output(char *data, int size)
 		{
 			case '\\':
 			case '"':
-			case '{':
-			case '}':
 			case '\b':
 			case '\f':
 			case '\n':
@@ -88,6 +86,12 @@ string_output(char *data, int size)
 			case '\t':
 			case '\v':
 				len++;
+				break;
+			case '{':
+				/* Escape beginning of string, to distinguish from arrays */
+				if (p == data) {
+					len++;
+				}
 				break;
 			default:
 				if (NOTPRINTABLE(*p))
@@ -104,8 +108,6 @@ string_output(char *data, int size)
 		{
 			case '\\':
 			case '"':
-			case '{':
-			case '}':
 				*r++ = '\\';
 				*r++ = c;
 				break;
@@ -132,6 +134,13 @@ string_output(char *data, int size)
 			case '\v':
 				*r++ = '\\';
 				*r++ = 'v';
+				break;
+			case '{':
+				/* Escape beginning of string, to distinguish from arrays */
+				if (p == data) {
+					*r++ = '\\';
+				}
+				*r++ = c;
 				break;
 			default:
 				if (NOTPRINTABLE(c))
@@ -180,8 +189,8 @@ string_output(char *data, int size)
  *	a pointer to the new string or the header.
  */
 
-char *
-string_input(char *str, int size, int hdrsize, int *rtn_size)
+unsigned char *
+string_input(unsigned char *str, int size, int hdrsize, int *rtn_size)
 {
 	register unsigned char *p,
 			   *r;
@@ -285,7 +294,7 @@ string_input(char *str, int size, int hdrsize, int *rtn_size)
 	return ((char *) result);
 }
 
-char *
+unsigned char *
 c_charout(int32 c)
 {
 	char		str[2];
@@ -300,7 +309,7 @@ c_charout(int32 c)
  * This can be used for SET, bytea, text and unknown data types
  */
 
-char *
+unsigned char *
 c_textout(struct varlena * vlena)
 {
 	int			len = 0;
@@ -318,8 +327,8 @@ c_textout(struct varlena * vlena)
  * This can be used for varchar and bpchar strings
  */
 
-char *
-c_varcharout(char *s)
+unsigned char *
+c_varcharout(unsigned char *s)
 {
 	int			len = 0;
 
@@ -333,7 +342,7 @@ c_varcharout(char *s)
 
 #if 0
 struct varlena *
-c_textin(char *str)
+c_textin(unsigned char *str)
 {
 	struct varlena *result;
 	int			len;
@@ -348,7 +357,7 @@ c_textin(char *str)
 }
 
 int32 *
-c_charin(char *str)
+c_charin(unsigned char *str)
 {
 	return (string_input(str, 1, 0, NULL));
 }

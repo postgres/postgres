@@ -233,8 +233,8 @@ tprintf_timestamp()
 	time = localtime(&tm);
 
 	sprintf(pid, "[%d]", MyProcPid);
-	sprintf(timestamp, "%04d%02d%02d.%02d:%02d:%02d.%03d %7s ",
-			time->tm_year+1900, time->tm_mon + 1, time->tm_mday,
+	sprintf(timestamp, "%02d%02d%02d.%02d:%02d:%02d.%03d %7s ",
+			time->tm_year % 100, time->tm_mon + 1, time->tm_mday,
 			time->tm_hour, time->tm_min, time->tm_sec,
 			(int) (tv.tv_usec/1000), pid);
 

@@ -6,13 +6,15 @@ int			backend_pid(void);
 int			unlisten(char *relname);
 int			max(int x, int y);
 int			min(int x, int y);
-int			assert_enable(int val);
+int			active_listeners(text *relname);
 
+#ifdef USE_ASSERT_CHECKING
+int			assert_enable(int val);
 #ifdef ASSERT_CHECKING_TEST
 int			assert_test(int val);
 #endif
+#endif
 
-int			active_listeners(text *relname);
 #endif
 
 /*

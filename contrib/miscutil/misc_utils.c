@@ -121,6 +121,7 @@ active_listeners(text *relname)
 	return count;
 }
 
+#ifdef USE_ASSERT_CHECKING
 int
 assert_enable(int val)
 {
@@ -133,6 +134,7 @@ assert_test(int val)
 {
 	return assertTest(val);
 }
+#endif
 #endif
 
 /* end of file */
