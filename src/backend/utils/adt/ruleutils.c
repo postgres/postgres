@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.124 2002/09/19 23:40:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.125 2002/11/15 02:50:09 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2223,6 +2223,12 @@ get_rule_expr(Node *node, deparse_context *context,
 				 * need not be explicitly represented in the output.
 				 */
 				get_rule_expr(ctest->arg, context, showimplicit);
+			}
+			break;
+
+		case T_ConstraintTestValue:
+			{
+				appendStringInfo(buf, "VALUE");
 			}
 			break;
 

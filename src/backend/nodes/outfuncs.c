@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.179 2002/11/11 22:19:22 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.180 2002/11/15 02:50:07 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1525,8 +1525,30 @@ _outConstraintTest(StringInfo str, ConstraintTest *node)
 	appendStringInfo(str, " :testtype %d :name ",
 					 (int) node->testtype);
 	_outToken(str, node->name);
+	appendStringInfo(str, " :domain ");
+	_outToken(str, node->domname);
 	appendStringInfo(str, " :check_expr ");
 	_outNode(str, node->check_expr);
+}
+
+/*
+ *	ConstraintTestValue
+ */
+static void
+_outConstraintTestValue(StringInfo str, ConstraintTestValue *node)
+{
+	appendStringInfo(str, " CONSTRAINTTESTVALUE :typeid %u :typemod %d ",
+					 node->typeId,
+					 node->typeMod);
+}
+
+/*
+ *	DomainConstraintValue
+ */
+static void
+_outDomainConstraintValue(StringInfo str, DomainConstraintValue *node)
+{
+	appendStringInfo(str, " DOMAINCONSTRAINTVALUE ");
 }
 
 /*
@@ -1796,8 +1818,14 @@ _outNode(StringInfo str, void *obj)
 			case T_ConstraintTest:
 				_outConstraintTest(str, obj);
 				break;
+			case T_ConstraintTestValue:
+				_outConstraintTestValue(str, obj);
+				break;
 			case T_FuncCall:
 				_outFuncCall(str, obj);
+				break;
+			case T_DomainConstraintValue:
+				_outDomainConstraintValue(str, obj);
 				break;
 
 			default:

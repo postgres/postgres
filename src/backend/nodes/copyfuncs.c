@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.217 2002/11/11 22:19:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.218 2002/11/15 02:50:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1056,7 +1056,31 @@ _copyConstraintTest(ConstraintTest *from)
 	newnode->testtype = from->testtype;
 	if (from->name)
 		newnode->name = pstrdup(from->name);
+	if (from->domname)
+		newnode->domname = pstrdup(from->domname);
 	Node_Copy(from, newnode, check_expr);
+
+	return newnode;
+}
+
+static ConstraintTestValue *
+_copyConstraintTestValue(ConstraintTestValue *from)
+{
+	ConstraintTestValue *newnode = makeNode(ConstraintTestValue);
+
+	/*
+	 * copy remainder of node
+	 */
+	newnode->typeId = from->typeId;
+	newnode->typeMod = from->typeMod;
+
+	return newnode;
+}
+
+static DomainConstraintValue *
+_copyDomainConstraintValue(DomainConstraintValue *from)
+{
+	DomainConstraintValue *newnode = makeNode(DomainConstraintValue);
 
 	return newnode;
 }
@@ -3252,6 +3276,9 @@ copyObject(void *from)
 		case T_ConstraintTest:
 			retval = _copyConstraintTest(from);
 			break;
+		case T_ConstraintTestValue:
+			retval = _copyConstraintTestValue(from);
+			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);
 			break;
@@ -3263,6 +3290,9 @@ copyObject(void *from)
 			break;
 		case T_InsertDefault:
 			retval = _copyInsertDefault(from);
+			break;
+		case T_DomainConstraintValue:
+			retval = _copyDomainConstraintValue(from);
 			break;
 
 		default:

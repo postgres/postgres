@@ -83,29 +83,36 @@ drop domain domaintextarr restrict;
 
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
+create domain dcheck   varchar(15) NOT NULL CHECK (VALUE = 'a' OR VALUE = 'c' OR VALUE = 'd');
 
 create table nulltest
            ( col1 dnotnull
            , col2 dnotnull NULL  -- NOT NULL in the domain cannot be overridden
            , col3 dnull    NOT NULL
            , col4 dnull
+           , col5 dcheck CHECK (col5 IN ('c', 'd'))
            );
 INSERT INTO nulltest DEFAULT VALUES;
-INSERT INTO nulltest values ('a', 'b', 'c', 'd');  -- Good
-INSERT INTO nulltest values (NULL, 'b', 'c', 'd');
-INSERT INTO nulltest values ('a', NULL, 'c', 'd');
-INSERT INTO nulltest values ('a', 'b', NULL, 'd');
-INSERT INTO nulltest values ('a', 'b', 'c', NULL); -- Good
+INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
+insert into nulltest values ('a', 'b', 'c', 'd', NULL);
+insert into nulltest values ('a', 'b', 'c', 'd', 'a');
+INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
+INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
+INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
+INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 
 -- Test copy
 COPY nulltest FROM stdin; --fail
-a	b	\N	d
+a	b	\N	d	\N
 \.
 
 SET autocommit TO 'on';
 
+-- Last row is bad
 COPY nulltest FROM stdin;
-a	b	c	\N
+a	b	c	\N	c
+a	b	c	\N	d
+a	b	c	\N	a
 \.
 
 select * from nulltest;

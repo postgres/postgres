@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.108 2002/09/04 20:31:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.109 2002/11/15 02:50:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,6 +70,9 @@ static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
 static Datum ExecEvalBooleanTest(BooleanTest *btest, ExprContext *econtext,
 					bool *isNull, ExprDoneCond *isDone);
 static Datum ExecEvalConstraintTest(ConstraintTest *constraint,
+					   ExprContext *econtext,
+					   bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalConstraintTestValue(ConstraintTestValue *conVal,
 					   ExprContext *econtext,
 					   bool *isNull, ExprDoneCond *isDone);
 
@@ -1552,6 +1555,23 @@ ExecEvalBooleanTest(BooleanTest *btest,
 }
 
 /*
+ * ExecEvalConstraintTestValue
+ *
+ * Return the value stored by constraintTest.
+ */
+static Datum
+ExecEvalConstraintTestValue(ConstraintTestValue *conVal, ExprContext *econtext,
+							bool *isNull, ExprDoneCond *isDone)
+{
+	/*
+	 * If the Datum hasn't been set, then it's ExecEvalConstraintTest
+	 * hasn't been called.
+	 */
+	*isNull = econtext->domainValue_isNull;
+	return econtext->domainValue_datum;
+}
+
+/*
  * ExecEvalConstraintTest
  *
  * Test the constraint against the data provided.  If the data fits
@@ -1571,11 +1591,22 @@ ExecEvalConstraintTest(ConstraintTest *constraint, ExprContext *econtext,
 		case CONSTR_TEST_NOTNULL:
 			if (*isNull)
 				elog(ERROR, "Domain %s does not allow NULL values",
-					 constraint->name);
+					 constraint->domname);
 			break;
 		case CONSTR_TEST_CHECK:
-			/* TODO: Add CHECK Constraints to domains */
-			elog(ERROR, "Domain CHECK Constraints not yet implemented");
+			{
+				Datum	conResult;
+
+				/* Var with attnum == UnassignedAttrNum uses the result */
+				econtext->domainValue_datum = result;
+				econtext->domainValue_isNull = *isNull;
+
+				conResult = ExecEvalExpr(constraint->check_expr, econtext, isNull, isDone);
+
+				if (!DatumGetBool(conResult))
+					elog(ERROR, "Domain %s constraint %s failed",
+						 constraint->name, constraint->domname);
+			}
 			break;
 		default:
 			elog(ERROR, "ExecEvalConstraintTest: Constraint type unknown");
@@ -1777,7 +1808,12 @@ ExecEvalExpr(Node *expression,
 											  isNull,
 											  isDone);
 			break;
-
+		case T_ConstraintTestValue:
+			retDatum = ExecEvalConstraintTestValue((ConstraintTestValue *) expression,
+												  econtext,
+												  isNull,
+												  isDone);
+			break;
 		default:
 			elog(ERROR, "ExecEvalExpr: unknown expression type %d",
 				 nodeTag(expression));

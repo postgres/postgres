@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.16 2002/11/11 22:19:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.17 2002/11/15 02:50:06 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -36,10 +36,17 @@
 #include "catalog/dependency.h"
 #include "catalog/heap.h"
 #include "catalog/namespace.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
 #include "miscadmin.h"
+#include "nodes/nodes.h"
+#include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
+#include "optimizer/var.h"
+#include "parser/parse_coerce.h"
+#include "parser/parse_expr.h"
 #include "parser/parse_func.h"
 #include "parser/parse_type.h"
 #include "utils/acl.h"
@@ -406,7 +413,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	List	   *listptr;
 	Oid			basetypeoid;
 	Oid			domainoid;
-	Form_pg_type baseType;
+	Form_pg_type	baseType;
+	int			counter = 0;
 
 	/* Convert list of names to a name and namespace */
 	domainNamespace = QualifiedNameGetCreationNamespace(stmt->domainname,
@@ -484,16 +492,20 @@ DefineDomain(CreateDomainStmt *stmt)
 	basetypelem = baseType->typelem;
 
 	/*
-	 * Run through constraints manually to avoid the additional processing
-	 * conducted by DefineRelation() and friends.
-	 *
-	 * Besides, we don't want any constraints to be cooked.  We'll do that
-	 * when the table is created via MergeDomainAttributes().
+	 * Run through constraints manually to avoid the additional
+	 * processing conducted by DefineRelation() and friends.
 	 */
 	foreach(listptr, schema)
 	{
-		Constraint *colDef = lfirst(listptr);
+		Node	   *newConstraint = lfirst(listptr);
+		Constraint *colDef;
 		ParseState *pstate;
+
+		/* Prior to processing, confirm that it is not a foreign key constraint */
+		if (nodeTag(newConstraint) == T_FkConstraint)
+			elog(ERROR, "CREATE DOMAIN / FOREIGN KEY constraints not supported");
+
+		colDef = (Constraint *) newConstraint;
 
 		switch (colDef->contype)
 		{
@@ -546,26 +558,26 @@ DefineDomain(CreateDomainStmt *stmt)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
 				typNotNull = false;
 				nullDefined = true;
-				break;
+		  		break;
 
-			case CONSTR_UNIQUE:
-				elog(ERROR, "CREATE DOMAIN / UNIQUE indexes not supported");
-				break;
+		  	case CONSTR_UNIQUE:
+		  		elog(ERROR, "CREATE DOMAIN / UNIQUE indexes not supported");
+		  		break;
 
-			case CONSTR_PRIMARY:
-				elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indexes not supported");
-				break;
+		  	case CONSTR_PRIMARY:
+		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indexes not supported");
+		  		break;
 
-			case CONSTR_CHECK:
-				elog(ERROR, "DefineDomain: CHECK Constraints not supported");
-				break;
+			/* Check constraints are handled after domain creation */
+		  	case CONSTR_CHECK:
+		  		break;
 
-			case CONSTR_ATTR_DEFERRABLE:
-			case CONSTR_ATTR_NOT_DEFERRABLE:
-			case CONSTR_ATTR_DEFERRED:
-			case CONSTR_ATTR_IMMEDIATE:
-				elog(ERROR, "DefineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED and IMMEDIATE not supported");
-				break;
+		  	case CONSTR_ATTR_DEFERRABLE:
+		  	case CONSTR_ATTR_NOT_DEFERRABLE:
+		  	case CONSTR_ATTR_DEFERRED:
+		  	case CONSTR_ATTR_IMMEDIATE:
+		  		elog(ERROR, "DefineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED and IMMEDIATE not supported");
+		  		break;
 
 			default:
 				elog(ERROR, "DefineDomain: unrecognized constraint node type");
@@ -591,12 +603,139 @@ DefineDomain(CreateDomainStmt *stmt)
 				   basetypeoid, /* base type ID */
 				   defaultValue,	/* default type value (text) */
 				   defaultValueBin,		/* default type value (binary) */
-				   byValue,		/* passed by value */
-				   alignment,	/* required alignment */
-				   storage,		/* TOAST strategy */
-				   stmt->typename->typmod,		/* typeMod value */
-				   typNDims,	/* Array dimensions for base type */
-				   typNotNull); /* Type NOT NULL */
+				   byValue,				/* passed by value */
+				   alignment,			/* required alignment */
+				   storage,				/* TOAST strategy */
+				   stmt->typename->typmod, /* typeMod value */
+				   typNDims,			/* Array dimensions for base type */
+				   typNotNull);			/* Type NOT NULL */
+
+	/*
+	 * Process constraints which refer to the domain ID returned by TypeCreate
+	 */
+	foreach(listptr, schema)
+	{
+		Constraint *constr = lfirst(listptr);
+		ParseState *pstate;
+
+		switch (constr->contype)
+		{
+		  	case CONSTR_CHECK:
+				{
+					Node	   *expr;
+					char	   *ccsrc;
+					char	   *ccbin;
+					ConstraintTestValue  *domVal;
+
+					/*
+					 * Assign or validate constraint name
+					 */
+					if (constr->name)
+					{
+						if (ConstraintNameIsUsed(CONSTRAINT_DOMAIN,
+												 domainoid,
+												 domainNamespace,
+												 constr->name))
+							elog(ERROR, "constraint \"%s\" already exists for domain \"%s\"",
+									constr->name,
+									domainName);
+					}
+					else
+						constr->name = GenerateConstraintName(CONSTRAINT_DOMAIN,
+															  domainoid,
+															  domainNamespace,
+															  &counter);
+
+					/*
+					 * Convert the A_EXPR in raw_expr into an
+					 * EXPR
+					 */
+					pstate = make_parsestate(NULL);
+
+					/*
+					 * We want to have the domain VALUE node type filled in so
+					 * that proper casting can occur.
+					 */
+					domVal = makeNode(ConstraintTestValue);
+					domVal->typeId = basetypeoid;
+					domVal->typeMod = stmt->typename->typmod;
+
+					expr = transformExpr(pstate, constr->raw_expr, domVal);
+
+					/*
+					 * Domains don't allow var clauses
+					 */
+					if (contain_var_clause(expr))
+						elog(ERROR, "cannot use column references in domain CHECK clause");
+
+					/*
+					 * Make sure it yields a boolean result.
+					 */
+					expr = coerce_to_boolean(expr, "CHECK");
+
+					/*
+					 * Make sure no outside relations are
+					 * referred to.
+					 */
+					if (length(pstate->p_rtable) != 0)
+						elog(ERROR, "Relations cannot be referenced in domain CHECK constraint");
+
+					/*
+					 * No subplans or aggregates, either...
+					 */
+					if (contain_subplans(expr))
+						elog(ERROR, "cannot use subselect in CHECK constraint expression");
+					if (contain_agg_clause(expr))
+						elog(ERROR, "cannot use aggregate function in CHECK constraint expression");
+
+					/*
+					 * Might as well try to reduce any constant expressions.
+					 */
+					expr = eval_const_expressions(expr);
+
+					/*
+					 * Must fix opids in operator clauses.
+					 */
+					fix_opids(expr);
+
+					ccbin = nodeToString(expr);
+
+					/*
+					 * Deparse it.  Since VARNOs aren't allowed in domain
+					 * constraints, relation context isn't required as anything
+					 * other than a shell.
+					 */
+					ccsrc = deparse_expression(expr,
+								deparse_context_for(domainName,
+													InvalidOid),
+												   false, false);
+
+					/* Write the constraint */
+					CreateConstraintEntry(constr->name,		/* Constraint Name */
+										  domainNamespace,	/* namespace */
+										  CONSTRAINT_CHECK,		/* Constraint Type */
+										  false,	/* Is Deferrable */
+										  false,	/* Is Deferred */
+										  InvalidOid,		/* not a relation constraint */
+										  NULL,	
+										  0,
+										  domainoid,	/* domain constraint */
+										  InvalidOid,	/* Foreign key fields */
+										  NULL,
+										  0,
+										  ' ',
+										  ' ',
+										  ' ',
+										  InvalidOid,
+										  expr, 	/* Tree form check constraint */
+										  ccbin,	/* Binary form check constraint */
+										  ccsrc);	/* Source form check constraint */
+				}
+		  		break;
+			default:
+		  		break;
+		}
+	}
 
 	/*
 	 * Add any dependencies needed for the default expression.

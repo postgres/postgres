@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.76 2002/10/18 20:33:57 tgl Exp $
+ * $Id: indexing.h,v 1.77 2002/11/15 02:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,7 @@
 #define ConstraintNameNspIndex		"pg_constraint_conname_nsp_index"
 #define ConstraintOidIndex			"pg_constraint_oid_index"
 #define ConstraintRelidIndex		"pg_constraint_conrelid_index"
+#define ConstraintTypidIndex		"pg_constraint_contypid_index"
 #define ConversionDefaultIndex		"pg_conversion_default_index"
 #define ConversionNameNspIndex		"pg_conversion_name_nsp_index"
 #define ConversionOidIndex			"pg_conversion_oid_index"
@@ -129,6 +130,8 @@ DECLARE_UNIQUE_INDEX(pg_class_relname_nsp_index on pg_class using btree(relname 
 DECLARE_INDEX(pg_constraint_conname_nsp_index on pg_constraint using btree(conname name_ops, connamespace oid_ops));
 /* This following index is not used for a cache and is not unique */
 DECLARE_INDEX(pg_constraint_conrelid_index on pg_constraint using btree(conrelid oid_ops));
+/* This following index is not used for a cache and is not unique */
+DECLARE_INDEX(pg_constraint_contypid_index on pg_constraint using btree(contypid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_constraint_oid_index on pg_constraint using btree(oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_conversion_default_index on pg_conversion using btree(connamespace oid_ops, conforencoding int4_ops, contoencoding int4_ops, oid oid_ops));
 DECLARE_UNIQUE_INDEX(pg_conversion_name_nsp_index on pg_conversion using btree(conname name_ops, connamespace oid_ops));

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.77 2002/11/06 22:31:24 tgl Exp $
+ * $Id: execnodes.h,v 1.78 2002/11/15 02:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,6 +112,13 @@ typedef struct ExprContext
 	/* Values to substitute for Aggref nodes in expression */
 	Datum	   *ecxt_aggvalues; /* precomputed values for Aggref nodes */
 	bool	   *ecxt_aggnulls;	/* null flags for Aggref nodes */
+
+	/*
+	 * Carry the domain value through the executor for application
+	 * in a domain constraint
+	 */
+	Datum		domainValue_datum;
+	bool		domainValue_isNull;
 
 	/* Functions to call back when ExprContext is shut down */
 	ExprContext_CB *ecxt_callbacks;

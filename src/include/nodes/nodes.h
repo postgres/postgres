@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.122 2002/11/10 02:17:25 momjian Exp $
+ * $Id: nodes.h,v 1.123 2002/11/15 02:50:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -171,6 +171,7 @@ typedef enum NodeTag
 	T_ViewStmt,
 	T_LoadStmt,
 	T_CreateDomainStmt,
+	T_DomainConstraintValue,
 	T_CreatedbStmt,
 	T_DropdbStmt,
 	T_VacuumStmt,
@@ -231,6 +232,7 @@ typedef enum NodeTag
 	T_NullTest,
 	T_BooleanTest,
 	T_ConstraintTest,
+	T_ConstraintTestValue,
 	T_CaseExpr,
 	T_CaseWhen,
 	T_FkConstraint,

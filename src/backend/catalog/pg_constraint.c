@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.7 2002/09/22 00:37:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_constraint.c,v 1.8 2002/11/15 02:50:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,6 +190,19 @@ CreateConstraintEntry(const char *constraintName,
 		}
 	}
 
+	if (OidIsValid(domainId))
+	{
+		/*
+		 * Register auto dependency from constraint to owning domain
+		 */
+		ObjectAddress	domobject;
+
+		domobject.classId = RelOid_pg_type;
+		domobject.objectId = domainId;
+
+		recordDependencyOn(&conobject, &domobject, DEPENDENCY_AUTO);
+	}
+
 	if (OidIsValid(foreignRelId))
 	{
 		/*
@@ -262,7 +275,7 @@ CreateConstraintEntry(const char *constraintName,
  * this test is not very meaningful.
  */
 bool
-ConstraintNameIsUsed(Oid relId, Oid relNamespace, const char *cname)
+ConstraintNameIsUsed(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, const char *cname)
 {
 	bool		found;
 	Relation	conDesc;
@@ -280,7 +293,7 @@ ConstraintNameIsUsed(Oid relId, Oid relNamespace, const char *cname)
 
 	ScanKeyEntryInitialize(&skey[1], 0x0,
 						   Anum_pg_constraint_connamespace, F_OIDEQ,
-						   ObjectIdGetDatum(relNamespace));
+						   ObjectIdGetDatum(objNamespace));
 
 	conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
 								 SnapshotNow, 2, skey);
@@ -289,7 +302,12 @@ ConstraintNameIsUsed(Oid relId, Oid relNamespace, const char *cname)
 	{
 		Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
 
-		if (con->conrelid == relId)
+		if (conCat == CONSTRAINT_RELATION && con->conrelid == objId)
+		{
+			found = true;
+			break;
+		}
+		else if (conCat == CONSTRAINT_DOMAIN && con->contypid == objId)
 		{
 			found = true;
 			break;
@@ -314,7 +332,7 @@ ConstraintNameIsUsed(Oid relId, Oid relNamespace, const char *cname)
  * someone else might choose the same name concurrently!
  */
 char *
-GenerateConstraintName(Oid relId, Oid relNamespace, int *counter)
+GenerateConstraintName(CONSTRAINTCATEGORY conCat, Oid objId, Oid objNamespace, int *counter)
 {
 	bool		found;
 	Relation	conDesc;
@@ -347,7 +365,7 @@ GenerateConstraintName(Oid relId, Oid relNamespace, int *counter)
 
 		ScanKeyEntryInitialize(&skey[1], 0x0,
 							   Anum_pg_constraint_connamespace, F_OIDEQ,
-							   ObjectIdGetDatum(relNamespace));
+							   ObjectIdGetDatum(objNamespace));
 
 		conscan = systable_beginscan(conDesc, ConstraintNameNspIndex, true,
 									 SnapshotNow, 2, skey);
@@ -356,7 +374,12 @@ GenerateConstraintName(Oid relId, Oid relNamespace, int *counter)
 		{
 			Form_pg_constraint con = (Form_pg_constraint) GETSTRUCT(tup);
 
-			if (con->conrelid == relId)
+			if (conCat == CONSTRAINT_RELATION && con->conrelid == objId)
+			{
+				found = true;
+				break;
+			}
+			else if (conCat == CONSTRAINT_DOMAIN && con->contypid == objId)
 			{
 				found = true;
 				break;
@@ -415,10 +438,13 @@ RemoveConstraintById(Oid conId)
 	con = (Form_pg_constraint) GETSTRUCT(tup);
 
 	/*
-	 * If the constraint is for a relation, open and exclusive-lock the
-	 * relation it's for.
+	 * If the constraint is for a relation, open and exclusive-lock
+	 * the relation it's for.
 	 *
-	 * XXX not clear what we should lock, if anything, for other constraints.
+	 * If the constraint is for a domain, open and lock the pg_type entry
+	 * tye constraint is used on.
+	 *
+	 * XXX not clear what we should lock, if anything, for assert constraints.
 	 */
 	if (OidIsValid(con->conrelid))
 	{
@@ -462,6 +488,34 @@ RemoveConstraintById(Oid conId)
 
 		/* Keep lock on constraint's rel until end of xact */
 		heap_close(rel, NoLock);
+	}
+	/* Lock the domain row in pg_type */
+	else if (OidIsValid(con->contypid))
+	{
+		Relation	typRel;
+		HeapTuple	typTup;
+		ScanKeyData typKey[1];
+		SysScanDesc typScan;
+
+		typRel = heap_openr(TypeRelationName, RowExclusiveLock);
+
+		ScanKeyEntryInitialize(&typKey[0], 0x0,
+							   Anum_pg_constraint_contypid, F_OIDEQ,
+							   ObjectIdGetDatum(con->contypid));
+
+		typScan = systable_beginscan(typRel, TypeOidIndex, true,
+									 SnapshotNow, 1, typKey);
+
+		typTup = systable_getnext(typScan);
+
+		if (!HeapTupleIsValid(typTup))
+			elog(ERROR, "RemoveConstraintById: Type %d does not exist",
+				 con->contypid);
+
+		systable_endscan(typScan);
+
+		/* Keep lock on domain type until end of xact */
+		heap_close(typRel, NoLock);
 	}
 
 	/* Fry the constraint itself */

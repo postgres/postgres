@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.129 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.130 2002/11/15 02:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
+#include "optimizer/clauses.h"
 #include "parser/analyze.h"
 #include "parser/gramparse.h"
 #include "parser/parse.h"
@@ -83,7 +84,7 @@ parse_expr_init(void)
  * input and output of transformExpr; see SubLink for example.
  */
 Node *
-transformExpr(ParseState *pstate, Node *expr)
+transformExpr(ParseState *pstate, Node *expr, ConstraintTestValue *domVal)
 {
 	Node	   *result = NULL;
 
@@ -152,7 +153,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				ExprFieldSelect *efs = (ExprFieldSelect *) expr;
 				List	   *fields;
 
-				result = transformExpr(pstate, efs->arg);
+				result = transformExpr(pstate, efs->arg, domVal);
 				/* handle qualification, if any */
 				foreach(fields, efs->fields)
 				{
@@ -169,7 +170,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-				Node	   *arg = transformExpr(pstate, tc->arg);
+				Node	   *arg = transformExpr(pstate, tc->arg, domVal);
 
 				result = typecast_expression(arg, tc->typename);
 				break;
@@ -204,14 +205,14 @@ transformExpr(ParseState *pstate, Node *expr)
 									n->arg = a->lexpr;
 
 								result = transformExpr(pstate,
-													   (Node *) n);
+													   (Node *) n, domVal);
 							}
 							else
 							{
 								Node	   *lexpr = transformExpr(pstate,
-															   a->lexpr);
+															   a->lexpr, domVal);
 								Node	   *rexpr = transformExpr(pstate,
-															   a->rexpr);
+															   a->rexpr, domVal);
 
 								result = (Node *) make_op(a->name,
 														  lexpr,
@@ -222,9 +223,9 @@ transformExpr(ParseState *pstate, Node *expr)
 					case AND:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr);
+															  a->lexpr, domVal);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr);
+															  a->rexpr, domVal);
 							Expr	   *expr = makeNode(Expr);
 
 							lexpr = coerce_to_boolean(lexpr, "AND");
@@ -239,9 +240,9 @@ transformExpr(ParseState *pstate, Node *expr)
 					case OR:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr);
+															  a->lexpr, domVal);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr);
+															  a->rexpr, domVal);
 							Expr	   *expr = makeNode(Expr);
 
 							lexpr = coerce_to_boolean(lexpr, "OR");
@@ -256,7 +257,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					case NOT:
 						{
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr);
+															  a->rexpr, domVal);
 							Expr	   *expr = makeNode(Expr);
 
 							rexpr = coerce_to_boolean(rexpr, "NOT");
@@ -270,9 +271,9 @@ transformExpr(ParseState *pstate, Node *expr)
 					case DISTINCT:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr);
+															  a->lexpr, domVal);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr);
+															  a->rexpr, domVal);
 
 							result = (Node *) make_op(a->name,
 													  lexpr,
@@ -293,7 +294,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 * Will result in a boolean constant node.
 							 */
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr);
+															  a->lexpr, domVal);
 
 							ltype = exprType(lexpr);
 							foreach(telem, (List *) a->rexpr)
@@ -317,7 +318,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							n->val.val.str = (matched ? "t" : "f");
 							n->typename = SystemTypeName("bool");
 
-							result = transformExpr(pstate, (Node *) n);
+							result = transformExpr(pstate, (Node *) n, domVal);
 						}
 						break;
 				}
@@ -331,7 +332,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* transform the list of arguments */
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate,
-												 (Node *) lfirst(args));
+												 (Node *) lfirst(args), domVal);
 				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
 										   fn->args,
@@ -405,7 +406,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					List	   *elist;
 
 					foreach(elist, left_list)
-						lfirst(elist) = transformExpr(pstate, lfirst(elist));
+						lfirst(elist) = transformExpr(pstate, lfirst(elist), domVal);
 
 					Assert(IsA(sublink->oper, A_Expr));
 					op = ((A_Expr *) sublink->oper)->name;
@@ -504,7 +505,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						warg = (Node *) makeSimpleA_Expr(OP, "=",
 														 c->arg, warg);
 					}
-					neww->expr = transformExpr(pstate, warg);
+					neww->expr = transformExpr(pstate, warg, domVal);
 
 					neww->expr = coerce_to_boolean(neww->expr, "CASE/WHEN");
 
@@ -520,7 +521,7 @@ transformExpr(ParseState *pstate, Node *expr)
 						n->val.type = T_Null;
 						warg = (Node *) n;
 					}
-					neww->result = transformExpr(pstate, warg);
+					neww->result = transformExpr(pstate, warg, domVal);
 
 					newargs = lappend(newargs, neww);
 					typeids = lappendi(typeids, exprType(neww->result));
@@ -544,7 +545,7 @@ transformExpr(ParseState *pstate, Node *expr)
 					n->val.type = T_Null;
 					defresult = (Node *) n;
 				}
-				newc->defresult = transformExpr(pstate, defresult);
+				newc->defresult = transformExpr(pstate, defresult, domVal);
 
 				/*
 				 * Note: default result is considered the most significant
@@ -580,7 +581,7 @@ transformExpr(ParseState *pstate, Node *expr)
 			{
 				NullTest   *n = (NullTest *) expr;
 
-				n->arg = transformExpr(pstate, n->arg);
+				n->arg = transformExpr(pstate, n->arg, domVal);
 				/* the argument can be any type, so don't coerce it */
 				result = expr;
 				break;
@@ -617,11 +618,18 @@ transformExpr(ParseState *pstate, Node *expr)
 						clausename = NULL;		/* keep compiler quiet */
 				}
 
-				b->arg = transformExpr(pstate, b->arg);
+				b->arg = transformExpr(pstate, b->arg, domVal);
 
 				b->arg = coerce_to_boolean(b->arg, clausename);
 
 				result = expr;
+				break;
+			}
+
+		case T_DomainConstraintValue:
+			{
+				result = (Node *) copyObject(domVal);
+
 				break;
 			}
 
@@ -935,6 +943,9 @@ exprType(Node *expr)
 			break;
 		case T_ConstraintTest:
 			type = exprType(((ConstraintTest *) expr)->arg);
+			break;
+		case T_ConstraintTestValue:
+			type = ((ConstraintTestValue *) expr)->typeId;
 			break;
 		default:
 			elog(ERROR, "exprType: Do not know how to get type for %d node",

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.253 2002/10/21 22:06:19 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.254 2002/11/15 02:50:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2401,7 +2401,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 			Oid			expected_type_id,
 						given_type_id;
 
-			expr = transformExpr(pstate, expr);
+			expr = transformExpr(pstate, expr, NULL);
 
 			/* Cannot contain subselects or aggregates */
 			if (contain_subplans(expr))

@@ -8,13 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.85 2002/10/24 22:09:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.86 2002/11/15 02:50:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/genam.h"
+#include "access/heapam.h"
+#include "catalog/catname.h"
+#include "catalog/indexing.h"
 #include "catalog/pg_cast.h"
+#include "catalog/pg_constraint.h"
 #include "catalog/pg_proc.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -405,8 +410,14 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 	for (;;)
 	{
 		HeapTuple	tup;
+		HeapTuple	conTup;
 		Form_pg_type typTup;
 
+		ScanKeyData key[1];
+		int			nkeys = 0;
+		SysScanDesc scan;
+		Relation	conRel;
+		
 		tup = SearchSysCache(TYPEOID,
 							 ObjectIdGetDatum(typeId),
 							 0, 0, 0);
@@ -419,7 +430,45 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 		if (typTup->typnotnull && notNull == NULL)
 			notNull = pstrdup(NameStr(typTup->typname));
 
-		/* TODO: Add CHECK Constraints to domains */
+		/* Add CHECK Constraints to domains */
+		conRel = heap_openr(ConstraintRelationName, RowShareLock);
+
+		ScanKeyEntryInitialize(&key[nkeys++], 0x0,
+							   Anum_pg_constraint_contypid, F_OIDEQ,
+							   ObjectIdGetDatum(typeId));
+
+		scan = systable_beginscan(conRel, ConstraintTypidIndex, true,
+								  SnapshotNow, nkeys, key);
+
+		while (HeapTupleIsValid(conTup = systable_getnext(scan)))
+		{
+			Datum	val;
+			bool	isNull;
+			ConstraintTest *r = makeNode(ConstraintTest);
+			Form_pg_constraint	c = (Form_pg_constraint) GETSTRUCT(conTup);
+
+			/* Not expecting conbin to be NULL, but we'll test for it anyway */
+			val = fastgetattr(conTup,
+							  Anum_pg_constraint_conbin,
+							  conRel->rd_att, &isNull);
+
+			if (isNull)
+				elog(ERROR, "coerce_type_constraints: domain %s constraint %s has NULL conbin",
+					 NameStr(typTup->typname), NameStr(c->conname));
+
+			r->arg = arg;
+			r->testtype = CONSTR_TEST_CHECK;
+			r->name = NameStr(c->conname);
+			r->domname = NameStr(typTup->typname);
+			r->check_expr =	stringToNode(MemoryContextStrdup(CacheMemoryContext,
+										 DatumGetCString(DirectFunctionCall1(textout,
+																			 val))));
+
+			arg = (Node *) r;
+		}
+
+		systable_endscan(scan);
+		heap_close(conRel, RowShareLock);
 
 		if (typTup->typtype != 'd')
 		{
@@ -452,7 +501,8 @@ coerce_type_constraints(Node *arg, Oid typeId, CoercionForm cformat)
 
 		r->arg = arg;
 		r->testtype = CONSTR_TEST_NOTNULL;
-		r->name = notNull;
+		r->name = "NOT NULL";
+		r->domname = notNull;
 		r->check_expr = NULL;
 
 		arg = (Node *) r;

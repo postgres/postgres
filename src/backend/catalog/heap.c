@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.234 2002/11/11 22:19:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.235 2002/11/15 02:50:05 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1500,7 +1500,8 @@ AddRelationRawConstraints(Relation rel,
 
 			ccname = cdef->name;
 			/* Check against pre-existing constraints */
-			if (ConstraintNameIsUsed(RelationGetRelid(rel),
+			if (ConstraintNameIsUsed(CONSTRAINT_RELATION,
+									 RelationGetRelid(rel),
 									 RelationGetNamespace(rel),
 									 ccname))
 				elog(ERROR, "constraint \"%s\" already exists for relation \"%s\"",
@@ -1534,7 +1535,8 @@ AddRelationRawConstraints(Relation rel,
 				 * pre-existing constraints, nor with any auto-generated
 				 * names so far.
 				 */
-				ccname = GenerateConstraintName(RelationGetRelid(rel),
+				ccname = GenerateConstraintName(CONSTRAINT_RELATION,
+												RelationGetRelid(rel),
 												RelationGetNamespace(rel),
 												&constr_name_ctr);
 
@@ -1565,7 +1567,7 @@ AddRelationRawConstraints(Relation rel,
 		/*
 		 * Transform raw parsetree to executable expression.
 		 */
-		expr = transformExpr(pstate, cdef->raw_expr);
+		expr = transformExpr(pstate, cdef->raw_expr, NULL);
 
 		/*
 		 * Make sure it yields a boolean result.
@@ -1694,7 +1696,7 @@ cookDefault(ParseState *pstate,
 	/*
 	 * Transform raw parsetree to executable expression.
 	 */
-	expr = transformExpr(pstate, raw_default);
+	expr = transformExpr(pstate, raw_default, NULL);
 
 	/*
 	 * Make sure default expr does not refer to any vars.

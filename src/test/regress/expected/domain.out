@@ -103,35 +103,43 @@ drop domain domainint4arr restrict;
 drop domain domaintextarr restrict;
 create domain dnotnull varchar(15) NOT NULL;
 create domain dnull    varchar(15);
+create domain dcheck   varchar(15) NOT NULL CHECK (VALUE = 'a' OR VALUE = 'c' OR VALUE = 'd');
 create table nulltest
            ( col1 dnotnull
            , col2 dnotnull NULL  -- NOT NULL in the domain cannot be overridden
            , col3 dnull    NOT NULL
            , col4 dnull
+           , col5 dcheck CHECK (col5 IN ('c', 'd'))
            );
 INSERT INTO nulltest DEFAULT VALUES;
 ERROR:  Domain dnotnull does not allow NULL values
-INSERT INTO nulltest values ('a', 'b', 'c', 'd');  -- Good
-INSERT INTO nulltest values (NULL, 'b', 'c', 'd');
+INSERT INTO nulltest values ('a', 'b', 'c', 'd', 'c');  -- Good
+insert into nulltest values ('a', 'b', 'c', 'd', NULL);
+ERROR:  Domain $1 constraint dcheck failed
+insert into nulltest values ('a', 'b', 'c', 'd', 'a');
+ERROR:  ExecInsert: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
+INSERT INTO nulltest values (NULL, 'b', 'c', 'd', 'd');
 ERROR:  Domain dnotnull does not allow NULL values
-INSERT INTO nulltest values ('a', NULL, 'c', 'd');
+INSERT INTO nulltest values ('a', NULL, 'c', 'd', 'c');
 ERROR:  Domain dnotnull does not allow NULL values
-INSERT INTO nulltest values ('a', 'b', NULL, 'd');
+INSERT INTO nulltest values ('a', 'b', NULL, 'd', 'c');
 ERROR:  ExecInsert: Fail to add null value in not null attribute col3
-INSERT INTO nulltest values ('a', 'b', 'c', NULL); -- Good
+INSERT INTO nulltest values ('a', 'b', 'c', NULL, 'd'); -- Good
 -- Test copy
 COPY nulltest FROM stdin; --fail
-ERROR:  copy: line 1, CopyFrom: Fail to add null value in not null attribute col3
+ERROR:  copy: line 1, Domain $1 constraint dcheck failed
 lost synchronization with server, resetting connection
 SET autocommit TO 'on';
+-- Last row is bad
 COPY nulltest FROM stdin;
+ERROR:  copy: line 3, CopyFrom: rejected due to CHECK constraint "nulltest_col5" on "nulltest"
+lost synchronization with server, resetting connection
 select * from nulltest;
- col1 | col2 | col3 | col4 
-------+------+------+------
- a    | b    | c    | d
- a    | b    | c    | 
- a    | b    | c    | 
-(3 rows)
+ col1 | col2 | col3 | col4 | col5 
+------+------+------+------+------
+ a    | b    | c    | d    | c
+ a    | b    | c    |      | d
+(2 rows)
 
 -- Test out coerced (casted) constraints
 SELECT cast('1' as dnotnull);

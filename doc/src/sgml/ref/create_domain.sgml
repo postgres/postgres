@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.6 2002/09/20 03:39:15 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_domain.sgml,v 1.7 2002/11/15 02:50:05 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -197,16 +197,6 @@ CREATE DOMAIN
 CREATE DOMAIN country_code char(2) NOT NULL;
 CREATE TABLE countrylist (id INT4, country country_code);
 </programlisting>
-  </para>
- </refsect1>
-
- <refsect1 id="SQL-CREATEDOMAIN-compatibility">
-  <title>Compatibility</title>
-
-  <para>
-   SQL99 defines CREATE DOMAIN, but says that the only allowed constraint
-   type is CHECK constraints.  CHECK constraints for domains are not yet
-   supported by <productname>PostgreSQL</productname>.
   </para>
  </refsect1>
 
