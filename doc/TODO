@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Dec 10 20:44:26 EST 2000
+Last updated:		Tue Dec 12 15:27:50 EST 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -109,6 +109,7 @@ TYPES
 * Add btree index support for reltime, tinterval, regproc, bit, varbit
 * Add rtree index support for line, lseg, path, point
 * Make file in/out interface to TOAST columns
+* SELECT cash_out(2) crashes because of opaque
 
 VIEWS
 
