@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Oct 20 22:47:57 EDT 2003
+Last updated:		Tue Oct 21 11:48:51 EDT 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -77,7 +77,7 @@ Data Types
 * -Change NUMERIC data type to use base 10,000 internally
 * Change NUMERIC to enforce the maximum precision, and increase it
 * Add function to return compressed length of TOAST data values (Tom)
-* Allow INET subnet tests to use indexes
+* Allow INET subnet tests using non-constants to be indexed
 * Add transaction_timestamp(), statement_timestamp(), clock_timestamp() functionality
 * -Add GUC variables to control floating number output digits (Pedro Ferreira)
 * Have sequence dependency track use of DEFAULT sequences, seqname.nextval
@@ -514,7 +514,7 @@ Source Code
 * Acquire lock on a relation before building a relcache entry for it
 * Research interaction of setitimer() and sleep() used by statement_timeout
 * Add checks for fclose() failure
-* Change CVS $Id: TODO,v 1.1153 2003/10/21 02:48:09 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1153 2003/10/21 02:48:09 momjian Exp $
+* Change CVS $Id: TODO,v 1.1154 2003/10/21 15:48:56 momjian Exp $ to $PostgreSQL: pgsql/doc/TODO,v 1.1154 2003/10/21 15:48:56 momjian Exp $
 * Exit postmaster if postgresql.conf can not be opened
 * Rename /scripts directory because they are all C programs now
 * Allow the regression tests to start postmaster with -i so the tests
