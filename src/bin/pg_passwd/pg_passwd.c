@@ -66,7 +66,8 @@ try_again:
 		{
 			printf("File \"%s\" does not exist.  Create? (y/n): ", filename);
 			fflush(stdout);
-			fgets(ans, 128, stdin);
+			if (fgets(ans, sizeof(ans), stdin) == NULL)
+				exit(1);
 			switch (ans[0])
 			{
 				case 'y':
@@ -260,18 +261,23 @@ prompt_for_username(char *username)
 	int			length;
 
 	printf("Username: ");
-	fgets(username, 9, stdin);
-	length = strlen(username);
+	fflush(stdout);
+	if (fgets(username, 9, stdin) == NULL)
+		username[0] = '\0';
 
-	/* skip rest of the line */
+	length = strlen(username);
 	if (length > 0 && username[length - 1] != '\n')
 	{
-		static char buf[512];
+		/* eat rest of the line */
+		char		buf[128];
+		int			buflen;
 
 		do
 		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
+			if (fgets(buf, sizeof(buf), stdin) == NULL)
+				break;
+			buflen = strlen(buf);
+		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 	if (length > 0 && username[length - 1] == '\n')
 		username[length - 1] = '\0';
@@ -289,27 +295,32 @@ prompt_for_password(char *prompt, char *password)
 #endif
 
 	printf(prompt);
+	fflush(stdout);
 #ifdef HAVE_TERMIOS_H
 	tcgetattr(0, &t);
 	t_orig = t;
 	t.c_lflag &= ~ECHO;
 	tcsetattr(0, TCSADRAIN, &t);
 #endif
-	fgets(password, 9, stdin);
+	if (fgets(password, 9, stdin) == NULL)
+		password[0] = '\0';
 #ifdef HAVE_TERMIOS_H
 	tcsetattr(0, TCSADRAIN, &t_orig);
 #endif
 
 	length = strlen(password);
-	/* skip rest of the line */
 	if (length > 0 && password[length - 1] != '\n')
 	{
-		static char buf[512];
+		/* eat rest of the line */
+		char		buf[128];
+		int			buflen;
 
 		do
 		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
+			if (fgets(buf, sizeof(buf), stdin) == NULL)
+				break;
+			buflen = strlen(buf);
+		} while (buflen > 0 && buf[buflen - 1] != '\n');
 	}
 	if (length > 0 && password[length - 1] == '\n')
 		password[length - 1] = '\0';
