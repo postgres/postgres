@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.89 1998/09/01 04:32:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.90 1998/10/02 01:14:14 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -223,6 +223,7 @@ InteractiveBackend(char *inBuf)
 	 * ----------------
 	 */
 	printf("> ");
+	fflush(stdout);
 
 	for (;;)
 	{
@@ -295,6 +296,7 @@ InteractiveBackend(char *inBuf)
 	 */
 	if (EchoQuery)
 		printf("query: %s\n", inBuf);
+	fflush(stdout);
 
 	return 'Q';
 }
@@ -1398,7 +1400,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	{
 		PS_INIT_STATUS(real_argc, real_argv, argv[0],
 					   remote_info, userName, DBName);
-		PS_SET_STATUS("idle");
+		PS_SET_STATUS("startup");
 	}
 
 	/* ----------------
@@ -1466,17 +1468,32 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 #endif
 
 	/* ----------------
+	 * if stable main memory is assumed (-S(old) flag is set), it is necessary
+	 * to flush all dirty shared buffers before exit
+	 * plai 8/7/90
+	 * this used to be done further down, causing an additional entry in
+	 * the shmem exit list for every error :-( ... tgl 10/1/98
+	 * ----------------
+	 */
+	if (!TransactionFlushEnabled())
+		on_shmem_exit(FlushBufferPool, NULL);
+
+	/* ----------------
 	 *	Set up handler for cancel-request signal, and
 	 *	send this backend's cancellation info to the frontend.
 	 *	This should not be done until we are sure startup is successful.
 	 * ----------------
 	 */
 
-	pqsignal(SIGHUP, read_pg_options);	/* upate pg_options from file */
+	pqsignal(SIGHUP, read_pg_options);	/* update pg_options from file */
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
 	pqsignal(SIGQUIT, handle_warn);		/* handle error */
 	pqsignal(SIGTERM, die);
-	pqsignal(SIGPIPE, die);
+	pqsignal(SIGPIPE, SIG_IGN);	/* ignore failure to write to frontend */
+	/* Note: if frontend closes connection, we will notice it and exit cleanly
+	 * when control next returns to outer loop.  This seems safer than forcing
+	 * exit in the midst of output during who-knows-what operation...
+	 */
 	pqsignal(SIGUSR1, quickdie);
 	pqsignal(SIGUSR2, Async_NotifyHandler);		/* flush also sinval cache */
 	pqsignal(SIGCHLD, SIG_IGN); /* ignored, sent by LockOwners */
@@ -1491,7 +1508,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		/* Need not flush since ReadyForQuery will do it. */
 	}
 
+	if (!IsUnderPostmaster)
+	{
+		puts("\nPOSTGRES backend interactive interface ");
+		puts("$Revision: 1.90 $ $Date: 1998/10/02 01:14:14 $\n");
+	}
+
 	/* ----------------
+	 *	POSTGRES main processing loop begins here
+	 *
 	 *	if an exception is encountered, processing resumes here
 	 *	so we abort the current transaction and start a new one.
 	 *	This must be done after we initialize the slave backends
@@ -1512,52 +1537,41 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		if (Verbose)
 			TPRINTF(TRACE_VERBOSE, "AbortCurrentTransaction");
 
-		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
-
 		AbortCurrentTransaction();
-
 	}
 
 	InError = false;
 
-	/* ----------------
-	 *	POSTGRES main processing loop begins here
-	 * ----------------
+	/*
+	 * Non-error queries loop here.
 	 */
-	if (!IsUnderPostmaster)
-	{
-		puts("\nPOSTGRES backend interactive interface");
-		puts("$Revision: 1.89 $ $Date: 1998/09/01 04:32:13 $");
-	}
-
-	/* ----------------
-	 * if stable main memory is assumed (-S(old) flag is set), it is necessary
-	 * to flush all dirty shared buffers before exit
-	 * plai 8/7/90
-	 * ----------------
-	 */
-	if (!TransactionFlushEnabled())
-		on_shmem_exit(FlushBufferPool, NULL);
 
 	for (;;)
 	{
+		PS_SET_STATUS("idle");
+
 		/* ----------------
-		 *	 (0) tell the frontend we're ready for a new query.
+		 *	 (1) tell the frontend we're ready for a new query.
+		 *
+		 *   Note: this includes fflush()'ing the last of the prior output.
 		 * ----------------
 		 */
 		ReadyForQuery(whereToSendOutput);
 
 		/* ----------------
-		 *	 (1) read a command.
+		 *	 (2) read a command.
 		 * ----------------
 		 */
 		MemSet(parser_input, 0, MAX_PARSE_BUFFER);
 
 		firstchar = ReadCommand(parser_input);
 
-		QueryCancel = false;
+		QueryCancel = false;	/* forget any earlier CANCEL signal */
 
-		/* process the command */
+		/* ----------------
+		 *	 (3) process the command.
+		 * ----------------
+		 */
 		switch (firstchar)
 		{
 				/* ----------------
@@ -1571,10 +1585,9 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				/* start an xact for this function invocation */
 				if (Verbose)
 					TPRINTF(TRACE_VERBOSE, "StartTransactionCommand");
-
 				StartTransactionCommand();
+
 				HandleFunctionRequest();
-				PS_SET_STATUS("idle");
 				break;
 
 				/* ----------------
@@ -1582,8 +1595,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				 * ----------------
 				 */
 			case 'Q':
-				fflush(stdout);
-
 				if (strspn(parser_input, " \t\n") == strlen(parser_input))
 				{
 					/* ----------------
@@ -1610,8 +1621,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 
 					pg_exec_query(parser_input);
 
-					PS_SET_STATUS("idle");
-
 					if (ShowStats)
 						ShowUsage();
 				}
@@ -1631,7 +1640,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 		}
 
 		/* ----------------
-		 *	 (3) commit the current transaction
+		 *	 (4) commit the current transaction
 		 *
 		 *	 Note: if we had an empty input buffer, then we didn't
 		 *	 call pg_exec_query, so we don't bother to commit this transaction.
@@ -1643,17 +1652,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				TPRINTF(TRACE_VERBOSE, "CommitTransactionCommand");
 			PS_SET_STATUS("commit");
 			CommitTransactionCommand();
-			PS_SET_STATUS("idle");
-
 		}
 		else
 		{
 			if (IsUnderPostmaster)
 				NullCommand(Remote);
 		}
-
 	}							/* infinite for-loop */
-	proc_exit(0);
+
+	proc_exit(0);				/* shouldn't get here... */
 	return 1;
 }
 
