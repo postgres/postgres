@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.11 2002/01/31 19:13:53 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.12 2002/02/11 15:19:33 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -34,8 +34,8 @@ trap "rm -f /tmp/$$.*" 0 1 2 3 15
 BASENAME=`basename "$0"`
 PHASE=""
 
-if [ "$#" -eq 1 ]
-then
+while [ "$#" -ne 0 ]
+do
 	if [ "X$1" = "X-1" ]
 	then	PHASE="1"
 		shift
@@ -46,7 +46,7 @@ then
 	then	PGDATA="$2"
 		shift 2
 	fi
-fi
+done
 
 if [ "$PHASE" = "" ]
 then	echo "You must run $BASENAME in either mode 1 or mode 2." 1>&2
