@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.16 2000/11/20 20:36:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.17 2000/12/08 00:11:55 tgl Exp $
  *
  **********************************************************************/
 
@@ -545,8 +545,12 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		{
 			free(prodesc->proname);
 			free(prodesc);
-			elog(ERROR, "plperl: cache lookup for return type %u failed",
-				 procStruct->prorettype);
+			if (!OidIsValid(procStruct->prorettype))
+				elog(ERROR, "plperl functions cannot return type \"opaque\""
+					 "\n\texcept when used as triggers");
+			else
+				elog(ERROR, "plperl: cache lookup for return type %u failed",
+					 procStruct->prorettype);
 		}
 		typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
@@ -577,8 +581,11 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			{
 				free(prodesc->proname);
 				free(prodesc);
-				elog(ERROR, "plperl: cache lookup for argument type %u failed",
-					 procStruct->proargtypes[i]);
+				if (!OidIsValid(procStruct->proargtypes[i]))
+					elog(ERROR, "plperl functions cannot take type \"opaque\"");
+				else
+					elog(ERROR, "plperl: cache lookup for argument type %u failed",
+						 procStruct->proargtypes[i]);
 			}
 			typeStruct = (Form_pg_type) GETSTRUCT(typeTup);
 
