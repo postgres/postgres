@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.20 2004/07/30 17:31:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.21 2004/07/31 19:12:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,24 +28,10 @@
 #include "utils/guc.h"
 
 
-#define T_DAY	((time_t) (60*60*24))
-#define T_WEEK  ((time_t) (60*60*24*7))
-#define T_MONTH ((time_t) (60*60*24*31))
-
-#define MAX_TEST_TIMES (52*40)	/* 40 years, or 1964..2004 */
-
-struct tztry
-{
-	int			n_test_times;
-	time_t		test_times[MAX_TEST_TIMES];
-};
-
 static char tzdir[MAXPGPATH];
 static int	done_tzdir = 0;
 
-static void scan_available_timezones(char *tzdir, char *tzdirsub,
-									 struct tztry *tt,
-									 int *bestscore, char *bestzonename);
+static const char *identify_system_timezone(void);
 
 
 /*
@@ -63,6 +49,43 @@ pg_TZDIR(void)
 	done_tzdir = 1;
 	return tzdir;
 }
+
+
+/*
+ * The following block of code attempts to determine which timezone in our
+ * timezone database is the best match for the active system timezone.
+ *
+ * On most systems, we rely on trying to match the observable behavior of
+ * the C library's localtime() function.  The database zone that matches
+ * furthest into the past is the one to use.  Often there will be several
+ * zones with identical rankings (since the zic database assigns multiple
+ * names to many zones).  We break ties arbitrarily by preferring shorter,
+ * then alphabetically earlier zone names.
+ *
+ * Win32's native knowledge about timezones appears to be too incomplete
+ * and too different from the zic database for the above matching strategy
+ * to be of any use. But there is just a limited number of timezones
+ * available, so we can rely on a handmade mapping table instead.
+ */
+
+#ifndef WIN32
+
+#define T_DAY	((time_t) (60*60*24))
+#define T_WEEK  ((time_t) (60*60*24*7))
+#define T_MONTH ((time_t) (60*60*24*31))
+
+#define MAX_TEST_TIMES (52*100)	/* 100 years, or 1904..2004 */
+
+struct tztry
+{
+	int			n_test_times;
+	time_t		test_times[MAX_TEST_TIMES];
+};
+
+static void scan_available_timezones(char *tzdir, char *tzdirsub,
+									 struct tztry *tt,
+									 int *bestscore, char *bestzonename);
+
 
 /*
  * Get GMT offset from a system struct tm
@@ -82,32 +105,6 @@ get_timezone_offset(struct tm *tm)
 #error No way to determine TZ? Can this happen?
 #endif
 }
-
-/*
- * Grotty kluge for win32 ... do we really need this?
- */
-#ifdef WIN32
-#define TZABBREV(tz) win32_get_timezone_abbrev(tz)
-
-static char *
-win32_get_timezone_abbrev(const char *tz)
-{
-	static char w32tzabbr[TZ_STRLEN_MAX + 1];
-	int			l = 0;
-	const char  *c;
-
-	for (c = tz; *c; c++)
-	{
-		if (isupper((unsigned char) *c))
-			w32tzabbr[l++] = *c;
-	}
-	w32tzabbr[l] = '\0';
-	return w32tzabbr;
-}
-
-#else
-#define TZABBREV(tz) (tz)
-#endif
 
 /*
  * Convenience subroutine to convert y/m/d to time_t (NOT pg_time_t)
@@ -210,7 +207,7 @@ score_timezone(const char *tzname, struct tztry *tt)
 				return -1;		/* probably shouldn't happen */
 			memset(cbuf, 0, sizeof(cbuf));
 			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm); /* zone abbr */
-			if (strcmp(TZABBREV(cbuf), pgtm->tm_zone) != 0)
+			if (strcmp(cbuf, pgtm->tm_zone) != 0)
 			{
 				elog(DEBUG4, "TZ \"%s\" scores %d: at %ld \"%s\" versus \"%s\"",
 					 tzname, i, (long) pgtt,
@@ -231,7 +228,7 @@ score_timezone(const char *tzname, struct tztry *tt)
  * the system TZ environment setting (if indeed there is one) matches our
  * terminology, so we ignore it and just look at what localtime() returns.
  */
-static char *
+static const char *
 identify_system_timezone(void)
 {
 	static char resultbuf[TZ_STRLEN_MAX + 1];
@@ -254,7 +251,7 @@ identify_system_timezone(void)
 	 * matches the system zone.  We first probe January and July of 2004;
 	 * this serves to quickly eliminate the vast majority of the TZ database
 	 * entries.  If those dates match, we probe every week from 2004 backwards
-	 * to late 1964.  (Weekly resolution is good enough to identify DST
+	 * to late 1904.  (Weekly resolution is good enough to identify DST
 	 * transition rules, since everybody switches on Sundays.)  The further
 	 * back the zone matches, the better we score it.  This may seem like
 	 * a rather random way of doing things, but experience has shown that
@@ -276,7 +273,8 @@ identify_system_timezone(void)
 
 	/* Search for the best-matching timezone file */
 	strcpy(tmptzdir, pg_TZDIR());
-	bestscore = 0;
+	bestscore = -1;
+	resultbuf[0] = '\0';
 	scan_available_timezones(tmptzdir, tmptzdir + strlen(tmptzdir) + 1,
 							 &tt,
 							 &bestscore, resultbuf);
@@ -320,7 +318,7 @@ identify_system_timezone(void)
 			/* found STD zone */
 			memset(cbuf, 0, sizeof(cbuf));
 			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
-			strcpy(std_zone_name, TZABBREV(cbuf));
+			strcpy(std_zone_name, cbuf);
 			std_ofs = get_timezone_offset(tm);
 		}
 		if (tm->tm_isdst > 0 && dst_zone_name[0] == '\0')
@@ -328,7 +326,7 @@ identify_system_timezone(void)
 			/* found DST zone */
 			memset(cbuf, 0, sizeof(cbuf));
 			strftime(cbuf, sizeof(cbuf) - 1, "%Z", tm); /* zone abbr */
-			strcpy(dst_zone_name, TZABBREV(cbuf));
+			strcpy(dst_zone_name, cbuf);
 		}
 		/* Done if found both */
 		if (std_zone_name[0] && dst_zone_name[0])
@@ -424,13 +422,6 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 		direntry = readdir(dirdesc);
 		if (!direntry)
 		{
-#ifdef WIN32
-			/* This fix is in mingw cvs (runtime/mingwex/dirent.c rev 1.4),
-			 * but not in released version
-			 */
-			if (GetLastError() == ERROR_NO_MORE_FILES)
-				errno = 0;
-#endif
 			if (errno)
 				ereport(LOG,
 						(errcode_for_file_access(),
@@ -469,6 +460,14 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 				*bestscore = score;
 				StrNCpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
 			}
+			else if (score == *bestscore)
+			{
+				/* Consider how to break a tie */
+				if (strlen(tzdirsub) < strlen(bestzonename) ||
+					(strlen(tzdirsub) == strlen(bestzonename) &&
+					 strcmp(tzdirsub, bestzonename) < 0))
+					StrNCpy(bestzonename, tzdirsub, TZ_STRLEN_MAX + 1);
+			}
 		}
 	}
 
@@ -477,6 +476,211 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt,
 	/* Restore tzdir */
 	tzdir[tzdir_orig_len] = '\0';
 }
+
+#else /* WIN32 */
+
+static const struct {
+	const char *stdname;  /* Windows name of standard timezone */
+	const char *dstname;  /* Windows name of daylight timezone */
+	const char *pgtzname; /* Name of pgsql timezone to map to */
+} win32_tzmap[] = {
+	/*
+	 * This list was built from the contents of the registry at
+	 *  HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Time Zones
+	 * on Windows XP Professional SP1
+	 *
+	 * The zones have been matched to zic timezones by looking at the cities
+	 * listed in the win32 display name (in the comment here) in most cases.
+	 */
+	{"Afghanistan Standard Time", "Afghanistan Daylight Time",
+	 "Asia/Kabul"},				/* (GMT+04:30) Kabul */
+	{"Alaskan Standard Time", "Alaskan Daylight Time",
+	 "US/Alaska"},				/* (GMT-09:00) Alaska */
+	{"Arab Standard Time", "Arab Daylight Time",
+	 "Asia/Kuwait"},			/* (GMT+03:00) Kuwait, Riyadh */
+	{"Arabian Standard Time", "Arabian Daylight Time",
+	 "Asia/Muscat"},			/* (GMT+04:00) Abu Dhabi, Muscat */
+	{"Arabic Standard Time", "Arabic Daylight Time",
+	 "Asia/Baghdad"},			/* (GMT+03:00) Baghdad */
+	{"Atlantic Standard Time", "Atlantic Daylight Time",
+	 "Canada/Atlantic"},		/* (GMT-04:00) Atlantic Time (Canada) */
+	{"AUS Central Standard Time", "AUS Central Daylight Time",
+	 "Australia/Darwin"},		/* (GMT+09:30) Darwin */
+	{"AUS Eastern Standard Time", "AUS Eastern Daylight Time",
+	 "Australia/Canberra"},		/* (GMT+10:00) Canberra, Melbourne, Sydney */
+	{"Azores Standard Time", "Azores Daylight Time",
+	 "Atlantic/Azores"},		/* (GMT-01:00) Azores */
+	{"Canada Central Standard Time", "Canada Central Daylight Time",
+	 "Canada/Saskatchewan"},	/* (GMT-06:00) Saskatchewan */
+	{"Cape Verde Standard Time", "Cape Verde Daylight Time",
+	 "Atlantic/Cape_Verde"},	/* (GMT-01:00) Cape Verde Is. */
+	{"Caucasus Standard Time", "Caucasus Daylight Time",
+	 "Asia/Baku"},				/* (GMT+04:00) Baku, Tbilisi, Yerevan */
+	{"Cen. Australia Standard Time", "Cen. Australia Daylight Time",
+	 "Australia/Adelaide"},		/* (GMT+09:30) Adelaide */
+	{"Central America Standard Time", "Central America Daylight Time",
+	 "CST6CDT"},				/* (GMT-06:00) Central America */
+	{"Central Asia Standard Time", "Central Asia Daylight Time",
+	 "Asia/Dhaka"},				/* (GMT+06:00) Astana, Dhaka */
+	{"Central Europe Standard Time", "Central Europe Daylight Time",
+	 "Europe/Belgrade"},		/* (GMT+01:00) Belgrade, Bratislava, Budapest, Ljubljana, Prague */
+	{"Central European Standard Time", "Central European Daylight Time",
+	 "Europe/Sarajevo"},		/* (GMT+01:00) Sarajevo, Skopje, Warsaw, Zagreb */
+	{"Central Pacific Standard Time", "Central Pacific Daylight Time",
+	 "Pacific/Noumea"},			/* (GMT+11:00) Magadan, Solomon Is., New Caledonia */
+	{"Central Standard Time", "Central Daylight Time",
+	 "US/Central"},				/* (GMT-06:00) Central Time (US & Canada) */
+	{"China Standard Time", "China Daylight Time",
+	 "Asia/Hong_Kong"},			/* (GMT+08:00) Beijing, Chongqing, Hong Kong, Urumqi */
+	{"Dateline Standard Time", "Dateline Daylight Time",
+	 "Etc/GMT+12"},				/* (GMT-12:00) International Date Line West */
+	{"E. Africa Standard Time", "E. Africa Daylight Time",
+	 "Africa/Nairobi"},			/* (GMT+03:00) Nairobi */
+	{"E. Australia Standard Time", "E. Australia Daylight Time",
+	 "Australia/Brisbane"},		/* (GMT+10:00) Brisbane */
+	{"E. Europe Standard Time", "E. Europe Daylight Time",
+	 "Europe/Bucharest"},		/* (GMT+02:00) Bucharest */
+	{"E. South America Standard Time", "E. South America Daylight Time",
+	 "America/Araguaina"},		/* (GMT-03:00) Brasilia */
+	{"Eastern Standard Time", "Eastern Daylight Time",
+	 "US/Eastern"},				/* (GMT-05:00) Eastern Time (US & Canada) */
+	{"Egypt Standard Time", "Egypt Daylight Time",
+	 "Africa/Cairo"},			/* (GMT+02:00) Cairo */
+	{"Ekaterinburg Standard Time", "Ekaterinburg Daylight Time",
+	 "Asia/Yekaterinburg"},		/* (GMT+05:00) Ekaterinburg */
+	{"Fiji Standard Time", "Fiji Daylight Time",
+	 "Pacific/Fiji"},			/* (GMT+12:00) Fiji, Kamchatka, Marshall Is. */
+	{"FLE Standard Time", "FLE Daylight Time",
+	 "Europe/Helsinki"},		/* (GMT+02:00) Helsinki, Kyiv, Riga, Sofia, Tallinn, Vilnius */
+	{"GMT Standard Time", "GMT Daylight Time",
+	 "Europe/Dublin"},			/* (GMT) Greenwich Mean Time : Dublin, Edinburgh, Lisbon, London */
+	{"Greenland Standard Time", "Greenland Daylight Time",
+	 "America/Godthab"},		/* (GMT-03:00) Greenland */
+	{"Greenwich Standard Time", "Greenwich Daylight Time",
+	 "Africa/Casablanca"},		/* (GMT) Casablanca, Monrovia */
+	{"GTB Standard Time", "GTB Daylight Time",
+	 "Europe/Athens"},			/* (GMT+02:00) Athens, Istanbul, Minsk */
+	{"Hawaiian Standard Time", "Hawaiian Daylight Time",
+	 "US/Hawaii"},				/* (GMT-10:00) Hawaii */
+	{"India Standard Time", "India Daylight Time",
+	 "Asia/Calcutta"},			/* (GMT+05:30) Chennai, Kolkata, Mumbai, New Delhi */
+	{"Iran Standard Time", "Iran Daylight Time",
+	 "Asia/Tehran"},			/* (GMT+03:30) Tehran */
+	{"Jerusalem Standard Time", "Jerusalem Daylight Time",
+	 "Asia/Jerusalem"},			/* (GMT+02:00) Jerusalem */
+	{"Korea Standard Time", "Korea Daylight Time",
+	 "Asia/Seoul"},				/* (GMT+09:00) Seoul */
+	{"Mexico Standard Time", "Mexico Daylight Time",
+	 "America/Mexico_City"},	/* (GMT-06:00) Guadalajara, Mexico City, Monterrey */
+	{"Mexico Standard Time", "Mexico Daylight Time",
+	 "America/La_Paz"},			/* (GMT-07:00) Chihuahua, La Paz, Mazatlan */
+	{"Mid-Atlantic Standard Time", "Mid-Atlantic Daylight Time",
+	 "Atlantic/South_Georgia"}, /* (GMT-02:00) Mid-Atlantic */
+	{"Mountain Standard Time", "Mountain Daylight Time",
+	 "US/Mountain"},			/* (GMT-07:00) Mountain Time (US & Canada) */
+	{"Myanmar Standard Time", "Myanmar Daylight Time",
+	 "Asia/Rangoon"},			/* (GMT+06:30) Rangoon */
+	{"N. Central Asia Standard Time", "N. Central Asia Daylight Time",
+	 "Asia/Almaty"},			/* (GMT+06:00) Almaty, Novosibirsk */
+	{"Nepal Standard Time", "Nepal Daylight Time",
+	 "Asia/Katmandu"},			/* (GMT+05:45) Kathmandu */
+	{"New Zealand Standard Time", "New Zealand Daylight Time",
+	 "Pacific/Auckland"},		/* (GMT+12:00) Auckland, Wellington */
+	{"Newfoundland Standard Time", "Newfoundland Daylight Time",
+	 "Canada/Newfoundland"},	/* (GMT-03:30) Newfoundland */
+	{"North Asia East Standard Time", "North Asia East Daylight Time",
+	 "Asia/Irkutsk"},			/* (GMT+08:00) Irkutsk, Ulaan Bataar */
+	{"North Asia Standard Time", "North Asia Daylight Time",
+	 "Asia/Krasnoyarsk"},		/* (GMT+07:00) Krasnoyarsk */
+	{"Pacific SA Standard Time", "Pacific SA Daylight Time",
+	 "America/Santiago"},		/* (GMT-04:00) Santiago */
+	{"Pacific Standard Time", "Pacific Daylight Time",
+	 "US/Pacific"},				/* (GMT-08:00) Pacific Time (US & Canada); Tijuana */
+	{"Romance Standard Time", "Romance Daylight Time",
+	 "Europe/Brussels"},		/* (GMT+01:00) Brussels, Copenhagen, Madrid, Paris */
+	{"Russian Standard Time", "Russian Daylight Time",
+	 "Europe/Moscow"},			/* (GMT+03:00) Moscow, St. Petersburg, Volgograd */
+	{"SA Eastern Standard Time", "SA Eastern Daylight Time",
+	 "America/Buenos_Aires"},	/* (GMT-03:00) Buenos Aires, Georgetown */
+	{"SA Pacific Standard Time", "SA Pacific Daylight Time",
+	 "America/Bogota"},			/* (GMT-05:00) Bogota, Lima, Quito */
+	{"SA Western Standard Time", "SA Western Daylight Time",
+	 "America/Caracas"},		/* (GMT-04:00) Caracas, La Paz */
+	{"Samoa Standard Time", "Samoa Daylight Time",
+	 "Pacific/Midway"},			/* (GMT-11:00) Midway Island, Samoa */
+	{"SE Asia Standard Time", "SE Asia Daylight Time",
+	 "Asia/Bangkok"},			/* (GMT+07:00) Bangkok, Hanoi, Jakarta */
+	{"Malay Peninsula Standard Time", "Malay Peninsula Daylight Time",
+	 "Asia/Kuala_Lumpur"},		/* (GMT+08:00) Kuala Lumpur, Singapore */
+	{"South Africa Standard Time", "South Africa Daylight Time",
+	 "Africa/Harare"},			/* (GMT+02:00) Harare, Pretoria */
+	{"Sri Lanka Standard Time", "Sri Lanka Daylight Time",
+	 "Asia/Colombo"},			/* (GMT+06:00) Sri Jayawardenepura */
+	{"Taipei Standard Time", "Taipei Daylight Time",
+	 "Asia/Taipei"},			/* (GMT+08:00) Taipei */
+	{"Tasmania Standard Time", "Tasmania Daylight Time",
+	 "Australia/Hobart"},		/* (GMT+10:00) Hobart */
+	{"Tokyo Standard Time", "Tokyo Daylight Time",
+	 "Asia/Tokyo"},				/* (GMT+09:00) Osaka, Sapporo, Tokyo */
+	{"Tonga Standard Time", "Tonga Daylight Time",
+	 "Pacific/Tongatapu"},		/* (GMT+13:00) Nuku'alofa */
+	{"US Eastern Standard Time", "US Eastern Daylight Time",
+	 "US/Eastern"},				/* (GMT-05:00) Indiana (East) */
+	{"US Mountain Standard Time", "US Mountain Daylight Time",
+	 "US/Arizona"},				/* (GMT-07:00) Arizona */
+	{"Vladivostok Standard Time", "Vladivostok Daylight Time",
+	 "Asia/Vladivostok"},		/* (GMT+10:00) Vladivostok */
+	{"W. Australia Standard Time", "W. Australia Daylight Time",
+	 "Australia/Perth"},		/* (GMT+08:00) Perth */
+/*	{"W. Central Africa Standard Time", "W. Central Africa Daylight Time",
+	""}, Could not find a match for this one. Excluded for now. */  /* (GMT+01:00) West Central Africa */
+	{"W. Europe Standard Time", "W. Europe Daylight Time",
+	 "CET"},					/* (GMT+01:00) Amsterdam, Berlin, Bern, Rome, Stockholm, Vienna */
+	{"West Asia Standard Time", "West Asia Daylight Time",
+	 "Asia/Karachi"},			/* (GMT+05:00) Islamabad, Karachi, Tashkent */
+	{"West Pacific Standard Time", "West Pacific Daylight Time",
+	 "Pacific/Guam"},			/* (GMT+10:00) Guam, Port Moresby */
+	{"Yakutsk Standard Time", "Yakutsk Daylight Time",
+	 "Asia/Yakutsk"},			/* (GMT+09:00) Yakutsk */
+	{NULL, NULL, NULL}
+};
+
+static const char *
+identify_system_timezone(void)
+{
+	int i;
+	char tzname[128];
+	time_t t = time(NULL);
+	struct tm *tm = localtime(&t);
+
+	if (!tm)
+	{
+		ereport(WARNING,
+				(errmsg_internal("could not determine current date/time: localtime failed")));
+		return NULL;
+	}
+
+	memset(tzname, 0, sizeof(tzname));
+	strftime(tzname, sizeof(tzname)-1, "%Z", tm);
+
+	for (i=0; win32_tzmap[i].stdname != NULL; i++)
+	{
+		if (strcmp(tzname, win32_tzmap[i].stdname) == 0 ||
+			strcmp(tzname, win32_tzmap[i].dstname) == 0)
+		{
+			elog(DEBUG4, "TZ \"%s\" matches Windows timezone \"%s\"",
+				 win32_tzmap[i].pgtzname, tzname);
+			return win32_tzmap[i].pgtzname;
+		}
+	}
+
+	ereport(WARNING,
+			(errmsg("could not find a match for Windows timezone \"%s\"",
+					tzname)));
+	return NULL;
+}
+
+#endif /* WIN32 */
 
 
 /*
@@ -520,7 +724,7 @@ tz_acceptable(void)
 const char *
 select_default_timezone(void)
 {
-	char	   *def_tz;
+	const char   *def_tz;
 
 	def_tz = getenv("TZ");
 	if (def_tz && pg_tzset(def_tz) && tz_acceptable())
