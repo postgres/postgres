@@ -47,7 +47,7 @@ copy tmp_pg_shadow to stdout;
 drop table tmp_pg_shadow;
 END
 echo "${BS}."
-psql -l -A -q -t | grep '|' | tr '|' ' ' | \
+psql -A -q -t -c "select * from pg_database" template1 | grep '|' | tr '|' ' ' | \
 grep -v '^template1 ' | \
 while read DATABASE DBUSERID ENCODING DATAPATH
 do
@@ -55,7 +55,7 @@ do
 
 	if pg_encoding $ENCODING >/dev/null 2>&1
 	then
-		echo "create database $DATABASE with encoding='$ENCODING';"
+		echo "create database $DATABASE with encoding='`pg_encoding $ENCODING`';"
 	else
 		echo "create database $DATABASE;"
 	fi
