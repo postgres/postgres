@@ -13,8 +13,8 @@
 
 #log_connections = on
 #fsync = off
-#max_backends = 64
+#max_connections = 64
 
 # Any option can also be given as a command line switch to the
-# postmaster, e.g., `postmaster --log-connections=on'. Some options
-# can be set at run-time with the `SET' SQL command.
+# postmaster, e.g., 'postmaster -c log_connections=on'. Some options
+# can be set at run-time with the 'SET' SQL command.
