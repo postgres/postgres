@@ -1,5 +1,5 @@
 #! /bin/sh
-# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.47 2004/09/22 19:11:19 tgl Exp $
+# $PostgreSQL: pgsql/src/test/regress/pg_regress.sh,v 1.48 2004/10/24 22:09:33 tgl Exp $
 
 me=`basename $0`
 : ${TMPDIR=/tmp}
@@ -470,7 +470,14 @@ else # not temp-install
     if [ -n "$PGHOST" ]; then
         echo "(using postmaster on $PGHOST, $port_info)"
     else
-        echo "(using postmaster on Unix socket, $port_info)"
+		case $host_platform in
+			*-*-mingw32*)
+				echo "(using postmaster on localhost socket, $port_info)"
+				;;
+			*)
+				echo "(using postmaster on Unix socket, $port_info)"
+				;;
+		esac
     fi
     message "dropping database \"$dbname\""
     "$bindir/dropdb" $psql_options "$dbname"
