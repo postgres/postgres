@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.133 2002/09/23 22:57:44 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.134 2002/10/03 21:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,6 +28,7 @@
 #include "commands/trigger.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_func.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
@@ -83,7 +84,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 	char		constrtrigname[NAMEDATALEN];
 	char	   *trigname;
 	char	   *constrname;
-	Oid			constrrelid;
+	Oid			constrrelid = InvalidOid;
 	ObjectAddress myself,
 				referenced;
 
@@ -91,8 +92,46 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	if (stmt->constrrel != NULL)
 		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
-	else
-		constrrelid = InvalidOid;
+	else if (stmt->isconstraint)
+	{
+		/* 
+		 * If this trigger is a constraint (and a foreign key one)
+		 * then we really need a constrrelid.  Since we don't have one,
+		 * we'll try to generate one from the argument information.
+		 *
+		 * This is really just a workaround for a long-ago pg_dump bug
+		 * that omitted the FROM clause in dumped CREATE CONSTRAINT TRIGGER
+		 * commands.  We don't want to bomb out completely here if we can't
+		 * determine the correct relation, because that would prevent loading
+		 * the dump file.  Instead, NOTICE here and ERROR in the trigger.
+		 */
+		bool	needconstrrelid = false;
+		void   *elem = NULL;
+
+		if (strncmp(strVal(llast(stmt->funcname)), "RI_FKey_check_", 14) == 0)
+		{
+			/* A trigger on FK table. */
+			needconstrrelid = true;
+			if (length(stmt->args) > RI_PK_RELNAME_ARGNO)
+				elem = nth(RI_PK_RELNAME_ARGNO, stmt->args);
+		}
+		else if (strncmp(strVal(llast(stmt->funcname)), "RI_FKey_", 8) == 0)
+		{
+			/* A trigger on PK table. */
+			needconstrrelid = true;
+			if (length(stmt->args) > RI_FK_RELNAME_ARGNO)
+				elem = nth(RI_FK_RELNAME_ARGNO, stmt->args);
+		}
+		if (elem != NULL)
+		{
+			RangeVar   *rel = makeRangeVar(NULL, strVal(elem));
+
+			constrrelid = RangeVarGetRelid(rel, true);
+		}
+		if (needconstrrelid && constrrelid == InvalidOid)
+			elog(NOTICE, "Unable to find table for constraint \"%s\"",
+				 stmt->trigname);
+	}
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",

@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.42 2002/09/04 20:31:28 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ri_triggers.c,v 1.43 2002/10/03 21:06:23 tgl Exp $
  *
  * ----------
  */
@@ -207,9 +207,18 @@ RI_FKey_check(PG_FUNCTION_ARGS)
 	 *
 	 * pk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
+	 *
+	 * Error check here is needed because of ancient pg_dump bug; see notes
+	 * in CreateTrigger().
 	 */
-	fk_rel = trigdata->tg_relation;
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	pk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
+	fk_rel = trigdata->tg_relation;
 	if (TRIGGER_FIRED_BY_UPDATE(trigdata->tg_event))
 	{
 		old_row = trigdata->tg_trigtuple;
@@ -745,6 +754,12 @@ RI_FKey_noaction_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -969,6 +984,12 @@ RI_FKey_noaction_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -1199,6 +1220,12 @@ RI_FKey_cascade_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual DELETE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1401,6 +1428,12 @@ RI_FKey_cascade_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -1639,6 +1672,12 @@ RI_FKey_restrict_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -1856,6 +1895,12 @@ RI_FKey_restrict_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowShareLock mode since that's what our eventual
 	 * SELECT FOR UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowShareLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -2078,6 +2123,12 @@ RI_FKey_setnull_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -2291,6 +2342,12 @@ RI_FKey_setnull_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -2550,6 +2607,12 @@ RI_FKey_setdefault_del(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	old_row = trigdata->tg_trigtuple;
@@ -2806,6 +2869,12 @@ RI_FKey_setdefault_upd(PG_FUNCTION_ARGS)
 	 * fk_rel is opened in RowExclusiveLock mode since that's what our
 	 * eventual UPDATE will get on it.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, RowExclusiveLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
@@ -3070,6 +3139,12 @@ RI_FKey_keyequal_upd(TriggerData *trigdata)
 	 *
 	 * Use minimal locking for fk_rel here.
 	 */
+	if (!OidIsValid(trigdata->tg_trigger->tgconstrrelid))
+		elog(ERROR, "No target table given for trigger \"%s\" on \"%s\""
+			 "\n\tRemove these RI triggers and do ALTER TABLE ADD CONSTRAINT",
+			 trigdata->tg_trigger->tgname,
+			 RelationGetRelationName(trigdata->tg_relation));
+
 	fk_rel = heap_open(trigdata->tg_trigger->tgconstrrelid, AccessShareLock);
 	pk_rel = trigdata->tg_relation;
 	new_row = trigdata->tg_newtuple;
