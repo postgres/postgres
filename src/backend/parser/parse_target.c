@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.21 1998/08/19 02:02:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.22 1998/08/23 14:43:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,6 +187,154 @@ printf("transformTargetIdent- attrtype_target = %d; type_mod = %d\n", attrtype_t
 } /* transformTargetIdent() */
 
 
+/* MakeTargetlistExpr()
+ * Make a TargetEntry from an expression.
+ * arrayRef is a list of transformed A_Indices.
+ *
+ * For type mismatches between expressions and targets, use the same
+ *  techniques as for function and operator type coersion.
+ * - thomas 1998-05-08
+ *
+ * Added resjunk flag and made extern so that it can be use by GROUP/
+ * ORDER BY a function or expersion not in the target_list
+ * -  daveh@insightdist.com 1998-07-31 
+ */
+TargetEntry *
+MakeTargetlistExpr(ParseState *pstate,
+					 char *colname,
+					 Node *expr,
+					 List *arrayRef,
+					 int16 resjunk)
+{
+	Oid			type_id,
+				attrtype;
+	int32		type_mod,
+				attrtypmod;
+	int			resdomno;
+	Relation	rd;
+	bool		attrisset;
+	TargetEntry *tent;
+	Resdom	   *resnode;
+
+	if (expr == NULL)
+		elog(ERROR, "MakeTargetlistExpr: invalid use of NULL expression");
+
+	type_id = exprType(expr);
+	if (nodeTag(expr) == T_Var)
+		type_mod = ((Var *) expr)->vartypmod;
+	else
+		type_mod = -1;
+
+	/* Processes target columns that will be receiving results */
+	if (pstate->p_is_insert || pstate->p_is_update)
+	{
+		/*
+		 * insert or update query -- insert, update work only on one
+		 * relation, so multiple occurence of same resdomno is bogus
+		 */
+		rd = pstate->p_target_relation;
+		Assert(rd != NULL);
+		resdomno = attnameAttNum(rd, colname);
+		attrisset = attnameIsSet(rd, colname);
+		attrtype = attnumTypeId(rd, resdomno);
+		if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
+			attrtype = GetArrayElementType(attrtype);
+		attrtypmod = rd->rd_att->attrs[resdomno - 1]->atttypmod;
+
+		/* Check for InvalidOid since that seems to indicate a NULL constant... */
+		if (type_id != InvalidOid)
+		{
+			/* Mismatch on types? then try to coerce to target...  */
+			if (attrtype != type_id)
+			{
+				Oid typelem;
+
+				if (arrayRef && !(((A_Indices *) lfirst(arrayRef))->lidx))
+					typelem = typeidTypElem(attrtype);
+				else
+					typelem = attrtype;
+
+				expr = CoerceTargetExpr(pstate, expr, type_id, typelem);
+
+				if (!HeapTupleIsValid(expr))
+					elog(ERROR, "parser: attribute '%s' is of type '%s'"
+						 " but expression is of type '%s'"
+						 "\n\tYou will need to rewrite or cast the expression",
+						 colname,
+						 typeidTypeName(attrtype),
+						 typeidTypeName(type_id));
+			}
+
+#ifdef PARSEDEBUG
+printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
+#endif
+
+			/* Apparently going to a fixed-length string?
+			 * Then explicitly size for storage...
+			 */
+			if (attrtypmod > 0)
+				expr = SizeTargetExpr(pstate, expr, attrtype, attrtypmod);
+		}
+
+		if (arrayRef != NIL)
+		{
+			Expr	   *target_expr;
+			Attr	   *att = makeNode(Attr);
+			List	   *ar = arrayRef;
+			List	   *upperIndexpr = NIL;
+			List	   *lowerIndexpr = NIL;
+
+			att->relname = pstrdup(RelationGetRelationName(rd)->data);
+			att->attrs = lcons(makeString(colname), NIL);
+			target_expr = (Expr *) ParseNestedFuncOrColumn(pstate, att,
+														   &pstate->p_last_resno,
+														   EXPR_COLUMN_FIRST);
+			while (ar != NIL)
+			{
+				A_Indices  *ind = lfirst(ar);
+
+				if (lowerIndexpr || (!upperIndexpr && ind->lidx))
+				{
+
+					/*
+					 * XXX assume all lowerIndexpr is non-null in this
+					 * case
+					 */
+					lowerIndexpr = lappend(lowerIndexpr, ind->lidx);
+				}
+				upperIndexpr = lappend(upperIndexpr, ind->uidx);
+				ar = lnext(ar);
+			}
+
+			expr = (Node *) make_array_set(target_expr,
+										   upperIndexpr,
+										   lowerIndexpr,
+										   (Expr *) expr);
+			attrtype = attnumTypeId(rd, resdomno);
+			attrtypmod = get_atttypmod(RelationGetRelid(rd), resdomno);
+		}
+	}
+	else
+	{
+		resdomno = pstate->p_last_resno++;
+		attrtype = type_id;
+		attrtypmod = type_mod;
+	}
+
+	resnode = makeResdom((AttrNumber) resdomno,
+						 (Oid) attrtype,
+						 attrtypmod,
+						 colname,
+						 (Index) 0,
+						 (Oid) 0,
+						 resjunk);
+
+	tent = makeTargetEntry(resnode, expr);
+
+	return tent;
+} /* MakeTargetlistExpr() */
+
+
 /* transformTargetList()
  * Turns a list of ResTarget's into a list of TargetEntry's.
  */
@@ -299,7 +447,6 @@ printf("transformTargetList: decode T_Expr\n");
 						/* this is not an array assignment */
 						if (colname == NULL)
 						{
-
 							/*
 							 * if you're wondering why this is here, look
 							 * at the yacc grammar for why a name can be
@@ -557,154 +704,6 @@ printf("SizeTargetExpr: no conversion function for sizing\n");
 
 	return expr;
 } /* SizeTargetExpr() */
-
-
-/* MakeTargetlistExpr()
- * Make a TargetEntry from an expression.
- * arrayRef is a list of transformed A_Indices.
- *
- * For type mismatches between expressions and targets, use the same
- *  techniques as for function and operator type coersion.
- * - thomas 1998-05-08
- *
- * Added resjunk flag and made extern so that it can be use by GROUP/
- * ORDER BY a function or expersion not in the target_list
- * -  daveh@insightdist.com 1998-07-31 
- */
-TargetEntry *
-MakeTargetlistExpr(ParseState *pstate,
-					 char *colname,
-					 Node *expr,
-					 List *arrayRef,
-					 int16 resjunk)
-{
-	Oid			type_id,
-				attrtype;
-	int32		type_mod,
-				attrtypmod;
-	int			resdomno;
-	Relation	rd;
-	bool		attrisset;
-	TargetEntry *tent;
-	Resdom	   *resnode;
-
-	if (expr == NULL)
-		elog(ERROR, "MakeTargetlistExpr: invalid use of NULL expression");
-
-	type_id = exprType(expr);
-	if (nodeTag(expr) == T_Var)
-		type_mod = ((Var *) expr)->vartypmod;
-	else
-		type_mod = -1;
-
-	/* Processes target columns that will be receiving results */
-	if (pstate->p_is_insert || pstate->p_is_update)
-	{
-		/*
-		 * insert or update query -- insert, update work only on one
-		 * relation, so multiple occurence of same resdomno is bogus
-		 */
-		rd = pstate->p_target_relation;
-		Assert(rd != NULL);
-		resdomno = attnameAttNum(rd, colname);
-		attrisset = attnameIsSet(rd, colname);
-		attrtype = attnumTypeId(rd, resdomno);
-		if ((arrayRef != NIL) && (lfirst(arrayRef) == NIL))
-			attrtype = GetArrayElementType(attrtype);
-		attrtypmod = rd->rd_att->attrs[resdomno - 1]->atttypmod;
-
-		/* Check for InvalidOid since that seems to indicate a NULL constant... */
-		if (type_id != InvalidOid)
-		{
-			/* Mismatch on types? then try to coerce to target...  */
-			if (attrtype != type_id)
-			{
-				Oid typelem;
-
-				if (arrayRef && !(((A_Indices *) lfirst(arrayRef))->lidx))
-					typelem = typeidTypElem(attrtype);
-				else
-					typelem = attrtype;
-
-				expr = CoerceTargetExpr(pstate, expr, type_id, typelem);
-
-				if (!HeapTupleIsValid(expr))
-					elog(ERROR, "parser: attribute '%s' is of type '%s'"
-						 " but expression is of type '%s'"
-						 "\n\tYou will need to rewrite or cast the expression",
-						 colname,
-						 typeidTypeName(attrtype),
-						 typeidTypeName(type_id));
-			}
-
-#ifdef PARSEDEBUG
-printf("MakeTargetlistExpr: attrtypmod is %d\n", (int4) attrtypmod);
-#endif
-
-			/* Apparently going to a fixed-length string?
-			 * Then explicitly size for storage...
-			 */
-			if (attrtypmod > 0)
-				expr = SizeTargetExpr(pstate, expr, attrtype, attrtypmod);
-		}
-
-		if (arrayRef != NIL)
-		{
-			Expr	   *target_expr;
-			Attr	   *att = makeNode(Attr);
-			List	   *ar = arrayRef;
-			List	   *upperIndexpr = NIL;
-			List	   *lowerIndexpr = NIL;
-
-			att->relname = pstrdup(RelationGetRelationName(rd)->data);
-			att->attrs = lcons(makeString(colname), NIL);
-			target_expr = (Expr *) ParseNestedFuncOrColumn(pstate, att,
-														   &pstate->p_last_resno,
-														   EXPR_COLUMN_FIRST);
-			while (ar != NIL)
-			{
-				A_Indices  *ind = lfirst(ar);
-
-				if (lowerIndexpr || (!upperIndexpr && ind->lidx))
-				{
-
-					/*
-					 * XXX assume all lowerIndexpr is non-null in this
-					 * case
-					 */
-					lowerIndexpr = lappend(lowerIndexpr, ind->lidx);
-				}
-				upperIndexpr = lappend(upperIndexpr, ind->uidx);
-				ar = lnext(ar);
-			}
-
-			expr = (Node *) make_array_set(target_expr,
-										   upperIndexpr,
-										   lowerIndexpr,
-										   (Expr *) expr);
-			attrtype = attnumTypeId(rd, resdomno);
-			attrtypmod = get_atttypmod(RelationGetRelid(rd), resdomno);
-		}
-	}
-	else
-	{
-		resdomno = pstate->p_last_resno++;
-		attrtype = type_id;
-		attrtypmod = type_mod;
-	}
-
-	resnode = makeResdom((AttrNumber) resdomno,
-						 (Oid) attrtype,
-						 attrtypmod,
-						 colname,
-						 (Index) 0,
-						 (Oid) 0,
-						 resjunk);
-
-	tent = makeTargetEntry(resnode, expr);
-
-	return tent;
-} /* MakeTargetlistExpr() */
 
 
 /*

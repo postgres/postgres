@@ -9,11 +9,11 @@ keywords.c	turn keywords into specific tokens
 gram.y		parse the tokens and fill query-type-specific structures
 analyze.c	handle post-parse processing for each query type
 parse_clause.c	handle clauses like WHERE, ORDER BY, GROUP BY, ...
+parse_coerce.c	used for coercing expressions of different types
 parse_expr.c	handle expressions like col, col + 3, x = 3 or x = 4
 parse_oper.c	handle operations in expressions
 parse_agg.c	handle aggregates, like SUM(col1),  AVG(col2), ...
 parse_func.c	handle functions, table.column and column identifiers
-
 parse_node.c	create nodes for various structures
 parse_target.c	handle the result list of the query
 parse_relation.c support routines for tables and column handling
