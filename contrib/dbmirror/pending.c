@@ -1,7 +1,7 @@
 /****************************************************************************
  * pending.c
- * $Id: pending.c,v 1.16 2004/02/17 03:34:35 momjian Exp $
- * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.16 2004/02/17 03:34:35 momjian Exp $
+ * $Id: pending.c,v 1.17 2004/04/22 03:48:38 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/dbmirror/pending.c,v 1.17 2004/04/22 03:48:38 momjian Exp $
  *
  * This file contains a trigger for Postgresql-7.x to record changes to tables
  * to a pending table for mirroring.
@@ -701,7 +701,7 @@ nextval(PG_FUNCTION_ARGS)
 
   debug_msg("dbmirror:nextval Set resTuple");
 
-  nextSequenceValue =*(DatumGetPointer(SPI_getbinval(resTuple,
+  nextSequenceValue =* (unsigned int *)(DatumGetPointer(SPI_getbinval(resTuple,
 						     SPI_tuptable->tupdesc,
 						     1,&isNull)));
 

@@ -33,7 +33,7 @@
 # 
 #
 ##############################################################################
-# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.8 2004/02/17 03:34:35 momjian Exp $ 
+# $PostgreSQL: pgsql/contrib/dbmirror/DBMirror.pl,v 1.9 2004/04/22 03:48:38 momjian Exp $ 
 #
 ##############################################################################
 
@@ -660,7 +660,7 @@ sub mirrorSequence($$$$$) {
 
     my $query;
     my $sequenceValue = $pendingResult->getvalue($currentTuple,4);
-    $query = sprintf("select setval(%s,%s)",$sequenceName,$sequenceValue);
+    $query = sprintf("select setval('%s',%s)",$sequenceName,$sequenceValue);
 
     sendQueryToSlaves($transId,$query);
     return $currentTuple;
@@ -960,7 +960,7 @@ sub openTransactionFile($$)
     my $nowisdst;
     ($nowsec,$nowmin,$nowhour,$nowmday,$nowmon,$nowyear,$nowwday,$nowyday,$nowisdst) =
 	localtime;
-    my $fileName=sprintf(">%s/%s_%d-%d-%d_%d:%d:%dXID%d.sql", $::slaveInfo->{'TransactionFileDirectory'},
+    my $fileName=sprintf(">%s/%s_%02d-%02d-%02d_%02d:%02d:%dXID%d.sql", $::slaveInfo->{'TransactionFileDirectory'},
 			 $::slaveInfo->{"MirrorHostId"},($nowyear+1900),($nowmon+1),$nowmday,$nowhour,$nowmin,
 			 $nowsec,$XID);
     
