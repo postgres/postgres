@@ -32,22 +32,32 @@ Features and packages:
   --with-template=<replaceable>template</replaceable>
                           use operating system template file
                               see template directory
-  --with-includes=<replaceable>incdir</replaceable>  site header files for tk/tcl, etc in DIR
-  --with-libs=<replaceable>incdir</replaceable>      also search for libraries in DIR
-  --with-libraries=<replaceable>libdir</replaceable> also search for libraries in DIR
+  --with-includes=<replaceable>incdir</replaceable>
+                          site header files for tk/tcl, etc in DIR
+  --with-libs=<replaceable>incdir</replaceable>
+                          also search for libraries in DIR
+  --with-libraries=<replaceable>libdir</replaceable>
+                          also search for libraries in DIR
   --enable-locale         enable locale support
   --enable-recode         enable cyrillic recode support
-  --with-mb=<replaceable>encoding</replaceable>    enable multi-byte support
-  --with-pgport=<replaceable>portnum</replaceable> change default startup port
-  --with-maxbackends=<replaceable>n</replaceable>  set default maximum number of server processes 
+  --with-mb=<replaceable>encoding</replaceable>
+                          enable multi-byte support
+  --with-pgport=<replaceable>portnum</replaceable>
+                          change default startup port
+  --with-maxbackends=<replaceable>n</replaceable>
+                          set default maximum number of server processes 
   --with-tcl              build Tcl interfaces and pgtclsh
-  --with-tclconfig=<replaceable>tcldir</replaceable> tclConfig.sh and tkConfig.sh are in DIR
+  --with-tclconfig=<replaceable>tcldir</replaceable>
+                          tclConfig.sh and tkConfig.sh are in DIR
   --with-perl             build Perl interface
   --with-odbc             build ODBC driver package
-  --with-odbcinst=<replaceable>odbcdir</replaceable> change default directory for odbcinst.ini
+  --with-odbcinst=<replaceable>odbcdir</replaceable>
+                          change default directory for odbcinst.ini
   --enable-cassert        enable assertion checks (debugging)
-  --with-CC=<replaceable>compiler</replaceable>      use specific C compiler
-  --with-CXX=<replaceable>compiler</replaceable>     use specific C++ compiler
+  --with-CC=<replaceable>compiler</replaceable>
+                          use specific C compiler
+  --with-CXX=<replaceable>compiler</replaceable>
+                          use specific C++ compiler
   --without-CXX           prevent building C++ code 
    </programlisting>
   </para>
@@ -218,14 +228,10 @@ Features and packages:
    
    <programlisting>
 # Makefile.custom
-# Thomas Lockhart 1998-03-01
+# Thomas Lockhart 1999-06-01
 
 POSTGRESDIR= /opt/postgres/current
-CFLAGS+= -m486 # -g -O0
-USE_TCL= true
-TCL_LIB= -ltcl
-X_LIBS= -L/usr/X11/lib
-TK_LIB= -ltk
+CFLAGS+= -m486 -O2
 
 # documentation
 
