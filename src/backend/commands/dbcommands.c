@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.56 2000/05/30 00:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.57 2000/06/02 04:04:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	char	   *loc;
 	char		locbuf[512];
 	int4		user_id;
+	int			ret;
 	bool		use_super,
 				use_createdb;
 	Relation	pg_database_rel;
@@ -89,12 +90,6 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 			 "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
 			 "path isn't permitted for databases", dbpath);
-
-	/*
-	 * close virtual file descriptors so the kernel has more available for
-	 * the system() calls
-	 */
-	closeAllVfds();
 
 	/*
 	 * Insert a new tuple into pg_database
@@ -133,6 +128,12 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 
 	heap_close(pg_database_rel, NoLock);
 
+	/*
+	 * Close virtual file descriptors so the kernel has more available for
+	 * the mkdir() and system() calls below.
+	 */
+	closeAllVfds();
+
 	/* Copy the template database to the new location */
 
 	if (mkdir(loc, S_IRWXU) != 0)
@@ -140,14 +141,15 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 
 	snprintf(buf, sizeof(buf), "cp %s%cbase%ctemplate1%c* '%s'",
 			 DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, loc);
+	ret = system(buf);
+	/* Some versions of SunOS seem to return ECHILD after a system() call */
 #if defined(sun)
-	if (system(buf) != 0 && errno != ECHILD)
+	if (ret != 0 && errno != ECHILD)
 #else
-	if (system(buf) != 0)
+	if (ret != 0)
 #endif
 	{
-		int			ret;
-
+		/* Failed, so try to clean up the created directory ... */
 		snprintf(buf, sizeof(buf), "rm -rf '%s'", loc);
 		ret = system(buf);
 #if defined(sun)
@@ -210,12 +212,6 @@ dropdb(const char *dbname)
 			 "path isn't permitted for databases", path);
 
 	/*
-	 * close virtual file descriptors so the kernel has more available for
-	 * the system() calls
-	 */
-	closeAllVfds();
-
-	/*
 	 * Obtain exclusive lock on pg_database.  We need this to ensure that
 	 * no new backend starts up in the target database while we are
 	 * deleting it.  (Actually, a new backend might still manage to start
@@ -276,6 +272,12 @@ dropdb(const char *dbname)
 	 * write out a dirty buffer to the dead database later...
 	 */
 	DropBuffers(db_id);
+
+	/*
+	 * Close virtual file descriptors so the kernel has more available for
+	 * the system() call below.
+	 */
+	closeAllVfds();
 
 	/*
 	 * Remove the database's subdirectory and everything in it.
