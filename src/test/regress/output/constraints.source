@@ -219,7 +219,7 @@ NOTICE:  CREATE TABLE/PRIMARY KEY will create implicit index 'primary_tbl_pkey' 
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'one');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (2, 'two');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (1, 'three');
-ERROR:  Cannot insert a duplicate key into a unique index
+ERROR:  Cannot insert a duplicate key into unique index primary_tbl_pkey
 QUERY: INSERT INTO PRIMARY_TBL VALUES (4, 'three');
 QUERY: INSERT INTO PRIMARY_TBL VALUES (5, 'one');
 QUERY: INSERT INTO PRIMARY_TBL (t) VALUES ('six');
@@ -260,7 +260,7 @@ NOTICE:  CREATE TABLE/UNIQUE will create implicit index 'unique_tbl_i_key' for t
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
-ERROR:  Cannot insert a duplicate key into a unique index
+ERROR:  Cannot insert a duplicate key into unique index unique_tbl_i_key
 QUERY: INSERT INTO UNIQUE_TBL VALUES (4, 'four');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('six');
@@ -284,7 +284,7 @@ QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (2, 'two');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'three');
 QUERY: INSERT INTO UNIQUE_TBL VALUES (1, 'one');
-ERROR:  Cannot insert a duplicate key into a unique index
+ERROR:  Cannot insert a duplicate key into unique index unique_tbl_i_key
 QUERY: INSERT INTO UNIQUE_TBL VALUES (5, 'one');
 QUERY: INSERT INTO UNIQUE_TBL (t) VALUES ('six');
 QUERY: SELECT '' AS five, * FROM UNIQUE_TBL;
