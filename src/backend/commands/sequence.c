@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.57 2001/06/01 19:52:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.58 2001/06/06 22:03:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,10 @@
 #include "miscadmin.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
+#ifdef MULTIBYTE
+#include "mb/pg_wchar.h"
+#endif
+
 
 #define SEQ_MAGIC	  0x1717
 
@@ -523,7 +527,8 @@ setval_and_iscalled(PG_FUNCTION_ARGS)
 
 /*
  * Given a 'text' parameter to a sequence function, extract the actual
- * sequence name.  We downcase the name if it's not double-quoted.
+ * sequence name.  We downcase the name if it's not double-quoted,
+ * and truncate it if it's too long.
  *
  * This is a kluge, really --- should be able to write nextval(seqrel).
  */
@@ -557,6 +562,20 @@ get_seq_name(text *seqin)
 				*rawname = tolower((unsigned char) *rawname);
 		}
 	}
+
+	/* Truncate name if it's overlength; again, should match scan.l */
+	if (strlen(seqname) >= NAMEDATALEN)
+	{
+#ifdef MULTIBYTE
+		int len;
+
+		len = pg_mbcliplen(seqname, i, NAMEDATALEN-1);
+		seqname[len] = '\0';
+#else
+		seqname[NAMEDATALEN-1] = '\0';
+#endif
+	}
+
 	return seqname;
 }
 
