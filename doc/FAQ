@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Wed Jul 26 13:33:21 EDT 2000
+   Last updated: Thu Jul 27 12:52:35 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -226,14 +226,14 @@
    has received around 30k of messages.
    
    The bugs mailing list is available. To subscribe to this list, send
-   email to bugs-request@PostgreSQL.org with a body of:
+   email to pgsql-bugs-request@PostgreSQL.org with a body of:
    
         subscribe
         end
 
    There is also a developers discussion mailing list available. To
-   subscribe to this list, send email to hackers-request@PostgreSQL.org
-   with a body of:
+   subscribe to this list, send email to
+   pgsql-hackers-request@PostgreSQL.org with a body of:
    
         subscribe
         end
@@ -307,7 +307,8 @@
    
     1.13) How do I submit a bug report?
     
-   Fill out the "bug-template" file and send it to: bugs@PostgreSQL.org
+   Fill out the "bug-template" file and send it to:
+   pgsql-bugs@PostgreSQL.org
    
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
    there is a more recent PostgreSQL version or patches.
