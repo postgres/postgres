@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.63 2002/03/11 05:03:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.64 2002/03/19 02:32:19 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -397,6 +397,29 @@ testdb=>
  version | function | PostgreSQL version string
 (1 row)
 </programlisting>
+        </para>
+
+        <para>
+        Descriptions for objects can be generated with the <command>COMMENT ON</command>
+        <acronym>SQL</acronym> command.
+	</para>
+
+        <note>
+        <para>
+        <productname>PostgreSQL</productname> stores the object descriptions in the
+        pg_description system table.
+        </para>
+        </note>
+
+        </listitem>
+      </varlistentry>
+
+
+      <varlistentry>
+        <term><literal>\dD</literal> [ <replaceable class="parameter">pattern</replaceable> ]</term>
+        <listitem>
+        <para>
+        Lists all database domains.
         </para>
 
         <para>

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.15 2002/03/07 17:54:41 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.h,v 1.16 2002/03/19 02:32:21 momjian Exp $
  */
 #ifndef DESCRIBE_H
 #define DESCRIBE_H
@@ -39,5 +39,8 @@ bool		listAllDbs(bool desc);
 
 /* \dt, \di, \ds, \dS, etc. */
 bool		listTables(const char *infotype, const char *name, bool desc);
+
+/* \dD */
+bool		listDomains(const char *name);
 
 #endif   /* DESCRIBE_H */
