@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.97 2003/06/24 23:14:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.98 2003/06/25 03:56:31 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -1442,6 +1442,37 @@ get_typtype(Oid typid)
 	else
 		return '\0';
 }
+
+/*
+ * get_typname
+ *		Returns the name of a given type.
+ *
+ * Returns a palloc'd copy of the string, or NULL if no such relation.
+ *
+ * NOTE: since type name is not unique, be wary of code that uses this
+ * for anything except preparing error messages.
+ */
+char *
+get_typname(Oid typid)
+{
+	HeapTuple	tp;
+
+	tp = SearchSysCache(TYPEOID,
+						ObjectIdGetDatum(typid),
+						0, 0, 0);
+	if (HeapTupleIsValid(tp))
+	{
+		Form_pg_type typtup = (Form_pg_type) GETSTRUCT(tp);
+		char	   *result;
+
+		result = pstrdup(NameStr(typtup->typname));
+		ReleaseSysCache(tp);
+		return result;
+	}
+	else
+		return NULL;
+}
+
 
 /*
  * get_typ_typrelid

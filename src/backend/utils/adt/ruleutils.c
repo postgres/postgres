@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.141 2003/05/28 16:03:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.142 2003/06/25 03:56:30 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -894,6 +894,10 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 			{
 				Datum		val;
 				bool		isnull;
+				char	   *conbin;
+				char	   *consrc;
+				Node	   *expr;
+				List	   *context;
 
 				/* Start off the constraint definition */
 				/* The consrc for CHECK constraints always seems to be
@@ -901,14 +905,39 @@ pg_get_constraintdef(PG_FUNCTION_ARGS)
 				appendStringInfo(&buf, "CHECK ");
 
 				/* Fetch constraint source */
-				val = heap_getattr(tup, Anum_pg_constraint_consrc,
+				val = heap_getattr(tup, Anum_pg_constraint_conbin,
 								   RelationGetDescr(conDesc), &isnull);
 				if (isnull)
 					elog(ERROR, "pg_get_constraintdef: Null consrc for constraint %u",
 						 constraintId);
 
+				conbin = DatumGetCString(DirectFunctionCall1(textout, val));
+				expr = stringToNode(conbin);
+
+				/*
+				 * If top level is a List, assume it is an implicit-AND structure, and
+				 * convert to explicit AND.  This is needed for partial index
+				 * predicates.
+				 */
+				if (expr && IsA(expr, List))
+					expr = (Node *) make_ands_explicit((List *) expr);
+
+				if (conForm->conrelid != InvalidOid)
+					/* It's a Relation */
+					context = deparse_context_for(get_rel_name(conForm->conrelid),
+												  conForm->conrelid);
+				else
+					/*
+					 * Since VARNOs aren't allowed in domain constraints, relation context
+					 * isn't required as anything other than a shell.
+					 */
+					context = deparse_context_for(get_typname(conForm->contypid),
+												  InvalidOid);
+
+				consrc = deparse_expression(expr, context, false, false);
+
 				/* Append the constraint source */
-				appendStringInfoString(&buf, DatumGetCString(DirectFunctionCall1(textout, val))); 
+				appendStringInfoString(&buf, consrc); 
 
 				break;
 			}

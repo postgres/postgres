@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.333 2003/06/11 16:29:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.334 2003/06/25 03:56:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3303,10 +3303,17 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 	/*
 	 * Fetch and process CHECK constraints for the domain
 	 */
-	appendPQExpBuffer(chkquery, "SELECT conname, consrc "
-					  "FROM pg_catalog.pg_constraint "
-					  "WHERE contypid = '%s'::pg_catalog.oid",
-					  tinfo->oid);
+	if (g_fout->remoteVersion >= 70400)
+		appendPQExpBuffer(chkquery, "SELECT conname,"
+						  "pg_catalog.pg_get_constraintdef(oid) AS consrc "
+						  "FROM pg_catalog.pg_constraint "
+						  "WHERE contypid = '%s'::pg_catalog.oid",
+						  tinfo->oid);
+	else
+		appendPQExpBuffer(chkquery, "SELECT conname, 'CHECK (' || consrc || ')'"
+						  "FROM pg_catalog.pg_constraint "
+						  "WHERE contypid = '%s'::pg_catalog.oid",
+						  tinfo->oid);
 
 	res = PQexec(g_conn, chkquery->data);
 	if (!res ||
@@ -3326,7 +3333,7 @@ dumpOneDomain(Archive *fout, TypeInfo *tinfo)
 		conname = PQgetvalue(res, i, PQfnumber(res, "conname"));
 		consrc = PQgetvalue(res, i, PQfnumber(res, "consrc"));
 
-		appendPQExpBuffer(q, "\n\tCONSTRAINT %s CHECK %s",
+		appendPQExpBuffer(q, "\n\tCONSTRAINT %s %s",
 						  fmtId(conname), consrc);
 	}
 	
@@ -5257,8 +5264,29 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 						  tbinfo->relname);
 
 			resetPQExpBuffer(query);
-			if (g_fout->remoteVersion >= 70300)
-				appendPQExpBuffer(query, "SELECT conname, consrc"
+			if (g_fout->remoteVersion >= 70400)
+				appendPQExpBuffer(query, "SELECT conname, "
+								  " pg_catalog.pg_get_constraintdef(c1.oid) AS consrc "
+								  " from pg_catalog.pg_constraint c1"
+								" where conrelid = '%s'::pg_catalog.oid "
+								  "   and contype = 'c' "
+								  "   and not exists "
+								  "  (select 1 from "
+								  "    pg_catalog.pg_constraint c2, "
+								  "    pg_catalog.pg_inherits i "
+								  "    where i.inhrelid = c1.conrelid "
+								  "      and (c2.conname = c1.conname "
+								  "          or (c2.conname[0] = '$' "
+								  "              and c1.conname[0] = '$')"
+								  "          )"
+								  "      and pg_catalog.pg_get_constraintdef(c2.oid) "
+								  "		     = pg_catalog.pg_get_constraintdef(c1.oid) "
+								  "      and c2.conrelid = i.inhparent) "
+								  " order by conname ",
+								  tbinfo->oid);
+			else if (g_fout->remoteVersion >= 70300)
+				appendPQExpBuffer(query, "SELECT conname, "
+								  " 'CHECK (' || consrc || ')'"
 								  " from pg_catalog.pg_constraint c1"
 								" where conrelid = '%s'::pg_catalog.oid "
 								  "   and contype = 'c' "
@@ -5276,7 +5304,8 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 								  " order by conname ",
 								  tbinfo->oid);
 			else
-				appendPQExpBuffer(query, "SELECT rcname as conname, rcsrc as consrc"
+				appendPQExpBuffer(query, "SELECT rcname as conname,"
+								  " 'CHECK (' || rcsrc || ')' as consrc"
 								  " from pg_relcheck c1"
 								  " where rcrelid = '%s'::oid "
 								  "   and not exists "
@@ -5321,7 +5350,7 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 				if (name[0] != '$')
 					appendPQExpBuffer(q, "CONSTRAINT %s ",
 									  fmtId(name));
-				appendPQExpBuffer(q, "CHECK (%s)", expr);
+				appendPQExpBuffer(q, "%s", expr);
 			}
 			PQclear(res2);
 		}
