@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.63 2000/05/22 02:34:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.64 2000/05/22 02:41:39 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -431,7 +431,7 @@ TupleDescInitEntry(TupleDesc desc,
 	   */
 	if (attisset)
 	{
-		Type		t = oidtypeidType(OIDOID);
+		Type		t = typeidType(OIDOID);
 
 		att->attlen = typeLen(t);
 		att->attbyval = typeByVal(t);
