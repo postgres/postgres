@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.151 2000/04/12 17:15:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.152 2000/04/23 00:13:16 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -967,10 +967,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			case 'F':
 				/* --------------------
 				 *	turn off fsync
+				 *
+				 *	7.0 buffer manager can support different backends running
+				 *	with different fsync settings, so this no longer needs
+				 *	to be "if (secure)".
 				 * --------------------
 				 */
-				if (secure)
-					disableFsync = true;
+				disableFsync = true;
 				break;
 
 			case 'f':
@@ -1452,7 +1455,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.151 $ $Date: 2000/04/12 17:15:43 $\n");
+		puts("$Revision: 1.152 $ $Date: 2000/04/23 00:13:16 $\n");
 	}
 
 	/*
