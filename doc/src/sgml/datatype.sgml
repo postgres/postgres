@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.50 2001/02/14 19:37:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.51 2001/03/10 21:16:32 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -1639,7 +1639,7 @@ SELECT * FROM test1 WHERE a;
     <para>
      Boxes are output using the first syntax.
      The corners are reordered on input to store
-     the lower left corner first and the upper right corner last.
+     the upper right corner, then the lower left corner.
      Other corners of the box can be entered, but the lower
      left and upper right corners are determined from the input and stored.
     </para>
