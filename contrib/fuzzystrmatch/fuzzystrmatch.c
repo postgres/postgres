@@ -3,7 +3,10 @@
  *
  * Functions for "fuzzy" comparison of strings
  *
- * Copyright (c) Joseph Conway <joseph.conway@home.com>, 2001;
+ * Joe Conway <mail@joeconway.com>
+ *
+ * Copyright (c) 2001, 2002, 2003 by PostgreSQL Global Development Group
+ * ALL RIGHTS RESERVED;
  *
  * levenshtein()
  * -------------
@@ -220,9 +223,6 @@ metaphone(PG_FUNCTION_ARGS)
 		elog(ERROR, "metaphone: Requested Metaphone output length must not exceed %d characters", MAX_METAPHONE_STRLEN);
 	if (!(reqlen > 0))
 		elog(ERROR, "metaphone: Requested Metaphone output length must be > 0");
-
-	metaph = palloc(reqlen);
-	memset(metaph, '\0', reqlen);
 
 	retval = _metaphone(str_i, reqlen, &metaph);
 	if (retval == META_SUCCESS)
@@ -629,7 +629,8 @@ _metaphone(
 				/* KS */
 			case 'X':
 				Phonize('K');
-				Phonize('S');
+				if (max_phonemes == 0 || Phone_Len < max_phonemes)
+					Phonize('S');
 				break;
 				/* Y if followed by a vowel */
 			case 'Y':
