@@ -108,7 +108,7 @@ $ du * | while read SIZE OID
 
 $ # show disk usage per database
 $ cd /u/pg/data/base
-$ du -s * | 
+$ du -s * |
 > while read SIZE OID
 > do
 >	echo "$SIZE      `aspg oid2name -q | grep ^$OID' '`"
