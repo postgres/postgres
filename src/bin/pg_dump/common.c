@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.26 1998/10/02 16:43:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/common.c,v 1.27 1998/10/06 22:14:17 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -307,6 +307,14 @@ dumpSchema(FILE *fout,
 	if (!tablename && fout)
 	{
 		if (g_verbose)
+			fprintf(stderr, "%s dumping out user-defined procedural languages %s\n",
+					g_comment_start, g_comment_end);
+		dumpProcLangs(fout, finfo, numFuncs, tinfo, numTypes);
+	}
+
+	if (!tablename && fout)
+	{
+		if (g_verbose)
 			fprintf(stderr, "%s dumping out user-defined functions %s\n",
 					g_comment_start, g_comment_end);
 		dumpFuncs(fout, finfo, numFuncs, tinfo, numTypes);
@@ -315,7 +323,7 @@ dumpSchema(FILE *fout,
 	if (!tablename && fout)
 	{
 		if (g_verbose)
-			fprintf(stderr, "%s dumping out user-defined functions %s\n",
+			fprintf(stderr, "%s dumping out user-defined aggregates %s\n",
 					g_comment_start, g_comment_end);
 		dumpAggs(fout, agginfo, numAggregates, tinfo, numTypes);
 	}

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.34 1998/10/06 03:09:01 momjian Exp $
+ * $Id: pg_dump.h,v 1.35 1998/10/06 22:14:21 momjian Exp $
  *
  * Modifications - 6/12/96 - dave@bensoft.com - version 1.13.dhb.2
  *
@@ -66,7 +66,6 @@ typedef struct _tableInfo
 {
 	char	   *oid;
 	char	   *relname;
-	char	   *viewdef;
 	char	   *relacl;
 	bool		sequence;
 	int			numatts;		/* number of attributes */
@@ -222,6 +221,8 @@ extern InhInfo *getInherits(int *numInherits);
 extern void getTableAttrs(TableInfo *tbinfo, int numTables);
 extern IndInfo *getIndices(int *numIndices);
 extern void dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes);
+extern void dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);
 extern void dumpFuncs(FILE *fout, FuncInfo *finfo, int numFuncs,
 		  TypeInfo *tinfo, int numTypes);

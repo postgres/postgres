@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.4 1998/10/02 16:27:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.5 1998/10/06 22:14:16 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -415,7 +415,7 @@ pg_get_indexdef(Oid indexrelid)
 	 * Start the index definition
 	 * ----------
 	 */
-	sprintf(buf, "CREATE %sINDEX %s ON %s USING %s (",
+	sprintf(buf, "CREATE %sINDEX \"%s\" ON \"%s\" USING %s (",
 		idxrec->indisunique ? "UNIQUE " : "",
 		nameout(&(idxrelrec->relname)),
 		nameout(&(indrelrec->relname)),
@@ -439,11 +439,13 @@ pg_get_indexdef(Oid indexrelid)
 		 * Add the indexed field name
 		 * ----------
 		 */
+		strcat(keybuf, "\"");
 		if (idxrec->indkey[keyno] == ObjectIdAttributeNumber - 1)
 			strcat(keybuf, "oid");
 		else
 			strcat(keybuf, get_attribute_name(idxrec->indrelid,
 						idxrec->indkey[keyno]));
+		strcat(keybuf, "\"");
 
 		/* ----------
 		 * If not a functional index, add the operator class name
@@ -462,8 +464,9 @@ pg_get_indexdef(Oid indexrelid)
 			spi_tup = SPI_tuptable->vals[0];
 			spi_ttc = SPI_tuptable->tupdesc;
 			spi_fno = SPI_fnumber(spi_ttc, "opcname");
-			strcat(keybuf, " ");
+			strcat(keybuf, " \"");
 			strcat(keybuf, SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+			strcat(keybuf, "\"");
 		}
 	}
 
@@ -482,8 +485,9 @@ pg_get_indexdef(Oid indexrelid)
 			elog(ERROR, "cache lookup for proc %d failed", idxrec->indproc);
 
 		procStruct = (Form_pg_proc) GETSTRUCT(proctup);
+		strcat(buf, "\"");
 		strcat(buf, nameout(&(procStruct->proname)));
-		strcat(buf, " (");
+		strcat(buf, "\" (");
 		strcat(buf, keybuf);
 		strcat(buf, ") ");
 
@@ -498,7 +502,9 @@ pg_get_indexdef(Oid indexrelid)
 		spi_tup = SPI_tuptable->vals[0];
 		spi_ttc = SPI_tuptable->tupdesc;
 		spi_fno = SPI_fnumber(spi_ttc, "opcname");
+		strcat(buf, "\"");
 		strcat(buf, SPI_getvalue(spi_tup, spi_ttc, spi_fno));
+		strcat(buf, "\"");
 	}
 	else
 	/* ----------
@@ -628,29 +634,29 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 	 * Build the rules definition text
 	 * ----------
 	 */
-	strcpy(buf, "CREATE RULE ");
+	strcpy(buf, "CREATE RULE \"");
 
 	/* The rule name */
 	strcat(buf, rulename);
-	strcat(buf, " AS ON ");
+	strcat(buf, "\" AS ON ");
 
 	/* The event the rule is fired for */
 	switch (ev_type)
 	{
 		case '1':
-			strcat(buf, "SELECT TO ");
+			strcat(buf, "SELECT TO \"");
 			break;
 
 		case '2':
-			strcat(buf, "UPDATE TO ");
+			strcat(buf, "UPDATE TO \"");
 			break;
 
 		case '3':
-			strcat(buf, "INSERT TO ");
+			strcat(buf, "INSERT TO \"");
 			break;
 
 		case '4':
-			strcat(buf, "DELETE TO ");
+			strcat(buf, "DELETE TO \"");
 			break;
 
 		default:
@@ -661,10 +667,12 @@ make_ruledef(HeapTuple ruletup, TupleDesc rulettc)
 
 	/* The relation the rule is fired on */
 	strcat(buf, get_relation_name(ev_class));
+	strcat(buf, "\"");
 	if (ev_attr > 0)
 	{
-		strcat(buf, ".");
+		strcat(buf, ".\"");
 		strcat(buf, get_attribute_name(ev_class, ev_attr));
+		strcat(buf, "\"");
 	}
 
 	/* If the rule has an event qualification, add it */
@@ -941,8 +949,9 @@ get_select_query_def(Query *query, QryHier *qh)
 		/* and do if so */
 		if (tell_as)
 		{
-			strcat(buf, " AS ");
+			strcat(buf, " AS \"");
 			strcat(buf, tle->resdom->resname);
+			strcat(buf, "\"");
 		}
 	}
 
@@ -967,11 +976,14 @@ get_select_query_def(Query *query, QryHier *qh)
 
 				strcat(buf, sep);
 				sep = ", ";
+				strcat(buf, "\"");
 				strcat(buf, rte->relname);
+				strcat(buf, "\"");
 				if (strcmp(rte->relname, rte->refname) != 0)
 				{
-					strcat(buf, " ");
+					strcat(buf, " \"");
 					strcat(buf, rte->refname);
+					strcat(buf, "\"");
 				}
 			}
 		}
@@ -1071,8 +1083,9 @@ get_insert_query_def(Query *query, QryHier *qh)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	strcpy(buf, "INSERT INTO ");
+	strcpy(buf, "INSERT INTO \"");
 	strcat(buf, rte->relname);
+	strcat(buf, "\"");
 
 	/* Add the target list */
 	sep = " (";
@@ -1082,7 +1095,9 @@ get_insert_query_def(Query *query, QryHier *qh)
 
 		strcat(buf, sep);
 		sep = ", ";
+		strcat(buf, "\"");
 		strcat(buf, tle->resdom->resname);
+		strcat(buf, "\"");
 	}
 	strcat(buf, ") ");
 
@@ -1142,8 +1157,9 @@ get_update_query_def(Query *query, QryHier *qh)
 
 		strcat(buf, sep);
 		sep = ", ";
+		strcat(buf, "\"");
 		strcat(buf, tle->resdom->resname);
-		strcat(buf, " = ");
+		strcat(buf, "\" = ");
 		strcat(buf, get_tle_expr(qh, query->resultRelation,
 								 tle, TRUE));
 	}
@@ -1179,8 +1195,9 @@ get_delete_query_def(Query *query, QryHier *qh)
 	 * ----------
 	 */
 	rte = (RangeTblEntry *) nth(query->resultRelation - 1, query->rtable);
-	strcpy(buf, "DELETE FROM ");
+	strcpy(buf, "DELETE FROM \"");
 	strcat(buf, rte->relname);
+	strcat(buf, "\"");
 
 	/* Add a WHERE clause if given */
 	if (query->qual != NULL)
@@ -1232,8 +1249,9 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 			{
 				Aggreg	   *agg = (Aggreg *) node;
 
+				strcat(buf, "\"");
 				strcat(buf, agg->aggname);
-				strcat(buf, "(");
+				strcat(buf, "\"(");
 				strcat(buf, get_rule_expr(qh, rt_index,
 									 (Node *) (agg->target), varprefix));
 				strcat(buf, ")");
@@ -1328,10 +1346,8 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 				int sup = var->varlevelsup;
 
 				while(sup-- > 0) qh = qh->parent;
-				rte = (RangeTblEntry *) nth(var->varno - 1, qh->query->rtable);
 
-				if (qh->parent == NULL && var->varlevelsup > 0)
-					rte = (RangeTblEntry *) nth(var->varno + 1, qh->query->rtable);
+				rte = (RangeTblEntry *) nth(var->varno - 1, qh->query->rtable);
 
 				if (!strcmp(rte->refname, "*NEW*"))
 					strcat(buf, "new.");
@@ -1343,12 +1359,15 @@ get_rule_expr(QryHier *qh, int rt_index, Node *node, bool varprefix)
 					{
 						if (strcmp(rte->relname, rte->refname) != 0)
 						{
+							strcat(buf, "\"");
 							strcat(buf, rte->refname);
-							strcat(buf, ".");
+							strcat(buf, "\".");
 						}
 					}
 				}
+				strcat(buf, "\"");
 				strcat(buf, get_attribute_name(rte->relid, var->varattno));
+				strcat(buf, "\"");
 
 				return pstrdup(buf);
 			}
@@ -1433,8 +1452,9 @@ get_func_expr(QryHier *qh, int rt_index, Expr *expr, bool varprefix)
 	 * Build a string of proname(args)
 	 * ----------
 	 */
-	strcpy(buf, proname);
-	strcat(buf, "(");
+	strcpy(buf, "\"");
+	strcat(buf, proname);
+	strcat(buf, "\"(");
 	sep = "";
 	foreach(l, expr->args)
 	{
@@ -1561,7 +1581,7 @@ get_const_expr(Const *constval)
 	extval = (char *) (*fmgr_faddr(&finfo_output)) (constval->constvalue,
 													&isnull, -1);
 
-	sprintf(namebuf, "::%s", nameout(&(typeStruct->typname)));
+	sprintf(namebuf, "::\"%s\"", nameout(&(typeStruct->typname)));
 	if (strcmp(namebuf, "::unknown") == 0)
 		namebuf[0] = '\0';
 	sprintf(buf, "'%s'%s", extval, namebuf);

@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.90 1998/10/06 05:35:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.91 1998/10/06 22:14:19 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -81,6 +81,8 @@
 static void dumpSequence(FILE *fout, TableInfo tbinfo);
 static void dumpACL(FILE *fout, TableInfo tbinfo);
 static void dumpTriggers(FILE *fout, const char *tablename,
+			 TableInfo *tblinfo, int numTables);
+static void dumpRules(FILE *fout, const char *tablename,
 			 TableInfo *tblinfo, int numTables);
 static char *checkForQuote(const char *s);
 static void clearTableInfo(TableInfo *, int);
@@ -190,6 +192,7 @@ isViewRule(char *relname)
 
 	sprintf(query, "select relname from pg_class, pg_rewrite "
 			"where pg_class.oid = ev_class "
+			"and pg_rewrite.ev_type = '1' "
 			"and rulename = '_RET%s'", relname);
 
 	res = PQexec(g_conn, query);
@@ -698,6 +701,7 @@ main(int argc, char **argv)
 	{
 		dumpSchemaIdx(g_fout, tablename, tblinfo, numTables);
 		dumpTriggers(g_fout, tablename, tblinfo, numTables);
+		dumpRules(g_fout, tablename, tblinfo, numTables);
 	}
 
 	fflush(g_fout);
@@ -1384,7 +1388,7 @@ getFuncs(int *numFuncs)
 TableInfo  *
 getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 {
-	PGresult   *res, *viewres;
+	PGresult   *res;
 	int			ntups;
 	int			i;
 	char		query[MAXQUERYLEN];
@@ -1415,8 +1419,6 @@ getTables(int *numTables, FuncInfo *finfo, int numFuncs)
 	}
 	PQclear(res);
 
-/* NOTE, when outer joins are here, change this query to get the 
-view definition all in one go. */
 	sprintf(query,
 			"SELECT pg_class.oid, relname, relkind, relacl, usename, "
 			"relchecks, reltriggers "
@@ -1456,39 +1458,6 @@ view definition all in one go. */
 		tblinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		tblinfo[i].ncheck = atoi(PQgetvalue(res, i, i_relchecks));
 		tblinfo[i].ntrig = atoi(PQgetvalue(res, i, i_reltriggers));
-
-		/* NOTE that at such time as left outer joins become avaliable, 
-		then this will no longer be needed, and can be done in the 
-		above query. */
-
-		sprintf(query,
-			"select definition from pg_views where viewname = '%s';",
-			tblinfo[i].relname);
-
-		viewres = PQexec(g_conn, query);
-		if (!viewres ||
-			PQresultStatus(res) != PGRES_TUPLES_OK)
-		{
-			fprintf(stderr, "getTables(): SELECT for views failed\n");
-			exit_nicely(g_conn);
-		}
-
-		/* NOTE: Tryed to use isViewRule here, but it does it's own 
-		BEGIN and END so messed things up.
-		This also needs redone should we ever get outer joins.
-		*/
-		if ( PQntuples(viewres) > 0 )
-		{
-			if ( PQntuples(viewres) != 1 )
-			{
-				fprintf(stderr, "getTables(): failed to get view definition.\n");
-				exit_nicely(g_conn);
-			}
-
-			tblinfo[i].viewdef = strdup(PQgetvalue(viewres, 0, 0)); 
-		}
-
-		PQclear(viewres);
 
 		/* Get CHECK constraints */
 		if (tblinfo[i].ncheck > 0)
@@ -1596,7 +1565,6 @@ view definition all in one go. */
 				for (findx = 0; findx < numFuncs; findx++)
 				{
 					if (strcmp(finfo[findx].oid, tgfunc) == 0 &&
-						finfo[findx].lang == ClanguageId &&
 						finfo[findx].nargs == 0 &&
 						strcmp(finfo[findx].prorettype, "0") == 0)
 						break;
@@ -2036,6 +2004,88 @@ dumpTypes(FILE *fout, FuncInfo *finfo, int numFuncs,
 }
 
 /*
+ * dumpProcLangs
+ *        writes out to fout the queries to recreate user-defined procedural languages
+ *
+ */
+void
+dumpProcLangs(FILE *fout, FuncInfo *finfo, int numFuncs,
+		  TypeInfo *tinfo, int numTypes)
+{
+	PGresult		*res;
+	char			query[MAXQUERYLEN];
+	int			ntups;
+	int			i_lanname;
+	int			i_lanpltrusted;
+	int			i_lanplcallfoid;
+	int			i_lancompiler;
+	char			*lanname;
+	char			*lancompiler;
+	char			*lanplcallfoid;
+	int			i,
+				fidx;
+
+	res = PQexec(g_conn, "begin");
+	if (!res ||
+		PQresultStatus(res) != PGRES_COMMAND_OK)
+	{
+		fprintf(stderr, "BEGIN command failed\n");
+		exit_nicely(g_conn);
+	}
+
+	sprintf(query, "SELECT * FROM pg_language "
+			"WHERE lanispl "
+			"ORDER BY oid");
+	res = PQexec(g_conn, query);
+	if (!res ||
+		PQresultStatus(res) != PGRES_TUPLES_OK)
+	{
+		fprintf(stderr, "dumpProcLangs(): SELECT failed\n");
+		exit_nicely(g_conn);
+	}
+	ntups = PQntuples(res);
+
+	i_lanname	= PQfnumber(res, "lanname");
+	i_lanpltrusted	= PQfnumber(res, "lanpltrusted");
+	i_lanplcallfoid	= PQfnumber(res, "lanplcallfoid");
+	i_lancompiler	= PQfnumber(res, "lancompiler");
+
+	for (i = 0; i < ntups; i++) {
+		lanplcallfoid = PQgetvalue(res, i, i_lanplcallfoid);
+		for (fidx = 0; fidx < numFuncs; fidx++)
+		{
+			if (!strcmp(finfo[fidx].oid, lanplcallfoid))
+				break;
+		}
+		if (fidx >= numFuncs)
+		{
+			fprintf(stderr, "dumpProcLangs(): handler procedure for language %s not found\n", PQgetvalue(res, i, i_lanname));
+			exit_nicely(g_conn);
+		}
+
+		dumpOneFunc(fout, finfo, fidx, tinfo, numTypes);
+
+		lanname = checkForQuote(PQgetvalue(res, i, i_lanname));
+		lancompiler = checkForQuote(PQgetvalue(res, i, i_lancompiler));
+
+		fprintf(fout, "CREATE %sPROCEDURAL LANGUAGE '%s' "
+			"HANDLER %s LANCOMPILER '%s';\n",
+			(PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ? "TRUSTED " : "",
+			lanname,
+			fmtId(finfo[fidx].proname),
+			lancompiler);
+
+		free(lanname);
+		free(lancompiler);
+	}
+
+	PQclear(res);
+
+	res = PQexec(g_conn, "end");
+	PQclear(res);
+}
+
+/*
  * dumpFuncs
  *	  writes out to fout the queries to recreate all the user-defined functions
  *
@@ -2063,6 +2113,8 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 {
 	char		q[MAXQUERYLEN];
 	int			j;
+	char		*func_def;
+	char		func_lang[NAMEDATALEN + 1];
 
 	if (finfo[i].dumped)
 		return;
@@ -2070,6 +2122,66 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 		finfo[i].dumped = 1;
 
 	becomeUser(fout, finfo[i].usename);
+
+	if (finfo[i].lang == INTERNALlanguageId)
+	{
+		func_def = finfo[i].prosrc;
+		strcpy(func_lang, "INTERNAL");
+	}
+	else if (finfo[i].lang == ClanguageId)
+	{
+		func_def = finfo[i].probin;
+		strcpy(func_lang, "C");
+	}
+	else if (finfo[i].lang == SQLlanguageId)
+	{
+		func_def = finfo[i].prosrc;
+		strcpy(func_lang, "SQL");
+	}
+	else
+	{
+		PGresult	*res;
+		int		nlangs;
+		int		i_lanname;
+		char		query[256];
+
+		res = PQexec(g_conn, "begin");
+		if (!res ||
+			PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "dumpOneFunc(): BEGIN command failed\n");
+			exit_nicely(g_conn);
+		}
+		PQclear(res);
+
+		sprintf(query, "SELECT lanname FROM pg_language "
+				"WHERE oid = %d",
+				finfo[i].lang);
+		res = PQexec(g_conn, query);
+		if (!res ||
+			PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, "dumpOneFunc(): SELECT for procedural language failed\n");
+			exit_nicely(g_conn);
+		}
+		nlangs = PQntuples(res);
+
+		if (nlangs != 1)
+		{
+			fprintf(stderr, "dumpOneFunc(): procedural language for function %s not found\n", finfo[i].proname);
+			exit_nicely(g_conn);
+		}
+
+		i_lanname = PQfnumber(res, "lanname");
+
+		func_def = finfo[i].prosrc;
+		strcpy(func_lang, PQgetvalue(res, 0, i_lanname));
+
+		PQclear(res);
+
+		res = PQexec(g_conn, "end");
+		PQclear(res);
+	}
 
 	sprintf(q, "CREATE FUNCTION %s (", fmtId(finfo[i].proname));
 	for (j = 0; j < finfo[i].nargs; j++)
@@ -2086,12 +2198,7 @@ dumpOneFunc(FILE *fout, FuncInfo *finfo, int i,
 			q,
 			(finfo[i].retset) ? " SETOF " : "",
 			fmtId(findTypeByOid(tinfo, numTypes, finfo[i].prorettype)),
-			(finfo[i].lang == INTERNALlanguageId) ? finfo[i].prosrc :
-			(finfo[i].lang == ClanguageId) ? finfo[i].probin :
-		  (finfo[i].lang == SQLlanguageId) ? finfo[i].prosrc : "unknown",
-			(finfo[i].lang == INTERNALlanguageId) ? "INTERNAL" :
-			(finfo[i].lang == ClanguageId) ? "C" :
-			(finfo[i].lang == SQLlanguageId) ? "SQL" : "unknown");
+			func_def, func_lang);
 
 	fputs(q, fout);
 
@@ -2504,102 +2611,97 @@ dumpTables(FILE *fout, TableInfo *tblinfo, int numTables,
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)))
 		{
 
-			/* Dump VIEW relations also !-) */
+			/* Skip VIEW relations */
+			/*
 			if (isViewRule(tblinfo[i].relname))
+				continue;
+			*/
+
+			parentRels = tblinfo[i].parentRels;
+			numParents = tblinfo[i].numParents;
+
+			becomeUser(fout, tblinfo[i].usename);
+
+			sprintf(q, "CREATE TABLE %s (", fmtId(tblinfo[i].relname));
+			actual_atts = 0;
+			for (j = 0; j < tblinfo[i].numatts; j++)
 			{
-				becomeUser(fout, tblinfo[i].usename);
-
-				sprintf(q, "CREATE VIEW %s AS %s\n", 
-					fmtId(tblinfo[i].relname),
-					tblinfo[i].viewdef);
-			}
-			else
-			{
-				parentRels = tblinfo[i].parentRels;
-				numParents = tblinfo[i].numParents;
-
-				becomeUser(fout, tblinfo[i].usename);
-
-				sprintf(q, "CREATE TABLE %s (", fmtId(tblinfo[i].relname));
-				actual_atts = 0;
-				for (j = 0; j < tblinfo[i].numatts; j++)
+				if (tblinfo[i].inhAttrs[j] == 0)
 				{
-					if (tblinfo[i].inhAttrs[j] == 0)
+
+					/* Show lengths on bpchar and varchar */
+					if (!strcmp(tblinfo[i].typnames[j], "bpchar"))
 					{
-
-						/* Show lengths on bpchar and varchar */
-						if (!strcmp(tblinfo[i].typnames[j], "bpchar"))
-						{
-							sprintf(q, "%s%s%s char", 
-									q, 
-									(actual_atts > 0) ? ", " : "",
-									fmtId(tblinfo[i].attnames[j]));
-
-							sprintf(q, "%s(%d)", 
-									q, 
-									tblinfo[i].atttypmod[j] - VARHDRSZ);
-							actual_atts++;
-						}
-						else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
-						{
-							sprintf(q, "%s%s%s %s",
-									q,
-									(actual_atts > 0) ? ", " : "",
-									fmtId(tblinfo[i].attnames[j]),
-									tblinfo[i].typnames[j]);
-
-							sprintf(q, "%s(%d)",
-									q,
-									tblinfo[i].atttypmod[j] - VARHDRSZ);
-							actual_atts++;
-						}
-						else
-						{
-							strcpy(id1, fmtId(tblinfo[i].attnames[j]));
-							strcpy(id2, fmtId(tblinfo[i].typnames[j]));
-							sprintf(q, "%s%s%s %s",
-									q,
-									(actual_atts > 0) ? ", " : "",
-									id1,
-									id2);
-							actual_atts++;
-						}
-						if (tblinfo[i].adef_expr[j] != NULL)
-							sprintf(q, "%s DEFAULT %s", q, tblinfo[i].adef_expr[j]);
-						if (tblinfo[i].notnull[j])
-							sprintf(q, "%s NOT NULL", q);
-					}
-				}
-
-				/* put the CONSTRAINTS inside the table def */
-				for (k = 0; k < tblinfo[i].ncheck; k++)
-				{
-					sprintf(q, "%s%s %s",
-							q,
-							(actual_atts + k > 0) ? ", " : "",
-							tblinfo[i].check_expr[k]);
-				}
-
-				strcat(q, ")");
-
-				if (numParents > 0)
-				{
-					sprintf(q, "%s inherits ( ", q);
-					for (k = 0; k < numParents; k++)
-					{
-						sprintf(q, "%s%s%s",
+						sprintf(q, "%s%s%s char",
 								q,
-								(k > 0) ? ", " : "",
-								fmtId(parentRels[k]));
-					}
-					strcat(q, ")");
-				}
-				strcat(q, ";\n");
-			} /* end of if view ... else .... */
+								(actual_atts > 0) ? ", " : "",
+								fmtId(tblinfo[i].attnames[j]));
 
+						sprintf(q, "%s(%d)",
+								q,
+								tblinfo[i].atttypmod[j] - VARHDRSZ);
+						actual_atts++;
+					}
+					else if (!strcmp(tblinfo[i].typnames[j], "varchar"))
+					{
+						sprintf(q, "%s%s%s %s",
+								q,
+								(actual_atts > 0) ? ", " : "",
+								fmtId(tblinfo[i].attnames[j]),
+								tblinfo[i].typnames[j]);
+
+						sprintf(q, "%s(%d)",
+								q,
+								tblinfo[i].atttypmod[j] - VARHDRSZ);
+						actual_atts++;
+					}
+					else
+					{
+						strcpy(id1, fmtId(tblinfo[i].attnames[j]));
+						strcpy(id2, fmtId(tblinfo[i].typnames[j]));
+						sprintf(q, "%s%s%s %s",
+								q,
+								(actual_atts > 0) ? ", " : "",
+								id1,
+								id2);
+						actual_atts++;
+					}
+					if (tblinfo[i].adef_expr[j] != NULL)
+						sprintf(q, "%s DEFAULT %s", q, tblinfo[i].adef_expr[j]);
+					if (tblinfo[i].notnull[j])
+						sprintf(q, "%s NOT NULL", q);
+				}
+			}
+
+			/* put the CONSTRAINTS inside the table def */
+			for (k = 0; k < tblinfo[i].ncheck; k++)
+			{
+				sprintf(q, "%s%s %s",
+						q,
+						(actual_atts + k > 0) ? ", " : "",
+						tblinfo[i].check_expr[k]);
+			}
+
+			strcat(q, ")");
+
+			if (numParents > 0)
+			{
+				sprintf(q, "%s inherits ( ", q);
+				for (k = 0; k < numParents; k++)
+				{
+					sprintf(q, "%s%s%s",
+							q,
+							(k > 0) ? ", " : "",
+							fmtId(parentRels[k]));
+				}
+				strcat(q, ")");
+			}
+
+			strcat(q, ";\n");
 			fputs(q, fout);
 			if (acls)
 				dumpACL(fout, tblinfo[i]);
+
 		}
 	}
 }
@@ -2744,7 +2846,7 @@ dumpIndices(FILE *fout, IndInfo *indinfo, int numIndices,
 			if (funcname)
 			{
 				sprintf(q, "%s %s (%s) %s );\n",
-						q, funcname, attlist, fmtId(classname[0]));
+						q, fmtId(funcname), attlist, fmtId(classname[0]));
 				free(funcname);
 				free(classname[0]);
 			}
@@ -3035,6 +3137,75 @@ dumpTriggers(FILE *fout, const char *tablename,
 			becomeUser(fout, tblinfo[i].usename);
 			fputs(tblinfo[i].triggers[j], fout);
 		}
+	}
+}
+
+
+static void
+dumpRules(FILE *fout, const char *tablename,
+			TableInfo *tblinfo, int numTables)
+{
+	PGresult   	*res;
+	int		nrules;
+	int		i,
+			t;
+	char		query[MAXQUERYLEN];
+
+	int		i_definition;
+
+	if (g_verbose)
+		fprintf(stderr, "%s dumping out rules %s\n",
+				g_comment_start, g_comment_end);
+
+	/*
+	 * For each table we dump
+	 */
+	for (t = 0; t < numTables; t++)
+	{
+		if (tablename && strcmp(tblinfo[t].relname, tablename))
+			continue;
+		res = PQexec(g_conn, "begin");
+		if (!res ||
+			PQresultStatus(res) != PGRES_COMMAND_OK)
+		{
+			fprintf(stderr, "BEGIN command failed\n");
+			exit_nicely(g_conn);
+		}
+		PQclear(res);
+
+		/*
+		 * Get all rules defined for this table
+		 */
+		sprintf(query, "SELECT pg_get_ruledef(pg_rewrite.rulename) "
+				"AS definition FROM pg_rewrite, pg_class "
+				"WHERE pg_class.relname = '%s' "
+				"AND pg_rewrite.ev_class = pg_class.oid "
+				"ORDER BY pg_rewrite.oid",
+				tblinfo[t].relname);
+		res = PQexec(g_conn, query);
+		if (!res ||
+			PQresultStatus(res) != PGRES_TUPLES_OK)
+		{
+			fprintf(stderr, "dumpRules(): SELECT failed for table %s\n",
+					tblinfo[t].relname);
+			exit_nicely(g_conn);
+		}
+
+		nrules = PQntuples(res);
+		i_definition = PQfnumber(res, "definition");
+
+		/*
+		 * Dump them out
+		 */
+		for (i = 0; i < nrules; i++)
+		{
+			fprintf(fout, "%s\n", PQgetvalue(res, i, i_definition));
+		}
+
+		PQclear(res);
+
+		res = PQexec(g_conn, "end");
+		PQclear(res);
 	}
 }
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.22 1998/10/02 16:27:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.23 1998/10/06 22:14:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -243,6 +243,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		Form_pg_attribute	attr;
 		char			*attname;
 		int			i;
+		char			expected_name[NAMEDATALEN + 5];
 
 		/*
 		 * So there cannot be INSTEAD NOTHING, ...
@@ -269,7 +270,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 		/*
 		 * ... the targetlist of the SELECT action must
-		 * exactly match the event relation ...
+		 * exactly match the event relation, ...
 		 */
 		event_relation = heap_openr(event_obj->relname);
 		if (event_relation == NULL)
@@ -295,8 +296,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 		}
 
 		/*
-		 * ... and final there must not be another ON SELECT
-		 * rule already.
+		 * ... there must not be another ON SELECT
+		 * rule already ...
 		 */
 		if (event_relation->rd_rules != NULL) {
 			for (i = 0; i < event_relation->rd_rules->numLocks; i++) {
@@ -309,6 +310,15 @@ DefineQueryRewrite(RuleStmt *stmt)
 		}
 
 		heap_close(event_relation);
+
+		/*
+		 * ... and finally the rule must be named _RETviewname.
+		 */
+		sprintf(expected_name, "_RET%s", event_obj->relname);
+		if (strcmp(expected_name, stmt->rulename) != 0) {
+			elog(ERROR, "view rule for %s must be named %s",
+				event_obj->relname, expected_name);
+		}
 	}
 
 	/*
