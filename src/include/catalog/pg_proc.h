@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.104 1999/09/30 14:54:23 wieck Exp $
+ * $Id: pg_proc.h,v 1.105 1999/10/11 06:28:28 inoue Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1559,6 +1559,13 @@ DATA(insert OID = 1290 (  _bpchar		   PGUID 11 f t t 2 f 1014 "1014 23" 100 0 0 
 DESCR("truncate _char()");
 DATA(insert OID = 1291 (  _varchar		   PGUID 11 f t t 2 f 1015 "1015 23" 100 0 0 100  _varchar - ));
 DESCR("truncate _varchar()");
+
+DATA(insert OID = 1292 ( tideq			   PGUID 11 f t f 2 f 16 "27 27" 100 0 0 100  tideq - ));
+DESCR("equal");
+DATA(insert OID = 1293 ( currtid		   PGUID 11 f t f 2 f 27 "26 27" 100 0 0 100  currtid_byreloid - ));
+DESCR("latest tid of a tuple");
+DATA(insert OID = 1294 ( currtid2		   PGUID 11 f t f 2 f 27 "25 27" 100 0 0 100  currtid_byrelname - ));
+DESCR("latest tid of a tuple");
 
 DATA(insert OID = 1297 (  timestamp_in	   PGUID 11 f t f 1 f 1296 "0" 100 0 0 100	timestamp_in - ));
 DESCR("(internal)");

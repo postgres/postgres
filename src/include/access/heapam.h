@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.46 1999/09/18 19:08:13 tgl Exp $
+ * $Id: heapam.h,v 1.47 1999/10/11 06:28:29 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,6 +256,7 @@ extern void heap_rescan(HeapScanDesc scan, bool scanFromEnd, ScanKey key);
 extern void heap_endscan(HeapScanDesc scan);
 extern HeapTuple heap_getnext(HeapScanDesc scandesc, int backw);
 extern void heap_fetch(Relation relation, Snapshot snapshot, HeapTuple tup, Buffer *userbuf);
+extern ItemPointer heap_get_latest_tid(Relation relation, Snapshot snapshot, ItemPointer tid);
 extern Oid	heap_insert(Relation relation, HeapTuple tup);
 extern int	heap_delete(Relation relation, ItemPointer tid, ItemPointer ctid);
 extern int heap_replace(Relation relation, ItemPointer otid, HeapTuple tup,

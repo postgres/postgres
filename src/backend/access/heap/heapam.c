@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.55 1999/09/24 00:23:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.56 1999/10/11 06:28:27 inoue Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1084,6 +1084,95 @@ heap_fetch(Relation relation,
 		 */
 		*userbuf = buffer;
 	}
+}
+
+/* ----------------
+ *	heap_get_latest_tid -  get the latest tid of a specified tuple
+ *
+ * ----------------
+ */
+ItemPointer
+heap_get_latest_tid(Relation relation,
+		   Snapshot snapshot,
+		   ItemPointer tid)
+{
+	ItemId		lp;
+	Buffer		buffer;
+	PageHeader	dp;
+	OffsetNumber	offnum;
+	HeapTupleData	tp;
+	HeapTupleHeader	t_data;
+	ItemPointerData	ctid;
+	bool		invalidBlock,linkend;
+
+	/* ----------------
+	 *	get the buffer from the relation descriptor
+	 *	Note that this does a buffer pin.
+	 * ----------------
+	 */
+
+	buffer = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
+
+	if (!BufferIsValid(buffer))
+		elog(ERROR, "heap_get_latest_tid: %s relation: ReadBuffer(%lx) failed",
+			 &relation->rd_rel->relname, (long) tid);
+
+	LockBuffer(buffer, BUFFER_LOCK_SHARE);
+
+	/* ----------------
+	 *	get the item line pointer corresponding to the requested tid
+	 * ----------------
+	 */
+	dp = (PageHeader) BufferGetPage(buffer);
+	offnum = ItemPointerGetOffsetNumber(tid);
+	invalidBlock = true;
+	if (!PageIsNew(dp))
+	{
+		lp = PageGetItemId(dp, offnum);
+		if (ItemIdIsUsed(lp))
+			invalidBlock = false;
+	}
+	if (invalidBlock)
+	{	
+		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+		ReleaseBuffer(buffer);
+		return NULL;
+	} 
+
+	/* ----------------
+	 *	more sanity checks
+	 * ----------------
+	 */
+
+	t_data = tp.t_data = (HeapTupleHeader) PageGetItem((Page) dp, lp);
+	tp.t_len = ItemIdGetLength(lp);
+	tp.t_self = *tid;
+	ctid = tp.t_data->t_ctid;
+
+	/* ----------------
+	 *	check time qualification of tid
+	 * ----------------
+	 */
+
+	HeapTupleSatisfies(&tp, relation, buffer, dp,
+					   snapshot, 0, (ScanKey) NULL);
+
+	linkend = true;
+	if ((t_data->t_infomask & HEAP_XMAX_COMMITTED) && 
+		!ItemPointerEquals(tid, &ctid))
+		linkend = false;
+
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+	ReleaseBuffer(buffer);
+
+	if (tp.t_data == NULL)
+	{
+		if (linkend)
+			return NULL;
+		return heap_get_latest_tid(relation, snapshot, &ctid); 
+	}
+
+	return tid;
 }
 
 /* ----------------

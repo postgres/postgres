@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.88 1999/10/03 23:55:37 tgl Exp $
+ * $Id: builtins.h,v 1.89 1999/10/11 06:28:28 inoue Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -399,8 +399,14 @@ extern float64 gistsel(Oid operatorObjectId, Oid indrelid, AttrNumber attributeN
 extern float64 gistnpage(Oid operatorObjectId, Oid indrelid, AttrNumber attributeNumber, char *constValue, int32 constFlag, int32 nIndexKeys, Oid indexrelid);
 
 /* tid.c */
-extern ItemPointer tidin(char *str);
+extern ItemPointer tidin(const char *str);
 extern char *tidout(ItemPointer itemPtr);
+extern bool tideq(ItemPointer,ItemPointer);
+extern bool tidne(ItemPointer,ItemPointer);
+extern text *tid_text(ItemPointer);
+extern ItemPointer text_tid(const text *); 
+extern ItemPointer currtid_byreloid(Oid relOid, ItemPointer); 
+extern ItemPointer currtid_byrelname(const text* relName, ItemPointer); 
 
 /* timestamp.c */
 extern time_t timestamp_in(const char *timestamp_str);
