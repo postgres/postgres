@@ -1,28 +1,22 @@
-all: test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init
+# $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Makefile,v 1.31 2001/08/11 10:52:09 petere Exp $
 
-#LDFLAGS=-g -I /usr/local/pgsql/include -L/usr/local/pgsql/lib -lecpg -lpq
-LDFLAGS=-g -I ../include
-LDLIBS=-L ../lib -lecpg -L ../../libpq -lpq
+subdir = src/interfaces/ecpg/test
+top_builddir = ../../../..
+include $(top_builddir)/src/Makefile.global
 
-#ECPG=/usr/local/pgsql/bin/ecpg -I../include
-ECPG=../preproc/ecpg -I../include
+override CPPFLAGS := -I$(srcdir)/../include $(CPPFLAGS)
 
-.SUFFIXES: .pgc .c
+ECPG = ../preproc/ecpg -I$(srcdir)/../include
 
-test1: test1.c
-test2: test2.c
-test3: test3.c
-test4: test4.c
-perftest: perftest.c
-dyntest: dyntest.c
-dyntest2: dyntest2.c
-test_code100: test_code100.c
-test_notice: test_notice.c
-test_init: test_init.c
-test_text: test_text.c
+TESTS = test1 test2 test3 test4 perftest dyntest dyntest2 test_notice test_code100 test_init
 
-.pgc.c:
-	$(ECPG) $? 
+all: $(TESTS)
+
+%: %.o
+	$(CC) $(CFLAGS) $(LDFLAGS) -L../lib -L../../libpq $^ $(LIBS) -lecpg -lpq -o $@
+
+%.c: %.pgc
+	$(ECPG) $<
 
 clean:
-	rm -f test1 test2 test3 test4 perftest *.c log dyntest dyntest2 test_notice test_code100 test_init test_text *.exe
+	rm -f $(TESTS) $(TESTS:%=%.o) $(TESTS:%=%.c) log

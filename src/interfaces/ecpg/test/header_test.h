@@ -1,7 +1,9 @@
 exec sql include sqlca;
 
-void
-Finish(msg)
+#include "stdlib.h"
+
+static void
+Finish(char *msg)
 {
 	fprintf(stderr, "Error in statement '%s':\n", msg);
 	sqlprint();
@@ -18,7 +20,7 @@ Finish(msg)
 	exit(-1);
 }
 
-void
+static void
 warn(void)
 {
 	fprintf(stderr, "Warning: At least one column was truncated\n");

@@ -2,16 +2,18 @@
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.7 2000/10/16 19:53:04 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/test/Attic/dyntest.pgc,v 1.8 2001/08/11 10:52:09 petere Exp $
  */
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 exec sql include sql3types;
 exec sql include sqlca;
 
-void error()
-{  printf("#%d:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
+static void error()
+{  printf("#%ld:%s\n",sqlca.sqlcode,sqlca.sqlerrm.sqlerrmc);
    exit(1);
 }
 
@@ -60,11 +62,12 @@ int main(int argc,char **argv)
      if (!done) 
      {  printf("%d Columns\n",COUNT);
         for (INDEX=1;INDEX<=COUNT;++INDEX)
-        {	exec sql get descriptor MYDESC value :INDEX 
+        {	exec sql get descriptor MYDESC value :INDEX
         		:TYPE = type,
         		:LENGTH = length, :OCTET_LENGTH=octet_length,
         		:PRECISION = precision, :SCALE=scale,
-        		:NULLABLE=nullable, :NAME=name;
+        		:NULLABLE=nullable, :NAME=name,
+        		:RETURNED_OCTET_LENGTH=returned_octet_length;
 			printf("%s ",NAME);
         	switch (TYPE)
         	{  case SQL3_BOOLEAN: 

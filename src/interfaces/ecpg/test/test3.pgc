@@ -5,6 +5,9 @@ exec sql include header_test;
 
 exec sql type str is varchar[10];
 
+#include <stdlib.h>
+#include <string.h>
+
 int
 main ()
 {
@@ -28,7 +31,7 @@ exec sql end declare section;
 	exec sql declare cur cursor for
 	       select name, born, age, married, children from meskes;
 
-	char msg[128], command[128];
+	char msg[128];
 	FILE *dbgs;
 
 	if ((dbgs = fopen("log", "w")) != NULL)
@@ -63,7 +66,7 @@ exec sql end declare section;
 		exec sql fetch from cur into :personal:ind_personal, :married:ind_married, :children:ind_children;
 		printf("%8.8s", personal.name.arr);
 		if (ind_personal.ind_birth.born >= 0)
-			printf(", born %d", personal.birth.born);
+			printf(", born %ld", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
 		if (ind_married >= 0)
@@ -93,7 +96,7 @@ exec sql end declare section;
 		exec sql fetch in prep into :personal:ind_personal, :married:ind_married, :children:ind_children;
 		printf("%8.8s", personal.name.arr);
 		if (ind_personal.ind_birth.born >= 0)
-			printf(", born %d", personal.birth.born);
+			printf(", born %ld", personal.birth.born);
 		if (ind_personal.ind_birth.age >= 0)
 			printf(", age = %d", personal.birth.age);
 		if (ind_married >= 0)
