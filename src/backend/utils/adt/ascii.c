@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * ascii.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.3 2000/08/05 14:59:17 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/ascii.c,v 1.4 2000/08/26 21:56:23 tgl Exp $
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
  *
@@ -38,18 +38,21 @@ Datum
 to_ascii_encname(PG_FUNCTION_ARGS)
 {
 	multibyte_error();
+	return 0;					/* keep compiler quiet */
 }
 
 Datum 
 to_ascii_enc(PG_FUNCTION_ARGS)
 {
 	multibyte_error();
+	return 0;					/* keep compiler quiet */
 }
 
 Datum 
 to_ascii_default(PG_FUNCTION_ARGS)
 {
 	multibyte_error();
+	return 0;					/* keep compiler quiet */
 }
 
 
