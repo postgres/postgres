@@ -89,6 +89,12 @@ public class LargeObject
     this.fd = fp.getInteger("lo_open",args);
   }
 
+  /* Release large object resources during garbage cleanup */
+  protected void finalize() throws SQLException
+  {
+    close();
+  }
+
   /**
    * @return the OID of this LargeObject
    */
