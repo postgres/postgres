@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Mon Jun 24 23:35:08 EDT 2002
+   Last updated: Thu Jul 4 15:25:57 EDT 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -706,6 +706,8 @@
 
    Indexes do not require as much overhead, but do contain the data that
    is being indexed, so they can be large also.
+   
+   NULLs are stored in bitmaps, so they use very little space.
    
     4.7) How do I find out what tables, indexes, databases, and users are
     defined?
