@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.5 2002/04/19 23:13:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.6 2002/04/22 21:46:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -771,10 +771,10 @@ AlterTableAlterColumnFlags(Oid myrelid,
 {
 	Relation	rel;
 	int			newtarget = 1;
-	char        newstorage = 'x';
-	char        *storagemode;
+	char        newstorage = 'p';
 	Relation	attrelation;
 	HeapTuple	tuple;
+	Form_pg_attribute attrtuple;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
 
@@ -813,9 +813,11 @@ AlterTableAlterColumnFlags(Oid myrelid,
 	else if (*flagType == 'M')
 	{
 		/* STORAGE */
-		Assert(IsA(flagValue, Value));
+		char        *storagemode;
 
+		Assert(IsA(flagValue, String));
 		storagemode = strVal(flagValue);
+
 		if (strcasecmp(storagemode, "plain") == 0)
 			newstorage = 'p';
 		else if (strcasecmp(storagemode, "external") == 0)
@@ -872,26 +874,30 @@ AlterTableAlterColumnFlags(Oid myrelid,
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
+	attrtuple = (Form_pg_attribute) GETSTRUCT(tuple);
 
-	if (((Form_pg_attribute) GETSTRUCT(tuple))->attnum < 0)
+	if (attrtuple->attnum < 0)
 		elog(ERROR, "ALTER TABLE: cannot change system attribute \"%s\"",
 			 colName);
 	/*
 	 * Now change the appropriate field
 	 */
 	if (*flagType == 'S')
-		((Form_pg_attribute) GETSTRUCT(tuple))->attstattarget = newtarget;
-	else
+		attrtuple->attstattarget = newtarget;
+	else if (*flagType == 'M')
 	{
-		if ((newstorage == 'p') ||
-			(((Form_pg_attribute) GETSTRUCT(tuple))->attlen == -1))
-			((Form_pg_attribute) GETSTRUCT(tuple))->attstorage = newstorage;
+		/*
+		 * safety check: do not allow toasted storage modes unless column
+		 * datatype is TOAST-aware.  We assume the datatype's typstorage
+		 * will be 'p' if and only if it ain't TOAST-aware.
+		 */
+		if (newstorage == 'p' || get_typstorage(attrtuple->atttypid) != 'p')
+			attrtuple->attstorage = newstorage;
 		else
-		{
-			elog(ERROR,
-				 "ALTER TABLE: Fixed-length columns can only have storage \"plain\"");
-		}
+			elog(ERROR, "ALTER TABLE: Column datatype %s can only have storage \"plain\"",
+				 format_type_be(attrtuple->atttypid));
 	}
+
 	simple_heap_update(attrelation, &tuple->t_self, tuple);
 
 	/* keep system catalog indices current */
