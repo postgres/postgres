@@ -258,7 +258,7 @@ Document service capability, and add sample file (Bruce)
 Make PQsetdbLogin() have the same defaults as PQconnectdb() (Tom)
 Allow libpq to cleanly fail when result sets are too large (Tom)
 Improve performance of PGunescapeBytea() (Ben Lamb)
-Allow threaded with --enable-thread-safety (Lee Kindness, Philip Yarra)
+Allow thread-safe libpq with --enable-thread-safety (Lee Kindness, Philip Yarra)
 Allow pqInternalNotice() to accept a format string and args instead of
   just a preformatted message (Tom, Sean Chittenden)
 Allow control SSL negotiation with sslmode values "disable", "allow", 
@@ -281,7 +281,7 @@ Miscellaneous Interfaces
 Prevent possible memory leak or core dump during libpgtcl shutdown (Tom)
 Add ecpg Informix compatibility (Michael)
 Add ecpg DECIMAL type that is fixed length, for Informix (Michael)
-Allow threaded ecpg with --enable-thread-safety (Lee Kindness, Bruce)
+Allow thread-safe ecpg with --enable-thread-safety (Lee Kindness, Bruce)
 Allow client interfaces to compile under MinGW/win32 (Bruce)
 Move python client interface to http://www.pygresql.org (Marc)
 
