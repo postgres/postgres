@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.194 2004/03/10 20:10:26 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.195 2004/03/19 19:13:26 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -6881,15 +6881,19 @@ SELECT has_table_privilege('myschema.mytable', 'select');
     arguments are analogous to <function>has_table_privilege</function>.
     When specifying a function by a text string rather than by OID,
     the allowed input is the same as for the <type>regprocedure</> data type.
-    The desired access privilege type must currently evaluate to
+    The desired access privilege type must evaluate to
     <literal>EXECUTE</literal>.
+    An example is:
+<programlisting>
+SELECT has_function_privilege('joeuser', 'myfunc(int, text)', 'execute');
+</programlisting>
    </para>
 
    <para>
     <function>has_language_privilege</function> checks whether a user
     can access a procedural language in a particular way.  The possibilities
     for its arguments are analogous to <function>has_table_privilege</function>.
-    The desired access privilege type must currently evaluate to
+    The desired access privilege type must evaluate to
     <literal>USAGE</literal>.
    </para>
 
