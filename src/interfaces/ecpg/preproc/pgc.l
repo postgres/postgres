@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.114 2003/05/30 08:39:01 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.115 2003/06/16 16:58:10 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -618,7 +618,7 @@ cppline			{space}*#(.*\\{space})+.*
 						char* endptr;
 
 						errno = 0;
-						yylval.ival = strtol((char *)yytext,&endptr,16);
+						yylval.ival = strtoul((char *)yytext,&endptr,16);
 						if (*endptr != '\0' || errno == ERANGE)
 						{
 							errno = 0;
