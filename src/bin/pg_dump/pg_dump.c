@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.156 2000/07/04 16:57:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.157 2000/07/06 18:39:39 wieck Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -3202,10 +3202,9 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 		{
 
 			/* Skip VIEW relations */
-
-			/*
-			 * if (isViewRule(tblinfo[i].relname)) continue;
-			 */
+			
+			/* if (isViewRule(tblinfo[i].relname)) continue; */
+			
 
 			parentRels = tblinfo[i].parentRels;
 			numParents = tblinfo[i].numParents;

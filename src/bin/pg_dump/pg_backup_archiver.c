@@ -118,7 +118,7 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 	    _printTocEntry(AH, te, ropt);
 
 	if (AH->PrintTocDataPtr != NULL && (reqs & 2) != 0) {
-#ifndef HAVE_ZLIB
+#ifndef HAVE_LIBZ
 	    if (AH->compression != 0)
 		die_horribly("%s: Unable to restore data from a compressed archive\n", progname);
 #endif
@@ -415,11 +415,14 @@ int archprintf(Archive* AH, const char *fmt, ...)
 {
     char 	*p = NULL;
     va_list 	ap;
-    int		bSize = strlen(fmt) + 1024;
+    int		bSize = strlen(fmt) + 256;
     int		cnt = -1;
 
     va_start(ap, fmt);
-    while (cnt < 0) {
+
+    /* This is paranoid: deal with the possibility that vsnprintf is willing to ignore trailing null */
+    /* or returns > 0 even if string does not fit. It may be the case that it returns cnt = bufsize */ 
+    while (cnt < 0 || cnt >= (bSize-1) ) {
 	if (p != NULL) free(p);
 	bSize *= 2;
 	if ((p = malloc(bSize)) == NULL)
@@ -443,7 +446,7 @@ int archprintf(Archive* AH, const char *fmt, ...)
 OutputContext SetOutput(ArchiveHandle* AH, char *filename, int compression)
 {
     OutputContext	sav;
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     char		fmode[10];
 #endif
     int			fn = 0;
@@ -464,7 +467,7 @@ OutputContext SetOutput(ArchiveHandle* AH, char *filename, int compression)
     }
 
     /* If compression explicitly requested, use gzopen */
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     if (compression != 0)
     {
 	sprintf(fmode, "wb%d", compression);
@@ -482,7 +485,7 @@ OutputContext SetOutput(ArchiveHandle* AH, char *filename, int compression)
 	    AH->OF = fopen(filename, PG_BINARY_W);
 	}
 	AH->gzOut = 0;
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     }
 #endif
 
@@ -509,11 +512,13 @@ int ahprintf(ArchiveHandle* AH, const char *fmt, ...)
 {
     char 	*p = NULL;
     va_list 	ap;
-    int		bSize = strlen(fmt) + 1024; /* Should be enough */
+    int		bSize = strlen(fmt) + 256; /* Should be enough */
     int		cnt = -1;
 
     va_start(ap, fmt);
-    while (cnt < 0) {
+    /* This is paranoid: deal with the possibility that vsnprintf is willing to ignore trailing null */
+    /* or returns > 0 even if string does not fit. It may be the case that it returns cnt = bufsize */ 
+    while (cnt < 0 || cnt >= (bSize - 1) ) {
 	if (p != NULL) free(p);
 	bSize *= 2;
 	p = (char*)malloc(bSize);
@@ -681,6 +686,7 @@ int _discoverArchiveFormat(ArchiveHandle* AH)
     int		cnt;
     int		wantClose = 0;
 
+
     if (AH->fSpec) {
 	wantClose = 1;
 	fh = fopen(AH->fSpec, PG_BINARY_R);
@@ -693,16 +699,11 @@ int _discoverArchiveFormat(ArchiveHandle* AH)
 
     cnt = fread(sig, 1, 5, fh);
 
-    if (cnt != 5) {
-        fprintf(stderr, "Archiver: input file is too short, or is unreadable\n");
-	exit(1);
-    }
+    if (cnt != 5)
+        die_horribly("%s: input file is too short, or is unreadable\n", progname);
 
     if (strncmp(sig, "PGDMP", 5) != 0)
-    {
-	fprintf(stderr, "Archiver: input file does not appear to be a valid archive\n");
-	exit(1);
-    }
+	die_horribly("%s: input file does not appear to be a valid archive\n", progname);
 
     AH->vmaj = fgetc(fh);
     AH->vmin = fgetc(fh);
@@ -739,7 +740,7 @@ static ArchiveHandle* _allocAH(const char* FileSpec, ArchiveFormat fmt,
 				int compression, ArchiveMode mode) {
     ArchiveHandle*	AH;
 
-    AH = (ArchiveHandle*)malloc(sizeof(ArchiveHandle));
+    AH = (ArchiveHandle*)calloc(1, sizeof(ArchiveHandle));
     if (!AH) 
 	die_horribly("Archiver: Could not allocate archive handle\n");
 
@@ -759,7 +760,7 @@ static ArchiveHandle* _allocAH(const char* FileSpec, ArchiveFormat fmt,
     AH->currToc = NULL;
     AH->currUser = "";
 
-    AH->toc = (TocEntry*)malloc(sizeof(TocEntry));
+    AH->toc = (TocEntry*)calloc(1, sizeof(TocEntry));
     if (!AH->toc)
 	die_horribly("Archiver: Could not allocate TOC header\n");
 
@@ -996,7 +997,7 @@ void WriteHead(ArchiveHandle* AH)
     (*AH->WriteBytePtr)(AH, AH->intSize);
     (*AH->WriteBytePtr)(AH, AH->format);
 
-#ifndef HAVE_ZLIB
+#ifndef HAVE_LIBZ
     if (AH->compression != 0)
 	fprintf(stderr, "%s: WARNING - requested compression not available in this installation - "
 		    "archive will be uncompressed \n", progname);
@@ -1016,43 +1017,43 @@ void ReadHead(ArchiveHandle* AH)
     char	tmpMag[7];
     int		fmt;
 
-    if (AH->readHeader)
-	return;
+    if (!AH->readHeader) {
 
-    (*AH->ReadBufPtr)(AH, tmpMag, 5);
+	(*AH->ReadBufPtr)(AH, tmpMag, 5);
 
-    if (strncmp(tmpMag,"PGDMP", 5) != 0)
-	die_horribly("Archiver: Did not fing magic PGDMP in file header\n");
+	if (strncmp(tmpMag,"PGDMP", 5) != 0)
+	    die_horribly("Archiver: Did not fing magic PGDMP in file header\n");
 
-    AH->vmaj = (*AH->ReadBytePtr)(AH);
-    AH->vmin = (*AH->ReadBytePtr)(AH);
+	AH->vmaj = (*AH->ReadBytePtr)(AH);
+	AH->vmin = (*AH->ReadBytePtr)(AH);
 
-    if (AH->vmaj > 1 || ( (AH->vmaj == 1) && (AH->vmin > 0) ) ) /* Version > 1.0 */
-    {
-	AH->vrev = (*AH->ReadBytePtr)(AH);
-    } else {
-	AH->vrev = 0;
+	if (AH->vmaj > 1 || ( (AH->vmaj == 1) && (AH->vmin > 0) ) ) /* Version > 1.0 */
+	{
+	    AH->vrev = (*AH->ReadBytePtr)(AH);
+	} else {
+	    AH->vrev = 0;
+	}
+
+	AH->version = ( (AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev ) * 256 + 0;
+
+
+	if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
+	    die_horribly("Archiver: unsupported version (%d.%d) in file header\n", AH->vmaj, AH->vmin);
+
+	AH->intSize = (*AH->ReadBytePtr)(AH);
+	if (AH->intSize > 32)
+	    die_horribly("Archiver: sanity check on integer size (%d) failes\n", AH->intSize);
+
+	if (AH->intSize > sizeof(int))
+	    fprintf(stderr, "\nWARNING: Backup file was made on a machine with larger integers, "
+			    "some operations may fail\n");
+
+	fmt = (*AH->ReadBytePtr)(AH);
+
+	if (AH->format != fmt)
+	    die_horribly("Archiver: expected format (%d) differs from format found in file (%d)\n", 
+			    AH->format, fmt);
     }
-
-    AH->version = ( (AH->vmaj * 256 + AH->vmin) * 256 + AH->vrev ) * 256 + 0;
-
-
-    if (AH->version < K_VERS_1_0 || AH->version > K_VERS_MAX)
-	die_horribly("Archiver: unsupported version (%d.%d) in file header\n", AH->vmaj, AH->vmin);
-
-    AH->intSize = (*AH->ReadBytePtr)(AH);
-    if (AH->intSize > 32)
-	die_horribly("Archiver: sanity check on integer size (%d) failes\n", AH->intSize);
-
-    if (AH->intSize > sizeof(int))
-	fprintf(stderr, "\nWARNING: Backup file was made on a machine with larger integers, "
-			"some operations may fail\n");
-
-    fmt = (*AH->ReadBytePtr)(AH);
-
-    if (AH->format != fmt)
-	die_horribly("Archiver: expected format (%d) differs from format found in file (%d)\n", 
-			AH->format, fmt);
 
     if (AH->version >= K_VERS_1_2)
     {
@@ -1061,8 +1062,9 @@ void ReadHead(ArchiveHandle* AH)
 	AH->compression = Z_DEFAULT_COMPRESSION;
     }
 
-#ifndef HAVE_ZLIB
-    fprintf(stderr, "%s: WARNING - archive is compressed - any data will not be available\n", progname);
+#ifndef HAVE_LIBZ
+    if (AH->compression != 0)
+	fprintf(stderr, "%s: WARNING - archive is compressed - any data will not be available\n", progname);
 #endif
 
 }

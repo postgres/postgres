@@ -108,7 +108,7 @@ int main(int argc, char **argv)
 	char		*progname;
 	int		c;
 	Archive*    	AH;
-	char		*fileSpec;
+	char		*fileSpec = NULL;
 
 	opts = NewRestoreOptions();
 

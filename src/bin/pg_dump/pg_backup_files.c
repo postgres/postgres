@@ -54,7 +54,7 @@ typedef struct {
 } lclContext;
 
 typedef struct {
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     gzFile	*FH;
 #else
     FILE	*FH;
@@ -133,7 +133,7 @@ static void	_ArchiveEntry(ArchiveHandle* AH, TocEntry* te)
 
     ctx = (lclTocEntry*)malloc(sizeof(lclTocEntry));
     if (te->dataDumper) {
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 	if (AH->compression == 0) {
 	    sprintf(fn, "%d.dat", te->id);
 	} else {
@@ -192,7 +192,7 @@ static void	_StartData(ArchiveHandle* AH, TocEntry* te)
 
     sprintf(fmode, "wb%d", AH->compression);
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     tctx->FH = gzopen(tctx->filename, fmode);
 #else
     tctx->FH = fopen(tctx->filename, PG_BINARY_W);
@@ -229,7 +229,7 @@ static void	_PrintTocData(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt)
     if (!tctx->filename) 
 	return;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     AH->FH = gzopen(tctx->filename,"rb");
 #else
     AH->FH = fopen(tctx->filename,PG_BINARY_R);

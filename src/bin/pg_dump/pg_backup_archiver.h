@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 #include <zlib.h>
 #define GZCLOSE(fh) gzclose(fh)
 #define GZWRITE(p, s, n, fh) gzwrite(fh, p, n * s)
@@ -54,7 +54,7 @@ typedef z_stream *z_streamp;
 
 #define K_VERS_MAJOR 1
 #define K_VERS_MINOR 2 
-#define K_VERS_REV 0 
+#define K_VERS_REV 1 
 
 /* Some important version numbers (checked in code) */
 #define K_VERS_1_0 (( (1 * 256 + 0) * 256 + 0) * 256 + 0)

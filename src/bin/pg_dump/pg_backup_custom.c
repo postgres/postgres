@@ -200,7 +200,7 @@ static void	_StartData(ArchiveHandle* AH, TocEntry* te)
 
     WriteInt(AH, te->id); /* For sanity check */
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 
     if (AH->compression < 0 || AH->compression > 9) {
 	AH->compression = Z_DEFAULT_COMPRESSION;
@@ -230,7 +230,7 @@ static int	_DoDeflate(ArchiveHandle* AH, lclContext* ctx, int flush)
 {
     z_streamp   zp = ctx->zp;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     char*	out = ctx->zlibOut;
     int		res = Z_OK;
 
@@ -268,14 +268,14 @@ static int	_DoDeflate(ArchiveHandle* AH, lclContext* ctx, int flush)
 	    ctx->filePos += zp->avail_in;
 	    zp->avail_in = 0;
 	} else {
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 	    if (flush == Z_FINISH)
 		res = Z_STREAM_END;
 #endif
 	}
 
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     }
 
     return res;
@@ -305,7 +305,7 @@ static void	_EndData(ArchiveHandle* AH, TocEntry* te)
     lclContext*		ctx = (lclContext*)AH->formatData;
     lclTocEntry*	tctx = (lclTocEntry*) te->formatData;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     z_streamp		zp = ctx->zp;
     int			res;
 
@@ -385,7 +385,7 @@ static void	_PrintData(ArchiveHandle* AH)
     char*	in = ctx->zlibIn;
     int		cnt;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 
     int		res;
     char*	out = ctx->zlibOut;
@@ -424,7 +424,7 @@ static void	_PrintData(ArchiveHandle* AH)
 	zp->next_in = in;
 	zp->avail_in = blkLen;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 
 	if (AH->compression != 0) {
 
@@ -443,14 +443,14 @@ static void	_PrintData(ArchiveHandle* AH)
 	    ahwrite(in, 1, zp->avail_in, AH);
 	    zp->avail_in = 0;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 	}
 #endif
 
 	blkLen = ReadInt(AH);
     }
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
     if (AH->compression != 0) 
     {
 	zp->next_in = NULL;
