@@ -11220,7 +11220,7 @@ case 468:
 case 469:
 #line 2621 "preproc.y"
 {
-					yyval.str = yyvsp[0].str
+					yyval.str = yyvsp[0].str;
 				;
     break;}
 case 470:

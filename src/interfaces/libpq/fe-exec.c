@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.76 1999/03/14 16:46:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.77 1999/03/14 18:12:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -467,7 +467,6 @@ static void
 parseInput(PGconn *conn)
 {
 	char		id;
-        static int      pendingT = 0;
 
 	/*
 	 * Loop to parse successive complete messages available in the buffer.
@@ -536,16 +535,7 @@ parseInput(PGconn *conn)
 														   PGRES_COMMAND_OK);
 					if (pqGets(conn->result->cmdStatus, CMDSTATUS_LEN, conn))
 						return;
-                                        if (pendingT) {
-                                            /* Check the returned message */
-                                            /* if it's a SELECT or FETCH in a pendingT case, */
-                                            /* then it probably means no rows returned. */
-                                            /* We clear pendingT in that case. */
-                                            if ((strncmp(conn->result->cmdStatus, "SELECT", 6) == 0) ||
-                                                (strncmp(conn->result->cmdStatus, "FETCH",  5) == 0))
-                                                pendingT = 0;
-                                        }
-					if (!pendingT) conn->asyncStatus = PGASYNC_READY;
+					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'E':		/* error return */
 					if (pqGets(conn->errorMessage, ERROR_MSG_LENGTH, conn))
@@ -555,11 +545,10 @@ parseInput(PGconn *conn)
 					/* and build an error result holding the error message */
 					conn->result = PQmakeEmptyPGresult(conn,
 													   PGRES_FATAL_ERROR);
-					if (!pendingT) conn->asyncStatus = PGASYNC_READY;
+					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'Z':		/* backend is ready for new query */
 					conn->asyncStatus = PGASYNC_IDLE;
-                                        pendingT = 0;
 					break;
 				case 'I':		/* empty query */
 					/* read and throw away the closing '\0' */
@@ -574,7 +563,7 @@ parseInput(PGconn *conn)
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
 														   PGRES_EMPTY_QUERY);
-					if (!pendingT) conn->asyncStatus = PGASYNC_READY;
+					conn->asyncStatus = PGASYNC_READY;
 					break;
 				case 'K':		/* secret key data from the backend */
 
@@ -595,15 +584,11 @@ parseInput(PGconn *conn)
 					break;
 				case 'T':		/* row descriptions (start of query
 								 * results) */
-                                        if (pendingT) {
-                                            DONOTICE(conn, "Got second 'T' message!\n");
-                                        }
 					if (conn->result == NULL)
 					{
 						/* First 'T' in a query sequence */
 						if (getRowDescriptions(conn))
 							return;
-                                                pendingT = 1;
 					}
 					else
 					{
@@ -615,13 +600,11 @@ parseInput(PGconn *conn)
 						 * We stop parsing until the application accepts
 						 * the current result.
 						 */
-                                                pendingT = 0;
 						conn->asyncStatus = PGASYNC_READY;
 						return;
 					}
 					break;
 				case 'D':		/* ASCII data tuple */
-                                        pendingT = 0;
 					if (conn->result != NULL)
 					{
 						/* Read another tuple of a normal query response */
@@ -639,7 +622,6 @@ parseInput(PGconn *conn)
 					}
 					break;
 				case 'B':		/* Binary data tuple */
-                                        pendingT = 0;
 					if (conn->result != NULL)
 					{
 						/* Read another tuple of a normal query response */
@@ -657,15 +639,12 @@ parseInput(PGconn *conn)
 					}
 					break;
 				case 'G':		/* Start Copy In */
-                                        pendingT = 0;
 					conn->asyncStatus = PGASYNC_COPY_IN;
 					break;
 				case 'H':		/* Start Copy Out */
-                                        pendingT = 0;
 					conn->asyncStatus = PGASYNC_COPY_OUT;
 					break;
 				default:
-                                        pendingT = 0;
 					sprintf(conn->errorMessage,
 					"unknown protocol character '%c' read from backend.  "
 					"(The protocol character is the first character the "
