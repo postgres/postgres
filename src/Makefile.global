@@ -7,13 +7,13 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.41 1996/10/21 06:56:57 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.42 1996/10/23 07:33:04 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
 #    override the default setting, create a Makefile.custom in this
 #    directory and put your defines there. (Makefile.custom is included
-#    at the end of this file.)
+#    near the end of this file.)
 #
 #    If you change any of these defines you probably have to 
 #	gmake clean; gmake
@@ -53,10 +53,8 @@
 #	next		-	Motorola MC68K or Intel x86 on NeXTSTEP 3.2
 #  but these are guaranteed not to work as of yet.
 #
-#  XXX	Note that you MUST set PORTNAME here (or on the command line) so 
-#	that port-dependent variables are correctly set within this file.
-#	Makefile.custom does not take effect (for ifeq purposes) 
-#	until after this file is processed!
+#  	Note that portname is defined here to be UNDEFINED to remind you
+#	to change it in Makefile.custom.
 #  make sure that you have no whitespaces after the PORTNAME setting
 #  or the makefiles can get confused
 PORTNAME=	UNDEFINED
@@ -217,6 +215,17 @@ X11_INCDIR = /usr/include
 X11_LIBDIR = /usr/lib
 X11_LIB = -lX11 -lsocket -lnsl
 
+##############################################################################
+#
+# Customization.
+#
+# This includes your local customizations if Makefile.custom exists
+# in the source directory.  This file doesn't exist in the original
+# distribution so that it doesn't get overwritten when you upgrade.
+ifneq ($(wildcard $(MKDIR)/../Makefile.custom), )
+include $(MKDIR)/../Makefile.custom
+endif
+
 # include port specific rules and variables. For instance:
 #
 # signal(2) handling - this is here because it affects some of 
@@ -238,6 +247,17 @@ X11_LIB = -lX11 -lsocket -lnsl
 #
 -include $(MKDIR)/port/postgres.mk.$(PORTNAME)
 
+##############################################################################
+#
+# Miscellaneous configuration
+#
+
+srcdir=		$(SRCDIR)
+includedir=	$(HEADERDIR)
+objdir=		obj
+
+
+# This goes here so that customization in Makefile.custom is effective
 ##############################################################################
 #
 # Flags for CC and LD. (depend on CDEBUG and PROFILE)
@@ -276,25 +296,4 @@ CFLAGS+= -DPOSTPORT='"$(POSTPORT)"'
 CFLAGS+= $(CFLAGS_BE)
 LDADD+= $(LDADD_BE)
 LDFLAGS+= $(LDFLAGS_BE)
-
-##############################################################################
-#
-# Miscellaneous configuration
-#
-
-srcdir=		$(SRCDIR)
-includedir=	$(HEADERDIR)
-objdir=		obj
-
-
-##############################################################################
-#
-# Customization.
-#
-# This includes your local customizations if Makefile.custom exists
-# in the source directory.  This file doesn't exist in the original
-# distribution so that it doesn't get overwritten when you upgrade.
-ifneq ($(wildcard $(MKDIR)/../Makefile.custom), )
-include $(MKDIR)/../Makefile.custom
-endif
 
