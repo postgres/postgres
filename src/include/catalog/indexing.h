@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.23 1999/07/20 17:14:07 momjian Exp $
+ * $Id: indexing.h,v 1.24 1999/09/29 16:06:14 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,27 +25,29 @@
 #define Num_pg_class_indices	2
 #define Num_pg_attrdef_indices	1
 #define Num_pg_relcheck_indices 1
-#define Num_pg_trigger_indices	1
+#define Num_pg_trigger_indices	3
 #define Num_pg_description_indices	1
 
 
 /*
  * Names of indices on system catalogs
  */
-#define AttributeNameIndex "pg_attribute_relid_attnam_index"
-#define AttributeNumIndex  "pg_attribute_relid_attnum_index"
-#define AttributeRelidIndex "pg_attribute_attrelid_index"
-#define ProcedureOidIndex  "pg_proc_oid_index"
-#define ProcedureNameIndex "pg_proc_proname_narg_type_index"
-#define ProcedureSrcIndex  "pg_proc_prosrc_index"
-#define TypeOidIndex	   "pg_type_oid_index"
-#define TypeNameIndex	   "pg_type_typname_index"
-#define ClassOidIndex	   "pg_class_oid_index"
-#define ClassNameIndex	   "pg_class_relname_index"
-#define AttrDefaultIndex   "pg_attrdef_adrelid_index"
-#define RelCheckIndex	   "pg_relcheck_rcrelid_index"
-#define TriggerRelidIndex  "pg_trigger_tgrelid_index"
-#define DescriptionObjIndex "pg_description_objoid_index"
+#define AttributeNameIndex		"pg_attribute_relid_attnam_index"
+#define AttributeNumIndex		"pg_attribute_relid_attnum_index"
+#define AttributeRelidIndex		"pg_attribute_attrelid_index"
+#define ProcedureOidIndex		"pg_proc_oid_index"
+#define ProcedureNameIndex		"pg_proc_proname_narg_type_index"
+#define ProcedureSrcIndex		"pg_proc_prosrc_index"
+#define TypeOidIndex			"pg_type_oid_index"
+#define TypeNameIndex			"pg_type_typname_index"
+#define ClassOidIndex			"pg_class_oid_index"
+#define ClassNameIndex			"pg_class_relname_index"
+#define AttrDefaultIndex		"pg_attrdef_adrelid_index"
+#define RelCheckIndex			"pg_relcheck_rcrelid_index"
+#define TriggerRelidIndex		"pg_trigger_tgrelid_index"
+#define TriggerConstrNameIndex	"pg_trigger_tgconstrname_index"
+#define TriggerConstrRelidIndex	"pg_trigger_tgconstrrelid_index"
+#define DescriptionObjIndex		"pg_description_objoid_index"
 
 extern char *Name_pg_attr_indices[];
 extern char *Name_pg_proc_indices[];
@@ -114,6 +116,8 @@ DECLARE_INDEX(pg_attrdef_adrelid_index on pg_attrdef using btree(adrelid oid_ops
 DECLARE_INDEX(pg_relcheck_rcrelid_index on pg_relcheck using btree(rcrelid oid_ops));
 
 DECLARE_INDEX(pg_trigger_tgrelid_index on pg_trigger using btree(tgrelid oid_ops));
+DECLARE_INDEX(pg_trigger_tgconstrname_index on pg_trigger using btree(tgconstrname name_ops));
+DECLARE_INDEX(pg_trigger_tgconstrrelid_index on pg_trigger using btree(tgconstrrelid oid_ops));
 
 DECLARE_INDEX(pg_description_objoid_index on pg_description using btree(objoid oid_ops));
 

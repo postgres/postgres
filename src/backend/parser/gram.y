@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.103 1999/09/28 14:49:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.104 1999/09/29 16:06:06 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -132,7 +132,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
 		UpdateStmt, InsertStmt, select_clause, SelectStmt, NotifyStmt, DeleteStmt, 
 		ClusterStmt, ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
-		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt
+		CreateUserStmt, AlterUserStmt, DropUserStmt, RuleActionStmt,
+		ConstraintsSetStmt,
 
 %type <str>		opt_database1, opt_database2, location, encoding
 
@@ -145,6 +146,9 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	user_group_list, user_group_clause
 
 %type <boolean>	TriggerActionTime, TriggerForSpec, PLangTrusted
+
+%type <ival>	OptConstrTrigDeferrable, OptConstrTrigInitdeferred
+%type <str>		OptConstrFromTable
 
 %type <str>		TriggerEvents, TriggerFuncArg
 
@@ -254,6 +258,10 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <list>	key_actions, key_action
 %type <str>		key_match, key_reference
 
+%type <list>	constraints_set_list
+%type <list>	constraints_set_namelist
+%type <boolean>	constraints_set_mode
+
 /*
  * If you make any token changes, remember to:
  *		- use "yacc -d" and update parse.h
@@ -274,8 +282,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CASE, CAST, CHAR, CHARACTER, CHECK, CLOSE,
 		COALESCE, COLLATE, COLUMN, COMMIT,
-		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
-		CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
+		CONSTRAINT, CONSTRAINTS, CREATE, CROSS, CURRENT, CURRENT_DATE,
+		CURRENT_TIME, CURRENT_TIMESTAMP, CURRENT_USER, CURSOR,
 		DAY_P, DECIMAL, DECLARE, DEFAULT, DELETE, DESC, DISTINCT, DOUBLE, DROP,
 		ELSE, END_TRANS, EXCEPT, EXECUTE, EXISTS, EXTRACT,
 		FALSE_P, FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
@@ -295,7 +303,11 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
 /* Keywords (in SQL3 reserved words) */
-%token	TRIGGER
+%token	DEFERRABLE, DEFERRED,
+		IMMEDIATE, INITIALLY,
+		PENDANT,
+		RESTRICT,
+		TRIGGER
 
 /* Keywords (in SQL92 non-reserved words) */
 %token	COMMITTED, SERIALIZABLE, TYPE_P
@@ -415,6 +427,7 @@ stmt :	  AddAttrStmt
 		| VariableSetStmt
 		| VariableShowStmt
 		| VariableResetStmt
+		| ConstraintsSetStmt
 		;
 
 /*****************************************************************************
@@ -626,6 +639,49 @@ VariableResetStmt:	RESET ColId
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = "XactIsoLevel";
 					$$ = (Node *) n;
+				}
+		;
+
+
+ConstraintsSetStmt:	SET CONSTRAINTS constraints_set_list constraints_set_mode
+				{
+					ConstraintsSetStmt *n = makeNode(ConstraintsSetStmt);
+					n->constraints = $3;
+					n->deferred    = $4;
+					$$ = (Node *) n;
+				}
+		;
+
+
+constraints_set_list:	ALL
+				{
+					$$ = NIL;
+				}
+		| constraints_set_namelist
+				{
+					$$ = $1;
+				}
+		;
+
+
+constraints_set_namelist:	IDENT
+				{
+					$$ = lappend(NIL, $1);
+				}
+		| constraints_set_namelist ',' IDENT
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+
+constraints_set_mode:	DEFERRED
+				{
+					$$ = true;
+				}
+		| IMMEDIATE
+				{
+					$$ = false;
 				}
 		;
 
@@ -1434,6 +1490,54 @@ CreateTrigStmt:  CREATE TRIGGER name TriggerActionTime TriggerEvents ON
 					n->before = $4;
 					n->row = $8;
 					memcpy (n->actions, $5, 4);
+					n->lang = NULL;		/* unused */
+					n->text = NULL;		/* unused */
+					n->attr = NULL;		/* unused */
+					n->when = NULL;		/* unused */
+
+					n->isconstraint  = false;
+					n->deferrable    = false;
+					n->initdeferred  = false;
+					n->constrrelname = NULL;
+					$$ = (Node *)n;
+				}
+		| CREATE CONSTRAINT TRIGGER name AFTER TriggerOneEvent ON
+				relation_name OptConstrFromTable 
+				OptConstrTrigDeferrable OptConstrTrigInitdeferred
+				FOR EACH ROW EXECUTE PROCEDURE name '(' TriggerFuncArgs ')'
+				{
+					CreateTrigStmt *n = makeNode(CreateTrigStmt);
+					n->trigname = $4;
+					n->relname = $8;
+					n->funcname = $17;
+					n->args = $19;
+					n->before = false;
+					n->row = true;
+					n->actions[0] = $6;
+					n->actions[1] = '\0';
+					n->lang = NULL;		/* unused */
+					n->text = NULL;		/* unused */
+					n->attr = NULL;		/* unused */
+					n->when = NULL;		/* unused */
+
+					/*
+					 * Check that the DEFERRABLE and INITIALLY combination
+					 * makes sense
+					 */
+					n->isconstraint  = true;
+					if ($11 == 1)
+					{
+						if ($10 == 0)
+							elog(ERROR, "INITIALLY DEFERRED constraint "
+										"cannot be NOT DEFERRABLE");
+						n->deferrable = true;
+						n->initdeferred = true;
+					} else {
+						n->deferrable = ($10 == 1);
+						n->initdeferred = false;
+					}
+
+					n->constrrelname = $9;
 					$$ = (Node *)n;
 				}
 		;
@@ -1501,6 +1605,44 @@ TriggerFuncArg:  ICONST
 				}
 			| Sconst						{  $$ = $1; }
 			| IDENT							{  $$ = $1; }
+		;
+
+OptConstrFromTable:			/* Empty */
+				{
+					$$ = "";
+				}
+		| FROM relation_name
+				{
+					$$ = $2;
+				}
+		;
+
+OptConstrTrigDeferrable:	/* Empty */
+				{
+					$$ = -1;
+				}
+		| DEFERRABLE
+				{
+					$$ = 1;
+				}
+		| NOT DEFERRABLE
+				{
+					$$ = 0;
+				}
+		;
+
+OptConstrTrigInitdeferred:	/* Empty */
+				{
+					$$ = -1;
+				}
+		| INITIALLY DEFERRED
+				{
+					$$ = 1;
+				}
+		| INITIALLY IMMEDIATE
+				{
+					$$ = 0;
+				}
 		;
 
 DropTrigStmt:  DROP TRIGGER name ON relation_name
@@ -5080,10 +5222,13 @@ ColId:  IDENT							{ $$ = $1; }
 		| BEFORE						{ $$ = "before"; }
 		| CACHE							{ $$ = "cache"; }
 		| COMMITTED						{ $$ = "committed"; }
+		| CONSTRAINTS					{ $$ = "constraints"; }
 		| CREATEDB						{ $$ = "createdb"; }
 		| CREATEUSER					{ $$ = "createuser"; }
 		| CYCLE							{ $$ = "cycle"; }
 		| DATABASE						{ $$ = "database"; }
+		| DEFERRABLE					{ $$ = "deferrable"; }
+		| DEFERRED						{ $$ = "deferred"; }
 		| DELIMITERS					{ $$ = "delimiters"; }
 		| DOUBLE						{ $$ = "double"; }
 		| EACH							{ $$ = "each"; }
@@ -5092,9 +5237,11 @@ ColId:  IDENT							{ $$ = $1; }
 		| FORWARD						{ $$ = "forward"; }
 		| FUNCTION						{ $$ = "function"; }
 		| HANDLER						{ $$ = "handler"; }
+		| IMMEDIATE						{ $$ = "immediate"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
 		| INHERITS						{ $$ = "inherits"; }
+		| INITIALLY						{ $$ = "initially"; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
 		| INSTEAD						{ $$ = "instead"; }
 		| ISNULL						{ $$ = "isnull"; }
@@ -5119,12 +5266,14 @@ ColId:  IDENT							{ $$ = $1; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
 		| PASSWORD						{ $$ = "password"; }
+		| PENDANT						{ $$ = "pendant"; }
 		| PRIOR							{ $$ = "prior"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
 		| PROCEDURAL					{ $$ = "procedural"; }
 		| READ							{ $$ = "read"; }
 		| RELATIVE						{ $$ = "relative"; }
 		| RENAME						{ $$ = "rename"; }
+		| RESTRICT						{ $$ = "restrict"; }
 		| RETURNS						{ $$ = "returns"; }
 		| ROW							{ $$ = "row"; }
 		| RULE							{ $$ = "rule"; }

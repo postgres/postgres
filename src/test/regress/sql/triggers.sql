@@ -88,34 +88,40 @@ DROP TABLE pkeys;
 DROP TABLE fkeys;
 DROP TABLE fkeys2;
 
-create table dup17 (x int4);
-
-create trigger dup17_before 
-	before insert on dup17
-	for each row 
-	execute procedure 
-	funny_dup17 ()
-;
-
-insert into dup17 values (17);
-select count(*) from dup17;
-insert into dup17 values (17);
-select count(*) from dup17;
-
-drop trigger dup17_before on dup17;
-
-create trigger dup17_after
-	after insert on dup17
-	for each row 
-	execute procedure 
-	funny_dup17 ()
-;
-insert into dup17 values (13);
-select count(*) from dup17 where x = 13;
-insert into dup17 values (13);
-select count(*) from dup17 where x = 13;
-
-DROP TABLE dup17;
+-- -- I've disabled the funny_dup17 test because the new semantics
+-- -- of AFTER ROW triggers, which get now fired at the end of a
+-- -- query allways, cause funny_dup17 to enter an endless loop.
+-- --
+-- --      Jan
+--
+-- create table dup17 (x int4);
+-- 
+-- create trigger dup17_before 
+-- 	before insert on dup17
+-- 	for each row 
+-- 	execute procedure 
+-- 	funny_dup17 ()
+-- ;
+-- 
+-- insert into dup17 values (17);
+-- select count(*) from dup17;
+-- insert into dup17 values (17);
+-- select count(*) from dup17;
+-- 
+-- drop trigger dup17_before on dup17;
+-- 
+-- create trigger dup17_after
+-- 	after insert on dup17
+-- 	for each row 
+-- 	execute procedure 
+-- 	funny_dup17 ()
+-- ;
+-- insert into dup17 values (13);
+-- select count(*) from dup17 where x = 13;
+-- insert into dup17 values (13);
+-- select count(*) from dup17 where x = 13;
+-- 
+-- DROP TABLE dup17;
 
 create sequence ttdummy_seq increment 10 start 0 minvalue 0;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.61 1999/09/23 17:02:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.62 1999/09/29 16:06:08 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"commit", COMMIT},
 	{"committed", COMMITTED},
 	{"constraint", CONSTRAINT},
+	{"constraints", CONSTRAINTS},
 	{"copy", COPY},
 	{"create", CREATE},
 	{"createdb", CREATEDB},
@@ -79,6 +80,8 @@ static ScanKeyword ScanKeywords[] = {
 	{"decimal", DECIMAL},
 	{"declare", DECLARE},
 	{"default", DEFAULT},
+	{"deferrable", DEFERRABLE},
+	{"deferred", DEFERRED},
 	{"delete", DELETE},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
@@ -112,10 +115,12 @@ static ScanKeyword ScanKeywords[] = {
 	{"handler", HANDLER},
 	{"having", HAVING},
 	{"hour", HOUR_P},
+	{"immediate", IMMEDIATE},
 	{"in", IN},
 	{"increment", INCREMENT},
 	{"index", INDEX},
 	{"inherits", INHERITS},
+	{"initially", INITIALLY},
 	{"inner", INNER_P},
 	{"insensitive", INSENSITIVE},
 	{"insert", INSERT},
@@ -177,6 +182,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"outer", OUTER_P},
 	{"partial", PARTIAL},
 	{"password", PASSWORD},
+	{"pendant", PENDANT},
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
@@ -190,6 +196,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"relative", RELATIVE},
 	{"rename", RENAME},
 	{"reset", RESET},
+	{"restrict", RESTRICT},
 	{"returns", RETURNS},
 	{"revoke", REVOKE},
 	{"right", RIGHT},

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.129 1999/09/24 00:24:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.130 1999/09/29 16:06:10 wieck Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -44,6 +44,7 @@
 #endif
 
 #include "commands/async.h"
+#include "commands/trigger.h"
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
@@ -1484,8 +1485,15 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.129 $ $Date: 1999/09/24 00:24:52 $\n");
+		puts("$Revision: 1.130 $ $Date: 1999/09/29 16:06:10 $\n");
 	}
+
+	/* ----------------
+	 * Initialize the deferred trigger manager
+	 * ----------------
+	 */
+	if (DeferredTriggerInit() != 0)
+		ExitPostgres(1);
 
 	/* ----------------
 	 *	POSTGRES main processing loop begins here
@@ -1608,6 +1616,12 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 					StartTransactionCommand();
 
 					pg_exec_query(parser_input->data);
+
+					/*
+					 * Invoke IMMEDIATE constraint triggers
+					 *
+					 */
+					DeferredTriggerEndQuery();
 
 					if (ShowStats)
 						ShowUsage();

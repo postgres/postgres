@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.67 1999/09/27 15:47:54 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.68 1999/09/29 16:06:11 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -783,6 +783,13 @@ ProcessUtility(Node *parsetree,
 			CHECK_IF_ABORTED();
 
 			LockTableCommand((LockStmt *) parsetree);
+			break;
+
+		case T_ConstraintsSetStmt:
+			PS_SET_STATUS(commandTag = "SET CONSTRAINTS");
+			CHECK_IF_ABORTED();
+
+			DeferredTriggerSetState((ConstraintsSetStmt *) parsetree);
 			break;
 
 

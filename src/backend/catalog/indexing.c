@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.45 1999/09/18 19:06:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.46 1999/09/29 16:05:56 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,9 @@ char	   *Name_pg_attrdef_indices[Num_pg_attrdef_indices] = {AttrDefaultIndex};
 
 char	   *Name_pg_relcheck_indices[Num_pg_relcheck_indices] = {RelCheckIndex};
 
-char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] = {TriggerRelidIndex};
+char	   *Name_pg_trigger_indices[Num_pg_trigger_indices] = {TriggerRelidIndex,
+	TriggerConstrNameIndex,
+	TriggerConstrRelidIndex};
 
 
 static HeapTuple CatalogIndexFetchTuple(Relation heapRelation,

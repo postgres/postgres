@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.98 1999/09/24 00:24:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.99 1999/09/29 16:05:56 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1468,8 +1468,7 @@ heap_destroy_with_catalog(char *relname)
 		RelationRemoveRules(rid);
 
 	/* triggers */
-	if (rel->rd_rel->reltriggers > 0)
-		RelationRemoveTriggers(rel);
+	RelationRemoveTriggers(rel);
 
 	/* ----------------
 	 *	delete attribute tuples

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.26 1999/09/18 19:08:25 tgl Exp $
+ * $Id: rel.h,v 1.27 1999/09/29 16:06:28 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,10 +42,15 @@ typedef LockInfoData *LockInfo;
 
 typedef struct Trigger
 {
+	Oid			tgoid;
 	char	   *tgname;
 	Oid			tgfoid;
 	FmgrInfo	tgfunc;
 	int16		tgtype;
+	bool		tgenabled;
+	bool		tgisconstraint;
+	bool		tgdeferrable;
+	bool		tginitdeferred;
 	int16		tgnargs;
 	int16		tgattr[8];
 	char	  **tgargs;

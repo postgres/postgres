@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.24 1999/07/15 23:04:24 momjian Exp $
+ * $Id: tqual.h,v 1.25 1999/09/29 16:06:28 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@ typedef SnapshotData *Snapshot;
 
 #define SnapshotNow					((Snapshot) 0x0)
 #define SnapshotSelf				((Snapshot) 0x1)
+#define SnapshotAny					((Snapshot) 0x2)
 
 extern Snapshot SnapshotDirty;
 extern Snapshot QuerySnapshot;
@@ -37,6 +38,7 @@ extern Snapshot SerializableSnapshot;
 
 #define IsSnapshotNow(snapshot)		((Snapshot) snapshot == SnapshotNow)
 #define IsSnapshotSelf(snapshot)	((Snapshot) snapshot == SnapshotSelf)
+#define IsSnapshotAny(snapshot)		((Snapshot) snapshot == SnapshotAny)
 #define IsSnapshotDirty(snapshot)	((Snapshot) snapshot == SnapshotDirty)
 
 extern TransactionId HeapSpecialTransactionId;
@@ -55,18 +57,22 @@ extern CommandId HeapSpecialCommandId;
 		false \
 	: \
 	( \
-		(IsSnapshotSelf(snapshot) || heapisoverride()) ? \
-			HeapTupleSatisfiesItself((tuple)->t_data) \
+		(IsSnapshotAny(snapshot) || heapisoverride()) ? \
+			true \
 		: \
-			((IsSnapshotDirty(snapshot)) ? \
-				HeapTupleSatisfiesDirty((tuple)->t_data) \
+			((IsSnapshotSelf(snapshot) || heapisoverride()) ? \
+				HeapTupleSatisfiesItself((tuple)->t_data) \
 			: \
-				((IsSnapshotNow(snapshot)) ? \
-					HeapTupleSatisfiesNow((tuple)->t_data) \
+				((IsSnapshotDirty(snapshot)) ? \
+					HeapTupleSatisfiesDirty((tuple)->t_data) \
 				: \
-					HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \
-				) \
+					((IsSnapshotNow(snapshot)) ? \
+						HeapTupleSatisfiesNow((tuple)->t_data) \
+					: \
+						HeapTupleSatisfiesSnapshot((tuple)->t_data, snapshot) \
+					) \
 			) \
+		) \
 	) \
 )
 

@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_attribute.h,v 1.49 1999/08/09 02:45:56 tgl Exp $
+ * $Id: pg_attribute.h,v 1.50 1999/09/29 16:06:16 wieck Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -447,9 +447,16 @@ DATA(insert OID = 0 ( 1219 tgrelid			26 0  4   1 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 tgname			19 0  NAMEDATALEN  2 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 tgfoid			26 0  4   3 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 tgtype			21 0  2   4 0 -1 -1 t f s f f));
-DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   5 0 -1 -1 t f s f f));
-DATA(insert OID = 0 ( 1219 tgattr			22 0 16   6 0 -1 -1 f f i f f));
-DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   7 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgenabled		16 0  1   5 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1219 tgisconstraint	16 0  1   6 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1219 tgconstrname		19 0  NAMEDATALEN  7 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgconstrrelid	26 0  4   8 0 -1 -1 t f i f f));
+
+DATA(insert OID = 0 ( 1219 tgdeferrable		16 0  1   9 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1219 tginitdeferred	16 0  1   10 0 -1 -1 t f c f f));
+DATA(insert OID = 0 ( 1219 tgnargs			21 0  2   11 0 -1 -1 t f s f f));
+DATA(insert OID = 0 ( 1219 tgattr			22 0 16   12 0 -1 -1 f f i f f));
+DATA(insert OID = 0 ( 1219 tgargs			17 0 -1   13 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 ctid				27 0  6  -1 0 -1 -1 f f i f f));
 DATA(insert OID = 0 ( 1219 oid				26 0  4  -2 0 -1 -1 t f i f f));
 DATA(insert OID = 0 ( 1219 xmin				28 0  4  -3 0 -1 -1 t f i f f));
