@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.85 2002/10/24 23:35:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.86 2003/01/07 22:23:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -690,7 +690,7 @@ pqSendSome(PGconn *conn)
 					/*
 					 * We used to close the socket here, but that's a bad
 					 * idea since there might be unread data waiting
-					 * (typically, a WARNING message from the backend
+					 * (typically, a NOTICE message from the backend
 					 * telling us it's committing hara-kiri...).  Leave
 					 * the socket open until pqReadData finds no more data
 					 * can be read.

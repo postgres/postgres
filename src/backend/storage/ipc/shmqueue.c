@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.22 2002/08/27 03:56:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.23 2003/01/07 22:23:17 tgl Exp $
  *
  * NOTES
  *
@@ -28,10 +28,8 @@
 #include "storage/shmem.h"
 
 /*#define SHMQUEUE_DEBUG*/
+
 #ifdef SHMQUEUE_DEBUG
-
-#define SHMQUEUE_DEBUG_ELOG WARNING
-
 static void dumpQ(SHM_QUEUE *q, char *s);
 #endif
 
@@ -231,7 +229,7 @@ dumpQ(SHM_QUEUE *q, char *s)
 	}
 	snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
 	strcat(buf, elem);
-	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
+	elog(DEBUG1, "%s: %s", s, buf);
 
 	snprintf(buf, sizeof(buf), "q nexts: %lx", MAKE_OFFSET(q));
 	count = 0;
@@ -251,7 +249,7 @@ dumpQ(SHM_QUEUE *q, char *s)
 	}
 	snprintf(elem, sizeof(elem), "--->%lx", MAKE_OFFSET(q));
 	strcat(buf, elem);
-	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
+	elog(DEBUG1, "%s: %s", s, buf);
 }
 
 #endif   /* SHMQUEUE_DEBUG */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.123 2002/11/10 00:14:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.124 2003/01/07 22:23:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -813,7 +813,7 @@ PQsendQuery(PGconn *conn, const char *query)
  * handleSendFailure: try to clean up after failure to send command.
  *
  * Primarily, what we want to accomplish here is to process an async
- * WARNING message that the backend might have sent just before it died.
+ * NOTICE message that the backend might have sent just before it died.
  *
  * NOTE: this routine should only be called in PGASYNC_IDLE state.
  */
@@ -831,7 +831,7 @@ handleSendFailure(PGconn *conn)
 
 	/*
 	 * Parse any available input messages.	Since we are in PGASYNC_IDLE
-	 * state, only WARNING and NOTIFY messages will be eaten.
+	 * state, only NOTICE and NOTIFY messages will be eaten.
 	 */
 	parseInput(conn);
 }
@@ -905,7 +905,7 @@ parseInput(PGconn *conn)
 			return;
 
 		/*
-		 * NOTIFY and WARNING messages can happen in any state besides
+		 * NOTIFY and NOTICE messages can happen in any state besides
 		 * COPY OUT; always process them right away.
 		 *
 		 * Most other messages should only be processed while in BUSY state.
