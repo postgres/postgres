@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 24 07:09:37 EDT 2004
+Last updated:		Wed Aug 25 23:09:14 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -148,6 +148,10 @@ Data Types
 * Add GUC variable to allow output of interval values in ISO8601 format
 * -Support composite types as table columns
 * Fix data types where equality comparison isn't intuitive, e.g. box
+* Merge hardwired timezone names with the TZ database; allow either kind
+  everywhere a TZ name is currently taken
+* Allow customization of the known set of TZ names (generalize the
+  present australian_timezones hack)
 
 
 * ARRAYS
