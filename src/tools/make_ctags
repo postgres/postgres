@@ -2,9 +2,9 @@
 trap "rm -f /tmp/$$" 0 1 2 3 15
 rm -f ./tags
 
-if [ "`ctags --version 2>&1 | grep Exuberant`" != "Exuberant" ]
-then	FLAGS="-dt"
-else	FLAGS="--c-types=+dfmstuv"
+if ctags --version 2>&1 | grep Exuberant >/dev/null
+then	FLAGS="--c-types=+dfmstuv"
+else	FLAGS="-dt"
 fi
 
 find `pwd`/ \( -name _deadcode -a -prune \) -o \
