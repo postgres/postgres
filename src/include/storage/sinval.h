@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.17 2001/01/24 19:43:28 momjian Exp $
+ * $Id: sinval.h,v 1.18 2001/02/26 00:50:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,6 @@ extern void InvalidateSharedInvalid(void (*invalFunction) (),
 extern bool DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself);
 extern bool TransactionIdIsInProgress(TransactionId xid);
 extern void GetXmaxRecent(TransactionId *XmaxRecent);
-
+extern int	CountActiveBackends(void);
 
 #endif	 /* SINVAL_H */

@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.30 2001/02/18 04:50:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.31 2001/02/26 00:50:07 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -41,6 +41,7 @@ extern int XLOGbuffers;
 extern int XLOGfiles;
 extern int XLOG_DEBUG;
 extern int CommitDelay;
+extern int CommitSiblings;
 
 extern bool FixBTree;
 
@@ -181,7 +182,7 @@ ConfigureNamesBool[] =
 
 	{"tcpip_socket",            PGC_POSTMASTER, &NetServer,             false},
 	{"ssl",                     PGC_POSTMASTER, &EnableSSL,             false},
-	{"fsync",                   PGC_USERSET,    &enableFsync,           true},
+	{"fsync",                   PGC_SIGHUP,     &enableFsync,           true},
 	{"silent_mode",             PGC_POSTMASTER, &SilentMode,            false},
 
 	{"log_connections",         PGC_SIGHUP,     &Log_connections,       false},
@@ -279,7 +280,7 @@ ConfigureNamesInt[] =
 	 0777, 0000, 0777},
 
 	{"checkpoint_timeout",	PGC_POSTMASTER,			&CheckPointTimeout,
-	 300, 30, 1800},
+	 300, 30, 3600},
 
 	{"wal_buffers",			PGC_POSTMASTER,			&XLOGbuffers,
 	 8, 4, INT_MAX},
@@ -292,6 +293,9 @@ ConfigureNamesInt[] =
 
 	{"commit_delay",		PGC_USERSET,			&CommitDelay,
 	 0, 0, 100000},
+
+	{"commit_siblings",		PGC_USERSET,			&CommitSiblings,
+	 5, 1, 1000},
 
 	{NULL, 0, NULL, 0, 0, 0}
 };

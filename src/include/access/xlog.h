@@ -3,7 +3,7 @@
  *
  * PostgreSQL transaction log manager
  *
- * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.17 2001/01/14 05:08:16 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/include/access/xlog.h,v 1.18 2001/02/26 00:50:07 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -145,5 +145,10 @@ extern void StartupXLOG(void);
 extern void ShutdownXLOG(void);
 extern void CreateCheckPoint(bool shutdown);
 extern void SetThisStartUpID(void);
+
+/* in storage/ipc/sinval.c, but don't want to declare in sinval.h because
+ * we'd have to include xlog.h into that ...
+ */
+extern XLogRecPtr GetUndoRecPtr(void);
 
 #endif	 /* XLOG_H */

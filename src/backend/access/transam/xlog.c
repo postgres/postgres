@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.54 2001/02/18 04:39:42 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.55 2001/02/26 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2095,8 +2095,6 @@ ShutdownXLOG()
 
 	elog(LOG, "database system is shut down");
 }
-
-extern XLogRecPtr	GetUndoRecPtr(void);
 
 void
 CreateCheckPoint(bool shutdown)

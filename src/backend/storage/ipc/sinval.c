@@ -8,15 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.25 2001/01/24 19:43:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.26 2001/02/26 00:50:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-/* #define INVALIDDEBUG 1 */
+#include "postgres.h"
 
 #include <sys/types.h>
-
-#include "postgres.h"
 
 #include "storage/backendid.h"
 #include "storage/proc.h"
@@ -348,10 +346,53 @@ GetSnapshotData(bool serializable)
 }
 
 /*
+ * CountActiveBackends --- count backends (other than myself) that are in
+ *		active transactions.  This is used as a heuristic to decide if
+ *		a pre-XLOG-flush delay is worthwhile during commit.
+ *
+ * An active transaction is something that has written at least one XLOG
+ * record; read-only transactions don't count.  Also, do not count backends
+ * that are blocked waiting for locks, since they are not going to get to
+ * run until someone else commits.
+ */
+int
+CountActiveBackends(void)
+{
+	SISeg	   *segP = shmInvalBuffer;
+	ProcState  *stateP = segP->procState;
+	int			count = 0;
+	int			index;
+
+	/*
+	 * Note: for speed, we don't acquire SInvalLock.  This is a little bit
+	 * bogus, but since we are only testing xrecoff for zero or nonzero,
+	 * it should be OK.  The result is only used for heuristic purposes
+	 * anyway...
+	 */
+	for (index = 0; index < segP->lastBackend; index++)
+	{
+		SHMEM_OFFSET pOffset = stateP[index].procStruct;
+
+		if (pOffset != INVALID_OFFSET)
+		{
+			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+
+			if (proc == MyProc)
+				continue;		/* do not count myself */
+			if (proc->logRec.xrecoff == 0)
+				continue;		/* do not count if not in a transaction */
+			if (proc->waitLock != NULL)
+				continue;		/* do not count if blocked on a lock */
+			count++;
+		}
+	}
+
+	return count;
+}
+
+/*
  * GetUndoRecPtr -- returns oldest PROC->logRec.
  */
-XLogRecPtr	GetUndoRecPtr(void);
-
 XLogRecPtr
 GetUndoRecPtr(void)
 {

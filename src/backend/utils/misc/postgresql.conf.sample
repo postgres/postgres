@@ -109,7 +109,8 @@
 #wal_files = 0 # range 0-64
 #wal_debug = 0 # range 0-16
 #commit_delay = 0 # range 0-100000
-#checkpoint_timeout = 300 # range 30-1800
+#commit_siblings = 5 # range 1-1000
+#checkpoint_timeout = 300 # in seconds, range 30-3600
 
 
 #
