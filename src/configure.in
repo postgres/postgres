@@ -262,6 +262,12 @@ Or do not specify an argument to the option to use the default.])
     AC_MSG_RESULT("disabled")
 )
 
+AC_ARG_WITH(mb,
+    [  --with-mb=<encoding>    this option is obsoleted ], 
+    [
+	    AC_MSG_ERROR([*** --with-mb is not supported anymore. Use --enable-multibyte instead.])
+    ]
+)
 
 dnl We use the default value of 5432 for the DEF_PGPORT value.	If
 dnl we over-ride it with --with-pgport=port then we bypass this piece
