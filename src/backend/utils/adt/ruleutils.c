@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.41 2000/02/15 08:24:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.42 2000/02/20 21:32:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1006,7 +1006,7 @@ get_select_query_def(Query *query, deparse_context *context)
 						appendStringInfo(buf, "%s",
 										 quote_identifier(strVal(lfirst(col))));
 					}
-					appendStringInfo(buf, ")");
+					appendStringInfoChar(buf, ')');
 				}
 			}
 		}
@@ -1127,7 +1127,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 			sep = ", ";
 			get_tle_expr(tle, context);
 		}
-		appendStringInfo(buf, ")");
+		appendStringInfoChar(buf, ')');
 	}
 	else
 		get_select_query_def(query, context);
@@ -1281,7 +1281,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				switch (expr->opType)
 				{
 					case OP_EXPR:
-						appendStringInfo(buf, "(");
+						appendStringInfoChar(buf, '(');
 						if (length(args) == 2)
 						{
 							/* binary operator */
@@ -1320,35 +1320,35 @@ get_rule_expr(Node *node, deparse_context *context)
 									elog(ERROR, "get_rule_expr: bogus oprkind");
 							}
 						}
-						appendStringInfo(buf, ")");
+						appendStringInfoChar(buf, ')');
 						break;
 
 					case OR_EXPR:
-						appendStringInfo(buf, "(");
+						appendStringInfoChar(buf, '(');
 						get_rule_expr((Node *) lfirst(args), context);
 						while ((args = lnext(args)) != NIL)
 						{
 							appendStringInfo(buf, " OR ");
 							get_rule_expr((Node *) lfirst(args), context);
 						}
-						appendStringInfo(buf, ")");
+						appendStringInfoChar(buf, ')');
 						break;
 
 					case AND_EXPR:
-						appendStringInfo(buf, "(");
+						appendStringInfoChar(buf, '(');
 						get_rule_expr((Node *) lfirst(args), context);
 						while ((args = lnext(args)) != NIL)
 						{
 							appendStringInfo(buf, " AND ");
 							get_rule_expr((Node *) lfirst(args), context);
 						}
-						appendStringInfo(buf, ")");
+						appendStringInfoChar(buf, ')');
 						break;
 
 					case NOT_EXPR:
 						appendStringInfo(buf, "(NOT ");
 						get_rule_expr((Node *) lfirst(args), context);
-						appendStringInfo(buf, ")");
+						appendStringInfoChar(buf, ')');
 						break;
 
 					case FUNC_EXPR:
@@ -1373,7 +1373,7 @@ get_rule_expr(Node *node, deparse_context *context)
 					appendStringInfo(buf, "*");
 				else
 					get_rule_expr(aggref->target, context);
-				appendStringInfo(buf, ")");
+				appendStringInfoChar(buf, ')');
 			}
 			break;
 
@@ -1402,6 +1402,28 @@ get_rule_expr(Node *node, deparse_context *context)
 					appendStringInfo(buf, "]");
 				}
 				/* XXX need to do anything with refassgnexpr? */
+			}
+			break;
+
+		case T_RelabelType:
+			{
+				RelabelType *relabel = (RelabelType *) node;
+				HeapTuple	typetup;
+				Form_pg_type typeStruct;
+				char	   *extval;
+
+				appendStringInfoChar(buf, '(');
+				get_rule_expr(relabel->arg, context);
+				typetup = SearchSysCacheTuple(TYPEOID,
+									ObjectIdGetDatum(relabel->resulttype),
+											  0, 0, 0);
+				if (!HeapTupleIsValid(typetup))
+					elog(ERROR, "cache lookup of type %u failed",
+						 relabel->resulttype);
+				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+				extval = pstrdup(NameStr(typeStruct->typname));
+				appendStringInfo(buf, ")::%s", quote_identifier(extval));
+				pfree(extval);
 			}
 			break;
 
@@ -1474,14 +1496,14 @@ get_func_expr(Expr *expr, deparse_context *context)
 	{
 		if (!strcmp(proname, "nullvalue"))
 		{
-			appendStringInfo(buf, "(");
+			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) lfirst(expr->args), context);
 			appendStringInfo(buf, " ISNULL)");
 			return;
 		}
 		if (!strcmp(proname, "nonnullvalue"))
 		{
-			appendStringInfo(buf, "(");
+			appendStringInfoChar(buf, '(');
 			get_rule_expr((Node *) lfirst(expr->args), context);
 			appendStringInfo(buf, " NOTNULL)");
 			return;
@@ -1500,7 +1522,7 @@ get_func_expr(Expr *expr, deparse_context *context)
 		sep = ", ";
 		get_rule_expr((Node *) lfirst(l), context);
 	}
-	appendStringInfo(buf, ")");
+	appendStringInfoChar(buf, ')');
 }
 
 
@@ -1712,13 +1734,13 @@ get_sublink_expr(Node *node, deparse_context *context)
 	Oper	   *oper;
 	bool		need_paren;
 
-	appendStringInfo(buf, "(");
+	appendStringInfoChar(buf, '(');
 
 	if (sublink->lefthand != NIL)
 	{
 		need_paren = (length(sublink->lefthand) > 1);
 		if (need_paren)
-			appendStringInfo(buf, "(");
+			appendStringInfoChar(buf, '(');
 
 		sep = "";
 		foreach(l, sublink->lefthand)
@@ -1731,7 +1753,7 @@ get_sublink_expr(Node *node, deparse_context *context)
 		if (need_paren)
 			appendStringInfo(buf, ") ");
 		else
-			appendStringInfo(buf, " ");
+			appendStringInfoChar(buf, ' ');
 	}
 
 	need_paren = true;
@@ -1768,14 +1790,14 @@ get_sublink_expr(Node *node, deparse_context *context)
 	}
 
 	if (need_paren)
-		appendStringInfo(buf, "(");
+		appendStringInfoChar(buf, '(');
 
 	get_query_def(query, buf, context->rangetables);
 
 	if (need_paren)
 		appendStringInfo(buf, "))");
 	else
-		appendStringInfo(buf, ")");
+		appendStringInfoChar(buf, ')');
 }
 
 /* ----------

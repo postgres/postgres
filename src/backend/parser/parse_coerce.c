@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * parse_coerce.c
- *		handle type coersions/conversions for parser
+ *		handle type coercions/conversions for parser
  *
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.31 2000/02/20 06:28:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.32 2000/02/20 21:32:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,17 +36,12 @@ Node *
 coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 			Oid targetTypeId, int32 atttypmod)
 {
-	Node	   *result = NULL;
+	Node	   *result;
 
 	if (targetTypeId == InvalidOid ||
 		targetTypeId == inputTypeId)
 	{
 		/* no conversion needed */
-		result = node;
-	}
-	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
-	{
-		/* no work if one of the known-good transparent conversions */
 		result = node;
 	}
 	else if (inputTypeId == UNKNOWNOID && IsA(node, Const))
@@ -86,6 +81,27 @@ coerce_type(ParseState *pstate, Node *node, Oid inputTypeId,
 		}
 
 		result = (Node *) newcon;
+	}
+	else if (IS_BINARY_COMPATIBLE(inputTypeId, targetTypeId))
+	{
+		/*
+		 * We don't really need to do a conversion, but we do need to attach
+		 * a RelabelType node so that the expression will be seen to have
+		 * the intended type when inspected by higher-level code.
+		 */
+		RelabelType *relabel = makeNode(RelabelType);
+
+		relabel->arg = node;
+		relabel->resulttype = targetTypeId;
+		/*
+		 * XXX could we label result with exprTypmod(node) instead of
+		 * default -1 typmod, to save a possible length-coercion later?
+		 * Would work if both types have same interpretation of typmod,
+		 * which is likely but not certain.
+		 */
+		relabel->resulttypmod = -1;
+
+		result = (Node *) relabel;
 	}
 	else
 	{

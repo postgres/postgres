@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.67 2000/01/26 05:56:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.68 2000/02/20 21:32:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1176,7 +1176,7 @@ ExecEvalExpr(Node *expression,
 			 bool *isNull,
 			 bool *isDone)
 {
-	Datum		retDatum = 0;
+	Datum		retDatum;
 
 	*isNull = false;
 
@@ -1200,36 +1200,33 @@ ExecEvalExpr(Node *expression,
 	switch (nodeTag(expression))
 	{
 		case T_Var:
-			retDatum = (Datum) ExecEvalVar((Var *) expression, econtext, isNull);
+			retDatum = ExecEvalVar((Var *) expression, econtext, isNull);
 			break;
 		case T_Const:
 			{
 				Const	   *con = (Const *) expression;
 
-				if (con->constisnull)
-					*isNull = true;
 				retDatum = con->constvalue;
+				*isNull = con->constisnull;
 				break;
 			}
 		case T_Param:
-			retDatum = (Datum) ExecEvalParam((Param *) expression, econtext, isNull);
+			retDatum = ExecEvalParam((Param *) expression, econtext, isNull);
 			break;
 		case T_Iter:
-			retDatum = (Datum) ExecEvalIter((Iter *) expression,
-											econtext,
-											isNull,
-											isDone);
+			retDatum = ExecEvalIter((Iter *) expression,
+									econtext,
+									isNull,
+									isDone);
 			break;
 		case T_Aggref:
-			retDatum = (Datum) ExecEvalAggref((Aggref *) expression,
-											  econtext,
-											  isNull);
+			retDatum = ExecEvalAggref((Aggref *) expression, econtext, isNull);
 			break;
 		case T_ArrayRef:
-			retDatum = (Datum) ExecEvalArrayRef((ArrayRef *) expression,
-												econtext,
-												isNull,
-												isDone);
+			retDatum = ExecEvalArrayRef((ArrayRef *) expression,
+										econtext,
+										isNull,
+										isDone);
 			break;
 		case T_Expr:
 			{
@@ -1238,37 +1235,48 @@ ExecEvalExpr(Node *expression,
 				switch (expr->opType)
 				{
 					case OP_EXPR:
-						retDatum = (Datum) ExecEvalOper(expr, econtext, isNull);
+						retDatum = ExecEvalOper(expr, econtext, isNull);
 						break;
 					case FUNC_EXPR:
-						retDatum = (Datum) ExecEvalFunc(expr, econtext, isNull, isDone);
+						retDatum = ExecEvalFunc(expr, econtext,
+												isNull, isDone);
 						break;
 					case OR_EXPR:
-						retDatum = (Datum) ExecEvalOr(expr, econtext, isNull);
+						retDatum = ExecEvalOr(expr, econtext, isNull);
 						break;
 					case AND_EXPR:
-						retDatum = (Datum) ExecEvalAnd(expr, econtext, isNull);
+						retDatum = ExecEvalAnd(expr, econtext, isNull);
 						break;
 					case NOT_EXPR:
-						retDatum = (Datum) ExecEvalNot(expr, econtext, isNull);
+						retDatum = ExecEvalNot(expr, econtext, isNull);
 						break;
 					case SUBPLAN_EXPR:
-						retDatum = (Datum) ExecSubPlan((SubPlan *) expr->oper,
-													   expr->args, econtext,
-													   isNull);
+						retDatum = ExecSubPlan((SubPlan *) expr->oper,
+											   expr->args, econtext,
+											   isNull);
 						break;
 					default:
-						elog(ERROR, "ExecEvalExpr: unknown expression type %d", expr->opType);
+						elog(ERROR, "ExecEvalExpr: unknown expression type %d",
+							 expr->opType);
+						retDatum = 0; /* keep compiler quiet */
 						break;
 				}
 				break;
 			}
+		case T_RelabelType:
+			retDatum = ExecEvalExpr(((RelabelType *) expression)->arg,
+									econtext,
+									isNull,
+									isDone);
+			break;
 		case T_CaseExpr:
-			retDatum = (Datum) ExecEvalCase((CaseExpr *) expression, econtext, isNull);
+			retDatum = ExecEvalCase((CaseExpr *) expression, econtext, isNull);
 			break;
 
 		default:
-			elog(ERROR, "ExecEvalExpr: unknown expression type %d", nodeTag(expression));
+			elog(ERROR, "ExecEvalExpr: unknown expression type %d",
+				 nodeTag(expression));
+			retDatum = 0;		/* keep compiler quiet */
 			break;
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.36 2000/02/15 20:49:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.37 2000/02/20 21:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -651,6 +651,22 @@ _freeSubLink(SubLink *node)
 }
 
 /* ----------------
+ *		_freeRelabelType
+ * ----------------
+ */
+static void
+_freeRelabelType(RelabelType *node)
+{
+	/* ----------------
+	 *	free remainder of node
+	 * ----------------
+	 */
+	freeObject(node->arg);
+
+	pfree(node);
+}
+
+/* ----------------
  *		_freeCaseExpr
  * ----------------
  */
@@ -1240,6 +1256,9 @@ freeObject(void *node)
 			break;
 		case T_SubLink:
 			_freeSubLink(node);
+			break;
+		case T_RelabelType:
+			_freeRelabelType(node);
 			break;
 		case T_CaseExpr:
 			_freeCaseExpr(node);

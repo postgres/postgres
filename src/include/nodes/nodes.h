@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.65 2000/02/18 09:29:43 inoue Exp $
+ * $Id: nodes.h,v 1.66 2000/02/20 21:32:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,6 +67,7 @@ typedef enum NodeTag
 	T_Array,
 	T_ArrayRef,
 	T_Iter,
+	T_RelabelType,
 
 	/*---------------------
 	 * TAGS FOR PLANNER NODES (relation.h)

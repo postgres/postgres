@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.59 2000/02/15 03:37:36 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.60 2000/02/20 21:32:06 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1150,6 +1150,37 @@ eval_const_expressions_mutator (Node *node, void *context)
         newexpr->args = args;
         return (Node *) newexpr;
 	}
+	if (IsA(node, RelabelType))
+	{
+		/*
+		 * If we can simplify the input to a constant, then we don't need
+		 * the RelabelType node anymore: just change the type field of
+		 * the Const node.  Otherwise keep the RelabelType node.
+		 *
+		 * XXX if relabel has a nondefault resulttypmod, do we need to
+		 * keep it to show that?  At present I don't think so.
+		 */
+		RelabelType *relabel = (RelabelType *) node;
+		Node	   *arg;
+
+		arg = eval_const_expressions_mutator(relabel->arg, context);
+		if (arg && IsA(arg, Const))
+		{
+			Const  *con = (Const *) arg;
+
+			con->consttype = relabel->resulttype;
+			return (Node *) con;
+		}
+		else
+		{
+			RelabelType *newrelabel = makeNode(RelabelType);
+
+			newrelabel->arg = arg;
+			newrelabel->resulttype = relabel->resulttype;
+			newrelabel->resulttypmod = relabel->resulttypmod;
+			return (Node *) newrelabel;
+		}
+	}
 	if (IsA(node, CaseExpr))
 	{
 		/*
@@ -1392,6 +1423,8 @@ expression_tree_walker(Node *node, bool (*walker) (), void *context)
 					return true;
 			}
 			break;
+		case T_RelabelType:
+			return walker(((RelabelType *) node)->arg, context);
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
@@ -1600,6 +1633,16 @@ expression_tree_mutator(Node *node, Node * (*mutator) (), void *context)
 					   Node *);
 				MUTATE(newnode->refassgnexpr, arrayref->refassgnexpr,
 					   Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_RelabelType:
+			{
+				RelabelType *relabel = (RelabelType *) node;
+				RelabelType *newnode;
+
+				FLATCOPY(newnode, relabel, RelabelType);
+				MUTATE(newnode->arg, relabel->arg, Node *);
 				return (Node *) newnode;
 			}
 			break;

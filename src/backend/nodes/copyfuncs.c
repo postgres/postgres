@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.106 2000/02/15 20:49:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.107 2000/02/20 21:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -874,6 +874,26 @@ _copySubLink(SubLink *from)
 }
 
 /* ----------------
+ *		_copyRelabelType
+ * ----------------
+ */
+static RelabelType *
+_copyRelabelType(RelabelType *from)
+{
+	RelabelType    *newnode = makeNode(RelabelType);
+
+	/* ----------------
+	 *	copy remainder of node
+	 * ----------------
+	 */
+	Node_Copy(from, newnode, arg);
+	newnode->resulttype = from->resulttype;
+	newnode->resulttypmod = from->resulttypmod;
+
+	return newnode;
+}
+
+/* ----------------
  *		_copyCaseExpr
  * ----------------
  */
@@ -1616,6 +1636,9 @@ copyObject(void *from)
 			break;
 		case T_SubLink:
 			retval = _copySubLink(from);
+			break;
+		case T_RelabelType:
+			retval = _copyRelabelType(from);
 			break;
 		case T_CaseExpr:
 			retval = _copyCaseExpr(from);

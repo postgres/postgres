@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.70 2000/02/20 06:35:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.71 2000/02/20 21:32:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,7 +163,10 @@ agg_get_candidates(char *aggname,
 }	/* agg_get_candidates() */
 
 /* agg_select_candidate()
- * Try to choose only one candidate aggregate function from a list of possibles.
+ *
+ * Try to choose only one candidate aggregate function from a list of
+ * possible matches.  Return value is Oid of input type of aggregate
+ * if successful, else InvalidOid.
  */
 static Oid
 agg_select_candidate(Oid typeid, CandidateList candidates)
@@ -175,10 +178,12 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 	CATEGORY	category,
 				current_category;
 
-/*
- * First look for exact matches or binary compatible matches.
- * (Of course exact matches shouldn't even get here, but anyway.)
- */
+	/*
+	 * First look for exact matches or binary compatible matches.
+	 * (Of course exact matches shouldn't even get here, but anyway.)
+	 */
+	ncandidates = 0;
+	last_candidate = NULL;
 	for (current_candidate = candidates;
 		 current_candidate != NULL;
 		 current_candidate = current_candidate->next)
@@ -188,15 +193,17 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 		if (current_typeid == typeid
             || IS_BINARY_COMPATIBLE(current_typeid, typeid))
 		{
-            /* we're home free */
-            return current_typeid;
+			last_candidate = current_candidate;
+			ncandidates++;
         }
     }
+	if (ncandidates == 1)
+		return last_candidate->args[0];
 
-/*
- * If no luck that way, look for candidates which allow coersion
- * and have a preferred type. Keep all candidates if none match.
- */
+	/*
+	 * If no luck that way, look for candidates which allow coercion
+	 * and have a preferred type. Keep all candidates if none match.
+	 */
 	category = TypeCategory(typeid);
 	ncandidates = 0;
 	last_candidate = NULL;
@@ -232,7 +239,10 @@ agg_select_candidate(Oid typeid, CandidateList candidates)
 	if (last_candidate)			/* terminate rebuilt list */
 		last_candidate->next = NULL;
 
-	return ((ncandidates == 1) ? candidates->args[0] : 0);
+	if (ncandidates == 1)
+		return candidates->args[0];
+
+	return InvalidOid;
 }	/* agg_select_candidate() */
 
 
@@ -471,10 +481,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	/*
 	 * See if this is a single argument function with the function
 	 * name also a type name and the input argument and type name
-	 * binary compatible... This means that you are trying for a
-	 * type conversion which does not need to take place, so we'll
-	 * just pass through the argument itself. (make this clearer
-	 * with some extra brackets - thomas 1998-12-05)
+	 * binary compatible.  If so, we do not need to do any real
+	 * conversion, but we do need to build a RelabelType node
+	 * so that exprType() sees the result as being of the output type.
 	 */
 	if (nargs == 1)
 	{
@@ -486,8 +495,13 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (HeapTupleIsValid(tp) &&
 			IS_BINARY_COMPATIBLE(typeTypeId(tp), exprType(lfirst(fargs))))
 		{
-			/* XXX FIXME: probably need to change expression's marked type? */
-			return (Node *) lfirst(fargs);
+			RelabelType *relabel = makeNode(RelabelType);
+
+			relabel->arg = (Node *) lfirst(fargs);
+			relabel->resulttype = typeTypeId(tp);
+			relabel->resulttypmod = -1;
+
+			return (Node *) relabel;
 		}
 	}
 
@@ -1128,7 +1142,7 @@ func_get_detail(char *funcname,
  *						 inheritance properties of the supplied argv.
  *
  *		This function is used to disambiguate among functions with the
- *		same name but different signatures.  It takes an array of eight
+ *		same name but different signatures.  It takes an array of input
  *		type ids.  For each type id in the array that's a complex type
  *		(a class), it walks up the inheritance tree, finding all
  *		superclasses of that type.	A vector of new Oid type arrays
@@ -1342,7 +1356,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
  *	2) the input type can be typecast into the function type
  * Right now, we only typecast unknowns, and that is all we check for.
  *
- * func_get_detail() now can find coersions for function arguments which
+ * func_get_detail() now can find coercions for function arguments which
  *	will make this function executable. So, we need to recover these
  *	results here too.
  * - thomas 1998-03-25
@@ -1361,7 +1375,7 @@ make_arguments(ParseState *pstate,
 		 i < nargs;
 		 i++, current_fargs = lnext(current_fargs))
 	{
-		/* types don't match? then force coersion using a function call... */
+		/* types don't match? then force coercion using a function call... */
 		if (input_typeids[i] != function_typeids[i])
 		{
 			lfirst(current_fargs) = coerce_type(pstate,

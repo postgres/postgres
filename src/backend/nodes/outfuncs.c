@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.108 2000/02/15 20:49:09 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.109 2000/02/20 21:32:05 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -771,6 +771,19 @@ _outSubLink(StringInfo str, SubLink *node)
 }
 
 /*
+ *	RelabelType
+ */
+static void
+_outRelabelType(StringInfo str, RelabelType *node)
+{
+	appendStringInfo(str, " RELABELTYPE :arg ");
+	_outNode(str, node->arg);
+
+	appendStringInfo(str, " :resulttype %u :resulttypmod %d ",
+					 node->resulttype, node->resulttypmod);
+}
+
+/*
  *	Array is a subclass of Expr
  */
 static void
@@ -1495,6 +1508,9 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_SubLink:
 				_outSubLink(str, obj);
+				break;
+			case T_RelabelType:
+				_outRelabelType(str, obj);
 				break;
 			case T_Array:
 				_outArray(str, obj);

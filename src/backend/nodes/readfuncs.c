@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.84 2000/02/15 20:49:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.85 2000/02/20 21:32:05 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1191,6 +1191,35 @@ _readSubLink()
 	return local_node;
 }
 
+/* ----------------
+ *		_readRelabelType
+ *
+ *	RelabelType is a subclass of Node
+ * ----------------
+ */
+static RelabelType *
+_readRelabelType()
+{
+	RelabelType *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(RelabelType);
+
+	token = lsptok(NULL, &length);		/* eat :arg */
+	local_node->arg = nodeRead(true);	/* now read it */
+
+	token = lsptok(NULL, &length);		/* eat :resulttype */
+	token = lsptok(NULL, &length);		/* get resulttype */
+	local_node->resulttype = (Oid) atol(token);
+
+	token = lsptok(NULL, &length);		/* eat :resulttypmod */
+	token = lsptok(NULL, &length);		/* get resulttypmod */
+	local_node->resulttypmod = atoi(token);
+
+	return local_node;
+}
+
 /*
  *	Stuff from execnodes.h
  */
@@ -1820,6 +1849,8 @@ parsePlanString(void)
 		return_value = _readAggref();
 	else if (length == 7 && strncmp(token, "SUBLINK", length) == 0)
 		return_value = _readSubLink();
+	else if (length == 11 && strncmp(token, "RELABELTYPE", length) == 0)
+		return_value = _readRelabelType();
 	else if (length == 3 && strncmp(token, "AGG", length) == 0)
 		return_value = _readAgg();
 	else if (length == 4 && strncmp(token, "HASH", length) == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.61 2000/02/15 20:49:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.62 2000/02/20 21:32:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,6 +258,18 @@ _equalSubLink(SubLink *a, SubLink *b)
 	if (!equal(a->oper, b->oper))
 		return false;
 	if (!equal(a->subselect, b->subselect))
+		return false;
+	return true;
+}
+
+static bool
+_equalRelabelType(RelabelType *a, RelabelType *b)
+{
+	if (!equal(a->arg, b->arg))
+		return false;
+	if (a->resulttype != b->resulttype)
+		return false;
+	if (a->resulttypmod != b->resulttypmod)
 		return false;
 	return true;
 }
@@ -805,6 +817,9 @@ equal(void *a, void *b)
 			break;
 		case T_SubLink:
 			retval = _equalSubLink(a, b);
+			break;
+		case T_RelabelType:
+			retval = _equalRelabelType(a, b);
 			break;
 		case T_Func:
 			retval = _equalFunc(a, b);
