@@ -6,7 +6,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Wed Nov 10 22:59:04 EST 2004
+Last updated:		Wed Nov 10 23:36:48 EST 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web
 site, http://www.PostgreSQL.org.
@@ -154,6 +154,7 @@ Data Types
 * Prevent INET cast to CIDR if the unmasked bits are not zero, or
   zero the bits
 
+
 * ARRAYS
 	o Allow NULLs in arrays
 	o Allow MIN()/MAX() on arrays
@@ -281,8 +282,8 @@ Indexes
 
 * Allow accurate statistics to be collected on indexes with more than
   one column or expression indexes, perhaps using per-index statistics
-
 * Add fillfactor to control reserved free space during index creation
+
 
 Commands
 ========
@@ -403,6 +404,7 @@ Commands
 	  To do this, determine the ideal cluster index for each system
 	  table and set the cluster setting during initdb.
 
+
 * COPY
 	o Allow COPY to report error lines and continue
 	
@@ -412,6 +414,7 @@ Commands
 	o Allow COPY to understand \x as a hex byte
 	o Have COPY return the number of rows loaded/unloaded (?)
 	o Allow COPY to optionally include column headings in the first line
+
 
 * CURSOR
 	o Allow UPDATE/DELETE WHERE CURRENT OF cursor
@@ -429,6 +432,7 @@ Commands
 	  Because WITH HOLD cursors exist outside transactions, this allows
 	  them to be listed so they can be closed.
 
+
 * INSERT
 	o Allow INSERT/UPDATE of the system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
@@ -437,6 +441,7 @@ Commands
 	  This is useful for returning the auto-generated key for an INSERT.
 	  One complication is how to handle rules that run as part of
 	  the insert.
+
 
 * SHOW/SET
 	o Add SET PERFORMANCE_TIPS option to suggest INDEX, VACUUM, VACUUM
@@ -449,6 +454,7 @@ Commands
 
 	  This requires a checking function to be called after the server
 	  configuration file is read.
+
 
 * SERVER-SIDE LANGUAGES
 	o Allow PL/PgSQL's RAISE function to take expressions (?)
@@ -517,7 +523,7 @@ Clients
 
 	o Add CSV output format
 
-* ECPG (?)
+* ECPG
 	o Docs
 
 	  Document differences between ecpg and the SQL standard and
@@ -844,6 +850,7 @@ Source Code
 * Remove Win32 rename/unlink looping if unnecessary
 * Remove kerberos4 from source tree?
 
+
 * Win32
 	o Remove per-backend parameter file and move into shared memory
 	o Remove configure.in check for link failure when cause is found
@@ -855,6 +862,7 @@ Source Code
 	  backslashes
 	o Re-enable timezone output on log_line_prefix '%t' when a
 	  shorter timezone string is available
+
 
 * Wire Protocol Changes
 	o Allow dynamic character set handling
