@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.15 1998/03/20 03:55:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.16 1998/04/11 21:14:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef alpha
+#if defined(alpha) && !defined(linux)
 #include <sys/sysinfo.h>
 #include <machine/hal_sysinfo.h>
 #define ASSEMBLER
