@@ -45,6 +45,14 @@ The files to be processed.
 .SH "BUGS"
 The return code is alway -1 in case of an error. You cannot see which error
 occured by examining the return code.
+.TP
+The cursor is opened when the declare statement is issued.
+.TP
+ecpg does not understand enum datatypes.
+.TP
+The is no exec sql prepare statement.
+.TP
+The complete structure definition has to be listed inside the declare section for ecpg to be able to understand it.
 .SH "RETURN VALUE"
 .IR ecpg
 returns 0 to the shell on successful completion, -1 for errors,
