@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.35 2003/11/16 16:41:00 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.36 2003/11/19 15:55:07 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,7 +190,27 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck)
 		if (StrategyControl->stat_report + DebugSharedBuffers < now)
 		{
 			long	all_hit, b1_hit, t1_hit, t2_hit, b2_hit;
+			int		id, t1_clean, t2_clean;
 			ErrorContextCallback	*errcxtold;
+
+			id = StrategyControl->listHead[STRAT_LIST_T1];
+			t1_clean = 0;
+			while (id >= 0)
+			{
+				if (BufferDescriptors[StrategyCDB[id].buf_id].flags & BM_DIRTY)
+					break;
+				t1_clean++;
+				id = StrategyCDB[id].next;
+			}
+			id = StrategyControl->listHead[STRAT_LIST_T2];
+			t2_clean = 0;
+			while (id >= 0)
+			{
+				if (BufferDescriptors[StrategyCDB[id].buf_id].flags & BM_DIRTY)
+					break;
+				t2_clean++;
+				id = StrategyCDB[id].next;
+			}
 
 			if (StrategyControl->num_lookup == 0)
 			{
@@ -215,6 +235,8 @@ StrategyBufferLookup(BufferTag *tagPtr, bool recheck)
 					T1_TARGET, B1_LENGTH, T1_LENGTH, T2_LENGTH, B2_LENGTH);
 			elog(DEBUG1, "ARC total   =%4ld%% B1hit=%4ld%% T1hit=%4ld%% T2hit=%4ld%% B2hit=%4ld%%",
 					all_hit, b1_hit, t1_hit, t2_hit, b2_hit);
+			elog(DEBUG1, "ARC clean buffers at LRU       T1=   %5d T2=   %5d",
+					t1_clean, t2_clean);
 			error_context_stack = errcxtold;
 
 			StrategyControl->num_lookup = 0;

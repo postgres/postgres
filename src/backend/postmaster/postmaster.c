@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.348 2003/11/11 01:09:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.349 2003/11/19 15:55:07 wieck Exp $
  *
  * NOTES
  *
@@ -104,6 +104,7 @@
 #include "storage/pg_shmem.h"
 #include "storage/pmsignal.h"
 #include "storage/proc.h"
+#include "storage/bufmgr.h"
 #include "access/xlog.h"
 #include "tcop/tcopprot.h"
 #include "utils/guc.h"
@@ -224,7 +225,8 @@ char	   *preload_libraries_string = NULL;
 /* Startup/shutdown state */
 static pid_t StartupPID = 0,
 			ShutdownPID = 0,
-			CheckPointPID = 0;
+			CheckPointPID = 0,
+			BgWriterPID = 0;
 static time_t checkpointed = 0;
 
 #define			NoShutdown		0
@@ -298,6 +300,7 @@ __attribute__((format(printf, 1, 2)));
 
 #define StartupDataBase()		SSDataBase(BS_XLOG_STARTUP)
 #define CheckPointDataBase()	SSDataBase(BS_XLOG_CHECKPOINT)
+#define StartBackgroundWriter()	SSDataBase(BS_XLOG_BGWRITER)
 #define ShutdownDataBase()		SSDataBase(BS_XLOG_SHUTDOWN)
 
 
@@ -1056,6 +1059,17 @@ ServerLoop(void)
 		}
 
 		/*
+		 * If no background writer process is running and we should
+		 * do background writing, start one. It doesn't matter if
+		 * this fails, we'll just try again later.
+		 */
+		if (BgWriterPID == 0 && BgWriterPercent > 0 &&
+				Shutdown == NoShutdown && !FatalError && random_seed != 0)
+		{
+			BgWriterPID = StartBackgroundWriter();
+		}
+
+		/*
 		 * Wait for something to happen.
 		 */
 		memcpy((char *) &rmask, (char *) &readmask, sizeof(fd_set));
@@ -1478,6 +1492,13 @@ processCancelRequest(Port *port, void *pkt)
 								 backendPID)));
 		return;
 	}
+	else if (backendPID == BgWriterPID)
+	{
+		ereport(DEBUG2,
+				(errmsg_internal("ignoring cancel request for bgwriter process %d",
+								 backendPID)));
+		return;
+	}
 	else if (ExecBackend)
 		AttachSharedMemoryAndSemaphores();
 
@@ -1660,6 +1681,13 @@ SIGHUP_handler(SIGNAL_ARGS)
 		SignalChildren(SIGHUP);
 		load_hba();
 		load_ident();
+
+		/*
+		 * Tell the background writer to terminate so that we
+		 * will start a new one with a possibly changed config
+		 */
+		if (BgWriterPID != 0)
+			kill(BgWriterPID, SIGTERM);
 	}
 
 	PG_SETMASK(&UnBlockSig);
@@ -1692,6 +1720,8 @@ pmdie(SIGNAL_ARGS)
 			 *
 			 * Wait for children to end their work and ShutdownDataBase.
 			 */
+			if (BgWriterPID != 0)
+				kill(BgWriterPID, SIGTERM);
 			if (Shutdown >= SmartShutdown)
 				break;
 			Shutdown = SmartShutdown;
@@ -1724,6 +1754,8 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGTERM (rollback active transactions
 			 * and exit) and ShutdownDataBase when they are gone.
 			 */
+			if (BgWriterPID != 0)
+				kill(BgWriterPID, SIGTERM);
 			if (Shutdown >= FastShutdown)
 				break;
 			ereport(LOG,
@@ -1770,6 +1802,8 @@ pmdie(SIGNAL_ARGS)
 			 * abort all children with SIGQUIT and exit without attempt to
 			 * properly shutdown data base system.
 			 */
+			if (BgWriterPID != 0)
+				kill(BgWriterPID, SIGQUIT);
 			ereport(LOG,
 					(errmsg("received immediate shutdown request")));
 			if (ShutdownPID > 0)
@@ -1877,6 +1911,12 @@ reaper(SIGNAL_ARGS)
 			CheckPointPID = 0;
 			checkpointed = time(NULL);
 
+			if (BgWriterPID == 0 && BgWriterPercent > 0 &&
+				Shutdown == NoShutdown && !FatalError && random_seed != 0)
+			{
+				BgWriterPID = StartBackgroundWriter();
+			}
+
 			/*
 			 * Go to shutdown mode if a shutdown request was pending.
 			 */
@@ -1983,6 +2023,8 @@ CleanupProc(int pid,
 				GetSavedRedoRecPtr();
 			}
 		}
+		else if (pid == BgWriterPID)
+			BgWriterPID = 0;
 		else
 			pgstat_beterm(pid);
 
@@ -1996,6 +2038,7 @@ CleanupProc(int pid,
 	{
 		LogChildExit(LOG,
 				 (pid == CheckPointPID) ? gettext("checkpoint process") :
+				 (pid == BgWriterPID) ? gettext("bgwriter process") :
 					 gettext("server process"),
 					 pid, exitstatus);
 		ereport(LOG,
@@ -2043,6 +2086,10 @@ CleanupProc(int pid,
 	{
 		CheckPointPID = 0;
 		checkpointed = 0;
+	}
+	else if (pid == BgWriterPID)
+	{
+		BgWriterPID = 0;
 	}
 	else
 	{
@@ -2754,6 +2801,8 @@ CountChildren(void)
 	}
 	if (CheckPointPID != 0)
 		cnt--;
+	if (BgWriterPID != 0)
+		cnt--;
 	return cnt;
 }
 
@@ -2827,6 +2876,9 @@ SSDataBase(int xlop)
 			case BS_XLOG_CHECKPOINT:
 				statmsg = "checkpoint subprocess";
 				break;
+			case BS_XLOG_BGWRITER:
+				statmsg = "bgwriter subprocess";
+				break;
 			case BS_XLOG_SHUTDOWN:
 				statmsg = "shutdown subprocess";
 				break;
@@ -2883,6 +2935,10 @@ SSDataBase(int xlop)
 				ereport(LOG,
 					  (errmsg("could not fork checkpoint process: %m")));
 				break;
+			case BS_XLOG_BGWRITER:
+				ereport(LOG,
+					  (errmsg("could not fork bgwriter process: %m")));
+				break;
 			case BS_XLOG_SHUTDOWN:
 				ereport(LOG,
 						(errmsg("could not fork shutdown process: %m")));
@@ -2895,19 +2951,22 @@ SSDataBase(int xlop)
 
 		/*
 		 * fork failure is fatal during startup/shutdown, but there's no
-		 * need to choke if a routine checkpoint fails.
+		 * need to choke if a routine checkpoint or starting a background
+		 * writer fails.
 		 */
 		if (xlop == BS_XLOG_CHECKPOINT)
+			return 0;
+		if (xlop == BS_XLOG_BGWRITER)
 			return 0;
 		ExitPostmaster(1);
 	}
 
 	/*
 	 * The startup and shutdown processes are not considered normal
-	 * backends, but the checkpoint process is.  Checkpoint must be added
-	 * to the list of backends.
+	 * backends, but the checkpoint and bgwriter processes are.
+	 * They must be added to the list of backends.
 	 */
-	if (xlop == BS_XLOG_CHECKPOINT)
+	if (xlop == BS_XLOG_CHECKPOINT || xlop == BS_XLOG_BGWRITER)
 	{
 		if (!(bn = (Backend *) malloc(sizeof(Backend))))
 		{

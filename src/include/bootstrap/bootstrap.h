@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bootstrap.h,v 1.31 2003/08/04 02:40:10 momjian Exp $
+ * $Id: bootstrap.h,v 1.32 2003/11/19 15:55:08 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ extern void Int_yyerror(const char *str);
 #define BS_XLOG_BOOTSTRAP	1
 #define BS_XLOG_STARTUP		2
 #define BS_XLOG_CHECKPOINT	3
-#define BS_XLOG_SHUTDOWN	4
+#define BS_XLOG_BGWRITER	4
+#define BS_XLOG_SHUTDOWN	5
 
 #endif   /* BOOTSTRAP_H */

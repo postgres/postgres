@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.136 2003/10/16 20:59:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.137 2003/11/19 15:55:07 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,6 +71,7 @@ static slock_t *ProcStructLock = NULL;
 static PROC_HDR *ProcGlobal = NULL;
 
 static PGPROC *DummyProc = NULL;
+static int	dummy_proc_type = -1;
 
 static bool waitingForLock = false;
 static bool waitingForSignal = false;
@@ -163,14 +164,17 @@ InitProcGlobal(int maxBackends)
 		 * processes, too.	This does not get linked into the freeProcs
 		 * list.
 		 */
-		DummyProc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
+		DummyProc = (PGPROC *) ShmemAlloc(sizeof(PGPROC) * NUM_DUMMY_PROCS);
 		if (!DummyProc)
 			ereport(FATAL,
 					(errcode(ERRCODE_OUT_OF_MEMORY),
 					 errmsg("out of shared memory")));
-		MemSet(DummyProc, 0, sizeof(PGPROC));
-		DummyProc->pid = 0;		/* marks DummyProc as not in use */
-		PGSemaphoreCreate(&DummyProc->sem);
+		MemSet(DummyProc, 0, sizeof(PGPROC) * NUM_DUMMY_PROCS);
+		for (i = 0; i < NUM_DUMMY_PROCS; i++)
+		{
+			DummyProc[i].pid = 0;		/* marks DummyProc as not in use */
+			PGSemaphoreCreate(&(DummyProc[i].sem));
+		}
 
 		/* Create ProcStructLock spinlock, too */
 		ProcStructLock = (slock_t *) ShmemAlloc(sizeof(slock_t));
@@ -270,8 +274,10 @@ InitProcess(void)
  * sema that are assigned are the extra ones created during InitProcGlobal.
  */
 void
-InitDummyProcess(void)
+InitDummyProcess(int proctype)
 {
+	PGPROC	*dummyproc;
+
 	/*
 	 * ProcGlobal should be set by a previous call to InitProcGlobal (we
 	 * inherit this by fork() from the postmaster).
@@ -282,12 +288,17 @@ InitDummyProcess(void)
 	if (MyProc != NULL)
 		elog(ERROR, "you already exist");
 
+	Assert(dummy_proc_type < 0);
+	dummy_proc_type = proctype;
+	dummyproc = &DummyProc[proctype];
+
 	/*
-	 * DummyProc should not presently be in use by anyone else
+	 * dummyproc should not presently be in use by anyone else
 	 */
-	if (DummyProc->pid != 0)
-		elog(FATAL, "DummyProc is in use by PID %d", DummyProc->pid);
-	MyProc = DummyProc;
+	if (dummyproc->pid != 0)
+		elog(FATAL, "DummyProc[%d] is in use by PID %d",
+				proctype, dummyproc->pid);
+	MyProc = dummyproc;
 
 	/*
 	 * Initialize all fields of MyProc, except MyProc->sem which was set
@@ -310,7 +321,7 @@ InitDummyProcess(void)
 	/*
 	 * Arrange to clean up at process exit.
 	 */
-	on_shmem_exit(DummyProcKill, 0);
+	on_shmem_exit(DummyProcKill, proctype);
 
 	/*
 	 * We might be reusing a semaphore that belonged to a failed process.
@@ -446,7 +457,13 @@ ProcKill(void)
 static void
 DummyProcKill(void)
 {
-	Assert(MyProc != NULL && MyProc == DummyProc);
+	PGPROC	*dummyproc;
+
+	Assert(dummy_proc_type >= 0 && dummy_proc_type < NUM_DUMMY_PROCS);
+
+	dummyproc = &DummyProc[dummy_proc_type];
+
+	Assert(MyProc != NULL && MyProc == dummyproc);
 
 	/* Release any LW locks I am holding */
 	LWLockReleaseAll();
@@ -463,6 +480,8 @@ DummyProcKill(void)
 
 	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
+
+	dummy_proc_type = -1;
 }
 
 

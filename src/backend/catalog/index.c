@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.221 2003/11/12 21:15:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.222 2003/11/19 15:55:07 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1043,7 +1043,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
 			CacheInvalidateHeapTuple(pg_class, tuple);
-		BufferSync();
+		BufferSync(-1, -1);
 	}
 	else if (dirty)
 	{

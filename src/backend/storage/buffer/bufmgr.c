@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.144 2003/11/13 14:57:15 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.145 2003/11/19 15:55:07 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include <sys/file.h>
 #include <math.h>
 #include <signal.h>
+#include <unistd.h>
 
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
@@ -63,6 +64,9 @@
 /* GUC variable */
 bool		zero_damaged_pages = false;
 
+int			BgWriterDelay = 200;
+int			BgWriterPercent = 1;
+int			BgWriterMaxpages = 100;
 
 static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
@@ -679,10 +683,11 @@ ReleaseAndReadBuffer(Buffer buffer,
 /*
  * BufferSync -- Write all dirty buffers in the pool.
  *
- * This is called at checkpoint time and writes out all dirty shared buffers.
+ * This is called at checkpoint time and writes out all dirty shared buffers,
+ * and by the background writer process to write out some of the dirty blocks.
  */
-void
-BufferSync(void)
+int
+BufferSync(int percent, int maxpages)
 {
 	int			i;
 	BufferDesc *bufHdr;
@@ -703,11 +708,23 @@ BufferSync(void)
 	 * have to wait until the next checkpoint.
 	 */
 	buffer_dirty = (int *)palloc(NBuffers * sizeof(int));
-	num_buffer_dirty = 0;
-
+	
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 	num_buffer_dirty = StrategyDirtyBufferList(buffer_dirty, NBuffers);
 	LWLockRelease(BufMgrLock);
+
+	/*
+	 * If called by the background writer, we are usually asked to
+	 * only write out some percentage of dirty buffers now, to prevent
+	 * the IO storm at checkpoint time.
+	 */
+	if (percent > 0 && num_buffer_dirty > 10)
+	{
+		Assert(percent <= 100);
+		num_buffer_dirty = (num_buffer_dirty * percent) / 100;
+		if (maxpages > 0 && num_buffer_dirty > maxpages)
+			num_buffer_dirty = maxpages;
+	}
 
 	for (i = 0; i < num_buffer_dirty; i++)
 	{
@@ -854,6 +871,8 @@ BufferSync(void)
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;
+
+	return num_buffer_dirty;
 }
 
 /*
@@ -984,8 +1003,54 @@ AtEOXact_Buffers(bool isCommit)
 void
 FlushBufferPool(void)
 {
-	BufferSync();
+	BufferSync(-1, -1);
 	smgrsync();
+}
+
+
+/*
+ * BufferBackgroundWriter
+ *
+ * Periodically flushes dirty blocks from the buffer pool to keep
+ * the LRU list clean, preventing regular backends from writing.
+ */
+void
+BufferBackgroundWriter(void)
+{
+	if (BgWriterPercent == 0)
+		return;
+
+	/*
+	 * Loop forever 
+	 */
+	for (;;)
+	{
+		int			n, i;
+
+		/*
+		 * Call BufferSync() with instructions to keep just the
+		 * LRU heads clean.
+		 */
+		n = BufferSync(BgWriterPercent, BgWriterMaxpages);
+
+		/*
+		 * Whatever signal is sent to us, let's just die galantly. If
+		 * it wasn't meant that way, the postmaster will reincarnate us.
+		 */
+		if (InterruptPending)
+			return;
+
+		/*
+		 * Nap for the configured time or sleep for 10 seconds if
+		 * there was nothing to do at all.
+		 */
+		if (n > 0)
+		{
+			PG_DELAY(BgWriterDelay);
+		}
+		else
+			sleep(10);
+	}
 }
 
 /*

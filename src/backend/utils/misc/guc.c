@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.170 2003/11/16 16:41:01 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.171 2003/11/19 15:55:08 wieck Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -44,6 +44,7 @@
 #include "optimizer/prep.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
+#include "storage/bufmgr.h"
 #include "storage/fd.h"
 #include "storage/freespace.h"
 #include "storage/lock.h"
@@ -1198,6 +1199,33 @@ static struct config_int ConfigureNamesInt[] =
 		},
 		&DebugSharedBuffers,
 		0, 0, 600, NULL, NULL
+	},
+
+	{
+		{"bgwriter_delay", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer sleep time between rounds in milliseconds"),
+			NULL
+		},
+		&BgWriterDelay,
+		200, 10, 5000, NULL, NULL
+	},
+
+	{
+		{"bgwriter_percent", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer percentage of dirty buffers to flush per round"),
+			NULL
+		},
+		&BgWriterPercent,
+		1, 0, 100, NULL, NULL
+	},
+
+	{
+		{"bgwriter_maxpages", PGC_SIGHUP, RESOURCES,
+			gettext_noop("Background writer maximum number of pages to flush per round"),
+			NULL
+		},
+		&BgWriterMaxpages,
+		100, 1, 1000, NULL, NULL
 	},
 
 	/* End-of-list marker */

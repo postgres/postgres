@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.126 2003/11/12 21:15:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.127 2003/11/19 15:55:07 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ createdb(const CreatedbStmt *stmt)
 	 * up-to-date for the copy.  (We really only need to flush buffers for
 	 * the source database...)
 	 */
-	BufferSync();
+	BufferSync(-1, -1);
 
 	/*
 	 * Close virtual file descriptors so the kernel has more available for
@@ -454,7 +454,7 @@ createdb(const CreatedbStmt *stmt)
 	 * will see the new database in pg_database right away.  (They'll see
 	 * an uncommitted tuple, but they don't care; see GetRawDatabaseInfo.)
 	 */
-	BufferSync();
+	BufferSync(-1, -1);
 }
 
 
@@ -591,7 +591,7 @@ dropdb(const char *dbname)
 	 * (They'll see an uncommitted deletion, but they don't care; see
 	 * GetRawDatabaseInfo.)
 	 */
-	BufferSync();
+	BufferSync(-1, -1);
 }
 
 
@@ -688,7 +688,7 @@ RenameDatabase(const char *oldname, const char *newname)
 	 * see an uncommitted tuple, but they don't care; see
 	 * GetRawDatabaseInfo.)
 	 */
-	BufferSync();
+	BufferSync(-1, -1);
 }
 
 

@@ -60,6 +60,11 @@
 #vacuum_mem = 8192		# min 1024, size in KB
 #debug_shared_buffers = 0	# 0-600 seconds
 
+# - Background writer -
+#bgwriter_delay = 200		# 10-5000 milliseconds
+#bgwriter_percent = 1		# 0-100% of dirty buffers
+#bgwriter_maxpages = 100	# 1-1000 buffers max at once
+
 # - Free Space Map -
 
 #max_fsm_pages = 20000		# min max_fsm_relations*16, 6 bytes each
