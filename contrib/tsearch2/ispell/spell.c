@@ -41,7 +41,7 @@ strlower(char *str)
 }
 
 static char* 
-strndup(char *s, int len) {
+strnduplicate(char *s, int len) {
 	char *d=(char*)palloc( len + 1 );
 	memcpy(d, s, len );
 	d[len]='\0';
@@ -866,7 +866,7 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 				/* and its length more than minimal */
 				if ( wordlen==level+1 ) {
 					/* well, it was last word */
-					var->stem[ var->nstem ] = strndup(word + startpos, wordlen - startpos);
+					var->stem[ var->nstem ] = strnduplicate(word + startpos, wordlen - startpos);
 					var->nstem++;
 					return var;
 				} else {
@@ -877,7 +877,7 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 					ptr->next=SplitToVariants(Conf, node, var, word, wordlen, startpos, level);
 					/* we can find next word */
 					level++;
-					var->stem[ var->nstem ] = strndup(word + startpos, level - startpos);
+					var->stem[ var->nstem ] = strnduplicate(word + startpos, level - startpos);
 					var->nstem++;
 					node = Conf->Dictionary;
 					startpos=level;
@@ -889,7 +889,7 @@ SplitToVariants( IspellDict * Conf, SPNode *snode, SplitVar * orig, char *word, 
 		node=StopMiddle->node;
 	}
 
-	var->stem[ var->nstem ] = strndup(word + startpos, wordlen - startpos);
+	var->stem[ var->nstem ] = strnduplicate(word + startpos, wordlen - startpos);
 	var->nstem++;
 	return var;
 } 
