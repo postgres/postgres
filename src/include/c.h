@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.75 2000/07/06 21:33:44 petere Exp $
+ * $Id: c.h,v 1.76 2000/07/07 21:12:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -781,11 +781,19 @@ extern int	assertTest(int val);
 
 /*
  * StrNCpy
- *		Like standard library function strncpy(), except that result string
- *		is guaranteed to be null-terminated --- that is, at most N-1 bytes
- *		of the source string will be kept.
- *		Also, the macro returns no result (too hard to do that without
- *		evaluating the arguments multiple times, which seems worse).
+ *	Like standard library function strncpy(), except that result string
+ *	is guaranteed to be null-terminated --- that is, at most N-1 bytes
+ *	of the source string will be kept.
+ *	Also, the macro returns no result (too hard to do that without
+ *	evaluating the arguments multiple times, which seems worse).
+ *
+ *	BTW: when you need to copy a non-null-terminated string (like a text
+ *	datum) and add a null, do not do it with StrNCpy(..., len+1).  That
+ *	might seem to work, but it fetches one byte more than there is in the
+ *	text object.  One fine day you'll have a SIGSEGV because there isn't
+ *	another byte before the end of memory.  Don't laugh, we've had real
+ *	live bug reports from real live users over exactly this mistake.
+ *	Do it honestly with "memcpy(dst,src,len); dst[len] = '\0';", instead.
  */
 #define StrNCpy(dst,src,len) \
 	do \

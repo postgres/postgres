@@ -536,7 +536,8 @@ readExports(ModulePtr mp)
 			 * first SYMNMLEN chars and make sure we have a zero byte at
 			 * the end.
 			 */
-			StrNCpy(tmpsym, ls->l_name, SYMNMLEN + 1);
+			strncpy(tmpsym, ls->l_name, SYMNMLEN);
+			tmpsym[SYMNMLEN] = '\0';
 			symname = tmpsym;
 		}
 		ep->name = strdup(symname);

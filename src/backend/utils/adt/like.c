@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.36 2000/07/06 05:48:11 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/like.c,v 1.37 2000/07/07 21:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,8 @@ fixedlen_like(char *s, text *p, int charlen)
 	(void) pg_mb2wchar_with_len((unsigned char *) s, sterm, charlen);
 #else
 	sterm = (char *) palloc(charlen + 1);
-	StrNCpy(sterm, s, charlen + 1);
+	memcpy(sterm, s, charlen);
+	sterm[charlen] = '\0';
 #endif
 
 	/*

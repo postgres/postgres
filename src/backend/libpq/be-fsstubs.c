@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.48 2000/07/03 23:09:37 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-fsstubs.c,v 1.49 2000/07/07 21:12:53 tgl Exp $
  *
  * NOTES
  *	  This should be moved to a more appropriate place.  It is here
@@ -379,26 +379,23 @@ lo_import(PG_FUNCTION_ARGS)
 	/*
 	 * open the file to be read in
 	 */
-	nbytes = VARSIZE(filename) - VARHDRSZ + 1;
-	if (nbytes > FNAME_BUFSIZE)
-		nbytes = FNAME_BUFSIZE;
-	StrNCpy(fnamebuf, VARDATA(filename), nbytes);
+	nbytes = VARSIZE(filename) - VARHDRSZ;
+	if (nbytes >= FNAME_BUFSIZE)
+		nbytes = FNAME_BUFSIZE-1;
+	memcpy(fnamebuf, VARDATA(filename), nbytes);
+	fnamebuf[nbytes] = '\0';
 	fd = PathNameOpenFile(fnamebuf, O_RDONLY | PG_BINARY, 0666);
 	if (fd < 0)
-	{							/* error */
 		elog(ERROR, "lo_import: can't open unix file \"%s\": %m",
 			 fnamebuf);
-	}
 
 	/*
 	 * create an inversion "object"
 	 */
 	lobj = inv_create(INV_READ | INV_WRITE);
 	if (lobj == NULL)
-	{
 		elog(ERROR, "lo_import: can't create inv object for \"%s\"",
 			 fnamebuf);
-	}
 
 	/*
 	 * the oid for the large object is just the oid of the relation
@@ -461,18 +458,17 @@ lo_export(PG_FUNCTION_ARGS)
 	 * 022.  This code used to drop it all the way to 0, but creating
 	 * world-writable export files doesn't seem wise.
 	 */
-	nbytes = VARSIZE(filename) - VARHDRSZ + 1;
-	if (nbytes > FNAME_BUFSIZE)
-		nbytes = FNAME_BUFSIZE;
-	StrNCpy(fnamebuf, VARDATA(filename), nbytes);
+	nbytes = VARSIZE(filename) - VARHDRSZ;
+	if (nbytes >= FNAME_BUFSIZE)
+		nbytes = FNAME_BUFSIZE-1;
+	memcpy(fnamebuf, VARDATA(filename), nbytes);
+	fnamebuf[nbytes] = '\0';
 	oumask = umask((mode_t) 0022);
 	fd = PathNameOpenFile(fnamebuf, O_CREAT | O_WRONLY | O_TRUNC | PG_BINARY, 0666);
 	umask(oumask);
 	if (fd < 0)
-	{							/* error */
 		elog(ERROR, "lo_export: can't open unix file \"%s\": %m",
 			 fnamebuf);
-	}
 
 	/*
 	 * read in from the Unix file and write to the inversion file

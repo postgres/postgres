@@ -99,9 +99,9 @@ active_listeners(text *relname)
 
 	if (relname && (VARSIZE(relname) > VARHDRSZ))
 	{
+		MemSet(listen_name, 0, NAMEDATALEN);
 		len = MIN(VARSIZE(relname) - VARHDRSZ, NAMEDATALEN - 1);
-		strncpy(listen_name, VARDATA(relname), len);
-		listen_name[len] = '\0';
+		memcpy(listen_name, VARDATA(relname), len);
 		ScanKeyEntryInitialize(&key, 0,
 							   Anum_pg_listener_relname,
 							   F_NAMEEQ,

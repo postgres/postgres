@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.35 2000/07/05 23:11:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.36 2000/07/07 21:12:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -236,8 +236,8 @@ strmake(char *str, int len)
 	if (len <= 0)
 		len = strlen(str);
 
-	newstr = (char *) palloc((unsigned) len + 1);
-	StrNCpy(newstr, str, len + 1);
+	newstr = (char *) palloc(len + 1);
+	memcpy(newstr, str, len);
 	newstr[len] = (char) 0;
 	return newstr;
 }

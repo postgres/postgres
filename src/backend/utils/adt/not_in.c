@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.23 2000/06/09 01:11:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.24 2000/07/07 21:12:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,10 +52,12 @@ int4notin(PG_FUNCTION_ARGS)
 	char		my_copy[NAMEDATALEN * 2 + 2];
 	Datum		value;
 
-	strlength = VARSIZE(relation_and_attr) - VARHDRSZ + 1;
-	if (strlength > sizeof(my_copy))
-		strlength = sizeof(my_copy);
-	StrNCpy(my_copy, VARDATA(relation_and_attr), strlength);
+	/* make a null-terminated copy of text */
+	strlength = VARSIZE(relation_and_attr) - VARHDRSZ;
+	if (strlength >= sizeof(my_copy))
+		strlength = sizeof(my_copy)-1;
+	memcpy(my_copy, VARDATA(relation_and_attr), strlength);
+	my_copy[strlength] = '\0';
 
 	relation = (char *) strtok(my_copy, ".");
 	attribute = (char *) strtok(NULL, ".");
