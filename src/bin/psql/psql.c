@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.127 1998/01/22 18:50:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.128 1998/01/23 19:21:11 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2413,9 +2413,11 @@ main(int argc, char **argv)
 	char	   *singleQuery = NULL;
 
 	bool		listDatabases = 0;
-	int			successResult = 1;
+	int		successResult = 1;
 	bool		singleSlashCmd = 0;
-	int			c;
+	int		c;
+
+	char		*home = NULL;  /* Used to store $HOME */
 
 	MemSet(&settings, 0, sizeof settings);
 	settings.opt.align = 1;
@@ -2556,6 +2558,30 @@ main(int argc, char **argv)
 		printf("   type \\g or terminate with semicolon to execute query\n");
 		printf(" You are currently connected to the database: %s\n\n", dbname);
 	}
+
+	/*
+	 * 20.06.97 ACRM See if we've got a /etc/psqlrc or .psqlrc file
+	 */
+	if(!access("/etc/psqlrc",R_OK))
+		HandleSlashCmds(&settings, "\\i /etc/psqlrc", "");
+	if((home = getenv("HOME"))!=NULL) {
+		char *psqlrc = NULL,
+		*line   = NULL;
+
+		if((psqlrc = (char *)malloc(strlen(home) + 10))!=NULL) {
+			sprintf(psqlrc, "%s/.psqlrc", home);
+			if(!access(psqlrc, R_OK)) {
+				if((line = (char *)malloc(strlen(psqlrc) + 5))!=NULL) {
+					sprintf(line, "\\i %s", psqlrc);
+					HandleSlashCmds(&settings, line, "");
+					free(line);
+				}
+			}
+			free(psqlrc);
+		}
+	}
+	/* End of check for psqlrc files */
+
 	if (qfilename || singleSlashCmd)
 	{
 
