@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.45 2004/12/28 19:08:58 tgl Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/regress.sgml,v 1.46 2005/03/07 02:00:28 tgl Exp $ -->
 
  <chapter id="regress">
   <title id="regress-title">Regression Tests</title>
@@ -294,21 +294,23 @@ according to the letter of the SQL specification.  In practice, since we are
 looking at the same queries being executed on the same data by the same
 software, we usually get the same result ordering on all platforms, and
 so the lack of <literal>ORDER BY</> isn't a problem.  Some queries do exhibit
-cross-platform ordering differences, however.  (Ordering differences
-can also be triggered by non-C locale settings.)
+cross-platform ordering differences, however.  When testing against an
+already-installed server, ordering differences can also be caused by
+non-C locale settings or non-default parameter settings, such as custom values
+of <varname>work_mem</> or the planner cost parameters.
     </para>
 
     <para>
 Therefore, if you see an ordering difference, it's not something to
-worry about, unless the query does have an <literal>ORDER BY</> that your result
-is violating.  But please report it anyway, so that we can add an
+worry about, unless the query does have an <literal>ORDER BY</> that your
+result is violating.  But please report it anyway, so that we can add an
 <literal>ORDER BY</> to that particular query and thereby eliminate the bogus
 <quote>failure</quote> in future releases.
     </para>
 
     <para>
-You might wonder why we don't order all the regression test queries explicitly to
-get rid of this issue once and for all.  The reason is that that would
+You might wonder why we don't order all the regression test queries explicitly
+to get rid of this issue once and for all.  The reason is that that would
 make the regression tests less useful, not more, since they'd tend
 to exercise query plan types that produce ordered results to the
 exclusion of those that don't.
