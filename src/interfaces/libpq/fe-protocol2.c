@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.3 2003/06/21 23:25:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.4 2003/06/23 19:20:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -358,7 +358,6 @@ void
 pqParseInput2(PGconn *conn)
 {
 	char		id;
-	char		noticeWorkspace[128];
 
 	/*
 	 * Loop to parse successive complete messages available in the buffer.
@@ -424,10 +423,9 @@ pqParseInput2(PGconn *conn)
 			}
 			else
 			{
-				snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-						 libpq_gettext("message type 0x%02x arrived from server while idle"),
-						 id);
-				PGDONOTICE(conn, noticeWorkspace);
+				pqInternalNotice(&conn->noticeHooks,
+								 "message type 0x%02x arrived from server while idle",
+								 id);
 				/* Discard the unexpected message; good idea?? */
 				conn->inStart = conn->inEnd;
 				break;
@@ -464,12 +462,9 @@ pqParseInput2(PGconn *conn)
 					if (pqGetc(&id, conn))
 						return;
 					if (id != '\0')
-					{
-						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("unexpected character %c following empty query response (\"I\" message)"),
-								 id);
-						PGDONOTICE(conn, noticeWorkspace);
-					}
+						pqInternalNotice(&conn->noticeHooks,
+										 "unexpected character %c following empty query response (\"I\" message)",
+										 id);
 					if (conn->result == NULL)
 						conn->result = PQmakeEmptyPGresult(conn,
 													  PGRES_EMPTY_QUERY);
@@ -522,9 +517,8 @@ pqParseInput2(PGconn *conn)
 					}
 					else
 					{
-						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("server sent data (\"D\" message) without prior row description (\"T\" message)"));
-						PGDONOTICE(conn, noticeWorkspace);
+						pqInternalNotice(&conn->noticeHooks,
+										 "server sent data (\"D\" message) without prior row description (\"T\" message)");
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
 						return;
@@ -539,9 +533,8 @@ pqParseInput2(PGconn *conn)
 					}
 					else
 					{
-						snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-								 libpq_gettext("server sent binary data (\"B\" message) without prior row description (\"T\" message)"));
-						PGDONOTICE(conn, noticeWorkspace);
+						pqInternalNotice(&conn->noticeHooks,
+										 "server sent binary data (\"B\" message) without prior row description (\"T\" message)");
 						/* Discard the unexpected message; good idea?? */
 						conn->inStart = conn->inEnd;
 						return;
@@ -872,7 +865,8 @@ pqGetErrorNotice2(PGconn *conn, bool isError)
 	}
 	else
 	{
-		(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+		if (res->noticeHooks.noticeRec != NULL)
+			(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
 		PQclear(res);
 	}
 
@@ -1196,7 +1190,7 @@ pqEndcopy2(PGconn *conn)
 
 		if (svLast == '\n')
 			conn->errorMessage.data[conn->errorMessage.len-1] = '\0';
-		PGDONOTICE(conn, conn->errorMessage.data);
+		pqInternalNotice(&conn->noticeHooks, "%s", conn->errorMessage.data);
 		conn->errorMessage.data[conn->errorMessage.len-1] = svLast;
 	}
 
@@ -1207,7 +1201,8 @@ pqEndcopy2(PGconn *conn)
 	 * entirely due to application screwup of the copy in/out protocol. To
 	 * recover, reset the connection (talk about using a sledgehammer...)
 	 */
-	PGDONOTICE(conn, libpq_gettext("lost synchronization with server, resetting connection"));
+	pqInternalNotice(&conn->noticeHooks,
+					 "lost synchronization with server, resetting connection");
 
 	/*
 	 * Users doing non-blocking connections need to handle the reset

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.251 2003/06/23 17:03:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.252 2003/06/23 19:20:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2843,8 +2843,9 @@ static void
 defaultNoticeReceiver(void *arg, const PGresult *res)
 {
 	(void) arg;					/* not used */
-	(*res->noticeHooks.noticeProc) (res->noticeHooks.noticeProcArg,
-									PQresultErrorMessage(res));
+	if (res->noticeHooks.noticeProc != NULL)
+		(*res->noticeHooks.noticeProc) (res->noticeHooks.noticeProcArg,
+										PQresultErrorMessage(res));
 }
 
 /*

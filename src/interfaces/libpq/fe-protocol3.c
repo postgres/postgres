@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.3 2003/06/21 23:25:38 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.4 2003/06/23 19:20:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,7 +57,6 @@ pqParseInput3(PGconn *conn)
 	char		id;
 	int			msgLength;
 	int			avail;
-	char		noticeWorkspace[128];
 
 	/*
 	 * Loop to parse successive complete messages available in the buffer.
@@ -172,10 +171,9 @@ pqParseInput3(PGconn *conn)
 			}
 			else
 			{
-				snprintf(noticeWorkspace, sizeof(noticeWorkspace),
-						 libpq_gettext("message type 0x%02x arrived from server while idle"),
-						 id);
-				PGDONOTICE(conn, noticeWorkspace);
+				pqInternalNotice(&conn->noticeHooks,
+								 "message type 0x%02x arrived from server while idle",
+								 id);
 				/* Discard the unexpected message */
 				conn->inCursor += msgLength;
 			}
@@ -667,7 +665,8 @@ pqGetErrorNotice3(PGconn *conn, bool isError)
 	{
 		/* We can cheat a little here and not copy the message. */
 		res->errMsg = workBuf.data;
-		(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
+		if (res->noticeHooks.noticeRec != NULL)
+			(*res->noticeHooks.noticeRec) (res->noticeHooks.noticeRecArg, res);
 		PQclear(res);
 	}
 
@@ -1119,7 +1118,7 @@ pqEndcopy3(PGconn *conn)
 
 		if (svLast == '\n')
 			conn->errorMessage.data[conn->errorMessage.len-1] = '\0';
-		PGDONOTICE(conn, conn->errorMessage.data);
+		pqInternalNotice(&conn->noticeHooks, "%s", conn->errorMessage.data);
 		conn->errorMessage.data[conn->errorMessage.len-1] = svLast;
 	}
 

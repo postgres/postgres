@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.97 2003/06/21 21:51:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.98 2003/06/23 19:20:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -206,7 +206,6 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 {
 	uint16		tmp2;
 	uint32		tmp4;
-	char		noticeBuf[64];
 
 	switch (bytes)
 	{
@@ -225,10 +224,9 @@ pqGetInt(int *result, size_t bytes, PGconn *conn)
 			*result = (int) ntohl(tmp4);
 			break;
 		default:
-			snprintf(noticeBuf, sizeof(noticeBuf),
-					 libpq_gettext("integer of size %lu not supported by pqGetInt"),
-					 (unsigned long) bytes);
-			PGDONOTICE(conn, noticeBuf);
+			pqInternalNotice(&conn->noticeHooks,
+							 "integer of size %lu not supported by pqGetInt",
+							 (unsigned long) bytes);
 			return EOF;
 	}
 
@@ -248,7 +246,6 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 {
 	uint16		tmp2;
 	uint32		tmp4;
-	char		noticeBuf[64];
 
 	switch (bytes)
 	{
@@ -263,10 +260,9 @@ pqPutInt(int value, size_t bytes, PGconn *conn)
 				return EOF;
 			break;
 		default:
-			snprintf(noticeBuf, sizeof(noticeBuf),
-					 libpq_gettext("integer of size %lu not supported by pqPutInt"),
-					 (unsigned long) bytes);
-			PGDONOTICE(conn, noticeBuf);
+			pqInternalNotice(&conn->noticeHooks,
+							 "integer of size %lu not supported by pqPutInt",
+							 (unsigned long) bytes);
 			return EOF;
 	}
 

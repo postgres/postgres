@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.139 2003/06/21 21:51:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.140 2003/06/23 19:20:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -440,18 +440,29 @@ pqPrepareAsyncResult(PGconn *conn)
 }
 
 /*
- * pqInternalNotice - helper routine for internally-generated notices
+ * pqInternalNotice - produce an internally-generated notice message
+ *
+ * A format string and optional arguments can be passed.  Note that we do
+ * libpq_gettext() here, so callers need not.
  *
  * The supplied text is taken as primary message (ie., it should not include
  * a trailing newline, and should not be more than one line).
  */
 void
-pqInternalNotice(const PGNoticeHooks *hooks, const char *msgtext)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt, ...)
 {
+	char		msgBuf[1024];
+	va_list		args;
 	PGresult   *res;
 
 	if (hooks->noticeRec == NULL)
-		return;					/* nobody home? */
+		return;					/* nobody home to receive notice? */
+
+	/* Format the message */
+	va_start(args, fmt);
+	vsnprintf(msgBuf, sizeof(msgBuf), libpq_gettext(fmt), args);
+	va_end(args);
+	msgBuf[sizeof(msgBuf)-1] = '\0'; /* make real sure it's terminated */
 
 	/* Make a PGresult to pass to the notice receiver */
 	res = PQmakeEmptyPGresult(NULL, PGRES_NONFATAL_ERROR);
@@ -459,14 +470,14 @@ pqInternalNotice(const PGNoticeHooks *hooks, const char *msgtext)
 	/*
 	 * Set up fields of notice.
 	 */
-	pqSaveMessageField(res, 'M', msgtext);
+	pqSaveMessageField(res, 'M', msgBuf);
 	pqSaveMessageField(res, 'S', libpq_gettext("NOTICE"));
 	/* XXX should provide a SQLSTATE too? */
 	/*
 	 * Result text is always just the primary message + newline.
 	 */
-	res->errMsg = (char *) pqResultAlloc(res, strlen(msgtext) + 2, FALSE);
-	sprintf(res->errMsg, "%s\n", msgtext);
+	res->errMsg = (char *) pqResultAlloc(res, strlen(msgBuf) + 2, FALSE);
+	sprintf(res->errMsg, "%s\n", msgBuf);
 	/*
 	 * Pass to receiver, then free it.
 	 */
@@ -1585,16 +1596,13 @@ PQbinaryTuples(const PGresult *res)
 static int
 check_field_number(const PGresult *res, int field_num)
 {
-	char		noticeBuf[128];
-
 	if (!res)
 		return FALSE;			/* no way to display error message... */
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		snprintf(noticeBuf, sizeof(noticeBuf),
-				 libpq_gettext("column number %d is out of range 0..%d"),
-				 field_num, res->numAttributes - 1);
-		PGDONOTICE(res, noticeBuf);
+		pqInternalNotice(&res->noticeHooks,
+						 "column number %d is out of range 0..%d",
+						 field_num, res->numAttributes - 1);
 		return FALSE;
 	}
 	return TRUE;
@@ -1604,24 +1612,20 @@ static int
 check_tuple_field_number(const PGresult *res,
 						 int tup_num, int field_num)
 {
-	char		noticeBuf[128];
-
 	if (!res)
 		return FALSE;			/* no way to display error message... */
 	if (tup_num < 0 || tup_num >= res->ntups)
 	{
-		snprintf(noticeBuf, sizeof(noticeBuf),
-				 libpq_gettext("row number %d is out of range 0..%d"),
-				 tup_num, res->ntups - 1);
-		PGDONOTICE(res, noticeBuf);
+		pqInternalNotice(&res->noticeHooks,
+						 "row number %d is out of range 0..%d",
+						 tup_num, res->ntups - 1);
 		return FALSE;
 	}
 	if (field_num < 0 || field_num >= res->numAttributes)
 	{
-		snprintf(noticeBuf, sizeof(noticeBuf),
-				 libpq_gettext("column number %d is out of range 0..%d"),
-				 field_num, res->numAttributes - 1);
-		PGDONOTICE(res, noticeBuf);
+		pqInternalNotice(&res->noticeHooks,
+						 "column number %d is out of range 0..%d",
+						 field_num, res->numAttributes - 1);
 		return FALSE;
 	}
 	return TRUE;
@@ -1822,7 +1826,6 @@ PQoidValue(const PGresult *res)
 char *
 PQcmdTuples(PGresult *res)
 {
-	char		noticeBuf[128];
 	char		*p;
 
 	if (!res)
@@ -1850,10 +1853,9 @@ PQcmdTuples(PGresult *res)
 
 	if (*p == 0)
 	{
-		snprintf(noticeBuf, sizeof(noticeBuf),
-				 libpq_gettext("could not interpret result from server: %s"),
-				 res->cmdStatus);
-		PGDONOTICE(res, noticeBuf);
+		pqInternalNotice(&res->noticeHooks,
+						 "could not interpret result from server: %s",
+						 res->cmdStatus);
 		return "";
 	}
 
