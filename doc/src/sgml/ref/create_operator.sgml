@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.14 2000/07/21 17:58:49 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.15 2000/08/12 05:15:23 tgl Exp $
 Postgres documentation
 -->
 
@@ -177,15 +177,15 @@ CREATE
    is a sequence of up to NAMEDATALEN-1 (31 by default) characters
    from the following list:
    <literallayout>
-+ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $ : 
++ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
    </literallayout>
 
    There are a few restrictions on your choice of name:
    <itemizedlist>
     <listitem>
      <para>
-     "$" and ":" cannot be defined as single-character operators,
-     although they can be part of a multi-character operator name.
+     "$" cannot be defined as a single-character operator,
+     although it can be part of a multi-character operator name.
      </para>
     </listitem>
     <listitem>
@@ -199,7 +199,7 @@ CREATE
      A multi-character operator name cannot end in "+" or "-",
      unless the name also contains at least one of these characters:
      <literallayout>
-~ ! @ # % ^ &amp; | ` ? $ : 
+~ ! @ # % ^ &amp; | ` ? $
      </literallayout>
      For example, <literal>@-</literal> is an allowed operator name,
      but <literal>*-</literal> is not.

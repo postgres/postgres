@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_operator.h,v 1.79 2000/07/30 22:13:59 tgl Exp $
+ * $Id: pg_operator.h,v 1.80 2000/08/12 05:15:22 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -275,8 +275,6 @@ DATA(insert OID = 596 (  "|/"	   PGUID 0 l t f   0 701 701   0   0   0   0 dsqrt
 DATA(insert OID = 597 (  "||/"	   PGUID 0 l t f   0 701 701   0   0   0   0 dcbrt - - ));
 DATA(insert OID = 598 (  "%"	   PGUID 0 l t f   0 701 701   0   0   0   0 dtrunc - - ));
 DATA(insert OID = 599 (  "%"	   PGUID 0 r t f 701   0 701   0   0   0   0 dround - - ));
-DATA(insert OID = 1282 (  ":"	   PGUID 0 l t f   0 701 701   0   0   0   0 dexp - - ));
-DATA(insert OID = 1283 (  ";"	   PGUID 0 l t f   0 701 701   0   0   0   0 dlog1 - - ));
 DATA(insert OID = 1284 (  "|"	   PGUID 0 l t f   0 704 702	0  0   0   0 tintervalstart - - ));
 DATA(insert OID = 606 (  "<#>"	   PGUID 0 b t f 702 702 704	0  0   0   0 mktinterval - - ));
 DATA(insert OID = 607 (  "="	   PGUID 0 b t t  26  26  16 607 608 609 609 oideq eqsel eqjoinsel ));

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.16 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.17 2000/08/12 05:15:24 tgl Exp $
 -->
 
  <Chapter Id="operators">
@@ -83,20 +83,10 @@ Operator Ordering (decreasing precedence)
 <tbody>
 <row>
 <entry>
-UNION
-</entry>
-<entry>
-left
-</entry>
-<entry>
-SQL select construct
-</entry>
-</row>
-<row>
-<entry>
 ::
 </entry>
 <entry>
+left
 </entry>
 <entry>
 <productname>Postgres</productname> typecasting
@@ -135,31 +125,6 @@ right
 unary minus
 </entry>
 </row>
-<!--
-Deprecated as of v7.0
-<row>
-<entry>
-;
-</entry>
-<entry>
-left
-</entry>
-<entry>
-statement termination, logarithm
-</entry>
-</row>
--->
-<row>
-<entry>
-:
-</entry>
-<entry>
-right
-</entry>
-<entry>
-exponentiation
-</entry>
-</row>
 <row>
 <entry>
 |
@@ -169,6 +134,17 @@ left
 </entry>
 <entry>
 start of interval
+</entry>
+</row>
+<row>
+<entry>
+^
+</entry>
+<entry>
+left
+</entry>
+<entry>
+power, exclusive or
 </entry>
 </row>
 <row>
@@ -228,6 +204,7 @@ test for NOT NULL
 (all other operators)
 </entry>
 <entry>
+left
 </entry>
 <entry>
 native and user-defined
@@ -265,7 +242,7 @@ time interval overlap
 </row>
 <row>
 <entry>
-LIKE
+LIKE ILIKE
 </entry>
 <entry>
 </entry>
@@ -487,19 +464,6 @@ logical union
 	<ENTRY>4 / 2</ENTRY>
        </ROW>
        <ROW>
-	<ENTRY> : </ENTRY>
-	<ENTRY>Natural Exponentiation</ENTRY>
-	<ENTRY>: 3.0</ENTRY>
-       </ROW>
-<!--
-Deprecated in v7.0, esp. since ln() is available as a generic function.
-       <ROW>
-	<ENTRY> ; </ENTRY>
-	<ENTRY>Natural Logarithm</ENTRY>
-	<ENTRY>(; 5.0)</ENTRY>
-       </ROW>
--->
-       <ROW>
 	<ENTRY> @ </ENTRY>
 	<ENTRY>Absolute value</ENTRY>
 	<ENTRY>@ -5.0</ENTRY>
@@ -523,17 +487,6 @@ Deprecated in v7.0, esp. since ln() is available as a generic function.
      </TGROUP>
     </TABLE>
    </Para>
-
-   <para>
-    <note>
-     <para>
-      Two operators, ":" and ";", are now deprecated and will be removed in
-      the next release.  Use the equivalent functions exp() and ln()
-      instead.
-     </para>
-    </note>
-   </para>
-
   </sect1>
 
   <sect1>

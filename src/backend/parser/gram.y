@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.185 2000/08/11 23:45:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.186 2000/08/12 05:15:21 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -363,7 +363,8 @@ static void doNegateFloat(Value *v);
 /* these are not real. they are here so that they get generated as #define's*/
 %token			OP
 
-/* precedence */
+/* precedence: lowest to highest */
+%left		UNION INTERSECT EXCEPT
 %left		OR
 %left		AND
 %right		NOT
@@ -381,15 +382,12 @@ static void doNegateFloat(Value *v);
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
-%left		'|'				/* this is the relation union op, not logical or */
+%left		'|'				/* XXX Should this have such a high priority? */
 /* Unary Operators */
-%right		':'				/* delimiter for array ranges */
-%left		';'				/* end of statement */
 %right		UMINUS
 %left		'.'
 %left		'[' ']'
 %left		TYPECAST
-%left		UNION INTERSECT EXCEPT
 %left		ESCAPE
 %%
 

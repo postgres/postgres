@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.74 2000/08/06 17:50:38 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.75 2000/08/12 05:15:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,7 +181,7 @@ typecast		"::"
  * rule for "operator"!
  */
 self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
-op_chars		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
+op_chars		[\~\!\@\#\^\&\|\`\?\$\+\-\*\/\%\<\>\=]
 operator		{op_chars}+
 
 /* we no longer allow unary minus in numbers. 
@@ -402,7 +402,7 @@ other			.
 
 						for (ic = nchars-2; ic >= 0; ic--)
 						{
-							if (strchr("~!@#&`?$:%^|", yytext[ic]))
+							if (strchr("~!@#^&|`?$%", yytext[ic]))
 								break;
 						}
 						if (ic >= 0)
