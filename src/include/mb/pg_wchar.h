@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.15 2000/06/13 07:35:27 tgl Exp $ */
+/* $Id: pg_wchar.h,v 1.16 2000/06/15 00:52:19 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -32,7 +32,6 @@
 
 #ifdef MULTIBYTE
 typedef unsigned int pg_wchar;
-
 #else
 #define pg_wchar char
 #endif

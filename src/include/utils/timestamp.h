@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.6 2000/06/09 01:11:15 tgl Exp $
+ * $Id: timestamp.h,v 1.7 2000/06/15 00:52:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include <time.h>
 #include <math.h>
 #include <limits.h>
+#include <float.h>
 
 #include "fmgr.h"
 

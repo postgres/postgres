@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqsignal.h,v 1.12 2000/04/12 17:16:36 momjian Exp $
+ * $Id: pqsignal.h,v 1.13 2000/06/15 00:52:11 momjian Exp $
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other
@@ -17,6 +17,8 @@
  */
 #ifndef PQSIGNAL_H
 #define PQSIGNAL_H
+
+#include <signal.h>
 
 #ifdef HAVE_SIGPROCMASK
 extern sigset_t UnBlockSig,

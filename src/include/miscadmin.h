@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.59 2000/06/13 07:35:24 tgl Exp $
+ * $Id: miscadmin.h,v 1.60 2000/06/15 00:52:04 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -26,7 +26,7 @@
 #include <sys/types.h>			/* For pid_t */
 
 #include "postgres.h"
-
+#include "storage/ipc.h"
 
 /*****************************************************************************
  *	  globals.h --															 *

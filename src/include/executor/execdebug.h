@@ -7,13 +7,14 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.12 2000/01/26 05:58:05 momjian Exp $
+ * $Id: execdebug.h,v 1.13 2000/06/15 00:52:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDEBUG_H
 #define EXECDEBUG_H
 
+#include "executor/executor.h"
 #include "nodes/print.h"
 
 /* ----------------------------------------------------------------
@@ -227,8 +228,8 @@ extern int	NIndexTupleInserted;
 #define EU_nodeDisplay(l)				nodeDisplay(l)
 #define EU_printf(s)					printf(s)
 #define EU1_printf(s, a)				printf(s, a)
-#define EU2_printf(s, a)				printf(s, a, b)
-#define EU3_printf(s, a)				printf(s, a, b, c)
+#define EU2_printf(s, a, b)				printf(s, a, b)
+#define EU3_printf(s, a, b, c)			printf(s, a, b, c)
 #define EU4_printf(s, a, b, c, d)		printf(s, a, b, c, d)
 #else
 #define EU_nodeDisplay(l)

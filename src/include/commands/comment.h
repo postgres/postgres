@@ -12,6 +12,8 @@
 #ifndef COMMENT_H
 #define COMMENT_H
 
+#include "nodes/pg_list.h"
+
 /*------------------------------------------------------------------
  * Function Prototypes --
  *
