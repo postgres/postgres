@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.13 1999/02/18 00:49:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.14 1999/02/22 19:55:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1045,9 +1045,8 @@ _freeStream(Stream *node)
 	pfree(node);
 }
 
-/* ****************
- *			  parsenodes.h routines have no free functions
- * ****************
+/*
+ *	parsenodes.h routines have no free functions
  */
 
 static void
@@ -1134,9 +1133,8 @@ _freeQuery(Query *node)
 }
 
 
-/* ****************
- *			  mnodes.h routines have no free functions
- * ****************
+/*
+ *	mnodes.h routines have no free functions
  */
 
 /* ****************************************************************

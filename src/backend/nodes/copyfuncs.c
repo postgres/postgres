@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.73 1999/02/18 00:49:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.74 1999/02/22 19:55:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1002,9 +1002,9 @@ _copyArrayRef(ArrayRef *from)
  * ----------------
  */
 /*
- ** when you change this, also make sure to fix up xfunc_copyRelOptInfo in
- ** planner/path/xfunc.c accordingly!!!
- **			-- JMH, 8/2/93
+ *	when you change this, also make sure to fix up xfunc_copyRelOptInfo in
+ *	planner/path/xfunc.c accordingly!!!
+ *		-- JMH, 8/2/93
  */
 static RelOptInfo *
 _copyRelOptInfo(RelOptInfo * from)
@@ -1469,9 +1469,8 @@ _copyStream(Stream *from)
 	return newnode;
 }
 
-/* ****************
- *			  parsenodes.h routines have no copy functions
- * ****************
+/*
+ *	parsenodes.h routines have no copy functions
  */
 
 static TargetEntry *
@@ -1604,9 +1603,8 @@ _copyQuery(Query *from)
 }
 
 
-/* ****************
- *			  mnodes.h routines have no copy functions
- * ****************
+/*
+ *	mnodes.h routines have no copy functions
  */
 
 /* ****************************************************************

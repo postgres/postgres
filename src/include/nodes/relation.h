@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.28 1999/02/20 19:02:43 momjian Exp $
+ * $Id: relation.h,v 1.29 1999/02/22 19:55:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,9 +185,9 @@ typedef struct HashPath
 	List	   *innerhashkeys;
 } HashPath;
 
-/******
+/*
  * Keys
- ******/
+ */
 
 typedef struct OrderKey
 {
@@ -203,9 +203,9 @@ typedef struct JoinKey
 	Var		   *inner;
 } JoinKey;
 
-/*******
+/*
  * clause info
- *******/
+ */
 
 typedef struct RestrictInfo
 {
@@ -260,24 +260,24 @@ typedef struct Iter
 } Iter;
 
 /*
-** Stream:
-**	 A stream represents a root-to-leaf path in a plan tree (i.e. a tree of
-** JoinPaths and Paths).  The stream includes pointers to all Path nodes,
-** as well as to any clauses that reside above Path nodes.	This structure
-** is used to make Path nodes and clauses look similar, so that Predicate
-** Migration can run.
-**
-**	   pathptr -- pointer to the current path node
-**		 cinfo -- if NULL, this stream node referes to the path node.
-**				  Otherwise this is a pointer to the current clause.
-**	clausetype -- whether cinfo is in loc_restrictinfo or pathinfo in the
-**				  path node
-**	  upstream -- linked list pointer upwards
-**	downstream -- ditto, downwards
-**	   groupup -- whether or not this node is in a group with the node upstream
-**	 groupcost -- total cost of the group that node is in
-**	  groupsel -- total selectivity of the group that node is in
-*/
+ *  Stream:
+ *	A stream represents a root-to-leaf path in a plan tree (i.e. a tree of
+ *	JoinPaths and Paths).  The stream includes pointers to all Path nodes,
+ *	as well as to any clauses that reside above Path nodes.	This structure
+ *	is used to make Path nodes and clauses look similar, so that Predicate
+ *	Migration can run.
+ *
+ *	pathptr -- pointer to the current path node
+ *	cinfo -- if NULL, this stream node referes to the path node.
+ *			  Otherwise this is a pointer to the current clause.
+ *	clausetype -- whether cinfo is in loc_restrictinfo or pathinfo in the
+ *			  path node
+ *	upstream -- linked list pointer upwards
+ *	downstream -- ditto, downwards
+ *	groupup -- whether or not this node is in a group with the node upstream
+ *	groupcost -- total cost of the group that node is in
+ *	groupsel -- total selectivity of the group that node is in
+ */
 typedef struct Stream *StreamPtr;
 
 typedef struct Stream

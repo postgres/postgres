@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.38 1999/02/19 06:06:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.39 1999/02/22 19:55:43 momjian Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -515,19 +515,14 @@ InitPostgres(char *name)		/* database name */
 	}
 
 	/*
-	 * ********************************
-	 *
-	 *
-	 *
-	 * code after this point assumes we are in the proper directory!
+	 * Code after this point assumes we are in the proper directory!
 	 *
 	 * So, how do we implement alternate locations for databases? There are
 	 * two possible locations for tables and we need to look in
 	 * DataDir/pg_database to find the true location of an individual
 	 * database. We can brute-force it as done in InitMyDatabaseInfo(), or
 	 * we can be patient and wait until we open pg_database gracefully.
-	 * Will try that, but may not work... - thomas 1997-11-01 ********************************
-	 *
+	 * Will try that, but may not work... - thomas 1997-11-01
 	 */
 
 	/* Does not touch files (?) - thomas 1997-11-01 */
