@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.6 1996/11/15 18:37:00 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/Attic/nbtscan.c,v 1.7 1997/02/18 17:13:45 momjian Exp $
  *
  *
  * NOTES
@@ -40,7 +40,10 @@ typedef struct BTScanListData {
 typedef BTScanListData	*BTScanList;
 
 static BTScanList	BTScans = (BTScanList) NULL;
-     
+
+static void _bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno);
+static bool _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
+
 /*
  *  _bt_regscan() -- register a new scan.
  */
@@ -81,8 +84,12 @@ _bt_dropscan(IndexScanDesc scan)
     pfree (chk);
 }
 
+/*
+ *  _bt_adjscans() -- adjust all scans in the scan list to compensate
+ *		      for a given deletion or insertion
+ */
 void
-_bt_adjscans(Relation rel, ItemPointer tid)
+_bt_adjscans(Relation rel, ItemPointer tid, int op)
 {
     BTScanList l;
     Oid relid;
@@ -90,13 +97,34 @@ _bt_adjscans(Relation rel, ItemPointer tid)
     relid = rel->rd_id;
     for (l = BTScans; l != (BTScanList) NULL; l = l->btsl_next) {
 	if (relid == l->btsl_scan->relation->rd_id)
-	    _bt_scandel(l->btsl_scan, ItemPointerGetBlockNumber(tid),
+	    _bt_scandel(l->btsl_scan, op,
+			ItemPointerGetBlockNumber(tid),
 			ItemPointerGetOffsetNumber(tid));
     }
 }
 
-void
-_bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
+/*
+ *  _bt_scandel() -- adjust a single scan
+ *
+ * because each index page is always maintained as an ordered array of
+ * index tuples, the index tuples on a given page shift beneath any
+ * given scan.  an index modification "behind" a scan position (i.e.,
+ * same page, lower or equal offset number) will therefore force us to
+ * adjust the scan in the following ways:
+ *
+ * - on insertion, we shift the scan forward by one item.
+ * - on deletion, we shift the scan backward by one item.
+ *
+ * note that:
+ *
+ * - we need not worry about the actual ScanDirection of the scan
+ * itself, since the problem is that the "current" scan position has
+ * shifted.
+ * - modifications "ahead" of our scan position do not change the
+ * array index of the current scan position and so can be ignored.
+ */
+static void
+_bt_scandel(IndexScanDesc scan, int op, BlockNumber blkno, OffsetNumber offno)
 {
     ItemPointer current;
     Buffer buf;
@@ -112,7 +140,17 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
     if (ItemPointerIsValid(current)
 	&& ItemPointerGetBlockNumber(current) == blkno
 	&& ItemPointerGetOffsetNumber(current) >= offno) {
-	_bt_step(scan, &buf, BackwardScanDirection);
+	switch (op) {
+	case BT_INSERT:
+	    _bt_step(scan, &buf, ForwardScanDirection);
+	    break;
+	case BT_DELETE:
+	    _bt_step(scan, &buf, BackwardScanDirection);
+	    break;
+	default:
+	    elog(WARN, "_bt_scandel: bad operation '%d'", op);
+	    /*NOTREACHED*/
+	}
 	so->btso_curbuf = buf;
     }
     
@@ -124,7 +162,17 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 	tmp = *current;
 	*current = scan->currentItemData;
 	scan->currentItemData = tmp;
-	_bt_step(scan, &buf, BackwardScanDirection);
+	switch (op) {
+	case BT_INSERT:
+	    _bt_step(scan, &buf, ForwardScanDirection);
+	    break;
+	case BT_DELETE:
+	    _bt_step(scan, &buf, BackwardScanDirection);
+	    break;
+	default:
+	    elog(WARN, "_bt_scandel: bad operation '%d'", op);
+	    /*NOTREACHED*/
+	}
 	so->btso_mrkbuf = buf;
 	tmp = *current;
 	*current = scan->currentItemData;
@@ -132,7 +180,11 @@ _bt_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
     }
 }
 
-bool
+/*
+ *  _bt_scantouched() -- check to see if a scan is affected by a given
+ *			 change to the index
+ */
+static bool
 _bt_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno)
 {
     ItemPointer current;

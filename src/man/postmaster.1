@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.3 1997/01/26 15:32:28 scrappy Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.4 1997/02/18 17:14:25 momjian Exp $
 .TH POSTMASTER UNIX 11/05/95 PostgreSQL PostgreSQL
 .SH "NAME"
 postmaster \(em run the Postgres postmaster
@@ -172,23 +172,6 @@ does not reinitialize shared data structures.  A knowledgable system
 programmer can then use the
 .IR shmemdoc
 program to examine shared memory and semaphore state.
-.TP
-.BR "-e"
-The
-.IR "-e"
-option controls how dates are input to and output from the database.
-.IP
-If the
-.IR "-e"
-option is supplied, then all dates passed to and from the frontend
-processes will be assumed to be in
-.IR "European"
-format ie.
-.IR "DD-MM-YYYY"
-otherwise dates are input and output in
-.IR "American"
-format ie.
-.IR "MM-DD-YYYY"
 .TP
 .BR "-o" " backend_options"
 The 

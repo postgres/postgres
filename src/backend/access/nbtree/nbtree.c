@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.13 1997/02/12 05:04:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.14 1997/02/18 17:13:42 momjian Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.

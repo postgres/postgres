@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.40 1997/02/14 04:16:12 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.41 1997/02/18 17:13:58 momjian Exp $
  *
  * NOTES
  *
@@ -287,12 +287,6 @@ PostmasterMain(int argc, char *argv[])
             else
                 DebugLvl = 1;
             break;
-        case 'e':
-            /*
-             * Use european date formats.
-             */
-            EuroDates = 1;
-            break;
         case 'm':
             MultiplexedBackends = 1;
             MultiplexedBackendPort = atoi(optarg);
@@ -424,7 +418,6 @@ usage(const char *progname)
     fprintf(stderr, "\t-b backend\tuse a specific backend server executable\n");
     fprintf(stderr, "\t-d [1|2|3]\tset debugging level\n");
     fprintf(stderr, "\t-D datadir\tset data directory\n");
-    fprintf(stderr, "\t-e \tturn on European date format\n");
     fprintf(stderr, "\t-m \tstart up multiplexing backends\n");
     fprintf(stderr, "\t-n\t\tdon't reinitialize shared memory after abnormal exit\n");
     fprintf(stderr, "\t-o option\tpass 'option' to each backend servers\n");
@@ -1113,10 +1106,6 @@ DoExec(StartupInfo *packet, int portFd)
         av[ac++] = "-o";
         av[ac++] = ttybuf;
     }
-
-    /* tell the backend we're using European dates */
-    if (EuroDates == 1)
-      av[ac++] = "-e";
     
     /* tell the multiplexed backend to start on a certain port */
     if (MultiplexedBackends) {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.13 1997/01/05 10:56:36 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.14 1997/02/18 17:13:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ _bt_binsrch(Relation rel,
 	else if (result < 0)
 	    high = mid - 1;
 	else
-	return (_bt_firsteq(rel, itupdesc, page, keysz, scankey, mid));
+	    return (_bt_firsteq(rel, itupdesc, page, keysz, scankey, mid));
     }
 	
 	/*
