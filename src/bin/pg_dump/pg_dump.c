@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355 2003/10/28 21:05:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.355.2.1 2003/12/19 14:21:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3488,6 +3488,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 	int			i_lanacl = -1;
 	char	   *lanoid;
 	char	   *lanname;
+	bool	    lanpltrusted;
 	char	   *lanacl;
 	const char *lanplcallfoid;
 	const char *lanvalidator;
@@ -3528,6 +3529,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 		lanoid = PQgetvalue(res, i, i_oid);
 		lanplcallfoid = PQgetvalue(res, i, i_lanplcallfoid);
 		lanname = PQgetvalue(res, i, i_lanname);
+		lanpltrusted = (PQgetvalue(res, i, i_lanpltrusted)[0] == 't');
 		if (fout->remoteVersion >= 70300)
 		{
 			lanvalidator = PQgetvalue(res, i, i_lanvalidator);
@@ -3580,7 +3582,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 						  fmtId(lanname));
 
 		appendPQExpBuffer(defqry, "CREATE %sPROCEDURAL LANGUAGE %s",
-						  (PQgetvalue(res, i, i_lanpltrusted)[0] == 't') ?
+						  lanpltrusted ?
 						  "TRUSTED " : "",
 						  fmtId(lanname));
 		appendPQExpBuffer(defqry, " HANDLER %s",
@@ -3605,7 +3607,7 @@ dumpProcLangs(Archive *fout, FuncInfo finfo[], int numFuncs)
 					 "PROCEDURAL LANGUAGE", deps,
 					 defqry->data, delqry->data, NULL, NULL, NULL);
 
-		if (!aclsSkip)
+		if (!aclsSkip && lanpltrusted)
 		{
 			char	   *tmp = strdup(fmtId(lanname));
 
