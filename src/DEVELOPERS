@@ -1,4 +1,3 @@
-
 Read the Developer's FAQ in pgsql/doc/FAQ_DEV.  All the developer tools
 are located in the pgsql/src/tools directory.
 
