@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.23 2003/08/08 21:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/portalcmds.c,v 1.24 2003/08/24 21:02:43 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,10 +88,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 
 	/*
 	 * Create a portal and copy the query and plan into its memory
-	 * context. (If a duplicate cursor name already exists, warn and drop
-	 * it.)
+	 * context.
 	 */
-	portal = CreatePortal(stmt->portalname, true, false);
+	portal = CreatePortal(stmt->portalname, false, false);
 
 	oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
@@ -168,13 +167,10 @@ PerformPortalFetch(FetchStmt *stmt,
 	portal = GetPortalByName(stmt->portalname);
 	if (!PortalIsValid(portal))
 	{
-		/* FIXME: shouldn't this be an ERROR? */
-		ereport(WARNING,
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
-			  errmsg("portal \"%s\" does not exist", stmt->portalname)));
-		if (completionTag)
-			strcpy(completionTag, stmt->ismove ? "MOVE 0" : "FETCH 0");
-		return;
+				 errmsg("cursor \"%s\" does not exist", stmt->portalname)));
+		return; /* keep compiler happy */
 	}
 
 	/* Adjust dest if needed.  MOVE wants destination None */
@@ -218,11 +214,10 @@ PerformPortalClose(const char *name)
 	portal = GetPortalByName(name);
 	if (!PortalIsValid(portal))
 	{
-		ereport(WARNING,
+		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_CURSOR),
-				 errmsg("portal \"%s\" does not exist", name),
-				 errfunction("PerformPortalClose")));	/* for ecpg */
-		return;
+				 errmsg("cursor \"%s\" does not exist", name)));
+		return; /* keep compiler happy */
 	}
 
 	/*

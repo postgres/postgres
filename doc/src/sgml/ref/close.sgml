@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.15 2003/08/17 04:46:00 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.16 2003/08/24 21:02:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -70,10 +70,10 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
    </varlistentry>
 
    <varlistentry>
-    <term><computeroutput>WARNING:  PerformPortalClose: portal "<replaceable class="PARAMETER">cursor</replaceable>" not found</computeroutput></term>
+    <term><computeroutput>ERROR:  cursor "<replaceable class="PARAMETER">cursor</replaceable>" does not exist</computeroutput></term>
     <listitem>
      <para>
-      This warning is given if <replaceable
+      Message returned if <replaceable
       class="PARAMETER">cursor</replaceable> is not declared or has
       already been closed.
      </para>

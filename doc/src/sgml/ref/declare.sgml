@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.24 2003/05/04 02:23:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.25 2003/08/24 21:02:42 petere Exp $
 PostgreSQL documentation
 -->
 
@@ -202,11 +202,10 @@ DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INS
    </varlistentry>
 
    <varlistentry>
-    <term><computeroutput>WARNING:  Closing pre-existing portal "<replaceable class="parameter">cursorname</replaceable>"</computeroutput></term>
+    <term><computeroutput>ERROR:  cursor "<replaceable class="parameter">cursorname</replaceable>" already exists</computeroutput></term>
     <listitem>
      <para>
-      This message is reported if a cursor with the same name already
-      exists. The previous definition is discarded.
+      This error occurs if a cursor with the same name already exists.
      </para>
     </listitem>
    </varlistentry>
