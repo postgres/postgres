@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.62 2002/06/15 21:28:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.63 2002/06/15 22:15:03 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1471,11 +1471,11 @@ SELECT somefunc() OR true;
     be used.  For example, this is an untrustworthy way of trying to
     avoid division by zero in a WHERE clause:
 <programlisting>
-SELECT ... WHERE x <> 0 AND y/x > 1.5;
+SELECT ... WHERE x &lt;&gt; 0 AND y/x &gt; 1.5;
 </programlisting>
     but this is safe:
 <programlisting>
-SELECT ... WHERE CASE WHEN x <> 0 THEN y/x > 1.5 ELSE false END;
+SELECT ... WHERE CASE WHEN x &lt;&gt; 0 THEN y/x &gt; 1.5 ELSE false END;
 </programlisting>
     A CASE construct used in this fashion will defeat optimization attempts,
     so it should only be done when necessary.
