@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openssl.c,v 1.10 2001/11/20 18:54:07 momjian Exp $
+ * $Id: openssl.c,v 1.11 2002/11/15 02:54:44 momjian Exp $
  */
 
 #include <postgres.h>
@@ -34,8 +34,10 @@
 #include "px.h"
 
 #include <openssl/evp.h>
-#include <openssl/blowfish.h>
 
+/*
+ * Hashes
+ */
 static unsigned
 digest_result_size(PX_MD * h)
 {
@@ -84,15 +86,63 @@ digest_free(PX_MD * h)
 	px_free(h);
 }
 
-/* CIPHERS */
+static int	px_openssl_initialized = 0;
+
+/* PUBLIC functions */
+
+int
+px_find_digest(const char *name, PX_MD ** res)
+{
+	const EVP_MD *md;
+	EVP_MD_CTX *ctx;
+	PX_MD	   *h;
+
+	if (!px_openssl_initialized)
+	{
+		px_openssl_initialized = 1;
+		OpenSSL_add_all_algorithms();
+	}
+
+	md = EVP_get_digestbyname(name);
+	if (md == NULL)
+		return -1;
+
+	ctx = px_alloc(sizeof(*ctx));
+	EVP_DigestInit(ctx, md);
+
+	h = px_alloc(sizeof(*h));
+	h->result_size = digest_result_size;
+	h->block_size = digest_block_size;
+	h->reset = digest_reset;
+	h->update = digest_update;
+	h->finish = digest_finish;
+	h->free = digest_free;
+	h->p.ptr = (void *) ctx;
+
+	*res = h;
+	return 0;
+}
 
 /*
+ * Ciphers
+ *
  * The problem with OpenSSL is that the EVP* family
  * of functions does not allow enough flexibility
  * and forces some of the parameters (keylen,
  * padding) to SSL defaults.
+ * 
+ * So need to manage ciphers ourselves.
  */
 
+struct ossl_cipher {
+	int         (*init) (PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv);
+	int         (*encrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
+	int         (*decrypt) (PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res);
+
+	int block_size;
+	int max_key_size;
+	int stream_cipher;
+};
 
 typedef struct
 {
@@ -103,101 +153,55 @@ typedef struct
 			BF_KEY		key;
 			int			num;
 		}			bf;
-		EVP_CIPHER_CTX evp_ctx;
+		struct
+		{
+			des_key_schedule key_schedule;
+		}			des;
+		CAST_KEY	cast_key;
 	}			u;
-	const EVP_CIPHER *evp_ciph;
 	uint8		key[EVP_MAX_KEY_LENGTH];
 	uint8		iv[EVP_MAX_IV_LENGTH];
 	unsigned	klen;
 	unsigned	init;
+	const struct ossl_cipher *ciph;
 }	ossldata;
 
-/* generic EVP */
+/* generic */
 
 static unsigned
-gen_evp_block_size(PX_Cipher * c)
+gen_ossl_block_size(PX_Cipher * c)
 {
 	ossldata   *od = (ossldata *) c->ptr;
 
-	return EVP_CIPHER_block_size(od->evp_ciph);
+	return od->ciph->block_size;
 }
 
 static unsigned
-gen_evp_key_size(PX_Cipher * c)
+gen_ossl_key_size(PX_Cipher * c)
 {
 	ossldata   *od = (ossldata *) c->ptr;
 
-	return EVP_CIPHER_key_length(od->evp_ciph);
+	return od->ciph->max_key_size;
 }
 
 static unsigned
-gen_evp_iv_size(PX_Cipher * c)
+gen_ossl_iv_size(PX_Cipher * c)
 {
 	unsigned	ivlen;
 	ossldata   *od = (ossldata *) c->ptr;
 
-	ivlen = EVP_CIPHER_iv_length(od->evp_ciph);
+	ivlen = od->ciph->block_size;
 	return ivlen;
 }
 
 static void
-gen_evp_free(PX_Cipher * c)
+gen_ossl_free(PX_Cipher * c)
 {
 	ossldata   *od = (ossldata *) c->ptr;
 
 	memset(od, 0, sizeof(*od));
 	pfree(od);
 	pfree(c);
-}
-
-/* fun */
-
-static int
-gen_evp_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
-{
-	ossldata   *od = (ossldata *) c->ptr;
-	unsigned	bs = gen_evp_block_size(c);
-
-	if (iv)
-		memcpy(od->iv, iv, bs);
-	else
-		memset(od->iv, 0, bs);
-	memcpy(od->key, key, klen);
-	od->klen = klen;
-	od->init = 0;
-	return 0;
-}
-
-static void
-_gen_init(PX_Cipher * c, int enc)
-{
-	ossldata   *od = c->ptr;
-
-	od->evp_ciph->init(&od->u.evp_ctx, od->key, od->iv, enc);
-	od->init = 1;
-	od->u.evp_ctx.encrypt = enc;
-}
-
-static int
-gen_evp_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
-{
-	ossldata   *od = c->ptr;
-
-	if (!od->init)
-		_gen_init(c, 1);
-	od->evp_ciph->do_cipher(&od->u.evp_ctx, res, data, dlen);
-	return 0;
-}
-
-static int
-gen_evp_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
-{
-	ossldata   *od = c->ptr;
-
-	if (!od->init)
-		_gen_init(c, 0);
-	od->evp_ciph->do_cipher(&od->u.evp_ctx, res, data, dlen);
-	return 0;
 }
 
 /* Blowfish */
@@ -219,8 +223,8 @@ bf_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 static int
 bf_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
-	unsigned	bs = gen_evp_block_size(c),
-				i;
+	unsigned	bs = gen_ossl_block_size(c);
+	unsigned    i;
 	ossldata   *od = c->ptr;
 
 	for (i = 0; i < dlen / bs; i++)
@@ -231,7 +235,7 @@ bf_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 static int
 bf_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 {
-	unsigned	bs = gen_evp_block_size(c),
+	unsigned	bs = gen_ossl_block_size(c),
 				i;
 	ossldata   *od = c->ptr;
 
@@ -278,21 +282,133 @@ bf_cfb64_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
 	return 0;
 }
 
+/* DES */
+
 static int
-bf_ofb64_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
+ossl_des_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
 {
 	ossldata   *od = c->ptr;
+	des_cblock xkey;
 
-	BF_ofb64_encrypt(data, res, dlen, &od->u.bf.key, od->iv, &od->u.bf.num);
+	memset(&xkey, 0, sizeof(xkey));
+	memcpy(&xkey, key, klen > 8 ? 8 : klen);
+	des_set_key(&xkey, od->u.des.key_schedule);
+	memset(&xkey, 0, sizeof(xkey));
+	
+	if (iv)
+		memcpy(od->iv, iv, 8);
+	else
+		memset(od->iv, 0, 8);
 	return 0;
 }
 
 static int
-bf_ofb64_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
+ossl_des_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+		uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	unsigned    i;
+	ossldata   *od = c->ptr;
+
+	for (i = 0; i < dlen / bs; i++)
+		des_ecb_encrypt((des_cblock*)(data + i * bs),
+				(des_cblock*)(res + i * bs),
+				od->u.des.key_schedule, 1);
+	return 0;
+}
+
+static int
+ossl_des_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+		uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	unsigned    i;
+	ossldata   *od = c->ptr;
+
+	for (i = 0; i < dlen / bs; i++)
+		des_ecb_encrypt((des_cblock*)(data + i * bs),
+				(des_cblock*)(res + i * bs),
+				od->u.des.key_schedule, 0);
+	return 0;
+}
+
+static int
+ossl_des_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+		uint8 *res)
 {
 	ossldata   *od = c->ptr;
 
-	BF_ofb64_encrypt(data, res, dlen, &od->u.bf.key, od->iv, &od->u.bf.num);
+	des_ncbc_encrypt(data, res, dlen, od->u.des.key_schedule,
+			(des_cblock*)od->iv, 1);
+	return 0;
+}
+
+static int
+ossl_des_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen,
+		uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	des_ncbc_encrypt(data, res, dlen, od->u.des.key_schedule,
+			(des_cblock*)od->iv, 0);
+	return 0;
+}
+
+/* CAST5 */
+
+static int
+ossl_cast_init(PX_Cipher * c, const uint8 *key, unsigned klen, const uint8 *iv)
+{
+	ossldata   *od = c->ptr;
+	unsigned	bs = gen_ossl_block_size(c);
+
+	CAST_set_key(&od->u.cast_key, klen, key);
+	if (iv)
+		memcpy(od->iv, iv, bs);
+	else
+		memset(od->iv, 0, bs);
+	return 0;
+}
+
+static int
+ossl_cast_ecb_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	ossldata   *od = c->ptr;
+	const uint8	   *end = data + dlen - bs;
+
+	for (; data <= end; data += bs, res += bs)
+		CAST_ecb_encrypt(data, res, &od->u.cast_key, CAST_ENCRYPT);
+	return 0;
+}
+
+static int
+ossl_cast_ecb_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
+{
+	unsigned	bs = gen_ossl_block_size(c);
+	ossldata   *od = c->ptr;
+	const uint8	   *end = data + dlen - bs;
+
+	for (; data <= end; data += bs, res += bs)
+		CAST_ecb_encrypt(data, res, &od->u.cast_key, CAST_DECRYPT);
+	return 0;
+}
+
+static int
+ossl_cast_cbc_encrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	CAST_cbc_encrypt(data, res, dlen, &od->u.cast_key, od->iv, CAST_ENCRYPT);
+	return 0;
+}
+
+static int
+ossl_cast_cbc_decrypt(PX_Cipher * c, const uint8 *data, unsigned dlen, uint8 *res)
+{
+	ossldata   *od = c->ptr;
+
+	CAST_cbc_encrypt(data, res, dlen, &od->u.cast_key, od->iv, CAST_DECRYPT);
 	return 0;
 }
 
@@ -306,112 +422,83 @@ static PX_Alias ossl_aliases[] = {
 	{"blowfish-cbc", "bf-cbc"},
 	{"blowfish-ecb", "bf-ecb"},
 	{"blowfish-cfb", "bf-cfb"},
-	{"blowfish-ofb", "bf-ofb"},
+	{"des", "des-cbc"},
+	{"cast5", "cast5-cbc"},
 	{NULL}
 };
 
-/*
-static PX_Alias ossl_mode_aliases [] = {
-	{ "cfb64", "cfb" },
-	{ "ofb64", "ofb" },
-	{ NULL }
-};*/
+static const struct ossl_cipher ossl_bf_cbc = {
+	bf_init, bf_cbc_encrypt, bf_cbc_decrypt,
+	64/8, 448/8, 0
+};
+
+static const struct ossl_cipher ossl_bf_ecb = {
+	bf_init, bf_ecb_encrypt, bf_ecb_decrypt,
+	64/8, 448/8, 0
+};
+
+static const struct ossl_cipher ossl_bf_cfb = {
+	bf_init, bf_cfb64_encrypt, bf_cfb64_decrypt,
+	64/8, 448/8, 1
+};
+
+static const struct ossl_cipher ossl_des_ecb = {
+	ossl_des_init, ossl_des_ecb_encrypt, ossl_des_ecb_decrypt,
+	64/8, 64/8, 0
+};
+
+static const struct ossl_cipher ossl_des_cbc = {
+	ossl_des_init, ossl_des_cbc_encrypt, ossl_des_cbc_decrypt,
+	64/8, 64/8, 0
+};
+
+static const struct ossl_cipher ossl_cast_ecb = {
+	ossl_cast_init, ossl_cast_ecb_encrypt, ossl_cast_ecb_decrypt,
+	64/8, 128/8, 0
+};
+
+static const struct ossl_cipher ossl_cast_cbc = {
+	ossl_cast_init, ossl_cast_cbc_encrypt, ossl_cast_cbc_decrypt,
+	64/8, 128/8, 0
+};
 
 /*
  * Special handlers
  */
-struct
+static const struct
 {
-	char	   *name;
-	PX_Cipher	cf;
-}	spec_types[] =
+	const char	   *name;
+	const struct ossl_cipher *ciph;
+}	ossl_cipher_types[] =
 
 {
 	{
-		"bf-cbc",
-		{
-			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_cbc_encrypt, bf_cbc_decrypt, gen_evp_free
-		}
+		"bf-cbc", &ossl_bf_cbc
 	},
 	{
-		"bf-ecb",
-		{
-			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_ecb_encrypt, bf_ecb_decrypt, gen_evp_free
-		}
+		"bf-ecb", &ossl_bf_ecb
 	},
 	{
-		"bf-cfb",
-		{
-			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_cfb64_encrypt, bf_cfb64_decrypt, gen_evp_free
-		}
+		"bf-cfb", &ossl_bf_cfb
 	},
 	{
-		"bf-ofb",
-		{
-			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_ofb64_encrypt, bf_ofb64_decrypt, gen_evp_free
-		}
+		"des-ecb", &ossl_des_ecb
+	},
+	{
+		"des-cbc", &ossl_des_cbc
+	},
+	{
+		"cast5-ecb", &ossl_cast_ecb
+	},
+	{
+		"cast5-cbc", &ossl_cast_cbc
 	},
 	{
 		NULL
 	}
 };
 
-/*
- * Generic EVP_* functions handler
- */
-static PX_Cipher gen_evp_handler = {
-	gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-	gen_evp_init, gen_evp_encrypt, gen_evp_decrypt, gen_evp_free
-};
-
-static int	px_openssl_initialized = 0;
-
-/* ATM not needed
-static void *o_alloc(unsigned s) { return px_alloc(s); }
-static void *o_realloc(void *p) { return px_realloc(p); }
-static void o_free(void *p) { px_free(p); }
-*/
-
 /* PUBLIC functions */
-
-int
-px_find_digest(const char *name, PX_MD ** res)
-{
-	const EVP_MD *md;
-	EVP_MD_CTX *ctx;
-	PX_MD	   *h;
-
-	if (!px_openssl_initialized)
-	{
-		px_openssl_initialized = 1;
-		/* CRYPTO_set_mem_functions(o_alloc, o_realloc, o_free); */
-		OpenSSL_add_all_algorithms();
-	}
-
-	md = EVP_get_digestbyname(name);
-	if (md == NULL)
-		return -1;
-
-	ctx = px_alloc(sizeof(*ctx));
-	EVP_DigestInit(ctx, md);
-
-	h = px_alloc(sizeof(*h));
-	h->result_size = digest_result_size;
-	h->block_size = digest_block_size;
-	h->reset = digest_reset;
-	h->update = digest_update;
-	h->finish = digest_finish;
-	h->free = digest_free;
-	h->p.ptr = (void *) ctx;
-
-	*res = h;
-	return 0;
-}
-
 
 int
 px_find_cipher(const char *name, PX_Cipher ** res)
@@ -420,39 +507,32 @@ px_find_cipher(const char *name, PX_Cipher ** res)
 	PX_Cipher  *c = NULL,
 			   *csrc;
 	ossldata   *od;
-
-	const EVP_CIPHER *evp_c;
-
-	if (!px_openssl_initialized)
-	{
-		px_openssl_initialized = 1;
-		/* CRYPTO_set_mem_functions(o_alloc, o_realloc, o_free); */
-		OpenSSL_add_all_algorithms();
-	}
+	const struct ossl_cipher *ossl_ciph = NULL;
 
 	name = px_resolve_alias(ossl_aliases, name);
-	evp_c = EVP_get_cipherbyname(name);
-	if (evp_c == NULL)
+	for (i = 0; ossl_cipher_types[i].name; i++) {
+		if (!strcmp(ossl_cipher_types[i].name, name)) {
+			ossl_ciph = ossl_cipher_types[i].ciph;
+			break;
+		}
+	}
+	if (ossl_ciph == NULL)
 		return -1;
 
 	od = px_alloc(sizeof(*od));
 	memset(od, 0, sizeof(*od));
-	od->evp_ciph = evp_c;
+	od->ciph = ossl_ciph;
 
 	csrc = NULL;
 
-	for (i = 0; spec_types[i].name; i++)
-		if (!strcmp(name, spec_types[i].name))
-		{
-			csrc = &spec_types[i].cf;
-			break;
-		}
-
-	if (csrc == NULL)
-		csrc = &gen_evp_handler;
-
 	c = px_alloc(sizeof(*c));
-	memcpy(c, csrc, sizeof(*c));
+	c->block_size = gen_ossl_block_size;
+	c->key_size = gen_ossl_key_size;
+	c->iv_size = gen_ossl_iv_size;
+	c->free = gen_ossl_free;
+	c->init = ossl_ciph->init;
+	c->encrypt = ossl_ciph->encrypt;
+	c->decrypt = ossl_ciph->decrypt;
 	c->ptr = od;
 
 	*res = c;
