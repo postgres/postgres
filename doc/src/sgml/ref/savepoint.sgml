@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.3 2004/09/20 00:04:19 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/savepoint.sgml,v 1.4 2005/01/06 20:53:34 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -83,11 +83,11 @@ SAVEPOINT <replaceable>savepoint_name</replaceable>
    after it was established:
 <programlisting>
 BEGIN;
-    INSERT INTO table VALUES (1);
+    INSERT INTO table1 VALUES (1);
     SAVEPOINT my_savepoint;
-    INSERT INTO table VALUES (2);
+    INSERT INTO table1 VALUES (2);
     ROLLBACK TO SAVEPOINT my_savepoint;
-    INSERT INTO table VALUES (3);
+    INSERT INTO table1 VALUES (3);
 COMMIT;
 </programlisting>
    The above transaction will insert the values 1 and 3, but not 2.
@@ -97,9 +97,9 @@ COMMIT;
    To establish and later destroy a savepoint:
 <programlisting>
 BEGIN;
-    INSERT INTO table VALUES (3);
+    INSERT INTO table1 VALUES (3);
     SAVEPOINT my_savepoint;
-    INSERT INTO table VALUES (4);
+    INSERT INTO table1 VALUES (4);
     RELEASE SAVEPOINT my_savepoint;
 COMMIT;
 </programlisting>
