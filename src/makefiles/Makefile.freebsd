@@ -5,5 +5,5 @@
 	@${AR} cq $@.pic `lorder $<.obj | tsort`
 	${RANLIB} $@.pic
 	@rm -f $@
-	$(LD) -x -Bshareable -Bforcearchive \
-	  -o $@ $@.pic
+#	$(LD) -x -Bshareable -Bforcearchive \
+	$(LD) -x -Bshareable -o $@ $@.pic
