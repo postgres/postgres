@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88.2.1 1999/08/18 13:01:50 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.88.2.2 1999/09/14 06:07:35 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5159,9 +5159,11 @@ ColId:  IDENT							{ $$ = $1; }
 		| INSENSITIVE					{ $$ = "insensitive"; }
 		| INSTEAD						{ $$ = "instead"; }
 		| ISNULL						{ $$ = "isnull"; }
+		| ISOLATION						{ $$ = "isolation"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
 		| LANCOMPILER					{ $$ = "lancompiler"; }
+		| LEVEL							{ $$ = "level"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
