@@ -8,27 +8,35 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.48 2004/03/05 01:53:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-lobj.c,v 1.49 2004/08/17 02:44:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#ifdef WIN32
+/*
+ *	As unlink/rename are #define'd in port.h (via postgres_fe.h), io.h
+ *	must be included first on MS C.  Might as well do it for all WIN32's
+ *	here.
+ */
+#include <io.h>
+#endif
+
 #include "postgres_fe.h"
+
+#ifdef WIN32
+#include "win32.h"
+#else
+#include <unistd.h>
+#endif
 
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <errno.h>
 
-#ifdef WIN32
-#include "win32.h"
-#include "io.h"
-#else
-#include <unistd.h>
-#endif
-
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "libpq/libpq-fs.h"		/* must come after sys/stat.h */
-
 
 #define LO_BUFSIZE		  8192
 
