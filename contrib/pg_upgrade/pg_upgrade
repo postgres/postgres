@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.7 2002/01/15 05:03:53 momjian Exp $
+# $Header: /cvsroot/pgsql/contrib/pg_upgrade/Attic/pg_upgrade,v 1.8 2002/01/15 05:10:57 momjian Exp $
 #
 # To migrate this to newer versions of PostgreSQL:  
 #	1)  Update the version numbers at the top of the file
@@ -352,7 +352,7 @@ fi
 if pg_ctl status | sed -n '1p' | grep "is running" > /dev/null 2>&1
 then	pg_ctl -w stop
 	if [ $? -ne 0 ]
-	then	echo "Can no start server.  Exiting." 1>&2
+	then	echo "Can not start server.  Exiting." 1>&2
 		exit 1
 	fi
 fi
