@@ -110,7 +110,7 @@ public class TestUtil
 			try
 			{
 				String sql = "DROP TABLE " + table;
-				if (con instanceof org.postgresql.jdbc1.AbstractJdbc1Connection && ((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3")) {
+				if (haveMinimumServerVersion(con,"7.3")) {
 					sql += " CASCADE ";
 				}
 				stmt.executeUpdate(sql);
@@ -189,5 +189,42 @@ public class TestUtil
 	{
 		String s = "0000000000".substring(0, l) + Integer.toString(v);
 		return s.substring(s.length() - l);
+	}
+
+	/**
+	 * Determine if the given connection is connected to a server with
+	 * a version of at least the given version.
+	 * This is convenient because we are working with a java.sql.Connection,
+	 * not an Postgres connection.
+	 */
+	public static boolean haveMinimumServerVersion(Connection con, String version) throws SQLException {
+		if (con instanceof org.postgresql.jdbc1.AbstractJdbc1Connection) {
+			return ((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion(version);
+		}
+		return false;
+	}
+
+	/**
+	 * Print a ResultSet to System.out.
+	 * This is useful for debugging tests.
+	 */
+	public static void printResultSet(ResultSet rs) throws SQLException {
+		ResultSetMetaData rsmd = rs.getMetaData();
+		for (int i=1; i<=rsmd.getColumnCount(); i++) {
+			if (i != 1) {
+				System.out.print(", ");
+			}
+			System.out.print(rsmd.getColumnName(i));
+		}
+		System.out.println();
+		while (rs.next()) {
+			for (int i=1; i<=rsmd.getColumnCount(); i++) {
+				if (i != 1) {
+					System.out.print(", ");
+				}
+				System.out.print(rs.getString(i));
+			}
+			System.out.println();
+		}
 	}
 }

@@ -25,8 +25,7 @@ public class Jdbc2TestSuite extends TestSuite
 		// complexity.
 
 		// ANTTest should be first as it ensures that test parameters are
-		// being sent to the suite. It also initialises the database (if required)
-		// with some simple global tables (will make each testcase use its own later).
+		// being sent to the suite.
 		//
 		suite.addTestSuite(ANTTest.class);
 
@@ -34,6 +33,7 @@ public class Jdbc2TestSuite extends TestSuite
 		suite.addTestSuite(DriverTest.class);
 		suite.addTestSuite(ConnectionTest.class);
 		suite.addTestSuite(DatabaseMetaDataTest.class);
+		suite.addTestSuite(DatabaseMetaDataPropertiesTest.class);
 		suite.addTestSuite(EncodingTest.class);
 
 		// Connectivity/Protocols
@@ -48,13 +48,12 @@ public class Jdbc2TestSuite extends TestSuite
 
 		// PreparedStatement
 
-        // ServerSide Prepared Statements
-        suite.addTestSuite(ServerPreparedStmtTest.class);
+		// ServerSide Prepared Statements
+		suite.addTestSuite(ServerPreparedStmtTest.class);
 
 		// BatchExecute
 		suite.addTestSuite(BatchExecuteTest.class);
 
-		// MetaData
 
 		// Other misc tests, based on previous problems users have had or specific
 		// features some applications require.
@@ -63,6 +62,8 @@ public class Jdbc2TestSuite extends TestSuite
 
 		// Fastpath/LargeObject
 		suite.addTestSuite(BlobTest.class);
+
+		suite.addTestSuite(SerializeTest.class);
 		suite.addTestSuite(UpdateableResultTest.class );
 
 		suite.addTestSuite(CallableStmtTest.class );

@@ -45,7 +45,7 @@ public class ServerPreparedStmtTest extends TestCase
 	{
 		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE id = 2");
         ((PGStatement)pstmt).setUseServerPrepare(true);
-        if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3")) {
+        if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
 			assertTrue(((PGStatement)pstmt).isUseServerPrepare());
 		} else {
 			assertTrue(!((PGStatement)pstmt).isUseServerPrepare());
@@ -85,7 +85,7 @@ public class ServerPreparedStmtTest extends TestCase
 	{
 		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE id = ?");
         ((PGStatement)pstmt).setUseServerPrepare(true);
-        if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3")) {
+        if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
 			assertTrue(((PGStatement)pstmt).isUseServerPrepare());
 		} else {
 			assertTrue(!((PGStatement)pstmt).isUseServerPrepare());
@@ -126,7 +126,7 @@ public class ServerPreparedStmtTest extends TestCase
 	{
 		PreparedStatement pstmt = con.prepareStatement("SELECT * FROM testsps WHERE id = ? or id = ?");
         ((PGStatement)pstmt).setUseServerPrepare(true);
-        if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3")) {
+        if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
 			assertTrue(((PGStatement)pstmt).isUseServerPrepare());
 		} else {
 			assertTrue(!((PGStatement)pstmt).isUseServerPrepare());

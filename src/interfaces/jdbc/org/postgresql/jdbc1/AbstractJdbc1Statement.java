@@ -8,7 +8,7 @@ import java.util.Vector;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.10 2002/09/14 03:52:56 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.11 2002/10/01 00:39:02 davec Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
@@ -1757,8 +1757,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	private void setSerialize(int parameterIndex, long x, String classname) throws SQLException
 	{
-		// converts . to _, toLowerCase, and ensures length<32
-		String tablename = Serialize.toPostgreSQL( classname );
+		// converts . to _, toLowerCase, and ensures length < max name length
+		String tablename = Serialize.toPostgreSQL((java.sql.Connection)connection, classname );
 		DriverManager.println("setSerialize: setting " + x + "::" + tablename );
 
 		// OID reference to tablerow-type must be cast like:  <oid>::<tablename>

@@ -103,15 +103,24 @@ public class LargeObjectManager
 		//
 		// This is an example of Fastpath.addFunctions();
 		//
-		ResultSet res = conn.createStatement().executeQuery("select proname, oid from pg_proc" +
-						" where proname = 'lo_open'" +
-						"    or proname = 'lo_close'" +
-						"    or proname = 'lo_creat'" +
-						"    or proname = 'lo_unlink'" +
-						"    or proname = 'lo_lseek'" +
-						"    or proname = 'lo_tell'" +
-						"    or proname = 'loread'" +
-						"    or proname = 'lowrite'");
+		String sql;
+		if (conn.getMetaData().supportsSchemasInTableDefinitions()) {
+			sql = "SELECT p.proname,p.oid "+
+				" FROM pg_catalog.pg_proc p, pg_catalog.pg_namespace n "+
+				" WHERE p.pronamespace=n.oid AND n.nspname='pg_catalog' AND ";
+		} else {
+			sql = "SELECT proname,oid FROM pg_proc WHERE ";
+		}
+		sql += " proname = 'lo_open'" +
+			" or proname = 'lo_close'" +
+			" or proname = 'lo_creat'" +
+			" or proname = 'lo_unlink'" +
+			" or proname = 'lo_lseek'" +
+			" or proname = 'lo_tell'" +
+			" or proname = 'loread'" +
+			" or proname = 'lowrite'";
+
+		ResultSet res = conn.createStatement().executeQuery(sql);
 
 		if (res == null)
 			throw new PSQLException("postgresql.lo.init");

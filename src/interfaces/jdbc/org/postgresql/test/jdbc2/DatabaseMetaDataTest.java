@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.14 2002/09/11 05:38:45 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.15 2002/10/01 00:39:02 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -35,10 +35,8 @@ public class DatabaseMetaDataTest extends TestCase
 
 		TestUtil.closeDB( con );
 	}
-	/*
-	 * The spec says this may return null, but we always do!
-	 */
-	public void testGetMetaData()
+
+	public void testTables()
 	{
 		try
 		{
@@ -50,7 +48,8 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue( rs.next() );
 			String tableName = rs.getString("TABLE_NAME");
 			assertTrue( tableName.equals("testmetadata") );
-
+			String tableType = rs.getString("TABLE_TYPE");
+			assertTrue( tableType.equals("TABLE") );
 			rs.close();
 
 			rs = dbmd.getColumns("", "", "test%", "%" );
@@ -68,162 +67,6 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
 			assertTrue( rs.getString("COLUMN_NAME").equals("updated") );
 			assertTrue( rs.getInt("DATA_TYPE") == java.sql.Types.TIMESTAMP );
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
-		}
-	}
-
-	/*
-	 * Test default capabilities
-	 */
-	public void testCapabilities()
-	{
-		try
-		{
-
-			DatabaseMetaData dbmd = con.getMetaData();
-			assertNotNull(dbmd);
-
-			assertTrue(dbmd.allProceduresAreCallable());
-			assertTrue(dbmd.allTablesAreSelectable()); // not true all the time
-
-			// This should always be false for postgresql (at least for 7.x)
-			assertTrue(!dbmd.isReadOnly());
-
-			// does the backend support this yet? The protocol does...
-			assertTrue(!dbmd.supportsMultipleResultSets());
-
-			// yes, as multiple backends can have transactions open
-			assertTrue(dbmd.supportsMultipleTransactions());
-
-			assertTrue(dbmd.supportsMinimumSQLGrammar());
-			assertTrue(!dbmd.supportsCoreSQLGrammar());
-			assertTrue(!dbmd.supportsExtendedSQLGrammar());
-			if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con).haveMinimumServerVersion("7.3"))
-				assertTrue(dbmd.supportsANSI92EntryLevelSQL());
-			else
-				assertTrue(!dbmd.supportsANSI92EntryLevelSQL());
-			assertTrue(!dbmd.supportsANSI92IntermediateSQL());
-			assertTrue(!dbmd.supportsANSI92FullSQL());
-
-			assertTrue(!dbmd.supportsIntegrityEnhancementFacility());
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
-		}
-	}
-
-
-	public void testJoins()
-	{
-		try
-		{
-
-			DatabaseMetaData dbmd = con.getMetaData();
-			assertNotNull(dbmd);
-
-			assertTrue(dbmd.supportsOuterJoins());
-			assertTrue(dbmd.supportsFullOuterJoins());
-			assertTrue(dbmd.supportsLimitedOuterJoins());
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
-		}
-	}
-
-	public void testCursors()
-	{
-		try
-		{
-
-			DatabaseMetaData dbmd = con.getMetaData();
-			assertNotNull(dbmd);
-
-			assertTrue(!dbmd.supportsPositionedDelete());
-			assertTrue(!dbmd.supportsPositionedUpdate());
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
-		}
-	}
-
-	public void testNulls()
-	{
-		try
-		{
-
-			DatabaseMetaData dbmd = con.getMetaData();
-			assertNotNull(dbmd);
-
-			// We need to type cast the connection to get access to the
-			// PostgreSQL-specific method haveMinimumServerVersion().
-			// This is not available through the java.sql.Connection interface.
-			assertTrue( con instanceof org.postgresql.PGConnection );
-
-			assertTrue(!dbmd.nullsAreSortedAtStart());
-			assertTrue( dbmd.nullsAreSortedAtEnd() !=
-						((org.postgresql.jdbc2.AbstractJdbc2Connection)con).haveMinimumServerVersion("7.2"));
-			assertTrue( dbmd.nullsAreSortedHigh() ==
-						((org.postgresql.jdbc2.AbstractJdbc2Connection)con).haveMinimumServerVersion("7.2"));
-			assertTrue(!dbmd.nullsAreSortedLow());
-
-			assertTrue(dbmd.nullPlusNonNullIsNull());
-
-			assertTrue(dbmd.supportsNonNullableColumns());
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
-		}
-	}
-
-	public void testLocalFiles()
-	{
-		try
-		{
-
-			DatabaseMetaData dbmd = con.getMetaData();
-			assertNotNull(dbmd);
-
-			assertTrue(!dbmd.usesLocalFilePerTable());
-			assertTrue(!dbmd.usesLocalFiles());
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
-		}
-	}
-
-	public void testIdentifiers()
-	{
-		try
-		{
-
-			DatabaseMetaData dbmd = con.getMetaData();
-			assertNotNull(dbmd);
-
-			assertTrue(!dbmd.supportsMixedCaseIdentifiers()); // always false
-			assertTrue(dbmd.supportsMixedCaseQuotedIdentifiers());	// always true
-
-			assertTrue(!dbmd.storesUpperCaseIdentifiers());   // always false
-			assertTrue(dbmd.storesLowerCaseIdentifiers());	  // always true
-			assertTrue(!dbmd.storesUpperCaseQuotedIdentifiers()); // always false
-			assertTrue(!dbmd.storesLowerCaseQuotedIdentifiers()); // always false
-			assertTrue(!dbmd.storesMixedCaseQuotedIdentifiers()); // always false
-
-			assertTrue(dbmd.getIdentifierQuoteString().equals("\""));
-
 
 		}
 		catch (SQLException ex)
@@ -264,7 +107,7 @@ public class DatabaseMetaDataTest extends TestCase
 				assertTrue( fkColumnName.equals( "m" ) || fkColumnName.equals( "n" ) ) ;
 
 				String fkName = rs.getString( "FK_NAME" );
-				if (((org.postgresql.jdbc1.AbstractJdbc1Connection)con1).haveMinimumServerVersion("7.3")) {
+				if (TestUtil.haveMinimumServerVersion(con1,"7.3")) {
 					assertTrue(fkName.startsWith("$1"));
 				} else {
 					assertTrue( fkName.startsWith( "<unnamed>") );
@@ -354,120 +197,217 @@ public class DatabaseMetaDataTest extends TestCase
 			fail(ex.getMessage());
 		}
 	}
-	public void testTables()
+
+	public void testColumns()
 	{
+		// At the moment just test that no exceptions are thrown KJ
 		try
 		{
-
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
-
-			// we can add columns
-			assertTrue(dbmd.supportsAlterTableWithAddColumn());
-
-			// we can't drop columns (yet)
-			assertTrue(!dbmd.supportsAlterTableWithDropColumn());
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
+			ResultSet rs = dbmd.getColumns(null,null,"pg_class",null);
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
 		}
 	}
 
-	public void testSelect()
+	public void testColumnPrivileges()
 	{
+		// At the moment just test that no exceptions are thrown KJ
 		try
 		{
-
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
-
-			// yes we can?: SELECT col a FROM a;
-			assertTrue(dbmd.supportsColumnAliasing());
-
-			// yes we can have expressions in ORDERBY
-			assertTrue(dbmd.supportsExpressionsInOrderBy());
-
-			// Yes, an ORDER BY clause can contain columns that are not in the
-			// SELECT clause.
-			assertTrue(dbmd.supportsOrderByUnrelated());
-
-			assertTrue(dbmd.supportsGroupBy());
-			assertTrue(dbmd.supportsGroupByUnrelated());
-			assertTrue(dbmd.supportsGroupByBeyondSelect()); // needs checking
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
+			ResultSet rs = dbmd.getColumnPrivileges(null,null,"pg_statistic",null);
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
 		}
 	}
 
-	public void testDBParams()
+	public void testTablePrivileges()
 	{
+		// At the moment just test that no exceptions are thrown KJ
 		try
 		{
-
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
-
-			assertTrue(dbmd.getURL().equals(TestUtil.getURL()));
-			assertTrue(dbmd.getUserName().equals(TestUtil.getUser()));
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
+			ResultSet rs = dbmd.getTablePrivileges(null,null,"grantme");
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
 		}
 	}
 
-	public void testDbProductDetails()
+	public void testPrimaryKeys()
 	{
+		// At the moment just test that no exceptions are thrown KJ
 		try
 		{
-			assertTrue(con instanceof org.postgresql.PGConnection);
-			org.postgresql.jdbc2.AbstractJdbc2Connection pc = (org.postgresql.jdbc2.AbstractJdbc2Connection) con;
-
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
-
-			assertTrue(dbmd.getDatabaseProductName().equals("PostgreSQL"));
-			//The test below doesn't make sense to me, it tests that
-			//the version of the driver = the version of the database it is connected to
-			//since the driver should be backwardly compatible this test is commented out
-			//assertTrue(dbmd.getDatabaseProductVersion().startsWith(
-			//		   Integer.toString(pc.getDriver().getMajorVersion())
-			//		   + "."
-			//		   + Integer.toString(pc.getDriver().getMinorVersion())));
-			assertTrue(dbmd.getDriverName().equals("PostgreSQL Native Driver"));
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
+			ResultSet rs = dbmd.getPrimaryKeys(null,null,"pg_class");
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
 		}
 	}
 
-	public void testDriverVersioning()
+	public void testIndexInfo()
+	{
+		// At the moment just test that no exceptions are thrown KJ
+		try
+		{
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getIndexInfo(null,null,"pg_class",false,false);
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
+		}
+	}
+
+	public void testTableTypes()
+	{
+		// At the moment just test that no exceptions are thrown KJ
+		try
+		{
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getTableTypes();
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
+		}
+	}
+
+	public void testProcedureColumns()
+	{
+		// At the moment just test that no exceptions are thrown KJ
+		try
+		{
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getProcedureColumns(null,null,null,null);
+			rs.close();
+		} catch (SQLException sqle) {
+			sqle.printStackTrace();
+			fail(sqle.getMessage());
+		}
+	}
+
+	public void testVersionColumns()
+	{
+		// At the moment just test that no exceptions are thrown KJ
+		try
+		{
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getVersionColumns(null,null,"pg_class");
+			rs.close();
+		} catch (SQLException sqle) {
+			fail(sqle.getMessage());
+		}
+	}
+
+	public void testBestRowIdentifier()
+	{
+		// At the moment just test that no exceptions are thrown KJ
+		try
+		{
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getBestRowIdentifier(null,null,"pg_type",dbmd.bestRowSession,false);
+			rs.close();
+		} catch (SQLException sqle) {
+			fail(sqle.getMessage());
+		}
+	}
+
+	public void testProcedures()
+	{
+		// At the moment just test that no exceptions are thrown KJ
+		try
+		{
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getProcedures(null,null,null);
+			rs.close();
+		} catch (SQLException sqle) {
+			fail(sqle.getMessage());
+		}
+	}
+
+	public void testCatalogs()
 	{
 		try
 		{
-			assertTrue(con instanceof org.postgresql.PGConnection);
-			org.postgresql.jdbc2.AbstractJdbc2Connection pc = (org.postgresql.jdbc2.AbstractJdbc2Connection) con;
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+			ResultSet rs = dbmd.getCatalogs();
+			boolean foundTemplate0 = false;
+			boolean foundTemplate1 = false;
+			while(rs.next()) {
+				String database = rs.getString("TABLE_CAT");
+				if ("template0".equals(database)) {
+					foundTemplate0 = true;
+				} else if ("template1".equals(database)) {
+					foundTemplate1 = true;
+				}
+			}
+			rs.close();
+			assertTrue(foundTemplate0);
+			assertTrue(foundTemplate1);
+		} catch(SQLException sqle) {
+			fail(sqle.getMessage());
+		}
+	}
 
+	public void testSchemas()
+	{
+		try
+		{
 			DatabaseMetaData dbmd = con.getMetaData();
 			assertNotNull(dbmd);
 
-			assertTrue(dbmd.getDriverVersion().equals(pc.getDriver().getVersion()));
-			assertTrue(dbmd.getDriverMajorVersion() == pc.getDriver().getMajorVersion());
-			assertTrue(dbmd.getDriverMinorVersion() == pc.getDriver().getMinorVersion());
-
-
-		}
-		catch (SQLException ex)
-		{
-			fail(ex.getMessage());
+			ResultSet rs = dbmd.getSchemas();
+			boolean foundPublic = false;
+			boolean foundEmpty = false;
+			boolean foundPGCatalog = false;
+			int count;
+		
+			for(count=0; rs.next(); count++) {
+				String schema = rs.getString("TABLE_SCHEM");
+				if ("public".equals(schema)) {
+					foundPublic = true;
+				} else if ("".equals(schema)) {
+					foundEmpty = true;
+				} else if ("pg_catalog".equals(schema)) {
+					foundPGCatalog = true;
+				}
+			}
+			rs.close();
+			if (TestUtil.haveMinimumServerVersion(con,"7.3")) {
+				assertTrue(count >= 2);
+				assertTrue(foundPublic);
+				assertTrue(foundPGCatalog);
+				assertTrue(!foundEmpty);
+			} else {
+				assertEquals(count,1);
+				assertTrue(foundEmpty);
+				assertTrue(!foundPublic);
+				assertTrue(!foundPGCatalog);
+			}
+		} catch (SQLException sqle) {
+			fail(sqle.getMessage());
 		}
 	}
+
 }

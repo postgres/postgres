@@ -124,14 +124,14 @@ public class Serialize
 	 * This creates an instance that can be used to serialize or deserialize
 	 * a Java object from a PostgreSQL table.
 	 */
-	public Serialize(Connection c, String type) throws SQLException
+	public Serialize(Connection conn, String type) throws SQLException
 	{
 		try
 		{
-			conn = c;
+			this.conn = conn;
 			if (Driver.logDebug)
 				Driver.debug("Serialize: initializing instance for type: " + type);
-			tableName = toPostgreSQL(type);
+			tableName = toPostgreSQL(conn,type);
 			className = type;
 			ourClass = Class.forName(className);
 		}
@@ -144,7 +144,14 @@ public class Serialize
 
 		// Second check, the type must be a table
 		boolean status = false;
-		ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL("select typname from pg_type,pg_class where typname=relname and typname='" + tableName + "'");
+		String sql;
+		if (conn.getMetaData().supportsSchemasInTableDefinitions()) {
+			sql = "SELECT 1 FROM pg_catalog.pg_type t, pg_catalog.pg_class c WHERE t.typrelid=c.oid AND c.relkind='r' AND t.typname='" + tableName + "' AND pg_table_is_visible(c.oid) ";
+		} else {
+			sql = "SELECT 1 FROM pg_type t, pg_class c WHERE t.typrelid=c.oid AND c.relkind='r' AND t.typname='"+tableName+"'";
+		}
+
+		ResultSet rs = conn.createStatement().executeQuery(sql);
 		if (rs != null)
 		{
 			if (rs.next())
@@ -187,7 +194,7 @@ public class Serialize
 	 * @return Object relating to oid
 	 * @exception SQLException on error
 	 */
-	public Object fetch(int oid) throws SQLException
+	public Object fetch(long oid) throws SQLException
 	{
 		try
 		{
@@ -228,7 +235,7 @@ public class Serialize
 
 			if (Driver.logDebug)
 				Driver.debug("Serialize.fetch: " + sb.toString());
-			ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).ExecSQL(sb.toString());
+			ResultSet rs = conn.createStatement().executeQuery(sb.toString());
 
 			if (rs != null)
 			{
@@ -493,15 +500,22 @@ public class Serialize
 	 * @param o Class to base table on
 	 * @exception SQLException on error
 	 */
-	public static void create(Connection con, Class c) throws SQLException
+	public static void create(Connection conn, Class c) throws SQLException
 	{
 		if (c.isInterface())
 			throw new PSQLException("postgresql.serial.interface");
 
 		// See if the table exists
-		String tableName = toPostgreSQL(c.getName());
+		String tableName = toPostgreSQL(conn,c.getName());
 
-		ResultSet rs = ((org.postgresql.jdbc1.AbstractJdbc1Connection)con).ExecSQL("select relname from pg_class where relname = '" + tableName + "'");
+		String sql;
+		if (conn.getMetaData().supportsSchemasInTableDefinitions()) {
+			sql = "SELECT 1 FROM pg_catalog.pg_class WHERE relkind='r' AND relname='" + tableName + "' AND pg_table_is_visible(oid) ";
+		} else {
+			sql = "SELECT 1 FROM pg_class WHERE relkind='r' AND relname='"+tableName+"'";
+		}
+
+		ResultSet rs = conn.createStatement().executeQuery(sql);
 		if ( rs.next() )
 		{
 			if (Driver.logDebug)
@@ -549,8 +563,8 @@ public class Serialize
 						sb.append(tp[j][1]);
 					else
 					{
-						create(con, type);
-						sb.append(toPostgreSQL(n));
+						create(conn, type);
+						sb.append(toPostgreSQL(conn,n));
 					}
 				}
 			}
@@ -560,7 +574,7 @@ public class Serialize
 		// Now create the table
 		if (Driver.logDebug)
 			Driver.debug("Serialize.create: " + sb );
-		((org.postgresql.jdbc1.AbstractJdbc1Connection)con).ExecSQL(sb.toString());
+		conn.createStatement().executeUpdate(sb.toString());
 	}
 
 	// This is used to translate between Java primitives and PostgreSQL types.
@@ -582,35 +596,53 @@ public class Serialize
 											 {"byte", "int2"}
 										 };
 
-	/*
+	/**
 	 * This converts a Java Class name to a org.postgresql table, by replacing . with
 	 * _<p>
 	 *
 	 * Because of this, a Class name may not have _ in the name.<p>
 	 * Another limitation, is that the entire class name (including packages)
-	 * cannot be longer than 64 characters (a limit forced by PostgreSQL).
+	 * cannot be longer than the maximum table name length.
 	 *
+	 * @param con The database connection
 	 * @param name Class name
 	 * @return PostgreSQL table name
 	 * @exception SQLException on error
+	 * @since 7.3
 	 */
-	public static String toPostgreSQL(String name) throws SQLException
+	public static String toPostgreSQL(Connection con, String name) throws SQLException
 	{
+		DatabaseMetaData dbmd = con.getMetaData();
+		int maxNameLength = dbmd.getMaxTableNameLength();
+		return toPostgreSQL(maxNameLength,name);
+	}
+
+	/**
+	 * Convert a Java Class Name to an org.postgresql table name, by replacing .
+	 * with _ <p>
+	 *
+	 * @deprecated Replaced by toPostgresql(connection, name) in 7.3
+	 */
+	public static String toPostgreSQL(String name) throws SQLException {
+		return toPostgreSQL(31,name);
+	}
+
+	private static String toPostgreSQL(int maxNameLength, String name) throws SQLException {
+
 		name = name.toLowerCase();
 
 		if (name.indexOf("_") > -1)
 			throw new PSQLException("postgresql.serial.underscore");
 
-		// Postgres table names can only be 64 character long.
-		// Reserve 1 char, so allow only up to 63 chars.
+		// Postgres table names can only be so many characters long.
 		// If the full class name with package is too long
 		// then just use the class name. If the class name is
 		// too long throw an exception.
 		//
-		if ( name.length() > 63 )
+		if ( name.length() > maxNameLength )
 		{
 			name = name.substring(name.lastIndexOf(".") + 1);
-			if ( name.length() > 63 )
+			if ( name.length() > maxNameLength )
 				throw new PSQLException("postgresql.serial.namelength", name, new Integer(name.length()));
 		}
 		return name.replace('.', '_');
