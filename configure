@@ -17673,7 +17673,7 @@ ac_config_headers="$ac_config_headers src/include/pg_config.h"
 # touch files to flex/bison not needed
 cat UPDATED | grep '^\./' | while read FILE
 do
-	touch "$FILE"
+	touch $srcdir/"$FILE"
 done
 
 cat >confcache <<\_ACEOF
