@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.15 2004/09/01 14:09:19 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_schema.sgml,v 1.16 2004/11/05 19:15:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -20,8 +20,8 @@ PostgreSQL documentation
 
  <refsynopsisdiv>
 <synopsis>
-CREATE SCHEMA <replaceable class="parameter">schemaname</replaceable> [ AUTHORIZATION <replaceable class="parameter">username</replaceable> ] [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
-CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable> [ TABLESPACE <replaceable class="parameter">tablespace</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA <replaceable class="parameter">schemaname</replaceable> [ AUTHORIZATION <replaceable class="parameter">username</replaceable> ] [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
+CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable> [ <replaceable class="parameter">schema_element</replaceable> [ ... ] ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -83,17 +83,6 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
      </varlistentry>
 
      <varlistentry>
-      <term><replaceable class="parameter">tablespace</replaceable></term>
-      <listitem>
-       <para>
-        The name of the tablespace that is to be the default tablespace
-        for all new objects created in the schema. If not supplied, the schema
-        will inherit the default tablespace of the database.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
       <term><replaceable class="parameter">schema_element</replaceable></term>
       <listitem>
        <para>
@@ -116,9 +105,7 @@ CREATE SCHEMA AUTHORIZATION <replaceable class="parameter">username</replaceable
   <para>
    To create a schema, the invoking user must have the
    <literal>CREATE</> privilege for the current database.
-   Also, the <literal>TABLESPACE</> option requires having
-   <literal>CREATE</> privilege for the specified tablespace.
-   (Of course, superusers bypass these checks.)
+   (Of course, superusers bypass this check.)
   </para>
  </refsect1>
 
@@ -161,15 +148,6 @@ CREATE VIEW hollywood.winners AS
 </programlisting>
   </para>
 
-  <para>
-   Create a schema <literal>sales</> whose tables and indexes
-   will be stored in the tablespace <literal>mirrorspace</> by default:
-
-<programlisting>
-CREATE SCHEMA sales TABLESPACE mirrorspace;
-</programlisting>
-  </para>
-
  </refsect1>
 
  <refsect1>
@@ -206,7 +184,6 @@ CREATE SCHEMA sales TABLESPACE mirrorspace;
   <simplelist type="inline">
    <member><xref linkend="sql-alterschema" endterm="sql-alterschema-title"></member>
    <member><xref linkend="sql-dropschema" endterm="sql-dropschema-title"></member>
-    <member><xref linkend="sql-createtablespace" endterm="sql-createtablespace-title"></member>
  </simplelist>
  </refsect1>
 

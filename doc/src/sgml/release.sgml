@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.303 2004/10/24 22:43:56 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.304 2004/11/05 19:15:49 tgl Exp $
 -->
 
 <appendix id="release">
@@ -96,8 +96,8 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.303 2004/10/24 22:43:56 tgl Exp
       <listitem>
        <para>
         Tablespaces allow administrators to select the file systems
-        used for storage of databases, schemas, tables, or
-        indexes. This improves performance and control over disk space
+        used for storage of tables, indexes, and entire databases.
+        This improves performance and control over disk space
         usage. Prior releases used <application>initlocation</> and
         manual symlink management for such tasks.
        </para>

@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.247 2004/11/04 19:08:42 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.248 2004/11/05 19:16:16 tgl Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -78,6 +78,7 @@ extern DLLIMPORT bool check_function_bodies;
 extern int	CommitDelay;
 extern int	CommitSiblings;
 extern int	DebugSharedBuffers;
+extern char *default_tablespace;
 
 static const char *assign_log_destination(const char *value,
 					   bool doit, GucSource source);
@@ -1504,6 +1505,15 @@ static struct config_string ConfigureNamesString[] =
 		},
 		&datestyle_string,
 		"ISO, MDY", assign_datestyle, NULL
+	},
+
+	{
+		{"default_tablespace", PGC_USERSET, CLIENT_CONN_STATEMENT,
+			gettext_noop("Sets the default tablespace to create tables and indexes in."),
+			gettext_noop("An empty string selects the database's default tablespace.")
+		},
+		&default_tablespace,
+		"", assign_default_tablespace, NULL
 	},
 
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.25 2004/09/02 00:22:16 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.26 2004/11/05 19:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "catalog/pg_namespace.h"
 #include "commands/dbcommands.h"
 #include "commands/schemacmds.h"
-#include "commands/tablespace.h"
 #include "miscadmin.h"
 #include "parser/analyze.h"
 #include "tcop/utility.h"
@@ -42,7 +41,6 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	const char *schemaName = stmt->schemaname;
 	const char *authId = stmt->authid;
 	Oid			namespaceId;
-	Oid			tablespaceId;
 	List	   *parsetree_list;
 	ListCell   *parsetree_item;
 	const char *owner_name;
@@ -102,35 +100,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 				 errmsg("unacceptable schema name \"%s\"", schemaName),
 		errdetail("The prefix \"pg_\" is reserved for system schemas.")));
 
-	/*
-	 * Select default tablespace for schema.  If not given, use zero which
-	 * implies the database's default tablespace.
-	 */
-	if (stmt->tablespacename)
-	{
-		AclResult	aclresult;
-
-		tablespaceId = get_tablespace_oid(stmt->tablespacename);
-		if (!OidIsValid(tablespaceId))
-			ereport(ERROR,
-					(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("tablespace \"%s\" does not exist",
-							stmt->tablespacename)));
-		/* check permissions */
-		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
-										   ACL_CREATE);
-		if (aclresult != ACLCHECK_OK)
-			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
-						   stmt->tablespacename);
-	}
-	else
-	{
-		tablespaceId = InvalidOid;
-		/* note there is no permission check in this path */
-	}
-
 	/* Create the schema's namespace */
-	namespaceId = NamespaceCreate(schemaName, owner_userid, tablespaceId);
+	namespaceId = NamespaceCreate(schemaName, owner_userid);
 
 	/* Advance cmd counter to make the namespace visible */
 	CommandCounterIncrement();

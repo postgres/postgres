@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.35 2004/10/29 02:11:18 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/manage-ag.sgml,v 2.36 2004/11/05 19:15:49 tgl Exp $
 -->
 
 <chapter id="managing-databases">
@@ -395,7 +395,7 @@ CREATE TABLESPACE fastspace LOCATION '/mnt/sda1/postgresql/data';
    </para>
 
    <para>
-    Databases, schemas, tables, and indexes can all be assigned to
+    Tables, indexes, and entire databases can be assigned to
     particular tablespaces. To do so, a user with the <literal>CREATE</>
     privilege on a given tablespace must pass the tablespace name as a 
     parameter to the relevant command. For example, the following creates 
@@ -406,37 +406,26 @@ CREATE TABLE foo(i int) TABLESPACE space1;
    </para>
 
    <para>
+    Alternatively, use the <xref linkend="guc-default-tablespace"> parameter:
+<programlisting>
+SET default_tablespace = space1;
+CREATE TABLE foo(i int);
+</programlisting>
+    When <varname>default_tablespace</> is set to anything but an empty
+    string, it supplies an implicit <literal>TABLESPACE</> clause for
+    <command>CREATE TABLE</> and <command>CREATE INDEX</> commands that
+    do not have an explicit one.
+   </para>
+
+   <para>
     The tablespace associated with a database is used to store the system
     catalogs of that database, as well as any temporary files created by
     server processes using that database.  Furthermore, it is the default
-    tablespace selected for any objects created within the database, if
-    no specific <literal>TABLESPACE</> clause is given when those objects
-    are created.  If a database is created without specifying a tablespace
-    for it, it uses the same tablespace as the template database it is copied
-    from.
-   </para>
-
-   <para>
-    A schema does not in itself occupy any storage (other than a
-    system catalog entry), so assigning a schema to a tablespace does
-    not in itself do anything.  What this actually does is to set a
-    default tablespace for tables later created within the schema.  If
-    no tablespace is mentioned when creating a schema, it inherits its
-    default tablespace from the current database.
-   </para>
-
-   <para>
-    The default tablespace for an index is the tablespace associated
-    with the table the index is on.
-   </para>
-
-   <para>
-    Another way to state the above rules is that when a schema, table, or index
-    is created without specifying a tablespace, the object
-    inherits its logical parent's tablespace. A schema will be created in the
-    current database's tablespace; a table will be created in the
-    tablespace of the schema it is being created in; an index will be created
-    in the tablespace of the table underlying the index.
+    tablespace selected for tables and indexes created within the database,
+    if no <literal>TABLESPACE</> clause is given (either explicitly or via
+    <varname>default_tablespace</>) when the objects are created.
+    If a database is created without specifying a tablespace for it,
+    it uses the same tablespace as the template database it is copied from.
    </para>
 
    <para>
@@ -444,9 +433,9 @@ CREATE TABLE foo(i int) TABLESPACE space1;
     <literal>pg_global</> tablespace is used for shared system catalogs. The
     <literal>pg_default</> tablespace is the default tablespace of the
     <literal>template1</> and <literal>template0</> databases (and, therefore,
-    will be the default tablespace for everything else as well, unless
-    explicit <literal>TABLESPACE</> clauses are used somewhere along the
-    line).
+    will be the default tablespace for other databases as well, unless
+    overridden by a <literal>TABLESPACE</> clause in <command>CREATE
+    DATABASE</>).
    </para>
 
    <para>

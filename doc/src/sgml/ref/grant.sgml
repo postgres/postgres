@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.43 2004/09/01 04:13:11 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.44 2004/11/05 19:15:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -29,10 +29,6 @@ GRANT { { CREATE | TEMPORARY | TEMP } [,...] | ALL [ PRIVILEGES ] }
     ON DATABASE <replaceable>dbname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 
-GRANT { CREATE | ALL [ PRIVILEGES ] }
-    ON TABLESPACE <replaceable>tablespacename</> [, ...]
-    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
-
 GRANT { EXECUTE | ALL [ PRIVILEGES ] }
     ON FUNCTION <replaceable>funcname</replaceable> ([<replaceable>type</replaceable>, ...]) [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
@@ -44,6 +40,10 @@ GRANT { USAGE | ALL [ PRIVILEGES ] }
 GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
     ON SCHEMA <replaceable>schemaname</replaceable> [, ...]
     TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
+
+GRANT { CREATE | ALL [ PRIVILEGES ] }
+    ON TABLESPACE <replaceable>tablespacename</> [, ...]
+    TO { <replaceable class="PARAMETER">username</replaceable> | GROUP <replaceable class="PARAMETER">groupname</replaceable> | PUBLIC } [, ...] [ WITH GRANT OPTION ]
 </synopsis>
  </refsynopsisdiv>
 
@@ -52,8 +52,8 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
 
   <para>
    The <command>GRANT</command> command gives specific privileges on
-   an object (table, view, sequence, database, tablespace, function,
-   procedural language, or schema) to
+   an object (table, view, sequence, database, function,
+   procedural language, schema, or tablespace) to
    one or more users or groups of users.  These privileges are added
    to those already granted, if any.
   </para>
@@ -189,15 +189,15 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
        For databases, allows new schemas to be created within the database.
       </para>
       <para>
-       For tablespaces, allows tables to be created within the tablespace,
-       and allows databases and schemas to be created that have the tablespace
-       as their default tablespace.  (Note that revoking this privilege
-       will not alter the behavior of existing databases and schemas.)
-      </para>
-      <para>
        For schemas, allows new objects to be created within the schema.
        To rename an existing object, you must own the object <emphasis>and</>
        have this privilege for the containing schema.
+      </para>
+      <para>
+       For tablespaces, allows tables and indexes to be created within the
+       tablespace, and allows databases to be created that have the tablespace
+       as their default tablespace.  (Note that revoking this privilege
+       will not alter the placement of existing objects.)
       </para>
      </listitem>
     </varlistentry>

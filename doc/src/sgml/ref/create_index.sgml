@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.49 2004/07/12 01:22:53 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_index.sgml,v 1.50 2004/11/05 19:15:51 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -186,7 +186,9 @@ CREATE [ UNIQUE ] INDEX <replaceable class="parameter">name</replaceable> ON <re
       <listitem>
        <para>
         The tablespace in which to create the index.  If not specified,
-        the tablespace of the parent table is used.
+        <xref linkend="guc-default-tablespace"> is used, or the database's
+        default tablespace if <varname>default_tablespace</> is an empty
+        string.
        </para>
       </listitem>
      </varlistentry>

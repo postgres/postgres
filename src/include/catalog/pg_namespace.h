@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_namespace.h,v 1.14 2004/08/29 05:06:55 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_namespace.h,v 1.15 2004/11/05 19:16:33 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -40,7 +40,6 @@ CATALOG(pg_namespace)
 {
 	NameData	nspname;
 	int4		nspowner;
-	Oid			nsptablespace;	/* default table space for name space */
 	aclitem		nspacl[1];		/* VARIABLE LENGTH FIELD */
 } FormData_pg_namespace;
 
@@ -56,11 +55,10 @@ typedef FormData_pg_namespace *Form_pg_namespace;
  * ----------------
  */
 
-#define Natts_pg_namespace				4
+#define Natts_pg_namespace				3
 #define Anum_pg_namespace_nspname		1
 #define Anum_pg_namespace_nspowner		2
-#define Anum_pg_namespace_nsptablespace 3
-#define Anum_pg_namespace_nspacl		4
+#define Anum_pg_namespace_nspacl		3
 
 
 /* ----------------
@@ -68,13 +66,13 @@ typedef FormData_pg_namespace *Form_pg_namespace;
  * ---------------
  */
 
-DATA(insert OID = 11 ( "pg_catalog" PGUID 0 _null_ ));
+DATA(insert OID = 11 ( "pg_catalog" PGUID _null_ ));
 DESCR("System catalog schema");
 #define PG_CATALOG_NAMESPACE 11
-DATA(insert OID = 99 ( "pg_toast" PGUID 0 _null_ ));
+DATA(insert OID = 99 ( "pg_toast" PGUID _null_ ));
 DESCR("Reserved schema for TOAST tables");
 #define PG_TOAST_NAMESPACE 99
-DATA(insert OID = 2200 ( "public" PGUID 0 _null_ ));
+DATA(insert OID = 2200 ( "public" PGUID _null_ ));
 DESCR("Standard public schema");
 #define PG_PUBLIC_NAMESPACE 2200
 
@@ -82,7 +80,6 @@ DESCR("Standard public schema");
 /*
  * prototypes for functions in pg_namespace.c
  */
-extern Oid NamespaceCreate(const char *nspName, int32 ownerSysId,
-				Oid nspTablespace);
+extern Oid NamespaceCreate(const char *nspName, int32 ownerSysId);
 
 #endif   /* PG_NAMESPACE_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.126 2004/09/13 20:06:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.127 2004/11/05 19:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/namespace.h"
 #include "catalog/pg_opclass.h"
 #include "catalog/pg_proc.h"
+#include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
 #include "commands/defrem.h"
 #include "commands/tablecmds.h"
@@ -66,7 +67,7 @@ static bool relationHasPrimaryKey(Relation rel);
  *		that a nonconflicting default name should be picked.
  * 'accessMethodName': name of the AM to use.
  * 'tableSpaceName': name of the tablespace to create the index in.
- *		NULL specifies using the same tablespace as the parent relation.
+ *		NULL specifies using the appropriate default.
  * 'attributeList': a list of IndexElem specifying columns and expressions
  *		to index on.
  * 'predicate': the partial-index condition, or NULL if none.
@@ -157,30 +158,43 @@ DefineIndex(RangeVar *heapRelation,
 						   get_namespace_name(namespaceId));
 	}
 
-	/* Determine tablespace to use */
+	/*
+	 * Select tablespace to use.  If not specified, use default_tablespace
+	 * (which may in turn default to database's default).
+	 */
 	if (tableSpaceName)
 	{
-		AclResult	aclresult;
-
 		tablespaceId = get_tablespace_oid(tableSpaceName);
 		if (!OidIsValid(tablespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
 							tableSpaceName)));
-		/* check permissions */
+	}
+	else
+	{
+		tablespaceId = GetDefaultTablespace();
+		/* note InvalidOid is OK in this case */
+	}
+
+	/* Check permissions except when using database's default */
+	if (OidIsValid(tablespaceId))
+	{
+		AclResult	aclresult;
+
 		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
 										   ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
-						   tableSpaceName);
+						   get_tablespace_name(tablespaceId));
 	}
-	else
-	{
-		/* Use the parent rel's tablespace */
-		tablespaceId = get_rel_tablespace(relationId);
-		/* Note there is no additional permission check in this path */
-	}
+
+	/*
+	 * Force shared indexes into the pg_global tablespace.  This is a bit of
+	 * a hack but seems simpler than marking them in the BKI commands.
+	 */
+	if (rel->rd_rel->relisshared)
+		tablespaceId = GLOBALTABLESPACE_OID;
 
 	/*
 	 * Select name for index if caller didn't specify

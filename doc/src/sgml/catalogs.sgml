@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.90 2004/10/11 17:24:39 tgl Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.91 2004/11/05 19:15:48 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2402,17 +2402,6 @@
       <entry><type>int4</type></entry>
       <entry><literal><link linkend="catalog-pg-shadow"><structname>pg_shadow</structname></link>.usesysid</literal></entry>
       <entry>Owner of the namespace</entry>
-     </row>
-
-     <row>
-      <entry><structfield>nsptablespace</structfield></entry>
-      <entry><type>oid</type></entry>
-      <entry><literal><link linkend="catalog-pg-tablespace"><structname>pg_tablespace</structname></link>.oid</literal></entry>
-      <entry>
-       The default tablespace in which to place relations created in this
-       namespace.  If zero, the database's default tablespace is implied.
-       (Changing this does not affect pre-existing relations.)
-      </entry>
      </row>
 
      <row>

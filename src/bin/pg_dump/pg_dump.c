@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.390 2004/10/22 16:04:35 petere Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pg_dump/pg_dump.c,v 1.391 2004/11/05 19:16:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,9 +107,6 @@ static const CatalogId nilCatalogId = {0, 0};
 /* these are to avoid passing around info for findNamespace() */
 static NamespaceInfo *g_namespaces;
 static int	g_numNamespaces;
-
-/* need the name of the database's default tablespace */
-static char *dbDefaultTableSpace;
 
 /* flag to turn on/off dollar quoting */
 static int	disable_dollar_quoting = 0;
@@ -1252,9 +1249,6 @@ dumpDatabase(Archive *AH)
 	encoding = PQgetvalue(res, 0, i_encoding);
 	tablespace = PQgetvalue(res, 0, i_tablespace);
 
-	/* save dattablespace name for later dump routines */
-	dbDefaultTableSpace = strdup(tablespace);
-
 	appendPQExpBuffer(creaQry, "CREATE DATABASE %s WITH TEMPLATE = template0",
 					  fmtId(datname));
 	if (strlen(encoding) > 0)
@@ -1482,7 +1476,6 @@ getNamespaces(int *numNamespaces)
 	int			i_oid;
 	int			i_nspname;
 	int			i_usename;
-	int			i_nsptablespace;
 	int			i_nspacl;
 
 	/*
@@ -1500,7 +1493,6 @@ getNamespaces(int *numNamespaces)
 		nsinfo[0].dobj.name = strdup("public");
 		nsinfo[0].usename = strdup("");
 		nsinfo[0].nspacl = strdup("");
-		nsinfo[0].nsptablespace = strdup("");
 
 		selectDumpableNamespace(&nsinfo[0]);
 
@@ -1511,7 +1503,6 @@ getNamespaces(int *numNamespaces)
 		nsinfo[1].dobj.name = strdup("pg_catalog");
 		nsinfo[1].usename = strdup("");
 		nsinfo[1].nspacl = strdup("");
-		nsinfo[0].nsptablespace = strdup("");
 
 		selectDumpableNamespace(&nsinfo[1]);
 
@@ -1530,21 +1521,9 @@ getNamespaces(int *numNamespaces)
 	 * we fetch all namespaces including system ones, so that every object
 	 * we read in can be linked to a containing namespace.
 	 */
-	if (g_fout->remoteVersion >= 80000)
-	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
-						  "(select usename from pg_user where nspowner = usesysid) as usename, "
-						  "nspacl, "
-						  "(SELECT spcname FROM pg_tablespace t WHERE t.oid = nsptablespace) AS nsptablespace "
-						  "FROM pg_namespace");
-	}
-	else
-	{
-		appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
-						  "(select usename from pg_user where nspowner = usesysid) as usename, "
-						  "nspacl, NULL AS nsptablespace "
-						  "FROM pg_namespace");
-	}
+	appendPQExpBuffer(query, "SELECT tableoid, oid, nspname, "
+					  "(select usename from pg_user where nspowner = usesysid) as usename, "
+					  "nspacl FROM pg_namespace");
 
 	res = PQexec(g_conn, query->data);
 	check_sql_result(res, g_conn, query->data, PGRES_TUPLES_OK);
@@ -1558,7 +1537,6 @@ getNamespaces(int *numNamespaces)
 	i_nspname = PQfnumber(res, "nspname");
 	i_usename = PQfnumber(res, "usename");
 	i_nspacl = PQfnumber(res, "nspacl");
-	i_nsptablespace = PQfnumber(res, "nsptablespace");
 
 	for (i = 0; i < ntups; i++)
 	{
@@ -1569,7 +1547,6 @@ getNamespaces(int *numNamespaces)
 		nsinfo[i].dobj.name = strdup(PQgetvalue(res, i, i_nspname));
 		nsinfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		nsinfo[i].nspacl = strdup(PQgetvalue(res, i, i_nspacl));
-		nsinfo[i].nsptablespace = strdup(PQgetvalue(res, i, i_nsptablespace));
 
 		/* Decide whether to dump this namespace */
 		selectDumpableNamespace(&nsinfo[i]);
@@ -4432,15 +4409,8 @@ dumpNamespace(Archive *fout, NamespaceInfo *nspinfo)
 	 */
 	appendPQExpBuffer(delq, "DROP SCHEMA %s;\n", qnspname);
 
-	appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s",
+	appendPQExpBuffer(q, "CREATE SCHEMA %s AUTHORIZATION %s;\n",
 					  qnspname, fmtId(nspinfo->usename));
-
-	/* Add tablespace qualifier, if not default for database */
-	if (strlen(nspinfo->nsptablespace) != 0)
-		appendPQExpBuffer(q, " TABLESPACE %s",
-						  fmtId(nspinfo->nsptablespace));
-
-	appendPQExpBuffer(q, ";\n");
 
 	ArchiveEntry(fout, nspinfo->dobj.catId, nspinfo->dobj.dumpId,
 				 nspinfo->dobj.name,
@@ -6659,17 +6629,10 @@ dumpTableSchema(Archive *fout, TableInfo *tbinfo)
 			appendPQExpBuffer(q, ")");
 		}
 
-		/* Output tablespace clause if different from parent schema's */
-		if (strcmp(tbinfo->reltablespace,
-				   tbinfo->dobj.namespace->nsptablespace) != 0)
-		{
-			if (strlen(tbinfo->reltablespace) != 0)
-				appendPQExpBuffer(q, " TABLESPACE %s",
-								  fmtId(tbinfo->reltablespace));
-			else if (strlen(dbDefaultTableSpace) != 0)
-				appendPQExpBuffer(q, " TABLESPACE %s",
-								  fmtId(dbDefaultTableSpace));
-		}
+		/* Output tablespace clause if not database's default */
+		if (strlen(tbinfo->reltablespace) != 0)
+			appendPQExpBuffer(q, " TABLESPACE %s",
+							  fmtId(tbinfo->reltablespace));
 
 		appendPQExpBuffer(q, ";\n");
 
@@ -6957,17 +6920,10 @@ dumpConstraint(Archive *fout, ConstraintInfo *coninfo)
 
 		appendPQExpBuffer(q, ")");
 
-		/* Output tablespace clause if different from parent table's */
-		if (strcmp(indxinfo->tablespace,
-				   indxinfo->indextable->reltablespace) != 0)
-		{
-			if (strlen(indxinfo->tablespace) != 0)
-				appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
-								  fmtId(indxinfo->tablespace));
-			else if (strlen(dbDefaultTableSpace) != 0)
-				appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
-								  fmtId(dbDefaultTableSpace));
-		}
+		/* Output tablespace clause if not database's default */
+		if (strlen(indxinfo->tablespace) != 0)
+			appendPQExpBuffer(q, " USING INDEX TABLESPACE %s",
+							  fmtId(indxinfo->tablespace));
 
 		appendPQExpBuffer(q, ";\n");
 

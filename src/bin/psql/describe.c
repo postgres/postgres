@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.108 2004/10/12 21:54:44 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/describe.c,v 1.109 2004/11/05 19:16:21 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -112,7 +112,7 @@ describeTablespaces(const char *pattern, bool verbose)
 	PGresult   *res;
 	printQueryOpt myopt = pset.popt;
 
-	if (pset.sversion < 70500)
+	if (pset.sversion < 80000)
 	{
 		fprintf(stderr, _("The server version (%d) does not support tablespaces.\n"),
 				pset.sversion);
@@ -715,7 +715,7 @@ describeOneTableDetails(const char *schemaname,
 	"SELECT relhasindex, relkind, relchecks, reltriggers, relhasrules, \n"
 					  "relhasoids %s \n"
 					  "FROM pg_catalog.pg_class WHERE oid = '%s'",
-					  pset.sversion >= 70500 ? ", reltablespace" : "",
+					  pset.sversion >= 80000 ? ", reltablespace" : "",
 					  oid);
 	res = PSQLexec(buf.data, false);
 	if (!res)
@@ -737,7 +737,7 @@ describeOneTableDetails(const char *schemaname,
 	tableinfo.hasindex = strcmp(PQgetvalue(res, 0, 0), "t") == 0;
 	tableinfo.hasrules = strcmp(PQgetvalue(res, 0, 4), "t") == 0;
 	tableinfo.hasoids = strcmp(PQgetvalue(res, 0, 5), "t") == 0;
-	tableinfo.tablespace = (pset.sversion >= 70500) ?
+	tableinfo.tablespace = (pset.sversion >= 80000) ?
 		atooid(PQgetvalue(res, 0, 6)) : 0;
 	PQclear(res);
 

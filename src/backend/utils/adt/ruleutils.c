@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.184 2004/10/27 18:09:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.185 2004/11/05 19:16:11 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -55,7 +55,6 @@
 #include "catalog/pg_operator.h"
 #include "catalog/pg_shadow.h"
 #include "catalog/pg_trigger.h"
-#include "commands/tablespace.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
 #include "miscadmin.h"
@@ -163,7 +162,6 @@ static char *pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 							int prettyFlags);
 static char *pg_get_expr_worker(text *expr, Oid relid, char *relname,
 				   int prettyFlags);
-static Oid	get_constraint_index(Oid constraintRelOid, Oid constraintOid);
 static void make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 			 int prettyFlags);
 static void make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
@@ -775,27 +773,6 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 		appendStringInfoChar(&buf, ')');
 
 		/*
-		 * If the index is in a different tablespace from its parent, tell
-		 * about that
-		 */
-		if (idxrelrec->reltablespace != get_rel_tablespace(indrelid))
-		{
-			char	   *spcname;
-
-			if (OidIsValid(idxrelrec->reltablespace))
-				spcname = get_tablespace_name(idxrelrec->reltablespace);
-			else
-				spcname = get_tablespace_name(MyDatabaseTableSpace);
-
-			if (spcname)		/* just paranoia... */
-			{
-				appendStringInfo(&buf, " TABLESPACE %s",
-								 quote_identifier(spcname));
-				pfree(spcname);
-			}
-		}
-
-		/*
 		 * If it's a partial index, decompile and append the predicate
 		 */
 		if (!heap_attisnull(ht_idx, Anum_pg_index_indpred))
@@ -1023,7 +1000,6 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 			{
 				Datum		val;
 				bool		isnull;
-				Oid			indexOid;
 
 				/* Start off the constraint definition */
 				if (conForm->contype == CONSTRAINT_PRIMARY)
@@ -1041,30 +1017,6 @@ pg_get_constraintdef_worker(Oid constraintId, bool fullCommand,
 				decompile_column_index_array(val, conForm->conrelid, &buf);
 
 				appendStringInfo(&buf, ")");
-
-				/* Add TABLESPACE if it's not default */
-				indexOid = get_constraint_index(RelationGetRelid(conDesc),
-												constraintId);
-				if (OidIsValid(indexOid))
-				{
-					Oid			reltablespace;
-					Oid			indtablespace;
-
-					reltablespace = get_rel_tablespace(conForm->conrelid);
-					indtablespace = get_rel_tablespace(indexOid);
-					if (OidIsValid(indtablespace) &&
-						indtablespace != reltablespace)
-					{
-						char	   *spcname = get_tablespace_name(indtablespace);
-
-						if (spcname)	/* just paranoia... */
-						{
-							appendStringInfo(&buf, " USING INDEX TABLESPACE %s",
-											 quote_identifier(spcname));
-							pfree(spcname);
-						}
-					}
-				}
 				break;
 			}
 		case CONSTRAINT_CHECK:
@@ -1375,67 +1327,6 @@ pg_get_serial_sequence(PG_FUNCTION_ARGS)
 	}
 
 	PG_RETURN_NULL();
-}
-
-/*
- * get_constraint_index
- *		Given the OID of a unique or primary-key constraint,
- *		look up the OID of the underlying index.
- *
- * We make the caller pass in the OID of pg_constraint, too, simply because
- * it's probably got it at hand already.
- *
- * Returns InvalidOid if index can't be found.
- */
-static Oid
-get_constraint_index(Oid constraintRelOid, Oid constraintOid)
-{
-	Oid			result = InvalidOid;
-	Relation	depRel;
-	ScanKeyData key[3];
-	SysScanDesc scan;
-	HeapTuple	tup;
-
-	/* Search the dependency table for the dependent index */
-	depRel = heap_openr(DependRelationName, AccessShareLock);
-
-	ScanKeyInit(&key[0],
-				Anum_pg_depend_refclassid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(constraintRelOid));
-	ScanKeyInit(&key[1],
-				Anum_pg_depend_refobjid,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(constraintOid));
-	ScanKeyInit(&key[2],
-				Anum_pg_depend_refobjsubid,
-				BTEqualStrategyNumber, F_INT4EQ,
-				Int32GetDatum(0));
-
-	scan = systable_beginscan(depRel, DependReferenceIndex, true,
-							  SnapshotNow, 3, key);
-
-	while (HeapTupleIsValid(tup = systable_getnext(scan)))
-	{
-		Form_pg_depend deprec = (Form_pg_depend) GETSTRUCT(tup);
-
-		/*
-		 * We assume any internal dependency of a relation on the
-		 * constraint must be what we are looking for.
-		 */
-		if (deprec->classid == RelOid_pg_class &&
-			deprec->objsubid == 0 &&
-			deprec->deptype == DEPENDENCY_INTERNAL)
-		{
-			result = deprec->objid;
-			break;
-		}
-	}
-
-	systable_endscan(scan);
-	heap_close(depRel, AccessShareLock);
-
-	return result;
 }
 
 

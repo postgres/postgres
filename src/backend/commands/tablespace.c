@@ -3,7 +3,6 @@
  * tablespace.c
  *	  Commands to manipulate table spaces
  *
- *
  * Tablespaces in PostgreSQL are designed to allow users to determine
  * where the data file(s) for a given database object reside on the file
  * system.
@@ -26,18 +25,11 @@
  *			$PGDATA/global/relfilenode
  *			$PGDATA/base/dboid/relfilenode
  *
- * The implementation is designed to be backwards compatible. For this reason
- * (and also as a feature unto itself) when a user creates an object without
- * specifying a tablespace, we look at the object's parent and place
- * the object in the parent's tablespace. The hierarchy is as follows:
- *			database > schema > table > index
- *
  * To allow CREATE DATABASE to give a new database a default tablespace
  * that's different from the template database's default, we make the
  * provision that a zero in pg_class.reltablespace means the database's
  * default tablespace.	Without this, CREATE DATABASE would have to go in
- * and munge the system catalogs of the new database.  This special meaning
- * of zero also applies in pg_namespace.nsptablespace.
+ * and munge the system catalogs of the new database.
  *
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
@@ -45,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.13 2004/11/05 17:11:05 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.14 2004/11/05 19:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,8 +61,13 @@
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/guc.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
+
+
+/* GUC variable */
+char   *default_tablespace = NULL;
 
 
 static bool remove_tablespace_directories(Oid tablespaceoid, bool redo);
@@ -726,77 +723,6 @@ directory_is_empty(const char *path)
 }
 
 /*
- * get_tablespace_oid - given a tablespace name, look up the OID
- *
- * Returns InvalidOid if tablespace name not found.
- */
-Oid
-get_tablespace_oid(const char *tablespacename)
-{
-	Oid			result;
-	Relation	rel;
-	HeapScanDesc scandesc;
-	HeapTuple	tuple;
-	ScanKeyData entry[1];
-
-	/* Search pg_tablespace */
-	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
-
-	ScanKeyInit(&entry[0],
-				Anum_pg_tablespace_spcname,
-				BTEqualStrategyNumber, F_NAMEEQ,
-				CStringGetDatum(tablespacename));
-	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
-	tuple = heap_getnext(scandesc, ForwardScanDirection);
-
-	if (HeapTupleIsValid(tuple))
-		result = HeapTupleGetOid(tuple);
-	else
-		result = InvalidOid;
-
-	heap_endscan(scandesc);
-	heap_close(rel, AccessShareLock);
-
-	return result;
-}
-
-/*
- * get_tablespace_name - given a tablespace OID, look up the name
- *
- * Returns a palloc'd string, or NULL if no such tablespace.
- */
-char *
-get_tablespace_name(Oid spc_oid)
-{
-	char	   *result;
-	Relation	rel;
-	HeapScanDesc scandesc;
-	HeapTuple	tuple;
-	ScanKeyData entry[1];
-
-	/* Search pg_tablespace */
-	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
-
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(spc_oid));
-	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
-	tuple = heap_getnext(scandesc, ForwardScanDirection);
-
-	/* We assume that there can be at most one matching tuple */
-	if (HeapTupleIsValid(tuple))
-		result = pstrdup(NameStr(((Form_pg_tablespace) GETSTRUCT(tuple))->spcname));
-	else
-		result = NULL;
-
-	heap_endscan(scandesc);
-	heap_close(rel, AccessShareLock);
-
-	return result;
-}
-
-/*
  * Rename a tablespace
  */
 void
@@ -945,6 +871,143 @@ AlterTableSpaceOwner(const char *name, AclId newOwnerSysId)
 	heap_endscan(scandesc);
 	heap_close(rel, NoLock);
 }
+
+
+/*
+ * Routines for handling the GUC variable 'default_tablespace'.
+ */
+
+/* assign_hook: validate new default_tablespace, do extra actions as needed */
+const char *
+assign_default_tablespace(const char *newval, bool doit, GucSource source)
+{
+	/*
+	 * If we aren't inside a transaction, we cannot do database access so
+	 * cannot verify the name.  Must accept the value on faith.
+	 */
+	if (IsTransactionState())
+	{
+		if (newval[0] != '\0' &&
+			!OidIsValid(get_tablespace_oid(newval)))
+		{
+			if (source >= PGC_S_INTERACTIVE)
+				ereport(ERROR,
+						(errcode(ERRCODE_UNDEFINED_OBJECT),
+						 errmsg("tablespace \"%s\" does not exist",
+								newval)));
+			return NULL;
+		}
+	}
+
+	return newval;
+}
+
+/*
+ * GetDefaultTablespace -- get the OID of the current default tablespace
+ *
+ * May return InvalidOid to indicate "use the database's default tablespace"
+ *
+ * This exists to hide (and possibly optimize the use of) the
+ * default_tablespace GUC variable.
+ */
+Oid
+GetDefaultTablespace(void)
+{
+	Oid			result;
+
+	/* Fast path for default_tablespace == "" */
+	if (default_tablespace == NULL || default_tablespace[0] == '\0')
+		return InvalidOid;
+	/*
+	 * It is tempting to cache this lookup for more speed, but then we would
+	 * fail to detect the case where the tablespace was dropped since the
+	 * GUC variable was set.  Note also that we don't complain if the value
+	 * fails to refer to an existing tablespace; we just silently return
+	 * InvalidOid, causing the new object to be created in the database's
+	 * tablespace.
+	 */
+	result = get_tablespace_oid(default_tablespace);
+	/*
+	 * Allow explicit specification of database's default tablespace in
+	 * default_tablespace without triggering permissions checks.
+	 */
+	if (result == MyDatabaseTableSpace)
+		result = InvalidOid;
+	return result;
+}
+
+
+/*
+ * get_tablespace_oid - given a tablespace name, look up the OID
+ *
+ * Returns InvalidOid if tablespace name not found.
+ */
+Oid
+get_tablespace_oid(const char *tablespacename)
+{
+	Oid			result;
+	Relation	rel;
+	HeapScanDesc scandesc;
+	HeapTuple	tuple;
+	ScanKeyData entry[1];
+
+	/* Search pg_tablespace */
+	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
+
+	ScanKeyInit(&entry[0],
+				Anum_pg_tablespace_spcname,
+				BTEqualStrategyNumber, F_NAMEEQ,
+				CStringGetDatum(tablespacename));
+	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tuple = heap_getnext(scandesc, ForwardScanDirection);
+
+	if (HeapTupleIsValid(tuple))
+		result = HeapTupleGetOid(tuple);
+	else
+		result = InvalidOid;
+
+	heap_endscan(scandesc);
+	heap_close(rel, AccessShareLock);
+
+	return result;
+}
+
+/*
+ * get_tablespace_name - given a tablespace OID, look up the name
+ *
+ * Returns a palloc'd string, or NULL if no such tablespace.
+ */
+char *
+get_tablespace_name(Oid spc_oid)
+{
+	char	   *result;
+	Relation	rel;
+	HeapScanDesc scandesc;
+	HeapTuple	tuple;
+	ScanKeyData entry[1];
+
+	/* Search pg_tablespace */
+	rel = heap_openr(TableSpaceRelationName, AccessShareLock);
+
+	ScanKeyInit(&entry[0],
+				ObjectIdAttributeNumber,
+				BTEqualStrategyNumber, F_OIDEQ,
+				ObjectIdGetDatum(spc_oid));
+	scandesc = heap_beginscan(rel, SnapshotNow, 1, entry);
+	tuple = heap_getnext(scandesc, ForwardScanDirection);
+
+	/* We assume that there can be at most one matching tuple */
+	if (HeapTupleIsValid(tuple))
+		result = pstrdup(NameStr(((Form_pg_tablespace) GETSTRUCT(tuple))->spcname));
+	else
+		result = NULL;
+
+	heap_endscan(scandesc);
+	heap_close(rel, AccessShareLock);
+
+	return result;
+}
+
 
 /*
  * TABLESPACE resource manager's routines

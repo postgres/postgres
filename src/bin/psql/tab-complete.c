@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.117 2004/11/02 16:10:05 petere Exp $
+ * $PostgreSQL: pgsql/src/bin/psql/tab-complete.c,v 1.118 2004/11/05 19:16:22 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -526,6 +526,7 @@ psql_completion(char *text, int start, int end)
 		"debug_print_plan",
 		"debug_print_rewritten",
 		"default_statistics_target",
+		"default_tablespace",
 		"default_transaction_isolation",
 		"default_transaction_read_only",
 		"default_with_oids",

@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.231 2004/08/29 05:06:43 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.232 2004/11/05 19:15:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1377,7 +1377,6 @@ _equalCreateSchemaStmt(CreateSchemaStmt *a, CreateSchemaStmt *b)
 {
 	COMPARE_STRING_FIELD(schemaname);
 	COMPARE_STRING_FIELD(authid);
-	COMPARE_STRING_FIELD(tablespacename);
 	COMPARE_NODE_FIELD(schemaElts);
 
 	return true;

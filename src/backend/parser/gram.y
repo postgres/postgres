@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.478 2004/10/01 16:39:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.479 2004/11/05 19:16:02 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -780,7 +780,7 @@ DropGroupStmt:
  *****************************************************************************/
 
 CreateSchemaStmt:
-			CREATE SCHEMA OptSchemaName AUTHORIZATION UserId OptTableSpace OptSchemaEltList
+			CREATE SCHEMA OptSchemaName AUTHORIZATION UserId OptSchemaEltList
 				{
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* One can omit the schema name or the authorization id. */
@@ -789,18 +789,16 @@ CreateSchemaStmt:
 					else
 						n->schemaname = $5;
 					n->authid = $5;
-					n->tablespacename = $6;
-					n->schemaElts = $7;
+					n->schemaElts = $6;
 					$$ = (Node *)n;
 				}
-			| CREATE SCHEMA ColId OptTableSpace OptSchemaEltList
+			| CREATE SCHEMA ColId OptSchemaEltList
 				{
 					CreateSchemaStmt *n = makeNode(CreateSchemaStmt);
 					/* ...but not both */
 					n->schemaname = $3;
 					n->authid = NULL;
-					n->tablespacename = $4;
-					n->schemaElts = $5;
+					n->schemaElts = $4;
 					$$ = (Node *)n;
 				}
 		;

@@ -7,7 +7,7 @@
  * Copyright (c) 2000-2004, PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
- * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.54 2004/10/22 19:48:19 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/guc.h,v 1.55 2004/11/05 19:16:41 tgl Exp $
  *--------------------------------------------------------------------
  */
 #ifndef GUC_H
@@ -222,6 +222,10 @@ extern void read_nondefault_variables(void);
 
 /* in utils/adt/datetime.c */
 extern bool ClearDateCache(bool newval, bool doit, GucSource source);
+
+/* in commands/tablespace.c */
+extern const char *assign_default_tablespace(const char *newval,
+				   bool doit, GucSource source);
 
 /* in utils/adt/regexp.c */
 extern const char *assign_regex_flavor(const char *value,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.138 2004/10/30 20:52:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.139 2004/11/05 19:15:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,7 +168,6 @@ static void StoreCatalogInheritance(Oid relationId, List *supers);
 static int	findAttrByName(const char *attributeName, List *schema);
 static void setRelhassubclassInRelation(Oid relationId, bool relhassubclass);
 static bool needs_toast_table(Relation rel);
-static void check_tablespace_exists(Oid tablespaceId, Oid namespaceId);
 static int transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids);
 static int transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
@@ -313,34 +312,34 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	}
 
 	/*
-	 * Select tablespace to use.  If not specified, use containing
-	 * schema's default tablespace (which may in turn default to
-	 * database's default).
+	 * Select tablespace to use.  If not specified, use default_tablespace
+	 * (which may in turn default to database's default).
 	 */
 	if (stmt->tablespacename)
 	{
-		AclResult	aclresult;
-
 		tablespaceId = get_tablespace_oid(stmt->tablespacename);
 		if (!OidIsValid(tablespaceId))
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_OBJECT),
 					 errmsg("tablespace \"%s\" does not exist",
 							stmt->tablespacename)));
-		/* check permissions */
+	}
+	else
+	{
+		tablespaceId = GetDefaultTablespace();
+		/* note InvalidOid is OK in this case */
+	}
+
+	/* Check permissions except when using database's default */
+	if (OidIsValid(tablespaceId))
+	{
+		AclResult	aclresult;
+
 		aclresult = pg_tablespace_aclcheck(tablespaceId, GetUserId(),
 										   ACL_CREATE);
 		if (aclresult != ACLCHECK_OK)
 			aclcheck_error(aclresult, ACL_KIND_TABLESPACE,
-						   stmt->tablespacename);
-	}
-	else
-	{
-		tablespaceId = get_namespace_tablespace(namespaceId);
-		/* note no permission check on tablespace in this case */
-		/* check to see that schema's tablespace still exists */
-		if (OidIsValid(tablespaceId))
-			check_tablespace_exists(tablespaceId, namespaceId);
+						   get_tablespace_name(tablespaceId));
 	}
 
 	/*
@@ -5888,42 +5887,6 @@ needs_toast_table(Relation rel)
 							BITMAPLEN(tupdesc->natts)) +
 		MAXALIGN(data_length);
 	return (tuple_length > TOAST_TUPLE_THRESHOLD);
-}
-
-/*
- * Verify that a schema's tablespace still exists
- *
- * We need this because DROP TABLESPACE cannot check whether the target
- * tablespace is the default tablespace for any schemas.  (It could check
- * in the current database, but that doesn't seem very helpful.)  Subsequent
- * attempts to create tables in that tablespace will fail.  This code just
- * exists to ensure that we give a helpful error message.
- */
-static void
-check_tablespace_exists(Oid tablespaceId, Oid namespaceId)
-{
-	Relation	pg_tablespace;
-	ScanKeyData entry[1];
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-
-	/* There's no syscache for pg_tablespace, so must look the hard way */
-	pg_tablespace = heap_openr(TableSpaceRelationName, AccessShareLock);
-	ScanKeyInit(&entry[0],
-				ObjectIdAttributeNumber,
-				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(tablespaceId));
-	scan = heap_beginscan(pg_tablespace, SnapshotNow, 1, entry);
-	tuple = heap_getnext(scan, ForwardScanDirection);
-	if (!HeapTupleIsValid(tuple))
-		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_OBJECT),
-				 errmsg("tablespace with OID %u does not exist",
-						tablespaceId),
-				 errdetail("The default tablespace for schema \"%s\" has been dropped.",
-						   get_namespace_name(namespaceId))));
-	heap_endscan(scan);
-	heap_close(pg_tablespace, AccessShareLock);
 }
 
 
