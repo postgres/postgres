@@ -3,7 +3,7 @@ DBMirror - Postgres Database Mirroring
 
 
 DBMirror is a database mirroring system developed for the Postgres
-database Written and maintened by Steven Singer(ssinger@navtechinc.com)
+database Written and maintained by Steven Singer(ssinger@navtechinc.com)
 
 
 (c) 2001-2002 Navtech Systems Support Inc.
@@ -17,7 +17,7 @@ Released under the GNU Public License version 2. See COPYING.
 
 
 
-Overrview
+Overview
 --------------------------------------------------------------------
 
 The mirroring system is trigger based and provides the following key features:
@@ -27,12 +27,12 @@ The mirroring system is trigger based and provides the following key features:
 -Per table selection of what gets mirrored.
 
 
-The system is based on the idea that a master database exist where all
-edits are made to the tables being mirrored.   A trigger attatched to the
+The system is based on the idea that a master database exists where all
+edits are made to the tables being mirrored.   A trigger attached to the
 tables being mirrored runs logging information about the edit to 
 the Pending table and  PendingData table. 
 
-A perl script(DBMirror.pl) runs continiously for each slave database(A database
+A perl script(DBMirror.pl) runs continuously for each slave database(A database
 that the change is supposed to be mirrored to) examining the Pending
 table; searching for transactions that need to be sent to that particular slave 
 database.  Those transactions are then mirrored to the slave database and
@@ -77,7 +77,7 @@ in the MirrorSetup.sql script associates the trigger function with the
 pending.so shared library.  Modify the arguments to this command if you
 choose to install the trigger elsewhere.
 
-2) Run MirroSetup.sql
+2) Run MirrorSetup.sql
 
 This file contains SQL commands to setup the Mirroring environment.  
 This includes
