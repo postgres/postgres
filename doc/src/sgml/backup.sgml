@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.41 2004/08/03 23:42:59 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.42 2004/08/04 17:37:09 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -889,6 +889,35 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     was itself generated after a recovery attempt), you need to specify the
     target timeline in <literal>recovery.conf</>.  You cannot recover into
     timelines that branched off earlier than the base backup.
+   </para>
+  </sect2>
+
+  <sect2 id="backup-online-caveats">
+   <title>Caveats</title>
+
+   <para>
+    At this writing, there are several limitations of the on-line backup
+    technique.  These will probably be fixed in future releases.
+
+  <itemizedlist>
+   <listitem>
+    <para>
+     The effects of <command>CREATE DATABASE</>, <command>DROP DATABASE</>,
+     <command>CREATE TABLESPACE</>, and <command>DROP TABLESPACE</> are
+     not fully reflected in the WAL log.  It is recommended that you take
+     a new base backup after performing one of these operations.
+    </para>
+   </listitem>
+   <listitem>
+    <para>
+     Operations on non-btree indexes (hash, R-tree, and GiST indexes) are
+     not presently WAL-logged, so replay will not update these index types.
+     The recommended workaround, if you use any non-btree indexes, is to
+     manually <command>REINDEX</> each such index after completing a
+     recovery operation.
+    </para>
+   </listitem>
+  </itemizedlist>
    </para>
   </sect2>
  </sect1>
