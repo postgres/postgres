@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.55 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.56 2000/01/29 16:58:34 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,8 @@
  * ----------------
  */
 
-static int checkAttrExists(char *attributeName,
-				char *attributeType, List *schema);
+static bool checkAttrExists(const char *attributeName,
+                            const char *attributeType, List *schema);
 static List *MergeAttributes(List *schema, List *supers, List **supconstr);
 static void StoreCatalogInheritance(Oid relationId, List *supers);
 
@@ -291,7 +291,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 
 			if (!strcmp(coldef->colname, restdef->colname))
 			{
-				elog(ERROR, "attribute '%s' duplicated",
+				elog(ERROR, "CREATE TABLE: attribute \"%s\" duplicated",
 					 coldef->colname);
 			}
 		}
@@ -304,7 +304,7 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		{
 			if (!strcmp(strVal(lfirst(entry)), strVal(lfirst(rest))))
 			{
-				elog(ERROR, "relation '%s' duplicated",
+				elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
 					 strVal(lfirst(entry)));
 			}
 		}
@@ -326,9 +326,8 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 		tupleDesc = RelationGetDescr(relation);
 		constr = tupleDesc->constr;
 
-		/* XXX shouldn't this test be stricter?  No indexes, for example? */
-		if (relation->rd_rel->relkind == 'S')
-			elog(ERROR, "MergeAttr: Can't inherit from sequence superclass '%s'", name);
+		if (relation->rd_rel->relkind != RELKIND_RELATION)
+			elog(ERROR, "CREATE TABLE: inherited relation \"%s\" is not a table", name);
 
 		for (attrno = relation->rd_rel->relnatts - 1; attrno >= 0; attrno--)
 		{
@@ -353,15 +352,15 @@ MergeAttributes(List *schema, List *supers, List **supconstr)
 			 * check validity
 			 *
 			 */
-			if (checkAttrExists(attributeName, attributeType, inhSchema) ||
-				checkAttrExists(attributeName, attributeType, schema))
-			{
+            if (checkAttrExists(attributeName, attributeType, schema))
+                elog(ERROR, "CREATE TABLE: attribute \"%s\" already exists in inherited schema",
+                     attributeName);
 
+			if (checkAttrExists(attributeName, attributeType, inhSchema))
 				/*
 				 * this entry already exists
 				 */
 				continue;
-			}
 
 			/*
 			 * add an entry to the schema
@@ -629,11 +628,13 @@ again:
 	heap_close(relation, RowExclusiveLock);
 }
 
+
+
 /*
- * returns 1 if attribute already exists in schema, 0 otherwise.
+ * returns true if attribute already exists in schema, false otherwise.
  */
-static int
-checkAttrExists(char *attributeName, char *attributeType, List *schema)
+static bool
+checkAttrExists(const char *attributeName, const char *attributeType, List *schema)
 {
 	List	   *s;
 
@@ -641,19 +642,16 @@ checkAttrExists(char *attributeName, char *attributeType, List *schema)
 	{
 		ColumnDef  *def = lfirst(s);
 
-		if (!strcmp(attributeName, def->colname))
+		if (strcmp(attributeName, def->colname)==0)
 		{
-
 			/*
 			 * attribute exists. Make sure the types are the same.
 			 */
 			if (strcmp(attributeType, def->typename->name) != 0)
-			{
-				elog(ERROR, "%s and %s conflict for %s",
-					 attributeType, def->typename->name, attributeName);
-			}
-			return 1;
+				elog(ERROR, "CREATE TABLE: attribute \"%s\" type conflict (%s and %s)",
+					 attributeName, attributeType, def->typename->name);
+			return true;
 		}
 	}
-	return 0;
+	return false;
 }

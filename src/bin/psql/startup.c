@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Team
+ * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.19 2000/01/27 05:33:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.20 2000/01/29 16:58:49 petere Exp $
  */
 #include <c.h>
 
@@ -162,8 +162,8 @@ main(int argc, char **argv)
 
 	if (PQstatus(pset.db) == CONNECTION_BAD)
 	{
-		fprintf(stderr, "%s: connection to database \"%s\" failed - %s",
-                pset.progname, PQdb(pset.db), PQerrorMessage(pset.db));
+		fprintf(stderr, "%s: %s",
+                pset.progname, PQerrorMessage(pset.db));
 		PQfinish(pset.db);
 		exit(EXIT_BADCONN);
 	}
@@ -187,6 +187,8 @@ main(int argc, char **argv)
     SetVariable(pset.vars, "USER", PQuser(pset.db));
     SetVariable(pset.vars, "HOST", PQhost(pset.db));
     SetVariable(pset.vars, "PORT", PQport(pset.db));
+
+    pset.issuper = test_superuser(PQuser(pset.db));
 
 	if (!QUIET() && !pset.notty && !options.action)
 	{
@@ -436,11 +438,13 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 				pset.getPassword = true;
 				break;
 			case '?':
-                if (strcmp(argv[optind-1], "-?")==0)
+                /* Actual help option given */
+                if (strcmp(argv[optind-1], "-?")==0 || strcmp(argv[optind-1], "--help")==0)
                 {
                     usage();
                     exit(EXIT_SUCCESS);
                 }
+                /* unknown option reported by getopt */
                 else
                 {
                     fputs("Try -? for help.\n", stderr);
@@ -486,7 +490,7 @@ parse_options(int argc, char *argv[], struct adhoc_opts * options)
 
 
 /*
- * Load /etc/psqlrc or .psqlrc file, if found.
+ * Load .psqlrc file, if found.
  */
 static void
 process_psqlrc(void)
@@ -497,12 +501,6 @@ process_psqlrc(void)
 #ifdef WIN32
 #define R_OK 0
 #endif
-
-	/* System-wide startup file */
-	if (access("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION, R_OK) == 0)
-		process_file("/etc/psqlrc-" PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
-	else if (access("/etc/psqlrc", R_OK) == 0)
-		process_file("/etc/psqlrc");
 
 	/* Look for one in the home dir */
 	home = getenv("HOME");
@@ -573,6 +571,6 @@ showVersion(void)
 
     puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
     puts("Portions Copyright (C) 1996 Regents of the University of California");
-    puts("Read the file COPYING or use the command \\copyright to see the");
+    puts("Read the file COPYRIGHT or use the command \\copyright to see the");
     puts("usage and distribution terms.");
 }

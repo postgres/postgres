@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.8 1999/07/22 15:09:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/commit.sgml,v 1.9 2000/01/29 16:58:27 petere Exp $
 Postgres documentation
 -->
 
@@ -62,7 +62,7 @@ COMMIT [ WORK | TRANSACTION ]
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-END
+COMMIT
        </computeroutput></term>
       <listitem>
        <para>
@@ -72,7 +72,7 @@ END
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE EndTransactionBlock and not inprogress/abort state
+NOTICE:  COMMIT: no transaction in progress
        </computeroutput></term>
       <listitem>
        <para>
@@ -141,7 +141,8 @@ COMMIT WORK;
     SQL92
    </title>
    <para>
-    Full compatibility.
+    <acronym>SQL92</acronym> only specifies the two forms <literal>COMMIT</literal>
+    and <literal>COMMIT WORK</literal>. Otherwise full compatibility.
    </para>
   </refsect2>
  </refsect1>

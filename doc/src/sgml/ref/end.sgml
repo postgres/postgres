@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.1 1999/07/22 15:09:11 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/end.sgml,v 1.2 2000/01/29 16:58:27 petere Exp $
 Postgres documentation
 -->
 
@@ -62,7 +62,7 @@ END [ WORK | TRANSACTION ]
     <variablelist>
      <varlistentry>
       <term><computeroutput>
-END
+COMMIT
        </computeroutput></term>
       <listitem>
        <para>
@@ -72,7 +72,7 @@ END
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE EndTransactionBlock and not inprogress/abort state
+NOTICE:  COMMIT: no transaction in progress
        </computeroutput></term>
       <listitem>
        <para>
@@ -94,7 +94,7 @@ NOTICE EndTransactionBlock and not inprogress/abort state
   </title>
 
   <para>
-   <command>END</command> is a <productname>Postgres</productname>
+   <command>END</command> is a <productname>PostgreSQL</productname>
    synonym for
    <xref linkend="sql-commit-title" endterm="sql-commit-title">.
   </para>
@@ -144,7 +144,7 @@ END WORK;
    </title>
 
    <para>
-    <command>END</command> is a <productname>Postgres</productname>
+    <command>END</command> is a <productname>PostgreSQL</productname>
     extension which provides functionality equivalent to
     <xref linkend="sql-commit-title" endterm="sql-commit-title">.
    </para>

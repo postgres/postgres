@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Team
+ * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.h,v 1.12 2000/01/18 23:30:24 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/stringutils.h,v 1.13 2000/01/29 16:58:49 petere Exp $
  */
 #ifndef STRINGUTILS_H
 #define STRINGUTILS_H

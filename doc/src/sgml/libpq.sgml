@@ -274,8 +274,8 @@ PostgresPollingStatusType *PQconnectPoll(PQconn *conn)
   </para>
 
   <para>
-   To begin, call conn=PQconnectStart("&lt;connection_info_string&gt;"). If
-   conn is NULL, then libpq has been unable to allocate a new PGconn
+   To begin, call <literal>conn=PQconnectStart("&lt;connection_info_string&gt;")</literal>.
+   If conn is NULL, then libpq has been unable to allocate a new PGconn
    structure. Otherwise, a valid PGconn pointer is returned (though not yet
    representing a valid connection to the database). On return from
    PQconnectStart, call status=PQstatus(conn). If status equals
@@ -1019,6 +1019,9 @@ const char * PQcmdTuples(const PGresult *res);
 <synopsis>
 Oid PQoidValue(const PGresult *res);
 </synopsis>
+          The type <type>Oid</type> and the constant <literal>Invalid</literal>
+          will be defined if you include the <application>libpq</application>
+          header file. They will both be some integer type.
 </para>
 </listitem>
 
@@ -1031,7 +1034,8 @@ Oid PQoidValue(const PGresult *res);
 <synopsis>
 const char * PQoidStatus(const PGresult *res);
 </synopsis>
-The function is deprecated in favor of <function>PQoidValue</function>.
+The function is deprecated in favor of <function>PQoidValue</function>
+and is not thread-safe.
 </para>
 </listitem>
 
@@ -1045,57 +1049,25 @@ void PQprint(FILE* fout,      /* output stream */
              const PGresult *res,
              const PQprintOpt *po);
 
-struct _PQprintOpt {
-    pqbool  header;      /* print output field headings and row count */
-    pqbool  align;       /* fill align the fields */
-    pqbool  standard;    /* old brain dead format */
-    pqbool  html3;       /* output html tables */
-    pqbool  expanded;    /* expand tables */
-    pqbool  pager;       /* use pager for output if needed */
+struct {
+    int     header;      /* print output field headings and row count */
+    int     align;       /* fill align the fields */
+    int     standard;    /* old brain dead format */
+    int     html3;       /* output html tables */
+    int     expanded;    /* expand tables */
+    int     pager;       /* use pager for output if needed */
     char    *fieldSep;   /* field separator */
     char    *tableOpt;   /* insert to HTML &lt;table ...&gt; */
     char    *caption;    /* HTML &lt;caption&gt; */
     char    **fieldName; /* null terminated array of replacement field names */
-}
+} PQprintOpt;
 </synopsis>
-This function is intended to replace PQprintTuples(), which is
-now obsolete.  The <filename>psql</filename> program uses
-<function>PQprint()</function> to display query results.
+This function was formerly used by <application>psql</application>
+to print query results, but this is no longer the case and this
+function is no longer supported.
 </para>
 </listitem>
 
-<listitem>
-<para>
-<function>PQprintTuples</function>
-          Prints out all the  tuples  and,  optionally,  the
-          attribute  names  to  the specified output stream.
-<synopsis>
-void PQprintTuples(const PGresult *res,
-                   FILE *fout,      /* output stream */
-                   int printAttName,/* print attribute names or not*/
-                   int terseOutput, /* delimiter bars or not?*/
-                   int width);      /* width of column, variable width if 0*/
-</synopsis>
-</para>
-</listitem>
-
-<listitem>
-<para>
-<function>PQdisplayTuples</function>
-          Prints out all the  tuples  and,  optionally,  the
-          attribute  names  to  the specified output stream.
-<synopsis>
-void PQdisplayTuples(const PGresult* res,
-                     FILE *fout,           /* output stream */
-                     int fillAlign,        /* space fill to align columns */
-                     const char *fieldSep, /* field separator */
-                     int printHeader,      /* display headers? */
-                     int quiet);           /* suppress print of row count at end */
-</synopsis>
-<function>PQdisplayTuples()</function> was intended to supersede
-<function>PQprintTuples()</function>, and
-is in turn superseded by <function>PQprint()</function>.
-</para>
 </listitem>
 <listitem>
 <para>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.59 2000/01/26 05:56:04 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.60 2000/01/29 16:58:29 petere Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -1331,7 +1331,7 @@ BeginTransactionBlock(void)
 		return;
 
 	if (s->blockState != TBLOCK_DEFAULT)
-		elog(NOTICE, "BeginTransactionBlock and not in default state ");
+		elog(NOTICE, "BEGIN: already a transaction in progress");
 
 	/* ----------------
 	 *	set the current transaction block state information
@@ -1404,7 +1404,7 @@ EndTransactionBlock(void)
 	 *	default state.
 	 * ----------------
 	 */
-	elog(NOTICE, "EndTransactionBlock and not inprogress/abort state ");
+	elog(NOTICE, "COMMIT: no transaction in progress");
 	s->blockState = TBLOCK_ENDABORT;
 }
 
@@ -1516,13 +1516,13 @@ UserAbortTransactionBlock()
 
 	/* ----------------
 	 *	this case should not be possible, because it would mean
-	 *	the user entered an "abort" from outside a transaction block.
+	 *	the user entered a "rollback" from outside a transaction block.
 	 *	So we print an error message, abort the transaction and
 	 *	enter the "ENDABORT" state so we will end up in the default
 	 *	state after the upcoming CommitTransactionCommand().
 	 * ----------------
 	 */
-	elog(NOTICE, "UserAbortTransactionBlock and not in in-progress state");
+	elog(NOTICE, "ROLLBACK: no transaction in progress");
 	AbortTransaction();
 	s->blockState = TBLOCK_ENDABORT;
 }

@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Team
+ * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.6 2000/01/18 23:30:23 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.h,v 1.7 2000/01/29 16:58:48 petere Exp $
  */
 #ifndef COMMAND_H
 #define COMMAND_H
@@ -35,6 +35,9 @@ HandleSlashCmds(const char *line,
 
 bool
 process_file(char *filename);
+
+bool
+test_superuser(const char * username);
 
 bool
 do_pset(const char *param,

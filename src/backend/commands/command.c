@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.66 2000/01/26 05:56:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.67 2000/01/29 16:58:34 petere Exp $
  *
  * NOTES
  *	  The PortalExecutorHeapMemory crap needs to be eliminated
@@ -301,7 +301,6 @@ AlterTableAddColumn(const char *relationName,
 	Relation	idescs[Num_pg_attr_indices];
 	Relation	ridescs[Num_pg_class_indices];
 	bool		hasindex;
-//    List       *rawDefaults = NIL;
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -386,9 +385,9 @@ AlterTableAddColumn(const char *relationName,
 	/*
 	 * XXX is the following check sufficient?
 	 */
-	if (((Form_pg_class) GETSTRUCT(reltup))->relkind == RELKIND_INDEX)
+	if (((Form_pg_class) GETSTRUCT(reltup))->relkind != RELKIND_RELATION)
 	{
-		elog(ERROR, "ALTER TABLE: index relation \"%s\" not changed",
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
 			 relationName);
 	}
 
@@ -429,7 +428,7 @@ AlterTableAddColumn(const char *relationName,
 								  0, 0);
 
 		if (HeapTupleIsValid(tup))
-			elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in relation \"%s\"",
+			elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
 				 colDef->colname, relationName);
 
 		/*
@@ -627,14 +626,12 @@ AlterTableAlterColumn(const char *relationName,
             /* keep the system catalog indices current */
             CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, irelations);
             CatalogIndexInsert(irelations, Num_pg_attr_indices, attr_rel, newtuple);
-            CatalogCloseIndices(Num_pg_attrdef_indices, irelations);
+            CatalogCloseIndices(Num_pg_attr_indices, irelations);
 
             /* get rid of actual default definition */
             drop_default(myrelid, attnum);
         }
-        else
-            elog(NOTICE, "ALTER TABLE: there was no default on column \"%s\" of relation \"%s\"",
-                 colName, relationName);
+
         heap_endscan(scan);
         heap_close(attr_rel, NoLock);
     }

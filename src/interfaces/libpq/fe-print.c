@@ -10,13 +10,13 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.32 2000/01/26 05:58:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.33 2000/01/29 16:58:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <signal.h>
+#include <postgres.h>
 
-#include "postgres.h"
+#include <signal.h>
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "pqsignal.h"
@@ -36,21 +36,14 @@
 #endif
 #endif
 
-#ifdef MULTIBYTE
-#include "miscadmin.h"
-#include "mb/pg_wchar.h"
-#endif
-
 #ifdef TIOCGWINSZ
 static struct winsize screen_size;
-
 #else
 static struct winsize
 {
 	int			ws_row;
 	int			ws_col;
 }			screen_size;
-
 #endif
 
 
@@ -66,7 +59,6 @@ static char *do_header(FILE *fout, const PQprintOpt *po, const int nFields,
 static void output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index);
-static void fill(int length, int max, char filler, FILE *fp);
 
 
 /*
@@ -78,7 +70,9 @@ static void fill(int length, int max, char filler, FILE *fp);
  * various flags and options. consult libpq-fe.h for
  * details
  *
- * Obsoletes PQprintTuples.
+ * This function should probably be removed sometime since psql
+ * doesn't use it anymore. It is unclear to what extend this is used
+ * by external clients, however.
  */
 
 void
@@ -314,229 +308,6 @@ PQprint(FILE *fout,
 	}
 }
 
-
-/*
- * PQdisplayTuples()
- * kept for backward compatibility
- */
-
-void
-PQdisplayTuples(const PGresult *res,
-		FILE *fp,		/* where to send the output */
-		int fillAlign,	/* pad the fields with spaces */
-		const char *fieldSep,	/* field separator */
-		int printHeader,/* display headers? */
-		int quiet
-)
-{
-#define DEFAULT_FIELD_SEP " "
-
-	int			i,
-				j;
-	int			nFields;
-	int			nTuples;
-	int		   *fLength = NULL;
-
-	if (fieldSep == NULL)
-		fieldSep = DEFAULT_FIELD_SEP;
-
-	/* Get some useful info about the results */
-	nFields = PQnfields(res);
-	nTuples = PQntuples(res);
-
-	if (fp == NULL)
-		fp = stdout;
-
-	/* Figure the field lengths to align to */
-	/* will be somewhat time consuming for very large results */
-	if (fillAlign)
-	{
-		fLength = (int *) malloc(nFields * sizeof(int));
-		for (j = 0; j < nFields; j++)
-		{
-			fLength[j] = strlen(PQfname(res, j));
-			for (i = 0; i < nTuples; i++)
-			{
-				int flen = PQgetlength(res, i, j);
-				if (flen > fLength[j])
-					fLength[j] = flen;
-			}
-		}
-	}
-
-	if (printHeader)
-	{
-		/* first, print out the attribute names */
-		for (i = 0; i < nFields; i++)
-		{
-			fputs(PQfname(res, i), fp);
-			if (fillAlign)
-				fill(strlen(PQfname(res, i)), fLength[i], ' ', fp);
-			fputs(fieldSep, fp);
-		}
-		fprintf(fp, "\n");
-
-		/* Underline the attribute names */
-		for (i = 0; i < nFields; i++)
-		{
-			if (fillAlign)
-				fill(0, fLength[i], '-', fp);
-			fputs(fieldSep, fp);
-		}
-		fprintf(fp, "\n");
-	}
-
-	/* next, print out the instances */
-	for (i = 0; i < nTuples; i++)
-	{
-		for (j = 0; j < nFields; j++)
-		{
-			fprintf(fp, "%s", PQgetvalue(res, i, j));
-			if (fillAlign)
-				fill(strlen(PQgetvalue(res, i, j)), fLength[j], ' ', fp);
-			fputs(fieldSep, fp);
-		}
-		fprintf(fp, "\n");
-	}
-
-	if (!quiet)
-		fprintf(fp, "\nQuery returned %d row%s.\n", PQntuples(res),
-				(PQntuples(res) == 1) ? "" : "s");
-
-	fflush(fp);
-
-	if (fLength)
-		free(fLength);
-}
-
-
-
-/*
- * PQprintTuples()
- *
- * kept for backward compatibility
- *
- */
-void
-PQprintTuples(const PGresult *res,
-	      FILE *fout,		/* output stream */
-	      int PrintAttNames,/* print attribute names or not */
-	      int TerseOutput,	/* delimiter bars or not? */
-	      int colWidth		/* width of column, if 0, use variable
-					 * width */
-)
-{
-	int			nFields;
-	int			nTups;
-	int			i,
-				j;
-	char		formatString[80];
-
-	char	   *tborder = NULL;
-
-	nFields = PQnfields(res);
-	nTups = PQntuples(res);
-
-	if (colWidth > 0)
-		sprintf(formatString, "%%s %%-%ds", colWidth);
-	else
-		sprintf(formatString, "%%s %%s");
-
-	if (nFields > 0)
-	{							/* only print rows with at least 1 field.  */
-
-		if (!TerseOutput)
-		{
-			int			width;
-
-			width = nFields * 14;
-			tborder = malloc(width + 1);
-			for (i = 0; i <= width; i++)
-				tborder[i] = '-';
-			tborder[i] = '\0';
-			fprintf(fout, "%s\n", tborder);
-		}
-
-		for (i = 0; i < nFields; i++)
-		{
-			if (PrintAttNames)
-			{
-				fprintf(fout, formatString,
-						TerseOutput ? "" : "|",
-						PQfname(res, i));
-			}
-		}
-
-		if (PrintAttNames)
-		{
-			if (TerseOutput)
-				fprintf(fout, "\n");
-			else
-				fprintf(fout, "|\n%s\n", tborder);
-		}
-
-		for (i = 0; i < nTups; i++)
-		{
-			for (j = 0; j < nFields; j++)
-			{
-				const char	   *pval = PQgetvalue(res, i, j);
-
-				fprintf(fout, formatString,
-						TerseOutput ? "" : "|",
-						pval ? pval : "");
-			}
-			if (TerseOutput)
-				fprintf(fout, "\n");
-			else
-				fprintf(fout, "|\n%s\n", tborder);
-		}
-	}
-}
-
-#ifdef MULTIBYTE
-/*
- * returns the byte length of the word beginning s.
- * Client side encoding is determined by the environment variable
- * "PGCLIENTENCODING".
- * if this variable is not defined, the same encoding as
- * the backend is assumed.
- */
-int
-PQmblen(const unsigned char *s, int encoding)
-{
-	return (pg_encoding_mblen(encoding, s));
-}
-
-/*
- * Get encoding id from environment variable PGCLIENTENCODING.
- */
-int
-PQenv2encoding(void)
-{
-	char	   *str;
-	int			encoding = SQL_ASCII;
-
-	str = getenv("PGCLIENTENCODING");
-	if (str && *str != '\0')
-		encoding = pg_char_to_encoding(str);
-	return(encoding);
-}
-
-#else
-
-/* Provide a default definition in case someone calls it anyway */
-int
-PQmblen(const unsigned char *s, int encoding)
-{
-	return 1;
-}
-int
-PQenv2encoding(void)
-{
-	return 0;
-}
-
-#endif	 /* MULTIBYTE */
 
 static void
 do_field(const PQprintOpt *po, const PGresult *res,
@@ -785,14 +556,176 @@ output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 }
 
 
-/* simply send out max-length number of filler characters to fp */
 
-static void
-fill(int length, int max, char filler, FILE *fp)
+#if 0
+/*
+ * really old printing routines
+ */
+
+void
+PQdisplayTuples(const PGresult *res,
+		FILE *fp,		/* where to send the output */
+		int fillAlign,	/* pad the fields with spaces */
+		const char *fieldSep,	/* field separator */
+		int printHeader,/* display headers? */
+		int quiet
+)
 {
-	int			count;
+#define DEFAULT_FIELD_SEP " "
 
-	count = max - length;
-	while (count-- >= 0)
-		putc(filler, fp);
+	int			i,
+				j;
+	int			nFields;
+	int			nTuples;
+	int		   *fLength = NULL;
+
+	if (fieldSep == NULL)
+		fieldSep = DEFAULT_FIELD_SEP;
+
+	/* Get some useful info about the results */
+	nFields = PQnfields(res);
+	nTuples = PQntuples(res);
+
+	if (fp == NULL)
+		fp = stdout;
+
+	/* Figure the field lengths to align to */
+	/* will be somewhat time consuming for very large results */
+	if (fillAlign)
+	{
+		fLength = (int *) malloc(nFields * sizeof(int));
+		for (j = 0; j < nFields; j++)
+		{
+			fLength[j] = strlen(PQfname(res, j));
+			for (i = 0; i < nTuples; i++)
+			{
+				int flen = PQgetlength(res, i, j);
+				if (flen > fLength[j])
+					fLength[j] = flen;
+			}
+		}
+	}
+
+	if (printHeader)
+	{
+		/* first, print out the attribute names */
+		for (i = 0; i < nFields; i++)
+		{
+			fputs(PQfname(res, i), fp);
+			if (fillAlign)
+				fill(strlen(PQfname(res, i)), fLength[i], ' ', fp);
+			fputs(fieldSep, fp);
+		}
+		fprintf(fp, "\n");
+
+		/* Underline the attribute names */
+		for (i = 0; i < nFields; i++)
+		{
+			if (fillAlign)
+				fill(0, fLength[i], '-', fp);
+			fputs(fieldSep, fp);
+		}
+		fprintf(fp, "\n");
+	}
+
+	/* next, print out the instances */
+	for (i = 0; i < nTuples; i++)
+	{
+		for (j = 0; j < nFields; j++)
+		{
+			fprintf(fp, "%s", PQgetvalue(res, i, j));
+			if (fillAlign)
+				fill(strlen(PQgetvalue(res, i, j)), fLength[j], ' ', fp);
+			fputs(fieldSep, fp);
+		}
+		fprintf(fp, "\n");
+	}
+
+	if (!quiet)
+		fprintf(fp, "\nQuery returned %d row%s.\n", PQntuples(res),
+				(PQntuples(res) == 1) ? "" : "s");
+
+	fflush(fp);
+
+	if (fLength)
+		free(fLength);
 }
+
+
+
+void
+PQprintTuples(const PGresult *res,
+	      FILE *fout,		/* output stream */
+	      int PrintAttNames,/* print attribute names or not */
+	      int TerseOutput,	/* delimiter bars or not? */
+	      int colWidth		/* width of column, if 0, use variable
+					 * width */
+)
+{
+	int			nFields;
+	int			nTups;
+	int			i,
+				j;
+	char		formatString[80];
+
+	char	   *tborder = NULL;
+
+	nFields = PQnfields(res);
+	nTups = PQntuples(res);
+
+	if (colWidth > 0)
+		sprintf(formatString, "%%s %%-%ds", colWidth);
+	else
+		sprintf(formatString, "%%s %%s");
+
+	if (nFields > 0)
+	{							/* only print rows with at least 1 field.  */
+
+		if (!TerseOutput)
+		{
+			int			width;
+
+			width = nFields * 14;
+			tborder = malloc(width + 1);
+			for (i = 0; i <= width; i++)
+				tborder[i] = '-';
+			tborder[i] = '\0';
+			fprintf(fout, "%s\n", tborder);
+		}
+
+		for (i = 0; i < nFields; i++)
+		{
+			if (PrintAttNames)
+			{
+				fprintf(fout, formatString,
+						TerseOutput ? "" : "|",
+						PQfname(res, i));
+			}
+		}
+
+		if (PrintAttNames)
+		{
+			if (TerseOutput)
+				fprintf(fout, "\n");
+			else
+				fprintf(fout, "|\n%s\n", tborder);
+		}
+
+		for (i = 0; i < nTups; i++)
+		{
+			for (j = 0; j < nFields; j++)
+			{
+				const char	   *pval = PQgetvalue(res, i, j);
+
+				fprintf(fout, formatString,
+						TerseOutput ? "" : "|",
+						pval ? pval : "");
+			}
+			if (TerseOutput)
+				fprintf(fout, "\n");
+			else
+				fprintf(fout, "|\n%s\n", tborder);
+		}
+	}
+}
+#endif

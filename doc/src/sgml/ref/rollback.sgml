@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.6 1999/07/22 15:09:14 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/rollback.sgml,v 1.7 2000/01/29 16:58:27 petere Exp $
 Postgres documentation
 -->
 
@@ -61,8 +61,7 @@ ABORT
      
      <varlistentry>
       <term><computeroutput>
-NOTICE:  UserAbortTransactionBlock and not in in-progress state
-ABORT
+NOTICE:  ROLLBACK: no transaction in progress
        </computeroutput></term>
       <listitem>
        <para>
@@ -95,10 +94,6 @@ ABORT
    <title>
     Notes
    </title>
-   <para>
-    The keywords WORK and TRANSACTION are noise and can be omitted.
-   </para>
-
    <para>
     Use <xref linkend="SQL-COMMIT-TITLE" endterm="SQL-COMMIT-TITLE">
     to successfully terminate a transaction.
@@ -134,8 +129,8 @@ ROLLBACK WORK;
     SQL92
    </title>
    <para>
-    Full compatibility. The TRANSACTION keyword is a
-    <productname>Postgres</productname> extension.
+    <acronym>SQL92</acronym> only specifies the two forms <literal>ROLLBACK</literal>
+    and <literal>ROLLBACK WORK</literal>. Otherwise full compatibility.
    </para>
   </refsect2>
  </refsect1>

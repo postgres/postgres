@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.81 2000/01/26 05:57:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.82 2000/01/29 16:58:38 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,8 @@ if (1) \
 { \
 	if (IsAbortedTransactionBlockState()) \
 	{ \
-		elog(NOTICE, "(transaction aborted): %s", \
-			 "all queries ignored until end of transaction block"); \
+		elog(NOTICE, "current transaction is aborted, " \
+			 "queries ignored until end of transaction block"); \
 		commandTag = "*ABORT STATE*"; \
 		break; \
 	} \
@@ -98,13 +98,13 @@ ProcessUtility(Node *parsetree,
 						BeginTransactionBlock();
 						break;
 
-					case END_TRANS:
-						PS_SET_STATUS(commandTag = "END");
+					case COMMIT:
+						PS_SET_STATUS(commandTag = "COMMIT");
 						EndTransactionBlock();
 						break;
 
-					case ABORT_TRANS:
-						PS_SET_STATUS(commandTag = "ABORT");
+					case ROLLBACK:
+						PS_SET_STATUS(commandTag = "ROLLBACK");
 						UserAbortTransactionBlock();
 						break;
 				}
@@ -278,17 +278,16 @@ ProcessUtility(Node *parsetree,
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
-				PS_SET_STATUS(commandTag = "RENAME");
+				PS_SET_STATUS(commandTag = "ALTER");
 				CHECK_IF_ABORTED();
 
 				relname = stmt->relname;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
-					elog(ERROR, "class \"%s\" is a system catalog",
+					elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 						 relname);
 #ifndef NO_SECURITY
 				if (!pg_ownercheck(userName, relname, RELNAME))
-					elog(ERROR, "you do not own class \"%s\"",
-						 relname);
+					elog(ERROR, "permission denied");
 #endif
 
 				/* ----------------
@@ -335,7 +334,7 @@ ProcessUtility(Node *parsetree,
         {
             AlterTableStmt *stmt = (AlterTableStmt *) parsetree;
 
-            PS_SET_STATUS(commandTag = "ALTER TABLE");
+            PS_SET_STATUS(commandTag = "ALTER");
             CHECK_IF_ABORTED();
 
             /*

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.9 2000/01/09 17:35:27 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.10 2000/01/29 16:58:27 petere Exp $
 Postgres documentation
 -->
 
@@ -23,11 +23,14 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    [ * ] ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable
     class="PARAMETER">type</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    [ * ] RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
+    ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
+    class="PARAMETER">value</replaceable> | DROP DEFAULT }
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> [ * ]
+    RENAME [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> TO <replaceable
     class="PARAMETER">newcolumn</replaceable>
 ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
     RENAME TO <replaceable class="PARAMETER">newtable</replaceable>
@@ -82,7 +85,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       <term><replaceable class="PARAMETER"> newtable </replaceable></term>
       <listitem>
        <para>
-	New name for an existing column.
+	New name for the table.
        </para>
       </listitem>
      </varlistentry>
@@ -101,9 +104,7 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 
     <variablelist>
      <varlistentry>
-      <term><computeroutput>
-ALTER
-       </computeroutput></term>
+      <term><computeroutput>ALTER</computeroutput></term>
       <listitem>
        <para>
 	Message returned from column or table renaming.
@@ -112,20 +113,7 @@ ALTER
      </varlistentry>
 
      <varlistentry>
-      <term><computeroutput>
-NEW
-       </computeroutput></term>
-      <listitem>
-       <para>
-	Message returned from column addition.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><computeroutput>
-ERROR
-       </computeroutput></term>
+      <term><computeroutput>ERROR</computeroutput></term>
       <listitem>
        <para>
 	Message returned if table or column is not available.
@@ -146,9 +134,12 @@ ERROR
   </title>
   <para>
    <command>ALTER TABLE</command> changes the definition of an existing table.
-   The new columns and their types are specified in the same style
-   and with the the same restrictions as in <command>CREATE TABLE</command>.
-   The RENAME clause causes the name of a table or column
+   The <literal>ADD COLUMN</literal> form adds a new column to the table
+   using the same syntax as <xref linkend="SQL-CREATETABLE"
+   endterm="SQL-CREATETABLE-title">. The <literal>ALTER COLUMN</literal> form
+   allows you to set or remove the default for the column. Note that defaults
+   only apply to newly inserted rows.
+   The <literal>RENAME</literal> clause causes the name of a table or column
    to change without changing any of the data contained in
    the affected table. Thus, the table or column will
    remain of the same type and size after this command is
@@ -189,13 +180,12 @@ SELECT <replaceable>NewColumn</replaceable> FROM <replaceable>SuperClass</replac
    </para>
 
    <para>
-    For efficiency reasons, default values for added attributes are
-    not placed in existing instances of a class.
-    That is, existing instances will have NULL values in the new
-    attributes. If non-NULL  values  are  desired,  a subsequent
-    <command>UPDATE</command> query 
-    (<xref linkend="sql-update-title" endterm="sql-update-title">)
-    should be run.
+    In the current implementation, default and constraint clauses for the
+    new column will be ignored. You can use the <literal>SET DEFAULT</literal>
+    form of <command>ALTER TABLE</command> to set the default later.
+    (You will also have to update the already existing rows to the
+    new default value, using <xref linkend="sql-update-title"
+    endterm="sql-update-title">.)
    </para>
 
    <para>
@@ -248,87 +238,38 @@ ALTER TABLE distributors RENAME TO suppliers;
    <refsect2info>
     <date>1998-04-15</date>
    </refsect2info>
-   <title>
-    SQL92
-   </title>
-   <para>
-    <command>ALTER TABLE/RENAME</command>
-    is a <productname>Postgres</productname> language extension.
-   </para>
+   <title>SQL92</title>
+    <para>
+     The <literal>ADD COLUMN</literal> form is compliant with the exception that
+     it does not support defaults and constraints, as explained above.
+     The <literal>ALTER COLUMN</literal> form is in full compliance.
+    </para>
 
-   <para>
-    SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
-    statement which are not yet directly supported by
-    <productname>Postgres</productname>:
-   </para>
+    <para>
+     SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
+     statement which are not yet directly supported by <productname>PostgreSQL</productname>:
 
-   <variablelist>
-    <varlistentry>
-     <term>
-      <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> ALTER [
-       COLUMN ] <replaceable class="PARAMETER">column</replaceable>
-    SET DEFAULT <replaceable class="PARAMETER">default</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> ALTER [
-       COLUMN ] <replaceable class="PARAMETER">column</replaceable>
-    ADD [ CONSTRAINT <replaceable class="PARAMETER">>constrain</replaceable>> ] <replaceable
-	class="PARAMETER">table-constraint</replaceable>
+    <variablelist>
+     <varlistentry>
+      <term>
+       <synopsis>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> ADD <replaceable class="PARAMETER">table constraint definition</replaceable>
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
       </synopsis>
      </term>
      <listitem>
       <para>
-       Puts the default value or constraint specified into the
-       definition of column in the table.
-       See <command>CREATE TABLE</command> for the
-       syntax of the default and table-constraint clauses.
-       If a default clause already exists, it will be replaced by
-       the new definition. If any constraints on this column already
-       exist, they will be retained using a boolean AND with the new
-       constraint.
+       Adds or removes a table constraint (such as a check constraint,
+       unique constraint, or foreign key constraint). To create
+       or remove a unique constraint, create or drop a unique index,
+       respectively (see <xref linkend="SQL-CREATEINDEX" endterm="SQL-CREATEINDEX-title">).
+       To change other kinds of constraints you need to recreate
+       and reload the table, using other parameters to the
+       <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-title">
+       command.
       </para>
-
       <para>
-       Currently, to set new default constraints on an existing column
-       the table must be recreated and reloaded:
-
-       <programlisting>
-CREATE TABLE temp AS SELECT * FROM distributors;
-DROP TABLE distributors;
-CREATE TABLE distributors (
-    did      DECIMAL(3) DEFAULT 1,
-    name     VARCHAR(40) NOT NULL,
-    city     VARCHAR(30)
-);
-INSERT INTO distributors SELECT * FROM temp;
-DROP TABLE temp;
-       </programlisting>
-      </para>
-     </listitem>
-    </varlistentry>
-
-    <varlistentry>
-     <term>
-      <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    DROP DEFAULT <replaceable class="PARAMETER">default</replaceable>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    DROP CONSTRAINT <replaceable class="PARAMETER">constraint</replaceable> { RESTRICT | CASCADE }
-      </synopsis>
-     </term>
-     <listitem>
-      <para>
-       Removes the default value specified by default or the rule
-       specified by constraint from the definition of a table. 
-       If RESTRICT is specified only a constraint with no dependent
-       constraints can be destroyed.
-       If CASCADE is specified, Any constraints that are dependent on
-       this constraint are also dropped.
-      </para>
-
-      <para>
-       Currently, to remove a default value or constraints on an
-       existing column the table must be recreated and reloaded:
-
+       For example, to drop any constraints on a table <literal>distributors</literal>:
        <programlisting>
 CREATE TABLE temp AS SELECT * FROM distributors;
 DROP TABLE distributors;
@@ -342,23 +283,14 @@ DROP TABLE temp;
     <varlistentry>
      <term>
       <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
-    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { RESTRICT | CASCADE }
+ALTER TABLE <replaceable class="PARAMETER">table</replaceable> DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { RESTRICT | CASCADE }
       </synopsis>
      </term>
      <listitem>
       <para>
        Removes a column from a table.
-       If RESTRICT is specified only a column with no dependent
-       objects can be destroyed.
-       If CASCADE is specified, all objects that are dependent on
-       this column are also dropped.
-      </para>
-
-      <para>
        Currently, to remove an existing column the table must be
        recreated and reloaded:
-
        <programlisting>
 CREATE TABLE temp AS SELECT did, city FROM distributors;    
 DROP TABLE distributors;
@@ -373,6 +305,13 @@ DROP TABLE temp;
      </listitem>
     </varlistentry>
    </variablelist>
+   </para>
+
+   <para>
+    The clauses to rename columns and tables are <productname>PostgreSQL</productname>
+    extensions. SQL92 does not provide for them.
+   </para>
+ 
   </refsect2>
  </refsect1>
 </refentry>

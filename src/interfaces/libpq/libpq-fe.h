@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.57 2000/01/26 05:58:46 momjian Exp $
+ * $Id: libpq-fe.h,v 1.58 2000/01/29 16:58:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,22 +116,15 @@ extern		"C"
 
 /* Print options for PQprint() */
 
-	/*
-	 * We can't use the conventional "bool", because we are designed to be
-	 * included in a user's program, and user may already have that type
-	 * defined.  Pqbool, on the other hand, is unlikely to be used.
-	 */
-	typedef char pqbool;
-
 	typedef struct _PQprintOpt
 	{
-		pqbool		header;		/* print output field headings and row
+		int	        header;		/* print output field headings and row
 								 * count */
-		pqbool		align;		/* fill align the fields */
-		pqbool		standard;	/* old brain dead format */
-		pqbool		html3;		/* output html tables */
-		pqbool		expanded;	/* expand tables */
-		pqbool		pager;		/* use pager for output if needed */
+		int         align;		/* fill align the fields */
+		int         standard;	/* old brain dead format */
+		int         html3;		/* output html tables */
+		int         expanded;	/* expand tables */
+		int         pager;		/* use pager for output if needed */
 		char	   *fieldSep;	/* field separator */
 		char	   *tableOpt;	/* insert to HTML <table ...> */
 		char	   *caption;	/* HTML <caption> */
@@ -296,8 +289,8 @@ extern		"C"
 	extern int	PQfsize(const PGresult *res, int field_num);
 	extern int	PQfmod(const PGresult *res, int field_num);
 	extern const char *PQcmdStatus(const PGresult *res);
-        extern const char *PQoidStatus(const PGresult *res); /* old and ugly */
-        extern Oid PQoidValue(const PGresult *res); /* new and improved */
+    extern const char *PQoidStatus(const PGresult *res); /* old and ugly */
+    extern Oid PQoidValue(const PGresult *res); /* new and improved */
 	extern const char *PQcmdTuples(const PGresult *res);
 	extern const char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
 	extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
@@ -319,33 +312,24 @@ extern		"C"
 			    const PGresult *res,
 			    const PQprintOpt *ps);	/* option structure */
 
-	/*
-	 * PQdisplayTuples() is a better version of PQprintTuples(), but both
-	 * are obsoleted by PQprint().
-	 */
-	extern void PQdisplayTuples(const PGresult *res,
-				    FILE *fp,	/* where to send the
-						 * output */
-				    int fillAlign,		/* pad the fields with
-								 * spaces */
-				    const char *fieldSep,		/* field separator */
-				    int printHeader,	/* display headers? */
-				    int quiet);
-
-	extern void PQprintTuples(const PGresult *res,
-				  FILE *fout,	/* output stream */
-				  int printAttName,		/* print attribute names
-								 * or not */
-				  int terseOutput,		/* delimiter bars or
-								 * not? */
-				  int width);	/* width of column, if
-						 * 0, use variable width */
-
-	/* Determine length of multibyte encoded char at *s */
-	extern int	PQmblen(const unsigned char *s, int encoding);
-
-	/* Get encoding id from environment variable PGCLIENTENCODING */
-	int PQenv2encoding(void);
+#if 0
+    /*
+     * really old printing routines
+     */
+    extern void PQdisplayTuples(const PGresult *res,
+                                FILE *fp,   /* where to send the output */
+                                int fillAlign,      /* pad the fields with spaces */
+                                const char *fieldSep,   /* field separator */
+                                int printHeader,    /* display headers? */
+                                int quiet);
+ 
+    extern void PQprintTuples(const PGresult *res,
+                              FILE *fout,   /* output stream */
+                              int printAttName,     /* print attribute names */
+                              int terseOutput,      /* delimiter bars */
+                              int width);   /* width of column, if
+                                             * 0, use variable width */
+#endif
 
 /* === in fe-lobj.c === */
 
@@ -360,6 +344,14 @@ extern		"C"
 	extern int	lo_unlink(PGconn *conn, Oid lobjId);
 	extern Oid	lo_import(PGconn *conn, const char *filename);
 	extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);
+
+/* === in fe-misc.c === */
+
+	/* Determine length of multibyte encoded char at *s */
+	extern int	PQmblen(const unsigned char *s, int encoding);
+
+	/* Get encoding id from environment variable PGCLIENTENCODING */
+	extern int PQenv2encoding(void);
 
 #ifdef __cplusplus
 };

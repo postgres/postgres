@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.136 2000/01/27 18:11:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.137 2000/01/29 16:58:37 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -832,14 +832,14 @@ AlterTableStmt:
                 $$ = (Node *)n;
         }
 /* ALTER TABLE <name> DROP [COLUMN] <name> {RESTRICT|CASCADE} */
-      | ALTER TABLE relation_name opt_inh_star DROP opt_column ColId /* drop_behavior */
+      | ALTER TABLE relation_name opt_inh_star DROP opt_column ColId drop_behavior
         {
                 AlterTableStmt *n = makeNode(AlterTableStmt);
                 n->subtype = 'D';
                 n->relname = $3;
                 n->inh = $4;
                 n->name = $7;
-                /* n->behavior = $8; */
+                n->behavior = $8;
                 $$ = (Node *)n;
         }
 /* ALTER TABLE <name> ADD CONSTRAINT ... */
@@ -856,7 +856,7 @@ AlterTableStmt:
       | ALTER TABLE relation_name opt_inh_star DROP CONSTRAINT name drop_behavior
         {
                 AlterTableStmt *n = makeNode(AlterTableStmt);
-		n->subtype = 'X';
+                n->subtype = 'X';
                 n->relname = $3;
                 n->inh = $4;
                 n->name = $7;
@@ -866,7 +866,8 @@ AlterTableStmt:
         ;
 
 alter_column_action:
-        SET DEFAULT a_expr_or_null { $$ = $3; }
+        SET DEFAULT a_expr      { $$ = $3; }
+        | SET DEFAULT NULL_P    { $$ = NULL; }
         | DROP DEFAULT          { $$ = NULL; }
         ;
 
@@ -2531,19 +2532,15 @@ UnlistenStmt:  UNLISTEN relation_name
  *
  *		Transactions:
  *
- *		abort transaction
- *				(ABORT)
- *		begin transaction
- *				(BEGIN)
- *		end transaction
- *				(END)
+ *      BEGIN / COMMIT / ROLLBACK
+ *      (also older versions END / ABORT)
  *
  *****************************************************************************/
 
 TransactionStmt: ABORT_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = ABORT_TRANS;
+					n->command = ROLLBACK;
 					$$ = (Node *)n;
 				}
 		| BEGIN_TRANS opt_trans
@@ -2555,19 +2552,19 @@ TransactionStmt: ABORT_TRANS opt_trans
 		| COMMIT opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = END_TRANS;
+					n->command = COMMIT;
 					$$ = (Node *)n;
 				}
 		| END_TRANS opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = END_TRANS;
+					n->command = COMMIT;
 					$$ = (Node *)n;
 				}
 		| ROLLBACK opt_trans
 				{
 					TransactionStmt *n = makeNode(TransactionStmt);
-					n->command = ABORT_TRANS;
+					n->command = ROLLBACK;
 					$$ = (Node *)n;
 				}
 		;

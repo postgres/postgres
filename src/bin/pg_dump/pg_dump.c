@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.140 2000/01/27 05:33:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.141 2000/01/29 16:58:44 petere Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -178,7 +178,7 @@ version(void)
     puts("pg_dump (PostgreSQL) " PG_RELEASE "." PG_VERSION "." PG_SUBVERSION);
     puts("Portions Copyright (c) 1996-2000, PostgreSQL, Inc");
     puts("Portions Copyright (C) 1996 Regents of the University of California");
-    puts("Read the file COPYING to see the usage and distribution terms.");
+    puts("Read the file COPYRIGHT to see the usage and distribution terms.");
 }
 
 
@@ -685,7 +685,7 @@ main(int argc, char **argv)
 			case '?':
                 /* getopt returns '?' on unknown argument. That's not
                    quite what we want */
-                if (strcmp(argv[optind-1], "-?")==0)
+                if (strcmp(argv[optind-1], "-?")==0 || strcmp(argv[optind-1], "--help")==0)
                 {
                     help(progname);
                     exit(1);

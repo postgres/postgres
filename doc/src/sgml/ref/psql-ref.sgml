@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.21 2000/01/18 23:30:19 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.22 2000/01/29 16:58:27 petere Exp $
 Postgres documentation
 -->
 
@@ -1944,7 +1944,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
       <varlistentry>
         <term><literal>%#</literal></term>
-	<listitem><para>If the username is <literal>postgres</literal>, a
+	<listitem><para>If the current user is a database superuser, then a
          <quote>#</quote>, otherwise a <quote>&gt;</quote>.</para></listitem>
       </varlistentry>
 
@@ -2020,10 +2020,9 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
 
     <para>
     Before starting up in interactive mode, <application>psql</application> attempts
-    to read and execute the files <filename>/etc/psqlrc</filename> and
-    <filename>$HOME/.psqlrc</filename>. They could be used to set up the client or
-    the server to taste (using the <command>\set</command> and <command>SET</command>
-    commands).
+    to read and execute commands from the file <filename>$HOME/.psqlrc</filename>. It
+    could be used to set up the client or the server to taste (using the <command>\set
+    </command> and <command>SET</command> commands).
     </para>
 
   </refsect2>
@@ -2034,7 +2033,7 @@ testdb=> <userinput>\set content `sed -e "s/'/\\\\\\'/g" < my_file.txt`</userinp
     <para>
     <application>psql</application> supports the readline and history libraries for
     convenienent line editing and retrieval. The command history is stored in a file
-    named <filename>.psqlrc</filename> in your home directory and is reloaded when
+    named <filename>.psql_history</filename> in your home directory and is reloaded when
     <application>psql</application> starts up.
     Tab-completion is also supported, although
     the completion logic makes no claim to be an <acronym>SQL</acronym> parser.
@@ -2088,7 +2087,7 @@ $ ./configure --with-includes=/opt/gnu/include --with-libraries=/opt/gnu/lib  ..
   Notice the changing prompt.
 <programlisting>
 testdb=> <userinput>CREATE TABLE my_table (</userinput>
-testdb-> <userinput> first int4 not null default 0,</userinput>
+testdb-> <userinput> first integer not null default 0,</userinput>
 testdb-> <userinput> second text</userinput>
 testdb-> <userinput>);</userinput>
 CREATE
@@ -2096,11 +2095,11 @@ CREATE
   Now look at the table definition again:
 <programlisting>
 testdb=> <userinput>\d my_table</userinput>
-           Table "my_table"
- Attribute | Type |        Info
------------+------+--------------------
- first     | int4 | not null default 0
- second    | text |
+             Table "my_table"
+ Attribute |  Type   |      Modifier
+-----------+---------+--------------------
+ first     | integer | not null default 0
+ second    | text    |
 
 </programlisting>
   At this point you decide to change the prompt to something more

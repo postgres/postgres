@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.9 1999/07/22 15:09:06 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/begin.sgml,v 1.10 2000/01/29 16:58:27 petere Exp $
 Postgres documentation
 -->
 
@@ -72,7 +72,7 @@ BEGIN
      </varlistentry>
      <varlistentry>
       <term><computeroutput>
-NOTICE:  BeginTransactionBlock and not in default state
+NOTICE:  BEGIN: already a transaction in progress
        </computeroutput></term>
       <listitem>
        <para>
@@ -95,7 +95,7 @@ NOTICE:  BeginTransactionBlock and not in default state
   </title>
 
   <para>
-   By default, <productname>Postgres</productname> executes transactions
+   By default, <productname>PostgreSQL</productname> executes transactions
    in <firstterm>unchained mode</firstterm>
    (also known as <quote>autocommit</quote> in other database
    systems).
@@ -116,7 +116,7 @@ NOTICE:  BeginTransactionBlock and not in default state
 
   <para>
    The default transaction isolation level in
-   <productname>Postgres</productname>
+   <productname>PostgreSQL</productname>
    is READ COMMITTED, where queries inside the transaction see only changes
    committed before query execution. So, you have to use 
    <command>SET TRANSACTION ISOLATION LEVEL SERIALIZABLE</command>
@@ -128,7 +128,7 @@ NOTICE:  BeginTransactionBlock and not in default state
   </para>
 
   <para>
-   If the transaction is committed, <productname>Postgres</productname> 
+   If the transaction is committed, <productname>PostgreSQL</productname> 
    will ensure either that all updates are done or else that none of
    them are done. Transactions have the standard <acronym>ACID</acronym>
    (atomic, consistent, isolatable, and durable) property.
@@ -141,11 +141,6 @@ NOTICE:  BeginTransactionBlock and not in default state
    <title>
     Notes
    </title>
-   <para>
-    The keyword TRANSACTION is just a cosmetic alternative to WORK.
-    Neither keyword need be specified.
-   </para>
-
    <para>
     Refer to <xref linkend="sql-lock-title" endterm="sql-lock-title">
     for further information
@@ -190,7 +185,7 @@ BEGIN WORK;
 
    <para>
     <command>BEGIN</command>
-    is a <productname>Postgres</productname> language extension.
+    is a <productname>PostgreSQL</productname> language extension.
     There is no explicit <command>BEGIN</command>
     command in <acronym>SQL92</acronym>;
     transaction initiation is always implicit and it terminates either 
@@ -202,6 +197,12 @@ BEGIN WORK;
       convenience.
      </para>
     </note>
+   </para>
+
+   <para>
+    Incidentally, the <literal>BEGIN</literal> keyword is used for a different
+    purpose in embedded SQL. You are advised to be careful about the transaction
+    semantics when porting database applications.
    </para>
 
    <para>

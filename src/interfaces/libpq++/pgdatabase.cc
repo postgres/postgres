@@ -10,7 +10,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.8 1999/10/13 16:46:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/pgdatabase.cc,v 1.9 2000/01/29 16:58:52 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,9 +26,9 @@ void PgDatabase::DisplayTuples(FILE *out, int fillAlign,
 
 	memset(&po,0,sizeof(po));
 
-	po.align = (pqbool)fillAlign;
+	po.align = fillAlign;
 	po.fieldSep = (char *)fieldSep;
-	po.header = (pqbool)printHeader;
+	po.header = printHeader;
 
 	PQprint(out,pgResult,&po);
 }
@@ -43,12 +43,12 @@ void PgDatabase::PrintTuples(FILE *out, int printAttName, int terseOutput,
 
 	memset(&po,0,sizeof(po));
 
-	po.align = (pqbool)width;
+	po.align = width;
 
 	if(terseOutput) po.fieldSep = strdup("|");
 	else po.fieldSep = "";
 
-	po.header = (pqbool)printAttName;
+	po.header = printAttName;
 
 	PQprint(out,pgResult,&po);
 }

@@ -1,9 +1,9 @@
 /*
  * psql - the PostgreSQL interactive terminal
  *
- * Copyright 2000 by PostgreSQL Global Development Team
+ * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.14 2000/01/26 16:10:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.15 2000/01/29 16:58:48 petere Exp $
  */
 #include <c.h>
 #include "help.h"

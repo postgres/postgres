@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.37 2000/01/26 05:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.38 2000/01/29 16:58:51 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,11 @@
 #include "libpq-fe.h"
 #include "libpq-int.h"
 #include "pqsignal.h"
+
+#ifdef MULTIBYTE
+#include "miscadmin.h"
+#include "mb/pg_wchar.h"
+#endif
 
 
 #define DONOTICE(conn,message) \
@@ -737,3 +742,52 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 
 	return 0;
 }
+
+
+
+/*
+ * A couple of "miscellaneous" multibyte related functions. They used
+ * to be in fe-print.c but that file is doomed.
+ */
+
+#ifdef MULTIBYTE
+/*
+ * returns the byte length of the word beginning s, using the
+ * specified encoding.
+ */
+int
+PQmblen(const unsigned char *s, int encoding)
+{
+	return (pg_encoding_mblen(encoding, s));
+}
+
+/*
+ * Get encoding id from environment variable PGCLIENTENCODING.
+ */
+int
+PQenv2encoding(void)
+{
+	char	   *str;
+	int			encoding = SQL_ASCII;
+
+	str = getenv("PGCLIENTENCODING");
+	if (str && *str != '\0')
+		encoding = pg_char_to_encoding(str);
+	return(encoding);
+}
+
+#else
+
+/* Provide a default definition in case someone calls it anyway */
+int
+PQmblen(const unsigned char *s, int encoding)
+{
+	return 1;
+}
+int
+PQenv2encoding(void)
+{
+	return 0;
+}
+
+#endif	 /* MULTIBYTE */
