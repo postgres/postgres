@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.70 2002/08/04 06:44:47 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.71 2002/09/03 19:41:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -337,45 +337,32 @@ date_timestamptz(PG_FUNCTION_ARGS)
 	TimestampTz result;
 	struct tm	tt,
 			   *tm = &tt;
-	time_t		utime;
 
-	j2date((dateVal + date2j(2000, 1, 1)), &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
+	j2date((dateVal + date2j(2000, 1, 1)),
+		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
 	{
-#if defined(HAVE_TM_ZONE) || defined(HAVE_INT_TIMEZONE)
+		int		tz;
+
 		tm->tm_hour = 0;
 		tm->tm_min = 0;
 		tm->tm_sec = 0;
-		tm->tm_isdst = -1;
-
-		tm->tm_year -= 1900;
-		tm->tm_mon -= 1;
-		utime = mktime(tm);
-		if (utime == -1)
-			elog(ERROR, "Unable to convert date to tm");
+		tz = DetermineLocalTimeZone(tm);
 
 #ifdef HAVE_INT64_TIMESTAMP
-		result = ((utime * INT64CONST(1000000))
-				  + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * INT64CONST(86400000000)));
+		result = (dateVal * INT64CONST(86400000000))
+			+ (tz * INT64CONST(1000000));
 #else
-		result = utime + ((date2j(1970, 1, 1) - date2j(2000, 1, 1)) * 86400.0);
-#endif
-#else
-#ifdef HAVE_INT64_TIMESTAMP
-		result = ((dateVal * INT64CONST(86400000000))
-			+ (CTimeZone * INT64CONST(1000000)));
-#else
-		result = dateVal * 86400.0 + CTimeZone;
-#endif
+		result = dateVal * 86400.0 + tz;
 #endif
 	}
 	else
 	{
+		/* Outside of range for timezone support, so assume UTC */
 #ifdef HAVE_INT64_TIMESTAMP
 		result = (dateVal * INT64CONST(86400000000));
 #else
-		/* Outside of range for timezone support, so assume UTC */
 		result = dateVal * 86400.0;
 #endif
 	}
