@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.43 1999/02/13 23:15:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.44 1999/02/21 03:48:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1609,7 +1609,7 @@ ExecTargetList(List *targetlist,
 				 curNode < nNodes;
 				 curNode++, fjTlist = lnext(fjTlist))
 			{
-#if 0							/* what is this?? */
+#ifdef NOT_USED						/* what is this?? */
 				Node	   *outernode = lfirst(fjTlist);
 
 				fjRes = (Resdom *) outernode->iterexpr;

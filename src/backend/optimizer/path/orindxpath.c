@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.20 1999/02/13 23:16:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.21 1999/02/21 03:48:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ create_or_index_paths(Query *root,
 				pathnode->path.loc_restrictinfo = set_difference(copyObject((Node *) rel->restrictinfo),
 								   lcons(clausenode, NIL));
 
-#if 0							/* fix xfunc */
+#ifdef NOT_USED						/* fix xfunc */
 				/* add in cost for expensive functions!  -- JMH, 7/7/92 */
 				if (XfuncMode != XFUNC_OFF)
 				{

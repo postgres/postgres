@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.48 1999/02/15 02:04:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.49 1999/02/21 03:48:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,7 +130,7 @@ create_plan(Path *best_path)
 		pages = 1;
 	plan_node->plan_tupperpage = tuples / pages;
 
-#if 0							/* fix xfunc */
+#ifdef NOT_USED						/* fix xfunc */
 	/* sort clauses by cost/(1-selectivity) -- JMH 2/26/92 */
 	if (XfuncMode != XFUNC_OFF)
 	{

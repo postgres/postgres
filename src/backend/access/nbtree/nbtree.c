@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.35 1999/02/13 23:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.36 1999/02/21 03:48:27 scrappy Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -372,7 +372,7 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
 	pfree(btitem);
 	pfree(itup);
 
-#if 0
+#ifdef NOT_USED
 	/* adjust any active scans that will be affected by this insertion */
 	_bt_adjscans(rel, &(res->pointerData), BT_INSERT);
 #endif

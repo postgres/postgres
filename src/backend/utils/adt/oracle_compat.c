@@ -1,7 +1,7 @@
 /*
  *	Edmund Mergl <E.Mergl@bawue.de>
  *
- *	$Id: oracle_compat.c,v 1.16 1998/09/01 04:32:45 momjian Exp $
+ *	$Id: oracle_compat.c,v 1.17 1999/02/21 03:49:32 scrappy Exp $
  *
  */
 
@@ -444,7 +444,7 @@ rtrim(text *string, text *set)
 
 	ret = (text *) palloc(VARHDRSZ + m);
 	VARSIZE(ret) = VARHDRSZ + m;
-#if FALSE
+#ifdef NOT_USED
 	memcpy(VARDATA(ret), ptr - VARSIZE(ret) + m, m);
 #endif
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.33 1999/02/15 03:22:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.34 1999/02/21 03:48:49 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -259,7 +259,7 @@ subplanner(Query *root,
 
 	final_rel = make_one_rel(root, root->base_rel_list);
 
-#if 0							/* fix xfunc */
+#ifdef NOT_USED						/* fix xfunc */
 
 	/*
 	 * Perform Predicate Migration on each path, to optimize and correctly
@@ -443,7 +443,7 @@ make_groupPlan(List **tlist,
 
 		if (IsA(expr, Var))
 		{
-#if 0							/* subplanVar->resdom->resno expected to
+#ifdef NOT_USED							/* subplanVar->resdom->resno expected to
 								 * be = te->resdom->resno */
 			TargetEntry *subplanVar;
 

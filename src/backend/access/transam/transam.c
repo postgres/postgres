@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.23 1999/02/13 23:14:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.24 1999/02/21 03:48:28 scrappy Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -300,7 +300,7 @@ TransactionLogUpdate(TransactionId transactionId,		/* trans id to update */
 static void
 TransRecover(Relation logRelation)
 {
-#if 0
+#ifdef NOT_USED
 	/* ----------------
 	 *	  first get the last recorded transaction in the log.
 	 * ----------------

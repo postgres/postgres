@@ -22,7 +22,7 @@ extern int	pwd_cache_count;
 extern char *crypt_getpwdfilename(void);
 extern char *crypt_getpwdreloadfilename(void);
 
-#if 0
+#ifdef NOT_USED
 extern MsgType crypt_salt(const char *user);
 
 #endif

@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.77 1999/02/13 23:15:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.78 1999/02/21 03:48:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1519,7 +1519,7 @@ lreplace:;
 		ExecARUpdateTriggers(estate, tupleid, tuple);
 }
 
-#if 0
+#ifdef NOT_USED
 static HeapTuple
 ExecAttrDefault(Relation rel, HeapTuple tuple)
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.103 1999/02/18 06:00:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.104 1999/02/21 03:49:27 scrappy Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -74,19 +74,19 @@
 #include "utils/ps_status.h"
 #include "utils/temprel.h"
 
-#if FALSE
+#ifdef NOT_USED
 #include "nodes/relation.h"
 #endif
 
-#if 0
+#ifdef NOT_USED
 #include "optimizer/xfunc.h"
 #endif
 
-#if FALSE
+#ifdef NOT_USED
 #include "nodes/plannodes.h"
 #endif
 
-#if FALSE
+#ifdef NOT_USED
 #include "nodes/memnodes.h"
 #endif
 
@@ -1267,7 +1267,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 				break;
 
 			case 'x':
-#if 0							/* planner/xfunc.h */
+#ifdef NOT_USED						/* planner/xfunc.h */
 
 				/*
 				 * control joey hellerstein's expensive function
@@ -1522,7 +1522,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.103 $ $Date: 1999/02/18 06:00:49 $\n");
+		puts("$Revision: 1.104 $ $Date: 1999/02/21 03:49:27 $\n");
 	}
 
 	/* ----------------

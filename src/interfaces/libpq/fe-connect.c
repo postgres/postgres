@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.93 1999/02/18 06:01:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.94 1999/02/21 03:49:52 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -755,7 +755,7 @@ connectDB(PGconn *conn)
 	 * send an empty query to test for startup.
 	 */
 
-#if 0
+#ifdef NOT_USED
 
 	/*
 	 * Send a blank query to make sure everything works; in particular,

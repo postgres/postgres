@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.17 1999/02/13 23:15:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.18 1999/02/21 03:48:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -332,7 +332,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	 */
 	appendstate->as_whichplan = 0;
 	exec_append_initialize_next(node);
-#if 0
+#ifdef NOT_USED
 	result = (List *) initialized[0];
 #endif
 	return TRUE;

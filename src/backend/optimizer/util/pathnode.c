@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.39 1999/02/20 19:02:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.40 1999/02/21 03:48:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,7 @@ create_seqscan_path(RelOptInfo *rel)
 	pathnode->path_cost = cost_seqscan(relid,
 									   rel->pages, rel->tuples);
 	/* add in expensive functions cost!  -- JMH, 7/7/92 */
-#if 0
+#ifdef NOT_USED
 	if (XfuncMode != XFUNC_OFF)
 	{
 		pathnode->path_cost += xfunc_get_path_cost(pathnode);
@@ -388,7 +388,7 @@ create_index_path(Query *root,
 											   index->pages,
 											   index->tuples,
 											   false);
-#if 0
+#ifdef NOT_USED
 		/* add in expensive functions cost!  -- JMH, 7/7/92 */
 		if (XfuncMode != XFUNC_OFF)
 		{
@@ -439,7 +439,7 @@ create_index_path(Query *root,
 											   index->tuples,
 											   false);
 
-#if 0
+#ifdef NOT_USED
 		/* add in expensive functions cost!  -- JMH, 7/7/92 */
 		if (XfuncMode != XFUNC_OFF)
 		{
@@ -515,7 +515,7 @@ create_nestloop_path(RelOptInfo *joinrel,
 								outer_rel->width),
 					  IsA(inner_path, IndexPath));
 	/* add in expensive function costs -- JMH 7/7/92 */
-#if 0
+#ifdef NOT_USED
 	if (XfuncMode != XFUNC_OFF)
 		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
 #endif
@@ -579,7 +579,7 @@ create_mergejoin_path(RelOptInfo *joinrel,
 					   outerwidth,
 					   innerwidth);
 	/* add in expensive function costs -- JMH 7/7/92 */
-#if 0
+#ifdef NOT_USED
 	if (XfuncMode != XFUNC_OFF)
 	{
 		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);
@@ -645,7 +645,7 @@ create_hashjoin_path(RelOptInfo *joinrel,
 					  outersize, innersize,
 					  outerwidth, innerwidth);
 	/* add in expensive function costs -- JMH 7/7/92 */
-#if 0
+#ifdef NOT_USED
 	if (XfuncMode != XFUNC_OFF)
 	{
 		pathnode->path_cost += xfunc_get_path_cost((Path *) pathnode);

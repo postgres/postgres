@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.55 1999/02/13 23:17:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.56 1999/02/21 03:49:00 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5250,7 +5250,7 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 		elog(ERROR,"Operator '%s' not implemented for row expressions",opr);
 	}
 
-#if FALSE
+#ifdef NOT_USED
 	while ((largs != NIL) && (rargs != NIL))
 	{
 		larg = lfirst(largs);

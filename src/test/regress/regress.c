@@ -1,5 +1,5 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.29 1999/02/03 21:18:02 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.30 1999/02/21 03:49:55 scrappy Exp $
  */
 
 #include <float.h>				/* faked on sunos */
@@ -137,7 +137,7 @@ PATH	   *p2;
 	LSEG		seg1,
 				seg2;
 
-#if FALSE
+#ifdef NOT_USED
 	LINE	   *ln;
 
 #endif
@@ -154,7 +154,7 @@ PATH	   *p2;
 				found = true;
 		}
 
-#if FALSE
+#ifdef NOT_USED
 	ln = line_construct_pp(&seg2.p[0], &seg2.p[1]);
 	retval = interpt_sl(&seg1, ln);
 #endif

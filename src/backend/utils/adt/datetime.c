@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.28 1999/02/13 23:19:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.29 1999/02/21 03:49:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,7 @@
 
 static int	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
-#if 0
+#ifdef NOT_USED
 static int	day_tab[2][12] = {
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31},
 {31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31}};
@@ -100,7 +100,7 @@ date_in(char *str)
 			elog(ERROR, "Unrecognized date external representation %s", str);
 	}
 
-#if 0
+#ifdef NOT_USED
 	if (tm->tm_year < 0 || tm->tm_year > 32767)
 		elog(ERROR, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
 	if (tm->tm_mon < 1 || tm->tm_mon > 12)

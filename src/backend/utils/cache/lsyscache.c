@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.24 1999/02/13 23:19:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.25 1999/02/21 03:49:33 scrappy Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -217,7 +217,7 @@ get_opname(Oid opno)
 	else
 	{
 		/* don't throw an error anymore; we want to continue... */
-#if FALSE
+#ifdef NOT_USED
 		elog(ERROR, "can't look up operator %d\n", opno);
 #endif
 		return NULL;

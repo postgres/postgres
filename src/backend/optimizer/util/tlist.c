@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.27 1999/02/15 05:56:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.28 1999/02/21 03:48:55 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ get_actual_tlist(List *tlist)
 	/*
 	 * this function is not making sense. - ay 10/94
 	 */
-#if 0
+#ifdef NOT_USED
 	List	   *element = NIL;
 	List	   *result = NIL;
 

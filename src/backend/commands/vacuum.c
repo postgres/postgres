@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.95 1999/02/13 23:15:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.96 1999/02/21 03:48:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1463,7 +1463,7 @@ vc_vaconeind(VPageList vpl, Relation indrel, int num_tuples)
 
 		if ((vp = vc_tidreapped(heapptr, vpl)) != (VPageDescr) NULL)
 		{
-#if 0
+#ifdef NOT_USED
 			elog(DEBUG, "<%x,%x> -> <%x,%x>",
 				 ItemPointerGetBlockNumber(&(res->index_iptr)),
 				 ItemPointerGetOffsetNumber(&(res->index_iptr)),

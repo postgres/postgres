@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.25 1999/02/13 23:16:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.26 1999/02/21 03:48:54 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -598,7 +598,7 @@ IndexSelectivity(Oid indexrelid,
 										(char *) constFlags[n],
 										(char *) nIndexKeys,
 										(char *) indexrelid);
-#if 0
+#ifdef NOT_USED
 /*
  * So cool guys! Npages for x > 10 and x < 20 is twice as
  * npages for x > 10!	- vadim 04/09/97

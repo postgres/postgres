@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.52 1999/02/13 23:19:24 momjian Exp $
+ *	  $Id: nabstime.c,v 1.53 1999/02/21 03:49:32 scrappy Exp $
  *
  */
 #include <stdio.h>
@@ -63,7 +63,7 @@ GetCurrentAbsoluteTime(void)
 		CTimeZone = -tm->tm_gmtoff;		/* tm_gmtoff is Sun/DEC-ism */
 		CDayLight = (tm->tm_isdst > 0);
 
-#if 0
+#ifdef NOT_USED
 		/*
 		 * XXX is there a better way to get local timezone string w/o
 		 * tzname? - tgl 97/03/18

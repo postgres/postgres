@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.42 1999/02/18 05:26:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.43 1999/02/21 03:48:41 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ make_one_rel_by_joins(Query *root, List *rels, int levels_needed)
 
 		root->join_rel_list = rels = joined_rels;
 
-#if 0
+#ifdef NOT_USED
 		/*
 		 * * for each expensive predicate in each path in each distinct
 		 * rel, * consider doing pullup  -- JMH

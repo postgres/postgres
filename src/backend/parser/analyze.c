@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.99 1999/02/13 23:16:51 momjian Exp $
+ *  $Id: analyze.c,v 1.100 1999/02/21 03:48:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -658,7 +658,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						break;
 
 					case CONSTR_UNIQUE:
-#if FALSE
+#ifdef NOT_USED
 						if (constraint->name == NULL)
 							constraint->name = makeTableName(stmt->relname, "key", NULL);
 #endif

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMaterial.h,v 1.9 1999/02/13 23:21:26 momjian Exp $
+ * $Id: nodeMaterial.h,v 1.10 1999/02/21 03:49:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,7 @@ extern int	ExecCountSlotsMaterial(Material *node);
 extern void ExecEndMaterial(Material *node);
 extern void ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent);
 
-#if 0
+#ifdef NOT_USED
 extern List ExecMaterialMarkPos(Material *node);
 extern void ExecMaterialRestrPos(Material *node);
 

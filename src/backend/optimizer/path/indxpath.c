@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.51 1999/02/18 00:49:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.52 1999/02/21 03:48:44 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1317,7 +1317,7 @@ index_innerjoin(Query *root, RelOptInfo *rel, List *clausegroup_list,
 		pathnode->path.loc_restrictinfo = set_difference(copyObject((Node *) rel->restrictinfo),
 						   clausegroup);
 
-#if 0							/* fix xfunc */
+#ifdef NOT_USED						/* fix xfunc */
 		/* add in cost for expensive functions!  -- JMH, 7/7/92 */
 		if (XfuncMode != XFUNC_OFF)
 		{

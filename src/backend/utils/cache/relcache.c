@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.58 1999/02/13 23:19:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.59 1999/02/21 03:49:36 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -235,7 +235,7 @@ do { \
 static void formrdesc(char *relationName, u_int natts,
 		  FormData_pg_attribute *att);
 
-#if 0							/* See comments at line 1304 */
+#ifdef NOT_USED					/* See comments at line 1304 */
 static void RelationFlushIndexes(Relation *r, Oid accessMethodId);
 
 #endif
@@ -1298,7 +1298,7 @@ RelationFlushRelation(Relation *relationPtr,
 
 		FreeTriggerDesc(relation);
 
-#if 0
+#ifdef NOT_USED
 		if (relation->rd_rules)
 		{
 			int			j;
@@ -1427,7 +1427,7 @@ RelationFlushIndexes(Relation *r,
 void
 RelationIdInvalidateRelationCacheByAccessMethodId(Oid accessMethodId)
 {
-#if 0
+#ifdef NOT_USED
 
 	/*
 	 * 25 aug 1992:  mao commented out the ht walk below.  it should be

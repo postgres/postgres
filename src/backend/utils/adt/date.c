@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.29 1999/02/13 23:19:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.30 1999/02/21 03:49:27 scrappy Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -73,7 +73,7 @@
 #define ABSTIMEMIN(t1, t2) abstimele((t1),(t2)) ? (t1) : (t2)
 #define ABSTIMEMAX(t1, t2) abstimelt((t1),(t2)) ? (t2) : (t1)
 
-#if FALSE
+#ifdef NOT_USED
 static char *unit_tab[] = {
 	"second", "seconds", "minute", "minutes",
 	"hour", "hours", "day", "days", "week", "weeks",
@@ -96,7 +96,7 @@ static int	sec_tab[] = {
 
 static void reltime2tm(int32 time, struct tm * tm);
 
-#if FALSE
+#ifdef NOT_USED
 static int	correct_unit(char *unit, int *unptr);
 static int	correct_dir(char *direction, int *signptr);
 
@@ -205,7 +205,7 @@ reltime2tm(int32 time, struct tm * tm)
 	return;
 }	/* reltime2tm() */
 
-#if FALSE
+#ifdef NOT_USED
 int
 dummyfunc()
 {
@@ -990,7 +990,7 @@ isreltime(char *str)
 }	/* isreltime() */
 #endif
 
-#if FALSE
+#ifdef NOT_USED
 int
 dummyfunc()
 {

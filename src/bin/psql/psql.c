@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.170 1999/02/13 23:20:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.171 1999/02/21 03:49:39 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2829,7 +2829,7 @@ main(int argc, char **argv)
 				settings.opt.align = 0;
 				break;
 			case 'a':
-#if 0							/* this no longer does anything */
+#ifdef NOT_USED					/* this no longer does anything */
 				fe_setauthsvc(optarg, errbuf);
 #endif
 				break;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.25 1999/02/13 23:17:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.26 1999/02/21 03:49:17 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,7 +155,7 @@ ValidateRule(int event_type,
 		"rules not allowed for insert or delete events to an attribute");
 	}
 
-#if 0
+#ifdef NOT_USED
 
 	/*
 	 * on retrieve to class.attribute do instead nothing is converted to

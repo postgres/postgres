@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Id: nbtsort.c,v 1.36 1999/02/13 23:14:36 momjian Exp $
+ *	  $Id: nbtsort.c,v 1.37 1999/02/21 03:48:27 scrappy Exp $
  *
  * NOTES
  *
@@ -397,7 +397,7 @@ _bt_tapeclear(BTTapeBlock *tape)
 {
 	/* blow away the contents of the old file */
 	_bt_taperewind(tape);
-#if 0
+#ifdef NOT_USED
 	FileSync(tape->bttb_fd);
 #endif
 	FileTruncate(tape->bttb_fd, 0);
@@ -781,7 +781,7 @@ _bt_blnewpage(Relation index, Buffer *buf, Page *page, int flags)
 	BTPageOpaque opaque;
 
 	*buf = _bt_getbuf(index, P_NEW, BT_WRITE);
-#if 0
+#ifdef NOT_USED
 	printf("\tblk=%d\n", BufferGetBlockNumber(*buf));
 #endif
 	*page = BufferGetPage(*buf);
@@ -962,7 +962,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 			if (PageAddItem(npage, PageGetItem(opage, ii),
 						  ii->lp_len, n, LP_USED) == InvalidOffsetNumber)
 				elog(FATAL, "btree: failed to add item to the page in _bt_sort (1)");
-#if 0
+#ifdef NOT_USED
 #if defined(FASTBUILD_DEBUG) && defined(FASTBUILD_MERGE)
 			{
 				bool		isnull;
@@ -1048,7 +1048,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 	off = OffsetNumberNext(last_off);
 	if (PageAddItem(npage, (Item) bti, btisz, off, LP_USED) == InvalidOffsetNumber)
 		elog(FATAL, "btree: failed to add item to the page in _bt_sort (2)");
-#if 0
+#ifdef NOT_USED
 #if defined(FASTBUILD_DEBUG) && defined(FASTBUILD_MERGE)
 	{
 		bool		isnull;
@@ -1382,7 +1382,7 @@ _bt_upperbuild(Relation index)
 	/* for each page... */
 	do
 	{
-#if 0
+#ifdef NOT_USED
 		printf("\t\tblk=%d\n", blk);
 #endif
 		rbuf = _bt_getbuf(index, blk, BT_READ);

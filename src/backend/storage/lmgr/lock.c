@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.43 1999/02/21 01:41:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.44 1999/02/21 03:49:22 scrappy Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -1569,7 +1569,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 		MemSet(&item, 0, XID_TAGSIZE);
 		TransactionIdStore(MyProc->xid, &item.tag.xid);
 		item.tag.lock = MAKE_OFFSET(findlock);
-#if 0
+#ifdef NOT_USED
 		item.tag.pid = pid;
 #endif
 
@@ -1648,7 +1648,7 @@ DeadLockCheck(SHM_QUEUE *lockQueue, LOCK *findlock, bool skip_check)
 					MemSet(&item, 0, XID_TAGSIZE);
 					TransactionIdStore(proc->xid, &item.tag.xid);
 					item.tag.lock = MAKE_OFFSET(findlock);
-#if 0
+#ifdef NOT_USED
 					item.tag.pid = pid;
 #endif
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.10 1998/12/04 15:34:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.11 1999/02/21 03:49:03 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -404,7 +404,7 @@ PreferredType(CATEGORY category, Oid type)
 }	/* PreferredType() */
 
 
-#if FALSE
+#ifdef NOT_USED
 Oid
 PromoteTypeToNext(Oid inType)
 {

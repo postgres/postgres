@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.10 1999/02/13 23:17:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.11 1999/02/21 03:49:13 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,7 +25,7 @@
 #include "utils/elog.h"
 #include "fmgr.h"
 
-#if FALSE
+#ifdef NOT_USED
 extern char *pg_pathname;
 
 void *

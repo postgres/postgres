@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.40 1999/02/13 23:19:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.41 1999/02/21 03:49:30 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,7 +218,7 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 			cp++;
 		if (*cp == LDELIM)
 		{
-#if FALSE
+#ifdef NOT_USED
 			/* nested delimiters with only one point? */
 			if (npts <= 1)
 				return FALSE;
@@ -821,7 +821,7 @@ line_out(LINE *line)
 #ifdef GEODEBUG
 		printf("line_construct_pp- line is vertical\n");
 #endif
-#if FALSE
+#ifdef NOT_USED
 		result->m = DBL_MAX;
 #endif
 
@@ -835,7 +835,7 @@ line_out(LINE *line)
 #ifdef GEODEBUG
 		printf("line_construct_pp- line is horizontal\n");
 #endif
-#if FALSE
+#ifdef NOT_USED
 		result->m = 0.0;
 #endif
 
@@ -882,7 +882,7 @@ line_construct_pm(Point *pt, double m)
 	result->B = -1.0;
 	result->C = pt->y - m * pt->x;
 
-#if FALSE
+#ifdef NOT_USED
 	result->m = m;
 #endif
 
@@ -907,7 +907,7 @@ line_construct_pp(Point *pt1, Point *pt2)
 #ifdef GEODEBUG
 		printf("line_construct_pp- line is vertical\n");
 #endif
-#if FALSE
+#ifdef NOT_USED
 		result->m = DBL_MAX;
 #endif
 
@@ -921,7 +921,7 @@ line_construct_pp(Point *pt1, Point *pt2)
 #ifdef GEODEBUG
 		printf("line_construct_pp- line is horizontal\n");
 #endif
-#if FALSE
+#ifdef NOT_USED
 		result->m = 0.0;
 #endif
 
@@ -929,7 +929,7 @@ line_construct_pp(Point *pt1, Point *pt2)
 	else
 	{
 		/* use "mx - y + yinter = 0" */
-#if FALSE
+#ifdef NOT_USED
 		result->A = (pt1->y - pt2->y) / (pt1->x - pt2->x);
 #endif
 		result->A = (pt2->y - pt1->y) / (pt2->x - pt1->x);
@@ -939,7 +939,7 @@ line_construct_pp(Point *pt1, Point *pt2)
 		printf("line_construct_pp- line is neither vertical nor horizontal (diffs x=%.*g, y=%.*g\n",
 			   digits8, (pt2->x - pt1->x), digits8, (pt2->y - pt1->y));
 #endif
-#if FALSE
+#ifdef NOT_USED
 		result->m = result->A;
 #endif
 	}
@@ -960,7 +960,7 @@ line_intersect(LINE *l1, LINE *l2)
 bool
 line_parallel(LINE *l1, LINE *l2)
 {
-#if FALSE
+#ifdef NOT_USED
 	return FPeq(l1->m, l2->m);
 #endif
 	if (FPzero(l1->B))
@@ -972,7 +972,7 @@ line_parallel(LINE *l1, LINE *l2)
 bool
 line_perp(LINE *l1, LINE *l2)
 {
-#if FALSE
+#ifdef NOT_USED
 	if (l1->m)
 		return FPeq(l2->m / l1->m, -1.0);
 	else if (l2->m)
@@ -989,7 +989,7 @@ line_perp(LINE *l1, LINE *l2)
 bool
 line_vertical(LINE *line)
 {
-#if FALSE
+#ifdef NOT_USED
 	return FPeq(line->A, -1.0) && FPzero(line->B);
 #endif
 	return FPzero(line->B);
@@ -998,7 +998,7 @@ line_vertical(LINE *line)
 bool
 line_horizontal(LINE *line)
 {
-#if FALSE
+#ifdef NOT_USED
 	return FPzero(line->m);
 #endif
 	return FPzero(line->A);
@@ -1065,7 +1065,7 @@ line_interpt(LINE *l1, LINE *l2)
 
 	if (line_parallel(l1, l2))
 		return NULL;
-#if FALSE
+#ifdef NOT_USED
 	if (line_vertical(l1))
 		result = point_construct(l2->m * l1->C + l2->C, l1->C);
 	else if (line_vertical(l2))
@@ -1079,7 +1079,7 @@ line_interpt(LINE *l1, LINE *l2)
 
 	if (line_vertical(l1))
 	{
-#if FALSE
+#ifdef NOT_USED
 		x = l1->C;
 		y = -((l2->A * x + l2->C) / l2->B);
 #endif
@@ -1089,7 +1089,7 @@ line_interpt(LINE *l1, LINE *l2)
 	}
 	else if (line_vertical(l2))
 	{
-#if FALSE
+#ifdef NOT_USED
 		x = l2->C;
 		y = -((l1->A * x + l1->C) / l1->B);
 #endif
@@ -1099,7 +1099,7 @@ line_interpt(LINE *l1, LINE *l2)
 	}
 	else
 	{
-#if FALSE
+#ifdef NOT_USED
 		x = (l2->B * l1->C - l1->B * l2->C) / (l2->A * l1->B - l1->A * l2->B);
 		y = -((l1->A * x + l1->C) / l1->B);
 #endif
@@ -1654,7 +1654,7 @@ lseg_in(char *str)
 		|| (*s != '\0'))
 		elog(ERROR, "Bad lseg external representation '%s'", str);
 
-#if FALSE
+#ifdef NOT_USED
 	lseg->m = point_sl(&lseg->p[0], &lseg->p[1]);
 #endif
 
@@ -1685,7 +1685,7 @@ lseg_construct(Point *pt1, Point *pt2)
 	result->p[1].x = pt2->x;
 	result->p[1].y = pt2->y;
 
-#if FALSE
+#ifdef NOT_USED
 	result->m = point_sl(pt1, pt2);
 #endif
 
@@ -1701,7 +1701,7 @@ statlseg_construct(LSEG *lseg, Point *pt1, Point *pt2)
 	lseg->p[1].x = pt2->x;
 	lseg->p[1].y = pt2->y;
 
-#if FALSE
+#ifdef NOT_USED
 	lseg->m = point_sl(pt1, pt2);
 #endif
 }
@@ -1750,7 +1750,7 @@ lseg_intersect(LSEG *l1, LSEG *l2)
 bool
 lseg_parallel(LSEG *l1, LSEG *l2)
 {
-#if FALSE
+#ifdef NOT_USED
 	return FPeq(l1->m, l2->m);
 #endif
 	return (FPeq(point_sl(&(l1->p[0]), &(l1->p[1])),
@@ -2010,7 +2010,7 @@ dist_ps(Point *pt, LSEG *lseg)
 	}
 	else
 	{
-#if FALSE
+#ifdef NOT_USED
 		m = (-1) * (lseg->p[1].y - lseg->p[0].y) /
 			(lseg->p[1].x - lseg->p[0].x);
 #endif
@@ -2303,7 +2303,7 @@ close_pl(Point *pt, LINE *line)
 	double		invm;
 
 	result = palloc(sizeof(Point));
-#if FALSE
+#ifdef NOT_USED
 	if (FPeq(line->A, -1.0) && FPzero(line->B))
 	{							/* vertical */
 	}
@@ -2314,7 +2314,7 @@ close_pl(Point *pt, LINE *line)
 		result->y = pt->y;
 		return result;
 
-#if FALSE
+#ifdef NOT_USED
 	}
 	else if (FPzero(line->m))
 	{							/* horizontal */
@@ -2327,7 +2327,7 @@ close_pl(Point *pt, LINE *line)
 		return result;
 	}
 	/* drop a perpendicular and find the intersection point */
-#if FALSE
+#ifdef NOT_USED
 	invm = -1.0 / line->m;
 #endif
 	/* invert and flip the sign on the slope to get a perpendicular */
@@ -3059,7 +3059,7 @@ poly_same(POLYGON *polya, POLYGON *polyb)
 
 	return plist_same(polya->npts, polya->p, polyb->p);
 
-#if FALSE
+#ifdef NOT_USED
 	for (i = 0; i < polya->npts; i++)
 	{
 		if ((polya->p[i].x != polyb->p[i].x)
@@ -3085,7 +3085,7 @@ poly_overlap(POLYGON *polya, POLYGON *polyb)
  * Determine if polygon A contains polygon B by determining if A's
  * bounding box contains B's bounding box.
  *-----------------------------------------------------------------*/
-#if FALSE
+#ifdef NOT_USED
 bool
 poly_contain(POLYGON *polya, POLYGON *polyb)
 {
@@ -3139,7 +3139,7 @@ poly_contain(POLYGON *polya, POLYGON *polyb)
  * Determine if polygon A is contained by polygon B by determining
  * if A's bounding box is contained by B's bounding box.
  *-----------------------------------------------------------------*/
-#if FALSE
+#ifdef NOT_USED
 bool
 poly_contained(POLYGON *polya, POLYGON *polyb)
 {

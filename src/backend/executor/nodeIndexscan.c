@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.32 1999/02/13 23:15:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.33 1999/02/21 03:48:40 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -469,7 +469,7 @@ ExecIndexMarkPos(IndexScan *node)
 	indexScanDescs = indexstate->iss_ScanDescs;
 	scanDesc = indexScanDescs[indexPtr];
 
-#if 0
+#ifdef NOT_USED
 	IndexScanMarkPosition(scanDesc);
 #endif
 	index_markpos(scanDesc);
@@ -498,7 +498,7 @@ ExecIndexRestrPos(IndexScan *node)
 	indexScanDescs = indexstate->iss_ScanDescs;
 	scanDesc = indexScanDescs[indexPtr];
 
-#if 0
+#ifdef NOT_USED
 	IndexScanRestorePosition(scanDesc);
 #endif
 	index_restrpos(scanDesc);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.40 1999/02/13 23:14:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.41 1999/02/21 03:48:27 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -613,7 +613,7 @@ _bt_compare(Relation rel,
 		if (!P_RIGHTMOST(opaque))
 			elog(ERROR, "_bt_compare: invalid comparison to high key");
 
-#if 0
+#ifdef NOT_USED
 
 		/*
 		 * We just have to belive that right answer will not break
@@ -1398,7 +1398,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		 * maxoff). Scanning in BackwardScanDirection is not
 		 * understandable at all. Well - new stuff. - vadim 12/06/96
 		 */
-#if 0
+#ifdef NOT_USED
 		if (PageIsEmpty(page) || start > maxoff)
 		{
 			ItemPointerSet(current, blkno, maxoff);
@@ -1444,7 +1444,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
 		 * empty why do scanning in ForwardScanDirection ??? Well - new
 		 * stuff. - vadim 12/06/96
 		 */
-#if 0
+#ifdef NOT_USED
 		if (PageIsEmpty(page))
 		{
 			ItemPointerSet(current, blkno, FirstOffsetNumber);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.25 1999/02/13 23:14:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.26 1999/02/21 03:48:32 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -172,7 +172,7 @@ ProcedureCreate(char *procedureName,
 		{
 			elog(NOTICE, "ProcedureCreate: type '%s' is not yet defined",
 				 returnTypeName);
-#if 0
+#ifdef NOT_USED
 			elog(NOTICE, "ProcedureCreate: creating a shell for type '%s'",
 				 returnTypeName);
 #endif
