@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Dec  5 16:25:23 EST 2001
+Last updated:		Wed Dec  5 18:11:24 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -57,6 +57,7 @@ ADMIN
   flags unique
 * Allow usernames to be specified directly in pg_hba.conf (Bruce)
 * Add function to return compressed length of TOAST data values (Tom)
+* Change DEBUG tag used in server logs
 
 DATA TYPES
 
@@ -102,7 +103,7 @@ MULTI-LANGUAGE SUPPORT
 * Add octet_length_server() and octet_length_client() (Thomas, Tatsuo)
 * Make octet_length_client the same as octet_length() (?)
 
-VIEWS
+VIEWS / RULES
 
 * Automatically create rules on views so they are updateable, per SQL92 [view]
 * Add the functionality for WITH CHECK OPTION clause of CREATE VIEW
@@ -110,6 +111,8 @@ VIEWS
 * -Evaluate INSERT rules at end of query, rather than beginning (Jan)
 * Allow temporary views
 * Move psql backslash information into views
+* Allow RULE recompilation
+* Remove brackets as multi-statement rule grouping, must use parens
 
 INDEXES
 
@@ -160,7 +163,6 @@ COMMANDS
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Add BETWEEN ASYMMETRIC/SYMMETRIC
 * -Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
-* Allow RULE recompilation
 * Remove LIMIT #,# and force use LIMIT and OFFSET clauses in 7.3 (Bruce)
 * Allow LIMIT/OFFSET to use expressions
 * -Allow GRANT/REVOKE to handle multiple user/group names (Vince)
