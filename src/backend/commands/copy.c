@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.23 1997/04/02 03:57:03 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.24 1997/06/12 15:39:44 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,7 +327,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 #endif
     int natts;
     AttrNumber *attnumP;
-    Datum idatum;
+    Datum *idatum;
     int n_indices;
     InsertIndexResult indexRes;
     TupleDesc tupDesc;
@@ -438,6 +438,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
     values       = (Datum *) palloc(sizeof(Datum) * attr_count);
     nulls        = (char *) palloc(attr_count);
     index_nulls  = (char *) palloc(attr_count);
+    idatum       = (Datum *) palloc(sizeof(Datum) * attr_count);
     byval        = (bool *) palloc(attr_count * sizeof(bool));
     
     for (i = 0; i < attr_count; i++) {
@@ -619,10 +620,10 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
                                tuple,
                                tupDesc,
                                InvalidBuffer,
-                               &idatum,
+                               idatum,
                                index_nulls,
                                finfoP[i]);
-                indexRes = index_insert(index_rels[i], &idatum, index_nulls,
+                indexRes = index_insert(index_rels[i], idatum, index_nulls,
                                         &(tuple->t_ctid), rel);
                 if (indexRes) pfree(indexRes);
             }
