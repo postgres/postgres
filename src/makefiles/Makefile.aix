@@ -24,6 +24,10 @@ POSTGRES_IMP= postgres$(IMPSUFF)
 
 MKLDEXPORT=$(top_srcdir)/src/backend/port/aix/mkldexport.sh
 
+.PHONY: default_aix
+
+default_aix: all
+
 $(POSTGRES_IMP):
 	@echo Making $@
 	$(MKLDEXPORT) postgres $(bindir) > $@
