@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jul 16 23:06:38 EDT 1999
+Last updated:		Sun Jul 18 20:49:38 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -31,8 +31,8 @@ PARSER
 * Update table SET table.value = 3 fails
 * Creating index of TIMESTAMP & RELTIME fails, or rename to DATETIME(Thomas)
 * SELECT foo UNION SELECT foo is incorrectly simplified to SELECT foo
-* INSERT ... SELECT ... GROUP BY groups by target columns not source columns
-* CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
+* -INSERT ... SELECT ... GROUP BY groups by target columns not source columns
+* -CREATE TABLE test (a char(5) DEFAULT text '', b int4) fails on INSERT
 * UNION with LIMIT fails
 * Unique index on base column not honored on inserts from inherited table
   INSERT INTO inherit_table (unique_index_col) VALUES (dup) should fail
