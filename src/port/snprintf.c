@@ -62,7 +62,7 @@
  * causing nasty effects.
  **************************************************************/
 
-/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.25 2005/03/20 03:53:39 momjian Exp $";*/
+/*static char _id[] = "$PostgreSQL: pgsql/src/port/snprintf.c,v 1.26 2005/03/20 13:54:53 momjian Exp $";*/
 
 static void dopr(char *buffer, const char *format, va_list args, char *end);
 
@@ -225,6 +225,7 @@ dopr(char *buffer, const char *format, va_list args, char *end)
 		if (*p == '%')			/* counts %% as two, so overcounts */
 			percents++;
 
+	/* Need to use malloc() because memory system might not be started yet. */
 	if ((fmtpar = malloc(sizeof(struct fmtpar) * percents)) == NULL)
 	{
 		fprintf(stderr, _("out of memory\n"));
