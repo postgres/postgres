@@ -2,6 +2,8 @@
 
 #include <ecpgtype.h>
 #include <ecpglib.h>
+#include <ecpgerrno.h>
+#include "extern.h"
 #include <sqlca.h>
 
 static struct prepared_statement

@@ -94,8 +94,7 @@ hashline_number(void)
 }
 
 void
-output_statement(char * stmt, int mode, char *descriptor,
-	char *con, struct arguments *insert, struct arguments *result)
+output_statement(char * stmt, int mode, char *descriptor, char *con)
 {
 	int i, j = strlen(stmt);
 
@@ -118,10 +117,11 @@ output_statement(char * stmt, int mode, char *descriptor,
 		fputs("\", ", yyout);
 		
 		/* dump variables to C file */
-		dump_variables(insert, 1);
+		dump_variables(argsinsert, 1);
 		fputs("ECPGt_EOIT, ", yyout);
-		dump_variables(result, 1);
+		dump_variables(argsresult, 1);
 		fputs("ECPGt_EORT);", yyout);
+		reset_variables();
 	}
 	else
 		fputs("\");", yyout);

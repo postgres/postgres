@@ -392,64 +392,64 @@ statement: ecpgstart opt_at stmt ';'	{ connection = NULL; }
 
 opt_at:	SQL_AT connection_target	{ connection = $2; }
 
-stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| AlterGroupStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| AlterUserStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ClosePortalStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CommentStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CopyStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreateStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreateAsStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreateGroupStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreateSeqStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreatePLangStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreateTrigStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreateUserStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-  		| ClusterStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DefineStmt 		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DropStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| TruncateStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DropGroupStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DropPLangStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DropTrigStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DropUserStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ExtendStmt 		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ExplainStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| FetchStmt		{ output_statement($1, 1, NULL, connection, argsinsert, argsresult); }
-		| GrantStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| IndexStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ListenStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| UnlistenStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| LockStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ProcedureStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ReindexStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| RemoveAggrStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| RemoveOperStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| RemoveFuncStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| RemoveStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| RenameStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| RevokeStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection); }
+		| AlterGroupStmt	{ output_statement($1, 0, NULL, connection); }
+		| AlterUserStmt		{ output_statement($1, 0, NULL, connection); }
+		| ClosePortalStmt	{ output_statement($1, 0, NULL, connection); }
+		| CommentStmt		{ output_statement($1, 0, NULL, connection); }
+		| CopyStmt		{ output_statement($1, 0, NULL, connection); }
+		| CreateStmt		{ output_statement($1, 0, NULL, connection); }
+		| CreateAsStmt		{ output_statement($1, 0, NULL, connection); }
+		| CreateGroupStmt	{ output_statement($1, 0, NULL, connection); }
+		| CreateSeqStmt		{ output_statement($1, 0, NULL, connection); }
+		| CreatePLangStmt	{ output_statement($1, 0, NULL, connection); }
+		| CreateTrigStmt	{ output_statement($1, 0, NULL, connection); }
+		| CreateUserStmt	{ output_statement($1, 0, NULL, connection); }
+  		| ClusterStmt		{ output_statement($1, 0, NULL, connection); }
+		| DefineStmt 		{ output_statement($1, 0, NULL, connection); }
+		| DropStmt		{ output_statement($1, 0, NULL, connection); }
+		| TruncateStmt		{ output_statement($1, 0, NULL, connection); }
+		| DropGroupStmt		{ output_statement($1, 0, NULL, connection); }
+		| DropPLangStmt		{ output_statement($1, 0, NULL, connection); }
+		| DropTrigStmt		{ output_statement($1, 0, NULL, connection); }
+		| DropUserStmt		{ output_statement($1, 0, NULL, connection); }
+		| ExtendStmt 		{ output_statement($1, 0, NULL, connection); }
+		| ExplainStmt		{ output_statement($1, 0, NULL, connection); }
+		| FetchStmt		{ output_statement($1, 1, NULL, connection); }
+		| GrantStmt		{ output_statement($1, 0, NULL, connection); }
+		| IndexStmt		{ output_statement($1, 0, NULL, connection); }
+		| ListenStmt		{ output_statement($1, 0, NULL, connection); }
+		| UnlistenStmt		{ output_statement($1, 0, NULL, connection); }
+		| LockStmt		{ output_statement($1, 0, NULL, connection); }
+		| ProcedureStmt		{ output_statement($1, 0, NULL, connection); }
+		| ReindexStmt		{ output_statement($1, 0, NULL, connection); }
+		| RemoveAggrStmt	{ output_statement($1, 0, NULL, connection); }
+		| RemoveOperStmt	{ output_statement($1, 0, NULL, connection); }
+		| RemoveFuncStmt	{ output_statement($1, 0, NULL, connection); }
+		| RemoveStmt		{ output_statement($1, 0, NULL, connection); }
+		| RenameStmt		{ output_statement($1, 0, NULL, connection); }
+		| RevokeStmt		{ output_statement($1, 0, NULL, connection); }
                 | OptimizableStmt	{
 						if (strncmp($1, "/* " , sizeof("/* ")-1) == 0)
 							output_simple_statement($1);
 						else
-							output_statement($1, 1, NULL, connection, argsinsert, argsresult);
+							output_statement($1, 1, NULL, connection);
 					}
-		| RuleStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| RuleStmt		{ output_statement($1, 0, NULL, connection); }
 		| TransactionStmt	{
 						fprintf(yyout, "{ ECPGtrans(__LINE__, %s, \"%s\");", connection ? connection : "NULL", $1);
 						whenever_action(2);
 						free($1);
 					}
-		| ViewStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| LoadStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| CreatedbStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| DropdbStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| VacuumStmt		{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| VariableSetStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| VariableShowStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| VariableResetStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ConstraintsSetStmt	{ output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
+		| ViewStmt		{ output_statement($1, 0, NULL, connection); }
+		| LoadStmt		{ output_statement($1, 0, NULL, connection); }
+		| CreatedbStmt		{ output_statement($1, 0, NULL, connection); }
+		| DropdbStmt		{ output_statement($1, 0, NULL, connection); }
+		| VacuumStmt		{ output_statement($1, 0, NULL, connection); }
+		| VariableSetStmt	{ output_statement($1, 0, NULL, connection); }
+		| VariableShowStmt	{ output_statement($1, 0, NULL, connection); }
+		| VariableResetStmt	{ output_statement($1, 0, NULL, connection); }
+		| ConstraintsSetStmt	{ output_statement($1, 0, NULL, connection); }
 		| ECPGAllocateDescr	{	fprintf(yyout,"ECPGallocate_desc(__LINE__, \"%s\");",$1);
 								whenever_action(0);
 								free($1);
@@ -489,8 +489,8 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection, argsinsert, 
 						whenever_action(2);
 						free($1);
 					} 
-		| ECPGExecute		{	output_statement($1, 0, NULL, connection, argsinsert, argsresult); }
-		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name, connection, argsinsert, argsresult); }
+		| ECPGExecute		{	output_statement($1, 0, NULL, connection); }
+		| ECPGFetchDescStmt	{ 	output_statement($1.str, 1, $1.name, connection); }
 		| ECPGFree		{
 						fprintf(yyout, "{ ECPGdeallocate(__LINE__, \"%s\");", $1);
 
@@ -531,7 +531,9 @@ stmt:  AlterTableStmt			{ output_statement($1, 0, NULL, connection, argsinsert, 
 						else
 							argsinsert = ptr->argsinsert;
 
-						output_statement(ptr->command, 0, NULL, ptr->connection, argsinsert, ptr->argsresult);
+						argsresult = ptr->argsresult;
+
+						output_statement(ptr->command, 0, NULL, ptr->connection);
 					}
 		| ECPGPrepare		{
 						if (connection)

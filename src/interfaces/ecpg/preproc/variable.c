@@ -189,7 +189,6 @@ reset_variables(void)
     argsresult = NULL;
 }
 
-
 /* Add a variable to a request. */
 void
 add_variable(struct arguments ** list, struct variable * var, struct variable * ind)

@@ -1,8 +1,9 @@
 #include <stdlib.h>
 
-#include <libpq/pqcomm.h>
 #include <ecpgtype.h>
 #include <ecpglib.h>
+#include <ecpgerrno.h>
+#include "extern.h"
 #include <sqlca.h>
 
 bool

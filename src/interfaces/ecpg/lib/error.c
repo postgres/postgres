@@ -3,13 +3,12 @@
 #include <ecpgerrno.h>
 #include <ecpgtype.h>
 #include <ecpglib.h>
+#include "extern.h"
 #include <sqlca.h>
 
 void
 ECPGraise(int line, int code, const char *str)
 {
-	struct auto_mem *am;
-	       
 	sqlca.sqlcode = code;
 	switch (code)
 	{ 
@@ -142,14 +141,7 @@ ECPGraise(int line, int code, const char *str)
 	sqlca.sqlerrm.sqlerrml = strlen(sqlca.sqlerrm.sqlerrmc);
 	
         /* free all memory we have allocated for the user */
-        for (am = auto_allocs; am;)
-        {
-        	struct auto_mem *act = am;
-	        
-	        am = am->next;
-	        free(act->pointer);
-	        free(act);
-	}
+        free_auto_mem();
 }
 
 /* print out an error message */

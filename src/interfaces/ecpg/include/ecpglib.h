@@ -24,22 +24,6 @@ extern		"C"
 	/* print an error message */
 	void		sqlprint(void);
 	
-#ifdef LIBPQ_FE_H
-	bool		ECPGsetdb(PGconn *);
-#endif
-
-/* Here are some methods used by the lib. */
-/* Returns a pointer to a string containing a simple type name. */
-	bool get_data(PGresult *, int, int, int, enum ECPGttype type,
-			enum ECPGttype, void *, void *, long, long, bool);
-	char *ecpg_alloc(long, int);
-	char *ecpg_strdup(const char *, int);
-	const char *ECPGtype_name(enum ECPGttype);
-	unsigned int ECPGDynamicType(Oid);
-	
-/* and some vars */
-	extern struct auto_mem *auto_allocs;
-
 /* define this for simplicity as well as compatibility */
 
 #define		  SQLCODE	 sqlca.sqlcode
@@ -59,5 +43,3 @@ extern		"C"
 }
 
 #endif
-
-#include <ecpgerrno.h>

@@ -13,32 +13,16 @@
    on Feb. 5th, 1998 */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <string.h>
-#include <ctype.h>
 #include <locale.h>
 
-#include <libpq/pqcomm.h>
 #include <ecpgtype.h>
 #include <ecpglib.h>
+#include <ecpgerrno.h>
+#include "extern.h"
 #include <sqlca.h>
 #include <sql3types.h>
 
 /* variables visible to the programs */
-static struct sqlca sqlca_init =
-{
-	{'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '},
-	sizeof(struct sqlca),
-	0,
-	{0, {0}},
-	{'N', 'O', 'T', ' ', 'S', 'E', 'T', ' '},
-	{0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0}
-};
-
 struct sqlca sqlca =
 {
 	{'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '},
@@ -50,15 +34,6 @@ struct sqlca sqlca =
 	{0, 0, 0, 0, 0, 0, 0, 0},
 	{0, 0, 0, 0, 0, 0, 0, 0}
 };
-
-static struct connection
-{
-	char	   *name;
-	PGconn	   *connection;
-	bool		committed;
-	int			autocommit;
-	struct connection *next;
-}		   *all_connections = NULL, *actual_connection = NULL;
 
 struct variable
 {
@@ -76,69 +51,12 @@ struct variable
 	struct variable *next;
 };
 
-struct auto_mem *auto_allocs;
-
-static int	simple_debug = 0;
-static FILE *debugstream = NULL;
-
-static struct connection *
-get_connection(const char *connection_name)
+/* keep a list of memory we allocated for the user */
+static struct auto_mem
 {
-	struct connection *con = all_connections;
-
-	if (connection_name == NULL || strcmp(connection_name, "CURRENT") == 0)
-		return actual_connection;
-
-	for (; con && strcmp(connection_name, con->name) != 0; con = con->next);
-	if (con)
-		return con;
-	else
-		return NULL;
-}
-
-static bool
-ecpg_init(const struct connection *con, const char * connection_name, const int lineno)
-{
-	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
-	if (con == NULL)
-	{
-		ECPGraise(lineno, ECPG_NO_CONN, connection_name ? connection_name : "NULL");
-		return (false);
-	}
-	
-	auto_allocs = NULL;
-	
-	return (true);
-}
-
-static void
-ecpg_finish(struct connection * act)
-{
-	if (act != NULL)
-	{
-		ECPGlog("ecpg_finish: finishing %s.\n", act->name);
-		PQfinish(act->connection);
-		/* remove act from the list */
-		if (act == all_connections)
-			all_connections = act->next;
-		else
-		{
-			struct connection *con;
-
-			for (con = all_connections; con->next && con->next != act; con = con->next);
-			if (con->next)
-				con->next = act->next;
-		}
-
-		if (actual_connection == act)
-			actual_connection = all_connections;
-
-		free(act->name);
-		free(act);
-	}
-	else
-		ECPGlog("ecpg_finish: called an extra time.\n");
-}
+       	void       *pointer;
+        struct auto_mem *next;
+} *auto_allocs = NULL;
 
 static void
 add_mem(void *ptr, int lineno)
@@ -147,6 +65,23 @@ add_mem(void *ptr, int lineno)
 
 	am->next = auto_allocs;
 	auto_allocs = am;
+}
+
+void free_auto_mem(void)
+{
+	struct auto_mem *am;
+	
+        /* free all memory we have allocated for the user */
+        for (am = auto_allocs; am;)
+        {
+        	struct auto_mem *act = am;
+	        
+	        am = am->next;
+	        free(act->pointer);
+	        free(act);
+	}
+	
+	auto_allocs = NULL;
 }
 
 /* This function returns a newly malloced string that has the  \
@@ -875,223 +810,11 @@ ECPGdo(int lineno, const char *connection_name, char *query, ...)
 	return (status);
 }
 
-bool
-ECPGstatus(int lineno, const char *connection_name)
-{
-	struct connection *con = get_connection(connection_name);
-
-	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
-
-	/* are we connected? */
-	if (con->connection == NULL)
-	{
-		ECPGlog("ECPGdo: not connected to %s\n", con->name);
-		ECPGraise(lineno, ECPG_NOT_CONN, NULL);
-		return false;
-	}
-
-	return (true);
-}
-
-bool
-ECPGtrans(int lineno, const char *connection_name, const char *transaction)
-{
-	PGresult   *res;
-	struct connection *con = get_connection(connection_name);
-
-	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
-
-	ECPGlog("ECPGtrans line %d action = %s connection = %s\n", lineno, transaction, con->name);
-
-	/* if we have no connection we just simulate the command */
-	if (con && con->connection)
-	{
-		if ((res = PQexec(con->connection, transaction)) == NULL)
-		{
-			ECPGraise(lineno, ECPG_TRANS, NULL);
-			return FALSE;
-		}
-		PQclear(res);
-	}
-	
-	if (strcmp(transaction, "commit") == 0 || strcmp(transaction, "rollback") == 0)
-	{
-		con->committed = true;
-
-		/* deallocate all prepared statements */
-		if (!ECPGdeallocate_all(lineno))
-				return false;
-	}
-
-	return true;
-}
-
-bool
-ECPGsetcommit(int lineno, const char *mode, const char *connection_name)
-{
-	struct connection *con = get_connection(connection_name);
-	PGresult   *results;
-
-	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
-
-	ECPGlog("ECPGsetcommit line %d action = %s connection = %s\n", lineno, mode, con->name);
-	
-	if (con->autocommit == true && strncmp(mode, "off", strlen("off")) == 0)
-	{
-		if (con->committed)
-		{
-			if ((results = PQexec(con->connection, "begin transaction")) == NULL)
-			{
-				ECPGraise(lineno, ECPG_TRANS, NULL);
-				return false;
-			}
-			PQclear(results);
-			con->committed = false;
-		}
-		con->autocommit = false;
-	}
-	else if (con->autocommit == false && strncmp(mode, "on", strlen("on")) == 0)
-	{
-		if (!con->committed)
-		{
-			if ((results = PQexec(con->connection, "commit")) == NULL)
-			{
-				ECPGraise(lineno, ECPG_TRANS, NULL);
-				return false;
-			}
-			PQclear(results);
-			con->committed = true;
-		}
-		con->autocommit = true;
-	}
-
-	return true;
-}
-
-bool
-ECPGsetconn(int lineno, const char *connection_name)
-{
-	struct connection *con = get_connection(connection_name);
-
-	if (!ecpg_init(con, connection_name, lineno))
-		return(false);
-
-	actual_connection = con;
-	return true;
-}
-
-bool
-ECPGconnect(int lineno, const char *dbname, const char *user, const char *passwd, const char *connection_name, int autocommit)
-{
-	struct connection *this;
-
-
-	memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
-	
-	if ((this = (struct connection *) ecpg_alloc(sizeof(struct connection), lineno)) == NULL)
-		return false;
-
-	if (dbname == NULL && connection_name == NULL)
-		connection_name = "DEFAULT";
-
-	/* add connection to our list */
-	if (connection_name != NULL)
-		this->name = ecpg_strdup(connection_name, lineno);
-	else
-		this->name = ecpg_strdup(dbname, lineno);
-
-	if (all_connections == NULL)
-		this->next = NULL;
-	else
-		this->next = all_connections;
-
-	actual_connection = all_connections = this;
-
-	ECPGlog("ECPGconnect: opening database %s %s%s\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "");
-
-	this->connection = PQsetdbLogin(NULL, NULL, NULL, NULL, dbname, user, passwd);
-
-	if (PQstatus(this->connection) == CONNECTION_BAD)
-	{
-		ecpg_finish(this);
-		ECPGlog("connect: could not open database %s %s%s in line %d\n", dbname ? dbname : "<DEFAULT>", user ? "for user " : "", user ? user : "", lineno);
-		ECPGraise(lineno, ECPG_CONNECT, dbname ? dbname : "<DEFAULT>");
-		return false;
-	}
-
-	this->committed = true;
-	this->autocommit = autocommit;
-
-	return true;
-}
-
-bool
-ECPGdisconnect(int lineno, const char *connection_name)
-{
-	struct connection *con;
-
-	if (strcmp(connection_name, "ALL") == 0)
-	{
-		memcpy((char *) &sqlca, (char *) &sqlca_init, sizeof(sqlca));
-		for (con = all_connections; con;)
-		{
-			struct connection *f = con;
-
-			con = con->next;
-			ecpg_finish(f);
-		}
-	}
-	else
-	{
-		con = get_connection(connection_name);
-
-		if (!ecpg_init(con, connection_name, lineno))
-		        return(false);
-		else
-			ecpg_finish(con);
-	}
-
-	return true;
-}
-
-void
-ECPGdebug(int n, FILE *dbgs)
-{
-	simple_debug = n;
-	debugstream = dbgs;
-	ECPGlog("ECPGdebug: set to %d\n", simple_debug);
-}
-
-void
-ECPGlog(const char *format,...)
-{
-	va_list		ap;
-
-	if (simple_debug)
-	{
-		char	   *f = (char *) malloc(strlen(format) + 100);
-
-		if (!f)
-			return;
-
-		sprintf(f, "[%d]: %s", (int) getpid(), format);
-
-		va_start(ap, format);
-		vfprintf(debugstream, f, ap);
-		va_end(ap);
-
-		free(f);
-	}
-}
-
 /* dynamic SQL support routines
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/ecpglib.c,v 1.62 2000/03/03 14:39:26 meskes Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.1 2000/03/07 15:10:56 meskes Exp $
  */
 
 PGconn *ECPG_internal_get_connection(char *name);
