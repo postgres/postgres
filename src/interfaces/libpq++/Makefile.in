@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.13 1999/05/26 16:19:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.14 1999/05/27 14:28:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -55,7 +55,7 @@ include $(SRCDIR)/Makefile.shlib
 
 
 # Pull shared-lib CFLAGS into CXXFLAGS
-CXXFLAGS+= $(CFLAGS) -Wno-unused
+CXXFLAGS+= $(CFLAGS)
 
 
 .PHONY: examples
