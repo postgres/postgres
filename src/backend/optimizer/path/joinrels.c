@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.65 2003/12/17 17:07:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.66 2004/01/24 00:37:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@ static List *make_rels_by_clause_joins(Query *root,
 static List *make_rels_by_clauseless_joins(Query *root,
 							  RelOptInfo *old_rel,
 							  List *other_rels);
+static bool is_inside_IN(Query *root, RelOptInfo *rel);
 
 
 /*
@@ -76,14 +77,26 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			/*
 			 * Note that if all available join clauses for this rel
 			 * require more than one other rel, we will fail to make any
-			 * joins against it here.  That's OK; it'll be considered by
-			 * "bushy plan" join code in a higher-level pass where we have
-			 * those other rels collected into a join rel.	See also the
-			 * last-ditch case below.
+			 * joins against it here.  In most cases that's OK; it'll be
+			 * considered by "bushy plan" join code in a higher-level pass
+			 * where we have those other rels collected into a join rel.
 			 */
 			new_rels = make_rels_by_clause_joins(root,
 												 old_rel,
 												 other_rels);
+			/*
+			 * An exception occurs when there is a clauseless join inside an
+			 * IN (sub-SELECT) construct.  Here, the members of the subselect
+			 * all have join clauses (against the stuff outside the IN), but
+			 * they *must* be joined to each other before we can make use of
+			 * those join clauses.  So do the clauseless join bit.
+			 *
+			 * See also the last-ditch case below.
+			 */
+			if (new_rels == NIL && is_inside_IN(root, old_rel))
+				new_rels = make_rels_by_clauseless_joins(root,
+														 old_rel,
+														 other_rels);
 		}
 		else
 		{
@@ -344,6 +357,29 @@ make_rels_by_clauseless_joins(Query *root,
 	}
 
 	return result;
+}
+
+
+/*
+ * is_inside_IN
+ *		Detect whether the specified relation is inside an IN (sub-SELECT).
+ *
+ * Note that we are actually only interested in rels that have been pulled up
+ * out of an IN, so the routine name is a slight misnomer.
+ */
+static bool
+is_inside_IN(Query *root, RelOptInfo *rel)
+{
+	List	   *i;
+
+	foreach(i, root->in_info_list)
+	{
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(i);
+
+		if (bms_is_subset(rel->relids, ininfo->righthand))
+			return true;
+	}
+	return false;
 }
 
 
