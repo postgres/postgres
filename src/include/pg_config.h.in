@@ -345,6 +345,9 @@
 /* Define to 1 if you have the <readline/readline.h> header file. */
 #undef HAVE_READLINE_READLINE_H
 
+/* Define to 1 if you have the `readlink' function. */
+#undef HAVE_READLINK
+
 /* Define to 1 if you have the `replace_history_entry' function. */
 #undef HAVE_REPLACE_HISTORY_ENTRY
 

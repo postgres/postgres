@@ -1,13 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * exec.c
+ *		Functions for finding and validating executable files
+ *
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.31 2004/11/06 01:16:22 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.32 2004/11/06 23:06:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +48,14 @@
 #else
 #define log_error(str, param)	(fprintf(stderr, str, param), fputc('\n', stderr))
 #endif
+
+#ifdef WIN32_CLIENT_ONLY
+#define getcwd(cwd,len)  GetCurrentDirectory(len, cwd)
+#endif
+
+static int	validate_exec(const char *path);
+static int	resolve_symlinks(char *path);
+static char *pipe_read_line(char *cmd, char *line, int maxsize);
 
 
 /*
@@ -154,13 +164,20 @@ validate_exec(const char *path)
 #endif
 }
 
+
 /*
  * find_my_exec -- find an absolute path to a valid executable
+ *
+ *	argv0 is the name passed on the command line
+ *	retpath is the output area (must be of size MAXPGPATH)
+ *	Returns 0 if OK, -1 if error.
  *
  * The reason we have to work so hard to find an absolute path is that
  * on some platforms we can't do dynamic loading unless we know the
  * executable's location.  Also, we need a full path not a relative
- * path because we will later change working directory.
+ * path because we will later change working directory.  Finally, we want
+ * a true path not a symlink location, so that we can locate other files
+ * that are part of our installation relative to the executable.
  *
  * This function is not thread-safe because it calls validate_exec(),
  * which calls getgrgid().	This function should be used only in
@@ -173,13 +190,12 @@ find_my_exec(const char *argv0, char *retpath)
 				test_path[MAXPGPATH];
 	char	   *path;
 
-#ifndef WIN32_CLIENT_ONLY
 	if (!getcwd(cwd, MAXPGPATH))
-		strcpy(cwd, ".");		/* cheesy, but better than nothing */
-#else
-	if (!GetCurrentDirectory(MAXPGPATH, cwd))
-		strcpy(cwd, ".");		/* cheesy, but better than nothing */
-#endif
+	{
+		log_error(_("could not identify current directory: %s"),
+				  strerror(errno));
+		return -1;
+	}
 
 	/*
 	 * If argv0 contains a separator, then PATH wasn't used.
@@ -193,7 +209,7 @@ find_my_exec(const char *argv0, char *retpath)
 		canonicalize_path(retpath);
 
 		if (validate_exec(retpath) == 0)
-			return 0;
+			return resolve_symlinks(retpath);
 
 		log_error("invalid binary \"%s\"", retpath);
 		return -1;
@@ -203,7 +219,7 @@ find_my_exec(const char *argv0, char *retpath)
 	/* Win32 checks the current directory first for names without slashes */
 	join_path_components(retpath, cwd, argv0);
 	if (validate_exec(retpath) == 0)
-		return 0;
+		return resolve_symlinks(retpath);
 #endif
 
 	/*
@@ -240,7 +256,7 @@ find_my_exec(const char *argv0, char *retpath)
 			switch (validate_exec(retpath))
 			{
 				case 0:			/* found ok */
-					return 0;
+					return resolve_symlinks(retpath);
 				case -1:		/* wasn't even a candidate, keep looking */
 					break;
 				case -2:		/* found but disqualified */
@@ -254,6 +270,141 @@ find_my_exec(const char *argv0, char *retpath)
 	return -1;
 }
 
+
+/*
+ * resolve_symlinks - resolve symlinks to the underlying file
+ *
+ * If path does not point to a symlink, leave it alone.  If it does,
+ * replace it by the absolute path to the referenced file.
+ *
+ * Returns 0 if OK, -1 if error.
+ *
+ * Note: we are not particularly tense about producing nice error messages
+ * because we are not really expecting error here; we just determined that
+ * the symlink does point to a valid executable.
+ */
+static int
+resolve_symlinks(char *path)
+{
+#ifdef HAVE_READLINK
+	struct stat buf;
+	char		orig_wd[MAXPGPATH],
+				link_buf[MAXPGPATH];
+	char	   *fname;
+
+	/* Quick out if it's not a symlink */
+	if (lstat(path, &buf) < 0 ||
+		(buf.st_mode & S_IFMT) != S_IFLNK)
+		return 0;
+
+	/*
+	 * To resolve a symlink properly, we have to chdir into its directory
+	 * and then chdir to where the symlink points; otherwise we may fail to
+	 * resolve relative links correctly (consider cases involving mount
+	 * points, for example).  After following the final symlink, we use
+	 * getcwd() to figure out where the heck we're at.
+	 */
+	if (!getcwd(orig_wd, MAXPGPATH))
+	{
+		log_error(_("could not identify current directory: %s"),
+				  strerror(errno));
+		return -1;
+	}
+
+	for (;;)
+	{
+		char   *lsep;
+		int		rllen;
+
+		lsep = last_dir_separator(path);
+		if (lsep)
+		{
+			*lsep = '\0';
+			if (chdir(path) == -1)
+			{
+				log_error(_("could not change directory to \"%s\""), path);
+				return -1;
+			}
+			fname = lsep + 1;
+		}
+		else
+			fname = path;
+
+		if (lstat(fname, &buf) < 0 ||
+			(buf.st_mode & S_IFMT) != S_IFLNK)
+			break;
+
+		rllen = readlink(fname, link_buf, sizeof(link_buf));
+		if (rllen < 0 || rllen >= sizeof(link_buf))
+		{
+			log_error(_("could not read symbolic link \"%s\""), fname);
+			return -1;
+		}
+		link_buf[rllen] = '\0';
+		strcpy(path, link_buf);
+	}
+
+	/* must copy final component out of 'path' temporarily */
+	strcpy(link_buf, fname);
+
+	if (!getcwd(path, MAXPGPATH))
+	{
+		log_error(_("could not identify current directory: %s"),
+				  strerror(errno));
+		return -1;
+	}
+	join_path_components(path, path, link_buf);
+	canonicalize_path(path);
+
+	if (chdir(orig_wd) == -1)
+	{
+		log_error(_("could not change directory to \"%s\""), orig_wd);
+		return -1;
+	}
+
+#endif /* HAVE_READLINK */
+
+	return 0;
+}
+
+
+/*
+ * Find another program in our binary's directory,
+ * then make sure it is the proper version.
+ */
+int
+find_other_exec(const char *argv0, const char *target,
+				const char *versionstr, char *retpath)
+{
+	char		cmd[MAXPGPATH];
+	char		line[100];
+
+	if (find_my_exec(argv0, retpath) < 0)
+		return -1;
+
+	/* Trim off program name and keep just directory */
+	*last_dir_separator(retpath) = '\0';
+	canonicalize_path(retpath);
+
+	/* Now append the other program's name */
+	snprintf(retpath + strlen(retpath), MAXPGPATH - strlen(retpath),
+			 "/%s%s", target, EXE);
+
+	if (validate_exec(retpath) != 0)
+		return -1;
+
+	snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
+
+	if (!pipe_read_line(cmd, line, sizeof(line)))
+		return -1;
+
+	if (strcmp(line, versionstr) != 0)
+		return -2;
+
+	return 0;
+}
+
+
 /*
  * The runtime library's popen() on win32 does not work when being
  * called from a service when running on windows <= 2000, because
@@ -262,7 +413,6 @@ find_my_exec(const char *argv0, char *retpath)
  * Executing a command in a pipe and reading the first line from it
  * is all we need.
  */
-
 static char *
 pipe_read_line(char *cmd, char *line, int maxsize)
 {
@@ -286,8 +436,9 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 		return NULL;
 
 	return line;
-#else
-	/* Win32 */
+
+#else /* WIN32 */
+
 	SECURITY_ATTRIBUTES sattr;
 	HANDLE		childstdoutrd,
 				childstdoutwr,
@@ -392,44 +543,7 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 	CloseHandle(childstdoutrddup);
 
 	return retval;
-#endif
-}
-
-
-/*
- * Find another program in our binary's directory,
- * then make sure it is the proper version.
- */
-int
-find_other_exec(const char *argv0, const char *target,
-				const char *versionstr, char *retpath)
-{
-	char		cmd[MAXPGPATH];
-	char		line[100];
-
-	if (find_my_exec(argv0, retpath) < 0)
-		return -1;
-
-	/* Trim off program name and keep just directory */
-	*last_dir_separator(retpath) = '\0';
-	canonicalize_path(retpath);
-
-	/* Now append the other program's name */
-	snprintf(retpath + strlen(retpath), MAXPGPATH - strlen(retpath),
-			 "/%s%s", target, EXE);
-
-	if (validate_exec(retpath))
-		return -1;
-
-	snprintf(cmd, sizeof(cmd), "\"%s\" -V 2>%s", retpath, DEVNULL);
-
-	if (!pipe_read_line(cmd, line, sizeof(line)))
-		return -1;
-
-	if (strcmp(line, versionstr) != 0)
-		return -2;
-
-	return 0;
+#endif /* WIN32 */
 }
 
 
@@ -454,20 +568,14 @@ pclose_check(FILE *stream)
 		perror("pclose failed");
 	}
 	else if (WIFEXITED(exitstatus))
-	{
 		log_error(_("child process exited with exit code %d"),
 				  WEXITSTATUS(exitstatus));
-	}
 	else if (WIFSIGNALED(exitstatus))
-	{
 		log_error(_("child process was terminated by signal %d"),
 				  WTERMSIG(exitstatus));
-	}
 	else
-	{
 		log_error(_("child process exited with unrecognized status %d"),
 				  exitstatus);
-	}
 
 	return -1;
 }
