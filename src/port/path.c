@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/path.c,v 1.41 2004/11/02 03:09:06 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/path.c,v 1.42 2004/11/06 01:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,51 +45,93 @@ static void trim_trailing_separator(char *path);
 }
 
 /*
+ * skip_drive
+ *
+ * On Windows, a path may begin with "C:" or "//network/".  Advance over
+ * this and point to the effective start of the path.
+ */
+#ifdef WIN32
+
+static char *
+skip_drive(const char *path)
+{
+	if (IS_DIR_SEP(path[0]) && IS_DIR_SEP(path[1]))
+	{
+		path += 2;
+		while (*path && !IS_DIR_SEP(*path))
+			path++;
+	}
+	else if (isalpha(path[0]) && path[1] == ':')
+	{
+		path += 2;
+	}
+	return (char *) path;
+}
+
+#else
+
+#define skip_drive(path)	(path)
+
+#endif
+
+/*
  *	first_dir_separator
+ *
+ * Find the location of the first directory separator, return
+ * NULL if not found.
  */
 char *
 first_dir_separator(const char *filename)
 {
-	char	   *p;
+	const char *p;
 
-	for (p = (char *) filename; *p; p++)
+	for (p = skip_drive(filename); *p; p++)
 		if (IS_DIR_SEP(*p))
-			return p;
+			return (char *) p;
 	return NULL;
 }
 
 /*
  *	first_path_separator
+ *
+ * Find the location of the first path separator (i.e. ':' on
+ * Unix, ';' on Windows), return NULL if not found.
  */
 char *
-first_path_separator(const char *filename)
+first_path_separator(const char *pathlist)
 {
-	char	   *p;
+	const char *p;
 
-	for (p = (char *) filename; *p; p++)
+	/* skip_drive is not needed */
+	for (p = pathlist; *p; p++)
 		if (IS_PATH_SEP(*p))
-			return p;
+			return (char *) p;
 	return NULL;
 }
 
 /*
  *	last_dir_separator
+ *
+ * Find the location of the last directory separator, return
+ * NULL if not found.
  */
 char *
 last_dir_separator(const char *filename)
 {
-	char	   *p,
+	const char *p,
 			   *ret = NULL;
 
-	for (p = (char *) filename; *p; p++)
+	for (p = skip_drive(filename); *p; p++)
 		if (IS_DIR_SEP(*p))
 			ret = p;
-	return ret;
+	return (char *) ret;
 }
 
 
 /*
  *	make_native_path - on WIN32, change / to \ in the path
+ *
+ *	This effectively undoes canonicalize_path.
  *
  *	This is required because WIN32 COPY is an internal CMD.EXE
  *	command and doesn't process forward slashes in the same way
@@ -115,10 +157,58 @@ make_native_path(char *filename)
 
 
 /*
+ * join_path_components - join two path components, inserting a slash
+ *
+ * ret_path is the output area (must be of size MAXPGPATH)
+ *
+ * ret_path can be the same as head, but not the same as tail.
+ */
+void
+join_path_components(char *ret_path,
+					 const char *head, const char *tail)
+{
+	if (ret_path != head)
+		StrNCpy(ret_path, head, MAXPGPATH);
+	/*
+	 * Remove any leading "." and ".." in the tail component,
+	 * adjusting head as needed.
+	 */
+	for (;;)
+	{
+		if (tail[0] == '.' && IS_DIR_SEP(tail[1]))
+		{
+			tail += 2;
+		}
+		else if (tail[0] == '.' && tail[1] == '\0')
+		{
+			tail += 1;
+			break;
+		}
+		else if (tail[0] == '.' && tail[1] == '.' && IS_DIR_SEP(tail[2]))
+		{
+			trim_directory(ret_path);
+			tail += 3;
+		}
+		else if (tail[0] == '.' && tail[1] == '.' && tail[2] == '\0')
+		{
+			trim_directory(ret_path);
+			tail += 2;
+			break;
+		}
+		else
+			break;
+	}
+	if (*tail)
+		snprintf(ret_path + strlen(ret_path), MAXPGPATH - strlen(ret_path),
+				 "/%s", tail);
+}
+
+
+/*
  *	Clean up path by:
  *		o  make Win32 path use Unix slashes
- *		o  remove trailling quote on Win32
- *		o  remove trailling slash
+ *		o  remove trailing quote on Win32
+ *		o  remove trailing slash
  *		o  remove trailing '.'
  *		o  process trailing '..' ourselves
  */
@@ -165,13 +255,11 @@ canonicalize_path(char *path)
 		if (len >= 2 && strcmp(path + len - 2, "/.") == 0)
 		{
 			trim_directory(path);
-			trim_trailing_separator(path);
 		}
 		else if (len >= 3 && strcmp(path + len - 3, "/..") == 0)
 		{
 			trim_directory(path);
 			trim_directory(path);	/* remove directory above */
-			trim_trailing_separator(path);
 		}
 		else
 			break;
@@ -188,10 +276,11 @@ get_progname(const char *argv0)
 {
 	const char *nodir_name;
 
-	if (!last_dir_separator(argv0))
-		nodir_name = argv0;
+	nodir_name = last_dir_separator(argv0);
+	if (nodir_name)
+		nodir_name++;
 	else
-		nodir_name = last_dir_separator(argv0) + 1;
+		nodir_name = skip_drive(argv0);
 
 #if defined(__CYGWIN__) || defined(WIN32)
 	/* strip .exe suffix, regardless of case */
@@ -231,7 +320,6 @@ get_share_path(const char *my_exec_path, char *ret_path)
 }
 
 
-
 /*
  *	get_etc_path
  */
@@ -246,7 +334,6 @@ get_etc_path(const char *my_exec_path, char *ret_path)
 		StrNCpy(ret_path, SYSCONFDIR, MAXPGPATH);
 	canonicalize_path(ret_path);
 }
-
 
 
 /*
@@ -265,7 +352,6 @@ get_include_path(const char *my_exec_path, char *ret_path)
 }
 
 
-
 /*
  *	get_pkginclude_path
  */
@@ -280,7 +366,6 @@ get_pkginclude_path(const char *my_exec_path, char *ret_path)
 		StrNCpy(ret_path, PKGINCLUDEDIR, MAXPGPATH);
 	canonicalize_path(ret_path);
 }
-
 
 
 /*
@@ -299,7 +384,6 @@ get_includeserver_path(const char *my_exec_path, char *ret_path)
 }
 
 
-
 /*
  *	get_lib_path
  */
@@ -316,7 +400,6 @@ get_lib_path(const char *my_exec_path, char *ret_path)
 }
 
 
-
 /*
  *	get_pkglib_path
  */
@@ -331,7 +414,6 @@ get_pkglib_path(const char *my_exec_path, char *ret_path)
 		StrNCpy(ret_path, PKGLIBDIR, MAXPGPATH);
 	canonicalize_path(ret_path);
 }
-
 
 
 /*
@@ -382,7 +464,6 @@ void
 get_parent_directory(char *path)
 {
 	trim_directory(path);
-	trim_trailing_separator(path);
 }
 
 
@@ -436,6 +517,8 @@ set_pglocale_pgservice(const char *argv0, const char *app)
 
 /*
  *	make_relative - adjust path to be relative to bin/
+ *
+ * ret_path is the output area (must be of size MAXPGPATH)
  */
 static void
 make_relative(const char *my_exec_path, const char *p, char *ret_path)
@@ -443,9 +526,9 @@ make_relative(const char *my_exec_path, const char *p, char *ret_path)
 	char		path[MAXPGPATH];
 
 	StrNCpy(path, my_exec_path, MAXPGPATH);
-	trim_directory(path);
-	trim_directory(path);
-	snprintf(ret_path, MAXPGPATH, "%s/%s", path, p);
+	trim_directory(path);		/* remove my executable name */
+	trim_directory(path);		/* remove last directory component (/bin) */
+	join_path_components(ret_path, path, p);
 }
 
 
@@ -520,57 +603,48 @@ relative_path(const char *bin_path, const char *other_path)
 /*
  *	trim_directory
  *
- *	Trim trailing directory from path
+ *	Trim trailing directory from path, that is, remove any trailing slashes,
+ *	the last pathname component, and the slash just ahead of it --- but never
+ *	remove a leading slash.
  */
 static void
 trim_directory(char *path)
 {
 	char	   *p;
 
+	path = skip_drive(path);
+
 	if (path[0] == '\0')
 		return;
 
+	/* back up over trailing slash(es) */
 	for (p = path + strlen(path) - 1; IS_DIR_SEP(*p) && p > path; p--)
 		;
+	/* back up over directory name */
 	for (; !IS_DIR_SEP(*p) && p > path; p--)
 		;
+	/* if multiple slashes before directory name, remove 'em all */
+	for (; p > path && IS_DIR_SEP(*(p - 1)); p--)
+		;
+	/* don't erase a leading slash */
+	if (p == path && IS_DIR_SEP(*p))
+		p++;
 	*p = '\0';
 }
 
 
-
 /*
  *	trim_trailing_separator
+ *
+ * trim off trailing slashes, but not a leading slash
  */
 static void
 trim_trailing_separator(char *path)
 {
-	char	   *p = path + strlen(path);
+	char	   *p;
 
-#ifdef WIN32
-
-	/*
-	 * Skip over network and drive specifiers for win32. Set 'path' to
-	 * point to the last character we must keep.
-	 */
-	if (strlen(path) >= 2)
-	{
-		if (IS_DIR_SEP(path[0]) && IS_DIR_SEP(path[1]))
-		{
-			path += 2;
-			while (*path && !IS_DIR_SEP(*path))
-				path++;
-		}
-		else if (isalpha(path[0]) && path[1] == ':')
-		{
-			path++;
-			if (IS_DIR_SEP(path[1]))
-				path++;
-		}
-	}
-#endif
-
-	/* trim off trailing slashes */
+	path = skip_drive(path);
+	p = path + strlen(path);
 	if (p > path)
 		for (p--; p > path && IS_DIR_SEP(*p); p--)
 			*p = '\0';

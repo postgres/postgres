@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
  * port.h
- *	  Header for /port compatibility functions.
+ *	  Header for src/port/ compatibility functions.
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/port.h,v 1.64 2004/10/11 22:50:33 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/port.h,v 1.65 2004/11/06 01:16:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,25 +20,15 @@
 #include <ctype.h>
 
 /* non-blocking */
-bool		set_noblock(int sock);
+extern bool set_noblock(int sock);
 
 /* Portable path handling for Unix/Win32 */
 
-/* Find the location of the first directory separator, return
- * NULL if not found.
- */
 extern char *first_dir_separator(const char *filename);
-
-/* Find the location of the last directory separator, return
- * NULL if not found.
- */
 extern char *last_dir_separator(const char *filename);
-
-/* Find the location of the first path separator (i.e. ':' on
- * Unix, ';' on Windows), return NULL if not found.
- */
-extern char *first_path_separator(const char *filename);
-
+extern char *first_path_separator(const char *pathlist);
+extern void join_path_components(char *ret_path,
+								 const char *head, const char *tail);
 extern void canonicalize_path(char *path);
 extern void make_native_path(char *path);
 extern const char *get_progname(const char *argv0);
@@ -123,11 +113,6 @@ extern unsigned char pg_tolower(unsigned char ch);
 /* Portable prompt handling */
 extern char *simple_prompt(const char *prompt, int maxlen, bool echo);
 
-#if defined(bsdi) || defined(netbsd)
-extern int	fseeko(FILE *stream, off_t offset, int whence);
-extern off_t ftello(FILE *stream);
-#endif
-
 /*
  *	WIN32 doesn't allow descriptors returned by pipe() to be used in select(),
  *	so for that platform we use socket() instead of pipe().
@@ -185,7 +170,7 @@ extern int	pgsymlink(const char *oldpath, const char *newpath);
 #define symlink(oldpath, newpath)	pgsymlink(oldpath, newpath)
 #endif
 
-#endif
+#endif /* defined(WIN32) || defined(__CYGWIN__) */
 
 extern bool rmtree(char *path, bool rmtopdir);
 
@@ -212,14 +197,14 @@ extern void srand48(long seed);
 /* Last parameter not used */
 extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
 
-#else
+#else /* !WIN32 */
 
 /*
  *	Win32 requires a special close for sockets and pipes, while on Unix
  *	close() does them all.
  */
 #define closesocket close
-#endif
+#endif /* WIN32 */
 
 /*
  * Default "extern" declarations or macro substitutes for library routines.
@@ -227,6 +212,11 @@ extern int	gettimeofday(struct timeval * tp, struct timezone * tzp);
  */
 #ifndef HAVE_CRYPT
 extern char *crypt(const char *key, const char *setting);
+#endif
+
+#if defined(bsdi) || defined(netbsd)
+extern int	fseeko(FILE *stream, off_t offset, int whence);
+extern off_t ftello(FILE *stream);
 #endif
 
 #ifndef HAVE_FSEEKO

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.30 2004/10/18 19:08:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.31 2004/11/06 01:16:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,13 +42,10 @@
 
 #ifndef FRONTEND
 /* We use only 3-parameter elog calls in this file, for simplicity */
-#define log_error(str, param)	elog(LOG, (str), (param))
+#define log_error(str, param)	elog(LOG, str, param)
 #else
-#define log_error(str, param)	fprintf(stderr, (str), (param))
+#define log_error(str, param)	(fprintf(stderr, str, param), fputc('\n', stderr))
 #endif
-
-
-static void win32_make_absolute(char *path);
 
 
 /*
@@ -165,7 +162,7 @@ validate_exec(const char *path)
  * executable's location.  Also, we need a full path not a relative
  * path because we will later change working directory.
  *
- * This function is not thread-safe because of it calls validate_exec(),
+ * This function is not thread-safe because it calls validate_exec(),
  * which calls getgrgid().	This function should be used only in
  * non-threaded binaries, not in library routines.
  */
@@ -178,61 +175,40 @@ find_my_exec(const char *argv0, char *retpath)
 
 #ifndef WIN32_CLIENT_ONLY
 	if (!getcwd(cwd, MAXPGPATH))
+		strcpy(cwd, ".");		/* cheesy, but better than nothing */
 #else
 	if (!GetCurrentDirectory(MAXPGPATH, cwd))
+		strcpy(cwd, ".");		/* cheesy, but better than nothing */
 #endif
-		cwd[0] = '\0';
 
 	/*
-	 * First try: use the binary that's located in the same directory if
-	 * it was invoked with an explicit path. Presumably the user used an
-	 * explicit path because it wasn't in PATH, and we don't want to use
-	 * incompatible executables.
-	 *
-	 * For the binary: First try: if we're given some kind of path, use it
-	 * (making sure that a relative path is made absolute before returning
-	 * it).
+	 * If argv0 contains a separator, then PATH wasn't used.
 	 */
-	/* Does argv0 have a separator? */
-	if ((path = last_dir_separator(argv0)))
+	if (first_dir_separator(argv0) != NULL)
 	{
-		if (*++path == '\0')
-		{
-			log_error("argv[0] ends with a path separator \"%s\"", argv0);
-			return -1;
-		}
-
 		if (is_absolute_path(argv0))
 			StrNCpy(retpath, argv0, MAXPGPATH);
 		else
-			snprintf(retpath, MAXPGPATH, "%s/%s", cwd, argv0);
-
+			join_path_components(retpath, cwd, argv0);
 		canonicalize_path(retpath);
+
 		if (validate_exec(retpath) == 0)
-		{
-			win32_make_absolute(retpath);
 			return 0;
-		}
-		else
-		{
-			log_error("invalid binary \"%s\"", retpath);
-			return -1;
-		}
+
+		log_error("invalid binary \"%s\"", retpath);
+		return -1;
 	}
 
 #ifdef WIN32
 	/* Win32 checks the current directory first for names without slashes */
-	if (validate_exec(argv0) == 0)
-	{
-		snprintf(retpath, MAXPGPATH, "%s/%s", cwd, argv0);
-		win32_make_absolute(retpath);
+	join_path_components(retpath, cwd, argv0);
+	if (validate_exec(retpath) == 0)
 		return 0;
-	}
 #endif
 
 	/*
-	 * Second try: since no explicit path was supplied, the user must have
-	 * been relying on PATH.  We'll use the same PATH.
+	 * Since no explicit path was supplied, the user must have
+	 * been relying on PATH.  We'll search the same PATH.
 	 */
 	if ((path = getenv("PATH")) && *path)
 	{
@@ -253,40 +229,33 @@ find_my_exec(const char *argv0, char *retpath)
 			StrNCpy(test_path, startp, Min(endp - startp + 1, MAXPGPATH));
 
 			if (is_absolute_path(test_path))
-				snprintf(retpath, MAXPGPATH, "%s/%s", test_path, argv0);
+				join_path_components(retpath, test_path, argv0);
 			else
-				snprintf(retpath, MAXPGPATH, "%s/%s/%s", cwd, test_path, argv0);
-
+			{
+				join_path_components(retpath, cwd, test_path);
+				join_path_components(retpath, retpath, argv0);
+			}
 			canonicalize_path(retpath);
+
 			switch (validate_exec(retpath))
 			{
-				case 0: /* found ok */
-					win32_make_absolute(retpath);
+				case 0:			/* found ok */
 					return 0;
 				case -1:		/* wasn't even a candidate, keep looking */
-					continue;
+					break;
 				case -2:		/* found but disqualified */
 					log_error("could not read binary \"%s\"", retpath);
-					continue;
+					break;
 			}
 		} while (*endp);
 	}
 
 	log_error("could not find a \"%s\" to execute", argv0);
 	return -1;
-
-#if NOT_USED
-	/*
-	 * Win32 has a native way to find the executable name, but the above
-	 * method works too.
-	 */
-	if (GetModuleFileName(NULL, retpath, MAXPGPATH) == 0)
-		log_error("GetModuleFileName failed (%i)", (int) GetLastError());
-#endif
 }
 
 /*
- * The runtime librarys popen() on win32 does not work when being
+ * The runtime library's popen() on win32 does not work when being
  * called from a service when running on windows <= 2000, because
  * there is no stdin/stdout/stderr.
  *
@@ -427,10 +396,9 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 }
 
 
-
 /*
- * Find our binary directory, then make sure the "target" executable
- * is the proper version.
+ * Find another program in our binary's directory,
+ * then make sure it is the proper version.
  */
 int
 find_other_exec(const char *argv0, const char *target,
@@ -487,41 +455,19 @@ pclose_check(FILE *stream)
 	}
 	else if (WIFEXITED(exitstatus))
 	{
-		log_error(_("child process exited with exit code %d\n"),
+		log_error(_("child process exited with exit code %d"),
 				  WEXITSTATUS(exitstatus));
 	}
 	else if (WIFSIGNALED(exitstatus))
 	{
-		log_error(_("child process was terminated by signal %d\n"),
+		log_error(_("child process was terminated by signal %d"),
 				  WTERMSIG(exitstatus));
 	}
 	else
 	{
-		log_error(_("child process exited with unrecognized status %d\n"),
+		log_error(_("child process exited with unrecognized status %d"),
 				  exitstatus);
 	}
 
 	return -1;
-}
-
-
-/*
- * Windows doesn't like relative paths to executables (other things work fine)
- * so we call its builtin function to expand them. Elsewhere this is a NOOP
- */
-static void
-win32_make_absolute(char *path)
-{
-#ifdef WIN32
-	char		abspath[MAXPGPATH];
-
-	if (_fullpath(abspath, path, MAXPGPATH) == NULL)
-	{
-		log_error("Win32 path expansion failed: %s", strerror(errno));
-		StrNCpy(abspath, path, MAXPGPATH);
-	}
-	canonicalize_path(abspath);
-
-	StrNCpy(path, abspath, MAXPGPATH);
-#endif
 }
