@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.80 2002/08/14 22:07:56 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.81 2002/08/14 23:02:59 tgl Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -476,7 +476,7 @@ static struct config_bool
 	},
 	{
 		{ "password_encryption", PGC_USERSET }, &Password_encryption,
-		false, NULL, NULL
+		true, NULL, NULL
 	},
 	{
 		{ "transform_null_equals", PGC_USERSET }, &Transform_null_equals,
