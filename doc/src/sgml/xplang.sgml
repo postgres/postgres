@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.7 2000/03/31 03:27:42 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.8 2000/04/02 22:59:40 tgl Exp $
 -->
 
  <chapter id="xplang">
@@ -10,12 +10,17 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.7 2000/03/31 03:27:42 thoma
    the definition of procedural languages.
    In the case of a function or trigger
    procedure defined in a procedural language, the database has
-   no builtin knowlege how to interpret the functions source
-   text. Instead, the calls are passed into
+   no built-in knowledge about how to interpret the function's source
+   text. Instead, the task is passed to
    a handler that knows the details of the language. The
    handler itself is a special programming language function
    compiled into a shared object
    and loaded on demand.
+  </para>
+
+  <para>
+   Writing a handler for a new procedural language (PL)
+   is outside the scope of this manual. 
   </para>
 
   <sect1>
@@ -28,6 +33,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.7 2000/03/31 03:27:42 thoma
 
     <para>
      A procedural language is installed in the database in three steps.
+     (For the languages supplied with the standard distribution, the
+     shell script <filename>createlang</filename> can be used instead
+     of carrying out the details manually.)
     </para>
 
     <step performance="Required">
@@ -39,10 +47,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/xplang.sgml,v 1.7 2000/03/31 03:27:42 thoma
       configured in, the handler for PL/Tcl is also built
       and installed in the same location.
      </para>
-     <para>
-      Writing a handler for a new procedural language (PL)
-      is outside the scope of this manual. 
-     </para>
     </step>
     <step performance="Required">
      <para>
@@ -53,8 +57,8 @@ CREATE FUNCTION <replaceable>handler_function_name</replaceable> ()
     '<filename>path-to-shared-object</filename>' LANGUAGE 'C';
       </programlisting>
       The special return type of <acronym>OPAQUE</acronym> tells
-      the database, that this function does not return one of
-      the defined base- or composite types and is not directly usable
+      the database that this function does not return one of
+      the defined <acronym>SQL</acronym> datatypes and is not directly usable
       in <acronym>SQL</acronym> statements.
      </para>
     </step>
@@ -67,11 +71,12 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable>language-name</replaceable>
     LANCOMPILER '<replaceable>description</replaceable>';
       </programlisting>
       The optional keyword <acronym>TRUSTED</acronym> tells
-      if ordinary database users that have no superuser
-      privileges can use this language to create functions
+      whether ordinary database users that have no superuser
+      privileges should be allowed to use this language to create functions
       and trigger procedures. Since PL functions are
-      executed inside the database backend it should only be used for
-      languages that don't gain access to database backends
+      executed inside the database backend, the <acronym>TRUSTED</acronym>
+      flag should only be given for
+      languages that don't allow access to database backends
       internals or the filesystem. The languages PL/pgSQL and
       PL/Tcl are known to be trusted.
      </para>
@@ -83,7 +88,7 @@ CREATE [ TRUSTED ] PROCEDURAL LANGUAGE '<replaceable>language-name</replaceable>
     <step performance="Required">
      <para>
       The following command tells the database where to find the 
-      shared object for the PL/pgSQL languages call handler function.
+      shared object for the PL/pgSQL language's call handler function.
 
       <programlisting>
 CREATE FUNCTION plpgsql_call_handler () RETURNS OPAQUE AS
@@ -116,7 +121,7 @@ CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'
       functions call arguments and it's return data type. The source
       text of the functions body is found in the prosrc attribute of
       <literal>pg_proc</literal>.
-      Due to this, in contrast to C language functions, PL functions
+      Due to this, PL functions
       can be overloaded like SQL language functions. There can be
       multiple different PL functions having the same function name,
       as long as the call arguments differ.
