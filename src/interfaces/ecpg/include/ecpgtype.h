@@ -40,22 +40,22 @@ enum ECPGttype
 {
 	ECPGt_char = 1, ECPGt_unsigned_char, ECPGt_short, ECPGt_unsigned_short,
 	ECPGt_int, ECPGt_unsigned_int, ECPGt_long, ECPGt_unsigned_long,
+	ECPGt_long_long, ECPGt_unsigned_long_long,
 	ECPGt_bool,
 	ECPGt_float, ECPGt_double,
 	ECPGt_varchar, ECPGt_varchar2,
-	ECPGt_array,
-	ECPGt_struct,
-	ECPGt_union,
-	ECPGt_char_variable,
-	ECPGt_EOIT,					/* End of insert types. */
-	ECPGt_EORT,					/* End of result types. */
-	ECPGt_NO_INDICATOR,			/* no indicator */
-	ECPGt_long_long, ECPGt_unsigned_long_long,
-	ECPGt_descriptor,			/* sql descriptor, no C variable */
 	ECPGt_numeric,
 	ECPGt_date,
 	ECPGt_timestamp,
-	ECPGt_interval
+	ECPGt_interval,
+	ECPGt_array,
+	ECPGt_struct,
+	ECPGt_union,
+	ECPGt_descriptor,		/* sql descriptor, no C variable */
+	ECPGt_char_variable,
+	ECPGt_EOIT,			/* End of insert types. */
+	ECPGt_EORT,			/* End of result types. */
+	ECPGt_NO_INDICATOR		/* no indicator */
 };
 
  /* descriptor items */
@@ -80,7 +80,7 @@ enum ECPGdtype
 	ECPGd_cardinality
 };
 
-#define IS_SIMPLE_TYPE(type) (((type) >= ECPGt_char && (type) <= ECPGt_varchar2) || ((type)>=ECPGt_long_long && (type) <= ECPGt_unsigned_long_long) || (type) >= ECPGt_numeric)
+#define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_interval)
 
 #ifdef __cplusplus
 }
