@@ -76,7 +76,7 @@ If You Are Upgrading
 
 The internal data storage format changes with new releases of PostgreSQL.
 Therefore, if you are upgrading an existing installation that does not have
-a version number "7.1.x", you must back up and restore your data as shown
+a version number "7.2.x", you must back up and restore your data as shown
 here. These instructions assume that your existing installation is under the
 /usr/local/pgsql directory, and that the data area is in
 /usr/local/pgsql/data. Substitute your paths appropriately.
@@ -97,7 +97,7 @@ here. These instructions assume that your existing installation is under the
      do this.
 
      Make sure that you use the pg_dumpall command from the version you are
-     currently running. 7.1's pg_dumpall should not be used on older
+     currently running. 7.2's pg_dumpall should not be used on older
      databases.
 
   3. If you are installing the new version at the same location as the old
@@ -125,7 +125,7 @@ here. These instructions assume that your existing installation is under the
 
      mv /usr/local/pgsql /usr/local/pgsql.old
 
-After you have installed PostgreSQL 7.1, create a new database directory and
+After you have installed PostgreSQL 7.2, create a new database directory and
 start the new server. Remember that you must execute these commands while
 logged in to the special database user account (which you already have if
 you are upgrading).
@@ -736,7 +736,7 @@ tests pass.
 
 Unsupported Platforms. The following platforms have not been verified to
 work. Platforms listed for version 6.3.x and later should also work with
-7.1, but we did not receive explicit confirmation of such at the time this
+7.2, but we did not receive explicit confirmation of such at the time this
 list was compiled. We include these here to let you know that these
 platforms could be supported if given some attention.
 
