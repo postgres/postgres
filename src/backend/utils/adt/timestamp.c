@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.107 2004/05/31 18:31:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/timestamp.c,v 1.108 2004/06/03 02:08:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -921,16 +921,14 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 }	/* dt2time() */
 
 
-/* timestamp2tm()
- * Convert timestamp data type to POSIX time structure.
+/*
+ * timestamp2tm() - Convert timestamp data type to POSIX time structure.
+ *
  * Note that year is _not_ 1900-based, but is an explicit full value.
  * Also, month is one-based, _not_ zero-based.
  * Returns:
  *	 0 on success
  *	-1 on out of range
- *
- * For dates within the system-supported time_t range, convert to the
- *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 int
 timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
@@ -942,8 +940,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 	double		date;
 	double		time;
 #endif
-	time_t		utime;
-	struct pg_tm  *tx;
+	pg_time_t	utime;
 
 	/*
 	 * If HasCTZSet is true then we have a brute force time zone
@@ -988,70 +985,77 @@ timestamp2tm(Timestamp dt, int *tzp, struct pg_tm *tm, fsec_t *fsec, char **tzn)
 	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 
-	if (tzp != NULL)
+	/* Done if no TZ conversion wanted */
+	if (tzp == NULL)
 	{
-		/*
-		 * We have a brute force time zone per SQL99? Then use it without
-		 * change since we have already rotated to the time zone.
-		 */
-		if (HasCTZSet)
-		{
-			*tzp = CTimeZone;
-			tm->tm_isdst = 0;
-			tm->tm_gmtoff = CTimeZone;
-			tm->tm_zone = NULL;
-			if (tzn != NULL)
-				*tzn = NULL;
-		}
+		tm->tm_isdst = -1;
+		tm->tm_gmtoff = 0;
+		tm->tm_zone = NULL;
+		if (tzn != NULL)
+			*tzn = NULL;
+		return 0;
+	}
 
-		/*
-		 * Does this fall within the capabilities of the localtime()
-		 * interface? Then use this to rotate to the local time zone.
-		 */
-		else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-		{
-			/*
-			 * Convert to integer, avoiding platform-specific
-			 * roundoff-in-wrong-direction errors, and adjust to
-			 * Unix epoch.  Note we have to do this in one step
-			 * because the intermediate result before adjustment
-			 * won't necessarily fit in an int32.
-			 */
+	/*
+	 * We have a brute force time zone per SQL99? Then use it without
+	 * change since we have already rotated to the time zone.
+	 */
+	if (HasCTZSet)
+	{
+		*tzp = CTimeZone;
+		tm->tm_isdst = 0;
+		tm->tm_gmtoff = CTimeZone;
+		tm->tm_zone = NULL;
+		if (tzn != NULL)
+			*tzn = NULL;
+		return 0;
+	}
+
+	/*
+	 * If the time falls within the range of pg_time_t, use pg_localtime()
+	 * to rotate to the local time zone.
+	 *
+	 * First, convert to an integral timestamp, avoiding possibly
+	 * platform-specific roundoff-in-wrong-direction errors, and adjust to
+	 * Unix epoch.  Then see if we can convert to pg_time_t without loss.
+	 * This coding avoids hardwiring any assumptions about the width of
+	 * pg_time_t, so it should behave sanely on machines without int64.
+	 */
 #ifdef HAVE_INT64_TIMESTAMP
-			utime = (dt - *fsec) / INT64CONST(1000000) +
-				(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
+	dt = (dt - *fsec) / INT64CONST(1000000) +
+		(POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
 #else
-			utime = rint(dt - *fsec +
-						 (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400);
+	dt = rint(dt - *fsec +
+			  (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400);
 #endif
+	utime = (pg_time_t) dt;
+	if ((Timestamp) utime == dt)
+	{
+		struct pg_tm  *tx = pg_localtime(&utime);
 
-			tx = pg_localtime(&utime);
-			tm->tm_year = tx->tm_year + 1900;
-			tm->tm_mon = tx->tm_mon + 1;
-			tm->tm_mday = tx->tm_mday;
-			tm->tm_hour = tx->tm_hour;
-			tm->tm_min = tx->tm_min;
-			tm->tm_sec = tx->tm_sec;
-			tm->tm_isdst = tx->tm_isdst;
-			tm->tm_gmtoff = tx->tm_gmtoff;
-			tm->tm_zone = tx->tm_zone;
-
-			*tzp = -(tm->tm_gmtoff);
-			if (tzn != NULL)
-				*tzn = (char *) tm->tm_zone;
-		}
-		else
-		{
-			*tzp = 0;
-			/* Mark this as *no* time zone available */
-			tm->tm_isdst = -1;
-			if (tzn != NULL)
-				*tzn = NULL;
-		}
+		tm->tm_year = tx->tm_year + 1900;
+		tm->tm_mon = tx->tm_mon + 1;
+		tm->tm_mday = tx->tm_mday;
+		tm->tm_hour = tx->tm_hour;
+		tm->tm_min = tx->tm_min;
+		tm->tm_sec = tx->tm_sec;
+		tm->tm_isdst = tx->tm_isdst;
+		tm->tm_gmtoff = tx->tm_gmtoff;
+		tm->tm_zone = tx->tm_zone;
+		*tzp = -(tm->tm_gmtoff);
+		if (tzn != NULL)
+			*tzn = (char *) tm->tm_zone;
 	}
 	else
 	{
+		/*
+		 * When out of range of pg_time_t, treat as GMT
+		 */
+		*tzp = 0;
+		/* Mark this as *no* time zone available */
 		tm->tm_isdst = -1;
+		tm->tm_gmtoff = 0;
+		tm->tm_zone = NULL;
 		if (tzn != NULL)
 			*tzn = NULL;
 	}
@@ -1224,7 +1228,7 @@ void
 GetEpochTime(struct pg_tm * tm)
 {
 	struct pg_tm  *t0;
-	time_t		epoch = 0;
+	pg_time_t		epoch = 0;
 
 	t0 = pg_gmtime(&epoch);
 
@@ -1235,12 +1239,9 @@ GetEpochTime(struct pg_tm * tm)
 	tm->tm_min = t0->tm_min;
 	tm->tm_sec = t0->tm_sec;
 
-	if (tm->tm_year < 1900)
-		tm->tm_year += 1900;
+	tm->tm_year += 1900;
 	tm->tm_mon++;
-
-	return;
-}	/* GetEpochTime() */
+}
 
 Timestamp
 SetEpochTimestamp(void)

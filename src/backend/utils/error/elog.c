@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.139 2004/05/29 22:48:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.140 2004/06/03 02:08:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,6 +45,7 @@
 
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 #include <unistd.h>
 #include <signal.h>
 #include <ctype.h>
@@ -56,7 +57,6 @@
 #include "libpq/pqformat.h"
 #include "mb/pg_wchar.h"
 #include "miscadmin.h"
-#include "pgtime.h"
 #include "postmaster/postmaster.h"
 #include "storage/ipc.h"
 #include "tcop/tcopprot.h"
@@ -1217,8 +1217,9 @@ log_line_prefix(StringInfo buf)
 					time_t stamp_time = time(NULL);
 					char strfbuf[128];
 
-					pg_strftime(strfbuf, sizeof(strfbuf), "%Y-%m-%d %H:%M:%S %Z",
-							 pg_localtime(&stamp_time));
+					strftime(strfbuf, sizeof(strfbuf),
+							 "%Y-%m-%d %H:%M:%S %Z",
+							 localtime(&stamp_time));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;
@@ -1228,8 +1229,9 @@ log_line_prefix(StringInfo buf)
 					time_t stamp_time = MyProcPort->session_start.tv_sec;
 					char strfbuf[128];
 
-					pg_strftime(strfbuf, sizeof(strfbuf), "%Y-%m-%d %H:%M:%S %Z",
-							 pg_localtime(&stamp_time));
+					strftime(strfbuf, sizeof(strfbuf),
+							 "%Y-%m-%d %H:%M:%S %Z",
+							 localtime(&stamp_time));
 					appendStringInfoString(buf, strfbuf);
 				}
 				break;

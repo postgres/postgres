@@ -180,15 +180,15 @@ SELECT '' AS "64", d1 FROM TIMESTAMPTZ_TBL;
     | Fri Feb 14 17:32:01 1997 PST
     | Sat Feb 15 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Tue Feb 16 17:32:01 0097 BC
-    | Sat Feb 16 17:32:01 0097
-    | Thu Feb 16 17:32:01 0597
-    | Tue Feb 16 17:32:01 1097
-    | Sat Feb 16 17:32:01 1697
-    | Thu Feb 16 17:32:01 1797
-    | Tue Feb 16 17:32:01 1897
+    | Tue Feb 16 17:32:01 0097 BC PST
+    | Sat Feb 16 17:32:01 0097 PST
+    | Thu Feb 16 17:32:01 0597 PST
+    | Tue Feb 16 17:32:01 1097 PST
+    | Sat Feb 16 17:32:01 1697 PST
+    | Thu Feb 16 17:32:01 1797 PST
+    | Tue Feb 16 17:32:01 1897 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Sat Feb 16 17:32:01 2097
+    | Sat Feb 16 17:32:01 2097 PST
     | Wed Feb 28 17:32:01 1996 PST
     | Thu Feb 29 17:32:01 1996 PST
     | Fri Mar 01 17:32:01 1996 PST
@@ -249,7 +249,7 @@ SELECT '' AS "48", d1 FROM TIMESTAMPTZ_TBL
     | Sat Feb 15 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Sat Feb 16 17:32:01 2097
+    | Sat Feb 16 17:32:01 2097 PST
     | Fri Feb 28 17:32:01 1997 PST
     | Sat Mar 01 17:32:01 1997 PST
     | Tue Dec 30 17:32:01 1997 PST
@@ -262,17 +262,17 @@ SELECT '' AS "48", d1 FROM TIMESTAMPTZ_TBL
 
 SELECT '' AS "15", d1 FROM TIMESTAMPTZ_TBL
    WHERE d1 < timestamp with time zone '1997-01-02';
- 15 |              d1              
-----+------------------------------
+ 15 |               d1                
+----+---------------------------------
     | -infinity
     | Wed Dec 31 16:00:00 1969 PST
-    | Tue Feb 16 17:32:01 0097 BC
-    | Sat Feb 16 17:32:01 0097
-    | Thu Feb 16 17:32:01 0597
-    | Tue Feb 16 17:32:01 1097
-    | Sat Feb 16 17:32:01 1697
-    | Thu Feb 16 17:32:01 1797
-    | Tue Feb 16 17:32:01 1897
+    | Tue Feb 16 17:32:01 0097 BC PST
+    | Sat Feb 16 17:32:01 0097 PST
+    | Thu Feb 16 17:32:01 0597 PST
+    | Tue Feb 16 17:32:01 1097 PST
+    | Sat Feb 16 17:32:01 1697 PST
+    | Thu Feb 16 17:32:01 1797 PST
+    | Tue Feb 16 17:32:01 1897 PST
     | Wed Feb 28 17:32:01 1996 PST
     | Thu Feb 29 17:32:01 1996 PST
     | Fri Mar 01 17:32:01 1996 PST
@@ -332,15 +332,15 @@ SELECT '' AS "63", d1 FROM TIMESTAMPTZ_TBL
     | Fri Feb 14 17:32:01 1997 PST
     | Sat Feb 15 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Tue Feb 16 17:32:01 0097 BC
-    | Sat Feb 16 17:32:01 0097
-    | Thu Feb 16 17:32:01 0597
-    | Tue Feb 16 17:32:01 1097
-    | Sat Feb 16 17:32:01 1697
-    | Thu Feb 16 17:32:01 1797
-    | Tue Feb 16 17:32:01 1897
+    | Tue Feb 16 17:32:01 0097 BC PST
+    | Sat Feb 16 17:32:01 0097 PST
+    | Thu Feb 16 17:32:01 0597 PST
+    | Tue Feb 16 17:32:01 1097 PST
+    | Sat Feb 16 17:32:01 1697 PST
+    | Thu Feb 16 17:32:01 1797 PST
+    | Tue Feb 16 17:32:01 1897 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Sat Feb 16 17:32:01 2097
+    | Sat Feb 16 17:32:01 2097 PST
     | Wed Feb 28 17:32:01 1996 PST
     | Thu Feb 29 17:32:01 1996 PST
     | Fri Mar 01 17:32:01 1996 PST
@@ -359,18 +359,18 @@ SELECT '' AS "63", d1 FROM TIMESTAMPTZ_TBL
 
 SELECT '' AS "16", d1 FROM TIMESTAMPTZ_TBL
    WHERE d1 <= timestamp with time zone '1997-01-02';
- 16 |              d1              
-----+------------------------------
+ 16 |               d1                
+----+---------------------------------
     | -infinity
     | Wed Dec 31 16:00:00 1969 PST
     | Thu Jan 02 00:00:00 1997 PST
-    | Tue Feb 16 17:32:01 0097 BC
-    | Sat Feb 16 17:32:01 0097
-    | Thu Feb 16 17:32:01 0597
-    | Tue Feb 16 17:32:01 1097
-    | Sat Feb 16 17:32:01 1697
-    | Thu Feb 16 17:32:01 1797
-    | Tue Feb 16 17:32:01 1897
+    | Tue Feb 16 17:32:01 0097 BC PST
+    | Sat Feb 16 17:32:01 0097 PST
+    | Thu Feb 16 17:32:01 0597 PST
+    | Tue Feb 16 17:32:01 1097 PST
+    | Sat Feb 16 17:32:01 1697 PST
+    | Thu Feb 16 17:32:01 1797 PST
+    | Tue Feb 16 17:32:01 1897 PST
     | Wed Feb 28 17:32:01 1996 PST
     | Thu Feb 29 17:32:01 1996 PST
     | Fri Mar 01 17:32:01 1996 PST
@@ -423,7 +423,7 @@ SELECT '' AS "49", d1 FROM TIMESTAMPTZ_TBL
     | Sat Feb 15 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
     | Sun Feb 16 17:32:01 1997 PST
-    | Sat Feb 16 17:32:01 2097
+    | Sat Feb 16 17:32:01 2097 PST
     | Fri Feb 28 17:32:01 1997 PST
     | Sat Mar 01 17:32:01 1997 PST
     | Tue Dec 30 17:32:01 1997 PST
@@ -1395,16 +1395,16 @@ SELECT '' AS to_char_10, to_char(d1, 'YYYY WW IYYY IYY IY I IW')
 
 -- TO_TIMESTAMP()
 SELECT '' AS to_timestamp_1, to_timestamp('0097/Feb/16 --> 08:14:30', 'YYYY/Mon/DD --> HH:MI:SS');
- to_timestamp_1 |       to_timestamp       
-----------------+--------------------------
-                | Sat Feb 16 08:14:30 0097
+ to_timestamp_1 |         to_timestamp         
+----------------+------------------------------
+                | Sat Feb 16 08:14:30 0097 PST
 (1 row)
 
 	
 SELECT '' AS to_timestamp_2, to_timestamp('97/2/16 8:14:30', 'FMYYYY/FMMM/FMDD FMHH:FMMI:FMSS');
- to_timestamp_2 |       to_timestamp       
-----------------+--------------------------
-                | Sat Feb 16 08:14:30 0097
+ to_timestamp_2 |         to_timestamp         
+----------------+------------------------------
+                | Sat Feb 16 08:14:30 0097 PST
 (1 row)
 
 SELECT '' AS to_timestamp_3, to_timestamp('1985 January 12', 'YYYY FMMonth DD');
@@ -1421,9 +1421,9 @@ SELECT '' AS to_timestamp_4, to_timestamp('My birthday-> Year: 1976, Month: May,
 (1 row)
 
 SELECT '' AS to_timestamp_5, to_timestamp('1,582nd VIII 21', 'Y,YYYth FMRM DD');
- to_timestamp_5 |       to_timestamp       
-----------------+--------------------------
-                | Sat Aug 21 00:00:00 1582
+ to_timestamp_5 |         to_timestamp         
+----------------+------------------------------
+                | Sat Aug 21 00:00:00 1582 PST
 (1 row)
 
 SELECT '' AS to_timestamp_6, to_timestamp('15 "text between quote marks" 98 54 45', 
@@ -1455,9 +1455,9 @@ SELECT '' AS to_timestamp_10, to_timestamp('19971116', 'YYYYMMDD');
 (1 row)
 
 SELECT '' AS to_timestamp_11, to_timestamp('20000-1116', 'YYYY-MMDD');
- to_timestamp_11 |       to_timestamp        
------------------+---------------------------
-                 | Thu Nov 16 00:00:00 20000
+ to_timestamp_11 |         to_timestamp          
+-----------------+-------------------------------
+                 | Thu Nov 16 00:00:00 20000 PST
 (1 row)
 
 SELECT '' AS to_timestamp_12, to_timestamp('9-1116', 'Y-MMDD');

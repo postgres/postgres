@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.16 2004/05/25 19:46:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/pgtz.c,v 1.17 2004/06/03 02:08:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,12 +16,14 @@
 
 #include <ctype.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include "miscadmin.h"
 #include "pgtime.h"
 #include "pgtz.h"
 #include "storage/fd.h"
 #include "tzfile.h"
+#include "utils/datetime.h"
 #include "utils/elog.h"
 #include "utils/guc.h"
 
@@ -107,7 +109,7 @@ win32_get_timezone_abbrev(const char *tz)
 #endif
 
 /*
- * Convenience subroutine to convert y/m/d to time_t
+ * Convenience subroutine to convert y/m/d to time_t (NOT pg_time_t)
  */
 static time_t
 build_time_t(int year, int month, int day)
@@ -148,6 +150,7 @@ static bool
 try_timezone(const char *tzname, struct tztry *tt)
 {
 	int			i;
+	pg_time_t	pgtt;
 	struct tm	   *systm;
 	struct pg_tm   *pgtm;
 	char		cbuf[TZ_STRLEN_MAX + 1];
@@ -158,14 +161,15 @@ try_timezone(const char *tzname, struct tztry *tt)
 	/* Check for match at all the test times */
 	for (i = 0; i < tt->n_test_times; i++)
 	{
-		pgtm = pg_localtime(&(tt->test_times[i]));
+		pgtt = (pg_time_t) (tt->test_times[i]);
+		pgtm = pg_localtime(&pgtt);
 		if (!pgtm)
 			return false;		/* probably shouldn't happen */
 		systm = localtime(&(tt->test_times[i]));
 		if (!compare_tm(systm, pgtm))
 		{
-			elog(DEBUG4, "Reject TZ \"%s\": at %lu %04d-%02d-%02d %02d:%02d:%02d %s versus %04d-%02d-%02d %02d:%02d:%02d %s",
-				 tzname, (unsigned long) tt->test_times[i],
+			elog(DEBUG4, "Reject TZ \"%s\": at %ld %04d-%02d-%02d %02d:%02d:%02d %s versus %04d-%02d-%02d %02d:%02d:%02d %s",
+				 tzname, (long) pgtt,
 				 pgtm->tm_year + 1900, pgtm->tm_mon + 1, pgtm->tm_mday,
 				 pgtm->tm_hour, pgtm->tm_min, pgtm->tm_sec,
 				 pgtm->tm_isdst ? "dst" : "std",
@@ -183,8 +187,8 @@ try_timezone(const char *tzname, struct tztry *tt)
 			strftime(cbuf, sizeof(cbuf) - 1, "%Z", systm); /* zone abbr */
 			if (strcmp(TZABBREV(cbuf), pgtm->tm_zone) != 0)
 			{
-				elog(DEBUG4, "Reject TZ \"%s\": at %lu \"%s\" versus \"%s\"",
-					 tzname, (unsigned long) tt->test_times[i],
+				elog(DEBUG4, "Reject TZ \"%s\": at %ld \"%s\" versus \"%s\"",
+					 tzname, (long) pgtt,
 					 pgtm->tm_zone, cbuf);
 				return false;
 			}
@@ -470,21 +474,17 @@ scan_available_timezones(char *tzdir, char *tzdirsub, struct tztry *tt)
 bool
 tz_acceptable(void)
 {
-	struct pg_tm tt;
-	time_t		time2000;
+	struct pg_tm *tt;
+	pg_time_t	time2000;
 
 	/*
-	 * To detect leap-second timekeeping, compute the time_t value for
-	 * local midnight, 2000-01-01.	Insist that this be a multiple of 60;
-	 * any partial-minute offset has to be due to leap seconds.
+	 * To detect leap-second timekeeping, run pg_localtime for what should
+	 * be GMT midnight, 2000-01-01.  Insist that the tm_sec value be zero;
+	 * any other result has to be due to leap seconds.
 	 */
-	MemSet(&tt, 0, sizeof(tt));
-	tt.tm_year = 100;
-	tt.tm_mon = 0;
-	tt.tm_mday = 1;
-	tt.tm_isdst = -1;
-	time2000 = pg_mktime(&tt);
-	if ((time2000 % 60) != 0)
+	time2000 = (POSTGRES_EPOCH_JDATE - UNIX_EPOCH_JDATE) * 86400;
+	tt = pg_localtime(&time2000);
+	if (tt->tm_sec != 0)
 		return false;
 
 	return true;

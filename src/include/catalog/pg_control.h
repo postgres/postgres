@@ -8,15 +8,16 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.14 2004/05/21 05:08:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.15 2004/06/03 02:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef PG_CONTROL_H
 #define PG_CONTROL_H
 
+#include <time.h>
+
 #include "access/xlogdefs.h"
-#include "pgtime.h"
 #include "utils/pg_crc.h"
 
 

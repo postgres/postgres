@@ -672,15 +672,15 @@ SELECT '' AS "64", d1 + interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Sat Feb 14 17:32:01 1998 PST
     | Sun Feb 15 17:32:01 1998 PST
     | Mon Feb 16 17:32:01 1998 PST
-    | Thu Feb 16 17:32:01 0096 BC
-    | Sun Feb 16 17:32:01 0098
-    | Fri Feb 16 17:32:01 0598
-    | Wed Feb 16 17:32:01 1098
-    | Sun Feb 16 17:32:01 1698
-    | Fri Feb 16 17:32:01 1798
-    | Wed Feb 16 17:32:01 1898
+    | Thu Feb 16 17:32:01 0096 BC PST
+    | Sun Feb 16 17:32:01 0098 PST
+    | Fri Feb 16 17:32:01 0598 PST
+    | Wed Feb 16 17:32:01 1098 PST
+    | Sun Feb 16 17:32:01 1698 PST
+    | Fri Feb 16 17:32:01 1798 PST
+    | Wed Feb 16 17:32:01 1898 PST
     | Mon Feb 16 17:32:01 1998 PST
-    | Sun Feb 16 17:32:01 2098
+    | Sun Feb 16 17:32:01 2098 PST
     | Fri Feb 28 17:32:01 1997 PST
     | Fri Feb 28 17:32:01 1997 PST
     | Sat Mar 01 17:32:01 1997 PST
@@ -741,15 +741,15 @@ SELECT '' AS "64", d1 - interval '1 year' AS one_year FROM TIMESTAMPTZ_TBL;
     | Wed Feb 14 17:32:01 1996 PST
     | Thu Feb 15 17:32:01 1996 PST
     | Fri Feb 16 17:32:01 1996 PST
-    | Mon Feb 16 17:32:01 0098 BC
-    | Thu Feb 16 17:32:01 0096
-    | Tue Feb 16 17:32:01 0596
-    | Sun Feb 16 17:32:01 1096
-    | Thu Feb 16 17:32:01 1696
-    | Tue Feb 16 17:32:01 1796
-    | Sun Feb 16 17:32:01 1896
+    | Mon Feb 16 17:32:01 0098 BC PST
+    | Thu Feb 16 17:32:01 0096 PST
+    | Tue Feb 16 17:32:01 0596 PST
+    | Sun Feb 16 17:32:01 1096 PST
+    | Thu Feb 16 17:32:01 1696 PST
+    | Tue Feb 16 17:32:01 1796 PST
+    | Sun Feb 16 17:32:01 1896 PST
     | Fri Feb 16 17:32:01 1996 PST
-    | Thu Feb 16 17:32:01 2096
+    | Thu Feb 16 17:32:01 2096 PST
     | Tue Feb 28 17:32:01 1995 PST
     | Tue Feb 28 17:32:01 1995 PST
     | Wed Mar 01 17:32:01 1995 PST

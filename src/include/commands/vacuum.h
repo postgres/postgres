@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.53 2004/05/21 16:22:38 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/commands/vacuum.h,v 1.54 2004/06/03 02:08:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 #include "catalog/pg_statistic.h"
 #include "catalog/pg_type.h"
 #include "nodes/parsenodes.h"
-#include "pgtime.h"
 #include "utils/rel.h"
 
 

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.48 2004/05/21 05:08:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/datetime.h,v 1.49 2004/06/03 02:08:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
 #include <limits.h>
 #include <math.h>
 
-#include "pgtime.h"
 #include "utils/timestamp.h"
 
 
@@ -232,9 +231,10 @@ do { \
  * Include check for leap year.
  */
 
-extern int	day_tab[2][13];
+extern const int day_tab[2][13];
 
 #define isleap(y) (((y) % 4) == 0 && (((y) % 100) != 0 || ((y) % 400) == 0))
+
 
 /* Julian date support for date2j() and j2date()
  *
@@ -257,24 +257,6 @@ extern int	day_tab[2][13];
 #define UNIX_EPOCH_JDATE		2440588 /* == date2j(1970, 1, 1) */
 #define POSTGRES_EPOCH_JDATE	2451545 /* == date2j(2000, 1, 1) */
 
-/*
- * Info about limits of the Unix time_t data type.  We assume that time_t
- * is a signed int32 with origin 1970-01-01.  Note this is only relevant
- * when we use the C library's time routines for timezone processing.
- */
-#define UTIME_MINYEAR (1901)
-#define UTIME_MINMONTH (12)
-#define UTIME_MINDAY (14)
-#define UTIME_MAXYEAR (2038)
-#define UTIME_MAXMONTH (01)
-#define UTIME_MAXDAY (18)
-
-#define IS_VALID_UTIME(y,m,d) ((((y) > UTIME_MINYEAR) \
- || (((y) == UTIME_MINYEAR) && (((m) > UTIME_MINMONTH) \
-  || (((m) == UTIME_MINMONTH) && ((d) >= UTIME_MINDAY))))) \
- && (((y) < UTIME_MAXYEAR) \
- || (((y) == UTIME_MAXYEAR) && (((m) < UTIME_MAXMONTH) \
-  || (((m) == UTIME_MAXMONTH) && ((d) <= UTIME_MAXDAY))))))
 
 /*
  * Datetime input parsing routines (ParseDateTime, DecodeDateTime, etc)

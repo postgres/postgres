@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.122 2004/05/21 16:08:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.123 2004/06/03 02:08:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <ctype.h>
 #include <float.h>
 #include <limits.h>
+#include <time.h>
 #include <sys/time.h>
 
 #include "access/xact.h"
@@ -179,7 +180,7 @@ GetCurrentTimeUsec(struct pg_tm * tm, fsec_t *fsec, int *tzp)
 void
 abstime2tm(AbsoluteTime _time, int *tzp, struct pg_tm * tm, char **tzn)
 {
-	time_t		time = (time_t) _time;
+	pg_time_t	time = (pg_time_t) _time;
 	struct pg_tm  *tx;
 
 	/*
@@ -1667,12 +1668,12 @@ timeofday(PG_FUNCTION_ARGS)
 	char		buf[128];
 	text	   *result;
 	int			len;
-	time_t		tt;
+	pg_time_t	tt;
 
 	gettimeofday(&tp, &tpz);
-	tt = (time_t) tp.tv_sec;
+	tt = (pg_time_t) tp.tv_sec;
 	pg_strftime(templ, sizeof(templ), "%a %b %d %H:%M:%S.%%06d %Y %Z",
-			 pg_localtime(&tt));
+				pg_localtime(&tt));
 	snprintf(buf, sizeof(buf), templ, tp.tv_usec);
 
 	len = VARHDRSZ + strlen(buf);

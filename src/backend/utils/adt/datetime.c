@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.129 2004/05/31 18:53:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.130 2004/06/03 02:08:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,9 +40,11 @@ static int	DecodeDate(char *str, int fmask, int *tmask, struct pg_tm * tm);
 static void TrimTrailingZeros(char *str);
 
 
-int			day_tab[2][13] = {
+const int	day_tab[2][13] =
+{
 	{31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0},
-{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}};
+	{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31, 0}
+};
 
 char	   *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec", NULL};
@@ -1572,115 +1574,126 @@ DecodeDateTime(char **field, int *ftype, int nf,
  * (ie, regular or daylight-savings time) at that time.  Set the struct pg_tm's
  * tm_isdst field accordingly, and return the actual timezone offset.
  *
- * Note: this subroutine exists because mktime() has such a spectacular
- * variety of, ahem, odd behaviors on various platforms.  We used to try to
- * use mktime() here, but finally gave it up as a bad job.  Avoid using
- * mktime() anywhere else.
+ * Note: it might seem that we should use mktime() for this, but bitter
+ * experience teaches otherwise.  In particular, mktime() is generally
+ * incapable of coping reasonably with "impossible" times within a
+ * spring-forward DST transition.  Typical implementations of mktime()
+ * turn out to be loops around localtime() anyway, so they're not even
+ * any faster than this code.
  */
 int
-DetermineLocalTimeZone(struct pg_tm * tm)
+DetermineLocalTimeZone(struct pg_tm *tm)
 {
 	int			tz;
+	int			date,
+				sec;
+	pg_time_t	day,
+				mysec,
+				locsec,
+				delta1,
+				delta2;
+	struct pg_tm  *tx;
 
 	if (HasCTZSet)
 	{
 		tm->tm_isdst = 0;		/* for lack of a better idea */
-		tz = CTimeZone;
+		return CTimeZone;
 	}
-	else if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
+
+	/*
+	 * First, generate the pg_time_t value corresponding to the given
+	 * y/m/d/h/m/s taken as GMT time.  If this overflows, punt and
+	 * decide the timezone is GMT.  (We only need to worry about overflow
+	 * on machines where pg_time_t is 32 bits.)
+	 */
+	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
+		goto overflow;
+	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
+	day = ((pg_time_t) date) * 86400;
+	if (day / 86400 != date)
+		goto overflow;
+	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * 60) * 60;
+	mysec = day + sec;
+	/* since sec >= 0, overflow could only be from +day to -mysec */
+	if (mysec < 0 && day > 0)
+		goto overflow;
+
+	/*
+	 * Use pg_localtime to convert that pg_time_t to broken-down time,
+	 * and reassemble to get a representation of local time.  (We could get
+	 * overflow of a few hours in the result, but the delta calculation
+	 * should still work.)
+	 */
+	tx = pg_localtime(&mysec);
+	if (!tx)
+		goto overflow;			/* probably can't happen */
+	day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
+		UNIX_EPOCH_JDATE;
+	locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
+
+	/*
+	 * The local time offset corresponding to that GMT time is now
+	 * computable as mysec - locsec.
+	 */
+	delta1 = mysec - locsec;
+
+	/*
+	 * However, if that GMT time and the local time we are
+	 * actually interested in are on opposite sides of a
+	 * daylight-savings-time transition, then this is not the time
+	 * offset we want.	So, adjust the pg_time_t to be what we think
+	 * the GMT time corresponding to our target local time is, and
+	 * repeat the pg_localtime() call and delta calculation.
+	 *
+	 * We have to watch out for overflow while adjusting the pg_time_t.
+	 */
+	if ((delta1 < 0) ? (mysec < 0 && (mysec + delta1) > 0) :
+		(mysec > 0 && (mysec + delta1) < 0))
+		goto overflow;
+	mysec += delta1;
+	tx = pg_localtime(&mysec);
+	if (!tx)
+		goto overflow;			/* probably can't happen */
+	day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
+		UNIX_EPOCH_JDATE;
+	locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
+	delta2 = mysec - locsec;
+
+	/*
+	 * We may have to do it again to get the correct delta.
+	 *
+	 * It might seem we should just loop until we get the same delta
+	 * twice in a row, but if we've been given an "impossible" local
+	 * time (in the gap during a spring-forward transition) we'd never
+	 * get out of the loop.  The behavior we want is that "impossible"
+	 * times are taken as standard time, and also that ambiguous times
+	 * (during a fall-back transition) are taken as standard time.
+	 * Therefore, we bias the code to prefer the standard-time solution.
+	 */
+	if (delta2 != delta1 && tx->tm_isdst != 0)
 	{
-		/*
-		 * First, generate the time_t value corresponding to the given
-		 * y/m/d/h/m/s taken as GMT time.  This will not overflow (at
-		 * least not for time_t taken as signed) because of the range
-		 * check we did above.
-		 */
-		long		day,
-					mysec,
-					locsec,
-					delta1,
-					delta2;
-		time_t		mytime;
-		struct pg_tm  *tx;
-
-		day = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
-		mysec = tm->tm_sec + (tm->tm_min + (day * 24 + tm->tm_hour) * 60) * 60;
-		mytime = (time_t) mysec;
-
-		/*
-		 * Use localtime to convert that time_t to broken-down time,
-		 * and reassemble to get a representation of local time.
-		 */
-		tx = pg_localtime(&mytime);
+		delta2 -= delta1;
+		if ((delta2 < 0) ? (mysec < 0 && (mysec + delta2) > 0) :
+			(mysec > 0 && (mysec + delta2) < 0))
+			goto overflow;
+		mysec += delta2;
+		tx = pg_localtime(&mysec);
 		if (!tx)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("timestamp out of range")));
-		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
-			UNIX_EPOCH_JDATE;
-		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
-
-		/*
-		 * The local time offset corresponding to that GMT time is now
-		 * computable as mysec - locsec.
-		 */
-		delta1 = mysec - locsec;
-		/*
-		 * However, if that GMT time and the local time we are
-		 * actually interested in are on opposite sides of a
-		 * daylight-savings-time transition, then this is not the time
-		 * offset we want.	So, adjust the time_t to be what we think
-		 * the GMT time corresponding to our target local time is, and
-		 * repeat the localtime() call and delta calculation.
-		 */
-		mysec += delta1;
-		mytime = (time_t) mysec;
-		tx = pg_localtime(&mytime);
-		if (!tx)
-			ereport(ERROR,
-					(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-					 errmsg("timestamp out of range")));
+			goto overflow;			/* probably can't happen */
 		day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
 			UNIX_EPOCH_JDATE;
 		locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
 		delta2 = mysec - locsec;
-
-		/*
-		 * We may have to do it again to get the correct delta.
-		 *
-		 * It might seem we should just loop until we get the same delta
-		 * twice in a row, but if we've been given an "impossible" local
-		 * time (in the gap during a spring-forward transition) we'd never
-		 * get out of the loop.  The behavior we want is that "impossible"
-		 * times are taken as standard time, and also that ambiguous times
-		 * (during a fall-back transition) are taken as standard time.
-		 * Therefore, we bias the code to prefer the standard-time solution.
-		 */
-		if (delta2 != delta1 && tx->tm_isdst != 0)
-		{
-			mysec += (delta2 - delta1);
-			mytime = (time_t) mysec;
-			tx = pg_localtime(&mytime);
-			if (!tx)
-				ereport(ERROR,
-						(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
-						 errmsg("timestamp out of range")));
-			day = date2j(tx->tm_year + 1900, tx->tm_mon + 1, tx->tm_mday) -
-				UNIX_EPOCH_JDATE;
-			locsec = tx->tm_sec + (tx->tm_min + (day * 24 + tx->tm_hour) * 60) * 60;
-			delta2 = mysec - locsec;
-		}
-		tm->tm_isdst = tx->tm_isdst;
-		tz = (int) delta2;
 	}
-	else
-	{
-		/* Given date is out of range, so assume UTC */
-		tm->tm_isdst = 0;
-		tz = 0;
-	}
+	tm->tm_isdst = tx->tm_isdst;
+	tz = (int) delta2;
 
 	return tz;
+
+overflow:
+	/* Given date is out of range, so assume UTC */
+	tm->tm_isdst = 0;
+	return 0;
 }
 
 

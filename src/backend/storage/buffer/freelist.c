@@ -12,11 +12,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.43 2004/04/21 18:06:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.44 2004/06/03 02:08:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#include <time.h>
 
 #include "access/xact.h"
 #include "storage/buf_internals.h"

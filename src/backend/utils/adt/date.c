@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.98 2004/05/31 18:53:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.99 2004/06/03 02:08:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
 #include "parser/scansup.h"
-#include "pgtime.h"
 #include "utils/builtins.h"
 #include "utils/date.h"
 #include "utils/nabstime.h"
@@ -295,35 +294,22 @@ date2timestamptz(DateADT dateVal)
 	TimestampTz result;
 	struct pg_tm	tt,
 			   *tm = &tt;
+	int			tz;
 
 	j2date(dateVal + POSTGRES_EPOCH_JDATE,
 		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
-	if (IS_VALID_UTIME(tm->tm_year, tm->tm_mon, tm->tm_mday))
-	{
-		int			tz;
-
-		tm->tm_hour = 0;
-		tm->tm_min = 0;
-		tm->tm_sec = 0;
-		tz = DetermineLocalTimeZone(tm);
+	tm->tm_hour = 0;
+	tm->tm_min = 0;
+	tm->tm_sec = 0;
+	tz = DetermineLocalTimeZone(tm);
 
 #ifdef HAVE_INT64_TIMESTAMP
-		result = (dateVal * INT64CONST(86400000000))
-			+ (tz * INT64CONST(1000000));
+	result = (dateVal * INT64CONST(86400000000))
+		+ (tz * INT64CONST(1000000));
 #else
-		result = dateVal * 86400.0 + tz;
+	result = dateVal * 86400.0 + tz;
 #endif
-	}
-	else
-	{
-		/* Outside of range for timezone support, so assume UTC */
-#ifdef HAVE_INT64_TIMESTAMP
-		result = (dateVal * INT64CONST(86400000000));
-#else
-		result = dateVal * 86400.0;
-#endif
-	}
 
 	return result;
 }

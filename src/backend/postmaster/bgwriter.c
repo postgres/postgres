@@ -37,13 +37,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.2 2004/05/31 03:47:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/bgwriter.c,v 1.3 2004/06/03 02:08:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 #include <signal.h>
+#include <time.h>
 
 #include "access/xlog.h"
 #include "libpq/pqsignal.h"

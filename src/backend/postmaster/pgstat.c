@@ -13,7 +13,7 @@
  *
  *	Copyright (c) 2001-2003, PostgreSQL Global Development Group
  *
- *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.73 2004/05/29 22:48:19 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/postmaster/pgstat.c,v 1.74 2004/06/03 02:08:03 tgl Exp $
  * ----------
  */
 #include "postgres.h"
@@ -29,6 +29,7 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <signal.h>
+#include <time.h>
 
 #include "pgstat.h"
 

@@ -3,12 +3,13 @@
  * 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.7 2004/05/21 20:59:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/timezone/zic.c,v 1.8 2004/06/03 02:08:07 tgl Exp $
  */
 
 #include "postgres.h"
 
 #include <locale.h>
+#include <limits.h>
 
 #include "pgtz.h"
 #include "private.h"
@@ -71,7 +72,7 @@ struct rule
 	const char *r_abbrvar;		/* variable part of abbreviation */
 
 	int			r_todo;			/* a rule to do (used in outzone) */
-	time_t		r_temp;			/* used in outzone */
+	pg_time_t	r_temp;			/* used in outzone */
 };
 
 /*
@@ -98,14 +99,14 @@ struct zone
 	int			z_nrules;
 
 	struct rule z_untilrule;
-	time_t		z_untiltime;
+	pg_time_t	z_untiltime;
 };
 
 extern int	link(const char *fromname, const char *toname);
-static void addtt(time_t starttime, int type);
+static void addtt(pg_time_t starttime, int type);
 static int addtype(long gmtoff, const char *abbr, int isdst,
 		int ttisstd, int ttisgmt);
-static void leapadd(time_t t, int positive, int rolling, int count);
+static void leapadd(pg_time_t t, int positive, int rolling, int count);
 static void adjleap(void);
 static void associate(void);
 static int	ciequal(const char *ap, const char *bp);
@@ -138,13 +139,13 @@ static long oadd(long t1, long t2);
 static void outzone(const struct zone * zp, int ntzones);
 static void puttzcode(long code, FILE *fp);
 static int	rcomp(const void *leftp, const void *rightp);
-static time_t rpytime(const struct rule * rp, int wantedy);
+static pg_time_t rpytime(const struct rule * rp, int wantedy);
 static void rulesub(struct rule * rp,
 		const char *loyearp, const char *hiyearp,
 		const char *typep, const char *monthp,
 		const char *dayp, const char *timep);
 static void setboundaries(void);
-static time_t tadd(time_t t1, long t2);
+static pg_time_t tadd(pg_time_t t1, long t2);
 static void usage(void);
 static void writezone(const char *name);
 static int	yearistype(int year, const char *type);
@@ -158,10 +159,10 @@ static int	errors;
 static const char *filename;
 static int	leapcnt;
 static int	linenum;
-static time_t max_time;
+static pg_time_t max_time;
 static int	max_year;
 static int	max_year_representable;
-static time_t min_time;
+static pg_time_t min_time;
 static int	min_year;
 static int	min_year_representable;
 static int	noise;
@@ -354,7 +355,7 @@ static const int len_years[2] = {
 
 static struct attype
 {
-	time_t		at;
+	pg_time_t		at;
 	unsigned char type;
 }	attypes[TZ_MAX_TIMES];
 static long gmtoffs[TZ_MAX_TYPES];
@@ -363,7 +364,7 @@ static unsigned char abbrinds[TZ_MAX_TYPES];
 static char ttisstds[TZ_MAX_TYPES];
 static char ttisgmts[TZ_MAX_TYPES];
 static char chars[TZ_MAX_CHARS];
-static time_t trans[TZ_MAX_LEAPS];
+static pg_time_t trans[TZ_MAX_LEAPS];
 static long corr[TZ_MAX_LEAPS];
 static char roll[TZ_MAX_LEAPS];
 
@@ -684,27 +685,26 @@ dolink(const char *fromfile, const char *tofile)
  * change to the tz file format.
  */
 
-#define MAX_BITS_IN_FILE	32
-#define TIME_T_BITS_IN_FILE ((TYPE_BIT(time_t) < MAX_BITS_IN_FILE) ? TYPE_BIT(time_t) : MAX_BITS_IN_FILE)
+#define TIME_T_BITS_IN_FILE 32
 
 static void
 setboundaries(void)
 {
-	if (TYPE_SIGNED(time_t))
-	{
-		min_time = ~(time_t) 0;
-		min_time <<= TIME_T_BITS_IN_FILE - 1;
-		max_time = ~(time_t) 0 - min_time;
-		if (sflag)
-			min_time = 0;
-	}
-	else
-	{
-		min_time = 0;
-		max_time = 2 - sflag;
-		max_time <<= TIME_T_BITS_IN_FILE - 1;
-		--max_time;
-	}
+	/*
+	 * pg_time_t is always signed, but might be only 32 bits ...
+	 */
+	min_time = ~(pg_time_t) 0;
+	min_time <<= TYPE_BIT(pg_time_t) - 1;
+	max_time = ~(pg_time_t) 0 - min_time;
+
+	/*
+	 * For the moment, hard-wire the range as 1901 to 2038.  We cannot
+	 * go wider without adopting an incompatible zone file format, which
+	 * is a step I'd just as soon not take just yet.
+	 */
+	min_time = Max(min_time, (pg_time_t) INT_MIN);
+	max_time = Min(max_time, (pg_time_t) INT_MAX);
+
 	min_year = TM_YEAR_BASE + pg_gmtime(&min_time)->tm_year;
 	max_year = TM_YEAR_BASE + pg_gmtime(&max_time)->tm_year;
 	min_year_representable = min_year;
@@ -1170,7 +1170,7 @@ inleap(register char **fields, const int nfields)
 				day;
 	long		dayoff,
 				tod;
-	time_t		t;
+	pg_time_t		t;
 
 	if (nfields != LEAP_FIELDS)
 	{
@@ -1223,11 +1223,6 @@ inleap(register char **fields, const int nfields)
 		return;
 	}
 	dayoff = oadd(dayoff, eitol(day - 1));
-	if (dayoff < 0 && !TYPE_SIGNED(time_t))
-	{
-		error(_("time before zero"));
-		return;
-	}
 	if (dayoff < min_time / SECSPERDAY)
 	{
 		error(_("time too small"));
@@ -1238,7 +1233,7 @@ inleap(register char **fields, const int nfields)
 		error(_("time too large"));
 		return;
 	}
-	t = (time_t) dayoff *SECSPERDAY;
+	t = (pg_time_t) dayoff *SECSPERDAY;
 
 	tod = gethms(fields[LP_TIME], _("invalid time of day"), FALSE);
 	cp = fields[LP_CORR];
@@ -1525,7 +1520,7 @@ writezone(const char *name)
 				j;
 	static char *fullname;
 	static struct tzhead tzh;
-	time_t		ats[TZ_MAX_TIMES];
+	pg_time_t		ats[TZ_MAX_TIMES];
 	unsigned char types[TZ_MAX_TIMES];
 
 	/*
@@ -1711,8 +1706,8 @@ outzone(const struct zone * zpfirst, const int zonecount)
 				j;
 	register int usestart,
 				useuntil;
-	register time_t starttime = 0;
-	register time_t untiltime = 0;
+	register pg_time_t starttime = 0;
+	register pg_time_t untiltime = 0;
 	register long gmtoff;
 	register long stdoff;
 	register int year;
@@ -1790,7 +1785,7 @@ outzone(const struct zone * zpfirst, const int zonecount)
 				for (;;)
 				{
 					register int k;
-					register time_t jtime,
+					register pg_time_t jtime,
 								ktime = 0;
 					register long offset;
 					char		buf[BUFSIZ];
@@ -1911,7 +1906,7 @@ outzone(const struct zone * zpfirst, const int zonecount)
 }
 
 static void
-addtt(const time_t starttime, int type)
+addtt(const pg_time_t starttime, int type)
 {
 	if (starttime <= min_time ||
 		(timecnt == 1 && attypes[0].at < min_time))
@@ -1999,7 +1994,7 @@ addtype(const long gmtoff, const char *abbr, const int isdst,
 }
 
 static void
-leapadd(const time_t t, const int positive, const int rolling, int count)
+leapadd(const pg_time_t t, const int positive, const int rolling, int count)
 {
 	register int i,
 				j;
@@ -2191,10 +2186,10 @@ oadd(const long t1, const long t2)
 	return t;
 }
 
-static time_t
-tadd(const time_t t1, const long t2)
+static pg_time_t
+tadd(const pg_time_t t1, const long t2)
 {
-	register time_t t;
+	register pg_time_t t;
 
 	if (t1 == max_time && t2 > 0)
 		return max_time;
@@ -2214,14 +2209,14 @@ tadd(const time_t t1, const long t2)
  * 1970, 00:00 LOCAL time - in that year that the rule refers to.
  */
 
-static time_t
+static pg_time_t
 rpytime(register const struct rule * rp, register const int wantedy)
 {
 	register int y,
 				m,
 				i;
 	register long dayoff;		/* with a nod to Margaret O. */
-	register time_t t;
+	register pg_time_t t;
 
 	if (wantedy == INT_MIN)
 		return min_time;
@@ -2302,13 +2297,11 @@ rpytime(register const struct rule * rp, register const int wantedy)
 			(void) exit(EXIT_FAILURE);
 		}
 	}
-	if (dayoff < 0 && !TYPE_SIGNED(time_t))
-		return min_time;
 	if (dayoff < min_time / SECSPERDAY)
 		return min_time;
 	if (dayoff > max_time / SECSPERDAY)
 		return max_time;
-	t = (time_t) dayoff *SECSPERDAY;
+	t = (pg_time_t) dayoff *SECSPERDAY;
 
 	return tadd(t, rp->r_tod);
 }
