@@ -13,9 +13,9 @@
 char	   *ECPGalloc(long, int);
 
 static int
-deccall2(Decimal * arg1, Decimal * arg2, int (*ptr) (Numeric *, Numeric *))
+deccall2(decimal * arg1, decimal * arg2, int (*ptr) (numeric *, numeric *))
 {
-	Numeric    *a1,
+	numeric    *a1,
 			   *a2;
 	int			i;
 
@@ -51,9 +51,9 @@ deccall2(Decimal * arg1, Decimal * arg2, int (*ptr) (Numeric *, Numeric *))
 }
 
 static int
-deccall3(Decimal * arg1, Decimal * arg2, Decimal * result, int (*ptr) (Numeric *, Numeric *, Numeric *))
+deccall3(decimal * arg1, decimal * arg2, decimal * result, int (*ptr) (numeric *, numeric *, numeric *))
 {
-	Numeric    *a1,
+	numeric    *a1,
 			   *a2,
 			   *nres;
 	int			i;
@@ -110,7 +110,7 @@ deccall3(Decimal * arg1, Decimal * arg2, Decimal * result, int (*ptr) (Numeric *
 
 /* we start with the numeric functions */
 int
-decadd(Decimal * arg1, Decimal * arg2, Decimal * sum)
+decadd(decimal * arg1, decimal * arg2, decimal * sum)
 {
 	deccall3(arg1, arg2, sum, PGTYPESnumeric_add);
 
@@ -123,15 +123,15 @@ decadd(Decimal * arg1, Decimal * arg2, Decimal * sum)
 }
 
 int
-deccmp(Decimal * arg1, Decimal * arg2)
+deccmp(decimal * arg1, decimal * arg2)
 {
 	return (deccall2(arg1, arg2, PGTYPESnumeric_cmp));
 }
 
 void
-deccopy(Decimal * src, Decimal * target)
+deccopy(decimal * src, decimal * target)
 {
-	memcpy(target, src, sizeof(Decimal));
+	memcpy(target, src, sizeof(decimal));
 }
 
 static char *
@@ -154,12 +154,12 @@ strndup(const char *str, size_t len)
 }
 
 int
-deccvasc(char *cp, int len, Decimal * np)
+deccvasc(char *cp, int len, decimal * np)
 {
-	char	   *str = strndup(cp, len); /* Decimal_in always converts the
+	char	   *str = strndup(cp, len); /* decimal_in always converts the
 										 * complete string */
 	int			ret = 0;
-	Numeric    *result;
+	numeric    *result;
 
 	if (risnull(CSTRINGTYPE, cp))
 	{
@@ -201,9 +201,9 @@ deccvasc(char *cp, int len, Decimal * np)
 }
 
 int
-deccvdbl(double dbl, Decimal * np)
+deccvdbl(double dbl, decimal * np)
 {
-	Numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres = PGTYPESnumeric_new();
 	int			result = 1;
 
 	if (risnull(CDOUBLETYPE, (char *) &dbl))
@@ -224,9 +224,9 @@ deccvdbl(double dbl, Decimal * np)
 }
 
 int
-deccvint(int in, Decimal * np)
+deccvint(int in, decimal * np)
 {
-	Numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres = PGTYPESnumeric_new();
 	int			result = 1;
 
 	if (risnull(CINTTYPE, (char *) &in))
@@ -247,9 +247,9 @@ deccvint(int in, Decimal * np)
 }
 
 int
-deccvlong(long lng, Decimal * np)
+deccvlong(long lng, decimal * np)
 {
-	Numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres = PGTYPESnumeric_new();
 	int			result = 1;
 
 	if (risnull(CLONGTYPE, (char *) &lng))
@@ -270,7 +270,7 @@ deccvlong(long lng, Decimal * np)
 }
 
 int
-decdiv(Decimal * n1, Decimal * n2, Decimal * n3)
+decdiv(decimal * n1, decimal * n2, decimal * n3)
 {
 	int			i = deccall3(n1, n2, n3, PGTYPESnumeric_div);
 
@@ -292,7 +292,7 @@ decdiv(Decimal * n1, Decimal * n2, Decimal * n3)
 }
 
 int
-decmul(Decimal * n1, Decimal * n2, Decimal * n3)
+decmul(decimal * n1, decimal * n2, decimal * n3)
 {
 	int			i = deccall3(n1, n2, n3, PGTYPESnumeric_mul);
 
@@ -311,7 +311,7 @@ decmul(Decimal * n1, Decimal * n2, Decimal * n3)
 }
 
 int
-decsub(Decimal * n1, Decimal * n2, Decimal * n3)
+decsub(decimal * n1, decimal * n2, decimal * n3)
 {
 	int			i = deccall3(n1, n2, n3, PGTYPESnumeric_sub);
 
@@ -330,10 +330,10 @@ decsub(Decimal * n1, Decimal * n2, Decimal * n3)
 }
 
 int
-dectoasc(Decimal * np, char *cp, int len, int right)
+dectoasc(decimal * np, char *cp, int len, int right)
 {
 	char	   *str;
-	Numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres = PGTYPESnumeric_new();
 
 	if (nres == NULL)
 		return -1211;
@@ -367,9 +367,9 @@ dectoasc(Decimal * np, char *cp, int len, int right)
 }
 
 int
-dectodbl(Decimal * np, double *dblp)
+dectodbl(decimal * np, double *dblp)
 {
-	Numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres = PGTYPESnumeric_new();
 	int			i;
 
 	if (nres == NULL)
@@ -385,10 +385,10 @@ dectodbl(Decimal * np, double *dblp)
 }
 
 int
-dectoint(Decimal * np, int *ip)
+dectoint(decimal * np, int *ip)
 {
 	int			ret;
-	Numeric    *nres = PGTYPESnumeric_new();
+	numeric    *nres = PGTYPESnumeric_new();
 
 	if (nres == NULL)
 		return -1211;
@@ -405,10 +405,10 @@ dectoint(Decimal * np, int *ip)
 }
 
 int
-dectolong(Decimal * np, long *lngp)
+dectolong(decimal * np, long *lngp)
 {
 	int			ret;
-	Numeric    *nres = PGTYPESnumeric_new();;
+	numeric    *nres = PGTYPESnumeric_new();;
 
 	if (nres == NULL)
 		return -1211;
@@ -529,15 +529,15 @@ rdayofweek(Date d)
 /* And the datetime stuff */
 
 void
-dtcurrent(Timestamp *ts)
+dtcurrent(timestamp *ts)
 {
 	PGTYPEStimestamp_current(ts);
 }
 
 int
-dtcvasc(char *str, Timestamp *ts)
+dtcvasc(char *str, timestamp *ts)
 {
-	Timestamp	ts_tmp;
+	timestamp	ts_tmp;
 	int			i;
 	char	  **endptr = &str;
 
@@ -558,13 +558,13 @@ dtcvasc(char *str, Timestamp *ts)
 }
 
 int
-dtsub(Timestamp *ts1, Timestamp *ts2, Interval *iv)
+dtsub(timestamp *ts1, timestamp *ts2, interval *iv)
 {
 	return PGTYPEStimestamp_sub(ts1, ts2, iv);
 }
 
 int
-dttoasc(Timestamp *ts, char *output)
+dttoasc(timestamp *ts, char *output)
 {
 	char	   *asctime = PGTYPEStimestamp_to_asc(*ts);
 
@@ -574,13 +574,13 @@ dttoasc(Timestamp *ts, char *output)
 }
 
 int
-dttofmtasc(Timestamp *ts, char *output, int str_len, char *fmtstr)
+dttofmtasc(timestamp *ts, char *output, int str_len, char *fmtstr)
 {
 	return PGTYPEStimestamp_fmt_asc(ts, output, str_len, fmtstr);
 }
 
 int
-intoasc(Interval *i, char *str)
+intoasc(interval *i, char *str)
 {
 	str = PGTYPESinterval_to_asc(i);
 

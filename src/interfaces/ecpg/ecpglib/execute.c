@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.23 2003/08/04 00:43:32 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.24 2003/09/09 10:46:37 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -846,16 +846,16 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 				{
 					char	   *str = NULL;
 					int			slen;
-					Numeric    *nval = PGTYPESnumeric_new();
+					numeric    *nval = PGTYPESnumeric_new();
 
 					if (var->arrsize > 1)
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
 							if (var->type == ECPGt_numeric)
-								PGTYPESnumeric_copy((Numeric *) ((var + var->offset * element)->value), nval);
+								PGTYPESnumeric_copy((numeric *) ((var + var->offset * element)->value), nval);
 							else
-								PGTYPESnumeric_from_decimal((Decimal *) ((var + var->offset * element)->value), nval);
+								PGTYPESnumeric_from_decimal((decimal *) ((var + var->offset * element)->value), nval);
 
 							str = PGTYPESnumeric_to_asc(nval, 0);
 							PGTYPESnumeric_free(nval);
@@ -875,9 +875,9 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					else
 					{
 						if (var->type == ECPGt_numeric)
-							PGTYPESnumeric_copy((Numeric *) (var->value), nval);
+							PGTYPESnumeric_copy((numeric *) (var->value), nval);
 						else
-							PGTYPESnumeric_from_decimal((Decimal *) (var->value), nval);
+							PGTYPESnumeric_from_decimal((decimal *) (var->value), nval);
 
 						str = PGTYPESnumeric_to_asc(nval, 0);
 
@@ -906,7 +906,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESinterval_to_asc((Interval *) ((var + var->offset * element)->value)), stmt->lineno);
+							str = quote_postgres(PGTYPESinterval_to_asc((interval *) ((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],interval "), stmt->lineno)))
@@ -923,7 +923,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESinterval_to_asc((Interval *) (var->value)), stmt->lineno);
+						str = quote_postgres(PGTYPESinterval_to_asc((interval *) (var->value)), stmt->lineno);
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + sizeof("interval ") + 1, stmt->lineno)))
@@ -949,7 +949,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPESdate_to_asc(*(Date *) ((var + var->offset * element)->value)), stmt->lineno);
+							str = quote_postgres(PGTYPESdate_to_asc(*(date *) ((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [],date "), stmt->lineno)))
@@ -966,7 +966,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = quote_postgres(PGTYPESdate_to_asc(*(Date *) (var->value)), stmt->lineno);
+						str = quote_postgres(PGTYPESdate_to_asc(*(date *) (var->value)), stmt->lineno);
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + sizeof("date ") + 1, stmt->lineno)))
@@ -992,7 +992,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					{
 						for (element = 0; element < var->arrsize; element++)
 						{
-							str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *) ((var + var->offset * element)->value)), stmt->lineno);
+							str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) ((var + var->offset * element)->value)), stmt->lineno);
 							slen = strlen(str);
 
 							if (!(mallocedval = ECPGrealloc(mallocedval, strlen(mallocedval) + slen + sizeof("array [], timestamp "), stmt->lineno)))
@@ -1009,7 +1009,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 					}
 					else
 					{
-						str = quote_postgres(PGTYPEStimestamp_to_asc(*(Timestamp *) (var->value)), stmt->lineno);
+						str = quote_postgres(PGTYPEStimestamp_to_asc(*(timestamp *) (var->value)), stmt->lineno);
 						slen = strlen(str);
 
 						if (!(mallocedval = ECPGalloc(slen + sizeof("timestamp") + 1, stmt->lineno)))

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.16 2003/08/04 00:43:32 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.17 2003/09/09 10:46:37 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -115,10 +115,10 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				unsigned long ures;
 				double		dres;
 				char	   *scan_length;
-				Numeric    *nres;
-				Date		ddres;
-				Timestamp	tres;
-				Interval   *ires;
+				numeric    *nres;
+				date		ddres;
+				timestamp	tres;
+				interval   *ires;
 
 			case ECPGt_short:
 			case ECPGt_int:
@@ -126,8 +126,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				if (pval)
 				{
 					res = strtol(pval, &scan_length, 10);
+					/* INFORMIX allows for selecting a numeric into an int, the result is truncated */
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_INT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
@@ -160,7 +161,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					ures = strtoul(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
@@ -193,7 +194,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					*((long long int *) (var + offset * act_tuple)) = strtoll(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_INT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
@@ -210,7 +211,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				{
 					*((unsigned long long int *) (var + offset * act_tuple)) = strtoull(pval, &scan_length, 10);
 					if ((isarray && *scan_length != ',' && *scan_length != '}')
-						|| (!isarray && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
+						|| (!isarray && !(INFORMIX_MODE(compat) && *scan_length == '.') && *scan_length != '\0' && *scan_length != ' '))	/* Garbage left */
 					{
 						ECPGraise(lineno, ECPG_UINT_FORMAT, ECPG_SQLSTATE_DATATYPE_MISMATCH, pval);
 						return (false);
@@ -403,9 +404,9 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 					nres = PGTYPESnumeric_from_asc("0.0", &scan_length);
 
 				if (type == ECPGt_numeric)
-					PGTYPESnumeric_copy(nres, (Numeric *) (var + offset * act_tuple));
+					PGTYPESnumeric_copy(nres, (numeric *) (var + offset * act_tuple));
 				else
-					PGTYPESnumeric_to_decimal(nres, (Decimal *) (var + offset * act_tuple));
+					PGTYPESnumeric_to_decimal(nres, (decimal *) (var + offset * act_tuple));
 				break;
 
 			case ECPGt_interval:
@@ -429,7 +430,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				else
 					ires = PGTYPESinterval_from_asc("0 seconds", NULL);
 
-				PGTYPESinterval_copy(ires, (Interval *) (var + offset * act_tuple));
+				PGTYPESinterval_copy(ires, (interval *) (var + offset * act_tuple));
 				break;
 			case ECPGt_date:
 				if (pval)
@@ -449,7 +450,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						return (false);
 					}
 
-					*((Date *) (var + offset * act_tuple)) = ddres;
+					*((date *) (var + offset * act_tuple)) = ddres;
 				}
 				break;
 
@@ -471,7 +472,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 						return (false);
 					}
 
-					*((Timestamp *) (var + offset * act_tuple)) = tres;
+					*((timestamp *) (var + offset * act_tuple)) = tres;
 				}
 				break;
 

@@ -3,16 +3,16 @@
 
 #include <pgtypes_timestamp.h>
 
-#define Date long
+#define date long
 
-extern Date PGTYPESdate_from_asc(char *, char **);
-extern char *PGTYPESdate_to_asc(Date);
-extern Date PGTYPESdate_from_timestamp(Timestamp);
-extern void PGTYPESdate_julmdy(Date, int *);
-extern void PGTYPESdate_mdyjul(int *, Date *);
-extern int	PGTYPESdate_dayofweek(Date);
-extern void PGTYPESdate_today(Date *);
-extern int	PGTYPESdate_defmt_asc(Date *, char *, char *);
-extern int	PGTYPESdate_fmt_asc(Date, char *, char *);
+extern date PGTYPESdate_from_asc(char *, char **);
+extern char *PGTYPESdate_to_asc(date);
+extern date PGTYPESdate_from_timestamp(timestamp);
+extern void PGTYPESdate_julmdy(date, int *);
+extern void PGTYPESdate_mdyjul(int *, date *);
+extern int	PGTYPESdate_dayofweek(date);
+extern void PGTYPESdate_today(date *);
+extern int	PGTYPESdate_defmt_asc(date *, char *, char *);
+extern int	PGTYPESdate_fmt_asc(date, char *, char *);
 
 #endif   /* PGTYPES_DATETIME */

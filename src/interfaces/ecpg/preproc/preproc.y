@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.253 2003/08/26 16:09:01 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.254 2003/09/09 10:46:38 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4505,7 +4505,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("Decimal");
+				$$.type_str = make_str("decimal");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4513,7 +4513,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "date") == 0)
 			{
 				$$.type_enum = ECPGt_date;
-				$$.type_str = make_str("Date");
+				$$.type_str = make_str("date");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4521,7 +4521,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "timestamp") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("Timestamp");
+				$$.type_str = make_str("timestamp");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4529,7 +4529,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "datetime") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("Timestamp");
+				$$.type_str = make_str("timestamp");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4537,7 +4537,7 @@ single_vt_type: common_type
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
-				$$.type_str = make_str("Interval");
+				$$.type_str = make_str("interval");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4806,12 +4806,12 @@ common_type: simple_type
 			if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("Numeric");
+				$$.type_str = make_str("numeric");
 			}
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("Decimal");
+				$$.type_str = make_str("decimal");
 			}
 			else
 				mmerror(PARSE_ERROR, ET_ERROR, "Only numeric/decimal have precision/scale argument");
@@ -4859,7 +4859,7 @@ var_type:	common_type
 			else if (strcmp($1, "numeric") == 0)
 			{
 				$$.type_enum = ECPGt_numeric;
-				$$.type_str = make_str("Numeric");
+				$$.type_str = make_str("numeric");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4867,7 +4867,7 @@ var_type:	common_type
 			else if (strcmp($1, "decimal") == 0)
 			{
 				$$.type_enum = ECPGt_decimal;
-				$$.type_str = make_str("Deciaml");
+				$$.type_str = make_str("decimal");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4875,7 +4875,7 @@ var_type:	common_type
 			else if (strcmp($1, "date") == 0)
 			{
 				$$.type_enum = ECPGt_date;
-				$$.type_str = make_str("Date");
+				$$.type_str = make_str("date");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4883,7 +4883,7 @@ var_type:	common_type
 			else if (strcmp($1, "timestamp") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("Timestamp");
+				$$.type_str = make_str("timestamp");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4891,7 +4891,7 @@ var_type:	common_type
 			else if (strcmp($1, "interval") == 0)
 			{
 				$$.type_enum = ECPGt_interval;
-				$$.type_str = make_str("Interval");
+				$$.type_str = make_str("interval");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;
@@ -4899,7 +4899,7 @@ var_type:	common_type
 			else if (strcmp($1, "datetime") == 0)
 			{
 				$$.type_enum = ECPGt_timestamp;
-				$$.type_str = make_str("Timestamp");
+				$$.type_str = make_str("timestamp");
 				$$.type_dimension = make_str("-1");
 				$$.type_index = make_str("-1");
 				$$.type_sizeof = NULL;

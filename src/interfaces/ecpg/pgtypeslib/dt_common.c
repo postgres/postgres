@@ -2736,11 +2736,11 @@ pgtypes_defmt_scan(union un_fmt_comb * scan_val, int scan_type, char **pstr, cha
 }
 
 /* XXX range checking */
-int PGTYPEStimestamp_defmt_scan(char **, char *, Timestamp *, int *, int *, int *,
+int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int *,
 							int *, int *, int *, int *);
 
 int
-PGTYPEStimestamp_defmt_scan(char **str, char *fmt, Timestamp *d,
+PGTYPEStimestamp_defmt_scan(char **str, char *fmt, timestamp *d,
 							int *year, int *month, int *day,
 							int *hour, int *minute, int *second,
 							int *tz)

@@ -6,7 +6,7 @@ int
 main()
 {
 	char *text="error\n";
-	Numeric *value1, *value2, *res;
+	numeric *value1, *value2, *res;
 	exec sql begin declare section;
 		numeric(14,7) des = {0, 0, 0, 0, 0, NULL, NULL} ;
 	exec sql end declare section;

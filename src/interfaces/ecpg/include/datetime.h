@@ -2,11 +2,11 @@
 #include <pgtypes_interval.h>
 
 #ifndef dtime_t
-#define dtime_t Timestamp
+#define dtime_t timestamp
 #endif   /* dtime_t */
 
 #ifndef intrvl_t
-#define intrvl_t Interval
+#define intrvl_t interval
 #endif   /* intrvl_t */
 
 extern void dtcurrent(dtime_t *);

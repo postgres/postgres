@@ -12,10 +12,10 @@ typedef struct
 #endif
 	long		month;			/* months and years, after time for
 								 * alignment */
-} Interval;
+} interval;
 
-extern Interval *PGTYPESinterval_from_asc(char *, char **);
-extern char *PGTYPESinterval_to_asc(Interval *);
-extern int	PGTYPESinterval_copy(Interval *, Interval *);
+extern interval *PGTYPESinterval_from_asc(char *, char **);
+extern char *PGTYPESinterval_to_asc(interval *);
+extern int	PGTYPESinterval_copy(interval *, interval *);
 
 #endif   /* PGTYPES_INTERVAL */

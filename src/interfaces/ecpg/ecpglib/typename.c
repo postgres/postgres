@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.8 2003/07/01 12:40:51 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/typename.c,v 1.9 2003/09/09 10:46:37 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -49,15 +49,15 @@ ECPGtype_name(enum ECPGttype typ)
 		case ECPGt_char_variable:
 			return "char";
 		case ECPGt_decimal:
-			return "Decimal";
+			return "decimal";
 		case ECPGt_numeric:
-			return "Numeric";
+			return "numeric";
 		case ECPGt_date:
-			return "Date";
+			return "date";
 		case ECPGt_timestamp:
-			return "Timestamp";
+			return "timestamp";
 		case ECPGt_interval:
-			return "Interval";
+			return "interval";
 		case ECPGt_const:
 			return "Const";
 		default:

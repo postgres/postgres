@@ -677,7 +677,7 @@ EncodeInterval(struct tm * tm, fsec_t fsec, int style, char *str)
  * Convert a interval data type to a tm structure.
  */
 static int
-interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
+interval2tm(interval span, struct tm * tm, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
@@ -721,7 +721,7 @@ interval2tm(Interval span, struct tm * tm, fsec_t *fsec)
 }	/* interval2tm() */
 
 static int
-tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
+tm2interval(struct tm * tm, fsec_t fsec, interval *span)
 {
 	span->month = ((tm->tm_year * 12) + tm->tm_mon);
 #ifdef HAVE_INT64_TIMESTAMP
@@ -740,10 +740,10 @@ tm2interval(struct tm * tm, fsec_t fsec, Interval *span)
 	return 0;
 }	/* tm2interval() */
 
-Interval *
+interval *
 PGTYPESinterval_from_asc(char *str, char **endptr)
 {
-	Interval   *result = NULL;
+	interval   *result = NULL;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -776,7 +776,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 		return NULL;
 	}
 
-	result = (Interval *) pgtypes_alloc(sizeof(Interval));
+	result = (interval *) pgtypes_alloc(sizeof(interval));
 	if (!result)
 		return NULL;
 
@@ -796,7 +796,7 @@ PGTYPESinterval_from_asc(char *str, char **endptr)
 }
 
 char *
-PGTYPESinterval_to_asc(Interval *span)
+PGTYPESinterval_to_asc(interval *span)
 {
 	struct tm	tt,
 			   *tm = &tt;
@@ -820,7 +820,7 @@ PGTYPESinterval_to_asc(Interval *span)
 }
 
 int
-PGTYPESinterval_copy(Interval *intvlsrc, Interval *intrcldest)
+PGTYPESinterval_copy(interval *intvlsrc, interval *intrcldest)
 {
 	intrcldest->time = intvlsrc->time;
 	intrcldest->month = intvlsrc->month;

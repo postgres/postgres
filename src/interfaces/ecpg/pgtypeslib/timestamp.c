@@ -13,7 +13,7 @@
 #include "pgtypes_date.h"
 #include "datetime.h"
 
-int PGTYPEStimestamp_defmt_scan(char **, char *, Timestamp *, int *, int *, int *,
+int PGTYPEStimestamp_defmt_scan(char **, char *, timestamp *, int *, int *, int *,
 							int *, int *, int *, int *);
 
 #ifdef HAVE_INT64_TIMESTAMP
@@ -31,8 +31,8 @@ time2t(const int hour, const int min, const int sec, const fsec_t fsec)
 }	/* time2t() */
 #endif
 
-static Timestamp
-dt2local(Timestamp dt, int tz)
+static timestamp
+dt2local(timestamp dt, int tz)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	dt -= (tz * INT64CONST(1000000));
@@ -51,22 +51,21 @@ dt2local(Timestamp dt, int tz)
  * Returns -1 on failure (overflow).
  */
 int
-tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
+tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int			date;
+	int		dDate;
 	int64		time;
 
 #else
-	double		date,
-				time;
+	double		dDate, time;
 #endif
 
 	/* Julian day routines are not correct for negative Julian days */
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		return -1;
 
-	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
+	dDate = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1);
 	time = time2t(tm->tm_hour, tm->tm_min, tm->tm_sec, fsec);
 #ifdef HAVE_INT64_TIMESTAMP
 	*result = (date * INT64CONST(86400000000)) + time;
@@ -77,7 +76,7 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	if ((*result < 0) ? (date >= 0) : (date < 0))
 		return -1;
 #else
-	*result = ((date * 86400) + time);
+	*result = ((dDate * 86400) + time);
 #endif
 	if (tzp != NULL)
 		*result = dt2local(*result, -(*tzp));
@@ -85,10 +84,10 @@ tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, Timestamp *result)
 	return 0;
 }	/* tm2timestamp() */
 
-static Timestamp
+static timestamp
 SetEpochTimestamp(void)
 {
-	Timestamp	dt;
+	timestamp	dt;
 	struct tm	tt,
 			   *tm = &tt;
 
@@ -98,7 +97,7 @@ SetEpochTimestamp(void)
 }	/* SetEpochTimestamp() */
 
 static void
-dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
+dt2time(timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		time;
@@ -141,16 +140,14 @@ dt2time(Timestamp jd, int *hour, int *min, int *sec, fsec_t *fsec)
  *	local time zone. If out of this range, leave as GMT. - tgl 97/05/27
  */
 static int
-timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
+timestamp2tm(timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 {
 #ifdef HAVE_INT64_TIMESTAMP
-	int			date,
-				date0;
+	int		dDate, date0;
 	int64		time;
 
 #else
-	double		date,
-				date0;
+	double		dDate, date0;
 	double		time;
 #endif
 	time_t		utime;
@@ -163,31 +160,31 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
 
 	time = dt;
 #ifdef HAVE_INT64_TIMESTAMP
-	TMODULO(time, date, INT64CONST(86400000000));
+	TMODULO(time, dDate, INT64CONST(86400000000));
 
 	if (time < INT64CONST(0))
 	{
 		time += INT64CONST(86400000000);
-		date -= 1;
+		dDate -= 1;
 	}
 #else
-	TMODULO(time, date, 86400e0);
+	TMODULO(time, dDate, 86400e0);
 
 	if (time < 0)
 	{
 		time += 86400;
-		date -= 1;
+		dDate -= 1;
 	}
 #endif
 
 	/* Julian day routine does not work for negative Julian days */
-	if (date < -date0)
+	if (dDate < -date0)
 		return -1;
 
 	/* add offset to go from J2000 back to standard Julian date */
-	date += date0;
+	dDate += date0;
 
-	j2date((int) date, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
+	j2date((int) dDate, &tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 	dt2time(time, &tm->tm_hour, &tm->tm_min, &tm->tm_sec, fsec);
 
 	if (tzp != NULL)
@@ -260,7 +257,7 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
  *	* Convert reserved timestamp data type to string.
  *	 */
 static int
-EncodeSpecialTimestamp(Timestamp dt, char *str)
+EncodeSpecialTimestamp(timestamp dt, char *str)
 {
 	if (TIMESTAMP_IS_NOBEGIN(dt))
 		strcpy(str, EARLY);
@@ -272,10 +269,10 @@ EncodeSpecialTimestamp(Timestamp dt, char *str)
 	return TRUE;
 }	/* EncodeSpecialTimestamp() */
 
-Timestamp
+timestamp
 PGTYPEStimestamp_from_asc(char *str, char **endptr)
 {
-	Timestamp	result;
+	timestamp	result;
 
 #ifdef HAVE_INT64_TIMESTAMP
 	int64		noresult = 0;
@@ -346,7 +343,7 @@ PGTYPEStimestamp_from_asc(char *str, char **endptr)
 }
 
 char *
-PGTYPEStimestamp_to_asc(Timestamp tstamp)
+PGTYPEStimestamp_to_asc(timestamp tstamp)
 {
 	struct tm	tt,
 			   *tm = &tt;
@@ -369,7 +366,7 @@ PGTYPEStimestamp_to_asc(Timestamp tstamp)
 }
 
 void
-PGTYPEStimestamp_current(Timestamp *ts)
+PGTYPEStimestamp_current(timestamp *ts)
 {
 	struct tm	tm;
 
@@ -379,7 +376,7 @@ PGTYPEStimestamp_current(Timestamp *ts)
 }
 
 static int
-dttofmtasc_replace(Timestamp *ts, Date dDate, int dow, struct tm * tm,
+dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 				   char *output, int *pstr_len, char *fmtstr)
 {
 	union un_fmt_comb replace_val;
@@ -769,11 +766,11 @@ dttofmtasc_replace(Timestamp *ts, Date dDate, int dow, struct tm * tm,
 
 
 int
-PGTYPEStimestamp_fmt_asc(Timestamp *ts, char *output, int str_len, char *fmtstr)
+PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr)
 {
 	struct tm	tm;
 	fsec_t		fsec;
-	Date		dDate;
+	date		dDate;
 	int			dow;
 
 	dDate = PGTYPESdate_from_timestamp(*ts);
@@ -784,7 +781,7 @@ PGTYPEStimestamp_fmt_asc(Timestamp *ts, char *output, int str_len, char *fmtstr)
 }
 
 int
-PGTYPEStimestamp_sub(Timestamp *ts1, Timestamp *ts2, Interval *iv)
+PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv)
 {
 	if (TIMESTAMP_NOT_FINITE(*ts1) || TIMESTAMP_NOT_FINITE(*ts2))
 		return PGTYPES_TS_ERR_EINFTIME;
@@ -801,7 +798,7 @@ PGTYPEStimestamp_sub(Timestamp *ts1, Timestamp *ts2, Interval *iv)
 }
 
 int
-PGTYPEStimestamp_defmt_asc(char *str, char *fmt, Timestamp *d)
+PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d)
 {
 	int			year,
 				month,

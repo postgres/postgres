@@ -14,7 +14,7 @@ main()
 		interval iv1;
 		char *text;
 	exec sql end declare section;
-	Date date2;
+	date date2;
 	int mdy[3] = { 4, 19, 1998 };
 	char *fmt, *out, *in;
 	char *d1 = "Mon Jan 17 1966";

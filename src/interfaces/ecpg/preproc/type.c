@@ -366,7 +366,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * we have to use a pointer here
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
-				sprintf(offset, "sizeof(Numeric)");
+				sprintf(offset, "sizeof(numeric)");
 				break;
 			case ECPGt_interval:
 
@@ -374,7 +374,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * we have to use a pointer here
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
-				sprintf(offset, "sizeof(Interval)");
+				sprintf(offset, "sizeof(interval)");
 				break;
 			case ECPGt_date:
 
@@ -383,7 +383,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * type
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
-				sprintf(offset, "sizeof(Date)");
+				sprintf(offset, "sizeof(date)");
 				break;
 			case ECPGt_timestamp:
 
@@ -392,7 +392,7 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype type,
 				 * type
 				 */
 				sprintf(variable, "&(%s%s)", prefix ? prefix : "", name);
-				sprintf(offset, "sizeof(Date)");
+				sprintf(offset, "sizeof(timestamp)");
 				break;
 			case ECPGt_const:
 

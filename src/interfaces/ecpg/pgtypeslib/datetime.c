@@ -9,10 +9,10 @@
 #include "pgtypes_error.h"
 #include "pgtypes_date.h"
 
-Date
-PGTYPESdate_from_timestamp(Timestamp dt)
+date
+PGTYPESdate_from_timestamp(timestamp dt)
 {
-	Date		dDate;
+	date		dDate;
 
 	dDate = 0;					/* suppress compiler warning */
 
@@ -30,11 +30,11 @@ PGTYPESdate_from_timestamp(Timestamp dt)
 	return dDate;
 }
 
-Date
+date
 PGTYPESdate_from_asc(char *str, char **endptr)
 {
 
-	Date		dDate;
+	date		dDate;
 	fsec_t		fsec;
 	struct tm	tt,
 			   *tm = &tt;
@@ -83,7 +83,7 @@ PGTYPESdate_from_asc(char *str, char **endptr)
 }
 
 char *
-PGTYPESdate_to_asc(Date dDate)
+PGTYPESdate_to_asc(date dDate)
 {
 	struct tm	tt,
 			   *tm = &tt;
@@ -97,7 +97,7 @@ PGTYPESdate_to_asc(Date dDate)
 }
 
 void
-PGTYPESdate_julmdy(Date jd, int *mdy)
+PGTYPESdate_julmdy(date jd, int *mdy)
 {
 	int			y,
 				m,
@@ -110,17 +110,17 @@ PGTYPESdate_julmdy(Date jd, int *mdy)
 }
 
 void
-PGTYPESdate_mdyjul(int *mdy, Date * jdate)
+PGTYPESdate_mdyjul(int *mdy, date * jdate)
 {
 	/* month is mdy[0] */
 	/* day	 is mdy[1] */
 	/* year  is mdy[2] */
 
-	*jdate = (Date) (date2j(mdy[2], mdy[0], mdy[1]) - date2j(2000, 1, 1));
+	*jdate = (date) (date2j(mdy[2], mdy[0], mdy[1]) - date2j(2000, 1, 1));
 }
 
 int
-PGTYPESdate_dayofweek(Date dDate)
+PGTYPESdate_dayofweek(date dDate)
 {
 	/*
 	 * Sunday:		0 Monday:	   1 Tuesday:	  2 Wednesday:	 3
@@ -130,7 +130,7 @@ PGTYPESdate_dayofweek(Date dDate)
 }
 
 void
-PGTYPESdate_today(Date * d)
+PGTYPESdate_today(date * d)
 {
 	struct tm	ts;
 
@@ -151,7 +151,7 @@ PGTYPESdate_today(Date * d)
 #define PGTYPES_FMTDATE_YEAR_DIGITS_LONG	6
 
 int
-PGTYPESdate_fmt_asc(Date dDate, char *fmtstring, char *outbuf)
+PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf)
 {
 	static struct
 	{
@@ -315,7 +315,7 @@ PGTYPESdate_fmt_asc(Date dDate, char *fmtstring, char *outbuf)
 
 #define PGTYPES_DATE_MONTH_MAXLENGTH		20	/* probably even less  :-) */
 int
-PGTYPESdate_defmt_asc(Date * d, char *fmt, char *str)
+PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
 {
 	/*
 	 * token[2] = { 4,6 } means that token 2 starts at position 4 and ends

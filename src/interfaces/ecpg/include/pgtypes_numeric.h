@@ -23,7 +23,7 @@ typedef struct
 								 * NUMERIC_NAN */
 	NumericDigit *buf;			/* start of alloc'd space for digits[] */
 	NumericDigit *digits;		/* decimal digits */
-} Numeric;
+} numeric;
 
 typedef struct
 {
@@ -35,25 +35,25 @@ typedef struct
 	int			sign;			/* NUMERIC_POS, NUMERIC_NEG, or
 								 * NUMERIC_NAN */
 	NumericDigit digits[DECSIZE];		/* decimal digits */
-}	Decimal;
+}	decimal;
 
-Numeric    *PGTYPESnumeric_new(void);
-void		PGTYPESnumeric_free(Numeric *);
-Numeric    *PGTYPESnumeric_from_asc(char *, char **);
-char	   *PGTYPESnumeric_to_asc(Numeric *, int);
-int			PGTYPESnumeric_add(Numeric *, Numeric *, Numeric *);
-int			PGTYPESnumeric_sub(Numeric *, Numeric *, Numeric *);
-int			PGTYPESnumeric_mul(Numeric *, Numeric *, Numeric *);
-int			PGTYPESnumeric_div(Numeric *, Numeric *, Numeric *);
-int			PGTYPESnumeric_cmp(Numeric *, Numeric *);
-int			PGTYPESnumeric_from_int(signed int, Numeric *);
-int			PGTYPESnumeric_from_long(signed long int, Numeric *);
-int			PGTYPESnumeric_copy(Numeric *, Numeric *);
-int			PGTYPESnumeric_from_double(double, Numeric *);
-int			PGTYPESnumeric_to_double(Numeric *, double *);
-int			PGTYPESnumeric_to_int(Numeric *, int *);
-int			PGTYPESnumeric_to_long(Numeric *, long *);
-int			PGTYPESnumeric_to_decimal(Numeric *, Decimal *);
-int			PGTYPESnumeric_from_decimal(Decimal *, Numeric *);
+numeric    *PGTYPESnumeric_new(void);
+void		PGTYPESnumeric_free(numeric *);
+numeric    *PGTYPESnumeric_from_asc(char *, char **);
+char	   *PGTYPESnumeric_to_asc(numeric *, int);
+int			PGTYPESnumeric_add(numeric *, numeric *, numeric *);
+int			PGTYPESnumeric_sub(numeric *, numeric *, numeric *);
+int			PGTYPESnumeric_mul(numeric *, numeric *, numeric *);
+int			PGTYPESnumeric_div(numeric *, numeric *, numeric *);
+int			PGTYPESnumeric_cmp(numeric *, numeric *);
+int			PGTYPESnumeric_from_int(signed int, numeric *);
+int			PGTYPESnumeric_from_long(signed long int, numeric *);
+int			PGTYPESnumeric_copy(numeric *, numeric *);
+int			PGTYPESnumeric_from_double(double, numeric *);
+int			PGTYPESnumeric_to_double(numeric *, double *);
+int			PGTYPESnumeric_to_int(numeric *, int *);
+int			PGTYPESnumeric_to_long(numeric *, long *);
+int			PGTYPESnumeric_to_decimal(numeric *, decimal *);
+int			PGTYPESnumeric_from_decimal(decimal *, numeric *);
 
 #endif   /* PGTYPES_NUMERIC */
