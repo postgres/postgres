@@ -1,7 +1,14 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(backend/access/common/heaptuple.c)
-AC_CANONICAL_HOST
+
+if test "$BUILDRUN" != "true"
+then
+  echo "You must run the build script, which will auto-run configure"
+  exit
+fi
 TR="tr"
+
+AC_CANONICAL_HOST
 case "$host_os" in
  solaris*)
         case "$host_cpu" in
@@ -41,6 +48,7 @@ AC_SUBST(PORTNAME)
 AC_SUBST(TR)
 AC_SUBST(LDFLAGS)
 AC_SUBST(CPPFLAGS)
+
 
 AC_CONFIG_HEADER(include/config.h)
 
@@ -82,6 +90,12 @@ AC_SUBST(INSTALL)
 AC_SUBST(INSTLOPTS)
 AC_SUBST(INSTL_LIB_OPTS)
 AC_SUBST(INSTL_EXE_OPTS)
+
+if test "$USE_LOCALE" = "yes"
+then
+	AC_MSG_RESULT(setting USE_LOCALE)
+	AC_DEFINE(USE_LOCALE)
+fi
 
 dnl Check the option to echo to inhibit newlines.
 ECHO_N_OUT=`echo -n "" | wc -c`

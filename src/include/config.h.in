@@ -104,6 +104,9 @@
 /* Set to 1 if you have union semun */
 #undef HAVE_UNION_SEMUN
 
+/* Set to 1 if you want to USE_LOCALE */
+#undef USE_LOCALE
+
 /*
  * Code below this point should not require changes
  */

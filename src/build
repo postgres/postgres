@@ -2,6 +2,8 @@
 #
 # PostgreSQL Build Script
 #
+BUILDRUN=true
+
 if echo '\c' | grep -s c >/dev/null 2>&1
 then
         ECHO_N="echo -n"
@@ -30,14 +32,24 @@ then
         LDFLAGS="$ADD_LIB_DIRS" ; export LDFLAGS
 fi
 
+IDIR=/usr/local/pgsql
 $ECHO_N "Installation directory [/usr/local/pgsql]: $ECHO_C"
 read a
 if [ "$a." != "." ]
 then
         IDIR=${a}
-else
-	IDIR=/usr/local/pgsql
 fi
+
+USE_LOCALE=no
+echo "Define USE_LOCALE to get Postgres work (sort, search)"
+$ECHO_N "with national alphabet. [no]: $ECHO_C"
+read a
+if [ "$a." != "." ]
+then
+	USE_LOCALE=${a}
+fi
+
+export BUILDRUN USE_LOCALE
 
 ./configure --prefix=${IDIR}
 
