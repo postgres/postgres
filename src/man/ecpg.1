@@ -53,6 +53,13 @@ ecpg does not understand enum datatypes.
 The is no exec sql prepare statement.
 .TP
 The complete structure definition has to be listed inside the declare section for ecpg to be able to understand it.
+.TP
+Each variable has to be defined on a line on its own.
+.TP
+There is no way yet to fill a complete array with one call except arrays of [unsigned] char
+which are considered strings.
+.TP
+ecpg cannot use pointer variables except [unsigned] char *
 .SH "RETURN VALUE"
 .IR ecpg
 returns 0 to the shell on successful completion, -1 for errors,
