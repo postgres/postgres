@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.10 1996/12/19 05:01:17 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.11 1997/01/08 08:31:07 bryanh Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,8 @@
 #include <utils/mcxt.h>
 #include <commands/async.h>
 #include <libpq/libpq.h>
+
+#include <port-protos.h>  /* for strdup() */
 
 static int notifyFrontEndPending = 0;
 static int notifyIssued = 0;
