@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.82 2000/01/26 05:57:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.83 2000/02/15 03:17:09 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1981,7 +1981,11 @@ static datetkn datetktbl[] = {
 	{"cdt", DTZ, NEG(30)},		/* Central Daylight Time */
 	{"cet", TZ, 6},				/* Central European Time */
 	{"cetdst", DTZ, 12},		/* Central European Dayl.Time */
+#if USE_AUSTRALIAN_RULES
+	{"cst", TZ, 63},			/* Australia Eastern Std Time */
+#else
 	{"cst", TZ, NEG(36)},		/* Central Standard Time */
+#endif
 	{DCURRENT, RESERV, DTK_CURRENT},	/* "current" is always now */
 	{"dec", MONTH, 12},
 	{"december", MONTH, 12},
@@ -1989,7 +1993,7 @@ static datetkn datetktbl[] = {
 	{"dow", RESERV, DTK_DOW},	/* day of week */
 	{"doy", RESERV, DTK_DOY},	/* day of year */
 	{"dst", DTZMOD, 6},
-	{"east", TZ, NEG(60)},		/* East Australian Std Time */
+	{"east", TZ, 60},			/* East Australian Std Time */
 	{"edt", DTZ, NEG(24)},		/* Eastern Daylight Time */
 	{"eet", TZ, 12},			/* East. Europe, USSR Zone 1 */
 	{"eetdst", DTZ, 18},		/* Eastern Europe */
@@ -2552,6 +2556,23 @@ ParseDateTime(char *timestr, char *lowstr,
 			/* full date string with leading text month? */
 			if ((*cp == '-') || (*cp == '/') || (*cp == '.'))
 			{
+				/*
+				 * special case of Posix timezone "GMT-0800"
+				 * Note that other sign (e.g. "GMT+0800"
+				 * is recognized as two separate fields and handled later.
+				 * XXX There is no room for a delimiter between
+				 * the "GMT" and the "-0800", so we are going to just swallow the "GMT".
+				 * But this leads to other troubles with the definition of signs,
+				 * so we have to flip
+				 * - thomas 2000-02-06
+				 */
+				if ((*cp == '-') && isdigit(*(cp+1))
+					&& (strncmp(field[nf], "gmt", 3) == 0))
+				{
+					*cp = '+';
+					continue;
+				}
+
 				ftype[nf] = DTK_DATE;
 				while (isdigit(*cp) || (*cp == '-') || (*cp == '/') || (*cp == '.'))
 					*lp++ = tolower(*cp++);
@@ -2826,6 +2847,25 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						if (tzp == NULL)
 							return -1;
 						*tzp = val * 60;
+
+						/* Swallow an immediately succeeding timezone if this is GMT
+						 * This handles the odd case in FreeBSD of "GMT+0800"
+						 * but note that we need to flip the sign on this too.
+						 * Claims to be some sort of POSIX standard format :(
+						 * - thomas 2000-01-20
+						 */
+						if ((i < (nf-1)) && (ftype[i+1] == DTK_TZ)
+							&& (strcmp(field[i], "gmt") == 0))
+						{
+							i++;
+							if (DecodeTimezone(field[i], tzp) != 0)
+								return -1;
+
+							/* flip the sign per POSIX standard */
+							*tzp = -(*tzp);
+						}
+
+
 						break;
 
 					case IGNORE:
