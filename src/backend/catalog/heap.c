@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.232 2002/10/21 22:06:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.232.2.1 2002/12/16 18:39:56 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -306,8 +306,8 @@ heap_storage_create(Relation rel)
  *
  *		this is done in 6 steps:
  *
- *		1) CheckAttributeNames() is used to make certain the tuple
- *		   descriptor contains a valid set of attribute names
+ *		1) CheckAttributeNamesTypes() is used to make certain the tuple
+ *		   descriptor contains a valid set of attribute names and types
  *
  *		2) pg_class is opened and get_relname_relid()
  *		   performs a scan to ensure that no relation with the
@@ -333,19 +333,24 @@ heap_storage_create(Relation rel)
  */
 
 /* --------------------------------
- *		CheckAttributeNames
+ *		CheckAttributeNamesTypes
  *
  *		this is used to make certain the tuple descriptor contains a
- *		valid set of attribute names.  a problem simply generates
- *		elog(ERROR) which aborts the current transaction.
+ *		valid set of attribute names and datatypes.  a problem simply
+ *		generates elog(ERROR) which aborts the current transaction.
  * --------------------------------
  */
-static void
-CheckAttributeNames(TupleDesc tupdesc, char relkind)
+void
+CheckAttributeNamesTypes(TupleDesc tupdesc, char relkind)
 {
 	int			i;
 	int			j;
 	int			natts = tupdesc->natts;
+
+	/* Sanity check on column count */
+	if (natts < 0 || natts > MaxHeapAttributeNumber)
+		elog(ERROR, "Number of columns is out of range (0 to %d)",
+			 MaxHeapAttributeNumber);
 
 	/*
 	 * first check for collision with system attribute names
@@ -379,8 +384,29 @@ CheckAttributeNames(TupleDesc tupdesc, char relkind)
 	}
 
 	/*
-	 * We also do some checking of the attribute types here.
-	 *
+	 * next check the attribute types
+	 */
+	for (i = 0; i < natts; i++)
+	{
+		CheckAttributeType(NameStr(tupdesc->attrs[i]->attname),
+						   tupdesc->attrs[i]->atttypid);
+	}
+}
+
+/* --------------------------------
+ *		CheckAttributeType
+ *
+ *		Verify that the proposed datatype of an attribute is legal.
+ *		This is needed because there are types (and pseudo-types)
+ *		in the catalogs that we do not support as elements of real tuples.
+ * --------------------------------
+ */
+void
+CheckAttributeType(const char *attname, Oid atttypid)
+{
+	char		att_typtype = get_typtype(atttypid);
+
+	/*
 	 * Warn user, but don't fail, if column to be created has UNKNOWN type
 	 * (usually as a result of a 'retrieve into' - jolly)
 	 *
@@ -389,28 +415,20 @@ CheckAttributeNames(TupleDesc tupdesc, char relkind)
 	 * all references to complex types, but for now there's still some
 	 * Berkeley-derived code that thinks it can do this...)
 	 */
-	for (i = 0; i < natts; i++)
+	if (atttypid == UNKNOWNOID)
+		elog(WARNING, "Attribute \"%s\" has an unknown type"
+			 "\n\tProceeding with relation creation anyway",
+			 attname);
+	else if (att_typtype == 'p')
+		elog(ERROR, "Attribute \"%s\" has pseudo-type %s",
+			 attname, format_type_be(atttypid));
+	else if (att_typtype == 'c')
 	{
-		Oid			att_type = tupdesc->attrs[i]->atttypid;
-		char		att_typtype = get_typtype(att_type);
+		Oid		typrelid = get_typ_typrelid(atttypid);
 
-		if (att_type == UNKNOWNOID)
-			elog(WARNING, "Attribute \"%s\" has an unknown type"
-				 "\n\tProceeding with relation creation anyway",
-				 NameStr(tupdesc->attrs[i]->attname));
-		if (att_typtype == 'p')
-			elog(ERROR, "Attribute \"%s\" has pseudo-type %s",
-				 NameStr(tupdesc->attrs[i]->attname),
-				 format_type_be(att_type));
-		if (att_typtype == 'c')
-		{
-			Oid		typrelid = get_typ_typrelid(att_type);
-
-			if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
-				elog(ERROR, "Attribute \"%s\" has composite type %s",
-					 NameStr(tupdesc->attrs[i]->attname),
-					 format_type_be(att_type));
-		}
+		if (get_rel_relkind(typrelid) == RELKIND_COMPOSITE_TYPE)
+			elog(ERROR, "Attribute \"%s\" has composite type %s",
+				 attname, format_type_be(atttypid));
 	}
 }
 
@@ -687,11 +705,8 @@ heap_create_with_catalog(const char *relname,
 	 * sanity checks
 	 */
 	Assert(IsNormalProcessingMode() || IsBootstrapProcessingMode());
-	if (tupdesc->natts <= 0 || tupdesc->natts > MaxHeapAttributeNumber)
-		elog(ERROR, "Number of columns is out of range (1 to %d)",
-			 MaxHeapAttributeNumber);
 
-	CheckAttributeNames(tupdesc, relkind);
+	CheckAttributeNamesTypes(tupdesc, relkind);
 
 	if (get_relname_relid(relname, relnamespace))
 		elog(ERROR, "Relation '%s' already exists", relname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.98 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.98.2.1 2002/12/16 18:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,6 +16,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "catalog/heap.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
@@ -500,6 +501,18 @@ transformRangeFunction(ParseState *pstate, RangeFunction *r)
 	{
 		if (contain_agg_clause(funcexpr))
 			elog(ERROR, "cannot use aggregate function in FROM function expression");
+	}
+
+	/*
+	 * If a coldeflist is supplied, ensure it defines a legal set of names
+	 * (no duplicates) and datatypes (no pseudo-types, for instance).
+	 */
+	if (r->coldeflist)
+	{
+		TupleDesc	tupdesc;
+
+		tupdesc = BuildDescForRelation(r->coldeflist);
+		CheckAttributeNamesTypes(tupdesc, RELKIND_COMPOSITE_TYPE);
 	}
 
 	/*

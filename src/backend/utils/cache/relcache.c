@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.177 2002/10/14 16:51:30 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.177.2.1 2002/12/16 18:39:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -570,7 +570,8 @@ RelationBuildTupleDesc(RelationBuildDescInfo buildinfo,
 	 * cases for attnum=1 that used to exist in fastgetattr() and
 	 * index_getattr().
 	 */
-	relation->rd_att->attrs[0]->attcacheoff = 0;
+	if (relation->rd_rel->relnatts > 0)
+		relation->rd_att->attrs[0]->attcacheoff = 0;
 
 	/*
 	 * Set up constraint/default info
@@ -2041,7 +2042,7 @@ RelationBuildLocalRelation(const char *relname,
 	int			natts = tupDesc->natts;
 	int			i;
 
-	AssertArg(natts > 0);
+	AssertArg(natts >= 0);
 
 	/*
 	 * switch to the cache context to create the relcache entry.
