@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.28 2000/08/26 13:08:15 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/commands.sgml,v 1.29 2000/10/18 13:29:23 pjw Exp $
 Postgres documentation
 -->
 
@@ -128,6 +128,7 @@ functions supported by <productname>Postgres</productname>.
    &pgCtl;
    &pgDump;
    &pgDumpall;
+   &pgRestore;
    &psqlRef;
    &pgTclSh;
    &pgTkSh;
