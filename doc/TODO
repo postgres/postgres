@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Aug 16 13:04:21 EDT 2002
+Last updated:		Sat Aug 17 09:14:04 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -238,7 +238,7 @@ Commands
 	  RULE cases (Philip)
 
 * SHOW/SET
-	o Add SHOW command to display locks
+	o -Add command to display locks
 	o -Add SET or BEGIN timeout parameter to cancel query
 	o Add SET REAL_FORMAT and SET DOUBLE_PRECISION_FORMAT using printf args
 	o -Remove SET KSQO option now that OR processing is improved (Tom)
