@@ -18,15 +18,13 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buffile.h,v 1.5 2000/06/08 22:37:54 momjian Exp $
+ * $Id: buffile.h,v 1.6 2000/06/15 03:32:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #ifndef BUFFILE_H
 #define BUFFILE_H
-
-#include "storage/fd.h"
 
 /* BufFile is an opaque type whose details are not known outside buffile.c. */
 

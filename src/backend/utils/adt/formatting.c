@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.13 2000/06/14 18:17:42 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.14 2000/06/15 03:32:28 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL, Inc
@@ -67,8 +67,11 @@
 
 #include "postgres.h"
 #include "utils/builtins.h"
-#include "utils/pg_locale.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
 #include "utils/formatting.h"
+#include "utils/int8.h"
+#include "utils/pg_locale.h"
 
 /* ----------
  * Routines type

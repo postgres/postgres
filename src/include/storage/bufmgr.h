@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.38 2000/05/19 03:22:26 tgl Exp $
+ * $Id: bufmgr.h,v 1.39 2000/06/15 03:33:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,11 +15,7 @@
 #define BUFMGR_H
 
 
-#include "storage/ipc.h"
-#include "storage/block.h"
-#include "storage/buf.h"
 #include "storage/buf_internals.h"
-#include "utils/rel.h"
 
 /*
  * the maximum size of a disk block for any possible installation.

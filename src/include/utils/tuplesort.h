@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tuplesort.h,v 1.4 2000/04/12 17:16:56 momjian Exp $
+ * $Id: tuplesort.h,v 1.5 2000/06/15 03:33:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,9 +22,6 @@
 
 #include "access/htup.h"
 #include "access/itup.h"
-#include "access/skey.h"
-#include "access/tupdesc.h"
-#include "utils/rel.h"
 
 /* Tuplesortstate is an opaque type whose details are not known outside tuplesort.c. */
 

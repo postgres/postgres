@@ -9,7 +9,6 @@
 #ifndef SEQUENCE_H
 #define SEQUENCE_H
 
-#include "fmgr.h"
 #include "nodes/parsenodes.h"
 
 /*

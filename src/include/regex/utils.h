@@ -39,6 +39,8 @@
 
 #include "postgres.h"
 
+#include "limits.h"
+
 /* utility definitions */
 #define DUPMAX			100000000		/* xxx is this right? */
 #define INFINITY		(DUPMAX + 1)

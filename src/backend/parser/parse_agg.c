@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.37 2000/04/12 17:15:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.38 2000/06/15 03:32:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,6 +21,7 @@
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
+#include "parser/parse_type.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
 

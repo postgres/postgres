@@ -12,12 +12,15 @@ do
 	then	IS_INCLUDE="Y"
 	else	IS_INCLUDE="N"
 	fi
-
+	
+	# remove defines
 	if [ "$IS_INCLUDE" = "Y" ]
 	then	cat "$FILE" | grep -v "^#if" | grep -v "^#else" | 
 		grep -v "^#endif" | sed 's/->[a-zA-Z0-9_\.]*//g' >/tmp/$$a
 	else	cat "$FILE" >/tmp/$$a
 	fi
+
+	# loop through all includes
 	cat /tmp/$$a | grep "^#include" |
 	sed 's/^#include[ 	]*[<"]\([^>"]*\).*$/\1/g' |
 	while read INCLUDE
@@ -26,11 +29,14 @@ do
 		[ "$INCLUDE" = postgres.h ] && continue
 		[ "$INCLUDE" = config.h ] && continue
 		[ "$INCLUDE" = c.h ] && continue
+
 		# preserve configure-specific includes
+		# these includes are surrounded by #ifdef's
 		grep -B1 '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" |
 		     egrep -q '^#if|^#else' && continue		
 		grep -A1 '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" |
 		     egrep -q '^#else|^#endif' && continue		
+
 		cat /tmp/$$a |
 		grep -v '^#include[ 	]*[<"]'"$INCLUDE"'[>"]' >/tmp/$$b
 		if [ "$IS_INCLUDE" = "Y" ]
@@ -50,12 +56,6 @@ do
 			if [ "$IS_INCLUDE" = "N" ]
 			then	grep -v '^#include[ 	][ 	]*[<"]'"$INCLUDE"'[>"]' "$FILE" >/tmp/$$b
 				mv /tmp/$$b "$FILE"
-				# reload after #include removal
-				if [ "$IS_INCLUDE" = "Y" ]
-				then	cat "$FILE" | grep -v "^#if" | grep -v "^#else" |
-					grep -v "^#endif" | sed 's/->[a-zA-Z0-9_\.]*//g' >/tmp/$$a
-				else	cat "$FILE" >/tmp/$$a
-				fi
 			fi
 			if [ "$1" = "-v" ]
 			then	cat /tmp/$$

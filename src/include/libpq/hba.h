@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.17 2000/04/12 17:16:35 momjian Exp $
+ * $Id: hba.h,v 1.18 2000/06/15 03:32:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -12,8 +12,6 @@
 #define HBA_H
 
 #include <netinet/in.h>
-
-#include "libpq/pqcomm.h"
 
 #define CONF_FILE "pg_hba.conf"
  /* Name of the config file  */
@@ -42,7 +40,7 @@ typedef enum UserAuth
 
 typedef struct Port hbaPort;
 
-int			hba_getauthmethod(hbaPort *port);
+int	hba_getauthmethod(hbaPort *port);
 int authident(struct sockaddr_in * raddr, struct sockaddr_in * laddr,
 		  const char *postgres_username, const char *auth_arg);
 

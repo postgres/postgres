@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.37 2000/06/13 07:35:17 tgl Exp $
+ * $Id: nbtree.h,v 1.38 2000/06/15 03:32:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef NBTREE_H
 #define NBTREE_H
 
-#include "access/funcindex.h"
 #include "access/itup.h"
 #include "access/relscan.h"
 #include "access/sdir.h"

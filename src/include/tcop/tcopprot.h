@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.29 2000/06/08 22:37:56 momjian Exp $
+ * $Id: tcopprot.h,v 1.30 2000/06/15 03:33:04 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -21,7 +21,6 @@
 
 #include <setjmp.h>
 #include "executor/execdesc.h"
-#include "parser/parse_node.h"
 
 extern DLLIMPORT sigjmp_buf Warn_restart;
 extern bool Warn_restart_ready;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.18 2000/03/17 05:29:07 tgl Exp $
+ * $Id: parse_expr.h,v 1.19 2000/06/15 03:32:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,6 @@
 #define PARSE_EXPR_H
 
 #include "parser/parse_node.h"
-#include "parser/parse_type.h"
 
 #define EXPR_COLUMN_FIRST	1
 #define EXPR_RELATION_FIRST 2

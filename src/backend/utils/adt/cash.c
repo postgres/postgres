@@ -9,11 +9,12 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.39 2000/06/14 18:17:42 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.40 2000/06/15 03:32:28 momjian Exp $
  */
 
 #include <limits.h>
 #include <ctype.h>
+#include <math.h>
 #include <locale.h>
 
 #include "postgres.h"

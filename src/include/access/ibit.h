@@ -7,14 +7,12 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.13 2000/04/12 17:16:26 momjian Exp $
+ * $Id: ibit.h,v 1.14 2000/06/15 03:32:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef IBIT_H
 #define IBIT_H
-
-#include "catalog/pg_index.h"
 
 typedef struct IndexAttributeBitMapData
 {

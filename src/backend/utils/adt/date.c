@@ -8,21 +8,25 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.45 2000/06/09 01:11:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.46 2000/06/15 03:32:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <limits.h>
+#include <time.h>
 
 #include "postgres.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>
 #endif
 #include "miscadmin.h"
+#include "utils/date.h"
+#include "utils/datetime.h"
+#include "utils/nabstime.h"
 #include "utils/builtins.h"
 
 static int
-			date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
+	date2tm(DateADT dateVal, int *tzp, struct tm * tm, double *fsec, char **tzn);
 
 
 /*****************************************************************************

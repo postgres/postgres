@@ -3,7 +3,7 @@
  * user.h
  *
  *
- * $Id: user.h,v 1.12 2000/05/29 01:59:11 tgl Exp $
+ * $Id: user.h,v 1.13 2000/06/15 03:32:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -11,7 +11,6 @@
 #define USER_H
 
 #include "nodes/parsenodes.h"
-#include "access/htup.h"
 
 extern void CreateUser(CreateUserStmt *stmt);
 extern void AlterUser(AlterUserStmt *stmt);

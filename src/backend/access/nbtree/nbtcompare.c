@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.36 2000/06/09 01:11:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.37 2000/06/15 03:31:54 momjian Exp $
  *
  * NOTES
  *
@@ -32,6 +32,7 @@
 
 #include "postgres.h"
 
+#include "utils/nabstime.h"
 #include "utils/builtins.h"
 
 Datum

@@ -7,17 +7,17 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rtree.h,v 1.18 2000/06/13 07:35:17 tgl Exp $
+ * $Id: rtree.h,v 1.19 2000/06/15 03:32:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef RTREE_H
 #define RTREE_H
 
-#include "access/funcindex.h"
 #include "access/itup.h"
-#include "access/relscan.h"
 #include "access/sdir.h"
+#include "access/skey.h"
+#include "utils/rel.h"
 
 /* see rtstrat.c for what all this is about */
 #define RTNStrategies					8

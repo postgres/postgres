@@ -10,8 +10,6 @@
 #ifndef PS_STATUS_H
 #define PS_STATUS_H
 
-#include "libpq/libpq-be.h"
-
 void
 init_ps_display(int argc, char *argv[],
 				const char * username, const char * dbname,

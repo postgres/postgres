@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.130 2000/05/30 00:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.131 2000/06/15 03:32:01 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -38,6 +38,7 @@
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
 #include "catalog/pg_inherits.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_ipl.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_relcheck.h"
@@ -54,6 +55,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_target.h"
+#include "parser/parse_type.h"
 #include "rewrite/rewriteRemove.h"
 #include "storage/smgr.h"
 #include "utils/builtins.h"

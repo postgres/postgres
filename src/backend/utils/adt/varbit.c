@@ -4,7 +4,7 @@
  *	  Functions for the built-in type bit() and varying bit().
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.2 2000/04/12 17:15:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varbit.c,v 1.3 2000/06/15 03:32:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #endif
 #include "fmgr.h"
 #include "utils/builtins.h"
+#include "utils/varbit.h"
 #include "access/htup.h"
 
 /*

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.54 2000/05/30 00:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.55 2000/06/15 03:32:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "access/heapam.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "catalog/pg_index.h"
 #include "catalog/pg_proc.h"
 #include "commands/cluster.h"
 #include "commands/rename.h"

@@ -7,14 +7,13 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.21 2000/04/12 17:16:52 momjian Exp $
+ * $Id: sinvaladt.h,v 1.22 2000/06/15 03:33:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SINVALADT_H
 #define SINVALADT_H
 
-#include "storage/ipc.h"
 #include "storage/itemptr.h"
 #include "storage/shmem.h"
 

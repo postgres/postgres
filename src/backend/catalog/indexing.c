@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.64 2000/06/07 04:09:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/indexing.c,v 1.65 2000/06/15 03:32:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/indexing.h"
+#include "catalog/pg_index.h"
 #include "miscadmin.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"

@@ -39,6 +39,8 @@
 
 #include "postgres.h"
 
+#include "limits.h"
+
 /*
  * First, the stuff that ends up in the outside-world include file
 */

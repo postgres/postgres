@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.82 2000/06/09 03:17:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.83 2000/06/15 03:32:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "parser/parse_expr.h"
+#include "parser/parse_type.h"
 #include "utils/lsyscache.h"
 
 

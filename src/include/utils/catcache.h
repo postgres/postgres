@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.22 2000/06/05 07:29:07 tgl Exp $
+ * $Id: catcache.h,v 1.23 2000/06/15 03:33:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 /* #define		CACHEDEBUG		 turns DEBUG elogs on */
 
 #include "access/htup.h"
-#include "fmgr.h"
 #include "lib/dllist.h"
 
 /*

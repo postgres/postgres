@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.75 2000/06/12 19:40:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.76 2000/06/15 03:32:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,6 +26,7 @@
 #include "parser/parse_oper.h"
 #include "parser/parse_target.h"
 #include "parser/parsetree.h"
+#include "parser/parse_type.h"
 #include "rewrite/locks.h"
 #include "rewrite/rewriteManip.h"
 #include "utils/acl.h"

@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.30 2000/06/14 18:17:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.31 2000/06/15 03:32:29 momjian Exp $
  *
  * ----------
  */
@@ -19,6 +19,7 @@
 #include <sys/types.h>
 
 #include "utils/builtins.h"
+#include "utils/int8.h"
 #include "utils/numeric.h"
 
 /* ----------

@@ -7,14 +7,12 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: internal.h,v 1.26 2000/01/26 05:58:20 momjian Exp $
+ * $Id: internal.h,v 1.27 2000/06/15 03:32:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef INTERNAL_H
 #define INTERNAL_H
-
-#include "catalog/pg_index.h"
 
 /*
  *		---------- SHARED MACROS

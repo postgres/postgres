@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-be.h,v 1.19 2000/04/12 17:16:36 momjian Exp $
+ * $Id: libpq-be.h,v 1.20 2000/06/15 03:32:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <sys/types.h>
 
 #include "libpq/hba.h"
+#include "libpq/pqcomm.h"
 
 #ifdef USE_SSL
 #include <openssl/ssl.h>

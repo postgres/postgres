@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.72 2000/06/14 18:17:45 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.73 2000/06/15 03:32:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,6 +37,7 @@
 #include "parser/parse_func.h"
 #include "parser/parse_oper.h"
 #include "utils/builtins.h"
+#include "utils/date.h"
 #include "utils/int8.h"
 #include "utils/lsyscache.h"
 #include "utils/syscache.h"
