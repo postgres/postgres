@@ -47,8 +47,17 @@
 #include "regex/regex.h"
 #include "regex/utils.h"
 #include "regex/regex2.h"
-#include "regex/cclass.h"
 #include "regex/cname.h"
+#include <locale.h>
+
+struct cclass
+{
+    char *name;
+    char *chars;
+    char *multis;
+};
+static struct cclass* cclasses = NULL;
+static struct cclass* cclass_init(void);
 
 /*
  * parse structure, passed up and down to avoid global variables and
@@ -173,6 +182,9 @@ pg95_regcomp(regex_t *preg, const char *pattern, int cflags)
 #ifdef MULTIBYTE
 	pg_wchar   *wcp;
 #endif
+
+    if ( cclasses == NULL )
+        cclasses = cclass_init();
 
 #ifdef REDEBUG
 #define  GOODFLAGS(f)	 (f)
@@ -884,7 +896,7 @@ p_b_cclass(struct parse * p, cset *cs)
 	struct cclass *cp;
 	size_t		len;
 	char	   *u;
-	char		c;
+	unsigned char		c;
 
 	while (MORE() && pg_isalpha(PEEK()))
 		NEXT();
@@ -1715,4 +1727,82 @@ pg_islower(int c)
 #else
 	return (islower((unsigned char) c));
 #endif
+}
+
+static struct cclass *
+cclass_init(void)
+{
+    static struct cclass cclasses_C[] = {
+        { "alnum", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", "" },
+        { "alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", "" },
+        { "blank", " \t", "" },
+        { "cntrl", "\007\b\t\n\v\f\r\1\2\3\4\5\6\16\17\20\21\22\23\24\25\26\27\30\31\32\33\34\35\36\37\177", "" },
+        { "digit", "0123456789", "" },
+        { "graph", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", "" },
+        { "lower", "abcdefghijklmnopqrstuvwxyz", "" },
+        { "print", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ", "" },
+        { "punct", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", "" },
+        { "space", "\t\n\v\f\r ", "" },
+        { "upper", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "" },
+        { "xdigit", "0123456789ABCDEFabcdef", "" },
+        { NULL, NULL, "" }
+    };
+    struct cclass *cp = NULL;
+    struct cclass *classes = NULL;
+    struct cclass_factory
+    {
+        char *name;
+        int (*func)(int);
+        char *chars;
+    } cclass_factories [] =
+        {
+            { "alnum", isalnum, NULL },
+            { "alpha", isalpha, NULL },
+            { "blank", NULL, " \t" },
+            { "cntrl", iscntrl, NULL },
+            { "digit", NULL, "0123456789" },
+            { "graph", isgraph, NULL },
+            { "lower", islower, NULL },
+            { "print", isprint, NULL },
+            { "punct", ispunct, NULL },
+            { "space", NULL, "\t\n\v\f\r " },
+            { "upper", isupper, NULL },
+            { "xdigit", NULL, "0123456789ABCDEFabcdef" },
+            { NULL, NULL, NULL }
+        };
+    struct cclass_factory *cf = NULL;
+
+    if ( strcmp( setlocale( LC_CTYPE, NULL ), "C" ) == 0 )
+        return cclasses_C;
+
+    classes = malloc(sizeof(struct cclass) * (sizeof(cclass_factories) / sizeof(struct cclass_factory)));
+    if (classes == NULL)
+        elog(ERROR,"cclass_init: out of memory");
+    
+    cp = classes;
+    for(cf = cclass_factories; cf->name != NULL; cf++)
+        {
+            cp->name = strdup(cf->name);
+            if ( cf->chars )
+                cp->chars = strdup(cf->chars);
+            else
+                {
+                    int x = 0, y = 0;
+                    cp->chars = malloc(sizeof(char) * 256);
+                    if (cp->chars == NULL)
+                        elog(ERROR,"cclass_init: out of memory");
+                    for (x = 0; x < 256; x++)
+                        {
+                            if((cf->func)(x))
+                                *(cp->chars + y++) = x;                            
+                        }
+                    *(cp->chars + y) = '\0';
+                }
+            cp->multis = "";
+            cp++;
+        }
+    cp->name = cp->chars = NULL;
+    cp->multis = "";
+    
+    return classes;
 }
