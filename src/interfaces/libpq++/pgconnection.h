@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  * 
- * $Id: pgconnection.h,v 1.7 2000/04/22 22:39:15 tgl Exp $
+ * $Id: pgconnection.h,v 1.8 2000/07/27 19:44:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,6 +81,7 @@ public:
     
 protected:
    ConnStatusType Connect(const char* conninfo);
+   void CloseConnection();
    string IntToString(int);
    // Default constructor is only available to subclasses
    PgConnection();
