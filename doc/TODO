@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Mar  7 23:03:04 EST 2002
+Last updated:		Thu Mar  7 23:33:25 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -123,7 +123,7 @@ VIEWS / RULES
 * Allow temporary views
 * Move psql backslash information into views
 * Allow RULE recompilation
-* Remove brackets as multi-statement rule grouping, must use parens
+* Remove brackets as multi-statement rule grouping, must use parens (Bruce)
 * Prevent aggregates from being used in rule WHERE clauses
 
 INDEXES
@@ -189,11 +189,11 @@ COMMANDS
 	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence
 	o ALTER TABLE ADD COLUMN column SET DEFAULT should fill existing
 	  rows with DEFAULT value
-	o Have ALTER TABLE OWNER change all dependant objects like indexes
+	o -Have ALTER TABLE OWNER change all dependant objects like indexes
 
 * CLUSTER
-	o cluster all tables at once
-	o prevent loss of indexes, permissions, inheritance (Bruce)
+	o Cluster all tables at once
+	o Prevent loss of indexes, permissions, inheritance
 	o Automatically maintain clustering on a table
 
 * COPY
@@ -251,7 +251,7 @@ CLIENTS
 * Allow psql to show transaction status if backend protocol changes made
 * Add XML interface:  psql, pg_dump, COPY, separate server (?)
 * Add config file check for $ODBCINI, $HOME/.odbc.ini, installpath/etc/odbc.ini
-* Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil Conway)
+* -Have pg_dump use ADD PRIMARY KEY after COPY, for performance (Neil Conway)
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
@@ -260,7 +260,7 @@ CLIENTS
 	o Error Codes (pending backend implementation)
 	o Support both 'make' and 'ant'
 	o Fix LargeObject API to handle OIDs as unsigned ints
-	o Implement cancel() method on Statement
+	o -Implement cancel() method on Statement
 	o Use cursors implicitly to avoid large results (see setCursorName())
         o Add support for CallableStatements
 	o Add LISTEN/NOTIFY support to the JDBC driver (Barry)
@@ -329,7 +329,7 @@ EXOTIC FEATURES
 
 * Add sql3 recursive unions
 * Add the concept of dataspaces/tablespaces [tablespaces]
-* Allow SQL92 schemas [schema]
+* Allow SQL92 schemas (Tom) [schema]
 * Allow queries across multiple databases [crossdb]
 * Add pre-parsing phase that converts non-ANSI features to supported features
 * Allow plug-in modules to emulate features from other databases
@@ -366,7 +366,7 @@ VACUUM
 * Improve speed with indexes (perhaps recreate index instead) [vacuum]
 * Reduce lock time by moving tuples with read lock, then write
   lock and truncate table [vacuum]
-* Provide automatic scheduling of background vacuum (Tom)
+* Provide automatic running of vacuum in the background (Tom)
 
 LOCKING
 -------
@@ -419,7 +419,7 @@ OPTIMIZER / EXECUTOR
 * Allow merge and hash joins on expressions not just simple variables (Tom)
 * Add new pg_proc cachable settings to specify whether function can be
   evaluated only once or once per query
-* Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
+* -Change FIXED_CHAR_SEL to 0.20 from 0.04 to give better selectivity (Bruce)
 * Make IN/NOT IN have similar performance to EXISTS/NOT EXISTS [exists]
 * Missing optimizer selectivities for date, r-tree, etc. [optimizer]
 * Allow ORDER BY ... LIMIT to select top values without sort or index
@@ -441,7 +441,7 @@ SOURCE CODE
 ===========
 
 * Add use of 'const' for variables in source tree
-* Fix problems with libpq non-blocking/async code [async]
+* -Fix problems with libpq non-blocking/async code
 * Make sure all block numbers are unsigned to increase maximum table size
 * Use BlockNumber rather than int where appropriate
 * Merge LockMethodCtl and LockMethodTable into one shared structure (Bruce)
@@ -473,6 +473,7 @@ SOURCE CODE
 * Better document ability to build only certain interfaces (Marc)
 * Remove or relicense modules that are not under the BSD license, if possible
 * Remove memory/file descriptor freeing befor elog(ERROR)  (Bruce)
+
 
 ---------------------------------------------------------------------------
 
