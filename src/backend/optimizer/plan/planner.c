@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.12 1997/12/18 12:54:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.13 1997/12/18 19:41:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
 #include "executor/executor.h"
 
 static Plan *make_sortplan(List *tlist, List *sortcls, Plan *plannode);
-static Plan *init_query_planner(Query *parse);
 
 /*****************************************************************************
  *
@@ -77,6 +76,8 @@ planner(Query *parse)
 
 	Plan	   *result_plan = (Plan *) NULL;
 
+	List	   *preprocessed_tlist = NIL;
+	List	   *primary_qual;
 	int			rt_index;
 
 	/*
@@ -93,8 +94,20 @@ planner(Query *parse)
 	if (special_plans)
 		result_plan = special_plans;
 	else
-		result_plan = init_query_planner(parse);		/* regular plans */
+	{
+		preprocessed_tlist = preprocess_targetlist(tlist,
+												  parse->commandType,
+					 							  parse->resultRelation,
+												  parse->rtable);
 
+		primary_qual = cnfify((Expr *) parse->qual, true);
+
+		result_plan = query_planner(parse,
+									  parse->commandType,
+									  preprocessed_tlist,
+									  primary_qual);
+	}
+	
 	/*
 	 * For now, before we hand back the plan, check to see if there is a
 	 * user-specified sort that needs to be done.  Eventually, this will
@@ -178,34 +191,6 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
 	sortplan->cost = plannode->cost;
 
 	return (sortplan);
-}
-
-
-/*
- * init-query-planner--
- *	  Deals with all non-union preprocessing,and CNFifying the qualifications.
- *
- * Returns a query plan.
- * MODIFIES: tlist,qual
- *
- */
-static Plan *
-init_query_planner(Query *root)
-{
-	List	   *primary_qual;
-	List	   *tlist = root->targetList;
-
-	tlist = preprocess_targetlist(tlist,
-								  root->commandType,
-								  root->resultRelation,
-								  root->rtable);
-
-	primary_qual = cnfify((Expr *) root->qual, true);
-
-	return (query_planner(root,
-						  root->commandType,
-						  tlist,
-						  primary_qual));
 }
 
 /*
