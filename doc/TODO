@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat Jan 25 20:13:27 EST 2003
+Last updated:		Mon Jan 27 18:16:46 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -54,6 +54,7 @@ Administration
 * Have standalone backend read postgresql.conf
 * Add group object ownership, so groups can rename/drop/grant on objects,
   so we can implement roles
+* Add the concept of dataspaces/tablespaces [tablespaces]
 
 Data Types
 ==========
@@ -304,7 +305,6 @@ Exotic Features
 
 * Add SQL99 WITH clause to SELECT (Tom, Fernando)
 * Add SQL99 WITH RECURSIVE to SELECT (Tom, Fernando)
-* Add the concept of dataspaces/tablespaces [tablespaces]
 * Allow queries across multiple databases [crossdb]
 * Add pre-parsing phase that converts non-ANSI features to supported features
 * Allow plug-in modules to emulate features from other databases
