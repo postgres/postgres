@@ -1,5 +1,5 @@
 # -*-makefile-*-
-# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.194 2004/08/28 22:55:06 momjian Exp $
+# $PostgreSQL: pgsql/src/Makefile.global.in,v 1.195 2004/09/18 13:28:54 petere Exp $
 
 #------------------------------------------------------------------------------
 # All PostgreSQL makefiles include this file and use the variables it sets,
@@ -207,7 +207,8 @@ X = @EXEEXT@
 
 # Perl 
 
-PERL			= "@PERL@"	# quoted for pathname with spaces
+# quoted for pathname with spaces
+PERL			= "@PERL@"
 perl_archlibexp		= @perl_archlibexp@
 perl_privlibexp		= @perl_privlibexp@
 perl_useshrplib		= @perl_useshrplib@
