@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.20 2000/04/11 14:43:54 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.21 2000/04/12 04:40:03 thomas Exp $
 Postgres documentation
 -->
 
@@ -451,13 +451,13 @@ CREATE TABLE distributors (
 [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] { [
     NULL | NOT NULL ] | UNIQUE | PRIMARY KEY | CHECK <replaceable
      class="parameter">constraint</replaceable> | REFERENCES 
-     <replaceable class="parameter">referenced table</replaceable>
-     (<replaceable class="parameter">referenced column</replaceable>)
-     [ MATCH <replaceable class="parameter">match type</replaceable> ]
+     <replaceable class="parameter">reftable</replaceable>
+     (<replaceable class="parameter">refcolumn</replaceable>)
+     [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
      [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
      [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
      [ [ NOT ] DEFERRABLE ] 
-     [ INITIALLY <replaceable class="parameter"> check time </replaceable> ] }
+     [ INITIALLY <replaceable class="parameter">checktime</replaceable> ] }
     [, ...]
    </synopsis>
   </para>
@@ -938,12 +938,12 @@ ERROR: Cannot insert a duplicate key into a unique index.
    </title>
    <synopsis>
 [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] REFERENCES 
-<replaceable class="parameter">referenced table</replaceable> [ ( <replaceable class="parameter"> referenced column</replaceable> ) ] 
+<replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> ) ] 
 [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
 [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
 [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
 [ [ NOT ] DEFERRABLE ] 
-[ INITIALLY <replaceable class="parameter"> check time </replaceable> ]
+[ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
    </synopsis>
    <para>
     The REFERENCES constraint specifies a rule that a column
@@ -954,6 +954,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
 
    <refsect3 id="R3-SQL-REFERENCES-1">
     <title>Inputs</title>
+
     <para>
      <variablelist>
       <varlistentry>
@@ -964,21 +965,23 @@ ERROR: Cannot insert a duplicate key into a unique index.
 	</para>
        </listitem>
       </varlistentry>
+
       <varlistentry>
-       <term><replaceable class="parameter">referenced table</replaceable></term>
+       <term><replaceable class="parameter">reftable</replaceable></term>
        <listitem>
         <para>
          The table that contains the data to check against.
         </para>
        </listitem>
       </varlistentry>
+
       <varlistentry>
-       <term><replaceable class="parameter">referenced column</replaceable></term>
+       <term><replaceable class="parameter">refcolumn</replaceable></term>
        <listitem>
         <para>
-         The column in the <replaceable class="parameter">referenced table</replaceable>
+         The column in <replaceable class="parameter">reftable</replaceable>
          to check the data against.  If this is not specified, the PRIMARY KEY of the
-         <replaceable class="parameter">referenced table</replaceable> is used.
+         <replaceable class="parameter">reftable</replaceable> is used.
         </para>
        </listitem>
       </varlistentry>
@@ -1096,6 +1099,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
         </para>
        </listitem>
       </varlistentry>
+
       <varlistentry>
        <term> [ NOT ] DEFERRABLE </term>
        <listitem>
@@ -1105,25 +1109,32 @@ ERROR: Cannot insert a duplicate key into a unique index.
         </para>
        </listitem>
       </varlistentry>
+
       <varlistentry>
-       <term>INITIALLY <replaceable class="parameter"> check time </replaceable></term>
+       <term>INITIALLY <replaceable class="parameter">checktime</replaceable></term>
        <listitem>
         <para>
-         <replaceable class="parameter">check time</replaceable> has two possible values 
+         <replaceable class="parameter">checktime</replaceable> has two possible values 
          which specify the default time to check the constraint.
+
          <variablelist>
           <varlistentry>
            <term>DEFERRED</term>
-           <para>
-            Check this constraint at the end of the transaction.
-           </para>
+	   <listitem>
+	    <para>
+	     Check this constraint at the end of the transaction.
+	    </para>
+	   </listitem>
           </varlistentry>
+
           <varlistentry>
            <term>IMMEDIATE</term>
-           <para>
-            Check this constraint after each statement.
-           </para>
-          </varlistentry>
+	   <listitem>
+	    <para>
+	     Check this constraint after each statement.
+	    </para>
+	   </listitem>
+	  </varlistentry>
          </variablelist>
         </para>
        </listitem>
@@ -1150,7 +1161,7 @@ ERROR: Cannot insert a duplicate key into a unique index.
 	  <varlistentry>
 	   <term><computeroutput>
 ERROR:  <replaceable class="parameter">name</replaceable> referential integrity violation - key referenced from 
-<replaceable class="parameter">table</replaceable> not found in <replaceable class="parameter">referenced table</replaceable>
+<replaceable class="parameter">table</replaceable> not found in <replaceable class="parameter">reftable</replaceable>
 	    </computeroutput></term>
 	   <listitem>
 	    <para>
@@ -1193,13 +1204,14 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
     </title>
     <para>
      Currently <productname>Postgres</productname> only supports
-     MATCH FULL and an unspecified MATCH type.
+     MATCH FULL and an unspecified match type.
      In addition, the referenced columns are supposed to be
      the columns of a UNIQUE constraint in the referenced table,
      however <productname>Postgres</productname> does not
      enforce this.
     </para>
    </refsect3>
+  </refsect2>
  </refsect1>
  
  <refsect1 id="R1-SQL-TABLECONSTRAINT-1">
@@ -1211,13 +1223,13 @@ ERROR:  <replaceable class="parameter">name</replaceable> referential integrity 
 [ CONSTRAINT name ] { PRIMARY KEY |  UNIQUE } ( <replaceable class="parameter">column</replaceable> [, ...] )
 [ CONSTRAINT name ] CHECK ( <replaceable>constraint</replaceable> )
 [ CONSTRAINT name ] FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) 
-                     REFERENCES <replaceable class="parameter">referenced table</replaceable>
-                      (<replaceable class="parameter">referenced column</replaceable> [, ...] )
-                      [ MATCH <match type> ] 
+                     REFERENCES <replaceable class="parameter">reftable</replaceable>
+                      (<replaceable class="parameter">refcolumn</replaceable> [, ...] )
+                      [ MATCH <replaceable class="parameter">matchtype</replaceable> ] 
                       [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
                       [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
                       [ [ NOT ] DEFERRABLE ] 
-                      [ INITIALLY <replaceable class="parameter"> check time </replaceable> ]
+                      [ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
    </synopsis>
   </para>
   <refsect2 id="R2-SQL-TABLECONSTRAINT-1">
@@ -1464,7 +1476,7 @@ CREATE TABLE distributors (
    </refsect3>
   </refsect2>
 
-  <refsect2 id="R2-SQL-REFERENCES-1">
+  <refsect2 id="R2-SQL-REFERENCES-2">
    <refsect2info>
     <date>2000-02-04</date>
    </refsect2info>
@@ -1474,12 +1486,12 @@ CREATE TABLE distributors (
    <synopsis>
 [ CONSTRAINT <replaceable class="parameter">name</replaceable> ] 
 FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFERENCES 
-<replaceable class="parameter">referenced table</replaceable> [ ( <replaceable class="parameter">referenced column</replaceable> [, ...] ) ] 
+<replaceable class="parameter">reftable</replaceable> [ ( <replaceable class="parameter">refcolumn</replaceable> [, ...] ) ] 
 [ MATCH <replaceable class="parameter">matchtype</replaceable> ]
 [ ON DELETE <replaceable class="parameter">action</replaceable> ] 
 [ ON UPDATE <replaceable class="parameter">action</replaceable> ]
 [ [ NOT ] DEFERRABLE ] 
-[ INITIALLY <replaceable class="parameter"> check time </replaceable> ]
+[ INITIALLY <replaceable class="parameter">checktime</replaceable> ]
    </synopsis>
    <para>
     The REFERENCES constraint specifies a rule that a column
@@ -1488,7 +1500,7 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
     a FOREIGN KEY table constraint.
    </para>
 
-   <refsect3 id="R3-SQL-REFERENCES-1">
+   <refsect3 id="R3-SQL-REFERENCES-5">
     <title>Inputs</title>
     <para>
      <variablelist>
@@ -1509,7 +1521,7 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term><replaceable class="parameter">referenced table</replaceable></term>
+       <term><replaceable class="parameter">reftable</replaceable></term>
        <listitem>
         <para>
          The table that contains the data to check against.
@@ -1520,9 +1532,9 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        <term><replaceable class="parameter">referenced column</replaceable> [, ...]</term>
        <listitem>
         <para>
-         One or more column in the <replaceable class="parameter">referenced table</replaceable>
+         One or more column in the <replaceable class="parameter">reftable</replaceable>
          to check the data against.  If this is not specified, the PRIMARY KEY of the
-         <replaceable class="parameter">referenced table</replaceable> is used.
+         <replaceable class="parameter">reftable</replaceable> is used.
         </para>
        </listitem>
       </varlistentry>
@@ -1650,23 +1662,27 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
        </listitem>
       </varlistentry>
       <varlistentry>
-       <term>INITIALLY <replaceable class="parameter"> check time </replaceable></term>
+       <term>INITIALLY <replaceable class="parameter">checktime</replaceable></term>
        <listitem>
         <para>
-         <replaceable class="parameter">check time</replaceable> has two possible values 
+         <replaceable class="parameter">checktime</replaceable> has two possible values 
          which specify the default time to check the constraint.
          <variablelist>
           <varlistentry>
            <term>DEFERRED</term>
-           <para>
-            Check this constraint at the end of the transaction.
-           </para>
+	   <listitem>
+	    <para>
+	     Check this constraint at the end of the transaction.
+	    </para>
+	   </listitem>
           </varlistentry>
           <varlistentry>
            <term>IMMEDIATE</term>
-           <para>
-            Check this constraint after each statement.
-           </para>
+	   <listitem>
+	    <para>
+	     Check this constraint after each statement.
+	    </para>
+	   </listitem>
           </varlistentry>
          </variablelist>
         </para>
@@ -1675,7 +1691,7 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
      </variablelist>
     </para>
    </refsect3>
-   <refsect3 id="R3-SQL-REFERENCES-2">
+   <refsect3 id="R3-SQL-REFERENCES-6">
     <refsect3info>
      <date>2000-02-04</date>
     </refsect3info>
@@ -1692,7 +1708,7 @@ FOREIGN KEY ( <replaceable class="parameter">column</replaceable> [, ...] ) REFE
 	  <varlistentry>
 	   <term><computeroutput>
 ERROR:  <replaceable class="parameter">name</replaceable> referential integrity violation - key referenced from 
-<replaceable class="parameter">table</replaceable> not found in <replaceable class="parameter">referenced table</replaceable>
+<replaceable class="parameter">table</replaceable> not found in <replaceable class="parameter">reftable</replaceable>
 	    </computeroutput></term>
 	   <listitem>
 	    <para>
