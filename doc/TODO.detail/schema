@@ -100,3 +100,82 @@ Ravensfield Digital Resource Group, Ltd.
 (740) 587-0114
 www.ravensfield.com
 
+From reedstrm@rice.edu Wed May 23 10:59:42 2001
+Return-path: <reedstrm@rice.edu>
+Received: from ece.rice.edu (ece.rice.edu [128.42.4.34])
+	by candle.pha.pa.us (8.10.1/8.10.1) with ESMTP id f4NExgQ05774
+	for <pgman@candle.pha.pa.us>; Wed, 23 May 2001 10:59:42 -0400 (EDT)
+Received: from wallace.ece.rice.edu (wallace.ece.rice.edu [128.42.12.154])
+	by ece.rice.edu (Postfix) with ESMTP id A419F68A0E
+	for <pgman@candle.pha.pa.us>; Wed, 23 May 2001 09:59:36 -0500 (CDT)
+Received: from reedstrm by wallace.ece.rice.edu with local (Exim 3.22 #1 (Debian))
+	id 152a41-0006E5-00
+	for <pgman@candle.pha.pa.us>; Wed, 23 May 2001 09:56:41 -0500
+Date: Wed, 23 May 2001 09:56:41 -0500
+From: "Ross J. Reedstrom" <reedstrm@rice.edu>
+To: Bruce Momjian <pgman@candle.pha.pa.us>
+Subject: Re: [HACKERS] Re: [GENERAL] Re: [GENERAL] Queries across multiple databases ?(was: SELECT from a table in another database).
+Message-ID: <20010523095641.D23741@rice.edu>
+References: <004c01c0e214$ce6c4800$1001a8c0@archonet.com> <200105221131.f4MBVIc28574@candle.pha.pa.us>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+User-Agent: Mutt/1.3.17i
+In-Reply-To: <200105221131.f4MBVIc28574@candle.pha.pa.us>; from pgman@candle.pha.pa.us on Tue, May 22, 2001 at 07:31:18AM -0400
+Status: ORr
+
+Bruce - 
+Around the first of the year, I started playing around with a schema
+implementation. As you may recall, my first crack at changing file storage
+names about a year ago was motivated by the need to avoid collisions
+once schema were available.
+
+Anyway, now that Vadim has removed a lot of the internal dependence
+on relname for keeping track of relations, using the new relfinenode
+many places relname used to be used, it seems to me that adding a
+parallel schemaname to all the data structures that use relname isn't
+as cumbersome as Peter might think. I hadn't tackled the relcache yet:
+perhaps concatenating the schemaname and relname to use as the hash key
+is the way to go for that.
+
+Unfortunately, all that code is now 4 months old, and on my machine
+at home.  I has started with the rangetable entries, because hacked the
+parser to allow 'SELECT * FROM schemaname.tablename' was easier than
+'select schemaname.tablename.fieldname FROM', since the dot function
+calling convention isn't allowed in the range list, while it is in the
+target list. 
+
+I seem to recall tripping up on the query plan printer, of all things,
+before other, paying work pushed it aside. I'll see if I can update that
+code to the current tree, and send you something, if you'd like.
+
+Ross
+
+
+
+On Tue, May 22, 2001 at 07:31:18AM -0400, Bruce Momjian wrote:
+> > > I'm not sure whether it is quite the way to do it, but I'd have a better
+> > > time with things if I could span databases in a single request. Are
+> > > there theoretical problems with spanning databases in a single query? Is
+> > > it a feature of bad database design & implementation?
+> > 
+> > I think the developers are planning full schema support for the relatively
+> > near future (possibly even 7.2, but check the archives and see what's been
+> > said). Although it looks easy to access a table from another database,
+> > things can rapidly become more complicated as you start having to deal with
+> > transactions, triggers, rules, constraints...
+> 
+> Schema is on my radar screen for 7.2.  I am waiting to do some research
+> in what needs to be done, but my initial idea is to use the system cache
+> to do namespace mapping, just like is done now for temp tables.
+> 
+> -- 
+>   Bruce Momjian                        |  http://candle.pha.pa.us
+>   pgman@candle.pha.pa.us               |  (610) 853-3000
+>   +  If your life is a hard drive,     |  830 Blythe Avenue
+>   +  Christ can be your backup.        |  Drexel Hill, Pennsylvania 19026
+> 
+> ---------------------------(end of broadcast)---------------------------
+> TIP 2: you can get off all lists at once with the unregister command
+>     (send "unregister YourEmailAddressHere" to majordomo@postgresql.org)
+
