@@ -17,4 +17,24 @@ select * from inserttest;
       |    7 | testing
 (4 rows)
 
+--
+-- insert with similar expression / target_list values (all fail)
+--
+insert into inserttest (col1, col2, col3) values (DEFAULT, DEFAULT);
+ERROR:  INSERT has more target columns than expressions
+insert into inserttest (col1, col2, col3) values (1, 2);
+ERROR:  INSERT has more target columns than expressions
+insert into inserttest (col1) values (1, 2);
+ERROR:  INSERT has more expressions than target columns
+insert into inserttest (col1) values (DEFAULT, DEFAULT);
+ERROR:  INSERT has more expressions than target columns
+select * from inserttest;
+ col1 | col2 |  col3   
+------+------+---------
+      |    3 | testing
+      |    5 | testing
+      |    5 | test
+      |    7 | testing
+(4 rows)
+
 drop table inserttest;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.231 2002/04/17 20:57:56 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.232 2002/04/24 02:22:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,10 +547,12 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	}
 
 	/*
-	 * XXX It is possible that the targetlist has fewer entries than were
-	 * in the columns list.  We do not consider this an error.	Perhaps we
-	 * should, if the columns list was explicitly given?
+	 * Ensure that the targetlist has the same number of  entries
+	 * that were present in the columns list.  Don't do the check
+	 * for select statements.
 	 */
+	if (stmt->cols != NIL && (icolumns != NIL || attnos != NIL))
+		elog(ERROR, "INSERT has more target columns than expressions");
 
 	/* done building the range table and jointree */
 	qry->rtable = pstate->p_rtable;
@@ -3247,7 +3249,7 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 		}
 	}
 
-	result = NIL;	
+	result = NIL;
 	result = nconc(result, cxt.tables);
 	result = nconc(result, cxt.views);
 	result = nconc(result, cxt.grants);
