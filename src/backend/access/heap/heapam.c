@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.80 2000/07/21 10:31:30 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.81 2000/07/21 11:18:51 wieck Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1360,7 +1360,11 @@ heap_insert(Relation relation, HeapTuple tup)
 	{
 		if (tup->t_datamcxt != NULL && (char *) (tup->t_data) !=
 					((char *) tup + HEAPTUPLESIZE))
+		{
+			MemoryContext oldcxt = MemoryContextSwitchTo(tup->t_datamcxt);
 			pfree(tup->t_data);
+			MemoryContextSwitchTo(oldcxt);
+		}
 	    tup->t_data = plaintdata;
 		tup->t_len  = plaintlen;
 	}
@@ -1672,7 +1676,11 @@ l2:
 	{
 		if (newtup->t_datamcxt != NULL && (char *) (newtup->t_data) !=
 					((char *) newtup + HEAPTUPLESIZE))
+		{
+			MemoryContext oldcxt = MemoryContextSwitchTo(newtup->t_datamcxt);
 			pfree(newtup->t_data);
+			MemoryContextSwitchTo(oldcxt);
+		}
 	    newtup->t_data = plaintdata;
 		newtup->t_len  = plaintlen;
 	}
