@@ -1,87 +1,88 @@
-<Chapter Id="xindex">
-<Title>Interfacing Extensions To Indices</Title>
+ <chapter id="xindex">
+  <title>Interfacing Extensions To Indices</title>
 
-<Para>
-     The procedures described thus far let you define a  new
-     type,  new  functions  and  new operators.  However, we
-     cannot yet define a secondary index (such as a  <Acronym>B-tree</Acronym>,
-     <Acronym>R-tree</Acronym>  or  hash  access method) over a new type or its
-     operators.
-</Para>
+  <para>
+   The procedures described thus far let you define a new type, new
+   functions and new operators.  However, we cannot yet define a secondary
+   index (such as a <acronym>B-tree</acronym>, <acronym>R-tree</acronym> or
+   hash access method) over a new type or its operators.
+  </para>
 
-<Para>
-     Look back at
-<XRef LinkEnd="EXTEND-CATALOGS" EndTerm="EXTEND-CATALOGS">.
-     The right half shows the  catalogs  
-     that we must modify in order to tell <ProductName>Postgres</ProductName> how
-     to use a user-defined type and/or  user-defined  operators 
-     with an index (i.e., <FileName>pg_am, pg_amop, pg_amproc</FileName> and
-     <FileName>pg_opclass</FileName>).  Unfortunately, there is no simple command
-     to  do  this.   We will demonstrate how to modify these
-     catalogs through a  running  example:  a  new  operator
-     class  for the <Acronym>B-tree</Acronym> access method that sorts integers
-     in ascending absolute value order.
-</Para>
+  <para>
+   Look back at
+   <xref endterm="EXTEND-CATALOGS" linkend="EXTEND-CATALOGS">.
+   The right half shows the  catalogs  that we must modify in order to tell
+   <productname>Postgres</productname> how to use a user-defined type and/or
+   user-defined  operators with an index (i.e., <filename>pg_am, pg_amop,
+    pg_amproc, pg_operator</filename> and <filename>pg_opclass</filename>).
+   Unfortunately, there is no simple command to do this.  We will demonstrate
+   how to modify these catalogs through a running example:  a  new  operator
+   class for the <acronym>B-tree</acronym> access method that stores and
+   sorts complex numbers in ascending absolute value order.
+  </para>
 
-<Para>
-     The <FileName>pg_am</FileName> class contains one instance for  every  user
-     defined  access  method.   Support  for the heap access
-     method is built into <ProductName>Postgres</ProductName>, but every  other  access
-     method is described here.  The schema is
+  <para>
+   The <filename>pg_am</filename> class contains one instance for every user
+   defined access method.  Support for the heap access method is built into
+   <productname>Postgres</productname>, but every other access method is
+   described here.  The schema is
 
-<TABLE TOCENTRY="1">
-<Title>Index Schema</Title>
-<TitleAbbrev>Indices</TitleAbbrev>
-<TGroup Cols="2">
-<THead>
-<Row>
-  <Entry>Attribute</Entry>
-  <Entry>Description</Entry>
-</Row>
-</THead>
-<TBody>
-<Row>
-  <Entry>amname</Entry>
-  <Entry>name of the access method</Entry>
-</Row>
-<Row>
-<Entry>amowner</Entry>
-<Entry>object id of the owner's instance in pg_user</Entry>
-</Row>
-<Row>
-<Entry>amkind</Entry>
-<Entry>not used at present, but set to 'o' as a place holder</Entry>
-</Row>
-<Row>
-<Entry>amstrategies</Entry>
-<Entry>number of strategies for this access method (see below)</Entry>
-</Row>
-<Row>
-<Entry>amsupport</Entry>
-<Entry>number of support routines for this access method (see below)</Entry>
-</Row>
-<Row>
-<Entry>amgettuple
-    aminsert
-    ...</Entry>
+   <table tocentry="1">
+    <title>Index Schema</title>
+    <titleabbrev>Indices</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Attribute</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>amname</entry>
+       <entry>name of the access method</entry>
+      </row>
+      <row>
+       <entry>amowner</entry>
+       <entry>object id of the owner's instance in pg_user</entry>
+      </row>
+      <row>
+       <entry>amkind</entry>
+       <entry>not used at present, but set to 'o' as a place holder</entry>
+      </row>
+      <row>
+       <entry>amstrategies</entry>
+       <entry>number of strategies for this access method (see below)</entry>
+      </row>
+      <row>
+       <entry>amsupport</entry>
+       <entry>number of support routines for this access method (see below)</entry>
+      </row>
+      <row>
+       <entry>amgettuple</entry>
+      </row>
+      <row>
+       <entry>aminsert</entry>
+      </row>
+      <row>
+       <entry>...</entry>
+       <entry>procedure  identifiers  for  interface routines to the access
+	method.  For example, regproc ids for opening,  closing,  and
+	getting instances from the access method appear here.</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
 
-<Entry>procedure  identifiers  for  interface routines to the access
-    method.  For example, regproc ids for opening,  closing,  and
-    getting instances from the access method appear here. </Entry>
-</Row>
-</TBody>
-</TGroup>
-</TABLE>
-</Para>
+  <para>
+   The <acronym>object ID</acronym> of the instance in
+   <filename>pg_am</filename> is used as a foreign key in lots of other
+   classes.  You  don't  need to  add a new instance to this class; all
+   you're interested in is the <acronym>object ID</acronym> of the access
+   method instance you want to extend:
 
-<Para>
-     The  <Acronym>object  ID</Acronym>  of  the instance in <FileName>pg_am</FileName> is used as a
-     foreign key in lots of other classes.  You  don't  need
-     to  add a new instance to this class; all you're interested in 
-     is the <Acronym>object ID</Acronym> of the access method instance
-     you want to extend:
-
-<ProgramListing>
+   <programlisting>
 SELECT oid FROM pg_am WHERE amname = 'btree';
 
          +----+
@@ -89,181 +90,187 @@ SELECT oid FROM pg_am WHERE amname = 'btree';
          +----+
          |403 |
          +----+
-</ProgramListing>
-</Para>
+   </programlisting>
 
-<Para>
-     The  <FileName>amstrategies</FileName>  attribute exists to standardize 
-     comparisons  across  data  types.   For  example,  <Acronym>B-tree</Acronym>s
-     impose  a  strict  ordering on keys, lesser to greater.
-     Since <ProductName>Postgres</ProductName> allows the  user  to  define  operators,
-     <ProductName>Postgres</ProductName>  cannot look at the name of an operator (eg, ">"
-     or "<") and tell what kind of comparison it is.  In fact,
-     some  access  methods don't impose any ordering at all.
-     For example, <Acronym>R-tree</Acronym>s  express  a  rectangle-containment
-     relationship, whereas a hashed data structure expresses
-     only bitwise similarity based on the value  of  a  hash
-     function.  <ProductName>Postgres</ProductName> needs some consistent way of taking
-     a qualification in your query, looking at the  operator
-     and  then  deciding  if  a  usable  index exists.  This
-     implies that <ProductName>Postgres</ProductName> needs to know, for example,  that
-     the  "<="  and  ">" operators partition a <Acronym>B-tree</Acronym>.  <ProductName>Postgres</ProductName>
-     uses strategies to express these relationships  between
-     operators and the way they can be used to scan indices.
-</Para>
+   We will use that <command>SELECT</command> in a <command>WHERE</command>
+   clause later.
+  </para>
 
-<Para>
-     Defining a new set of strategies is beyond the scope of
-     this  discussion,  but we'll explain how <Acronym>B-tree</Acronym> strategies 
-     work because you'll need to know that to add a new
-     operator  class.   In the <FileName>pg_am</FileName> class, the amstrategies
-     attribute is the number of strategies defined for  this
-     access  method.   For <Acronym>B-tree</Acronym>s, this number is 5.  These
-     strategies correspond to
+  <para>
+   The <filename>amstrategies</filename> attribute exists to standardize
+   comparisons across data types.  For example, <acronym>B-tree</acronym>s
+   impose a strict ordering on keys, lesser to greater.  Since
+   <productname>Postgres</productname> allows the user to define operators,
+   <productname>Postgres</productname> cannot look at the name of an operator
+   (eg, ">" or "<") and tell what kind of comparison it is.  In fact,
+   some  access methods don't impose any ordering at all.  For example,
+   <acronym>R-tree</acronym>s express a rectangle-containment relationship,
+   whereas a hashed data structure expresses only bitwise similarity based
+   on the value of a hash function.  <productname>Postgres</productname>
+   needs some consistent way of taking a qualification in your query,
+   looking at the operator and then deciding if a usable index exists.  This
+   implies that <productname>Postgres</productname> needs to know, for
+   example, that the  "<="  and  ">" operators partition a
+   <acronym>B-tree</acronym>.  <productname>Postgres</productname>
+   uses strategies to express these relationships  between
+   operators and the way they can be used to scan indices.
+  </para>
 
-<TABLE TOCENTRY="1">
-<Title>B-tree Strategies</Title>
-<TitleAbbrev>B-tree</TitleAbbrev>
-<TGroup Cols="2">
-<THead>
-<Row>
-<Entry>Operation</Entry>
-<Entry>Index</Entry>
-</Row>
-</THead>
-<TBody>
-<Row>
-<Entry>less than</Entry>
-<Entry>1</Entry>
-</Row>
-<Row>
-<Entry>less than or equal</Entry>
-<Entry>2</Entry>
-</Row>
-<Row>
-<Entry>equal</Entry>
-<Entry>3</Entry>
-</Row>
-<Row>
-<Entry>greater than or equal</Entry>
-<Entry>4</Entry>
-</Row>
-<Row>
-<Entry>greater than</Entry>
-<Entry>5</Entry>
-</Row>
-</TBody>
-</TGroup>
-</TABLE>
-</Para>
+  <para>
+   Defining a new set of strategies is beyond the scope of this discussion,
+   but we'll explain how <acronym>B-tree</acronym> strategies work because
+   you'll need to know that to add a new operator class. In the
+   <filename>pg_am</filename> class, the amstrategies attribute is the
+   number of strategies defined for this access method. For
+   <acronym>B-tree</acronym>s, this number is 5.  These strategies
+   correspond to
 
-<Para>
-     The idea is that you'll need to add  procedures  corresponding  
-     to the comparisons above to the <FileName>pg_amop</FileName> relation 
-     (see below).  The access method code can use these
-     strategy  numbers,  regardless  of data type, to figure
-     out how to partition the <Acronym>B-tree</Acronym>,  compute  selectivity,
-     and  so  on.   Don't  worry about the details of adding
-     procedures yet; just understand that there  must  be  a
-     set  of these procedures for <FileName>int2, int4, oid,</FileName> and every
-     other data type on which a <Acronym>B-tree</Acronym> can operate.
+   <table tocentry="1">
+    <title>B-tree Strategies</title>
+    <titleabbrev>B-tree</titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Operation</entry>
+       <entry>Index</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>less than</entry>
+       <entry>1</entry>
+      </row>
+      <row>
+       <entry>less than or equal</entry>
+       <entry>2</entry>
+      </row>
+      <row>
+       <entry>equal</entry>
+       <entry>3</entry>
+      </row>
+      <row>
+       <entry>greater than or equal</entry>
+       <entry>4</entry>
+      </row>
+      <row>
+       <entry>greater than</entry>
+       <entry>5</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+  </para>
 
-     Sometimes, strategies aren't enough information for the
-     system  to figure out how to use an index.  Some access
-     methods require other  support  routines  in  order  to
-     work.   For  example,  the <Acronym>B-tree</Acronym> access method must be
-     able to compare two keys and determine whether  one  is
-     greater  than, equal to, or less than the other.  
-     Similarly, the <Acronym>R-tree</Acronym> access method must be able to compute
-     intersections,  unions, and sizes of rectangles.  These
-     operations do not correspond to user qualifications  in
-     SQL  queries;  they are administrative routines used by
-     the access methods, internally.
-</Para>
+  <para>
+   The idea is that you'll need to add procedures corresponding to the
+   comparisons above to the <filename>pg_amop</filename> relation (see below).
+   The access method code can use these strategy numbers, regardless of data
+   type, to figure out how to partition the <acronym>B-tree</acronym>,
+   compute selectivity, and so on.  Don't worry about the details of adding
+   procedures yet; just understand that there must be a set of these
+   procedures for <filename>int2, int4, oid,</filename> and every other
+   data type on which a <acronym>B-tree</acronym> can operate.
+  </para>
 
-<Para>
-     In order to manage  diverse  support  routines  
-     consistently   across  all  <ProductName>Postgres</ProductName>  access  methods,  <FileName>pg_am</FileName>
-     includes an attribute called <FileName>amsupport</FileName>.  This attribute
-     records  the  number  of  support  routines  used by an
-     access method.  For <Acronym>B-tree</Acronym>s, this number is one --  the
-     routine  to  take  two  keys  and  return -1, 0, or +1,
-     depending on whether the first key is less than,  equal
-     to, or greater than the second.
-<Note>
-<Para>
-Strictly  speaking, this routine can return a negative
-number (< 0), 0, or a non-zero positive number (> 0).
-</Para>
-</Note>
-</para>
-<Para>
-     The <FileName>amstrategies</FileName> entry in pg_am is just the  number  of
-     strategies  defined  for the access method in question.
-     The procedures for less than, less  equal,  and  so  on
-     don't  appear  in  <FileName>pg_am</FileName>.  Similarly, <FileName>amsupport</FileName> is just
-     the number of support routines required by  the  access
-     method.  The actual routines are listed elsewhere.
-</Para>
+  <para>
+   Sometimes, strategies aren't enough information for the system to figure
+   out how to use an index.  Some access methods require other support
+   routines in order to work. For example, the <acronym>B-tree</acronym>
+   access method must be able to compare two keys and determine whether one
+   is greater than, equal to, or less than the other.  Similarly, the
+   <acronym>R-tree</acronym> access method must be able to compute
+   intersections,  unions, and sizes of rectangles.  These
+   operations do not correspond to user qualifications in
+   SQL queries;  they are administrative routines used by
+   the access methods, internally.
+  </para>
 
-<Para>
-     The  next  class of interest is pg_opclass.  This class
-     exists only to  associate  a  name  with  an  oid.   In
-     pg_amop,  every <Acronym>B-tree</Acronym> operator class has a set of 
-     procedures,  one  through  five,  above.   Some   existing
-     opclasses  are  <FileName>int2_ops,  int4_ops,  and oid_ops</FileName>.  You
-     need to add an instance with  your  opclass  name  (for
-     example,  <FileName>complex_abs_ops</FileName>)  to  <FileName>pg_opclass</FileName>.  The <FileName>oid</FileName> of
-     this instance is a foreign key in other classes.
+  <para>
+   In order to manage diverse support routines consistently across all
+   <productname>Postgres</productname> access methods,
+   <filename>pg_am</filename> includes an attribute called
+   <filename>amsupport</filename>.  This attribute records the number of
+   support routines used by an access method.  For <acronym>B-tree</acronym>s,
+   this number is one -- the routine to take two keys and return -1, 0, or
+   +1, depending on whether the first key is less than, equal
+   to, or greater than the second.
 
-<ProgramListing>
-INSERT INTO pg_opclass (opcname) VALUES ('complex_abs_ops');
+   <note>
+    <para>
+     Strictly  speaking, this routine can return a negative
+     number (< 0), 0, or a non-zero positive number (> 0).
+    </para>
+   </note>
+  </para>
 
-SELECT oid, opcname
+  <para>
+   The <filename>amstrategies</filename> entry in pg_am is just the number
+   of strategies defined for the access method in question.  The procedures
+   for less than, less equal, and so on don't appear in
+   <filename>pg_am</filename>.  Similarly, <filename>amsupport</filename>
+   is just the number of support routines required by  the  access
+   method.  The actual routines are listed elsewhere.
+  </para>
+
+  <para>
+   The next class of interest is pg_opclass.  This class exists only to
+   associate a name and default type with an oid.  In pg_amop, every
+   <acronym>B-tree</acronym> operator class has a set of procedures, one
+   through five, above. Some existing opclasses are <filename>int2_ops,
+    int4_ops, and oid_ops</filename>.  You need to add an instance with your
+   opclass name (for example, <filename>complex_abs_ops</filename>) to
+   <filename>pg_opclass</filename>.  The <filename>oid</filename> of
+   this instance is a foreign key in other classes.
+
+   <programlisting>
+INSERT INTO pg_opclass (opcname, opcdeftype)
+    SELECT 'complex_abs_ops', oid FROM pg_type WHERE typname = 'complex_abs';
+
+SELECT oid, opcname, opcdeftype
     FROM pg_opclass
     WHERE opcname = 'complex_abs_ops';
 
-         +------+--------------+
-         |oid   | opcname      |
-         +------+--------------+
-         |17314 | int4_abs_ops |
-         +------+--------------+
-</ProgramListing>
+         +------+-----------------+------------+
+         |oid   | opcname         | opcdeftype |
+         +------+-----------------+------------+
+         |17314 | complex_abs_ops |      29058 |
+         +------+-----------------+------------+
+   </programlisting>
 
-     Note that the oid for your <FileName>pg_opclass</FileName> instance will  be
-     different!   You should substitute your value for 17314
-     wherever it appears in this discussion.
-</Para>
+   Note that the oid for your <filename>pg_opclass</filename> instance will
+   be different!  Don't worry about this though.  We'll get this number
+   from the system later just like we got the oid of the type here.
+  </para>
 
-<Para>
-     So now we have an access method and an operator  class.
-     We  still  need  a  set of operators; the procedure for
-     defining operators was discussed earlier in  this  manual.   
-     For  the  complex_abs_ops  operator  class on Btrees, 
-     the operators we require are:
+  <para>
+   So now we have an access method and an operator  class.
+   We  still  need  a  set of operators; the procedure for
+   defining operators was discussed earlier in  this  manual.
+   For  the  complex_abs_ops  operator  class on Btrees,
+   the operators we require are:
 
-<ProgramListing>
+   <programlisting>
         absolute value less-than
         absolute value less-than-or-equal
         absolute value equal
         absolute value greater-than-or-equal
         absolute value greater-than
-</ProgramListing>
-</Para>
+   </programlisting>
+  </para>
 
-<Para>
-     Suppose the code that implements the functions  defined
-     is stored in the file
-<FileName>PGROOT/src/tutorial/complex.c</FileName>
-</Para>
+  <para>
+   Suppose the code that implements the functions  defined
+   is stored in the file
+   <filename>PGROOT/src/tutorial/complex.c</filename>
+  </para>
 
-<Para>
-     Part  of  the  code  look like this: (note that we will
-     only show the equality operator for  the  rest  of  the
-     examples.  The  other  four operators are very similar.
-     Refer to <FileName>complex.c</FileName> or <FileName>complex.sql</FileName> for the details.)
+  <para>
+   Part of the code look like this: (note that we will only show the
+   equality operator for the rest of the examples.  The other four
+   operators are very similar.  Refer to <filename>complex.c</filename>
+   or <filename>complex.source</filename> for the details.)
 
-<ProgramListing>
+   <programlisting>
 #define Mag(c) ((c)-&gt;x*(c)-&gt;x + (c)-&gt;y*(c)-&gt;y)
 
          bool
@@ -272,61 +279,57 @@ SELECT oid, opcname
              double amag = Mag(a), bmag = Mag(b);
              return (amag==bmag);
          }
-</ProgramListing>
-</Para>
+   </programlisting>
+  </para>
 
-<Para>
-     There are a couple of important things that are happening below.
-</Para>
+  <para>
+   There are a couple of important things that are happening below.
+  </para>
 
-<Para>
-     First, note that operators for less-than, less-than-or
-     equal, equal, greater-than-or-equal,  and  greater-than
-     for <FileName>int4</FileName> are being defined.  All of these operators are
-     already defined for <FileName>int4</FileName> under the names &lt;, &lt;=, =,  &gt;=,
-     and  &gt;.   The  new  operators  behave  differently,  of
-     course.  In order to guarantee that <ProductName>Postgres</ProductName> uses these
-     new operators rather than the old ones, they need to be
-     named differently from the old ones.   This  is  a  key
-     point: you can overload operators in <ProductName>Postgres</ProductName>, but only
-     if the operator isn't already defined for the  argument
-     types.   That  is,  if  you  have  &lt; defined for (int4,
-     int4), you can't define it again.   <ProductName>Postgres</ProductName>  does  not
-     check  this  when you define your operator, so be careful.  
-     To avoid this problem, odd names will be used for
-     the operators.  If you get this wrong, the access methods 
-     are likely to crash when you try to do scans.
-</Para>
+  <para>
+   First, note that operators for less-than, less-than-or equal, equal,
+   greater-than-or-equal, and greater-than for <filename>int4</filename>
+   are being defined.  All of these operators are already defined for
+   <filename>int4</filename> under the names &lt;, &lt;=, =, &gt;=,
+   and &gt;. The new operators behave differently, of course.  In order
+   to guarantee that <productname>Postgres</productname> uses these
+   new operators rather than the old ones, they need to be named differently
+   from the old ones.  This is a key point: you can overload operators in
+   <productname>Postgres</productname>, but only if the operator isn't
+   already defined for the argument types.  That is, if you have &lt;
+   defined for (int4, int4), you can't define it again.
+   <productname>Postgres</productname> does not check this when you define
+   your operator, so be careful.  To avoid this problem, odd names will be
+   used for the operators.  If you get this wrong, the access methods
+   are likely to crash when you try to do scans.
+  </para>
 
-<Para>
-     The other important point  is  that  all  the  operator
-     functions  return  Boolean  values.  The access methods
-     rely on this fact.  (On the  other  hand,  the  support
-     function  returns whatever the particular access method
-     expects -- in this case, a signed integer.)
-     The final routine in the file is the "support  routine"
-     mentioned  when we discussed the amsupport attribute of
-     the <FileName>pg_am</FileName> class.  We will use this later on.  For  now,
-     ignore it.
-</Para>
+  <para>
+   The other important point is that all the operator functions return
+   Boolean values.  The access methods rely on this fact.  (On the other
+   hand, the support function returns whatever the particular access method
+   expects -- in this case, a signed integer.) The final routine in the
+   file is the "support routine" mentioned when we discussed the amsupport
+   attribute of the <filename>pg_am</filename> class.  We will use this
+   later on.  For now, ignore it.
+  </para>
 
-<Para>
-<ProgramListing>
-CREATE FUNCTION complex_abs_eq(complex, complex)
+  <para>
+   <programlisting>
+CREATE FUNCTION complex_abs_eq(complex_abs, complex_abs)
               RETURNS bool
               AS 'PGROOT/tutorial/obj/complex.so'
               LANGUAGE 'c';
-</ProgramListing>
-</Para>
+   </programlisting>
+  </para>
 
-<Para>
-     Now  define the operators that use them.  As noted, the
-     operator names must be unique among all operators  that
-     take  two <FileName>int4</FileName> operands.  In order to see if the 
-     operator names listed below are taken, we can do a query  on
-     <FileName>pg_operator</FileName>:
+  <para>
+   Now define the operators that use them.  As noted, the operator names
+   must be unique among all operators that take two <filename>int4</filename>
+   operands.  In order to see if the operator names listed below are taken,
+   we can do a query  on <filename>pg_operator</filename>:
 
-<ProgramListing>
+   <programlisting>
     /*
      * this query uses the regular expression operator (~)
      * to find three-character operator names that end in
@@ -335,95 +338,93 @@ CREATE FUNCTION complex_abs_eq(complex, complex)
     SELECT *
      FROM pg_operator
      WHERE oprname ~ '^..&amp;$'::text;
-</ProgramListing>
+   </programlisting>
 
-</Para>
+  </para>
 
-<Para>
-     to  see  if  your name is taken for the types you want.
-     The important things here are the procedure (which  are
-     the  <Acronym>C</Acronym> functions defined above) and the restriction and
-     join selectivity functions.  You should  just  use  the
-     ones  used  below--note  that  there are different such
-     functions for the less-than,  equal,  and  greater-than
-     cases.   These  must  be supplied, or the access method
-     will crash when it tries  to  use  the  operator.   You
-     should  copy  the  names for restrict and join, but use
-     the procedure names you defined in the last step.
+  <para>
+   to see if your name is taken for the types you want.  The important
+   things here are the procedure (which are the <acronym>C</acronym>
+   functions defined above) and the restriction and join selectivity
+   functions.  You should just use the ones used below--note that there
+   are different such functions for the less-than, equal, and greater-than
+   cases.  These must be supplied, or the access method will crash when it
+   tries to use the operator.  You should copy the names for restrict and
+   join, but use the procedure names you defined in the last step.
 
-<ProgramListing>
+   <programlisting>
 CREATE OPERATOR = (
-     leftarg = complex, rightarg = complex,
+     leftarg = complex_abs, rightarg = complex_abs,
      procedure = complex_abs_eq,
      restrict = eqsel, join = eqjoinsel
          )
-</ProgramListing>
-</Para>
+   </programlisting>
+  </para>
 
-<Para>
-     Notice that five operators corresponding to less,  less
-     equal, equal, greater, and greater equal are defined.
-</Para>
+  <para>
+   Notice that five operators corresponding to less,  less equal, equal,
+   greater, and greater equal are defined.
+  </para>
 
-<Para>
-     We're just about finished. the last thing we need to do
-     is to update the <FileName>pg_amop</FileName> relation.  To do this, we need
-     the following attributes:
-     
-<TABLE TOCENTRY="1">
-<Title><FileName>pg_amproc</FileName> Schema</Title>
-<TitleAbbrev><FileName>pg_amproc</FileName></TitleAbbrev>
-<TGroup Cols="2">
-<THead>
-<Row>
-<Entry>Attribute</Entry>
-<Entry>Description</Entry>
-</Row>
-</THead>
-<TBody>
-<Row>
-<Entry>amopid</Entry>
-<Entry>the <FileName>oid</FileName> of the <FileName>pg_am</FileName> instance
- for  B-tree (== 403, see above)</Entry>
-</Row>
-<Row>
-<Entry>amopclaid</Entry>
-<Entry>the <FileName>oid</FileName> of the 
-<FileName>pg_opclass</FileName>  instance for <FileName>int4_abs_ops</FileName>
- (== whatever you got instead  of <FileName>17314</FileName>, see above)</Entry>
-</Row>
-<Row>
-<Entry>amopopr</Entry>
-<Entry>the <FileName>oid</FileName>s of the  operators  for the opclass
-  (which we'll get in just a minute)</Entry>
-</Row>
-<Row>
-<Entry>amopselect, amopnpages</Entry>
-<Entry>cost functions</Entry>
-</Row>
-</TBody>
-</TGroup>
-</TABLE>
+  <para>
+   We're just about finished. the last thing we need to do is to update
+   the <filename>pg_amop</filename> relation.  To do this, we need the
+   following attributes:
 
-     The cost functions are used by the query  optimizer  to
-     decide  whether  or not to use a given index in a scan.
-     Fortunately, these already exist.   The  two  functions
-     we'll use are <FileName>btreesel</FileName>, which estimates the selectivity
-     of the <Acronym>B-tree</Acronym>, and <FileName>btreenpage</FileName>, which estimates the 
-     number of pages a search will touch in the tree.
-</Para>
+   <table tocentry="1">
+    <title><filename>pg_amproc</filename> Schema</title>
+    <titleabbrev><filename>pg_amproc</filename></titleabbrev>
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Attribute</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+     <tbody>
+      <row>
+       <entry>amopid</entry>
+       <entry>the <filename>oid</filename> of the <filename>pg_am</filename> instance
+	for  B-tree (== 403, see above)</entry>
+      </row>
+      <row>
+       <entry>amopclaid</entry>
+       <entry>the <filename>oid</filename> of the
+	<filename>pg_opclass</filename>  instance for <filename>complex_abs_ops</filename>
+	(== whatever you got instead  of <filename>17314</filename>, see above)</entry>
+      </row>
+      <row>
+       <entry>amopopr</entry>
+       <entry>the <filename>oid</filename>s of the  operators  for the opclass
+	(which we'll get in just a minute)</entry>
+      </row>
+      <row>
+       <entry>amopselect, amopnpages</entry>
+       <entry>cost functions</entry>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
 
-<Para>
-     So  we  need the <FileName>oid</FileName>s of the operators we just defined.
-     We'll look up the names of all the operators that  take
-     two <FileName>int4</FileName>s, and pick ours out:
+   The cost functions are used by the query optimizer to decide whether or
+   not to use a given index in a scan.  Fortunately, these already exist.
+   The two functions we'll use are <filename>btreesel</filename>, which
+   estimates the selectivity of the <acronym>B-tree</acronym>, and
+   <filename>btreenpage</filename>, which estimates the number of pages a
+   search will touch in the tree.
+  </para>
 
-<ProgramListing>
+  <para>
+   So we need the <filename>oid</filename>s of the operators we just
+   defined.  We'll look up the names of all the operators that take
+   two <filename>complex</filename>es, and pick ours out:
+   
+   <programlisting>
     SELECT o.oid AS opoid, o.oprname
      INTO TABLE complex_ops_tmp
      FROM pg_operator o, pg_type t
      WHERE o.oprleft = t.oid and o.oprright = t.oid
-      and t.typname = 'complex';
+      and t.typname = 'complex_abs';
 
          +------+---------+
          |oid   | oprname |
@@ -438,78 +439,169 @@ CREATE OPERATOR = (
          +------+---------+
          |17325 | &gt;       |
          +------+---------+
-</ProgramListing>
+   </programlisting>
 
-     (Again,  some of your <FileName>oid</FileName> numbers will almost certainly
-     be different.)  The operators we are interested in  are
-     those  with  <FileName>oid</FileName>s  17321 through 17325.  The values you
-     get will probably be different, and you should  
-     substitute  them  for  the  values below.  We can look at the
-     operator names and pick out the ones we just added.
-</Para>
+   (Again, some of your <filename>oid</filename> numbers will almost
+   certainly be different.)  The operators we are interested in are those
+   with <filename>oid</filename>s 17321 through 17325.  The values you
+   get will probably be different, and you should substitute them for the
+   values below.  We will do this with a select statement.
+  </para>
 
-<Para>
-     Now we're ready to update <FileName>pg_amop</FileName> with our new operator
-     class.  The most important thing in this entire 
-     discussion is that the operators are ordered, from less equal
-     through   greater   equal,  in  <FileName>pg_amop</FileName>.   We  add  the
-     instances we need:
+  <para>
+   Now we're ready to update <filename>pg_amop</filename> with our new
+   operator class.  The most important thing in this entire discussion
+   is that the operators are ordered, from less equal through greater
+   equal, in <filename>pg_amop</filename>.  We add the instances we need:
 
-<ProgramListing>
-    INSERT INTO pg_amop (amopid, amopclaid,
-     amopopr, amopstrategy,
-     amopselect, amopnpages)
-    SELECT am.oid, opcl.oid, c.opoid, 3,
-     'btreesel'::regproc, 'btreenpage'::regproc
-    FROM pg_am am, pg_opclass opcl, complex_ops_tmp c
-    WHERE amname = 'btree'
-     and opcname = 'complex_abs_ops'
-     and c.oprname = '=';
-</ProgramListing>
+   <programlisting>
+    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy,
+                amopselect, amopnpages) 
+        SELECT am.oid, opcl.oid, c.opoid, 1,
+                'btreesel'::regproc, 'btreenpage'::regproc
+        FROM pg_am am, pg_opclass opcl, complex_abs_ops_tmp c
+        WHERE amname = 'btree' AND
+            opcname = 'complex_abs_ops' AND
+            c.oprname = '<';
+   </programlisting>
 
-     Note the order: "less than" is 1, "less than or  equal"
-     is  2,  "equal" is 3, "greater than or equal" is 4, and
-     "greater than" is 5.
-</Para>
+   Now do this for the other operators substituting for the "1" in the
+   third line above and the "<" in the last line.  Note the order:
+   "less than" is 1, "less than or equal" is 2, "equal" is 3, "greater
+   than or equal" is 4, and "greater than" is 5.
+  </para>
 
-<Para>
-     The last step (finally!) is registration of  the  
-     "support routine" previously described in our discussion of
-     <FileName>pg_am</FileName>.  The <FileName>oid</FileName> of this support routine  is  stored  in
-     the <FileName>pg_amproc</FileName> class, keyed by the access method <FileName>oid</FileName> and
-     the operator class <FileName>oid</FileName>.  First, we need to register the
-     function  in  <ProductName>Postgres</ProductName>  (recall  that we put the <Acronym>C</Acronym> code
-     that implements this routine in the bottom of the  file
-     in which we implemented the operator routines):
+  <para>
+   The next step is registration of the "support routine" previously
+   described in our discussion of <filename>pg_am</filename>.  The
+   <filename>oid</filename> of this support routine is stored in the
+   <filename>pg_amproc</filename> class, keyed by the access method
+   <filename>oid</filename> and the operator class <filename>oid</filename>.
+   First, we need to register the function in
+   <productname>Postgres</productname> (recall that we put the
+   <acronym>C</acronym> code that implements this routine in the bottom of
+   the file in which we implemented the operator routines):
 
-<ProgramListing>
-    CREATE FUNCTION int4_abs_cmp(int4, int4)
+   <programlisting>
+    CREATE FUNCTION complex_abs_cmp(complex, complex)
      RETURNS int4
      AS 'PGROOT/tutorial/obj/complex.so'
      LANGUAGE 'c';
 
     SELECT oid, proname FROM pg_proc
-     WHERE prname = 'int4_abs_cmp';
+     WHERE proname = 'complex_abs_cmp';
 
-         +------+--------------+
-         |oid   | proname      |
-         +------+--------------+
-         |17328 | int4_abs_cmp |
-         +------+--------------+
-</ProgramListing>
+         +------+-----------------+
+         |oid   | proname         |
+         +------+-----------------+
+         |17328 | complex_abs_cmp |
+         +------+-----------------+
+   </programlisting>
 
-     (Again,  your <FileName>oid</FileName> number will probably be different and
-     you should substitute the value you see for  the  value
-     below.)   Recalling  that  the <Acronym>B-tree</Acronym> instance's oid is
-     403 and that of <FileName>int4_abs_ops</FileName> is 17314, we can  add  the
-     new instance as follows:
+   (Again, your <filename>oid</filename> number will probably be different
+   and you should substitute the value you see for the value below.)
+   We can add the new instance as follows:
 
-<ProgramListing>
+   <programlisting>
     INSERT INTO pg_amproc (amid, amopclaid, amproc, amprocnum)
-     VALUES ('403'::oid, -- btree oid
-     '17314'::oid,       --  pg_opclass tuple
-     '17328'::oid,       -- new pg_proc oid
-     '1'::int2);
-</ProgramListing>
-</Para>
-</Chapter>
+        SELECT a.oid, b.oid, c.oid, 1
+            FROM pg_am a, pg_opclass b, pg_proc c
+            WHERE a.amname = 'btree' AND
+                b.opcname = 'complex_abs_ops' AND
+                c.proname = 'complex_abs_cmp';
+   </programlisting>
+  </para>
+
+  <para>
+   Now we need to add a hashing strategy to allow the type to be indexed.
+   We do this by using another type in pg_am but we reuse the sames ops.
+
+   <programlisting>
+    INSERT INTO pg_amop (amopid, amopclaid, amopopr, amopstrategy,
+                amopselect, amopnpages)
+        SELECT am.oid, opcl.oid, c.opoid, 1,
+                'hashsel'::regproc, 'hashnpage'::regproc
+        FROM pg_am am, pg_opclass opcl, complex_abs_ops_tmp c
+        WHERE amname = 'hash' AND
+            opcname = 'complex_abs_ops' AND
+            c.oprname = '=';
+   </programlisting>
+  </para>
+
+  <para>
+   In order to use this index in a where clause, we need to modify the
+   <filename>pg_operator</filename> class as follows.
+
+   <programlisting>
+    UPDATE pg_operator
+        SET oprrest = 'eqsel'::regproc, oprjoin = 'eqjoinsel'
+        WHERE oprname = '=' AND
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
+    
+    UPDATE pg_operator
+        SET oprrest = 'neqsel'::regproc, oprjoin = 'neqjoinsel'
+        WHERE oprname = '<filename>' AND
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
+    
+    UPDATE pg_operator
+        SET oprrest = 'neqsel'::regproc, oprjoin = 'neqjoinsel'
+        WHERE oprname = '<filename>' AND
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
+    
+    UPDATE pg_operator
+        SET oprrest = 'intltsel'::regproc, oprjoin = 'intltjoinsel'
+        WHERE oprname = '<' AND 
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
+    
+    UPDATE pg_operator
+        SET oprrest = 'intltsel'::regproc, oprjoin = 'intltjoinsel'
+        WHERE oprname = '<=' AND
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
+    
+    UPDATE pg_operator
+        SET oprrest = 'intgtsel'::regproc, oprjoin = 'intgtjoinsel'
+        WHERE oprname = '>' AND
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');
+    
+    UPDATE pg_operator
+        SET oprrest = 'intgtsel'::regproc, oprjoin = 'intgtjoinsel'
+        WHERE oprname = '>=' AND
+            oprleft = oprright AND
+            oprleft = (SELECT oid FROM pg_type WHERE typname = 'complex_abs');</filename></filename>
+   </programlisting> 
+  </para>
+
+  <para>
+   And last (Finally!) we register a description of this type.
+
+   <programlisting>
+    INSERT INTO pg_description (objoid, description) 
+    SELECT oid, 'Two part G/L account'
+	    FROM pg_type WHERE typname = 'complex_abs';
+   </programlisting> 
+  </para>
+
+ </chapter>
+
+<!-- Keep this comment at the end of the file
+Local variables:
+mode: sgml
+sgml-omittag:nil
+sgml-shorttag:t
+sgml-minimize-attributes:nil
+sgml-always-quote-attributes:t
+sgml-indent-step:1
+sgml-indent-data:t
+sgml-parent-document:nil
+sgml-default-dtd-file:"./reference.ced"
+sgml-exposed-tags:nil
+sgml-local-catalogs:"/usr/lib/sgml/catalog"
+sgml-local-ecat-files:nil
+End:
+-->
