@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.11 2001/09/29 04:02:19 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.12 2001/10/26 23:10:21 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -88,8 +88,11 @@
     transaction identifiers.  Once UNDO is implemented,
     <filename>pg_clog</filename> will no longer be required to be
     permanent; it will be possible to remove
-    <filename>pg_clog</filename> at shutdown, split it into segments
-    and remove old segments.
+    <filename>pg_clog</filename> at shutdown.  (However, the urgency
+    of this concern has decreased greatly with the adoption of a segmented
+    storage method for <filename>pg_clog</filename> --- it is no longer
+    necessary to keep old <filename>pg_clog</filename> entries around
+    forever.)
    </para>
 
    <para>
@@ -116,6 +119,18 @@
     copying the data files (operating system copy commands are not
     suitable).
    </para>
+
+   <para>
+    A difficulty standing in the way of realizing these benefits is that they
+    require saving <acronym>WAL</acronym> entries for considerable periods
+    of time (eg, as long as the longest possible transaction if transaction
+    UNDO is wanted).  The present <acronym>WAL</acronym> format is
+    extremely bulky since it includes many disk page snapshots.
+    This is not a serious concern at present, since the entries only need
+    to be kept for one or two checkpoint intervals; but to achieve
+    these future benefits some sort of compressed <acronym>WAL</acronym>
+    format will be needed.
+   </para>
   </sect2>
  </sect1>
 
@@ -133,8 +148,8 @@
   <para>
    <acronym>WAL</acronym> logs are stored in the directory
    <Filename><replaceable>$PGDATA</replaceable>/pg_xlog</Filename>, as
-   a set of segment files, each 16 MB in size.  Each segment is
-   divided into 8 kB pages. The log record headers are described in
+   a set of segment files, each 16MB in size.  Each segment is
+   divided into 8KB pages. The log record headers are described in
    <filename>access/xlog.h</filename>; record content is dependent on
    the type of event that is being logged.  Segment files are given
    ever-increasing numbers as names, starting at
@@ -147,8 +162,8 @@
    The <acronym>WAL</acronym> buffers and control structure are in
    shared memory, and are handled by the backends; they are protected
    by lightweight locks.  The demand on shared memory is dependent on the
-   number of buffers; the default size of the <acronym>WAL</acronym>
-   buffers is 64 kB.
+   number of buffers.  The default size of the <acronym>WAL</acronym>
+   buffers is 8 8KB buffers, or 64KB.
   </para>
 
   <para>
@@ -166,8 +181,8 @@
    disk drives that falsely report a successful write to the kernel,
    when, in fact, they have only cached the data and not yet stored it
    on the disk.  A power failure in such a situation may still lead to
-   irrecoverable data corruption; administrators should try to ensure
-   that disks holding <productname>PostgreSQL</productname>'s data and
+   irrecoverable data corruption.  Administrators should try to ensure
+   that disks holding <productname>PostgreSQL</productname>'s
    log files do not make such false reports.
   </para>
 
@@ -179,11 +194,12 @@
     checkpoint's position is saved in the file
     <filename>pg_control</filename>. Therefore, when recovery is to be
     done, the backend first reads <filename>pg_control</filename> and
-    then the checkpoint record; next it reads the redo record, whose
-    position is saved in the checkpoint, and begins the REDO operation.
-    Because the entire content of the pages is saved in the log on the
-    first page modification after a checkpoint, the pages will be first
-    restored to a consistent state.
+    then the checkpoint record; then it performs the REDO operation by
+    scanning forward from the log position indicated in the checkpoint
+    record.
+    Because the entire content of data pages is saved in the log on the
+    first page modification after a checkpoint, all pages changed since
+    the checkpoint will be restored to a consistent state.
    </para>
 
    <para>
@@ -217,9 +233,9 @@
    buffers. This is undesirable because <function>LogInsert</function>
    is used on every database low level modification (for example,
    tuple insertion) at a time when an exclusive lock is held on
-   affected data pages and the operation is supposed to be as fast as
-   possible; what is worse, writing <acronym>WAL</acronym> buffers may
-   also cause the creation of a new log segment, which takes even more
+   affected data pages, so the operation needs to be as fast as
+   possible.  What is worse, writing <acronym>WAL</acronym> buffers may
+   also force the creation of a new log segment, which takes even more
    time. Normally, <acronym>WAL</acronym> buffers should be written
    and flushed by a <function>LogFlush</function> request, which is
    made, for the most part, at transaction commit time to ensure that
@@ -230,7 +246,7 @@
    one should increase the number of <acronym>WAL</acronym> buffers by
    modifying the <varname>WAL_BUFFERS</varname> parameter. The default
    number of <acronym>WAL</acronym> buffers is 8.  Increasing this
-   value will have an impact on shared memory usage.
+   value will correspondingly increase shared memory usage.
   </para>
 
   <para>
@@ -243,32 +259,26 @@
    log (known as the redo record) it should start the REDO operation,
    since any changes made to data files before that record are already
    on disk. After a checkpoint has been made, any log segments written
-   before the undo records are removed, so checkpoints are used to free
-   disk space in the <acronym>WAL</acronym> directory. (When
-   <acronym>WAL</acronym>-based <acronym>BAR</acronym> is implemented,
-   the log segments can be archived instead of just being removed.)
+   before the undo records are no longer needed and can be recycled or
+   removed. (When <acronym>WAL</acronym>-based <acronym>BAR</acronym> is
+   implemented, the log segments would be archived before being recycled
+   or removed.)
+  </para>
+
+  <para>
    The checkpoint maker is also able to create a few log segments for
    future use, so as to avoid the need for
    <function>LogInsert</function> or <function>LogFlush</function> to
-   spend time in creating them.
-  </para>
-
-  <para>
-   The <acronym>WAL</acronym> log is held on the disk as a set of 16
-   MB files called <firstterm>segments</firstterm>.  By default a new
-   segment is created only if more than 75% of the current segment is
-   used. One can instruct the server to pre-create up to 64 log segments
+   spend time in creating them.  (If that happens, the entire database
+   system will be delayed by the creation operation, so it's better if
+   the files can be created in the checkpoint maker, which is not on
+   anyone's critical path.)
+   By default a new 16MB segment file is created only if more than 75% of
+   the current segment has been used.  This is inadequate if the system
+   generates more than 4MB of log output between checkpoints.
+   One can instruct the server to pre-create up to 64 log segments
    at checkpoint time by modifying the <varname>WAL_FILES</varname>
    configuration parameter.
-  </para>
-
-  <para>
-   For faster after-crash recovery, it would be better to create
-   checkpoints more often.  However, one should balance this against
-   the cost of flushing dirty data pages; in addition, to ensure data
-   page consistency, the first modification of a data page after each
-   checkpoint results in logging the entire page content, thus
-   increasing output to log and the log's size.
   </para>
 
   <para>
@@ -279,6 +289,35 @@
    The default settings are 3 segments and 300 seconds respectively.
    It is also possible to force a checkpoint by using the SQL command
    <command>CHECKPOINT</command>.
+  </para>
+
+  <para>
+   Reducing <varname>CHECKPOINT_SEGMENTS</varname> and/or
+   <varname>CHECKPOINT_TIMEOUT</varname> causes checkpoints to be
+   done more often.  This allows faster after-crash recovery (since
+   less work will need to be redone).  However, one must balance this against
+   the increased cost of flushing dirty data pages more often.  In addition,
+   to ensure data page consistency, the first modification of a data page
+   after each checkpoint results in logging the entire page content.
+   Thus a smaller checkpoint interval increases the volume of output to
+   the log, partially negating the goal of using a smaller interval, and
+   in any case causing more disk I/O.
+  </para>
+
+  <para>
+   The number of 16MB segment files will always be at least
+   <varname>WAL_FILES</varname> + 1, and will normally not exceed
+   <varname>WAL_FILES</varname> + 2 * <varname>CHECKPOINT_SEGMENTS</varname>
+   + 1.  This may be used to estimate space requirements for WAL.  Ordinarily,
+   when an old log segment file is no longer needed, it is recycled (renamed
+   to become the next sequential future segment).  If, due to a short-term
+   peak of log output rate, there are more than <varname>WAL_FILES</varname> +
+   2 * <varname>CHECKPOINT_SEGMENTS</varname> + 1 segment files, then unneeded
+   segment files will be deleted instead of recycled until the system gets
+   back under this limit.  (If this happens on a regular basis,
+   <varname>WAL_FILES</varname> should be increased to avoid it.  Deleting log
+   segments that will only have to be created again later is expensive and
+   pointless.)
   </para>
 
   <para>
@@ -294,6 +333,8 @@
    Note that on most platforms, the resolution of a sleep request is
    ten milliseconds, so that any nonzero <varname>COMMIT_DELAY</varname>
    setting between 1 and 10000 microseconds will have the same effect.
+   Good values for these parameters are not yet clear; experimentation
+   is encouraged.
   </para>
 
   <para>
