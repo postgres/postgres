@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.126 2004/08/15 23:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.127 2004/08/28 21:05:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4924,7 +4924,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	add_column_datatype_dependency(RelationGetRelid(rel), attnum, targettype);
 
 	/* Drop any pg_statistic entry for the column, since it's now wrong type */
-	RemoveStatistics(rel, attnum);
+	RemoveStatistics(RelationGetRelid(rel), attnum);
 
 	/*
 	 * Update the default, if present, by brute force --- remove and re-add

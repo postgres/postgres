@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.68 2004/07/11 19:52:51 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/heap.h,v 1.69 2004/08/28 21:05:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ extern Oid heap_create_with_catalog(const char *relname,
 						 OnCommitAction oncommit,
 						 bool allow_system_table_mods);
 
-extern void heap_drop_with_catalog(Oid rid);
+extern void heap_drop_with_catalog(Oid relid);
 
 extern void heap_truncate(Oid rid);
 
@@ -81,7 +81,7 @@ extern void RemoveAttributeById(Oid relid, AttrNumber attnum);
 extern void RemoveAttrDefault(Oid relid, AttrNumber attnum,
 				  DropBehavior behavior, bool complain);
 extern void RemoveAttrDefaultById(Oid attrdefId);
-extern void RemoveStatistics(Relation rel, AttrNumber attnum);
+extern void RemoveStatistics(Oid relid, AttrNumber attnum);
 
 extern Form_pg_attribute SystemAttributeDefinition(AttrNumber attno,
 						  bool relhasoids);

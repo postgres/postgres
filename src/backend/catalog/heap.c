@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.272 2004/07/11 19:52:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.273 2004/08/28 21:05:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -71,7 +71,7 @@ static void AddNewRelationType(const char *typeName,
 				   Oid new_rel_oid,
 				   char new_rel_kind,
 				   Oid new_type_oid);
-static void RelationRemoveInheritance(Relation relation);
+static void RelationRemoveInheritance(Oid relid);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
 static void StoreConstraints(Relation rel, TupleDesc tupdesc);
 static void SetRelationNumChecks(Relation rel, int numchecks);
@@ -836,7 +836,7 @@ heap_create_with_catalog(const char *relname,
  * linking this relation to its parent(s).
  */
 static void
-RelationRemoveInheritance(Relation relation)
+RelationRemoveInheritance(Oid relid)
 {
 	Relation	catalogRelation;
 	SysScanDesc scan;
@@ -848,7 +848,7 @@ RelationRemoveInheritance(Relation relation)
 	ScanKeyInit(&key,
 				Anum_pg_inherits_inhrelid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(relation)));
+				ObjectIdGetDatum(relid));
 
 	scan = systable_beginscan(catalogRelation, InheritsRelidSeqnoIndex, true,
 							  SnapshotNow, 1, &key);
@@ -1015,7 +1015,7 @@ RemoveAttributeById(Oid relid, AttrNumber attnum)
 	heap_close(attr_rel, RowExclusiveLock);
 
 	if (attnum > 0)
-		RemoveStatistics(rel, attnum);
+		RemoveStatistics(relid, attnum);
 
 	relation_close(rel, NoLock);
 }
@@ -1147,33 +1147,24 @@ RemoveAttrDefaultById(Oid attrdefId)
 	relation_close(myrel, NoLock);
 }
 
-/* ----------------------------------------------------------------
- *		heap_drop_with_catalog	- removes specified relation from catalogs
- *
- *		1)	open relation, acquire exclusive lock.
- *		2)	flush relation buffers from bufmgr
- *		3)	remove inheritance information
- *		4)	remove pg_statistic tuples
- *		5)	remove pg_attribute tuples
- *		6)	remove pg_class tuple
- *		7)	unlink relation file
+/*
+ * heap_drop_with_catalog	- removes specified relation from catalogs
  *
  * Note that this routine is not responsible for dropping objects that are
  * linked to the pg_class entry via dependencies (for example, indexes and
  * constraints).  Those are deleted by the dependency-tracing logic in
  * dependency.c before control gets here.  In general, therefore, this routine
  * should never be called directly; go through performDeletion() instead.
- * ----------------------------------------------------------------
  */
 void
-heap_drop_with_catalog(Oid rid)
+heap_drop_with_catalog(Oid relid)
 {
 	Relation	rel;
 
 	/*
 	 * Open and lock the relation.
 	 */
-	rel = relation_open(rid, AccessExclusiveLock);
+	rel = relation_open(relid, AccessExclusiveLock);
 
 	/*
 	 * Release all buffers that belong to this relation, after writing any
@@ -1182,32 +1173,7 @@ heap_drop_with_catalog(Oid rid)
 	FlushRelationBuffers(rel, (BlockNumber) 0);
 
 	/*
-	 * remove inheritance information
-	 */
-	RelationRemoveInheritance(rel);
-
-	/*
-	 * delete statistics
-	 */
-	RemoveStatistics(rel, 0);
-
-	/*
-	 * delete attribute tuples
-	 */
-	DeleteAttributeTuples(RelationGetRelid(rel));
-
-	/*
-	 * delete relation tuple
-	 */
-	DeleteRelationTuple(RelationGetRelid(rel));
-
-	/*
-	 * forget any ON COMMIT action for the rel
-	 */
-	remove_on_commit_action(rid);
-
-	/*
-	 * unlink the relation's physical file and finish up.
+	 * Schedule unlinking of the relation's physical file at commit.
 	 */
 	if (rel->rd_rel->relkind != RELKIND_VIEW &&
 		rel->rd_rel->relkind != RELKIND_COMPOSITE_TYPE)
@@ -1226,9 +1192,38 @@ heap_drop_with_catalog(Oid rid)
 	relation_close(rel, NoLock);
 
 	/*
-	 * flush the relation from the relcache
+	 * Forget any ON COMMIT action for the rel
 	 */
-	RelationForgetRelation(rid);
+	remove_on_commit_action(relid);
+
+	/*
+	 * Flush the relation from the relcache.  We want to do this before
+	 * starting to remove catalog entries, just to be certain that no
+	 * relcache entry rebuild will happen partway through.  (That should
+	 * not really matter, since we don't do CommandCounterIncrement here,
+	 * but let's be safe.)
+	 */
+	RelationForgetRelation(relid);
+
+	/*
+	 * remove inheritance information
+	 */
+	RelationRemoveInheritance(relid);
+
+	/*
+	 * delete statistics
+	 */
+	RemoveStatistics(relid, 0);
+
+	/*
+	 * delete attribute tuples
+	 */
+	DeleteAttributeTuples(relid);
+
+	/*
+	 * delete relation tuple
+	 */
+	DeleteRelationTuple(relid);
 }
 
 
@@ -1884,7 +1879,7 @@ RemoveRelConstraints(Relation rel, const char *constrName,
  * for that column.
  */
 void
-RemoveStatistics(Relation rel, AttrNumber attnum)
+RemoveStatistics(Oid relid, AttrNumber attnum)
 {
 	Relation	pgstatistic;
 	SysScanDesc scan;
@@ -1897,7 +1892,7 @@ RemoveStatistics(Relation rel, AttrNumber attnum)
 	ScanKeyInit(&key[0],
 				Anum_pg_statistic_starelid,
 				BTEqualStrategyNumber, F_OIDEQ,
-				ObjectIdGetDatum(RelationGetRelid(rel)));
+				ObjectIdGetDatum(relid));
 
 	if (attnum == 0)
 		nkeys = 1;

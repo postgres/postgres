@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.235 2004/08/01 17:32:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.236 2004/08/28 21:05:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -769,8 +769,6 @@ index_drop(Oid indexId)
 	HeapTuple	tuple;
 	bool		hasexprs;
 
-	Assert(OidIsValid(indexId));
-
 	/*
 	 * To drop an index safely, we must grab exclusive lock on its parent
 	 * table; otherwise there could be other backends using the index!
@@ -790,14 +788,24 @@ index_drop(Oid indexId)
 	LockRelation(userIndexRelation, AccessExclusiveLock);
 
 	/*
-	 * fix RELATION relation
+	 * flush buffer cache and schedule physical removal of the file
 	 */
-	DeleteRelationTuple(indexId);
+	FlushRelationBuffers(userIndexRelation, (BlockNumber) 0);
+
+	if (userIndexRelation->rd_smgr == NULL)
+		userIndexRelation->rd_smgr = smgropen(userIndexRelation->rd_node);
+	smgrscheduleunlink(userIndexRelation->rd_smgr,
+					   userIndexRelation->rd_istemp);
+	userIndexRelation->rd_smgr = NULL;
 
 	/*
-	 * fix ATTRIBUTE relation
+	 * Close and flush the index's relcache entry, to ensure relcache
+	 * doesn't try to rebuild it while we're deleting catalog entries.
+	 * We keep the lock though.
 	 */
-	DeleteAttributeTuples(indexId);
+	index_close(userIndexRelation);
+
+	RelationForgetRelation(indexId);
 
 	/*
 	 * fix INDEX relation, and check for expressional index
@@ -822,18 +830,17 @@ index_drop(Oid indexId)
 	 * statistics about them.
 	 */
 	if (hasexprs)
-		RemoveStatistics(userIndexRelation, 0);
+		RemoveStatistics(indexId, 0);
 
 	/*
-	 * flush buffer cache and physically remove the file
+	 * fix ATTRIBUTE relation
 	 */
-	FlushRelationBuffers(userIndexRelation, (BlockNumber) 0);
+	DeleteAttributeTuples(indexId);
 
-	if (userIndexRelation->rd_smgr == NULL)
-		userIndexRelation->rd_smgr = smgropen(userIndexRelation->rd_node);
-	smgrscheduleunlink(userIndexRelation->rd_smgr,
-					   userIndexRelation->rd_istemp);
-	userIndexRelation->rd_smgr = NULL;
+	/*
+	 * fix RELATION relation
+	 */
+	DeleteRelationTuple(indexId);
 
 	/*
 	 * We are presently too lazy to attempt to compute the new correct
@@ -846,12 +853,9 @@ index_drop(Oid indexId)
 	CacheInvalidateRelcache(userHeapRelation);
 
 	/*
-	 * Close rels, but keep locks
+	 * Close owning rel, but keep lock
 	 */
-	index_close(userIndexRelation);
 	heap_close(userHeapRelation, NoLock);
-
-	RelationForgetRelation(indexId);
 }
 
 /* ----------------------------------------------------------------
