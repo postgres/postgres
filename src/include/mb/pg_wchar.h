@@ -1,10 +1,17 @@
-/* $Id: pg_wchar.h,v 1.18 2000/10/12 06:08:28 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.19 2000/10/12 07:36:51 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
 
 #include "postgres.h"
 #include <sys/types.h>
+
+#ifdef FRONTEND
+#define elog(X...)
+#undef palloc
+#define palloc malloc
+#define pfree free
+#endif
 
 #define SQL_ASCII 0				/* SQL/ASCII */
 #define EUC_JP 1				/* EUC for Japanese */
