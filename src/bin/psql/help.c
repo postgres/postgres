@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.70 2003/03/10 15:46:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.71 2003/03/18 22:15:44 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -262,7 +262,7 @@ slashUsage(unsigned short int pager)
  *
  */
 void
-helpSQL(const char *topic, bool pager)
+helpSQL(const char *topic, unsigned short int pager)
 {
 #define VALUE_OR_NULL(a) ((a) ? (a) : "")
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.70 2003/01/06 18:53:25 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.71 2003/03/18 22:15:44 petere Exp $
  */
 #include "postgres_fe.h"
 
@@ -230,6 +230,8 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
+
+	pset.popt.topt.encoding = pset.encoding;
 
 	/*
 	 * Now find something to do

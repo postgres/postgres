@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.56 2003/03/10 22:28:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.57 2003/03/18 22:15:44 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -22,14 +22,6 @@
 #include <io.h>					/* for _write() */
 #include <win32.h>
 #include <sys/timeb.h>			/* for _ftime() */
-#endif
-
-#ifndef WIN32
-#include <sys/ioctl.h>			/* for ioctl() */
-#endif
-
-#ifdef HAVE_TERMIOS_H
-#include <termios.h>
 #endif
 
 #include "libpq-fe.h"
@@ -521,47 +513,4 @@ SendQuery(const char *query)
 #endif
 
 	return success;
-}
-
-
-/*
- * PageOutput
- *
- * Tests if pager is needed and returns appropriate FILE pointer.
- */
-FILE *
-PageOutput(int lines, bool pager)
-{
-	/* check whether we need / can / are supposed to use pager */
-	if (pager
-#ifndef WIN32
-		&&
-		isatty(fileno(stdin)) &&
-		isatty(fileno(stdout))
-#endif
-		)
-	{
-		const char *pagerprog;
-
-#ifdef TIOCGWINSZ
-		int			result;
-		struct winsize screen_size;
-
-		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
-		if (result == -1 || lines > screen_size.ws_row || pager > 1)
-		{
-#endif
-			pagerprog = getenv("PAGER");
-			if (!pagerprog)
-				pagerprog = DEFAULT_PAGER;
-#ifndef WIN32
-			pqsignal(SIGPIPE, SIG_IGN);
-#endif
-			return popen(pagerprog, "w");
-#ifdef TIOCGWINSZ
-		}
-#endif
-	}
-
-	return stdout;
 }

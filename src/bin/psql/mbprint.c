@@ -3,14 +3,13 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.5 2002/10/03 17:09:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.6 2003/03/18 22:15:44 petere Exp $
  */
 
 #include "postgres_fe.h"
 #include "mbprint.h"
 
 #include "mb/pg_wchar.h"
-#include "settings.h"
 
 /*
  * This is an implementation of wcwidth() and wcswidth() as defined in
@@ -310,9 +309,9 @@ mb_utf_validate(unsigned char *pwcs)
  */
 
 int
-pg_wcswidth(unsigned char *pwcs, size_t len)
+pg_wcswidth(unsigned char *pwcs, size_t len, int encoding)
 {
-	if (pset.encoding == PG_UTF8)
+	if (encoding == PG_UTF8)
 		return mb_utf_wcswidth(pwcs, len);
 	else
 	{
@@ -325,9 +324,9 @@ pg_wcswidth(unsigned char *pwcs, size_t len)
 }
 
 unsigned char *
-mbvalidate(unsigned char *pwcs)
+mbvalidate(unsigned char *pwcs, int encoding)
 {
-	if (pset.encoding == PG_UTF8)
+	if (encoding == PG_UTF8)
 		return mb_utf_validate(pwcs);
 	else
 	{

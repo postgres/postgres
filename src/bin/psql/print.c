@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.35 2002/11/01 15:12:19 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.c,v 1.36 2003/03/18 22:15:44 petere Exp $
  */
 #include "postgres_fe.h"
 #include "common.h"
@@ -11,11 +11,14 @@
 
 #include <math.h>
 #include <signal.h>
+#include <unistd.h>
+
+#ifndef WIN32
+#include <sys/ioctl.h>			/* for ioctl() */
+#endif
 
 #include "pqsignal.h"
 #include "libpq-fe.h"
-
-#include "settings.h"
 
 #include "mbprint.h"
 
@@ -195,7 +198,7 @@ static void
 print_aligned_text(const char *title, const char *const * headers,
 				   const char *const * cells, const char *const * footers,
 				   const char *opt_align, bool opt_barebones,
-				   unsigned short int opt_border,
+				   unsigned short int opt_border, int encoding,
 				   FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -253,7 +256,7 @@ print_aligned_text(const char *title, const char *const * headers,
 	/* calc column widths */
 	for (i = 0; i < col_count; i++)
 	{
-		tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]));
+		tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]), encoding);
 		if (tmp > widths[i])
 			widths[i] = tmp;
 		head_w[i] = tmp;
@@ -261,7 +264,7 @@ print_aligned_text(const char *title, const char *const * headers,
 
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr));
+		tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding);
 		if (tmp > widths[i % col_count])
 			widths[i % col_count] = tmp;
 		cell_w[i] = tmp;
@@ -282,7 +285,7 @@ print_aligned_text(const char *title, const char *const * headers,
 	{
 		int			tlen;
 
-		tlen = pg_wcswidth((unsigned char *) title, strlen(title));
+		tlen = pg_wcswidth((unsigned char *) title, strlen(title), encoding);
 		if (tlen >= (int) total_w)
 			fprintf(fout, "%s\n", title);
 		else
@@ -392,9 +395,9 @@ print_aligned_text(const char *title, const char *const * headers,
 
 static void
 print_aligned_vertical(const char *title, const char *const * headers,
-				  const char *const * cells, const char *const * footers,
+					   const char *const * cells, const char *const * footers,
 					   bool opt_barebones, unsigned short int opt_border,
-					   FILE *fout)
+					   int encoding, FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int record = 1;
@@ -425,7 +428,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	}
 	for (i = 0; i < col_count; i++)
 	{
-		if ((tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]))) > hwidth)
+		if ((tmp = pg_wcswidth((unsigned char *) headers[i], strlen(headers[i]), encoding)) > hwidth)
 			hwidth = tmp;
 		head_w[i] = tmp;
 	}
@@ -447,7 +450,7 @@ print_aligned_vertical(const char *title, const char *const * headers,
 	/* find longest data cell */
 	for (i = 0, ptr = cells; *ptr; ptr++, i++)
 	{
-		if ((tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr))) > dwidth)
+		if ((tmp = pg_wcswidth((unsigned char *) *ptr, strlen(*ptr), encoding)) > dwidth)
 			dwidth = tmp;
 		cell_w[i] = tmp;
 	}
@@ -953,12 +956,53 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 
-
-
-
 /********************************/
 /* Public functions		*/
 /********************************/
+
+
+/*
+ * PageOutput
+ *
+ * Tests if pager is needed and returns appropriate FILE pointer.
+ */
+FILE *
+PageOutput(int lines, unsigned short int pager)
+{
+	/* check whether we need / can / are supposed to use pager */
+	if (pager
+#ifndef WIN32
+		&&
+		isatty(fileno(stdin)) &&
+		isatty(fileno(stdout))
+#endif
+		)
+	{
+		const char *pagerprog;
+
+#ifdef TIOCGWINSZ
+		int			result;
+		struct winsize screen_size;
+
+		result = ioctl(fileno(stdout), TIOCGWINSZ, &screen_size);
+		if (result == -1 || lines > screen_size.ws_row || pager > 1)
+		{
+#endif
+			pagerprog = getenv("PAGER");
+			if (!pagerprog)
+				pagerprog = DEFAULT_PAGER;
+#ifndef WIN32
+			pqsignal(SIGPIPE, SIG_IGN);
+#endif
+			return popen(pagerprog, "w");
+#ifdef TIOCGWINSZ
+		}
+#endif
+	}
+
+	return stdout;
+}
+
 
 
 void
@@ -1023,9 +1067,9 @@ printTable(const char *title,
 			break;
 		case PRINT_ALIGNED:
 			if (opt->expanded)
-				print_aligned_vertical(title, headers, cells, footers, opt->tuples_only, border, output);
+				print_aligned_vertical(title, headers, cells, footers, opt->tuples_only, border, opt->encoding, output);
 			else
-				print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, border, output);
+				print_aligned_text(title, headers, cells, footers, align, opt->tuples_only, border, opt->encoding, output);
 			break;
 		case PRINT_HTML:
 			if (opt->expanded)
@@ -1077,7 +1121,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 	}
 
 	for (i = 0; i < nfields; i++)
-		headers[i] = mbvalidate(PQfname(result, i));
+		headers[i] = mbvalidate(PQfname(result, i), opt->topt.encoding);
 
 	/* set cells */
 
@@ -1093,7 +1137,7 @@ printQuery(const PGresult *result, const printQueryOpt *opt, FILE *fout)
 		if (PQgetisnull(result, i / nfields, i % nfields))
 			cells[i] = opt->nullPrint ? opt->nullPrint : "";
 		else
-			cells[i] = mbvalidate(PQgetvalue(result, i / nfields, i % nfields));
+			cells[i] = mbvalidate(PQgetvalue(result, i / nfields, i % nfields), opt->topt.encoding);
 	}
 
 	/* set footers */

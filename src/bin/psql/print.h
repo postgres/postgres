@@ -3,12 +3,16 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.15 2002/11/08 19:12:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.16 2003/03/18 22:15:44 petere Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
 
 #include "libpq-fe.h"
+
+
+extern FILE *PageOutput(int lines, unsigned short int pager);
+
 
 enum printFormat
 {
@@ -36,6 +40,7 @@ typedef struct _printTableOpt
 	char	   *recordSep;		/* record separator for unaligned text
 								 * mode */
 	char	   *tableAttr;		/* attributes for HTML <table ...> */
+	int			encoding;		/* character encoding */
 } printTableOpt;
 
 
