@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.67 2000/03/13 01:52:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.68 2000/03/18 18:03:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,10 +87,10 @@ static void addlit(char *ytext, int yleng);
  * and to eliminate parsing troubles for numeric strings.
  * Exclusive states:
  *  <xb> binary numeric string - thomas 1997-11-16
- *  <xc> extended C-style comments - tgl 1997-07-12
- *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
+ *  <xc> extended C-style comments - thomas 1997-07-12
+ *  <xd> delimited identifiers (double-quoted identifiers) - thomas 1997-10-27
  *  <xh> hexadecimal numeric string - thomas 1997-11-16
- *  <xq> quoted strings - tgl 1997-07-30
+ *  <xq> quoted strings - thomas 1997-07-30
  */
 
 %x xb
@@ -144,7 +144,7 @@ xdinside		[^"]+
  * have something like plus-slash-star, lex will think this is a 3-character
  * operator whereas we want to see it as a + operator and a comment start.
  * The solution is two-fold:
- * 1. append {op_and_self}* to xcstart so that it matches as much text as
+ * 1. append {op_chars}* to xcstart so that it matches as much text as
  *    {operator} would. Then the tie-breaker (first matching rule of same
  *    length) ensures xcstart wins.  We put back the extra stuff with yyless()
  *    in case it contains a star-slash that should terminate the comment.
@@ -154,7 +154,7 @@ xdinside		[^"]+
  * SQL92-style comments, which start with dash-dash, have similar interactions
  * with the operator rule.
  */
-xcstart			\/\*{op_and_self}*
+xcstart			\/\*{op_chars}*
 xcstop			\*+\/
 xcinside		([^*]+)|(\*+[^/])
 
@@ -166,10 +166,19 @@ identifier		{letter}{letter_or_digit}*
 
 typecast		"::"
 
-/* NB: if you change "self", fix the copy in the operator rule too! */
+/*
+ * "self" is the set of chars that should be returned as single-character
+ * tokens.  "op_chars" is the set of chars that can make up "Op" tokens,
+ * which can be one or more characters long (but if a single-char token
+ * appears in the "self" set, it is not to be returned as an Op).  Note
+ * that the sets overlap, but each has some chars that are not in the other.
+ *
+ * If you change either set, adjust the character lists appearing in the
+ * rule for "operator"!
+ */
 self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
-op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
-operator		{op_and_self}+
+op_chars		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
+operator		{op_chars}+
 
 /* we no longer allow unary minus in numbers. 
  * instead we pass it separately to parser. there it gets
@@ -202,7 +211,7 @@ horiz_space		[ \t\f]
 newline			[\n\r]
 non_newline		[^\n\r]
 
-comment			(("--"|"//"){non_newline}*)
+comment			("--"{non_newline}*)
 
 whitespace		({space}|{comment})
 
@@ -220,7 +229,7 @@ other			.
 
 /* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
  * AT&T lex does not properly handle C-style comments in this second lex block.
- * So, put comments here. tgl - 1997-09-08
+ * So, put comments here. thomas - 1997-09-08
  *
  * Quoted strings must allow some special characters such as single-quote
  *  and newline.
@@ -329,23 +338,57 @@ other			.
 {self}			{ return yytext[0]; }
 
 {operator}		{
-					/* Check for embedded slash-star or dash-dash */
-					char *slashstar = strstr((char*)yytext, "/*");
-					char *dashdash = strstr((char*)yytext, "--");
+					/*
+					 * Check for embedded slash-star or dash-dash; those
+					 * are comment starts, so operator must stop there.
+					 * Note that slash-star or dash-dash at the first
+					 * character will match a prior rule, not this one.
+					 */
+					int		nchars = yyleng;
+					char   *slashstar = strstr((char*)yytext, "/*");
+					char   *dashdash = strstr((char*)yytext, "--");
 
 					if (slashstar && dashdash)
 					{
+						/* if both appear, take the first one */
 						if (slashstar > dashdash)
 							slashstar = dashdash;
 					}
 					else if (!slashstar)
 						slashstar = dashdash;
-
 					if (slashstar)
+						nchars = slashstar - ((char*)yytext);
+
+					/*
+					 * For SQL92 compatibility, '+' and '-' cannot be the
+					 * last char of a multi-char operator unless the operator
+					 * contains chars that are not in SQL92 operators.
+					 * The idea is to lex '=-' as two operators, but not
+					 * to forbid operator names like '?-' that could not be
+					 * sequences of SQL92 operators.
+					 */
+					while (nchars > 1 &&
+						   (yytext[nchars-1] == '+' ||
+							yytext[nchars-1] == '-'))
 					{
-						int nchars = slashstar - ((char*)yytext);
+						int		ic;
+
+						for (ic = nchars-2; ic >= 0; ic--)
+						{
+							if (strchr("~!@#&`?$:%^|", yytext[ic]))
+								break;
+						}
+						if (ic >= 0)
+							break; /* found a char that makes it OK */
+						nchars--; /* else remove the +/-, and check again */
+					}
+
+					if (nchars < yyleng)
+					{
+						/* Strip the unwanted chars from the token */
 						yyless(nchars);
-						/* If what we have left is only one char, and it's
+						/*
+						 * If what we have left is only one char, and it's
 						 * one of the characters matching "self", then
 						 * return it as a character token the same way
 						 * that the "self" rule would have.
@@ -355,8 +398,9 @@ other			.
 							return yytext[0];
 					}
 
+					/* Convert "!=" operator to "<>" for compatibility */
 					if (strcmp((char*)yytext, "!=") == 0)
-						yylval.str = pstrdup("<>"); /* compatibility */
+						yylval.str = pstrdup("<>");
 					else
 						yylval.str = pstrdup((char*)yytext);
 					return Op;

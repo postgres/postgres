@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.25 2000/03/13 13:46:32 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.26 2000/03/18 18:03:11 tgl Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -318,8 +318,7 @@ MainLoop(FILE *source)
 			}
 
 			/* single-line comment? truncate line */
-			else if ((line[i] == '-' && line[i + thislen] == '-') ||
-					 (line[i] == '/' && line[i + thislen] == '/'))
+			else if (line[i] == '-' && line[i + thislen] == '-')
 			{
 				line[i] = '\0'; /* remove comment */
 				break;

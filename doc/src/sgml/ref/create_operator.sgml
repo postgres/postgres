@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.11 1999/07/22 15:09:08 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.12 2000/03/18 18:03:12 tgl Exp $
 Postgres documentation
 -->
 
@@ -60,8 +60,8 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       <term><replaceable class="parameter">type1</replaceable></term>
       <listitem>
        <para>
-	The type for the left-hand side of the operator, if any. This option would be
-	omitted for a right-unary operator.
+	The type of the left-hand argument of the operator, if any.
+	This option would be omitted for a left-unary operator.
        </para>
       </listitem>
      </varlistentry>
@@ -69,8 +69,8 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       <term><replaceable class="parameter">type2</replaceable></term>
       <listitem>
        <para>
-	The type for the right-hand side of the operator, if any. This option would be
-	omitted for a left-unary operator.
+	The type of the right-hand argument of the operator, if any.
+	This option would be omitted for a right-unary operator.
        </para>
       </listitem>
      </varlistentry>
@@ -78,7 +78,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       <term><replaceable class="parameter">com_op</replaceable></term>
       <listitem>
        <para>
-	The commutator for this operator.
+	The commutator of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -110,7 +110,7 @@ CREATE OPERATOR <replaceable>name</replaceable> ( PROCEDURE = <replaceable class
       <term>HASHES</term>
       <listitem>
        <para>
-Indicates this operator can support a hash-join algorithm.
+       Indicates this operator can support a hash join.
        </para>
       </listitem>
      </varlistentry>
@@ -118,7 +118,8 @@ Indicates this operator can support a hash-join algorithm.
       <term><replaceable class="parameter">left_sort_op</replaceable></term>
       <listitem>
        <para>
-	Operator that sorts the left-hand data type of this operator.
+	If this operator can support a merge join, the
+	operator that sorts the left-hand data type of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -126,7 +127,8 @@ Indicates this operator can support a hash-join algorithm.
       <term><replaceable class="parameter">right_sort_op</replaceable></term>
       <listitem>
        <para>
-	Operator that sorts the right-hand data type of this operator.
+	If this operator can support a merge join, the
+	operator that sorts the right-hand data type of this operator.
        </para>
       </listitem>
      </varlistentry>
@@ -172,22 +174,56 @@ CREATE
   </para>
   <para>
    The operator <replaceable class="parameter">name</replaceable>
-   is a sequence of up to thirty two (32) characters in any combination
-   from the following:
+   is a sequence of up to NAMEDATALEN-1 (31 by default) characters
+   from the following list:
    <literallayout>
-+ - * / &lt; &gt; = ~ ! @ # % ^ & | ` ? $ : 
++ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $ : 
    </literallayout>
+
+   There are a few restrictions on your choice of name:
+   <itemizedlist>
+    <listitem>
+     <para>
+     "$" and ":" cannot be defined as single-character operators,
+     although they can be part of a multi-character operator name.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+     "--" and "/*" cannot appear anywhere in an operator name,
+     since they will be taken as the start of a comment.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+     A multi-character operator name cannot end in "+" or "-",
+     unless the name also contains at least one of these characters:
+     <literallayout>
+~ ! @ # % ^ &amp; | ` ? $ : 
+     </literallayout>
+     For example, <literal>@-</literal> is an allowed operator name,
+     but <literal>*-</literal> is not.
+     This restriction allows <productname>Postgres</productname> to
+     parse SQL-compliant queries without requiring spaces between tokens.
+     </para>
+    </listitem>
+   </itemizedlist>
+
    <note>
     <para>
-     No  alphabetic characters are allowed in an operator name.
-     This enables <productname>Postgres</productname> to parse SQL input
-     into tokens without requiring spaces between each token.
+     When working with non-SQL-standard operator names, you will usually
+     need to separate adjacent operators with spaces to avoid ambiguity.
+     For example, if you have defined a left-unary operator named "@",
+     you cannot write <literal>X*@Y</literal>; you must write
+     <literal>X* @Y</literal> to ensure that
+     <productname>Postgres</productname> reads it as two operator names
+     not one.
      </para>
    </note>   
   </para>
   <para>
-   The operator "!=" is mapped to "&lt;&gt;" on input, so they are
-   therefore equivalent.
+   The operator "!=" is mapped to "&lt;&gt;" on input, so these two names
+   are always equivalent.
   </para>
   <para>
    At least one of LEFTARG and RIGHTARG must be defined.  For
@@ -196,11 +232,11 @@ CREATE
    unary operators only RIGHTARG should be defined.
   </para>
   <para>
-   Also, the
+   The
    <replaceable class="parameter">func_name</replaceable> procedure must have
    been previously defined using <command>CREATE FUNCTION</command> and  must
    be defined to accept the correct number of arguments
-   (either  one or two).
+   (either  one or two) of the indicated types.
   </para>
   <para>
    The commutator operator should be identified if one exists,
@@ -247,8 +283,6 @@ MYBOXES.description !== "0,0,1,1"::box
    does not yet have a commutator itself, then the commutator's
    entry is updated to have the newly created operator as its
    commutator.  This applies to the negator, as well.
-  </para>
-  <para>
    This  is to allow the definition of two operators that are
    the commutators or the negators of each other.  The  first
    operator should be defined without a commutator or negator
@@ -258,7 +292,7 @@ MYBOXES.description !== "0,0,1,1"::box
    it also works to just have both operators refer to each other.)
   </para>
   <para>
-   The next three specifications are  present  to  support  the
+   The HASHES, SORT1, and SORT2 options are  present  to  support  the
    query  optimizer in performing joins.  
    <productname>Postgres</productname> can always
    evaluate a join (i.e., processing a clause with two  tuple
@@ -294,9 +328,8 @@ MYBOXES.description !== "0,0,1,1"::box
    be worth the complexity involved.
   </para>
   <para>
-   The  last  two  pieces of the specification are present so
-   the query optimizer  can  estimate  result  sizes.   If  a
-   clause of the form:
+   The RESTRICT and JOIN options assist the query optimizer in estimating
+   result sizes.  If a clause of the form:
    <programlisting>
 MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    </programlisting>
@@ -310,7 +343,7 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    data types and returns a floating point  number.   The
    query  optimizer  simply  calls this function, passing the
    parameter "0,0,1,1" and multiplies the result by the relation
-   size to get the desired expected number of instances.
+   size to get the expected number of instances.
   </para>
   <para>
    Similarly, when the operands of the operator both  contain
@@ -318,7 +351,7 @@ MYBOXES.description &lt;&lt;&lt; "0,0,1,1"::box
    size of the resulting join.  The function  join_proc  will
    return  another floating point number which will be multiplied
    by the cardinalities of the two classes involved  to
-   compute the desired expected result size.
+   compute the expected result size.
   </para>
   <para>
    The difference between the function
