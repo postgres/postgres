@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.131 2001/06/09 23:21:55 petere Exp $
+ * $Id: parsenodes.h,v 1.132 2001/06/19 22:39:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -983,9 +983,8 @@ typedef struct ParamNo
 typedef struct A_Expr
 {
 	NodeTag		type;
-	int			oper;			/* type of operation
-								 * {OP,OR,AND,NOT,ISNULL,NOTNULL} */
-	char	   *opname;			/* name of operator/function */
+	int			oper;			/* type of operation (OP,OR,AND,NOT) */
+	char	   *opname;			/* name of operator */
 	Node	   *lexpr;			/* left argument */
 	Node	   *rexpr;			/* right argument */
 } A_Expr;
@@ -1053,6 +1052,50 @@ typedef struct CaseWhen
 	Node	   *expr;			/* comparison expression */
 	Node	   *result;			/* substitution result */
 } CaseWhen;
+
+/* ----------------
+ * NullTest
+ *
+ * NullTest represents the operation of testing a value for NULLness.
+ * Currently, we only support scalar input values, but eventually a
+ * row-constructor input should be supported.
+ * The appropriate test is performed and returned as a boolean Datum.
+ * ----------------
+ */
+
+typedef enum NullTestType
+{
+	IS_NULL, IS_NOT_NULL
+} NullTestType;
+
+typedef struct NullTest
+{
+	NodeTag			type;
+	Node			*arg;			/* input expression */
+	NullTestType	nulltesttype;	/* IS NULL, IS NOT NULL */
+} NullTest;
+
+/* ----------------
+ * BooleanTest
+ *
+ * BooleanTest represents the operation of determining whether a boolean
+ * is TRUE, FALSE, or UNKNOWN (ie, NULL).  All six meaningful combinations
+ * are supported.  Note that a NULL input does *not* cause a NULL result.
+ * The appropriate test is performed and returned as a boolean Datum.
+ * ----------------
+ */
+
+typedef enum BoolTestType
+{
+	IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
+} BoolTestType;
+
+typedef struct BooleanTest
+{
+	NodeTag			type;
+	Node			*arg;			/* input expression */
+	BoolTestType	booltesttype;	/* test type */
+} BooleanTest;
 
 /*
  * ColumnDef - column definition (used in various creates)

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.230 2001/06/09 23:21:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.231 2001/06/19 22:39:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -315,7 +315,7 @@ static void doNegateFloat(Value *v);
 		SCHEMA, SCROLL, SECOND_P, SELECT, SESSION, SESSION_USER, SET, SOME, SUBSTRING,
 		TABLE, TEMPORARY, THEN, TIME, TIMESTAMP, TIMEZONE_HOUR,
 		TIMEZONE_MINUTE, TO, TRAILING, TRANSACTION, TRIM, TRUE_P,
-		UNION, UNIQUE, UPDATE, USER, USING,
+		UNION, UNIQUE, UNKNOWN, UPDATE, USER, USING,
 		VALUES, VARCHAR, VARYING, VIEW,
 		WHEN, WHERE, WITH, WORK, YEAR_P, ZONE
 
@@ -386,7 +386,7 @@ static void doNegateFloat(Value *v);
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
 %nonassoc	ISNULL
-%nonassoc	IS NULL_P TRUE_P FALSE_P	/* sets precedence for IS NULL, etc */
+%nonassoc	IS NULL_P TRUE_P FALSE_P UNKNOWN	/* sets precedence for IS NULL, etc */
 %left		'+' '-'
 %left		'*' '/' '%'
 %left		'^'
@@ -4434,9 +4434,19 @@ a_expr:  c_expr
 					 * (like Microsoft's).  Turn these into IS NULL exprs.
 					 */
 					if (exprIsNullConstant($3))
-						$$ = makeA_Expr(ISNULL, NULL, $1, NULL);
+					{
+						NullTest *n = makeNode(NullTest);
+						n->arg = $1;
+						n->nulltesttype = IS_NULL;
+						$$ = (Node *)n;
+					}
 					else if (exprIsNullConstant($1))
-						$$ = makeA_Expr(ISNULL, NULL, $3, NULL);
+					{
+						NullTest *n = makeNode(NullTest);
+						n->arg = $3;
+						n->nulltesttype = IS_NULL;
+						$$ = (Node *)n;
+					}
 					else
 						$$ = makeA_Expr(OP, "=", $1, $3);
 				}
@@ -4499,59 +4509,95 @@ a_expr:  c_expr
 					n->agg_distinct = FALSE;
 					$$ = makeA_Expr(OP, "!~~*", $1, (Node *) n);
 				}
-
+		/* NullTest clause
+		 * Define SQL92-style Null test clause.
+		 * Allow two forms described in the standard:
+		 *  a IS NULL
+		 *  a IS NOT NULL
+		 * Allow two SQL extensions
+		 *  a ISNULL
+		 *  a NOTNULL
+		 * NOTE: this is not yet fully SQL-compatible, since SQL92
+		 * allows a row constructor as argument, not just a scalar.
+		 */
 		| a_expr ISNULL
-				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
+				{
+					NullTest *n = makeNode(NullTest);
+					n->arg = $1;
+					n->nulltesttype = IS_NULL;
+					$$ = (Node *)n;
+				}
 		| a_expr IS NULL_P
-				{	$$ = makeA_Expr(ISNULL, NULL, $1, NULL); }
+				{
+					NullTest *n = makeNode(NullTest);
+					n->arg = $1;
+					n->nulltesttype = IS_NULL;
+					$$ = (Node *)n;
+				}
 		| a_expr NOTNULL
-				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
+				{
+					NullTest *n = makeNode(NullTest);
+					n->arg = $1;
+					n->nulltesttype = IS_NOT_NULL;
+					$$ = (Node *)n;
+				}
 		| a_expr IS NOT NULL_P
-				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
+				{
+					NullTest *n = makeNode(NullTest);
+					n->arg = $1;
+					n->nulltesttype = IS_NOT_NULL;
+					$$ = (Node *)n;
+				}
 		/* IS TRUE, IS FALSE, etc used to be function calls
 		 *  but let's make them expressions to allow the optimizer
 		 *  a chance to eliminate them if a_expr is a constant string.
 		 * - thomas 1997-12-22
+		 *
+		 *  Created BooleanTest Node type, and changed handling
+		 *  for NULL inputs
+		 * - jec 2001-06-18
 		 */
 		| a_expr IS TRUE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "t";
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("bool");
-					n->typename->typmod = -1;
-					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
-				}
-		| a_expr IS NOT FALSE_P
-				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "t";
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("bool");
-					n->typename->typmod = -1;
-					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
-				}
-		| a_expr IS FALSE_P
-				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "f";
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("bool");
-					n->typename->typmod = -1;
-					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
+					BooleanTest *b = makeNode(BooleanTest);
+					b->arg = $1;
+					b->booltesttype = IS_TRUE;
+					$$ = (Node *)b;
 				}
 		| a_expr IS NOT TRUE_P
 				{
-					A_Const *n = makeNode(A_Const);
-					n->val.type = T_String;
-					n->val.val.str = "f";
-					n->typename = makeNode(TypeName);
-					n->typename->name = xlateSqlType("bool");
-					n->typename->typmod = -1;
-					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
+					BooleanTest *b = makeNode(BooleanTest);
+					b->arg = $1;
+					b->booltesttype = IS_NOT_TRUE;
+					$$ = (Node *)b;
+				}
+		| a_expr IS FALSE_P
+				{
+					BooleanTest *b = makeNode(BooleanTest);
+					b->arg = $1;
+					b->booltesttype = IS_FALSE;
+					$$ = (Node *)b;
+				}
+		| a_expr IS NOT FALSE_P
+				{
+					BooleanTest *b = makeNode(BooleanTest);
+					b->arg = $1;
+					b->booltesttype = IS_NOT_FALSE;
+					$$ = (Node *)b;
+				}
+		| a_expr IS UNKNOWN
+				{
+					BooleanTest *b = makeNode(BooleanTest);
+					b->arg = $1;
+					b->booltesttype = IS_UNKNOWN;
+					$$ = (Node *)b;
+				}
+		| a_expr IS NOT UNKNOWN
+				{
+					BooleanTest *b = makeNode(BooleanTest);
+					b->arg = $1;
+					b->booltesttype = IS_NOT_UNKNOWN;
+					$$ = (Node *)b;
 				}
 		| a_expr BETWEEN b_expr AND b_expr			%prec BETWEEN
 				{
@@ -5206,12 +5252,14 @@ case_expr:  CASE case_arg when_clause_list case_default END_TRANS
 		| COALESCE '(' expr_list ')'
 				{
 					CaseExpr *c = makeNode(CaseExpr);
-					CaseWhen *w;
 					List *l;
 					foreach (l,$3)
 					{
-						w = makeNode(CaseWhen);
-						w->expr = makeA_Expr(NOTNULL, NULL, lfirst(l), NULL);
+						CaseWhen *w = makeNode(CaseWhen);
+						NullTest *n = makeNode(NullTest);
+						n->arg = lfirst(l);
+						n->nulltesttype = IS_NOT_NULL;
+						w->expr = (Node *) n;
 						w->result = lfirst(l);
 						c->args = lappend(c->args, w);
 					}
@@ -5765,6 +5813,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| TRUE_P						{ $$ = "true"; }
 		| UNION							{ $$ = "union"; }
 		| UNIQUE						{ $$ = "unique"; }
+		| UNKNOWN						{ $$ = "unknown"; }
 		| USER							{ $$ = "user"; }
 		| USING							{ $$ = "using"; }
 		| VACUUM						{ $$ = "vacuum"; }

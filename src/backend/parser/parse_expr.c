@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.97 2001/06/04 23:27:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.98 2001/06/19 22:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,32 +167,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							result = (Node *) make_op(a->opname, lexpr, rexpr);
 						}
 						break;
-					case ISNULL:
-						{
-							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr,
-															  precedence);
-
-							result = ParseFuncOrColumn(pstate,
-													   "nullvalue",
-													   makeList1(lexpr),
-													   false, false,
-													   precedence);
-						}
-						break;
-					case NOTNULL:
-						{
-							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr,
-															  precedence);
-
-							result = ParseFuncOrColumn(pstate,
-													   "nonnullvalue",
-													   makeList1(lexpr),
-													   false, false,
-													   precedence);
-						}
-						break;
 					case AND:
 						{
 							Node	   *lexpr = transformExpr(pstate,
@@ -203,13 +177,15 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  precedence);
 							Expr	   *expr = makeNode(Expr);
 
-							if (exprType(lexpr) != BOOLOID)
+							if (! coerce_to_boolean(pstate, &lexpr))
 								elog(ERROR, "left-hand side of AND is type '%s', not '%s'",
-									 typeidTypeName(exprType(lexpr)), typeidTypeName(BOOLOID));
+									 typeidTypeName(exprType(lexpr)),
+									 typeidTypeName(BOOLOID));
 
-							if (exprType(rexpr) != BOOLOID)
+							if (! coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "right-hand side of AND is type '%s', not '%s'",
-									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
+									 typeidTypeName(exprType(rexpr)),
+									 typeidTypeName(BOOLOID));
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
@@ -227,12 +203,16 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  precedence);
 							Expr	   *expr = makeNode(Expr);
 
-							if (exprType(lexpr) != BOOLOID)
+							if (! coerce_to_boolean(pstate, &lexpr))
 								elog(ERROR, "left-hand side of OR is type '%s', not '%s'",
-									 typeidTypeName(exprType(lexpr)), typeidTypeName(BOOLOID));
-							if (exprType(rexpr) != BOOLOID)
+									 typeidTypeName(exprType(lexpr)),
+									 typeidTypeName(BOOLOID));
+
+							if (! coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "right-hand side of OR is type '%s', not '%s'",
-									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
+									 typeidTypeName(exprType(rexpr)),
+									 typeidTypeName(BOOLOID));
+
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
 							expr->args = makeList2(lexpr, rexpr);
@@ -246,9 +226,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 															  precedence);
 							Expr	   *expr = makeNode(Expr);
 
-							if (exprType(rexpr) != BOOLOID)
+							if (! coerce_to_boolean(pstate, &rexpr))
 								elog(ERROR, "argument to NOT is type '%s', not '%s'",
-									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
+									 typeidTypeName(exprType(rexpr)),
+									 typeidTypeName(BOOLOID));
+
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
 							expr->args = makeList1(rexpr);
@@ -491,7 +473,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				CaseWhen   *w = (CaseWhen *) expr;
 
 				w->expr = transformExpr(pstate, w->expr, precedence);
-				if (exprType(w->expr) != BOOLOID)
+
+				if (! coerce_to_boolean(pstate, &w->expr))
 					elog(ERROR, "WHEN clause must have a boolean result");
 
 				/*
@@ -506,6 +489,59 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					w->result = (Node *) n;
 				}
 				w->result = transformExpr(pstate, w->result, precedence);
+				result = expr;
+				break;
+			}
+
+		case T_NullTest:
+			{
+				NullTest   *n = (NullTest *) expr;
+
+				n->arg = transformExpr(pstate, n->arg, precedence);
+				/* the argument can be any type, so don't coerce it */
+				result = expr;
+				break;
+			}
+
+		case T_BooleanTest:
+			{
+				BooleanTest   *b = (BooleanTest *) expr;
+
+				b->arg = transformExpr(pstate, b->arg, precedence);
+
+				if (! coerce_to_boolean(pstate, &b->arg))
+				{
+					const char *clausename;
+
+					switch (b->booltesttype)
+					{
+						case IS_TRUE:
+							clausename = "IS TRUE";
+							break;
+						case IS_NOT_TRUE:
+							clausename = "IS NOT TRUE";
+							break;
+						case IS_FALSE:
+							clausename = "IS FALSE";
+							break;
+						case IS_NOT_FALSE:
+							clausename = "IS NOT FALSE";
+							break;
+						case IS_UNKNOWN:
+							clausename = "IS UNKNOWN";
+							break;
+						case IS_NOT_UNKNOWN:
+							clausename = "IS NOT UNKNOWN";
+							break;
+						default:
+							elog(ERROR, "transformExpr: unexpected booltesttype %d",
+								 (int) b->booltesttype);
+							clausename = NULL; /* keep compiler quiet */
+					}
+
+					elog(ERROR, "Argument of %s must be boolean",
+						 clausename);
+				}
 				result = expr;
 				break;
 			}
@@ -669,8 +705,14 @@ exprType(Node *expr)
 		case T_CaseWhen:
 			type = exprType(((CaseWhen *) expr)->result);
 			break;
+		case T_NullTest:
+			type = BOOLOID;
+			break;
+		case T_BooleanTest:
+			type = BOOLOID;
+			break;
 		case T_Ident:
-			/* is this right? */
+			/* XXX is this right? */
 			type = UNKNOWNOID;
 			break;
 		default:

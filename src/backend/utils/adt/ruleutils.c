@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.77 2001/04/18 17:04:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.78 2001/06/19 22:39:12 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -52,7 +52,6 @@
 #include "parser/parse_expr.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteManip.h"
-#include "utils/fmgroids.h"
 #include "utils/lsyscache.h"
 
 
@@ -1948,6 +1947,60 @@ get_rule_expr(Node *node, deparse_context *context)
 			}
 			break;
 
+		case T_NullTest:
+			{
+				NullTest		*ntest = (NullTest *) node;
+
+				appendStringInfo(buf, "((");
+				get_rule_expr(ntest->arg, context);
+			    switch (ntest->nulltesttype)
+			    {
+			        case IS_NULL:
+						appendStringInfo(buf, ") IS NULL)");
+						break;
+			        case IS_NOT_NULL:
+						appendStringInfo(buf, ") IS NOT NULL)");
+						break;
+			        default:
+			            elog(ERROR, "get_rule_expr: unexpected nulltesttype %d",
+			                 (int) ntest->nulltesttype);
+				}
+			}
+			break;
+
+		case T_BooleanTest:
+			{
+				BooleanTest		*btest = (BooleanTest *) node;
+
+				appendStringInfo(buf, "((");
+				get_rule_expr(btest->arg, context);
+			    switch (btest->booltesttype)
+			    {
+			        case IS_TRUE:
+						appendStringInfo(buf, ") IS TRUE)");
+						break;
+			        case IS_NOT_TRUE:
+						appendStringInfo(buf, ") IS NOT TRUE)");
+						break;
+			        case IS_FALSE:
+						appendStringInfo(buf, ") IS FALSE)");
+						break;
+			        case IS_NOT_FALSE:
+						appendStringInfo(buf, ") IS NOT FALSE)");
+						break;
+			        case IS_UNKNOWN:
+						appendStringInfo(buf, ") IS UNKNOWN)");
+						break;
+			        case IS_NOT_UNKNOWN:
+						appendStringInfo(buf, ") IS NOT UNKNOWN)");
+						break;
+			        default:
+			            elog(ERROR, "get_rule_expr: unexpected booltesttype %d",
+			                 (int) btest->booltesttype);
+				}
+			}
+			break;
+
 		case T_SubLink:
 			get_sublink_expr(node, context);
 			break;
@@ -1977,25 +2030,6 @@ get_func_expr(Expr *expr, deparse_context *context)
 	int32		coercedTypmod;
 	List	   *l;
 	char	   *sep;
-
-	/*
-	 * nullvalue() and nonnullvalue() should get turned into special
-	 * syntax
-	 */
-	if (funcoid == F_NULLVALUE)
-	{
-		appendStringInfoChar(buf, '(');
-		get_rule_expr((Node *) lfirst(expr->args), context);
-		appendStringInfo(buf, " ISNULL)");
-		return;
-	}
-	if (funcoid == F_NONNULLVALUE)
-	{
-		appendStringInfoChar(buf, '(');
-		get_rule_expr((Node *) lfirst(expr->args), context);
-		appendStringInfo(buf, " NOTNULL)");
-		return;
-	}
 
 	/*
 	 * Get the functions pg_proc tuple

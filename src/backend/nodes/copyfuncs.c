@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.144 2001/06/09 23:21:54 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.145 2001/06/19 22:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1013,6 +1013,42 @@ _copyCaseWhen(CaseWhen *from)
 	 */
 	Node_Copy(from, newnode, expr);
 	Node_Copy(from, newnode, result);
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copyNullTest
+ * ----------------
+ */
+static NullTest *
+_copyNullTest(NullTest *from)
+{
+	NullTest *newnode = makeNode(NullTest);
+
+	/*
+	 * copy remainder of node
+	 */
+	Node_Copy(from, newnode, arg);
+	newnode->nulltesttype = from->nulltesttype;
+
+	return newnode;
+}
+
+/* ----------------
+ *		_copyBooleanTest
+ * ----------------
+ */
+static BooleanTest *
+_copyBooleanTest(BooleanTest *from)
+{
+	BooleanTest *newnode = makeNode(BooleanTest);
+
+	/*
+	 * copy remainder of node
+	 */
+	Node_Copy(from, newnode, arg);
+	newnode->booltesttype = from->booltesttype;
 
 	return newnode;
 }
@@ -2953,6 +2989,12 @@ copyObject(void *from)
 			break;
 		case T_CaseWhen:
 			retval = _copyCaseWhen(from);
+			break;
+		case T_NullTest:
+			retval = _copyNullTest(from);
+			break;
+		case T_BooleanTest:
+			retval = _copyBooleanTest(from);
 			break;
 		case T_FkConstraint:
 			retval = _copyFkConstraint(from);

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.42 2001/05/12 22:51:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.43 2001/06/19 22:39:08 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -1060,7 +1060,7 @@ SELECT (5 !) - 6;
       <row>
        <entry><token>IS</token></entry>
        <entry></entry>
-       <entry>test for TRUE, FALSE, NULL</entry>
+       <entry>test for TRUE, FALSE, UNKNOWN, NULL</entry>
       </row>
 
       <row>

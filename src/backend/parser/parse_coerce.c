@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.57 2001/05/22 16:37:16 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_coerce.c,v 2.58 2001/06/19 22:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -318,6 +318,30 @@ coerce_type_typmod(ParseState *pstate, Node *node,
 	}
 
 	return node;
+}
+
+
+/* coerce_to_boolean()
+ *		Coerce an argument of a construct that requires boolean input
+ *		(AND, OR, NOT, etc).
+ *
+ * If successful, update *pnode to be the transformed argument (if any
+ * transformation is needed), and return TRUE.  If fail, return FALSE.
+ * (The caller must check for FALSE and emit a suitable error message.)
+ */
+bool
+coerce_to_boolean(ParseState *pstate, Node **pnode)
+{
+	Oid			inputTypeId = exprType(*pnode);
+	Oid			targetTypeId;
+
+	if (inputTypeId == BOOLOID)
+		return true;			/* no work */
+	targetTypeId = BOOLOID;
+	if (! can_coerce_type(1, &inputTypeId, &targetTypeId))
+		return false;			/* fail, but let caller choose error msg */
+	*pnode = coerce_type(pstate, *pnode, inputTypeId, targetTypeId, -1);
+	return true;
 }
 
 

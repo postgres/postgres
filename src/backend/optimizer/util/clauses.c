@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.85 2001/05/20 20:28:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.86 2001/06/19 22:39:11 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1580,6 +1580,10 @@ expression_tree_walker(Node *node,
 					return true;
 			}
 			break;
+		case T_NullTest:
+			return walker(((NullTest *) node)->arg, context);
+		case T_BooleanTest:
+			return walker(((BooleanTest *) node)->arg, context);
 		case T_SubLink:
 			{
 				SubLink    *sublink = (SubLink *) node;
@@ -1930,6 +1934,26 @@ expression_tree_mutator(Node *node,
 				FLATCOPY(newnode, casewhen, CaseWhen);
 				MUTATE(newnode->expr, casewhen->expr, Node *);
 				MUTATE(newnode->result, casewhen->result, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_NullTest:
+			{
+				NullTest *ntest = (NullTest *) node;
+				NullTest *newnode;
+
+				FLATCOPY(newnode, ntest, NullTest);
+				MUTATE(newnode->arg, ntest->arg, Node *);
+				return (Node *) newnode;
+			}
+			break;
+		case T_BooleanTest:
+			{
+				BooleanTest *btest = (BooleanTest *) node;
+				BooleanTest *newnode;
+
+				FLATCOPY(newnode, btest, BooleanTest);
+				MUTATE(newnode->arg, btest->arg, Node *);
 				return (Node *) newnode;
 			}
 			break;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.86 2001/04/19 04:29:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.87 2001/06/19 22:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,6 +61,10 @@ static Datum ExecEvalNot(Expr *notclause, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalAnd(Expr *andExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalOr(Expr *orExpr, ExprContext *econtext, bool *isNull);
 static Datum ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
+			 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalNullTest(NullTest *ntest, ExprContext *econtext,
+			 bool *isNull, ExprDoneCond *isDone);
+static Datum ExecEvalBooleanTest(BooleanTest *btest, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone);
 
 
@@ -1092,6 +1096,126 @@ ExecEvalCase(CaseExpr *caseExpr, ExprContext *econtext,
 }
 
 /* ----------------------------------------------------------------
+ *		ExecEvalNullTest
+ *
+ *		Evaluate a NullTest node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalNullTest(NullTest *ntest,
+				 ExprContext *econtext,
+				 bool *isNull,
+				 ExprDoneCond *isDone)
+{
+	Datum		result;
+
+	result = ExecEvalExpr(ntest->arg, econtext, isNull, isDone);
+	switch (ntest->nulltesttype)
+    {
+        case IS_NULL:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(true);
+            }
+            else
+                return BoolGetDatum(false);
+        case IS_NOT_NULL:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(false);
+            }
+            else
+                return BoolGetDatum(true);
+        default:
+            elog(ERROR, "ExecEvalNullTest: unexpected nulltesttype %d",
+                 (int) ntest->nulltesttype);
+            return (Datum) 0;  /* keep compiler quiet */
+    }
+}
+
+/* ----------------------------------------------------------------
+ *		ExecEvalBooleanTest
+ *
+ *		Evaluate a BooleanTest node.
+ * ----------------------------------------------------------------
+ */
+static Datum
+ExecEvalBooleanTest(BooleanTest *btest,
+					ExprContext *econtext,
+					bool *isNull,
+					ExprDoneCond *isDone)
+{
+	Datum		result;
+
+	result = ExecEvalExpr(btest->arg, econtext, isNull, isDone);
+	switch (btest->booltesttype)
+    {
+        case IS_TRUE:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(false);
+            }
+            else if (DatumGetBool(result))
+                return BoolGetDatum(true);
+			else
+                return BoolGetDatum(false);
+        case IS_NOT_TRUE:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(true);
+            }
+            else if (DatumGetBool(result))
+                return BoolGetDatum(false);
+			else
+                return BoolGetDatum(true);
+        case IS_FALSE:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(false);
+            }
+            else if (DatumGetBool(result))
+                return BoolGetDatum(false);
+			else
+                return BoolGetDatum(true);
+        case IS_NOT_FALSE:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(true);
+            }
+            else if (DatumGetBool(result))
+                return BoolGetDatum(true);
+			else
+                return BoolGetDatum(false);
+        case IS_UNKNOWN:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(true);
+            }
+			else
+                return BoolGetDatum(false);
+        case IS_NOT_UNKNOWN:
+            if (*isNull)
+            {
+                *isNull = false;
+                return BoolGetDatum(false);
+            }
+			else
+                return BoolGetDatum(true);
+        default:
+            elog(ERROR, "ExecEvalBooleanTest: unexpected booltesttype %d",
+                 (int) btest->booltesttype);
+            return (Datum) 0;  /* keep compiler quiet */
+    }
+}
+
+/* ----------------------------------------------------------------
  *		ExecEvalFieldSelect
  *
  *		Evaluate a FieldSelect node.
@@ -1262,6 +1386,18 @@ ExecEvalExpr(Node *expression,
 			break;
 		case T_CaseExpr:
 			retDatum = ExecEvalCase((CaseExpr *) expression,
+									econtext,
+									isNull,
+									isDone);
+			break;
+		case T_NullTest:
+			retDatum = ExecEvalNullTest((NullTest *) expression,
+									econtext,
+									isNull,
+									isDone);
+			break;
+		case T_BooleanTest:
+			retDatum = ExecEvalBooleanTest((BooleanTest *) expression,
 									econtext,
 									isNull,
 									isDone);

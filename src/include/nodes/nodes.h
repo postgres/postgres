@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.90 2001/06/09 23:21:55 petere Exp $
+ * $Id: nodes.h,v 1.91 2001/06/19 22:39:12 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,8 +218,8 @@ typedef enum NodeTag
 	T_RangeTblEntry,
 	T_SortClause,
 	T_GroupClause,
-	T_SubSelectXXX,				/* not used anymore; tag# available */
-	T_oldJoinExprXXX,			/* not used anymore; tag# available */
+	T_NullTest,
+	T_BooleanTest,
 	T_CaseExpr,
 	T_CaseWhen,
 	T_RowMarkXXX,				/* not used anymore; tag# available */

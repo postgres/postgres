@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.80 2001/05/18 21:24:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.81 2001/06/19 22:39:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -286,16 +286,14 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 */
 	result = transformExpr(pstate, result, EXPR_COLUMN_FIRST);
 
+	/*
+	 * We expect the result to yield bool directly, otherwise complain.
+	 * We could try coerce_to_boolean() here, but it seems likely that an
+	 * "=" operator that doesn't return bool is wrong anyway.
+	 */
 	if (exprType(result) != BOOLOID)
-	{
-
-		/*
-		 * This could only happen if someone defines a funny version of
-		 * '='
-		 */
 		elog(ERROR, "JOIN/USING clause must return type bool, not type %s",
 			 typeidTypeName(exprType(result)));
-	}
 
 	return result;
 }	/* transformJoinUsingClause() */
@@ -328,11 +326,10 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 
 	/* This part is just like transformWhereClause() */
 	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
-	if (exprType(result) != BOOLOID)
-	{
+
+	if (! coerce_to_boolean(pstate, &result))
 		elog(ERROR, "JOIN/ON clause must return type bool, not type %s",
 			 typeidTypeName(exprType(result)));
-	}
 
 	pstate->p_namespace = save_namespace;
 
@@ -689,11 +686,11 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 							/* Need COALESCE(l_colvar, r_colvar) */
 							CaseExpr   *c = makeNode(CaseExpr);
 							CaseWhen   *w = makeNode(CaseWhen);
-							A_Expr	   *a = makeNode(A_Expr);
+							NullTest   *n = makeNode(NullTest);
 
-							a->oper = NOTNULL;
-							a->lexpr = l_colvar;
-							w->expr = (Node *) a;
+							n->arg = l_colvar;
+							n->nulltesttype = IS_NOT_NULL;
+							w->expr = (Node *) n;
 							w->result = l_colvar;
 							c->args = makeList1(w);
 							c->defresult = r_colvar;
@@ -777,11 +774,10 @@ transformWhereClause(ParseState *pstate, Node *clause)
 
 	qual = transformExpr(pstate, clause, EXPR_COLUMN_FIRST);
 
-	if (exprType(qual) != BOOLOID)
-	{
+	if (! coerce_to_boolean(pstate, &qual))
 		elog(ERROR, "WHERE clause must return type bool, not type %s",
 			 typeidTypeName(exprType(qual)));
-	}
+
 	return qual;
 }
 

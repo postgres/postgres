@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.61 2001/06/15 21:03:07 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.62 2001/06/19 22:39:08 tgl Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -272,6 +272,21 @@
    allow some broken client applications (such as
    <productname>Microsoft Access</productname>) to work, but this may
    be discontinued in a future release.
+  </para>
+
+  <para>
+   Boolean values can be tested using the constructs
+<synopsis>
+<replaceable>expression</replaceable> IS TRUE
+<replaceable>expression</replaceable> IS NOT TRUE
+<replaceable>expression</replaceable> IS FALSE
+<replaceable>expression</replaceable> IS NOT FALSE
+<replaceable>expression</replaceable> IS UNKNOWN
+<replaceable>expression</replaceable> IS NOT UNKNOWN
+</synopsis>
+   These are similar to <literal>IS NULL</literal> in that they will
+   always return TRUE or FALSE, never NULL, even when the operand is NULL.
+   A NULL input is treated as the logical value UNKNOWN.
   </para>
  </sect1>
 
