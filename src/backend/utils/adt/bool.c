@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.9 1997/10/25 05:09:58 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.10 1997/10/30 16:45:12 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,3 +116,15 @@ boolgt(bool arg1, bool arg2)
 {
 	return (arg1 > arg2);
 }
+
+bool
+istrue(bool arg1)
+{
+	return(arg1 == TRUE);
+} /* istrue() */
+
+bool
+isfalse(bool arg1)
+{
+	return(arg1 != TRUE);
+} /* istrue() */

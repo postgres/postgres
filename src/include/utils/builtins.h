@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.28 1997/10/25 05:40:43 thomas Exp $
+ * $Id: builtins.h,v 1.29 1997/10/30 16:42:50 thomas Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -35,6 +35,8 @@ extern bool booleq(bool arg1, bool arg2);
 extern bool boolne(bool arg1, bool arg2);
 extern bool boollt(bool arg1, bool arg2);
 extern bool boolgt(bool arg1, bool arg2);
+extern bool istrue(bool arg1);
+extern bool isfalse(bool arg1);
 
 /* char.c */
 extern int32 charin(char *ch);
