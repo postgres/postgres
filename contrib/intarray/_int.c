@@ -17,6 +17,7 @@
 #include "access/gist.h"
 #include "access/itup.h"
 #include "access/rtree.h"
+#include "catalog/pg_type.h"
 #include "utils/elog.h"
 #include "utils/palloc.h"
 #include "utils/array.h"
@@ -923,6 +924,7 @@ new_intArrayType(int num)
 	r->flags &= ~LEAFKEY;
 	*((int *) ARR_DIMS(r)) = num;
 	*((int *) ARR_LBOUND(r)) = 1;
+	ARR_ELEMTYPE(r) = INT4OID;
 
 	return r;
 }
