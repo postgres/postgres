@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.213 2001/01/05 06:34:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.214 2001/01/06 10:50:02 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -252,8 +252,8 @@ static void doNegateFloat(Value *v);
 %type <paramno> ParamNo
 
 %type <typnam>	Typename, SimpleTypename, ConstTypename
-				Generic, Numeric, Geometric, Character, ConstDatetime, ConstInterval, Bit
-%type <str>		generic, character, datetime, bit
+				GenericType, Numeric, Geometric, Character, ConstDatetime, ConstInterval, Bit
+%type <str>		character, datetime, bit
 %type <str>		extract_arg
 %type <str>		opt_charset, opt_collate
 %type <str>		opt_float
@@ -3845,7 +3845,7 @@ SimpleTypename:  ConstTypename
 		| ConstInterval
 		;
 
-ConstTypename:  Generic
+ConstTypename:  GenericType
 		| Numeric
 		| Geometric
 		| Bit
@@ -3853,16 +3853,12 @@ ConstTypename:  Generic
 		| ConstDatetime
 		;
 
-Generic:  generic
+GenericType:  IDENT
 				{
 					$$ = makeNode(TypeName);
 					$$->name = xlateSqlType($1);
 					$$->typmod = -1;
 				}
-		;
-
-generic:  IDENT									{ $$ = $1; }
-		| TYPE_P								{ $$ = "type"; }
 		;
 
 /* SQL92 numeric data types
@@ -5392,7 +5388,7 @@ UserId:  ColId							{ $$ = $1; };
  *  list due to shift/reduce conflicts in yacc. If so, move
  *  down to the ColLabel entity. - thomas 1997-11-06
  */
-ColId:  generic							{ $$ = $1; }
+ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
 		| TokenId						{ $$ = $1; }
 		| INTERVAL						{ $$ = "interval"; }
@@ -5520,6 +5516,7 @@ TokenId:  ABSOLUTE						{ $$ = "absolute"; }
 		| TRIGGER						{ $$ = "trigger"; }
 		| TRUNCATE						{ $$ = "truncate"; }
 		| TRUSTED						{ $$ = "trusted"; }
+		| TYPE_P						{ $$ = "type"; }
 		| UNLISTEN						{ $$ = "unlisten"; }
 		| UNTIL							{ $$ = "until"; }
 		| UPDATE						{ $$ = "update"; }
@@ -5549,6 +5546,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| ALL							{ $$ = "all"; }
 		| ANALYSE						{ $$ = "analyse"; } /* British */
 		| ANALYZE						{ $$ = "analyze"; }
+		| AND							{ $$ = "and"; }
 		| ANY							{ $$ = "any"; }
 		| ASC							{ $$ = "asc"; }
 		| BETWEEN						{ $$ = "between"; }
@@ -5647,6 +5645,7 @@ ColLabel:  ColId						{ $$ = $1; }
 		| TABLE							{ $$ = "table"; }
 		| THEN							{ $$ = "then"; }
 		| TO							{ $$ = "to"; }
+		| TRAILING						{ $$ = "trailing"; }
 		| TRANSACTION					{ $$ = "transaction"; }
 		| TRIM							{ $$ = "trim"; }
 		| TRUE_P						{ $$ = "true"; }
