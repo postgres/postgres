@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.10 1998/01/05 03:30:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.11 1998/01/05 16:38:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,12 +81,12 @@ renameatt(char *relname,
 	 * normally, only the owner of a class can change its schema.
 	 */
 	if (IsSystemRelationName(relname))
-		elog(ABORT, "renameatt: class \"%s\" is a system catalog",
+		elog(ERROR, "renameatt: class \"%s\" is a system catalog",
 			 relname);
 #ifndef NO_SECURITY
 	if (!IsBootstrapProcessingMode() &&
 		!pg_ownercheck(userName, relname, RELNAME))
-		elog(ABORT, "renameatt: you do not own class \"%s\"",
+		elog(ERROR, "renameatt: you do not own class \"%s\"",
 			 relname);
 #endif
 
@@ -109,7 +109,7 @@ renameatt(char *relname,
 		relrdesc = heap_openr(relname);
 		if (!RelationIsValid(relrdesc))
 		{
-			elog(ABORT, "renameatt: unknown relation: \"%s\"",
+			elog(ERROR, "renameatt: unknown relation: \"%s\"",
 				 relname);
 		}
 		myrelid = relrdesc->rd_id;
@@ -134,7 +134,7 @@ renameatt(char *relname,
 			relrdesc = heap_open(childrelid);
 			if (!RelationIsValid(relrdesc))
 			{
-				elog(ABORT, "renameatt: can't find catalog entry for inheriting class with oid %d",
+				elog(ERROR, "renameatt: can't find catalog entry for inheriting class with oid %d",
 					 childrelid);
 			}
 			childname = (relrdesc->rd_rel->relname).data;
@@ -149,7 +149,7 @@ renameatt(char *relname,
 	if (!PointerIsValid(reltup))
 	{
 		heap_close(relrdesc);
-		elog(ABORT, "renameatt: relation \"%s\" nonexistent",
+		elog(ERROR, "renameatt: relation \"%s\" nonexistent",
 			 relname);
 		return;
 	}
@@ -160,12 +160,12 @@ renameatt(char *relname,
 	if (!PointerIsValid(oldatttup))
 	{
 		heap_close(attrdesc);
-		elog(ABORT, "renameatt: attribute \"%s\" nonexistent",
+		elog(ERROR, "renameatt: attribute \"%s\" nonexistent",
 			 oldattname);
 	}
 	if (((AttributeTupleForm) GETSTRUCT(oldatttup))->attnum < 0)
 	{
-		elog(ABORT, "renameatt: system attribute \"%s\" not renamed",
+		elog(ERROR, "renameatt: system attribute \"%s\" not renamed",
 			 oldattname);
 	}
 
@@ -174,7 +174,7 @@ renameatt(char *relname,
 	{
 		pfree(oldatttup);
 		heap_close(attrdesc);
-		elog(ABORT, "renameatt: attribute \"%s\" exists",
+		elog(ERROR, "renameatt: attribute \"%s\" exists",
 			 newattname);
 	}
 
@@ -223,13 +223,13 @@ renamerel(char oldrelname[], char newrelname[])
 
 	if (IsSystemRelationName(oldrelname))
 	{
-		elog(ABORT, "renamerel: system relation \"%s\" not renamed",
+		elog(ERROR, "renamerel: system relation \"%s\" not renamed",
 			 oldrelname);
 		return;
 	}
 	if (IsSystemRelationName(newrelname))
 	{
-		elog(ABORT, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
+		elog(ERROR, "renamerel: Illegal class name: \"%s\" -- pg_ is reserved for system catalogs",
 			 newrelname);
 		return;
 	}
@@ -240,7 +240,7 @@ renamerel(char oldrelname[], char newrelname[])
 	if (!PointerIsValid(oldreltup))
 	{
 		heap_close(relrdesc);
-		elog(ABORT, "renamerel: relation \"%s\" does not exist",
+		elog(ERROR, "renamerel: relation \"%s\" does not exist",
 			 oldrelname);
 	}
 
@@ -249,7 +249,7 @@ renamerel(char oldrelname[], char newrelname[])
 	{
 		pfree(oldreltup);
 		heap_close(relrdesc);
-		elog(ABORT, "renamerel: relation \"%s\" exists",
+		elog(ERROR, "renamerel: relation \"%s\" exists",
 			 newrelname);
 	}
 
@@ -257,7 +257,7 @@ renamerel(char oldrelname[], char newrelname[])
 	strcpy(oldpath, relpath(oldrelname));
 	strcpy(newpath, relpath(newrelname));
 	if (rename(oldpath, newpath) < 0)
-		elog(ABORT, "renamerel: unable to rename file: %m");
+		elog(ERROR, "renamerel: unable to rename file: %m");
 
 	memmove((char *) (((Form_pg_class) GETSTRUCT(oldreltup))->relname.data),
 			newrelname,

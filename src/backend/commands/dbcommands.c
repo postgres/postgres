@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.4 1998/01/05 03:30:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.5 1998/01/05 16:38:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,12 +75,12 @@ createdb(char *dbname, char *dbpath)
 	lp = ExpandDatabasePath(loc);
 
 	if (lp == NULL)
-		elog(ABORT,"Unable to locate path '%s'"
+		elog(ERROR,"Unable to locate path '%s'"
 			"\n\tThis may be due to a missing environment variable"
 			" in the server",loc);
 
 	if (mkdir(lp,S_IRWXU) != 0)
-		elog(ABORT,"Unable to create database directory %s",lp);
+		elog(ERROR,"Unable to create database directory %s",lp);
 
 	sprintf(buf, "%s %s%cbase%ctemplate1%c* %s",
 			COPY_CMD, DataDir, SEP_CHAR, SEP_CHAR, SEP_CHAR, lp);
@@ -123,7 +123,7 @@ destroydb(char *dbname)
 
 	path = ExpandDatabasePath(dbpath);
     if (path == NULL)
-		elog(ABORT,"Unable to locate path '%s'"
+		elog(ERROR,"Unable to locate path '%s'"
 			"\n\tThis may be due to a missing environment variable"
 			" in the server",dbpath);
 
@@ -161,7 +161,7 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
 
 	scan = heap_beginscan(dbrel, 0, false, 1, &scanKey);
 	if (!HeapScanIsValid(scan))
-		elog(ABORT, "%s: cannot begin scan of pg_database.", command);
+		elog(ERROR, "%s: cannot begin scan of pg_database.", command);
 
 	/*
 	 * since we want to return the tuple out of this proc, and we're going
@@ -185,7 +185,7 @@ get_pg_dbtup(char *command, char *dbname, Relation dbrel)
  *	check_permissions() -- verify that the user is permitted to do this.
  *
  *	If the user is not allowed to carry out this operation, this routine
- *	elog(ABORT, ...)s, which will abort the xact.  As a side effect, the
+ *	elog(ERROR, ...)s, which will abort the xact.  As a side effect, the
  *	user's pg_user tuple OID is returned in userIdP and the target database's
  *	OID is returned in dbIdP.
  */
@@ -218,20 +218,20 @@ check_permissions(char *command,
 	/* Check to make sure user has permission to use createdb */
 	if (!use_createdb)
 	{
-		elog(ABORT, "user \"%s\" is not allowed to create/destroy databases",
+		elog(ERROR, "user \"%s\" is not allowed to create/destroy databases",
 			 userName);
 	}
 
 	/* Make sure we are not mucking with the template database */
 	if (!strcmp(dbname, "template1"))
 	{
-		elog(ABORT, "%s cannot be executed on the template database.", command);
+		elog(ERROR, "%s cannot be executed on the template database.", command);
 	}
 
 	/* Check to make sure database is not the currently open database */
 	if (!strcmp(dbname, GetDatabaseName()))
 	{
-		elog(ABORT, "%s cannot be executed on an open database", command);
+		elog(ERROR, "%s cannot be executed on an open database", command);
 	}
 
 	/* Check to make sure database is owned by this user */
@@ -285,20 +285,20 @@ check_permissions(char *command,
 	if (dbfound && !strcmp(command, "createdb"))
 	{
 
-		elog(ABORT, "createdb: database %s already exists.", dbname);
+		elog(ERROR, "createdb: database %s already exists.", dbname);
 
 	}
 	else if (!dbfound && !strcmp(command, "destroydb"))
 	{
 
-		elog(ABORT, "destroydb: database %s does not exist.", dbname);
+		elog(ERROR, "destroydb: database %s does not exist.", dbname);
 
 	}
 	else if (dbfound && !strcmp(command, "destroydb")
 			 && dbowner != *userIdP && use_super == false)
 	{
 
-		elog(ABORT, "%s: database %s is not owned by you.", command, dbname);
+		elog(ERROR, "%s: database %s is not owned by you.", command, dbname);
 
 	}
 
@@ -332,7 +332,7 @@ stop_vacuum(char *dbpath, char *dbname)
 		FreeFile(fp);
 		if (kill(pid, SIGKILLDAEMON1) < 0)
 		{
-			elog(ABORT, "can't kill vacuum daemon (pid %d) on %s",
+			elog(ERROR, "can't kill vacuum daemon (pid %d) on %s",
 				 pid, dbname);
 		}
 	}

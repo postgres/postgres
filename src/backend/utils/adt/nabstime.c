@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.37 1998/01/05 03:34:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.38 1998/01/05 16:40:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,14 +256,14 @@ nabstimein(char *str)
 				ftype[MAXDATEFIELDS];
 
 	if (!PointerIsValid(str))
-		elog(ABORT, "Bad (null) abstime external representation", NULL);
+		elog(ERROR, "Bad (null) abstime external representation", NULL);
 
 	if (strlen(str) > MAXDATELEN)
-		elog(ABORT, "Bad (length) abstime external representation '%s'", str);
+		elog(ERROR, "Bad (length) abstime external representation '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	  || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tz) != 0))
-		elog(ABORT, "Bad abstime external representation '%s'", str);
+		elog(ERROR, "Bad abstime external representation '%s'", str);
 
 #ifdef DATEDEBUG
 	printf("nabstimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE);
@@ -296,7 +296,7 @@ nabstimein(char *str)
 			break;
 
 		default:
-			elog(ABORT, "Bad abstime (internal coding error) '%s'", str);
+			elog(ERROR, "Bad abstime (internal coding error) '%s'", str);
 			result = INVALID_ABSTIME;
 			break;
 	};
@@ -547,7 +547,7 @@ abstime_datetime(AbsoluteTime abstime)
 	DateTime   *result;
 
 	if (!PointerIsValid(result = PALLOCTYPE(DateTime)))
-		elog(ABORT, "Unable to allocate space to convert abstime to datetime", NULL);
+		elog(ERROR, "Unable to allocate space to convert abstime to datetime", NULL);
 
 	switch (abstime)
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.15 1998/01/05 03:34:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.16 1998/01/05 16:40:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,7 +75,7 @@ bpcharin(char *s, int dummy, int typlen)
 	}
 
 	if (len > 4096)
-		elog(ABORT, "bpcharin: length of char() must be less than 4096");
+		elog(ERROR, "bpcharin: length of char() must be less than 4096");
 
 	result = (char *) palloc(typlen);
 	*(int32 *) result = typlen;
@@ -145,7 +145,7 @@ varcharin(char *s, int dummy, int typlen)
 	}
 
 	if (len > 4096)
-		elog(ABORT, "varcharin: length of char() must be less than 4096");
+		elog(ERROR, "varcharin: length of char() must be less than 4096");
 
 	result = (char *) palloc(typlen);
 	*(int32 *) result = typlen;
@@ -199,7 +199,7 @@ int32
 bpcharlen(char *arg)
 {
 	if (!PointerIsValid(arg))
-		elog(ABORT, "Bad (null) char() external representation", NULL);
+		elog(ERROR, "Bad (null) char() external representation", NULL);
 
 	return(bcTruelen(arg));
 } /* bpcharlen() */
@@ -355,7 +355,7 @@ int32
 varcharlen(char *arg)
 {
 	if (!PointerIsValid(arg))
-		elog(ABORT, "Bad (null) varchar() external representation", NULL);
+		elog(ERROR, "Bad (null) varchar() external representation", NULL);
 
 	return(vcTruelen(arg));
 } /* vclen() */

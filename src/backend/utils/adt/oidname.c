@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.10 1998/01/05 03:34:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/oidname.c,v 1.11 1998/01/05 16:40:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ oidnamein(char *inStr)
 		StrNCpy(oc->name.data, inptr, NAMEDATALEN);
 	}
 	else
-		elog(ABORT, "Bad input data for type oidname");
+		elog(ERROR, "Bad input data for type oidname");
 
 	return oc;
 }

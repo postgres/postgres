@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.20 1998/01/05 03:34:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.21 1998/01/05 16:40:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,9 +58,9 @@ pg_atoi(char *s, int size, int c)
 	errno = 0;
 	l = strtol(s, &badp, 10);
 	if (errno)					/* strtol must set ERANGE */
-		elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+		elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 	if (badp && *badp && (*badp != c))
-		elog(ABORT, "pg_atoi: error in \"%s\": can\'t parse \"%s\"", s, badp);
+		elog(ERROR, "pg_atoi: error in \"%s\": can\'t parse \"%s\"", s, badp);
 
 	switch (size)
 	{
@@ -70,12 +70,12 @@ pg_atoi(char *s, int size, int c)
 			if (l < INT_MIN)
 			{
 				errno = ERANGE;
-				elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
 			if (l > INT_MAX)
 			{
 				errno = ERANGE;
-				elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
 #endif							/* HAS_LONG_LONG */
 			break;
@@ -83,28 +83,28 @@ pg_atoi(char *s, int size, int c)
 			if (l < SHRT_MIN)
 			{
 				errno = ERANGE;
-				elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
 			if (l > SHRT_MAX)
 			{
 				errno = ERANGE;
-				elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
 			break;
 		case sizeof(int8):
 			if (l < SCHAR_MIN)
 			{
 				errno = ERANGE;
-				elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
 			if (l > SCHAR_MAX)
 			{
 				errno = ERANGE;
-				elog(ABORT, "pg_atoi: error reading \"%s\": %m", s);
+				elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
 			}
 			break;
 		default:
-			elog(ABORT, "pg_atoi: invalid result size: %d", size);
+			elog(ERROR, "pg_atoi: invalid result size: %d", size);
 	}
 	return ((int32) l);
 }

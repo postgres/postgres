@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.22 1998/01/05 03:33:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/arrayfuncs.c,v 1.23 1998/01/05 16:39:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,14 +145,14 @@ array_in(char *string,			/* input array in external form */
 			}
 			for (q = p; isdigit(*q); q++);
 			if (*q != ']')
-				elog(ABORT, "array_in: missing ']' in array declaration");
+				elog(ERROR, "array_in: missing ']' in array declaration");
 			*q = '\0';
 			dim[ndim] = atoi(p);
 			if ((dim[ndim] < 0) || (lBound[ndim] < 0))
-				elog(ABORT, "array_in: array dimensions need to be positive");
+				elog(ERROR, "array_in: array dimensions need to be positive");
 			dim[ndim] = dim[ndim] - lBound[ndim] + 1;
 			if (dim[ndim] < 0)
-				elog(ABORT, "array_in: upper_bound cannot be < lower_bound");
+				elog(ERROR, "array_in: upper_bound cannot be < lower_bound");
 			p = q + 1;
 			ndim++;
 		}
@@ -171,7 +171,7 @@ array_in(char *string,			/* input array in external form */
 		}
 		else
 		{
-			elog(ABORT, "array_in: Need to specify dimension");
+			elog(ERROR, "array_in: Need to specify dimension");
 		}
 	}
 	else
@@ -179,7 +179,7 @@ array_in(char *string,			/* input array in external form */
 		while (isspace(*p))
 			p++;
 		if (strncmp(p, ASSGN, strlen(ASSGN)))
-			elog(ABORT, "array_in: missing assignment operator");
+			elog(ERROR, "array_in: missing assignment operator");
 		p += strlen(ASSGN);
 		while (isspace(*p))
 			p++;
@@ -249,7 +249,7 @@ array_in(char *string,			/* input array in external form */
 		memmove((char *) ARR_LBOUND(retval), (char *) lBound, ndim * sizeof(int));
 		memmove(ARR_DATA_PTR(retval), dataPtr, bytes);
 #endif
-		elog(ABORT, "large object arrays not supported");
+		elog(ERROR, "large object arrays not supported");
 	}
 	pfree(string_save);
 	return ((char *) retval);
@@ -302,7 +302,7 @@ _ArrayCount(char *str, int dim[], int typdelim)
 					 * Signal a premature end of the string.  DZ -
 					 * 2-9-1996
 					 */
-					elog(ABORT, "malformed array constant: %s", str);
+					elog(ERROR, "malformed array constant: %s", str);
 					break;
 				case '\"':
 					scanning_string = !scanning_string;
@@ -425,7 +425,7 @@ _ReadArrayStr(char *arrayStr,
 						p++;
 						nest_level++;
 						if (nest_level > ndim)
-							elog(ABORT, "array_in: illformed array constant");
+							elog(ERROR, "array_in: illformed array constant");
 						indx[nest_level - 1] = 0;
 						indx[ndim - 1] = 0;
 					}
@@ -460,7 +460,7 @@ _ReadArrayStr(char *arrayStr,
 		}
 		*q = '\0';
 		if (i >= nitems)
-			elog(ABORT, "array_in: illformed array constant");
+			elog(ERROR, "array_in: illformed array constant");
 		values[i] = (*inputproc) (p, typelem);
 		p = ++q;
 		if (!eoArray)
@@ -544,27 +544,27 @@ _ReadLOArray(char *str,
 		if (!strcmp(word, "-chunk"))
 		{
 			if (str == NULL)
-				elog(ABORT, "array_in: access pattern file required");
+				elog(ERROR, "array_in: access pattern file required");
 			str = _AdvanceBy1word(str, &accessfile);
 		}
 		else if (!strcmp(word, "-noreorg"))
 		{
 			if (str == NULL)
-				elog(ABORT, "array_in: chunk file required");
+				elog(ERROR, "array_in: chunk file required");
 			str = _AdvanceBy1word(str, &chunkfile);
 		}
 		else
 		{
-			elog(ABORT, "usage: <input file> -chunk DEFAULT/<access pattern file> -invert/-native [-noreorg <chunk file>]");
+			elog(ERROR, "usage: <input file> -chunk DEFAULT/<access pattern file> -invert/-native [-noreorg <chunk file>]");
 		}
 	}
 
 	if (inputfile == NULL)
-		elog(ABORT, "array_in: missing file name");
+		elog(ERROR, "array_in: missing file name");
 	lobjId = lo_creat(0);
 	*fd = lo_open(lobjId, INV_READ);
 	if (*fd < 0)
-		elog(ABORT, "Large object create failed");
+		elog(ERROR, "Large object create failed");
 	retStr = inputfile;
 	*nbytes = strlen(retStr) + 2;
 
@@ -573,7 +573,7 @@ _ReadLOArray(char *str,
 		FILE	   *afd;
 
 		if ((afd = AllocateFile(accessfile, "r")) == NULL)
-			elog(ABORT, "unable to open access pattern file");
+			elog(ERROR, "unable to open access pattern file");
 		*chunkFlag = true;
 		retStr = _ChunkArray(*fd, afd, ndim, dim, baseSize, nbytes,
 							 chunkfile);
@@ -836,7 +836,7 @@ array_ref(ArrayType *array,
 		 * fixed length arrays -- these are assumed to be 1-d
 		 */
 		if (indx[0] * elmlen > arraylen)
-			elog(ABORT, "array_ref: array bound exceeded");
+			elog(ERROR, "array_ref: array bound exceeded");
 		retval = (char *) array + indx[0] * elmlen;
 		return _ArrayCast(retval, reftype, elmlen);
 	}
@@ -964,7 +964,7 @@ array_clip(ArrayType *array,
 
 	for (i = 0; i < n; i++)
 		if (lowerIndx[i] > upperIndx[i])
-			elog(ABORT, "lowerIndex cannot be larger than upperIndx");
+			elog(ERROR, "lowerIndex cannot be larger than upperIndx");
 	mda_get_range(n, span, lowerIndx, upperIndx);
 
 	if (ARR_IS_LO(array))
@@ -980,7 +980,7 @@ array_clip(ArrayType *array,
 					rsize;
 
 		if (len < 0)
-			elog(ABORT, "array_clip: array of variable length objects not supported");
+			elog(ERROR, "array_clip: array of variable length objects not supported");
 #ifdef LOARRAY
 		lo_name = (char *) ARR_DATA_PTR(array);
 		if ((fd = LOopen(lo_name, ARR_IS_INV(array) ? INV_READ : O_RDONLY)) < 0)
@@ -1098,7 +1098,7 @@ array_set(ArrayType *array,
 		 * fixed length arrays -- these are assumed to be 1-d
 		 */
 		if (indx[0] * elmlen > arraylen)
-			elog(ABORT, "array_ref: array bound exceeded");
+			elog(ERROR, "array_ref: array bound exceeded");
 		pos = (char *) array + indx[0] * elmlen;
 		ArrayCastAndSet(dataPtr, (bool) reftype, elmlen, pos);
 		return ((char *) array);
@@ -1110,7 +1110,7 @@ array_set(ArrayType *array,
 
 	if (!SanityCheckInput(ndim, n, dim, lb, indx))
 	{
-		elog(ABORT, "array_set: array bound exceeded");
+		elog(ERROR, "array_set: array bound exceeded");
 		return ((char *) array);
 	}
 	offset = GetOffset(n, dim, lb, indx);
@@ -1225,7 +1225,7 @@ array_assgn(ArrayType *array,
 	if (array == (ArrayType *) NULL)
 		RETURN_NULL;
 	if (len < 0)
-		elog(ABORT, "array_assgn:updates on arrays of variable length elements not allowed");
+		elog(ERROR, "array_assgn:updates on arrays of variable length elements not allowed");
 
 	dim = ARR_DIMS(array);
 	lb = ARR_LBOUND(array);
@@ -1239,7 +1239,7 @@ array_assgn(ArrayType *array,
 
 	for (i = 0; i < n; i++)
 		if (lowerIndx[i] > upperIndx[i])
-			elog(ABORT, "lowerIndex larger than upperIndx");
+			elog(ERROR, "lowerIndex larger than upperIndx");
 
 	if (ARR_IS_LO(array))
 	{
@@ -1315,7 +1315,7 @@ system_cache_lookup(Oid element_type,
 
 	if (!HeapTupleIsValid(typeTuple))
 	{
-		elog(ABORT, "array_out: Cache lookup failed for type %d\n",
+		elog(ERROR, "array_out: Cache lookup failed for type %d\n",
 			 element_type);
 		return;
 	}
@@ -1350,7 +1350,7 @@ _ArrayCast(char *value, bool byval, int len)
 			case 4:
 				return ((Datum) *(int32 *) value);
 			default:
-				elog(ABORT, "array_ref: byval and elt len > 4!");
+				elog(ERROR, "array_ref: byval and elt len > 4!");
 				break;
 		}
 	}
@@ -1734,7 +1734,7 @@ _array_newLO(int *fd, int flag)
 	strcpy(saveName, p);
 #ifdef LOARRAY
 	if ((*fd = LOcreat(saveName, 0600, flag)) < 0)
-		elog(ABORT, "Large object create failed");
+		elog(ERROR, "Large object create failed");
 #endif
 	return (p);
 }

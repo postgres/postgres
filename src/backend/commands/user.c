@@ -102,7 +102,7 @@ void DefineUser(CreateUserStmt *stmt) {
   pg_user = GetPgUserName();
   if (pg_aclcheck(UserRelationName, pg_user, ACL_RD | ACL_WR | ACL_AP) != ACLCHECK_OK) {
     UserAbortTransactionBlock();
-    elog(ABORT, "defineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
+    elog(ERROR, "defineUser: user \"%s\" does not have SELECT and INSERT privilege for \"%s\"",
                pg_user, UserRelationName);
     return;
   }
@@ -135,7 +135,7 @@ void DefineUser(CreateUserStmt *stmt) {
     RelationUnsetLockForWrite(pg_user_rel);
     heap_close(pg_user_rel);
     UserAbortTransactionBlock();
-    elog(ABORT, "defineUser: user \"%s\" has already been created", stmt->user);
+    elog(ERROR, "defineUser: user \"%s\" has already been created", stmt->user);
     return;
   }
 
@@ -213,7 +213,7 @@ extern void AlterUser(AlterUserStmt *stmt) {
   pg_user = GetPgUserName();
   if (pg_aclcheck(UserRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK) {
     UserAbortTransactionBlock();
-    elog(ABORT, "alterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
+    elog(ERROR, "alterUser: user \"%s\" does not have SELECT and UPDATE privilege for \"%s\"",
                pg_user, UserRelationName);
     return;
   }
@@ -243,7 +243,7 @@ extern void AlterUser(AlterUserStmt *stmt) {
     RelationUnsetLockForWrite(pg_user_rel);
     heap_close(pg_user_rel);
     UserAbortTransactionBlock();
-    elog(ABORT, "alterUser: user \"%s\" does not exist", stmt->user);
+    elog(ERROR, "alterUser: user \"%s\" does not exist", stmt->user);
     return;
   }
 
@@ -323,7 +323,7 @@ extern void RemoveUser(char* user) {
   pg_user = GetPgUserName();
   if (pg_aclcheck(UserRelationName, pg_user, ACL_RD | ACL_WR) != ACLCHECK_OK) {
     UserAbortTransactionBlock();
-    elog(ABORT, "removeUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
+    elog(ERROR, "removeUser: user \"%s\" does not have SELECT and DELETE privilege for \"%s\"",
                pg_user, UserRelationName);
     return;
   }
@@ -355,7 +355,7 @@ extern void RemoveUser(char* user) {
     RelationUnsetLockForWrite(pg_user_rel);
     heap_close(pg_user_rel);
     UserAbortTransactionBlock();
-    elog(ABORT, "removeUser: user \"%s\" does not exist", user);
+    elog(ERROR, "removeUser: user \"%s\" does not exist", user);
     return;
   }
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.33 1998/01/05 03:32:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.34 1998/01/05 16:39:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,13 +199,13 @@ other			.
 					errno = 0;
 					yylval.ival = strtol((char *)literal,&endptr,2);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ABORT,"Bad binary integer input '%s'",literal);
+						elog(ERROR,"Bad binary integer input '%s'",literal);
 					return (ICONST);
 				}
 <xh>{xhinside}	|
 <xb>{xbinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						elog(ABORT,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
@@ -225,7 +225,7 @@ other			.
 					errno = 0;
 					yylval.ival = strtol((char *)literal,&endptr,16);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ABORT,"Bad hexadecimal integer input '%s'",literal);
+						elog(ERROR,"Bad hexadecimal integer input '%s'",literal);
 					return (ICONST);
 				}
 
@@ -242,13 +242,13 @@ other			.
 <xq>{xqdouble}	|
 <xq>{xqinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						elog(ABORT,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
 <xq>{xqembedded} {
 					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
-						elog(ABORT,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
 					memcpy(literal+llen, yytext, yyleng+1);
 					*(literal+llen) = '\'';
 					llen += yyleng;
@@ -256,7 +256,7 @@ other			.
 
 <xq>{xqliteral} {
 					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
-						elog(ABORT,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
@@ -276,7 +276,7 @@ other			.
 				}
 <xd>{xdinside}	{
 					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
-						elog(ABORT,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
+						elog(ERROR,"quoted string parse buffer of %d chars exceeded",MAX_PARSE_BUFFER);
 					memcpy(literal+llen, yytext, yyleng+1);
 					llen += yyleng;
 				}
@@ -318,7 +318,7 @@ other			.
 					errno = 0;
 					yylval.ival = strtol((char *)yytext,&endptr,10);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ABORT,"Bad integer input '%s'",yytext);
+						elog(ERROR,"Bad integer input '%s'",yytext);
 					return (ICONST);
 				}
 {real}/{space}*-{number} {
@@ -328,7 +328,7 @@ other			.
 					errno = 0;
 					yylval.dval = strtod(((char *)yytext),&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-					elog(ABORT,"Bad float8 input '%s'",yytext);
+					elog(ERROR,"Bad float8 input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
 					return (FCONST);
 				}
@@ -338,7 +338,7 @@ other			.
 					errno = 0;
 					yylval.ival = strtol((char *)yytext,&endptr,10);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ABORT,"Bad integer input '%s'",yytext);
+						elog(ERROR,"Bad integer input '%s'",yytext);
 					return (ICONST);
 				}
 {real}			{
@@ -347,7 +347,7 @@ other			.
 					errno = 0;
 					yylval.dval = strtod((char *)yytext,&endptr);
 					if (*endptr != '\0' || errno == ERANGE)
-						elog(ABORT,"Bad float input '%s'",yytext);
+						elog(ERROR,"Bad float input '%s'",yytext);
 					CheckFloat8Val(yylval.dval);
 					return (FCONST);
 				}
@@ -377,7 +377,7 @@ other			.
 
 void yyerror(char message[])
 {
-	elog(ABORT, "parser: %s at or near \"%s\"", message, yytext);
+	elog(ERROR, "parser: %s at or near \"%s\"", message, yytext);
 }
 
 int yywrap()

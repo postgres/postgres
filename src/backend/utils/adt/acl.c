@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.22 1998/01/05 03:33:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.23 1998/01/05 16:39:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,7 +54,7 @@ getid(char *s, char *n)
 	for (id = s, len = 0; isalnum(*s) || *s == '_'; ++len, ++s)
 		;
 	if (len > sizeof(NameData))
-		elog(ABORT, "getid: identifier cannot be >%d characters",
+		elog(ERROR, "getid: identifier cannot be >%d characters",
 			 sizeof(NameData));
 	if (len > 0)
 		memmove(n, id, len);
@@ -102,11 +102,11 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 		}
 		else if (strcmp(name, ACL_IDTYPE_UID_KEYWORD))
 		{
-			elog(ABORT, "aclparse: bad keyword, must be [group|user]");
+			elog(ERROR, "aclparse: bad keyword, must be [group|user]");
 		}
 		s = getid(s, name);		/* move s to the name beyond the keyword */
 		if (name[0] == '\0')
-			elog(ABORT, "aclparse: a name must follow the [group|user] keyword");
+			elog(ERROR, "aclparse: a name must follow the [group|user] keyword");
 	}
 	if (name[0] == '\0')
 		aip->ai_idtype = ACL_IDTYPE_WORLD;
@@ -123,7 +123,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 			*modechg = ACL_MODECHG_EQL;
 			break;
 		default:
-			elog(ABORT, "aclparse: mode change flag must use \"%s\"",
+			elog(ERROR, "aclparse: mode change flag must use \"%s\"",
 				 ACL_MODECHG_STR);
 	}
 
@@ -145,7 +145,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 				aip->ai_mode |= ACL_RU;
 				break;
 			default:
-				elog(ABORT, "aclparse: mode flags must use \"%s\"",
+				elog(ERROR, "aclparse: mode flags must use \"%s\"",
 					 ACL_MODE_STR);
 		}
 	}
@@ -156,7 +156,7 @@ aclparse(char *s, AclItem *aip, unsigned *modechg)
 			htp = SearchSysCacheTuple(USENAME, PointerGetDatum(name),
 									  0, 0, 0);
 			if (!HeapTupleIsValid(htp))
-				elog(ABORT, "aclparse: non-existent user \"%s\"", name);
+				elog(ERROR, "aclparse: non-existent user \"%s\"", name);
 			aip->ai_id = ((Form_pg_user) GETSTRUCT(htp))->usesysid;
 			break;
 		case ACL_IDTYPE_GID:
@@ -188,10 +188,10 @@ makeacl(int n)
 	Size		size;
 
 	if (n < 0)
-		elog(ABORT, "makeacl: invalid size: %d\n", n);
+		elog(ERROR, "makeacl: invalid size: %d\n", n);
 	size = ACL_N_SIZE(n);
 	if (!(new_acl = (Acl *) palloc(size)))
-		elog(ABORT, "makeacl: palloc failed on %d\n", size);
+		elog(ERROR, "makeacl: palloc failed on %d\n", size);
 	MemSet((char *) new_acl, 0, size);
 	new_acl->size = size;
 	new_acl->ndim = 1;
@@ -216,18 +216,18 @@ aclitemin(char *s)
 	AclItem    *aip;
 
 	if (!s)
-		elog(ABORT, "aclitemin: null string");
+		elog(ERROR, "aclitemin: null string");
 
 	aip = (AclItem *) palloc(sizeof(AclItem));
 	if (!aip)
-		elog(ABORT, "aclitemin: palloc failed");
+		elog(ERROR, "aclitemin: palloc failed");
 	s = aclparse(s, aip, &modechg);
 	if (modechg != ACL_MODECHG_EQL)
-		elog(ABORT, "aclitemin: cannot accept anything but = ACLs");
+		elog(ERROR, "aclitemin: cannot accept anything but = ACLs");
 	while (isspace(*s))
 		++s;
 	if (*s)
-		elog(ABORT, "aclitemin: extra garbage at end of specification");
+		elog(ERROR, "aclitemin: extra garbage at end of specification");
 	return (aip);
 }
 
@@ -257,7 +257,7 @@ aclitemout(AclItem *aip)
 
 	p = out = palloc(strlen("group =arwR ") + 1 + NAMEDATALEN);
 	if (!out)
-		elog(ABORT, "aclitemout: palloc failed");
+		elog(ERROR, "aclitemout: palloc failed");
 	*p = '\0';
 
 	switch (aip->ai_idtype)
@@ -296,7 +296,7 @@ aclitemout(AclItem *aip)
 		case ACL_IDTYPE_WORLD:
 			break;
 		default:
-			elog(ABORT, "aclitemout: bad ai_idtype: %d", aip->ai_idtype);
+			elog(ERROR, "aclitemout: bad ai_idtype: %d", aip->ai_idtype);
 			break;
 	}
 	while (*p)
@@ -420,7 +420,7 @@ aclinsert3(Acl *old_acl, AclItem *mod_aip, unsigned modechg)
 		new_aip = ACL_DAT(new_acl);
 		if (dst == 0)
 		{						/* start */
-			elog(ABORT, "aclinsert3: insertion before world ACL??");
+			elog(ERROR, "aclinsert3: insertion before world ACL??");
 		}
 		else if (dst >= num)
 		{						/* end */
@@ -534,7 +534,7 @@ aclremove(Acl *old_acl, AclItem *mod_aip)
 		new_aip = ACL_DAT(new_acl);
 		if (dst == 0)
 		{						/* start */
-			elog(ABORT, "aclremove: removal of the world ACL??");
+			elog(ERROR, "aclremove: removal of the world ACL??");
 		}
 		else if (dst == old_num - 1)
 		{						/* end */

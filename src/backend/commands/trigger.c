@@ -68,16 +68,16 @@ CreateTrigger(CreateTrigStmt * stmt)
 	int			i;
 
 	if (IsSystemRelationName(stmt->relname))
-		elog(ABORT, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
+		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
 
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
-		elog(ABORT, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 
 	rel = heap_openr(stmt->relname);
 	if (!RelationIsValid(rel))
-		elog(ABORT, "CreateTrigger: there is no relation %s", stmt->relname);
+		elog(ERROR, "CreateTrigger: there is no relation %s", stmt->relname);
 
 	RelationSetLockForWrite(rel);
 
@@ -87,7 +87,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 	if (stmt->row)
 		TRIGGER_SETT_ROW(tgtype);
 	else
-		elog(ABORT, "CreateTrigger: STATEMENT triggers are unimplemented, yet");
+		elog(ERROR, "CreateTrigger: STATEMENT triggers are unimplemented, yet");
 
 	for (i = 0; i < 3 && stmt->actions[i]; i++)
 	{
@@ -95,21 +95,21 @@ CreateTrigger(CreateTrigStmt * stmt)
 		{
 			case 'i':
 				if (TRIGGER_FOR_INSERT(tgtype))
-					elog(ABORT, "CreateTrigger: double INSERT event specified");
+					elog(ERROR, "CreateTrigger: double INSERT event specified");
 				TRIGGER_SETT_INSERT(tgtype);
 				break;
 			case 'd':
 				if (TRIGGER_FOR_DELETE(tgtype))
-					elog(ABORT, "CreateTrigger: double DELETE event specified");
+					elog(ERROR, "CreateTrigger: double DELETE event specified");
 				TRIGGER_SETT_DELETE(tgtype);
 				break;
 			case 'u':
 				if (TRIGGER_FOR_UPDATE(tgtype))
-					elog(ABORT, "CreateTrigger: double UPDATE event specified");
+					elog(ERROR, "CreateTrigger: double UPDATE event specified");
 				TRIGGER_SETT_UPDATE(tgtype);
 				break;
 			default:
-				elog(ABORT, "CreateTrigger: unknown event specified");
+				elog(ERROR, "CreateTrigger: unknown event specified");
 				break;
 		}
 	}
@@ -125,7 +125,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 		Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
 
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
-			elog(ABORT, "CreateTrigger: trigger %s already defined on relation %s",
+			elog(ERROR, "CreateTrigger: trigger %s already defined on relation %s",
 				 stmt->trigname, stmt->relname);
 		else
 			found++;
@@ -139,7 +139,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 	if (!HeapTupleIsValid(tuple) ||
 		((Form_pg_proc) GETSTRUCT(tuple))->prorettype != 0 ||
 		((Form_pg_proc) GETSTRUCT(tuple))->pronargs != 0)
-		elog(ABORT, "CreateTrigger: function %s () does not exist", stmt->funcname);
+		elog(ERROR, "CreateTrigger: function %s () does not exist", stmt->funcname);
 
 	if (((Form_pg_proc) GETSTRUCT(tuple))->prolang != ClanguageId)
 	{
@@ -150,12 +150,12 @@ CreateTrigger(CreateTrigStmt * stmt)
 									  0, 0, 0);
 		if (!HeapTupleIsValid(langTup))
 		{
-			elog(ABORT, "CreateTrigger: cache lookup for PL failed");
+			elog(ERROR, "CreateTrigger: cache lookup for PL failed");
 		}
 
 		if (((Form_pg_language) GETSTRUCT(langTup))->lanispl == false)
 		{
-			elog(ABORT, "CreateTrigger: only C and PL functions are supported");
+			elog(ERROR, "CreateTrigger: only C and PL functions are supported");
 		}
 	}
 
@@ -227,7 +227,7 @@ CreateTrigger(CreateTrigStmt * stmt)
 	if (!PointerIsValid(tuple))
 	{
 		heap_close(relrdesc);
-		elog(ABORT, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
+		elog(ERROR, "CreateTrigger: relation %s not found in pg_class", stmt->relname);
 	}
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 	RelationInvalidateHeapTuple(relrdesc, tuple);
@@ -266,12 +266,12 @@ DropTrigger(DropTrigStmt * stmt)
 
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetPgUserName(), stmt->relname, RELNAME))
-		elog(ABORT, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
+		elog(ERROR, "%s: %s", stmt->relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 #endif
 
 	rel = heap_openr(stmt->relname);
 	if (!RelationIsValid(rel))
-		elog(ABORT, "DropTrigger: there is no relation %s", stmt->relname);
+		elog(ERROR, "DropTrigger: there is no relation %s", stmt->relname);
 
 	RelationSetLockForWrite(rel);
 
@@ -293,7 +293,7 @@ DropTrigger(DropTrigStmt * stmt)
 			found++;
 	}
 	if (tgfound == 0)
-		elog(ABORT, "DropTrigger: there is no trigger %s on relation %s",
+		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
 			 stmt->trigname, stmt->relname);
 	if (tgfound > 1)
 		elog(NOTICE, "DropTrigger: found (and deleted) %d trigger %s on relation %s",
@@ -308,7 +308,7 @@ DropTrigger(DropTrigStmt * stmt)
 	if (!PointerIsValid(tuple))
 	{
 		heap_close(relrdesc);
-		elog(ABORT, "DropTrigger: relation %s not found in pg_class", stmt->relname);
+		elog(ERROR, "DropTrigger: relation %s not found in pg_class", stmt->relname);
 	}
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
 	RelationInvalidateHeapTuple(relrdesc, tuple);
@@ -400,7 +400,7 @@ RelationBuildTriggers(Relation relation)
 		if (!HeapTupleIsValid(tuple))
 			continue;
 		if (found == ntrigs)
-			elog(ABORT, "RelationBuildTriggers: unexpected record found for rel %.*s",
+			elog(ERROR, "RelationBuildTriggers: unexpected record found for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(tuple);
@@ -422,7 +422,7 @@ RelationBuildTriggers(Relation relation)
 											 Anum_pg_trigger_tgargs,
 											 tgrel->rd_att, &isnull);
 		if (isnull)
-			elog(ABORT, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
+			elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
 				 NAMEDATALEN, relation->rd_rel->relname.data);
 		if (build->tgnargs > 0)
 		{
@@ -433,7 +433,7 @@ RelationBuildTriggers(Relation relation)
 												 Anum_pg_trigger_tgargs,
 												 tgrel->rd_att, &isnull);
 			if (isnull)
-				elog(ABORT, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
+				elog(ERROR, "RelationBuildTriggers: tgargs IS NULL for rel %.*s",
 					 NAMEDATALEN, relation->rd_rel->relname.data);
 			p = (char *) VARDATA(val);
 			build->tgargs = (char **) palloc(build->tgnargs * sizeof(char *));
@@ -452,7 +452,7 @@ RelationBuildTriggers(Relation relation)
 	}
 
 	if (found < ntrigs)
-		elog(ABORT, "RelationBuildTriggers: %d record not found for rel %.*s",
+		elog(ERROR, "RelationBuildTriggers: %d record not found for rel %.*s",
 			 ntrigs - found,
 			 NAMEDATALEN, relation->rd_rel->relname.data);
 
@@ -616,7 +616,7 @@ ExecCallTriggerFunc(Trigger * trigger)
 										0, 0, 0);
 		if (!HeapTupleIsValid(procTuple))
 		{
-			elog(ABORT, "ExecCallTriggerFunc(): Cache lookup for proc %ld failed",
+			elog(ERROR, "ExecCallTriggerFunc(): Cache lookup for proc %ld failed",
 				 ObjectIdGetDatum(trigger->tgfoid));
 		}
 		procStruct = (Form_pg_proc) GETSTRUCT(procTuple);
@@ -626,7 +626,7 @@ ExecCallTriggerFunc(Trigger * trigger)
 										0, 0, 0);
 		if (!HeapTupleIsValid(langTuple))
 		{
-			elog(ABORT, "ExecCallTriggerFunc(): Cache lookup for language %ld failed",
+			elog(ERROR, "ExecCallTriggerFunc(): Cache lookup for language %ld failed",
 				 ObjectIdGetDatum(procStruct->prolang));
 		}
 		langStruct = (Form_pg_language) GETSTRUCT(langTuple);
@@ -840,7 +840,7 @@ GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 	b = ReadBuffer(relation, ItemPointerGetBlockNumber(tid));
 
 	if (!BufferIsValid(b))
-		elog(ABORT, "GetTupleForTrigger: failed ReadBuffer");
+		elog(ERROR, "GetTupleForTrigger: failed ReadBuffer");
 
 	dp = (PageHeader) BufferGetPage(b);
 	lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
@@ -863,7 +863,7 @@ GetTupleForTrigger(Relation relation, ItemPointer tid, bool before)
 		if (!tuple)
 		{
 			ReleaseBuffer(b);
-			elog(ABORT, "GetTupleForTrigger: (am)invalid tid");
+			elog(ERROR, "GetTupleForTrigger: (am)invalid tid");
 		}
 	}
 

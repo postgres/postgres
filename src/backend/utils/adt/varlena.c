@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.27 1998/01/05 03:34:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.28 1998/01/05 16:40:20 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
  *
  *		Non-printable characters must be passed as '\nnn' (octal) and are
  *		converted to internal form.  '\' must be passed as '\\'.
- *		elog(ABORT, ...) if bad form.
+ *		elog(ERROR, ...) if bad form.
  *
  *		BUGS:
  *				The input is scaned twice.
@@ -46,7 +46,7 @@ byteain(char *inputText)
 	text	   *result;
 
 	if (inputText == NULL)
-		elog(ABORT, "Bad input string for type bytea");
+		elog(ERROR, "Bad input string for type bytea");
 
 	for (byte = 0, tp = inputText; *tp != '\0'; byte++)
 		if (*tp++ == '\\')
@@ -56,7 +56,7 @@ byteain(char *inputText)
 			else if (!isdigit(*tp++) ||
 					 !isdigit(*tp++) ||
 					 !isdigit(*tp++))
-				elog(ABORT, "Bad input string for type bytea");
+				elog(ERROR, "Bad input string for type bytea");
 		}
 	tp = inputText;
 	byte += VARHDRSZ;
@@ -195,7 +195,7 @@ int32
 textlen(text *t)
 {
 	if (!PointerIsValid(t))
-		elog(ABORT,"Null input to textlen");
+		elog(ERROR,"Null input to textlen");
 
 	return (VARSIZE(t) - VARHDRSZ);
 } /* textlen() */
@@ -537,7 +537,7 @@ byteaGetByte(text *v, int32 n)
 
 	if (n >= len)
 	{
-		elog(ABORT, "byteaGetByte: index (=%d) out of range [0..%d]",
+		elog(ERROR, "byteaGetByte: index (=%d) out of range [0..%d]",
 			 n, len - 1);
 	}
 
@@ -595,7 +595,7 @@ byteaSetByte(text *v, int32 n, int32 newByte)
 
 	if (n >= len)
 	{
-		elog(ABORT,
+		elog(ERROR,
 			 "byteaSetByte: index (=%d) out of range [0..%d]",
 			 n, len - 1);
 	}
@@ -606,7 +606,7 @@ byteaSetByte(text *v, int32 n, int32 newByte)
 	res = (text *) palloc(VARSIZE(v));
 	if (res == NULL)
 	{
-		elog(ABORT, "byteaSetByte: Out of memory (%d bytes requested)",
+		elog(ERROR, "byteaSetByte: Out of memory (%d bytes requested)",
 			 VARSIZE(v));
 	}
 	memmove((char *) res, (char *) v, VARSIZE(v));
@@ -641,7 +641,7 @@ byteaSetBit(text *v, int32 n, int32 newBit)
 	 */
 	if (newBit != 0 && newBit != 1)
 	{
-		elog(ABORT, "byteaSetByte: new bit must be 0 or 1");
+		elog(ERROR, "byteaSetByte: new bit must be 0 or 1");
 	}
 
 	/*

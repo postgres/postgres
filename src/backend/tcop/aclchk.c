@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.21 1998/01/05 03:33:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/Attic/aclchk.c,v 1.22 1998/01/05 16:39:30 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -120,7 +120,7 @@ ChangeAcl(char *relname,
 	 */
 	relation = heap_openr(RelationRelationName);
 	if (!RelationIsValid(relation))
-		elog(ABORT, "ChangeAcl: could not open '%s'??",
+		elog(ERROR, "ChangeAcl: could not open '%s'??",
 			 RelationRelationName);
 	fmgr_info(NameEqualRegProcedure, &relkey[0].sk_func, &relkey[0].sk_nargs);
 	relkey[0].sk_argument = NameGetDatum(relname);
@@ -134,7 +134,7 @@ ChangeAcl(char *relname,
 	{
 		heap_endscan(hsdp);
 		heap_close(relation);
-		elog(ABORT, "ChangeAcl: class \"%s\" not found",
+		elog(ERROR, "ChangeAcl: class \"%s\" not found",
 			 relname);
 		return;
 	}
@@ -205,7 +205,7 @@ get_grosysid(char *groname)
 	}
 	else
 	{
-		elog(ABORT, "non-existent group \"%s\"", groname);
+		elog(ERROR, "non-existent group \"%s\"", groname);
 	}
 	return (id);
 }
@@ -370,7 +370,7 @@ aclcheck(Acl *acl, AclId id, AclIdType idtype, AclMode mode)
 		case ACL_IDTYPE_WORLD:
 			break;
 		default:
-			elog(ABORT, "aclcheck: bogus ACL id type: %d", idtype);
+			elog(ERROR, "aclcheck: bogus ACL id type: %d", idtype);
 			break;
 	}
 
@@ -393,7 +393,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
-		elog(ABORT, "pg_aclcheck: user \"%s\" not found",
+		elog(ERROR, "pg_aclcheck: user \"%s\" not found",
 			 usename);
 	id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
 
@@ -445,9 +445,9 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
 	{
-		elog(ABORT, "pg_aclcheck: class \"%s\" not found",
+		elog(ERROR, "pg_aclcheck: class \"%s\" not found",
 			 relname);
-		/* an elog(ABORT) kills us, so no need to return anything. */
+		/* an elog(ERROR) kills us, so no need to return anything. */
 	}
 	if (!heap_attisnull(htp, Anum_pg_class_relacl))
 	{
@@ -528,7 +528,7 @@ pg_ownercheck(char *usename,
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
-		elog(ABORT, "pg_ownercheck: user \"%s\" not found",
+		elog(ERROR, "pg_ownercheck: user \"%s\" not found",
 			 usename);
 	user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
 
@@ -550,30 +550,30 @@ pg_ownercheck(char *usename,
 	{
 		case OPROID:
 			if (!HeapTupleIsValid(htp))
-				elog(ABORT, "pg_ownercheck: operator %ld not found",
+				elog(ERROR, "pg_ownercheck: operator %ld not found",
 					 PointerGetDatum(value));
 			owner_id = ((OperatorTupleForm) GETSTRUCT(htp))->oprowner;
 			break;
 		case PRONAME:
 			if (!HeapTupleIsValid(htp))
-				elog(ABORT, "pg_ownercheck: function \"%s\" not found",
+				elog(ERROR, "pg_ownercheck: function \"%s\" not found",
 					 value);
 			owner_id = ((Form_pg_proc) GETSTRUCT(htp))->proowner;
 			break;
 		case RELNAME:
 			if (!HeapTupleIsValid(htp))
-				elog(ABORT, "pg_ownercheck: class \"%s\" not found",
+				elog(ERROR, "pg_ownercheck: class \"%s\" not found",
 					 value);
 			owner_id = ((Form_pg_class) GETSTRUCT(htp))->relowner;
 			break;
 		case TYPNAME:
 			if (!HeapTupleIsValid(htp))
-				elog(ABORT, "pg_ownercheck: type \"%s\" not found",
+				elog(ERROR, "pg_ownercheck: type \"%s\" not found",
 					 value);
 			owner_id = ((TypeTupleForm) GETSTRUCT(htp))->typowner;
 			break;
 		default:
-			elog(ABORT, "pg_ownercheck: invalid cache id: %d",
+			elog(ERROR, "pg_ownercheck: invalid cache id: %d",
 				 cacheid);
 			break;
 	}
@@ -594,7 +594,7 @@ pg_func_ownercheck(char *usename,
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
-		elog(ABORT, "pg_func_ownercheck: user \"%s\" not found",
+		elog(ERROR, "pg_func_ownercheck: user \"%s\" not found",
 			 usename);
 	user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
 
@@ -635,7 +635,7 @@ pg_aggr_ownercheck(char *usename,
 	htp = SearchSysCacheTuple(USENAME, PointerGetDatum(usename),
 							  0, 0, 0);
 	if (!HeapTupleIsValid(htp))
-		elog(ABORT, "pg_aggr_ownercheck: user \"%s\" not found",
+		elog(ERROR, "pg_aggr_ownercheck: user \"%s\" not found",
 			 usename);
 	user_id = (AclId) ((Form_pg_user) GETSTRUCT(htp))->usesysid;
 

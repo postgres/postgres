@@ -175,7 +175,7 @@ DefineSequence(CreateSeqStmt *seq)
 	buf = ReadBuffer(rel, P_NEW);
 
 	if (!BufferIsValid(buf))
-		elog(ABORT, "DefineSequence: ReadBuffer failed");
+		elog(ERROR, "DefineSequence: ReadBuffer failed");
 
 	page = (PageHeader) BufferGetPage(buf);
 
@@ -188,7 +188,7 @@ DefineSequence(CreateSeqStmt *seq)
 	heap_insert(rel, tuple);
 
 	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ABORT, "DefineSequence: WriteBuffer failed");
+		elog(ERROR, "DefineSequence: WriteBuffer failed");
 
 	RelationUnsetLockForWrite(rel);
 	heap_close(rel);
@@ -251,7 +251,7 @@ nextval(struct varlena * seqin)
 				if (rescnt > 0)
 					break;		/* stop caching */
 				if (seq->is_cycled != 't')
-					elog(ABORT, "%s.nextval: got MAXVALUE (%d)",
+					elog(ERROR, "%s.nextval: got MAXVALUE (%d)",
 						 elm->name, maxv);
 				next = minv;
 			}
@@ -267,7 +267,7 @@ nextval(struct varlena * seqin)
 				if (rescnt > 0)
 					break;		/* stop caching */
 				if (seq->is_cycled != 't')
-					elog(ABORT, "%s.nextval: got MINVALUE (%d)",
+					elog(ERROR, "%s.nextval: got MINVALUE (%d)",
 						 elm->name, minv);
 				next = maxv;
 			}
@@ -288,7 +288,7 @@ nextval(struct varlena * seqin)
 	seq->is_called = 't';
 
 	if (WriteBuffer(buf) == STATUS_ERROR)
-		elog(ABORT, "%s.nextval: WriteBuffer failed", elm->name);
+		elog(ERROR, "%s.nextval: WriteBuffer failed", elm->name);
 
 	ItemPointerSet(&iptr, 0, FirstOffsetNumber);
 	RelationUnsetSingleWLockPage(elm->rel, &iptr);
@@ -311,7 +311,7 @@ currval(struct varlena * seqin)
 
 	if (elm->increment == 0)	/* nextval/read_info were not called */
 	{
-		elog(ABORT, "%s.currval is not yet defined in this session", elm->name);
+		elog(ERROR, "%s.currval is not yet defined in this session", elm->name);
 	}
 
 	result = elm->last;
@@ -334,18 +334,18 @@ read_info(char *caller, SeqTable elm, Buffer *buf)
 	RelationSetSingleWLockPage(elm->rel, &iptr);
 
 	if (RelationGetNumberOfBlocks(elm->rel) != 1)
-		elog(ABORT, "%s.%s: invalid number of blocks in sequence",
+		elog(ERROR, "%s.%s: invalid number of blocks in sequence",
 			 elm->name, caller);
 
 	*buf = ReadBuffer(elm->rel, 0);
 	if (!BufferIsValid(*buf))
-		elog(ABORT, "%s.%s: ReadBuffer failed", elm->name, caller);
+		elog(ERROR, "%s.%s: ReadBuffer failed", elm->name, caller);
 
 	page = (PageHeader) BufferGetPage(*buf);
 	sm = (sequence_magic *) PageGetSpecialPointer(page);
 
 	if (sm->magic != SEQ_MAGIC)
-		elog(ABORT, "%s.%s: bad magic (%08X)", elm->name, caller, sm->magic);
+		elog(ERROR, "%s.%s: bad magic (%08X)", elm->name, caller, sm->magic);
 
 	lp = PageGetItemId(page, FirstOffsetNumber);
 	Assert(ItemIdIsUsed(lp));
@@ -395,12 +395,12 @@ init_sequence(char *caller, char *name)
 	temp->rel = heap_openr(name);
 
 	if (!RelationIsValid(temp->rel))
-		elog(ABORT, "%s.%s: sequence does not exist", name, caller);
+		elog(ERROR, "%s.%s: sequence does not exist", name, caller);
 
 	RelationSetWIntentLock(temp->rel);
 
 	if (temp->rel->rd_rel->relkind != RELKIND_SEQUENCE)
-		elog(ABORT, "%s.%s: %s is not sequence !", name, caller, name);
+		elog(ERROR, "%s.%s: %s is not sequence !", name, caller, name);
 
 	if (elm != (SeqTable) NULL) /* we opened sequence from our */
 	{							/* SeqTable - check relid ! */
@@ -484,18 +484,18 @@ init_params(CreateSeqStmt *seq, SequenceTupleForm new)
 		else if (!strcasecmp(defel->defname, "cycle"))
 		{
 			if (defel->arg != (Node *) NULL)
-				elog(ABORT, "DefineSequence: CYCLE ??");
+				elog(ERROR, "DefineSequence: CYCLE ??");
 			new->is_cycled = 't';
 		}
 		else
-			elog(ABORT, "DefineSequence: option \"%s\" not recognized",
+			elog(ERROR, "DefineSequence: option \"%s\" not recognized",
 				 defel->defname);
 	}
 
 	if (increment_by == (DefElem *) NULL)		/* INCREMENT BY */
 		new->increment_by = 1;
 	else if ((new->increment_by = get_param(increment_by)) == 0)
-		elog(ABORT, "DefineSequence: can't INCREMENT by 0");
+		elog(ERROR, "DefineSequence: can't INCREMENT by 0");
 
 	if (max_value == (DefElem *) NULL)	/* MAXVALUE */
 		if (new->increment_by > 0)
@@ -514,7 +514,7 @@ init_params(CreateSeqStmt *seq, SequenceTupleForm new)
 		new->min_value = get_param(min_value);
 
 	if (new->min_value >= new->max_value)
-		elog(ABORT, "DefineSequence: MINVALUE (%d) can't be >= MAXVALUE (%d)",
+		elog(ERROR, "DefineSequence: MINVALUE (%d) can't be >= MAXVALUE (%d)",
 			 new->min_value, new->max_value);
 
 	if (last_value == (DefElem *) NULL) /* START WITH */
@@ -526,16 +526,16 @@ init_params(CreateSeqStmt *seq, SequenceTupleForm new)
 		new->last_value = get_param(last_value);
 
 	if (new->last_value < new->min_value)
-		elog(ABORT, "DefineSequence: START value (%d) can't be < MINVALUE (%d)",
+		elog(ERROR, "DefineSequence: START value (%d) can't be < MINVALUE (%d)",
 			 new->last_value, new->min_value);
 	if (new->last_value > new->max_value)
-		elog(ABORT, "DefineSequence: START value (%d) can't be > MAXVALUE (%d)",
+		elog(ERROR, "DefineSequence: START value (%d) can't be > MAXVALUE (%d)",
 			 new->last_value, new->max_value);
 
 	if (cache_value == (DefElem *) NULL)		/* CACHE */
 		new->cache_value = 1;
 	else if ((new->cache_value = get_param(cache_value)) <= 0)
-		elog(ABORT, "DefineSequence: CACHE (%d) can't be <= 0",
+		elog(ERROR, "DefineSequence: CACHE (%d) can't be <= 0",
 			 new->cache_value);
 
 }
@@ -545,11 +545,11 @@ static int
 get_param(DefElem *def)
 {
 	if (def->arg == (Node *) NULL)
-		elog(ABORT, "DefineSequence: \"%s\" value unspecified", def->defname);
+		elog(ERROR, "DefineSequence: \"%s\" value unspecified", def->defname);
 
 	if (nodeTag(def->arg) == T_Integer)
 		return (intVal(def->arg));
 
-	elog(ABORT, "DefineSequence: \"%s\" is to be integer", def->defname);
+	elog(ERROR, "DefineSequence: \"%s\" is to be integer", def->defname);
 	return (-1);
 }

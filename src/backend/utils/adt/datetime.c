@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.19 1998/01/05 03:34:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.20 1998/01/05 16:39:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,14 +71,14 @@ date_in(char *str)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
-		elog(ABORT, "Bad (null) date external representation", NULL);
+		elog(ERROR, "Bad (null) date external representation", NULL);
 
 #ifdef DATEDEBUG
 	printf("date_in- input string is %s\n", str);
 #endif
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 	 || (DecodeDateTime(field, ftype, nf, &dtype, tm, &fsec, &tzp) != 0))
-		elog(ABORT, "Bad date external representation %s", str);
+		elog(ERROR, "Bad date external representation %s", str);
 
 	switch (dtype)
 	{
@@ -96,15 +96,15 @@ date_in(char *str)
 			break;
 
 		default:
-			elog(ABORT, "Unrecognized date external representation %s", str);
+			elog(ERROR, "Unrecognized date external representation %s", str);
 	}
 
 	if (tm->tm_year < 0 || tm->tm_year > 32767)
-		elog(ABORT, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
+		elog(ERROR, "date_in: year must be limited to values 0 through 32767 in '%s'", str);
 	if (tm->tm_mon < 1 || tm->tm_mon > 12)
-		elog(ABORT, "date_in: month must be limited to values 1 through 12 in '%s'", str);
+		elog(ERROR, "date_in: month must be limited to values 1 through 12 in '%s'", str);
 	if (tm->tm_mday < 1 || tm->tm_mday > day_tab[isleap(tm->tm_year)][tm->tm_mon - 1])
-		elog(ABORT, "date_in: day must be limited to values 1 through %d in '%s'",
+		elog(ERROR, "date_in: day must be limited to values 1 through %d in '%s'",
 			 day_tab[isleap(tm->tm_year)][tm->tm_mon - 1], str);
 
 	date = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
@@ -239,7 +239,7 @@ date_datetime(DateADT dateVal)
 	result = PALLOCTYPE(DateTime);
 
 	if (date2tm(dateVal, &tz, tm, &fsec, &tzn) != 0)
-		elog(ABORT, "Unable to convert date to datetime", NULL);
+		elog(ERROR, "Unable to convert date to datetime", NULL);
 
 #ifdef DATEDEBUG
 	printf("date_datetime- date is %d.%02d.%02d\n", tm->tm_year, tm->tm_mon, tm->tm_mday);
@@ -247,7 +247,7 @@ date_datetime(DateADT dateVal)
 #endif
 
 	if (tm2datetime(tm, fsec, &tz, result) != 0)
-		elog(ABORT, "Datetime out of range", NULL);
+		elog(ERROR, "Datetime out of range", NULL);
 
 	return (result);
 } /* date_datetime() */
@@ -267,10 +267,10 @@ datetime_date(DateTime *datetime)
 	char	   *tzn;
 
 	if (!PointerIsValid(datetime))
-		elog(ABORT, "Unable to convert null datetime to date", NULL);
+		elog(ERROR, "Unable to convert null datetime to date", NULL);
 
 	if (DATETIME_NOT_FINITE(*datetime))
-		elog(ABORT, "Unable to convert datetime to date", NULL);
+		elog(ERROR, "Unable to convert datetime to date", NULL);
 
 	if (DATETIME_IS_EPOCH(*datetime))
 	{
@@ -285,7 +285,7 @@ datetime_date(DateTime *datetime)
 	else
 	{
 		if (datetime2tm(*datetime, &tz, tm, &fsec, &tzn) != 0)
-			elog(ABORT, "Unable to convert datetime to date", NULL);
+			elog(ERROR, "Unable to convert datetime to date", NULL);
 	}
 
 	result = (date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - date2j(2000, 1, 1));
@@ -310,7 +310,7 @@ abstime_date(AbsoluteTime abstime)
 		case INVALID_ABSTIME:
 		case NOSTART_ABSTIME:
 		case NOEND_ABSTIME:
-			elog(ABORT, "Unable to convert reserved abstime value to date", NULL);
+			elog(ERROR, "Unable to convert reserved abstime value to date", NULL);
 
 			/*
 			 * pretend to drop through to make compiler think that result
@@ -440,18 +440,18 @@ time_in(char *str)
 	int			ftype[MAXDATEFIELDS];
 
 	if (!PointerIsValid(str))
-		elog(ABORT, "Bad (null) time external representation", NULL);
+		elog(ERROR, "Bad (null) time external representation", NULL);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeTimeOnly(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		elog(ABORT, "Bad time external representation '%s'", str);
+		elog(ERROR, "Bad time external representation '%s'", str);
 
 	if ((tm->tm_hour < 0) || (tm->tm_hour > 23))
-		elog(ABORT, "Hour must be limited to values 0 through 23 in '%s'", str);
+		elog(ERROR, "Hour must be limited to values 0 through 23 in '%s'", str);
 	if ((tm->tm_min < 0) || (tm->tm_min > 59))
-		elog(ABORT, "Minute must be limited to values 0 through 59 in '%s'", str);
+		elog(ERROR, "Minute must be limited to values 0 through 59 in '%s'", str);
 	if ((tm->tm_sec < 0) || ((tm->tm_sec + fsec) >= 60))
-		elog(ABORT, "Second must be limited to values 0 through < 60 in '%s'", str);
+		elog(ERROR, "Second must be limited to values 0 through < 60 in '%s'", str);
 
 	time = PALLOCTYPE(TimeADT);
 
@@ -565,10 +565,10 @@ datetime_time(DateTime *datetime)
 	char	   *tzn;
 
 	if (!PointerIsValid(datetime))
-		elog(ABORT, "Unable to convert null datetime to date", NULL);
+		elog(ERROR, "Unable to convert null datetime to date", NULL);
 
 	if (DATETIME_NOT_FINITE(*datetime))
-		elog(ABORT, "Unable to convert datetime to date", NULL);
+		elog(ERROR, "Unable to convert datetime to date", NULL);
 
 	if (DATETIME_IS_EPOCH(*datetime))
 	{
@@ -583,7 +583,7 @@ datetime_time(DateTime *datetime)
 	else
 	{
 		if (datetime2tm(*datetime, &tz, tm, &fsec, &tzn) != 0)
-			elog(ABORT, "Unable to convert datetime to date", NULL);
+			elog(ERROR, "Unable to convert datetime to date", NULL);
 	}
 
 	result = PALLOCTYPE(TimeADT);

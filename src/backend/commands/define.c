@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.20 1998/01/05 03:30:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.21 1998/01/05 16:38:54 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -140,7 +140,7 @@ compute_full_attributes(const List *parameters, int32 *byte_pct_p,
 			 * we don't have untrusted functions any more. The 4.2
 			 * implementation is lousy anyway so I took it out. -ay 10/94
 			 */
-			elog(ABORT, "untrusted function has been decommissioned.");
+			elog(ERROR, "untrusted function has been decommissioned.");
 		}
 		else if (strcasecmp(param->name, "byte_pct") == 0)
 		{
@@ -275,7 +275,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		
 		if (!HeapTupleIsValid(languageTuple)) {
 
-		    elog(ABORT,
+		    elog(ERROR,
 			 "Unrecognized language specified in a CREATE FUNCTION: "
 			 "'%s'.  Recognized languages are sql, C, internal "
 			 "and the created procedural languages.",
@@ -285,7 +285,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		/* Check that this language is a PL */
 		languageStruct = (Form_pg_language) GETSTRUCT(languageTuple);
 		if (!(languageStruct->lanispl)) {
-		    elog(ABORT,
+		    elog(ERROR,
 		    	"Language '%s' isn't defined as PL", languageName);
 		}
 
@@ -294,7 +294,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 		 * restricted to be defined by postgres superusers only
 		 */
 		if (languageStruct->lanpltrusted == false && !superuser()) {
-		    elog(ABORT, "Only users with Postgres superuser privilege "
+		    elog(ERROR, "Only users with Postgres superuser privilege "
 		    	"are permitted to create a function in the '%s' "
 			"language.",
 			languageName);
@@ -313,7 +313,7 @@ CreateFunction(ProcedureStmt *stmt, CommandDest dest)
 	interpret_AS_clause(languageName, stmt->as, &prosrc_str, &probin_str);
 
 	if (strcmp(languageName, "sql") != 0 && lanisPL == false && !superuser())
-		elog(ABORT,
+		elog(ERROR,
 			 "Only users with Postgres superuser privilege are permitted "
 			 "to create a function "
 			 "in the '%s' language.  Others may use the 'sql' language "
@@ -388,7 +388,7 @@ DefineOperator(char *oprName,
 		{
 			/* see gram.y, must be setof */
 			if (nodeTag(defel->arg) == T_TypeName)
-				elog(ABORT, "setof type not implemented for leftarg");
+				elog(ERROR, "setof type not implemented for leftarg");
 
 			if (nodeTag(defel->arg) == T_String)
 			{
@@ -396,14 +396,14 @@ DefineOperator(char *oprName,
 			}
 			else
 			{
-				elog(ABORT, "type for leftarg is malformed.");
+				elog(ERROR, "type for leftarg is malformed.");
 			}
 		}
 		else if (!strcasecmp(defel->defname, "rightarg"))
 		{
 			/* see gram.y, must be setof */
 			if (nodeTag(defel->arg) == T_TypeName)
-				elog(ABORT, "setof type not implemented for rightarg");
+				elog(ERROR, "setof type not implemented for rightarg");
 
 			if (nodeTag(defel->arg) == T_String)
 			{
@@ -411,7 +411,7 @@ DefineOperator(char *oprName,
 			}
 			else
 			{
-				elog(ABORT, "type for rightarg is malformed.");
+				elog(ERROR, "type for rightarg is malformed.");
 			}
 		}
 		else if (!strcasecmp(defel->defname, "procedure"))
@@ -474,7 +474,7 @@ DefineOperator(char *oprName,
 	 */
 	if (functionName == NULL)
 	{
-		elog(ABORT, "Define: \"procedure\" unspecified");
+		elog(ERROR, "Define: \"procedure\" unspecified");
 	}
 
 	/* ----------------
@@ -579,16 +579,16 @@ DefineAggregate(char *aggName, List *parameters)
 	 * make sure we have our required definitions
 	 */
 	if (baseType == NULL)
-		elog(ABORT, "Define: \"basetype\" unspecified");
+		elog(ERROR, "Define: \"basetype\" unspecified");
 	if (stepfunc1Name != NULL)
 	{
 		if (stepfunc1Type == NULL)
-			elog(ABORT, "Define: \"stype1\" unspecified");
+			elog(ERROR, "Define: \"stype1\" unspecified");
 	}
 	if (stepfunc2Name != NULL)
 	{
 		if (stepfunc2Type == NULL)
-			elog(ABORT, "Define: \"stype2\" unspecified");
+			elog(ERROR, "Define: \"stype2\" unspecified");
 	}
 
 	/*
@@ -635,7 +635,7 @@ DefineType(char *typeName, List *parameters)
 	 */
 	if (strlen(typeName) >= (NAMEDATALEN - 1))
 	{
-		elog(ABORT, "DefineType: type names must be %d characters or less",
+		elog(ERROR, "DefineType: type names must be %d characters or less",
 			 NAMEDATALEN - 1);
 	}
 
@@ -699,7 +699,7 @@ DefineType(char *typeName, List *parameters)
 			}
 			else
 			{
-				elog(ABORT, "DefineType: \"%s\" alignment  not recognized",
+				elog(ERROR, "DefineType: \"%s\" alignment  not recognized",
 					 a);
 			}
 		}
@@ -714,9 +714,9 @@ DefineType(char *typeName, List *parameters)
 	 * make sure we have our required definitions
 	 */
 	if (inputName == NULL)
-		elog(ABORT, "Define: \"input\" unspecified");
+		elog(ERROR, "Define: \"input\" unspecified");
 	if (outputName == NULL)
-		elog(ABORT, "Define: \"output\" unspecified");
+		elog(ERROR, "Define: \"output\" unspecified");
 
 	/* ----------------
 	 *	now have TypeCreate do all the real work.
@@ -766,7 +766,7 @@ static char *
 defGetString(DefElem *def)
 {
 	if (nodeTag(def->arg) != T_String)
-		elog(ABORT, "Define: \"%s\" = what?", def->defname);
+		elog(ERROR, "Define: \"%s\" = what?", def->defname);
 	return (strVal(def->arg));
 }
 
@@ -779,6 +779,6 @@ defGetTypeLength(DefElem *def)
 			 !strcasecmp(strVal(def->arg), "variable"))
 		return -1;				/* variable length */
 
-	elog(ABORT, "Define: \"%s\" = what?", def->defname);
+	elog(ERROR, "Define: \"%s\" = what?", def->defname);
 	return -1;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.56 1998/01/05 03:30:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.57 1998/01/05 16:39:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -185,7 +185,7 @@ vc_init()
 	int			fd;
 
 	if ((fd = open("pg_vlock", O_CREAT | O_EXCL, 0600)) < 0)
-		elog(ABORT, "can't create lock file -- another vacuum cleaner running?");
+		elog(ERROR, "can't create lock file -- another vacuum cleaner running?");
 
 	close(fd);
 
@@ -207,7 +207,7 @@ vc_shutdown()
 {
 	/* on entry, not in a transaction */
 	if (unlink("pg_vlock") < 0)
-		elog(ABORT, "vacuum: can't destroy lock file!");
+		elog(ERROR, "vacuum: can't destroy lock file!");
 
 	/* okay, we're done */
 	VacuumRunning = false;
@@ -438,7 +438,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 			List	   *le;
 
 			if (length(va_cols) > attr_cnt)
-				elog(ABORT, "vacuum: too many attributes specified for relation %s",
+				elog(ERROR, "vacuum: too many attributes specified for relation %s",
 					 (RelationGetRelationName(onerel))->data);
 			attnums = (int *) palloc(attr_cnt * sizeof(int));
 			foreach(le, va_cols)
@@ -454,7 +454,7 @@ vc_vacone(Oid relid, bool analyze, List *va_cols)
 					attnums[tcnt++] = i;
 				else
 				{
-					elog(ABORT, "vacuum: there is no attribute %s in %s",
+					elog(ERROR, "vacuum: there is no attribute %s in %s",
 						 col, (RelationGetRelationName(onerel))->data);
 				}
 			}
@@ -1139,7 +1139,7 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 								 InvalidOffsetNumber, LP_USED);
 			if (newoff == InvalidOffsetNumber)
 			{
-				elog(ABORT, "\
+				elog(ERROR, "\
 failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 					 tlen, ToVpd->vpd_blkno, ToVpd->vpd_free,
 					 ToVpd->vpd_nusd, ToVpd->vpd_noff);
@@ -1789,7 +1789,7 @@ vc_updstats(Oid relid, int npages, int ntups, bool hasindex, VRelStats *vacrelst
 	rsdesc = heap_beginscan(rd, false, false, 1, &rskey);
 
 	if (!HeapTupleIsValid(rtup = heap_getnext(rsdesc, 0, &rbuf)))
-		elog(ABORT, "pg_class entry for relid %d vanished during vacuuming",
+		elog(ERROR, "pg_class entry for relid %d vanished during vacuuming",
 			 relid);
 
 	/* overwrite the existing statistics in the tuple */

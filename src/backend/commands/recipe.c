@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.16 1998/01/05 03:30:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/recipe.c,v 1.17 1998/01/05 16:38:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,7 +402,7 @@ tg_rewriteQuery(TgRecipe * r,
 	{
 		if (nodeTag(orig->qual) == T_List)
 		{
-			elog(ABORT, "tg_rewriteQuery: Whoa! why is my qual a List???");
+			elog(ERROR, "tg_rewriteQuery: Whoa! why is my qual a List???");
 		}
 		orig->qual = tg_rewriteParamsInExpr(orig->qual, inputQlist);
 	}
@@ -629,7 +629,7 @@ tg_rewriteParamsInExpr(Node *expression, QueryTreeList *inputQlist)
 						}
 						else
 						{
-							elog(ABORT, "tg_rewriteParamsInExpr:can't substitute for parameter %d when that input is unconnected", p->paramid);
+							elog(ERROR, "tg_rewriteParamsInExpr:can't substitute for parameter %d when that input is unconnected", p->paramid);
 						}
 
 					}
@@ -719,13 +719,13 @@ getParamTypes(TgElement * elem, Oid typev[])
 	{
 		if (parameterCount == 8)
 		{
-			elog(ABORT,
+			elog(ERROR,
 				 "getParamTypes: Ingredients cannot take > 8 arguments");
 		}
 		t = elem->inTypes->val[j];
 		if (strcmp(t, "opaque") == 0)
 		{
-			elog(ABORT,
+			elog(ERROR,
 				 "getParamTypes: Ingredient functions cannot take type 'opaque'");
 		}
 		else
@@ -733,7 +733,7 @@ getParamTypes(TgElement * elem, Oid typev[])
 			toid = TypeGet(elem->inTypes->val[j], &defined);
 			if (!OidIsValid(toid))
 			{
-				elog(ABORT, "getParamTypes: arg type '%s' is not defined", t);
+				elog(ERROR, "getParamTypes: arg type '%s' is not defined", t);
 			}
 			if (!defined)
 			{

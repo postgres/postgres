@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.20 1998/01/05 03:33:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.21 1998/01/05 16:39:48 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -129,14 +129,14 @@ reltimein(char *str)
 	char		lowstr[MAXDATELEN + 1];
 
 	if (!PointerIsValid(str))
-		elog(ABORT, "Bad (null) date external representation", NULL);
+		elog(ERROR, "Bad (null) date external representation", NULL);
 
 	if (strlen(str) > MAXDATELEN)
-		elog(ABORT, "Bad (length) reltime external representation '%s'", str);
+		elog(ERROR, "Bad (length) reltime external representation '%s'", str);
 
 	if ((ParseDateTime(str, lowstr, field, ftype, MAXDATEFIELDS, &nf) != 0)
 		|| (DecodeDateDelta(field, ftype, nf, &dtype, tm, &fsec) != 0))
-		elog(ABORT, "Bad reltime external representation '%s'", str);
+		elog(ERROR, "Bad reltime external representation '%s'", str);
 
 #ifdef DATEDEBUG
 	printf("reltimein- %d fields are type %d (DTK_DATE=%d)\n", nf, dtype, DTK_DATE);
@@ -153,7 +153,7 @@ reltimein(char *str)
 			return (INVALID_RELTIME);
 	}
 
-	elog(ABORT, "Bad reltime (internal coding error) '%s'", str);
+	elog(ERROR, "Bad reltime (internal coding error) '%s'", str);
 	return (INVALID_RELTIME);
 }								/* reltimein() */
 
@@ -361,7 +361,7 @@ reltime_timespan(RelativeTime reltime)
 				month;
 
 	if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
-		elog(ABORT, "Memory allocation failed, can't convert reltime to timespan", NULL);
+		elog(ERROR, "Memory allocation failed, can't convert reltime to timespan", NULL);
 
 	switch (reltime)
 	{

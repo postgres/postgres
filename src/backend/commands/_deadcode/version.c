@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.10 1998/01/05 03:30:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/_deadcode/Attic/version.c,v 1.11 1998/01/05 16:39:07 momjian Exp $
  *
  * NOTES
  *	  At the point the version is defined, 2 physical relations are created
@@ -195,7 +195,7 @@ setAttrList(char *bname)
 	rdesc = heap_openr(bname);
 	if (rdesc == NULL)
 	{
-		elog(ABORT, "Unable to expand all -- amopenr failed ");
+		elog(ERROR, "Unable to expand all -- amopenr failed ");
 		return;
 	}
 	maxattrs = RelationGetNumberOfAttributes(rdesc);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.19 1998/01/05 03:30:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/defind.c,v 1.20 1998/01/05 16:38:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,7 +95,7 @@ DefineIndex(char *heapRelationName,
 	numberOfAttributes = length(attributeList);
 	if (numberOfAttributes <= 0)
 	{
-		elog(ABORT, "DefineIndex: must specify at least one attribute");
+		elog(ERROR, "DefineIndex: must specify at least one attribute");
 	}
 
 	/*
@@ -106,16 +106,16 @@ DefineIndex(char *heapRelationName,
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "DefineIndex: %s relation not found",
+		elog(ERROR, "DefineIndex: %s relation not found",
 			 heapRelationName);
 	}
 	relationId = tuple->t_oid;
 
 	if (unique && strcmp(accessMethodName, "btree") != 0)
-		elog(ABORT, "DefineIndex: unique indices are only available with the btree access method");
+		elog(ERROR, "DefineIndex: unique indices are only available with the btree access method");
 
 	if (numberOfAttributes > 1 && strcmp(accessMethodName, "btree") != 0)
-		elog(ABORT, "DefineIndex: multi-column indices are only available with the btree access method");
+		elog(ERROR, "DefineIndex: multi-column indices are only available with the btree access method");
 
 	/*
 	 * compute access method id
@@ -124,7 +124,7 @@ DefineIndex(char *heapRelationName,
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "DefineIndex: %s access method not found",
+		elog(ERROR, "DefineIndex: %s access method not found",
 			 accessMethodName);
 	}
 	accessMethodId = tuple->t_oid;
@@ -168,7 +168,7 @@ DefineIndex(char *heapRelationName,
 		nargs = length(funcIndex->args);
 		if (nargs > INDEX_MAX_KEYS)
 		{
-			elog(ABORT,
+			elog(ERROR,
 				 "Too many args to function, limit of %d",
 				 INDEX_MAX_KEYS);
 		}
@@ -250,7 +250,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "ExtendIndex: %s index not found",
+		elog(ERROR, "ExtendIndex: %s index not found",
 			 indexRelationName);
 	}
 	indexId = tuple->t_oid;
@@ -264,7 +264,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 								0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "ExtendIndex: %s is not an index",
+		elog(ERROR, "ExtendIndex: %s is not an index",
 			 indexRelationName);
 	}
 
@@ -290,7 +290,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 		pfree(predString);
 	}
 	if (oldPred == NULL)
-		elog(ABORT, "ExtendIndex: %s is not a partial index",
+		elog(ERROR, "ExtendIndex: %s is not a partial index",
 			 indexRelationName);
 
 	/*
@@ -334,7 +334,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 									ObjectIdGetDatum(indproc),
 									0, 0, 0);
 		if (!HeapTupleIsValid(tuple))
-			elog(ABORT, "ExtendIndex: index procedure not found");
+			elog(ERROR, "ExtendIndex: index procedure not found");
 
 		namecpy(&(funcInfo->funcName),
 				&(((Form_pg_proc) GETSTRUCT(tuple))->proname));
@@ -388,7 +388,7 @@ CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid)
 	else if (or_clause(predicate) || and_clause(predicate))
 		clauses = ((Expr *) predicate)->args;
 	else
-		elog(ABORT, "Unsupported partial-index predicate expression type");
+		elog(ERROR, "Unsupported partial-index predicate expression type");
 
 	foreach(clause, clauses)
 	{
@@ -409,11 +409,11 @@ CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid)
 		!IsA(pred_var, Var) ||
 		!IsA(pred_const, Const))
 	{
-		elog(ABORT, "Unsupported partial-index predicate clause type");
+		elog(ERROR, "Unsupported partial-index predicate clause type");
 	}
 
 	if (getrelid(pred_var->varno, rangeTable) != baseRelOid)
-		elog(ABORT,
+		elog(ERROR,
 		 "Partial-index predicates may refer only to the base relation");
 }
 
@@ -435,7 +435,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "DefineIndex: %s class not found",
+		elog(ERROR, "DefineIndex: %s class not found",
 			 funcIndex->class);
 	}
 	*opOidP = tuple->t_oid;
@@ -457,7 +457,7 @@ FuncIndexArgs(IndexElem *funcIndex,
 
 		if (!HeapTupleIsValid(tuple))
 		{
-			elog(ABORT,
+			elog(ERROR,
 				 "DefineIndex: attribute \"%s\" not found",
 				 arg);
 		}
@@ -488,7 +488,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 		attribute = lfirst(rest);
 
 		if (attribute->name == NULL)
-			elog(ABORT, "missing attribute for define index");
+			elog(ERROR, "missing attribute for define index");
 
 		tuple = SearchSysCacheTuple(ATTNAME,
 									ObjectIdGetDatum(relId),
@@ -496,7 +496,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 									0, 0);
 		if (!HeapTupleIsValid(tuple))
 		{
-			elog(ABORT,
+			elog(ERROR,
 				 "DefineIndex: attribute \"%s\" not found",
 				 attribute->name);
 		}
@@ -510,7 +510,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			attribute->class = GetDefaultOpClass(attform->atttypid);
 			if (attribute->class == NULL)
 			{
-				elog(ABORT,
+				elog(ERROR,
 					 "Can't find a default operator class for type %d.",
 					 attform->atttypid);
 			}
@@ -522,7 +522,7 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 
 		if (!HeapTupleIsValid(tuple))
 		{
-			elog(ABORT, "DefineIndex: %s class not found",
+			elog(ERROR, "DefineIndex: %s class not found",
 				 attribute->class);
 		}
 		*opOidP++ = tuple->t_oid;
@@ -565,12 +565,12 @@ RemoveIndex(char *name)
 
 	if (!HeapTupleIsValid(tuple))
 	{
-		elog(ABORT, "index \"%s\" nonexistent", name);
+		elog(ERROR, "index \"%s\" nonexistent", name);
 	}
 
 	if (((Form_pg_class) GETSTRUCT(tuple))->relkind != RELKIND_INDEX)
 	{
-		elog(ABORT, "relation \"%s\" is of type \"%c\"",
+		elog(ERROR, "relation \"%s\" is of type \"%c\"",
 			 name,
 			 ((Form_pg_class) GETSTRUCT(tuple))->relkind);
 	}
