@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.56 1999/09/27 17:46:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.57 1999/09/28 03:41:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -275,7 +275,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (rte == NULL)
 			{
 				rte = addRangeTableEntry(pstate, refname, refname,FALSE, FALSE);
-				elog(NOTICE,"Auto-creating query reference to table %s", refname);
+				elog(NOTICE,"Adding missing FROM-clause entry for table %s", refname);
 			}
 
 			relname = rte->relname;
@@ -434,7 +434,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			if (rte == NULL)
 			{
 				rte = addRangeTableEntry(pstate, refname, refname,FALSE, FALSE);
-				elog(NOTICE,"Auto-creating query reference to table %s", refname);
+				elog(NOTICE,"Adding missing FROM-clause entry for table %s", refname);
 			}
 										 
 			relname = rte->relname;

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.6 1999/07/31 22:05:48 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.7 1999/09/28 03:41:35 momjian Exp $
 Postgres documentation
 -->
 
@@ -40,7 +40,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
    is a utility for upgrading from a previous
    PostgreSQL release without reloading all the data.
    Not all <productname>Postgres</productname> release transitions can be
-   handled this way; check the release notes for details on your installation.
+   handled this way.  Check the release notes for details on your installation.
   </para>
 
   <procedure>
@@ -55,7 +55,7 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
 
    <step performance="required">
     <para>
-     Do
+     Then do:
      <programlisting>
 % pg_dumpall -s >db.out
      </programlisting>
