@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.66 2002/03/05 05:20:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.67 2002/03/05 06:07:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,21 +110,19 @@ pqPutc(char c, PGconn *conn)
 static int
 pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 {
-	/*
-	 * Strategy to handle blocking and non-blocking connections: Fill the
-	 * output buffer and flush it repeatedly until either all data has
-	 * been sent or is at least queued in the buffer.
+	/* Strategy to handle blocking and non-blocking connections: Fill
+	 * the output buffer and flush it repeatedly until either all data
+	 * has been sent or is at least queued in the buffer.
 	 *
-	 * For non-blocking connections, grow the buffer if not all data fits
-	 * into it and the buffer can't be sent because the socket would
-	 * block.
+	 * For non-blocking connections, grow the buffer if not all data
+	 * fits into it and the buffer can't be sent because the socket
+	 * would block.
 	 */
 
 	while (nbytes)
 	{
-		size_t		avail,
-					remaining;
-
+		size_t avail, remaining;
+		
 		/* fill the output buffer */
 		avail = Max(conn->outBufSize - conn->outCount, 0);
 		remaining = Min(avail, nbytes);
@@ -133,40 +131,36 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 		s += remaining;
 		nbytes -= remaining;
 
-		/*
-		 * if the data didn't fit completely into the buffer, try to flush
-		 * the buffer
-		 */
+		/* if the data didn't fit completely into the buffer, try to
+		 * flush the buffer */
 		if (nbytes)
 		{
-			int			send_result = pqSendSome(conn);
+			int send_result = pqSendSome(conn);
 
 			/* if there were errors, report them */
 			if (send_result < 0)
 				return EOF;
 
-			/*
-			 * if not all data could be sent, increase the output buffer,
-			 * put the rest of s into it and return successfully. This
-			 * case will only happen in a non-blocking connection
+			/* if not all data could be sent, increase the output
+			 * buffer, put the rest of s into it and return
+			 * successfully. This case will only happen in a
+			 * non-blocking connection
 			 */
 			if (send_result > 0)
 			{
-				/*
-				 * try to grow the buffer. FIXME: The new size could be
-				 * chosen more intelligently.
+				/* try to grow the buffer.
+				 * FIXME: The new size could be chosen more
+				 * intelligently.
 				 */
-				size_t		buflen = conn->outCount + nbytes;
-
+				size_t buflen = conn->outCount + nbytes;
 				if (buflen > conn->outBufSize)
 				{
-					char	   *newbuf = realloc(conn->outBuffer, buflen);
-
+					char * newbuf = realloc(conn->outBuffer, buflen);
 					if (!newbuf)
 					{
 						/* realloc failed. Probably out of memory */
 						printfPQExpBuffer(&conn->errorMessage,
-						   "cannot allocate memory for output buffer\n");
+								"cannot allocate memory for output buffer\n");
 						return EOF;
 					}
 					conn->outBuffer = newbuf;
@@ -181,11 +175,9 @@ pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 			}
 		}
 
-		/*
-		 * pqSendSome was able to send all data. Continue with the next
-		 * chunk of s.
-		 */
-	}							/* while */
+		/* pqSendSome was able to send all data. Continue with the next
+		 * chunk of s. */
+	} /* while */
 
 	return 0;
 }
@@ -631,19 +623,11 @@ definitelyFailed:
 	return -1;
 }
 
-/* pqSendSome: send any data waiting in the output buffer and return 0
- * if all data was sent, -1 if an error occurred or 1 if not all data
- * could be written because the socket would have blocked.
+/*
+ * pqSendSome: send any data waiting in the output buffer.
  *
- * For a blocking connection all data will be sent unless an error
- * occurrs. -1 will only be returned if the connection is non-blocking.
- *
- * Internally, the case of data remaining in the buffer after pqSendSome
- * could be determined by looking at outCount, but this function also
- * serves as the implementation of the new API function PQsendsome.
- *
- * FIXME: perhaps it would be more useful to return the number of bytes
- * remaining?
+ * Return 0 on sucess, -1 on failure and 1 when data remains because the
+ * socket would block and the connection is non-blocking.
  */
 int
 pqSendSome(PGconn *conn)
@@ -655,7 +639,7 @@ pqSendSome(PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("connection not open\n"));
-		return EOF;
+		return -1;
 	}
 
 	/*
@@ -713,7 +697,7 @@ pqSendSome(PGconn *conn)
 					printfPQExpBuffer(&conn->errorMessage,
 									  libpq_gettext(
 							"server closed the connection unexpectedly\n"
-													"\tThis probably means the server terminated abnormally\n"
+				   "\tThis probably means the server terminated abnormally\n"
 						 "\tbefore or while processing the request.\n"));
 
 					/*
@@ -778,6 +762,7 @@ pqSendSome(PGconn *conn)
 }
 
 
+
 /*
  * pqFlush: send any data waiting in the output buffer
  *
@@ -790,7 +775,9 @@ int
 pqFlush(PGconn *conn)
 {
 	if (pqSendSome(conn))
+	{
 		return EOF;
+	}
 	return 0;
 }
 
@@ -812,7 +799,7 @@ pqWait(int forRead, int forWrite, PGconn *conn)
 	{
 		printfPQExpBuffer(&conn->errorMessage,
 						  libpq_gettext("connection not open\n"));
-		return -1;
+		return EOF;
 	}
 
 	if (forRead || forWrite)
@@ -913,20 +900,19 @@ libpq_gettext(const char *msgid)
  * strerror replacement for windows:
  *
  * This works on WIN2000 and newer, but we don't know where to find WinSock
- * error strings on older Windows flavors.	If you know, clue us in.
+ * error strings on older Windows flavors.  If you know, clue us in.
  */
 const char *
 winsock_strerror(int eno)
 {
-	static char err_buf[512];
-
-#define WSSE_MAXLEN (sizeof(err_buf)-1-13)		/* 13 for " (0x00000000)" */
+	static char	err_buf[512];
+#define WSSE_MAXLEN (sizeof(err_buf)-1-13)	/* 13 for " (0x00000000)" */
 	int			length;
 
 	/* First try the "system table", this works on Win2k and up */
 
 	if (FormatMessage(
-			  FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
+				FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM,
 					  0,
 					  eno,
 					  MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),

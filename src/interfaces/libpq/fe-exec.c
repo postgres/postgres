@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.115 2002/03/05 05:20:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.116 2002/03/05 06:07:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */

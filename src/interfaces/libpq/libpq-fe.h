@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.82 2002/03/05 05:20:12 momjian Exp $
+ * $Id: libpq-fe.h,v 1.83 2002/03/05 06:07:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -282,10 +282,6 @@ extern int	PQisnonblocking(const PGconn *conn);
 
 /* Force the write buffer to be written (or at least try) */
 extern int	PQflush(PGconn *conn);
-/*
- * Force the write buffer to be written (or at least try)
- * (better than PQflush)
- */
 extern int	PQsendSome(PGconn *conn);
 
 /*
