@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.222 2001/06/19 23:40:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.223 2001/06/20 18:07:55 petere Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -45,6 +45,7 @@
 #include "libpq/pqformat.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "libpq/auth.h"
 #include "nodes/print.h"
 #include "optimizer/cost.h"
 #include "optimizer/planner.h"
@@ -1142,11 +1143,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 */
 	if (!IsUnderPostmaster)
 	{
+		SetProcessingMode(InitProcessing);
 		EnableExceptionHandling(true);
 		MemoryContextInit();
 	}
 
-	SetProcessingMode(InitProcessing);
+	if (IsUnderPostmaster)
+		ClientAuthentication(MyProcPort); /* might not return */
 
 	/*
 	 * Set default values for command-line options.
@@ -1567,13 +1570,11 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 								 * restart... */
 		}
 		pq_init();				/* initialize libpq at backend startup */
-		whereToSendOutput = Remote;
 		BaseInit();
 	}
 	else
 	{
 		/* interactive case: database name can be last arg on command line */
-		whereToSendOutput = Debug;
 		if (errs || argc - optind > 1)
 		{
 			fprintf(stderr, "%s: invalid command line arguments\nTry -? for help.\n", argv[0]);
@@ -1709,7 +1710,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.222 $ $Date: 2001/06/19 23:40:10 $\n");
+		puts("$Revision: 1.223 $ $Date: 2001/06/20 18:07:55 $\n");
 	}
 
 	/*

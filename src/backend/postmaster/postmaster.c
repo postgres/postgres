@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.223 2001/06/19 23:40:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.224 2001/06/20 18:07:55 petere Exp $
  *
  * NOTES
  *
@@ -116,15 +116,12 @@ int			UnBlockSig,
  */
 typedef struct bkend
 {
-	int			pid;			/* process id of backend */
+	pid_t		pid;			/* process id of backend */
 	long		cancel_key;		/* cancel key for cancels for this backend */
 } Backend;
 
 /* list of active backends.  For garbage collection only now. */
 static Dllist *BackendList;
-
-/* list of ports associated with still open, but incomplete connections */
-static Dllist *PortList;
 
 /* The socket number we are listening for connections on */
 int			PostPortNumber;
@@ -221,21 +218,20 @@ extern int	optreset;
 static void pmdaemonize(int argc, char *argv[]);
 static Port *ConnCreate(int serverFd);
 static void ConnFree(Port *port);
-static void ClosePostmasterPorts(Port *myConn);
+static void ClosePostmasterPorts(void);
 static void reset_shared(unsigned short port);
 static void SIGHUP_handler(SIGNAL_ARGS);
 static void pmdie(SIGNAL_ARGS);
 static void reaper(SIGNAL_ARGS);
 static void schedule_checkpoint(SIGNAL_ARGS);
-static void dumpstatus(SIGNAL_ARGS);
 static void CleanupProc(int pid, int exitstatus);
 static int	DoBackend(Port *port);
 static void ExitPostmaster(int status);
 static void usage(const char *);
 static int	ServerLoop(void);
 static int	BackendStartup(Port *port);
-static int	readStartupPacket(void *arg, PacketLen len, void *pkt);
-static int	processCancelRequest(Port *port, PacketLen len, void *pkt);
+static int	ProcessStartupPacket(Port *port);
+static void	processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
 static char *canAcceptConnections(void);
 static long PostmasterRandom(void);
@@ -661,7 +657,6 @@ PostmasterMain(int argc, char *argv[])
 	 * garbage collecting the backend processes.
 	 */
 	BackendList = DLNewList();
-	PortList = DLNewList();
 
 	/*
 	 * Record postmaster options.  We delay this till now to avoid
@@ -690,7 +685,6 @@ PostmasterMain(int argc, char *argv[])
 	pqsignal(SIGCHLD, reaper);	/* handle child termination */
 	pqsignal(SIGTTIN, SIG_IGN); /* ignored */
 	pqsignal(SIGTTOU, SIG_IGN); /* ignored */
-	pqsignal(SIGWINCH, dumpstatus);		/* dump port status */
 
 	/*
 	 * We're ready to rock and roll...
@@ -794,7 +788,6 @@ ServerLoop(void)
 	fd_set		readmask,
 				writemask;
 	int			nSockets;
-	Dlelem	   *curr;
 	struct timeval now,
 				later;
 	struct timezone tz;
@@ -840,27 +833,6 @@ ServerLoop(void)
 					checkpointed = now - (9 * CheckPointTimeout) / 10;
 			}
 		}
-
-#ifdef USE_SSL
-
-		/*
-		 * If we are using SSL, there may be input data already read and
-		 * pending in SSL's input buffers.  If so, check for additional
-		 * input from other clients, but don't delay before processing.
-		 */
-		for (curr = DLGetHead(PortList); curr; curr = DLGetSucc(curr))
-		{
-			Port	   *port = (Port *) DLE_VAL(curr);
-
-			if (port->ssl && SSL_pending(port->ssl))
-			{
-				timeout_tv.tv_sec = 0;
-				timeout_tv.tv_usec = 0;
-				timeout = &timeout_tv;
-				break;
-			}
-		}
-#endif
 
 		/*
 		 * Wait for something to happen.
@@ -915,126 +887,26 @@ ServerLoop(void)
 		 */
 
 #ifdef HAVE_UNIX_SOCKETS
-		if (ServerSock_UNIX != INVALID_SOCK &&
-			FD_ISSET(ServerSock_UNIX, &rmask) &&
-			(port = ConnCreate(ServerSock_UNIX)) != NULL)
+		if (ServerSock_UNIX != INVALID_SOCK
+			&& FD_ISSET(ServerSock_UNIX, &rmask))
 		{
-			PacketReceiveSetup(&port->pktInfo,
-							   readStartupPacket,
-							   (void *) port);
+			port = ConnCreate(ServerSock_UNIX);
+			if (port)
+				BackendStartup(port);
+			StreamClose(port->sock);
+			ConnFree(port);
 		}
 #endif
 
-		if (ServerSock_INET != INVALID_SOCK &&
-			FD_ISSET(ServerSock_INET, &rmask) &&
-			(port = ConnCreate(ServerSock_INET)) != NULL)
+		if (ServerSock_INET != INVALID_SOCK
+			&& FD_ISSET(ServerSock_INET, &rmask))
 		{
-			PacketReceiveSetup(&port->pktInfo,
-							   readStartupPacket,
-							   (void *) port);
+			port = ConnCreate(ServerSock_INET);
+			if (port)
+				BackendStartup(port);
+			StreamClose(port->sock);
+			ConnFree(port);
 		}
-
-		/*
-		 * Scan active ports, processing any available input.  While we
-		 * are at it, build up new masks for next select().
-		 */
-		nSockets = initMasks(&readmask, &writemask);
-
-		curr = DLGetHead(PortList);
-
-		while (curr)
-		{
-			Port	   *port = (Port *) DLE_VAL(curr);
-			int			status = STATUS_OK;
-			Dlelem	   *next;
-
-			if (FD_ISSET(port->sock, &rmask)
-#ifdef USE_SSL
-				|| (port->ssl && SSL_pending(port->ssl))
-#endif
-				)
-			{
-				if (DebugLvl > 1)
-					postmaster_error("ServerLoop: handling reading %d", port->sock);
-
-				if (PacketReceiveFragment(port) != STATUS_OK)
-					status = STATUS_ERROR;
-			}
-
-			if (FD_ISSET(port->sock, &wmask))
-			{
-				if (DebugLvl > 1)
-					postmaster_error("ServerLoop: handling writing %d", port->sock);
-
-				if (PacketSendFragment(port) != STATUS_OK)
-					status = STATUS_ERROR;
-			}
-
-			/* Get this before the connection might be closed. */
-
-			next = DLGetSucc(curr);
-
-			/*
-			 * If there is no error and no outstanding data transfer going
-			 * on, then the authentication handshake must be complete to
-			 * the postmaster's satisfaction.  So, start the backend.
-			 */
-
-			if (status == STATUS_OK && port->pktInfo.state == Idle)
-			{
-
-				/*
-				 * Can we accept a connection now?
-				 *
-				 * Even though readStartupPacket() already checked, we have
-				 * to check again in case conditions changed while
-				 * negotiating authentication.
-				 */
-				char	   *rejectMsg = canAcceptConnections();
-
-				if (rejectMsg != NULL)
-					PacketSendError(&port->pktInfo, rejectMsg);
-				else
-				{
-
-					/*
-					 * If the backend start fails then keep the connection
-					 * open to report it.  Otherwise, pretend there is an
-					 * error to close our descriptor for the connection,
-					 * which will now be managed by the backend.
-					 */
-					if (BackendStartup(port) != STATUS_OK)
-						PacketSendError(&port->pktInfo,
-										"Backend startup failed");
-					else
-						status = STATUS_ERROR;
-				}
-			}
-
-			/* Close the connection if required. */
-
-			if (status != STATUS_OK)
-			{
-				StreamClose(port->sock);
-				DLRemove(curr);
-				ConnFree(port);
-				DLFreeElem(curr);
-			}
-			else
-			{
-				/* Set the masks for this connection. */
-
-				if (nSockets <= port->sock)
-					nSockets = port->sock + 1;
-
-				if (port->pktInfo.state == WritingPacket)
-					FD_SET(port->sock, &writemask);
-				else
-					FD_SET(port->sock, &readmask);
-			}
-
-			curr = next;
-		}						/* loop over active ports */
 	}
 }
 
@@ -1074,28 +946,42 @@ initMasks(fd_set *rmask, fd_set *wmask)
 
 
 /*
- * Called when the startup packet has been read.
+ * Read the startup packet and do something according to it.
+ *
+ * Returns STATUS_OK or STATUS_ERROR, or might call elog(FATAL) and
+ * not return at all.
  */
-
 static int
-readStartupPacket(void *arg, PacketLen len, void *pkt)
+ProcessStartupPacket(Port *port)
 {
-	Port	   *port;
-	StartupPacket *si;
+	StartupPacket *packet;
 	char	   *rejectMsg;
+	int32		len;
+	void	   *buf;
 
-	port = (Port *) arg;
-	si = (StartupPacket *) pkt;
+	pq_getbytes((char *)&len, 4);
+	len = ntohl(len);
+	len -= 4;
+
+	if (len < sizeof(len) || len > sizeof(len) + sizeof(StartupPacket))
+		elog(FATAL, "invalid length of startup packet");
+
+	buf = palloc(len);
+	pq_getbytes(buf, len);
+	
+	packet = buf;
 
 	/*
 	 * The first field is either a protocol version number or a special
 	 * request code.
 	 */
-
-	port->proto = ntohl(si->protoVersion);
+	port->proto = ntohl(packet->protoVersion);
 
 	if (port->proto == CANCEL_REQUEST_CODE)
-		return processCancelRequest(port, len, pkt);
+	{
+		processCancelRequest(port, packet);
+		return 127;				/* XXX */
+	}
 
 	if (port->proto == NEGOTIATE_SSL_CODE)
 	{
@@ -1114,7 +1000,7 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		{
 			postmaster_error("failed to send SSL negotiation response: %s",
 							 strerror(errno));
-			return STATUS_ERROR;/* Close connection */
+			return STATUS_ERROR; /* close the connection */
 		}
 
 #ifdef USE_SSL
@@ -1130,11 +1016,10 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 			}
 		}
 #endif
-		/* ready for the normal startup packet */
-		PacketReceiveSetup(&port->pktInfo,
-						   readStartupPacket,
-						   (void *) port);
-		return STATUS_OK;		/* Do not close connection */
+		/* regular startup packet should follow... */
+		/* FIXME: by continuing to send SSL negotiation packets, a
+           client could run us out of stack space */
+		return ProcessStartupPacket(port);
 	}
 
 	/* Could add additional special packet types here */
@@ -1146,46 +1031,35 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 		PG_PROTOCOL_MAJOR(port->proto) > PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) ||
 		(PG_PROTOCOL_MAJOR(port->proto) == PG_PROTOCOL_MAJOR(PG_PROTOCOL_LATEST) &&
 		 PG_PROTOCOL_MINOR(port->proto) > PG_PROTOCOL_MINOR(PG_PROTOCOL_LATEST)))
-	{
-		PacketSendError(&port->pktInfo, "Unsupported frontend protocol.");
-		return STATUS_OK;		/* don't close the connection yet */
-	}
+		elog(FATAL, "unsupported frontend protocol");
 
 	/*
 	 * Get the parameters from the startup packet as C strings.  The
 	 * packet destination was cleared first so a short packet has zeros
 	 * silently added and a long packet is silently truncated.
 	 */
-
-	StrNCpy(port->database, si->database, sizeof(port->database));
-	StrNCpy(port->user, si->user, sizeof(port->user));
-	StrNCpy(port->options, si->options, sizeof(port->options));
-	StrNCpy(port->tty, si->tty, sizeof(port->tty));
+	StrNCpy(port->database, packet->database, sizeof(port->database));
+	StrNCpy(port->user, packet->user, sizeof(port->user));
+	StrNCpy(port->options, packet->options, sizeof(port->options));
+	StrNCpy(port->tty, packet->tty, sizeof(port->tty));
 
 	/* The database defaults to the user name. */
-
 	if (port->database[0] == '\0')
-		StrNCpy(port->database, si->user, sizeof(port->database));
+		StrNCpy(port->database, packet->user, sizeof(port->database));
 
 	/*
 	 * Truncate given database and user names to length of a Postgres
-	 * name.
+	 * name.  This avoids lookup failures when overlength names are
+	 * given.
 	 */
-	/* This avoids lookup failures when overlength names are given. */
-
 	if ((int) sizeof(port->database) >= NAMEDATALEN)
 		port->database[NAMEDATALEN - 1] = '\0';
 	if ((int) sizeof(port->user) >= NAMEDATALEN)
 		port->user[NAMEDATALEN - 1] = '\0';
 
 	/* Check a user name was given. */
-
 	if (port->user[0] == '\0')
-	{
-		PacketSendError(&port->pktInfo,
-					"No Postgres username specified in startup packet.");
-		return STATUS_OK;		/* don't close the connection yet */
-	}
+		elog(FATAL, "no PostgreSQL user name specified in startup packet");
 
 	/*
 	 * If we're going to reject the connection due to database state, say
@@ -1195,27 +1069,19 @@ readStartupPacket(void *arg, PacketLen len, void *pkt)
 	rejectMsg = canAcceptConnections();
 
 	if (rejectMsg != NULL)
-	{
-		PacketSendError(&port->pktInfo, rejectMsg);
-		return STATUS_OK;		/* don't close the connection yet */
-	}
+		elog(FATAL, "%s", rejectMsg);
 
-	/* Start the authentication itself. */
-
-	be_recvauth(port);
-
-	return STATUS_OK;			/* don't close the connection yet */
+	return STATUS_OK;
 }
+
 
 /*
  * The client has sent a cancel request packet, not a normal
- * start-a-new-backend packet.	Perform the necessary processing.
- * Note that in any case, we return STATUS_ERROR to close the
- * connection immediately.	Nothing is sent back to the client.
+ * start-a-new-connection packet.  Perform the necessary processing.
+ * Nothing is sent back to the client.
  */
-
-static int
-processCancelRequest(Port *port, PacketLen len, void *pkt)
+static void
+processCancelRequest(Port *port, void *pkt)
 {
 	CancelRequestPacket *canc = (CancelRequestPacket *) pkt;
 	int			backendPID;
@@ -1230,7 +1096,7 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 	{
 		if (DebugLvl)
 			postmaster_error("processCancelRequest: CheckPointPID in cancel request for process %d", backendPID);
-		return STATUS_ERROR;
+		return;
 	}
 
 	/* See if we have a matching backend */
@@ -1244,24 +1110,24 @@ processCancelRequest(Port *port, PacketLen len, void *pkt)
 			{
 				/* Found a match; signal that backend to cancel current op */
 				if (DebugLvl)
-					postmaster_error("processCancelRequest: sending SIGINT to process %d", bp->pid);
+					elog(DEBUG, "processing cancel request: sending SIGINT to process %d",
+						 backendPID);
 				kill(bp->pid, SIGINT);
 			}
 			else
 			{
 				/* Right PID, wrong key: no way, Jose */
 				if (DebugLvl)
-					postmaster_error("processCancelRequest: bad key in cancel request for process %d", bp->pid);
+					elog(DEBUG, "bad key in cancel request for process %d",
+						 backendPID);
 			}
-			return STATUS_ERROR;
+			return;
 		}
 	}
 
 	/* No matching backend */
 	if (DebugLvl)
-		postmaster_error("processCancelRequest: bad PID in cancel request for process %d", backendPID);
-
-	return STATUS_ERROR;
+		elog(DEBUG, "bad pid in cancel request for process %d", backendPID);
 }
 
 /*
@@ -1295,6 +1161,7 @@ canAcceptConnections(void)
 	return NULL;
 }
 
+
 /*
  * ConnCreate -- create a local connection data structure
  */
@@ -1318,13 +1185,13 @@ ConnCreate(int serverFd)
 	}
 	else
 	{
-		DLAddHead(PortList, DLNewElem(port));
 		RandomSalt(port->salt);
 		port->pktInfo.state = Idle;
 	}
 
 	return port;
 }
+
 
 /*
  * ConnFree -- free a local connection data structure
@@ -1339,22 +1206,20 @@ ConnFree(Port *conn)
 	free(conn);
 }
 
+
 /*
  * ClosePostmasterPorts -- close all the postmaster's open sockets
  *
  * This is called during child process startup to release file descriptors
- * that are not needed by that child process.  All descriptors other than
- * the one for myConn (if it's not null) are closed.
+ * that are not needed by that child process.
  *
  * Note that closing the child's descriptor does not destroy the client
  * connection prematurely, since the parent (postmaster) process still
  * has the socket open.
  */
 static void
-ClosePostmasterPorts(Port *myConn)
+ClosePostmasterPorts(void)
 {
-	Dlelem	   *curr;
-
 	/* Close the listen sockets */
 	if (NetServer)
 		StreamClose(ServerSock_INET);
@@ -1363,25 +1228,6 @@ ClosePostmasterPorts(Port *myConn)
 	StreamClose(ServerSock_UNIX);
 	ServerSock_UNIX = INVALID_SOCK;
 #endif
-
-	/* Close any sockets for other clients, and release memory too */
-	curr = DLGetHead(PortList);
-
-	while (curr)
-	{
-		Port	   *port = (Port *) DLE_VAL(curr);
-		Dlelem	   *next = DLGetSucc(curr);
-
-		if (port != myConn)
-		{
-			StreamClose(port->sock);
-			DLRemove(curr);
-			ConnFree(port);
-			DLFreeElem(curr);
-		}
-
-		curr = next;
-	}
 }
 
 
@@ -1847,7 +1693,7 @@ static int
 BackendStartup(Port *port)
 {
 	Backend    *bn;				/* for backend cleanup */
-	int			pid;
+	pid_t		pid;
 
 	/*
 	 * Compute the cancel key that will be assigned to this backend. The
@@ -1872,42 +1718,45 @@ BackendStartup(Port *port)
 	beos_before_backend_startup();
 #endif
 
-	if ((pid = fork()) == 0)
-	{							/* child */
+	/*
+	 * Make room for backend data structure.  Better before the fork()
+	 * so we can handle failure cleanly.
+	 */
+	bn = (Backend *) malloc(sizeof(Backend));
+	if (!bn)
+	{
+		fprintf(stderr, gettext("%s: BackendStartup: malloc failed\n"),
+				progname);
+		return STATUS_ERROR;
+	}
+
+	pid = fork();
+
+	if (pid == 0)				/* child */
+	{
+		int		status;
+
+		free(bn);
 #ifdef __BEOS__
 		/* Specific beos backend startup actions */
 		beos_backend_startup();
 #endif
 
-#ifdef CYR_RECODE
-		{
-			/* Save charset for this host while we still have client addr */
-			char		ChTable[80];
-			static char cyrEnvironment[100];
-
-			GetCharSetByHost(ChTable, port->raddr.in.sin_addr.s_addr, DataDir);
-			if (*ChTable != '\0')
-			{
-				snprintf(cyrEnvironment, sizeof(cyrEnvironment),
-						 "PG_RECODETABLE=%s", ChTable);
-				putenv(cyrEnvironment);
-			}
-		}
-#endif
-
-		if (DoBackend(port))
+		status = DoBackend(port);
+		if (status != 0)
 		{
 			fprintf(stderr, gettext("%s child[%d]: BackendStartup: backend startup failed\n"),
 					progname, (int) getpid());
-			ExitPostmaster(1);
+			proc_exit(status);
 		}
 		else
-			ExitPostmaster(0);
+			proc_exit(0);
 	}
 
-	/* in parent */
+	/* in parent, error */
 	if (pid < 0)
 	{
+		free(bn);
 #ifdef __BEOS__
 		/* Specific beos backend startup actions */
 		beos_backend_startup_failed();
@@ -1917,8 +1766,9 @@ BackendStartup(Port *port)
 		return STATUS_ERROR;
 	}
 
-	if (DebugLvl)
-		fprintf(stderr, gettext("%s: BackendStartup: pid %d user %s db %s socket %d\n"),
+	/* in parent, normal */
+	if (DebugLvl >= 1)
+		fprintf(stderr, gettext("%s: BackendStartup: pid=%d user=%s db=%s socket=%d\n"),
 				progname, pid, port->user, port->database,
 				port->sock);
 
@@ -1926,19 +1776,13 @@ BackendStartup(Port *port)
 	 * Everything's been successful, it's safe to add this backend to our
 	 * list of backends.
 	 */
-	if (!(bn = (Backend *) calloc(1, sizeof(Backend))))
-	{
-		fprintf(stderr, gettext("%s: BackendStartup: malloc failed\n"),
-				progname);
-		ExitPostmaster(1);
-	}
-
 	bn->pid = pid;
 	bn->cancel_key = MyCancelKey;
 	DLAddHead(BackendList, DLNewElem(bn));
 
 	return STATUS_OK;
 }
+
 
 /*
  * split_opts -- split a string of options and append it to an argv array
@@ -1990,6 +1834,7 @@ DoBackend(Port *port)
 	char		optbuf[ARGV_SIZE];
 	char		ttybuf[ARGV_SIZE];
 	int			i;
+	int			status;
 	struct timeval now;
 	struct timezone tz;
 
@@ -2004,14 +1849,22 @@ DoBackend(Port *port)
 	 * Signal handlers setting is moved to tcop/postgres...
 	 */
 
+	SetProcessingMode(InitProcessing);
+
 	/* Save port etc. for ps status */
 	MyProcPort = port;
 
 	/* Reset MyProcPid to new backend's pid */
 	MyProcPid = getpid();
 
+	whereToSendOutput = Remote;
+
+	status = ProcessStartupPacket(port);
+	if (status == 127)
+		return 0;				/* cancel request processed */
+
 	/* Close the postmaster's other sockets */
-	ClosePostmasterPorts(port);
+	ClosePostmasterPorts();
 
 	/*
 	 * Don't want backend to be able to see the postmaster random number
@@ -2162,26 +2015,6 @@ schedule_checkpoint(SIGNAL_ARGS)
 	errno = save_errno;
 }
 
-static void
-dumpstatus(SIGNAL_ARGS)
-{
-	int			save_errno = errno;
-	Dlelem	   *curr;
-
-	PG_SETMASK(&BlockSig);
-
-	fprintf(stderr, "%s: dumpstatus:\n", progname);
-
-	curr = DLGetHead(PortList);
-	while (curr)
-	{
-		Port	   *port = DLE_VAL(curr);
-
-		fprintf(stderr, "\tsock %d\n", port->sock);
-		curr = DLGetSucc(curr);
-	}
-	errno = save_errno;
-}
 
 /*
  * CharRemap
@@ -2336,7 +2169,7 @@ SSDataBase(int xlop)
 		on_exit_reset();
 
 		/* Close the postmaster's sockets */
-		ClosePostmasterPorts(NULL);
+		ClosePostmasterPorts();
 
 		/* Set up command-line arguments for subprocess */
 		av[ac++] = "postgres";
@@ -2463,7 +2296,7 @@ postmaster_error(const char *fmt, ...)
 
 	fprintf(stderr, "%s: ", progname);
 	va_start(ap, fmt);
-	fprintf(stderr, gettext(fmt), ap);
+	vfprintf(stderr, gettext(fmt), ap);
 	va_end(ap);
 	fprintf(stderr, "\n");
 }

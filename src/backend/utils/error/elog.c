@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.86 2001/06/08 21:16:48 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.87 2001/06/20 18:07:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,10 +128,6 @@ elog(int lev, const char *fmt,...)
 
 	/* size of the prefix needed for timestamp and pid, if enabled */
 	size_t		timestamp_size;
-
-	/* ignore debug msgs if noplace to send */
-	if (lev == DEBUG && Debugfile < 0)
-		return;
 
 	/* Save error str before calling any function that might change errno */
 	errorstr = useful_strerror(errno);
@@ -336,10 +332,9 @@ elog(int lev, const char *fmt,...)
 	/* syslog doesn't want a trailing newline, but other destinations do */
 	strcat(msg_buf, "\n");
 
-	/* Write to debug file, if open and enabled */
-	/* NOTE: debug file is typically pointed at stderr */
-	if (Debugfile >= 0 && Use_syslog <= 1)
-		write(Debugfile, msg_buf, strlen(msg_buf));
+	/* write to terminal */
+	if (Use_syslog <= 1 || whereToSendOutput == Debug)
+		write(2, msg_buf, strlen(msg_buf));
 
 	if (lev > DEBUG && whereToSendOutput == Remote)
 	{
@@ -369,17 +364,6 @@ elog(int lev, const char *fmt,...)
 		}
 
 		MemoryContextSwitchTo(oldcxt);
-	}
-
-	if (lev > DEBUG && whereToSendOutput != Remote)
-	{
-		/*
-		 * We are running as an interactive backend, so just send the
-		 * message to stderr.  But don't send a duplicate if Debugfile
-		 * write, above, already sent to stderr.
-		 */
-		if (Debugfile != fileno(stderr))
-			fputs(msg_buf, stderr);
 	}
 
 	/* done with the message, release space */

@@ -8,48 +8,34 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.52 2001/03/22 03:59:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.53 2001/06/20 18:07:55 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
-/*
- * INTERFACE ROUTINES
- *
- *	   backend (postmaster) routines:
- *		be_recvauth				receive authentication information
- */
-#include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
-#ifndef  MAXHOSTNAMELEN
-#include <netdb.h>				/* for MAXHOSTNAMELEN on some */
-#endif
-#include <pwd.h>
-#include <ctype.h>
+
+#include "postgres.h"
 
 #include <sys/types.h>			/* needed by in.h on Ultrix */
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#include "postgres.h"
 
 #include "libpq/auth.h"
 #include "libpq/crypt.h"
 #include "libpq/hba.h"
 #include "libpq/libpq.h"
 #include "libpq/password.h"
+#include "libpq/pqformat.h"
 #include "miscadmin.h"
 
-static void sendAuthRequest(Port *port, AuthRequest areq, PacketDoneProc handler);
-static int	handle_done_auth(void *arg, PacketLen len, void *pkt);
-static int	handle_krb4_auth(void *arg, PacketLen len, void *pkt);
-static int	handle_krb5_auth(void *arg, PacketLen len, void *pkt);
-static int	handle_password_auth(void *arg, PacketLen len, void *pkt);
-static int	readPasswordPacket(void *arg, PacketLen len, void *pkt);
-static int	pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt);
+static void sendAuthRequest(Port *port, AuthRequest areq);
+
 static int	checkPassword(Port *port, char *user, char *password);
 static int	old_be_recvauth(Port *port);
 static int	map_old_to_new(Port *port, UserAuth old, int status);
 static void auth_failed(Port *port);
 
+static int	recv_and_check_password_packet(Port *port);
+static int	recv_and_check_passwordv0(Port *port);
 
 char	   *pg_krb_server_keyfile;
 
@@ -325,25 +311,28 @@ pg_krb5_recvauth(Port *port)
 /*
  * Handle a v0 password packet.
  */
-
 static int
-pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
+recv_and_check_passwordv0(Port *port)
 {
-	Port	   *port;
+	int32		len;
+	char	   *buf;
 	PasswordPacketV0 *pp;
 	char	   *user,
 			   *password,
 			   *cp,
 			   *start;
 
-	port = (Port *) arg;
-	pp = (PasswordPacketV0 *) pkt;
+	pq_getint(&len, 4);
+	len -= 4;
+	buf = palloc(len);
+	pq_getbytes(buf, len);
+
+	pp = (PasswordPacketV0 *) buf;
 
 	/*
 	 * The packet is supposed to comprise the user name and the password
 	 * as C strings.  Be careful the check that this is the case.
 	 */
-
 	user = password = NULL;
 
 	len -= sizeof(pp->unused);
@@ -371,6 +360,7 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 		fputs(PQerrormsg, stderr);
 		pqdebug("%s", PQerrormsg);
 
+		pfree(buf);
 		auth_failed(port);
 	}
 	else
@@ -385,15 +375,15 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 
 		status = checkPassword(port, user, password);
 
+		pfree(buf);
 		port->auth_method = saved;
 
 		/* Adjust the result if necessary. */
-
 		if (map_old_to_new(port, uaPassword, status) != STATUS_OK)
 			auth_failed(port);
 	}
 
-	return STATUS_OK;			/* don't close the connection yet */
+	return STATUS_OK;
 }
 
 
@@ -413,7 +403,6 @@ pg_passwordv0_recvauth(void *arg, PacketLen len, void *pkt)
 static void
 auth_failed(Port *port)
 {
-	char		buffer[512];
 	const char *authmethod = "Unknown auth method:";
 
 	switch (port->auth_method)
@@ -441,19 +430,20 @@ auth_failed(Port *port)
 			break;
 	}
 
-	sprintf(buffer, "%s authentication failed for user '%s'",
-			authmethod, port->user);
-
-	PacketSendError(&port->pktInfo, buffer);
+	elog(FATAL, "%s authentication failed for user \"%s\"",
+		 authmethod, port->user);
 }
 
 
+
 /*
- * be_recvauth -- server demux routine for incoming authentication information
+ * Client authentication starts here.  If there is an error, this
+ * function does not return and the backend process is terminated.
  */
 void
-be_recvauth(Port *port)
+ClientAuthentication(Port *port)
 {
+	int status = STATUS_ERROR;
 
 	/*
 	 * Get the authentication method to use for this frontend/database
@@ -463,97 +453,77 @@ be_recvauth(Port *port)
 	 */
 
 	if (hba_getauthmethod(port) != STATUS_OK)
-		PacketSendError(&port->pktInfo,
-						"Missing or erroneous pg_hba.conf file, see postmaster log for details");
+		elog(FATAL, "Missing or erroneous pg_hba.conf file, see postmaster log for details");
 
+	/* Handle old style authentication. */
 	else if (PG_PROTOCOL_MAJOR(port->proto) == 0)
 	{
-		/* Handle old style authentication. */
-
 		if (old_be_recvauth(port) != STATUS_OK)
 			auth_failed(port);
+		return;
 	}
-	else
+
+	/* Handle new style authentication. */
+
+	switch (port->auth_method)
 	{
-		/* Handle new style authentication. */
+		case uaReject:
 
-		AuthRequest areq = AUTH_REQ_OK;
-		PacketDoneProc auth_handler = NULL;
-
-		switch (port->auth_method)
+			/*
+			 * This could have come from an explicit "reject" entry in
+			 * pg_hba.conf, but more likely it means there was no
+			 * matching entry.	Take pity on the poor user and issue a
+			 * helpful error message.  NOTE: this is not a security
+			 * breach, because all the info reported here is known at
+			 * the frontend and must be assumed known to bad guys.
+			 * We're merely helping out the less clueful good guys.
+			 */
 		{
-			case uaReject:
+			const char *hostinfo = "localhost";
 
-				/*
-				 * This could have come from an explicit "reject" entry in
-				 * pg_hba.conf, but more likely it means there was no
-				 * matching entry.	Take pity on the poor user and issue a
-				 * helpful error message.  NOTE: this is not a security
-				 * breach, because all the info reported here is known at
-				 * the frontend and must be assumed known to bad guys.
-				 * We're merely helping out the less clueful good guys.
-				 * NOTE 2: libpq-be.h defines the maximum error message
-				 * length as 99 characters.  It probably wouldn't hurt
-				 * anything to increase it, but there might be some client
-				 * out there that will fail.  So, be terse.
-				 */
-				{
-					char		buffer[512];
-					const char *hostinfo = "localhost";
-
-					if (port->raddr.sa.sa_family == AF_INET)
-						hostinfo = inet_ntoa(port->raddr.in.sin_addr);
-					sprintf(buffer,
-							"No pg_hba.conf entry for host %s, user %s, database %s",
-							hostinfo, port->user, port->database);
-					PacketSendError(&port->pktInfo, buffer);
-					return;
-				}
-				break;
-
-			case uaKrb4:
-				areq = AUTH_REQ_KRB4;
-				auth_handler = handle_krb4_auth;
-				break;
-
-			case uaKrb5:
-				areq = AUTH_REQ_KRB5;
-				auth_handler = handle_krb5_auth;
-				break;
-
-			case uaTrust:
-				areq = AUTH_REQ_OK;
-				auth_handler = handle_done_auth;
-				break;
-
-			case uaIdent:
-				if (authident(&port->raddr.in, &port->laddr.in,
-							  port->user, port->auth_arg) == STATUS_OK)
-				{
-					areq = AUTH_REQ_OK;
-					auth_handler = handle_done_auth;
-				}
-
-				break;
-
-			case uaPassword:
-				areq = AUTH_REQ_PASSWORD;
-				auth_handler = handle_password_auth;
-				break;
-
-			case uaCrypt:
-				areq = AUTH_REQ_CRYPT;
-				auth_handler = handle_password_auth;
-				break;
+			if (port->raddr.sa.sa_family == AF_INET)
+				hostinfo = inet_ntoa(port->raddr.in.sin_addr);
+			elog(FATAL, 
+				 "No pg_hba.conf entry for host %s, user %s, database %s",
+				 hostinfo, port->user, port->database);
+			return;
 		}
+		break;
 
-		/* Tell the frontend what we want next. */
+		case uaKrb4:
+			sendAuthRequest(port, AUTH_REQ_KRB4);
+			status = pg_krb4_recvauth(port);
+			break;
 
-		if (auth_handler != NULL)
-			sendAuthRequest(port, areq, auth_handler);
-		else
-			auth_failed(port);
+		case uaKrb5:
+			sendAuthRequest(port, AUTH_REQ_KRB5);
+			status = pg_krb5_recvauth(port);
+			break;
+
+		case uaIdent:
+			status = authident(&port->raddr.in, &port->laddr.in,
+							   port->user, port->auth_arg);
+			break;
+
+		case uaPassword:
+			sendAuthRequest(port, AUTH_REQ_PASSWORD);
+			status = recv_and_check_password_packet(port);
+			break;
+
+		case uaCrypt:
+			sendAuthRequest(port, AUTH_REQ_CRYPT);
+			status = recv_and_check_password_packet(port);
+			break;
+
+		case uaTrust:
+			status = STATUS_OK;
+			break;
 	}
+
+	if (status == STATUS_OK)
+		sendAuthRequest(port, AUTH_REQ_OK);
+	else
+		auth_failed(port);
 }
 
 
@@ -562,109 +532,25 @@ be_recvauth(Port *port)
  */
 
 static void
-sendAuthRequest(Port *port, AuthRequest areq, PacketDoneProc handler)
+sendAuthRequest(Port *port, AuthRequest areq)
 {
-	char	   *dp,
-			   *sp;
-	int			i;
-	uint32		net_areq;
+	StringInfoData buf;
 
-	/* Convert to a byte stream. */
-
-	net_areq = htonl(areq);
-
-	dp = port->pktInfo.pkt.ar.data;
-	sp = (char *) &net_areq;
-
-	*dp++ = 'R';
-
-	for (i = 1; i <= 4; ++i)
-		*dp++ = *sp++;
+	pq_beginmessage(&buf);
+	pq_sendbyte(&buf, 'R');
+	pq_sendint(&buf, (int32) areq, sizeof(int32));
 
 	/* Add the salt for encrypted passwords. */
-
 	if (areq == AUTH_REQ_CRYPT)
 	{
-		*dp++ = port->salt[0];
-		*dp++ = port->salt[1];
-		i += 2;
+		pq_sendint(&buf, port->salt[0], 1);
+		pq_sendint(&buf, port->salt[1], 1);
 	}
 
-	PacketSendSetup(&port->pktInfo, i, handler, (void *) port);
+	pq_endmessage(&buf);
+	pq_flush();
 }
 
-
-/*
- * Called when we have told the front end that it is authorised.
- */
-
-static int
-handle_done_auth(void *arg, PacketLen len, void *pkt)
-{
-
-	/*
-	 * Don't generate any more traffic.  This will cause the backend to
-	 * start.
-	 */
-
-	return STATUS_OK;
-}
-
-
-/*
- * Called when we have told the front end that it should use Kerberos V4
- * authentication.
- */
-
-static int
-handle_krb4_auth(void *arg, PacketLen len, void *pkt)
-{
-	Port	   *port = (Port *) arg;
-
-	if (pg_krb4_recvauth(port) != STATUS_OK)
-		auth_failed(port);
-	else
-		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
-
-	return STATUS_OK;
-}
-
-
-/*
- * Called when we have told the front end that it should use Kerberos V5
- * authentication.
- */
-
-static int
-handle_krb5_auth(void *arg, PacketLen len, void *pkt)
-{
-	Port	   *port = (Port *) arg;
-
-	if (pg_krb5_recvauth(port) != STATUS_OK)
-		auth_failed(port);
-	else
-		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
-
-	return STATUS_OK;
-}
-
-
-/*
- * Called when we have told the front end that it should use password
- * authentication.
- */
-
-static int
-handle_password_auth(void *arg, PacketLen len, void *pkt)
-{
-	Port	   *port = (Port *) arg;
-
-	/* Set up the read of the password packet. */
-
-	PacketReceiveSetup(&port->pktInfo, readPasswordPacket, (void *) port);
-
-	return STATUS_OK;
-}
 
 
 /*
@@ -672,24 +558,24 @@ handle_password_auth(void *arg, PacketLen len, void *pkt)
  */
 
 static int
-readPasswordPacket(void *arg, PacketLen len, void *pkt)
+recv_and_check_password_packet(Port *port)
 {
-	char		password[sizeof(PasswordPacket) + 1];
-	Port	   *port = (Port *) arg;
+	StringInfoData buf;
+	int32		len;
+	int			result;
 
-	/* Silently truncate a password that is too big. */
+	if (pq_getint(&len, 4) == EOF)
+		return STATUS_ERROR;	/* client didn't want to send password */
+	initStringInfo(&buf);
+	pq_getstr(&buf);
 
-	if (len > sizeof(PasswordPacket))
-		len = sizeof(PasswordPacket);
+	if (DebugLvl)
+		fprintf(stderr, "received password packet with len=%d, pw=%s\n",
+				len, buf.data);
 
-	StrNCpy(password, ((PasswordPacket *) pkt)->passwd, len);
-
-	if (checkPassword(port, port->user, password) != STATUS_OK)
-		auth_failed(port);
-	else
-		sendAuthRequest(port, AUTH_REQ_OK, handle_done_auth);
-
-	return STATUS_OK;			/* don't close the connection yet */
+	result = checkPassword(port, port->user, buf.data);
+	pfree(buf.data);
+	return result;
 }
 
 
@@ -734,10 +620,8 @@ old_be_recvauth(Port *port)
 			break;
 
 		case STARTUP_PASSWORD_MSG:
-			PacketReceiveSetup(&port->pktInfo, pg_passwordv0_recvauth,
-							   (void *) port);
-
-			return STATUS_OK;
+			status = recv_and_check_passwordv0(port);
+			break;
 
 		default:
 			fprintf(stderr, "Invalid startup message type: %u\n", msgtype);
@@ -760,8 +644,8 @@ map_old_to_new(Port *port, UserAuth old, int status)
 {
 	switch (port->auth_method)
 	{
-			case uaCrypt:
-			case uaReject:
+		case uaCrypt:
+		case uaReject:
 			status = STATUS_ERROR;
 			break;
 
