@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.62 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/indexam.c,v 1.62.2.1 2003/01/08 19:41:57 tgl Exp $
  *
  * INTERFACE ROUTINES
  *		index_open		- open an index relation by relation OID
@@ -308,6 +308,8 @@ index_rescan(IndexScanDesc scan, ScanKey key)
 	scan->kill_prior_tuple = false;		/* for safety */
 	scan->keys_are_unique = false;		/* may be set by amrescan */
 	scan->got_tuple = false;
+	scan->unique_tuple_pos = 0;
+	scan->unique_tuple_mark = 0;
 
 	OidFunctionCall2(procedure,
 					 PointerGetDatum(scan),
@@ -360,6 +362,8 @@ index_markpos(IndexScanDesc scan)
 	SCAN_CHECKS;
 	GET_SCAN_PROCEDURE(markpos, ammarkpos);
 
+	scan->unique_tuple_mark = scan->unique_tuple_pos;
+
 	OidFunctionCall1(procedure, PointerGetDatum(scan));
 }
 
@@ -376,7 +380,13 @@ index_restrpos(IndexScanDesc scan)
 	GET_SCAN_PROCEDURE(restrpos, amrestrpos);
 
 	scan->kill_prior_tuple = false;		/* for safety */
-	scan->got_tuple = false;
+
+	/*
+	 * We do not reset got_tuple; so if the scan is actually being
+	 * short-circuited by index_getnext, the effective position restoration
+	 * is done by restoring unique_tuple_pos.
+	 */
+	scan->unique_tuple_pos = scan->unique_tuple_mark;
 
 	OidFunctionCall1(procedure, PointerGetDatum(scan));
 }
@@ -398,6 +408,32 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	SCAN_CHECKS;
 
+	/*
+	 * Can skip entering the index AM if we already got a tuple and it
+	 * must be unique.  Instead, we need a "short circuit" path that
+	 * just keeps track of logical scan position (before/on/after tuple).
+	 *
+	 * Note that we hold the pin on the single tuple's buffer throughout
+	 * the scan once we are in this state.
+	 */
+	if (scan->keys_are_unique && scan->got_tuple)
+	{
+		if (ScanDirectionIsForward(direction))
+		{
+			if (scan->unique_tuple_pos <= 0)
+				scan->unique_tuple_pos++;
+		}
+		else if (ScanDirectionIsBackward(direction))
+		{
+			if (scan->unique_tuple_pos >= 0)
+				scan->unique_tuple_pos--;
+		}
+		if (scan->unique_tuple_pos == 0)
+			return heapTuple;
+		else
+			return NULL;
+	}
+
 	/* Release any previously held pin */
 	if (BufferIsValid(scan->xs_cbuf))
 	{
@@ -407,13 +443,6 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	/* just make sure this is false... */
 	scan->kill_prior_tuple = false;
-
-	/*
-	 * Can skip entering the index AM if we already got a tuple and it
-	 * must be unique.
-	 */
-	if (scan->keys_are_unique && scan->got_tuple)
-		return NULL;
 
 	for (;;)
 	{
@@ -474,6 +503,12 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 
 	/* Success exit */
 	scan->got_tuple = true;
+
+	/*
+	 * If we just fetched a known-unique tuple, then subsequent calls will
+	 * go through the short-circuit code above.  unique_tuple_pos has been
+	 * initialized to 0, which is the correct state ("on row").
+	 */
 
 	pgstat_count_index_getnext(&scan->xs_pgstat_info);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.36 2002/09/04 20:31:09 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/index/genam.c,v 1.36.2.1 2003/01/08 19:41:57 tgl Exp $
  *
  * NOTES
  *	  many of the old access method routines have been turned into
@@ -106,6 +106,9 @@ RelationGetIndexScan(Relation indexRelation,
 
 	/* mark cached function lookup data invalid; it will be set later */
 	scan->fn_getnext.fn_oid = InvalidOid;
+
+	scan->unique_tuple_pos = 0;
+	scan->unique_tuple_mark = 0;
 
 	pgstat_initstats(&scan->xs_pgstat_info, indexRelation);
 
