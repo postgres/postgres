@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.148 2004/07/19 02:47:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.149 2004/07/19 14:34:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3196,8 +3196,6 @@ readRecoveryCommandFile(void)
 			recoveryTargetExact = true;
 		}
 		else if (strcmp(tok1,"recovery_target_time") == 0) {
-			struct  tm tm;
-
 			/*
 			 * if recovery_target_xid specified, then this overrides
 			 * recovery_target_time
@@ -3207,23 +3205,17 @@ readRecoveryCommandFile(void)
 			recoveryTarget = true;
 			recoveryTargetExact = false;
 			/*
-			 * convert the time string given
-			 * by the user to the time_t format.
+			 * Convert the time string given by the user to the time_t format.
+			 * We use type abstime's input converter because we know abstime
+			 * has the same representation as time_t.
 			 */
-			if (strptime(tok2, "%Y-%m-%d %H:%M:%S", &tm) == NULL)
-				ereport(FATAL,
-						(errmsg("invalid recovery_target_time \"%s\"",
-								tok2),
-						 errhint("Correct format is YYYY-MM-DD hh:mm:ss.")));
-			recoveryTargetTime = mktime(&tm);
-			if (recoveryTargetTime == (time_t) -1)
-				ereport(FATAL,
-						(errmsg("invalid recovery_target_time \"%s\"",
-								tok2),
-						 errhint("Correct format is YYYY-MM-DD hh:mm:ss.")));
+			recoveryTargetTime = (time_t)
+				DatumGetAbsoluteTime(DirectFunctionCall1(abstimein,
+														 CStringGetDatum(tok2)));
 			ereport(LOG,
 					(errmsg("recovery_target_time = %s",
-							tok2)));
+							DatumGetCString(DirectFunctionCall1(abstimeout,
+																AbsoluteTimeGetDatum((AbsoluteTime) recoveryTargetTime))))));
 		}
 		else if (strcmp(tok1,"recovery_target_inclusive") == 0) {
 			/*

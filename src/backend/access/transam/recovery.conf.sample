@@ -3,12 +3,12 @@
 # -------------------------------
 #
 # Edit this file to provide the parameters that PostgreSQL
-# needs to perform an archive recovery of a database
+# needs to perform an archive recovery of a database.
 #
 # If "recovery.conf" is present in the PostgreSQL data directory, it is
 # read on postmaster startup.  After successful recovery, it is renamed
-# to "recovery.done" to ensure that we do not accidentally re-enter archive
-# recovery mode.
+# to "recovery.done" to ensure that we do not accidentally re-enter
+# archive recovery mode.
 #
 # This file consists of lines of the form:
 #
@@ -18,15 +18,15 @@
 #
 # Comments are introduced with '#'.
 #
-# The complete list of option names and
-# allowed values can be found in the PostgreSQL documentation. The
-# commented-out settings shown below are sample values.
+# The complete list of option names and allowed values can be found
+# in the PostgreSQL documentation. The commented-out settings shown below
+# are example values.
 #
 #---------------------------------------------------------------------------
 # REQUIRED PARAMETERS
 #---------------------------------------------------------------------------
 #
-# restore command
+# restore_command
 #
 # specifies the shell command that is executed to copy log files
 # back from archival storage.  The command string may contain %f,
@@ -50,21 +50,17 @@
 #
 # By default, recovery will rollforward to the end of the WAL log.
 # If you want to stop rollforward before that point, you
-# MUST set a recovery target.
+# must set a recovery target.
 #
 # You may set a recovery target either by transactionId, or
 # by timestamp. Recovery may either include or exclude the
-# records with the recovery target value (ie, stop either just
-# after or just before the given target).
+# transaction(s) with the recovery target value (ie, stop either
+# just after or just before the given target, respectively).
 #
-#recovery_target_time = '2004-07-14 22:39:00'
+#recovery_target_time = '2004-07-14 22:39:00 EST'
 #
-# note: target time is interpreted by strptime() and must therefore be
-# given in your system's default timezone.
+#recovery_target_xid = '1100842'
 #
-#recovery_target_xid = '11000'
-#
-# true or false
-#recovery_target_inclusive = 'true'
+#recovery_target_inclusive = 'true'		# 'true' or 'false'
 #
 #---------------------------------------------------------------------------
