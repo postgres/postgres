@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.62 2001/01/10 01:12:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.63 2001/01/12 01:22:21 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -157,7 +157,7 @@ copy_heap(Oid OIDOldHeap, char *NewName, bool istemp)
 	 * Need to make a copy of the tuple descriptor,
 	 * since heap_create_with_catalog modifies it.
 	 */
-	tupdesc = CreateTupleDescCopy(OldHeapDesc);
+	tupdesc = CreateTupleDescCopyConstr(OldHeapDesc);
 
 	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc,
 										  RELKIND_RELATION, istemp,
