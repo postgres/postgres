@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.8 2000/03/31 03:27:40 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.9 2000/09/12 05:34:28 thomas Exp $
 -->
 
  <chapter id="overview">
@@ -258,31 +258,28 @@ $Header: /cvsroot/pgsql/doc/src/sgml/arch-dev.sgml,v 2.8 2000/03/31 03:27:40 tho
      <productname>Postgres</productname>
      for the processing of a query we use an example to illustrate the
      changes made to these data structures in every stage.
-    </para>
+     This example contains the following simple query that will be used in
+     various descriptions and figures throughout the following
+     sections. The query assumes that the tables given in
+     <citetitle>The Supplier Database</citetitle>
+     <!--
+     XXX The above citetitle should really be an xref,
+     but that part has not yet been converted from Stefan's original document.
+     - thomas 1999-02-11
+    <xref linkend="supplier" endterm="supplier">
+     -->
+     have already been defined.
 
-    <example id="simple-select">
-     <title>A Simple Select</title>
-
-     <para>
-      This example contains the following simple query that will be used in
-      various descriptions and figures throughout the following
-      sections. The query assumes that the tables given in
-      <citetitle>The Supplier Database</citetitle>
-      <!--
-      XXX The above citetitle should really be an xref,
-      but that part has not yet been converted from Stefan's original document.
-      - thomas 1999-02-11
-      <xref linkend="supplier" endterm="supplier">
-      -->
-      have already been defined.
+     <example id="simple-select">
+      <title>A Simple Select</title>
 
       <programlisting>
 select s.sname, se.pno
     from supplier s, sells se
     where s.sno > 2 and s.sno = se.sno;
       </programlisting>
-     </para>
-    </example>
+     </example>
+    </para>
 
     <para>
      Figure \ref{parsetree} shows the <firstterm>parse tree</firstterm> built by the
