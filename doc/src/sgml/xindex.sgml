@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.30 2003/04/13 09:57:35 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xindex.sgml,v 1.31 2003/08/17 22:09:00 tgl Exp $
 -->
 
 <sect1 id="xindex">
@@ -452,7 +452,7 @@ CREATE OPERATOR = (
 </programlisting>
    It is important to specify the restriction and join selectivity
    functions, otherwise the optimizer will be unable to make effective
-   use of the index.  Note that there less-than, equal, and
+   use of the index.  Note that the less-than, equal, and
    greater-than cases should use different selectivity functions.
   </para>
 
@@ -551,13 +551,68 @@ CREATE OPERATOR CLASS complex_abs_ops
   </para>
  </sect2>
 
+ <sect2 id="xindex-opclass-dependencies">
+  <title>System Dependencies on Operator Classes</title>
+
+   <indexterm>
+    <primary>ordering operator</primary>
+   </indexterm>
+
+  <para>
+   <productname>PostgreSQL</productname> uses operator classes to infer the
+   properties of operators in more ways than just whether they can be used
+   with indexes.  Therefore, you might want to create operator classes
+   even if you have no intention of indexing any columns of your datatype.
+  </para>
+
+  <para>
+   In particular, there are SQL features such as <literal>ORDER BY</> and
+   <literal>DISTINCT</> that require comparison and sorting of values.
+   To implement these features on a user-defined datatype,
+   <productname>PostgreSQL</productname> looks for the default B-tree operator
+   class for the datatype.  The <quote>equals</> member of this operator
+   class defines the system's notion of equality of values for
+   <literal>GROUP BY</> and <literal>DISTINCT</>, and the sort ordering
+   imposed by the operator class defines the default <literal>ORDER BY</>
+   ordering.
+  </para>
+
+  <para>
+   Comparison of arrays of user-defined types also relies on the semantics
+   defined by the default B-tree operator class.
+  </para>
+
+  <para>
+   If there is no default B-tree operator class for a datatype, the system
+   will look for a default hash operator class.  But since that kind of
+   operator class only provides equality, in practice it is only enough
+   to support array equality.
+  </para>
+
+  <para>
+   When there is no default operator class for a datatype, you will get
+   errors like <quote>could not identify an ordering operator</> if you
+   try to use these SQL features with the datatype.
+  </para>
+
+   <note>
+    <para>
+     In <ProductName>PostgreSQL</ProductName> versions before 7.4,
+     sorting and grouping operations would implicitly use operators named
+     <literal>=</>, <literal>&lt;</>, and <literal>&gt;</>.  The new
+     behavior of relying on default operator classes avoids having to make
+     any assumption about the behavior of operators with particular names.
+    </para>
+   </note>
+ </sect2>
+
  <sect2 id="xindex-opclass-features">
   <title>Special Features of Operator Classes</title>
 
   <para>
    There are two special features of operator classes that we have
-   not discussed yet, mainly because they are not very useful
-   with the default B-tree index method.
+   not discussed yet, mainly because they are not useful
+   with the most commonly used index methods.
   </para>
 
   <para>

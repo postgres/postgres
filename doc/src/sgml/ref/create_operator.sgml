@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.35 2003/04/22 10:08:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_operator.sgml,v 1.36 2003/08/17 22:09:00 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -43,17 +43,11 @@ CREATE OPERATOR <replaceable>name</replaceable> (
    The operator name is a sequence of up to <symbol>NAMEDATALEN</>-1
    (63 by default) characters from the following list:
 <literallayout>
-+ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ? $
++ - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ?
 </literallayout>
 
    There are a few restrictions on your choice of name:
    <itemizedlist>
-    <listitem>
-     <para>
-     <literal>$</literal> cannot be defined as a single-character operator,
-     although it can be part of a multicharacter operator name.
-     </para>
-    </listitem>
     <listitem>
      <para>
      <literal>--</literal> and <literal>/*</literal> cannot appear anywhere in an operator name,
@@ -66,7 +60,7 @@ CREATE OPERATOR <replaceable>name</replaceable> (
      <literal>-</literal>,
      unless the name also contains at least one of these characters:
 <literallayout>
-~ ! @ # % ^ &amp; | ` ? $
+~ ! @ # % ^ &amp; | ` ?
 </literallayout>
      For example, <literal>@-</literal> is an allowed operator name,
      but <literal>*-</literal> is not.

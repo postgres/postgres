@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.24 2003/06/22 22:04:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xoper.sgml,v 1.25 2003/08/17 22:09:00 tgl Exp $
 -->
 
  <sect1 id="xoper">
@@ -468,17 +468,6 @@ table1.column1 OP table2.column2
      The function underlying a mergejoinable operator must be marked
      immutable or stable.  If it is volatile, the system will never
      attempt to use the operator for a merge join.
-    </para>
-    </note>
-
-    <note>
-    <para>
-     <literal>GROUP BY</> and <literal>DISTINCT</> operations require each
-     datatype being grouped or compared to have a mergejoinable
-     equality operator named <literal>=</>.  The equality operator and its
-     associated <literal>SORT1</> operator are used to implement these
-     operations.  Also, the associated <literal>SORT1</> operator is the
-     default ordering operator for <literal>ORDER BY</>.
     </para>
     </note>
 
