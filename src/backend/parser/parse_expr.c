@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.71 2000/02/26 21:11:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.72 2000/03/07 23:30:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,19 +78,21 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				ParamNo    *pno = (ParamNo *) expr;
 				int			paramno = pno->number;
 				Oid			toid = param_type(paramno);
-				Param	   *param;
+				Param	   *param = makeNode(Param);
 
 				if (!OidIsValid(toid))
 					elog(ERROR, "Parameter '$%d' is out of range", paramno);
-				param = makeNode(Param);
 				param->paramkind = PARAM_NUM;
 				param->paramid = (AttrNumber) paramno;
 				param->paramname = "<unnamed>";
-				param->paramtype = (Oid) toid;
-				param->param_tlist = (List *) NULL;
+				param->paramtype = toid;
+				param->param_tlist = NIL;
 				result = transformIndirection(pstate, (Node *) param,
 											  pno->indirection);
-				/* XXX what about cast (typename) applied to Param ??? */
+				/* cope with typecast applied to param */
+				if (pno->typename != NULL)
+					result = parser_typecast_expression(pstate, result,
+														pno->typename);
 				break;
 			}
 		case T_TypeCast:
@@ -732,6 +734,7 @@ exprTypmod(Node *expr)
  * We assume that a two-argument function named for a datatype, whose
  * output and first argument types are that datatype, and whose second
  * input is an int32 constant, represents a forced length coercion.
+ *
  * XXX It'd be better if the parsetree retained some explicit indication
  * of the coercion, so we didn't need these heuristics.
  */
