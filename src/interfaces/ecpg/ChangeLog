@@ -1895,3 +1895,8 @@ Mon Jan 10 13:55:32 CET 2005
 	- Set compat library version to 1.2.
 	- Set ecpg library version to 4.2.
 
+Tue Jan 25 13:47:45 CET 2005
+
+	- Fixed segfault in preprocessor due to free a struct twice.
+	- Set ecpg version to 3.2.1.
+

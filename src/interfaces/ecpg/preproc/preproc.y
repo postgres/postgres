@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.303 2005/01/10 12:58:30 meskes Exp $ */
+/* $PostgreSQL: pgsql/src/interfaces/ecpg/preproc/preproc.y,v 1.304 2005/01/25 12:51:31 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -4690,7 +4690,7 @@ type_declaration: S_TYPEDEF
 			this->type->type_index = length;    /* length of string */
 			this->type->type_sizeof = ECPGstruct_sizeof;
 			this->struct_member_list = ($3.type_enum == ECPGt_struct || $3.type_enum == ECPGt_union) ?
-				struct_member_list[struct_level] : NULL;
+				ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
 
 			if ($3.type_enum != ECPGt_varchar &&
 			    $3.type_enum != ECPGt_char &&
@@ -5556,7 +5556,7 @@ ECPGTypedef: TYPE_P
 				this->type->type_index = length;	/* length of string */
 				this->type->type_sizeof = ECPGstruct_sizeof;
 				this->struct_member_list = ($5.type_enum == ECPGt_struct || $5.type_enum == ECPGt_union) ?
-					struct_member_list[struct_level] : NULL;
+					ECPGstruct_member_dup(struct_member_list[struct_level]) : NULL;
 
 				if ($5.type_enum != ECPGt_varchar &&
 					$5.type_enum != ECPGt_char &&
