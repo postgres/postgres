@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.14 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.c,v 1.15 2000/02/20 02:37:40 tgl Exp $
  */
 #include "postgres.h"
 #include "common.h"
@@ -301,7 +301,7 @@ PSQLexec(const char *query)
 	{
         if (!pset.cur_cmd_interactive)
         {
-            psql_error("connection to server was lost");
+            psql_error("connection to server was lost\n");
             exit(EXIT_BADCONN);
         }
 		fputs("The connection to the server was lost. Attempting reset: ", stderr);
@@ -479,7 +479,7 @@ SendQuery(const char *query)
 		{
             if (!pset.cur_cmd_interactive)
             {
-                psql_error("connection to server was lost");
+                psql_error("connection to server was lost\n");
                 exit(EXIT_BADCONN);
             }
 			fputs("The connection to the server was lost. Attempting reset: ", stderr);

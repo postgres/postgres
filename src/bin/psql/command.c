@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.20 2000/02/19 05:01:15 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.21 2000/02/20 02:37:40 tgl Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -308,7 +308,7 @@ exec_command(const char *cmd,
 
         if (!query_buf)
         {
-            psql_error("no query buffer");
+            psql_error("no query buffer\n");
             status = CMD_ERROR;
         }
         else
@@ -586,7 +586,7 @@ exec_command(const char *cmd,
                 newval = realloc(newval, strlen(newval) + strlen(opt) + 1);
                 if (!newval)
                 {
-                    psql_error("out of memory");
+                    psql_error("out of memory\n");
                     exit(EXIT_FAILURE);
                 }
                 strcat(newval, opt);
@@ -622,7 +622,7 @@ exec_command(const char *cmd,
         char * opt = scan_option(&string, OT_NORMAL, NULL);
         if (!opt)
         {
-            psql_error("\\%s: missing required argument", cmd);
+            psql_error("\\%s: missing required argument\n", cmd);
             success = false;
         }
         if (!SetVariable(pset.vars, opt, NULL))
@@ -642,7 +642,7 @@ exec_command(const char *cmd,
 
         if (!query_buf)
         {
-            psql_error("no query buffer");
+            psql_error("no query buffer\n");
             status = CMD_ERROR;
         }
         else

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.12 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.13 2000/02/20 02:37:40 tgl Exp $
  */
 
 /*-----------
@@ -726,7 +726,7 @@ PGresult * exec_query(char * query)
 
     if (result != NULL && PQresultStatus(result) != PGRES_TUPLES_OK) {
 #if 0
-        psql_error("tab completion: %s failed - %s", 
+        psql_error("tab completion: %s failed - %s\n", 
                    query, PQresStatus(PQresultStatus(result)));
 #endif
         PQclear(result);

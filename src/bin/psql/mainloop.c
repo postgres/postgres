@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.20 2000/02/16 13:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.21 2000/02/20 02:37:40 tgl Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -73,7 +73,7 @@ MainLoop(FILE *source)
     previous_buf = createPQExpBuffer();
 	if (!query_buf || !previous_buf)
 	{
-        psql_error("out of memory");
+        psql_error("out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -311,7 +311,7 @@ MainLoop(FILE *source)
                     new = malloc(len + out_length - (1 + in_length) + 1);
                     if (!new)
                     {
-                        psql_error("out of memory");
+                        psql_error("out of memory\n");
                         exit(EXIT_FAILURE);
                     }
 

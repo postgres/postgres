@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.20 2000/02/19 05:01:16 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/help.c,v 1.21 2000/02/20 02:37:40 tgl Exp $
  */
 #include "postgres.h"
 #include "help.h"
@@ -57,7 +57,7 @@ usage(void)
 			user = pw->pw_name;
 		else
 		{
-			psql_error("could not get current user name: %s", strerror(errno));
+			psql_error("could not get current user name: %s\n", strerror(errno));
 			exit(EXIT_FAILURE);
 		}
 #else
