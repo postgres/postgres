@@ -8,7 +8,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.9 1998/08/22 05:19:21 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/destroyuser/Attic/destroyuser.sh,v 1.10 1998/09/01 15:57:00 thomas Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -90,7 +90,7 @@ fi
 
 if [ -z "$DELUSER" ]
 then
-    echo OPT_DASH_N_PARAM "Enter name of user to delete ---> OPT_BACKSLASH_C_PARAM"
+    echo PG_OPT_DASH_N_PARAM "Enter name of user to delete ---> PG_OPT_BACKSLASH_C_PARAM"
     read DELUSER
 fi
 
@@ -154,7 +154,7 @@ then
     yn=f
     while [ $yn != y -a $yn != n ]
     do
-        echo OPT_DASH_N_PARAM "Deleting user $DELUSER will destroy them. Continue (y/n)? OPT_BACKSLASH_C_PARAM"
+        echo PG_OPT_DASH_N_PARAM "Deleting user $DELUSER will destroy them. Continue (y/n)? PG_OPT_BACKSLASH_C_PARAM"
         read yn
     done
 
