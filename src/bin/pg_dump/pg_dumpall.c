@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.32 2004/05/12 13:38:44 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.33 2004/05/14 17:04:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,8 +123,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if ((ret = find_other_exec(pg_dump_bin, argv[0], "pg_dump",
-						   PG_VERSIONSTR)) < 0)
+	if ((ret = find_other_exec(argv[0], "pg_dump", PG_VERSIONSTR,
+							   pg_dump_bin)) < 0)
 	{
 		if (ret == -1)
 			fprintf(stderr,

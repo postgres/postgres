@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.386 2004/05/13 22:45:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.387 2004/05/14 17:04:44 momjian Exp $
  *
  * NOTES
  *
@@ -693,13 +693,13 @@ PostmasterMain(int argc, char *argv[])
 	/*
 	 * On some systems our dynloader code needs the executable's pathname.
 	 */
-	if (find_my_exec(my_exec_path, argv[0]) < 0)
+	if (find_my_exec(argv[0], my_exec_path) < 0)
 		ereport(FATAL,
 				(errmsg("%s: could not locate my own executable path",
 						progname)));
 
 #ifdef EXEC_BACKEND
-	if (find_other_exec(postgres_exec_path, argv[0], "postgres", PG_VERSIONSTR) < 0)
+	if (find_other_exec(argv[0], "postgres", PG_VERSIONSTR, postgres_exec_path) < 0)
 		ereport(FATAL,
 				(errmsg("%s: could not locate postgres executable or non-matching version",
 						progname)));

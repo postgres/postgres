@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.4 2004/05/13 22:45:04 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.5 2004/05/14 17:04:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,7 +177,7 @@ validate_exec(char *path)
  * non-threaded binaries, not in library routines.
  */
 int
-find_my_exec(char *full_path, const char *argv0)
+find_my_exec(const char *argv0, char *full_path)
 {
 	char		buf[MAXPGPATH + 2];
 	char	   *p;
@@ -272,14 +272,14 @@ find_my_exec(char *full_path, const char *argv0)
  * Find our binary directory, then make sure the "target" executable
  * is the proper version.
  */
-int find_other_exec(char *retpath, const char *argv0,
-			    char const *target, const char *versionstr)
+int find_other_exec(const char *argv0, char const *target,
+					const char *versionstr, char *retpath)
 {
 	char		cmd[MAXPGPATH];
 	char		line[100];
 	FILE	   *pgver;
 
-	if (find_my_exec(retpath, argv0) < 0)
+	if (find_my_exec(argv0, retpath) < 0)
 		return -1;
 
 	/* Trim off program name and keep just directory */	

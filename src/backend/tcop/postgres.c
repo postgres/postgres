@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.405 2004/05/13 22:45:03 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.406 2004/05/14 17:04:45 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -2648,7 +2648,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 		/*
 		 * On some systems our dynloader code needs the executable's pathname.
 		 */
-		if (strlen(my_exec_path) == 0 && find_my_exec(my_exec_path, argv[0]) < 0)
+		if (strlen(my_exec_path) == 0 && find_my_exec(argv[0], my_exec_path) < 0)
 			ereport(FATAL,
 					(errmsg("%s: could not locate postgres executable",
 							argv[0])));
