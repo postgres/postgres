@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.28 2001/03/22 06:16:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.29 2001/04/06 02:06:48 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -83,6 +83,28 @@ char	   *plpgsql_error_funcname;
 int			plpgsql_DumpExecTree = 0;
 
 PLpgSQL_function *plpgsql_curr_compile;
+
+
+/*
+ * This routine is a crock, and so is everyplace that calls it.  The problem
+ * is that the compiled form of a plpgsql function is allocated permanently
+ * (mostly via malloc()) and never released until backend exit.  Subsidiary
+ * data structures such as fmgr info records therefore must live forever
+ * as well.  A better implementation would store all this stuff in a per-
+ * function memory context that could be reclaimed at need.  In the meantime,
+ * fmgr_info must be called in TopMemoryContext so that whatever it might
+ * allocate, and whatever the eventual function might allocate using fn_mcxt,
+ * will live forever too.
+ */
+static void
+perm_fmgr_info(Oid functionId, FmgrInfo *finfo)
+{
+	MemoryContext	oldcontext;
+
+	oldcontext = MemoryContextSwitchTo(TopMemoryContext);
+	fmgr_info(functionId, finfo);
+	MemoryContextSwitchTo(oldcontext);
+}
 
 
 /* ----------
@@ -184,7 +206,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 				function->fn_retbyval = typeStruct->typbyval;
 				function->fn_rettyplen = typeStruct->typlen;
 				function->fn_rettypelem = typeStruct->typelem;
-				fmgr_info(typeStruct->typinput, &(function->fn_retinput));
+				perm_fmgr_info(typeStruct->typinput, &(function->fn_retinput));
 			}
 			ReleaseSysCache(typeTup);
 
@@ -257,7 +279,7 @@ plpgsql_compile(Oid fn_oid, int functype)
 					var->datatype->typname = DatumGetCString(DirectFunctionCall1(nameout,
 								  NameGetDatum(&(typeStruct->typname))));
 					var->datatype->typoid = procStruct->proargtypes[i];
-					fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
+					perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 					var->datatype->typelem = typeStruct->typelem;
 					var->datatype->typbyval = typeStruct->typbyval;
 					var->datatype->atttypmod = -1;
@@ -607,7 +629,7 @@ plpgsql_parse_word(char *word)
 		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
 								  NameGetDatum(&(typeStruct->typname))));
 		typ->typoid = typeTup->t_data->t_oid;
-		fmgr_info(typeStruct->typinput, &(typ->typinput));
+		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
 		typ->typbyval = typeStruct->typbyval;
 		typ->atttypmod = -1;
@@ -923,7 +945,7 @@ plpgsql_parse_wordtype(char *word)
 		typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
 								  NameGetDatum(&(typeStruct->typname))));
 		typ->typoid = typeTup->t_data->t_oid;
-		fmgr_info(typeStruct->typinput, &(typ->typinput));
+		perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 		typ->typelem = typeStruct->typelem;
 		typ->typbyval = typeStruct->typbyval;
 		typ->atttypmod = -1;
@@ -1066,7 +1088,7 @@ plpgsql_parse_dblwordtype(char *string)
 	typ->typname = DatumGetCString(DirectFunctionCall1(nameout,
 								  NameGetDatum(&(typeStruct->typname))));
 	typ->typoid = typetup->t_data->t_oid;
-	fmgr_info(typeStruct->typinput, &(typ->typinput));
+	perm_fmgr_info(typeStruct->typinput, &(typ->typinput));
 	typ->typelem = typeStruct->typelem;
 	typ->typbyval = typeStruct->typbyval;
 	typ->atttypmod = attrStruct->atttypmod;
@@ -1200,7 +1222,7 @@ plpgsql_parse_wordrowtype(char *string)
 		var->datatype = malloc(sizeof(PLpgSQL_type));
 		var->datatype->typname = strdup(NameStr(typeStruct->typname));
 		var->datatype->typoid = typetup->t_data->t_oid;
-		fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
+		perm_fmgr_info(typeStruct->typinput, &(var->datatype->typinput));
 		var->datatype->typelem = typeStruct->typelem;
 		var->datatype->typbyval = typeStruct->typbyval;
 		var->datatype->atttypmod = attrStruct->atttypmod;
