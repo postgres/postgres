@@ -17,16 +17,28 @@
 #include <dlfcn.h>
 #include "utils/dynamic_loader.h"
 
- /* dynloader.c */
 /*
  * Dynamic Loader on Intel x86/Windows NT
  *
  * this dynamic loader uses the system dynamic loading interface for shared
  * libraries (ie. dlopen/dlsym/dlclose). The user must specify a shared
  * library as the file to be dynamically loaded.
- *
-  */
-#define pg_dlopen(f)		dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
+ */
+
+/*
+ * In some older systems, the RTLD_NOW flag isn't defined and the mode
+ * argument to dlopen must always be 1.  The RTLD_GLOBAL flag is wanted
+ * if available, but it doesn't exist everywhere.
+ * If it doesn't exist, set it to 0 so it has no effect.
+ */
+#ifndef RTLD_NOW
+#define RTLD_NOW 1
+#endif
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+
+#define pg_dlopen(f)	dlopen((f), RTLD_NOW | RTLD_GLOBAL)
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror

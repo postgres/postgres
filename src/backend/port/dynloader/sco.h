@@ -1,13 +1,13 @@
 /*-------------------------------------------------------------------------
  *
- * port_protos.h
+ * sco.h
  *	  port-specific prototypes for SCO 3.2v5.2
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sco.h,v 1.11 2001/11/05 17:46:27 momjian Exp $
+ * $Id: sco.h,v 1.12 2002/02/12 23:40:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,20 +17,30 @@
 #include <dlfcn.h>
 #include "utils/dynamic_loader.h"
 
-/* dynloader.c */
 /*
  * Dynamic Loader on SCO 3.2v5.0.2
  *
  * this dynamic loader uses the system dynamic loading interface for shared
  * libraries (ie. dlopen/dlsym/dlclose). The user must specify a shared
  * library as the file to be dynamically loaded.
- *
  */
-#define pg_dlopen(f)	dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
+
+/*
+ * In some older systems, the RTLD_NOW flag isn't defined and the mode
+ * argument to dlopen must always be 1.  The RTLD_GLOBAL flag is wanted
+ * if available, but it doesn't exist everywhere.
+ * If it doesn't exist, set it to 0 so it has no effect.
+ */
+#ifndef RTLD_NOW
+#define RTLD_NOW 1
+#endif
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+
+#define pg_dlopen(f)	dlopen((f), RTLD_NOW | RTLD_GLOBAL)
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
-
-/* port.c */
 
 #endif   /* PORT_PROTOS_H */

@@ -1,12 +1,12 @@
 /*-------------------------------------------------------------------------
  *
- * Dynamic loader interface for BSD/OS
- *
+ * bsdi.h
+ *		Dynamic loader interface for BSD/OS
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * port_protos.h,v 1.2 1995/05/25 22:51:03 andrew Exp
+ * $Id: bsdi.h,v 1.15 2002/02/12 23:39:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,21 @@
 #ifdef HAVE_DLOPEN
 
 #include <dlfcn.h>
-#define		  pg_dlopen(f)	  dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
+
+/*
+ * In some older systems, the RTLD_NOW flag isn't defined and the mode
+ * argument to dlopen must always be 1.  The RTLD_GLOBAL flag is wanted
+ * if available, but it doesn't exist everywhere.
+ * If it doesn't exist, set it to 0 so it has no effect.
+ */
+#ifndef RTLD_NOW
+#define RTLD_NOW 1
+#endif
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+
+#define		  pg_dlopen(f)	  dlopen((f), RTLD_NOW | RTLD_GLOBAL)
 #define		  pg_dlsym		  dlsym
 #define		  pg_dlclose	  dlclose
 #define		  pg_dlerror	  dlerror
@@ -32,6 +46,7 @@ do { \
 	dld_unlink_by_file(handle, 1); \
 	free(handle); \
 } while (0)
+
 #endif   /* not HAVE_DLOPEN */
 
 #endif   /* PORT_PROTOS_H */

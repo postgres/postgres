@@ -1,34 +1,46 @@
 /*-------------------------------------------------------------------------
  *
- * dynloader.h
+ * svr4.h
  *	  port-specific prototypes for Intel x86/Intel SVR4
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: svr4.h,v 1.11 2001/11/05 17:46:27 momjian Exp $
+ * $Id: svr4.h,v 1.12 2002/02/12 23:41:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#ifndef DYNLOADER_H
-#define DYNLOADER_H
+#ifndef PORT_PROTOS_H
+#define PORT_PROTOS_H
 
 #include <dlfcn.h>
 #include "utils/dynamic_loader.h"
 
-/* dynloader.h */
 /*
  * Dynamic Loader on Intel x86/Intel SVR4.
  *
  * this dynamic loader uses the system dynamic loading interface for shared
  * libraries (ie. dlopen/dlsym/dlclose). The user must specify a shared
  * library as the file to be dynamically loaded.
- *
  */
-#define pg_dlopen(f)	dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
+
+/*
+ * In some older systems, the RTLD_NOW flag isn't defined and the mode
+ * argument to dlopen must always be 1.  The RTLD_GLOBAL flag is wanted
+ * if available, but it doesn't exist everywhere.
+ * If it doesn't exist, set it to 0 so it has no effect.
+ */
+#ifndef RTLD_NOW
+#define RTLD_NOW 1
+#endif
+#ifndef RTLD_GLOBAL
+#define RTLD_GLOBAL 0
+#endif
+
+#define pg_dlopen(f)	dlopen((f), RTLD_NOW | RTLD_GLOBAL)
 #define pg_dlsym		dlsym
 #define pg_dlclose		dlclose
 #define pg_dlerror		dlerror
 
-#endif   /* DYNLOADER_H */
+#endif   /* PORT_PROTOS_H */

@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.10 2001/11/08 20:37:52 momjian Exp $
+ * $Id: aix.h,v 1.11 2002/02/12 23:39:46 tgl Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -57,7 +57,7 @@ int			dlclose();
 
 #include "utils/dynamic_loader.h"
 
-#define  pg_dlopen(f)	dlopen((f), RTLD_LAZY | RTLD_GLOBAL)
+#define  pg_dlopen(f)	dlopen((f), RTLD_NOW | RTLD_GLOBAL)
 #define  pg_dlsym	dlsym
 #define  pg_dlclose dlclose
 #define  pg_dlerror dlerror
