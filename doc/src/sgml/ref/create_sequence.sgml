@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.16 2001/06/23 00:07:33 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_sequence.sgml,v 1.17 2001/06/30 22:01:17 petere Exp $
 Postgres documentation
 -->
 
@@ -50,7 +50,6 @@ CREATE [ TEMPORARY | TEMP ] SEQUENCE <replaceable class="parameter">seqname</rep
       </listitem>
      </varlistentry>
 
-    <variablelist>
      <varlistentry>
       <term><replaceable class="parameter">seqname</replaceable></term>
       <listitem>
