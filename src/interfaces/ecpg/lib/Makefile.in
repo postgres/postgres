@@ -31,7 +31,7 @@ ifeq ($(PORTNAME), bsd)
     CFLAGS += $(CFLAGS_SL)
   endif
 endif
-#ifeq ($(PORTNAME), i386_solaris)
+#ifeq ($(PORTNAME), solaris)
 #  install-shlib-dep := install-shlib
 #  shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
 #  LDFLAGS_SL = -G -z text

@@ -169,17 +169,6 @@ The 'expected' files
   careful (?) inspection. Many of the development machines are running a
   Unix OS variant (FreeBSD, Linux, etc) on Ix86 hardware.
 
-  The original 'expected.input' file was created on a SPARC Solaris 2.4
-  system using the 'postgres5-1.02a5.tar.gz' source tree. It was compared
-  with a file created on an I386 Solaris 2.4 system and the differences
-  were only in the floating point polygons in the 3rd digit to the right
-  of the decimal point. (see below)
-
-  The original 'sample.regress.out' file was from the postgres-1.01 release
-  constructed by Jolly Chen and is included here for reference. It may
-  have been created on a DEC ALPHA machine as the 'Makefile.global'
-  in the postgres-1.01 release has PORTNAME=alpha.
-
 Current release notes (Thomas.Lockhart@jpl.nasa.gov)
 
   The regression tests have been adapted and extensively modified for the
