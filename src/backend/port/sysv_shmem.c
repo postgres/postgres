@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.28 2004/01/07 18:56:27 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/sysv_shmem.c,v 1.29 2004/01/27 00:45:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 #include "miscadmin.h"
 #include "storage/ipc.h"
 #include "storage/pg_shmem.h"
+#include "libpq/pqsignal.h"
 
 
 typedef key_t IpcMemoryKey;		/* shared memory key passed to shmget(2) */
@@ -284,7 +285,7 @@ PGSharedMemoryCreate(uint32 size, bool makePrivate, int port)
 		hdr = (PGShmemHeader *) memAddress;
 		if (hdr->creatorPID != getpid())
 		{
-			if (kill(hdr->creatorPID, 0) == 0 || errno != ESRCH)
+			if (pqkill(hdr->creatorPID, 0) == 0 || errno != ESRCH)
 			{
 				shmdt(memAddress);
 				continue;		/* segment belongs to a live process */

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.362 2004/01/26 22:59:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/postmaster.c,v 1.363 2004/01/27 00:45:26 momjian Exp $
  *
  * NOTES
  *
@@ -1566,7 +1566,7 @@ processCancelRequest(Port *port, void *pkt)
 				ereport(DEBUG2,
 						(errmsg_internal("processing cancel request: sending SIGINT to process %d",
 										 backendPID)));
-				kill(bp->pid, SIGINT);
+				pqkill(bp->pid, SIGINT);
 			}
 			else
 				/* Right PID, wrong key: no way, Jose */
@@ -1738,7 +1738,7 @@ SIGHUP_handler(SIGNAL_ARGS)
 		 * will start a new one with a possibly changed config
 		 */
 		if (BgWriterPID != 0)
-			kill(BgWriterPID, SIGTERM);
+			pqkill(BgWriterPID, SIGTERM);
 	}
 
 	PG_SETMASK(&UnBlockSig);
@@ -1772,7 +1772,7 @@ pmdie(SIGNAL_ARGS)
 			 * Wait for children to end their work and ShutdownDataBase.
 			 */
 			if (BgWriterPID != 0)
-				kill(BgWriterPID, SIGTERM);
+				pqkill(BgWriterPID, SIGTERM);
 			if (Shutdown >= SmartShutdown)
 				break;
 			Shutdown = SmartShutdown;
@@ -1806,7 +1806,7 @@ pmdie(SIGNAL_ARGS)
 			 * and exit) and ShutdownDataBase when they are gone.
 			 */
 			if (BgWriterPID != 0)
-				kill(BgWriterPID, SIGTERM);
+				pqkill(BgWriterPID, SIGTERM);
 			if (Shutdown >= FastShutdown)
 				break;
 			ereport(LOG,
@@ -1854,13 +1854,13 @@ pmdie(SIGNAL_ARGS)
 			 * properly shutdown data base system.
 			 */
 			if (BgWriterPID != 0)
-				kill(BgWriterPID, SIGQUIT);
+				pqkill(BgWriterPID, SIGQUIT);
 			ereport(LOG,
 					(errmsg("received immediate shutdown request")));
 			if (ShutdownPID > 0)
-				kill(ShutdownPID, SIGQUIT);
+				pqkill(ShutdownPID, SIGQUIT);
 			if (StartupPID > 0)
-				kill(StartupPID, SIGQUIT);
+				pqkill(StartupPID, SIGQUIT);
 			if (DLGetHead(BackendList))
 				SignalChildren(SIGQUIT);
 			ExitPostmaster(0);
@@ -2130,7 +2130,7 @@ CleanupProc(int pid,
 						(errmsg_internal("sending %s to process %d",
 										 (SendStop ? "SIGSTOP" : "SIGQUIT"),
 										 (int) bp->pid)));
-				kill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
+				pqkill(bp->pid, (SendStop ? SIGSTOP : SIGQUIT));
 			}
 		}
 		else
@@ -2225,7 +2225,7 @@ SignalChildren(int signal)
 					(errmsg_internal("sending signal %d to process %d",
 									 signal,
 									 (int) bp->pid)));
-			kill(bp->pid, signal);
+			pqkill(bp->pid, signal);
 		}
 
 		curr = next;

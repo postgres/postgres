@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.71 2004/01/11 03:49:31 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/main/main.c,v 1.72 2004/01/27 00:45:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,9 @@
 #include "utils/help_config.h"
 #include "utils/ps_status.h"
 #include "pgstat.h"
+#ifdef WIN32
+#include "libpq/pqsignal.h"
+#endif
 
 
 
@@ -97,6 +100,8 @@ main(int argc, char *argv[])
 					argv[0], err);
 			exit(1);
 		}
+
+		pgwin32_signal_initialize();
 	}
 #endif
 
