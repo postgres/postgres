@@ -6,7 +6,7 @@
 --
 -- Copyright (c) 1994, Andrew Yu, University of California
 --
--- $Id: basics.source,v 1.1.1.1 1996/07/09 06:22:34 scrappy Exp $
+-- $Id: basics.source,v 1.2 1997/06/25 19:59:57 momjian Exp $
 --
 ---------------------------------------------------------------------------
 
@@ -23,7 +23,7 @@ CREATE TABLE weather (
 	temp_hi		int,		-- high temperature
 	prcp		float8,		-- precipitation
 	date		date
-)
+);
 
 CREATE TABLE cities (
 	name		varchar(80),
@@ -40,7 +40,7 @@ CREATE TABLE cities (
 --    the columns specified in CREATE TABLE.
 
 INSERT INTO weather 
-   VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994')
+   VALUES ('San Francisco', 46, 50, 0.25, '11/27/1994');
 
 INSERT INTO cities 
    VALUES ('San Francisco', '(-194.0, 53.0)');
@@ -50,7 +50,7 @@ INSERT INTO cities
 --    eg. unknown precipitation below)
 
 INSERT INTO weather (city, temp_lo, temp_hi, prcp, date)
-   VALUES ('San Francisco', 43, 57, 0.0, '11/29/1994')
+   VALUES ('San Francisco', 43, 57, 0.0, '11/29/1994');
 
 INSERT INTO weather (date, city, temp_hi, temp_lo)
    VALUES ('11/29/1994', 'Hayward', 54, 37);

@@ -93,8 +93,8 @@ main()
          << " i = (" << data.GetLength(i,i_fnum) << " bytes) " << *ival << "," << endl
          << " d = (" << data.GetLength(i,d_fnum) << " bytes) " << *dval << "," << endl
          << " p = (" << data.GetLength(i,d_fnum) << " bytes) " << pval->npts << " points"
-         << "\tboundbox = (hi=" << pval->boundbox.xh << "/" << pval->boundbox.yh << ","
-         << "lo = " << pval->boundbox.xl << "," << pval->boundbox.yl << ")" << endl;
+         << "\tboundbox = (hi=" << pval->boundbox.high.x << "/" << pval->boundbox.high.y << ","
+         << "lo = " << pval->boundbox.low.x << "," << pval->boundbox.low.y << ")" << endl;
 	   
     // Deallocate memory allocated for the Polygon structure
     free(pval);
