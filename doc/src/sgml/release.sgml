@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.217 2003/10/26 04:50:16 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.218 2003/10/27 02:51:39 momjian Exp $
 -->
 
 <appendix id="release">
@@ -249,10 +249,9 @@ required for those wishing to migrate data from any previous release.</para>
 <itemizedlist>
 <listitem><para>Add ON COMMIT clause to CREATE TABLE for temp tables (Gavin)</para></listitem>
 <listitem><para>Allow cursors outside transactions using WITH HOLD (Neil)</para></listitem>
-<listitem><para>Make MOVE/FETCH 0 now does nothing (Bruce)</para></listitem>
-<listitem><para>Cause MOVE/FETCH now returns the number of rows moved/fetched, or zero if at the beginning/end of cursor,
+<listitem><para>MOVE/FETCH 0 now does nothing (Bruce)</para></listitem>
+<listitem><para>Cause MOVE/FETCH to return the number of rows moved/fetched, or zero if at the beginning/end of cursor,
    per SQL spec (Bruce)</para></listitem>
-<listitem><para>Have MOVE return 0 or 1 depending on cursor position (Bruce)</para></listitem>
 <listitem><para>Properly handle SCROLL with cursors, or report an error (Neil)</para></listitem>
 <listitem><para>Implement SQL92-compatible FIRST, LAST, ABSOLUTE n, RELATIVE n options
    for FETCH and MOVE (Tom)</para></listitem>
