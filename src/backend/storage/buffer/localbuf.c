@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.41 2001/05/12 19:58:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.42 2002/05/03 17:42:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,10 +109,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 				  (char *) MAKE_PTR(bufHdr->data));
 		LocalBufferFlushCount++;
 
-		/*
-		 * drop relcache refcount incremented by
-		 * RelationIdCacheGetRelation
-		 */
+		/* drop refcount incremented by RelationNodeCacheGetRelation */
 		RelationDecrementReferenceCount(bufrel);
 	}
 
@@ -249,7 +246,7 @@ LocalBufferSync(void)
 			smgrmarkdirty(DEFAULT_SMGR, bufrel, buf->tag.blockNum);
 			LocalBufferFlushCount++;
 
-			/* drop relcache refcount from RelationIdCacheGetRelation */
+			/* drop relcache refcount from RelationNodeCacheGetRelation */
 			RelationDecrementReferenceCount(bufrel);
 
 			buf->flags &= ~BM_DIRTY;
