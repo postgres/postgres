@@ -188,7 +188,7 @@ struct sqlca
  char sqlerrp[8];
  long sqlerrd[6];
  /* 0: empty                                         */
- /* 1: empty                                         */
+ /* 1: OID of processed tuple if applicable          */
  /* 2: number of rows processed in an INSERT, UPDATE */
  /*    or DELETE statement                           */
  /* 3: empty                                         */
