@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.30 1999/02/12 06:43:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.31 1999/02/12 17:24:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -435,7 +435,7 @@ compute_attribute_width(TargetEntry *tlistentry)
  * Returns a fixnum.
  */
 int
-compute_joinrel_size(NestPath *joinpath)
+compute_joinrel_size(JoinPath *joinpath)
 {
 	Cost		temp = 1.0;
 	int			temp1 = 0;

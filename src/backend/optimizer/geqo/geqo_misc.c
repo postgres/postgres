@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.15 1999/02/12 06:43:26 momjian Exp $
+ * $Id: geqo_misc.c,v 1.16 1999/02/12 17:24:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -158,7 +158,7 @@ void
 geqo_print_path(Query *root, Path *path, int indent)
 {
 	char	   *ptype = NULL;
-	NestPath   *jp;
+	JoinPath   *jp;
 	bool		join = false;
 	int			i;
 
@@ -194,7 +194,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 	{
 		int			size = path->parent->size;
 
-		jp = (NestPath *) path;
+		jp = (JoinPath *) path;
 		printf("%s size=%d cost=%f\n", ptype, size, path->path_cost);
 		switch (nodeTag(path))
 		{
@@ -203,7 +203,7 @@ geqo_print_path(Query *root, Path *path, int indent)
 				for (i = 0; i < indent + 1; i++)
 					printf("\t");
 				printf("   clauses=(");
-				geqo_print_joinclauses(root, ((NestPath *) path)->pathinfo);
+				geqo_print_joinclauses(root, ((JoinPath *) path)->pathinfo);
 				printf(")\n");
 
 				if (nodeTag(path) == T_MergePath)

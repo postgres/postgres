@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.21 1999/02/12 06:43:47 momjian Exp $
+ * $Id: relation.h,v 1.22 1999/02/12 17:24:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -168,9 +168,11 @@ typedef struct NestPath
 	Path	   *innerjoinpath;
 } NestPath;
 
+typedef NestPath JoinPath;
+
 typedef struct MergePath
 {
-	NestPath	jpath;
+	JoinPath	jpath;
 	List	   *path_mergeclauses;
 	List	   *outersortkeys;
 	List	   *innersortkeys;
@@ -178,7 +180,7 @@ typedef struct MergePath
 
 typedef struct HashPath
 {
-	NestPath	jpath;
+	JoinPath	jpath;
 	List	   *path_hashclauses;
 	List	   *outerhashkeys;
 	List	   *innerhashkeys;
@@ -262,7 +264,7 @@ typedef struct Iter
 /*
 ** Stream:
 **	 A stream represents a root-to-leaf path in a plan tree (i.e. a tree of
-** NestPaths and Paths).  The stream includes pointers to all Path nodes,
+** JoinPaths and Paths).  The stream includes pointers to all Path nodes,
 ** as well as to any clauses that reside above Path nodes.	This structure
 ** is used to make Path nodes and clauses look similar, so that Predicate
 ** Migration can run.

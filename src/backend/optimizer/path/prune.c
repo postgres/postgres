@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.29 1999/02/12 06:43:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/prune.c,v 1.30 1999/02/12 17:24:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -92,17 +92,17 @@ rels_set_cheapest(List *rel_list)
 {
 	List	   *x = NIL;
 	RelOptInfo *rel = (RelOptInfo *) NULL;
-	NestPath	*cheapest;
+	JoinPath	*cheapest;
 
 	foreach(x, rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(x);
 
-		cheapest = (NestPath *) set_cheapest(rel, rel->pathlist);
+		cheapest = (JoinPath *) set_cheapest(rel, rel->pathlist);
 		if (IsA_JoinPath(cheapest))
 			rel->size = compute_joinrel_size(cheapest);
 		else
-			elog(ERROR, "non NestPath called");
+			elog(ERROR, "non JoinPath called");
 	}
 }
 

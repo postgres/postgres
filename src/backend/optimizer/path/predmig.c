@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.16 1999/02/12 06:43:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/Attic/predmig.c,v 1.17 1999/02/12 17:24:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,13 +53,13 @@
 												 * (not a join) iff it has
 												 * a non-NULL cinfo field */
 
-static void xfunc_predmig(NestPath pathnode, Stream streamroot,
+static void xfunc_predmig(JoinPath pathnode, Stream streamroot,
 			  Stream laststream, bool *progressp);
 static bool xfunc_series_llel(Stream stream);
 static bool xfunc_llel_chains(Stream root, Stream bottom);
 static Stream xfunc_complete_stream(Stream stream);
 static bool xfunc_prdmig_pullup(Stream origstream, Stream pullme,
-					NestPath joinpath);
+					JoinPath joinpath);
 static void xfunc_form_groups(Stream root, Stream bottom);
 static void xfunc_free_stream(Stream root);
 static Stream xfunc_add_clauses(Stream current);
@@ -91,8 +91,8 @@ xfunc_do_predmig(Path root)
 		do
 		{
 			progress = false;
-			Assert(IsA(root, NestPath));
-			xfunc_predmig((NestPath) root, (Stream) NULL, (Stream) NULL,
+			Assert(IsA(root, JoinPath));
+			xfunc_predmig((JoinPath) root, (Stream) NULL, (Stream) NULL,
 						  &progress);
 			if (changed && progress)
 				elog(DEBUG, "Needed to do a second round of predmig!\n");
@@ -111,7 +111,7 @@ xfunc_do_predmig(Path root)
  ** Destructively modifies the join tree (via predicate pullup).
  */
 static void
-xfunc_predmig(NestPath pathnode,/* root of the join tree */
+xfunc_predmig(JoinPath pathnode,/* root of the join tree */
 			  Stream streamroot,
 			  Stream laststream,/* for recursive calls -- these are the
 								 * root of the stream under construction,
@@ -161,11 +161,11 @@ xfunc_predmig(NestPath pathnode,/* root of the join tree */
 	else
 	{
 		/* visit left child */
-		xfunc_predmig((NestPath) get_outerjoinpath(pathnode),
+		xfunc_predmig((JoinPath) get_outerjoinpath(pathnode),
 					  streamroot, newstream, progressp);
 
 		/* visit right child */
-		xfunc_predmig((NestPath) get_innerjoinpath(pathnode),
+		xfunc_predmig((JoinPath) get_innerjoinpath(pathnode),
 					  streamroot, newstream, progressp);
 	}
 
@@ -257,7 +257,7 @@ xfunc_llel_chains(Stream root, Stream bottom)
 			 */
 			Assert(xfunc_num_relids(pathstream) > xfunc_num_relids(tmpstream));
 			progress = xfunc_prdmig_pullup(origstream, tmpstream,
-									(NestPath) get_pathptr(pathstream));
+									(JoinPath) get_pathptr(pathstream));
 		}
 		if (get_downstream(tmpstream))
 			pathstream = (Stream) xfunc_get_downjoin((Stream) get_downstream(tmpstream));
@@ -304,14 +304,14 @@ xfunc_complete_stream(Stream stream)
 
 /*
  ** xfunc_prdmig_pullup
- **    pullup a clause in a path above joinpath.  Since the NestPath tree
+ **    pullup a clause in a path above joinpath.  Since the JoinPath tree
  ** doesn't have upward pointers, it's difficult to deal with.	Thus we
  ** require the original stream, which maintains pointers to all the path
  ** nodes.	We use the original stream to find out what joins are
  ** above the clause.
  */
 static bool
-xfunc_prdmig_pullup(Stream origstream, Stream pullme, NestPath joinpath)
+xfunc_prdmig_pullup(Stream origstream, Stream pullme, JoinPath joinpath)
 {
 	RestrictInfo	restrictinfo = get_cinfo(pullme);
 	bool		progress = false;
@@ -333,7 +333,7 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, NestPath joinpath)
 	/* pull up this node as far as it should go */
 	for (upjoin = (Stream) xfunc_get_upjoin(orignode);
 		 upjoin != (Stream) NULL
-		 && (NestPath) get_pathptr((Stream) xfunc_get_downjoin(upjoin))
+		 && (JoinPath) get_pathptr((Stream) xfunc_get_downjoin(upjoin))
 		 != joinpath;
 		 upjoin = (Stream) xfunc_get_upjoin(upjoin))
 	{
@@ -342,12 +342,12 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, NestPath joinpath)
 #endif
 		/* move clause up in path */
 		if (get_pathptr((Stream) get_downstream(upjoin))
-		  == (pathPtr) get_outerjoinpath((NestPath) get_pathptr(upjoin)))
+		  == (pathPtr) get_outerjoinpath((JoinPath) get_pathptr(upjoin)))
 			whichchild = OUTER;
 		else
 			whichchild = INNER;
 		restrictinfo = xfunc_pullup((Path) get_pathptr((Stream) get_downstream(upjoin)),
-								  (NestPath) get_pathptr(upjoin),
+								  (JoinPath) get_pathptr(upjoin),
 								  restrictinfo,
 								  whichchild,
 								  get_clausetype(orignode));
@@ -366,10 +366,10 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, NestPath joinpath)
 				 temp = (Stream) get_downstream(temp))
 				set_pathptr
 					(temp, (pathPtr)
-					 get_outerjoinpath((NestPath) get_pathptr(upjoin)));
+					 get_outerjoinpath((JoinPath) get_pathptr(upjoin)));
 			set_pathptr
 				(temp,
-			(pathPtr) get_outerjoinpath((NestPath) get_pathptr(upjoin)));
+			(pathPtr) get_outerjoinpath((JoinPath) get_pathptr(upjoin)));
 		}
 		else
 		{
@@ -377,10 +377,10 @@ xfunc_prdmig_pullup(Stream origstream, Stream pullme, NestPath joinpath)
 				 temp = (Stream) get_downstream(temp))
 				set_pathptr
 					(temp, (pathPtr)
-					 get_innerjoinpath((NestPath) get_pathptr(upjoin)));
+					 get_innerjoinpath((JoinPath) get_pathptr(upjoin)));
 			set_pathptr
 				(temp, (pathPtr)
-				 get_innerjoinpath((NestPath) get_pathptr(upjoin)));
+				 get_innerjoinpath((JoinPath) get_pathptr(upjoin)));
 		}
 		progress = true;
 	}
@@ -425,14 +425,14 @@ xfunc_form_groups(Query *queryInfo, Stream root, Stream bottom)
 		if (!is_clause(temp))
 		{
 			if (get_pathptr((Stream) get_downstream(temp))
-			== (pathPtr) get_outerjoinpath((NestPath) get_pathptr(temp)))
+			== (pathPtr) get_outerjoinpath((JoinPath) get_pathptr(temp)))
 				whichchild = OUTER;
 			else
 				whichchild = INNER;
 			set_groupcost(temp,
-						  xfunc_join_expense((NestPath) get_pathptr(temp),
+						  xfunc_join_expense((JoinPath) get_pathptr(temp),
 											 whichchild));
-			if (primjoin = xfunc_primary_join((NestPath) get_pathptr(temp)))
+			if (primjoin = xfunc_primary_join((JoinPath) get_pathptr(temp)))
 			{
 				set_groupsel(temp,
 							 compute_clause_selec(queryInfo,
@@ -529,10 +529,10 @@ xfunc_add_clauses(Stream current)
 	}
 
 	/* and add in the join clauses */
-	if (IsA(get_pathptr(current), NestPath))
+	if (IsA(get_pathptr(current), JoinPath))
 	{
-		primjoin = xfunc_primary_join((NestPath) get_pathptr(current));
-		foreach(temp, get_pathrestrictinfo((NestPath) get_pathptr(current)))
+		primjoin = xfunc_primary_join((JoinPath) get_pathptr(current));
+		foreach(temp, get_pathrestrictinfo((JoinPath) get_pathptr(current)))
 		{
 			if (!equal(get_clause((RestrictInfo) lfirst(temp)), primjoin))
 				topnode = xfunc_streaminsert((RestrictInfo) lfirst(temp), topnode,
@@ -615,11 +615,11 @@ xfunc_streaminsert(RestrictInfo restrictinfo,
 static int
 xfunc_num_relids(Stream node)
 {
-	if (!node || !IsA(get_pathptr(node), NestPath))
+	if (!node || !IsA(get_pathptr(node), JoinPath))
 		return 0;
 	else
 		return (length
-				(get_relids(get_parent((NestPath) get_pathptr(node)))));
+				(get_relids(get_parent((JoinPath) get_pathptr(node)))));
 }
 
 /*

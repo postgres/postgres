@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xfunc.h,v 1.13 1999/02/12 06:43:53 momjian Exp $
+ * $Id: xfunc.h,v 1.14 1999/02/12 17:25:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,13 +50,13 @@ extern int	XfuncMode;			/* defined in tcop/postgres.c */
 
 /* function prototypes from planner/path/xfunc.c */
 extern void xfunc_trypullup(RelOptInfo *rel);
-extern int xfunc_shouldpull(Path *childpath, NestPath *parentpath,
+extern int xfunc_shouldpull(Path *childpath, JoinPath *parentpath,
 				 int whichchild, RestrictInfo * maxcinfopt);
-extern RestrictInfo *xfunc_pullup(Path *childpath, NestPath *parentpath, RestrictInfo * cinfo,
+extern RestrictInfo *xfunc_pullup(Path *childpath, JoinPath *parentpath, RestrictInfo * cinfo,
 			 int whichchild, int clausetype);
 extern Cost xfunc_rank(Expr *clause);
 extern Cost xfunc_expense(Query *queryInfo, Expr *clause);
-extern Cost xfunc_join_expense(NestPath *path, int whichchild);
+extern Cost xfunc_join_expense(JoinPath *path, int whichchild);
 extern Cost xfunc_local_expense(Expr *clause);
 extern Cost xfunc_func_expense(Expr *node, List *args);
 extern int	xfunc_width(Expr *clause);
@@ -65,10 +65,10 @@ extern int	xfunc_width(Expr *clause);
 /* extern int xfunc_card_unreferenced(Expr *clause, Relid referenced); */
 extern int	xfunc_card_product(Relid relids);
 extern List *xfunc_find_references(List *clause);
-extern List *xfunc_primary_join(NestPath *pathnode);
+extern List *xfunc_primary_join(JoinPath *pathnode);
 extern Cost xfunc_get_path_cost(Path *pathnode);
-extern Cost xfunc_total_path_cost(NestPath *pathnode);
-extern Cost xfunc_expense_per_tuple(NestPath *joinnode, int whichchild);
+extern Cost xfunc_total_path_cost(JoinPath *pathnode);
+extern Cost xfunc_expense_per_tuple(JoinPath *joinnode, int whichchild);
 extern void xfunc_fixvars(Expr *clause, RelOptInfo *rel, int varno);
 extern int	xfunc_cinfo_compare(void *arg1, void *arg2);
 extern int	xfunc_clause_compare(void *arg1, void *arg2);
@@ -76,7 +76,7 @@ extern void xfunc_disjunct_sort(List *clause_list);
 extern int	xfunc_disjunct_compare(void *arg1, void *arg2);
 extern int	xfunc_func_width(RegProcedure funcid, List *args);
 extern int	xfunc_tuple_width(Relation rd);
-extern int	xfunc_num_join_clauses(NestPath *path);
+extern int	xfunc_num_join_clauses(JoinPath *path);
 extern List *xfunc_LispRemove(List *foo, List *bar);
 extern bool xfunc_copyrel(RelOptInfo *from, RelOptInfo ** to);
 

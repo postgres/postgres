@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.21 1999/02/12 06:43:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.22 1999/02/12 17:24:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -372,6 +372,7 @@ match_unsorted_outer(RelOptInfo *joinrel,
 								 innerrel->pathlist,
 								 INNER);
 
+			/* Should we use the mergeinner, or sort the cheapest inner? */
 			path_is_cheaper_than_sort = (bool) (mergeinnerpath &&
 						(mergeinnerpath->path_cost <
 						 (cheapest_inner->path_cost +
