@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.25 2000/02/20 14:28:20 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.26 2000/02/27 01:10:31 tgl Exp $
  */
 #include "postgres.h"
 
@@ -21,8 +21,8 @@
 #include <getopt.h>
 #endif
 
-#include <libpq-fe.h>
-#include <version.h>
+#include "libpq-fe.h"
+#include "version.h"
 
 #include "command.h"
 #include "common.h"
