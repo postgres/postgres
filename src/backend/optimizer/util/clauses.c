@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.87 2001/07/31 17:56:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.88 2001/07/31 20:16:33 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -737,8 +737,30 @@ pull_constant_clauses(List *quals, List **constantQual)
  *****************************************************************************/
 
 /*
+ * Test whether a sort/group reference value appears in the given list of
+ * SortClause (or GroupClause) nodes.
+ *
+ * Because GroupClause is typedef'd as SortClause, either kind of
+ * node list can be passed without casting.
+ */
+static bool
+sortgroupref_is_present(Index sortgroupref, List *clauselist)
+{
+	List   *clause;
+
+	foreach(clause, clauselist)
+	{
+		SortClause *scl = (SortClause *) lfirst(clause);
+
+		if (scl->tleSortGroupRef == sortgroupref)
+			return true;
+	}
+	return false;
+}
+
+/*
  * Test whether a query uses DISTINCT ON, ie, has a distinct-list that is
- * just a subset of the output columns.
+ * not the same as the set of output columns.
  */
 bool
 has_distinct_on_clause(Query *query)
@@ -750,30 +772,43 @@ has_distinct_on_clause(Query *query)
 		return false;
 	/*
 	 * If the DISTINCT list contains all the nonjunk targetlist items,
-	 * then it's a simple DISTINCT, else it's DISTINCT ON.  We do not
-	 * require the lists to be in the same order (since the parser may
-	 * have adjusted the DISTINCT clause ordering to agree with ORDER BY).
+	 * and nothing else (ie, no junk tlist items), then it's a simple
+	 * DISTINCT, else it's DISTINCT ON.  We do not require the lists to be
+	 * in the same order (since the parser may have adjusted the DISTINCT
+	 * clause ordering to agree with ORDER BY).  Furthermore, a non-DISTINCT
+	 * junk tlist item that is in the sortClause is also evidence of
+	 * DISTINCT ON, since we don't allow ORDER BY on junk tlist items when
+	 * plain DISTINCT is used.
+	 *
+	 * This code assumes that the DISTINCT list is valid, ie, all its entries
+	 * match some entry of the tlist.
 	 */
 	foreach(targetList, query->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
-		Index		ressortgroupref;
-		List	   *distinctClause;
+		Index		ressortgroupref = tle->resdom->ressortgroupref;
 
-		if (tle->resdom->resjunk)
-			continue;
-		ressortgroupref = tle->resdom->ressortgroupref;
 		if (ressortgroupref == 0)
-			return true;		/* definitely not in DISTINCT list */
-		foreach(distinctClause, query->distinctClause)
 		{
-			SortClause *scl = (SortClause *) lfirst(distinctClause);
-
-			if (scl->tleSortGroupRef == ressortgroupref)
-				break;			/* found TLE in DISTINCT */
+			if (tle->resdom->resjunk)
+				continue;		/* we can ignore unsorted junk cols */
+			return true;		/* definitely not in DISTINCT list */
 		}
-		if (distinctClause == NIL)
-			return true;		/* this TLE is not in DISTINCT list */
+		if (sortgroupref_is_present(ressortgroupref, query->distinctClause))
+		{
+			if (tle->resdom->resjunk)
+				return true;	/* junk TLE in DISTINCT means DISTINCT ON */
+			/* else this TLE is okay, keep looking */
+		}
+		else
+		{
+			/* This TLE is not in DISTINCT list */
+			if (!tle->resdom->resjunk)
+				return true;	/* non-junk, non-DISTINCT, so DISTINCT ON */
+			if (sortgroupref_is_present(ressortgroupref, query->sortClause))
+				return true;	/* sorted, non-distinct junk */
+			/* unsorted junk is okay, keep looking */
+		}
 	}
 	/* It's a simple DISTINCT */
 	return false;
