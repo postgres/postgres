@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.118 2003/11/29 19:51:58 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.119 2004/03/22 15:34:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1724,8 +1724,8 @@ timeofday(PG_FUNCTION_ARGS)
 {
 	struct timeval tp;
 	struct timezone tpz;
-	char		templ[100];
-	char		buf[100];
+	char		templ[128];
+	char		buf[128];
 	text	   *result;
 	int			len;
 

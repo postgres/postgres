@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.130 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/error/elog.c,v 1.131 2004/03/22 15:34:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1187,9 +1187,9 @@ log_line_prefix(StringInfo buf)
 			case 't':
 				{
 					time_t stamp_time = time(NULL);
-					char strfbuf[32];
+					char strfbuf[128];
 
-					strftime(strfbuf, sizeof(strfbuf), "%Y-%m-%d %H:%M:%S",
+					strftime(strfbuf, sizeof(strfbuf), "%Y-%m-%d %H:%M:%S %Z",
 							 localtime(&stamp_time));
 					appendStringInfoString(buf, strfbuf);
 				}
@@ -1198,9 +1198,9 @@ log_line_prefix(StringInfo buf)
 				if (MyProcPort)
 				{
 					time_t stamp_time = MyProcPort->session_start.tv_sec;
-					char strfbuf[32];
+					char strfbuf[128];
 
-					strftime(strfbuf, sizeof(strfbuf), "%Y-%m-%d %H:%M:%S",
+					strftime(strfbuf, sizeof(strfbuf), "%Y-%m-%d %H:%M:%S %Z",
 							 localtime(&stamp_time));
 					appendStringInfoString(buf, strfbuf);
 				}

@@ -5,9 +5,8 @@
  */
 
 #include "pg_autovacuum.h"
-#define TIMEBUFF 256
+
 FILE	   *LOGOUTPUT;
-char		timebuffer[TIMEBUFF];
 char		logbuffer[4096];
 
 void
@@ -15,11 +14,11 @@ log_entry(const char *logentry)
 {
 	time_t		curtime;
 	struct tm  *loctime;
+	char		timebuffer[128];
 
 	curtime = time(NULL);
 	loctime = localtime(&curtime);
-	strftime(timebuffer, TIMEBUFF, "%Y-%m-%d %r", loctime);		/* cbb - %F is not
-																 * always available */
+	strftime(timebuffer, sizeof(timebuffer), "%Y-%m-%d %H:%M:%S %Z", loctime);
 	fprintf(LOGOUTPUT, "[%s] %s\n", timebuffer, logentry);
 }
 
