@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.25 1997/09/18 20:21:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.26 1997/09/22 07:13:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,6 +98,9 @@ BufferAlloc(Relation reln, BlockNumber blockNum,
 static int	FlushBuffer(Buffer buffer, bool release);
 static void BufferSync(void);
 static int	BufferReplace(BufferDesc *bufHdr, bool bufferLockHeld);
+
+/* not static but used by vacuum only ... */
+int BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
 
 /* ---------------------------------------------------
  * RelationGetBufferWithBuffer
@@ -1602,6 +1605,67 @@ BufferPoolBlowaway()
 }
 
 #endif
+
+/* ---------------------------------------------------------------------
+ *		BlowawayRelationBuffers
+ *
+ *		This function blowaway all the pages with blocknumber >= passed
+ *		of a relation in the buffer pool. Used by vacuum before truncation...
+ *		
+ *		Returns: 0 - Ok, -1 - DIRTY, -2 - PINNED
+ *		
+ *		XXX currently it sequentially searches the buffer pool, should be
+ *		changed to more clever ways of searching.
+ * --------------------------------------------------------------------
+ */
+int
+BlowawayRelationBuffers(Relation rdesc, BlockNumber block)
+{
+	register int	i;
+	BufferDesc	   *buf;
+
+	if (rdesc->rd_islocal)
+	{
+		for (i = 0; i < NLocBuffer; i++)
+		{
+			buf = &LocalBufferDescriptors[i];
+			if (buf->tag.relId.relId == rdesc->rd_id && 
+				buf->tag.blockNum >= block)
+			{
+				if (buf->flags & BM_DIRTY)
+					return (-1);
+				if (LocalRefCount[i] > 0)
+					return (-2);
+				buf->tag.relId.relId = InvalidOid;
+			}
+		}
+		return (0);
+	}
+
+	SpinAcquire(BufMgrLock);
+	for (i = 0; i < NBuffers; i++)
+	{
+		buf = &BufferDescriptors[i];
+		if (buf->tag.relId.dbId == MyDatabaseId &&
+			buf->tag.relId.relId == rdesc->rd_id && 
+			buf->tag.blockNum >= block)
+		{
+			if (buf->flags & BM_DIRTY)
+			{
+				SpinRelease(BufMgrLock);
+				return (-1);
+			}
+			if (!(buf->flags & BM_FREE))
+			{
+				SpinRelease(BufMgrLock);
+				return (-2);
+			}
+			BufTableDelete(buf);
+		}
+	}
+	SpinRelease(BufMgrLock);
+	return (0);
+}
 
 #undef IncrBufferRefCount
 #undef ReleaseBuffer
