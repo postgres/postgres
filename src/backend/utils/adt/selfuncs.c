@@ -15,12 +15,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.61 2000/03/23 00:55:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.62 2000/03/30 00:53:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
+#include <math.h>
 
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -900,10 +902,10 @@ genericcostestimate(Query *root, RelOptInfo *rel,
 											   lfirsti(rel->relids));
 
 	/* Estimate the number of index tuples that will be visited */
-	numIndexTuples = *indexSelectivity * index->tuples;
+	numIndexTuples = ceil(*indexSelectivity * index->tuples);
 
 	/* Estimate the number of index pages that will be retrieved */
-	numIndexPages = *indexSelectivity * index->pages;
+	numIndexPages = ceil(*indexSelectivity * index->pages);
 
 	/*
 	 * Compute the index access cost.

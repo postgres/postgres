@@ -42,7 +42,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.54 2000/03/22 22:08:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/costsize.c,v 1.55 2000/03/30 00:53:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,11 +262,11 @@ cost_index(Path *path, Query *root,
 	 * effect.  Would be nice to do better someday.
 	 */
 
-	tuples_fetched = indexSelectivity * baserel->tuples;
+	tuples_fetched = ceil(indexSelectivity * baserel->tuples);
 
 	if (tuples_fetched > 0 && baserel->pages > 0)
-		pages_fetched = baserel->pages *
-			log(tuples_fetched / baserel->pages + 1.0);
+		pages_fetched = ceil(baserel->pages *
+							 log(tuples_fetched / baserel->pages + 1.0));
 	else
 		pages_fetched = tuples_fetched;
 
@@ -594,7 +594,7 @@ cost_hashjoin(Path *path,
 	 * conservatively as the inner disbursion times the inner tuple count.
 	 */
 	run_cost += cpu_operator_cost * outer_path->parent->rows *
-		(inner_path->parent->rows * innerdisbursion);
+		ceil(inner_path->parent->rows * innerdisbursion);
 
 	/*
 	 * Estimate the number of tuples that get through the hashing filter
