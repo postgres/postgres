@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.262 2001/12/04 16:17:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.263 2002/01/06 21:40:02 tgl Exp $
  *
  * NOTES
  *
@@ -249,6 +249,7 @@ static int	BackendStartup(Port *port);
 static int	ProcessStartupPacket(Port *port, bool SSLdone);
 static void processCancelRequest(Port *port, void *pkt);
 static int	initMasks(fd_set *rmask, fd_set *wmask);
+static void report_fork_failure_to_client(Port *port, int errnum);
 enum CAC_state
 {
 	CAC_OK, CAC_STARTUP, CAC_SHUTDOWN, CAC_RECOVERY, CAC_TOOMANY
@@ -1864,11 +1865,11 @@ BackendStartup(Port *port)
 	{
 		int			status;
 
-		free(bn);
 #ifdef __BEOS__
 		/* Specific beos backend startup actions */
 		beos_backend_startup();
 #endif
+		free(bn);
 
 		status = DoBackend(port);
 		if (status != 0)
@@ -1883,13 +1884,16 @@ BackendStartup(Port *port)
 	/* in parent, error */
 	if (pid < 0)
 	{
-		free(bn);
+		int			save_errno = errno;
+
 #ifdef __BEOS__
 		/* Specific beos backend startup actions */
 		beos_backend_startup_failed();
 #endif
+		free(bn);
 		elog(DEBUG, "connection startup failed (fork failure): %s",
-			 strerror(errno));
+			 strerror(save_errno));
+		report_fork_failure_to_client(port, save_errno);
 		return STATUS_ERROR;
 	}
 
@@ -1907,6 +1911,40 @@ BackendStartup(Port *port)
 	DLAddHead(BackendList, DLNewElem(bn));
 
 	return STATUS_OK;
+}
+
+
+/*
+ * Try to report backend fork() failure to client before we close the
+ * connection.  Since we do not care to risk blocking the postmaster on
+ * this connection, we set the connection to non-blocking and try only once.
+ *
+ * This is grungy special-purpose code; we cannot use backend libpq since
+ * it's not up and running.
+ */
+static void
+report_fork_failure_to_client(Port *port, int errnum)
+{
+	char		buffer[1000];
+#ifdef __BEOS__
+	int			on = 1;
+#endif
+
+	/* Format the error message packet */
+	snprintf(buffer, sizeof(buffer), "E%s%s\n",
+			 gettext("Server process fork() failed: "),
+			 strerror(errnum));
+
+	/* Set port to non-blocking.  Don't do send() if this fails */
+#ifdef __BEOS__
+	if (ioctl(port->sock, FIONBIO, &on) != 0)
+		return;
+#else
+	if (fcntl(port->sock, F_SETFL, O_NONBLOCK) < 0)
+		return;
+#endif
+
+	send(port->sock, buffer, strlen(buffer)+1, 0);
 }
 
 
