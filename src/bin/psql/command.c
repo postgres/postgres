@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.48 2001/03/22 04:00:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.49 2001/04/18 20:53:08 petere Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -139,7 +139,7 @@ HandleSlashCmds(const char *line,
 		new_cmd[0] = my_line[0];
 		new_cmd[1] = '\0';
 
-		status = exec_command(new_cmd, my_line + 1, &continue_parse, query_buf);
+		status = exec_command(new_cmd, line + 1, &continue_parse, query_buf);
 
 #if 0							/* turned out to be too annoying */
 		if (status != CMD_UNKNOWN && isalpha((unsigned char) new_cmd[0]))
@@ -1189,8 +1189,8 @@ unescape(const unsigned char *source, size_t len)
  * The new user can be NULL. A db name of "-" is the same as the old one.
  * (That is, the one currently in pset. But pset.db can also be NULL. A NULL
  * dbname is handled by libpq.)
- * Returns true if all ok, false if the new connection couldn't be established
- * but the old one was set back. Otherwise it terminates the program.
+ * Returns true if all ok, false if the new connection couldn't be established.
+ * The old connection will be kept if the session is interactive.
  */
 static bool
 do_connect(const char *new_dbname, const char *new_user)
