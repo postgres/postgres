@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.141 2002/09/27 02:04:39 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.142 2002/10/02 16:27:57 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1036,15 +1036,15 @@ env PGOPTIONS='-c geqo=off' psql
       <term><varname>LOG_MIN_ERROR_STATEMENT</varname> (<type>string</type>)</term>
       <listitem>
        <para>
-        This controls which log messages are accompanied by the original
-        query which generated the message. All queries matching the setting
-        or which are of a higher severity than the setting are logged. The
-        default is <literal>ERROR</literal>. Valid values are
-        <literal>DEBUG5</literal>, <literal>DEBUG4</literal>, 
-        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>, 
+        This controls which message types output the original query to
+        the server logs. All queries matching the setting or higher are
+        logged. The default is <literal>PANIC</literal>. Valid values
+        are <literal>DEBUG5</literal>, <literal>DEBUG4</literal>,
+        <literal>DEBUG3</literal>, <literal>DEBUG2</literal>,
         <literal>DEBUG1</literal>, <literal>INFO</literal>,
-        <literal>NOTICE</literal>, <literal>WARNING</literal>
-        and <literal>ERROR</literal>.
+        <literal>NOTICE</literal>, <literal>WARNING</literal>,
+        <literal>ERROR</literal>, <literal>FATAL</literal>, and
+	<literal>PANIC</literal>.
        </para>
        <para>
         It is recommended you enable <literal>LOG_PID</literal> as well

@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.96 2002/09/22 19:52:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.97 2002/10/02 16:27:57 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -104,7 +104,7 @@ bool		Password_encryption = true;
 
 int			log_min_error_statement = ERROR;
 char	   *log_min_error_statement_str = NULL;
-const char	log_min_error_statement_str_default[] = "error";
+const char	log_min_error_statement_str_default[] = "panic";
 
 int			server_min_messages = NOTICE;
 char	   *server_min_messages_str = NULL;
@@ -2999,6 +2999,17 @@ assign_msglvl(int *var, const char *newval, bool doit, bool interactive)
 	{
 		if (doit)
 			(*var) = ERROR;
+	}
+	/* We allow FATAL/PANIC for client-side messages too. */
+	else if (strcasecmp(newval, "fatal") == 0)
+	{
+		if (doit)
+			(*var) = FATAL;
+	}
+	else if (strcasecmp(newval, "panic") == 0)
+	{
+		if (doit)
+			(*var) = PANIC;
 	}
 	else
 		return NULL;			/* fail */
