@@ -1,3 +1,9 @@
+==========================================================================
+This module is deprecated in 7.4 version of PostgreSQL and will be
+obsoleted in 7.5. Please, use new tsearch2 contrib module, it works
+with 7.3.X (http://www.sai.msu.su/~megera/postgres/gist/tsearch/V2/)
+==========================================================================
+
 Tsearch contrib module contains implementation of new data type txtidx - 
 a searchable data type (textual) with indexed access.
 
