@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.103 2004/06/04 00:07:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.104 2004/06/04 02:37:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -2664,49 +2664,15 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				  PLpgSQL_datum * target,
 				  Datum value, Oid valtype, bool *isNull)
 {
-	PLpgSQL_var *var;
-	PLpgSQL_rec *rec;
-	PLpgSQL_recfield *recfield;
-	int			fno;
-	int			i;
-	int			natts;
-	Datum	   *values;
-	char	   *nulls;
-	void	   *mustfree;
-	Datum		newvalue;
-	bool		attisnull;
-	Oid			atttype;
-	int32		atttypmod;
-	int			nsubscripts;
-	PLpgSQL_expr *subscripts[MAXDIM];
-	int			subscriptvals[MAXDIM];
-	bool		havenullsubscript,
-				oldarrayisnull;
-	Oid			arraytypeid,
-				arrayelemtypeid,
-				arrayInputFn;
-	int16		elemtyplen;
-	bool		elemtypbyval;
-	char		elemtypalign;
-	Datum		oldarrayval,
-				coerced_value;
-	ArrayType  *newarrayval;
-	HeapTuple	newtup;
-
 	switch (target->dtype)
 	{
 		case PLPGSQL_DTYPE_VAR:
-
+		{
 			/*
 			 * Target is a variable
 			 */
-			var = (PLpgSQL_var *) target;
-
-			if (var->freeval)
-			{
-				pfree(DatumGetPointer(var->value));
-				var->freeval = false;
-			}
+			PLpgSQL_var *var = (PLpgSQL_var *) target;
+			Datum		newvalue;
 
 			newvalue = exec_cast_value(value, valtype, var->datatype->typoid,
 									   &(var->datatype->typinput),
@@ -2719,6 +2685,12 @@ exec_assign_value(PLpgSQL_execstate * estate,
 						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 						 errmsg("NULL cannot be assigned to variable \"%s\" declared NOT NULL",
 								var->refname)));
+
+			if (var->freeval)
+			{
+				pfree(DatumGetPointer(var->value));
+				var->freeval = false;
+			}
 
 			/*
 			 * If type is by-reference, make sure we have a freshly
@@ -2741,13 +2713,110 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				var->value = newvalue;
 			var->isnull = *isNull;
 			break;
+		}
+
+		case PLPGSQL_DTYPE_ROW:
+		{
+			/*
+			 * Target is a row variable
+			 */
+			PLpgSQL_row *row = (PLpgSQL_row *) target;
+
+			/* Source must be of RECORD or composite type */
+			if (!(valtype == RECORDOID ||
+				  get_typtype(valtype) == 'c'))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot assign non-composite value to a row variable")));
+			if (*isNull)
+			{
+				/* If source is null, just assign nulls to the row */
+				exec_move_row(estate, NULL, row, NULL, NULL);
+			}
+			else
+			{
+				HeapTupleHeader td;
+				Oid			tupType;
+				int32		tupTypmod;
+				TupleDesc	tupdesc;
+				HeapTupleData tmptup;
+
+				/* Else source is a tuple Datum, safe to do this: */
+				td = DatumGetHeapTupleHeader(value);
+				/* Extract rowtype info and find a tupdesc */
+				tupType = HeapTupleHeaderGetTypeId(td);
+				tupTypmod = HeapTupleHeaderGetTypMod(td);
+				tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+				/* Build a temporary HeapTuple control structure */
+				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+				ItemPointerSetInvalid(&(tmptup.t_self));
+				tmptup.t_tableOid = InvalidOid;
+				tmptup.t_data = td;
+				exec_move_row(estate, NULL, row, &tmptup, tupdesc);
+			}
+			break;
+		}
+
+		case PLPGSQL_DTYPE_REC:
+		{
+			/*
+			 * Target is a record variable
+			 */
+			PLpgSQL_rec *rec = (PLpgSQL_rec *) target;
+
+			/* Source must be of RECORD or composite type */
+			if (!(valtype == RECORDOID ||
+				  get_typtype(valtype) == 'c'))
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("cannot assign non-composite value to a record variable")));
+			if (*isNull)
+			{
+				/* If source is null, just assign nulls to the record */
+				exec_move_row(estate, rec, NULL, NULL, NULL);
+			}
+			else
+			{
+				HeapTupleHeader td;
+				Oid			tupType;
+				int32		tupTypmod;
+				TupleDesc	tupdesc;
+				HeapTupleData tmptup;
+
+				/* Else source is a tuple Datum, safe to do this: */
+				td = DatumGetHeapTupleHeader(value);
+				/* Extract rowtype info and find a tupdesc */
+				tupType = HeapTupleHeaderGetTypeId(td);
+				tupTypmod = HeapTupleHeaderGetTypMod(td);
+				tupdesc = lookup_rowtype_tupdesc(tupType, tupTypmod);
+				/* Build a temporary HeapTuple control structure */
+				tmptup.t_len = HeapTupleHeaderGetDatumLength(td);
+				ItemPointerSetInvalid(&(tmptup.t_self));
+				tmptup.t_tableOid = InvalidOid;
+				tmptup.t_data = td;
+				exec_move_row(estate, rec, NULL, &tmptup, tupdesc);
+			}
+			break;
+		}
 
 		case PLPGSQL_DTYPE_RECFIELD:
-
+		{
 			/*
 			 * Target is a field of a record
 			 */
-			recfield = (PLpgSQL_recfield *) target;
+			PLpgSQL_recfield *recfield = (PLpgSQL_recfield *) target;
+			PLpgSQL_rec *rec;
+			int			fno;
+			HeapTuple	newtup;
+			int			natts;
+			int			i;
+			Datum	   *values;
+			char	   *nulls;
+			void	   *mustfree;
+			bool		attisnull;
+			Oid			atttype;
+			int32		atttypmod;
+
 			rec = (PLpgSQL_rec *) (estate->datums[recfield->recparentno]);
 
 			/*
@@ -2839,8 +2908,25 @@ exec_assign_value(PLpgSQL_execstate * estate,
 				pfree(mustfree);
 
 			break;
+		}
 
 		case PLPGSQL_DTYPE_ARRAYELEM:
+		{
+			int			nsubscripts;
+			int			i;
+			PLpgSQL_expr *subscripts[MAXDIM];
+			int			subscriptvals[MAXDIM];
+			bool		havenullsubscript,
+						oldarrayisnull;
+			Oid			arraytypeid,
+						arrayelemtypeid,
+						arrayInputFn;
+			int16		elemtyplen;
+			bool		elemtypbyval;
+			char		elemtypalign;
+			Datum		oldarrayval,
+						coerced_value;
+			ArrayType  *newarrayval;
 
 			/*
 			 * Target is an element of an array
@@ -2942,6 +3028,7 @@ exec_assign_value(PLpgSQL_execstate * estate,
 			 */
 			pfree(newarrayval);
 			break;
+		}
 
 		default:
 			elog(ERROR, "unrecognized dtype: %d", target->dtype);
@@ -2993,6 +3080,8 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 
 			if (!row->rowtupdesc) /* should not happen */
 				elog(ERROR, "row variable has no tupdesc");
+			/* Make sure we have a valid type/typmod setting */
+			BlessTupleDesc(row->rowtupdesc);
 			tup = make_tuple_from_row(estate, row, row->rowtupdesc);
 			if (tup == NULL)	/* should not happen */
 				elog(ERROR, "row not compatible with its own tupdesc");
@@ -3010,6 +3099,7 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 		case PLPGSQL_DTYPE_REC:
 		{
 			PLpgSQL_rec *rec = (PLpgSQL_rec *) datum;
+			HeapTupleData worktup;
 
 			if (!HeapTupleIsValid(rec->tup))
 				ereport(ERROR,
@@ -3017,8 +3107,20 @@ exec_eval_datum(PLpgSQL_execstate * estate,
 						 errmsg("record \"%s\" is not assigned yet",
 								rec->refname),
 						 errdetail("The tuple structure of a not-yet-assigned record is indeterminate.")));
+			Assert(rec->tupdesc != NULL);
+			/* Make sure we have a valid type/typmod setting */
+			BlessTupleDesc(rec->tupdesc);
+			/*
+			 * In a trigger, the NEW and OLD parameters are likely to be
+			 * on-disk tuples that don't have the desired Datum fields.
+			 * Copy the tuple body and insert the right values.
+			 */
+			heap_copytuple_with_tuple(rec->tup, &worktup);
+			HeapTupleHeaderSetDatumLength(worktup.t_data, worktup.t_len);
+			HeapTupleHeaderSetTypeId(worktup.t_data, rec->tupdesc->tdtypeid);
+			HeapTupleHeaderSetTypMod(worktup.t_data, rec->tupdesc->tdtypmod);
 			*typeid = rec->tupdesc->tdtypeid;
-			*value = HeapTupleGetDatum(rec->tup);
+			*value = HeapTupleGetDatum(&worktup);
 			*isnull = false;
 			if (expectedtypeid != InvalidOid && expectedtypeid != *typeid)
 				ereport(ERROR,

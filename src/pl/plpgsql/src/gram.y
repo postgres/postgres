@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.55 2004/06/04 00:07:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.56 2004/06/04 02:37:06 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -743,6 +743,16 @@ assign_var		: T_SCALAR
 					{
 						check_assignable(yylval.scalar);
 						$$ = yylval.scalar->dno;
+					}
+				| T_ROW
+					{
+						check_assignable((PLpgSQL_datum *) yylval.row);
+						$$ = yylval.row->rowno;
+					}
+				| T_RECORD
+					{
+						check_assignable((PLpgSQL_datum *) yylval.rec);
+						$$ = yylval.rec->recno;
 					}
 				| assign_var '[' expr_until_rightbracket
 					{
@@ -1965,6 +1975,12 @@ check_assignable(PLpgSQL_datum *datum)
 						 errmsg("\"%s\" is declared CONSTANT",
 								((PLpgSQL_var *) datum)->refname)));
 			}
+			break;
+		case PLPGSQL_DTYPE_ROW:
+			/* always assignable? */
+			break;
+		case PLPGSQL_DTYPE_REC:
+			/* always assignable?  What about NEW/OLD? */
 			break;
 		case PLPGSQL_DTYPE_RECFIELD:
 			/* always assignable? */
