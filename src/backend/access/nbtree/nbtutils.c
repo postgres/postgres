@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.8 1997/03/18 18:38:46 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtutils.c,v 1.9 1997/03/24 08:48:16 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,11 @@
 #include <access/nbtree.h>
 #include <access/istrat.h>
 #include <access/iqual.h>
+#include <catalog/pg_proc.h>
+#include <executor/execdebug.h>
+
+extern int	NIndexTupleProcessed;
+
 
 #ifndef HAVE_MEMMOVE
 # include <regex/utils.h>
@@ -37,6 +42,7 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
     Datum arg;
     RegProcedure proc;
     bool null;
+    bits16 flag;
     
     natts = rel->rd_rel->relnatts;
     itupdesc = RelationGetTupleDescriptor(rel);
@@ -45,9 +51,18 @@ _bt_mkscankey(Relation rel, IndexTuple itup)
     
     for (i = 0; i < natts; i++) {
 	arg = index_getattr(itup, i + 1, itupdesc, &null);
-	proc = index_getprocid(rel, i + 1, BTORDER_PROC);
+	if ( null )
+	{
+	    proc = NullValueRegProcedure;
+	    flag = SK_ISNULL;
+	}
+	else
+	{
+	    proc = index_getprocid(rel, i + 1, BTORDER_PROC);
+	    flag = 0x0;
+	}
 	ScanKeyEntryInitialize(&skey[i],
-			       0x0, (AttrNumber) (i + 1), proc, arg);
+			       flag, (AttrNumber) (i + 1), proc, arg);
     }
     
     return (skey);
@@ -90,22 +105,35 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
     int i, j;
     int init[BTMaxStrategyNumber+1];
     ScanKey key;
-    uint16 numberOfKeys, new_numberOfKeys = 0;
+    uint16 numberOfKeys = so->numberOfKeys;
+    uint16 new_numberOfKeys = 0;
     AttrNumber attno = 1;
     
-    numberOfKeys = so->numberOfKeys;
-    key = so->keyData;
-    
-    if ( numberOfKeys <= 1 )
+    if ( numberOfKeys < 1 )
     	return;
     
-    /* get space for the modified array of keys */
-    nbytes = BTMaxStrategyNumber * sizeof(ScanKeyData);
-    xform = (ScanKey) palloc(nbytes);
+    key = so->keyData;
     
     cur = &key[0];
     if ( cur->sk_attno != 1 )
 	elog (WARN, "_bt_orderkeys: key(s) for attribute 1 missed");
+    
+    if ( numberOfKeys == 1 )
+    {
+	/*
+	 * We don't use indices for 'A is null' and 'A is not null'
+	 * currently and 'A < = > <> NULL' is non-sense' - so
+	 * qual is not Ok. 	- vadim 03/21/97
+	 */
+	if ( cur->sk_flags & SK_ISNULL )
+	    so->qual_ok = 0;
+    	so->numberOfFirstKeys = 1;
+    	return;
+    }
+    
+    /* get space for the modified array of keys */
+    nbytes = BTMaxStrategyNumber * sizeof(ScanKeyData);
+    xform = (ScanKey) palloc(nbytes);
 
     memset(xform, 0, nbytes); 
     map = IndexStrategyGetStrategyMap(RelationGetIndexStrategy(relation),
@@ -119,6 +147,10 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
     {
 	if ( i < numberOfKeys )
 	    cur = &key[i];
+
+	if ( cur->sk_flags & SK_ISNULL )	/* see comments above */
+	    so->qual_ok = 0;
+
 	if ( i == numberOfKeys || cur->sk_attno != attno )
 	{
 	    if ( cur->sk_attno != attno + 1 && i < numberOfKeys )
@@ -243,6 +275,32 @@ _bt_orderkeys(Relation relation, BTScanOpaque so)
     pfree(xform);
 }
 
+BTItem
+_bt_formitem(IndexTuple itup)
+{
+    int nbytes_btitem;
+    BTItem btitem;
+    Size tuplen;
+    extern Oid newoid();
+    
+    /* see comments in btbuild
+    
+    if (itup->t_info & INDEX_NULL_MASK)
+	elog(WARN, "btree indices cannot include null keys");
+    */
+    
+    /* make a copy of the index tuple with room for the sequence number */
+    tuplen = IndexTupleSize(itup);
+    nbytes_btitem = tuplen +
+	(sizeof(BTItemData) - sizeof(IndexTupleData));
+    
+    btitem = (BTItem) palloc(nbytes_btitem);
+    memmove((char *) &(btitem->bti_itup), (char *) itup, tuplen);
+    
+    btitem->bti_oid = newoid();
+    return (btitem);
+}
+
 bool
 _bt_checkqual(IndexScanDesc scan, IndexTuple itup)
 {
@@ -269,26 +327,57 @@ _bt_checkforkeys(IndexScanDesc scan, IndexTuple itup, Size keysz)
 	return (true);
 }
 
-BTItem
-_bt_formitem(IndexTuple itup)
+bool
+_bt_checkkeys (IndexScanDesc scan, IndexTuple tuple, Size *keysok)
 {
-    int nbytes_btitem;
-    BTItem btitem;
-    Size tuplen;
-    extern Oid newoid();
+    BTScanOpaque so = (BTScanOpaque) scan->opaque;
+    Size keysz = so->numberOfKeys;
+    TupleDesc tupdesc;
+    ScanKey key;
+    Datum datum;
+    bool isNull;
+    int	test;
     
-    /* disallow nulls in btree keys */
-    if (itup->t_info & INDEX_NULL_MASK)
-	elog(WARN, "btree indices cannot include null keys");
+    *keysok = 0;
+    if ( keysz == 0 )
+        return (true);
     
-    /* make a copy of the index tuple with room for the sequence number */
-    tuplen = IndexTupleSize(itup);
-    nbytes_btitem = tuplen +
-	(sizeof(BTItemData) - sizeof(IndexTupleData));
+    key = so->keyData;
+    tupdesc = RelationGetTupleDescriptor(scan->relation);
     
-    btitem = (BTItem) palloc(nbytes_btitem);
-    memmove((char *) &(btitem->bti_itup), (char *) itup, tuplen);
+    IncrIndexProcessed();
     
-    btitem->bti_oid = newoid();
-    return (btitem);
+    while (keysz > 0)
+    {
+	datum = index_getattr(tuple,
+			      key[0].sk_attno,
+			      tupdesc,
+			      &isNull);
+	
+	/* btree doesn't support 'A is null' clauses, yet */
+	if ( isNull || key[0].sk_flags & SK_ISNULL )
+	{
+	    return (false);
+	}
+
+	if (key[0].sk_flags & SK_COMMUTE) {
+	    test = (int) (*(key[0].sk_func))
+		(DatumGetPointer(key[0].sk_argument),
+		 datum);
+	} else {
+	    test = (int) (*(key[0].sk_func))
+		(datum,
+		 DatumGetPointer(key[0].sk_argument));
+	}
+	
+	if (!test == !(key[0].sk_flags & SK_NEGATE)) {
+	    return (false);
+	}
+	
+	keysz -= 1;
+	key++;
+	(*keysok)++;
+    }
+    
+    return (true);
 }

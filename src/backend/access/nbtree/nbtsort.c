@@ -5,7 +5,7 @@
  *
  *
  * IDENTIFICATION
- *    $Id: nbtsort.c,v 1.12 1997/02/25 03:38:23 scrappy Exp $
+ *    $Id: nbtsort.c,v 1.13 1997/03/24 08:48:15 vadim Exp $
  *
  * NOTES
  *
@@ -137,11 +137,13 @@ typedef struct {
  * *-------------------------------------------------------------------------
  */
 typedef struct {
-    Datum	btsk_datum;
+    Datum	*btsk_datum;
+    char	*btsk_nulls;
     BTItem	btsk_item;
 } BTSortKey;
 
 static Relation _bt_sortrel;
+static int _bt_nattr;
 static BTSpool * _bt_inspool;
 
 static void
@@ -149,26 +151,51 @@ _bt_isortcmpinit(Relation index, BTSpool *spool)
 {
     _bt_sortrel = index;
     _bt_inspool = spool;
+    _bt_nattr = index->rd_att->natts;
 }
 
 static int
 _bt_isortcmp(BTSortKey *k1, BTSortKey *k2)
 {
-    if (k1->btsk_item == (BTItem) NULL) {
-	if (k2->btsk_item == (BTItem) NULL) {
+    Datum *k1_datum = k1->btsk_datum;
+    Datum *k2_datum = k2->btsk_datum;
+    char *k1_nulls = k1->btsk_nulls;
+    char *k2_nulls = k2->btsk_nulls;
+    bool equal_isnull = false;
+    int i;
+    
+    if (k1->btsk_item == (BTItem) NULL)
+    {
+	if (k2->btsk_item == (BTItem) NULL)
 	    return(0);	/* 1 = 2 */
-	}
 	return(1);	/* 1 > 2 */
-    } else if (k2->btsk_item == (BTItem) NULL) {
-	return(-1);	/* 1 < 2 */
-    } else if (_bt_invokestrat(_bt_sortrel, 1, BTGreaterStrategyNumber,
-			       k1->btsk_datum, k2->btsk_datum)) {
-	return(1);	/* 1 > 2 */
-    } else if (_bt_invokestrat(_bt_sortrel, 1, BTGreaterStrategyNumber,
-			       k2->btsk_datum, k1->btsk_datum)) {
-	return(-1);	/* 1 < 2 */
     }
-    if ( _bt_inspool->isunique )
+    else if (k2->btsk_item == (BTItem) NULL)
+	return(-1);	/* 1 < 2 */
+    
+    for (i = 0; i < _bt_nattr; i++)
+    {
+	if ( k1_nulls[i] != ' ' )	/* k1 attr is NULL */
+	{
+	    if ( k2_nulls[i] != ' ' )	/* the same for k2 */
+	    {
+	    	equal_isnull = true;
+	    	continue;
+	    }
+	    return (1);			/* NULL ">" NOT_NULL */
+	}
+	else if ( k2_nulls[i] != ' ' )	/* k2 attr is NULL */
+	    return (-1);		/* NOT_NULL "<" NULL */
+	
+    	if (_bt_invokestrat(_bt_sortrel, i+1, BTGreaterStrategyNumber,
+			       k1_datum[i], k2_datum[i]))
+		return(1);	/* 1 > 2 */
+    	else if (_bt_invokestrat(_bt_sortrel, i+1, BTGreaterStrategyNumber,
+			       k2_datum[i], k1_datum[i]))
+		return(-1);	/* 1 < 2 */
+    }
+
+    if ( _bt_inspool->isunique && !equal_isnull )
     {
     	_bt_spooldestroy ((void*)_bt_inspool);
     	elog (WARN, "Cannot create unique index. Table contains non-unique values");
@@ -180,15 +207,29 @@ static void
 _bt_setsortkey(Relation index, BTItem bti, BTSortKey *sk)
 {
     sk->btsk_item = (BTItem) NULL;
-    sk->btsk_datum = (Datum) NULL;
-    if (bti != (BTItem) NULL) {
+    sk->btsk_datum = (Datum*) NULL;
+    sk->btsk_nulls = (char*) NULL;
+
+    if (bti != (BTItem) NULL)
+    {
+	IndexTuple it = &(bti->bti_itup);
+	TupleDesc itdesc = index->rd_att;
+	Datum *dp = (Datum*) palloc (_bt_nattr * sizeof (Datum));
+	char *np = (char*) palloc (_bt_nattr * sizeof (char));
 	bool isnull;
-	Datum d = index_getattr(&(bti->bti_itup), 1, index->rd_att, &isnull);
-	
-	if (!isnull) {
-	    sk->btsk_item = bti;
-	    sk->btsk_datum = d;
+	int i;
+
+    	for (i = 0; i < _bt_nattr; i++)
+    	{
+	    dp[i] = index_getattr(it, i+1, itdesc, &isnull);
+	    if ( isnull )
+		np[i] = 'n';
+	    else
+	    	np[i] = ' ';
 	}
+	sk->btsk_item = bti;
+	sk->btsk_datum = dp;
+	sk->btsk_nulls = np;
     }
 }
 
@@ -622,27 +663,25 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 	BTItem bti;
 	char *pos;
 	int btisz;
+	int it_ntup = itape->bttb_ntup;
 	int i;
 
 	/*
 	 * build an array of pointers to the BTItemDatas on the input
 	 * block.
 	 */
-	if (itape->bttb_ntup > 0) {
+	if (it_ntup > 0) {
 	    parray =
-		(BTSortKey *) palloc(itape->bttb_ntup * sizeof(BTSortKey));
-	    if (parray == (BTSortKey *) NULL) {
-		elog(WARN, "_bt_spool: out of memory");
-	    }
+		(BTSortKey *) palloc(it_ntup * sizeof(BTSortKey));
 	    pos = itape->bttb_data;
-	    for (i = 0; i < itape->bttb_ntup; ++i) {
+	    for (i = 0; i < it_ntup; ++i) {
 		_bt_setsortkey(index, _bt_tapenext(itape, &pos), &(parray[i]));
 	    }
 	    
 	    /*
 	     * qsort the pointer array.
 	     */
-	    qsort((void *) parray, itape->bttb_ntup, sizeof(BTSortKey),
+	    qsort((void *) parray, it_ntup, sizeof(BTSortKey),
 		  (int (*)(const void *,const void *))_bt_isortcmp);
 	}
 
@@ -656,7 +695,7 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 	 * block..)
 	 */
 	otape = btspool->bts_otape[btspool->bts_tape];
-	for (i = 0; i < itape->bttb_ntup; ++i) {
+	for (i = 0; i < it_ntup; ++i) {
 	    bti = parray[i].btsk_item;
 	    btisz = BTITEMSZ(bti);
 	    btisz = DOUBLEALIGN(btisz);
@@ -694,7 +733,15 @@ _bt_spool(Relation index, BTItem btitem, void *spool)
 	/*
 	 * destroy the pointer array.
 	 */
-	if (parray != (BTSortKey *) NULL) {
+	if (parray != (BTSortKey *) NULL)
+	{
+	    for (i = 0; i < it_ntup; i++)
+	    {
+	    	if ( parray[i].btsk_datum != (Datum*) NULL )
+	    	    pfree ((void*)(parray[i].btsk_datum));
+	    	if ( parray[i].btsk_nulls != (char*) NULL )
+	    	    pfree ((void*)(parray[i].btsk_nulls));
+	    }
 	    pfree((void *) parray);
 	}
     }
@@ -976,7 +1023,7 @@ _bt_buildadd(Relation index, void *pstate, BTItem bti, int flags)
 #endif
     if (last_bti == (BTItem) NULL) {
 	first_off = P_FIRSTKEY;
-    } else if (!_bt_itemcmp(index, 1, bti, last_bti, BTEqualStrategyNumber)) {
+    } else if (!_bt_itemcmp(index, _bt_nattr, bti, last_bti, BTEqualStrategyNumber)) {
 	first_off = off;
     }
     last_off = off;
@@ -1044,6 +1091,7 @@ _bt_merge(Relation index, BTSpool *btspool)
     BTPageState *state;
     BTPriQueue q;
     BTPriQueueElem e;
+    BTSortKey btsk;
     BTItem bti;
     BTTapeBlock *itape;
     BTTapeBlock *otape;
@@ -1136,7 +1184,8 @@ _bt_merge(Relation index, BTSpool *btspool)
 		 * if it hits either End-Of-Run or EOF.
 		 */
 		t = e.btpqe_tape;
-		bti = e.btpqe_item.btsk_item;
+		btsk = e.btpqe_item;
+		bti = btsk.btsk_item;
 		if (bti != (BTItem) NULL) {
 		    btisz = BTITEMSZ(bti);
 		    btisz = DOUBLEALIGN(btisz);
@@ -1177,6 +1226,12 @@ _bt_merge(Relation index, BTSpool *btspool)
 			}
 #endif /* FASTBUILD_DEBUG && FASTBUILD_MERGE */
 		    }
+		    
+    		    if ( btsk.btsk_datum != (Datum*) NULL )
+	    	    	pfree ((void*)(btsk.btsk_datum));
+	    	    if ( btsk.btsk_nulls != (char*) NULL )
+	    	    	pfree ((void*)(btsk.btsk_nulls));
+		    
 		}
 		itape = btspool->bts_itape[t];
 		if (!tapedone[t]) {

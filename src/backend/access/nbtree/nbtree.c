@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.16 1997/03/18 18:38:35 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtree.c,v 1.17 1997/03/24 08:48:11 vadim Exp $
  *
  * NOTES
  *    This file contains only the public interface routines.
@@ -219,11 +219,21 @@ btbuild(Relation heap,
 	 *  artifact of the strategy map architecture chosen in 1986, not
 	 *  of the way nulls are handled here.
 	 */
-	
+	/*
+	 * New comments: NULLs handling.
+	 * While we can't do NULL comparison, we can follow simple
+	 * rule for ordering items on btree pages - NULLs greater
+	 * NOT_NULLs and NULL = NULL is TRUE. Sure, it's just rule
+	 * for placing/finding items and no more - keytest'll return
+	 * FALSE for a = 5 for items having 'a' isNULL.	
+	 * Look at _bt_skeycmp, _bt_compare and _bt_itemcmp for
+	 * how it works.		- vadim 03/23/97
+	 
 	if (itup->t_info & INDEX_NULL_MASK) {
 	    pfree(itup);
 	    continue;
 	}
+	 */
 	
 	itup->t_tid = htup->t_ctid;
 	btitem = _bt_formitem(itup);
@@ -328,8 +338,12 @@ btinsert(Relation rel, Datum *datum, char *nulls, ItemPointer ht_ctid, Relation 
     itup = index_formtuple(RelationGetTupleDescriptor(rel), datum, nulls);
     itup->t_tid = *ht_ctid;
 
+    /*
+     * See comments in btbuild.
+     
     if (itup->t_info & INDEX_NULL_MASK)
 	return ((InsertIndexResult) NULL);
+    */
     
     btitem = _bt_formitem(itup);
     
@@ -423,7 +437,7 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
     
     /* reset the scan key */
     so->numberOfKeys = scan->numberOfKeys;
-    so->numberOfFirstKeys = 0;
+    so->numberOfFirstKeys = 0;		/* may be changed by _bt_orderkeys */
     so->qual_ok = 1;			/* may be changed by _bt_orderkeys */
     if (scan->numberOfKeys > 0) {
 	memmove(scan->keyData,
@@ -433,10 +447,7 @@ btrescan(IndexScanDesc scan, bool fromEnd, ScanKey scankey)
 		scankey,
 		so->numberOfKeys * sizeof(ScanKeyData));
 	/* order the keys in the qualification */
-	if (so->numberOfKeys > 1)
-	    _bt_orderkeys(scan->relation, so);
-	else
-	    so->numberOfFirstKeys = 1;
+	_bt_orderkeys(scan->relation, so);
     }
     
     /* finally, be sure that the scan exploits the tree order */
@@ -499,9 +510,10 @@ btendscan(IndexScanDesc scan)
 	ItemPointerSetInvalid(iptr);
     }
 
-    pfree (scan->opaque);
     if ( so->keyData != (ScanKey) NULL )
     	pfree (so->keyData);
+    pfree (so);
+
     _bt_dropscan(scan);
 }
 

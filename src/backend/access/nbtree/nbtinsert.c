@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.10 1997/01/25 21:08:09 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.11 1997/03/24 08:48:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <access/nbtree.h>
 #include <access/heapam.h>
 #include <storage/bufmgr.h>
+#include <fmgr.h>
 
 #ifndef HAVE_MEMMOVE
 # include <regex/utils.h>
@@ -33,6 +34,7 @@ static void _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf);
 static OffsetNumber _bt_pgaddtup(Relation rel, Buffer buf, int keysz, ScanKey itup_scankey, Size itemsize, BTItem btitem, BTItem afteritem);
 static bool _bt_goesonpg(Relation rel, Buffer buf, Size keysz, ScanKey scankey, BTItem afteritem);
 static void _bt_updateitem(Relation rel, Size keysz, Buffer buf, Oid bti_oid, BTItem newItem);
+static bool _bt_isequal (TupleDesc itupdesc, Page page, OffsetNumber offnum, int keysz, ScanKey scankey);
 
 /*
  *  _bt_doinsert() -- Handle insertion of a single btitem in the tree.
@@ -104,8 +106,16 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	    itupdesc = RelationGetTupleDescriptor(rel);
 	    nbuf = InvalidBuffer;
 	    opaque = (BTPageOpaque) PageGetSpecialPointer(page);
+	    /*
+	     * _bt_compare returns 0 for (1,NULL) and (1,NULL) -
+	     * this's how we handling NULLs - and so we must not use
+	     * _bt_compare in real comparison, but only for
+	     * ordering/finding items on pages.	- vadim 03/24/97
+
 	    while ( !_bt_compare (rel, itupdesc, page, 
 			    	natts, itup_scankey, offset) )
+	     */
+	    while ( _bt_isequal (itupdesc, page, offset, natts, itup_scankey) )
 	    {	/* they're equal */
 		btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offset));
 		itup = &(btitem->bti_itup);
@@ -123,8 +133,8 @@ _bt_doinsert(Relation rel, BTItem btitem, bool index_is_unique, Relation heapRel
 	    	{	/* move right ? */
 		    if ( P_RIGHTMOST (opaque) )
 		    	break;
-		    if ( _bt_compare (rel, itupdesc, page, 
-			    	natts, itup_scankey, P_HIKEY) )
+	    	    if ( !_bt_isequal (itupdesc, page, P_HIKEY, 
+	    	    				natts, itup_scankey) )
 			break;
 		    /* 
 		     * min key of the right page is the same,
@@ -939,18 +949,70 @@ _bt_itemcmp(Relation rel,
     IndexTuple indexTuple1, indexTuple2;
     Datum attrDatum1, attrDatum2;
     int i;
-    bool isNull;
+    bool isFirstNull, isSecondNull;
     bool compare;
+    bool useEqual = false;
+    
+    if ( strat == BTLessEqualStrategyNumber )
+    {
+	useEqual = true;
+	strat = BTLessStrategyNumber;
+    }
+    else if ( strat == BTGreaterEqualStrategyNumber )
+    {
+	useEqual = true;
+	strat = BTGreaterStrategyNumber;
+    }
     
     tupDes = RelationGetTupleDescriptor(rel);
     indexTuple1 = &(item1->bti_itup);
     indexTuple2 = &(item2->bti_itup);
     
     for (i = 1; i <= keysz; i++) {
-	attrDatum1 = index_getattr(indexTuple1, i, tupDes, &isNull);
-	attrDatum2 = index_getattr(indexTuple2, i, tupDes, &isNull);
-	compare = _bt_invokestrat(rel, i, strat, attrDatum1, attrDatum2);
-	if (!compare) {
+	attrDatum1 = index_getattr(indexTuple1, i, tupDes, &isFirstNull);
+	attrDatum2 = index_getattr(indexTuple2, i, tupDes, &isSecondNull);
+	
+	/* see comments about NULLs handling in btbuild */
+	if ( isFirstNull )	/* attr in item1 is NULL */
+	{
+    	    if ( isSecondNull )	/* attr in item2 is NULL too */
+    	    	compare = ( strat == BTEqualStrategyNumber ) ? true : false;
+    	    else
+    	    	compare = ( strat == BTGreaterStrategyNumber ) ? true : false;
+    	}
+    	else if ( isSecondNull )	/* attr in item1 is NOT_NULL and */
+    	{				/* and attr in item2 is NULL */
+    	    compare = ( strat == BTLessStrategyNumber ) ? true : false;
+    	}
+    	else
+    	{
+	    compare = _bt_invokestrat(rel, i, strat, attrDatum1, attrDatum2);
+	}
+	
+	if ( compare )	/* true for one of ">, <, =" */
+	{
+	    if ( strat != BTEqualStrategyNumber )
+	    	return (true);
+	}
+	else		/* false for one of ">, <, =" */
+	{
+	    if ( strat == BTEqualStrategyNumber )
+		return (false);
+	    /*
+	     * if original strat was "<=, >=" OR
+	     * "<, >" but some attribute(s) left
+	     * - need to test for Equality
+	     */
+	    if ( useEqual || i < keysz )
+	    {
+	    	if ( isFirstNull || isSecondNull )
+	    	    compare = ( isFirstNull && isSecondNull ) ? true : false;
+	    	else
+		    compare = _bt_invokestrat(rel, i, BTEqualStrategyNumber, 
+						attrDatum1, attrDatum2);
+		if ( compare )	/* item1' and item2' attributes are equal */
+		    continue;	/* - try to compare next attributes */
+	    }
 	    return (false);
 	}
     }
@@ -1014,4 +1076,46 @@ _bt_updateitem(Relation rel,
     CopyIndexTuple(newIndexTuple, &oldIndexTuple);
     ItemPointerCopy(&itemPtrData, &(oldIndexTuple->t_tid));
     
+}
+
+/*
+ * _bt_isequal - used in _bt_doinsert in check for duplicates.
+ *
+ * Rule is simple: NOT_NULL not equal NULL, NULL not_equal NULL too.
+ */
+static bool
+_bt_isequal (TupleDesc itupdesc, Page page, OffsetNumber offnum,
+					int keysz, ScanKey scankey)
+{
+    Datum datum;
+    BTItem btitem;
+    IndexTuple itup;
+    ScanKey entry;
+    AttrNumber attno;
+    long result;
+    int i;
+    bool null;
+    
+    btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
+    itup = &(btitem->bti_itup);
+    
+    for (i = 1; i <= keysz; i++)
+    {
+	entry = &scankey[i - 1];
+	attno = entry->sk_attno;
+	Assert (attno == i);
+	datum = index_getattr(itup, attno, itupdesc, &null);
+
+	/* NULLs are not equal */
+	if ( entry->sk_flags & SK_ISNULL || null )
+	    return (false);
+	
+	result = (long) FMGR_PTR2(entry->sk_func, entry->sk_procedure,
+					entry->sk_argument, datum);
+	if (result != 0)
+	    return (false);
+    }
+    
+    /* by here, the keys are equal */
+    return (true);
 }

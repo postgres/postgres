@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.15 1997/03/18 18:38:41 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.16 1997/03/24 08:48:12 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <storage/bufpage.h>
 #include <storage/bufmgr.h>
 #include <access/nbtree.h>
+#include <catalog/pg_proc.h>
 
 #ifndef HAVE_MEMMOVE
 # include <regex/utils.h>
@@ -238,7 +239,20 @@ _bt_skeycmp(Relation rel,
     Datum keyDatum;
     bool compare;
     bool isNull;
+    bool useEqual = false;
+    bool keyNull;
     
+    if ( strat == BTLessEqualStrategyNumber )
+    {
+	useEqual = true;
+	strat = BTLessStrategyNumber;
+    }
+    else if ( strat == BTGreaterEqualStrategyNumber )
+    {
+	useEqual = true;
+	strat = BTGreaterStrategyNumber;
+    }
+	
     item = (BTItem) PageGetItem(page, itemid);
     indexTuple = &(item->bti_itup);
     
@@ -248,27 +262,60 @@ _bt_skeycmp(Relation rel,
     for (i=1; i <= keysz; i++) {
 	
 	entry = &scankey[i-1];
+	Assert ( entry->sk_attno == i );
 	attrDatum = index_getattr(indexTuple,
 				  entry->sk_attno,
 				  tupDes,
 				  &isNull);
 	keyDatum  = entry->sk_argument;
-	
-	/*
-	 * This may happen in a nested loop if an attribute used
-	 * as scan key is null.			DZ 29-10-1996
-	 */
-	if ((entry->sk_flags & SK_ISNULL) || (isNull)) {
-	    if ((entry->sk_flags & SK_ISNULL) && (isNull)) {
-		return (true);
-	    } else {
-		return (false);
-	    }
+
+	/* see comments about NULLs handling in btbuild */
+	if ( entry->sk_flags & SK_ISNULL )	/* key is NULL */
+	{
+	    Assert ( entry->sk_procedure == NullValueRegProcedure );
+	    keyNull = true;
+    	    if ( isNull )
+    	    	compare = ( strat == BTEqualStrategyNumber ) ? true : false;
+    	    else
+    	    	compare = ( strat == BTGreaterStrategyNumber ) ? true : false;
+    	}
+    	else if ( isNull )	/* key is NOT_NULL and item is NULL */
+    	{
+	    keyNull = false;
+    	    compare = ( strat == BTLessStrategyNumber ) ? true : false;
+    	}
+    	else
+    	{
+	    keyNull = false;
+	    compare = _bt_invokestrat(rel, i, strat, keyDatum, attrDatum);
 	}
 
-	compare = _bt_invokestrat(rel, i, strat, keyDatum, attrDatum);
-	if (!compare)
+	if ( compare )	/* true for one of ">, <, =" */
+	{
+	    if ( strat != BTEqualStrategyNumber )
+	    	return (true);
+	}
+	else		/* false for one of ">, <, =" */
+	{
+	    if ( strat == BTEqualStrategyNumber )
+		return (false);
+	    /*
+	     * if original strat was "<=, >=" OR
+	     * "<, >" but some attribute(s) left
+	     * - need to test for Equality
+	     */
+	    if ( useEqual || i < keysz )
+	    {
+	    	if ( keyNull || isNull )
+	    	    compare = ( keyNull && isNull ) ? true : false;
+	    	else
+		    compare = _bt_invokestrat(rel, i, BTEqualStrategyNumber, 
+						keyDatum, attrDatum);
+		if ( compare )	/* key' and item' attributes are equal */
+		    continue;	/* - try to compare next attributes */
+	    }
 	    return (false);
+	}
     }
     
     return (true);
@@ -520,20 +567,24 @@ _bt_compare(Relation rel,
 	attno = entry->sk_attno;
 	datum = index_getattr(itup, attno, itupdesc, &null);
 
-	/*
-	 * This may happen in a nested loop if an attribute used
-	 * as scan key is null.			DZ 29-10-1996
-	 */
-	if ((entry->sk_flags & SK_ISNULL) || (null)) {
-	    if ((entry->sk_flags & SK_ISNULL) && (null)) {
-		return (0);
-	    } else {
-		return (null ? +1 : -1);
-	    }
+	/* see comments about NULLs handling in btbuild */
+	if ( entry->sk_flags & SK_ISNULL )	/* key is NULL */
+	{
+	    Assert ( entry->sk_procedure == NullValueRegProcedure );
+    	    if ( null )
+    	    	tmpres = (long) 0;		/* NULL "=" NULL */
+    	    else
+    	    	tmpres = (long) 1;		/* NULL ">" NOT_NULL */
+    	}
+    	else if ( null )	/* key is NOT_NULL and item is NULL */
+    	{
+    	    	tmpres = (long) -1;		/* NOT_NULL "<" NULL */
+    	}
+    	else
+    	{
+	    tmpres = (long) FMGR_PTR2(entry->sk_func, entry->sk_procedure,
+					entry->sk_argument, datum);
 	}
-
-	tmpres = (long) FMGR_PTR2(entry->sk_func, entry->sk_procedure,
-				  entry->sk_argument, datum);
 	result = tmpres;
 	
 	/* if the keys are unequal, return the difference */
@@ -566,6 +617,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
     BTItem btitem;
     IndexTuple itup;
     BTScanOpaque so;
+    Size keysok;
     
     rel = scan->relation;
     so = (BTScanOpaque) scan->opaque;
@@ -596,8 +648,9 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
     	btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
     	itup = &btitem->bti_itup;
     
-    	if (_bt_checkqual(scan, itup)) 
+    	if ( _bt_checkkeys (scan, itup, &keysok) ) 
     	{
+	    Assert (keysok == so->numberOfKeys);
 	    res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	    /* remember which buffer we have pinned and locked */
@@ -605,7 +658,7 @@ _bt_next(IndexScanDesc scan, ScanDirection dir)
 	    return (res);
 	}
 
-    } while ( _bt_checkforkeys (scan, itup, so->numberOfFirstKeys) );
+    } while ( keysok >= so->numberOfFirstKeys );
 
     ItemPointerSetInvalid(current);
     so->btso_curbuf = InvalidBuffer;
@@ -644,6 +697,7 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     int result;
     BTScanOpaque so;
     ScanKeyData skdata;
+    Size keysok;
     
     so = (BTScanOpaque) scan->opaque;
     if ( so->qual_ok == 0 )		/* may be set by _bt_orderkeys */
@@ -663,6 +717,12 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
      *  ordered to take advantage of index ordering) to position ourselves
      *  at the right place in the scan.
      */
+    /* _bt_orderkeys disallows it, but it's place to add some code latter */
+    if ( so->keyData[0].sk_flags & SK_ISNULL )
+    {
+    	elog (WARN, "_bt_first: btree doesn't support is(not)null, yet");
+    	return ((RetrieveIndexResult) NULL);
+    }
     proc = index_getprocid(rel, 1, BTORDER_PROC);
     ScanKeyEntryInitialize(&skdata, so->keyData[0].sk_flags, 1, proc,
 			   so->keyData[0].sk_argument);
@@ -706,6 +766,9 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
      */
     
     result = _bt_compare(rel, itupdesc, page, 1, &skdata, offnum);
+
+    /* it's yet other place to add some code latter for is(not)null */
+
     strat = _bt_getstrat(rel, 1, so->keyData[0].sk_procedure);
     
     switch (strat) {
@@ -798,14 +861,14 @@ _bt_first(IndexScanDesc scan, ScanDirection dir)
     btitem = (BTItem) PageGetItem(page, PageGetItemId(page, offnum));
     itup = &btitem->bti_itup;
     
-    if ( _bt_checkqual(scan, itup) )
+    if ( _bt_checkkeys (scan, itup, &keysok) ) 
     {
 	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned */
 	so->btso_curbuf = buf;
     }
-    else if ( _bt_checkforkeys (scan, itup, so->numberOfFirstKeys) )
+    else if ( keysok >= so->numberOfFirstKeys )
     {
 	so->btso_curbuf = buf;
 	return (_bt_next (scan, dir));
@@ -1081,6 +1144,7 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     IndexTuple itup;
     BTScanOpaque so;
     RetrieveIndexResult res;
+    Size keysok;
     
     rel = scan->relation;
     current = &(scan->currentItemData);
@@ -1223,13 +1287,14 @@ _bt_endpoint(IndexScanDesc scan, ScanDirection dir)
     itup = &(btitem->bti_itup);
     
     /* see if we picked a winner */
-    if (_bt_checkqual(scan, itup)) {
+    if ( _bt_checkkeys (scan, itup, &keysok) ) 
+    {
 	res = FormRetrieveIndexResult(current, &(itup->t_tid));
 	
 	/* remember which buffer we have pinned */
 	so->btso_curbuf = buf;
     }
-    else if ( _bt_checkforkeys (scan, itup, so->numberOfFirstKeys) )
+    else if ( keysok >= so->numberOfFirstKeys )
     {
 	so->btso_curbuf = buf;
 	return (_bt_next (scan, dir));
