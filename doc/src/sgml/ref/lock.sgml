@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.41 2004/03/11 01:47:35 ishii Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/lock.sgml,v 1.42 2004/03/12 00:52:23 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -33,13 +33,15 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
   <title>Description</title>
 
   <para>
-   <command>LOCK TABLE</command> obtains a table-level lock, waiting if
-   necessary for any conflicting locks to be released.
-   If <literal>NOWAIT</literal> is given, <command>LOCK TABLE</command>
-   does not wait for acquiring lock, and throws an error instead.
-   Once obtained, the lock is held for the remainder of the current transaction.
-   (There is no <command>UNLOCK TABLE</command> command; locks are always
-   released at transaction end.)
+   <command>LOCK TABLE</command> obtains a table-level lock, waiting
+   if necessary for any conflicting locks to be released.  If
+   <literal>NOWAIT</literal> is specified, <command>LOCK
+   TABLE</command> does not wait to acquire the desired lock: if it
+   cannot be immediately acquired, the transaction is aborted and an
+   error is emitted.  Once obtained, the lock is held for the
+   remainder of the current transaction.  (There is no <command>UNLOCK
+   TABLE</command> command; locks are always released at transaction
+   end.)
   </para>
 
   <para>
@@ -129,6 +131,18 @@ where <replaceable class="PARAMETER">lockmode</replaceable> is one of:
      <para>
       If no lock mode is specified, then <literal>ACCESS
       EXCLUSIVE</literal>, the most restrictive mode, is used.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><literal>NOWAIT</literal></term>
+    <listitem>
+     <para>
+      Specifies that <command>LOCK TABLE</command> should not wait for
+      any conflicting locks to be released: if the specified lock
+      cannot be immediately acquired without waiting, the transaction
+      is aborted.
      </para>
     </listitem>
    </varlistentry>
