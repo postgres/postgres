@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.9.2.1 2002/11/22 03:09:59 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.9.2.2 2003/01/16 15:28:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -414,7 +414,7 @@ dumpCreateDB(PGconn *conn)
 			continue;
 
 		if (output_clean)
-			appendPQExpBuffer(buf, "DROP DATABASE %s\n;", fmtId(dbname));
+			appendPQExpBuffer(buf, "DROP DATABASE %s;\n", fmtId(dbname));
 
 		appendPQExpBuffer(buf, "CREATE DATABASE %s", fmtId(dbname));
 		appendPQExpBuffer(buf, " WITH OWNER = %s TEMPLATE = template0", fmtId(dbowner));
