@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.39 2003/08/04 18:40:50 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.40 2003/09/14 17:13:06 tgl Exp $
  *
  *********************************************************************
  */
@@ -224,13 +224,11 @@ static HeapTuple PLy_modify_tuple(PLyProcedure *, PyObject *,
 
 static PyObject *PLy_procedure_call(PLyProcedure *, char *, PyObject *);
 
-/* returns a cached PLyProcedure, or creates, stores and returns
- * a new PLyProcedure.
- */
-static PLyProcedure *PLy_procedure_get(FunctionCallInfo fcinfo, bool);
+static PLyProcedure *PLy_procedure_get(FunctionCallInfo fcinfo,
+									   Oid tgreloid);
 
 static PLyProcedure *PLy_procedure_create(FunctionCallInfo fcinfo,
-					 bool is_trigger,
+					 Oid tgreloid,
 					 HeapTuple procTup, char *key);
 
 static void PLy_procedure_compile(PLyProcedure *, const char *);
@@ -326,7 +324,6 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 {
 	DECLARE_EXC();
 	Datum		retval;
-	volatile bool is_trigger;
 	PLyProcedure *volatile proc = NULL;
 
 	enter();
@@ -337,7 +334,6 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		elog(ERROR, "could not connect to SPI manager");
 
 	CALL_LEVEL_INC();
-	is_trigger = CALLED_AS_TRIGGER(fcinfo);
 
 	SAVE_EXC();
 	if (TRAP_EXC())
@@ -364,16 +360,21 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 	 * PLy_restart_in_progress);
 	 */
 
-	proc = PLy_procedure_get(fcinfo, is_trigger);
-
-	if (is_trigger)
+	if (CALLED_AS_TRIGGER(fcinfo))
 	{
-		HeapTuple	trv = PLy_trigger_handler(fcinfo, proc);
+		TriggerData *tdata = (TriggerData *) fcinfo->context;
+		HeapTuple	trv;
 
+		proc = PLy_procedure_get(fcinfo,
+								 RelationGetRelid(tdata->tg_relation));
+		trv = PLy_trigger_handler(fcinfo, proc);
 		retval = PointerGetDatum(trv);
 	}
 	else
+	{
+		proc = PLy_procedure_get(fcinfo, InvalidOid);
 		retval = PLy_function_handler(fcinfo, proc);
+	}
 
 	CALL_LEVEL_DEC();
 	RESTORE_EXC();
@@ -962,10 +963,17 @@ PLy_function_build_args(FunctionCallInfo fcinfo, PLyProcedure * proc)
 }
 
 
-/* PLyProcedure functions
+/*
+ * PLyProcedure functions
+ */
+
+/* PLy_procedure_get: returns a cached PLyProcedure, or creates, stores and
+ * returns a new PLyProcedure.  fcinfo is the call info, tgreloid is the
+ * relation OID when calling a trigger, or InvalidOid (zero) for ordinary
+ * function calls.
  */
 static PLyProcedure *
-PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
+PLy_procedure_get(FunctionCallInfo fcinfo, Oid tgreloid)
 {
 	Oid			fn_oid;
 	HeapTuple	procTup;
@@ -983,9 +991,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 	if (!HeapTupleIsValid(procTup))
 		elog(ERROR, "cache lookup failed for function %u", fn_oid);
 
-	rv = snprintf(key, sizeof(key), "%u%s",
-				  fn_oid,
-				  is_trigger ? "_trigger" : "");
+	rv = snprintf(key, sizeof(key), "%u_%u", fn_oid, tgreloid);
 	if ((rv >= sizeof(key)) || (rv < 0))
 		elog(ERROR, "key too long");
 
@@ -1012,7 +1018,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 	}
 
 	if (proc == NULL)
-		proc = PLy_procedure_create(fcinfo, is_trigger, procTup, key);
+		proc = PLy_procedure_create(fcinfo, tgreloid, procTup, key);
 
 	ReleaseSysCache(procTup);
 
@@ -1020,7 +1026,7 @@ PLy_procedure_get(FunctionCallInfo fcinfo, bool is_trigger)
 }
 
 static PLyProcedure *
-PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
+PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 					 HeapTuple procTup, char *key)
 {
 	char		procName[NAMEDATALEN + 256];
@@ -1037,11 +1043,17 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 
 	procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 
-	rv = snprintf(procName, sizeof(procName),
-				  "__plpython_procedure_%s_%u%s",
-				  NameStr(procStruct->proname),
-				  fcinfo->flinfo->fn_oid,
-				  is_trigger ? "_trigger" : "");
+	if (OidIsValid(tgreloid))
+		rv = snprintf(procName, sizeof(procName),
+					  "__plpython_procedure_%s_%u_trigger_%u",
+					  NameStr(procStruct->proname),
+					  fcinfo->flinfo->fn_oid,
+					  tgreloid);
+	else
+		rv = snprintf(procName, sizeof(procName),
+					  "__plpython_procedure_%s_%u",
+					  NameStr(procStruct->proname),
+					  fcinfo->flinfo->fn_oid);
 	if ((rv >= sizeof(procName)) || (rv < 0))
 		elog(ERROR, "procedure name would overrun buffer");
 
@@ -1073,7 +1085,7 @@ PLy_procedure_create(FunctionCallInfo fcinfo, bool is_trigger,
 	 * get information required for output conversion of the return value,
 	 * but only if this isn't a trigger.
 	 */
-	if (!is_trigger)
+	if (!CALLED_AS_TRIGGER(fcinfo))
 	{
 		HeapTuple	rvTypeTup;
 		Form_pg_type rvTypeStruct;
