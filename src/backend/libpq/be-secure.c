@@ -11,8 +11,34 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.1 2002/06/14 04:23:17 momjian Exp $
- *	  
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/be-secure.c,v 1.2 2002/06/14 04:31:49 momjian Exp $
+ *
+ *	  Since the server static private key ($DataDir/server.key)
+ *	  will normally be stored unencrypted so that the database
+ *	  backend can restart automatically, it is important that
+ *	  we select an algorithm that continues to provide confidentiality
+ *	  even if the attacker has the server's private key.  Empheral
+ *	  DH (EDH) keys provide this, and in fact provide Perfect Forward
+ *	  Secrecy (PFS) except for situations where the session can
+ *	  be hijacked during a periodic handshake/renegotiation.
+ *	  Even that backdoor can be closed if client certificates
+ *	  are used (since the imposter will be unable to successfully
+ *	  complete renegotiation).
+ *
+ *	  N.B., the static private key should still be protected to
+ *	  the largest extent possible, to minimize the risk of
+ *	  impersonations.
+ *
+ *	  Another benefit of EDH is that it allows the backend and
+ *	  clients to use DSA keys.  DSA keys can only provide digital
+ *	  signatures, not encryption, and are often acceptable in
+ *	  jurisdictions where RSA keys are unacceptable.
+ *
+ *	  The downside to EDH is that it makes it impossible to
+ *	  use ssldump(1) if there's a problem establishing an SSL
+ *	  session.  In this case you'll need to temporarily disable
+ *	  EDH by commenting out the callback.
+ *
  * PATCH LEVEL
  *	  milestone 1: fix basic coding errors
  *	  [*] existing SSL code pulled out of existing files.
@@ -25,8 +51,9 @@
  *
  *	  milestone 3: improve confidentially, support perfect forward secrecy
  *	  [ ] use 'random' file, read from '/dev/urandom?'
- *	  [ ] emphermal DH keys, default values
+ *	  [*] emphermal DH keys, default values
  *	  [ ] periodic renegotiation
+ *	  [ ] private key permissions
  *
  *	  milestone 4: provide endpoint authentication (client)
  *	  [ ] server verifies client certificates
@@ -74,6 +101,7 @@
 #ifdef USE_SSL
 #include <openssl/ssl.h>
 #include <openssl/e_os.h>
+#include <openssl/dh.h>
 #endif
 
 extern void ExitPostmaster(int);
@@ -87,6 +115,9 @@ ssize_t secure_read(Port *, void *ptr, size_t len);
 ssize_t secure_write(Port *, const void *ptr, size_t len);
 
 #ifdef USE_SSL
+static DH *load_dh_file(int keylength);
+static DH *load_dh_buffer(const char *, size_t);
+static DH *tmp_dh_cb(SSL *s, int is_export, int keylength);
 static int initialize_SSL(void);
 static void destroy_SSL(void);
 static int open_server_SSL(Port *);
@@ -97,6 +128,70 @@ static const char *SSLerrmessage(void);
 #ifdef USE_SSL
 static SSL_CTX *SSL_context = NULL;
 #endif
+
+/* ------------------------------------------------------------ */
+/*                       Hardcoded values                       */
+/* ------------------------------------------------------------ */
+
+/*
+ *	Hardcoded DH parameters, used in empheral DH keying.
+ *	As discussed above, EDH protects the confidentiality of
+ *	sessions even if the static private key is compromised,
+ *	so we are *highly* motivated to ensure that we can use
+ *	EDH even if the DBA... or an attacker... deletes the 
+ *	$DataDir/dh*.pem files.
+ *
+ *	We could refuse SSL connections unless a good DH parameter
+ *	file exists, but some clients may quietly renegotiate an
+ *	unsecured connection without fully informing the user.
+ *	Very uncool.  
+ *
+ *	Alternately, the backend could attempt to load these files
+ *	on startup if SSL is enabled - and refuse to start if any
+ *	do not exist - but this would tend to piss off DBAs.
+ *
+ *	If you want to create your own hardcoded DH parameters
+ *	for fun and profit, review "Assigned Number for SKIP 
+ *	Protocols" (http://www.skip-vpn.org/spec/numbers.html)
+ *	for suggestions.
+ */
+static const char file_dh512[] =
+"-----BEGIN DH PARAMETERS-----\n\
+MEYCQQD1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6ypUM2Zafq9AKUJsCRtMIPWak\n\
+XUGfnHy9iUsiGSa6q6Jew1XpKgVfAgEC\n\
+-----END DH PARAMETERS-----\n";
+
+static const char file_dh1024[] =
+"-----BEGIN DH PARAMETERS-----\n\
+MIGHAoGBAPSI/VhOSdvNILSd5JEHNmszbDgNRR0PfIizHHxbLY7288kjwEPwpVsY\n\
+jY67VYy4XTjTNP18F1dDox0YbN4zISy1Kv884bEpQBgRjXyEpwpy1obEAxnIByl6\n\
+ypUM2Zafq9AKUJsCRtMIPWakXUGfnHy9iUsiGSa6q6Jew1XpL3jHAgEC\n\
+-----END DH PARAMETERS-----\n";
+
+static const char file_dh2048[] =
+"-----BEGIN DH PARAMETERS-----\n\
+MIIBCAKCAQEA9kJXtwh/CBdyorrWqULzBej5UxE5T7bxbrlLOCDaAadWoxTpj0BV\n\
+89AHxstDqZSt90xkhkn4DIO9ZekX1KHTUPj1WV/cdlJPPT2N286Z4VeSWc39uK50\n\
+T8X8dryDxUcwYc58yWb/Ffm7/ZFexwGq01uejaClcjrUGvC/RgBYK+X0iP1YTknb\n\
+zSC0neSRBzZrM2w4DUUdD3yIsxx8Wy2O9vPJI8BD8KVbGI2Ou1WMuF040zT9fBdX\n\
+Q6MdGGzeMyEstSr/POGxKUAYEY18hKcKctaGxAMZyAcpesqVDNmWn6vQClCbAkbT\n\
+CD1mpF1Bn5x8vYlLIhkmuquiXsNV6TILOwIBAg==\n\
+-----END DH PARAMETERS-----\n";
+
+static const char file_dh4096[] =
+"-----BEGIN DH PARAMETERS-----\n\
+MIICCAKCAgEA+hRyUsFN4VpJ1O8JLcCo/VWr19k3BCgJ4uk+d+KhehjdRqNDNyOQ\n\
+l/MOyQNQfWXPeGKmOmIig6Ev/nm6Nf9Z2B1h3R4hExf+zTiHnvVPeRBhjdQi81rt\n\
+Xeoh6TNrSBIKIHfUJWBh3va0TxxjQIs6IZOLeVNRLMqzeylWqMf49HsIXqbcokUS\n\
+Vt1BkvLdW48j8PPv5DsKRN3tloTxqDJGo9tKvj1Fuk74A+Xda1kNhB7KFlqMyN98\n\
+VETEJ6c7KpfOo30mnK30wqw3S8OtaIR/maYX72tGOno2ehFDkq3pnPtEbD2CScxc\n\
+alJC+EL7RPk5c/tgeTvCngvc1KZn92Y//EI7G9tPZtylj2b56sHtMftIoYJ9+ODM\n\
+sccD5Piz/rejE3Ome8EOOceUSCYAhXn8b3qvxVI1ddd1pED6FHRhFvLrZxFvBEM9\n\
+ERRMp5QqOaHJkM+Dxv8Cj6MqrCbfC4u+ZErxodzuusgDgvZiLF22uxMZbobFWyte\n\
+OvOzKGtwcTqO/1wV5gKkzu1ZVswVUQd5Gg8lJicwqRWyyNRczDDoG9jVDxmogKTH\n\
+AaqLulO7R8Ifa1SwF2DteSGVtgWEN8gDpN3RBmmPTDngyF2DHb5qmpnznwtFKdTL\n\
+KWbuHn491xNO25CQWMtem80uKw+pTnisBRF/454n1Jnhub144YRBoN8CAQI=\n\
+-----END DH PARAMETERS-----\n";
 
 /* ------------------------------------------------------------ */
 /*           Procedures common to all secure sessions           */
@@ -246,6 +341,161 @@ secure_write (Port *port, const void *ptr, size_t len)
 /* ------------------------------------------------------------ */
 #ifdef USE_SSL
 /*
+ *	Load precomputed DH parameters.
+ *
+ *	To prevent "downgrade" attacks, we perform a number of checks
+ *	to verify that the DBA-generated DH parameters file contains 
+ *	what we expect it to contain.
+ */
+static DH *
+load_dh_file (int keylength)
+{
+	FILE *fp;
+	char fnbuf[2048];
+	DH *dh = NULL;
+	int codes;
+
+	/* attempt to open file.  It's not an error if it doesn't exist. */
+	snprintf(fnbuf, sizeof fnbuf, "%s/dh%d.pem", DataDir, keylength);
+	if ((fp = fopen(fnbuf, "r")) == NULL)
+		return NULL;
+
+/*	flock(fileno(fp), LOCK_SH); */
+	dh = PEM_read_DHparams(fp, NULL, NULL, NULL);
+/*	flock(fileno(fp), LOCK_UN); */
+	fclose(fp);
+
+	/* is the prime the correct size? */
+	if (dh != NULL && 8*DH_size(dh) < keylength)
+	{
+		elog(DEBUG, "DH errors (%s): %d bits expected, %d bits found",
+			fnbuf, keylength, 8*DH_size(dh));
+		dh = NULL;
+	}
+
+	/* make sure the DH parameters are usable */
+	if (dh != NULL)
+	{
+		if (DH_check(dh, &codes))
+		{
+			elog(DEBUG, "DH_check error (%s): %s", fnbuf, SSLerrmessage());
+			return NULL;
+		}
+		if (codes & DH_CHECK_P_NOT_PRIME)
+		{
+			elog(DEBUG, "DH error (%s): p is not prime", fnbuf);
+			return NULL;
+		}
+		if ((codes & DH_NOT_SUITABLE_GENERATOR) && 
+			(codes & DH_CHECK_P_NOT_SAFE_PRIME))
+		{
+			elog(DEBUG,
+				"DH error (%s): neither suitable generator or safe prime",
+				fnbuf);
+			return NULL;
+		}
+	}
+
+	return dh;
+}
+
+/*
+ *	Load hardcoded DH parameters.
+ *
+ *	To prevent problems if the DH parameters files don't even
+ *	exist, we can load DH parameters hardcoded into this file.
+ */
+static DH *
+load_dh_buffer (const char *buffer, size_t len)
+{
+	BIO *bio;
+	DH *dh = NULL;
+
+	bio = BIO_new_mem_buf((char *) buffer, len);
+	if (bio == NULL)
+		return NULL;
+	dh = PEM_read_bio_DHparams(bio, NULL, NULL, NULL);
+	if (dh == NULL)
+		elog(DEBUG, "DH load buffer: %s", SSLerrmessage());
+	BIO_free(bio);
+
+	return dh;
+}
+
+/*
+ *	Generate an empheral DH key.  Because this can take a long
+ *	time to compute, we can use precomputed parameters of the
+ *	common key sizes.
+ *
+ *	Since few sites will bother to precompute these parameter
+ *	files, we also provide a fallback to the parameters provided
+ *	by the OpenSSL project.
+ *
+ *	These values can be static (once loaded or computed) since
+ *	the OpenSSL library can efficiently generate random keys from
+ *	the information provided.
+ */
+static DH *
+tmp_dh_cb (SSL *s, int is_export, int keylength)
+{
+	DH *r = NULL;
+	static DH *dh = NULL;
+	static DH *dh512 = NULL;
+	static DH *dh1024 = NULL;
+	static DH *dh2048 = NULL;
+	static DH *dh4096 = NULL;
+
+	switch (keylength)
+	{
+	case 512:
+		if (dh512 == NULL)
+			dh512 = load_dh_file(keylength);
+		if (dh512 == NULL)
+			dh512 = load_dh_buffer(file_dh512, sizeof file_dh512);
+		r = dh512;
+		break;
+
+	case 1024:
+		if (dh1024 == NULL)
+			dh1024 = load_dh_file(keylength);
+		if (dh1024 == NULL)
+			dh1024 = load_dh_buffer(file_dh1024, sizeof file_dh1024);
+		r = dh1024;
+		break;
+
+	case 2048:
+		if (dh2048 == NULL)
+			dh2048 = load_dh_file(keylength);
+		if (dh2048 == NULL)
+			dh2048 = load_dh_buffer(file_dh2048, sizeof file_dh2048);
+		r = dh2048;
+		break;
+
+	case 4096:
+		if (dh4096 == NULL)
+			dh4096 = load_dh_file(keylength);
+		if (dh4096 == NULL)
+			dh4096 = load_dh_buffer(file_dh4096, sizeof file_dh4096);
+		r = dh4096;
+		break;
+
+	default:
+		if (dh == NULL)
+			dh = load_dh_file(keylength);
+		r = dh;
+	}
+
+	/* this may take a long time, but it may be necessary... */
+	if (r == NULL || 8*DH_size(r) < keylength)
+	{
+		elog(DEBUG, "DH: generating parameters (%d bits)....", keylength);
+		r = DH_generate_parameters(keylength, DH_GENERATOR_2, NULL, NULL);
+	}
+	
+	return r;
+}
+
+/*
  *	Initialize global SSL context.
  */
 static int
@@ -289,6 +539,10 @@ initialize_SSL (void)
 			ExitPostmaster(1);
 		}
 	}
+
+	/* set up empheral DH keys */
+	SSL_CTX_set_tmp_dh_callback(SSL_context, tmp_dh_cb);
+	SSL_CTX_set_options(SSL_context, SSL_OP_SINGLE_DH_USE);
 
 	return 0;
 }
