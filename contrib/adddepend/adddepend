@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# $Id: adddepend,v 1.2 2002/10/18 18:41:19 momjian Exp $
+# $Id: adddepend,v 1.2.2.1 2002/12/02 00:28:34 tgl Exp $
 
 # Project exists to assist PostgreSQL users with their structural upgrade 
 # from 7.2 (or prior) to 7.3 (possibly later).  Must be run against a 7.3
@@ -221,7 +221,7 @@ sub findForeignKeys
 			my $ref_cols = "$fcolumn_name";
 
 			# Perhaps there is more than a single column
-			while ($lcolumn_name = pop(@junk) and $fcolumn_name = pop(@junk)) {
+			while ($lcolumn_name = shift(@junk) and $fcolumn_name = shift(@junk)) {
 				$key_cols .= ", $lcolumn_name";
 				$ref_cols .= ", $fcolumn_name";
 			}
