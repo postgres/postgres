@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.107 2001/01/12 21:53:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.108 2001/01/15 05:29:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1534,17 +1534,19 @@ l1:
 	}
 	END_CRIT_SECTION();
 
+	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
+
 #ifdef TUPLE_TOASTER_ACTIVE
 	/* ----------
 	 * If the relation has toastable attributes, we need to delete
-	 * no longer needed items there too.
+	 * no longer needed items there too.  We have to do this before
+	 * WriteBuffer because we need to look at the contents of the tuple,
+	 * but it's OK to release the context lock on the buffer first.
 	 * ----------
 	 */
 	if (HeapTupleHasExtended(&tp))
 		heap_tuple_toast_attrs(relation, NULL, &(tp));
 #endif
-
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 
 	/*
 	 * Mark tuple for invalidation from system caches at next command boundary.
@@ -1568,7 +1570,10 @@ heap_update(Relation relation, ItemPointer otid, HeapTuple newtup,
 	ItemId		lp;
 	HeapTupleData oldtup;
 	PageHeader	dp;
-	Buffer		buffer, newbuf;
+	Buffer		buffer,
+				newbuf;
+	bool		need_toast,
+				already_marked;
 	int			result;
 
 	/* increment access statistics */
@@ -1645,7 +1650,7 @@ l2:
 		return result;
 	}
 
-	/* XXX order problems if not atomic assignment ??? */
+	/* Fill in OID and transaction status data for newtup */
 	newtup->t_data->t_oid = oldtup.t_data->t_oid;
 	TransactionIdStore(GetCurrentTransactionId(), &(newtup->t_data->t_xmin));
 	newtup->t_data->t_cmin = GetCurrentCommandId();
@@ -1653,69 +1658,84 @@ l2:
 	newtup->t_data->t_infomask &= ~(HEAP_XACT_MASK);
 	newtup->t_data->t_infomask |= (HEAP_XMAX_INVALID | HEAP_UPDATED);
 
-#ifdef TUPLE_TOASTER_ACTIVE
-	/* ----------
-	 * If this relation is enabled for toasting, let the toaster
-	 * delete any no-longer-needed entries and create new ones to
-	 * make the new tuple fit again.  Also, if there are already-
-	 * toasted values from some other relation, the toaster must
-	 * fix them.
-	 * ----------
+	/*
+	 * If the toaster needs to be activated, OR if the new tuple will not
+	 * fit on the same page as the old, then we need to release the context
+	 * lock (but not the pin!) on the old tuple's buffer while we are off
+	 * doing TOAST and/or table-file-extension work.  We must mark the old
+	 * tuple to show that it's already being updated, else other processes
+	 * may try to update it themselves. To avoid second XLOG log record,
+	 * we use xact mgr hook to unlock old tuple without reading log if xact
+	 * will abort before update is logged. In the event of crash prio logging,
+	 * TQUAL routines will see HEAP_XMAX_UNLOGGED flag...
+	 *
+	 * NOTE: this trick is useless currently but saved for future
+	 * when we'll implement UNDO and will re-use transaction IDs
+	 * after postmaster startup.
+	 *
+	 * We need to invoke the toaster if there are already any toasted values
+	 * present, or if the new tuple is over-threshold.
 	 */
-	if (HeapTupleHasExtended(&oldtup) || 
-		HeapTupleHasExtended(newtup) ||
-		(MAXALIGN(newtup->t_len) > TOAST_TUPLE_THRESHOLD))
-		heap_tuple_toast_attrs(relation, newtup, &oldtup);
-#endif
+	need_toast = (HeapTupleHasExtended(&oldtup) || 
+				  HeapTupleHasExtended(newtup) ||
+				  (MAXALIGN(newtup->t_len) > TOAST_TUPLE_THRESHOLD));
 
-	/* Find buffer for new tuple */
-
-	if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
-		newbuf = buffer;
-	else
+	if (need_toast ||
+		(unsigned) MAXALIGN(newtup->t_len) > PageGetFreeSpace((Page) dp))
 	{
-		/* 
-		 * We have to unlock old tuple buffer before extending table
-		 * file but have to keep lock on the old tuple. To avoid second
-		 * XLOG log record we use xact mngr hook to unlock old tuple
-		 * without reading log if xact will abort before update is logged.
-		 * In the event of crash prio logging, TQUAL routines will see
-		 * HEAP_XMAX_UNLOGGED flag...
-		 *
-		 * NOTE: this trick is useless currently but saved for future
-		 * when we'll implement UNDO and will re-use transaction IDs
-		 * after postmaster startup.
-		 */
 		_locked_tuple_.node = relation->rd_node;
 		_locked_tuple_.tid = oldtup.t_self;
 		XactPushRollback(_heap_unlock_tuple, (void*) &_locked_tuple_);
 
-		TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
+		TransactionIdStore(GetCurrentTransactionId(),
+						   &(oldtup.t_data->t_xmax));
 		oldtup.t_data->t_cmax = GetCurrentCommandId();
 		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-								 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+									   HEAP_XMAX_INVALID |
+									   HEAP_MARKED_FOR_UPDATE);
 		oldtup.t_data->t_infomask |= HEAP_XMAX_UNLOGGED;
+		already_marked = true;
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		newbuf = RelationGetBufferForTuple(relation, newtup->t_len);
+
+		/* Let the toaster do its thing */
+		if (need_toast)
+			heap_tuple_toast_attrs(relation, newtup, &oldtup);
+
+		/* Now, do we need a new page for the tuple, or not? */
+		if ((unsigned) MAXALIGN(newtup->t_len) <= PageGetFreeSpace((Page) dp))
+			newbuf = buffer;
+		else
+			newbuf = RelationGetBufferForTuple(relation, newtup->t_len);
+
+		/* Re-acquire the lock on the old tuple's page. */
 		/* this seems to be deadlock free... */
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
+	}
+	else
+	{
+		/* No TOAST work needed, and it'll fit on same page */
+		already_marked = false;
+		newbuf = buffer;
 	}
 
 	/* NO ELOG(ERROR) from here till changes are logged */
 	START_CRIT_SECTION();
 
 	RelationPutHeapTuple(relation, newbuf, newtup);	/* insert new tuple */
-	if (buffer == newbuf)
-	{
-		TransactionIdStore(GetCurrentTransactionId(), &(oldtup.t_data->t_xmax));
-		oldtup.t_data->t_cmax = GetCurrentCommandId();
-		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
-								 HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
-	}
-	else
+
+	if (already_marked)
 	{
 		oldtup.t_data->t_infomask &= ~HEAP_XMAX_UNLOGGED;
 		XactPopRollback();
+	}
+	else
+	{
+		TransactionIdStore(GetCurrentTransactionId(),
+						   &(oldtup.t_data->t_xmax));
+		oldtup.t_data->t_cmax = GetCurrentCommandId();
+		oldtup.t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+									   HEAP_XMAX_INVALID |
+									   HEAP_MARKED_FOR_UPDATE);
 	}
 
 	/* record address of new tuple in t_ctid of old one */
@@ -1724,7 +1744,7 @@ l2:
 	/* XLOG stuff */
 	{
 		XLogRecPtr	recptr = log_heap_update(relation, buffer, oldtup.t_self, 
-												newbuf, newtup, false);
+											 newbuf, newtup, false);
 
 		if (newbuf != buffer)
 		{
@@ -1734,6 +1754,7 @@ l2:
 		PageSetLSN(BufferGetPage(buffer), recptr);
 		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
 	}
+
 	END_CRIT_SECTION();
 
 	if (newbuf != buffer)
