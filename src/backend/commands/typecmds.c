@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.35 2003/05/08 22:19:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.36 2003/05/09 23:01:45 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -911,13 +911,20 @@ findTypeReceiveFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Receive functions take a single argument of type INTERNAL.
+	 * Receive functions can take a single argument of type INTERNAL, or
+	 * two arguments (internal, oid).
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	argList[0] = INTERNALOID;
 
 	procOid = LookupFuncName(procname, 1, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	argList[1] = OIDOID;
+
+	procOid = LookupFuncName(procname, 2, argList);
 	if (OidIsValid(procOid))
 		return procOid;
 
@@ -933,13 +940,20 @@ findTypeSendFunction(List *procname, Oid typeOid)
 	Oid			procOid;
 
 	/*
-	 * Send functions take a single argument of the type.
+	 * Send functions can take a single argument of the type, or two
+	 * arguments (data value, element OID).
 	 */
 	MemSet(argList, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	argList[0] = typeOid;
 
 	procOid = LookupFuncName(procname, 1, argList);
+	if (OidIsValid(procOid))
+		return procOid;
+
+	argList[1] = OIDOID;
+
+	procOid = LookupFuncName(procname, 2, argList);
 	if (OidIsValid(procOid))
 		return procOid;
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.42 2003/05/08 22:19:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_type.sgml,v 1.43 2003/05/09 23:01:44 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -117,15 +117,20 @@ CREATE TYPE <replaceable class="parameter">typename</replaceable> (
    representation is in the machine's native byte order.)  The receive
    function should perform adequate checking to ensure that the value is
    valid.
-   The receive function should be declared as taking one argument of type
-   <type>internal</type> and returning a value of the data type itself.
-   (The argument actually supplied is a pointer to a StringInfo buffer
-   holding the received byte string.)  Similarly, the optional
+   The receive function may be declared as taking one argument of type
+   <type>internal</type>, or two arguments of types <type>internal</type>
+   and <type>oid</type>.  It must return a value of the data type itself.
+   (The first argument is a pointer to a StringInfo buffer
+   holding the received byte string; the optional second argument is the
+   element type in case this is an array type.)  Similarly, the optional
    <replaceable class="parameter">send_function</replaceable> converts
    from the internal representation to the external binary representation.
    If this function is not supplied, the type cannot participate in binary
-   output.  The send function should be declared as taking one argument of the
-   new data type and returning type <type>bytea</type>.
+   output.  The send function may be
+   declared as taking one argument of the new data type,  or as taking
+   two arguments of which the second is type <type>oid</type>.
+   The second argument is again the array element type for array types.
+   The send function must return type <type>bytea</type>.
   </para>
 
   <para>

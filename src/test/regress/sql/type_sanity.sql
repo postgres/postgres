@@ -114,7 +114,9 @@ WHERE p1.typoutput = p2.oid AND p1.typtype in ('b', 'p') AND NOT
 SELECT p1.oid, p1.typname, p2.oid, p2.proname
 FROM pg_type AS p1, pg_proc AS p2
 WHERE p1.typreceive = p2.oid AND p1.typtype in ('b', 'p') AND NOT
-    (p2.pronargs = 1 AND p2.proargtypes[0] = 'internal'::regtype);
+    ((p2.pronargs = 1 AND p2.proargtypes[0] = 'internal'::regtype) OR
+     (p2.pronargs = 2 AND p2.proargtypes[0] = 'internal'::regtype AND
+      p2.proargtypes[1] = 'oid'::regtype));
 
 -- As of 7.4, this check finds refcursor, which is borrowing
 -- other types' I/O routines

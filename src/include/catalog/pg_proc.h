@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.296 2003/05/09 21:19:49 tgl Exp $
+ * $Id: pg_proc.h,v 1.297 2003/05/09 23:01:45 tgl Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -3153,9 +3153,9 @@ DATA(insert OID =  2311 (  md5	   PGNSP PGUID 12 f f t f i 1 25 "25"  md5_text -
 DESCR("calculates md5 hash");
 
 
-DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 f f t f s 1 2277 "2281"  array_recv - _null_ ));
+DATA(insert OID = 2400 (  array_recv		   PGNSP PGUID 12 f f t f s 2 2277 "2281 26"  array_recv - _null_ ));
 DESCR("I/O");
-DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 f f t f s 1 17 "2277"  array_send - _null_ ));
+DATA(insert OID = 2401 (  array_send		   PGNSP PGUID 12 f f t f s 2 17 "2277 26"  array_send - _null_ ));
 DESCR("I/O");
 DATA(insert OID = 2402 (  record_recv		   PGNSP PGUID 12 f f t f i 1 2249 "2281"  record_recv - _null_ ));
 DESCR("I/O");
