@@ -1,0 +1,814 @@
+# Swedish message translation file for psql
+# Peter Eisentraut <peter_e@gmx.net>, 2001.
+#
+# $Header: /cvsroot/pgsql/src/bin/psql/Attic/sv.po,v 1.1 2001/06/20 18:25:26 petere Exp $
+#
+# Use these quotes: "%s"
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 7.2\n"
+"POT-Creation-Date: 2001-06-11 20:14+0200\n"
+"PO-Revision-Date: 2001-06-13 22:22+0200\n"
+"Last-Translator: Peter Eisentraut <peter_e@gmx.net>\n"
+"Language-Team: Swedish <sv@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: command.c:152
+msgid "Warning: This syntax is deprecated.\n"
+msgstr ""
+
+#: command.c:159
+#, c-format
+msgid "Invalid command \\%s. Try \\? for help.\n"
+msgstr "Ogiltigt kommando \\%s. Forsök med \\? för hjälp.\n"
+
+#: command.c:161
+#, c-format
+msgid "invalid command \\%s\n"
+msgstr "ogiltigt kommando \\%s\n"
+
+#: command.c:278
+#, c-format
+msgid "could not get home directory: %s\n"
+msgstr "kan inte hämta hemkatalogen: %s\n"
+
+#: command.c:292
+#, c-format
+msgid "\\%s: could not change directory to '%s': %s\n"
+msgstr "\\%s: kan inte byta katalog till \"%s\": %s\n"
+
+#: command.c:380 command.c:726
+msgid "no query buffer\n"
+msgstr "ingen frågebuffert\n"
+
+#: command.c:436
+#, c-format
+msgid "%s: invalid encoding name\n"
+msgstr "%s: ogiltig kodningnamn\n"
+
+#: command.c:445
+#, c-format
+msgid "\\%s: multibyte support is not enabled\n"
+msgstr "\\%s: flerbyte stöds ej\n"
+
+#: command.c:499 command.c:530 command.c:541 command.c:555 command.c:597
+#: command.c:706 command.c:735
+#, c-format
+msgid "\\%s: missing required argument\n"
+msgstr "\\%s: obligatoriskt argument saknas\n"
+
+#: command.c:585
+msgid "Query buffer is empty."
+msgstr "Frågebufferten är tom."
+
+#: command.c:616
+msgid "Query buffer reset (cleared)."
+msgstr "Frågebufferten har blivit borttagen."
+
+#: command.c:627
+#, c-format
+msgid "Wrote history to %s.\n"
+msgstr "Kommandohistoria har skrivits till %s.\n"
+
+#: command.c:668 command.c:900 command.c:1114 command.c:1160 command.c:1844
+#: common.c:57 copy.c:87 mainloop.c:80 mainloop.c:384
+msgid "out of memory\n"
+msgstr "minnet slut\n"
+
+#: command.c:677 command.c:711
+#, c-format
+msgid "\\%s: error\n"
+msgstr "\\%s: fel\n"
+
+#: command.c:750 command.c:770 command.c:1005 command.c:1018 command.c:1028
+#: command.c:1501 command.c:1514 command.c:1526 command.c:1539 command.c:1553
+#: command.c:1567 command.c:1597 common.c:106 copy.c:290
+#, c-format
+msgid "%s: %s\n"
+msgstr "%s: %s\n"
+
+#: command.c:835
+#, c-format
+msgid "\\%s: extra argument '%s' ignored\n"
+msgstr "\\%s: överflödigt argument \"%s\" ignorerat\n"
+
+#: command.c:892 command.c:966 command.c:994
+msgid "parse error at end of line\n"
+msgstr "parsfel vid radslutet\n"
+
+#: command.c:1275 command.c:1299 startup.c:183 startup.c:201
+msgid "Password: "
+msgstr "Lösenord: "
+
+#: command.c:1313 common.c:155 common.c:331 common.c:496
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: command.c:1317
+msgid "Previous connection kept\n"
+msgstr "Föregående förbindelsen bevarad\n"
+
+#: command.c:1330
+#, c-format
+msgid "\\connect: %s"
+msgstr "\\connect: %s"
+
+#: command.c:1342
+#, c-format
+msgid "You are now connected to database %s.\n"
+msgstr "Du är nu förbunden till databasen %s.\n"
+
+#: command.c:1344
+#, c-format
+msgid "You are now connected as new user %s.\n"
+msgstr "Du är nu förbunden som ny användar %s.\n"
+
+#: command.c:1347
+#, c-format
+msgid "You are now connected to database %s as user %s.\n"
+msgstr "Du är nu förbunden till databasen %s som användar %s.\n"
+
+#: command.c:1438
+#, c-format
+msgid "could not start editor %s\n"
+msgstr "kan inte starta editorn %s\n"
+
+#: command.c:1440
+msgid "could not start /bin/sh\n"
+msgstr "kan inte starta /bin/sh\n"
+
+#: command.c:1486
+#, c-format
+msgid "could not open temporary file %s: %s\n"
+msgstr "kan inte öppna temporär fil %s: %s\n"
+
+#: command.c:1670
+msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
+msgstr "\\pset: tillåtna formaten är unaligned, aligned, html, latex\n"
+
+#: command.c:1675
+#, c-format
+msgid "Output format is %s.\n"
+msgstr "Utdataformatet är \"%s\".\n"
+
+#: command.c:1685
+#, c-format
+msgid "Border style is %d.\n"
+msgstr ""
+
+#: command.c:1694
+msgid "Expanded display is on.\n"
+msgstr ""
+
+#: command.c:1695
+msgid "Expanded display is off.\n"
+msgstr ""
+
+#: command.c:1707
+#, c-format
+msgid "Null display is '%s'.\n"
+msgstr ""
+
+#: command.c:1719
+#, c-format
+msgid "Field separator is '%s'.\n"
+msgstr "Fältseparatorn är \"%s\".\n"
+
+#: command.c:1733
+msgid "Record separator is <newline>."
+msgstr "Postseparatorn är <newline>."
+
+#: command.c:1735
+#, c-format
+msgid "Record separator is '%s'.\n"
+msgstr "Postseparatorn är \"%s\".\n"
+
+#: command.c:1746
+msgid "Showing only tuples."
+msgstr ""
+
+#: command.c:1748
+msgid "Tuples only is off."
+msgstr ""
+
+#: command.c:1764
+#, c-format
+msgid "Title is \"%s\".\n"
+msgstr "Titeln är \"%s\".\n"
+
+#: command.c:1766
+msgid "Title is unset.\n"
+msgstr ""
+
+#: command.c:1782
+#, c-format
+msgid "Table attribute is \"%s\".\n"
+msgstr ""
+
+#: command.c:1784
+msgid "Table attributes unset.\n"
+msgstr ""
+
+#: command.c:1795
+msgid "Using pager is on."
+msgstr ""
+
+#: command.c:1797
+msgid "Using pager is off."
+msgstr ""
+
+#: command.c:1808
+msgid "Default footer is on."
+msgstr ""
+
+#: command.c:1810
+msgid "Default footer is off."
+msgstr ""
+
+#: command.c:1816
+#, c-format
+msgid "\\pset: unknown option: %s\n"
+msgstr "\\pset: okänd parameter: %s\n"
+
+#: command.c:1859
+msgid "\\!: failed\n"
+msgstr "\\!: misslyckades\n"
+
+#: common.c:50
+#, c-format
+msgid "%s: xstrdup: cannot duplicate null pointer (internal error)\n"
+msgstr ""
+
+#: common.c:299 common.c:385
+msgid "You are currently not connected to a database.\n"
+msgstr "Du är för närvarande inte förbunden till en databas.\n"
+
+#: common.c:338 common.c:506
+msgid "connection to server was lost\n"
+msgstr "förbindelsen till servern har blivit förlorad\n"
+
+#: common.c:341 common.c:509
+msgid "The connection to the server was lost. Attempting reset: "
+msgstr "Förbindelsen till servern har blivit förlorad. Försök att omstarta: "
+
+#: common.c:345 common.c:513
+msgid "Failed.\n"
+msgstr "Misslyckades.\n"
+
+#: common.c:355 common.c:525
+msgid "Succeeded.\n"
+msgstr "Lyckades.\n"
+
+#: common.c:393
+#, c-format
+msgid ""
+"***(Single step mode: Verify query)"
+"*********************************************\n"
+"%s\n"
+"***(press return to proceed or enter x and return to cancel)"
+"********************\n"
+msgstr ""
+
+#: common.c:485
+msgid ""
+"Enter data to be copied followed by a newline.\n"
+"End with a backslash and a period on a line by itself."
+msgstr ""
+
+#: common.c:531
+#, c-format
+msgid "Asynchronous NOTIFY '%s' from backend with pid %d received.\n"
+msgstr "Asynkront NOTIFY \"%s\" mottaget från backenden med pid %d.\n"
+
+#: copy.c:81
+msgid "\\copy: arguments required\n"
+msgstr "\\copy: argument krävs\n"
+
+#: copy.c:211
+#, c-format
+msgid "\\copy: parse error at '%s'\n"
+msgstr "\\copy: parsfel vid \"%s\"\n"
+
+#: copy.c:213
+msgid "\\copy: parse error at end of line\n"
+msgstr "\\copy: parsfel vid radslutet\n"
+
+#: copy.c:310
+#, c-format
+msgid "\\copy: %s"
+msgstr "\\copy: %s"
+
+#: copy.c:314
+#, c-format
+msgid "\\copy: unexpected response (%d)\n"
+msgstr "\\copy: oväntat svar (%d)\n"
+
+#: help.c:47
+msgid "on"
+msgstr ""
+
+#: help.c:47
+msgid "off"
+msgstr ""
+
+#: help.c:70
+#, c-format
+msgid "could not get current user name: %s\n"
+msgstr "kan inte hämta det aktuella användarnamnet: %s\n"
+
+#: help.c:79
+msgid "This is psql, the PostgreSQL interactive terminal.\n"
+msgstr "Detta är psql, den interaktiva PostgreSQL-terminalen.\n"
+
+#: help.c:80
+msgid "Usage:"
+msgstr "Användning:"
+
+#: help.c:81
+msgid "  psql [options] [dbname [username]]\n"
+msgstr "  psql [flaggor] [dbnamn [användar]]\n"
+
+#: help.c:82
+msgid "Options:"
+msgstr "Flaggor:"
+
+#: help.c:83
+msgid "  -a              Echo all input from script"
+msgstr ""
+
+#: help.c:84
+msgid "  -A              Unaligned table output mode (-P format=unaligned)"
+msgstr ""
+
+#: help.c:85
+msgid "  -c COMMAND      Run only single command (SQL or internal) and exit"
+msgstr "  -c KOMMANDO     Kör enkelt kommando (SQL eller internt) och avsluta sedan"
+
+#: help.c:91
+#, c-format
+msgid "  -d DBNAME       Specify database name to connect to (default: %s)\n"
+msgstr "  -d DBNAMN       Ange databasen att förbinda till (standard: %s)\n"
+
+#: help.c:93
+msgid "  -e              Echo commands sent to server"
+msgstr ""
+
+#: help.c:94
+msgid "  -E              Display queries that internal commands generate"
+msgstr ""
+
+#: help.c:95
+msgid "  -f FILENAME     Execute commands from file, then exit"
+msgstr "  -f FILNAMN      Kör kommandona från fil och avsluta sedan"
+
+#: help.c:96
+#, c-format
+msgid ""
+"  -F STRING       Set field separator (default: \"%s\") (-P fieldsep=)\n"
+msgstr "  -F STRÄNG       Sätt fältseparatorn (standard: \"%s\") (-P fieldsep=)\n"
+
+#: help.c:101
+#, c-format
+msgid "  -h HOSTNAME     Specify database server host (default: %s)\n"
+msgstr ""
+
+#: help.c:102
+msgid "local socket"
+msgstr "lokalt uttag"
+
+#: help.c:104
+msgid "  -H              HTML table output mode (-P format=html)"
+msgstr ""
+
+#: help.c:105
+msgid "  -l              List available databases, then exit"
+msgstr "  -l              Visa befintliga databaser och avsluta sedan"
+
+#: help.c:106
+msgid "  -n              Disable enhanced command line editing (readline)"
+msgstr ""
+
+#: help.c:107
+msgid "  -o FILENAME     Send query results to file (or |pipe)"
+msgstr "  -o FILNAMN      Skriv frågeresultater till fil (eller |rör)"
+
+#: help.c:111
+#, c-format
+msgid "  -p PORT         Specify database server port (default: %s)\n"
+msgstr ""
+
+#: help.c:114
+msgid ""
+"  -P VAR[=ARG]    Set printing option 'VAR' to 'ARG' (see \\pset command)"
+msgstr ""
+
+#: help.c:115
+msgid "  -q              Run quietly (no messages, only query output)"
+msgstr ""
+
+#: help.c:116
+msgid ""
+"  -R STRING       Set record separator (default: newline) (-P recordsep=)"
+msgstr "  -R STRÄNG       Sätt postseparatorn (standard: newline) (-P recordsep=)"
+
+#: help.c:117
+msgid "  -s              Single step mode (confirm each query)"
+msgstr ""
+
+#: help.c:118
+msgid "  -S              Single line mode (end of line terminates SQL command)"
+msgstr ""
+
+#: help.c:119
+msgid "  -t              Print rows only (-P tuples_only)"
+msgstr ""
+
+#: help.c:120
+msgid ""
+"  -T TEXT         Set HTML table tag attributes (width, border) (-P "
+"tableattr=)"
+msgstr ""
+
+#: help.c:126
+#, c-format
+msgid "  -U NAME         Specify database user name (default: %s)\n"
+msgstr ""
+
+#: help.c:128
+msgid "  -v NAME=VALUE   Set psql variable 'NAME' to 'VALUE'"
+msgstr ""
+
+#: help.c:129
+msgid "  -V              Show version information and exit"
+msgstr "  -V              Visa versionsinformation och avsluta"
+
+#: help.c:130
+msgid "  -W              Prompt for password (should happen automatically)"
+msgstr "  -W              Fråga om lösenord (bör sker automatiskt)"
+
+#: help.c:131
+msgid "  -x              Turn on expanded table output (-P expanded)"
+msgstr ""
+
+#: help.c:132
+msgid "  -X              Do not read startup file (~/.psqlrc)"
+msgstr "  -X              Läs inte startfilen (~/.psqlrc)"
+
+#: help.c:135
+msgid ""
+"\n"
+"For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
+"(for SQL commands) from within psql, or consult the psql section in\n"
+"the PostgreSQL documentation.\n"
+"\n"
+"Report bugs to <pgsql-bugs@postgresql.org>."
+msgstr ""
+
+#: help.c:194
+msgid " \\a             toggle between unaligned and aligned output mode\n"
+msgstr ""
+
+#: help.c:195
+#, c-format
+msgid ""
+" \\c[onnect] [DBNAME|- [USER]]\n"
+"                connect to new database (currently \"%s\")\n"
+msgstr ""
+" \\c[onnect] [DBNAMN|- [ANVÄNDAR]]\n"
+"                förbind till en ny databas (för närvarande \"%s\")\n"
+
+#: help.c:198
+msgid " \\C TITLE       set table title\n"
+msgstr ""
+
+#: help.c:199
+msgid " \\cd [DIRNAME]  change the current working directory\n"
+msgstr " \\cd [KATALOG]  byt den aktuella katalogen\n"
+
+#: help.c:200
+msgid " \\copy ...      perform SQL COPY with data stream to the client host\n"
+msgstr ""
+
+#: help.c:201
+msgid " \\copyright     show PostgreSQL usage and distribution terms\n"
+msgstr ""
+
+#: help.c:202
+msgid " \\d TABLE       describe table (or view, index, sequence)\n"
+msgstr ""
+
+# XXX
+#: help.c:203
+msgid " \\d{t|i|s|v}... list tables/indexes/sequences/views\n"
+msgstr " \\d{t|i|s|v}... beskriv tabeller/indexen/sekvenser/sikter\n"
+
+#: help.c:204
+msgid ""
+" \\d{p|S|l}      list access privileges, system tables, or large objects\n"
+msgstr ""
+
+#: help.c:205
+msgid " \\da            list aggregate functions\n"
+msgstr ""
+
+#: help.c:206
+msgid " \\dd NAME       show comment for table, type, function, or operator\n"
+msgstr ""
+
+#: help.c:207
+msgid " \\df            list functions\n"
+msgstr " \\df            visa funktioner\n"
+
+#: help.c:208
+msgid " \\do            list operators\n"
+msgstr ""
+
+#: help.c:209
+msgid " \\dT            list data types\n"
+msgstr ""
+
+#: help.c:210
+msgid ""
+" \\e FILENAME    edit the current query buffer or file with external editor\n"
+msgstr ""
+
+#: help.c:211
+msgid " \\echo TEXT     write text to standard output\n"
+msgstr " \\echo TEXT     skriv text till standard ut\n"
+
+#: help.c:212
+msgid " \\encoding ENCODING  set client encoding\n"
+msgstr ""
+
+#: help.c:213
+msgid " \\f STRING      set field separator\n"
+msgstr " \\f STRÄNG      sätt fältseparatorn\n"
+
+#: help.c:214
+msgid ""
+" \\g FILENAME    send SQL command to server (and write results to file or |"
+"pipe)\n"
+msgstr " \\g FILNAMN     skicka SQL-kommando till servern (och skriv resultater till fil eller |rör)\n"
+
+#: help.c:215
+msgid " \\h NAME        help on syntax of SQL commands, * for all commands\n"
+msgstr ""
+
+#: help.c:216
+#, c-format
+msgid " \\H             toggle HTML output mode (currently %s)\n"
+msgstr ""
+
+#: help.c:218
+msgid " \\i FILENAME    execute commands from file\n"
+msgstr " \\i FILNAMN     kör kommandona från fil\n"
+
+#: help.c:219
+msgid " \\l             list all databases\n"
+msgstr " \\l             visa befintliga databaser\n"
+
+#: help.c:220
+msgid ""
+" \\lo_export, \\lo_import, \\lo_list, \\lo_unlink\n"
+"                large object operations\n"
+msgstr ""
+
+#: help.c:222
+msgid " \\o FILENAME    send all query results to file or |pipe\n"
+msgstr ""
+
+#: help.c:223
+msgid " \\p             show the content of the current query buffer\n"
+msgstr ""
+
+#: help.c:224
+msgid ""
+" \\pset VAR      set table output option (VAR := {format|border|expanded|\n"
+"                fieldsep|null|recordsep|tuples_only|title|tableattr|pager})\n"
+msgstr ""
+
+#: help.c:226
+msgid " \\q             quit psql\n"
+msgstr " \\q             lämna psql\n"
+
+#: help.c:227
+msgid " \\qecho TEXT    write text to query output stream (see \\o)\n"
+msgstr ""
+
+#: help.c:228
+msgid " \\r             reset (clear) the query buffer\n"
+msgstr ""
+
+#: help.c:229
+msgid " \\s FILENAME    print history or save it to file\n"
+msgstr ""
+
+#: help.c:230
+msgid " \\set NAME VALUE  set internal variable\n"
+msgstr ""
+
+#: help.c:231
+#, c-format
+msgid " \\t             show only rows (currently %s)\n"
+msgstr ""
+
+#: help.c:233
+msgid " \\T TEXT        set HTML table tag attributes\n"
+msgstr ""
+
+#: help.c:234
+msgid " \\unset NAME    unset (delete) internal variable\n"
+msgstr ""
+
+#: help.c:235
+msgid " \\w FILENAME    write current query buffer to file\n"
+msgstr ""
+
+#: help.c:236
+#, c-format
+msgid " \\x             toggle expanded output (currently %s)\n"
+msgstr ""
+
+#: help.c:238
+msgid " \\z             list table access privileges\n"
+msgstr ""
+
+# XXX
+#: help.c:239
+msgid " \\! [COMMAND]   execute command in shell or start interactive shell\n"
+msgstr " \\! [KOMMANDO]  kör kommando i shell eller starta interaktiv shell\n"
+
+#: help.c:266
+msgid "Available help:"
+msgstr "Tillgänglig hjälp:"
+
+#: help.c:297
+#, c-format
+msgid ""
+"Command:     %s\n"
+"Description: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+msgstr ""
+"Kommando:    %s\n"
+"Beskrivning: %s\n"
+"Syntax:\n"
+"%s\n"
+"\n"
+
+#: help.c:308
+#, c-format
+msgid ""
+"No help available for '%-.*s'.\n"
+"Try \\h with no arguments to see available help.\n"
+msgstr ""
+"Ingen hjälp tillgänglig för \"%-.*s\".\n"
+"Försök med \\h utan argument för att ser den tillgängliga hjälpen.\n"
+
+#: input.c:171
+#, c-format
+msgid "could not save history to %s: %s\n"
+msgstr ""
+
+#: large_obj.c:66
+msgid "Warning: Your transaction in progress has been committed."
+msgstr ""
+
+#: large_obj.c:68
+msgid "Warning: Your transaction in progress has been rolled back."
+msgstr ""
+
+#: large_obj.c:95
+msgid "\\lo_export: not connected to a database\n"
+msgstr "\\lo_export: inte förbunden till en databas\n"
+
+#: large_obj.c:162
+msgid "\\lo_import: not connected to a database\n"
+msgstr "\\lo_import: inte förbunden till en databas\n"
+
+#: large_obj.c:253
+msgid "\\lo_unlink: not connected to a database\n"
+msgstr "\\lo_unlink: inte förbunden till en databas\n"
+
+#: large_obj.c:328
+msgid "Description"
+msgstr "Beskrivning"
+
+#: large_obj.c:336
+msgid "Large objects"
+msgstr ""
+
+#: mainloop.c:242
+#, c-format
+msgid "Use \"\\q\" to leave %s.\n"
+msgstr "Använd \"\\q\" för att lämna %s.\n"
+
+#: print.c:367
+msgid "(No rows)\n"
+msgstr "(Inga rader)\n"
+
+#: print.c:1072
+msgid "(1 row)"
+msgstr "(1 rad)"
+
+#: print.c:1074
+#, c-format
+msgid "(%d rows)"
+msgstr "(%d rader)"
+
+#: startup.c:141 startup.c:615
+#, c-format
+msgid "%s: out of memory\n"
+msgstr "%s: minnet slut\n"
+
+#: startup.c:177
+msgid "Username: "
+msgstr "Användarnamn: "
+
+#: startup.c:286
+#, c-format
+msgid ""
+"Welcome to %s, the PostgreSQL interactive terminal.\n"
+"\n"
+"Type:  \\copyright for distribution terms\n"
+"       \\h for help with SQL commands\n"
+"       \\? for help on internal slash commands\n"
+"       \\g or terminate with semicolon to execute query\n"
+"       \\q to quit\n"
+"\n"
+msgstr ""
+
+#: startup.c:461
+#, c-format
+msgid "%s: couldn't set printing parameter %s\n"
+msgstr ""
+
+#: startup.c:507
+#, c-format
+msgid "%s: could not delete variable %s\n"
+msgstr "%s: kan inte ta bort variabeln %s\n"
+
+#: startup.c:517
+#, c-format
+msgid "%s: could not set variable %s\n"
+msgstr "%s: kan inte sätta variabeln %s\n"
+
+#: startup.c:548 startup.c:563
+#, c-format
+msgid "Try '%s --help' for more information.\n"
+msgstr "Forsök med \"%s --help\" för mer information.\n"
+
+#: startup.c:556
+#, c-format
+msgid ""
+"%s was compiled without support for long options.\n"
+"Use --help for help on invocation options.\n"
+msgstr ""
+"%s har inte blivit kompilerat med stöd för långa flaggor.\n"
+"Använda --help för hjälp om flaggor.\n"
+
+#: startup.c:581
+#, c-format
+msgid "%s: warning: extra option %s ignored\n"
+msgstr "%s: varning: överflödig flagga \"%s\" ignorerad\n"
+
+#: startup.c:588
+#, c-format
+msgid "%s: Warning: The -u option is deprecated. Use -U.\n"
+msgstr ""
+
+#: startup.c:644
+msgid "contains support for: "
+msgstr "innehåller stöd för: "
+
+#: startup.c:647
+msgid "readline"
+msgstr "readline"
+
+#: startup.c:657
+msgid "history"
+msgstr "history"
+
+#: startup.c:666
+msgid "multibyte"
+msgstr "multibyte"
+
+#: startup.c:674
+msgid ""
+"Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group\n"
+"Portions Copyright (c) 1996, Regents of the University of California\n"
+"Read the file COPYRIGHT or use the command \\copyright to see the\n"
+"usage and distribution terms."
+msgstr ""
+
+#: startup.c:699
+#, c-format
+msgid ""
+"SSL connection (cipher: %s, bits: %i)\n"
+"\n"
+msgstr "SSL-förbindelse (cipher: %s, bits: %i)\n\n"
