@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.32 2003/02/19 23:41:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.33 2003/04/08 16:57:45 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -1025,7 +1025,7 @@ AlterDomainDefault(List *names, Node *defaultRaw)
 	/* Clean up */
 	heap_close(rel, NoLock);
 	heap_freetuple(newtuple);
-};
+}
 
 /*
  * AlterDomainNotNull
@@ -1219,7 +1219,7 @@ AlterDomainDropConstraint(List *names, const char *constrName, DropBehavior beha
 	heap_close(conrel, RowExclusiveLock);
 
 	heap_close(rel, NoLock);
-};
+}
 
 /*
  * AlterDomainAddConstraint
