@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.54 2000/11/28 23:27:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.55 2000/11/30 03:11:24 tgl Exp $
  *
  * NOTES
  *
@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/file.h>
 #include <errno.h>
+#include <signal.h>
 #include <unistd.h>
 
 #include "storage/ipc.h"
