@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.74 2001/01/14 05:08:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.75 2001/01/23 23:29:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -861,10 +861,11 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 
 	PageRestoreTempPage(leftpage, origpage);
 
+	END_CRIT_SECTION();
+
 	/* write and release the old right sibling */
 	if (!P_RIGHTMOST(ropaque))
 		_bt_wrtbuf(rel, sbuf);
-	END_CRIT_SECTION();
 
 	/* split's done */
 	return rbuf;
