@@ -1,4 +1,3 @@
-/* include/config.h.  Generated automatically by configure.  */
 /* the purpose of this file is to reduce the use of #ifdef's through
  * the code base by those porting the software, and to facilitate the
  * eventual use of autoconf to build the server 
@@ -9,54 +8,14 @@
 
 #define BLCKSZ	8192
 
-/* 
- * The following is set using configure.  
- */
-
-/* Set to 1 if you have <termios.h> */
-#define HAVE_TERMIOS_H 1 
-
-/* Set to 1 if you have <limits.h> */
-#define HAVE_LIMITS_H 1
-
-/* Set to 1 if  you have <values.h> */
-/* #undef HAVE_VALUES_H */
-
-/* Set to 1 if you have isinf() */
-#define HAVE_ISINF 1 
-
-/* Set to 1 if you have tzset() */
-#define HAVE_TZSET 1 
-
-/* Set to 1 if you have cbrt() */
-/* #undef HAVE_CBRT */ 
-
-/*
- * Code below this point should not require changes
- */
-
-#if defined(HAVE_TERMIOS_H)
-#  define TERMIOS_H_LOCATION <termios.h>
+#if defined(aix)
+#define TERMIOS_H_LOCATION <termios.h>
 #else
-#  define TERMIOS_H_LOCATION <sys/termios.h>
+#define TERMIOS_H_LOCATION <sys/termios.h>
 #endif
 
-/* Temporary: Need to change source files from USE_VALUES_H to HAVE_VALUES_H */
-#if defined(HAVE_VALUES_H)
+#if !defined(nextstep)
 #define USE_VALUES_H
-#endif
-
-/* Temporary: Need to change source files from USE_LIMITS_H to HAVE_LIMITS_H */
-#if defined(HAVE_LIMITS_H)
-#  define USE_LIMITS_H
-#endif 
-
-#if !defined(HAVE_ISINF)
-#  define NEED_ISINF
-#endif
-
-#if !defined(HAVE_CBRT)
-#  define NEED_CBRT
 #endif
 
 #define HAVE_MEMMOVE
@@ -64,8 +23,10 @@
 #if defined(aix)
 #  define CLASS_CONFLICT 
 #  define DISABLE_XOPEN_NLS 
+#  define NEED_ISINF
 #  define NEED_UNION_SEMUN 
 #  define NEED_SYS_SELECT_H
+#  define HAVE_TZSET
 #  define HAVE_ANSI_CPP
 #  define HAS_TEST_AND_SET
    typedef unsigned int slock_t;
@@ -75,6 +36,7 @@
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
 #  define DISABLE_XOPEN_NLS 
+#  define NEED_ISINF 
 #  define HAS_LONG_LONG
 #  define NEED_UNION_SEMUN 
 #  define HAS_TEST_AND_SET
@@ -83,11 +45,13 @@
 #endif
 
 #if defined(BSD44_derived)
+#  define USE_LIMITS_H
 #  define USE_POSIX_TIME
+#  define NEED_CBRT
 #  define NEED_I386_TAS_ASM
 #  define HAS_TEST_AND_SET
 #  if defined(__mips__)
-/* #    undef HAS_TEST_AND_SET */
+#    undef HAS_TEST_AND_SET
 #  endif
    typedef unsigned char slock_t;
 #endif
@@ -102,7 +66,9 @@
 #  if defined(PRE_BSDI_2_1)
 #    define NEED_UNION_SEMUN 
 #  endif
+#  define USE_LIMITS_H
 #  define USE_POSIX_TIME
+#  define NEED_CBRT
 #  define HAS_TEST_AND_SET
    typedef unsigned char slock_t;
 #endif
@@ -117,6 +83,8 @@
 #if defined(hpux)
 #  define JMP_BUF
 #  define USE_POSIX_TIME
+#  define HAVE_TZSET
+#  define NEED_CBRT
 #  define NEED_RINT
 #  define NEED_UNION_SEMUN 
 #  define HAS_TEST_AND_SET
@@ -124,10 +92,13 @@
 #endif
 
 #if defined(i386_solaris) 
+#  define USE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
+#  define NEED_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
+#  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
@@ -137,8 +108,10 @@
 #if defined(irix5)
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
+#  define NEED_ISINF 
 #  define NO_EMPTY_STMTS
 #  define NO_VFORK
+#  define HAVE_TZSET
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
 #  include <abi_mutex.h>
@@ -154,6 +127,8 @@
 */
 #  define JMP_BUF
 #  define USE_POSIX_TIME
+#  define HAVE_TZSET
+#  define NEED_CBRT
 #  define NEED_I386_TAS_ASM
 #  define HAS_TEST_AND_SET
    typedef unsigned char slock_t;
@@ -177,6 +152,7 @@
 #  define NEED_SIG_JMP
 # endif
 
+# define USE_LIMITS_H
 # define JMP_BUF
 # define NO_WAITPID
   typedef struct mutex slock_t;
@@ -187,11 +163,14 @@
 #endif
 
 #if defined(sparc_solaris)
+#  define USE_LIMITS_H
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
+#  define NEED_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
 #  define USE_POSIX_TIME
+#  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
 #  define HAS_TEST_AND_SET
@@ -200,14 +179,16 @@ typedef unsigned char slock_t;
 
 #if defined(sunos4)
 #  define USE_POSIX_TIME
-/* #  undef HAVE_MEMMOVE */
+#  undef HAVE_MEMMOVE
 #endif
 
 #if defined(svr4) 
 #  define USE_POSIX_TIME 
 #  define USE_POSIX_SIGNALS
+#  define NEED_ISINF 
 #  define NEED_RUSAGE 
 #  define NO_EMPTY_STMTS
+#  define HAVE_TZSET
 #  define NEED_UNION_SEMUN 
 #  define SYSV_DIRENT
 #endif
@@ -219,12 +200,16 @@ typedef unsigned char slock_t;
 #  define USES_WINSOCK 
 #  define NOFILE	100
 #  define NEED_UNION_SEMUN
+#  define HAVE_TZSET
+#  define NEED_CBRT
+#  define NEED_ISINF
 #  ifndef MAXPATHLEN
 #  define MAXPATHLEN    250
 #  endif
 #endif /* WIN32 */
 
 #if defined(ultrix4)
+#  define NEED_ISINF 
 #  define USE_POSIX_TIME
 #  define NEED_UNION_SEMUN 
 #  define NEED_STRDUP
