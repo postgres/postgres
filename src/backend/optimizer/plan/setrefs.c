@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.101 2004/05/11 13:15:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/setrefs.c,v 1.102 2004/05/26 04:41:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,7 +84,7 @@ static void set_sa_opfuncid(ScalarArrayOpExpr *opexpr);
 void
 set_plan_references(Plan *plan, List *rtable)
 {
-	List	   *pl;
+	ListCell *l;
 
 	if (plan == NULL)
 		return;
@@ -213,15 +213,14 @@ set_plan_references(Plan *plan, List *rtable)
 			fix_expr_references(plan, ((Result *) plan)->resconstantqual);
 			break;
 		case T_Append:
-
 			/*
 			 * Append, like Sort et al, doesn't actually evaluate its
-			 * targetlist or quals, and we haven't bothered to give it its
-			 * own tlist copy.	So, don't fix targetlist/qual. But do
-			 * recurse into child plans.
+			 * targetlist or quals, and we haven't bothered to give it
+			 * its own tlist copy. So, don't fix targetlist/qual. But
+			 * do recurse into child plans.
 			 */
-			foreach(pl, ((Append *) plan)->appendplans)
-				set_plan_references((Plan *) lfirst(pl), rtable);
+			foreach(l, ((Append *) plan)->appendplans)
+				set_plan_references((Plan *) lfirst(l), rtable);
 			break;
 		default:
 			elog(ERROR, "unrecognized node type: %d",
@@ -242,9 +241,9 @@ set_plan_references(Plan *plan, List *rtable)
 	set_plan_references(plan->lefttree, rtable);
 	set_plan_references(plan->righttree, rtable);
 
-	foreach(pl, plan->initPlan)
+	foreach(l, plan->initPlan)
 	{
-		SubPlan    *sp = (SubPlan *) lfirst(pl);
+		SubPlan    *sp = (SubPlan *) lfirst(l);
 
 		Assert(IsA(sp, SubPlan));
 		set_plan_references(sp->plan, sp->rtable);
@@ -440,8 +439,8 @@ set_uppernode_references(Plan *plan, Index subvarno)
 {
 	Plan	   *subplan = plan->lefttree;
 	List	   *subplan_targetlist,
-			   *output_targetlist,
-			   *l;
+			   *output_targetlist;
+	ListCell   *l;
 	bool		tlist_has_non_vars;
 
 	if (subplan != NULL)
@@ -483,7 +482,7 @@ set_uppernode_references(Plan *plan, Index subvarno)
 static bool
 targetlist_has_non_vars(List *tlist)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, tlist)
 	{

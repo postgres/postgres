@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.61 2004/01/28 07:46:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_agg.c,v 1.62 2004/05/26 04:41:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 {
 	List	   *groupClauses = NIL;
 	bool		have_non_var_grouping;
-	List	   *lst;
+	ListCell   *l;
 	bool		hasJoinRTEs;
 	Node	   *clause;
 
@@ -129,9 +129,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * While we are at it, build a list of the acceptable GROUP BY
 	 * expressions for use by check_ungrouped_columns().
 	 */
-	foreach(lst, qry->groupClause)
+	foreach(l, qry->groupClause)
 	{
-		GroupClause *grpcl = (GroupClause *) lfirst(lst);
+		GroupClause *grpcl = (GroupClause *) lfirst(l);
 		Node	   *expr;
 
 		expr = get_sortgroupclause_expr(grpcl, qry->targetList);
@@ -151,9 +151,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * no rangetable entries are RTE_JOIN kind.
 	 */
 	hasJoinRTEs = false;
-	foreach(lst, pstate->p_rtable)
+	foreach(l, pstate->p_rtable)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 		if (rte->rtekind == RTE_JOIN)
 		{
@@ -172,9 +172,9 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * recursive scans.  (Note we have to flatten aliases before this.)
 	 */
 	have_non_var_grouping = false;
-	foreach(lst, groupClauses)
+	foreach(l, groupClauses)
 	{
-		if (!IsA((Node *) lfirst(lst), Var))
+		if (!IsA((Node *) lfirst(l), Var))
 		{
 			have_non_var_grouping = true;
 			break;
@@ -236,7 +236,7 @@ static bool
 check_ungrouped_columns_walker(Node *node,
 							   check_ungrouped_columns_context *context)
 {
-	List	   *gl;
+	ListCell   *gl;
 
 	if (node == NULL)
 		return false;

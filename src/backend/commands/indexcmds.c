@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.119 2004/05/08 00:34:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/indexcmds.c,v 1.120 2004/05/26 04:41:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -109,7 +109,7 @@ DefineIndex(RangeVar *heapRelation,
 	/*
 	 * count attributes in index
 	 */
-	numberOfAttributes = length(attributeList);
+	numberOfAttributes = list_length(attributeList);
 	if (numberOfAttributes <= 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_OBJECT_DEFINITION),
@@ -165,7 +165,7 @@ DefineIndex(RangeVar *heapRelation,
 												namespaceId);
 		else
 		{
-			IndexElem  *iparam = (IndexElem *) lfirst(attributeList);
+			IndexElem  *iparam = (IndexElem *) linitial(attributeList);
 
 			indexRelationName = CreateIndexName(RelationGetRelationName(rel),
 												iparam->name,
@@ -208,7 +208,7 @@ DefineIndex(RangeVar *heapRelation,
 	 */
 	if (rangetable != NIL)
 	{
-		if (length(rangetable) != 1 || getrelid(1, rangetable) != relationId)
+		if (list_length(rangetable) != 1 || getrelid(1, rangetable) != relationId)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("index expressions and predicates may refer only to the table being indexed")));
@@ -226,7 +226,7 @@ DefineIndex(RangeVar *heapRelation,
 	if (primary)
 	{
 		List	   *cmds;
-		List	   *keys;
+		ListCell   *keys;
 
 		/*
 		 * If ALTER TABLE, check that there isn't already a PRIMARY KEY.
@@ -399,7 +399,7 @@ ComputeIndexAttrs(IndexInfo *indexInfo,
 				  Oid accessMethodId,
 				  bool isconstraint)
 {
-	List	   *rest;
+	ListCell   *rest;
 	int			attn = 0;
 
 	/*
@@ -516,9 +516,9 @@ GetIndexOpClass(List *opclass, Oid attrType,
 	 * Release 7.5 removes bigbox_ops (which was dead code for a long while
 	 * anyway).  tgl 2003/11/11
 	 */
-	if (length(opclass) == 1)
+	if (list_length(opclass) == 1)
 	{
-		char	   *claname = strVal(lfirst(opclass));
+		char	   *claname = strVal(linitial(opclass));
 
 		if (strcmp(claname, "network_ops") == 0 ||
 			strcmp(claname, "timespan_ops") == 0 ||
@@ -697,8 +697,8 @@ static bool
 relationHasPrimaryKey(Relation rel)
 {
 	bool		result = false;
-	List	   *indexoidlist,
-			   *indexoidscan;
+	List	   *indexoidlist;
+	ListCell   *indexoidscan;
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -709,7 +709,7 @@ relationHasPrimaryKey(Relation rel)
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsto(indexoidscan);
+		Oid			indexoid = lfirst_oid(indexoidscan);
 		HeapTuple	indexTuple;
 
 		indexTuple = SearchSysCache(INDEXRELID,
@@ -723,7 +723,7 @@ relationHasPrimaryKey(Relation rel)
 			break;
 	}
 
-	freeList(indexoidlist);
+	list_free(indexoidlist);
 
 	return result;
 }
@@ -843,12 +843,13 @@ void
 ReindexDatabase(const char *dbname, bool force /* currently unused */,
 				bool all)
 {
-	Relation	relationRelation;
+	Relation	 relationRelation;
 	HeapScanDesc scan;
-	HeapTuple	tuple;
+	HeapTuple	 tuple;
 	MemoryContext private_context;
 	MemoryContext old;
-	List	   *relids = NIL;
+	List		*relids = NIL;
+	ListCell	*l;
 
 	AssertArg(dbname);
 
@@ -887,7 +888,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 	 * reindexing itself will try to update pg_class.
 	 */
 	old = MemoryContextSwitchTo(private_context);
-	relids = lappendo(relids, RelOid_pg_class);
+	relids = lappend_oid(relids, RelOid_pg_class);
 	MemoryContextSwitchTo(old);
 
 	/*
@@ -921,7 +922,7 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 			continue;			/* got it already */
 
 		old = MemoryContextSwitchTo(private_context);
-		relids = lappendo(relids, HeapTupleGetOid(tuple));
+		relids = lappend_oid(relids, HeapTupleGetOid(tuple));
 		MemoryContextSwitchTo(old);
 	}
 	heap_endscan(scan);
@@ -929,9 +930,9 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 
 	/* Now reindex each rel in a separate transaction */
 	CommitTransactionCommand();
-	while (relids)
+	foreach(l, relids)
 	{
-		Oid		relid = lfirsto(relids);
+		Oid		relid = lfirst_oid(l);
 
 		StartTransactionCommand();
 		SetQuerySnapshot();		/* might be needed for functions in
@@ -941,7 +942,6 @@ ReindexDatabase(const char *dbname, bool force /* currently unused */,
 					(errmsg("table \"%s\" was reindexed",
 							get_rel_name(relid))));
 		CommitTransactionCommand();
-		relids = lnext(relids);
 	}
 	StartTransactionCommand();
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.215 2004/05/07 19:12:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.216 2004/05/26 04:41:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -331,7 +331,7 @@ ProcessUtility(Node *parsetree,
 
 							if (stmt->options)
 							{
-								List	   *head;
+								ListCell   *head;
 
 								foreach(head, stmt->options)
 								{
@@ -339,10 +339,10 @@ ProcessUtility(Node *parsetree,
 
 									if (strcmp(item->defname, "transaction_isolation") == 0)
 										SetPGVariable("transaction_isolation",
-											makeList1(item->arg), false);
+											list_make1(item->arg), false);
 									else if (strcmp(item->defname, "transaction_read_only") == 0)
 										SetPGVariable("transaction_read_only",
-											makeList1(item->arg), false);
+											list_make1(item->arg), false);
 								}
 							}
 						}
@@ -405,7 +405,7 @@ ProcessUtility(Node *parsetree,
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				List	   *arg;
+				ListCell   *arg;
 
 				foreach(arg, stmt->objects)
 				{
@@ -743,7 +743,7 @@ ProcessUtility(Node *parsetree,
 				 */
 				if (strcmp(n->name, "TRANSACTION") == 0)
 				{
-					List	   *head;
+					ListCell   *head;
 
 					foreach(head, n->args)
 					{
@@ -751,15 +751,15 @@ ProcessUtility(Node *parsetree,
 
 						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("transaction_isolation",
-									  makeList1(item->arg), n->is_local);
+									  list_make1(item->arg), n->is_local);
 						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("transaction_read_only",
-									  makeList1(item->arg), n->is_local);
+									  list_make1(item->arg), n->is_local);
 					}
 				}
 				else if (strcmp(n->name, "SESSION CHARACTERISTICS") == 0)
 				{
-					List	   *head;
+					ListCell   *head;
 
 					foreach(head, n->args)
 					{
@@ -767,10 +767,10 @@ ProcessUtility(Node *parsetree,
 
 						if (strcmp(item->defname, "transaction_isolation") == 0)
 							SetPGVariable("default_transaction_isolation",
-									  makeList1(item->arg), n->is_local);
+									  list_make1(item->arg), n->is_local);
 						else if (strcmp(item->defname, "transaction_read_only") == 0)
 							SetPGVariable("default_transaction_read_only",
-									  makeList1(item->arg), n->is_local);
+									  list_make1(item->arg), n->is_local);
 					}
 				}
 				else

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.57 2004/01/05 23:39:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/orindxpath.c,v 1.58 2004/05/26 04:41:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 	RestrictInfo *or_rinfo;
 	Selectivity or_selec,
 				orig_selec;
-	List	   *i;
+	ListCell   *i;
 
 	/*
 	 * We use the best_or_subclause_indexes() machinery to locate the
@@ -111,7 +111,7 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 	foreach(i, rel->joininfo)
 	{
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
-		List	   *j;
+		ListCell   *j;
 
 		foreach(j, joininfo->jinfo_restrictinfo)
 		{
@@ -150,7 +150,7 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 	newrinfos = make_restrictinfo_from_indexclauses(bestpath->indexclauses,
 													true, true);
 	Assert(length(newrinfos) == 1);
-	or_rinfo = (RestrictInfo *) lfirst(newrinfos);
+	or_rinfo = (RestrictInfo *) linitial(newrinfos);
 	rel->baserestrictinfo = nconc(rel->baserestrictinfo, newrinfos);
 
 	/*
@@ -190,15 +190,15 @@ create_or_index_quals(Query *root, RelOptInfo *rel)
 void
 create_or_index_paths(Query *root, RelOptInfo *rel)
 {
-	List	   *i;
+	ListCell   *l;
 
 	/*
 	 * Check each restriction clause to see if it is an OR clause, and if so,
 	 * try to make a path using it.
 	 */
-	foreach(i, rel->baserestrictinfo)
+	foreach(l, rel->baserestrictinfo)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 		if (restriction_is_or_clause(rinfo))
 		{
@@ -248,7 +248,7 @@ best_or_subclause_indexes(Query *root,
 	FastList	quals;
 	Cost		path_startup_cost;
 	Cost		path_total_cost;
-	List	   *slist;
+	ListCell   *slist;
 	IndexPath  *pathnode;
 
 	FastListInit(&infos);
@@ -283,7 +283,7 @@ best_or_subclause_indexes(Query *root,
 		 *
 		 * Total cost is sum of the per-scan costs.
 		 */
-		if (slist == subclauses)	/* first scan? */
+		if (slist == list_head(subclauses))	/* first scan? */
 			path_startup_cost = best_startup_cost;
 		path_total_cost += best_total_cost;
 	}
@@ -351,7 +351,7 @@ best_or_subclause_index(Query *root,
 						Cost *retTotalCost)		/* return value */
 {
 	bool		found = false;
-	List	   *ilist;
+	ListCell   *ilist;
 
 	foreach(ilist, rel->indexlist)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.112 2004/02/21 00:34:53 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/varlena.c,v 1.113 2004/05/26 04:41:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1623,7 +1623,7 @@ textToQualifiedNameList(text *textval, const char *caller)
 	char	   *rawname;
 	List	   *result = NIL;
 	List	   *namelist;
-	List	   *l;
+	ListCell   *l;
 
 	/* Convert to C string (handles possible detoasting). */
 	/* Note we rely on being able to modify rawname below. */

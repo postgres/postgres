@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.223 2004/04/21 00:34:18 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.224 2004/05/26 04:41:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -685,7 +685,7 @@ DoCopy(const CopyStmt *stmt)
 	char	   *filename = stmt->filename;
 	bool		is_from = stmt->is_from;
 	bool		pipe = (stmt->filename == NULL);
-	List	   *option;
+	ListCell   *option;
 	List	   *attnamelist = stmt->attlist;
 	List	   *attnumlist;
 	bool		binary = false;
@@ -934,15 +934,15 @@ DoCopy(const CopyStmt *stmt)
 	{
 		TupleDesc	tupDesc = RelationGetDescr(rel);
 		Form_pg_attribute *attr = tupDesc->attrs;
-		List	   *cur;
+		ListCell   *cur;
 
 		force_quote_atts = CopyGetAttnums(rel, force_quote);
 
 		foreach(cur, force_quote_atts)
 		{
-			int			attnum = lfirsti(cur);
+			int			attnum = lfirst_int(cur);
 
-			if (!intMember(attnum, attnumlist))
+			if (!list_member_int(attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("FORCE QUOTE column \"%s\" not referenced by COPY",
@@ -955,7 +955,7 @@ DoCopy(const CopyStmt *stmt)
 	 */
 	if (force_notnull)
 	{
-		List	   *cur;
+		ListCell   *cur;
 		TupleDesc	tupDesc = RelationGetDescr(rel);
 		Form_pg_attribute *attr = tupDesc->attrs;
 
@@ -963,9 +963,9 @@ DoCopy(const CopyStmt *stmt)
 
 		foreach(cur, force_notnull_atts)
 		{
-			int			attnum = lfirsti(cur);
+			int			attnum = lfirst_int(cur);
 
-			if (!intMember(attnum, attnumlist))
+			if (!list_member_int(attnumlist, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 						 errmsg("FORCE NOT NULL column \"%s\" not referenced by COPY",
@@ -1011,7 +1011,7 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (whereToSendOutput == Remote)
-				ReceiveCopyBegin(binary, length(attnumlist));
+				ReceiveCopyBegin(binary, list_length(attnumlist));
 			else
 				copy_file = stdin;
 		}
@@ -1062,7 +1062,7 @@ DoCopy(const CopyStmt *stmt)
 		if (pipe)
 		{
 			if (whereToSendOutput == Remote)
-				SendCopyBegin(binary, length(attnumlist));
+				SendCopyBegin(binary, list_length(attnumlist));
 			else
 				copy_file = stdout;
 		}
@@ -1147,14 +1147,14 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	bool	   *isvarlena;
 	char	   *string;
 	Snapshot	mySnapshot;
-	List	   *cur;
+	ListCell   *cur;
 	MemoryContext oldcontext;
 	MemoryContext mycontext;
 
 	tupDesc = rel->rd_att;
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
-	attr_count = length(attnumlist);
+	attr_count = list_length(attnumlist);
 
 	/*
 	 * Get info about the columns we need to process.
@@ -1167,7 +1167,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	force_quote = (bool *) palloc((num_phys_attrs + 1) * sizeof(bool));
 	foreach(cur, attnumlist)
 	{
-		int			attnum = lfirsti(cur);
+		int			attnum = lfirst_int(cur);
 		Oid			out_func_oid;
 		
 		if (binary)
@@ -1180,7 +1180,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 							  &isvarlena[attnum - 1]);
 		fmgr_info(out_func_oid, &out_functions[attnum - 1]);
 
-		if (intMember(attnum, force_quote_atts))
+		if (list_member_int(force_quote_atts, attnum))
 			force_quote[attnum - 1] = true;
 		else
 			force_quote[attnum - 1] = false;
@@ -1266,7 +1266,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 
 		foreach(cur, attnumlist)
 		{
-			int			attnum = lfirsti(cur);
+			int			attnum = lfirst_int(cur);
 			Datum		value;
 			bool		isnull;
 
@@ -1451,7 +1451,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	bool		hasConstraints = false;
 	int			attnum;
 	int			i;
-	List	   *cur;
 	Oid			in_func_oid;
 	Datum	   *values;
 	char	   *nulls;
@@ -1471,7 +1470,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	tupDesc = RelationGetDescr(rel);
 	attr = tupDesc->attrs;
 	num_phys_attrs = tupDesc->natts;
-	attr_count = length(attnumlist);
+	attr_count = list_length(attnumlist);
 	num_defaults = 0;
 
 	/*
@@ -1526,13 +1525,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 							 &in_func_oid, &elements[attnum - 1]);
 		fmgr_info(in_func_oid, &in_functions[attnum - 1]);
 
-		if (intMember(attnum, force_notnull_atts))
+		if (list_member_int(force_notnull_atts, attnum))
 			force_notnull[attnum - 1] = true;
 		else
 			force_notnull[attnum - 1] = false;
 		
 		/* Get default info if needed */
-		if (!intMember(attnum, attnumlist))
+		if (!list_member_int(attnumlist, attnum))
 		{
 			/* attribute is NOT to be copied from input */
 			/* use default value if one exists */
@@ -1681,6 +1680,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		{
 			CopyReadResult result = NORMAL_ATTR;
 			char	   *string;
+			ListCell   *cur;
 
 			/* Actually read the line into memory here */
 			done = CopyReadLine();
@@ -1722,7 +1722,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			 */
 			foreach(cur, attnumlist)
 			{
-				int			attnum = lfirsti(cur);
+				int			attnum = lfirst_int(cur);
 				int			m = attnum - 1;
 
 				/*
@@ -1783,6 +1783,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		{
 			/* binary */
 			int16		fld_count;
+			ListCell   *cur;
 
 			fld_count = CopyGetInt16();
 			if (CopyGetEof() || fld_count == -1)
@@ -1815,7 +1816,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			i = 0;
 			foreach(cur, attnumlist)
 			{
-				int			attnum = lfirsti(cur);
+				int			attnum = lfirst_int(cur);
 				int			m = attnum - 1;
 
 				copy_attname = NameStr(attr[m]->attname);
@@ -2642,13 +2643,13 @@ CopyGetAttnums(Relation rel, List *attnamelist)
 		{
 			if (attr[i]->attisdropped)
 				continue;
-			attnums = lappendi(attnums, i + 1);
+			attnums = lappend_int(attnums, i + 1);
 		}
 	}
 	else
 	{
 		/* Validate the user-supplied list and extract attnums */
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, attnamelist)
 		{
@@ -2659,12 +2660,12 @@ CopyGetAttnums(Relation rel, List *attnamelist)
 			/* Note we disallow system columns here */
 			attnum = attnameAttNum(rel, name, false);
 			/* Check for duplicates */
-			if (intMember(attnum, attnums))
+			if (list_member_int(attnums, attnum))
 				ereport(ERROR,
 						(errcode(ERRCODE_DUPLICATE_COLUMN),
 					  errmsg("column \"%s\" specified more than once",
 							 name)));
-			attnums = lappendi(attnums, attnum);
+			attnums = lappend_int(attnums, attnum);
 		}
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.24 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeFunctionscan.c,v 1.25 2004/05/26 04:41:15 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,7 +201,7 @@ ExecInitFunctionScan(FunctionScan *node, EState *estate)
 	else if (functyptype == 'b' || functyptype == 'd')
 	{
 		/* Must be a base data type, i.e. scalar */
-		char	   *attname = strVal(lfirst(rte->eref->colnames));
+		char	   *attname = strVal(linitial(rte->eref->colnames));
 
 		tupdesc = CreateTemplateTupleDesc(1, false);
 		TupleDescInitEntry(tupdesc,

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.76 2004/03/08 21:35:59 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/comment.c,v 1.77 2004/05/26 04:41:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,11 +379,11 @@ CommentAttribute(List *qualname, char *comment)
 	AttrNumber	attnum;
 
 	/* Separate relname and attr name */
-	nnames = length(qualname);
+	nnames = list_length(qualname);
 	if (nnames < 2)				/* parser messed up */
 		elog(ERROR, "must specify relation and attribute");
-	relname = ltruncate(nnames - 1, listCopy(qualname));
-	attrname = strVal(llast(qualname));
+	relname = list_truncate(list_copy(qualname), nnames - 1);
+	attrname = strVal(lfirst(list_tail(qualname)));
 
 	/* Open the containing relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
@@ -429,11 +429,11 @@ CommentDatabase(List *qualname, char *comment)
 	char	   *database;
 	Oid			oid;
 
-	if (length(qualname) != 1)
+	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("database name may not be qualified")));
-	database = strVal(lfirst(qualname));
+	database = strVal(linitial(qualname));
 
 	/*
 	 * We cannot currently support cross-database comments (since other
@@ -493,11 +493,11 @@ CommentNamespace(List *qualname, char *comment)
 	Oid			classoid;
 	char	   *namespace;
 
-	if (length(qualname) != 1)
+	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("schema name may not be qualified")));
-	namespace = strVal(lfirst(qualname));
+	namespace = strVal(linitial(qualname));
 
 	oid = GetSysCacheOid(NAMESPACENAME,
 						 CStringGetDatum(namespace),
@@ -548,7 +548,7 @@ CommentRule(List *qualname, char *comment)
 	AclResult	aclcheck;
 
 	/* Separate relname and trig name */
-	nnames = length(qualname);
+	nnames = list_length(qualname);
 	if (nnames == 1)
 	{
 		/* Old-style: only a rule name is given */
@@ -556,7 +556,7 @@ CommentRule(List *qualname, char *comment)
 		HeapScanDesc scanDesc;
 		ScanKeyData scanKeyData;
 
-		rulename = strVal(lfirst(qualname));
+		rulename = strVal(linitial(qualname));
 
 		/* Search pg_rewrite for such a rule */
 		ScanKeyInit(&scanKeyData,
@@ -599,8 +599,8 @@ CommentRule(List *qualname, char *comment)
 	{
 		/* New-style: rule and relname both provided */
 		Assert(nnames >= 2);
-		relname = ltruncate(nnames - 1, listCopy(qualname));
-		rulename = strVal(llast(qualname));
+		relname = list_truncate(list_copy(qualname), nnames - 1);
+		rulename = strVal(lfirst(list_tail(qualname)));
 
 		/* Open the owning relation to ensure it won't go away meanwhile */
 		rel = makeRangeVarFromNameList(relname);
@@ -683,7 +683,7 @@ CommentType(List *typename, char *comment)
 static void
 CommentAggregate(List *aggregate, List *arguments, char *comment)
 {
-	TypeName   *aggtype = (TypeName *) lfirst(arguments);
+	TypeName   *aggtype = (TypeName *) linitial(arguments);
 	Oid			baseoid,
 				oid;
 
@@ -750,7 +750,7 @@ CommentProc(List *function, List *arguments, char *comment)
 static void
 CommentOperator(List *opername, List *arguments, char *comment)
 {
-	TypeName   *typenode1 = (TypeName *) lfirst(arguments);
+	TypeName   *typenode1 = (TypeName *) linitial(arguments);
 	TypeName   *typenode2 = (TypeName *) lsecond(arguments);
 	Oid			oid;
 	Oid			classoid;
@@ -794,11 +794,11 @@ CommentTrigger(List *qualname, char *comment)
 	Oid			oid;
 
 	/* Separate relname and trig name */
-	nnames = length(qualname);
+	nnames = list_length(qualname);
 	if (nnames < 2)				/* parser messed up */
 		elog(ERROR, "must specify relation and trigger");
-	relname = ltruncate(nnames - 1, listCopy(qualname));
-	trigname = strVal(llast(qualname));
+	relname = list_truncate(list_copy(qualname), nnames - 1);
+	trigname = strVal(lfirst(list_tail(qualname)));
 
 	/* Open the owning relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relname);
@@ -872,11 +872,11 @@ CommentConstraint(List *qualname, char *comment)
 	Oid			conOid = InvalidOid;
 
 	/* Separate relname and constraint name */
-	nnames = length(qualname);
+	nnames = list_length(qualname);
 	if (nnames < 2)				/* parser messed up */
 		elog(ERROR, "must specify relation and constraint");
-	relName = ltruncate(nnames - 1, listCopy(qualname));
-	conName = strVal(llast(qualname));
+	relName = list_truncate(list_copy(qualname), nnames - 1);
+	conName = strVal(lfirst(list_tail(qualname)));
 
 	/* Open the owning relation to ensure it won't go away meanwhile */
 	rel = makeRangeVarFromNameList(relName);
@@ -985,11 +985,11 @@ CommentLanguage(List *qualname, char *comment)
 	Oid			classoid;
 	char	   *language;
 
-	if (length(qualname) != 1)
+	if (list_length(qualname) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("language name may not be qualified")));
-	language = strVal(lfirst(qualname));
+	language = strVal(linitial(qualname));
 
 	oid = GetSysCacheOid(LANGNAME,
 						 CStringGetDatum(language),
@@ -1032,8 +1032,8 @@ CommentOpClass(List *qualname, List *arguments, char *comment)
 	Oid			classoid;
 	HeapTuple	tuple;
 
-	Assert(length(arguments) == 1);
-	amname = strVal(lfirst(arguments));
+	Assert(list_length(arguments) == 1);
+	amname = strVal(linitial(arguments));
 
 	/*
 	 * Get the access method's OID.
@@ -1118,8 +1118,8 @@ CommentLargeObject(List *qualname, char *comment)
 	Oid			classoid;
 	Node	   *node; 
 
-	Assert(length(qualname) == 1);
-	node = (Node *) lfirst(qualname);
+	Assert(list_length(qualname) == 1);
+	node = (Node *) linitial(qualname);
 
 	switch (nodeTag(node))
 	{
@@ -1176,11 +1176,11 @@ CommentCast(List *qualname, List *arguments, char *comment)
 	Oid			castOid;
 	Oid			classoid;
 
-	Assert(length(qualname) == 1);
-	sourcetype = (TypeName *) lfirst(qualname);
+	Assert(list_length(qualname) == 1);
+	sourcetype = (TypeName *) linitial(qualname);
 	Assert(IsA(sourcetype, TypeName));
-	Assert(length(arguments) == 1);
-	targettype = (TypeName *) lfirst(arguments);
+	Assert(list_length(arguments) == 1);
+	targettype = (TypeName *) linitial(arguments);
 	Assert(IsA(targettype, TypeName));
 	
 	sourcetypeid = typenameTypeId(sourcetype);

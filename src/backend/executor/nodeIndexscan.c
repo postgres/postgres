@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.93 2004/04/21 18:24:26 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeIndexscan.c,v 1.94 2004/05/26 04:41:16 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,7 +146,7 @@ IndexNext(IndexScanState *node)
 	if (estate->es_evTuple != NULL &&
 		estate->es_evTuple[scanrelid - 1] != NULL)
 	{
-		List	   *qual;
+		ListCell   *qual;
 
 		if (estate->es_evTupleNull[scanrelid - 1])
 			return slot;		/* return empty slot */
@@ -164,7 +164,7 @@ IndexNext(IndexScanState *node)
 			if (ExecQual((List *) lfirst(qual), econtext, false))
 				break;
 		}
-		if (qual == NIL)		/* would not be returned by indices */
+		if (qual == NULL)		/* would not be returned by indices */
 			slot->val = NULL;
 
 		/* Flag for the next call that no more tuples */
@@ -283,11 +283,11 @@ IndexNext(IndexScanState *node)
 				{
 					bool		prev_matches = false;
 					int			prev_index;
-					List	   *qual;
+					ListCell   *qual;
 
 					econtext->ecxt_scantuple = slot;
 					ResetExprContext(econtext);
-					qual = node->indxqualorig;
+					qual = list_head(node->indxqualorig);
 					for (prev_index = 0;
 						 prev_index < node->iss_IndexPtr;
 						 prev_index++)
@@ -641,11 +641,11 @@ IndexScanState *
 ExecInitIndexScan(IndexScan *node, EState *estate)
 {
 	IndexScanState *indexstate;
-	List	   *indxqual;
-	List	   *indxstrategy;
-	List	   *indxsubtype;
-	List	   *indxlossy;
-	List	   *indxid;
+	ListCell   *indxqual;
+	ListCell   *indxstrategy;
+	ListCell   *indxsubtype;
+	ListCell   *indxlossy;
+	ListCell   *indxid_item;
 	int			i;
 	int			numIndices;
 	int			indexPtr;
@@ -719,8 +719,8 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	/*
 	 * get the index node information
 	 */
-	indxid = node->indxid;
-	numIndices = length(indxid);
+	indxid_item = list_head(node->indxid);
+	numIndices = length(node->indxid);
 	indexPtr = -1;
 
 	CXT1_printf("ExecInitIndexScan: context is %d\n", CurrentMemoryContext);
@@ -745,28 +745,32 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	/*
 	 * build the index scan keys from the index qualification
 	 */
-	indxqual = node->indxqual;
-	indxstrategy = node->indxstrategy;
-	indxsubtype = node->indxsubtype;
-	indxlossy = node->indxlossy;
+	indxqual = list_head(node->indxqual);
+	indxstrategy = list_head(node->indxstrategy);
+	indxsubtype = list_head(node->indxsubtype);
+	indxlossy = list_head(node->indxlossy);
 	for (i = 0; i < numIndices; i++)
 	{
 		List	   *quals;
 		List	   *strategies;
 		List	   *subtypes;
 		List	   *lossyflags;
+		ListCell   *qual_cell;
+		ListCell   *strategy_cell;
+		ListCell   *subtype_cell;
+		ListCell   *lossyflag_cell;
 		int			n_keys;
 		ScanKey		scan_keys;
 		ExprState **run_keys;
 		int			j;
 
-		quals = lfirst(indxqual);
+		quals = (List *) lfirst(indxqual);
 		indxqual = lnext(indxqual);
-		strategies = lfirst(indxstrategy);
+		strategies = (List *) lfirst(indxstrategy);
 		indxstrategy = lnext(indxstrategy);
-		subtypes = lfirst(indxsubtype);
+		subtypes = (List *) lfirst(indxsubtype);
 		indxsubtype = lnext(indxsubtype);
-		lossyflags = lfirst(indxlossy);
+		lossyflags = (List *) lfirst(indxlossy);
 		indxlossy = lnext(indxlossy);
 		n_keys = length(quals);
 		scan_keys = (n_keys <= 0) ? NULL :
@@ -778,6 +782,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 		 * for each opclause in the given qual, convert each qual's
 		 * opclause into a single scan key
 		 */
+		qual_cell = list_head(quals);
+		strategy_cell = list_head(strategies);
+		subtype_cell = list_head(subtypes);
+		lossyflag_cell = list_head(lossyflags);
 		for (j = 0; j < n_keys; j++)
 		{
 			OpExpr	   *clause;			/* one clause of index qual */
@@ -794,14 +802,14 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 			/*
 			 * extract clause information from the qualification
 			 */
-			clause = (OpExpr *) lfirst(quals);
-			quals = lnext(quals);
-			strategy = lfirsti(strategies);
-			strategies = lnext(strategies);
-			subtype = lfirsto(subtypes);
-			subtypes = lnext(subtypes);
-			lossy = lfirsti(lossyflags);
-			lossyflags = lnext(lossyflags);
+			clause = (OpExpr *) lfirst(qual_cell);
+			qual_cell = lnext(qual_cell);
+			strategy = lfirsti(strategy_cell);
+			strategy_cell = lnext(strategy_cell);
+			subtype = lfirsto(subtype_cell);
+			subtype_cell = lnext(subtype_cell);
+			lossy = lfirsti(lossyflag_cell);
+			lossyflag_cell = lnext(lossyflag_cell);
 
 			if (!IsA(clause, OpExpr))
 				elog(ERROR, "indxqual is not an OpExpr");
@@ -972,7 +980,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 	 */
 	for (i = 0; i < numIndices; i++)
 	{
-		Oid			indexOid = lfirsto(indxid);
+		Oid			indexOid = lfirsto(indxid_item);
 
 		indexDescs[i] = index_open(indexOid);
 		scanDescs[i] = index_beginscan(currentRelation,
@@ -980,7 +988,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate)
 									   estate->es_snapshot,
 									   numScanKeys[i],
 									   scanKeys[i]);
-		indxid = lnext(indxid);
+		indxid_item = lnext(indxid_item);
 	}
 
 	indexstate->iss_RelationDescs = indexDescs;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.113 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.114 2004/05/26 04:41:16 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -744,8 +744,8 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("cannot open multi-query plan as cursor")));
-	queryTree = (Query *) lfirst((List *) lfirst(qtlist));
-	planTree = (Plan *) lfirst(ptlist);
+	queryTree = (Query *) linitial((List *) linitial(qtlist));
+	planTree = (Plan *) linitial(ptlist);
 
 	if (queryTree->commandType != CMD_SELECT)
 		ereport(ERROR,
@@ -953,7 +953,7 @@ SPI_is_cursor_plan(void *plan)
 	qtlist = spiplan->qtlist;
 	if (length(spiplan->ptlist) == 1 && length(qtlist) == 1)
 	{
-		Query *queryTree = (Query *) lfirst((List *) lfirst(qtlist));
+		Query *queryTree = (Query *) linitial((List *) linitial(qtlist));
 
 		if (queryTree->commandType == CMD_SELECT && queryTree->into == NULL)
 			return true;
@@ -1062,7 +1062,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	List	   *raw_parsetree_list;
 	List	   *query_list_list;
 	List	   *plan_list;
-	List	   *list_item;
+	ListCell   *list_item;
 	ErrorContextCallback spierrcontext;
 	int			nargs = 0;
 	Oid		   *argtypes = NULL;
@@ -1110,7 +1110,7 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	{
 		Node	   *parsetree = (Node *) lfirst(list_item);
 		List	   *query_list;
-		List	   *query_list_item;
+		ListCell   *query_list_item;
 
 		query_list = pg_analyze_and_rewrite(parsetree, argtypes, nargs);
 
@@ -1207,8 +1207,8 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 				  bool useCurrentSnapshot, int tcount)
 {
 	List	   *query_list_list = plan->qtlist;
-	List	   *plan_list = plan->ptlist;
-	List	   *query_list_list_item;
+	ListCell   *plan_list_item = list_head(plan->ptlist);
+	ListCell   *query_list_list_item;
 	ErrorContextCallback spierrcontext;
 	int			nargs = plan->nargs;
 	int			res = 0;
@@ -1254,7 +1254,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 	foreach(query_list_list_item, query_list_list)
 	{
 		List	   *query_list = lfirst(query_list_list_item);
-		List	   *query_list_item;
+		ListCell   *query_list_item;
 
 		/* Reset state for each original parsetree */
 		/* (at most one of its querytrees will be marked canSetTag) */
@@ -1270,8 +1270,8 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
 			QueryDesc  *qdesc;
 			DestReceiver *dest;
 
-			planTree = lfirst(plan_list);
-			plan_list = lnext(plan_list);
+			planTree = lfirst(plan_list_item);
+			plan_list_item = lnext(plan_list_item);
 
 			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None, NULL);
 			if (queryTree->commandType == CMD_UTILITY)

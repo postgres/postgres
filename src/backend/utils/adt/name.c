@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.50 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/name.c,v 1.51 2004/05/26 04:41:37 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -342,7 +342,8 @@ current_schema(PG_FUNCTION_ARGS)
 
 	if (search_path == NIL)
 		PG_RETURN_NULL();
-	nspname = get_namespace_name(lfirsto(search_path));
+	nspname = get_namespace_name(linitial_oid(search_path));
+	list_free(search_path);
 	if (!nspname)
 		PG_RETURN_NULL();		/* recently-deleted namespace? */
 	PG_RETURN_DATUM(DirectFunctionCall1(namein, CStringGetDatum(nspname)));
@@ -352,25 +353,27 @@ Datum
 current_schemas(PG_FUNCTION_ARGS)
 {
 	List	   *search_path = fetch_search_path(PG_GETARG_BOOL(0));
+	ListCell   *l;
 	Datum	   *names;
 	int			i;
 	ArrayType  *array;
 
 	/* +1 here is just to avoid palloc(0) error */
+
 	names = (Datum *) palloc((length(search_path) + 1) * sizeof(Datum));
 	i = 0;
-	while (search_path)
+	foreach(l, search_path)
 	{
 		char	   *nspname;
 
-		nspname = get_namespace_name(lfirsto(search_path));
+		nspname = get_namespace_name(lfirst_oid(l));
 		if (nspname)			/* watch out for deleted namespace */
 		{
 			names[i] = DirectFunctionCall1(namein, CStringGetDatum(nspname));
 			i++;
 		}
-		search_path = lnext(search_path);
 	}
+	list_free(search_path);
 
 	array = construct_array(names, i,
 							NAMEOID,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.104 2004/04/25 18:23:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/pathnode.c,v 1.105 2004/05/26 04:41:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -200,7 +200,7 @@ void
 set_cheapest(RelOptInfo *parent_rel)
 {
 	List	   *pathlist = parent_rel->pathlist;
-	List	   *p;
+	ListCell   *p;
 	Path	   *cheapest_startup_path;
 	Path	   *cheapest_total_path;
 
@@ -209,9 +209,9 @@ set_cheapest(RelOptInfo *parent_rel)
 	if (pathlist == NIL)
 		elog(ERROR, "could not devise a query plan for the given query");
 
-	cheapest_startup_path = cheapest_total_path = (Path *) lfirst(pathlist);
+	cheapest_startup_path = cheapest_total_path = (Path *) linitial(pathlist);
 
-	foreach(p, lnext(pathlist))
+	for_each_cell(p, lnext(list_head(pathlist)))
 	{
 		Path	   *path = (Path *) lfirst(p);
 		int			cmp;
@@ -269,17 +269,17 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 {
 	bool		accept_new = true;		/* unless we find a superior old
 										 * path */
-	List	   *insert_after = NIL;		/* where to insert new item */
-	List	   *p1_prev = NIL;
-	List	   *p1;
+	ListCell   *insert_after = NULL;	/* where to insert new item */
+	ListCell   *p1_prev = NULL;
+	ListCell   *p1;
 
 	/*
 	 * Loop to check proposed new path against old paths.  Note it is
 	 * possible for more than one old path to be tossed out because
 	 * new_path dominates it.
 	 */
-	p1 = parent_rel->pathlist;	/* cannot use foreach here */
-	while (p1 != NIL)
+	p1 = list_head(parent_rel->pathlist);	/* cannot use foreach here */
+	while (p1 != NULL)
 	{
 		Path	   *old_path = (Path *) lfirst(p1);
 		bool		remove_old = false; /* unless new proves superior */
@@ -346,15 +346,14 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 		 */
 		if (remove_old)
 		{
-			List	   *p1_next = lnext(p1);
-
-			if (p1_prev)
-				lnext(p1_prev) = p1_next;
-			else
-				parent_rel->pathlist = p1_next;
+			parent_rel->pathlist = list_delete_cell(parent_rel->pathlist,
+													p1, p1_prev);
+			/* Delete the data pointed-to by the deleted cell */
 			pfree(old_path);
-			pfree(p1);			/* this is why we can't use foreach */
-			p1 = p1_next;
+			if (p1_prev)
+				p1 = lnext(p1_prev);
+			else
+				p1 = list_head(parent_rel->pathlist);
 		}
 		else
 		{
@@ -378,7 +377,7 @@ add_path(RelOptInfo *parent_rel, Path *new_path)
 	{
 		/* Accept the new path: insert it at proper place in pathlist */
 		if (insert_after)
-			lnext(insert_after) = lcons(new_path, lnext(insert_after));
+			lappend_cell(parent_rel->pathlist, insert_after, new_path);
 		else
 			parent_rel->pathlist = lcons(new_path, parent_rel->pathlist);
 	}
@@ -508,7 +507,7 @@ AppendPath *
 create_append_path(RelOptInfo *rel, List *subpaths)
 {
 	AppendPath *pathnode = makeNode(AppendPath);
-	List	   *l;
+	ListCell   *l;
 
 	pathnode->path.pathtype = T_Append;
 	pathnode->path.parent = rel;
@@ -522,7 +521,7 @@ create_append_path(RelOptInfo *rel, List *subpaths)
 	{
 		Path	   *subpath = (Path *) lfirst(l);
 
-		if (l == subpaths)		/* first node? */
+		if (l == list_head(subpaths))		/* first node? */
 			pathnode->path.startup_cost = subpath->startup_cost;
 		pathnode->path.total_cost += subpath->total_cost;
 	}
@@ -608,7 +607,7 @@ create_unique_path(Query *root, RelOptInfo *rel, Path *subpath)
 	Path		agg_path;		/* dummy for result of cost_agg */
 	MemoryContext oldcontext;
 	List	   *sub_targetlist;
-	List	   *l;
+	ListCell   *l;
 	int			numCols;
 
 	/* Caller made a mistake if subpath isn't cheapest_total */
@@ -783,7 +782,7 @@ is_distinct_query(Query *query)
 	 */
 	if (query->groupClause)
 	{
-		List   *gl;
+		ListCell   *gl;
 
 		foreach(gl, query->groupClause)
 		{
@@ -818,7 +817,7 @@ is_distinct_query(Query *query)
 static bool
 hash_safe_tlist(List *tlist)
 {
-	List	   *tl;
+	ListCell   *tl;
 
 	foreach(tl, tlist)
 	{

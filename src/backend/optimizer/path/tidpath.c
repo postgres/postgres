@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.18 2003/11/29 19:51:50 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/tidpath.c,v 1.19 2004/05/26 04:41:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,7 +33,7 @@ static List *TidqualFromExpr(int varno, Expr *expr);
 static bool
 isEvaluable(int varno, Node *node)
 {
-	List	   *lst;
+	ListCell   *l;
 	FuncExpr   *expr;
 
 	if (IsA(node, Const))
@@ -51,9 +51,9 @@ isEvaluable(int varno, Node *node)
 	if (!is_funcclause(node))
 		return false;
 	expr = (FuncExpr *) node;
-	foreach(lst, expr->args)
+	foreach(l, expr->args)
 	{
-		if (!isEvaluable(varno, lfirst(lst)))
+		if (!isEvaluable(varno, lfirst(l)))
 			return false;
 	}
 
@@ -81,7 +81,7 @@ TidequalClause(int varno, OpExpr *node)
 		return rnode;
 	if (length(node->args) != 2)
 		return rnode;
-	arg1 = lfirst(node->args);
+	arg1 = linitial(node->args);
 	arg2 = lsecond(node->args);
 
 	arg = NULL;
@@ -156,8 +156,8 @@ static List *
 TidqualFromExpr(int varno, Expr *expr)
 {
 	List	   *rlst = NIL,
-			   *lst,
 			   *frtn;
+	ListCell   *l;
 	Node	   *node = (Node *) expr,
 			   *rnode;
 
@@ -169,9 +169,9 @@ TidqualFromExpr(int varno, Expr *expr)
 	}
 	else if (and_clause(node))
 	{
-		foreach(lst, ((BoolExpr *) expr)->args)
+		foreach(l, ((BoolExpr *) expr)->args)
 		{
-			node = lfirst(lst);
+			node = (Node *) lfirst(l);
 			rlst = TidqualFromExpr(varno, (Expr *) node);
 			if (rlst)
 				break;
@@ -179,9 +179,9 @@ TidqualFromExpr(int varno, Expr *expr)
 	}
 	else if (or_clause(node))
 	{
-		foreach(lst, ((BoolExpr *) expr)->args)
+		foreach(l, ((BoolExpr *) expr)->args)
 		{
-			node = lfirst(lst);
+			node = (Node *) lfirst(l);
 			frtn = TidqualFromExpr(varno, (Expr *) node);
 			if (frtn)
 				rlst = nconc(rlst, frtn);
@@ -200,8 +200,8 @@ TidqualFromExpr(int varno, Expr *expr)
 static List *
 TidqualFromRestrictinfo(Relids relids, List *restrictinfo)
 {
-	List	   *lst,
-			   *rlst = NIL;
+	ListCell   *l;
+	List	   *rlst = NIL;
 	int			varno;
 	Node	   *node;
 	Expr	   *expr;
@@ -209,9 +209,9 @@ TidqualFromRestrictinfo(Relids relids, List *restrictinfo)
 	if (bms_membership(relids) != BMS_SINGLETON)
 		return NIL;
 	varno = bms_singleton_member(relids);
-	foreach(lst, restrictinfo)
+	foreach(l, restrictinfo)
 	{
-		node = lfirst(lst);
+		node = (Node *) lfirst(l);
 		if (!IsA(node, RestrictInfo))
 			continue;
 		expr = ((RestrictInfo *) node)->clause;

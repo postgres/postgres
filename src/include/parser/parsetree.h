@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.23 2003/11/29 22:41:09 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/parser/parsetree.h,v 1.24 2004/05/26 04:41:46 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 #define PARSETREE_H
 
 #include "nodes/parsenodes.h"
-#include "nodes/pg_list.h"		/* for nth(), etc */
+#include "nodes/pg_list.h"		/* for list_nth(), etc */
 
 
 /* ----------------
@@ -30,7 +30,7 @@
  * NB: this will crash and burn if handed an out-of-range RT index
  */
 #define rt_fetch(rangetable_index, rangetable) \
-	((RangeTblEntry *) nth((rangetable_index)-1, rangetable))
+	((RangeTblEntry *) list_nth(rangetable, (rangetable_index)-1))
 
 /*
  *		getrelid

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.26 2004/03/21 22:29:10 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.27 2004/05/26 04:41:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,9 +68,9 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	 * strange.
 	 */
 	rewritten = QueryRewrite((Query *) stmt->query);
-	if (length(rewritten) != 1 || !IsA(lfirst(rewritten), Query))
+	if (list_length(rewritten) != 1 || !IsA(linitial(rewritten), Query))
 		elog(ERROR, "unexpected rewrite result");
-	query = (Query *) lfirst(rewritten);
+	query = (Query *) linitial(rewritten);
 	if (query->commandType != CMD_SELECT)
 		elog(ERROR, "unexpected rewrite result");
 
@@ -100,8 +100,8 @@ PerformCursorOpen(DeclareCursorStmt *stmt)
 	PortalDefineQuery(portal,
 					  NULL,		/* unfortunately don't have sourceText */
 					  "SELECT", /* cursor's query is always a SELECT */
-					  makeList1(query),
-					  makeList1(plan),
+					  list_make1(query),
+					  list_make1(plan),
 					  PortalGetHeapMemory(portal));
 
 	MemoryContextSwitchTo(oldContext);

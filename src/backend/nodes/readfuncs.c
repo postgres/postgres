@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.169 2004/05/10 22:44:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/readfuncs.c,v 1.170 2004/05/26 04:41:19 neilc Exp $
  *
  * NOTES
  *	  Path and Plan nodes do not have any readfuncs support, because we
@@ -18,6 +18,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#define DISABLE_LIST_COMPAT
+
 #include "postgres.h"
 
 #include <math.h>
@@ -33,20 +35,21 @@
  * routine.
  */
 
-/* Declare appropriate local variables */
-#define READ_LOCALS(nodeTypeName) \
-	nodeTypeName *local_node = makeNode(nodeTypeName); \
-	char	   *token; \
-	int			length
+/* Macros for declaring appropriate local variables */
 
 /* A few guys need only local_node */
 #define READ_LOCALS_NO_FIELDS(nodeTypeName) \
 	nodeTypeName *local_node = makeNode(nodeTypeName)
 
 /* And a few guys need only the pg_strtok support fields */
-#define READ_TEMP_LOCALS() \
-	char	   *token; \
+#define READ_TEMP_LOCALS()	\
+	char	   *token;		\
 	int			length
+
+/* ... but most need both */
+#define READ_LOCALS(nodeTypeName)			\
+	READ_LOCALS_NO_FIELDS(nodeTypeName);	\
+	READ_TEMP_LOCALS()
 
 /* Read an integer field (anything written as ":fldname %d") */
 #define READ_INT_FIELD(fldname) \
@@ -101,16 +104,6 @@
 	token = pg_strtok(&length);		/* skip :fldname */ \
 	local_node->fldname = nodeRead(NULL, 0)
 
-/* Read an integer-list field (XXX combine me with READ_NODE_FIELD) */
-#define READ_INTLIST_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = nodeRead(NULL, 0)
-
-/* Read an OID-list field (XXX combine me with READ_NODE_FIELD) */
-#define READ_OIDLIST_FIELD(fldname) \
-	token = pg_strtok(&length);		/* skip :fldname */ \
-	local_node->fldname = nodeRead(NULL, 0)
-
 /* Routine exit */
 #define READ_DONE() \
 	return local_node
@@ -153,7 +146,7 @@ _readQuery(void)
 	READ_BOOL_FIELD(hasSubLinks);
 	READ_NODE_FIELD(rtable);
 	READ_NODE_FIELD(jointree);
-	READ_INTLIST_FIELD(rowMarks);
+	READ_NODE_FIELD(rowMarks);
 	READ_NODE_FIELD(targetList);
 	READ_NODE_FIELD(groupClause);
 	READ_NODE_FIELD(havingQual);
@@ -162,7 +155,7 @@ _readQuery(void)
 	READ_NODE_FIELD(limitOffset);
 	READ_NODE_FIELD(limitCount);
 	READ_NODE_FIELD(setOperations);
-	READ_INTLIST_FIELD(resultRelations);
+	READ_NODE_FIELD(resultRelations);
 
 	/* planner-internal fields are left zero */
 
@@ -237,7 +230,7 @@ _readSetOperationStmt(void)
 	READ_BOOL_FIELD(all);
 	READ_NODE_FIELD(larg);
 	READ_NODE_FIELD(rarg);
-	READ_OIDLIST_FIELD(colTypes);
+	READ_NODE_FIELD(colTypes);
 
 	READ_DONE();
 }
@@ -526,7 +519,7 @@ _readSubLink(void)
 	READ_BOOL_FIELD(useOr);
 	READ_NODE_FIELD(lefthand);
 	READ_NODE_FIELD(operName);
-	READ_OIDLIST_FIELD(operOids);
+	READ_NODE_FIELD(operOids);
 	READ_NODE_FIELD(subselect);
 
 	READ_DONE();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.86 2004/04/06 18:46:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinpath.c,v 1.87 2004/05/26 04:41:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -145,7 +145,7 @@ sort_inner_and_outer(Query *root,
 	Path	   *outer_path;
 	Path	   *inner_path;
 	List	   *all_pathkeys;
-	List	   *i;
+	ListCell   *l;
 
 	/*
 	 * If we are doing a right or full join, we must use *all* the
@@ -224,9 +224,9 @@ sort_inner_and_outer(Query *root,
 												  mergeclause_list,
 												  outerrel);
 
-	foreach(i, all_pathkeys)
+	foreach(l, all_pathkeys)
 	{
-		List	   *front_pathkey = lfirst(i);
+		List	   *front_pathkey = (List *) lfirst(l);
 		List	   *cur_pathkeys;
 		List	   *cur_mergeclauses;
 		List	   *outerkeys;
@@ -234,7 +234,7 @@ sort_inner_and_outer(Query *root,
 		List	   *merge_pathkeys;
 
 		/* Make a pathkey list with this guy first. */
-		if (i != all_pathkeys)
+		if (l != list_head(all_pathkeys))
 			cur_pathkeys = lcons(front_pathkey,
 								 lremove(front_pathkey,
 										 listCopy(all_pathkeys)));
@@ -338,7 +338,7 @@ match_unsorted_outer(Query *root,
 	Path	   *inner_cheapest_total = innerrel->cheapest_total_path;
 	Path	   *matpath = NULL;
 	Path	   *bestinnerjoin = NULL;
-	List	   *i;
+	ListCell   *l;
 
 	/*
 	 * Nestloop only supports inner, left, and IN joins.  Also, if we are
@@ -402,9 +402,9 @@ match_unsorted_outer(Query *root,
 											 outerrel->relids, jointype);
 	}
 
-	foreach(i, outerrel->pathlist)
+	foreach(l, outerrel->pathlist)
 	{
-		Path	   *outerpath = (Path *) lfirst(i);
+		Path	   *outerpath = (Path *) lfirst(l);
 		List	   *merge_pathkeys;
 		List	   *mergeclauses;
 		List	   *innersortkeys;
@@ -676,7 +676,7 @@ hash_inner_and_outer(Query *root,
 {
 	bool		isouterjoin;
 	List	   *hashclauses;
-	List	   *i;
+	ListCell   *l;
 
 	/*
 	 * Hashjoin only supports inner, left, and IN joins.
@@ -704,9 +704,9 @@ hash_inner_and_outer(Query *root,
 	 * are usable with this pair of sub-relations.
 	 */
 	hashclauses = NIL;
-	foreach(i, restrictlist)
+	foreach(l, restrictlist)
 	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 
 		if (!restrictinfo->can_join ||
 			restrictinfo->hashjoinoperator == InvalidOid)
@@ -803,11 +803,11 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 {
 	List	   *result_list = NIL;
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, restrictlist)
+	foreach(l, restrictlist)
 	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 
 		/*
 		 * If processing an outer join, only use its own join clauses in

@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.5 2004/04/01 21:28:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.6 2004/05/26 04:41:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -432,7 +432,7 @@ assign_record_type_typmod(TupleDesc tupDesc)
 	Oid			hashkey[REC_HASH_KEYS];
 	bool		found;
 	int			i;
-	List	   *l;
+	ListCell   *l;
 	int32		newtypmod;
 	MemoryContext oldcxt;
 

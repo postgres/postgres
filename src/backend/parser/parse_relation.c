@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.94 2004/04/18 18:12:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_relation.c,v 1.95 2004/05/26 04:41:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 		return NULL;
 	if (IsA(nsnode, RangeTblRef))
 	{
-		int			varno = ((RangeTblRef *) nsnode)->rtindex;
+		int			   varno = ((RangeTblRef *) nsnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
 		if (strcmp(rte->eref->aliasname, refname) == 0)
@@ -174,7 +174,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 	}
 	else if (IsA(nsnode, List))
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, (List *) nsnode)
 		{
@@ -249,7 +249,7 @@ scanNameSpaceForRelid(ParseState *pstate, Node *nsnode, Oid relid)
 	}
 	else if (IsA(nsnode, List))
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, (List *) nsnode)
 		{
@@ -321,7 +321,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 	}
 	else if (IsA(namespace1, List))
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, (List *) namespace1)
 			checkNameSpaceConflicts(pstate, lfirst(l), namespace2);
@@ -378,7 +378,7 @@ scanNameSpaceForConflict(ParseState *pstate, Node *nsnode,
 	}
 	else if (IsA(nsnode, List))
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, (List *) nsnode)
 			scanNameSpaceForConflict(pstate, lfirst(l), rte1, aliasname1);
@@ -397,7 +397,7 @@ int
 RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
 {
 	int			index;
-	List	   *temp;
+	ListCell   *l;
 
 	if (sublevels_up)
 		*sublevels_up = 0;
@@ -405,9 +405,9 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
 	while (pstate != NULL)
 	{
 		index = 1;
-		foreach(temp, pstate->p_rtable)
+		foreach(l, pstate->p_rtable)
 		{
-			if (rte == (RangeTblEntry *) lfirst(temp))
+			if (rte == (RangeTblEntry *) lfirst(l))
 				return index;
 			index++;
 		}
@@ -460,7 +460,7 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 {
 	Node	   *result = NULL;
 	int			attnum = 0;
-	List	   *c;
+	ListCell   *c;
 
 	/*
 	 * Scan the user column names (or aliases) for a match. Complain if
@@ -546,7 +546,7 @@ colNameToVar(ParseState *pstate, char *colname, bool localonly)
 
 	while (pstate != NULL)
 	{
-		List	   *ns;
+		ListCell   *ns;
 
 		/*
 		 * We need to look only at top-level namespace items, and even for
@@ -841,7 +841,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	Alias	   *eref;
 	int			numaliases;
 	int			varattno;
-	List	   *tlistitem;
+	ListCell   *tlistitem;
 
 	rte->rtekind = RTE_SUBQUERY;
 	rte->relid = InvalidOid;
@@ -1027,7 +1027,7 @@ addRangeTableEntryForFunction(ParseState *pstate,
 	}
 	else if (functyptype == 'p' && funcrettype == RECORDOID)
 	{
-		List	   *col;
+		ListCell   *col;
 
 		/* Use the column definition list to form the alias list */
 		eref->colnames = NIL;
@@ -1101,11 +1101,8 @@ addRangeTableEntryForJoin(ParseState *pstate,
 
 	/* fill in any unspecified alias columns */
 	if (numaliases < length(colnames))
-	{
-		while (numaliases-- > 0)
-			colnames = lnext(colnames);
-		eref->colnames = nconc(eref->colnames, colnames);
-	}
+		eref->colnames = nconc(eref->colnames,
+							   list_copy_tail(colnames, numaliases));
 
 	rte->eref = eref;
 
@@ -1145,7 +1142,7 @@ isForUpdate(ParseState *pstate, char *refname)
 	{
 		if (pstate->p_forUpdate != NIL)
 		{
-			if (lfirst(pstate->p_forUpdate) == NULL)
+			if (linitial(pstate->p_forUpdate) == NULL)
 			{
 				/* all tables used in query */
 				return true;
@@ -1153,7 +1150,7 @@ isForUpdate(ParseState *pstate, char *refname)
 			else
 			{
 				/* just the named tables */
-				List	   *l;
+				ListCell   *l;
 
 				foreach(l, pstate->p_forUpdate)
 				{
@@ -1282,8 +1279,8 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		case RTE_SUBQUERY:
 			{
 				/* Subquery RTE */
-				List	   *aliasp = rte->eref->colnames;
-				List	   *tlistitem;
+				ListCell	   *aliasp_item = list_head(rte->eref->colnames);
+				ListCell	   *tlistitem;
 
 				varattno = 0;
 				foreach(tlistitem, rte->subquery->targetList)
@@ -1298,10 +1295,10 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					if (colnames)
 					{
 						/* Assume there is one alias per target item */
-						char	   *label = strVal(lfirst(aliasp));
+						char	   *label = strVal(lfirst(aliasp_item));
 
 						*colnames = lappend(*colnames, makeString(pstrdup(label)));
-						aliasp = lnext(aliasp);
+						aliasp_item = lnext(aliasp_item);
 					}
 
 					if (colvars)
@@ -1385,7 +1382,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					 */
 					if (colnames)
 						*colnames = lappend(*colnames,
-											lfirst(rte->eref->colnames));
+											linitial(rte->eref->colnames));
 
 					if (colvars)
 					{
@@ -1400,7 +1397,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				}
 				else if (functyptype == 'p' && funcrettype == RECORDOID)
 				{
-					List	   *col;
+					ListCell   *col;
 					int			attnum = 0;
 
 					foreach(col, coldeflist)
@@ -1442,39 +1439,36 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		case RTE_JOIN:
 			{
 				/* Join RTE */
-				List	   *aliasp = rte->eref->colnames;
-				List	   *aliasvars = rte->joinaliasvars;
+				ListCell	*colname;
+				ListCell	*aliasvar;
+
+				Assert(length(rte->eref->colnames) == length(rte->joinaliasvars));
 
 				varattno = 0;
-				while (aliasp)
+				forboth (colname, rte->eref->colnames, aliasvar, rte->joinaliasvars)
 				{
-					Assert(aliasvars);
 					varattno++;
 
 					if (colnames)
 					{
-						char	   *label = strVal(lfirst(aliasp));
+						char	   *label = strVal(lfirst(colname));
 
 						*colnames = lappend(*colnames, makeString(pstrdup(label)));
 					}
 
 					if (colvars)
 					{
-						Node	   *aliasvar = (Node *) lfirst(aliasvars);
+						Node	   *avar = (Node *) lfirst(aliasvar);
 						Var		   *varnode;
 
 						varnode = makeVar(rtindex, varattno,
-										  exprType(aliasvar),
-										  exprTypmod(aliasvar),
+										  exprType(avar),
+										  exprTypmod(avar),
 										  sublevels_up);
 
 						*colvars = lappend(*colvars, varnode);
 					}
-
-					aliasp = lnext(aliasp);
-					aliasvars = lnext(aliasvars);
 				}
-				Assert(aliasvars == NIL);
 			}
 			break;
 		default:
@@ -1492,14 +1486,16 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 {
 	List	   *names,
 			   *vars;
+	ListCell   *name,
+			   *var;
 	List	   *te_list = NIL;
 
 	expandRTE(pstate, rte, &names, &vars);
 
-	while (names)
+	forboth (name, names, var, vars)
 	{
-		char	   *label = strVal(lfirst(names));
-		Node	   *varnode = (Node *) lfirst(vars);
+		char	   *label = strVal(lfirst(name));
+		Node	   *varnode = (Node *) lfirst(var);
 		TargetEntry *te = makeNode(TargetEntry);
 
 		te->resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
@@ -1509,12 +1505,9 @@ expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 								false);
 		te->expr = (Expr *) varnode;
 		te_list = lappend(te_list, te);
-
-		names = lnext(names);
-		vars = lnext(vars);
 	}
 
-	Assert(vars == NIL);		/* lists not same length? */
+	Assert(name == NULL && var == NULL); /* lists not the same length? */
 
 	return te_list;
 }
@@ -1790,11 +1783,11 @@ get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
 TargetEntry *
 get_tle_by_resno(List *tlist, AttrNumber resno)
 {
-	List	   *i;
+	ListCell  *l;
 
-	foreach(i, tlist)
+	foreach(l, tlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(i);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (tle->resdom->resno == resno)
 			return tle;
@@ -1917,7 +1910,7 @@ static void
 warnAutoRange(ParseState *pstate, RangeVar *relation)
 {
 	bool		foundInFromCl = false;
-	List	   *temp;
+	ListCell   *temp;
 
 	if (!add_missing_from)
 	{

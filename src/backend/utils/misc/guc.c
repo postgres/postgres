@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.206 2004/05/21 05:08:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.207 2004/05/26 04:41:43 neilc Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3290,7 +3290,7 @@ flatten_set_variable_args(const char *name, List *args)
 	struct config_generic *record;
 	int			flags;
 	StringInfoData buf;
-	List	   *l;
+	ListCell   *l;
 
 	/*
 	 * Fast path if just DEFAULT.  We do not check the variable name in
@@ -3310,7 +3310,7 @@ flatten_set_variable_args(const char *name, List *args)
 
 	/* Complain if list input and non-list variable */
 	if ((flags & GUC_LIST_INPUT) == 0 &&
-		lnext(args) != NIL)
+		list_length(args) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
 				 errmsg("SET %s takes only one argument", name)));
@@ -3322,7 +3322,7 @@ flatten_set_variable_args(const char *name, List *args)
 		A_Const    *arg = (A_Const *) lfirst(l);
 		char	   *val;
 
-		if (l != args)
+		if (l != list_head(args))
 			appendStringInfo(&buf, ", ");
 
 		if (!IsA(arg, A_Const))
@@ -4430,7 +4430,7 @@ assign_log_destination(const char *value, bool doit, GucSource source)
 {
 	char *rawstring;
 	List *elemlist;
-	List *l;
+	ListCell *l;
 	unsigned int  newlogdest = 0;
  
 	/* Need a modifiable copy of string */

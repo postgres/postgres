@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.37 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/joininfo.c,v 1.38 2004/05/26 04:41:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +29,11 @@
 JoinInfo *
 find_joininfo_node(RelOptInfo *this_rel, Relids join_relids)
 {
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, this_rel->joininfo)
+	foreach(l, this_rel->joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
 
 		if (bms_equal(join_relids, joininfo->unjoined_relids))
 			return joininfo;

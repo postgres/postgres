@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.26 2004/02/27 21:48:04 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/restrictinfo.c,v 1.27 2004/05/26 04:41:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,14 +93,14 @@ make_restrictinfo_from_indexclauses(List *indexclauses,
 {
 	List	   *withris = NIL;
 	List	   *withoutris = NIL;
-	List	   *orlist;
+	ListCell   *orlist;
 
 	/* Empty list probably can't happen, but here's what to do */
 	if (indexclauses == NIL)
 		return NIL;
 	/* If single indexscan, just return the ANDed clauses */
-	if (lnext(indexclauses) == NIL)
-		return (List *) lfirst(indexclauses);
+	if (length(indexclauses) == 1)
+		return (List *) linitial(indexclauses);
 	/* Else we need an OR RestrictInfo structure */
 	foreach(orlist, indexclauses)
 	{
@@ -206,7 +206,7 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 	if (or_clause((Node *) clause))
 	{
 		List	   *orlist = NIL;
-		List	   *temp;
+		ListCell   *temp;
 
 		foreach(temp, ((BoolExpr *) clause)->args)
 			orlist = lappend(orlist,
@@ -218,7 +218,7 @@ make_sub_restrictinfos(Expr *clause, bool is_pushed_down,
 	else if (and_clause((Node *) clause))
 	{
 		List	   *andlist = NIL;
-		List	   *temp;
+		ListCell   *temp;
 
 		foreach(temp, ((BoolExpr *) clause)->args)
 			andlist = lappend(andlist,
@@ -257,7 +257,7 @@ List *
 get_actual_clauses(List *restrictinfo_list)
 {
 	List	   *result = NIL;
-	List	   *temp;
+	ListCell   *temp;
 
 	foreach(temp, restrictinfo_list)
 	{
@@ -280,7 +280,7 @@ void
 get_actual_join_clauses(List *restrictinfo_list,
 						List **joinquals, List **otherquals)
 {
-	List	   *temp;
+	ListCell   *temp;
 
 	*joinquals = NIL;
 	*otherquals = NIL;
@@ -317,7 +317,7 @@ remove_redundant_join_clauses(Query *root, List *restrictinfo_list,
 							  JoinType jointype)
 {
 	List	   *result = NIL;
-	List	   *item;
+	ListCell   *item;
 	QualCost	cost;
 
 	/*
@@ -380,7 +380,7 @@ select_nonredundant_join_clauses(Query *root,
 								 JoinType jointype)
 {
 	List	   *result = NIL;
-	List	   *item;
+	ListCell   *item;
 
 	foreach(item, restrictinfo_list)
 	{
@@ -431,7 +431,7 @@ join_clause_is_redundant(Query *root,
 						 List *reference_list,
 						 JoinType jointype)
 {
-	List	   *refitem;
+	ListCell   *refitem;
 
 	/* always consider exact duplicates redundant */
 	foreach(refitem, reference_list)

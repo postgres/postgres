@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.87 2004/05/07 00:24:58 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/regproc.c,v 1.88 2004/05/26 04:41:37 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,7 +1099,7 @@ stringToQualifiedNameList(const char *string, const char *caller)
 	char	   *rawname;
 	List	   *result = NIL;
 	List	   *namelist;
-	List	   *l;
+	ListCell   *l;
 
 	/* We need a modifiable copy of the input string. */
 	rawname = pstrdup(string);

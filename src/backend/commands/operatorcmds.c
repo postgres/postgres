@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.15 2004/05/14 16:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/operatorcmds.c,v 1.16 2004/05/26 04:41:11 neilc Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -79,7 +79,7 @@ DefineOperator(List *names, List *parameters)
 	List	   *rightSortName = NIL;	/* optional right sort operator */
 	List	   *ltCompareName = NIL;	/* optional < compare operator */
 	List	   *gtCompareName = NIL;	/* optional > compare operator */
-	List	   *pl;
+	ListCell   *pl;
 
 	/* Convert list of names to a name and namespace */
 	oprNamespace = QualifiedNameGetCreationNamespace(names, &oprName);
@@ -167,13 +167,13 @@ DefineOperator(List *names, List *parameters)
 	if (canMerge)
 	{
 		if (!leftSortName)
-			leftSortName = makeList1(makeString("<"));
+			leftSortName = list_make1(makeString("<"));
 		if (!rightSortName)
-			rightSortName = makeList1(makeString("<"));
+			rightSortName = list_make1(makeString("<"));
 		if (!ltCompareName)
-			ltCompareName = makeList1(makeString("<"));
+			ltCompareName = list_make1(makeString("<"));
 		if (!gtCompareName)
-			gtCompareName = makeList1(makeString(">"));
+			gtCompareName = list_make1(makeString(">"));
 	}
 
 	/*
@@ -206,7 +206,7 @@ void
 RemoveOperator(RemoveOperStmt *stmt)
 {
 	List	   *operatorName = stmt->opname;
-	TypeName   *typeName1 = (TypeName *) lfirst(stmt->args);
+	TypeName   *typeName1 = (TypeName *) linitial(stmt->args);
 	TypeName   *typeName2 = (TypeName *) lsecond(stmt->args);
 	Oid			operOid;
 	HeapTuple	tup;

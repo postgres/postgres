@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.56 2004/05/14 16:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/typecmds.c,v 1.57 2004/05/26 04:41:12 neilc Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -114,7 +114,7 @@ DefineType(List *names, List *parameters)
 	Oid			sendOid = InvalidOid;
 	Oid			analyzeOid = InvalidOid;
 	char	   *shadow_type;
-	List	   *pl;
+	ListCell   *pl;
 	Oid			typoid;
 	Oid			resulttype;
 
@@ -502,10 +502,10 @@ DefineDomain(CreateDomainStmt *stmt)
 	bool		typNotNull = false;
 	bool		nullDefined = false;
 	Oid			basetypelem;
-	int32		typNDims = length(stmt->typename->arrayBounds);
+	int32		typNDims = list_length(stmt->typename->arrayBounds);
 	HeapTuple	typeTup;
 	List	   *schema = stmt->constraints;
-	List	   *listptr;
+	ListCell   *listptr;
 	Oid			basetypeoid;
 	Oid			domainoid;
 	Form_pg_type baseType;
@@ -1304,7 +1304,7 @@ AlterDomainNotNull(List *names, bool notNull)
 	if (notNull)
 	{
 		List	   *rels;
-		List	   *rt;
+		ListCell   *rt;
 
 		/* Fetch relation list with attributes based on this domain */
 		/* ShareLock is sufficient to prevent concurrent data changes */
@@ -1461,7 +1461,7 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 	HeapTuple	tup;
 	Form_pg_type typTup;
 	List	   *rels;
-	List	   *rt;
+	ListCell   *rt;
 	EState	   *estate;
 	ExprContext *econtext;
 	char	   *ccbin;
@@ -1681,7 +1681,7 @@ get_rels_with_domain(Oid domainOid, LOCKMODE lockmode)
 	{
 		Form_pg_depend pg_depend = (Form_pg_depend) GETSTRUCT(depTup);
 		RelToCheck *rtc = NULL;
-		List	   *rellist;
+		ListCell   *rellist;
 		Form_pg_attribute pg_att;
 		int			ptr;
 
@@ -1848,7 +1848,7 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	/*
 	 * Make sure no outside relations are referred to.
 	 */
-	if (length(pstate->p_rtable) != 0)
+	if (list_length(pstate->p_rtable) != 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 				 errmsg("cannot use table references in domain check constraint")));

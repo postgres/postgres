@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.117 2004/05/10 22:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_target.c,v 1.118 2004/05/26 04:41:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ List *
 transformTargetList(ParseState *pstate, List *targetlist)
 {
 	FastList	p_target;
-	List	   *o_target;
+	ListCell   *o_target;
 
 	FastListInit(&p_target);
 
@@ -134,15 +134,15 @@ transformTargetList(ParseState *pstate, List *targetlist)
 					{
 						case 2:
 							schemaname = NULL;
-							relname = strVal(lfirst(fields));
+							relname = strVal(linitial(fields));
 							break;
 						case 3:
-							schemaname = strVal(lfirst(fields));
+							schemaname = strVal(linitial(fields));
 							relname = strVal(lsecond(fields));
 							break;
 						case 4:
 						{
-							char	   *name1 = strVal(lfirst(fields));
+							char	   *name1 = strVal(linitial(fields));
 
 							/*
 							 * We check the catalog name and then ignore
@@ -215,7 +215,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 void
 markTargetListOrigins(ParseState *pstate, List *targetlist)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, targetlist)
 	{
@@ -468,7 +468,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 		/*
 		 * Do initial validation of user-supplied INSERT column list.
 		 */
-		List	   *tl;
+		ListCell   *tl;
 
 		foreach(tl, cols)
 		{
@@ -502,7 +502,7 @@ ExpandAllTables(ParseState *pstate)
 {
 	List	   *target = NIL;
 	bool		found_table = false;
-	List	   *ns;
+	ListCell   *ns;
 
 	foreach(ns, pstate->p_namespace)
 	{

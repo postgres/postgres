@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.58 2003/11/29 19:51:49 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/libpq/crypt.c,v 1.59 2004/05/26 04:41:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,14 +36,14 @@ md5_crypt_verify(const Port *port, const char *user, char *client_pass)
 			   *crypt_pwd;
 	int			retval = STATUS_ERROR;
 	List	  **line;
-	List	   *token;
+	ListCell   *token;
 	char	   *crypt_client_pass = client_pass;
 
 	if ((line = get_user_line(user)) == NULL)
 		return STATUS_ERROR;
 
-	/* Skip over line number and username */
-	token = lnext(lnext(*line));
+	/* Skip over username */
+	token = lnext(list_head(*line));
 	if (token)
 	{
 		shadow_pass = lfirst(token);

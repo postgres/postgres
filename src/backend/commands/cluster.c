@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.123 2004/05/08 00:34:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.124 2004/05/26 04:41:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ cluster(ClusterStmt *stmt)
 
 		if (stmt->indexname == NULL)
 		{
-			List	   *index;
+			ListCell   *index;
 
 			/* We need to find the index that has indisclustered set. */
 			foreach(index, RelationGetIndexList(rel))
@@ -111,7 +111,7 @@ cluster(ClusterStmt *stmt)
 				HeapTuple	idxtuple;
 				Form_pg_index indexForm;
 
-				indexOid = lfirsto(index);
+				indexOid = lfirst_oid(index);
 				idxtuple = SearchSysCache(INDEXRELID,
 										  ObjectIdGetDatum(indexOid),
 										  0, 0, 0);
@@ -165,8 +165,8 @@ cluster(ClusterStmt *stmt)
 		 * tables that have some index with indisclustered set.
 		 */
 		MemoryContext cluster_context;
-		List	   *rv,
-				   *rvs;
+		List	   *rvs;
+		ListCell   *rv;
 
 		/*
 		 * We cannot run this form of CLUSTER inside a user transaction
@@ -408,7 +408,7 @@ mark_index_clustered(Relation rel, Oid indexOid)
 	HeapTuple	indexTuple;
 	Form_pg_index indexForm;
 	Relation	pg_index;
-	List	   *index;
+	ListCell   *index;
 
 	/*
 	 * If the index is already marked clustered, no need to do anything.
@@ -438,7 +438,7 @@ mark_index_clustered(Relation rel, Oid indexOid)
 
 	foreach(index, RelationGetIndexList(rel))
 	{
-		Oid		thisIndexOid = lfirsto(index);
+		Oid		thisIndexOid = lfirst_oid(index);
 
 		indexTuple = SearchSysCacheCopy(INDEXRELID,
 										ObjectIdGetDatum(thisIndexOid),

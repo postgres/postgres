@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.62 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/tlist.c,v 1.63 2004/05/26 04:41:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,7 +31,7 @@
 TargetEntry *
 tlistentry_member(Node *node, List *targetlist)
 {
-	List	   *temp;
+	ListCell   *temp;
 
 	foreach(temp, targetlist)
 	{
@@ -138,11 +138,11 @@ List *
 add_to_flat_tlist(List *tlist, List *vars)
 {
 	int			next_resdomno = length(tlist) + 1;
-	List	   *v;
+	ListCell   *v;
 
 	foreach(v, vars)
 	{
-		Var		   *var = lfirst(v);
+		Var		   *var = (Var *) lfirst(v);
 
 		if (!tlistentry_member((Node *) var, tlist))
 		{
@@ -173,7 +173,7 @@ get_sortgroupclause_tle(SortClause *sortClause,
 						List *targetList)
 {
 	Index		refnumber = sortClause->tleSortGroupRef;
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, targetList)
 	{
@@ -212,7 +212,7 @@ List *
 get_sortgrouplist_exprs(List *sortClauses, List *targetList)
 {
 	List	   *result = NIL;
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, sortClauses)
 	{

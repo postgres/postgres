@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.236 2004/05/10 22:44:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/outfuncs.c,v 1.237 2004/05/26 04:41:19 neilc Exp $
  *
  * NOTES
  *	  Every node type that can appear in stored rules' parsetrees *must*
@@ -19,6 +19,8 @@
  *
  *-------------------------------------------------------------------------
  */
+#define DISABLE_LIST_COMPAT
+
 #include "postgres.h"
 
 #include <ctype.h>
@@ -85,16 +87,6 @@
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
 	 _outNode(str, node->fldname))
 
-/* Write an integer-list field */
-#define WRITE_INTLIST_FIELD(fldname) \
-	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
-	 _outIntList(str, node->fldname))
-
-/* Write an OID-list field */
-#define WRITE_OIDLIST_FIELD(fldname) \
-	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
-	 _outOidList(str, node->fldname))
-
 /* Write a bitmapset field */
 #define WRITE_BITMAPSET_FIELD(fldname) \
 	(appendStringInfo(str, " :" CppAsString(fldname) " "), \
@@ -145,35 +137,40 @@ _outToken(StringInfo str, char *s)
 	}
 }
 
-/*
- * _outIntList -
- *	   converts a List of integers
- */
 static void
-_outIntList(StringInfo str, List *list)
+_outList(StringInfo str, List *node)
 {
-	List	   *l;
+	ListCell *lc;
 
 	appendStringInfoChar(str, '(');
-	appendStringInfoChar(str, 'i');
-	foreach(l, list)
-		appendStringInfo(str, " %d", lfirsti(l));
-	appendStringInfoChar(str, ')');
-}
 
-/*
- * _outOidList -
- *	   converts a List of OIDs
- */
-static void
-_outOidList(StringInfo str, List *list)
-{
-	List	   *l;
+	if (IsA(node, IntList))
+		appendStringInfoChar(str, 'i');
+	else if (IsA(node, OidList))
+		appendStringInfoChar(str, 'o');
 
-	appendStringInfoChar(str, '(');
-	appendStringInfoChar(str, 'o');
-	foreach(l, list)
-		appendStringInfo(str, " %u", lfirsto(l));
+	foreach (lc, node)
+	{
+		/*
+		 * For the sake of backward compatibility, we emit a slightly
+		 * different whitespace format for lists of nodes vs. other
+		 * types of lists. XXX: is this necessary?
+		 */
+		if (IsA(node, List))
+		{
+			_outNode(str, lfirst(lc));
+			if (lnext(lc))
+				appendStringInfoChar(str, ' ');
+		}
+		else if (IsA(node, IntList))
+			appendStringInfo(str, " %d", lfirst_int(lc));
+		else if (IsA(node, OidList))
+			appendStringInfo(str, " %u", lfirst_oid(lc));
+		else
+ 			elog(ERROR, "unrecognized list node type: %d",
+ 				 (int) node->type);
+	}
+
 	appendStringInfoChar(str, ')');
 }
 
@@ -336,39 +333,12 @@ _outIndexScan(StringInfo str, IndexScan *node)
 
 	_outScanInfo(str, (Scan *) node);
 
-	WRITE_OIDLIST_FIELD(indxid);
+	WRITE_NODE_FIELD(indxid);
 	WRITE_NODE_FIELD(indxqual);
 	WRITE_NODE_FIELD(indxqualorig);
-	/* this can become WRITE_NODE_FIELD when intlists are normal objects: */
-	{
-		List    *tmp;
-
-		appendStringInfo(str, " :indxstrategy ");
-		foreach(tmp, node->indxstrategy)
-		{
-			_outIntList(str, lfirst(tmp));
-		}
-	}
-	/* this can become WRITE_NODE_FIELD when OID lists are normal objects: */
-	{
-		List    *tmp;
-
-		appendStringInfo(str, " :indxsubtype ");
-		foreach(tmp, node->indxsubtype)
-		{
-			_outOidList(str, lfirst(tmp));
-		}
-	}
-	/* this can become WRITE_NODE_FIELD when intlists are normal objects: */
-	{
-		List    *tmp;
-
-		appendStringInfo(str, " :indxlossy ");
-		foreach(tmp, node->indxlossy)
-		{
-			_outIntList(str, lfirst(tmp));
-		}
-	}
+	WRITE_NODE_FIELD(indxstrategy);
+	WRITE_NODE_FIELD(indxsubtype);
+	WRITE_NODE_FIELD(indxlossy);
 	WRITE_ENUM_FIELD(indxorderdir, ScanDirection);
 }
 
@@ -743,7 +713,7 @@ _outSubLink(StringInfo str, SubLink *node)
 	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(lefthand);
 	WRITE_NODE_FIELD(operName);
-	WRITE_OIDLIST_FIELD(operOids);
+	WRITE_NODE_FIELD(operOids);
 	WRITE_NODE_FIELD(subselect);
 }
 
@@ -755,14 +725,14 @@ _outSubPlan(StringInfo str, SubPlan *node)
 	WRITE_ENUM_FIELD(subLinkType, SubLinkType);
 	WRITE_BOOL_FIELD(useOr);
 	WRITE_NODE_FIELD(exprs);
-	WRITE_INTLIST_FIELD(paramIds);
+	WRITE_NODE_FIELD(paramIds);
 	WRITE_NODE_FIELD(plan);
 	WRITE_INT_FIELD(plan_id);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_BOOL_FIELD(useHashTable);
 	WRITE_BOOL_FIELD(unknownEqFalse);
-	WRITE_INTLIST_FIELD(setParam);
-	WRITE_INTLIST_FIELD(parParam);
+	WRITE_NODE_FIELD(setParam);
+	WRITE_NODE_FIELD(parParam);
 	WRITE_NODE_FIELD(args);
 }
 
@@ -1302,7 +1272,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_BOOL_FIELD(hasSubLinks);
 	WRITE_NODE_FIELD(rtable);
 	WRITE_NODE_FIELD(jointree);
-	WRITE_INTLIST_FIELD(rowMarks);
+	WRITE_NODE_FIELD(rowMarks);
 	WRITE_NODE_FIELD(targetList);
 	WRITE_NODE_FIELD(groupClause);
 	WRITE_NODE_FIELD(havingQual);
@@ -1311,7 +1281,7 @@ _outQuery(StringInfo str, Query *node)
 	WRITE_NODE_FIELD(limitOffset);
 	WRITE_NODE_FIELD(limitCount);
 	WRITE_NODE_FIELD(setOperations);
-	WRITE_INTLIST_FIELD(resultRelations);
+	WRITE_NODE_FIELD(resultRelations);
 
 	/* planner-internal fields are not written out */
 }
@@ -1343,7 +1313,7 @@ _outSetOperationStmt(StringInfo str, SetOperationStmt *node)
 	WRITE_BOOL_FIELD(all);
 	WRITE_NODE_FIELD(larg);
 	WRITE_NODE_FIELD(rarg);
-	WRITE_OIDLIST_FIELD(colTypes);
+	WRITE_NODE_FIELD(colTypes);
 }
 
 static void
@@ -1444,7 +1414,6 @@ _outValue(StringInfo str, Value *value)
 			appendStringInfo(str, "%ld", value->val.ival);
 			break;
 		case T_Float:
-
 			/*
 			 * We assume the value is a valid numeric literal and so does
 			 * not need quoting.
@@ -1572,24 +1541,9 @@ static void
 _outNode(StringInfo str, void *obj)
 {
 	if (obj == NULL)
-	{
 		appendStringInfo(str, "<>");
-		return;
-	}
-
-	if (IsA(obj, List))
-	{
-		List	   *l;
-
-		appendStringInfoChar(str, '(');
-		foreach(l, (List *) obj)
-		{
-			_outNode(str, lfirst(l));
-			if (lnext(l))
-				appendStringInfoChar(str, ' ');
-		}
-		appendStringInfoChar(str, ')');
-	}
+	else if (IsA(obj, List) || IsA(obj, IntList) || IsA(obj, OidList))
+		_outList(str, obj);
 	else if (IsA(obj, Integer) ||
 			 IsA(obj, Float) ||
 			 IsA(obj, String) ||

@@ -18,10 +18,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.220 2004/05/10 22:44:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.221 2004/05/26 04:41:19 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#define DISABLE_LIST_COMPAT
 
 #include "postgres.h"
 
@@ -49,20 +51,6 @@
 #define COMPARE_NODE_FIELD(fldname) \
 	do { \
 		if (!equal(a->fldname, b->fldname)) \
-			return false; \
-	} while (0)
-
-/* Compare a field that is a pointer to a list of integers */
-#define COMPARE_INTLIST_FIELD(fldname) \
-	do { \
-		if (!equali(a->fldname, b->fldname)) \
-			return false; \
-	} while (0)
-
-/* Compare a field that is a pointer to a list of Oids */
-#define COMPARE_OIDLIST_FIELD(fldname) \
-	do { \
-		if (!equalo(a->fldname, b->fldname)) \
 			return false; \
 	} while (0)
 
@@ -328,7 +316,7 @@ _equalSubLink(SubLink *a, SubLink *b)
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_NODE_FIELD(lefthand);
 	COMPARE_NODE_FIELD(operName);
-	COMPARE_OIDLIST_FIELD(operOids);
+	COMPARE_NODE_FIELD(operOids);
 	COMPARE_NODE_FIELD(subselect);
 
 	return true;
@@ -340,14 +328,14 @@ _equalSubPlan(SubPlan *a, SubPlan *b)
 	COMPARE_SCALAR_FIELD(subLinkType);
 	COMPARE_SCALAR_FIELD(useOr);
 	COMPARE_NODE_FIELD(exprs);
-	COMPARE_INTLIST_FIELD(paramIds);
+	COMPARE_NODE_FIELD(paramIds);
 	/* should compare plans, but have to settle for comparing plan IDs */
 	COMPARE_SCALAR_FIELD(plan_id);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_SCALAR_FIELD(useHashTable);
 	COMPARE_SCALAR_FIELD(unknownEqFalse);
-	COMPARE_INTLIST_FIELD(setParam);
-	COMPARE_INTLIST_FIELD(parParam);
+	COMPARE_NODE_FIELD(setParam);
+	COMPARE_NODE_FIELD(parParam);
 	COMPARE_NODE_FIELD(args);
 
 	return true;
@@ -636,7 +624,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_SCALAR_FIELD(hasSubLinks);
 	COMPARE_NODE_FIELD(rtable);
 	COMPARE_NODE_FIELD(jointree);
-	COMPARE_INTLIST_FIELD(rowMarks);
+	COMPARE_NODE_FIELD(rowMarks);
 	COMPARE_NODE_FIELD(targetList);
 	COMPARE_NODE_FIELD(groupClause);
 	COMPARE_NODE_FIELD(havingQual);
@@ -645,7 +633,7 @@ _equalQuery(Query *a, Query *b)
 	COMPARE_NODE_FIELD(limitOffset);
 	COMPARE_NODE_FIELD(limitCount);
 	COMPARE_NODE_FIELD(setOperations);
-	COMPARE_INTLIST_FIELD(resultRelations);
+	COMPARE_NODE_FIELD(resultRelations);
 	COMPARE_NODE_FIELD(in_info_list);
 	COMPARE_SCALAR_FIELD(hasJoinRTEs);
 
@@ -720,7 +708,7 @@ _equalSetOperationStmt(SetOperationStmt *a, SetOperationStmt *b)
 	COMPARE_SCALAR_FIELD(all);
 	COMPARE_NODE_FIELD(larg);
 	COMPARE_NODE_FIELD(rarg);
-	COMPARE_OIDLIST_FIELD(colTypes);
+	COMPARE_NODE_FIELD(colTypes);
 
 	return true;
 }
@@ -764,7 +752,7 @@ _equalGrantStmt(GrantStmt *a, GrantStmt *b)
 	COMPARE_SCALAR_FIELD(is_grant);
 	COMPARE_SCALAR_FIELD(objtype);
 	COMPARE_NODE_FIELD(objects);
-	COMPARE_INTLIST_FIELD(privileges);
+	COMPARE_NODE_FIELD(privileges);
 	COMPARE_NODE_FIELD(grantees);
 	COMPARE_SCALAR_FIELD(grant_option);
 	COMPARE_SCALAR_FIELD(behavior);
@@ -1389,7 +1377,7 @@ _equalPrepareStmt(PrepareStmt *a, PrepareStmt *b)
 {
 	COMPARE_STRING_FIELD(name);
 	COMPARE_NODE_FIELD(argtypes);
-	COMPARE_OIDLIST_FIELD(argtype_oids);
+	COMPARE_NODE_FIELD(argtype_oids);
 	COMPARE_NODE_FIELD(query);
 
 	return true;
@@ -1649,6 +1637,65 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
  */
 
 static bool
+_equalList(List *a, List *b)
+{
+	ListCell *item_a;
+	ListCell *item_b;
+
+	/*
+	 * Try to reject by simple scalar checks before grovelling through
+	 * all the list elements...
+	 */
+	COMPARE_SCALAR_FIELD(type);
+	COMPARE_SCALAR_FIELD(length);
+
+	/*
+	 * We place the switch outside the loop for the sake of
+	 * efficiency; this may not be worth doing...
+	 */
+	switch (a->type)
+	{
+		case T_List:
+			forboth(item_a, a, item_b, b)
+			{
+				if (!equal(lfirst(item_a), lfirst(item_b)))
+					return false;
+			}
+			break;
+		case T_IntList:
+			forboth(item_a, a, item_b, b)
+			{
+				if (lfirst_int(item_a) != lfirst_int(item_b))
+					return false;
+			}
+			break;
+		case T_OidList:
+			forboth(item_a, a, item_b, b)
+			{
+				if (lfirst_oid(item_a) != lfirst_oid(item_b))
+					return false;
+			}
+			break;
+		default:
+			elog(ERROR, "unrecognized list node type: %d",
+				 (int) a->type);
+			return false;		/* keep compiler quiet */
+	}
+
+	/*
+	 * If we got here, we should have run out of elements of both lists
+	 */
+	Assert(item_a == NULL);
+	Assert(item_b == NULL);
+
+	return true;
+}
+
+/*
+ * Stuff from value.h
+ */
+
+static bool
 _equalValue(Value *a, Value *b)
 {
 	COMPARE_SCALAR_FIELD(type);
@@ -1818,30 +1865,10 @@ equal(void *a, void *b)
 		case T_InClauseInfo:
 			retval = _equalInClauseInfo(a, b);
 			break;
-
-			/*
-			 * LIST NODES
-			 */
 		case T_List:
-			{
-				List	   *la = (List *) a;
-				List	   *lb = (List *) b;
-				List	   *l;
-
-				/*
-				 * Try to reject by length check before we grovel through
-				 * all the elements...
-				 */
-				if (length(la) != length(lb))
-					return false;
-				foreach(l, la)
-				{
-					if (!equal(lfirst(l), lfirst(lb)))
-						return false;
-					lb = lnext(lb);
-				}
-				retval = true;
-			}
+		case T_IntList:
+		case T_OidList:
+			retval = _equalList(a, b);
 			break;
 
 		case T_Integer:

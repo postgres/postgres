@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.169 2004/05/11 02:21:37 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.170 2004/05/26 04:41:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -174,6 +174,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	Plan	   *plan;
 	List	   *newHaving;
 	List	   *lst;
+	ListCell   *l;
 
 	/* Set up for a new level of subquery */
 	PlannerQueryLevel++;
@@ -206,9 +207,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 */
 	parse->hasJoinRTEs = false;
 	hasOuterJoins = false;
-	foreach(lst, parse->rtable)
+	foreach(l, parse->rtable)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 		if (rte->rtekind == RTE_JOIN)
 		{
@@ -244,9 +245,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 							  EXPRKIND_ININFO);
 
 	/* Also need to preprocess expressions for function RTEs */
-	foreach(lst, parse->rtable)
+	foreach(l, parse->rtable)
 	{
-		RangeTblEntry *rte = (RangeTblEntry *) lfirst(lst);
+		RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 		if (rte->rtekind == RTE_FUNCTION)
 			rte->funcexpr = preprocess_expression(parse, rte->funcexpr,
@@ -271,9 +272,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 	 * declared as Node *.
 	 */
 	newHaving = NIL;
-	foreach(lst, (List *) parse->havingQual)
+	foreach(l, (List *) parse->havingQual)
 	{
-		Node	   *havingclause = (Node *) lfirst(lst);
+		Node	   *havingclause = (Node *) lfirst(l);
 
 		if (contain_agg_clause(havingclause))
 			newHaving = lappend(newHaving, havingclause);
@@ -337,9 +338,9 @@ subquery_planner(Query *parse, double tuple_fraction)
 		 */
 		plan->initPlan = PlannerInitPlan;
 
-		foreach(lst, plan->initPlan)
+		foreach(l, plan->initPlan)
 		{
-			SubPlan    *initplan = (SubPlan *) lfirst(lst);
+			SubPlan    *initplan = (SubPlan *) lfirst(l);
 
 			plan->extParam = bms_add_members(plan->extParam,
 											 initplan->plan->extParam);
@@ -445,7 +446,7 @@ preprocess_qual_conditions(Query *parse, Node *jtnode)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 			preprocess_qual_conditions(parse, lfirst(l));
@@ -495,7 +496,7 @@ inheritance_planner(Query *parse, List *inheritlist)
 	int			mainrtlength = length(parse->rtable);
 	List	   *subplans = NIL;
 	List	   *tlist = NIL;
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, inheritlist)
 	{
@@ -524,10 +525,9 @@ inheritance_planner(Query *parse, List *inheritlist)
 		subrtlength = length(subquery->rtable);
 		if (subrtlength > mainrtlength)
 		{
-			List	   *subrt = subquery->rtable;
+			List	   *subrt;
 
-			while (mainrtlength-- > 0)	/* wish we had nthcdr() */
-				subrt = lnext(subrt);
+			subrt = list_copy_tail(subquery->rtable, mainrtlength);
 			parse->rtable = nconc(parse->rtable, subrt);
 			mainrtlength = subrtlength;
 		}
@@ -650,7 +650,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 		 */
 		if (parse->rowMarks)
 		{
-			List	   *l;
+			ListCell   *l;
 
 			/*
 			 * We've got trouble if the FOR UPDATE appears inside
@@ -1328,7 +1328,7 @@ grouping_planner(Query *parse, double tuple_fraction)
 static bool
 hash_safe_grouping(Query *parse)
 {
-	List	   *gl;
+	ListCell   *gl;
 
 	foreach(gl, parse->groupClause)
 	{
@@ -1435,17 +1435,17 @@ make_subplanTargetList(Query *parse,
 	{
 		int			keyno = 0;
 		AttrNumber *grpColIdx;
-		List	   *gl;
+		ListCell   *gl;
 
 		grpColIdx = (AttrNumber *) palloc(sizeof(AttrNumber) * numCols);
 		*groupColIdx = grpColIdx;
 
 		foreach(gl, parse->groupClause)
 		{
-			GroupClause *grpcl = (GroupClause *) lfirst(gl);
-			Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
-			TargetEntry *te = NULL;
-			List	   *sl;
+			GroupClause		*grpcl = (GroupClause *) lfirst(gl);
+			Node			*groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+			TargetEntry		*te = NULL;
+			ListCell		*sl;
 
 			/* Find or make a matching sub_tlist entry */
 			foreach(sl, sub_tlist)
@@ -1489,7 +1489,7 @@ locate_grouping_columns(Query *parse,
 						AttrNumber *groupColIdx)
 {
 	int			keyno = 0;
-	List	   *gl;
+	ListCell   *gl;
 
 	/*
 	 * No work unless grouping.
@@ -1503,10 +1503,10 @@ locate_grouping_columns(Query *parse,
 
 	foreach(gl, parse->groupClause)
 	{
-		GroupClause *grpcl = (GroupClause *) lfirst(gl);
-		Node	   *groupexpr = get_sortgroupclause_expr(grpcl, tlist);
-		TargetEntry *te = NULL;
-		List	   *sl;
+		GroupClause		*grpcl = (GroupClause *) lfirst(gl);
+		Node			*groupexpr = get_sortgroupclause_expr(grpcl, tlist);
+		TargetEntry		*te = NULL;
+		ListCell		*sl;
 
 		foreach(sl, sub_tlist)
 		{
@@ -1534,7 +1534,8 @@ locate_grouping_columns(Query *parse,
 static List *
 postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
 {
-	List	   *l;
+	ListCell   *l;
+	ListCell   *orig_tlist_item = list_head(orig_tlist);
 
 	foreach(l, new_tlist)
 	{
@@ -1545,16 +1546,16 @@ postprocess_setop_tlist(List *new_tlist, List *orig_tlist)
 		if (new_tle->resdom->resjunk)
 			continue;
 
-		Assert(orig_tlist != NIL);
-		orig_tle = (TargetEntry *) lfirst(orig_tlist);
-		orig_tlist = lnext(orig_tlist);
+		Assert(orig_tlist_item != NULL);
+		orig_tle = (TargetEntry *) lfirst(orig_tlist_item);
+		orig_tlist_item = lnext(orig_tlist_item);
 		if (orig_tle->resdom->resjunk)	/* should not happen */
 			elog(ERROR, "resjunk output columns are not implemented");
 		Assert(new_tle->resdom->resno == orig_tle->resdom->resno);
 		Assert(new_tle->resdom->restype == orig_tle->resdom->restype);
 		new_tle->resdom->ressortgroupref = orig_tle->resdom->ressortgroupref;
 	}
-	if (orig_tlist != NIL)
+	if (orig_tlist_item != NULL)
 		elog(ERROR, "resjunk output columns are not implemented");
 	return new_tlist;
 }

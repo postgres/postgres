@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.66 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/preptlist.c,v 1.67 2004/05/26 04:41:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -122,9 +122,12 @@ expand_targetlist(List *tlist, int command_type,
 				  Index result_relation, List *range_table)
 {
 	List	   *new_tlist = NIL;
+	ListCell   *tlist_item;
 	Relation	rel;
 	int			attrno,
 				numattrs;
+
+	tlist_item = list_head(tlist);
 
 	/*
 	 * The rewriter should have already ensured that the TLEs are in
@@ -143,15 +146,15 @@ expand_targetlist(List *tlist, int command_type,
 		Form_pg_attribute att_tup = rel->rd_att->attrs[attrno - 1];
 		TargetEntry *new_tle = NULL;
 
-		if (tlist != NIL)
+		if (tlist_item != NULL)
 		{
-			TargetEntry *old_tle = (TargetEntry *) lfirst(tlist);
+			TargetEntry *old_tle = (TargetEntry *) lfirst(tlist_item);
 			Resdom	   *resdom = old_tle->resdom;
 
 			if (!resdom->resjunk && resdom->resno == attrno)
 			{
 				new_tle = old_tle;
-				tlist = lnext(tlist);
+				tlist_item = lnext(tlist_item);
 			}
 		}
 
@@ -259,9 +262,9 @@ expand_targetlist(List *tlist, int command_type,
 	 * an UPDATE in a table with dropped columns, or an inheritance child
 	 * table with extra columns.)
 	 */
-	while (tlist)
+	while (tlist_item)
 	{
-		TargetEntry *old_tle = (TargetEntry *) lfirst(tlist);
+		TargetEntry *old_tle = (TargetEntry *) lfirst(tlist_item);
 		Resdom	   *resdom = old_tle->resdom;
 
 		if (!resdom->resjunk)
@@ -275,7 +278,7 @@ expand_targetlist(List *tlist, int command_type,
 		}
 		new_tlist = lappend(new_tlist, old_tle);
 		attrno++;
-		tlist = lnext(tlist);
+		tlist_item = lnext(tlist_item);
 	}
 
 	heap_close(rel, AccessShareLock);

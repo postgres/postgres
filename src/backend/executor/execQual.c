@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.159 2004/05/10 22:44:43 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execQual.c,v 1.160 2004/05/26 04:41:15 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,7 +217,7 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 	ArrayType  *array_source;
 	ArrayType  *resultArray;
 	bool		isAssignment = (arrayRef->refassgnexpr != NULL);
-	List	   *elt;
+	ListCell   *l;
 	int			i = 0,
 				j = 0;
 	IntArray	upper,
@@ -258,9 +258,9 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 		array_source = NULL;
 	}
 
-	foreach(elt, astate->refupperindexpr)
+	foreach(l, astate->refupperindexpr)
 	{
-		ExprState  *eltstate = (ExprState *) lfirst(elt);
+		ExprState  *eltstate = (ExprState *) lfirst(l);
 
 		if (i >= MAXDIM)
 			ereport(ERROR,
@@ -284,9 +284,9 @@ ExecEvalArrayRef(ArrayRefExprState *astate,
 
 	if (astate->reflowerindexpr != NIL)
 	{
-		foreach(elt, astate->reflowerindexpr)
+		foreach(l, astate->reflowerindexpr)
 		{
-			ExprState  *eltstate = (ExprState *) lfirst(elt);
+			ExprState  *eltstate = (ExprState *) lfirst(l);
 
 			if (j >= MAXDIM)
 				ereport(ERROR,
@@ -798,7 +798,7 @@ ExecEvalFuncArgs(FunctionCallInfo fcinfo,
 {
 	ExprDoneCond argIsDone;
 	int			i;
-	List	   *arg;
+	ListCell   *arg;
 
 	argIsDone = ExprSingleResult;		/* default assumption */
 
@@ -1070,7 +1070,7 @@ ExecMakeFunctionResultNoSets(FuncExprState *fcache,
 							 bool *isNull,
 							 ExprDoneCond *isDone)
 {
-	List	   *arg;
+	ListCell   *arg;
 	Datum		result;
 	FunctionCallInfoData fcinfo;
 	int			i;
@@ -1703,7 +1703,7 @@ static Datum
 ExecEvalNot(BoolExprState *notclause, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
-	ExprState  *clause = lfirst(notclause->args);
+	ExprState  *clause = linitial(notclause->args);
 	Datum		expr_value;
 
 	if (isDone)
@@ -1734,7 +1734,7 @@ ExecEvalOr(BoolExprState *orExpr, ExprContext *econtext,
 		   bool *isNull, ExprDoneCond *isDone)
 {
 	List	   *clauses = orExpr->args;
-	List	   *clause;
+	ListCell   *clause;
 	bool		AnyNull;
 
 	if (isDone)
@@ -1786,7 +1786,7 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 			bool *isNull, ExprDoneCond *isDone)
 {
 	List	   *clauses = andExpr->args;
-	List	   *clause;
+	ListCell   *clause;
 	bool		AnyNull;
 
 	if (isDone)
@@ -1802,6 +1802,7 @@ ExecEvalAnd(BoolExprState *andExpr, ExprContext *econtext,
 	 * when you interpret NULL as "don't know", using the same sort of
 	 * reasoning as for OR, above.
 	 */
+
 	foreach(clause, clauses)
 	{
 		ExprState  *clausestate = (ExprState *) lfirst(clause);
@@ -1838,7 +1839,7 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 			 bool *isNull, ExprDoneCond *isDone)
 {
 	List	   *clauses = caseExpr->args;
-	List	   *clause;
+	ListCell   *clause;
 	Datum		save_datum;
 	bool		save_isNull;
 
@@ -1938,7 +1939,7 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 {
 	ArrayExpr  *arrayExpr = (ArrayExpr *) astate->xprstate.expr;
 	ArrayType  *result;
-	List	   *element;
+	ListCell   *element;
 	Oid			element_type = arrayExpr->element_typeid;
 	int			ndims = 0;
 	int			dims[MAXDIM];
@@ -2118,7 +2119,7 @@ ExecEvalRow(RowExprState *rstate,
 	Datum	   *values;
 	char	   *nulls;
 	int			nargs;
-	List	   *arg;
+	ListCell   *arg;
 	int			i;
 
 	/* Set default values for result flags: non-null, not a set result */
@@ -2161,7 +2162,7 @@ static Datum
 ExecEvalCoalesce(CoalesceExprState *coalesceExpr, ExprContext *econtext,
 				 bool *isNull, ExprDoneCond *isDone)
 {
-	List	   *arg;
+	ListCell   *arg;
 
 	if (isDone)
 		*isDone = ExprSingleResult;
@@ -2390,7 +2391,7 @@ ExecEvalCoerceToDomain(CoerceToDomainState *cstate, ExprContext *econtext,
 {
 	CoerceToDomain *ctest = (CoerceToDomain *) cstate->xprstate.expr;
 	Datum		result;
-	List	   *l;
+	ListCell   *l;
 
 	result = ExecEvalExpr(cstate->arg, econtext, isNull, isDone);
 
@@ -2826,14 +2827,14 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				CaseExprState *cstate = makeNode(CaseExprState);
 				FastList	outlist;
-				List	   *inlist;
+				ListCell   *l;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCase;
 				cstate->arg = ExecInitExpr(caseexpr->arg, parent);
 				FastListInit(&outlist);
-				foreach(inlist, caseexpr->args)
+				foreach(l, caseexpr->args)
 				{
-					CaseWhen   *when = (CaseWhen *) lfirst(inlist);
+					CaseWhen   *when = (CaseWhen *) lfirst(l);
 					CaseWhenState *wstate = makeNode(CaseWhenState);
 
 					Assert(IsA(when, CaseWhen));
@@ -2853,13 +2854,13 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
 				ArrayExprState *astate = makeNode(ArrayExprState);
 				FastList	outlist;
-				List	   *inlist;
+				ListCell   *l;
 
 				astate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalArray;
 				FastListInit(&outlist);
-				foreach(inlist, arrayexpr->elements)
+				foreach(l, arrayexpr->elements)
 				{
-					Expr	   *e = (Expr *) lfirst(inlist);
+					Expr	   *e = (Expr *) lfirst(l);
 					ExprState  *estate;
 
 					estate = ExecInitExpr(e, parent);
@@ -2879,13 +2880,13 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				RowExpr	   *rowexpr = (RowExpr *) node;
 				RowExprState *rstate = makeNode(RowExprState);
 				List	   *outlist;
-				List	   *inlist;
+				ListCell   *l;
 
 				rstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalRow;
 				outlist = NIL;
-				foreach(inlist, rowexpr->args)
+				foreach(l, rowexpr->args)
 				{
-					Expr	   *e = (Expr *) lfirst(inlist);
+					Expr	   *e = (Expr *) lfirst(l);
 					ExprState  *estate;
 
 					estate = ExecInitExpr(e, parent);
@@ -2912,13 +2913,13 @@ ExecInitExpr(Expr *node, PlanState *parent)
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 				CoalesceExprState *cstate = makeNode(CoalesceExprState);
 				FastList	outlist;
-				List	   *inlist;
+				ListCell   *l;
 
 				cstate->xprstate.evalfunc = (ExprStateEvalFunc) ExecEvalCoalesce;
 				FastListInit(&outlist);
-				foreach(inlist, coalesceexpr->args)
+				foreach(l, coalesceexpr->args)
 				{
-					Expr	   *e = (Expr *) lfirst(inlist);
+					Expr	   *e = (Expr *) lfirst(l);
 					ExprState  *estate;
 
 					estate = ExecInitExpr(e, parent);
@@ -2984,13 +2985,13 @@ ExecInitExpr(Expr *node, PlanState *parent)
 		case T_List:
 			{
 				FastList	outlist;
-				List	   *inlist;
+				ListCell   *l;
 
 				FastListInit(&outlist);
-				foreach(inlist, (List *) node)
+				foreach(l, (List *) node)
 				{
 					FastAppend(&outlist,
-							   ExecInitExpr((Expr *) lfirst(inlist),
+							   ExecInitExpr((Expr *) lfirst(l),
 											parent));
 				}
 				/* Don't fall through to the "common" code below */
@@ -3101,7 +3102,7 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 {
 	bool		result;
 	MemoryContext oldContext;
-	List	   *qlist;
+	ListCell   *l;
 
 	/*
 	 * debugging stuff
@@ -3131,9 +3132,9 @@ ExecQual(List *qual, ExprContext *econtext, bool resultForNull)
 	 */
 	result = true;
 
-	foreach(qlist, qual)
+	foreach(l, qual)
 	{
-		ExprState  *clause = (ExprState *) lfirst(qlist);
+		ExprState  *clause = (ExprState *) lfirst(l);
 		Datum		expr_value;
 		bool		isNull;
 
@@ -3179,7 +3180,7 @@ int
 ExecCleanTargetListLength(List *targetlist)
 {
 	int			len = 0;
-	List	   *tl;
+	ListCell   *tl;
 
 	foreach(tl, targetlist)
 	{
@@ -3219,7 +3220,7 @@ ExecTargetList(List *targetlist,
 			   ExprDoneCond *isDone)
 {
 	MemoryContext oldContext;
-	List	   *tl;
+	ListCell   *tl;
 	bool		isNull;
 	bool		haveDoneSets;
 

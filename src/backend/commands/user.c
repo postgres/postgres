@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.140 2004/05/06 16:59:16 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.141 2004/05/26 04:41:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,8 +491,8 @@ CreateUser(CreateUserStmt *stmt)
 				sysid_exists = false,
 				havesysid = false;
 	int			max_id;
-	List	   *item,
-			   *option;
+	ListCell   *item;
+	ListCell   *option;
 	char	   *password = NULL;	/* PostgreSQL user password */
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
@@ -715,7 +715,7 @@ CreateUser(CreateUserStmt *stmt)
 		ags.name = strVal(lfirst(item));		/* the group name to add
 												 * this in */
 		ags.action = +1;
-		ags.listUsers = makeList1(makeInteger(sysid));
+		ags.listUsers = list_make1(makeInteger(sysid));
 		AlterGroup(&ags, "CREATE USER");
 	}
 
@@ -746,7 +746,7 @@ AlterUser(AlterUserStmt *stmt)
 	TupleDesc	pg_shadow_dsc;
 	HeapTuple	tuple,
 				new_tuple;
-	List	   *option;
+	ListCell   *option;
 	char	   *password = NULL;	/* PostgreSQL user password */
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
@@ -1017,7 +1017,7 @@ DropUser(DropUserStmt *stmt)
 {
 	Relation	pg_shadow_rel;
 	TupleDesc	pg_shadow_dsc;
-	List	   *item;
+	ListCell   *item;
 
 	if (!superuser())
 		ereport(ERROR,
@@ -1122,7 +1122,7 @@ DropUser(DropUserStmt *stmt)
 			/* the group name from which to try to drop the user: */
 			ags.name = pstrdup(NameStr(((Form_pg_group) GETSTRUCT(tmp_tuple))->groname));
 			ags.action = -1;
-			ags.listUsers = makeList1(makeInteger(usesysid));
+			ags.listUsers = list_make1(makeInteger(usesysid));
 			AlterGroup(&ags, "DROP USER");
 		}
 		heap_endscan(scan);
@@ -1283,9 +1283,9 @@ CreateGroup(CreateGroupStmt *stmt)
 	int			max_id;
 	Datum		new_record[Natts_pg_group];
 	char		new_record_nulls[Natts_pg_group];
-	List	   *item,
-			   *option,
-			   *newlist = NIL;
+	ListCell   *item;
+	ListCell   *option;
+	List	   *newlist = NIL;
 	IdList	   *grolist;
 	int			sysid = 0;
 	List	   *userElts = NIL;
@@ -1397,8 +1397,8 @@ CreateGroup(CreateGroupStmt *stmt)
 		const char *groupuser = strVal(lfirst(item));
 		int32		userid = get_usesysid(groupuser);
 
-		if (!intMember(userid, newlist))
-			newlist = lappendi(newlist, userid);
+		if (!list_member_int(newlist, userid))
+			newlist = lappend_int(newlist, userid);
 	}
 
 	/* build an array to insert */
@@ -1454,8 +1454,8 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 	IdList	   *oldarray;
 	Datum		datum;
 	bool		null;
-	List	   *newlist,
-			   *item;
+	List	   *newlist;
+	ListCell   *item;
 
 	/*
 	 * Make sure the user can do this.
@@ -1525,8 +1525,8 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 				sysid = 0;		/* keep compiler quiet */
 			}
 
-			if (!intMember(sysid, newlist))
-				newlist = lappendi(newlist, sysid);
+			if (!list_member_int(newlist, sysid))
+				newlist = lappend_int(newlist, sysid);
 		}
 
 		/* Do the update */
@@ -1565,8 +1565,8 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 					/* for dropuser we already know the uid */
 					sysid = intVal(lfirst(item));
 				}
-				if (intMember(sysid, newlist))
-					newlist = lremovei(sysid, newlist);
+				if (list_member_int(newlist, sysid))
+					newlist = list_delete_int(newlist, sysid);
 				else if (!is_dropuser)
 					ereport(WARNING,
 							(errcode(ERRCODE_WARNING),
@@ -1636,9 +1636,9 @@ UpdateGroupMembership(Relation group_rel, HeapTuple group_tuple,
 static IdList *
 IdListToArray(List *members)
 {
-	int			nmembers = length(members);
+	int			nmembers = list_length(members);
 	IdList	   *newarray;
-	List	   *item;
+	ListCell   *item;
 	int			i;
 
 	newarray = palloc(ARR_OVERHEAD(1) + nmembers * sizeof(int32));
@@ -1650,7 +1650,7 @@ IdListToArray(List *members)
 	ARR_DIMS(newarray)[0] = nmembers;	/* axis is this long */
 	i = 0;
 	foreach(item, members)
-		((int *) ARR_DATA_PTR(newarray))[i++] = lfirsti(item);
+		((int *) ARR_DATA_PTR(newarray))[i++] = lfirst_int(item);
 
 	return newarray;
 }
@@ -1679,8 +1679,8 @@ IdArrayToList(IdList *oldarray)
 
 		sysid = ((int32 *) ARR_DATA_PTR(oldarray))[i];
 		/* filter out any duplicates --- probably a waste of time */
-		if (!intMember(sysid, newlist))
-			newlist = lappendi(newlist, sysid);
+		if (!list_member_int(newlist, sysid))
+			newlist = lappend_int(newlist, sysid);
 	}
 
 	return newlist;

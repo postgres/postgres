@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.82 2004/05/10 22:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteManip.c,v 1.83 2004/05/26 04:41:33 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,7 +216,6 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 	if (node && IsA(node, Query))
 	{
 		Query	   *qry = (Query *) node;
-		List	   *l;
 
 		/*
 		 * If we are starting at a Query, and sublevels_up is zero, then
@@ -227,6 +226,8 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
 		 */
 		if (sublevels_up == 0)
 		{
+			ListCell   *l;
+
 			if (qry->resultRelation)
 				qry->resultRelation += offset;
 			foreach(l, qry->rowMarks)
@@ -356,7 +357,6 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 	if (node && IsA(node, Query))
 	{
 		Query	   *qry = (Query *) node;
-		List	   *l;
 
 		/*
 		 * If we are starting at a Query, and sublevels_up is zero, then
@@ -367,6 +367,8 @@ ChangeVarNodes(Node *node, int rt_index, int new_index, int sublevels_up)
 		 */
 		if (sublevels_up == 0)
 		{
+			ListCell   *l;
+
 			if (qry->resultRelation == rt_index)
 				qry->resultRelation = new_index;
 			foreach(l, qry->rowMarks)
@@ -678,7 +680,7 @@ getInsertSelectQuery(Query *parsetree, Query ***subquery_ptr)
 	Assert(parsetree->jointree && IsA(parsetree->jointree, FromExpr));
 	if (length(parsetree->jointree->fromlist) != 1)
 		elog(ERROR, "expected to find SELECT subquery");
-	rtr = (RangeTblRef *) lfirst(parsetree->jointree->fromlist);
+	rtr = (RangeTblRef *) linitial(parsetree->jointree->fromlist);
 	Assert(IsA(rtr, RangeTblRef));
 	selectrte = rt_fetch(rtr->rtindex, parsetree->rtable);
 	selectquery = selectrte->subquery;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.66 2004/05/08 21:21:18 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/print.c,v 1.67 2004/05/26 04:41:19 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -255,7 +255,7 @@ pretty_format_node_dump(const char *dump)
 void
 print_rt(List *rtable)
 {
-	List	   *l;
+	ListCell   *l;
 	int			i = 1;
 
 	printf("resno\trefname  \trelid\tinFromCl\n");
@@ -395,7 +395,7 @@ print_expr(Node *expr, List *rtable)
 	{
 		FuncExpr   *e = (FuncExpr *) expr;
 		char	   *funcname;
-		List	   *l;
+		ListCell   *l;
 
 		funcname = get_func_name(e->funcid);
 		printf("%s(", ((funcname != NULL) ? funcname : "(invalid function)"));
@@ -418,18 +418,18 @@ print_expr(Node *expr, List *rtable)
 void
 print_pathkeys(List *pathkeys, List *rtable)
 {
-	List	   *i,
-			   *k;
+	ListCell   *i;
 
 	printf("(");
 	foreach(i, pathkeys)
 	{
-		List	   *pathkey = lfirst(i);
+		List	   *pathkey = (List *) lfirst(i);
+		ListCell   *k;
 
 		printf("(");
 		foreach(k, pathkey)
 		{
-			PathKeyItem *item = lfirst(k);
+			PathKeyItem *item = (PathKeyItem *) lfirst(k);
 
 			print_expr(item->key, rtable);
 			if (lnext(k))
@@ -449,12 +449,12 @@ print_pathkeys(List *pathkeys, List *rtable)
 void
 print_tl(List *tlist, List *rtable)
 {
-	List	   *tl;
+	ListCell   *tl;
 
 	printf("(\n");
 	foreach(tl, tlist)
 	{
-		TargetEntry *tle = lfirst(tl);
+		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 
 		printf("\t%d %s\t", tle->resdom->resno,
 			   tle->resdom->resname ? tle->resdom->resname : "<null>");
@@ -590,13 +590,13 @@ print_plan_recursive(Plan *p, Query *parsetree, int indentLevel, char *label)
 
 	if (IsA(p, Append))
 	{
-		List	   *lst;
+		ListCell   *l;
 		int			whichplan = 0;
 		Append	   *appendplan = (Append *) p;
 
-		foreach(lst, appendplan->appendplans)
+		foreach(l, appendplan->appendplans)
 		{
-			Plan	   *subnode = (Plan *) lfirst(lst);
+			Plan	   *subnode = (Plan *) lfirst(l);
 
 			/*
 			 * I don't think we need to fiddle with the range table here,

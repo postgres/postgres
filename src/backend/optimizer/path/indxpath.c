@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.158 2004/03/27 00:24:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/indxpath.c,v 1.159 2004/05/26 04:41:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ void
 create_index_paths(Query *root, RelOptInfo *rel)
 {
 	Relids		all_join_outerrelids = NULL;
-	List	   *ilist;
+	ListCell   *ilist;
 
 	foreach(ilist, rel->indexlist)
 	{
@@ -250,12 +250,12 @@ group_clauses_by_indexkey(RelOptInfo *rel, IndexOptInfo *index)
 	{
 		Oid			curClass = classes[0];
 		FastList	clausegroup;
-		List	   *i;
+		ListCell   *l;
 
 		FastListInit(&clausegroup);
-		foreach(i, restrictinfo_list)
+		foreach(l, restrictinfo_list)
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			if (match_clause_to_indexcol(rel,
 										 index,
@@ -312,7 +312,7 @@ group_clauses_by_indexkey_for_join(Query *root,
 		Oid			curClass = classes[0];
 		FastList	clausegroup;
 		int			numsources;
-		List	   *i;
+		ListCell   *l;
 
 		FastListInit(&clausegroup);
 
@@ -324,9 +324,9 @@ group_clauses_by_indexkey_for_join(Query *root,
 		 * of a non-join clause if it appears after a join clause it is
 		 * redundant with.
 		 */
-		foreach(i, rel->baserestrictinfo)
+		foreach(l, rel->baserestrictinfo)
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			/* Can't use pushed-down clauses in outer join */
 			if (isouterjoin && rinfo->is_pushed_down)
@@ -344,11 +344,11 @@ group_clauses_by_indexkey_for_join(Query *root,
 		numsources = (FastListValue(&clausegroup) != NIL) ? 1 : 0;
 
 		/* Look for joinclauses that are usable with given outer_relids */
-		foreach(i, rel->joininfo)
+		foreach(l, rel->joininfo)
 		{
-			JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+			JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
 			bool		jfoundhere = false;
-			List	   *j;
+			ListCell   *j;
 
 			if (!bms_is_subset(joininfo->unjoined_relids, outer_relids))
 				continue;
@@ -448,7 +448,7 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 	{
 		Oid			curClass = classes[0];
 		FastList	clausegroup;
-		List	   *item;
+		ListCell   *item;
 
 		FastListInit(&clausegroup);
 
@@ -511,7 +511,6 @@ group_clauses_by_indexkey_for_or(RelOptInfo *rel,
 
 		indexcol++;
 		classes++;
-
 	} while (!DoneMatchingIndexKeys(classes));
 
 	/* if OR clause was not used then forget it, per comments above */
@@ -738,7 +737,7 @@ void
 check_partial_indexes(Query *root, RelOptInfo *rel)
 {
 	List	   *restrictinfo_list = rel->baserestrictinfo;
-	List	   *ilist;
+	ListCell   *ilist;
 
 	foreach(ilist, rel->indexlist)
 	{
@@ -772,7 +771,7 @@ check_partial_indexes(Query *root, RelOptInfo *rel)
 static bool
 pred_test(List *predicate_list, List *restrictinfo_list)
 {
-	List	   *pred;
+	ListCell   *pred;
 
 	/*
 	 * Note: if Postgres tried to optimize queries by forming equivalence
@@ -815,7 +814,7 @@ pred_test(List *predicate_list, List *restrictinfo_list)
 static bool
 pred_test_restrict_list(Expr *predicate, List *restrictinfo_list)
 {
-	List	   *item;
+	ListCell   *item;
 
 	foreach(item, restrictinfo_list)
 	{
@@ -839,8 +838,8 @@ pred_test_restrict_list(Expr *predicate, List *restrictinfo_list)
 static bool
 pred_test_recurse_clause(Expr *predicate, Node *clause)
 {
-	List	   *items,
-			   *item;
+	List	   *items;
+	ListCell   *item;
 
 	Assert(clause != NULL);
 	if (or_clause(clause))
@@ -883,8 +882,8 @@ pred_test_recurse_clause(Expr *predicate, Node *clause)
 static bool
 pred_test_recurse_pred(Expr *predicate, Node *clause)
 {
-	List	   *items,
-			   *item;
+	List	   *items;
+	ListCell   *item;
 
 	Assert(predicate != NULL);
 	if (or_clause((Node *) predicate))
@@ -1360,13 +1359,13 @@ static Relids
 indexable_outerrelids(RelOptInfo *rel, IndexOptInfo *index)
 {
 	Relids		outer_relids = NULL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, rel->joininfo)
+	foreach(l, rel->joininfo)
 	{
-		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
+		JoinInfo   *joininfo = (JoinInfo *) lfirst(l);
 		bool		match_found = false;
-		List	   *j;
+		ListCell   *j;
 
 		/*
 		 * Examine each joinclause in the JoinInfo node's list to see if
@@ -1433,8 +1432,8 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 {
 	Path	   *cheapest = NULL;
 	bool		isouterjoin;
-	List	   *ilist;
-	List	   *jlist;
+	ListCell   *ilist;
+	ListCell   *jlist;
 	InnerIndexscanInfo *info;
 	MemoryContext oldcontext;
 
@@ -1538,7 +1537,7 @@ best_inner_indexscan(Query *root, RelOptInfo *rel,
 			}
 		}
 
-		if (jlist == NIL)		/* failed to find a match? */
+		if (jlist == NULL)		/* failed to find a match? */
 		{
 			List	   *clausegroups;
 
@@ -1676,7 +1675,7 @@ List *
 flatten_clausegroups_list(List *clausegroups)
 {
 	List	   *allclauses = NIL;
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, clausegroups)
 	{
@@ -1697,7 +1696,7 @@ Expr *
 make_expr_from_indexclauses(List *indexclauses)
 {
 	List	   *orclauses = NIL;
-	List	   *orlist;
+	ListCell   *orlist;
 
 	/* There's no such thing as an indexpath with zero scans */
 	Assert(indexclauses != NIL);
@@ -1715,7 +1714,7 @@ make_expr_from_indexclauses(List *indexclauses)
 	if (length(orclauses) > 1)
 		return make_orclause(orclauses);
 	else
-		return (Expr *) lfirst(orclauses);
+		return (Expr *) linitial(orclauses);
 }
 
 
@@ -1768,23 +1767,23 @@ match_index_to_operand(Node *operand,
 		 * could be avoided, at the cost of complicating all the callers
 		 * of this routine; doesn't seem worth it.)
 		 */
-		List	   *indexprs;
+		ListCell   *indexpr_item;
 		int			i;
 		Node	   *indexkey;
 
-		indexprs = index->indexprs;
+		indexpr_item = list_head(index->indexprs);
 		for (i = 0; i < indexcol; i++)
 		{
 			if (index->indexkeys[i] == 0)
 			{
-				if (indexprs == NIL)
+				if (indexpr_item == NULL)
 					elog(ERROR, "wrong number of index expressions");
-				indexprs = lnext(indexprs);
+				indexpr_item = lnext(indexpr_item);
 			}
 		}
-		if (indexprs == NIL)
+		if (indexpr_item == NULL)
 			elog(ERROR, "wrong number of index expressions");
-		indexkey = (Node *) lfirst(indexprs);
+		indexkey = (Node *) lfirst(indexpr_item);
 
 		/*
 		 * Does it match the operand?  Again, strip any relabeling.
@@ -2013,32 +2012,32 @@ List *
 expand_indexqual_conditions(IndexOptInfo *index, List *clausegroups)
 {
 	FastList	resultquals;
+	ListCell   *clausegroup_item;
 	Oid		   *classes = index->classlist;
 
 	if (clausegroups == NIL)
 		return NIL;
 
 	FastListInit(&resultquals);
+	clausegroup_item = list_head(clausegroups);
 	do
 	{
 		Oid			curClass = classes[0];
-		List	   *i;
+		ListCell   *l;
 
-		foreach(i, (List *) lfirst(clausegroups))
+		foreach(l, (List *) lfirst(clausegroup_item))
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 
 			FastConc(&resultquals,
 					 expand_indexqual_condition(rinfo, curClass));
 		}
 
-		clausegroups = lnext(clausegroups);
-
+		clausegroup_item = lnext(clausegroup_item);
 		classes++;
+	} while (clausegroup_item != NULL && !DoneMatchingIndexKeys(classes));
 
-	} while (clausegroups != NIL && !DoneMatchingIndexKeys(classes));
-
-	Assert(clausegroups == NIL);	/* else more groups than indexkeys... */
+	Assert(clausegroup_item == NULL);	/* else more groups than indexkeys... */
 
 	return FastListValue(&resultquals);
 }

@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.80 2004/01/07 18:56:23 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/printtup.c,v 1.81 2004/05/26 04:41:03 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -138,7 +138,7 @@ printtup_startup(DestReceiver *self, int operation, TupleDesc typeinfo)
 		List	   *targetlist;
 
 		if (portal->strategy == PORTAL_ONE_SELECT)
-			targetlist = ((Query *) lfirst(portal->parseTrees))->targetList;
+			targetlist = ((Query *) linitial(portal->parseTrees))->targetList;
 		else
 			targetlist = NIL;
 
@@ -176,6 +176,7 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 	int			proto = PG_PROTOCOL_MAJOR(FrontendProtocol);
 	int			i;
 	StringInfoData buf;
+	ListCell   *tlist_item = list_head(targetlist);
 
 	pq_beginmessage(&buf, 'T'); /* tuple descriptor message type */
 	pq_sendint(&buf, natts, 2); /* # of attrs in tuples */
@@ -191,16 +192,16 @@ SendRowDescriptionMessage(TupleDesc typeinfo, List *targetlist, int16 *formats)
 		if (proto >= 3)
 		{
 			/* Do we have a non-resjunk tlist item? */
-			while (targetlist &&
-				   ((TargetEntry *) lfirst(targetlist))->resdom->resjunk)
-				targetlist = lnext(targetlist);
-			if (targetlist)
+			while (tlist_item &&
+				   ((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
+				tlist_item = lnext(tlist_item);
+			if (tlist_item)
 			{
-				Resdom	   *res = ((TargetEntry *) lfirst(targetlist))->resdom;
+				Resdom	   *res = ((TargetEntry *) lfirst(tlist_item))->resdom;
 
 				pq_sendint(&buf, res->resorigtbl, 4);
 				pq_sendint(&buf, res->resorigcol, 2);
-				targetlist = lnext(targetlist);
+				tlist_item = lnext(tlist_item);
 			}
 			else
 			{

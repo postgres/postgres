@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.60 2004/01/07 18:56:26 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeHashjoin.c,v 1.61 2004/05/26 04:41:15 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -311,7 +311,7 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	List	   *lclauses;
 	List	   *rclauses;
 	List	   *hoperators;
-	List	   *hcl;
+	ListCell   *l;
 
 	/*
 	 * create state structure
@@ -419,15 +419,15 @@ ExecInitHashJoin(HashJoin *node, EState *estate)
 	lclauses = NIL;
 	rclauses = NIL;
 	hoperators = NIL;
-	foreach(hcl, hjstate->hashclauses)
+	foreach(l, hjstate->hashclauses)
 	{
-		FuncExprState *fstate = (FuncExprState *) lfirst(hcl);
+		FuncExprState *fstate = (FuncExprState *) lfirst(l);
 		OpExpr	   *hclause;
 
 		Assert(IsA(fstate, FuncExprState));
 		hclause = (OpExpr *) fstate->xprstate.expr;
 		Assert(IsA(hclause, OpExpr));
-		lclauses = lappend(lclauses, lfirst(fstate->args));
+		lclauses = lappend(lclauses, linitial(fstate->args));
 		rclauses = lappend(rclauses, lsecond(fstate->args));
 		hoperators = lappendo(hoperators, hclause->opno);
 	}

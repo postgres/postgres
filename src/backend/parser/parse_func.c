@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.168 2004/04/02 21:30:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_func.c,v 1.169 2004/05/26 04:41:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 {
 	Oid			rettype;
 	Oid			funcid;
-	List	   *i;
+	ListCell   *l;
 	Node	   *first_arg = NULL;
 	int			nargs = length(fargs);
 	int			argn;
@@ -91,7 +91,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 	if (fargs)
 	{
-		first_arg = lfirst(fargs);
+		first_arg = linitial(fargs);
 		Assert(first_arg != NULL);
 	}
 
@@ -108,7 +108,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		if (argtype == RECORDOID || ISCOMPLEX(argtype))
 		{
 			retval = ParseComplexProjection(pstate,
-											strVal(lfirst(funcname)),
+											strVal(linitial(funcname)),
 											first_arg);
 			if (retval)
 				return retval;
@@ -126,9 +126,9 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 	MemSet(actual_arg_types, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
 	argn = 0;
-	foreach(i, fargs)
+	foreach(l, fargs)
 	{
-		Node	   *arg = lfirst(i);
+		Node	   *arg = lfirst(l);
 
 		actual_arg_types[argn++] = exprType(arg);
 	}
@@ -149,8 +149,8 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		 * We can do it as a trivial coercion. coerce_type can handle
 		 * these cases, so why duplicate code...
 		 */
-		return coerce_type(pstate, lfirst(fargs), actual_arg_types[0],
-						   rettype,
+		return coerce_type(pstate, linitial(fargs),
+						   actual_arg_types[0], rettype,
 						   COERCION_EXPLICIT, COERCE_EXPLICIT_CALL);
 	}
 	else if (fdresult == FUNCDETAIL_NORMAL)
@@ -183,7 +183,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 		{
 			Assert(nargs == 1);
 			Assert(length(funcname) == 1);
-			unknown_attribute(pstate, first_arg, strVal(lfirst(funcname)));
+			unknown_attribute(pstate, first_arg, strVal(linitial(funcname)));
 		}
 
 		/*
@@ -240,7 +240,7 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 
 		aggref->aggfnoid = funcid;
 		aggref->aggtype = rettype;
-		aggref->target = lfirst(fargs);
+		aggref->target = linitial(fargs);
 		aggref->aggstar = agg_star;
 		aggref->aggdistinct = agg_distinct;
 
@@ -725,7 +725,7 @@ func_get_detail(List *funcname,
 				!ISCOMPLEX(targetType))
 			{
 				Oid			sourceType = argtypes[0];
-				Node	   *arg1 = lfirst(fargs);
+				Node	   *arg1 = linitial(fargs);
 
 				if ((sourceType == UNKNOWNOID && IsA(arg1, Const)) ||
 					(find_coercion_pathway(targetType, sourceType,
@@ -896,37 +896,51 @@ static int
 find_inheritors(Oid relid, Oid **supervec)
 {
 	Relation	inhrel;
-	HeapScanDesc inhscan;
-	ScanKeyData skey;
-	HeapTuple	inhtup;
-	Oid		   *relidvec;
 	int			nvisited;
 	List	   *visited,
 			   *queue;
-	List	   *elt;
-	bool		newrelid;
+	ListCell   *queue_item;
 
-	nvisited = 0;
-	queue = NIL;
+	/*
+	 * Begin the search at the relation itself, so add relid to the
+	 * queue.
+	 */
+	queue = list_make1_oid(relid);
 	visited = NIL;
 
 	inhrel = heap_openr(InheritsRelationName, AccessShareLock);
 
 	/*
-	 * Use queue to do a breadth-first traversal of the inheritance graph
-	 * from the relid supplied up to the root.	At the top of the loop,
-	 * relid is the OID of the reltype to check next, queue is the list of
-	 * pending relids to check after this one, and visited is the list of
-	 * relids we need to output.
+	 * Use queue to do a breadth-first traversal of the inheritance
+	 * graph from the relid supplied up to the root.  Notice that we
+	 * append to the queue inside the loop --- this is okay because
+	 * the foreach() macro doesn't advance queue_item until the next
+	 * loop iteration begins.
 	 */
-	do
+	foreach(queue_item, queue)
 	{
-		/* find all types this relid inherits from, and add them to queue */
+		Oid				this_relid = lfirst_oid(queue_item);
+		ScanKeyData		skey;
+		HeapScanDesc	inhscan;
+		HeapTuple		inhtup;
+
+		/* If we've seen this relid already, skip it */
+		if (list_member_oid(visited, this_relid))
+			continue;
+
+		/*
+		 * Okay, this is a not-yet-seen relid. Add it to the list of
+		 * already-visited OIDs, then find all the types this relid
+		 * inherits from and add them to the queue. The one exception
+		 * is we don't add the original relation to 'visited'.
+		 */
+		if (queue_item != list_head(queue))
+			visited = lappend_oid(visited, this_relid);
 
 		ScanKeyInit(&skey,
 					Anum_pg_inherits_inhrelid,
 					BTEqualStrategyNumber, F_OIDEQ,
-					ObjectIdGetDatum(relid));
+					ObjectIdGetDatum(this_relid));
 
 		inhscan = heap_beginscan(inhrel, SnapshotNow, 1, &skey);
 
@@ -934,54 +948,34 @@ find_inheritors(Oid relid, Oid **supervec)
 		{
 			Form_pg_inherits inh = (Form_pg_inherits) GETSTRUCT(inhtup);
 
-			queue = lappendo(queue, inh->inhparent);
+			queue = lappend_oid(queue, inh->inhparent);
 		}
 
 		heap_endscan(inhscan);
-
-		/* pull next unvisited relid off the queue */
-
-		newrelid = false;
-		while (queue != NIL)
-		{
-			relid = lfirsto(queue);
-			queue = lnext(queue);
-			if (!oidMember(relid, visited))
-			{
-				newrelid = true;
-				break;
-			}
-		}
-
-		if (newrelid)
-		{
-			visited = lappendo(visited, relid);
-			nvisited++;
-		}
-	} while (newrelid);
+	}
 
 	heap_close(inhrel, AccessShareLock);
 
+	nvisited = list_length(visited);
 	if (nvisited > 0)
 	{
-		relidvec = (Oid *) palloc(nvisited * sizeof(Oid));
+		Oid		   *relidvec;
+		ListCell   *l;
+
+		relidvec = (Oid *) palloc(nvisited * sizeof(*relidvec));
 		*supervec = relidvec;
 
-		foreach(elt, visited)
+		foreach(l, visited)
 		{
 			/* return the type id, rather than the relation id */
-			*relidvec++ = get_rel_type_id(lfirsto(elt));
+			*relidvec++ = get_rel_type_id(lfirst_oid(l));
 		}
 	}
 	else
 		*supervec = NULL;
 
 	freeList(visited);
-
-	/*
-	 * there doesn't seem to be any equally easy way to release the queue
-	 * list cells, but since they're palloc'd space it's not critical.
-	 */
+	freeList(queue);
 
 	return nvisited;
 }
@@ -1117,7 +1111,7 @@ make_fn_arguments(ParseState *pstate,
 				  Oid *actual_arg_types,
 				  Oid *declared_arg_types)
 {
-	List	   *current_fargs;
+	ListCell   *current_fargs;
 	int			i = 0;
 
 	foreach(current_fargs, fargs)
@@ -1403,6 +1397,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 	Oid			argoids[FUNC_MAX_ARGS];
 	int			argcount;
 	int			i;
+	ListCell   *args_item;
 
 	MemSet(argoids, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	argcount = length(argtypes);
@@ -1412,9 +1407,10 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 				 errmsg("functions cannot have more than %d arguments",
 						FUNC_MAX_ARGS)));
 
+	args_item = list_head(argtypes);
 	for (i = 0; i < argcount; i++)
 	{
-		TypeName   *t = (TypeName *) lfirst(argtypes);
+		TypeName   *t = (TypeName *) lfirst(args_item);
 
 		argoids[i] = LookupTypeName(t);
 
@@ -1424,7 +1420,7 @@ LookupFuncNameTypeNames(List *funcname, List *argtypes, bool noError)
 					 errmsg("type \"%s\" does not exist",
 							TypeNameToString(t))));
 
-		argtypes = lnext(argtypes);
+		args_item = lnext(args_item);
 	}
 
 	return LookupFuncName(funcname, argcount, argoids, noError);

@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.126 2004/04/06 18:46:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.127 2004/05/26 04:41:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -920,7 +920,7 @@ cost_mergejoin(MergePath *path, Query *root)
 	 */
 	if (mergeclauses)
 	{
-		firstclause = (RestrictInfo *) lfirst(mergeclauses);
+		firstclause = (RestrictInfo *) linitial(mergeclauses);
 		if (firstclause->left_mergescansel < 0)	/* not computed yet? */
 			mergejoinscansel(root, (Node *) firstclause->clause,
 							 &firstclause->left_mergescansel,
@@ -1069,7 +1069,7 @@ cost_hashjoin(HashPath *path, Query *root)
 	int			numbatches;
 	Selectivity innerbucketsize;
 	Selectivity joininfactor;
-	List	   *hcl;
+	ListCell   *hcl;
 
 	if (!enable_hashjoin)
 		startup_cost += disable_cost;
@@ -1267,7 +1267,7 @@ cost_hashjoin(HashPath *path, Query *root)
 void
 cost_qual_eval(QualCost *cost, List *quals)
 {
-	List	   *l;
+	ListCell   *l;
 
 	cost->startup = 0;
 	cost->per_tuple = 0;
@@ -1444,7 +1444,7 @@ static Selectivity
 approx_selectivity(Query *root, List *quals, JoinType jointype)
 {
 	Selectivity total = 1.0;
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, quals)
 	{
@@ -1699,7 +1699,7 @@ static void
 set_rel_width(Query *root, RelOptInfo *rel)
 {
 	int32		tuple_width = 0;
-	List	   *tllist;
+	ListCell   *tllist;
 
 	foreach(tllist, FastListValue(&rel->reltargetlist))
 	{

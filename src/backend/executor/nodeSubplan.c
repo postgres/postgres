@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.61 2004/03/17 01:02:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeSubplan.c,v 1.62 2004/05/26 04:41:16 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -212,8 +212,8 @@ ExecScanSubPlan(SubPlanState *node,
 	TupleTableSlot *slot;
 	Datum		result;
 	bool		found = false;	/* TRUE if got at least one subplan tuple */
-	List	   *pvar;
-	List	   *lst;
+	ListCell   *pvar;
+	ListCell   *l;
 	ArrayBuildState *astate = NULL;
 
 	/*
@@ -228,21 +228,19 @@ ExecScanSubPlan(SubPlanState *node,
 	 * calculation we have to do is done in the parent econtext, since the
 	 * Param values don't need to have per-query lifetime.)
 	 */
-	pvar = node->args;
-	foreach(lst, subplan->parParam)
+	Assert(length(subplan->parParam) == length(node->args));
+
+	forboth(l, subplan->parParam, pvar, node->args)
 	{
-		int			paramid = lfirsti(lst);
+		int			paramid = lfirst_int(l);
 		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
-		Assert(pvar != NIL);
 		prm->value = ExecEvalExprSwitchContext((ExprState *) lfirst(pvar),
 											   econtext,
 											   &(prm->isnull),
 											   NULL);
-		pvar = lnext(pvar);
 		planstate->chgParam = bms_add_member(planstate->chgParam, paramid);
 	}
-	Assert(pvar == NIL);
 
 	ExecReScan(planstate, NULL);
 
@@ -278,7 +276,7 @@ ExecScanSubPlan(SubPlanState *node,
 		Datum		rowresult = BoolGetDatum(!useOr);
 		bool		rownull = false;
 		int			col = 1;
-		List	   *plst;
+		ListCell   *plst;
 
 		if (subLinkType == EXISTS_SUBLINK)
 		{
@@ -343,11 +341,12 @@ ExecScanSubPlan(SubPlanState *node,
 		 * For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
 		 * operators for columns of tuple.
 		 */
-		plst = subplan->paramIds;
-		foreach(lst, node->exprs)
+		Assert(length(node->exprs) == length(subplan->paramIds));
+
+		forboth(l, node->exprs, plst, subplan->paramIds)
 		{
-			ExprState  *exprstate = (ExprState *) lfirst(lst);
-			int			paramid = lfirsti(plst);
+			ExprState  *exprstate = (ExprState *) lfirst(l);
+			int			paramid = lfirst_int(plst);
 			ParamExecData *prmdata;
 			Datum		expresult;
 			bool		expnull;
@@ -400,7 +399,6 @@ ExecScanSubPlan(SubPlanState *node,
 				}
 			}
 
-			plst = lnext(plst);
 			col++;
 		}
 
@@ -559,7 +557,7 @@ buildSubPlanHash(SubPlanState *node)
 		HeapTuple	tup = slot->val;
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
 		int			col = 1;
-		List	   *plst;
+		ListCell   *plst;
 		bool		isnew;
 
 		/*
@@ -737,7 +735,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 	 */
 	if (subplan->setParam != NIL)
 	{
-		List	   *lst;
+		ListCell   *lst;
 
 		foreach(lst, subplan->setParam)
 		{
@@ -762,8 +760,8 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 		List	   *lefttlist,
 				   *righttlist,
 				   *leftptlist,
-				   *rightptlist,
-				   *lexpr;
+				   *rightptlist;
+		ListCell   *lexpr;
 
 		/* We need a memory context to hold the hash table(s) */
 		node->tablecxt =
@@ -815,7 +813,7 @@ ExecInitSubPlan(SubPlanState *node, EState *estate)
 			Assert(length(fstate->args) == 2);
 
 			/* Process lefthand argument */
-			exstate = (ExprState *) lfirst(fstate->args);
+			exstate = (ExprState *) linitial(fstate->args);
 			expr = exstate->expr;
 			tle = makeTargetEntry(makeResdom(i,
 											 exprType((Node *) expr),
@@ -914,7 +912,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	SubLinkType subLinkType = subplan->subLinkType;
 	MemoryContext oldcontext;
 	TupleTableSlot *slot;
-	List	   *lst;
+	ListCell	*l;
 	bool		found = false;
 	ArrayBuildState *astate = NULL;
 
@@ -941,7 +939,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		if (subLinkType == EXISTS_SUBLINK)
 		{
 			/* There can be only one param... */
-			int			paramid = lfirsti(subplan->setParam);
+			int			paramid = linitial_int(subplan->setParam);
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
@@ -992,9 +990,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		/*
 		 * Now set all the setParam params from the columns of the tuple
 		 */
-		foreach(lst, subplan->setParam)
+		foreach(l, subplan->setParam)
 		{
-			int			paramid = lfirsti(lst);
+			int			paramid = lfirsti(l);
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
@@ -1008,7 +1006,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		if (subLinkType == EXISTS_SUBLINK)
 		{
 			/* There can be only one param... */
-			int			paramid = lfirsti(subplan->setParam);
+			int			paramid = linitial_int(subplan->setParam);
 			ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 			prm->execPlan = NULL;
@@ -1017,9 +1015,9 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 		}
 		else
 		{
-			foreach(lst, subplan->setParam)
+			foreach(l, subplan->setParam)
 			{
-				int			paramid = lfirsti(lst);
+				int			paramid = lfirsti(l);
 				ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 				prm->execPlan = NULL;
@@ -1031,7 +1029,7 @@ ExecSetParamPlan(SubPlanState *node, ExprContext *econtext)
 	else if (subLinkType == ARRAY_SUBLINK)
 	{
 		/* There can be only one param... */
-		int			paramid = lfirsti(subplan->setParam);
+		int			paramid = linitial_int(subplan->setParam);
 		ParamExecData *prm = &(econtext->ecxt_param_exec_vals[paramid]);
 
 		Assert(astate != NULL);
@@ -1074,7 +1072,7 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	PlanState  *planstate = node->planstate;
 	SubPlan    *subplan = (SubPlan *) node->xprstate.expr;
 	EState	   *estate = parent->state;
-	List	   *lst;
+	ListCell   *l;
 
 	/* sanity checks */
 	if (subplan->parParam != NIL)
@@ -1091,9 +1089,9 @@ ExecReScanSetParamPlan(SubPlanState *node, PlanState *parent)
 	/*
 	 * Mark this subplan's output parameters as needing recalculation
 	 */
-	foreach(lst, subplan->setParam)
+	foreach(l, subplan->setParam)
 	{
-		int			paramid = lfirsti(lst);
+		int			paramid = lfirsti(l);
 		ParamExecData *prm = &(estate->es_param_exec_vals[paramid]);
 
 		prm->execPlan = node;

@@ -15,10 +15,12 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.281 2004/05/10 22:44:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/copyfuncs.c,v 1.282 2004/05/26 04:41:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
+
+#define DISABLE_LIST_COMPAT
 
 #include "postgres.h"
 
@@ -43,14 +45,6 @@
 #define COPY_NODE_FIELD(fldname) \
 	(newnode->fldname = copyObject(from->fldname))
 
-/* Copy a field that is a pointer to a list of integers */
-#define COPY_INTLIST_FIELD(fldname) \
-	(newnode->fldname = listCopy(from->fldname))
-
-/* Copy a field that is a pointer to a list of Oids */
-#define COPY_OIDLIST_FIELD(fldname) \
-	(newnode->fldname = listCopy(from->fldname))
-
 /* Copy a field that is a pointer to a Bitmapset */
 #define COPY_BITMAPSET_FIELD(fldname) \
 	(newnode->fldname = bms_copy(from->fldname))
@@ -67,46 +61,6 @@
 		memcpy(newnode->fldname, from->fldname, _size); \
 	} while (0)
 
-
-/*
- * listCopy
- *	  This copy function only copies the "cons-cells" of the list, not the
- *	  pointed-to objects.  (Use copyObject if you want a "deep" copy.)
- *
- *	  We also use this function for copying lists of integers and Oids,
- *	  which is notationally a bit ugly, but perfectly safe.
- *
- *	  Note that copyObject will surely coredump if applied to a list
- *	  of integers or Oids!
- */
-List *
-listCopy(List *list)
-{
-	List	   *newlist,
-			   *oldl,
-			   *newcell,
-			   *prev;
-
-	/* rather ugly coding for speed... */
-	if (list == NIL)
-		return NIL;
-
-	newcell = makeNode(List);
-	newcell->elem = list->elem;
-
-	newlist = prev = newcell;
-
-	foreach(oldl, lnext(list))
-	{
-		newcell = makeNode(List);
-		newcell->elem = oldl->elem;
-		prev->next = newcell;
-		prev = newcell;
-	}
-	prev->next = NIL;
-
-	return newlist;
-}
 
 /* ****************************************************************
  *					 plannodes.h copy functions
@@ -259,42 +213,12 @@ _copyIndexScan(IndexScan *from)
 	/*
 	 * copy remainder of node
 	 */
-	COPY_OIDLIST_FIELD(indxid);
+	COPY_NODE_FIELD(indxid);
 	COPY_NODE_FIELD(indxqual);
 	COPY_NODE_FIELD(indxqualorig);
-	/* this can become COPY_NODE_FIELD when intlists are normal objects: */
-	{
-		List	*newstrat = NIL;
-		List    *tmp;
-
-		foreach(tmp, from->indxstrategy)
-		{
-			newstrat = lappend(newstrat, listCopy(lfirst(tmp)));
-		}
-		newnode->indxstrategy = newstrat;
-	}
-	/* this can become COPY_NODE_FIELD when OID lists are normal objects: */
-	{
-		List	*newsubtype = NIL;
-		List    *tmp;
-
-		foreach(tmp, from->indxsubtype)
-		{
-			newsubtype = lappend(newsubtype, listCopy(lfirst(tmp)));
-		}
-		newnode->indxsubtype = newsubtype;
-	}
-	/* this can become COPY_NODE_FIELD when intlists are normal objects: */
-	{
-		List	*newstrat = NIL;
-		List    *tmp;
-
-		foreach(tmp, from->indxlossy)
-		{
-			newstrat = lappend(newstrat, listCopy(lfirst(tmp)));
-		}
-		newnode->indxlossy = newstrat;
-	}
+	COPY_NODE_FIELD(indxstrategy);
+	COPY_NODE_FIELD(indxsubtype);
+	COPY_NODE_FIELD(indxlossy);
 	COPY_SCALAR_FIELD(indxorderdir);
 
 	return newnode;
@@ -876,7 +800,7 @@ _copySubLink(SubLink *from)
 	COPY_SCALAR_FIELD(useOr);
 	COPY_NODE_FIELD(lefthand);
 	COPY_NODE_FIELD(operName);
-	COPY_OIDLIST_FIELD(operOids);
+	COPY_NODE_FIELD(operOids);
 	COPY_NODE_FIELD(subselect);
 
 	return newnode;
@@ -893,14 +817,14 @@ _copySubPlan(SubPlan *from)
 	COPY_SCALAR_FIELD(subLinkType);
 	COPY_SCALAR_FIELD(useOr);
 	COPY_NODE_FIELD(exprs);
-	COPY_INTLIST_FIELD(paramIds);
+	COPY_NODE_FIELD(paramIds);
 	COPY_NODE_FIELD(plan);
 	COPY_SCALAR_FIELD(plan_id);
 	COPY_NODE_FIELD(rtable);
 	COPY_SCALAR_FIELD(useHashTable);
 	COPY_SCALAR_FIELD(unknownEqFalse);
-	COPY_INTLIST_FIELD(setParam);
-	COPY_INTLIST_FIELD(parParam);
+	COPY_NODE_FIELD(setParam);
+	COPY_NODE_FIELD(parParam);
 	COPY_NODE_FIELD(args);
 
 	return newnode;
@@ -1582,7 +1506,7 @@ _copyQuery(Query *from)
 	COPY_SCALAR_FIELD(hasSubLinks);
 	COPY_NODE_FIELD(rtable);
 	COPY_NODE_FIELD(jointree);
-	COPY_INTLIST_FIELD(rowMarks);
+	COPY_NODE_FIELD(rowMarks);
 	COPY_NODE_FIELD(targetList);
 	COPY_NODE_FIELD(groupClause);
 	COPY_NODE_FIELD(havingQual);
@@ -1591,7 +1515,7 @@ _copyQuery(Query *from)
 	COPY_NODE_FIELD(limitOffset);
 	COPY_NODE_FIELD(limitCount);
 	COPY_NODE_FIELD(setOperations);
-	COPY_INTLIST_FIELD(resultRelations);
+	COPY_NODE_FIELD(resultRelations);
 	COPY_NODE_FIELD(in_info_list);
 	COPY_SCALAR_FIELD(hasJoinRTEs);
 
@@ -1679,7 +1603,7 @@ _copySetOperationStmt(SetOperationStmt *from)
 	COPY_SCALAR_FIELD(all);
 	COPY_NODE_FIELD(larg);
 	COPY_NODE_FIELD(rarg);
-	COPY_OIDLIST_FIELD(colTypes);
+	COPY_NODE_FIELD(colTypes);
 
 	return newnode;
 }
@@ -1731,7 +1655,7 @@ _copyGrantStmt(GrantStmt *from)
 	COPY_SCALAR_FIELD(is_grant);
 	COPY_SCALAR_FIELD(objtype);
 	COPY_NODE_FIELD(objects);
-	COPY_INTLIST_FIELD(privileges);
+	COPY_NODE_FIELD(privileges);
 	COPY_NODE_FIELD(grantees);
 	COPY_SCALAR_FIELD(grant_option);
 	COPY_SCALAR_FIELD(behavior);
@@ -2477,7 +2401,7 @@ _copyPrepareStmt(PrepareStmt *from)
 
 	COPY_STRING_FIELD(name);
 	COPY_NODE_FIELD(argtypes);
-	COPY_OIDLIST_FIELD(argtype_oids);
+	COPY_NODE_FIELD(argtype_oids);
 	COPY_NODE_FIELD(query);
 
 	return newnode;
@@ -2511,6 +2435,47 @@ _copyDeallocateStmt(DeallocateStmt *from)
  * ****************************************************************
  */
 
+/*
+ * Perform a deep copy of the specified list, using copyObject(). The
+ * list MUST be of type T_List; T_IntList and T_OidList nodes don't
+ * need deep copies, so they should be copied via list_copy()
+ */
+#define COPY_NODE_CELL(new, old)					\
+	(new) = (ListCell *) palloc(sizeof(ListCell));	\
+	lfirst(new) = copyObject(lfirst(old));
+
+static List *
+_copyList(List *from)
+{
+	List		*new;
+	ListCell	*curr_old;
+	ListCell	*prev_new;
+
+	Assert(list_length(from) >= 1);
+
+	new = makeNode(List);
+	new->length = from->length;
+
+	COPY_NODE_CELL(new->head, from->head);
+	prev_new = new->head;
+	curr_old = lnext(from->head);
+
+	while (curr_old)
+	{
+		COPY_NODE_CELL(prev_new->next, curr_old);
+		prev_new = prev_new->next;
+		curr_old = curr_old->next;
+	}
+	prev_new->next = NULL;
+	new->tail = prev_new;
+
+	return new;
+}
+
+/* ****************************************************************
+ *					value.h copy functions
+ * ****************************************************************
+ */
 static Value *
 _copyValue(Value *from)
 {
@@ -2752,30 +2717,21 @@ copyObject(void *from)
 		case T_Null:
 			retval = _copyValue(from);
 			break;
+
+			/*
+			 * LIST NODES
+			 */
 		case T_List:
-			{
-				List	   *list = from,
-						   *oldl,
-						   *newcell,
-						   *prev;
-
-				/* rather ugly coding for speed... */
-				/* Note the input list cannot be NIL if we got here. */
-				newcell = makeNode(List);
-				lfirst(newcell) = copyObject(lfirst(list));
-
-				retval = (void *) newcell;
-				prev = newcell;
-
-				foreach(oldl, lnext(list))
-				{
-					newcell = makeNode(List);
-					lfirst(newcell) = copyObject(lfirst(oldl));
-					prev->next = newcell;
-					prev = newcell;
-				}
-				prev->next = NIL;
-			}
+			retval = _copyList(from);
+			break;
+			/*
+			 * Lists of integers and OIDs don't need to be
+			 * deep-copied, so we perform a shallow copy via
+			 * list_copy()
+			 */
+		case T_IntList:
+		case T_OidList:
+			retval = list_copy(from);
 			break;
 
 			/*

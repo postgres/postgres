@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.166 2004/05/10 22:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/ruleutils.c,v 1.167 2004/05/26 04:41:38 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -627,6 +627,7 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	Form_pg_class idxrelrec;
 	Form_pg_am	amrec;
 	List	   *indexprs;
+	ListCell   *indexpr_item;
 	List	   *context;
 	Oid			indrelid;
 	int			keyno;
@@ -691,6 +692,8 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 	else
 		indexprs = NIL;
 
+	indexpr_item = list_head(indexprs);
+
 	context = deparse_context_for(get_rel_name(indrelid), indrelid);
 
 	/*
@@ -733,10 +736,10 @@ pg_get_indexdef_worker(Oid indexrelid, int colno, int prettyFlags)
 			/* expressional index */
 			Node	   *indexkey;
 
-			if (indexprs == NIL)
+			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
-			indexkey = (Node *) lfirst(indexprs);
-			indexprs = lnext(indexprs);
+			indexkey = (Node *) lfirst(indexpr_item);
+			indexpr_item = lnext(indexpr_item);
 			/* Deparse */
 			str = deparse_expression_pretty(indexkey, context, false, false,
 											prettyFlags, 0);
@@ -1358,7 +1361,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	List	   *attrs = NIL;
 	int			nattrs = 0;
 	int			rtablelength = length(rtable);
-	List	   *tl;
+	ListCell   *tl;
 	char		buf[32];
 
 	foreach(tl, tlist)
@@ -1526,7 +1529,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		 * (which can only be references to OLD and NEW).  Use the rtable
 		 * of the first query in the action list for this purpose.
 		 */
-		query = (Query *) lfirst(actions);
+		query = (Query *) linitial(actions);
 
 		/*
 		 * If the action is INSERT...SELECT, OLD/NEW have been pushed down
@@ -1556,7 +1559,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	/* Finally the rules actions */
 	if (length(actions) > 1)
 	{
-		List	   *action;
+		ListCell   *action;
 		Query	   *query;
 
 		appendStringInfo(buf, "(");
@@ -1579,7 +1582,7 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 	{
 		Query	   *query;
 
-		query = (Query *) lfirst(actions);
+		query = (Query *) linitial(actions);
 		get_query_def(query, buf, NIL, NULL, prettyFlags, 0);
 		appendStringInfo(buf, ";");
 	}
@@ -1636,7 +1639,7 @@ make_viewdef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc,
 		return;
 	}
 
-	query = (Query *) lfirst(actions);
+	query = (Query *) linitial(actions);
 
 	if (ev_type != '1' || ev_attr >= 0 || !is_instead ||
 		strcmp(ev_qual, "<>") != 0 || query->commandType != CMD_SELECT)
@@ -1670,7 +1673,7 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace,
 	deparse_namespace dpns;
 
 	context.buf = buf;
-	context.namespaces = lcons(&dpns, parentnamespace);
+	context.namespaces = lcons(&dpns, list_copy(parentnamespace));
 	context.varprefix = (parentnamespace != NIL ||
 						 length(query->rtable) != 1);
 	context.prettyFlags = prettyFlags;
@@ -1725,7 +1728,7 @@ get_select_query_def(Query *query, deparse_context *context,
 	StringInfo	buf = context->buf;
 	bool		force_colno;
 	char	   *sep;
-	List	   *l;
+	ListCell   *l;
 
 	/*
 	 * If the Query node has a setOperations tree, then it's the top level
@@ -1802,7 +1805,7 @@ get_basic_select_query(Query *query, deparse_context *context,
 {
 	StringInfo	buf = context->buf;
 	char	   *sep;
-	List	   *l;
+	ListCell   *l;
 	int			colno;
 
 	/*
@@ -2057,7 +2060,7 @@ get_insert_query_def(Query *query, deparse_context *context)
 	RangeTblEntry *select_rte = NULL;
 	RangeTblEntry *rte;
 	char	   *sep;
-	List	   *l;
+	ListCell   *l;
 
 	/*
 	 * If it's an INSERT ... SELECT there will be a single subquery RTE
@@ -2136,10 +2139,10 @@ get_insert_query_def(Query *query, deparse_context *context)
 static void
 get_update_query_def(Query *query, deparse_context *context)
 {
-	StringInfo	buf = context->buf;
-	char	   *sep;
-	RangeTblEntry *rte;
-	List	   *l;
+	StringInfo		 buf = context->buf;
+	char			*sep;
+	RangeTblEntry	*rte;
+	ListCell		*l;
 
 	/*
 	 * Start the query with UPDATE relname SET
@@ -2271,17 +2274,17 @@ static void
 get_names_for_var(Var *var, deparse_context *context,
 				  char **schemaname, char **refname, char **attname)
 {
-	List	   *nslist = context->namespaces;
+	ListCell   *nslist_item = list_head(context->namespaces);
 	int			sup = var->varlevelsup;
 	deparse_namespace *dpns;
 	RangeTblEntry *rte;
 
 	/* Find appropriate nesting depth */
-	while (sup-- > 0 && nslist != NIL)
-		nslist = lnext(nslist);
-	if (nslist == NIL)
+	while (sup-- > 0 && nslist_item != NULL)
+		nslist_item = lnext(nslist_item);
+	if (nslist_item == NULL)
 		elog(ERROR, "bogus varlevelsup: %d", var->varlevelsup);
-	dpns = (deparse_namespace *) lfirst(nslist);
+	dpns = (deparse_namespace *) lfirst(nslist_item);
 
 	/* Find the relevant RTE */
 	if (var->varno >= 1 && var->varno <= length(dpns->rtable))
@@ -2342,13 +2345,13 @@ get_names_for_var(Var *var, deparse_context *context,
 static RangeTblEntry *
 find_rte_by_refname(const char *refname, deparse_context *context)
 {
-	RangeTblEntry *result = NULL;
-	List	   *nslist;
+	RangeTblEntry  *result = NULL;
+	ListCell	   *nslist;
 
 	foreach(nslist, context->namespaces)
 	{
 		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
-		List	   *rtlist;
+		ListCell	   *rtlist;
 
 		foreach(rtlist, dpns->rtable)
 		{
@@ -2396,7 +2399,7 @@ get_simple_binary_op_name(OpExpr *expr)
 	if (length(args) == 2)
 	{
 		/* binary operator */
-		Node	   *arg1 = (Node *) lfirst(args);
+		Node	   *arg1 = (Node *) linitial(args);
 		Node	   *arg2 = (Node *) lsecond(args);
 		const char *op;
 
@@ -2501,7 +2504,7 @@ isSimpleNode(Node *node, Node *parentNode, int prettyFlags)
 					 * Operators are same priority --- can skip parens
 					 * only if we have (a - b) - c, not a - (b - c).
 					 */
-					if (node == (Node *) lfirst(((OpExpr *) parentNode)->args))
+					if (node == (Node *) linitial(((OpExpr *) parentNode)->args))
 						return true;
 
 					return false;
@@ -2759,8 +2762,8 @@ get_rule_expr(Node *node, deparse_context *context,
 				ArrayRef   *aref = (ArrayRef *) node;
 				bool		savevarprefix = context->varprefix;
 				bool		need_parens;
-				List	   *lowlist;
-				List	   *uplist;
+				ListCell   *lowlist_item;
+				ListCell   *uplist_item;
 
 				/*
 				 * If we are doing UPDATE array[n] = expr, we need to
@@ -2783,18 +2786,19 @@ get_rule_expr(Node *node, deparse_context *context,
 				if (need_parens)
 					appendStringInfoChar(buf, ')');
 				context->varprefix = savevarprefix;
-				lowlist = aref->reflowerindexpr;
-				foreach(uplist, aref->refupperindexpr)
+				lowlist_item = list_head(aref->reflowerindexpr);
+				foreach(uplist_item, aref->refupperindexpr)
 				{
 					appendStringInfo(buf, "[");
-					if (lowlist)
+					if (lowlist_item)
 					{
-						get_rule_expr((Node *) lfirst(lowlist), context,
+						get_rule_expr((Node *) lfirst(lowlist_item), context,
 									  false);
 						appendStringInfo(buf, ":");
-						lowlist = lnext(lowlist);
+						lowlist_item = lnext(lowlist_item);
 					}
-					get_rule_expr((Node *) lfirst(uplist), context, false);
+					get_rule_expr((Node *) lfirst(uplist_item),
+								  context, false);
 					appendStringInfo(buf, "]");
 				}
 				if (aref->refassgnexpr)
@@ -2818,7 +2822,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				DistinctExpr *expr = (DistinctExpr *) node;
 				List	   *args = expr->args;
-				Node	   *arg1 = (Node *) lfirst(args);
+				Node	   *arg1 = (Node *) linitial(args);
 				Node	   *arg2 = (Node *) lsecond(args);
 
 				if (!PRETTY_PAREN(context))
@@ -2835,7 +2839,7 @@ get_rule_expr(Node *node, deparse_context *context,
 			{
 				ScalarArrayOpExpr *expr = (ScalarArrayOpExpr *) node;
 				List	   *args = expr->args;
-				Node	   *arg1 = (Node *) lfirst(args);
+				Node	   *arg1 = (Node *) linitial(args);
 				Node	   *arg2 = (Node *) lsecond(args);
 
 				if (!PRETTY_PAREN(context))
@@ -2856,20 +2860,22 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_BoolExpr:
 			{
 				BoolExpr   *expr = (BoolExpr *) node;
-				List	   *args = expr->args;
+				Node	   *first_arg = linitial(expr->args);
+				ListCell   *arg = lnext(list_head(expr->args));
 
 				switch (expr->boolop)
 				{
 					case AND_EXPR:
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, '(');
-						get_rule_expr_paren((Node *) lfirst(args), context,
+						get_rule_expr_paren(first_arg, context,
 											false, node);
-						while ((args = lnext(args)) != NIL)
+						while (arg)
 						{
 							appendStringInfo(buf, " AND ");
-							get_rule_expr_paren((Node *) lfirst(args), context,
+							get_rule_expr_paren((Node *) lfirst(arg), context,
 												false, node);
+							arg = lnext(arg);
 						}
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, ')');
@@ -2878,13 +2884,14 @@ get_rule_expr(Node *node, deparse_context *context,
 					case OR_EXPR:
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, '(');
-						get_rule_expr_paren((Node *) lfirst(args), context,
+						get_rule_expr_paren(first_arg, context,
 											false, node);
-						while ((args = lnext(args)) != NIL)
+						while (arg)
 						{
 							appendStringInfo(buf, " OR ");
-							get_rule_expr_paren((Node *) lfirst(args), context,
+							get_rule_expr_paren((Node *) lfirst(arg), context,
 												false, node);
+							arg = lnext(arg);
 						}
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, ')');
@@ -2894,7 +2901,7 @@ get_rule_expr(Node *node, deparse_context *context,
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, '(');
 						appendStringInfo(buf, "NOT ");
-						get_rule_expr_paren((Node *) lfirst(args), context,
+						get_rule_expr_paren(first_arg, context,
 											false, node);
 						if (!PRETTY_PAREN(context))
 							appendStringInfoChar(buf, ')');
@@ -2989,7 +2996,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_CaseExpr:
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
-				List	   *temp;
+				ListCell   *temp;
 
 				appendContextKeyword(context, "CASE",
 									 0, PRETTYINDENT_VAR, 0);
@@ -3035,7 +3042,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_ArrayExpr:
 			{
 				ArrayExpr  *arrayexpr = (ArrayExpr *) node;
-				List	   *element;
+				ListCell   *element;
 				char	   *sep;
 
 				appendStringInfo(buf, "ARRAY[");
@@ -3055,7 +3062,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_RowExpr:
 			{
 				RowExpr	   *rowexpr = (RowExpr *) node;
-				List	   *arg;
+				ListCell   *arg;
 				char	   *sep;
 
 				/*
@@ -3082,7 +3089,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_CoalesceExpr:
 			{
 				CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
-				List	   *arg;
+				ListCell   *arg;
 				char	   *sep;
 
 				appendStringInfo(buf, "COALESCE(");
@@ -3102,7 +3109,7 @@ get_rule_expr(Node *node, deparse_context *context,
 		case T_NullIfExpr:
 			{
 				NullIfExpr *nullifexpr = (NullIfExpr *) node;
-				List	   *arg;
+				ListCell   *arg;
 				char	   *sep;
 
 				appendStringInfo(buf, "NULLIF(");
@@ -3239,7 +3246,7 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 	if (length(args) == 2)
 	{
 		/* binary operator */
-		Node	   *arg1 = (Node *) lfirst(args);
+		Node	   *arg1 = (Node *) linitial(args);
 		Node	   *arg2 = (Node *) lsecond(args);
 
 		get_rule_expr_paren(arg1, context, true, (Node *) expr);
@@ -3252,7 +3259,7 @@ get_oper_expr(OpExpr *expr, deparse_context *context)
 	else
 	{
 		/* unary operator --- but which side? */
-		Node	   *arg = (Node *) lfirst(args);
+		Node	   *arg = (Node *) linitial(args);
 		HeapTuple	tp;
 		Form_pg_operator optup;
 
@@ -3298,7 +3305,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	Oid			funcoid = expr->funcid;
 	Oid			argtypes[FUNC_MAX_ARGS];
 	int			nargs;
-	List	   *l;
+	ListCell   *l;
 	char	   *sep;
 
 	/*
@@ -3308,7 +3315,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	 */
 	if (expr->funcformat == COERCE_IMPLICIT_CAST && !showimplicit)
 	{
-		get_rule_expr_paren((Node *) lfirst(expr->args), context,
+		get_rule_expr_paren((Node *) linitial(expr->args), context,
 							showimplicit, (Node *) expr);
 		return;
 	}
@@ -3320,7 +3327,7 @@ get_func_expr(FuncExpr *expr, deparse_context *context,
 	if (expr->funcformat == COERCE_EXPLICIT_CAST ||
 		expr->funcformat == COERCE_IMPLICIT_CAST)
 	{
-		Node	   *arg = lfirst(expr->args);
+		Node	   *arg = linitial(expr->args);
 		Oid			rettype = expr->funcresulttype;
 		int32		coercedTypmod;
 
@@ -3424,7 +3431,7 @@ strip_type_coercion(Node *expr, Oid resultType)
 		if (exprIsLengthCoercion(expr, NULL))
 			return expr;
 
-		return (Node *) lfirst(func->args);
+		return (Node *) linitial(func->args);
 	}
 
 	return expr;
@@ -3580,7 +3587,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	Query	   *query = (Query *) (sublink->subselect);
-	List	   *l;
+	ListCell   *l;
 	char	   *sep;
 	bool		need_paren;
 
@@ -3625,7 +3632,7 @@ get_sublink_expr(SubLink *sublink, deparse_context *context)
 
 		case ANY_SUBLINK:
 			if (length(sublink->operName) == 1 &&
-				strcmp(strVal(lfirst(sublink->operName)), "=") == 0)
+				strcmp(strVal(linitial(sublink->operName)), "=") == 0)
 			{
 				/* Represent = ANY as IN */
 				appendStringInfo(buf, "IN ");
@@ -3680,7 +3687,7 @@ get_from_clause(Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
 	bool		first = true;
-	List	   *l;
+	ListCell   *l;
 
 	/*
 	 * We use the query's jointree as a guide to what to print.  However,
@@ -3763,12 +3770,12 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			gavealias = true;
 			if (rte->alias->colnames != NIL && coldeflist == NIL)
 			{
-				List	   *col;
+				ListCell   *col;
 
 				appendStringInfoChar(buf, '(');
 				foreach(col, rte->alias->colnames)
 				{
-					if (col != rte->alias->colnames)
+					if (col != list_head(rte->alias->colnames))
 						appendStringInfo(buf, ", ");
 					appendStringInfoString(buf,
 										   quote_identifier(strVal(lfirst(col))));
@@ -3897,12 +3904,12 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		{
 			if (j->using)
 			{
-				List	   *col;
+				ListCell   *col;
 
 				appendStringInfo(buf, " USING (");
 				foreach(col, j->using)
 				{
-					if (col != j->using)
+					if (col != list_head(j->using))
 						appendStringInfo(buf, ", ");
 					appendStringInfoString(buf,
 								quote_identifier(strVal(lfirst(col))));
@@ -3929,12 +3936,12 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 							 quote_identifier(j->alias->aliasname));
 			if (j->alias->colnames != NIL)
 			{
-				List	   *col;
+				ListCell   *col;
 
 				appendStringInfoChar(buf, '(');
 				foreach(col, j->alias->colnames)
 				{
-					if (col != j->alias->colnames)
+					if (col != list_head(j->alias->colnames))
 						appendStringInfo(buf, ", ");
 					appendStringInfoString(buf,
 								  quote_identifier(strVal(lfirst(col))));
@@ -3958,7 +3965,7 @@ static void
 get_from_clause_coldeflist(List *coldeflist, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	List	   *col;
+	ListCell   *col;
 	int			i = 0;
 
 	appendStringInfoChar(buf, '(');
@@ -4337,20 +4344,21 @@ generate_operator_name(Oid operid, Oid arg1, Oid arg2)
 static void
 print_operator_name(StringInfo buf, List *opname)
 {
-	int			nnames = length(opname);
+	ListCell	*op = list_head(opname);
+	int			 nnames = length(opname);
 
 	if (nnames == 1)
-		appendStringInfoString(buf, strVal(lfirst(opname)));
+		appendStringInfoString(buf, strVal(lfirst(op)));
 	else
 	{
 		appendStringInfo(buf, "OPERATOR(");
 		while (nnames-- > 1)
 		{
 			appendStringInfo(buf, "%s.",
-							 quote_identifier(strVal(lfirst(opname))));
-			opname = lnext(opname);
+							 quote_identifier(strVal(lfirst(op))));
+			op = lnext(op);
 		}
-		appendStringInfo(buf, "%s)", strVal(lfirst(opname)));
+		appendStringInfo(buf, "%s)", strVal(lfirst(op)));
 	}
 }
 

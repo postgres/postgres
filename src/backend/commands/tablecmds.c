@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.107 2004/05/08 22:46:29 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.108 2004/05/26 04:41:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -262,7 +262,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	bool		localHasOids;
 	int			parentOidCount;
 	List	   *rawDefaults;
-	List	   *listptr;
+	ListCell   *listptr;
 	int			i;
 	AttrNumber	attnum;
 
@@ -320,7 +320,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 
 	if (old_constraints != NIL)
 	{
-		ConstrCheck *check = (ConstrCheck *) palloc(length(old_constraints) *
+		ConstrCheck *check = (ConstrCheck *) palloc(list_length(old_constraints) *
 													sizeof(ConstrCheck));
 		int			ncheck = 0;
 		int			constr_name_ctr = 0;
@@ -634,7 +634,7 @@ static List *
 MergeAttributes(List *schema, List *supers, bool istemp,
 				List **supOids, List **supconstr, int *supOidCount)
 {
-	List	   *entry;
+	ListCell   *entry;
 	List	   *inhSchema = NIL;
 	List	   *parentOids = NIL;
 	List	   *constraints = NIL;
@@ -654,9 +654,9 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	foreach(entry, schema)
 	{
 		ColumnDef  *coldef = lfirst(entry);
-		List	   *rest;
+		ListCell   *rest;
 
-		foreach(rest, lnext(entry))
+		for_each_cell(rest, lnext(entry))
 		{
 			ColumnDef  *restdef = lfirst(rest);
 
@@ -708,13 +708,13 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		/*
 		 * Reject duplications in the list of parents.
 		 */
-		if (oidMember(RelationGetRelid(relation), parentOids))
+		if (list_member_oid(parentOids, RelationGetRelid(relation)))
 			ereport(ERROR,
 					(errcode(ERRCODE_DUPLICATE_TABLE),
 					 errmsg("inherited relation \"%s\" duplicated",
 							parent->relname)));
 
-		parentOids = lappendo(parentOids, RelationGetRelid(relation));
+		parentOids = lappend_oid(parentOids, RelationGetRelid(relation));
 
 		if (relation->rd_rel->relhasoids)
 			parentsWithOids++;
@@ -767,7 +767,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				ereport(NOTICE,
 						(errmsg("merging multiple inherited definitions of column \"%s\"",
 								attributeName)));
-				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
+				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
 				if (typenameTypeId(def->typename) != attribute->atttypid ||
 					def->typename->typmod != attribute->atttypmod)
 					ereport(ERROR,
@@ -922,7 +922,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 				ereport(NOTICE,
 						(errmsg("merging column \"%s\" with inherited definition",
 								attributeName)));
-				def = (ColumnDef *) nth(exist_attno - 1, inhSchema);
+				def = (ColumnDef *) list_nth(inhSchema, exist_attno - 1);
 				if (typenameTypeId(def->typename) != typenameTypeId(newdef->typename) ||
 					def->typename->typmod != newdef->typename->typmod)
 					ereport(ERROR,
@@ -1033,7 +1033,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	Relation	relation;
 	TupleDesc	desc;
 	int16		seqNumber;
-	List	   *entry;
+	ListCell   *entry;
 	HeapTuple	tuple;
 
 	/*
@@ -1059,7 +1059,7 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 	seqNumber = 1;
 	foreach(entry, supers)
 	{
-		Oid			parentOid = lfirsto(entry);
+		Oid			parentOid = lfirst_oid(entry);
 		Datum		datum[Natts_pg_inherits];
 		char		nullarr[Natts_pg_inherits];
 		ObjectAddress childobject,
@@ -1113,16 +1113,17 @@ StoreCatalogInheritance(Oid relationId, List *supers)
 static int
 findAttrByName(const char *attributeName, List *schema)
 {
-	List	   *s;
-	int			i = 0;
+	ListCell   *s;
+	int			i = 1;
 
 	foreach(s, schema)
 	{
 		ColumnDef  *def = lfirst(s);
 
-		++i;
 		if (strcmp(attributeName, def->colname) == 0)
 			return i;
+
+		i++;
 	}
 	return 0;
 }
@@ -1198,7 +1199,7 @@ renameatt(Oid myrelid,
 	Form_pg_attribute attform;
 	int			attnum;
 	List	   *indexoidlist;
-	List	   *indexoidscan;
+	ListCell   *indexoidscan;
 
 	/*
 	 * Grab an exclusive lock on the target table, which we will NOT
@@ -1232,8 +1233,8 @@ renameatt(Oid myrelid,
 	 */
 	if (recurse)
 	{
-		List	   *child,
-				   *children;
+		ListCell   *child;
+		List	   *children;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(myrelid);
@@ -1245,7 +1246,7 @@ renameatt(Oid myrelid,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsto(child);
+			Oid			childrelid = lfirst_oid(child);
 
 			if (childrelid == myrelid)
 				continue;
@@ -1322,7 +1323,7 @@ renameatt(Oid myrelid,
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsto(indexoidscan);
+		Oid			indexoid = lfirst_oid(indexoidscan);
 		HeapTuple	indextup;
 		Form_pg_index indexform;
 		int			i;
@@ -1370,7 +1371,7 @@ renameatt(Oid myrelid,
 		ReleaseSysCache(indextup);
 	}
 
-	freeList(indexoidlist);
+	list_free(indexoidlist);
 
 	heap_close(attrelation, RowExclusiveLock);
 
@@ -1765,7 +1766,7 @@ static void
 ATController(Relation rel, List *cmds, bool recurse)
 {
 	List	   *wqueue = NIL;
-	List	   *lcmd;
+	ListCell   *lcmd;
 
 	/* Phase 1: preliminary examination of commands, create work queue */
 	foreach(lcmd, cmds)
@@ -1962,7 +1963,7 @@ static void
 ATRewriteCatalogs(List **wqueue)
 {
 	int			pass;
-	List	   *ltab;
+	ListCell   *ltab;
 
 	/*
 	 * We process all the tables "in parallel", one pass at a time.  This
@@ -1979,7 +1980,7 @@ ATRewriteCatalogs(List **wqueue)
 			AlteredTableInfo *tab = (AlteredTableInfo *) lfirst(ltab);
 			List	   *subcmds = tab->subcmds[pass];
 			Relation	rel;
-			List	   *lcmd;
+			ListCell   *lcmd;
 
 			if (subcmds == NIL)
 				continue;
@@ -2107,7 +2108,7 @@ ATExecCmd(AlteredTableInfo *tab, Relation rel, AlterTableCmd *cmd)
 static void
 ATRewriteTables(List **wqueue)
 {
-	List	   *ltab;
+	ListCell   *ltab;
 
 	/* Go through each table that needs to be checked or rewritten */
 	foreach(ltab, *wqueue)
@@ -2215,7 +2216,7 @@ ATRewriteTables(List **wqueue)
 	{
 		AlteredTableInfo  *tab = (AlteredTableInfo *) lfirst(ltab);
 		Relation		rel = NULL;
-		List	   *lcon;
+		ListCell	   *lcon;
 
 		foreach(lcon, tab->constraints)
 		{
@@ -2259,7 +2260,7 @@ ATRewriteTable(AlteredTableInfo *tab, Oid OIDNewHeap)
 	TupleDesc	newTupDesc;
 	bool		needscan = false;
 	int			i;
-	List	   *l;
+	ListCell   *l;
 	EState	   *estate;
 
 	/*
@@ -2473,7 +2474,7 @@ ATGetQueueEntry(List **wqueue, Relation rel)
 {
 	Oid			relid = RelationGetRelid(rel);
 	AlteredTableInfo *tab;
-	List	   *ltab;
+	ListCell   *ltab;
 
 	foreach(ltab, *wqueue)
 	{
@@ -2554,8 +2555,8 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 	if (recurse && rel->rd_rel->relkind == RELKIND_RELATION)
 	{
 		Oid			relid = RelationGetRelid(rel);
-		List	   *child,
-				   *children;
+		ListCell   *child;
+		List	   *children;
 
 		/* this routine is actually in the planner */
 		children = find_all_inheritors(relid);
@@ -2567,7 +2568,7 @@ ATSimpleRecursion(List **wqueue, Relation rel,
 		 */
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsto(child);
+			Oid			childrelid = lfirst_oid(child);
 			Relation	childrel;
 
 			if (childrelid == relid)
@@ -2592,15 +2593,15 @@ ATOneLevelRecursion(List **wqueue, Relation rel,
 					AlterTableCmd *cmd)
 {
 	Oid			relid = RelationGetRelid(rel);
-	List	   *child,
-			   *children;
+	ListCell   *child;
+	List	   *children;
 
 	/* this routine is actually in the planner */
 	children = find_inheritance_children(relid);
 
 	foreach(child, children)
 	{
-		Oid			childrelid = lfirsto(child);
+		Oid			childrelid = lfirst_oid(child);
 		Relation	childrel;
 
 		childrel = relation_open(childrelid, AccessExclusiveLock);
@@ -2764,7 +2765,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 	attribute->atttypmod = colDef->typename->typmod;
 	attribute->attnum = i;
 	attribute->attbyval = tform->typbyval;
-	attribute->attndims = length(colDef->typename->arrayBounds);
+	attribute->attndims = list_length(colDef->typename->arrayBounds);
 	attribute->attstorage = tform->typstorage;
 	attribute->attalign = tform->typalign;
 	attribute->attnotnull = colDef->is_not_null;
@@ -2814,7 +2815,7 @@ ATExecAddColumn(AlteredTableInfo *tab, Relation rel,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationRawConstraints(rel, makeList1(rawEnt), NIL);
+		AddRelationRawConstraints(rel, list_make1(rawEnt), NIL);
 
 		/* Make the additional catalog changes visible */
 		CommandCounterIncrement();
@@ -2880,7 +2881,7 @@ ATExecDropNotNull(Relation rel, const char *colName)
 	AttrNumber	attnum;
 	Relation	attr_rel;
 	List	   *indexoidlist;
-	List	   *indexoidscan;
+	ListCell   *indexoidscan;
 
 	/*
 	 * lookup the attribute
@@ -2913,7 +2914,7 @@ ATExecDropNotNull(Relation rel, const char *colName)
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsto(indexoidscan);
+		Oid			indexoid = lfirst_oid(indexoidscan);
 		HeapTuple	indexTuple;
 		Form_pg_index indexStruct;
 		int			i;
@@ -2945,7 +2946,7 @@ ATExecDropNotNull(Relation rel, const char *colName)
 		ReleaseSysCache(indexTuple);
 	}
 
-	freeList(indexoidlist);
+	list_free(indexoidlist);
 
 	/*
 	 * Okay, actually perform the catalog change ... if needed
@@ -3067,7 +3068,7 @@ ATExecColumnDefault(Relation rel, const char *colName,
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationRawConstraints(rel, makeList1(rawEnt), NIL);
+		AddRelationRawConstraints(rel, list_make1(rawEnt), NIL);
 	}
 }
 
@@ -3292,12 +3293,12 @@ ATExecDropColumn(Relation rel, const char *colName,
 	if (children)
 	{
 		Relation	attr_rel;
-		List	   *child;
+		ListCell   *child;
 
 		attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 		foreach(child, children)
 		{
-			Oid			childrelid = lfirsto(child);
+			Oid			childrelid = lfirst_oid(child);
 			Relation	childrel;
 			Form_pg_attribute childatt;
 
@@ -3464,14 +3465,14 @@ ATExecAddConstraint(AlteredTableInfo *tab, Relation rel, Node *newConstraint)
 				case CONSTR_CHECK:
 				{
 					List	   *newcons;
-					List	   *lcon;
+					ListCell   *lcon;
 
 					/*
 					 * Call AddRelationRawConstraints to do the work.
 					 * It returns a list of cooked constraints.
 					 */
 					newcons = AddRelationRawConstraints(rel, NIL,
-														makeList1(constr));
+														list_make1(constr));
 					/* Add each constraint to Phase 3's queue */
 					foreach(lcon, newcons)
 					{ 
@@ -3676,7 +3677,7 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 		 * get the right answer from the test below on opclass membership
 		 * unless we select the proper operator.)
 		 */
-		Operator	o = oper(makeList1(makeString("=")),
+		Operator	o = oper(list_make1(makeString("=")),
 							 pktypoid[i], fktypoid[i], true);
 
 		if (o == NULL)
@@ -3687,8 +3688,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 							fkconstraint->constr_name),
 					 errdetail("Key columns \"%s\" and \"%s\" "
 							   "are of incompatible types: %s and %s.",
-							   strVal(nth(i, fkconstraint->fk_attrs)),
-							   strVal(nth(i, fkconstraint->pk_attrs)),
+							   strVal(list_nth(fkconstraint->fk_attrs, i)),
+							   strVal(list_nth(fkconstraint->pk_attrs, i)),
 							   format_type_be(fktypoid[i]),
 							   format_type_be(pktypoid[i]))));
 
@@ -3704,8 +3705,8 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 							fkconstraint->constr_name),
 					 errdetail("Key columns \"%s\" and \"%s\" "
 							   "are of different types: %s and %s.",
-							   strVal(nth(i, fkconstraint->fk_attrs)),
-							   strVal(nth(i, fkconstraint->pk_attrs)),
+							   strVal(list_nth(fkconstraint->fk_attrs, i)),
+							   strVal(list_nth(fkconstraint->pk_attrs, i)),
 							   format_type_be(fktypoid[i]),
 							   format_type_be(pktypoid[i]))));
 
@@ -3774,7 +3775,7 @@ static int
 transformColumnNameList(Oid relId, List *colList,
 						int16 *attnums, Oid *atttypids)
 {
-	List	   *l;
+	ListCell   *l;
 	int			attnum;
 
 	attnum = 0;
@@ -3821,8 +3822,8 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 						   int16 *attnums, Oid *atttypids,
 						   Oid *opclasses)
 {
-	List	   *indexoidlist,
-			   *indexoidscan;
+	List	   *indexoidlist;
+	ListCell   *indexoidscan;
 	HeapTuple	indexTuple = NULL;
 	Form_pg_index indexStruct = NULL;
 	int			i;
@@ -3836,7 +3837,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsto(indexoidscan);
+		Oid			indexoid = lfirst_oid(indexoidscan);
 
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
@@ -3853,7 +3854,7 @@ transformFkeyGetPrimaryKey(Relation pkrel, Oid *indexOid,
 		indexStruct = NULL;
 	}
 
-	freeList(indexoidlist);
+	list_free(indexoidlist);
 
 	/*
 	 * Check that we found it
@@ -3900,8 +3901,8 @@ transformFkeyCheckAttrs(Relation pkrel,
 {
 	Oid			indexoid = InvalidOid;
 	bool		found = false;
-	List	   *indexoidlist,
-			   *indexoidscan;
+	List	   *indexoidlist;
+	ListCell   *indexoidscan;
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -3917,7 +3918,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 		int			i,
 					j;
 
-		indexoid = lfirsto(indexoidscan);
+		indexoid = lfirst_oid(indexoidscan);
 		indexTuple = SearchSysCache(INDEXRELID,
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
@@ -3982,7 +3983,7 @@ transformFkeyCheckAttrs(Relation pkrel,
 				 errmsg("there is no unique constraint matching given keys for referenced table \"%s\"",
 						RelationGetRelationName(pkrel))));
 
-	freeList(indexoidlist);
+	list_free(indexoidlist);
 
 	return indexoid;
 }
@@ -4001,7 +4002,7 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	HeapScanDesc scan;
 	HeapTuple	tuple;
 	Trigger		trig;
-	List	   *list;
+	ListCell   *list;
 	int			count;
 
 	/*
@@ -4026,8 +4027,8 @@ validateForeignKeyConstraint(FkConstraint *fkconstraint,
 	trig.tginitdeferred = FALSE;
 
 	trig.tgargs = (char **) palloc(sizeof(char *) *
-								   (4 + length(fkconstraint->fk_attrs)
-									+ length(fkconstraint->pk_attrs)));
+								   (4 + list_length(fkconstraint->fk_attrs)
+									+ list_length(fkconstraint->pk_attrs)));
 
 	trig.tgargs[0] = trig.tgname;
 	trig.tgargs[1] = RelationGetRelationName(rel);
@@ -4094,8 +4095,8 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 {
 	RangeVar   *myRel;
 	CreateTrigStmt *fk_trigger;
-	List	   *fk_attr;
-	List	   *pk_attr;
+	ListCell   *fk_attr;
+	ListCell   *pk_attr;
 	ObjectAddress trigobj,
 				constrobj;
 
@@ -4146,19 +4147,16 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 							 makeString(fkconstraint->pktable->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
 			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
-	fk_attr = fkconstraint->fk_attrs;
-	pk_attr = fkconstraint->pk_attrs;
-	if (length(fk_attr) != length(pk_attr))
+	if (list_length(fkconstraint->fk_attrs) != list_length(fkconstraint->pk_attrs))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_FOREIGN_KEY),
 				 errmsg("number of referencing and referenced columns for foreign key disagree")));
 
-	while (fk_attr != NIL)
+	forboth(fk_attr, fkconstraint->fk_attrs,
+			pk_attr, fkconstraint->pk_attrs)
 	{
 		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
 		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
-		fk_attr = lnext(fk_attr);
-		pk_attr = lnext(pk_attr);
 	}
 
 	trigobj.objectId = CreateTrigger(fk_trigger, true);
@@ -4219,14 +4217,11 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 							 makeString(fkconstraint->pktable->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
 			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
-	fk_attr = fkconstraint->fk_attrs;
-	pk_attr = fkconstraint->pk_attrs;
-	while (fk_attr != NIL)
+	forboth(fk_attr, fkconstraint->fk_attrs,
+			pk_attr, fkconstraint->pk_attrs)
 	{
 		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
 		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
-		fk_attr = lnext(fk_attr);
-		pk_attr = lnext(pk_attr);
 	}
 
 	trigobj.objectId = CreateTrigger(fk_trigger, true);
@@ -4286,14 +4281,11 @@ createForeignKeyTriggers(Relation rel, FkConstraint *fkconstraint,
 							 makeString(fkconstraint->pktable->relname));
 	fk_trigger->args = lappend(fk_trigger->args,
 			makeString(fkMatchTypeToString(fkconstraint->fk_matchtype)));
-	fk_attr = fkconstraint->fk_attrs;
-	pk_attr = fkconstraint->pk_attrs;
-	while (fk_attr != NIL)
+	forboth(fk_attr, fkconstraint->fk_attrs,
+			pk_attr, fkconstraint->pk_attrs)
 	{
 		fk_trigger->args = lappend(fk_trigger->args, lfirst(fk_attr));
 		fk_trigger->args = lappend(fk_trigger->args, lfirst(pk_attr));
-		fk_attr = lnext(fk_attr);
-		pk_attr = lnext(pk_attr);
 	}
 
 	trigobj.objectId = CreateTrigger(fk_trigger, true);
@@ -4626,9 +4618,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 				if (relKind == RELKIND_INDEX)
 				{
 					Assert(foundObject.objectSubId == 0);
-					if (!oidMember(foundObject.objectId, tab->changedIndexOids))
+					if (!list_member_oid(tab->changedIndexOids, foundObject.objectId))
 					{
-						tab->changedIndexOids = lappendo(tab->changedIndexOids,
+						tab->changedIndexOids = lappend_oid(tab->changedIndexOids,
 														 foundObject.objectId);
 						tab->changedIndexDefs = lappend(tab->changedIndexDefs,
 														pg_get_indexdef_string(foundObject.objectId));
@@ -4653,9 +4645,9 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 
 			case OCLASS_CONSTRAINT:
 				Assert(foundObject.objectSubId == 0);
-				if (!oidMember(foundObject.objectId, tab->changedConstraintOids))
+				if (!list_member_oid(tab->changedConstraintOids, foundObject.objectId))
 				{
-					tab->changedConstraintOids = lappendo(tab->changedConstraintOids,
+					tab->changedConstraintOids = lappend_oid(tab->changedConstraintOids,
 														  foundObject.objectId);
 					tab->changedConstraintDefs = lappend(tab->changedConstraintDefs,
 														 pg_get_constraintdef_string(foundObject.objectId));
@@ -4750,7 +4742,7 @@ ATExecAlterColumnType(AlteredTableInfo *tab, Relation rel,
 	 */
 	attTup->atttypid = targettype;
 	attTup->atttypmod = typename->typmod;
-	attTup->attndims = length(typename->arrayBounds);
+	attTup->attndims = list_length(typename->arrayBounds);
 	attTup->attlen = tform->typlen;
 	attTup->attbyval = tform->typbyval;
 	attTup->attalign = tform->typalign;
@@ -4805,7 +4797,7 @@ static void
 ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 {
 	ObjectAddress obj;
-	List	*l;
+	ListCell	 *l;
 
 	/*
 	 * Re-parse the index and constraint definitions, and attach them to
@@ -4835,7 +4827,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 		obj.classId = get_system_catalog_relid(ConstraintRelationName);
 	foreach(l, tab->changedConstraintOids)
 	{
-		obj.objectId = lfirsto(l);
+		obj.objectId = lfirst_oid(l);
 		obj.objectSubId = 0;
 		performDeletion(&obj, DROP_RESTRICT);
 	}
@@ -4843,7 +4835,7 @@ ATPostAlterTypeCleanup(List **wqueue, AlteredTableInfo *tab)
 	obj.classId = RelOid_pg_class;
 	foreach(l, tab->changedIndexOids)
 	{
-		obj.objectId = lfirsto(l);
+		obj.objectId = lfirst_oid(l);
 		obj.objectSubId = 0;
 		performDeletion(&obj, DROP_RESTRICT);
 	}
@@ -4859,7 +4851,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 {
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
-	List	   *list_item;
+	ListCell   *list_item;
 
 	/*
 	 * We expect that we only have to do raw parsing and parse analysis, not
@@ -4871,7 +4863,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 	{
 		Node	   *parsetree = (Node *) lfirst(list_item);
 
-		querytree_list = nconc(querytree_list,
+		querytree_list = list_concat(querytree_list,
 							   parse_analyze(parsetree, NULL, 0));
 	}
 
@@ -4907,7 +4899,7 @@ ATPostAlterTypeParse(char *cmd, List **wqueue)
 			case T_AlterTableStmt:
 			{
 				AlterTableStmt *stmt = (AlterTableStmt *) query->utilityStmt;
-				List	   *lcmd;
+				ListCell	   *lcmd;
 
 				rel = relation_openrv(stmt->relation, AccessExclusiveLock);
 				tab = ATGetQueueEntry(wqueue, rel);
@@ -5002,17 +4994,17 @@ ATExecChangeOwner(Oid relationOid, int32 newOwnerSysId)
 	if (tuple_class->relkind == RELKIND_RELATION ||
 		tuple_class->relkind == RELKIND_TOASTVALUE)
 	{
-		List	   *index_oid_list,
-				   *i;
+		List	   *index_oid_list;
+		ListCell   *i;
 
 		/* Find all the indexes belonging to this relation */
 		index_oid_list = RelationGetIndexList(target_rel);
 
 		/* For each index, recursively change its ownership */
 		foreach(i, index_oid_list)
-			ATExecChangeOwner(lfirsto(i), newOwnerSysId);
+			ATExecChangeOwner(lfirst_oid(i), newOwnerSysId);
 
-		freeList(index_oid_list);
+		list_free(index_oid_list);
 	}
 
 	if (tuple_class->relkind == RELKIND_RELATION)
@@ -5362,7 +5354,7 @@ register_on_commit_action(Oid relid, OnCommitAction action)
 void
 remove_on_commit_action(Oid relid)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, on_commits)
 	{
@@ -5385,7 +5377,7 @@ remove_on_commit_action(Oid relid)
 void
 PreCommit_on_commit_actions(void)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, on_commits)
 	{
@@ -5437,40 +5429,34 @@ PreCommit_on_commit_actions(void)
 void
 AtEOXact_on_commit_actions(bool isCommit)
 {
-	List	   *l,
-			   *prev;
+	ListCell *cur_item;
+	ListCell *prev_item;
 
-	prev = NIL;
-	l = on_commits;
-	while (l != NIL)
+	prev_item = NULL;
+	cur_item = list_head(on_commits);
+
+	while (cur_item != NULL)
 	{
-		OnCommitItem *oc = (OnCommitItem *) lfirst(l);
+		OnCommitItem *oc = (OnCommitItem *) lfirst(cur_item);
 
 		if (isCommit ? oc->deleted_in_cur_xact :
 			oc->created_in_cur_xact)
 		{
-			/* This entry must be removed */
-			if (prev != NIL)
-			{
-				lnext(prev) = lnext(l);
-				pfree(l);
-				l = lnext(prev);
-			}
-			else
-			{
-				on_commits = lnext(l);
-				pfree(l);
-				l = on_commits;
-			}
+			/* cur_item must be removed */
+			on_commits = list_delete_cell(on_commits, cur_item, prev_item);
 			pfree(oc);
+			if (prev_item)
+				cur_item = lnext(prev_item);
+			else
+				cur_item = list_head(on_commits);
 		}
 		else
 		{
-			/* This entry must be preserved */
-			oc->created_in_cur_xact = false;
+			/* cur_item must be preserved */
 			oc->deleted_in_cur_xact = false;
-			prev = l;
-			l = lnext(l);
+			oc->created_in_cur_xact = false;
+			prev_item = cur_item;
+			cur_item = lnext(prev_item);
 		}
 	}
 }

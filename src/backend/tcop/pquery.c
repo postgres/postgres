@@ -8,10 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.77 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.78 2004/05/26 04:41:35 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
+
 #include "postgres.h"
 
 #include "executor/executor.h"
@@ -200,9 +201,9 @@ ChoosePortalStrategy(List *parseTrees)
 
 	strategy = PORTAL_MULTI_QUERY;		/* default assumption */
 
-	if (length(parseTrees) == 1)
+	if (list_length(parseTrees) == 1)
 	{
-		Query	   *query = (Query *) lfirst(parseTrees);
+		Query	   *query = (Query *) linitial(parseTrees);
 
 		if (query->commandType == CMD_SELECT &&
 			query->canSetTag &&
@@ -267,8 +268,8 @@ PortalStart(Portal portal, ParamListInfo params)
 			 * Create QueryDesc in portal's context; for the moment, set
 			 * the destination to None.
 			 */
-			queryDesc = CreateQueryDesc((Query *) lfirst(portal->parseTrees),
-									  (Plan *) lfirst(portal->planTrees),
+			queryDesc = CreateQueryDesc((Query *) linitial(portal->parseTrees),
+										(Plan *) linitial(portal->planTrees),
 										None_Receiver,
 										params,
 										false);
@@ -304,7 +305,7 @@ PortalStart(Portal portal, ParamListInfo params)
 			 * will take care of it.
 			 */
 			portal->tupDesc =
-				UtilityTupleDescriptor(((Query *) lfirst(portal->parseTrees))->utilityStmt);
+				UtilityTupleDescriptor(((Query *) linitial(portal->parseTrees))->utilityStmt);
 
 			/*
 			 * Reset cursor position data to "start of query"
@@ -473,7 +474,7 @@ PortalRun(Portal portal, long count,
 
 				PortalCreateHoldStore(portal);
 				treceiver = CreateDestReceiver(Tuplestore, portal);
-				PortalRunUtility(portal, lfirst(portal->parseTrees),
+				PortalRunUtility(portal, linitial(portal->parseTrees),
 								 treceiver, NULL);
 				(*treceiver->rDestroy) (treceiver);
 				portal->portalUtilReady = true;
@@ -800,8 +801,8 @@ PortalRunMulti(Portal portal,
 			   DestReceiver *dest, DestReceiver *altdest,
 			   char *completionTag)
 {
-	List	   *plantree_list = portal->planTrees;
-	List	   *querylist_item;
+	ListCell   *planlist_item = list_head(portal->planTrees);
+	ListCell   *querylist_item;
 
 	/*
 	 * If the destination is RemoteExecute, change to None.  The reason is
@@ -825,9 +826,9 @@ PortalRunMulti(Portal portal,
 	foreach(querylist_item, portal->parseTrees)
 	{
 		Query	   *query = (Query *) lfirst(querylist_item);
-		Plan	   *plan = (Plan *) lfirst(plantree_list);
+		Plan	   *plan = (Plan *) lfirst(planlist_item);
 
-		plantree_list = lnext(plantree_list);
+		planlist_item = lnext(planlist_item);
 
 		/*
 		 * If we got a cancel signal in prior command, quit
@@ -885,7 +886,7 @@ PortalRunMulti(Portal portal,
 		 * Increment command counter between queries, but not after the
 		 * last one.
 		 */
-		if (plantree_list != NIL)
+		if (planlist_item != NULL)
 			CommandCounterIncrement();
 
 		/*

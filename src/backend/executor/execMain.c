@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.231 2004/05/11 17:36:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.232 2004/05/26 04:41:14 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -353,11 +353,11 @@ ExecutorRewind(QueryDesc *queryDesc)
 void
 ExecCheckRTPerms(List *rangeTable)
 {
-	List	   *lp;
+	ListCell   *l;
 
-	foreach(lp, rangeTable)
+	foreach(l, rangeTable)
 	{
-		RangeTblEntry *rte = lfirst(lp);
+		RangeTblEntry *rte = lfirst(l);
 
 		ExecCheckRTEPerms(rte);
 	}
@@ -427,7 +427,7 @@ ExecCheckRTEPerms(RangeTblEntry *rte)
 static void
 ExecCheckXactReadOnly(Query *parsetree)
 {
-	List	   *lp;
+	ListCell   *l;
 
 	/*
 	 * CREATE TABLE AS or SELECT INTO?
@@ -438,9 +438,9 @@ ExecCheckXactReadOnly(Query *parsetree)
 		goto fail;
 
 	/* Fail if write permissions are requested on any non-temp table */
-	foreach(lp, parsetree->rtable)
+	foreach(l, parsetree->rtable)
 	{
-		RangeTblEntry *rte = lfirst(lp);
+		RangeTblEntry *rte = lfirst(l);
 
 		if (rte->rtekind == RTE_SUBQUERY)
 		{
@@ -521,20 +521,20 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 			 * Multiple result relations (due to inheritance)
 			 * parseTree->resultRelations identifies them all
 			 */
-			ResultRelInfo *resultRelInfo;
+			ResultRelInfo	*resultRelInfo;
+			ListCell		*l;
 
 			numResultRelations = length(resultRelations);
 			resultRelInfos = (ResultRelInfo *)
 				palloc(numResultRelations * sizeof(ResultRelInfo));
 			resultRelInfo = resultRelInfos;
-			while (resultRelations != NIL)
+			foreach(l, resultRelations)
 			{
 				initResultRelInfo(resultRelInfo,
-								  lfirsti(resultRelations),
+								  lfirst_int(l),
 								  rangeTable,
 								  operation);
 				resultRelInfo++;
-				resultRelations = lnext(resultRelations);
 			}
 		}
 		else
@@ -586,7 +586,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	estate->es_rowMark = NIL;
 	if (parseTree->rowMarks != NIL)
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, parseTree->rowMarks)
 		{
@@ -651,7 +651,7 @@ InitPlan(QueryDesc *queryDesc, bool explainOnly)
 	 */
 	{
 		bool		junk_filter_needed = false;
-		List	   *tlist;
+		ListCell   *tlist;
 
 		switch (operation)
 		{
@@ -950,7 +950,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 {
 	ResultRelInfo *resultRelInfo;
 	int			i;
-	List	   *l;
+	ListCell   *l;
 
 	/*
 	 * shut down any PlanQual processing we were doing
@@ -1132,7 +1132,7 @@ lnext:	;
 			}
 			else if (estate->es_rowMark != NIL)
 			{
-				List	   *l;
+				ListCell   *l;
 
 		lmark:	;
 				foreach(l, estate->es_rowMark)
@@ -1785,7 +1785,7 @@ EvalPlanQual(EState *estate, Index rti, ItemPointer tid)
 		relation = estate->es_result_relation_info->ri_RelationDesc;
 	else
 	{
-		List	   *l;
+		ListCell   *l;
 
 		relation = NULL;
 		foreach(l, estate->es_rowMark)

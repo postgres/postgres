@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.67 2004/03/08 17:20:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/joinrels.c,v 1.68 2004/05/26 04:41:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,10 +20,10 @@
 
 static List *make_rels_by_clause_joins(Query *root,
 						  RelOptInfo *old_rel,
-						  List *other_rels);
+						  ListCell *other_rels);
 static List *make_rels_by_clauseless_joins(Query *root,
 							  RelOptInfo *old_rel,
-							  List *other_rels);
+							  ListCell *other_rels);
 static bool is_inside_IN(Query *root, RelOptInfo *rel);
 
 
@@ -43,8 +43,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 {
 	List	   *result_rels = NIL;
 	List	   *new_rels;
-	List	   *nr;
-	List	   *r;
+	ListCell   *nr;
+	ListCell   *r;
 	int			k;
 
 	/*
@@ -64,13 +64,13 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 	foreach(r, joinrels[level - 1])
 	{
 		RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
-		List	   *other_rels;
+		ListCell   *other_rels;
 
 		if (level == 2)
 			other_rels = lnext(r);		/* only consider remaining initial
 										 * rels */
 		else
-			other_rels = joinrels[1];	/* consider all initial rels */
+			other_rels = list_head(joinrels[1]);	/* consider all initial rels */
 
 		if (old_rel->joininfo != NIL)
 		{
@@ -149,8 +149,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 		foreach(r, joinrels[k])
 		{
 			RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
-			List	   *other_rels;
-			List	   *r2;
+			ListCell   *other_rels;
+			ListCell   *r2;
 
 			if (old_rel->joininfo == NIL)
 				continue;		/* we ignore clauseless joins here */
@@ -158,15 +158,15 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 			if (k == other_level)
 				other_rels = lnext(r);	/* only consider remaining rels */
 			else
-				other_rels = joinrels[other_level];
+				other_rels = list_head(joinrels[other_level]);
 
-			foreach(r2, other_rels)
+			for_each_cell(r2, other_rels)
 			{
 				RelOptInfo *new_rel = (RelOptInfo *) lfirst(r2);
 
 				if (!bms_overlap(old_rel->relids, new_rel->relids))
 				{
-					List	   *i;
+					ListCell   *i;
 
 					/*
 					 * OK, we can build a rel of the right level from this
@@ -217,14 +217,14 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 		foreach(r, joinrels[level - 1])
 		{
 			RelOptInfo *old_rel = (RelOptInfo *) lfirst(r);
-			List	   *other_rels;
+			ListCell   *other_rels;
 
 			if (level == 2)
 				other_rels = lnext(r);	/* only consider remaining initial
 										 * rels */
 			else
-				other_rels = joinrels[1];		/* consider all initial
-												 * rels */
+				other_rels = list_head(joinrels[1]); /* consider all initial
+													  * rels */
 
 			new_rels = make_rels_by_clauseless_joins(root,
 													 old_rel,
@@ -271,7 +271,8 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
  *	  The join rel nodes are returned in a list.
  *
  * 'old_rel' is the relation entry for the relation to be joined
- * 'other_rels': other rels to be considered for joining
+ * 'other_rels': the first cell in a linked list containing the other
+ * rels to be considered for joining
  *
  * Currently, this is only used with initial rels in other_rels, but it
  * will work for joining to joinrels too, if the caller ensures there is no
@@ -282,10 +283,10 @@ make_rels_by_joins(Query *root, int level, List **joinrels)
 static List *
 make_rels_by_clause_joins(Query *root,
 						  RelOptInfo *old_rel,
-						  List *other_rels)
+						  ListCell *other_rels)
 {
 	List	   *result = NIL;
-	List	   *i,
+	ListCell   *i,
 			   *j;
 
 	foreach(i, old_rel->joininfo)
@@ -293,7 +294,7 @@ make_rels_by_clause_joins(Query *root,
 		JoinInfo   *joininfo = (JoinInfo *) lfirst(i);
 		Relids		unjoined_relids = joininfo->unjoined_relids;
 
-		foreach(j, other_rels)
+		for_each_cell(j, other_rels)
 		{
 			RelOptInfo *other_rel = (RelOptInfo *) lfirst(j);
 
@@ -324,7 +325,8 @@ make_rels_by_clause_joins(Query *root,
  *	  The join rel nodes are returned in a list.
  *
  * 'old_rel' is the relation entry for the relation to be joined
- * 'other_rels': other rels to be considered for joining
+ * 'other_rels': the first cell of a linked list containing the
+ * other rels to be considered for joining
  *
  * Currently, this is only used with initial rels in other_rels, but it would
  * work for joining to joinrels too.
@@ -332,12 +334,12 @@ make_rels_by_clause_joins(Query *root,
 static List *
 make_rels_by_clauseless_joins(Query *root,
 							  RelOptInfo *old_rel,
-							  List *other_rels)
+							  ListCell *other_rels)
 {
 	List	   *result = NIL;
-	List	   *i;
+	ListCell   *i;
 
-	foreach(i, other_rels)
+	for_each_cell(i, other_rels)
 	{
 		RelOptInfo *other_rel = (RelOptInfo *) lfirst(i);
 
@@ -370,11 +372,11 @@ make_rels_by_clauseless_joins(Query *root,
 static bool
 is_inside_IN(Query *root, RelOptInfo *rel)
 {
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, root->in_info_list)
+	foreach(l, root->in_info_list)
 	{
-		InClauseInfo *ininfo = (InClauseInfo *) lfirst(i);
+		InClauseInfo *ininfo = (InClauseInfo *) lfirst(l);
 
 		if (bms_is_subset(rel->relids, ininfo->righthand))
 			return true;
@@ -476,7 +478,7 @@ make_join_rel(Query *root, RelOptInfo *rel1, RelOptInfo *rel2,
 	 */
 	if (jointype == JOIN_INNER)
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, root->in_info_list)
 		{

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.30 2004/01/22 02:23:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execScan.c,v 1.31 2004/05/26 04:41:15 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -195,6 +195,7 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 	int			numattrs = tupdesc->natts;
 	int			attrno;
 	bool		hasoid;
+	ListCell   *tlist_item = list_head(tlist);
 
 	/* Check the tlist attributes */
 	for (attrno = 1; attrno <= numattrs; attrno++)
@@ -202,9 +203,9 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 		Form_pg_attribute att_tup = tupdesc->attrs[attrno - 1];
 		Var		   *var;
 
-		if (tlist == NIL)
+		if (tlist_item == NULL)
 			return false;		/* tlist too short */
-		var = (Var *) ((TargetEntry *) lfirst(tlist))->expr;
+		var = (Var *) ((TargetEntry *) lfirst(tlist_item))->expr;
 		if (!var || !IsA(var, Var))
 			return false;		/* tlist item not a Var */
 		Assert(var->varno == varno);
@@ -216,10 +217,10 @@ tlist_matches_tupdesc(PlanState *ps, List *tlist, Index varno, TupleDesc tupdesc
 		Assert(var->vartype == att_tup->atttypid);
 		Assert(var->vartypmod == att_tup->atttypmod);
 
-		tlist = lnext(tlist);
+		tlist_item = lnext(tlist_item);
 	}
 
-	if (tlist)
+	if (tlist_item)
 		return false;			/* tlist too long */
 
 	/*

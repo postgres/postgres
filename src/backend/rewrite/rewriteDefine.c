@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.94 2004/05/18 22:49:51 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteDefine.c,v 1.95 2004/05/26 04:41:33 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -167,7 +167,7 @@ InsertRule(char *rulname,
 	if (event_qual != NULL)
 	{
 		/* Find query containing OLD/NEW rtable entries */
-		Query	   *qry = (Query *) lfirst(action);
+		Query	   *qry = (Query *) linitial(action);
 
 		qry = getInsertSelectQuery(qry, NULL);
 		recordDependencyOnExpr(&myself, event_qual, qry->rtable,
@@ -193,7 +193,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	Oid			ruleId;
 	int			event_attno;
 	Oid			event_attype;
-	List	   *l;
+	ListCell   *l;
 	Query	   *query;
 	AclResult	aclresult;
 	bool		RelisBecomingView = false;
@@ -245,7 +245,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	if (event_type == CMD_SELECT)
 	{
-		List	   *tllist;
+		ListCell	   *tllist;
 		int			i;
 
 		/*
@@ -268,7 +268,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 		/*
 		 * ... the one action must be a SELECT, ...
 		 */
-		query = (Query *) lfirst(action);
+		query = (Query *) linitial(action);
 		if (!is_instead || query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
@@ -509,7 +509,7 @@ DefineQueryRewrite(RuleStmt *stmt)
 static void
 setRuleCheckAsUser_Query(Query *qry, AclId userid)
 {
-	List	   *l;
+	ListCell   *l;
 
 	/* Set all the RTEs in this query node */
 	foreach(l, qry->rtable)

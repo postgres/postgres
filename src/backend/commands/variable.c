@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.96 2004/05/23 23:12:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.97 2004/05/26 04:41:13 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 	char	   *rawstring;
 	char	   *result;
 	List	   *elemlist;
-	List	   *l;
+	ListCell   *l;
 
 	/* Need a modifiable copy of string */
 	rawstring = pstrdup(value);
@@ -58,7 +58,7 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 	{
 		/* syntax error in list */
 		pfree(rawstring);
-		freeList(elemlist);
+		list_free(elemlist);
 		if (source >= PGC_S_INTERACTIVE)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_PARAMETER_VALUE),
@@ -159,7 +159,7 @@ assign_datestyle(const char *value, bool doit, GucSource source)
 		ok = false;
 
 	pfree(rawstring);
-	freeList(elemlist);
+	list_free(elemlist);
 
 	if (!ok)
 	{

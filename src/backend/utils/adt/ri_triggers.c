@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.67 2004/02/03 17:34:03 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.68 2004/05/26 04:41:38 neilc Exp $
  *
  * ----------
  */
@@ -2571,8 +2571,8 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 	char		attname[MAX_QUOTED_NAME_LEN];
 	char		fkattname[MAX_QUOTED_NAME_LEN];
 	const char *sep;
-	List		*list;
-	List		*list2;
+	ListCell	*l;
+	ListCell	*l2;
 	int			old_work_mem;
 	char		workmembuf[32];
 	int			spi_result;
@@ -2605,9 +2605,9 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 
 	sprintf(querystr, "SELECT ");
 	sep="";
-	foreach(list, fkconstraint->fk_attrs)
+	foreach(l, fkconstraint->fk_attrs)
 	{
-		quoteOneName(attname, strVal(lfirst(list)));
+		quoteOneName(attname, strVal(lfirst(l)));
 		snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr),
 				 "%sfk.%s", sep, attname);
 		sep = ", ";
@@ -2620,12 +2620,10 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 			 relname, pkrelname);
 
 	sep="";
-	for (list=fkconstraint->pk_attrs, list2=fkconstraint->fk_attrs; 
-		 list != NIL && list2 != NIL; 
-		 list=lnext(list), list2=lnext(list2))
+	forboth(l, fkconstraint->pk_attrs, l2, fkconstraint->fk_attrs)
 	{
-		quoteOneName(attname, strVal(lfirst(list)));
-		quoteOneName(fkattname, strVal(lfirst(list2)));
+		quoteOneName(attname, strVal(lfirst(l)));
+		quoteOneName(fkattname, strVal(lfirst(l2)));
 		snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr),
 				 "%spk.%s=fk.%s",
 				 sep, attname, fkattname);
@@ -2635,14 +2633,14 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 	 * It's sufficient to test any one pk attribute for null to detect a
 	 * join failure.
 	 */
-	quoteOneName(attname, strVal(lfirst(fkconstraint->pk_attrs)));
+	quoteOneName(attname, strVal(linitial(fkconstraint->pk_attrs)));
 	snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr),
 			 ") WHERE pk.%s IS NULL AND (", attname);
 
 	sep="";
-	foreach(list, fkconstraint->fk_attrs)
+	foreach(l, fkconstraint->fk_attrs)
 	{
-		quoteOneName(attname, strVal(lfirst(list)));
+		quoteOneName(attname, strVal(lfirst(l)));
 		snprintf(querystr + strlen(querystr), sizeof(querystr) - strlen(querystr),
 				 "%sfk.%s IS NOT NULL",
 				 sep, attname);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.170 2004/05/10 22:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_expr.c,v 1.171 2004/05/26 04:41:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,7 +100,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				int			paramno = pref->number;
 				ParseState *toppstate;
 				Param	   *param;
-				List	   *fields;
+				ListCell   *fields;
 
 				/*
 				 * Find topmost ParseState, which is where paramtype info
@@ -176,7 +176,7 @@ transformExpr(ParseState *pstate, Node *expr)
 		case T_ExprFieldSelect:
 			{
 				ExprFieldSelect *efs = (ExprFieldSelect *) expr;
-				List	   *fields;
+				ListCell	    *fields;
 
 				result = transformExpr(pstate, efs->arg);
 				/* handle qualification, if any */
@@ -219,7 +219,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 */
 							if (Transform_null_equals &&
 								length(a->name) == 1 &&
-							 strcmp(strVal(lfirst(a->name)), "=") == 0 &&
+								strcmp(strVal(linitial(a->name)), "=") == 0 &&
 								(exprIsNullConstant(lexpr) ||
 								 exprIsNullConstant(rexpr)))
 							{
@@ -396,7 +396,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 * Checking an expression for match to type.
 							 * Will result in a boolean constant node.
 							 */
-							List	   *telem;
+							ListCell   *telem;
 							A_Const    *n;
 							Oid			ltype,
 										rtype;
@@ -418,7 +418,7 @@ transformExpr(ParseState *pstate, Node *expr)
 							 * Flip the sense of the result for not
 							 * equals.
 							 */
-							if (strcmp(strVal(lfirst(a->name)), "!=") == 0)
+							if (strcmp(strVal(linitial(a->name)), "!=") == 0)
 								matched = (!matched);
 
 							n = makeNode(A_Const);
@@ -436,12 +436,15 @@ transformExpr(ParseState *pstate, Node *expr)
 			{
 				FuncCall   *fn = (FuncCall *) expr;
 				List	   *targs;
-				List	   *args;
+				ListCell   *args;
 
 				/*
 				 * Transform the list of arguments.  We use a shallow list
 				 * copy and then transform-in-place to avoid O(N^2)
 				 * behavior from repeated lappend's.
+				 *
+				 * XXX: repeated lappend() would no longer result in
+				 * O(n^2) behavior; worth reconsidering this design?
 				 */
 				targs = listCopy(fn->args);
 				foreach(args, targs)
@@ -473,7 +476,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				qtrees = parse_sub_analyze(sublink->subselect, pstate);
 				if (length(qtrees) != 1)
 					elog(ERROR, "bad query in sub-select");
-				qtree = (Query *) lfirst(qtrees);
+				qtree = (Query *) linitial(qtrees);
 				if (qtree->commandType != CMD_SELECT ||
 					qtree->resultRelation != 0)
 					elog(ERROR, "bad query in sub-select");
@@ -493,20 +496,20 @@ transformExpr(ParseState *pstate, Node *expr)
 				else if (sublink->subLinkType == EXPR_SUBLINK ||
 						 sublink->subLinkType == ARRAY_SUBLINK)
 				{
-					List	   *tlist = qtree->targetList;
+					ListCell   *tlist_item = list_head(qtree->targetList);
 
 					/*
 					 * Make sure the subselect delivers a single column
 					 * (ignoring resjunk targets).
 					 */
-					if (tlist == NIL ||
-						((TargetEntry *) lfirst(tlist))->resdom->resjunk)
+					if (tlist_item == NULL ||
+						((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("subquery must return a column")));
-					while ((tlist = lnext(tlist)) != NIL)
+					while ((tlist_item = lnext(tlist_item)) != NULL)
 					{
-						if (!((TargetEntry *) lfirst(tlist))->resdom->resjunk)
+						if (!((TargetEntry *) lfirst(tlist_item))->resdom->resjunk)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 									 errmsg("subquery must return only one column")));
@@ -531,11 +534,12 @@ transformExpr(ParseState *pstate, Node *expr)
 					bool		needNot = false;
 					List	   *op = sublink->operName;
 					char	   *opname = strVal(llast(op));
-					List	   *elist;
+					ListCell   *l;
+					ListCell   *ll_item;
 
 					/* transform lefthand expressions */
-					foreach(elist, left_list)
-						lfirst(elist) = transformExpr(pstate, lfirst(elist));
+					foreach(l, left_list)
+						lfirst(l) = transformExpr(pstate, lfirst(l));
 
 					/*
 					 * If the expression is "<> ALL" (with unqualified
@@ -578,23 +582,23 @@ transformExpr(ParseState *pstate, Node *expr)
 					 */
 					sublink->operOids = NIL;
 
-					while (right_list != NIL)
+					ll_item = list_head(left_list);
+					foreach(l, right_list)
 					{
-						TargetEntry *tent = (TargetEntry *) lfirst(right_list);
+						TargetEntry *tent = (TargetEntry *) lfirst(l);
 						Node	   *lexpr;
 						Operator	optup;
 						Form_pg_operator opform;
 
-						right_list = lnext(right_list);
 						if (tent->resdom->resjunk)
 							continue;
 
-						if (left_list == NIL)
+						if (ll_item == NULL)
 							ereport(ERROR,
 									(errcode(ERRCODE_SYNTAX_ERROR),
 							 errmsg("subquery has too many columns")));
-						lexpr = lfirst(left_list);
-						left_list = lnext(left_list);
+						lexpr = lfirst(ll_item);
+						ll_item = lnext(ll_item);
 
 						/*
 						 * It's OK to use oper() not compatible_oper()
@@ -627,7 +631,7 @@ transformExpr(ParseState *pstate, Node *expr)
 
 						ReleaseSysCache(optup);
 					}
-					if (left_list != NIL)
+					if (ll_item != NULL)
 						ereport(ERROR,
 								(errcode(ERRCODE_SYNTAX_ERROR),
 							  errmsg("subquery has too few columns")));
@@ -651,7 +655,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				CaseTestExpr *placeholder;
 				List	   *newargs;
 				List	   *typeids;
-				List	   *args;
+				ListCell   *l;
 				Node	   *defresult;
 				Oid			ptype;
 
@@ -679,9 +683,9 @@ transformExpr(ParseState *pstate, Node *expr)
 				/* transform the list of arguments */
 				newargs = NIL;
 				typeids = NIL;
-				foreach(args, c->args)
+				foreach(l, c->args)
 				{
-					CaseWhen   *w = (CaseWhen *) lfirst(args);
+					CaseWhen   *w = (CaseWhen *) lfirst(l);
 					CaseWhen   *neww = makeNode(CaseWhen);
 					Node	   *warg;
 
@@ -741,9 +745,9 @@ transformExpr(ParseState *pstate, Node *expr)
 										  "CASE/ELSE");
 
 				/* Convert when-clause results, if necessary */
-				foreach(args, newc->args)
+				foreach(l, newc->args)
 				{
-					CaseWhen   *w = (CaseWhen *) lfirst(args);
+					CaseWhen   *w = (CaseWhen *) lfirst(l);
 
 					w->result = (Expr *)
 						coerce_to_common_type(pstate,
@@ -763,7 +767,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				List	   *newelems = NIL;
 				List	   *newcoercedelems = NIL;
 				List	   *typeids = NIL;
-				List	   *element;
+				ListCell   *element;
 				Oid			array_type;
 				Oid			element_type;
 
@@ -827,7 +831,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				RowExpr	   *r = (RowExpr *) expr;
 				RowExpr	   *newr = makeNode(RowExpr);
 				List	   *newargs = NIL;
-				List	   *arg;
+				ListCell   *arg;
 
 				/* Transform the field expressions */
 				foreach(arg, r->args)
@@ -855,7 +859,7 @@ transformExpr(ParseState *pstate, Node *expr)
 				List	   *newargs = NIL;
 				List	   *newcoercedargs = NIL;
 				List	   *typeids = NIL;
-				List	   *args;
+				ListCell   *args;
 
 				foreach(args, c->args)
 				{
@@ -1024,7 +1028,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 	{
 		case 1:
 			{
-				char	   *name = strVal(lfirst(cref->fields));
+				char	   *name = strVal(linitial(cref->fields));
 
 				/* Try to identify as an unqualified column */
 				node = colNameToVar(pstate, name, false);
@@ -1070,7 +1074,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 2:
 			{
-				char	   *name1 = strVal(lfirst(cref->fields));
+				char	   *name1 = strVal(linitial(cref->fields));
 				char	   *name2 = strVal(lsecond(cref->fields));
 
 				/* Whole-row reference? */
@@ -1099,7 +1103,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 3:
 			{
-				char	   *name1 = strVal(lfirst(cref->fields));
+				char	   *name1 = strVal(linitial(cref->fields));
 				char	   *name2 = strVal(lsecond(cref->fields));
 				char	   *name3 = strVal(lthird(cref->fields));
 
@@ -1125,7 +1129,7 @@ transformColumnRef(ParseState *pstate, ColumnRef *cref)
 			}
 		case 4:
 			{
-				char	   *name1 = strVal(lfirst(cref->fields));
+				char	   *name1 = strVal(linitial(cref->fields));
 				char	   *name2 = strVal(lsecond(cref->fields));
 				char	   *name3 = strVal(lthird(cref->fields));
 				char	   *name4 = strVal(lfourth(cref->fields));
@@ -1316,7 +1320,7 @@ exprType(Node *expr)
 
 					if (!qtree || !IsA(qtree, Query))
 						elog(ERROR, "cannot get type for untransformed sublink");
-					tent = (TargetEntry *) lfirst(qtree->targetList);
+					tent = (TargetEntry *) linitial(qtree->targetList);
 					Assert(IsA(tent, TargetEntry));
 					Assert(!tent->resdom->resjunk);
 					if (sublink->subLinkType == EXPR_SUBLINK)
@@ -1355,7 +1359,7 @@ exprType(Node *expr)
 					/* get the type of the subselect's first target column */
 					TargetEntry *tent;
 
-					tent = (TargetEntry *) lfirst(subplan->plan->targetlist);
+					tent = (TargetEntry *) linitial(subplan->plan->targetlist);
 					Assert(IsA(tent, TargetEntry));
 					Assert(!tent->resdom->resjunk);
 					if (subplan->subLinkType == EXPR_SUBLINK)
@@ -1403,7 +1407,7 @@ exprType(Node *expr)
 			type = ((CoalesceExpr *) expr)->coalescetype;
 			break;
 		case T_NullIfExpr:
-			type = exprType((Node *) lfirst(((NullIfExpr *) expr)->args));
+			type = exprType((Node *) linitial(((NullIfExpr *) expr)->args));
 			break;
 		case T_NullTest:
 			type = BOOLOID;
@@ -1481,7 +1485,7 @@ exprTypmod(Node *expr)
 				CaseExpr   *cexpr = (CaseExpr *) expr;
 				Oid			casetype = cexpr->casetype;
 				int32		typmod;
-				List	   *arg;
+				ListCell   *arg;
 
 				if (!cexpr->defresult)
 					return -1;
@@ -1514,9 +1518,9 @@ exprTypmod(Node *expr)
 				CoalesceExpr *cexpr = (CoalesceExpr *) expr;
 				Oid			coalescetype = cexpr->coalescetype;
 				int32		typmod;
-				List	   *arg;
+				ListCell   *arg;
 
-				typmod = exprTypmod((Node *) lfirst(cexpr->args));
+				typmod = exprTypmod((Node *) linitial(cexpr->args));
 				foreach(arg, cexpr->args)
 				{
 					Node	   *e = (Node *) lfirst(arg);
@@ -1533,7 +1537,7 @@ exprTypmod(Node *expr)
 			{
 				NullIfExpr *nexpr = (NullIfExpr *) expr;
 
-				return exprTypmod((Node *) lfirst(nexpr->args));
+				return exprTypmod((Node *) linitial(nexpr->args));
 			}
 			break;
 		case T_CoerceToDomain:
@@ -1644,8 +1648,8 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 			   *rrow;
 	List	   *largs,
 			   *rargs;
-	List	   *largl,
-			   *rargl;
+	ListCell   *l,
+			   *r;
 	char	   *oprname;
 	BoolExprType boolop;
 
@@ -1690,15 +1694,12 @@ make_row_op(ParseState *pstate, List *opname, Node *ltree, Node *rtree)
 		boolop = 0;			/* keep compiler quiet */
 	}
 
-	/* XXX use forboth */
-	rargl = rargs;
-	foreach(largl, largs)
+	forboth(l, largs, r, rargs)
 	{
-		Node	*larg = (Node *) lfirst(largl);
-		Node	*rarg = (Node *) lfirst(rargl);
+		Node	*larg = (Node *) lfirst(l);
+		Node	*rarg = (Node *) lfirst(r);
 		Node	*cmp;
 
-		rargl = lnext(rargl);
 		cmp = (Node *) make_op(pstate, opname, larg, rarg);
 		cmp = coerce_to_boolean(pstate, cmp, "row comparison");
 		if (result == NULL)
@@ -1732,8 +1733,8 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 			   *rrow;
 	List	   *largs,
 			   *rargs;
-	List	   *largl,
-			   *rargl;
+	ListCell   *l,
+			   *r;
 
 	/* Inputs are untransformed RowExprs */
 	lrow = (RowExpr *) transformExpr(pstate, ltree);
@@ -1748,15 +1749,12 @@ make_row_distinct_op(ParseState *pstate, List *opname,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("unequal number of entries in row expression")));
 
-	/* XXX use forboth */
-	rargl = rargs;
-	foreach(largl, largs)
+	forboth(l, largs, r, rargs)
 	{
-		Node	*larg = (Node *) lfirst(largl);
-		Node	*rarg = (Node *) lfirst(rargl);
+		Node	*larg = (Node *) lfirst(l);
+		Node	*rarg = (Node *) lfirst(r);
 		Node	*cmp;
 
-		rargl = lnext(rargl);
 		cmp = (Node *) make_distinct_op(pstate, opname, larg, rarg);
 		if (result == NULL)
 			result = cmp;

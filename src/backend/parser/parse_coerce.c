@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.115 2004/05/10 22:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_coerce.c,v 2.116 2004/05/26 04:41:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -546,7 +546,7 @@ coerce_record_to_complex(ParseState *pstate, Node *node,
 	List	   *args = NIL;
 	List	   *newargs;
 	int			i;
-	List	   *arg;
+	ListCell   *arg;
 
 	if (node && IsA(node, RowExpr))
 	{
@@ -720,14 +720,15 @@ select_common_type(List *typeids, const char *context)
 {
 	Oid			ptype;
 	CATEGORY	pcategory;
-	List	   *l;
+	ListCell   *type_item;
 
 	Assert(typeids != NIL);
-	ptype = getBaseType(lfirsto(typeids));
+	ptype = getBaseType(linitial_oid(typeids));
 	pcategory = TypeCategory(ptype);
-	foreach(l, lnext(typeids))
+
+	for_each_cell(type_item, lnext(list_head(typeids)))
 	{
-		Oid			ntype = getBaseType(lfirsto(l));
+		Oid			ntype = getBaseType(lfirsto(type_item));
 
 		/* move on to next one if no new information... */
 		if ((ntype != InvalidOid) && (ntype != UNKNOWNOID) && (ntype != ptype))
@@ -746,7 +747,6 @@ select_common_type(List *typeids, const char *context)
 				 */
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
-
 				/*
 				 * translator: first %s is name of a SQL construct, eg
 				 * CASE

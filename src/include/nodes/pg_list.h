@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.43 2004/01/07 18:43:36 neilc Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/pg_list.h,v 1.44 2004/05/26 04:41:45 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,140 +16,324 @@
 
 #include "nodes/nodes.h"
 
-/* ----------------------------------------------------------------
- *						node definitions
- * ----------------------------------------------------------------
+/*
+ * As a temporary measure, enable the compatibility API unless the
+ * include site specifically disabled it. Once the rest of the source
+ * tree has been converted to the new API, this will be removed.
  */
+#ifndef DISABLE_LIST_COMPAT
+#define ENABLE_LIST_COMPAT
+#endif
 
-/*----------------------
- *		List node
+/*
+ * This package implements singly-linked homogeneous lists. It is
+ * important to have constant-time length, append, and prepend
+ * operations. To achieve this, we deal with two distinct data
+ * structures:
+ *
+ *		1. A set of "list cells": each cell contains a data field and
+ *		   a link to the next cell in the list or NULL.
+ *		2. A single structure containing metadata about the list: the
+ *		   type of the list, pointers to the head and tail cells, and
+ *		   the length of the list.
  *
  * We support three types of lists:
- *	lists of pointers (in practice always pointers to Nodes, but declare as
- *		"void *" to minimize casting annoyances)
- *	lists of integers
- *	lists of Oids
  *
- * (At this writing, ints and Oids are the same size, but they may not always
- * be so; try to be careful to maintain the distinction.)
- *----------------------
+ *	T_List: lists of pointers
+ *      (in practice usually pointers to Nodes, but not always;
+ *      declared as "void *" to minimize casting annoyances)
+ *	T_IntList: lists of integers
+ *	T_OidList: lists of Oids
+ *
+ * (At the moment, ints and Oids are the same size, but they may not
+ * always be so; try to be careful to maintain the distinction.)
  */
-typedef struct List
+
+#define LIST_CELL_TYPE ListCell
+
+typedef struct ListCell ListCell;
+typedef struct List List;
+
+struct List
 {
-	NodeTag		type;
+	NodeTag		 type;	/* T_List, T_IntList, or T_OidList */
+	int			 length;
+	ListCell *head;
+	ListCell *tail;
+};
+
+struct ListCell
+{
 	union
 	{
-		void	   *ptr_value;
-		int			int_value;
-		Oid			oid_value;
-	}			elem;
-	struct List *next;
-} List;
+		void	*ptr_value;
+		int		 int_value;
+		Oid		 oid_value;
+	} data;
+	ListCell *next;
+};
 
-#define    NIL			((List *) NULL)
+/*
+ * The *only* valid representation of an empty list is NIL; in other
+ * words, a non-NIL list is guaranteed to have length >= 1 and
+ * head/tail != NULL
+ */
+#define NIL						((List *) NULL)
 
-/* ----------------
- *		accessor macros
- *
- * The general naming convention is that the base name xyz() is for the
- * pointer version, xyzi() is for integers, xyzo() is for Oids.  We don't
- * bother with multiple names if the same routine can handle all cases.
- * ----------------
+/*
+ * These routines are used frequently. However, we can't implement
+ * them as macros, since we want to avoid double-evaluation of macro
+ * arguments. Therefore, we implement them using GCC inline functions,
+ * and as regular functions with non-GCC compilers.
+ */
+#ifdef __GNUC__
+
+static __inline__ ListCell *
+list_head(List *l)
+{
+	return l ? l->head : NULL;
+}
+
+static __inline__ ListCell *
+list_tail(List *l)
+{
+	return l ? l->tail : NULL;
+}
+
+static __inline__ int
+list_length(List *l)
+{
+	return l ? l->length : 0;
+}
+
+#else
+
+extern ListCell *list_head(List *l);
+extern ListCell *list_tail(List *l);
+extern int list_length(List *l);
+
+#endif /* __GNUC__ */
+
+/*
+ * NB: There is an unfortunate legacy from a previous incarnation of
+ * the List API: the macro lfirst() was used to mean "the data in this
+ * cons cell". To avoid changing every usage of lfirst(), that meaning
+ * has been kept. As a result, lfirst() takes a ListCell and returns
+ * the data it contains; to get the data in the _first_ cell of a
+ * List, use linitial(). Worse, lsecond() is more closely related to
+ * linitial() than lfirst(): given a List, lsecond() returns the data
+ * in the second cons cell.
  */
 
-#define lfirst(l)								((l)->elem.ptr_value)
-#define lfirsti(l)								((l)->elem.int_value)
-#define lfirsto(l)								((l)->elem.oid_value)
+#define lnext(lc)				((lc)->next)
+#define lfirst(lc)				((lc)->data.ptr_value)
+#define lfirst_int(lc)			((lc)->data.int_value)
+#define lfirst_oid(lc)			((lc)->data.oid_value)
 
-#define lnext(l)								((l)->next)
+#define linitial(l)				lfirst(list_head(l))
+#define linitial_int(l)			lfirst_int(list_head(l))
+#define linitial_oid(l)			lfirst_oid(list_head(l))
 
-#define lsecond(l)								lfirst(lnext(l))
+#define lsecond(l)				lfirst(lnext(list_head(l)))
+#define lsecond_int(l)			lfirst_int(lnext(list_head(l)))
+#define lsecond_oid(l)			lfirst_oid(lnext(list_head(l)))
 
-#define lthird(l)								lfirst(lnext(lnext(l)))
+#define lthird(l)				lfirst(lnext(lnext(list_head(l))))
+#define lthird_int(l)			lfirst_int(lnext(lnext(list_head(l))))
+#define lthird_oid(l)			lfirst_oid(lnext(lnext(list_head(l))))
 
-#define lfourth(l)								lfirst(lnext(lnext(lnext(l))))
+#define lfourth(l)				lfirst(lnext(lnext(lnext(list_head(l)))))
+#define lfourth_int(l)			lfirst_int(lnext(lnext(lnext(list_head(l)))))
+#define lfourth_oid(l)			lfirst_oid(lnext(lnext(lnext(list_head(l)))))
+
+/*
+ * Convenience macros for building fixed-length lists
+ */
+#define list_make1(x1)				lcons(x1, NIL)
+#define list_make2(x1,x2)			lcons(x1, list_make1(x2))
+#define list_make3(x1,x2,x3)		lcons(x1, list_make2(x2, x3))
+#define list_make4(x1,x2,x3,x4)		lcons(x1, list_make3(x2, x3, x4))
+
+#define list_make1_int(x1)			lcons_int(x1, NIL)
+#define list_make2_int(x1,x2)		lcons_int(x1, list_make1_int(x2))
+#define list_make3_int(x1,x2,x3)	lcons_int(x1, list_make2_int(x2, x3))
+#define list_make4_int(x1,x2,x3,x4)	lcons_int(x1, list_make3_int(x2, x3, x4))
+
+#define list_make1_oid(x1)			lcons_oid(x1, NIL)
+#define list_make2_oid(x1,x2)		lcons_oid(x1, list_make1_oid(x2))
+#define list_make3_oid(x1,x2,x3)	lcons_oid(x1, list_make2_oid(x2, x3))
+#define list_make4_oid(x1,x2,x3,x4)	lcons_oid(x1, list_make3_oid(x2, x3, x4))
 
 /*
  * foreach -
  *	  a convenience macro which loops through the list
  */
-#define foreach(_elt_,_list_)	\
-	for (_elt_ = (_list_); _elt_ != NIL; _elt_ = lnext(_elt_))
+#define foreach(cell, l)	\
+	for ((cell) = list_head(l); (cell) != NULL; (cell) = lnext(cell))
 
 /*
- * Convenience macros for building fixed-length lists
+ * for_each_cell -
+ *	  a convenience macro which loops through a list starting from a
+ *	  specified cell
  */
-#define makeList1(x1)				lcons(x1, NIL)
-#define makeList2(x1,x2)			lcons(x1, makeList1(x2))
-#define makeList3(x1,x2,x3)			lcons(x1, makeList2(x2,x3))
-#define makeList4(x1,x2,x3,x4)		lcons(x1, makeList3(x2,x3,x4))
-
-#define makeListi1(x1)				lconsi(x1, NIL)
-#define makeListi2(x1,x2)			lconsi(x1, makeListi1(x2))
-
-#define makeListo1(x1)				lconso(x1, NIL)
-#define makeListo2(x1,x2)			lconso(x1, makeListo1(x2))
+#define for_each_cell(cell, l)	\
+	for ((cell) = (l); (cell) != NULL; (cell) = lnext(cell))
 
 /*
- * FastList is an optimization for building large lists.  The conventional
- * way to build a list is repeated lappend() operations, but that is O(N^2)
- * in the number of list items, which gets tedious for large lists.
- *
- * Note: there are some hacks in gram.y that rely on the head pointer (the
- * value-as-list) being the first field.
+ * forboth -
+ *    a convenience macro for advancing through two linked lists
+ *    simultaneously. This macro loops through both lists at the same
+ *    time, stopping when either list runs out of elements. Depending
+ *    on the requirements of the call site, it may also be wise to
+ *    ensure that the lengths of the two lists are equal.
+ */
+#define forboth(cell1, list1, cell2, list2)							\
+	for ((cell1) = list_head(list1), (cell2) = list_head(list2);	\
+		 (cell1) != NULL && (cell2) != NULL;						\
+		 (cell1) = lnext(cell1), (cell2) = lnext(cell2))
+
+extern List *lappend(List *list, void *datum);
+extern List *lappend_int(List *list, int datum);
+extern List *lappend_oid(List *list, Oid datum);
+
+extern ListCell *lappend_cell(List *list, ListCell *prev, void *datum);
+extern ListCell *lappend_cell_int(List *list, ListCell *prev, int datum);
+extern ListCell *lappend_cell_oid(List *list, ListCell *prev, Oid datum);
+
+extern List *lcons(void *datum, List *list);
+extern List *lcons_int(int datum, List *list);
+extern List *lcons_oid(Oid datum, List *list);
+
+extern List *list_concat(List *list1, List *list2);
+extern List *list_truncate(List *list, int new_size);
+
+extern void *list_nth(List *list, int n);
+extern int list_nth_int(List *list, int n);
+extern Oid list_nth_oid(List *list, int n);
+
+extern bool list_member(List *list, void *datum);
+extern bool list_member_ptr(List *list, void *datum);
+extern bool list_member_int(List *list, int datum);
+extern bool list_member_oid(List *list, Oid datum);
+
+extern List *list_delete(List *list, void *datum);
+extern List *list_delete_ptr(List *list, void *datum);
+extern List *list_delete_int(List *list, int datum);
+extern List *list_delete_oid(List *list, Oid datum);
+extern List *list_delete_first(List *list);
+extern List *list_delete_cell(List *list, ListCell *cell, ListCell *prev);
+
+extern List *list_union(List *list1, List *list2);
+extern List *list_union_ptr(List *list1, List *list2);
+extern List *list_union_int(List *list1, List *list2);
+extern List *list_union_oid(List *list1, List *list2);
+
+extern List *list_difference(List *list1, List *list2);
+extern List *list_difference_ptr(List *list1, List *list2);
+extern List *list_difference_int(List *list1, List *list2);
+extern List *list_difference_oid(List *list1, List *list2);
+
+extern void list_free(List *list);
+extern void list_free_deep(List *list);
+
+extern List *list_copy(List *list);
+extern List *list_copy_tail(List *list, int nskip);
+
+/*
+ * To ease migration to the new list API, a set of compatibility
+ * macros are provided that reduce the impact of the list API changes
+ * as far as possible. Until client code has been rewritten to use the
+ * new list API, the ENABLE_LIST_COMPAT symbol can be defined before
+ * including pg_list.h
+ */
+#ifdef ENABLE_LIST_COMPAT
+
+#define lfirsti(lc)					lfirst_int(lc)
+#define lfirsto(lc)					lfirst_oid(lc)
+
+#define llast(l)					lfirst(list_tail(l))
+
+#define makeList1(x1)				list_make1(x1)
+#define makeList2(x1, x2)			list_make2(x1, x2)
+#define makeList3(x1, x2, x3)		list_make3(x1, x2, x3)
+#define makeList4(x1, x2, x3, x4)	list_make4(x1, x2, x3, x4)
+
+#define makeListi1(x1)				list_make1_int(x1)
+#define makeListi2(x1, x2)			list_make2_int(x1, x2)
+
+#define makeListo1(x1)				list_make1_oid(x1)
+#define makeListo2(x1, x2)			list_make2_oid(x1, x2)
+
+#define lconsi(datum, list)			lcons_int(datum, list)
+#define lconso(datum, list)			lcons_oid(datum, list)
+
+#define lappendi(list, datum)		lappend_int(list, datum)
+#define lappendo(list, datum)		lappend_oid(list, datum)
+
+#define nconc(l1, l2)				list_concat(l1, l2)
+
+#define nth(n, list)				list_nth(list, n)
+
+#define member(datum, list)			list_member(list, datum)
+#define ptrMember(datum, list)		list_member_ptr(list, datum)
+#define intMember(datum, list)		list_member_int(list, datum)
+#define oidMember(datum, list)		list_member_oid(list, datum)
+
+/*
+ * Note that the old lremove() determined equality via pointer
+ * comparison, whereas the new list_delete() uses equal(); in order to
+ * keep the same behavior, we therefore need to map lremove() calls to
+ * list_delete_ptr() rather than list_delete()
+ */
+#define lremove(elem, list)			list_delete_ptr(list, elem)
+#define LispRemove(elem, list)		list_delete(list, elem)
+#define lremovei(elem, list)		list_delete_int(list, elem)
+#define lremoveo(elem, list)		list_delete_oid(list, elem)
+
+#define ltruncate(n, list)			list_truncate(list, n)
+
+#define set_union(l1, l2)			list_union(l1, l2)
+#define set_uniono(l1, l2)			list_union_oid(l1, l2)
+#define set_ptrUnion(l1, l2)		list_union_ptr(l1, l2)
+
+#define set_difference(l1, l2)		list_difference(l1, l2)
+#define set_differenceo(l1, l2)		list_difference_oid(l1, l2)
+#define set_ptrDifference(l1, l2)	list_difference_ptr(l1, l2)
+
+#define equali(l1, l2)				equal(l1, l2)
+#define equalo(l1, l2)				equal(l1, l2)
+
+#define freeList(list)				list_free(list)
+
+#define listCopy(list)				list_copy(list)
+
+extern int length(List *list);
+
+#endif
+
+/*
+ * Temporary hack: we define the FastList type whether the
+ * compatibility API is enabled or not, since this allows files that
+ * don't use the compatibility API to include headers that reference
+ * the FastList type without an error.
  */
 typedef struct FastList
 {
-	List	   *head;
-	List	   *tail;
+	List		*list;
 } FastList;
 
-#define FastListInit(fl)	( (fl)->head = (fl)->tail = NIL )
-#define FastListFromList(fl, l)  \
-	( (fl)->head = (l), (fl)->tail = llastnode((fl)->head) )
-#define FastListValue(fl)	( (fl)->head )
+#ifdef ENABLE_LIST_COMPAT
 
-#define makeFastList1(fl, x1)  \
-	( (fl)->head = (fl)->tail = makeList1(x1) )
-
-extern List *lcons(void *datum, List *list);
-extern List *lconsi(int datum, List *list);
-extern List *lconso(Oid datum, List *list);
-extern List *lappend(List *list, void *datum);
-extern List *lappendi(List *list, int datum);
-extern List *lappendo(List *list, Oid datum);
-extern List *nconc(List *list1, List *list2);
+extern void FastListInit(FastList *fl);
+extern void FastListFromList(FastList *fl, List *list);
+extern List *FastListValue(FastList *fl);
+extern void makeFastList1(FastList *fl, void *elem);
 extern void FastAppend(FastList *fl, void *datum);
 extern void FastAppendi(FastList *fl, int datum);
 extern void FastAppendo(FastList *fl, Oid datum);
 extern void FastConc(FastList *fl, List *cells);
-extern void FastConcFast(FastList *fl, FastList *fl2);
-extern void *nth(int n, List *l);
-extern int	length(List *list);
-extern void *llast(List *list);
-extern List *llastnode(List *list);
-extern bool member(void *datum, List *list);
-extern bool ptrMember(void *datum, List *list);
-extern bool intMember(int datum, List *list);
-extern bool oidMember(Oid datum, List *list);
-extern List *lremove(void *elem, List *list);
-extern List *LispRemove(void *elem, List *list);
-extern List *lremovei(int elem, List *list);
-extern List *ltruncate(int n, List *list);
+extern void FastConcFast(FastList *fl1, FastList *fl2);
 
-extern List *set_union(List *list1, List *list2);
-extern List *set_uniono(List *list1, List *list2);
-extern List *set_ptrUnion(List *list1, List *list2);
-extern List *set_difference(List *list1, List *list2);
-extern List *set_differenceo(List *list1, List *list2);
-extern List *set_ptrDifference(List *list1, List *list2);
-
-extern bool equali(List *list1, List *list2);
-extern bool equalo(List *list1, List *list2);
-
-extern void freeList(List *list);
-
-/* in copyfuncs.c */
-extern List *listCopy(List *list);
+#endif
 
 #endif   /* PG_LIST_H */

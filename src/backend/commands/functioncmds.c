@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.46 2004/05/14 16:11:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.47 2004/05/26 04:41:11 neilc Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -137,7 +137,7 @@ examine_parameter_list(List *parameter, Oid languageOid,
 					   Oid *parameterTypes, const char *parameterNames[])
 {
 	int			parameterCount = 0;
-	List	   *x;
+	ListCell   *x;
 
 	MemSet(parameterTypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	MemSet(parameterNames, 0, FUNC_MAX_ARGS * sizeof(char *));
@@ -202,14 +202,14 @@ examine_parameter_list(List *parameter, Oid languageOid,
  */
 
 static void
-compute_attributes_sql_style(const List *options,
+compute_attributes_sql_style(List *options,
 							 List **as,
 							 char **language,
 							 char *volatility_p,
 							 bool *strict_p,
 							 bool *security_definer)
 {
-	const List *option;
+	ListCell   *option;
 	DefElem    *as_item = NULL;
 	DefElem    *language_item = NULL;
 	DefElem    *volatility_item = NULL;
@@ -322,7 +322,7 @@ compute_attributes_sql_style(const List *options,
 static void
 compute_attributes_with_style(List *parameters, bool *isStrict_p, char *volatility_p)
 {
-	List	   *pl;
+	ListCell   *pl;
 
 	foreach(pl, parameters)
 	{
@@ -357,7 +357,7 @@ compute_attributes_with_style(List *parameters, bool *isStrict_p, char *volatili
  */
 
 static void
-interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
+interpret_AS_clause(Oid languageOid, const char *languageName, List *as,
 					char **prosrc_str_p, char **probin_str_p)
 {
 	Assert(as != NIL);
@@ -368,8 +368,8 @@ interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
 		 * For "C" language, store the file name in probin and, when
 		 * given, the link symbol name in prosrc.
 		 */
-		*probin_str_p = strVal(lfirst(as));
-		if (lnext(as) == NULL)
+		*probin_str_p = strVal(linitial(as));
+		if (list_length(as) == 1)
 			*prosrc_str_p = "-";
 		else
 			*prosrc_str_p = strVal(lsecond(as));
@@ -377,10 +377,10 @@ interpret_AS_clause(Oid languageOid, const char *languageName, const List *as,
 	else
 	{
 		/* Everything else wants the given string in prosrc. */
-		*prosrc_str_p = strVal(lfirst(as));
+		*prosrc_str_p = strVal(linitial(as));
 		*probin_str_p = "-";
 
-		if (lnext(as) != NIL)
+		if (list_length(as) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("only one AS item needed for language \"%s\"",

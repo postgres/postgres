@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.65 2004/05/10 22:44:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/clausesel.c,v 1.66 2004/05/26 04:41:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,16 +98,16 @@ clauselist_selectivity(Query *root,
 {
 	Selectivity s1 = 1.0;
 	RangeQueryClause *rqlist = NULL;
-	List	   *clist;
+	ListCell   *l;
 
 	/*
 	 * Initial scan over clauses.  Anything that doesn't look like a
 	 * potential rangequery clause gets multiplied into s1 and forgotten.
 	 * Anything that does gets inserted into an rqlist entry.
 	 */
-	foreach(clist, clauses)
+	foreach(l, clauses)
 	{
-		Node	   *clause = (Node *) lfirst(clist);
+		Node	   *clause = (Node *) lfirst(l);
 		RestrictInfo *rinfo;
 		Selectivity s2;
 
@@ -143,7 +143,7 @@ clauselist_selectivity(Query *root,
 					(is_pseudo_constant_clause_relids(lsecond(expr->args),
 													  rinfo->right_relids) ||
 					 (varonleft = false,
-					  is_pseudo_constant_clause_relids(lfirst(expr->args),
+					  is_pseudo_constant_clause_relids(linitial(expr->args),
 													   rinfo->left_relids)));
 			}
 			else
@@ -151,7 +151,7 @@ clauselist_selectivity(Query *root,
 				ok = (NumRelids(clause) == 1) &&
 					(is_pseudo_constant_clause(lsecond(expr->args)) ||
 					 (varonleft = false,
-					  is_pseudo_constant_clause(lfirst(expr->args))));
+					  is_pseudo_constant_clause(linitial(expr->args))));
 			}
 
 			if (ok)
@@ -521,7 +521,7 @@ clause_selectivity(Query *root,
 		 *
 		 * XXX is this too conservative?
 		 */
-		List	   *arg;
+		ListCell   *arg;
 
 		s1 = 0.0;
 		foreach(arg, ((BoolExpr *) clause)->args)

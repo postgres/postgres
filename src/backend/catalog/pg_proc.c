@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.115 2004/04/02 23:14:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.116 2004/05/26 04:41:08 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -374,7 +374,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	Query	   *parse;
 	int			cmd;
 	List	   *tlist;
-	List	   *tlistitem;
+	ListCell   *tlistitem;
 	int			tlistlen;
 	Oid			typerelid;
 	Oid			restype;
@@ -396,7 +396,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 	}
 
 	/* find the final query */
-	parse = (Query *) llast(queryTreeList);
+	parse = (Query *) lfirst(list_tail(queryTreeList));
 
 	cmd = parse->commandType;
 	tlist = parse->targetList;
@@ -448,7 +448,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 							format_type_be(rettype)),
 			 errdetail("Final SELECT must return exactly one column.")));
 
-		restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+		restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
 		if (!IsBinaryCoercible(restype, rettype))
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
@@ -471,7 +471,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		 */
 		if (tlistlen == 1)
 		{
-			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+			restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
 			if (IsBinaryCoercible(restype, rettype))
 				return false;	/* NOT returning whole tuple */
 		}
@@ -556,7 +556,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		 */
 		if (tlistlen == 1)
 		{
-			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+			restype = ((TargetEntry *) linitial(tlist))->resdom->restype;
 			if (IsBinaryCoercible(restype, rettype))
 				return false;	/* NOT returning whole tuple */
 		}

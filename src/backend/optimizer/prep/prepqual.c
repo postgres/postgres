@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.41 2003/12/30 21:49:19 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepqual.c,v 1.42 2004/05/26 04:41:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,7 +144,7 @@ flatten_andors_mutator(Node *node, void *context)
 static void
 flatten_andors_and_walker(FastList *out_list, List *andlist)
 {
-	List	   *arg;
+	ListCell   *arg;
 
 	foreach(arg, andlist)
 	{
@@ -160,7 +160,7 @@ flatten_andors_and_walker(FastList *out_list, List *andlist)
 static void
 flatten_andors_or_walker(FastList *out_list, List *orlist)
 {
-	List	   *arg;
+	ListCell   *arg;
 
 	foreach(arg, orlist)
 	{
@@ -193,7 +193,7 @@ pull_ands(List *andlist)
 static void
 pull_ands_walker(FastList *out_list, List *andlist)
 {
-	List	   *arg;
+	ListCell   *arg;
 
 	foreach(arg, andlist)
 	{
@@ -226,7 +226,7 @@ pull_ors(List *orlist)
 static void
 pull_ors_walker(FastList *out_list, List *orlist)
 {
-	List	   *arg;
+	ListCell   *arg;
 
 	foreach(arg, orlist)
 	{
@@ -258,7 +258,7 @@ find_nots(Expr *qual)
 	if (and_clause((Node *) qual))
 	{
 		FastList	t_list;
-		List	   *temp;
+		ListCell   *temp;
 
 		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
@@ -268,7 +268,7 @@ find_nots(Expr *qual)
 	else if (or_clause((Node *) qual))
 	{
 		FastList	t_list;
-		List	   *temp;
+		ListCell   *temp;
 
 		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
@@ -324,7 +324,7 @@ push_nots(Expr *qual)
 		 *--------------------
 		 */
 		FastList	t_list;
-		List	   *temp;
+		ListCell   *temp;
 
 		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
@@ -334,7 +334,7 @@ push_nots(Expr *qual)
 	else if (or_clause((Node *) qual))
 	{
 		FastList	t_list;
-		List	   *temp;
+		ListCell   *temp;
 
 		FastListInit(&t_list);
 		foreach(temp, ((BoolExpr *) qual)->args)
@@ -398,7 +398,7 @@ find_duplicate_ors(Expr *qual)
 	if (or_clause((Node *) qual))
 	{
 		List	   *orlist = NIL;
-		List	   *temp;
+		ListCell   *temp;
 
 		/* Recurse */
 		foreach(temp, ((BoolExpr *) qual)->args)
@@ -412,7 +412,7 @@ find_duplicate_ors(Expr *qual)
 	else if (and_clause((Node *) qual))
 	{
 		List	   *andlist = NIL;
-		List	   *temp;
+		ListCell   *temp;
 
 		/* Recurse */
 		foreach(temp, ((BoolExpr *) qual)->args)
@@ -441,13 +441,12 @@ process_duplicate_ors(List *orlist)
 	int			num_subclauses = 0;
 	List	   *winners;
 	List	   *neworlist;
-	List	   *temp;
-	List	   *temp2;
+	ListCell   *temp;
 
 	if (orlist == NIL)
 		return NULL;			/* probably can't happen */
-	if (lnext(orlist) == NIL)
-		return lfirst(orlist);	/* single-expression OR (can this happen?) */
+	if (length(orlist) == 1)	/* single-expression OR (can this happen?) */
+		return linitial(orlist);
 
 	/*
 	 * Choose the shortest AND clause as the reference list --- obviously,
@@ -457,7 +456,7 @@ process_duplicate_ors(List *orlist)
 	 */
 	foreach(temp, orlist)
 	{
-		Expr	   *clause = lfirst(temp);
+		Expr	   *clause = (Expr *) lfirst(temp);
 
 		if (and_clause((Node *) clause))
 		{
@@ -489,12 +488,13 @@ process_duplicate_ors(List *orlist)
 	winners = NIL;
 	foreach(temp, reference)
 	{
-		Expr	   *refclause = lfirst(temp);
+		Expr	   *refclause = (Expr *) lfirst(temp);
 		bool		win = true;
+		ListCell   *temp2;
 
 		foreach(temp2, orlist)
 		{
-			Expr	   *clause = lfirst(temp2);
+			Expr	   *clause = (Expr *) lfirst(temp2);
 
 			if (and_clause((Node *) clause))
 			{
@@ -537,7 +537,7 @@ process_duplicate_ors(List *orlist)
 	neworlist = NIL;
 	foreach(temp, orlist)
 	{
-		Expr	   *clause = lfirst(temp);
+		Expr	   *clause = (Expr *) lfirst(temp);
 
 		if (and_clause((Node *) clause))
 		{
@@ -546,8 +546,8 @@ process_duplicate_ors(List *orlist)
 			subclauses = set_difference(subclauses, winners);
 			if (subclauses != NIL)
 			{
-				if (lnext(subclauses) == NIL)
-					neworlist = lappend(neworlist, lfirst(subclauses));
+				if (length(subclauses) == 1)
+					neworlist = lappend(neworlist, linitial(subclauses));
 				else
 					neworlist = lappend(neworlist, make_andclause(subclauses));
 			}
@@ -577,8 +577,8 @@ process_duplicate_ors(List *orlist)
 	 */
 	if (neworlist != NIL)
 	{
-		if (lnext(neworlist) == NIL)
-			winners = lappend(winners, lfirst(neworlist));
+		if (length(neworlist) == 1)
+			winners = lappend(winners, linitial(neworlist));
 		else
 			winners = lappend(winners, make_orclause(pull_ors(neworlist)));
 	}
@@ -587,8 +587,8 @@ process_duplicate_ors(List *orlist)
 	 * And return the constructed AND clause, again being wary of a single
 	 * element and AND/OR flatness.
 	 */
-	if (lnext(winners) == NIL)
-		return (Expr *) lfirst(winners);
+	if (length(winners) == 1)
+		return (Expr *) linitial(winners);
 	else
 		return make_andclause(pull_ands(winners));
 }

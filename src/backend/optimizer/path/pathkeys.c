@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.56 2004/04/07 17:42:28 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/pathkeys.c,v 1.57 2004/05/26 04:41:22 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,8 +95,8 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 	PathKeyItem *item2 = makePathKeyItem(get_rightop(clause),
 										 restrictinfo->right_sortop,
 										 false);
-	List	   *newset,
-			   *cursetlink;
+	List	   *newset;
+	ListCell   *cursetlink;
 
 	/* We might see a clause X=X; don't make a single-element list from it */
 	if (equal(item1, item2))
@@ -122,10 +122,10 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 	newset = NIL;
 
 	/* cannot use foreach here because of possible lremove */
-	cursetlink = root->equi_key_list;
+	cursetlink = list_head(root->equi_key_list);
 	while (cursetlink)
 	{
-		List	   *curset = lfirst(cursetlink);
+		List	   *curset = (List *) lfirst(cursetlink);
 		bool		item1here = member(item1, curset);
 		bool		item2here = member(item2, curset);
 
@@ -199,15 +199,15 @@ add_equijoined_keys(Query *root, RestrictInfo *restrictinfo)
 void
 generate_implied_equalities(Query *root)
 {
-	List	   *cursetlink;
+	ListCell   *cursetlink;
 
 	foreach(cursetlink, root->equi_key_list)
 	{
-		List	   *curset = lfirst(cursetlink);
+		List	   *curset = (List *) lfirst(cursetlink);
 		int			nitems = length(curset);
 		Relids	   *relids;
 		bool		have_consts;
-		List	   *ptr1;
+		ListCell   *ptr1;
 		int			i1;
 
 		/*
@@ -245,10 +245,10 @@ generate_implied_equalities(Query *root)
 		{
 			PathKeyItem *item1 = (PathKeyItem *) lfirst(ptr1);
 			bool		i1_is_variable = !bms_is_empty(relids[i1]);
-			List	   *ptr2;
+			ListCell   *ptr2;
 			int			i2 = i1 + 1;
 
-			foreach(ptr2, lnext(ptr1))
+			for_each_cell(ptr2, lnext(ptr1))
 			{
 				PathKeyItem *item2 = (PathKeyItem *) lfirst(ptr2);
 				bool		i2_is_variable = !bms_is_empty(relids[i2]);
@@ -294,14 +294,14 @@ generate_implied_equalities(Query *root)
 bool
 exprs_known_equal(Query *root, Node *item1, Node *item2)
 {
-	List	   *cursetlink;
+	ListCell   *cursetlink;
 
 	foreach(cursetlink, root->equi_key_list)
 	{
-		List	   *curset = lfirst(cursetlink);
+		List	   *curset = (List *) lfirst(cursetlink);
 		bool		item1member = false;
 		bool		item2member = false;
-		List	   *ptr;
+		ListCell   *ptr;
 
 		foreach(ptr, curset)
 		{
@@ -334,12 +334,12 @@ exprs_known_equal(Query *root, Node *item1, Node *item2)
 static List *
 make_canonical_pathkey(Query *root, PathKeyItem *item)
 {
-	List	   *cursetlink;
 	List	   *newset;
+	ListCell   *cursetlink;
 
 	foreach(cursetlink, root->equi_key_list)
 	{
-		List	   *curset = lfirst(cursetlink);
+		List	   *curset = (List *) lfirst(cursetlink);
 
 		if (member(item, curset))
 			return curset;
@@ -360,11 +360,11 @@ List *
 canonicalize_pathkeys(Query *root, List *pathkeys)
 {
 	List	   *new_pathkeys = NIL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, pathkeys)
+	foreach(l, pathkeys)
 	{
-		List	   *pathkey = (List *) lfirst(i);
+		List	   *pathkey = (List *) lfirst(l);
 		PathKeyItem *item;
 		List	   *cpathkey;
 
@@ -374,7 +374,7 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 		 * set by definition.
 		 */
 		Assert(pathkey != NIL);
-		item = (PathKeyItem *) lfirst(pathkey);
+		item = (PathKeyItem *) linitial(pathkey);
 		cpathkey = make_canonical_pathkey(root, item);
 
 		/*
@@ -402,11 +402,11 @@ canonicalize_pathkeys(Query *root, List *pathkeys)
 static int
 count_canonical_peers(Query *root, PathKeyItem *item)
 {
-	List	   *cursetlink;
+	ListCell   *cursetlink;
 
 	foreach(cursetlink, root->equi_key_list)
 	{
-		List	   *curset = lfirst(cursetlink);
+		List	   *curset = (List *) lfirst(cursetlink);
 
 		if (member(item, curset))
 			return length(curset) - 1;
@@ -430,15 +430,13 @@ count_canonical_peers(Query *root, PathKeyItem *item)
 PathKeysComparison
 compare_pathkeys(List *keys1, List *keys2)
 {
-	List	   *key1,
+	ListCell   *key1,
 			   *key2;
 
-	for (key1 = keys1, key2 = keys2;
-		 key1 != NIL && key2 != NIL;
-		 key1 = lnext(key1), key2 = lnext(key2))
+	forboth(key1, keys1, key2, keys2)
 	{
-		List	   *subkey1 = lfirst(key1);
-		List	   *subkey2 = lfirst(key2);
+		List	   *subkey1 = (List *) lfirst(key1);
+		List	   *subkey2 = (List *) lfirst(key2);
 
 		/*
 		 * XXX would like to check that we've been given canonicalized
@@ -465,9 +463,9 @@ compare_pathkeys(List *keys1, List *keys2)
 	 * the other list are not NIL --- no pathkey list should ever have a
 	 * NIL sublist.)
 	 */
-	if (key1 == NIL && key2 == NIL)
+	if (key1 == NULL && key2 == NULL)
 		return PATHKEYS_EQUAL;
-	if (key1 != NIL)
+	if (key1 != NULL)
 		return PATHKEYS_BETTER1;	/* key1 is longer */
 	return PATHKEYS_BETTER2;	/* key2 is longer */
 }
@@ -493,15 +491,13 @@ compare_pathkeys(List *keys1, List *keys2)
 PathKeysComparison
 compare_noncanonical_pathkeys(List *keys1, List *keys2)
 {
-	List	   *key1,
+	ListCell   *key1,
 			   *key2;
 
-	for (key1 = keys1, key2 = keys2;
-		 key1 != NIL && key2 != NIL;
-		 key1 = lnext(key1), key2 = lnext(key2))
+	forboth(key1, keys1, key2, keys2)
 	{
-		List	   *subkey1 = lfirst(key1);
-		List	   *subkey2 = lfirst(key2);
+		List	   *subkey1 = (List *) lfirst(key1);
+		List	   *subkey2 = (List *) lfirst(key2);
 
 		Assert(length(subkey1) == 1);
 		Assert(length(subkey2) == 1);
@@ -515,9 +511,9 @@ compare_noncanonical_pathkeys(List *keys1, List *keys2)
 	 * the other list are not NIL --- no pathkey list should ever have a
 	 * NIL sublist.)
 	 */
-	if (key1 == NIL && key2 == NIL)
+	if (key1 == NULL && key2 == NULL)
 		return PATHKEYS_EQUAL;
-	if (key1 != NIL)
+	if (key1 != NULL)
 		return PATHKEYS_BETTER1;	/* key1 is longer */
 	return PATHKEYS_BETTER2;	/* key2 is longer */
 }
@@ -573,11 +569,11 @@ get_cheapest_path_for_pathkeys(List *paths, List *pathkeys,
 							   CostSelector cost_criterion)
 {
 	Path	   *matched_path = NULL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, paths)
+	foreach(l, paths)
 	{
-		Path	   *path = (Path *) lfirst(i);
+		Path	   *path = (Path *) lfirst(l);
 
 		/*
 		 * Since cost comparison is a lot cheaper than pathkey comparison,
@@ -612,11 +608,11 @@ get_cheapest_fractional_path_for_pathkeys(List *paths,
 										  double fraction)
 {
 	Path	   *matched_path = NULL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, paths)
+	foreach(l, paths)
 	{
-		Path	   *path = (Path *) lfirst(i);
+		Path	   *path = (Path *) lfirst(l);
 
 		/*
 		 * Since cost comparison is a lot cheaper than pathkey comparison,
@@ -658,7 +654,7 @@ build_index_pathkeys(Query *root,
 	List	   *retval = NIL;
 	int		   *indexkeys = index->indexkeys;
 	Oid		   *ordering = index->ordering;
-	List	   *indexprs = index->indexprs;
+	ListCell   *indexprs_item = list_head(index->indexprs);
 
 	while (*ordering != InvalidOid)
 	{
@@ -683,10 +679,10 @@ build_index_pathkeys(Query *root,
 		else
 		{
 			/* expression --- assume we need not copy it */
-			if (indexprs == NIL)
+			if (indexprs_item == NULL)
 				elog(ERROR, "wrong number of index expressions");
-			indexkey = (Node *) lfirst(indexprs);
-			indexprs = lnext(indexprs);
+			indexkey = (Node *) lfirst(indexprs_item);
+			indexprs_item = lnext(indexprs_item);
 		}
 
 		/* OK, make a sublist for this sort key */
@@ -719,7 +715,7 @@ build_index_pathkeys(Query *root,
 static Var *
 find_indexkey_var(Query *root, RelOptInfo *rel, AttrNumber varattno)
 {
-	List	   *temp;
+	ListCell   *temp;
 	Index		relid;
 	Oid			reloid,
 				vartypeid;
@@ -758,12 +754,12 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 	int			retvallen = 0;
 	int			outer_query_keys = length(root->query_pathkeys);
 	List	   *sub_tlist = rel->subplan->targetlist;
-	List	   *l;
+	ListCell   *i;
 
-	foreach(l, subquery->query_pathkeys)
+	foreach(i, subquery->query_pathkeys)
 	{
-		List	   *sub_pathkey = (List *) lfirst(l);
-		List	   *j;
+		List	   *sub_pathkey = (List *) lfirst(i);
+		ListCell   *j;
 		PathKeyItem *best_item = NULL;
 		int			best_score = 0;
 		List	   *cpathkey;
@@ -788,7 +784,7 @@ build_subquery_pathkeys(Query *root, RelOptInfo *rel, Query *subquery)
 		{
 			PathKeyItem *sub_item = (PathKeyItem *) lfirst(j);
 			Node	   *sub_key = sub_item->key;
-			List	   *k;
+			ListCell   *k;
 
 			foreach(k, sub_tlist)
 			{
@@ -908,11 +904,11 @@ make_pathkeys_for_sortclauses(List *sortclauses,
 							  List *tlist)
 {
 	List	   *pathkeys = NIL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, sortclauses)
+	foreach(l, sortclauses)
 	{
-		SortClause *sortcl = (SortClause *) lfirst(i);
+		SortClause *sortcl = (SortClause *) lfirst(l);
 		Node	   *sortkey;
 		PathKeyItem *pathkey;
 
@@ -1000,21 +996,21 @@ find_mergeclauses_for_pathkeys(Query *root,
 							   List *restrictinfos)
 {
 	List	   *mergeclauses = NIL;
-	List	   *i;
+	ListCell   *i;
 
 	/* make sure we have pathkeys cached in the clauses */
 	foreach(i, restrictinfos)
 	{
-		RestrictInfo *restrictinfo = lfirst(i);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
 
 		cache_mergeclause_pathkeys(root, restrictinfo);
 	}
 
 	foreach(i, pathkeys)
 	{
-		List	   *pathkey = lfirst(i);
+		List	   *pathkey = (List *) lfirst(i);
 		List	   *matched_restrictinfos = NIL;
-		List	   *j;
+		ListCell   *j;
 
 		/*
 		 * We can match a pathkey against either left or right side of any
@@ -1037,7 +1033,7 @@ find_mergeclauses_for_pathkeys(Query *root,
 		 */
 		foreach(j, restrictinfos)
 		{
-			RestrictInfo *restrictinfo = lfirst(j);
+			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
 
 			/*
 			 * We can compare canonical pathkey sublists by simple pointer
@@ -1093,11 +1089,11 @@ make_pathkeys_for_mergeclauses(Query *root,
 							   RelOptInfo *rel)
 {
 	List	   *pathkeys = NIL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, mergeclauses)
+	foreach(l, mergeclauses)
 	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 		List	   *pathkey;
 
 		cache_mergeclause_pathkeys(root, restrictinfo);
@@ -1160,18 +1156,18 @@ int
 pathkeys_useful_for_merging(Query *root, RelOptInfo *rel, List *pathkeys)
 {
 	int			useful = 0;
-	List	   *i;
+	ListCell   *i;
 
 	foreach(i, pathkeys)
 	{
-		List	   *pathkey = lfirst(i);
+		List	   *pathkey = (List *) lfirst(i);
 		bool		matched = false;
-		List	   *j;
+		ListCell   *j;
 
 		foreach(j, rel->joininfo)
 		{
 			JoinInfo   *joininfo = (JoinInfo *) lfirst(j);
-			List	   *k;
+			ListCell   *k;
 
 			foreach(k, joininfo->jinfo_restrictinfo)
 			{

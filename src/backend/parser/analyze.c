@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.300 2004/05/23 17:10:54 tgl Exp $
+ *	$PostgreSQL: pgsql/src/backend/parser/analyze.c,v 1.301 2004/05/26 04:41:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,28 +240,20 @@ do_parse_analyze(Node *parseTree, ParseState *pstate)
 	List	   *extras_before = NIL;
 	List	   *extras_after = NIL;
 	Query	   *query;
-	List	   *listscan;
+	ListCell   *l;
 
 	query = transformStmt(pstate, parseTree, &extras_before, &extras_after);
 
 	/* don't need to access result relation any more */
 	release_pstate_resources(pstate);
 
-	while (extras_before != NIL)
-	{
-		result = nconc(result,
-					   parse_sub_analyze(lfirst(extras_before), pstate));
-		extras_before = lnext(extras_before);
-	}
+	foreach(l, extras_before)
+		result = nconc(result, parse_sub_analyze(lfirst(l), pstate));
 
 	result = lappend(result, query);
 
-	while (extras_after != NIL)
-	{
-		result = nconc(result,
-					   parse_sub_analyze(lfirst(extras_after), pstate));
-		extras_after = lnext(extras_after);
-	}
+	foreach(l, extras_after)
+		result = nconc(result, parse_sub_analyze(lfirst(l), pstate));
 
 	/*
 	 * Make sure that only the original query is marked original. We have
@@ -270,9 +262,9 @@ do_parse_analyze(Node *parseTree, ParseState *pstate)
 	 * mark only the original query as allowed to set the command-result
 	 * tag.
 	 */
-	foreach(listscan, result)
+	foreach(l, result)
 	{
-		Query	   *q = lfirst(listscan);
+		Query	   *q = lfirst(l);
 
 		if (q == query)
 		{
@@ -428,8 +420,8 @@ transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 	 */
 	if (stmt->aliases != NIL)
 	{
-		List	   *aliaslist = stmt->aliases;
-		List	   *targetList;
+		ListCell	   *alist_item = list_head(stmt->aliases);
+		ListCell	   *targetList;
 
 		foreach(targetList, stmt->query->targetList)
 		{
@@ -442,13 +434,13 @@ transformViewStmt(ParseState *pstate, ViewStmt *stmt,
 			/* junk columns don't get aliases */
 			if (rd->resjunk)
 				continue;
-			rd->resname = pstrdup(strVal(lfirst(aliaslist)));
-			aliaslist = lnext(aliaslist);
-			if (aliaslist == NIL)
+			rd->resname = pstrdup(strVal(lfirst(alist_item)));
+			alist_item = lnext(alist_item);
+			if (alist_item == NULL)
 				break;		/* done assigning aliases */
 		}
 
-		if (aliaslist != NIL)
+		if (alist_item != NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 					 errmsg("CREATE VIEW specifies more column "
@@ -506,9 +498,9 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	List	   *sub_namespace;
 	List	   *icolumns;
 	List	   *attrnos;
-	List	   *icols;			/* to become ListCell */
-	List	   *attnos;			/* to become ListCell */
-	List	   *tl;
+	ListCell   *icols;
+	ListCell   *attnos;
+	ListCell   *tl;
 
 	qry->commandType = CMD_INSERT;
 	pstate->p_is_insert = true;
@@ -666,14 +658,14 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	/*
 	 * Prepare columns for assignment to target table.
 	 */
-	icols = icolumns;
-	attnos = attrnos;
+	icols = list_head(icolumns);
+	attnos = list_head(attrnos);
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		ResTarget  *col;
 
-		if (icols == NIL || attnos == NIL)
+		if (icols == NULL || attnos == NULL)
 			ereport(ERROR,
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("INSERT has more expressions than target columns")));
@@ -694,7 +686,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * present in the columns list.  Don't do the check unless an explicit
 	 * columns list was given, though.
 	 */
-	if (stmt->cols != NIL && (icols != NIL || attnos != NIL))
+	if (stmt->cols != NIL && (icols != NULL || attnos != NULL))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("INSERT has more target columns than expressions")));
@@ -810,7 +802,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 {
 	CreateStmtContext cxt;
 	Query	   *q;
-	List	   *elements;
+	ListCell   *elements;
 
 	cxt.stmtType = "CREATE TABLE";
 	cxt.relation = stmt->relation;
@@ -895,7 +887,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	bool		is_serial;
 	bool		saw_nullable;
 	Constraint *constraint;
-	List	   *clist;
+	ListCell   *clist;
 
 	cxt->columns = lappend(cxt->columns, column);
 
@@ -903,7 +895,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 	is_serial = false;
 	if (length(column->typename->names) == 1)
 	{
-		char	   *typname = strVal(lfirst(column->typename->names));
+		char	   *typname = strVal(linitial(column->typename->names));
 
 		if (strcmp(typname, "serial") == 0 ||
 			strcmp(typname, "serial4") == 0)
@@ -1256,13 +1248,10 @@ transformInhRelation(ParseState *pstate, CreateStmtContext *cxt,
 static void
 transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 {
-	List	   *listptr;
-	List	   *keys;
 	IndexStmt  *index;
-	IndexElem  *iparam;
-	ColumnDef  *column;
-	List	   *columns;
 	List	   *indexlist = NIL;
+	ListCell   *listptr;
+	ListCell   *l;
 
 	/*
 	 * Run through the constraints that need to generate an index. For
@@ -1273,6 +1262,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 	foreach(listptr, cxt->ixconstraints)
 	{
 		Constraint *constraint = lfirst(listptr);
+		ListCell   *keys;
+		IndexElem  *iparam;
 
 		Assert(IsA(constraint, Constraint));
 		Assert((constraint->contype == CONSTR_PRIMARY)
@@ -1317,11 +1308,12 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		{
 			char	   *key = strVal(lfirst(keys));
 			bool		found = false;
+			ColumnDef  *column = NULL;
+			ListCell   *columns;
 
-			column = NULL;
 			foreach(columns, cxt->columns)
 			{
-				column = lfirst(columns);
+				column = (ColumnDef *) lfirst(columns);
 				Assert(IsA(column, ColumnDef));
 				if (strcmp(column->colname, key) == 0)
 				{
@@ -1347,11 +1339,11 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			else if (cxt->inhRelations)
 			{
 				/* try inherited tables */
-				List	   *inher;
+				ListCell   *inher;
 
 				foreach(inher, cxt->inhRelations)
 				{
-					RangeVar   *inh = lfirst(inher);
+					RangeVar   *inh = (RangeVar *) lfirst(inher);
 					Relation	rel;
 					int			count;
 
@@ -1447,41 +1439,40 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		/* Make sure we keep the PKEY index in preference to others... */
 		cxt->alist = makeList1(cxt->pkey);
 	}
-	while (indexlist != NIL)
+
+	foreach(l, indexlist)
 	{
-		index = lfirst(indexlist);
+		bool		keep = true;
+		ListCell   *k;
+
+		index = lfirst(l);
 
 		/* if it's pkey, it's already in cxt->alist */
-		if (index != cxt->pkey)
+		if (index == cxt->pkey)
+			continue;
+
+		foreach(k, cxt->alist)
 		{
-			bool		keep = true;
-			List	   *priorlist;
+			IndexStmt  *priorindex = lfirst(k);
 
-			foreach(priorlist, cxt->alist)
+			if (equal(index->indexParams, priorindex->indexParams))
 			{
-				IndexStmt  *priorindex = lfirst(priorlist);
-
-				if (equal(index->indexParams, priorindex->indexParams))
-				{
-					/*
-					 * If the prior index is as yet unnamed, and this one
-					 * is named, then transfer the name to the prior
-					 * index. This ensures that if we have named and
-					 * unnamed constraints, we'll use (at least one of)
-					 * the names for the index.
-					 */
-					if (priorindex->idxname == NULL)
-						priorindex->idxname = index->idxname;
-					keep = false;
-					break;
-				}
+				/*
+				 * If the prior index is as yet unnamed, and this one
+				 * is named, then transfer the name to the prior
+				 * index. This ensures that if we have named and
+				 * unnamed constraints, we'll use (at least one of)
+				 * the names for the index.
+				 */
+				if (priorindex->idxname == NULL)
+					priorindex->idxname = index->idxname;
+				keep = false;
+				break;
 			}
-
-			if (keep)
-				cxt->alist = lappend(cxt->alist, index);
 		}
 
-		indexlist = lnext(indexlist);
+		if (keep)
+			cxt->alist = lappend(cxt->alist, index);
 	}
 }
 
@@ -1489,7 +1480,7 @@ static void
 transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt,
 					   bool skipValidation, bool isAddConstraint)
 {
-	List	   *fkclist;
+	ListCell   *fkclist;
 
 	if (cxt->fkconstraints == NIL)
 		return;
@@ -1550,7 +1541,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 {
 	Query	   *qry;
 	RangeTblEntry *rte = NULL;
-	List	   *l;
+	ListCell   *l;
 
 	qry = makeNode(Query);
 	qry->commandType = CMD_UTILITY;
@@ -1721,15 +1712,15 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	}
 	else
 	{
-		List	   *oldactions;
+		ListCell   *l;
 		List	   *newactions = NIL;
 
 		/*
 		 * transform each statement, like parse_sub_analyze()
 		 */
-		foreach(oldactions, stmt->actions)
+		foreach(l, stmt->actions)
 		{
-			Node	   *action = (Node *) lfirst(oldactions);
+			Node	   *action = (Node *) lfirst(l);
 			ParseState *sub_pstate = make_parsestate(pstate->parentParseState);
 			Query	   *sub_qry,
 					   *top_subqry;
@@ -1986,9 +1977,9 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	Node	   *limitCount;
 	List	   *forUpdate;
 	Node	   *node;
-	List	   *lefttl,
-			   *dtlist,
-			   *targetvars,
+	ListCell   *left_tlist,
+			   *dtlist;
+	List	   *targetvars,
 			   *targetnames,
 			   *sv_namespace,
 			   *sv_rtable;
@@ -2067,15 +2058,17 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	qry->targetList = NIL;
 	targetvars = NIL;
 	targetnames = NIL;
-	lefttl = leftmostQuery->targetList;
+	left_tlist = list_head(leftmostQuery->targetList);
+
 	foreach(dtlist, sostmt->colTypes)
 	{
 		Oid			colType = lfirsto(dtlist);
-		Resdom	   *leftResdom = ((TargetEntry *) lfirst(lefttl))->resdom;
+		Resdom	   *leftResdom;
 		char	   *colName;
 		Resdom	   *resdom;
 		Expr	   *expr;
 
+		leftResdom = ((TargetEntry *) lfirst(left_tlist))->resdom;
 		Assert(!leftResdom->resjunk);
 		colName = pstrdup(leftResdom->resname);
 		resdom = makeResdom((AttrNumber) pstate->p_next_resno++,
@@ -2092,7 +2085,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 								  makeTargetEntry(resdom, expr));
 		targetvars = lappend(targetvars, expr);
 		targetnames = lappend(targetnames, makeString(colName));
-		lefttl = lnext(lefttl);
+		left_tlist = lnext(left_tlist);
 	}
 
 	/*
@@ -2239,7 +2232,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		selectList = parse_sub_analyze((Node *) stmt, pstate);
 
 		Assert(length(selectList) == 1);
-		selectQuery = (Query *) lfirst(selectList);
+		selectQuery = (Query *) linitial(selectList);
 		Assert(IsA(selectQuery, Query));
 
 		/*
@@ -2282,6 +2275,8 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		SetOperationStmt *op = makeNode(SetOperationStmt);
 		List	   *lcoltypes;
 		List	   *rcoltypes;
+		ListCell   *l;
+		ListCell   *r;
 		const char *context;
 
 		context = (stmt->op == SETOP_UNION ? "UNION" :
@@ -2308,18 +2303,17 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 					(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("each %s query must have the same number of columns",
 					context)));
+
 		op->colTypes = NIL;
-		while (lcoltypes != NIL)
+		forboth(l, lcoltypes, r, rcoltypes)
 		{
-			Oid			lcoltype = lfirsto(lcoltypes);
-			Oid			rcoltype = lfirsto(rcoltypes);
+			Oid			lcoltype = lfirsto(l);
+			Oid			rcoltype = lfirsto(r);
 			Oid			rescoltype;
 
 			rescoltype = select_common_type(makeListo2(lcoltype, rcoltype),
 											context);
 			op->colTypes = lappendo(op->colTypes, rescoltype);
-			lcoltypes = lnext(lcoltypes);
-			rcoltypes = lnext(rcoltypes);
 		}
 
 		return (Node *) op;
@@ -2339,7 +2333,7 @@ getSetColTypes(ParseState *pstate, Node *node)
 		RangeTblEntry *rte = rt_fetch(rtr->rtindex, pstate->p_rtable);
 		Query	   *selectQuery = rte->subquery;
 		List	   *result = NIL;
-		List	   *tl;
+		ListCell   *tl;
 
 		Assert(selectQuery != NULL);
 		/* Get types of non-junk columns */
@@ -2373,22 +2367,25 @@ getSetColTypes(ParseState *pstate, Node *node)
 static void
 applyColumnNames(List *dst, List *src)
 {
+	ListCell *dst_item = list_head(dst);
+	ListCell *src_item = list_head(src);
+
 	if (length(src) > length(dst))
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 			 errmsg("CREATE TABLE AS specifies too many column names")));
 
-	while (src != NIL && dst != NIL)
+	while (src_item != NULL && dst_item != NULL)
 	{
-		TargetEntry *d = (TargetEntry *) lfirst(dst);
-		ColumnDef  *s = (ColumnDef *) lfirst(src);
+		TargetEntry *d = (TargetEntry *) lfirst(dst_item);
+		ColumnDef  *s = (ColumnDef *) lfirst(src_item);
 
 		Assert(d->resdom && !d->resdom->resjunk);
 
 		d->resdom->resname = pstrdup(s->colname);
 
-		dst = lnext(dst);
-		src = lnext(src);
+		dst_item = lnext(dst_item);
+		src_item = lnext(src_item);
 	}
 }
 
@@ -2402,8 +2399,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 	Node	   *qual;
-	List	   *origTargetList;
-	List	   *tl;
+	ListCell   *origTargetList;
+	ListCell   *tl;
 
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
@@ -2441,7 +2438,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		pstate->p_next_resno = pstate->p_target_relation->rd_rel->relnatts + 1;
 
 	/* Prepare non-junk columns for assignment to target table */
-	origTargetList = stmt->targetList;
+	origTargetList = list_head(stmt->targetList);
+
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
@@ -2460,7 +2458,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 			resnode->resname = NULL;
 			continue;
 		}
-		if (origTargetList == NIL)
+		if (origTargetList == NULL)
 			elog(ERROR, "UPDATE target count mismatch --- internal error");
 		origTarget = (ResTarget *) lfirst(origTargetList);
 
@@ -2471,7 +2469,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 
 		origTargetList = lnext(origTargetList);
 	}
-	if (origTargetList != NIL)
+	if (origTargetList != NULL)
 		elog(ERROR, "UPDATE target count mismatch --- internal error");
 
 	return qry;
@@ -2487,7 +2485,7 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 {
 	CreateStmtContext cxt;
 	Query	   *qry;
-	List	   *lcmd,
+	ListCell   *lcmd,
 			   *l;
 	List	   *newcmds = NIL;
 	bool		skipValidation = true;
@@ -2687,7 +2685,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 
 	if (nargs)
 	{
-		List	   *l;
+		ListCell   *l;
 		int			i = 0;
 
 		argtoids = (Oid *) palloc(nargs * sizeof(Oid));
@@ -2717,7 +2715,7 @@ transformPrepareStmt(ParseState *pstate, PrepareStmt *stmt)
 	if (length(queries) != 1)
 		elog(ERROR, "unexpected extra stuff in prepared statement");
 
-	stmt->query = lfirst(queries);
+	stmt->query = linitial(queries);
 
 	return result;
 }
@@ -2737,7 +2735,7 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 	{
 		int			nparams = length(stmt->params);
 		int			nexpected = length(paramtypes);
-		List	   *l;
+		ListCell   *l, *l2;
 		int			i = 1;
 
 		if (nparams != nexpected)
@@ -2748,11 +2746,11 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 					 errdetail("Expected %d parameters but got %d.",
 							   nexpected, nparams)));
 
-		foreach(l, stmt->params)
+		forboth(l, stmt->params, l2, paramtypes)
 		{
 			Node	   *expr = lfirst(l);
-			Oid			expected_type_id,
-						given_type_id;
+			Oid			expected_type_id = lfirsto(l2);
+			Oid			given_type_id;
 
 			expr = transformExpr(pstate, expr);
 
@@ -2767,7 +2765,6 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 				   errmsg("cannot use aggregate function in EXECUTE parameter")));
 
 			given_type_id = exprType(expr);
-			expected_type_id = lfirsto(paramtypes);
 
 			expr = coerce_to_target_type(pstate, expr, given_type_id,
 										 expected_type_id, -1,
@@ -2784,8 +2781,6 @@ transformExecuteStmt(ParseState *pstate, ExecuteStmt *stmt)
 						 errhint("You will need to rewrite or cast the expression.")));
 
 			lfirst(l) = expr;
-
-			paramtypes = lnext(paramtypes);
 			i++;
 		}
 	}
@@ -2825,13 +2820,13 @@ static void
 transformForUpdate(Query *qry, List *forUpdate)
 {
 	List	   *rowMarks = qry->rowMarks;
-	List	   *l;
-	List	   *rt;
+	ListCell   *l;
+	ListCell   *rt;
 	Index		i;
 
 	CheckSelectForUpdate(qry);
 
-	if (lfirst(forUpdate) == NULL)
+	if (linitial(forUpdate) == NULL)
 	{
 		/* all regular tables used in query */
 		i = 0;
@@ -2912,7 +2907,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 					break;		/* out of foreach loop */
 				}
 			}
-			if (rt == NIL)
+			if (rt == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_TABLE),
 						 errmsg("relation \"%s\" in FOR UPDATE clause not found in FROM clause",
@@ -2938,7 +2933,7 @@ transformConstraintAttrs(List *constraintList)
 	Node	   *lastprimarynode = NULL;
 	bool		saw_deferrability = false;
 	bool		saw_initially = false;
-	List	   *clist;
+	ListCell   *clist;
 
 	foreach(clist, constraintList)
 	{
@@ -3113,7 +3108,7 @@ analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
 {
 	CreateSchemaStmtContext cxt;
 	List	   *result;
-	List	   *elements;
+	ListCell   *elements;
 
 	cxt.stmtType = "CREATE SCHEMA";
 	cxt.schemaname = stmt->schemaname;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.170 2004/05/10 22:44:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.171 2004/05/26 04:41:27 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -114,7 +114,7 @@ get_leftop(Expr *clause)
 	OpExpr	   *expr = (OpExpr *) clause;
 
 	if (expr->args != NIL)
-		return lfirst(expr->args);
+		return linitial(expr->args);
 	else
 		return NULL;
 }
@@ -130,8 +130,8 @@ get_rightop(Expr *clause)
 {
 	OpExpr	   *expr = (OpExpr *) clause;
 
-	if (expr->args != NIL && lnext(expr->args) != NIL)
-		return lfirst(lnext(expr->args));
+	if (list_length(expr->args) >= 2)
+		return lsecond(expr->args);
 	else
 		return NULL;
 }
@@ -176,7 +176,7 @@ make_notclause(Expr *notclause)
 Expr *
 get_notclausearg(Expr *notclause)
 {
-	return lfirst(((BoolExpr *) notclause)->args);
+	return linitial(((BoolExpr *) notclause)->args);
 }
 
 /*****************************************************************************
@@ -278,8 +278,8 @@ make_ands_explicit(List *andclauses)
 {
 	if (andclauses == NIL)
 		return (Expr *) makeBoolConst(true, false);
-	else if (lnext(andclauses) == NIL)
-		return (Expr *) lfirst(andclauses);
+	else if (length(andclauses) == 1)
+		return (Expr *) linitial(andclauses);
 	else
 		return make_andclause(andclauses);
 }
@@ -595,7 +595,7 @@ contain_mutable_functions_walker(Node *node, void *context)
 	if (IsA(node, SubLink))
 	{
 		SubLink    *sublink = (SubLink *) node;
-		List	   *opid;
+		ListCell   *opid;
 
 		foreach(opid, sublink->operOids)
 		{
@@ -678,7 +678,7 @@ contain_volatile_functions_walker(Node *node, void *context)
 	if (IsA(node, SubLink))
 	{
 		SubLink    *sublink = (SubLink *) node;
-		List	   *opid;
+		ListCell   *opid;
 
 		foreach(opid, sublink->operOids)
 		{
@@ -848,7 +848,7 @@ pull_constant_clauses(List *quals, List **constantQual)
 {
 	FastList	constqual,
 				restqual;
-	List	   *q;
+	ListCell   *q;
 
 	FastListInit(&constqual);
 	FastListInit(&restqual);
@@ -882,7 +882,7 @@ pull_constant_clauses(List *quals, List **constantQual)
 bool
 has_distinct_on_clause(Query *query)
 {
-	List	   *targetList;
+	ListCell   *l;
 
 	/* Is there a DISTINCT clause at all? */
 	if (query->distinctClause == NIL)
@@ -901,9 +901,9 @@ has_distinct_on_clause(Query *query)
 	 * This code assumes that the DISTINCT list is valid, ie, all its entries
 	 * match some entry of the tlist.
 	 */
-	foreach(targetList, query->targetList)
+	foreach(l, query->targetList)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(targetList);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (tle->resdom->ressortgroupref == 0)
 		{
@@ -998,8 +998,8 @@ CommuteClause(OpExpr *clause)
 	clause->opfuncid = InvalidOid;
 	/* opresulttype and opretset are assumed not to change */
 
-	temp = lfirst(clause->args);
-	lfirst(clause->args) = lsecond(clause->args);
+	temp = linitial(clause->args);
+	linitial(clause->args) = lsecond(clause->args);
 	lsecond(clause->args) = temp;
 }
 
@@ -1162,7 +1162,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 	{
 		DistinctExpr *expr = (DistinctExpr *) node;
 		List	   *args;
-		List	   *arg;
+		ListCell   *arg;
 		bool		has_null_input = false;
 		bool		all_null_input = true;
 		bool		has_nonconst_input = false;
@@ -1281,8 +1281,8 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					if (newargs == NIL)
 						return makeBoolConst(false, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (lnext(newargs) == NIL)
-						return (Node *) lfirst(newargs);
+					if (length(newargs) == 1)
+						return (Node *) linitial(newargs);
 					/* Else we still need an OR node */
 					return (Node *) make_orclause(newargs);
 				}
@@ -1302,16 +1302,16 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					if (newargs == NIL)
 						return makeBoolConst(true, false);
 					/* If only one nonconst-or-NULL input, it's the result */
-					if (lnext(newargs) == NIL)
-						return (Node *) lfirst(newargs);
+					if (length(newargs) == 1)
+						return (Node *) linitial(newargs);
 					/* Else we still need an AND node */
 					return (Node *) make_andclause(newargs);
 				}
 			case NOT_EXPR:
 				Assert(length(args) == 1);
-				if (IsA(lfirst(args), Const))
+				if (IsA(linitial(args), Const))
 				{
-					Const *const_input = (Const *) lfirst(args);
+					Const *const_input = (Const *) linitial(args);
 
 					/* NOT NULL => NULL */
 					if (const_input->constisnull)
@@ -1320,13 +1320,13 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 					return makeBoolConst(!DatumGetBool(const_input->constvalue),
 										 false);
 				}
-				else if (not_clause((Node *) lfirst(args)))
+				else if (not_clause((Node *) linitial(args)))
 				{
 					/* Cancel NOT/NOT */
-					return (Node *) get_notclausearg((Expr *) lfirst(args));
+					return (Node *) get_notclausearg((Expr *) linitial(args));
 				}
 				/* Else we still need a NOT node */
-				return (Node *) make_notclause((Expr *) lfirst(args));
+				return (Node *) make_notclause((Expr *) linitial(args));
 			default:
 				elog(ERROR, "unrecognized boolop: %d",
 					 (int) expr->boolop);
@@ -1414,7 +1414,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		FastList	newargs;
 		Node	   *defresult;
 		Const	   *const_input;
-		List	   *arg;
+		ListCell   *arg;
 
 		/* Simplify the test expression, if any */
 		newarg = eval_const_expressions_mutator((Node *) caseexpr->arg,
@@ -1480,7 +1480,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		ArrayExpr  *newarray;
 		bool		all_const = true;
 		FastList	newelems;
-		List	   *element;
+		ListCell   *element;
 
 		FastListInit(&newelems);
 		foreach(element, arrayexpr->elements)
@@ -1511,7 +1511,7 @@ eval_const_expressions_mutator(Node *node, List *active_fns)
 		CoalesceExpr *coalesceexpr = (CoalesceExpr *) node;
 		CoalesceExpr *newcoalesce;
 		FastList	newargs;
-		List	   *arg;
+		ListCell   *arg;
 
 		FastListInit(&newargs);
 		foreach(arg, coalesceexpr->args)
@@ -1614,7 +1614,7 @@ static List *
 simplify_or_arguments(List *args, bool *haveNull, bool *forceTrue)
 {
 	List	   *newargs = NIL;
-	List	   *larg;
+	ListCell   *larg;
 
 	foreach(larg, args)
 	{
@@ -1675,7 +1675,7 @@ static List *
 simplify_and_arguments(List *args, bool *haveNull, bool *forceFalse)
 {
 	List	   *newargs = NIL;
-	List	   *larg;
+	ListCell   *larg;
 
 	foreach(larg, args)
 	{
@@ -1774,7 +1774,7 @@ evaluate_function(Oid funcid, Oid result_type, List *args,
 	Form_pg_proc funcform = (Form_pg_proc) GETSTRUCT(func_tuple);
 	bool		has_nonconst_input = false;
 	bool		has_null_input = false;
-	List	   *arg;
+	ListCell   *arg;
 	FuncExpr   *newexpr;
 
 	/*
@@ -1870,7 +1870,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	Query	   *querytree;
 	Node	   *newexpr;
 	int		   *usecounts;
-	List	   *arg;
+	ListCell   *arg;
 	int			i;
 
 	/*
@@ -1946,13 +1946,13 @@ inline_function(Oid funcid, Oid result_type, List *args,
 	if (length(raw_parsetree_list) != 1)
 		goto fail;
 
-	querytree_list = parse_analyze(lfirst(raw_parsetree_list),
+	querytree_list = parse_analyze(linitial(raw_parsetree_list),
 								   argtypes, funcform->pronargs);
 
 	if (length(querytree_list) != 1)
 		goto fail;
 
-	querytree = (Query *) lfirst(querytree_list);
+	querytree = (Query *) linitial(querytree_list);
 
 	/*
 	 * The single command must be a simple "SELECT expression".
@@ -1976,7 +1976,7 @@ inline_function(Oid funcid, Oid result_type, List *args,
 		length(querytree->targetList) != 1)
 		goto fail;
 
-	newexpr = (Node *) ((TargetEntry *) lfirst(querytree->targetList))->expr;
+	newexpr = (Node *) ((TargetEntry *) linitial(querytree->targetList))->expr;
 
 	/*
 	 * If the function has any arguments declared as polymorphic types,
@@ -2330,7 +2330,7 @@ expression_tree_walker(Node *node,
 					   bool (*walker) (),
 					   void *context)
 {
-	List	   *temp;
+	ListCell   *temp;
 
 	/*
 	 * The walker has already visited the current node, and so we need
@@ -2576,7 +2576,7 @@ query_tree_walker(Query *query,
 				  void *context,
 				  int flags)
 {
-	List	   *rt;
+	ListCell   *rt;
 
 	Assert(query != NULL && IsA(query, Query));
 
@@ -2972,7 +2972,7 @@ expression_tree_mutator(Node *node,
 				 * elements!
 				 */
 				FastList	resultlist;
-				List	   *temp;
+				ListCell   *temp;
 
 				FastListInit(&resultlist);
 				foreach(temp, (List *) node)
@@ -3064,7 +3064,7 @@ query_tree_mutator(Query *query,
 				   int flags)
 {
 	FastList	newrt;
-	List	   *rt;
+	ListCell   *rt;
 
 	Assert(query != NULL && IsA(query, Query));
 

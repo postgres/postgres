@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.110 2004/05/11 22:43:55 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.111 2004/05/26 04:41:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,15 +420,19 @@ generate_setop_tlist(List *colTypes, int flag,
 {
 	List	   *tlist = NIL;
 	int			resno = 1;
-	List	   *i;
+	ListCell   *i,
+			   *j,
+			   *k;
 	Resdom	   *resdom;
 	Node	   *expr;
 
+	j = list_head(input_tlist);
+	k = list_head(refnames_tlist);
 	foreach(i, colTypes)
 	{
 		Oid			colType = lfirsto(i);
-		TargetEntry *inputtle = (TargetEntry *) lfirst(input_tlist);
-		TargetEntry *reftle = (TargetEntry *) lfirst(refnames_tlist);
+		TargetEntry *inputtle = (TargetEntry *) lfirst(j);
+		TargetEntry *reftle = (TargetEntry *) lfirst(k);
 		int32		colTypmod;
 
 		Assert(inputtle->resdom->resno == resno);
@@ -476,8 +480,8 @@ generate_setop_tlist(List *colTypes, int flag,
 							pstrdup(reftle->resdom->resname),
 							false);
 		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
-		input_tlist = lnext(input_tlist);
-		refnames_tlist = lnext(refnames_tlist);
+		j = lnext(j);
+		k = lnext(k);
 	}
 
 	if (flag >= 0)
@@ -518,11 +522,12 @@ generate_append_tlist(List *colTypes, bool flag,
 {
 	List	   *tlist = NIL;
 	int			resno = 1;
-	List	   *curColType;
+	ListCell   *curColType;
+	ListCell   *ref_tl_item;
 	int			colindex;
 	Resdom	   *resdom;
 	Node	   *expr;
-	List	   *planl;
+	ListCell   *planl;
 	int32	   *colTypmods;
 
 	/*
@@ -536,9 +541,9 @@ generate_append_tlist(List *colTypes, bool flag,
 	foreach(planl, input_plans)
 	{
 		Plan	   *subplan = (Plan *) lfirst(planl);
-		List	   *subtlist;
+		ListCell   *subtlist;
 
-		curColType = colTypes;
+		curColType = list_head(colTypes);
 		colindex = 0;
 		foreach(subtlist, subplan->targetlist)
 		{
@@ -546,11 +551,11 @@ generate_append_tlist(List *colTypes, bool flag,
 
 			if (subtle->resdom->resjunk)
 				continue;
-			Assert(curColType != NIL);
-			if (subtle->resdom->restype == lfirsto(curColType))
+			Assert(curColType != NULL);
+			if (subtle->resdom->restype == lfirst_oid(curColType))
 			{
 				/* If first subplan, copy the typmod; else compare */
-				if (planl == input_plans)
+				if (planl == list_head(input_plans))
 					colTypmods[colindex] = subtle->resdom->restypmod;
 				else if (subtle->resdom->restypmod != colTypmods[colindex])
 					colTypmods[colindex] = -1;
@@ -563,18 +568,18 @@ generate_append_tlist(List *colTypes, bool flag,
 			curColType = lnext(curColType);
 			colindex++;
 		}
-		Assert(curColType == NIL);
+		Assert(curColType == NULL);
 	}
 
 	/*
 	 * Now we can build the tlist for the Append.
 	 */
 	colindex = 0;
-	foreach(curColType, colTypes)
+	forboth(curColType, colTypes, ref_tl_item, refnames_tlist)
 	{
 		Oid			colType = lfirsto(curColType);
 		int32		colTypmod = colTypmods[colindex++];
-		TargetEntry *reftle = (TargetEntry *) lfirst(refnames_tlist);
+		TargetEntry *reftle = (TargetEntry *) lfirst(ref_tl_item);
 
 		Assert(reftle->resdom->resno == resno);
 		Assert(!reftle->resdom->resjunk);
@@ -589,7 +594,6 @@ generate_append_tlist(List *colTypes, bool flag,
 							pstrdup(reftle->resdom->resname),
 							false);
 		tlist = lappend(tlist, makeTargetEntry(resdom, (Expr *) expr));
-		refnames_tlist = lnext(refnames_tlist);
 	}
 
 	if (flag)
@@ -623,11 +627,12 @@ generate_append_tlist(List *colTypes, bool flag,
 static bool
 tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 {
-	List	   *i;
+	ListCell   *l;
+	ListCell   *curColType = list_head(colTypes);
 
-	foreach(i, tlist)
+	foreach(l, tlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(i);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (tle->resdom->resjunk)
 		{
@@ -636,14 +641,14 @@ tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK)
 		}
 		else
 		{
-			if (colTypes == NIL)
+			if (curColType == NULL)
 				return false;
-			if (tle->resdom->restype != lfirsto(colTypes))
+			if (tle->resdom->restype != lfirst_oid(curColType))
 				return false;
-			colTypes = lnext(colTypes);
+			curColType = lnext(curColType);
 		}
 	}
-	if (colTypes != NIL)
+	if (curColType != NULL)
 		return false;
 	return true;
 }
@@ -667,10 +672,10 @@ find_all_inheritors(Oid parentrel)
 	 */
 	while (unexamined_relids != NIL)
 	{
-		Oid			currentrel = lfirsto(unexamined_relids);
+		Oid			currentrel = linitial_oid(unexamined_relids);
 		List	   *currentchildren;
 
-		unexamined_relids = lnext(unexamined_relids);
+		unexamined_relids = list_delete_first(unexamined_relids);
 		examined_relids = lappendo(examined_relids, currentrel);
 		currentchildren = find_inheritance_children(currentrel);
 
@@ -719,7 +724,7 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 	Oid			parentOID;
 	List	   *inhOIDs;
 	List	   *inhRTIs;
-	List	   *l;
+	ListCell   *l;
 
 	/* Does RT entry allow inheritance? */
 	if (!rte->inh)
@@ -739,7 +744,7 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
 	 * case.  This could happen despite above has_subclass() check, if
 	 * table once had a child but no longer does.
 	 */
-	if (lnext(inhOIDs) == NIL)
+	if (length(inhOIDs) < 2)
 		return NIL;
 	/* OK, it's an inheritance set; expand it */
 	if (dup_parent)
@@ -1020,7 +1025,7 @@ static List *
 adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid)
 {
 	bool		changed_it = false;
-	List	   *tl;
+	ListCell   *tl;
 	List	   *new_tlist;
 	bool		more;
 	int			attrno;

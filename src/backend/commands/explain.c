@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.120 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.121 2004/05/26 04:41:10 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,7 +72,7 @@ ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 	Query	   *query = stmt->query;
 	TupOutputState *tstate;
 	List	   *rewritten;
-	List	   *l;
+	ListCell   *l;
 
 	/* prepare for projection of tuples */
 	tstate = begin_tup_output_tupdesc(dest, ExplainResultDesc(stmt));
@@ -104,7 +104,7 @@ ExplainQuery(ExplainStmt *stmt, DestReceiver *dest)
 			{
 				ExplainOneQuery(lfirst(l), stmt, tstate);
 				/* put a blank line between plans */
-				if (lnext(l) != NIL)
+				if (lnext(l) != NULL)
 					do_text_output_oneline(tstate, "");
 			}
 		}
@@ -156,9 +156,9 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 			/* Still need to rewrite cursor command */
 			Assert(query->commandType == CMD_SELECT);
 			rewritten = QueryRewrite(query);
-			if (length(rewritten) != 1)
+			if (list_length(rewritten) != 1)
 				elog(ERROR, "unexpected rewrite result");
-			query = (Query *) lfirst(rewritten);
+			query = (Query *) linitial(rewritten);
 			Assert(query->commandType == CMD_SELECT);
 			/* do not actually execute the underlying query! */
 			stmt->analyze = false;
@@ -317,7 +317,7 @@ explain_outNode(StringInfo str,
 				Plan *outer_plan,
 				int indent, ExplainState *es)
 {
-	List	   *l;
+	ListCell	*l;
 	char	   *pname;
 	int			i;
 
@@ -491,7 +491,7 @@ explain_outNode(StringInfo str,
 			{
 				Relation	relation;
 
-				relation = index_open(lfirsto(l));
+				relation = index_open(lfirst_oid(l));
 				appendStringInfo(str, "%s%s",
 								 (++i > 1) ? ", " : "",
 					quote_identifier(RelationGetRelationName(relation)));
@@ -699,7 +699,7 @@ explain_outNode(StringInfo str,
 	if (plan->initPlan)
 	{
 		List	   *saved_rtable = es->rtable;
-		List	   *lst;
+		ListCell   *lst;
 
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
@@ -749,7 +749,7 @@ explain_outNode(StringInfo str,
 	{
 		Append	   *appendplan = (Append *) plan;
 		AppendState *appendstate = (AppendState *) planstate;
-		List	   *lst;
+		ListCell   *lst;
 		int			j;
 
 		j = 0;
@@ -797,7 +797,7 @@ explain_outNode(StringInfo str,
 	if (planstate->subPlan)
 	{
 		List	   *saved_rtable = es->rtable;
-		List	   *lst;
+		ListCell   *lst;
 
 		for (i = 0; i < indent; i++)
 			appendStringInfo(str, "  ");
@@ -839,11 +839,8 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 	/* No work if empty qual */
 	if (qual == NIL)
 		return;
-	if (is_or_qual)
-	{
-		if (lfirst(qual) == NIL && lnext(qual) == NIL)
-			return;
-	}
+	if (is_or_qual && list_length(qual) == 1 && linitial(qual) == NIL)
+		return;
 
 	/* Fix qual --- indexqual requires different processing */
 	if (is_or_qual)
@@ -852,7 +849,7 @@ show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
 		node = (Node *) make_ands_explicit(qual);
 
 	/* Generate deparse context */
-	Assert(scanrelid > 0 && scanrelid <= length(es->rtable));
+	Assert(scanrelid > 0 && scanrelid <= list_length(es->rtable));
 	rte = rt_fetch(scanrelid, es->rtable);
 	scancontext = deparse_context_for_rte(rte);
 
@@ -984,7 +981,7 @@ show_sort_keys(List *tlist, int nkeys, AttrNumber *keycols,
 		context = deparse_context_for_plan(0, NULL,
 										   0, NULL,
 										   es->rtable);
-		useprefix = length(es->rtable) > 1;
+		useprefix = list_length(es->rtable) > 1;
 	}
 	bms_free(varnos);
 
@@ -1017,17 +1014,16 @@ make_ors_ands_explicit(List *orclauses)
 {
 	if (orclauses == NIL)
 		return NULL;			/* probably can't happen */
-	else if (lnext(orclauses) == NIL)
-		return (Node *) make_ands_explicit(lfirst(orclauses));
+	else if (list_length(orclauses) == 1)
+		return (Node *) make_ands_explicit(linitial(orclauses));
 	else
 	{
-		FastList	args;
-		List	   *orptr;
+		List	   *args = NIL;
+		ListCell   *orptr;
 
-		FastListInit(&args);
 		foreach(orptr, orclauses)
-			FastAppend(&args, make_ands_explicit(lfirst(orptr)));
+			args = lappend(args, make_ands_explicit(lfirst(orptr)));
 
-		return (Node *) make_orclause(FastListValue(&args));
+		return (Node *) make_orclause(args);
 	}
 }

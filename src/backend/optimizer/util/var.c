@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.56 2004/05/10 22:44:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/var.c,v 1.57 2004/05/26 04:41:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,9 +513,9 @@ flatten_join_alias_vars_mutator(Node *node,
 		if (var->varattno == InvalidAttrNumber)
 		{
 			/* Must expand whole-row reference */
-			RowExpr *rowexpr;
-			List	*fields = NIL;
-			List    *l;
+			RowExpr		*rowexpr;
+			List		*fields = NIL;
+			ListCell	*l;
 
 			foreach(l, rte->joinaliasvars)
 			{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.129 2004/05/23 17:10:54 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_clause.c,v 1.130 2004/05/26 04:41:29 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static TargetEntry *findTargetlistEntry(ParseState *pstate, Node *node,
 void
 transformFromClause(ParseState *pstate, List *frmList)
 {
-	List	   *fl;
+	ListCell   *fl;
 
 	/*
 	 * The grammar will have produced a list of RangeVars,
@@ -231,14 +231,15 @@ extractRemainingColumns(List *common_colnames,
 {
 	List	   *new_colnames = NIL;
 	List	   *new_colvars = NIL;
-	List	   *lnames,
-			   *lvars = src_colvars;
+	ListCell   *lnames, *lvars;
 
-	foreach(lnames, src_colnames)
+	Assert(length(src_colnames) == length(src_colvars));
+
+	forboth(lnames, src_colnames, lvars, src_colvars)
 	{
 		char	   *colname = strVal(lfirst(lnames));
 		bool		match = false;
-		List	   *cnames;
+		ListCell   *cnames;
 
 		foreach(cnames, common_colnames)
 		{
@@ -256,8 +257,6 @@ extractRemainingColumns(List *common_colnames,
 			new_colnames = lappend(new_colnames, lfirst(lnames));
 			new_colvars = lappend(new_colvars, lfirst(lvars));
 		}
-
-		lvars = lnext(lvars);
 	}
 
 	*res_colnames = new_colnames;
@@ -273,8 +272,7 @@ static Node *
 transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 {
 	Node	   *result = NULL;
-	List	   *lvars,
-			   *rvars = rightVars;
+	ListCell   *lvars, *rvars;
 
 	/*
 	 * We cheat a little bit here by building an untransformed operator
@@ -282,7 +280,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 * because transformExpr() won't complain about already-transformed
 	 * subnodes.
 	 */
-	foreach(lvars, leftVars)
+	forboth(lvars, leftVars, rvars, rightVars)
 	{
 		Node	   *lvar = (Node *) lfirst(lvars);
 		Node	   *rvar = (Node *) lfirst(rvars);
@@ -299,8 +297,6 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 			a = makeA_Expr(AEXPR_AND, NIL, result, (Node *) e);
 			result = (Node *) a;
 		}
-
-		rvars = lnext(rvars);
 	}
 
 	/*
@@ -314,7 +310,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	result = coerce_to_boolean(pstate, result, "JOIN/USING");
 
 	return result;
-}	/* transformJoinUsingClause() */
+}
 
 /* transformJoinOnClause()
  *	  Transform the qual conditions for JOIN/ON.
@@ -435,7 +431,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 */
 	if (length(parsetrees) != 1)
 		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
-	query = (Query *) lfirst(parsetrees);
+	query = (Query *) linitial(parsetrees);
 	if (query == NULL || !IsA(query, Query))
 		elog(ERROR, "unexpected parse analysis result for subquery in FROM");
 
@@ -686,7 +682,7 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		if (j->isNatural)
 		{
 			List	   *rlist = NIL;
-			List	   *lx,
+			ListCell   *lx,
 					   *rx;
 
 			Assert(j->using == NIL);	/* shouldn't have USING() too */
@@ -731,14 +727,14 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			List	   *ucols = j->using;
 			List	   *l_usingvars = NIL;
 			List	   *r_usingvars = NIL;
-			List	   *ucol;
+			ListCell   *ucol;
 
 			Assert(j->quals == NULL);	/* shouldn't have ON() too */
 
 			foreach(ucol, ucols)
 			{
 				char	   *u_colname = strVal(lfirst(ucol));
-				List	   *col;
+				ListCell   *col;
 				int			ndx;
 				int			l_index = -1;
 				int			r_index = -1;
@@ -1083,7 +1079,7 @@ static TargetEntry *
 findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 {
 	TargetEntry *target_result = NULL;
-	List	   *tl;
+	ListCell   *tl;
 	Node	   *expr;
 
 	/*----------
@@ -1129,7 +1125,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List **tlist, int clause)
 		length(((ColumnRef *) node)->fields) == 1 &&
 		((ColumnRef *) node)->indirection == NIL)
 	{
-		char	   *name = strVal(lfirst(((ColumnRef *) node)->fields));
+		char	   *name = strVal(linitial(((ColumnRef *) node)->fields));
 
 		if (clause == GROUP_CLAUSE)
 		{
@@ -1255,8 +1251,11 @@ List *
 transformGroupClause(ParseState *pstate, List *grouplist,
 					 List **targetlist, List *sortClause)
 {
-	List	   *glist = NIL,
-			   *gl;
+	List	   *glist = NIL;
+	ListCell   *gl;
+	ListCell   *sortItem;
+
+	sortItem = list_head(sortClause);
 
 	foreach(gl, grouplist)
 	{
@@ -1293,17 +1292,17 @@ transformGroupClause(ParseState *pstate, List *grouplist,
 		 * any user-supplied ordering operator will bring equal values
 		 * together, which is all that GROUP BY needs.
 		 */
-		if (sortClause &&
-			((SortClause *) lfirst(sortClause))->tleSortGroupRef ==
+		if (sortItem &&
+			((SortClause *) lfirst(sortItem))->tleSortGroupRef ==
 			tle->resdom->ressortgroupref)
 		{
-			ordering_op = ((SortClause *) lfirst(sortClause))->sortop;
-			sortClause = lnext(sortClause);
+			ordering_op = ((SortClause *) lfirst(sortItem))->sortop;
+			sortItem = lnext(sortItem);
 		}
 		else
 		{
 			ordering_op = ordering_oper_opid(restype);
-			sortClause = NIL;	/* disregard ORDER BY once match fails */
+			sortItem = NULL;	/* disregard ORDER BY once match fails */
 		}
 
 		grpcl = makeNode(GroupClause);
@@ -1329,7 +1328,7 @@ transformSortClause(ParseState *pstate,
 					bool resolveUnknown)
 {
 	List	   *sortlist = NIL;
-	List	   *olitem;
+	ListCell   *olitem;
 
 	foreach(olitem, orderlist)
 	{
@@ -1361,14 +1360,14 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 						List **targetlist, List **sortClause)
 {
 	List	   *result = NIL;
-	List	   *slitem;
-	List	   *dlitem;
+	ListCell   *slitem;
+	ListCell   *dlitem;
 
 	/* No work if there was no DISTINCT clause */
 	if (distinctlist == NIL)
 		return NIL;
 
-	if (lfirst(distinctlist) == NIL)
+	if (linitial(distinctlist) == NULL)
 	{
 		/* We had SELECT DISTINCT */
 
@@ -1423,7 +1422,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 		 * match in any order, but implementing that check seems like more
 		 * trouble than it's worth.
 		 */
-		List	   *nextsortlist = *sortClause;
+		ListCell   *nextsortlist = list_head(*sortClause);
 
 		foreach(dlitem, distinctlist)
 		{
@@ -1432,7 +1431,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 			tle = findTargetlistEntry(pstate, lfirst(dlitem),
 									  targetlist, DISTINCT_ON_CLAUSE);
 
-			if (nextsortlist != NIL)
+			if (nextsortlist != NULL)
 			{
 				SortClause *scl = (SortClause *) lfirst(nextsortlist);
 
@@ -1463,7 +1462,7 @@ transformDistinctClause(ParseState *pstate, List *distinctlist,
 						break;
 					}
 				}
-				if (slitem == NIL)		/* should not happen */
+				if (slitem == NULL)		/* should not happen */
 					elog(ERROR, "failed to add DISTINCT ON clause to target list");
 			}
 		}
@@ -1486,11 +1485,11 @@ List *
 addAllTargetsToSortList(ParseState *pstate, List *sortlist,
 						List *targetlist, bool resolveUnknown)
 {
-	List	   *i;
+	ListCell  *l;
 
-	foreach(i, targetlist)
+	foreach(l, targetlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(i);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (!tle->resdom->resjunk)
 			sortlist = addTargetToSortList(pstate, tle,
@@ -1575,7 +1574,7 @@ Index
 assignSortGroupRef(TargetEntry *tle, List *tlist)
 {
 	Index		maxRef;
-	List	   *l;
+	ListCell   *l;
 
 	if (tle->resdom->ressortgroupref)	/* already has one? */
 		return tle->resdom->ressortgroupref;
@@ -1605,15 +1604,15 @@ bool
 targetIsInSortList(TargetEntry *tle, List *sortList)
 {
 	Index		ref = tle->resdom->ressortgroupref;
-	List	   *i;
+	ListCell   *l;
 
 	/* no need to scan list if tle has no marker */
 	if (ref == 0)
 		return false;
 
-	foreach(i, sortList)
+	foreach(l, sortList)
 	{
-		SortClause *scl = (SortClause *) lfirst(i);
+		SortClause *scl = (SortClause *) lfirst(l);
 
 		if (scl->tleSortGroupRef == ref)
 			return true;

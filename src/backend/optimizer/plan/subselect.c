@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.89 2004/05/11 13:15:15 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/subselect.c,v 1.90 2004/05/26 04:41:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,7 @@ static Param *
 replace_outer_var(Var *var)
 {
 	Param	   *retval;
-	List	   *ppl;
+	ListCell   *ppl;
 	PlannerParamItem *pitem;
 	Index		abslevel;
 	int			i;
@@ -250,7 +250,6 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	Plan	   *plan;
 	Bitmapset  *tmpset;
 	int			paramid;
-	List	   *lst;
 	Node	   *result;
 
 	/*
@@ -348,7 +347,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	}
 	else if (node->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
 	{
-		TargetEntry *te = lfirst(plan->targetlist);
+		TargetEntry *te = linitial(plan->targetlist);
 		Param	   *prm;
 
 		Assert(!te->resdom->resjunk);
@@ -359,7 +358,7 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 	}
 	else if (node->parParam == NIL && slink->subLinkType == ARRAY_SUBLINK)
 	{
-		TargetEntry *te = lfirst(plan->targetlist);
+		TargetEntry *te = linitial(plan->targetlist);
 		Oid			arraytype;
 		Param	   *prm;
 
@@ -395,11 +394,12 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 			result = (Node *) (node->useOr ? make_orclause(exprs) :
 							   make_andclause(exprs));
 		else
-			result = (Node *) lfirst(exprs);
+			result = (Node *) linitial(exprs);
 	}
 	else
 	{
 		List	   *args;
+		ListCell   *l;
 
 		/*
 		 * We can't convert subplans of ALL_SUBLINK or ANY_SUBLINK types
@@ -471,9 +471,9 @@ make_subplan(SubLink *slink, List *lefthand, bool isTopQual)
 		 * Make node->args from parParam.
 		 */
 		args = NIL;
-		foreach(lst, node->parParam)
+		foreach(l, node->parParam)
 		{
-			PlannerParamItem *pitem = nth(lfirsti(lst), PlannerParamList);
+			PlannerParamItem *pitem = nth(lfirsti(l), PlannerParamList);
 
 			/*
 			 * The Var or Aggref has already been adjusted to have the
@@ -509,15 +509,17 @@ convert_sublink_opers(List *lefthand, List *operOids,
 					  List **righthandIds)
 {
 	List	   *result = NIL;
-	List	   *lst;
+	ListCell   *l, *lefthand_item, *tlist_item;
 
 	*righthandIds = NIL;
+	lefthand_item = list_head(lefthand);
+	tlist_item = list_head(targetlist);
 
-	foreach(lst, operOids)
+	foreach(l, operOids)
 	{
-		Oid			opid = lfirsto(lst);
-		Node	   *leftop = lfirst(lefthand);
-		TargetEntry *te = lfirst(targetlist);
+		Oid			opid = lfirsto(l);
+		Node	   *leftop = (Node *) lfirst(lefthand_item);
+		TargetEntry *te = (TargetEntry *) lfirst(tlist_item);
 		Node	   *rightop;
 		Operator	tup;
 
@@ -574,8 +576,8 @@ convert_sublink_opers(List *lefthand, List *operOids,
 
 		ReleaseSysCache(tup);
 
-		lefthand = lnext(lefthand);
-		targetlist = lnext(targetlist);
+		lefthand_item = lnext(lefthand_item);
+		tlist_item = lnext(tlist_item);
 	}
 
 	return result;
@@ -591,7 +593,7 @@ static bool
 subplan_is_hashable(SubLink *slink, SubPlan *node)
 {
 	double		subquery_size;
-	List	   *opids;
+	ListCell   *l;
 
 	/*
 	 * The sublink type must be "= ANY" --- that is, an IN operator. (We
@@ -602,7 +604,7 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	if (slink->subLinkType != ANY_SUBLINK)
 		return false;
 	if (length(slink->operName) != 1 ||
-		strcmp(strVal(lfirst(slink->operName)), "=") != 0)
+		strcmp(strVal(linitial(slink->operName)), "=") != 0)
 		return false;
 
 	/*
@@ -636,9 +638,9 @@ subplan_is_hashable(SubLink *slink, SubPlan *node)
 	 * different sets of operators with the hash table, but there is no
 	 * obvious usefulness to that at present.)
 	 */
-	foreach(opids, slink->operOids)
+	foreach(l, slink->operOids)
 	{
-		Oid			opid = lfirsto(opids);
+		Oid			opid = lfirsto(l);
 		HeapTuple	tup;
 		Form_pg_operator optup;
 
@@ -690,7 +692,7 @@ convert_IN_to_join(Query *parse, SubLink *sublink)
 	if (sublink->subLinkType != ANY_SUBLINK)
 		return NULL;
 	if (length(sublink->operName) != 1 ||
-		strcmp(strVal(lfirst(sublink->operName)), "=") != 0)
+		strcmp(strVal(linitial(sublink->operName)), "=") != 0)
 		return NULL;
 
 	/*
@@ -859,8 +861,8 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 	 */
 	if (and_clause(node))
 	{
-		List   *newargs = NIL;
-		List   *l;
+		List		*newargs = NIL;
+		ListCell	*l;
 
 		/* Still at qual top-level */
 		locTopQual = *isTopQual;
@@ -884,8 +886,8 @@ process_sublinks_mutator(Node *node, bool *isTopQual)
 
 	if (or_clause(node))
 	{
-		List   *newargs = NIL;
-		List   *l;
+		List		*newargs = NIL;
+		ListCell	*l;
 
 		foreach(l, ((BoolExpr *) node)->args)
 		{
@@ -918,7 +920,7 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	Bitmapset  *outer_params = NULL;
 	Bitmapset  *valid_params = NULL;
 	int			paramid;
-	List	   *lst;
+	ListCell   *l;
 
 	/*
 	 * First, scan the param list to discover the sets of params that are
@@ -926,9 +928,9 @@ SS_finalize_plan(Plan *plan, List *rtable)
 	 * this once to save time in the per-plan recursion steps.
 	 */
 	paramid = 0;
-	foreach(lst, PlannerParamList)
+	foreach(l, PlannerParamList)
 	{
-		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(lst);
+		PlannerParamItem *pitem = (PlannerParamItem *) lfirst(l);
 
 		if (pitem->abslevel < PlannerQueryLevel)
 		{
@@ -966,7 +968,6 @@ finalize_plan(Plan *plan, List *rtable,
 			  Bitmapset *outer_params, Bitmapset *valid_params)
 {
 	finalize_primnode_context context;
-	List	   *lst;
 
 	if (plan == NULL)
 		return NULL;
@@ -1033,14 +1034,18 @@ finalize_plan(Plan *plan, List *rtable,
 			break;
 
 		case T_Append:
-			foreach(lst, ((Append *) plan)->appendplans)
 			{
-				context.paramids =
-					bms_add_members(context.paramids,
-									finalize_plan((Plan *) lfirst(lst),
-												  rtable,
-												  outer_params,
-												  valid_params));
+				ListCell *l;
+
+				foreach(l, ((Append *) plan)->appendplans)
+				{
+					context.paramids =
+						bms_add_members(context.paramids,
+										finalize_plan((Plan *) lfirst(l),
+													  rtable,
+													  outer_params,
+													  valid_params));
+				}
 			}
 			break;
 

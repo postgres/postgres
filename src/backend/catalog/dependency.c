@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.35 2004/05/05 04:48:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/dependency.c,v 1.36 2004/05/26 04:41:06 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -841,7 +841,7 @@ recordDependencyOnExpr(const ObjectAddress *depender,
 	init_object_addresses(&context.addrs);
 
 	/* Set up interpretation for Vars at varlevelsup = 0 */
-	context.rtables = makeList1(rtable);
+	context.rtables = list_make1(rtable);
 
 	/* Scan the expression tree for referenceable objects */
 	find_expr_references_walker(expr, &context);
@@ -883,7 +883,7 @@ recordDependencyOnSingleRelExpr(const ObjectAddress *depender,
 	rte.rtekind = RTE_RELATION;
 	rte.relid = relId;
 
-	context.rtables = makeList1(makeList1(&rte));
+	context.rtables = list_make1(list_make1(&rte));
 
 	/* Scan the expression tree for referenceable objects */
 	find_expr_references_walker(expr, &context);
@@ -960,24 +960,14 @@ find_expr_references_walker(Node *node,
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		int			levelsup;
-		List	   *rtable,
-				   *rtables;
+		List	   *rtable;
 		RangeTblEntry *rte;
 
 		/* Find matching rtable entry, or complain if not found */
-		levelsup = var->varlevelsup;
-		rtables = context->rtables;
-		while (levelsup--)
-		{
-			if (rtables == NIL)
-				break;
-			rtables = lnext(rtables);
-		}
-		if (rtables == NIL)
+		if (var->varlevelsup >= list_length(context->rtables))
 			elog(ERROR, "invalid varlevelsup %d", var->varlevelsup);
-		rtable = lfirst(rtables);
-		if (var->varno <= 0 || var->varno > length(rtable))
+		rtable = (List *) list_nth(context->rtables, var->varlevelsup);
+		if (var->varno <= 0 || var->varno > list_length(rtable))
 			elog(ERROR, "invalid varno %d", var->varno);
 		rte = rt_fetch(var->varno, rtable);
 		if (rte->rtekind == RTE_RELATION)
@@ -994,13 +984,15 @@ find_expr_references_walker(Node *node,
 
 			/* We must make the context appropriate for join's level */
 			save_rtables = context->rtables;
-			context->rtables = rtables;
+			context->rtables = list_copy_tail(context->rtables,
+											  var->varlevelsup);
 			if (var->varattno <= 0 ||
-				var->varattno > length(rte->joinaliasvars))
+				var->varattno > list_length(rte->joinaliasvars))
 				elog(ERROR, "invalid varattno %d", var->varattno);
-			find_expr_references_walker((Node *) nth(var->varattno - 1,
-													 rte->joinaliasvars),
+			find_expr_references_walker((Node *) list_nth(rte->joinaliasvars,
+														  var->varattno - 1),
 										context);
+			list_free(context->rtables);
 			context->rtables = save_rtables;
 		}
 		return false;
@@ -1056,11 +1048,11 @@ find_expr_references_walker(Node *node,
 	if (IsA(node, SubLink))
 	{
 		SubLink    *sublink = (SubLink *) node;
-		List	   *opid;
+		ListCell   *opid;
 
 		foreach(opid, sublink->operOids)
 		{
-			add_object_address(OCLASS_OPERATOR, lfirsto(opid), 0,
+			add_object_address(OCLASS_OPERATOR, lfirst_oid(opid), 0,
 							   &context->addrs);
 		}
 		/* fall through to examine arguments */
@@ -1074,7 +1066,7 @@ find_expr_references_walker(Node *node,
 	{
 		/* Recurse into RTE subquery or not-yet-planned sublink subquery */
 		Query	   *query = (Query *) node;
-		List	   *rtable;
+		ListCell   *rtable;
 		bool		result;
 
 		/*
@@ -1099,7 +1091,7 @@ find_expr_references_walker(Node *node,
 								   find_expr_references_walker,
 								   (void *) context,
 								   QTW_IGNORE_JOINALIASES);
-		context->rtables = lnext(context->rtables);
+		context->rtables = list_delete_first(context->rtables);
 		return result;
 	}
 	return expression_tree_walker(node, find_expr_references_walker,

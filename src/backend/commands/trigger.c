@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.164 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.165 2004/05/26 04:41:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,19 +111,19 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		bool		needconstrrelid = false;
 		void	   *elem = NULL;
 
-		if (strncmp(strVal(llast(stmt->funcname)), "RI_FKey_check_", 14) == 0)
+		if (strncmp(strVal(lfirst(list_tail((stmt->funcname)))), "RI_FKey_check_", 14) == 0)
 		{
 			/* A trigger on FK table. */
 			needconstrrelid = true;
-			if (length(stmt->args) > RI_PK_RELNAME_ARGNO)
-				elem = nth(RI_PK_RELNAME_ARGNO, stmt->args);
+			if (list_length(stmt->args) > RI_PK_RELNAME_ARGNO)
+				elem = list_nth(stmt->args, RI_PK_RELNAME_ARGNO);
 		}
-		else if (strncmp(strVal(llast(stmt->funcname)), "RI_FKey_", 8) == 0)
+		else if (strncmp(strVal(lfirst(list_tail((stmt->funcname)))), "RI_FKey_", 8) == 0)
 		{
 			/* A trigger on PK table. */
 			needconstrrelid = true;
-			if (length(stmt->args) > RI_FK_RELNAME_ARGNO)
-				elem = nth(RI_FK_RELNAME_ARGNO, stmt->args);
+			if (list_length(stmt->args) > RI_FK_RELNAME_ARGNO)
+				elem = list_nth(stmt->args, RI_FK_RELNAME_ARGNO);
 		}
 		if (elem != NULL)
 		{
@@ -318,9 +318,9 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 
 	if (stmt->args)
 	{
-		List	   *le;
+		ListCell   *le;
 		char	   *args;
-		int16		nargs = length(stmt->args);
+		int16		nargs = list_length(stmt->args);
 		int			len = 0;
 
 		foreach(le, stmt->args)
@@ -1691,7 +1691,7 @@ static bool
 deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 {
 	MemoryContext oldcxt;
-	List	   *sl;
+	ListCell   *sl;
 	DeferredTriggerStatus trigstate;
 
 	/*
@@ -2193,7 +2193,7 @@ DeferredTriggerAbortXact(void)
 void
 DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 {
-	List	   *l;
+	ListCell	   *l;
 
 	/*
 	 * Ignore call if we aren't in a transaction.
@@ -2210,15 +2210,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		 * Drop all per-transaction information about individual trigger
 		 * states.
 		 */
-		l = deferredTriggers->deftrig_trigstates;
-		while (l != NIL)
-		{
-			List	   *next = lnext(l);
-
-			pfree(lfirst(l));
-			pfree(l);
-			l = next;
-		}
+		list_free_deep(deferredTriggers->deftrig_trigstates);
 		deferredTriggers->deftrig_trigstates = NIL;
 
 		/*
@@ -2233,7 +2225,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		MemoryContext oldcxt;
 		bool		found;
 		DeferredTriggerStatus state;
-		List	   *ls;
+		ListCell   *ls;
 		List	   *loid = NIL;
 
 		/* ----------
@@ -2293,7 +2285,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 									cname)));
 
 				constr_oid = HeapTupleGetOid(htup);
-				loid = lappendo(loid, constr_oid);
+				loid = lappend_oid(loid, constr_oid);
 				found = true;
 			}
 
@@ -2321,7 +2313,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			foreach(ls, deferredTriggers->deftrig_trigstates)
 			{
 				state = (DeferredTriggerStatus) lfirst(ls);
-				if (state->dts_tgoid == lfirsto(l))
+				if (state->dts_tgoid == lfirst_oid(l))
 				{
 					state->dts_tgisdeferred = stmt->deferred;
 					found = true;
@@ -2332,7 +2324,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			{
 				state = (DeferredTriggerStatus)
 					palloc(sizeof(DeferredTriggerStatusData));
-				state->dts_tgoid = lfirsto(l);
+				state->dts_tgoid = lfirst_oid(l);
 				state->dts_tgisdeferred = stmt->deferred;
 
 				deferredTriggers->deftrig_trigstates =

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.414 2004/05/23 03:50:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.415 2004/05/26 04:41:35 neilc Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -428,7 +428,7 @@ pg_parse_and_rewrite(const char *query_string,	/* string to execute */
 {
 	List	   *raw_parsetree_list;
 	List	   *querytree_list;
-	List	   *list_item;
+	ListCell   *list_item;
 
 	/*
 	 * (1) parse the request string into a list of raw parse trees.
@@ -443,7 +443,7 @@ pg_parse_and_rewrite(const char *query_string,	/* string to execute */
 	{
 		Node	   *parsetree = (Node *) lfirst(list_item);
 
-		querytree_list = nconc(querytree_list,
+		querytree_list = list_concat(querytree_list,
 							   pg_analyze_and_rewrite(parsetree,
 													  paramTypes,
 													  numParams));
@@ -468,8 +468,8 @@ pg_parse_and_rewrite(const char *query_string,	/* string to execute */
 List *
 pg_parse_query(const char *query_string)
 {
-	List	   *raw_parsetree_list,
-			   *parsetree_item;
+	List	   *raw_parsetree_list;
+	ListCell   *parsetree_item;
 
 	if (log_statement == LOGSTMT_ALL)
 		ereport(LOG,
@@ -571,7 +571,7 @@ List *
 pg_rewrite_queries(List *querytree_list)
 {
 	List	   *new_list = NIL;
-	List	   *list_item;
+	ListCell   *list_item;
 
 	if (log_parser_stats)
 		ResetUsage();
@@ -598,7 +598,7 @@ pg_rewrite_queries(List *querytree_list)
 			/* rewrite regular queries */
 			List	   *rewritten = QueryRewrite(querytree);
 
-			new_list = nconc(new_list, rewritten);
+			new_list = list_concat(new_list, rewritten);
 		}
 	}
 
@@ -691,7 +691,7 @@ List *
 pg_plan_queries(List *querytrees, bool needSnapshot)
 {
 	List	   *plan_list = NIL;
-	List	   *query_list;
+	ListCell   *query_list;
 
 	foreach(query_list, querytrees)
 	{
@@ -730,8 +730,8 @@ exec_simple_query(const char *query_string)
 {
 	CommandDest dest = whereToSendOutput;
 	MemoryContext oldcontext;
-	List	   *parsetree_list,
-			   *parsetree_item;
+	List	   *parsetree_list;
+	ListCell   *parsetree_item;
 	struct timeval start_t,
 				stop_t;
 	bool		save_log_duration = log_duration;
@@ -946,7 +946,7 @@ exec_simple_query(const char *query_string)
 			 */
 			finish_xact_command();
 		}
-		else if (lnext(parsetree_item) == NIL)
+		else if (lnext(parsetree_item) == NULL)
 		{
 			/*
 			 * If this is the last parsetree of the query string, close
@@ -1129,14 +1129,14 @@ exec_parse_message(const char *query_string,	/* string to execute */
 	 * is mainly to keep the protocol simple --- otherwise we'd need to
 	 * worry about multiple result tupdescs and things like that.
 	 */
-	if (length(parsetree_list) > 1)
+	if (list_length(parsetree_list) > 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("cannot insert multiple commands into a prepared statement")));
 
 	if (parsetree_list != NIL)
 	{
-		Node	   *parsetree = (Node *) lfirst(parsetree_list);
+		Node	   *parsetree = (Node *) linitial(parsetree_list);
 		int			i;
 
 		/*
@@ -1198,7 +1198,7 @@ exec_parse_message(const char *query_string,	/* string to execute */
 						(errcode(ERRCODE_INDETERMINATE_DATATYPE),
 				  errmsg("could not determine data type of parameter $%d",
 						 i + 1)));
-			param_list = lappendo(param_list, ptype);
+			param_list = lappend_oid(param_list, ptype);
 		}
 
 		if (log_parser_stats)
@@ -1342,11 +1342,11 @@ exec_bind_message(StringInfo input_message)
 				   errmsg("unnamed prepared statement does not exist")));
 	}
 
-	if (numParams != length(pstmt->argtype_list))
+	if (numParams != list_length(pstmt->argtype_list))
 		ereport(ERROR,
 				(errcode(ERRCODE_PROTOCOL_VIOLATION),
 				 errmsg("bind message supplies %d parameters, but prepared statement \"%s\" requires %d",
-					numParams, stmt_name, length(pstmt->argtype_list))));
+					numParams, stmt_name, list_length(pstmt->argtype_list))));
 
 	/*
 	 * Create the portal.  Allow silent replacement of an existing portal
@@ -1374,7 +1374,7 @@ exec_bind_message(StringInfo input_message)
 	if (numParams > 0)
 	{
 		bool		isaborted = IsAbortedTransactionBlockState();
-		List	   *l;
+		ListCell   *l;
 		MemoryContext oldContext;
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
@@ -1385,7 +1385,7 @@ exec_bind_message(StringInfo input_message)
 		i = 0;
 		foreach(l, pstmt->argtype_list)
 		{
-			Oid			ptype = lfirsto(l);
+			Oid			ptype = lfirst_oid(l);
 			int32		plength;
 			bool		isNull;
 
@@ -1587,9 +1587,9 @@ exec_execute_message(const char *portal_name, long max_rows)
 	BeginCommand(portal->commandTag, dest);
 
 	/* Check for transaction-control commands */
-	if (length(portal->parseTrees) == 1)
+	if (list_length(portal->parseTrees) == 1)
 	{
-		Query	   *query = (Query *) lfirst(portal->parseTrees);
+		Query	   *query = (Query *) linitial(portal->parseTrees);
 
 		if (query->commandType == CMD_UTILITY &&
 			query->utilityStmt != NULL &&
@@ -1690,7 +1690,7 @@ exec_describe_statement_message(const char *stmt_name)
 {
 	PreparedStatement *pstmt;
 	TupleDesc	tupdesc;
-	List	   *l;
+	ListCell   *l;
 	StringInfoData buf;
 
 	/* Find prepared statement */
@@ -1713,11 +1713,11 @@ exec_describe_statement_message(const char *stmt_name)
 	 * First describe the parameters...
 	 */
 	pq_beginmessage(&buf, 't'); /* parameter description message type */
-	pq_sendint(&buf, length(pstmt->argtype_list), 2);
+	pq_sendint(&buf, list_length(pstmt->argtype_list), 2);
 
 	foreach(l, pstmt->argtype_list)
 	{
-		Oid			ptype = lfirsto(l);
+		Oid			ptype = lfirst_oid(l);
 
 		pq_sendint(&buf, (int) ptype, 4);
 	}
@@ -1732,7 +1732,7 @@ exec_describe_statement_message(const char *stmt_name)
 		List	   *targetlist;
 
 		if (ChoosePortalStrategy(pstmt->query_list) == PORTAL_ONE_SELECT)
-			targetlist = ((Query *) lfirst(pstmt->query_list))->targetList;
+			targetlist = ((Query *) linitial(pstmt->query_list))->targetList;
 		else
 			targetlist = NIL;
 		SendRowDescriptionMessage(tupdesc, targetlist, NULL);
@@ -1766,7 +1766,7 @@ exec_describe_portal_message(const char *portal_name)
 		List	   *targetlist;
 
 		if (portal->strategy == PORTAL_ONE_SELECT)
-			targetlist = ((Query *) lfirst(portal->parseTrees))->targetList;
+			targetlist = ((Query *) linitial(portal->parseTrees))->targetList;
 		else
 			targetlist = NIL;
 		SendRowDescriptionMessage(portal->tupDesc, targetlist,
@@ -2524,17 +2524,19 @@ PostgresMain(int argc, char *argv[], const char *username)
 	 */
 	if (MyProcPort != NULL)
 	{
-		List	   *gucopts = MyProcPort->guc_options;
+		ListCell   *gucopts = list_head(MyProcPort->guc_options);
 
 		while (gucopts)
 		{
-			char	   *name,
-					   *value;
+			char *name;
+			char *value;
 
 			name = lfirst(gucopts);
 			gucopts = lnext(gucopts);
+
 			value = lfirst(gucopts);
 			gucopts = lnext(gucopts);
+
 			SetConfigOption(name, value, PGC_BACKEND, PGC_S_CLIENT);
 		}
 

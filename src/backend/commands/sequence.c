@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.110 2004/05/08 19:09:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/sequence.c,v 1.111 2004/05/26 04:41:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -862,7 +862,7 @@ init_params(List *options, Form_pg_sequence new, bool isInit)
 	DefElem    *min_value = NULL;
 	DefElem    *cache_value = NULL;
 	DefElem    *is_cycled = NULL;
-	List	   *option;
+	ListCell   *option;
 
 	foreach(option, options)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.111 2003/11/29 19:52:00 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/catcache.c,v 1.112 2004/05/26 04:41:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1317,6 +1317,7 @@ SearchCatCacheList(CatCache *cache,
 	CatCList   *cl;
 	CatCTup    *ct;
 	List	   *ctlist;
+	ListCell   *ctlist_item;
 	int			nmembers;
 	Relation	relation;
 	SysScanDesc scandesc;
@@ -1510,15 +1511,16 @@ SearchCatCacheList(CatCache *cache,
 	cl->hash_value = lHashValue;
 	cl->n_members = nmembers;
 	/* The list is backwards because we built it with lcons */
+	ctlist_item = list_head(ctlist);
 	for (i = nmembers; --i >= 0;)
 	{
-		cl->members[i] = ct = (CatCTup *) lfirst(ctlist);
+		cl->members[i] = ct = (CatCTup *) lfirst(ctlist_item);
 		Assert(ct->c_list == NULL);
 		ct->c_list = cl;
 		/* mark list dead if any members already dead */
 		if (ct->dead)
 			cl->dead = true;
-		ctlist = lnext(ctlist);
+		ctlist_item = lnext(ctlist_item);
 	}
 
 	DLAddHead(&cache->cc_lists, &cl->cache_elem);

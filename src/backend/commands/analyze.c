@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.72 2004/05/23 21:24:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/analyze.c,v 1.73 2004/05/26 04:41:09 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -207,9 +207,9 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 */
 	if (vacstmt->va_cols != NIL)
 	{
-		List	   *le;
+		ListCell   *le;
 
-		vacattrstats = (VacAttrStats **) palloc(length(vacstmt->va_cols) *
+		vacattrstats = (VacAttrStats **) palloc(list_length(vacstmt->va_cols) *
 												sizeof(VacAttrStats *));
 		tcnt = 0;
 		foreach(le, vacstmt->va_cols)
@@ -260,7 +260,7 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 			thisdata->tupleFract = 1.0;		/* fix later if partial */
 			if (indexInfo->ii_Expressions != NIL && vacstmt->va_cols == NIL)
 			{
-				List	   *indexprs = indexInfo->ii_Expressions;
+				ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
 
 				thisdata->vacattrstats = (VacAttrStats **)
 					palloc(indexInfo->ii_NumIndexAttrs * sizeof(VacAttrStats *));
@@ -274,10 +274,10 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 						/* Found an index expression */
 						Node	   *indexkey;
 
-						if (indexprs == NIL)	/* shouldn't happen */
+						if (indexpr_item == NULL)	/* shouldn't happen */
 							elog(ERROR, "too few entries in indexprs list");
-						indexkey = (Node *) lfirst(indexprs);
-						indexprs = lnext(indexprs);
+						indexkey = (Node *) lfirst(indexpr_item);
+						indexpr_item = lnext(indexpr_item);
 
 						/*
 						 * Can't analyze if the opclass uses a storage type

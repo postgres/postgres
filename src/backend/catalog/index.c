@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.231 2004/05/08 19:09:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/index.c,v 1.232 2004/05/26 04:41:07 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -88,7 +88,7 @@ ConstructTupleDescriptor(Relation heapRelation,
 						 Oid *classObjectId)
 {
 	int			numatts = indexInfo->ii_NumIndexAttrs;
-	List	   *indexprs = indexInfo->ii_Expressions;
+	ListCell   *indexpr_item = list_head(indexInfo->ii_Expressions);
 	TupleDesc	heapTupDesc;
 	TupleDesc	indexTupDesc;
 	int			natts;			/* #atts in heap rel --- for error checks */
@@ -165,10 +165,10 @@ ConstructTupleDescriptor(Relation heapRelation,
 			/* Expressional index */
 			Node	   *indexkey;
 
-			if (indexprs == NIL)	/* shouldn't happen */
+			if (indexpr_item == NULL)	/* shouldn't happen */
 				elog(ERROR, "too few entries in indexprs list");
-			indexkey = (Node *) lfirst(indexprs);
-			indexprs = lnext(indexprs);
+			indexkey = (Node *) lfirst(indexpr_item);
+			indexpr_item = lnext(indexpr_item);
 
 			/*
 			 * Make the attribute's name "pg_expresssion_nnn" (maybe think
@@ -928,7 +928,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 			   Datum *datum,
 			   char *nullv)
 {
-	List	   *indexprs;
+	ListCell   *indexpr_item;
 	int			i;
 
 	if (indexInfo->ii_Expressions != NIL &&
@@ -941,7 +941,7 @@ FormIndexDatum(IndexInfo *indexInfo,
 		/* Check caller has set up context correctly */
 		Assert(GetPerTupleExprContext(estate)->ecxt_scantuple->val == heapTuple);
 	}
-	indexprs = indexInfo->ii_ExpressionsState;
+	indexpr_item = list_head(indexInfo->ii_ExpressionsState);
 
 	for (i = 0; i < indexInfo->ii_NumIndexAttrs; i++)
 	{
@@ -962,19 +962,19 @@ FormIndexDatum(IndexInfo *indexInfo,
 			/*
 			 * Index expression --- need to evaluate it.
 			 */
-			if (indexprs == NIL)
+			if (indexpr_item == NULL)
 				elog(ERROR, "wrong number of index expressions");
-			iDatum = ExecEvalExprSwitchContext((ExprState *) lfirst(indexprs),
+			iDatum = ExecEvalExprSwitchContext((ExprState *) lfirst(indexpr_item),
 										  GetPerTupleExprContext(estate),
 											   &isNull,
 											   NULL);
-			indexprs = lnext(indexprs);
+			indexpr_item = lnext(indexpr_item);
 		}
 		datum[i] = iDatum;
 		nullv[i] = (isNull) ? 'n' : ' ';
 	}
 
-	if (indexprs != NIL)
+	if (indexpr_item != NULL)
 		elog(ERROR, "wrong number of index expressions");
 }
 
@@ -1738,8 +1738,8 @@ reindex_relation(Oid relid, bool toast_too)
 	bool		is_pg_class;
 	bool		result;
 	List	   *indexIds,
-			   *doneIndexes,
-			   *indexId;
+			   *doneIndexes;
+	ListCell   *indexId;
 
 	/*
 	 * Ensure to hold an exclusive lock throughout the transaction. The
@@ -1780,7 +1780,7 @@ reindex_relation(Oid relid, bool toast_too)
 	/* Reindex all the indexes. */
 	foreach(indexId, indexIds)
 	{
-		Oid		indexOid = lfirsto(indexId);
+		Oid		indexOid = lfirst_oid(indexId);
 
 		if (is_pg_class)
 			RelationSetIndexList(rel, doneIndexes);
@@ -1790,7 +1790,7 @@ reindex_relation(Oid relid, bool toast_too)
 		CommandCounterIncrement();
 
 		if (is_pg_class)
-			doneIndexes = lappendo(doneIndexes, indexOid);
+			doneIndexes = lappend_oid(doneIndexes, indexOid);
 	}
 
 	if (is_pg_class)

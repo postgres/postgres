@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.100 2004/05/10 22:44:49 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.101 2004/05/26 04:41:48 neilc Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -3799,7 +3799,7 @@ exec_simple_check_node(Node *node)
 		case T_List:
 			{
 				List	   *expr = (List *) node;
-				List	   *l;
+				ListCell   *l;
 
 				foreach(l, expr)
 				{
@@ -3838,7 +3838,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	if (length(spi_plan->ptlist) != 1)
 		return;
 
-	plan = (Plan *) lfirst(spi_plan->ptlist);
+	plan = (Plan *) linitial(spi_plan->ptlist);
 
 	/*
 	 * 2. It must be a RESULT plan --> no scan's required
@@ -3865,7 +3865,7 @@ exec_simple_check_plan(PLpgSQL_expr * expr)
 	if (length(plan->targetlist) != 1)
 		return;
 
-	tle = (TargetEntry *) lfirst(plan->targetlist);
+	tle = (TargetEntry *) linitial(plan->targetlist);
 
 	/*
 	 * 5. Check that all the nodes in the expression are non-scary.

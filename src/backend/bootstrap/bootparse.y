@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.67 2004/05/21 05:07:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootparse.y,v 1.68 2004/05/26 04:41:05 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -271,7 +271,7 @@ Boot_BuildIndsStmt:
 
 boot_index_params:
 		boot_index_params COMMA boot_index_param	{ $$ = lappend($1, $3); }
-		| boot_index_param							{ $$ = makeList1($1); }
+		| boot_index_param							{ $$ = list_make1($1); }
 		;
 
 boot_index_param:
@@ -280,7 +280,7 @@ boot_index_param:
 					IndexElem *n = makeNode(IndexElem);
 					n->name = LexIDStr($1);
 					n->expr = NULL;
-					n->opclass = makeList1(makeString(LexIDStr($2)));
+					n->opclass = list_make1(makeString(LexIDStr($2)));
 					$$ = n;
 				}
 		;

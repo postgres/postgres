@@ -9,700 +9,1160 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.56 2004/01/07 18:43:36 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/list.c,v 1.57 2004/05/26 04:41:19 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
+#define DISABLE_LIST_COMPAT
+
 #include "postgres.h"
-
-#include "nodes/parsenodes.h"
+#include "nodes/pg_list.h"
 
 /*
- *	lcons
- *
- *	Add obj to the front of list, or make a new list if 'list' is NIL
+ * Routines to simplify writing assertions about the type of a list; a
+ * NIL list is considered to be an empty list of any type.
  */
-List *
-lcons(void *obj, List *list)
-{
-	List	   *l = makeNode(List);
+#define IsPointerList(l)		((l) == NIL || IsA((l), List))
+#define IsIntegerList(l)		((l) == NIL || IsA((l), IntList))
+#define IsOidList(l)			((l) == NIL || IsA((l), OidList))
 
-	lfirst(l) = obj;
-	lnext(l) = list;
-	return l;
+#ifdef USE_ASSERT_CHECKING
+/*
+ * Check that the specified List is valid (so far as we can tell).
+ */
+static void
+check_list_invariants(List *list)
+{
+	if (list == NIL)
+		return;
+
+	Assert(list->length > 0);
+	Assert(list->head != NULL);
+	Assert(list->tail != NULL);
+
+	Assert(list->type == T_List ||
+		   list->type == T_IntList ||
+		   list->type == T_OidList);
+
+	if (list->length == 1)
+		Assert(list->head == list->tail);
+	if (list->length == 2)
+		Assert(list->head->next == list->tail);
+	Assert(list->tail->next == NULL);
+}
+#else
+#define check_list_invariants(l)
+#endif /* USE_ASSERT_CHECKING */
+
+/*
+ * Return a freshly allocated List. Since empty non-NIL lists are
+ * invalid, new_list() also allocates the head cell of the new list:
+ * the caller should be sure to fill in that cell's data.
+ */
+static List *
+new_list(NodeTag type)
+{
+	List		*new_list;
+	ListCell	*new_head;
+
+	new_head = (ListCell *) palloc(sizeof(*new_head));
+	new_head->next = NULL;
+	/* new_head->data is left undefined! */
+
+	new_list = (List *) palloc(sizeof(*new_list));
+	new_list->type = type;
+	new_list->length = 1;
+	new_list->head = new_head;
+	new_list->tail = new_head;
+
+	return new_list;
 }
 
 /*
- *	lconsi
+ * Allocate a new cell and make it the head of the specified
+ * list. Assumes the list it is passed is non-NIL.
  *
- *	Same as lcons, but for integer data
+ * The data in the new head cell is undefined; the caller should be
+ * sure to fill it in
  */
-List *
-lconsi(int datum, List *list)
+static void
+new_head_cell(List *list)
 {
-	List	   *l = makeNode(List);
+	ListCell *new_head;
 
-	lfirsti(l) = datum;
-	lnext(l) = list;
-	return l;
+	new_head = (ListCell *) palloc(sizeof(*new_head));
+	new_head->next = list->head;
+
+	list->head = new_head;
+	list->length++;
 }
 
 /*
- *	lconso
+ * Allocate a new cell and make it the tail of the specified
+ * list. Assumes the list it is passed is non-NIL.
  *
- *	Same as lcons, but for Oid data
+ * The data in the new tail cell is undefined; the caller should be
+ * sure to fill it in
  */
-List *
-lconso(Oid datum, List *list)
+static void
+new_tail_cell(List *list)
 {
-	List	   *l = makeNode(List);
+	ListCell *new_tail;
 
-	lfirsto(l) = datum;
-	lnext(l) = list;
-	return l;
+	new_tail = (ListCell *) palloc(sizeof(*new_tail));
+	new_tail->next = NULL;
+
+	list->tail->next = new_tail;
+	list->tail = new_tail;
+	list->length++;
 }
 
 /*
- *	lappend
- *
- *	Add obj to the end of list, or make a new list if 'list' is NIL
- *
- * MORE EXPENSIVE THAN lcons
+ * Append a pointer to the list. A pointer to the modified list is
+ * returned. Note that this function may or may not destructively
+ * modify the list; callers should always use this function's return
+ * value, rather than continuing to use the pointer passed as the
+ * first argument.
  */
 List *
 lappend(List *list, void *datum)
 {
-	return nconc(list, makeList1(datum));
-}
+	Assert(IsPointerList(list));
 
-/*
- *	lappendi
- *
- *	Same as lappend, but for integers
- */
-List *
-lappendi(List *list, int datum)
-{
-	return nconc(list, makeListi1(datum));
-}
-
-/*
- *	lappendo
- *
- *	Same as lappend, but for Oids
- */
-List *
-lappendo(List *list, Oid datum)
-{
-	return nconc(list, makeListo1(datum));
-}
-
-/*
- *	nconc
- *
- *	Concat l2 on to the end of l1
- *
- * NB: l1 is destructively changed!  Use nconc(listCopy(l1), l2)
- * if you need to make a merged list without touching the original lists.
- */
-List *
-nconc(List *l1, List *l2)
-{
-	List	   *temp;
-
-	if (l1 == NIL)
-		return l2;
-	if (l2 == NIL)
-		return l1;
-	if (l1 == l2)
-		elog(ERROR, "cannot nconc a list to itself");
-
-	for (temp = l1; lnext(temp) != NIL; temp = lnext(temp))
-		;
-
-	lnext(temp) = l2;
-	return l1;					/* list1 is now list1+list2  */
-}
-
-/*
- * FastAppend - append to a FastList.
- *
- * For long lists this is significantly faster than repeated lappend's,
- * since we avoid having to chase down the list again each time.
- */
-void
-FastAppend(FastList *fl, void *datum)
-{
-	List	   *cell = makeList1(datum);
-
-	if (fl->tail)
-	{
-		lnext(fl->tail) = cell;
-		fl->tail = cell;
-	}
+	if (list == NIL)
+		list = new_list(T_List);
 	else
-	{
-		/* First cell of list */
-		Assert(fl->head == NIL);
-		fl->head = fl->tail = cell;
-	}
-}
+		new_tail_cell(list);
 
-/*
- * FastAppendi - same for integers
- */
-void
-FastAppendi(FastList *fl, int datum)
-{
-	List	   *cell = makeListi1(datum);
-
-	if (fl->tail)
-	{
-		lnext(fl->tail) = cell;
-		fl->tail = cell;
-	}
-	else
-	{
-		/* First cell of list */
-		Assert(fl->head == NIL);
-		fl->head = fl->tail = cell;
-	}
-}
-
-/*
- * FastAppendo - same for Oids
- */
-void
-FastAppendo(FastList *fl, Oid datum)
-{
-	List	   *cell = makeListo1(datum);
-
-	if (fl->tail)
-	{
-		lnext(fl->tail) = cell;
-		fl->tail = cell;
-	}
-	else
-	{
-		/* First cell of list */
-		Assert(fl->head == NIL);
-		fl->head = fl->tail = cell;
-	}
-}
-
-/*
- * FastConc - nconc() for FastList building
- *
- * Note that the cells of the second argument are absorbed into the FastList.
- */
-void
-FastConc(FastList *fl, List *cells)
-{
-	if (cells == NIL)
-		return;					/* nothing to do */
-	if (fl->tail)
-		lnext(fl->tail) = cells;
-	else
-	{
-		/* First cell of list */
-		Assert(fl->head == NIL);
-		fl->head = cells;
-	}
-	while (lnext(cells) != NIL)
-		cells = lnext(cells);
-	fl->tail = cells;
-}
-
-/*
- * FastConcFast - nconc() for FastList building
- *
- * Note that the cells of the second argument are absorbed into the first.
- */
-void
-FastConcFast(FastList *fl, FastList *fl2)
-{
-	if (fl2->head == NIL)
-		return;					/* nothing to do */
-	if (fl->tail)
-		lnext(fl->tail) = fl2->head;
-	else
-	{
-		/* First cell of list */
-		Assert(fl->head == NIL);
-		fl->head = fl2->head;
-	}
-	fl->tail = fl2->tail;
-}
-
-/*
- *	nth
- *
- *	Get the n'th element of the list.  First element is 0th.
- */
-void *
-nth(int n, List *l)
-{
-	/* XXX assume list is long enough */
-	while (n-- > 0)
-		l = lnext(l);
-	return lfirst(l);
-}
-
-/*
- *	length
- *
- *	Get the length of l
- */
-int
-length(List *l)
-{
-	int			i = 0;
-
-	while (l != NIL)
-	{
-		l = lnext(l);
-		i++;
-	}
-	return i;
-}
-
-/*
- *	llast
- *
- *	Get the last element of l ... error if empty list
- */
-void *
-llast(List *l)
-{
-	if (l == NIL)
-		elog(ERROR, "empty list does not have a last item");
-	while (lnext(l) != NIL)
-		l = lnext(l);
-	return lfirst(l);
-}
-
-/*
- *	llastnode
- *
- *	Get the last node of l ... NIL if empty list
- */
-List *
-llastnode(List *l)
-{
-	if (l == NIL)
-		return NIL;
-	while (lnext(l) != NIL)
-		l = lnext(l);
-	return l;
-}
-
-/*
- *	freeList
- *
- *	Free the List nodes of a list
- *	The pointed-to nodes, if any, are NOT freed.
- *	This works for integer and Oid lists too.
- */
-void
-freeList(List *list)
-{
-	while (list != NIL)
-	{
-		List	   *l = list;
-
-		list = lnext(list);
-		pfree(l);
-	}
-}
-
-/*
- * equali
- *	  compares two lists of integers
- */
-bool
-equali(List *list1, List *list2)
-{
-	List	   *l;
-
-	foreach(l, list1)
-	{
-		if (list2 == NIL)
-			return false;
-		if (lfirsti(l) != lfirsti(list2))
-			return false;
-		list2 = lnext(list2);
-	}
-	if (list2 != NIL)
-		return false;
-	return true;
-}
-
-/*
- * equalo
- *	  compares two lists of Oids
- */
-bool
-equalo(List *list1, List *list2)
-{
-	List	   *l;
-
-	foreach(l, list1)
-	{
-		if (list2 == NIL)
-			return false;
-		if (lfirsto(l) != lfirsto(list2))
-			return false;
-		list2 = lnext(list2);
-	}
-	if (list2 != NIL)
-		return false;
-	return true;
-}
-
-/*
- * Generate the union of two lists,
- * ie, l1 plus all members of l2 that are not already in l1.
- *
- * NOTE: if there are duplicates in l1 they will still be duplicate in the
- * result; but duplicates in l2 are discarded.
- *
- * The result is a fresh List, but it points to the same member nodes
- * as were in the inputs.
- */
-List *
-set_union(List *l1, List *l2)
-{
-	List	   *retval = listCopy(l1);
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (!member(lfirst(i), retval))
-			retval = lappend(retval, lfirst(i));
-	}
-	return retval;
-}
-
-/* set_union for Oid lists */
-List *
-set_uniono(List *l1, List *l2)
-{
-	List	   *retval = listCopy(l1);
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (!oidMember(lfirsto(i), retval))
-			retval = lappendo(retval, lfirsto(i));
-	}
-	return retval;
-}
-
-/* set_union when pointer-equality comparison is sufficient */
-List *
-set_ptrUnion(List *l1, List *l2)
-{
-	List	   *retval = listCopy(l1);
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (!ptrMember(lfirst(i), retval))
-			retval = lappend(retval, lfirst(i));
-	}
-	return retval;
-}
-
-/*
- * Generate the intersection of two lists,
- * ie, all members of both l1 and l2.
- *
- * NOTE: if there are duplicates in l1 they will still be duplicate in the
- * result; but duplicates in l2 are discarded.
- *
- * The result is a fresh List, but it points to the same member nodes
- * as were in the inputs.
- */
-#ifdef NOT_USED
-List *
-set_intersect(List *l1, List *l2)
-{
-	List	   *retval = NIL;
-	List	   *i;
-
-	foreach(i, l1)
-	{
-		if (member(lfirst(i), l2))
-			retval = lappend(retval, lfirst(i));
-	}
-	return retval;
-}
-#endif
-
-/*
- * member()
- *	nondestructive, returns t iff l1 is a member of the list l2
- */
-bool
-member(void *l1, List *l2)
-{
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (equal((Node *) l1, (Node *) lfirst(i)))
-			return true;
-	}
-	return false;
-}
-
-/*
- * like member(), but use when pointer-equality comparison is sufficient
- */
-bool
-ptrMember(void *l1, List *l2)
-{
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (l1 == lfirst(i))
-			return true;
-	}
-	return false;
-}
-
-/*
- * membership test for integer lists
- */
-bool
-intMember(int l1, List *l2)
-{
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (l1 == lfirsti(i))
-			return true;
-	}
-	return false;
-}
-
-/*
- * membership test for Oid lists
- */
-bool
-oidMember(Oid l1, List *l2)
-{
-	List	   *i;
-
-	foreach(i, l2)
-	{
-		if (l1 == lfirsto(i))
-			return true;
-	}
-	return false;
-}
-
-/*
- * lremove
- *	  Removes 'elem' from the linked list (destructively changing the list!).
- *	  (If there is more than one equal list member, the first is removed.)
- *
- *	  This version matches 'elem' using simple pointer comparison.
- *	  See also LispRemove.
- */
-List *
-lremove(void *elem, List *list)
-{
-	List	   *l;
-	List	   *prev = NIL;
-	List	   *result = list;
-
-	foreach(l, list)
-	{
-		if (elem == lfirst(l))
-			break;
-		prev = l;
-	}
-	if (l != NIL)
-	{
-		if (prev == NIL)
-			result = lnext(l);
-		else
-			lnext(prev) = lnext(l);
-		pfree(l);
-	}
-	return result;
-}
-
-/*
- *	LispRemove
- *	  Removes 'elem' from the linked list (destructively changing the list!).
- *	  (If there is more than one equal list member, the first is removed.)
- *
- *	  This version matches 'elem' using equal().
- *	  See also lremove.
- */
-List *
-LispRemove(void *elem, List *list)
-{
-	List	   *l;
-	List	   *prev = NIL;
-	List	   *result = list;
-
-	foreach(l, list)
-	{
-		if (equal(elem, lfirst(l)))
-			break;
-		prev = l;
-	}
-	if (l != NIL)
-	{
-		if (prev == NIL)
-			result = lnext(l);
-		else
-			lnext(prev) = lnext(l);
-		pfree(l);
-	}
-	return result;
-}
-
-/*
- *	lremovei
- *		lremove() for integer lists.
- */
-List *
-lremovei(int elem, List *list)
-{
-	List	   *l;
-	List	   *prev = NIL;
-	List	   *result = list;
-
-	foreach(l, list)
-	{
-		if (elem == lfirsti(l))
-			break;
-		prev = l;
-	}
-	if (l != NIL)
-	{
-		if (prev == NIL)
-			result = lnext(l);
-		else
-			lnext(prev) = lnext(l);
-		pfree(l);
-	}
-	return result;
-}
-
-/*
- * ltruncate
- *		Truncate a list to n elements.
- *		Does nothing if n >= length(list).
- *		NB: the list is modified in-place!
- */
-List *
-ltruncate(int n, List *list)
-{
-	List	   *ptr;
-
-	if (n <= 0)
-		return NIL;				/* truncate to zero length */
-
-	foreach(ptr, list)
-	{
-		if (--n == 0)
-		{
-			lnext(ptr) = NIL;
-			break;
-		}
-	}
+	lfirst(list->tail) = datum;
+	check_list_invariants(list);
 	return list;
 }
 
 /*
- *	set_difference
+ * Append an integer to the specified list. See lappend()
+ */
+List * 
+lappend_int(List *list, int datum)
+{
+	Assert(IsIntegerList(list));
+
+	if (list == NIL)
+		list = new_list(T_IntList);
+	else
+		new_tail_cell(list);
+
+	lfirst_int(list->tail) = datum;
+	check_list_invariants(list);
+	return list;
+}
+
+/*
+ * Append an OID to the specified list. See lappend()
+ */
+List * 
+lappend_oid(List *list, Oid datum)
+{
+	Assert(IsOidList(list));
+
+	if (list == NIL)
+		list = new_list(T_OidList);
+	else
+		new_tail_cell(list);
+
+	lfirst_oid(list->tail) = datum;
+	check_list_invariants(list);
+	return list;
+}
+
+/*
+ * Add a new cell to the list, in the position after 'prev_cell'. The
+ * data in the cell is left undefined, and must be filled in by the
+ * caller. 'list' is assumed to be non-NIL, and 'prev_cell' is assumed
+ * to be non-NULL and a member of 'list'.
+ */
+static ListCell *
+add_new_cell(List *list, ListCell *prev_cell)
+{
+	ListCell *new_cell;
+
+	new_cell = (ListCell *) palloc(sizeof(*new_cell));
+	/* new_cell->data is left undefined! */
+	new_cell->next = prev_cell->next;
+	prev_cell->next = new_cell;
+
+	if (list->tail == prev_cell)
+		list->tail = new_cell;
+
+	list->length++;
+
+	return new_cell;
+}
+
+/*
+ * Add a new cell to the specified list (which must be non-NIL);
+ * it will be placed after the list cell 'prev' (which must be
+ * non-NULL and a member of 'list'). The data placed in the new cell
+ * is 'datum'. The newly-constructed cell is returned.
+ */
+ListCell *
+lappend_cell(List *list, ListCell *prev, void *datum)
+{
+	ListCell *new_cell;
+
+	Assert(IsPointerList(list));
+
+	new_cell = add_new_cell(list, prev);
+	lfirst(new_cell) = datum;
+	check_list_invariants(list);
+	return new_cell;
+}
+
+ListCell *
+lappend_cell_int(List *list, ListCell *prev, int datum)
+{
+	ListCell *new_cell;
+
+	Assert(IsIntegerList(list));
+
+	new_cell = add_new_cell(list, prev);
+	lfirst_int(new_cell) = datum;
+	check_list_invariants(list);
+	return new_cell;
+}
+
+ListCell *
+lappend_cell_oid(List *list, ListCell *prev, Oid datum)
+{
+	ListCell *new_cell;
+
+	Assert(IsOidList(list));
+
+	new_cell = add_new_cell(list, prev);
+	lfirst_oid(new_cell) = datum;
+	check_list_invariants(list);
+	return new_cell;
+}
+
+/*
+ * Prepend a new element to the list. A pointer to the modified list
+ * is returned. Note that this function may or may not destructively
+ * modify the list; callers should always use this function's return
+ * value, rather than continuing to use the pointer passed as the
+ * second argument.
  *
- *	Return l1 without the elements in l2.
- *
- * The result is a fresh List, but it points to the same member nodes
- * as were in l1.
+ * Caution: before Postgres 7.5, the original List was unmodified and
+ * could be considered to retain its separate identity.  This is no longer
+ * the case.
  */
 List *
-set_difference(List *l1, List *l2)
+lcons(void *datum, List *list)
 {
-	List	   *result = NIL;
-	List	   *i;
+	Assert(IsPointerList(list));
 
-	if (l2 == NIL)
-		return listCopy(l1);	/* slightly faster path for empty l2 */
+	if (list == NIL)
+		list = new_list(T_List);
+	else
+		new_head_cell(list);
 
-	foreach(i, l1)
+	lfirst(list->head) = datum;
+	check_list_invariants(list);
+	return list;
+}
+
+/*
+ * Prepend an integer to the list. See lcons()
+ */
+List *
+lcons_int(int datum, List *list)
+{
+	Assert(IsIntegerList(list));
+
+	if (list == NIL)
+		list = new_list(T_IntList);
+	else
+		new_head_cell(list);
+
+	lfirst_int(list->head) = datum;
+	check_list_invariants(list);
+	return list;
+}
+
+/*
+ * Prepend an OID to the list. See lcons()
+ */
+List * 
+lcons_oid(Oid datum, List *list)
+{
+	Assert(IsOidList(list));
+
+	if (list == NIL)
+		list = new_list(T_OidList);
+	else
+		new_head_cell(list);
+
+	lfirst_oid(list->head) = datum;
+	check_list_invariants(list);
+	return list;
+}
+
+/*
+ * Concatenate list2 to the end of list1, and return list1. list1 is
+ * destructively changed. Callers should be sure to use the return
+ * value as the new pointer to the concatenated list: the 'list1'
+ * input pointer may or may not be the same as the returned pointer.
+ *
+ * The nodes in list2 are merely appended to the end of list1 in-place
+ * (i.e. they aren't copied; the two lists will share some of the same
+ * storage). Therefore, invoking list_free() on list2 will also
+ * invalidate a portion of list1.
+ */
+List *
+list_concat(List *list1, List *list2)
+{
+	if (list1 == NIL)
+		return list2;
+	if (list2 == NIL)
+		return list1;
+	if (list1 == list2)
+		elog(ERROR, "cannot list_concat() a list to itself");
+
+	Assert(list1->type == list2->type);
+
+	list1->length += list2->length;
+	list1->tail->next = list2->head;
+	list1->tail = list2->tail;
+
+	check_list_invariants(list1);
+	return list1;
+}
+
+/*
+ * Truncate 'list' to contain no more than 'new_size' elements. This
+ * modifies the list in-place! Despite this, callers should use the
+ * pointer returned by this function to refer to the newly truncated
+ * list -- it may or may not be the same as the pointer that was
+ * passed.
+ *
+ * Note that any cells removed by list_truncate() are NOT pfree'd.
+ */
+List *
+list_truncate(List *list, int new_size)
+{
+	ListCell	*cell;
+	int			 n;
+
+	if (new_size <= 0)
+		return NIL;		/* truncate to zero length */
+
+	/* If asked to effectively extend the list, do nothing */
+	if (new_size >= list_length(list))
+		return list;
+
+	n = 1;
+	foreach (cell, list)
 	{
-		if (!member(lfirst(i), l2))
-			result = lappend(result, lfirst(i));
+		if (n == new_size)
+		{
+			cell->next = NULL;
+			list->tail = cell;
+			list->length = new_size;
+			check_list_invariants(list);
+			return list;
+		}
+		n++;
 	}
+
+	/* keep the compiler quiet; never reached */
+	Assert(false);
+	return list;
+}
+
+/*
+ * Locate the n'th cell (counting from 0) of the list.  It is an assertion
+ * error if there isn't one.
+ */
+static ListCell *
+list_nth_cell(List *list, int n)
+{
+	ListCell *match;
+
+	Assert(list != NIL);
+	Assert(n >= 0);
+	Assert(n < list->length);
+	check_list_invariants(list);
+
+	/* Does the caller actually mean to fetch the tail? */
+	if (n == list->length - 1)
+		return list->tail;
+
+	for (match = list->head; n-- > 0; match = match->next)
+		;
+
+	return match;
+}
+
+/*
+ * Return the data value contained in the n'th element of the
+ * specified list. (List elements begin at 0.)
+ */
+void *
+list_nth(List *list, int n)
+{
+	Assert(IsPointerList(list));
+	return lfirst(list_nth_cell(list, n));
+}
+
+/*
+ * Return the integer value contained in the n'th element of the
+ * specified list.
+ */
+int
+list_nth_int(List *list, int n)
+{
+	Assert(IsIntegerList(list));
+	return lfirst_int(list_nth_cell(list, n));
+}
+
+/*
+ * Return the OID value contained in the n'th element of the specified
+ * list.
+ */
+Oid
+list_nth_oid(List *list, int n)
+{
+	Assert(IsOidList(list));
+	return lfirst_oid(list_nth_cell(list, n));
+}
+
+/*
+ * Return true iff 'datum' is a member of the list. Equality is
+ * determined via equal(), so callers should ensure that they pass a
+ * Node as 'datum'.
+ */
+bool
+list_member(List *list, void *datum)
+{
+	ListCell *cell;
+
+	Assert(IsPointerList(list));
+	check_list_invariants(list);
+
+	foreach (cell, list)
+	{
+		if (equal(lfirst(cell), datum))
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Return true iff 'datum' is a member of the list. Equality is
+ * determined by using simple pointer comparison.
+ */
+bool
+list_member_ptr(List *list, void *datum)
+{
+	ListCell *cell;
+
+	Assert(IsPointerList(list));
+	check_list_invariants(list);
+
+	foreach (cell, list)
+	{
+		if (lfirst(cell) == datum)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Return true iff the integer 'datum' is a member of the list.
+ */
+bool
+list_member_int(List *list, int datum)
+{
+	ListCell *cell;
+
+	Assert(IsIntegerList(list));
+	check_list_invariants(list);
+
+	foreach (cell, list)
+	{
+		if (lfirst_int(cell) == datum)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Return true iff the OID 'datum' is a member of the list.
+ */
+bool
+list_member_oid(List *list, Oid datum)
+{
+	ListCell *cell;
+
+	Assert(IsOidList(list));
+	check_list_invariants(list);
+
+	foreach (cell, list)
+	{
+		if (lfirst_oid(cell) == datum)
+			return true;
+	}
+
+	return false;
+}
+
+/*
+ * Delete 'cell' from 'list'; 'prev' is the previous element to 'cell'
+ * in 'list', if any (i.e. prev == NULL iff list->head == cell)
+ *
+ * The cell is pfree'd, as is the List header if this was the last member.
+ */
+List *
+list_delete_cell(List *list, ListCell *cell, ListCell *prev)
+{
+	check_list_invariants(list);
+	Assert(prev != NULL ? lnext(prev) == cell : list_head(list) == cell);
+
+	/*
+	 * If we're about to delete the last node from the list, free the
+	 * whole list instead and return NIL, which is the only valid
+	 * representation of a zero-length list.
+	 */
+	if (list->length == 1)
+	{
+		list_free(list);
+		return NIL;
+	}
+
+	/*
+	 * Otherwise, adjust the necessary list links, deallocate the
+	 * particular node we have just removed, and return the list we
+	 * were given.
+	 */
+	list->length--;
+
+	if (prev)
+		prev->next = cell->next;
+	else
+		list->head = cell->next;
+
+	if (list->tail == cell)
+		list->tail = prev;
+
+	pfree(cell);
+	return list;
+}
+
+/*
+ * Delete the first cell in list that matches datum, if any.
+ * Equality is determined via equal().
+ */
+List *
+list_delete(List *list, void *datum)
+{
+	ListCell	*cell;
+	ListCell	*prev;
+
+	Assert(IsPointerList(list));
+	check_list_invariants(list);
+
+	prev = NULL;
+	foreach (cell, list)
+	{
+		if (equal(lfirst(cell), datum))
+			return list_delete_cell(list, cell, prev);
+
+		prev = cell;
+	}
+
+	/* Didn't find a match: return the list unmodified */
+	return list;
+}
+
+/* As above, but use simple pointer equality */
+List *
+list_delete_ptr(List *list, void *datum)
+{
+	ListCell	*cell;
+	ListCell	*prev;
+
+	Assert(IsPointerList(list));
+	check_list_invariants(list);
+
+	prev = NULL;
+	foreach (cell, list)
+	{
+		if (lfirst(cell) == datum)
+			return list_delete_cell(list, cell, prev);
+
+		prev = cell;
+	}
+
+	/* Didn't find a match: return the list unmodified */
+	return list;
+}
+
+/* As above, but for integers */
+List *
+list_delete_int(List *list, int datum)
+{
+	ListCell	*cell;
+	ListCell	*prev;
+
+	Assert(IsIntegerList(list));
+	check_list_invariants(list);
+
+	prev = NULL;
+	foreach (cell, list)
+	{
+		if (lfirst_int(cell) == datum)
+			return list_delete_cell(list, cell, prev);
+
+		prev = cell;
+	}
+
+	/* Didn't find a match: return the list unmodified */
+	return list;
+}
+
+/* As above, but for OIDs */
+List *
+list_delete_oid(List *list, Oid datum)
+{
+	ListCell	*cell;
+	ListCell	*prev;
+
+	Assert(IsOidList(list));
+	check_list_invariants(list);
+
+	prev = NULL;
+	foreach (cell, list)
+	{
+		if (lfirst_oid(cell) == datum)
+			return list_delete_cell(list, cell, prev);
+
+		prev = cell;
+	}
+
+	/* Didn't find a match: return the list unmodified */
+	return list;
+}
+
+/*
+ * Delete the first element of the list.
+ *
+ * This is useful to replace the Lisp-y code "list = lnext(list);" in cases
+ * where the intent is to alter the list rather than just traverse it.
+ * Beware that the removed cell is freed, whereas the lnext() coding leaves
+ * the original list head intact if there's another pointer to it.
+ */
+List *
+list_delete_first(List *list)
+{
+	check_list_invariants(list);
+
+	if (list == NIL)
+		return NIL;				/* would an error be better? */
+
+	return list_delete_cell(list, list_head(list), NULL);
+}
+
+/*
+ * Generate the union of two lists. This is calculated by copying
+ * list1 via list_copy(), then adding to it all the members of list2
+ * that aren't already in list1.
+ *
+ * Whether an element is already a member of the list is determined
+ * via equal().
+ *
+ * The returned list is newly-allocated, although the content of the
+ * cells is the same (i.e. any pointed-to objects are not copied).
+ *
+ * NB: Bizarrely, this function will NOT remove any duplicates that
+ * are present in list1 (so it is not really a union at all!). Also,
+ * this function could probably be implemented a lot faster if it is a
+ * performance bottleneck.
+ */
+List *
+list_union(List *list1, List *list2)
+{
+	List		*result;
+	ListCell	*cell;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
+	result = list_copy(list1);
+	foreach(cell, list2)
+	{
+		if (!list_member(result, lfirst(cell)))
+			result = lappend(result, lfirst(cell));
+	}
+
+	check_list_invariants(result);
 	return result;
 }
 
 /*
- *	set_differenceo
- *
- *	Same as set_difference, but for Oid lists
+ * This variant of list_union() determines duplicates via simple
+ * pointer comparison.
  */
 List *
-set_differenceo(List *l1, List *l2)
+list_union_ptr(List *list1, List *list2)
 {
-	List	   *result = NIL;
-	List	   *i;
+	List		*result;
+	ListCell	*cell;
 
-	if (l2 == NIL)
-		return listCopy(l1);	/* slightly faster path for empty l2 */
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
 
-	foreach(i, l1)
+	result = list_copy(list1);
+	foreach(cell, list2)
 	{
-		if (!oidMember(lfirsto(i), l2))
-			result = lappendo(result, lfirsto(i));
+		if (!list_member_ptr(result, lfirst(cell)))
+			result = lappend(result, lfirst(cell));
 	}
+
+	check_list_invariants(result);
 	return result;
 }
 
 /*
- *	set_ptrDifference
- *
- *	Same as set_difference, when pointer-equality comparison is sufficient
+ * This variant of list_union() operates upon lists of integers.
  */
 List *
-set_ptrDifference(List *l1, List *l2)
+list_union_int(List *list1, List *list2)
 {
-	List	   *result = NIL;
-	List	   *i;
+	List		*result;
+	ListCell	*cell;
 
-	if (l2 == NIL)
-		return listCopy(l1);	/* slightly faster path for empty l2 */
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
 
-	foreach(i, l1)
+	result = list_copy(list1);
+	foreach(cell, list2)
 	{
-		if (!ptrMember(lfirst(i), l2))
-			result = lappend(result, lfirst(i));
+		if (!list_member_int(result, lfirst_int(cell)))
+			result = lappend_int(result, lfirst_int(cell));
 	}
+
+	check_list_invariants(result);
 	return result;
 }
 
 /*
- * Reverse a list, non-destructively
+ * This variant of list_union() operates upon lists of OIDs.
  */
-#ifdef NOT_USED
 List *
-lreverse(List *l)
+list_union_oid(List *list1, List *list2)
 {
-	List	   *result = NIL;
-	List	   *i;
+	List		*result;
+	ListCell	*cell;
 
-	foreach(i, l)
-		result = lcons(lfirst(i), result);
+	Assert(IsOidList(list1));
+	Assert(IsOidList(list2));
+
+	result = list_copy(list1);
+	foreach(cell, list2)
+	{
+		if (!list_member_oid(result, lfirst_oid(cell)))
+			result = lappend_oid(result, lfirst_oid(cell));
+	}
+
+	check_list_invariants(result);
 	return result;
 }
 
-#endif
+/*
+ * Return a list that contains all the cells in list1 that are not in
+ * list2. The returned list is freshly allocated via palloc(), but the
+ * cells themselves point to the same objects as the cells of the
+ * input lists.
+ *
+ * This variant works on lists of pointers, and determines list
+ * membership via equal()
+ */
+List *
+list_difference(List *list1, List *list2)
+{
+	ListCell	*cell;
+	List		*result = NIL;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
+	if (list2 == NIL)
+		return list_copy(list1);
+
+	foreach (cell, list1)
+	{
+		if (!list_member(list2, lfirst(cell)))
+			result = lappend(result, lfirst(cell));
+	}
+
+	check_list_invariants(result);
+	return result;
+}
+
+/*
+ * This variant of list_difference() determines list membership via
+ * simple pointer equality.
+ */
+List *
+list_difference_ptr(List *list1, List *list2)
+{
+	ListCell	*cell;
+	List		*result = NIL;
+
+	Assert(IsPointerList(list1));
+	Assert(IsPointerList(list2));
+
+	if (list2 == NIL)
+		return list_copy(list1);
+
+	foreach (cell, list1)
+	{
+		if (!list_member_ptr(list2, lfirst(cell)))
+			result = lappend(result, lfirst(cell));
+	}
+
+	check_list_invariants(result);
+	return result;
+}
+
+/*
+ * This variant of list_difference() operates upon lists of integers.
+ */
+List *
+list_difference_int(List *list1, List *list2)
+{
+	ListCell	*cell;
+	List		*result = NIL;
+
+	Assert(IsIntegerList(list1));
+	Assert(IsIntegerList(list2));
+
+	if (list2 == NIL)
+		return list_copy(list1);
+
+	foreach (cell, list1)
+	{
+		if (!list_member_int(list2, lfirst_int(cell)))
+			result = lappend_int(result, lfirst_int(cell));
+	}
+
+	check_list_invariants(result);
+	return result;
+}
+
+/*
+ * This variant of list_difference() operates upon lists of OIDs.
+ */
+List *
+list_difference_oid(List *list1, List *list2)
+{
+	ListCell	*cell;
+	List		*result = NIL;
+
+	Assert(IsOidList(list1));
+	Assert(IsOidList(list2));
+
+	if (list2 == NIL)
+		return list_copy(list1);
+
+	foreach (cell, list1)
+	{
+		if (!list_member_oid(list2, lfirst_oid(cell)))
+			result = lappend_oid(result, lfirst_oid(cell));
+	}
+
+	check_list_invariants(result);
+	return result;
+}
+
+/* Free all storage in a list, and optionally the pointed-to elements */
+static void
+list_free_private(List *list, bool deep)
+{
+	ListCell	*cell;
+
+	check_list_invariants(list);
+
+	cell = list_head(list);
+	while (cell != NULL)
+	{
+		ListCell *tmp = cell;
+
+		cell = lnext(cell);
+		if (deep)
+			pfree(lfirst(tmp));
+		pfree(tmp);
+	}
+
+	if (list)
+		pfree(list);
+}
+
+/*
+ * Free all the cells of the list, as well as the list itself. Any
+ * objects that are pointed-to by the cells of the list are NOT
+ * free'd.
+ *
+ * On return, the argument to this function has been freed, so the
+ * caller would be wise to set it to NIL for safety's sake.
+ */
+void
+list_free(List *list)
+{
+	list_free_private(list, false);
+}
+
+/*
+ * Free all the cells of the list, the list itself, and all the
+ * objects pointed-to by the cells of the list (each element in the
+ * list must contain a pointer to a palloc()'d region of memory!)
+ *
+ * On return, the argument to this function has been freed, so the
+ * caller would be wise to set it to NIL for safety's sake.
+ */
+void
+list_free_deep(List *list)
+{
+	/*
+	 * A "deep" free operation only makes sense on a list of pointers.
+	 */
+	Assert(IsPointerList(list));
+	list_free_private(list, true);
+}
+
+/*
+ * Return a shallow copy of the specified list.
+ */
+List *
+list_copy(List *oldlist)
+{
+	List		*newlist;
+	ListCell	*newlist_prev;
+	ListCell	*oldlist_cur;
+
+	if (oldlist == NIL)
+		return NIL;
+
+	newlist = new_list(oldlist->type);
+	newlist->length = oldlist->length;
+
+	/*
+	 * Copy over the data in the first cell; new_list() has already
+	 * allocated the head cell itself
+	 */
+	newlist->head->data = oldlist->head->data;
+
+	newlist_prev = newlist->head;
+	oldlist_cur = oldlist->head->next;
+	while (oldlist_cur)
+	{
+		ListCell *newlist_cur;
+
+		newlist_cur = (ListCell *) palloc(sizeof(*newlist_cur));
+		newlist_cur->data = oldlist_cur->data;
+		newlist_prev->next = newlist_cur;
+
+		newlist_prev = newlist_cur;
+		oldlist_cur = oldlist_cur->next;
+	}
+
+	newlist_prev->next = NULL;
+	newlist->tail = newlist_prev;
+
+	check_list_invariants(newlist);
+	return newlist;
+}
+
+/*
+ * Return a shallow copy of the specified list, without the first N elements.
+ */
+List *
+list_copy_tail(List *oldlist, int nskip)
+{
+	List		*newlist;
+	ListCell	*newlist_prev;
+	ListCell	*oldlist_cur;
+
+	if (nskip < 0)
+		nskip = 0;				/* would it be better to elog? */
+
+	if (oldlist == NIL || nskip >= oldlist->length)
+		return NIL;
+
+	newlist = new_list(oldlist->type);
+	newlist->length = oldlist->length - nskip;
+
+	/*
+	 * Skip over the unwanted elements.
+	 */
+	oldlist_cur = oldlist->head;
+	while (nskip-- > 0)
+		oldlist_cur = oldlist_cur->next;
+
+	/*
+	 * Copy over the data in the first remaining cell; new_list() has already
+	 * allocated the head cell itself
+	 */
+	newlist->head->data = oldlist_cur->data;
+
+	newlist_prev = newlist->head;
+	oldlist_cur = oldlist_cur->next;
+	while (oldlist_cur)
+	{
+		ListCell *newlist_cur;
+
+		newlist_cur = (ListCell *) palloc(sizeof(*newlist_cur));
+		newlist_cur->data = oldlist_cur->data;
+		newlist_prev->next = newlist_cur;
+
+		newlist_prev = newlist_cur;
+		oldlist_cur = oldlist_cur->next;
+	}
+
+	newlist_prev->next = NULL;
+	newlist->tail = newlist_prev;
+
+	check_list_invariants(newlist);
+	return newlist;
+}
+
+/*
+ * When using non-GCC compilers, we can't define these as inline
+ * functions in pg_list.h, so they are defined here.
+ *
+ * TODO: investigate supporting inlining for some non-GCC compilers.
+ */
+#ifndef __GNUC__
+
+ListCell *
+list_head(List *l)
+{
+	return l ? l->head : NULL;
+}
+
+ListCell *
+list_tail(List *l)
+{
+	return l ? l->tail : NULL;
+}
+
+int
+list_length(List *l)
+{
+	return l ? l->length : 0;
+}
+
+#endif /* ! __GNUC__ */
+
+/*
+ * Temporary compatibility functions
+ *
+ * In order to avoid warnings for these function definitions, we need
+ * to include a prototype here as well as in pg_list.h. That's because
+ * we explicitly disable list API compatibility in list.c, so we
+ * don't see the prototypes for these functions.
+ */
+
+/*
+ * Given a list, return its length. This is merely defined for the
+ * sake of backward compatibility: we can't afford to define a macro
+ * called "length", so it must be a function. New code should use the
+ * list_length() macro in order to avoid the overhead of a function
+ * call.
+ */
+int length(List *list);
+
+int
+length(List *list)
+{
+	return list_length(list);
+}
+
+/*
+ * This code implements the old "Fast List" API, making use of the new
+ * List code to do so. There's no need for FastList anymore, so this
+ * code is a bit sloppy -- it will be removed soon.
+ */
+void FastListInit(FastList *fl);
+
+void
+FastListInit(FastList *fl)
+{
+	fl->list = NIL;
+}
+
+void FastListFromList(FastList *fl, List *l);
+
+void
+FastListFromList(FastList *fl, List *list)
+{
+	fl->list = list;
+}
+
+List *FastListValue(FastList *fl);
+
+List *
+FastListValue(FastList *fl)
+{
+	return fl->list;
+}
+
+void makeFastList1(FastList *fl, void *elem);
+
+void
+makeFastList1(FastList *fl, void *elem)
+{
+	fl->list = list_make1(elem);
+}
+
+void FastAppend(FastList *fl, void *datum);
+
+void
+FastAppend(FastList *fl, void *datum)
+{
+	fl->list = lappend(fl->list, datum);
+}
+
+void FastAppendi(FastList *fl, int datum);
+
+void
+FastAppendi(FastList *fl, int datum)
+{
+	fl->list = lappend_int(fl->list, datum);
+}
+
+void FastAppendo(FastList *fl, Oid datum);
+
+void
+FastAppendo(FastList *fl, Oid datum)
+{
+	fl->list = lappend_oid(fl->list, datum);
+}
+
+void FastConc(FastList *fl, List *cells);
+
+void
+FastConc(FastList *fl, List *cells)
+{
+	fl->list = list_concat(fl->list, cells);
+}
+
+void FastConcFast(FastList *fl1, FastList *fl2);
+
+void
+FastConcFast(FastList *fl1, FastList *fl2)
+{
+	fl1->list = list_concat(fl1->list, fl2->list);
+}

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.135 2004/05/10 22:44:46 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/rewrite/rewriteHandler.c,v 1.136 2004/05/26 04:41:33 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -238,13 +238,13 @@ static List *
 adjustJoinTreeList(Query *parsetree, bool removert, int rt_index)
 {
 	List	   *newjointree = copyObject(parsetree->jointree->fromlist);
-	List	   *jjt;
+	ListCell   *l;
 
 	if (removert)
 	{
-		foreach(jjt, newjointree)
+		foreach(l, newjointree)
 		{
-			RangeTblRef *rtr = lfirst(jjt);
+			RangeTblRef *rtr = lfirst(l);
 
 			if (IsA(rtr, RangeTblRef) &&
 				rtr->rtindex == rt_index)
@@ -295,7 +295,7 @@ rewriteTargetList(Query *parsetree, Relation target_relation)
 	List	   *new_tlist = NIL;
 	int			attrno,
 				numattrs;
-	List	   *temp;
+	ListCell   *temp;
 
 	/*
 	 * Scan the tuple description in the relation's relcache entry to make
@@ -627,7 +627,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 * Make a modifiable copy of the view query, and recursively expand
 	 * any view references inside it.
 	 */
-	rule_action = copyObject(lfirst(rule->actions));
+	rule_action = copyObject(linitial(rule->actions));
 
 	rule_action = fireRIRrules(rule_action, activeRIRs);
 
@@ -687,7 +687,7 @@ static void
 markQueryForUpdate(Query *qry, bool skipOldNew)
 {
 	Index		rti = 0;
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, qry->rtable)
 	{
@@ -865,7 +865,7 @@ fireRIRrules(Query *parsetree, List *activeRIRs)
 		if (locks != NIL)
 		{
 			List	   *newActiveRIRs;
-			List	   *l;
+			ListCell   *l;
 
 			if (oidMember(RelationGetRelid(rel), activeRIRs))
 				ereport(ERROR,
@@ -995,15 +995,15 @@ fireRules(Query *parsetree,
 		  Query **qual_product)
 {
 	List	   *results = NIL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, locks)
+	foreach(l, locks)
 	{
-		RewriteRule *rule_lock = (RewriteRule *) lfirst(i);
+		RewriteRule *rule_lock = (RewriteRule *) lfirst(l);
 		Node	   *event_qual = rule_lock->qual;
 		List	   *actions = rule_lock->actions;
 		QuerySource qsrc;
-		List	   *r;
+		ListCell   *r;
 
 		/* Determine correct QuerySource value for actions */
 		if (rule_lock->isInstead)
@@ -1143,8 +1143,8 @@ RewriteQuery(Query *parsetree, List *rewrite_events)
 			 */
 			if (product_queries != NIL)
 			{
-				List	   *n;
-				rewrite_event *rev;
+				ListCell	   *n;
+				rewrite_event  *rev;
 
 				foreach(n, rewrite_events)
 				{
@@ -1225,7 +1225,7 @@ QueryRewrite(Query *parsetree)
 {
 	List	   *querylist;
 	List	   *results = NIL;
-	List	   *l;
+	ListCell   *l;
 	CmdType		origCmdType;
 	bool		foundOriginalQuery;
 	Query	   *lastInstead;

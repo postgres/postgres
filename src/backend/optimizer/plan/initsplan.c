@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.98 2004/02/27 21:42:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/initsplan.c,v 1.99 2004/05/26 04:41:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -81,7 +81,7 @@ add_base_rels_to_query(Query *root, Node *jtnode)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 			add_base_rels_to_query(root, lfirst(l));
@@ -135,7 +135,7 @@ build_base_rel_tlists(Query *root, List *final_tlist)
 static void
 add_vars_to_targetlist(Query *root, List *vars, Relids where_needed)
 {
-	List	   *temp;
+	ListCell   *temp;
 
 	Assert(!bms_is_empty(where_needed));
 
@@ -205,8 +205,7 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
-		List	   *qual;
+		ListCell   *l;
 
 		/*
 		 * First, recurse to handle child joins.
@@ -222,8 +221,8 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 		 * Now process the top-level quals.  These are always marked as
 		 * "pushed down", since they clearly didn't come from a JOIN expr.
 		 */
-		foreach(qual, (List *) f->quals)
-			distribute_qual_to_rels(root, (Node *) lfirst(qual),
+		foreach(l, (List *) f->quals)
+			distribute_qual_to_rels(root, (Node *) lfirst(l),
 									true, false, NULL, result);
 	}
 	else if (IsA(jtnode, JoinExpr))
@@ -233,7 +232,7 @@ distribute_quals_to_rels(Query *root, Node *jtnode)
 					rightids,
 					nonnullable_rels,
 					nullable_rels;
-		List	   *qual;
+		ListCell   *qual;
 
 		/*
 		 * Order of operations here is subtle and critical.  First we
@@ -636,7 +635,7 @@ process_implied_equality(Query *root,
 	BMS_Membership membership;
 	RelOptInfo *rel1;
 	List	   *restrictlist;
-	List	   *itm;
+	ListCell   *itm;
 	Oid			ltype,
 				rtype;
 	Operator	eq_operator;
@@ -803,7 +802,7 @@ qual_is_redundant(Query *root,
 	Node	   *newleft;
 	Node	   *newright;
 	List	   *oldquals;
-	List	   *olditem;
+	ListCell   *olditem;
 	List	   *equalexprs;
 	bool		someadded;
 
@@ -860,7 +859,7 @@ qual_is_redundant(Query *root,
 	{
 		someadded = false;
 		/* cannot use foreach here because of possible lremove */
-		olditem = oldquals;
+		olditem = list_head(oldquals);
 		while (olditem)
 		{
 			RestrictInfo *oldrinfo = (RestrictInfo *) lfirst(olditem);

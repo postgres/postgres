@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.10 2004/01/07 18:56:24 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.11 2004/05/26 04:41:05 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,7 +59,7 @@ forget_matching_split(Relation reln, RelFileNode node,
 	Page		page;
 	BTItem		btitem;
 	BlockNumber rightblk;
-	List	   *l;
+	ListCell   *l;
 
 	/* Get downlink TID from page */
 	buffer = XLogReadBuffer(false, reln, insertblk);
@@ -964,7 +964,7 @@ btree_xlog_startup(void)
 void
 btree_xlog_cleanup(void)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, incomplete_splits)
 	{

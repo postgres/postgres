@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.169 2004/04/25 18:23:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/createplan.c,v 1.170 2004/05/26 04:41:24 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -263,7 +263,7 @@ build_relation_tlist(RelOptInfo *rel)
 {
 	FastList	tlist;
 	int			resdomno = 1;
-	List	   *v;
+	ListCell   *v;
 
 	FastListInit(&tlist);
 	foreach(v, FastListValue(&rel->reltargetlist))
@@ -415,7 +415,7 @@ create_append_plan(Query *root, AppendPath *best_path)
 	Append	   *plan;
 	List	   *tlist = build_relation_tlist(best_path->path.parent);
 	List	   *subplans = NIL;
-	List	   *subpaths;
+	ListCell   *subpaths;
 
 	foreach(subpaths, best_path->subpaths)
 	{
@@ -505,7 +505,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 	List	   *newtlist;
 	int			nextresno;
 	bool		newitems;
-	List	   *l;
+	ListCell   *l;
 
 	subplan = create_plan(root, best_path->subpath);
 
@@ -544,7 +544,7 @@ create_unique_plan(Query *root, UniquePath *best_path)
 			break;
 		}
 	}
-	if (l == NIL)				/* fell out of loop? */
+	if (l == NULL)				/* fell out of loop? */
 		elog(ERROR, "could not find UniquePath in in_info_list");
 
 	/* set up to record positions of unique columns */
@@ -702,7 +702,7 @@ create_indexscan_plan(Query *root,
 	List	   *indxsubtype;
 	List	   *indxlossy;
 	FastList	indexids;
-	List	   *i;
+	ListCell   *l;
 	IndexScan  *scan_plan;
 
 	/* it should be a base rel... */
@@ -727,7 +727,7 @@ create_indexscan_plan(Query *root,
 		 */
 		Assert(length(best_path->indexclauses) == 1);
 		scan_clauses = set_ptrUnion(scan_clauses,
-									(List *) lfirst(best_path->indexclauses));
+									(List *) linitial(best_path->indexclauses));
 	}
 
 	/* Reduce RestrictInfo list to bare expressions */
@@ -738,9 +738,9 @@ create_indexscan_plan(Query *root,
 
 	/* Build list of index OIDs */
 	FastListInit(&indexids);
-	foreach(i, best_path->indexinfo)
+	foreach(l, best_path->indexinfo)
 	{
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(i);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(l);
 
 		FastAppendo(&indexids, index->indexoid);
 	}
@@ -750,9 +750,9 @@ create_indexscan_plan(Query *root,
 	 * executor as indxqualorig
 	 */
 	stripped_indxquals = NIL;
-	foreach(i, indxquals)
+	foreach(l, indxquals)
 	{
-		List   *andlist = (List *) lfirst(i);
+		List   *andlist = (List *) lfirst(l);
 
 		stripped_indxquals = lappend(stripped_indxquals,
 									 get_actual_clauses(andlist));
@@ -785,7 +785,7 @@ create_indexscan_plan(Query *root,
 		 * behavior.
 		 */
 		Assert(stripped_indxquals != NIL);
-		qpqual = set_difference(scan_clauses, lfirst(stripped_indxquals));
+		qpqual = set_difference(scan_clauses, linitial(stripped_indxquals));
 	}
 
 	/*
@@ -955,7 +955,7 @@ create_nestloop_plan(Query *root,
 			joinrestrictclauses =
 				select_nonredundant_join_clauses(root,
 												 joinrestrictclauses,
-												 lfirst(indexclauses),
+												 linitial(indexclauses),
 												 best_path->jointype);
 		}
 	}
@@ -1182,17 +1182,17 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 {
 	Relids		baserelids = index_path->path.parent->relids;
 	int			baserelid = index_path->path.parent->relid;
-	List	   *ixinfo = index_path->indexinfo;
-	List	   *i;
+	List	   *index_info = index_path->indexinfo;
+	ListCell   *iq, *ii;
 
 	*fixed_indexquals = NIL;
 	*indxstrategy = NIL;
 	*indxsubtype = NIL;
 	*indxlossy = NIL;
-	foreach(i, indexquals)
+	forboth(iq, indexquals, ii, index_info)
 	{
-		List	   *indexqual = lfirst(i);
-		IndexOptInfo *index = (IndexOptInfo *) lfirst(ixinfo);
+		List	   *indexqual = (List *) lfirst(iq);
+		IndexOptInfo *index = (IndexOptInfo *) lfirst(ii);
 		List	   *fixed_qual;
 		List	   *strategy;
 		List	   *subtype;
@@ -1204,8 +1204,6 @@ fix_indxqual_references(List *indexquals, IndexPath *index_path,
 		*indxstrategy = lappend(*indxstrategy, strategy);
 		*indxsubtype = lappend(*indxsubtype, subtype);
 		*indxlossy = lappend(*indxlossy, lossy);
-
-		ixinfo = lnext(ixinfo);
 	}
 }
 
@@ -1232,15 +1230,15 @@ fix_indxqual_sublist(List *indexqual,
 					 List **subtype,
 					 List **lossy)
 {
-	List	   *i;
+	ListCell   *l;
 
 	*fixed_quals = NIL;
 	*strategy = NIL;
 	*subtype = NIL;
 	*lossy = NIL;
-	foreach(i, indexqual)
+	foreach(l, indexqual)
 	{
-		RestrictInfo *rinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 		OpExpr	   *clause;
 		OpExpr	   *newclause;
 		Oid			opclass;
@@ -1250,8 +1248,7 @@ fix_indxqual_sublist(List *indexqual,
 
 		Assert(IsA(rinfo, RestrictInfo));
 		clause = (OpExpr *) rinfo->clause;
-		if (!IsA(clause, OpExpr) ||
-			length(clause->args) != 2)
+		if (!IsA(clause, OpExpr) || length(clause->args) != 2)
 			elog(ERROR, "indexqual clause is not binary opclause");
 
 		/*
@@ -1275,7 +1272,7 @@ fix_indxqual_sublist(List *indexqual,
 		 * Now, determine which index attribute this is, change the
 		 * indexkey operand as needed, and get the index opclass.
 		 */
-		lfirst(newclause->args) = fix_indxqual_operand(lfirst(newclause->args),
+		linitial(newclause->args) = fix_indxqual_operand(linitial(newclause->args),
 													   baserelid,
 													   index,
 													   &opclass);
@@ -1309,7 +1306,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 	 */
 	Var		   *result;
 	int			pos;
-	List	   *indexprs;
+	ListCell   *indexpr_item;
 
 	/*
 	 * Remove any binary-compatible relabeling of the indexkey
@@ -1340,29 +1337,29 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 	}
 
 	/* Try to match against index expressions */
-	indexprs = index->indexprs;
+	indexpr_item = list_head(index->indexprs);
 	for (pos = 0; pos < index->ncolumns; pos++)
 	{
 		if (index->indexkeys[pos] == 0)
 		{
 			Node	   *indexkey;
 
-			if (indexprs == NIL)
+			if (indexpr_item == NULL)
 				elog(ERROR, "too few entries in indexprs list");
-			indexkey = (Node *) lfirst(indexprs);
+			indexkey = (Node *) lfirst(indexpr_item);
 			if (indexkey && IsA(indexkey, RelabelType))
 				indexkey = (Node *) ((RelabelType *) indexkey)->arg;
 			if (equal(node, indexkey))
 			{
 				/* Found a match */
 				result = makeVar(baserelid, pos + 1,
-								 exprType(lfirst(indexprs)), -1,
+								 exprType(lfirst(indexpr_item)), -1,
 								 0);
 				/* return the correct opclass, too */
 				*opclass = index->classlist[pos];
 				return (Node *) result;
 			}
-			indexprs = lnext(indexprs);
+			indexpr_item = lnext(indexpr_item);
 		}
 	}
 
@@ -1383,11 +1380,11 @@ static List *
 get_switched_clauses(List *clauses, Relids outerrelids)
 {
 	List	   *t_list = NIL;
-	List	   *i;
+	ListCell   *l;
 
-	foreach(i, clauses)
+	foreach(l, clauses)
 	{
-		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
+		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(l);
 		OpExpr	   *clause = (OpExpr *) restrictinfo->clause;
 
 		Assert(is_opclause(clause));
@@ -1432,7 +1429,7 @@ order_qual_clauses(Query *root, List *clauses)
 {
 	FastList	nosubplans;
 	FastList	withsubplans;
-	List	   *l;
+	ListCell   *l;
 
 	/* No need to work hard if the query is subselect-free */
 	if (!root->hasSubLinks)
@@ -1442,7 +1439,7 @@ order_qual_clauses(Query *root, List *clauses)
 	FastListInit(&withsubplans);
 	foreach(l, clauses)
 	{
-		Node	   *clause = lfirst(l);
+		Node	   *clause = (Node *) lfirst(l);
 
 		if (contain_subplans(clause))
 			FastAppend(&withsubplans, clause);
@@ -1632,7 +1629,7 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 {
 	Append	   *node = makeNode(Append);
 	Plan	   *plan = &node->plan;
-	List	   *subnode;
+	ListCell   *subnode;
 
 	/*
 	 * Compute cost as sum of subplan costs.  We charge nothing extra for
@@ -1647,7 +1644,7 @@ make_append(List *appendplans, bool isTarget, List *tlist)
 	{
 		Plan	   *subplan = (Plan *) lfirst(subnode);
 
-		if (subnode == appendplans)		/* first node? */
+		if (subnode == list_head(appendplans))		/* first node? */
 			plan->startup_cost = subplan->startup_cost;
 		plan->total_cost += subplan->total_cost;
 		plan->plan_rows += subplan->plan_rows;
@@ -1837,7 +1834,7 @@ static Sort *
 make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 {
 	List	   *tlist = lefttree->targetlist;
-	List	   *i;
+	ListCell   *i;
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
@@ -1854,7 +1851,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 		List	   *keysublist = (List *) lfirst(i);
 		PathKeyItem *pathkey = NULL;
 		Resdom	   *resdom = NULL;
-		List	   *j;
+		ListCell   *j;
 
 		/*
 		 * We can sort by any one of the sort key items listed in this
@@ -1870,7 +1867,7 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 		 */
 		foreach(j, keysublist)
 		{
-			pathkey = lfirst(j);
+			pathkey = (PathKeyItem *) lfirst(j);
 			Assert(IsA(pathkey, PathKeyItem));
 			resdom = tlist_member(pathkey->key, tlist);
 			if (resdom)
@@ -1881,10 +1878,10 @@ make_sort_from_pathkeys(Query *root, Plan *lefttree, List *pathkeys)
 			/* No matching Var; look for a computable expression */
 			foreach(j, keysublist)
 			{
-				List   *exprvars;
-				List   *k;
+				List		*exprvars;
+				ListCell	*k;
 
-				pathkey = lfirst(j);
+				pathkey = (PathKeyItem *) lfirst(j);
 				exprvars = pull_var_clause(pathkey->key, false);
 				foreach(k, exprvars)
 				{
@@ -1948,7 +1945,7 @@ Sort *
 make_sort_from_sortclauses(Query *root, List *sortcls, Plan *lefttree)
 {
 	List	   *sub_tlist = lefttree->targetlist;
-	List	   *i;
+	ListCell   *l;
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
@@ -1960,9 +1957,9 @@ make_sort_from_sortclauses(Query *root, List *sortcls, Plan *lefttree)
 
 	numsortkeys = 0;
 
-	foreach(i, sortcls)
+	foreach(l, sortcls)
 	{
-		SortClause *sortcl = (SortClause *) lfirst(i);
+		SortClause *sortcl = (SortClause *) lfirst(l);
 		TargetEntry *tle = get_sortgroupclause_tle(sortcl, sub_tlist);
 
 		/*
@@ -2001,7 +1998,7 @@ make_sort_from_groupcols(Query *root,
 {
 	List	   *sub_tlist = lefttree->targetlist;
 	int			grpno = 0;
-	List	   *i;
+	ListCell   *l;
 	int			numsortkeys;
 	AttrNumber *sortColIdx;
 	Oid		   *sortOperators;
@@ -2013,9 +2010,9 @@ make_sort_from_groupcols(Query *root,
 
 	numsortkeys = 0;
 
-	foreach(i, groupcls)
+	foreach(l, groupcls)
 	{
-		GroupClause *grpcl = (GroupClause *) lfirst(i);
+		GroupClause *grpcl = (GroupClause *) lfirst(l);
 		TargetEntry *tle = get_tle_by_resno(sub_tlist, grpColIdx[grpno]);
 
 		/*
@@ -2213,7 +2210,7 @@ make_unique(Plan *lefttree, List *distinctList)
 	int			numCols = length(distinctList);
 	int			keyno = 0;
 	AttrNumber *uniqColIdx;
-	List	   *slitem;
+	ListCell   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
 
@@ -2270,7 +2267,7 @@ make_setop(SetOpCmd cmd, Plan *lefttree,
 	int			numCols = length(distinctList);
 	int			keyno = 0;
 	AttrNumber *dupColIdx;
-	List	   *slitem;
+	ListCell   *slitem;
 
 	copy_plan_costsize(plan, lefttree);
 

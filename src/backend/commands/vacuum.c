@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.277 2004/05/22 23:14:38 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.278 2004/05/26 04:41:12 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -164,8 +164,8 @@ vacuum(VacuumStmt *vacstmt)
 	bool		all_rels,
 				in_outer_xact,
 				use_own_xacts;
-	List	   *relations,
-			   *cur;
+	List	   *relations;
+	ListCell   *cur;
 
 	if (vacstmt->verbose)
 		elevel = INFO;
@@ -276,7 +276,7 @@ vacuum(VacuumStmt *vacstmt)
 		Assert(vacstmt->analyze);
 		if (in_outer_xact)
 			use_own_xacts = false;
-		else if (length(relations) > 1)
+		else if (list_length(relations) > 1)
 			use_own_xacts = true;
 		else
 			use_own_xacts = false;
@@ -312,7 +312,7 @@ vacuum(VacuumStmt *vacstmt)
 	 */
 	foreach(cur, relations)
 	{
-		Oid			relid = lfirsto(cur);
+		Oid			relid = lfirst_oid(cur);
 
 		if (vacstmt->vacuum)
 		{
@@ -431,7 +431,7 @@ get_rel_oids(const RangeVar *vacrel, const char *stmttype)
 
 		/* Make a relation list entry for this guy */
 		oldcontext = MemoryContextSwitchTo(vac_context);
-		oid_list = lappendo(oid_list, relid);
+		oid_list = lappend_oid(oid_list, relid);
 		MemoryContextSwitchTo(oldcontext);
 	}
 	else
@@ -455,7 +455,7 @@ get_rel_oids(const RangeVar *vacrel, const char *stmttype)
 		{
 			/* Make a relation list entry for this guy */
 			oldcontext = MemoryContextSwitchTo(vac_context);
-			oid_list = lappendo(oid_list, HeapTupleGetOid(tuple));
+			oid_list = lappend_oid(oid_list, HeapTupleGetOid(tuple));
 			MemoryContextSwitchTo(oldcontext);
 		}
 
@@ -3061,13 +3061,13 @@ vac_cmp_vtlinks(const void *left, const void *right)
 void
 vac_open_indexes(Relation relation, int *nindexes, Relation **Irel)
 {
-	List	   *indexoidlist,
-			   *indexoidscan;
+	List	   *indexoidlist;
+	ListCell   *indexoidscan;
 	int			i;
 
 	indexoidlist = RelationGetIndexList(relation);
 
-	*nindexes = length(indexoidlist);
+	*nindexes = list_length(indexoidlist);
 
 	if (*nindexes > 0)
 		*Irel = (Relation *) palloc(*nindexes * sizeof(Relation));
@@ -3077,13 +3077,13 @@ vac_open_indexes(Relation relation, int *nindexes, Relation **Irel)
 	i = 0;
 	foreach(indexoidscan, indexoidlist)
 	{
-		Oid			indexoid = lfirsto(indexoidscan);
+		Oid			indexoid = lfirst_oid(indexoidscan);
 
 		(*Irel)[i] = index_open(indexoid);
 		i++;
 	}
 
-	freeList(indexoidlist);
+	list_free(indexoidlist);
 }
 
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.202 2004/05/08 19:09:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/relcache.c,v 1.203 2004/05/26 04:41:40 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1872,7 +1872,7 @@ RelationCacheInvalidate(void)
 	Relation	relation;
 	List	   *rebuildFirstList = NIL;
 	List	   *rebuildList = NIL;
-	List	   *l;
+	ListCell   *l;
 
 	/* Phase 1 */
 	hash_seq_init(&status, RelationIdCache);
@@ -2577,23 +2577,24 @@ RelationGetIndexList(Relation relation)
 static List *
 insert_ordered_oid(List *list, Oid datum)
 {
-	List	   *l;
+	ListCell *prev;
 
 	/* Does the datum belong at the front? */
-	if (list == NIL || datum < lfirsto(list))
-		return lconso(datum, list);
+	if (list == NIL || datum < linitial_oid(list))
+		return lcons_oid(datum, list);
 	/* No, so find the entry it belongs after */
-	l = list;
+	prev = list_head(list);
 	for (;;)
 	{
-		List	   *n = lnext(l);
+		ListCell *curr = lnext(prev);
 
-		if (n == NIL || datum < lfirsto(n))
-			break;				/* it belongs before n */
-		l = n;
+		if (curr == NULL || datum < lfirst_oid(curr))
+			break;		/* it belongs after 'prev', before 'curr' */
+
+		prev = curr;
 	}
-	/* Insert datum into list after item l */
-	lnext(l) = lconso(datum, lnext(l));
+	/* Insert datum into list after 'prev' */
+	lappend_cell_oid(list, prev, datum);
 	return list;
 }
 

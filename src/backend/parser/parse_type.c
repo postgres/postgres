@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.65 2004/03/21 22:29:11 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/parse_type.c,v 1.66 2004/05/26 04:41:30 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,16 +63,16 @@ LookupTypeName(const TypeName *typename)
 								NameListToString(typename->names))));
 				break;
 			case 2:
-				rel->relname = strVal(lfirst(typename->names));
+				rel->relname = strVal(linitial(typename->names));
 				field = strVal(lsecond(typename->names));
 				break;
 			case 3:
-				rel->schemaname = strVal(lfirst(typename->names));
+				rel->schemaname = strVal(linitial(typename->names));
 				rel->relname = strVal(lsecond(typename->names));
 				field = strVal(lthird(typename->names));
 				break;
 			case 4:
-				rel->catalogname = strVal(lfirst(typename->names));
+				rel->catalogname = strVal(linitial(typename->names));
 				rel->schemaname = strVal(lsecond(typename->names));
 				rel->relname = strVal(lthird(typename->names));
 				field = strVal(lfourth(typename->names));
@@ -155,11 +155,11 @@ TypeNameToString(const TypeName *typename)
 	if (typename->names != NIL)
 	{
 		/* Emit possibly-qualified name as-is */
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, typename->names)
 		{
-			if (l != typename->names)
+			if (l != list_head(typename->names))
 				appendStringInfoChar(&string, '.');
 			appendStringInfoString(&string, strVal(lfirst(l)));
 		}
@@ -488,7 +488,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 	 */
 	if (length(raw_parsetree_list) != 1)
 		goto fail;
-	stmt = (SelectStmt *) lfirst(raw_parsetree_list);
+	stmt = (SelectStmt *) linitial(raw_parsetree_list);
 	if (stmt == NULL ||
 		!IsA(stmt, SelectStmt) ||
 		stmt->distinctClause != NIL ||
@@ -505,7 +505,7 @@ parseTypeString(const char *str, Oid *type_id, int32 *typmod)
 		goto fail;
 	if (length(stmt->targetList) != 1)
 		goto fail;
-	restarget = (ResTarget *) lfirst(stmt->targetList);
+	restarget = (ResTarget *) linitial(stmt->targetList);
 	if (restarget == NULL ||
 		!IsA(restarget, ResTarget) ||
 		restarget->name != NULL ||

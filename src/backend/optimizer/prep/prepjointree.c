@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.17 2004/05/10 22:44:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepjointree.c,v 1.18 2004/05/26 04:41:26 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,11 +97,11 @@ pull_up_IN_clauses(Query *parse, Node *node)
 	if (and_clause(node))
 	{
 		List	   *newclauses = NIL;
-		List	   *oldclauses;
+		ListCell   *l;
 
-		foreach(oldclauses, ((BoolExpr *) node)->args)
+		foreach(l, ((BoolExpr *) node)->args)
 		{
-			Node	   *oldclause = lfirst(oldclauses);
+			Node	   *oldclause = (Node *) lfirst(l);
 
 			newclauses = lappend(newclauses,
 								 pull_up_IN_clauses(parse,
@@ -162,7 +162,7 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 		{
 			int			rtoffset;
 			List	   *subtlist;
-			List	   *rt;
+			ListCell   *rt;
 
 			/*
 			 * Need a modifiable copy of the subquery to hack on.  Even if
@@ -314,7 +314,7 @@ pull_up_subqueries(Query *parse, Node *jtnode, bool below_outer_join)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 			lfirst(l) = pull_up_subqueries(parse, lfirst(l),
@@ -447,7 +447,7 @@ is_simple_subquery(Query *subquery)
 static bool
 has_nullable_targetlist(Query *subquery)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, subquery->targetList)
 	{
@@ -488,7 +488,7 @@ resolvenew_in_jointree(Node *jtnode, int varno,
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 			resolvenew_in_jointree(lfirst(l), varno, rte, subtlist);
@@ -588,7 +588,7 @@ reduce_outer_joins_pass1(Node *jtnode)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 		{
@@ -653,8 +653,8 @@ reduce_outer_joins_pass2(Node *jtnode,
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
-		List	   *s;
+		ListCell   *l;
+		ListCell   *s;
 		Relids		pass_nonnullable;
 
 		/* Scan quals to see if we can add any nonnullability constraints */
@@ -662,15 +662,14 @@ reduce_outer_joins_pass2(Node *jtnode,
 		pass_nonnullable = bms_add_members(pass_nonnullable,
 										   nonnullable_rels);
 		/* And recurse --- but only into interesting subtrees */
-		s = state->sub_states;
-		foreach(l, f->fromlist)
+		Assert(length(f->fromlist) == length(state->sub_states));
+		forboth(l, f->fromlist, s, state->sub_states)
 		{
 			reduce_outer_joins_state *sub_state = lfirst(s);
 
 			if (sub_state->contains_outer)
 				reduce_outer_joins_pass2(lfirst(l), sub_state, parse,
 										 pass_nonnullable);
-			s = lnext(s);
 		}
 		bms_free(pass_nonnullable);
 	}
@@ -679,7 +678,7 @@ reduce_outer_joins_pass2(Node *jtnode,
 		JoinExpr   *j = (JoinExpr *) jtnode;
 		int			rtindex = j->rtindex;
 		JoinType	jointype = j->jointype;
-		reduce_outer_joins_state *left_state = lfirst(state->sub_states);
+		reduce_outer_joins_state *left_state = linitial(state->sub_states);
 		reduce_outer_joins_state *right_state = lsecond(state->sub_states);
 
 		/* Can we simplify this join? */
@@ -798,7 +797,7 @@ find_nonnullable_rels(Node *node, bool top_level)
 	}
 	else if (IsA(node, List))
 	{
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, (List *) node)
 		{
@@ -898,7 +897,7 @@ simplify_jointree(Query *parse, Node *jtnode)
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
 		List	   *newlist = NIL;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 		{
@@ -918,7 +917,16 @@ simplify_jointree(Query *parse, Node *jtnode)
 				 */
 				FromExpr   *subf = (FromExpr *) child;
 				int			childlen = length(subf->fromlist);
-				int			myothers = length(newlist) + length(lnext(l));
+				int			myothers;
+				ListCell   *l2;
+
+				/*
+				 * XXX: This is a quick hack, not sure of the proper
+				 * fix.
+				 */
+				myothers = length(newlist);
+				for_each_cell(l2, lnext(l))
+					myothers++;
 
 				if (childlen <= 1 ||
 					(childlen + myothers) <= from_collapse_limit)
@@ -1022,7 +1030,7 @@ simplify_jointree(Query *parse, Node *jtnode)
 static void
 fix_in_clause_relids(List *in_info_list, int varno, Relids subrelids)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, in_info_list)
 	{
@@ -1060,7 +1068,7 @@ get_relids_in_jointree(Node *jtnode)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 		{
@@ -1119,7 +1127,7 @@ find_jointree_node_for_rel(Node *jtnode, int relid)
 	else if (IsA(jtnode, FromExpr))
 	{
 		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
+		ListCell   *l;
 
 		foreach(l, f->fromlist)
 		{

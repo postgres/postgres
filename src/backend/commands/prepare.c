@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.26 2004/04/22 02:58:20 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.27 2004/05/26 04:41:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -125,7 +125,7 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 	plan_list = entry->plan_list;
 	qcontext = entry->context;
 
-	Assert(length(query_list) == length(plan_list));
+	Assert(list_length(query_list) == list_length(plan_list));
 
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
@@ -162,11 +162,11 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 		plan_list = copyObject(plan_list);
 		qcontext = PortalGetHeapMemory(portal);
 
-		if (length(query_list) != 1)
+		if (list_length(query_list) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("prepared statement is not a SELECT")));
-		query = (Query *) lfirst(query_list);
+		query = (Query *) linitial(query_list);
 		if (query->commandType != CMD_SELECT)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
@@ -208,14 +208,14 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 static ParamListInfo
 EvaluateParams(EState *estate, List *params, List *argtypes)
 {
-	int			nargs = length(argtypes);
+	int			nargs = list_length(argtypes);
 	ParamListInfo paramLI;
 	List	   *exprstates;
-	List	   *l;
+	ListCell   *l;
 	int			i = 0;
 
 	/* Parser should have caught this error, but check for safety */
-	if (length(params) != nargs)
+	if (list_length(params) != nargs)
 		elog(ERROR, "wrong number of arguments");
 
 	exprstates = (List *) ExecPrepareExpr((Expr *) params, estate);
@@ -326,7 +326,7 @@ StorePreparedStatement(const char *stmt_name,
 	qstring = query_string ? pstrdup(query_string) : NULL;
 	query_list = (List *) copyObject(query_list);
 	plan_list = (List *) copyObject(plan_list);
-	argtype_list = listCopy(argtype_list);
+	argtype_list = list_copy(argtype_list);
 
 	/* Now we can add entry to hash table */
 	entry = (PreparedStatement *) hash_search(prepared_queries,
@@ -419,11 +419,11 @@ FetchPreparedStatementResultDesc(PreparedStatement *stmt)
 	switch (ChoosePortalStrategy(stmt->query_list))
 	{
 		case PORTAL_ONE_SELECT:
-			query = (Query *) lfirst(stmt->query_list);
+			query = (Query *) linitial(stmt->query_list);
 			return ExecCleanTypeFromTL(query->targetList, false);
 
 		case PORTAL_UTIL_SELECT:
-			query = (Query *) lfirst(stmt->query_list);
+			query = (Query *) linitial(stmt->query_list);
 			return UtilityTupleDescriptor(query->utilityStmt);
 
 		case PORTAL_MULTI_QUERY:
@@ -478,8 +478,9 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 {
 	ExecuteStmt *execstmt = (ExecuteStmt *) stmt->query->utilityStmt;
 	PreparedStatement *entry;
-	List	   *l,
-			   *query_list,
+	ListCell   *q,
+			   *p;
+	List	   *query_list,
 			   *plan_list;
 	ParamListInfo paramLI = NULL;
 	EState	   *estate = NULL;
@@ -493,7 +494,7 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 	query_list = entry->query_list;
 	plan_list = entry->plan_list;
 
-	Assert(length(query_list) == length(plan_list));
+	Assert(list_length(query_list) == list_length(plan_list));
 
 	/* Evaluate parameters, if any */
 	if (entry->argtype_list != NIL)
@@ -508,14 +509,13 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 	}
 
 	/* Explain each query */
-	foreach(l, query_list)
+	forboth (q, query_list, p, plan_list)
 	{
-		Query	   *query = (Query *) lfirst(l);
-		Plan	   *plan = (Plan *) lfirst(plan_list);
+		Query	   *query = (Query *) lfirst(q);
+		Plan	   *plan = (Plan *) lfirst(p);
 		bool		is_last_query;
 
-		plan_list = lnext(plan_list);
-		is_last_query = (plan_list == NIL);
+		is_last_query = (lnext(p) == NULL);
 
 		if (query->commandType == CMD_UTILITY)
 		{

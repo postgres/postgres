@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.64 2004/03/17 01:02:23 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/nodeMergejoin.c,v 1.65 2004/05/26 04:41:16 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,10 +104,10 @@ static void
 MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
 				PlanState *parent)
 {
-	List	   *ltexprs,
-			   *gtexprs,
-			   *ltcdr,
-			   *gtcdr;
+	List		*ltexprs,
+				*gtexprs;
+	ListCell	*ltcdr,
+				*gtcdr;
 
 	/*
 	 * Make modifiable copies of the qualList.
@@ -119,8 +119,7 @@ MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
 	 * Scan both lists in parallel, so that we can update the operators
 	 * with the minimum number of syscache searches.
 	 */
-	ltcdr = ltexprs;
-	foreach(gtcdr, gtexprs)
+	forboth(ltcdr, ltexprs, gtcdr, gtexprs)
 	{
 		OpExpr	   *ltop = (OpExpr *) lfirst(ltcdr);
 		OpExpr	   *gtop = (OpExpr *) lfirst(gtcdr);
@@ -140,8 +139,6 @@ MJFormSkipQuals(List *qualList, List **ltQuals, List **gtQuals,
 							  &gtop->opno,
 							  &ltop->opfuncid,
 							  &gtop->opfuncid);
-
-		ltcdr = lnext(ltcdr);
 	}
 
 	/*
@@ -173,8 +170,8 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 {
 	bool		result;
 	MemoryContext oldContext;
-	List	   *clause;
-	List	   *eqclause;
+	ListCell   *clause;
+	ListCell   *eqclause;
 
 	/*
 	 * Do expression eval in short-lived context.
@@ -188,8 +185,12 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 	 */
 	result = false;				/* assume 'false' result */
 
-	eqclause = eqQual;
-	foreach(clause, compareQual)
+	/*
+	 * We can't run out of one list before the other
+	 */
+	Assert(length(compareQual) == length(eqQual));
+
+	forboth(clause, compareQual, eqclause, eqQual)
 	{
 		ExprState  *clauseexpr = (ExprState *) lfirst(clause);
 		ExprState  *eqclauseexpr = (ExprState *) lfirst(eqclause);
@@ -220,8 +221,6 @@ MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext)
 
 		if (!DatumGetBool(const_value) || isNull)
 			break;				/* return false */
-
-		eqclause = lnext(eqclause);
 	}
 
 	MemoryContextSwitchTo(oldContext);

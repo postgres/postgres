@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.454 2004/05/10 22:44:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.455 2004/05/26 04:41:29 neilc Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2385,15 +2385,15 @@ DefineStmt:
 						case 1:
 							r->catalogname = NULL;
 							r->schemaname = NULL;
-							r->relname = strVal(lfirst($3));
+							r->relname = strVal(linitial($3));
 							break;
 						case 2:
 							r->catalogname = NULL;
-							r->schemaname = strVal(lfirst($3));
+							r->schemaname = strVal(linitial($3));
 							r->relname = strVal(lsecond($3));
 							break;
 						case 3:
-							r->catalogname = strVal(lfirst($3));
+							r->catalogname = strVal(linitial($3));
 							r->schemaname = strVal(lsecond($3));
 							r->relname = strVal(lthird($3));
 							break;
@@ -6020,7 +6020,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					else
 					{
 						Node *n = NULL;
-						List *l;
+						ListCell *l;
 						foreach(l, (List *) $3)
 						{
 							Node *cmp;
@@ -6052,7 +6052,7 @@ a_expr:		c_expr									{ $$ = $1; }
 					else
 					{
 						Node *n = NULL;
-						List *l;
+						ListCell *l;
 						foreach(l, (List *) $4)
 						{
 							Node *cmp;
@@ -7168,11 +7168,11 @@ qualified_name:
 					{
 						case 2:
 							$$->catalogname = NULL;
-							$$->schemaname = strVal(lfirst($1));
+							$$->schemaname = strVal(linitial($1));
 							$$->relname = strVal(lsecond($1));
 							break;
 						case 3:
-							$$->catalogname = strVal(lfirst($1));
+							$$->catalogname = strVal(linitial($1));
 							$$->schemaname = strVal(lsecond($1));
 							$$->relname = strVal(lthird($1));
 							break;
@@ -7864,8 +7864,8 @@ makeBoolAConst(bool state)
 static Node *
 makeRowNullTest(NullTestType test, RowExpr *row)
 {
-	Node	*result = NULL;
-	List	*arg;
+	Node		*result = NULL;
+	ListCell	*arg;
 
 	foreach(arg, row->args)
 	{
@@ -7928,7 +7928,7 @@ static List *
 extractArgTypes(List *parameters)
 {
 	List	   *result = NIL;
-	List	   *i;
+	ListCell   *i;
 
 	foreach(i, parameters)
 	{

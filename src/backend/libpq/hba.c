@@ -10,11 +10,13 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.122 2004/05/25 19:11:14 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/libpq/hba.c,v 1.123 2004/05/26 04:41:18 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
+
+#define DISABLE_LIST_COMPAT
 
 #include <errno.h>
 #include <pwd.h>
@@ -63,11 +65,19 @@
  * one string per token on the line.  Note there will always be at least
  * one token, since blank lines are not entered in the data structure.
  */
-static List *hba_lines = NIL;	/* pre-parsed contents of hba file */
-static List *ident_lines = NIL; /* pre-parsed contents of ident file */
-static List *group_lines = NIL; /* pre-parsed contents of group file */
-static List *user_lines = NIL;	/* pre-parsed contents of user password
-								 * file */
+
+/* pre-parsed content of CONF_FILE and corresponding line #s */
+static List *hba_lines			= NIL;
+static List *hba_line_nums		= NIL;
+/* pre-parsed content of USERMAP_FILE and corresponding line #s */
+static List *ident_lines		= NIL;
+static List *ident_line_nums	= NIL;
+/* pre-parsed content of group file and corresponding line #s */
+static List *group_lines		= NIL;
+static List *group_line_nums	= NIL;
+/* pre-parsed content of user passwd file and corresponding line #s */
+static List *user_lines			= NIL;
+static List *user_line_nums		= NIL;
 
 /* sorted entries so we can do binary search lookups */
 static List **user_sorted = NULL;		/* sorted user list, for bsearch() */
@@ -76,7 +86,7 @@ static List **group_sorted = NULL;		/* sorted group list, for
 static int	user_length;
 static int	group_length;
 
-static List *tokenize_file(FILE *file);
+static void tokenize_file(FILE *file, List **lines, List **line_nums);
 static char *tokenize_inc_file(const char *inc_filename);
 
 /*
@@ -250,27 +260,44 @@ next_token_expand(FILE *file)
  * Free memory used by lines/tokens (i.e., structure built by tokenize_file)
  */
 static void
-free_lines(List **lines)
+free_lines(List **lines, List **line_nums)
 {
+	/*
+	 * Either both must be non-NULL, or both must be NULL
+	 */
+	Assert((*lines != NIL && *line_nums != NIL) ||
+		   (*lines == NIL && *line_nums == NIL));
+
 	if (*lines)
 	{
-		List	   *line,
-				   *token;
+		/*
+		 * "lines" is a list of lists; each of those sublists consists
+		 * of palloc'ed tokens, so we want to free each pointed-to
+		 * token in a sublist, followed by the sublist itself, and
+		 * finally the whole list.
+		 */
+		ListCell   *line;
 
 		foreach(line, *lines)
 		{
 			List	   *ln = lfirst(line);
+			ListCell   *token;
 
-			/* free the pstrdup'd tokens (don't try it on the line number) */
-			foreach(token, lnext(ln))
+			foreach(token, ln)
 				pfree(lfirst(token));
 			/* free the sublist structure itself */
-			freeList(ln);
+			list_free(ln);
 		}
 		/* free the list structure itself */
-		freeList(*lines);
+		list_free(*lines);
 		/* clear the static variable */
 		*lines = NIL;
+	}
+
+	if (*line_nums)
+	{
+		list_free(*line_nums);
+		*line_nums = NIL;
 	}
 }
 
@@ -281,7 +308,8 @@ tokenize_inc_file(const char *inc_filename)
 	char	   *inc_fullname;
 	FILE	   *inc_file;
 	List	   *inc_lines;
-	List	   *line;
+	List	   *inc_line_nums;
+	ListCell   *line;
 	char	   *comma_str = pstrdup("");
 
 	inc_fullname = (char *) palloc(strlen(DataDir) + 1 +
@@ -305,17 +333,16 @@ tokenize_inc_file(const char *inc_filename)
 	pfree(inc_fullname);
 
 	/* There is possible recursion here if the file contains @ */
-	inc_lines = tokenize_file(inc_file);
+	tokenize_file(inc_file, &inc_lines, &inc_line_nums);
 	FreeFile(inc_file);
 
 	/* Create comma-separate string from List */
 	foreach(line, inc_lines)
 	{
-		List	   *ln = lfirst(line);
-		List	   *token;
+		List		   *token_list = (List *) lfirst(line);
+		ListCell	   *token;
 
-		/* First entry is line number */
-		foreach(token, lnext(ln))
+		foreach(token, token_list)
 		{
 			if (strlen(comma_str))
 			{
@@ -328,23 +355,25 @@ tokenize_inc_file(const char *inc_filename)
 		}
 	}
 
-	free_lines(&inc_lines);
+	free_lines(&inc_lines, &inc_line_nums);
 
 	return comma_str;
 }
 
 
-
 /*
- *	Read the given file and create a list of line sublists.
+ * Tokenize the given file, storing the resulting data into two lists:
+ * a list of sublists, each sublist containing the tokens in a line of
+ * the file, and a list of line numbers.
  */
-static List *
-tokenize_file(FILE *file)
+static void
+tokenize_file(FILE *file, List **lines, List **line_nums)
 {
-	List	   *lines = NIL;
-	List	   *next_line = NIL;
+	List	   *current_line = NIL;
 	int			line_number = 1;
 	char	   *buf;
+
+	*lines = *line_nums = NIL;
 
 	while (!feof(file))
 	{
@@ -353,27 +382,27 @@ tokenize_file(FILE *file)
 		/* add token to list, unless we are at EOL or comment start */
 		if (buf[0] != '\0')
 		{
-			if (next_line == NIL)
+			if (current_line == NIL)
 			{
-				/* make a new line List */
-				next_line = makeListi1(line_number);
-				lines = lappend(lines, next_line);
+				/* make a new line List, record its line number */
+				current_line = lappend(current_line, buf);
+				*lines = lappend(*lines, current_line);
+				*line_nums = lappend_int(*line_nums, line_number);
 			}
-			/* append token to current line's list */
-			next_line = lappend(next_line, buf);
+			else
+			{
+				/* append token to current line's list */
+				current_line = lappend(current_line, buf);
+			}
 		}
 		else
 		{
 			/* we are at real or logical EOL, so force a new line List */
-			next_line = NIL;
-		}
-
-		/* Advance line number whenever we reach EOL */
-		if (next_line == NIL)
+			current_line = NIL;
+			/* Advance line number whenever we reach EOL */
 			line_number++;
+		}
 	}
-
-	return lines;
 }
 
 
@@ -385,9 +414,8 @@ tokenize_file(FILE *file)
 static int
 user_group_qsort_cmp(const void *list1, const void *list2)
 {
-	/* first node is line number */
-	char	   *user1 = lfirst(lnext(*(List **) list1));
-	char	   *user2 = lfirst(lnext(*(List **) list2));
+	char	   *user1 = linitial(*(List **) list1);
+	char	   *user2 = linitial(*(List **) list2);
 
 	return strcmp(user1, user2);
 }
@@ -401,8 +429,7 @@ user_group_qsort_cmp(const void *list1, const void *list2)
 static int
 user_group_bsearch_cmp(const void *user, const void *list)
 {
-	/* first node is line number */
-	char	   *user2 = lfirst(lnext(*(List **) list));
+	char	   *user2 = linitial(*(List **) list);
 
 	return strcmp(user, user2);
 }
@@ -450,14 +477,18 @@ get_user_line(const char *user)
 static bool
 check_group(char *group, char *user)
 {
-	List	  **line,
-			   *l;
+	List	  **line;
 
 	if ((line = get_group_line(group)) != NULL)
 	{
-		foreach(l, lnext(lnext(*line)))
-			if (strcmp(lfirst(l), user) == 0)
-			return true;
+		ListCell *line_item;
+
+		/* skip over the group name */
+		for_each_cell(line_item, lnext(list_head(*line)))
+		{
+			if (strcmp(lfirst(line_item), user) == 0)
+				return true;
+		}
 	}
 
 	return false;
@@ -518,24 +549,24 @@ check_db(char *dbname, char *user, char *param_str)
 /*
  *	Scan the rest of a host record (after the mask field)
  *	and return the interpretation of it as *userauth_p, *auth_arg_p, and
- *	*error_p.  *line points to the next token of the line, and is
+ *	*error_p.  *line_item points to the next token of the line, and is
  *	advanced over successfully-read tokens.
  */
 static void
-parse_hba_auth(List **line, UserAuth *userauth_p, char **auth_arg_p,
-			   bool *error_p)
+parse_hba_auth(ListCell **line_item, UserAuth *userauth_p,
+			   char **auth_arg_p, bool *error_p)
 {
 	char	   *token;
 
 	*auth_arg_p = NULL;
 
-	/* Get authentication type token. */
-	if (!*line)
+	if (!*line_item)
 	{
 		*error_p = true;
 		return;
 	}
-	token = lfirst(*line);
+
+	token = lfirst(*line_item);
 	if (strcmp(token, "trust") == 0)
 		*userauth_p = uaTrust;
 	else if (strcmp(token, "ident") == 0)
@@ -561,16 +592,16 @@ parse_hba_auth(List **line, UserAuth *userauth_p, char **auth_arg_p,
 		*error_p = true;
 		return;
 	}
-	*line = lnext(*line);
+	*line_item = lnext(*line_item);
 
 	/* Get the authentication argument token, if any */
-	if (*line)
+	if (*line_item)
 	{
-		token = lfirst(*line);
+		token = lfirst(*line_item);
 		*auth_arg_p = pstrdup(token);
-		*line = lnext(*line);
+		*line_item = lnext(*line_item);
 		/* If there is more on the line, it is an error */
-		if (*line)
+		if (*line_item)
 			*error_p = true;
 	}
 }
@@ -587,9 +618,9 @@ parse_hba_auth(List **line, UserAuth *userauth_p, char **auth_arg_p,
  *	leave *error_p as it was.
  */
 static void
-parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
+parse_hba(List *line, int line_num, hbaPort *port,
+		  bool *found_p, bool *error_p)
 {
-	int			line_number;
 	char	   *token;
 	char	   *db;
 	char	   *user;
@@ -599,33 +630,32 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	struct sockaddr_storage addr;
 	struct sockaddr_storage mask;
 	char	   *cidr_slash;
+	ListCell   *line_item;
 
-	Assert(line != NIL);
-	line_number = lfirsti(line);
-	line = lnext(line);
-	Assert(line != NIL);
+	line_item = list_head(line);
 	/* Check the record type. */
-	token = lfirst(line);
+	token = lfirst(line_item);
 	if (strcmp(token, "local") == 0)
 	{
 		/* Get the database. */
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
-		db = lfirst(line);
+		db = lfirst(line_item);
 
 		/* Get the user. */
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
-		user = lfirst(line);
+		user = lfirst(line_item);
 
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
 
 		/* Read the rest of the line. */
-		parse_hba_auth(&line, &port->auth_method, &port->auth_arg, error_p);
+		parse_hba_auth(&line_item, &port->auth_method,
+					   &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 
@@ -669,22 +699,22 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 #endif
 
 		/* Get the database. */
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
-		db = lfirst(line);
+		db = lfirst(line_item);
 
 		/* Get the user. */
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
-		user = lfirst(line);
+		user = lfirst(line_item);
 
 		/* Read the IP address field. (with or without CIDR netmask) */
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
-		token = lfirst(line);
+		token = lfirst(line_item);
 
 		/* Check if it has a CIDR suffix and if so isolate it */
 		cidr_slash = strchr(token, '/');
@@ -707,7 +737,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			ereport(LOG,
 					(errcode(ERRCODE_CONFIG_FILE_ERROR),
 					 errmsg("invalid IP address \"%s\" in pg_hba.conf file line %d: %s",
-							token, line_number, gai_strerror(ret))));
+							token, line_num, gai_strerror(ret))));
 			if (cidr_slash)
 				*cidr_slash = '/';
 			if (gai_result)
@@ -730,10 +760,10 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 		else
 		{
 			/* Read the mask field. */
-			line = lnext(line);
-			if (!line)
+			line_item = lnext(line_item);
+			if (!line_item)
 				goto hba_syntax;
-			token = lfirst(line);
+			token = lfirst(line_item);
 
 			ret = getaddrinfo_all(token, NULL, &hints, &gai_result);
 			if (ret || !gai_result)
@@ -741,7 +771,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("invalid IP mask \"%s\" in pg_hba.conf file line %d: %s",
-								token, line_number, gai_strerror(ret))));
+								token, line_num, gai_strerror(ret))));
 				if (gai_result)
 					freeaddrinfo_all(hints.ai_family, gai_result);
 				goto hba_other_error;
@@ -755,7 +785,7 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 				ereport(LOG,
 						(errcode(ERRCODE_CONFIG_FILE_ERROR),
 						 errmsg("IP address and mask do not match in pg_hba.conf file line %d",
-								line_number)));
+								line_num)));
 				goto hba_other_error;
 			}
 		}
@@ -787,10 +817,11 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 			return;
 
 		/* Read the rest of the line. */
-		line = lnext(line);
-		if (!line)
+		line_item = lnext(line_item);
+		if (!line_item)
 			goto hba_syntax;
-		parse_hba_auth(&line, &port->auth_method, &port->auth_arg, error_p);
+		parse_hba_auth(&line_item, &port->auth_method,
+					   &port->auth_arg, error_p);
 		if (*error_p)
 			goto hba_syntax;
 	}
@@ -808,16 +839,16 @@ parse_hba(List *line, hbaPort *port, bool *found_p, bool *error_p)
 	return;
 
 hba_syntax:
-	if (line)
+	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid entry in pg_hba.conf file at line %d, token \"%s\"",
-						line_number, (const char *) lfirst(line))));
+						line_num, (char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
-			errmsg("missing field in pg_hba.conf file at end of line %d",
-				   line_number)));
+				 errmsg("missing field in pg_hba.conf file at end of line %d",
+						line_num)));
 
 	/* Come here if suitable message already logged */
 hba_other_error:
@@ -834,11 +865,13 @@ check_hba(hbaPort *port)
 {
 	bool		found_entry = false;
 	bool		error = false;
-	List	   *line;
+	ListCell   *line;
+	ListCell   *line_num;
 
-	foreach(line, hba_lines)
+	forboth(line, hba_lines, line_num, hba_line_nums)
 	{
-		parse_hba(lfirst(line), port, &found_entry, &error);
+		parse_hba(lfirst(line), lfirst_int(line_num),
+				  port, &found_entry, &error);
 		if (found_entry || error)
 			break;
 	}
@@ -911,11 +944,10 @@ void
 load_group(void)
 {
 	FILE	   *group_file;
-	List	   *line;
 
 	/* Discard any old data */
-	if (group_lines)
-		free_lines(&group_lines);
+	if (group_lines || group_line_nums)
+		free_lines(&group_lines, &group_line_nums);
 	if (group_sorted)
 		pfree(group_sorted);
 	group_sorted = NULL;
@@ -924,14 +956,15 @@ load_group(void)
 	group_file = group_openfile();
 	if (!group_file)
 		return;
-	group_lines = tokenize_file(group_file);
+	tokenize_file(group_file, &group_lines, &group_line_nums);
 	FreeFile(group_file);
 
 	/* create sorted lines for binary searching */
-	group_length = length(group_lines);
+	group_length = list_length(group_lines);
 	if (group_length)
 	{
 		int			i = 0;
+		ListCell   *line;
 
 		group_sorted = palloc(group_length * sizeof(List *));
 
@@ -953,11 +986,10 @@ void
 load_user(void)
 {
 	FILE	   *user_file;
-	List	   *line;
 
 	/* Discard any old data */
-	if (user_lines)
-		free_lines(&user_lines);
+	if (user_lines || user_line_nums)
+		free_lines(&user_lines, &user_line_nums);
 	if (user_sorted)
 		pfree(user_sorted);
 	user_sorted = NULL;
@@ -966,14 +998,15 @@ load_user(void)
 	user_file = user_openfile();
 	if (!user_file)
 		return;
-	user_lines = tokenize_file(user_file);
+	tokenize_file(user_file, &user_lines, &user_line_nums);
 	FreeFile(user_file);
 
 	/* create sorted lines for binary searching */
-	user_length = length(user_lines);
+	user_length = list_length(user_lines);
 	if (user_length)
 	{
 		int			i = 0;
+		ListCell   *line;
 
 		user_sorted = palloc(user_length * sizeof(List *));
 
@@ -1002,8 +1035,8 @@ load_hba(void)
 	FILE	   *file;			/* The config file we have to read */
 	char	   *conf_file;		/* The name of the config file */
 
-	if (hba_lines)
-		free_lines(&hba_lines);
+	if (hba_lines || hba_line_nums)
+		free_lines(&hba_lines, &hba_line_nums);
 
 	/* Put together the full pathname to the config file. */
 	bufsize = (strlen(DataDir) + strlen(CONF_FILE) + 2) * sizeof(char);
@@ -1017,7 +1050,7 @@ load_hba(void)
 				 errmsg("could not open configuration file \"%s\": %m",
 						conf_file)));
 
-	hba_lines = tokenize_file(file);
+	tokenize_file(file, &hba_lines, &hba_line_nums);
 	FreeFile(file);
 	pfree(conf_file);
 }
@@ -1030,10 +1063,11 @@ load_hba(void)
  *	*found_p and *error_p are set according to our results.
  */
 static void
-parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
-					const char *ident_user, bool *found_p, bool *error_p)
+parse_ident_usermap(List *line, int line_number, const char *usermap_name,
+					const char *pg_user, const char *ident_user,
+					bool *found_p, bool *error_p)
 {
-	int			line_number;
+	ListCell   *line_item;
 	char	   *token;
 	char	   *file_map;
 	char	   *file_pguser;
@@ -1043,26 +1077,24 @@ parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
 	*error_p = false;
 
 	Assert(line != NIL);
-	line_number = lfirsti(line);
-	line = lnext(line);
-	Assert(line != NIL);
+	line_item = list_head(line);
 
 	/* Get the map token (must exist) */
-	token = lfirst(line);
+	token = lfirst(line_item);
 	file_map = token;
 
 	/* Get the ident user token (must be provided) */
-	line = lnext(line);
+	line_item = lnext(line_item);
 	if (!line)
 		goto ident_syntax;
-	token = lfirst(line);
+	token = lfirst(line_item);
 	file_ident_user = token;
 
 	/* Get the PG username token */
-	line = lnext(line);
+	line_item = lnext(line_item);
 	if (!line)
 		goto ident_syntax;
-	token = lfirst(line);
+	token = lfirst(line_item);
 	file_pguser = token;
 
 	/* Match? */
@@ -1073,11 +1105,11 @@ parse_ident_usermap(List *line, const char *usermap_name, const char *pg_user,
 	return;
 
 ident_syntax:
-	if (line)
+	if (line_item)
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
 				 errmsg("invalid entry in pg_ident.conf file at line %d, token \"%s\"",
-						line_number, (const char *) lfirst(line))));
+						line_number, (const char *) lfirst(line_item))));
 	else
 		ereport(LOG,
 				(errcode(ERRCODE_CONFIG_FILE_ERROR),
@@ -1105,7 +1137,6 @@ check_ident_usermap(const char *usermap_name,
 					const char *pg_user,
 					const char *ident_user)
 {
-	List	   *line;
 	bool		found_entry = false,
 				error = false;
 
@@ -1125,10 +1156,13 @@ check_ident_usermap(const char *usermap_name,
 	}
 	else
 	{
-		foreach(line, ident_lines)
+		ListCell *line_cell, *num_cell;
+
+		forboth(line_cell, ident_lines, num_cell, ident_line_nums)
 		{
-			parse_ident_usermap(lfirst(line), usermap_name, pg_user,
-								ident_user, &found_entry, &error);
+			parse_ident_usermap(lfirst(line_cell), lfirst_int(num_cell),
+								usermap_name, pg_user, ident_user,
+								&found_entry, &error);
 			if (found_entry || error)
 				break;
 		}
@@ -1148,8 +1182,8 @@ load_ident(void)
 								 * read */
 	int			bufsize;
 
-	if (ident_lines)
-		free_lines(&ident_lines);
+	if (ident_lines || ident_line_nums)
+		free_lines(&ident_lines, &ident_line_nums);
 
 	/* put together the full pathname to the map file */
 	bufsize = (strlen(DataDir) + strlen(USERMAP_FILE) + 2) * sizeof(char);
@@ -1166,7 +1200,7 @@ load_ident(void)
 	}
 	else
 	{
-		ident_lines = tokenize_file(file);
+		tokenize_file(file, &ident_lines, &ident_line_nums);
 		FreeFile(file);
 	}
 	pfree(map_file);

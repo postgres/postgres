@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.264 2004/05/08 19:09:24 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/heap.c,v 1.265 2004/05/26 04:41:07 neilc Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1379,11 +1379,11 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	 * contents of subselects.
 	 */
 	varList = pull_var_clause(expr, false);
-	keycount = length(varList);
+	keycount = list_length(varList);
 
 	if (keycount > 0)
 	{
-		List	   *vl;
+		ListCell   *vl;
 		int			i = 0;
 
 		attNos = (int16 *) palloc(keycount * sizeof(int16));
@@ -1505,7 +1505,7 @@ AddRelationRawConstraints(Relation rel,
 	RangeTblEntry *rte;
 	int			numchecks;
 	int			constr_name_ctr = 0;
-	List	   *listptr;
+	ListCell   *cell;
 	Node	   *expr;
 	CookedConstraint *cooked;
 
@@ -1540,9 +1540,9 @@ AddRelationRawConstraints(Relation rel,
 	/*
 	 * Process column default expressions.
 	 */
-	foreach(listptr, rawColDefaults)
+	foreach(cell, rawColDefaults)
 	{
-		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(listptr);
+		RawColumnDefault *colDef = (RawColumnDefault *) lfirst(cell);
 		Form_pg_attribute atp = rel->rd_att->attrs[colDef->attnum - 1];
 
 		expr = cookDefault(pstate, colDef->raw_default,
@@ -1563,9 +1563,9 @@ AddRelationRawConstraints(Relation rel,
 	 * Process constraint expressions.
 	 */
 	numchecks = numoldchecks;
-	foreach(listptr, rawConstraints)
+	foreach(cell, rawConstraints)
 	{
-		Constraint *cdef = (Constraint *) lfirst(listptr);
+		Constraint *cdef = (Constraint *) lfirst(cell);
 		char	   *ccname;
 
 		if (cdef->contype != CONSTR_CHECK || cdef->raw_expr == NULL)
@@ -1575,7 +1575,7 @@ AddRelationRawConstraints(Relation rel,
 		/* Check name uniqueness, or generate a new name */
 		if (cdef->name != NULL)
 		{
-			List	   *listptr2;
+			ListCell   *cell2;
 
 			ccname = cdef->name;
 			/* Check against pre-existing constraints */
@@ -1589,9 +1589,9 @@ AddRelationRawConstraints(Relation rel,
 								ccname, RelationGetRelationName(rel))));
 			/* Check against other new constraints */
 			/* Needed because we don't do CommandCounterIncrement in loop */
-			foreach(listptr2, rawConstraints)
+			foreach(cell2, rawConstraints)
 			{
-				Constraint *cdef2 = (Constraint *) lfirst(listptr2);
+				Constraint *cdef2 = (Constraint *) lfirst(cell2);
 
 				if (cdef2 == cdef ||
 					cdef2->contype != CONSTR_CHECK ||
@@ -1611,7 +1611,7 @@ AddRelationRawConstraints(Relation rel,
 
 			do
 			{
-				List	   *listptr2;
+				ListCell   *cell2;
 
 				/*
 				 * Generate a name that does not conflict with
@@ -1629,9 +1629,9 @@ AddRelationRawConstraints(Relation rel,
 				 * name.
 				 */
 				success = true;
-				foreach(listptr2, rawConstraints)
+				foreach(cell2, rawConstraints)
 				{
-					Constraint *cdef2 = (Constraint *) lfirst(listptr2);
+					Constraint *cdef2 = (Constraint *) lfirst(cell2);
 
 					if (cdef2 == cdef ||
 						cdef2->contype != CONSTR_CHECK ||
@@ -1660,7 +1660,7 @@ AddRelationRawConstraints(Relation rel,
 		/*
 		 * Make sure no outside relations are referred to.
 		 */
-		if (length(pstate->p_rtable) != 1)
+		if (list_length(pstate->p_rtable) != 1)
 			ereport(ERROR,
 					(errcode(ERRCODE_INVALID_COLUMN_REFERENCE),
 					 errmsg("only table \"%s\" can be referenced in check constraint",
@@ -1949,7 +1949,7 @@ static void
 RelationTruncateIndexes(Oid heapId)
 {
 	Relation	heapRelation;
-	List	   *indlist;
+	ListCell   *indlist;
 
 	/*
 	 * Open the heap rel.  We need grab no lock because we assume
@@ -1960,7 +1960,7 @@ RelationTruncateIndexes(Oid heapId)
 	/* Ask the relcache to produce a list of the indexes of the rel */
 	foreach(indlist, RelationGetIndexList(heapRelation))
 	{
-		Oid			indexId = lfirsto(indlist);
+		Oid			indexId = lfirst_oid(indlist);
 		Relation	currentIndex;
 		IndexInfo  *indexInfo;
 

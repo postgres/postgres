@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.114 2004/05/10 22:44:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/allpaths.c,v 1.115 2004/05/26 04:41:21 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,11 +102,11 @@ make_one_rel(Query *root)
 static void
 set_base_rel_pathlists(Query *root)
 {
-	List	   *rellist;
+	ListCell	   *l;
 
-	foreach(rellist, root->base_rel_list)
+	foreach(l, root->base_rel_list)
 	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(rellist);
+		RelOptInfo *rel = (RelOptInfo *) lfirst(l);
 		Index		rti = rel->relid;
 		RangeTblEntry *rte;
 		List	   *inheritlist;
@@ -212,7 +212,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 	int			parentRTindex = rti;
 	Oid			parentOID = rte->relid;
 	List	   *subpaths = NIL;
-	List	   *il;
+	ListCell   *il;
 
 	/*
 	 * XXX for now, can't handle inherited expansion of FOR UPDATE; can we
@@ -247,8 +247,8 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		Oid			childOID;
 		RelOptInfo *childrel;
 		List	   *reltlist;
-		List	   *parentvars;
-		List	   *childvars;
+		ListCell   *parentvars;
+		ListCell   *childvars;
 
 		childrte = rt_fetch(childRTindex, root->rtable);
 		childOID = childrte->relid;
@@ -300,7 +300,7 @@ set_inherited_rel_pathlist(Query *root, RelOptInfo *rel,
 		if (childrel->width > rel->width)
 			rel->width = childrel->width;
 
-		childvars = FastListValue(&childrel->reltargetlist);
+		childvars = list_head(FastListValue(&childrel->reltargetlist));
 		foreach(parentvars, FastListValue(&rel->reltargetlist))
 		{
 			Var		   *parentvar = (Var *) lfirst(parentvars);
@@ -366,11 +366,11 @@ set_subquery_pathlist(Query *root, RelOptInfo *rel,
 	{
 		/* OK to consider pushing down individual quals */
 		List	   *upperrestrictlist = NIL;
-		List	   *lst;
+		ListCell   *l;
 
-		foreach(lst, rel->baserestrictinfo)
+		foreach(l, rel->baserestrictinfo)
 		{
-			RestrictInfo *rinfo = (RestrictInfo *) lfirst(lst);
+			RestrictInfo *rinfo = (RestrictInfo *) lfirst(l);
 			Node	   *clause = (Node *) rinfo->clause;
 
 			if (qual_is_pushdown_safe(subquery, rti, clause, differentTypes))
@@ -434,7 +434,7 @@ make_fromexpr_rel(Query *root, FromExpr *from)
 {
 	int			levels_needed;
 	List	   *initial_rels = NIL;
-	List	   *jt;
+	ListCell   *jt;
 
 	/*
 	 * Count the number of child jointree nodes.  This is the depth of the
@@ -464,7 +464,7 @@ make_fromexpr_rel(Query *root, FromExpr *from)
 		/*
 		 * Single jointree node, so we're done.
 		 */
-		return (RelOptInfo *) lfirst(initial_rels);
+		return (RelOptInfo *) linitial(initial_rels);
 	}
 	else
 	{
@@ -516,7 +516,7 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 
 	for (lev = 2; lev <= levels_needed; lev++)
 	{
-		List	   *x;
+		ListCell   *x;
 
 		/*
 		 * Determine all possible pairs of relations to be joined at this
@@ -548,7 +548,7 @@ make_one_rel_by_joins(Query *root, int levels_needed, List *initial_rels)
 		elog(ERROR, "failed to build any %d-way joins", levels_needed);
 	Assert(length(joinitems[levels_needed]) == 1);
 
-	rel = (RelOptInfo *) lfirst(joinitems[levels_needed]);
+	rel = (RelOptInfo *) linitial(joinitems[levels_needed]);
 
 	return rel;
 }
@@ -660,21 +660,22 @@ static void
 compare_tlist_datatypes(List *tlist, List *colTypes,
 						bool *differentTypes)
 {
-	List	   *i;
+	ListCell   *l;
+	ListCell   *colType = list_head(colTypes);
 
-	foreach(i, tlist)
+	foreach(l, tlist)
 	{
-		TargetEntry *tle = (TargetEntry *) lfirst(i);
+		TargetEntry *tle = (TargetEntry *) lfirst(l);
 
 		if (tle->resdom->resjunk)
 			continue;			/* ignore resjunk columns */
-		if (colTypes == NIL)
+		if (colType == NULL)
 			elog(ERROR, "wrong number of tlist entries");
-		if (tle->resdom->restype != lfirsto(colTypes))
+		if (tle->resdom->restype != lfirst_oid(colType))
 			differentTypes[tle->resdom->resno] = true;
-		colTypes = lnext(colTypes);
+		colType = lnext(colType);
 	}
-	if (colTypes != NIL)
+	if (colType != NULL)
 		elog(ERROR, "wrong number of tlist entries");
 }
 
@@ -712,7 +713,7 @@ qual_is_pushdown_safe(Query *subquery, Index rti, Node *qual,
 {
 	bool		safe = true;
 	List	   *vars;
-	List	   *vl;
+	ListCell   *vl;
 	Bitmapset  *tested = NULL;
 
 	/* Refuse subselects (point 1) */
@@ -869,7 +870,7 @@ print_relids(Relids relids)
 static void
 print_restrictclauses(Query *root, List *clauses)
 {
-	List	   *l;
+	ListCell   *l;
 
 	foreach(l, clauses)
 	{
@@ -987,7 +988,7 @@ print_path(Query *root, Path *path, int indent)
 void
 debug_print_rel(Query *root, RelOptInfo *rel)
 {
-	List	   *l;
+	ListCell   *l;
 
 	printf("RELOPTINFO (");
 	print_relids(rel->relids);

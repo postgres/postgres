@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.42 2004/03/02 22:17:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.43 2004/05/26 04:41:15 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -119,7 +119,7 @@ ExecInitNode(Plan *node, EState *estate)
 {
 	PlanState  *result;
 	List	   *subps;
-	List	   *subp;
+	ListCell   *l;
 
 	/*
 	 * do nothing when we get to the end of a leaf on tree.
@@ -224,9 +224,9 @@ ExecInitNode(Plan *node, EState *estate)
 	 * them in a separate list for us.
 	 */
 	subps = NIL;
-	foreach(subp, node->initPlan)
+	foreach(l, node->initPlan)
 	{
-		SubPlan    *subplan = (SubPlan *) lfirst(subp);
+		SubPlan    *subplan = (SubPlan *) lfirst(l);
 		SubPlanState *sstate;
 
 		Assert(IsA(subplan, SubPlan));
@@ -242,9 +242,9 @@ ExecInitNode(Plan *node, EState *estate)
 	 * do this after initializing initPlans, in case their arguments
 	 * contain subPlans (is that actually possible? perhaps not).
 	 */
-	foreach(subp, result->subPlan)
+	foreach(l, result->subPlan)
 	{
-		SubPlanState *sstate = (SubPlanState *) lfirst(subp);
+		SubPlanState *sstate = (SubPlanState *) lfirst(l);
 
 		Assert(IsA(sstate, SubPlanState));
 		ExecInitSubPlan(sstate, estate);
@@ -483,7 +483,7 @@ ExecCountSlotsNode(Plan *node)
 void
 ExecEndNode(PlanState *node)
 {
-	List	   *subp;
+	ListCell   *subp;
 
 	/*
 	 * do nothing when we get to the end of a leaf on tree.

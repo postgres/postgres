@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.158 2004/02/27 21:44:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.159 2004/05/26 04:41:39 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1936,7 +1936,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 	List	   *allvars = NIL;
 	List	   *varinfos = NIL;
 	double		numdistinct;
-	List	   *l;
+	ListCell   *l;
 	typedef struct
 	{							/* varinfos is a List of these */
 		Var		   *var;
@@ -1987,14 +1987,14 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		VariableStatData vardata;
 		double		ndistinct;
 		bool		keep = true;
-		List	   *l2;
+		ListCell   *l2;
 
 		examine_variable(root, (Node *) var, 0, &vardata);
 		ndistinct = get_variable_numdistinct(&vardata);
 		ReleaseVariableStats(vardata);
 
 		/* cannot use foreach here because of possible lremove */
-		l2 = varinfos;
+		l2 = list_head(varinfos);
 		while (l2)
 		{
 			MyVarInfo  *varinfo = (MyVarInfo *) lfirst(l2);
@@ -2043,7 +2043,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 
 	do
 	{
-		MyVarInfo  *varinfo1 = (MyVarInfo *) lfirst(varinfos);
+		MyVarInfo  *varinfo1 = (MyVarInfo *) linitial(varinfos);
 		RelOptInfo *rel = find_base_rel(root, varinfo1->var->varno);
 		double		reldistinct = varinfo1->ndistinct;
 		List	   *newvarinfos = NIL;
@@ -2052,7 +2052,7 @@ estimate_num_groups(Query *root, List *groupExprs, double input_rows)
 		 * Get the largest numdistinct estimate of the Vars for this rel.
 		 * Also, construct new varinfos list of remaining Vars.
 		 */
-		foreach(l, lnext(varinfos))
+		for_each_cell(l, lnext(list_head(varinfos)))
 		{
 			MyVarInfo  *varinfo2 = (MyVarInfo *) lfirst(l);
 
@@ -2844,7 +2844,7 @@ get_restriction_variable(Query *root, List *args, int varRelid,
 	if (length(args) != 2)
 		return false;
 
-	left = (Node *) lfirst(args);
+	left = (Node *) linitial(args);
 	right = (Node *) lsecond(args);
 
 	/*
@@ -2895,7 +2895,7 @@ get_join_variables(Query *root, List *args,
 	if (length(args) != 2)
 		elog(ERROR, "join operator should take two arguments");
 
-	left = (Node *) lfirst(args);
+	left = (Node *) linitial(args);
 	right = (Node *) lsecond(args);
 
 	examine_variable(root, left, 0, vardata1);
@@ -3033,16 +3033,16 @@ examine_variable(Query *root, Node *node, int varRelid,
 		 * different index opclasses; if so, we need to pick one that
 		 * matches the operator we are estimating for.  FIXME later.
 		 */
-		List	   *ilist;
+		ListCell   *ilist;
 
 		foreach(ilist, onerel->indexlist)
 		{
 			IndexOptInfo *index = (IndexOptInfo *) lfirst(ilist);
-			List	   *indexprs;
+			ListCell   *indexpr_item;
 			int			pos;
 
-			indexprs = index->indexprs;
-			if (indexprs == NIL)
+			indexpr_item = list_head(index->indexprs);
+			if (indexpr_item == NULL)
 				continue;		/* no expressions here... */
 
 			/*
@@ -3058,9 +3058,9 @@ examine_variable(Query *root, Node *node, int varRelid,
 				{
 					Node	   *indexkey;
 
-					if (indexprs == NIL)
+					if (indexpr_item == NULL)
 						elog(ERROR, "too few entries in indexprs list");
-					indexkey = (Node *) lfirst(indexprs);
+					indexkey = (Node *) lfirst(indexpr_item);
 					if (indexkey && IsA(indexkey, RelabelType))
 						indexkey = (Node *) ((RelabelType *) indexkey)->arg;
 					if (equal(node, indexkey))
@@ -3081,7 +3081,7 @@ examine_variable(Query *root, Node *node, int varRelid,
 						if (vardata->statsTuple)
 							break;
 					}
-					indexprs = lnext(indexprs);
+					indexpr_item = lnext(indexpr_item);
 				}
 			}
 			if (vardata->statsTuple)

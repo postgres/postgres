@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.98 2004/05/11 17:36:12 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.99 2004/05/26 04:41:06 neilc Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -110,7 +110,7 @@ merge_acl_with_grant(Acl *old_acl, bool is_grant,
 					 AclId grantor_uid, AclId owner_uid)
 {
 	unsigned	modechg;
-	List	   *j;
+	ListCell   *j;
 	Acl		   *new_acl;
 
 	modechg = is_grant ? ACL_MODECHG_ADD : ACL_MODECHG_DEL;
@@ -221,16 +221,16 @@ static void
 ExecuteGrantStmt_Relation(GrantStmt *stmt)
 {
 	AclMode		privileges;
-	List	   *i;
+	ListCell   *i;
 
-	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
 		privileges = ACL_ALL_RIGHTS_RELATION;
 	else
 	{
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirsti(i);
+			AclMode		priv = lfirst_int(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_RELATION))
 				ereport(ERROR,
@@ -328,16 +328,16 @@ static void
 ExecuteGrantStmt_Database(GrantStmt *stmt)
 {
 	AclMode		privileges;
-	List	   *i;
+	ListCell   *i;
 
-	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
 		privileges = ACL_ALL_RIGHTS_DATABASE;
 	else
 	{
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirsti(i);
+			AclMode		priv = lfirst_int(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_DATABASE))
 				ereport(ERROR,
@@ -433,16 +433,16 @@ static void
 ExecuteGrantStmt_Function(GrantStmt *stmt)
 {
 	AclMode		privileges;
-	List	   *i;
+	ListCell   *i;
 
-	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
 		privileges = ACL_ALL_RIGHTS_FUNCTION;
 	else
 	{
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirsti(i);
+			AclMode		priv = lfirst_int(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_FUNCTION))
 				ereport(ERROR,
@@ -534,16 +534,16 @@ static void
 ExecuteGrantStmt_Language(GrantStmt *stmt)
 {
 	AclMode		privileges;
-	List	   *i;
+	ListCell   *i;
 
-	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
 		privileges = ACL_ALL_RIGHTS_LANGUAGE;
 	else
 	{
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirsti(i);
+			AclMode		priv = lfirst_int(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_LANGUAGE))
 				ereport(ERROR,
@@ -643,16 +643,16 @@ static void
 ExecuteGrantStmt_Namespace(GrantStmt *stmt)
 {
 	AclMode		privileges;
-	List	   *i;
+	ListCell   *i;
 
-	if (lfirsti(stmt->privileges) == ACL_ALL_RIGHTS)
+	if (linitial_int(stmt->privileges) == ACL_ALL_RIGHTS)
 		privileges = ACL_ALL_RIGHTS_NAMESPACE;
 	else
 	{
 		privileges = ACL_NO_RIGHTS;
 		foreach(i, stmt->privileges)
 		{
-			AclMode		priv = lfirsti(i);
+			AclMode		priv = lfirst_int(i);
 
 			if (priv & ~((AclMode) ACL_ALL_RIGHTS_NAMESPACE))
 				ereport(ERROR,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.17 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.18 2004/05/26 04:41:11 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,7 +42,7 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	const char *authId = stmt->authid;
 	Oid			namespaceId;
 	List	   *parsetree_list;
-	List	   *parsetree_item;
+	ListCell   *parsetree_item;
 	const char *owner_name;
 	AclId		owner_userid;
 	AclId		saved_userid;
@@ -129,8 +129,8 @@ CreateSchemaCommand(CreateSchemaStmt *stmt)
 	foreach(parsetree_item, parsetree_list)
 	{
 		Node	   *parsetree = (Node *) lfirst(parsetree_item);
-		List	   *querytree_list,
-				   *querytree_item;
+		List	   *querytree_list;
+		ListCell   *querytree_item;
 
 		querytree_list = parse_analyze(parsetree, NULL, 0);
 
@@ -166,11 +166,11 @@ RemoveSchema(List *names, DropBehavior behavior)
 	Oid			namespaceId;
 	ObjectAddress object;
 
-	if (length(names) != 1)
+	if (list_length(names) != 1)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),
 				 errmsg("schema name may not be qualified")));
-	namespaceName = strVal(lfirst(names));
+	namespaceName = strVal(linitial(names));
 
 	namespaceId = GetSysCacheOid(NAMESPACENAME,
 								 CStringGetDatum(namespaceName),

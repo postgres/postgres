@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.56 2004/04/25 18:23:56 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.57 2004/05/26 04:41:27 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,21 +47,21 @@ static void subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 void
 build_base_rel(Query *root, int relid)
 {
-	List	   *rels;
+	ListCell   *l;
 	RelOptInfo *rel;
 
 	/* Rel should not exist already */
-	foreach(rels, root->base_rel_list)
+	foreach(l, root->base_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(rels);
+		rel = (RelOptInfo *) lfirst(l);
 		if (relid == rel->relid)
 			elog(ERROR, "rel already exists");
 	}
 
 	/* It should not exist as an "other" rel, either */
-	foreach(rels, root->other_rel_list)
+	foreach(l, root->other_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(rels);
+		rel = (RelOptInfo *) lfirst(l);
 		if (relid == rel->relid)
 			elog(ERROR, "rel already exists as \"other\" rel");
 	}
@@ -82,21 +82,21 @@ build_base_rel(Query *root, int relid)
 RelOptInfo *
 build_other_rel(Query *root, int relid)
 {
-	List	   *rels;
+	ListCell   *l;
 	RelOptInfo *rel;
 
 	/* Already made? */
-	foreach(rels, root->other_rel_list)
+	foreach(l, root->other_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(rels);
+		rel = (RelOptInfo *) lfirst(l);
 		if (relid == rel->relid)
 			return rel;
 	}
 
 	/* It should not exist as a base rel */
-	foreach(rels, root->base_rel_list)
+	foreach(l, root->base_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(rels);
+		rel = (RelOptInfo *) lfirst(l);
 		if (relid == rel->relid)
 			elog(ERROR, "rel already exists as base rel");
 	}
@@ -187,19 +187,19 @@ make_base_rel(Query *root, int relid)
 RelOptInfo *
 find_base_rel(Query *root, int relid)
 {
-	List	   *rels;
+	ListCell   *l;
 	RelOptInfo *rel;
 
-	foreach(rels, root->base_rel_list)
+	foreach(l, root->base_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(rels);
+		rel = (RelOptInfo *) lfirst(l);
 		if (relid == rel->relid)
 			return rel;
 	}
 
-	foreach(rels, root->other_rel_list)
+	foreach(l, root->other_rel_list)
 	{
-		rel = (RelOptInfo *) lfirst(rels);
+		rel = (RelOptInfo *) lfirst(l);
 		if (relid == rel->relid)
 			return rel;
 	}
@@ -217,11 +217,11 @@ find_base_rel(Query *root, int relid)
 RelOptInfo *
 find_join_rel(Query *root, Relids relids)
 {
-	List	   *joinrels;
+	ListCell   *l;
 
-	foreach(joinrels, root->join_rel_list)
+	foreach(l, root->join_rel_list)
 	{
-		RelOptInfo *rel = (RelOptInfo *) lfirst(joinrels);
+		RelOptInfo *rel = (RelOptInfo *) lfirst(l);
 
 		if (bms_equal(rel->relids, relids))
 			return rel;
@@ -363,8 +363,7 @@ static void
 build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 {
 	Relids		relids = joinrel->relids;
-	List	   *rels;
-	List	   *vars;
+	ListCell   *rels;
 
 	FastListInit(&joinrel->reltargetlist);
 	joinrel->width = 0;
@@ -372,6 +371,7 @@ build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 	foreach(rels, root->base_rel_list)
 	{
 		RelOptInfo *baserel = (RelOptInfo *) lfirst(rels);
+		ListCell   *vars;
 
 		if (!bms_is_member(baserel->relid, relids))
 			continue;
@@ -481,7 +481,7 @@ subbuild_joinrel_restrictlist(RelOptInfo *joinrel,
 							  List *joininfo_list)
 {
 	List	   *restrictlist = NIL;
-	List	   *xjoininfo;
+	ListCell   *xjoininfo;
 
 	foreach(xjoininfo, joininfo_list)
 	{
@@ -515,7 +515,7 @@ static void
 subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 						  List *joininfo_list)
 {
-	List	   *xjoininfo;
+	ListCell   *xjoininfo;
 
 	foreach(xjoininfo, joininfo_list)
 	{
