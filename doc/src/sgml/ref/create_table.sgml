@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.69 2003/06/12 07:49:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_table.sgml,v 1.70 2003/06/12 18:34:06 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -190,6 +190,7 @@ and <replaceable class="PARAMETER">table_constraint</replaceable> is:
       Default expressions for the inherited column definitions will only be included if
       <literal>INCLUDING DEFAULTS</literal> is specified.  The default is to exclude
       default expressions.
+     </para>
     </listitem>
    </varlistentry>
 
