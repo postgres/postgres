@@ -35,7 +35,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-# $Id: my2pg.pl,v 1.4 2001/03/06 22:46:50 momjian Exp $
+# $My2pg: my2pg.pl,v 1.21 2001/08/25 18:55:28 fonin Exp $
+# $Id: my2pg.pl,v 1.5 2001/11/21 02:43:30 momjian Exp $
 
 # TODO:
 # + Handle SETs
@@ -46,8 +47,31 @@
 
 #
 # $Log: my2pg.pl,v $
-# Revision 1.4  2001/03/06 22:46:50  momjian
-# Update my2pg, new version.
+# Revision 1.5  2001/11/21 02:43:30  momjian
+# Update my2pg.pl for release.
+#
+# Revision 1.21  2001/08/25 18:55:28  fonin
+# Incorporated changes from Yunliang Yu <yu@math.duke.edu>:
+# - By default table & column names are not quoted; use the new
+#   "-d" option if you want to,
+# - Use conditional substitutions to speed up and preserve
+#   the data integrity.
+# Fixes by Max:
+# - timestamps conversion fix. Shouldn't break now matching binary data and
+# strings.
+#
+# Revision 1.21  2001/07/23 03:04:39  yu
+# Updates & fixes by Yunliang Yu <yu@math.duke.edu>
+# . By default table & column names are not quoted; use the new
+#   "-d" option if you want to,
+# . Use conditional substitutions to speed up and preserve
+#   the data integrity.
+#
+# Revision 1.20  2001/07/05 12:45:05  fonin
+# Timestamp conversion enhancement from Joakim Lemström <jocke@bytewize.com>
+#
+# Revision 1.19  2001/05/07 19:36:38  fonin
+# Fixed a bug in quoting  PRIMARY KEYs, KEYs and UNIQUE indexes with more than 2 columns. Thanks to Jeff Waugh <jaw@ic.net>.
 #
 # Revision 1.18  2001/03/06 22:25:40  fonin
 # Documentation up2dating.
@@ -94,9 +118,10 @@ use Getopt::Std;
 
 my %opts;		# command line options
 my $chareg='';		# CHAR conversion regexps
+my $dq=''; # double quote
 
 # parse command line
-getopts('nh',\%opts);
+getopts('nhd',\%opts);
 
 # output syntax
 if($opts{h} ne '') {
@@ -108,12 +133,15 @@ if($opts{h} ne '') {
 if($opts{n} ne '') {
     $chareg='\s*?(default\s*?\'\')*?\s*?not\s*?null';
 }
-
+# want double quotes
+if($opts{d} ne '') {
+    $dq='"';
+}
 
 $|=1;
 
 print("------------------------------------------------------------------");
-print("\n-- My2Pg \$Revision: 1.4 $ \translated dump");
+print("\n-- My2Pg \$Revision: 1.5 $ \translated dump");
 print("\n--");
 print("\n------------------------------------------------------------------");
 
@@ -135,19 +163,28 @@ $libtypename.='/libtypes.so';
 # push header to libtypes.c
 open(LIBTYPES,">$libtypesource");
 print LIBTYPES "/******************************************************";
-print LIBTYPES "\n * My2Pg \$Revision: 1.4 $ \translated dump";
+print LIBTYPES "\n * My2Pg \$Revision: 1.5 $ \translated dump";
 print LIBTYPES "\n * User types definitions";
 print LIBTYPES "\n ******************************************************/";
 print LIBTYPES "\n\n#include <postgres.h>\n";
 print LIBTYPES "\n#define ADD_COMMA if(strcmp(result,\"\")!=0) strcat(result,\",\")\n";
 
 # reading STDIN...
+my $tabledef=0; # we are outside a table definition
 while (<>) {
 
+	if(!$tabledef && /^CREATE TABLE \S+/i){
+		$tabledef=1;
+	}elsif($tabledef && /^\);/i){ # /^\w/i
+		$tabledef=0;
+	}
+	
 # Comments start with -- in SQL
-    if(!/insert into.*\(.*#.*\)/i) {
+    if(/^#/) {# !/insert into.*\(.*#.*\)/i, in mysqldump output
 	s/#/--/;
     }
+
+  if($tabledef){##################################
 # Convert numeric types
     s/tinyint\(\d+\)/INT2/i;
     s/smallint\(\d+\)/INT2/i;
@@ -165,11 +202,18 @@ while (<>) {
     s/\w*blob$chareg/text/i;
     s/mediumtext$chareg/text/i;
     s/tinytext$chareg/text/i;
+    s/\stext\s+not\s+null/ TEXT DEFAULT '' NOT NULL/i;
     s/(.*?char\(.*?\))$chareg/$1/i;
+
+# Old and New are reserved words in Postgres    
+    s/^(\s+)Old /${1}MyOld /;
+    s/^(\s+)New /${1}MyNew /;
 
 # Convert DATE types
     s/datetime/TIMESTAMP/;
     s/timestamp\(\d+\)/TIMESTAMP/i;
+    s/ date / DATE /i;
+    s/,(\d{4})(\d{2})(\d{2}),/,'$1-$2-$3 00:00:00',/g;
 
 # small hack - convert "default" to uppercase, because below we 
 # enclose all lowercase words in double quotes
@@ -184,17 +228,9 @@ while (<>) {
 	#s/(int.*?)DEFAULT\s*?'.*?'(.*?)AUTO_INCREMENT/$1$2DEFAULT nextval\('$tmpseq'\)/i;
     }
 
-# Fix timestamps
-    s/0000-00-00/0001-01-01/g;
-# may work wrong !!!
-    s/00000000000000/00010101000000/g;
-    s/(\d{8})(\d{6})/'$1 $2'/g;
-
-#<Hackzone> ---------------------------------------------------
-
 # convert UNSIGNED to CHECK constraints
     if(/^\s+?([\w\d_]+).*?unsigned/i) {
-	$check.=",\n  CHECK (\"$1\">=0)";
+	$check.=",\n  CHECK ($dq$1$dq>=0)";
     }
     s/unsigned//i;
 
@@ -553,7 +589,7 @@ CREATE OPERATOR <> (
 # );
 #   CREATE INDEX offer_id ON bids (offer_id,user_id,the_time);
 #   CREATE INDEX bid_value ON bids (bid_value);
-    if (s/CREATE TABLE (.*) /CREATE TABLE "$1" /i) {
+    if (s/CREATE TABLE (.*) /CREATE TABLE $dq$1$dq /i) {
 	if($oldtable ne $table_name) {
 	    $oldtable=$table_name;
 	    $j=-1;
@@ -581,30 +617,41 @@ CREATE OPERATOR <> (
 # output CHECK constraints instead UNSIGNED modifiers
     if(/PRIMARY KEY \((.*)\)/i) {
 	my $tmpfld=$1;
-	$tmpfld=~s/,/","/;
-	s/PRIMARY KEY (\(.*\))/PRIMARY KEY \("$tmpfld"\)/i;
+	$tmpfld=~s/,/","/g if $dq;
+	s/PRIMARY KEY (\(.*\))/PRIMARY KEY \($dq$tmpfld$dq\)/i;
 	s/(PRIMARY KEY \(.*\)).*/$1$check\n/i;
     }
     
     if(/^\s*KEY ([\w\d_]+)\s*\((.*)\).*/i) {
-	my $tmpfld=$2;
-	$tmpfld=~s/\s*,\s*/","/;
-	$index{$table_name}[++$j]="CREATE INDEX $1_$table_name\_index ON \"$table_name\" (\"$tmpfld\");";
+	my $tmpfld=$2; my $ky=$1;
+	$tmpfld=~s/\s*,\s*/","/g if $dq;
+	$index{$table_name}[++$j]="CREATE INDEX ${ky}_$table_name\_index ON $dq$table_name$dq ($dq$tmpfld$dq);";
     }
     if(/^\s*UNIQUE ([\w\d_]+)\s*\((.*)\).*/i) {
-	my $tmpfld=$2;
-	$tmpfld=~s/,/","/;
-	$index{$table_name}[++$j]="CREATE UNIQUE INDEX $1_$table_name\_index ON \"$table_name\" (\"$tmpfld\");";
+	my $tmpfld=$2; my $ky=$1;
+	$tmpfld=~s/,/","/g if $dq;
+	$index{$table_name}[++$j]="CREATE UNIQUE INDEX ${ky}_$table_name\_index ON $dq$table_name$dq ($dq$tmpfld$dq);";
     }
     s/^\s*UNIQUE (.+).*(\(.*\)).*\n//i;
     s/^\s*KEY (.+).*(\(.*\)).*\n//i;
+    
+    if($dq && !/^\s*(PRIMARY KEY|UNIQUE |KEY |CREATE TABLE |\);)/i){
+    	s/\s([A-Za-z_\d]+)\s/ $dq$+$dq /;
+    }
+  } ####if($tabledef)###############################
 
-    if(!s/INSERT INTO\s+?(.*?)\s+?/INSERT INTO "$1" /i) {
+    if($dq && !s/INSERT INTO\s+?(.*?)\s+?/INSERT INTO $dq$1$dq /i) {
 # Quote lowercase identifiers in double quotes
-	while(!/^--/ && s/\s([A-Za-z_\d]+[a-z][A-Za-z_\d]*)\s/ "$+" /) {;}
+	#while(!/^--/ && s/\s([A-Za-z_\d]+[a-z][A-Za-z_\d]*)\s/ $dq$+$dq /) {;}
     }
 
-
+# Fix timestamps
+    s/'0000-00-00/'0001-01-01/g;
+# may work wrong !!!
+    s/([,(])00000000000000([,)])/$1'00010101 000000'$2/g;
+    s/([,(])(\d{8})(\d{6})([,)])/$1'$2 $3'$4/g;
+    s/([,(])(\d{4})(\d{2})(\d{2})([,)])/$1'$2-$3-$4 00:00:00'$5/g;
+#<Hackzone> ---------------------------------------------------
 #</Hackzone> --------------------------------------------------
     $dump.=$_;
 }
@@ -638,7 +685,7 @@ while(my($table,$s)=each(%seq)) {
 
     # setting SERIAL sequence values right    
     if($primary{$table} ne '') {
-	print "\nSELECT SETVAL('".$seq{$table}."',(select case when max(\"".$primary{$table}."\")>0 then max(\"".$primary{$table}."\")+1 else 1 end from \"$table\"));";
+	print "\nSELECT SETVAL('".$seq{$table}."',(select case when max($dq".$primary{$table}."$dq)>0 then max($dq".$primary{$table}."$dq)+1 else 1 end from $dq$table$dq));";
     }
 }
 
@@ -647,7 +694,7 @@ close(LIBTYPES);
 
 open(MAKE,">Makefile");
 print MAKE "#
-# My2Pg \$Revision: 1.4 $ \translated dump
+# My2Pg \$Revision: 1.5 $ \translated dump
 # Makefile
 #
 
@@ -699,14 +746,15 @@ Copyright (c) 2000 Valentine Danilchuk	<valdan\@ziet.zhitomir.ua>
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+code source for license details.
 
 SYNTAX:
-    my2pg [-hn]
+    my2pg [-hnd]
 
 OPTIONS:
     h		- this help
     n		- convert *CHAR NOT NULL DEFAULT '' types to *CHAR NULL
+    d       - double quotes around table and column names
 EOF
 ;
 }
@@ -795,6 +843,10 @@ My2pg takes the following command-line options:
 Convert *CHAR DEFAULT '' NOT NULL types to *CHAR NULL.
 Postgres can't load empty '' strings in NOT NULL fields.
 
+=item -d
+
+Add double quotes around table and column names
+
 =item -h
 
 Show usage banner.
@@ -850,6 +902,12 @@ include path, you need to check it before compiling.
 
 B<(c) 2000 Maxim V. Rudensky	 (fonin@ziet.zhitomir.ua)>
 B<(c) 2000 Valentine V. Danilchuk (valdan@ziet.zhitomir.ua)>
+
+=head1 CREDITS
+
+Jeff Waugh <jaw@ic.net>
+Joakim Lemström <jocke@bytewize.com> || <buddyh19@hotmail.com>
+Yunliang Yu <yu@math.duke.edu>
 
 =head1 LICENSE
 
