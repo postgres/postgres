@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.45 2001/10/02 21:39:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.46 2001/10/15 00:06:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -252,8 +252,6 @@ static ScanKeyword ScanKeywords[] = {
 	{"then", THEN},
 	{"time", TIME},
 	{"timestamp", TIMESTAMP},
-	{"timezone_hour", TIMEZONE_HOUR},
-	{"timezone_minute", TIMEZONE_MINUTE},
 	{"to", TO},
 	{"toast", TOAST},
 	{"trailing", TRAILING},
