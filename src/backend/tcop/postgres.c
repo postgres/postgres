@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.225 2001/06/23 22:23:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.226 2001/06/25 22:56:04 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1108,7 +1108,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	int			flag;
 
 	const char *DBName = NULL;
-	bool		secure = true;
+	bool		secure;
 	int			errs = 0;
 	GucContext	ctx;
 	char		*tmp;
@@ -1120,9 +1120,6 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	unsigned short remote_port;
 
 	char	   *potential_DataDir = NULL;
-
-	/* all options are allowed until '-p' */
-	ctx = PGC_POSTMASTER;
 	
 	/*
 	 * Catch standard options before doing much else.  This even works on
@@ -1190,6 +1187,10 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	 * ----------------
 	 */
 
+	/* all options are allowed until '-p' */
+	secure = true;
+	ctx = PGC_POSTMASTER;
+
 	optind = 1;					/* reset after postmaster's usage */
 
 	while ((flag = getopt(argc, argv, "A:B:c:CD:d:Eef:FiLNOPo:p:S:st:v:W:x:-:")) != EOF)
@@ -1225,18 +1226,17 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 				break;
 
 			case 'd':			/* debug level */
-				tmp = "true";
 				SetConfigOption("debug_level", optarg, ctx, true);
 				if (DebugLvl >= 1)
-					SetConfigOption("log_connections", tmp, ctx, true);
+					SetConfigOption("log_connections", "true", ctx, true);
 				if (DebugLvl >= 2)
-					SetConfigOption("debug_print_query", tmp, ctx, true);
+					SetConfigOption("debug_print_query", "true", ctx, true);
 				if (DebugLvl >= 3)
-					SetConfigOption("debug_print_parse", tmp, ctx, true);
+					SetConfigOption("debug_print_parse", "true", ctx, true);
 				if (DebugLvl >= 4)
-					SetConfigOption("debug_print_plan", tmp, ctx, true);
+					SetConfigOption("debug_print_plan", "true", ctx, true);
 				if (DebugLvl >= 5)
-					SetConfigOption("debug_print_rewritten", tmp, ctx, true);
+					SetConfigOption("debug_print_rewritten", "true", ctx, true);
 				break;
 
 			case 'E':
@@ -1491,7 +1491,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 		(Show_parser_stats || Show_planner_stats || Show_executor_stats))
 	{
 		fprintf(stderr, "Query statistics are disabled because parser, planner, or executor statistics are on.\n");
-		Show_query_stats = false;
+		SetConfigOption("show_query_stats", "false", ctx, true);
 	}
 
 	if (!IsUnderPostmaster)
@@ -1714,7 +1714,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.225 $ $Date: 2001/06/23 22:23:49 $\n");
+		puts("$Revision: 1.226 $ $Date: 2001/06/25 22:56:04 $\n");
 	}
 
 	/*

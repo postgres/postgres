@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.227 2001/06/23 22:23:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.228 2001/06/25 22:56:05 tgl Exp $
  *
  * NOTES
  *
@@ -371,7 +371,7 @@ PostmasterMain(int argc, char *argv[])
 
 	/* PGPORT environment variable, if set, overrides GUC setting */
 	if (getenv("PGPORT"))
-		PostPortNumber = atoi(getenv("PGPORT"));
+		SetConfigOption("port", getenv("PGPORT"), PGC_POSTMASTER, true);
 
 	potential_DataDir = getenv("PGDATA");		/* default value */
 
@@ -447,7 +447,6 @@ PostmasterMain(int argc, char *argv[])
 				/* already done above */
 				break;
 			case 'd':
-
 				/*
 				 * Turn on debugging for the postmaster and the backend
 				 * servers descended from it.
@@ -561,7 +560,6 @@ PostmasterMain(int argc, char *argv[])
 	 */
 	if (NBuffers < 2 * MaxBackends || NBuffers < 16)
 	{
-
 		/*
 		 * Do not accept -B so small that backends are likely to starve
 		 * for lack of buffers.  The specific choices here are somewhat
