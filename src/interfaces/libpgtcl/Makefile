@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.11 1997/03/25 09:19:41 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile,v 1.12 1997/04/02 18:13:47 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,11 +24,6 @@ CFLAGS+= $(INCLUDE_OPT)
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
 endif
-
-ifeq ($(CC), gcc)
-  CFLAGS+= -Wno-error
-endif
-
 
 shlib             := 
 install-shlib-dep :=

@@ -5,7 +5,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Id: Makefile,v 1.3 1997/03/14 16:02:40 scrappy Exp $
+# $Id: Makefile,v 1.4 1997/04/02 18:11:49 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,7 +16,7 @@ INCLUDE_OPT = -I../.. \
               -I../../port/$(PORTNAME) \
               -I../../../include
 
-CFLAGS+=$(INCLUDE_OPT) -Wno-error
+CFLAGS+=$(INCLUDE_OPT) 
 
 OBJS =	geqo_copy.o geqo_eval.o geqo_main.o geqo_misc.o \
 	geqo_params.o geqo_paths.o geqo_pool.o geqo_recombination.o \

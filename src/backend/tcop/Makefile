@@ -4,7 +4,7 @@
 #    Makefile for tcop
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.9 1997/03/25 02:35:22 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/tcop/Makefile,v 1.10 1997/04/02 18:13:01 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,13 +16,6 @@ INCLUDE_OPT= -I.. \
              -I../../include
 
 CFLAGS+= $(INCLUDE_OPT)
-
-ifeq ($(CC), gcc)
-# Until we figure out how to get rid of the warnings in this directory,
-# we must turn off any -Werror that is in CFLAGS now.  These options only
-# exist for the gcc compiler.
-CFLAGS+= -Wno-error
-endif
 
 OBJS= aclchk.o dest.o fastpath.o postgres.o pquery.o utility.o variable.o
 

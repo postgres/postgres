@@ -7,13 +7,16 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.3 1996/11/14 20:49:09 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/main/main.c,v 1.4 1997/04/02 18:11:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#ifdef USE_LOCALE  
+  #include <locale.h>
+#endif
 #include "postgres.h"
 #include "miscadmin.h"
 #include "bootstrap/bootstrap.h"	/* for BootstrapMain() */
@@ -31,6 +34,10 @@ int
 main(int argc, char *argv[])
 {
     int len;
+#ifdef USE_LOCALE
+    setlocale(LC_CTYPE,""); /* take locale information from an environment */
+    setlocale(LC_COLLATE,"");
+#endif
 #if defined(NOFIXADE) || defined(NOPRINTADE)
     /*
      * Must be first so that the bootstrap code calls it, too.

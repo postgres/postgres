@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.4 1996/11/14 07:33:30 bryanh Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.5 1997/04/02 18:12:14 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -16,13 +16,6 @@ INCLUDE_OPT= -I.. \
              -I../../include
 
 CFLAGS+= $(INCLUDE_OPT)
-
-ifeq ($(CC), gcc)
-# Until we figure out how to get rid of the warnings in this directory,
-# we must turn off any -Werror that is in CFLAGS now.  These options only
-# exist for the gcc compiler.
-CFLAGS+= -Wno-error
-endif
 
 OBJS= analyze.o catalog_utils.o dbcommands.o gram.o \
       keywords.o parser.o parse_query.o scan.o scansup.o sysfunc.o
