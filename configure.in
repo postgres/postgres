@@ -654,9 +654,7 @@ fi
 ##
 
 AC_CHECK_LIB(sfio,     main)
-AC_CHECK_LIB(ncurses,  main, [], [AC_CHECK_LIB(curses, main)])
-AC_CHECK_LIB(termcap,  main)
-AC_SEARCH_LIBS(readline, [readline edit], [AC_DEFINE(HAVE_LIBREADLINE)])
+PGAC_CHECK_READLINE
 AC_SEARCH_LIBS(using_history, history, [AC_DEFINE(HAVE_HISTORY_FUNCTIONS)])
 
 if test "$PORTNAME" != "aix" -a "$PORTNAME" != "alpha"
