@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.29 2001/11/28 20:49:10 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/indices.sgml,v 1.30 2001/12/04 01:22:13 tgl Exp $ -->
 
 <chapter id="indexes">
  <title id="indexes-title">Indexes</title>
@@ -607,7 +607,8 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
 
   <para>
    A major motivation for partial indexes is to avoid indexing common
-   values.  Since a query conditionalized on a common value will not
+   values.  Since a query searching for a common value (one that
+   accounts for more than a few percent of all the table rows) will not
    use the index anyway, there is no point in keeping those rows in the
    index at all.  This reduces the size of the index, which will speed
    up queries that do use the index.  It will also speed up many table
@@ -623,7 +624,8 @@ CREATE MEMSTORE ON <replaceable>table</replaceable> COLUMNS <replaceable>cols</r
     Suppose you are storing web server access logs in a database.
     Most accesses originate from the IP range of your organization but
     some are from elsewhere (say, employees on dial-up connections).
-    So you do not want to index the IP range that corresponds to your
+    If your searches by IP are primarily for outside accesses,
+    you probably do not need to index the IP range that corresponds to your
     organization's subnet.
    </para>
 
@@ -660,9 +662,9 @@ SELECT * FROM access_log WHERE client_ip = inet '192.168.100.23';
 
    <para>
     Observe that this kind of partial index requires that the common
-    values be actively tracked.  If the distribution of values is
-    inherent (due to the nature of the application) and static (does
-    not change), this is not difficult, but if the common values are
+    values be predetermined.  If the distribution of values is
+    inherent (due to the nature of the application) and static (not
+    changing over time), this is not difficult, but if the common values are
     merely due to the coincidental data load this can require a lot of
     maintenance work.
    </para>
@@ -673,7 +675,7 @@ SELECT * FROM access_log WHERE client_ip = inet '192.168.100.23';
    typical query workload is not interested in; this is shown in <xref
    linkend="indexes-partial-ex2">.  This results in the same
    advantages as listed above, but it prevents the
-   <quote>uninteresting</quote> values from being accessed via an
+   <quote>uninteresting</quote> values from being accessed via that
    index at all, even if an index scan might be profitable in that
    case.  Obviously, setting up partial indexes for this kind of
    scenario will require a lot of care and experimentation.
@@ -683,11 +685,11 @@ SELECT * FROM access_log WHERE client_ip = inet '192.168.100.23';
    <title>Setting up a Partial Index to Exclude Uninteresting Values</title>
 
    <para>
-    If you have a table that contains both billed and unbilled orders
+    If you have a table that contains both billed and unbilled orders,
     where the unbilled orders take up a small fraction of the total
-    table and yet that is an often used section, you can improve
-    performance by creating an index on just that portion.  The
-    command the create the index would look like this:
+    table and yet those are the most-accessed rows, you can improve
+    performance by creating an index on just the unbilled rows.  The
+    command to create the index would look like this:
 <programlisting>
 CREATE INDEX orders_unbilled_index ON orders (order_nr)
     WHERE billed is not true;
@@ -706,7 +708,9 @@ SELECT * FROM orders WHERE billed is not true AND amount > 5000.00;
 </programlisting>
     This is not as efficient as a partial index on the
     <structfield>amount</> column would be, since the system has to
-    scan the entire index in any case.
+    scan the entire index.  Yet, if there are relatively few unbilled
+    orders, using this partial index just to find the unbilled orders
+    could be a win.
    </para>
 
    <para>
@@ -723,16 +727,53 @@ SELECT * FROM orders WHERE order_nr = 3501;
    <xref linkend="indexes-partial-ex2"> also illustrates that the
    indexed column and the column used in the predicate do not need to
    match.  <productname>PostgreSQL</productname> supports partial
-   indexes with arbitrary predicates, as long as only columns of the
+   indexes with arbitrary predicates, so long as only columns of the
    table being indexed are involved.  However, keep in mind that the
-   predicate must actually match the condition used in the query that
-   is supposed to benefit from the index.
+   predicate must match the conditions used in the queries that
+   are supposed to benefit from the index.  To be precise, a partial
+   index can be used in a query only if the system can recognize that
+   the query's WHERE condition mathematically <firstterm>implies</>
+   the index's predicate.
    <productname>PostgreSQL</productname> does not have a sophisticated
    theorem prover that can recognize mathematically equivalent
    predicates that are written in different forms.  (Not
    only is such a general theorem prover extremely difficult to
    create, it would probably be too slow to be of any real use.)
+   The system can recognize simple inequality implications, for example
+   <quote>x &lt; 1</quote> implies <quote>x &lt; 2</quote>; otherwise
+   the predicate condition must exactly match the query's WHERE condition
+   or the index will not be recognized to be usable.
   </para>
+
+  <para>
+   A third possible use for partial indexes does not require the
+   index to be used in queries at all.  The idea here is to create
+   a unique index over a subset of a table, as in <xref
+   linkend="indexes-partial-ex3">.  This enforces uniqueness
+   among the rows that satisfy the index predicate, without constraining
+   those that do not.
+  </para>
+
+  <example id="indexes-partial-ex3">
+   <title>Setting up a Partial Unique Index</title>
+
+   <para>
+    Suppose that we have a table describing test outcomes.  We wish
+    to ensure that there is only one <quote>successful</> entry for
+    a given subject and target combination, but there might be any number of
+    <quote>unsuccessful</> entries.  Here is one way to do it:
+<programlisting>
+CREATE TABLE tests (subject text,
+                    target text,
+                    success bool,
+                    ...);
+CREATE UNIQUE INDEX tests_success_constraint ON tests (subject, target)
+    WHERE success;
+</programlisting>
+    This is a particularly efficient way of doing it when there are few
+    successful trials and many unsuccessful ones.
+   </para>
+  </example>
 
   <para>
    Finally, a partial index can also be used to override the system's
