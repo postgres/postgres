@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.155 2003/11/29 19:51:51 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/clauses.c,v 1.156 2003/12/09 01:56:20 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -2960,36 +2960,31 @@ query_tree_mutator(Query *query,
 		RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 		RangeTblEntry *newrte;
 
+		FLATCOPY(newrte, rte, RangeTblEntry);
 		switch (rte->rtekind)
 		{
 			case RTE_RELATION:
 			case RTE_SPECIAL:
-				/* nothing to do, don't bother to make a copy */
+				/* we don't bother to copy eref, aliases, etc; OK? */
 				break;
 			case RTE_SUBQUERY:
 				if (!(flags & QTW_IGNORE_RT_SUBQUERIES))
 				{
-					FLATCOPY(newrte, rte, RangeTblEntry);
 					CHECKFLATCOPY(newrte->subquery, rte->subquery, Query);
 					MUTATE(newrte->subquery, newrte->subquery, Query *);
-					rte = newrte;
 				}
 				break;
 			case RTE_JOIN:
 				if (!(flags & QTW_IGNORE_JOINALIASES))
 				{
-					FLATCOPY(newrte, rte, RangeTblEntry);
 					MUTATE(newrte->joinaliasvars, rte->joinaliasvars, List *);
-					rte = newrte;
 				}
 				break;
 			case RTE_FUNCTION:
-				FLATCOPY(newrte, rte, RangeTblEntry);
 				MUTATE(newrte->funcexpr, rte->funcexpr, Node *);
-				rte = newrte;
 				break;
 		}
-		FastAppend(&newrt, rte);
+		FastAppend(&newrt, newrte);
 	}
 	query->rtable = FastListValue(&newrt);
 	return query;
