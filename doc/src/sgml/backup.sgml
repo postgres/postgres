@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.44 2004/08/07 12:21:25 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.45 2004/08/07 18:07:46 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -813,11 +813,12 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     some previous point in time (say, right before the junior DBA dropped your
     main transaction table), just specify the required stopping point in
     <literal>recovery.conf</>.  You can specify the stop point either by
-    date/time or by transaction ID.  As of this writing only the date/time
-    option is very usable, since there are no tools to help you identify
-    which transaction ID to use.  Keep in mind that while transaction
-    IDs are asigned sequentially at transaction start, transactions can
-    complete in a different numeric order.
+    date/time or completion of a specific transaction ID.  The stop
+    specification can be inclusive or exclusive.  As of this writing 
+    only the date/time option is very usable, since there are no tools 
+    to help you identify which transaction ID to use.  Keep in mind 
+    that while transaction IDs are asigned sequentially at transaction 
+    start, transactions can complete in a different numeric order.
    </para>
    <para>
     Note that the stop point must be after the ending time of the backup
