@@ -1047,6 +1047,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 					while (!clear)
 					{
 						id = SOCK_get_char(sock);
+						mylog("got clear id = '%c'\n", id);
 						switch (id)
 						{
 							case 'I':
@@ -1069,8 +1070,9 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 									msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
 								break;
 							case 'E':
-								msg_truncated = SOCK_get_string(sock, cmdbuffer, ERROR_MSG_LENGTH);
-								qlog("ERROR from backend during clear: '%s'\n", cmdbuffer);
+								msg_truncated = SOCK_get_string(sock, msgbuffer, ERROR_MSG_LENGTH);
+mylog("ERROR from backend during clear: '%s'\n", msgbuffer);
+								qlog("ERROR from backend during clear: '%s'\n", msgbuffer);
 
 								/*
 								 * We must report this type of error as
@@ -1079,7 +1081,7 @@ CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi)
 								 * from PostgreSQL 7.0). (Zoltan Kovacs,
 								 * 04/26/2000)
 								 */
-								self->errormsg = cmdbuffer;
+								self->errormsg = msgbuffer;
 								if (!strncmp(self->errormsg, "FATAL", 5))
 								{
 									self->errornumber = CONNECTION_SERVER_REPORTED_ERROR;
