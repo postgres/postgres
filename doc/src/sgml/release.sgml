@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.192 2003/05/28 16:03:55 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.193 2003/06/17 23:12:36 tgl Exp $
 -->
 
 <appendix id="release">
@@ -24,6 +24,7 @@ CDATA means the content is "SGML-free", so you can write without
 worries about funny characters.
 -->
 <literallayout><![CDATA[
+Precision in FLOAT(p) is now interpreted as bits, not decimal digits
 Functional indexes have been generalized into expressional indexes
 CHAR(n) to TEXT conversion automatically strips trailing blanks
 Pattern matching operations can use indexes regardless of locale

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.416 2003/05/29 20:40:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.417 2003/06/17 23:12:36 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -5051,8 +5051,8 @@ GenericType:
 
 /* SQL92 numeric data types
  * Check FLOAT() precision limits assuming IEEE floating types.
- * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  * - thomas 1997-09-18
+ * Provide real DECIMAL() and NUMERIC() implementations now - Jan 1998-12-30
  */
 Numeric:	INT_P
 				{
@@ -5107,14 +5107,14 @@ opt_float:	'(' Iconst ')'
 				{
 					if ($2 < 1)
 						elog(ERROR,
-							"precision for FLOAT must be at least 1");
-					else if ($2 < 7)
+							"precision for FLOAT must be at least 1 bit");
+					else if ($2 <= 24)
 						$$ = SystemTypeName("float4");
-					else if ($2 < 16)
+					else if ($2 <= 53)
 						$$ = SystemTypeName("float8");
 					else
 						elog(ERROR,
-							"precision for FLOAT must be less than 16");
+							"precision for FLOAT must be less than 54 bits");
 				}
 			| /*EMPTY*/
 				{

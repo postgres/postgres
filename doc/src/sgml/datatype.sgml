@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.116 2003/03/13 01:30:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.117 2003/06/17 23:12:36 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -607,15 +607,46 @@ NUMERIC
     </para>
 
     <para>
-     Normally, the <type>real</type> type has a range of at least
-     -1E+37 to +1E+37 with a precision of at least 6 decimal digits.  The
-     <type>double precision</type> type normally has a range of around
-     -1E+308 to +1E+308 with a precision of at least 15 digits.  Values that
+     On most platforms, the <type>real</type> type has a range of at least
+     1E-37 to 1E+37 with a precision of at least 6 decimal digits.  The
+     <type>double precision</type> type typically has a range of around
+     1E-307 to 1E+308 with a precision of at least 15 digits.  Values that
      are too large or too small will cause an error.  Rounding may
      take place if the precision of an input number is too high.
      Numbers too close to zero that are not representable as distinct
      from zero will cause an underflow error.
     </para>
+
+    <para>
+     <productname>PostgreSQL</productname> also supports the SQL-standard
+     notations <type>float</type> and
+     <type>float(<replaceable>p</replaceable>)</type> for specifying
+     inexact numeric types.  Here, <replaceable>p</replaceable> specifies
+     the minimum acceptable precision in binary digits.
+     <productname>PostgreSQL</productname> accepts 
+     <type>float(1)</type> to <type>float(24)</type> as selecting the
+     <type>real</type> type, while 
+     <type>float(25)</type> to <type>float(53)</type> select
+     <type>double precision</type>.  Values of <replaceable>p</replaceable>
+     outside the allowed range draw an error.
+     <type>float</type> with no precision specified is taken to mean
+     <type>double precision</type>.
+    </para>
+
+    <note>
+     <para>
+      Prior to <productname>PostgreSQL</productname> 7.4, the precision in
+      <type>float(<replaceable>p</replaceable>)</type> was taken to mean
+      so many decimal digits.  This has been corrected to match the SQL
+      standard, which specifies that the precision is measured in binary
+      digits.  The assumption that <type>real</type> and
+      <type>double precision</type> have exactly 24 and 53 bits in the
+      mantissa respectively is correct for IEEE-standard floating point
+      implementations.  On non-IEEE platforms it may be off a little, but
+      for simplicity the same ranges of <replaceable>p</replaceable> are used
+      on all platforms.
+     </para>
+    </note>
 
    </sect2>
 
