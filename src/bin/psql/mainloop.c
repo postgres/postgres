@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.37 2001/03/22 04:00:21 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.38 2001/03/23 00:36:38 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -137,6 +137,10 @@ MainLoop(FILE *source)
 				break;
 			}
 		}
+
+		/* establish the control-C handler only after main_loop_jmp is ready */
+		pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
+
 #endif	 /* not WIN32 */
 
 		if (slashCmdStatus == CMD_NEWEDIT)
@@ -546,7 +550,8 @@ MainLoop(FILE *source)
 	/*
 	 * Process query at the end of file without a semicolon
 	 */
-	if (query_buf->len > 0 && !pset.cur_cmd_interactive)
+	if (query_buf->len > 0 && !pset.cur_cmd_interactive &&
+		successResult == EXIT_SUCCESS)
 	{
 		success = SendQuery(query_buf->data);
 
@@ -555,6 +560,14 @@ MainLoop(FILE *source)
 		else if (pset.db == NULL)
 			successResult = EXIT_BADCONN;
 	}
+
+	/*
+	 * Reset SIGINT handler because main_loop_jmp will be invalid as soon
+	 * as we exit this routine.  If there is an outer MainLoop instance,
+	 * it will re-enable ^C catching as soon as it gets back to the top
+	 * of its loop and resets main_loop_jmp to point to itself.
+	 */
+	pqsignal(SIGINT, SIG_DFL);
 
 	destroyPQExpBuffer(query_buf);
 	destroyPQExpBuffer(previous_buf);

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.45 2001/03/22 04:00:23 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.46 2001/03/23 00:36:38 tgl Exp $
  */
 #include "postgres_fe.h"
 
@@ -222,10 +222,6 @@ main(int argc, char *argv[])
 	SetVariable(pset.vars, "HOST", PQhost(pset.db));
 	SetVariable(pset.vars, "PORT", PQport(pset.db));
 	SetVariable(pset.vars, "ENCODING", pg_encoding_to_char(pset.encoding));
-
-#ifndef WIN32
-	pqsignal(SIGINT, handle_sigint);	/* control-C => cancel */
-#endif
 
 	/*
 	 * Now find something to do
