@@ -5,7 +5,7 @@ TODO list for PostgreSQL
 Bracketed items "[]" have more detail.
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
-Last updated:		Tue Aug 17 13:14:48 EDT 2004
+Last updated:		Tue Aug 17 23:19:44 EDT 2004
 
 The most recent version of this document can be viewed at the PostgreSQL web site, http://www.PostgreSQL.org.
 
@@ -479,23 +479,37 @@ Clients
 * -Allow psql \du to show users, and add \dg for groups
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name (?)
-* -Allow pg_dump to dump CREATE CONVERSION (Christopher)
-* -Make pg_restore continue after errors, so it acts more like pg_dump scripts
 * Have psql show current values for a sequence
-* Allow pg_dumpall to use non-text output formats
-* Have pg_dump use multi-statement transactions for INSERT dumps
 * Move psql backslash database information into the backend, use mnemonic
   commands? [psql]
 
   This would allow non-psql clients to pull the same information out of
   the database as psql.
 
-* Allow pg_dump to use multiple -t and -n switches
-
-  This should be done by allowing a '-t schema.table' syntax.
-
 * Fix oid2name and dbsize for tablespaces
 * Consistently display privilege information for all objects in psql
+
+* pg_dump
+	o Allow pg_dumpall to use non-text output formats
+	o Have pg_dump use multi-statement transactions for INSERT dumps
+	o -Allow pg_dump to dump CREATE CONVERSION (Christopher)
+	o -Make pg_restore continue after errors, so it acts more like pg_dump
+	  scripts
+	o Allow pg_dump to use multiple -t and -n switches
+
+	  This should be done by allowing a '-t schema.table' syntax.
+
+	o Add dumping of comments on composite type columns
+	o Add dumping of comments on index columns
+	o Replace crude DELETE FROM method of pg_dumpall for cleaning of
+	  users and groups with separate DROP commands
+	o Add dumping and restoring of LOB comments
+	o Stop dumping CASCADE on DROP TYPE commands in clean mode
+	o Add full object name to the tag field.  eg. for operators we need
+	  '=(integer, integer)', instead of just '='.
+	o Add pg_dumpall custom format dumps. This is probably best done by
+	  combining pg_dump and pg_dumpall into a single binary
+	o Add CSV output format
 
 * ECPG (?)
 	o Docs
