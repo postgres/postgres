@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.19 2002/09/04 20:31:46 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/connect.c,v 1.20 2003/02/13 13:11:52 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -419,15 +419,20 @@ ECPGconnect(int lineno, const char *name, const char *user, const char *passwd, 
 
 	if (PQstatus(this->connection) == CONNECTION_BAD)
 	{
+        const char *errmsg = PQerrorMessage(this->connection);
+        char *db = realname ? realname : "<DEFAULT>";
+
+        set_backend_err(errmsg, lineno);
 		ecpg_finish(this);
-		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n",
-				realname ? realname : "<DEFAULT>",
+		ECPGlog("connect: could not open database %s on %s port %s %s%s%s%s in line %d\n\t%s\n",
+                db,
 				host ? host : "<DEFAULT>",
 				port ? port : "<DEFAULT>",
 				options ? "with options " : "", options ? options : "",
 				user ? "for user " : "", user ? user : "",
-				lineno);
-		ECPGraise(lineno, ECPG_CONNECT, realname ? realname : "<DEFAULT>");
+				lineno, errmsg);
+        
+		ECPGraise(lineno, ECPG_CONNECT, db);
 		if (host)
 			ECPGfree(host);
 		if (port)

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.58 2002/10/18 22:05:36 petere Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.59 2003/02/13 13:11:52 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -19,6 +19,9 @@ extern char *optarg;
 int			ret_value = 0,
 			autocommit = false,
 			auto_create_c = false;
+
+enum COMPAT_MODE	compat = ECPG_COMPAT_PGSQL;
+
 struct _include_path *include_paths = NULL;
 struct cursor *cur = NULL;
 struct typedefs *types = NULL;
@@ -38,6 +41,8 @@ help(const char *progname)
 #ifdef YYDEBUG
 	printf("  -d             generate parser debug output\n");
 #endif
+	printf("  -C <mode>      set compatibility mode\n"
+		   "                 mode may be INFORMIX only at the moment\n");
 	printf("  -D SYMBOL      define SYMBOL\n");
 	printf("  -I DIRECTORY   search DIRECTORY for include files\n");
 	printf("  -o OUTFILE     write result to OUTFILE\n");
@@ -107,7 +112,7 @@ main(int argc, char *const argv[])
 	add_include_path("/usr/local/include");
 	add_include_path(".");
 
-	while ((c = getopt(argc, argv, "vco:I:tD:d")) != -1)
+	while ((c = getopt(argc, argv, "vco:I:tD:dC:")) != -1)
 	{
 		switch (c)
 		{
@@ -129,6 +134,15 @@ main(int argc, char *const argv[])
 				break;
 			case 'c':
 				auto_create_c = true;
+				break;
+			case 'C':
+				if (strcmp(optarg, "INFORMIX") == 0)
+					compat = ECPG_COMPAT_INFORMIX;
+				else
+				{
+					fprintf(stderr, "Try '%s --help' for more information.\n", argv[0]);
+					return ILLEGAL_OPTION;
+				}				
 				break;
 			case 'D':
 				add_preprocessor_define(optarg);

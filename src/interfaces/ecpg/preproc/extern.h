@@ -93,4 +93,7 @@ extern ScanKeyword *ScanKeywordLookup(char *text);
 #define INDICATOR_NOT_STRUCT	6
 #define INDICATOR_NOT_SIMPLE	7
 
+enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX};
+extern enum COMPAT_MODE compat;
+
 #endif /* _ECPG_PREPROC_EXTERN_H */

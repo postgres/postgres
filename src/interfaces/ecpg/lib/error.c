@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.16 2002/09/04 20:31:46 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/error.c,v 1.17 2003/02/13 13:11:52 meskes Exp $ */
 
 #include "postgres_fe.h"
 
@@ -9,6 +9,10 @@
 #include "ecpglib.h"
 #include "extern.h"
 #include "sqlca.h"
+
+/* This should hold the back-end error message from 
+ * the last back-end operation. */
+char *ECPGerr;
 
 void
 ECPGraise(int line, int code, const char *str)
@@ -162,6 +166,29 @@ ECPGraise(int line, int code, const char *str)
 	ECPGfree_auto_mem();
 }
 
+/* Set the error message string from the backend */
+void
+set_backend_err(const char *err, int lineno)
+{
+	if (ECPGerr)
+		ECPGfree(ECPGerr);
+
+	if (!err)
+	{
+		ECPGerr = NULL;
+		return;
+	}
+
+	ECPGerr = ECPGstrdup(err, lineno);
+}
+
+/* Retrieve the error message from the backend. */
+char *
+ECPGerrmsg(void)
+{
+	return ECPGerr;
+}
+	
 /* print out an error message */
 void
 sqlprint(void)

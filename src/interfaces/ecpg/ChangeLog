@@ -1324,3 +1324,13 @@ Tue Jan 21 20:50:58 CET 2003
 
 	- Set ecpg version to 2.11.0.
 	- Synced preproc.y with gram.y.
+
+Thu Feb 13 14:06:28 CET 2003
+
+	- Applied patch by Matthew Vanecek <mevanecek@yahoo.com> for better
+	  error reporting.
+	- Started working on an Informix compatibility mode. With option "-C
+	  INFORMIX" set, ecpg now accepts "$" as alias for "exec sql" and to
+	  denote variables inside SQL statements.
+	- Set ecpg version to 2.12.0.
+

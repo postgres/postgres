@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.101 2002/11/07 06:06:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.102 2003/02/13 13:11:52 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,7 +70,6 @@ static struct _if_value
 
 %option 8bit
 %option never-interactive
-%option nounput
 %option noyywrap
 
 %option yylineno
@@ -247,6 +246,10 @@ whitespace		({space}+|{comment})
 horiz_whitespace	({horiz_space}|{comment})
 whitespace_with_newline ({horiz_whitespace}*{newline}{whitespace}*)
 
+/* special characters for other dbms */
+/* we have to react differently in compat mode */
+informix_special	[\$]
+
 other			.
 
 /* some stuff needed for ecpg */
@@ -416,6 +419,16 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 <xdc>{xdcinside}	{ addlit(yytext, yyleng); }
 <SQL>{typecast}		{ return TYPECAST; }
+<SQL>{informix_special}	{
+			  /* are we simulating Informix? */
+                          if (compat == ECPG_COMPAT_INFORMIX)
+			  {
+			  	printf ("unput $\n");
+			  	unput(':');
+			  }
+			  else
+				return yytext[0];
+			}
 <SQL>{self}			{ /*
 					   * We may find a ';' inside a structure
 					   * definition in a TYPE or VAR statement.
@@ -584,7 +597,17 @@ cppline			{space}*#(.*\\{space})*.*
 					}
 <SQL>{other}		{ return yytext[0]; }
 <C>{exec_sql}		{ BEGIN SQL; return SQL_START; }
-<C>{ccomment}		{ /* ignore */ }
+<C>{informix_special}	{ 
+			  /* are we simulating Informix? */
+			  if (compat == ECPG_COMPAT_INFORMIX)
+			  {
+			  	BEGIN SQL;
+				return SQL_START;
+			  }
+			  else
+			  	return S_ANYTHING;
+			 }
+<C>{ccomment}		 { /* ignore */ }
 <C>{xch}			{
 						char* endptr;
 

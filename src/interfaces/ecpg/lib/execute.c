@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.40 2002/10/21 13:09:31 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.41 2003/02/13 13:11:52 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -850,6 +850,7 @@ ECPGexecute(struct statement * stmt)
 {
 	bool		status = false;
 	char	   *copiedquery;
+	char	   *errmsg, *cmdstat;
 	PGresult   *results;
 	PGnotify   *notify;
 	struct variable *var;
@@ -949,9 +950,10 @@ ECPGexecute(struct statement * stmt)
 
 	if (results == NULL)
 	{
-		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno,
-				PQerrorMessage(stmt->connection->connection));
-		ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
+		errmsg = PQerrorMessage(stmt->connection->connection);
+		ECPGlog("ECPGexecute line %d: error: %s", stmt->lineno, errmsg);
+		ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
+		set_backend_err(errmsg, stmt->lineno);
 	}
 	else
 
@@ -961,7 +963,9 @@ ECPGexecute(struct statement * stmt)
 		 */
 	{
 		bool		clear_result = TRUE;
-
+		errmsg = PQresultErrorMessage(results);
+		set_backend_err(errmsg, stmt->lineno);
+		
 		var = stmt->outlist;
 		switch (PQresultStatus(results))
 		{
@@ -1027,20 +1031,20 @@ ECPGexecute(struct statement * stmt)
 				break;
 			case PGRES_COMMAND_OK:
 				status = true;
+				cmdstat = PQcmdStatus(results);
 				sqlca.sqlerrd[1] = PQoidValue(results);
 				sqlca.sqlerrd[2] = atol(PQcmdTuples(results));
-				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, PQcmdStatus(results));
-				if (!sqlca.sqlerrd[2] && (!strncmp(PQcmdStatus(results), "UPDATE", 6)
-						   || !strncmp(PQcmdStatus(results), "INSERT", 6)
-						 || !strncmp(PQcmdStatus(results), "DELETE", 6)))
+				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, cmdstat);
+				if (!sqlca.sqlerrd[2] && (   !strncmp(cmdstat, "UPDATE", 6)
+							  || !strncmp(cmdstat, "INSERT", 6)
+							  || !strncmp(cmdstat, "DELETE", 6)))
 					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);
 				break;
 			case PGRES_NONFATAL_ERROR:
 			case PGRES_FATAL_ERROR:
 			case PGRES_BAD_RESPONSE:
-				ECPGlog("ECPGexecute line %d: Error: %s",
-						stmt->lineno, PQerrorMessage(stmt->connection->connection));
-				ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
+				ECPGlog("ECPGexecute line %d: Error: %s", stmt->lineno, errmsg);
+				ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
 				status = false;
 				break;
 			case PGRES_COPY_OUT:
@@ -1054,7 +1058,7 @@ ECPGexecute(struct statement * stmt)
 			default:
 				ECPGlog("ECPGexecute line %d: Got something else, postgres error.\n",
 						stmt->lineno);
-				ECPGraise(stmt->lineno, ECPG_PGSQL, PQerrorMessage(stmt->connection->connection));
+				ECPGraise(stmt->lineno, ECPG_PGSQL, errmsg);
 				status = false;
 				break;
 		}
