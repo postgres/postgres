@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.46 2001/09/14 10:28:09 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/select.sgml,v 1.47 2001/09/23 03:39:01 momjian Exp $
 Postgres documentation
 -->
 
@@ -29,7 +29,8 @@ SELECT [ ALL | DISTINCT [ ON ( <replaceable class="PARAMETER">expression</replac
     [ { UNION | INTERSECT | EXCEPT [ ALL ] } <replaceable class="PARAMETER">select</replaceable> ]
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
     [ FOR UPDATE [ OF <replaceable class="PARAMETER">tablename</replaceable> [, ...] ] ]
-    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+    [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
+    [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
 
 where <replaceable class="PARAMETER">from_item</replaceable> can be:
 
@@ -613,7 +614,8 @@ SELECT name FROM distributors ORDER BY code;
     <synopsis>
 <replaceable class="PARAMETER">table_query</replaceable> UNION [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
-    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+    [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
+    [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
     </synopsis>
 
     where
@@ -662,7 +664,8 @@ SELECT name FROM distributors ORDER BY code;
     <synopsis>
 <replaceable class="PARAMETER">table_query</replaceable> INTERSECT [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
-    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+    [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
+    [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
     </synopsis>
     
     where
@@ -702,7 +705,8 @@ SELECT name FROM distributors ORDER BY code;
     <synopsis>
 <replaceable class="PARAMETER">table_query</replaceable> EXCEPT [ ALL ] <replaceable class="PARAMETER">table_query</replaceable>
     [ ORDER BY <replaceable class="PARAMETER">expression</replaceable> [ ASC | DESC | USING <replaceable class="PARAMETER">operator</replaceable> ] [, ...] ]
-    [ LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]]
+    [ LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL } ]
+    [ OFFSET <replaceable class="PARAMETER">start</replaceable> ]
     </synopsis>
     
     where
@@ -738,7 +742,7 @@ SELECT name FROM distributors ORDER BY code;
    </title>
    <para>
     <synopsis>
-    LIMIT { <replaceable class="PARAMETER">count</replaceable> | ALL } [ { OFFSET | , } <replaceable class="PARAMETER">start</replaceable> ]
+    LIMIT [ <replaceable class="PARAMETER">start</replaceable> , ] { <replaceable class="PARAMETER">count</replaceable> | ALL }
     OFFSET <replaceable class="PARAMETER">start</replaceable>
     </synopsis>
     
@@ -761,14 +765,14 @@ SELECT name FROM distributors ORDER BY code;
     constrains the result rows into a unique order.  Otherwise you will get
     an unpredictable subset of the query's rows---you may be asking for
     the tenth through twentieth rows, but tenth through twentieth in what
-    ordering?  You don't know what ordering, unless you specified ORDER BY.
+    ordering?  You don't know what ordering unless you specify ORDER BY.
    </para>
 
    <para>
     As of <productname>Postgres</productname> 7.0, the
     query optimizer takes LIMIT into account when generating a query plan,
     so you are very likely to get different plans (yielding different row
-    orders) depending on what you give for LIMIT and OFFSET.  Thus, using
+    orders) depending on what you use for LIMIT and OFFSET.  Thus, using
     different LIMIT/OFFSET values to select different subsets of a query
     result <emphasis>will give inconsistent results</emphasis> unless
     you enforce a predictable result ordering with ORDER BY.  This is not

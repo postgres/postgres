@@ -74,10 +74,10 @@ TYPES
 	o Allow nulls in arrays
 	o Allow arrays to be ORDER'ed
 	o fix array handling in ECPG
-BINARY DATA
+lfBINARY DATA
 	o -Add non-large-object binary field (already exists -- bytea)
 	o -Make binary interface for TOAST columns (base64)
-	o Improve vacuum of large objects (/contrib/vacuumlo)
+	o Improve vacuum of large objects, like /contrib/vacuumlo
 	o Add security checking for large objects
 	o Make file in/out interface for TOAST columns, similar to large object
 	  interface (force out-of-line storage and no compression)
@@ -105,7 +105,7 @@ INDEXES
 * Allow CREATE INDEX zman_index ON test (date_trunc( 'day', zman ) datetime_ops)
   fails index can't store constant parameters
 * Add FILLFACTOR to index creation
-* Order duplicate index entries by tid
+* Order duplicate index entries by tid for faster heap lookups
 * -Re-enable partial indexes
 * -Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Allow inherited tables to inherit index, UNIQUE constraint, and primary
@@ -124,7 +124,7 @@ INDEXES
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too [optimizer]
-* Use indexes with CIDR '<<' (contains) operator
+* -Use indexes with CIDR '<<' (contains) operator
 * Allow LIKE indexing optimization for non-ASCII locales
 * Be smarter about insertion of already-ordered data into btree index
 * -Gather more accurate dispersion statistics using indexes (Tom)

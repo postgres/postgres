@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.252 2001/09/20 14:20:27 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.253 2001/09/23 03:39:01 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -3587,8 +3587,8 @@ OptUseOp:  USING all_Op							{ $$ = $2; }
 		;
 
 
-select_limit:	LIMIT select_limit_value ',' select_offset_value
-			{ $$ = makeList2($4, $2); }
+select_limit:	LIMIT select_offset_value ',' select_limit_value
+			{ $$ = makeList2($2, $4); }
 		| LIMIT select_limit_value OFFSET select_offset_value
 			{ $$ = makeList2($4, $2); }
 		| LIMIT select_limit_value
