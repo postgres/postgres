@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.321 2003/03/20 06:26:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.322 2003/03/20 07:05:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,6 +547,13 @@ main(int argc, char **argv)
 		exit_horribly(g_fout, NULL, "could not set transaction isolation level to serializable: %s",
 					  PQerrorMessage(g_conn));
 	PQclear(res);
+
+    /* Set the datestyle to ISO to ensure the dump's portability */
+    res = PQexec(g_conn, "SET DATESTYLE = ISO");
+    if (!res || PQresultStatus(res) != PGRES_COMMAND_OK)
+            exit_horribly(g_fout, NULL, "could not set datestyle to ISO: %s",
+                                      PQerrorMessage(g_conn));
+    PQclear(res);
 
 	/*
 	 * If supported, set extra_float_digits so that we can dump float data
