@@ -122,3 +122,16 @@ as many column/sequence pairs as you need).
 autoinc.source).
 
 
+4. insert_username.c - function for inserting user names.
+
+   You have to create BEFORE INSERT OR UPDATE trigger using the function
+insert_username(). You have to specify as a function argument: the column
+name (of text type) in which user names will be inserted.  Note that user
+names will be inserted irregardless of the initial value of the field, so
+that users cannot bypass this functionality by simply defining the field to
+be NOT NULL.
+
+   There is an example in insert_username.example.
+
+   To CREATE FUNCTION use insert_username.sql (will be made by gmake from
+insert_username.source).
