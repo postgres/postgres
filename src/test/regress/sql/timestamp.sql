@@ -222,3 +222,5 @@ SELECT '' AS to_timestamp_6, to_timestamp('15 "text bettween quote marks" 98 54 
 SELECT '' AS to_timestamp_7, to_timestamp('05121445482000', 'MMDDHHMISSYYYY');    
 
 SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDFMDay');
+
+SET DateStyle TO DEFAULT;

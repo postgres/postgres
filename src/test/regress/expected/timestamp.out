@@ -1578,3 +1578,4 @@ SELECT '' AS to_timestamp_8, to_timestamp('2000January09Sunday', 'YYYYFMMonthDDF
                 | Sun Jan 09 00:00:00 2000 PST
 (1 row)
 
+SET DateStyle TO DEFAULT;
