@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.119 2000/12/08 06:17:56 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.120 2000/12/09 20:32:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -253,7 +253,6 @@ static void RelationClearRelation(Relation relation, bool rebuildIt);
 #ifdef	ENABLE_REINDEX_NAILED_RELATIONS
 static void RelationReloadClassinfo(Relation relation);
 #endif /* ENABLE_REINDEX_NAILED_RELATIONS */
-static void RelationResetRelation(Relation relation, bool rebuildIt);
 static void RelationFlushRelation(Relation *relationPtr,
 					  int skipLocalRelations);
 static Relation RelationNameCacheGetRelation(const char *relationName);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.131 2000/12/08 06:17:57 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.132 2000/12/09 20:31:43 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -21,6 +21,7 @@
  */
 #include "postgres.h"
 
+#include <unistd.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -1513,7 +1514,7 @@ setNewRelfilenode(Relation relation)
 	Oid		newrelfilenode;
 	bool		in_place_update = false;
 	HeapTupleData 	lockTupleData;
-	HeapTuple 	classTuple;
+	HeapTuple 	classTuple = NULL;
 	Buffer		buffer;
 	RelationData	workrel;
 	
