@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.8 2000/03/26 19:45:21 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.9 2000/03/31 14:57:05 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,7 +24,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> [ AS ] ( BASETYPE = <replaceable class="PARAMETER">input_data_type</replaceable>
+CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = <replaceable class="PARAMETER">input_data_type</replaceable>
     [ , SFUNC1 = <replaceable class="PARAMETER">sfunc1</replaceable>, STYPE1 = <replaceable class="PARAMETER">state1_type</replaceable> ]
     [ , SFUNC2 = <replaceable class="PARAMETER">sfunc2</replaceable>, STYPE2 = <replaceable class="PARAMETER">state2_type</replaceable> ]
     [ , FINALFUNC = <replaceable class="PARAMETER">ffunc</replaceable> ]
