@@ -673,8 +673,8 @@ static void	_LoadBlobs(ArchiveHandle* AH, RestoreOptions *ropt)
 static int	_WriteByte(ArchiveHandle* AH, const int i)
 {
     lclContext*		ctx = (lclContext*)AH->formatData;
-    int			res;
-	int			b = i;
+    int				res;
+	char			b = i; /* Avoid endian problems */
 
     res = tarWrite(&b, 1, ctx->FH);
     if (res != EOF) {
@@ -1088,27 +1088,33 @@ static void _tarWriteHeader(TAR_MEMBER* th)
 	sprintf(&h[100], "100600 ");
 
 	/* User ID 8 */
-	sprintf(&h[108], "     0 ");
+	sprintf(&h[108], " 04000 ");
 
 	/* Group 8 */
-	sprintf(&h[116], "     0 ");
+	sprintf(&h[116], " 02000 ");
 
 	/* File size 12 */
-	sprintf(&h[124], "%12o", th->fileLen);
+	sprintf(&h[124], "%10o ", th->fileLen);
 
 	/* Mod Time 12 */
-	sprintf(&h[136], "%12o", (int)time(NULL));
+	sprintf(&h[136], "%10o ", (int)time(NULL));
 
 	/* Checksum 8 */
-	sprintf(&h[148], "%8o", lastSum);
+	sprintf(&h[148], "%6o ", lastSum);
 
-	/* Link 1 */
-	sprintf(&h[156], "%c", LF_NORMAL);
+	/* Type 1 */
+	/* sprintf(&h[156], "%c", LF_NORMAL); */
+	sprintf(&h[156], "0");
 
 	/* Link name 100 (NULL) */
 
 	/* Magic 8 */
 	sprintf(&h[257], "ustar  ");
+
+	/* GNU Version...
+	 * sprintf(&h[257], "ustar");
+	 * sprintf(&h[263], "00");
+	*/
 
 	/* User 32 */
 	sprintf(&h[265], "%.31s", ""); /* How do I get username reliably? Do I need to? */
@@ -1117,15 +1123,15 @@ static void _tarWriteHeader(TAR_MEMBER* th)
 	sprintf(&h[297], "%.31s", ""); /* How do I get group reliably? Do I need to? */
 
 	/* Maj Dev 8 */
-	/* sprintf(&h[329], "%8o", 0); */
+	/* sprintf(&h[329], "%6o ", 0); */
 
 	/* Min Dev */
-	/* sprintf(&h[337], "%8o", 0); */
+	/* sprintf(&h[337], "%6o ", 0); */
 
 
 	while ( (sum = _tarChecksum(h)) != lastSum)
 	{
-		sprintf(&h[148], "%8o", sum);
+		sprintf(&h[148], "%6o ", sum);
 		lastSum = sum;
 	}
 

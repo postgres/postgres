@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.175 2000/10/24 01:38:32 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.176 2000/10/24 13:24:30 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -696,7 +696,7 @@ main(int argc, char **argv)
 	if (strcmp(progname, "pg_backup") == 0)
 	{
 		format = "c";
-		outputBlobs = 1;
+		outputBlobs = true;
 	}
 
 #ifdef HAVE_GETOPT_LONG
@@ -864,6 +864,14 @@ main(int argc, char **argv)
 		}
 	}
 
+	if (optind < (argc - 1)) {
+		fprintf(stderr,
+				"%s: extra parameters found on command line after '%s' (first is '%s').\n"
+			    "Please respecify command.\nUse -? for help on invocation options.\n",
+				progname, argv[optind], argv[optind+1]);
+		exit(1);
+	}
+
 	if (dataOnly && schemaOnly)
 	{
 		fprintf(stderr,
@@ -885,6 +893,14 @@ main(int argc, char **argv)
 		fprintf(stderr,
 				"%s: INSERT's can not set oids, so INSERT and OID options can not be used together.\n",
 				progname);
+		exit(1);
+	}
+
+	if (outputBlobs == true && (format[0] == 'p' || format[0] == 'P') )
+	{
+		fprintf(stderr,
+			"%s: BLOB output is not supported for plain text dump files. Use a different output format.\n",
+			progname);
 		exit(1);
 	}
 
