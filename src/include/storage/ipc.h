@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.36 1999/10/06 21:58:17 vadim Exp $
+ * $Id: ipc.h,v 1.37 1999/11/22 02:06:30 tgl Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -71,6 +71,8 @@ typedef int IpcMemoryId;
 
 
 /* ipc.c */
+extern bool proc_exit_inprogress;
+
 extern void proc_exit(int code);
 extern void shmem_exit(int code);
 extern int	on_shmem_exit(void (*function) (), caddr_t arg);

@@ -1,4 +1,4 @@
- /*-------------------------------------------------------------------------
+/*-------------------------------------------------------------------------
  *
  * ipc.c
  *	  POSTGRES inter-process communication definitions.
@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.42 1999/11/06 19:46:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.43 1999/11/22 02:06:31 tgl Exp $
  *
  * NOTES
  *
@@ -28,8 +28,8 @@
 #include <sys/file.h>
 #include <errno.h>
 
-
 #include "postgres.h"
+
 #include "storage/ipc.h"
 #include "storage/s_lock.h"
 /* In Ultrix, sem.h and shm.h must be included AFTER ipc.h */
@@ -42,6 +42,13 @@
 #if defined(solaris_sparc)
 #include <sys/ipc.h>
 #endif
+
+/*
+ * This flag is set during proc_exit() to change elog()'s behavior,
+ * so that an elog() from an on_proc_exit routine cannot get us out
+ * of the exit procedure.  We do NOT want to go back to the idle loop...
+ */
+bool	proc_exit_inprogress = false;
 
 static int	UsePrivateMemory = 0;
 
@@ -70,7 +77,8 @@ typedef struct _PrivateMemStruct
 	char	   *memptr;
 } PrivateMem;
 
-PrivateMem	IpcPrivateMem[16];
+static PrivateMem	IpcPrivateMem[16];
+
 
 static int
 PrivateMemoryCreate(IpcMemoryKey memKey,
@@ -105,45 +113,34 @@ PrivateMemoryAttach(IpcMemoryId memid)
  *		-cim 2/6/90
  * ----------------------------------------------------------------
  */
-static int	proc_exit_inprogress = 0;
-
 void
 proc_exit(int code)
 {
-	int			i;
-
-	TPRINTF(TRACE_VERBOSE, "proc_exit(%d) [#%d]", code, proc_exit_inprogress);
-
 	/*
-	 * If proc_exit is called too many times something bad is happening, so
-	 * exit immediately.  This is crafted in two if's for a reason.
+	 * Once we set this flag, we are committed to exit.  Any elog() will
+	 * NOT send control back to the main loop, but right back here.
 	 */
+	proc_exit_inprogress = true;
 
-	if (++proc_exit_inprogress == 9)
-		elog(ERROR, "infinite recursion in proc_exit");
-	if (proc_exit_inprogress >= 9)
-		goto exit;
-
-	/* ----------------
-	 *	if proc_exit_inprocess > 1, then it means that we
-	 *	are being invoked from within an on_exit() handler
-	 *	and so we return immediately to avoid recursion.
-	 * ----------------
-	 */
-	if (proc_exit_inprogress > 1)
-		return;
+	TPRINTF(TRACE_VERBOSE, "proc_exit(%d)", code);
 
 	/* do our shared memory exits first */
 	shmem_exit(code);
 
 	/* ----------------
 	 *	call all the callbacks registered before calling exit().
+	 *
+	 *	Note that since we decrement on_proc_exit_index each time,
+	 *	if a callback calls elog(ERROR) or elog(FATAL) then it won't
+	 *	be invoked again when control comes back here (nor will the
+	 *	previously-completed callbacks).  So, an infinite loop
+	 *	should not be possible.
 	 * ----------------
 	 */
-	for (i = on_proc_exit_index - 1; i >= 0; --i)
-		(*on_proc_exit_list[i].function) (code, on_proc_exit_list[i].arg);
+	while (--on_proc_exit_index >= 0)
+		(*on_proc_exit_list[on_proc_exit_index].function) (code,
+														   on_proc_exit_list[on_proc_exit_index].arg);
 
-exit:
 	TPRINTF(TRACE_VERBOSE, "exit(%d)", code);
 	exit(code);
 }
@@ -154,44 +151,23 @@ exit:
  * semaphores after a backend dies horribly
  * ------------------
  */
-static int	shmem_exit_inprogress = 0;
-
 void
 shmem_exit(int code)
 {
-	int			i;
-
-	TPRINTF(TRACE_VERBOSE, "shmem_exit(%d) [#%d]",
-			code, shmem_exit_inprogress);
-
-	/*
-	 * If shmem_exit is called too many times something bad is happenig,
-	 * so exit immediately.
-	 */
-	if (shmem_exit_inprogress > 9)
-	{
-		elog(ERROR, "infinite recursion in shmem_exit");
-		exit(-1);
-	}
+	TPRINTF(TRACE_VERBOSE, "shmem_exit(%d)", code);
 
 	/* ----------------
-	 *	if shmem_exit_inprocess is true, then it means that we
-	 *	are being invoked from within an on_exit() handler
-	 *	and so we return immediately to avoid recursion.
+	 *	call all the registered callbacks.
+	 *
+	 *	As with proc_exit(), we remove each callback from the list
+	 *	before calling it, to avoid infinite loop in case of error.
 	 * ----------------
 	 */
-	if (shmem_exit_inprogress++)
-		return;
-
-	/* ----------------
-	 *	call all the callbacks registered before calling exit().
-	 * ----------------
-	 */
-	for (i = on_shmem_exit_index - 1; i >= 0; --i)
-		(*on_shmem_exit_list[i].function) (code, on_shmem_exit_list[i].arg);
+	while (--on_shmem_exit_index >= 0)
+		(*on_shmem_exit_list[on_shmem_exit_index].function) (code,
+														   on_shmem_exit_list[on_shmem_exit_index].arg);
 
 	on_shmem_exit_index = 0;
-	shmem_exit_inprogress = 0;
 }
 
 /* ----------------------------------------------------------------
@@ -202,7 +178,7 @@ shmem_exit(int code)
  * ----------------------------------------------------------------
  */
 int
-			on_proc_exit(void (*function) (), caddr_t arg)
+on_proc_exit(void (*function) (), caddr_t arg)
 {
 	if (on_proc_exit_index >= MAX_ON_EXITS)
 		return -1;
@@ -223,7 +199,7 @@ int
  * ----------------------------------------------------------------
  */
 int
-			on_shmem_exit(void (*function) (), caddr_t arg)
+on_shmem_exit(void (*function) (), caddr_t arg)
 {
 	if (on_shmem_exit_index >= MAX_ON_EXITS)
 		return -1;

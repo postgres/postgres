@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.51 1999/11/16 06:13:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.52 1999/11/22 02:06:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "miscadmin.h"
+#include "storage/ipc.h"
 #include "storage/proc.h"
 #include "tcop/tcopprot.h"
 #include "utils/trace.h"
@@ -371,21 +372,38 @@ elog(int lev, const char *fmt, ...)
 	 */
 	if (lev == ERROR || lev == FATAL)
 	{
+		/*
+		 * If we have not yet entered the main backend loop (ie, we are in
+		 * the postmaster or in backend startup), then go directly to
+		 * proc_exit.  The same is true if anyone tries to report an error
+		 * after proc_exit has begun to run.  (It's proc_exit's responsibility
+		 * to see that this doesn't turn into infinite recursion!)  But in
+		 * the latter case, we exit with nonzero exit code to indicate that
+		 * something's pretty wrong.
+		 */
+		if (proc_exit_inprogress || ! Warn_restart_ready)
+		{
+			fflush(stdout);
+			fflush(stderr);
+			ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
+			ProcReleaseLocks();		/* get rid of real locks we hold */
+			/* XXX shouldn't proc_exit be doing the above?? */
+			proc_exit((int) proc_exit_inprogress);
+		}
+		/*
+		 * Guard against infinite loop from elog() during error recovery.
+		 */
 		if (InError)
-		{
-			/* error reported during error recovery; don't loop forever */
 			elog(REALLYFATAL, "elog: error during error recovery, giving up!");
-		}
 		InError = true;
+		/*
+		 * Otherwise we can return to the main loop in postgres.c.
+		 * In the FATAL case, postgres.c will call proc_exit, but not
+		 * till after completing a standard transaction-abort sequence.
+		 */
 		ProcReleaseSpins(NULL); /* get rid of spinlocks we hold */
-		if (! Warn_restart_ready)
-		{
-			/* error reported before there is a main loop to return to */
-			elog(REALLYFATAL, "elog: error in postmaster or backend startup, giving up!");
-		}
 		if (lev == FATAL)
 			ExitAfterAbort = true;
-		/* exit to main loop */
 		siglongjmp(Warn_restart, 1);
 	}
 
