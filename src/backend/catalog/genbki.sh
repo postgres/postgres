@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.29 2003/04/06 22:45:22 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.30 2003/07/29 14:12:50 tgl Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -113,7 +113,7 @@ if [ x"$TMPDIR" = x"" ] ; then
 fi
 
 
-TMPFILE="$TMPDIR/genbkitmp.c"
+TMPFILE="$TMPDIR/genbkitmp$$.c"
 
 trap "rm -f $TMPFILE ${OUTPUT_PREFIX}.bki.$$ ${OUTPUT_PREFIX}.description.$$" 0 1 2 3 15
 
