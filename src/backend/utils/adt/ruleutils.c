@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.87 2001/11/19 19:51:20 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.88 2001/11/26 00:29:15 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -178,9 +178,9 @@ pg_get_ruledef(PG_FUNCTION_ARGS)
 		elog(ERROR, "get_ruledef: cannot connect to SPI manager");
 
 	/*
-	 * On the first call prepare the plan to lookup pg_proc. We read
-	 * pg_proc over the SPI manager instead of using the syscache to be
-	 * checked for read access on pg_proc.
+	 * On the first call prepare the plan to lookup pg_rewrite. We read
+	 * pg_rewrite over the SPI manager instead of using the syscache to be
+	 * checked for read access on pg_rewrite.
 	 */
 	if (plan_getrule == NULL)
 	{
@@ -271,9 +271,9 @@ pg_get_viewdef(PG_FUNCTION_ARGS)
 		elog(ERROR, "get_viewdef: cannot connect to SPI manager");
 
 	/*
-	 * On the first call prepare the plan to lookup pg_proc. We read
-	 * pg_proc over the SPI manager instead of using the syscache to be
-	 * checked for read access on pg_proc.
+	 * On the first call prepare the plan to lookup pg_rewrite. We read
+	 * pg_rewrite over the SPI manager instead of using the syscache to be
+	 * checked for read access on pg_rewrite.
 	 */
 	if (plan_getview == NULL)
 	{
@@ -769,7 +769,20 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		appendStringInfo(buf, " WHERE ");
 
 		qual = stringToNode(ev_qual);
+
+		/*
+		 * We need to make a context for recognizing any Vars in the qual
+		 * (which can only be references to OLD and NEW).  Use the rtable
+		 * of the first query in the action list for this purpose.
+		 */
 		query = (Query *) lfirst(actions);
+
+		/*
+		 * If the action is INSERT...SELECT, OLD/NEW have been pushed
+		 * down into the SELECT, and that's what we need to look at.
+		 * (Ugly kluge ... try to fix this when we redesign querytrees.)
+		 */
+		query = getInsertSelectQuery(query, NULL);
 
 		context.buf = buf;
 		context.namespaces = makeList1(&dpns);
