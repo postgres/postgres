@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.120 2004/10/07 18:38:48 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.121 2004/10/18 01:45:38 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ ProcedureCreate(const char *procedureName,
 	 */
 	if (parameterCount == 1 && OidIsValid(typev[0]) &&
 		(relid = typeidTypeRelid(typev[0])) != InvalidOid &&
-		get_attnum(relid, (char *) procedureName) != InvalidAttrNumber)
+		get_attnum(relid, procedureName) != InvalidAttrNumber)
 		ereport(ERROR,
 				(errcode(ERRCODE_DUPLICATE_COLUMN),
 				 errmsg("\"%s\" is already an attribute of type %s",
