@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.105 2004/05/31 03:48:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.106 2004/05/31 20:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,7 +270,7 @@ mdunlink(RelFileNode rnode, bool isRedo)
  * already.  Might as well pass in the position and save a seek.
  */
 bool
-mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
+mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
 	long		seekpos;
 	int			nbytes;
@@ -311,8 +311,11 @@ mdextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 		return false;
 	}
 
-	if (!register_dirty_segment(reln, v))
-		return false;
+	if (!isTemp)
+	{
+		if (!register_dirty_segment(reln, v))
+			return false;
+	}
 
 #ifndef LET_OS_MANAGE_FILESIZE
 	Assert(_mdnblocks(v->mdfd_vfd, BLCKSZ) <= ((BlockNumber) RELSEG_SIZE));
@@ -465,7 +468,7 @@ mdread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
  *	mdwrite() -- Write the supplied block at the appropriate location.
  */
 bool
-mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
+mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
 	long		seekpos;
 	MdfdVec    *v;
@@ -485,8 +488,11 @@ mdwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
 	if (FileWrite(v->mdfd_vfd, buffer, BLCKSZ) != BLCKSZ)
 		return false;
 
-	if (!register_dirty_segment(reln, v))
-		return false;
+	if (!isTemp)
+	{
+		if (!register_dirty_segment(reln, v))
+			return false;
+	}
 
 	return true;
 }
@@ -565,7 +571,7 @@ mdnblocks(SMgrRelation reln)
  *		Returns # of blocks or InvalidBlockNumber on error.
  */
 BlockNumber
-mdtruncate(SMgrRelation reln, BlockNumber nblocks)
+mdtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 {
 	MdfdVec    *v;
 	BlockNumber curnblk;
@@ -624,6 +630,11 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks)
 
 			if (FileTruncate(v->mdfd_vfd, lastsegblocks * BLCKSZ) < 0)
 				return InvalidBlockNumber;
+			if (!isTemp)
+			{
+				if (!register_dirty_segment(reln, v))
+					return InvalidBlockNumber;
+			}
 			v = v->mdfd_chain;
 			ov->mdfd_chain = NULL;
 		}
@@ -640,6 +651,11 @@ mdtruncate(SMgrRelation reln, BlockNumber nblocks)
 #else
 	if (FileTruncate(v->mdfd_vfd, nblocks * BLCKSZ) < 0)
 		return InvalidBlockNumber;
+	if (!isTemp)
+	{
+		if (!register_dirty_segment(reln, v))
+			return InvalidBlockNumber;
+	}
 #endif
 
 	return nblocks;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.168 2004/05/31 19:24:05 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/bufmgr.c,v 1.169 2004/05/31 20:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -182,7 +182,8 @@ ReadBufferInternal(Relation reln, BlockNumber blockNum,
 	{
 		/* new buffers are zero-filled */
 		MemSet((char *) MAKE_PTR(bufHdr->data), 0, BLCKSZ);
-		smgrextend(reln->rd_smgr, blockNum, (char *) MAKE_PTR(bufHdr->data));
+		smgrextend(reln->rd_smgr, blockNum, (char *) MAKE_PTR(bufHdr->data),
+				   reln->rd_istemp);
 	}
 	else
 	{
@@ -915,8 +916,8 @@ BufferGetFileNode(Buffer buffer)
  * NOTE: this actually just passes the buffer contents to the kernel; the
  * real write to disk won't happen until the kernel feels like it.  This
  * is okay from our point of view since we can redo the changes from WAL.
- * However, we will need to force the changes to disk via sync/fsync
- * before we can checkpoint WAL.
+ * However, we will need to force the changes to disk via fsync before
+ * we can checkpoint WAL.
  *
  * BufMgrLock must be held at entry, and the buffer must be pinned.  The
  * caller is also responsible for doing StartBufferIO/TerminateBufferIO.
@@ -979,7 +980,8 @@ FlushBuffer(BufferDesc *buf, SMgrRelation reln)
 	 */
 	smgrwrite(reln,
 			  buf->tag.blockNum,
-			  (char *) MAKE_PTR(buf->data));
+			  (char *) MAKE_PTR(buf->data),
+			  false);
 
 	/* Pop the error context stack */
 	error_context_stack = errcontext.previous;
@@ -1033,7 +1035,7 @@ RelationTruncate(Relation rel, BlockNumber nblocks)
 	rel->rd_targblock = InvalidBlockNumber;
 
 	/* Do the real work */
-	smgrtruncate(rel->rd_smgr, nblocks);
+	smgrtruncate(rel->rd_smgr, nblocks, rel->rd_istemp);
 }
 
 /* ---------------------------------------------------------------------
@@ -1351,7 +1353,8 @@ FlushRelationBuffers(Relation rel, BlockNumber firstDelBlock)
 
 					smgrwrite(rel->rd_smgr,
 							  bufHdr->tag.blockNum,
-							  (char *) MAKE_PTR(bufHdr->data));
+							  (char *) MAKE_PTR(bufHdr->data),
+							  true);
 
 					bufHdr->flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
 					bufHdr->cntxDirty = false;

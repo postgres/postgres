@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.54 2004/04/22 07:21:55 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.55 2004/05/31 20:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,7 +111,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 		/* And write... */
 		smgrwrite(reln,
 				  bufHdr->tag.blockNum,
-				  (char *) MAKE_PTR(bufHdr->data));
+				  (char *) MAKE_PTR(bufHdr->data),
+				  true);
 
 		LocalBufferFlushCount++;
 	}

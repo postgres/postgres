@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.71 2004/05/31 03:48:06 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.72 2004/05/31 20:31:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,13 +40,14 @@ typedef struct f_smgr
 	bool		(*smgr_create) (SMgrRelation reln, bool isRedo);
 	bool		(*smgr_unlink) (RelFileNode rnode, bool isRedo);
 	bool		(*smgr_extend) (SMgrRelation reln, BlockNumber blocknum,
-											char *buffer);
+								char *buffer, bool isTemp);
 	bool		(*smgr_read) (SMgrRelation reln, BlockNumber blocknum,
-										  char *buffer);
+							  char *buffer);
 	bool		(*smgr_write) (SMgrRelation reln, BlockNumber blocknum,
-										   char *buffer);
+							   char *buffer, bool isTemp);
 	BlockNumber (*smgr_nblocks) (SMgrRelation reln);
-	BlockNumber (*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks);
+	BlockNumber (*smgr_truncate) (SMgrRelation reln, BlockNumber nblocks,
+								  bool isTemp);
 	bool		(*smgr_commit) (void);			/* may be NULL */
 	bool		(*smgr_abort) (void);			/* may be NULL */
 	bool		(*smgr_sync) (void);			/* may be NULL */
@@ -438,9 +439,10 @@ smgr_internal_unlink(RelFileNode rnode, int which, bool isTemp, bool isRedo)
  *		failure we clean up by truncating.
  */
 void
-smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer)
+smgrextend(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-	if (! (*(smgrsw[reln->smgr_which].smgr_extend)) (reln, blocknum, buffer))
+	if (! (*(smgrsw[reln->smgr_which].smgr_extend)) (reln, blocknum, buffer,
+													 isTemp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not extend relation %u/%u: %m",
@@ -473,12 +475,18 @@ smgrread(SMgrRelation reln, BlockNumber blocknum, char *buffer)
  *	smgrwrite() -- Write the supplied buffer out.
  *
  *		This is not a synchronous write -- the block is not necessarily
- *		on disk at return, only dumped out to the kernel.
+ *		on disk at return, only dumped out to the kernel.  However,
+ *		provisions will be made to fsync the write before the next checkpoint.
+ *
+ *		isTemp indicates that the relation is a temp table (ie, is managed
+ *		by the local-buffer manager).  In this case no provisions need be
+ *		made to fsync the write before checkpointing.
  */
 void
-smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer)
+smgrwrite(SMgrRelation reln, BlockNumber blocknum, char *buffer, bool isTemp)
 {
-	if (! (*(smgrsw[reln->smgr_which].smgr_write)) (reln, blocknum, buffer))
+	if (! (*(smgrsw[reln->smgr_which].smgr_write)) (reln, blocknum, buffer,
+													isTemp))
 		ereport(ERROR,
 				(errcode_for_file_access(),
 				 errmsg("could not write block %u of relation %u/%u: %m",
@@ -525,12 +533,9 @@ smgrnblocks(SMgrRelation reln)
  *		transaction on failure.
  */
 BlockNumber
-smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
+smgrtruncate(SMgrRelation reln, BlockNumber nblocks, bool isTemp)
 {
 	BlockNumber newblks;
-	XLogRecPtr		lsn;
-	XLogRecData		rdata;
-	xl_smgr_truncate xlrec;
 
 	/*
 	 * Tell the free space map to forget anything it may have stored
@@ -540,7 +545,8 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
 	FreeSpaceMapTruncateRel(&reln->smgr_rnode, nblocks);
 
 	/* Do the truncation */
-	newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, nblocks);
+	newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln, nblocks,
+														   isTemp);
 	if (newblks == InvalidBlockNumber)
 		ereport(ERROR,
 				(errcode_for_file_access(),
@@ -549,20 +555,29 @@ smgrtruncate(SMgrRelation reln, BlockNumber nblocks)
 						reln->smgr_rnode.relNode,
 						nblocks)));
 
-	/*
-	 * Make a non-transactional XLOG entry showing the file truncation.  It's
-	 * non-transactional because we should replay it whether the transaction
-	 * commits or not; the underlying file change is certainly not reversible.
-	 */
-	xlrec.blkno = newblks;
-	xlrec.rnode = reln->smgr_rnode;
+	if (!isTemp)
+	{
+		/*
+		 * Make a non-transactional XLOG entry showing the file truncation.
+		 * It's non-transactional because we should replay it whether the
+		 * transaction commits or not; the underlying file change is certainly
+		 * not reversible.
+		 */
+		XLogRecPtr		lsn;
+		XLogRecData		rdata;
+		xl_smgr_truncate xlrec;
 
-	rdata.buffer = InvalidBuffer;
-	rdata.data = (char *) &xlrec;
-	rdata.len = sizeof(xlrec);
-	rdata.next = NULL;
+		xlrec.blkno = newblks;
+		xlrec.rnode = reln->smgr_rnode;
 
-	lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLOG_NO_TRAN, &rdata);
+		rdata.buffer = InvalidBuffer;
+		rdata.data = (char *) &xlrec;
+		rdata.len = sizeof(xlrec);
+		rdata.next = NULL;
+
+		lsn = XLogInsert(RM_SMGR_ID, XLOG_SMGR_TRUNCATE | XLOG_NO_TRAN,
+						 &rdata);
+	}
 
 	return newblks;
 }
@@ -725,7 +740,8 @@ smgr_redo(XLogRecPtr lsn, XLogRecord *record)
 
 		/* Do the truncation */
 		newblks = (*(smgrsw[reln->smgr_which].smgr_truncate)) (reln,
-															   xlrec->blkno);
+															   xlrec->blkno,
+															   false);
 		if (newblks == InvalidBlockNumber)
 			ereport(WARNING,
 					(errcode_for_file_access(),
