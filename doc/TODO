@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sun Sep 23 00:08:16 EDT 2001
+Last updated:		Sun Sep 23 00:13:19 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -360,6 +360,7 @@ Developers who have claimed items are:
 * Jan is Jan Wieck <wieck@sapserv.debis.de>
 * Marc is Marc Fournier <scrappy@hub.org>
 * Mark is Mark Hollomon <mhh@mindspring.com>
+* Marko is Marko Kreen <marko@l-t.ee>
 * Michael is Michael Meskes <meskes@postgresql.org>
 * Oleg is Oleg Bartunov <oleg@sai.msu.su>
 * Peter M is Peter T Mount <peter@retep.org.uk>
