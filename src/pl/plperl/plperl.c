@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.59 2004/11/20 19:07:40 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.60 2004/11/21 21:17:03 tgl Exp $
  *
  **********************************************************************/
 
@@ -1593,20 +1593,79 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 }
 
 
+/*
+ * Implementation of spi_exec_query() Perl function
+ */
 HV *
 plperl_spi_exec(char *query, int limit)
 {
 	HV		   *ret_hv;
-	int			spi_rv;
 
-	spi_rv = SPI_execute(query, plperl_current_prodesc->fn_readonly, limit);
-	ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed, spi_rv);
+	/*
+	 * Execute the query inside a sub-transaction, so we can cope with
+	 * errors sanely
+	 */
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
+
+	BeginInternalSubTransaction(NULL);
+	/* Want to run inside function's memory context */
+	MemoryContextSwitchTo(oldcontext);
+
+	PG_TRY();
+	{
+		int			spi_rv;
+
+		spi_rv = SPI_execute(query, plperl_current_prodesc->fn_readonly,
+							 limit);
+		ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed,
+												 spi_rv);
+
+		/* Commit the inner transaction, return to outer xact context */
+		ReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+		/*
+		 * AtEOSubXact_SPI() should not have popped any SPI context,
+		 * but just in case it did, make sure we remain connected.
+		 */
+		SPI_restore_connection();
+	}
+	PG_CATCH();
+	{
+		ErrorData  *edata;
+
+		/* Save error info */
+		MemoryContextSwitchTo(oldcontext);
+		edata = CopyErrorData();
+		FlushErrorState();
+
+		/* Abort the inner transaction */
+		RollbackAndReleaseCurrentSubTransaction();
+		MemoryContextSwitchTo(oldcontext);
+		CurrentResourceOwner = oldowner;
+
+		/*
+		 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
+		 * it will have left us in a disconnected state.  We need this
+		 * hack to return to connected state.
+		 */
+		SPI_restore_connection();
+
+		/* Punt the error to Perl */
+		croak("%s", edata->message);
+
+		/* Can't get here, but keep compiler quiet */
+		return NULL;
+	}
+	PG_END_TRY();
 
 	return ret_hv;
 }
 
 static HV  *
-plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed, int status)
+plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed,
+								int status)
 {
 	HV		   *result;
 
@@ -1619,21 +1678,18 @@ plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed, int stat
 
 	if (status == SPI_OK_SELECT)
 	{
-		if (processed)
-		{
-			AV		   *rows;
-			HV		   *row;
-			int			i;
+		AV		   *rows;
+		HV		   *row;
+		int			i;
 
-			rows = newAV();
-			for (i = 0; i < processed; i++)
-			{
-				row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
-				av_push(rows, newRV_noinc((SV *)row));
-			}
-			hv_store(result, "rows", strlen("rows"),
-					 newRV_noinc((SV *) rows), 0);
+		rows = newAV();
+		for (i = 0; i < processed; i++)
+		{
+			row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
+			av_push(rows, newRV_noinc((SV *)row));
 		}
+		hv_store(result, "rows", strlen("rows"),
+				 newRV_noinc((SV *) rows), 0);
 	}
 
 	SPI_freetuptable(tuptable);

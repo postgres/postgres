@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.93 2004/09/14 03:21:27 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.94 2004/11/21 21:17:05 tgl Exp $
  *
  **********************************************************************/
 
@@ -147,19 +147,6 @@ static Tcl_HashTable *pltcl_safe_query_hash = NULL;
 static FunctionCallInfo pltcl_current_fcinfo = NULL;
 static pltcl_proc_desc *pltcl_current_prodesc = NULL;
 
-/*
- * When a callback from Tcl into PG incurs an error, we temporarily store
- * the error information here, and return TCL_ERROR to the Tcl interpreter.
- * Any further callback attempts immediately fail, and when the Tcl interpreter
- * returns to the calling function, we re-throw the error (even if Tcl
- * thinks it trapped the error and doesn't return TCL_ERROR).  Eventually
- * this ought to be improved to let Tcl code really truly trap the error,
- * but that's more of a change from the pre-8.0 semantics than I have time
- * for now --- it will only be possible if the callback query is executed
- * inside a subtransaction.
- */
-static ErrorData *pltcl_error_in_progress = NULL;
-
 /**********************************************************************
  * Forward declarations
  **********************************************************************/
@@ -189,6 +176,12 @@ static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 
 static int pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 			   int argc, CONST84 char *argv[]);
+static int pltcl_process_SPI_result(Tcl_Interp *interp,
+									CONST84 char *arrayname,
+									CONST84 char *loop_body,
+									int spi_rc,
+									SPITupleTable *tuptable,
+									int ntuples);
 static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[]);
 static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
@@ -592,28 +585,16 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	Tcl_DStringFree(&tcl_cmd);
 
 	/************************************************************
-	 * If there was an error in a PG callback, propagate that
-	 * no matter what Tcl claims about its success.
-	 ************************************************************/
-	if (pltcl_error_in_progress)
-	{
-		ErrorData  *edata = pltcl_error_in_progress;
-
-		pltcl_error_in_progress = NULL;
-		ReThrowError(edata);
-	}
-
-	/************************************************************
-	 * Check for errors reported by Tcl itself.
+	 * Check for errors reported by Tcl.
 	 ************************************************************/
 	if (tcl_rc != TCL_OK)
 	{
 		UTF_BEGIN;
 		ereport(ERROR,
-				(errmsg("pltcl: %s", interp->result),
-				 errdetail("%s",
-						   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-											  TCL_GLOBAL_ONLY)))));
+				(errmsg("%s", interp->result),
+				 errcontext("%s",
+							UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+											   TCL_GLOBAL_ONLY)))));
 		UTF_END;
 	}
 
@@ -820,28 +801,16 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	Tcl_DStringFree(&tcl_cmd);
 
 	/************************************************************
-	 * If there was an error in a PG callback, propagate that
-	 * no matter what Tcl claims about its success.
-	 ************************************************************/
-	if (pltcl_error_in_progress)
-	{
-		ErrorData  *edata = pltcl_error_in_progress;
-
-		pltcl_error_in_progress = NULL;
-		ReThrowError(edata);
-	}
-
-	/************************************************************
-	 * Check for errors reported by Tcl itself.
+	 * Check for errors reported by Tcl.
 	 ************************************************************/
 	if (tcl_rc != TCL_OK)
 	{
 		UTF_BEGIN;
 		ereport(ERROR,
-				(errmsg("pltcl: %s", interp->result),
-				 errdetail("%s",
-						   UTF_U2E(Tcl_GetVar(interp, "errorInfo",
-											  TCL_GLOBAL_ONLY)))));
+				(errmsg("%s", interp->result),
+				 errcontext("%s",
+							UTF_U2E(Tcl_GetVar(interp, "errorInfo",
+											   TCL_GLOBAL_ONLY)))));
 		UTF_END;
 	}
 
@@ -1312,15 +1281,6 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	volatile int level;
 	MemoryContext oldcontext;
 
-	/************************************************************
-	 * Suppress messages if an error is already declared
-	 ************************************************************/
-	if (pltcl_error_in_progress)
-	{
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-
 	if (argc != 3)
 	{
 		Tcl_SetResult(interp, "syntax error - 'elog level msg'",
@@ -1350,8 +1310,9 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * If elog() throws an error, catch and save it, then return
-	 * error indication to Tcl interpreter.
+	 * If elog() throws an error, catch it and return the error to the
+	 * Tcl interpreter.  Note we are assuming that elog() can't have any
+	 * internal failures that are so bad as to require a transaction abort.
 	 ************************************************************/
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
@@ -1362,9 +1323,17 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 	}
 	PG_CATCH();
 	{
+		ErrorData  *edata;
+
+		/* Must reset elog.c's state */
 		MemoryContextSwitchTo(oldcontext);
-		pltcl_error_in_progress = CopyErrorData();
+		edata = CopyErrorData();
 		FlushErrorState();
+
+		/* Pass the error message to Tcl */
+		Tcl_SetResult(interp, edata->message, TCL_VOLATILE);
+		FreeErrorData(edata);
+
 		return TCL_ERROR;
 	}
 	PG_END_TRY();
@@ -1522,6 +1491,83 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 }
 
 
+/*----------
+ * Support for running SPI operations inside subtransactions
+ *
+ * Intended usage pattern is:
+ *
+ *	MemoryContext oldcontext = CurrentMemoryContext;
+ *	ResourceOwner oldowner = CurrentResourceOwner;
+ *
+ *	...
+ *	pltcl_subtrans_begin(oldcontext, oldowner);
+ *	PG_TRY();
+ *	{
+ *		do something risky;
+ *		pltcl_subtrans_commit(oldcontext, oldowner);
+ *	}
+ *	PG_CATCH();
+ *	{
+ *		pltcl_subtrans_abort(interp, oldcontext, oldowner);
+ *		return TCL_ERROR;
+ *	}
+ *	PG_END_TRY();
+ *	return TCL_OK;
+ *----------
+ */
+static void
+pltcl_subtrans_begin(MemoryContext oldcontext, ResourceOwner oldowner)
+{
+	BeginInternalSubTransaction(NULL);
+
+	/* Want to run inside function's memory context */
+	MemoryContextSwitchTo(oldcontext);
+}
+
+static void
+pltcl_subtrans_commit(MemoryContext oldcontext, ResourceOwner oldowner)
+{
+	/* Commit the inner transaction, return to outer xact context */
+	ReleaseCurrentSubTransaction();
+	MemoryContextSwitchTo(oldcontext);
+	CurrentResourceOwner = oldowner;
+
+	/*
+	 * AtEOSubXact_SPI() should not have popped any SPI context,
+	 * but just in case it did, make sure we remain connected.
+	 */
+	SPI_restore_connection();
+}
+
+static void
+pltcl_subtrans_abort(Tcl_Interp *interp,
+					 MemoryContext oldcontext, ResourceOwner oldowner)
+{
+	ErrorData  *edata;
+
+	/* Save error info */
+	MemoryContextSwitchTo(oldcontext);
+	edata = CopyErrorData();
+	FlushErrorState();
+
+	/* Abort the inner transaction */
+	RollbackAndReleaseCurrentSubTransaction();
+	MemoryContextSwitchTo(oldcontext);
+	CurrentResourceOwner = oldowner;
+
+	/*
+	 * If AtEOSubXact_SPI() popped any SPI context of the subxact,
+	 * it will have left us in a disconnected state.  We need this
+	 * hack to return to connected state.
+	 */
+	SPI_restore_connection();
+
+	/* Pass the error message to Tcl */
+	Tcl_SetResult(interp, edata->message, TCL_VOLATILE);
+	FreeErrorData(edata);
+}
+
+
 /**********************************************************************
  * pltcl_SPI_execute()		- The builtin SPI_execute command
  *				  for the Tcl interpreter
@@ -1530,35 +1576,22 @@ static int
 pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[])
 {
-	volatile int my_rc;
+	int			my_rc;
 	int			spi_rc;
-	char		buf[64];
+	int			query_idx;
+	int			i;
 	int			count = 0;
 	CONST84 char *volatile arrayname = NULL;
-	volatile int query_idx;
-	int			i;
-	int			loop_rc;
-	int			ntuples;
-	HeapTuple  *volatile tuples;
-	volatile TupleDesc tupdesc = NULL;
-	SPITupleTable *tuptable;
-	MemoryContext oldcontext;
+	CONST84 char *volatile loop_body = NULL;
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
 
 	char	   *usage = "syntax error - 'SPI_exec "
 	"?-count n? "
 	"?-array name? query ?loop body?";
 
 	/************************************************************
-	 * Don't do anything if we are already in error mode
-	 ************************************************************/
-	if (pltcl_error_in_progress)
-	{
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-
-	/************************************************************
-	 * Check the call syntax and get the count option
+	 * Check the call syntax and get the options
 	 ************************************************************/
 	if (argc < 2)
 	{
@@ -1596,133 +1629,143 @@ pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	query_idx = i;
-	if (query_idx >= argc)
+	if (query_idx >= argc || query_idx + 2 < argc)
 	{
 		Tcl_SetResult(interp, usage, TCL_VOLATILE);
 		return TCL_ERROR;
 	}
+	if (query_idx + 1 < argc)
+		loop_body = argv[query_idx + 1];
 
 	/************************************************************
-	 * Execute the query and handle return codes
+	 * Execute the query inside a sub-transaction, so we can cope with
+	 * errors sanely
 	 ************************************************************/
-	oldcontext = CurrentMemoryContext;
+
+	pltcl_subtrans_begin(oldcontext, oldowner);
+
 	PG_TRY();
 	{
 		UTF_BEGIN;
 		spi_rc = SPI_execute(UTF_U2E(argv[query_idx]),
 							 pltcl_current_prodesc->fn_readonly, count);
 		UTF_END;
+
+		my_rc = pltcl_process_SPI_result(interp,
+										 arrayname,
+										 loop_body,
+										 spi_rc,
+										 SPI_tuptable,
+										 SPI_processed);
+
+		pltcl_subtrans_commit(oldcontext, oldowner);
 	}
 	PG_CATCH();
 	{
-		MemoryContextSwitchTo(oldcontext);
-		pltcl_error_in_progress = CopyErrorData();
-		FlushErrorState();
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+		pltcl_subtrans_abort(interp, oldcontext, oldowner);
 		return TCL_ERROR;
 	}
 	PG_END_TRY();
+
+	return my_rc;
+}
+
+/*
+ * Process the result from SPI_execute or SPI_execute_plan
+ *
+ * Shared code between pltcl_SPI_execute and pltcl_SPI_execute_plan
+ */
+static int
+pltcl_process_SPI_result(Tcl_Interp *interp,
+						 CONST84 char *arrayname,
+						 CONST84 char *loop_body,
+						 int spi_rc,
+						 SPITupleTable *tuptable,
+						 int ntuples)
+{
+	int			my_rc = TCL_OK;
+	char		buf[64];
+	int			i;
+	int			loop_rc;
+	HeapTuple  *tuples;
+	TupleDesc	tupdesc;
 
 	switch (spi_rc)
 	{
 		case SPI_OK_UTILITY:
 			Tcl_SetResult(interp, "0", TCL_VOLATILE);
-			SPI_freetuptable(SPI_tuptable);
-			return TCL_OK;
+			break;
 
 		case SPI_OK_SELINTO:
 		case SPI_OK_INSERT:
 		case SPI_OK_DELETE:
 		case SPI_OK_UPDATE:
-			snprintf(buf, sizeof(buf), "%d", SPI_processed);
+			snprintf(buf, sizeof(buf), "%d", ntuples);
 			Tcl_SetResult(interp, buf, TCL_VOLATILE);
-			SPI_freetuptable(SPI_tuptable);
-			return TCL_OK;
+			break;
 
 		case SPI_OK_SELECT:
+			/*
+			 * Process the tuples we got
+			 */
+			tuples = tuptable->vals;
+			tupdesc = tuptable->tupdesc;
+
+			if (loop_body == NULL)
+			{
+				/*
+				 * If there is no loop body given, just set the variables
+				 * from the first tuple (if any)
+				 */
+				if (ntuples > 0)
+					pltcl_set_tuple_values(interp, arrayname, 0,
+										   tuples[0], tupdesc);
+			}
+			else
+			{
+				/*
+				 * There is a loop body - process all tuples and evaluate
+				 * the body on each
+				 */
+				for (i = 0; i < ntuples; i++)
+				{
+					pltcl_set_tuple_values(interp, arrayname, i,
+										   tuples[i], tupdesc);
+
+					loop_rc = Tcl_Eval(interp, loop_body);
+
+					if (loop_rc == TCL_OK)
+						continue;
+					if (loop_rc == TCL_CONTINUE)
+						continue;
+					if (loop_rc == TCL_RETURN)
+					{
+						my_rc = TCL_RETURN;
+						break;
+					}
+					if (loop_rc == TCL_BREAK)
+						break;
+					my_rc = TCL_ERROR;
+					break;
+				}
+			}
+
+			if (my_rc == TCL_OK)
+			{
+				snprintf(buf, sizeof(buf), "%d", ntuples);
+				Tcl_SetResult(interp, buf, TCL_VOLATILE);
+			}
 			break;
 
 		default:
 			Tcl_AppendResult(interp, "pltcl: SPI_execute failed: ",
 							 SPI_result_code_string(spi_rc), NULL);
-			SPI_freetuptable(SPI_tuptable);
-			return TCL_ERROR;
+			my_rc = TCL_ERROR;
+			break;
 	}
 
-	/************************************************************
-	 * Only SELECT queries fall through to here - process the tuples we got
-	 ************************************************************/
-	ntuples = SPI_processed;
-	tuptable = SPI_tuptable;
-	if (ntuples > 0)
-	{
-		tuples = tuptable->vals;
-		tupdesc = tuptable->tupdesc;
-	}
+	SPI_freetuptable(tuptable);
 
-	my_rc = TCL_OK;
-	PG_TRY();
-	{
-		if (argc == query_idx + 1)
-		{
-			/************************************************************
-			 * If there is no loop body given, just set the variables
-			 * from the first tuple (if any)
-			 ************************************************************/
-			if (ntuples > 0)
-				pltcl_set_tuple_values(interp, arrayname, 0,
-									   tuples[0], tupdesc);
-		}
-		else
-		{
-			/************************************************************
-			 * There is a loop body - process all tuples and evaluate
-			 * the body on each
-			 ************************************************************/
-			query_idx++;
-			for (i = 0; i < ntuples; i++)
-			{
-				pltcl_set_tuple_values(interp, arrayname, i,
-									   tuples[i], tupdesc);
-
-				loop_rc = Tcl_Eval(interp, argv[query_idx]);
-
-				if (loop_rc == TCL_OK)
-					continue;
-				if (loop_rc == TCL_CONTINUE)
-					continue;
-				if (loop_rc == TCL_RETURN)
-				{
-					my_rc = TCL_RETURN;
-					break;
-				}
-				if (loop_rc == TCL_BREAK)
-					break;
-				my_rc = TCL_ERROR;
-				break;
-			}
-		}
-
-		SPI_freetuptable(tuptable);
-	}
-	PG_CATCH();
-	{
-		MemoryContextSwitchTo(oldcontext);
-		pltcl_error_in_progress = CopyErrorData();
-		FlushErrorState();
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
-	PG_END_TRY();
-
-	/************************************************************
-	 * Finally return the number of tuples
-	 ************************************************************/
-	if (my_rc == TCL_OK)
-	{
-		snprintf(buf, sizeof(buf), "%d", ntuples);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
-	}
 	return my_rc;
 }
 
@@ -1748,16 +1791,8 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	Tcl_HashEntry *hashent;
 	int			hashnew;
 	Tcl_HashTable *query_hash;
-	MemoryContext oldcontext;
-
-	/************************************************************
-	 * Don't do anything if we are already in error mode
-	 ************************************************************/
-	if (pltcl_error_in_progress)
-	{
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
 
 	/************************************************************
 	 * Check the call syntax
@@ -1785,7 +1820,13 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	qdesc->arginfuncs = (FmgrInfo *) malloc(nargs * sizeof(FmgrInfo));
 	qdesc->argtypioparams = (Oid *) malloc(nargs * sizeof(Oid));
 
-	oldcontext = CurrentMemoryContext;
+	/************************************************************
+	 * Execute the prepare inside a sub-transaction, so we can cope with
+	 * errors sanely
+	 ************************************************************/
+
+	pltcl_subtrans_begin(oldcontext, oldowner);
+
 	PG_TRY();
 	{
 		/************************************************************
@@ -1844,30 +1885,30 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 		/* Release the procCxt copy to avoid within-function memory leak */
 		SPI_freeplan(plan);
 
-		/************************************************************
-		 * Insert a hashtable entry for the plan and return
-		 * the key to the caller
-		 ************************************************************/
-		if (interp == pltcl_norm_interp)
-			query_hash = pltcl_norm_query_hash;
-		else
-			query_hash = pltcl_safe_query_hash;
-
+		pltcl_subtrans_commit(oldcontext, oldowner);
 	}
 	PG_CATCH();
 	{
-		MemoryContextSwitchTo(oldcontext);
-		pltcl_error_in_progress = CopyErrorData();
-		FlushErrorState();
+		pltcl_subtrans_abort(interp, oldcontext, oldowner);
+
 		free(qdesc->argtypes);
 		free(qdesc->arginfuncs);
 		free(qdesc->argtypioparams);
 		free(qdesc);
 		ckfree((char *) args);
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+
 		return TCL_ERROR;
 	}
 	PG_END_TRY();
+
+	/************************************************************
+	 * Insert a hashtable entry for the plan and return
+	 * the key to the caller
+	 ************************************************************/
+	if (interp == pltcl_norm_interp)
+		query_hash = pltcl_norm_query_hash;
+	else
+		query_hash = pltcl_safe_query_hash;
 
 	hashent = Tcl_CreateHashEntry(query_hash, qdesc->qname, &hashnew);
 	Tcl_SetHashValue(hashent, (ClientData) qdesc);
@@ -1886,40 +1927,26 @@ static int
 pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 					   int argc, CONST84 char *argv[])
 {
-	volatile int my_rc;
+	int			my_rc;
 	int			spi_rc;
-	char		buf[64];
-	volatile int i;
+	int			i;
 	int			j;
-	int			loop_body;
 	Tcl_HashEntry *hashent;
 	pltcl_query_desc *qdesc;
-	Datum	   *volatile argvalues = NULL;
 	const char *volatile nulls = NULL;
 	CONST84 char *volatile arrayname = NULL;
+	CONST84 char *volatile loop_body = NULL;
 	int			count = 0;
 	int			callnargs;
-	CONST84 char **callargs;
-	int			loop_rc;
-	int			ntuples;
-	HeapTuple  *volatile tuples = NULL;
-	volatile TupleDesc tupdesc = NULL;
-	SPITupleTable *tuptable;
-	volatile MemoryContext oldcontext;
+	CONST84 char **callargs = NULL;
+	Datum	   *argvalues;
+	MemoryContext oldcontext = CurrentMemoryContext;
+	ResourceOwner oldowner = CurrentResourceOwner;
 	Tcl_HashTable *query_hash;
 
 	char	   *usage = "syntax error - 'SPI_execp "
 	"?-nulls string? ?-count n? "
 	"?-array name? query ?args? ?loop body?";
-
-	/************************************************************
-	 * Don't do anything if we are already in error mode
-	 ************************************************************/
-	if (pltcl_error_in_progress)
-	{
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
-		return TCL_ERROR;
-	}
 
 	/************************************************************
 	 * Get the options and check syntax
@@ -1963,7 +1990,7 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 	}
 
 	/************************************************************
-	 * Check minimum call arguments
+	 * Get the prepared plan descriptor by its key
 	 ************************************************************/
 	if (i >= argc)
 	{
@@ -1971,21 +1998,19 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 		return TCL_ERROR;
 	}
 
-	/************************************************************
-	 * Get the prepared plan descriptor by its key
-	 ************************************************************/
 	if (interp == pltcl_norm_interp)
 		query_hash = pltcl_norm_query_hash;
 	else
 		query_hash = pltcl_safe_query_hash;
 
-	hashent = Tcl_FindHashEntry(query_hash, argv[i++]);
+	hashent = Tcl_FindHashEntry(query_hash, argv[i]);
 	if (hashent == NULL)
 	{
-		Tcl_AppendResult(interp, "invalid queryid '", argv[--i], "'", NULL);
+		Tcl_AppendResult(interp, "invalid queryid '", argv[i], "'", NULL);
 		return TCL_ERROR;
 	}
 	qdesc = (pltcl_query_desc *) Tcl_GetHashValue(hashent);
+	i++;
 
 	/************************************************************
 	 * If a nulls string is given, check for correct length
@@ -2030,178 +2055,86 @@ pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 			ckfree((char *) callargs);
 			return TCL_ERROR;
 		}
-
-		/************************************************************
-		 * Setup the value array for SPI_execute_plan() using
-		 * the type specific input functions
-		 ************************************************************/
-		oldcontext = CurrentMemoryContext;
-		PG_TRY();
-		{
-			argvalues = (Datum *) palloc(callnargs * sizeof(Datum));
-
-			for (j = 0; j < callnargs; j++)
-			{
-				if (nulls && nulls[j] == 'n')
-				{
-					/* don't try to convert the input for a null */
-					argvalues[j] = (Datum) 0;
-				}
-				else
-				{
-					UTF_BEGIN;
-					argvalues[j] =
-						FunctionCall3(&qdesc->arginfuncs[j],
-								   CStringGetDatum(UTF_U2E(callargs[j])),
-							  ObjectIdGetDatum(qdesc->argtypioparams[j]),
-									  Int32GetDatum(-1));
-					UTF_END;
-				}
-			}
-		}
-		PG_CATCH();
-		{
-			ckfree((char *) callargs);
-			MemoryContextSwitchTo(oldcontext);
-			pltcl_error_in_progress = CopyErrorData();
-			FlushErrorState();
-			Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
-			return TCL_ERROR;
-		}
-		PG_END_TRY();
-
-		ckfree((char *) callargs);
 	}
 	else
 		callnargs = 0;
 
 	/************************************************************
-	 * Remember the index of the last processed call
-	 * argument - a loop body for SELECT might follow
+	 * Get loop body if present
 	 ************************************************************/
-	loop_body = i;
+	if (i < argc)
+		loop_body = argv[i++];
 
-	/************************************************************
-	 * Execute the plan
-	 ************************************************************/
-	oldcontext = CurrentMemoryContext;
-	PG_TRY();
+	if (i != argc)
 	{
-		spi_rc = SPI_execute_plan(qdesc->plan, argvalues, nulls,
-								  pltcl_current_prodesc->fn_readonly, count);
-	}
-	PG_CATCH();
-	{
-		MemoryContextSwitchTo(oldcontext);
-		pltcl_error_in_progress = CopyErrorData();
-		FlushErrorState();
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+		Tcl_SetResult(interp, usage, TCL_VOLATILE);
 		return TCL_ERROR;
 	}
-	PG_END_TRY();
 
 	/************************************************************
-	 * Check the return code from SPI_execute_plan()
+	 * Execute the plan inside a sub-transaction, so we can cope with
+	 * errors sanely
 	 ************************************************************/
-	switch (spi_rc)
-	{
-		case SPI_OK_UTILITY:
-			Tcl_SetResult(interp, "0", TCL_VOLATILE);
-			SPI_freetuptable(SPI_tuptable);
-			return TCL_OK;
 
-		case SPI_OK_SELINTO:
-		case SPI_OK_INSERT:
-		case SPI_OK_DELETE:
-		case SPI_OK_UPDATE:
-			snprintf(buf, sizeof(buf), "%d", SPI_processed);
-			Tcl_SetResult(interp, buf, TCL_VOLATILE);
-			SPI_freetuptable(SPI_tuptable);
-			return TCL_OK;
+	pltcl_subtrans_begin(oldcontext, oldowner);
 
-		case SPI_OK_SELECT:
-			break;
-
-		default:
-			Tcl_AppendResult(interp, "pltcl: SPI_execute_plan failed: ",
-							 SPI_result_code_string(spi_rc), NULL);
-			SPI_freetuptable(SPI_tuptable);
-			return TCL_ERROR;
-	}
-
-	/************************************************************
-	 * Only SELECT queries fall through to here - process the tuples we got
-	 ************************************************************/
-	ntuples = SPI_processed;
-	tuptable = SPI_tuptable;
-	if (ntuples > 0)
-	{
-		tuples = tuptable->vals;
-		tupdesc = tuptable->tupdesc;
-	}
-
-	my_rc = TCL_OK;
 	PG_TRY();
 	{
-		if (loop_body >= argc)
+		/************************************************************
+		 * Setup the value array for SPI_execute_plan() using
+		 * the type specific input functions
+		 ************************************************************/
+		argvalues = (Datum *) palloc(callnargs * sizeof(Datum));
+
+		for (j = 0; j < callnargs; j++)
 		{
-			/************************************************************
-			 * If there is no loop body given, just set the variables
-			 * from the first tuple (if any)
-			 ************************************************************/
-			if (ntuples > 0)
-				pltcl_set_tuple_values(interp, arrayname, 0,
-									   tuples[0], tupdesc);
-		}
-		else
-		{
-			/************************************************************
-			 * There is a loop body - process all tuples and evaluate
-			 * the body on each
-			 ************************************************************/
-			for (i = 0; i < ntuples; i++)
+			if (nulls && nulls[j] == 'n')
 			{
-				pltcl_set_tuple_values(interp, arrayname, i,
-									   tuples[i], tupdesc);
-
-				loop_rc = Tcl_Eval(interp, argv[loop_body]);
-
-				if (loop_rc == TCL_OK)
-					continue;
-				if (loop_rc == TCL_CONTINUE)
-					continue;
-				if (loop_rc == TCL_RETURN)
-				{
-					my_rc = TCL_RETURN;
-					break;
-				}
-				if (loop_rc == TCL_BREAK)
-					break;
-				my_rc = TCL_ERROR;
-				break;
+				/* don't try to convert the input for a null */
+				argvalues[j] = (Datum) 0;
+			}
+			else
+			{
+				UTF_BEGIN;
+				argvalues[j] =
+					FunctionCall3(&qdesc->arginfuncs[j],
+								  CStringGetDatum(UTF_U2E(callargs[j])),
+								  ObjectIdGetDatum(qdesc->argtypioparams[j]),
+								  Int32GetDatum(-1));
+				UTF_END;
 			}
 		}
 
-		SPI_freetuptable(tuptable);
+		if (callargs)
+			ckfree((char *) callargs);
+		callargs = NULL;
+
+		/************************************************************
+		 * Execute the plan
+		 ************************************************************/
+		spi_rc = SPI_execute_plan(qdesc->plan, argvalues, nulls,
+								  pltcl_current_prodesc->fn_readonly, count);
+
+		my_rc = pltcl_process_SPI_result(interp,
+										 arrayname,
+										 loop_body,
+										 spi_rc,
+										 SPI_tuptable,
+										 SPI_processed);
+
+		pltcl_subtrans_commit(oldcontext, oldowner);
 	}
 	PG_CATCH();
 	{
-		MemoryContextSwitchTo(oldcontext);
-		pltcl_error_in_progress = CopyErrorData();
-		FlushErrorState();
-		Tcl_SetResult(interp, "Transaction aborted", TCL_VOLATILE);
+		pltcl_subtrans_abort(interp, oldcontext, oldowner);
+
+		if (callargs)
+			ckfree((char *) callargs);
+
 		return TCL_ERROR;
 	}
 	PG_END_TRY();
 
-	/************************************************************
-	 * Finally return the number of tuples
-	 ************************************************************/
-	if (my_rc == TCL_OK)
-	{
-		snprintf(buf, sizeof(buf), "%d", ntuples);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
-	}
 	return my_rc;
 }
 

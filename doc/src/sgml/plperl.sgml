@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.31 2004/11/19 23:22:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plperl.sgml,v 2.32 2004/11/21 21:17:01 tgl Exp $
 -->
 
  <chapter id="plperl">
@@ -219,9 +219,13 @@ $nrows = $rv-&gt;{processed};
        Emit a log or error message. Possible levels are
        <literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
        <literal>NOTICE</>, <literal>WARNING</>, and <literal>ERROR</>.
-       <literal>ERROR</> raises an error condition: further execution
-       of the function is abandoned, and the current transaction is
-       aborted.
+       <literal>ERROR</>
+        raises an error condition; if this is not trapped by the surrounding
+        Perl code, the error propagates out to the calling query, causing
+        the current transaction or subtransaction to be aborted.  This
+        is effectively the same as the Perl <literal>die</> command.
+        The other levels simply report the message to the system log
+        and/or client.
       </para>
      </listitem>
     </varlistentry>

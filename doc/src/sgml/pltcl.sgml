@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.31 2004/09/20 22:48:25 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/pltcl.sgml,v 2.32 2004/11/21 21:17:02 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -449,17 +449,19 @@ SELECT 'doesn''t' AS ret
       <term><function>elog</> <replaceable>level</replaceable> <replaceable>msg</replaceable></term>
       <listitem>
        <para>
-	Emits a log or error message. Possible levels are
-	<literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
-	<literal>NOTICE</>, <literal>WARNING</>, <literal>ERROR</>, and
-	<literal>FATAL</>. Most simply emit the given message just like
-	the <literal>elog</> C function. <literal>ERROR</>
-	raises an error condition: further execution of the function is
-	abandoned, and the current transaction is aborted.
-	<literal>FATAL</> aborts the transaction and causes the current
-	session to shut down.  (There is probably no good reason to use
-	this error level in PL/Tcl functions, but it's provided for
-	completeness.)
+        Emits a log or error message. Possible levels are
+        <literal>DEBUG</>, <literal>LOG</>, <literal>INFO</>,
+        <literal>NOTICE</>, <literal>WARNING</>, <literal>ERROR</>, and
+        <literal>FATAL</>. Most simply emit the given message just like
+        the <literal>elog</> C function. <literal>ERROR</>
+        raises an error condition; if this is not trapped by the surrounding
+        Tcl code, the error propagates out to the calling query, causing
+        the current transaction or subtransaction to be aborted.  This
+        is effectively the same as the Tcl <literal>error</> command.
+        <literal>FATAL</> aborts the transaction and causes the current
+        session to shut down.  (There is probably no good reason to use
+        this error level in PL/Tcl functions, but it's provided for
+        completeness.)
        </para>
       </listitem>
      </varlistentry>

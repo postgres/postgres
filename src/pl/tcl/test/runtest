@@ -6,6 +6,8 @@ export DBNAME
 echo "**** Destroy old database $DBNAME ****"
 dropdb $DBNAME
 
+sleep 1
+
 echo "**** Create test database $DBNAME ****"
 createdb $DBNAME
 

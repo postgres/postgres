@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.309 2004/11/20 21:44:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.310 2004/11/21 21:17:02 tgl Exp $
 -->
 
 <appendix id="release">
@@ -1683,6 +1683,15 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.309 2004/11/20 21:44:24 tgl Exp
     <listitem>
      <para>
       Major overhaul of PL/Perl server-side language (Command Prompt, Andrew Dunstan)
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      In PL/Tcl, SPI commands are now run in subtransactions.  If an error
+      occurs, the subtransaction is cleaned up and the error is reported
+      as an ordinary Tcl error, which can be trapped with <literal>catch</>.
+      Formerly, it was not possible to catch such errors.
      </para>
     </listitem>
 

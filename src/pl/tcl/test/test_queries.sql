@@ -1,3 +1,5 @@
+-- suppress CONTEXT so that function OIDs aren't in output
+\set VERBOSITY terse
 
 insert into T_pkey1 values (1, 'key1-1', 'test key');
 insert into T_pkey1 values (1, 'key1-2', 'test key');

@@ -1,4 +1,10 @@
 --
+-- checkpoint so that if we have a crash in the tests, replay of the
+-- just-completed CREATE DATABASE won't discard the core dump file
+--
+checkpoint;
+
+--
 -- Create the tables used in the test queries
 --
 -- T_pkey1 is the primary key table for T_dta1. Entries from T_pkey1
