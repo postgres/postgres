@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 25 15:29:56 EST 2002
+Last updated:		Mon Mar  4 11:19:14 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -79,6 +79,7 @@ DATA TYPES
 * Functions returning sets do not totally work
 * Change factorial to return a numeric
 * Add function to return compressed length of TOAST data values (Tom)
+* Add GUC parameter for eurodates
 
 * CONVERSION
 	o Store binary-compatible type information in the system
