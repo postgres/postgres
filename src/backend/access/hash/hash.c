@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.73 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/hash/hash.c,v 1.74 2004/11/11 00:32:40 neilc Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -44,11 +44,6 @@ static void hashbuildCallback(Relation index,
 
 /*
  *	hashbuild() -- build a new hash index.
- *
- *		We use a global variable to record the fact that we're creating
- *		a new index.  This is used to avoid high-concurrency locking,
- *		since the index won't be visible until this transaction commits
- *		and since building is guaranteed to be single-threaded.
  */
 Datum
 hashbuild(PG_FUNCTION_ARGS)
