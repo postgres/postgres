@@ -1,15 +1,15 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Fri Dec 17 23:12:56 EST 2004
+   Last updated: Fri Dec 24 11:02:21 EST 2004
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    The most recent version of this document can be viewed at
-   http://www.PostgreSQL.org/docs/faqs/FAQ.html.
+   http://www.postgresql.org/files/documentation/faqs/FAQ.html.
    
    Platform-specific questions are answered at
-   http://www.PostgreSQL.org/docs/index.html.
+   http://www.postgresql.org/docs/faq/.
      _________________________________________________________________
    
                              General Questions
@@ -130,7 +130,7 @@
    1.6 on how to join). This team is now responsible for all development
    of PostgreSQL. It is a community project and is not controlled by any
    company. To get involved, see the developer's FAQ at
-   http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
+   http://www.postgresql.org/files/documentation/faqs/FAQ_DEV.html
    
    The authors of PostgreSQL 1.01 were Andrew Yu and Jolly Chen. Many
    others have contributed to the porting, testing, debugging, and
@@ -309,7 +309,7 @@
     1.13) How do I submit a bug report?
     
    Visit the PostgreSQL bug form at
-   http://www.postgresql.org/bugform.html.
+   http://www.postgresql.org/support/submitbug.
    
    Also check out our ftp site ftp://ftp.PostgreSQL.org/pub to see if
    there is a more recent PostgreSQL version or patches.
@@ -381,8 +381,8 @@
    specific company. If you prefer, you can also send a check to the
    contact address.
    
-   Also, if you have a success story about PostgreSQL, please submit it
-   to our advocacy site at http://advocacy.postgresql.org.
+   Also, if you have a success story about PostgreSQL, please email it to
+   our advocacy list at pgsql-advocacy@postgresql.org.
      _________________________________________________________________
    
                            User Client Questions
