@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.86 2003/11/04 09:55:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.87 2003/11/04 19:18:15 tgl Exp $
 -->
 
 <chapter id="sql-syntax">
@@ -185,7 +185,7 @@ UPDATE "my_table" SET "a" = 5;
 
    <para>
     Quoted identifiers can contain any character other than a double
-    quote itself.  To include a double quote, write two double quotes.
+    quote itself.  (To include a double quote, write two double quotes.)
     This allows constructing table or column names that would
     otherwise not be possible, such as ones containing spaces or
     ampersands.  The length limitation still applies.
@@ -449,7 +449,7 @@ CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
    </indexterm>
 
    <para>
-    An operator is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
+    An operator name is a sequence of up to <symbol>NAMEDATALEN</symbol>-1
     (63 by default) characters from the following list:
 <literallayout>
 + - * / &lt; &gt; = ~ ! @ # % ^ &amp; | ` ?
@@ -857,6 +857,18 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 
     <listitem>
      <para>
+      A subscripted expression.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      A field selection expression.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
       An operator invocation.
      </para>
     </listitem>
@@ -928,30 +940,17 @@ SELECT 3 OPERATOR(pg_catalog.+) 4;
 <synopsis>
 <replaceable>correlation</replaceable>.<replaceable>columnname</replaceable>
 </synopsis>
-    or
-<synopsis>
-<replaceable>correlation</replaceable>.<replaceable>columnname</replaceable>[<replaceable>subscript</replaceable>]
-</synopsis>
-    (Here, the brackets <literal>[ ]</literal> are meant to appear literally.)
    </para>
 
    <para>
     <replaceable>correlation</replaceable> is the name of a
-    table (possibly qualified), or an alias for a table defined by means of a
-    <literal>FROM</literal> clause, or 
+    table (possibly qualified with a schema name), or an alias for a table
+    defined by means of a <literal>FROM</literal> clause, or one of
     the key words <literal>NEW</literal> or <literal>OLD</literal>.
     (<literal>NEW</literal> and <literal>OLD</literal> can only appear in rewrite rules,
     while other correlation names can be used in any SQL statement.)
     The correlation name and separating dot may be omitted if the column name
     is unique across all the tables being used in the current query.  (See also <xref linkend="queries">.)
-   </para>
-
-   <para>
-    If <replaceable>column</replaceable> is of an array type, then the
-    optional <replaceable>subscript</replaceable> selects a specific
-    element or elements in the array.  If no subscript is provided, then the
-    whole array is selected.  (See <xref linkend="arrays"> for more about
-    arrays.)
    </para>
   </sect2>
 
@@ -996,6 +995,81 @@ CREATE FUNCTION dept(text) RETURNS dept
   </sect2>
 
   <sect2>
+   <title>Subscripts</title>
+
+   <indexterm>
+    <primary>subscript</primary>
+   </indexterm>
+
+   <para>
+    If an expression yields a value of an array type, then a specific
+    element of the array value can be extracted by writing
+<synopsis>
+<replaceable>expression</replaceable>[<replaceable>subscript</replaceable>]
+</synopsis>
+    or multiple adjacent elements (an <quote>array slice</>) can be extracted
+    by writing
+<synopsis>
+<replaceable>expression</replaceable>[<replaceable>lower_subscript</replaceable>:<replaceable>upper_subscript</replaceable>]
+</synopsis>
+    (Here, the brackets <literal>[ ]</literal> are meant to appear literally.)
+    Each <replaceable>subscript</replaceable> is itself an expression,
+    which must yield an integer value.
+   </para>
+
+   <para>
+    In general the array <replaceable>expression</replaceable> must be
+    parenthesized, but the parentheses may be omitted when the expression
+    to be subscripted is just a column reference or positional parameter.
+    Also, multiple subscripts can be concatenated when the original array
+    is multi-dimensional.
+    For example,
+
+<programlisting>
+mytable.arraycolumn[4]
+mytable.two_d_column[17][34]
+$1[10:42]
+(arrayfunction(a,b))[42]
+</programlisting>
+
+    The parentheses in the last example are required.
+    See <xref linkend="arrays"> for more about arrays.
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>Field Selection</title>
+
+   <indexterm>
+    <primary>field selection</primary>
+   </indexterm>
+
+   <para>
+    If an expression yields a value of a composite type (row type), then a
+    specific field of the row can be extracted by writing
+<synopsis>
+<replaceable>expression</replaceable>.<replaceable>fieldname</replaceable>
+</synopsis>
+   </para>
+
+   <para>
+    In general the row <replaceable>expression</replaceable> must be
+    parenthesized, but the parentheses may be omitted when the expression
+    to be selected from is just a table reference or positional parameter.
+    For example,
+
+<programlisting>
+mytable.mycolumn
+$1.somecolumn
+(rowfunction(a,b)).col3
+</programlisting>
+
+    (Thus, a qualified column reference is actually just a special case
+    of the field selection syntax.)
+   </para>
+  </sect2>
+
+  <sect2>
    <title>Operator Invocations</title>
 
    <indexterm>
@@ -1013,7 +1087,7 @@ CREATE FUNCTION dept(text) RETURNS dept
     where the <replaceable>operator</replaceable> token follows the syntax
     rules of <xref linkend="sql-syntax-operators">, or is one of the
     key words <token>AND</token>, <token>OR</token>, and
-    <token>NOT</token>, or is a qualified operator name
+    <token>NOT</token>, or is a qualified operator name in the form
 <synopsis>
 <literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operatorname</><literal>)</>
 </synopsis>
@@ -1078,7 +1152,7 @@ sqrt(2)
 </synopsis>
 
     where <replaceable>aggregate_name</replaceable> is a previously
-    defined aggregate (possibly a qualified name), and
+    defined aggregate (possibly qualified with a schema name), and
     <replaceable>expression</replaceable> is 
     any value expression that does not itself contain an aggregate
     expression.
