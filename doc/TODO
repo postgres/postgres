@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jun 13 22:24:15 EDT 2000
+Last updated:		Tue Jun 13 22:56:20 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -98,6 +98,7 @@ TYPES
 * Allow arrays to hold NULL elements
 * Get BIT type working
 * Allow better handling of numeric constants
+* Support multiple simultaneous character sets, per SQL92
 
 VIEWS
 
