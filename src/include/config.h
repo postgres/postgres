@@ -35,6 +35,7 @@
 #define HAVE_CBRT
 #define HAVE_RINT
 #define HAVE_GETRUSAGE
+#define HAVE_SYSCONF
 
 #if defined(aix)
 #  undef HAVE_SYS_SELECT_H
@@ -151,6 +152,7 @@
 #endif
 
 #if defined(nextstep)
+# undef HAVE_SYSCONF
 # undef HAVE_VALUES_H
 # include <sys/ioctl.h>
 # if defined(__STRICT_ANSI__)
