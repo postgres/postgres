@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.c,v 1.3 2001/10/25 05:49:20 momjian Exp $
+ * $Id: px.c,v 1.4 2001/11/08 15:56:58 momjian Exp $
  */
 
 #include <postgres.h>
@@ -88,6 +88,8 @@ combo_init(PX_Combo * cx, const uint8 *key, uint klen,
 			memcpy(ivbuf, iv, ivlen);
 	}
 
+	if (klen > ks)
+		klen = ks;
 	keybuf = px_alloc(ks);
 	memset(keybuf, 0, ks);
 	memcpy(keybuf, key, klen);
@@ -96,6 +98,7 @@ combo_init(PX_Combo * cx, const uint8 *key, uint klen,
 
 	if (ivbuf)
 		px_free(ivbuf);
+	px_free(keybuf);
 
 	return err;
 }
