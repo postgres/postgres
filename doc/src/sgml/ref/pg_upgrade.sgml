@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.5 1999/07/22 15:09:13 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/Attic/pg_upgrade.sgml,v 1.6 1999/07/31 22:05:48 tgl Exp $
 Postgres documentation
 -->
 
@@ -20,17 +20,16 @@ Postgres documentation
  </refnamediv>
  <refsynopsisdiv>
   <refsynopsisdivinfo>
-   <date>1999-07-20</date>
+   <date>1999-07-31</date>
   </refsynopsisdivinfo>
   <synopsis>
-pg_upgrade
 pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replaceable class="parameter">old_data_dir</replaceable>
   </synopsis>
  </refsynopsisdiv>
 
  <refsect1 id="R1-APP-PG-UPGRADE-1">
   <refsect1info>
-   <date>1998-10-04</date>
+   <date>1999-07-31</date>
   </refsect1info>
   <title>
    Description
@@ -40,54 +39,66 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
    <application>pg_upgrade</application>
    is a utility for upgrading from a previous
    PostgreSQL release without reloading all the data.
-   Not all <productname>Postgres</productname> releases can be handled 
-   this way; check the release notes for details on your installation.
+   Not all <productname>Postgres</productname> release transitions can be
+   handled this way; check the release notes for details on your installation.
   </para>
 
   <procedure>
-   <title>Upgrading <productname>Postgres</productname></title>
+   <title>Upgrading <productname>Postgres</productname> with pg_upgrade</title>
 
    <step performance="required">
     <para>
-     Back up your data directory.
+     Back up your existing data directory, preferably by making a
+     complete dump with pg_dumpall.
     </para>
    </step>
 
    <step performance="required">
     <para>
-     Use:
+     Do
      <programlisting>
 % pg_dumpall -s >db.out
      </programlisting>
-     to dump out your old  database definitions without any
-     data.  Stop the postmaster and all backends.
+     to dump out your old database's table definitions without any data.
     </para>
    </step>
 
    <step performance="required">
     <para>
-     Rename  (using mv) your old pgsql <filename>data/</filename> directory to
+     Stop the old postmaster and all backends.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Rename (using mv) your old pgsql <filename>data/</filename> directory to
      <filename>data.old/</filename>.
     </para>
    </step>
 
    <step performance="required">
     <para>
-     Do a
-     <command>make install</command> to install the new binaries.
+     Do
+     <programlisting>
+% make install
+     </programlisting>
+     to install the new binaries.
     </para>
    </step>
 
    <step performance="required">
     <para>
-     Run <application>initdb</application> to create a new template1 database containing the system
-     tables for the new release.
+     Run <application>initdb</application> to create a new template1 database
+     containing the system tables for the new release.
     </para>
    </step>
 
    <step performance="required">
     <para>
-     Start the new postmaster.
+     Start the new postmaster.  (Note: it is critical that no users connect
+     to the database until the upgrade is complete.  You may wish to start
+     the postmaster without -i and/or alter <filename>pg_hba.conf</filename>
+     temporarily.)
     </para>
    </step>
 
@@ -98,22 +109,36 @@ pg_upgrade [ -f <replaceable class="parameter">filename</replaceable> ] <replace
      <programlisting>
 % pg_upgrade -f db.out data.old
      </programlisting>
-     The  system  will do some checking to make sure everything
-     is properly configured, and will run your db.out script to create
-     all the  databases and  tables you had, but with no
-     data.  It will then move the  data  files  from <filename>data.old/</filename>
-     into  the  proper <filename>data/</filename> directory.
+     The program will do some checking to make sure everything is properly
+     configured, and will run your db.out script to recreate all the databases
+     and tables you had, but with no data.  It will then physically move the
+     data files containing non-system tables and indexes from
+     <filename>data.old/</filename> into the proper
+     <filename>data/</filename> subdirectories, replacing the empty data files
+     created during the db.out script.
     </para>
    </step>
 
    <step performance="required">
     <para>
-     <emphasis>Carefully</emphasis> examine the contents of the upgraded database.
+     <emphasis>Carefully</emphasis> examine the contents of the upgraded
+     database.  If you detect problems, you'll need to recover by restoring
+     from your full pg_dump backup.
     </para>
    </step>
 
    <step performance="required">
     <para>
+     The upgraded database will be in an un-vacuumed state.  You will probably
+     want to run a <command>VACUUM ANALYZE</command> before beginning
+     production work.
+    </para>
+   </step>
+
+   <step performance="required">
+    <para>
+     Restart the postmaster and/or restore your old
+     <filename>pg_hba.conf</filename> if needed to allow user logins.
      You can delete the <filename>data.old/</filename> directory when you
      are finished.
     </para>
