@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.16 2001/03/22 06:16:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.16.2.1 2001/10/01 09:38:14 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,11 +29,11 @@
 #include "access/heapam.h"
 #include "parser/parsetree.h"
 
-static int	TidListCreate(List *, ExprContext *, ItemPointer *);
+static int	TidListCreate(List *, ExprContext *, ItemPointerData []);
 static TupleTableSlot *TidNext(TidScan *node);
 
 static int
-TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
+TidListCreate(List *evalList, ExprContext *econtext, ItemPointerData tidList[])
 {
 	List	   *lst;
 	ItemPointer itemptr;
@@ -49,7 +49,7 @@ TidListCreate(List *evalList, ExprContext *econtext, ItemPointer *tidList)
 													  NULL));
 		if (!isNull && itemptr && ItemPointerIsValid(itemptr))
 		{
-			tidList[numTids] = itemptr;
+			tidList[numTids] = *itemptr;
 			numTids++;
 		}
 	}
@@ -80,8 +80,7 @@ TidNext(TidScan *node)
 
 	bool		bBackward;
 	int			tidNumber;
-	ItemPointer *tidList,
-				itemptr;
+	ItemPointerData* tidList;
 
 	/*
 	 * extract necessary information from tid scan node
@@ -146,14 +145,10 @@ TidNext(TidScan *node)
 	{
 		bool		slot_is_valid = false;
 
-		itemptr = tidList[tidstate->tss_TidPtr];
 		tuple->t_datamcxt = NULL;
 		tuple->t_data = NULL;
-		if (itemptr)
-		{
-			tuple->t_self = *(itemptr);
-			heap_fetch(heapRelation, snapshot, tuple, &buffer);
-		}
+		tuple->t_self = tidList[tidstate->tss_TidPtr];
+		heap_fetch(heapRelation, snapshot, tuple, &buffer);
 		if (tuple->t_data != NULL)
 		{
 			bool		prev_matches = false;
@@ -187,7 +182,7 @@ TidNext(TidScan *node)
 			for (prev_tid = 0; prev_tid < tidstate->tss_TidPtr;
 				 prev_tid++)
 			{
-				if (ItemPointerEquals(tidList[prev_tid], &tuple->t_self))
+				if (ItemPointerEquals(&tidList[prev_tid], &tuple->t_self))
 				{
 					prev_matches = true;
 					break;
@@ -254,7 +249,7 @@ ExecTidReScan(TidScan *node, ExprContext *exprCtxt, Plan *parent)
 {
 	EState	   *estate;
 	TidScanState *tidstate;
-	ItemPointer *tidList;
+	ItemPointerData* tidList;
 
 	tidstate = node->tidstate;
 	estate = node->scan.plan.state;
@@ -381,7 +376,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 {
 	TidScanState *tidstate;
 	CommonScanState *scanstate;
-	ItemPointer *tidList;
+	ItemPointerData*	tidList;
 	int			numTids;
 	int			tidPtr;
 	List	   *rangeTable;
@@ -436,7 +431,7 @@ ExecInitTidScan(TidScan *node, EState *estate, Plan *parent)
 	/*
 	 * get the tid node information
 	 */
-	tidList = (ItemPointer *) palloc(length(node->tideval) * sizeof(ItemPointer));
+	tidList = (ItemPointerData *) palloc(length(node->tideval) * sizeof(ItemPointerData));
 	numTids = 0;
 	if (!node->needRescan)
 		numTids = TidListCreate(node->tideval, scanstate->cstate.cs_ExprContext, tidList);

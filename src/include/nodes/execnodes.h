@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execnodes.h,v 1.57.2.1 2001/05/15 00:34:02 tgl Exp $
+ * $Id: execnodes.h,v 1.57.2.2 2001/10/01 09:38:14 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -454,7 +454,7 @@ typedef struct TidScanState
 	int			tss_NumTids;
 	int			tss_TidPtr;
 	int			tss_MarkTidPtr;
-	ItemPointer *tss_TidList;
+	ItemPointerData*	tss_TidList;
 	HeapTupleData tss_htup;
 } TidScanState;
 
