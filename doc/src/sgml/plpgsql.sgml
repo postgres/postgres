@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.26 2003/09/12 22:17:23 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/plpgsql.sgml,v 1.27 2003/09/23 19:58:50 tgl Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -156,7 +156,7 @@ END;
 
     <para>
      That means that your client application must send each query to
-     the database server, wait for it to process it, receive the
+     the database server, wait for it to be processed, receive the
      results, do some computation, then send other queries to the
      server. All this incurs interprocess communication and may also
      incur network overhead if your client is on a different machine
@@ -652,7 +652,7 @@ user_id users.user_id%TYPE;
     an existing table or view, by using the
     <replaceable>table_name</replaceable><literal>%ROWTYPE</literal>
     notation; or it can be declared by giving a composite type's name.
-    (Since every table has an associated datatype of the same name,
+    (Since every table has an associated composite type of the same name,
     it actually does not matter in <productname>PostgreSQL</> whether you
     write <literal>%ROWTYPE</literal> or not.  But the form with
     <literal>%ROWTYPE</literal> is more portable.)
@@ -916,12 +916,13 @@ tax := subtotal * 0.06;
      variable, or list of scalar variables.  This is done by:
 
 <synopsis>
-SELECT INTO <replaceable>target</replaceable> <replaceable>expressions</replaceable> FROM ...;
+SELECT INTO <replaceable>target</replaceable> <replaceable>select_expressions</replaceable> FROM ...;
 </synopsis>
 
      where <replaceable>target</replaceable> can be a record variable, a row
      variable, or a comma-separated list of simple variables and
-     record/row fields.
+     record/row fields.  The <replaceable>select_expressions</replaceable>
+     and the remainder of the command are the same as in regular SQL.
     </para>
 
     <para>
@@ -1085,9 +1086,11 @@ EXECUTE <replaceable class="command">command-string</replaceable>;
      The results from <command>SELECT</command> commands are discarded
      by <command>EXECUTE</command>, and <command>SELECT INTO</command>
      is not currently supported within <command>EXECUTE</command>.
-     So, the only way to extract a result from a dynamically-created
-     <command>SELECT</command> is to use the <command>FOR-IN-EXECUTE</> form
-     described later.
+     There are two ways to extract a result from a dynamically-created
+     <command>SELECT</command>: one is to use the <command>FOR-IN-EXECUTE</>
+     loop form described in <xref linkend="plpgsql-records-iterating">,
+     and the other is to use a cursor with <command>OPEN-FOR-EXECUTE</>, as
+     described in <xref linkend="plpgsql-cursor-opening">.
     </para>
 
     <para>
@@ -1107,8 +1110,8 @@ EXECUTE ''UPDATE tbl SET ''
      <function>quote_literal(<type>text</type>)</function>.<indexterm><primary>quote_ident</><secondary>use
      in
      PL/pgSQL</></indexterm><indexterm><primary>quote_literal</><secondary>use
-     in PL/pgSQL</></indexterm> Variables containing column and table
-     identifiers should be passed to function
+     in PL/pgSQL</></indexterm> For safety, variables containing column and
+     table identifiers should be passed to function
      <function>quote_ident</function>.  Variables containing values
      that should be literal strings in the constructed command should
      be passed to <function>quote_literal</function>.  Both take the
@@ -1157,8 +1160,8 @@ END;
 
     <para>
 	 There are several ways to determine the effect of a command. The
-	 first method is to use the <command>GET DIAGNOSTICS</command>,
-	 which has the form:
+	 first method is to use the <command>GET DIAGNOSTICS</command>
+	 command, which has the form:
 
 <synopsis>
 GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replaceable> <optional> , ... </optional> ;
@@ -1179,15 +1182,15 @@ GET DIAGNOSTICS <replaceable>variable</replaceable> = <replaceable>item</replace
     <para>
      An example:
 <programlisting>
-GET DIAGNOSTICS var_integer = ROW_COUNT;
+GET DIAGNOSTICS integer_var = ROW_COUNT;
 </programlisting>
     </para>
 
     <para>
-     The second method to determine the effects of a command is the
-     special variable named <literal>FOUND</literal> of
+     The second method to determine the effects of a command is to check the
+     special variable named <literal>FOUND</literal>, which is of
      type <type>boolean</type>.  <literal>FOUND</literal> starts out
-     false within each <application>PL/pgSQL</application> function.
+     false within each <application>PL/pgSQL</application> function call.
      It is set by each of the following types of statements:
 	 <itemizedlist>
 	  <listitem>
@@ -1200,7 +1203,7 @@ GET DIAGNOSTICS var_integer = ROW_COUNT;
 	  <listitem>
 	   <para>
 		A <command>PERFORM</> statement sets <literal>FOUND</literal>
-		true if it produces (discards) a row, false if no row is
+		true if it produces (and discards) a row, false if no row is
 		produced.
 	   </para>
 	  </listitem>
@@ -1271,7 +1274,7 @@ RETURN <replaceable>expression</replaceable>;
       <command>RETURN</command> with an expression terminates the
       function and returns the value of
       <replaceable>expression</replaceable> to the caller.  This form
-      is to be used for <application>PL/pgSQL</> functions that does
+      is to be used for <application>PL/pgSQL</> functions that do
       not return a set.
      </para>
 
@@ -1287,11 +1290,14 @@ RETURN <replaceable>expression</replaceable>;
       The return value of a function cannot be left undefined. If
       control reaches the end of the top-level block of the function
       without hitting a <command>RETURN</command> statement, a run-time
-      error will occur. Note that if you have declared the function to
+      error will occur.
+     </para>
+
+     <para>
+      If you have declared the function to
       return <type>void</type>, a <command>RETURN</command> statement
-      must still be specified; the expression following
-      <command>RETURN</command> is, however, optional and will be ignored in
-      any case.
+      must still be specified; but in this case the expression following
+      <command>RETURN</command> is optional and will be ignored if present.
      </para>
     </sect3>
 
@@ -1308,9 +1314,9 @@ RETURN NEXT <replaceable>expression</replaceable>;
       to follow is slightly different.  In that case, the individual
       items to return are specified in <command>RETURN NEXT</command>
       commands, and then a final <command>RETURN</command> command
-      with no arguments is used to indicate that the function has
+      with no argument is used to indicate that the function has
       finished executing.  <command>RETURN NEXT</command> can be used
-      with both scalar and composite data types; in the later case, an
+      with both scalar and composite data types; in the latter case, an
       entire <quote>table</quote> of results will be returned.
      </para>
 
@@ -1347,7 +1353,7 @@ SELECT * FROM some_func();
        written to disk to avoid memory exhaustion, but the function
        itself will not return until the entire result set has been
        generated.  A future version of <application>PL/pgSQL</> may
-       allow users to allow users to define set-returning functions
+       allow users to define set-returning functions
        that do not have this limitation.  Currently, the point at
        which data begins being written to disk is controlled by the
        <varname>sort_mem</> configuration variable.  Administrators
@@ -1585,19 +1591,19 @@ EXIT <optional> <replaceable>label</replaceable> </optional> <optional> WHEN <re
 <programlisting>
 LOOP
     -- some computations
-    IF count > 0 THEN
+    IF count &gt; 0 THEN
         EXIT;  -- exit loop
     END IF;
 END LOOP;
 
 LOOP
     -- some computations
-    EXIT WHEN count > 0;
+    EXIT WHEN count &gt; 0;  -- same result as previous example
 END LOOP;
 
 BEGIN
     -- some computations
-    IF stocks > 100000 THEN
+    IF stocks &gt; 100000 THEN
         EXIT;  -- invalid; cannot use EXIT outside of LOOP
     END IF;
 END;
@@ -1625,7 +1631,7 @@ END LOOP;
        <para>
         For example:
 <programlisting>
-WHILE amount_owed > 0 AND gift_certificate_balance > 0 LOOP
+WHILE amount_owed &gt; 0 AND gift_certificate_balance &gt; 0 LOOP
     -- some computations here
 END LOOP;
 
@@ -1660,19 +1666,20 @@ END LOOP;
         Some examples of integer <literal>FOR</> loops:
 <programlisting>
 FOR i IN 1..10 LOOP
-    -- some expressions here
+    -- some computations here
     RAISE NOTICE ''i is %'', i;
 END LOOP;
 
 FOR i IN REVERSE 10..1 LOOP
-    -- some expressions here
+    -- some computations here
 END LOOP;
 </programlisting>
        </para>
 
        <para>
-        If the lower bound is greater than the upper bound, the loop body is not
-        executed at all, but no error is raised.
+        If the lower bound is greater than the upper bound (or less than,
+	in the <literal>REVERSE</> case), the loop body is not
+        executed at all.  No error is raised.
        </para>
      </sect3>
    </sect2>
@@ -1744,7 +1751,9 @@ END LOOP;
      declared as a record or row variable.  If not, it's presumed to be
      an integer <literal>FOR</> loop.  This can cause rather nonintuitive error
      messages when the true problem is, say, that one has
-     misspelled the variable name after the <literal>FOR</>.
+     misspelled the variable name after the <literal>FOR</>.  Typically
+     the complaint will be something like <literal>missing ".." at end of SQL
+     expression</>.
     </para>
     </note>
   </sect2>
@@ -1766,7 +1775,7 @@ END LOOP;
     rows. (However, <application>PL/pgSQL</> users do not normally need
     to worry about that, since <literal>FOR</> loops automatically use a cursor
     internally to avoid memory problems.) A more interesting usage is to
-    return a reference to a cursor that it has created, allowing the
+    return a reference to a cursor that a function has created, allowing the
     caller to read the rows. This provides an efficient way to return
     large row sets from functions.
    </para>
@@ -1819,8 +1828,8 @@ DECLARE
      Before a cursor can be used to retrieve rows, it must be
      <firstterm>opened</>. (This is the equivalent action to the SQL
      command <command>DECLARE CURSOR</>.) <application>PL/pgSQL</> has
-     three forms of the <command>OPEN</> statement, two of which use unbound cursor
-     variables and the other uses a bound cursor variable.
+     three forms of the <command>OPEN</> statement, two of which use unbound
+     cursor variables while the third uses a bound cursor variable.
     </para>
 
     <sect3>
@@ -1958,7 +1967,7 @@ CLOSE <replaceable>cursor</replaceable>;
 </synopsis>
 
        <para>
-    <command>CLOSE</command> closes the Portal underlying an open
+        <command>CLOSE</command> closes the portal underlying an open
 	cursor.  This can be used to release resources earlier than end of
 	transaction, or to free up the cursor variable to be opened again.
        </para>
@@ -1976,18 +1985,41 @@ CLOSE curs1;
 
        <para>
         <application>PL/pgSQL</> functions can return cursors to the
-        caller. This is used to return multiple rows or columns from
-        the function. To do this, the function opens the cursor and returns the
-        cursor name to the caller. The caller can then
-        fetch rows from the cursor. The cursor can
-        be closed by the caller, or it will be closed automatically
+        caller. This is useful to return multiple rows or columns,
+	especially with very large result sets.  To do this, the function
+	opens the cursor and returns the cursor name to the caller (or simply
+	opens the cursor using a portal name specified by or otherwise known
+	to the caller).  The caller can then fetch rows from the cursor. The
+	cursor can be closed by the caller, or it will be closed automatically
         when the transaction closes.
        </para>
 
        <para>
-        The cursor name returned by the function can be specified by the
-        caller or automatically generated. The following example shows
-        how a cursor name can be supplied by the caller:
+        The portal name used for a cursor can be specified by the
+	programmer or automatically generated.  To specify a portal name,
+	simply assign a string to the <type>refcursor</> variable before
+	opening it.  The string value of the <type>refcursor</> variable
+	will be used by <command>OPEN</> as the name of the underlying portal.
+	However, if the <type>refcursor</> variable is NULL,
+	<command>OPEN</> automatically generates a name that does not
+	conflict with any existing portal, and assigns it to the
+	<type>refcursor</> variable.
+       </para>
+
+       <note>
+        <para>
+	 A bound cursor variable is initialized to the string value
+	 representing its name, so that the portal name is the same as
+	 the cursor variable name, unless the programmer overrides it
+	 by assignment before opening the cursor.  But an unbound cursor
+	 variable defaults to an initial value of NULL, so it will receive
+	 an automatically-generated unique name, unless overridden.
+        </para>
+       </note>
+
+       <para>
+        The following example shows one way a cursor name can be supplied by
+	the caller:
 
 <programlisting>
 CREATE TABLE test (col text);
@@ -2128,8 +2160,8 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
   <para>
 	<application>PL/pgSQL</application> can be used to define trigger
 	procedures. A trigger procedure is created with the
-	<command>CREATE FUNCTION</> command as a function with no
-	arguments and a return type of <type>trigger</type>.  Note that
+	<command>CREATE FUNCTION</> command, declaring it as a function with
+	no arguments and a return type of <type>trigger</type>.  Note that
 	the function must be declared with no arguments even if it expects
 	to receive arguments specified in <command>CREATE TRIGGER</> ---
 	trigger arguments are passed via <varname>TG_ARGV</>, as described
@@ -2255,22 +2287,29 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
    <para>
     A trigger function must return either null or a record/row value
     having exactly the structure of the table the trigger was fired
-    for. The return value of a <literal>BEFORE</> or <literal>AFTER</> statement-level
-    trigger or an <literal>AFTER</> row-level trigger is ignored; it may as well
-    be null. However, any of these types of triggers can still
-    abort the entire trigger operation by raising an error.
+    for.
    </para>
 
    <para>
     Row-level triggers fired <literal>BEFORE</> may return null to signal the
     trigger manager to skip the rest of the operation for this row
     (i.e., subsequent triggers are not fired, and the
-    <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> does not occur for this row).  If a nonnull
+    <command>INSERT</>/<command>UPDATE</>/<command>DELETE</> does not occur
+    for this row).  If a nonnull 
     value is returned then the operation proceeds with that row value.
     Returning a row value different from the original value
-    of <varname>NEW</> alters the row that will be inserted or updated.  It is
-    possible to replace single values directly in <varname>NEW</> and return <varname>NEW</>,
+    of <varname>NEW</> alters the row that will be inserted or updated
+    (but has no direct effect in the <command>DELETE</> case).
+    To alter the row to be stored, it is possible to replace single values
+    directly in <varname>NEW</> and return the modified <varname>NEW</>,
     or to build a complete new record/row to return.
+   </para>
+
+   <para>
+    The return value of a <literal>BEFORE</> or <literal>AFTER</>
+    statement-level trigger or an <literal>AFTER</> row-level trigger is
+    always ignored; it may as well be null. However, any of these types of
+    triggers can still abort the entire operation by raising an error.
    </para>
 
    <para>
@@ -2284,7 +2323,7 @@ RAISE EXCEPTION ''Inexistent ID --> %'', user_id;
     <para>
      This example trigger ensures that any time a row is inserted or updated
      in the table, the current user name and time are stamped into the
-     row. And it ensures that an employee's name is given and that the
+     row. And it checks that an employee's name is given and that the
      salary is a positive value.
     </para>
 
@@ -2343,7 +2382,7 @@ CREATE TRIGGER emp_stamp BEFORE INSERT OR UPDATE ON emp
    This section explains differences between
    <productname>PostgreSQL</>'s <application>PL/pgSQL</application>
    language and Oracle's <application>PL/SQL</application> language,
-   to help developers that port applications from Oracle to
+   to help developers who port applications from Oracle to
    <productname>PostgreSQL</>.
   </para>
 
@@ -2815,7 +2854,7 @@ END;
 
     <para>
      The <application>PL/pgSQL</> version of
-     <command>EXECUTE</command> works similar to the
+     <command>EXECUTE</command> works similarly to the
      <application>PL/SQL</> version, but you have to remember to use
      <function>quote_literal(text)</function> and
      <function>quote_string(text)</function> as described in <xref
