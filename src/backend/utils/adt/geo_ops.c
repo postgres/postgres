@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.25 1997/09/20 16:22:31 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.26 1997/09/25 14:09:04 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -224,9 +224,11 @@ path_decode(int opentype, int npts, char *str, int *isopen, char **ss, Point *p)
 			cp++;
 		if (*cp == LDELIM)
 		{
+#if FALSE
 			/* nested delimiters with only one point? */
 			if (npts <= 1)
 				return (FALSE);
+#endif
 			depth++;
 			s = cp;
 		}
