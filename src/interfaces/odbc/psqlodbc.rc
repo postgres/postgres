@@ -203,8 +203,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 6,30,2,48
- PRODUCTVERSION 6,30,2,48
+ FILEVERSION 6,30,2,50
+ PRODUCTVERSION 6,30,2,50
  FILEFLAGSMASK 0x3L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -222,12 +222,12 @@ BEGIN
             VALUE "Comments", "PostgreSQL ODBC driver for Windows 95\0"
             VALUE "CompanyName", "Insight Distribution Systems\0"
             VALUE "FileDescription", "PostgreSQL Driver\0"
-            VALUE "FileVersion", " 6.30.0248\0"
+            VALUE "FileVersion", " 6.30.0250\0"
             VALUE "InternalName", "psqlodbc\0"
             VALUE "LegalTrademarks", "ODBC(TM) is a trademark of Microsoft Corporation.  Microsoft® is a registered trademark of Microsoft Corporation. Windows(TM) is a trademark of Microsoft Corporation.\0"
             VALUE "OriginalFilename", "psqlodbc.dll\0"
             VALUE "ProductName", "Microsoft Open Database Connectivity\0"
-            VALUE "ProductVersion", " 6.30.0248\0"
+            VALUE "ProductVersion", " 6.30.0250\0"
         END
     END
     BLOCK "VarFileInfo"

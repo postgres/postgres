@@ -20,14 +20,15 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #include "statement.h"
 #include "connection.h"
 #include "qresult.h"
 #include "pgtypes.h"
 
-#ifdef UNIX
-#if !HAVE_STRICMP
+#ifndef WIN32
+#ifndef HAVE_STRICMP
 #define stricmp(s1,s2) 		strcasecmp(s1,s2)
 #define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
 #endif
@@ -36,6 +37,10 @@
 #define FLD_INCR	32
 #define TAB_INCR	8
 #define COL_INCR	16
+
+char *getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric);
+void getColInfo(COL_INFO *col_info, FIELD_INFO *fi, int k);
+char searchColInfo(COL_INFO *col_info, FIELD_INFO *fi);
 
 char *
 getNextToken(char *s, char *token, int smax, char *delim, char *quote, char *dquote, char *numeric)
@@ -106,7 +111,9 @@ char qc, in_escape = FALSE;
 			break;
 		}
 
-		if ( ispunct(s[i])) {
+		if ( ispunct(s[i]) && s[i] != '_') {
+			mylog("got ispunct: s[%d] = '%c'\n", i, s[i]);
+
 			if (out == 0) {
 				token[out++] = s[i++];
 				break;
@@ -205,12 +212,13 @@ char *col;
 char
 parse_statement(StatementClass *stmt)
 {
+static char *func="parse_statement";
 char token[256];
 char delim, quote, dquote, numeric, unquoted;
 char *ptr;
 char in_select = FALSE, in_distinct = FALSE, in_on = FALSE, in_from = FALSE, in_where = FALSE, in_table = FALSE;
 char in_field = FALSE, in_expr = FALSE, in_func = FALSE, in_dot = FALSE, in_as = FALSE;
-int j, i, k, n, blevel = 0;
+int j, i, k = 0, n, blevel = 0;
 FIELD_INFO **fi;
 TABLE_INFO **ti;
 char parse;
@@ -220,6 +228,8 @@ StatementClass *col_stmt;
 RETCODE result;
 
 
+	mylog("%s: entering...\n", func);
+
 	ptr = stmt->statement;
 	fi = stmt->fi;
 	ti = stmt->ti;
@@ -227,7 +237,7 @@ RETCODE result;
 	stmt->nfld = 0;
 	stmt->ntab = 0;
 
-	while (ptr = getNextToken(ptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) {
+	while ((ptr = getNextToken(ptr, token, sizeof(token), &delim, &quote, &dquote, &numeric)) != NULL) {
 
 		unquoted = ! ( quote || dquote );
 

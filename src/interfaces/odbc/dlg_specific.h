@@ -11,13 +11,13 @@
 #define __DLG_SPECIFIC_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "psqlodbc.h"
 #include "connection.h"
 
-#ifndef UNIX
+#ifdef WIN32
 #include  <windows.h>
 #include  <windowsx.h>
 #include  <odbcinst.h>
@@ -30,13 +30,20 @@
 #define UNKNOWNS_AS_LONGEST			2
 
 /* INI File Stuff */
-#ifdef UNIX
-#define ODBC_INI		".odbc.ini"
-#define ODBCINST_INI	"/etc/odbcinst.ini"
+#ifndef WIN32
+#define ODBC_INI        ".odbc.ini"
+#ifdef ODBCINST
+#define xstr(s)         str(s)
+#define str(s)          #s
+#define ODBCINST_INI    xstr(ODBCINST) "/odbcinst.ini"
 #else
-#define ODBC_INI		"ODBC.INI"         /* ODBC initialization file */
-#define ODBCINST_INI	"ODBCINST.INI"		/* ODBC Installation file */
+#define ODBCINST_INI    "/etc/odbcinst.ini"
 #endif
+#else
+#define ODBC_INI        "ODBC.INI"         /* ODBC initialization file */
+#define ODBCINST_INI    "ODBCINST.INI"      /* ODBC Installation file */
+#endif
+
 
 #define INI_DSN           DBMS_NAME         /* Name of default Datasource in ini file (not used?) */
 #define INI_KDESC         "Description"     /* Data source description */
@@ -81,13 +88,14 @@
 /*	Connection Defaults */
 #define DEFAULT_PORT					"5432"
 #define DEFAULT_READONLY				1
-#define DEFAULT_USEDECLAREFETCH			1
+#define DEFAULT_USEDECLAREFETCH			0
 #define DEFAULT_TEXTASLONGVARCHAR		1
 #define DEFAULT_UNKNOWNSASLONGVARCHAR	0
 #define DEFAULT_BOOLSASCHAR				1
 #define DEFAULT_OPTIMIZER				1		// disable
 #define DEFAULT_UNIQUEINDEX				0		// dont recognize
 #define DEFAULT_COMMLOG					0		// dont log
+#define DEFAULT_DEBUG					0
 #define DEFAULT_UNKNOWNSIZES			UNKNOWNS_AS_MAX
 
 
@@ -101,9 +109,9 @@
 #define DEFAULT_EXTRASYSTABLEPREFIXES	"dd_;"
 
 /*  prototypes */
-void getGlobalDefaults(void);
+void getGlobalDefaults(char *section, char *filename, char override);
 
-#ifndef UNIX
+#ifdef WIN32
 void SetDlgStuff(HWND hdlg, ConnInfo *ci);
 void GetDlgStuff(HWND hdlg, ConnInfo *ci);
 
@@ -115,7 +123,7 @@ int CALLBACK ds_optionsProc(HWND   hdlg,
                            WORD   wMsg,
                            WPARAM wParam,
                            LPARAM lParam);
-#endif /* ! UNIX */
+#endif /* WIN32 */
 
 void updateGlobals(void);
 void writeDSNinfo(ConnInfo *ci);

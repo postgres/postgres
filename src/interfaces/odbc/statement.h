@@ -11,10 +11,10 @@
 #define __STATEMENT_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #else
@@ -179,7 +179,7 @@ struct StatementClass_ {
 #define STMT_FREE_PARAMS_DATA_AT_EXEC_ONLY	1
 
 /*	Statement prototypes */
-StatementClass *SC_Constructor();
+StatementClass *SC_Constructor(void);
 char SC_Destructor(StatementClass *self);
 int statement_type(char *statement);
 char parse_statement(StatementClass *stmt);
@@ -194,16 +194,5 @@ RETCODE SC_execute(StatementClass *stmt);
 void SC_free_params(StatementClass *self, char option);
 void SC_log_error(char *func, char *desc, StatementClass *self);
 
-RETCODE SQL_API _SQLAllocStmt(HDBC hdbc, HSTMT FAR *phstmt);
-RETCODE SQL_API _SQLFreeStmt(HSTMT hstmt, UWORD fOption);
-RETCODE SQL_API _SQLExecDirect(HSTMT hstmt, UCHAR FAR *szSqlStr, SDWORD cbSqlStr);
-RETCODE SQL_API _SQLFetch(HSTMT   hstmt);
-RETCODE SQL_API _SQLGetData(
-        HSTMT      hstmt,
-        UWORD      icol,
-        SWORD      fCType,
-        PTR        rgbValue,
-        SDWORD     cbValueMax,
-        SDWORD FAR *pcbValue);
 
 #endif

@@ -1,0 +1,201 @@
+#----------------------------------------------------------------------------
+#
+# Makefile.global--
+#    global configuration for the Makefiles
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/Makefile.global.in,v 1.1 1998/10/06 05:57:56 thomas Exp $
+#
+# NOTES
+#    This is derived from the main Postgres makefile.
+#
+#    When running standalone:
+#    To override the default setting, create a Makefile.custom in this
+#    directory and put your defines there. (Makefile.custom is included
+#    near the end of this file).  Sometimes, a variable gets set in
+#    Makefile.global after Makefile.custom has been included, so you can't
+#    simply set that variable in Makefile.custom.  In those cases, there is
+#    often another variable (like CUSTOM_COPT) that you can set in 
+#    Makefile.custom that influences the later setting of the true variable
+#    of interest (like CFLAGS) by Makefile.global.
+#
+#
+#    If you change any of these defines you probably have to 
+#       make clean; make
+#    since no dependencies are created for these. (of course you can 
+#    be crafty and check what files really depend on them and just remake
+#    those).
+#        
+#    Before including this file, you must set the SRCDIR variable to the 
+#    path of the top of the Postgres source tree (the directory that 
+#    contains this file).  
+#
+#-------------------------------------------------------------------------
+
+
+##############################################################################
+#
+# CONFIGURATION SECTION
+#
+# Following are settings pertaining to the postgres build and 
+# installation.  
+# of the port.
+#
+# Ignore LINUX_ELF if you're not using Linux.  But if you are, and you're
+# compiling to a.out (which means you're using the dld dynamic loading 
+# library), set LINUX_ELF to null in Makefile.custom.
+LINUX_ELF= true
+#
+# Ignore BSD_SHLIB if you're not using one of the BSD ports.  But if you
+# are, and it's one that doesn't have shared libraries (NetBSD/vax is an
+# example of this), set BSD_SHLIB to null in Makefile.custom.
+BSD_SHLIB= true
+
+# For convenience, POSTGRESDIR is where BINDIR, and LIBDIR 
+# and other target destinations are rooted.  Of course, each of these is 
+# changable separately.
+
+POSTGRESDIR=@prefix@
+
+# Where the postgres executables live (changeable by just putting them
+# somewhere else and putting that directory in your shell PATH)
+BINDIR= $(POSTGRESDIR)/bin
+
+# Where libpsqlodbc.a gets installed.  You must put it where your loader will
+# look for it if you wish to use the -lpq convention.  Otherwise you
+# can just put the absolute pathname to the library at the end of your
+# command line.
+
+LIBDIR= $(POSTGRESDIR)/lib
+
+# Where the man pages (suitable for use with "man") get installed.
+POSTMANDIR= $(POSTGRESDIR)/man
+
+# Where the formatted documents (e.g., the reference manual) get installed.
+POSTDOCDIR= $(POSTGRESDIR)/doc
+
+# Where the header files necessary to build frontend programs get installed.
+HEADERDIR= $(POSTGRESDIR)/include
+
+# Where the odbcinst.ini file will be placed
+
+ODBCINST= $(POSTGRESDIR)@ODBCINSTDIR@
+
+##############################################################################
+#
+# FEATURES 
+#
+# To disable a feature, comment out the entire definition
+# (that is, prepend '#', don't set it to "0" or "no").
+
+##############################################################################
+#
+# Installation. 
+#
+# For many ports, INSTALL is overridden below.
+INSTALL= @INSTALL@
+RANLIB= @RANLIB@
+
+INSTLOPTS= @INSTLOPTS@
+INSTL_EXE_OPTS= @INSTL_EXE_OPTS@
+INSTL_LIB_OPTS= @INSTL_LIB_OPTS@
+
+##############################################################################
+#
+# For building shell scripts:
+# 
+# For many ports, these are overridden below.
+
+# DASH_N is what we put before the text on an echo command when we don't
+# want a trailing newline.  BACKSLASH_C is what we put at the end of the
+# string on a echo command when we don't want a trailing newline.  On
+# some systems, you do echo -n "no newline after this", while on others
+# you do echo "no newline after this\c".
+
+DASH_N= @DASH_N@
+BACKSLASH_C= @BACKSLASH_C@ 
+
+
+
+#-------------------------------------------------------------
+# See the subdirectory template for default settings for these
+#-------------------------------------------------------------
+CC= @CC@
+AROPT= @AROPT@
+CFLAGS= -I$(ODBCSRCDIR) @CPPFLAGS@ @CFLAGS@ 
+CFLAGS_SL= @SHARED_LIB@
+LDFLAGS= @LDFLAGS@ @LIBS@
+DLSUFFIX= @DLSUFFIX@
+LN_S = @LN_S@
+
+##############################################################################
+#
+# Customization.
+#
+# This includes local customizations. If we're being build from
+# within the Postgres distribution and a Makefile.custom exists
+# in the top level Postgres directory it overrides any local customization
+# that might be in Makefile.custom of the odbc driver directory. These
+# files don't exist in the original
+# distribution so that they don't get overwritten when you upgrade.
+
+ifneq ($(wildcard $(SRCDIR)/Makefile.custom), )
+include $(SRCDIR)/Makefile.custom
+endif
+
+ifneq ($(wildcard ../../Makefile.custom), )
+include ../../Makefile.custom
+endif
+
+# This goes here so that customization in Makefile.custom is effective
+##############################################################################
+
+ifneq ($(CUSTOM_INSTALL),)
+INSTALL= $(CUSTOM_INSTALL)
+endif
+
+#
+# Flags for CC and LD. 
+
+##############################################################################
+# COPT
+#
+# COPT is for options that the sophisticated builder might want to vary 
+# from one build to the next, like options to build Postgres with debugging
+# information included.  COPT is meant to be set on the make command line, 
+# for example with the command "make COPT=-g".  The value you see set here
+# is the default that gets used if the builder does not give a value for
+# COPT on his make command.
+#
+# There is a nonobvious relationship between -O (optimization) and 
+# -Werror (consider all warnings fatal).  On some systems, if you don't
+# optimize, you will always get some warnings because the system header
+# files will include some unreferenced functions in the code.  These are
+# functions that are supposed to be inline, so there wouldn't ordinarily
+# be an "unreferenced" problem, but if you don't enable optimization, no
+# inlining can happen, and hence the problem.  Therefore, we include 
+# if you override -O, you override -Werror as well.
+#
+# CUSTOM_COPT is something the user may set in Makefile.custom
+
+# Common values for COPT are: -g for debuggable binaries, -m486 if you are
+# using a i486 or better.
+
+ifneq ($(CUSTOM_CC),)
+  CC= $(CUSTOM_CC)
+endif
+
+ifneq ($(CUSTOM_COPT),)
+  COPT= $(CUSTOM_COPT)
+endif
+
+ifeq ($(CC), gcc)
+CFLAGS+= -Wall -Wmissing-prototypes
+endif
+
+ifdef COPT
+   CFLAGS+= $(COPT)
+endif

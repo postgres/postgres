@@ -13,11 +13,12 @@
 #ifndef WIN32
 
 #if HAVE_CONFIG_H
-#include <config.h>	// produced by configure
+#include "config.h"	// produced by configure
 #endif
 
 #include <stdio.h>
 #include <unistd.h>
+#include <ctype.h>
 
 #if HAVE_PWD_H
 #include <pwd.h>
@@ -26,6 +27,7 @@
 #include <sys/types.h>
 #include <string.h>
 #include "gpps.h"
+#include "misc.h"
 
 #ifndef TRUE
 #define TRUE	((BOOL)1)
@@ -54,6 +56,7 @@ GetPrivateProfileString(char *theSection,	// section name
 	size_t aLength;
 	char aLine[2048];
 	char *aValue;
+	char *aStart;
 	char *aString;
 	size_t aLineLength;
 	size_t aReturnLength = 0;
@@ -144,11 +147,15 @@ GetPrivateProfileString(char *theSection,	// section name
 
 				if( (aString = strchr(aLine, ']')) )
 				{
-					*aString = '\0';
+					aStart = aLine + 1;
+					aString--;
+					while (isspace(*aStart)) aStart++;
+					while (isspace(*aString)) aString--;
+					*(aString+1) = '\0';
 
 					// accept as matched if NULL key or exact match
 
-					if(!theSection || !strcmp(aLine + 1, theSection))
+					if(!theSection || !strcmp(aStart, theSection))
 					{
 						aSectionFound = TRUE;
 					}
@@ -185,11 +192,14 @@ GetPrivateProfileString(char *theSection,	// section name
 						aValue = "";
 					}
 
+					aStart = aLine;
+					while(isspace(*aStart)) aStart++;
+
 					// strip trailing blanks from key
 
 					if(aString)
 					{
-						while(--aString >= aLine && *aString == ' ')
+						while(--aString >= aStart && *aString == ' ')
 						{
 							*aString = '\0';
 						}
@@ -197,7 +207,7 @@ GetPrivateProfileString(char *theSection,	// section name
 
 					// see if key is matched
 
-					if(theKey == NULL || !strcmp(theKey, aLine))
+					if(theKey == NULL || !strcmp(theKey, aStart))
 					{
 						// matched -- first, terminate value part
 

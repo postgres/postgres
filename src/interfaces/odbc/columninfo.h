@@ -26,7 +26,7 @@ struct ColumnInfoClass_ {
 #define CI_get_fieldsize(self, col)		(self->adtsize[col])
 #define CI_get_display_size(self, col)	(self->display_size[col])
 
-ColumnInfoClass *CI_Constructor();
+ColumnInfoClass *CI_Constructor(void);
 void CI_Destructor(ColumnInfoClass *self);
 void CI_free_memory(ColumnInfoClass *self);
 char CI_read_fields(ColumnInfoClass *self, SocketClass *sock);

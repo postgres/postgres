@@ -25,7 +25,7 @@ ConnectionClass *conns[MAX_CONNECTIONS];
 
 RETCODE SQL_API SQLAllocEnv(HENV FAR *phenv)
 {
-char *func = "SQLAllocEnv";
+static char *func = "SQLAllocEnv";
 
 mylog("**** in SQLAllocEnv ** \n");
 
@@ -42,7 +42,7 @@ mylog("**** in SQLAllocEnv ** \n");
 
 RETCODE SQL_API SQLFreeEnv(HENV henv)
 {
-char *func = "SQLFreeEnv";
+static char *func = "SQLFreeEnv";
 EnvironmentClass *env = (EnvironmentClass *) henv;
 
 mylog("**** in SQLFreeEnv: env = %u ** \n", env);
@@ -403,8 +403,7 @@ mylog("EN_add_connection: self = %u, conn = %u\n", self, conn);
 			conn->henv = self;
 			conns[i] = conn;
 
-			mylog("       added at i =%d, conn->henv = %u, conns[i]->henv = %u\n",
-				i, conn->henv, conns[i]->henv);
+			mylog("       added at i =%d, conn->henv = %u, conns[i]->henv = %u\n", i, conn->henv, conns[i]->henv);
 
 			return TRUE;
 		}

@@ -13,7 +13,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "statement.h"
@@ -25,7 +25,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #else
@@ -35,8 +35,8 @@
 
 extern GLOBAL_VALUES globals;
 
-#ifdef UNIX
-#if !HAVE_STRICMP
+#ifndef WIN32
+#ifndef HAVE_STRICMP
 #define stricmp(s1,s2) 		strcasecmp(s1,s2)
 #define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
 #endif
@@ -63,22 +63,11 @@ static struct {
 RETCODE SQL_API SQLAllocStmt(HDBC      hdbc,
                              HSTMT FAR *phstmt)
 {
-	return _SQLAllocStmt(hdbc, phstmt);
-}
-
-RETCODE SQL_API SQLFreeStmt(HSTMT     hstmt,
-                            UWORD     fOption)
-{
-	return _SQLFreeStmt(hstmt, fOption);
-}
-
-
-RETCODE SQL_API _SQLAllocStmt(HDBC      hdbc,
-                             HSTMT FAR *phstmt)
-{
-char *func="SQLAllocStmt";
+static char *func="SQLAllocStmt";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 StatementClass *stmt;
+
+	mylog("%s: entering...\n", func);
 
 	if( ! conn) {
 		CC_log_error(func, "", NULL);
@@ -112,13 +101,13 @@ StatementClass *stmt;
 }
 
 
-RETCODE SQL_API _SQLFreeStmt(HSTMT     hstmt,
+RETCODE SQL_API SQLFreeStmt(HSTMT     hstmt,
                             UWORD     fOption)
 {
-char *func="SQLFreeStmt";
+static char *func="SQLFreeStmt";
 StatementClass *stmt = (StatementClass *) hstmt;
 
-	mylog("**** enter SQLFreeStmt: hstmt=%u, fOption=%d\n", hstmt, fOption);
+	mylog("%s: entering...hstmt=%u, fOption=%d\n", func, hstmt, fOption);
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -151,8 +140,6 @@ StatementClass *stmt = (StatementClass *) hstmt;
 		SC_unbind_cols(stmt);
 
     } else if (fOption == SQL_CLOSE) {
-		ConnectionClass *conn = stmt->hdbc;
-
 		/* this should discard all the results, but leave the statement */
 		/* itself in place (it can be executed again) */
         if (!SC_recycle_statement(stmt)) {
@@ -181,7 +168,7 @@ StatementClass *stmt = (StatementClass *) hstmt;
  */
 
 StatementClass *
-SC_Constructor()
+SC_Constructor(void)
 {
 StatementClass *rv;
 
@@ -345,6 +332,8 @@ char
 SC_recycle_statement(StatementClass *self)
 {
 ConnectionClass *conn;
+
+mylog("recycle statement: self= %u\n", self);
 
 	/*	This would not happen */    
 	if (self->status == STMT_EXECUTING) {
@@ -540,7 +529,7 @@ char rv;
 
 RETCODE SC_execute(StatementClass *self)
 {
-char *func="SC_execute";
+static char *func="SC_execute";
 ConnectionClass *conn;
 QResultClass *res;
 char ok, was_ok, was_nonfatal;
@@ -553,7 +542,7 @@ Int2 oldstatus, numcols;
 	/*	The reason is because we can't use declare/fetch cursors without
 		starting a transaction first.
 	*/
-	if ( ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
+	if ( ! self->internal && ! CC_is_in_trans(conn) && (globals.use_declarefetch || STMT_UPDATE(self))) {
 
 		mylog("   about to begin a transaction on statement = %u\n", self);
 		res = CC_send_query(conn, "BEGIN", NULL, NULL);
@@ -618,7 +607,7 @@ Int2 oldstatus, numcols;
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL, NULL);
 		
 		//	If we are in autocommit, we must send the commit.
-		if (CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
+		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
 			CC_send_query(conn, "COMMIT", NULL, NULL);
 			CC_set_no_trans(conn);
 		}
@@ -671,7 +660,9 @@ Int2 oldstatus, numcols;
 			self->errornumber = STMT_EXEC_ERROR;
 			self->errormsg = "Error while executing the query";
 		}
-		CC_abort(conn);
+
+		if ( ! self->internal)
+			CC_abort(conn);
 	}
 
 	if (self->errornumber == STMT_OK)
@@ -691,6 +682,7 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 {
 	if (self) {
 		qlog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+		mylog("STATEMENT ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
 		qlog("                 ------------------------------------------------------------\n");
 		qlog("                 hdbc=%u, stmt=%u, result=%u\n", self->hdbc, self, self->result);
 		qlog("                 manual_result=%d, prepare=%d, internal=%d\n", self->manual_result, self->prepare, self->internal);

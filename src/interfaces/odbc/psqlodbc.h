@@ -12,10 +12,12 @@
 #define __PSQLODBC_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifdef UNIX
+#include <stdio.h>	/* for FILE* pointers: see GLOBAL_VALUES */
+
+#ifndef WIN32
 #define Int4 long int
 #define UInt4 unsigned int
 #define Int2 short
@@ -67,10 +69,10 @@ typedef UInt4 Oid;
 /* Driver stuff */
 #define DRIVERNAME             "PostgreSQL ODBC"
 #define DBMS_NAME              "PostgreSQL"
-#define DBMS_VERSION           "06.30.0248 PostgreSQL 6.3"
-#define POSTGRESDRIVERVERSION  "06.30.0248"
+#define DBMS_VERSION           "06.30.0250 PostgreSQL 6.3"
+#define POSTGRESDRIVERVERSION  "06.30.0250"
 
-#ifndef UNIX
+#ifdef WIN32
 #define DRIVER_FILE_NAME		"PSQLODBC.DLL"
 #else
 #define DRIVER_FILE_NAME		"libpsqlodbc.so"
@@ -114,6 +116,8 @@ typedef struct GlobalValues_
 	char				parse;
 	char				extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char				conn_settings[LARGE_REGISTRY_LEN];
+	FILE*				mylogFP;
+	FILE*				qlogFP;	
 } GLOBAL_VALUES;
 
 
@@ -125,7 +129,6 @@ typedef struct GlobalValues_
 #define TEXT_FIELD_SIZE			4094	/* size of text fields (not including null term) */
 #define NAME_FIELD_SIZE			32		/* size of name fields */
 #define MAX_VARCHAR_SIZE		254		/* maximum size of a varchar (not including null term) */
-
 
 
 #include "misc.h"

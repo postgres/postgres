@@ -13,16 +13,13 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "socket.h"
 
-#ifdef UNIX
+#ifndef WIN32
 #include <stdlib.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 #include <string.h>	/* for memset */
 #endif
 

@@ -13,7 +13,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <stdio.h>
@@ -22,7 +22,7 @@
 #include "psqlodbc.h"
 #include "connection.h"
 
-#ifdef UNIX
+#ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #define NEAR
@@ -33,7 +33,7 @@
 
 #include <string.h>
 
-#ifdef UNIX
+#ifndef WIN32
 #define stricmp(s1,s2)	strcasecmp(s1,s2)
 #define strnicmp(s1,s2,n)	strncasecmp(s1,s2,n)
 #else
@@ -55,7 +55,7 @@
 /* prototypes */
 void dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci);
 
-#ifndef UNIX	/* should be something like ifdef WINDOWS */
+#ifdef WIN32
 BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
 RETCODE dconn_DoDialog(HWND hwnd, ConnInfo *ci);
 
@@ -75,14 +75,18 @@ RETCODE SQL_API SQLDriverConnect(
                                  SWORD FAR *pcbConnStrOut,
                                  UWORD     fDriverCompletion)
 {
-char *func = "SQLDriverConnect";
+static char *func = "SQLDriverConnect";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
+#ifdef WIN32
 RETCODE dialog_result;
+#endif
 char connStrIn[MAX_CONNECT_STRING];
 char connStrOut[MAX_CONNECT_STRING];
 int retval;
 char password_required = FALSE;
+
+	mylog("%s: entering...\n", func);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
@@ -107,11 +111,13 @@ char password_required = FALSE;
 	//	Fill in any default parameters if they are not there.
 	getDSNdefaults(ci);
 
+#ifdef WIN32
 dialog:
+#endif
 	ci->focus_password = password_required;
 
 	switch(fDriverCompletion) {
-#ifndef UNIX	/* again should be ifdef WINDOWS like */
+#ifdef WIN32
 	case SQL_DRIVER_PROMPT:
 		dialog_result = dconn_DoDialog(hwnd, ci);
 		if(dialog_result != SQL_SUCCESS) {
@@ -185,7 +191,7 @@ dialog:
 			return SQL_ERROR;	/* need a password but not allowed to prompt so error */
 		}
 		else {
-#ifndef UNIX
+#ifdef WIN32
 			password_required = TRUE;
 			goto dialog;
 #else
@@ -203,7 +209,7 @@ dialog:
 	return SQL_SUCCESS;
 }
 
-#ifndef UNIX	/* yet another candidate for ifdef WINDOWS */
+#ifdef WIN32
 RETCODE dconn_DoDialog(HWND hwnd, ConnInfo *ci)
 {
 int dialog_result;
@@ -299,7 +305,7 @@ ConnInfo *ci;
 	return FALSE;
 }
 
-#endif	/* ! UNIX */
+#endif	/* WIN32 */
 
 void dconn_get_connect_attributes(UCHAR FAR *connect_string, ConnInfo *ci)
 {

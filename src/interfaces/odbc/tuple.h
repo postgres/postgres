@@ -32,9 +32,9 @@ struct TupleNode_ {
 	but these handle automatic NULL determination and call set_tuplefield_null()
 	if appropriate for the datatype (used by SQLGetTypeInfo).
 */
-#define set_nullfield_string(FLD, VAL)		(VAL ? set_tuplefield_string(FLD, VAL) : set_tuplefield_null(FLD))
-#define set_nullfield_int2(FLD, VAL)		(VAL != -1 ? set_tuplefield_int2(FLD, VAL) : set_tuplefield_null(FLD))
-#define set_nullfield_int4(FLD, VAL)		(VAL != -1 ? set_tuplefield_int4(FLD, VAL) : set_tuplefield_null(FLD))
+#define set_nullfield_string(FLD, VAL)		((VAL) ? set_tuplefield_string(FLD, (VAL)) : set_tuplefield_null(FLD))
+#define set_nullfield_int2(FLD, VAL)		((VAL) != -1 ? set_tuplefield_int2(FLD, (VAL)) : set_tuplefield_null(FLD))
+#define set_nullfield_int4(FLD, VAL)		((VAL) != -1 ? set_tuplefield_int4(FLD, (VAL)) : set_tuplefield_null(FLD))
 
 void set_tuplefield_null(TupleField *tuple_field);
 void set_tuplefield_string(TupleField *tuple_field, char *string);

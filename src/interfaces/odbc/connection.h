@@ -11,10 +11,10 @@
 #define __CONNECTION_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
@@ -163,6 +163,14 @@ struct col_info {
 };
 
  /* Translation DLL entry points */
+#ifdef WIN32
+#define DLLHANDLE HINSTANCE
+#else
+#define WINAPI CALLBACK
+#define DLLHANDLE void *
+#define HINSTANCE void *
+#endif
+
 typedef BOOL (FAR WINAPI *DataSourceToDriverProc) (UDWORD,
 					SWORD,
 					PTR,
@@ -222,7 +230,7 @@ struct ConnectionClass_ {
 
 
 /*	prototypes */
-ConnectionClass *CC_Constructor();
+ConnectionClass *CC_Constructor(void);
 char CC_Destructor(ConnectionClass *self);
 int CC_cursor_count(ConnectionClass *self);
 char CC_cleanup(ConnectionClass *self);

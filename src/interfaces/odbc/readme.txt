@@ -70,3 +70,26 @@ But for now, it sure is fun to stick a Word document, Visio document, or avi of 
 baby into a database column, even if you will fill up your server's hard disk after a while!
 
 
+
+III.  Using Row Versioning feature and creating the missing equals operator
+
+In order to use row versioning, you must overload the int4eq function for use
+with the xid type.  Also, you need to create an operator to compare xid to int4.
+You must do this for each database you want to use this feature on.
+Here are the details:
+
+create function int4eq(xid,int4)
+  returns bool
+  as ''
+  language 'internal';
+
+create operator = (
+        leftarg=xid,
+        rightarg=int4,
+        procedure=int4eq,
+        commutator='=',
+        negator='<>',
+        restrict=eqsel,
+        join=eqjoinsel
+        );
+

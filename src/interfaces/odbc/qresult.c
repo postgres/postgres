@@ -501,7 +501,7 @@ ColumnInfoClass *flds;
 			SOCK_get_n_char(sock, buffer, len);
 			buffer[len] = '\0';
 
-			// mylog("qresult: len=%d, buffer='%s'\n", len, buffer);
+			mylog("qresult: len=%d, buffer='%s'\n", len, buffer);
 
 			this_tuplefield[field_lf].len = len;
 			this_tuplefield[field_lf].value = buffer;

@@ -1,0 +1,16 @@
+
+ODBC Driver TO-DO List                    
+Last Updated:  9/16/98
+
+
+Task                                                Added      Priority  %Complete?
+-----------------------------------------------------------------------------------
+Implement 6.4 protocol changes                      09/16/98   high
+Handle multi-row rowsets (SQLBindCol)               09/16/98   med
+Port to 16 bit?                                     04/20/98   med
+Handle Literal precision in parsing                 07/01/98   med
+Cache SQLColumns at a higher level (henv or dll)    07/02/98   med
+Add lo_text type to map to LONGVARCHAR              07/09/98   low
+Add encrypted password capability                   06/11/98   low
+Remove tuplelist structure                          06/25/98   low
+Support SQLTables "%" semantics                     07/01/98   low

@@ -14,12 +14,45 @@
 
 #include <stdio.h>
 #include <varargs.h>
+#include <string.h>
 
 #include "psqlodbc.h"
 
+#ifndef WIN32
+#if HAVE_PWD_H
+#include <pwd.h>
+#endif
+#include <sys/types.h>
+#include <unistd.h>
+#else
+#include <process.h>	/* Byron: is this where Windows keeps def. of getpid ? */
+#endif
 
 extern GLOBAL_VALUES globals;
+void generate_filename(char*,char*,char*);
 
+void
+generate_filename(char* dirname,char* prefix,char* filename)
+{
+	int pid = 0;
+#ifndef WIN32
+	struct passwd *ptr = 0;
+	ptr = getpwuid(getuid());
+#endif
+	pid = getpid();
+	if(dirname == 0 || filename == 0)
+		return;
+
+	strcpy(filename,dirname);
+	strcat(filename,DIRSEPERATOR);
+	if(prefix != 0)
+		strcat(filename,prefix);
+#ifndef WIN32
+	strcat(filename,ptr->pw_name);
+#endif
+	sprintf(filename,"%s%d%s",filename,pid,".log");
+	return;
+}
 
 #ifdef MY_LOG
 
@@ -29,15 +62,17 @@ va_dcl
 {
 char *fmt;
 char *args;
-
-static FILE *LOGFP = 0;
+char filebuf[80];
+	FILE* LOGFP = globals.mylogFP;
 
 	if ( globals.debug) {
 		va_start(args);
 		fmt = va_arg(args, char *);
 
 		if (! LOGFP) {
-			LOGFP = fopen(MYLOGFILE, "w");
+			generate_filename(MYLOGDIR,MYLOGFILE,filebuf);
+			LOGFP = fopen(filebuf, "w");
+			globals.mylogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
 
@@ -57,14 +92,18 @@ va_dcl
 {
 char *fmt;
 char *args;
-static FILE *LOGFP = 0;
+char filebuf[80];
+FILE* LOGFP = globals.qlogFP;
 
 	if ( globals.commlog) {
 		va_start(args);
 		fmt = va_arg(args, char *);
 
+
 		if (! LOGFP) {
-			LOGFP = fopen(QLOGFILE, "w");
+			generate_filename(QLOGDIR,QLOGFILE,filebuf);
+			LOGFP = fopen(filebuf, "w");
+			globals.qlogFP = LOGFP;
 			setbuf(LOGFP, NULL);
 		}
 
@@ -79,15 +118,15 @@ static FILE *LOGFP = 0;
 /*  Undefine these because windows.h will redefine and cause a warning */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifndef UNIX
+#ifdef WIN32
 #undef va_start
 #undef va_end
 #endif
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #else

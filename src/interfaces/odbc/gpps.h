@@ -4,10 +4,10 @@
 #define GPPS_H
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifdef UNIX
+#ifndef WIN32
 #include <sys/types.h>
 #include "iodbc.h"
 #endif
@@ -34,7 +34,7 @@ WritePrivateProfileString(char *theSection,	// section name
 }
 #endif
 
-#ifdef UNIX
+#ifndef WIN32
 #undef DWORD
 #endif
 #endif

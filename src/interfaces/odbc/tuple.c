@@ -22,7 +22,7 @@
 void set_tuplefield_null(TupleField *tuple_field)
 {
 	tuple_field->len = 0;
-	tuple_field->value = strdup("");
+	tuple_field->value = NULL;  // strdup("");
 }
 
 void set_tuplefield_string(TupleField *tuple_field, char *string)
@@ -36,6 +36,7 @@ void set_tuplefield_string(TupleField *tuple_field, char *string)
 void set_tuplefield_int2(TupleField *tuple_field, Int2 value)
 {
 char buffer[10];
+
 
 	sprintf(buffer,"%d", value);
 

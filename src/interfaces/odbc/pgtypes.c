@@ -16,7 +16,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "psqlodbc.h"
@@ -26,7 +26,7 @@
 #include "connection.h"
 #include "qresult.h"
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
@@ -38,6 +38,8 @@
 
 
 extern GLOBAL_VALUES globals;
+
+Int4 getCharPrecision(StatementClass *stmt, Int4 type, int col, int handle_unknown_size_as);
 
 
 /* these are the types we support.  all of the pgtype_ functions should */

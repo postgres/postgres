@@ -14,13 +14,13 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "psqlodbc.h"
 #include "dlg_specific.h"
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
@@ -33,7 +33,11 @@
 
 GLOBAL_VALUES globals;
 
-#ifndef UNIX	/* again find a WINDOWS #ifdef */
+BOOL _init(void);
+BOOL _fini(void);
+RETCODE SQL_API SQLDummyOrdinal(void);
+
+#ifdef WIN32
 HINSTANCE NEAR s_hModule;               /* Saved module handle. */
 
 /*	This is where the Driver Manager attaches to this Driver */
@@ -60,7 +64,7 @@ WSADATA wsaData;
 			return FALSE;
 		}
 
-		getGlobalDefaults();
+		getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
 		break;
 
 	case DLL_THREAD_ATTACH:
@@ -84,7 +88,7 @@ WSADATA wsaData;
 	UNREFERENCED_PARAMETER(lpReserved);                                         
 }
 
-#else	/* UNIX */
+#else	/* WIN32 */
 
 #ifndef TRUE
 #define TRUE	(BOOL)1
@@ -99,7 +103,7 @@ WSADATA wsaData;
 BOOL
 _init(void)
 {
-	getGlobalDefaults();
+	getGlobalDefaults(DBMS_NAME, ODBCINST_INI, FALSE);
 	return TRUE;
 }
 

@@ -1,0 +1,127 @@
+#-------------------------------------------------------------------------
+#
+# Makefile.inc--
+#    Build and install postgres.
+#
+# Copyright (c) 1994, Regents of the University of California
+#
+#
+# IDENTIFICATION
+#    $Header: /cvsroot/pgsql/src/interfaces/odbc/Attic/GNUmakefile.in,v 1.1 1998/10/06 05:57:56 thomas Exp $
+#
+#-------------------------------------------------------------------------
+@SET_MAKE@
+
+NAME = psqlodbc
+SRCDIR=@srcdir@
+ODBCSRCDIR=@srcdir@
+include $(ODBCSRCDIR)/Makefile.global
+
+include Version.mk
+PORTNAME= @PORTNAME@
+
+FIND = @find@
+
+# assuming gnu tar and split here
+TAR  = @tar@
+SPLIT = @split@
+
+ifeq ($(PORTNAME), linux)
+  install-shlib-dep := install-shlib
+  shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+  LDFLAGS_SL = -shared -soname lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+  LDFLAGS_SL += -Bsymbolic $(LDFLAGS) -lc -lm
+  CFLAGS += -I. $(CFLAGS_SL)
+endif
+
+ifeq ($(PORTNAME), bsd)
+  ifdef BSD_SHLIB
+    install-shlib-dep := install-shlib
+    shlib := lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)
+    LDFLAGS_SL = -x -Bshareable -Bforcearchive $(LDFLAGS)
+    CFLAGS += -I. $(CFLAGS_SL)
+  endif
+endif
+
+SOURCES = *.c *.h *.in Config.mk Makefile Makefile.unx README.Linux \
+	TODO.txt Version.mk config.guess config.sub configure \
+	install-sh license.txt notice.txt odbcinst.ini patch \
+	psqlodbc.aps psqlodbc.def psqlodbc.mak psqlodbc.mdp \
+	psqlodbc.ncb psqlodbc.rc readme.txt
+
+OBJECTS = info.o bind.o columninfo.o connection.o convert.o drvconn.o \
+        environ.o execute.o lobj.o misc.o options.o \
+        pgtypes.o psqlodbc.o qresult.o results.o socket.o parse.o statement.o \
+        gpps.o tuple.o tuplelist.o dlg_specific.o $(OBJX)
+
+CFLAGS += @DEFS@
+
+all: libpsqlodbc.a $(shlib)
+
+libpsqlodbc.a: $(OBJECTS)
+	$(AR) $(AROPT) libpsqlodbc.a $(OBJS)
+	$(RANLIB) libpsqlodbc.a
+
+$(shlib): $(OBJECTS)
+	$(LD) $(LDFLAGS_SL) $(OBJECTS) \
+	-o $(shlib) $(LIBS)
+
+.PHONY: beforeinstall-headers
+
+.PHONY: install
+
+install: $(HEADERDIR) $(LIBDIR) $(ODBCINST) install-headers \
+	install-libpsqlodbc install-ini $(install-shlib-dep)
+
+$(HEADERDIR) $(LIBDIR) $(ODBCINST):
+	mkdir -p $@
+
+install-headers: beforeinstall-headers isql.h isqlext.h iodbc.h
+	$(INSTALL) $(INSTLOPTS) iodbc.h $(HEADERDIR)/iodbc/iodbc.h
+	$(INSTALL) $(INSTLOPTS) isql.h $(HEADERDIR)/iodbc/isql.h
+	$(INSTALL) $(INSTLOPTS) isqlext.h $(HEADERDIR)/iodbc/isqlext.h
+
+beforeinstall-headers:
+	@if [ ! -d $(HEADERDIR)/iodbc ]; then mkdir -p $(HEADERDIR)/iodbc; fi
+
+install-libpsqlodbc: libpsqlodbc.a
+	$(INSTALL) $(INSTL_LIB_OPTS) libpsqlodbc.a $(DESTDIR)$(LIBDIR)/lib$(NAME).a
+
+install-shlib: $(shlib)
+	$(INSTALL) $(INSTL_LIB_OPTS) $(shlib) $(DESTDIR)$(LIBDIR)/$(shlib)
+	rm -f $(DESTDIR)$(LIBDIR)/lib$(NAME)$(DLSUFFIX)
+	rm -f $(DESTDIR)$(LIBDIR)/lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	cd $(DESTDIR)$(LIBDIR) && $(LN_S) -f $(shlib) lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION)
+	cd $(DESTDIR)$(LIBDIR) && $(LN_S) -f lib$(NAME)$(DLSUFFIX).$(SO_MAJOR_VERSION) lib$(NAME)$(DLSUFFIX)
+
+install-ini: odbcinst.ini
+	$(INSTALL) $(INSTL_LIB_OPTS) odbcinst.ini $(ODBCINST)/odbcinst.ini
+
+depend dep:
+	$(CC) -MM *.c >depend
+
+.PHONY: clean
+
+clean:
+	-rm -f lib$(NAME).a $(shlib) $(OBJECTS) lib$(NAME)$(DLSUFFIX)
+	-rm -f config.log config.cache config.status
+	
+.PHONY: distclean
+
+distclean: clean
+	-rm -f config.h GNUmakefile Makefile.global
+
+.PHONY: standalone
+
+standalone:
+	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar.gz
+	tar -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar $(SOURCES)
+	tar -r -C ../.. -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar template
+	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION).tar
+
+.PHONY: integrated
+
+integrated:
+	-rm -f psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar.gz
+	tar -cf psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar $(SOURCES)
+	gzip psqlodbc-$(SO_MAJOR_VERSION)$(SO_MINOR_VERSION)-int.tar

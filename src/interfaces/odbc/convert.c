@@ -17,13 +17,14 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
@@ -42,8 +43,8 @@
 #include "lobj.h"
 #include "connection.h"
 
-#ifdef UNIX
-#if !HAVE_STRICMP
+#ifndef WIN32
+#ifndef HAVE_STRICMP
 #define stricmp(s1,s2) strcasecmp(s1,s2)
 #define strnicmp(s1,s2,n) strncasecmp(s1,s2,n)
 #endif
@@ -69,6 +70,10 @@ char *mapFuncs[][2] = {
 	{    0,             0      }
 };
 
+char *mapFunction(char *func);
+unsigned int conv_from_octal(unsigned char *s);
+unsigned int conv_from_hex(unsigned char *s);
+char *conv_to_octal(unsigned char val);
 
 /********		A Guide for date/time/timestamp conversions    **************
 
@@ -126,6 +131,7 @@ struct tm *tim;
 		return COPY_OK;
 	}
 
+
 	if (stmt->hdbc->DataSourceToDriver != NULL) {
 		int length = strlen (value);
 		stmt->hdbc->DataSourceToDriver (stmt->hdbc->translation_option,
@@ -134,6 +140,7 @@ struct tm *tim;
 										value, length, NULL,
 										NULL, 0, NULL);
 	}
+
 
 	/********************************************************************
 		First convert any specific postgres types into more
@@ -393,6 +400,7 @@ struct tm *tim;
 
 }
 
+
 /*	This function inserts parameters into an SQL statements.
 	It will also modify a SELECT statement for use with declare/fetch cursors.
 	This function no longer does any dynamic memory allocation!
@@ -400,7 +408,7 @@ struct tm *tim;
 int
 copy_statement_with_parameters(StatementClass *stmt)
 {
-char *func="copy_statement_with_parameters";
+static char *func="copy_statement_with_parameters";
 unsigned int opos, npos;
 char param_string[128], tmp[256], cbuf[TEXT_FIELD_SIZE+5];
 int param_number;
@@ -431,7 +439,7 @@ char in_quote = FALSE;
 
 	/*	If the application hasn't set a cursor name, then generate one */
 	if ( stmt->cursor_name[0] == '\0')
-		sprintf(stmt->cursor_name, "SQL_CUR%u", stmt);
+		sprintf(stmt->cursor_name, "SQL_CUR%p", stmt);
 
 	//	For selects, prepend a declare cursor to the statement
 	if (stmt->statement_type == STMT_TYPE_SELECT && globals.use_declarefetch) {
@@ -533,9 +541,7 @@ char in_quote = FALSE;
 		param_ctype = stmt->parameters[param_number].CType;
 		param_sqltype = stmt->parameters[param_number].SQLType;
 		
-		mylog("copy_statement_with_params: from(fcType)=%d, to(fSqlType)=%d\n", 
-			param_ctype,
-			param_sqltype);
+		mylog("copy_statement_with_params: from(fcType)=%d, to(fSqlType)=%d\n", param_ctype, param_sqltype);
 		
 		// replace DEFAULT with something we can use
 		if(param_ctype == SQL_C_DEFAULT)
@@ -630,8 +636,7 @@ char in_quote = FALSE;
 			st.mm = tss->minute;
 			st.ss = tss->second;
 
-			mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n",
-				st.m, st.d, st.y, st.hh, st.mm, st.ss);
+			mylog("m=%d,d=%d,y=%d,hh=%d,mm=%d,ss=%d\n", st.m, st.d, st.y, st.hh, st.mm, st.ss);
 
 			break;
 
@@ -769,6 +774,7 @@ char in_quote = FALSE;
 	// make sure new_statement is always null-terminated
 	new_statement[npos] = '\0';
 
+
 	if(stmt->hdbc->DriverToDataSource != NULL) {
 		int length = strlen (new_statement);
 		stmt->hdbc->DriverToDataSource (stmt->hdbc->translation_option,
@@ -777,6 +783,7 @@ char in_quote = FALSE;
 										new_statement, length, NULL,
 										NULL, 0, NULL);
 	}
+
 
 	return SQL_SUCCESS;
 }
@@ -975,6 +982,9 @@ char *p;
 int
 convert_pgbinary_to_char(char *value, char *rgbValue, int cbValueMax)
 {
+	mylog("convert_pgbinary_to_char: value = '%s'\n", value);
+
+	strncpy_null(rgbValue, value, cbValueMax);
 	return 0;
 }
 
@@ -1029,6 +1039,9 @@ int o=0;
 		mylog("convert_from_pgbinary: i=%d, rgbValue[%d] = %d, %c\n", i, o, rgbValue[o], rgbValue[o]);
 		o++;
 	}
+
+	rgbValue[o] = '\0';
+
 	return o;
 }
 
@@ -1148,13 +1161,16 @@ int retval;
 		stmt->lobj_fd = lo_open(stmt->hdbc, oid, INV_READ);
 		if (stmt->lobj_fd < 0) {
 			stmt->errornumber = STMT_EXEC_ERROR;
-			stmt->errormsg = "Couldnt open large object for writing.";
+			stmt->errormsg = "Couldnt open large object for reading.";
 			return COPY_GENERAL_ERROR;
 		}
 	}
 
-	if (stmt->lobj_fd < 0)
-		return COPY_NO_DATA_FOUND;
+	if (stmt->lobj_fd < 0) {
+		stmt->errornumber = STMT_EXEC_ERROR;
+		stmt->errormsg = "Large object FD undefined for multiple read.";
+		return COPY_GENERAL_ERROR;
+	}
 
 	retval = lo_read(stmt->hdbc, stmt->lobj_fd, rgbValue, cbValueMax);
 	if (retval < 0) {

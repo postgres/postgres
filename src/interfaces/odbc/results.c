@@ -16,7 +16,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <string.h>
@@ -32,7 +32,7 @@
 
 #include <stdio.h>
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isqlext.h"
 #else
@@ -42,28 +42,13 @@
 
 extern GLOBAL_VALUES globals;
 
-RETCODE SQL_API SQLFetch(HSTMT   hstmt)
-{
-	return _SQLFetch(hstmt);
-}
 
-RETCODE SQL_API SQLGetData(
-        HSTMT      hstmt,
-        UWORD      icol,
-        SWORD      fCType,
-        PTR        rgbValue,
-        SDWORD     cbValueMax,
-        SDWORD FAR *pcbValue)
-{
-
-	return _SQLGetData(hstmt, icol, fCType, rgbValue, cbValueMax, pcbValue);
-}
 
 RETCODE SQL_API SQLRowCount(
         HSTMT      hstmt,
         SDWORD FAR *pcrow)
 {
-char *func="SQLRowCount";
+static char *func="SQLRowCount";
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *res;
 char *msg, *ptr;
@@ -117,7 +102,7 @@ RETCODE SQL_API SQLNumResultCols(
         HSTMT     hstmt,
         SWORD FAR *pccol)
 {       
-char *func="SQLNumResultCols";
+static char *func="SQLNumResultCols";
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *result;
 char parse_ok;
@@ -182,15 +167,17 @@ RETCODE SQL_API SQLDescribeCol(
         SWORD  FAR *pibScale,
         SWORD  FAR *pfNullable)
 {
-char *func="SQLDescribeCol";
+static char *func="SQLDescribeCol";
     /* gets all the information about a specific column */
 StatementClass *stmt = (StatementClass *) hstmt;
 QResultClass *result;
-char *col_name;
-Int4 fieldtype;
-int precision;
+char *col_name = NULL;
+Int4 fieldtype = 0;
+int precision = 0;
 ConnInfo *ci;
 char parse_ok;
+
+	mylog("%s: entering...\n", func);
 
     if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -201,13 +188,9 @@ char parse_ok;
 
     SC_clear_error(stmt);
 
-    if(icol < 1) {
-        // we do not support bookmarks
-        stmt->errormsg = "Bookmarks are not currently supported.";
-        stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
-    }
+	/*	Dont check for bookmark column.  This is the responsibility
+		of the driver manager.  
+	*/
 
 	icol--;		/* use zero based column numbers */
 
@@ -342,15 +325,16 @@ RETCODE SQL_API SQLColAttributes(
         SWORD  FAR *pcbDesc,
         SDWORD FAR *pfDesc)
 {
-char *func = "SQLColAttributes";
+static char *func = "SQLColAttributes";
 StatementClass *stmt = (StatementClass *) hstmt;
 char *value;
-Int4 field_type;
+Int4 field_type = 0;
 ConnInfo *ci;
 int unknown_sizes;
-int cols;
+int cols = 0;
 char parse_ok;
 
+	mylog("%s: entering...\n", func);
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -359,13 +343,10 @@ char parse_ok;
 
 	ci = &(stmt->hdbc->connInfo);
 
-	if(icol < 1) {
-		// we do not support bookmarks
-		stmt->errormsg = "Bookmarks are not currently supported.";
-		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
-		SC_log_error(func, "", stmt);
-		return SQL_ERROR;
-	}
+	/*	Dont check for bookmark column.  This is the responsibility
+		of the driver manager.  For certain types of arguments, the column
+		number is ignored anyway, so it may be 0.
+	*/
 
 	icol--;
 
@@ -382,6 +363,16 @@ char parse_ok;
 		}
 
 		cols = stmt->nfld;
+
+		/*	Column Count is a special case.  The Column number is ignored
+			in this case.
+		*/
+		if (fDescType == SQL_COLUMN_COUNT) {
+			if (pfDesc)
+				*pfDesc = cols;
+
+			return SQL_SUCCESS;
+		}
 
 		if (stmt->parse_status != STMT_PARSE_FATAL && stmt->fi && stmt->fi[icol]) {
 
@@ -411,6 +402,17 @@ char parse_ok;
 		}
 
 		cols = QR_NumResultCols(stmt->result);
+
+		/*	Column Count is a special case.  The Column number is ignored
+			in this case.
+		*/
+		if (fDescType == SQL_COLUMN_COUNT) {
+			if (pfDesc)
+				*pfDesc = cols;
+
+			return SQL_SUCCESS;
+		}
+
 		if (icol >= cols) {
 			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
 			stmt->errormsg = "Invalid column number in DescribeCol.";
@@ -438,10 +440,10 @@ char parse_ok;
 			*pfDesc = pgtype_case_sensitive(stmt, field_type);
 		break;
 
-	case SQL_COLUMN_COUNT:
-		if (pfDesc)
-			*pfDesc = cols;
-		break;
+	/* 	This special case is handled above.
+
+	case SQL_COLUMN_COUNT: 
+	*/
 
     case SQL_COLUMN_DISPLAY_SIZE:
 		if (pfDesc) {
@@ -593,7 +595,7 @@ char parse_ok;
 
 //      Returns result data for a single column in the current row.
 
-RETCODE SQL_API _SQLGetData(
+RETCODE SQL_API SQLGetData(
         HSTMT      hstmt,
         UWORD      icol,
         SWORD      fCType,
@@ -601,7 +603,7 @@ RETCODE SQL_API _SQLGetData(
         SDWORD     cbValueMax,
         SDWORD FAR *pcbValue)
 {
-char *func="SQLGetData";
+static char *func="SQLGetData";
 QResultClass *res;
 StatementClass *stmt = (StatementClass *) hstmt;
 int num_cols, num_rows;
@@ -737,10 +739,10 @@ mylog("SQLGetData: enter, stmt=%u\n", stmt);
 //      Returns data for bound columns in the current row ("hstmt->iCursor"),
 //      advances the cursor.
 
-RETCODE SQL_API _SQLFetch(
+RETCODE SQL_API SQLFetch(
         HSTMT   hstmt)
 {
-char *func = "SQLFetch";
+static char *func = "SQLFetch";
 StatementClass *stmt = (StatementClass *) hstmt;   
 QResultClass *res;
 int retval;
@@ -749,6 +751,8 @@ Oid type;
 char *value;
 ColumnInfoClass *ci;
 // TupleField *tupleField;
+
+mylog("SQLFetch: stmt = %u, stmt->result= %u\n", stmt, stmt->result);
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -790,8 +794,7 @@ ColumnInfoClass *ci;
 		return SQL_ERROR;
 	}
 
-	mylog("manual_result = %d, use_declarefetch = %d\n",
-		stmt->manual_result, globals.use_declarefetch);
+	mylog("manual_result = %d, use_declarefetch = %d\n", stmt->manual_result, globals.use_declarefetch);
  
 	if ( stmt->manual_result || ! globals.use_declarefetch) {
 
@@ -832,8 +835,7 @@ ColumnInfoClass *ci;
 
 	for (lf=0; lf < num_cols; lf++) {
 
-		mylog("fetch: cols=%d, lf=%d, stmt = %u, stmt->bindings = %u, buffer[] = %u\n", 
-			 num_cols, lf, stmt, stmt->bindings, stmt->bindings[lf].buffer);
+		mylog("fetch: cols=%d, lf=%d, stmt = %u, stmt->bindings = %u, buffer[] = %u\n", num_cols, lf, stmt, stmt->bindings, stmt->bindings[lf].buffer);
 
 		if (stmt->bindings[lf].buffer != NULL) {
             // this column has a binding
@@ -843,8 +845,10 @@ ColumnInfoClass *ci;
 
 			mylog("type = %d\n", type);
 
-			if (stmt->manual_result)
+			if (stmt->manual_result) {
 				value = QR_get_value_manual(res, stmt->currTuple, lf);
+				mylog("manual_result\n");
+			}
 			else if (globals.use_declarefetch)
 				value = QR_get_value_backend(res, lf);
 			else {
@@ -857,32 +861,41 @@ ColumnInfoClass *ci;
 
 			mylog("copy_and_convert: retval = %d\n", retval);
 
-			// check whether the complete result was copied
-			if(retval == COPY_UNSUPPORTED_TYPE) {
+
+			switch(retval) {
+			case COPY_OK:
+				break;	/*	OK, do next bound column */
+
+			case COPY_UNSUPPORTED_TYPE:
 				stmt->errormsg = "Received an unsupported type from Postgres.";
 				stmt->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 
-			} else if(retval == COPY_UNSUPPORTED_CONVERSION) {
+			case COPY_UNSUPPORTED_CONVERSION:
 				stmt->errormsg = "Couldn't handle the necessary data type conversion.";
 				stmt->errornumber = STMT_RESTRICTED_DATA_TYPE_ERROR;
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
 
-			} else if(retval == COPY_RESULT_TRUNCATED) {
-				/* The result has been truncated during the copy */
-				/* this will generate a SQL_SUCCESS_WITH_INFO result */
+			case COPY_RESULT_TRUNCATED:
 				stmt->errornumber = STMT_TRUNCATED;
-				stmt->errormsg = "A buffer was too small for the return value to fit in";
+				stmt->errormsg = "The buffer was too small for the result.";
 				return SQL_SUCCESS_WITH_INFO;
 
-			} else if(retval != COPY_OK) {
+			case COPY_GENERAL_ERROR:	/* error msg already filled in */
+				SC_log_error(func, "", stmt);
+				return SQL_ERROR;
+
+			case COPY_NO_DATA_FOUND:
+				SC_log_error(func, "no data found", stmt);
+				return SQL_NO_DATA_FOUND;
+
+			default:
 				stmt->errormsg = "Unrecognized return value from copy_and_convert_field.";
 				stmt->errornumber = STMT_INTERNAL_ERROR;
 				SC_log_error(func, "", stmt);
 				return SQL_ERROR;
-
 			}
 		}
 	}
@@ -899,7 +912,7 @@ RETCODE SQL_API SQLExtendedFetch(
         UDWORD FAR *pcrow,
         UWORD  FAR *rgfRowStatus)
 {
-char *func = "SQLExtendedFetch";
+static char *func = "SQLExtendedFetch";
 StatementClass *stmt = (StatementClass *) hstmt;
 int num_tuples;
 RETCODE result;
@@ -1009,7 +1022,7 @@ RETCODE SQL_API SQLSetPos(
         UWORD   fOption,
         UWORD   fLock)
 {
-char *func = "SQLSetPos";
+static char *func = "SQLSetPos";
 char buf[128];
 
 	sprintf(buf, "SQLSetPos not implemented: irow=%d, fOption=%d, fLock=%d\n", irow, fOption, fLock);
@@ -1026,7 +1039,7 @@ RETCODE SQL_API SQLSetScrollOptions(
         SDWORD  crowKeyset,
         UWORD      crowRowset)
 {
-char *func = "SQLSetScrollOptions";
+static char *func = "SQLSetScrollOptions";
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
@@ -1040,12 +1053,11 @@ RETCODE SQL_API SQLSetCursorName(
         UCHAR FAR *szCursor,
         SWORD     cbCursor)
 {
-char *func="SQLSetCursorName";
+static char *func="SQLSetCursorName";
 StatementClass *stmt = (StatementClass *) hstmt;
 int len;
 
-mylog("SQLSetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d\n",
-	  hstmt, szCursor, cbCursor);
+mylog("SQLSetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d\n", hstmt, szCursor, cbCursor);
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -1072,11 +1084,10 @@ RETCODE SQL_API SQLGetCursorName(
         SWORD     cbCursorMax,
         SWORD FAR *pcbCursor)
 {
-char *func="SQLGetCursorName";
+static char *func="SQLGetCursorName";
 StatementClass *stmt = (StatementClass *) hstmt;
 
-mylog("SQLGetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d, pcbCursor=%u\n",
-	  hstmt, szCursor, cbCursorMax, pcbCursor);
+mylog("SQLGetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d, pcbCursor=%u\n", hstmt, szCursor, cbCursorMax, pcbCursor);
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);

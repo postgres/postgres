@@ -14,12 +14,12 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "psqlodbc.h"
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
@@ -43,8 +43,10 @@ RETCODE SQL_API SQLSetConnectOption(
         UWORD   fOption,
         UDWORD  vParam)
 {
-char *func="SQLSetConnectOption";
+static char *func="SQLSetConnectOption";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+
+	mylog("%s: entering...\n", func);
 
 	if ( ! conn)  {
 		CC_log_error(func, "", NULL);
@@ -101,7 +103,7 @@ ConnectionClass *conn = (ConnectionClass *) hdbc;
 		char option[64];
 		conn->errormsg = "Driver does not support setting this connect option";
 		conn->errornumber = CONN_UNSUPPORTED_OPTION;
-		sprintf(option, "fOption=%d, vParam=%d", fOption, vParam);
+		sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
 		CC_log_error(func, option, conn);
 		return SQL_ERROR;
 		}
@@ -118,8 +120,10 @@ RETCODE SQL_API SQLGetConnectOption(
         UWORD   fOption,
         PTR     pvParam)
 {
-char *func="SQLGetConnectOption";
+static char *func="SQLGetConnectOption";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+
+	mylog("%s: entering...\n", func);
 
 	if (! conn)  {
 		CC_log_error(func, "", NULL);
@@ -162,9 +166,11 @@ RETCODE SQL_API SQLSetStmtOption(
         UWORD   fOption,
         UDWORD  vParam)
 {
-char *func="SQLSetStmtOption";
+static char *func="SQLSetStmtOption";
 StatementClass *stmt = (StatementClass *) hstmt;
 char changed = FALSE;
+
+	mylog("%s: entering...\n", func);
 
     // thought we could fake Access out by just returning SQL_SUCCESS
     // all the time, but it tries to set a huge value for SQL_MAX_LENGTH
@@ -260,7 +266,7 @@ char changed = FALSE;
 		char option[64];
 		stmt->errornumber = STMT_NOT_IMPLEMENTED_ERROR;
 		stmt->errormsg = "Driver does not support setting this statement option";
-		sprintf(option, "fOption=%d, vParam=%d", fOption, vParam);
+		sprintf(option, "fOption=%d, vParam=%ld", fOption, vParam);
 		SC_log_error(func, option, stmt);
         return SQL_ERROR;
 		}
@@ -283,8 +289,10 @@ RETCODE SQL_API SQLGetStmtOption(
         UWORD   fOption,
         PTR     pvParam)
 {
-char *func="SQLGetStmtOption";
+static char *func="SQLGetStmtOption";
 StatementClass *stmt = (StatementClass *) hstmt;
+
+	mylog("%s: entering...\n", func);
 
     // thought we could fake Access out by just returning SQL_SUCCESS
     // all the time, but it tries to set a huge value for SQL_MAX_LENGTH

@@ -11,10 +11,10 @@
 #define __MISC_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifdef UNIX
+#ifndef WIN32
 #include "gpps.h"
 #define SQLGetPrivateProfileString(a,b,c,d,e,f) GetPrivateProfileString(a,b,c,d,e,f)
 #endif
@@ -26,7 +26,7 @@
 	portion of the registry.  You may have to manually add this key.
 	This logfile is intended for development use, not for an end user!
 */
-// #define MY_LOG
+#define MY_LOG
 
 
 /*	Uncomment Q_LOG to compile in the qlog() statements (Communications log, i.e. CommLog).
@@ -39,10 +39,11 @@
 
 
 #ifdef MY_LOG
-#ifdef UNIX
-#define MYLOGFILE	"/tmp/mylog.log"
+#define MYLOGFILE	"mylog_"
+#ifndef WIN32
+#define MYLOGDIR	"/tmp"
 #else
-#define MYLOGFILE	"c:\\mylog.log"
+#define MYLOGDIR	"c:"
 #endif
 void mylog();	/* prototype */
 #else
@@ -50,14 +51,21 @@ void mylog();	/* prototype */
 #endif
 
 #ifdef Q_LOG
-#ifdef UNIX
-#define QLOGFILE	"/tmp/psqlodbc.log"
+#define QLOGFILE	"psqlodbc_"
+#ifndef WIN32
+#define QLOGDIR		"/tmp"
 #else
-#define QLOGFILE	"c:\\psqlodbc.log"
+#define QLOGDIR		"c:"
 #endif
 void qlog();	/* prototype */
 #else
 #define qlog    // qlog
+#endif
+
+#ifndef WIN32
+#define DIRSEPERATOR	"/"
+#else
+#define DIRSEPERATOR	"\\"
 #endif
 
 void remove_newlines(char *string);

@@ -17,17 +17,18 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include <string.h>
 #include <stdio.h>
 #include "psqlodbc.h"
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
+#include <ctype.h>	/* for tolower function */
 #else
 #include <windows.h>
 #include <sql.h> 
@@ -46,7 +47,15 @@
 #include "pgtypes.h"
 
 
+/*	Trigger related stuff for SQLForeign Keys */
+#define TRIGGER_SHIFT 3
+#define TRIGGER_MASK   0x03
+#define TRIGGER_DELETE 0x01
+#define TRIGGER_UPDATE 0x02
+
+
 extern GLOBAL_VALUES globals;
+
 
 //      -       -       -       -       -       -       -       -       -
 
@@ -57,9 +66,12 @@ RETCODE SQL_API SQLGetInfo(
         SWORD     cbInfoValueMax,
         SWORD FAR *pcbInfoValue)
 {
-char *func = "SQLGetInfo";
+static char *func = "SQLGetInfo";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
+ConnInfo *ci;
 char *p;
+
+	mylog( "%s: entering...\n", func);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
@@ -71,6 +83,7 @@ char *p;
         return SQL_INVALID_HANDLE;
 	}
 
+	ci = &conn->connInfo;
 
     switch (fInfoType) {
     case SQL_ACCESSIBLE_PROCEDURES: /* ODBC 1.0 */
@@ -290,11 +303,8 @@ char *p;
 
     case SQL_IDENTIFIER_QUOTE_CHAR: /* ODBC 1.0 */
         // the character used to quote "identifiers" (what are they?)
-        // the manual index lists 'owner names' and 'qualifiers' as
-        // examples of identifiers.  it says return a blank for no
-        // quote character, we'll try that...
         if (pcbInfoValue) *pcbInfoValue = 1;
-        strncpy_null((char *)rgbInfoValue, "\"", (size_t)cbInfoValueMax);
+        strncpy_null((char *)rgbInfoValue, PROTOCOL_62(ci) ? " " : "\"", (size_t)cbInfoValueMax);
         break;
 
     case SQL_KEYWORDS: /* ODBC 2.0 */
@@ -737,13 +747,13 @@ RETCODE SQL_API SQLGetTypeInfo(
         HSTMT   hstmt,
         SWORD   fSqlType)
 {
-char *func = "SQLGetTypeInfo";
+static char *func = "SQLGetTypeInfo";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 int i;
 Int4 type;
 
-	mylog("**** in SQLGetTypeInfo: fSqlType = %d\n", fSqlType);
+	mylog("%s: entering...fSqlType = %d\n", func, fSqlType);
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -822,6 +832,10 @@ RETCODE SQL_API SQLGetFunctions(
         UWORD     fFunction,
         UWORD FAR *pfExists)
 {
+static char *func="SQLGetFunctions";
+
+	mylog( "%s: entering...\n", func);
+
     if (fFunction == SQL_API_ALL_FUNCTIONS) {
 
 		if (globals.lie) {
@@ -988,7 +1002,7 @@ RETCODE SQL_API SQLTables(
                           UCHAR FAR * szTableType,
                           SWORD       cbTableType)
 {
-char *func = "SQLTables";
+static char *func = "SQLTables";
 StatementClass *stmt = (StatementClass *) hstmt;
 StatementClass *tbl_stmt;
 TupleNode *row;
@@ -1004,7 +1018,7 @@ char show_system_tables, show_regular_tables, show_views;
 char regular_table, view, systable;
 int i;
 
-mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
+mylog("%s: entering...stmt=%u\n", func, stmt);
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -1029,7 +1043,8 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 	//	Create the query to find out the tables
 	// **********************************************************************
 
-	strcpy(tables_query, "select relname, usename, relhasrules from pg_class, pg_user where relkind = 'r' ");
+	strcpy(tables_query, "select relname, usename, relhasrules from pg_class, pg_user");
+	strcat(tables_query, " where relkind = 'r'");
 
 	my_strcat(tables_query, " and usename like '%.*s'", szTableOwner, cbTableOwner);
 	my_strcat(tables_query, " and relname like '%.*s'", szTableName, cbTableName);
@@ -1097,7 +1112,9 @@ mylog("**** SQLTables(): ENTER, stmt=%u\n", stmt);
 
 
 	/*	filter out large objects unconditionally (they are not system tables) and match users */
-	strcat(tables_query, " and relname !~ '^xinv[0-9]+' and int4out(usesysid) = int4out(relowner) order by relname");
+	strcat(tables_query, " and relname !~ '^xinv[0-9]+'");
+	strcat(tables_query, " and int4out(usesysid) = int4out(relowner)");
+	strcat(tables_query, "order by relname");
 
 	// **********************************************************************
 
@@ -1257,7 +1274,7 @@ RETCODE SQL_API SQLColumns(
                            UCHAR FAR *  szColumnName,
                            SWORD        cbColumnName)
 {
-char *func = "SQLColumns";
+static char *func = "SQLColumns";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
 HSTMT hcol_stmt;
@@ -1265,14 +1282,13 @@ StatementClass *col_stmt;
 char columns_query[MAX_STATEMENT_LEN];
 RETCODE result;
 char table_owner[MAX_INFO_STRING], table_name[MAX_INFO_STRING], field_name[MAX_INFO_STRING], field_type_name[MAX_INFO_STRING];
-Int2 field_number, field_length, mod_length, result_cols;
-Int4 field_type, the_type;
+Int2 field_number, result_cols;
+Int4 field_type, the_type, field_length, mod_length;
 char not_null[MAX_INFO_STRING];
 ConnInfo *ci;
 
 
-
-mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
+	mylog("%s: entering...stmt=%u\n", func, stmt);
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -1308,6 +1324,8 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
 	col_stmt = (StatementClass *) hcol_stmt;
+
+	mylog("SQLColumns: hcol_stmt = %u, col_stmt = %u\n", hcol_stmt, col_stmt);
 
     result = SQLExecDirect(hcol_stmt, columns_query,
                            strlen(columns_query));
@@ -1349,7 +1367,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
 
-    result = SQLBindCol(hcol_stmt, 4, SQL_C_DEFAULT,
+    result = SQLBindCol(hcol_stmt, 4, SQL_C_LONG,
                         &field_type, 4, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
@@ -1369,7 +1387,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
 
-    result = SQLBindCol(hcol_stmt, 6, SQL_C_DEFAULT,
+    result = SQLBindCol(hcol_stmt, 6, SQL_C_SHORT,
                         &field_number, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
@@ -1379,7 +1397,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
 
-    result = SQLBindCol(hcol_stmt, 7, SQL_C_DEFAULT,
+    result = SQLBindCol(hcol_stmt, 7, SQL_C_LONG,
                         &field_length, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
@@ -1389,7 +1407,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
         return SQL_ERROR;
     }
 
-    result = SQLBindCol(hcol_stmt, 8, SQL_C_DEFAULT,
+    result = SQLBindCol(hcol_stmt, 8, SQL_C_LONG,
                         &mod_length, MAX_INFO_STRING, NULL);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		stmt->errormsg = col_stmt->errormsg;
@@ -1445,6 +1463,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 	
 	result = SQLFetch(hcol_stmt);
 
+
 	/*	Only show oid if option AND there are other columns AND 
 		its not being called by SQLStatistics .
 		Always show OID if its a system table
@@ -1487,6 +1506,7 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
     while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
         row = (TupleNode *)malloc(sizeof(TupleNode) +
                                   (result_cols - 1) * sizeof(TupleField));
+
 
         set_tuplefield_string(&row->tuple[0], "");
         // see note in SQLTables()
@@ -1535,7 +1555,9 @@ mylog("**** SQLColumns(): ENTER, stmt=%u\n", stmt);
 
         QR_add_tuple(stmt->result, row);
 
+
         result = SQLFetch(hcol_stmt);
+
     }
     if(result != SQL_NO_DATA_FOUND) {
 		stmt->errormsg = SC_create_errormsg(hcol_stmt);
@@ -1597,13 +1619,13 @@ RETCODE SQL_API SQLSpecialColumns(
                                   UWORD        fScope,
                                   UWORD        fNullable)
 {
-char *func = "SQLSpecialColumns";
+static char *func = "SQLSpecialColumns";
 TupleNode *row;
 StatementClass *stmt = (StatementClass *) hstmt;
 ConnInfo *ci;
 
 
-mylog("**** SQLSpecialColumns(): ENTER,  stmt=%u\n", stmt);
+mylog("%s: entering...stmt=%u\n", func, stmt);
 
     if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -1678,7 +1700,7 @@ RETCODE SQL_API SQLStatistics(
                               UWORD         fUnique,
                               UWORD         fAccuracy)
 {
-char *func="SQLStatistics";
+static char *func="SQLStatistics";
 StatementClass *stmt = (StatementClass *) hstmt;
 char index_query[MAX_STATEMENT_LEN];
 HSTMT hindx_stmt;
@@ -1700,7 +1722,7 @@ char error = TRUE;
 ConnInfo *ci;
 char buf[256];
 
-mylog("**** SQLStatistics(): ENTER,  stmt=%u\n", stmt);
+mylog("%s: entering...stmt=%u\n", func, stmt);
 
     if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -2013,31 +2035,71 @@ RETCODE SQL_API SQLColumnPrivileges(
                                     UCHAR FAR *  szColumnName,
                                     SWORD        cbColumnName)
 {
-char *func="SQLColumnPrivileges";
+static char *func="SQLColumnPrivileges";
+
+	mylog("%s: entering...\n", func);
+
 /*	Neither Access or Borland care about this. */
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
 }
 
-RETCODE
-getPrimaryKeyString(StatementClass *stmt, char *szTableName, SWORD cbTableName, char *svKey, int *nKey)
+
+
+RETCODE SQL_API SQLPrimaryKeys(
+                               HSTMT         hstmt,
+                               UCHAR FAR *   szTableQualifier,
+                               SWORD         cbTableQualifier,
+                               UCHAR FAR *   szTableOwner,
+                               SWORD         cbTableOwner,
+                               UCHAR FAR *   szTableName,
+                               SWORD         cbTableName)
 {
-char *func = "getPrimaryKeyString";
+static char *func = "SQLPrimaryKeys";
+StatementClass *stmt = (StatementClass *) hstmt;
+TupleNode *row;
+RETCODE result;
+int seq = 0;
 HSTMT htbl_stmt;
 StatementClass *tbl_stmt;
-RETCODE result;
 char tables_query[MAX_STATEMENT_LEN];
 char attname[MAX_INFO_STRING];
 SDWORD attname_len;
-int nk = 0;
+char pktab[MAX_TABLE_LEN + 1];
+Int2 result_cols;
 
-	if (nKey != NULL)
-		*nKey = 0;
+	mylog("%s: entering...stmt=%u\n", func, stmt);
 
-	svKey[0] = '\0';
-
+    if( ! stmt) {
+		SC_log_error(func, "", NULL);
+        return SQL_INVALID_HANDLE;
+    }
+	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
+
+    stmt->result = QR_Constructor();
+    if(!stmt->result) {
+        stmt->errormsg = "Couldn't allocate memory for SQLPrimaryKeys result.";
+        stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		SC_log_error(func, "", stmt);
+        return SQL_ERROR;
+    }
+
+    // the binding structure for a statement is not set up until
+    // a statement is actually executed, so we'll have to do this ourselves.
+	result_cols = 6;
+    extend_bindings(stmt, result_cols);
+	
+    // set the field names
+    QR_set_num_fields(stmt->result, result_cols);
+    QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
+    QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
+    QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+    QR_set_field_info(stmt->result, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+    QR_set_field_info(stmt->result, 4, "KEY_SEQ", PG_TYPE_INT2, 2);
+    QR_set_field_info(stmt->result, 5, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
+
 
     result = SQLAllocStmt( stmt->hdbc, &htbl_stmt);
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
@@ -2048,18 +2110,19 @@ int nk = 0;
     }
 	tbl_stmt = (StatementClass *) htbl_stmt;
 
-	tables_query[0] = '\0';
-	if ( ! my_strcat(tables_query, "select distinct on attnum a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%.*s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum",
-			szTableName, cbTableName)) {
-
-		stmt->errormsg = "No Table specified to getPrimaryKeyString.";
+	pktab[0] = '\0';
+	make_string(szTableName, cbTableName, pktab);
+	if ( pktab[0] == '\0') {
+		stmt->errormsg = "No Table specified to SQLPrimaryKeys.";
 	    stmt->errornumber = STMT_INTERNAL_ERROR;
 		SC_log_error(func, "", stmt);
 		SQLFreeStmt(htbl_stmt, SQL_DROP);
 		return SQL_ERROR;
 	}
 
-	mylog("getPrimaryKeyString: tables_query='%s'\n", tables_query);
+	sprintf(tables_query, "select distinct on attnum a2.attname, a2.attnum from pg_attribute a1, pg_attribute a2, pg_class c, pg_index i where c.relname = '%s_pkey' AND c.oid = i.indexrelid AND a1.attrelid = c.oid AND a2.attrelid = c.oid AND (i.indkey[0] = a1.attnum OR i.indkey[1] = a1.attnum OR i.indkey[2] = a1.attnum OR i.indkey[3] = a1.attnum OR i.indkey[4] = a1.attnum OR i.indkey[5] = a1.attnum OR i.indkey[6] = a1.attnum OR i.indkey[7] = a1.attnum) order by a2.attnum", pktab);
+
+	mylog("SQLPrimaryKeys: tables_query='%s'\n", tables_query);
 
     result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
     if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
@@ -2081,14 +2144,29 @@ int nk = 0;
     }
 
     result = SQLFetch(htbl_stmt);
+
     while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
 
-		if (strlen(svKey) > 0)
-			strcat(svKey, "+");
-		strcat(svKey, attname);
+        row = (TupleNode *)malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+
+        set_tuplefield_null(&row->tuple[0]);
+
+        // I have to hide the table owner from Access, otherwise it
+        // insists on referring to the table as 'owner.table'.
+        // (this is valid according to the ODBC SQL grammar, but
+        // Postgres won't support it.)
+
+        set_tuplefield_string(&row->tuple[1], "");
+        set_tuplefield_string(&row->tuple[2], pktab);
+        set_tuplefield_string(&row->tuple[3], attname);
+		set_tuplefield_int2(&row->tuple[4], (Int2) (++seq));
+		set_tuplefield_null(&row->tuple[5]);
+
+        QR_add_tuple(stmt->result, row);
+
+		mylog(">> primaryKeys: pktab = '%s', attname = '%s', seq = %d\n", pktab, attname, seq);
 
         result = SQLFetch(htbl_stmt);
-		nk++;
     }
 
     if(result != SQL_NO_DATA_FOUND) {
@@ -2101,135 +2179,6 @@ int nk = 0;
 
 	SQLFreeStmt(htbl_stmt, SQL_DROP);
 
-	if (nKey != NULL)
-		*nKey = nk;
-
-	mylog(">> getPrimaryKeyString: returning nKey=%d, svKey='%s'\n", nk, svKey);
-	return result;
-}
-
-RETCODE
-getPrimaryKeyArray(StatementClass *stmt, char *szTableName, SWORD cbTableName, char keyArray[][MAX_INFO_STRING], int *nKey)
-{
-RETCODE result;
-char svKey[MAX_KEYLEN], *svKeyPtr;
-int i = 0;
-
-	result = getPrimaryKeyString(stmt, szTableName, cbTableName, svKey, nKey);
-	if (result != SQL_SUCCESS && result != SQL_NO_DATA_FOUND)
-		//  error passed from above
-		return result;
-
-	//	If no keys, return NO_DATA_FOUND
-	if (svKey[0] == '\0') {
-		mylog("!!!!!! getPrimaryKeyArray: svKey was null\n");
-		return SQL_NO_DATA_FOUND;
-	}
-
-	// mylog(">> primarykeyArray: nKey=%d, svKey='%s'\n",  *nKey, svKey);
-
-	svKeyPtr = strtok(svKey, "+");
-	while (svKeyPtr != NULL && i < MAX_KEYPARTS) {
-		strcpy(keyArray[i++], svKeyPtr);
-		svKeyPtr = strtok(NULL, "+");
-	}
-
-	/*
-	for (i = 0; i < *nKey; i++)
-		mylog(">> keyArray[%d] = '%s'\n", i, keyArray[i]);
-	*/
-
-	return result;
-}
-
-
-RETCODE SQL_API SQLPrimaryKeys(
-                               HSTMT         hstmt,
-                               UCHAR FAR *   szTableQualifier,
-                               SWORD         cbTableQualifier,
-                               UCHAR FAR *   szTableOwner,
-                               SWORD         cbTableOwner,
-                               UCHAR FAR *   szTableName,
-                               SWORD         cbTableName)
-{
-char *func = "SQLPrimaryKeys";
-StatementClass *stmt = (StatementClass *) hstmt;
-TupleNode *row;
-RETCODE result;
-char svKey[MAX_KEYLEN], *ptr;
-int seq = 1, nkeys = 0;
-
-mylog("**** SQLPrimaryKeys(): ENTER, stmt=%u\n", stmt);
-
-    if( ! stmt) {
-		SC_log_error(func, "", NULL);
-        return SQL_INVALID_HANDLE;
-    }
-	stmt->manual_result = TRUE;
-
-	result = getPrimaryKeyString(stmt, szTableName, cbTableName, svKey, &nkeys);
-
-	mylog(">> PrimaryKeys: getPrimaryKeyString() returned %d, nkeys=%d, svKey = '%s'\n", result, nkeys, svKey);
-
-	if (result != SQL_SUCCESS && result != SQL_NO_DATA_FOUND) {
-		//	error msg passed from above
-		return result;
-	}
-
-	//	I'm not sure if this is correct to return when there are no keys or
-	//	if an empty result set would be better.
-	if (nkeys == 0) {
-		stmt->errornumber = STMT_INFO_ONLY;
-		stmt->errormsg = "No primary keys for this table.";
-		return SQL_SUCCESS_WITH_INFO;
-	}
-
-    stmt->result = QR_Constructor();
-    if(!stmt->result) {
-        stmt->errormsg = "Couldn't allocate memory for SQLPrimaryKeys result.";
-        stmt->errornumber = STMT_NO_MEMORY_ERROR;
-		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
-    }
-
-
-    // the binding structure for a statement is not set up until
-    // a statement is actually executed, so we'll have to do this ourselves.
-    extend_bindings(stmt, 6);
-	
-    // set the field names
-    QR_set_num_fields(stmt->result, 6);
-    QR_set_field_info(stmt->result, 0, "TABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
-    QR_set_field_info(stmt->result, 1, "TABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
-    QR_set_field_info(stmt->result, 2, "TABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-    QR_set_field_info(stmt->result, 3, "COLUMN_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-    QR_set_field_info(stmt->result, 4, "KEY_SEQ", PG_TYPE_INT2, 2);
-    QR_set_field_info(stmt->result, 5, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-
-    // add the tuples
-	ptr = strtok(svKey, "+");
-    while( ptr != NULL) {
-        row = (TupleNode *)malloc(sizeof(TupleNode) + (6 - 1) * sizeof(TupleField));
-
-        set_tuplefield_string(&row->tuple[0], "");
-
-        // I have to hide the table owner from Access, otherwise it
-        // insists on referring to the table as 'owner.table'.
-        // (this is valid according to the ODBC SQL grammar, but
-        // Postgres won't support it.)
-
-		mylog(">> primaryKeys: ptab = '%s', seq = %d\n", ptr, seq);
-
-        set_tuplefield_string(&row->tuple[1], "");
-        set_tuplefield_string(&row->tuple[2], szTableName);
-        set_tuplefield_string(&row->tuple[3], ptr);
-		set_tuplefield_int2(&row->tuple[4], (Int2) (seq++));
-		set_tuplefield_null(&row->tuple[5]);
-
-        QR_add_tuple(stmt->result, row);
-
-		ptr = strtok(NULL, "+");
-	}
 
     // also, things need to think that this statement is finished so
     // the results can be retrieved.
@@ -2258,24 +2207,24 @@ RETCODE SQL_API SQLForeignKeys(
                                UCHAR FAR *   szFkTableName,
                                SWORD         cbFkTableName)
 {
-char *func = "SQLForeignKeys";
+static char *func = "SQLForeignKeys";
 StatementClass *stmt = (StatementClass *) hstmt;
 TupleNode *row;
-HSTMT htbl_stmt;
+HSTMT htbl_stmt, hpkey_stmt;
 StatementClass *tbl_stmt;
-RETCODE result;
+RETCODE result, keyresult;
 char tables_query[MAX_STATEMENT_LEN];
-char relname[MAX_INFO_STRING], attnames[MAX_INFO_STRING], frelname[MAX_INFO_STRING];
-SDWORD relname_len, attnames_len, frelname_len;
-char *pktab, *fktab;
-char fkey = FALSE;
-char primaryKey[MAX_KEYPARTS][MAX_INFO_STRING];
-char *attnamePtr;
-int pkeys, seq;
+char args[1024], tgname[MAX_INFO_STRING];
+char pktab[MAX_TABLE_LEN + 1], fktab[MAX_TABLE_LEN + 1];
+char *ptr, *pkey_ptr, *pkptr, *fkptr, *frel, *prel;
+int i, k, pkeys, seq, ntabs;
+SWORD nargs, rule_type, action;
+char pkey[MAX_INFO_STRING];
+Int2 result_cols;
 
-mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
 
-	memset(primaryKey, 0, sizeof(primaryKey));
+	mylog("%s: entering...stmt=%u\n", func, stmt);
+
 
     if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -2283,113 +2232,6 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     }
 	stmt->manual_result = TRUE;
 	stmt->errormsg_created = TRUE;
-
-    result = SQLAllocStmt( stmt->hdbc, &htbl_stmt);
-    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		stmt->errornumber = STMT_NO_MEMORY_ERROR;
-		stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys result.";
-		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
-    }
-
-	tbl_stmt = (StatementClass *) htbl_stmt;
-
-	pktab = make_string(szPkTableName, cbPkTableName, NULL);
-	fktab = make_string(szFkTableName, cbFkTableName, NULL);
-
-	if (pktab && fktab) {
-        //	Get the primary key of the table listed in szPkTable
-		result = getPrimaryKeyArray(stmt, pktab, (SWORD) strlen(pktab), primaryKey, &pkeys);
-		if (result != SQL_SUCCESS && result != SQL_NO_DATA_FOUND) {
-			//	error msg passed from above
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
-			free(pktab); free(fktab);
-			return result;
-		}
-		if (pkeys == 0) {
-			stmt->errornumber = STMT_INFO_ONLY;
-			stmt->errormsg = "No primary keys for this table.";
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
-			free(pktab); free(fktab);
-			return SQL_SUCCESS_WITH_INFO;
-		}
-
-	    sprintf(tables_query, "select relname, attnames, frelname from %s where relname='%s' AND frelname='%s'", KEYS_TABLE, fktab, pktab);
-		free(pktab); free(fktab);
-	}
-    else if (pktab) {
-        //	Get the primary key of the table listed in szPkTable
-		result = getPrimaryKeyArray(stmt, pktab, (SWORD) strlen(pktab), primaryKey, &pkeys);
-		if (result != SQL_SUCCESS && result != SQL_NO_DATA_FOUND) {
-			//	error msg passed from above
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
-			free(pktab);
-			return result;
-		}
-		if (pkeys == 0) {
-			stmt->errornumber = STMT_INFO_ONLY;
-			stmt->errormsg = "No primary keys for this table.";
-			SQLFreeStmt(htbl_stmt, SQL_DROP);
-			free(pktab);
-			return SQL_SUCCESS_WITH_INFO;
-		}
-
-	    sprintf(tables_query, "select relname, attnames, frelname from %s where frelname='%s'", KEYS_TABLE, pktab);
-		free(pktab);
-    }
-    else if (fktab) {
-		//	This query could involve multiple calls to getPrimaryKey()
-		//	so put that off till we know what pktables we need.
-		fkey = TRUE;
-
-	    sprintf(tables_query, "select relname, attnames, frelname from %s where relname='%s'", KEYS_TABLE, fktab);
-		free(fktab);
-    }
-	else {
-		stmt->errormsg = "No tables specified to SQLForeignKeys.";
-		stmt->errornumber = STMT_INTERNAL_ERROR;
-		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
-		return SQL_ERROR;
-	}
-
-    result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
-    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		stmt->errormsg = SC_create_errormsg(htbl_stmt);
-		stmt->errornumber = tbl_stmt->errornumber;
-		SC_log_error(func, "", stmt);
-    	SQLFreeStmt(htbl_stmt, SQL_DROP);
-	    return SQL_ERROR;
-    }
-
-    result = SQLBindCol(htbl_stmt, 1, SQL_C_CHAR,
-                        relname, MAX_INFO_STRING, &relname_len);
-    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		stmt->errormsg = tbl_stmt->errormsg;
-		stmt->errornumber = tbl_stmt->errornumber;
-		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
-        return SQL_ERROR;
-    }
-    result = SQLBindCol(htbl_stmt, 2, SQL_C_CHAR,
-                        attnames, MAX_INFO_STRING, &attnames_len);
-    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		stmt->errormsg = tbl_stmt->errormsg;
-		stmt->errornumber = tbl_stmt->errornumber;
-		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
-        return SQL_ERROR;
-    }
-
-    result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
-                        frelname, MAX_INFO_STRING, &frelname_len);
-    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		stmt->errormsg = tbl_stmt->errormsg;
-		stmt->errornumber = tbl_stmt->errornumber;
-		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
-        return SQL_ERROR;
-    }
 
     stmt->result = QR_Constructor();
     if(!stmt->result) {
@@ -2402,10 +2244,11 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
 
     // the binding structure for a statement is not set up until
     // a statement is actually executed, so we'll have to do this ourselves.
-    extend_bindings(stmt, 13);
+	result_cols = 14;
+    extend_bindings(stmt, result_cols);
 
     // set the field names
-    QR_set_num_fields(stmt->result, 13);
+    QR_set_num_fields(stmt->result, result_cols);
     QR_set_field_info(stmt->result, 0, "PKTABLE_QUALIFIER", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 1, "PKTABLE_OWNER", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 2, "PKTABLE_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
@@ -2419,79 +2262,7 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     QR_set_field_info(stmt->result, 10, "DELETE_RULE", PG_TYPE_INT2, 2);
     QR_set_field_info(stmt->result, 11, "FK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
     QR_set_field_info(stmt->result, 12, "PK_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
-
-    // add the tuples
-    result = SQLFetch(htbl_stmt);
-
-    while((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO)) {
-
-		if (fkey == TRUE) {
-			result = getPrimaryKeyArray(stmt, frelname, (SWORD) strlen(frelname), primaryKey, &pkeys);
-
-			//  mylog(">> getPrimaryKeyArray: frelname = '%s', pkeys = %d, result = %d\n", frelname, pkeys, result);
-
-			//	If an error occurs or for some reason there is no primary key for a
-			//	table that is a foreign key, then skip that one.
-			if ((result != SQL_SUCCESS && result != SQL_NO_DATA_FOUND) || pkeys == 0) {
-		        result = SQLFetch(htbl_stmt);
-				continue;
-			}
-
-			/*
-			for (i = 0; i< pkeys; i++)
-				mylog(">> fkey: pkeys=%d, primaryKey[%d] = '%s'\n", pkeys, i, primaryKey[i]);
-			mylog(">> !!!!!!!!! pkeys = %d\n", pkeys);
-			*/
-		}
-
-		// mylog(">> attnames='%s'\n", attnames);
-
-		attnamePtr = strtok(attnames, "+");
-		seq = 0;
-
-		while (attnamePtr != NULL && seq < pkeys) {
-
-	        row = (TupleNode *)malloc(sizeof(TupleNode) + (13 - 1) * sizeof(TupleField));
-
-			set_tuplefield_null(&row->tuple[0]);
-
-			// I have to hide the table owner from Access, otherwise it
-			// insists on referring to the table as 'owner.table'.
-			// (this is valid according to the ODBC SQL grammar, but
-			// Postgres won't support it.)
-
-			mylog(">> foreign keys: pktab='%s' patt='%s' fktab='%s' fatt='%s' seq=%d\n", 
-				frelname, primaryKey[seq], relname, attnamePtr, (seq+1));
-
-			set_tuplefield_string(&row->tuple[1], "");
-			set_tuplefield_string(&row->tuple[2], frelname);
-			set_tuplefield_string(&row->tuple[3], primaryKey[seq]);
-			set_tuplefield_null(&row->tuple[4]);
-			set_tuplefield_string(&row->tuple[5], "");
-			set_tuplefield_string(&row->tuple[6], relname);
-			set_tuplefield_string(&row->tuple[7], attnamePtr);
-			set_tuplefield_int2(&row->tuple[8], (Int2) (++seq));
-			set_tuplefield_null(&row->tuple[9]);
-			set_tuplefield_null(&row->tuple[10]);
-			set_tuplefield_null(&row->tuple[11]);
-			set_tuplefield_null(&row->tuple[12]);
-
-			QR_add_tuple(stmt->result, row);
-
-			attnamePtr = strtok(NULL, "+");
-		}
-        result = SQLFetch(htbl_stmt);
-    }
-
-    if(result != SQL_NO_DATA_FOUND) {
-		stmt->errormsg = SC_create_errormsg(htbl_stmt);
-		stmt->errornumber = tbl_stmt->errornumber;
-		SC_log_error(func, "", stmt);
-		SQLFreeStmt(htbl_stmt, SQL_DROP);
-        return SQL_ERROR;
-    }
-
-	SQLFreeStmt(htbl_stmt, SQL_DROP);
+    QR_set_field_info(stmt->result, 13, "TRIGGER_NAME", PG_TYPE_TEXT, MAX_INFO_STRING);
 
     // also, things need to think that this statement is finished so
     // the results can be retrieved.
@@ -2500,6 +2271,413 @@ mylog("**** SQLForeignKeys(): ENTER, stmt=%u\n", stmt);
     // set up the current tuple pointer for SQLFetch
     stmt->currTuple = -1;
 	stmt->current_col = -1;
+
+
+    result = SQLAllocStmt( stmt->hdbc, &htbl_stmt);
+    if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+		stmt->errornumber = STMT_NO_MEMORY_ERROR;
+		stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys result.";
+		SC_log_error(func, "", stmt);
+        return SQL_ERROR;
+    }
+
+	tbl_stmt = (StatementClass *) htbl_stmt;
+
+	pktab[0] = '\0';
+	fktab[0] = '\0';
+
+	make_string(szPkTableName, cbPkTableName, pktab);
+	make_string(szFkTableName, cbFkTableName, fktab);
+
+
+	/*	Case #2 -- Get the foreign keys in the specified table (fktab) that 
+		refer to the primary keys of other table(s).
+	*/
+	if (fktab[0] != '\0') {
+
+		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs, pg_trigger.tgname from pg_proc, pg_trigger, pg_class where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid AND pg_proc.proname = 'check_primary_key' AND pg_class.relname = '%s'",
+			fktab);
+
+		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = SC_create_errormsg(htbl_stmt);
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+    		SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 1, SQL_C_BINARY,
+							args, MAX_INFO_STRING, NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 2, SQL_C_SHORT,
+							&nargs, 0, NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 3, SQL_C_CHAR,
+							tgname, sizeof(tgname), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLFetch(htbl_stmt);
+		if (result == SQL_NO_DATA_FOUND)
+			return SQL_SUCCESS;
+
+		if(result != SQL_SUCCESS) {
+			stmt->errormsg = SC_create_errormsg(htbl_stmt);
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		keyresult = SQLAllocStmt( stmt->hdbc, &hpkey_stmt);
+		if((keyresult != SQL_SUCCESS) && (keyresult != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errornumber = STMT_NO_MEMORY_ERROR;
+			stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys (pkeys) result.";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		keyresult = SQLBindCol(hpkey_stmt, 4, SQL_C_CHAR,
+								pkey, sizeof(pkey), NULL);
+		if (keyresult != SQL_SUCCESS) {
+			stmt->errornumber = STMT_NO_MEMORY_ERROR;
+			stmt->errormsg = "Couldn't bindcol for primary keys for SQLForeignKeys result.";
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(hpkey_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		while (result == SQL_SUCCESS) {
+
+			/*	Compute the number of keyparts.	*/
+			pkeys = nargs / 2;
+
+			mylog("Foreign Key Case#2: nargs = %d, pkeys = %d\n", nargs, pkeys);
+
+			ptr = args;
+
+			/*	Get to the PK Table Name */
+			for (k = 0; k < pkeys; k++)
+				ptr += strlen(ptr) + 1;
+
+			prel = ptr;
+
+			mylog("prel = '%s'\n", prel);
+
+			/*	If there is a pk table specified, then check it. */
+			if (pktab[0] != '\0') {
+
+				/*	If it doesn't match, then continue */
+				if ( strcmp(prel, pktab)) {	
+					result = SQLFetch(htbl_stmt);
+					continue;
+				}
+			}
+
+			keyresult = SQLPrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, prel, SQL_NTS);
+			if (keyresult != SQL_SUCCESS) {
+				stmt->errornumber = STMT_NO_MEMORY_ERROR;
+				stmt->errormsg = "Couldn't get primary keys for SQLForeignKeys result.";
+				SC_log_error(func, "", stmt);
+				SQLFreeStmt(hpkey_stmt, SQL_DROP);
+				return SQL_ERROR;
+			}
+
+
+			/*	Check that the key listed is the primary key */
+			keyresult = SQLFetch(hpkey_stmt);
+			for (k = 0; k < pkeys; k++) {
+
+				ptr += strlen(ptr) + 1;
+				if ( keyresult != SQL_SUCCESS || strcmp(ptr, pkey)) {
+					pkeys = 0;
+					break;
+				}
+				keyresult = SQLFetch(hpkey_stmt);
+			}
+			ptr = prel;
+
+
+
+			/*	Set to first fk column */
+			fkptr = args;
+			seq = 0;
+
+			for (k = 0; k < pkeys; k++) {
+
+				row = (TupleNode *)malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+
+				set_tuplefield_null(&row->tuple[0]);
+				set_tuplefield_string(&row->tuple[1], "");
+
+				set_tuplefield_string(&row->tuple[2], prel);
+
+				//	Get to the primary key
+				ptr += strlen(ptr) + 1;
+
+				mylog("prel = '%s', ptr = '%s'\n", prel, ptr);
+
+				set_tuplefield_string(&row->tuple[3], ptr);
+				set_tuplefield_null(&row->tuple[4]);
+				set_tuplefield_string(&row->tuple[5], "");
+
+				set_tuplefield_string(&row->tuple[6], fktab);
+				set_tuplefield_string(&row->tuple[7], fkptr);
+
+				mylog("fktab = '%s', fkptr = '%s'\n", fktab, fkptr);
+
+				set_tuplefield_int2(&row->tuple[8], (Int2) (++seq));
+				set_tuplefield_null(&row->tuple[9]);
+				set_tuplefield_null(&row->tuple[10]);
+				set_tuplefield_null(&row->tuple[11]);
+				set_tuplefield_null(&row->tuple[12]);
+
+				set_tuplefield_string(&row->tuple[13], tgname);
+
+				QR_add_tuple(stmt->result, row);
+
+				//	next foreign key
+				fkptr += strlen(fkptr) + 1;
+
+			}
+
+			result = SQLFetch(htbl_stmt);
+		}
+	}
+
+	/*	Case #1 -- Get the foreign keys in other tables that refer to the primary key
+		in the specified table (pktab).  i.e., Who points to me?
+	*/
+    else if (pktab[0] != '\0') {
+
+		sprintf(tables_query, "select pg_trigger.tgargs, pg_trigger.tgnargs, pg_trigger.tgtype, pg_trigger.tgname from pg_proc, pg_trigger, pg_class where pg_proc.oid = pg_trigger.tgfoid and pg_trigger.tgrelid = pg_class.oid AND pg_proc.proname = 'check_foreign_key' AND pg_class.relname = '%s'",
+			pktab);
+
+		result = SQLExecDirect(htbl_stmt, tables_query, strlen(tables_query));
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = SC_create_errormsg(htbl_stmt);
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+    		SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 1, SQL_C_BINARY,
+							args, sizeof(args), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 2, SQL_C_SHORT,
+							&nargs, 0, NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 3, SQL_C_SHORT,
+							&rule_type, 0, NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLBindCol(htbl_stmt, 4, SQL_C_CHAR,
+							tgname, sizeof(tgname), NULL);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errormsg = tbl_stmt->errormsg;
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		result = SQLFetch(htbl_stmt);
+		if (result == SQL_NO_DATA_FOUND)
+			return SQL_SUCCESS;
+
+		if(result != SQL_SUCCESS) {
+			stmt->errormsg = SC_create_errormsg(htbl_stmt);
+			stmt->errornumber = tbl_stmt->errornumber;
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(htbl_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		keyresult = SQLAllocStmt( stmt->hdbc, &hpkey_stmt);
+		if((keyresult != SQL_SUCCESS) && (keyresult != SQL_SUCCESS_WITH_INFO)) {
+			stmt->errornumber = STMT_NO_MEMORY_ERROR;
+			stmt->errormsg = "Couldn't allocate statement for SQLForeignKeys (pkeys) result.";
+			SC_log_error(func, "", stmt);
+			return SQL_ERROR;
+		}
+
+		keyresult = SQLPrimaryKeys(hpkey_stmt, NULL, 0, NULL, 0, pktab, SQL_NTS);
+		if (keyresult != SQL_SUCCESS) {
+			stmt->errornumber = STMT_NO_MEMORY_ERROR;
+			stmt->errormsg = "Couldn't get primary keys for SQLForeignKeys result.";
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(hpkey_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		keyresult = SQLBindCol(hpkey_stmt, 4, SQL_C_CHAR,
+								pkey, sizeof(pkey), NULL);
+		if (keyresult != SQL_SUCCESS) {
+			stmt->errornumber = STMT_NO_MEMORY_ERROR;
+			stmt->errormsg = "Couldn't bindcol for primary keys for SQLForeignKeys result.";
+			SC_log_error(func, "", stmt);
+			SQLFreeStmt(hpkey_stmt, SQL_DROP);
+			return SQL_ERROR;
+		}
+
+		while (result == SQL_SUCCESS) {
+			//	Get the number of tables
+			ptr = args;
+			ntabs = atoi(args);
+			ptr += strlen(ptr) + 1;
+
+
+			//	Handle action (i.e., 'cascade', 'restrict', 'setnull')
+			switch(tolower(ptr[0])) {
+			case 'c':	
+				action = SQL_CASCADE;
+				break;
+			case 'r':
+				action = SQL_RESTRICT;
+				break;
+			case 's':
+				action = SQL_SET_NULL;
+				break;
+			default:
+				action = -1;
+				break;
+			}
+
+			rule_type >>= TRIGGER_SHIFT;
+			ptr += strlen(ptr) + 1;
+
+			//	Calculate the number of key parts
+			pkeys = (nargs - ( 2 + ntabs)) / (ntabs + 1);
+			pkey_ptr = ptr;
+
+
+			keyresult = SQLExtendedFetch(hpkey_stmt, SQL_FETCH_FIRST, -1, NULL, NULL);
+			if ( keyresult != SQL_SUCCESS || strcmp(pkey, ptr)) {
+				ntabs = 0;
+			}
+
+			//	Get to the last primary keypart
+			for (i = 1; i < pkeys; i++) {
+
+				//	If keypart doesnt match, skip this entry
+				if ( keyresult != SQL_SUCCESS || strcmp(pkey, ptr)) {
+					ntabs = 0;
+					break;
+				}
+				ptr += strlen(ptr) + 1;
+
+				keyresult = SQLExtendedFetch(hpkey_stmt, SQL_FETCH_NEXT, -1, NULL, NULL);
+			}
+				
+			mylog("Foreign Key Case#1: nargs = %d, ntabs = %d, pkeys = %d\n", nargs, ntabs, pkeys);
+
+
+			//	Get Foreign Key Tables
+			for (i = 0; i < ntabs; i++) {
+
+				seq = 0;
+				pkptr = pkey_ptr;
+
+				ptr += strlen(ptr) + 1;
+				frel = ptr;
+
+				for (k = 0; k < pkeys; k++) {
+
+					row = (TupleNode *)malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+
+					set_tuplefield_null(&row->tuple[0]);
+					set_tuplefield_string(&row->tuple[1], "");
+
+					set_tuplefield_string(&row->tuple[2], pktab);
+					set_tuplefield_string(&row->tuple[3], pkptr);
+
+					mylog("pktab = '%s', pkptr = '%s'\n", pktab, pkptr);
+
+					set_tuplefield_null(&row->tuple[4]);
+					set_tuplefield_string(&row->tuple[5], "");
+					set_tuplefield_string(&row->tuple[6], frel);
+
+					//	Get to the foreign key
+					ptr += strlen(ptr) + 1;
+
+					set_tuplefield_string(&row->tuple[7], ptr);
+
+					mylog("frel = '%s', ptr = '%s'\n", frel, ptr);
+					mylog("rule_type = %d, action = %d\n", rule_type, action);
+
+					set_tuplefield_int2(&row->tuple[8], (Int2) (++seq));
+
+					set_nullfield_int2(&row->tuple[9], (Int2) ((rule_type & TRIGGER_UPDATE) ? action : -1));
+					set_nullfield_int2(&row->tuple[10], (Int2) ((rule_type & TRIGGER_DELETE) ? action : -1));
+
+					set_tuplefield_null(&row->tuple[11]);
+					set_tuplefield_null(&row->tuple[12]);
+
+					set_tuplefield_string(&row->tuple[13], tgname);
+
+					QR_add_tuple(stmt->result, row);
+
+					//	next primary key
+					pkptr += strlen(pkptr) + 1;
+
+				}
+
+			}
+
+			result = SQLFetch(htbl_stmt);
+		}
+    }
+	else {
+		stmt->errormsg = "No tables specified to SQLForeignKeys.";
+		stmt->errornumber = STMT_INTERNAL_ERROR;
+		SC_log_error(func, "", stmt);
+		SQLFreeStmt(htbl_stmt, SQL_DROP);
+		return SQL_ERROR;
+	}
+
+	SQLFreeStmt(htbl_stmt, SQL_DROP);
+	SQLFreeStmt(hpkey_stmt, SQL_DROP);
 
 	mylog("SQLForeignKeys(): EXIT, stmt=%u\n", stmt);
     return SQL_SUCCESS;
@@ -2518,7 +2696,9 @@ RETCODE SQL_API SQLProcedureColumns(
                                     UCHAR FAR *   szColumnName,
                                     SWORD         cbColumnName)
 {
-char *func="SQLProcedureColumns";
+static char *func="SQLProcedureColumns";
+
+	mylog("%s: entering...\n", func);
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
@@ -2533,7 +2713,9 @@ RETCODE SQL_API SQLProcedures(
                               UCHAR FAR *    szProcName,
                               SWORD          cbProcName)
 {
-char *func="SQLProcedures";
+static char *func="SQLProcedures";
+
+	mylog("%s: entering...\n", func);
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;
@@ -2548,7 +2730,9 @@ RETCODE SQL_API SQLTablePrivileges(
                                    UCHAR FAR *     szTableName,
                                    SWORD           cbTableName)
 {
-char *func="SQLTablePrivileges";
+static char *func="SQLTablePrivileges";
+
+	mylog("%s: entering...\n", func);
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
     return SQL_ERROR;

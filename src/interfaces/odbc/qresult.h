@@ -65,8 +65,7 @@ struct QResultClass_ {
 /*	These functions are for retrieving data from the qresult */
 #define QR_get_value_manual(self, tupleno, fieldno)	(TL_get_fieldval(self->manual_tuples, tupleno, fieldno))
 #define QR_get_value_backend(self, fieldno)			(self->tupleField[fieldno].value) 
-#define QR_get_value_backend_row(self, tupleno, fieldno) \
-	((self->backend_tuples + (tupleno * self->num_fields))[fieldno].value)
+#define QR_get_value_backend_row(self, tupleno, fieldno) ((self->backend_tuples + (tupleno * self->num_fields))[fieldno].value)
 
 /*	These functions are used by both manual and backend results */
 #define QR_NumResultCols(self)				(CI_get_num_fields(self->fields))
@@ -93,7 +92,7 @@ struct QResultClass_ {
 #define QR_get_status(self)				(self->status)
 
 //	Core Functions
-QResultClass *QR_Constructor();
+QResultClass *QR_Constructor(void);
 void QR_Destructor(QResultClass *self);
 char QR_read_tuple(QResultClass *self, char binary);
 int QR_next_tuple(QResultClass *self);

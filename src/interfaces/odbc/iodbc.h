@@ -1,7 +1,7 @@
 #ifndef	_IODBC_H
 #define	_IODBC_H
 
-# if	!defined(WINDOWS) && !defined(WIN32_SYSTEM) 
+# if	!defined(WIN32) && !defined(WIN32_SYSTEM) 
 #  define	_UNIX_
 
 #  include	<stdlib.h>
@@ -32,7 +32,7 @@
 
 # endif	/* _UNIX_ */
 
-# if	defined(WINDOWS) || defined(WIN32_SYSTEM)
+# if	defined(WIN32) || defined(WIN32_SYSTEM)
 
 #  include	<windows.h>
 #  include	<windowsx.h>
@@ -55,7 +55,7 @@
 #   define      STREQ(a, b)     (_fstrcmp((char FAR*)(a), (char FAR*)(b) == 0)
 #  endif
 
-# endif	/* WINDOWS */
+# endif	/* WIN32 */
 
 # define	SYSERR		(-1)
 

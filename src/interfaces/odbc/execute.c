@@ -14,14 +14,14 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "psqlodbc.h"
 #include <stdio.h>
 #include <string.h>
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isqlext.h"
 #else
@@ -37,22 +37,15 @@
 #include "lobj.h"
 
 
-RETCODE SQL_API SQLExecDirect(
-        HSTMT     hstmt,
-        UCHAR FAR *szSqlStr,
-        SDWORD    cbSqlStr)
-{
-	return _SQLExecDirect(hstmt, szSqlStr, cbSqlStr);
-}
-
-
 //      Perform a Prepare on the SQL statement
 RETCODE SQL_API SQLPrepare(HSTMT     hstmt,
                            UCHAR FAR *szSqlStr,
                            SDWORD    cbSqlStr)
 {
-char *func = "SQLPrepare";
+static char *func = "SQLPrepare";
 StatementClass *self = (StatementClass *) hstmt;
+
+	mylog( "%s: entering...\n", func);
 
 	if ( ! self) {
 		SC_log_error(func, "", NULL);
@@ -130,13 +123,16 @@ StatementClass *self = (StatementClass *) hstmt;
 
 //      Performs the equivalent of SQLPrepare, followed by SQLExecute.
 
-RETCODE SQL_API _SQLExecDirect(
+RETCODE SQL_API SQLExecDirect(
         HSTMT     hstmt,
         UCHAR FAR *szSqlStr,
         SDWORD    cbSqlStr)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-char *func = "SQLExecDirect";
+RETCODE SQL_API result;
+static char *func = "SQLExecDirect";
+
+	mylog( "%s: entering...\n", func);
     
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -156,7 +152,7 @@ char *func = "SQLExecDirect";
 		return SQL_ERROR;
 	}
 
-	mylog("**** SQLExecDirect: hstmt=%u, statement='%s'\n", hstmt, stmt->statement);
+	mylog("**** %s: hstmt=%u, statement='%s'\n", func, hstmt, stmt->statement);
 
 	stmt->prepare = FALSE;
 	stmt->statement_type = statement_type(stmt->statement);
@@ -169,23 +165,29 @@ char *func = "SQLExecDirect";
 		return SQL_ERROR;
 	}
 	
-	mylog("SQLExecDirect: calling SQLExecute\n");
+	mylog("%s: calling SQLExecute...\n", func);
 
-	return SQLExecute(hstmt);
+	result = SQLExecute(hstmt);
+
+	mylog("%s: returned %hd from SQLExecute\n", func, result);
+	return result;
 }
 
 //      Execute a prepared SQL statement
 RETCODE SQL_API SQLExecute(
         HSTMT   hstmt)
 {
-char *func="SQLExecute";
+static char *func="SQLExecute";
 StatementClass *stmt = (StatementClass *) hstmt;
 ConnectionClass *conn;
 int i, retval;
 
 
+	mylog("%s: entering...\n", func);
+
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
+		mylog("%s: NULL statement so return SQL_INVALID_HANDLE\n", func);
 		return SQL_INVALID_HANDLE;
 	}
 
@@ -195,13 +197,18 @@ int i, retval;
 	*/
 	if ( stmt->prepare && stmt->status == STMT_PREMATURE) {
 		stmt->status = STMT_FINISHED;       
-		if (stmt->errormsg == NULL)
+		if (stmt->errormsg == NULL) {
+			mylog("%s: premature statement but return SQL_SUCCESS\n", func);
 			return SQL_SUCCESS;
+		}
 		else {
 			SC_log_error(func, "", stmt);
+			mylog("%s: premature statement so return SQL_ERROR\n", func);
 			return SQL_ERROR;
 		}
 	}  
+
+	mylog("%s: clear errors...\n", func);
 
 	SC_clear_error(stmt);
 
@@ -210,6 +217,7 @@ int i, retval;
 		stmt->errormsg = "Connection is already in use.";
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
 		SC_log_error(func, "", stmt);
+		mylog("%s: problem with connection\n", func);
 		return SQL_ERROR;
 	}
 
@@ -217,6 +225,7 @@ int i, retval;
 		stmt->errornumber = STMT_NO_STMTSTRING;
 		stmt->errormsg = "This handle does not have a SQL statement stored in it";
 		SC_log_error(func, "", stmt);
+		mylog("%s: problem with handle\n", func);
 		return SQL_ERROR;
 	}
 
@@ -225,6 +234,7 @@ int i, retval;
 		to SQLFreeStmt(SQL_CLOSE) or SQLCancel.
 	*/
 	if (stmt->status == STMT_FINISHED) {
+		mylog("%s: recycling statement (should have been done by app)...\n", func);
 		SC_recycle_statement(stmt);
 	}
 
@@ -235,6 +245,7 @@ int i, retval;
 		stmt->errornumber = STMT_STATUS_ERROR;
 		stmt->errormsg = "The handle does not point to a statement that is ready to be executed";
 		SC_log_error(func, "", stmt);
+		mylog("%s: problem with statement\n", func);
 		return SQL_ERROR;
 	}
 
@@ -258,7 +269,7 @@ int i, retval;
 		return SQL_NEED_DATA;
 
 
-	mylog("SQLExecute: copying statement params: trans_status=%d, len=%d, stmt='%s'\n", conn->transact_status, strlen(stmt->statement), stmt->statement);
+	mylog("%s: copying statement params: trans_status=%d, len=%d, stmt='%s'\n", func, conn->transact_status, strlen(stmt->statement), stmt->statement);
 
 	//	Create the statement with parameters substituted.
 	retval = copy_statement_with_parameters(stmt);
@@ -282,14 +293,14 @@ RETCODE SQL_API SQLTransact(
         HDBC    hdbc,
         UWORD   fType)
 {
-char *func = "SQLTransact";
-extern ConnectionClass **conns;
+static char *func = "SQLTransact";
+extern ConnectionClass *conns[];
 ConnectionClass *conn;
 QResultClass *res;
 char ok, *stmt_string;
 int lf;
 
-mylog("**** SQLTransact: hdbc=%u, henv=%u\n", hdbc, henv);
+	mylog("entering %s: hdbc=%u, henv=%u\n", func, hdbc, henv);
 
 	if (hdbc == SQL_NULL_HDBC && henv == SQL_NULL_HENV) {
 		CC_log_error(func, "", NULL);
@@ -357,8 +368,10 @@ mylog("**** SQLTransact: hdbc=%u, henv=%u\n", hdbc, henv);
 RETCODE SQL_API SQLCancel(
         HSTMT   hstmt)  // Statement to cancel.
 {
-char *func="SQLCancel";
+static char *func="SQLCancel";
 StatementClass *stmt = (StatementClass *) hstmt;
+
+	mylog( "%s: entering...\n", func);
 
 	//	Check if this can handle canceling in the middle of a SQLPutData?
 	if ( ! stmt) {
@@ -394,6 +407,9 @@ RETCODE SQL_API SQLNativeSql(
         SDWORD     cbSqlStrMax,
         SDWORD FAR *pcbSqlStr)
 {
+static char *func="SQLNativeSql";
+
+	mylog( "%s: entering...\n", func);
 
     strncpy_null(szSqlStr, szSqlStrIn, cbSqlStrMax);
 
@@ -409,17 +425,18 @@ RETCODE SQL_API SQLParamData(
         HSTMT   hstmt,
         PTR FAR *prgbValue)
 {
-char *func = "SQLParamData";
+static char *func = "SQLParamData";
 StatementClass *stmt = (StatementClass *) hstmt;
 int i, retval;
+
+	mylog( "%s: entering...\n", func);
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
 
-	mylog("SQLParamData, enter: data_at_exec=%d, params_alloc=%d\n", 
-		stmt->data_at_exec, stmt->parameters_allocated);
+	mylog("%s: data_at_exec=%d, params_alloc=%d\n", func, stmt->data_at_exec, stmt->parameters_allocated);
 
 	if (stmt->data_at_exec < 0) {
 		stmt->errornumber = STMT_SEQUENCE_ERROR;
@@ -482,12 +499,13 @@ RETCODE SQL_API SQLPutData(
         PTR     rgbValue,
         SDWORD  cbValue)
 {
-char *func = "SQLPutData";
+static char *func = "SQLPutData";
 StatementClass *stmt = (StatementClass *) hstmt;
 int old_pos, retval;
 ParameterInfoClass *current_param;
 char *buffer;
 
+	mylog( "%s: entering...\n", func);
 
 	if ( ! stmt) {
 		SC_log_error(func, "", NULL);

@@ -14,7 +14,7 @@
  */
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
 #include "bind.h"
@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <malloc.h>
 
-#ifdef HAVE_IODBC
+#ifndef WIN32
 #include "iodbc.h"
 #include "isql.h"
 #include "isqlext.h"
@@ -49,7 +49,9 @@ RETCODE SQL_API SQLBindParameter(
         SDWORD FAR *pcbValue)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-char *func="SQLBindParameter";
+static char *func="SQLBindParameter";
+
+	mylog( "%s: entering...\n", func);
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -131,8 +133,7 @@ char *func="SQLBindParameter";
 	else
 		stmt->parameters[ipar].data_at_exec = FALSE;
 
-	mylog("SQLBindParamater: ipar = %d, *pcbValue = %d, data_at_exec = %d\n", 
-		ipar, pcbValue ? *pcbValue: -777, stmt->parameters[ipar].data_at_exec);
+	mylog("SQLBindParamater: ipar = %d, *pcbValue = %d, data_at_exec = %d\n", ipar, pcbValue ? *pcbValue: -777, stmt->parameters[ipar].data_at_exec);
 
 	return SQL_SUCCESS;
 }
@@ -149,8 +150,9 @@ RETCODE SQL_API SQLBindCol(
         SDWORD FAR *pcbValue)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-Int2 numcols = 0;
-char *func="SQLBindCol";
+static char *func="SQLBindCol";
+
+	mylog( "%s: entering...\n", func);
     
 mylog("**** SQLBindCol: stmt = %u, icol = %d\n", stmt, icol);
 
@@ -230,7 +232,9 @@ RETCODE SQL_API SQLDescribeParam(
         SWORD  FAR *pfNullable)
 {
 StatementClass *stmt = (StatementClass *) hstmt;
-char *func = "SQLDescribeParam";
+static char *func = "SQLDescribeParam";
+
+	mylog( "%s: entering...\n", func);
 
 	if( ! stmt) {
 		SC_log_error(func, "", NULL);
@@ -272,7 +276,9 @@ RETCODE SQL_API SQLParamOptions(
         UDWORD     crow,
         UDWORD FAR *pirow)
 {
-char *func = "SQLParamOptions";
+static char *func = "SQLParamOptions";
+
+	mylog( "%s: entering...\n", func);
 
 	SC_log_error(func, "Function not implemented", (StatementClass *) hstmt);
 	return SQL_ERROR;
@@ -294,7 +300,9 @@ RETCODE SQL_API SQLNumParams(
 StatementClass *stmt = (StatementClass *) hstmt;
 char in_quote = FALSE;
 unsigned int i;
-char *func = "SQLNumParams";
+static char *func = "SQLNumParams";
+
+	mylog( "%s: entering...\n", func);
 
 	if(!stmt) {
 		SC_log_error(func, "", NULL);
@@ -357,10 +365,11 @@ int i;
 void
 extend_bindings(StatementClass *stmt, int num_columns)
 {
+static char *func="extend_bindings";
 BindInfoClass *new_bindings;
 int i;
 
-mylog("in extend_bindings: stmt=%u, bindings_allocated=%d, num_columns=%d\n", stmt, stmt->bindings_allocated, num_columns);
+mylog("%s: entering ... stmt=%u, bindings_allocated=%d, num_columns=%d\n", func, stmt, stmt->bindings_allocated, num_columns);
 
 	/* if we have too few, allocate room for more, and copy the old */
 	/* entries into the new structure */
@@ -368,6 +377,8 @@ mylog("in extend_bindings: stmt=%u, bindings_allocated=%d, num_columns=%d\n", st
 
 		new_bindings = create_empty_bindings(num_columns);
 		if ( ! new_bindings) {
+           mylog("%s: unable to create %d new bindings from %d old bindings\n", func, num_columns, stmt->bindings_allocated);
+
 			if (stmt->bindings) {
 				free(stmt->bindings);
 				stmt->bindings = NULL;

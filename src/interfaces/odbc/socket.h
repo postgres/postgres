@@ -11,15 +11,16 @@
 #define __SOCKET_H__
 
 #ifdef HAVE_CONFIG_H
-#include <config.h>
+#include "config.h"
 #endif
 
-#ifdef UNIX
+#ifndef WIN32
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #define closesocket(xxx) close(xxx)
 #define SOCKETFD int
 #else
@@ -68,7 +69,7 @@ struct SocketClass_ {
 
 
 /* Socket prototypes */
-SocketClass *SOCK_Constructor();
+SocketClass *SOCK_Constructor(void);
 void SOCK_Destructor(SocketClass *self);
 char SOCK_connect_to(SocketClass *self, unsigned short port, char *hostname);
 void SOCK_get_n_char(SocketClass *self, char *buffer, int len);

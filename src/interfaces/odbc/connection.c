@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifndef UNIX
+#ifdef WIN32
 #include <odbcinst.h>
 #endif
 
@@ -39,10 +39,12 @@ RETCODE SQL_API SQLAllocConnect(
 {
 EnvironmentClass *env = (EnvironmentClass *)henv;
 ConnectionClass *conn;
-char *func="SQLAllocConnect";
+static char *func="SQLAllocConnect";
+
+	mylog( "%s: entering...\n", func);
 
 	conn = CC_Constructor();
-	mylog("**** SQLAllocConnect: henv = %u, conn = %u\n", henv, conn);
+	mylog("**** %s: henv = %u, conn = %u\n", func, henv, conn);
 
     if( ! conn) {
         env->errormsg = "Couldn't allocate memory for Connection object.";
@@ -80,7 +82,9 @@ RETCODE SQL_API SQLConnect(
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
-char *func = "SQLConnect";
+static char *func = "SQLConnect";
+
+	mylog( "%s: entering...\n", func);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
@@ -103,13 +107,15 @@ char *func = "SQLConnect";
 	/* fill in any defaults */
 	getDSNdefaults(ci);
 
-	qlog("conn = %u, SQLConnect(DSN='%s', UID='%s', PWD='%s')\n", conn, ci->dsn, ci->username, ci->password);
+	qlog("conn = %u, %s(DSN='%s', UID='%s', PWD='%s')\n", conn, func, ci->dsn, ci->username, ci->password);
 
 	if ( CC_connect(conn, FALSE) <= 0) {
 		//	Error messages are filled in
 		CC_log_error(func, "Error on CC_connect", conn);
 		return SQL_ERROR;
 	}
+
+	mylog( "%s: returning...\n", func);
 
 	return SQL_SUCCESS;
 }
@@ -124,6 +130,10 @@ RETCODE SQL_API SQLBrowseConnect(
         SWORD     cbConnStrOutMax,
         SWORD FAR *pcbConnStrOut)
 {
+static char *func="SQLBrowseConnect";
+
+	mylog( "%s: entering...\n", func);
+
 	return SQL_SUCCESS;
 }
 
@@ -134,16 +144,17 @@ RETCODE SQL_API SQLDisconnect(
         HDBC      hdbc)
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
-char *func = "SQLDisconnect";
+static char *func = "SQLDisconnect";
 
-	mylog("**** in SQLDisconnect\n");
+
+	mylog( "%s: entering...\n", func);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
 		return SQL_INVALID_HANDLE;
 	}
 
-	qlog("conn=%u, SQLDisconnect\n", conn);
+	qlog("conn=%u, %s\n", conn, func);
 
 	if (conn->status == CONN_EXECUTING) {
 		conn->errornumber = CONN_IN_USE;
@@ -152,13 +163,13 @@ char *func = "SQLDisconnect";
 		return SQL_ERROR;
 	}
 
-	mylog("SQLDisconnect: about to CC_cleanup\n");
+	mylog("%s: about to CC_cleanup\n", func);
 
 	/*  Close the connection and free statements */
 	CC_cleanup(conn);
 
-	mylog("SQLDisconnect: done CC_cleanup\n");
-	mylog("exit SQLDisconnect\n");
+	mylog("%s: done CC_cleanup\n", func);
+	mylog("%s: returning...\n", func);
 
 	return SQL_SUCCESS;
 }
@@ -170,9 +181,10 @@ RETCODE SQL_API SQLFreeConnect(
         HDBC      hdbc)
 {
 ConnectionClass *conn = (ConnectionClass *) hdbc;
-char *func = "SQLFreeConnect";
+static char *func = "SQLFreeConnect";
 
-	mylog("**** in SQLFreeConnect: hdbc=%u\n", hdbc);
+	mylog( "%s: entering...\n", func);
+	mylog("**** in %s: hdbc=%u\n", func, hdbc);
 
 	if ( ! conn) {
 		CC_log_error(func, "", NULL);
@@ -189,7 +201,7 @@ char *func = "SQLFreeConnect";
 
 	CC_Destructor(conn);
 
-	mylog("exit SQLFreeConnect\n");
+	mylog("%s: returning...\n", func);
 
 	return SQL_SUCCESS;
 }
@@ -201,8 +213,7 @@ char *func = "SQLFreeConnect";
 *
 */
 
-ConnectionClass
-*CC_Constructor()
+ConnectionClass *CC_Constructor()
 {
 ConnectionClass *rv;
 
@@ -381,10 +392,12 @@ StatementClass *stmt;
 	}
 
 	/*	Check for translation dll */
+#ifdef WIN32
 	if ( self->translation_handle) {
 		FreeLibrary (self->translation_handle);
 		self->translation_handle = NULL;
 	}
+#endif
 
 	mylog("exit CC_Cleanup\n");
 	return TRUE;
@@ -393,6 +406,8 @@ StatementClass *stmt;
 int
 CC_set_translation (ConnectionClass *self)
 {
+
+#ifdef WIN32
 
 	if (self->translation_handle != NULL) {
 		FreeLibrary (self->translation_handle);
@@ -424,7 +439,7 @@ CC_set_translation (ConnectionClass *self)
 		self->errormsg = "Could not find translation DLL functions.";
 		return FALSE;
 	}
-
+#endif
 	return TRUE;
 }
 
@@ -440,6 +455,9 @@ int areq = -1;
 int beresp;
 char msgbuffer[ERROR_MSG_LENGTH]; 
 char salt[2];
+static char *func="CC_connect";
+
+	mylog("%s: entering...\n", func);
 
 	if ( do_password)
 
@@ -447,7 +465,8 @@ char salt[2];
 
 	else {
 
-		qlog("Global Options: fetch=%d, socket=%d, unknown_sizes=%d, max_varchar_size=%d, max_longvarchar_size=%d\n",
+		qlog("Global Options: Version='%s', fetch=%d, socket=%d, unknown_sizes=%d, max_varchar_size=%d, max_longvarchar_size=%d\n",
+			POSTGRESDRIVERVERSION,
 			globals.fetch_max, 
 			globals.socket_buffersize, 
 			globals.unknown_sizes, 
@@ -477,8 +496,7 @@ char salt[2];
 			return 0;
 		}
 
-		mylog("CC_connect(): DSN = '%s', server = '%s', port = '%s', database = '%s', username = '%s', password='%s'\n",
-				ci->dsn, ci->server, ci->port, ci->database, ci->username, ci->password);
+		mylog("CC_connect(): DSN = '%s', server = '%s', port = '%s', database = '%s', username = '%s', password='%s'\n", ci->dsn, ci->server, ci->port, ci->database, ci->username, ci->password);
 
 		/* If the socket was closed for some reason (like a SQLDisconnect, but no SQLFreeConnect
 			then create a socket now.
@@ -668,10 +686,12 @@ char salt[2];
 	CC_send_settings(self);
 	CC_lookup_lo(self);		/* a hack to get the oid of our large object oid type */
 
-//	CC_test(self);
+	// CC_test(self);
 
 	CC_clear_error(self);	/* clear any initial command errors */
 	self->status = CONN_CONNECTED;
+
+	mylog("%s: returning...\n", func);
 
 	return 1;
 
@@ -837,7 +857,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 	mylog("send_query: done sending query\n");
 
 	while(1) {
-		/* what type of message is comming now ? */
+		/* what type of message is coming now ? */
 		id = SOCK_get_char(sock);
 
 		if ((SOCK_get_errcode(sock) != 0) || (id == EOF)) {
@@ -884,7 +904,7 @@ char cmdbuffer[MAX_MESSAGE_LEN+1];	// QR_set_command() dups this string so dont 
 				QR_set_command(res, cmdbuffer);
 
 				/* (Quotation from the original comments)
-					since backend may produze more than one result for some commands
+					since backend may produce more than one result for some commands
 					we need to poll until clear
 					so we send an empty query, and keep reading out of the pipe
 					until an 'I' is received
@@ -1039,8 +1059,7 @@ int i;
 
 	for (i = 0; i < nargs; ++i) {
 
-		mylog("  arg[%d]: len = %d, isint = %d, integer = %d, ptr = %u\n", 
-			i, args[i].len, args[i].isint, args[i].u.integer, args[i].u.ptr);
+		mylog("  arg[%d]: len = %d, isint = %d, integer = %d, ptr = %u\n", i, args[i].len, args[i].isint, args[i].u.integer, args[i].u.ptr);
 
 		SOCK_put_int(sock, args[i].len, 4);
 		if (args[i].isint) 
@@ -1148,58 +1167,86 @@ int i;
 char
 CC_send_settings(ConnectionClass *self)
 {
-char ini_query[MAX_MESSAGE_LEN];
+// char ini_query[MAX_MESSAGE_LEN];
 ConnInfo *ci = &(self->connInfo);
 // QResultClass *res;
 HSTMT hstmt;
 StatementClass *stmt;
 RETCODE result;
-SWORD cols = 0;
+char status = TRUE;
+char *cs, *ptr;
+static char *func="CC_send_settings";
+
+
+	mylog("%s: entering...\n", func);
 
 /*	This function must use the local odbc API functions since the odbc state 
 	has not transitioned to "connected" yet.
 */
-	result = _SQLAllocStmt( self, &hstmt);
+
+	result = SQLAllocStmt( self, &hstmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return FALSE;
 	}
 	stmt = (StatementClass *) hstmt;
 
-	ini_query[0] = '\0';
+	stmt->internal = TRUE;	/* ensure no BEGIN/COMMIT/ABORT stuff */
 
 	/*	Set the Datestyle to the format the driver expects it to be in */
-	sprintf(ini_query, "set DateStyle to 'ISO'");
+	result = SQLExecDirect(hstmt, "set DateStyle to 'ISO'", SQL_NTS);
+	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+		status = FALSE;
+
+	mylog("%s: result %d, status %d from set DateStyle\n", func, result, status);
 
 	/*	Disable genetic optimizer based on global flag */
-	if (globals.disable_optimizer)
-		sprintf(&ini_query[strlen(ini_query)], "%sset geqo to 'OFF'", 
-			ini_query[0] != '\0' ? "; " : "");
+	if (globals.disable_optimizer) {
+		result = SQLExecDirect(hstmt, "set geqo to 'OFF'", SQL_NTS);
+		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+			status = FALSE;
+
+		mylog("%s: result %d, status %d from set geqo\n", func, result, status);
+	
+	}
 
 	/*	Global settings */
-	if (globals.conn_settings[0] != '\0')
-		sprintf(&ini_query[strlen(ini_query)], "%s%s", 
-			ini_query[0] != '\0' ? "; " : "",
-			globals.conn_settings);
+	if (globals.conn_settings[0] != '\0') {
+		cs = strdup(globals.conn_settings);
+		ptr = strtok(cs, ";");
+		while (ptr) {
+			result = SQLExecDirect(hstmt, ptr, SQL_NTS);
+			if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+				status = FALSE;
 
-	/*	Per Datasource settings */
-	if (ci->conn_settings[0] != '\0')
-		sprintf(&ini_query[strlen(ini_query)], "%s%s",
-			ini_query[0] != '\0' ? "; " : "",
-			ci->conn_settings);
+			mylog("%s: result %d, status %d from '%s'\n", func, result, status, ptr);
 
-	if (ini_query[0] != '\0') {
-		mylog("Sending Initial Connection query: '%s'\n", ini_query);
-
-		result = _SQLExecDirect(hstmt, ini_query, SQL_NTS);
-		if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-			_SQLFreeStmt(hstmt, SQL_DROP);
-			return FALSE;
+			ptr = strtok(NULL, ";");
 		}
 
-		_SQLFreeStmt(hstmt, SQL_DROP);
-
+		free(cs);
 	}
-	return TRUE;
+	
+	/*	Per Datasource settings */
+	if (ci->conn_settings[0] != '\0') {
+		cs = strdup(ci->conn_settings);
+		ptr = strtok(cs, ";");
+		while (ptr) {
+			result = SQLExecDirect(hstmt, ptr, SQL_NTS);
+			if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO))
+				status = FALSE;
+
+			mylog("%s: result %d, status %d from '%s'\n", func, result, status, ptr);
+
+			ptr = strtok(NULL, ";");
+		}
+
+		free(cs);
+	}
+
+
+	SQLFreeStmt(hstmt, SQL_DROP);
+
+	return status;
 }
 
 /*	This function is just a hack to get the oid of our Large Object oid type.
@@ -1212,40 +1259,41 @@ CC_lookup_lo(ConnectionClass *self)
 HSTMT hstmt;
 StatementClass *stmt;
 RETCODE result;
+static char *func = "CC_lookup_lo";
+
+	mylog( "%s: entering...\n", func);
 
 /*	This function must use the local odbc API functions since the odbc state 
 	has not transitioned to "connected" yet.
 */
-	result = _SQLAllocStmt( self, &hstmt);
+	result = SQLAllocStmt( self, &hstmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return;
 	}
 	stmt = (StatementClass *) hstmt;
 
-	result = _SQLExecDirect(hstmt, "select oid from pg_type where typname='" \
-		PG_TYPE_LO_NAME \
-		"'", SQL_NTS);
+	result = SQLExecDirect(hstmt, "select oid from pg_type where typname='" PG_TYPE_LO_NAME "'", SQL_NTS);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		_SQLFreeStmt(hstmt, SQL_DROP);
+		SQLFreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = _SQLFetch(hstmt);
+	result = SQLFetch(hstmt);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		_SQLFreeStmt(hstmt, SQL_DROP);
+		SQLFreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
-	result = _SQLGetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
+	result = SQLGetData(hstmt, 1, SQL_C_SLONG, &self->lobj_type, sizeof(self->lobj_type), NULL);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
-		_SQLFreeStmt(hstmt, SQL_DROP);
+		SQLFreeStmt(hstmt, SQL_DROP);
 		return;
 	}
 
 	mylog("Got the large object oid: %d\n", self->lobj_type);
 	qlog("    [ Large Object oid = %d ]\n", self->lobj_type);
 
-	result = _SQLFreeStmt(hstmt, SQL_DROP);
+	result = SQLFreeStmt(hstmt, SQL_DROP);
 }
 
 void
@@ -1253,6 +1301,7 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 {
 	if (self) {
 		qlog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
+		mylog("CONN ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);
 		qlog("            ------------------------------------------------------------\n");
 		qlog("            henv=%u, conn=%u, status=%u, num_stmts=%d\n", self->henv, self, self->status, self->num_stmts);
 		qlog("            sock=%u, stmts=%u, lobj_type=%d\n", self->sock, self->stmts, self->lobj_type);
@@ -1273,43 +1322,103 @@ CC_log_error(char *func, char *desc, ConnectionClass *self)
 void
 CC_test(ConnectionClass *self)
 {
+static char *func = "CC_test";
 HSTMT hstmt1;
 RETCODE result;
-SDWORD pcbValue;
-UDWORD pcrow;
-UWORD rgfRowStatus;
-char name[255], type[255];
-SDWORD namelen, typelen;
-SWORD cols;
+char pktab[255], fktab[255], pkcol[255], fkcol[255], tgname[255];
+SDWORD pktab_len, pkcol_len, fktab_len, fkcol_len, ur_len, dr_len, tgname_len;
+SWORD cols, seq;
+SDWORD update_rule, delete_rule;
+
+	mylog( "%s: entering...\n", func);
 
 	result = SQLAllocStmt( self, &hstmt1);
 	if((result != SQL_SUCCESS) && (result != SQL_SUCCESS_WITH_INFO)) {
 		return;
 	}
 
-	result = SQLTables(hstmt1, "", SQL_NTS, "", SQL_NTS, "", SQL_NTS, "", SQL_NTS);
-	qlog("SQLTables result = %d\n", result);
+	result = SQLPrimaryKeys(hstmt1, NULL, 0, NULL, 0, "t1", SQL_NTS);
+
+	qlog("SQLPrimaryKeys result = %d\n", result);
 
 	result = SQLNumResultCols(hstmt1, &cols);
 	qlog("cols SQLTables result = %d\n", result);
 
-	result = SQLBindCol(hstmt1, 3, SQL_C_CHAR, name, sizeof(name), &namelen);
+	result = SQLBindCol(hstmt1, 3, SQL_C_CHAR, pktab, sizeof(pktab), &pktab_len);
 	qlog("bind result = %d\n", result);
 
-	result = SQLBindCol(hstmt1, 4, SQL_C_CHAR, type, sizeof(type), &typelen);
+	result = SQLBindCol(hstmt1, 4, SQL_C_CHAR, pkcol, sizeof(pkcol), &pkcol_len);
 	qlog("bind result = %d\n", result);
-	
+
+	result = SQLBindCol(hstmt1, 5, SQL_C_SHORT, &seq, 0, NULL);
+	qlog("bind result = %d\n", result);
+
 	result = SQLFetch(hstmt1);
 	qlog("SQLFetch result = %d\n", result);
 	while (result != SQL_NO_DATA_FOUND) {
-		qlog("fetch on stmt1: result=%d, namelen=%d: name='%s', typelen=%d, type='%s'\n", result, namelen, name, typelen, type);
+		qlog("fetch on stmt1: result = %d, pktab='%s', pkcol='%s', seq=%d\n", 
+			result, pktab, pkcol, seq);
 
 		result = SQLFetch(hstmt1);
 	}
 	qlog("SQLFetch result = %d\n", result);
+
+	// Test of case #1 
+	result = SQLForeignKeys(hstmt1, "", SQL_NTS, "", SQL_NTS, "t1", SQL_NTS, 
+		NULL, 0, NULL, 0, NULL, 0);
+
+	//	Test of case #2 
+	result = SQLForeignKeys(hstmt1, "", SQL_NTS, "", SQL_NTS, NULL, 0, 
+		NULL, 0, NULL, 0, "ar_register", SQL_NTS);
+
+
+	//	Test of case #3 
+	result = SQLForeignKeys(hstmt1, NULL, 0, NULL, 0, "employee", SQL_NTS, 
+		NULL, 0, NULL, 0, "invoice", SQL_NTS);
+
+	qlog("SQLForeignKeys result = %d\n", result);
+
+	result = SQLNumResultCols(hstmt1, &cols);
+	qlog("cols SQLTables result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 3, SQL_C_CHAR, pktab, sizeof(pktab), &pktab_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 4, SQL_C_CHAR, pkcol, sizeof(pkcol), &pkcol_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 7, SQL_C_CHAR, fktab, sizeof(fktab), &fktab_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 8, SQL_C_CHAR, fkcol, sizeof(fkcol), &fkcol_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 9, SQL_C_SHORT, &seq, 0, NULL);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 10, SQL_C_LONG, &update_rule, 0, &ur_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 11, SQL_C_LONG, &delete_rule, 0, &dr_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLBindCol(hstmt1, 14, SQL_C_CHAR, tgname, sizeof(tgname), &tgname_len);
+	qlog("bind result = %d\n", result);
+
+	result = SQLFetch(hstmt1);
+	qlog("SQLFetch result = %d\n", result);
+	while (result != SQL_NO_DATA_FOUND) {
+		qlog("fetch on stmt1: result = %d, pktab='%s', pkcol='%s', fktab='%s', fkcol='%s', seq=%d, update_rule=%d, ur_len=%d, delete_rule=%d, dr_len=%d, tgname='%s', tgname_len=%d\n", 
+			result, pktab, pkcol, fktab, fkcol, seq, update_rule, ur_len, delete_rule, dr_len, tgname, tgname_len);
+
+		result = SQLFetch(hstmt1);
+	}
+	qlog("SQLFetch result = %d\n", result);
+
 	SQLFreeStmt(hstmt1, SQL_DROP);
 
 }
 */
+
 
 
