@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.61 2000/10/16 14:52:03 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.62 2000/10/22 17:55:36 pjw Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,7 +44,6 @@ static bool
 			get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP);
 
 
-
 /*
  * CREATE DATABASE
  */
@@ -62,7 +61,8 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	HeapTuple	tuple;
 	TupleDesc	pg_database_dsc;
 	Datum		new_record[Natts_pg_database];
-	char		new_record_nulls[Natts_pg_database] = {' ', ' ', ' ', ' '};
+	char		new_record_nulls[Natts_pg_database] = {' ', ' ', ' ', ' ', ' '};
+	Oid			dboid;
 
 	if (!get_user_info(GetUserId(), &use_super, &use_createdb))
 		elog(ERROR, "current user name is invalid");
@@ -91,6 +91,8 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 			 "The database path '%s' is invalid. "
 			 "This may be due to a character that is not allowed or because the chosen "
 			 "path isn't permitted for databases", dbpath);
+#else
+	locbuf[0] = 0; /* Avoid junk in strings */
 #endif
 
 	/*
@@ -99,15 +101,25 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 	pg_database_rel = heap_openr(DatabaseRelationName, AccessExclusiveLock);
 	pg_database_dsc = RelationGetDescr(pg_database_rel);
 
+	/* 
+	 * Preassign OID for pg_database tuple, so that we know current
+	 * OID counter value
+	 */
+	dboid = newoid();
+
 	/* Form tuple */
 	new_record[Anum_pg_database_datname - 1] = DirectFunctionCall1(namein,
 													CStringGetDatum(dbname));
 	new_record[Anum_pg_database_datdba - 1] = Int32GetDatum(GetUserId());
 	new_record[Anum_pg_database_encoding - 1] = Int32GetDatum(encoding);
+	new_record[Anum_pg_database_datlastsysoid - 1] = ObjectIdGetDatum(dboid); /* Save current OID val */
 	new_record[Anum_pg_database_datpath - 1] = DirectFunctionCall1(textin,
 													CStringGetDatum(locbuf));
 
 	tuple = heap_formtuple(pg_database_dsc, new_record, new_record_nulls);
+
+	tuple->t_data->t_oid = dboid;	/* override heap_insert */
+
 
 	/*
 	 * Update table
@@ -180,6 +192,7 @@ createdb(const char *dbname, const char *dbpath, int encoding)
 		else
 			elog(ERROR, "CREATE DATABASE: Could not initialize database directory. Delete failed as well");
 	}
+
 }
 
 
@@ -390,8 +403,6 @@ get_db_info(const char *name, char *dbpath, Oid *dbIdP, int4 *ownerIdP)
 
 	return HeapTupleIsValid(tuple);
 }
-
-
 
 static bool
 get_user_info(Oid use_sysid, bool *use_super, bool *use_createdb)

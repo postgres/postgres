@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.11 2000/10/20 11:01:17 vadim Exp $
+ * $Id: pg_database.h,v 1.12 2000/10/22 17:55:49 pjw Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -36,6 +36,7 @@ CATALOG(pg_database) BOOTSTRAP
 	NameData	datname;
 	int4		datdba;
 	int4		encoding;
+	int4		datlastsysoid;
 	text		datpath;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_database;
 
@@ -50,13 +51,14 @@ typedef FormData_pg_database *Form_pg_database;
  *		compiler constants for pg_database
  * ----------------
  */
-#define Natts_pg_database				4
+#define Natts_pg_database			5	
 #define Anum_pg_database_datname		1
 #define Anum_pg_database_datdba			2
 #define Anum_pg_database_encoding		3
-#define Anum_pg_database_datpath		4
+#define Anum_pg_database_datlastsysoid  4
+#define Anum_pg_database_datpath		5
 
-DATA(insert OID = 1 (  template1 PGUID ENCODING template1 ));
+DATA(insert OID = 1 (  template1 PGUID ENCODING 0 template1 ));
 DESCR("");
 
 #define TemplateDbOid			1

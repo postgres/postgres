@@ -23,7 +23,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.105 2000/10/16 14:52:21 vadim Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.106 2000/10/22 17:55:45 pjw Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -596,6 +596,11 @@ cat "$GLOBAL_DESCR" >> $TEMPFILE
 cat $TEMPFILE \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 rm -f "$TEMPFILE" || exit_nicely
+
+echo "Setting lastsysoid."
+echo "Update pg_database Set datlastsysoid = (Select max(oid) From pg_description) \
+        Where datname = 'template1'" \
+		| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 echo "Vacuuming database."
 echo "VACUUM ANALYZE" \
