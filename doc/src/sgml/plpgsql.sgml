@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.35 2004/02/03 17:34:02 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/plpgsql.sgml,v 1.36 2004/02/27 03:59:23 neilc Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -392,7 +392,7 @@ END;
 
     <para>
      All key words and identifiers can be written in mixed upper and
-     lower case.  Identifiers are implicitly converted to lower-case
+     lower case.  Identifiers are implicitly converted to lowercase
      unless double-quoted.
     </para>
 

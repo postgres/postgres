@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.187 2004/02/22 04:14:06 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.188 2004/02/27 03:59:23 neilc Exp $
 PostgreSQL documentation
 -->
 
@@ -1003,7 +1003,7 @@ PostgreSQL documentation
       <row>
        <entry><literal><function>upper</function>(<parameter>string</parameter>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>Convert string to upper case</entry>
+       <entry>Convert string to uppercase</entry>
        <entry><literal>upper('tom')</literal></entry>
        <entry><literal>TOM</literal></entry>
       </row>
@@ -1033,7 +1033,7 @@ PostgreSQL documentation
      <tbody>
       <row>
        <entry><literal><function>ascii</function>(<type>text</type>)</literal></entry>
-       <entry>integer</entry>
+       <entry><type>integer</type></entry>
        <entry><acronym>ASCII</acronym> code of the first character of the argument</entry>
        <entry><literal>ascii('x')</literal></entry>
        <entry><literal>120</literal></entry>
@@ -1109,16 +1109,20 @@ PostgreSQL documentation
       <row>
        <entry><literal><function>initcap</function>(<type>text</type>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>Convert first letter of each word (whitespace-separated) to upper case</entry>
-       <entry><literal>initcap('hi thomas')</literal></entry>
+       <entry>
+        Convert the first letter of each word to uppercase and the
+        rest to lowercase. Words are sequences of alphanumeric
+        characters separated by non-alphanumeric characters.
+       </entry>
+       <entry><literal>initcap('hi THOMAS')</literal></entry>
        <entry><literal>Hi Thomas</literal></entry>
       </row>
 
       <row>
-       <entry><literal><function>length</function>(<parameter>string</parameter>)</literal></entry>
+       <entry><literal><function>length</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
        <entry><type>integer</type></entry>
        <entry>
-        Number of characters in string
+        Number of characters in <parameter>string</parameter>.
         <indexterm>
          <primary>character string</primary>
          <secondary>length</secondary>
@@ -1139,7 +1143,7 @@ PostgreSQL documentation
         <parameter>length</parameter> <type>integer</type>
         <optional>, <parameter>fill</parameter> <type>text</type></optional>)</literal>
        </entry>
-       <entry>text</entry>
+       <entry><type>text</type></entry>
        <entry>
         Fill up the <parameter>string</parameter> to length
         <parameter>length</parameter> by prepending the characters
@@ -1157,7 +1161,8 @@ PostgreSQL documentation
        <entry><type>text</type></entry>
        <entry>
         Remove the longest string containing only characters from
-        <parameter>characters</parameter> from the start of the string.
+        <parameter>characters</parameter> from the start of
+        <parameter>string</parameter>.
        </entry>
        <entry><literal>ltrim('zzzytrim', 'xyz')</literal></entry>
        <entry><literal>trim</literal></entry>
@@ -1167,7 +1172,8 @@ PostgreSQL documentation
        <entry><literal><function>md5</function>(<parameter>string</parameter> <type>text</type>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
-        Calculates the MD5 hash of given string, returning the result in hexadecimal.
+        Calculates the MD5 hash of <parameter>string</parameter>,
+        returning the result in hexadecimal.
        </entry>
        <entry><literal>md5('abc')</literal></entry>
        <entry><literal>900150983cd24fb0 d6963f7d28e17f72</literal></entry>
@@ -1210,9 +1216,10 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>repeat</function>(<type>text</type>, <type>integer</type>)</literal></entry>
+       <entry><literal><function>repeat</function>(<parameter>string</parameter> <type>text</type>, <parameter>number</parameter> <type>integer</type>)</literal></entry>
        <entry><type>text</type></entry>
-       <entry>Repeat text a number of times</entry>
+       <entry>Repeat <parameter>string</parameter> the specified
+       <parameter>number</parameter> of times</entry>
        <entry><literal>repeat('Pg', 4)</literal></entry>
        <entry><literal>PgPgPgPg</literal></entry>
       </row>
@@ -1253,7 +1260,8 @@ PostgreSQL documentation
        <entry><type>text</type></entry>
        <entry>
         Remove the longest string containing only characters from
-        <parameter>characters</parameter> from the end of the string.
+        <parameter>characters</parameter> from the end of
+        <parameter>string</parameter>.
        </entry>
        <entry><literal>rtrim('trimxxxx', 'x')</literal></entry>
        <entry><literal>trim</literal></entry>
@@ -3956,12 +3964,12 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        <row>
 	<entry><literal>AM</literal> or <literal>A.M.</literal> or
 	<literal>PM</literal> or <literal>P.M.</literal></entry>
-	<entry>meridian indicator (upper case)</entry>
+	<entry>meridian indicator (uppercase)</entry>
        </row>
        <row>
 	<entry><literal>am</literal> or <literal>a.m.</literal> or
 	<literal>pm</literal> or <literal>p.m.</literal></entry>
-	<entry>meridian indicator (lower case)</entry>
+	<entry>meridian indicator (lowercase)</entry>
        </row>
        <row>
 	<entry><literal>Y,YYY</literal></entry>
@@ -4002,16 +4010,16 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        <row>
 	<entry><literal>BC</literal> or <literal>B.C.</literal> or
 	<literal>AD</literal> or <literal>A.D.</literal></entry>
-	<entry>era indicator (upper case)</entry>
+	<entry>era indicator (uppercase)</entry>
        </row>
        <row>
 	<entry><literal>bc</literal> or <literal>b.c.</literal> or
 	<literal>ad</literal> or <literal>a.d.</literal></entry>
-	<entry>era indicator (lower case)</entry>
+	<entry>era indicator (lowercase)</entry>
        </row>
        <row>
 	<entry><literal>MONTH</literal></entry>
-	<entry>full upper-case month name (blank-padded to 9 chars)</entry>
+	<entry>full uppercase month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry><literal>Month</literal></entry>
@@ -4019,11 +4027,11 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>month</literal></entry>
-	<entry>full lower-case month name (blank-padded to 9 chars)</entry>
+	<entry>full lowercase month name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry><literal>MON</literal></entry>
-	<entry>abbreviated upper-case month name (3 chars)</entry>
+	<entry>abbreviated uppercase month name (3 chars)</entry>
        </row>
        <row>
 	<entry><literal>Mon</literal></entry>
@@ -4031,7 +4039,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>mon</literal></entry>
-	<entry>abbreviated lower-case month name (3 chars)</entry>
+	<entry>abbreviated lowercase month name (3 chars)</entry>
        </row>
        <row>
 	<entry><literal>MM</literal></entry>
@@ -4039,7 +4047,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>DAY</literal></entry>
-	<entry>full upper-case day name (blank-padded to 9 chars)</entry>
+	<entry>full uppercase day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry><literal>Day</literal></entry>
@@ -4047,11 +4055,11 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>day</literal></entry>
-	<entry>full lower-case day name (blank-padded to 9 chars)</entry>
+	<entry>full lowercase day name (blank-padded to 9 chars)</entry>
        </row>
        <row>
 	<entry><literal>DY</literal></entry>
-	<entry>abbreviated upper-case day name (3 chars)</entry>
+	<entry>abbreviated uppercase day name (3 chars)</entry>
        </row>
        <row>
 	<entry><literal>Dy</literal></entry>
@@ -4059,7 +4067,7 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>dy</literal></entry>
-	<entry>abbreviated lower-case day name (3 chars)</entry>
+	<entry>abbreviated lowercase day name (3 chars)</entry>
        </row>
        <row>
 	<entry><literal>DDD</literal></entry>
@@ -4099,19 +4107,19 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>RM</literal></entry>
-	<entry>month in Roman numerals (I-XII; I=January) (upper case)</entry>
+	<entry>month in Roman numerals (I-XII; I=January) (uppercase)</entry>
        </row>
        <row>
 	<entry><literal>rm</literal></entry>
-	<entry>month in Roman numerals (i-xii; i=January) (lower case)</entry>
+	<entry>month in Roman numerals (i-xii; i=January) (lowercase)</entry>
        </row>
        <row>
 	<entry><literal>TZ</literal></entry>
-	<entry>time-zone name (upper case)</entry>
+	<entry>time-zone name (uppercase)</entry>
        </row>
        <row>
 	<entry><literal>tz</literal></entry>
-	<entry>time-zone name (lower case)</entry>
+	<entry>time-zone name (lowercase)</entry>
        </row>
       </tbody>
      </tgroup>
@@ -4144,12 +4152,12 @@ substring('foobar' from 'o(.)b')   <lineannotation>o</lineannotation>
        </row>
        <row>
 	<entry><literal>TH</literal> suffix</entry>
-	<entry>upper-case ordinal number suffix</entry>
+	<entry>uppercase ordinal number suffix</entry>
 	<entry><literal>DDTH</literal></entry>
        </row>	
        <row>
 	<entry><literal>th</literal> suffix</entry>
-	<entry>lower-case ordinal number suffix</entry>
+	<entry>lowercase ordinal number suffix</entry>
 	<entry><literal>DDth</literal></entry>
        </row>
        <row>
@@ -6216,7 +6224,7 @@ SELECT TIMESTAMP 'now';
    sequence-function call is specified by a text-string argument.  To
    achieve some compatibility with the handling of ordinary
    <acronym>SQL</acronym> names, the sequence functions convert their
-   argument to lower case unless the string is double-quoted.  Thus
+   argument to lowercase unless the string is double-quoted.  Thus
 <programlisting>
 nextval('foo')      <lineannotation>operates on sequence <literal>foo</literal></>
 nextval('FOO')      <lineannotation>operates on sequence <literal>foo</literal></>
