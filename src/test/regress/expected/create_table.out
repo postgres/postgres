@@ -81,6 +81,9 @@ CREATE TABLE student (
 CREATE TABLE stud_emp (
 	percent 	int4
 ) INHERITS (emp, student);
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "name"
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "age"
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "location"
 CREATE TABLE city (
 	name		name,
 	location 	box,
@@ -132,6 +135,8 @@ CREATE TABLE c_star (
 CREATE TABLE d_star (
 	d 			float8
 ) INHERITS (b_star, c_star);
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "class"
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "a"
 CREATE TABLE e_star (
 	e 			int2
 ) INHERITS (c_star);

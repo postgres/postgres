@@ -5,6 +5,8 @@ CREATE TABLE a (aa TEXT);
 CREATE TABLE b (bb TEXT) INHERITS (a);
 CREATE TABLE c (cc TEXT) INHERITS (a);
 CREATE TABLE d (dd TEXT) INHERITS (b,c,a);
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "aa"
+NOTICE:  CREATE TABLE: merging multiple inherited definitions of attribute "aa"
 INSERT INTO a(aa) VALUES('aaa');
 INSERT INTO a(aa) VALUES('aaaa');
 INSERT INTO a(aa) VALUES('aaaaa');
