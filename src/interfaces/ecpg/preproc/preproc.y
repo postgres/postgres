@@ -24,8 +24,7 @@ char	errortext[128];
 char	*connection = NULL;
 char 	*input_filename = NULL;
 
-static int      QueryIsRule = 0, ForUpdateNotAllowed = 0, FoundInto = 0;
-static int	FoundSort = 0;
+static int      QueryIsRule = 0, FoundInto = 0;
 static int	initializer = 0;
 static struct this_type actual_type[STRUCT_DEPTH];
 static char     *actual_storage[STRUCT_DEPTH];
@@ -300,7 +299,7 @@ make_name(void)
 %type  <str> 	opt_decimal Character character opt_varying opt_charset
 %type  <str>	opt_collate datetime opt_timezone opt_interval table_ref
 %type  <str>	row_expr row_descriptor row_list ConstDatetime opt_chain
-%type  <str>	SelectStmt SubSelect result OptTemp ConstraintAttributeSpec
+%type  <str>	SelectStmt select_subclause result OptTemp ConstraintAttributeSpec
 %type  <str>	opt_table opt_all sort_clause sortby_list ConstraintAttr 
 %type  <str>	sortby OptUseOp opt_inh_star relation_name_list name_list
 %type  <str>	group_clause having_clause from_clause opt_distinct
@@ -1972,25 +1971,7 @@ func_args_list:  func_arg				{ $$ = $1; }
 				{	$$ = cat_str(3, $1, make_str(","), $3); }
 		;
 
-/* Would be nice to use the full Typename production for these fields,
- * but that one sometimes dives into the catalogs looking for valid types.
- * Arguments like "opaque" are valid when defining functions,
- * so that won't work here. The only thing we give up is array notation,
- * which isn't meaningful in this context anyway.
- * - thomas 2000-03-25
- * The following productions are difficult, since it is difficult to
- * distinguish between TokenId and SimpleTypename:
-                opt_arg TokenId SimpleTypename
-                                {
-                                        $$ = $3;
-                                }
-                | TokenId SimpleTypename
-                                {
-                                        $$ = $2;
-                                }
- */                        
-
-func_arg:  opt_arg SimpleTypename
+func_arg:  opt_arg Typename
                                {
                                        /* We can catch over-specified arguments here if we want to,
                                         * but for now better to silently swallow typmod, etc.
@@ -1998,7 +1979,7 @@ func_arg:  opt_arg SimpleTypename
                                         */
                                        $$ = cat2_str($1, $2);
                                }
-		| SimpleTypename 
+		| Typename 
 				{
 					$$ = $1;
 				}
@@ -2020,7 +2001,7 @@ opt_arg:  IN    { $$ = make_str("in"); }
 func_as: Sconst				{ $$ = $1; }
 		| Sconst ',' Sconst	{ $$ = cat_str(3, $1, make_str(","), $3); }
 
-func_return:  SimpleTypename
+func_return:  Typename
 				{
                                        /* We can catch over-specified arguments here if we want to,
                                         * but for now better to silently swallow typmod, etc.
@@ -2028,11 +2009,6 @@ func_return:  SimpleTypename
                                         */
                                        $$ = $1;
                                 }
-		| SETOF SimpleTypename
-				{
-
-					$$ = cat2_str(make_str("setof"), $2);
-				}
 		;
 
 /*****************************************************************************
@@ -2071,7 +2047,7 @@ RemoveAggrStmt:  DROP AGGREGATE name aggr_argtype
 				}
 		;
 
-aggr_argtype:  name			{ $$ = $1; }
+aggr_argtype:  Typename			{ $$ = $1; }
 		| '*'			{ $$ = make_str("*"); }
 		;
 
@@ -2089,15 +2065,15 @@ RemoveOperStmt:  DROP OPERATOR all_Op '(' oper_argtypes ')'
 				}
 		;
 
-oper_argtypes:	name
+oper_argtypes:	Typename
 				{
 				   mmerror(ET_ERROR, "parser: argument type missing (use NONE for unary operators)");
 				}
-		| name ',' name
+		| Typename ',' Typename
 				{ $$ = cat_str(3, $1, make_str(","), $3); }
-		| NONE ',' name			/* left unary */
+		| NONE ',' Typename			/* left unary */
 				{ $$ = cat2_str(make_str("none,"), $3); }
-		| name ',' NONE			/* right unary */
+		| Typename ',' NONE			/* right unary */
 				{ $$ = cat2_str($1, make_str(", none")); }
 		;
 
@@ -2471,14 +2447,8 @@ insert_rest:  VALUES '(' target_list ')'
 				{
 					$$ = make_str("default values");
 				}
-/* We want the full power of SelectStatements including INTERSECT and EXCEPT
- * for insertion.  However, we can't support sort or limit clauses.
- */
 		| SelectStmt
 				{
-					if (FoundSort != 0)
-						mmerror(ET_ERROR, "ORDER BY is not allowed in INSERT/SELECT");
-
 					$$ = $1;
 				}
 		| '(' columnList ')' VALUES '(' target_list ')'
@@ -2487,9 +2457,6 @@ insert_rest:  VALUES '(' target_list ')'
 				}
 		| '(' columnList ')' SelectStmt
 				{
-					if (FoundSort != 0)
-						mmerror(ET_ERROR, "ORDER BY is not all owed in INSERT/SELECT");
-
 					$$ = cat_str(4, make_str("("), $2, make_str(")"), $4);
 				}
 		;
@@ -2568,9 +2535,7 @@ UpdateStmt:  UPDATE opt_only relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt:  DECLARE name opt_cursor CURSOR FOR
-		{ ForUpdateNotAllowed = 1; }
-	     SelectStmt
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt
 				{
 					struct cursor *ptr, *this;
 	
@@ -2590,7 +2555,7 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR
 				        this->next = cur;
 				        this->name = $2;
 					this->connection = connection;
-				        this->command =  cat_str(5, make_str("declare"), mm_strdup($2), $3, make_str("cursor for"), $7);
+				        this->command =  cat_str(5, make_str("declare"), mm_strdup($2), $3, make_str("cursor for"), $6);
 					this->argsinsert = argsinsert;
 					this->argsresult = argsresult;
 					argsinsert = argsresult = NULL;
@@ -2615,21 +2580,9 @@ opt_cursor:  BINARY             	{ $$ = make_str("binary"); }
  *
  *****************************************************************************/
 
-/* The new 'SelectStmt' rule adapted for the optional use of INTERSECT EXCEPT a nd UNION
- * accepts the use of '(' and ')' to select an order of set operations.
- * The rule returns a SelectStmt Node having the set operations attached to
- * unionClause and intersectClause (NIL if no set operations were present)
- */
-
-SelectStmt:      select_clause
-			{ FoundSort = 0; }
-		 sort_clause for_update_clause opt_select_limit
+SelectStmt:      select_clause sort_clause for_update_clause opt_select_limit
 			{
-				if (strlen($4) > 0 && ForUpdateNotAllowed != 0)
-						mmerror(ET_ERROR, "FOR UPDATE is not allowed in this context");
-
-				ForUpdateNotAllowed = 0;
-				$$ = cat_str(4, $1, $3, $4, $5);
+				$$ = cat_str(4, $1, $2, $3, $4);
 			}
 
 /* This rule parses Select statements including UNION INTERSECT and EXCEPT.
@@ -2637,48 +2590,45 @@ SelectStmt:      select_clause
  * (UNION EXCEPT INTERSECT). Without the use of '(' and ')' we want the
  * operations to be ordered per the precedence specs at the head of this file.
  *
- *  The sort_clause is not handled here!
+ * Since parentheses around SELECTs also appear in the expression grammar,
+ * there is a parse ambiguity if parentheses are allowed at the top level of a
+ * select_clause: are the parens part of the expression or part of the select?
+ * We separate select_clause into two levels to resolve this: select_clause
+ * can have top-level parentheses, select_subclause cannot.  
+ * Note that sort clauses cannot be included at this level --- a sort clau
+ * can only appear at the end of the complete Select, and it will be handl
+ * by the topmost SelectStmt rule.  Likewise FOR UPDATE and LIMIT.
  */
-select_clause: '(' select_clause ')'
+ 
+select_clause: '(' select_subclause ')'
                         {
                                 $$ = cat_str(3, make_str("("), $2, make_str(")")); 
                         }
-                | SubSelect
+                | select_subclause
                         {
-				FoundInto = 0;
+								FoundInto = 0;
                                 $$ = $1; 
                         }
-                | select_clause EXCEPT opt_all select_clause
-			{
-				if (strlen($3) != 0)
-					mmerror(ET_WARN, "EXCEPT ALL is not implemented yet.");
-
-				$$ = cat_str(4, $1, make_str("except"), $3, $4);
-				ForUpdateNotAllowed = 1;
-			}
-		| select_clause UNION opt_all select_clause
-			{
-				$$ = cat_str(4, $1, make_str("union"), $3, $4);
-				ForUpdateNotAllowed = 1;
-			}
-		| select_clause INTERSECT opt_all select_clause
-			{
-				if (strlen($3) != 0)
-					mmerror(ET_WARN, "INTERSECT ALL is not implemented yet.");
-
-				$$ = cat_str(4, $1, make_str("intersect"), $3, $4);
-				ForUpdateNotAllowed = 1;
-			}
 		;
 
-SubSelect:     SELECT opt_distinct target_list
+select_subclause:     SELECT opt_distinct target_list
                          result from_clause where_clause
                          group_clause having_clause
 				{
-					if (strlen($7) > 0 || strlen($8) > 0)
-						ForUpdateNotAllowed = 1;
 					$$ = cat_str(8, make_str("select"), $2, $3, $4, $5, $6, $7, $8);
 				}
+				| select_clause UNION opt_all select_clause
+				{
+					$$ = cat_str(4, $1, make_str("union"), $3, $4); 
+				}
+				| select_clause INTERSECT opt_all select_clause 
+		                { 
+					$$ = cat_str(4, $1, make_str("intersect"), $3, $4);
+				}
+				| select_clause EXCEPT opt_all select_clause 
+		                { 
+                		    $$ = cat_str(4, $1, make_str("except"), $3, $4);
+                		} 
 		;
 
 result:  INTO OptTempTableName 		{
@@ -2747,7 +2697,6 @@ opt_distinct:  DISTINCT					{ $$ = make_str("distinct"); }
 		;
 
 sort_clause:  ORDER BY sortby_list	{ 
-						FoundSort = 1;
 						$$ = cat2_str(make_str("order by"), $3);
 					}
 		| /*EMPTY*/		{ $$ = EMPTY; }
@@ -2880,7 +2829,7 @@ table_ref:  relation_expr
 		{
 			cat2_str($1, $2);
 		}
-	| '(' select_clause ')' alias_clause 
+	| '(' select_subclause ')' alias_clause 
 		{
 			cat_str(4, make_str("("), $2, make_str(")"), $4);
 		}
@@ -3299,19 +3248,19 @@ opt_interval:  datetime					{ $$ = $1; }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
+row_expr: '(' row_descriptor ')' IN '(' select_subclause ')'
 				{
 					$$ = cat_str(5, make_str("("), $2, make_str(") in ("), $6, make_str(")"));
 				}
-		| '(' row_descriptor ')' NOT IN '(' SubSelect ')'
+		| '(' row_descriptor ')' NOT IN '(' select_subclause ')'
 				{
 					$$ = cat_str(5, make_str("("), $2, make_str(") not in ("), $7, make_str(")"));
 				}
-		| '(' row_descriptor ')' all_Op sub_type  '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op sub_type  '(' select_subclause ')'
 				{
 					$$ = cat_str(8, make_str("("), $2, make_str(")"), $4, $5, make_str("("), $7, make_str(")"));
 				}
-		| '(' row_descriptor ')' all_Op '(' SubSelect ')'
+		| '(' row_descriptor ')' all_Op '(' select_subclause ')'
 				{
 					$$ = cat_str(7, make_str("("), $2, make_str(")"), $4, make_str("("), $6, make_str(")"));
 				}
@@ -3491,7 +3440,7 @@ a_expr:  c_expr
 				{
 					$$ = cat_str(4, $1, make_str(" not in ("), $5, make_str(")")); 
 				}
-		| a_expr all_Op sub_type '(' SubSelect ')'
+		| a_expr all_Op sub_type '(' select_subclause ')'
 				{
 					$$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); 
 				}
@@ -3638,9 +3587,9 @@ c_expr:  attr
 				{	$$ = cat_str(3, make_str("trim(trailing"), $4, make_str(")")); }
 		| TRIM '(' trim_list ')'
 				{	$$ = cat_str(3, make_str("trim("), $3, make_str(")")); }
-		| '(' SubSelect ')'
+		| '(' select_subclause ')'
 				{	$$ = cat_str(3, make_str("("), $2, make_str(")")); }
-		| EXISTS '(' SubSelect ')'
+		| EXISTS '(' select_subclause ')'
 				{	$$ = cat_str(3, make_str("exists("), $3, make_str(")")); }
 		;
 /* 
@@ -3719,7 +3668,7 @@ trim_list:  a_expr FROM expr_list
 				{ $$ = $1; }
 		;
 
-in_expr:  SubSelect
+in_expr:  select_subclause
 				{
 					$$ = $1;
 				}
@@ -5164,6 +5113,7 @@ ECPGColId: ident			{ $$ = $1; }
 	| TokenId			{ $$ = $1; }
 	| INTERVAL			{ $$ = make_str("interval"); }
 	| NATIONAL			{ $$ = make_str("national"); }
+	| NONE				{ $$ = make_str("none"); }
 	| PATH_P			{ $$ = make_str("path_p"); }
 	| SERIAL			{ $$ = make_str("serial"); }
 	| TIME				{ $$ = make_str("time"); }
@@ -5177,7 +5127,7 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| ANALYZE       { $$ = make_str("analyze"); }
 		| ANY		{ $$ = make_str("any"); }
 		| ASC		{ $$ = make_str("asc"); }
-	    	| BETWEEN       { $$ = make_str("between"); }
+    	| BETWEEN       { $$ = make_str("between"); }
 		| BINARY        { $$ = make_str("binary"); }
 		| BIT	        { $$ = make_str("bit"); }
 		| BOTH		{ $$ = make_str("both"); }
@@ -5236,7 +5186,6 @@ ECPGColLabel:  ECPGColId	{ $$ = $1; }
 		| NATURAL	{ $$ = make_str("natural"); }
 		| NCHAR		{ $$ = make_str("nchar"); }
 		| NEW		{ $$ = make_str("new"); }
-		| NONE		{ $$ = make_str("none"); }
 		| NOT		{ $$ = make_str("not"); }
 		| NOTNULL   	{ $$ = make_str("notnull"); }
 		| NULLIF	{ $$ = make_str("nullif"); }
