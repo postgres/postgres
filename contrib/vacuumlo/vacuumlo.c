@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.18 2002/12/03 07:12:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/contrib/vacuumlo/vacuumlo.c,v 1.19 2002/12/10 01:57:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,6 +284,7 @@ vacuumlo(char *database, struct _param * param)
 	strcat(buf, "      AND t.typname in ('oid', 'lo') ");
 	strcat(buf, "      AND c.relkind = 'r'");
 	strcat(buf, "      AND c.relname NOT LIKE 'pg_%'");
+	strcat(buf, "      AND c.relname != 'vacuum_l'");
 	res = PQexec(conn, buf);
 	if (PQresultStatus(res) != PGRES_TUPLES_OK)
 	{
