@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.35 2004/02/12 19:58:16 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.36 2004/06/29 19:57:40 petere Exp $
 -->
 
  <chapter id="tutorial-start">
@@ -25,7 +25,7 @@ $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.35 2004/02/12 19:58:16 momjian Ex
     experimentation then you can install it yourself.  Doing so is not
     hard and it can be a good exercise.
     <productname>PostgreSQL</productname> can be installed by any
-    unprivileged user, no superuser (<systemitem>root</systemitem>)
+    unprivileged user; no superuser (<systemitem>root</systemitem>)
     access is required.
    </para>
 
@@ -91,7 +91,7 @@ $PostgreSQL: pgsql/doc/src/sgml/start.sgml,v 1.35 2004/02/12 19:58:16 momjian Ex
        application, a web server that accesses the database to
        display web pages, or a specialized database maintenance tool.
        Some client applications are supplied with the
-       <productname>PostgreSQL</productname> distribution, most are
+       <productname>PostgreSQL</productname> distribution; most are
        developed by users.
       </para>
      </listitem>
