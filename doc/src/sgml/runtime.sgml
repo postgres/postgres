@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.129 2002/08/30 00:28:40 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.130 2002/08/30 16:50:49 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1945,17 +1945,6 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         If non-zero, turn on WAL-related debugging output on standard
         error.
-       </para>
-      </listitem>
-     </varlistentry>
-
-     <varlistentry>
-      <term><varname>WAL_FILES</varname> (<type>integer</type>)</term>
-      <listitem>
-       <para>
-        Number of log files that are created in advance at checkpoint
-        time.  This option can only be set at server start or in the
-	<filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.102 2002/08/17 15:12:06 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.103 2002/08/30 16:50:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,6 @@
 /* User-settable parameters */
 int			CheckPointSegments = 3;
 int			XLOGbuffers = 8;
-int			XLOGfiles = 0;		/* # of files to preallocate during ckpt */
 int			XLOG_DEBUG = 0;
 char	   *XLOG_sync_method = NULL;
 const char	XLOG_sync_method_default[] = DEFAULT_SYNC_METHOD_STR;
@@ -97,7 +96,7 @@ char		XLOG_archive_dir[MAXPGPATH];		/* null string means
 /*
  * XLOGfileslop is used in the code as the allowed "fuzz" in the number of
  * preallocated XLOG segments --- we try to have at least XLOGfiles advance
- * segments but no more than XLOGfiles+XLOGfileslop segments.  This could
+ * segments but no more than XLOGfileslop segments.  This could
  * be made a separate GUC variable, but at present I think it's sufficient
  * to hardwire it as 2*CheckPointSegments+1.  Under normal conditions, a
  * checkpoint will free no more than 2*CheckPointSegments log segments, and
@@ -1422,7 +1421,7 @@ XLogFileInit(uint32 log, uint32 seg,
 	 * ours to pre-create a future log segment.
 	 */
 	if (!InstallXLogFileSegment(log, seg, tmppath,
-								*use_existent, XLOGfiles + XLOGfileslop,
+								*use_existent, XLOGfileslop,
 								use_lock))
 	{
 		/* No need for any more future segments... */
@@ -1568,20 +1567,9 @@ PreallocXlogFiles(XLogRecPtr endptr)
 	uint32		_logSeg;
 	int			lf;
 	bool		use_existent;
-	int			i;
 
 	XLByteToPrevSeg(endptr, _logId, _logSeg);
-	if (XLOGfiles > 0)
-	{
-		for (i = 1; i <= XLOGfiles; i++)
-		{
-			NextLogSeg(_logId, _logSeg);
-			use_existent = true;
-			lf = XLogFileInit(_logId, _logSeg, &use_existent, true);
-			close(lf);
-		}
-	}
-	else if ((endptr.xrecoff - 1) % XLogSegSize >=
+	if ((endptr.xrecoff - 1) % XLogSegSize >=
 			 (uint32) (0.75 * XLogSegSize))
 	{
 		NextLogSeg(_logId, _logSeg);
@@ -1635,11 +1623,11 @@ MoveOfflineLogs(uint32 log, uint32 seg, XLogRecPtr endptr)
 				/*
 				 * Before deleting the file, see if it can be recycled as
 				 * a future log segment.  We allow recycling segments up
-				 * to XLOGfiles + XLOGfileslop segments beyond the current
+				 * to XLOGfileslop segments beyond the current
 				 * XLOG location.
 				 */
 				if (InstallXLogFileSegment(endlogId, endlogSeg, path,
-										   true, XLOGfiles + XLOGfileslop,
+										   true, XLOGfileslop,
 										   true))
 				{
 					elog(LOG, "recycled transaction log file %s",

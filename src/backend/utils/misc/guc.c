@@ -5,7 +5,7 @@
  * command, configuration file, and command line options.
  * See src/backend/utils/misc/README for more information.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.87 2002/08/29 21:02:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.88 2002/08/30 16:50:50 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -638,11 +638,6 @@ static struct config_int
 	{
 		{ "wal_buffers", PGC_POSTMASTER }, &XLOGbuffers,
 		8, 4, INT_MAX, NULL, NULL
-	},
-
-	{
-		{ "wal_files", PGC_SIGHUP }, &XLOGfiles,
-		0, 0, 64, NULL, NULL
 	},
 
 	{
