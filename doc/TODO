@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Oct 12 12:07:24 EDT 2001
+Last updated:		Fri Oct 12 12:13:27 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -124,7 +124,8 @@ INDEXES
 * Have UPDATE/DELETE clean out indexes
 * Add btree index support for reltime, tinterval, regproc
 * Add rtree index support for line, lseg, path, point
-* Use indexes for min() and max()
+* Use indexes for min() and max() or convert to SELECT col FROM tab ORDER
+  BY col DESC LIMIT 1;
 * Use index to restrict rows returned by multi-key index when used with
   non-consecutive keys or OR clauses, so fewer heap accesses
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
