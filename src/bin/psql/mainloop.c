@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.35 2001/02/10 02:31:28 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.36 2001/02/28 20:39:42 petere Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -249,7 +249,7 @@ MainLoop(FILE *source)
 		pset.lineno++;
 
 		/* nothing left on line? then ignore */
-		if (line[0] == '\0')
+		if (line[0] == '\0' && !in_quote)
 		{
 			free(line);
 			continue;
@@ -510,7 +510,7 @@ MainLoop(FILE *source)
 
 
 		/* Put the rest of the line in the query buffer. */
-		if (line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
+		if (in_quote || line[query_start + strspn(line + query_start, " \t\n\r")] != '\0')
 		{
 			if (query_buf->len > 0)
 				appendPQExpBufferChar(query_buf, '\n');
