@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.75 1999/05/25 16:08:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.76 1999/05/26 22:57:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1291,7 +1291,6 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	if (!RelationIsValid(pg_class))
 		elog(ERROR, "UpdateStats: could not open RELATION relation");
 
-
 	if (!IsBootstrapProcessingMode())
 	{
 		tuple = SearchSysCacheTupleCopy(RELOID,
@@ -1320,34 +1319,48 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	}
 
 	/* ----------------
-	 *	update statistics
+	 * Figure values to insert.
+	 *
+	 * If we found zero tuples in the scan, do NOT believe it; instead put
+	 * a bogus estimate into the statistics fields.  Otherwise, the common
+	 * pattern "CREATE TABLE; CREATE INDEX; insert data" leaves the table
+	 * with zero size statistics until a VACUUM is done.  The optimizer will
+	 * generate very bad plans if the stats claim the table is empty when
+	 * it is actually sizable.  See also CREATE TABLE in heap.c.
 	 * ----------------
 	 */
 	relpages = RelationGetNumberOfBlocks(whichRel);
+
+	if (reltuples == 0)
+	{
+		if (relpages == 0)
+		{
+			/* Bogus defaults for a virgin table, same as heap.c */
+			reltuples = 1000;
+			relpages = 10;
+		}
+		else if (whichRel->rd_rel->relkind == RELKIND_INDEX && relpages <= 2)
+		{
+			/* Empty index, leave bogus defaults in place */
+			reltuples = 1000;
+		}
+		else
+			reltuples = relpages * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
+	}
 
 	/*
 	 * We shouldn't have to do this, but we do...  Modify the reldesc in
 	 * place with the new values so that the cache contains the latest
 	 * copy.
 	 */
-
 	whichRel->rd_rel->relhasindex = hasindex;
 	whichRel->rd_rel->relpages = relpages;
 	whichRel->rd_rel->reltuples = reltuples;
 
-	for (i = 0; i < Natts_pg_class; i++)
-	{
-		nulls[i] = heap_attisnull(tuple, i + 1) ? 'n' : ' ';
-		replace[i] = ' ';
-		values[i] = (Datum) NULL;
-	}
-
-	/*
-	 * If reltuples wasn't supplied take an educated guess.
+	/* ----------------
+	 *	Update statistics in pg_class.
+	 * ----------------
 	 */
-	if (reltuples == 0)
-		reltuples = relpages * NTUPLES_PER_PAGE(whichRel->rd_rel->relnatts);
-
 	if (IsBootstrapProcessingMode())
 	{
 
@@ -1363,7 +1376,15 @@ UpdateStats(Oid relid, long reltuples, bool hasindex)
 	}
 	else
 	{
-		/* during normal processing, work harder */
+		/* During normal processing, must work harder. */
+
+		for (i = 0; i < Natts_pg_class; i++)
+		{
+			nulls[i] = heap_attisnull(tuple, i + 1) ? 'n' : ' ';
+			replace[i] = ' ';
+			values[i] = (Datum) NULL;
+		}
+
 		replace[Anum_pg_class_relpages - 1] = 'r';
 		values[Anum_pg_class_relpages - 1] = (Datum) relpages;
 		replace[Anum_pg_class_reltuples - 1] = 'r';
@@ -1438,12 +1459,10 @@ DefaultBuild(Relation heapRelation,
 	char	   *nullv;
 	long		reltuples,
 				indtuples;
-
 #ifndef OMIT_PARTIAL_INDEX
 	ExprContext *econtext;
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
-
 #endif
 	Node	   *predicate;
 	Node	   *oldPred;
@@ -1524,13 +1543,13 @@ DefaultBuild(Relation heapRelation,
 	{
 		reltuples++;
 
+#ifndef OMIT_PARTIAL_INDEX
 		/*
 		 * If oldPred != NULL, this is an EXTEND INDEX command, so skip
 		 * this tuple if it was already in the existing partial index
 		 */
 		if (oldPred != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, heapTuple); */
 			slot->val = heapTuple;
 			if (ExecQual((List *) oldPred, econtext) == true)
@@ -1538,7 +1557,6 @@ DefaultBuild(Relation heapRelation,
 				indtuples++;
 				continue;
 			}
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
 
 		/*
@@ -1547,13 +1565,12 @@ DefaultBuild(Relation heapRelation,
 		 */
 		if (predicate != NULL)
 		{
-#ifndef OMIT_PARTIAL_INDEX
 			/* SetSlotContents(slot, heapTuple); */
 			slot->val = heapTuple;
 			if (ExecQual((List *) predicate, econtext) == false)
 				continue;
-#endif	 /* OMIT_PARTIAL_INDEX */
 		}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 		indtuples++;
 
@@ -1586,12 +1603,12 @@ DefaultBuild(Relation heapRelation,
 
 	heap_endscan(scan);
 
+#ifndef OMIT_PARTIAL_INDEX
 	if (predicate != NULL || oldPred != NULL)
 	{
-#ifndef OMIT_PARTIAL_INDEX
 		ExecDestroyTupleTable(tupleTable, false);
-#endif	 /* OMIT_PARTIAL_INDEX */
 	}
+#endif	 /* OMIT_PARTIAL_INDEX */
 
 	pfree(nullv);
 	pfree(datum);

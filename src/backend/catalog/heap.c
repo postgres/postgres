@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.85 1999/05/25 16:08:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.86 1999/05/26 22:57:39 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -674,11 +674,10 @@ AddNewRelationTuple(Relation pg_class_desc,
 	 * enough to discourage the optimizer from using nested-loop plans.
 	 * With this hack, nested-loop plans will be preferred only after
 	 * the table has been proven to be small by VACUUM or CREATE INDEX.
-	 * (NOTE: if user does CREATE TABLE, then CREATE INDEX, then loads
-	 * the table, he still loses until he vacuums, because CREATE INDEX
-	 * will set reltuples to zero.	Can't win 'em all.	Maintaining the
-	 * stats on-the-fly would solve the problem, but the overhead of that
-	 * would likely cost more than it'd save.)
+	 * Maintaining the stats on-the-fly would solve the problem more cleanly,
+	 * but the overhead of that would likely cost more than it'd save.
+	 * (NOTE: CREATE INDEX inserts the same bogus estimates if it finds the
+	 * relation has 0 rows and pages. See index.c.)
 	 * ----------------
 	 */
 	new_rel_reltup->relpages = 10;		/* bogus estimates */
