@@ -345,8 +345,9 @@ pg_restore [ <replaceable class="parameter">archive-file</replaceable>  ]
      <varlistentry>
       <term><computeroutput>
 Connection to database 'template1' failed.
-connectDB() failed: Is the postmaster running and accepting connections
-            at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
+connectDBStart() -- connect() failed: No such file or directory
+        Is the postmaster running locally
+        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
        </computeroutput></term>
       <listitem>
        <para>

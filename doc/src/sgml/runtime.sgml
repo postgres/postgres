@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.39 2000/11/25 20:33:47 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.40 2000/11/30 23:20:50 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -347,7 +347,7 @@ IpcSemaphoreCreate: semget(key=5440026, num=16, 01600) failed: No space left on 
     <para>
 <screen>
 connectDB() -- connect() failed: Connection refused
-Is the postmaster running (with -i) at 'server.joe.com' and accepting connections on TCP/IP port '5432'?
+Is the postmaster running (with -i) at 'server.joe.com' and accepting connections on TCP/IP port 5432?
 </screen>
      This is the generic <quote>I couldn't find a server to talk
      to</quote> failure. It looks like the above when TCP/IP
@@ -361,7 +361,7 @@ Is the postmaster running (with -i) at 'server.joe.com' and accepting connection
      Unix-socket communication to a local postmaster:
 <screen>
 connectDB() -- connect() failed: No such file or directory
-Is the postmaster running at 'localhost' and accepting connections on Unix socket '5432'?
+Is the postmaster running locally and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
 </screen>
     </para>
 
@@ -1082,15 +1082,13 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
-      <term>UNIXSOCKET (<type>string</type>)</term>
+      <term>UNIX_SOCKET_DIRECTORY (<type>string</type>)</term>
       <listitem>
        <para>
-	Specifies the directory of the Unix domain socket on which the
+	Specifies the directory of the Unix-domain socket on which the
 	<application>postmaster</application> is to listen for
-	connections from client applications.  Defaults to the value
-	of the <envar>PGUNIXSOCKET</envar> environment variable, or if
-	<envar>PGUNIXSOCKET</envar> is not set, then defaults to 
-        <filename>/tmp</filename>.
+	connections from client applications.  The default is normally
+	<filename>/tmp</filename>, but can be changed at build time.
        </para>
       </listitem>
      </varlistentry>
@@ -1151,23 +1149,8 @@ env PGOPTIONS='-c geqo=off' psql
        <para>
 	Specifies the TCP/IP hostname or address on which the
 	<application>postmaster</application> is to listen for
-	connections from client applications.  Defaults to the value
-	of the <envar>PGHOST</envar> environment variable, or if
-	<envar>PGHOST</envar> is not set, it defaults to listening on
-	all configured addresses (including localhost).
-       </para>
-       <para>
-	If you use a hostname do not try to run multiple instances of
-	<application>postmaster</application> on the same IP address
-	but different ports.  Doing so will result in them attempting
-	(incorrectly) to use the same shared memory segments.  Also,
-	if you use a hostname, all of the host's IP addresses on which
-	<application>postmaster</application> instances are listening
-	must be distinct in the two last octets.
-       </para>
-       <para>
-	If you do not use this option, then each instance must listen
-	on a different port.
+	connections from client applications.  Defaults to
+	listening on all configured addresses (including localhost).
        </para>
       </listitem>
      </varlistentry>
@@ -1218,6 +1201,11 @@ env PGOPTIONS='-c geqo=off' psql
        <row>
         <entry>-i</entry>
         <entry>tcpip_socket = on</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>-k <replaceable>x</replaceable></entry>
+        <entry>unix_socket_directory = <replaceable>x</replaceable></entry>
         <entry></entry>
        </row>
        <row>

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.151 2000/11/30 18:32:52 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.152 2000/11/30 23:20:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -742,6 +742,36 @@ connectNoDelay(PGconn *conn)
 
 
 /* ----------
+ * connectFailureMessage -
+ * create a friendly error message on connection failure.
+ * ----------
+ */
+static void
+connectFailureMessage(PGconn *conn, const char *caller, int errorno)
+{
+#ifdef HAVE_UNIX_SOCKETS
+	if (conn->raddr.sa.sa_family == AF_UNIX)
+		printfPQExpBuffer(&conn->errorMessage,
+						  "%s -- connect() failed: %s\n"
+						  "\tIs the postmaster running locally\n"
+						  "\tand accepting connections on Unix socket '%s'?\n",
+						  caller,
+						  strerror(errorno),
+						  conn->raddr.un.sun_path);
+	else
+#endif
+		printfPQExpBuffer(&conn->errorMessage,
+						  "%s -- connect() failed: %s\n"
+						  "\tIs the postmaster running (with -i) at '%s'\n"
+						  "\tand accepting connections on TCP/IP port %s?\n",
+						  caller,
+						  strerror(errorno),
+						  conn->pghost ? conn->pghost : "localhost",
+						  conn->pgport);
+}
+
+
+/* ----------
  * connectDBStart -
  * Start to make a connection to the backend so it is ready to receive
  * queries.
@@ -911,17 +941,7 @@ connectDBStart(PGconn *conn)
 		else
 		{
 			/* Something's gone wrong */
-			printfPQExpBuffer(&conn->errorMessage,
-							  "connectDBStart() -- connect() failed: %s\n"
-							  "\tIs the postmaster running%s at '%s'\n"
-							  "\tand accepting connections on %s '%s'?\n",
-							  strerror(errno),
-							  (family == AF_INET) ? " (with -i)" : "",
-							  conn->pghost ? conn->pghost : "localhost",
-							  (family == AF_INET) ?
-							  "TCP/IP port" : "Unix socket",
-							  (family == AF_UNIX && conn->pgunixsocket) ?
-							  conn->pgunixsocket : conn->pgport);
+			connectFailureMessage(conn, "connectDBStart()", errno);
 			goto connect_errReturn;
 		}
 	}
@@ -1213,17 +1233,7 @@ keep_going:						/* We will come back to here until there
 					 * see connect failures at this point, so provide a
 					 * friendly error message.
 					 */
-					printfPQExpBuffer(&conn->errorMessage,
-							  "PQconnectPoll() -- connect() failed: %s\n"
-								"\tIs the postmaster running%s at '%s'\n"
-							 "\tand accepting connections on %s '%s'?\n",
-									  strerror(optval),
-									  (conn->raddr.sa.sa_family == AF_INET) ? " (with -i)" : "",
-							   conn->pghost ? conn->pghost : "localhost",
-								  (conn->raddr.sa.sa_family == AF_INET) ?
-									  "TCP/IP port" : "Unix socket",
-							  (conn->raddr.sa.sa_family == AF_UNIX && conn->pgunixsocket) ?
-									  conn->pgunixsocket : conn->pgport);
+					connectFailureMessage(conn, "PQconnectPoll()", optval);
 					goto error_return;
 				}
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.15 2000/11/22 01:41:13 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_dumpall.sgml,v 1.16 2000/11/30 23:20:50 tgl Exp $
 Postgres documentation
 -->
 
@@ -192,7 +192,9 @@ pg_dumpall [ -h <replaceable class="parameter">host</replaceable> ] [ -p <replac
      <varlistentry>
       <term><computeroutput>
 Connection to database 'template1' failed.
-connectDB() failed: Is the postmaster running and accepting connections at 'UNIX Socket' on port '<replaceable class="parameter">port</replaceable>'?
+connectDBStart() -- connect() failed: No such file or directory
+        Is the postmaster running locally
+        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
        </computeroutput></term>
       <listitem>
        <para>

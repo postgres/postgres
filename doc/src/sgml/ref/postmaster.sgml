@@ -1,11 +1,11 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.17 2000/11/28 23:27:54 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/postmaster.sgml,v 1.18 2000/11/30 23:20:50 tgl Exp $
 Postgres documentation
 -->
 
 <refentry id="APP-POSTMASTER">
  <docinfo>
-  <date>2000-11-12</date>
+  <date>2000-11-30</date>
  </docinfo>
 
  <refmeta>
@@ -30,7 +30,7 @@ Postgres documentation
    <arg>-F</arg>
    <arg>-h <replaceable>hostname</replaceable></arg>
    <arg>-i</arg>
-   <arg>-k <replaceable>filename</replaceable></arg>
+   <arg>-k <replaceable>directory</replaceable></arg>
    <arg>-l</arg>
    <arg>-N <replaceable>max-connections</replaceable></arg>
    <arg>-o <replaceable>extra-options</replaceable></arg>
@@ -70,10 +70,10 @@ Postgres documentation
    starts it needs to know the location of the database cluster files
    (<quote>data area</quote>).  This is done with the
    <option>-D</option> invocation option or the <envar>PGDATA</envar>
-   environment variable, there is no default.  More than one
+   environment variable; there is no default.  More than one
    postmaster process can run on a system at one time, as long as they
-   use different data areas and different port numbers (see below).  A
-   data area is created with <xref linkend="app-initdb"
+   use different data areas and different communication ports (see below).
+   A data area is created with <xref linkend="app-initdb"
    endterm="app-initdb-title">.
   </para>
 
@@ -165,10 +165,8 @@ Postgres documentation
        <para>
 	Specifies the TCP/IP hostname or address on which the
 	<application>postmaster</application> is to listen for
-	connections from client applications.  Defaults to the value
-	of the <envar>PGHOST</envar> environment variable, or if
-	<envar>PGHOST</envar> is not set, it defaults to listening on
-	all configured addresses (including localhost).
+	connections from client applications.  Defaults to
+	listening on all configured addresses (including localhost).
        </para>
       </listitem>
      </varlistentry>
@@ -185,15 +183,13 @@ Postgres documentation
      </varlistentry>
 
      <varlistentry>
-      <term>-k <replaceable class="parameter">filename</replaceable></term>
+      <term>-k <replaceable class="parameter">directoryname</replaceable></term>
       <listitem>
        <para>
-	Specifies the directory for Unix domain socket on which the
+	Specifies the directory of the Unix-domain socket on which the
 	<application>postmaster</application> is to listen for
-	connections from client applications.  Defaults to the value
-	of the <envar>PGUNIXSOCKET</envar> environment variable, or if
-	<envar>PGUNIXSOCKET</envar> is not set, then defaults to a
-	file in <filename>/tmp</filename>.
+	connections from client applications.  The default is normally
+	<filename>/tmp</filename>, but can be changed at build time.
        </para>
       </listitem>
      </varlistentry>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.19 2000/11/22 01:41:12 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.20 2000/11/30 23:20:50 tgl Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -80,22 +80,16 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.19 2000/11/22 01:41:
       <listitem>
        <para>
 	<envar>PGHOST</envar> sets the default server name.
-        If it begins with a slash, it is used
-        as the directory for the unix domain socket.
+        If this begins with a slash, it specifies Unix-domain communication
+        rather than TCP/IP communication; the value is the name of the
+	directory in which the socket file is stored (default "/tmp").
        </para>
       </listitem>
       <listitem>
        <para>
-	<envar>PGPORT</envar>  sets the default port or local Unix domain socket
-	file extension for communicating with the <productname>Postgres</productname>
-	backend.
-       </para>
-      </listitem>
-      <listitem>
-       <para>
-	<envar>PGUNIXSOCKET</envar>  sets the Unix domain socket
-	directory for communicating with the <productname>Postgres</productname>
-	backend.
+	<envar>PGPORT</envar> sets the default TCP port number or Unix-domain
+	socket file extension for communicating with the
+	<productname>Postgres</productname> backend.
        </para>
       </listitem>
       <listitem>

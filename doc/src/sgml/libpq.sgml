@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.50 2000/11/30 18:34:36 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.51 2000/11/30 23:20:50 tgl Exp $
 -->
 
  <chapter id="libpq-chapter">
@@ -88,9 +88,11 @@ PGconn *PQconnectdb(const char *conninfo)
      <listitem>
      <para>
       Name of host to connect to. 
-      Using this parameter causes a hostname look-up.  See hostaddr.
-      If it begins with a slash, it is used
-      as the directory for the unix domain socket.
+      If this begins with a slash, it specifies Unix-domain communication
+      rather than TCP/IP communication; the value is the name of the
+      directory in which the socket file is stored.
+      The default is to connect to a Unix-domain socket in
+      <filename>/tmp</filename>.
      </para>
      </listitem>
     </varlistentry>
@@ -118,7 +120,7 @@ PGconn *PQconnectdb(const char *conninfo)
       machine at hostaddr.
      </para>
      <para>
-      Without both a host name and host address, libpq will connect using a
+      Without either a host name or host address, libpq will connect using a
       local Unix domain socket.
      </para>
      </listitem>
@@ -1820,14 +1822,16 @@ application programs.
 <listitem>
 <para>
 <envar>PGHOST</envar> sets the default server name.
-If it beings with a slash, it is used as the directory for the unix domain
-socket.
+If this begins with a slash, it specifies Unix-domain communication
+rather than TCP/IP communication; the value is the name of the
+directory in which the socket file is stored (default "/tmp").
 </para>
 </listitem>
 <listitem>
 <para>
-<envar>PGPORT</envar> sets the default port for communicating with
-the <productname>Postgres</productname> backend.
+<envar>PGPORT</envar> sets the default TCP port number or Unix-domain
+socket file extension for communicating with the
+<productname>Postgres</productname> backend.
 </para>
 </listitem>
 <listitem>

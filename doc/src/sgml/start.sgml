@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.14 2000/11/13 15:18:07 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.15 2000/11/30 23:20:50 tgl Exp $
 -->
 
  <chapter id="start">
@@ -110,7 +110,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.14 2000/11/13 15:18:07 momji
     will need to set the <acronym>PGHOST</acronym> environment
     variable to the name
     of the database server machine.   The  environment  variable
-    <acronym>PGPORT</acronym> or <acronym>PGUNIXSOCKET</acronym> may also have to be set.
+    <acronym>PGPORT</acronym> may also have to be set.
     The bottom line is this: if
     you try to start an application  program  and  it  complains
     that it cannot connect to the <application>postmaster</application>,
@@ -154,18 +154,18 @@ $Header: /cvsroot/pgsql/doc/src/sgml/start.sgml,v 1.14 2000/11/13 15:18:07 momji
 
     <programlisting>
 % psql template1
-Connection to database 'postgres' failed.
-connectDB() failed: Is the postmaster running and accepting connections
-    at 'UNIX Socket' on port '5432'?
+psql: connectDBStart() -- connect() failed: No such file or directory
+        Is the postmaster running locally
+        and accepting connections on Unix socket '/tmp/.s.PGSQL.5432'?
     </programlisting>
 
     or
 
     <programlisting>
 % psql -h localhost template1
-Connection to database 'postgres' failed.
-connectDB() failed: Is the postmaster running and accepting TCP/IP
-    (with -i) connections at 'localhost' on port '5432'?
+psql: PQconnectPoll() -- connect() failed: Connection refused
+        Is the postmaster running (with -i) at 'localhost'
+        and accepting connections on TCP/IP port 5432?
     </programlisting>
 
     it is usually because
