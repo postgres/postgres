@@ -4,7 +4,8 @@
 
      Release date: 2002-08-23
 
-   This has a variety of fixes from 7.2.1.
+   This has a variety of fixes from 7.2.1, including the security
+   problems reported on BUGTRAQ.
 
      ----------------------------------------------------------------------
 
@@ -19,17 +20,21 @@ Changes
  Allow EXECUTE of "CREATE TABLE AS ... SELECT" in PL/PgSQL (Tom)
  Fix for compressed transaction log id wraparound (Tom)
  Fix PQescapeBytea/PQunescapeBytea so that they handle bytes > 0x7f (Tatsuo)
- Fix for psql and pg_dump crashing when invoked with non-existand long 
+ Fix for psql and pg_dump crashing when invoked with non-existent long 
    options (Tatsuo)
  Fix crash when invoking geometric operators (Tom)
  Allow OPEN cursor(args) (Tom)
  Fix for rtree_gist index build (Teodor)
+ Fix for usage of partial indexes for relations other than first in
+   joins (Tom)
  Fix for dumping user-defined aggregates (Tom)
  Contrib/intarray fixes (Oleg)
  Fix for complex UNION/EXCEPT/INTERSECT queries using parens (Tom)
  Fix to pg_convert (Tatsuo)
- Fix for crash with long DATA strings (Thomes, Neil)
- Fix for repeat(), lpad(), rpad() and long strings (Neil)
+ Fix for buffer overrun in handling long datetime input (Thomas, Neil)
+ Fix for buffer overrun in repeat() (Neil)
+ Fix for buffer overrun in lpad() and rpad() with multibyte (Neil)
+ Fix for buffer overrun in SET TIME ZONE and TZ env var (Neil)
 
 
      ----------------------------------------------------------------------
