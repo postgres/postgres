@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-10-20 19:06+0100\n"
-"PO-Revision-Date: 2004-11-09 22:16+0100\n"
+"PO-Revision-Date: 2004-12-11 21:24+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
@@ -13,7 +13,6 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "X-Poedit-Language: Slovenian\n"
 "X-Poedit-Country: SLOVENIA\n"
-
 
 #: pg_config.c:36
 #, c-format
@@ -114,4 +113,37 @@ msgstr "%s: neveljaven argument: %s\n"
 #, c-format
 msgid "%s: could not find own executable\n"
 msgstr "%s: lastne izvr¹ljive datoteke ni bilo mogoèe najti\n"
+
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "trenutnega imenika ni bilo mogoèe izvedeti: %s"
+
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "delovnega imenika ni bilo mogoèe spremeniti v \"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "simbolne povezave \"%s\" ni bilo mogoèe prebrati"
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "podproces je zakljuèil izvajanje z izhodno kodo %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "podproces je bil pokonèan s signalom %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "podproces je zakljuèil izvajanje z neznanim statusom %d"
 

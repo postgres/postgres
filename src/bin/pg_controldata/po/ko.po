@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-12-15 07:06+0000\n"
-"PO-Revision-Date: 2004-12-16 00:51+0900\n"
+"PO-Revision-Date: 2004-12-16 11:37+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: KOREAN <pgsql-kr@postgresql.or.kr>\n"
 "MIME-Version: 1.0\n"
@@ -58,23 +58,23 @@ msgstr "오류보고: <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_controldata.c:50
 msgid "starting up"
-msgstr "starting up"
+msgstr "시작 중"
 
 #: pg_controldata.c:52
 msgid "shut down"
-msgstr "shut down"
+msgstr "중지됨"
 
 #: pg_controldata.c:54
 msgid "shutting down"
-msgstr "shutting down"
+msgstr "중지 중"
 
 #: pg_controldata.c:56
 msgid "in recovery"
-msgstr "in recovery"
+msgstr "복구 작업 중"
 
 #: pg_controldata.c:58
 msgid "in production"
-msgstr "in production"
+msgstr "정상가동중"
 
 #: pg_controldata.c:60
 msgid "unrecognized status code"

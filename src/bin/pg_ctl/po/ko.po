@@ -1,45 +1,45 @@
-# translation of pg_ctl-sl.po to Slovenian
-# Aleksander Kmetec <aleksander.kmetec@intera.si>, 2004.
+# Korean message translation file for PostgreSQL pg_ctl
+# Ioseph Kim <ioseph@uri.sarang.net>, 2004.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
-"POT-Creation-Date: 2004-10-09 07:07+0100\n"
-"PO-Revision-Date: 2004-12-11 21:22+0100\n"
-"Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
-"Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
+"POT-Creation-Date: 2004-12-15 07:07+0000\n"
+"PO-Revision-Date: 2004-12-16 11:30+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: KOREAN <pgsql-kr@postgresql.or.kr>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ISO-8859-2\n"
+"Content-Type: text/plain; charset=euc-kr\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Poedit-Language: Slovenian\n"
-"X-Poedit-Country: SLOVENIA\n"
+"X-Poedit-Language: Korean\n"
+"X-Poedit-Country: KOREA, REPUBLIC OF\n"
 
 #: pg_ctl.c:201
 #: pg_ctl.c:216
 #: pg_ctl.c:1342
 #, c-format
 msgid "%s: out of memory\n"
-msgstr "%s: zmanjkalo je pomnilnika\n"
+msgstr "%s: ¸Þ¸ð¸® ºÎÁ·\n"
 
 #: pg_ctl.c:250
 #, c-format
 msgid "%s: could not open PID file \"%s\": %s"
-msgstr "%s: PID datoteke ni bilo mogoèe odpreti \"%s\": %s"
+msgstr "%s: \"%s\" PID ÆÄÀÏÀ» ¿­ ¼ö ¾øÀ½: %s"
 
 #: pg_ctl.c:469
 #, c-format
 msgid "%s: another postmaster may be running; trying to start postmaster anyway\n"
-msgstr "%s: obstaja verjetnost, da je postmaster ¾e zagnan; poizkus zagona se nadaljuje kljub temu\n"
+msgstr "%s: ´Ù¸¥ postmaster ÇÁ·Î¼¼½º°¡ °¡µ¿ ÁßÀÎ °Í °°À½; ¾îÂ°µç postmaster °¡µ¿À» ½ÃµµÇÔ\n"
 
 #: pg_ctl.c:487
 #, c-format
 msgid "%s: could not read file \"%s\"\n"
-msgstr "%s: datoteke \"%s\" ni bilo mogoèe prebrati\n"
+msgstr "%s: \"%s\" ÆÄÀÏÀ» ÀÐÀ» ¼ö ¾øÀ½\n"
 
 #: pg_ctl.c:493
 #, c-format
 msgid "%s: option file \"%s\" must have exactly one line\n"
-msgstr "%s: datoteka z mo¾nostmi \"%s\" mora vsebovati natanko 1 vrstico\n"
+msgstr "%s: \"%s\" È¯°æ¼³Á¤ÆÄÀÏÀº ¹Ýµå½Ã ÇÑ ÁÙÀ» °¡Á®¾ßÇÑ´Ù?\n"
 
 #: pg_ctl.c:544
 #, c-format
@@ -48,9 +48,9 @@ msgid ""
 "same directory as \"%s\".\n"
 "Check your installation.\n"
 msgstr ""
-"%s potrebuje program \"postmaster\", vendar pa ta ni bil najden\n"
-"v istem imeniku kot \"%s\".\n"
-"Preverite, ali je program name¹èen pravilno.\n"
+"%s ÇÁ·Î±×·¥Àº \"postgres\" ÇÁ·Î±×·¥À» ÇÊ¿ä·Î ÇÕ´Ï´Ù. ±×·±µ¥, ÀÌ ÆÄÀÏÀÌ\n"
+"\"%s\" ÆÄÀÏÀÌ ÀÖ´Â µð·ºÅä¸®¾È¿¡ ¾ø½À´Ï´Ù.\n"
+"¼³Ä¡ »óÅÂ¸¦ È®ÀÎÇØ ÁÖ½Ê½Ã¿À.\n"
 
 #: pg_ctl.c:550
 #, c-format
@@ -59,14 +59,14 @@ msgid ""
 "but was not the same version as %s.\n"
 "Check your installation.\n"
 msgstr ""
-"%s: program \"postmaster\" je bil najden, vendar se njegova\n"
-"razlièica razlikuje od razlièice programa \"%s\".\n"
-"Preverite, ali je program name¹èen pravilno.\n"
+"\"%s\" ÇÁ·Î±×·¥Àº \"postgres\" ÇÁ·Î±×·¥À» Ã£¾ÒÁö¸¸ ÀÌ ÆÄÀÏÀº\n"
+"%s ÇÁ·Î±×·¥ÀÇ ¹öÀü°ú Æ²¸³´Ï´Ù.\n"
+"¼³Ä¡ »óÅÂ¸¦ È®ÀÎÇØ ÁÖ½Ê½Ã¿À.\n"
 
 #: pg_ctl.c:562
 #, c-format
 msgid "%s: could not start postmaster: exit code was %d\n"
-msgstr "%s: programa postmaster ni bilo mogoèe zagnati; izhodna koda je bila: %d\n"
+msgstr "%s: postmaster¸¦ ½ÃÀÛÇÒ ¼ö ¾øÀ½: Á¾·á ÄÚµå %d\n"
 
 #: pg_ctl.c:573
 #, c-format
@@ -74,173 +74,173 @@ msgid ""
 "%s: could not start postmaster\n"
 "Examine the log output.\n"
 msgstr ""
-"%s: programa postmaster ni bilo mogoèe zagnati\n"
-"Preglejte sporoèila v dnevniku.\n"
+"%s: postmaster¸¦ ½ÃÀÛ ÇÒ ¼ö ¾øÀ½\n"
+"·Î±× Ãâ·ÂÀ» »ìÆìº¸½Ê½Ã¿À.\n"
 
 #: pg_ctl.c:582
 msgid "waiting for postmaster to start..."
-msgstr "postmaster se zaganja..."
+msgstr "postmaster¸¦ ½ÃÀÛÇÏ±â À§ÇØ ±â´Ù¸®´Â Áß..."
 
 #: pg_ctl.c:585
 msgid "could not start postmaster\n"
-msgstr "programa \"postmaster\" ni bilo mogoèe zagnati\n"
+msgstr "postmaster¸¦ ½ÃÀÛ ÇÒ ¼ö ¾øÀ½\n"
 
 #: pg_ctl.c:588
 #: pg_ctl.c:654
 #: pg_ctl.c:721
 msgid " done\n"
-msgstr " opravljeno\n"
+msgstr " ¿Ï·á\n"
 
 #: pg_ctl.c:589
 msgid "postmaster started\n"
-msgstr "postmaster zagnan\n"
+msgstr "postmaster ½ÃÀÛµÊ\n"
 
 #: pg_ctl.c:593
 msgid "postmaster starting\n"
-msgstr "postmaster se zaganja\n"
+msgstr "postmaster¸¦ ½ÃÀÛÇÕ´Ï´Ù\n"
 
 #: pg_ctl.c:607
 #: pg_ctl.c:675
 #: pg_ctl.c:735
 #, c-format
 msgid "%s: PID file \"%s\" does not exist\n"
-msgstr "%s: PID datoteka \"%s\" ne obstaja\n"
+msgstr "%s: \"%s\" PID ÆÄÀÏÀÌ ¾ø½À´Ï´Ù\n"
 
 #: pg_ctl.c:608
 #: pg_ctl.c:676
 #: pg_ctl.c:736
 msgid "Is postmaster running?\n"
-msgstr "Ali je postmaster zagnan?\n"
+msgstr "postmaster°¡ ½ÇÇà ÁßÀÔ´Ï±î?\n"
 
 #: pg_ctl.c:614
 #, c-format
 msgid "%s: cannot stop postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: zaustavitev programa postmaster ni mogoèa; postgres je zagnan (PID: %ld)\n"
+msgstr "%s: postmaster ÁßÁö ½ÇÆÐ; postgres°¡ ½ÇÇà Áß (PID: %ld)\n"
 
 #: pg_ctl.c:622
 #: pg_ctl.c:693
 #, c-format
 msgid "%s: could not send stop signal (PID: %ld): %s\n"
-msgstr "%s: signala za zaustavitev ni bilo mogoèe poslati (PID: %ld): %s\n"
+msgstr "%s: stop ½Ã±×³ÎÀ» º¸³¾ ¼ö ¾øÀ½ (PID: %ld): %s\n"
 
 #: pg_ctl.c:629
 msgid "postmaster shutting down\n"
-msgstr "postmaster se zaustavlja\n"
+msgstr "postmaster¸¦ ¸ØÃä´Ï´Ù\n"
 
 #: pg_ctl.c:634
 #: pg_ctl.c:698
 msgid "waiting for postmaster to shut down..."
-msgstr "postmaster se zaustavlja..."
+msgstr "postmaster¸¦ ¸ØÃß±â À§ÇØ ±â´Ù¸®´Â Áß..."
 
 #: pg_ctl.c:649
 #: pg_ctl.c:715
 msgid " failed\n"
-msgstr " spodletelo\n"
+msgstr " ½ÇÆÐ\n"
 
 #: pg_ctl.c:651
 #: pg_ctl.c:717
 #, c-format
 msgid "%s: postmaster does not shut down\n"
-msgstr "%s: postmaster se ni zaustavil\n"
+msgstr "%s: postmaster¸¦ ¸ØÃßÁö ¸øÇßÀ½\n"
 
 #: pg_ctl.c:656
 #: pg_ctl.c:722
 msgid "postmaster stopped\n"
-msgstr "postmaster zaustavljen\n"
+msgstr "postmaster ¸ØÃß¾úÀ½\n"
 
 #: pg_ctl.c:677
 msgid "starting postmaster anyway\n"
-msgstr "zagon programa posmaster se nadaljuje kljub temu\n"
+msgstr "¾îÂ°µç postmaster¸¦ ½ÃÀÛÇÕ´Ï´Ù\n"
 
 #: pg_ctl.c:684
 #, c-format
 msgid "%s: cannot restart postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: ponovni zagon programa postmaster ni mogoè; postgres je zagnan (PID: %ld)\n"
+msgstr "%s: postmaster¸¦ ´Ù½Ã ½ÃÀÛ ÇÒ ¼ö ¾øÀ½; postgres°¡ ½ÇÇà ÁßÀÓ (PID: %ld)\n"
 
 #: pg_ctl.c:687
 #: pg_ctl.c:745
 msgid "Please terminate postgres and try again.\n"
-msgstr "Zaustavite postgres in poskusite znova.\n"
+msgstr "postgres ÇÁ·Î¼¼½º¸¦ ³¡³»°í ´Ù½Ã ½ÃµµÇÏ½Ê½Ã¿À.\n"
 
 #: pg_ctl.c:742
 #, c-format
 msgid "%s: cannot reload postmaster; postgres is running (PID: %ld)\n"
-msgstr "%s: ponovno nalaganje konfiguracije za program postmaster ni mogoèe; postgres je zagnan (PID: %ld)\n"
+msgstr "%s: postmaster¸¦ ´Ù½Ã ºÒ·¯¿Ã ¼ö ¾øÀ½; postgres°¡ ½ÇÇà ÁßÀÓ (PID: %ld)\n"
 
 #: pg_ctl.c:751
 #, c-format
 msgid "%s: could not send reload signal (PID: %ld): %s\n"
-msgstr "%s: signala za ponovno nalaganje ni bilo mogoèe poslati (PID: %ld): %s\n"
+msgstr "%s: reload ½Ã±×³ÎÀ» º¸³¾ ¼ö ¾øÀ½ (PID: %ld): %s\n"
 
 #: pg_ctl.c:756
 msgid "postmaster signaled\n"
-msgstr "ukaz poslan\n"
+msgstr "postmaster°¡ ½Ã½ºÅÛ ½Ã±×³ÎÀ» ¹Þ¾ÒÀ½\n"
 
 #: pg_ctl.c:771
 #, c-format
 msgid "%s: neither postmaster nor postgres running\n"
-msgstr "%s: niti postmaster niti postgres ni zagnan\n"
+msgstr "%s: postmaster³ª postgres ¸ðµÎ ½ÇÇà ÁßÀÌÁö ¾ÊÀ½\n"
 
 #: pg_ctl.c:777
 #, c-format
 msgid "%s: a standalone backend \"postgres\" is running (PID: %ld)\n"
-msgstr "%s: zagnan je samostojni stre¾ni¹ki proces \"postgres\" (PID: %ld)\n"
+msgstr "%s: ´ÜÀÏ ¹é¿£µå \"postgres\"°¡ ½ÇÇà ÁßÀÓ (PID: %ld)\n"
 
 #: pg_ctl.c:784
 #, c-format
 msgid "%s: postmaster is running (PID: %ld)\n"
-msgstr "%s: postmaster je zagnan (PID: %ld)\n"
+msgstr "%s: postmaster°¡ ½ÇÇà ÁßÀÓ (PID: %ld)\n"
 
 #: pg_ctl.c:800
 #, c-format
 msgid "%s: could not send signal %d (PID: %ld): %s\n"
-msgstr "%s: signala %d ni bilo mogoèe poslati (PID: %ld): %s\n"
+msgstr "%s: %d ½Ã±×³ÎÀ» º¸³¾ ¼ö ¾øÀ½ (PID: %ld): %s\n"
 
 #: pg_ctl.c:833
 #, c-format
 msgid "%s: could not find own program executable\n"
-msgstr "%s: lastne izvr¹ljive datoteke ni bilo mogoèe najti\n"
+msgstr ""
 
 #: pg_ctl.c:842
 #, c-format
 msgid "%s: could not find postmaster program executable\n"
-msgstr "%s: postmaster izvr¹ilna datoteka ni bila najdena\n"
+msgstr "%s: ½ÇÇà °¡´ÉÇÑ postmaster ÇÁ·Î±×·¥À» Ã£À» ¼ö ¾øÀ½\n"
 
 #: pg_ctl.c:896
 #: pg_ctl.c:928
 #, c-format
 msgid "%s: could not open service manager\n"
-msgstr "%s: upravljavca servisov ni bilo mogoèe odpreti\n"
+msgstr "%s: ¼­ºñ½º °ü¸®ÀÚ¸¦ ¿­ ¼ö ¾øÀ½\n"
 
 #: pg_ctl.c:902
 #, c-format
 msgid "%s: service \"%s\" already registered\n"
-msgstr "%s: servis \"%s\" je ¾e registriran\n"
+msgstr "%s: \"%s\" ¼­ºñ½º°¡ ÀÌ¹Ì µî·Ï µÇ¾î ÀÖÀ½\n"
 
 #: pg_ctl.c:913
 #, c-format
 msgid "%s: could not register service \"%s\": error code %d\n"
-msgstr "%s: servisa \"%s\" ni bilo mogoèe registrirati [koda napake: %d]\n"
+msgstr "%s: \"%s\" ¼­ºñ½º¸¦ µî·ÏÇÒ ¼ö ¾øÀ½: ¿À·ù ÄÚµå %d\n"
 
 #: pg_ctl.c:934
 #, c-format
 msgid "%s: service \"%s\" not registered\n"
-msgstr "%s: servis \"%s\" ni registriran\n"
+msgstr "%s: \"%s\" ¼­ºñ½º°¡ µî·ÏµÇ¾î ÀÖÁö ¾ÊÀ½\n"
 
 #: pg_ctl.c:941
 #, c-format
 msgid "%s: could not open service \"%s\": error code %d\n"
-msgstr "%s: servisa \"%s\" ni bilo mogoèe odpreti [koda napake: %d]\n"
+msgstr "%s: \"%s\" ¼­ºñ½º¸¦ ¿­ ¼ö ¾øÀ½: ¿À·ù ÄÚµå %d\n"
 
 #: pg_ctl.c:948
 #, c-format
 msgid "%s: could not unregister service \"%s\": error code %d\n"
-msgstr "%s: servisa \"%s\" ni bilo mogoèe odstraniti [koda napake: %d]\n"
+msgstr "%s: \"%s\" ¼­ºñ½º¸¦ ¼­ºñ½º ¸ñ·Ï¿¡¼­ »¬ ¼ö ¾øÀ½: ¿À·ù ÄÚµå %d\n"
 
 #: pg_ctl.c:1085
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
-msgstr "Za veè informacij poskusite \"%s --help\".\n"
+msgstr "º¸´Ù ÀÚ¼¼ÇÑ »ç¿ë¹ýÀº \"%s --help\"\n"
 
 #: pg_ctl.c:1093
 #, c-format
@@ -249,43 +249,44 @@ msgid ""
 "report the status of a PostgreSQL server, or signal a PostgreSQL process.\n"
 "\n"
 msgstr ""
-"%s je orodje za zagon, zaustavitev, ponovni zagon, ponovno nalaganje konfiguracije\n"
-"in poroèanje o statusu PostgreSQL stre¾nika, ali za prisilno pokonèanje PostgreSQL procesa.\n"
+"%s ÇÁ·Î±×·¥Àº PostgreSQL ¼­ºñ½º¸¦ ½ÃÀÛ, ÁßÁö, Àç½ÃÀÛ, È¯°æ¼³Á¤ ÀçÀû¿ë,\n"
+"¼­¹ö »óÅÂ º¸±â, ¶Ç´Â PostgreSQL ÇÁ·Î¼¼½º¿¡ Æ¯Á¤ ½Ã±×³ÎÀ» º¸³¾ ¼ö ÀÖ´Â\n"
+"ÇÁ·Î±×·¥ÀÔ´Ï´Ù.\n"
 "\n"
 
 #: pg_ctl.c:1095
 msgid "Usage:\n"
-msgstr "Uporaba:\n"
+msgstr "»ç¿ë¹ý:\n"
 
 #: pg_ctl.c:1096
 #, c-format
 msgid "  %s start   [-w] [-D DATADIR] [-s] [-l FILENAME] [-o \"OPTIONS\"]\n"
-msgstr "  %s start   [-w] [-D PODATKOVNI_IMENIK] [-s] [-l IME_DATOTEKE] [-o \"MO®NOSTI\"]\n"
+msgstr "  %s start   [-w] [-D DATADIR] [-s] [-l ·Î±×ÆÄÀÏ] [-o \"¼­¹ö¿É¼Ç\"]\n"
 
 #: pg_ctl.c:1097
 #, c-format
 msgid "  %s stop    [-W] [-D DATADIR] [-s] [-m SHUTDOWN-MODE]\n"
-msgstr "  %s stop    [-W] [-D PODATKOVNI_IMENIK] [-s] [-m NAÈIN_ZAUSTAVITVE]\n"
+msgstr "  %s stop    [-W] [-D DATADIR] [-s] [-m ÁßÁö¹æ¹ý]\n"
 
 #: pg_ctl.c:1098
 #, c-format
 msgid "  %s restart [-w] [-D DATADIR] [-s] [-m SHUTDOWN-MODE] [-o \"OPTIONS\"]\n"
-msgstr "  %s restart [-w] [-D PODATKOVNI_IMENIK] [-s] [-m NAÈIN_ZAUSTAVITVE] [-o \"MO®NOSTI\"]\n"
+msgstr "  %s restart [-w] [-D DATADIR] [-s] [-m ÁßÁö¹æ¹ý] [-o \"¼­¹ö¿É¼Ç\"]\n"
 
 #: pg_ctl.c:1099
 #, c-format
 msgid "  %s reload  [-D DATADIR] [-s]\n"
-msgstr "  %s reload  [-D PODATKOVNI_IMENIK] [-s]\n"
+msgstr "  %s reload  [-D DATADIR] [-s]\n"
 
 #: pg_ctl.c:1100
 #, c-format
 msgid "  %s status  [-D DATADIR]\n"
-msgstr "  %s status  [-D PODATKOVNI_IMENIK]\n"
+msgstr "  %s status  [-D DATADIR]\n"
 
 #: pg_ctl.c:1101
 #, c-format
 msgid "  %s kill    SIGNALNAME PID\n"
-msgstr "  %s kill    IME_SIGNALA  PID\n"
+msgstr "  %s kill    ½Ã±×³ÎÀÌ¸§ PID\n"
 
 #: pg_ctl.c:1103
 #, c-format
@@ -293,13 +294,13 @@ msgid ""
 "  %s register   [-N SERVICENAME] [-U USERNAME] [-P PASSWORD] [-D DATADIR]\n"
 "                    [-w] [-o \"OPTIONS\"]\n"
 msgstr ""
-"  %s register   [-N IME_SERVISA] [-U UPORABNI©KO_IME] [-P GESLO] [-D PODATKOVNI_IMENIK]\n"
-"                    [-w] [-o \"MO®NOSTI\"]\n"
+"  %s register   [-N ¼­ºñ½ºÀÌ¸§] [-U »ç¿ëÀÚ] [-P ºñ¹Ð¹øÈ£] [-D DATADIR]\n"
+"                    [-w] [-o \"¼­¹ö¿É¼Ç\"]\n"
 
 #: pg_ctl.c:1105
 #, c-format
 msgid "  %s unregister [-N SERVICENAME]\n"
-msgstr "  %s unregister [-N IME_SERVISA]\n"
+msgstr "  %s unregister [-N ¼­ºñ½ºÀÌ¸§]\n"
 
 #: pg_ctl.c:1108
 msgid ""
@@ -307,43 +308,41 @@ msgid ""
 "Common options:\n"
 msgstr ""
 "\n"
-"Pogoste mo¾nosti:\n"
+"ÀÏ¹Ý ¿É¼Çµé:\n"
 
 #: pg_ctl.c:1109
 msgid "  -D, --pgdata DATADIR   location of the database storage area\n"
-msgstr "  -D, --pgdata PODATKOVNI_IMENIK   lokacija za shranjevanje podatkovnih datotek\n"
+msgstr "  -D, --pgdata DATADIR   µ¥ÀÌÅÍº£ÀÌ½º ÀÚ·á°¡ ÀúÀåµÇ¾îÀÖ´Â µð·ºÅä¸®\n"
 
 #: pg_ctl.c:1110
 msgid "  -s, --silent           only print errors, no informational messages\n"
-msgstr "  -s, --silent  izpisuj samo napake, brez obvestil\n"
+msgstr "  -s, --silent           ÀÏ¹ÝÀûÀÎ ¸Þ½ÃÁö´Â º¸ÀÌÁö ¾Ê°í, ¿À·ù¸¸ º¸¿©ÁÜ\n"
 
 #: pg_ctl.c:1111
 msgid "  -w                     wait until operation completes\n"
-msgstr "  -w           poèakaj na konec izvajanja operacije\n"
+msgstr "  -w                     ÀÛ¾÷ÀÌ ³¡³¯ ¶§±îÁö ±â´Ù¸²\n"
 
 #: pg_ctl.c:1112
 msgid "  -W                     do not wait until operation completes\n"
-msgstr "  -W           ne èakaj na konec izvajanja operacije\n"
+msgstr "  -W                     ÀÛ¾÷ÀÌ ³¡³¯ ¶§±îÁö ±â´Ù¸®Áö ¾ÊÀ½\n"
 
 #: pg_ctl.c:1113
 msgid "  --help                 show this help, then exit\n"
-msgstr "  --help                       prika¾i to pomoè, nato konèaj program\n"
+msgstr "  --help                 µµ¿ò¸»À» º¸¿©ÁÖ°í ¸¶Ä§\n"
 
 #: pg_ctl.c:1114
 msgid "  --version              output version information, then exit\n"
-msgstr "  --version                    izpi¹i podatke o razlièici, nato konèaj program\n"
+msgstr "  --version              ¹öÀü Á¤º¸¸¦ º¸¿©ÁÖ°í ¸¶Ä§\n"
 
 #: pg_ctl.c:1115
 msgid ""
 "(The default is to wait for shutdown, but not for start or restart.)\n"
 "\n"
-msgstr ""
-"(Privzeto je èakanje na konec zaustavitve, ne pa tudi na konec zagona ali ponovnega zagona.)\n"
-"\n"
+msgstr "(±âº» ¼³Á¤Àº ÁßÁö ÇÒ ¶§´Â ±â´Ù¸®°í, ½ÃÀÛÀÌ³ª Àç½ÃÀÛÇÒ ¶§´Â ¾È ±â´Ù¸².)\n"
 
 #: pg_ctl.c:1116
 msgid "If the -D option is omitted, the environment variable PGDATA is used.\n"
-msgstr "Èe je mo¾nost -D izpu¹èena, je uporabljena vrednost okoljske spremenljivke PGDATA.\n"
+msgstr "-D ¿É¼ÇÀ» »ç¿ëÇÏÁö ¾ÊÀ¸¸ç, PGDATA È¯°æº¯¼ö°ªÀ» »ç¿ëÇÔ.\n"
 
 #: pg_ctl.c:1118
 msgid ""
@@ -351,23 +350,23 @@ msgid ""
 "Options for start or restart:\n"
 msgstr ""
 "\n"
-"Mo¾nosti za zagon ali ponovni zagon:\n"
+"start, restart ¶§ »ç¿ëÇÒ ¼ö ÀÖ´Â ¿É¼Çµé:\n"
 
 #: pg_ctl.c:1119
 msgid "  -l, --log FILENAME     write (or append) server log to FILENAME\n"
-msgstr "  -l, --log DATOTEKA      dnevnik stre¾nika zapisuj v podano datoteko\n"
+msgstr "  -l, --log ÆÄÀÏÀÌ¸§     ¼­¹ö ·Î±×¸¦ ÀÌ ÆÄÀÏ¿¡ ±â·ÏÇÔ\n"
 
 #: pg_ctl.c:1120
 msgid ""
 "  -o OPTIONS             command line options to pass to the postmaster\n"
 "                         (PostgreSQL server executable)\n"
 msgstr ""
-"  -o MO®NOSTI             ukazne mo¾nosti, ki bodo podane programu postmaster\n"
-"                          (postmaster je PostgreSQL-ov stre¾ni¹ki program)\n"
+"  -o ¿É¼Çµé              PostgreSQL ¼­¹öÇÁ·Î±×·¥ÀÎ postmaster ½ÇÇàÇÒ ¶§\n"
+"                         »ç¿ëÇÒ ¸í·ÉÇà ¿É¼Çµé\n"
 
 #: pg_ctl.c:1122
 msgid "  -p PATH-TO-POSTMASTER  normally not necessary\n"
-msgstr "  -p PATH-TO-POSTMASTER   pot do programa postmaster; ponavadi ni potrebna\n"
+msgstr "  -p PATH-TO-POSTMASTER  postmaster °æ·Î (º¸ÅëÀº ÇÊ¿äÄ¡ ¾ÊÀ½)\n"
 
 #: pg_ctl.c:1124
 msgid ""
@@ -375,11 +374,11 @@ msgid ""
 "Options for stop or restart:\n"
 msgstr ""
 "\n"
-"Mo¾nosti za zaustavitev ali ponovni zagon:\n"
+"stop, restart ¶§ »ç¿ë ÇÒ ¼ö ÀÖ´Â ¿É¼Çµé:\n"
 
 #: pg_ctl.c:1125
 msgid "  -m SHUTDOWN-MODE   may be \"smart\", \"fast\", or \"immediate\"\n"
-msgstr "  -m NAÈIN-ZAUSTAVITVE   lahko je 'smart', 'fast', ali 'immediate'\n"
+msgstr "  -m ÁßÁö¹æ¹ý        \"smart\", \"fast\", \"immediate\" Áß ÇÏ³ª\n"
 
 #: pg_ctl.c:1127
 msgid ""
@@ -387,21 +386,19 @@ msgid ""
 "Shutdown modes are:\n"
 msgstr ""
 "\n"
-"Naèini zaustavitve so:\n"
+"ÁßÁö¹æ¹ý ¼³¸í:\n"
 
 #: pg_ctl.c:1128
 msgid "  smart       quit after all clients have disconnected\n"
-msgstr "  smart       konèaj, ko vsi uporabniki prekinejo povezavo\n"
+msgstr "  smart       ¸ðµç Å¬¶óÀÌ¾ðÆ®ÀÇ ¿¬°áÀÌ ²÷±â°Ô µÇ¸é ÁßÁö µÊ\n"
 
 #: pg_ctl.c:1129
 msgid "  fast        quit directly, with proper shutdown\n"
-msgstr "  fast        konèaj takoj, s pravilnim postopkom zaustavitve\n"
+msgstr "  fast        Å¬¶óÀÌ¾ðÆ®ÀÇ ¿¬°áÀ» °­Á¦·Î ²÷°í Á¤»óÀûÀ¸·Î ÁßÁö µÊ\n"
 
 #: pg_ctl.c:1130
 msgid "  immediate   quit without complete shutdown; will lead to recovery on restart\n"
-msgstr ""
-"  immediate   konèaj takoj, brez pravilnega postopka zaustavitve;\n"
-"              ob zagonu bo spro¾eno preverjanje/obnavljanje podatkov\n"
+msgstr "  immediate   ±×³É ¹«Á¶°Ç ÁßÁöÇÔ; ´Ù½Ã ½ÃÀÛÇÒ ¶§ º¹±¸ ÀÛ¾÷À» ÇÒ ¼öµµ ÀÖÀ½\n"
 
 #: pg_ctl.c:1132
 msgid ""
@@ -409,7 +406,7 @@ msgid ""
 "Allowed signal names for kill:\n"
 msgstr ""
 "\n"
-"Imena dovoljenih signalov za ukaz \"kill\":\n"
+"»ç¿ëÇÒ ¼ö ÀÖ´Â ÁßÁö¿ë(for kill) ½Ã±×³Î ÀÌ¸§:\n"
 
 #: pg_ctl.c:1136
 msgid ""
@@ -417,19 +414,19 @@ msgid ""
 "Options for register and unregister:\n"
 msgstr ""
 "\n"
-"Mo¾nosti za registracijo in odstranitev registracije:\n"
+"¼­ºñ½º µî·Ï/Á¦°Å¿ë ¿É¼Çµé:\n"
 
 #: pg_ctl.c:1137
 msgid "  -N SERVICENAME  service name with which to register PostgreSQL server\n"
-msgstr "  -N IME_SERVISA      ime servisa, pod katerim bo registriran PostgreSQL stre¾nik\n"
+msgstr "  -N SERVICENAME  ¼­ºñ½º ¸ñ·Ï¿¡ µî·ÏµÉ PostgreSQL ¼­ºñ½º ÀÌ¸§\n"
 
 #: pg_ctl.c:1138
 msgid "  -P PASSWORD     password of account to register PostgreSQL server\n"
-msgstr "  -P GESLO            geslo za uporabni¹ki raèun, ki ga bo uporabljal PostgreSQL stre¾nik\n"
+msgstr "  -P PASSWORD     ÀÌ ¼­ºñ½º¸¦ ½ÇÇàÇÒ »ç¿ëÀÚÀÇ ºñ¹Ð¹øÈ£\n"
 
 #: pg_ctl.c:1139
 msgid "  -U USERNAME     user name of account to register PostgreSQL server\n"
-msgstr "  -U UPORABNI©KO_IME  uporabni¹ko ime raèuna, ki ga bo uporabljal PostgreSQL stre¾nik\n"
+msgstr "  -U USERNAME     ÀÌ ¼­ºñ½º¸¦ ½ÇÇàÇÒ »ç¿ëÀÚ ÀÌ¸§\n"
 
 #: pg_ctl.c:1142
 msgid ""
@@ -437,17 +434,17 @@ msgid ""
 "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr ""
 "\n"
-"Napake sporoèajte na naslov <pgsql-bugs@postgresql.org>.\n"
+"¿À·ùº¸°í: <pgsql-bugs@postgresql.org>.\n"
 
 #: pg_ctl.c:1167
 #, c-format
 msgid "%s: unrecognized shutdown mode \"%s\"\n"
-msgstr "%s: \"%s\" ni veljaven naèin zaustavitve\n"
+msgstr "%s: Àß¸øµÈ ÁßÁö ¹æ¹ý \"%s\"\n"
 
 #: pg_ctl.c:1200
 #, c-format
 msgid "%s: unrecognized signal name \"%s\"\n"
-msgstr "%s: neveljaven signal \"%s\"\n"
+msgstr "%s: Àß¸øµÈ ½Ã±×³Î ÀÌ¸§ \"%s\"\n"
 
 #: pg_ctl.c:1265
 #, c-format
@@ -456,70 +453,70 @@ msgid ""
 "Please log in (using, e.g., \"su\") as the (unprivileged) user that will\n"
 "own the server process.\n"
 msgstr ""
-"%s: poganjanje programa pod uporabnikom root ni mogoèe\n"
-"Lastnik stre¾ni¹kega procesa je lahko le obièajni uporabnik.\n"
-"(Kot drug uporabnik se lahko prijavite z uporabo ukaza \"su\".)\n"
+"%s: root·Î ÀÌ ÇÁ·Î±×·¥À» ½ÇÇàÇÏÁö ¸¶½Ê½Ã¿À\n"
+"½Ã½ºÅÛ°ü¸®ÀÚ ±ÇÇÑÀÌ ¾ø´Â, ¼­¹öÇÁ·Î¼¼½ºÀÇ ¼ÒÀ¯ÁÖ°¡ µÉ ÀÏ¹Ý »ç¿ëÀÚ·Î\n"
+"·Î±×ÀÎ ÇØ¼­(\"su\", \"runas\" °°Àº ¸í·É ÀÌ¿ë) ½ÇÇàÇÏ½Ê½Ã¿À.\n"
 
 #: pg_ctl.c:1358
 #, c-format
 msgid "%s: invalid option %s\n"
-msgstr "%s: neveljavna mo¾nost \"%s\"\n"
+msgstr "%s: Àß¸øµÈ ¿É¼Ç %s\n"
 
 #: pg_ctl.c:1369
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
-msgstr "%s: preveè argumentov na ukazni vrstici (prvi je \"%s\")\n"
+msgstr "%s: ³Ê¹« ¸¹Àº ¸í·ÉÇà ÀÎÀÚµé (½ÃÀÛ \"%s\")\n"
 
 #: pg_ctl.c:1388
 #, c-format
 msgid "%s: missing arguments for kill mode\n"
-msgstr "%s: manjkajo argumenti za \"kill\" ukaz\n"
+msgstr "%s: kill ÀÛ¾÷¿¡ ÇÊ¿äÇÑ ÀÎÀÚ°¡ ºüÁ³½À´Ï´Ù\n"
 
 #: pg_ctl.c:1406
 #, c-format
 msgid "%s: unrecognized operation mode \"%s\"\n"
-msgstr "%s: \"%s\" ni podprta operacija\n"
+msgstr "%s: ¾Ë ¼ö ¾ø´Â ÀÛ¾÷ ¸ðµå \"%s\"\n"
 
 #: pg_ctl.c:1416
 #, c-format
 msgid "%s: no operation specified\n"
-msgstr "%s: operacija ni bila navedena\n"
+msgstr "%s: ¼öÇàÇÒ ÀÛ¾÷À» ÁöÁ¤ÇÏÁö ¾Ê¾Ò½À´Ï´Ù\n"
 
 #: pg_ctl.c:1432
 #, c-format
 msgid "%s: no database directory specified and environment variable PGDATA unset\n"
-msgstr "%s: podatkovni imenik ni bil podan in okoljska spremenljivka PGDATA ni nastavljena\n"
+msgstr "%s: -D ¿É¼Çµµ ¾ø°í, PGDATA È¯°æº¯¼ö°ªµµ ÁöÁ¤µÇ¾î ÀÖÁö ¾Ê½À´Ï´Ù.\n"
 
 #: ../../port/exec.c:193
 #: ../../port/exec.c:307
 #: ../../port/exec.c:350
 #, c-format
 msgid "could not identify current directory: %s"
-msgstr "trenutnega imenika ni bilo mogoèe izvedeti: %s"
+msgstr "ÇöÀç µð·ºÅä¸®¸¦ ¾Ë ¼ö ¾øÀ½: %s"
 
 #: ../../port/exec.c:323
 #: ../../port/exec.c:359
 #, c-format
 msgid "could not change directory to \"%s\""
-msgstr "delovnega imenika ni bilo mogoèe spremeniti v \"%s\""
+msgstr "\"%s\" µð·ºÅä¸®·Î ÀÌµ¿ ÇÒ ¼ö ¾øÀ½"
 
 #: ../../port/exec.c:338
 #, c-format
 msgid "could not read symbolic link \"%s\""
-msgstr "simbolne povezave \"%s\" ni bilo mogoèe prebrati"
+msgstr "\"%s\" ½É¹ú¸¯ ¸µÅ©¸¦ ÀÐÀ» ¼ö ¾øÀ½"
 
 #: ../../port/exec.c:569
 #, c-format
 msgid "child process exited with exit code %d"
-msgstr "podproces je zakljuèil izvajanje z izhodno kodo %d"
+msgstr "ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½, Á¾·á ÄÚµå %d"
 
 #: ../../port/exec.c:572
 #, c-format
 msgid "child process was terminated by signal %d"
-msgstr "podproces je bil pokonèan s signalom %d"
+msgstr "ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½, ½Ã±×³Î %d"
 
 #: ../../port/exec.c:575
 #, c-format
 msgid "child process exited with unrecognized status %d"
-msgstr "podproces je zakljuèil izvajanje z neznanim statusom %d"
+msgstr "ÇÏÀ§ ÇÁ·Î¼¼½º°¡ Á¾·áµÇ¾úÀ½, ¾Ë¼ö ¾ø´Â »óÅÂ %d"
 

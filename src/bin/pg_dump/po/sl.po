@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-06-04 13:08-0300\n"
-"PO-Revision-Date: 2004-11-11 02:56+0100\n"
+"PO-Revision-Date: 2004-12-11 21:54+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenia <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
@@ -14,21 +14,21 @@ msgstr ""
 "X-Poedit-Language: Slovenian\n"
 "X-Poedit-Country: SLOVENIA\n"
 
-#: pg_dump.c:366
+#: pg_dump.c:363
 #: pg_restore.c:229
 msgid "User name: "
 msgstr "Uporabni¹ko ime: "
 
-#: pg_dump.c:402
+#: pg_dump.c:399
 #: pg_dumpall.c:264
 #: pg_restore.c:256
 #, c-format
 msgid "%s: invalid -X option -- %s\n"
 msgstr "%s: neveljavna -X mo¾nost -- %s\n"
 
-#: pg_dump.c:404
-#: pg_dump.c:418
-#: pg_dump.c:427
+#: pg_dump.c:401
+#: pg_dump.c:415
+#: pg_dump.c:424
 #: pg_dumpall.c:266
 #: pg_dumpall.c:275
 #: pg_dumpall.c:292
@@ -39,71 +39,71 @@ msgstr "%s: neveljavna -X mo¾nost -- %s\n"
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "Za veè informacij poskusite \"%s --help\".\n"
 
-#: pg_dump.c:425
+#: pg_dump.c:422
 #: pg_dumpall.c:290
 #, c-format
 msgid "%s: too many command-line arguments (first is \"%s\")\n"
 msgstr "%s: preveè argumentov na ukazni vrstici (prvi je \"%s\")\n"
 
-#: pg_dump.c:438
+#: pg_dump.c:435
 msgid "options \"schema only\" (-s) and \"data only\" (-a) cannot be used together\n"
 msgstr "mo¾nosti \"schema only\" (-s) in \"data only\" (-a) ni mogoèe uporabiti skupaj\n"
 
-#: pg_dump.c:444
+#: pg_dump.c:441
 msgid "options \"clean\" (-c) and \"data only\" (-a) cannot be used together\n"
 msgstr "mo¾nosti \"clean\" (-c) in \"data only\" (-a) ni mogoèe uporabiti skupaj\n"
 
-#: pg_dump.c:450
+#: pg_dump.c:447
 msgid "large-object output not supported for a single table\n"
 msgstr "izvoz velikih objektov ni mogoè, kadar izva¾ate posamezno tabelo\n"
 
-#: pg_dump.c:451
-#: pg_dump.c:458
+#: pg_dump.c:448
+#: pg_dump.c:455
 msgid "use a full dump instead\n"
 msgstr "uporabite izvoz celotne vsebine baze (full dump)\n"
 
-#: pg_dump.c:457
+#: pg_dump.c:454
 msgid "large-object output not supported for a single schema\n"
 msgstr "izvoz velikih objektov ni mogoè, kadar izva¾ate vsebino posamezne sheme\n"
 
-#: pg_dump.c:464
+#: pg_dump.c:461
 msgid "INSERT (-d, -D) and OID (-o) options cannot be used together\n"
 msgstr "mo¾nosti INSERT (-d, -D) in OID (-o) ni mogoèe uporabiti skupaj\n"
 
-#: pg_dump.c:465
+#: pg_dump.c:462
 msgid "(The INSERT command cannot set OIDs.)\n"
 msgstr "(Ukaz INSERT ne more nastavljati OID vrednosti.)\n"
 
-#: pg_dump.c:471
+#: pg_dump.c:468
 msgid "large-object output is not supported for plain-text dump files\n"
 msgstr "velikih objektov ni mogoèe izvoziti v tekstovno datoteko\n"
 
-#: pg_dump.c:472
+#: pg_dump.c:469
 msgid "(Use a different output format.)\n"
 msgstr "(Uporabite drugaèen izhodni format.)\n"
 
-#: pg_dump.c:501
+#: pg_dump.c:498
 #, c-format
 msgid "invalid output format \"%s\" specified\n"
 msgstr "navedli ste neveljaven izhodni format: \"%s\"\n"
 
-#: pg_dump.c:507
+#: pg_dump.c:504
 #, c-format
 msgid "could not open output file \"%s\" for writing\n"
 msgstr "izhodne datoteke \"%s\" ni bilo mogoèe odpreti za pisanje\n"
 
 #: pg_backup_db.c:52
-#: pg_dump.c:518
+#: pg_dump.c:515
 #, c-format
 msgid "could not parse version string \"%s\"\n"
 msgstr "niza z razlièico \"%s\" ni bilo mogoèe razumeti\n"
 
-#: pg_dump.c:554
+#: pg_dump.c:551
 #, c-format
 msgid "last built-in OID is %u\n"
 msgstr "zadnji vgrajen OID je %u\n"
 
-#: pg_dump.c:665
+#: pg_dump.c:662
 #, c-format
 msgid ""
 "%s dumps a database as a text file or to other formats.\n"
@@ -112,18 +112,18 @@ msgstr ""
 "%s izvozi podatkovno bazo v tekstovno datoteko ali druge formate.\n"
 "\n"
 
-#: pg_dump.c:666
+#: pg_dump.c:663
 #: pg_dumpall.c:337
 #: pg_restore.c:359
 msgid "Usage:\n"
 msgstr "Uporaba:\n"
 
-#: pg_dump.c:667
+#: pg_dump.c:664
 #, c-format
 msgid "  %s [OPTION]... [DBNAME]\n"
 msgstr "  %s [MO®NOST]... [IME_BAZE]\n"
 
-#: pg_dump.c:669
+#: pg_dump.c:666
 #: pg_dumpall.c:340
 #: pg_restore.c:362
 msgid ""
@@ -133,16 +133,16 @@ msgstr ""
 "\n"
 "Splo¹ne mo¾nosti:\n"
 
-#: pg_dump.c:670
+#: pg_dump.c:667
 #: pg_restore.c:364
 msgid "  -f, --file=FILENAME      output file name\n"
 msgstr "  -f, --file=DATOTEKA      ime izhodne datoteke\n"
 
-#: pg_dump.c:671
+#: pg_dump.c:668
 msgid "  -F, --format=c|t|p       output file format (custom, tar, plain text)\n"
 msgstr "  -F, --format=c|t|p       format izhodne datoteke (custom, tar, plain text)\n"
 
-#: pg_dump.c:672
+#: pg_dump.c:669
 msgid ""
 "  -i, --ignore-version     proceed even when server version mismatches\n"
 "                           pg_dump version\n"
@@ -150,28 +150,28 @@ msgstr ""
 "  -i, --ignore-version     nadaljuj tudi ob neujemanju razlièic stre¾nika in\n"
 "                           programa pg_dump\n"
 
-#: pg_dump.c:674
+#: pg_dump.c:671
 #: pg_restore.c:368
 msgid "  -v, --verbose            verbose mode\n"
 msgstr "  -v, --verbose            verbose naèin\n"
 
-#: pg_dump.c:675
+#: pg_dump.c:672
 msgid "  -Z, --compress=0-9       compression level for compressed formats\n"
 msgstr "  -Z, --compress=0-9       stopnja kompresije za stisnjene formate\n"
 
-#: pg_dump.c:676
+#: pg_dump.c:673
 #: pg_dumpall.c:343
 #: pg_restore.c:369
 msgid "  --help                   show this help, then exit\n"
 msgstr "  --help                   izpi¹i to pomoè, nato konèaj program\n"
 
-#: pg_dump.c:677
+#: pg_dump.c:674
 #: pg_dumpall.c:344
 #: pg_restore.c:370
 msgid "  --version                output version information, then exit\n"
 msgstr "  --version                izpi¹i podatke o razlièici, nato konèaj program\n"
 
-#: pg_dump.c:679
+#: pg_dump.c:676
 #: pg_dumpall.c:345
 msgid ""
 "\n"
@@ -180,57 +180,57 @@ msgstr ""
 "\n"
 "Mo¾nosti za doloèanje vsebine izvoza:\n"
 
-#: pg_dump.c:680
+#: pg_dump.c:677
 #: pg_dumpall.c:346
 msgid "  -a, --data-only          dump only the data, not the schema\n"
 msgstr "  -a, --data-only          izvozi samo podatke, brez definicij\n"
 
-#: pg_dump.c:681
+#: pg_dump.c:678
 msgid "  -b, --blobs              include large objects in dump\n"
 msgstr "  -b, --blobs              v izvoz vkljuèi velike objekte\n"
 
-#: pg_dump.c:682
+#: pg_dump.c:679
 #: pg_restore.c:374
 msgid "  -c, --clean              clean (drop) schema prior to create\n"
 msgstr "  -c, --clean              pred ustvarjanjem odstrani (drop) objekte, èe ¾e obstajajo\n"
 
-#: pg_dump.c:683
+#: pg_dump.c:680
 msgid "  -C, --create             include commands to create database in dump\n"
 msgstr "  -C, --create             v izvo¾ene podatke dodaj ukaz za kreiranje baze\n"
 
-#: pg_dump.c:684
+#: pg_dump.c:681
 #: pg_dumpall.c:348
 msgid "  -d, --inserts            dump data as INSERT, rather than COPY, commands\n"
 msgstr "  -d, --inserts            podatke izvozi v obliki INSERT, namesto COPY ukazov\n"
 
-#: pg_dump.c:685
+#: pg_dump.c:682
 #: pg_dumpall.c:349
 msgid "  -D, --column-inserts     dump data as INSERT commands with column names\n"
 msgstr "  -D, --column-inserts     podatke izvozi v obliki INSERT ukazov z imeni stolpcev\n"
 
-#: pg_dump.c:686
+#: pg_dump.c:683
 msgid "  -n, --schema=SCHEMA      dump the named schema only\n"
 msgstr "  -n, --schema=SHEMA       izvozi samo vsebino navedene sheme\n"
 
-#: pg_dump.c:687
+#: pg_dump.c:684
 #: pg_dumpall.c:351
 msgid "  -o, --oids               include OIDs in dump\n"
-msgstr "  -o, --oids               v izvoz vkljuèi OID vrednosti\n"
+msgstr "  -o, --oids               izvozi tudi OID vrednosti\n"
 
-#: pg_dump.c:688
+#: pg_dump.c:685
 msgid ""
-"  -O, --no-owner           do not output commands to set object ownership\n"
+"  -O, --no-owner           skip restoration of object ownership\n"
 "                           in plain text format\n"
 msgstr ""
-"  -O, --no-owner           v tekstovno datoteko z izvo¾enimi podatki ne dodaj\n"
-"                           ukazov za nastavitev lastni¹tva objektov\n"
+"  -O, --no-owner           izpusti obnavljanje lastni¹tva objektov\n"
+"                           v tekstovni datoteki\n"
 
-#: pg_dump.c:690
+#: pg_dump.c:687
 #: pg_dumpall.c:353
 msgid "  -s, --schema-only        dump only the schema, no data\n"
 msgstr "  -s, --schema-only        izvozi samo definicije, brez podatkov\n"
 
-#: pg_dump.c:691
+#: pg_dump.c:688
 msgid ""
 "  -S, --superuser=NAME     specify the superuser user name to use in\n"
 "                           plain text format\n"
@@ -238,16 +238,16 @@ msgstr ""
 "  -S, --superuser=NAME     navedite ime superuser uporabnika, ki bo uporabljeno\n"
 "                           v tekstovnem formatu\n"
 
-#: pg_dump.c:693
+#: pg_dump.c:690
 msgid "  -t, --table=TABLE        dump the named table only\n"
 msgstr "  -t, --table=TABELA       izvozi samo vsebino navedene tabele\n"
 
-#: pg_dump.c:694
+#: pg_dump.c:691
 #: pg_dumpall.c:355
 msgid "  -x, --no-privileges      do not dump privileges (grant/revoke)\n"
 msgstr "  -x, --no-privileges      ne izva¾aj pravic (grant/revoke)\n"
 
-#: pg_dump.c:695
+#: pg_dump.c:692
 #: pg_dumpall.c:356
 msgid ""
 "  -X disable-dollar-quoting, --disable-dollar-quoting\n"
@@ -257,7 +257,7 @@ msgstr ""
 "                           onemogoèi navajanje z dolarskimi znaki; uporabi\n"
 "                           standardno SQL navajanje\n"
 
-#: pg_dump.c:697
+#: pg_dump.c:694
 #: pg_dumpall.c:358
 #: pg_restore.c:388
 msgid ""
@@ -267,7 +267,7 @@ msgstr ""
 "  -X disable-triggers, --disable-triggers\n"
 "                           med obnavljanjem samih podatkov onemogoèi pro¾ilce\n"
 
-#: pg_dump.c:699
+#: pg_dump.c:696
 #: pg_dumpall.c:360
 #: pg_restore.c:390
 msgid ""
@@ -279,7 +279,7 @@ msgstr ""
 "                           uporabiSESSION AUTHORIZATION ukaze namesto\n"
 "                           OWNER TO ukazov\n"
 
-#: pg_dump.c:703
+#: pg_dump.c:700
 #: pg_dumpall.c:364
 #: pg_restore.c:394
 msgid ""
@@ -289,31 +289,31 @@ msgstr ""
 "\n"
 "Povezavne mo¾nosti:\n"
 
-#: pg_dump.c:704
+#: pg_dump.c:701
 #: pg_dumpall.c:365
 #: pg_restore.c:395
 msgid "  -h, --host=HOSTNAME      database server host or socket directory\n"
 msgstr "  -h, --host=GOSTITELJ     gostitelj podatkovnega stre¾nika ali imenik z vtiènico\n"
 
-#: pg_dump.c:705
+#: pg_dump.c:702
 #: pg_dumpall.c:366
 #: pg_restore.c:396
 msgid "  -p, --port=PORT          database server port number\n"
 msgstr "  -p, --port=VRATA         vrata (port) podatkovnega stre¾nika\n"
 
-#: pg_dump.c:706
+#: pg_dump.c:703
 #: pg_dumpall.c:367
 #: pg_restore.c:397
 msgid "  -U, --username=NAME      connect as specified database user\n"
 msgstr "  -U, --username=UPORABNIK pove¾i se z navedenim uporabni¹kim imenom\n"
 
-#: pg_dump.c:707
+#: pg_dump.c:704
 #: pg_dumpall.c:368
 #: pg_restore.c:398
 msgid "  -W, --password           force password prompt (should happen automatically)\n"
 msgstr "  -W, --password           vpra¹aj za geslo (ponavadi se to zgodi samodejno)\n"
 
-#: pg_dump.c:709
+#: pg_dump.c:706
 msgid ""
 "\n"
 "If no database name is supplied, then the PGDATABASE environment\n"
@@ -324,305 +324,305 @@ msgstr ""
 "Èe ime baze ni podano, je uporabljena vrednost okoljske spremenljivke PGDATABASE.\n"
 "\n"
 
-#: pg_dump.c:711
+#: pg_dump.c:708
 #: pg_dumpall.c:371
 #: pg_restore.c:402
 msgid "Report bugs to <pgsql-bugs@postgresql.org>.\n"
 msgstr "Napake sporoèajte na naslov <pgsql-bugs@postgresql.org>.\n"
 
-#: pg_backup_archiver.c:1209
-#: pg_dump.c:719
+#: pg_backup_archiver.c:1219
+#: pg_dump.c:716
 msgid "*** aborted because of error\n"
 msgstr "*** prekinitev zaradi napake\n"
 
-#: pg_dump.c:801
+#: pg_dump.c:798
 #, c-format
 msgid "dumping contents of table %s\n"
 msgstr "izva¾anje vsebine tabele %s\n"
 
-#: pg_dump.c:913
+#: pg_dump.c:910
 #, c-format
 msgid "SQL command to dump the contents of table \"%s\" failed: PQendcopy() failed.\n"
 msgstr "SQL ukaz za izvoz vsebine tabele \"%s\" ni uspel: PQendcopy() ni uspel.\n"
 
-#: pg_dump.c:914
-#: pg_dump.c:8071
+#: pg_dump.c:911
+#: pg_dump.c:8050
 #, c-format
 msgid "Error message from server: %s"
 msgstr "Sporoèilo o napaki od stre¾nika: %s"
 
-#: pg_dump.c:915
-#: pg_dump.c:8072
+#: pg_dump.c:912
+#: pg_dump.c:8051
 #, c-format
 msgid "The command was: %s\n"
 msgstr "Ukaz se je glasil: %s\n"
 
-#: pg_dump.c:1185
+#: pg_dump.c:1183
 msgid "saving database definition\n"
 msgstr "shranjevanje definicije baze podatkov\n"
 
-#: pg_dump.c:1231
+#: pg_dump.c:1229
 #, c-format
 msgid "missing pg_database entry for database \"%s\"\n"
 msgstr "manjkajoè pg_database vnos za bazo podatkov \"%s\"\n"
 
-#: pg_dump.c:1238
+#: pg_dump.c:1236
 #, c-format
 msgid "query returned more than one (%d) pg_database entry for database \"%s\"\n"
 msgstr "poizvedba je vrnila veè kot en (%d) pg_database vnos za bazo \"%s\"\n"
 
-#: pg_dump.c:1348
+#: pg_dump.c:1344
 msgid "saving encoding\n"
 msgstr "shranjevanje kodne tabele\n"
 
-#: pg_dump.c:1398
+#: pg_dump.c:1394
 msgid "saving large objects\n"
 msgstr "shranjevanje velikih objektov\n"
 
-#: pg_dump.c:1431
+#: pg_dump.c:1427
 #, c-format
 msgid "dumpBlobs(): could not open large object: %s"
 msgstr "dumpBlobs(): velikega objekta ni bilo mogoèe odpreti: %s"
 
-#: pg_dump.c:1444
+#: pg_dump.c:1440
 #, c-format
 msgid "dumpBlobs(): error reading large object: %s"
 msgstr "dumpBlobs(): napaka pri branju velikega objekta: %s"
 
-#: pg_dump.c:1578
+#: pg_dump.c:1557
 #, c-format
 msgid "WARNING: owner of schema \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik sheme \"%s\" se zdi neveljaven\n"
 
-#: pg_dump.c:1595
+#: pg_dump.c:1574
 #, c-format
 msgid "specified schema \"%s\" does not exist\n"
 msgstr "navedena shema \"%s\" ne obstaja\n"
 
-#: pg_dump.c:1632
+#: pg_dump.c:1611
 #, c-format
 msgid "schema with OID %u does not exist\n"
 msgstr "shema z OID %u ne obstaja\n"
 
-#: pg_dump.c:1817
+#: pg_dump.c:1796
 #, c-format
 msgid "WARNING: owner of data type \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik podatkovnega tipa \"%s\" se zdi neveljaven\n"
 
-#: pg_dump.c:1915
+#: pg_dump.c:1894
 #, c-format
 msgid "WARNING: owner of operator \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik operatorja \"%s\"  se zdi neveljaven\n"
 
-#: pg_dump.c:2081
+#: pg_dump.c:2060
 #, c-format
 msgid "WARNING: owner of operator class \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik razreda operatorjev \"%s\" se zdi neveljaven\n"
 
-#: pg_dump.c:2185
+#: pg_dump.c:2164
 #, c-format
 msgid "WARNING: owner of aggregate function \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik agregatne funkcije \"%s\" se zdi neveljaven\n"
 
-#: pg_dump.c:2319
+#: pg_dump.c:2298
 #, c-format
 msgid "WARNING: owner of function \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik funkcije \"%s\" se zdi neveljaven\n"
 
-#: pg_dump.c:2597
+#: pg_dump.c:2576
 #, c-format
 msgid "WARNING: owner of table \"%s\" appears to be invalid\n"
 msgstr "OPOZORILO: lastnik tabele \"%s\" se zdi neveljaven\n"
 
-#: pg_dump.c:2616
+#: pg_dump.c:2595
 #, c-format
 msgid "specified table \"%s\" does not exist\n"
 msgstr "navedena tabela \"%s\" ne obstaja\n"
 
-#: pg_dump.c:2723
+#: pg_dump.c:2702
 #, c-format
 msgid "reading indexes for table \"%s\"\n"
 msgstr "branje indeksov za tabelo \"%s\"\n"
 
-#: pg_dump.c:2960
+#: pg_dump.c:2939
 #, c-format
 msgid "reading foreign key constraints for table \"%s\"\n"
 msgstr "branje omejitev po tujem kljuèu za tabelo \"%s\"\n"
 
-#: pg_dump.c:3236
+#: pg_dump.c:3215
 #, c-format
 msgid "reading triggers for table \"%s\"\n"
 msgstr "branje pro¾ilcev za tabelo \"%s\"\n"
 
-#: pg_dump.c:3308
+#: pg_dump.c:3287
 #, c-format
 msgid "expected %d triggers on table \"%s\" but found %d\n"
 msgstr "namesto prièakovanih %d je na tabeli \"%s\" bilo najdenih %d pro¾ilcev\n"
 
-#: pg_dump.c:3353
+#: pg_dump.c:3332
 #, c-format
 msgid "query produced null referenced table name for foreign key trigger \"%s\" on table \"%s\" (OID of table: %u)\n"
 msgstr "poizvedba je vrnila null za ime referencirane tabele za pro¾ilec tujega kljuèa \"%s\" na tabeli \"%s\" (OID tabele: %u)\n"
 
-#: pg_dump.c:3654
+#: pg_dump.c:3633
 #, c-format
 msgid "finding the columns and types of table \"%s\"\n"
 msgstr "iskanje stolpcev in podatkovnih tipov za tabelo \"%s\"\n"
 
-#: pg_dump.c:3740
+#: pg_dump.c:3719
 #, c-format
 msgid "invalid column numbering in table \"%s\"\n"
 msgstr "tabela \"%s\" vsebuje neveljavno ¹tevilèenje stolpcev\n"
 
-#: pg_dump.c:3774
+#: pg_dump.c:3753
 #, c-format
 msgid "finding default expressions of table \"%s\"\n"
 msgstr "iskanje privzetih izrazov za tabelo \"%s\"\n"
 
-#: pg_dump.c:3857
+#: pg_dump.c:3836
 #, c-format
 msgid "invalid adnum value %d for table \"%s\"\n"
 msgstr "%d ni veljavna adnum vrednost za tabelo \"%s\"\n"
 
-#: pg_dump.c:3875
+#: pg_dump.c:3854
 #, c-format
 msgid "finding check constraints for table \"%s\"\n"
 msgstr "iskanje CHECK omejitev za tabelo \"%s\"\n"
 
-#: pg_dump.c:3939
+#: pg_dump.c:3918
 #, c-format
 msgid "expected %d check constraints on table \"%s\" but found %d\n"
 msgstr "namesto prièakovanih %d je na tabeli \"%s\" bilo najdenih %d CHECK omejitev\n"
 
-#: pg_dump.c:3941
+#: pg_dump.c:3920
 msgid "(The system catalogs might be corrupted.)\n"
 msgstr "(Obstaja verjetnost, da gre za okvaro sistemskih katalogov.)\n"
 
-#: pg_dump.c:4628
-#: pg_dump.c:4793
-#: pg_dump.c:5192
-#: pg_dump.c:5577
-#: pg_dump.c:5874
-#: pg_dump.c:6074
-#: pg_dump.c:6257
+#: pg_dump.c:4605
+#: pg_dump.c:4771
+#: pg_dump.c:5172
+#: pg_dump.c:5558
+#: pg_dump.c:5857
+#: pg_dump.c:6059
+#: pg_dump.c:6244
 #, c-format
 msgid "Got %d rows instead of one from: %s"
 msgstr "Namesto ene je bilo prejetih %d vrstic od: %s"
 
-#: pg_dump.c:4901
+#: pg_dump.c:4880
 #, c-format
 msgid "query yielded no rows: %s\n"
 msgstr "poizvedba ni vrnila nobene vrstice: %s\n"
 
-#: pg_dump.c:5248
+#: pg_dump.c:5228
 msgid "WARNING: could not parse proargnames array\n"
 msgstr "OPOZORILO: polja proargnames ni bilo mogoèe razumeti\n"
 
-#: pg_dump.c:5285
+#: pg_dump.c:5265
 #, c-format
 msgid "unrecognized provolatile value for function \"%s\"\n"
 msgstr "neprepoznana vrednost za doloèitev stabilnosti (provolatile value) funkcije \"%s\"\n"
 
-#: pg_dump.c:5799
+#: pg_dump.c:5782
 #, c-format
 msgid "WARNING: could not find operator with OID %s\n"
 msgstr "OPOZORILO: operatorja z OID %s ni bilo mogoèe najti\n"
 
-#: pg_dump.c:6285
+#: pg_dump.c:6272
 #, c-format
 msgid "WARNING: aggregate function %s could not be dumped correctly for this database version; ignored\n"
 msgstr "OPOZORILO: agregatne funkcije \"%s\" ni bilo mogoèe pravilno izvoziti za to razlièico baze; ignorirana\n"
 
-#: pg_dump.c:6417
+#: pg_dump.c:6406
 #, c-format
 msgid "could not parse ACL list (%s) for object \"%s\" (%s)\n"
 msgstr "ACL seznama (%s) za objekt \"%s\" ni bilo mogoèe razumeti (%s)\n"
 
-#: pg_dump.c:6510
+#: pg_dump.c:6500
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned no data\n"
 msgstr "poizvedba za pridobitev definicije pogleda \"%s\" ni vrnila podatkov\n"
 
-#: pg_dump.c:6513
+#: pg_dump.c:6503
 #, c-format
 msgid "query to obtain definition of view \"%s\" returned more than one definition\n"
 msgstr "poizvedba za pridobitev definicije pogleda \"%s\" je vrnila veè kot en rezultat\n"
 
-#: pg_dump.c:6522
+#: pg_dump.c:6512
 #, c-format
 msgid "definition of view \"%s\" appears to be empty (length zero)\n"
 msgstr "definicija pogleda \"%s\" se zdi prazna (dol¾ine niè)\n"
 
-#: pg_dump.c:6832
+#: pg_dump.c:6814
 #, c-format
 msgid "invalid column number %d for table \"%s\"\n"
 msgstr "%d ni veljavno ¹tevilo stolpca za tabelo \"%s\"\n"
 
-#: pg_dump.c:6933
+#: pg_dump.c:6916
 #, c-format
 msgid "missing index for constraint \"%s\"\n"
 msgstr "manjka indeks za omejitev \"%s\"\n"
 
-#: pg_dump.c:7103
+#: pg_dump.c:7076
 #, c-format
 msgid "unrecognized constraint type: %c\n"
 msgstr "neprepoznan tip omejitve: %c\n"
 
-#: pg_dump.c:7145
+#: pg_dump.c:7118
 msgid "inserted invalid OID\n"
 msgstr "vstavljen je bil neveljaven OID\n"
 
-#: pg_dump.c:7151
+#: pg_dump.c:7124
 #, c-format
 msgid "maximum system OID is %u\n"
 msgstr "najveèja mo¾na sistemska OID vrednost je %u\n"
 
-#: pg_dump.c:7192
+#: pg_dump.c:7165
 msgid "missing pg_database entry for this database\n"
 msgstr "manjkajoè pg_database vnos za to bazo podatkov\n"
 
-#: pg_dump.c:7197
+#: pg_dump.c:7170
 msgid "found more than one pg_database entry for this database\n"
 msgstr "najden je bil veè kot en pg_database vnos za trenutno bazo\n"
 
-#: pg_dump.c:7229
+#: pg_dump.c:7202
 msgid "could not find entry for pg_indexes in pg_class\n"
 msgstr "v pg_class ni bilo mogoèe najti vnosa za pg_indexes\n"
 
-#: pg_dump.c:7234
+#: pg_dump.c:7207
 msgid "found more than one entry for pg_indexes in pg_class\n"
 msgstr "v pg_class je bil najden veè kot en vnos za pg_indexes\n"
 
-#: pg_dump.c:7283
+#: pg_dump.c:7256
 #, c-format
 msgid "query to get data of sequence \"%s\" returned %d rows (expected 1)\n"
 msgstr "poizvedba za pridobitev podatkov o zaporedju \"%s\" je vrnila %d vrstic (namesto 1)\n"
 
-#: pg_dump.c:7292
+#: pg_dump.c:7265
 #, c-format
 msgid "query to get data of sequence \"%s\" returned name \"%s\"\n"
 msgstr "poizvedba za pridobitev podatkov o zaporedju \"%s\" je vrnila ime \"%s\"\n"
 
-#: pg_dump.c:7529
+#: pg_dump.c:7506
 #, c-format
 msgid "invalid argument string (%s) for trigger \"%s\" on table \"%s\"\n"
 msgstr "neveljaven argument (%s) za pro¾ilec \"%s\" na tabeli \"%s\"\n"
 
-#: pg_dump.c:7635
+#: pg_dump.c:7613
 #, c-format
 msgid "query to get rule \"%s\" for table \"%s\" failed: wrong number of rows returned"
 msgstr "poizvedba za pridobitev pravila \"%s\" za tabelo \"%s\" ni uspela: vrnjeno je bilo napaèno ¹tevilo vrstic"
 
-#: pg_dump.c:7702
+#: pg_dump.c:7681
 msgid "reading dependency data\n"
 msgstr "branje podatkov o odvisnostih\n"
 
-#: pg_dump.c:7879
+#: pg_dump.c:7858
 #, c-format
 msgid "query yielded %d rows instead of one: %s\n"
 msgstr "poizvedba je vrnila %d vrstic namesto ene: %s\n"
 
-#: pg_dump.c:8066
+#: pg_dump.c:8045
 msgid "SQL command failed\n"
 msgstr "SQL ukaz ni uspel\n"
 
@@ -701,19 +701,19 @@ msgstr "branje pro¾ilcev\n"
 #: common.c:421
 #: common.c:553
 #: common.c:587
-#: pg_backup_archiver.c:616
-#: pg_backup_archiver.c:960
-#: pg_backup_archiver.c:1074
-#: pg_backup_archiver.c:1512
-#: pg_backup_archiver.c:1662
-#: pg_backup_archiver.c:1695
+#: pg_backup_archiver.c:619
+#: pg_backup_archiver.c:970
+#: pg_backup_archiver.c:1084
+#: pg_backup_archiver.c:1522
+#: pg_backup_archiver.c:1672
+#: pg_backup_archiver.c:1705
 #: pg_backup_custom.c:141
 #: pg_backup_custom.c:146
 #: pg_backup_custom.c:152
 #: pg_backup_custom.c:167
 #: pg_backup_custom.c:544
-#: pg_backup_db.c:156
-#: pg_backup_db.c:232
+#: pg_backup_db.c:157
+#: pg_backup_db.c:233
 #: pg_backup_files.c:112
 #: pg_backup_tar.c:168
 #: pg_backup_tar.c:960
@@ -737,310 +737,310 @@ msgstr "polja ¹tevil ni bilo mogoèe razumeti: ¹tevilo vsebuje neveljaven znak\n"
 msgid "archiver"
 msgstr "arhiver"
 
-#: pg_backup_archiver.c:125
+#: pg_backup_archiver.c:126
 msgid "could not close output archive file\n"
 msgstr "izhodne arhivske datoteke ni bilo mogoèe zapreti\n"
 
-#: pg_backup_archiver.c:152
+#: pg_backup_archiver.c:153
 msgid "-C and -c are incompatible options\n"
 msgstr "mo¾nosti -C in -c nista zdru¾ljivi\n"
 
-#: pg_backup_archiver.c:159
+#: pg_backup_archiver.c:160
 msgid "connecting to database for restore\n"
 msgstr "vzpostavljanje povezave z bazo za obnavljanje\n"
 
-#: pg_backup_archiver.c:161
+#: pg_backup_archiver.c:162
 msgid "direct database connections are not supported in pre-1.3 archives\n"
 msgstr "direktne povezave z bazo niso podprte v pre-1.3 arhivih\n"
 
-#: pg_backup_archiver.c:204
+#: pg_backup_archiver.c:205
 msgid "implied data-only restore\n"
 msgstr "implicitno obnavljanje samo podatkov (data-only restore)\n"
 
-#: pg_backup_archiver.c:237
+#: pg_backup_archiver.c:238
 #, c-format
 msgid "dropping %s %s\n"
 msgstr "odstranjevanje %s %s\n"
 
-#: pg_backup_archiver.c:263
-#: pg_backup_archiver.c:265
+#: pg_backup_archiver.c:264
+#: pg_backup_archiver.c:266
 #, c-format
 msgid "warning from original dump file: %s\n"
 msgstr "opozorilo iz originalne datoteke: %s\n"
 
-#: pg_backup_archiver.c:272
+#: pg_backup_archiver.c:273
 #, c-format
 msgid "creating %s %s\n"
 msgstr "ustvarjanje %s %s\n"
 
-#: pg_backup_archiver.c:280
+#: pg_backup_archiver.c:281
 #, c-format
 msgid "connecting to new database \"%s\"\n"
 msgstr "vzpostavljanje povezave z novo bazo \"%s\"\n"
 
-#: pg_backup_archiver.c:305
+#: pg_backup_archiver.c:306
 msgid "cannot restore from compressed archive (not configured for compression support)\n"
 msgstr "obnavljanje podatkov iz kompresiranega arhiva ni mogoèe (program ne vsebuje podpore za kompresijo)\n"
 
-#: pg_backup_archiver.c:325
+#: pg_backup_archiver.c:326
 msgid "WARNING: skipping large-object restoration\n"
 msgstr "OPOZORILO: izpu¹èam obnavljanje velikih objektov\n"
 
-#: pg_backup_archiver.c:335
+#: pg_backup_archiver.c:336
 #, c-format
 msgid "restoring data for table \"%s\"\n"
 msgstr "obnavljanje podatkov za tabelo \"%s\"\n"
 
-#: pg_backup_archiver.c:367
-#: pg_backup_archiver.c:453
+#: pg_backup_archiver.c:368
+#: pg_backup_archiver.c:454
 #, c-format
 msgid "fixing up large-object cross-reference for \"%s\"\n"
 msgstr "popravljanje navzkri¾nega referenciranja velikega objekta za \"%s\"\n"
 
-#: pg_backup_archiver.c:378
+#: pg_backup_archiver.c:379
 #, c-format
 msgid "executing %s %s\n"
 msgstr "izvr¹evanje %s %s\n"
 
-#: pg_backup_archiver.c:398
+#: pg_backup_archiver.c:399
 #, c-format
 msgid "setting owner and privileges for %s %s\n"
 msgstr "nastavljanje lastnika in pravic za %s %s\n"
 
-#: pg_backup_archiver.c:516
+#: pg_backup_archiver.c:517
 msgid "disabling triggers\n"
 msgstr "onemogoèanje pro¾ilcev\n"
 
-#: pg_backup_archiver.c:555
+#: pg_backup_archiver.c:556
 msgid "enabling triggers\n"
 msgstr "omogoèanje pro¾ilcev\n"
 
-#: pg_backup_archiver.c:590
+#: pg_backup_archiver.c:591
 msgid "internal error -- WriteData cannot be called outside the context of a DataDumper routine\n"
 msgstr "interna napaka -- WriteData ne more biti klicana izven konteksta DataDumper rutine\n"
 
-#: pg_backup_archiver.c:724
+#: pg_backup_archiver.c:734
 msgid "large-object output not supported in chosen format\n"
 msgstr "izbrana oblika arhiva ne podpira izvoza velikih objektov\n"
 
-#: pg_backup_archiver.c:764
-#: pg_backup_archiver.c:852
+#: pg_backup_archiver.c:774
+#: pg_backup_archiver.c:862
 msgid "committing large-object transactions\n"
 msgstr "potrjevanje transakcij za velike objekte\n"
 
-#: pg_backup_archiver.c:774
+#: pg_backup_archiver.c:784
 #, c-format
 msgid "restored %d large objects\n"
 msgstr "obnovljenih je bilo %d velikih objektov\n"
 
-#: pg_backup_archiver.c:791
+#: pg_backup_archiver.c:801
 msgid "cannot restore large objects without a database connection\n"
 msgstr "velikih objektov ni mogoèe obnoviti brez povezave z bazo\n"
 
-#: pg_backup_archiver.c:805
+#: pg_backup_archiver.c:815
 msgid "starting large-object transactions\n"
 msgstr "zaèenjanje transakcij za velike objekte\n"
 
-#: pg_backup_archiver.c:813
+#: pg_backup_archiver.c:823
 msgid "could not create large object\n"
 msgstr "velikega objekta ni bilo mogoèe ustvariti\n"
 
-#: pg_backup_archiver.c:815
+#: pg_backup_archiver.c:825
 #, c-format
 msgid "restoring large object with OID %u as %u\n"
 msgstr "obnavljanje velikega objekta z OID %u kot %u\n"
 
-#: pg_backup_archiver.c:821
+#: pg_backup_archiver.c:831
 msgid "could not open large object\n"
 msgstr "velikega objekta ni bilo mogoèe odpreti\n"
 
-#: pg_backup_archiver.c:836
+#: pg_backup_archiver.c:846
 #, c-format
 msgid "wrote remaining %lu bytes of large-object data (result = %lu)\n"
 msgstr "zapisal preostalih %lu byte-ov podatkov velikega objekta (rezultat = %lu)\n"
 
-#: pg_backup_archiver.c:839
-#: pg_backup_archiver.c:1131
+#: pg_backup_archiver.c:849
+#: pg_backup_archiver.c:1141
 #, c-format
 msgid "could not write to large object (result: %lu, expected: %lu)\n"
 msgstr "v velik objekt ni bilo mogoèe pisati (rezultat: %lu, prièakovano: %lu)\n"
 
-#: pg_backup_archiver.c:885
+#: pg_backup_archiver.c:895
 msgid "could not open TOC file\n"
 msgstr "TOC datoteke ni bilo mogoèe odpreti\n"
 
-#: pg_backup_archiver.c:906
+#: pg_backup_archiver.c:916
 #, c-format
 msgid "WARNING: line ignored: %s\n"
 msgstr "OPOZORILO: vrstica je bila ignorirana: %s\n"
 
-#: pg_backup_archiver.c:913
+#: pg_backup_archiver.c:923
 #, c-format
 msgid "could not find entry for ID %d\n"
 msgstr "vnosa za ID %d ni bilo mogoèe najti\n"
 
-#: pg_backup_archiver.c:923
+#: pg_backup_archiver.c:933
 #: pg_backup_files.c:156
 #: pg_backup_files.c:439
 #, c-format
 msgid "could not close TOC file: %s\n"
 msgstr "TOC datoteke ni bilo mogoèe zapreti: %s\n"
 
-#: pg_backup_archiver.c:1022
+#: pg_backup_archiver.c:1032
 #: pg_backup_files.c:130
 #, c-format
 msgid "could not open output file: %s\n"
 msgstr "izhodne datoteke ni bilo mogoèe odpreti: %s\n"
 
-#: pg_backup_archiver.c:1038
+#: pg_backup_archiver.c:1048
 #, c-format
 msgid "could not close output file: %s\n"
 msgstr "izhodne datoteke ni bilo mogoèe zapreti: %s\n"
 
-#: pg_backup_archiver.c:1127
+#: pg_backup_archiver.c:1137
 #, c-format
 msgid "wrote %lu bytes of large object data (result = %lu)\n"
 msgstr "zapisal %lu byte-ov podatkov velikega objekta (rezultat = %lu)\n"
 
-#: pg_backup_archiver.c:1149
+#: pg_backup_archiver.c:1159
 msgid "could not write to compressed archive\n"
 msgstr "v kompresiran arhiv ni bilo mogoèe pisati\n"
 
-#: pg_backup_archiver.c:1157
+#: pg_backup_archiver.c:1167
 msgid "could not write to custom output routine\n"
 msgstr "v custom izhodno rutino ni bilo mogoèe pisati\n"
 
-#: pg_backup_archiver.c:1172
+#: pg_backup_archiver.c:1182
 #, c-format
 msgid "could not write to output file (%lu != %lu)\n"
 msgstr "v izhodno datoteko ni bilo mogoèe pisati (%lu != %lu)\n"
 
-#: pg_backup_archiver.c:1257
+#: pg_backup_archiver.c:1267
 msgid "Error while INITIALIZING:\n"
 msgstr "Napaka med inicializacijo:\n"
 
-#: pg_backup_archiver.c:1262
+#: pg_backup_archiver.c:1272
 msgid "Error while PROCESSING TOC:\n"
 msgstr "Napaka med procesiranjem seznama vsebine (TOC):\n"
 
-#: pg_backup_archiver.c:1267
+#: pg_backup_archiver.c:1277
 msgid "Error while FINALIZING:\n"
 msgstr "Napaka med finalizacijo:\n"
 
-#: pg_backup_archiver.c:1272
+#: pg_backup_archiver.c:1282
 #, c-format
 msgid "Error from TOC entry %d; %u %u %s %s %s\n"
 msgstr "Napaka pri TOC vnosu %d; %u %u %s %s %s\n"
 
-#: pg_backup_archiver.c:1405
+#: pg_backup_archiver.c:1415
 #, c-format
 msgid "Unexpected data offset flag %d\n"
 msgstr "Neprièakovani data offset flag %d\n"
 
-#: pg_backup_archiver.c:1418
+#: pg_backup_archiver.c:1428
 msgid "file offset in dump file is too large\n"
 msgstr "file offset v dump datoteki je prevelik\n"
 
-#: pg_backup_archiver.c:1530
+#: pg_backup_archiver.c:1540
 msgid "attempting to ascertain archive format\n"
 msgstr "preverjanje formata arhiva\n"
 
-#: pg_backup_archiver.c:1550
+#: pg_backup_archiver.c:1560
 #: pg_backup_files.c:148
 #, c-format
 msgid "could not open input file: %s\n"
 msgstr "vhodne datoteke ni bilo mogoèe odpreti: %s\n"
 
-#: pg_backup_archiver.c:1557
+#: pg_backup_archiver.c:1567
 #, c-format
 msgid "could not read input file: %s\n"
 msgstr "vhodne datoteke ni bilo mogoèe prebrati: %s\n"
 
-#: pg_backup_archiver.c:1559
+#: pg_backup_archiver.c:1569
 #, c-format
 msgid "input file is too short (read %lu, expected 5)\n"
 msgstr "vhodna datoteka je prekratka (prebrano: %lu, prièakovano: 5)\n"
 
-#: pg_backup_archiver.c:1612
+#: pg_backup_archiver.c:1622
 msgid "input file does not appear to be a valid archive (too short?)\n"
 msgstr "vhodna datoteka ne izgleda kot veljaven arhiv (morda je prekratka?)\n"
 
-#: pg_backup_archiver.c:1615
+#: pg_backup_archiver.c:1625
 msgid "input file does not appear to be a valid archive\n"
 msgstr "vhodna datoteka ne izgleda kot veljaven arhiv\n"
 
-#: pg_backup_archiver.c:1633
+#: pg_backup_archiver.c:1643
 #, c-format
 msgid "read %lu bytes into lookahead buffer\n"
 msgstr "prebral %lu byte-ov v lookahead medpomnilnik\n"
 
-#: pg_backup_archiver.c:1640
+#: pg_backup_archiver.c:1650
 #, c-format
 msgid "could not close the input file after reading header: %s\n"
 msgstr "vhodne datoteke po branju glave ni bilo mogoèe zapreti: %s\n"
 
-#: pg_backup_archiver.c:1657
+#: pg_backup_archiver.c:1667
 #, c-format
 msgid "allocating AH for %s, format %d\n"
 msgstr "alociranje AH za %s, format %d\n"
 
-#: pg_backup_archiver.c:1711
+#: pg_backup_archiver.c:1721
 #, c-format
 msgid "archive format is %d\n"
 msgstr "oblika arhiva je %d\n"
 
-#: pg_backup_archiver.c:1739
+#: pg_backup_archiver.c:1749
 #, c-format
 msgid "unrecognized file format \"%d\"\n"
 msgstr "\"%d\" ni prepoznavna oblika arhiva\n"
 
-#: pg_backup_archiver.c:1866
+#: pg_backup_archiver.c:1877
 #, c-format
 msgid "entry ID %d out of range -- perhaps a corrupt TOC\n"
 msgstr "ID vnosa %d je izven obsega -- obstaja mo¾nost TOC okvare\n"
 
-#: pg_backup_archiver.c:1948
+#: pg_backup_archiver.c:1962
 #, c-format
 msgid "read TOC entry %d (ID %d) for %s %s\n"
 msgstr "branje TOC vnosa %d (ID %d) za %s %s\n"
 
-#: pg_backup_archiver.c:2110
+#: pg_backup_archiver.c:2124
 #, c-format
 msgid "could not set session user to \"%s\": %s"
 msgstr "uporabnika seje ni bilo mogoèe spremeniti v \"%s\": %s"
 
-#: pg_backup_archiver.c:2495
+#: pg_backup_archiver.c:2569
 msgid "WARNING: requested compression not available in this installation -- archive will be uncompressed\n"
 msgstr "OPOZORILO: izbrani naèin kompresije ni na voljo -- arhiv ne bo kompresiran\n"
 
-#: pg_backup_archiver.c:2528
+#: pg_backup_archiver.c:2604
 msgid "did not find magic string in file header\n"
 msgstr "glava datoteke ne vsebuje magiènega niza oz. le-ta ni bil najden\n"
 
-#: pg_backup_archiver.c:2542
+#: pg_backup_archiver.c:2618
 #, c-format
 msgid "unsupported version (%d.%d) in file header\n"
 msgstr "glava datoteke vsebuje nepodprto razlièico (%d.%d)\n"
 
-#: pg_backup_archiver.c:2547
+#: pg_backup_archiver.c:2623
 #, c-format
 msgid "sanity check on integer size (%lu) failed\n"
 msgstr "sanity check velikosti integer vrednosti (%lu) ni uspel\n"
 
-#: pg_backup_archiver.c:2551
+#: pg_backup_archiver.c:2627
 msgid "WARNING: archive was made on a machine with larger integers, some operations may fail\n"
 msgstr "OPOZORILO: arhiv je bil ustvarjen na raèunalniku, ki podpira veèje integer vrednosti, kot trenutni sistem; nekatere operacije morda ne bodo uspele\n"
 
-#: pg_backup_archiver.c:2561
+#: pg_backup_archiver.c:2637
 #, c-format
 msgid "expected format (%d) differs from format found in file (%d)\n"
 msgstr "prièakovani format (%d) se razlikuje od formata, najdenega v datoteki (%d)\n"
 
-#: pg_backup_archiver.c:2577
+#: pg_backup_archiver.c:2653
 msgid "WARNING: archive is compressed, but this installation does not support compression -- no data will be available\n"
 msgstr "OPOZORILO: arhiv je kompresiran, name¹èeni programi pa kompresije ne podpirajo -- podatki ne bodo na voljo\n"
 
-#: pg_backup_archiver.c:2595
+#: pg_backup_archiver.c:2671
 msgid "WARNING: invalid creation date in header\n"
 msgstr "OPOZORILO: glava vsebuje neveljaven datum nastanka\n"
 
@@ -1155,144 +1155,144 @@ msgstr "arhiver (db)"
 msgid "could not get server_version from libpq\n"
 msgstr "vrednosti server_version ni bilo mogoèe dobiti od libpq\n"
 
-#: pg_backup_db.c:78
+#: pg_backup_db.c:79
 #, c-format
 msgid "server version: %s; %s version: %s\n"
 msgstr "razlièica stre¾nika: %s; razlièica %s: %s\n"
 
-#: pg_backup_db.c:81
+#: pg_backup_db.c:82
 msgid "proceeding despite version mismatch\n"
 msgstr "nadaljujemo kljub neujemanju razlièic\n"
 
-#: pg_backup_db.c:83
+#: pg_backup_db.c:84
 msgid "aborting because of version mismatch  (Use the -i option to proceed anyway.)\n"
 msgstr "prekinjamo zaradi neskladja razlièic (Da bi kljub temu nadaljevali, uporabite mo¾nost -i.)\n"
 
-#: pg_backup_db.c:150
+#: pg_backup_db.c:151
 #, c-format
 msgid "connecting to database \"%s\" as user \"%s\"\n"
 msgstr "vzpostavljanje povezave z bazo \"%s\" kot uporabnik \"%s\"\n"
 
-#: pg_backup_db.c:154
-#: pg_backup_db.c:186
-#: pg_backup_db.c:230
-#: pg_backup_db.c:259
+#: pg_backup_db.c:155
+#: pg_backup_db.c:187
+#: pg_backup_db.c:231
+#: pg_backup_db.c:260
 #: pg_dumpall.c:941
 #: pg_dumpall.c:967
 msgid "Password: "
 msgstr "Geslo: "
 
-#: pg_backup_db.c:166
+#: pg_backup_db.c:167
 msgid "failed to reconnect to database\n"
 msgstr "z bazo podatkov se ni bilo mogoèe ponovno povezati\n"
 
-#: pg_backup_db.c:189
+#: pg_backup_db.c:190
 #, c-format
 msgid "could not reconnect to database: %s"
 msgstr "z bazo podatkov se ni bilo mogoèe ponovno povezati: %s"
 
-#: pg_backup_db.c:226
+#: pg_backup_db.c:227
 msgid "already connected to a database\n"
 msgstr "povezava z bazo je ¾e vzpostavljena\n"
 
-#: pg_backup_db.c:249
+#: pg_backup_db.c:250
 msgid "failed to connect to database\n"
 msgstr "z bazo podatkov se ni bilo mogoèe povezati\n"
 
-#: pg_backup_db.c:268
+#: pg_backup_db.c:269
 #, c-format
 msgid "connection to database \"%s\" failed: %s"
 msgstr "povezovanje z bazo \"%s\" ni uspelo: %s"
 
-#: pg_backup_db.c:283
+#: pg_backup_db.c:284
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: pg_backup_db.c:312
+#: pg_backup_db.c:313
 #, c-format
 msgid "%s: no result from server\n"
 msgstr "%s: stre¾nik ni vrnil rezultata\n"
 
-#: pg_backup_db.c:319
+#: pg_backup_db.c:320
 msgid "COPY command executed in non-primary connection\n"
 msgstr "COPY ukaz je bil izvr¹en preko ne-primarne povezave\n"
 
-#: pg_backup_db.c:409
+#: pg_backup_db.c:410
 msgid "error returned by PQputline\n"
 msgstr "funkcija PQputline je vrnila napako\n"
 
-#: pg_backup_db.c:420
+#: pg_backup_db.c:421
 msgid "error returned by PQendcopy\n"
 msgstr "funkcija PQendcopy je vrnila napako\n"
 
-#: pg_backup_db.c:480
+#: pg_backup_db.c:481
 msgid "could not execute query"
 msgstr "poizvedbe ni bilo mogoèe izvr¹iti"
 
-#: pg_backup_db.c:700
+#: pg_backup_db.c:701
 #, c-format
 msgid "could not find OID columns of table \"%s\": %s"
 msgstr "OID stolpcev tabele \"%s\" ni bilo mogoèe najti: %s"
 
-#: pg_backup_db.c:706
+#: pg_backup_db.c:707
 #, c-format
 msgid "no OID type columns in table %s\n"
 msgstr "tabela \"%s\" ne vsebuje stolpcev tipa OID\n"
 
-#: pg_backup_db.c:720
+#: pg_backup_db.c:721
 #, c-format
 msgid "fixing large object cross-references for %s.%s\n"
 msgstr "popravljanje navzkri¾nega referenciranja velikih objektov za %s.%s\n"
 
-#: pg_backup_db.c:759
+#: pg_backup_db.c:760
 #, c-format
 msgid "SQL: %s\n"
 msgstr "SQL: %s\n"
 
-#: pg_backup_db.c:764
+#: pg_backup_db.c:765
 #, c-format
 msgid "could not update column \"%s\" of table \"%s\": %s"
 msgstr "stolpca \"%s\" v tabeli \"%s\" ni bilo mogoèe posodobiti: %s"
 
-#: pg_backup_db.c:769
+#: pg_backup_db.c:770
 #, c-format
 msgid "error while updating column \"%s\" of table \"%s\": %s"
 msgstr "pri posodabljanju stolpca \"%s\" v tabeli \"%s\" je pri¹lo do napake: %s"
 
-#: pg_backup_db.c:792
+#: pg_backup_db.c:793
 msgid "creating table for large object cross-references\n"
 msgstr "ustvarjanje tabele za navzkri¾ne reference velikih objektov\n"
 
-#: pg_backup_db.c:795
+#: pg_backup_db.c:796
 msgid "could not create large object cross-reference table"
 msgstr "tabele za navzkri¾ne reference velikih objektov ni bilo mogoèe ustvariti"
 
-#: pg_backup_db.c:805
+#: pg_backup_db.c:806
 msgid "creating index for large object cross-references\n"
 msgstr "ustvarjanje indeksa za navzkri¾ne reference velikih objektov\n"
 
-#: pg_backup_db.c:809
+#: pg_backup_db.c:810
 msgid "could not create index on large object cross-reference table"
 msgstr "indeksa na tabeli za navzkri¾ne reference velikih objektov ni bilo mogoèe ustvariti"
 
-#: pg_backup_db.c:822
+#: pg_backup_db.c:823
 msgid "could not create large object cross-reference entry"
 msgstr "vnosa v tabelo za navzkri¾ne reference velikih objektov ni bilo mogoèe dodati"
 
-#: pg_backup_db.c:834
+#: pg_backup_db.c:835
 msgid "could not start database transaction"
 msgstr "transakcije ni bilo mogoèe zaèeti"
 
-#: pg_backup_db.c:848
+#: pg_backup_db.c:849
 msgid "could not start transaction for large object cross-references"
 msgstr "transakcije za navzkri¾ne reference velikih objektov ni bilo mogoèe zaèeti"
 
-#: pg_backup_db.c:861
+#: pg_backup_db.c:862
 msgid "could not commit database transaction"
 msgstr "transakcije ni bilo mogoèe potrditi"
 
-#: pg_backup_db.c:874
+#: pg_backup_db.c:875
 msgid "could not commit transaction for large object cross-references"
 msgstr "transakcije za navzkri¾ne reference velikih objektov ni bilo mogoèe potrditi"
 
@@ -1437,76 +1437,76 @@ msgstr "obnavljanje velikega objekta OID %u\n"
 msgid "could not write null block at end of tar archive\n"
 msgstr "null bloka ni bilo mogoèe zapisati na konec arhiva\n"
 
-#: pg_backup_tar.c:1023
+#: pg_backup_tar.c:1027
 msgid "archive member too large for tar format\n"
 msgstr "vnos v arhiv je prevelik za format tar\n"
 
-#: pg_backup_tar.c:1033
+#: pg_backup_tar.c:1037
 #, c-format
 msgid "write error appending to tar archive (wrote %lu, attempted %lu)\n"
 msgstr "napaka pri pisanju na konec tar arhiva (zapisano %lu, nameravano %lu)\n"
 
-#: pg_backup_tar.c:1039
+#: pg_backup_tar.c:1043
 #, c-format
 msgid "could not close tar member: %s\n"
 msgstr "tar vnosa ni bilo mogoèe zapreti: %s\n"
 
-#: pg_backup_tar.c:1048
+#: pg_backup_tar.c:1052
 #, c-format
 msgid "actual file length (%s) does not match expected (%s)\n"
 msgstr "dejanska dol¾ina datoteke (%s) ni enaka prièakovani dol¾ini (%s)\n"
 
-#: pg_backup_tar.c:1056
+#: pg_backup_tar.c:1060
 msgid "could not output padding at end of tar member\n"
 msgstr "na koncu tar vnosa ni bilo mogoèe dodati paddinga\n"
 
-#: pg_backup_tar.c:1085
+#: pg_backup_tar.c:1089
 #, c-format
 msgid "moving from position %s to next member at file position %s\n"
 msgstr "premik iz pozicije %s na naslednji vnos na poziciji %s\n"
 
-#: pg_backup_tar.c:1096
+#: pg_backup_tar.c:1100
 #, c-format
 msgid "now at file position %s\n"
 msgstr "trenutna pozicija v datoteki: %s\n"
 
-#: pg_backup_tar.c:1105
-#: pg_backup_tar.c:1132
+#: pg_backup_tar.c:1109
+#: pg_backup_tar.c:1136
 #, c-format
 msgid "could not find header for file %s in tar archive\n"
 msgstr "glava datoteke %s ni bila najdena v tar arhivu\n"
 
-#: pg_backup_tar.c:1116
+#: pg_backup_tar.c:1120
 #, c-format
 msgid "skipping tar member %s\n"
 msgstr "preskakujem tar vnos %s\n"
 
-#: pg_backup_tar.c:1120
+#: pg_backup_tar.c:1124
 #, c-format
 msgid "dumping data out of order is not supported in this archive format: %s is required, but comes before %s in the archive file.\n"
 msgstr "ta format ne podpira izvoza podatkov v drugaènem vrstnem redu: %s je zahtevan, ampak se v arhivu nahaja pred %s.\n"
 
-#: pg_backup_tar.c:1168
+#: pg_backup_tar.c:1172
 #, c-format
 msgid "mismatch in actual vs. predicted file position (%s vs. %s)\n"
 msgstr "dejanska in predvidena pozicija datoteke se ne ujemata (%s namesto %s)\n"
 
-#: pg_backup_tar.c:1183
+#: pg_backup_tar.c:1187
 #, c-format
 msgid "incomplete tar header found (%lu bytes)\n"
 msgstr "najdena je bila nepopolna glava tar arhiva (%lu bytov)\n"
 
-#: pg_backup_tar.c:1218
+#: pg_backup_tar.c:1222
 #, c-format
 msgid "TOC Entry %s at %s (length %lu, checksum %d)\n"
 msgstr "TOC vnos %s pri %s (dol¾ina %lu, checksum %d)\n"
 
-#: pg_backup_tar.c:1228
+#: pg_backup_tar.c:1232
 #, c-format
 msgid "corrupt tar header found in %s (expected %d, computed %d) file position %s\n"
 msgstr "okvarjena tar glava je bila najdena v %s (prièakovano %d, izraèunano %d) file position %s\n"
 
-#: pg_backup_tar.c:1321
+#: pg_backup_tar.c:1325
 msgid "could not write tar header\n"
 msgstr "napaka pri zapisovanju glave tar datoteke\n"
 
@@ -1535,8 +1535,8 @@ msgid "  %s [OPTION]... [FILE]\n"
 msgstr "  %s [MO®NOST]... [DATOTEKA]\n"
 
 #: pg_restore.c:363
-msgid "  -d, --dbname=NAME        target database name\n"
-msgstr "  -d, --dbname=IME         ime ciljne baze\n"
+msgid "  -d, --dbname=NAME        connect to database name\n"
+msgstr "  -d, --dbname=IME_BAZE    pove¾i se z navedeno bazo\n"
 
 #: pg_restore.c:365
 msgid "  -F, --format=c|t         specify backup file format\n"
@@ -1563,8 +1563,8 @@ msgid "  -a, --data-only          restore only the data, no schema\n"
 msgstr "  -a, --data-only          obnovi samo podatke, brez definicij elementov\n"
 
 #: pg_restore.c:375
-msgid "  -C, --create             issue commands to create the database\n"
-msgstr "  -C, --create             izdaj ukaze za kreiranje podatkovnih baz\n"
+msgid "  -C, --create             create the target database\n"
+msgstr "  -C, --create             ustvari ciljno bazo\n"
 
 #: pg_restore.c:376
 msgid "  -I, --index=NAME         restore named index\n"
@@ -1578,9 +1578,10 @@ msgstr ""
 "  -L, --use-list=DATOTEKA  uporabi navedeno kazalo vsebine (TOC) za vrstni red\n"
 "                           izvoza iz te datoteke\n"
 
+#: pg_dumpall.c:352
 #: pg_restore.c:379
-msgid "  -O, --no-owner           do not issue commands to set object ownership\n"
-msgstr "  -O, --no-owner           ne izdaj ukazov za nastavitev lastni¹tva objektov\n"
+msgid "  -O, --no-owner           skip restoration of object ownership\n"
+msgstr "  -O, --no-owner           izpusti obnavljanje lastni¹tva objektov\n"
 
 #: pg_restore.c:380
 msgid ""
@@ -1682,10 +1683,6 @@ msgstr "  -c, --clean              pred ustvarjanjem nove, odstrani (drop) staro
 msgid "  -g, --globals-only       dump only global objects, no databases\n"
 msgstr "  -g, --globals-only       izvozi samo globalne objekte, brez podatkovnih baz\n"
 
-#: pg_dumpall.c:352
-msgid "  -O, --no-owner           do not output commands to set object ownership\n"
-msgstr "  -O, --no-owner           ne dodaj ukazov za nastavitev lastni¹tva objektov\n"
-
 #: pg_dumpall.c:354
 msgid "  -S, --superuser=NAME     specify the superuser user name to use in the dump\n"
 msgstr ""
@@ -1761,4 +1758,37 @@ msgstr "%s: poizvedba ni uspela: %s"
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: poizvedba se je glasila: %s\n"
+
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "trenutnega imenika ni bilo mogoèe izvedeti: %s"
+
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "delovnega imenika ni bilo mogoèe spremeniti v \"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "simbolne povezave \"%s\" ni bilo mogoèe prebrati"
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "podproces je zakljuèil izvajanje z izhodno kodo %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "podproces je bil pokonèan s signalom %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "podproces je zakljuèil izvajanje z neznanim statusom %d"
 

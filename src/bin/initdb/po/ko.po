@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2004-12-15 07:06+0000\n"
-"PO-Revision-Date: 2004-12-15 23:48+0900\n"
+"PO-Revision-Date: 2004-12-16 11:23+0900\n"
 "Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
 "Language-Team: KOREAN <pgsql-kr@postgresql.or.kr>\n"
 "MIME-Version: 1.0\n"
@@ -79,8 +79,8 @@ msgid ""
 "own the server process.\n"
 msgstr ""
 "%s: root로 이 프로그램을 실행하지 마십시오\n"
-"시스템 관리자 권한이 없는 사용자로 로그인 해서(\"su\", \"runas\" 같은 명령 이용)\n"
-"실행하십시오. 이 사용자가 서버 프로세스의 소유주가 될 것입니다.\n"
+"시스템관리자 권한이 없는, 서버프로세스의 소유주가 될 일반 사용자로\n"
+"로그인 해서(\"su\", \"runas\" 같은 명령 이용) 실행하십시오.\n"
 
 #: initdb.c:689
 #, c-format
@@ -420,7 +420,7 @@ msgid ""
 "Check your installation.\n"
 msgstr ""
 "%s 프로그램은 \"postgres\" 프로그램을 필요로 합니다. 그런데, 이 파일이\n"
-"\"%s\" 디렉토리안에 없습니다.\n"
+"\"%s\" 파일이 있는 디렉토리안에 없습니다.\n"
 "설치 상태를 확인해 주십시오.\n"
 
 #: initdb.c:2333

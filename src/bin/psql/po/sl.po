@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 8.0\n"
 "POT-Creation-Date: 2003-10-13 03:11+0200\n"
-"PO-Revision-Date: 2004-11-09 23:09+0100\n"
+"PO-Revision-Date: 2004-12-11 21:21+0100\n"
 "Last-Translator: Aleksander Kmetec <aleksander.kmetec@intera.si>\n"
 "Language-Team: Slovenian <aleksander.kmetec@intera.si>\n"
 "MIME-Version: 1.0\n"
@@ -45,7 +45,7 @@ msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: delovnega imenika nisem uspel spremeniti v \"%s\": %s\n"
 
 #: command.c:374
-#: command.c:764
+#: command.c:766
 msgid "no query buffer\n"
 msgstr "medpomnilnik poizvedb ne obstaja\n"
 
@@ -59,8 +59,8 @@ msgstr "%s: neveljavno ime kodne tabele, ali pa pretvorbeni postopek ni bil najd
 #: command.c:553
 #: command.c:570
 #: command.c:616
-#: command.c:744
-#: command.c:775
+#: command.c:746
+#: command.c:777
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: manjka zahtevan argument\n"
@@ -78,7 +78,7 @@ msgstr "Medpomnilnik poizvedb je bil poèi¹èen."
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Zgodovina je bila zapisana v datoteko \"%s\".\n"
 
-#: command.c:685
+#: command.c:687
 #: common.c:85
 #: common.c:99
 #: mainloop.c:71
@@ -98,30 +98,30 @@ msgstr "Zgodovina je bila zapisana v datoteko \"%s\".\n"
 msgid "out of memory\n"
 msgstr "zmanjkalo je pomnilnika\n"
 
-#: command.c:700
-#: command.c:749
+#: command.c:702
+#: command.c:751
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: pri¹lo je do napake\n"
 
-#: command.c:730
+#: command.c:732
 msgid "Timing is on."
 msgstr "Merjenje èasa je vkljuèeno."
 
-#: command.c:732
+#: command.c:734
 msgid "Timing is off."
 msgstr "Merjenje èasa je izkljuèeno."
 
-#: command.c:792
-#: command.c:812
-#: command.c:1189
-#: command.c:1196
+#: command.c:794
+#: command.c:814
+#: command.c:1199
 #: command.c:1206
-#: command.c:1218
-#: command.c:1231
-#: command.c:1245
-#: command.c:1267
-#: command.c:1298
+#: command.c:1216
+#: command.c:1228
+#: command.c:1241
+#: command.c:1255
+#: command.c:1277
+#: command.c:1308
 #: common.c:170
 #: copy.c:530
 #: copy.c:575
@@ -129,14 +129,14 @@ msgstr "Merjenje èasa je izkljuèeno."
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:919
-#: command.c:943
+#: command.c:921
+#: command.c:945
 #: startup.c:188
 #: startup.c:206
 msgid "Password: "
 msgstr "Geslo: "
 
-#: command.c:957
+#: command.c:959
 #: common.c:216
 #: common.c:685
 #: common.c:740
@@ -145,142 +145,142 @@ msgstr "Geslo: "
 msgid "%s"
 msgstr "%s"
 
-#: command.c:961
+#: command.c:963
 msgid "Previous connection kept\n"
 msgstr "Predhodna povezava je bila ohranjena\n"
 
-#: command.c:973
+#: command.c:975
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:985
+#: command.c:987
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Sedaj ste povezani s podatkovno bazo \"%s\".\n"
 
-#: command.c:987
+#: command.c:989
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Sedaj ste povezani kot nov uporabnik \"%s\".\n"
 
-#: command.c:990
+#: command.c:992
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Sedaj ste povezani s podatkovno bazo \"%s\" kot uporabnik \"%s\".\n"
 
-#: command.c:1107
+#: command.c:1117
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "urejevalnika \"%s\" ni bilo mogoèe zagnati\n"
 
-#: command.c:1109
+#: command.c:1119
 msgid "could not start /bin/sh\n"
 msgstr "lupine /bin/sh ni bilo mogoèe zagnati\n"
 
-#: command.c:1148
+#: command.c:1158
 #, c-format
 msgid "cannot locate temporary directory: %s"
 msgstr "zaèasnega imenika ni bilo mogoèe najti: %s"
 
-#: command.c:1174
+#: command.c:1184
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "zaèasne datoteke \"%s\" ni bilo mogoèe odpreti: %s\n"
 
-#: command.c:1366
+#: command.c:1376
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: dovoljene oblike izpisa so: unaligned, aligned, html, latex\n"
 
-#: command.c:1371
+#: command.c:1381
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Izhodna oblika je: %s.\n"
 
-#: command.c:1381
+#: command.c:1391
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Stil obrobe: %d.\n"
 
-#: command.c:1390
+#: command.c:1400
 msgid "Expanded display is on.\n"
 msgstr "Raz¹irjen prikaz je vkljuèen.\n"
 
-#: command.c:1391
+#: command.c:1401
 msgid "Expanded display is off.\n"
 msgstr "Raz¹irjen prikaz je izkljuèen.\n"
 
-#: command.c:1403
+#: command.c:1413
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Vrednost NULL bo prikazana kot \"%s\".\n"
 
-#: command.c:1415
+#: command.c:1425
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Loèitveni niz med polji je \"%s\".\n"
 
-#: command.c:1429
+#: command.c:1439
 msgid "Record separator is <newline>."
 msgstr "Loèitveni niz med zapisi (vrsticami) je <newline>."
 
-#: command.c:1431
+#: command.c:1441
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Loèitveni niz med zapisi (vrsticami) je \"%s\".\n"
 
-#: command.c:1442
+#: command.c:1452
 msgid "Showing only tuples."
 msgstr "Prikazujem samo vrednosti."
 
-#: command.c:1444
+#: command.c:1454
 msgid "Tuples only is off."
 msgstr "Prikaz samih vrednosti je izkljuèen."
 
-#: command.c:1460
+#: command.c:1470
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Naslov je \"%s\".\n"
 
-#: command.c:1462
+#: command.c:1472
 msgid "Title is unset.\n"
 msgstr "Naslov pobrisan.\n"
 
-#: command.c:1478
+#: command.c:1488
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Atributi tabele: \"%s\".\n"
 
-#: command.c:1480
+#: command.c:1490
 msgid "Table attributes unset.\n"
 msgstr "Atributi tabele pobrisani.\n"
 
-#: command.c:1496
+#: command.c:1506
 msgid "Pager is used for long output."
 msgstr "Postopni izpis se uporablja za prikaz dolgega besedila."
 
-#: command.c:1498
+#: command.c:1508
 msgid "Pager is always used."
 msgstr "Postopni izpis je vkljuèen."
 
-#: command.c:1500
+#: command.c:1510
 msgid "Pager usage is off."
 msgstr "Postopni izpis je izkljuèen."
 
-#: command.c:1511
+#: command.c:1521
 msgid "Default footer is on."
 msgstr "Izpis privzete noge je vkljuèen."
 
-#: command.c:1513
+#: command.c:1523
 msgid "Default footer is off."
 msgstr "Izpis privzete noge je izkljuèen."
 
-#: command.c:1519
+#: command.c:1529
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: neznana mo¾nost: %s\n"
 
-#: command.c:1570
+#: command.c:1582
 msgid "\\!: failed\n"
 msgstr "\\!: spodletelo\n"
 
@@ -387,20 +387,20 @@ msgstr ""
 "Vnesite podatke za kopiranje, zakljuèene z <newline>.\n"
 "Konèajte z backslashem in piko (\\.) v samostojni vrstici."
 
-#: help.c:48
+#: help.c:49
 msgid "on"
 msgstr "vkljuèeno"
 
-#: help.c:48
+#: help.c:49
 msgid "off"
 msgstr "izkljuèeno"
 
-#: help.c:70
+#: help.c:71
 #, c-format
 msgid "could not get current user name: %s\n"
 msgstr "trenutnega uporabni¹kega imena ni bilo mogoèe izvedeti: %s\n"
 
-#: help.c:83
+#: help.c:84
 #, c-format
 msgid ""
 "This is psql %s, the PostgreSQL interactive terminal.\n"
@@ -409,52 +409,52 @@ msgstr ""
 "To je psql %s, PostgreSQL-ov interaktivni terminal.\n"
 "\n"
 
-#: help.c:85
+#: help.c:86
 msgid "Usage:"
 msgstr "Uporaba:"
 
-#: help.c:86
+#: help.c:87
 msgid "  psql [OPTIONS]... [DBNAME [USERNAME]]\n"
 msgstr "  psql [MO®NOSTI]... [BAZA [UPORABNIK]]\n"
 
-#: help.c:88
+#: help.c:89
 msgid "General options:"
 msgstr "Splo¹ne mo¾nosti:"
 
-#: help.c:93
+#: help.c:94
 #, c-format
 msgid "  -d DBNAME       specify database name to connect to (default: \"%s\")\n"
 msgstr "  -d IME_BAZE      navedite ime baze podatkov, s katero se ¾elite povezati (privzeto: \"%s\")\n"
 
-#: help.c:94
+#: help.c:95
 msgid "  -c COMMAND      run only single command (SQL or internal) and exit"
 msgstr "  -c UKAZ          izvr¹i podani ukaz (SQL ali interni), nato konèaj program"
 
-#: help.c:95
+#: help.c:96
 msgid "  -f FILENAME     execute commands from file, then exit"
 msgstr "  -f DATOTEKA      izvr¹i ukaze iz datoteke, nato konèaj program"
 
-#: help.c:96
+#: help.c:97
 msgid "  -l              list available databases, then exit"
 msgstr "  -l               na¹tej razpolo¾ljive baze podatkov, nato konèaj program"
 
-#: help.c:97
+#: help.c:98
 msgid "  -v NAME=VALUE   set psql variable NAME to VALUE"
 msgstr "  -v IME=VREDNOST  nastavi psql spremenljivko IME na podano VREDNOST"
 
-#: help.c:98
+#: help.c:99
 msgid "  -X              do not read startup file (~/.psqlrc)"
 msgstr "  -X               preskoèi branje zagonske datoteke (~/.psqlrc)"
 
-#: help.c:99
+#: help.c:100
 msgid "  --help          show this help, then exit"
 msgstr "  --help           izpi¹i to pomoè, nato konèaj program"
 
-#: help.c:100
+#: help.c:101
 msgid "  --version       output version information, then exit"
 msgstr "  --version        izpi¹i podatke o razlièici, nato konèaj program"
 
-#: help.c:102
+#: help.c:103
 msgid ""
 "\n"
 "Input and output options:"
@@ -462,39 +462,39 @@ msgstr ""
 "\n"
 "Vhodne in izhodne mo¾nosti:"
 
-#: help.c:103
+#: help.c:104
 msgid "  -a              echo all input from script"
 msgstr "  -a               izpisuj vse vhodne ukaze iz datoteke"
 
-#: help.c:104
+#: help.c:105
 msgid "  -e              echo commands sent to server"
 msgstr "  -e               izpisuj ukaze, poslane stre¾niku"
 
-#: help.c:105
+#: help.c:106
 msgid "  -E              display queries that internal commands generate"
 msgstr "  -E               prikazuj poizvedbe, ki jih generirajo interni ukazi"
 
-#: help.c:106
+#: help.c:107
 msgid "  -q              run quietly (no messages, only query output)"
 msgstr "  -q               tiho izvajanje (brez sporoèil, samo rezultati poizvedb)"
 
-#: help.c:107
+#: help.c:108
 msgid "  -o FILENAME     send query results to file (or |pipe)"
 msgstr "  -o DATOTEKA      rezultate poizvedbe preusmeri v datoteko (ali |cev)"
 
-#: help.c:108
+#: help.c:109
 msgid "  -n              disable enhanced command line editing (readline)"
 msgstr "  -n               onemogoèi napredno urejanje ukazne vrstice (readline)"
 
-#: help.c:109
+#: help.c:110
 msgid "  -s              single-step mode (confirm each query)"
 msgstr "  -s               zahtevaj potrditev vsake poizvedbe (single-step naèin)"
 
-#: help.c:110
+#: help.c:111
 msgid "  -S              single-line mode (end of line terminates SQL command)"
 msgstr "  -S               konec vrstice konèa SQL ukaz (single-line naèin)"
 
-#: help.c:112
+#: help.c:113
 msgid ""
 "\n"
 "Output format options:"
@@ -502,40 +502,40 @@ msgstr ""
 "\n"
 "Oblikovne mo¾nosti:"
 
-#: help.c:113
+#: help.c:114
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
 msgstr "  -A               neporavnan izpis tabel (-P format=unaligned)"
 
-#: help.c:114
+#: help.c:115
 msgid "  -H              HTML table output mode (-P format=html)"
 msgstr "  -H               HTML izpis tabel (-P format=html)"
 
-#: help.c:115
+#: help.c:116
 msgid "  -t              print rows only (-P tuples_only)"
 msgstr "  -t               izpisuj samo vrstice (-P tuples_only)"
 
-#: help.c:116
+#: help.c:117
 msgid "  -T TEXT         set HTML table tag attributes (width, border) (-P tableattr=)"
 msgstr "  -T BESEDILO      nastavi atribute tabele v HTML izpisu (width, border) (-P tableattr=)"
 
-#: help.c:117
+#: help.c:118
 msgid "  -x              turn on expanded table output (-P expanded)"
 msgstr "  -x               vkljuèi raz¹irjeni izpis tabel (-P expanded)"
 
-#: help.c:118
+#: help.c:119
 msgid "  -P VAR[=ARG]    set printing option VAR to ARG (see \\pset command)"
 msgstr "  -P IME[=ARG]     nastavi mo¾nost izpisa IME na vrednost ARG (glejte \\pset ukaz)"
 
-#: help.c:119
+#: help.c:120
 #, c-format
 msgid "  -F STRING       set field separator (default: \"%s\") (-P fieldsep=)\n"
 msgstr "  -F NIZ           nastavi loèitveni niz med polji (privzeto: \"%s\") (-P fieldsep=)\n"
 
-#: help.c:121
+#: help.c:122
 msgid "  -R STRING       set record separator (default: newline) (-P recordsep=)"
 msgstr "  -R NIZ           nastavi loèitveni niz med zapisi (privzeto: <newline>) (-P recordsep=)"
 
-#: help.c:123
+#: help.c:124
 msgid ""
 "\n"
 "Connection options:"
@@ -543,30 +543,30 @@ msgstr ""
 "\n"
 "Povezavne mo¾nosti:"
 
-#: help.c:126
+#: help.c:127
 #, c-format
 msgid "  -h HOSTNAME     database server host or socket directory (default: \"%s\")\n"
 msgstr "  -h GOSTITELJ     gostitelj stre¾nika ali imenik z vtiènico (privzeto: \"%s\")\n"
 
-#: help.c:127
+#: help.c:128
 msgid "local socket"
 msgstr "lokalna vtiènica"
 
-#: help.c:130
+#: help.c:131
 #, c-format
 msgid "  -p PORT         database server port (default: \"%s\")\n"
 msgstr "  -p VRATA         vrata (port) podatkovnega stre¾nika (privzeto: \"%s\")\n"
 
-#: help.c:136
+#: help.c:137
 #, c-format
 msgid "  -U NAME         database user name (default: \"%s\")\n"
 msgstr "  -U IME           uporabni¹ko ime (privzeto: \"%s\")\n"
 
-#: help.c:137
+#: help.c:138
 msgid "  -W              prompt for password (should happen automatically)"
 msgstr "  -W               vpra¹aj za geslo (ponavadi se to zgodi samodejno)"
 
-#: help.c:140
+#: help.c:141
 msgid ""
 "\n"
 "For more information, type \"\\?\" (for internal commands) or \"\\help\"\n"
@@ -582,11 +582,11 @@ msgstr ""
 "\n"
 "Napake sporoèajte na naslov <pgsql-bugs@postgresql.org>."
 
-#: help.c:174
+#: help.c:175
 msgid "General\n"
 msgstr "Splo¹no\n"
 
-#: help.c:175
+#: help.c:176
 #, c-format
 msgid ""
 "  \\c[onnect] [DBNAME|- [USER]]\n"
@@ -595,15 +595,15 @@ msgstr ""
 "  \\c[onnect] [IME_BAZE|- [UPORABNIK]]\n"
 "                 pove¾i z novo bazo podatkov (trenutno \"%s\")\n"
 
-#: help.c:178
+#: help.c:179
 msgid "  \\cd [DIR]      change the current working directory\n"
 msgstr "  \\cd [DIR]      spremeni trenutni delovni imenik\n"
 
-#: help.c:179
+#: help.c:180
 msgid "  \\copyright     show PostgreSQL usage and distribution terms\n"
 msgstr "  \\copyright     prika¾i pogoje za uporabo in raz¹irjanje programa PostgreSQL\n"
 
-#: help.c:180
+#: help.c:181
 msgid ""
 "  \\encoding [ENCODING]\n"
 "                 show or set client encoding\n"
@@ -611,15 +611,15 @@ msgstr ""
 "  \\encoding [KODNA_TABELA]\n"
 "                 prika¾i ali nastavi kodno tabelo odjemalca\n"
 
-#: help.c:182
+#: help.c:183
 msgid "  \\h [NAME]      help on syntax of SQL commands, * for all commands\n"
 msgstr "  \\h [IME]       pomoè s sintakso SQL ukazov, * za vse ukaze\n"
 
-#: help.c:183
+#: help.c:184
 msgid "  \\q             quit psql\n"
 msgstr "  \\q             zapri psql\n"
 
-#: help.c:184
+#: help.c:185
 msgid ""
 "  \\set [NAME [VALUE]]\n"
 "                 set internal variable, or list all if no parameters\n"
@@ -628,78 +628,78 @@ msgstr ""
 "                 nastavi vrednost interne spremenljivke,\n"
 "                 ali izpi¹i vse obstojeèe, èe ni podan noben parameter\n"
 
-#: help.c:186
+#: help.c:187
 #, c-format
 msgid "  \\timing        toggle timing of commands (currently %s)\n"
 msgstr "  \\timing        preklopi merjenja èasa izvajanja (trenutno %s)\n"
 
-#: help.c:188
+#: help.c:189
 msgid "  \\unset NAME    unset (delete) internal variable\n"
 msgstr "  \\unset IME     pobri¹i interno spremenljivko\n"
 
-#: help.c:189
+#: help.c:190
 msgid "  \\! [COMMAND]   execute command in shell or start interactive shell\n"
 msgstr "  \\! [UKAZ]      izvr¹i ukaz v lupini, ali za¾eni interaktivno ukazno lupino\n"
 
-#: help.c:192
+#: help.c:193
 msgid "Query Buffer\n"
 msgstr "Medpomnilnik poizvedb\n"
 
-#: help.c:193
+#: help.c:194
 msgid "  \\e [FILE]      edit the query buffer (or file) with external editor\n"
 msgstr "  \\e [DATOTEKA]  uredi vsebino medpomnilnika poizvedb (ali datoteko) z zunanjim urejevalnikom\n"
 
-#: help.c:194
+#: help.c:195
 msgid "  \\g [FILE]      send query buffer to server (and results to file or |pipe)\n"
 msgstr "  \\g [DATOTEKA]  po¹lji vsebino medpomnilnika poizvedb stre¾niku (in rezultate v datoteko ali |cev)\n"
 
-#: help.c:195
+#: help.c:196
 msgid "  \\p             show the contents of the query buffer\n"
 msgstr "  \\p             prika¾i vsebino medpomnilnika poizvedb\n"
 
-#: help.c:196
+#: help.c:197
 msgid "  \\r             reset (clear) the query buffer\n"
 msgstr "  \\r             izprazni medpomnilnik poizvedb\n"
 
-#: help.c:198
+#: help.c:199
 msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr "  \\s [DATOTEKA]  prika¾i zgodovino, ali jo shrani v datoteko\n"
 
-#: help.c:200
+#: help.c:201
 msgid "  \\w FILE        write query buffer to file\n"
 msgstr "  \\w DATOTEKA    zapi¹i vsebino medpomnilnika poizvedb v datoteko\n"
 
-#: help.c:203
+#: help.c:204
 msgid "Input/Output\n"
 msgstr "Vhod/Izhod\n"
 
-#: help.c:204
+#: help.c:205
 msgid "  \\echo [STRING] write string to standard output\n"
 msgstr "  \\echo [NIZ]    izpi¹i niz na standardni izhod\n"
 
-#: help.c:205
+#: help.c:206
 msgid "  \\i FILE        execute commands from file\n"
 msgstr "  \\i DATOTEKA    izvr¹i ukaze iz datoteke\n"
 
-#: help.c:206
+#: help.c:207
 msgid "  \\o [FILE]      send all query results to file or |pipe\n"
 msgstr "  \\o [DATOTEKA]  vse rezultate poizvedb preusmeri v datoteko ali |cev\n"
 
-#: help.c:207
+#: help.c:208
 msgid ""
 "  \\qecho [STRING]\n"
 "                 write string to query output stream (see \\o)\n"
 msgstr "  \\qecho [NIZ]   zapi¹i niz v izhodni tok poizvedbe (glejte \\o)\n"
 
-#: help.c:211
+#: help.c:212
 msgid "Informational\n"
 msgstr "Informativno\n"
 
-#: help.c:212
+#: help.c:213
 msgid "  \\d [NAME]      describe table, index, sequence, or view\n"
 msgstr "  \\d [IME]       opi¹i tabelo, indeks, zaporedje, ali pogled\n"
 
-#: help.c:213
+#: help.c:214
 msgid ""
 "  \\d{t|i|s|v|S} [PATTERN] (add \"+\" for more detail)\n"
 "                 list tables/indexes/sequences/views/system tables\n"
@@ -707,92 +707,92 @@ msgstr ""
 "  \\d{t|i|s|v|S} [VZOREC] (dodajte \"+\" za veè podrobnosti)\n"
 "                 na¹tej tabele/indekse/zaporedja/poglede/sistemske tabele\n"
 
-#: help.c:215
+#: help.c:216
 msgid "  \\da [PATTERN]  list aggregate functions\n"
 msgstr "  \\da [VZOREC]   na¹tej agregatne funkcije\n"
 
-#: help.c:216
+#: help.c:217
 msgid "  \\db [PATTERN]  list tablespaces (add \"+\" for more detail)\n"
 msgstr "  \\db [VZOREC]   na¹tej tabelske prostore (dodajte \"+\" za veè podrobnosti)\n"
 
-#: help.c:217
+#: help.c:218
 msgid "  \\dc [PATTERN]  list conversions\n"
 msgstr "  \\dc [VZOREC]   na¹tej pretvorbe med kodnimi tabelami\n"
 
-#: help.c:218
+#: help.c:219
 msgid "  \\dC            list casts\n"
 msgstr "  \\dC            na¹tej pretvorbe med podatkovnimi tipi (casts)\n"
 
-#: help.c:219
+#: help.c:220
 msgid "  \\dd [PATTERN]  show comment for object\n"
 msgstr "  \\dd [VZOREC]   prika¾i komentar objekta\n"
 
-#: help.c:220
+#: help.c:221
 msgid "  \\dD [PATTERN]  list domains\n"
 msgstr "  \\dD [VZOREC]   na¹tej domene\n"
 
-#: help.c:221
+#: help.c:222
 msgid "  \\df [PATTERN]  list functions (add \"+\" for more detail)\n"
 msgstr "  \\df [VZOREC]   na¹tej funkcije (dodajte \"+\" za veè podrobnosti)\n"
 
-#: help.c:222
+#: help.c:223
 msgid "  \\dg [PATTERN]  list groups\n"
 msgstr "  \\du [VZOREC]   na¹tej uporabni¹ke skupine\n"
 
-#: help.c:223
+#: help.c:224
 msgid "  \\dn [PATTERN]  list schemas (add \"+\" for more detail)\n"
 msgstr "  \\dn [VZOREC]   na¹tej sheme (dodajte \"+\" za veè podrobnosti)\n"
 
-#: help.c:224
+#: help.c:225
 msgid "  \\do [NAME]     list operators\n"
 msgstr "  \\do [IME]      na¹tej operatorje\n"
 
-#: help.c:225
+#: help.c:226
 msgid "  \\dl            list large objects, same as \\lo_list\n"
 msgstr "  \\dl            na¹tej velike objekte, enako kot \\lo_list\n"
 
-#: help.c:226
+#: help.c:227
 msgid "  \\dp [PATTERN]  list table, view, and sequence access privileges\n"
 msgstr "  \\dp [VZOREC]   na¹tej pravice za dostop do tabel, pogledov in zaporedij\n"
 
-#: help.c:227
+#: help.c:228
 msgid "  \\dT [PATTERN]  list data types (add \"+\" for more detail)\n"
 msgstr "  \\dT [VZOREC]   na¹tej podatkovne tipe (dodajte \"+\" za veè podrobnosti)\n"
 
-#: help.c:228
+#: help.c:229
 msgid "  \\du [PATTERN]  list users\n"
 msgstr "  \\du [VZOREC]   na¹tej uporabnike\n"
 
-#: help.c:229
+#: help.c:230
 msgid "  \\l             list all databases (add \"+\" for more detail)\n"
 msgstr "  \\l             na¹tej vse baze podatkov (dodajte \"+\" za veè podrobnosti)\n"
 
-#: help.c:230
+#: help.c:231
 msgid "  \\z [PATTERN]   list table, view, and sequence access privileges (same as \\dp)\n"
 msgstr "  \\z [VZOREC]    na¹tej pravice za dostop do tabel, pogledov in zaporedij (isto kot \\dp)\n"
 
-#: help.c:233
+#: help.c:234
 msgid "Formatting\n"
 msgstr "Oblikovanje\n"
 
-#: help.c:234
+#: help.c:235
 msgid "  \\a             toggle between unaligned and aligned output mode\n"
 msgstr "  \\a             preklopi med neporavnanim in poravnanim naèinom izpisa\n"
 
-#: help.c:235
+#: help.c:236
 msgid "  \\C [STRING]    set table title, or unset if none\n"
 msgstr "  \\C [NIZ]       nastavi naslov tabele, ali poèisti, èe niz ni podan\n"
 
-#: help.c:236
+#: help.c:237
 msgid "  \\f [STRING]    show or set field separator for unaligned query output\n"
 msgstr "  \\f [NIZ]       prika¾i ali nastavi loèitveni niz za neporavnan izpis rezultatov\n"
 
-#: help.c:237
+#: help.c:238
 #, c-format
 msgid "  \\H             toggle HTML output mode (currently %s)\n"
 msgstr "  \\H             preklopi HTML naèin izpisa (trenutno %s)\n"
 
-#: help.c:239
+#: help.c:240
 msgid ""
 "  \\pset NAME [VALUE]\n"
 "                 set table output option\n"
@@ -804,29 +804,29 @@ msgstr ""
 "                 (NAME := {format|border|expanded|fieldsep|footer|null|\n"
 "                 recordsep|tuples_only|title|tableattr|pager})\n"
 
-#: help.c:243
+#: help.c:244
 #, c-format
 msgid "  \\t             show only rows (currently %s)\n"
 msgstr "  \\t             prika¾i samo vrstice (trenutno %s)\n"
 
-#: help.c:245
+#: help.c:246
 msgid "  \\T [STRING]    set HTML <table> tag attributes, or unset if none\n"
 msgstr "  \\T [NIZ]       nastavi atribute HTML znaèke <table>, ali poèisti, èe niz ni podan\n"
 
-#: help.c:246
+#: help.c:247
 #, c-format
 msgid "  \\x             toggle expanded output (currently %s)\n"
 msgstr "  \\x             preklopi raz¹irjen naèin izpisa (trenutno %s)\n"
 
-#: help.c:250
+#: help.c:251
 msgid "Copy, Large Object\n"
 msgstr "Kopiranje in veliki objekti\n"
 
-#: help.c:251
+#: help.c:252
 msgid "  \\copy ...      perform SQL COPY with data stream to the client host\n"
 msgstr "  \\copy ...      izvedi SQL COPY med odjemalcem in stre¾nikom\n"
 
-#: help.c:252
+#: help.c:253
 msgid ""
 "  \\lo_export LOBOID FILE\n"
 "  \\lo_import FILE [COMMENT]\n"
@@ -838,11 +838,11 @@ msgstr ""
 "  \\lo_list\n"
 "  \\lo_unlink LOBOID    operacije za delo z velikimi objekti\n"
 
-#: help.c:285
+#: help.c:286
 msgid "Available help:\n"
 msgstr "Razpolo¾ljiva pomoè:\n"
 
-#: help.c:344
+#: help.c:345
 #, c-format
 msgid ""
 "Command:     %s\n"
@@ -857,7 +857,7 @@ msgstr ""
 "%s\n"
 "\n"
 
-#: help.c:357
+#: help.c:358
 #, c-format
 msgid ""
 "No help available for \"%-.*s\".\n"
@@ -3094,9 +3094,42 @@ msgstr "poberi smeti in (ob zahtevi) analiziraj bazo podatkov"
 
 #: sql_help.h:430
 msgid ""
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ table ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ table ]\n"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ table [ (column [, ...] ) ] ]"
 msgstr ""
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] [ ime_tabele ]\n"
-"VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ ime_tabele [ (stolpec [, ...] ) ] ]"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] [ ime_tabele ]\n"
+"VACUUM [ FULL | FREEZE ] [ VERBOSE ] ANALYZE [ ime_tabele [ (stolpec [, ...] ) ] ]"
+
+#: ../../port/exec.c:193
+#: ../../port/exec.c:307
+#: ../../port/exec.c:350
+#, c-format
+msgid "could not identify current directory: %s"
+msgstr "trenutnega imenika ni bilo mogoèe izvedeti: %s"
+
+#: ../../port/exec.c:323
+#: ../../port/exec.c:359
+#, c-format
+msgid "could not change directory to \"%s\""
+msgstr "delovnega imenika ni bilo mogoèe spremeniti v \"%s\""
+
+#: ../../port/exec.c:338
+#, c-format
+msgid "could not read symbolic link \"%s\""
+msgstr "simbolne povezave \"%s\" ni bilo mogoèe prebrati"
+
+#: ../../port/exec.c:569
+#, c-format
+msgid "child process exited with exit code %d"
+msgstr "podproces je zakljuèil izvajanje z izhodno kodo %d"
+
+#: ../../port/exec.c:572
+#, c-format
+msgid "child process was terminated by signal %d"
+msgstr "podproces je bil pokonèan s signalom %d"
+
+#: ../../port/exec.c:575
+#, c-format
+msgid "child process exited with unrecognized status %d"
+msgstr "podproces je zakljuèil izvajanje z neznanim statusom %d"
 
