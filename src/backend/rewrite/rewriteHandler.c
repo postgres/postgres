@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.61 1999/10/17 23:50:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.62 1999/11/01 05:18:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,7 +491,7 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	target = (Var *) (aggref->target);
 	if (! IsA(target, Var))
 		elog(ERROR, "rewrite: aggregates of views only allowed on simple variables for now");
-	rte = (RangeTblEntry *) nth(target->varno - 1, parsetree->rtable);
+	rte = rt_fetch(target->varno, parsetree->rtable);
 
 	resdom = makeNode(Resdom);
 	resdom->resno = 1;
@@ -916,7 +916,7 @@ ApplyRetrieveRule(Query *parsetree,
 
 	if (relation_level)
 	{
-		RangeTblEntry  *rte = (RangeTblEntry *) nth(rt_index - 1, rtable);
+		RangeTblEntry  *rte = rt_fetch(rt_index, rtable);
 
 		parsetree = (Query *) apply_RIR_view((Node *) parsetree,
 											 rt_index, rte,
@@ -1024,7 +1024,7 @@ fireRIRrules(Query *parsetree)
 	{
 		++rt_index;
 
-		rte = nth(rt_index - 1, parsetree->rtable);
+		rte = rt_fetch(rt_index, parsetree->rtable);
 
 		/*
 		 * If the table is not one named in the original FROM clause
@@ -1110,7 +1110,8 @@ fireRIRrules(Query *parsetree)
 		heap_close(rel, AccessShareLock);
 	}
 
-	fireRIRonSubselect((Node *) parsetree, NULL);
+	if (parsetree->hasSubLinks)
+		fireRIRonSubselect((Node *) parsetree, NULL);
 
 	parsetree->qual = modifyAggrefQual(parsetree->qual, parsetree);
 
@@ -1246,8 +1247,7 @@ fireRules(Query *parsetree,
 					break;
 			}
 
-			rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
-										parsetree->rtable);
+			rte = rt_fetch(parsetree->resultRelation, parsetree->rtable);
 			if (!rte->skipAcl)
 			{
 				acl_rc = pg_aclcheck(rte->relname,
@@ -1546,50 +1546,6 @@ QueryRewriteOne(Query *parsetree)
 }
 
 
-/* ----------
- * RewritePreprocessQuery -
- *	adjust details in the parsetree, the rule system
- *	depends on
- * ----------
- */
-static void
-RewritePreprocessQuery(Query *parsetree)
-{
-	/* ----------
-	 * if the query has a resultRelation, reassign the
-	 * result domain numbers to the attribute numbers in the
-	 * target relation. FixNew() depends on it when replacing
-	 * *new* references in a rule action by the expressions
-	 * from the rewritten query.
-	 * resjunk targets are somewhat arbitrarily given a resno of 0;
-	 * this is to prevent FixNew() from matching them to var nodes.
-	 * ----------
-	 */
-	if (parsetree->resultRelation > 0)
-	{
-		RangeTblEntry *rte;
-		Relation	rd;
-		List	   *tl;
-
-		rte = (RangeTblEntry *) nth(parsetree->resultRelation - 1,
-									parsetree->rtable);
-		rd = heap_openr(rte->relname, AccessShareLock);
-
-		foreach(tl, parsetree->targetList)
-		{
-			TargetEntry *tle = (TargetEntry *) lfirst(tl);
-
-			if (! tle->resdom->resjunk)
-				tle->resdom->resno = attnameAttNum(rd, tle->resdom->resname);
-			else
-				tle->resdom->resno = 0;
-		}
-
-		heap_close(rd, AccessShareLock);
-	}
-}
-
-
 /*
  * BasicQueryRewrite -
  *	  rewrite one query via query rewrite system, possibly returning 0
@@ -1606,20 +1562,12 @@ BasicQueryRewrite(Query *parsetree)
 	/*
 	 * Step 1
 	 *
-	 * There still seems something broken with the resdom numbers so we
-	 * reassign them first.
-	 */
-	RewritePreprocessQuery(parsetree);
-
-	/*
-	 * Step 2
-	 *
 	 * Apply all non-SELECT rules possibly getting 0 or many queries
 	 */
 	querylist = QueryRewriteOne(parsetree);
 
 	/*
-	 * Step 3
+	 * Step 2
 	 *
 	 * Apply all the RIR rules on each query
 	 */
@@ -1629,17 +1577,20 @@ BasicQueryRewrite(Query *parsetree)
 
 		/*
 		 * If the query was marked having aggregates, check if this is
-		 * still true after rewriting. This check must get expanded when
-		 * someday aggregates can appear somewhere else than in the
-		 * targetlist or the having qual.
+		 * still true after rewriting.  Ditto for sublinks.
+		 *
+		 * This check must get expanded when someday aggregates can appear
+		 * somewhere else than in the targetlist or the having qual.
 		 */
 		if (query->hasAggs)
 			query->hasAggs = checkQueryHasAggs((Node *) (query->targetList))
 				|| checkQueryHasAggs((Node *) (query->havingQual));
-		query->hasSubLinks = checkQueryHasSubLink((Node *) (query->qual))
-			|| checkQueryHasSubLink((Node *) (query->havingQual));
+		if (query->hasSubLinks)
+			query->hasSubLinks = checkQueryHasSubLink((Node *) (query->qual))
+				|| checkQueryHasSubLink((Node *) (query->havingQual));
 		results = lappend(results, query);
 	}
+
 	return results;
 }
 
@@ -1809,8 +1760,7 @@ Except_Intersect_Rewrite(Query *parsetree)
 	Node	   *limitOffset,
 			   *limitCount;
 	CmdType		commandType = CMD_SELECT;
-	List	   *rtable_insert = NIL;
-
+	RangeTblEntry *rtable_insert = NULL;
 	List	   *prev_target = NIL;
 
 	/*
@@ -1837,15 +1787,15 @@ Except_Intersect_Rewrite(Query *parsetree)
 	 */
 	if (parsetree->commandType == CMD_INSERT)
 	{
-		parsetree->commandType = CMD_SELECT;
-		commandType = CMD_INSERT;
-		parsetree->resultRelation = 0;
-
 		/*
 		 * The result relation ( = the one to insert into) has to be
 		 * attached to the rtable list of the new top node
 		 */
-		rtable_insert = nth(length(parsetree->rtable) - 1, parsetree->rtable);
+		rtable_insert = rt_fetch(parsetree->resultRelation, parsetree->rtable);
+
+		parsetree->commandType = CMD_SELECT;
+		commandType = CMD_INSERT;
+		parsetree->resultRelation = 0;
 	}
 
 	/*
