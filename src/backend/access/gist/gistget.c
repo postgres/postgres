@@ -47,6 +47,20 @@
  
 #include "access/gist.h"
 
+#include "executor/execdebug.h"
+
+#include "utils/palloc.h"
+
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#else
+# include <string.h>
+#endif
+
+#include <stdio.h>
+#include "storage/ipc.h"
+#include "storage/bufmgr.h"
+
 static OffsetNumber gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, 
 				 ScanDirection dir);
 static RetrieveIndexResult gistscancache(IndexScanDesc s, ScanDirection dir);
@@ -306,7 +320,6 @@ gistfindnext(IndexScanDesc s, Page p, OffsetNumber n, ScanDirection dir)
     char *it;
     GISTPageOpaque po;
     GISTScanOpaque so;
-    GISTENTRY de;
     GISTSTATE *giststate;
 
     maxoff = PageGetMaxOffsetNumber(p);

@@ -56,6 +56,8 @@
 #include "nodes/memnodes.h"  
 #include "nodes/execnodes.h"
 
+#include <stdio.h>
+#include "storage/ipc.h"
 #include "storage/bufmgr.h"
 
 #include "catalog/pg_index.h"
@@ -66,10 +68,30 @@
 #include "nodes/parsenodes.h"
 #include "tcop/dest.h"  
 #include "executor/execdesc.h"
-#include <stdio.h>
 #include "executor/executor.h"
 
 #include "access/heapam.h"
+
+#include "storage/spin.h"
+#include "utils/hsearch.h"
+#include "storage/shmem.h"
+#include "storage/lock.h"
+#include "storage/lmgr.h"
+
+#include "utils/palloc.h"
+
+#include "catalog/index.h"
+
+#include "access/genam.h"
+
+#include <string.h>
+#ifndef HAVE_MEMMOVE
+# include "regex/utils.h"
+#endif
+
+#include "access/gistscan.h"
+
+#include "fmgr.h"
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
@@ -404,11 +426,10 @@ gistdoinsert(Relation r,
 	     IndexTuple itup, /* itup contains compressed entry */
 	     GISTSTATE *giststate)
 {
-    char *datum, *newdatum;
-    GISTENTRY entry, tmpdentry;
+    GISTENTRY tmpdentry;
     InsertIndexResult res;
     OffsetNumber l;
-    GISTSTACK *stack, *tmpstk;
+    GISTSTACK *stack;
     Buffer buffer;
     BlockNumber blk;
     Page page;
@@ -519,7 +540,7 @@ gistAdjustKeys(Relation r,
     Buffer b;
     bool result;
     bytea *evec;
-    GISTENTRY centry, *ev0p, *ev1p, *dentryp;
+    GISTENTRY centry, *ev0p, *ev1p;
     int size, datumsize; 
     IndexTuple tid;
     
@@ -648,7 +669,6 @@ gistSplit(Relation r,
     bool *decompvec;
     IndexTuple item_1;
     GISTENTRY tmpdentry, tmpentry;
-    char *datum;
     
     isnull = (char *) palloc(r->rd_rel->relnatts);
     for (blank = 0; blank < r->rd_rel->relnatts; blank++)
@@ -850,9 +870,6 @@ gistintinsert(Relation r,
 	      IndexTuple rtup, /* entry for new page */
 	      GISTSTATE *giststate)
 {
-    IndexTuple old;
-    Buffer b;
-    Page p;
     ItemPointerData ltid;
 
     if (stk == (GISTSTACK *) NULL) {
@@ -877,10 +894,6 @@ gistentryinserttwo(Relation r, GISTSTACK *stk, IndexTuple ltup,
     Buffer b;
     Page p;
     InsertIndexResult res;
-    OffsetNumber off;
-    bytea *evec;
-    char *datum;
-    int size;
     GISTENTRY tmpentry;
     IndexTuple newtup;
 
@@ -919,9 +932,6 @@ gistentryinsert(Relation r, GISTSTACK *stk, IndexTuple tup,
     Buffer b;
     Page p;
     InsertIndexResult res;
-    bytea *evec;
-    char *datum;
-    int size;
     OffsetNumber off;
     GISTENTRY tmpentry;
     IndexTuple newtup;
@@ -1009,9 +1019,9 @@ gistchoose(Relation r, Page p, IndexTuple it, /* it has compressed entry */
 {
     OffsetNumber maxoff;
     OffsetNumber i;
-    char *ud, *id;
+    char *id;
     char *datum;
-    float usize, dsize;
+    float usize;
     OffsetNumber which;
     float which_grow;
     GISTENTRY entry, identry;
