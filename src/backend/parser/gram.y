@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.259 2001/10/05 06:37:42 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.260 2001/10/08 18:16:59 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4921,7 +4921,6 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					d = makeNode(TypeName);
 					d->name = xlateSqlType("date");
 					d->setof = FALSE;
 					d->typmod = -1;
@@ -4931,7 +4930,7 @@ c_expr:  attr
 		| CURRENT_TIME
 				{
 					/*
-					 * Translate as "time('now'::text)".
+					 * Translate as "timetz('now'::text)".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
@@ -4946,8 +4945,7 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					d = makeNode(TypeName);
-					d->name = xlateSqlType("time");
+					d->name = xlateSqlType("timetz");
 					d->setof = FALSE;
 					d->typmod = 0;
 
@@ -4956,7 +4954,7 @@ c_expr:  attr
 		| CURRENT_TIME '(' Iconst ')'
 				{
 					/*
-					 * Translate as "time('now'::text)".
+					 * Translate as "timetz('now'::text)".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
@@ -4971,7 +4969,6 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					d = makeNode(TypeName);
 					d->name = xlateSqlType("timetz");
 					d->setof = FALSE;
 					if (($3 < 0) || ($3 > 13))
@@ -5002,7 +4999,6 @@ c_expr:  attr
 					/* SQL99 mandates a default precision of 6
 					 * for timestamp. - thomas 2001-10-04
 					 */
-					d = makeNode(TypeName);
 					d->name = xlateSqlType("timestamptz");
 					d->setof = FALSE;
 					d->typmod = 6;
@@ -5012,7 +5008,7 @@ c_expr:  attr
 		| CURRENT_TIMESTAMP '(' Iconst ')'
 				{
 					/*
-					 * Translate as "timestamp('now'::text)".
+					 * Translate as "timestamptz('now'::text)".
 					 * See comments for CURRENT_DATE.
 					 */
 					A_Const *s = makeNode(A_Const);
@@ -5027,7 +5023,6 @@ c_expr:  attr
 					t->setof = FALSE;
 					t->typmod = -1;
 
-					d = makeNode(TypeName);
 					d->name = xlateSqlType("timestamptz");
 					d->setof = FALSE;
 					if (($3 < 0) || ($3 > 13))
