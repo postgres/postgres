@@ -23,7 +23,6 @@
 #include "executor/executor.h"
 #include "executor/nodeAgg.h"
 #include "optimizer/clauses.h"
-#include "optimizer/planmain.h"
 #include "parser/parse_type.h"
 #include "utils/syscache.h"
 
@@ -443,7 +442,7 @@ ExecAgg(Agg *node)
 		 * qualifications it is ignored and the next group is fetched
 		 */
 		if (node->plan.qual != NULL)
-			qual_result = ExecQual(fix_opids(node->plan.qual), econtext);
+			qual_result = ExecQual(node->plan.qual, econtext);
 		else
 			qual_result = false;
 

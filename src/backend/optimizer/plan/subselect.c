@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.22 1999/08/21 03:49:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.23 1999/08/22 20:14:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,29 +48,13 @@ int			PlannerPlanId;		/* to assign unique ID to subquery plans */
 static int
 _new_param(Var *var, int varlevel)
 {
-	List	   *last;
-	int			i = 0;
+	Var		   *paramVar = (Var *) copyObject(var);
 
-	if (PlannerParamVar == NULL)
-		last = PlannerParamVar = makeNode(List);
-	else
-	{
-		for (last = PlannerParamVar;;)
-		{
-			i++;
-			if (lnext(last) == NULL)
-				break;
-			last = lnext(last);
-		}
-		lnext(last) = makeNode(List);
-		last = lnext(last);
-	}
+	paramVar->varlevelsup = varlevel;
 
-	lnext(last) = NULL;
-	lfirst(last) = makeVar(var->varno, var->varattno, var->vartype,
-				var->vartypmod, varlevel, var->varnoold, var->varoattno);
+	PlannerParamVar = lappend(PlannerParamVar, paramVar);
 
-	return i;
+	return length(PlannerParamVar) - 1;
 }
 
 /*
@@ -193,8 +177,7 @@ _make_subplan(SubLink *slink)
 			List	   *rside = lnext(((Expr *) lfirst(lst))->args);
 			TargetEntry *te = nth(i, plan->targetlist);
 			Var		   *var = makeVar(0, 0, te->resdom->restype,
-									  te->resdom->restypmod,
-									  0, 0, 0);
+									  te->resdom->restypmod, 0);
 			Param	   *prm = makeNode(Param);
 
 			prm->paramkind = PARAM_EXEC;
@@ -214,7 +197,7 @@ _make_subplan(SubLink *slink)
 	}
 	else if (node->parParam == NULL && slink->subLinkType == EXISTS_SUBLINK)
 	{
-		Var		   *var = makeVar(0, 0, BOOLOID, -1, 0, 0, 0);
+		Var		   *var = makeVar(0, 0, BOOLOID, -1, 0);
 		Param	   *prm = makeNode(Param);
 
 		prm->paramkind = PARAM_EXEC;

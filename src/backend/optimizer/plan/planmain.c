@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.41 1999/08/21 03:49:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.42 1999/08/22 20:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
 
 
 static Plan *subplanner(Query *root, List *flat_tlist, List *qual);
-static Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
 /*
  * query_planner
@@ -84,11 +83,6 @@ query_planner(Query *root,
 	 * topmost result node.
 	 */
 	qual = pull_constant_clauses(qual, &constant_qual);
-	/*
-	 * The opids for the variable qualifications will be fixed later, but
-	 * someone seems to think that the constant quals need to be fixed here.
-	 */
-	fix_opids(constant_qual);
 
 	/*
 	 * Create a target list that consists solely of (resdom var) target
@@ -124,8 +118,7 @@ query_planner(Query *root,
 				{
 					SeqScan    *scan = make_seqscan(tlist,
 													NIL,
-													root->resultRelation,
-													(Plan *) NULL);
+													root->resultRelation);
 
 					if (constant_qual != NULL)
 						return ((Plan *) make_result(tlist,
@@ -141,13 +134,9 @@ query_planner(Query *root,
 	}
 
 	/*
-	 * Find the subplan (access path) and destructively modify the target
-	 * list of the newly created subplan to contain the appropriate join
-	 * references.
+	 * Choose the best access path and build a plan for it.
 	 */
 	subplan = subplanner(root, level_tlist, qual);
-
-	set_tlist_references(subplan);
 
 	/*
 	 * Build a result node linking the plan if we have constant quals
@@ -158,33 +147,24 @@ query_planner(Query *root,
 									   (Node *) constant_qual,
 									   subplan);
 
-		/*
-		 * Fix all varno's of the Result's node target list.
-		 */
-		set_tlist_references(subplan);
-
 		root->query_pathkeys = NIL; /* result is unordered, no? */
 
 		return subplan;
 	}
 
 	/*
-	 * fix up the flattened target list of the plan root node so that
-	 * expressions are evaluated.  this forces expression evaluations that
-	 * may involve expensive function calls to be delayed to the very last
-	 * stage of query execution.  this could be bad. but it is joey's
-	 * responsibility to optimally push these expressions down the plan
-	 * tree.  -- Wei
+	 * Replace the toplevel plan node's flattened target list with the
+	 * targetlist given by my caller, so that expressions are evaluated.
 	 *
-	 * Note: formerly there was a test here to skip the unflatten call if
-	 * we expected union_planner to insert a Group or Agg node above our
-	 * result. However, now union_planner tells us exactly what it wants
-	 * returned, and we just do it.  Much cleaner.
+	 * This implies that all expression evaluations are done at the root
+	 * of the plan tree.  Once upon a time there was code to try to push
+	 * expensive function calls down to lower plan nodes, but that's dead
+	 * code and has been for a long time...
 	 */
 	else
 	{
-		subplan->targetlist = unflatten_tlist(tlist,
-											  subplan->targetlist);
+		subplan->targetlist = tlist;
+
 		return subplan;
 	}
 
@@ -330,36 +310,11 @@ subplanner(Query *root,
 
 	/* Nothing for it but to sort the cheapestpath...
 	 *
-	 * we indicate we failed to sort the plan, and let the caller
-	 * stick the appropriate sortplan on top.
+	 * We indicate we failed to sort the plan, and let the caller
+	 * stick the appropriate sort node on top.  union_planner has to be
+	 * able to add a sort node anyway, so no need for extra code here.
 	 */
 	root->query_pathkeys = NIL; /* sorry, it ain't sorted */
 
 	return create_plan(final_rel->cheapestpath);
-}
-
-/*****************************************************************************
- *
- *****************************************************************************/
-
-static Result *
-make_result(List *tlist,
-			Node *resconstantqual,
-			Plan *subplan)
-{
-	Result	   *node = makeNode(Result);
-	Plan	   *plan = &node->plan;
-
-#ifdef NOT_USED
-	tlist = generate_fjoin(tlist);
-#endif
-	plan->cost = (subplan ? subplan->cost : 0);
-	plan->state = (EState *) NULL;
-	plan->targetlist = tlist;
-	plan->lefttree = subplan;
-	plan->righttree = NULL;
-	node->resconstantqual = resconstantqual;
-	node->resstate = NULL;
-
-	return node;
 }

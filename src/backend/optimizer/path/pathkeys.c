@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.15 1999/08/21 03:49:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.16 1999/08/22 20:14:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,8 +24,6 @@
 #include "utils/lsyscache.h"
 
 static PathKeyItem *makePathKeyItem(Node *key, Oid sortop);
-static bool pathkeyitem_equal(PathKeyItem *a, PathKeyItem *b);
-static bool pathkeyitem_member(PathKeyItem *a, List *l);
 static Var *find_indexkey_var(int indexkey, List *tlist);
 static List *build_join_pathkey(List *pathkeys, List *join_rel_tlist,
 								List *joinclauses);
@@ -119,45 +117,6 @@ makePathKeyItem(Node *key, Oid sortop)
  ****************************************************************************/
 
 /*
- * Compare two pathkey items for equality.
- *
- * This is unlike straight equal() because when the two keys are both Vars,
- * we want to apply the weaker var_equal() condition (doesn't check varnoold
- * or varoattno).  But if that fails, try equal() so that we recognize
- * functional-index keys.
- */
-static bool
-pathkeyitem_equal (PathKeyItem *a, PathKeyItem *b)
-{
-	Assert(a && IsA(a, PathKeyItem));
-	Assert(b && IsA(b, PathKeyItem));
-
-	if (a->sortop != b->sortop)
-		return false;
-	if (var_equal((Var *) a->key, (Var *) b->key))
-		return true;
-	return equal(a->key, b->key);
-}
-
-/*
- * member() test using pathkeyitem_equal
- */
-static bool
-pathkeyitem_member (PathKeyItem *a, List *l)
-{
-	List	   *i;
-
-	Assert(a && IsA(a, PathKeyItem));
-
-	foreach(i, l)
-	{
-		if (pathkeyitem_equal(a, (PathKeyItem *) lfirst(i)))
-			return true;
-	}
-	return false;
-}
-
-/*
  * compare_pathkeys
  *	  Compare two pathkeys to see if they are equivalent, and if not whether
  *	  one is "better" than the other.
@@ -191,7 +150,7 @@ compare_pathkeys(List *keys1, List *keys2)
 		{
 			foreach(i, subkey1)
 			{
-				if (! pathkeyitem_member((PathKeyItem *) lfirst(i), subkey2))
+				if (! member(lfirst(i), subkey2))
 				{
 					key1_subsetof_key2 = false;
 					break;
@@ -203,7 +162,7 @@ compare_pathkeys(List *keys1, List *keys2)
 		{
 			foreach(i, subkey2)
 			{
-				if (! pathkeyitem_member((PathKeyItem *) lfirst(i), subkey1))
+				if (! member(lfirst(i), subkey1))
 				{
 					key2_subsetof_key1 = false;
 					break;
@@ -336,8 +295,8 @@ build_index_pathkeys(Query *root, RelOptInfo *rel, RelOptInfo *index)
 			int32		type_mod = get_atttypmod(reloid, varattno);
 
 			funcargs = lappend(funcargs,
-							   makeVar(relid, varattno, vartypeid, type_mod,
-									   0, relid, varattno));
+							   makeVar(relid, varattno, vartypeid,
+									   type_mod, 0));
 			indexkeys++;
 		}
 
@@ -483,13 +442,13 @@ build_join_pathkey(List *pathkey,
 	foreach(i, pathkey)
 	{
 		PathKeyItem *key = (PathKeyItem *) lfirst(i);
-		Expr	   *tlist_key;
+		Node	   *tlist_key;
 
 		Assert(key && IsA(key, PathKeyItem));
 
-		tlist_key = matching_tlist_var((Var *) key->key, join_rel_tlist);
+		tlist_key = matching_tlist_expr(key->key, join_rel_tlist);
 		if (tlist_key)
-			new_pathkey = lcons(makePathKeyItem((Node *) tlist_key,
+			new_pathkey = lcons(makePathKeyItem(tlist_key,
 												key->sortop),
 								new_pathkey);
 
@@ -498,17 +457,17 @@ build_join_pathkey(List *pathkey,
 			RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(j);
 			Expr	   *joinclause = restrictinfo->clause;
 			/* We assume the clause is a binary opclause... */
-			Var		   *l = get_leftop(joinclause);
-			Var		   *r = get_rightop(joinclause);
-			Var		   *other_var = NULL;
+			Node	   *l = (Node *) get_leftop(joinclause);
+			Node	   *r = (Node *) get_rightop(joinclause);
+			Node	   *other_var = NULL;
 			Oid			other_sortop = InvalidOid;
 
-			if (var_equal((Var *) key->key, l))
+			if (equal(key->key, l))
 			{
 				other_var = r;
 				other_sortop = restrictinfo->right_sortop;
 			}
-			else if (var_equal((Var *) key->key, r))
+			else if (equal(key->key, r))
 			{
 				other_var = l;
 				other_sortop = restrictinfo->left_sortop;
@@ -516,9 +475,9 @@ build_join_pathkey(List *pathkey,
 
 			if (other_var && other_sortop)
 			{
-				tlist_key = matching_tlist_var(other_var, join_rel_tlist);
+				tlist_key = matching_tlist_expr(other_var, join_rel_tlist);
 				if (tlist_key)
-					new_pathkey = lcons(makePathKeyItem((Node *) tlist_key,
+					new_pathkey = lcons(makePathKeyItem(tlist_key,
 														other_sortop),
 										new_pathkey);
 			}
@@ -638,11 +597,8 @@ find_mergeclauses_for_pathkeys(List *pathkeys, List *restrictinfos)
 		foreach(j, pathkey)
 		{
 			PathKeyItem	   *keyitem = lfirst(j);
-			Var			   *keyvar = (Var *) keyitem->key;
+			Node		   *key = keyitem->key;
 			List		   *k;
-
-			if (! IsA(keyvar, Var))
-				continue;		/* for now, only Vars can be mergejoined */
 
 			foreach(k, restrictinfos)
 			{
@@ -650,8 +606,8 @@ find_mergeclauses_for_pathkeys(List *pathkeys, List *restrictinfos)
 
 				Assert(restrictinfo->mergejoinoperator != InvalidOid);
 
-				if ((var_equal(keyvar, get_leftop(restrictinfo->clause)) ||
-					 var_equal(keyvar, get_rightop(restrictinfo->clause))) &&
+				if ((equal(key, get_leftop(restrictinfo->clause)) ||
+					 equal(key, get_rightop(restrictinfo->clause))) &&
 					! member(restrictinfo, mergeclauses))
 				{
 					matched_restrictinfo = restrictinfo;
@@ -705,8 +661,10 @@ make_pathkeys_for_mergeclauses(List *mergeclauses, List *tlist)
 	foreach(i, mergeclauses)
 	{
 		RestrictInfo *restrictinfo = (RestrictInfo *) lfirst(i);
-		Var		   *key;
+		Node	   *key;
 		Oid			sortop;
+
+		Assert(restrictinfo->mergejoinoperator != InvalidOid);
 
 		/*
 		 * Find the key and sortop needed for this mergeclause.
@@ -714,14 +672,13 @@ make_pathkeys_for_mergeclauses(List *mergeclauses, List *tlist)
 		 * We can use either side of the mergeclause, since we haven't yet
 		 * committed to which side will be inner.
 		 */
-		Assert(restrictinfo->mergejoinoperator != InvalidOid);
-		key = (Var *) matching_tlist_var(get_leftop(restrictinfo->clause),
-										 tlist);
+		key = matching_tlist_expr((Node *) get_leftop(restrictinfo->clause),
+								  tlist);
 		sortop = restrictinfo->left_sortop;
 		if (! key)
 		{
-			key = (Var *) matching_tlist_var(get_rightop(restrictinfo->clause),
-											 tlist);
+			key = matching_tlist_expr((Node *) get_rightop(restrictinfo->clause),
+									  tlist);
 			sortop = restrictinfo->right_sortop;
 		}
 		if (! key)
@@ -730,7 +687,7 @@ make_pathkeys_for_mergeclauses(List *mergeclauses, List *tlist)
 		 * Add a pathkey sublist for this sort item
 		 */
 		pathkeys = lappend(pathkeys,
-						   lcons(makePathKeyItem((Node *) key, sortop),
+						   lcons(makePathKeyItem(key, sortop),
 								 NIL));
 	}
 

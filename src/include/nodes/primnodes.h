@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.34 1999/08/21 03:49:09 tgl Exp $
+ * $Id: primnodes.h,v 1.35 1999/08/22 20:15:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,15 +120,23 @@ typedef struct Expr
 /* ----------------
  * Var
  *		varno			- index of this var's relation in the range table
- *						  (could be INNER or OUTER)
+ *						  (could also be INNER or OUTER)
  *		varattno		- attribute number of this var, or zero for all
- *		vartype			- pg_type tuple oid for the type of this var
+ *		vartype			- pg_type tuple OID for the type of this var
  *		vartypmod		- pg_attribute typmod value
- *		varlevelsup		- for subquery variables referencing outer relations
- *		varnoold		- keep varno around in case it got changed to INNER/
- *						  OUTER (see match_varid)
- *		varoattno		- attribute number of this var
- *						  [ '(varnoold varoattno) was varid   -ay 2/95]
+ *		varlevelsup		- for subquery variables referencing outer relations;
+ *						  0 in a normal var, >0 means N levels up
+ *		varnoold		- original value of varno
+ *		varoattno		- original value of varattno
+ *
+ * Note: during parsing/planning, varnoold/varoattno are always just copies
+ * of varno/varattno.  At the tail end of planning, Var nodes appearing in
+ * upper-level plan nodes are reassigned to point to the outputs of their
+ * subplans; for example, in a join node varno becomes INNER or OUTER and
+ * varattno becomes the index of the proper element of that subplan's target
+ * list.  But varnoold/varoattno continue to hold the original values.
+ * The code doesn't really need varnoold/varoattno, but they are very useful
+ * for debugging and interpreting completed plans, so we keep them around.
  * ----------------
  */
 #define    INNER		65000
@@ -145,8 +153,8 @@ typedef struct Var
 	Oid			vartype;
 	int32		vartypmod;
 	Index		varlevelsup;	/* erased by upper optimizer */
-	Index		varnoold;		/* only used by optimizer */
-	AttrNumber	varoattno;		/* only used by optimizer */
+	Index		varnoold;		/* mainly for debugging --- see above */
+	AttrNumber	varoattno;
 } Var;
 
 /* ----------------

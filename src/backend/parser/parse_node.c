@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.29 1999/07/19 00:26:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.30 1999/08/22 20:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -216,8 +216,7 @@ make_var(ParseState *pstate, Oid relid, char *refname,
 	vartypeid = get_atttype(relid, attid);
 	type_mod = get_atttypmod(relid, attid);
 
-	varnode = makeVar(vnum, attid, vartypeid, type_mod,
-					  sublevels_up, vnum, attid);
+	varnode = makeVar(vnum, attid, vartypeid, type_mod, sublevels_up);
 
 	return varnode;
 }

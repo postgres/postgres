@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.47 1999/08/16 02:17:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.48 1999/08/22 20:14:53 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -24,11 +24,19 @@
 #include "nodes/plannodes.h"
 #include "optimizer/clauses.h"
 #include "optimizer/internal.h"
+#include "optimizer/tlist.h"
 #include "optimizer/var.h"
 #include "utils/lsyscache.h"
 
 
-static bool fix_opids_walker(Node *node, void *context);
+typedef struct {
+	List	   *groupClause;
+	List	   *targetList;
+} check_subplans_for_ungrouped_vars_context;
+
+static bool pull_agg_clause_walker(Node *node, List **listptr);
+static bool check_subplans_for_ungrouped_vars_walker(Node *node,
+					check_subplans_for_ungrouped_vars_context *context);
 static int is_single_func(Node *node);
 
 
@@ -351,10 +359,116 @@ pull_constant_clauses(List *quals, List **constantQual)
 		else
 			restqual = lcons(lfirst(q), restqual);
 	}
-	freeList(quals);			/* XXX seems a tad risky? */
 	*constantQual = constqual;
 	return restqual;
 }
+
+/*
+ * pull_agg_clause
+ *	  Recursively pulls all Aggref nodes from an expression tree.
+ *
+ *	  Returns list of Aggref nodes found.  Note the nodes themselves are not
+ *	  copied, only referenced.
+ */
+List *
+pull_agg_clause(Node *clause)
+{
+	List	   *result = NIL;
+
+	pull_agg_clause_walker(clause, &result);
+	return result;
+}
+
+static bool
+pull_agg_clause_walker(Node *node, List **listptr)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+	{
+		*listptr = lappend(*listptr, node);
+		/* continue, to iterate over agg's arg as well (do nested aggregates
+		 * actually work?)
+		 */
+	}
+	return expression_tree_walker(node, pull_agg_clause_walker,
+								  (void *) listptr);
+}
+
+/*
+ * check_subplans_for_ungrouped_vars
+ *		Check for subplans that are being passed ungrouped variables as
+ *		parameters; return TRUE if any are found.
+ *
+ * In most contexts, ungrouped variables will be detected by the parser (see
+ * parse_agg.c, exprIsAggOrGroupCol()). But that routine currently does not
+ * check subplans, because the necessary info is not computed until the
+ * planner runs.  So we do it here, after we have processed the subplan.
+ * This ought to be cleaned up someday.
+ *
+ * 'clause' is the expression tree to be searched for subplans.
+ * 'groupClause' is the GROUP BY list (a list of GroupClause nodes).
+ * 'targetList' is the target list that the group clauses refer to.
+ */
+bool
+check_subplans_for_ungrouped_vars(Node *clause,
+								  List *groupClause,
+								  List *targetList)
+{
+	check_subplans_for_ungrouped_vars_context context;
+
+	context.groupClause = groupClause;
+	context.targetList = targetList;
+	return check_subplans_for_ungrouped_vars_walker(clause, &context);
+}
+
+static bool
+check_subplans_for_ungrouped_vars_walker(Node *node,
+					check_subplans_for_ungrouped_vars_context *context)
+{
+	if (node == NULL)
+		return false;
+	/*
+	 * We can ignore Vars other than in subplan args lists,
+	 * since the parser already checked 'em.
+	 */
+	if (is_subplan(node))
+	{
+		/*
+		 * The args list of the subplan node represents attributes from
+		 * outside passed into the sublink.
+		 */
+		List	*t;
+
+		foreach(t, ((Expr *) node)->args)
+		{
+			Node	   *thisarg = lfirst(t);
+			bool		contained_in_group_clause = false;
+			List	   *gl;
+
+			foreach(gl, context->groupClause)
+			{
+				GroupClause	   *gcl = lfirst(gl);
+				Node		   *groupexpr;
+
+				groupexpr = get_sortgroupclause_expr(gcl,
+													 context->targetList);
+				if (equal(thisarg, groupexpr))
+				{
+					contained_in_group_clause = true;
+					break;
+				}
+			}
+
+			if (!contained_in_group_clause)
+				return true;	/* found an ungrouped argument */
+		}
+	}
+	return expression_tree_walker(node,
+								  check_subplans_for_ungrouped_vars_walker,
+								  (void *) context);
+}
+
 
 /*
  * clause_relids_vars
@@ -414,31 +528,6 @@ NumRelids(Node *clause)
 
 	freeList(varno_list);
 	return result;
-}
-
-/*
- * fix_opids
- *	  Calculate opid field from opno for each Oper node in given tree.
- *	  (The given tree can be anything expression_tree_walker handles.)
- *
- * Returns its argument, which has been modified in-place.
- */
-List *
-fix_opids(List *clauses)
-{
-	/* This tree walk requires no special setup, so away we go... */
-	fix_opids_walker((Node *) clauses, NULL);
-	return clauses;
-}
-
-static bool
-fix_opids_walker (Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (is_opclause(node))
-		replace_opid((Oper *) ((Expr *) node)->oper);
-	return expression_tree_walker(node, fix_opids_walker, context);
 }
 
 /*

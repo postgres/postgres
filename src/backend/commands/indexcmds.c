@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.9 1999/07/17 20:16:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.10 1999/08/22 20:14:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "catalog/pg_type.h"
 #include "commands/defrem.h"
 #include "optimizer/clauses.h"
+#include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
 #include "utils/builtins.h"
@@ -142,7 +143,7 @@ DefineIndex(char *heapRelationName,
 	if (predicate != NULL && rangetable != NIL)
 	{
 		cnfPred = cnfify((Expr *) copyObject(predicate), true);
-		fix_opids(cnfPred);
+		fix_opids((Node *) cnfPred);
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 
@@ -285,7 +286,7 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	if (rangetable != NIL)
 	{
 		cnfPred = cnfify((Expr *) copyObject(predicate), true);
-		fix_opids(cnfPred);
+		fix_opids((Node *) cnfPred);
 		CheckPredicate(cnfPred, rangetable, relationId);
 	}
 

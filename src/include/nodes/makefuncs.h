@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: makefuncs.h,v 1.20 1999/07/15 23:03:52 momjian Exp $
+ * $Id: makefuncs.h,v 1.21 1999/08/22 20:15:00 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,9 +25,7 @@ extern Var *makeVar(Index varno,
 		AttrNumber varattno,
 		Oid vartype,
 		int32 vartypmod,
-		Index varlevelsup,
-		Index varnoold,
-		AttrNumber varoattno);
+		Index varlevelsup);
 
 extern TargetEntry *makeTargetEntry(Resdom *resdom, Node *expr);
 

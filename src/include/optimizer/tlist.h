@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.21 1999/08/21 03:49:15 tgl Exp $
+ * $Id: tlist.h,v 1.22 1999/08/22 20:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,20 +15,16 @@
 
 #include "nodes/relation.h"
 
-extern TargetEntry *tlistentry_member(Var *var, List *targetlist);
-extern Expr *matching_tlist_var(Var *var, List *targetlist);
+extern TargetEntry *tlistentry_member(Node *node, List *targetlist);
+extern Node *matching_tlist_expr(Node *node, List *targetlist);
+extern Resdom *tlist_member(Node *node, List *targetlist);
+
 extern void add_var_to_tlist(RelOptInfo *rel, Var *var);
 extern TargetEntry *create_tl_element(Var *var, int resdomno);
-extern List *get_actual_tlist(List *tlist);
-extern Resdom *tlist_member(Var *var, List *tlist);
 
-extern TargetEntry *match_varid(Var *test_var, List *tlist);
 extern List *new_unsorted_tlist(List *targetlist);
-extern List *copy_vars(List *target, List *source);
 extern List *flatten_tlist(List *tlist);
 extern List *add_to_flat_tlist(List *tlist, List *vars);
-extern List *unflatten_tlist(List *full_tlist,
-							 List *flat_tlist);
 
 extern Var *get_expr(TargetEntry *tle);
 extern Node *get_sortgroupclause_expr(SortClause *sortClause,

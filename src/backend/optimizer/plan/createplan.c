@@ -1,13 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * createplan.c
- *	  Routines to create the desired plan for processing a query
+ *	  Routines to create the desired plan for processing a query.
+ *	  Planning is complete, we just need to convert the selected
+ *	  Path into a Plan.
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.74 1999/08/21 03:49:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.75 1999/08/22 20:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -70,13 +72,13 @@ static void copy_costsize(Plan *dest, Plan *src);
  *	  every pathnode found:
  *	  (1) Create a corresponding plan node containing appropriate id,
  *		  target list, and qualification information.
- *	  (2) Modify ALL clauses so that attributes are referenced using
- *		  relative values.
- *	  (3) Target lists are not modified, but will be in another routine.
+ *	  (2) Modify qual clauses of join nodes so that subplan attributes are
+ *		  referenced using relative values.
+ *	  (3) Target lists are not modified, but will be in setrefs.c.
  *
  *	  best_path is the best access path
  *
- *	  Returns the optimal(?) access plan.
+ *	  Returns the access plan.
  */
 Plan *
 create_plan(Path *best_path)
@@ -90,7 +92,7 @@ create_plan(Path *best_path)
 	int			tuples;
 
 	parent_rel = best_path->parent;
-	tlist = get_actual_tlist(parent_rel->targetlist);
+	tlist = parent_rel->targetlist;
 	size = parent_rel->size;
 	width = parent_rel->width;
 	pages = parent_rel->pages;
@@ -152,9 +154,8 @@ create_scan_node(Path *best_path, List *tlist)
 	/*
 	 * Extract the relevant restriction clauses from the parent relation;
 	 * the executor must apply all these restrictions during the scan.
-	 * Fix regproc ids in the restriction clauses.
 	 */
-	scan_clauses = fix_opids(get_actual_clauses(best_path->parent->restrictinfo));
+	scan_clauses = get_actual_clauses(best_path->parent->restrictinfo);
 
 	switch (best_path->pathtype)
 	{
@@ -235,7 +236,6 @@ create_join_node(JoinPath *best_path, List *tlist)
 												   inner_tlist);
 			break;
 		default:
-			/* do nothing */
 			elog(ERROR, "create_join_node: unknown node type",
 				 best_path->path.pathtype);
 	}
@@ -249,8 +249,7 @@ create_join_node(JoinPath *best_path, List *tlist)
 	if (get_loc_restrictinfo(best_path) != NIL)
 		set_qpqual((Plan) retval,
 				   nconc(get_qpqual((Plan) retval),
-						 fix_opids(get_actual_clauses
-								   (get_loc_restrictinfo(best_path)))));
+						 get_actual_clauses(get_loc_restrictinfo(best_path))));
 #endif
 
 	return retval;
@@ -282,8 +281,7 @@ create_seqscan_node(Path *best_path, List *tlist, List *scan_clauses)
 
 	scan_node = make_seqscan(tlist,
 							 scan_clauses,
-							 scan_relid,
-							 (Plan *) NULL);
+							 scan_relid);
 
 	scan_node->plan.cost = best_path->path_cost;
 
@@ -386,16 +384,9 @@ create_indexscan_node(IndexPath *best_path,
 		qpqual = NIL;
 
 	/* The executor needs a copy with the indexkey on the left of each clause
-	 * and with index attrs substituted for table ones.
+	 * and with index attr numbers substituted for table ones.
 	 */
 	fixed_indxqual = fix_indxqual_references(indxqual, best_path);
-
-	/*
-	 * Fix opids in the completed indxquals.
-	 * XXX this ought to only happen at final exit from the planner...
-	 */
-	indxqual = fix_opids(indxqual);
-	fixed_indxqual = fix_opids(fixed_indxqual);
 
 	scan_node = make_indexscan(tlist,
 							   qpqual,
@@ -412,6 +403,21 @@ create_indexscan_node(IndexPath *best_path,
 /*****************************************************************************
  *
  *	JOIN METHODS
+ *
+ * A general note about join_references() processing in these routines:
+ * once we have changed a Var node to refer to a subplan output rather than
+ * the original relation, it is no longer equal() to an unmodified Var node
+ * for the same var.  So, we cannot easily compare reference-adjusted qual
+ * clauses to clauses that have not been adjusted.  Fortunately, that
+ * doesn't seem to be necessary; all the decisions are made before we do
+ * the reference adjustments.
+ *
+ * A cleaner solution would be to not call join_references() here at all,
+ * but leave it for setrefs.c to do at the end of plan tree construction.
+ * But that would make switch_outer() much more complicated, and some care
+ * would be needed to get setrefs.c to do the right thing with nestloop
+ * inner indexscan quals.  So, we do subplan reference adjustment here for
+ * quals of join nodes (and *only* for quals of join nodes).
  *
  *****************************************************************************/
 
@@ -432,7 +438,7 @@ create_nestloop_node(NestPath *best_path,
 		 * An index is being used to reduce the number of tuples scanned
 		 * in the inner relation.  If there are join clauses being used
 		 * with the index, we must update their outer-rel var nodes to
-		 * refer to the outer relation.
+		 * refer to the outer side of the join.
 		 *
 		 * We can also remove those join clauses from the list of clauses
 		 * that have to be checked as qpquals at the join node, but only
@@ -442,7 +448,12 @@ create_nestloop_node(NestPath *best_path,
 		 * Note: if the index is lossy, the same clauses may also be getting
 		 * checked as qpquals in the indexscan.  We can still remove them
 		 * from the nestloop's qpquals, but we gotta update the outer-rel
-		 * vars in the indexscan's qpquals too...
+		 * vars in the indexscan's qpquals too.
+		 *
+		 * Note: we can safely do set_difference() against my clauses and
+		 * join_references() because the innerscan is a primitive plan,
+		 * and therefore has not itself done join_references renumbering
+		 * of the vars in its quals.
 		 */
 		IndexScan  *innerscan = (IndexScan *) inner_node;
 		List	   *indxqualorig = innerscan->indxqualorig;
@@ -450,6 +461,8 @@ create_nestloop_node(NestPath *best_path,
 		/* No work needed if indxqual refers only to its own relation... */
 		if (NumRelids((Node *) indxqualorig) > 1)
 		{
+			Index		innerrel = innerscan->scan.scanrelid;
+
 			/* Remove redundant tests from my clauses, if possible.
 			 * Note we must compare against indxqualorig not the "fixed"
 			 * indxqual (which has index attnos instead of relation attnos,
@@ -461,20 +474,28 @@ create_nestloop_node(NestPath *best_path,
 			/* only refs to outer vars get changed in the inner indexqual */
 			innerscan->indxqualorig = join_references(indxqualorig,
 													  outer_tlist,
-													  NIL);
+													  NIL,
+													  innerrel);
 			innerscan->indxqual = join_references(innerscan->indxqual,
 												  outer_tlist,
-												  NIL);
+												  NIL,
+												  innerrel);
 			/* fix the inner qpqual too, if it has join clauses */
 			if (NumRelids((Node *) inner_node->qual) > 1)
 				inner_node->qual = join_references(inner_node->qual,
 												   outer_tlist,
-												   NIL);
+												   NIL,
+												   innerrel);
 		}
 	}
 	else if (IsA_Join(inner_node))
 	{
-		/* Materialize the inner join for speed reasons */
+		/*
+		 * Materialize the inner join for speed reasons.
+		 *
+		 * XXX It is probably *not* always fastest to materialize an inner
+		 * join --- how can we estimate whether this is a good thing to do?
+		 */
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  NIL,
 										  inner_node);
@@ -483,7 +504,8 @@ create_nestloop_node(NestPath *best_path,
 	join_node = make_nestloop(tlist,
 							  join_references(clauses,
 											  outer_tlist,
-											  inner_tlist),
+											  inner_tlist,
+											  (Index) 0),
 							  outer_node,
 							  inner_node);
 
@@ -513,7 +535,8 @@ create_mergejoin_node(MergePath *best_path,
 	qpqual = join_references(set_difference(clauses,
 											best_path->path_mergeclauses),
 							 outer_tlist,
-							 inner_tlist);
+							 inner_tlist,
+							 (Index) 0);
 
 	/*
 	 * Now set the references in the mergeclauses and rearrange them so
@@ -521,7 +544,8 @@ create_mergejoin_node(MergePath *best_path,
 	 */
 	mergeclauses = switch_outer(join_references(best_path->path_mergeclauses,
 												outer_tlist,
-												inner_tlist));
+												inner_tlist,
+												(Index) 0));
 
 	/*
 	 * Create explicit sort nodes for the outer and inner join paths if
@@ -578,7 +602,8 @@ create_hashjoin_node(HashPath *best_path,
 	qpqual = join_references(set_difference(clauses,
 											best_path->path_hashclauses),
 							 outer_tlist,
-							 inner_tlist);
+							 inner_tlist,
+							 (Index) 0);
 
 	/*
 	 * Now set the references in the hashclauses and rearrange them so
@@ -586,7 +611,8 @@ create_hashjoin_node(HashPath *best_path,
 	 */
 	hashclauses = switch_outer(join_references(best_path->path_hashclauses,
 											   outer_tlist,
-											   inner_tlist));
+											   inner_tlist,
+											   (Index) 0));
 
 	/* Now the righthand op of the sole hashclause is the inner hash key. */
 	innerhashkey = get_rightop(lfirst(hashclauses));
@@ -839,7 +865,7 @@ set_tlist_sort_info(List *tlist, List *pathkeys)
 		{
 			pathkey = lfirst(j);
 			Assert(IsA(pathkey, PathKeyItem));
-			resdom = tlist_member((Var *) pathkey->key, tlist);
+			resdom = tlist_member(pathkey->key, tlist);
 			if (resdom)
 				break;
 		}
@@ -939,17 +965,16 @@ make_noname(List *tlist,
 SeqScan    *
 make_seqscan(List *qptlist,
 			 List *qpqual,
-			 Index scanrelid,
-			 Plan *lefttree)
+			 Index scanrelid)
 {
 	SeqScan    *node = makeNode(SeqScan);
 	Plan	   *plan = &node->plan;
 
-	copy_costsize(plan, lefttree);
+	copy_costsize(plan, NULL);
 	plan->state = (EState *) NULL;
 	plan->targetlist = qptlist;
 	plan->qual = qpqual;
-	plan->lefttree = lefttree;
+	plan->lefttree = NULL;
 	plan->righttree = NULL;
 	node->scanrelid = scanrelid;
 	node->scanstate = (CommonScanState *) NULL;
@@ -1158,9 +1183,7 @@ make_group(List *tlist,
 }
 
 /*
- *	A unique node always has a SORT node in the lefttree.
- *
- *	the uniqueAttr argument must be a null-terminated string,
+ * The uniqueAttr argument must be a null-terminated string,
  * either the name of the attribute to select unique on
  * or "*"
  */
@@ -1183,6 +1206,29 @@ make_unique(List *tlist, Plan *lefttree, char *uniqueAttr)
 		node->uniqueAttr = NULL;
 	else
 		node->uniqueAttr = pstrdup(uniqueAttr);
+	return node;
+}
+
+Result *
+make_result(List *tlist,
+			Node *resconstantqual,
+			Plan *subplan)
+{
+	Result	   *node = makeNode(Result);
+	Plan	   *plan = &node->plan;
+
+#ifdef NOT_USED
+	tlist = generate_fjoin(tlist);
+#endif
+	copy_costsize(plan, subplan);
+	plan->state = (EState *) NULL;
+	plan->targetlist = tlist;
+	plan->qual = NIL;
+	plan->lefttree = subplan;
+	plan->righttree = NULL;
+	node->resconstantqual = resconstantqual;
+	node->resstate = NULL;
+
 	return node;
 }
 

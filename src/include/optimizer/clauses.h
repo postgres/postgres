@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.28 1999/08/16 02:17:44 tgl Exp $
+ * $Id: clauses.h,v 1.29 1999/08/22 20:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,9 +38,13 @@ extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
 
 extern List *pull_constant_clauses(List *quals, List **constantQual);
+extern List *pull_agg_clause(Node *clause);
+extern bool check_subplans_for_ungrouped_vars(Node *clause,
+											  List *groupClause,
+											  List *targetList);
+
 extern void clause_get_relids_vars(Node *clause, Relids *relids, List **vars);
 extern int	NumRelids(Node *clause);
-extern List *fix_opids(List *clauses);
 extern void get_relattval(Node *clause, int targetrelid,
 						  int *relid, AttrNumber *attno,
 						  Datum *constval, int *flag);
@@ -53,8 +57,8 @@ extern bool expression_tree_walker(Node *node, bool (*walker) (),
 extern Node *expression_tree_mutator(Node *node, Node * (*mutator) (),
 									 void *context);
 
-#define is_subplan(clause)	((Node*) (clause) != NULL && \
-						nodeTag((Node*) (clause)) == T_Expr && \
-						((Expr *) (clause))->opType == SUBPLAN_EXPR)
+#define is_subplan(clause)	((clause) != NULL && \
+							 IsA(clause, Expr) && \
+							 ((Expr *) (clause))->opType == SUBPLAN_EXPR)
 
 #endif	 /* CLAUSES_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.30 1999/08/21 03:49:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.31 1999/08/22 20:14:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,8 +59,6 @@ preprocess_targetlist(List *tlist,
 	 */
 	expanded_tlist = expand_targetlist(tlist, relid, command_type, result_relation);
 
-	/* XXX should the fix-opids be this early?? */
-	fix_opids(expanded_tlist);
 	t_list = copyObject(expanded_tlist);
 
 	/* ------------------
@@ -87,7 +85,7 @@ preprocess_targetlist(List *tlist,
 							0,
 							true);
 
-		var = makeVar(result_relation, -1, TIDOID, -1, 0, result_relation, -1);
+		var = makeVar(result_relation, -1, TIDOID, -1, 0);
 
 		ctid = makeTargetEntry(resdom, (Node *) var);
 		t_list = lappend(t_list, ctid);
@@ -340,8 +338,8 @@ new_relation_targetlist(Oid relid, Index rt_index, NodeTag node_type)
 					Var		   *temp_var;
 					TargetEntry *temp_tle;
 
-					temp_var = makeVar(rt_index, attno, atttype, atttypmod,
-									   0, rt_index, attno);
+					temp_var = makeVar(rt_index, attno, atttype,
+									   atttypmod, 0);
 
 					temp_tle = makeTargetEntry(makeResdom(attno,
 														  atttype,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.63 1999/08/21 03:49:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.64 1999/08/22 20:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,8 @@ planner(Query *parse)
 		(void) SS_finalize_plan(result_plan);
 	}
 	result_plan->nParamExec = length(PlannerParamVar);
+
+	set_plan_references(result_plan);
 
 	return result_plan;
 }
@@ -173,8 +175,7 @@ union_planner(Query *parse)
 									0,
 									true);
 
-				var = makeVar(rowmark->rti, -1, TIDOID,
-							  -1, 0, rowmark->rti, -1);
+				var = makeVar(rowmark->rti, -1, TIDOID, -1, 0);
 
 				ctid = makeTargetEntry(resdom, (Node *) var);
 				tlist = lappend(tlist, ctid);
@@ -279,6 +280,8 @@ union_planner(Query *parse)
 	 */
 	if (parse->havingQual)
 	{
+		List	   *ql;
+
 		/* convert the havingQual to conjunctive normal form (cnf) */
 		parse->havingQual = (Node *) cnfify((Expr *) parse->havingQual, true);
 
@@ -295,13 +298,21 @@ union_planner(Query *parse)
 			 * Check for ungrouped variables passed to subplans. (Probably
 			 * this should be done for the targetlist as well???)
 			 */
-			check_having_for_ungrouped_vars(parse->havingQual,
-											parse->groupClause,
-											parse->targetList);
+			if (check_subplans_for_ungrouped_vars(parse->havingQual,
+												  parse->groupClause,
+												  parse->targetList))
+				elog(ERROR, "Sub-SELECT in HAVING clause must use only GROUPed attributes from outer SELECT");
 		}
 
-		/* Calculate the opfids from the opnos */
-		parse->havingQual = (Node *) fix_opids((List *) parse->havingQual);
+		/*
+		 * Require an aggregate function to appear in each clause of the
+		 * havingQual (else it could have been done as a WHERE constraint).
+		 */
+		foreach(ql, (List *) parse->havingQual)
+		{
+			if (pull_agg_clause(lfirst(ql)) == NIL)
+				elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
+		}
 	}
 
 	/*
@@ -313,13 +324,6 @@ union_planner(Query *parse)
 
 		/* HAVING clause, if any, becomes qual of the Agg node */
 		result_plan->qual = (List *) parse->havingQual;
-
-		/*
-		 * Update vars to refer to subplan result tuples, and
-		 * make sure there is an Aggref in every HAVING clause.
-		 */
-		if (!set_agg_tlist_references((Agg *) result_plan))
-			elog(ERROR, "SELECT/HAVING requires aggregates to be valid");
 
 		/*
 		 * Assume result is not ordered suitably for ORDER BY.
@@ -474,7 +478,6 @@ make_groupplan(List *group_tlist,
 			   Plan *subplan)
 {
 	int			numCols = length(groupClause);
-	Group	   *grpplan;
 
 	if (! is_sorted)
 	{
@@ -515,21 +518,8 @@ make_groupplan(List *group_tlist,
 									 keyno);
 	}
 
-	/*
-	 * Fix variables in tlist (should be done somewhere else?)
-	 */
-	group_tlist = copyObject(group_tlist);	/* necessary?? */
-	replace_tlist_with_subplan_refs(group_tlist,
-									(Index) 0,
-									subplan->targetlist);
-
-	/*
-	 * Make the Group node
-	 */
-	grpplan = make_group(group_tlist, tuplePerGroup, numCols,
-						 grpColIdx, subplan);
-
-	return (Plan *) grpplan;
+	return (Plan *) make_group(group_tlist, tuplePerGroup, numCols,
+							   grpColIdx, subplan);
 }
 
 /*

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: var.h,v 1.8 1999/07/15 15:21:23 momjian Exp $
+ * $Id: var.h,v 1.9 1999/08/22 20:14:57 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,5 @@
 extern List *pull_varnos(Node *me);
 extern bool contain_var_clause(Node *clause);
 extern List *pull_var_clause(Node *clause);
-extern bool var_equal(Var *var1, Var *var2);
 
 #endif	 /* VAR_H */

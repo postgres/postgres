@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planmain.h,v 1.31 1999/08/21 03:49:15 tgl Exp $
+ * $Id: planmain.h,v 1.32 1999/08/22 20:14:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,14 +27,14 @@ extern Plan *query_planner(Query *root,
  * prototypes for plan/createplan.c
  */
 extern Plan *create_plan(Path *best_path);
-extern SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid,
-			 Plan *lefttree);
+extern SeqScan *make_seqscan(List *qptlist, List *qpqual, Index scanrelid);
 extern Sort *make_sort(List *tlist, Oid nonameid, Plan *lefttree,
 		  int keycount);
 extern Agg *make_agg(List *tlist, Plan *lefttree);
 extern Group *make_group(List *tlist, bool tuplePerGroup, int ngrp,
 		   AttrNumber *grpColIdx, Plan *lefttree);
 extern Unique *make_unique(List *tlist, Plan *lefttree, char *uniqueAttr);
+extern Result *make_result(List *tlist, Node *resconstantqual, Plan *subplan);
 
 /*
  * prototypes for plan/initsplan.c
@@ -47,17 +47,10 @@ extern void add_missing_vars_to_tlist(Query *root, List *tlist);
 /*
  * prototypes for plan/setrefs.c
  */
-extern void set_tlist_references(Plan *plan);
+extern void set_plan_references(Plan *plan);
 extern List *join_references(List *clauses, List *outer_tlist,
-							 List *inner_tlist);
-extern void replace_tlist_with_subplan_refs(List *tlist,
-								Index subvarno,
-								List *subplanTargetList);
-extern bool set_agg_tlist_references(Agg *aggNode);
-extern List *pull_agg_clause(Node *clause);
-extern void check_having_for_ungrouped_vars(Node *clause,
-								List *groupClause,
-								List *targetList);
+							 List *inner_tlist, Index acceptable_rel);
+extern void fix_opids(Node *node);
 
 /*
  * prep/prepkeyset.c

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.37 1999/08/16 02:17:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.38 1999/08/22 20:14:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,8 +104,7 @@ add_missing_vars_to_tlist(Query *root, List *tlist)
 			/* add it to base_rel_list */
 			rel = get_base_rel(root, varno);
 			/* give it a dummy tlist entry for its OID */
-			var = makeVar(varno, ObjectIdAttributeNumber,
-						  OIDOID, -1, 0, varno, ObjectIdAttributeNumber);
+			var = makeVar(varno, ObjectIdAttributeNumber, OIDOID, -1, 0);
 			add_var_to_tlist(rel, var);
 		}
 		pfree(relids);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.22 1999/08/10 03:00:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/var.c,v 1.23 1999/08/22 20:14:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,30 +104,4 @@ pull_var_clause_walker(Node *node, List **listptr)
 	}
 	return expression_tree_walker(node, pull_var_clause_walker,
 								  (void *) listptr);
-}
-
-/*
- *		var_equal
- *
- *		This is like equal() except that it does NOT test varnoold and
- *		varoattno.  Also, it will not compare non-Var nodes.
- *
- *		Returns t iff two var nodes correspond to the same attribute.
- */
-bool
-var_equal(Var *var1, Var *var2)
-{
-	if (var1 != NULL && IsA(var1, Var) &&
-		var2 != NULL && IsA(var2, Var) &&
-		var1->varno == var2->varno &&
-		var1->varattno == var2->varattno &&
-		var1->vartype == var2->vartype &&
-		var1->vartypmod == var2->vartypmod &&
-		var1->varlevelsup == var2->varlevelsup)
-	{
-		Assert(var1->varlevelsup == 0);	/* XXX why do this here??? */
-		return true;
-	}
-	else
-		return false;
 }

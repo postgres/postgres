@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.53 1999/08/21 03:48:55 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.54 1999/08/22 20:15:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -444,7 +444,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			toid = typeTypeId(typenameType(relname));
 			/* replace it in the arg list */
-			lfirst(fargs) = makeVar(vnum, 0, toid, -1, 0, vnum, 0);
+			lfirst(fargs) = makeVar(vnum, 0, toid, -1, 0);
 		}
 		else if (!attisset)
 		{						/* set functions don't have parameters */
@@ -1300,7 +1300,7 @@ setup_tlist(char *attname, Oid relid)
 						 0,
 						 InvalidOid,
 						 false);
-	varnode = makeVar(-1, attno, typeid, type_mod, 0, -1, attno);
+	varnode = makeVar(-1, attno, typeid, type_mod, 0);
 
 	tle = makeTargetEntry(resnode, (Node *) varnode);
 	return lcons(tle, NIL);
@@ -1325,7 +1325,7 @@ setup_base_tlist(Oid typeid)
 						 0,
 						 InvalidOid,
 						 false);
-	varnode = makeVar(-1, 1, typeid, -1, 0, -1, 1);
+	varnode = makeVar(-1, 1, typeid, -1, 0);
 	tle = makeTargetEntry(resnode, (Node *) varnode);
 
 	return lcons(tle, NIL);

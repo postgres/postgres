@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.39 1999/08/21 03:49:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.40 1999/08/22 20:14:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,8 +19,6 @@
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
 
-static Node *unflatten_tlist_mutator(Node *node, List *flat_tlist);
-
 /*****************************************************************************
  *	---------- RELATION node target list routines ----------
  *****************************************************************************/
@@ -28,39 +26,38 @@ static Node *unflatten_tlist_mutator(Node *node, List *flat_tlist);
 /*
  * tlistentry_member
  *	  Finds the (first) member of the given tlist whose expression is
- *	  var_equal() to the given var.  Result is NULL if no such member.
+ *	  equal() to the given expression.  Result is NULL if no such member.
  */
 TargetEntry *
-tlistentry_member(Var *var, List *targetlist)
+tlistentry_member(Node *node, List *targetlist)
 {
-	if (var && IsA(var, Var))
-	{
-		List	   *temp;
+	List	   *temp;
 
-		foreach(temp, targetlist)
-		{
-			if (var_equal(var, get_expr(lfirst(temp))))
-				return (TargetEntry *) lfirst(temp);
-		}
+	foreach(temp, targetlist)
+	{
+		TargetEntry	   *tlentry = (TargetEntry *) lfirst(temp);
+
+		if (equal(node, tlentry->expr))
+			return tlentry;
 	}
 	return NULL;
 }
 
 /*
- * matching_tlist_var
+ * matching_tlist_expr
  *	  Same as tlistentry_member(), except returns the tlist expression
  *	  rather than its parent TargetEntry node.
  */
-Expr *
-matching_tlist_var(Var *var, List *targetlist)
+Node *
+matching_tlist_expr(Node *node, List *targetlist)
 {
 	TargetEntry *tlentry;
 
-	tlentry = tlistentry_member(var, targetlist);
+	tlentry = tlistentry_member(node, targetlist);
 	if (tlentry)
-		return (Expr *) get_expr(tlentry);
+		return tlentry->expr;
 
-	return (Expr *) NULL;
+	return (Node *) NULL;
 }
 
 /*
@@ -69,11 +66,11 @@ matching_tlist_var(Var *var, List *targetlist)
  *	  rather than its parent TargetEntry node.
  */
 Resdom *
-tlist_member(Var *var, List *tlist)
+tlist_member(Node *node, List *targetlist)
 {
 	TargetEntry *tlentry;
 
-	tlentry = tlistentry_member(var, tlist);
+	tlentry = tlistentry_member(node, targetlist);
 	if (tlentry)
 		return tlentry->resdom;
 
@@ -89,7 +86,7 @@ tlist_member(Var *var, List *tlist)
 void
 add_var_to_tlist(RelOptInfo *rel, Var *var)
 {
-	if (! tlistentry_member(var, rel->targetlist))
+	if (! tlistentry_member((Node *) var, rel->targetlist))
 	{
 		/* XXX is copyObject necessary here? */
 		rel->targetlist = lappend(rel->targetlist,
@@ -116,83 +113,9 @@ create_tl_element(Var *var, int resdomno)
 						   (Node *) var);
 }
 
-/*
- * get_actual_tlist
- *	  Returns the targetlist elements from a relation tlist.
- *
- */
-List *
-get_actual_tlist(List *tlist)
-{
-
-	/*
-	 * this function is not making sense. - ay 10/94
-	 */
-#ifdef NOT_USED
-	List	   *element = NIL;
-	List	   *result = NIL;
-
-	if (tlist == NULL)
-	{
-		elog(DEBUG, "calling get_actual_tlist with empty tlist");
-		return NIL;
-	}
-
-	/*
-	 * XXX - it is unclear to me what exactly get_entry should be doing,
-	 * as it is unclear to me the exact relationship between "TL" "TLE"
-	 * and joinlists
-	 */
-
-	foreach(element, tlist)
-		result = lappend(result, lfirst((List *) lfirst(element)));
-
-	return result;
-#endif
-	return tlist;
-}
-
 /*****************************************************************************
  *		---------- GENERAL target list routines ----------
  *****************************************************************************/
-
-/*
- * match_varid
- *	  Searches a target list for an entry matching a given var.
- *
- * Returns the target list entry (resdom var) of the matching var,
- * or NULL if no match.
- */
-TargetEntry *
-match_varid(Var *test_var, List *tlist)
-{
-	List	   *tl;
-
-	Assert(test_var->varlevelsup == 0);	/* XXX why? */
-
-	foreach(tl, tlist)
-	{
-		TargetEntry *entry = lfirst(tl);
-		Var		   *tlvar = get_expr(entry);
-
-		if (!IsA(tlvar, Var))
-			continue;
-
-		/*
-		 * we test the original varno, instead of varno which might be
-		 * changed to INNER/OUTER.  XXX is test on vartype necessary?
-		 */
-		Assert(tlvar->varlevelsup == 0);
-
-		if (tlvar->varnoold == test_var->varnoold &&
-			tlvar->varoattno == test_var->varoattno &&
-			tlvar->vartype == test_var->vartype)
-			return entry;
-	}
-
-	return NULL;
-}
-
 
 /*
  * new_unsorted_tlist
@@ -218,37 +141,6 @@ new_unsorted_tlist(List *targetlist)
 		tle->resdom->reskeyop = (Oid) 0;
 	}
 	return new_targetlist;
-}
-
-/*
- * copy_vars
- *	  Replaces the var nodes in the first target list with those from
- *	  the second target list.  The two target lists are assumed to be
- *	  identical except their actual resdoms and vars are different.
- *
- * 'target' is the target list to be replaced
- * 'source' is the target list to be copied
- *
- * Returns a new target list.
- *
- */
-List *
-copy_vars(List *target, List *source)
-{
-	List	   *result = NIL;
-	List	   *src;
-	List	   *dest;
-
-	for (src = source, dest = target;
-		 src != NIL && dest != NIL;
-		 src = lnext(src), dest = lnext(dest))
-	{
-		TargetEntry *temp = makeTargetEntry(((TargetEntry *) lfirst(dest))->resdom,
-										 (Node *) get_expr(lfirst(src)));
-
-		result = lappend(result, temp);
-	}
-	return result;
 }
 
 /*
@@ -292,7 +184,7 @@ add_to_flat_tlist(List *tlist, List *vars)
 	{
 		Var		   *var = lfirst(v);
 
-		if (! tlistentry_member(var, tlist))
+		if (! tlistentry_member((Node *) var, tlist))
 		{
 			Resdom	   *r;
 
@@ -309,39 +201,6 @@ add_to_flat_tlist(List *tlist, List *vars)
 	}
 	return tlist;
 }
-
-/*
- * unflatten_tlist
- *	  Reconstructs the target list of a query by replacing vars within
- *	  target expressions with vars from the 'flattened' target list.
- *
- * XXX is this really necessary?  Why can't we just use the tlist as is?
- *
- * 'full_tlist' is the original target list
- * 'flat_tlist' is the flattened (var-only) target list
- *
- * Returns the rebuilt target list.  The original is not modified.
- *
- */
-List *
-unflatten_tlist(List *full_tlist, List *flat_tlist)
-{
-	return (List *) unflatten_tlist_mutator((Node *) full_tlist,
-											flat_tlist);
-}
-
-static Node *
-unflatten_tlist_mutator(Node *node, List *flat_tlist)
-{
-	if (node == NULL)
-		return NULL;
-	if (IsA(node, Var))
-		return (Node *) get_expr(match_varid((Var *) node,
-											 flat_tlist));
-	return expression_tree_mutator(node, unflatten_tlist_mutator,
-								   (void *) flat_tlist);
-}
-
 
 Var *
 get_expr(TargetEntry *tle)

@@ -1,13 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * setrefs.c
- *	  Routines to change varno/attno entries to contain references
+ *	  Post-processing of a completed plan tree: fix references to subplan
+ *	  vars, and compute regproc values for operators
  *
  * Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.56 1999/08/21 03:49:03 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.57 1999/08/22 20:14:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,36 +26,24 @@
 typedef struct {
 	List	   *outer_tlist;
 	List	   *inner_tlist;
-} replace_joinvar_refs_context;
+	Index		acceptable_rel;
+} join_references_context;
 
 typedef struct {
 	Index		subvarno;
 	List	   *subplanTargetList;
 } replace_vars_with_subplan_refs_context;
 
-typedef struct {
-	List	   *groupClause;
-	List	   *targetList;
-} check_having_for_ungrouped_vars_context;
-
-static void set_join_tlist_references(Join *join);
-static void set_nonamescan_tlist_references(SeqScan *nonamescan);
-static void set_noname_tlist_references(Noname *noname);
-static Node *replace_joinvar_refs(Node *clause,
-								  List *outer_tlist,
-								  List *inner_tlist);
-static Node *replace_joinvar_refs_mutator(Node *node,
-					replace_joinvar_refs_context *context);
-static List *tlist_noname_references(Oid nonameid, List *tlist);
-static void set_result_tlist_references(Result *resultNode);
-static void replace_vars_with_subplan_refs(Node *clause,
-										   Index subvarno,
-										   List *subplanTargetList);
-static bool replace_vars_with_subplan_refs_walker(Node *node,
+static void set_join_references(Join *join);
+static void set_uppernode_references(Plan *plan, Index subvarno);
+static Node *join_references_mutator(Node *node,
+									 join_references_context *context);
+static Node *replace_vars_with_subplan_refs(Node *node,
+											Index subvarno,
+											List *subplanTargetList);
+static Node *replace_vars_with_subplan_refs_mutator(Node *node,
 					replace_vars_with_subplan_refs_context *context);
-static bool pull_agg_clause_walker(Node *node, List **listptr);
-static bool check_having_for_ungrouped_vars_walker(Node *node,
-					check_having_for_ungrouped_vars_context *context);
+static bool fix_opids_walker(Node *node, void *context);
 
 /*****************************************************************************
  *
@@ -63,340 +52,298 @@ static bool check_having_for_ungrouped_vars_walker(Node *node,
  *****************************************************************************/
 
 /*
- * set_tlist_references
- *	  Modifies the target list of nodes in a plan to reference target lists
- *	  at lower levels.
+ * set_plan_references
+ *	  This is the final processing pass of the planner/optimizer.  The plan
+ *	  tree is complete; we just have to adjust some representational details
+ *	  for the convenience of the executor.  We update Vars in upper plan nodes
+ *	  to refer to the outputs of their subplans, and we compute regproc OIDs
+ *	  for operators (ie, we look up the function that implements each op).
  *
- * 'plan' is the plan whose target list and children's target lists will
- *		be modified
+ *	  set_plan_references recursively traverses the whole plan tree.
  *
  * Returns nothing of interest, but modifies internal fields of nodes.
- *
  */
 void
-set_tlist_references(Plan *plan)
+set_plan_references(Plan *plan)
 {
+	List	   *pl;
+
 	if (plan == NULL)
 		return;
 
-	if (IsA_Join(plan))
-		set_join_tlist_references((Join *) plan);
-	else if (IsA(plan, SeqScan) && plan->lefttree &&
-			 IsA_Noname(plan->lefttree))
-		set_nonamescan_tlist_references((SeqScan *) plan);
-	else if (IsA_Noname(plan))
-		set_noname_tlist_references((Noname *) plan);
-	else if (IsA(plan, Result))
-		set_result_tlist_references((Result *) plan);
-	else if (IsA(plan, Hash))
-		set_tlist_references(plan->lefttree);
+	/*
+	 * Plan-type-specific fixes
+	 */
+	switch (nodeTag(plan))
+	{
+		case T_SeqScan:
+			/* nothing special */
+			break;
+		case T_IndexScan:
+			fix_opids((Node *) ((IndexScan *) plan)->indxqual);
+			fix_opids((Node *) ((IndexScan *) plan)->indxqualorig);
+			break;
+		case T_NestLoop:
+			set_join_references((Join *) plan);
+			break;
+		case T_MergeJoin:
+			set_join_references((Join *) plan);
+			fix_opids((Node *) ((MergeJoin *) plan)->mergeclauses);
+			break;
+		case T_HashJoin:
+			set_join_references((Join *) plan);
+			fix_opids((Node *) ((HashJoin *) plan)->hashclauses);
+			break;
+		case T_Material:
+		case T_Sort:
+		case T_Unique:
+		case T_Hash:
+			/* These plan types don't actually bother to evaluate their
+			 * targetlists or quals (because they just return their
+			 * unmodified input tuples).  The optimizer is lazy about
+			 * creating really valid targetlists for them.  Best to
+			 * just leave the targetlist alone.
+			 */
+			break;
+		case T_Agg:
+		case T_Group:
+			set_uppernode_references(plan, (Index) 0);
+			break;
+		case T_Result:
+			/* XXX why does Result use a different subvarno? */
+			set_uppernode_references(plan, (Index) OUTER);
+			fix_opids(((Result *) plan)->resconstantqual);
+			break;
+		case T_Append:
+			foreach(pl, ((Append *) plan)->appendplans)
+			{
+				set_plan_references((Plan *) lfirst(pl));
+			}
+			break;
+		default:
+			elog(ERROR, "set_plan_references: unknown plan type %d",
+				 nodeTag(plan));
+			break;
+	}
+
+	/*
+	 * For all plan types, fix operators in targetlist and qual expressions
+	 */
+	fix_opids((Node *) plan->targetlist);
+	fix_opids((Node *) plan->qual);
+
+	/*
+	 * Now recurse into subplans, if any
+	 *
+	 * NOTE: it is essential that we recurse into subplans AFTER we set
+	 * subplan references in this plan's tlist and quals.  If we did the
+	 * reference-adjustments bottom-up, then we would fail to match this
+	 * plan's var nodes against the already-modified nodes of the subplans.
+	 */
+	set_plan_references(plan->lefttree);
+	set_plan_references(plan->righttree);
+	foreach(pl, plan->initPlan)
+	{
+		SubPlan	   *sp = (SubPlan *) lfirst(pl);
+
+		Assert(IsA(sp, SubPlan));
+		set_plan_references(sp->plan);
+	}
+	foreach(pl, plan->subPlan)
+	{
+		SubPlan	   *sp = (SubPlan *) lfirst(pl);
+
+		Assert(IsA(sp, SubPlan));
+		set_plan_references(sp->plan);
+	}
 }
 
 /*
- * set_join_tlist_references
- *	  Modifies the target list of a join node by setting the varnos and
- *	  varattnos to reference the target list of the outer and inner join
- *	  relations.
- *
- *	  Creates a target list for a join node to contain references by setting
- *	  varno values to OUTER or INNER and setting attno values to the
+ * set_join_references
+ *	  Modifies the target list of a join node to reference its subplans,
+ *	  by setting the varnos to OUTER or INNER and setting attno values to the
  *	  result domain number of either the corresponding outer or inner join
- *	  tuple.
+ *	  tuple item.
+ *
+ * Note: this same transformation has already been applied to the quals
+ * of the join by createplan.c.  It's a little odd to do it here for the
+ * targetlist and there for the quals, but it's easier that way.  (Look
+ * at switch_outer() and the handling of nestloop inner indexscans to
+ * see why.)
+ *
+ * Because the quals are reference-adjusted sooner, we cannot do equal()
+ * comparisons between qual and tlist var nodes during the time between
+ * creation of a plan node by createplan.c and its fixing by this module.
+ * Fortunately, there doesn't seem to be any need to do that.
  *
  * 'join' is a join plan node
- *
- * Returns nothing of interest, but modifies internal fields of nodes.
- *
  */
 static void
-set_join_tlist_references(Join *join)
+set_join_references(Join *join)
 {
 	Plan	   *outer = join->lefttree;
 	Plan	   *inner = join->righttree;
 	List	   *outer_tlist = ((outer == NULL) ? NIL : outer->targetlist);
 	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
-	List	   *new_join_targetlist = NIL;
-	List	   *qptlist = join->targetlist;
-	List	   *entry;
 
-	foreach(entry, qptlist)
-	{
-		TargetEntry *xtl = (TargetEntry *) lfirst(entry);
-		Node	   *joinexpr = replace_joinvar_refs(xtl->expr,
-													outer_tlist,
-													inner_tlist);
-
-		new_join_targetlist = lappend(new_join_targetlist,
-									  makeTargetEntry(xtl->resdom, joinexpr));
-	}
-	join->targetlist = new_join_targetlist;
-
-	set_tlist_references(outer);
-	set_tlist_references(inner);
+	join->targetlist = join_references(join->targetlist,
+									   outer_tlist,
+									   inner_tlist,
+									   (Index) 0);
 }
 
 /*
- * set_nonamescan_tlist_references
- *	  Modifies the target list of a node that scans a noname relation (i.e., a
- *	  sort or materialize node) so that the varnos refer to the child noname.
+ * set_uppernode_references
+ *	  Update the targetlist and quals of an upper-level plan node
+ *	  to refer to the tuples returned by its lefttree subplan.
  *
- * 'nonamescan' is a seqscan node
- *
- * Returns nothing of interest, but modifies internal fields of nodes.
- *
+ * This is used for single-input plan types like Agg, Group, Result.
  */
 static void
-set_nonamescan_tlist_references(SeqScan *nonamescan)
+set_uppernode_references(Plan *plan, Index subvarno)
 {
-	Noname	   *noname = (Noname *) nonamescan->plan.lefttree;
+	Plan	   *subplan = plan->lefttree;
+	List	   *subplanTargetList;
 
-	nonamescan->plan.targetlist = tlist_noname_references(noname->nonameid,
-									  nonamescan->plan.targetlist);
-	/* since we know child is a Noname, skip recursion through
-	 * set_tlist_references() and just get the job done
-	 */
-	set_noname_tlist_references(noname);
-}
-
-/*
- * set_noname_tlist_references
- *	  The noname's vars are made consistent with (actually, identical to) the
- *	  modified version of the target list of the node from which noname node
- *	  receives its tuples.
- *
- * 'noname' is a noname (e.g., sort, materialize) plan node
- *
- * Returns nothing of interest, but modifies internal fields of nodes.
- *
- */
-static void
-set_noname_tlist_references(Noname *noname)
-{
-	Plan	   *source = noname->plan.lefttree;
-
-	if (source != NULL)
-	{
-		set_tlist_references(source);
-		noname->plan.targetlist = copy_vars(noname->plan.targetlist,
-											source->targetlist);
-	}
+	if (subplan != NULL)
+		subplanTargetList = subplan->targetlist;
 	else
-		elog(ERROR, "calling set_noname_tlist_references with empty lefttree");
+		subplanTargetList = NIL;
+
+	plan->targetlist = (List *)
+		replace_vars_with_subplan_refs((Node *) plan->targetlist,
+									   subvarno,
+									   subplanTargetList);
+
+	plan->qual = (List *)
+		replace_vars_with_subplan_refs((Node *) plan->qual,
+									   subvarno,
+									   subplanTargetList);
 }
 
 /*
  * join_references
- *	   Creates a new set of join clauses by changing the varno/varattno
- *	   values of variables in the clauses to reference target list values
- *	   from the outer and inner join relation target lists.
- *	   This is just an external interface for replace_joinvar_refs.
+ *	   Creates a new set of targetlist entries or join qual clauses by
+ *	   changing the varno/varattno values of variables in the clauses
+ *	   to reference target list values from the outer and inner join
+ *	   relation target lists.
  *
- * 'clauses' is the list of join clauses
+ * This is used in two different scenarios: a normal join clause, where
+ * all the Vars in the clause *must* be replaced by OUTER or INNER references;
+ * and an indexscan being used on the inner side of a nestloop join.
+ * In the latter case we want to replace the outer-relation Vars by OUTER
+ * references, but not touch the Vars of the inner relation.
+ *
+ * For a normal join, acceptable_rel should be zero so that any failure to
+ * match a Var will be reported as an error.  For the indexscan case,
+ * pass inner_tlist = NIL and acceptable_rel = the ID of the inner relation.
+ *
+ * 'clauses' is the targetlist or list of join clauses
  * 'outer_tlist' is the target list of the outer join relation
- * 'inner_tlist' is the target list of the inner join relation
+ * 'inner_tlist' is the target list of the inner join relation, or NIL
+ * 'acceptable_rel' is either zero or the rangetable index of a relation
+ *		whose Vars may appear in the clause without provoking an error.
  *
- * Returns the new join clauses.  The original clause structure is
+ * Returns the new expression tree.  The original clause structure is
  * not modified.
- *
  */
 List *
 join_references(List *clauses,
 				List *outer_tlist,
-				List *inner_tlist)
+				List *inner_tlist,
+				Index acceptable_rel)
 {
-	return (List *) replace_joinvar_refs((Node *) clauses,
-										 outer_tlist,
-										 inner_tlist);
-}
-
-/*
- * replace_joinvar_refs
- *
- *	  Replaces all variables within a join clause with a new var node
- *	  whose varno/varattno fields contain a reference to a target list
- *	  element from either the outer or inner join relation.
- *
- *	  Returns a suitably modified copy of the join clause;
- *	  the original is not modified (and must not be!)
- *
- *	  Side effect: also runs fix_opids on the modified join clause.
- *	  Really ought to make that happen in a uniform, consistent place...
- *
- * 'clause' is the join clause
- * 'outer_tlist' is the target list of the outer join relation
- * 'inner_tlist' is the target list of the inner join relation
- */
-static Node *
-replace_joinvar_refs(Node *clause,
-					 List *outer_tlist,
-					 List *inner_tlist)
-{
-	replace_joinvar_refs_context context;
+	join_references_context context;
 
 	context.outer_tlist = outer_tlist;
 	context.inner_tlist = inner_tlist;
-	return (Node *) fix_opids((List *)
-							  replace_joinvar_refs_mutator(clause, &context));
+	context.acceptable_rel = acceptable_rel;
+	return (List *) join_references_mutator((Node *) clauses, &context);
 }
 
 static Node *
-replace_joinvar_refs_mutator(Node *node,
-							 replace_joinvar_refs_context *context)
+join_references_mutator(Node *node,
+						join_references_context *context)
 {
 	if (node == NULL)
 		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		Resdom	   *resdom = tlist_member(var, context->outer_tlist);
+		Var		   *newvar = (Var *) copyObject(var);
+		Resdom	   *resdom;
 
-		if (resdom != NULL && IsA(resdom, Resdom))
-			return (Node *) makeVar(OUTER,
-									resdom->resno,
-									var->vartype,
-									var->vartypmod,
-									0,
-									var->varnoold,
-									var->varoattno);
-		resdom = tlist_member(var, context->inner_tlist);
-		if (resdom != NULL && IsA(resdom, Resdom))
-			return (Node *) makeVar(INNER,
-									resdom->resno,
-									var->vartype,
-									var->vartypmod,
-									0,
-									var->varnoold,
-									var->varoattno);
-		/* Var not in either tlist, return an unmodified copy. */
-		return copyObject(node);
+		resdom = tlist_member((Node *) var, context->outer_tlist);
+		if (resdom)
+		{
+			newvar->varno = OUTER;
+			newvar->varattno = resdom->resno;
+			return (Node *) newvar;
+		}
+		resdom = tlist_member((Node *) var, context->inner_tlist);
+		if (resdom)
+		{
+			newvar->varno = INNER;
+			newvar->varattno = resdom->resno;
+			return (Node *) newvar;
+		}
+		/*
+		 * Var not in either tlist --- either raise an error,
+		 * or return the Var unmodified.
+		 */
+		if (var->varno != context->acceptable_rel)
+			elog(ERROR, "join_references: variable not in subplan target lists");
+		return (Node *) newvar;	/* copy is probably not necessary here... */
+	}
+	/*
+	 * expression_tree_mutator will copy SubPlan nodes if given a chance.
+	 * We do not want to do that here, because subselect.c has already
+	 * constructed the initPlan and subPlan lists of the current plan node
+	 * and we mustn't leave those dangling (ie, pointing to different
+	 * copies of the nodes than what's in the targetlist & quals...)
+	 * Instead, alter the SubPlan in-place.  Grotty --- is there a better way?
+	 */
+	if (is_subplan(node))
+	{
+		Expr	   *expr = (Expr *) node;
+		SubLink	   *sublink = ((SubPlan *) expr->oper)->sublink;
+
+		/* transform args list (params to be passed to subplan) */
+		expr->args = (List *)
+			join_references_mutator((Node *) expr->args,
+									context);
+		/* transform sublink's oper list as well */
+		sublink->oper = (List *)
+			join_references_mutator((Node *) sublink->oper,
+									context);
+
+		return (Node *) expr;
 	}
 	return expression_tree_mutator(node,
-								   replace_joinvar_refs_mutator,
+								   join_references_mutator,
 								   (void *) context);
 }
 
 /*
- * tlist_noname_references
- *	  Creates a new target list for a node that scans a noname relation,
- *	  setting the varnos to the id of the noname relation and setting varids
- *	  if necessary (varids are only needed if this is a targetlist internal
- *	  to the tree, in which case the targetlist entry always contains a var
- *	  node, so we can just copy it from the noname).
- *
- * 'nonameid' is the id of the noname relation
- * 'tlist' is the target list to be modified
- *
- * Returns new target list
- *
- */
-static List *
-tlist_noname_references(Oid nonameid,
-						List *tlist)
-{
-	List	   *t_list = NIL;
-	List	   *entry;
-
-	foreach(entry, tlist)
-	{
-		TargetEntry *xtl = lfirst(entry);
-		AttrNumber	oattno;
-		TargetEntry *noname;
-
-		if (IsA(get_expr(xtl), Var))
-			oattno = ((Var *) xtl->expr)->varoattno;
-		else
-			oattno = 0;
-
-		noname = makeTargetEntry(xtl->resdom,
-								 (Node *) makeVar(nonameid,
-												  xtl->resdom->resno,
-												  xtl->resdom->restype,
-												  xtl->resdom->restypmod,
-												  0,
-												  nonameid,
-												  oattno));
-
-		t_list = lappend(t_list, noname);
-	}
-	return t_list;
-}
-
-/*---------------------------------------------------------
- *
- * set_result_tlist_references
- *
- * Change the target list of a Result node, so that it correctly
- * addresses the tuples returned by its left tree subplan.
- *
- * NOTE:
- *	1) we ignore the right tree! (in the current implementation
- *	   it is always nil)
- *	2) this routine will probably *NOT* work with nested dot
- *	   fields....
- */
-static void
-set_result_tlist_references(Result *resultNode)
-{
-	Plan	   *subplan;
-	List	   *resultTargetList;
-	List	   *subplanTargetList;
-
-	resultTargetList = ((Plan *) resultNode)->targetlist;
-
-	/*
-	 * NOTE: we only consider the left tree subplan. This is usually a seq
-	 * scan.
-	 */
-	subplan = ((Plan *) resultNode)->lefttree;
-	if (subplan != NULL)
-		subplanTargetList = subplan->targetlist;
-	else
-		subplanTargetList = NIL;
-
-	replace_tlist_with_subplan_refs(resultTargetList,
-									(Index) OUTER,
-									subplanTargetList);
-}
-
-/*---------------------------------------------------------
- *
- * replace_tlist_with_subplan_refs
- *
- * Applies replace_vars_with_subplan_refs() to each entry of a targetlist.
- */
-void
-replace_tlist_with_subplan_refs(List *tlist,
-								Index subvarno,
-								List *subplanTargetList)
-{
-	List	   *t;
-
-	foreach(t, tlist)
-	{
-		TargetEntry *entry = (TargetEntry *) lfirst(t);
-
-		replace_vars_with_subplan_refs((Node *) get_expr(entry),
-									   subvarno, subplanTargetList);
-	}
-}
-
-/*---------------------------------------------------------
- *
  * replace_vars_with_subplan_refs
+ *		This routine modifies an expression tree so that all Var nodes
+ *		reference target nodes of a subplan.  It is used to fix up
+ *		target and qual expressions of non-join upper-level plan nodes.
  *
- * This routine modifies (destructively!) an expression tree so that all
- * Var nodes reference target nodes of a subplan.  It is used to fix up
- * target expressions of upper-level plan nodes.
+ * An error is raised if no matching var can be found in the subplan tlist
+ * --- so this routine should only be applied to nodes whose subplans'
+ * targetlists were generated via flatten_tlist() or some such method.
  *
- * 'clause': the tree to be fixed
+ * 'node': the tree to be fixed (a targetlist or qual list)
  * 'subvarno': varno to be assigned to all Vars
  * 'subplanTargetList': target list for subplan
  *
- * Afterwards, all Var nodes have varno = subvarno, varattno = resno
- * of corresponding subplan target.
+ * The resulting tree is a copy of the original in which all Var nodes have
+ * varno = subvarno, varattno = resno of corresponding subplan target.
+ * The original tree is not modified.
  */
-static void
-replace_vars_with_subplan_refs(Node *clause,
+static Node *
+replace_vars_with_subplan_refs(Node *node,
 							   Index subvarno,
 							   List *subplanTargetList)
 {
@@ -404,182 +351,84 @@ replace_vars_with_subplan_refs(Node *clause,
 
 	context.subvarno = subvarno;
 	context.subplanTargetList = subplanTargetList;
-	replace_vars_with_subplan_refs_walker(clause, &context);
+	return replace_vars_with_subplan_refs_mutator(node, &context);
 }
 
-static bool
-replace_vars_with_subplan_refs_walker(Node *node,
+static Node *
+replace_vars_with_subplan_refs_mutator(Node *node,
 							 replace_vars_with_subplan_refs_context *context)
 {
 	if (node == NULL)
-		return false;
+		return NULL;
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		TargetEntry *subplanVar;
+		Var		   *newvar = (Var *) copyObject(var);
+		Resdom	   *resdom;
 
-		subplanVar = match_varid(var, context->subplanTargetList);
-		if (!subplanVar)
-			elog(ERROR, "replace_vars_with_subplan_refs: variable not in target list");
+		resdom = tlist_member((Node *) var, context->subplanTargetList);
+		if (!resdom)
+			elog(ERROR, "replace_vars_with_subplan_refs: variable not in subplan target list");
 
-		/*
-		 * Change the varno & varattno fields of the var node.
-		 */
-		var->varno = context->subvarno;
-		var->varattno = subplanVar->resdom->resno;
-		return false;
+		newvar->varno = context->subvarno;
+		newvar->varattno = resdom->resno;
+		return (Node *) newvar;
 	}
-	return expression_tree_walker(node,
-								  replace_vars_with_subplan_refs_walker,
-								  (void *) context);
-}
-
-/*****************************************************************************
- *
- *****************************************************************************/
-
-/*---------------------------------------------------------
- *
- * set_agg_tlist_references -
- *	  This routine has several responsibilities:
- *	* Update the target list of an Agg node so that it points to
- *	  the tuples returned by its left tree subplan.
- *	* If there is a qual list (from a HAVING clause), similarly update
- *	  vars in it to point to the subplan target list.
- *
- * The return value is TRUE if all qual clauses include Aggrefs, or FALSE
- * if any do not (caller may choose to raise an error condition).
- */
-bool
-set_agg_tlist_references(Agg *aggNode)
-{
-	List	   *subplanTargetList;
-	List	   *tl;
-	List	   *ql;
-	bool		all_quals_ok;
-
-	subplanTargetList = aggNode->plan.lefttree->targetlist;
-
-	foreach(tl, aggNode->plan.targetlist)
-	{
-		TargetEntry *tle = lfirst(tl);
-
-		replace_vars_with_subplan_refs(tle->expr,
-									   (Index) 0,
-									   subplanTargetList);
-	}
-
-	all_quals_ok = true;
-	foreach(ql, aggNode->plan.qual)
-	{
-		Node	   *qual = lfirst(ql);
-
-		replace_vars_with_subplan_refs(qual,
-									   (Index) 0,
-									   subplanTargetList);
-		if (pull_agg_clause(qual) == NIL)
-			all_quals_ok = false;		/* this qual clause has no agg
-										 * functions! */
-	}
-
-	return all_quals_ok;
-}
-
-/*
- * pull_agg_clause
- *	  Recursively pulls all Aggref nodes from an expression clause.
- *
- *	  Returns list of Aggref nodes found.  Note the nodes themselves are not
- *	  copied, only referenced.
- */
-List *
-pull_agg_clause(Node *clause)
-{
-	List	   *result = NIL;
-
-	pull_agg_clause_walker(clause, &result);
-	return result;
-}
-
-static bool
-pull_agg_clause_walker(Node *node, List **listptr)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Aggref))
-	{
-		*listptr = lappend(*listptr, node);
-		return false;
-	}
-	return expression_tree_walker(node, pull_agg_clause_walker,
-								  (void *) listptr);
-}
-
-/*
- * check_having_for_ungrouped_vars takes the havingQual and the list of
- * GROUP BY clauses and checks for subplans in the havingQual that are being
- * passed ungrouped variables as parameters.  In other contexts, ungrouped
- * vars in the havingQual will be detected by the parser (see parse_agg.c,
- * exprIsAggOrGroupCol()).	But that routine currently does not check subplans,
- * because the necessary info is not computed until the planner runs.
- * This ought to be cleaned up someday.
- */
-
-void
-check_having_for_ungrouped_vars(Node *clause, List *groupClause,
-								List *targetList)
-{
-	check_having_for_ungrouped_vars_context context;
-
-	context.groupClause = groupClause;
-	context.targetList = targetList;
-	check_having_for_ungrouped_vars_walker(clause, &context);
-}
-
-static bool
-check_having_for_ungrouped_vars_walker(Node *node,
-					check_having_for_ungrouped_vars_context *context)
-{
-	if (node == NULL)
-		return false;
 	/*
-	 * We can ignore Vars other than in subplan args lists,
-	 * since the parser already checked 'em.
+	 * expression_tree_mutator will copy SubPlan nodes if given a chance.
+	 * We do not want to do that here, because subselect.c has already
+	 * constructed the initPlan and subPlan lists of the current plan node
+	 * and we mustn't leave those dangling (ie, pointing to different
+	 * copies of the nodes than what's in the targetlist & quals...)
+	 * Instead, alter the SubPlan in-place.  Grotty --- is there a better way?
 	 */
 	if (is_subplan(node))
 	{
-		/*
-		 * The args list of the subplan node represents attributes from
-		 * outside passed into the sublink.
-		 */
-		List	*t;
+		Expr	   *expr = (Expr *) node;
+		SubLink	   *sublink = ((SubPlan *) expr->oper)->sublink;
 
-		foreach(t, ((Expr *) node)->args)
-		{
-			Node	   *thisarg = lfirst(t);
-			bool		contained_in_group_clause = false;
-			List	   *gl;
+		/* transform args list (params to be passed to subplan) */
+		expr->args = (List *)
+			replace_vars_with_subplan_refs_mutator((Node *) expr->args,
+												   context);
+		/* transform sublink's oper list as well */
+		sublink->oper = (List *)
+			replace_vars_with_subplan_refs_mutator((Node *) sublink->oper,
+												   context);
 
-			foreach(gl, context->groupClause)
-			{
-				GroupClause	   *gcl = lfirst(gl);
-				Node		   *groupexpr;
-
-				groupexpr = get_sortgroupclause_expr(gcl,
-													 context->targetList);
-				/* XXX is var_equal correct, or should we use equal()? */
-				if (var_equal((Var *) thisarg, (Var *) groupexpr))
-				{
-					contained_in_group_clause = true;
-					break;
-				}
-			}
-
-			if (!contained_in_group_clause)
-				elog(ERROR, "Sub-SELECT in HAVING clause must use only GROUPed attributes from outer SELECT");
-		}
+		return (Node *) expr;
 	}
-	return expression_tree_walker(node,
-								  check_having_for_ungrouped_vars_walker,
-								  (void *) context);
+	return expression_tree_mutator(node,
+								   replace_vars_with_subplan_refs_mutator,
+								   (void *) context);
+}
+
+/*****************************************************************************
+ *					OPERATOR REGPROC LOOKUP
+ *****************************************************************************/
+
+/*
+ * fix_opids
+ *	  Calculate opid field from opno for each Oper node in given tree.
+ *	  The given tree can be anything expression_tree_walker handles.
+ *
+ * The argument is modified in-place.  (This is OK since we'd want the
+ * same change for any node, even if it gets visited more than once due to
+ * shared structure.)
+ */
+void
+fix_opids(Node *node)
+{
+	/* This tree walk requires no special setup, so away we go... */
+	fix_opids_walker(node, NULL);
+}
+
+static bool
+fix_opids_walker (Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (is_opclause(node))
+		replace_opid((Oper *) ((Expr *) node)->oper);
+	return expression_tree_walker(node, fix_opids_walker, context);
 }

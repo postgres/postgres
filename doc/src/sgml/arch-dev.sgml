@@ -2475,7 +2475,7 @@ having clause} is found.
 +         if(node->plan.qual != NULL)
 +         {
 +           qual_result =
-+               ExecQual(fix_opids(node->plan.qual),
++               ExecQual(node->plan.qual,
 +                        econtext);
 +         }     
 +         if (oneTuple) pfree(oneTuple);
