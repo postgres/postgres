@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.24 1997/07/29 16:17:52 thomas Exp $
+ * $Id: pg_proc.h,v 1.25 1997/08/21 23:56:51 momjian Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -828,8 +828,8 @@ DATA(insert OID = 1165 (  timespan_le      PGUID 11 f t f 2 f 16 "1186 1186" 100
 DATA(insert OID = 1166 (  timespan_ge      PGUID 11 f t f 2 f 16 "1186 1186" 100 0 0 100  foo bar ));
 DATA(insert OID = 1167 (  timespan_gt      PGUID 11 f t f 2 f 16 "1186 1186" 100 0 0 100  foo bar ));
 DATA(insert OID = 1168 (  timespan_um      PGUID 11 f t f 1 f 1186 "1186" 100 0 0 100  foo bar ));
-DATA(insert OID = 1169 (  timespan_add     PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
-DATA(insert OID = 1170 (  timespan_sub     PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1169 (  timespan_pl     PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1170 (  timespan_mi     PGUID 11 f t f 2 f 1186 "1186 1186" 100 0 0 100  foo bar ));
 DATA(insert OID = 1171 (  datetime_part    PGUID 11 f t f 2 f  701 "25 1184" 100 0 0 100  foo bar ));
 DATA(insert OID = 1172 (  timespan_part    PGUID 11 f t f 2 f  701 "25 1186" 100 0 0 100  foo bar ));
 
@@ -842,9 +842,9 @@ DATA(insert OID = 1178 (  datetime_date      PGUID 11 f t f 1 f 1082 "1184" 100 
 DATA(insert OID = 1179 (  abstime_date       PGUID 11 f t f 1 f 1082  "702" 100 0 0 100  foo bar ));
 DATA(insert OID = 1180 (  datetime_abstime   PGUID 11 f t f 1 f  702 "1184" 100 0 0 100  foo bar ));
 
-DATA(insert OID = 1188 (  datetime_sub       PGUID 11 f t f 2 f 1186 "1184 1184" 100 0 0 100  foo bar ));
-DATA(insert OID = 1189 (  datetime_add_span  PGUID 11 f t f 2 f 1184 "1184 1186" 100 0 0 100  foo bar ));
-DATA(insert OID = 1190 (  datetime_sub_span  PGUID 11 f t f 2 f 1184 "1184 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1188 (  datetime_mi       PGUID 11 f t f 2 f 1186 "1184 1184" 100 0 0 100  foo bar ));
+DATA(insert OID = 1189 (  datetime_pl_span  PGUID 11 f t f 2 f 1184 "1184 1186" 100 0 0 100  foo bar ));
+DATA(insert OID = 1190 (  datetime_mi_span  PGUID 11 f t f 2 f 1184 "1184 1186" 100 0 0 100  foo bar ));
 DATA(insert OID = 1191 (  text_datetime      PGUID 11 f t f 1 f 1184 "25" 100 0 0 100  foo bar ));
 DATA(insert OID = 1192 (  datetime_text      PGUID 11 f t f 1 f   25 "1184" 100 0 0 100  foo bar ));
 DATA(insert OID = 1193 (  timespan_text      PGUID 11 f t f 1 f 1186 "25" 100 0 0 100  foo bar ));
@@ -1088,6 +1088,8 @@ DATA(insert OID =  882 (  rtrim        PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "
 DATA(insert OID =  883 (  substr       PGUID 14 f t f 2 f 25 "25 23" 100 0 0 100  "select substr($1, $2, 10000)" - ));
 DATA(insert OID =  884 (  btrim        PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  885 (  btrim        PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select btrim($1, \' \')" - ));
+/* XXX Help, where should I go to  */
+DATA(insert OID =  1586 (  timespan_div PGUID 11 f t f 2 f 1186 "1186 701" 100 0 0 100  foo bar ));
 
 /* SEQUENCEs nextval & currval functions */
 DATA(insert OID =  1317 (  nextval     PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));

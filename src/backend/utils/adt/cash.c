@@ -9,7 +9,7 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  * 
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.7 1997/04/28 16:15:13 scrappy Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.8 1997/08/21 23:56:37 momjian Exp $
  */
 
 #include <stdio.h>
@@ -370,6 +370,9 @@ cash_div(Cash *c, float8 *f)
 
     if (!PointerIsValid(result = PALLOCTYPE(Cash)))
         elog(WARN,"Memory allocation failed, can't divide cash",NULL);
+
+    if (*f == 0.0)
+        elog(WARN,"cash_div:  divide by 0.0 error");
 
     *result = rint(*c / *f);
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.15 1997/08/19 21:34:39 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.16 1997/08/21 23:56:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2554,6 +2554,9 @@ point_div(Point *p1, Point *p2)
     result = PALLOCTYPE(Point);
 
     div = (p2->x*p2->x) + (p2->y*p2->y);
+
+    if (div == 0.0)
+        elog(WARN,"point_div:  divide by 0.0 error");
 
     result->x = ((p1->x*p2->x) + (p1->y*p2->y)) / div;
     result->y = ((p2->x*p1->y) - (p2->y*p1->x)) / div;

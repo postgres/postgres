@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.32 1997/08/19 21:34:34 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.33 1997/08/21 23:56:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,7 +645,7 @@ datetime_larger(DateTime *datetime1, DateTime *datetime2)
 
 
 TimeSpan *
-datetime_sub(DateTime *datetime1, DateTime *datetime2)
+datetime_mi(DateTime *datetime1, DateTime *datetime2)
 {
     TimeSpan *result;
 
@@ -672,10 +672,10 @@ datetime_sub(DateTime *datetime1, DateTime *datetime2)
     result->month = 0;
 
     return(result);
-} /* datetime_sub() */
+} /* datetime_mi() */
 
 
-/* datetime_add_span()
+/* datetime_pl_span()
  * Add a timespan to a datetime data type.
  * Note that timespan has provisions for qualitative year/month
  *  units, so try to do the right thing with them.
@@ -684,7 +684,7 @@ datetime_sub(DateTime *datetime1, DateTime *datetime2)
  *  to the last day of month.
  */
 DateTime *
-datetime_add_span(DateTime *datetime, TimeSpan *span)
+datetime_pl_span(DateTime *datetime, TimeSpan *span)
 {
     DateTime *result;
     DateTime dt;
@@ -697,7 +697,7 @@ datetime_add_span(DateTime *datetime, TimeSpan *span)
     result = PALLOCTYPE(DateTime);
 
 #ifdef DATEDEBUG
-printf( "datetime_add_span- add %f to %d %f\n", *datetime, span->month, span->time);
+printf( "datetime_pl_span- add %f to %d %f\n", *datetime, span->month, span->time);
 #endif
 
     if (DATETIME_NOT_FINITE(*datetime)) {
@@ -721,7 +721,7 @@ printf( "datetime_add_span- add %f to %d %f\n", *datetime, span->month, span->ti
 
 	    if (datetime2tm( dt, &tz, tm, &fsec, &tzn) == 0) {
 #ifdef DATEDEBUG
-printf( "datetime_add_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
+printf( "datetime_pl_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
  tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
 		tm->tm_mon += span->month;
@@ -743,7 +743,7 @@ printf( "datetime_add_span- date was %04d-%02d-%02d %02d:%02d:%02d\n",
 		};
 
 #ifdef DATEDEBUG
-printf( "datetime_add_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
+printf( "datetime_pl_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
  tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
 #endif
 		if (tm2datetime( tm, fsec, &tz, &dt) != 0)
@@ -758,10 +758,10 @@ printf( "datetime_add_span- date becomes %04d-%02d-%02d %02d:%02d:%02d\n",
     };
 
     return(result);
-} /* datetime_add_span() */
+} /* datetime_pl_span() */
 
 DateTime *
-datetime_sub_span(DateTime *datetime, TimeSpan *span)
+datetime_mi_span(DateTime *datetime, TimeSpan *span)
 {
     DateTime *result;
     TimeSpan tspan;
@@ -772,10 +772,10 @@ datetime_sub_span(DateTime *datetime, TimeSpan *span)
     tspan.month = -span->month;
     tspan.time = -span->time;
 
-    result = datetime_add_span( datetime, &tspan);
+    result = datetime_pl_span( datetime, &tspan);
 
     return(result);
-} /* datetime_sub_span() */
+} /* datetime_mi_span() */
 
 
 TimeSpan *
@@ -885,7 +885,7 @@ printf( "timespan_larger- months %d %d times %f %f spans %f %f\n",
 
 
 TimeSpan *
-timespan_add(TimeSpan *span1, TimeSpan *span2)
+timespan_pl(TimeSpan *span1, TimeSpan *span2)
 {
     TimeSpan *result;
 
@@ -898,10 +898,10 @@ timespan_add(TimeSpan *span1, TimeSpan *span2)
     result->time = JROUND(span1->time + span2->time);
 
     return(result);
-} /* timespan_add() */
+} /* timespan_pl() */
 
 TimeSpan *
-timespan_sub(TimeSpan *span1, TimeSpan *span2)
+timespan_mi(TimeSpan *span1, TimeSpan *span2)
 {
     TimeSpan *result;
 
@@ -914,8 +914,27 @@ timespan_sub(TimeSpan *span1, TimeSpan *span2)
     result->time = JROUND(span1->time - span2->time);
 
     return(result);
-} /* timespan_sub() */
+} /* timespan_mi() */
 
+TimeSpan *
+timespan_div(TimeSpan *span1, float8 *arg2)
+{
+    TimeSpan *result;
+
+    if ((!PointerIsValid(span1)) || (!PointerIsValid(arg2)))
+        return NULL;
+
+    if (!PointerIsValid(result = PALLOCTYPE(TimeSpan)))
+        elog(WARN,"Memory allocation failed, can't subtract timespans",NULL);
+
+    if (*arg2 == 0.0)
+        elog(WARN,"timespan_div:  divide by 0.0 error");
+
+    result->month = rint(span1->month / *arg2);
+    result->time = JROUND(span1->time / *arg2);
+
+    return(result);
+} /* timespan_div() */
 
 /* datetime_age()
  * Calculate time difference while retaining year/month fields.
