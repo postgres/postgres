@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.99 2000/07/03 20:48:46 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.100 2000/07/05 19:51:03 wieck Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -532,6 +532,11 @@ if [ "$PwPrompt" ]; then
     fi
     echo "Setting password"
 fi
+
+
+echo "Enabling unlimited storage for pg_rewrite"
+echo "ALTER TABLE pg_rewrite CREATE TOAST TABLE" \
+        | "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
 
 
 echo "Creating view pg_user."
