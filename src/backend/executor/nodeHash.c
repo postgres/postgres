@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.37 1999/07/15 22:39:08 momjian Exp $
+ *	$Id: nodeHash.c,v 1.38 1999/07/17 20:16:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,9 +19,7 @@
  */
 
 #include <sys/types.h>
-#include <stdio.h>
 #include <math.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "executor/execdebug.h"

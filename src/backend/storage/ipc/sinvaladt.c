@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.22 1999/07/15 22:39:49 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinvaladt.c,v 1.23 1999/07/17 20:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <signal.h>
 #include <unistd.h>
 

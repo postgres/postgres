@@ -7,16 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.25 1999/07/16 05:00:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/fcache.c,v 1.26 1999/07/17 20:18:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 #include "catalog/pg_language.h"
 #include "catalog/pg_proc.h"

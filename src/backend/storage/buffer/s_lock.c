@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.22 1999/07/13 20:12:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/Attic/s_lock.c,v 1.23 1999/07/17 20:17:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <sys/time.h>
 #include <unistd.h>
 

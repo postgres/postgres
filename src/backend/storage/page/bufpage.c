@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.25 1999/07/15 22:39:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.26 1999/07/17 20:17:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include <sys/types.h>
 #include <sys/file.h>
 

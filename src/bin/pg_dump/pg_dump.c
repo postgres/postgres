@@ -21,7 +21,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.116 1999/07/15 15:20:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.117 1999/07/17 20:18:18 momjian Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -51,10 +51,7 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdlib.h>
 #include <unistd.h>				/* for getopt() */
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifdef solaris_sparc

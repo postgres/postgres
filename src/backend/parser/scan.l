@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.51 1999/07/16 04:59:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.52 1999/07/17 20:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,10 +16,7 @@
 #include <unistd.h>
 #ifndef __linux__
 #include <math.h>
-#else
-#include <stdlib.h>
-#endif /* __linux__ */
-#include <string.h>
+#endif
 #include <errno.h>
 
 #include "postgres.h"

@@ -26,11 +26,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.92 1999/07/16 04:58:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.93 1999/07/17 20:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
 #include "access/heapam.h"

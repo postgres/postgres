@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.52 1999/07/17 16:02:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsearch.c,v 1.53 1999/07/17 20:16:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,6 @@
 #include "access/genam.h"
 #include "access/nbtree.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 
 static BTStack _bt_searchr(Relation rel, int keysz, ScanKey scankey,

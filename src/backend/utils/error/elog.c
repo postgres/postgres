@@ -7,19 +7,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.46 1999/07/16 05:23:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.47 1999/07/17 20:18:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include <time.h>
 #include <fcntl.h>
 #ifndef O_RDONLY
 #include <sys/file.h>
 #endif	 /* O_RDONLY */
 #include <sys/types.h>
-#include <stdarg.h>
 #include <errno.h>
 #include <unistd.h>
 #include <signal.h>

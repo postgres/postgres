@@ -1,5 +1,4 @@
 
-#include <stdio.h>
 #include "postgres.h"
 
 int

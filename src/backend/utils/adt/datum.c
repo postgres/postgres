@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.15 1999/07/15 22:39:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datum.c,v 1.16 1999/07/17 20:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
  * particular instance of the type and about its value.
  *
  */
-#include <string.h>
 #include "postgres.h"
 #include "utils/datum.h"
 

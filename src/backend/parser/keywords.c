@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.59 1999/07/15 15:19:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.60 1999/07/17 20:17:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "nodes/parsenodes.h"

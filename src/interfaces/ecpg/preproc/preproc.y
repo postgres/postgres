@@ -1,9 +1,5 @@
 /* Copyright comment */
 %{
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
 #include "postgres.h"
 #include "access/htup.h"
 #include "catalog/catname.h"

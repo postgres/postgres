@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.60 1999/07/17 04:12:09 momjian Exp $
+ * $Id: c.h,v 1.61 1999/07/17 20:18:25 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,7 +50,9 @@
 #include "config.h"
 
 
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #ifdef STDC_HEADERS
 #include <stddef.h>
 #include <stdarg.h>
@@ -789,12 +791,14 @@ extern char *vararg_format(const char *fmt,...);
 
 #ifndef HAVE_SNPRINTF
 extern int	snprintf(char *str, size_t count, const char *fmt,...);
-
 #endif
 
 #ifndef HAVE_VSNPRINTF
 extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
+#endif
 
+#ifndef HAVE_MEMMOVE
+#include <regex/utils.h>
 #endif
 
 /* ----------------

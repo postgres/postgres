@@ -13,11 +13,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.11 1999/07/16 03:13:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/single.c,v 1.12 1999/07/17 20:17:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 
 #include "postgres.h"
 

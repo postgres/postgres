@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.92 1999/07/16 22:29:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.93 1999/07/17 20:17:21 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -32,7 +32,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include <ctype.h>
 
 #include "postgres.h"

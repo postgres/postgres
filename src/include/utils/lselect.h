@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lselect.h,v 1.13 1999/07/15 15:21:40 momjian Exp $
+ * $Id: lselect.h,v 1.14 1999/07/17 20:18:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef LSELECT_H
 #define LSELECT_H
-
-#include <stdio.h>
 
 #include "utils/syscache.h"
 

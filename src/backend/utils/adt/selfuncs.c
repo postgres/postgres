@@ -12,15 +12,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.34 1999/07/16 05:00:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.35 1999/07/17 20:17:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
-
 
 #include "access/heapam.h"
 #include "catalog/catname.h"

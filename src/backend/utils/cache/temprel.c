@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.9 1999/07/16 05:23:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.10 1999/07/17 20:18:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,6 @@
  */
 
 #include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "access/heapam.h"

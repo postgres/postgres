@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: password.c,v 1.24 1999/07/16 04:59:01 momjian Exp $
+ * $Id: password.c,v 1.25 1999/07/17 20:17:02 momjian Exp $
  *
  */
 
-#include <string.h>
 #include <unistd.h>
+
 #include "postgres.h"
 #ifdef HAVE_CRYPT_H
 #include "crypt.h"

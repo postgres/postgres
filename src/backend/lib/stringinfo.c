@@ -8,13 +8,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: stringinfo.c,v 1.19 1999/07/15 15:19:02 momjian Exp $
+ *	  $Id: stringinfo.c,v 1.20 1999/07/17 20:16:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "lib/stringinfo.h"

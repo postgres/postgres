@@ -8,12 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.26 1999/07/16 04:58:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.27 1999/07/17 20:16:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <time.h>
 
 #include "postgres.h"

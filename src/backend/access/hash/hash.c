@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.29 1999/07/16 04:58:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hash.c,v 1.30 1999/07/17 20:16:38 momjian Exp $
  *
  * NOTES
  *	  This file contains only the public interface routines.
@@ -24,11 +24,6 @@
 #include "executor/executor.h"
 #include "miscadmin.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 bool		BuildingHash = false;
 

@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.25 1999/07/16 04:58:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.26 1999/07/17 20:16:47 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
 #include "access/heapam.h"

@@ -7,17 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.36 1999/07/16 04:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.37 1999/07/17 20:17:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"
-
-
-
 
 #include "optimizer/plancat.h"
 #include "optimizer/planmain.h"

@@ -10,22 +10,16 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.37 1999/07/16 05:00:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.38 1999/07/17 20:17:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <errno.h>
 #include <math.h>
 
 #include "postgres.h"
 #ifdef HAVE_LIMITS_H
 #include <limits.h>
-#endif
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
 #endif
 #include "utils/builtins.h"
 

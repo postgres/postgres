@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.35 1999/07/16 04:58:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/remove.c,v 1.36 1999/07/17 20:16:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,11 +24,6 @@
 #include "utils/acl.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /*
  * RemoveOperator

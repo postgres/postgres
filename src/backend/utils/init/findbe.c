@@ -6,14 +6,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.15 1999/07/16 03:14:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/Attic/findbe.c,v 1.16 1999/07/17 20:18:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <grp.h>
 #include <pwd.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>

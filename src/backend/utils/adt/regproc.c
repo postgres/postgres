@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.41 1999/07/16 05:00:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.42 1999/07/17 20:17:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
 #include "access/genam.h"

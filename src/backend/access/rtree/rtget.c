@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.18 1999/07/16 04:58:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtget.c,v 1.19 1999/07/17 20:16:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,6 @@
 #include "access/iqual.h"
 #include "access/rtree.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 
 static OffsetNumber findnext(IndexScanDesc s, Page p, OffsetNumber n,

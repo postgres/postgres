@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.35 1999/07/16 04:58:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.36 1999/07/17 20:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,6 @@
 #include "executor/executor.h"
 #include "utils/geo_decls.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 typedef struct SPLITVEC
 {

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.84 1999/07/16 04:58:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.85 1999/07/17 20:16:49 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -19,11 +19,6 @@
  */
 #include "postgres.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 #include "access/genam.h"
 #include "access/heapam.h"

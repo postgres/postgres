@@ -6,16 +6,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.53 1999/07/16 04:59:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.54 1999/07/17 20:17:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
-
-
-
-
 
 #include "access/heapam.h"
 #include "catalog/pg_type.h"

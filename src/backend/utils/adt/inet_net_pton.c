@@ -16,7 +16,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$Id: inet_net_pton.c,v 1.9 1999/07/15 23:03:27 momjian Exp $";
+static const char rcsid[] = "$Id: inet_net_pton.c,v 1.10 1999/07/17 20:17:56 momjian Exp $";
 
 #endif
 
@@ -28,9 +28,6 @@ static const char rcsid[] = "$Id: inet_net_pton.c,v 1.9 1999/07/15 23:03:27 momj
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include "postgres.h"
 #include "utils/builtins.h"

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.28 1999/07/16 04:58:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.29 1999/07/17 20:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,7 +116,6 @@
  *		and the TupleTableSlot node in execnodes.h.
  *
  */
-#include <string.h>
 
 #include "postgres.h"
 #include "executor/executor.h"

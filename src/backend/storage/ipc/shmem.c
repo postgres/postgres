@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.44 1999/07/15 22:39:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmem.c,v 1.45 1999/07/17 20:17:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -57,8 +57,6 @@
  *	shmem index.
  *
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "storage/proc.h"

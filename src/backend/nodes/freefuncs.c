@@ -7,12 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.21 1999/07/15 22:39:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.22 1999/07/17 20:17:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 

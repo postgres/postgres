@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.11 1999/02/13 23:22:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/utils/Attic/version.c,v 1.12 1999/07/17 20:18:55 momjian Exp $
  *
  * NOTES
  *		XXX eventually, should be able to handle version identifiers
@@ -22,8 +22,6 @@
 #include <fcntl.h>				/* For open() flags */
 #include <sys/stat.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <errno.h>
 

@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.36 1999/07/15 23:03:47 momjian Exp $
+ * $Id: executor.h,v 1.37 1999/07/17 20:18:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECUTOR_H
 #define EXECUTOR_H
 
-#include <stdio.h>
 #include "executor/execdesc.h"
 
 /* ----------------

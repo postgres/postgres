@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.51 1999/07/16 04:58:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/async.c,v 1.52 1999/07/17 20:16:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,7 +78,6 @@
 
 #include <unistd.h>
 #include <signal.h>
-#include <string.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <netinet/in.h>

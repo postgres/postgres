@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.35 1999/07/16 05:23:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.36 1999/07/17 20:18:08 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -16,8 +16,6 @@
  *-------------------------------------------------------------------------
  */
 #include <fcntl.h>
-#include <stdio.h>
-#include <string.h>
 #include <sys/file.h>
 #include <sys/types.h>
 #include <math.h>

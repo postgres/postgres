@@ -4,9 +4,6 @@
   format for these routines is dictated by Postgres architecture.
 ******************************************************************************/
 
-#include <stdio.h>
-/* do not include libpq-fe.h for backend-loaded functions*/
-/* #include "libpq-fe.h"  */
 #include "postgres.h"
 
 typedef struct Complex

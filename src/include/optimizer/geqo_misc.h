@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.h,v 1.12 1999/07/15 15:21:20 momjian Exp $
+ * $Id: geqo_misc.h,v 1.13 1999/07/17 20:18:30 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,8 +20,6 @@
 
 #ifndef GEQO_MISC_H
 #define GEQO_MISC_H
-
-#include <stdio.h>
 
 #include "optimizer/geqo_recombination.h"
 #include "nodes/relation.h"

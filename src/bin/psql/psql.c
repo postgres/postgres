@@ -7,13 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.182 1999/06/04 21:21:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.183 1999/07/17 20:18:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <signal.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -29,6 +26,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <ctype.h>
+
 #include "postgres.h"
 #include "libpq-fe.h"
 #include "pqsignal.h"

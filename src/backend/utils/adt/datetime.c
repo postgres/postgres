@@ -7,12 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.37 1999/07/16 03:13:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.38 1999/07/17 20:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include <limits.h>
 
 #include "postgres.h"

@@ -28,7 +28,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.79 1999/07/17 05:16:15 momjian Exp $
+ *	$Id: pqcomm.c,v 1.80 1999/07/17 20:17:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,6 @@
  *
  *------------------------
  */
-#include <stdio.h>
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -73,12 +72,6 @@
 #include <sys/file.h>
 
 #include "postgres.h"
-
-#if defined(HAVE_STRING_H)
-#include <string.h>
-#else
-#include <strings.h>
-#endif
 
 #include "libpq/libpq.h"
 #include "utils/trace.h" /* needed for HAVE_FCNTL_SETLK */

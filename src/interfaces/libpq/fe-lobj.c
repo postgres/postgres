@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.20 1999/05/10 00:46:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.21 1999/07/17 20:18:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
 #include <unistd.h>
 #endif
 #endif
-#include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
 

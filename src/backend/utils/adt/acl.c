@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.39 1999/07/16 04:59:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/acl.c,v 1.40 1999/07/17 20:17:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 #include "postgres.h"
 
 #include "catalog/catalog.h"

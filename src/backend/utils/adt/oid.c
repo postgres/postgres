@@ -7,13 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.27 1999/07/16 05:00:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/oid.c,v 1.28 1999/07/17 20:17:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "utils/builtins.h"

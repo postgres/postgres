@@ -16,11 +16,6 @@
 #include "access/gist.h"
 #include "access/gistscan.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* routines defined and used here */
 static void gistregscan(IndexScanDesc s);

@@ -7,13 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.28 1999/07/17 04:00:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.29 1999/07/17 20:17:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <sys/file.h>
-#include <stdio.h>
 #include <math.h>
 #include <signal.h>
 

@@ -7,16 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.26 1999/07/16 04:59:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.27 1999/07/17 20:17:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
-
-
-
-
 
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"

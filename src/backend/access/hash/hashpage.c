@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.23 1999/07/16 04:58:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashpage.c,v 1.24 1999/07/17 20:16:39 momjian Exp $
  *
  * NOTES
  *	  Postgres hash pages look like ordinary relation pages.  The opaque
@@ -29,11 +29,6 @@
 #include "access/hash.h"
 #include "miscadmin.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static void _hash_setpagelock(Relation rel, BlockNumber blkno, int access);
 static void _hash_unsetpagelock(Relation rel, BlockNumber blkno, int access);

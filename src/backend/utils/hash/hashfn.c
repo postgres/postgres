@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.9 1999/02/13 23:19:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.10 1999/07/17 20:18:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
 #include "utils/hsearch.h"

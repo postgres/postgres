@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_misc.c,v 1.22 1999/07/16 04:59:09 momjian Exp $
+ * $Id: geqo_misc.c,v 1.23 1999/07/17 20:17:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,6 @@
  */
 
 
-#include <stdio.h>
 
 #include "postgres.h"
 #include "optimizer/geqo_misc.h"

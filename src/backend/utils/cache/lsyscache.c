@@ -7,13 +7,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.30 1999/07/16 05:23:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.31 1999/07/17 20:18:01 momjian Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 
 

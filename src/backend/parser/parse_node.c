@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.27 1999/07/16 04:59:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.28 1999/07/17 20:17:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "access/heapam.h"

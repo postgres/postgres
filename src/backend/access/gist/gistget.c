@@ -16,11 +16,6 @@
 #include "access/gist.h"
 #include "executor/execdebug.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 
 static OffsetNumber gistfindnext(IndexScanDesc s, Page p, OffsetNumber n,

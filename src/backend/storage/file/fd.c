@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.46 1999/07/16 03:13:31 momjian Exp $
+ *	  $Id: fd.c,v 1.47 1999/07/17 20:17:42 momjian Exp $
  *
  * NOTES:
  *
@@ -37,13 +37,11 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <sys/types.h>
 #include <sys/file.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 

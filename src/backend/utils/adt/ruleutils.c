@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.20 1999/07/15 22:40:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.21 1999/07/17 20:17:59 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -35,13 +35,10 @@
  *
  **********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <string.h>
 
+#include "postgres.h"
 #include "executor/spi.h"
 #include "optimizer/clauses.h"
 #include "utils/lsyscache.h"

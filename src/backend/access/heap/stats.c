@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.20 1999/07/16 04:58:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/Attic/stats.c,v 1.21 1999/07/17 20:16:40 momjian Exp $
  *
  * NOTES
  *	  initam should be moved someplace else.
@@ -15,18 +15,12 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <time.h>
 
 #include "postgres.h"
 
 #include "access/heapam.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static void InitHeapAccessStatistics(void);
 

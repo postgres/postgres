@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.28 1999/07/16 04:58:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtscan.c,v 1.29 1999/07/17 20:16:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,6 @@
 #include "access/genam.h"
 #include "access/rtree.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 
 /* routines defined and used here */

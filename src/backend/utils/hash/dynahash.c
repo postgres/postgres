@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.26 1999/07/16 05:23:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.27 1999/07/17 20:18:05 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,8 @@
  * Modified by sullivan@postgres.berkeley.edu April 1990
  *		changed ctl structure for shared memory
  */
-#include <stdio.h>
 #include <sys/types.h>
-#include <string.h>
+
 #include "postgres.h"
 #include "utils/dynahash.h"
 #include "utils/hsearch.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.24 1999/07/15 22:39:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/list.c,v 1.25 1999/07/17 20:17:06 momjian Exp $
  *
  * NOTES
  *	  XXX a few of the following functions are duplicated to handle
@@ -21,7 +21,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdarg.h>
 #include "postgres.h"
 #include "nodes/parsenodes.h"
 

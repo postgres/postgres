@@ -7,11 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.26 1999/07/16 04:59:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.27 1999/07/17 20:17:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 
 #include "postgres.h"
 

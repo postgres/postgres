@@ -24,18 +24,17 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.25 1999/05/28 01:54:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.26 1999/07/17 20:18:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "libpq-fe.h"
 #include "libpq-int.h"
+
 #include "postgres.h"
 #include "pqsignal.h"
 
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <signal.h>
 #include <time.h>

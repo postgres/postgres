@@ -7,12 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.49 1999/07/16 04:59:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.50 1999/07/17 20:17:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
 
 #include "postgres.h"
 

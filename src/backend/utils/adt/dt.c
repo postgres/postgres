@@ -7,16 +7,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.75 1999/07/16 05:00:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.76 1999/07/17 20:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
-#include <string.h>
 #include <sys/types.h>
 #include <errno.h>
+
 #include "postgres.h"
 #ifdef HAVE_FLOAT_H
 #include <float.h>

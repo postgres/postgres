@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.19 1999/07/16 03:13:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/bool.c,v 1.20 1999/07/17 20:17:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 #include "postgres.h"
 
 #include "utils/builtins.h"

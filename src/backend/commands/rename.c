@@ -7,16 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.31 1999/07/16 05:41:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.32 1999/07/17 20:16:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 #include "access/heapam.h"
 #include "catalog/catname.h"

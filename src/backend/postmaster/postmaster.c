@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.113 1999/07/16 05:41:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.114 1999/07/17 20:17:32 momjian Exp $
  *
  * NOTES
  *
@@ -49,8 +49,6 @@
 #endif	 /* !NO_UNISTD_H */
 
 #include <signal.h>
-#include <string.h>
-#include <stdlib.h>
 #include <time.h>
 
 
@@ -68,7 +66,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <stdio.h>
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>

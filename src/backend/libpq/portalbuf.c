@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.20 1999/07/16 04:59:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/portalbuf.c,v 1.21 1999/07/17 20:17:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,6 @@
  *		see utils/mmgr/portalmem.c for why. -cim 2/22/91
  *
  */
-#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"

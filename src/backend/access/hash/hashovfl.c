@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.23 1999/07/16 04:58:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashovfl.c,v 1.24 1999/07/17 20:16:38 momjian Exp $
  *
  * NOTES
  *	  Overflow pages look like ordinary relation pages.
@@ -18,11 +18,6 @@
 
 #include "access/hash.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static OverflowPageAddress _hash_getovfladdr(Relation rel, Buffer *metabufp);
 static uint32 _hash_firstfreebit(uint32 map);

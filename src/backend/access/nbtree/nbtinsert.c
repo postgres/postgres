@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.47 1999/07/16 04:58:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.48 1999/07/17 20:16:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,11 +17,6 @@
 #include "access/heapam.h"
 #include "access/nbtree.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static InsertIndexResult _bt_insertonpg(Relation rel, Buffer buf, BTStack stack, int keysz, ScanKey scankey, BTItem btitem, BTItem afteritem);
 static Buffer _bt_split(Relation rel, Buffer buf, OffsetNumber firstright);

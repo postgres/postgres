@@ -9,11 +9,9 @@
  * workings can be found in the book "Software Solutions in C" by
  * Dale Schumacher, Academic Press, ISBN: 0-12-632360-7.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.31 1999/07/16 05:00:01 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/cash.c,v 1.32 1999/07/17 20:17:54 momjian Exp $
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <limits.h>
 #include <ctype.h>
 #include <locale.h>

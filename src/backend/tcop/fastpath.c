@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.28 1999/07/16 04:59:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.29 1999/07/17 20:17:50 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -57,7 +57,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 
 #include "postgres.h"
 

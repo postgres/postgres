@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.19 1999/07/16 05:23:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.20 1999/07/17 20:18:13 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -21,14 +21,8 @@
  *				Jan Wieck
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include "postgres.h"
 #include "utils/memutils.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 
 #undef AllocSetReset

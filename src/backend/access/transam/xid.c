@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: xid.c,v 1.25 1999/07/15 23:03:04 momjian Exp $
+ *	$Id: xid.c,v 1.26 1999/07/17 20:16:45 momjian Exp $
  *
  * OLD COMMENTS
  * XXX WARNING
@@ -18,7 +18,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 
 #include "postgres.h"
 #include "access/xact.h"

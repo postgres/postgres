@@ -6,14 +6,13 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.28 1999/07/15 23:04:09 momjian Exp $
+ * $Id: bufmgr.h,v 1.29 1999/07/17 20:18:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef BUFMGR_H
 #define BUFMGR_H
 
-#include <stdio.h>
 
 #include "storage/ipc.h"
 #include "storage/block.h"

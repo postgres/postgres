@@ -7,13 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.53 1999/07/16 22:32:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.54 1999/07/17 20:17:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "nodes/makefuncs.h"

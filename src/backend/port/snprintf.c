@@ -32,14 +32,11 @@
  * SUCH DAMAGE.
  */
 
-#include "postgres.h"
-
-
-#include <stdio.h>
-#include <stdarg.h>
-
 #include <sys/ioctl.h>
 #include <sys/param.h>
+
+#include "postgres.h"
+
 
 /*
  * We do all internal arithmetic in the widest available integer type,
@@ -77,7 +74,7 @@ typedef unsigned long ulong_long;
  * causing nast effects.
  **************************************************************/
 
-/*static char _id[] = "$Id: snprintf.c,v 1.24 1999/07/16 04:59:36 momjian Exp $";*/
+/*static char _id[] = "$Id: snprintf.c,v 1.25 1999/07/17 20:17:28 momjian Exp $";*/
 static char *end;
 static int	SnprfOverflow;
 

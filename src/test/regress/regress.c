@@ -1,12 +1,10 @@
 /*
- * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.32 1999/05/25 16:15:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/test/regress/regress.c,v 1.33 1999/07/17 20:18:52 momjian Exp $
  */
 
 #include <float.h>				/* faked on sunos */
-#include <stdio.h>
-#include <string.h>				/* for MemSet() */
 
-#include <postgres.h>
+#include "postgres.h"
 
 #include "utils/geo_decls.h"	/* includes <math.h> */
 #include "executor/executor.h"	/* For GetAttributeByName */

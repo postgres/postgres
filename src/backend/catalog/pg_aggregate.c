@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.23 1999/07/16 04:58:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_aggregate.c,v 1.24 1999/07/17 20:16:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,11 +21,6 @@
 #include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------
  * AggregateCreate

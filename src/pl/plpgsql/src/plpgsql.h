@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.3 1999/01/27 16:15:22 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.4 1999/07/17 20:18:47 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -37,8 +37,6 @@
 #ifndef PLPGSQL_H
 #define PLPGSQL_H
 
-#include <stdio.h>
-#include <stdarg.h>
 #include "postgres.h"
 #include "executor/spi.h"
 #include "commands/trigger.h"

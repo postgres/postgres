@@ -9,14 +9,11 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.22 1999/07/16 04:59:00 momjian Exp $
+ * $Id: crypt.c,v 1.23 1999/07/17 20:17:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <unistd.h>
 
 #include "postgres.h"

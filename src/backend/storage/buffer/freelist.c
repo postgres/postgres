@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.17 1999/07/16 04:59:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.18 1999/07/17 20:17:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,7 +23,6 @@
  * Sync: all routines in this file assume that the buffer
  *		semaphore has been acquired by the caller.
  */
-#include <stdio.h>
 
 #include "postgres.h"
 #include "storage/bufmgr.h"

@@ -2,12 +2,10 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.24 1999/07/16 04:58:41 momjian Exp $
+ * $Id: variable.c,v 1.25 1999/07/17 20:16:54 momjian Exp $
  *
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 #include <time.h>
 

@@ -8,13 +8,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.56 1999/07/16 04:59:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.57 1999/07/17 20:17:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
-#include <stdio.h>
-#include <string.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.51 1999/07/16 04:58:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.52 1999/07/17 20:16:39 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -85,11 +85,6 @@
 #include "utils/inval.h"
 #include "utils/relcache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *						 heap support routines

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.39 1999/07/16 04:58:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.40 1999/07/17 20:17:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,8 +17,6 @@
  *	   backend (postmaster) routines:
  *		be_recvauth				receive authentication information
  */
-#include <stdio.h>
-#include <string.h>
 #include <sys/param.h>			/* for MAXHOSTNAMELEN on most */
 #ifndef  MAXHOSTNAMELEN
 #include <netdb.h>				/* for MAXHOSTNAMELEN on some */

@@ -7,13 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.21 1999/07/16 03:14:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/filename.c,v 1.22 1999/07/17 20:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
-#include <stdio.h>
 #include <pwd.h>
 
 #include <sys/param.h>

@@ -4,7 +4,6 @@
 
 #include "postgres.h"
 
-#include <stdio.h>
 #if HAVE_GETOPT_H
 #include <getopt.h>
 #else
@@ -12,12 +11,6 @@
 extern int	optind;
 extern char *optarg;
 
-#endif
-#include <stdlib.h>
-#if defined(HAVE_STRING_H)
-#include <string.h>
-#else
-#include <strings.h>
 #endif
 
 #include "extern.h"

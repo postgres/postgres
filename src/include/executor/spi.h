@@ -8,7 +8,6 @@
 #ifndef SPI_H
 #define SPI_H
 
-#include <string.h>
 #include "postgres.h"
 
 /*

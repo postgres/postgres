@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: portal.c,v 1.26 1999/07/16 04:59:02 momjian Exp $
+ *	$Id: portal.c,v 1.27 1999/07/17 20:17:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,8 +50,6 @@
  *		see utils/mmgr/portalmem.c for why. -cim 2/22/91
  *
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 

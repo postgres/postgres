@@ -9,11 +9,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.8 1999/07/16 04:59:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/ultrix4.c,v 1.9 1999/07/17 20:17:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include "postgres.h"
 #include "dl.h"
 #include "fmgr.h"

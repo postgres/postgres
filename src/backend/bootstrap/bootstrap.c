@@ -7,16 +7,14 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.64 1999/07/16 04:58:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.65 1999/07/17 20:16:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <unistd.h>
 #include <time.h>
-#include <stdio.h>
 #include <signal.h>
 #include <setjmp.h>
-#include <string.h>
 #ifdef __CYGWIN32__
 #include <getopt.h>
 #endif
@@ -38,10 +36,6 @@
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
 #include "utils/portal.h"
-
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#endif
 
 #define ALLOC(t, c)		(t *)calloc((unsigned)(c), sizeof(t))
 #define FIRST_TYPE_OID 16		/* OID of the first type */

@@ -15,14 +15,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.25 1999/07/16 04:59:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/localbuf.c,v 1.26 1999/07/17 20:17:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <sys/types.h>
 #include <sys/file.h>
-#include <stdio.h>
-#include <string.h>
 #include <math.h>
 #include <signal.h>
 

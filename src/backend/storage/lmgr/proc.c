@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.59 1999/07/16 04:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.60 1999/07/17 20:17:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,11 +46,10 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.59 1999/07/16 04:59:48 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.60 1999/07/17 20:17:47 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
-#include <string.h>
 #include <signal.h>
 #include <sys/types.h>
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.81 1999/05/28 01:54:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.82 1999/07/17 20:18:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,6 @@
 #include <unistd.h>
 #endif
 #endif
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 #include <ctype.h>
 

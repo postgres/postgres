@@ -10,12 +10,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.14 1999/07/16 04:59:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/linux.c,v 1.15 1999/07/17 20:17:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 #ifdef HAVE_DLD_H

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fd.h,v 1.16 1999/05/26 12:56:53 momjian Exp $
+ * $Id: fd.h,v 1.17 1999/07/17 20:18:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,8 +37,6 @@
  */
 #ifndef FD_H
 #define FD_H
-
-#include <stdio.h>
 
 /*
  * FileSeek uses the standard UNIX lseek(2) flags.

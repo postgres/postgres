@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.37 1999/05/25 16:11:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/ipc.c,v 1.38 1999/07/17 20:17:43 momjian Exp $
  *
  * NOTES
  *
@@ -26,8 +26,6 @@
  */
 #include <sys/types.h>
 #include <sys/file.h>
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 
 
@@ -42,7 +40,6 @@
 #include "utils/trace.h"
 
 #if defined(solaris_sparc)
-#include <string.h>
 #include <sys/ipc.h>
 #endif
 

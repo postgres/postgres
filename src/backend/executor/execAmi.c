@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.40 1999/07/16 04:58:44 momjian Exp $
+ *	$Id: execAmi.c,v 1.41 1999/07/17 20:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,7 +24,6 @@
  *		ExecCreatR		function to create temporary relations
  *
  */
-#include <stdio.h>
 
 #include "postgres.h"
 

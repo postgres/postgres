@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.32 1999/07/16 04:59:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Attic/multi.c,v 1.33 1999/07/17 20:17:47 momjian Exp $
  *
  * NOTES:
  *	 (1) The lock.c module assumes that the caller here is doing
@@ -20,8 +20,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include "postgres.h"
 
 #include "miscadmin.h"

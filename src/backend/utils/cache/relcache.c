@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.66 1999/07/16 05:23:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.67 1999/07/17 20:18:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,11 +30,9 @@
  *
  */
 #include <sys/types.h>
-#include <stdio.h>
 #include <errno.h>
 #include <sys/file.h>
 #include <fcntl.h>
-#include <string.h>
 
 #include "postgres.h"
 

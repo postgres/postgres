@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.26 1999/07/15 23:02:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtcompare.c,v 1.27 1999/07/17 20:16:41 momjian Exp $
  *
  *	NOTES
  *		These functions are stored in pg_amproc.  For each operator class
@@ -20,7 +20,6 @@
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 
 #include "postgres.h"
 

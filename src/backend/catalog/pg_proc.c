@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.32 1999/07/16 04:58:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.33 1999/07/17 20:16:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,11 +28,6 @@
 #include "utils/sets.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *		ProcedureCreate

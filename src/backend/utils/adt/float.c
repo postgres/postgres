@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.46 1999/07/16 03:14:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.47 1999/07/17 20:17:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -45,10 +45,7 @@
  *		 for calls to pow(), exp() since on some machines (my Linux box
  *		 included) these routines do not set errno. - tgl 97/05/10
  */
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
-#include <stdlib.h>
 #include <errno.h>
 
 #include <float.h>				/* faked on sunos4 */

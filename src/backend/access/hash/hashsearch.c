@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.20 1999/07/16 04:58:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashsearch.c,v 1.21 1999/07/17 20:16:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,11 +16,6 @@
 
 #include "access/hash.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /*
  *	_hash_search() -- Finds the page/bucket that the contains the

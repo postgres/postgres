@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.26 1999/07/16 05:00:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/int.c,v 1.27 1999/07/17 20:17:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,6 @@
  * XXX makes massive and possibly unwarranted type promotion assumptions.
  * fix me when we figure out what we want to do about ANSIfication...
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 #ifdef HAVE_LIMITS_H

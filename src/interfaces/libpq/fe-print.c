@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.23 1999/05/25 16:15:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.24 1999/07/17 20:18:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,7 @@
 #include <termios.h>
 #endif
 #endif	 /* WIN32 */
-#include <stdlib.h>
 #include <signal.h>
-#include <string.h>
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"

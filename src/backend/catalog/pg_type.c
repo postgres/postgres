@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.39 1999/07/16 04:58:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.40 1999/07/17 20:16:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,11 +22,6 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static Oid TypeShellMakeWithOpenRelation(Relation pg_type_desc,
 							  char *typeName);

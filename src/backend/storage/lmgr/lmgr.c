@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.32 1999/07/16 04:59:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lmgr.c,v 1.33 1999/07/17 20:17:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,14 +18,8 @@
 #define LOCKDEBUG		1
 #endif	 /* LOCKDEBUGALL */
 
-#include <string.h>
 
 #include "postgres.h"
-
-
-
-
-
 #include "access/transam.h"
 #include "catalog/catalog.h"
 

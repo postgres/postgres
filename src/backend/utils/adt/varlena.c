@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.52 1999/07/16 05:00:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.53 1999/07/17 20:18:00 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
 

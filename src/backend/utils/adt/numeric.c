@@ -5,14 +5,11 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.18 1999/07/15 15:20:18 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.19 1999/07/17 20:17:58 momjian Exp $
  *
  * ----------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <float.h>
 #include <math.h>

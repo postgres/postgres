@@ -7,14 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.15 1999/07/16 03:14:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/assert.c,v 1.16 1999/07/17 20:18:03 momjian Exp $
  *
  * NOTE
  *	  This should eventually work with elog(), dlog(), etc.
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <unistd.h>
 
 #include "postgres.h"

@@ -1,24 +1,15 @@
 /* This is a modified version of src/backend/parser/scan.l */
 %{
-#include "config.h"
-
 #include <ctype.h>
 #include <sys/types.h>
 #include <limits.h>
+#include <errno.h>
 
+#include "postgres.h"
 #ifndef PATH_MAX
 #include <sys/param.h>
 #define PATH_MAX MAXPATHLEN
 #endif
-
-#if defined(HAVE_STRING_H)
-#include <string.h>
-#else
-#include <strings.h>
-#endif
-#include <errno.h>
-
-#include "postgres.h"
 #include "miscadmin.h"
 #include "nodes/pg_list.h"
 #include "nodes/parsenodes.h"

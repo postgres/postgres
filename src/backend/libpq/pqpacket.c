@@ -8,14 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.21 1999/07/15 23:03:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/pqpacket.c,v 1.22 1999/07/17 20:17:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
 #include <unistd.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>

@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.20 1999/07/16 04:59:11 momjian Exp $
+* $Id: geqo_params.c,v 1.21 1999/07/17 20:17:10 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -18,11 +18,9 @@
    =*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=*=
  */
 
-#include <stdio.h>
 #include <time.h>
 #include <math.h>
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "miscadmin.h"

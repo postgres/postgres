@@ -8,12 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.18 1999/07/16 05:23:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.19 1999/07/17 20:18:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
 
 #include "postgres.h"
 

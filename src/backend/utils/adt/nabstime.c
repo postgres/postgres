@@ -4,12 +4,10 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.60 1999/07/16 05:23:19 momjian Exp $
+ *	  $Id: nabstime.c,v 1.61 1999/07/17 20:17:57 momjian Exp $
  *
  */
-#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 #include <sys/types.h>
 
 #include "postgres.h"

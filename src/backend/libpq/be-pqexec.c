@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.23 1999/07/16 04:59:00 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-pqexec.c,v 1.24 1999/07/17 20:17:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -26,11 +26,6 @@
 #include "tcop/fastpath.h"
 #include "tcop/tcopprot.h"
 #include "utils/builtins.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static char *strmake(char *str, int len);
 

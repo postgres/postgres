@@ -9,7 +9,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.21 1999/07/15 23:03:09 momjian Exp $
+ *	$Id: version.c,v 1.22 1999/07/17 20:16:55 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -20,8 +20,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 

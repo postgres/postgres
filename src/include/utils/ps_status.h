@@ -13,7 +13,6 @@
 
 #ifdef linux
 
-#include <stdio.h>
 #include <string.h>
 
 extern char *ps_status_buffer;

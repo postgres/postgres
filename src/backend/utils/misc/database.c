@@ -7,13 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.27 1999/07/16 05:23:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.28 1999/07/17 20:18:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
 

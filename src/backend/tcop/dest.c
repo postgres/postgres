@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.35 1999/07/16 04:59:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.36 1999/07/17 20:17:50 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,8 +32,6 @@
  *		versa --- so I think I'll just leave 'em alone for now.  tgl 1/99.
  *
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: be-dumpdata.c,v 1.29 1999/07/16 04:58:58 momjian Exp $
+ *	$Id: be-dumpdata.c,v 1.30 1999/07/17 20:17:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,6 @@
  *		puts portals on the stack and the PQ functions remove them.
  *
  */
-#include <string.h>
 
 #include "postgres.h"
 

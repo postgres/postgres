@@ -1,15 +1,7 @@
 /*
  * @(#) pg_passwd.c 1.8 09:13:16 97/07/02		Y. Ichikawa
  */
-#include <stdio.h>
-#include <stdlib.h>
-
 #include "postgres.h"
-#if defined(HAVE_STRING_H)
-#include <string.h>
-#else
-#include <strings.h>
-#endif
 #include <unistd.h>
 #include <errno.h>
 #include <time.h>

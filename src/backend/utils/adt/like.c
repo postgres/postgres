@@ -17,7 +17,6 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include "postgres.h"
 #include "mb/pg_wchar.h"
 #include "utils/builtins.h"
@@ -110,7 +109,7 @@ textnlike(struct varlena * s, struct varlena * p)
 }
 
 
-/*	$Revision: 1.29 $
+/*	$Revision: 1.30 $
 **	"like.c" A first attempt at a LIKE operator for Postgres95.
 **
 **	Originally written by Rich $alz, mirror!rs, Wed Nov 26 19:03:17 EST 1986.

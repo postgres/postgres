@@ -5,12 +5,10 @@
  *	  wherein you authenticate a user by seeing what IP address the system
  *	  says he comes from and possibly using ident).
  *
- *	$Id: hba.c,v 1.46 1999/07/16 04:59:01 momjian Exp $
+ *	$Id: hba.c,v 1.47 1999/07/17 20:17:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include <errno.h>
 #include <pwd.h>
 #include <sys/types.h>

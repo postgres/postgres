@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.36 1999/07/16 05:00:07 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.37 1999/07/17 20:17:54 momjian Exp $
  *
  * NOTES
  *	 This code is actually (almost) unused.
@@ -24,11 +24,9 @@
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <string.h>
 
 #include "postgres.h"
 #ifdef HAVE_FLOAT_H

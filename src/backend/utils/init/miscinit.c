@@ -7,24 +7,19 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.33 1999/07/16 05:23:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.34 1999/07/17 20:18:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/file.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <grp.h>
 #include <pwd.h>
 
 #include "postgres.h"
-
-
-
 #include "catalog/catname.h"
 #include "catalog/pg_shadow.h"
 #include "miscadmin.h"

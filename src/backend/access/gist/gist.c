@@ -22,11 +22,6 @@
 #include "executor/executor.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,

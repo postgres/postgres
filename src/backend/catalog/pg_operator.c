@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.40 1999/07/16 04:58:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_operator.c,v 1.41 1999/07/17 20:16:49 momjian Exp $
  *
  * NOTES
  *	  these routines moved here from commands/define.c and somewhat cleaned up.
@@ -26,11 +26,6 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static Oid OperatorGetWithOpenRelation(Relation pg_operator_desc,
 							const char *operatorName,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.53 1999/07/16 04:58:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.54 1999/07/17 20:16:36 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -15,8 +15,6 @@
  *
  *-------------------------------------------------------------------------
  */
-
-#include <stdio.h>
 
 #include "postgres.h"
 
@@ -26,11 +24,6 @@
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 /* ----------------------------------------------------------------
  *		CreateTemplateTupleDesc

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.88 1999/07/16 04:59:05 momjian Exp $
+ *	$Id: outfuncs.c,v 1.89 1999/07/17 20:17:07 momjian Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -19,9 +19,8 @@
  *	  representation plus some other information (string length, etc.)
  *
  */
-#include <stdio.h>
-#include "postgres.h"
 
+#include "postgres.h"
 #include "access/heapam.h"
 #include "access/htup.h"
 #include "catalog/pg_type.h"

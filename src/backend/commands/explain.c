@@ -4,11 +4,9 @@
  *
  * Copyright (c) 1994-5, Regents of the University of California
  *
- *	  $Id: explain.c,v 1.42 1999/07/17 19:01:21 tgl Exp $
+ *	  $Id: explain.c,v 1.43 1999/07/17 20:16:52 momjian Exp $
  *
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 

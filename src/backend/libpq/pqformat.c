@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqformat.c,v 1.6 1999/07/16 04:59:04 momjian Exp $
+ *	$Id: pqformat.c,v 1.7 1999/07/17 20:17:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -51,8 +51,8 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
-#include <string.h>
 #ifdef HAVE_ENDIAN_H
+#include "endian.h"
 #endif
 
 #ifndef BYTE_ORDER

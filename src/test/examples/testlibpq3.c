@@ -26,8 +26,6 @@ tuple 1: got
 
  *
  */
-#include <stdio.h>
-#include <string.h>
 #include "postgres.h"			/* -> "c.h" -> int16, in access/attnum.h */
 #include "libpq-fe.h"
 #include "utils/geo_decls.h"	/* for the POLYGON type */

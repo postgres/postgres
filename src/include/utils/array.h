@@ -10,7 +10,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: array.h,v 1.19 1999/07/15 15:21:38 momjian Exp $
+ * $Id: array.h,v 1.20 1999/07/17 20:18:35 momjian Exp $
  *
  * NOTES
  *	  XXX the data array should be LONGALIGN'd -- notice that the array
@@ -22,7 +22,6 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
-#include <stdio.h>
 #include "utils/memutils.h"
 
 typedef struct

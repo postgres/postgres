@@ -5,12 +5,10 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: user.c,v 1.31 1999/07/16 04:58:41 momjian Exp $
+ * $Id: user.c,v 1.32 1999/07/17 20:16:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.33 1999/07/16 04:58:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.34 1999/07/17 20:16:52 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -32,9 +32,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <ctype.h>
-#include <string.h>
 #include <math.h>
 
 #include "postgres.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.56 1999/07/16 04:58:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.57 1999/07/17 20:16:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,6 @@
  *		instead of doing needless copying.	-cim 5/31/91
  *
  */
-#include <string.h>
 
 #include "postgres.h"
 

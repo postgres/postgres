@@ -11,12 +11,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.14 1999/07/16 04:59:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tioga/Attic/tgRecipe.c,v 1.15 1999/07/17 20:17:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdlib.h>
 #include "postgres.h"
 
 #include "catalog/catalog.h"

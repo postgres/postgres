@@ -15,7 +15,6 @@
  *-------------------------------------------------------------------------
  */
 #ifdef PRE_BSDI_2_1
-#include <stdio.h>
 #include "postgres.h"
 
 extern char *pg_pathname;

@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.15 1999/07/15 15:21:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.16 1999/07/17 20:18:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <ctype.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "nodes/parsenodes.h"

@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: psort.c,v 1.55 1999/07/16 05:23:30 momjian Exp $
+ *	  $Id: psort.c,v 1.56 1999/07/17 20:18:16 momjian Exp $
  *
  * NOTES
  *		Sorts the first relation into the second relation.
@@ -30,9 +30,7 @@
  *				MAXMERGE, MAXTAPES
  *
  */
-#include <stdio.h>
 #include <math.h>
-#include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
 

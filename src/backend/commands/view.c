@@ -5,12 +5,10 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.36 1999/07/16 04:58:42 momjian Exp $
+ *	$Id: view.c,v 1.37 1999/07/17 20:16:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <string.h>
 
 #include "postgres.h"
 

@@ -8,18 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.34 1999/07/16 04:59:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.35 1999/07/17 20:17:18 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
 #include <math.h>
+
 #include "postgres.h"
-
-
-
-
-
 #include "access/genam.h"
 #include "access/heapam.h"
 #include "catalog/catname.h"
@@ -29,11 +24,6 @@
 #include "optimizer/plancat.h"
 #include "parser/parsetree.h"
 #include "utils/syscache.h"
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 
 static void IndexSelectivity(Oid indexrelid, Oid indrelid, int32 nIndexKeys,

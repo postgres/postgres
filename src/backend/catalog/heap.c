@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.92 1999/07/16 04:58:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.93 1999/07/17 20:16:48 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -52,11 +52,6 @@
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
-#ifndef HAVE_MEMMOVE
-#include <regex/utils.h>
-#else
-#include <string.h>
-#endif
 
 static void AddNewRelationTuple(Relation pg_class_desc,
 				  Relation new_rel_desc, Oid new_rel_oid, unsigned natts,

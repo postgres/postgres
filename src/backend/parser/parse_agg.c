@@ -7,13 +7,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.25 1999/07/16 04:59:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.26 1999/07/17 20:17:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 #include "postgres.h"
 #include "catalog/pg_aggregate.h"

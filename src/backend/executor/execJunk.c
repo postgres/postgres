@@ -7,12 +7,11 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.19 1999/07/15 22:39:05 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.20 1999/07/17 20:16:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <string.h>
 
 #include "postgres.h"
 

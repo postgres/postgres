@@ -8,17 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.13 1999/07/16 04:58:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.14 1999/07/17 20:16:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <time.h>
-#include <string.h>
 
 #include "postgres.h"
-
-
-
 
 #include "access/attnum.h"
 #include "access/funcindex.h"

@@ -12,13 +12,11 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.20 1999/05/25 22:43:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/pgtclId.c,v 1.21 1999/07/17 20:18:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include <errno.h>
 
 #include "postgres.h"

@@ -6,12 +6,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.41 1999/07/16 04:59:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.42 1999/07/17 20:17:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <string.h>
-#include <stdio.h>
 
 #include "postgres.h"
 #include "parser/analyze.h"

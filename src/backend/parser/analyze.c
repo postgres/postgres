@@ -5,15 +5,11 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.114 1999/07/16 04:59:28 momjian Exp $
+ *	$Id: analyze.c,v 1.115 1999/07/17 20:17:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
 
 #include "postgres.h"
 

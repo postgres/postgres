@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.11 1999/07/16 03:13:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.12 1999/07/17 20:17:44 momjian Exp $
  *
  * NOTES
  *
@@ -22,7 +22,7 @@
  *
  *-------------------------------------------------------------------------
  */
-#include <stdio.h>
+
 #include "postgres.h"
 #include "storage/shmem.h"
 
