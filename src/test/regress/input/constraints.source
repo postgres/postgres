@@ -1,72 +1,142 @@
 --
 -- Check constraints
+-- Constraints can be specified with either DEFAULT or CHECK clauses.
 --
 
+--
+-- DEFAULT syntax
+--
+
+CREATE TABLE DEFAULT_TBL (i int DEFAULT 100,
+ x text DEFAULT 'vadim', f float8 DEFAULT 123.456);
+
+INSERT INTO DEFAULT_TBL VALUES (1, 'thomas', 57.0613);
+INSERT INTO DEFAULT_TBL VALUES (1, 'bruce');
+INSERT INTO DEFAULT_TBL (i, f) VALUES (2, 987.654);
+INSERT INTO DEFAULT_TBL (x) VALUES ('tgl');
+
+SELECT '' AS four, * FROM DEFAULT_TBL;
+
+CREATE SEQUENCE DEFAULT_SEQ;
+CREATE TABLE DEFAULTEXPR_TBL (i1 int DEFAULT 100 + (200-199) * 2,
+ i2 int DEFAULT nextval('default_seq'));
+
+INSERT INTO DEFAULTEXPR_TBL VALUES (-1, -2);
+INSERT INTO DEFAULTEXPR_TBL (i1) VALUES (-3);
+INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (-4);
+INSERT INTO DEFAULTEXPR_TBL (i2) VALUES (NULL);
+SELECT '' AS four, * FROM DEFAULTEXPR_TBL;
+
+-- errors
+-- test for:
+--  extraneous comma
+--  booleans not allowed
+CREATE TABLE error_tbl (i int DEFAULT (100, ));
+CREATE TABLE error_tbl (b1 bool DEFAULT 1 < 2);
+
+--
+-- CHECK syntax
+--
+
+CREATE TABLE CHECK_TBL (x int) 
+ CONSTRAINT CHECK_CON CHECK (x > 3);
+
+INSERT INTO CHECK_TBL VALUES (5);
+INSERT INTO CHECK_TBL VALUES (4);
+INSERT INTO CHECK_TBL VALUES (3);
+INSERT INTO CHECK_TBL VALUES (2);
+INSERT INTO CHECK_TBL VALUES (6);
+INSERT INTO CHECK_TBL VALUES (1);
+
+CREATE SEQUENCE CHECK_SEQ;
+CREATE TABLE CHECK2_TBL (x int, y text, z int) 
+ CONSTRAINT SEQUENCE_CON CHECK (x > 3 and y <> 'check failed' and x < 8);
+INSERT INTO CHECK2_TBL VALUES (4, 'check ok', -2);
+INSERT INTO CHECK2_TBL VALUES (1, 'x check failed', -2);
+INSERT INTO CHECK2_TBL VALUES (5, 'z check failed', 10);
+INSERT INTO CHECK2_TBL VALUES (0, 'check failed', -2);
+INSERT INTO CHECK2_TBL VALUES (6, 'check failed', 11);
+INSERT INTO CHECK2_TBL VALUES (7, 'check ok', 7);
+
+--
 -- Check constraints on INSERT
-drop sequence seq;
-drop table test;
-create sequence seq;
-create table test (x int default  nextval ( 'seq')  , 
-y text default '-NULL-', z int default -1 * currval('seq') ) 
-constraint test1 check (x > 3 and y <> 'check failed' and x < 8 ), 
-check x + z = 0;
-insert into test values (null, null, null);
-insert into test values (null, null, -2);
-select * from test;
-select nextval('seq');
-insert into test values (null, null, null);
-insert into test values (1, null, -2);
-insert into test values (7, null, -7);
-insert into test values (5, 'check failed', -5);
-insert into test values (7, '!check failed', -7);
-insert into test values (null, null, null);
-select * from test;
-insert into test values (null, 'check failed', 5);
-insert into test values (5, 'check failed', null);
-insert into test values (5, '!check failed', null);
-insert into test values (null, null, null);
-select * from test;
-insert into test values (null, null, null);
-select currval('seq');
+--
 
+CREATE SEQUENCE INSERT_SEQ;
+
+CREATE TABLE INSERT_TBL (x INT DEFAULT nextval('insert_seq'),
+y TEXT DEFAULT '-NULL-', z INT DEFAULT -1 * currval('insert_seq') ) 
+CONSTRAINT INSERT_CON CHECK (x > 3 AND y <> 'check failed' AND x < 8), 
+CHECK x + z = 0;
+
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+INSERT INTO INSERT_TBL VALUES (null, null, -2);
+
+SELECT * FROM INSERT_TBL;
+SELECT nextval('insert_seq');
+
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+INSERT INTO INSERT_TBL VALUES (1, null, -2);
+INSERT INTO INSERT_TBL VALUES (7, null, -7);
+INSERT INTO INSERT_TBL VALUES (5, 'check failed', -5);
+INSERT INTO INSERT_TBL VALUES (7, '!check failed', -7);
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+SELECT * FROM INSERT_TBL;
+INSERT INTO INSERT_TBL VALUES (null, 'check failed', 5);
+INSERT INTO INSERT_TBL VALUES (5, 'check failed', null);
+INSERT INTO INSERT_TBL VALUES (5, '!check failed', null);
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+SELECT * FROM INSERT_TBL;
+INSERT INTO INSERT_TBL VALUES (null, null, null);
+SELECT currval('insert_seq');
+
+--
 -- Check constraints on INSERT INTO
+--
 
-drop table test;
-drop sequence seq;
-create sequence seq start 4;
-create table dummy (xd int, yd text, zd int);
+DELETE FROM INSERT_TBL;
+DROP SEQUENCE INSERT_SEQ;
+CREATE SEQUENCE INSERT_SEQ START 4;
+CREATE TABLE TEMP (xd INT, yd TEXT, zd INT);
 
-create table test (x int default  nextval ( 'seq')  , 
-y text default '-NULL-', z int default -1 * currval('seq') ) 
-constraint test1 check (x > 3 and y <> 'check failed' and x < 7 ), check 
-x + z = 0;
+SELECT nextval('insert_seq');
+INSERT INTO TEMP VALUES (null, null, null);
+INSERT INTO TEMP VALUES (5, '!check failed', null);
+INSERT INTO TEMP VALUES (null, 'try again', null);
+INSERT INTO INSERT_TBL SELECT * FROM TEMP;
+SELECT * FROM INSERT_TBL;
+INSERT INTO INSERT_TBL SELECT * FROM TEMP WHERE yd = 'try again';
+SELECT * FROM INSERT_TBL;
 
-select nextval('seq');
-insert into dummy values (null, null, null);
-insert into dummy values (5, '!check failed', null);
-insert into dummy values (null, 'try again', null);
-insert into test select * from dummy;
-select * from test;
-insert into test select * from dummy where yd = 'try again';
+DROP TABLE TEMP;
 
+--
 -- Check constraints on UPDATE
-update test set x = null where x = 6;
-select currval('seq');
+--
 
+UPDATE INSERT_TBL SET x = NULL WHERE x = 6;
+SELECT currval('insert_seq');
+SELECT * FROM INSERT_TBL;
+
+UPDATE INSERT_TBL SET x = 6 WHERE x = 6;
+SELECT * FROM INSERT_TBL;
+
+UPDATE INSERT_TBL SET x = -z, z = -x;
+SELECT * FROM INSERT_TBL;
+
+--
 -- Check constraints on COPY FROM
-drop table test;
-drop sequence seq;
-create sequence seq start 4;
-create table test (x int default  nextval ( 'seq')  , 
-y text default '-NULL-', z int default -1 * currval('seq') ) 
-constraint test1 check (x > 3 and y <> 'check failed' and x < 7 ), check 
-x + z = 0;
-copy test from '_OBJWD_/data/constro.data';
-select * from test;
-copy test from '_OBJWD_/data/constrf.data';
-select * from test;
-select nextval('seq') - 1 as currval;
+--
 
--- Clean up
-drop sequence seq;
-drop table test;
+CREATE SEQUENCE COPY_SEQ START 4;
+CREATE TABLE COPY_TBL (x INT DEFAULT nextval('copy_seq'),
+ y TEXT DEFAULT '-NULL-', z INT DEFAULT -1 * currval('copy_seq') ) 
+ CONSTRAINT COPY_CON CHECK (x > 3 AND y <> 'check failed' AND x < 7 ),
+ CHECK x + z = 0;
+
+COPY COPY_TBL FROM '_OBJWD_/data/constro.data';
+SELECT * FROM COPY_TBL;
+COPY COPY_TBL FROM '_OBJWD_/data/constrf.data';
+
+SELECT * FROM COPY_TBL;
+select nextval('copy_seq') - 1 as currval;
