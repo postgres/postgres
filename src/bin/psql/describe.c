@@ -519,8 +519,8 @@ describeTableDetails(const char *name, PsqlSettings *pset)
 	printTableOpt myopt = pset->popt.topt;
 	bool		description = GetVariableBool(pset->vars, "description");
 	int			i;
-	char	   *view_def = NULL;
-	char	   *headers[5];
+	const char	   *view_def = NULL;
+	const char *headers[5];
 	char	  **cells = NULL;
 	char	   *title = NULL;
 	char	  **footers = NULL;
@@ -587,11 +587,10 @@ describeTableDetails(const char *name, PsqlSettings *pset)
 	for (i = 0; i < PQntuples(res); i++)
 	{
 		int4		attypmod = atoi(PQgetvalue(res, i, 3));
-		char	   *attype = PQgetvalue(res, i, 1);
+		const char	   *attype = PQgetvalue(res, i, 1);
 
 		/* Name */
-		cells[i * cols + 0] = PQgetvalue(res, i, 0);	/* don't free this
-														 * afterwards */
+		cells[i * cols + 0] = (char*)PQgetvalue(res, i, 0);	/* don't free this afterwards */
 
 		/* Type */
 		cells[i * cols + 1] = xmalloc(NAMEDATALEN + 16);
@@ -609,7 +608,7 @@ describeTableDetails(const char *name, PsqlSettings *pset)
 
 		/* Info */
 		cells[i * cols + 2] = xmalloc(128 + 128);		/* I'm cutting off the
-														 * default string at 128 */
+									 * 'default' string at 128 */
 		cells[i * cols + 2][0] = '\0';
 		if (strcmp(PQgetvalue(res, i, 4), "t") == 0)
 			strcat(cells[i * cols + 2], "not null");
@@ -633,7 +632,7 @@ describeTableDetails(const char *name, PsqlSettings *pset)
 
 		/* Description */
 		if (description)
-			cells[i * cols + 3] = PQgetvalue(res, i, 7);
+			cells[i * cols + 3] = (char*)PQgetvalue(res, i, 7);
 	}
 
 	/* Make title */
@@ -685,7 +684,7 @@ describeTableDetails(const char *name, PsqlSettings *pset)
 
 
 	myopt.tuples_only = false;
-	printTable(title, headers, cells, footers, "llll", &myopt, pset->queryFout);
+	printTable(title, headers, (const char**)cells, (const char**)footers, "llll", &myopt, pset->queryFout);
 
 	/* clean up */
 	free(title);

@@ -28,13 +28,14 @@
 
 
 static void
-print_unaligned_text(const char *title, char **headers, char **cells, char **footers,
+print_unaligned_text(const char *title, const char * const * headers,
+		     const char * const * cells, const char * const * footers,
 					 const char *opt_fieldsep, bool opt_barebones,
 					 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	char	  **ptr;
+	const char * const * ptr;
 
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
@@ -80,14 +81,15 @@ print_unaligned_text(const char *title, char **headers, char **cells, char **foo
 
 
 static void
-print_unaligned_vertical(const char *title, char **headers, char **cells, char **footers,
+print_unaligned_vertical(const char *title, const char * const * headers,
+			 const char * const * cells, const char * const * footers,
 						 const char *opt_fieldsep, bool opt_barebones,
 						 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
 	unsigned int record = 1;
-	char	  **ptr;
+	const char * const * ptr;
 
 	if (!opt_fieldsep)
 		opt_fieldsep = "";
@@ -167,8 +169,9 @@ _print_horizontal_line(const unsigned int col_count, const unsigned int *widths,
 
 
 static void
-print_aligned_text(const char *title, char **headers, char **cells, char **footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+print_aligned_text(const char *title, const char * const * headers,
+		   const char * const * cells, const char * const * footers,
+		   const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 				   FILE *fout)
 {
 	unsigned int col_count = 0;
@@ -176,7 +179,7 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 				tmp;
 	unsigned int *widths,
 				total_w;
-	char	  **ptr;
+	const char * const * ptr;
 
 	/* count columns */
 	for (ptr = headers; *ptr; ptr++)
@@ -308,13 +311,14 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 static void
-print_aligned_vertical(const char *title, char **headers, char **cells, char **footers,
+print_aligned_vertical(const char *title, const char * const * headers,
+		       const char * const * cells, const char * const * footers,
 					   bool opt_barebones, unsigned short int opt_border,
 					   FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int record = 1;
-	char	  **ptr;
+	const char * const *ptr;
 	unsigned int i,
 				tmp,
 				hwidth = 0,
@@ -471,14 +475,15 @@ html_escaped_print(const char *in, FILE *fout)
 
 
 static void
-print_html_text(const char *title, char **headers, char **cells, char **footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-				char *opt_table_attr,
+print_html_text(const char *title, const char * const * headers,
+		const char * const * cells, const char * const * footers,
+		const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+		const char *opt_table_attr,
 				FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	char	  **ptr;
+	const char * const *ptr;
 
 	fprintf(fout, "<table border=%d", opt_border);
 	if (opt_table_attr)
@@ -544,15 +549,16 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 static void
-print_html_vertical(const char *title, char **headers, char **cells, char **footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
-					char *opt_table_attr,
+print_html_vertical(const char *title, const char * const * headers,
+		    const char * const * cells, const char * const * footers,
+		    const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+		    const char *opt_table_attr,
 					FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
 	unsigned int record = 1;
-	char	  **ptr;
+	const char * const *ptr;
 
 	fprintf(fout, "<table border=%d", opt_border);
 	if (opt_table_attr)
@@ -652,14 +658,15 @@ latex_escaped_print(const char *in, FILE *fout)
 
 
 static void
-print_latex_text(const char *title, char **headers, char **cells, char **footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+print_latex_text(const char *title, const char * const * headers,
+		 const char * const * cells, const char * const * footers,
+		 const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 				 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
 	const char *cp;
-	char	  **ptr;
+	const char * const *ptr;
 
 
 	/* print title */
@@ -747,13 +754,14 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 static void
-print_latex_vertical(const char *title, char **headers, char **cells, char **footers,
-const char *opt_align, bool opt_barebones, unsigned short int opt_border,
+print_latex_vertical(const char *title, const char * const * headers,
+		     const char * const * cells, const char * const * footers,
+		     const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 					 FILE *fout)
 {
 	unsigned int col_count = 0;
 	unsigned int i;
-	char	  **ptr;
+	const char * const *ptr;
 	unsigned int record = 1;
 
 	(void) opt_align;			/* currently unused parameter */
@@ -833,11 +841,14 @@ const char *opt_align, bool opt_barebones, unsigned short int opt_border,
 
 
 void
-printTable(const char *title, char **headers, char **cells, char **footers,
+printTable(const char *title,
+	   const char * const * headers,
+	   const char * const * cells,
+	   const char * const * footers,
 		   const char *align,
 		   const printTableOpt * opt, FILE *fout)
 {
-	char	   *default_footer[] = {NULL};
+	const char *default_footer[] = {NULL};
 	unsigned short int border = opt->border;
 	FILE	   *pager = NULL,
 			   *output;
@@ -868,7 +879,7 @@ printTable(const char *title, char **headers, char **cells, char **footers,
 		unsigned int col_count = 0,
 					row_count = 0,
 					lines;
-		char	  **ptr;
+		const char * const *ptr;
 		int			result;
 		struct winsize screen_size;
 
@@ -952,11 +963,11 @@ printTable(const char *title, char **headers, char **cells, char **footers,
 
 
 void
-printQuery(PGresult *result, const printQueryOpt * opt, FILE *fout)
+printQuery(const PGresult *result, const printQueryOpt * opt, FILE *fout)
 {
 	int			nfields;
-	char	  **headers;
-	char	  **cells;
+	const char **headers;
+	const char **cells;
 	char	  **footers;
 	char	   *align;
 	int			i;
@@ -1043,8 +1054,9 @@ printQuery(PGresult *result, const printQueryOpt * opt, FILE *fout)
 
 	/* call table printer */
 
-	printTable(opt->title, headers, cells, footers ? footers : opt->footers, align,
-			   &opt->topt, fout);
+	printTable(opt->title, headers, cells,
+		   footers ? (const char * const *)footers : (const char * const *)(opt->footers),
+		   align, &opt->topt, fout);
 
 	free(headers);
 	free(cells);

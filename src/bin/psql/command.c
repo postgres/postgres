@@ -828,7 +828,7 @@ do_connect(const char *new_dbname, const char *new_user, PsqlSettings *pset)
 	PGconn	   *oldconn = pset->db;
 	const char *dbparam = NULL;
 	const char *userparam = NULL;
-	char	   *pwparam = NULL;
+	const char *pwparam = NULL;
 	char	   *prompted_password = NULL;
 	char	   *prompted_user = NULL;
 	bool		need_pass;

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.25 1999/08/31 01:37:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-lobj.c,v 1.26 1999/11/11 00:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -127,7 +127,7 @@ lo_close(PGconn *conn, int fd)
  */
 
 int
-lo_read(PGconn *conn, int fd, char *buf, int len)
+lo_read(PGconn *conn, int fd, char *buf, size_t len)
 {
 	PQArgBlock	argv[2];
 	PGresult   *res;
@@ -167,7 +167,7 @@ lo_read(PGconn *conn, int fd, char *buf, int len)
  *
  */
 int
-lo_write(PGconn *conn, int fd, char *buf, int len)
+lo_write(PGconn *conn, int fd, const char *buf, size_t len)
 {
 	PQArgBlock	argv[2];
 	PGresult   *res;
@@ -378,7 +378,7 @@ lo_unlink(PGconn *conn, Oid lobjId)
  */
 
 Oid
-lo_import(PGconn *conn, char *filename)
+lo_import(PGconn *conn, const char *filename)
 {
 	int			fd;
 	int			nbytes,
@@ -451,7 +451,7 @@ lo_import(PGconn *conn, char *filename)
  * returns -1 upon failure, 1 otherwise
  */
 int
-lo_export(PGconn *conn, Oid lobjId, char *filename)
+lo_export(PGconn *conn, Oid lobjId, const char *filename)
 {
 	int			fd;
 	int			nbytes,
@@ -522,7 +522,7 @@ lo_initialize(PGconn *conn)
 	PGresult   *res;
 	PGlobjfuncs *lobjfuncs;
 	int			n;
-	char	   *fname;
+	const char	   *fname;
 	Oid			foid;
 
 	/* ----------------

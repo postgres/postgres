@@ -44,7 +44,8 @@ typedef struct _printTableOpt
  * - align is an 'l' or an 'r' for every column, if the output format needs it.
  *	 (You must specify this long enough. Otherwise anything could happen.)
 */
-void printTable(const char *title, char **headers, char **cells, char **footers,
+void printTable(const char *title, const char * const * headers,
+		const char * const * cells, const char * const * footers,
 		   const char *align,
 		   const printTableOpt * opt, FILE *fout);
 
@@ -66,7 +67,7 @@ typedef struct _printQueryOpt
  * It calls the printTable above with all the things set straight.
  */
 void
-			printQuery(PGresult *result, const printQueryOpt * opt, FILE *fout);
+printQuery(const PGresult *result, const printQueryOpt * opt, FILE *fout);
 
 
 #endif	 /* PRINT_H */

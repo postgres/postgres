@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.51 1999/10/26 04:49:00 momjian Exp $
+ * $Id: libpq-fe.h,v 1.52 1999/11/11 00:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,17 +176,17 @@ extern		"C"
 	extern int	PQrequestCancel(PGconn *conn);
 
 	/* Accessor functions for PGconn objects */
-	extern char *PQdb(PGconn *conn);
-	extern char *PQuser(PGconn *conn);
-	extern char *PQpass(PGconn *conn);
-	extern char *PQhost(PGconn *conn);
-	extern char *PQport(PGconn *conn);
-	extern char *PQtty(PGconn *conn);
-	extern char *PQoptions(PGconn *conn);
-	extern ConnStatusType PQstatus(PGconn *conn);
-	extern char *PQerrorMessage(PGconn *conn);
-	extern int	PQsocket(PGconn *conn);
-	extern int	PQbackendPID(PGconn *conn);
+	extern const char *PQdb(const PGconn *conn);
+	extern const char *PQuser(const PGconn *conn);
+	extern const char *PQpass(const PGconn *conn);
+	extern const char *PQhost(const PGconn *conn);
+	extern const char *PQport(const PGconn *conn);
+	extern const char *PQtty(const PGconn *conn);
+	extern const char *PQoptions(const PGconn *conn);
+	extern ConnStatusType PQstatus(const PGconn *conn);
+	extern const char *PQerrorMessage(const PGconn *conn);
+	extern int	PQsocket(const PGconn *conn);
+	extern int	PQbackendPID(const PGconn *conn);
 
 	/* Enable/disable tracing */
 	extern void PQtrace(PGconn *conn, FILE *debug_port);
@@ -221,31 +221,32 @@ extern		"C"
 	 * use
 	 */
 	extern PGresult *PQfn(PGconn *conn,
-									  int fnid,
-									  int *result_buf,
-									  int *result_len,
-									  int result_is_int,
-									  PQArgBlock *args,
-									  int nargs);
+			      int fnid,
+			      int *result_buf,
+			      int *result_len,
+			      int result_is_int,
+			      const PQArgBlock *args,
+			      int nargs);
 
 	/* Accessor functions for PGresult objects */
-	extern ExecStatusType PQresultStatus(PGresult *res);
+	extern ExecStatusType PQresultStatus(const PGresult *res);
 	extern const char *PQresStatus(ExecStatusType status);
-	extern const char *PQresultErrorMessage(PGresult *res);
-	extern int	PQntuples(PGresult *res);
-	extern int	PQnfields(PGresult *res);
-	extern int	PQbinaryTuples(PGresult *res);
-	extern char *PQfname(PGresult *res, int field_num);
-	extern int	PQfnumber(PGresult *res, const char *field_name);
-	extern Oid	PQftype(PGresult *res, int field_num);
-	extern int	PQfsize(PGresult *res, int field_num);
-	extern int	PQfmod(PGresult *res, int field_num);
-	extern char *PQcmdStatus(PGresult *res);
-	extern const char *PQoidStatus(PGresult *res);
-	extern const char *PQcmdTuples(PGresult *res);
-	extern char *PQgetvalue(PGresult *res, int tup_num, int field_num);
-	extern int	PQgetlength(PGresult *res, int tup_num, int field_num);
-	extern int	PQgetisnull(PGresult *res, int tup_num, int field_num);
+	extern const char *PQresultErrorMessage(const PGresult *res);
+	extern int	PQntuples(const PGresult *res);
+	extern int	PQnfields(const PGresult *res);
+	extern int	PQbinaryTuples(const PGresult *res);
+	extern const char *PQfname(const PGresult *res, int field_num);
+	extern int	PQfnumber(const PGresult *res, const char *field_name);
+	extern Oid	PQftype(const PGresult *res, int field_num);
+	extern int	PQfsize(const PGresult *res, int field_num);
+	extern int	PQfmod(const PGresult *res, int field_num);
+	extern const char *PQcmdStatus(const PGresult *res);
+        extern const char *PQoidStatus(const PGresult *res); /* old and ugly */
+        extern Oid PQoidValue(const PGresult *res); /* new and improved */
+	extern const char *PQcmdTuples(const PGresult *res);
+	extern const char *PQgetvalue(const PGresult *res, int tup_num, int field_num);
+	extern int	PQgetlength(const PGresult *res, int tup_num, int field_num);
+	extern int	PQgetisnull(const PGresult *res, int tup_num, int field_num);
 
 	/* Delete a PGresult */
 	extern void PQclear(PGresult *res);
@@ -260,47 +261,47 @@ extern		"C"
 /* === in fe-print.c === */
 
 	extern void PQprint(FILE *fout,		/* output stream */
-									PGresult *res,
-									PQprintOpt *ps);	/* option structure */
+			    const PGresult *res,
+			    const PQprintOpt *ps);	/* option structure */
 
 	/*
 	 * PQdisplayTuples() is a better version of PQprintTuples(), but both
 	 * are obsoleted by PQprint().
 	 */
-	extern void PQdisplayTuples(PGresult *res,
-											FILE *fp,	/* where to send the
-														 * output */
-											int fillAlign,		/* pad the fields with
-																 * spaces */
-											const char *fieldSep,		/* field separator */
-											int printHeader,	/* display headers? */
-											int quiet);
+	extern void PQdisplayTuples(const PGresult *res,
+				    FILE *fp,	/* where to send the
+						 * output */
+				    int fillAlign,		/* pad the fields with
+								 * spaces */
+				    const char *fieldSep,		/* field separator */
+				    int printHeader,	/* display headers? */
+				    int quiet);
 
-	extern void PQprintTuples(PGresult *res,
-										  FILE *fout,	/* output stream */
-										  int printAttName,		/* print attribute names
-																 * or not */
-										  int terseOutput,		/* delimiter bars or
-																 * not? */
-										  int width);	/* width of column, if
-														 * 0, use variable width */
+	extern void PQprintTuples(const PGresult *res,
+				  FILE *fout,	/* output stream */
+				  int printAttName,		/* print attribute names
+								 * or not */
+				  int terseOutput,		/* delimiter bars or
+								 * not? */
+				  int width);	/* width of column, if
+						 * 0, use variable width */
 
 	/* Determine length of multibyte encoded char at *s */
-	extern int	PQmblen(unsigned char *s);
+	extern int	PQmblen(const unsigned char *s);
 
 /* === in fe-lobj.c === */
 
 	/* Large-object access routines */
 	extern int	lo_open(PGconn *conn, Oid lobjId, int mode);
 	extern int	lo_close(PGconn *conn, int fd);
-	extern int	lo_read(PGconn *conn, int fd, char *buf, int len);
-	extern int	lo_write(PGconn *conn, int fd, char *buf, int len);
+	extern int	lo_read(PGconn *conn, int fd, char *buf, size_t len);
+	extern int	lo_write(PGconn *conn, int fd, const char *buf, size_t len);
 	extern int	lo_lseek(PGconn *conn, int fd, int offset, int whence);
 	extern Oid	lo_creat(PGconn *conn, int mode);
 	extern int	lo_tell(PGconn *conn, int fd);
 	extern int	lo_unlink(PGconn *conn, Oid lobjId);
-	extern Oid	lo_import(PGconn *conn, char *filename);
-	extern int	lo_export(PGconn *conn, Oid lobjId, char *filename);
+	extern Oid	lo_import(PGconn *conn, const char *filename);
+	extern int	lo_export(PGconn *conn, Oid lobjId, const char *filename);
 
 #ifdef __cplusplus
 };

@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.12 1999/09/27 03:13:16 momjian Exp $
+ * $Id: libpq-int.h,v 1.13 1999/11/11 00:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -247,7 +247,7 @@ extern int	pqPacketSend(PGconn *conn, const char *buf, size_t len);
 /* === in fe-exec.c === */
 
 extern void pqSetResultError(PGresult *res, const char *msg);
-extern void *pqResultAlloc(PGresult *res, int nBytes, int isBinary);
+extern void *pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary);
 extern char *pqResultStrdup(PGresult *res, const char *str);
 extern void pqClearAsyncResult(PGconn *conn);
 
@@ -261,10 +261,10 @@ extern void pqClearAsyncResult(PGconn *conn);
 extern int	pqGetc(char *result, PGconn *conn);
 extern int	pqGets(PQExpBuffer buf, PGconn *conn);
 extern int	pqPuts(const char *s, PGconn *conn);
-extern int	pqGetnchar(char *s, int len, PGconn *conn);
-extern int	pqPutnchar(const char *s, int len, PGconn *conn);
-extern int	pqGetInt(int *result, int bytes, PGconn *conn);
-extern int	pqPutInt(int value, int bytes, PGconn *conn);
+extern int	pqGetnchar(char *s, size_t len, PGconn *conn);
+extern int	pqPutnchar(const char *s, size_t len, PGconn *conn);
+extern int	pqGetInt(int *result, size_t bytes, PGconn *conn);
+extern int	pqPutInt(int value, size_t bytes, PGconn *conn);
 extern int	pqReadData(PGconn *conn);
 extern int	pqFlush(PGconn *conn);
 extern int	pqWait(int forRead, int forWrite, PGconn *conn);

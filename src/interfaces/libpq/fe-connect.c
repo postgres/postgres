@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.105 1999/11/05 06:43:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.106 1999/11/11 00:10:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -141,7 +141,7 @@ static struct EnvironmentOptions
 		"PGGEQO", "geqo"
 	},
 	{
-		NULL
+		NULL, NULL
 	}
 };
 
@@ -1453,56 +1453,56 @@ conninfo_free()
 }
 
 /* =========== accessor functions for PGconn ========= */
-char *
-PQdb(PGconn *conn)
+const char *
+PQdb(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
 	return conn->dbName;
 }
 
-char *
-PQuser(PGconn *conn)
+const char *
+PQuser(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
 	return conn->pguser;
 }
 
-char *
-PQpass(PGconn *conn)
+const char *
+PQpass(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
 	return conn->pgpass;
 }
 
-char *
-PQhost(PGconn *conn)
+const char *
+PQhost(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
 	return conn->pghost;
 }
 
-char *
-PQport(PGconn *conn)
+const char *
+PQport(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
 	return conn->pgport;
 }
 
-char *
-PQtty(PGconn *conn)
+const char *
+PQtty(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
 	return conn->pgtty;
 }
 
-char *
-PQoptions(PGconn *conn)
+const char *
+PQoptions(const PGconn *conn)
 {
 	if (!conn)
 		return (char *) NULL;
@@ -1510,15 +1510,15 @@ PQoptions(PGconn *conn)
 }
 
 ConnStatusType
-PQstatus(PGconn *conn)
+PQstatus(const PGconn *conn)
 {
 	if (!conn)
 		return CONNECTION_BAD;
 	return conn->status;
 }
 
-char *
-PQerrorMessage(PGconn *conn)
+const char *
+PQerrorMessage(const PGconn *conn)
 {
 	static char noConn[] = "PQerrorMessage: conn pointer is NULL\n";
 
@@ -1528,7 +1528,7 @@ PQerrorMessage(PGconn *conn)
 }
 
 int
-PQsocket(PGconn *conn)
+PQsocket(const PGconn *conn)
 {
 	if (!conn)
 		return -1;
@@ -1536,7 +1536,7 @@ PQsocket(PGconn *conn)
 }
 
 int
-PQbackendPID(PGconn *conn)
+PQbackendPID(const PGconn *conn)
 {
 	if (!conn || conn->status != CONNECTION_OK)
 		return 0;

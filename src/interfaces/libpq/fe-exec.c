@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.85 1999/08/31 01:37:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-exec.c,v 1.86 1999/11/11 00:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -179,7 +179,7 @@ PQmakeEmptyPGresult(PGconn *conn, ExecStatusType status)
  * be allocated on any byte boundary.
  */
 void *
-pqResultAlloc(PGresult *res, int nBytes, int isBinary)
+pqResultAlloc(PGresult *res, size_t nBytes, bool isBinary)
 {
 	char	   *space;
 	PGresult_data *block;
@@ -882,7 +882,7 @@ getAnotherTuple(PGconn *conn, int binary)
 	char		std_bitmap[64]; /* used unless it doesn't fit */
 	char	   *bitmap = std_bitmap;
 	int			i;
-	int			nbytes;			/* the number of bytes in bitmap  */
+	size_t		nbytes;			/* the number of bytes in bitmap  */
 	char		bmap;			/* One byte of the bitmap */
 	int			bitmap_index;	/* Its index */
 	int			bitcnt;			/* number of bits examined in current byte */
@@ -1495,7 +1495,7 @@ PQfn(PGconn *conn,
 	 int *result_buf,
 	 int *actual_result_len,
 	 int result_is_int,
-	 PQArgBlock *args,
+	 const PQArgBlock *args,
 	 int nargs)
 {
 	bool		needInput = false;
@@ -1674,7 +1674,7 @@ PQfn(PGconn *conn,
 /* ====== accessor funcs for PGresult ======== */
 
 ExecStatusType
-PQresultStatus(PGresult *res)
+PQresultStatus(const PGresult *res)
 {
 	if (!res)
 		return PGRES_NONFATAL_ERROR;
@@ -1684,14 +1684,13 @@ PQresultStatus(PGresult *res)
 const char *
 PQresStatus(ExecStatusType status)
 {
-	if (((int) status) < 0 ||
-		((int) status) >= (sizeof(pgresStatus) / sizeof(pgresStatus[0])))
+	if ((int)status < 0 || (size_t)status >= sizeof pgresStatus / sizeof pgresStatus[0])
 		return "Invalid ExecStatusType code";
 	return pgresStatus[status];
 }
 
 const char *
-PQresultErrorMessage(PGresult *res)
+PQresultErrorMessage(const PGresult *res)
 {
 	if (!res || !res->errMsg)
 		return "";
@@ -1699,7 +1698,7 @@ PQresultErrorMessage(PGresult *res)
 }
 
 int
-PQntuples(PGresult *res)
+PQntuples(const PGresult *res)
 {
 	if (!res)
 		return 0;
@@ -1707,7 +1706,7 @@ PQntuples(PGresult *res)
 }
 
 int
-PQnfields(PGresult *res)
+PQnfields(const PGresult *res)
 {
 	if (!res)
 		return 0;
@@ -1715,7 +1714,7 @@ PQnfields(PGresult *res)
 }
 
 int
-PQbinaryTuples(PGresult *res)
+PQbinaryTuples(const PGresult *res)
 {
 	if (!res)
 		return 0;
@@ -1728,7 +1727,7 @@ PQbinaryTuples(PGresult *res)
  */
 
 static int
-check_field_number(const char *routineName, PGresult *res, int field_num)
+check_field_number(const char *routineName, const PGresult *res, int field_num)
 {
 	char noticeBuf[128];
 
@@ -1749,7 +1748,7 @@ check_field_number(const char *routineName, PGresult *res, int field_num)
 }
 
 static int
-check_tuple_field_number(const char *routineName, PGresult *res,
+check_tuple_field_number(const char *routineName, const PGresult *res,
 						 int tup_num, int field_num)
 {
 	char noticeBuf[128];
@@ -1784,8 +1783,8 @@ check_tuple_field_number(const char *routineName, PGresult *res,
 /*
    returns NULL if the field_num is invalid
 */
-char *
-PQfname(PGresult *res, int field_num)
+const char *
+PQfname(const PGresult *res, int field_num)
 {
 	if (!check_field_number("PQfname", res, field_num))
 		return NULL;
@@ -1799,7 +1798,7 @@ PQfname(PGresult *res, int field_num)
    returns -1 on a bad field name
 */
 int
-PQfnumber(PGresult *res, const char *field_name)
+PQfnumber(const PGresult *res, const char *field_name)
 {
 	int			i;
 	char	   *field_case;
@@ -1837,7 +1836,7 @@ PQfnumber(PGresult *res, const char *field_name)
 }
 
 Oid
-PQftype(PGresult *res, int field_num)
+PQftype(const PGresult *res, int field_num)
 {
 	if (!check_field_number("PQftype", res, field_num))
 		return InvalidOid;
@@ -1848,7 +1847,7 @@ PQftype(PGresult *res, int field_num)
 }
 
 int
-PQfsize(PGresult *res, int field_num)
+PQfsize(const PGresult *res, int field_num)
 {
 	if (!check_field_number("PQfsize", res, field_num))
 		return 0;
@@ -1859,7 +1858,7 @@ PQfsize(PGresult *res, int field_num)
 }
 
 int
-PQfmod(PGresult *res, int field_num)
+PQfmod(const PGresult *res, int field_num)
 {
 	if (!check_field_number("PQfmod", res, field_num))
 		return 0;
@@ -1869,8 +1868,8 @@ PQfmod(PGresult *res, int field_num)
 		return 0;
 }
 
-char *
-PQcmdStatus(PGresult *res)
+const char *
+PQcmdStatus(const PGresult *res)
 {
 	if (!res)
 		return NULL;
@@ -1883,47 +1882,49 @@ PQcmdStatus(PGresult *res)
 	if not, return ""
 */
 const char *
-PQoidStatus(PGresult *res)
+PQoidStatus(const PGresult *res)
 {
-	char	   *p,
-			   *e,
-			   *scan;
-	int			slen,
-				olen;
+        /* 
+         * This must be enough to hold the result. Don't laugh, this is
+         * better than what this function used to do.
+         */
+        static char buf[24];
 
-	if (!res)
+	size_t len;
+
+	if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
 		return "";
 
-	if (strncmp(res->cmdStatus, "INSERT ", 7) != 0)
-		return "";
+	len = strspn(res->cmdStatus + 7, "0123456789");
+	if (len > 23)
+	        len = 23;
+	strncpy(buf, res->cmdStatus + 7, len);
+	buf[23] = '\0';
 
-	/*----------
-	 * The cmdStatus string looks like
-	 *	   INSERT oid count\0
-	 * In order to be able to return an ordinary C string without
-	 * damaging the result for PQcmdStatus or PQcmdTuples, we copy
-	 * the oid part of the string to just after the null, so that
-	 * cmdStatus looks like
-	 *	   INSERT oid count\0oid\0
-	 *						 ^ our return value points here
-	 * Pretty klugy eh?  This routine should've just returned an Oid value.
-	 *----------
-	 */
+	return buf;
+}
 
-	slen = strlen(res->cmdStatus);
-	p = res->cmdStatus + 7;		/* where oid is now */
-	e = res->cmdStatus + slen + 1;		/* where to put the oid string */
+/*
+  PQoidValue -
+        a perhaps preferable form of the above which just returns
+	an Oid type
+*/
+Oid
+PQoidValue(const PGresult *res)
+{
+    char * endptr = NULL;
+    long int result;
 
-	for (scan = p; *scan && *scan != ' ';)
-		scan++;
-	olen = scan - p;
-	if (slen + olen + 2 > sizeof(res->cmdStatus))
-		return "";				/* something very wrong if it doesn't fit */
+    if (!res || !res->cmdStatus || strncmp(res->cmdStatus, "INSERT ", 7) != 0)
+	return InvalidOid;
 
-	strncpy(e, p, olen);
-	e[olen] = '\0';
+    errno = 0;
+    result = strtoul(res->cmdStatus + 7, &endptr, 10);
 
-	return e;
+    if (!endptr || (*endptr != ' ' && *endptr != '\0') || errno == ERANGE)
+	return InvalidOid;
+    else
+	return (Oid)result;
 }
 
 /*
@@ -1932,7 +1933,7 @@ PQoidStatus(PGresult *res)
 	of inserted/affected tuples, if not, return ""
 */
 const char *
-PQcmdTuples(PGresult *res)
+PQcmdTuples(const PGresult *res)
 {
 	char noticeBuf[128];
 
@@ -1943,7 +1944,7 @@ PQcmdTuples(PGresult *res)
 		strncmp(res->cmdStatus, "DELETE", 6) == 0 ||
 		strncmp(res->cmdStatus, "UPDATE", 6) == 0)
 	{
-		char	   *p = res->cmdStatus + 6;
+		const char	   *p = res->cmdStatus + 6;
 
 		if (*p == 0)
 		{
@@ -1987,8 +1988,8 @@ PQcmdTuples(PGresult *res)
 
 	if res is not binary, a null-terminated ASCII string is returned.
 */
-char *
-PQgetvalue(PGresult *res, int tup_num, int field_num)
+const char *
+PQgetvalue(const PGresult *res, int tup_num, int field_num)
 {
 	if (!check_tuple_field_number("PQgetvalue", res, tup_num, field_num))
 		return NULL;
@@ -2002,7 +2003,7 @@ PQgetvalue(PGresult *res, int tup_num, int field_num)
 	 by PQgetvalue doesn't either.)
 */
 int
-PQgetlength(PGresult *res, int tup_num, int field_num)
+PQgetlength(const PGresult *res, int tup_num, int field_num)
 {
 	if (!check_tuple_field_number("PQgetlength", res, tup_num, field_num))
 		return 0;
@@ -2016,7 +2017,7 @@ PQgetlength(PGresult *res, int tup_num, int field_num)
 	 returns the null status of a field value.
 */
 int
-PQgetisnull(PGresult *res, int tup_num, int field_num)
+PQgetisnull(const PGresult *res, int tup_num, int field_num)
 {
 	if (!check_tuple_field_number("PQgetisnull", res, tup_num, field_num))
 		return 1;				/* pretend it is null */

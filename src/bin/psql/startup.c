@@ -37,10 +37,10 @@
 
 
 static void
-			process_psqlrc(PsqlSettings *pset);
+process_psqlrc(PsqlSettings *pset);
 
 static void
-			showVersion(PsqlSettings *pset, bool verbose);
+showVersion(PsqlSettings *pset);
 
 
 /* Structures to pass information between the option parsing routine
@@ -68,7 +68,7 @@ struct adhoc_opts
 };
 
 static void
-			parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * options);
+parse_options(int argc, char *argv[], PsqlSettings *pset, struct adhoc_opts * options);
 
 
 
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 	free(username);
 	free(password);
 
-	if (PQstatus(settings.db) == CONNECTION_BAD)
+	if (PQstatus(settings.db) == CONNECTION_BAD && options.action != ACT_SHOW_VER)
 	{
 		fprintf(stderr, "Connection to database '%s' failed.\n%s\n", PQdb(settings.db), PQerrorMessage(settings.db));
 		PQfinish(settings.db);
@@ -169,7 +169,7 @@ main(int argc, char **argv)
 
 	if (options.action == ACT_SHOW_VER)
 	{
-		showVersion(&settings, true);
+		showVersion(&settings);
 		PQfinish(settings.db);
 		exit(EXIT_SUCCESS);
 	}
@@ -177,11 +177,8 @@ main(int argc, char **argv)
 
 	if (!GetVariable(settings.vars, "quiet") && !settings.notty && !options.action)
 	{
-		puts("Welcome to psql, the PostgreSQL interactive terminal.\n");
-
-		//showVersion(&settings, false);
-
-		puts("Type:  \\copyright for distribution terms\n"
+		puts("Welcome to psql, the PostgreSQL interactive terminal.\n\n"
+		     "Type:  \\copyright for distribution terms\n"
 			 "       \\h for help with SQL commands\n"
 			 "       \\? for help on internal slash commands\n"
 			 "       \\g or terminate with semicolon to execute query\n"
@@ -509,28 +506,22 @@ process_psqlrc(PsqlSettings *pset)
  * or a mismatch was detected.
  */
 static void
-showVersion(PsqlSettings *pset, bool verbose)
+showVersion(PsqlSettings *pset)
 {
-	PGresult   *res;
-	char	   *versionstr = NULL;
+	PGresult   *res = NULL;
+	const char *versionstr = NULL;
 	long int	release = 0,
 				version = 0,
 				subversion = 0;
 
 	/* get backend version */
+	if (pset->db && PQstatus(pset->db) == CONNECTION_OK) {
 	res = PSQLexec(pset, "SELECT version()");
 	if (PQresultStatus(res) == PGRES_TUPLES_OK)
 		versionstr = PQgetvalue(res, 0, 0);
-
-	if (!verbose)
-	{
-		if (versionstr)
-			puts(versionstr);
-		PQclear(res);
-		return;
 	}
 
-	if (strncmp(versionstr, "PostgreSQL ", 11) == 0)
+	if (versionstr && strncmp(versionstr, "PostgreSQL ", 11) == 0)
 	{
 		char	   *tmp;
 
@@ -539,9 +530,9 @@ showVersion(PsqlSettings *pset, bool verbose)
 		subversion = strtol(tmp + 1, &tmp, 10);
 	}
 
-	printf("Server: %s\npsql", versionstr ? versionstr : "(could not connected)");
+	printf("Server: %s\npsql", versionstr ? versionstr : "(could not connect)");
 
-	if (strcmp(versionstr, PG_VERSION_STR) != 0)
+	if (!versionstr || strcmp(versionstr, PG_VERSION_STR) != 0)
 		printf(&PG_VERSION_STR[strcspn(PG_VERSION_STR, " ")]);
 	printf(" (" __DATE__ " " __TIME__ ")");
 
@@ -569,10 +560,11 @@ showVersion(PsqlSettings *pset, bool verbose)
 
 	puts("");
 
-	if (release < 6 || (release == 6 && version < 5))
+	if (versionstr && (release < 6 || (release == 6 && version < 5)))
 		puts("\nWarning: The server you are connected to is potentially too old for this client\n"
 			 "version. You should ideally be using clients and servers from the same\n"
 			 "distribution.");
 
+	if (res)
 	PQclear(res);
 }

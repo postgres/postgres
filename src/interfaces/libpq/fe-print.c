@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.27 1999/08/31 01:37:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.28 1999/11/11 00:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,16 +50,16 @@ static struct winsize
 #endif
 
 
-static void do_field(PQprintOpt *po, PGresult *res,
+static void do_field(const PQprintOpt *po, const PGresult *res,
 		 const int i, const int j, const int fs_len,
 		 char **fields,
-		 const int nFields, char **fieldNames,
+		 const int nFields, const char **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout);
-static char *do_header(FILE *fout, PQprintOpt *po, const int nFields,
-		  int *fieldMax, char **fieldNames, unsigned char *fieldNotNum,
-		  const int fs_len, PGresult *res);
-static void output_row(FILE *fout, PQprintOpt *po, const int nFields, char **fields,
+static char *do_header(FILE *fout, const PQprintOpt *po, const int nFields,
+		  int *fieldMax, const char **fieldNames, unsigned char *fieldNotNum,
+		  const int fs_len, const PGresult *res);
+static void output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index);
 static void fill(int length, int max, char filler, FILE *fp);
@@ -79,8 +79,8 @@ static void fill(int length, int max, char filler, FILE *fp);
 
 void
 PQprint(FILE *fout,
-		PGresult *res,
-		PQprintOpt *po)
+	const PGresult *res,
+	const PQprintOpt *po)
 {
 	int			nFields;
 
@@ -95,7 +95,7 @@ PQprint(FILE *fout,
 		unsigned char *fieldNotNum = NULL;
 		char	   *border = NULL;
 		char	  **fields = NULL;
-		char	  **fieldNames;
+		const char	  **fieldNames;
 		int			fieldMaxLen = 0;
 		int			numFieldName;
 		int			fs_len = strlen(po->fieldSep);
@@ -105,7 +105,7 @@ PQprint(FILE *fout,
 		char	   *pagerenv;
 
 		nTups = PQntuples(res);
-		if (!(fieldNames = (char **) calloc(nFields, sizeof(char *))))
+		if (!(fieldNames = (const char **) calloc(nFields, sizeof(char *))))
 		{
 			perror("calloc");
 			exit(1);
@@ -127,7 +127,7 @@ PQprint(FILE *fout,
 		for (j = 0; j < nFields; j++)
 		{
 			int			len;
-			char	   *s = (j < numFieldName && po->fieldName[j][0]) ?
+			const char	   *s = (j < numFieldName && po->fieldName[j][0]) ?
 			po->fieldName[j] : PQfname(res, j);
 
 			fieldNames[j] = s;
@@ -218,7 +218,7 @@ PQprint(FILE *fout,
 
 				for (j = 0; j < nFields; j++)
 				{
-					char	   *s = fieldNames[j];
+					const char	   *s = fieldNames[j];
 
 					fputs(s, fout);
 					len += strlen(s) + fs_len;
@@ -317,12 +317,12 @@ PQprint(FILE *fout,
  */
 
 void
-PQdisplayTuples(PGresult *res,
-				FILE *fp,		/* where to send the output */
-				int fillAlign,	/* pad the fields with spaces */
-				const char *fieldSep,	/* field separator */
-				int printHeader,/* display headers? */
-				int quiet
+PQdisplayTuples(const PGresult *res,
+		FILE *fp,		/* where to send the output */
+		int fillAlign,	/* pad the fields with spaces */
+		const char *fieldSep,	/* field separator */
+		int printHeader,/* display headers? */
+		int quiet
 )
 {
 #define DEFAULT_FIELD_SEP " "
@@ -414,12 +414,12 @@ PQdisplayTuples(PGresult *res,
  *
  */
 void
-PQprintTuples(PGresult *res,
-			  FILE *fout,		/* output stream */
-			  int PrintAttNames,/* print attribute names or not */
-			  int TerseOutput,	/* delimiter bars or not? */
-			  int colWidth		/* width of column, if 0, use variable
-								 * width */
+PQprintTuples(const PGresult *res,
+	      FILE *fout,		/* output stream */
+	      int PrintAttNames,/* print attribute names or not */
+	      int TerseOutput,	/* delimiter bars or not? */
+	      int colWidth		/* width of column, if 0, use variable
+					 * width */
 )
 {
 	int			nFields;
@@ -475,7 +475,7 @@ PQprintTuples(PGresult *res,
 		{
 			for (j = 0; j < nFields; j++)
 			{
-				char	   *pval = PQgetvalue(res, i, j);
+				const char	   *pval = PQgetvalue(res, i, j);
 
 				fprintf(fout, formatString,
 						TerseOutput ? "" : "|",
@@ -498,7 +498,7 @@ PQprintTuples(PGresult *res,
  * the backend is assumed.
  */
 int
-PQmblen(unsigned char *s)
+PQmblen(const unsigned char *s)
 {
 	char	   *str;
 	int			encoding = -1;
@@ -515,7 +515,7 @@ PQmblen(unsigned char *s)
 
 /* Provide a default definition in case someone calls it anyway */
 int
-PQmblen(unsigned char *s)
+PQmblen(const unsigned char *s)
 {
 	return 1;
 }
@@ -523,15 +523,15 @@ PQmblen(unsigned char *s)
 #endif	 /* MULTIBYTE */
 
 static void
-do_field(PQprintOpt *po, PGresult *res,
+do_field(const PQprintOpt *po, const PGresult *res,
 		 const int i, const int j, const int fs_len,
 		 char **fields,
-		 const int nFields, char **fieldNames,
+		 const int nFields, char const **fieldNames,
 		 unsigned char *fieldNotNum, int *fieldMax,
 		 const int fieldMaxLen, FILE *fout)
 {
 
-	char	   *pval,
+	const char	   *pval,
 			   *p;
 	int			plen;
 	bool		skipit;
@@ -641,9 +641,9 @@ do_field(PQprintOpt *po, PGresult *res,
 
 
 static char *
-do_header(FILE *fout, PQprintOpt *po, const int nFields, int *fieldMax,
-		  char **fieldNames, unsigned char *fieldNotNum,
-		  const int fs_len, PGresult *res)
+do_header(FILE *fout, const PQprintOpt *po, const int nFields, int *fieldMax,
+		  const char **fieldNames, unsigned char *fieldNotNum,
+		  const int fs_len, const PGresult *res)
 {
 
 	int			j;				/* for loop index */
@@ -697,7 +697,7 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int *fieldMax,
 		fputs(po->fieldSep, fout);
 	for (j = 0; j < nFields; j++)
 	{
-		char	   *s = PQfname(res, j);
+		const char	   *s = PQfname(res, j);
 
 		if (po->html3)
 		{
@@ -729,7 +729,7 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int *fieldMax,
 
 
 static void
-output_row(FILE *fout, PQprintOpt *po, const int nFields, char **fields,
+output_row(FILE *fout, const PQprintOpt *po, const int nFields, char **fields,
 		   unsigned char *fieldNotNum, int *fieldMax, char *border,
 		   const int row_index)
 {

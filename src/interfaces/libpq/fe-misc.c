@@ -24,7 +24,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.31 1999/09/27 03:13:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.32 1999/11/11 00:10:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,9 +82,9 @@ pqGetc(char *result, PGconn *conn)
    with buffering
  */
 static int
-pqPutBytes(const char *s, int nbytes, PGconn *conn)
+pqPutBytes(const char *s, size_t nbytes, PGconn *conn)
 {
-	int			avail = conn->outBufSize - conn->outCount;
+	size_t avail = Max(conn->outBufSize - conn->outCount, 0);
 
 	while (nbytes > avail)
 	{
@@ -157,7 +157,7 @@ pqPuts(const char *s, PGconn *conn)
    get a string of exactly len bytes in buffer s, no null termination
 */
 int
-pqGetnchar(char *s, int len, PGconn *conn)
+pqGetnchar(char *s, size_t len, PGconn *conn)
 {
 	if (len < 0 || len > conn->inEnd - conn->inCursor)
 		return EOF;
@@ -168,7 +168,7 @@ pqGetnchar(char *s, int len, PGconn *conn)
 	conn->inCursor += len;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "From backend (%d)> %.*s\n", len, len, s);
+		fprintf(conn->Pfdebug, "From backend (%d)> %.*s\n", len, (int)len, s);
 
 	return 0;
 }
@@ -178,13 +178,13 @@ pqGetnchar(char *s, int len, PGconn *conn)
    send a string of exactly len bytes, no null termination needed
 */
 int
-pqPutnchar(const char *s, int len, PGconn *conn)
+pqPutnchar(const char *s, size_t len, PGconn *conn)
 {
 	if (pqPutBytes(s, len, conn))
 		return EOF;
 
 	if (conn->Pfdebug)
-		fprintf(conn->Pfdebug, "To backend> %.*s\n", len, s);
+		fprintf(conn->Pfdebug, "To backend> %.*s\n", (int)len, s);
 
 	return 0;
 }
@@ -195,7 +195,7 @@ pqPutnchar(const char *s, int len, PGconn *conn)
    to local byte order
 */
 int
-pqGetInt(int *result, int bytes, PGconn *conn)
+pqGetInt(int *result, size_t bytes, PGconn *conn)
 {
 	uint16		tmp2;
 	uint32		tmp4;
@@ -236,7 +236,7 @@ pqGetInt(int *result, int bytes, PGconn *conn)
    to network byte order.
 */
 int
-pqPutInt(int value, int bytes, PGconn *conn)
+pqPutInt(int value, size_t bytes, PGconn *conn)
 {
 	uint16		tmp2;
 	uint32		tmp4;
