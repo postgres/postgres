@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.27 2002/06/20 20:29:53 momjian Exp $
+ * $Id: timestamp.h,v 1.28 2002/08/04 06:42:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -50,6 +50,10 @@ typedef struct
 #endif
 	int32		month;	/* months and years, after time for alignment */
 } Interval;
+
+
+#define MAX_TIMESTAMP_PRECISION 6
+#define MAX_INTERVAL_PRECISION 6
 
 
 /*
@@ -117,10 +121,6 @@ typedef struct
 
 #define TIMESTAMP_NOT_FINITE(j) (TIMESTAMP_IS_NOBEGIN(j) || TIMESTAMP_IS_NOEND(j))
 
-
-#define MAX_TIMESTAMP_PRECISION 6
-#define MAX_INTERVAL_PRECISION 6
-
 #ifdef HAVE_INT64_TIMESTAMP
 
 typedef int32 fsec_t;
@@ -133,6 +133,18 @@ typedef double fsec_t;
 #define JROUND(j) (rint(((double) (j))*TIME_PREC_INV)/TIME_PREC_INV)
 
 #endif
+
+#define TIMESTAMP_MASK(b) (1 << (b))
+#define INTERVAL_MASK(b) (1 << (b))
+
+/* Macros to handle packing and unpacking the typmod field for intervals */
+#define INTERVAL_FULL_RANGE (0x7FFF)
+#define INTERVAL_RANGE_MASK (0x7FFF)
+#define INTERVAL_FULL_PRECISION (0xFFFF)
+#define INTERVAL_PRECISION_MASK (0xFFFF)
+#define INTERVAL_TYPMOD(p,r) ((((r) & INTERVAL_RANGE_MASK) << 16) | ((p) & INTERVAL_PRECISION_MASK))
+#define INTERVAL_PRECISION(t) ((t) & INTERVAL_PRECISION_MASK)
+#define INTERVAL_RANGE(t) (((t) >> 16) & INTERVAL_RANGE_MASK)
 
 
 /*
