@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.170 2004/09/07 21:48:30 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/trigger.c,v 1.171 2004/09/08 23:47:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1772,7 +1772,7 @@ static DeferredTriggerState DeferredTriggerStateAddItem(DeferredTriggerState sta
 static bool
 deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 {
-	bool		tgisdeferred;
+	DeferredTriggerState state = deferredTriggers->state;
 	int			i;
 
 	/*
@@ -1783,32 +1783,24 @@ deferredTriggerCheckState(Oid tgoid, int32 itemstate)
 		return false;
 
 	/*
-	 * Lookup if we know an individual state for this trigger
+	 * Check if SET CONSTRAINTS has been executed for this specific trigger.
 	 */
-	for (i = 0; i < deferredTriggers->state->numstates; i++)
+	for (i = 0; i < state->numstates; i++)
 	{
-		if (deferredTriggers->state->trigstates[i].dts_tgoid == tgoid)
-			return deferredTriggers->state->trigstates[i].dts_tgisdeferred;
+		if (state->trigstates[i].dts_tgoid == tgoid)
+			return state->trigstates[i].dts_tgisdeferred;
 	}
 
 	/*
-	 * No individual state known - so if the user issued a SET CONSTRAINT
-	 * ALL ..., we return that instead of the triggers default state.
+	 * Check if SET CONSTRAINTS ALL has been executed; if so use that.
 	 */
-	if (deferredTriggers->state->all_isset)
-		return deferredTriggers->state->all_isdeferred;
+	if (state->all_isset)
+		return state->all_isdeferred;
 
 	/*
-	 * No ALL state known either, remember the default state as the
-	 * current and return that.  (XXX why do we bother making a state
-	 * entry?)
+	 * Otherwise return the default state for the trigger.
 	 */
-	tgisdeferred = ((itemstate & TRIGGER_DEFERRED_INITDEFERRED) != 0);
-	deferredTriggers->state =
-		DeferredTriggerStateAddItem(deferredTriggers->state,
-									tgoid, tgisdeferred);
-
-	return tgisdeferred;
+	return ((itemstate & TRIGGER_DEFERRED_INITDEFERRED) != 0);
 }
 
 
@@ -2486,8 +2478,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 	if (stmt->constraints == NIL)
 	{
 		/*
-		 * Drop all per-transaction information about individual trigger
-		 * states.
+		 * Forget any previous SET CONSTRAINTS commands in this transaction.
 		 */
 		deferredTriggers->state->numstates = 0;
 
@@ -2545,23 +2536,22 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			while (HeapTupleIsValid(htup = systable_getnext(tgscan)))
 			{
 				Form_pg_trigger pg_trigger = (Form_pg_trigger) GETSTRUCT(htup);
-				Oid			constr_oid;
 
 				/*
 				 * If we found some, check that they fit the deferrability
 				 * but skip ON <event> RESTRICT ones, since they are
 				 * silently never deferrable.
 				 */
-				if (stmt->deferred && !pg_trigger->tgdeferrable &&
-					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
+				if (pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_UPD &&
 					pg_trigger->tgfoid != F_RI_FKEY_RESTRICT_DEL)
-					ereport(ERROR,
-							(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-							 errmsg("constraint \"%s\" is not deferrable",
-									cname)));
-
-				constr_oid = HeapTupleGetOid(htup);
-				oidlist = lappend_oid(oidlist, constr_oid);
+				{
+					if (stmt->deferred && !pg_trigger->tgdeferrable)
+						ereport(ERROR,
+								(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+								 errmsg("constraint \"%s\" is not deferrable",
+										cname)));
+					oidlist = lappend_oid(oidlist, HeapTupleGetOid(htup));
+				}
 				found = true;
 			}
 
@@ -2573,7 +2563,8 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			if (!found)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_OBJECT),
-					 errmsg("constraint \"%s\" does not exist", cname)));
+						 errmsg("constraint \"%s\" does not exist",
+								cname)));
 		}
 		heap_close(tgrel, AccessShareLock);
 
@@ -2584,14 +2575,15 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 		foreach(l, oidlist)
 		{
 			Oid			tgoid = lfirst_oid(l);
+			DeferredTriggerState state = deferredTriggers->state;
 			bool		found = false;
 			int			i;
 
-			for (i = 0; i < deferredTriggers->state->numstates; i++)
+			for (i = 0; i < state->numstates; i++)
 			{
-				if (deferredTriggers->state->trigstates[i].dts_tgoid == tgoid)
+				if (state->trigstates[i].dts_tgoid == tgoid)
 				{
-					deferredTriggers->state->trigstates[i].dts_tgisdeferred = stmt->deferred;
+					state->trigstates[i].dts_tgisdeferred = stmt->deferred;
 					found = true;
 					break;
 				}
@@ -2599,8 +2591,7 @@ DeferredTriggerSetState(ConstraintsSetStmt *stmt)
 			if (!found)
 			{
 				deferredTriggers->state =
-					DeferredTriggerStateAddItem(deferredTriggers->state,
-												tgoid, stmt->deferred);
+					DeferredTriggerStateAddItem(state, tgoid, stmt->deferred);
 			}
 		}
 	}
