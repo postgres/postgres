@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.30 2001/05/09 17:49:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.31 2001/05/09 17:57:42 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -978,7 +978,7 @@ describeUsers (const char *name)
 	printTable(title, headers,
 			   (const char **) cells,
 			   NULL,
-			   "lll", &myopt, pset.queryFout);
+			   "lrl", &myopt, pset.queryFout);
 
 	/* clean up */
 	for (i = 0; i < PQntuples(res); i++)
