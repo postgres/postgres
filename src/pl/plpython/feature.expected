@@ -29,7 +29,7 @@ SELECT global_test_two();
 (1 row)
 
 SELECT import_fail();
-NOTICE:  ('import socket failed -- untrusted dynamic module: socket',)
+NOTICE:  ('import socket failed -- untrusted dynamic module: _socket',)
     import_fail     
 --------------------
  failed as expected

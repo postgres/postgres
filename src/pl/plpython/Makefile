@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.6 2001/05/14 22:06:50 petere Exp $
+# $Header: /cvsroot/pgsql/src/pl/plpython/Makefile,v 1.7 2001/05/25 15:48:33 momjian Exp $
 
 subdir = src/pl/plpython
 top_builddir = ../../..
@@ -6,6 +6,8 @@ include $(top_builddir)/src/Makefile.global
 
 
 override CPPFLAGS := -I$(srcdir) -I$(python_includedir) $(CPPFLAGS)
+
+override DLLLIBS := $(BE_DLLLIBS) $(DLLLIBS)
 
 NAME = plpython
 SO_MAJOR_VERSION = 0

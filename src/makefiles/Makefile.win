@@ -1,4 +1,4 @@
-# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.12 2001/05/25 14:28:58 momjian Exp $
+# $Header: /cvsroot/pgsql/src/makefiles/Attic/Makefile.win,v 1.13 2001/05/25 15:48:33 momjian Exp $
 LDFLAGS+= -g
 DLLTOOL= dlltool
 DLLWRAP= dllwrap
@@ -26,6 +26,10 @@ endif
 
 ifeq ($(findstring ecpg/lib,$(subdir)), ecpg/lib)
 override CPPFLAGS+= -DBUILDING_DLL=1
+endif
+
+ifeq ($(findstring src/pl/plpython,$(subdir)), src/pl/plpython)
+override CPPFLAGS+= -DUSE_DL_IMPORT
 endif
 
 override javadir := '$(shell cygpath -w $(javadir))'
