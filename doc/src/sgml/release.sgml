@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.177 2003/01/10 22:03:26 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.178 2003/01/11 21:02:49 momjian Exp $
 -->
 
 <appendix id="release">
@@ -920,7 +920,7 @@ Fix for repeat(), lpad(), rpad() and long strings (Neil)
 Ensure that sequence counters do not go backwards after a crash (Tom)
 Fix pgaccess kanji-coversion key binding (Tatsuo)
 Optimizer improvements (Tom)
-cash I/O improvements (Tom)
+Cash I/O improvements (Tom)
 New Russian FAQ
 Compile fix for missing AuthBlockSig (Heiko)
 Additional time zones and time zone fixes (Thomas)
