@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.105 1999/05/25 16:10:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.106 1999/06/04 21:14:46 tgl Exp $
  *
  * NOTES
  *
@@ -427,7 +427,7 @@ PostmasterMain(int argc, char *argv[])
 				 * means we have to start each backend with a -B # to make
 				 * sure they know how many buffers were allocated.
 				 */
-				NBuffers = atol(optarg);
+				NBuffers = atoi(optarg);
 				strcat(ExtraOptions, " -B ");
 				strcat(ExtraOptions, optarg);
 				break;
@@ -530,8 +530,25 @@ PostmasterMain(int argc, char *argv[])
 				break;
 		}
 	}
+
+	/*
+	 * Select default values for switches where needed
+	 */
 	if (PostPortName == -1)
 		PostPortName = pq_getport();
+
+	/*
+	 * Check for invalid combinations of switches
+	 */
+	if (NBuffers < 2 * MaxBackends || NBuffers < 16)
+	{
+		/* Do not accept -B so small that backends are likely to starve for
+		 * lack of buffers.  The specific choices here are somewhat arbitrary.
+		 */
+		fprintf(stderr, "%s: -B must be at least twice -N and at least 16.\n",
+				progname);
+		exit(1);
+	}
 
 	checkDataDir(DataDir, &DataDirOK);	/* issues error messages */
 	if (!DataDirOK)
