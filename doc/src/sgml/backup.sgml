@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.57 2005/03/17 05:03:37 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.58 2005/03/17 05:10:11 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -365,7 +365,7 @@ tar -cf backup.tar /usr/local/pgsql/data
 
   <para>
    If your database is spread across multiple volumes (for example,
-   data files and WAL log on different disks) there may not be any way
+   if you are using tablespaces) there may not be any way
    to obtain exactly-simultaneous frozen snapshots of all the volumes.
    Read your file system documentation very carefully before trusting
    to the consistent-snapshot technique in such situations.  The safest
