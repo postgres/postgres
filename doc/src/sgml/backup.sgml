@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.3 2000/09/29 20:21:33 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/backup.sgml,v 2.4 2000/12/10 20:47:34 momjian Exp $ -->
 <chapter id="backup">
  <title>Backup and Restore</title>
 
@@ -46,7 +46,7 @@ pg_dump <replaceable class="parameter">dbname</replaceable> &gt; <replaceable cl
   </para>
 
   <para>
-   To specify which databaser server <application>pg_dump</> should
+   To specify which database server <application>pg_dump</> should
    contact, use the command line options <option>-h
    <replaceable>host</></> and <option>-p <replaceable>port</></>. The
    default host is the local host or whatever your
