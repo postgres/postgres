@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.132 2002/09/04 20:31:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.133 2002/09/14 19:59:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,7 +316,7 @@ BufferAlloc(Relation reln,
 		{
 			/*
 			 * I couldn't understand the following old comment. If there's
-			 * no IO for the buffer and the buffer is BROKEN,it should be
+			 * no IO for the buffer and the buffer is BROKEN, it should be
 			 * read again. So start a new buffer IO here.
 			 *
 			 * wierd race condition:

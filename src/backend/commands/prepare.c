@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.2 2002/09/04 20:31:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.3 2002/09/14 19:59:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,7 +248,7 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 		elog(ERROR, "Prepared statement with name \"%s\" already exists",
 			 stmt_name);
 
-	/* Okay. Make a permanent memory context for the hashtable entry */
+	/* Make a permanent memory context for the hashtable entry */
 	entrycxt = AllocSetContextCreate(TopMemoryContext,
 									 stmt_name,
 									 1024,
@@ -399,8 +399,8 @@ DeallocateQuery(DeallocateStmt *stmt)
 			 stmt->name);
 
 	/* Flush the context holding the subsidiary data */
-	if (MemoryContextIsValid(entry->context))
-		MemoryContextDelete(entry->context);
+	Assert(MemoryContextIsValid(entry->context));
+	MemoryContextDelete(entry->context);
 
 	/* Now we can remove the hash table entry */
 	hash_search(prepared_queries, key, HASH_REMOVE, NULL);
