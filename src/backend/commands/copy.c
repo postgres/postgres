@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.48 1998/07/12 21:29:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.49 1998/07/15 18:53:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -231,7 +231,7 @@ CopyTo(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
-		typmod = (int32 *) palloc(attr_count * sizeof(int16));
+		typmod = (int32 *) palloc(attr_count * sizeof(int32));
 		for (i = 0; i < attr_count; i++)
 		{
 			out_func_oid = (Oid) GetOutputFunction(attr[i]->atttypid);
@@ -499,7 +499,7 @@ CopyFrom(Relation rel, bool binary, bool oids, FILE *fp, char *delim)
 	{
 		in_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
 		elements = (Oid *) palloc(attr_count * sizeof(Oid));
-		typmod = (int32 *) palloc(attr_count * sizeof(int16));
+		typmod = (int32 *) palloc(attr_count * sizeof(int32));
 		for (i = 0; i < attr_count; i++)
 		{
 			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
