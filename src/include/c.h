@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.82 2000/09/29 13:53:32 petere Exp $
+ * $Id: c.h,v 1.83 2000/10/02 17:15:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,6 +56,9 @@
 #include <errno.h>
 #include <sys/fcntl.h>		/* ensure O_BINARY is available */
 #endif
+#ifdef __BEOS__
+#include <SupportDefs.h>
+#endif
 
 /* ----------------------------------------------------------------
  *				Section 1:	bool, true, false, TRUE, FALSE, NULL
@@ -66,6 +69,7 @@
  *		Boolean value, either true or false.
  *
  */
+#ifndef __BEOS__
 #ifndef __cplusplus
 #ifndef bool
 typedef char bool;
@@ -78,6 +82,7 @@ typedef char bool;
 #ifndef false
 #define false	((bool) 0)
 #endif
+#endif /* __BEOS__ */
 typedef bool *BoolPtr;
 
 #ifndef TRUE
@@ -165,9 +170,11 @@ typedef char *Pointer;
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
+#ifndef __BEOS__
 typedef signed char int8;		/* == 8 bits */
 typedef signed short int16;		/* == 16 bits */
 typedef signed int int32;		/* == 32 bits */
+#endif /* __BEOS__ */
 
 /*
  * uintN
@@ -175,9 +182,11 @@ typedef signed int int32;		/* == 32 bits */
  *		used for numerical computations and the
  *		frontend/backend protocol.
  */
+#ifndef __BEOS__
 typedef unsigned char uint8;	/* == 8 bits */
 typedef unsigned short uint16;	/* == 16 bits */
 typedef unsigned int uint32;	/* == 32 bits */
+#endif /* __BEOS__ */
 
 /*
  * floatN
@@ -259,6 +268,8 @@ typedef int32 int4;
 typedef float float4;
 typedef double float8;
 
+/* BeOS already has int64 defined, so skip these... */
+#ifndef BEOS
 #ifdef HAVE_LONG_INT_64
 /* Plain "long int" fits, use it */
 typedef long int int64;
@@ -272,6 +283,9 @@ typedef long int int64;
 #define INT64_IS_BUSTED
 #endif
 #endif
+#else /* Add BeOS support */
+#include <SupportDefs.h>
+#endif /* BEOS */
 
 /* ----------------------------------------------------------------
  *				Section 4:	datum type + support macros

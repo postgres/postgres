@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ipc.h,v 1.38 2000/01/26 05:58:32 momjian Exp $
+ * $Id: ipc.h,v 1.39 2000/10/02 17:15:58 momjian Exp $
  *
  * NOTES
  *	  This file is very architecture-specific.	This stuff should actually
@@ -23,7 +23,9 @@
 #define IPC_H
 
 #include <sys/types.h>
+#ifdef HAVE_SYS_IPC_H
 #include <sys/ipc.h>			/* For IPC_PRIVATE */
+#endif
 
 #include "config.h"
 

@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.137 2000/09/29 22:00:45 momjian Exp $
+ * $Id: config.h.in,v 1.138 2000/10/02 17:15:55 momjian Exp $
  */
 
 #ifndef CONFIG_H
@@ -341,6 +341,9 @@
 
 /* Set to 1 if you have <readline/readline.h> */
 #undef HAVE_READLINE_READLINE_H
+
+/* Define if you have <sys/ipc.h> */
+#undef HAVE_SYS_IPC_H
 
 /* Set to 1 if  you have <sys/select.h> */
 #undef HAVE_SYS_SELECT_H

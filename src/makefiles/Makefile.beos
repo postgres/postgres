@@ -1,0 +1,6 @@
+MK_NO_LORDER=true
+ifdef ELF_SYSTEM
+LDFLAGS += -Wl,-E
+endif
+%.so: %.o
+	$(LD) -x -Bshareable -o $@ $<
