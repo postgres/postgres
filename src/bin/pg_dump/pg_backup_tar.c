@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.33 2003/01/10 23:49:06 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.34 2003/02/01 19:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -981,7 +981,7 @@ _tarChecksum(char *header)
 	return sum + 256;			/* Assume 8 blanks in checksum field */
 }
 
-int
+bool
 isValidTarHeader(char *header)
 {
 	int			sum;
@@ -989,7 +989,17 @@ isValidTarHeader(char *header)
 
 	sscanf(&header[148], "%8o", &sum);
 
-	return (sum == chk && strncmp(&header[257], "ustar  ", 7) == 0);
+	if (sum != chk)
+		return false;
+
+	/* POSIX format */
+	if (strncmp(&header[257], "ustar00", 7) == 0)
+		return true;
+	/* older format */
+	if (strncmp(&header[257], "ustar  ", 7) == 0)
+		return true;
+
+	return false;
 }
 
 /* Given the member, write the TAR header & copy the file */

@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.49 2002/10/25 01:33:17 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.50 2003/02/01 19:29:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,7 +309,7 @@ extern void InitArchiveFmt_Files(ArchiveHandle *AH);
 extern void InitArchiveFmt_Null(ArchiveHandle *AH);
 extern void InitArchiveFmt_Tar(ArchiveHandle *AH);
 
-extern int	isValidTarHeader(char *header);
+extern bool isValidTarHeader(char *header);
 
 extern OutputContext SetOutput(ArchiveHandle *AH, char *filename, int compression);
 extern void ResetOutput(ArchiveHandle *AH, OutputContext savedContext);
