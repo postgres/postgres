@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: acl.h,v 1.13 1998/01/24 22:50:28 momjian Exp $
+ * $Id: acl.h,v 1.14 1998/02/23 18:43:13 scrappy Exp $
  *
  * NOTES
  *	  For backward-compatability purposes we have to allow there
@@ -62,7 +62,7 @@ typedef uint8 AclMode;
 #define ACL_MODECHG_EQL			3
 
 /* change this line if you want to set the default acl permission  */
-#define ACL_WORLD_DEFAULT		(ACL_RD)
+#define ACL_WORLD_DEFAULT		(ACL_NO)
 /* #define		ACL_WORLD_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU) */
 #define ACL_OWNER_DEFAULT		(ACL_RD|ACL_WR|ACL_AP|ACL_RU)
 

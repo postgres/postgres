@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.23 1998/02/23 17:43:53 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.24 1998/02/23 18:43:06 scrappy Exp $
  *
  * NOTES
  *		InitPostgres() is the function called from PostgresMain
@@ -591,7 +591,8 @@ InitPostgres(char *name)		/* database name */
 	 *	 initialize local data in cache invalidation stuff
 	 * ----------------
 	 */
-	InitLocalInvalidateData();
+	if (!bootstrap)
+		InitLocalInvalidateData();
 
 	/* ----------------
 	 *	ok, all done, now let's make sure we don't do it again.
