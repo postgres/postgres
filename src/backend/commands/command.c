@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.143 2001/10/05 17:28:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.144 2001/10/12 00:07:14 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -309,9 +309,10 @@ AlterTableAddColumn(const char *relationName,
 	int			i;
 	int			minattnum,
 				maxatts;
-	Relation	idescs[Num_pg_attr_indices];
-	Relation	ridescs[Num_pg_class_indices];
-	bool		hasindex;
+	HeapTuple	typeTuple;
+	Form_pg_type tform;
+	char	   *typename;
+	int			attndims;
 
 	/*
 	 * permissions checking.  this would normally be done in utility.c,
@@ -339,56 +340,63 @@ AlterTableAddColumn(const char *relationName,
 	heap_close(rel, NoLock);	/* close rel but keep lock! */
 
 	/*
-	 * we can't add a not null attribute
-	 */
-	if (colDef->is_not_null)
-		elog(ERROR, "Can't add a NOT NULL attribute to an existing relation");
-
-	if (colDef->raw_default || colDef->cooked_default)
-		elog(ERROR, "Adding columns with defaults is not implemented.");
-
-
-	/*
-	 * if the first element in the 'schema' list is a "*" then we are
-	 * supposed to add this attribute to all classes that inherit from
-	 * 'relationName' (as well as to 'relationName').
+	 * Recurse to add the column to child classes, if requested.
 	 *
 	 * any permissions or problems with duplicate attributes will cause the
 	 * whole transaction to abort, which is what we want -- all or
 	 * nothing.
 	 */
-	if (colDef != NULL)
+	if (inherits)
 	{
-		if (inherits)
+		List	   *child,
+				   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all
+		 * of the relids in the list that it returns.
+		 */
+		foreach(child, children)
 		{
-			List	   *child,
-					   *children;
+			Oid			childrelid = lfirsti(child);
+			char	   *childrelname;
 
-			/* this routine is actually in the planner */
-			children = find_all_inheritors(myrelid);
+			if (childrelid == myrelid)
+				continue;
+			rel = heap_open(childrelid, AccessExclusiveLock);
+			childrelname = pstrdup(RelationGetRelationName(rel));
+			heap_close(rel, AccessExclusiveLock);
 
-			/*
-			 * find_all_inheritors does the recursive search of the
-			 * inheritance hierarchy, so all we have to do is process all
-			 * of the relids in the list that it returns.
-			 */
-			foreach(child, children)
-			{
-				Oid			childrelid = lfirsti(child);
-				char	   *childrelname;
+			AlterTableAddColumn(childrelname, false, colDef);
 
-				if (childrelid == myrelid)
-					continue;
-				rel = heap_open(childrelid, AccessExclusiveLock);
-				childrelname = pstrdup(RelationGetRelationName(rel));
-				heap_close(rel, AccessExclusiveLock);
-
-				AlterTableAddColumn(childrelname, false, colDef);
-
-				pfree(childrelname);
-			}
+			pfree(childrelname);
 		}
 	}
+
+	/*
+	 * OK, get on with it...
+	 *
+	 * Implementation restrictions: because we don't touch the table rows,
+	 * the new column values will initially appear to be NULLs.  (This
+	 * happens because the heap tuple access routines always check for
+	 * attnum > # of attributes in tuple, and return NULL if so.)  Therefore
+	 * we can't support a DEFAULT value in SQL92-compliant fashion, and
+	 * we also can't allow a NOT NULL constraint.
+	 *
+	 * We do allow CHECK constraints, even though these theoretically
+	 * could fail for NULL rows (eg, CHECK (newcol IS NOT NULL)).
+	 */
+	if (colDef->raw_default || colDef->cooked_default)
+		elog(ERROR, "Adding columns with defaults is not implemented."
+			 "\n\tAdd the column, then use ALTER TABLE SET DEFAULT.");
+
+	if (colDef->is_not_null)
+		elog(ERROR, "Adding NOT NULL columns is not implemented."
+			 "\n\tAdd the column, then use ALTER TABLE ADD CONSTRAINT.");
+
 
 	rel = heap_openr(RelationRelationName, RowExclusiveLock);
 
@@ -400,22 +408,39 @@ AlterTableAddColumn(const char *relationName,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 relationName);
 
+	if (SearchSysCacheExists(ATTNAME,
+							 ObjectIdGetDatum(reltup->t_data->t_oid),
+							 PointerGetDatum(colDef->colname),
+							 0, 0))
+		elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
+			 colDef->colname, relationName);
+
 	minattnum = ((Form_pg_class) GETSTRUCT(reltup))->relnatts;
 	maxatts = minattnum + 1;
 	if (maxatts > MaxHeapAttributeNumber)
 		elog(ERROR, "ALTER TABLE: relations limited to %d columns",
 			 MaxHeapAttributeNumber);
+	i = minattnum + 1;
 
 	attrdesc = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	/*
-	 * Open all (if any) pg_attribute indices
-	 */
-	hasindex = RelationGetForm(attrdesc)->relhasindex;
-	if (hasindex)
-		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+	if (colDef->typename->arrayBounds)
+	{
+		attndims = length(colDef->typename->arrayBounds);
+		typename = makeArrayTypeName(colDef->typename->name);
+	}
+	else
+	{
+		attndims = 0;
+		typename = colDef->typename->name;
+	}
 
-	attributeD.attrelid = reltup->t_data->t_oid;
+	typeTuple = SearchSysCache(TYPENAME,
+							   PointerGetDatum(typename),
+							   0, 0, 0);
+	if (!HeapTupleIsValid(typeTuple))
+		elog(ERROR, "ALTER TABLE: type \"%s\" does not exist", typename);
+	tform = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	attributeTuple = heap_addheader(Natts_pg_attribute,
 									ATTRIBUTE_TUPLE_SIZE,
@@ -423,70 +448,36 @@ AlterTableAddColumn(const char *relationName,
 
 	attribute = (Form_pg_attribute) GETSTRUCT(attributeTuple);
 
-	i = 1 + minattnum;
+	attribute->attrelid = reltup->t_data->t_oid;
+	namestrcpy(&(attribute->attname), colDef->colname);
+	attribute->atttypid = typeTuple->t_data->t_oid;
+	attribute->attstattarget = DEFAULT_ATTSTATTARGET;
+	attribute->attlen = tform->typlen;
+	attribute->attcacheoff = -1;
+	attribute->atttypmod = colDef->typename->typmod;
+	attribute->attnum = i;
+	attribute->attbyval = tform->typbyval;
+	attribute->attndims = attndims;
+	attribute->attisset = (bool) (tform->typtype == 'c');
+	attribute->attstorage = tform->typstorage;
+	attribute->attalign = tform->typalign;
+	attribute->attnotnull = colDef->is_not_null;
+	attribute->atthasdef = (colDef->raw_default != NULL ||
+							colDef->cooked_default != NULL);
 
+	ReleaseSysCache(typeTuple);
+
+	heap_insert(attrdesc, attributeTuple);
+
+	/* Update indexes on pg_attribute */
+	if (RelationGetForm(attrdesc)->relhasindex)
 	{
-		HeapTuple	typeTuple;
-		Form_pg_type tform;
-		char	   *typename;
-		int			attndims;
+		Relation	idescs[Num_pg_attr_indices];
 
-		if (SearchSysCacheExists(ATTNAME,
-								 ObjectIdGetDatum(reltup->t_data->t_oid),
-								 PointerGetDatum(colDef->colname),
-								 0, 0))
-			elog(ERROR, "ALTER TABLE: column name \"%s\" already exists in table \"%s\"",
-				 colDef->colname, relationName);
-
-		/*
-		 * check to see if it is an array attribute.
-		 */
-
-		typename = colDef->typename->name;
-
-		if (colDef->typename->arrayBounds)
-		{
-			attndims = length(colDef->typename->arrayBounds);
-			typename = makeArrayTypeName(colDef->typename->name);
-		}
-		else
-			attndims = 0;
-
-		typeTuple = SearchSysCache(TYPENAME,
-								   PointerGetDatum(typename),
-								   0, 0, 0);
-		if (!HeapTupleIsValid(typeTuple))
-			elog(ERROR, "ALTER TABLE: type \"%s\" does not exist", typename);
-		tform = (Form_pg_type) GETSTRUCT(typeTuple);
-
-		namestrcpy(&(attribute->attname), colDef->colname);
-		attribute->atttypid = typeTuple->t_data->t_oid;
-		attribute->attlen = tform->typlen;
-		attribute->attstattarget = DEFAULT_ATTSTATTARGET;
-		attribute->attcacheoff = -1;
-		attribute->atttypmod = colDef->typename->typmod;
-		attribute->attnum = i;
-		attribute->attbyval = tform->typbyval;
-		attribute->attndims = attndims;
-		attribute->attisset = (bool) (tform->typtype == 'c');
-		attribute->attstorage = tform->typstorage;
-		attribute->attalign = tform->typalign;
-		attribute->attnotnull = false;
-		attribute->atthasdef = (colDef->raw_default != NULL ||
-								colDef->cooked_default != NULL);
-
-		ReleaseSysCache(typeTuple);
-
-		heap_insert(attrdesc, attributeTuple);
-		if (hasindex)
-			CatalogIndexInsert(idescs,
-							   Num_pg_attr_indices,
-							   attrdesc,
-							   attributeTuple);
-	}
-
-	if (hasindex)
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_attr_indices, attrdesc, attributeTuple);
 		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	}
 
 	heap_close(attrdesc, NoLock);
 
@@ -499,9 +490,14 @@ AlterTableAddColumn(const char *relationName,
 	simple_heap_update(rel, &newreltup->t_self, newreltup);
 
 	/* keep catalog indices current */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
-	CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, newreltup);
-	CatalogCloseIndices(Num_pg_class_indices, ridescs);
+	if (RelationGetForm(rel)->relhasindex)
+	{
+		Relation	ridescs[Num_pg_class_indices];
+
+		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices, ridescs);
+		CatalogIndexInsert(ridescs, Num_pg_class_indices, rel, newreltup);
+		CatalogCloseIndices(Num_pg_class_indices, ridescs);
+	}
 
 	heap_freetuple(newreltup);
 	ReleaseSysCache(reltup);
@@ -509,10 +505,27 @@ AlterTableAddColumn(const char *relationName,
 	heap_close(rel, NoLock);
 
 	/*
+	 * Make our catalog updates visible for subsequent steps.
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * Add any CHECK constraints attached to the new column.
+	 *
+	 * To do this we must re-open the rel so that its new attr list
+	 * gets loaded into the relcache.
+	 */
+	if (colDef->constraints != NIL)
+	{
+		rel = heap_openr(relationName, AccessExclusiveLock);
+		AddRelationRawConstraints(rel, NIL, colDef->constraints);
+		heap_close(rel, NoLock);
+	}
+
+	/*
 	 * Automatically create the secondary relation for TOAST if it
 	 * formerly had no such but now has toastable attributes.
 	 */
-	CommandCounterIncrement();
 	AlterTableCreateToastTable(relationName, true);
 }
 
@@ -596,7 +609,6 @@ AlterTableAlterColumnDefault(const char *relationName,
 	if (newDefault)
 	{
 		/* SET DEFAULT */
-		List	   *rawDefaults = NIL;
 		RawColumnDefault *rawEnt;
 
 		/* Get rid of the old one first */
@@ -605,13 +617,12 @@ AlterTableAlterColumnDefault(const char *relationName,
 		rawEnt = (RawColumnDefault *) palloc(sizeof(RawColumnDefault));
 		rawEnt->attnum = attnum;
 		rawEnt->raw_default = newDefault;
-		rawDefaults = lappend(rawDefaults, rawEnt);
 
 		/*
 		 * This function is intended for CREATE TABLE, so it processes a
 		 * _list_ of defaults, but we just do one.
 		 */
-		AddRelationRawConstraints(rel, rawDefaults, NIL);
+		AddRelationRawConstraints(rel, makeList1(rawEnt), NIL);
 	}
 	else
 	{
@@ -1169,10 +1180,11 @@ AlterTableDropColumn(const char *relationName,
  */
 void
 AlterTableAddConstraint(char *relationName,
-						bool inh, Node *newConstraint)
+						bool inh, List *newConstraints)
 {
-	if (newConstraint == NULL)
-		elog(ERROR, "ALTER TABLE / ADD CONSTRAINT passed invalid constraint.");
+	Relation	rel;
+	Oid	myrelid;
+	List	*listptr;
 
 #ifndef NO_SECURITY
 	if (!pg_ownercheck(GetUserId(), relationName, RELNAME))
@@ -1183,6 +1195,41 @@ AlterTableAddConstraint(char *relationName,
 	if (!is_relation(relationName))
 		elog(ERROR, "ALTER TABLE ADD CONSTRAINT: %s is not a table",
 			 relationName);
+
+	rel = heap_openr(relationName, AccessExclusiveLock);
+	myrelid = RelationGetRelid(rel);
+
+	if (inh) {
+		List	   *child,
+				   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all
+		 * of the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+			char	   *childrelname;
+			Relation	childrel;
+
+			if (childrelid == myrelid)
+				continue;
+			childrel = heap_open(childrelid, AccessExclusiveLock);
+			childrelname = pstrdup(RelationGetRelationName(childrel));
+			heap_close(childrel, AccessExclusiveLock);
+			AlterTableAddConstraint(childrelname, false, newConstraints);
+			pfree(childrelname);
+		}
+	}
+
+	foreach(listptr, newConstraints)
+	{
+		Node   *newConstraint = lfirst(listptr);
 
 	switch (nodeTag(newConstraint))
 	{
@@ -1202,32 +1249,13 @@ AlterTableAddConstraint(char *relationName,
 							HeapTuple	tuple;
 							RangeTblEntry *rte;
 							List	   *qual;
-							List	   *constlist;
-							Relation	rel;
 							Node	   *expr;
 							char	   *name;
-							Oid	myrelid;
 
 							if (constr->name)
 								name = constr->name;
 							else
 								name = "<unnamed>";
-
-							constlist = makeList1(constr);
-
-							rel = heap_openr(relationName, AccessExclusiveLock);
-							myrelid = RelationGetRelid(rel);
-
-							/* make sure it is not a view */
-							if (rel->rd_rel->relkind == RELKIND_VIEW)
-								elog(ERROR, "ALTER TABLE: cannot add constraint to a view");
-
-							/*
-							 * Scan all of the rows, looking for a false
-							 * match
-							 */
-							scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
-							AssertState(scan != NULL);
 
 							/*
 							 * We need to make a parse state and range
@@ -1280,6 +1308,8 @@ AlterTableAddConstraint(char *relationName,
 							 * Scan through the rows now, checking the
 							 * expression at each row.
 							 */
+							scan = heap_beginscan(rel, false, SnapshotNow, 0, NULL);
+
 							while (HeapTupleIsValid(tuple = heap_getnext(scan, 0)))
 							{
 								ExecStoreTuple(tuple, slot, InvalidBuffer, false);
@@ -1291,10 +1321,10 @@ AlterTableAddConstraint(char *relationName,
 								ResetExprContext(econtext);
 							}
 
+							heap_endscan(scan);
+
 							FreeExprContext(econtext);
 							pfree(slot);
-
-							heap_endscan(scan);
 
 							if (!successful)
 								elog(ERROR, "AlterTableAddConstraint: rejected due to CHECK constraint %s", name);
@@ -1306,38 +1336,8 @@ AlterTableAddConstraint(char *relationName,
 							 * the constraint against tuples already in
 							 * the table.
 							 */
-							AddRelationRawConstraints(rel, NIL, constlist);
-							heap_close(rel, NoLock);
-
-							if (inh) {
-								List	   *child,
-									   *children;
-
-								/* this routine is actually in the planner */
-								children = find_all_inheritors(myrelid);
-
-								/*
-								 * find_all_inheritors does the recursive search of the
-								 * inheritance hierarchy, so all we have to do is process all
-								 * of the relids in the list that it returns.
-								 */
-								foreach(child, children)
-								{
-									Oid			childrelid = lfirsti(child);
-									char	   *childrelname;
-	
-									if (childrelid == myrelid)
-										continue;
-									rel = heap_open(childrelid, AccessExclusiveLock);
-									childrelname = pstrdup(RelationGetRelationName(rel));
-									heap_close(rel, AccessExclusiveLock);
-
-									AlterTableAddConstraint(childrelname, false, newConstraint);
-	
-									pfree(childrelname);
-								}
-							}
-							pfree(constlist);
+							AddRelationRawConstraints(rel, NIL,
+													  makeList1(constr));
 
 							break;
 						}
@@ -1345,7 +1345,6 @@ AlterTableAddConstraint(char *relationName,
 						{
                             char  *iname = constr->name;
                             bool  istemp = is_temp_rel_name(relationName);
-                            Relation rel;
                             List	   *indexoidlist;
                             List     *indexoidscan;
                             Form_pg_attribute *rel_attrs;
@@ -1389,7 +1388,6 @@ AlterTableAddConstraint(char *relationName,
                             }
 
                             /* Need to check for unique key already on field(s) */
-                            rel = heap_openr(relationName, AccessExclusiveLock);
 
                             /*
                              * First we check for limited correctness of the
@@ -1490,9 +1488,6 @@ AlterTableAddConstraint(char *relationName,
                                elog(NOTICE, "Unique constraint supercedes existing index on relation \"%s\".  Drop the existing index to remove redundancy.", relationName);
                             pfree(iname);
 
-                            /* Finally, close relation */
-                            heap_close(rel, NoLock);
-
            					break;
                          }
 					default:
@@ -1503,8 +1498,7 @@ AlterTableAddConstraint(char *relationName,
 		case T_FkConstraint:
 			{
 				FkConstraint *fkconstraint = (FkConstraint *) newConstraint;
-				Relation	rel,
-							pkrel;
+				Relation	pkrel;
 				HeapScanDesc scan;
 				HeapTuple	tuple;
 				Trigger		trig;
@@ -1538,16 +1532,11 @@ AlterTableAddConstraint(char *relationName,
 						 fkconstraint->pktable_name);
 
 				/*
-				 * Grab an exclusive lock on the fk table, and then scan
-				 * through each tuple, calling the RI_FKey_Match_Ins
+				 * Scan through each tuple, calling the RI_FKey_Match_Ins
 				 * (insert trigger) as if that tuple had just been
 				 * inserted.  If any of those fail, it should elog(ERROR)
 				 * and that's that.
 				 */
-				rel = heap_openr(relationName, AccessExclusiveLock);
-				if (rel->rd_rel->relkind != RELKIND_RELATION)
-					elog(ERROR, "referencing table \"%s\" not a relation",
-						 relationName);
 
 				/*
 				 * First we check for limited correctness of the
@@ -1741,8 +1730,6 @@ AlterTableAddConstraint(char *relationName,
 					RI_FKey_check_ins(&fcinfo);
 				}
 				heap_endscan(scan);
-				heap_close(rel, NoLock);		/* close rel but keep
-												 * lock! */
 
 				pfree(trig.tgargs);
 				break;
@@ -1750,6 +1737,10 @@ AlterTableAddConstraint(char *relationName,
 		default:
 			elog(ERROR, "ALTER TABLE / ADD CONSTRAINT unable to determine type of constraint passed");
 	}
+	}
+
+	/* Close rel, but keep lock till commit */
+	heap_close(rel, NoLock);
 }
 
 

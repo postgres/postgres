@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.200 2001/10/03 20:54:20 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.201 2001/10/12 00:07:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,10 +36,32 @@
 #include "utils/numeric.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
+#include "utils/temprel.h"
 
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+
+
+/* State shared by transformCreateStmt and its subroutines */
+typedef struct
+{
+	const char *stmtType;		/* "CREATE TABLE" or "ALTER TABLE" */
+	char	   *relname;		/* name of relation */
+	List	   *inhRelnames;	/* names of relations to inherit from */
+	bool		istemp;			/* is it to be a temp relation? */
+	Oid			relOid;			/* OID of table, if ALTER TABLE case */
+	List	   *columns;		/* ColumnDef items */
+	List	   *ckconstraints;	/* CHECK constraints */
+	List	   *fkconstraints;	/* FOREIGN KEY constraints */
+	List	   *ixconstraints;	/* index-creating constraints */
+	List	   *blist;			/* "before list" of things to do before
+								 * creating the table */
+	List	   *alist;			/* "after list" of things to do after
+								 * creating the table */
+	IndexStmt  *pkey;			/* PRIMARY KEY index, if any */
+} CreateStmtContext;
+
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
@@ -52,17 +74,28 @@ static Node *transformSetOperationTree(ParseState *pstate, SelectStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 static Query *transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt);
+static void transformColumnDefinition(ParseState *pstate,
+									  CreateStmtContext *cxt,
+									  ColumnDef *column);
+static void transformTableConstraint(ParseState *pstate,
+									 CreateStmtContext *cxt,
+									 Constraint *constraint);
+static void transformIndexConstraints(ParseState *pstate,
+									  CreateStmtContext *cxt);
+static void transformFKConstraints(ParseState *pstate,
+								   CreateStmtContext *cxt);
 static Node *transformTypeRefs(ParseState *pstate, Node *stmt);
 
 static void transformTypeRefsList(ParseState *pstate, List *l);
 static void transformTypeRef(ParseState *pstate, TypeName *tn);
 static List *getSetColTypes(ParseState *pstate, Node *node);
 static void transformForUpdate(Query *qry, List *forUpdate);
-static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid);
 static void transformConstraintAttrs(List *constraintList);
 static void transformColumnType(ParseState *pstate, ColumnDef *column);
 static void transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid);
-
+static void transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid);
+static bool relationHasPrimaryKey(char *relname);
+static Oid transformFkeyGetColType(CreateStmtContext *cxt, char *colname);
 static void release_pstate_resources(ParseState *pstate);
 static FromExpr *makeFromExpr(List *fromlist, Node *quals);
 
@@ -679,278 +712,46 @@ CreateIndexName(char *table_name, char *column_name,
 static Query *
 transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 {
+	CreateStmtContext cxt;
 	Query	   *q;
 	List	   *elements;
-	Node	   *element;
-	List	   *columns;
-	List	   *dlist;
-	ColumnDef  *column;
-	List	   *constraints,
-			   *clist;
-	Constraint *constraint;
-	List	   *fkconstraints,	/* List of FOREIGN KEY constraints to */
-			   *fkclist;		/* add finally */
-	FkConstraint *fkconstraint;
-	List	   *keys;
-	Ident	   *key;
-	List	   *blist = NIL;	/* "before list" of things to do before
-								 * creating the table */
-	List	   *ilist = NIL;	/* "index list" of things to do after
-								 * creating the table */
-	IndexStmt  *index,
-			   *pkey = NULL;
-	IndexElem  *iparam;
-	bool		saw_nullable;
-	bool		is_serial;
 
-	q = makeNode(Query);
-	q->commandType = CMD_UTILITY;
-
-	fkconstraints = NIL;
-	constraints = stmt->constraints;
-	columns = NIL;
-	dlist = NIL;
+	cxt.stmtType = "CREATE TABLE";
+	cxt.relname = stmt->relname;
+	cxt.inhRelnames = stmt->inhRelnames;
+	cxt.istemp = stmt->istemp;
+	cxt.relOid = InvalidOid;
+	cxt.columns = NIL;
+	cxt.ckconstraints = NIL;
+	cxt.fkconstraints = NIL;
+	cxt.ixconstraints = NIL;
+	cxt.blist = NIL;
+	cxt.alist = NIL;
+	cxt.pkey = NULL;
 
 	/*
-	 * Run through each primary element in the table creation clause
+	 * Run through each primary element in the table creation clause.
+	 * Separate column defs from constraints, and do preliminary analysis.
 	 */
 	foreach(elements, stmt->tableElts)
 	{
-		element = lfirst(elements);
+		Node	   *element = lfirst(elements);
+
 		switch (nodeTag(element))
 		{
 			case T_ColumnDef:
-				column = (ColumnDef *) element;
-				columns = lappend(columns, column);
-
-				/* Check for SERIAL pseudo-types */
-				is_serial = false;
-				if (strcmp(column->typename->name, "serial") == 0 ||
-					strcmp(column->typename->name, "serial4") == 0)
-				{
-					is_serial = true;
-					column->typename->name = pstrdup("int4");
-				}
-				else if (strcmp(column->typename->name, "bigserial") == 0 ||
-						 strcmp(column->typename->name, "serial8") == 0)
-				{
-					is_serial = true;
-					column->typename->name = pstrdup("int8");
-				}
-
-				/* Do necessary work on the column type declaration */
-				transformColumnType(pstate, column);
-
-				/* Special actions for SERIAL pseudo-types */
-				if (is_serial)
-				{
-					char	   *sname;
-					char	   *qstring;
-					A_Const    *snamenode;
-					FuncCall   *funccallnode;
-					CreateSeqStmt *sequence;
-
-					/*
-					 * Create appropriate constraints for SERIAL.  We do
-					 * this in full, rather than shortcutting, so that we
-					 * will detect any conflicting constraints the user
-					 * wrote (like a different DEFAULT).
-					 */
-					sname = makeObjectName(stmt->relname, column->colname,
-										   "seq");
-
-					/*
-					 * Create an expression tree representing the function
-					 * call  nextval('"sequencename"')
-					 */
-					qstring = palloc(strlen(sname) + 2 + 1);
-					sprintf(qstring, "\"%s\"", sname);
-					snamenode = makeNode(A_Const);
-					snamenode->val.type = T_String;
-					snamenode->val.val.str = qstring;
-					funccallnode = makeNode(FuncCall);
-					funccallnode->funcname = "nextval";
-					funccallnode->args = makeList1(snamenode);
-					funccallnode->agg_star = false;
-					funccallnode->agg_distinct = false;
-
-					constraint = makeNode(Constraint);
-					constraint->contype = CONSTR_DEFAULT;
-					constraint->name = sname;
-					constraint->raw_expr = (Node *) funccallnode;
-					constraint->cooked_expr = NULL;
-					constraint->keys = NIL;
-					column->constraints = lappend(column->constraints,
-												  constraint);
-
-					constraint = makeNode(Constraint);
-					constraint->contype = CONSTR_UNIQUE;
-					constraint->name = NULL;	/* assign later */
-					column->constraints = lappend(column->constraints,
-												  constraint);
-
-					constraint = makeNode(Constraint);
-					constraint->contype = CONSTR_NOTNULL;
-					column->constraints = lappend(column->constraints,
-												  constraint);
-
-					/*
-					 * Build a CREATE SEQUENCE command to create the
-					 * sequence object, and add it to the list of things
-					 * to be done before this CREATE TABLE.
-					 */
-					sequence = makeNode(CreateSeqStmt);
-					sequence->seqname = pstrdup(sname);
-					sequence->istemp = stmt->istemp;
-					sequence->options = NIL;
-
-					elog(NOTICE, "CREATE TABLE will create implicit sequence '%s' for SERIAL column '%s.%s'",
-						 sequence->seqname, stmt->relname, column->colname);
-
-					blist = lappend(blist, sequence);
-				}
-
-				/* Process column constraints, if any... */
-				transformConstraintAttrs(column->constraints);
-
-				saw_nullable = false;
-
-				foreach(clist, column->constraints)
-				{
-					constraint = lfirst(clist);
-
-					/*
-					 * If this column constraint is a FOREIGN KEY
-					 * constraint, then we fill in the current attributes
-					 * name and throw it into the list of FK constraints
-					 * to be processed later.
-					 */
-					if (IsA(constraint, FkConstraint))
-					{
-						Ident	   *id = makeNode(Ident);
-
-						id->name = column->colname;
-						id->indirection = NIL;
-						id->isRel = false;
-
-						fkconstraint = (FkConstraint *) constraint;
-						fkconstraint->fk_attrs = makeList1(id);
-
-						fkconstraints = lappend(fkconstraints, constraint);
-						continue;
-					}
-
-					switch (constraint->contype)
-					{
-						case CONSTR_NULL:
-							if (saw_nullable && column->is_not_null)
-								elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
-									 " for '%s.%s'", stmt->relname, column->colname);
-							column->is_not_null = FALSE;
-							saw_nullable = true;
-							break;
-
-						case CONSTR_NOTNULL:
-							if (saw_nullable && !column->is_not_null)
-								elog(ERROR, "CREATE TABLE/(NOT) NULL conflicting declaration"
-									 " for '%s.%s'", stmt->relname, column->colname);
-							column->is_not_null = TRUE;
-							saw_nullable = true;
-							break;
-
-						case CONSTR_DEFAULT:
-							if (column->raw_default != NULL)
-								elog(ERROR, "CREATE TABLE/DEFAULT multiple values specified"
-									 " for '%s.%s'", stmt->relname, column->colname);
-							column->raw_default = constraint->raw_expr;
-							Assert(constraint->cooked_expr == NULL);
-							break;
-
-						case CONSTR_PRIMARY:
-							if (constraint->name == NULL)
-								constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
-							if (constraint->keys == NIL)
-							{
-								key = makeNode(Ident);
-								key->name = pstrdup(column->colname);
-								constraint->keys = makeList1(key);
-							}
-							dlist = lappend(dlist, constraint);
-							break;
-
-						case CONSTR_UNIQUE:
-							if (constraint->name == NULL)
-								constraint->name = makeObjectName(stmt->relname, column->colname, "key");
-							if (constraint->keys == NIL)
-							{
-								key = makeNode(Ident);
-								key->name = pstrdup(column->colname);
-								constraint->keys = makeList1(key);
-							}
-							dlist = lappend(dlist, constraint);
-							break;
-
-						case CONSTR_CHECK:
-							if (constraint->name == NULL)
-								constraint->name = makeObjectName(stmt->relname, column->colname, NULL);
-							constraints = lappend(constraints, constraint);
-							break;
-
-						case CONSTR_ATTR_DEFERRABLE:
-						case CONSTR_ATTR_NOT_DEFERRABLE:
-						case CONSTR_ATTR_DEFERRED:
-						case CONSTR_ATTR_IMMEDIATE:
-							/* transformConstraintAttrs took care of these */
-							break;
-
-						default:
-							elog(ERROR, "parser: unrecognized constraint (internal error)");
-							break;
-					}
-				}
+				transformColumnDefinition(pstate, &cxt,
+										  (ColumnDef *) element);
 				break;
 
 			case T_Constraint:
-				constraint = (Constraint *) element;
-				switch (constraint->contype)
-				{
-					case CONSTR_PRIMARY:
-						if (constraint->name == NULL)
-							constraint->name = makeObjectName(stmt->relname, NULL, "pkey");
-						dlist = lappend(dlist, constraint);
-						break;
-
-					case CONSTR_UNIQUE:
-						dlist = lappend(dlist, constraint);
-						break;
-
-					case CONSTR_CHECK:
-						constraints = lappend(constraints, constraint);
-						break;
-
-					case CONSTR_NULL:
-					case CONSTR_NOTNULL:
-					case CONSTR_DEFAULT:
-					case CONSTR_ATTR_DEFERRABLE:
-					case CONSTR_ATTR_NOT_DEFERRABLE:
-					case CONSTR_ATTR_DEFERRED:
-					case CONSTR_ATTR_IMMEDIATE:
-						elog(ERROR, "parser: illegal context for constraint (internal error)");
-						break;
-
-					default:
-						elog(ERROR, "parser: unrecognized constraint (internal error)");
-						break;
-				}
+				transformTableConstraint(pstate, &cxt,
+										 (Constraint *) element);
 				break;
 
 			case T_FkConstraint:
-
-				/*
-				 * Table level FOREIGN KEY constraints are already
-				 * complete. Just remember for later.
-				 */
-				fkconstraints = lappend(fkconstraints, element);
+				/* No pre-transformation needed */
+				cxt.fkconstraints = lappend(cxt.fkconstraints, element);
 				break;
 
 			default:
@@ -958,17 +759,294 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		}
 	}
 
-	stmt->tableElts = columns;
-	stmt->constraints = constraints;
+	Assert(stmt->constraints == NIL);
 
-/* Now run through the "deferred list" to complete the query transformation.
- * For PRIMARY KEY, mark each column as NOT NULL and create an index.
- * For UNIQUE, create an index as for PRIMARY KEY, but do not insist on
- * NOT NULL.
- */
-	while (dlist != NIL)
+	/*
+	 * Postprocess constraints that give rise to index definitions.
+	 */
+	transformIndexConstraints(pstate, &cxt);
+
+	/*
+	 * Postprocess foreign-key constraints.
+	 */
+	transformFKConstraints(pstate, &cxt);
+
+	/*
+	 * Output results.
+	 */
+	q = makeNode(Query);
+	q->commandType = CMD_UTILITY;
+	q->utilityStmt = (Node *) stmt;
+	stmt->tableElts = cxt.columns;
+	stmt->constraints = cxt.ckconstraints;
+	extras_before = cxt.blist;
+	extras_after = cxt.alist;
+
+	return q;
+}
+
+static void
+transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
+						  ColumnDef *column)
+{
+	bool		is_serial;
+	bool		saw_nullable;
+	Constraint *constraint;
+	List	   *clist;
+	Ident	   *key;
+
+	cxt->columns = lappend(cxt->columns, column);
+
+	/* Check for SERIAL pseudo-types */
+	is_serial = false;
+	if (strcmp(column->typename->name, "serial") == 0 ||
+		strcmp(column->typename->name, "serial4") == 0)
 	{
-		constraint = lfirst(dlist);
+		is_serial = true;
+		column->typename->name = pstrdup("int4");
+	}
+	else if (strcmp(column->typename->name, "bigserial") == 0 ||
+			 strcmp(column->typename->name, "serial8") == 0)
+	{
+		is_serial = true;
+		column->typename->name = pstrdup("int8");
+	}
+
+	/* Do necessary work on the column type declaration */
+	transformColumnType(pstate, column);
+
+	/* Special actions for SERIAL pseudo-types */
+	if (is_serial)
+	{
+		char	   *sname;
+		char	   *qstring;
+		A_Const    *snamenode;
+		FuncCall   *funccallnode;
+		CreateSeqStmt *sequence;
+
+		/*
+		 * Create appropriate constraints for SERIAL.  We do
+		 * this in full, rather than shortcutting, so that we
+		 * will detect any conflicting constraints the user
+		 * wrote (like a different DEFAULT).
+		 */
+		sname = makeObjectName(cxt->relname, column->colname, "seq");
+
+		/*
+		 * Create an expression tree representing the function
+		 * call  nextval('"sequencename"')
+		 */
+		qstring = palloc(strlen(sname) + 2 + 1);
+		sprintf(qstring, "\"%s\"", sname);
+		snamenode = makeNode(A_Const);
+		snamenode->val.type = T_String;
+		snamenode->val.val.str = qstring;
+		funccallnode = makeNode(FuncCall);
+		funccallnode->funcname = "nextval";
+		funccallnode->args = makeList1(snamenode);
+		funccallnode->agg_star = false;
+		funccallnode->agg_distinct = false;
+
+		constraint = makeNode(Constraint);
+		constraint->contype = CONSTR_DEFAULT;
+		constraint->name = sname;
+		constraint->raw_expr = (Node *) funccallnode;
+		constraint->cooked_expr = NULL;
+		constraint->keys = NIL;
+		column->constraints = lappend(column->constraints, constraint);
+
+		constraint = makeNode(Constraint);
+		constraint->contype = CONSTR_UNIQUE;
+		constraint->name = NULL;	/* assign later */
+		column->constraints = lappend(column->constraints, constraint);
+
+		constraint = makeNode(Constraint);
+		constraint->contype = CONSTR_NOTNULL;
+		column->constraints = lappend(column->constraints, constraint);
+
+		/*
+		 * Build a CREATE SEQUENCE command to create the
+		 * sequence object, and add it to the list of things
+		 * to be done before this CREATE/ALTER TABLE.
+		 */
+		sequence = makeNode(CreateSeqStmt);
+		sequence->seqname = pstrdup(sname);
+		sequence->istemp = cxt->istemp;
+		sequence->options = NIL;
+
+		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
+			 cxt->stmtType, sequence->seqname, cxt->relname, column->colname);
+
+		cxt->blist = lappend(cxt->blist, sequence);
+	}
+
+	/* Process column constraints, if any... */
+	transformConstraintAttrs(column->constraints);
+
+	saw_nullable = false;
+
+	foreach(clist, column->constraints)
+	{
+		constraint = lfirst(clist);
+
+		/*
+		 * If this column constraint is a FOREIGN KEY
+		 * constraint, then we fill in the current attributes
+		 * name and throw it into the list of FK constraints
+		 * to be processed later.
+		 */
+		if (IsA(constraint, FkConstraint))
+		{
+			FkConstraint *fkconstraint = (FkConstraint *) constraint;
+			Ident	   *id = makeNode(Ident);
+
+			id->name = column->colname;
+			id->indirection = NIL;
+			id->isRel = false;
+
+			fkconstraint->fk_attrs = makeList1(id);
+
+			cxt->fkconstraints = lappend(cxt->fkconstraints, fkconstraint);
+			continue;
+		}
+
+		Assert(IsA(constraint, Constraint));
+
+		switch (constraint->contype)
+		{
+			case CONSTR_NULL:
+				if (saw_nullable && column->is_not_null)
+					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
+						 cxt->stmtType, cxt->relname, column->colname);
+				column->is_not_null = FALSE;
+				saw_nullable = true;
+				break;
+
+			case CONSTR_NOTNULL:
+				if (saw_nullable && !column->is_not_null)
+					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
+						 cxt->stmtType, cxt->relname, column->colname);
+				column->is_not_null = TRUE;
+				saw_nullable = true;
+				break;
+
+			case CONSTR_DEFAULT:
+				if (column->raw_default != NULL)
+					elog(ERROR, "%s/DEFAULT multiple values specified for '%s.%s'",
+						 cxt->stmtType, cxt->relname, column->colname);
+				column->raw_default = constraint->raw_expr;
+				Assert(constraint->cooked_expr == NULL);
+				break;
+
+			case CONSTR_PRIMARY:
+				if (constraint->name == NULL)
+					constraint->name = makeObjectName(cxt->relname,
+													  NULL,
+													  "pkey");
+				if (constraint->keys == NIL)
+				{
+					key = makeNode(Ident);
+					key->name = pstrdup(column->colname);
+					constraint->keys = makeList1(key);
+				}
+				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
+				break;
+
+			case CONSTR_UNIQUE:
+				if (constraint->name == NULL)
+					constraint->name = makeObjectName(cxt->relname,
+													  column->colname,
+													  "key");
+				if (constraint->keys == NIL)
+				{
+					key = makeNode(Ident);
+					key->name = pstrdup(column->colname);
+					constraint->keys = makeList1(key);
+				}
+				cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
+				break;
+
+			case CONSTR_CHECK:
+				if (constraint->name == NULL)
+					constraint->name = makeObjectName(cxt->relname,
+													  column->colname,
+													  NULL);
+				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
+				break;
+
+			case CONSTR_ATTR_DEFERRABLE:
+			case CONSTR_ATTR_NOT_DEFERRABLE:
+			case CONSTR_ATTR_DEFERRED:
+			case CONSTR_ATTR_IMMEDIATE:
+				/* transformConstraintAttrs took care of these */
+				break;
+
+			default:
+				elog(ERROR, "parser: unrecognized constraint (internal error)");
+				break;
+		}
+	}
+}
+
+static void
+transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
+						 Constraint *constraint)
+{
+	switch (constraint->contype)
+	{
+		case CONSTR_PRIMARY:
+			if (constraint->name == NULL)
+				constraint->name = makeObjectName(cxt->relname,
+												  NULL,
+												  "pkey");
+			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
+			break;
+
+		case CONSTR_UNIQUE:
+			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
+			break;
+
+		case CONSTR_CHECK:
+			cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
+			break;
+
+		case CONSTR_NULL:
+		case CONSTR_NOTNULL:
+		case CONSTR_DEFAULT:
+		case CONSTR_ATTR_DEFERRABLE:
+		case CONSTR_ATTR_NOT_DEFERRABLE:
+		case CONSTR_ATTR_DEFERRED:
+		case CONSTR_ATTR_IMMEDIATE:
+			elog(ERROR, "parser: illegal context for constraint (internal error)");
+			break;
+
+		default:
+			elog(ERROR, "parser: unrecognized constraint (internal error)");
+			break;
+	}
+}
+
+static void
+transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
+{
+	List	   *listptr;
+	List	   *keys;
+	IndexStmt  *index;
+	IndexElem  *iparam;
+	ColumnDef  *column;
+	List	   *columns;
+	List	   *indexlist = NIL;
+
+	/*
+	 * Run through the constraints that need to generate an index.
+	 * For PRIMARY KEY, mark each column as NOT NULL and create an index.
+	 * For UNIQUE, create an index as for PRIMARY KEY, but do not insist on
+	 * NOT NULL.
+	 */
+	foreach(listptr, cxt->ixconstraints)
+	{
+		Constraint *constraint = lfirst(listptr);
+
 		Assert(IsA(constraint, Constraint));
 		Assert((constraint->contype == CONSTR_PRIMARY)
 			   || (constraint->contype == CONSTR_UNIQUE));
@@ -979,32 +1057,40 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 		index->primary = (constraint->contype == CONSTR_PRIMARY);
 		if (index->primary)
 		{
-			if (pkey != NULL)
-				elog(ERROR, "CREATE TABLE/PRIMARY KEY multiple primary keys"
-					 " for table '%s' are not allowed", stmt->relname);
-			pkey = index;
+			/* In ALTER TABLE case, a primary index might already exist */
+			if (cxt->pkey != NULL ||
+				(OidIsValid(cxt->relOid) &&
+				 relationHasPrimaryKey(cxt->relname)))
+				elog(ERROR, "%s/PRIMARY KEY multiple primary keys"
+					 " for table '%s' are not allowed",
+					 cxt->stmtType, cxt->relname);
+			cxt->pkey = index;
 		}
 
 		if (constraint->name != NULL)
 			index->idxname = pstrdup(constraint->name);
 		else if (constraint->contype == CONSTR_PRIMARY)
-			index->idxname = makeObjectName(stmt->relname, NULL, "pkey");
+			index->idxname = makeObjectName(cxt->relname, NULL, "pkey");
 		else
 			index->idxname = NULL;		/* will set it later */
 
-		index->relname = stmt->relname;
+		index->relname = cxt->relname;
 		index->accessMethod = "btree";
 		index->indexParams = NIL;
 		index->whereClause = NULL;
 
+		/*
+		 * Make sure referenced keys exist.  If we are making a
+		 * PRIMARY KEY index, also make sure they are NOT NULL.
+		 */
 		foreach(keys, constraint->keys)
 		{
+			Ident	   *key = (Ident *) lfirst(keys);
 			bool		found = false;
 
-			key = (Ident *) lfirst(keys);
 			Assert(IsA(key, Ident));
 			column = NULL;
-			foreach(columns, stmt->tableElts)
+			foreach(columns, cxt->columns)
 			{
 				column = lfirst(columns);
 				Assert(IsA(column, ColumnDef));
@@ -1020,13 +1106,12 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 				if (constraint->contype == CONSTR_PRIMARY)
 					column->is_not_null = TRUE;
 			}
-			else
+			else if (cxt->inhRelnames)
 			{
 				/* try inherited tables */
-				List	   *inhRelnames = stmt->inhRelnames;
 				List	   *inher;
 
-				foreach(inher, inhRelnames)
+				foreach(inher, cxt->inhRelnames)
 				{
 					Value	   *inh = lfirst(inher);
 					Relation	rel;
@@ -1072,18 +1157,41 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 						break;
 				}
 			}
+			else if (OidIsValid(cxt->relOid))
+			{
+				/* ALTER TABLE case: does column already exist? */
+				HeapTuple	atttuple;
+
+				atttuple = SearchSysCache(ATTNAME,
+										  ObjectIdGetDatum(cxt->relOid),
+										  PointerGetDatum(key->name),
+										  0, 0);
+				if (HeapTupleIsValid(atttuple))
+				{
+					found = true;
+					/*
+					 * We require pre-existing column to be already marked
+					 * NOT NULL.
+					 */
+					if (constraint->contype == CONSTR_PRIMARY &&
+						!((Form_pg_attribute) GETSTRUCT(atttuple))->attnotnull)
+						elog(ERROR, "Existing attribute \"%s\" cannot be a PRIMARY KEY because it is not marked NOT NULL",
+							 key->name);
+					ReleaseSysCache(atttuple);
+				}
+			}
 
 			if (!found)
-				elog(ERROR, "CREATE TABLE: column \"%s\" named in key does not exist",
-					 key->name);
+				elog(ERROR, "%s: column \"%s\" named in key does not exist",
+					 cxt->stmtType, key->name);
 
 			/* Check for PRIMARY KEY(foo, foo) */
 			foreach(columns, index->indexParams)
 			{
 				iparam = (IndexElem *) lfirst(columns);
 				if (strcmp(key->name, iparam->name) == 0)
-					elog(ERROR, "CREATE TABLE: column \"%s\" appears twice in %s constraint",
-						 key->name,
+					elog(ERROR, "%s: column \"%s\" appears twice in %s constraint",
+						 cxt->stmtType, key->name,
 						 index->primary ? "PRIMARY KEY" : "UNIQUE");
 			}
 
@@ -1095,8 +1203,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			index->indexParams = lappend(index->indexParams, iparam);
 		}
 
-		ilist = lappend(ilist, index);
-		dlist = lnext(dlist);
+		indexlist = lappend(indexlist, index);
 	}
 
 	/*
@@ -1105,31 +1212,32 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 	 * KEY or SERIAL UNIQUE.  A strict reading of SQL92 would suggest
 	 * raising an error instead, but that strikes me as too
 	 * anal-retentive. - tgl 2001-02-14
+	 *
+	 * XXX in ALTER TABLE case, it'd be nice to look for duplicate
+	 * pre-existing indexes, too.
 	 */
-	dlist = ilist;
-	ilist = NIL;
-	if (pkey != NULL)
+	cxt->alist = NIL;
+	if (cxt->pkey != NULL)
 	{
 		/* Make sure we keep the PKEY index in preference to others... */
-		ilist = makeList1(pkey);
+		cxt->alist = makeList1(cxt->pkey);
 	}
-	while (dlist != NIL)
+	while (indexlist != NIL)
 	{
-		index = lfirst(dlist);
+		index = lfirst(indexlist);
 
-		/* if it's pkey, it's already in ilist */
-		if (index != pkey)
+		/* if it's pkey, it's already in cxt->alist */
+		if (index != cxt->pkey)
 		{
 			bool		keep = true;
 			List	   *priorlist;
 
-			foreach(priorlist, ilist)
+			foreach(priorlist, cxt->alist)
 			{
 				IndexStmt  *priorindex = lfirst(priorlist);
 
 				if (equal(index->indexParams, priorindex->indexParams))
 				{
-
 					/*
 					 * If the prior index is as yet unnamed, and this one
 					 * is named, then transfer the name to the prior
@@ -1145,502 +1253,411 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			}
 
 			if (keep)
-				ilist = lappend(ilist, index);
+				cxt->alist = lappend(cxt->alist, index);
 		}
 
-		dlist = lnext(dlist);
+		indexlist = lnext(indexlist);
 	}
 
 	/*
 	 * Finally, select unique names for all not-previously-named indices,
 	 * and display notice messages.
+	 *
+	 * XXX in ALTER TABLE case, we fail to consider name collisions
+	 * against pre-existing indexes.
 	 */
-	dlist = ilist;
-	while (dlist != NIL)
+	foreach(indexlist, cxt->alist)
 	{
-		index = lfirst(dlist);
+		index = lfirst(indexlist);
 
 		if (index->idxname == NULL && index->indexParams != NIL)
 		{
 			iparam = lfirst(index->indexParams);
-			index->idxname = CreateIndexName(stmt->relname, iparam->name,
-											 "key", ilist);
+			index->idxname = CreateIndexName(cxt->relname, iparam->name,
+											 "key", cxt->alist);
 		}
 		if (index->idxname == NULL)		/* should not happen */
-			elog(ERROR, "CREATE TABLE: failed to make implicit index name");
+			elog(ERROR, "%s: failed to make implicit index name",
+				 cxt->stmtType);
 
-		elog(NOTICE, "CREATE TABLE/%s will create implicit index '%s' for table '%s'",
-			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
-			 index->idxname, stmt->relname);
-
-		dlist = lnext(dlist);
+		elog(NOTICE, "%s/%s will create implicit index '%s' for table '%s'",
+			 cxt->stmtType, (index->primary ? "PRIMARY KEY" : "UNIQUE"),
+			 index->idxname, cxt->relname);
 	}
+}
 
-	q->utilityStmt = (Node *) stmt;
-	extras_before = blist;
-	extras_after = ilist;
+static void
+transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
+{
+	CreateTrigStmt *fk_trigger;
+	List	   *fkactions = NIL;
+	List	   *fkclist;
+	List	   *fk_attr;
+	List	   *pk_attr;
+	Ident	   *id;
+	Oid	   pktypoid[INDEX_MAX_KEYS];
+	Oid	   fktypoid[INDEX_MAX_KEYS];
+	int	   i;
 
-	/*
-	 * Now process the FOREIGN KEY constraints and add appropriate queries
-	 * to the extras_after statements list.
-	 */
-	if (fkconstraints != NIL)
+	if (cxt->fkconstraints == NIL)
+		return;
+
+	elog(NOTICE, "%s will create implicit trigger(s) for FOREIGN KEY check(s)",
+		 cxt->stmtType);
+
+	foreach(fkclist, cxt->fkconstraints)
 	{
-		CreateTrigStmt *fk_trigger;
-		List	   *fk_attr;
-		List	   *pk_attr;
-		Ident	   *id;
-		Oid	   pktypoid[INDEX_MAX_KEYS];
-		Oid	   fktypoid[INDEX_MAX_KEYS];
-		int	   i;
+		FkConstraint *fkconstraint = (FkConstraint *) lfirst(fkclist);
+		int	   attnum;
+		List	   *fkattrs;
 
-		for (i=0; i<INDEX_MAX_KEYS; i++) {
-			pktypoid[i]=fktypoid[i]=0;
-		}
-		elog(NOTICE, "CREATE TABLE will create implicit trigger(s) for FOREIGN KEY check(s)");
+		/*
+		 * If the constraint has no name, set it to <unnamed>
+		 */
+		if (fkconstraint->constr_name == NULL)
+			fkconstraint->constr_name = "<unnamed>";
 
-		foreach(fkclist, fkconstraints)
+		for (attnum=0; attnum<INDEX_MAX_KEYS; attnum++)
+			pktypoid[attnum] = fktypoid[attnum] = InvalidOid;
+
+		/*
+		 * Look up the referencing attributes to make sure they exist
+		 * (or will exist) in this table, and remember their type OIDs.
+		 */
+		attnum = 0;
+		foreach(fkattrs, fkconstraint->fk_attrs)
 		{
-			fkconstraint = (FkConstraint *) lfirst(fkclist);
+			Ident	   *fkattr = lfirst(fkattrs);
 
-			/*
-			 * If the constraint has no name, set it to <unnamed>
-			 *
-			 */
-			if (fkconstraint->constr_name == NULL)
-				fkconstraint->constr_name = "<unnamed>";
+			if (attnum >= INDEX_MAX_KEYS)
+				elog(ERROR, "Can only have %d keys in a foreign key",
+					 INDEX_MAX_KEYS);
+			fktypoid[attnum++] = transformFkeyGetColType(cxt,
+														 fkattr->name);
+		}
 
-			/*
-			 * Check to see if the attributes mentioned by the constraint
-			 * actually exist on this table.
-			 */
-			if (fkconstraint->fk_attrs != NIL)
+		/*
+		 * If the attribute list for the referenced table was omitted,
+		 * lookup the definition of the primary key.
+		 */
+		if (fkconstraint->pk_attrs == NIL)
+		{
+			if (strcmp(fkconstraint->pktable_name, cxt->relname) != 0)
+				transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
+			else if (cxt->pkey != NULL)
 			{
-				int			found = 0;
-				int	   attnum=0;
-				List	   *cols;
-				List	   *fkattrs;
-				Ident	   *fkattr = NULL;
-				ColumnDef  *col;
+				/* Use the to-be-created primary key */
+				List	   *attr;
 
-				foreach(fkattrs, fkconstraint->fk_attrs)
+				attnum=0;
+				foreach(attr, cxt->pkey->indexParams)
 				{
-					found = 0;
-					fkattr = lfirst(fkattrs);
-					foreach(cols, stmt->tableElts)
-					{
-						col = lfirst(cols);
-						if (strcmp(col->colname, fkattr->name) == 0)
-						{
-							char *buff=TypeNameToInternalName(col->typename);
-							Oid type=typenameTypeId(buff);
-							if (!OidIsValid(type)) {
-								elog(ERROR, "Unable to lookup type %s", col->typename->name);
-							}
-							fktypoid[attnum++]=type;
-							found = 1;
-							break;
-						}
-					}
-					if (!found) {
-						List	   *inher;
-						List	   *inhRelnames = stmt->inhRelnames;
-						Relation	rel;
+					IndexElem  *ielem = lfirst(attr);
+					Ident	   *pkattr = (Ident *) makeNode(Ident);
 
-						foreach(inher, inhRelnames)
-						{
-							Value	   *inh = lfirst(inher);
-							int			count;
-
-							Assert(IsA(inh, String));
-							rel = heap_openr(strVal(inh), AccessShareLock);
-							if (rel->rd_rel->relkind != RELKIND_RELATION)
-								elog(ERROR, "inherited table \"%s\" is not a relation",
-									 strVal(inh));
-							for (count = 0; count < rel->rd_att->natts; count++)
-							{
-								char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
-
-								if (strcmp(fkattr->name, name) == 0)
-								{
-									fktypoid[attnum++]=rel->rd_att->attrs[count]->atttypid;
-									found = 1;
-									break;
-								}
-							}
-							heap_close(rel, NoLock);
-							if (found)
-								break;
-						}
-					}
-					if (!found)
-						break;
-				}
-				if (!found)
-					elog(ERROR, "columns referenced in foreign key constraint not found.");
-			}
-
-			/*
-			 * If the attribute list for the referenced table was omitted,
-			 * lookup for the definition of the primary key. If the
-			 * referenced table is this table, use the definition we found
-			 * above, rather than looking to the system tables.
-			 *
-			 */
-			if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
-			{
-				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
-					transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
-				else if (pkey != NULL)
-				{
-					List	   *pkey_attr = pkey->indexParams;
-					List	   *attr;
-					List       *findattr;
-					IndexElem  *ielem;
-					Ident	   *pkattr;
-					int	   attnum=0;
-					ColumnDef  *col;
-
-					foreach(attr, pkey_attr)
-					{
-						ielem = lfirst(attr);
-						pkattr = (Ident *) makeNode(Ident);
-						pkattr->name = pstrdup(ielem->name);
-						pkattr->indirection = NIL;
-						pkattr->isRel = false;
-						fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
-						foreach (findattr, stmt->tableElts) {
-													col=lfirst(findattr);
-													if (strcmp(col->colname, ielem->name)==0) {
-								char *buff=TypeNameToInternalName(col->typename);
-								Oid type=typenameTypeId(buff);
-															if (!OidIsValid(type)) {
-																	elog(ERROR, "Unable to lookup type %s", col->typename->name);
-															}
-															pktypoid[attnum++]=type; /* need to convert typename */
-															break;
-													}
-						}
-					}
-				}
-				else
-				{
-					elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
-						 fkconstraint->pktable_name);
+					pkattr->name = pstrdup(ielem->name);
+					pkattr->indirection = NIL;
+					pkattr->isRel = false;
+					fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
+													 pkattr);
+					if (attnum >= INDEX_MAX_KEYS)
+						elog(ERROR, "Can only have %d keys in a foreign key",
+							 INDEX_MAX_KEYS);
+					pktypoid[attnum++] = transformFkeyGetColType(cxt,
+																 ielem->name);
 				}
 			}
 			else
 			{
-				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
-					transformFkeyCheckAttrs(fkconstraint, pktypoid);
+				/* In ALTER TABLE case, primary key may already exist */
+				if (OidIsValid(cxt->relOid))
+					transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
 				else
+					elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
+						 fkconstraint->pktable_name);
+			}
+		}
+		else
+		{
+			/* Validate the specified referenced key list */
+			if (strcmp(fkconstraint->pktable_name, cxt->relname) != 0)
+				transformFkeyCheckAttrs(fkconstraint, pktypoid);
+			else
+			{
+				/* Look for a matching new unique/primary constraint */
+				List	   *index;
+				bool		found = false;
+
+				foreach(index, cxt->alist)
 				{
-					/* Get a unique/pk constraint from above */
-					List	   *index;
-					int			found = 0;
+					IndexStmt  *ind = lfirst(index);
+					List	   *pkattrs;
 
-					foreach(index, ilist)
+					if (!ind->unique)
+						continue;
+					if (length(ind->indexParams) !=
+						length(fkconstraint->pk_attrs))
+						continue;
+					attnum=0;
+					foreach(pkattrs, fkconstraint->pk_attrs)
 					{
-						IndexStmt  *ind = lfirst(index);
-						IndexElem  *indparm;
+						Ident	   *pkattr = lfirst(pkattrs);
 						List	   *indparms;
-						List	   *pkattrs;
-						List	   *findattr;
-						ColumnDef  *col;
-						Ident	   *pkattr;
 
-						if (ind->unique)
+						found = false;
+						foreach(indparms, ind->indexParams)
 						{
-							int			count = 0;
-							int attnum=0;
+							IndexElem  *indparm = lfirst(indparms);
 
-							foreach(indparms, ind->indexParams)
-								count++;
-							if (count != length(fkconstraint->pk_attrs))
-								found = 0;
-							else
+							if (strcmp(indparm->name, pkattr->name) == 0)
 							{
-								foreach(pkattrs, fkconstraint->pk_attrs)
-								{
-									found = 0;
-									pkattr = lfirst(pkattrs);
-									foreach(indparms, ind->indexParams)
-									{
-										indparm = lfirst(indparms);
-										if (strcmp(indparm->name, pkattr->name) == 0)
-										{
-											foreach (findattr, stmt->tableElts) {
-												col=lfirst(findattr);
-												if (strcmp(col->colname, indparm->name)==0) {
-													char *buff=TypeNameToInternalName(col->typename);
-													Oid type=typenameTypeId(buff);
-													if (!OidIsValid(type)) {
-														elog(ERROR, "Unable to lookup type %s", col->typename->name);
-													}
-													pktypoid[attnum++]=type;
-													found=1;
-													break;
-												}
-											}
-											if (!found) {
-												List *inher;
-												List *inhRelnames=stmt->inhRelnames;
-												Relation rel;
-												foreach (inher, inhRelnames) {
-													Value *inh=lfirst(inher);
-													int count;
-													Assert(IsA(inh, String));
-													rel=heap_openr(strVal(inh), AccessShareLock);
-													if (rel->rd_rel->relkind!=RELKIND_RELATION)
-														elog(ERROR, "inherited table \"%s\" is not a relation", strVal(inh));
-													for (count=0; count<rel->rd_att->natts; count++) {
-														char *name=NameStr(rel->rd_att->attrs[count]->attname);
-														if (strcmp(pkattr->name, name)==0) {
-															pktypoid[attnum++]=rel->rd_att->attrs[count]->atttypid;
-															found=1;
-															break;
-														}
-													}
-													heap_close(rel, NoLock);
-													if (found)
-														break;
-												}
-											}
-											break;
-										}
-									}
-									if (!found)
-										break;
-								}
+								found = true;
+								break;
 							}
 						}
-						if (found)
+						if (!found)
 							break;
+						if (attnum >= INDEX_MAX_KEYS)
+							elog(ERROR, "Can only have %d keys in a foreign key",
+								 INDEX_MAX_KEYS);
+						pktypoid[attnum++] = transformFkeyGetColType(cxt,
+																	 pkattr->name);
 					}
-					if (!found)
+					if (found)
+						break;
+				}
+				if (!found)
+				{
+					/* In ALTER TABLE case, such an index may already exist */
+					if (OidIsValid(cxt->relOid))
+						transformFkeyCheckAttrs(fkconstraint, pktypoid);
+					else
 						elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
 							 fkconstraint->pktable_name);
 				}
 			}
-
-			for (i = 0; i < INDEX_MAX_KEYS && fktypoid[i] != 0; i++) {
-				/*
-				 * fktypoid[i] is the foreign key table's i'th element's type oid
-				 * pktypoid[i] is the primary key table's i'th element's type oid
-				 * We let oper() do our work for us, including elog(ERROR) if the
-				 * types don't compare with =
-				 */
-				Operator o=oper("=", fktypoid[i], pktypoid[i], false);
-				ReleaseSysCache(o);
-			}
-			/*
-			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
-			 * action.
-			 *
-			 */
-			fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
-			fk_trigger->trigname = fkconstraint->constr_name;
-			fk_trigger->relname = stmt->relname;
-			fk_trigger->funcname = "RI_FKey_check_ins";
-			fk_trigger->before = false;
-			fk_trigger->row = true;
-			fk_trigger->actions[0] = 'i';
-			fk_trigger->actions[1] = 'u';
-			fk_trigger->actions[2] = '\0';
-			fk_trigger->lang = NULL;
-			fk_trigger->text = NULL;
-
-			fk_trigger->attr = NIL;
-			fk_trigger->when = NULL;
-			fk_trigger->isconstraint = true;
-			fk_trigger->deferrable = fkconstraint->deferrable;
-			fk_trigger->initdeferred = fkconstraint->initdeferred;
-			fk_trigger->constrrelname = fkconstraint->pktable_name;
-
-			fk_trigger->args = NIL;
-			fk_trigger->args = lappend(fk_trigger->args,
-								  makeString(fkconstraint->constr_name));
-			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(stmt->relname));
-			fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
-			fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->match_type));
-			fk_attr = fkconstraint->fk_attrs;
-			pk_attr = fkconstraint->pk_attrs;
-			if (length(fk_attr) != length(pk_attr))
-			{
-				elog(NOTICE, "Illegal FOREIGN KEY definition REFERENCES \"%s\"",
-					 fkconstraint->pktable_name);
-				elog(ERROR, "number of key attributes in referenced table must be equal to foreign key");
-			}
-			while (fk_attr != NIL)
-			{
-				id = (Ident *) lfirst(fk_attr);
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(id->name));
-
-				id = (Ident *) lfirst(pk_attr);
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(id->name));
-
-				fk_attr = lnext(fk_attr);
-				pk_attr = lnext(pk_attr);
-			}
-
-			extras_after = lappend(extras_after, (Node *) fk_trigger);
-
-			/*
-			 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
-			 * DELETE action fired on the PK table !!!
-			 *
-			 */
-			fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
-			fk_trigger->trigname = fkconstraint->constr_name;
-			fk_trigger->relname = fkconstraint->pktable_name;
-			fk_trigger->before = false;
-			fk_trigger->row = true;
-			fk_trigger->actions[0] = 'd';
-			fk_trigger->actions[1] = '\0';
-			fk_trigger->lang = NULL;
-			fk_trigger->text = NULL;
-
-			fk_trigger->attr = NIL;
-			fk_trigger->when = NULL;
-			fk_trigger->isconstraint = true;
-			fk_trigger->deferrable = fkconstraint->deferrable;
-			fk_trigger->initdeferred = fkconstraint->initdeferred;
-			fk_trigger->constrrelname = stmt->relname;
-			switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
-					>> FKCONSTR_ON_DELETE_SHIFT)
-			{
-				case FKCONSTR_ON_KEY_NOACTION:
-					fk_trigger->funcname = "RI_FKey_noaction_del";
-					break;
-				case FKCONSTR_ON_KEY_RESTRICT:
-					fk_trigger->deferrable = false;
-					fk_trigger->initdeferred = false;
-					fk_trigger->funcname = "RI_FKey_restrict_del";
-					break;
-				case FKCONSTR_ON_KEY_CASCADE:
-					fk_trigger->funcname = "RI_FKey_cascade_del";
-					break;
-				case FKCONSTR_ON_KEY_SETNULL:
-					fk_trigger->funcname = "RI_FKey_setnull_del";
-					break;
-				case FKCONSTR_ON_KEY_SETDEFAULT:
-					fk_trigger->funcname = "RI_FKey_setdefault_del";
-					break;
-				default:
-					elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
-					break;
-			}
-
-			fk_trigger->args = NIL;
-			fk_trigger->args = lappend(fk_trigger->args,
-								  makeString(fkconstraint->constr_name));
-			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(stmt->relname));
-			fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
-			fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->match_type));
-			fk_attr = fkconstraint->fk_attrs;
-			pk_attr = fkconstraint->pk_attrs;
-			while (fk_attr != NIL)
-			{
-				id = (Ident *) lfirst(fk_attr);
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(id->name));
-
-				id = (Ident *) lfirst(pk_attr);
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(id->name));
-
-				fk_attr = lnext(fk_attr);
-				pk_attr = lnext(pk_attr);
-			}
-
-			extras_after = lappend(extras_after, (Node *) fk_trigger);
-
-			/*
-			 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
-			 * UPDATE action fired on the PK table !!!
-			 *
-			 */
-			fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
-			fk_trigger->trigname = fkconstraint->constr_name;
-			fk_trigger->relname = fkconstraint->pktable_name;
-			fk_trigger->before = false;
-			fk_trigger->row = true;
-			fk_trigger->actions[0] = 'u';
-			fk_trigger->actions[1] = '\0';
-			fk_trigger->lang = NULL;
-			fk_trigger->text = NULL;
-
-			fk_trigger->attr = NIL;
-			fk_trigger->when = NULL;
-			fk_trigger->isconstraint = true;
-			fk_trigger->deferrable = fkconstraint->deferrable;
-			fk_trigger->initdeferred = fkconstraint->initdeferred;
-			fk_trigger->constrrelname = stmt->relname;
-			switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
-					>> FKCONSTR_ON_UPDATE_SHIFT)
-			{
-				case FKCONSTR_ON_KEY_NOACTION:
-					fk_trigger->funcname = "RI_FKey_noaction_upd";
-					break;
-				case FKCONSTR_ON_KEY_RESTRICT:
-					fk_trigger->deferrable = false;
-					fk_trigger->initdeferred = false;
-					fk_trigger->funcname = "RI_FKey_restrict_upd";
-					break;
-				case FKCONSTR_ON_KEY_CASCADE:
-					fk_trigger->funcname = "RI_FKey_cascade_upd";
-					break;
-				case FKCONSTR_ON_KEY_SETNULL:
-					fk_trigger->funcname = "RI_FKey_setnull_upd";
-					break;
-				case FKCONSTR_ON_KEY_SETDEFAULT:
-					fk_trigger->funcname = "RI_FKey_setdefault_upd";
-					break;
-				default:
-					elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
-					break;
-			}
-
-			fk_trigger->args = NIL;
-			fk_trigger->args = lappend(fk_trigger->args,
-								  makeString(fkconstraint->constr_name));
-			fk_trigger->args = lappend(fk_trigger->args,
-									   makeString(stmt->relname));
-			fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
-			fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->match_type));
-			fk_attr = fkconstraint->fk_attrs;
-			pk_attr = fkconstraint->pk_attrs;
-			while (fk_attr != NIL)
-			{
-				id = (Ident *) lfirst(fk_attr);
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(id->name));
-
-				id = (Ident *) lfirst(pk_attr);
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(id->name));
-
-				fk_attr = lnext(fk_attr);
-				pk_attr = lnext(pk_attr);
-			}
-
-			extras_after = lappend(extras_after, (Node *) fk_trigger);
 		}
+
+		/* Be sure referencing and referenced column types are comparable */
+		for (i = 0; i < INDEX_MAX_KEYS && fktypoid[i] != 0; i++)
+		{
+			/*
+			 * fktypoid[i] is the foreign key table's i'th element's type oid
+			 * pktypoid[i] is the primary key table's i'th element's type oid
+			 * We let oper() do our work for us, including elog(ERROR) if the
+			 * types don't compare with =
+			 */
+			Operator o=oper("=", fktypoid[i], pktypoid[i], false);
+			ReleaseSysCache(o);
+		}
+
+		/*
+		 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
+		 * action.
+		 */
+		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
+		fk_trigger->trigname = fkconstraint->constr_name;
+		fk_trigger->relname = cxt->relname;
+		fk_trigger->funcname = "RI_FKey_check_ins";
+		fk_trigger->before = false;
+		fk_trigger->row = true;
+		fk_trigger->actions[0] = 'i';
+		fk_trigger->actions[1] = 'u';
+		fk_trigger->actions[2] = '\0';
+		fk_trigger->lang = NULL;
+		fk_trigger->text = NULL;
+
+		fk_trigger->attr = NIL;
+		fk_trigger->when = NULL;
+		fk_trigger->isconstraint = true;
+		fk_trigger->deferrable = fkconstraint->deferrable;
+		fk_trigger->initdeferred = fkconstraint->initdeferred;
+		fk_trigger->constrrelname = fkconstraint->pktable_name;
+
+		fk_trigger->args = NIL;
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->constr_name));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(cxt->relname));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->pktable_name));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->match_type));
+		fk_attr = fkconstraint->fk_attrs;
+		pk_attr = fkconstraint->pk_attrs;
+		if (length(fk_attr) != length(pk_attr))
+			elog(ERROR, "number of key attributes in referenced table must be equal to foreign key"
+				 "\n\tIllegal FOREIGN KEY definition references \"%s\"",
+				 fkconstraint->pktable_name);
+
+		while (fk_attr != NIL)
+		{
+			id = (Ident *) lfirst(fk_attr);
+			fk_trigger->args = lappend(fk_trigger->args,
+									   makeString(id->name));
+
+			id = (Ident *) lfirst(pk_attr);
+			fk_trigger->args = lappend(fk_trigger->args,
+									   makeString(id->name));
+
+			fk_attr = lnext(fk_attr);
+			pk_attr = lnext(pk_attr);
+		}
+
+		fkactions = lappend(fkactions, (Node *) fk_trigger);
+
+		/*
+		 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
+		 * DELETE action fired on the PK table !!!
+		 */
+		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
+		fk_trigger->trigname = fkconstraint->constr_name;
+		fk_trigger->relname = fkconstraint->pktable_name;
+		fk_trigger->before = false;
+		fk_trigger->row = true;
+		fk_trigger->actions[0] = 'd';
+		fk_trigger->actions[1] = '\0';
+		fk_trigger->lang = NULL;
+		fk_trigger->text = NULL;
+
+		fk_trigger->attr = NIL;
+		fk_trigger->when = NULL;
+		fk_trigger->isconstraint = true;
+		fk_trigger->deferrable = fkconstraint->deferrable;
+		fk_trigger->initdeferred = fkconstraint->initdeferred;
+		fk_trigger->constrrelname = cxt->relname;
+		switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
+				>> FKCONSTR_ON_DELETE_SHIFT)
+		{
+			case FKCONSTR_ON_KEY_NOACTION:
+				fk_trigger->funcname = "RI_FKey_noaction_del";
+				break;
+			case FKCONSTR_ON_KEY_RESTRICT:
+				fk_trigger->deferrable = false;
+				fk_trigger->initdeferred = false;
+				fk_trigger->funcname = "RI_FKey_restrict_del";
+				break;
+			case FKCONSTR_ON_KEY_CASCADE:
+				fk_trigger->funcname = "RI_FKey_cascade_del";
+				break;
+			case FKCONSTR_ON_KEY_SETNULL:
+				fk_trigger->funcname = "RI_FKey_setnull_del";
+				break;
+			case FKCONSTR_ON_KEY_SETDEFAULT:
+				fk_trigger->funcname = "RI_FKey_setdefault_del";
+				break;
+			default:
+				elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
+				break;
+		}
+
+		fk_trigger->args = NIL;
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->constr_name));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(cxt->relname));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->pktable_name));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->match_type));
+		fk_attr = fkconstraint->fk_attrs;
+		pk_attr = fkconstraint->pk_attrs;
+		while (fk_attr != NIL)
+		{
+			id = (Ident *) lfirst(fk_attr);
+			fk_trigger->args = lappend(fk_trigger->args,
+									   makeString(id->name));
+
+			id = (Ident *) lfirst(pk_attr);
+			fk_trigger->args = lappend(fk_trigger->args,
+									   makeString(id->name));
+
+			fk_attr = lnext(fk_attr);
+			pk_attr = lnext(pk_attr);
+		}
+
+		fkactions = lappend(fkactions, (Node *) fk_trigger);
+
+		/*
+		 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
+		 * UPDATE action fired on the PK table !!!
+		 */
+		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
+		fk_trigger->trigname = fkconstraint->constr_name;
+		fk_trigger->relname = fkconstraint->pktable_name;
+		fk_trigger->before = false;
+		fk_trigger->row = true;
+		fk_trigger->actions[0] = 'u';
+		fk_trigger->actions[1] = '\0';
+		fk_trigger->lang = NULL;
+		fk_trigger->text = NULL;
+
+		fk_trigger->attr = NIL;
+		fk_trigger->when = NULL;
+		fk_trigger->isconstraint = true;
+		fk_trigger->deferrable = fkconstraint->deferrable;
+		fk_trigger->initdeferred = fkconstraint->initdeferred;
+		fk_trigger->constrrelname = cxt->relname;
+		switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
+				>> FKCONSTR_ON_UPDATE_SHIFT)
+		{
+			case FKCONSTR_ON_KEY_NOACTION:
+				fk_trigger->funcname = "RI_FKey_noaction_upd";
+				break;
+			case FKCONSTR_ON_KEY_RESTRICT:
+				fk_trigger->deferrable = false;
+				fk_trigger->initdeferred = false;
+				fk_trigger->funcname = "RI_FKey_restrict_upd";
+				break;
+			case FKCONSTR_ON_KEY_CASCADE:
+				fk_trigger->funcname = "RI_FKey_cascade_upd";
+				break;
+			case FKCONSTR_ON_KEY_SETNULL:
+				fk_trigger->funcname = "RI_FKey_setnull_upd";
+				break;
+			case FKCONSTR_ON_KEY_SETDEFAULT:
+				fk_trigger->funcname = "RI_FKey_setdefault_upd";
+				break;
+			default:
+				elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
+				break;
+		}
+
+		fk_trigger->args = NIL;
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->constr_name));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(cxt->relname));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->pktable_name));
+		fk_trigger->args = lappend(fk_trigger->args,
+								   makeString(fkconstraint->match_type));
+		fk_attr = fkconstraint->fk_attrs;
+		pk_attr = fkconstraint->pk_attrs;
+		while (fk_attr != NIL)
+		{
+			id = (Ident *) lfirst(fk_attr);
+			fk_trigger->args = lappend(fk_trigger->args,
+									   makeString(id->name));
+
+			id = (Ident *) lfirst(pk_attr);
+			fk_trigger->args = lappend(fk_trigger->args,
+									   makeString(id->name));
+
+			fk_attr = lnext(fk_attr);
+			pk_attr = lnext(pk_attr);
+		}
+
+		fkactions = lappend(fkactions, (Node *) fk_trigger);
 	}
 
-	return q;
-}	/* transformCreateStmt() */
-
+	/*
+	 * Attach completed list of extra actions to cxt->alist.  We cannot
+	 * do this earlier, because we assume above that cxt->alist still
+	 * holds only IndexStmts.
+	 */
+	cxt->alist = nconc(cxt->alist, fkactions);
+}
 
 /*
  * transformIndexStmt -
@@ -2481,262 +2498,89 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 /*
  * tranformAlterTableStmt -
  *	transform an Alter Table Statement
- *
  */
 static Query *
 transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt)
 {
+	CreateStmtContext cxt;
 	Query	   *qry;
 
-	qry = makeNode(Query);
-	qry->commandType = CMD_UTILITY;
-
 	/*
-	 * The only subtypes that currently have special handling are 'A'dd
-	 * column and Add 'C'onstraint.  In addition, right now only Foreign
-	 * Key 'C'onstraints have a special transformation.
-	 *
+	 * The only subtypes that currently require parse transformation
+	 * handling are 'A'dd column and Add 'C'onstraint.  These largely
+	 * re-use code from CREATE TABLE.
 	 */
 	switch (stmt->subtype)
 	{
 		case 'A':
-			transformColumnType(pstate, (ColumnDef *) stmt->def);
+			cxt.stmtType = "ALTER TABLE";
+			cxt.relname = stmt->relname;
+			cxt.inhRelnames = NIL;
+			cxt.istemp = is_temp_rel_name(stmt->relname);
+			cxt.relOid = GetSysCacheOid(RELNAME,
+										PointerGetDatum(stmt->relname),
+										0, 0, 0);
+			cxt.columns = NIL;
+			cxt.ckconstraints = NIL;
+			cxt.fkconstraints = NIL;
+			cxt.ixconstraints = NIL;
+			cxt.blist = NIL;
+			cxt.alist = NIL;
+			cxt.pkey = NULL;
+
+			Assert(IsA(stmt->def, ColumnDef));
+			transformColumnDefinition(pstate, &cxt,
+									  (ColumnDef *) stmt->def);
+
+			transformIndexConstraints(pstate, &cxt);
+			transformFKConstraints(pstate, &cxt);
+
+			((ColumnDef *) stmt->def)->constraints = cxt.ckconstraints;
+			extras_before = cxt.blist;
+			extras_after = cxt.alist;
 			break;
+
 		case 'C':
-			if (stmt->def && IsA(stmt->def, FkConstraint))
-			{
-				CreateTrigStmt *fk_trigger;
-				List	   *fk_attr;
-				List	   *pk_attr;
-				Ident	   *id;
-				FkConstraint *fkconstraint;
+			cxt.stmtType = "ALTER TABLE";
+			cxt.relname = stmt->relname;
+			cxt.inhRelnames = NIL;
+			cxt.istemp = is_temp_rel_name(stmt->relname);
+			cxt.relOid = GetSysCacheOid(RELNAME,
+										PointerGetDatum(stmt->relname),
+										0, 0, 0);
+			cxt.columns = NIL;
+			cxt.ckconstraints = NIL;
+			cxt.fkconstraints = NIL;
+			cxt.ixconstraints = NIL;
+			cxt.blist = NIL;
+			cxt.alist = NIL;
+			cxt.pkey = NULL;
 
-				extras_after = NIL;
-				elog(NOTICE, "ALTER TABLE ... ADD CONSTRAINT will create implicit trigger(s) for FOREIGN KEY check(s)");
+			if (IsA(stmt->def, Constraint))
+				transformTableConstraint(pstate, &cxt,
+										 (Constraint *) stmt->def);
+			else if (IsA(stmt->def, FkConstraint))
+				cxt.fkconstraints = lappend(cxt.fkconstraints, stmt->def);
+			else
+				elog(ERROR, "Unexpected node type in ALTER TABLE ADD CONSTRAINT");
 
-				fkconstraint = (FkConstraint *) stmt->def;
+			transformIndexConstraints(pstate, &cxt);
+			transformFKConstraints(pstate, &cxt);
 
-				/*
-				 * If the constraint has no name, set it to <unnamed>
-				 *
-				 */
-				if (fkconstraint->constr_name == NULL)
-					fkconstraint->constr_name = "<unnamed>";
-
-				/*
-				 * If the attribute list for the referenced table was
-				 * omitted, lookup for the definition of the primary key
-				 *
-				 */
-				if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL) {
-					Oid pktypoid[INDEX_MAX_KEYS];
-					transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
-				}
-
-				/*
-				 * Build a CREATE CONSTRAINT TRIGGER statement for the
-				 * CHECK action.
-				 *
-				 */
-				fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
-				fk_trigger->trigname = fkconstraint->constr_name;
-				fk_trigger->relname = stmt->relname;
-				fk_trigger->funcname = "RI_FKey_check_ins";
-				fk_trigger->before = false;
-				fk_trigger->row = true;
-				fk_trigger->actions[0] = 'i';
-				fk_trigger->actions[1] = 'u';
-				fk_trigger->actions[2] = '\0';
-				fk_trigger->lang = NULL;
-				fk_trigger->text = NULL;
-
-				fk_trigger->attr = NIL;
-				fk_trigger->when = NULL;
-				fk_trigger->isconstraint = true;
-				fk_trigger->deferrable = fkconstraint->deferrable;
-				fk_trigger->initdeferred = fkconstraint->initdeferred;
-				fk_trigger->constrrelname = fkconstraint->pktable_name;
-
-				fk_trigger->args = NIL;
-				fk_trigger->args = lappend(fk_trigger->args,
-								  makeString(fkconstraint->constr_name));
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(stmt->relname));
-				fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
-				fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->match_type));
-				fk_attr = fkconstraint->fk_attrs;
-				pk_attr = fkconstraint->pk_attrs;
-				if (length(fk_attr) != length(pk_attr))
-				{
-					elog(NOTICE, "Illegal FOREIGN KEY definition REFERENCES \"%s\"",
-						 fkconstraint->pktable_name);
-					elog(ERROR, "number of key attributes in referenced table must be equal to foreign key");
-				}
-				while (fk_attr != NIL)
-				{
-					id = (Ident *) lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args,
-											   makeString(id->name));
-
-					id = (Ident *) lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args,
-											   makeString(id->name));
-
-					fk_attr = lnext(fk_attr);
-					pk_attr = lnext(pk_attr);
-				}
-
-				extras_after = lappend(extras_after, (Node *) fk_trigger);
-
-				/*
-				 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
-				 * DELETE action fired on the PK table !!!
-				 *
-				 */
-				fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
-				fk_trigger->trigname = fkconstraint->constr_name;
-				fk_trigger->relname = fkconstraint->pktable_name;
-				switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
-						>> FKCONSTR_ON_DELETE_SHIFT)
-				{
-					case FKCONSTR_ON_KEY_NOACTION:
-						fk_trigger->funcname = "RI_FKey_noaction_del";
-						break;
-					case FKCONSTR_ON_KEY_RESTRICT:
-						fk_trigger->funcname = "RI_FKey_restrict_del";
-						break;
-					case FKCONSTR_ON_KEY_CASCADE:
-						fk_trigger->funcname = "RI_FKey_cascade_del";
-						break;
-					case FKCONSTR_ON_KEY_SETNULL:
-						fk_trigger->funcname = "RI_FKey_setnull_del";
-						break;
-					case FKCONSTR_ON_KEY_SETDEFAULT:
-						fk_trigger->funcname = "RI_FKey_setdefault_del";
-						break;
-					default:
-						elog(ERROR, "Only one ON DELETE action can be specified for FOREIGN KEY constraint");
-						break;
-				}
-				fk_trigger->before = false;
-				fk_trigger->row = true;
-				fk_trigger->actions[0] = 'd';
-				fk_trigger->actions[1] = '\0';
-				fk_trigger->lang = NULL;
-				fk_trigger->text = NULL;
-
-				fk_trigger->attr = NIL;
-				fk_trigger->when = NULL;
-				fk_trigger->isconstraint = true;
-				fk_trigger->deferrable = fkconstraint->deferrable;
-				fk_trigger->initdeferred = fkconstraint->initdeferred;
-				fk_trigger->constrrelname = stmt->relname;
-
-				fk_trigger->args = NIL;
-				fk_trigger->args = lappend(fk_trigger->args,
-								  makeString(fkconstraint->constr_name));
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(stmt->relname));
-				fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
-				fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->match_type));
-				fk_attr = fkconstraint->fk_attrs;
-				pk_attr = fkconstraint->pk_attrs;
-				while (fk_attr != NIL)
-				{
-					id = (Ident *) lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args,
-											   makeString(id->name));
-
-					id = (Ident *) lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args,
-											   makeString(id->name));
-
-					fk_attr = lnext(fk_attr);
-					pk_attr = lnext(pk_attr);
-				}
-
-				extras_after = lappend(extras_after, (Node *) fk_trigger);
-
-				/*
-				 * Build a CREATE CONSTRAINT TRIGGER statement for the ON
-				 * UPDATE action fired on the PK table !!!
-				 *
-				 */
-				fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
-				fk_trigger->trigname = fkconstraint->constr_name;
-				fk_trigger->relname = fkconstraint->pktable_name;
-				switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
-						>> FKCONSTR_ON_UPDATE_SHIFT)
-				{
-					case FKCONSTR_ON_KEY_NOACTION:
-						fk_trigger->funcname = "RI_FKey_noaction_upd";
-						break;
-					case FKCONSTR_ON_KEY_RESTRICT:
-						fk_trigger->funcname = "RI_FKey_restrict_upd";
-						break;
-					case FKCONSTR_ON_KEY_CASCADE:
-						fk_trigger->funcname = "RI_FKey_cascade_upd";
-						break;
-					case FKCONSTR_ON_KEY_SETNULL:
-						fk_trigger->funcname = "RI_FKey_setnull_upd";
-						break;
-					case FKCONSTR_ON_KEY_SETDEFAULT:
-						fk_trigger->funcname = "RI_FKey_setdefault_upd";
-						break;
-					default:
-						elog(ERROR, "Only one ON UPDATE action can be specified for FOREIGN KEY constraint");
-						break;
-				}
-				fk_trigger->before = false;
-				fk_trigger->row = true;
-				fk_trigger->actions[0] = 'u';
-				fk_trigger->actions[1] = '\0';
-				fk_trigger->lang = NULL;
-				fk_trigger->text = NULL;
-
-				fk_trigger->attr = NIL;
-				fk_trigger->when = NULL;
-				fk_trigger->isconstraint = true;
-				fk_trigger->deferrable = fkconstraint->deferrable;
-				fk_trigger->initdeferred = fkconstraint->initdeferred;
-				fk_trigger->constrrelname = stmt->relname;
-
-				fk_trigger->args = NIL;
-				fk_trigger->args = lappend(fk_trigger->args,
-								  makeString(fkconstraint->constr_name));
-				fk_trigger->args = lappend(fk_trigger->args,
-										   makeString(stmt->relname));
-				fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
-				fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(fkconstraint->match_type));
-				fk_attr = fkconstraint->fk_attrs;
-				pk_attr = fkconstraint->pk_attrs;
-				while (fk_attr != NIL)
-				{
-					id = (Ident *) lfirst(fk_attr);
-					fk_trigger->args = lappend(fk_trigger->args,
-											   makeString(id->name));
-
-					id = (Ident *) lfirst(pk_attr);
-					fk_trigger->args = lappend(fk_trigger->args,
-											   makeString(id->name));
-
-					fk_attr = lnext(fk_attr);
-					pk_attr = lnext(pk_attr);
-				}
-
-				extras_after = lappend(extras_after, (Node *) fk_trigger);
-			}
+			Assert(cxt.columns == NIL);
+			stmt->def = (Node *) nconc(cxt.ckconstraints, cxt.fkconstraints);
+			extras_before = cxt.blist;
+			extras_after = cxt.alist;
 			break;
+
 		default:
 			break;
 	}
+
+	qry = makeNode(Query);
+	qry->commandType = CMD_UTILITY;
 	qry->utilityStmt = (Node *) stmt;
+
 	return qry;
 }
 
@@ -2931,9 +2775,8 @@ transformForUpdate(Query *qry, List *forUpdate)
 /*
  * transformFkeyCheckAttrs -
  *
- *	Try to make sure that the attributes of a referenced table
+ *	Make sure that the attributes of a referenced table
  *		belong to a unique (or primary key) constraint.
- *
  */
 static void
 transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
@@ -2949,9 +2792,6 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 	 * Open the referenced table and get the attributes list
 	 */
 	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
-	if (pkrel == NULL)
-		elog(ERROR, "referenced table \"%s\" not found",
-			 fkconstraint->pktable_name);
 	pkrel_attrs = pkrel->rd_att->attrs;
 
 	/*
@@ -2971,7 +2811,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 									ObjectIdGetDatum(indexoid),
 									0, 0, 0);
 		if (!HeapTupleIsValid(indexTuple))
-			elog(ERROR, "transformFkeyGetPrimaryKey: index %u not found",
+			elog(ERROR, "transformFkeyCheckAttrs: index %u not found",
 				 indexoid);
 		indexStruct = (Form_pg_index) GETSTRUCT(indexTuple);
 
@@ -2980,7 +2820,8 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 			List	   *attrl;
 			int	   attnum=0;
 
-			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++);
+			for (i = 0; i < INDEX_MAX_KEYS && indexStruct->indkey[i] != 0; i++)
+				;
 			if (i != length(fkconstraint->pk_attrs))
 				found = false;
 			else
@@ -3030,7 +2871,6 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
  *
  *	Try to find the primary key attributes of a referenced table if
  *	the column list in the REFERENCES specification was omitted.
- *
  */
 static void
 transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
@@ -3048,9 +2888,6 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	 * Open the referenced table and get the attributes list
 	 */
 	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
-	if (pkrel == NULL)
-		elog(ERROR, "referenced table \"%s\" not found",
-			 fkconstraint->pktable_name);
 	pkrel_attrs = pkrel->rd_att->attrs;
 
 	/*
@@ -3095,11 +2932,10 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 		int			pkattno = indexStruct->indkey[i];
 		Ident	   *pkattr = makeNode(Ident);
 
-		pkattr->name = DatumGetCString(DirectFunctionCall1(nameout,
-					NameGetDatum(&(pkrel_attrs[pkattno - 1]->attname))));
+		pkattr->name = pstrdup(NameStr(pkrel_attrs[pkattno-1]->attname));
 		pkattr->indirection = NIL;
 		pkattr->isRel = false;
-		pktypoid[attnum++]=pkrel_attrs[pkattno-1]->atttypid;
+		pktypoid[attnum++] = pkrel_attrs[pkattno-1]->atttypid;
 
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
 	}
@@ -3107,6 +2943,130 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	ReleaseSysCache(indexTuple);
 
 	heap_close(pkrel, AccessShareLock);
+}
+
+/*
+ * relationHasPrimaryKey -
+ *
+ *	See whether an existing relation has a primary key.
+ */
+static bool
+relationHasPrimaryKey(char *relname)
+{
+	bool		result = false;
+	Relation	rel;
+	List	   *indexoidlist,
+			   *indexoidscan;
+
+	rel = heap_openr(relname, AccessShareLock);
+
+	/*
+	 * Get the list of index OIDs for the table from the relcache, and
+	 * look up each one in the pg_index syscache until we find one marked
+	 * primary key (hopefully there isn't more than one such).
+	 */
+	indexoidlist = RelationGetIndexList(rel);
+
+	foreach(indexoidscan, indexoidlist)
+	{
+		Oid			indexoid = lfirsti(indexoidscan);
+		HeapTuple	indexTuple;
+
+		indexTuple = SearchSysCache(INDEXRELID,
+									ObjectIdGetDatum(indexoid),
+									0, 0, 0);
+		if (!HeapTupleIsValid(indexTuple))
+			elog(ERROR, "relationHasPrimaryKey: index %u not found",
+				 indexoid);
+		result = ((Form_pg_index) GETSTRUCT(indexTuple))->indisprimary;
+		ReleaseSysCache(indexTuple);
+		if (result)
+			break;
+	}
+
+	freeList(indexoidlist);
+
+	heap_close(rel, AccessShareLock);
+
+	return result;
+}
+
+/*
+ * transformFkeyGetColType -
+ *
+ *	Find a referencing column by name, and return its type OID.
+ *	Error if it can't be found.
+ */
+static Oid
+transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
+{
+	List	   *cols;
+	List	   *inher;
+	Oid			result;
+
+	/* First look for column among the newly-created columns */
+	foreach(cols, cxt->columns)
+	{
+		ColumnDef  *col = lfirst(cols);
+
+		if (strcmp(col->colname, colname) == 0)
+		{
+			char *buff = TypeNameToInternalName(col->typename);
+
+			result = typenameTypeId(buff);
+			if (!OidIsValid(result))
+				elog(ERROR, "Unable to lookup type %s",
+					 col->typename->name);
+			return result;
+		}
+	}
+	/* Look for column among inherited columns (if CREATE TABLE case) */
+	foreach(inher, cxt->inhRelnames)
+	{
+		Value	   *inh = lfirst(inher);
+		Relation	rel;
+		int			count;
+
+		Assert(IsA(inh, String));
+		rel = heap_openr(strVal(inh), AccessShareLock);
+		if (rel->rd_rel->relkind != RELKIND_RELATION)
+			elog(ERROR, "inherited table \"%s\" is not a relation",
+				 strVal(inh));
+		for (count = 0; count < rel->rd_att->natts; count++)
+		{
+			char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
+
+			if (strcmp(name, colname) == 0)
+			{
+				result = rel->rd_att->attrs[count]->atttypid;
+
+				heap_close(rel, NoLock);
+				return result;
+			}
+		}
+		heap_close(rel, NoLock);
+	}
+	/* Look for column among existing columns (if ALTER TABLE case) */
+	if (OidIsValid(cxt->relOid))
+	{
+		HeapTuple	atttuple;
+
+		atttuple = SearchSysCache(ATTNAME,
+								  ObjectIdGetDatum(cxt->relOid),
+								  PointerGetDatum(colname),
+								  0, 0);
+		if (HeapTupleIsValid(atttuple))
+		{
+			result = ((Form_pg_attribute) GETSTRUCT(atttuple))->atttypid;
+
+			ReleaseSysCache(atttuple);
+			return result;
+		}
+	}
+
+	elog(ERROR, "%s: column \"%s\" referenced in foreign key constraint does not exist",
+		 cxt->stmtType, colname);
+	return InvalidOid;			/* keep compiler quiet */
 }
 
 /*

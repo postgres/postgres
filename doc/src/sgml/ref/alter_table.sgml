@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.28 2001/09/12 02:13:25 ishii Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.29 2001/10/12 00:07:14 tgl Exp $
 Postgres documentation
 -->
 
@@ -24,8 +24,7 @@ Postgres documentation
   </refsynopsisdivinfo>
   <synopsis>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
-    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable
-    class="PARAMETER">type</replaceable>
+    ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable
     class="PARAMETER">value</replaceable> | DROP DEFAULT }
@@ -202,19 +201,12 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
 
    <para>
     In the current implementation of <literal>ADD COLUMN</literal>,
-    default and constraint clauses for the
-    new column will be ignored. You can use the <literal>SET DEFAULT</literal>
-    form of <command>ALTER TABLE</command> to set the default later.
+    default and NOT NULL clauses for the new column are not supported.
+    You can use the <literal>SET DEFAULT</literal> form
+    of <command>ALTER TABLE</command> to set the default later.
     (You may also want to update the already existing rows to the
     new default value, using <xref linkend="sql-update"
     endterm="sql-update-title">.)
-   </para>
-
-   <para>
-    In the current implementation, only UNIQUE, FOREIGN KEY and CHECK constraints can
-    be added to a table.  To create a primary constraint, create 
-    a unique, not null index (see <xref linkend="SQL-CREATEINDEX" 
-    endterm="SQL-CREATEINDEX-title">).
    </para>
 
 	<para>
@@ -318,7 +310,7 @@ ALTER TABLE distributors ADD CONSTRAINT dist_id_zipcode_key UNIQUE (dist_id, zip
    <title>SQL92</title>
     <para>
      The <literal>ADD COLUMN</literal> form is compliant with the exception that
-     it does not support defaults and constraints, as explained above.
+     it does not support defaults and NOT NULL constraints, as explained above.
      The <literal>ALTER COLUMN</literal> form is in full compliance.
     </para>
 

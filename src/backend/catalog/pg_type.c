@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.63 2001/09/06 02:07:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.64 2001/10/12 00:07:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -555,9 +555,8 @@ TypeRename(const char *oldTypeName, const char *newTypeName)
  * makeArrayTypeName(typeName);
  *	  - given a base type name, make an array of type name out of it
  *
- * the CALLER is responsible for pfreeing the
+ * the caller is responsible for pfreeing the result
  */
-
 char *
 makeArrayTypeName(char *typeName)
 {
@@ -565,10 +564,8 @@ makeArrayTypeName(char *typeName)
 
 	if (!typeName)
 		return NULL;
-	arr = palloc(strlen(typeName) + 2);
-	arr[0] = '_';
-	strcpy(arr + 1, typeName);
-
+	arr = palloc(NAMEDATALEN);
+	snprintf(arr, NAMEDATALEN,
+			 "_%.*s", NAMEDATALEN - 2, typeName);
 	return arr;
-
 }

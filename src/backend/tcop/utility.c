@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.119 2001/10/09 14:00:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.120 2001/10/12 00:07:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -450,7 +450,7 @@ ProcessUtility(Node *parsetree,
 					case 'C':	/* ADD CONSTRAINT */
 						AlterTableAddConstraint(stmt->relname,
 										interpretInhOption(stmt->inhOpt),
-												stmt->def);
+												(List *) stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
 						AlterTableDropConstraint(stmt->relname,

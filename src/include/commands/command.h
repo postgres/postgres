@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.27 2001/05/07 00:43:25 tgl Exp $
+ * $Id: command.h,v 1.28 2001/10/12 00:07:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,7 +56,7 @@ extern void AlterTableDropColumn(const char *relationName,
 					 int behavior);
 
 extern void AlterTableAddConstraint(char *relationName,
-						bool inh, Node *newConstraint);
+						bool inh, List *newConstraints);
 
 extern void AlterTableDropConstraint(const char *relationName,
 						 bool inh, const char *constrName,
