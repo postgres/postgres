@@ -59,10 +59,11 @@ static struct rerr
 
 {
 	{
-		REG_NOMATCH, "REG_NOMATCH", "regexec() failed to match"
+		/* NOMATCH is not really an error condition, it just says no match */
+		REG_NOMATCH, "REG_NOMATCH", "no pattern match found"
 	},
 	{
-		REG_BADPAT, "REG_BADPAT", "invalid regular expression"
+		REG_BADPAT, "REG_BADPAT", "invalid regex struct"
 	},
 	{
 		REG_ECOLLATE, "REG_ECOLLATE", "invalid collating element"
@@ -77,28 +78,28 @@ static struct rerr
 		REG_ESUBREG, "REG_ESUBREG", "invalid backreference number"
 	},
 	{
-		REG_EBRACK, "REG_EBRACK", "brackets ([ ]) not balanced"
+		REG_EBRACK, "REG_EBRACK", "brackets [ ] not balanced"
 	},
 	{
-		REG_EPAREN, "REG_EPAREN", "parentheses not balanced"
+		REG_EPAREN, "REG_EPAREN", "parentheses ( ) not balanced"
 	},
 	{
-		REG_EBRACE, "REG_EBRACE", "braces not balanced"
+		REG_EBRACE, "REG_EBRACE", "braces { } not balanced"
 	},
 	{
-		REG_BADBR, "REG_BADBR", "invalid repetition count(s)"
+		REG_BADBR, "REG_BADBR", "invalid repetition count(s) in { }"
 	},
 	{
-		REG_ERANGE, "REG_ERANGE", "invalid character range"
+		REG_ERANGE, "REG_ERANGE", "invalid character range in [ ]"
 	},
 	{
-		REG_ESPACE, "REG_ESPACE", "out of memory"
+		REG_ESPACE, "REG_ESPACE", "ran out of memory"
 	},
 	{
-		REG_BADRPT, "REG_BADRPT", "repetition-operator operand invalid"
+		REG_BADRPT, "REG_BADRPT", "?, *, or + operand invalid"
 	},
 	{
-		REG_EMPTY, "REG_EMPTY", "empty (sub)expression"
+		REG_EMPTY, "REG_EMPTY", "empty expression or subexpression"
 	},
 	{
 		REG_ASSERT, "REG_ASSERT", "\"can't happen\" -- you found a bug"

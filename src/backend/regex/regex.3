@@ -464,11 +464,11 @@ include the following:
 .PP
 .nf
 .ta \w'REG_ECOLLATE'u+3n
-REG_NOMATCH	regexec() failed to match
-REG_BADPAT	invalid regular expression
+REG_NOMATCH	no pattern match found
+REG_BADPAT	invalid regex struct
 REG_ECOLLATE	invalid collating element
 REG_ECTYPE	invalid character class
-REG_EESCAPE	\e applied to unescapable character
+REG_EESCAPE	trailing backslash (\e)
 REG_ESUBREG	invalid backreference number
 REG_EBRACK	brackets [ ] not balanced
 REG_EPAREN	parentheses ( ) not balanced
@@ -477,7 +477,7 @@ REG_BADBR	invalid repetition count(s) in { }
 REG_ERANGE	invalid character range in [ ]
 REG_ESPACE	ran out of memory
 REG_BADRPT	?, *, or + operand invalid
-REG_EMPTY	empty (sub)expression
+REG_EMPTY	empty expression or subexpression
 REG_ASSERT	``can't happen''\(emyou found a bug
 REG_INVARG	invalid argument, e.g. negative-length string
 .fi
