@@ -1,5 +1,4 @@
 %{
-#define YYERROR_VERBOSE   
 #define YYPARSE_PARAM result  /* need this to pass a pointer (void *) to yyparse */
   
 #include "postgres.h"

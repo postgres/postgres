@@ -258,46 +258,46 @@ SELECT '[(0,0,0,0),(1,0,0,0)]'::cube AS cube;
 SELECT ''::cube AS cube;
 ERROR:  cube_in: can't parse an empty string
 SELECT 'ABC'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' or `O_PAREN' or `O_BRACKET' at or before position 1, character ('A', \101), input: 'ABC'
+ERROR:  parse error at or before position 1, character ('A', \101), input: 'ABC'
 
 SELECT '()'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 2, character (')', \051), input: '()'
+ERROR:  parse error at or before position 2, character (')', \051), input: '()'
 
 SELECT '[]'::cube AS cube;
-ERROR:  parse error, expecting `O_PAREN' at or before position 2, character (']', \135), input: '[]'
+ERROR:  parse error at or before position 2, character (']', \135), input: '[]'
 
 SELECT '[()]'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 3, character (')', \051), input: '[()]'
+ERROR:  parse error at or before position 3, character (')', \051), input: '[()]'
 
 SELECT '[(1)]'::cube AS cube;
-ERROR:  parse error, expecting `COMMA' at or before position 5, character (']', \135), input: '[(1)]'
+ERROR:  parse error at or before position 5, character (']', \135), input: '[(1)]'
 
 SELECT '[(1),]'::cube AS cube;
-ERROR:  parse error, expecting `O_PAREN' at or before position 6, character (']', \135), input: '[(1),]'
+ERROR:  parse error at or before position 6, character (']', \135), input: '[(1),]'
 
 SELECT '[(1),2]'::cube AS cube;
-ERROR:  parse error, expecting `O_PAREN' at or before position 7, character (']', \135), input: '[(1),2]'
+ERROR:  parse error at or before position 7, character (']', \135), input: '[(1),2]'
 
 SELECT '[(1),(2),(3)]'::cube AS cube;
-ERROR:  parse error, expecting `C_BRACKET' at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
+ERROR:  parse error at or before position 9, character (',', \054), input: '[(1),(2),(3)]'
 
 SELECT '1,'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 2, character (',', \054), input: '1,'
+ERROR:  parse error at or before position 2, character (',', \054), input: '1,'
 
 SELECT '1,2,'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 4, character (',', \054), input: '1,2,'
+ERROR:  parse error at or before position 4, character (',', \054), input: '1,2,'
 
 SELECT '1,,2'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 3, character (',', \054), input: '1,,2'
+ERROR:  parse error at or before position 3, character (',', \054), input: '1,,2'
 
 SELECT '(1,)'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 4, character (')', \051), input: '(1,)'
+ERROR:  parse error at or before position 4, character (')', \051), input: '(1,)'
 
 SELECT '(1,2,)'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 6, character (')', \051), input: '(1,2,)'
+ERROR:  parse error at or before position 6, character (')', \051), input: '(1,2,)'
 
 SELECT '(1,,2)'::cube AS cube;
-ERROR:  parse error, expecting `FLOAT' at or before position 4, character (',', \054), input: '(1,,2)'
+ERROR:  parse error at or before position 4, character (',', \054), input: '(1,,2)'
 
 -- invalid input: semantic errors and trailing garbage
 SELECT '[(1),(2)],'::cube AS cube; -- 0
