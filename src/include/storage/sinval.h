@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.25 2001/11/05 17:46:35 momjian Exp $
+ * $Id: sinval.h,v 1.26 2002/03/03 17:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,22 +28,32 @@
  * are available to identify other inval message types.
  *
  * Shared-inval events are initially driven by detecting tuple inserts,
- * updates and deletions in system catalogs (see RelationInvalidateHeapTuple
- * and RelationMark4RollbackHeapTuple).  Note that some system catalogs have
- * multiple caches on them (with different indexes).  On detecting a tuple
- * invalidation in such a catalog, a separate catcache inval message must be
- * generated for each of its caches.  The catcache inval message carries the
- * hash index for the target tuple, so that the catcache only needs to search
- * one hash chain not all its chains.  Of course this assumes that all the
- * backends are using identical hashing code, but that should be OK.
+ * updates and deletions in system catalogs (see CacheInvalidateHeapTuple).
+ * An update generates two inval events, one for the old tuple and one for
+ * the new --- this is needed to get rid of both positive entries for the
+ * old tuple, and negative cache entries associated with the new tuple's
+ * cache key.  (This could perhaps be optimized down to one event when the
+ * cache key is not changing, but for now we don't bother to try.)  Note that
+ * the inval events themselves don't actually say whether the tuple is being
+ * inserted or deleted.
+ *
+ * Note that some system catalogs have multiple caches on them (with different
+ * indexes).  On detecting a tuple invalidation in such a catalog, separate
+ * catcache inval messages must be generated for each of its caches.  The
+ * catcache inval messages carry the hash value for the target tuple, so
+ * that the catcache only needs to search one hash chain not all its chains,
+ * and so that negative cache entries can be recognized with good accuracy.
+ * (Of course this assumes that all the backends are using identical hashing
+ * code, but that should be OK.)
  */
 
 typedef struct
 {
+	/* note: field layout chosen with an eye to alignment concerns */
 	int16		id;				/* cache ID --- must be first */
-	uint16		hashIndex;		/* hashchain index within this catcache */
-	Oid			dbId;			/* database ID, or 0 if a shared relation */
 	ItemPointerData tuplePtr;	/* tuple identifier in cached relation */
+	Oid			dbId;			/* database ID, or 0 if a shared relation */
+	uint32		hashValue;		/* hash value of key for this catcache */
 } SharedInvalCatcacheMsg;
 
 #define SHAREDINVALRELCACHE_ID	(-1)

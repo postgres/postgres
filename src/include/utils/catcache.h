@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.38 2002/02/19 20:11:19 tgl Exp $
+ * $Id: catcache.h,v 1.39 2002/03/03 17:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,20 +35,28 @@ typedef struct catcache
 	struct catcache *cc_next;	/* link to next catcache */
 	char	   *cc_relname;		/* name of relation the tuples come from */
 	char	   *cc_indname;		/* name of index matching cache keys */
-	int			cc_reloidattr;	/* AttrNumber of relation OID, or 0 */
+	Oid			cc_reloid;		/* OID of relation the tuples come from */
 	bool		cc_relisshared; /* is relation shared? */
 	TupleDesc	cc_tupdesc;		/* tuple descriptor (copied from reldesc) */
+	int			cc_reloidattr;	/* AttrNumber of relation OID attr, or 0 */
 	int			cc_ntup;		/* # of tuples currently in this cache */
 	int			cc_size;		/* # of hash buckets in this cache */
 	int			cc_nkeys;		/* number of keys (1..4) */
 	int			cc_key[4];		/* AttrNumber of each key */
 	PGFunction	cc_hashfunc[4]; /* hash function to use for each key */
 	ScanKeyData cc_skey[4];		/* precomputed key info for heap scans */
+	bool		cc_isname[4];	/* flag key columns that are NAMEs */
 #ifdef CATCACHE_STATS
 	long		cc_searches;	/* total # searches against this cache */
 	long		cc_hits;		/* # of matches against existing entry */
+	long		cc_neg_hits;	/* # of matches against negative entry */
 	long		cc_newloads;	/* # of successful loads of new entry */
-	/* cc_searches - (cc_hits + cc_newloads) is # of failed searches */
+	/*
+	 * cc_searches - (cc_hits + cc_neg_hits + cc_newloads) is number of
+	 * failed searches, each of which will result in loading a negative entry
+	 */
+	long		cc_invals;		/* # of entries invalidated from cache */
+	long		cc_discards;	/* # of entries discarded due to overflow */
 #endif
 	Dllist		cc_bucket[1];	/* hash buckets --- VARIABLE LENGTH ARRAY */
 } CatCache;						/* VARIABLE LENGTH STRUCT */
@@ -68,11 +76,18 @@ typedef struct catctup
 	 * A tuple marked "dead" must not be returned by subsequent searches.
 	 * However, it won't be physically deleted from the cache until its
 	 * refcount goes to zero.
+	 *
+	 * A negative cache entry is an assertion that there is no tuple
+	 * matching a particular key.  This is just as useful as a normal entry
+	 * so far as avoiding catalog searches is concerned.  Management of
+	 * positive and negative entries is identical.
 	 */
 	Dlelem		lrulist_elem;	/* list member of global LRU list */
 	Dlelem		cache_elem;		/* list member of per-bucket list */
 	int			refcount;		/* number of active references */
 	bool		dead;			/* dead but not yet removed? */
+	bool		negative;		/* negative cache entry? */
+	uint32		hash_value;		/* hash value for this tuple's keys */
 	HeapTupleData tuple;		/* tuple management header */
 } CatCTup;
 
@@ -104,10 +119,10 @@ extern void ReleaseCatCache(HeapTuple tuple);
 
 extern void ResetCatalogCaches(void);
 extern void CatalogCacheFlushRelation(Oid relId);
-extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
+extern void CatalogCacheIdInvalidate(int cacheId, uint32 hashValue,
 						 ItemPointer pointer);
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
-						void (*function) (int, Index, ItemPointer, Oid));
+						void (*function) (int, uint32, ItemPointer, Oid));
 
 #endif   /* CATCACHE_H */

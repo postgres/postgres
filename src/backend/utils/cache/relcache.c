@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.152 2002/02/19 20:11:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.153 2002/03/03 17:47:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2065,10 +2065,16 @@ RelationBuildLocalRelation(const char *relname,
 		rel->rd_isnailed = true;
 
 	/*
-	 * create a new tuple descriptor from the one passed in (we do this to
-	 * copy it into the cache context)
+	 * create a new tuple descriptor from the one passed in.  We do this
+	 * partly to copy it into the cache context, and partly because the
+	 * new relation can't have any defaults or constraints yet; they
+	 * have to be added in later steps, because they require additions
+	 * to multiple system catalogs.  We can copy attnotnull constraints
+	 * here, however.
 	 */
-	rel->rd_att = CreateTupleDescCopyConstr(tupDesc);
+	rel->rd_att = CreateTupleDescCopy(tupDesc);
+	for (i = 0; i < natts; i++)
+		rel->rd_att->attrs[i]->attnotnull = tupDesc->attrs[i]->attnotnull;
 
 	/*
 	 * initialize relation tuple form (caller may add/override data later)
@@ -2082,8 +2088,6 @@ RelationBuildLocalRelation(const char *relname,
 	rel->rd_rel->relhasoids = true;
 	rel->rd_rel->relnatts = natts;
 	rel->rd_rel->reltype = InvalidOid;
-	if (tupDesc->constr)
-		rel->rd_rel->relchecks = tupDesc->constr->num_check;
 
 	/*
 	 * Insert relation OID and database/tablespace ID into the right

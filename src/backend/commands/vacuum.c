@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.215 2002/03/02 21:39:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.216 2002/03/03 17:47:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -527,7 +527,7 @@ vac_update_relstats(Oid relid, BlockNumber num_pages, double num_tuples,
 	 * no flush will occur, but no great harm is done since there are no
 	 * noncritical state updates here.)
 	 */
-	RelationInvalidateHeapTuple(rd, &rtup);
+	CacheInvalidateHeapTuple(rd, &rtup);
 
 	/* Write the buffer */
 	WriteBuffer(buffer);
@@ -583,7 +583,7 @@ vac_update_dbstats(Oid dbid,
 	dbform->datfrozenxid = frozenXID;
 
 	/* invalidate the tuple in the cache and write the buffer */
-	RelationInvalidateHeapTuple(relation, tuple);
+	CacheInvalidateHeapTuple(relation, tuple);
 	WriteNoReleaseBuffer(scan->rs_cbuf);
 
 	heap_endscan(scan);
@@ -1796,7 +1796,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					 */
 					heap_copytuple_with_tuple(&tuple, &newtup);
 
-					RelationInvalidateHeapTuple(onerel, &tuple);
+					/*
+					 * register invalidation of source tuple in catcaches.
+					 */
+					CacheInvalidateHeapTuple(onerel, &tuple);
 
 					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
 					START_CRIT_SECTION();
@@ -1953,7 +1956,15 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			/* copy tuple */
 			heap_copytuple_with_tuple(&tuple, &newtup);
 
-			RelationInvalidateHeapTuple(onerel, &tuple);
+			/*
+			 * register invalidation of source tuple in catcaches.
+			 *
+			 * (Note: we do not need to register the copied tuple,
+			 * because we are not changing the tuple contents and
+			 * so there cannot be any need to flush negative
+			 * catcache entries.)
+			 */
+			CacheInvalidateHeapTuple(onerel, &tuple);
 
 			/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
 			START_CRIT_SECTION();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.172 2002/02/19 20:11:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.173 2002/03/03 17:47:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -800,19 +800,6 @@ index_drop(Oid indexId)
 	simple_heap_delete(relationRelation, &tuple->t_self);
 	heap_freetuple(tuple);
 
-	/*
-	 * Update the pg_class tuple for the owning relation.  We are
-	 * presently too lazy to attempt to compute the new correct value of
-	 * relhasindex (the next VACUUM will fix it if necessary).	But we
-	 * must send out a shared-cache-inval notice on the owning relation to
-	 * ensure other backends update their relcache lists of indexes.  So,
-	 * unconditionally do setRelhasindex(true).
-	 *
-	 * Possible future improvement: skip the physical tuple update and just
-	 * send out an invalidation message.
-	 */
-	setRelhasindex(heapId, true, false, InvalidOid);
-
 	heap_close(relationRelation, RowExclusiveLock);
 
 	/*
@@ -857,6 +844,15 @@ index_drop(Oid indexId)
 		elog(ERROR, "index_drop: FlushRelationBuffers returned %d", i);
 
 	smgrunlink(DEFAULT_SMGR, userIndexRelation);
+
+	/*
+	 * We are presently too lazy to attempt to compute the new correct value
+	 * of relhasindex (the next VACUUM will fix it if necessary).  So there is
+	 * no need to update the pg_class tuple for the owning relation.
+	 * But we must send out a shared-cache-inval notice on the owning relation
+	 * to ensure other backends update their relcache lists of indexes.
+	 */
+	CacheInvalidateRelcache(heapId);
 
 	/*
 	 * Close rels, but keep locks
@@ -1076,7 +1072,7 @@ LockClassinfoForUpdate(Oid relid, HeapTuple rtup,
 		}
 		break;
 	}
-	RelationInvalidateHeapTuple(relationRelation, rtup);
+	CacheInvalidateHeapTuple(relationRelation, rtup);
 	if (confirmCommitted)
 	{
 		HeapTupleHeader th = rtup->t_data;
@@ -1137,10 +1133,8 @@ IndexesAreActive(Oid relid, bool confirmCommitted)
  *
  * NOTE: an important side-effect of this operation is that an SI invalidation
  * message is sent out to all backends --- including me --- causing relcache
- * entries to be flushed or updated with the new hasindex data.
- * Therefore, we execute the update even if relhasindex has the right value
- * already.  Possible future improvement: skip the disk update and just send
- * an SI message in that case.
+ * entries to be flushed or updated with the new hasindex data.  This must
+ * happen even if we find that no change is needed in the pg_class row.
  * ----------------
  */
 void
@@ -1149,6 +1143,7 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 	Relation	pg_class;
 	HeapTuple	tuple;
 	Form_pg_class classtuple;
+	bool		dirty = false;
 	HeapScanDesc pg_class_scan = NULL;
 
 	/*
@@ -1192,13 +1187,28 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_EXCLUSIVE);
 
 	classtuple = (Form_pg_class) GETSTRUCT(tuple);
-	classtuple->relhasindex = hasindex;
+
+	if (classtuple->relhasindex != hasindex)
+	{
+		classtuple->relhasindex = hasindex;
+		dirty = true;
+	}
 	if (isprimary)
-		classtuple->relhaspkey = true;
+	{
+		if (!classtuple->relhaspkey)
+		{
+			classtuple->relhaspkey = true;
+			dirty = true;
+		}
+	}
 	if (OidIsValid(reltoastidxid))
 	{
 		Assert(classtuple->relkind == RELKIND_TOASTVALUE);
-		classtuple->reltoastidxid = reltoastidxid;
+		if (classtuple->reltoastidxid != reltoastidxid)
+		{
+			classtuple->reltoastidxid = reltoastidxid;
+			dirty = true;
+		}
 	}
 
 	if (pg_class_scan)
@@ -1210,10 +1220,10 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
-			RelationInvalidateHeapTuple(pg_class, tuple);
+			CacheInvalidateHeapTuple(pg_class, tuple);
 		BufferSync();
 	}
-	else
+	else if (dirty)
 	{
 		simple_heap_update(pg_class, &tuple->t_self, tuple);
 
@@ -1227,6 +1237,11 @@ setRelhasindex(Oid relid, bool hasindex, bool isprimary, Oid reltoastidxid)
 			CatalogIndexInsert(idescs, Num_pg_class_indices, pg_class, tuple);
 			CatalogCloseIndices(Num_pg_class_indices, idescs);
 		}
+	}
+	else
+	{
+		/* no need to change tuple, but force relcache rebuild anyway */
+		CacheInvalidateRelcache(relid);
 	}
 
 	if (!pg_class_scan)
@@ -1280,7 +1295,7 @@ setNewRelfilenode(Relation relation)
 		classTuple = &lockTupleData;
 		/* Send out shared cache inval if necessary */
 		if (!IsBootstrapProcessingMode())
-			RelationInvalidateHeapTuple(pg_class, classTuple);
+			CacheInvalidateHeapTuple(pg_class, classTuple);
 		/* Update the buffer in-place */
 		LockBuffer(buffer, BUFFER_LOCK_EXCLUSIVE);
 		((Form_pg_class) GETSTRUCT(classTuple))->relfilenode = newrelfilenode;
@@ -1442,7 +1457,7 @@ UpdateStats(Oid relid, double reltuples)
 		LockBuffer(pg_class_scan->rs_cbuf, BUFFER_LOCK_UNLOCK);
 		WriteNoReleaseBuffer(pg_class_scan->rs_cbuf);
 		if (!IsBootstrapProcessingMode())
-			RelationInvalidateHeapTuple(pg_class, tuple);
+			CacheInvalidateHeapTuple(pg_class, tuple);
 	}
 	else
 	{

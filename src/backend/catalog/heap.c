@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.182 2002/02/19 20:11:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.183 2002/03/03 17:47:54 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -57,6 +57,7 @@
 #include "storage/smgr.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
+#include "utils/inval.h"
 #include "utils/lsyscache.h"
 #include "utils/relcache.h"
 #include "utils/syscache.h"
@@ -75,10 +76,10 @@ static void RelationRemoveIndexes(Relation relation);
 static void RelationRemoveInheritance(Relation relation);
 static void AddNewRelationType(char *typeName, Oid new_rel_oid,
 				   Oid new_type_oid);
-static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
-				 bool updatePgAttribute);
+static void StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin);
 static void StoreRelCheck(Relation rel, char *ccname, char *ccbin);
-static void StoreConstraints(Relation rel);
+static void StoreConstraints(Relation rel, TupleDesc tupdesc);
+static void SetRelationNumChecks(Relation rel, int numchecks);
 static void RemoveConstraints(Relation rel);
 static void RemoveStatistics(Relation rel);
 
@@ -201,9 +202,6 @@ SystemAttributeByName(const char *attname, bool relhasoids)
  *		and is mostly zeroes at return.
  *
  *		Remove the system relation specific code to elsewhere eventually.
- *
- *		Eventually, must place information about this temporary relation
- *		into the transaction context block.
  *
  * NOTE: if istemp is TRUE then heap_create will overwrite relname with
  * the unique "real" name chosen for the temp relation.
@@ -799,9 +797,16 @@ heap_create_with_catalog(char *relname,
 	 * now add tuples to pg_attribute for the attributes in our new
 	 * relation.
 	 */
-	AddNewAttributeTuples(new_rel_oid, tupdesc, relhasoids);
+	AddNewAttributeTuples(new_rel_oid, new_rel_desc->rd_att, relhasoids);
 
-	StoreConstraints(new_rel_desc);
+	/*
+	 * store constraints and defaults passed in the tupdesc, if any.
+	 *
+	 * NB: this may do a CommandCounterIncrement and rebuild the relcache
+	 * entry, so the relation must be valid and self-consistent at this point.
+	 * In particular, there are not yet constraints and defaults anywhere.
+	 */
+	StoreConstraints(new_rel_desc, tupdesc);
 
 	/*
 	 * We create the disk file for this relation here
@@ -922,8 +927,6 @@ RelationRemoveIndexes(Relation relation)
 		Oid			indexoid = lfirsti(indexoidscan);
 
 		index_drop(indexoid);
-		/* advance cmd counter to make catalog changes visible */
-		CommandCounterIncrement();
 	}
 
 	freeList(indexoidlist);
@@ -1377,12 +1380,9 @@ heap_drop_with_catalog(const char *relname,
 /*
  * Store a default expression for column attnum of relation rel.
  * The expression must be presented as a nodeToString() string.
- * If updatePgAttribute is true, update the pg_attribute entry
- * for the column to show that a default exists.
  */
 static void
-StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
-				 bool updatePgAttribute)
+StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin)
 {
 	Node	   *expr;
 	char	   *adsrc;
@@ -1429,9 +1429,10 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	heap_freetuple(tuple);
 	pfree(adsrc);
 
-	if (!updatePgAttribute)
-		return;					/* done if pg_attribute is OK */
-
+	/*
+	 * Update the pg_attribute entry for the column to show that a default
+	 * exists.
+	 */
 	attrrel = heap_openr(AttributeRelationName, RowExclusiveLock);
 	atttup = SearchSysCacheCopy(ATTNUM,
 								ObjectIdGetDatum(RelationGetRelid(rel)),
@@ -1516,33 +1517,35 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
  * NOTE: only pre-cooked expressions will be passed this way, which is to
  * say expressions inherited from an existing relation.  Newly parsed
  * expressions can be added later, by direct calls to StoreAttrDefault
- * and StoreRelCheck (see AddRelationRawConstraints()).  We assume that
- * pg_attribute and pg_class entries for the relation were already set
- * to reflect the existence of these defaults/constraints.
+ * and StoreRelCheck (see AddRelationRawConstraints()).
  */
 static void
-StoreConstraints(Relation rel)
+StoreConstraints(Relation rel, TupleDesc tupdesc)
 {
-	TupleConstr *constr = rel->rd_att->constr;
+	TupleConstr *constr = tupdesc->constr;
 	int			i;
 
 	if (!constr)
-		return;
+		return;					/* nothing to do */
 
 	/*
-	 * deparsing of constraint expressions will fail unless the
+	 * Deparsing of constraint expressions will fail unless the
 	 * just-created pg_attribute tuples for this relation are made
-	 * visible.  So, bump the command counter.
+	 * visible.  So, bump the command counter.  CAUTION: this will
+	 * cause a relcache entry rebuild.
 	 */
 	CommandCounterIncrement();
 
 	for (i = 0; i < constr->num_defval; i++)
 		StoreAttrDefault(rel, constr->defval[i].adnum,
-						 constr->defval[i].adbin, false);
+						 constr->defval[i].adbin);
 
 	for (i = 0; i < constr->num_check; i++)
 		StoreRelCheck(rel, constr->check[i].ccname,
 					  constr->check[i].ccbin);
+
+	if (constr->num_check > 0)
+		SetRelationNumChecks(rel, constr->num_check);
 }
 
 /*
@@ -1580,10 +1583,6 @@ AddRelationRawConstraints(Relation rel,
 	RangeTblEntry *rte;
 	int			numchecks;
 	List	   *listptr;
-	Relation	relrel;
-	Relation	relidescs[Num_pg_class_indices];
-	HeapTuple	reltup;
-	Form_pg_class relStruct;
 
 	/*
 	 * Get info about existing constraints.
@@ -1681,7 +1680,7 @@ AddRelationRawConstraints(Relation rel,
 		/*
 		 * OK, store it.
 		 */
-		StoreAttrDefault(rel, colDef->attnum, nodeToString(expr), true);
+		StoreAttrDefault(rel, colDef->attnum, nodeToString(expr));
 	}
 
 	/*
@@ -1839,9 +1838,29 @@ AddRelationRawConstraints(Relation rel,
 	 * We do this even if there was no change, in order to ensure that an
 	 * SI update message is sent out for the pg_class tuple, which will
 	 * force other backends to rebuild their relcache entries for the rel.
-	 * (Of course, for a newly created rel there is no need for an SI
-	 * message, but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
+	 * (This is critical if we added defaults but not constraints.)
 	 */
+	SetRelationNumChecks(rel, numchecks);
+}
+
+/*
+ * Update the count of constraints in the relation's pg_class tuple.
+ *
+ * Caller had better hold exclusive lock on the relation.
+ *
+ * An important side effect is that a SI update message will be sent out for
+ * the pg_class tuple, which will force other backends to rebuild their
+ * relcache entries for the rel.  Also, this backend will rebuild its
+ * own relcache entry at the next CommandCounterIncrement.
+ */
+static void
+SetRelationNumChecks(Relation rel, int numchecks)
+{
+	Relation	relrel;
+	HeapTuple	reltup;
+	Form_pg_class relStruct;
+	Relation	relidescs[Num_pg_class_indices];
+
 	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	reltup = SearchSysCacheCopy(RELOID,
 								ObjectIdGetDatum(RelationGetRelid(rel)),
@@ -1851,22 +1870,30 @@ AddRelationRawConstraints(Relation rel,
 			 RelationGetRelid(rel));
 	relStruct = (Form_pg_class) GETSTRUCT(reltup);
 
-	relStruct->relchecks = numchecks;
+	if (relStruct->relchecks != numchecks)
+	{
+		relStruct->relchecks = numchecks;
 
-	simple_heap_update(relrel, &reltup->t_self, reltup);
+		simple_heap_update(relrel, &reltup->t_self, reltup);
 
-	/* keep catalog indices current */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-					   relidescs);
-	CatalogIndexInsert(relidescs, Num_pg_class_indices, relrel, reltup);
-	CatalogCloseIndices(Num_pg_class_indices, relidescs);
+		/* keep catalog indices current */
+		CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
+						   relidescs);
+		CatalogIndexInsert(relidescs, Num_pg_class_indices, relrel, reltup);
+		CatalogCloseIndices(Num_pg_class_indices, relidescs);
+	}
+	else
+	{
+		/* Skip the disk update, but force relcache inval anyway */
+		CacheInvalidateRelcache(RelationGetRelid(rel));
+	}
 
 	heap_freetuple(reltup);
 	heap_close(relrel, RowExclusiveLock);
 }
 
 static void
-RemoveAttrDefault(Relation rel)
+RemoveAttrDefaults(Relation rel)
 {
 	Relation	adrel;
 	HeapScanDesc adscan;
@@ -1889,7 +1916,7 @@ RemoveAttrDefault(Relation rel)
 }
 
 static void
-RemoveRelCheck(Relation rel)
+RemoveRelChecks(Relation rel)
 {
 	Relation	rcrel;
 	HeapScanDesc rcscan;
@@ -1923,9 +1950,6 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 {
 	Oid			relid;
 	Relation	rcrel;
-	Relation	relrel;
-	Relation	inhrel;
-	Relation	relidescs[Num_pg_class_indices];
 	TupleDesc	tupleDesc;
 	TupleConstr *oldconstr;
 	int			numoldchecks;
@@ -1933,8 +1957,6 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 	HeapScanDesc rcscan;
 	ScanKeyData key[2];
 	HeapTuple	rctup;
-	HeapTuple	reltup;
-	Form_pg_class relStruct;
 	int			rel_deleted = 0;
 	int			all_deleted = 0;
 
@@ -1960,6 +1982,7 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 		foreach(child, children)
 		{
 			Oid			childrelid = lfirsti(child);
+			Relation	inhrel;
 
 			if (childrelid == relid)
 				continue;
@@ -1969,7 +1992,17 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 		}
 	}
 
-	/* Grab an exclusive lock on the pg_relcheck relation */
+	/*
+	 * Get number of existing constraints.
+	 */
+	tupleDesc = RelationGetDescr(rel);
+	oldconstr = tupleDesc->constr;
+	if (oldconstr)
+		numoldchecks = oldconstr->num_check;
+	else
+		numoldchecks = 0;
+
+	/* Grab an appropriate lock on the pg_relcheck relation */
 	rcrel = heap_openr(RelCheckRelationName, RowExclusiveLock);
 
 	/*
@@ -2002,60 +2035,21 @@ RemoveCheckConstraint(Relation rel, const char *constrName, bool inh)
 
 	/* Clean up after the scan */
 	heap_endscan(rcscan);
-
-	/*
-	 * Update the count of constraints in the relation's pg_class tuple.
-	 * We do this even if there was no change, in order to ensure that an
-	 * SI update message is sent out for the pg_class tuple, which will
-	 * force other backends to rebuild their relcache entries for the rel.
-	 * (Of course, for a newly created rel there is no need for an SI
-	 * message, but for ALTER TABLE ADD ATTRIBUTE this'd be important.)
-	 */
-
-	/*
-	 * Get number of existing constraints.
-	 */
-
-	tupleDesc = RelationGetDescr(rel);
-	oldconstr = tupleDesc->constr;
-	if (oldconstr)
-		numoldchecks = oldconstr->num_check;
-	else
-		numoldchecks = 0;
-
-	/* Calculate the new number of checks in the table, fail if negative */
-	numchecks = numoldchecks - rel_deleted;
-
-	if (numchecks < 0)
-		elog(ERROR, "check count became negative");
-
-	relrel = heap_openr(RelationRelationName, RowExclusiveLock);
-	reltup = SearchSysCacheCopy(RELOID,
-					   ObjectIdGetDatum(RelationGetRelid(rel)), 0, 0, 0);
-
-	if (!HeapTupleIsValid(reltup))
-		elog(ERROR, "cache lookup of relation %u failed",
-			 RelationGetRelid(rel));
-	relStruct = (Form_pg_class) GETSTRUCT(reltup);
-
-	relStruct->relchecks = numchecks;
-
-	simple_heap_update(relrel, &reltup->t_self, reltup);
-
-	/* Keep catalog indices current */
-	CatalogOpenIndices(Num_pg_class_indices, Name_pg_class_indices,
-					   relidescs);
-	CatalogIndexInsert(relidescs, Num_pg_class_indices, relrel, reltup);
-	CatalogCloseIndices(Num_pg_class_indices, relidescs);
-
-	/* Clean up after the scan */
-	heap_freetuple(reltup);
-	heap_close(relrel, RowExclusiveLock);
-
-	/* Close the heap relation */
 	heap_close(rcrel, RowExclusiveLock);
 
-	/* Return the number of tuples deleted */
+	if (rel_deleted)
+	{
+		/*
+		 * Update the count of constraints in the relation's pg_class tuple.
+		 */
+		numchecks = numoldchecks - rel_deleted;
+		if (numchecks < 0)
+			elog(ERROR, "check count became negative");
+
+		SetRelationNumChecks(rel, numchecks);
+	}
+
+	/* Return the number of tuples deleted, including all children */
 	return all_deleted;
 }
 
@@ -2068,10 +2062,10 @@ RemoveConstraints(Relation rel)
 		return;
 
 	if (constr->num_defval > 0)
-		RemoveAttrDefault(rel);
+		RemoveAttrDefaults(rel);
 
 	if (constr->num_check > 0)
-		RemoveRelCheck(rel);
+		RemoveRelChecks(rel);
 }
 
 static void

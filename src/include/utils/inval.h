@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: inval.h,v 1.23 2001/11/05 17:46:36 momjian Exp $
+ * $Id: inval.h,v 1.24 2002/03/03 17:47:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,8 +23,8 @@ extern void AtEOXactInvalidationMessages(bool isCommit);
 
 extern void CommandEndInvalidationMessages(bool isCommit);
 
-extern void RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple);
+extern void CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple);
 
-extern void RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple);
+extern void CacheInvalidateRelcache(Oid relationId);
 
 #endif   /* INVAL_H */

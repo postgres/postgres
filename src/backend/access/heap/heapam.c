@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.130 2002/03/02 21:39:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.131 2002/03/03 17:47:53 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1131,12 +1131,12 @@ heap_insert(Relation relation, HeapTuple tup)
 	WriteBuffer(buffer);
 
 	/*
-	 * If tuple is cachable, mark it for rollback from the caches in case
+	 * If tuple is cachable, mark it for invalidation from the caches in case
 	 * we abort.  Note it is OK to do this after WriteBuffer releases the
 	 * buffer, because the "tup" data structure is all in local memory,
 	 * not in the shared buffer.
 	 */
-	RelationMark4RollbackHeapTuple(relation, tup);
+	CacheInvalidateHeapTuple(relation, tup);
 
 	return tup->t_data->t_oid;
 }
@@ -1278,7 +1278,7 @@ l1:
 	 * look at the contents of the tuple, so we need to hold our refcount
 	 * on the buffer.
 	 */
-	RelationInvalidateHeapTuple(relation, &tp);
+	CacheInvalidateHeapTuple(relation, &tp);
 
 	WriteBuffer(buffer);
 
@@ -1585,19 +1585,19 @@ l2:
 	 * boundary. We have to do this before WriteBuffer because we need to
 	 * look at the contents of the tuple, so we need to hold our refcount.
 	 */
-	RelationInvalidateHeapTuple(relation, &oldtup);
+	CacheInvalidateHeapTuple(relation, &oldtup);
 
 	if (newbuf != buffer)
 		WriteBuffer(newbuf);
 	WriteBuffer(buffer);
 
 	/*
-	 * If new tuple is cachable, mark it for rollback from the caches in
+	 * If new tuple is cachable, mark it for invalidation from the caches in
 	 * case we abort.  Note it is OK to do this after WriteBuffer releases
 	 * the buffer, because the "newtup" data structure is all in local
 	 * memory, not in the shared buffer.
 	 */
-	RelationMark4RollbackHeapTuple(relation, newtup);
+	CacheInvalidateHeapTuple(relation, newtup);
 
 	return HeapTupleMayBeUpdated;
 }

@@ -5,26 +5,38 @@
  *
  *	This is subtle stuff, so pay attention:
  *
- *	When a tuple is updated or deleted, our time qualification rules consider
- *	that it is *still valid* so long as we are in the same command, ie,
- *	until the next CommandCounterIncrement() or transaction commit.
- *	(See utils/time/tqual.c.)  At the command boundary, the old tuple stops
+ *	When a tuple is updated or deleted, our standard time qualification rules
+ *	consider that it is *still valid* so long as we are in the same command,
+ *	ie, until the next CommandCounterIncrement() or transaction commit.
+ *	(See utils/time/tqual.c, and note that system catalogs are generally
+ *	scanned under SnapshotNow rules by the system, or plain user snapshots
+ *	for user queries.)  At the command boundary, the old tuple stops
  *	being valid and the new version, if any, becomes valid.  Therefore,
  *	we cannot simply flush a tuple from the system caches during heap_update()
  *	or heap_delete().  The tuple is still good at that point; what's more,
  *	even if we did flush it, it might be reloaded into the caches by a later
  *	request in the same command.  So the correct behavior is to keep a list
  *	of outdated (updated/deleted) tuples and then do the required cache
- *	flushes at the next command boundary.  Similarly, we need a list of
- *	inserted tuples (including new versions of updated tuples), which we will
- *	use to flush those tuples out of the caches if we abort the transaction.
- *	Notice that the first list lives only till command boundary, whereas the
- *	second lives till end of transaction.  Finally, we need a third list of
- *	all tuples outdated in the current transaction; if we commit, we send
- *	those invalidation events to all other backends (via the SI message queue)
- *	so that they can flush obsolete entries from their caches.	This list
- *	definitely can't be processed until after we commit, otherwise the other
- *	backends won't see our updated tuples as good.
+ *	flushes at the next command boundary.  We must also keep track of
+ *	inserted tuples so that we can flush "negative" cache entries that match
+ *	the new tuples; again, that mustn't happen until end of command.
+ *
+ *	Once we have finished the command, we still need to remember inserted
+ *	tuples (including new versions of updated tuples), so that we can flush
+ *	them from the caches if we abort the transaction.  Similarly, we'd better
+ *	be able to flush "negative" cache entries that may have been loaded in
+ *	place of deleted tuples, so we still need the deleted ones too.
+ *
+ *	If we successfully complete the transaction, we have to broadcast all
+ *	these invalidation events to other backends (via the SI message queue)
+ *	so that they can flush obsolete entries from their caches.  Note we have
+ *	to record the transaction commit before sending SI messages, otherwise
+ *	the other backends won't see our updated tuples as good.
+ *
+ *	In short, we need to remember until xact end every insert or delete
+ *	of a tuple that might be in the system caches.  Updates are treated as
+ *	two events, delete + insert, for simplicity.  (There are cases where
+ *	it'd be possible to record just one event, but we don't currently try.)
  *
  *	We do not need to register EVERY tuple operation in this way, just those
  *	on tuples in relations that have associated catcaches.	We do, however,
@@ -62,7 +74,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.48 2002/02/19 20:11:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/inval.c,v 1.49 2002/03/03 17:47:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,33 +111,26 @@ typedef struct InvalidationListHeader
 
 /*
  * ----------------
- *	Invalidation info is divided into three parts.
- *	1) shared invalidation to be sent to all backends at commit
- *	2) local invalidation for the transaction itself (actually, just
- *	   for the current command within the transaction)
- *	3) rollback information for the transaction itself (in case we abort)
+ *	Invalidation info is divided into two lists:
+ *	1) events so far in current command, not yet reflected to caches.
+ *	2) events in previous commands of current transaction; these have
+ *	   been reflected to local caches, and must be either broadcast to
+ *	   other backends or rolled back from local cache when we commit
+ *	   or abort the transaction.
+ *
+ * The relcache-file-invalidated flag can just be a simple boolean,
+ * since we only act on it at transaction commit; we don't care which
+ * command of the transaction set it.
  * ----------------
  */
 
-/*
- * head of invalidation message list for all backends
- * eaten by AtCommit_Cache() in CommitTransaction()
- */
-static InvalidationListHeader GlobalInvalidMsgs;
+/* head of current-command event list */
+static InvalidationListHeader CurrentCmdInvalidMsgs;
+
+/* head of previous-commands event list */
+static InvalidationListHeader PriorCmdInvalidMsgs;
 
 static bool RelcacheInitFileInval; /* init file must be invalidated? */
-
-/*
- * head of invalidation message list for the current command
- * eaten by AtCommit_LocalCache() in CommandCounterIncrement()
- */
-static InvalidationListHeader LocalInvalidMsgs;
-
-/*
- * head of rollback message list for abort-time processing
- * eaten by AtAbort_Cache() in AbortTransaction()
- */
-static InvalidationListHeader RollbackMsgs;
 
 
 /* ----------------------------------------------------------------
@@ -205,6 +210,29 @@ FreeInvalidationMessageList(InvalidationChunk **listHdr)
 }
 
 /*
+ * Append one list of invalidation message chunks to another, resetting
+ * the source chunk-list pointer to NULL.
+ */
+static void
+AppendInvalidationMessageList(InvalidationChunk **destHdr,
+							  InvalidationChunk **srcHdr)
+{
+	InvalidationChunk *chunk = *srcHdr;
+
+	if (chunk == NULL)
+		return;					/* nothing to do */
+
+	while (chunk->next != NULL)
+		chunk = chunk->next;
+
+	chunk->next = *destHdr;
+
+	*destHdr = *srcHdr;
+
+	*srcHdr = NULL;
+}
+
+/*
  * Process a list of invalidation messages.
  *
  * This is a macro that executes the given code fragment for each message in
@@ -238,15 +266,15 @@ FreeInvalidationMessageList(InvalidationChunk **listHdr)
  */
 static void
 AddCatcacheInvalidationMessage(InvalidationListHeader *hdr,
-							   int id, Index hashIndex,
+							   int id, uint32 hashValue,
 							   ItemPointer tuplePtr, Oid dbId)
 {
 	SharedInvalidationMessage msg;
 
 	msg.cc.id = (int16) id;
-	msg.cc.hashIndex = (uint16) hashIndex;
-	msg.cc.dbId = dbId;
 	msg.cc.tuplePtr = *tuplePtr;
+	msg.cc.dbId = dbId;
+	msg.cc.hashValue = hashValue;
 	AddInvalidationMessage(&hdr->cclist, &msg);
 }
 
@@ -269,6 +297,18 @@ AddRelcacheInvalidationMessage(InvalidationListHeader *hdr,
 	msg.rc.dbId = dbId;
 	msg.rc.relId = relId;
 	AddInvalidationMessage(&hdr->rclist, &msg);
+}
+
+/*
+ * Append one list of invalidation messages to another, resetting
+ * the source list to empty.
+ */
+static void
+AppendInvalidationMessages(InvalidationListHeader *dest,
+						   InvalidationListHeader *src)
+{
+	AppendInvalidationMessageList(&dest->cclist, &src->cclist);
+	AppendInvalidationMessageList(&dest->rclist, &src->rclist);
 }
 
 /*
@@ -318,21 +358,16 @@ ProcessInvalidationMessages(InvalidationListHeader *hdr,
 /*
  * RegisterCatcacheInvalidation
  *
- * Register an invalidation event for an updated/deleted catcache entry.
- * We insert the event into both GlobalInvalidMsgs (for transmission
- * to other backends at transaction commit) and LocalInvalidMsgs (for
- * my local invalidation at end of command within xact).
+ * Register an invalidation event for a catcache tuple entry.
  */
 static void
 RegisterCatcacheInvalidation(int cacheId,
-							 Index hashIndex,
+							 uint32 hashValue,
 							 ItemPointer tuplePtr,
 							 Oid dbId)
 {
-	AddCatcacheInvalidationMessage(&GlobalInvalidMsgs,
-								   cacheId, hashIndex, tuplePtr, dbId);
-	AddCatcacheInvalidationMessage(&LocalInvalidMsgs,
-								   cacheId, hashIndex, tuplePtr, dbId);
+	AddCatcacheInvalidationMessage(&CurrentCmdInvalidMsgs,
+								   cacheId, hashValue, tuplePtr, dbId);
 }
 
 /*
@@ -343,45 +378,14 @@ RegisterCatcacheInvalidation(int cacheId,
 static void
 RegisterRelcacheInvalidation(Oid dbId, Oid relId)
 {
-	AddRelcacheInvalidationMessage(&GlobalInvalidMsgs,
+	AddRelcacheInvalidationMessage(&CurrentCmdInvalidMsgs,
 								   dbId, relId);
-	AddRelcacheInvalidationMessage(&LocalInvalidMsgs,
-								   dbId, relId);
-
 	/*
 	 * If the relation being invalidated is one of those cached in the
 	 * relcache init file, mark that we need to zap that file at commit.
 	 */
 	if (RelationIdIsInInitFile(relId))
 		RelcacheInitFileInval = true;
-}
-
-/*
- * RegisterCatcacheRollback
- *
- * Register an invalidation event for an inserted catcache entry.
- * This only needs to be flushed out of my local catcache, if I abort.
- */
-static void
-RegisterCatcacheRollback(int cacheId,
-						 Index hashIndex,
-						 ItemPointer tuplePtr,
-						 Oid dbId)
-{
-	AddCatcacheInvalidationMessage(&RollbackMsgs,
-								   cacheId, hashIndex, tuplePtr, dbId);
-}
-
-/*
- * RegisterRelcacheRollback
- *
- * As above, but register a relcache invalidation event.
- */
-static void
-RegisterRelcacheRollback(Oid dbId, Oid relId)
-{
-	AddRelcacheInvalidationMessage(&RollbackMsgs,
-								   dbId, relId);
 }
 
 /*
@@ -398,7 +402,7 @@ LocalExecuteInvalidationMessage(SharedInvalidationMessage *msg)
 	{
 		if (msg->cc.dbId == MyDatabaseId || msg->cc.dbId == 0)
 			CatalogCacheIdInvalidate(msg->cc.id,
-									 msg->cc.hashIndex,
+									 msg->cc.hashValue,
 									 &msg->cc.tuplePtr);
 	}
 	else if (msg->id == SHAREDINVALRELCACHE_ID)
@@ -438,7 +442,7 @@ InvalidateSystemCaches(void)
  */
 static void
 PrepareForTupleInvalidation(Relation relation, HeapTuple tuple,
-							void (*CacheIdRegisterFunc) (int, Index,
+							void (*CacheIdRegisterFunc) (int, uint32,
 													   ItemPointer, Oid),
 							void (*RelationIdRegisterFunc) (Oid, Oid))
 {
@@ -517,16 +521,18 @@ AcceptInvalidationMessages(void)
  * AtEOXactInvalidationMessages
  *		Process queued-up invalidation messages at end of transaction.
  *
- * If isCommit, we must send out the messages in our GlobalInvalidMsgs list
+ * If isCommit, we must send out the messages in our PriorCmdInvalidMsgs list
  * to the shared invalidation message queue.  Note that these will be read
  * not only by other backends, but also by our own backend at the next
- * transaction start (via AcceptInvalidationMessages).	Therefore, it's okay
- * to discard any pending LocalInvalidMsgs, since these will be redundant
- * with the global list.
+ * transaction start (via AcceptInvalidationMessages).  This means that
+ * we can skip immediate local processing of anything that's still in
+ * CurrentCmdInvalidMsgs, and just send that list out too.
  *
  * If not isCommit, we are aborting, and must locally process the messages
- * in our RollbackMsgs list.  No messages need be sent to other backends,
- * since they'll not have seen our changed tuples anyway.
+ * in PriorCmdInvalidMsgs.  No messages need be sent to other backends,
+ * since they'll not have seen our changed tuples anyway.  We can forget
+ * about CurrentCmdInvalidMsgs too, since those changes haven't touched
+ * the caches yet.
  *
  * In any case, reset the various lists to empty.  We need not physically
  * free memory here, since TopTransactionContext is about to be emptied
@@ -548,7 +554,10 @@ AtEOXactInvalidationMessages(bool isCommit)
 		if (RelcacheInitFileInval)
 			RelationCacheInitFileInvalidate(true);
 
-		ProcessInvalidationMessages(&GlobalInvalidMsgs,
+		AppendInvalidationMessages(&PriorCmdInvalidMsgs,
+								   &CurrentCmdInvalidMsgs);
+
+		ProcessInvalidationMessages(&PriorCmdInvalidMsgs,
 									SendSharedInvalidMessage);
 
 		if (RelcacheInitFileInval)
@@ -556,15 +565,14 @@ AtEOXactInvalidationMessages(bool isCommit)
 	}
 	else
 	{
-		ProcessInvalidationMessages(&RollbackMsgs,
+		ProcessInvalidationMessages(&PriorCmdInvalidMsgs,
 									LocalExecuteInvalidationMessage);
 	}
 
 	RelcacheInitFileInval = false;
 
-	DiscardInvalidationMessages(&GlobalInvalidMsgs, false);
-	DiscardInvalidationMessages(&LocalInvalidMsgs, false);
-	DiscardInvalidationMessages(&RollbackMsgs, false);
+	DiscardInvalidationMessages(&PriorCmdInvalidMsgs, false);
+	DiscardInvalidationMessages(&CurrentCmdInvalidMsgs, false);
 }
 
 /*
@@ -573,13 +581,13 @@ AtEOXactInvalidationMessages(bool isCommit)
  *		in a transaction.
  *
  * Here, we send no messages to the shared queue, since we don't know yet if
- * we will commit.	But we do need to locally process the LocalInvalidMsgs
- * list, so as to flush our caches of any tuples we have outdated in the
- * current command.
+ * we will commit.	We do need to locally process the CurrentCmdInvalidMsgs
+ * list, so as to flush our caches of any entries we have outdated in the
+ * current command.  We then move the current-cmd list over to become part
+ * of the prior-cmds list.
  *
  * The isCommit = false case is not currently used, but may someday be
  * needed to support rollback to a savepoint within a transaction.
- * (I suspect it needs more work first --- tgl.)
  *
  * Note:
  *		This should be called during CommandCounterIncrement(),
@@ -590,29 +598,24 @@ CommandEndInvalidationMessages(bool isCommit)
 {
 	if (isCommit)
 	{
-		ProcessInvalidationMessages(&LocalInvalidMsgs,
+		ProcessInvalidationMessages(&CurrentCmdInvalidMsgs,
 									LocalExecuteInvalidationMessage);
+		AppendInvalidationMessages(&PriorCmdInvalidMsgs,
+								   &CurrentCmdInvalidMsgs);
 	}
 	else
 	{
-		ProcessInvalidationMessages(&RollbackMsgs,
-									LocalExecuteInvalidationMessage);
+		/* XXX what needs to be done here? */
 	}
-
-	/*
-	 * LocalInvalidMsgs list is not interesting anymore, so flush it (for
-	 * real).  Do *not* clear GlobalInvalidMsgs or RollbackMsgs.
-	 */
-	DiscardInvalidationMessages(&LocalInvalidMsgs, true);
 }
 
 /*
- * RelationInvalidateHeapTuple
+ * CacheInvalidateHeapTuple
  *		Register the given tuple for invalidation at end of command
  *		(ie, current command is outdating this tuple).
  */
 void
-RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
+CacheInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 {
 	PrepareForTupleInvalidation(relation, tuple,
 								RegisterCatcacheInvalidation,
@@ -620,14 +623,17 @@ RelationInvalidateHeapTuple(Relation relation, HeapTuple tuple)
 }
 
 /*
- * RelationMark4RollbackHeapTuple
- *		Register the given tuple for invalidation in case of abort
- *		(ie, current command is creating this tuple).
+ * CacheInvalidateRelcache
+ *		Register invalidation of the specified relation's relcache entry
+ *		at end of command.
+ *
+ * This is used in places that need to force relcache rebuild but aren't
+ * changing any of the tuples recognized as contributors to the relcache
+ * entry by PrepareForTupleInvalidation.  (An example is dropping an index.)
  */
 void
-RelationMark4RollbackHeapTuple(Relation relation, HeapTuple tuple)
+CacheInvalidateRelcache(Oid relationId)
 {
-	PrepareForTupleInvalidation(relation, tuple,
-								RegisterCatcacheRollback,
-								RegisterRelcacheRollback);
+	/* See KLUGE ALERT in PrepareForTupleInvalidation */
+	RegisterRelcacheInvalidation(MyDatabaseId, relationId);
 }
