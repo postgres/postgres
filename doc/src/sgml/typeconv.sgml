@@ -435,7 +435,7 @@ On the other hand, the postfix operator <literal>!</> (factorial)
 is defined only for integer data types, not for float8.  So, if we
 try a similar case with <literal>!</>, we get:
 <screen>
-tgl=> select text '44' ! as "factorial";
+tgl=> select text '20' ! as "factorial";
 ERROR:  Unable to identify a postfix operator '!' for type 'text'
         You may need to add parentheses or an explicit cast
 </screen>
@@ -443,10 +443,10 @@ This happens because the system can't decide which of the several
 possible <literal>!</> operators should be preferred.  We can help
 it out with an explicit cast:
 <screen>
-tgl=> select cast(text '44' as int8) ! as "factorial";
+tgl=> select cast(text '20' as int8) ! as "factorial";
       factorial
 ---------------------
- 2673996885588443136
+ 2432902008176640000
 (1 row)
 </screen>
 </para>
