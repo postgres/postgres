@@ -3,4 +3,4 @@
 **
 */
 
-void		halt();
+void		halt(char *format,...);

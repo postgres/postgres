@@ -5,13 +5,13 @@
 **		This is used to print out error messages and exit
 */
 
-#include <varargs.h>
+#include <stdarg.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-
+#include "halt.h"
 
 /*-------------------------------------------------------------------------
 **
@@ -19,18 +19,14 @@
 **
 **------------------------------------------------------------------------*/
 
-/*VARARGS*/
 void
-halt(va_alist)
-va_dcl
+halt(char *format, ...)
 {
 	va_list		arg_ptr;
-	char	   *format,
-			   *pstr;
+	char	   *pstr;
 	void		(*sig_func) ();
 
-	va_start(arg_ptr);
-	format = va_arg(arg_ptr, char *);
+	va_start(arg_ptr, format);
 	if (strncmp(format, "PERROR", 6) != 0)
 		vfprintf(stderr, format, arg_ptr);
 	else
