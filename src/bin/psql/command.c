@@ -3,7 +3,7 @@
  *
  * Copyright 2000-2002 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.88 2003/01/10 21:57:44 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.89 2003/02/13 04:08:16 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -1648,6 +1648,9 @@ do_edit(const char *filename_arg, PQExpBuffer query_buf)
 				error = true;
 			}
 
+#ifdef USE_READLINE
+			replace_history_entry(where_history(),query_buf->data,NULL);
+#endif
 			fclose(stream);
 		}
 
