@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.93 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.94 2002/07/02 05:48:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,10 +383,9 @@ _bt_insertonpg(Relation rel,
 	 * to 1/3 the per-page available space. Note that at this point,
 	 * itemsz doesn't include the ItemId.
 	 */
-	if (itemsz > (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
+	if (itemsz > BTMaxItemSize(page))
 		elog(ERROR, "btree: index item size %lu exceeds maximum %lu",
-			 (unsigned long) itemsz,
-			 (PageGetPageSize(page) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData));
+			 (unsigned long) itemsz, BTMaxItemSize(page));
 
 	/*
 	 * Determine exactly where new item will go.
@@ -1020,9 +1019,8 @@ _bt_findsplitloc(Relation rel,
 
 	/* Total free space available on a btree page, after fixed overhead */
 	leftspace = rightspace =
-		PageGetPageSize(page) - sizeof(PageHeaderData) -
-		MAXALIGN(sizeof(BTPageOpaqueData))
-		+sizeof(ItemIdData);
+		PageGetPageSize(page) - SizeOfPageHeaderData -
+		MAXALIGN(sizeof(BTPageOpaqueData));
 
 	/*
 	 * Finding the best possible split would require checking all the

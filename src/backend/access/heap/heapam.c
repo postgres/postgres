@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.140 2002/07/02 05:46:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.141 2002/07/02 05:48:44 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -2067,7 +2067,7 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 		while ((char *) unused < unend)
 		{
-			lp = ((PageHeader) page)->pd_linp + *unused;
+			lp = PageGetItemId(page, *unused + 1);
 			lp->lp_flags &= ~LP_USED;
 			unused++;
 		}

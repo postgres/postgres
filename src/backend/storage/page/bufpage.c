@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.45 2002/06/20 20:29:35 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.46 2002/07/02 05:48:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,13 +37,12 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	specialSize = MAXALIGN(specialSize);
 
 	Assert(pageSize == BLCKSZ);
-	Assert(pageSize >
-		   specialSize + sizeof(PageHeaderData) - sizeof(ItemIdData));
+	Assert(pageSize > specialSize + SizeOfPageHeaderData);
 
 	/* Make sure all fields of page are zero, as well as unused space */
 	MemSet(p, 0, pageSize);
 
-	p->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
+	p->pd_lower = SizeOfPageHeaderData;
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
 	PageSetPageSize(page, pageSize);
@@ -88,7 +87,7 @@ PageAddItem(Page page,
 	/*
 	 * Be wary about corrupted page pointers
 	 */
-	if (phdr->pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
+	if (phdr->pd_lower < SizeOfPageHeaderData ||
 		phdr->pd_lower > phdr->pd_upper ||
 		phdr->pd_upper > phdr->pd_special ||
 		phdr->pd_special > BLCKSZ)
@@ -112,7 +111,7 @@ PageAddItem(Page page,
 			}
 			if (offsetNumber < limit)
 			{
-				itemId = &phdr->pd_linp[offsetNumber - 1];
+				itemId = PageGetItemId(phdr, offsetNumber);
 				if (((*itemId).lp_flags & LP_USED) ||
 					((*itemId).lp_len != 0))
 				{
@@ -136,7 +135,7 @@ PageAddItem(Page page,
 		/* look for "recyclable" (unused & deallocated) ItemId */
 		for (offsetNumber = 1; offsetNumber < limit; offsetNumber++)
 		{
-			itemId = &phdr->pd_linp[offsetNumber - 1];
+			itemId = PageGetItemId(phdr, offsetNumber);
 			if ((((*itemId).lp_flags & LP_USED) == 0) &&
 				((*itemId).lp_len == 0))
 				break;
@@ -150,7 +149,7 @@ PageAddItem(Page page,
 	 * alignedSize > pd_upper.
 	 */
 	if (offsetNumber > limit)
-		lower = (char *) (&phdr->pd_linp[offsetNumber]) - (char *) page;
+		lower = (char *) PageGetItemId(phdr, offsetNumber + 1) - (char *) page;
 	else if (offsetNumber == limit || needshuffle)
 		lower = phdr->pd_lower + sizeof(ItemIdData);
 	else
@@ -175,13 +174,13 @@ PageAddItem(Page page,
 			ItemId		fromitemId,
 						toitemId;
 
-			fromitemId = &phdr->pd_linp[i - 1];
-			toitemId = &phdr->pd_linp[i];
+			fromitemId = PageGetItemId(phdr, i);
+			toitemId =  PageGetItemId(phdr, i + 1);
 			*toitemId = *fromitemId;
 		}
 	}
 
-	itemId = &phdr->pd_linp[offsetNumber - 1];
+	itemId = PageGetItemId(phdr, offsetNumber);
 	(*itemId).lp_off = upper;
 	(*itemId).lp_len = size;
 	(*itemId).lp_flags = flags;
@@ -214,12 +213,12 @@ PageGetTempPage(Page page, Size specialSize)
 	memcpy(temp, page, pageSize);
 
 	/* clear out the middle */
-	size = (pageSize - sizeof(PageHeaderData)) + sizeof(ItemIdData);
+	size = pageSize - SizeOfPageHeaderData;
 	size -= MAXALIGN(specialSize);
-	MemSet((char *) &(thdr->pd_linp[0]), 0, size);
+	MemSet(PageGetContents(thdr), 0, size);
 
 	/* set high, low water marks */
-	thdr->pd_lower = sizeof(PageHeaderData) - sizeof(ItemIdData);
+	thdr->pd_lower = SizeOfPageHeaderData;
 	thdr->pd_upper = pageSize - MAXALIGN(specialSize);
 
 	return temp;
@@ -291,7 +290,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	 * pointers, lengths, etc could cause us to clobber adjacent disk
 	 * buffers, spreading the data loss further.  So, check everything.
 	 */
-	if (pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
+	if (pd_lower < SizeOfPageHeaderData ||
 		pd_lower > pd_upper ||
 		pd_upper > pd_special ||
 		pd_special > BLCKSZ ||
@@ -303,7 +302,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 	nused = 0;
 	for (i = 0; i < nline; i++)
 	{
-		lp = ((PageHeader) page)->pd_linp + i;
+		lp = PageGetItemId(page, i + 1);
 		if ((*lp).lp_flags & LP_DELETE) /* marked for deletion */
 			(*lp).lp_flags &= ~(LP_USED | LP_DELETE);
 		if ((*lp).lp_flags & LP_USED)
@@ -317,7 +316,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		/* Page is completely empty, so just reset it quickly */
 		for (i = 0; i < nline; i++)
 		{
-			lp = ((PageHeader) page)->pd_linp + i;
+			lp = PageGetItemId(page, i + 1);
 			(*lp).lp_len = 0;	/* indicate unused & deallocated */
 		}
 		((PageHeader) page)->pd_upper = pd_special;
@@ -331,7 +330,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 		totallen = 0;
 		for (i = 0; i < nline; i++)
 		{
-			lp = ((PageHeader) page)->pd_linp + i;
+			lp = PageGetItemId(page, i + 1);
 			if ((*lp).lp_flags & LP_USED)
 			{
 				itemidptr->offsetindex = i;
@@ -363,7 +362,7 @@ PageRepairFragmentation(Page page, OffsetNumber *unused)
 
 		for (i = 0, itemidptr = itemidbase; i < nused; i++, itemidptr++)
 		{
-			lp = ((PageHeader) page)->pd_linp + itemidptr->offsetindex;
+			lp = PageGetItemId(page, itemidptr->offsetindex + 1);
 			upper -= itemidptr->alignedlen;
 			memmove((char *) page + upper,
 					(char *) page + itemidptr->itemoff,
@@ -426,7 +425,7 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	/*
 	 * As with PageRepairFragmentation, paranoia seems justified.
 	 */
-	if (phdr->pd_lower < (sizeof(PageHeaderData) - sizeof(ItemIdData)) ||
+	if (phdr->pd_lower < SizeOfPageHeaderData ||
 		phdr->pd_lower > phdr->pd_upper ||
 		phdr->pd_upper > phdr->pd_special ||
 		phdr->pd_special > BLCKSZ)
@@ -452,6 +451,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 	/*
 	 * First, we want to get rid of the pd_linp entry for the index tuple.
 	 * We copy all subsequent linp's back one slot in the array.
+	 * We don't use PageGetItemId, because we are manipulating the _array_,
+	 * not individual linp's.
 	 */
 	nbytes = phdr->pd_lower -
 		((char *) &phdr->pd_linp[offidx + 1] - (char *) phdr);
@@ -490,8 +491,8 @@ PageIndexTupleDelete(Page page, OffsetNumber offnum)
 		nline--;				/* there's one less than when we started */
 		for (i = nline; --i >= 0; )
 		{
-			if (phdr->pd_linp[i].lp_off <= offset)
-				phdr->pd_linp[i].lp_off += size;
+			if (PageGetItemId(phdr, i + 1)->lp_off <= offset)
+				PageGetItemId(phdr, i + 1)->lp_off += size;
 		}
 	}
 }

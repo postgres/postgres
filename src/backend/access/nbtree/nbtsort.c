@@ -35,7 +35,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.64 2002/06/20 20:29:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtsort.c,v 1.65 2002/07/02 05:48:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -346,10 +346,9 @@ _bt_buildadd(Relation index, BTPageState *state, BTItem bti)
 	 * oversize items being inserted into an already-existing index. But
 	 * during creation of an index, we don't go through there.
 	 */
-	if (btisz > (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
+	if (btisz > BTMaxItemSize(npage))
 		elog(ERROR, "btree: index item size %lu exceeds maximum %ld",
-			 (unsigned long) btisz,
-			 (PageGetPageSize(npage) - sizeof(PageHeaderData) - MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData));
+			 (unsigned long) btisz, BTMaxItemSize(npage));
 
 	if (pgspc < btisz || pgspc < state->btps_full)
 	{

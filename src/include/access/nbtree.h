@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.62 2002/06/20 20:29:43 momjian Exp $
+ * $Id: nbtree.h,v 1.63 2002/07/02 05:48:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ typedef struct BTMetaPageData
 } BTMetaPageData;
 
 #define BTPageGetMeta(p) \
-	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
+	((BTMetaPageData *) PageGetContents(p))
 
 #define BTREE_METAPAGE	0		/* first page is meta */
 #define BTREE_MAGIC		0x053162	/* magic number of btree pages */
@@ -76,6 +76,14 @@ typedef struct BTMetaPageData
 
 #define BTREE_VERSION	1
 
+/*
+ * We actually need to be able to fit three items on every page,
+ * so restrict any one item to 1/3 the per-page available space.
+ */
+#define BTMaxItemSize(page) \
+	((PageGetPageSize(page) - \
+	  sizeof(PageHeaderData) - \
+	  MAXALIGN(sizeof(BTPageOpaqueData))) / 3 - sizeof(ItemIdData))
 /*
  *	BTScanOpaqueData is used to remember which buffers we're currently
  *	examining in the scan.	We keep these buffers pinned (but not locked,
