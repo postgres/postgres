@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.14 2003/04/15 13:25:08 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/close.sgml,v 1.15 2003/08/17 04:46:00 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -31,9 +31,13 @@ CLOSE <replaceable class="PARAMETER">cursor</replaceable>
   </para>
 
   <para>
-   Every open cursor is implicitly closed when a transaction is
-   terminated by <command>COMMIT</command> or
-   <command>ROLLBACK</command>.
+   Every non-holdable open cursor is implicitly closed when a
+   transaction is terminated by <command>COMMIT</command> or
+   <command>ROLLBACK</command>. Holdable cursors are implicitely
+   closed if the transaction that created them aborts via
+   <command>ROLLBACK</command>; if this does not happen, the holdable
+   cursor remains open until an explicit <command>CLOSE</command> is
+   executed, or the client disconnects.
   </para>
  </refsect1>
   
