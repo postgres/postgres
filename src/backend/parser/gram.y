@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.78 1999/05/19 17:53:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.79 1999/05/20 12:12:55 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -196,7 +196,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <boolean> opt_inh_star, opt_binary, opt_instead, opt_with_copy,
 				index_opt_unique, opt_verbose, opt_analyze
-%type <boolean> cursor_clause, opt_cursor, opt_readonly, opt_of
+%type <boolean> opt_cursor
 
 %type <ival>	copy_dirn, def_type, opt_direction, remove_type,
 				opt_column, event
@@ -2646,7 +2646,7 @@ UpdateStmt:  UPDATE relation_name
  *
  *****************************************************************************/
 /***S*I***/
-CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt
   				{
  					SelectStmt *n;
   
@@ -2664,6 +2664,9 @@ CursorStmt:  DECLARE name opt_cursor CURSOR FOR SelectStmt cursor_clause
 
 					n->portalname = $2;
 					n->binary = $3;
+					if (n->forUpdate != NULL)
+							elog(ERROR,"DECLARE/UPDATE not supported;"
+								 		" Cursors must be READ ONLY.");
 					$$ = (Node *)n;
 				}
 		;
@@ -2674,24 +2677,6 @@ opt_cursor:  BINARY						{ $$ = TRUE; }
 		| INSENSITIVE SCROLL			{ $$ = FALSE; }
 		| /*EMPTY*/						{ $$ = FALSE; }
 		;
-
-cursor_clause:  FOR opt_readonly		{ $$ = $2; }
-		| /*EMPTY*/						{ $$ = FALSE; }
-		;
-
-opt_readonly:  READ ONLY				{ $$ = TRUE; }
-		| UPDATE opt_of
-			{
-				elog(ERROR,"DECLARE/UPDATE not supported;"
-					 " Cursors must be READ ONLY.");
-				$$ = FALSE;
-			}
-		;
-
-opt_of:  OF columnList
-			{
-				$$ = FALSE;
-			}
 
 /*****************************************************************************
  *
@@ -3007,6 +2992,7 @@ having_clause:  HAVING a_expr
 		;
 
 for_update_clause:  FOR UPDATE update_list		{ $$ = $3; }
+		| FOR READ ONLY							{ $$ = NULL; }
 		| /* EMPTY */							{ $$ = NULL; }
 		;
 
