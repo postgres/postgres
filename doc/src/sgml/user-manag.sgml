@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.14 2002/08/16 04:47:43 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/user-manag.sgml,v 1.15 2002/09/12 22:05:36 petere Exp $
 -->
 
 <chapter id="user-manag">
@@ -138,6 +138,8 @@ ALTER GROUP <replaceable>name</replaceable> DROP USER <replaceable>uname1</repla
 
  <sect1 id="privileges">
   <title>Privileges</title>
+
+  <comment>Being moved to User's Guide.  Will eventually disappear here.</comment>
 
   <para>
    When a database object is created, it is assigned an owner. The

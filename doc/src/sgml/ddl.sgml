@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.3 2002/09/05 21:32:23 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ddl.sgml,v 1.4 2002/09/12 22:05:35 petere Exp $ -->
 
 <chapter id="ddl">
  <title>Data Definition</title>
@@ -140,6 +140,120 @@ DROP TABLE products;
    data now you can skip ahead to <xref linkend="dml"> and read the
    rest of this chapter later.
   </para>
+ </sect1>
+
+ <sect1 id="ddl-system-columns">
+  <title>System Columns</title>
+
+  <para>
+   Every table has several <firstterm>system columns</> that are
+   implicitly defined by the system.  Therefore, these names cannot be
+   used as names of user-defined columns.  (Note that these
+   restrictions are separate from whether the name is a key word or
+   not; quoting a name will not allow you to escape these
+   restrictions.)  You do not really need to be concerned about these
+   columns, just know they exist.
+  </para>
+
+  <indexterm>
+   <primary>columns</primary>
+   <secondary>system columns</secondary>
+  </indexterm>
+
+  <variablelist>
+   <varlistentry>
+    <term><structfield>oid</></term>
+    <listitem>
+     <para>
+      <indexterm>
+       <primary>OID</primary>
+      </indexterm>
+      The object identifier (object ID) of a row.  This is a serial
+      number that is automatically added by
+      <productname>PostgreSQL</productname> to all table rows (unless
+      the table was created <literal>WITHOUT OIDS</literal>, in which
+      case this column is not present).  This column is of type
+      <literal>oid</literal> (same name as the column); see <xref
+      linkend="datatype-oid"> for more information about the type.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><structfield>tableoid</></term>
+    <listitem>
+     <para>
+      The OID of the table containing this row.  This attribute is
+      particularly handy for queries that select from inheritance
+      hierarchies, since without it, it's difficult to tell which
+      individual table a row came from.  The
+      <structfield>tableoid</structfield> can be joined against the
+      <structfield>oid</structfield> column of
+      <classname>pg_class</classname> to obtain the table name.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><structfield>xmin</></term>
+    <listitem>
+     <para>
+      The identity (transaction ID) of the inserting transaction for
+      this tuple.  (Note: In this context, a tuple is an individual
+      state of a row; each update of a row creates a new tuple for the
+      same logical row.)
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><structfield>cmin</></term>
+    <listitem>
+     <para>
+      The command identifier (starting at zero) within the inserting
+      transaction.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><structfield>xmax</></term>
+    <listitem>
+     <para>
+      The identity (transaction ID) of the deleting transaction, or
+      zero for an undeleted tuple.  It is possible for this field to
+      be nonzero in a visible tuple: that usually indicates that the
+      deleting transaction hasn't committed yet, or that an attempted
+      deletion was rolled back.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><structfield>cmax</></term>
+    <listitem>
+     <para>
+      The command identifier within the deleting transaction, or zero.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term><structfield>ctid</></term>
+    <listitem>
+     <para>
+      The physical location of the tuple within its table.  Note that
+      although the <structfield>ctid</structfield> can be used to
+      locate the tuple very quickly, a row's
+      <structfield>ctid</structfield> will change each time it is
+      updated or moved by <command>VACUUM FULL</>.  Therefore
+      <structfield>ctid</structfield> is useless as a long-term row
+      identifier.  The OID, or even better a user-defined serial
+      number, should be used to identify logical rows.
+     </para>
+    </listitem>
+   </varlistentry>
+  </variablelist>
  </sect1>
 
  <sect1>
@@ -1016,11 +1130,502 @@ ALTER TABLE products RENAME TO items;
    </para>
   </sect2>
  </sect1>
+ 
+ <sect1 id="ddl-priv">
+  <title>Privileges</title>
+
+  <para>
+   When you create a database object, you become its owner.  By
+   default, only the owner of an object can do anything with the
+   object. In order to allow other users to use it,
+   <firstterm>privileges</firstterm> must be granted.  (There are also
+   users that have the superuser privilege.  Those users can always
+   access any object.)
+  </para>
+
+  <note>
+   <para>
+    To change the owner of a table, index, sequence, or view, use the
+    <command>ALTER TABLE</command> command.
+   </para>
+  </note>
+
+  <para>
+   There are several different privileges: <literal>SELECT</>,
+   <literal>INSERT</>, <literal>UPDATE</>, <literal>DELETE</>,
+   <literal>RULE</>, <literal>REFERENCES</>, <literal>TRIGGER</>,
+   <literal>CREATE</>, <literal>TEMPORARY</>, <literal>EXECUTE</>,
+   <literal>USAGE</>, and <literal>ALL PRIVILEGES</>. For complete
+   information on the different types of privileges supported by
+   <productname>PostgreSQL</productname>, refer to the
+   <command>GRANT</command> reference page.  The following sections
+   and chapters will also show you how those privileges are used.
+  </para>
+
+  <para>
+   The right to modify or destroy an object is always the privilege of
+   the owner only.
+  </para>
+
+  <para>
+   To assign privileges, the <command>GRANT</command> command is
+   used. So, if <literal>joe</literal> is an existing user, and
+   <literal>accounts</literal> is an existing table, the privilege to
+   update the table can be granted with
+<programlisting>
+GRANT UPDATE ON accounts TO joe;
+</programlisting>
+   The user executing this command must be the owner of the table. To
+   grant a privilege to a group, use
+<programlisting>
+GRANT SELECT ON accounts TO GROUP staff;
+</programlisting>
+   The special <quote>user</quote> name <literal>PUBLIC</literal> can
+   be used to grant a privilege to every user on the system. Writing
+   <literal>ALL</literal> in place of a specific privilege specifies that all
+   privileges will be granted.
+  </para>
+
+  <para>
+   To revoke a privilege, use the fittingly named
+   <command>REVOKE</command> command:
+<programlisting>
+REVOKE ALL ON accounts FROM PUBLIC;
+</programlisting>
+   The special privileges of the table owner (i.e., the right to do
+   <command>DROP</>, <command>GRANT</>, <command>REVOKE</>, etc)
+   are always implicit in being the owner,
+   and cannot be granted or revoked.  But the table owner can choose
+   to revoke his own ordinary privileges, for example to make a
+   table read-only for himself as well as others.
+  </para>
+ </sect1>
 
  <sect1 id="ddl-schemas">
   <title>Schemas</title>
 
-  <comment>to be filled in</comment>
+  <indexterm>
+   <primary>schemas</primary>
+  </indexterm>
+
+  <indexterm>
+   <primary>namespaces</primary>
+  </indexterm>
+
+  <para>
+   A <productname>PostgreSQL</productname> database cluster (installation)
+   contains one or more named databases.  Users and groups of users are
+   shared across the entire cluster, but no other data is shared across
+   databases.  Any given client connection to the server can access
+   only the data in a single database, the one specified in the connection
+   request.
+  </para>
+
+  <note>
+   <para>
+    Users of a cluster do not necessarily have the privilege to access every
+    database in the cluster.  Sharing of user names means that there
+    cannot be different users named, say, <literal>joe</> in two databases
+    in the same cluster; but the system can be configured to allow
+    <literal>joe</> access to only some of the databases.
+   </para>
+  </note>
+
+  <para>
+   A database contains one or more named <firstterm>schemas</>, which
+   in turn contain tables.  Schemas also contain other kinds of named
+   objects, including data types, functions, and operators.  The same
+   object name can be used in different schemas without conflict; for
+   example, both <literal>schema1</> and <literal>myschema</> may
+   contain tables named <literal>mytable</>.  Unlike databases,
+   schemas are not rigidly separated: a user may access objects in any
+   of the schemas in the database he is connected to, if he has
+   privileges to do so.
+  </para>
+
+  <para>
+   There are several reasons why one might want to use schemas:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      To allow many users to use one database without interfering with
+      each other.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      To organize database objects into logical groups to make them
+      more manageable.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Third-party applications can be put into separate schemas so
+      they cannot collide with the names of other objects.
+     </para>
+    </listitem>
+   </itemizedlist>
+
+   Schemas are analogous to directories at the operating system level,
+   but schemas cannot be nested.
+  </para>
+
+  <sect2 id="ddl-schemas-create">
+   <title>Creating a Schema</title>
+
+   <para>
+    To create a separate schema, use the command <literal>CREATE
+    SCHEMA</literal>.  Give the schema a name of your choice.  For
+    example:
+<programlisting>
+CREATE SCHEMA myschema;
+</programlisting>
+   </para>
+
+   <indexterm>
+    <primary>qualified names</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>names</primary>
+    <secondary>qualified</secondary>
+   </indexterm>
+
+   <para>
+    To create or access objects in a schema, write a
+    <firstterm>qualified name</> consisting of the schema name and
+    table name separated by a dot:
+<synopsis>
+<replaceable>schema</><literal>.</><replaceable>table</>
+</synopsis>
+    Actually, the even more general syntax
+<synopsis>
+<replaceable>database</><literal>.</><replaceable>schema</><literal>.</><replaceable>table</>
+</synopsis>
+    can be used too, but at present this is just for pro-forma compliance
+    with the SQL standard; if you write a database name it must be the
+    same as the database you are connected to.
+   </para>
+
+   <para>
+    So to create a table in the new schema, use
+<programlisting>
+CREATE TABLE myschema.mytable (
+ ...
+);
+</programlisting>
+    This works anywhere a table name is expected, including the table
+    modification commands and the data access commands discussed in
+    the following chapters.
+   </para>
+
+   <para>
+    To drop a schema if it's empty (all objects in it have been
+    dropped), use
+<programlisting>
+DROP SCHEMA myschema;
+</programlisting>
+    To drop a schema including all contained objects, use
+<programlisting>
+DROP SCHEMA myschema CASCADE;
+</programlisting>
+    See <xref linkend="ddl-depend"> for a description of the general
+    mechanism behind this.
+   </para>
+
+   <para>
+    Often you will want to create a schema owned by someone else
+    (since this is one of the ways to restrict the activities of your
+    users to well-defined namespaces).  The syntax for that is:
+<programlisting>
+CREATE SCHEMA <replaceable>schemaname</replaceable> AUTHORIZATON <replaceable>username</replaceable>;
+</programlisting>
+    You can even omit the schema name, in which case the schema name
+    will be the same as the user name.  See <xref
+    linkend="ddl-schemas-patterns"> for how this can be useful.
+   </para>
+
+   <para>
+    Schema names beginning with <literal>pg_</> are reserved for
+    system purposes and may not be created by users.
+   </para>
+  </sect2>
+
+  <sect2 id="ddl-schemas-public">
+   <title>The Public Schema</title>
+
+   <para>
+    In the previous sections we created tables without specifying any
+    schema names.  Those tables (and other objects) are automatically
+    put into a schema named <quote>public</quote>.  Every new database
+    contains such a schema.  Thus, the following are equivalent:
+<programlisting>
+CREATE TABLE products ( ... );
+</programlisting>
+    and
+<programlisting>
+CREATE TABLE public.products ( ... );
+</programlisting>
+   </para>
+  </sect2>
+
+  <sect2 id="ddl-schemas-path">
+   <title>The Schema Search Path</title>
+
+   <indexterm>
+    <primary>search path</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>unqualified names</primary>
+   </indexterm>
+
+   <indexterm>
+    <primary>names</primary>
+    <secondary>unqualified</secondary>
+   </indexterm>
+
+   <para>
+    Qualified names are tedious to write, and it's often best not to
+    wire a particular schema name into applications anyway.  Therefore
+    tables are often referred to by <firstterm>unqualified names</>,
+    which consist of just the table name.  The system determines which table
+    is meant by following a <firstterm>search path</>, which is a list
+    of schemas to look in.  The first matching table in the search path
+    is taken to be the one wanted.  If there is no match in the search
+    path, an error is reported, even if matching table names exist
+    in other schemas in the database.
+   </para>
+
+   <para>
+    The first schema named in the search path is called the current schema.
+    Aside from being the first schema searched, it is also the schema in
+    which new tables will be created if the <command>CREATE TABLE</>
+    command does not specify a schema name.
+   </para>
+
+   <para>
+    To show the current search path, use the following command:
+<programlisting>
+SHOW search_path;
+</programlisting>
+    In the default setup this returns:
+<screen>
+ search_path
+--------------
+ $user,public
+</screen>
+    The first element specifies that a schema with the same name as
+    the current user is to be searched.  Since no such schema exists
+    yet, this entry is ignored.  The second element refers to the
+    public schema that we have seen already.
+   </para>
+
+   <para>
+    The first schema in the seach path that exists is the default
+    location for creating new objects.  That is the reason that by
+    default objects are created in the public schema.  When objects
+    are referenced in any other context without schema qualification
+    (table modification, data modification, or query commands) the
+    search path is traversed until a matching object is found.
+    Therefore, in the default configuration, any unqualified access
+    again can only refer to the public schema.
+   </para>
+
+   <para>
+    To put our new schema in the path, we use
+<programlisting>
+SET search_path TO myschema,public;
+</programlisting>
+    (We omit the <literal>$user</literal> here because we have no
+    immediate need for it.)  And then we can access the table without
+    schema qualification:
+<programlisting>
+DROP TABLE mytable;
+</programlisting>
+    Also, since <literal>myschema</literal> is the first element in
+    the path, new objects would by default be created in it.
+   </para>
+
+   <para>
+    We could also have written
+<programlisting>
+SET search_path TO myschema;
+</programlisting>
+    Then we no longer have access to the public schema without
+    explicit qualification.  There is nothing special about the public
+    schema except that it exists by default.  It can be dropped, too.
+   </para>
+
+   <para>
+    See also <xref linkend="set-search-path"> for other ways to access
+    the schema search path.
+   </para>
+
+   <para>
+    The search path works in the same way for datatype names, function names,
+    and operator names as it does for table names.  Datatype and function
+    names can be qualified in exactly the same way as table names.  If you
+    need to write a qualified operator name in an expression, there is a
+    special provision: you must write
+<synopsis>
+<literal>OPERATOR(</><replaceable>schema</><literal>.</><replaceable>operator</><literal>)</>
+</synopsis>
+    This is needed to avoid syntactic ambiguity.  An example is
+<programlisting>
+SELECT 3 OPERATOR(pg_catalog.+) 4;
+</programlisting>
+    In practice one usually relies on the search path for operators,
+    so as not to have to write anything so ugly as that.
+   </para>
+  </sect2>
+
+  <sect2 id="ddl-schemas-priv">
+   <title>Schemas and Privileges</title>
+
+   <para>
+    By default, users cannot see the objects in schemas they do not
+    own.  To allow that, the owner of the schema needs to grant the
+    <literal>USAGE</literal> privilege on the schema.  To allow users
+    to make use of the objects in the schema, additional privileges
+    may need to be granted, as appropriate for the object.
+   </para>
+
+   <para>
+    A user can also be allowed to create objects in someone else's
+    schema.  To allow that, the <literal>CREATE</literal> privilege on
+    the schema needs to be granted.  Note that by default, everyone
+    has the <literal>CREATE</literal> privilege on the schema
+    <literal>public</literal>.  This allows all users that manage to
+    connect to a given database to create objects there.  If you do
+    not want to allow that, you can revoke that privilege:
+<programlisting>
+REVOKE CREATE ON public FROM PUBLIC;
+</programlisting>
+    (The first <quote>public</quote> is the schema, the second
+    <quote>public</quote> means <quote>every user</quote>.  In the
+    first sense it is an identifier, in the second sense it is a
+    reserved word, hence the different capitalization; recall the
+    guidelines from <xref linkend="sql-syntax-identifiers">.)
+   </para>
+  </sect2>
+
+  <sect2>
+   <title>The System Catalog Schema</title>
+
+   <para>
+    In addition to <literal>public</> and user-created schemas, each
+    database contains a <literal>pg_catalog</> schema, which contains
+    the system tables and all the built-in datatypes, functions, and
+    operators.  <literal>pg_catalog</> is always effectively part of
+    the search path.  If it is not named explicitly in the path then
+    it is implicitly searched <emphasis>before</> searching the path's
+    schemas.  This ensures that built-in names will always be
+    findable.  However, you may explicitly place
+    <literal>pg_catalog</> at the end of your search path if you
+    prefer to have user-defined names override built-in names.
+   </para>
+
+   <para>
+    In <productname>PostgreSQL</productname> versions before 7.3,
+    table names beginning with <literal>pg_</> were reserved.  This is
+    no longer true: you may create such a table name if you wish, in
+    any non-system schema.  However, it's best to continue to avoid
+    such names, to ensure that you won't suffer a conflict if some
+    future version defines a system catalog named the same as your
+    table.  (With the default search path, an unqualified reference to
+    your table name would be resolved as the system catalog instead.)
+    System catalogs will continue to follow the convention of having
+    names beginning with <literal>pg_</>, so that they will not
+    conflict with unqualified user-table names so long as users avoid
+    the <literal>pg_</> prefix.
+   </para>
+  </sect2>
+
+  <sect2 id="ddl-schemas-patterns">
+   <title>Usage Patterns</title>
+
+   <para>
+    Schemas can be used to organize your data in many ways.  There are
+    a few usage patterns are recommended and are easily supported by
+    the default configuration:
+    <itemizedlist>
+     <listitem>
+      <para>
+       If you do not create any schemas then all users access the
+       public schema implicitly.  This simulates the situation where
+       schemas are not available at all.  This setup is mainly
+       recommended when there is only a single user or few cooperating
+       users in a database.  This setup also allows smooth transition
+       from the non-schema-aware world.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       You can create a schema for each user with the same name as
+       that user.  Recall that the default search path starts with
+       <literal>$user</literal>, which resolves to the user name.
+       Therefore, if each user has a separate schema, they access their
+       own schemas by default.
+      </para>
+
+      <para>
+       If you use this setup then you might also want to revoke access
+       to the public schema (or drop it altogether), so users are
+       truly constrained to their own schemas.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       To install shared applications (tables to be used by everyone,
+       additional functions provided by third parties, etc.), put them
+       into separate schemas.  Remember to grant appropriate
+       privileges to allow the other users to access them.  Users can
+       then refer to these additional object by qualifying the names
+       with a schema name, or they can put the additional schemas into
+       their path, as they choose.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+  </sect2>
+
+  <sect2 id="ddl-schemas-portability">
+   <title>Portability</title>
+
+   <para>
+    In the SQL standard, the notion of objects in the same schema
+    being owned by different users does not exist.  Moreover, some
+    implementations don't allow you to create schemas that have a
+    different name than their owner.  In fact, the concepts of schema
+    and user are nearly equivalent in a database system that
+    implements only the basic schema support specified in the
+    standard.  Therefore, many users consider qualified names to
+    really consist of
+    <literal><replaceable>username</>.<replaceable>tablename</></literal>.
+    This is also supported by PostgreSQL if you create a per-user
+    schema for every user.
+   </para>
+
+   <para>
+    Also, there is no concept of a <literal>public</> schema in the
+    SQL standard.  For maximum conformance to the standard, you should
+    not use (perhaps even remove) the <literal>public</> schema.
+   </para>
+
+   <para>
+    Of course, some SQL database systems might not implement schemas
+    at all, or provide namespace support by allowing (possibly
+    limited) cross-database access.  If you need to work with those
+    systems, then maximum portability would be achieved by not using
+    schemas at all.
+   </para>
+  </sect2>
  </sect1>
 
  <sect1 id="ddl-others">

@@ -232,7 +232,7 @@ Select the operators to be considered from the
 <classname>pg_operator</classname> system catalog.  If an unqualified
 operator name is used (the usual case), the operators
 considered are those of the right name and argument count that are
-visible in the current search path (see <xref linkend="sql-naming">).
+visible in the current search path (see <xref linkend="ddl-schemas-path">).
 If a qualified operator name was given, only operators in the specified
 schema are considered.
 </para>
@@ -497,7 +497,7 @@ Select the functions to be considered from the
 <classname>pg_proc</classname> system catalog.  If an unqualified
 function name is used, the functions
 considered are those of the right name and argument count that are
-visible in the current search path (see <xref linkend="sql-naming">).
+visible in the current search path (see <xref linkend="ddl-schemas-path">).
 If a qualified function name was given, only functions in the specified
 schema are considered.
 </para>
