@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.84 2003/07/17 00:55:37 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.85 2003/07/24 00:21:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -348,17 +348,17 @@ timestamp_date(PG_FUNCTION_ARGS)
 {
 	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
+	struct tm	tt,
+			   *tm = &tt;
+	double		fsec;
 
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-#ifdef HAVE_INT64_TIMESTAMP
-	/* Microseconds to days */
-	result = (timestamp / INT64CONST(86400000000));
-#else
-	/* Seconds to days */
-	result = (timestamp / 86400.0);
-#endif
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+		elog(ERROR, "Unable to convert timestamp to date");
+
+	result = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - POSTGRES_EPOCH_JDATE;
 
 	PG_RETURN_DATEADT(result);
 }
