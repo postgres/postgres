@@ -29,7 +29,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: pqcomm.c,v 1.145 2003/01/06 09:58:23 petere Exp $
+ *	$Id: pqcomm.c,v 1.146 2003/01/14 22:52:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,6 +69,7 @@
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <netinet/in.h>
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
