@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 17 22:47:31 EST 2003
+Last updated:		Tue Feb 18 00:15:49 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -388,6 +388,7 @@ Write-Ahead Log
 * Allow xlog directory location to be specified during initdb, perhaps
   using symlinks
 * Allow pg_xlog to be moved without symlinks
+* Allow WAL information to recover corrupted pg_controldata
 
 
 Optimizer / Executor
