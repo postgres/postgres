@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.56 2002/04/09 02:43:25 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/plsql.sgml,v 2.57 2002/04/09 03:08:25 momjian Exp $
 -->
 
 <chapter id="plpgsql"> 
@@ -1449,8 +1449,8 @@ END LOOP;
     to worry about that, since FOR loops automatically use a cursor
     internally to avoid memory problems.) A more interesting usage is to
     return a reference to a cursor that it has created, allowing the
-    caller to read the rows. This provides one way of returning multiple
-    rows and columns from a function.
+    caller to read the rows. This provides a way to return row sets
+    from functions.
    </para>
    
    <sect2 id="plpgsql-cursor-declarations">
@@ -1691,10 +1691,10 @@ SELECT reffunc2();
   
         reffunc2      
   --------------------
-   &gt;unnamed cursor 1&lt;
+   &lt;unnamed cursor 1&gt;
   (1 row)
 
-FETCH ALL IN "&gt;unnamed cursor 1&lt;";
+FETCH ALL IN "&lt;unnamed cursor 1&gt;";
 COMMIT;
 </programlisting>
        </para>
