@@ -6,6 +6,7 @@
 # "Classic" interface.  For DB-API compliance use the pgdb module.
 
 from _pg import *
+from types import *
 import string, re, sys
 
 # utility function
@@ -73,10 +74,15 @@ class DB:
 							pg_attribute.attisdropped = 'f'""").getresult():
 			self.__pkeys__[rel] = att
 
+	def _do_debug(self, s):
+		if not self.debug: return
+		if type(self.debug) == StringType: print self.debug % s
+		if type(self.debug) == FunctionType: self.debug(s)
+		if type(self.debug) == FileType: print >> self.debug, s
+
 	# wrap query for debugging
 	def query(self, qstr):
-		if self.debug != None:
-			print self.debug % qstr
+		self._do_debug(qstr)
 		return self.db.query(qstr)
 
 	# If third arg supplied set primary key to it
@@ -158,7 +164,7 @@ class DB:
 
 		fnames = self.get_attnames(xcl)
 
-		if type(arg) == type({}):
+		if type(arg) == DictType:
 			# To allow users to work with multiple tables we munge the
 			# name when the key is "oid"
 			if keyname == 'oid': k = arg['oid_%s' % xcl]
@@ -178,7 +184,7 @@ class DB:
 				(xcl, string.join(fnames.keys(), ','),\
 					cl, keyname, _quote(k, fnames[keyname]))
 
-		if self.debug != None: print self.debug % q
+		self._do_debug(q)
 		res = self.db.query(q).dictresult()
 		if res == []:
 			raise error, \
@@ -205,7 +211,7 @@ class DB:
 		try:
 			q = "INSERT INTO %s (%s) VALUES (%s)" % \
 				(cl, string.join(n, ','), string.join(l, ','))
-			if self.debug != None: print self.debug % q
+			self._do_debug(q)
 			a['oid_%s' % cl] = self.db.query(q)
 		except:
 			raise error, "Error inserting into %s: %s" % (cl, sys.exc_value)
@@ -241,7 +247,7 @@ class DB:
 		try:
 			q = "UPDATE %s SET %s WHERE %s" % \
 							(cl, string.join(v, ','), where)
-			if self.debug != None: print self.debug % q
+			self._do_debug(q)
 			self.db.query(q)
 		except:
 			raise error, "Can't update %s: %s" % (cl, sys.exc_value)
@@ -270,7 +276,7 @@ class DB:
 	def delete(self, cl, a):
 		try:
 			q = "DELETE FROM %s WHERE oid = %s" % (cl, a['oid_%s' % cl])
-			if self.debug != None: print self.debug % q
+			self._do_debug(q)
 			self.db.query(q)
 		except:
 			raise error, "Can't delete %s: %s" % (cl, sys.exc_value)
