@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.5 2000/01/10 17:14:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.6 2000/01/14 01:36:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -433,10 +433,6 @@ extern PLpgSQL_function *plpgsql_curr_compile;
 /**********************************************************************
  * Function declarations
  **********************************************************************/
-
-
-extern char *pstrdup(char *s);
-
 
 /* ----------
  * Functions in pl_comp.c
