@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.8 2000/03/26 18:32:27 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/fetch.sgml,v 1.9 2000/04/04 19:29:18 momjian Exp $
 Postgres documentation
 -->
 
@@ -254,11 +254,6 @@ FETCH RELATIVE 0 FROM <replaceable class="PARAMETER">cursor</replaceable>
     The <acronym>SQL92</acronym> syntax is also supported, specified
     in the second form of the command. See below for details
     on compatibility issues.
-   </para>
-
-   <para>
-    Once all rows are fetched, every other fetch access returns
-    no rows.
    </para>
 
    <para>
