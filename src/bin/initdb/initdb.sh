@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.6 1996/09/23 08:23:17 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.7 1996/10/03 00:23:42 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -57,24 +57,28 @@ noclean=0
 template_only=0
 POSTGRES_SUPERUSERNAME=$USER
 
-for ARG ; do
-    if [ $ARG = "--debug" -o $ARG = "-d" ]; then
+while [ "$#" -gt 0 ]
+do
+    if [ "$1" = "-d" ]; then
         debug=1
         echo "Running with debug mode on."
-    elif [ $ARG = "--noclean" -o $ARG = "-n" ]; then
+    elif [ "$1" = "-n" ]; then
         noclean=1
         echo "Running with noclean mode on.  Mistakes will not be cleaned up."
-    elif [ $ARG = "--template" ]; then
+    elif [ "$1" = "-t" ]; then
         template_only=1
         echo "updating template1 database only."
-    elif [ ${ARG#--username=} != $ARG ]; then
-        POSTGRES_SUPERUSERNAME=${ARG,"--username="}
-    elif [ ${ARG#--pgdata=} != $ARG ]; then
-        PGDATA=${ARG#--pgdata=}
+    elif [ "$1" = "-u" ]; then
+	shift
+        POSTGRES_SUPERUSERNAME="$1"
+    elif [ "$1" = "-r" ]; then
+	shift
+        PGDATA=$1
     else    
-        echo "initdb [--template] [--debug] [--noclean]" \
-             "[--username=SUPERUSER] [--pgdata=DATADIR]"
+        echo "initdb [-t] [-d] [-n] [-u superuser] [-r datadir]" 1>&2
+	exit 1
     fi
+    shift
 done
 
 if [ "$debug" -eq 1 ]; then
