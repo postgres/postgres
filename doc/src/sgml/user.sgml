@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.21 2000/12/14 22:30:56 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.22 2000/12/16 02:29:36 tgl Exp $
 -->
 
 <book id="user">
@@ -57,8 +57,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/user.sgml,v 1.21 2000/12/14 22:30:56 
  &environ;
  &manage;
  &storage;
- &plan;
- &populate
+ &perform;
 
  <!-- appendices -->
 
