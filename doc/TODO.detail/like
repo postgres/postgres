@@ -2,7 +2,7 @@ From zalman@netcom.com Tue Mar 16 18:01:18 1999
 Received: from renoir.op.net (root@renoir.op.net [209.152.193.4])
 	by candle.pha.pa.us (8.9.0/8.9.0) with ESMTP id SAA24313
 	for <maillist@candle.pha.pa.us>; Tue, 16 Mar 1999 18:01:17 -0500 (EST)
-Received: from netcom15.netcom.com (zalman@netcom15.netcom.com [192.100.81.128]) by renoir.op.net (o1/$Revision: 1.1 $) with ESMTP id RAA15235 for <maillist@candle.pha.pa.us>; Tue, 16 Mar 1999 17:56:56 -0500 (EST)
+Received: from netcom15.netcom.com (zalman@netcom15.netcom.com [192.100.81.128]) by renoir.op.net (o1/$Revision: 1.2 $) with ESMTP id RAA15235 for <maillist@candle.pha.pa.us>; Tue, 16 Mar 1999 17:56:56 -0500 (EST)
 Received: (from zalman@localhost)
 	by netcom15.netcom.com (8.8.5-r-beta/8.8.5/(NETCOM v1.02)) id OAA28174;
 	Tue, 16 Mar 1999 14:55:33 -0800 (PST)
