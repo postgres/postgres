@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.5 2001/05/17 21:50:16 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.6 2001/06/11 00:52:09 tgl Exp $
 -->
 
  <chapter id="performance-tips">
@@ -15,26 +15,19 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.5 2001/05/17 21:50:16 pete
   <sect1 id="using-explain">
    <title>Using <command>EXPLAIN</command></title>
 
-   <note>
-    <title>Author</title>
-    <para>
-     Written by Tom Lane, from e-mail dated 2000-03-27.
-    </para>
-   </note>
-
    <para>
     <productname>Postgres</productname> devises a <firstterm>query
     plan</firstterm> for each query it is given.  Choosing the right
     plan to match the query structure and the properties of the data
     is absolutely critical for good performance.  You can use the
     <command>EXPLAIN</command> command to see what query plan the system
-    creates for any query.  Unfortunately,
-    plan-reading is an art that deserves a tutorial, and I haven't
-    had time to write one.  Here is some quick &amp; dirty explanation.
+    creates for any query.
+    Plan-reading is an art that deserves an extensive tutorial, which
+    this is not; but here is some basic information.
    </para>
 
    <para>
-    The numbers that are currently quoted by EXPLAIN are:
+    The numbers that are currently quoted by <command>EXPLAIN</command> are:
 
     <itemizedlist>
      <listitem>
@@ -94,12 +87,12 @@ $Header: /cvsroot/pgsql/doc/src/sgml/perform.sgml,v 1.5 2001/05/17 21:50:16 pete
     estimated selectivity of any WHERE-clause constraints that are being
     applied at this node.  Ideally the top-level rows estimate will
     approximate the number of rows actually returned, updated, or deleted
-    by the query (again, without considering the effects of LIMIT).
+    by the query.
    </para>
 
    <para>
     Here are some examples (using the regress test database after a
-    vacuum analyze, and almost-7.0 sources):
+    vacuum analyze, and 7.2 development sources):
 
     <programlisting>
 regression=# explain select * from tenk1;
@@ -129,45 +122,51 @@ select * from pg_class where relname = 'tenk1';
 regression=# explain select * from tenk1 where unique1 &lt; 1000;
 NOTICE:  QUERY PLAN:
 
-Seq Scan on tenk1  (cost=0.00..358.00 rows=1000 width=148)
+Seq Scan on tenk1  (cost=0.00..358.00 rows=1003 width=148)
     </programlisting>
 
     The estimate of output rows has gone down because of the WHERE clause.
-    (This estimate is uncannily accurate because tenk1 is a particularly
-    simple case --- the unique1 column has 10000 distinct values ranging
-    from 0 to 9999, so the estimator's linear interpolation between min and
-    max column values is dead-on.)  However, the scan will still have to
-    visit all 10000 rows, so the cost hasn't decreased; in fact it has gone
-    up a bit to reflect the extra CPU time spent checking the WHERE
-    condition.
+    However, the scan will still have to visit all 10000 rows, so the cost
+    hasn't decreased; in fact it has gone up a bit to reflect the extra CPU
+    time spent checking the WHERE condition.
+   </para>
+
+   <para>
+    The actual number of rows this query would select is 1000, but the
+    estimate is only approximate.  If you try to duplicate this experiment,
+    you will probably get a slightly different estimate; moreover, it will
+    change after each <command>ANALYZE</command> command, because the
+    statistics produced by <command>ANALYZE</command> are taken from a
+    randomized sample of the table.
    </para>
 
    <para>
     Modify the query to restrict the qualification even more:
 
     <programlisting>
-regression=# explain select * from tenk1 where unique1 &lt; 100;
+regression=# explain select * from tenk1 where unique1 &lt; 50;
 NOTICE:  QUERY PLAN:
 
-Index Scan using tenk1_unique1 on tenk1  (cost=0.00..89.35 rows=100 width=148)
+Index Scan using tenk1_unique1 on tenk1  (cost=0.00..173.32 rows=47 width=148)
     </programlisting>
 
     and you will see that if we make the WHERE condition selective
     enough, the planner will
     eventually decide that an indexscan is cheaper than a sequential scan.
-    This plan will only have to visit 100 tuples because of the index,
-    so it wins despite the fact that each individual fetch is expensive.
+    This plan will only have to visit 50 tuples because of the index,
+    so it wins despite the fact that each individual fetch is more expensive
+    than reading a whole disk page sequentially.
    </para>
 
    <para>
     Add another condition to the qualification:
 
     <programlisting>
-regression=# explain select * from tenk1 where unique1 &lt; 100 and
+regression=# explain select * from tenk1 where unique1 &lt; 50 and
 regression-# stringu1 = 'xxx';
 NOTICE:  QUERY PLAN:
 
-Index Scan using tenk1_unique1 on tenk1  (cost=0.00..89.60 rows=1 width=148)
+Index Scan using tenk1_unique1 on tenk1  (cost=0.00..173.44 rows=1 width=148)
     </programlisting>
 
     The added clause "stringu1 = 'xxx'" reduces the output-rows estimate,
@@ -178,22 +177,22 @@ Index Scan using tenk1_unique1 on tenk1  (cost=0.00..89.60 rows=1 width=148)
     Let's try joining two tables, using the fields we have been discussing:
 
     <programlisting>
-regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 100
+regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
 regression-# and t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
-Nested Loop  (cost=0.00..144.07 rows=100 width=296)
+Nested Loop  (cost=0.00..269.11 rows=47 width=296)
   -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-             (cost=0.00..89.35 rows=100 width=148)
+               (cost=0.00..173.32 rows=47 width=148)
   -&gt;  Index Scan using tenk2_unique2 on tenk2 t2
-             (cost=0.00..0.53 rows=1 width=148)
+               (cost=0.00..2.01 rows=1 width=148)
     </programlisting>
    </para>
 
    <para>
     In this nested-loop join, the outer scan is the same indexscan we had
     in the example before last, and so its cost and row count are the same
-    because we are applying the "unique1 &lt; 100" WHERE clause at that node.
+    because we are applying the "unique1 &lt; 50" WHERE clause at that node.
     The "t1.unique2 = t2.unique2" clause isn't relevant yet, so it doesn't
     affect the outer scan's row count.  For the inner scan, the
     current
@@ -203,7 +202,7 @@ Nested Loop  (cost=0.00..144.07 rows=100 width=296)
      same inner-scan plan and costs that we'd get from, say, "explain select
      * from tenk2 where unique2 = 42".  The loop node's costs are then set
      on the basis of the outer scan's cost, plus one repetition of the
-     inner scan for each outer tuple (100 * 0.53, here), plus a little CPU
+     inner scan for each outer tuple (47 * 2.01, here), plus a little CPU
      time for join processing.
    </para>
 
@@ -226,27 +225,27 @@ Nested Loop  (cost=0.00..144.07 rows=100 width=296)
     <programlisting>
 regression=# set enable_nestloop = off;
 SET VARIABLE
-regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 < 100
+regression=# explain select * from tenk1 t1, tenk2 t2 where t1.unique1 &lt; 50
 regression-# and t1.unique2 = t2.unique2;
 NOTICE:  QUERY PLAN:
 
-Hash Join  (cost=89.60..574.10 rows=100 width=296)
+Hash Join  (cost=173.44..557.03 rows=47 width=296)
   -&gt;  Seq Scan on tenk2 t2
                (cost=0.00..333.00 rows=10000 width=148)
-  -&gt;  Hash  (cost=89.35..89.35 rows=100 width=148)
+  -&gt;  Hash  (cost=173.32..173.32 rows=47 width=148)
         -&gt;  Index Scan using tenk1_unique1 on tenk1 t1
-               (cost=0.00..89.35 rows=100 width=148)
+               (cost=0.00..173.32 rows=47 width=148)
     </programlisting>
 
-    This plan proposes to extract the 100 interesting rows of tenk1
+    This plan proposes to extract the 50 interesting rows of tenk1
     using ye same olde indexscan, stash them into an in-memory hash table,
     and then do a sequential scan of tenk2, probing into the hash table
     for possible matches of "t1.unique2 = t2.unique2" at each tenk2 tuple.
     The cost to read tenk1 and set up the hash table is entirely start-up
     cost for the hash join, since we won't get any tuples out until we can
     start reading tenk2.  The total time estimate for the join also
-    includes a pretty hefty charge for CPU time to probe the hash table
-    10000 times.  Note, however, that we are NOT charging 10000 times 89.35;
+    includes a hefty charge for CPU time to probe the hash table
+    10000 times.  Note, however, that we are NOT charging 10000 times 173.32;
     the hash table setup is only done once in this plan type.
    </para>
   </sect1>
