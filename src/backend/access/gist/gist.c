@@ -11,92 +11,24 @@
  *-------------------------------------------------------------------------
  */
 
-#include <stdio.h>
-#include <time.h>
-#include <sys/types.h>
-#include <string.h>
-
 #include "postgres.h"
- 
-#include "catalog/pg_attribute.h"
-#include "access/attnum.h"
-#include "nodes/nodes.h"
-#include "nodes/pg_list.h"
-#include "access/tupdesc.h"  
-#include "storage/fd.h"  
-#include "catalog/pg_am.h"
-#include "catalog/pg_class.h"
-#include "rewrite/prs2lock.h"
-#include "access/skey.h"
-#include "access/strat.h"
-#include "utils/rel.h"
- 
-#include "storage/block.h" 
-#include "storage/off.h" 
-#include "storage/itemptr.h"
-#include "access/itup.h"
- 
-#include "storage/itemid.h"
-#include "storage/item.h"
-#include "storage/buf.h"
-#include "storage/page.h"
-#include "storage/bufpage.h"
-#include "access/gist.h"
 
-#include "access/funcindex.h"
-
-#include "utils/nabstime.h"
-#include "access/htup.h"
-
-#include "executor/tuptable.h"
-
-#include "utils/tqual.h"
-#include "access/relscan.h"
-
-#include "nodes/params.h"
-#include "access/sdir.h"
-#include "storage/ipc.h"
-#include "executor/hashjoin.h"
-#include "utils/fcache.h"
-#include "nodes/primnodes.h"
-#include "utils/memutils.h"
-#include "lib/fstack.h"
-#include "nodes/memnodes.h"  
-#include "nodes/execnodes.h"
-
-#include "storage/bufmgr.h"
-
-#include "catalog/pg_index.h"
-
-#include "utils/syscache.h"
-
-#include "nodes/plannodes.h"
-#include "nodes/parsenodes.h"
-#include "tcop/dest.h"  
-#include "executor/execdesc.h"
-#include "executor/executor.h"
-
-#include "access/heapam.h"
-
-#include "storage/spin.h"
-#include "utils/hsearch.h"
-#include "storage/shmem.h"
-#include "storage/lock.h"
-#include "storage/lmgr.h"
-
-#include "utils/palloc.h"
-
-#include "catalog/index.h"
-
+#include "fmgr.h"
 #include "access/genam.h"
+#include "access/gist.h"
+#include "access/gistscan.h"
+#include "access/heapam.h"
+#include "catalog/index.h"
+#include "executor/executor.h"
+#include "storage/bufmgr.h"
+#include "storage/bufpage.h"
+#include "storage/lmgr.h"
+#include "utils/palloc.h"
+#include "utils/syscache.h"
 
 #ifndef HAVE_MEMMOVE
 # include "regex/utils.h"
 #endif
-
-#include "access/gistscan.h"
-
-#include "fmgr.h"
 
 /* non-export function prototypes */
 static InsertIndexResult gistdoinsert(Relation r, IndexTuple itup,
