@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.120 2003/08/04 02:40:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.121 2003/10/19 13:22:33 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1066,7 +1066,8 @@ parse_include(void)
 
 	/* If file name is enclosed in '"' remove these and look only in '.' */
 	/* Informix does look into all include paths though, except filename starts with '/' */
-	if ((yytext[0] == '"' && yytext[i] == '"') && (compat != ECPG_COMPAT_INFORMIX || yytext[1] == '/'))
+	if ((yytext[0] == '"' && yytext[i] == '"') &&
+	    ((compat != ECPG_COMPAT_INFORMIX && compat != ECPG_COMPAT_INFORMIX_SE) || yytext[1] == '/'))
 	{
 		yytext[i] = '\0';
 		memmove(yytext, yytext+1, strlen(yytext));
