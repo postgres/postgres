@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.225 2004/12/01 19:32:12 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/func.sgml,v 1.226 2004/12/02 17:14:54 momjian Exp $
 PostgreSQL documentation
 -->
 
@@ -1070,12 +1070,13 @@ PostgreSQL documentation
       </row>
 
       <row>
-       <entry><literal><function>btrim</function>(<parameter>string</parameter> <type>text</type>, <parameter>characters</parameter> <type>text</type>)</literal></entry>
+       <entry><literal><function>btrim</function>(<parameter>string</parameter> <type>text</type>
+       <optional>, <parameter>characters</parameter> <type>text</type></optional>)</literal></entry>
        <entry><type>text</type></entry>
        <entry>
         Remove the longest string consisting only of characters
-        in <parameter>characters</parameter> from the start and end of
-        <parameter>string</parameter>.
+        in <parameter>characters</parameter> (or spaces if not supplied)
+        from the start and end of <parameter>string</parameter>.
        </entry>
        <entry><literal>btrim('xyxtrimyyx', 'xy')</literal></entry>
        <entry><literal>trim</literal></entry>
