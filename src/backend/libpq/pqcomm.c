@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.50 1998/07/26 04:30:28 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.51 1998/08/25 21:32:10 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,7 @@
 #include <netinet/in.h>
 #include <netinet/tcp.h>
 #include <arpa/inet.h>
+#include <sys/file.h>
 
 #if defined(linux)
 #ifndef SOMAXCONN
@@ -70,6 +71,7 @@
 #ifdef MULTIBYTE
 #include "mb/pg_wchar.h"
 #endif
+#include "utils/trace.h"
 
 /* ----------------
  *		declarations
@@ -522,6 +524,7 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				family;
 	size_t		len;
 	int			one = 1;
+	int			lock_fd;
 
 	family = ((hostName != NULL) ? AF_INET : AF_UNIX);
 
@@ -550,6 +553,20 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 	{
 		len = UNIXSOCK_PATH(saddr.un, portName);
 		strcpy(sock_path, saddr.un.sun_path);
+
+		/*
+		 * If the socket exists but nobody has an advisory lock on it
+		 * we can safely delete the file.
+		 */
+		if ((lock_fd = open(sock_path, O_RDONLY|O_NONBLOCK, 0666)) >= 0) {
+			if (flock(lock_fd, LOCK_EX|LOCK_NB) == 0) {
+				TPRINTF(TRACE_VERBOSE, "flock on %s, deleting", sock_path);
+				unlink(sock_path);
+			} else {
+				TPRINTF(TRACE_VERBOSE, "flock failed for %s", sock_path);
+			}
+			close(lock_fd);
+		}
 	}
 	else
 	{
@@ -564,17 +581,31 @@ StreamServerPort(char *hostName, short portName, int *fdP)
 				"FATAL: StreamServerPort: bind() failed: errno=%d\n",
 				errno);
 		pqdebug("%s", PQerrormsg);
-		strcat(PQerrormsg, "\tIs another postmaster already running on that port?\n");
+		strcat(PQerrormsg,
+			   "\tIs another postmaster already running on that port?\n");
 		if (family == AF_UNIX)
-			strcat(PQerrormsg, "\tIf not, remove socket node (/tmp/.s.PGSQL.<portnumber>)and retry.\n");
+			sprintf(PQerrormsg+strlen(PQerrormsg),
+				   "\tIf not, remove socket node (%s) and retry.\n",
+					sock_path);
 		else
 			strcat(PQerrormsg, "\tIf not, wait a few seconds and retry.\n");
 		fputs(PQerrormsg, stderr);
 		return (STATUS_ERROR);
 	}
 
-	if (family == AF_UNIX)
+	if (family == AF_UNIX) {
 		on_proc_exit(StreamDoUnlink, NULL);
+
+		/*
+		 * Open the socket file and get an advisory lock on it.
+		 * The lock_fd is left open to keep the lock.
+		 */
+		if ((lock_fd = open(sock_path, O_RDONLY|O_NONBLOCK, 0666)) >= 0) {
+			if (flock(lock_fd, LOCK_EX|LOCK_NB) != 0) {
+				TPRINTF(TRACE_VERBOSE, "flock error for %s", sock_path);
+			}
+		}
+	}
 
 	listen(fd, SOMAXCONN);
 
