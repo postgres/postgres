@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.47 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_init.c,v 1.48 2002/06/15 19:55:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -60,9 +60,6 @@ Block	   *BufferBlockPointers;
 
 long	   *PrivateRefCount;	/* also used in freelist.c */
 bits8	   *BufferLocks;		/* flag bits showing locks I have set */
-BufferTag  *BufferTagLastDirtied;		/* tag buffer had when last
-										 * dirtied by me */
-bool	   *BufferDirtiedByMe;	/* T if buf has been dirtied in cur xact */
 
 
 /*
@@ -235,9 +232,6 @@ InitBufferPoolAccess(void)
 	BufferBlockPointers = (Block *) calloc(NBuffers, sizeof(Block));
 	PrivateRefCount = (long *) calloc(NBuffers, sizeof(long));
 	BufferLocks = (bits8 *) calloc(NBuffers, sizeof(bits8));
-	BufferTagLastDirtied = (BufferTag *) calloc(NBuffers, sizeof(BufferTag));
-	BufferDirtiedByMe = (bool *) calloc(NBuffers, sizeof(bool));
-
 	/*
 	 * Convert shmem offsets into addresses as seen by this process. This
 	 * is just to speed up the BufferGetBlock() macro.

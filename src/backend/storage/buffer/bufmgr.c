@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.123 2002/04/15 23:47:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/bufmgr.c,v 1.124 2002/06/15 19:55:37 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -66,15 +66,6 @@ extern long int BufferHitCount;
 extern long int LocalBufferHitCount;
 extern long int BufferFlushCount;
 extern long int LocalBufferFlushCount;
-
-/*
- * It's used to avoid disk writes for read-only transactions
- * (i.e. when no one shared buffer was changed by transaction).
- * We set it to true in WriteBuffer/WriteNoReleaseBuffer when
- * marking shared buffer as dirty. We set it to false in xact.c
- * after transaction is committed/aborted.
- */
-bool		SharedBufferChanged = false;
 
 static void WaitIO(BufferDesc *buf);
 static void StartBufferIO(BufferDesc *buf, bool forInput);
@@ -593,8 +584,6 @@ WriteBuffer(Buffer buffer)
 
 	bufHdr = &BufferDescriptors[buffer - 1];
 
-	SharedBufferChanged = true;
-
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 	Assert(bufHdr->refcount > 0);
 
@@ -622,8 +611,6 @@ WriteNoReleaseBuffer(Buffer buffer)
 		return STATUS_ERROR;
 
 	bufHdr = &BufferDescriptors[buffer - 1];
-
-	SharedBufferChanged = true;
 
 	LWLockAcquire(BufMgrLock, LW_EXCLUSIVE);
 	Assert(bufHdr->refcount > 0);
@@ -1901,12 +1888,9 @@ _bm_die(Oid dbId, Oid relId, int blkNo, int bufNo,
  *
  *	Mark a buffer dirty when we have updated tuple commit-status bits in it.
  *
- * This is similar to WriteNoReleaseBuffer, except that we do not set
- * SharedBufferChanged or BufferDirtiedByMe, because we have not made a
+ * This is similar to WriteNoReleaseBuffer, except that we have not made a
  * critical change that has to be flushed to disk before xact commit --- the
- * status-bit update could be redone by someone else just as easily.  The
- * buffer will be marked dirty, but it will not be written to disk until
- * there is another reason to write it.
+ * status-bit update could be redone by someone else just as easily.
  *
  * This routine might get called many times on the same page, if we are making
  * the first scan after commit of an xact that added/deleted many tuples.
