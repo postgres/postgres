@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.25 2004/08/29 05:07:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/port/exec.c,v 1.26 2004/09/27 22:06:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,11 @@
 #include <pwd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 #include <unistd.h>
+#else
+#include "port/win32.h"
+#endif
 
 #include "miscadmin.h"
 
@@ -71,7 +75,7 @@ validate_exec(const char *path)
 	int			in_grp = 0;
 
 #else
-	char		path_exe[MAXPGPATH + 2 + strlen(".exe")];
+	char		path_exe[MAXPGPATH + sizeof(".exe") - 1];
 #endif
 	int			is_r = 0;
 	int			is_x = 0;
@@ -176,7 +180,11 @@ find_my_exec(const char *argv0, char *retpath)
 				test_path[MAXPGPATH];
 	char	   *path;
 
+#if !defined(_MSC_VER) && !defined(__BORLANDC__)
 	if (!getcwd(cwd, MAXPGPATH))
+#else
+	if (!GetCurrentDirectory(MAXPGPATH, cwd))
+#endif
 		cwd[0] = '\0';
 
 	/*
@@ -387,8 +395,8 @@ pipe_read_line(char *cmd, char *line, int maxsize)
 			bytesread > 0)
 		{
 			/* So we read some data */
-			retval = line;
 			int			len = strlen(line);
+			retval = line;
 
 			/*
 			 * If EOL is \r\n, convert to just \n. Because stdout is a

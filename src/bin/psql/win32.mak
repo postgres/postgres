@@ -60,7 +60,8 @@ CLEAN :
 
 CPP_PROJ=/nologo /MD /W3 /GX /O2 /D "WIN32" /D "NDEBUG" /D "_CONSOLE" /D\
  "_MBCS" /Fp"$(INTDIR)\psql.pch" /YX /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c \
- /I ..\..\include /I ..\..\interfaces\libpq /D "HAVE_STRDUP" /D "FRONTEND"
+ /I ..\..\include /I ..\..\interfaces\libpq /I ..\..\include\port\win32 \
+ /D "HAVE_STRDUP" /D "FRONTEND"
 
 CPP_OBJS=.\Release/
 CPP_SBRS=.
@@ -71,6 +72,8 @@ LINK32_FLAGS=kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib\
  odbccp32.lib wsock32.lib /nologo /subsystem:console /incremental:no\
  /pdb:"$(OUTDIR)\psql.pdb" /machine:I386 /out:"$(OUTDIR)\psql.exe" 
 LINK32_OBJS= \
+	"$(INTDIR)\pgstrcasecmp.obj" \
+	"$(INTDIR)\exec.obj" \
 	"$(INTDIR)\command.obj" \
 	"$(INTDIR)\common.obj" \
 	"$(INTDIR)\help.obj" \
@@ -116,6 +119,16 @@ LINK32_OBJS= \
 "$(OUTDIR)\path.obj" : "$(OUTDIR)" ..\..\port\path.c
     $(CPP) @<<
     $(CPP_PROJ) ..\..\port\path.c
+<<
+
+"$(INTDIR)\pgstrcasecmp.obj" : ..\..\port\pgstrcasecmp.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\pgstrcasecmp.c
+<<
+
+"$(INTDIR)\exec.obj" : ..\..\port\exec.c
+    $(CPP) @<<
+    $(CPP_PROJ) ..\..\port\exec.c
 <<
 
 .c{$(CPP_OBJS)}.obj::
