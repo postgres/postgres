@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.42 2000/12/03 20:45:38 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.43 2000/12/30 14:47:06 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -95,7 +95,6 @@ HandleSlashCmds(const char *line,
 
 #ifdef USE_ASSERT_CHECKING
 	assert(line);
-	assert(end_of_cmd);
 #endif
 
 	my_line = xstrdup(line);
