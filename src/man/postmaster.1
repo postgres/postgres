@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.15 1999/02/22 05:26:58 momjian Exp $
-.TH POSTMASTER UNIX 02/20/99 PostgreSQL PostgreSQL
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postmaster.1,v 1.16 1999/05/19 23:30:43 tgl Exp $
+.TH POSTMASTER UNIX 05/19/99 PostgreSQL PostgreSQL
 .SH "NAME"
 postmaster - run the Postgres postmaster
 .SH "SYNOPSIS"
@@ -49,12 +49,17 @@ port]
 The
 .IR "postmaster"
 manages the communication between frontend and backend processes, as
-well as allocating the shared buffer pool and semaphores (on machines
-without a test-and-set instruction).  The 
+well as allocating the shared buffer pool and SysV semaphores
+(on machines without a test-and-set instruction).  The 
 .IR postmaster
 does not itself interact with the user and should be started as a
 background process.
-.BR "Only one postmaster should be run on a machine."
+.PP
+.BR "Only one postmaster should be running at a time in a given
+Postgres installation."
+Here, an installation means a database directory and postmaster port number.
+You can run more than one postmaster on a machine only if each one has a
+separate directory and port number.
 .PP
 The 
 .IR "postmaster"
@@ -65,12 +70,13 @@ understands the following command-line options:
 is the number of shared-memory buffers for the 
 .IR "postmaster"
 to allocate and manage for the backend server processes that it
-starts.  This value defaults to 64, and each buffer is 8k bytes.
+starts.  This value defaults to 64 buffers, where each buffer is 8k bytes
+(or whatever BLCKSZ is set to in config.h).
 .TP
 .BR "-D" " data_dir"
 Specifies the directory to use as the root of the tree of database
-directories.  This directory uses the value of the environment
-variable 
+directories.  If -D is not given, the default data directory name is
+the value of the environment variable 
 .SM PGDATA.
 If 
 .SM PGDATA
@@ -86,7 +92,7 @@ is the maximum number of backend server processes that this postmaster
 is allowed to start.  In the stock configuration, this value defaults
 to 64, and can be set as high as 1024 if your system will support that
 many processes. Both the default and upper limit values can be altered
-when building Postgres.
+when building Postgres (see src/include/config.h).
 .TP
 .BR "-S"
 Specifies that the
@@ -113,7 +119,8 @@ authentication, use
 to deny any unauthenticated
 connections, use
 .BR "-a nounauth .
-This option no longer has any effect.
+This option no longer has any effect!  The pg_hba.conf configuration
+file now controls authentication.
 .TP
 .BR "-b" " backend_pathname"
 .IR "backend_pathname"
@@ -131,6 +138,9 @@ was invoked.  If no pathname was specified, then the
 .SM PATH
 environment variable is searched for an executable named
 \*(lqpostgres\*(rq).
+This option is also obsolete, since the postmaster and backend are now
+a single executable --- the postmaster forks a backend but does not do
+an exec.
 .TP
 .BR "-d" " [debug_level]"
 The optional argument
@@ -201,9 +211,12 @@ Specifies the TCP/IP port or local Unix domain socket file extension
 on which the
 .IR postmaster
 is to listen for connections from frontend applications.  Defaults to
-5432, or the value of the 
+the value of the 
 .SM PGPORT 
-environment variable (if set).  If you specify a port other than the
+environment variable, or if
+.SM PGPORT 
+is not set, then the default value established when Postgres was
+compiled (normally 5432).  If you specify a port other than the
 default port then all frontend application users must specify the same
 port (using command-line options or
 .SM PGPORT\c
@@ -253,7 +266,7 @@ simplest and most common way to start the
 .nf
 
 # start with specific port and executable name
-nohup postmaster -p -b /usr/postgres/bin/postgres &
+nohup postmaster -p 1234 -b /usr/postgres/bin/postgres &
 
 .fi
 This command will start up a 
@@ -281,7 +294,7 @@ postgres(1),
 .BR "FindBackend: could not find a backend to execute..."
 If you see this message, you do not have the 
 .IR "postgres"
-executable in your path.  Add the directoy in which postgres resides to
+executable in your path.  Add the directory in which postgres resides to
 your path.
 .TP
 .BR "semget: No space left on device"
@@ -293,10 +306,11 @@ again.  If this still doesn't work, you probably need to configure
 your kernel for shared memory and semaphores as described in the
 installation notes.  If you run multiple 
 .IR postmaster s
-on a single host, or have reduced the shared memory and semaphore
-parameters from the defaults in the generic kernel, you may have to 
-go back and increase the shared memory and semaphores configured 
-into your kernel.
+on a single host, or have a kernel with particularly small shared memory
+and/or semaphore limits, you may have to reconfigure your kernel to increase
+its shared memory or semaphore parameters.  (You may be able to postpone
+reconfiguring your kernel by reducing -B to reduce Postgres' shared memory
+consumption, or by reducing -N to reduce Postgres' semaphore consumption.)
 .TP
 .BR "StreamServerPort: cannot bind to port"
 If you see this message, you should be certain that there is no other 

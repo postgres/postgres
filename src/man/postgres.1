@@ -1,7 +1,7 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.14 1999/03/17 22:53:31 momjian Exp $
-.TH POSTGRESQL UNIX 12/08/96 PostgreSQL PostgreSQL
+.\" $Header: /cvsroot/pgsql/src/man/Attic/postgres.1,v 1.15 1999/05/19 23:30:43 tgl Exp $
+.TH POSTGRESQL UNIX 05/19/99 PostgreSQL PostgreSQL
 .SH NAME
 postgres - the Postgres backend server
 .SH SYNOPSIS
@@ -57,6 +57,11 @@ done while other Postgres backends are being managed by a
 .IR postmaster
 on this set of databases.
 .PP
+Some of the switches explained in this man page can be passed to the backend
+through the "database options" field of a connection request, and thus can be
+set for a particular backend without going to the trouble of restarting the
+postmaster.  This is particularly handy for debugging-related switches.
+.PP
 The optional argument
 .IR dbname
 specifies the name of the database to be accessed.
@@ -77,7 +82,8 @@ is the number of shared-memory buffers that the
 .IR "postmaster"
 has allocated for the backend server processes that it starts.  If the
 backend is running standalone, this specifies the number of buffers to
-allocate.  This value defaults to 64, and each buffer is 8k bytes.
+allocate.  This value defaults to 64 buffers, where each buffer is 8k bytes
+(or whatever BLCKSZ is set to in config.h).
 .TP
 .BR "-C"
 Do not show server version number.
@@ -116,9 +122,12 @@ useful for interactive use.
 Specifies \*(lqquiet\*(rq mode.
 .TP
 .BR "-S"
-Specifies the amount of memory to be used by internal sorts before using
-disk files for sorting.  This value is specified in 1k bytes, and
-defaults to 512.
+Specifies the amount of memory to be used by internal sorts and hashes
+before resorting to temporary disk files.  The value is specified in
+kilobytes, and defaults to 512 kilobytes.  Note that for a complex query,
+several sorts and/or hashes might be running in parallel, and each one
+will be allowed to use as much as -S kilobytes before it starts to put
+data into temporary files.
 .TP
 .BR "-e"
 The
@@ -185,8 +194,9 @@ Forbids the use of particular scan and join methods:
 disable sequential and index scans respectively, while
 .IR n ", " m " and " h
 disable nested-loop, merge and hash joins respectively.
-This is another feature that may not necessarily produce executable
-plans.
+(Neither sequential scans nor nested-loop joins can be disabled completely;
+the -fs and -fn options simply discourage the optimizer from using those
+plan types if it has any other alternative.)
 .TP
 .BR "-i"
 Prevents query execution, but shows the plan tree.
