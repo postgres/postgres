@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.63 2001/11/05 17:46:30 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.64 2002/01/18 16:14:54 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -710,7 +710,7 @@ exec_command(const char *cmd,
 			psql_error("\\%s: missing required argument\n", cmd);
 			success = false;
 		}
-		if (!SetVariable(pset.vars, opt, NULL))
+		else if (!SetVariable(pset.vars, opt, NULL))
 		{
 			psql_error("\\%s: error\n", cmd);
 			success = false;
