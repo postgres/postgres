@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon May 27 21:00:47 EDT 2002
+Last updated:		Tue May 28 20:36:36 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -456,7 +456,7 @@ Miscellaneous
 * Add Intimate Shared Memory(ISM) for Solaris
 * Add documentation to lock shared memory into RAM for each OS, if possible
 * -Use faster flex flags for performance improvement (Peter E)
-* Add BSD-licensed qsort() for 32-bit Solaris
+* Add BSD-licensed qsort() for Solaris
 
 Source Code
 ===========
