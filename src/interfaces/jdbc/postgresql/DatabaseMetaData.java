@@ -35,6 +35,7 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
   static final int iBoolOid = 16;	// OID for bool
   static final int iInt2Oid = 21;	// OID for int2
   static final int iInt4Oid = 23;	// OID for int4
+  static final int VARHDRSZ =  4;	// length for int4
   
   public DatabaseMetaData(Connection conn)
   {
@@ -1848,13 +1849,14 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
     f[17] = new Field(connection, new String("IS_NULLABLE"), iVarcharOid, 32);
     
     // Now form the query
-    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern+"' and a.attname like '"+columnNamePattern+"' and a.attnum>0 order by c.relname,a.attnum");
+    r = connection.ExecSQL("select a.oid,c.relname,a.attname,a.atttypid,a.attnum,a.attnotnull,a.attlen,a.atttypmod from pg_class c, pg_attribute a where a.attrelid=c.oid and c.relname like '"+tableNamePattern+"' and a.attname like '"+columnNamePattern+"' and a.attnum>0 order by c.relname,a.attnum");
     
     while(r.next()) {
 	byte[][] tuple = new byte[18][0];
 	
 	String name = r.getString(1);
 	String remarks = new String("no remarks");
+	String columnSize;
 	
 	// Fetch the description for the table (if any)
 	ResultSet dr = connection.ExecSQL("select description from pg_description where objoid="+r.getInt(1));
@@ -1875,8 +1877,16 @@ public class DatabaseMetaData implements java.sql.DatabaseMetaData
 	dr.close();
 	tuple[4] = Integer.toString(Field.getSQLType(typname)).getBytes();	// Data type
 	tuple[5] = typname.getBytes();	// Type name
-	
-	tuple[6] = r.getString(7).getBytes();	// Column size
+
+	// Looking at the psql source,
+	// I think the length of a varchar as specified when the table was created
+	// should be extracted from atttypmod which contains this length + sizeof(int32)
+	if (typname.equals("bpchar") || typname.equals("varchar")) {
+	  int atttypmod = r.getInt(8);
+	  columnSize = Integer.toString(atttypmod != -1 ? atttypmod - VARHDRSZ : 0);
+	} else
+	  columnSize = r.getString(7);
+	tuple[6] = columnSize.getBytes();	// Column size
 	
 	tuple[7] = null;	// Buffer length
 	
