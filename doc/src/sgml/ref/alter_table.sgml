@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.23 2001/05/07 00:43:15 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.24 2001/05/09 13:27:15 momjian Exp $
 Postgres documentation
 -->
 
@@ -207,13 +207,10 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </para>
 
    <para>
-    In the current implementation, only FOREIGN KEY constraints can
+    In the current implementation, only FOREIGN KEY and CHECK constraints can
     be added to a table.  To create or remove a unique constraint, create 
     a unique index (see <xref linkend="SQL-CREATEINDEX" 
-    endterm="SQL-CREATEINDEX-title">).  To add check constraints
-    you need to recreate and reload the table, using other 
-    parameters to the <xref linkend="SQL-CREATETABLE" 
-    endterm="SQL-CREATETABLE-title"> command.
+    endterm="SQL-CREATEINDEX-title">).
    </para>
 
    <para>
@@ -253,6 +250,13 @@ ALTER TABLE distributors RENAME COLUMN address TO city;
    To rename an existing table:
    <programlisting>
 ALTER TABLE distributors RENAME TO suppliers;
+   </programlisting>
+  </para>
+
+  <para> 
+   To add a check constraint to a table:
+   <programlisting>
+ALTER TABLE distributors ADD CONSTRAINT zipchk CHECK (char_length(zipcode) = 5)
    </programlisting>
   </para>
 
