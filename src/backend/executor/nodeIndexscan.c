@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.5 1996/11/08 00:45:57 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.6 1997/01/22 05:26:50 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -609,6 +609,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	    Oper	*op;		/* operator used in scan.. */
 	    Node	*leftop;		/* expr on lhs of operator */
 	    Node	*rightop; 	/* expr on rhs ... */
+	    bits16	flags = 0;
 	    
 	    int		scanvar; 	/* which var identifies varattno */
 	    AttrNumber	varattno = 0; 	/* att number used in scan */
@@ -675,6 +676,21 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		 */
 		run_keys[ j ] = NO_OP;
 		scanvalue = ((Const*) leftop)->constvalue;
+#ifdef INDEXSCAN_PATCH
+	    } else if (IsA(leftop,Param)) {
+	        bool isnull;
+		/* ----------------
+		 *  if the leftop is a Param node then it means
+		 *  it identifies the value to place in our scan key.
+		 * ----------------
+		 */
+		run_keys[ j ] = NO_OP;
+		scanvalue = ExecEvalParam((Param*) leftop, 
+				scanstate->cstate.cs_ExprContext,
+				&isnull);
+		if ( isnull )
+		    flags |= SK_ISNULL;
+#endif
 	    } else if (leftop != NULL &&
 		       is_funcclause(leftop) &&
 		       var_is_rel(lfirst(((Expr*)leftop)->args))) {
@@ -733,7 +749,21 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 		 */
 		run_keys[ j ] = NO_OP;
 		scanvalue = ((Const*) rightop)->constvalue;
-		
+#ifdef INDEXSCAN_PATCH
+	    } else if (IsA(rightop,Param)) {
+	        bool isnull;
+		/* ----------------
+		 *  if the rightop is a Param node then it means
+		 *  it identifies the value to place in our scan key.
+		 * ----------------
+		 */
+		run_keys[ j ] = NO_OP;
+		scanvalue = ExecEvalParam((Param*) rightop, 
+				scanstate->cstate.cs_ExprContext,
+				&isnull);
+		if ( isnull )
+		    flags |= SK_ISNULL;
+#endif
 	    } else if (rightop!=NULL &&
 		       is_funcclause(rightop) &&
 		       var_is_rel(lfirst(((Expr*)rightop)->args))) {
@@ -777,7 +807,7 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 	     * ----------------
 	     */
 	    ScanKeyEntryInitialize(&scan_keys[j],
-				   0,
+				   flags,
 				   varattno, /* attribute number to scan */
 				   (RegProcedure) opid,	/* reg proc to use */
 				   (Datum) scanvalue);	/* constant */
