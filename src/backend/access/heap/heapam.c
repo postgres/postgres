@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.22 1997/11/20 23:19:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.23 1997/11/21 18:03:55 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -650,7 +650,7 @@ heap_beginscan(Relation relation,
 	 */
 	sdesc = (HeapScanDesc) palloc(sizeof(HeapScanDescData));
 
-	relation->rd_nblocks = smgrnblocks(relation->rd_rel->relsmgr, relation);
+	relation->rd_nblocks = smgrnblocks(DEFAULT_SMGR, relation);
 	sdesc->rs_rd = relation;
 
 	if (nkeys)

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.26 1997/11/20 23:20:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.27 1997/11/21 18:04:16 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -568,10 +568,7 @@ ConstructIndexReldesc(Relation indexRelation, Oid amoid)
 
 	indexRelation->rd_rel->relam = amoid;
 	indexRelation->rd_rel->reltuples = 1;		/* XXX */
-	indexRelation->rd_rel->relexpires = 0;		/* XXX */
-	indexRelation->rd_rel->relpreserved = 0;	/* XXX */
 	indexRelation->rd_rel->relkind = RELKIND_INDEX;
-	indexRelation->rd_rel->relarch = 'n';		/* XXX */
 }
 
 /* ----------------------------------------------------------------
@@ -858,7 +855,6 @@ UpdateIndexRelation(Oid indexoid,
 	}
 
 	indexForm->indisclustered = '\0';	/* XXX constant */
-	indexForm->indisarchived = '\0';	/* XXX constant */
 
 	/* ----------------
 	 *	open the system catalog index relation

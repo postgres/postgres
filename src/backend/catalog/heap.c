@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.31 1997/11/20 23:20:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.32 1997/11/21 18:04:11 momjian Exp $
  *
  * INTERFACE ROUTINES
  *		heap_creatr()			- Create an uncataloged heap relation
@@ -58,9 +58,8 @@
 #include <string.h>
 #endif
 
-static void
-AddPgRelationTuple(Relation pg_class_desc,
-	   Relation new_rel_desc, Oid new_rel_oid, int arch, unsigned natts);
+static void AddPgRelationTuple(Relation pg_class_desc,
+	   Relation new_rel_desc, Oid new_rel_oid, unsigned natts);
 static void AddToTempRelList(Relation r);
 static void DeletePgAttributeTuples(Relation rdesc);
 static void DeletePgRelationTuple(Relation rdesc);
@@ -165,7 +164,6 @@ static TempRelList *tempRels = NULL;
  */
 Relation
 heap_creatr(char *name,
-			unsigned smgr,
 			TupleDesc tupDesc)
 {
 	register unsigned i;
@@ -283,7 +281,6 @@ heap_creatr(char *name,
 	namestrcpy(&(rdesc->rd_rel->relname), relname);
 	rdesc->rd_rel->relkind = RELKIND_UNCATALOGED;
 	rdesc->rd_rel->relnatts = natts;
-	rdesc->rd_rel->relsmgr = smgr;
 	if (tupDesc->constr)
 		rdesc->rd_rel->relchecks = tupDesc->constr->num_check;
 
@@ -313,7 +310,7 @@ heap_creatr(char *name,
 	 */
 
 	rdesc->rd_tmpunlinked = TRUE;		/* change once table is created */
-	rdesc->rd_fd = (File) smgrcreate(smgr, rdesc);
+	rdesc->rd_fd = (File) smgrcreate(DEFAULT_SMGR, rdesc);
 	rdesc->rd_tmpunlinked = FALSE;
 
 	RelationRegisterRelation(rdesc);
@@ -631,7 +628,6 @@ static void
 AddPgRelationTuple(Relation pg_class_desc,
 				   Relation new_rel_desc,
 				   Oid new_rel_oid,
-				   int arch,
 				   unsigned natts)
 {
 	Form_pg_class new_rel_reltup;
@@ -656,7 +652,6 @@ AddPgRelationTuple(Relation pg_class_desc,
 		new_rel_reltup->relkind = RELKIND_SEQUENCE;
 	else
 		new_rel_reltup->relkind = RELKIND_RELATION;
-	new_rel_reltup->relarch = arch;
 	new_rel_reltup->relnatts = natts;
 
 	/* ----------------
@@ -748,16 +743,12 @@ addNewRelationType(char *typeName, Oid new_rel_oid)
  */
 Oid
 heap_create(char relname[],
-			char *typename,		/* not used currently */
-			int arch,
-			unsigned smgr,
 			TupleDesc tupdesc)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
 	Oid			new_rel_oid;
 
-/*	  NameData			  typeNameData; */
 	int			natts = tupdesc->natts;
 
 	/* ----------------
@@ -793,7 +784,7 @@ heap_create(char relname[],
 	 *	of creating the disk file for the relation.
 	 * ----------------
 	 */
-	new_rel_desc = heap_creatr(relname, smgr, tupdesc);
+	new_rel_desc = heap_creatr(relname, tupdesc);
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
 	/* ----------------
@@ -801,8 +792,6 @@ heap_create(char relname[],
 	 *	we add a new system type corresponding to the new relation.
 	 * ----------------
 	 */
-/*	  namestrcpy(&typeNameData, relname);*/
-/*	  addNewRelationType(&typeNameData, new_rel_oid);*/
 	addNewRelationType(relname, new_rel_oid);
 
 	/* ----------------
@@ -819,7 +808,6 @@ heap_create(char relname[],
 	AddPgRelationTuple(pg_class_desc,
 					   new_rel_desc,
 					   new_rel_oid,
-					   arch,
 					   natts);
 
 	StoreConstraints(new_rel_desc);
@@ -1354,7 +1342,7 @@ heap_destroy(char *relname)
 	 */
 	if (!(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked))
 	{
-		smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
+		smgrunlink(DEFAULT_SMGR, rdesc);
 	}
 	rdesc->rd_tmpunlinked = TRUE;
 
@@ -1377,9 +1365,7 @@ heap_destroyr(Relation rdesc)
 {
 	ReleaseRelationBuffers(rdesc);
 	if (!(rdesc->rd_istemp) || !(rdesc->rd_tmpunlinked))
-	{
-		smgrunlink(rdesc->rd_rel->relsmgr, rdesc);
-	}
+		smgrunlink(DEFAULT_SMGR, rdesc);
 	rdesc->rd_tmpunlinked = TRUE;
 	heap_close(rdesc);
 	RemoveFromTempRelList(rdesc);
