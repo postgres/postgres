@@ -1,4 +1,4 @@
-/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.49 2003/11/29 22:41:04 pgsql Exp $ */
+/* $PostgreSQL: pgsql/src/include/mb/pg_wchar.h,v 1.50 2004/03/15 10:41:26 ishii Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -248,11 +248,14 @@ typedef int (*mb2wchar_with_len_converter) (const unsigned char *from,
 														int len);
 typedef int (*mblen_converter) (const unsigned char *mbstr);
 
+typedef int (*mbdisplaylen_converter) (const unsigned char *mbstr);
+
 typedef struct
 {
 	mb2wchar_with_len_converter mb2wchar_with_len;		/* convert a multibyte
 														 * string to a wchar */
 	mblen_converter mblen;		/* returns the length of a multibyte char */
+	mbdisplaylen_converter	dsplen;	/* returns the lenghth of a display length */
 	int			maxmblen;		/* max bytes for a char in this charset */
 } pg_wchar_tbl;
 
@@ -283,7 +286,9 @@ extern int	pg_wchar_strncmp(const pg_wchar *s1, const pg_wchar *s2, size_t n);
 extern int	pg_char_and_wchar_strncmp(const char *s1, const pg_wchar *s2, size_t n);
 extern size_t pg_wchar_strlen(const pg_wchar *wstr);
 extern int	pg_mblen(const unsigned char *mbstr);
+extern int	pg_dsplen(const unsigned char *mbstr);
 extern int	pg_encoding_mblen(int encoding, const unsigned char *mbstr);
+extern int	pg_encoding_dsplen(int encoding, const unsigned char *mbstr);
 extern int	pg_mule_mblen(const unsigned char *mbstr);
 extern int	pg_mic_mblen(const unsigned char *mbstr);
 extern int	pg_mbstrlen(const unsigned char *mbstr);

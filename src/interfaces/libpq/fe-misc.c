@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.104 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-misc.c,v 1.105 2004/03/15 10:41:26 ishii Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1093,6 +1093,16 @@ int
 PQmblen(const unsigned char *s, int encoding)
 {
 	return (pg_encoding_mblen(encoding, s));
+}
+
+/*
+ * returns the display length of the word beginning s, using the
+ * specified encoding.
+ */
+int
+PQdsplen(const unsigned char *s, int encoding)
+{
+	return (pg_encoding_dsplen(encoding, s));
 }
 
 /*

@@ -4,7 +4,7 @@
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.45 2003/11/29 19:52:02 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/mbutils.c,v 1.46 2004/03/15 10:41:25 ishii Exp $
  */
 #include "postgres.h"
 
@@ -461,6 +461,13 @@ int
 pg_mblen(const unsigned char *mbstr)
 {
 	return ((*pg_wchar_table[DatabaseEncoding->encoding].mblen) (mbstr));
+}
+
+/* returns the display length of a multibyte word */
+int
+pg_dsplen(const unsigned char *mbstr)
+{
+	return ((*pg_wchar_table[DatabaseEncoding->encoding].dsplen) (mbstr));
 }
 
 /* returns the length (counted as a wchar) of a multibyte string */

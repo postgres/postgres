@@ -1,7 +1,7 @@
 /*
  * conversion functions between pg_wchar and multibyte streams.
  * Tatsuo Ishii
- * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.35 2003/11/29 22:39:59 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/wchar.c,v 1.36 2004/03/15 10:41:25 ishii Exp $
  *
  * WIN1250 client encoding updated by Pavel Behal
  *
@@ -45,6 +45,12 @@ static int	pg_ascii2wchar_with_len
 
 static int
 pg_ascii_mblen(const unsigned char *s)
+{
+	return (1);
+}
+
+static int
+pg_ascii_dsplen(const unsigned char *s)
 {
 	return (1);
 }
@@ -107,6 +113,22 @@ pg_euc_mblen(const unsigned char *s)
 	return (len);
 }
 
+static int
+pg_euc_dsplen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s == SS2)
+		len = 2;
+	else if (*s == SS3)
+		len = 2;
+	else if (*s & 0x80)
+		len = 2;
+	else
+		len = 1;
+	return (len);
+}
+
 /*
  * EUC_JP
  */
@@ -122,6 +144,22 @@ pg_eucjp_mblen(const unsigned char *s)
 	return (pg_euc_mblen(s));
 }
 
+static int
+pg_eucjp_dsplen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s == SS2)
+		len = 1;
+	else if (*s == SS3)
+		len = 2;
+	else if (*s & 0x80)
+		len = 2;
+	else
+		len = 1;
+	return (len);
+}
+
 /*
  * EUC_KR
  */
@@ -135,6 +173,12 @@ static int
 pg_euckr_mblen(const unsigned char *s)
 {
 	return (pg_euc_mblen(s));
+}
+
+static int
+pg_euckr_dsplen(const unsigned char *s)
+{
+	return (pg_euc_dsplen(s));
 }
 
 /*
@@ -181,6 +225,18 @@ static int	pg_euccn2wchar_with_len
 
 static int
 pg_euccn_mblen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s & 0x80)
+		len = 2;
+	else
+		len = 1;
+	return (len);
+}
+
+static int
+pg_euccn_dsplen(const unsigned char *s)
 {
 	int			len;
 
@@ -250,6 +306,22 @@ pg_euctw_mblen(const unsigned char *s)
 	return (len);
 }
 
+static int
+pg_euctw_dsplen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s == SS2)
+		len = 2;
+	else if (*s == SS3)
+		len = 2;
+	else if (*s & 0x80)
+		len = 2;
+	else
+		len = 1;
+	return (len);
+}
+
 /*
  * JOHAB
  */
@@ -263,6 +335,12 @@ static int
 pg_johab_mblen(const unsigned char *s)
 {
 	return (pg_euc_mblen(s));
+}
+
+static int
+pg_johab_dsplen(const unsigned char *s)
+{
+	return (pg_euc_dsplen(s));
 }
 
 /*
@@ -331,6 +409,12 @@ pg_utf_mblen(const unsigned char *s)
 	else if ((*s & 0xe0) == 0xe0)
 		len = 3;
 	return (len);
+}
+
+static int
+pg_utf_dsplen(const unsigned char *s)
+{
+  return 1;	/* XXX fix me! */
 }
 
 /*
@@ -406,6 +490,12 @@ pg_mule_mblen(const unsigned char *s)
 	return (len);
 }
 
+static int
+pg_mule_dsplen(const unsigned char *s)
+{
+  return 1;	/* XXX fix me! */
+}
+
 /*
  * ISO8859-1
  */
@@ -430,11 +520,37 @@ pg_latin1_mblen(const unsigned char *s)
 	return (1);
 }
 
+static int
+pg_latin1_dsplen(const unsigned char *s)
+{
+	return (1);
+}
+
 /*
  * SJIS
  */
 static int
 pg_sjis_mblen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s >= 0xa1 && *s <= 0xdf)
+	{							/* 1 byte kana? */
+		len = 1;
+	}
+	else if (*s > 0x7f)
+	{							/* kanji? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
+static int
+pg_sjis_dsplen(const unsigned char *s)
 {
 	int			len;
 
@@ -472,6 +588,22 @@ pg_big5_mblen(const unsigned char *s)
 	return (len);
 }
 
+static int
+pg_big5_dsplen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s > 0x7f)
+	{							/* kanji? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
 /*
  * GBK
  */
@@ -491,11 +623,43 @@ pg_gbk_mblen(const unsigned char *s)
 	return (len);
 }
 
+static int
+pg_gbk_dsplen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s > 0x7f)
+	{							/* kanji? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
 /*
  * UHC
  */
 static int
 pg_uhc_mblen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s > 0x7f)
+	{							/* 2byte? */
+		len = 2;
+	}
+	else
+	{							/* should be ASCII */
+		len = 1;
+	}
+	return (len);
+}
+
+static int
+pg_uhc_dsplen(const unsigned char *s)
 {
 	int			len;
 
@@ -535,42 +699,58 @@ pg_gb18030_mblen(const unsigned char *s)
 	return (len);
 }
 
+static int
+pg_gb18030_dsplen(const unsigned char *s)
+{
+	int			len;
+
+	if (*s <= 0x7f)
+	{							/* ASCII */
+		len = 1;
+	}
+	else
+	{
+		len = 2;
+	}
+	return (len);
+}
+
 
 pg_wchar_tbl pg_wchar_table[] = {
-	{pg_ascii2wchar_with_len, pg_ascii_mblen, 1},		/* 0; PG_SQL_ASCII	*/
-	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, 3},		/* 1; PG_EUC_JP */
-	{pg_euccn2wchar_with_len, pg_euccn_mblen, 3},		/* 2; PG_EUC_CN */
-	{pg_euckr2wchar_with_len, pg_euckr_mblen, 3},		/* 3; PG_EUC_KR */
-	{pg_euctw2wchar_with_len, pg_euctw_mblen, 3},		/* 4; PG_EUC_TW */
-	{pg_johab2wchar_with_len, pg_johab_mblen, 3},		/* 5; PG_JOHAB */
-	{pg_utf2wchar_with_len, pg_utf_mblen, 3},	/* 6; PG_UNICODE */
-	{pg_mule2wchar_with_len, pg_mule_mblen, 3}, /* 7; PG_MULE_INTERNAL */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 8; PG_LATIN1 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 9; PG_LATIN2 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 10; PG_LATIN3 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 11; PG_LATIN4 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 12; PG_LATIN5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 13; PG_LATIN6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 14; PG_LATIN7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 15; PG_LATIN8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 16; PG_LATIN9 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 17; PG_LATIN10 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 18; PG_WIN1256 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 19; PG_TCVN */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 20; PG_WIN874 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 21; PG_KOI8 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 22; PG_WIN1251 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 23; PG_ALT */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 24; ISO-8859-5 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 25; ISO-8859-6 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 26; ISO-8859-7 */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 27; ISO-8859-8 */
-	{0, pg_sjis_mblen, 2},		/* 28; PG_SJIS */
-	{0, pg_big5_mblen, 2},		/* 29; PG_BIG5 */
-	{0, pg_gbk_mblen, 2},		/* 30; PG_GBK */
-	{0, pg_uhc_mblen, 2},		/* 31; PG_UHC */
-	{pg_latin12wchar_with_len, pg_latin1_mblen, 1},		/* 32; PG_WIN1250 */
-	{0, pg_gb18030_mblen, 2}	/* 33; PG_GB18030 */
+	{pg_ascii2wchar_with_len, pg_ascii_mblen, pg_ascii_dsplen, 1},		/* 0; PG_SQL_ASCII	*/
+	{pg_eucjp2wchar_with_len, pg_eucjp_mblen, pg_eucjp_dsplen, 3},		/* 1; PG_EUC_JP */
+	{pg_euccn2wchar_with_len, pg_euccn_mblen, pg_euccn_dsplen, 3},		/* 2; PG_EUC_CN */
+	{pg_euckr2wchar_with_len, pg_euckr_mblen, pg_euckr_dsplen, 3},		/* 3; PG_EUC_KR */
+	{pg_euctw2wchar_with_len, pg_euctw_mblen, pg_euctw_dsplen, 3},		/* 4; PG_EUC_TW */
+	{pg_johab2wchar_with_len, pg_johab_mblen, pg_johab_dsplen, 3},		/* 5; PG_JOHAB */
+	{pg_utf2wchar_with_len, pg_utf_mblen, pg_utf_dsplen, 3},	/* 6; PG_UNICODE */
+	{pg_mule2wchar_with_len, pg_mule_mblen, pg_mule_dsplen, 3}, /* 7; PG_MULE_INTERNAL */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 8; PG_LATIN1 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 9; PG_LATIN2 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 10; PG_LATIN3 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 11; PG_LATIN4 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 12; PG_LATIN5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 13; PG_LATIN6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 14; PG_LATIN7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 15; PG_LATIN8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 16; PG_LATIN9 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 17; PG_LATIN10 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 18; PG_WIN1256 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 19; PG_TCVN */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 20; PG_WIN874 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 21; PG_KOI8 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 22; PG_WIN1251 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 23; PG_ALT */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 24; ISO-8859-5 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 25; ISO-8859-6 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 26; ISO-8859-7 */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 27; ISO-8859-8 */
+	{0, pg_sjis_mblen, pg_sjis_dsplen, 2},		/* 28; PG_SJIS */
+	{0, pg_big5_mblen, pg_big5_dsplen,2},		/* 29; PG_BIG5 */
+	{0, pg_gbk_mblen, pg_gbk_dsplen, 2},		/* 30; PG_GBK */
+	{0, pg_uhc_mblen, pg_uhc_dsplen, 2},		/* 31; PG_UHC */
+	{pg_latin12wchar_with_len, pg_latin1_mblen, pg_latin1_dsplen, 1},		/* 32; PG_WIN1250 */
+	{0, pg_gb18030_mblen, pg_gb18030_dsplen, 2}	/* 33; PG_GB18030 */
 };
 
 /* returns the byte length of a word for mule internal code */
@@ -592,6 +772,20 @@ pg_encoding_mblen(int encoding, const unsigned char *mbstr)
 			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
 			((*pg_wchar_table[encoding].mblen) (mbstr)) :
 			((*pg_wchar_table[PG_SQL_ASCII].mblen) (mbstr)));
+}
+
+/*
+ * Returns the display length of a multibyte word.
+ */
+int
+pg_encoding_dsplen(int encoding, const unsigned char *mbstr)
+{
+	Assert(PG_VALID_ENCODING(encoding));
+
+	return ((encoding >= 0 &&
+			 encoding < sizeof(pg_wchar_table) / sizeof(pg_wchar_tbl)) ?
+			((*pg_wchar_table[encoding].dsplen) (mbstr)) :
+			((*pg_wchar_table[PG_SQL_ASCII].dsplen) (mbstr)));
 }
 
 /*
@@ -688,6 +882,3 @@ pg_database_encoding_max_length(void)
 }
 
 #endif
-
-
-
