@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.4 1997/02/06 02:31:25 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_id/Attic/Makefile,v 1.5 1997/04/04 10:41:26 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS= pg_id.o
 all: pg_id
 
 pg_id: $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) $(LDFLAGS) -o pg_id -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+	$(CC) -o pg_id -L$(LIBPQDIR) $(OBJS) -lpq $(LDFLAGS)
 
 $(LIBPQDIR)/libpq.a:
 	$(MAKE) -C $(LIBPQDIR) libpq.a

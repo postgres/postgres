@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.1 1997/02/09 03:23:23 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/Makefile.in,v 1.2 1997/04/04 10:41:17 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS= pg_dump.o common.o @STRDUP@
 all: submake pg_dump
 
 pg_dump: $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) $(LDFLAGS) -o pg_dump -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+	$(CC) -o pg_dump -L$(LIBPQDIR) $(OBJS) -lpq $(LDFLAGS)
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o

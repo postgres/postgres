@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.3 1997/02/06 02:31:52 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.4 1997/04/04 10:41:37 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ OBJS= pg_version.o ../../utils/version.o
 all: pg_version
 
 pg_version: submake $(OBJS)
-	$(CC) $(LDFLAGS) -o pg_version $(OBJS) $(LD_ADD)
+	$(CC) -o pg_version $(OBJS) $(LDFLAGS)
 
 .PHONY: submake
 submake:

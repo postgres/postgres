@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.7 1997/03/25 09:20:32 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile,v 1.8 1997/04/04 10:42:43 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -46,7 +46,7 @@ ifeq ($(PORTNAME), i386_solaris)
   INSTALL-SHLIB-DEP := install-shlib
   SHLIB := libpq++.so.1
   LDFLAGS_SL = -G -z text
-  CFLAGS += -fPIC
+  CFLAGS += $(CFLAGS_SL)
 endif
 
 all: $(LIBNAME).a $(SHLIB) install examples

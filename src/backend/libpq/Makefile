@@ -4,7 +4,7 @@
 #    Makefile for libpq subsystem (backend half of libpq interface)
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.6 1997/03/18 20:14:32 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/libpq/Makefile,v 1.7 1997/04/04 10:39:19 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -20,7 +20,7 @@ CFLAGS+=$(INCLUDE_OPT)
 # kerberos flags
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
-LDADD+= $(KRBLIBS)
+LDFLAGS+= $(KRBLIBS)
 endif
 
 OBJS = be-dumpdata.o be-fsstubs.o be-pqexec.o pqcomprim.o\

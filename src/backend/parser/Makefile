@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.5 1997/04/02 18:12:14 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.6 1997/04/04 10:40:11 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -15,7 +15,7 @@ INCLUDE_OPT= -I.. \
              -I../port/$(PORTNAME) \
              -I../../include
 
-CFLAGS+= $(INCLUDE_OPT)
+CFLAGS+= $(INCLUDE_OPT) -Wno-error
 
 OBJS= analyze.o catalog_utils.o dbcommands.o gram.o \
       keywords.o parser.o parse_query.o scan.o scansup.o sysfunc.o

@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.17 1997/04/04 07:57:45 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.18 1997/04/04 10:38:23 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -249,12 +249,9 @@ endif
 CC= @CC@
 LEX= @LEX@
 AROPT= @AROPT@
-CFLAGS= @CPPFLAGS@ @ALL@
-CFLAGS_SL= @SHARED_LIBS@
-CFLAGS_BE= @BACKEND@
-LDFLAGS= @LDFLAGS@
-LDADD_BE= @LIBS@
-LD_ADD= $(LDADD_BE)
+CFLAGS= @CPPFLAGS@ @CFLAGS@
+CFLAGS_SL= @SHARED_LIB@
+LDFLAGS= @LDFLAGS@ @LIBS@
 DLSUFFIX= @DLSUFFIX@
 
 #----------------------------------------------------------------------
@@ -360,7 +357,7 @@ ifeq ($(PORTNAME), irix5)
 RANLIB= touch
 
 %.so: %.o
-	$(LD) -G -Bdynamic -o $@ $< $(LD_ADD)
+	$(LD) -G -Bdynamic -o $@ $< $(LDFLAGS)
 
 endif
 
@@ -368,7 +365,7 @@ endif
 
 ifeq ($(PORTNAME), linux)
 ifdef LINUX_ELF
-LDFLAGS_BE= -rdynamic
+LDFLAGS+= -rdynamic
 endif
 MK_NO_LORDER= true
 
@@ -402,8 +399,7 @@ YACC= bison -y
 # symbol names to tell them what to export/import.
 MAKE_EXPORTS= true
 
-LDADD_BE+= /usr/ucblib/libucb.a 
-LDFLAGS_BE= -LD-Blargedynsym
+LDFLAGS+= /usr/ucblib/libucb.a -LD-Blargedynsym
 
 %.so: %.o
 	$(LD) -G -Bdynamic -o $@ $<
@@ -425,12 +421,6 @@ endif
 #
 ifeq ($(PORTNAME), univel)
 YACC= bison -y
-
-#
-#	Some of the Makefiles use LDADD, others use LD_ADD.
-#	This makes them the same.
-#
-LDADD= $(LD_ADD)
 
 # MAKE_EXPORTS is required for svr4 loaders that want a file of
 # symbol names to tell them what to export/import.
@@ -483,32 +473,14 @@ endif
 
 ifneq ($(CUSTOM_COPT),)
   COPT= $(CUSTOM_COPT)
-else
-  ifeq ($(CC), gcc)
-    COPT= -O2 -Werror
-  else
-    COPT= -O
-  endif
 endif
 
-
 ifeq ($(CC), gcc)
-# Some flags only gcc recognizes...
-# PostgreSQL should *always* compile with these enabled
 CFLAGS+= -Wall -Wmissing-prototypes
 endif
 
-# Globally pass debugging/optimization/profiling flags based
-# on the options selected above.
-
-
 ifdef COPT
    CFLAGS+= $(COPT)
-else
-   ifndef CFLAGS_OPT
-      CFLAGS_OPT= -O
-   endif
-   CFLAGS+= $(CFLAGS_OPT)
 endif
 
 ifndef CASSERT
@@ -517,13 +489,7 @@ endif
 
 ifdef PROFILE
    CFLAGS+= $(PROFILE)
-   LDFLAGS+= $(PROFILE)
 endif
 
 # Globally pass PORTNAME
 CFLAGS+= -D$(PORTNAME)
-
-# include port-specific flags
-CFLAGS+= $(CFLAGS_BE)
-LDFLAGS+= $(LDFLAGS_BE)
-

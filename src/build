@@ -28,12 +28,13 @@ else
 		TEMPLATE=template/$a
 	fi
 	AROPT=`grep AROPT $TEMPLATE | awk -F: '{print $2}'`
-	SHARED_LIBS=`grep SHARED_LIBS $TEMPLATE | awk -F: '{print $2}'`
-	ALL=`grep ALL $TEMPLATE | awk -F: '{print $2}'`
-	BACKEND=`grep BACKEND $TEMPLATE | awk -F: '{print $2}'`
+	SHARED_LIB=`grep SHARED_LIB $TEMPLATE | awk -F: '{print $2}'`
+	CFLAGS=`grep CFLAGS $TEMPLATE | awk -F: '{print $2}'`
 	SRCH_INC=`grep SRCH_INC $TEMPLATE | awk -F: '{print $2}'`
 	SRCH_LIB=`grep SRCH_LIB $TEMPLATE | awk -F: '{print $2}'`
 	USE_LOCALE=`grep USE_LOCALE $TEMPLATE | awk -F: '{print $2}'`
+	DLSUFFIX=`grep DLSUFFIX $TEMPLATE | awk -F: '{print $2}'`
+	DL_LIB=`grep DL_LIB $TEMPLATE | awk -F: '{print $2}'`
 fi
 
 $ECHO_N "Additional directories to search for .h files [$SRCH_INC]: $ECHO_C"
@@ -45,14 +46,13 @@ else
 	if [ "$a." != "." ]; then
 		SRCH_INC = $a
 	fi
-	echo $a
         CPPFLAGS=`echo "$SRCH_INC" | sed 's@  *@ @g; s@^\([^ ]\)@-I\1@; s@ \([^ ]\)@ -I\1@g'`
 fi
 
-echo ""
+
 $ECHO_N "Additional directories to search for library files [$SRCH_LIB]: $ECHO_C"
 read a
-if [ "$a." != " ." ]
+if [ "$a." = " ." ]
 then
 	LDFLAGS=
 else
@@ -105,8 +105,8 @@ then
         NOHBA=${a}
 fi
 
-export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA AROPT 
-export SHARED_LIBS CFLAGS CPPFLAGS LDFLAGS
+export BUILDRUN USE_LOCALE DEF_PGPORT NOHBA AROPT DLSUFFIX DL_LIB
+export SHARED_LIB CFLAGS CPPFLAGS LDFLAGS
 
 ./configure --prefix=${IDIR}
 

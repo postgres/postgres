@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.3 1997/02/09 03:23:52 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/psql/Attic/Makefile.in,v 1.4 1997/04/04 10:42:23 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,7 +24,7 @@ OBJS= psql.o stringutils.o @STRDUP@
 all: submake psql
 
 psql: $(OBJS) $(LIBPQDIR)/libpq.a
-	$(CC) $(LDFLAGS) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LD_ADD)
+	$(CC) -o psql -L$(LIBPQDIR) $(OBJS) -lpq $(LDFLAGS)
 
 ../../utils/strdup.o:
 	$(MAKE) -C ../../utils strdup.o

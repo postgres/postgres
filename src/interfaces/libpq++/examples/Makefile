@@ -21,13 +21,13 @@ INCLUDE_OPT= \
              -I$(HEADERDIR)
 CXXFLAGS+= $(INCLUDE_OPT)
 
-LD_ADD+= -L.. -lpq++ -L$(LIBPQDIR) -lpq 
+LDFLAGS+= -L.. -lpq++ -L$(LIBPQDIR) -lpq 
 
 #
 # And where libpq goes, so goes the authentication stuff...
 #
 ifdef KRBVERS
-LD_ADD+= $(KRBLIBS)
+LDFLAGS+= $(KRBLIBS)
 CXXFLAGS+= $(KRBFLAGS)
 endif
 
@@ -37,7 +37,7 @@ PROGS=	testlibpq0 testlibpq1 testlibpq2 testlibpq3 \
 all: submake $(PROGS)
 
 $(PROGS): % : %.cc ../$(LIBNAME).a
-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -o $@ $@.cc $(LD_ADD)
+	$(CXX) $(CXXFLAGS) -o $@ $@.cc $(LDFLAGS)
 
 .PHONY: submake
 submake: 
