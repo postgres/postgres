@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.4 2000/08/06 04:40:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.5 2000/08/21 17:22:32 tgl Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -436,8 +436,8 @@ update_attstats(Oid relid, int natts, VacAttrStats *vacattrstats)
 
 		if (VacAttrStatsEqValid(stats))
 		{
-			float32data selratio;	/* average ratio of rows selected
-									 * for a random constant */
+			float4	selratio;	/* average ratio of rows selected
+								 * for a random constant */
 
 			/* Compute disbursion */
 			if (stats->nonnull_cnt == 0 && stats->null_cnt == 0)

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.46 2000/07/05 23:11:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.47 2000/08/21 17:22:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -295,14 +295,14 @@ ProcedureCreate(char *procedureName,
 	values[i++] = Int32GetDatum(GetUserId());
 	values[i++] = ObjectIdGetDatum(languageObjectId);
 	/* XXX isinherited is always false for now */
-	values[i++] = Int8GetDatum((bool) false);
-	values[i++] = Int8GetDatum(trusted);
-	values[i++] = Int8GetDatum(canCache);
-	values[i++] = Int8GetDatum(isStrict);
+	values[i++] = BoolGetDatum(false);
+	values[i++] = BoolGetDatum(trusted);
+	values[i++] = BoolGetDatum(canCache);
+	values[i++] = BoolGetDatum(isStrict);
 	values[i++] = UInt16GetDatum(parameterCount);
-	values[i++] = Int8GetDatum(returnsSet);
+	values[i++] = BoolGetDatum(returnsSet);
 	values[i++] = ObjectIdGetDatum(typeObjectId);
-	values[i++] = (Datum) typev;
+	values[i++] = PointerGetDatum(typev);
 	values[i++] = Int32GetDatum(byte_pct);		/* probyte_pct */
 	values[i++] = Int32GetDatum(perbyte_cpu);	/* properbyte_cpu */
 	values[i++] = Int32GetDatum(percall_cpu);	/* propercall_cpu */

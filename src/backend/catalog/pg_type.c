@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.54 2000/07/05 23:11:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_type.c,v 1.55 2000/08/21 17:22:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -177,17 +177,17 @@ TypeShellMakeWithOpenRelation(Relation pg_type_desc, char *typeName)
 	values[i++] = Int16GetDatum(0);				/* 3 */
 	values[i++] = Int16GetDatum(0);				/* 4 */
 	values[i++] = BoolGetDatum(false);			/* 5 */
-	values[i++] = BoolGetDatum(false);			/* 6 */
+	values[i++] = CharGetDatum(0);				/* 6 */
 	values[i++] = BoolGetDatum(false);			/* 7 */
-	values[i++] = BoolGetDatum(false);			/* 8 */
+	values[i++] = CharGetDatum(0);				/* 8 */
 	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 9 */
 	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 10 */
 	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 11 */
 	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 12 */
 	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 13 */
 	values[i++] = ObjectIdGetDatum(InvalidOid);	/* 14 */
-	values[i++] = CharGetDatum('p');			/* 15 */
-	values[i++] = CharGetDatum('i');			/* 16 */
+	values[i++] = CharGetDatum('i');			/* 15 */
+	values[i++] = CharGetDatum('p');			/* 16 */
 	values[i++] = DirectFunctionCall1(textin,
 									  CStringGetDatum(typeName));	/* 17 */
 
@@ -370,16 +370,16 @@ TypeCreate(char *typeName,
 	 */
 	i = 0;
 	namestrcpy(&name, typeName);
-	values[i++] = NameGetDatum(&name);	/* 1 */
-	values[i++] = (Datum) GetUserId();	/* 2 */
-	values[i++] = (Datum) internalSize; /* 3 */
-	values[i++] = (Datum) externalSize; /* 4 */
-	values[i++] = (Datum) passedByValue;		/* 5 */
-	values[i++] = (Datum) typeType;		/* 6 */
-	values[i++] = (Datum) (bool) 1;		/* 7 */
-	values[i++] = (Datum) typDelim;		/* 8 */
-	values[i++] = (Datum) (typeType == 'c' ? relationOid : InvalidOid); /* 9 */
-	values[i++] = (Datum) elementObjectId;		/* 10 */
+	values[i++] = NameGetDatum(&name);			/* 1 */
+	values[i++] = Int32GetDatum(GetUserId());	/* 2 */
+	values[i++] = Int16GetDatum(internalSize);	/* 3 */
+	values[i++] = Int16GetDatum(externalSize);	/* 4 */
+	values[i++] = BoolGetDatum(passedByValue);	/* 5 */
+	values[i++] = CharGetDatum(typeType);		/* 6 */
+	values[i++] = BoolGetDatum(true);			/* 7 */
+	values[i++] = CharGetDatum(typDelim);		/* 8 */
+	values[i++] = ObjectIdGetDatum(typeType == 'c' ? relationOid : InvalidOid); /* 9 */
+	values[i++] = ObjectIdGetDatum(elementObjectId); /* 10 */
 
 	procs[0] = inputProcedure;
 	procs[1] = outputProcedure;
@@ -438,20 +438,20 @@ TypeCreate(char *typeName,
 				func_error("TypeCreate", procname, 1, argList, NULL);
 		}
 
-		values[i++] = (Datum) tup->t_data->t_oid;		/* 11 - 14 */
+		values[i++] = ObjectIdGetDatum(tup->t_data->t_oid);	/* 11 - 14 */
 	}
 
 	/* ----------------
 	 * set default alignment
 	 * ----------------
 	 */
-	values[i++] = (Datum) alignment;	/* 15 */
+	values[i++] = CharGetDatum(alignment);	/* 15 */
 
 	/* ----------------
 	 *	set default storage for TOAST
 	 * ----------------
 	 */
-	values[i++] = (Datum) storage; /* 16 */
+	values[i++] = CharGetDatum(storage);	/* 16 */
 
 	/* ----------------
 	 *	initialize the default value for this type.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.17 2000/05/27 18:18:31 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.18 2000/08/21 17:22:36 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -499,12 +499,12 @@ SELECT clean_EMP();
 	</row>
 	<row>
 	 <entry>float4</entry>
-	 <entry>float32 or (float4 *)</entry>
+	 <entry>(float4 *)</entry>
 	<entry>include/c.h or include/postgres.h</entry>
 	</row>
 	<row>
 	 <entry>float8</entry>
-	 <entry>float64 or (float8 *)</entry>
+	 <entry>(float8 *)</entry>
 	 <entry>include/c.h or include/postgres.h</entry>
 	</row>
 	<row>

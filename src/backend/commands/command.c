@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.94 2000/08/04 04:16:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.95 2000/08/21 17:22:32 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -614,7 +614,7 @@ AlterTableAlterColumn(const char *relationName,
 							   Int16GetDatum(attnum));
 		ScanKeyEntryInitialize(&scankeys[2], 0x0,
 							   Anum_pg_attribute_atthasdef, F_BOOLEQ,
-							   Int32GetDatum(TRUE));
+							   BoolGetDatum(true));
 
 		scan = heap_beginscan(attr_rel, false, SnapshotNow, 3, scankeys);
 		AssertState(scan != NULL);

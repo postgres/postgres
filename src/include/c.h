@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.80 2000/07/17 04:35:55 tgl Exp $
+ * $Id: c.h,v 1.81 2000/08/21 17:22:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,6 +186,9 @@ typedef unsigned int uint32;	/* == 32 bits */
  *
  *		Since sizeof(floatN) may be > sizeof(char *), always pass
  *		floatN by reference.
+ *
+ * XXX: these typedefs are now deprecated in favor of float4 and float8.
+ * They will eventually go away.
  */
 typedef float float32data;
 typedef double float64data;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.71 2000/08/13 02:50:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.72 2000/08/21 17:22:34 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -353,7 +353,7 @@ make_ands_implicit(Expr *clause)
 		return clause->args;
 	else if (IsA(clause, Const) &&
 			 !((Const *) clause)->constisnull &&
-			 DatumGetInt32(((Const *) clause)->constvalue))
+			 DatumGetBool(((Const *) clause)->constvalue))
 		return NIL;				/* constant TRUE input -> NIL list */
 	else
 		return lcons(clause, NIL);
@@ -1111,12 +1111,15 @@ eval_const_expressions_mutator(Node *node, void *context)
 			case OR_EXPR:
 				{
 
-					/*
-					 * OR arguments are handled as follows: non constant:
-					 * keep FALSE: drop (does not affect result) TRUE:
-					 * force result to TRUE NULL: keep only one We keep
-					 * one NULL input because ExecEvalOr returns NULL when
-					 * no input is TRUE and at least one is NULL.
+					/*----------
+					 * OR arguments are handled as follows:
+					 *	non constant: keep
+					 *	FALSE: drop (does not affect result)
+					 *	TRUE: force result to TRUE
+					 *	NULL: keep only one
+					 * We keep one NULL input because ExecEvalOr returns NULL
+					 * when no input is TRUE and at least one is NULL.
+					 *----------
 					 */
 					List	   *newargs = NIL;
 					List	   *arg;
@@ -1133,7 +1136,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 						const_input = (Const *) lfirst(arg);
 						if (const_input->constisnull)
 							haveNull = true;
-						else if (DatumGetInt32(const_input->constvalue))
+						else if (DatumGetBool(const_input->constvalue))
 							forceTrue = true;
 						/* otherwise, we can drop the constant-false input */
 					}
@@ -1161,12 +1164,15 @@ eval_const_expressions_mutator(Node *node, void *context)
 			case AND_EXPR:
 				{
 
-					/*
-					 * AND arguments are handled as follows: non constant:
-					 * keep TRUE: drop (does not affect result) FALSE:
-					 * force result to FALSE NULL: keep only one We keep
-					 * one NULL input because ExecEvalAnd returns NULL
+					/*----------
+					 * AND arguments are handled as follows:
+					 *	non constant: keep
+					 *	TRUE: drop (does not affect result)
+					 *	FALSE: force result to FALSE
+					 *	NULL: keep only one
+					 * We keep one NULL input because ExecEvalAnd returns NULL
 					 * when no input is FALSE and at least one is NULL.
+					 *----------
 					 */
 					List	   *newargs = NIL;
 					List	   *arg;
@@ -1183,7 +1189,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 						const_input = (Const *) lfirst(arg);
 						if (const_input->constisnull)
 							haveNull = true;
-						else if (!DatumGetInt32(const_input->constvalue))
+						else if (!DatumGetBool(const_input->constvalue))
 							forceFalse = true;
 						/* otherwise, we can drop the constant-true input */
 					}
@@ -1217,7 +1223,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 				if (const_input->constisnull)
 					return MAKEBOOLCONST(false, true);
 				/* otherwise pretty easy */
-				return MAKEBOOLCONST(!DatumGetInt32(const_input->constvalue),
+				return MAKEBOOLCONST(!DatumGetBool(const_input->constvalue),
 									 false);
 			case SUBPLAN_EXPR:
 
@@ -1330,7 +1336,7 @@ eval_const_expressions_mutator(Node *node, void *context)
 			}
 			const_input = (Const *) casewhen->expr;
 			if (const_input->constisnull ||
-				!DatumGetInt32(const_input->constvalue))
+				!DatumGetBool(const_input->constvalue))
 				continue;		/* drop alternative with FALSE condition */
 
 			/*
