@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.31 1999/12/10 07:37:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.32 1999/12/13 01:26:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,37 +28,10 @@ typedef struct {
 	List	   *groupClauses;
 } check_ungrouped_columns_context;
 
-static bool contain_agg_clause(Node *clause);
-static bool contain_agg_clause_walker(Node *node, void *context);
 static void check_ungrouped_columns(Node *node, ParseState *pstate,
 									List *groupClauses);
 static bool check_ungrouped_columns_walker(Node *node,
 										   check_ungrouped_columns_context *context);
-
-/*
- * contain_agg_clause
- *	  Recursively find aggref nodes within a clause.
- *
- *	  Returns true if any aggregate found.
- *
- * NOTE: we assume that the given clause has been transformed suitably for
- * parser output.  This means we can use the planner's expression_tree_walker.
- */
-static bool
-contain_agg_clause(Node *clause)
-{
-	return contain_agg_clause_walker(clause, NULL);
-}
-
-static bool
-contain_agg_clause_walker(Node *node, void *context)
-{
-	if (node == NULL)
-		return false;
-	if (IsA(node, Aggref))
-		return true;			/* abort the tree traversal and return true */
-	return expression_tree_walker(node, contain_agg_clause_walker, context);
-}
 
 /*
  * check_ungrouped_columns -
@@ -232,7 +205,8 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	 * Since "1" never evaluates as null, we currently have no need of
 	 * the "usenulls" flag, but it should be kept around; in fact, we should
 	 * extend the pg_aggregate table to let usenulls be specified as an
-	 * attribute of user-defined aggregates.
+	 * attribute of user-defined aggregates.  In the meantime, usenulls
+	 * is just always set to "false".
 	 */
 
 	aggform = (Form_pg_aggregate) GETSTRUCT(theAggTuple);
@@ -264,14 +238,8 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 	aggref->aggtype = fintype;
 	aggref->target = lfirst(args);
 	aggref->usenulls = usenulls;
-
-	/*
-	 * We should store agg_star and agg_distinct into the Aggref node,
-	 * and let downstream processing deal with them.  Currently, agg_star
-	 * is ignored and agg_distinct is not implemented...
-	 */
-	if (agg_distinct)
-		elog(ERROR, "aggregate(DISTINCT ...) is not implemented yet");
+	aggref->aggstar = agg_star;
+	aggref->aggdistinct = agg_distinct;
 
 	pstate->p_hasAggs = true;
 

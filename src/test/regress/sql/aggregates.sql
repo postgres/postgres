@@ -30,6 +30,12 @@ SELECT max(student.gpa) AS max_3_7 FROM student;
 
 SELECT count(four) AS cnt_1000 FROM onek;
 
+SELECT count(DISTINCT four) AS cnt_4 FROM onek;
+
+select ten, count(*), sum(four) from onek group by ten;
+
+select ten, count(four), sum(DISTINCT four) from onek group by ten;
+
 
 SELECT newavg(four) AS avg_1 FROM onek;
 

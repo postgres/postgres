@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.56 1999/12/09 05:58:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.57 1999/12/13 01:26:55 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -45,6 +45,7 @@ typedef struct {
 	List	   *targetList;
 } check_subplans_for_ungrouped_vars_context;
 
+static bool contain_agg_clause_walker(Node *node, void *context);
 static bool pull_agg_clause_walker(Node *node, List **listptr);
 static bool check_subplans_for_ungrouped_vars_walker(Node *node,
 					check_subplans_for_ungrouped_vars_context *context);
@@ -394,11 +395,35 @@ pull_constant_clauses(List *quals, List **constantQual)
 }
 
 /*
+ * contain_agg_clause
+ *	  Recursively search for Aggref nodes within a clause.
+ *
+ *	  Returns true if any aggregate found.
+ */
+bool
+contain_agg_clause(Node *clause)
+{
+	return contain_agg_clause_walker(clause, NULL);
+}
+
+static bool
+contain_agg_clause_walker(Node *node, void *context)
+{
+	if (node == NULL)
+		return false;
+	if (IsA(node, Aggref))
+		return true;			/* abort the tree traversal and return true */
+	return expression_tree_walker(node, contain_agg_clause_walker, context);
+}
+
+/*
  * pull_agg_clause
  *	  Recursively pulls all Aggref nodes from an expression tree.
  *
  *	  Returns list of Aggref nodes found.  Note the nodes themselves are not
  *	  copied, only referenced.
+ *
+ *	  Note: this also checks for nested aggregates, which are an error.
  */
 List *
 pull_agg_clause(Node *clause)
@@ -417,9 +442,16 @@ pull_agg_clause_walker(Node *node, List **listptr)
 	if (IsA(node, Aggref))
 	{
 		*listptr = lappend(*listptr, node);
-		/* continue, to iterate over agg's arg as well (do nested aggregates
-		 * actually work?)
+		/*
+		 * Complain if the aggregate's argument contains any aggregates;
+		 * nested agg functions are semantically nonsensical.
 		 */
+		if (contain_agg_clause(((Aggref *) node)->target))
+			elog(ERROR, "Aggregate function calls may not be nested");
+		/*
+		 * Having checked that, we need not recurse into the argument.
+		 */
+		return false;
 	}
 	return expression_tree_walker(node, pull_agg_clause_walker,
 								  (void *) listptr);

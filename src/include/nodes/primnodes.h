@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.37 1999/11/15 02:00:15 tgl Exp $
+ * $Id: primnodes.h,v 1.38 1999/12/13 01:27:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,10 +297,12 @@ typedef struct Iter
 /* ----------------
  * Aggref
  *		aggname			- name of the aggregate
- *		basetype		- base type Oid of the aggregate
+ *		basetype		- base type Oid of the aggregate (ie, input type)
  *		aggtype			- type Oid of final result of the aggregate
  *		target			- attribute or expression we are aggregating on
  *		usenulls		- TRUE to accept null values as inputs
+ *		aggstar			- TRUE if argument was really '*'
+ *		aggdistinct		- TRUE if arguments were labeled DISTINCT
  *		aggno			- workspace for nodeAgg.c executor
  * ----------------
  */
@@ -312,6 +314,8 @@ typedef struct Aggref
 	Oid			aggtype;
 	Node	   *target;
 	bool		usenulls;
+	bool		aggstar;
+	bool		aggdistinct;
 	int			aggno;
 } Aggref;
 

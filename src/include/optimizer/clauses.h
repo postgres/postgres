@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.31 1999/12/09 05:58:55 tgl Exp $
+ * $Id: clauses.h,v 1.32 1999/12/13 01:27:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -38,6 +38,7 @@ extern Expr *make_ands_explicit(List *andclauses);
 extern List *make_ands_implicit(Expr *clause);
 
 extern List *pull_constant_clauses(List *quals, List **constantQual);
+extern bool contain_agg_clause(Node *clause);
 extern List *pull_agg_clause(Node *clause);
 extern void check_subplans_for_ungrouped_vars(Node *clause,
 											  Query *query,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.75 1999/11/23 20:06:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.76 1999/12/13 01:26:54 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1189,6 +1189,14 @@ _readAggref()
 	token = lsptok(NULL, &length);		/* eat :usenulls */
 	token = lsptok(NULL, &length);		/* get usenulls */
 	local_node->usenulls = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :aggstar */
+	token = lsptok(NULL, &length);		/* get aggstar */
+	local_node->aggstar = (token[0] == 't') ? true : false;
+
+	token = lsptok(NULL, &length);		/* eat :aggdistinct */
+	token = lsptok(NULL, &length);		/* get aggdistinct */
+	local_node->aggdistinct = (token[0] == 't') ? true : false;
 
 	return local_node;
 }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.97 1999/11/23 20:06:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.98 1999/12/13 01:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -832,6 +832,8 @@ _copyAggref(Aggref *from)
 	newnode->aggtype = from->aggtype;
 	Node_Copy(from, newnode, target);
 	newnode->usenulls = from->usenulls;
+	newnode->aggstar = from->aggstar;
+	newnode->aggdistinct = from->aggdistinct;
 	newnode->aggno = from->aggno; /* probably not needed */
 
 	return newnode;

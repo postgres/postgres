@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.52 1999/11/23 20:06:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.53 1999/12/13 01:26:53 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,10 @@ _equalAggref(Aggref *a, Aggref *b)
 	if (!equal(a->target, b->target))
 		return false;
 	if (a->usenulls != b->usenulls)
+		return false;
+	if (a->aggstar != b->aggstar)
+		return false;
+	if (a->aggdistinct != b->aggdistinct)
 		return false;
 	/* ignore aggno, which is only a private field for the executor */
 	return true;

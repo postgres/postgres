@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.34 1999/12/06 02:37:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.35 1999/12/13 01:27:01 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1352,9 +1352,13 @@ get_rule_expr(Node *node, deparse_context *context)
 			{
 				Aggref	   *aggref = (Aggref *) node;
 
-				appendStringInfo(buf, "%s(",
-								 quote_identifier(aggref->aggname));
-				get_rule_expr(aggref->target, context);
+				appendStringInfo(buf, "%s(%s",
+								 quote_identifier(aggref->aggname),
+								 aggref->aggdistinct ? "DISTINCT " : "");
+				if (aggref->aggstar)
+					appendStringInfo(buf, "*");
+				else
+					get_rule_expr(aggref->target, context);
 				appendStringInfo(buf, ")");
 			}
 			break;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: outfuncs.c,v 1.99 1999/12/10 07:37:31 tgl Exp $
+ *	$Id: outfuncs.c,v 1.100 1999/12/13 01:26:53 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -680,14 +680,17 @@ static void
 _outAggref(StringInfo str, Aggref *node)
 {
 	appendStringInfo(str,
-				 " AGGREG :aggname %s :basetype %u :aggtype %u :target ",
+					 " AGGREG :aggname %s :basetype %u :aggtype %u :target ",
 					 stringStringInfo(node->aggname),
 					 node->basetype,
 					 node->aggtype);
 	_outNode(str, node->target);
 
-	appendStringInfo(str, " :usenulls %s ",
-					 node->usenulls ? "true" : "false");
+	appendStringInfo(str, " :usenulls %s :aggstar %s :aggdistinct %s ",
+					 node->usenulls ? "true" : "false",
+					 node->aggstar ? "true" : "false",
+					 node->aggdistinct ? "true" : "false");
+	/* aggno is not dumped */
 }
 
 /*

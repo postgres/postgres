@@ -3,8 +3,8 @@
  * tuplesort.c
  *	  Generalized tuple sorting routines.
  *
- * This module handles sorting of either heap tuples or index tuples
- * (and could fairly easily support other kinds of sortable objects,
+ * This module handles sorting of heap tuples, index tuples, or single
+ * Datums (and could easily support other kinds of sortable objects,
  * if necessary).  It works efficiently for both small and large amounts
  * of data.  Small amounts are sorted in-memory using qsort().  Large
  * amounts are sorted using temporary files and a standard external sort
@@ -77,7 +77,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.2 1999/10/30 17:27:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.3 1999/12/13 01:27:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -87,7 +87,9 @@
 #include "access/heapam.h"
 #include "access/nbtree.h"
 #include "miscadmin.h"
+#include "parser/parse_type.h"
 #include "utils/logtape.h"
+#include "utils/lsyscache.h"
 #include "utils/tuplesort.h"
 
 /*
@@ -251,6 +253,17 @@ struct Tuplesortstate
 	 */
 	Relation	indexRel;
 	bool		enforceUnique;	/* complain if we find duplicate tuples */
+
+	/*
+	 * These variables are specific to the Datum case; they are set
+	 * by tuplesort_begin_datum and used only by the DatumTuple routines.
+	 */
+	Oid			datumType;
+	Oid			sortOperator;
+	FmgrInfo	sortOpFn;		/* cached lookup data for sortOperator */
+	/* we need typelen and byval in order to know how to copy the Datums. */
+	int			datumTypeLen;
+	bool		datumTypeByVal;
 };
 
 #define COMPARETUP(state,a,b)	((*(state)->comparetup) (state, a, b))
@@ -321,7 +334,22 @@ struct Tuplesortstate
  *--------------------
  */
 
+/*
+ * For sorting single Datums, we build "pseudo tuples" that just carry
+ * the datum's value and null flag.  For pass-by-reference data types,
+ * the actual data value appears after the DatumTupleHeader (MAXALIGNed,
+ * of course), and the value field in the header is just a pointer to it.
+ */
+
+typedef struct
+{
+	Datum		val;
+	bool		isNull;
+} DatumTuple;
+
+
 static Tuplesortstate *tuplesort_begin_common(bool randomAccess);
+static void puttuple_common(Tuplesortstate *state, void *tuple);
 static void inittapes(Tuplesortstate *state);
 static void selectnewtape(Tuplesortstate *state);
 static void mergeruns(Tuplesortstate *state);
@@ -349,6 +377,13 @@ static void writetup_index(Tuplesortstate *state, int tapenum, void *tup);
 static void *readtup_index(Tuplesortstate *state, int tapenum,
 						   unsigned int len);
 static unsigned int tuplesize_index(Tuplesortstate *state, void *tup);
+static int comparetup_datum(Tuplesortstate *state,
+							const void *a, const void *b);
+static void *copytup_datum(Tuplesortstate *state, void *tup);
+static void writetup_datum(Tuplesortstate *state, int tapenum, void *tup);
+static void *readtup_datum(Tuplesortstate *state, int tapenum,
+						   unsigned int len);
+static unsigned int tuplesize_datum(Tuplesortstate *state, void *tup);
 
 /*
  * Since qsort(3) will not pass any context info to qsort_comparetup(),
@@ -369,6 +404,7 @@ static Tuplesortstate *qsort_tuplesortstate;
  * have been supplied.  After performsort, retrieve the tuples in sorted
  * order by calling tuplesort_gettuple until it returns NULL.  (If random
  * access was requested, rescan, markpos, and restorepos can also be called.)
+ * For Datum sorts, putdatum/getdatum are used instead of puttuple/gettuple.
  * Call tuplesort_end to terminate the operation and release memory/disk space.
  */
 
@@ -444,6 +480,32 @@ tuplesort_begin_index(Relation indexRel,
 	return state;
 }
 
+Tuplesortstate *
+tuplesort_begin_datum(Oid datumType,
+					  Oid sortOperator,
+					  bool randomAccess)
+{
+	Tuplesortstate *state = tuplesort_begin_common(randomAccess);
+	Type			typeInfo;
+
+	state->comparetup = comparetup_datum;
+	state->copytup = copytup_datum;
+	state->writetup = writetup_datum;
+	state->readtup = readtup_datum;
+	state->tuplesize = tuplesize_datum;
+
+	state->datumType = datumType;
+	state->sortOperator = sortOperator;
+	/* lookup the function that implements the sort operator */
+	fmgr_info(get_opcode(sortOperator), &state->sortOpFn);
+	/* lookup necessary attributes of the datum type */
+	typeInfo = typeidType(datumType);
+	state->datumTypeLen = typeLen(typeInfo);
+	state->datumTypeByVal = typeByVal(typeInfo);
+
+	return state;
+}
+
 /*
  * tuplesort_end
  *
@@ -476,9 +538,60 @@ tuplesort_puttuple(Tuplesortstate *state, void *tuple)
 {
 	/*
 	 * Copy the given tuple into memory we control, and decrease availMem.
+	 * Then call the code shared with the Datum case.
 	 */
 	tuple = COPYTUP(state, tuple);
 
+	puttuple_common(state, tuple);
+}
+
+/*
+ * Accept one Datum while collecting input data for sort.
+ *
+ * If the Datum is pass-by-ref type, the value will be copied.
+ */
+void
+tuplesort_putdatum(Tuplesortstate *state, Datum val, bool isNull)
+{
+	DatumTuple	   *tuple;
+
+	/*
+	 * Build pseudo-tuple carrying the datum, and decrease availMem.
+	 */
+	if (isNull || state->datumTypeByVal)
+	{
+		USEMEM(state, sizeof(DatumTuple));
+		tuple = (DatumTuple *) palloc(sizeof(DatumTuple));
+		tuple->val = val;
+		tuple->isNull = isNull;
+	}
+	else
+	{
+		int		datalen = state->datumTypeLen;
+		int		tuplelen;
+		char   *newVal;
+
+		if (datalen == -1)		/* variable length type? */
+			datalen = VARSIZE((struct varlena *) DatumGetPointer(val));
+		tuplelen = datalen + MAXALIGN(sizeof(DatumTuple));
+		USEMEM(state, tuplelen);
+		newVal = (char *) palloc(tuplelen);
+		tuple = (DatumTuple *) newVal;
+		newVal += MAXALIGN(sizeof(DatumTuple));
+		memcpy(newVal, DatumGetPointer(val), datalen);
+		tuple->val = PointerGetDatum(newVal);
+		tuple->isNull = false;
+	}
+
+	puttuple_common(state, (void *) tuple);
+}
+
+/*
+ * Shared code for tuple and datum cases.
+ */
+static void
+puttuple_common(Tuplesortstate *state, void *tuple)
+{
 	switch (state->status)
 	{
 		case TSS_INITIAL:
@@ -752,6 +865,50 @@ tuplesort_gettuple(Tuplesortstate *state, bool forward,
 			return NULL;		/* keep compiler quiet */
 	}
 }
+
+/*
+ * Fetch the next Datum in either forward or back direction.
+ * Returns FALSE if no more datums.
+ *
+ * If the Datum is pass-by-ref type, the returned value is freshly palloc'd
+ * and is now owned by the caller.
+ */
+bool
+tuplesort_getdatum(Tuplesortstate *state, bool forward,
+				   Datum *val, bool *isNull)
+{
+	DatumTuple	   *tuple;
+	bool			should_free;
+
+	tuple = (DatumTuple *) tuplesort_gettuple(state, forward, &should_free);
+
+	if (tuple == NULL)
+		return false;
+
+	if (tuple->isNull || state->datumTypeByVal)
+	{
+		*val = tuple->val;
+		*isNull = tuple->isNull;
+	}
+	else
+	{
+		int		datalen = state->datumTypeLen;
+		char   *newVal;
+
+		if (datalen == -1)		/* variable length type? */
+			datalen = VARSIZE((struct varlena *) DatumGetPointer(tuple->val));
+		newVal = (char *) palloc(datalen);
+		memcpy(newVal, DatumGetPointer(tuple->val), datalen);
+		*val = PointerGetDatum(newVal);
+		*isNull = false;
+	}
+
+	if (should_free)
+		pfree(tuple);
+
+	return true;
+}
+
 
 /*
  * inittapes - initialize for tape sorting.
@@ -1694,4 +1851,104 @@ tuplesize_index(Tuplesortstate *state, void *tup)
 	unsigned int	tuplen = IndexTupleSize(tuple);
 
 	return tuplen;
+}
+
+
+/*
+ * Routines specialized for DatumTuple case
+ */
+
+static int
+comparetup_datum(Tuplesortstate *state, const void *a, const void *b)
+{
+	DatumTuple *ltup = (DatumTuple *) a;
+	DatumTuple *rtup = (DatumTuple *) b;
+
+	if (ltup->isNull)
+	{
+		if (!rtup->isNull)
+			return 1;			/* NULL sorts after non-NULL */
+		return 0;
+	}
+	else if (rtup->isNull)
+		return -1;
+	else
+	{
+		int		result;
+
+		if (!(result = - (int) (*fmgr_faddr(&state->sortOpFn)) (ltup->val,
+																rtup->val)))
+			result = (int) (*fmgr_faddr(&state->sortOpFn)) (rtup->val,
+															ltup->val);
+		return result;
+	}
+}
+
+static void *
+copytup_datum(Tuplesortstate *state, void *tup)
+{
+	/* Not currently needed */
+	elog(ERROR, "copytup_datum() should not be called");
+	return NULL;
+}
+
+static void
+writetup_datum(Tuplesortstate *state, int tapenum, void *tup)
+{
+	DatumTuple	   *tuple = (DatumTuple *) tup;
+	unsigned int	tuplen = tuplesize_datum(state, tup);
+	unsigned int	writtenlen = tuplen + sizeof(unsigned int);
+
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 (void*) &writtenlen, sizeof(writtenlen));
+	LogicalTapeWrite(state->tapeset, tapenum,
+					 (void*) tuple, tuplen);
+	if (state->randomAccess)	/* need trailing length word? */
+		LogicalTapeWrite(state->tapeset, tapenum,
+						 (void*) &writtenlen, sizeof(writtenlen));
+
+	FREEMEM(state, tuplen);
+	pfree(tuple);
+}
+
+static void *
+readtup_datum(Tuplesortstate *state, int tapenum, unsigned int len)
+{
+	unsigned int	tuplen = len - sizeof(unsigned int);
+	DatumTuple	   *tuple = (DatumTuple *) palloc(tuplen);
+
+	USEMEM(state, tuplen);
+	if (LogicalTapeRead(state->tapeset, tapenum, (void *) tuple,
+						tuplen) != tuplen)
+		elog(ERROR, "tuplesort: unexpected end of data");
+	if (state->randomAccess)	/* need trailing length word? */
+		if (LogicalTapeRead(state->tapeset, tapenum, (void *) &tuplen,
+							sizeof(tuplen)) != sizeof(tuplen))
+			elog(ERROR, "tuplesort: unexpected end of data");
+
+	if (!tuple->isNull && !state->datumTypeByVal)
+		tuple->val = PointerGetDatum(((char *) tuple) +
+									 MAXALIGN(sizeof(DatumTuple)));
+	return (void *) tuple;
+}
+
+static unsigned int
+tuplesize_datum(Tuplesortstate *state, void *tup)
+{
+	DatumTuple	   *tuple = (DatumTuple *) tup;
+
+	if (tuple->isNull || state->datumTypeByVal)
+	{
+		return (unsigned int) sizeof(DatumTuple);
+	}
+	else
+	{
+		int		datalen = state->datumTypeLen;
+		int		tuplelen;
+
+		if (datalen == -1)		/* variable length type? */
+			datalen = VARSIZE((struct varlena *) DatumGetPointer(tuple->val));
+		tuplelen = datalen + MAXALIGN(sizeof(DatumTuple));
+		return (unsigned int) tuplelen;
+	}
 }
