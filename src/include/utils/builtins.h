@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.29 1997/10/30 16:42:50 thomas Exp $
+ * $Id: builtins.h,v 1.30 1997/11/15 16:32:15 momjian Exp $
  *
  * NOTES
  *	  This should normally only be included by fmgr.h.
@@ -410,6 +410,7 @@ extern bool texticregexne(struct varlena * s, struct varlena * p);
 /* regproc.c */
 extern int32 regprocin(char *proname);
 extern char *regprocout(RegProcedure proid);
+extern text *oid8types(Oid (*oidArray)[]);
 extern Oid	regproctooid(RegProcedure rp);
 
 /* define macro to replace mixed-case function call - tgl 97/04/27 */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.35 1997/11/14 21:37:54 momjian Exp $
+ * $Id: pg_proc.h,v 1.36 1997/11/15 16:32:09 momjian Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -1650,6 +1650,8 @@ DESCR("");
 DATA(insert OID = 1347 (  int4		   PGUID 14 f t f 1 f	23 "25" 100 0 0 100  "select text_int4($1)" - ));
 DESCR("");
 DATA(insert OID = 1348 (  obj_description   PGUID 14 f t f 1 f	25 "26" 100 0 0 100  "select description from pg_description where objoid = $1" - ));
+DESCR("");
+DATA(insert OID = 1349 (  oid8types	   PGUID 11 f t f 1 f	25 "30" 100 0 0 100  foo bar ));
 DESCR("");
 
 DATA(insert OID = 1350 (  datetime	   PGUID 14 f t f 1 f 1184 "1184" 100 0 0 100  "select $1" - ));

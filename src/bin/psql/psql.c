@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.105 1997/11/14 21:37:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/psql/Attic/psql.c,v 1.106 1997/11/15 16:32:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -219,6 +219,7 @@ slashUsage(PsqlSettings *pset)
 	fprintf(fout, " \\d [<table>] -- list tables and indices, columns in <table>, or * for all\n");
 	fprintf(fout, " \\da          -- list aggregates\n");
 	fprintf(fout, " \\dd [<object>]- list comment for table, field, type, function, or operator.\n");
+	fprintf(fout, " \\df          -- list functions\n");
 	fprintf(fout, " \\di          -- list only indices\n");
 	fprintf(fout, " \\do          -- list operators\n");
 	fprintf(fout, " \\ds          -- list only sequences\n");
@@ -1691,6 +1692,20 @@ HandleSlashCmds(PsqlSettings *pset,
 			else if (strncmp(cmd, "dd", 2) == 0)
 								/* descriptions */
 				objectDescription(pset, optarg+1, NULL);
+			else if (strncmp(cmd, "df", 2) == 0)
+								/* functions/procedures */
+			/* we skip in/out funcs by excluding functions that take
+			   some arguments, but have no types defined for those arguments */
+				SendQuery(&success, pset,"\
+					SELECT	p.proname as function, \
+							t.typname as return_type, \
+							oid8types(p.proargtypes) as arguments, \
+							obj_description(p.oid) \
+					FROM pg_proc p, pg_type t \
+					WHERE p.prorettype = t.oid and \
+							(pronargs = 0 or oid8types(p.proargtypes) != '') \
+					ORDER BY function;",
+					false, false, 0);
 			else if (strncmp(cmd, "di", 2) == 0)
 								/* only indices */
 				tableList(pset, false, 'i');

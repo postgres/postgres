@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.8 1997/10/25 01:10:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.9 1997/11/15 16:32:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -118,7 +118,7 @@ regprocout(RegProcedure proid)
 	if (!HeapScanIsValid(procscan))
 	{
 		heap_close(proc);
-		elog(WARN, "regprocin: could not being scan of %s",
+		elog(WARN, "regprocout: could not being scan of %s",
 			 ProcedureRelationName);
 		return (0);
 	}
@@ -147,6 +147,81 @@ regprocout(RegProcedure proid)
 	}
 	heap_endscan(procscan);
 	heap_close(proc);
+	return (result);
+}
+
+/*
+ *		int8typeout			- converts int8 type oids to "typname" list
+ */
+text	   *
+oid8types(Oid (*oidArray)[])
+{
+	Relation	type;
+	HeapScanDesc typescan;
+	HeapTuple	typetup;
+	text	   *result;
+	ScanKeyData key;
+	register int num;
+	register Oid *sp;
+
+	if (oidArray == NULL)
+	{
+	 	result = (text *) palloc(VARHDRSZ);
+		VARSIZE(result) = 0;
+		return (result);
+	}
+
+ 	result = (text *) palloc(NAMEDATALEN * 8 + 8 + VARHDRSZ);
+ 	*VARDATA(result) = '\0';
+	type = heap_openr(TypeRelationName);
+	if (!RelationIsValid(type))
+	{
+		elog(WARN, "int8typeout: could not open %s",
+			 TypeRelationName);
+		return (0);
+	}
+
+	sp = *oidArray;
+	for (num = 8; num != 0; num--, sp++)
+	{
+		if (*sp != InvalidOid)
+		{
+			ScanKeyEntryInitialize(&key,
+								   (bits16) 0,
+								   (AttrNumber) ObjectIdAttributeNumber,
+								   (RegProcedure) F_INT4EQ,
+								   (Datum) *sp);
+		
+			typescan = heap_beginscan(type, 0, NowTimeQual, 1, &key);
+			if (!HeapScanIsValid(typescan))
+			{
+				heap_close(type);
+				elog(WARN, "int8typeout: could not being scan of %s",
+					 TypeRelationName);
+				return (0);
+			}
+			typetup = heap_getnext(typescan, 0, (Buffer *) NULL);
+			if (HeapTupleIsValid(typetup))
+			{
+				char	   *s;
+				bool		isnull;
+	
+				s = (char *) heap_getattr(typetup, InvalidBuffer, 1,
+								  RelationGetTupleDescriptor(type), &isnull);
+				if (!isnull)
+				{
+					StrNCpy(VARDATA(result)+strlen(VARDATA(result)),s,16);
+					strcat(VARDATA(result)," ");
+				}
+				else
+					elog(FATAL, "int8typeout: null procedure %d", *sp);
+					/* FALLTHROUGH */
+			}
+			heap_endscan(typescan);
+		}
+	}
+	heap_close(type);
+	VARSIZE(result) = strlen(VARDATA(result)) + VARHDRSZ;
 	return (result);
 }
 
