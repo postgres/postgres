@@ -8,11 +8,12 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.33 2001/01/09 18:40:14 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/Attic/exc.c,v 1.34 2001/01/21 00:59:26 tgl Exp $
  *
  * NOTE
  *	  XXX this code needs improvement--check for state violations and
  *	  XXX reset after handling an exception.
+ *	  XXX Probably should be merged with elog.c.
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +23,13 @@
 
 #include "storage/ipc.h"
 #include "utils/exc.h"
+
+extern int	errno;
+
+#ifdef HAVE_SYS_NERR
+extern int sys_nerr;
+#endif
+
 
 static void ExcUnCaught(Exception *excP, ExcDetail detail, ExcData data,
 			ExcMessage message);
@@ -39,8 +47,6 @@ Index		ExcLineNumber = 0;
 ExcFrame   *ExcCurFrameP = NULL;
 
 static ExcProc *ExcUnCaughtP = NULL;
-
-extern char *ProgramName;
 
 /*
  * Exported Functions
@@ -94,49 +100,49 @@ EnableExceptionHandling(bool on)
 	ExceptionHandlingEnabled = on;
 }
 
-
-extern int	errno;
-
 static void
 ExcPrint(Exception *excP,
 		 ExcDetail detail,
 		 ExcData data,
 		 ExcMessage message)
 {
+	/* this buffer is only used if errno has a bogus value: */
+	char		errorstr_buf[32];
+	const char *errorstr;
+
 #ifdef	lint
 	data = data;
 #endif
 
-	fflush(stdout);				/* In case stderr is buffered */
-
-#if		0
-	if (ProgramName != NULL && *ProgramName != '\0')
-		fprintf(stderr, "%s: ", ProgramName);
+	/* Save error str before calling any function that might change errno */
+	if (errno >= 0
+#ifdef HAVE_SYS_NERR
+		&& errno <= sys_nerr
 #endif
+		)
+		errorstr = strerror(errno);
+	else
+		errorstr = NULL;
+	/*
+	 * Some strerror()s return an empty string for out-of-range errno.
+	 * This is ANSI C spec compliant, but not exactly useful.
+	 */
+	if (errorstr == NULL || *errorstr == '\0')
+	{
+		sprintf(errorstr_buf, "error %d", errno);
+		errorstr = errorstr_buf;
+	}
+
+	fflush(stdout);				/* In case stderr is buffered */
 
 	if (message != NULL)
 		fprintf(stderr, "%s", message);
 	else if (excP->message != NULL)
 		fprintf(stderr, "%s", excP->message);
 	else
-#ifdef	lint
-		fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", excP);
-#else
-		fprintf(stderr, "UNNAMED EXCEPTION 0x%lx", (long) excP);
-#endif
+		fprintf(stderr, "UNNAMED EXCEPTION %p", excP);
 
-	fprintf(stderr, " (%ld)", detail);
-
-#ifdef HAVE_SYS_NERR
-	if (errno > 0 && errno < sys_nerr)
-#else
-    if (errno > 0)
-#endif
-		fprintf(stderr, " [%s]", strerror(errno));
-	else if (errno != 0)
-		fprintf(stderr, " [Error %d]", errno);
-
-	fprintf(stderr, "\n");
+	fprintf(stderr, " (%ld) [%s]\n", detail, errorstr);
 
 	fflush(stderr);
 }

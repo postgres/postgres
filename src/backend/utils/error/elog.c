@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.77 2001/01/19 22:08:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.78 2001/01/21 00:59:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include <time.h>
@@ -43,6 +42,10 @@
 #endif
 
 extern int	errno;
+
+#ifdef HAVE_SYS_NERR
+extern int sys_nerr;
+#endif
 
 extern CommandDest whereToSendOutput;
 
@@ -120,10 +123,8 @@ elog(int lev, const char *fmt, ...)
 	char	   *msg_buf = msg_fixedbuf;
 	/* this buffer is only used for strange values of lev: */
 	char		prefix_buf[32];
-#ifdef HAVE_SYS_NERR
 	/* this buffer is only used if errno has a bogus value: */
 	char		errorstr_buf[32];
-#endif
 	const char *errorstr;
 	const char *prefix;
 	const char *cp;
@@ -137,19 +138,24 @@ elog(int lev, const char *fmt, ...)
 	if (lev <= DEBUG && Debugfile < 0)
 		return;					/* ignore debug msgs if noplace to send */
 
+	/* Save error str before calling any function that might change errno */
+	if (errno >= 0
 #ifdef HAVE_SYS_NERR
-	/* save errno string for %m */
-	if (errno < sys_nerr && errno >= 0)
+		&& errno <= sys_nerr
+#endif
+		)
 		errorstr = strerror(errno);
 	else
+		errorstr = NULL;
+	/*
+	 * Some strerror()s return an empty string for out-of-range errno.
+	 * This is ANSI C spec compliant, but not exactly useful.
+	 */
+	if (errorstr == NULL || *errorstr == '\0')
 	{
 		sprintf(errorstr_buf, "error %d", errno);
 		errorstr = errorstr_buf;
 	}
-#else
-	/* assume strerror() will cope gracefully with bogus errno values */
-	errorstr = strerror(errno);
-#endif
 
 	if (lev == ERROR || lev == FATAL)
 	{

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.87 2001/01/09 18:40:15 petere Exp $
+ * $Id: c.h,v 1.88 2001/01/21 00:59:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -991,10 +991,6 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>
-#endif
-
-#ifdef HAVE_SYS_NERR
-extern int sys_nerr;
 #endif
 
 /* ----------------
