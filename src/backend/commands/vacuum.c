@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.47 1997/09/12 04:07:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.48 1997/09/22 07:12:33 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,6 +55,8 @@
 #endif
 
 #include <port-protos.h>
+
+extern int BlowawayRelationBuffers(Relation rdesc, BlockNumber block);
 
 bool		VacuumRunning = false;
 
@@ -1394,6 +1396,9 @@ Elapsed %u/%u sec.",
 	/* truncate relation */
 	if (blkno < nblocks)
 	{
+		i = BlowawayRelationBuffers(onerel, blkno);
+		if (i < 0)
+			elog (FATAL, "VACUUM (vc_rpfheap): BlowawayRelationBuffers returned %d", i);
 		blkno = smgrtruncate(onerel->rd_rel->relsmgr, onerel, blkno);
 		Assert(blkno >= 0);
 		vacrelstats->npages = blkno;	/* set new number of blocks */
@@ -1465,6 +1470,10 @@ vc_vacheap(VRelStats *vacrelstats, Relation onerel, VPageList Vvpl)
 		 * it) before truncation
 		 */
 		FlushBufferPool(!TransactionFlushEnabled());
+		
+		i = BlowawayRelationBuffers(onerel, nblocks);
+		if (i < 0)
+			elog (FATAL, "VACUUM (vc_vacheap): BlowawayRelationBuffers returned %d", i);
 
 		nblocks = smgrtruncate(onerel->rd_rel->relsmgr, onerel, nblocks);
 		Assert(nblocks >= 0);
