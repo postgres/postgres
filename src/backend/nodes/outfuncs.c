@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.149 2002/03/12 00:51:39 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.150 2002/03/21 16:00:40 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -105,20 +105,19 @@ _outOidList(StringInfo str, List *list)
 static void
 _outCreateStmt(StringInfo str, CreateStmt *node)
 {
-	appendStringInfo(str, " CREATE :relname ");
-	_outToken(str, node->relname);
+	appendStringInfo(str, " CREATE :relation ");
+	_outNode(str, node->relation);
 
-	appendStringInfo(str, "	:columns ");
+	appendStringInfo(str, "	:tableElts ");
 	_outNode(str, node->tableElts);
 
-	appendStringInfo(str, " :inhRelnames ");
-	_outNode(str, node->inhRelnames);
+	appendStringInfo(str, " :inhRelations ");
+	_outNode(str, node->inhRelations);
 
 	appendStringInfo(str, " :constraints ");
 	_outNode(str, node->constraints);
 
-	appendStringInfo(str, " :istemp %s :hasoids %s ",
-					 booltostr(node->istemp),
+	appendStringInfo(str, " :hasoids %s ",
 					 booltostr(node->hasoids));
 }
 
@@ -127,8 +126,8 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 {
 	appendStringInfo(str, " INDEX :idxname ");
 	_outToken(str, node->idxname);
-	appendStringInfo(str, " :relname ");
-	_outToken(str, node->relname);
+	appendStringInfo(str, " :relation ");
+	_outNode(str, node->relation);
 	appendStringInfo(str, " :accessMethod ");
 	_outToken(str, node->accessMethod);
 	appendStringInfo(str, " :indexParams ");
@@ -140,6 +139,13 @@ _outIndexStmt(StringInfo str, IndexStmt *node)
 	appendStringInfo(str, " :unique %s :primary %s ",
 					 booltostr(node->unique),
 					 booltostr(node->primary));
+}
+
+static void
+_outNotifyStmt(StringInfo str, NotifyStmt *node)
+{
+	appendStringInfo(str, "NOTIFY :relation ");
+	_outNode(str, node->relation);
 }
 
 static void
@@ -213,53 +219,40 @@ _outIndexElem(StringInfo str, IndexElem *node)
 static void
 _outQuery(StringInfo str, Query *node)
 {
+	appendStringInfo(str, " QUERY :command %d :utility ", node->commandType);
 
-	appendStringInfo(str, " QUERY :command %d ", node->commandType);
-
+	/*
+	 * Hack to work around missing outfuncs routines for a lot of the
+	 * utility-statement node types.  (The only one we actually *need*
+	 * for rules support is NotifyStmt.)  Someday we ought to support
+	 * 'em all, but for the meantime do this to avoid getting lots of
+	 * warnings when running with debug_print_parse on.
+	 */
 	if (node->utilityStmt)
 	{
-		/*
-		 * Hack to make up for lack of outfuncs for utility-stmt nodes
-		 */
 		switch (nodeTag(node->utilityStmt))
 		{
 			case T_CreateStmt:
-				appendStringInfo(str, " :create ");
-				_outToken(str, ((CreateStmt *) (node->utilityStmt))->relname);
-				appendStringInfo(str, " ");
-				_outNode(str, node->utilityStmt);
-				break;
-
 			case T_IndexStmt:
-				appendStringInfo(str, " :index ");
-				_outToken(str, ((IndexStmt *) (node->utilityStmt))->idxname);
-				appendStringInfo(str, " on ");
-				_outToken(str, ((IndexStmt *) (node->utilityStmt))->relname);
-				appendStringInfo(str, " ");
+			case T_NotifyStmt:
 				_outNode(str, node->utilityStmt);
 				break;
-
-			case T_NotifyStmt:
-				appendStringInfo(str, " :notify ");
-				_outToken(str, ((NotifyStmt *) (node->utilityStmt))->relname);
-				break;
-
 			default:
-				appendStringInfo(str, " :utility ? ");
+				appendStringInfo(str, "?");
+				break;
 		}
 	}
 	else
-		appendStringInfo(str, " :utility <>");
+		appendStringInfo(str, "<>");
 
 	appendStringInfo(str, " :resultRelation %d :into ",
 					 node->resultRelation);
-	_outToken(str, node->into);
+	_outNode(str, node->into);
 
-	appendStringInfo(str, " :isPortal %s :isBinary %s :isTemp %s"
+	appendStringInfo(str, " :isPortal %s :isBinary %s"
 					 " :hasAggs %s :hasSubLinks %s :rtable ",
 					 booltostr(node->isPortal),
 					 booltostr(node->isBinary),
-					 booltostr(node->isTemp),
 					 booltostr(node->hasAggs),
 					 booltostr(node->hasSubLinks));
 	_outNode(str, node->rtable);
@@ -964,6 +957,15 @@ _outTargetEntry(StringInfo str, TargetEntry *node)
 }
 
 static void
+_outAlias(StringInfo str, Alias *node)
+{
+	appendStringInfo(str, " ALIAS :aliasname ");
+	_outToken(str, node->aliasname);
+	appendStringInfo(str, " :colnames ");
+	_outNode(str, node->colnames);
+}
+
+static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	appendStringInfo(str, " RTE :rtekind %d :relname ",
@@ -1312,19 +1314,46 @@ _outValue(StringInfo str, Value *value)
 }
 
 static void
+_outRangeVar(StringInfo str, RangeVar *node)
+{
+	appendStringInfo(str, " RANGEVAR :relation ");
+	/*
+	 * we deliberately ignore catalogname here, since it is presently not
+	 * semantically meaningful
+	 */
+	_outToken(str, node->schemaname);
+	appendStringInfo(str, " . ");
+	_outToken(str, node->relname);
+	appendStringInfo(str, " :inhopt %d :istemp %s",
+					(int) node->inhOpt,
+					booltostr(node->istemp));
+	appendStringInfo(str, " :alias ");
+	_outNode(str, node->alias);
+}
+
+static void
+_outColumnRef(StringInfo str, ColumnRef *node)
+{
+	appendStringInfo(str, " COLUMNREF :fields ");
+	_outNode(str, node->fields);
+	appendStringInfo(str, " :indirection ");
+	_outNode(str, node->indirection);
+}
+
+static void
+_outParamRef(StringInfo str, ParamRef *node)
+{
+	appendStringInfo(str, " PARAMREF :number %d :fields ", node->number);
+	_outNode(str, node->fields);
+	appendStringInfo(str, " :indirection ");
+	_outNode(str, node->indirection);
+}
+
+static void
 _outIdent(StringInfo str, Ident *node)
 {
 	appendStringInfo(str, " IDENT ");
 	_outToken(str, node->name);
-}
-
-static void
-_outAttr(StringInfo str, Attr *node)
-{
-	appendStringInfo(str, " ATTR :relname ");
-	_outToken(str, node->relname);
-	appendStringInfo(str, " :attrs ");
-	_outNode(str, node->attrs);
 }
 
 static void
@@ -1334,6 +1363,17 @@ _outAConst(StringInfo str, A_Const *node)
 	_outValue(str, &(node->val));
 	appendStringInfo(str, " :typename ");
 	_outNode(str, node->typename);
+}
+
+static void
+_outExprFieldSelect(StringInfo str, ExprFieldSelect *node)
+{
+	appendStringInfo(str, " EXPRFIELDSELECT :arg ");
+	_outNode(str, node->arg);
+	appendStringInfo(str, " :fields ");
+	_outNode(str, node->fields);
+	appendStringInfo(str, " :indirection ");
+	_outNode(str, node->indirection);
 }
 
 static void
@@ -1384,8 +1424,8 @@ _outFkConstraint(StringInfo str, FkConstraint *node)
 {
 	appendStringInfo(str, " FKCONSTRAINT :constr_name ");
 	_outToken(str, node->constr_name);
-	appendStringInfo(str, " :pktable_name ");
-	_outToken(str, node->pktable_name);
+	appendStringInfo(str, " :pktable ");
+	_outNode(str, node->pktable);
 	appendStringInfo(str, " :fk_attrs ");
 	_outNode(str, node->fk_attrs);
 	appendStringInfo(str, " :pk_attrs ");
@@ -1489,6 +1529,12 @@ _outNode(StringInfo str, void *obj)
 				break;
 			case T_IndexStmt:
 				_outIndexStmt(str, obj);
+				break;
+			case T_NotifyStmt:
+				_outNotifyStmt(str, obj);
+				break;
+			case T_SelectStmt:
+				_outSelectStmt(str, obj);
 				break;
 			case T_ColumnDef:
 				_outColumnDef(str, obj);
@@ -1628,6 +1674,9 @@ _outNode(StringInfo str, void *obj)
 			case T_TargetEntry:
 				_outTargetEntry(str, obj);
 				break;
+			case T_Alias:
+				_outAlias(str, obj);
+				break;
 			case T_RangeTblEntry:
 				_outRangeTblEntry(str, obj);
 				break;
@@ -1670,11 +1719,23 @@ _outNode(StringInfo str, void *obj)
 			case T_A_Expr:
 				_outAExpr(str, obj);
 				break;
+			case T_RangeVar:
+				_outRangeVar(str, obj);
+				break;
+			case T_ColumnRef:
+				_outColumnRef(str, obj);
+				break;
+			case T_ParamRef:
+				_outParamRef(str, obj);
+				break;
 			case T_Ident:
 				_outIdent(str, obj);
 				break;
 			case T_A_Const:
 				_outAConst(str, obj);
+				break;
+			case T_ExprFieldSelect:
+				_outExprFieldSelect(str, obj);
 				break;
 			case T_Constraint:
 				_outConstraint(str, obj);
@@ -1694,16 +1755,8 @@ _outNode(StringInfo str, void *obj)
 			case T_BooleanTest:
 				_outBooleanTest(str, obj);
 				break;
-			case T_VariableSetStmt:
-				break;
-			case T_SelectStmt:
-				_outSelectStmt(str, obj);
-				break;
 			case T_FuncCall:
 				_outFuncCall(str, obj);
-				break;
-			case T_Attr:
-				_outAttr(str, obj);
 				break;
 
 			default:

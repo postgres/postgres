@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.56 2002/03/06 06:09:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.57 2002/03/21 16:00:29 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -200,7 +200,7 @@ ExecuteGrantStmt_Table(GrantStmt *stmt)
 
 	foreach(i, stmt->objects)
 	{
-		char	   *relname = strVal(lfirst(i));
+		char	   *relname = ((RangeVar *) lfirst(i))->relname;
 		Relation	relation;
 		HeapTuple	tuple;
 		Form_pg_class pg_class_tuple;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.220 2002/03/12 00:51:52 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.221 2002/03/21 16:00:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,13 +43,30 @@
 #endif
 
 
+/* State shared by transformCreateSchemaStmt and its subroutines */
+typedef struct
+{
+	const char *stmtType;		/* "CREATE TABLE" or "ALTER TABLE" */
+	char	   *schemaname;		/* name of schema */
+	char	   *authid;			/* owner of schema */
+	List	   *tables;			/* CREATE TABLE items */
+	List	   *views;			/* CREATE VIEW items */
+	List	   *grants;			/* GRANT items */
+	List	   *fwconstraints;	/* Forward referencing FOREIGN KEY constraints */
+	List	   *alters;			/* Generated ALTER items (from the above) */
+	List	   *ixconstraints;	/* index-creating constraints */
+	List	   *blist;			/* "before list" of things to do before
+								 * creating the schema */
+	List	   *alist;			/* "after list" of things to do after
+								 * creating the schema */
+} CreateSchemaStmtContext;
+
 /* State shared by transformCreateStmt and its subroutines */
 typedef struct
 {
 	const char *stmtType;		/* "CREATE TABLE" or "ALTER TABLE" */
-	char	   *relname;		/* name of relation */
-	List	   *inhRelnames;	/* names of relations to inherit from */
-	bool		istemp;			/* is it to be a temp relation? */
+	RangeVar   *relation;		/* relation to create */
+	List	   *inhRelations;	/* relations to inherit from */
 	bool		hasoids;		/* does relation have an OID column? */
 	Oid			relOid;			/* OID of table, if ALTER TABLE case */
 	List	   *columns;		/* ColumnDef items */
@@ -330,8 +347,8 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up range table with just the result rel */
-	qry->resultRelation = setTargetTable(pstate, stmt->relname,
-										 interpretInhOption(stmt->inhOpt),
+	qry->resultRelation = setTargetTable(pstate, stmt->relation->relname,
+										 interpretInhOption(stmt->relation->inhOpt),
 										 true);
 
 	qry->distinctClause = NIL;
@@ -398,7 +415,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	 * table is also mentioned in the SELECT part.	Note that the target
 	 * table is not added to the joinlist or namespace.
 	 */
-	qry->resultRelation = setTargetTable(pstate, stmt->relname,
+	qry->resultRelation = setTargetTable(pstate, stmt->relation->relname,
 										 false, false);
 
 	/*
@@ -443,7 +460,7 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 		 */
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
-											makeAttr("*SELECT*", NULL),
+											makeAlias("*SELECT*", NIL),
 											true);
 		rtr = makeNode(RangeTblRef);
 		/* assume new rte is at end */
@@ -515,14 +532,15 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt,
 	foreach(tl, qry->targetList)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
-		Ident	   *id;
+		ResTarget   *col;
 
 		Assert(!tle->resdom->resjunk);
 		if (icolumns == NIL || attnos == NIL)
 			elog(ERROR, "INSERT has more expressions than target columns");
-		id = (Ident *) lfirst(icolumns);
-		updateTargetListEntry(pstate, tle, id->name, lfirsti(attnos),
-							  id->indirection);
+		col = (ResTarget *) lfirst(icolumns);
+		Assert(IsA(col, ResTarget));
+		updateTargetListEntry(pstate, tle, col->name, lfirsti(attnos),
+							  col->indirection);
 		icolumns = lnext(icolumns);
 		attnos = lnext(attnos);
 	}
@@ -691,9 +709,8 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt,
 	List	   *elements;
 
 	cxt.stmtType = "CREATE TABLE";
-	cxt.relname = stmt->relname;
-	cxt.inhRelnames = stmt->inhRelnames;
-	cxt.istemp = stmt->istemp;
+	cxt.relation = stmt->relation;
+	cxt.inhRelations = stmt->inhRelations;
 	cxt.hasoids = stmt->hasoids;
 	cxt.relOid = InvalidOid;
 	cxt.columns = NIL;
@@ -805,7 +822,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		 * conflicting constraints the user wrote (like a different
 		 * DEFAULT).
 		 */
-		sname = makeObjectName(cxt->relname, column->colname, "seq");
+		sname = makeObjectName((cxt->relation)->relname, column->colname, "seq");
 
 		/*
 		 * Create an expression tree representing the function call
@@ -845,12 +862,12 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 		 * CREATE/ALTER TABLE.
 		 */
 		sequence = makeNode(CreateSeqStmt);
-		sequence->seqname = pstrdup(sname);
-		sequence->istemp = cxt->istemp;
+		sequence->sequence = copyObject(cxt->relation);
+		sequence->sequence->relname = pstrdup(sname);
 		sequence->options = NIL;
 
 		elog(NOTICE, "%s will create implicit sequence '%s' for SERIAL column '%s.%s'",
-		cxt->stmtType, sequence->seqname, cxt->relname, column->colname);
+		cxt->stmtType, sequence->sequence->relname, (cxt->relation)->relname, column->colname);
 
 		cxt->blist = lappend(cxt->blist, sequence);
 	}
@@ -875,9 +892,6 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			Ident	   *id = makeNode(Ident);
 
 			id->name = column->colname;
-			id->indirection = NIL;
-			id->isRel = false;
-
 			fkconstraint->fk_attrs = makeList1(id);
 
 			cxt->fkconstraints = lappend(cxt->fkconstraints, fkconstraint);
@@ -891,7 +905,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			case CONSTR_NULL:
 				if (saw_nullable && column->is_not_null)
 					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
-						 cxt->stmtType, cxt->relname, column->colname);
+						 cxt->stmtType, (cxt->relation)->relname, column->colname);
 				column->is_not_null = FALSE;
 				saw_nullable = true;
 				break;
@@ -899,7 +913,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			case CONSTR_NOTNULL:
 				if (saw_nullable && !column->is_not_null)
 					elog(ERROR, "%s/(NOT) NULL conflicting declaration for '%s.%s'",
-						 cxt->stmtType, cxt->relname, column->colname);
+						 cxt->stmtType, (cxt->relation)->relname, column->colname);
 				column->is_not_null = TRUE;
 				saw_nullable = true;
 				break;
@@ -907,14 +921,14 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 			case CONSTR_DEFAULT:
 				if (column->raw_default != NULL)
 					elog(ERROR, "%s/DEFAULT multiple values specified for '%s.%s'",
-						 cxt->stmtType, cxt->relname, column->colname);
+						 cxt->stmtType, (cxt->relation)->relname, column->colname);
 				column->raw_default = constraint->raw_expr;
 				Assert(constraint->cooked_expr == NULL);
 				break;
 
 			case CONSTR_PRIMARY:
 				if (constraint->name == NULL)
-					constraint->name = makeObjectName(cxt->relname,
+					constraint->name = makeObjectName((cxt->relation)->relname,
 													  NULL,
 													  "pkey");
 				if (constraint->keys == NIL)
@@ -928,7 +942,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 			case CONSTR_UNIQUE:
 				if (constraint->name == NULL)
-					constraint->name = makeObjectName(cxt->relname,
+					constraint->name = makeObjectName((cxt->relation)->relname,
 													  column->colname,
 													  "key");
 				if (constraint->keys == NIL)
@@ -942,7 +956,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 			case CONSTR_CHECK:
 				if (constraint->name == NULL)
-					constraint->name = makeObjectName(cxt->relname,
+					constraint->name = makeObjectName((cxt->relation)->relname,
 													  column->colname,
 													  NULL);
 				cxt->ckconstraints = lappend(cxt->ckconstraints, constraint);
@@ -970,7 +984,7 @@ transformTableConstraint(ParseState *pstate, CreateStmtContext *cxt,
 	{
 		case CONSTR_PRIMARY:
 			if (constraint->name == NULL)
-				constraint->name = makeObjectName(cxt->relname,
+				constraint->name = makeObjectName((cxt->relation)->relname,
 												  NULL,
 												  "pkey");
 			cxt->ixconstraints = lappend(cxt->ixconstraints, constraint);
@@ -1034,21 +1048,21 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			/* In ALTER TABLE case, a primary index might already exist */
 			if (cxt->pkey != NULL ||
 				(OidIsValid(cxt->relOid) &&
-				 relationHasPrimaryKey(cxt->relname)))
+				 relationHasPrimaryKey((cxt->relation)->relname)))
 				elog(ERROR, "%s / PRIMARY KEY multiple primary keys"
 					 " for table '%s' are not allowed",
-					 cxt->stmtType, cxt->relname);
+					 cxt->stmtType, (cxt->relation)->relname);
 			cxt->pkey = index;
 		}
 
 		if (constraint->name != NULL)
 			index->idxname = pstrdup(constraint->name);
 		else if (constraint->contype == CONSTR_PRIMARY)
-			index->idxname = makeObjectName(cxt->relname, NULL, "pkey");
+			index->idxname = makeObjectName((cxt->relation)->relname, NULL, "pkey");
 		else
 			index->idxname = NULL;		/* will set it later */
 
-		index->relname = cxt->relname;
+		index->relation = cxt->relation;
 		index->accessMethod = DEFAULT_INDEX_TYPE;
 		index->indexParams = NIL;
 		index->whereClause = NULL;
@@ -1089,19 +1103,19 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				 */
 				found = true;
 			}
-			else if (cxt->inhRelnames)
+			else if (cxt->inhRelations)
 			{
 				/* try inherited tables */
 				List	   *inher;
 
-				foreach(inher, cxt->inhRelnames)
+				foreach(inher, cxt->inhRelations)
 				{
-					Value	   *inh = lfirst(inher);
+					RangeVar   *inh = lfirst(inher);
 					Relation	rel;
 					int			count;
 
-					Assert(IsA(inh, String));
-					rel = heap_openr(strVal(inh), AccessShareLock);
+					Assert(IsA(inh, RangeVar));
+					rel = heap_openr(inh->relname, AccessShareLock);
 					if (rel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "inherited table \"%s\" is not a relation",
 							 strVal(inh));
@@ -1257,7 +1271,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		if (index->idxname == NULL && index->indexParams != NIL)
 		{
 			iparam = lfirst(index->indexParams);
-			index->idxname = CreateIndexName(cxt->relname, iparam->name,
+			index->idxname = CreateIndexName((cxt->relation)->relname, iparam->name,
 											 "key", cxt->alist);
 		}
 		if (index->idxname == NULL)		/* should not happen */
@@ -1268,7 +1282,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 			 cxt->stmtType,
 			 (strcmp(cxt->stmtType, "ALTER TABLE") == 0) ? "ADD " : "",
 			 (index->primary ? "PRIMARY KEY" : "UNIQUE"),
-			 index->idxname, cxt->relname);
+			 index->idxname, (cxt->relation)->relname);
 	}
 }
 
@@ -1328,7 +1342,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 */
 		if (fkconstraint->pk_attrs == NIL)
 		{
-			if (strcmp(fkconstraint->pktable_name, cxt->relname) != 0)
+			if (strcmp(fkconstraint->pktable->relname, (cxt->relation)->relname) != 0)
 				transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
 			else if (cxt->pkey != NULL)
 			{
@@ -1342,8 +1356,6 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					Ident	   *pkattr = (Ident *) makeNode(Ident);
 
 					pkattr->name = pstrdup(ielem->name);
-					pkattr->indirection = NIL;
-					pkattr->isRel = false;
 					fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs,
 													 pkattr);
 					if (attnum >= INDEX_MAX_KEYS)
@@ -1360,13 +1372,13 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 					transformFkeyGetPrimaryKey(fkconstraint, pktypoid);
 				else
 					elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
-						 fkconstraint->pktable_name);
+						 fkconstraint->pktable->relname);
 			}
 		}
 		else
 		{
 			/* Validate the specified referenced key list */
-			if (strcmp(fkconstraint->pktable_name, cxt->relname) != 0)
+			if (strcmp(fkconstraint->pktable->relname, (cxt->relation)->relname) != 0)
 				transformFkeyCheckAttrs(fkconstraint, pktypoid);
 			else
 			{
@@ -1422,7 +1434,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						transformFkeyCheckAttrs(fkconstraint, pktypoid);
 					else
 						elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
-							 fkconstraint->pktable_name);
+							 fkconstraint->pktable->relname);
 				}
 			}
 		}
@@ -1447,7 +1459,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 */
 		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
 		fk_trigger->trigname = fkconstraint->constr_name;
-		fk_trigger->relname = cxt->relname;
+		fk_trigger->relation = cxt->relation;
 		fk_trigger->funcname = "RI_FKey_check_ins";
 		fk_trigger->before = false;
 		fk_trigger->row = true;
@@ -1462,15 +1474,15 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->isconstraint = true;
 		fk_trigger->deferrable = fkconstraint->deferrable;
 		fk_trigger->initdeferred = fkconstraint->initdeferred;
-		fk_trigger->constrrelname = fkconstraint->pktable_name;
+		fk_trigger->constrrel = fkconstraint->pktable;
 
 		fk_trigger->args = NIL;
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->constr_name));
 		fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(cxt->relname));
+								   makeString((cxt->relation)->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->match_type));
 		fk_attr = fkconstraint->fk_attrs;
@@ -1478,7 +1490,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		if (length(fk_attr) != length(pk_attr))
 			elog(ERROR, "number of key attributes in referenced table must be equal to foreign key"
 				 "\n\tIllegal FOREIGN KEY definition references \"%s\"",
-				 fkconstraint->pktable_name);
+				 fkconstraint->pktable->relname);
 
 		while (fk_attr != NIL)
 		{
@@ -1502,7 +1514,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 */
 		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
 		fk_trigger->trigname = fkconstraint->constr_name;
-		fk_trigger->relname = fkconstraint->pktable_name;
+		fk_trigger->relation = fkconstraint->pktable;
 		fk_trigger->before = false;
 		fk_trigger->row = true;
 		fk_trigger->actions[0] = 'd';
@@ -1515,7 +1527,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->isconstraint = true;
 		fk_trigger->deferrable = fkconstraint->deferrable;
 		fk_trigger->initdeferred = fkconstraint->initdeferred;
-		fk_trigger->constrrelname = cxt->relname;
+		fk_trigger->constrrel = cxt->relation;
 		switch ((fkconstraint->actions & FKCONSTR_ON_DELETE_MASK)
 				>> FKCONSTR_ON_DELETE_SHIFT)
 		{
@@ -1545,9 +1557,9 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->constr_name));
 		fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(cxt->relname));
+								   makeString((cxt->relation)->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->match_type));
 		fk_attr = fkconstraint->fk_attrs;
@@ -1574,7 +1586,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		 */
 		fk_trigger = (CreateTrigStmt *) makeNode(CreateTrigStmt);
 		fk_trigger->trigname = fkconstraint->constr_name;
-		fk_trigger->relname = fkconstraint->pktable_name;
+		fk_trigger->relation = fkconstraint->pktable;
 		fk_trigger->before = false;
 		fk_trigger->row = true;
 		fk_trigger->actions[0] = 'u';
@@ -1587,7 +1599,7 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->isconstraint = true;
 		fk_trigger->deferrable = fkconstraint->deferrable;
 		fk_trigger->initdeferred = fkconstraint->initdeferred;
-		fk_trigger->constrrelname = cxt->relname;
+		fk_trigger->constrrel = cxt->relation;
 		switch ((fkconstraint->actions & FKCONSTR_ON_UPDATE_MASK)
 				>> FKCONSTR_ON_UPDATE_SHIFT)
 		{
@@ -1617,9 +1629,9 @@ transformFKConstraints(ParseState *pstate, CreateStmtContext *cxt)
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->constr_name));
 		fk_trigger->args = lappend(fk_trigger->args,
-								   makeString(cxt->relname));
+								   makeString((cxt->relation)->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
-								 makeString(fkconstraint->pktable_name));
+								 makeString(fkconstraint->pktable->relname));
 		fk_trigger->args = lappend(fk_trigger->args,
 								   makeString(fkconstraint->match_type));
 		fk_attr = fkconstraint->fk_attrs;
@@ -1672,7 +1684,7 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 		 * easily support predicates on indexes created implicitly by
 		 * CREATE TABLE. Fortunately, that's not necessary.
 		 */
-		rte = addRangeTableEntry(pstate, stmt->relname, NULL, false, true);
+		rte = addRangeTableEntry(pstate, stmt->relation->relname, NULL, false, true);
 
 		/* no to join list, yes to namespace */
 		addRTEtoQuery(pstate, rte, false, true);
@@ -1712,7 +1724,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * beforehand.	We don't need to hold a refcount on the relcache
 	 * entry, however.
 	 */
-	heap_close(heap_openr(stmt->object->relname, AccessExclusiveLock),
+	heap_close(heap_openr(stmt->relation->relname, AccessExclusiveLock),
 			   NoLock);
 
 	/*
@@ -1721,11 +1733,11 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 	 * rule qualification.
 	 */
 	Assert(pstate->p_rtable == NIL);
-	oldrte = addRangeTableEntry(pstate, stmt->object->relname,
-								makeAttr("*OLD*", NULL),
+	oldrte = addRangeTableEntry(pstate, stmt->relation->relname,
+								makeAlias("*OLD*", NIL),
 								false, true);
-	newrte = addRangeTableEntry(pstate, stmt->object->relname,
-								makeAttr("*NEW*", NULL),
+	newrte = addRangeTableEntry(pstate, stmt->relation->relname,
+								makeAlias("*NEW*", NIL),
 								false, true);
 	/* Must override addRangeTableEntry's default access-check flags */
 	oldrte->checkForRead = false;
@@ -1812,11 +1824,11 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt,
 			 * or they won't be accessible at all.  We decide later
 			 * whether to put them in the joinlist.
 			 */
-			oldrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
-										makeAttr("*OLD*", NULL),
+			oldrte = addRangeTableEntry(sub_pstate, stmt->relation->relname,
+										makeAlias("*OLD*", NIL),
 										false, false);
-			newrte = addRangeTableEntry(sub_pstate, stmt->object->relname,
-										makeAttr("*NEW*", NULL),
+			newrte = addRangeTableEntry(sub_pstate, stmt->relation->relname,
+										makeAlias("*NEW*", NIL),
 										false, false);
 			oldrte->checkForRead = false;
 			newrte->checkForRead = false;
@@ -1950,8 +1962,8 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 		if (!IsTransactionBlock())
 			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
 
-		qry->into = stmt->portalname;
-		qry->isTemp = stmt->istemp;
+		qry->into = makeNode(RangeVar);
+		qry->into->relname = stmt->portalname;
 		qry->isPortal = TRUE;
 		qry->isBinary = stmt->binary;	/* internal portal */
 	}
@@ -1959,7 +1971,6 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 	{
 		/* SELECT */
 		qry->into = stmt->into;
-		qry->isTemp = stmt->istemp;
 		qry->isPortal = FALSE;
 		qry->isBinary = FALSE;
 	}
@@ -2033,8 +2044,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	int			leftmostRTI;
 	Query	   *leftmostQuery;
 	SetOperationStmt *sostmt;
-	char	   *into;
-	bool		istemp;
+	RangeVar   *into;
 	List	   *intoColNames;
 	char	   *portalname;
 	bool		binary;
@@ -2065,14 +2075,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	Assert(leftmostSelect && IsA(leftmostSelect, SelectStmt) &&
 		   leftmostSelect->larg == NULL);
 	into = leftmostSelect->into;
-	istemp = leftmostSelect->istemp;
 	intoColNames = leftmostSelect->intoColNames;
 	portalname = stmt->portalname;
 	binary = stmt->binary;
 
 	/* clear them to prevent complaints in transformSetOperationTree() */
 	leftmostSelect->into = NULL;
-	leftmostSelect->istemp = false;
 	leftmostSelect->intoColNames = NIL;
 	stmt->portalname = NULL;
 	stmt->binary = false;
@@ -2174,8 +2182,8 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 		if (!IsTransactionBlock())
 			elog(ERROR, "DECLARE CURSOR may only be used in begin/end transaction blocks");
 
-		qry->into = portalname;
-		qry->isTemp = istemp;
+		qry->into = makeNode(RangeVar);
+		qry->into->relname = portalname;
 		qry->isPortal = TRUE;
 		qry->isBinary = binary; /* internal portal */
 	}
@@ -2183,7 +2191,6 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	{
 		/* SELECT */
 		qry->into = into;
-		qry->isTemp = istemp;
 		qry->isPortal = FALSE;
 		qry->isBinary = FALSE;
 	}
@@ -2325,8 +2332,7 @@ transformSetOperationTree(ParseState *pstate, SelectStmt *stmt)
 		sprintf(selectName, "*SELECT* %d", length(pstate->p_rtable) + 1);
 		rte = addRangeTableEntryForSubquery(pstate,
 											selectQuery,
-											makeAttr(pstrdup(selectName),
-													 NULL),
+											makeAlias(selectName, NIL),
 											false);
 
 		/*
@@ -2468,8 +2474,8 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	qry->commandType = CMD_UPDATE;
 	pstate->p_is_update = true;
 
-	qry->resultRelation = setTargetTable(pstate, stmt->relname,
-										 interpretInhOption(stmt->inhOpt),
+	qry->resultRelation = setTargetTable(pstate, stmt->relation->relname,
+										 interpretInhOption(stmt->relation->inhOpt),
 										 true);
 
 	/*
@@ -2553,11 +2559,11 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 	{
 		case 'A':
 			cxt.stmtType = "ALTER TABLE";
-			cxt.relname = stmt->relname;
-			cxt.inhRelnames = NIL;
-			cxt.istemp = is_temp_rel_name(stmt->relname);
+			cxt.relation = stmt->relation;
+			cxt.inhRelations = NIL;
+			cxt.relation->istemp = is_temp_rel_name(stmt->relation->relname);
 			cxt.relOid = GetSysCacheOid(RELNAME,
-										PointerGetDatum(stmt->relname),
+										PointerGetDatum((stmt->relation)->relname),
 										0, 0, 0);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
 											ObjectIdGetDatum(cxt.relOid),
@@ -2585,11 +2591,11 @@ transformAlterTableStmt(ParseState *pstate, AlterTableStmt *stmt,
 
 		case 'C':
 			cxt.stmtType = "ALTER TABLE";
-			cxt.relname = stmt->relname;
-			cxt.inhRelnames = NIL;
-			cxt.istemp = is_temp_rel_name(stmt->relname);
+			cxt.relation = stmt->relation;
+			cxt.inhRelations = NIL;
+			cxt.relation->istemp = is_temp_rel_name(stmt->relation->relname);
 			cxt.relOid = GetSysCacheOid(RELNAME,
-										PointerGetDatum(stmt->relname),
+										PointerGetDatum((stmt->relation)->relname),
 										0, 0, 0);
 			cxt.hasoids = SearchSysCacheExists(ATTNUM,
 											ObjectIdGetDatum(cxt.relOid),
@@ -2713,15 +2719,18 @@ transformTypeRefsList(ParseState *pstate, List *l)
 static void
 transformTypeRef(ParseState *pstate, TypeName *tn)
 {
-	Attr	   *att;
+	ColumnRef  *cref;
 	Node	   *n;
 	Var		   *v;
 	char	   *tyn;
 
 	if (tn->attrname == NULL)
 		return;
-	att = makeAttr(tn->name, tn->attrname);
-	n = transformExpr(pstate, (Node *) att, EXPR_COLUMN_FIRST);
+	/* XXX this needs work; can't type name be qualified? */
+	cref = makeNode(ColumnRef);
+	cref->fields = makeList2(makeString(tn->name), makeString(tn->attrname));
+	cref->indirection = NIL;
+	n = transformExpr(pstate, (Node *) cref);
 	if (!IsA(n, Var))
 		elog(ERROR, "unsupported expression in %%TYPE");
 	v = (Var *) n;
@@ -2791,7 +2800,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 				RangeTblEntry *rte = (RangeTblEntry *) lfirst(rt);
 
 				++i;
-				if (strcmp(rte->eref->relname, relname) == 0)
+				if (strcmp(rte->eref->aliasname, relname) == 0)
 				{
 					if (rte->subquery)
 					{
@@ -2835,11 +2844,11 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 	/*
 	 * Open the referenced table
 	 */
-	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
+	pkrel = heap_openr(fkconstraint->pktable->relname, AccessShareLock);
 
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "Referenced relation \"%s\" is not a table",
-			 fkconstraint->pktable_name);
+			 fkconstraint->pktable->relname);
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -2901,7 +2910,7 @@ transformFkeyCheckAttrs(FkConstraint *fkconstraint, Oid *pktypoid)
 	}
 	if (!found)
 		elog(ERROR, "UNIQUE constraint matching given keys for referenced table \"%s\" not found",
-			 fkconstraint->pktable_name);
+			 fkconstraint->pktable->relname);
 
 	freeList(indexoidlist);
 	heap_close(pkrel, AccessShareLock);
@@ -2928,11 +2937,11 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	/*
 	 * Open the referenced table
 	 */
-	pkrel = heap_openr(fkconstraint->pktable_name, AccessShareLock);
+	pkrel = heap_openr(fkconstraint->pktable->relname, AccessShareLock);
 
 	if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "Referenced relation \"%s\" is not a table",
-			 fkconstraint->pktable_name);
+			 fkconstraint->pktable->relname);
 
 	/*
 	 * Get the list of index OIDs for the table from the relcache, and
@@ -2965,7 +2974,7 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 	 */
 	if (indexStruct == NULL)
 		elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
-			 fkconstraint->pktable_name);
+			 fkconstraint->pktable->relname);
 
 	/*
 	 * Now build the list of PK attributes from the indkey definition
@@ -2977,8 +2986,6 @@ transformFkeyGetPrimaryKey(FkConstraint *fkconstraint, Oid *pktypoid)
 		Ident	   *pkattr = makeNode(Ident);
 
 		pkattr->name = pstrdup(NameStr(*attnumAttName(pkrel, pkattno)));
-		pkattr->indirection = NIL;
-		pkattr->isRel = false;
 		pktypoid[attnum++] = attnumTypeId(pkrel, pkattno);
 
 		fkconstraint->pk_attrs = lappend(fkconstraint->pk_attrs, pkattr);
@@ -3070,14 +3077,14 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 	if (sysatt)
 		return sysatt->atttypid;
 	/* Look for column among inherited columns (if CREATE TABLE case) */
-	foreach(inher, cxt->inhRelnames)
+	foreach(inher, cxt->inhRelations)
 	{
-		Value	   *inh = lfirst(inher);
+		RangeVar   *inh = lfirst(inher);
 		Relation	rel;
 		int			count;
 
-		Assert(IsA(inh, String));
-		rel = heap_openr(strVal(inh), AccessShareLock);
+		Assert(IsA(inh, RangeVar));
+		rel = heap_openr(inh->relname, AccessShareLock);
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
 			elog(ERROR, "inherited table \"%s\" is not a relation",
 				 strVal(inh));
@@ -3247,4 +3254,105 @@ transformColumnType(ParseState *pstate, ColumnDef *column)
 	}
 
 	ReleaseSysCache(ctype);
+}
+
+/*
+ * analyzeCreateSchemaStmt -
+ *	  analyzes the "create schema" statement
+ *
+ * Split the schema element list into individual commands and place
+ * them in the result list in an order such that there are no
+ * forward references (e.g. GRANT to a table created later in the list).
+ *
+ * SQL92 also allows constraints to make forward references, so thumb through
+ * the table columns and move forward references to a posterior alter-table
+ * command.
+ *
+ * The result is a list of parse nodes that still need to be analyzed ---
+ * but we can't analyze the later commands until we've executed the earlier
+ * ones, because of possible inter-object references.
+ *
+ * Note: Called from commands/command.c
+ */
+List *
+analyzeCreateSchemaStmt(CreateSchemaStmt *stmt)
+{
+	CreateSchemaStmtContext cxt;
+	List	   *result;
+	List	   *elements;
+
+	cxt.stmtType = "CREATE SCHEMA";
+	cxt.schemaname = stmt->schemaname;
+	cxt.authid = stmt->authid;
+	cxt.tables = NIL;
+	cxt.views = NIL;
+	cxt.grants = NIL;
+	cxt.fwconstraints = NIL;
+	cxt.alters = NIL;
+	cxt.blist = NIL;
+	cxt.alist = NIL;
+
+	/*
+	 * Run through each schema element in the schema element list.
+	 * Separate statements by type, and do preliminary analysis.
+	 */
+	foreach(elements, stmt->schemaElts)
+	{
+		Node	   *element = lfirst(elements);
+
+		switch (nodeTag(element))
+		{
+			case T_CreateStmt:
+				{
+					CreateStmt *elp = (CreateStmt *) element;
+
+					if (elp->relation->schemaname == NULL)
+						elp->relation->schemaname = cxt.schemaname;
+					else if (strcmp(cxt.schemaname, elp->relation->schemaname))
+						elog(ERROR, "New table refers to a schema (%s)"
+							" different from the one being created (%s)",
+							elp->relation->schemaname, cxt.schemaname);
+
+					/*
+					 * XXX todo: deal with constraints
+					 */
+
+					cxt.tables = lappend(cxt.tables, element);
+				}
+				break;
+
+			case T_ViewStmt:
+				{
+					ViewStmt *elp = (ViewStmt *) element;
+
+					if (elp->view->schemaname == NULL)
+						elp->view->schemaname = cxt.schemaname;
+					else if (strcmp(cxt.schemaname, elp->view->schemaname))
+						elog(ERROR, "New view refers to a schema (%s)"
+							" different from the one being created (%s)",
+							elp->view->schemaname, cxt.schemaname);
+
+					/*
+					 * XXX todo: deal with references between views
+					 */
+
+					cxt.views = lappend(cxt.views, element);
+				}
+				break;
+
+			case T_GrantStmt:
+				cxt.grants = lappend(cxt.grants, element);
+				break;
+
+			default:
+				elog(ERROR, "parser: unsupported schema node (internal error)");
+		}
+	}
+
+	result = NIL;	
+	result = nconc(result, cxt.tables);
+	result = nconc(result, cxt.views);
+	result = nconc(result, cxt.grants);
+
+	return result;
 }

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.49 2002/03/11 05:03:52 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/xfunc.sgml,v 1.50 2002/03/21 16:00:28 tgl Exp $
 -->
 
  <chapter id="xfunc">
@@ -306,7 +306,8 @@ CREATE FUNCTION new_emp() RETURNS EMP AS '
        <para>
 	The  target  list  order must be exactly the same as
 	that in which the columns appear in the table associated
-	with the composite type.
+	with the composite type.  (Naming the columns, as we did above,
+	is irrelevant to the system.)
        </para>
       </listitem>
       <listitem>
@@ -328,9 +329,34 @@ ERROR:  function declared to return emp returns varchar instead of text at colum
      there are some unpleasant restrictions on how functions returning
      composite types can be used.  Briefly, when calling a function that
      returns a row, we cannot retrieve the entire row.  We must either
-     project a single attribute out of the row or pass the entire row into
+     extract a single attribute out of the row or pass the entire row into
      another function.  (Trying to display the entire row value will yield
      a meaningless number.)  For example,
+
+<programlisting>
+SELECT (new_emp()).name;
+</programlisting>
+
+<screen>
+ name
+------
+ None
+</screen>
+
+     We need the extra parentheses to keep the parser from getting confused:
+
+<screen>
+SELECT new_emp().name;
+ERROR:  parser: parse error at or near "."
+</screen>
+    </para>
+
+    <para>
+     Another approach is to use
+     functional notation for extracting attributes.  The  simple  way 
+     to explain this is that we can use the
+     notations <literal>attribute(table)</>  and  <literal>table.attribute</>
+     interchangeably:
 
 <programlisting>
 SELECT name(new_emp());
@@ -342,13 +368,6 @@ SELECT name(new_emp());
  None
 </screen>
     </para>
-
-    <para>
-     This example makes use of the
-     function notation for projecting attributes.  The  simple  way 
-     to explain this is that we can usually use the
-     notations <literal>attribute(table)</>  and  <literal>table.attribute</>
-     interchangeably:
 
 <programlisting>
 --
@@ -364,19 +383,6 @@ SELECT name(EMP) AS youngster
  youngster
 -----------
  Sam
-</screen>
-    </para>
-
-    <para>
-	The reason why, in general, we must use the function
-        syntax  for projecting attributes of function return
-        values is that the parser  just  doesn't  understand
-        the  dot syntax for projection when combined
-        with function calls.
-
-<screen>
-SELECT new_emp().name AS nobody;
-ERROR:  parser: parse error at or near "."
 </screen>
     </para>
 

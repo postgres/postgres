@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.161 2002/03/14 22:44:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.162 2002/03/21 16:00:31 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -33,7 +33,7 @@
 #include "catalog/pg_type.h"
 #include "commands/command.h"
 #include "commands/trigger.h"
-#include "commands/defrem.h"	/* For add constraint unique, primary */
+#include "commands/defrem.h"
 #include "executor/execdefs.h"
 #include "executor/executor.h"
 #include "miscadmin.h"
@@ -44,7 +44,8 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_oper.h"
 #include "parser/parse_relation.h"
-#include "parser/analyze.h"		/* For add constraint unique, primary */
+#include "parser/analyze.h"
+#include "tcop/utility.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
@@ -1279,8 +1280,7 @@ AlterTableAddConstraint(char *relationName,
 								 * Convert the A_EXPR in raw_expr into an
 								 * EXPR
 								 */
-								expr = transformExpr(pstate, constr->raw_expr,
-													 EXPR_COLUMN_FIRST);
+								expr = transformExpr(pstate, constr->raw_expr);
 
 								/*
 								 * Make sure it yields a boolean result.
@@ -1366,7 +1366,7 @@ AlterTableAddConstraint(char *relationName,
 					List	   *list;
 					int			count;
 
-					if (is_temp_rel_name(fkconstraint->pktable_name) &&
+					if (is_temp_rel_name(fkconstraint->pktable->relname) &&
 						!is_temp_rel_name(relationName))
 						elog(ERROR, "ALTER TABLE / ADD CONSTRAINT: Unable to reference temporary table from permanent table constraint.");
 
@@ -1375,10 +1375,10 @@ AlterTableAddConstraint(char *relationName,
 					 * someone doesn't delete rows out from under us.
 					 */
 
-					pkrel = heap_openr(fkconstraint->pktable_name, AccessExclusiveLock);
+					pkrel = heap_openr(fkconstraint->pktable->relname, AccessExclusiveLock);
 					if (pkrel->rd_rel->relkind != RELKIND_RELATION)
 						elog(ERROR, "referenced table \"%s\" not a relation",
-							 fkconstraint->pktable_name);
+							 fkconstraint->pktable->relname);
 					heap_close(pkrel, NoLock);
 
 					/*
@@ -1417,7 +1417,7 @@ AlterTableAddConstraint(char *relationName,
 					else
 						trig.tgargs[0] = "<unknown>";
 					trig.tgargs[1] = (char *) relationName;
-					trig.tgargs[2] = fkconstraint->pktable_name;
+					trig.tgargs[2] = fkconstraint->pktable->relname;
 					trig.tgargs[3] = fkconstraint->match_type;
 					count = 4;
 					foreach(list, fkconstraint->fk_attrs)
@@ -1936,9 +1936,10 @@ LockTableCommand(LockStmt *lockstmt)
 	 * at a time
 	 */
 
-	foreach(p, lockstmt->rellist)
+	foreach(p, lockstmt->relations)
 	{
-		char	   *relname = strVal(lfirst(p));
+		RangeVar   *relation = lfirst(p);
+		char	   *relname = relation->relname;
 		int			aclresult;
 		Relation	rel;
 
@@ -1961,4 +1962,95 @@ LockTableCommand(LockStmt *lockstmt)
 
 		relation_close(rel, NoLock);	/* close rel, keep lock */
 	}
+}
+
+
+/*
+ * CREATE SCHEMA
+ */
+void 
+CreateSchemaCommand(CreateSchemaStmt *stmt)
+{
+	const char *schemaName = stmt->schemaname;
+	const char *authId = stmt->authid;
+	List	   *parsetree_list;
+	List	   *parsetree_item;
+	const char *owner_name;
+	Oid			owner_userid;
+	Oid			saved_userid;
+
+	saved_userid = GetUserId();
+
+	if (!authId)
+	{
+		owner_userid = saved_userid;
+		owner_name = GetUserName(owner_userid);
+	}
+	else if (superuser())
+	{
+		owner_name = authId;
+		/* The following will error out if user does not exist */
+		owner_userid = get_usesysid(owner_name);
+		/*
+		 * Set the current user to the requested authorization so
+		 * that objects created in the statement have the requested
+		 * owner.  (This will revert to session user on error or at
+		 * the end of this routine.)
+		 */
+		SetUserId(owner_userid);
+	}
+	else /* not superuser */
+	{
+		owner_userid = saved_userid;
+		owner_name = GetUserName(owner_userid);
+		if (strcmp(authId, owner_name) != 0)
+			elog(ERROR, "CREATE SCHEMA: permission denied"
+				 "\n\t\"%s\" is not a superuser, so cannot create a schema for \"%s\"",
+				 owner_name, authId);
+	}
+
+	/* FIXME FENN: Create the schema here */
+	(void) schemaName;			/* suppress compiler warning for now... */
+
+	/*
+	 * Let commands in the schema-element-list know about the schema
+	 */
+	CommandCounterIncrement();
+
+	/*
+	 * Examine the list of commands embedded in the CREATE SCHEMA command,
+	 * and reorganize them into a sequentially executable order with no
+	 * forward references.  Note that the result is still a list of raw
+	 * parsetrees in need of parse analysis --- we cannot, in general,
+	 * run analyze.c on one statement until we have actually executed the
+	 * prior ones.
+	 */
+	parsetree_list = analyzeCreateSchemaStmt(stmt);
+
+	/*
+	 * Analyze and execute each command contained in the CREATE SCHEMA
+	 */
+	foreach(parsetree_item, parsetree_list)
+	{
+		Node	   *parsetree = (Node *) lfirst(parsetree_item);
+		List	   *querytree_list,
+				   *querytree_item;
+				   
+		querytree_list = parse_analyze(parsetree, NULL);
+		
+		foreach(querytree_item, querytree_list)
+		{
+			Query	   *querytree = (Query *) lfirst(querytree_item);
+			
+			/* schemas should contain only utility stmts */
+			Assert(querytree->commandType == CMD_UTILITY);
+			/* do this step */
+			ProcessUtility(querytree->utilityStmt, None, NULL);
+			/* make sure later steps can see the object created here */
+			CommandCounterIncrement();
+		}
+	}
+
+	/* Reset current user */
+	SetUserId(saved_userid);
 }

@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.171 2002/03/20 19:43:58 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.172 2002/03/21 16:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -729,18 +729,6 @@ _copyVar(Var *from)
 
 	newnode->varnoold = from->varnoold;
 	newnode->varoattno = from->varoattno;
-
-	return newnode;
-}
-
-static Attr *
-_copyAttr(Attr *from)
-{
-	Attr	   *newnode = makeNode(Attr);
-
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
-	Node_Copy(from, newnode, attrs);
 
 	return newnode;
 }
@@ -1515,8 +1503,7 @@ _copyFkConstraint(FkConstraint *from)
 
 	if (from->constr_name)
 		newnode->constr_name = pstrdup(from->constr_name);
-	if (from->pktable_name)
-		newnode->pktable_name = pstrdup(from->pktable_name);
+	Node_Copy(from, newnode, pktable);
 	Node_Copy(from, newnode, fk_attrs);
 	Node_Copy(from, newnode, pk_attrs);
 	if (from->match_type)
@@ -1553,6 +1540,29 @@ _copyAExpr(A_Expr *from)
 	return newnode;
 }
 
+static ColumnRef *
+_copyColumnRef(ColumnRef *from)
+{
+	ColumnRef	   *newnode = makeNode(ColumnRef);
+
+	Node_Copy(from, newnode, fields);
+	Node_Copy(from, newnode, indirection);
+
+	return newnode;
+}
+
+static ParamRef *
+_copyParamRef(ParamRef *from)
+{
+	ParamRef    *newnode = makeNode(ParamRef);
+
+	newnode->number = from->number;
+	Node_Copy(from, newnode, fields);
+	Node_Copy(from, newnode, indirection);
+
+	return newnode;
+}
+
 static A_Const *
 _copyAConst(A_Const *from)
 {
@@ -1564,27 +1574,12 @@ _copyAConst(A_Const *from)
 	return newnode;
 }
 
-static ParamNo *
-_copyParamNo(ParamNo *from)
-{
-	ParamNo    *newnode = makeNode(ParamNo);
-
-	newnode->number = from->number;
-	Node_Copy(from, newnode, typename);
-	Node_Copy(from, newnode, indirection);
-
-	return newnode;
-}
-
 static Ident *
 _copyIdent(Ident *from)
 {
 	Ident	   *newnode = makeNode(Ident);
 
-	if (from->name)
-		newnode->name = pstrdup(from->name);
-	Node_Copy(from, newnode, indirection);
-	newnode->isRel = from->isRel;
+	newnode->name = pstrdup(from->name);
 
 	return newnode;
 }
@@ -1610,6 +1605,18 @@ _copyAIndices(A_Indices *from)
 
 	Node_Copy(from, newnode, lidx);
 	Node_Copy(from, newnode, uidx);
+
+	return newnode;
+}
+
+static ExprFieldSelect *
+_copyExprFieldSelect(ExprFieldSelect *from)
+{
+	ExprFieldSelect	   *newnode = makeNode(ExprFieldSelect);
+
+	Node_Copy(from, newnode, arg);
+	Node_Copy(from, newnode, fields);
+	Node_Copy(from, newnode, indirection);
 
 	return newnode;
 }
@@ -1654,15 +1661,32 @@ _copySortGroupBy(SortGroupBy *from)
 	return newnode;
 }
 
+static Alias *
+_copyAlias(Alias *from)
+{
+	Alias	   *newnode = makeNode(Alias);
+
+	if (from->aliasname)
+		newnode->aliasname = pstrdup(from->aliasname);
+	Node_Copy(from, newnode, colnames);
+
+	return newnode;
+}
+
 static RangeVar *
 _copyRangeVar(RangeVar *from)
 {
 	RangeVar   *newnode = makeNode(RangeVar);
 
+	if (from->catalogname)
+		newnode->catalogname = pstrdup(from->catalogname);
+	if (from->schemaname)
+		newnode->schemaname = pstrdup(from->schemaname);
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	newnode->inhOpt = from->inhOpt;
-	Node_Copy(from, newnode, name);
+	newnode->istemp = from->istemp;
+	Node_Copy(from, newnode, alias);
 
 	return newnode;
 }
@@ -1673,7 +1697,7 @@ _copyRangeSubselect(RangeSubselect *from)
 	RangeSubselect *newnode = makeNode(RangeSubselect);
 
 	Node_Copy(from, newnode, subquery);
-	Node_Copy(from, newnode, name);
+	Node_Copy(from, newnode, alias);
 
 	return newnode;
 }
@@ -1756,11 +1780,9 @@ _copyQuery(Query *from)
 	newnode->commandType = from->commandType;
 	Node_Copy(from, newnode, utilityStmt);
 	newnode->resultRelation = from->resultRelation;
-	if (from->into)
-		newnode->into = pstrdup(from->into);
+	Node_Copy(from, newnode, into);
 	newnode->isPortal = from->isPortal;
 	newnode->isBinary = from->isBinary;
-	newnode->isTemp = from->isTemp;
 	newnode->hasAggs = from->hasAggs;
 	newnode->hasSubLinks = from->hasSubLinks;
 	newnode->originalQuery = from->originalQuery;
@@ -1798,8 +1820,7 @@ _copyInsertStmt(InsertStmt *from)
 {
 	InsertStmt *newnode = makeNode(InsertStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	Node_Copy(from, newnode, cols);
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, selectStmt);
@@ -1812,10 +1833,8 @@ _copyDeleteStmt(DeleteStmt *from)
 {
 	DeleteStmt *newnode = makeNode(DeleteStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	Node_Copy(from, newnode, whereClause);
-	newnode->inhOpt = from->inhOpt;
 
 	return newnode;
 }
@@ -1825,12 +1844,10 @@ _copyUpdateStmt(UpdateStmt *from)
 {
 	UpdateStmt *newnode = makeNode(UpdateStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, whereClause);
 	Node_Copy(from, newnode, fromClause);
-	newnode->inhOpt = from->inhOpt;
 
 	return newnode;
 }
@@ -1841,9 +1858,7 @@ _copySelectStmt(SelectStmt *from)
 	SelectStmt *newnode = makeNode(SelectStmt);
 
 	Node_Copy(from, newnode, distinctClause);
-	if (from->into)
-		newnode->into = pstrdup(from->into);
-	newnode->istemp = from->istemp;
+	Node_Copy(from, newnode, into);
 	Node_Copy(from, newnode, intoColNames);
 	Node_Copy(from, newnode, targetList);
 	Node_Copy(from, newnode, fromClause);
@@ -1885,9 +1900,7 @@ _copyAlterTableStmt(AlterTableStmt *from)
 	AlterTableStmt *newnode = makeNode(AlterTableStmt);
 
 	newnode->subtype = from->subtype;
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
-	newnode->inhOpt = from->inhOpt;
+	Node_Copy(from, newnode, relation);
 	if (from->name)
 		newnode->name = pstrdup(from->name);
 	Node_Copy(from, newnode, def);
@@ -1951,8 +1964,7 @@ _copyClusterStmt(ClusterStmt *from)
 {
 	ClusterStmt *newnode = makeNode(ClusterStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	if (from->indexname)
 		newnode->indexname = pstrdup(from->indexname);
 
@@ -1965,8 +1977,7 @@ _copyCopyStmt(CopyStmt *from)
 	CopyStmt   *newnode = makeNode(CopyStmt);
 
 	newnode->binary = from->binary;
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	newnode->oids = from->oids;
 	newnode->direction = from->direction;
 	if (from->filename)
@@ -1984,11 +1995,10 @@ _copyCreateStmt(CreateStmt *from)
 {
 	CreateStmt *newnode = makeNode(CreateStmt);
 
-	newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	Node_Copy(from, newnode, tableElts);
-	Node_Copy(from, newnode, inhRelnames);
+	Node_Copy(from, newnode, inhRelations);
 	Node_Copy(from, newnode, constraints);
-	newnode->istemp = from->istemp;
 	newnode->hasoids = from->hasoids;
 
 	return newnode;
@@ -2024,7 +2034,7 @@ _copyDropStmt(DropStmt *from)
 {
 	DropStmt   *newnode = makeNode(DropStmt);
 
-	Node_Copy(from, newnode, names);
+	Node_Copy(from, newnode, objects);
 	newnode->removeType = from->removeType;
 	newnode->behavior = from->behavior;
 
@@ -2036,7 +2046,7 @@ _copyTruncateStmt(TruncateStmt *from)
 {
 	TruncateStmt *newnode = makeNode(TruncateStmt);
 
-	newnode->relName = pstrdup(from->relName);
+	Node_Copy(from, newnode, relation);
 
 	return newnode;
 }
@@ -2047,6 +2057,8 @@ _copyCommentStmt(CommentStmt *from)
 	CommentStmt *newnode = makeNode(CommentStmt);
 
 	newnode->objtype = from->objtype;
+	if (from->objschema)
+		newnode->objschema = pstrdup(from->objschema);
 	newnode->objname = pstrdup(from->objname);
 	if (from->objproperty)
 		newnode->objproperty = pstrdup(from->objproperty);
@@ -2075,7 +2087,7 @@ _copyIndexStmt(IndexStmt *from)
 	IndexStmt  *newnode = makeNode(IndexStmt);
 
 	newnode->idxname = pstrdup(from->idxname);
-	newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	newnode->accessMethod = pstrdup(from->accessMethod);
 	Node_Copy(from, newnode, indexParams);
 	Node_Copy(from, newnode, whereClause);
@@ -2140,8 +2152,7 @@ _copyRenameStmt(RenameStmt *from)
 {
 	RenameStmt *newnode = makeNode(RenameStmt);
 
-	newnode->relname = pstrdup(from->relname);
-	newnode->inhOpt = from->inhOpt;
+	Node_Copy(from, newnode, relation);
 	if (from->column)
 		newnode->column = pstrdup(from->column);
 	if (from->newname)
@@ -2155,10 +2166,10 @@ _copyRuleStmt(RuleStmt *from)
 {
 	RuleStmt   *newnode = makeNode(RuleStmt);
 
+	Node_Copy(from, newnode, relation);
 	newnode->rulename = pstrdup(from->rulename);
 	Node_Copy(from, newnode, whereClause);
 	newnode->event = from->event;
-	Node_Copy(from, newnode, object);
 	newnode->instead = from->instead;
 	Node_Copy(from, newnode, actions);
 
@@ -2170,8 +2181,7 @@ _copyNotifyStmt(NotifyStmt *from)
 {
 	NotifyStmt *newnode = makeNode(NotifyStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 
 	return newnode;
 }
@@ -2181,8 +2191,7 @@ _copyListenStmt(ListenStmt *from)
 {
 	ListenStmt *newnode = makeNode(ListenStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 
 	return newnode;
 }
@@ -2192,8 +2201,7 @@ _copyUnlistenStmt(UnlistenStmt *from)
 {
 	UnlistenStmt *newnode = makeNode(UnlistenStmt);
 
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 
 	return newnode;
 }
@@ -2213,8 +2221,7 @@ _copyViewStmt(ViewStmt *from)
 {
 	ViewStmt   *newnode = makeNode(ViewStmt);
 
-	if (from->viewname)
-		newnode->viewname = pstrdup(from->viewname);
+	Node_Copy(from, newnode, view);
 	Node_Copy(from, newnode, aliases);
 	Node_Copy(from, newnode, query);
 
@@ -2298,8 +2305,7 @@ _copyVacuumStmt(VacuumStmt *from)
 	newnode->analyze = from->analyze;
 	newnode->freeze = from->freeze;
 	newnode->verbose = from->verbose;
-	if (from->vacrel)
-		newnode->vacrel = pstrdup(from->vacrel);
+	Node_Copy(from, newnode, relation);
 	Node_Copy(from, newnode, va_cols);
 
 	return newnode;
@@ -2322,8 +2328,7 @@ _copyCreateSeqStmt(CreateSeqStmt *from)
 {
 	CreateSeqStmt *newnode = makeNode(CreateSeqStmt);
 
-	if (from->seqname)
-		newnode->seqname = pstrdup(from->seqname);
+	Node_Copy(from, newnode, sequence);
 	Node_Copy(from, newnode, options);
 
 	return newnode;
@@ -2370,8 +2375,7 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 
 	if (from->trigname)
 		newnode->trigname = pstrdup(from->trigname);
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 	if (from->funcname)
 		newnode->funcname = pstrdup(from->funcname);
 	Node_Copy(from, newnode, args);
@@ -2389,8 +2393,7 @@ _copyCreateTrigStmt(CreateTrigStmt *from)
 	newnode->isconstraint = from->isconstraint;
 	newnode->deferrable = from->deferrable;
 	newnode->initdeferred = from->initdeferred;
-	if (from->constrrelname)
-		newnode->constrrelname = pstrdup(from->constrrelname);
+	Node_Copy(from, newnode, constrrel);
 
 	return newnode;
 }
@@ -2402,8 +2405,7 @@ _copyDropTrigStmt(DropTrigStmt *from)
 
 	if (from->trigname)
 		newnode->trigname = pstrdup(from->trigname);
-	if (from->relname)
-		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, relation);
 
 	return newnode;
 }
@@ -2488,7 +2490,7 @@ _copyLockStmt(LockStmt *from)
 {
 	LockStmt   *newnode = makeNode(LockStmt);
 
-	Node_Copy(from, newnode, rellist);
+	Node_Copy(from, newnode, relations);
 
 	newnode->mode = from->mode;
 
@@ -2548,10 +2550,24 @@ _copyReindexStmt(ReindexStmt *from)
 	ReindexStmt *newnode = makeNode(ReindexStmt);
 
 	newnode->reindexType = from->reindexType;
+	Node_Copy(from, newnode, relation);
 	if (from->name)
 		newnode->name = pstrdup(from->name);
 	newnode->force = from->force;
 	newnode->all = from->all;
+
+	return newnode;
+}
+
+static CreateSchemaStmt *
+_copyCreateSchemaStmt(CreateSchemaStmt *from)
+{
+	CreateSchemaStmt *newnode = makeNode(CreateSchemaStmt);
+
+	newnode->schemaname = pstrdup(from->schemaname);
+	if (from->authid)
+		newnode->authid = pstrdup(from->authid);
+	Node_Copy(from, newnode, schemaElts);
 
 	return newnode;
 }
@@ -2888,6 +2904,9 @@ copyObject(void *from)
 		case T_LoadStmt:
 			retval = _copyLoadStmt(from);
 			break;
+		case T_CreateDomainStmt:
+			retval = _copyCreateDomainStmt(from);
+			break;
 		case T_CreatedbStmt:
 			retval = _copyCreatedbStmt(from);
 			break;
@@ -2960,18 +2979,21 @@ copyObject(void *from)
 		case T_CheckPointStmt:
 			retval = (void *) makeNode(CheckPointStmt);
 			break;
+		case T_CreateSchemaStmt:
+			retval = _copyCreateSchemaStmt(from);
+			break;
 
 		case T_A_Expr:
 			retval = _copyAExpr(from);
 			break;
-		case T_Attr:
-			retval = _copyAttr(from);
+		case T_ColumnRef:
+			retval = _copyColumnRef(from);
+			break;
+		case T_ParamRef:
+			retval = _copyParamRef(from);
 			break;
 		case T_A_Const:
 			retval = _copyAConst(from);
-			break;
-		case T_ParamNo:
-			retval = _copyParamNo(from);
 			break;
 		case T_Ident:
 			retval = _copyIdent(from);
@@ -2982,6 +3004,9 @@ copyObject(void *from)
 		case T_A_Indices:
 			retval = _copyAIndices(from);
 			break;
+		case T_ExprFieldSelect:
+			retval = _copyExprFieldSelect(from);
+			break;
 		case T_ResTarget:
 			retval = _copyResTarget(from);
 			break;
@@ -2990,6 +3015,9 @@ copyObject(void *from)
 			break;
 		case T_SortGroupBy:
 			retval = _copySortGroupBy(from);
+			break;
+		case T_Alias:
+			retval = _copyAlias(from);
 			break;
 		case T_RangeVar:
 			retval = _copyRangeVar(from);
@@ -3044,9 +3072,6 @@ copyObject(void *from)
 			break;
 		case T_FuncWithArgs:
 			retval = _copyFuncWithArgs(from);
-			break;
-		case T_CreateDomainStmt:
-			retval = _copyCreateDomainStmt(from);
 			break;
 
 		default:

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_expr.h,v 1.25 2001/11/05 17:46:34 momjian Exp $
+ * $Id: parse_expr.h,v 1.26 2002/03/21 16:01:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,13 +16,12 @@
 
 #include "parser/parse_node.h"
 
-#define EXPR_COLUMN_FIRST	1
-#define EXPR_RELATION_FIRST 2
 
+/* GUC parameters */
 extern int	max_expr_depth;
 extern bool Transform_null_equals;
 
-extern Node *transformExpr(ParseState *pstate, Node *expr, int precedence);
+extern Node *transformExpr(ParseState *pstate, Node *expr);
 extern Oid	exprType(Node *expr);
 extern int32 exprTypmod(Node *expr);
 extern bool exprIsLengthCoercion(Node *expr, int32 *coercedTypmod);

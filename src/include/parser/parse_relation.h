@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.29 2002/03/12 00:52:04 tgl Exp $
+ * $Id: parse_relation.h,v 1.30 2002/03/21 16:02:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,12 @@ extern Node *qualifiedNameToVar(ParseState *pstate, char *refname,
 				   char *colname, bool implicitRTEOK);
 extern RangeTblEntry *addRangeTableEntry(ParseState *pstate,
 				   char *relname,
-				   Attr *alias,
+				   Alias *alias,
 				   bool inh,
 				   bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
-							  Attr *alias,
+							  Alias *alias,
 							  bool inFromCl);
 extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 						  List *colnames,
@@ -43,7 +43,7 @@ extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
 						  List *coltypmods,
 						  List *leftcols,
 						  List *rightcols,
-						  Attr *alias,
+						  Alias *alias,
 						  bool inFromCl);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList, bool addToNameSpace);

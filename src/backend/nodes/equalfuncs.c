@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.119 2002/03/20 19:44:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.120 2002/03/21 16:00:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -579,13 +579,11 @@ _equalQuery(Query *a, Query *b)
 		return false;
 	if (a->resultRelation != b->resultRelation)
 		return false;
-	if (!equalstr(a->into, b->into))
+	if (!equal(a->into, b->into))
 		return false;
 	if (a->isPortal != b->isPortal)
 		return false;
 	if (a->isBinary != b->isBinary)
-		return false;
-	if (a->isTemp != b->isTemp)
 		return false;
 	if (a->hasAggs != b->hasAggs)
 		return false;
@@ -629,7 +627,7 @@ _equalQuery(Query *a, Query *b)
 static bool
 _equalInsertStmt(InsertStmt *a, InsertStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equal(a->cols, b->cols))
 		return false;
@@ -644,11 +642,9 @@ _equalInsertStmt(InsertStmt *a, InsertStmt *b)
 static bool
 _equalDeleteStmt(DeleteStmt *a, DeleteStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equal(a->whereClause, b->whereClause))
-		return false;
-	if (a->inhOpt != b->inhOpt)
 		return false;
 
 	return true;
@@ -657,15 +653,13 @@ _equalDeleteStmt(DeleteStmt *a, DeleteStmt *b)
 static bool
 _equalUpdateStmt(UpdateStmt *a, UpdateStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equal(a->targetList, b->targetList))
 		return false;
 	if (!equal(a->whereClause, b->whereClause))
 		return false;
 	if (!equal(a->fromClause, b->fromClause))
-		return false;
-	if (a->inhOpt != b->inhOpt)
 		return false;
 
 	return true;
@@ -676,9 +670,7 @@ _equalSelectStmt(SelectStmt *a, SelectStmt *b)
 {
 	if (!equal(a->distinctClause, b->distinctClause))
 		return false;
-	if (!equalstr(a->into, b->into))
-		return false;
-	if (a->istemp != b->istemp)
+	if (!equal(a->into, b->into))
 		return false;
 	if (!equal(a->intoColNames, b->intoColNames))
 		return false;
@@ -738,9 +730,7 @@ _equalAlterTableStmt(AlterTableStmt *a, AlterTableStmt *b)
 {
 	if (a->subtype != b->subtype)
 		return false;
-	if (!equalstr(a->relname, b->relname))
-		return false;
-	if (a->inhOpt != b->inhOpt)
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equalstr(a->name, b->name))
 		return false;
@@ -795,7 +785,7 @@ _equalClosePortalStmt(ClosePortalStmt *a, ClosePortalStmt *b)
 static bool
 _equalClusterStmt(ClusterStmt *a, ClusterStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equalstr(a->indexname, b->indexname))
 		return false;
@@ -808,7 +798,7 @@ _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 {
 	if (a->binary != b->binary)
 		return false;
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (a->oids != b->oids)
 		return false;
@@ -827,15 +817,13 @@ _equalCopyStmt(CopyStmt *a, CopyStmt *b)
 static bool
 _equalCreateStmt(CreateStmt *a, CreateStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equal(a->tableElts, b->tableElts))
 		return false;
-	if (!equal(a->inhRelnames, b->inhRelnames))
+	if (!equal(a->inhRelations, b->inhRelations))
 		return false;
 	if (!equal(a->constraints, b->constraints))
-		return false;
-	if (a->istemp != b->istemp)
 		return false;
 	if (a->hasoids != b->hasoids)
 		return false;
@@ -874,7 +862,7 @@ _equalDefineStmt(DefineStmt *a, DefineStmt *b)
 static bool
 _equalDropStmt(DropStmt *a, DropStmt *b)
 {
-	if (!equal(a->names, b->names))
+	if (!equal(a->objects, b->objects))
 		return false;
 	if (a->removeType != b->removeType)
 		return false;
@@ -887,7 +875,7 @@ _equalDropStmt(DropStmt *a, DropStmt *b)
 static bool
 _equalTruncateStmt(TruncateStmt *a, TruncateStmt *b)
 {
-	if (!equalstr(a->relName, b->relName))
+	if (!equal(a->relation, b->relation))
 		return false;
 
 	return true;
@@ -899,6 +887,8 @@ _equalCommentStmt(CommentStmt *a, CommentStmt *b)
 	if (a->objtype != b->objtype)
 		return false;
 	if (!equalstr(a->objname, b->objname))
+		return false;
+	if (!equalstr(a->objschema, b->objschema))
 		return false;
 	if (!equalstr(a->objproperty, b->objproperty))
 		return false;
@@ -930,7 +920,7 @@ _equalIndexStmt(IndexStmt *a, IndexStmt *b)
 {
 	if (!equalstr(a->idxname, b->idxname))
 		return false;
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equalstr(a->accessMethod, b->accessMethod))
 		return false;
@@ -1006,9 +996,7 @@ _equalRemoveOperStmt(RemoveOperStmt *a, RemoveOperStmt *b)
 static bool
 _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
-		return false;
-	if (a->inhOpt != b->inhOpt)
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equalstr(a->column, b->column))
 		return false;
@@ -1021,13 +1009,13 @@ _equalRenameStmt(RenameStmt *a, RenameStmt *b)
 static bool
 _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 {
+	if (!equal(a->relation, b->relation))
+		return false;
 	if (!equalstr(a->rulename, b->rulename))
 		return false;
 	if (!equal(a->whereClause, b->whereClause))
 		return false;
 	if (a->event != b->event)
-		return false;
-	if (!equal(a->object, b->object))
 		return false;
 	if (a->instead != b->instead)
 		return false;
@@ -1040,7 +1028,7 @@ _equalRuleStmt(RuleStmt *a, RuleStmt *b)
 static bool
 _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 
 	return true;
@@ -1049,7 +1037,7 @@ _equalNotifyStmt(NotifyStmt *a, NotifyStmt *b)
 static bool
 _equalListenStmt(ListenStmt *a, ListenStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 
 	return true;
@@ -1058,7 +1046,7 @@ _equalListenStmt(ListenStmt *a, ListenStmt *b)
 static bool
 _equalUnlistenStmt(UnlistenStmt *a, UnlistenStmt *b)
 {
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 
 	return true;
@@ -1076,7 +1064,7 @@ _equalTransactionStmt(TransactionStmt *a, TransactionStmt *b)
 static bool
 _equalViewStmt(ViewStmt *a, ViewStmt *b)
 {
-	if (!equalstr(a->viewname, b->viewname))
+	if (!equal(a->view, b->view))
 		return false;
 	if (!equal(a->aliases, b->aliases))
 		return false;
@@ -1160,7 +1148,7 @@ _equalVacuumStmt(VacuumStmt *a, VacuumStmt *b)
 		return false;
 	if (a->verbose != b->verbose)
 		return false;
-	if (!equalstr(a->vacrel, b->vacrel))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equal(a->va_cols, b->va_cols))
 		return false;
@@ -1184,7 +1172,7 @@ _equalExplainStmt(ExplainStmt *a, ExplainStmt *b)
 static bool
 _equalCreateSeqStmt(CreateSeqStmt *a, CreateSeqStmt *b)
 {
-	if (!equalstr(a->seqname, b->seqname))
+	if (!equal(a->sequence, b->sequence))
 		return false;
 	if (!equal(a->options, b->options))
 		return false;
@@ -1226,7 +1214,7 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 {
 	if (!equalstr(a->trigname, b->trigname))
 		return false;
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 	if (!equalstr(a->funcname, b->funcname))
 		return false;
@@ -1252,7 +1240,7 @@ _equalCreateTrigStmt(CreateTrigStmt *a, CreateTrigStmt *b)
 		return false;
 	if (a->initdeferred != b->initdeferred)
 		return false;
-	if (!equalstr(a->constrrelname, b->constrrelname))
+	if (!equal(a->constrrel, b->constrrel))
 		return false;
 
 	return true;
@@ -1263,7 +1251,7 @@ _equalDropTrigStmt(DropTrigStmt *a, DropTrigStmt *b)
 {
 	if (!equalstr(a->trigname, b->trigname))
 		return false;
-	if (!equalstr(a->relname, b->relname))
+	if (!equal(a->relation, b->relation))
 		return false;
 
 	return true;
@@ -1340,7 +1328,7 @@ _equalDropUserStmt(DropUserStmt *a, DropUserStmt *b)
 static bool
 _equalLockStmt(LockStmt *a, LockStmt *b)
 {
-	if (!equal(a->rellist, b->rellist))
+	if (!equal(a->relations, b->relations))
 		return false;
 	if (a->mode != b->mode)
 		return false;
@@ -1397,11 +1385,26 @@ _equalReindexStmt(ReindexStmt *a, ReindexStmt *b)
 {
 	if (a->reindexType != b->reindexType)
 		return false;
+	if (!equal(a->relation, b->relation))
+		return false;
 	if (!equalstr(a->name, b->name))
 		return false;
 	if (a->force != b->force)
 		return false;
 	if (a->all != b->all)
+		return false;
+
+	return true;
+}
+
+static bool
+_equalCreateSchemaStmt(CreateSchemaStmt *a, CreateSchemaStmt *b)
+{
+	if (!equalstr(a->schemaname, b->schemaname))
+		return false;
+	if (!equalstr(a->authid, b->authid))
+		return false;
+	if (!equal(a->schemaElts, b->schemaElts))
 		return false;
 
 	return true;
@@ -1423,13 +1426,22 @@ _equalAExpr(A_Expr *a, A_Expr *b)
 }
 
 static bool
-_equalAttr(Attr *a, Attr *b)
+_equalColumnRef(ColumnRef *a, ColumnRef *b)
 {
-	if (strcmp(a->relname, b->relname) != 0)
+	if (!equal(a->fields, b->fields))
 		return false;
-	if (!equal(a->paramNo, b->paramNo))
+	if (!equal(a->indirection, b->indirection))
 		return false;
-	if (!equal(a->attrs, b->attrs))
+
+	return true;
+}
+
+static bool
+_equalParamRef(ParamRef *a, ParamRef *b)
+{
+	if (a->number != b->number)
+		return false;
+	if (!equal(a->fields, b->fields))
 		return false;
 	if (!equal(a->indirection, b->indirection))
 		return false;
@@ -1449,26 +1461,9 @@ _equalAConst(A_Const *a, A_Const *b)
 }
 
 static bool
-_equalParamNo(ParamNo *a, ParamNo *b)
-{
-	if (a->number != b->number)
-		return false;
-	if (!equal(a->typename, b->typename))
-		return false;
-	if (!equal(a->indirection, b->indirection))
-		return false;
-
-	return true;
-}
-
-static bool
 _equalIdent(Ident *a, Ident *b)
 {
 	if (!equalstr(a->name, b->name))
-		return false;
-	if (!equal(a->indirection, b->indirection))
-		return false;
-	if (a->isRel != b->isRel)
 		return false;
 
 	return true;
@@ -1495,6 +1490,19 @@ _equalAIndices(A_Indices *a, A_Indices *b)
 	if (!equal(a->lidx, b->lidx))
 		return false;
 	if (!equal(a->uidx, b->uidx))
+		return false;
+
+	return true;
+}
+
+static bool
+_equalExprFieldSelect(ExprFieldSelect *a, ExprFieldSelect *b)
+{
+	if (!equal(a->arg, b->arg))
+		return false;
+	if (!equal(a->fields, b->fields))
+		return false;
+	if (!equal(a->indirection, b->indirection))
 		return false;
 
 	return true;
@@ -1536,13 +1544,30 @@ _equalSortGroupBy(SortGroupBy *a, SortGroupBy *b)
 }
 
 static bool
+_equalAlias(Alias *a, Alias *b)
+{
+	if (!equalstr(a->aliasname, b->aliasname))
+		return false;
+	if (!equal(a->colnames, b->colnames))
+		return false;
+
+	return true;
+}
+
+static bool
 _equalRangeVar(RangeVar *a, RangeVar *b)
 {
+	if (!equalstr(a->catalogname, b->catalogname))
+		return false;
+	if (!equalstr(a->schemaname, b->schemaname))
+		return false;
 	if (!equalstr(a->relname, b->relname))
 		return false;
 	if (a->inhOpt != b->inhOpt)
 		return false;
-	if (!equal(a->name, b->name))
+	if (a->istemp != b->istemp)
+		return false;
+	if (!equal(a->alias, b->alias))
 		return false;
 
 	return true;
@@ -1553,7 +1578,7 @@ _equalRangeSubselect(RangeSubselect *a, RangeSubselect *b)
 {
 	if (!equal(a->subquery, b->subquery))
 		return false;
-	if (!equal(a->name, b->name))
+	if (!equal(a->alias, b->alias))
 		return false;
 
 	return true;
@@ -1704,7 +1729,7 @@ _equalFkConstraint(FkConstraint *a, FkConstraint *b)
 {
 	if (!equalstr(a->constr_name, b->constr_name))
 		return false;
-	if (!equalstr(a->pktable_name, b->pktable_name))
+	if (!equal(a->pktable, b->pktable))
 		return false;
 	if (!equal(a->fk_attrs, b->fk_attrs))
 		return false;
@@ -2111,18 +2136,21 @@ equal(void *a, void *b)
 		case T_CheckPointStmt:
 			retval = true;
 			break;
+		case T_CreateSchemaStmt:
+			retval = _equalCreateSchemaStmt(a, b);
+			break;
 
 		case T_A_Expr:
 			retval = _equalAExpr(a, b);
 			break;
-		case T_Attr:
-			retval = _equalAttr(a, b);
+		case T_ColumnRef:
+			retval = _equalColumnRef(a, b);
+			break;
+		case T_ParamRef:
+			retval = _equalParamRef(a, b);
 			break;
 		case T_A_Const:
 			retval = _equalAConst(a, b);
-			break;
-		case T_ParamNo:
-			retval = _equalParamNo(a, b);
 			break;
 		case T_Ident:
 			retval = _equalIdent(a, b);
@@ -2133,6 +2161,9 @@ equal(void *a, void *b)
 		case T_A_Indices:
 			retval = _equalAIndices(a, b);
 			break;
+		case T_ExprFieldSelect:
+			retval = _equalExprFieldSelect(a, b);
+			break;
 		case T_ResTarget:
 			retval = _equalResTarget(a, b);
 			break;
@@ -2141,6 +2172,9 @@ equal(void *a, void *b)
 			break;
 		case T_SortGroupBy:
 			retval = _equalSortGroupBy(a, b);
+			break;
+		case T_Alias:
+			retval = _equalAlias(a, b);
 			break;
 		case T_RangeVar:
 			retval = _equalRangeVar(a, b);

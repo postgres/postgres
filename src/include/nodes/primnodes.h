@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.58 2002/03/12 00:52:02 tgl Exp $
+ * $Id: primnodes.h,v 1.59 2002/03/21 16:01:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -508,7 +508,7 @@ typedef struct RangeTblRef
  * If he writes ON() then only "quals" is set.	Note that NATURAL/USING
  * are not equivalent to ON() since they also affect the output column list.
  *
- * alias is an Attr node representing the AS alias-clause attached to the
+ * alias is an Alias node representing the AS alias-clause attached to the
  * join expression, or NULL if no clause.  NB: presence or absence of the
  * alias has a critical impact on semantics, because a join with an alias
  * restricts visibility of the tables/columns inside it.
@@ -527,7 +527,7 @@ typedef struct JoinExpr
 	Node	   *rarg;			/* right subtree */
 	List	   *using;			/* USING clause, if any (list of String) */
 	Node	   *quals;			/* qualifiers on join, if any */
-	struct Attr *alias;			/* user-written alias clause, if any */
+	struct Alias *alias;		/* user-written alias clause, if any */
 	int			rtindex;		/* RT index assigned for join */
 } JoinExpr;
 

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.135 2002/03/20 19:44:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.136 2002/03/21 16:01:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -218,6 +218,14 @@ ProcessUtility(Node *parsetree,
 			/*
 			 * relation and attribute manipulation
 			 */
+		case T_CreateSchemaStmt:
+			{
+				CreateSchemaStmt  *stmt = (CreateSchemaStmt *) parsetree;
+
+				CreateSchemaCommand(stmt);
+			}
+			break;
+
 		case T_CreateStmt:
 			DefineRelation((CreateStmt *) parsetree, RELKIND_RELATION);
 
@@ -226,19 +234,19 @@ ProcessUtility(Node *parsetree,
 			 * secondary relation too.
 			 */
 			CommandCounterIncrement();
-			AlterTableCreateToastTable(((CreateStmt *) parsetree)->relname,
+			AlterTableCreateToastTable(((CreateStmt *) parsetree)->relation->relname,
 									   true);
 			break;
 
 		case T_DropStmt:
 			{
 				DropStmt   *stmt = (DropStmt *) parsetree;
-				List	   *args = stmt->names;
+				List	   *args = stmt->objects;
 				List	   *arg;
 
 				foreach(arg, args)
 				{
-					relname = strVal(lfirst(arg));
+					relname = ((RangeVar *) lfirst(arg))->relname;
 
 					switch (stmt->removeType)
 					{
@@ -299,7 +307,8 @@ ProcessUtility(Node *parsetree,
 
 		case T_TruncateStmt:
 			{
-				TruncateRelation(((TruncateStmt *) parsetree)->relName);
+				relname = ((TruncateStmt *) parsetree)->relation->relname;
+				TruncateRelation(relname);
 			}
 			break;
 
@@ -322,7 +331,7 @@ ProcessUtility(Node *parsetree,
 				if (stmt->direction != FROM)
 					SetQuerySnapshot();
 
-				DoCopy(stmt->relname,
+				DoCopy(stmt->relation->relname,
 					   stmt->binary,
 					   stmt->oids,
 					   (bool) (stmt->direction == FROM),
@@ -345,7 +354,7 @@ ProcessUtility(Node *parsetree,
 			{
 				RenameStmt *stmt = (RenameStmt *) parsetree;
 
-				relname = stmt->relname;
+				relname = stmt->relation->relname;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
 					elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
 						 relname);
@@ -380,7 +389,7 @@ ProcessUtility(Node *parsetree,
 					renameatt(relname,	/* relname */
 							  stmt->column,		/* old att name */
 							  stmt->newname,	/* new att name */
-							  interpretInhOption(stmt->inhOpt));		/* recursive? */
+							  interpretInhOption(stmt->relation->inhOpt));		/* recursive? */
 				}
 			}
 			break;
@@ -398,47 +407,47 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->subtype)
 				{
 					case 'A':	/* ADD COLUMN */
-						AlterTableAddColumn(stmt->relname,
-										interpretInhOption(stmt->inhOpt),
+						AlterTableAddColumn(stmt->relation->relname,
+										interpretInhOption((stmt->relation)->inhOpt),
 											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN DEFAULT */
-						AlterTableAlterColumnDefault(stmt->relname,
-										interpretInhOption(stmt->inhOpt),
+						AlterTableAlterColumnDefault(stmt->relation->relname,
+										interpretInhOption((stmt->relation)->inhOpt),
 													 stmt->name,
 													 stmt->def);
 						break;
 					case 'S':	/* ALTER COLUMN STATISTICS */
 					case 'M':   /* ALTER COLUMN STORAGE */
-						AlterTableAlterColumnFlags(stmt->relname,
-										interpretInhOption(stmt->inhOpt),
+						AlterTableAlterColumnFlags(stmt->relation->relname,
+										interpretInhOption(stmt->relation->inhOpt),
 														stmt->name,
 														stmt->def,
 												        &(stmt->subtype));
 						break;
 					case 'D':	/* DROP COLUMN */
-						AlterTableDropColumn(stmt->relname,
-										interpretInhOption(stmt->inhOpt),
+						AlterTableDropColumn(stmt->relation->relname,
+										interpretInhOption(stmt->relation->inhOpt),
 											 stmt->name,
 											 stmt->behavior);
 						break;
 					case 'C':	/* ADD CONSTRAINT */
-						AlterTableAddConstraint(stmt->relname,
-										interpretInhOption(stmt->inhOpt),
+						AlterTableAddConstraint(stmt->relation->relname,
+										interpretInhOption(stmt->relation->inhOpt),
 												(List *) stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
-						AlterTableDropConstraint(stmt->relname,
-										interpretInhOption(stmt->inhOpt),
+						AlterTableDropConstraint(stmt->relation->relname,
+										interpretInhOption(stmt->relation->inhOpt),
 												 stmt->name,
 												 stmt->behavior);
 						break;
 					case 'E':	/* CREATE TOAST TABLE */
-						AlterTableCreateToastTable(stmt->relname,
+						AlterTableCreateToastTable(stmt->relation->relname,
 												   false);
 						break;
 					case 'U':	/* ALTER OWNER */
-						AlterTableOwner(stmt->relname,
+						AlterTableOwner(stmt->relation->relname,
 										stmt->name);
 						break;
 					default:	/* oops */
@@ -487,7 +496,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ViewStmt   *stmt = (ViewStmt *) parsetree;
 
-				DefineView(stmt->viewname, stmt->query);		/* retrieve parsetree */
+				DefineView(stmt->view->relname, stmt->query);	/* retrieve parsetree */
 			}
 			break;
 
@@ -499,17 +508,17 @@ ProcessUtility(Node *parsetree,
 			{
 				IndexStmt  *stmt = (IndexStmt *) parsetree;
 
-				relname = stmt->relname;
+				relname = stmt->relation->relname;
 				if (!allowSystemTableMods && IsSystemRelationName(relname))
 					elog(ERROR, "CREATE INDEX: relation \"%s\" is a system catalog",
 						 relname);
 				if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 					elog(ERROR, "permission denied");
 
-				DefineIndex(stmt->relname,		/* relation name */
-							stmt->idxname,		/* index name */
-							stmt->accessMethod, /* am name */
-							stmt->indexParams,	/* parameters */
+				DefineIndex(stmt->relation->relname,	/* relation */
+							stmt->idxname,				/* index name */
+							stmt->accessMethod, 		/* am name */
+							stmt->indexParams,			/* parameters */
 							stmt->unique,
 							stmt->primary,
 							(Expr *) stmt->whereClause,
@@ -522,7 +531,7 @@ ProcessUtility(Node *parsetree,
 				RuleStmt   *stmt = (RuleStmt *) parsetree;
 				int			aclcheck_result;
 
-				relname = stmt->object->relname;
+				relname = stmt->relation->relname;
 				aclcheck_result = pg_aclcheck(relname, GetUserId(), ACL_RULE);
 				if (aclcheck_result != ACLCHECK_OK)
 					elog(ERROR, "%s: %s", relname, aclcheck_error_strings[aclcheck_result]);
@@ -603,7 +612,7 @@ ProcessUtility(Node *parsetree,
 			{
 				NotifyStmt *stmt = (NotifyStmt *) parsetree;
 
-				Async_Notify(stmt->relname);
+				Async_Notify(stmt->relation->relname);
 			}
 			break;
 
@@ -611,7 +620,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ListenStmt *stmt = (ListenStmt *) parsetree;
 
-				Async_Listen(stmt->relname, MyProcPid);
+				Async_Listen(stmt->relation->relname, MyProcPid);
 			}
 			break;
 
@@ -619,7 +628,7 @@ ProcessUtility(Node *parsetree,
 			{
 				UnlistenStmt *stmt = (UnlistenStmt *) parsetree;
 
-				Async_Unlisten(stmt->relname, MyProcPid);
+				Async_Unlisten(stmt->relation->relname, MyProcPid);
 			}
 			break;
 
@@ -636,7 +645,7 @@ ProcessUtility(Node *parsetree,
 			{
 				ClusterStmt *stmt = (ClusterStmt *) parsetree;
 
-				relname = stmt->relname;
+				relname = stmt->relation->relname;
 				if (IsSystemRelationName(relname))
 					elog(ERROR, "CLUSTER: relation \"%s\" is a system catalog",
 						 relname);
@@ -712,7 +721,6 @@ ProcessUtility(Node *parsetree,
 
 			/*
 			 * ******************************** DOMAIN statements ****
-			 *
 			 */
 		case T_CreateDomainStmt:
 			DefineDomain((CreateDomainStmt *) parsetree);
@@ -720,9 +728,7 @@ ProcessUtility(Node *parsetree,
 
 			/*
 			 * ******************************** USER statements ****
-			 *
 			 */
-
 		case T_CreateUserStmt:
 			CreateUser((CreateUserStmt *) parsetree);
 			break;
@@ -774,7 +780,7 @@ ProcessUtility(Node *parsetree,
 				switch (stmt->reindexType)
 				{
 					case INDEX:
-						relname = (char *) stmt->name;
+						relname = (char *) stmt->relation->relname;
 						if (IsSystemRelationName(relname))
 						{
 							if (!allowSystemTableMods)
@@ -789,7 +795,7 @@ ProcessUtility(Node *parsetree,
 						ReindexIndex(relname, stmt->force);
 						break;
 					case TABLE:
-						relname = (char *) stmt->name;
+						relname = (char *) stmt->relation->relname;
 						if (!pg_ownercheck(GetUserId(), relname, RELNAME))
 							elog(ERROR, "%s: %s", relname, aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 						ReindexTable(relname, stmt->force);

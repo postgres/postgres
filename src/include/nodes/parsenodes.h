@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.162 2002/03/20 19:45:02 tgl Exp $
+ * $Id: parsenodes.h,v 1.163 2002/03/21 16:01:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -49,10 +49,10 @@ typedef struct Query
 								 * statement */
 
 	int			resultRelation; /* target relation (index into rtable) */
-	char	   *into;			/* portal (cursor) name */
+	struct RangeVar *into;		/* target relation or portal (cursor) 
+								 * for portal just name is meaningful */
 	bool		isPortal;		/* is this a retrieve into portal? */
 	bool		isBinary;		/* binary portal? */
-	bool		isTemp;			/* is 'into' a temp table? */
 
 	bool		hasAggs;		/* has aggregates in tlist or havingQual */
 	bool		hasSubLinks;	/* has subquery SubLink */
@@ -125,15 +125,30 @@ typedef struct TypeName
 } TypeName;
 
 /*
- * ParamNo - specifies a parameter reference
+ * ColumnRef - specifies a reference to a column, or possibly a whole tuple
+ *
+ *		The "fields" list must be nonempty; its last component may be "*"
+ *		instead of a field name.  Subscripts are optional.
  */
-typedef struct ParamNo
+typedef struct ColumnRef
+{
+	NodeTag		type;
+	List	   *fields;			/* field names (list of Value strings) */
+	List	   *indirection;	/* subscripts (list of A_Indices) */
+} ColumnRef;
+
+/*
+ * ParamRef - specifies a parameter reference
+ *
+ *		The parameter could be qualified with field names and/or subscripts
+ */
+typedef struct ParamRef
 {
 	NodeTag		type;
 	int			number;			/* the number of the parameter */
-	TypeName   *typename;		/* the typecast */
-	List	   *indirection;	/* array references */
-} ParamNo;
+	List	   *fields;			/* field names (list of Value strings) */
+	List	   *indirection;	/* subscripts (list of A_Indices) */
+} ParamRef;
 
 /*
  * A_Expr - binary expressions
@@ -148,22 +163,6 @@ typedef struct A_Expr
 } A_Expr;
 
 /*
- * Attr -
- *	  specifies an Attribute (ie. a Column); could have nested dots or
- *	  array references.
- *
- */
-typedef struct Attr
-{
-	NodeTag		type;
-	char	   *relname;		/* name of relation (can be "*") */
-	ParamNo    *paramNo;		/* or a parameter */
-	List	   *attrs;			/* attributes (possibly nested); list of
-								 * Values (strings) */
-	List	   *indirection;	/* array refs (list of A_Indices') */
-} Attr;
-
-/*
  * A_Const - a constant expression
  */
 typedef struct A_Const
@@ -176,11 +175,11 @@ typedef struct A_Const
 /*
  * TypeCast - a CAST expression
  *
- * NOTE: for mostly historical reasons, A_Const and ParamNo parsenodes contain
+ * NOTE: for mostly historical reasons, A_Const parsenodes contain
  * room for a TypeName; we only generate a separate TypeCast node if the
- * argument to be casted is neither of those kinds of nodes.  In theory either
- * representation would work, but it is convenient (especially for A_Const)
- * to have the target type immediately available.
+ * argument to be casted is not a constant.  In theory either representation
+ * would work, but it is convenient to have the target type immediately
+ * available while resolving a constant's datatype.
  */
 typedef struct TypeCast
 {
@@ -284,17 +283,13 @@ typedef struct ColumnDef
 
 /*
  * Ident -
- *	  an identifier (could be an attribute or a relation name). Depending
- *	  on the context at transformStmt time, the identifier is treated as
- *	  either a relation name (in which case, isRel will be set) or an
- *	  attribute (in which case, it will be transformed into an Attr).
+ *	  an unqualified identifier.  This is currently used only in the context
+ *	  of column name lists.
  */
 typedef struct Ident
 {
 	NodeTag		type;
 	char	   *name;			/* its name */
-	List	   *indirection;	/* array references */
-	bool		isRel;			/* is this a relation or a column? */
 } Ident;
 
 /*
@@ -323,6 +318,21 @@ typedef struct A_Indices
 	Node	   *lidx;			/* could be NULL */
 	Node	   *uidx;
 } A_Indices;
+
+/*
+ * ExprFieldSelect - select a field and/or array element from an expression
+ *
+ *		This is used in the raw parsetree to represent selection from an
+ *		arbitrary expression (not a column or param reference).  Either
+ *		fields or indirection may be NIL if not used.
+ */
+typedef struct ExprFieldSelect
+{
+	NodeTag		type;
+	Node	   *arg;			/* the thing being selected from */
+	List	   *fields;			/* field names (list of Value strings) */
+	List	   *indirection;	/* subscripts (list of A_Indices) */
+} ExprFieldSelect;
 
 /*
  * ResTarget -
@@ -359,14 +369,36 @@ typedef struct SortGroupBy
 } SortGroupBy;
 
 /*
+ * Alias -
+ *	  specifies an alias for a range variable; the alias might also
+ *	  specify renaming of columns within the table.
+ */
+typedef struct Alias
+{
+	NodeTag		type;
+	char	   *aliasname;		/* aliased rel name (never qualified) */
+	List	   *colnames;		/* optional list of column aliases */
+	/* Note: colnames is a list of Value nodes (always strings) */
+} Alias;
+
+/*
  * RangeVar - range variable, used in FROM clauses
+ *
+ * Also used to represent table names in utility statements; there, the alias
+ * field is not used, and inhOpt shows whether to apply the operation
+ * recursively to child tables.  In some contexts it is also useful to carry
+ * a TEMP table indication here.
  */
 typedef struct RangeVar
 {
 	NodeTag		type;
-	char	   *relname;		/* the relation name */
-	InhOption	inhOpt;			/* expand rel by inheritance? */
-	Attr	   *name;			/* optional table alias & column aliases */
+	char	   *catalogname;	/* the catalog (database) name, or NULL */
+	char	   *schemaname;		/* the schema name, or NULL */
+	char	   *relname;		/* the relation/sequence name */
+	InhOption	inhOpt;			/* expand rel by inheritance? 
+								 * recursively act on children? */
+	bool		istemp;			/* is this a temp relation/sequence? */
+	Alias	   *alias;			/* table alias & optional column aliases */
 } RangeVar;
 
 /*
@@ -376,7 +408,7 @@ typedef struct RangeSubselect
 {
 	NodeTag		type;
 	Node	   *subquery;		/* the untransformed sub-select clause */
-	Attr	   *name;			/* table alias & optional column aliases */
+	Alias	   *alias;			/* table alias & optional column aliases */
 } RangeSubselect;
 
 /*
@@ -437,7 +469,7 @@ typedef struct TargetEntry
  *	  like outer joins and join-output-column aliasing.)  Other special
  *	  RTE types also exist, as indicated by RTEKind.
  *
- *	  alias is an Attr node representing the AS alias-clause attached to the
+ *	  alias is an Alias node representing the AS alias-clause attached to the
  *	  FROM expression, or NULL if no clause.
  *
  *	  eref is the table reference name and column reference names (either
@@ -489,7 +521,7 @@ typedef struct RangeTblEntry
 	 */
 
 	/*
-	 * Fields valid for a plain relation or inh_relation RTE (else NULL/zero):
+	 * Fields valid for a plain relation RTE (else NULL/zero):
 	 */
 	char	   *relname;		/* real name of the relation */
 	Oid			relid;			/* OID of the relation */
@@ -517,8 +549,8 @@ typedef struct RangeTblEntry
 	/*
 	 * Fields valid in all RTEs:
 	 */
-	Attr	   *alias;			/* user-written alias clause, if any */
-	Attr	   *eref;			/* expanded reference names */
+	Alias	   *alias;			/* user-written alias clause, if any */
+	Alias	   *eref;			/* expanded reference names */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause */
 	bool		checkForRead;	/* check rel for read access */
@@ -570,7 +602,7 @@ typedef SortClause GroupClause;
 typedef struct InsertStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to insert into */
+	RangeVar   *relation;		/* relation to insert into */
 	List	   *cols;			/* optional: names of the target columns */
 
 	/*
@@ -589,9 +621,8 @@ typedef struct InsertStmt
 typedef struct DeleteStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to delete from */
+	RangeVar   *relation;		/* relation to delete from */
 	Node	   *whereClause;	/* qualifications */
-	InhOption	inhOpt;			/* recursively act on children? */
 } DeleteStmt;
 
 /* ----------------------
@@ -601,11 +632,10 @@ typedef struct DeleteStmt
 typedef struct UpdateStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to update */
+	RangeVar   *relation;		/* relation to update */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	Node	   *whereClause;	/* qualifications */
-	List	   *fromClause;		/* the from clause */
-	InhOption	inhOpt;			/* recursively act on children? */
+	List	   *fromClause;		/* optional from clause for more tables */
 } UpdateStmt;
 
 /* ----------------------
@@ -639,8 +669,7 @@ typedef struct SelectStmt
 	List	   *distinctClause; /* NULL, list of DISTINCT ON exprs, or
 								 * lcons(NIL,NIL) for all (SELECT
 								 * DISTINCT) */
-	char	   *into;			/* name of table (for select into table) */
-	bool		istemp;			/* into is a temp table? */
+	RangeVar   *into;			/* target table (for select into table) */
 	List	   *intoColNames;	/* column names for into table */
 	List	   *targetList;		/* the target list (of ResTarget) */
 	List	   *fromClause;		/* the FROM clause */
@@ -704,6 +733,22 @@ typedef struct SetOperationStmt
  *****************************************************************************/
 
 /* ----------------------
+ *		Create Schema Statement
+ *
+ * NOTE: the schemaElts list contains raw parsetrees for component statements
+ * of the schema, such as CREATE TABLE, GRANT, etc.  These are analyzed and
+ * executed after the schema itself is created.
+ * ----------------------
+ */
+typedef struct CreateSchemaStmt
+{
+	NodeTag		type;
+	char	   *schemaname;		/* the name of the schema to create */
+	char	   *authid;			/* the owner of the created schema */
+	List	   *schemaElts;		/* schema components (list of parsenodes) */
+} CreateSchemaStmt;
+
+/* ----------------------
  *	Alter Table
  *
  * The fields are used in different ways by the different variants of
@@ -725,8 +770,7 @@ typedef struct AlterTableStmt
 								 *	U = change owner
 								 *------------
 								 */
-	char	   *relname;		/* table to work on */
-	InhOption	inhOpt;			/* recursively act on children? */
+	RangeVar   *relation;		/* table to work on */
 	char	   *name;			/* column or constraint name to act on, or
 								 * new owner */
 	Node	   *def;			/* definition of new column or constraint */
@@ -743,11 +787,11 @@ typedef struct GrantStmt
 	NodeTag		type;
 	bool		is_grant;		/* not revoke */
 	int			objtype;
-	List	   *objects;		/* list of names (as Value strings) */
+	List	   *objects;		/* list of names (as Value strings)
+								 * or relations (as RangeVar's) */
 	List	   *privileges;		/* integer list of privilege codes */
 	List	   *grantees;		/* list of PrivGrantee nodes */
 } GrantStmt;
-
 
 typedef struct PrivGrantee
 {
@@ -756,14 +800,12 @@ typedef struct PrivGrantee
 	char	   *groupname;
 } PrivGrantee;
 
-
 typedef struct FuncWithArgs
 {
 	NodeTag		type;
 	char	   *funcname;
 	List	   *funcargs;		/* list of Typename nodes */
 } FuncWithArgs;
-
 
 /* This is only used internally in gram.y. */
 typedef struct PrivTarget
@@ -772,7 +814,6 @@ typedef struct PrivTarget
 	int			objtype;
 	List	   *objs;
 } PrivTarget;
-
 
 /* ----------------------
  *		Close Portal Statement
@@ -792,7 +833,7 @@ typedef struct CopyStmt
 {
 	NodeTag		type;
 	bool		binary;			/* is a binary copy? */
-	char	   *relname;		/* the relation to copy */
+	RangeVar   *relation;		/* the relation to copy */
 	bool		oids;			/* copy oid's? */
 	int			direction;		/* TO or FROM */
 	char	   *filename;		/* if NULL, use stdin/stdout */
@@ -813,12 +854,10 @@ typedef struct CopyStmt
 typedef struct CreateStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* name of relation to create */
+	RangeVar   *relation;		/* relation to create */
 	List	   *tableElts;		/* column definitions (list of ColumnDef) */
-	List	   *inhRelnames;	/* relations to inherit from (list of
-								 * T_String Values) */
+	List	   *inhRelations;	/* relations to inherit from */
 	List	   *constraints;	/* constraints (list of Constraint nodes) */
-	bool		istemp;			/* is this a temp table? */
 	bool		hasoids;		/* should it have OIDs? */
 } CreateStmt;
 
@@ -886,7 +925,7 @@ typedef struct FkConstraint
 {
 	NodeTag		type;
 	char	   *constr_name;	/* Constraint name */
-	char	   *pktable_name;	/* Primary key table name */
+	RangeVar   *pktable;		/* Primary key table */
 	List	   *fk_attrs;		/* Attributes of foreign key */
 	List	   *pk_attrs;		/* Corresponding attrs in PK table */
 	char	   *match_type;		/* FULL or PARTIAL */
@@ -904,7 +943,7 @@ typedef struct CreateTrigStmt
 {
 	NodeTag		type;
 	char	   *trigname;		/* TRIGGER' name */
-	char	   *relname;		/* triggered relation */
+	RangeVar   *relation;		/* triggered relation */
 	char	   *funcname;		/* function to call (or NULL) */
 	List	   *args;			/* list of (T_String) Values or NULL */
 	bool		before;			/* BEFORE/AFTER */
@@ -920,14 +959,14 @@ typedef struct CreateTrigStmt
 	bool		isconstraint;	/* This is an RI trigger */
 	bool		deferrable;		/* [NOT] DEFERRABLE */
 	bool		initdeferred;	/* INITIALLY {DEFERRED|IMMEDIATE} */
-	char	   *constrrelname;	/* opposite relation */
+	RangeVar   *constrrel;		/* opposite relation */
 } CreateTrigStmt;
 
 typedef struct DropTrigStmt
 {
 	NodeTag		type;
 	char	   *trigname;		/* TRIGGER' name */
-	char	   *relname;		/* triggered relation */
+	RangeVar   *relation;		/* triggered relation */
 } DropTrigStmt;
 
 /* ----------------------
@@ -1014,8 +1053,7 @@ typedef struct DropGroupStmt
 typedef struct CreateSeqStmt
 {
 	NodeTag		type;
-	char	   *seqname;		/* the relation to create */
-	bool		istemp;			/* is this a temp sequence? */
+	RangeVar   *sequence;		/* the sequence to create */
 	List	   *options;
 } CreateSeqStmt;
 
@@ -1072,7 +1110,7 @@ typedef struct CreateDomainStmt
 typedef struct DropStmt
 {
 	NodeTag		type;
-	List	   *names;
+	List	   *objects;
 	int			removeType;
 	int	   		behavior;		/* CASCADE or RESTRICT drop behavior */
 } DropStmt;
@@ -1084,7 +1122,7 @@ typedef struct DropStmt
 typedef struct TruncateStmt
 {
 	NodeTag		type;
-	char	   *relName;		/* relation to be truncated */
+	RangeVar   *relation;		/* relation to be truncated */
 } TruncateStmt;
 
 /* ----------------------
@@ -1095,6 +1133,8 @@ typedef struct CommentStmt
 {
 	NodeTag		type;
 	int			objtype;		/* Object's type */
+	char	   *objschema;		/* Schema where object is defined,
+								 * if object is schema specific */
 	char	   *objname;		/* Name of the object */
 	char	   *objproperty;	/* Property Id (such as column) */
 	List	   *objlist;		/* Arguments for VAL objects */
@@ -1132,7 +1172,7 @@ typedef struct IndexStmt
 {
 	NodeTag		type;
 	char	   *idxname;		/* name of the index */
-	char	   *relname;		/* name of relation to index on */
+	RangeVar   *relation;		/* relation to build index on */
 	char	   *accessMethod;	/* name of access method (eg. btree) */
 	List	   *indexParams;	/* a list of IndexElem */
 	Node	   *whereClause;	/* qualification (partial-index predicate) */
@@ -1192,14 +1232,13 @@ typedef struct RemoveOperStmt
 } RemoveOperStmt;
 
 /* ----------------------
- *		Alter Table Statement
+ *		Alter Table Rename Statement
  * ----------------------
  */
 typedef struct RenameStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to be altered */
-	InhOption	inhOpt;			/* recursively act on children? */
+	RangeVar   *relation;		/* relation to be altered */
 	char	   *column;			/* if NULL, rename the relation name to
 								 * the new name. Otherwise, rename this
 								 * column name. */
@@ -1213,10 +1252,10 @@ typedef struct RenameStmt
 typedef struct RuleStmt
 {
 	NodeTag		type;
+	RangeVar   *relation;		/* relation the rule is for */
 	char	   *rulename;		/* name of the rule */
 	Node	   *whereClause;	/* qualifications */
-	CmdType		event;			/* RETRIEVE */
-	struct Attr *object;		/* object affected */
+	CmdType		event;			/* SELECT, INSERT, etc */
 	bool		instead;		/* is a 'do instead'? */
 	List	   *actions;		/* the action statements */
 } RuleStmt;
@@ -1228,7 +1267,7 @@ typedef struct RuleStmt
 typedef struct NotifyStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to notify */
+	RangeVar   *relation;		/* qualified name to notify */
 } NotifyStmt;
 
 /* ----------------------
@@ -1238,7 +1277,7 @@ typedef struct NotifyStmt
 typedef struct ListenStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to listen on */
+	RangeVar   *relation;		/* qualified name to listen on */
 } ListenStmt;
 
 /* ----------------------
@@ -1248,7 +1287,7 @@ typedef struct ListenStmt
 typedef struct UnlistenStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation to unlisten on */
+	RangeVar   *relation;		/* qualified name to unlisten on, or '*' */
 } UnlistenStmt;
 
 /* ----------------------
@@ -1268,7 +1307,7 @@ typedef struct TransactionStmt
 typedef struct ViewStmt
 {
 	NodeTag		type;
-	char	   *viewname;		/* name of the view */
+	RangeVar   *view;			/* the view to be created */
 	List	   *aliases;		/* target column names */
 	Query	   *query;			/* the SQL statement */
 } ViewStmt;
@@ -1282,7 +1321,6 @@ typedef struct LoadStmt
 	NodeTag		type;
 	char	   *filename;		/* file to load */
 } LoadStmt;
-
 
 /* ----------------------
  *		Createdb Statement
@@ -1327,7 +1365,7 @@ typedef struct DropdbStmt
 typedef struct ClusterStmt
 {
 	NodeTag		type;
-	char	   *relname;		/* relation being indexed */
+	RangeVar   *relation;		/* relation being indexed */
 	char	   *indexname;		/* original index defined */
 } ClusterStmt;
 
@@ -1346,8 +1384,7 @@ typedef struct VacuumStmt
 	bool		analyze;		/* do ANALYZE step */
 	bool		freeze;			/* early-freeze option */
 	bool		verbose;		/* print progress info */
-	char	   *vacrel;			/* name of single table to process, or
-								 * NULL */
+	RangeVar   *relation;		/* single table to process, or NULL */
 	List	   *va_cols;		/* list of column names, or NIL for all */
 } VacuumStmt;
 
@@ -1413,7 +1450,7 @@ typedef struct VariableResetStmt
 typedef struct LockStmt
 {
 	NodeTag		type;
-	List	   *rellist;		/* relations to lock */
+	List	   *relations;		/* relations to lock */
 	int			mode;			/* lock mode */
 } LockStmt;
 
@@ -1436,7 +1473,8 @@ typedef struct ReindexStmt
 {
 	NodeTag		type;
 	int			reindexType;	/* INDEX|TABLE|DATABASE */
-	const char *name;			/* name to reindex */
+	RangeVar   *relation;		/* Table or index to reindex */
+	const char *name;			/* name of database to reindex */
 	bool		force;
 	bool		all;
 } ReindexStmt;

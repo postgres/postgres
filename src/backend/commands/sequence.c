@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.71 2002/03/15 19:20:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.72 2002/03/21 16:00:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -123,7 +123,7 @@ DefineSequence(CreateSeqStmt *seq)
 			case SEQ_COL_NAME:
 				typnam->name = "name";
 				coldef->colname = "sequence_name";
-				namestrcpy(&name, seq->seqname);
+				namestrcpy(&name, seq->sequence->relname);
 				value[i - 1] = NameGetDatum(&name);
 				break;
 			case SEQ_COL_LASTVAL:
@@ -170,15 +170,14 @@ DefineSequence(CreateSeqStmt *seq)
 		stmt->tableElts = lappend(stmt->tableElts, coldef);
 	}
 
-	stmt->relname = seq->seqname;
-	stmt->inhRelnames = NIL;
+	stmt->relation = seq->sequence;
+	stmt->inhRelations = NIL;
 	stmt->constraints = NIL;
-	stmt->istemp = seq->istemp;
 	stmt->hasoids = false;
 
 	DefineRelation(stmt, RELKIND_SEQUENCE);
 
-	rel = heap_openr(seq->seqname, AccessExclusiveLock);
+	rel = heap_openr(seq->sequence->relname, AccessExclusiveLock);
 	tupDesc = RelationGetDescr(rel);
 
 	/* Initialize first page of relation with special magic number */

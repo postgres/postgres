@@ -8,11 +8,10 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.118 2002/03/20 19:44:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.119 2002/03/21 16:01:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
 #include "access/genam.h"
@@ -36,8 +35,7 @@
 
 static Node *ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
-					   Node *first_arg,
-					   bool *attisset);
+					   Node *first_arg);
 static Oid **argtype_inherit(int nargs, Oid *argtypes);
 
 static int	find_inheritors(Oid relid, Oid **supervec);
@@ -60,75 +58,31 @@ static Oid	agg_select_candidate(Oid typeid, CandidateList candidates);
 
 
 /*
- ** ParseNestedFuncOrColumn
- **    Given a nested dot expression (i.e. (relation func ... attr), build up
- ** a tree with of Iter and Func nodes.
- */
-Node *
-ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int precedence)
-{
-	List	   *mutator_iter;
-	Node	   *retval = NULL;
-
-	if (attr->paramNo != NULL)
-	{
-		Param	   *param = (Param *) transformExpr(pstate,
-												  (Node *) attr->paramNo,
-													EXPR_RELATION_FIRST);
-
-		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
-								   makeList1(param),
-								   false, false,
-								   precedence);
-	}
-	else
-	{
-		Ident	   *ident = makeNode(Ident);
-
-		ident->name = attr->relname;
-		ident->isRel = TRUE;
-		retval = ParseFuncOrColumn(pstate, strVal(lfirst(attr->attrs)),
-								   makeList1(ident),
-								   false, false,
-								   precedence);
-	}
-
-	/* Do more attributes follow this one? */
-	foreach(mutator_iter, lnext(attr->attrs))
-	{
-		retval = ParseFuncOrColumn(pstate, strVal(lfirst(mutator_iter)),
-								   makeList1(retval),
-								   false, false,
-								   precedence);
-	}
-
-	return retval;
-}
-
-/*
- *	parse function
+ *	Parse a function call
  *
- *	This code is confusing because the database can accept
- *	relation.column, column.function, or relation.column.function.
- *	In these cases, funcname is the last parameter, and fargs are
- *	the rest.
+ *	For historical reasons, Postgres tries to treat the notations tab.col
+ *	and col(tab) as equivalent: if a single-argument function call has an
+ *	argument of complex type and the function name matches any attribute
+ *	of the type, we take it as a column projection.
  *
- *	It can also be called as func(col) or func(col,col).
- *	In this case, Funcname is the part before parens, and fargs
- *	are the part in parens.
+ *	Hence, both cases come through here.  The is_column parameter tells us
+ *	which syntactic construct is actually being dealt with, but this is
+ *	intended to be used only to deliver an appropriate error message,
+ *	not to affect the semantics.  When is_column is true, we should have
+ *	a single argument (the putative table), function name equal to the
+ *	column name, and no aggregate decoration.
  *
- *	FYI, projection is choosing column from a table.
- *
+ *	In the function-call case, the argument expressions have been transformed
+ *	already.  In the column case, we may get either a transformed expression
+ *	or a RangeVar node as argument.
  */
 Node *
 ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
-				  bool agg_star, bool agg_distinct,
-				  int precedence)
+				  bool agg_star, bool agg_distinct, bool is_column)
 {
-	Oid			rettype = InvalidOid;
-	Oid			argrelid = InvalidOid;
-	Oid			funcid = InvalidOid;
-	List	   *i = NIL;
+	Oid			rettype;
+	Oid			funcid;
+	List	   *i;
 	Node	   *first_arg = NULL;
 	char	   *refname;
 	int			nargs = length(fargs);
@@ -140,9 +94,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	bool		retset;
 	bool		must_be_agg = agg_star || agg_distinct;
 	bool		could_be_agg;
-	bool		attisset = false;
-	Oid			toid = InvalidOid;
 	Expr	   *expr;
+	FuncDetailCode fdresult;
 
 	/*
 	 * Most of the rest of the parser just assumes that functions do not
@@ -157,33 +110,26 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	if (fargs)
 	{
 		first_arg = lfirst(fargs);
-		if (first_arg == NULL)
+		if (first_arg == NULL)	/* should not happen */
 			elog(ERROR, "Function '%s' does not allow NULL input", funcname);
 	}
 
 	/*
-	 * test for relation.column
-	 *
-	 * check for projection methods: if function takes one argument, and that
-	 * argument is a relation, param, or PQ function returning a complex *
-	 * type, then the function could be a projection.
+	 * check for column projection: if function has one argument, and that
+	 * argument is of complex type, then the function could be a projection.
 	 */
 	/* We only have one parameter, and it's not got aggregate decoration */
 	if (nargs == 1 && !must_be_agg)
 	{
-		/* Is it a plain Relation name from the parser? */
-		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
+		/* Is it a not-yet-transformed RangeVar node? */
+		if (IsA(first_arg, RangeVar))
 		{
-			Ident	   *ident = (Ident *) first_arg;
-
 			/* First arg is a relation. This could be a projection. */
-			refname = ident->name;
+			refname = ((RangeVar *) first_arg)->relname;
 
 			retval = qualifiedNameToVar(pstate, refname, funcname, true);
 			if (retval)
 				return retval;
-
-			/* else drop through - attr is a set or function */
 		}
 		else if (ISCOMPLEX(exprType(first_arg)))
 		{
@@ -194,24 +140,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			retval = ParseComplexProjection(pstate,
 											funcname,
-											first_arg,
-											&attisset);
-			if (attisset)
-			{
-				toid = exprType(first_arg);
-				argrelid = typeidTypeRelid(toid);
-				if (argrelid == InvalidOid)
-					elog(ERROR, "Type '%s' is not a relation type",
-						 typeidTypeName(toid));
-
-				/*
-				 * A projection must match an attribute name of the rel.
-				 */
-				if (get_attnum(argrelid, funcname) == InvalidAttrNumber)
-					elog(ERROR, "No such attribute or function '%s'",
-						 funcname);
-			}
-
+											first_arg);
 			if (retval)
 				return retval;
 		}
@@ -226,15 +155,14 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (nargs != 1)
 			elog(ERROR, "Aggregate functions may only have one parameter");
 		/* Agg's argument can't be a relation name, either */
-		if (IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel)
+		if (IsA(first_arg, RangeVar))
 			elog(ERROR, "Aggregate functions cannot be applied to relation names");
 		could_be_agg = true;
 	}
 	else
 	{
 		/* Try to parse as an aggregate if above-mentioned checks are OK */
-		could_be_agg = (nargs == 1) &&
-			!(IsA(first_arg, Ident) &&((Ident *) first_arg)->isRel);
+		could_be_agg = (nargs == 1) && !(IsA(first_arg, RangeVar));
 	}
 
 	if (could_be_agg)
@@ -249,8 +177,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 								 ObjectIdGetDatum(basetype),
 								 0, 0))
 			return (Node *) ParseAgg(pstate, funcname, basetype,
-									 fargs, agg_star, agg_distinct,
-									 precedence);
+									 fargs, agg_star, agg_distinct);
 
 		/* check for aggregate-that-accepts-any-type (eg, COUNT) */
 		if (SearchSysCacheExists(AGGNAME,
@@ -258,8 +185,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 								 ObjectIdGetDatum(0),
 								 0, 0))
 			return (Node *) ParseAgg(pstate, funcname, 0,
-									 fargs, agg_star, agg_distinct,
-									 precedence);
+									 fargs, agg_star, agg_distinct);
 
 		/*
 		 * No exact match yet, so see if there is another entry in the
@@ -277,8 +203,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 											basetype, type, -1);
 				basetype = type;
 				return (Node *) ParseAgg(pstate, funcname, basetype,
-										 fargs, agg_star, agg_distinct,
-										 precedence);
+										 fargs, agg_star, agg_distinct);
 			}
 			else
 			{
@@ -300,10 +225,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	}
 
 	/*
-	 * If we dropped through to here it's really a function (or a set,
-	 * which is implemented as a function). Extract arg type info and
-	 * transform relation name arguments into varnodes of the appropriate
-	 * form.
+	 * Okay, it's not a column projection, so it must really be a function.
+	 * Extract arg type info and transform RangeVar arguments into varnodes
+	 * of the appropriate form.
 	 */
 	MemSet(oid_array, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
@@ -311,8 +235,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	foreach(i, fargs)
 	{
 		Node	   *arg = lfirst(i);
+		Oid			toid;
 
-		if (IsA(arg, Ident) &&((Ident *) arg)->isRel)
+		if (IsA(arg, RangeVar))
 		{
 			RangeTblEntry *rte;
 			int			vnum;
@@ -321,7 +246,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			/*
 			 * a relation
 			 */
-			refname = ((Ident *) arg)->name;
+			refname = ((RangeVar *) arg)->relname;
 
 			rte = refnameRangeTblEntry(pstate, refname,
 									   &sublevels_up);
@@ -346,16 +271,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				 * RTE is a join or subselect; must fail for lack of a
 				 * named tuple type
 				 */
-				if (nargs == 1)
-				{
-					/*
-					 * Here, we probably have an unrecognized attribute of
-					 * a sub-select; again can't tell if it was x.f or
-					 * f(x)
-					 */
-					elog(ERROR, "No such attribute or function %s.%s",
+				if (is_column)
+					elog(ERROR, "No such attribute %s.%s",
 						 refname, funcname);
-				}
 				else
 				{
 					elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
@@ -365,93 +283,53 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			toid = typenameTypeId(rte->relname);
 
-			/* replace it in the arg list */
+			/* replace RangeVar in the arg list */
 			lfirst(i) = makeVar(vnum,
 								InvalidAttrNumber,
 								toid,
 								sizeof(Pointer),
 								sublevels_up);
 		}
-		else if (!attisset)
-			toid = exprType(arg);
 		else
-		{
-			/* if attisset is true, we already set toid for the single arg */
-		}
+			toid = exprType(arg);
 
 		oid_array[argn++] = toid;
 	}
 
 	/*
-	 * Is it a set, or a function?
+	 * func_get_detail looks up the function in the catalogs, does
+	 * disambiguation for polymorphic functions, handles inheritance,
+	 * and returns the funcid and type and set or singleton status of
+	 * the function's return value.  it also returns the true argument
+	 * types to the function.
 	 */
-	if (attisset)
-	{							/* we know all of these fields already */
-
-		/*
-		 * We create a funcnode with a placeholder function seteval(). At
-		 * runtime, seteval() will execute the function identified by the
-		 * funcid it receives as parameter.
-		 *
-		 * Example: retrieve (emp.mgr.name).  The plan for this will scan the
-		 * emp relation, projecting out the mgr attribute, which is a
-		 * funcid. This function is then called (via seteval()) and "name"
-		 * is projected from its result.
-		 */
-		funcid = F_SETEVAL;
-		rettype = toid;
-		retset = true;
-		true_oid_array = oid_array;
-	}
-	else
+	fdresult = func_get_detail(funcname, fargs, nargs, oid_array,
+							   &funcid, &rettype, &retset,
+							   &true_oid_array);
+	if (fdresult == FUNCDETAIL_COERCION)
 	{
-		FuncDetailCode fdresult;
-
 		/*
-		 * func_get_detail looks up the function in the catalogs, does
-		 * disambiguation for polymorphic functions, handles inheritance,
-		 * and returns the funcid and type and set or singleton status of
-		 * the function's return value.  it also returns the true argument
-		 * types to the function.
+		 * We can do it as a trivial coercion. coerce_type can handle
+		 * these cases, so why duplicate code...
 		 */
-		fdresult = func_get_detail(funcname, fargs, nargs, oid_array,
-								   &funcid, &rettype, &retset,
-								   &true_oid_array);
-		if (fdresult == FUNCDETAIL_COERCION)
-		{
-			/*
-			 * We can do it as a trivial coercion. coerce_type can handle
-			 * these cases, so why duplicate code...
-			 */
-			return coerce_type(pstate, lfirst(fargs),
-							   oid_array[0], rettype, -1);
-		}
-		if (fdresult != FUNCDETAIL_NORMAL)
-		{
-			/*
-			 * Oops.  Time to die.
-			 *
-			 * If there is a single argument of complex type, we might be
-			 * dealing with the PostQuel notation rel.function instead of
-			 * the more usual function(rel).  Give a nonspecific error
-			 * message that will cover both cases.
-			 */
-			if (nargs == 1)
-			{
-				Type		tp = typeidType(oid_array[0]);
-
-				if (typeTypeFlag(tp) == 'c')
-					elog(ERROR, "No such attribute or function '%s'",
-						 funcname);
-				ReleaseSysCache(tp);
-			}
-
-			/* Else generate a detailed complaint */
-			func_error(NULL, funcname, nargs, oid_array,
-					   "Unable to identify a function that satisfies the "
-					   "given argument types"
-					   "\n\tYou may need to add explicit typecasts");
-		}
+		return coerce_type(pstate, lfirst(fargs),
+						   oid_array[0], rettype, -1);
+	}
+	if (fdresult != FUNCDETAIL_NORMAL)
+	{
+		/*
+		 * Oops.  Time to die.
+		 *
+		 * If we are dealing with the attribute notation rel.function,
+		 * give an error message that is appropriate for that case.
+		 */
+		if (is_column)
+			elog(ERROR, "Attribute \"%s\" not found", funcname);
+		/* Else generate a detailed complaint */
+		func_error(NULL, funcname, nargs, oid_array,
+				   "Unable to identify a function that satisfies the "
+				   "given argument types"
+				   "\n\tYou may need to add explicit typecasts");
 	}
 
 	/* got it */
@@ -471,25 +349,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	retval = (Node *) expr;
 
 	/*
-	 * For sets, we want to project out the desired attribute of the
-	 * tuples.
-	 */
-	if (attisset)
-	{
-		FieldSelect *fselect;
-
-		fselect = setup_field_select(retval, funcname, argrelid);
-		rettype = fselect->resulttype;
-		retval = (Node *) fselect;
-	}
-
-	/*
 	 * if the function returns a set of values, then we need to iterate
 	 * over all the returned values in the executor, so we stick an iter
 	 * node here.  if it returns a singleton, then we don't need the iter
 	 * node.
 	 */
-
 	if (retset)
 	{
 		Iter	   *iter = makeNode(Iter);
@@ -1497,10 +1361,10 @@ make_arguments(ParseState *pstate,
 }
 
 /*
- ** setup_field_select
- **		Build a FieldSelect node that says which attribute to project to.
- **		This routine is called by ParseFuncOrColumn() when we have found
- **		a projection on a function result or parameter.
+ * setup_field_select
+ *		Build a FieldSelect node that says which attribute to project to.
+ *		This routine is called by ParseFuncOrColumn() when we have found
+ *		a projection on a function result or parameter.
  */
 static FieldSelect *
 setup_field_select(Node *input, char *attname, Oid relid)
@@ -1521,18 +1385,31 @@ setup_field_select(Node *input, char *attname, Oid relid)
 /*
  * ParseComplexProjection -
  *	  handles function calls with a single argument that is of complex type.
- *	  This routine returns NULL if it can't handle the projection (eg. sets).
+ *	  If the function call is actually a column projection, return a suitably
+ *	  transformed expression tree.  If not, return NULL.
+ *
+ * NB: argument is expected to be transformed already, ie, not a RangeVar.
  */
 static Node *
 ParseComplexProjection(ParseState *pstate,
 					   char *funcname,
-					   Node *first_arg,
-					   bool *attisset)
+					   Node *first_arg)
 {
-	Oid			argtype;
+	Oid			argtype = exprType(first_arg);
 	Oid			argrelid;
+	AttrNumber	attnum;
 	FieldSelect *fselect;
 
+	argrelid = typeidTypeRelid(argtype);
+	if (!argrelid)
+		return NULL;			/* probably should not happen */
+	attnum = get_attnum(argrelid, funcname);
+	if (attnum == InvalidAttrNumber)
+		return NULL;			/* funcname does not match any column */
+
+	/*
+	 * Check for special cases where we don't want to return a FieldSelect.
+	 */
 	switch (nodeTag(first_arg))
 	{
 		case T_Iter:
@@ -1540,75 +1417,42 @@ ParseComplexProjection(ParseState *pstate,
 				Iter	   *iter = (Iter *) first_arg;
 
 				/*
-				 * If the argument of the Iter returns a tuple, funcname
-				 * may be a projection.  If so, we stick the FieldSelect
+				 * If it's an Iter, we stick the FieldSelect
 				 * *inside* the Iter --- this is klugy, but necessary
 				 * because ExecTargetList() currently does the right thing
 				 * only when the Iter node is at the top level of a
 				 * targetlist item.
+				 *
+				 * XXX Iter should go away altogether...
 				 */
-				argtype = iter->itertype;
-				argrelid = typeidTypeRelid(argtype);
-				if (argrelid &&
-					get_attnum(argrelid, funcname) != InvalidAttrNumber)
-				{
-					fselect = setup_field_select(iter->iterexpr,
-												 funcname, argrelid);
-					iter->iterexpr = (Node *) fselect;
-					iter->itertype = fselect->resulttype;
-					return (Node *) iter;
-				}
+				fselect = setup_field_select(iter->iterexpr,
+											 funcname, argrelid);
+				iter->iterexpr = (Node *) fselect;
+				iter->itertype = fselect->resulttype;
+				return (Node *) iter;
 				break;
 			}
 		case T_Var:
 			{
-				/*
-				 * The argument is a set, so this is either a projection
-				 * or a function call on this set.
-				 */
-				*attisset = true;
-				break;
-			}
-		case T_Expr:
-			{
-				Expr	   *expr = (Expr *) first_arg;
-				Func	   *funcnode;
-
-				if (expr->opType != FUNC_EXPR)
-					break;
+				Var		   *var = (Var *) first_arg;
 
 				/*
-				 * If the argument is a function returning a tuple,
-				 * funcname may be a projection
+				 * If the Var is a whole-row tuple, we can just replace it
+				 * with a simple Var reference.
 				 */
-				funcnode = (Func *) expr->oper;
-				argtype = funcnode->functype;
-				argrelid = typeidTypeRelid(argtype);
-				if (argrelid &&
-					get_attnum(argrelid, funcname) != InvalidAttrNumber)
+				if (var->varattno == InvalidAttrNumber)
 				{
-					fselect = setup_field_select((Node *) expr,
-												 funcname, argrelid);
-					return (Node *) fselect;
-				}
-				break;
-			}
-		case T_Param:
-			{
-				Param	   *param = (Param *) first_arg;
+					Oid		vartype;
+					int32	vartypmod;
 
-				/*
-				 * If the Param is a complex type, this could be a
-				 * projection
-				 */
-				argtype = param->paramtype;
-				argrelid = typeidTypeRelid(argtype);
-				if (argrelid &&
-					get_attnum(argrelid, funcname) != InvalidAttrNumber)
-				{
-					fselect = setup_field_select((Node *) param,
-												 funcname, argrelid);
-					return (Node *) fselect;
+					get_atttypetypmod(argrelid, attnum,
+									  &vartype, &vartypmod);
+
+					return (Node *) makeVar(var->varno,
+											attnum,
+											vartype,
+											vartypmod,
+											var->varlevelsup);
 				}
 				break;
 			}
@@ -1616,7 +1460,9 @@ ParseComplexProjection(ParseState *pstate,
 			break;
 	}
 
-	return NULL;
+	/* Else generate a FieldSelect expression */
+	fselect = setup_field_select(first_arg, funcname, argrelid);
+	return (Node *) fselect;
 }
 
 /*

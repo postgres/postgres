@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.71 2002/03/12 00:51:35 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.72 2002/03/21 16:00:32 tgl Exp $
  *
  */
 
@@ -310,9 +310,9 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 
 				appendStringInfo(str, " on %s",
 								 stringStringInfo(rte->relname));
-				if (strcmp(rte->eref->relname, rte->relname) != 0)
+				if (strcmp(rte->eref->aliasname, rte->relname) != 0)
 					appendStringInfo(str, " %s",
-								   stringStringInfo(rte->eref->relname));
+								   stringStringInfo(rte->eref->aliasname));
 			}
 			break;
 		case T_SubqueryScan:
@@ -322,7 +322,7 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 											  es->rtable);
 
 				appendStringInfo(str, " %s",
-								 stringStringInfo(rte->eref->relname));
+								 stringStringInfo(rte->eref->aliasname));
 			}
 			break;
 		default:

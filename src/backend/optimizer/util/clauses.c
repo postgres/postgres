@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.94 2002/03/12 00:51:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.95 2002/03/21 16:00:44 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -687,7 +687,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 				rte = rt_fetch(var->varno, context->query->rtable);
 				attname = get_rte_attribute_name(rte, var->varattno);
 				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
-					 rte->eref->relname, attname);
+					 rte->eref->aliasname, attname);
 			}
 		}
 	}
@@ -1670,7 +1670,6 @@ expression_tree_walker(Node *node,
 		return false;
 	switch (nodeTag(node))
 	{
-		case T_Ident:
 		case T_Const:
 		case T_Var:
 		case T_Param:
@@ -1963,7 +1962,6 @@ expression_tree_mutator(Node *node,
 		return NULL;
 	switch (nodeTag(node))
 	{
-		case T_Ident:
 		case T_Const:
 		case T_Var:
 		case T_Param:

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.93 2002/03/12 00:51:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.94 2002/03/21 16:01:34 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -48,6 +48,7 @@
 #include "catalog/pg_shadow.h"
 #include "executor/spi.h"
 #include "lib/stringinfo.h"
+#include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/tlist.h"
 #include "parser/keywords.h"
@@ -659,8 +660,7 @@ deparse_context_for(char *relname, Oid relid)
 	rte->rtekind = RTE_RELATION;
 	rte->relname = relname;
 	rte->relid = relid;
-	rte->eref = makeNode(Attr);
-	rte->eref->relname = relname;
+	rte->eref = makeAlias(relname, NIL);
 	rte->inh = false;
 	rte->inFromCl = true;
 
@@ -755,9 +755,7 @@ deparse_context_for_subplan(const char *name, List *tlist,
 	rte->rtekind = RTE_SPECIAL;	/* XXX */
 	rte->relname = pstrdup(name);
 	rte->relid = InvalidOid;
-	rte->eref = makeNode(Attr);
-	rte->eref->relname = rte->relname;
-	rte->eref->attrs = attrs;
+	rte->eref = makeAlias(rte->relname, attrs);
 	rte->inh = false;
 	rte->inFromCl = true;
 
@@ -1462,7 +1460,7 @@ get_utility_query_def(Query *query, deparse_context *context)
 	{
 		NotifyStmt *stmt = (NotifyStmt *) query->utilityStmt;
 
-		appendStringInfo(buf, "NOTIFY %s", quote_identifier(stmt->relname));
+		appendStringInfo(buf, "NOTIFY %s", quote_identifier(stmt->relation->relname));
 	}
 	else
 		elog(ERROR, "get_utility_query_def: unexpected statement type");
@@ -1512,7 +1510,7 @@ get_names_for_var(Var *var, deparse_context *context,
 	if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
 		*refname = NULL;
 	else
-		*refname = rte->eref->relname;
+		*refname = rte->eref->aliasname;
 
 	if (var->varattno == InvalidAttrNumber)
 		*attname = NULL;
@@ -1758,12 +1756,11 @@ get_rule_expr(Node *node, deparse_context *context)
 				/*
 				 * If the argument is simple enough, we could emit
 				 * arg.fieldname, but most cases where FieldSelect is used
-				 * are *not* simple.  For now, always use the projection-
-				 * function syntax.
+				 * are *not* simple.  So, always use parenthesized syntax.
 				 */
-				appendStringInfo(buf, "%s(", quote_identifier(fieldname));
+				appendStringInfoChar(buf, '(');
 				get_rule_expr(fselect->arg, context);
-				appendStringInfoChar(buf, ')');
+				appendStringInfo(buf, ").%s", quote_identifier(fieldname));
 			}
 			break;
 
@@ -2302,9 +2299,9 @@ get_from_clause(Query *query, deparse_context *context)
 
 			if (!rte->inFromCl)
 				continue;
-			if (strcmp(rte->eref->relname, "*NEW*") == 0)
+			if (strcmp(rte->eref->aliasname, "*NEW*") == 0)
 				continue;
-			if (strcmp(rte->eref->relname, "*OLD*") == 0)
+			if (strcmp(rte->eref->aliasname, "*OLD*") == 0)
 				continue;
 		}
 
@@ -2342,15 +2339,15 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		if (rte->alias != NULL)
 		{
 			appendStringInfo(buf, " %s",
-							 quote_identifier(rte->alias->relname));
-			if (rte->alias->attrs != NIL)
+							 quote_identifier(rte->alias->aliasname));
+			if (rte->alias->colnames != NIL)
 			{
 				List	   *col;
 
 				appendStringInfo(buf, "(");
-				foreach(col, rte->alias->attrs)
+				foreach(col, rte->alias->colnames)
 				{
-					if (col != rte->alias->attrs)
+					if (col != rte->alias->colnames)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
 								  quote_identifier(strVal(lfirst(col))));
@@ -2420,15 +2417,15 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 		if (j->alias != NULL)
 		{
 			appendStringInfo(buf, " %s",
-							 quote_identifier(j->alias->relname));
-			if (j->alias->attrs != NIL)
+							 quote_identifier(j->alias->aliasname));
+			if (j->alias->colnames != NIL)
 			{
 				List	   *col;
 
 				appendStringInfo(buf, "(");
-				foreach(col, j->alias->attrs)
+				foreach(col, j->alias->colnames)
 				{
-					if (col != j->alias->attrs)
+					if (col != j->alias->colnames)
 						appendStringInfo(buf, ", ");
 					appendStringInfo(buf, "%s",
 								  quote_identifier(strVal(lfirst(col))));

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.16 2001/10/28 06:25:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.17 2002/03/21 16:00:40 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,7 +29,9 @@ static bool var_is_inner(Var *var);
 bool
 single_node(Node *node)
 {
-	if (IsA(node, Ident) ||IsA(node, Const) ||IsA(node, Var) ||IsA(node, Param))
+	if (IsA(node, Const) ||
+		IsA(node, Var) ||
+		IsA(node, Param))
 		return true;
 	else
 		return false;
@@ -103,13 +105,13 @@ replace_opid(Oper *oper)
  * non_null -
  *		Returns t if the node is a non-null constant, e.g., if the node has a
  *		valid `constvalue' field.
- *
  */
 bool
 non_null(Expr *c)
 {
 
-	if (IsA(c, Const) &&!((Const *) c)->constisnull)
+	if (IsA(c, Const) &&
+		!((Const *) c)->constisnull)
 		return true;
 	else
 		return false;

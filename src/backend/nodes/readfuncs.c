@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.116 2002/03/12 00:51:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.117 2002/03/21 16:00:42 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -119,34 +119,19 @@ _readQuery(void)
 
 	local_node = makeNode(Query);
 
-	token = pg_strtok(&length); /* skip the :command */
-	token = pg_strtok(&length); /* get the commandType */
+	token = pg_strtok(&length); /* skip :command */
+	token = pg_strtok(&length); /* get commandType */
 	local_node->commandType = atoi(token);
 
 	token = pg_strtok(&length); /* skip :utility */
-	token = pg_strtok(&length);
-	if (length == 0)
-		local_node->utilityStmt = NULL;
-	else
-	{
-		/*
-		 * Hack to make up for lack of readfuncs for utility-stmt nodes
-		 *
-		 * we can't get create or index here, can we?
-		 */
-		NotifyStmt *n = makeNode(NotifyStmt);
+	local_node->utilityStmt = nodeRead(true);
 
-		n->relname = debackslash(token, length);
-		local_node->utilityStmt = (Node *) n;
-	}
-
-	token = pg_strtok(&length); /* skip the :resultRelation */
+	token = pg_strtok(&length); /* skip :resultRelation */
 	token = pg_strtok(&length); /* get the resultRelation */
 	local_node->resultRelation = atoi(token);
 
 	token = pg_strtok(&length); /* skip :into */
-	token = pg_strtok(&length); /* get into */
-	local_node->into = nullable_string(token, length);
+	local_node->into = nodeRead(true);
 
 	token = pg_strtok(&length); /* skip :isPortal */
 	token = pg_strtok(&length); /* get isPortal */
@@ -155,10 +140,6 @@ _readQuery(void)
 	token = pg_strtok(&length); /* skip :isBinary */
 	token = pg_strtok(&length); /* get isBinary */
 	local_node->isBinary = strtobool(token);
-
-	token = pg_strtok(&length); /* skip :isTemp */
-	token = pg_strtok(&length); /* get isTemp */
-	local_node->isTemp = strtobool(token);
 
 	token = pg_strtok(&length); /* skip the :hasAggs */
 	token = pg_strtok(&length); /* get hasAggs */
@@ -206,6 +187,25 @@ _readQuery(void)
 
 	token = pg_strtok(&length); /* skip :resultRelations */
 	local_node->resultRelations = toIntList(nodeRead(true));
+
+	return local_node;
+}
+
+/* ----------------
+ *		_readNotifyStmt
+ * ----------------
+ */
+static NotifyStmt *
+_readNotifyStmt(void)
+{
+	NotifyStmt *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(NotifyStmt);
+
+	token = pg_strtok(&length); /* skip :relation */
+	local_node->relation = nodeRead(true);
 
 	return local_node;
 }
@@ -1394,21 +1394,93 @@ _readTargetEntry(void)
 	return local_node;
 }
 
-static Attr *
-_readAttr(void)
+static RangeVar *
+_readRangeVar(void)
 {
-	Attr	   *local_node;
+	RangeVar   *local_node;
 	char	   *token;
 	int			length;
 
-	local_node = makeNode(Attr);
+	local_node = makeNode(RangeVar);
 
-	token = pg_strtok(&length); /* eat :relname */
+	local_node->catalogname = NULL;	/* not currently saved in output format */
+
+	token = pg_strtok(&length); /* eat :relation */
+	token = pg_strtok(&length); /* get schemaname */
+	local_node->schemaname = nullable_string(token, length);
+
+	token = pg_strtok(&length); /* eat "." */
 	token = pg_strtok(&length); /* get relname */
-	local_node->relname = debackslash(token, length);
+	local_node->relname = nullable_string(token, length);
+	
+	token = pg_strtok(&length); /* eat :inhopt */
+	token = pg_strtok(&length); /* get inhopt */
+	local_node->inhOpt = (InhOption) atoi(token);
+	
+	token = pg_strtok(&length); /* eat :istemp */
+	token = pg_strtok(&length); /* get istemp */
+	local_node->istemp = strtobool(token);
 
-	token = pg_strtok(&length); /* eat :attrs */
-	local_node->attrs = nodeRead(true); /* now read it */
+	token = pg_strtok(&length); /* eat :alias */
+	local_node->alias = nodeRead(true); /* now read it */
+
+	return local_node;
+}
+
+static ColumnRef *
+_readColumnRef(void)
+{
+	ColumnRef  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(ColumnRef);
+
+	token = pg_strtok(&length); /* eat :fields */
+	local_node->fields = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* eat :indirection */
+	local_node->indirection = nodeRead(true); /* now read it */
+
+	return local_node;
+}
+
+static ExprFieldSelect *
+_readExprFieldSelect(void)
+{
+	ExprFieldSelect  *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(ExprFieldSelect);
+
+	token = pg_strtok(&length); /* eat :arg */
+	local_node->arg = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* eat :fields */
+	local_node->fields = nodeRead(true); /* now read it */
+
+	token = pg_strtok(&length); /* eat :indirection */
+	local_node->indirection = nodeRead(true); /* now read it */
+
+	return local_node;
+}
+
+static Alias *
+_readAlias(void)
+{
+	Alias	   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(Alias);
+
+	token = pg_strtok(&length); /* eat :aliasname */
+	token = pg_strtok(&length); /* get aliasname */
+	local_node->aliasname = debackslash(token, length);
+
+	token = pg_strtok(&length); /* eat :colnames */
+	local_node->colnames = nodeRead(true); /* now read it */
 
 	return local_node;
 }
@@ -1994,8 +2066,6 @@ parsePlanString(void)
 		return_value = _readArrayRef();
 	else if (length == 3 && strncmp(token, "VAR", length) == 0)
 		return_value = _readVar();
-	else if (length == 4 && strncmp(token, "ATTR", length) == 0)
-		return_value = _readAttr();
 	else if (length == 5 && strncmp(token, "CONST", length) == 0)
 		return_value = _readConst();
 	else if (length == 4 && strncmp(token, "FUNC", length) == 0)
@@ -2006,6 +2076,14 @@ parsePlanString(void)
 		return_value = _readParam();
 	else if (length == 11 && strncmp(token, "TARGETENTRY", length) == 0)
 		return_value = _readTargetEntry();
+	else if (length == 8 && strncmp(token, "RANGEVAR", length) == 0)
+		return_value = _readRangeVar();
+	else if (length == 9 && strncmp(token, "COLUMNREF", length) == 0)
+		return_value = _readColumnRef();
+	else if (length == 15 && strncmp(token, "EXPRFIELDSELECT", length) == 0)
+		return_value = _readExprFieldSelect();
+	else if (length == 5 && strncmp(token, "ALIAS", length) == 0)
+		return_value = _readAlias();
 	else if (length == 3 && strncmp(token, "RTE", length) == 0)
 		return_value = _readRangeTblEntry();
 	else if (length == 4 && strncmp(token, "PATH", length) == 0)
@@ -2032,6 +2110,8 @@ parsePlanString(void)
 		return_value = _readIter();
 	else if (length == 5 && strncmp(token, "QUERY", length) == 0)
 		return_value = _readQuery();
+	else if (length == 6 && strncmp(token, "NOTIFY", length) == 0)
+		return_value = _readNotifyStmt();
 	else if (length == 10 && strncmp(token, "SORTCLAUSE", length) == 0)
 		return_value = _readSortClause();
 	else if (length == 11 && strncmp(token, "GROUPCLAUSE", length) == 0)

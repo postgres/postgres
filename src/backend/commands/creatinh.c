@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.88 2002/03/20 19:43:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.89 2002/03/21 16:00:31 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * Truncate relname to appropriate length (probably a waste of time,
 	 * as parser should have done this already).
 	 */
-	StrNCpy(relname, stmt->relname, NAMEDATALEN);
+	StrNCpy(relname, (stmt->relation)->relname, NAMEDATALEN);
 
 	/*
 	 * Merge domain attributes into the known columns before processing table
@@ -82,8 +82,9 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	 * Look up inheritance ancestors and generate relation schema,
 	 * including inherited attributes.
 	 */
-	schema = MergeAttributes(schema, stmt->inhRelnames, stmt->istemp,
-						 &inheritOids, &old_constraints, &parentHasOids);
+	schema = MergeAttributes(schema, stmt->inhRelations,
+							 stmt->relation->istemp,
+							 &inheritOids, &old_constraints, &parentHasOids);
 
 	numberOfAttributes = length(schema);
 	if (numberOfAttributes <= 0)
@@ -147,7 +148,7 @@ DefineRelation(CreateStmt *stmt, char relkind)
 	relationId = heap_create_with_catalog(relname, descriptor,
 										  relkind,
 										  stmt->hasoids || parentHasOids,
-										  stmt->istemp,
+										  stmt->relation->istemp,
 										  allowSystemTableMods);
 
 	StoreCatalogInheritance(relationId, inheritOids);
@@ -414,6 +415,8 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 	/*
 	 * Reject duplicate names in the list of parents, too.
+	 *
+	 * XXX needs to be smarter about schema-qualified table names.
 	 */
 	foreach(entry, supers)
 	{
@@ -421,9 +424,10 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 
 		foreach(rest, lnext(entry))
 		{
-			if (strcmp(strVal(lfirst(entry)), strVal(lfirst(rest))) == 0)
+			if (strcmp(((RangeVar *) lfirst(entry))->relname, 
+					   ((RangeVar *) lfirst(rest))->relname) == 0)
 				elog(ERROR, "CREATE TABLE: inherited relation \"%s\" duplicated",
-					 strVal(lfirst(entry)));
+					 ((RangeVar *) lfirst(entry))->relname);
 		}
 	}
 
@@ -435,7 +439,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 	child_attno = 0;
 	foreach(entry, supers)
 	{
-		char	   *name = strVal(lfirst(entry));
+		char	   *name = ((RangeVar *) lfirst(entry))->relname;
 		Relation	relation;
 		TupleDesc	tupleDesc;
 		TupleConstr *constr;

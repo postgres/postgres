@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.84 2002/03/12 00:51:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.85 2002/03/21 16:00:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -285,7 +285,7 @@ transformJoinUsingClause(ParseState *pstate, List *leftVars, List *rightVars)
 	 * transformJoinOnClause() does.  Just invoke transformExpr() to fix
 	 * up the operators, and we're done.
 	 */
-	result = transformExpr(pstate, result, EXPR_COLUMN_FIRST);
+	result = transformExpr(pstate, result);
 
 	/*
 	 * We expect the result to yield bool directly, otherwise complain. We
@@ -326,7 +326,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 	pstate->p_namespace = makeList2(j->larg, j->rarg);
 
 	/* This part is just like transformWhereClause() */
-	result = transformExpr(pstate, j->quals, EXPR_COLUMN_FIRST);
+	result = transformExpr(pstate, j->quals);
 
 	if (!coerce_to_boolean(pstate, &result))
 		elog(ERROR, "JOIN/ON clause must return type boolean, not type %s",
@@ -350,7 +350,7 @@ transformJoinOnClause(ParseState *pstate, JoinExpr *j,
 		if (!intMember(varno, containedRels))
 		{
 			elog(ERROR, "JOIN/ON clause refers to \"%s\", which is not part of JOIN",
-				 rt_fetch(varno, pstate->p_rtable)->eref->relname);
+				 rt_fetch(varno, pstate->p_rtable)->eref->aliasname);
 		}
 	}
 	freeList(clause_varnos);
@@ -375,7 +375,7 @@ transformTableEntry(ParseState *pstate, RangeVar *r)
 	 * automatically generate the range variable if not specified. However
 	 * there are times we need to know whether the entries are legitimate.
 	 */
-	rte = addRangeTableEntry(pstate, relname, r->name,
+	rte = addRangeTableEntry(pstate, relname, r->alias,
 							 interpretInhOption(r->inhOpt), true);
 
 	/*
@@ -408,7 +408,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	 * relax this, we'd have to be prepared to gin up a unique alias for
 	 * an unlabeled subselect.
 	 */
-	if (r->name == NULL)
+	if (r->alias == NULL)
 		elog(ERROR, "sub-select in FROM must have an alias");
 
 	/*
@@ -444,7 +444,7 @@ transformRangeSubselect(ParseState *pstate, RangeSubselect *r)
 	/*
 	 * OK, build an RTE for the subquery.
 	 */
-	rte = addRangeTableEntryForSubquery(pstate, query, r->name, true);
+	rte = addRangeTableEntryForSubquery(pstate, query, r->alias, true);
 
 	/*
 	 * We create a RangeTblRef, but we do not add it to the joinlist or
@@ -748,11 +748,11 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 */
 		if (j->alias)
 		{
-			if (j->alias->attrs != NIL)
+			if (j->alias->colnames != NIL)
 			{
-				if (length(j->alias->attrs) > length(res_colnames))
+				if (length(j->alias->colnames) > length(res_colnames))
 					elog(ERROR, "Column alias list for \"%s\" has too many entries",
-						 j->alias->relname);
+						 j->alias->aliasname);
 			}
 		}
 
@@ -791,7 +791,7 @@ transformWhereClause(ParseState *pstate, Node *clause)
 	if (clause == NULL)
 		return NULL;
 
-	qual = transformExpr(pstate, clause, EXPR_COLUMN_FIRST);
+	qual = transformExpr(pstate, clause);
 
 	if (!coerce_to_boolean(pstate, &qual))
 		elog(ERROR, "WHERE clause must return type boolean, not type %s",
@@ -858,9 +858,11 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * an expression.
 	 *----------
 	 */
-	if (IsA(node, Ident) &&((Ident *) node)->indirection == NIL)
+	if (IsA(node, ColumnRef) &&
+		length(((ColumnRef *) node)->fields) == 1 &&
+		((ColumnRef *) node)->indirection == NIL)
 	{
-		char	   *name = ((Ident *) node)->name;
+		char	   *name = strVal(lfirst(((ColumnRef *) node)->fields));
 
 		if (clause == GROUP_CLAUSE)
 		{
@@ -934,7 +936,7 @@ findTargetlistEntry(ParseState *pstate, Node *node, List *tlist, int clause)
 	 * willing to match a resjunk target here, though the above cases must
 	 * ignore resjunk targets.
 	 */
-	expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
+	expr = transformExpr(pstate, node);
 
 	foreach(tl, tlist)
 	{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.50 2002/03/06 06:10:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.51 2002/03/21 16:01:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -181,12 +181,12 @@ ProcessQuery(Query *parsetree,
 	 */
 	if (isRetrieveIntoPortal)
 	{
-		intoName = parsetree->into;
+		intoName = parsetree->into->relname;
 		portal = PreparePortal(intoName);
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 		parsetree = copyObject(parsetree);
 		plan = copyObject(plan);
-		intoName = parsetree->into;	/* use copied name in QueryDesc */
+		intoName = parsetree->into->relname;	/* use copied name in QueryDesc */
 
 		/*
 		 * We stay in portal's memory context for now, so that query desc,

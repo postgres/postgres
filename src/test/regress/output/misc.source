@@ -442,7 +442,7 @@ SELECT class, aa, a FROM a_star*;
 -- joe and sally play basketball, and
 -- everyone else does nothing.
 --
-SELECT p.name, p.hobbies.name FROM ONLY person p;
+SELECT p.name, name(p.hobbies) FROM ONLY person p;
  name  |    name     
 -------+-------------
  mike  | posthacking
@@ -453,7 +453,7 @@ SELECT p.name, p.hobbies.name FROM ONLY person p;
 --
 -- as above, but jeff also does post_hacking.
 --
-SELECT p.name, p.hobbies.name FROM person* p;
+SELECT p.name, name(p.hobbies) FROM person* p;
  name  |    name     
 -------+-------------
  mike  | posthacking
@@ -466,7 +466,7 @@ SELECT p.name, p.hobbies.name FROM person* p;
 -- the next two queries demonstrate how functions generate bogus duplicates.
 -- this is a "feature" ..
 --
-SELECT DISTINCT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
+SELECT DISTINCT hobbies_r.name, name(hobbies_r.equipment) FROM hobbies_r;
     name     |     name      
 -------------+---------------
  basketball  | hightops
@@ -475,7 +475,7 @@ SELECT DISTINCT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
  skywalking  | guts
 (4 rows)
 
-SELECT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
+SELECT hobbies_r.name, (hobbies_r.equipment).name FROM hobbies_r;
     name     |     name      
 -------------+---------------
  posthacking | advil
@@ -492,7 +492,7 @@ SELECT hobbies_r.name, hobbies_r.equipment.name FROM hobbies_r;
 -- joe and sally need hightops, and
 -- everyone else is fine.
 --
-SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM ONLY person p;
+SELECT p.name, name(p.hobbies), name(equipment(p.hobbies)) FROM ONLY person p;
  name  |    name     |     name      
 -------+-------------+---------------
  mike  | posthacking | advil
@@ -504,7 +504,7 @@ SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM ONLY person p;
 --
 -- as above, but jeff needs advil and peet's coffee as well.
 --
-SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
+SELECT p.name, name(p.hobbies), name(equipment(p.hobbies)) FROM person* p;
  name  |    name     |     name      
 -------+-------------+---------------
  mike  | posthacking | advil
@@ -519,7 +519,7 @@ SELECT p.name, p.hobbies.name, p.hobbies.equipment.name FROM person* p;
 -- just like the last two, but make sure that the target list fixup and
 -- unflattening is being done correctly.
 --
-SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM ONLY person p;
+SELECT name(equipment(p.hobbies)), p.name, name(p.hobbies) FROM ONLY person p;
      name      | name  |    name     
 ---------------+-------+-------------
  advil         | mike  | posthacking
@@ -528,7 +528,7 @@ SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM ONLY person p;
  hightops      | sally | basketball
 (4 rows)
 
-SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
+SELECT (p.hobbies).equipment.name, p.name, name(p.hobbies) FROM person* p;
      name      | name  |    name     
 ---------------+-------+-------------
  advil         | mike  | posthacking
@@ -539,7 +539,7 @@ SELECT p.hobbies.equipment.name, p.name, p.hobbies.name FROM person* p;
  peet's coffee | jeff  | posthacking
 (6 rows)
 
-SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM ONLY person p;
+SELECT (p.hobbies).equipment.name, name(p.hobbies), p.name FROM ONLY person p;
      name      |    name     | name  
 ---------------+-------------+-------
  advil         | posthacking | mike
@@ -548,7 +548,7 @@ SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM ONLY person p;
  hightops      | basketball  | sally
 (4 rows)
 
-SELECT p.hobbies.equipment.name, p.hobbies.name, p.name FROM person* p;
+SELECT name(equipment(p.hobbies)), name(p.hobbies), p.name FROM person* p;
      name      |    name     | name  
 ---------------+-------------+-------
  advil         | posthacking | mike

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.110 2002/03/20 19:44:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.111 2002/03/21 16:01:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "catalog/pg_operator.h"
 #include "catalog/pg_proc.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "nodes/params.h"
 #include "parser/analyze.h"
@@ -41,8 +42,7 @@ bool		Transform_null_equals = false;
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
 						   Node *expr, TypeName *typename);
-static Node *transformAttr(ParseState *pstate, Attr *att, int precedence);
-static Node *transformIdent(ParseState *pstate, Ident *ident, int precedence);
+static Node *transformColumnRef(ParseState *pstate, ColumnRef *cref);
 static Node *transformIndirection(ParseState *pstate, Node *basenode,
 					 List *indirection);
 
@@ -85,7 +85,7 @@ parse_expr_init(void)
  * input and output of transformExpr; see SubLink for example.
  */
 Node *
-transformExpr(ParseState *pstate, Node *expr, int precedence)
+transformExpr(ParseState *pstate, Node *expr)
 {
 	Node	   *result = NULL;
 
@@ -105,9 +105,37 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 
 	switch (nodeTag(expr))
 	{
-		case T_Attr:
+		case T_ColumnRef:
 			{
-				result = transformAttr(pstate, (Attr *) expr, precedence);
+				result = transformColumnRef(pstate, (ColumnRef *) expr);
+				break;
+			}
+		case T_ParamRef:
+			{
+				ParamRef   *pref = (ParamRef *) expr;
+				int			paramno = pref->number;
+				Oid			paramtyp = param_type(paramno);
+				Param	   *param;
+				List	   *fields;
+
+				if (!OidIsValid(paramtyp))
+					elog(ERROR, "Parameter '$%d' is out of range", paramno);
+				param = makeNode(Param);
+				param->paramkind = PARAM_NUM;
+				param->paramid = (AttrNumber) paramno;
+				param->paramname = "<unnamed>";
+				param->paramtype = paramtyp;
+				result = (Node *) param;
+				/* handle qualification, if any */
+				foreach(fields, pref->fields)
+				{
+					result = ParseFuncOrColumn(pstate, strVal(lfirst(fields)),
+											   makeList1(result),
+											   false, false, true);
+				}
+				/* handle subscripts, if any */
+				result = transformIndirection(pstate, result,
+											  pref->indirection);
 				break;
 			}
 		case T_A_Const:
@@ -121,31 +149,28 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					result = (Node *) make_const(val);
 				break;
 			}
-		case T_ParamNo:
+		case T_ExprFieldSelect:
 			{
-				ParamNo    *pno = (ParamNo *) expr;
-				int			paramno = pno->number;
-				Oid			toid = param_type(paramno);
-				Param	   *param = makeNode(Param);
+				ExprFieldSelect *efs = (ExprFieldSelect *) expr;
+				List	   *fields;
 
-				if (!OidIsValid(toid))
-					elog(ERROR, "Parameter '$%d' is out of range", paramno);
-				param->paramkind = PARAM_NUM;
-				param->paramid = (AttrNumber) paramno;
-				param->paramname = "<unnamed>";
-				param->paramtype = toid;
-				result = transformIndirection(pstate, (Node *) param,
-											  pno->indirection);
-				/* cope with typecast applied to param */
-				if (pno->typename != NULL)
-					result = parser_typecast_expression(pstate, result,
-														pno->typename);
+				result = transformExpr(pstate, efs->arg);
+				/* handle qualification, if any */
+				foreach(fields, efs->fields)
+				{
+					result = ParseFuncOrColumn(pstate, strVal(lfirst(fields)),
+											   makeList1(result),
+											   false, false, true);
+				}
+				/* handle subscripts, if any */
+				result = transformIndirection(pstate, result,
+											  efs->indirection);
 				break;
 			}
 		case T_TypeCast:
 			{
 				TypeCast   *tc = (TypeCast *) expr;
-				Node	   *arg = transformExpr(pstate, tc->arg, precedence);
+				Node	   *arg = transformExpr(pstate, tc->arg);
 
 				result = parser_typecast_expression(pstate, arg, tc->typename);
 				break;
@@ -179,17 +204,14 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 									n->arg = a->lexpr;
 
 								result = transformExpr(pstate,
-													   (Node *) n,
-													   precedence);
+													   (Node *) n);
 							}
 							else
 							{
 								Node	   *lexpr = transformExpr(pstate,
-																a->lexpr,
-															 precedence);
+																a->lexpr);
 								Node	   *rexpr = transformExpr(pstate,
-																a->rexpr,
-															 precedence);
+																a->rexpr);
 
 								result = (Node *) make_op(a->opname,
 														  lexpr,
@@ -200,11 +222,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					case AND:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr,
-															  precedence);
+															  a->lexpr);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr,
-															  precedence);
+															  a->rexpr);
 							Expr	   *expr = makeNode(Expr);
 
 							if (!coerce_to_boolean(pstate, &lexpr))
@@ -226,11 +246,9 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					case OR:
 						{
 							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr,
-															  precedence);
+															  a->lexpr);
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr,
-															  precedence);
+															  a->rexpr);
 							Expr	   *expr = makeNode(Expr);
 
 							if (!coerce_to_boolean(pstate, &lexpr))
@@ -252,8 +270,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					case NOT:
 						{
 							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr,
-															  precedence);
+															  a->rexpr);
 							Expr	   *expr = makeNode(Expr);
 
 							if (!coerce_to_boolean(pstate, &rexpr))
@@ -270,11 +287,6 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				}
 				break;
 			}
-		case T_Ident:
-			{
-				result = transformIdent(pstate, (Ident *) expr, precedence);
-				break;
-			}
 		case T_FuncCall:
 			{
 				FuncCall   *fn = (FuncCall *) expr;
@@ -283,14 +295,13 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				/* transform the list of arguments */
 				foreach(args, fn->args)
 					lfirst(args) = transformExpr(pstate,
-												 (Node *) lfirst(args),
-												 precedence);
+												 (Node *) lfirst(args));
 				result = ParseFuncOrColumn(pstate,
 										   fn->funcname,
 										   fn->args,
 										   fn->agg_star,
 										   fn->agg_distinct,
-										   precedence);
+										   false);
 				break;
 			}
 		case T_SubLink:
@@ -357,8 +368,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					List	   *elist;
 
 					foreach(elist, left_list)
-						lfirst(elist) = transformExpr(pstate, lfirst(elist),
-													  precedence);
+						lfirst(elist) = transformExpr(pstate, lfirst(elist));
 
 					Assert(IsA(sublink->oper, A_Expr));
 					op = ((A_Expr *) sublink->oper)->opname;
@@ -455,7 +465,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						a->rexpr = warg;
 						warg = (Node *) a;
 					}
-					neww->expr = transformExpr(pstate, warg, precedence);
+					neww->expr = transformExpr(pstate, warg);
 
 					if (!coerce_to_boolean(pstate, &neww->expr))
 						elog(ERROR, "WHEN clause must have a boolean result");
@@ -472,7 +482,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						n->val.type = T_Null;
 						warg = (Node *) n;
 					}
-					neww->result = transformExpr(pstate, warg, precedence);
+					neww->result = transformExpr(pstate, warg);
 
 					newargs = lappend(newargs, neww);
 					typeids = lappendi(typeids, exprType(neww->result));
@@ -496,7 +506,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					n->val.type = T_Null;
 					defresult = (Node *) n;
 				}
-				newc->defresult = transformExpr(pstate, defresult, precedence);
+				newc->defresult = transformExpr(pstate, defresult);
 
 				/*
 				 * Note: default result is considered the most significant
@@ -534,7 +544,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			{
 				NullTest   *n = (NullTest *) expr;
 
-				n->arg = transformExpr(pstate, n->arg, precedence);
+				n->arg = transformExpr(pstate, n->arg);
 				/* the argument can be any type, so don't coerce it */
 				result = expr;
 				break;
@@ -544,7 +554,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			{
 				BooleanTest *b = (BooleanTest *) expr;
 
-				b->arg = transformExpr(pstate, b->arg, precedence);
+				b->arg = transformExpr(pstate, b->arg);
 
 				if (!coerce_to_boolean(pstate, &b->arg))
 				{
@@ -627,47 +637,183 @@ transformIndirection(ParseState *pstate, Node *basenode, List *indirection)
 }
 
 static Node *
-transformAttr(ParseState *pstate, Attr *att, int precedence)
+transformColumnRef(ParseState *pstate, ColumnRef *cref)
 {
-	Node	   *basenode;
+	int			numnames = length(cref->fields);
+	Node	   *node;
+	RangeVar   *rv;
 
-	basenode = ParseNestedFuncOrColumn(pstate, att, precedence);
-	return transformIndirection(pstate, basenode, att->indirection);
-}
-
-static Node *
-transformIdent(ParseState *pstate, Ident *ident, int precedence)
-{
-	Node	   *result = NULL;
-	int			sublevels_up;
-
-	/*
-	 * try to find the ident as a relation ... but not if subscripts
-	 * appear
+	/*----------
+	 * The allowed syntaxes are:
+	 *
+	 * A		First try to resolve as unqualified column name;
+	 *			if no luck, try to resolve as unqual. table name (A.*).
+	 * A.B		A is an unqual. table name; B is either a
+	 *			column or function name (trying column name first).
+	 * A.B.C	schema A, table B, col or func name C.
+	 * A.B.C.D	catalog A, schema B, table C, col or func D.
+	 * A.*		A is an unqual. table name; means whole-row value.
+	 * A.B.*	whole-row value of table B in schema A.
+	 * A.B.C.*	whole-row value of table C in schema B in catalog A.
+	 *
+	 * We do not need to cope with bare "*"; that will only be accepted by
+	 * the grammar at the top level of a SELECT list, and transformTargetList
+	 * will take care of it before it ever gets here.
+	 *
+	 * Currently, if a catalog name is given then it must equal the current
+	 * database name; we check it here and then discard it.
+	 *
+	 * For whole-row references, the result is an untransformed RangeVar,
+	 * which will work as the argument to a function call, but not in any
+	 * other context at present.  (We could instead coerce to a whole-row Var,
+	 * but that will fail for subselect and join RTEs, because there is no
+	 * pg_type entry for their rowtypes.)
+	 *----------
 	 */
-	if (ident->indirection == NIL &&
-		refnameRangeTblEntry(pstate, ident->name, &sublevels_up) != NULL)
+	switch (numnames)
 	{
-		ident->isRel = TRUE;
-		result = (Node *) ident;
-	}
-
-	if (result == NULL || precedence == EXPR_COLUMN_FIRST)
-	{
-		/* try to find the ident as a column */
-		Node	   *var = colnameToVar(pstate, ident->name);
-
-		if (var != NULL)
+		case 1:
 		{
-			ident->isRel = FALSE;
-			result = transformIndirection(pstate, var, ident->indirection);
+			char   *name = strVal(lfirst(cref->fields));
+
+			/* Try to identify as an unqualified column */
+			node = colnameToVar(pstate, name);
+			if (node == NULL)
+			{
+				/*
+				 * Not known as a column of any range-table entry, so
+				 * try to find the name as a relation ... but not if
+				 * subscripts appear.  Note also that only relations
+				 * already entered into the rangetable will be recognized.
+				 */
+				int		levels_up;
+
+				if (cref->indirection == NIL &&
+					refnameRangeTblEntry(pstate, name, &levels_up) != NULL)
+				{
+					rv = makeNode(RangeVar);
+					rv->relname = name;
+					rv->inhOpt = INH_DEFAULT;
+					node = (Node *) rv;
+				}
+				else
+					elog(ERROR, "Attribute \"%s\" not found", name);
+			}
+			break;
 		}
+		case 2:
+		{
+			char   *name1 = strVal(lfirst(cref->fields));
+			char   *name2 = strVal(lsecond(cref->fields));
+
+			/* Whole-row reference? */
+			if (strcmp(name2, "*") == 0)
+			{
+				rv = makeNode(RangeVar);
+				rv->relname = name1;
+				rv->inhOpt = INH_DEFAULT;
+				node = (Node *) rv;
+				break;
+			}
+
+			/* Try to identify as a once-qualified column */
+			node = qualifiedNameToVar(pstate, name1, name2, true);
+			if (node == NULL)
+			{
+				/*
+				 * Not known as a column of any range-table entry, so
+				 * try it as a function call.  Here, we will create an
+				 * implicit RTE for tables not already entered.
+				 */
+				rv = makeNode(RangeVar);
+				rv->relname = name1;
+				rv->inhOpt = INH_DEFAULT;
+				node = ParseFuncOrColumn(pstate, name2,
+										 makeList1(rv),
+										 false, false, true);
+			}
+			break;
+		}
+		case 3:
+		{
+			char   *name1 = strVal(lfirst(cref->fields));
+			char   *name2 = strVal(lsecond(cref->fields));
+			char   *name3 = strVal(lfirst(lnext(lnext(cref->fields))));
+
+			/* Whole-row reference? */
+			if (strcmp(name3, "*") == 0)
+			{
+				rv = makeNode(RangeVar);
+				rv->schemaname = name1;
+				rv->relname = name2;
+				rv->inhOpt = INH_DEFAULT;
+				node = (Node *) rv;
+				break;
+			}
+
+			/* Try to identify as a twice-qualified column */
+			/* XXX do something with schema name here */
+			node = qualifiedNameToVar(pstate, name2, name3, true);
+			if (node == NULL)
+			{
+				/* Try it as a function call */
+				rv = makeNode(RangeVar);
+				rv->schemaname = name1;
+				rv->relname = name2;
+				rv->inhOpt = INH_DEFAULT;
+				node = ParseFuncOrColumn(pstate, name3,
+										 makeList1(rv),
+										 false, false, true);
+			}
+			break;
+		}
+		case 4:
+		{
+			char   *name1 = strVal(lfirst(cref->fields));
+			char   *name2 = strVal(lsecond(cref->fields));
+			char   *name3 = strVal(lfirst(lnext(lnext(cref->fields))));
+			char   *name4 = strVal(lfirst(lnext(lnext(lnext(cref->fields)))));
+
+			/*
+			 * We check the catalog name and then ignore it.
+			 */
+			if (strcmp(name1, DatabaseName) != 0)
+				elog(ERROR, "Cross-database references are not implemented");
+
+			/* Whole-row reference? */
+			if (strcmp(name4, "*") == 0)
+			{
+				rv = makeNode(RangeVar);
+				rv->schemaname = name2;
+				rv->relname = name3;
+				rv->inhOpt = INH_DEFAULT;
+				node = (Node *) rv;
+				break;
+			}
+
+			/* Try to identify as a twice-qualified column */
+			/* XXX do something with schema name here */
+			node = qualifiedNameToVar(pstate, name3, name4, true);
+			if (node == NULL)
+			{
+				/* Try it as a function call */
+				rv = makeNode(RangeVar);
+				rv->schemaname = name2;
+				rv->relname = name3;
+				rv->inhOpt = INH_DEFAULT;
+				node = ParseFuncOrColumn(pstate, name4,
+										 makeList1(rv),
+										 false, false, true);
+			}
+			break;
+		}
+		default:
+			elog(ERROR, "Invalid qualified name syntax (too many names)");
+			node = NULL;		/* keep compiler quiet */
+			break;
 	}
 
-	if (result == NULL)
-		elog(ERROR, "Attribute '%s' not found", ident->name);
-
-	return result;
+	return transformIndirection(pstate, node, cref->indirection);
 }
 
 /*
@@ -747,10 +893,6 @@ exprType(Node *expr)
 			break;
 		case T_BooleanTest:
 			type = BOOLOID;
-			break;
-		case T_Ident:
-			/* XXX is this right? */
-			type = UNKNOWNOID;
 			break;
 		default:
 			elog(ERROR, "Do not know how to get type for %d node",

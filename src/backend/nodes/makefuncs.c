@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.27 2002/03/20 19:44:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.28 2002/03/21 16:00:40 tgl Exp $
  */
 #include "postgres.h"
 
@@ -159,19 +159,18 @@ makeNullConst(Oid consttype)
 }
 
 /*
- * makeAttr -
- *	  creates an Attr node
+ * makeAlias -
+ *	  creates an Alias node
+ *
+ * NOTE: the given name is copied, but the colnames list (if any) isn't.
  */
-Attr *
-makeAttr(char *relname, char *attname)
+Alias *
+makeAlias(const char *aliasname, List *colnames)
 {
-	Attr	   *a = makeNode(Attr);
+	Alias	   *a = makeNode(Alias);
 
-	a->relname = pstrdup(relname);
-	a->paramNo = NULL;
-	if (attname != NULL)
-		a->attrs = makeList1(makeString(pstrdup(attname)));
-	a->indirection = NULL;
+	a->aliasname = pstrdup(aliasname);
+	a->colnames = colnames;
 
 	return a;
 }

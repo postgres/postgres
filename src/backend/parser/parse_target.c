@@ -8,13 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.77 2002/03/12 00:51:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.78 2002/03/21 16:01:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-
 #include "postgres.h"
 
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -56,9 +56,9 @@ transformTargetEntry(ParseState *pstate,
 
 	/* Transform the node if caller didn't do it already */
 	if (expr == NULL)
-		expr = transformExpr(pstate, node, EXPR_COLUMN_FIRST);
+		expr = transformExpr(pstate, node);
 
-	if (IsA(expr, Ident) &&((Ident *) expr)->isRel)
+	if (IsA(expr, RangeVar))
 		elog(ERROR, "You can't use relation names alone in the target list, try relation.*.");
 
 	type_id = exprType(expr);
@@ -99,11 +99,13 @@ transformTargetList(ParseState *pstate, List *targetlist)
 	{
 		ResTarget  *res = (ResTarget *) lfirst(targetlist);
 
-		if (IsA(res->val, Attr))
+		if (IsA(res->val, ColumnRef))
 		{
-			Attr	   *att = (Attr *) res->val;
+			ColumnRef  *cref = (ColumnRef *) res->val;
+			List	   *fields = cref->fields;
+			int			numnames = length(fields);
 
-			if (att->relname != NULL && strcmp(att->relname, "*") == 0)
+			if (numnames == 1 && strcmp(strVal(lfirst(fields)), "*") == 0)
 			{
 				/*
 				 * Target item is a single '*', expand all tables (eg.
@@ -112,27 +114,59 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				p_target = nconc(p_target,
 								 ExpandAllTables(pstate));
 			}
-			else if (att->attrs != NIL &&
-					 strcmp(strVal(lfirst(att->attrs)), "*") == 0)
+			else if (strcmp(strVal(nth(numnames-1, fields)), "*") == 0)
 			{
 				/*
 				 * Target item is relation.*, expand that table (eg.
 				 * SELECT emp.*, dname FROM emp, dept)
 				 */
+				char	   *schemaname;
+				char	   *relname;
 				RangeTblEntry *rte;
 				int			sublevels_up;
 
-				rte = refnameRangeTblEntry(pstate, att->relname,
+				switch (numnames)
+				{
+					case 2:
+						schemaname = NULL;
+						relname = strVal(lfirst(fields));
+						break;
+					case 3:
+						schemaname = strVal(lfirst(fields));
+						relname = strVal(lsecond(fields));
+						break;
+					case 4:
+					{
+						char   *name1 = strVal(lfirst(fields));
+
+						/*
+						 * We check the catalog name and then ignore it.
+						 */
+						if (strcmp(name1, DatabaseName) != 0)
+							elog(ERROR, "Cross-database references are not implemented");
+						schemaname = strVal(lsecond(fields));
+						relname = strVal(lfirst(lnext(lnext(fields))));
+						break;
+					}
+					default:
+						elog(ERROR, "Invalid qualified name syntax (too many names)");
+						schemaname = NULL; /* keep compiler quiet */
+						relname = NULL;
+						break;
+				}
+
+				/* XXX do something with schema name */
+				rte = refnameRangeTblEntry(pstate, relname,
 										   &sublevels_up);
 				if (rte == NULL)
-					rte = addImplicitRTE(pstate, att->relname);
+					rte = addImplicitRTE(pstate, relname);
 
 				p_target = nconc(p_target,
 								 expandRelAttrs(pstate, rte));
 			}
 			else
 			{
-				/* Plain Attr node, treat it as an expression */
+				/* Plain ColumnRef node, treat it as an expression */
 				p_target = lappend(p_target,
 								   transformTargetEntry(pstate,
 														res->val,
@@ -143,7 +177,7 @@ transformTargetList(ParseState *pstate, List *targetlist)
 		}
 		else
 		{
-			/* Everything else but Attr */
+			/* Everything else but ColumnRef */
 			p_target = lappend(p_target,
 							   transformTargetEntry(pstate,
 													res->val,
@@ -317,10 +351,9 @@ CoerceTargetExpr(ParseState *pstate,
 
 /*
  * checkInsertTargets -
- *	  generate a list of column names if not supplied or
+ *	  generate a list of INSERT column targets if not supplied, or
  *	  test supplied column names to make sure they are in target table.
  *	  Also return an integer list of the columns' attribute numbers.
- *	  (used exclusively for inserts)
  */
 List *
 checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
@@ -338,17 +371,16 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 		for (i = 0; i < numcol; i++)
 		{
-			Ident	   *id = makeNode(Ident);
+			ResTarget	   *col = makeNode(ResTarget);
 
 #ifdef	_DROP_COLUMN_HACK__
 			if (COLUMN_IS_DROPPED(attr[i]))
 				continue;
 #endif   /* _DROP_COLUMN_HACK__ */
-			id->name = palloc(NAMEDATALEN);
-			StrNCpy(id->name, NameStr(attr[i]->attname), NAMEDATALEN);
-			id->indirection = NIL;
-			id->isRel = false;
-			cols = lappend(cols, id);
+			col->name = pstrdup(NameStr(attr[i]->attname));
+			col->indirection = NIL;
+			col->val = NULL;
+			cols = lappend(cols, col);
 			*attrnos = lappendi(*attrnos, i + 1);
 		}
 	}
@@ -361,7 +393,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 		foreach(tl, cols)
 		{
-			char	   *name = ((Ident *) lfirst(tl))->name;
+			char	   *name = ((ResTarget *) lfirst(tl))->name;
 			int			attrno;
 
 			/* Lookup column name, elog on failure */
@@ -458,16 +490,32 @@ FigureColnameInternal(Node *node, char **name)
 		case T_Ident:
 			*name = ((Ident *) node)->name;
 			return 2;
-		case T_Attr:
+		case T_ColumnRef:
 			{
-				List	   *attrs = ((Attr *) node)->attrs;
+				List	   *fields = ((ColumnRef *) node)->fields;
 
-				if (attrs)
+				while (lnext(fields) != NIL)
+					fields = lnext(fields);
+				if (strcmp(strVal(lfirst(fields)), "*") != 0)
 				{
-					while (lnext(attrs) != NIL)
-						attrs = lnext(attrs);
-					*name = strVal(lfirst(attrs));
+					*name = strVal(lfirst(fields));
 					return 2;
+				}
+			}
+			break;
+		case T_ExprFieldSelect:
+			{
+				List	   *fields = ((ExprFieldSelect *) node)->fields;
+
+				if (fields)
+				{
+					while (lnext(fields) != NIL)
+						fields = lnext(fields);
+					if (strcmp(strVal(lfirst(fields)), "*") != 0)
+					{
+						*name = strVal(lfirst(fields));
+						return 2;
+					}
 				}
 			}
 			break;

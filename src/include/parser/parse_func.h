@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.35 2001/11/05 17:46:35 momjian Exp $
+ * $Id: parse_func.h,v 1.36 2002/03/21 16:02:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,12 +47,9 @@ typedef enum
 } FuncDetailCode;
 
 
-extern Node *ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr,
-						int precedence);
 extern Node *ParseFuncOrColumn(ParseState *pstate,
 				  char *funcname, List *fargs,
-				  bool agg_star, bool agg_distinct,
-				  int precedence);
+				  bool agg_star, bool agg_distinct, bool is_column);
 
 extern FuncDetailCode func_get_detail(char *funcname, List *fargs,
 				int nargs, Oid *argtypes,

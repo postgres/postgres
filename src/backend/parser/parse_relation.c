@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.63 2002/03/12 00:51:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.64 2002/03/21 16:01:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,7 +104,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 		int			varno = ((RangeTblRef *) nsnode)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
-		if (strcmp(rte->eref->relname, refname) == 0)
+		if (strcmp(rte->eref->aliasname, refname) == 0)
 			result = (Node *) rte;
 	}
 	else if (IsA(nsnode, JoinExpr))
@@ -113,7 +113,7 @@ scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 
 		if (j->alias)
 		{
-			if (strcmp(j->alias->relname, refname) == 0)
+			if (strcmp(j->alias->aliasname, refname) == 0)
 				return (Node *) j;		/* matched a join alias */
 
 			/*
@@ -175,7 +175,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 		int			varno = ((RangeTblRef *) namespace1)->rtindex;
 		RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
-		scanNameSpaceForConflict(pstate, namespace2, rte->eref->relname);
+		scanNameSpaceForConflict(pstate, namespace2, rte->eref->aliasname);
 	}
 	else if (IsA(namespace1, JoinExpr))
 	{
@@ -183,7 +183,7 @@ checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
 
 		if (j->alias)
 		{
-			scanNameSpaceForConflict(pstate, namespace2, j->alias->relname);
+			scanNameSpaceForConflict(pstate, namespace2, j->alias->aliasname);
 
 			/*
 			 * Tables within an aliased join are invisible from outside
@@ -268,7 +268,7 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	 * Scan the user column names (or aliases) for a match. Complain if
 	 * multiple matches.
 	 */
-	foreach(c, rte->eref->attrs)
+	foreach(c, rte->eref->colnames)
 	{
 		attnum++;
 		if (strcmp(strVal(lfirst(c)), colname) == 0)
@@ -420,15 +420,15 @@ qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
 				   char *relname,
-				   Attr *alias,
+				   Alias *alias,
 				   bool inh,
 				   bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias ? alias->relname : relname;
+	char	   *refname = alias ? alias->aliasname : relname;
 	LOCKMODE	lockmode;
 	Relation	rel;
-	Attr	   *eref;
+	Alias	   *eref;
 	int			maxattrs;
 	int			numaliases;
 	int			varattno;
@@ -447,8 +447,8 @@ addRangeTableEntry(ParseState *pstate,
 	rel = heap_openr(relname, lockmode);
 	rte->relid = RelationGetRelid(rel);
 
-	eref = alias ? (Attr *) copyObject(alias) : makeAttr(refname, NULL);
-	numaliases = length(eref->attrs);
+	eref = alias ? (Alias *) copyObject(alias) : makeAlias(refname, NIL);
+	numaliases = length(eref->colnames);
 
 	/*
 	 * Since the rel is open anyway, let's check that the number of column
@@ -459,13 +459,13 @@ addRangeTableEntry(ParseState *pstate,
 		elog(ERROR, "Table \"%s\" has %d columns available but %d columns specified",
 			 refname, maxattrs, numaliases);
 
-	/* fill in any unspecified alias columns */
+	/* fill in any unspecified alias columns using actual column names */
 	for (varattno = numaliases; varattno < maxattrs; varattno++)
 	{
 		char	   *attrname;
 
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-		eref->attrs = lappend(eref->attrs, makeString(attrname));
+		eref->colnames = lappend(eref->colnames, makeString(attrname));
 	}
 	rte->eref = eref;
 
@@ -512,12 +512,12 @@ addRangeTableEntry(ParseState *pstate,
 RangeTblEntry *
 addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
-							  Attr *alias,
+							  Alias *alias,
 							  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	char	   *refname = alias->relname;
-	Attr	   *eref;
+	char	   *refname = alias->aliasname;
+	Alias	   *eref;
 	int			numaliases;
 	int			varattno;
 	List	   *tlistitem;
@@ -529,7 +529,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	rte->alias = alias;
 
 	eref = copyObject(alias);
-	numaliases = length(eref->attrs);
+	numaliases = length(eref->colnames);
 
 	/* fill in any unspecified alias columns */
 	varattno = 0;
@@ -546,7 +546,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 			char	   *attrname;
 
 			attrname = pstrdup(te->resdom->resname);
-			eref->attrs = lappend(eref->attrs, makeString(attrname));
+			eref->colnames = lappend(eref->colnames, makeString(attrname));
 		}
 	}
 	if (varattno < numaliases)
@@ -594,11 +594,11 @@ addRangeTableEntryForJoin(ParseState *pstate,
 						  List *coltypmods,
 						  List *leftcols,
 						  List *rightcols,
-						  Attr *alias,
+						  Alias *alias,
 						  bool inFromCl)
 {
 	RangeTblEntry *rte = makeNode(RangeTblEntry);
-	Attr	   *eref;
+	Alias	   *eref;
 	int			numaliases;
 
 	rte->rtekind = RTE_JOIN;
@@ -612,15 +612,15 @@ addRangeTableEntryForJoin(ParseState *pstate,
 	rte->joinrightcols = rightcols;
 	rte->alias = alias;
 
-	eref = alias ? (Attr *) copyObject(alias) : makeAttr("unnamed_join", NULL);
-	numaliases = length(eref->attrs);
+	eref = alias ? (Alias *) copyObject(alias) : makeAlias("unnamed_join", NIL);
+	numaliases = length(eref->colnames);
 
 	/* fill in any unspecified alias columns */
 	if (numaliases < length(colnames))
 	{
 		while (numaliases-- > 0)
 			colnames = lnext(colnames);
-		eref->attrs = nconc(eref->attrs, colnames);
+		eref->colnames = nconc(eref->colnames, colnames);
 	}
 
 	rte->eref = eref;
@@ -759,7 +759,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 
 		rel = heap_openr(rte->relname, AccessShareLock);
 		maxattrs = RelationGetNumberOfAttributes(rel);
-		numaliases = length(rte->eref->attrs);
+		numaliases = length(rte->eref->colnames);
 
 		for (varattno = 0; varattno < maxattrs; varattno++)
 		{
@@ -775,7 +775,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				char	   *label;
 
 				if (varattno < numaliases)
-					label = strVal(nth(varattno, rte->eref->attrs));
+					label = strVal(nth(varattno, rte->eref->colnames));
 				else
 					label = NameStr(attr->attname);
 				*colnames = lappend(*colnames, makeString(pstrdup(label)));
@@ -798,7 +798,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 	else if (rte->rtekind == RTE_SUBQUERY)
 	{
 		/* Subquery RTE */
-		List	   *aliasp = rte->eref->attrs;
+		List	   *aliasp = rte->eref->colnames;
 		List	   *tlistitem;
 
 		varattno = 0;
@@ -836,7 +836,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 	else if (rte->rtekind == RTE_JOIN)
 	{
 		/* Join RTE */
-		List	   *aliasp = rte->eref->attrs;
+		List	   *aliasp = rte->eref->colnames;
 		List	   *coltypes = rte->joincoltypes;
 		List	   *coltypmods = rte->joincoltypmods;
 
@@ -936,8 +936,8 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 * If there is an alias, use it.  (This path should always be taken
 	 * for non-relation RTEs.)
 	 */
-	if (attnum > 0 && attnum <= length(rte->eref->attrs))
-		return strVal(nth(attnum - 1, rte->eref->attrs));
+	if (attnum > 0 && attnum <= length(rte->eref->colnames))
+		return strVal(nth(attnum - 1, rte->eref->colnames));
 
 	/*
 	 * Can get here for a system attribute (which never has an alias), or
@@ -946,7 +946,7 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	 */
 	if (rte->rtekind != RTE_RELATION)
 		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
-			 attnum, rte->eref->relname);
+			 attnum, rte->eref->aliasname);
 
 	/*
 	 * Use the real name of the table's column
@@ -1002,7 +1002,7 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 		}
 		/* falling off end of list shouldn't happen... */
 		elog(ERROR, "Subquery %s does not have attribute %d",
-			 rte->eref->relname, attnum);
+			 rte->eref->aliasname, attnum);
 	}
 	else if (rte->rtekind == RTE_JOIN)
 	{

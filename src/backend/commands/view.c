@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.58 2001/10/25 05:49:26 momjian Exp $
+ *	$Id: view.c,v 1.59 2002/03/21 16:00:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@ static void
 DefineVirtualRelation(char *relname, List *tlist)
 {
 	CreateStmt *createStmt = makeNode(CreateStmt);
+	RangeVar   *rel = makeNode(RangeVar);
 	List	   *attrList,
 			   *t;
 
@@ -83,11 +84,13 @@ DefineVirtualRelation(char *relname, List *tlist)
 	 * now create the parameters for keys/inheritance etc. All of them are
 	 * nil...
 	 */
-	createStmt->relname = relname;
+	rel->relname = relname;
+	rel->schemaname = NULL;		/* XXX wrong */
+	rel->istemp = false;
+	createStmt->relation = rel;
 	createStmt->tableElts = attrList;
-	createStmt->inhRelnames = NIL;
+	createStmt->inhRelations = NIL;
 	createStmt->constraints = NIL;
-	createStmt->istemp = false;
 	createStmt->hasoids = false;
 
 	/*
@@ -101,21 +104,24 @@ FormViewRetrieveRule(char *viewName, Query *viewParse)
 {
 	RuleStmt   *rule;
 	char	   *rname;
-	Attr	   *attr;
+	RangeVar   *rel;
 
 	/*
 	 * Create a RuleStmt that corresponds to the suitable rewrite rule
 	 * args for DefineQueryRewrite();
 	 */
-	rule = makeNode(RuleStmt);
 	rname = MakeRetrieveViewRuleName(viewName);
 
-	attr = makeNode(Attr);
-	attr->relname = pstrdup(viewName);
+	rel = makeNode(RangeVar);
+	rel->relname = pstrdup(viewName);
+	rel->inhOpt = INH_NO;
+	rel->alias = NULL;
+
+	rule = makeNode(RuleStmt);
+	rule->relation = rel;
 	rule->rulename = pstrdup(rname);
 	rule->whereClause = NULL;
 	rule->event = CMD_SELECT;
-	rule->object = attr;
 	rule->instead = true;
 	rule->actions = makeList1(viewParse);
 
@@ -191,10 +197,10 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	 * table... OLD first, then NEW....
 	 */
 	rt_entry1 = addRangeTableEntry(NULL, viewName,
-								   makeAttr("*OLD*", NULL),
+								   makeAlias("*OLD*", NIL),
 								   false, false);
 	rt_entry2 = addRangeTableEntry(NULL, viewName,
-								   makeAttr("*NEW*", NULL),
+								   makeAlias("*NEW*", NIL),
 								   false, false);
 	/* Must override addRangeTableEntry's default access-check flags */
 	rt_entry1->checkForRead = false;

@@ -396,7 +396,7 @@ drop table atacc1;
 create table atacc1 ( test int );
 -- add a check constraint (fails)
 alter table atacc1 add constraint atacc_test1 check (test1>3);
-ERROR:  Attribute 'test1' not found
+ERROR:  Attribute "test1" not found
 drop table atacc1;
 -- something a little more complicated
 create table atacc1 ( test int, test2 int, test3 int);

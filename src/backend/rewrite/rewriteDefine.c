@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.63 2001/08/12 21:35:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.64 2002/03/21 16:01:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -110,63 +110,17 @@ InsertRule(char *rulname,
 	return rewriteObjectId;
 }
 
-/*
- *		for now, event_object must be a single attribute
- */
-static void
-ValidateRule(int event_type,
-			 char *eobj_string,
-			 char *eslot_string,
-			 Node *event_qual,
-			 List **action,
-			 int is_instead,
-			 Oid event_attype)
-{
-	if (((event_type == CMD_INSERT) || (event_type == CMD_DELETE)) &&
-		eslot_string)
-	{
-		elog(ERROR,
-		"rules not allowed for insert or delete events to an attribute");
-	}
-
-#ifdef NOT_USED
-
-	/*---------
-	 * on retrieve to class.attribute do instead nothing is converted to
-	 * 'on retrieve to class.attribute do instead:
-	 *
-	 *	 retrieve (attribute = NULL)'
-	 *
-	 * this is also a terrible hack that works well -- glass
-	 *---------
-	 */
-	if (is_instead && !*action && eslot_string && event_type == CMD_SELECT)
-	{
-		char	   *temp_buffer = (char *) palloc(strlen(template) + 80);
-
-		sprintf(temp_buffer, template, event_attype,
-				get_typlen(event_attype), eslot_string,
-				event_attype);
-
-		*action = (List *) stringToNode(temp_buffer);
-
-		pfree(temp_buffer);
-	}
-#endif
-}
-
 void
 DefineQueryRewrite(RuleStmt *stmt)
 {
-	CmdType		event_type = stmt->event;
-	Attr	   *event_obj = stmt->object;
+	RangeVar   *event_obj = stmt->relation;
 	Node	   *event_qual = stmt->whereClause;
+	CmdType		event_type = stmt->event;
 	bool		is_instead = stmt->instead;
 	List	   *action = stmt->actions;
 	Relation	event_relation;
 	Oid			ev_relid;
 	Oid			ruleId;
-	char	   *eslot_string = NULL;
 	int			event_attno;
 	Oid			event_attype;
 	char	   *actionP,
@@ -185,23 +139,6 @@ DefineQueryRewrite(RuleStmt *stmt)
 	 */
 	event_relation = heap_openr(event_obj->relname, AccessExclusiveLock);
 	ev_relid = RelationGetRelid(event_relation);
-
-	/*
-	 * The current rewrite handler is known to work on relation level
-	 * rules only. And for SELECT events, it expects one non-nothing
-	 * action that is instead and returns exactly a tuple of the rewritten
-	 * relation. This restricts SELECT rules to views.
-	 *
-	 * Jan
-	 */
-	if (event_obj->attrs)
-		elog(ERROR, "attribute level rules currently not supported");
-
-	/*
-	 * eslot_string = strVal(lfirst(event_obj->attrs));
-	 */
-	else
-		eslot_string = NULL;
 
 	/*
 	 * No rule actions that modify OLD or NEW
@@ -358,21 +295,8 @@ DefineQueryRewrite(RuleStmt *stmt)
 	/*
 	 * This rule is allowed - prepare to install it.
 	 */
-	if (eslot_string == NULL)
-	{
-		event_attno = -1;
-		event_attype = InvalidOid;
-	}
-	else
-	{
-		event_attno = attnameAttNum(event_relation, eslot_string);
-		event_attype = attnumTypeId(event_relation, event_attno);
-	}
-
-	/* fix bug about instead nothing */
-	ValidateRule(event_type, event_obj->relname,
-				 eslot_string, event_qual, &action,
-				 is_instead, event_attype);
+	event_attno = -1;
+	event_attype = InvalidOid;
 
 	/*
 	 * We want the rule's table references to be checked as though by the

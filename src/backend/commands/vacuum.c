@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.217 2002/03/06 06:09:38 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.218 2002/03/21 16:00:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -209,10 +209,10 @@ vacuum(VacuumStmt *vacstmt)
 										ALLOCSET_DEFAULT_INITSIZE,
 										ALLOCSET_DEFAULT_MAXSIZE);
 
-	/* Convert vacrel, which is just a string, to a Name */
-	if (vacstmt->vacrel)
+	/* Convert relname, which is just a string, to a Name */
+	if (vacstmt->relation)
 	{
-		namestrcpy(&VacRel, vacstmt->vacrel);
+		namestrcpy(&VacRel, vacstmt->relation->relname);
 		VacRelName = &VacRel;
 	}
 	else
@@ -268,7 +268,7 @@ vacuum(VacuumStmt *vacstmt)
 static void
 vacuum_init(VacuumStmt *vacstmt)
 {
-	if (vacstmt->vacuum && vacstmt->vacrel == NULL)
+	if (vacstmt->vacuum && vacstmt->relation == NULL)
 	{
 		/*
 		 * Compute the initially applicable OldestXmin and FreezeLimit
@@ -308,7 +308,7 @@ vacuum_shutdown(VacuumStmt *vacstmt)
 	 * row with info about the transaction IDs used, and try to truncate
 	 * pg_clog.
 	 */
-	if (vacstmt->vacuum && vacstmt->vacrel == NULL)
+	if (vacstmt->vacuum && vacstmt->relation == NULL)
 	{
 		vac_update_dbstats(MyDatabaseId,
 						   initialOldestXmin, initialFreezeLimit);

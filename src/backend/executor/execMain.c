@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.152 2002/03/06 06:09:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.153 2002/03/21 16:00:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -707,7 +707,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				/*
 				 * create the "into" relation
 				 */
-				intoName = parseTree->into;
+				intoName = parseTree->into->relname;
 
 				/*
 				 * have to copy tupType to get rid of constraints
@@ -718,7 +718,7 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 					heap_create_with_catalog(intoName,
 											 tupdesc,
 											 RELKIND_RELATION, true,
-											 parseTree->isTemp,
+											 parseTree->into->istemp,
 											 allowSystemTableMods);
 
 				FreeTupleDesc(tupdesc);

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.105 2002/03/08 04:37:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.106 2002/03/21 16:00:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,10 +71,11 @@ CreateTrigger(CreateTrigStmt *stmt)
 	char	   *constrname = "";
 	Oid			constrrelid = InvalidOid;
 
-	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
-		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s", stmt->relname);
+	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
+		elog(ERROR, "CreateTrigger: can't create trigger for system relation %s",
+			stmt->relation->relname);
 
-	if (pg_aclcheck(stmt->relname, GetUserId(),
+	if (pg_aclcheck(stmt->relation->relname, GetUserId(),
 					stmt->isconstraint ? ACL_REFERENCES : ACL_TRIGGER)
 		!= ACLCHECK_OK)
 		elog(ERROR, "permission denied");
@@ -89,7 +90,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 		stmt->trigname = constrtrigname;
 		sprintf(constrtrigname, "RI_ConstraintTrigger_%u", newoid());
 
-		if (strcmp(stmt->constrrelname, "") == 0)
+		if (stmt->constrrel == NULL)
 			constrrelid = InvalidOid;
 		else
 		{
@@ -97,17 +98,17 @@ CreateTrigger(CreateTrigStmt *stmt)
 			 * NoLock is probably sufficient here, since we're only
 			 * interested in getting the relation's OID...
 			 */
-			rel = heap_openr(stmt->constrrelname, NoLock);
+			rel = heap_openr(stmt->constrrel->relname, NoLock);
 			constrrelid = rel->rd_id;
 			heap_close(rel, NoLock);
 		}
 	}
 
-	rel = heap_openr(stmt->relname, AccessExclusiveLock);
+	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "CreateTrigger: relation \"%s\" is not a table",
-			 stmt->relname);
+			 stmt->relation->relname);
 
 	TRIGGER_CLEAR_TYPE(tgtype);
 	if (stmt->before)
@@ -159,7 +160,7 @@ CreateTrigger(CreateTrigStmt *stmt)
 
 		if (namestrcmp(&(pg_trigger->tgname), stmt->trigname) == 0)
 			elog(ERROR, "CreateTrigger: trigger %s already defined on relation %s",
-				 stmt->trigname, stmt->relname);
+				 stmt->trigname, stmt->relation->relname);
 		found++;
 	}
 	systable_endscan(tgscan);
@@ -283,11 +284,11 @@ CreateTrigger(CreateTrigStmt *stmt)
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELNAME,
-							   PointerGetDatum(stmt->relname),
+							   PointerGetDatum(stmt->relation->relname),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "CreateTrigger: relation %s not found in pg_class",
-			 stmt->relname);
+			 stmt->relation->relname);
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found + 1;
 	simple_heap_update(pgrel, &tuple->t_self, tuple);
@@ -320,19 +321,19 @@ DropTrigger(DropTrigStmt *stmt)
 	int			found = 0;
 	int			tgfound = 0;
 
-	if (!allowSystemTableMods && IsSystemRelationName(stmt->relname))
+	if (!allowSystemTableMods && IsSystemRelationName(stmt->relation->relname))
 		elog(ERROR, "DropTrigger: can't drop trigger for system relation %s",
-			 stmt->relname);
+			 stmt->relation->relname);
 
-	if (!pg_ownercheck(GetUserId(), stmt->relname, RELNAME))
-		elog(ERROR, "%s: %s", stmt->relname,
+	if (!pg_ownercheck(GetUserId(), stmt->relation->relname, RELNAME))
+		elog(ERROR, "%s: %s", stmt->relation->relname,
 			 aclcheck_error_strings[ACLCHECK_NOT_OWNER]);
 
-	rel = heap_openr(stmt->relname, AccessExclusiveLock);
+	rel = heap_openr(stmt->relation->relname, AccessExclusiveLock);
 
 	if (rel->rd_rel->relkind != RELKIND_RELATION)
 		elog(ERROR, "DropTrigger: relation \"%s\" is not a table",
-			 stmt->relname);
+			 stmt->relation->relname);
 
 	/*
 	 * Search pg_trigger, delete target trigger, count remaining triggers
@@ -366,10 +367,10 @@ DropTrigger(DropTrigStmt *stmt)
 
 	if (tgfound == 0)
 		elog(ERROR, "DropTrigger: there is no trigger %s on relation %s",
-			 stmt->trigname, stmt->relname);
+			 stmt->trigname, stmt->relation->relname);
 	if (tgfound > 1)
 		elog(NOTICE, "DropTrigger: found (and deleted) %d triggers %s on relation %s",
-			 tgfound, stmt->trigname, stmt->relname);
+			 tgfound, stmt->trigname, stmt->relation->relname);
 
 	/*
 	 * Update relation's pg_class entry.  Crucial side-effect: other
@@ -378,11 +379,11 @@ DropTrigger(DropTrigStmt *stmt)
 	 */
 	pgrel = heap_openr(RelationRelationName, RowExclusiveLock);
 	tuple = SearchSysCacheCopy(RELNAME,
-							   PointerGetDatum(stmt->relname),
+							   PointerGetDatum(stmt->relation->relname),
 							   0, 0, 0);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "DropTrigger: relation %s not found in pg_class",
-			 stmt->relname);
+			 stmt->relation->relname);
 
 	((Form_pg_class) GETSTRUCT(tuple))->reltriggers = found;
 	simple_heap_update(pgrel, &tuple->t_self, tuple);
@@ -478,20 +479,23 @@ RelationRemoveTriggers(Relation rel)
 	{
 		Form_pg_trigger pg_trigger;
 		Relation	refrel;
-		DropTrigStmt stmt;
+		DropTrigStmt *stmt = makeNode(DropTrigStmt);
 
 		pg_trigger = (Form_pg_trigger) GETSTRUCT(tup);
 
-		stmt.trigname = pstrdup(NameStr(pg_trigger->tgname));
+		stmt->trigname = pstrdup(NameStr(pg_trigger->tgname));
 
 		/* May as well grab AccessExclusiveLock, since DropTrigger will. */
 		refrel = heap_open(pg_trigger->tgrelid, AccessExclusiveLock);
-		stmt.relname = pstrdup(RelationGetRelationName(refrel));
+		stmt->relation = makeNode(RangeVar);
+		/* XXX bogus: what about schema? */
+		stmt->relation->relname = pstrdup(RelationGetRelationName(refrel));
 		heap_close(refrel, NoLock);
 
-		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"", stmt.relname);
+		elog(NOTICE, "DROP TABLE implicitly drops referential integrity trigger from table \"%s\"",
+			stmt->relation->relname);
 
-		DropTrigger(&stmt);
+		DropTrigger(stmt);
 
 		/*
 		 * Need to do a command counter increment here to show up new
@@ -500,9 +504,6 @@ RelationRemoveTriggers(Relation rel)
 		 * FK table defined on the PK table).
 		 */
 		CommandCounterIncrement();
-
-		pfree(stmt.relname);
-		pfree(stmt.trigname);
 	}
 	systable_endscan(tgscan);
 
