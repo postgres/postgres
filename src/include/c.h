@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.81 2000/08/21 17:22:32 tgl Exp $
+ * $Id: c.h,v 1.82 2000/09/29 13:53:32 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 #include <errno.h>
 #include <sys/fcntl.h>		/* ensure O_BINARY is available */
 #endif
@@ -921,7 +921,7 @@ extern char *vararg_format(const char *fmt,...);
  * ----------------------------------------------------------------
  */
 
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 #define PG_BINARY	O_BINARY
 #define	PG_BINARY_R	"rb"
 #define	PG_BINARY_W	"wb"
@@ -942,7 +942,7 @@ extern char *vararg_format(const char *fmt,...);
 #define SEP_CHAR		'/'
 
 /* defines for dynamic linking on Win32 platform */
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 #if __GNUC__ && ! defined (__declspec)
 #error You need egcs 1.1 or newer for compiling!
 #endif

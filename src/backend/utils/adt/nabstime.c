@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.73 2000/07/28 02:13:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.74 2000/09/29 13:53:31 petere Exp $
  *
  * NOTES
  *
@@ -166,7 +166,7 @@ GetCurrentAbsoluteTime(void)
 
 		CDayLight = tm->tm_isdst;
 		CTimeZone =
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 			(tm->tm_isdst ? (_timezone - 3600) : _timezone);
 #else
 			(tm->tm_isdst ? (timezone - 3600) : timezone);

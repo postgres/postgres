@@ -43,14 +43,14 @@
 BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD reason,
 		LPVOID reserved /* Not used. */ );
 
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 
 #include <cygwin/cygwin_dll.h>
 DECLARE_CYGWIN_DLL(DllMain);
 /* save hInstance from DllMain */
 HINSTANCE	__hDllInstance_base;
 
-#endif	 /* __CYGWIN32__ */
+#endif	 /* __CYGWIN__ */
 
 struct _reent *_impure_ptr;
 
@@ -80,9 +80,9 @@ DllMain(
 		LPVOID reserved /* Not used. */ )
 {
 
-#ifdef __CYGWIN32__
+#ifdef __CYGWIN__
 	__hDllInstance_base = hInst;
-#endif	 /* __CYGWIN32__ */
+#endif	 /* __CYGWIN__ */
 
 	_impure_ptr = __imp_reent_data;
 

@@ -94,7 +94,7 @@ char	  **argv;
 			in_file = stdin;
 		else
 		{
-#ifndef __CYGWIN32__
+#ifndef __CYGWIN__
 			if ((in_file = fopen(*argv, "r")) == NULL)
 #else
 			if ((in_file = fopen(*argv, "rb")) == NULL)
