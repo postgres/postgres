@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.7 1997/01/14 01:41:57 momjian Exp $
+ * $Id: pg_type.h,v 1.8 1997/03/12 21:27:41 scrappy Exp $
  *
  * NOTES
  *    the genbki.sh script reads this file and generates .bki
@@ -292,6 +292,8 @@ DATA(insert OID = 1082 ( date      PGUID  4  10 t b t \054 0  0 date_in date_out
 DATA(insert OID = 1083 ( time      PGUID  8  16 f b t \054 0  0 time_in time_out time_in time_out i _null_ ));
 DATA(insert OID = 1182 ( _date     PGUID  -1 -1 f b t \054 0  1082 array_in array_out array_in array_out i _null_ ));
 DATA(insert OID = 1183 ( _time     PGUID  -1 -1 f b t \054 0  1083 array_in array_out array_in array_out d _null_ ));
+DATA(insert OID = 1296 ( timestamp PGUID  4  19 t b t \054 0  0 timestamp_in timestamp_out timestamp_in timestamp_out i _null_ ));
+
 /*
  * prototypes for functions in pg_type.c 
  */

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.8 1997/03/04 05:32:11 scrappy Exp $
+ * $Id: pg_proc.h,v 1.9 1997/03/12 21:27:28 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -757,6 +757,15 @@ DATA(insert OID =  1238 (  texticregexeq       PGUID 11 f t f 2 f 16 "25 25" 100
 DATA(insert OID =  1239 (  texticregexne       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));
 DATA(insert OID =  1240 (  nameicregexeq     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  1241 (  nameicregexne     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1297 (  timestamp_in      PGUID 11 f t f 1 f 1296 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  1298 (  timestamp_out     PGUID 11 f t f 1 f 23 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  1299 (  now               PGUID 11 f t f 0 f 1296 "0" 100 0 0 100  foo bar ));
+DATA(insert OID =  1306 (  timestampeq      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID =  1307 (  timestampne      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID =  1308 (  timestamplt      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID =  1309 (  timestampgt      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID =  1310 (  timestample      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
+DATA(insert OID =  1311 (  timestampge      PGUID 11 f t f 2 f 16 "1296 1296" 100 0 0 100  foo bar ));
 
 /* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
 DATA(insert OID =  1260 (  lower             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
