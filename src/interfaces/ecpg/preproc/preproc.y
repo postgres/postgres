@@ -3695,7 +3695,7 @@ index_name:				ColId			{ $$ = $1; };
  * Include date/time keywords as SQL92 extension.
  * Include TYPE as a SQL92 unreserved keyword. - thomas 1997-10-05
  */
-func_name:	ColId			{ $$ = $1; };
+func_name:	ColId			{ $$ = $1; }
 		| BETWEEN 		{ $$ = make_str("between");}
 		| ILIKE			{ $$ = make_str("ilike");}
 		| IN			{ $$ = make_str("in");}
@@ -4292,7 +4292,7 @@ signed_type: SQL_SHORT          	{ $$ = ECPGt_short; }
 								  $$ = ECPGt_long;
 #endif
 								}
-           | SQL_BOOL   		{ $$ = ECPGt_bool; };
+           | SQL_BOOL   		{ $$ = ECPGt_bool; }
            | FLOAT 	        	{ $$ = ECPGt_float; }
            | DOUBLE 		        { $$ = ECPGt_double; }
            | CHAR            		{ $$ = ECPGt_char; }
