@@ -1,12 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * xlog.c
+ *		PostgreSQL transaction log manager
  *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.56 2001/03/13 01:17:05 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.57 2001/03/13 20:32:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -344,6 +345,7 @@ static char *readBuf = NULL;
 static XLogRecPtr ReadRecPtr;
 static XLogRecPtr EndRecPtr;
 static XLogRecord *nextRecord = NULL;
+static StartUpID lastReadSUI;
 
 static bool InRedo = false;
 
@@ -355,6 +357,7 @@ static int	XLogFileOpen(uint32 log, uint32 seg, bool econt);
 static void PreallocXlogFiles(XLogRecPtr endptr);
 static void MoveOfflineLogs(uint32 log, uint32 seg);
 static XLogRecord *ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer);
+static bool ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI);
 static XLogRecord *ReadCheckpointRecord(XLogRecPtr RecPtr,
 										const char *whichChkpt,
 										char *buffer);
@@ -891,6 +894,7 @@ AdvanceXLInsertBuffer(void)
 	MemSet((char*) Insert->currpage, 0, BLCKSZ);
 	Insert->currpage->xlp_magic = XLOG_PAGE_MAGIC;
 	/* Insert->currpage->xlp_info = 0; */	/* done by memset */
+	Insert->currpage->xlp_sui = ThisStartUpID;
 
 	return update_needed;
 }
@@ -1498,6 +1502,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 				total_len;
 	uint32		targetPageOff;
 	unsigned	i;
+	bool		nextmode = false;
 
 	if (readBuf == NULL)
 	{
@@ -1516,6 +1521,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 	if (RecPtr == NULL)
 	{
 		RecPtr = &tmpRecPtr;
+		nextmode = true;
 		/* fast case if next record is on same page */
 		if (nextRecord != NULL)
 		{
@@ -1566,13 +1572,8 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 				 readId, readSeg, readOff);
 			goto next_record_is_invalid;
 		}
-		if (((XLogPageHeader) readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
-		{
-			elog(emode, "ReadRecord: invalid magic number %u in logfile %u seg %u off %u",
-				 ((XLogPageHeader) readBuf)->xlp_magic,
-				 readId, readSeg, readOff);
+		if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode, nextmode))
 			goto next_record_is_invalid;
-		}
 	}
 	if ((((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD) &&
 		RecPtr->xrecoff % BLCKSZ == SizeOfXLogPHD)
@@ -1651,13 +1652,8 @@ got_record:;
 					 readId, readSeg, readOff);
 				goto next_record_is_invalid;
 			}
-			if (((XLogPageHeader) readBuf)->xlp_magic != XLOG_PAGE_MAGIC)
-			{
-				elog(emode, "ReadRecord: invalid magic number %u in logfile %u seg %u off %u",
-					 ((XLogPageHeader) readBuf)->xlp_magic,
-					 readId, readSeg, readOff);
+			if (!ValidXLOGHeader((XLogPageHeader) readBuf, emode, true))
 				goto next_record_is_invalid;
-			}
 			if (!(((XLogPageHeader) readBuf)->xlp_info & XLP_FIRST_IS_CONTRECORD))
 			{
 				elog(emode, "ReadRecord: there is no ContRecord flag in logfile %u seg %u off %u",
@@ -1717,6 +1713,50 @@ next_record_is_invalid:;
 	readFile = -1;
 	nextRecord = NULL;
 	return NULL;
+}
+
+/*
+ * Check whether the xlog header of a page just read in looks valid.
+ *
+ * This is just a convenience subroutine to avoid duplicated code in
+ * ReadRecord.  It's not intended for use from anywhere else.
+ */
+static bool
+ValidXLOGHeader(XLogPageHeader hdr, int emode, bool checkSUI)
+{
+	if (hdr->xlp_magic != XLOG_PAGE_MAGIC)
+	{
+		elog(emode, "ReadRecord: invalid magic number %04X in logfile %u seg %u off %u",
+			 hdr->xlp_magic, readId, readSeg, readOff);
+		return false;
+	}
+	if ((hdr->xlp_info & ~XLP_ALL_FLAGS) != 0)
+	{
+		elog(emode, "ReadRecord: invalid info bits %04X in logfile %u seg %u off %u",
+			 hdr->xlp_info, readId, readSeg, readOff);
+		return false;
+	}
+	/*
+	 * We disbelieve a SUI less than the previous page's SUI, or more
+	 * than a few counts greater.  In theory as many as 512 shutdown
+	 * checkpoint records could appear on a 32K-sized xlog page, so
+	 * that's the most differential there could legitimately be.
+	 *
+	 * Note this check can only be applied when we are reading the next page
+	 * in sequence, so ReadRecord passes a flag indicating whether to check.
+	 */
+	if (checkSUI)
+	{
+		if (hdr->xlp_sui < lastReadSUI ||
+			hdr->xlp_sui > lastReadSUI + 512)
+		{
+			elog(emode, "ReadRecord: out-of-sequence SUI %u (after %u) in logfile %u seg %u off %u",
+				 hdr->xlp_sui, lastReadSUI, readId, readSeg, readOff);
+			return false;
+		}
+	}
+	lastReadSUI = hdr->xlp_sui;
+	return true;
 }
 
 /*
@@ -2023,6 +2063,7 @@ BootStrapXLOG(void)
 	memset(buffer, 0, BLCKSZ);
 	page->xlp_magic = XLOG_PAGE_MAGIC;
 	page->xlp_info = 0;
+	page->xlp_sui = checkPoint.ThisStartUpID;
 	record = (XLogRecord *) ((char *) page + SizeOfXLogPHD);
 	record->xl_prev.xlogid = 0;
 	record->xl_prev.xrecoff = 0;

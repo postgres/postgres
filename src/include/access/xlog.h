@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlog.h,v 1.19 2001/03/13 01:17:06 tgl Exp $
+ * $Id: xlog.h,v 1.20 2001/03/13 20:32:37 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -26,6 +26,9 @@
  * really:
  *
  * SizeOfXLogRecord + xl_len + n_backup_blocks * (sizeof(BkpBlock) + BLCKSZ)
+ *
+ * rounded up to a MAXALIGN boundary (so that all xlog records start on
+ * MAXALIGN boundaries).
  */
 typedef struct XLogRecord
 {
@@ -105,12 +108,13 @@ typedef struct XLogContRecord
 /*
  * Each page of XLOG file has a header like this:
  */
-#define XLOG_PAGE_MAGIC 0x17345169 /* can be used as WAL version indicator */
+#define XLOG_PAGE_MAGIC 0xD058	/* can be used as WAL version indicator */
 
 typedef struct XLogPageHeaderData
 {
-	uint32		xlp_magic;		/* magic value for correctness checks */
+	uint16		xlp_magic;		/* magic value for correctness checks */
 	uint16		xlp_info;		/* flag bits, see below */
+	StartUpID	xlp_sui;		/* StartUpID of first record on page */
 } XLogPageHeaderData;
 
 #define SizeOfXLogPHD	MAXALIGN(sizeof(XLogPageHeaderData))
@@ -119,6 +123,8 @@ typedef XLogPageHeaderData *XLogPageHeader;
 
 /* When record crosses page boundary, set this flag in new page's header */
 #define XLP_FIRST_IS_CONTRECORD		0x0001
+/* All defined flag bits in xlp_info (used for validity checking of header) */
+#define XLP_ALL_FLAGS				0x0001
 
 /*
  * We break each logical log file (xlogid value) into 16Mb segments.
