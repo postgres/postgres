@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.59 2004/09/13 20:05:38 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.60 2004/09/16 04:16:08 neilc Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -83,7 +83,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
 
      <listitem>
       <para>
-       The name of a function to create.
+       The name (optionally schema-qualified) of the function to create.
       </para>
      </listitem>
     </varlistentry>
