@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.6 2001/03/22 04:01:12 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/guc.h,v 1.7 2001/06/07 04:50:57 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -46,12 +46,13 @@ typedef enum
 } GucContext;
 
 
-void		SetConfigOption(const char *name, const char *value, GucContext context);
+void		SetConfigOption(const char *name, const char *value, GucContext context, bool makeDefault);
 const char *GetConfigOption(const char *name);
 void		ProcessConfigFile(GucContext context);
 void		ResetAllOptions(void);
 void		ParseLongOption(const char *string, char **name, char **value);
-bool		set_config_option(const char *name, const char *value, GucContext context, bool DoIt);
+bool		set_config_option(const char *name, const char *value, GucContext context, bool DoIt, bool makeDefault);
+void		ShowAllGUCConfig(void);
 
 
 extern bool Debug_print_query;

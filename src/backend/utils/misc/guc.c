@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.36 2001/05/17 17:44:18 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.37 2001/06/07 04:50:57 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -136,9 +136,10 @@ struct config_string
 	const char *name;
 	GucContext	context;
 	char	  **variable;
-	const char *default_val;
+	const char *boot_default_val;
 	bool		(*parse_hook) (const char *proposed);
 	void		(*assign_hook) (const char *newval);
+	char		*default_val;
 };
 
 
@@ -433,6 +434,15 @@ ResetAllOptions(void)
 	{
 		char	   *str = NULL;
 
+		if (!ConfigureNamesString[i].default_val
+				&& ConfigureNamesString[i].boot_default_val)
+		{
+			str = strdup(ConfigureNamesString[i].boot_default_val);
+			if (str == NULL)
+				elog(ERROR, "out of memory");
+
+			ConfigureNamesString[i].default_val = str;
+		}
 		if (ConfigureNamesString[i].default_val)
 		{
 			str = strdup(ConfigureNamesString[i].default_val);
@@ -582,7 +592,7 @@ parse_real(const char *value, double *result)
  */
 bool
 set_config_option(const char *name, const char *value, GucContext
-				  context, bool DoIt)
+				  context, bool DoIt, bool makeDefault)
 {
 	struct config_generic *record;
 	enum config_type type;
@@ -653,7 +663,11 @@ set_config_option(const char *name, const char *value, GucContext
 						return false;
 					}
 					if (DoIt)
+					{
 						*conf->variable = boolval;
+						if (makeDefault)
+							conf->default_val = boolval;
+					}
 				}
 				else if (DoIt)
 					*conf->variable = conf->default_val;
@@ -681,7 +695,11 @@ set_config_option(const char *name, const char *value, GucContext
 						return false;
 					}
 					if (DoIt)
+					{
 						*conf->variable = intval;
+						if (makeDefault)
+							conf->default_val = intval;
+					}
 				}
 				else if (DoIt)
 					*conf->variable = conf->default_val;
@@ -709,7 +727,11 @@ set_config_option(const char *name, const char *value, GucContext
 						return false;
 					}
 					if (DoIt)
+					{
 						*conf->variable = dval;
+						if (makeDefault)
+							conf->default_val = dval;
+					}
 				}
 				else if (DoIt)
 					*conf->variable = conf->default_val;
@@ -742,12 +764,33 @@ set_config_option(const char *name, const char *value, GucContext
 						if (*conf->variable)
 							free(*conf->variable);
 						*conf->variable = str;
+						if (makeDefault)
+						{
+							if (conf->default_val)
+								free(conf->default_val);
+							str = strdup(value);
+							if (str == NULL) {
+								elog(elevel, "out of memory");
+								return false;
+							}
+							conf->default_val = str;
+						}
 					}
 				}
 				else if (DoIt)
 				{
 					char	   *str;
 
+					if (!conf->default_val && conf->boot_default_val)
+					{
+						str = strdup(conf->boot_default_val);
+						if (str == NULL)
+						{
+							elog(elevel, "out of memory");
+							return false;
+						}
+						conf->boot_default_val = str;
+					}
 					str = strdup(conf->default_val);
 					if (str == NULL)
 					{
@@ -776,9 +819,9 @@ set_config_option(const char *name, const char *value, GucContext
  */
 void
 SetConfigOption(const char *name, const char *value, GucContext
-				context)
+				context, bool makeDefault)
 {
-	(void) set_config_option(name, value, context, true);
+	(void) set_config_option(name, value, context, true, makeDefault);
 }
 
 
@@ -825,6 +868,58 @@ GetConfigOption(const char *name)
 	}
 	return NULL;
 }
+
+static void
+_ShowOption(enum config_type opttype, struct config_generic *record)
+{
+	static char buffer[256];
+	char *val;
+
+	switch (opttype)
+	{
+		case PGC_BOOL:
+			val = *((struct config_bool *) record)->variable ? "on" : "off";
+			break;
+		case PGC_INT:
+			snprintf(buffer, 256, "%d", *((struct config_int *) record)->variable);
+			val = buffer;
+			break;
+
+		case PGC_REAL:
+			snprintf(buffer, 256, "%g", *((struct config_real *) record)->variable);
+			val = buffer;
+			break;
+
+		case PGC_STRING:
+			val = strlen(*((struct config_string *) record)->variable) != 0 ?
+				*((struct config_string *) record)->variable : "unset";
+			break;
+
+		default:
+			val = "???";
+	}
+	elog(NOTICE, "%s is %s", record->name, val);
+}
+
+void
+ShowAllGUCConfig(void)
+{
+	int			i;
+
+	for (i = 0; ConfigureNamesBool[i].name; i++)
+		_ShowOption(PGC_BOOL, (struct config_generic *)&ConfigureNamesBool[i]);
+
+	for (i = 0; ConfigureNamesInt[i].name; i++)
+		_ShowOption(PGC_INT, (struct config_generic *)&ConfigureNamesInt[i]);
+
+	for (i = 0; ConfigureNamesReal[i].name; i++)
+		_ShowOption(PGC_REAL, (struct config_generic *)&ConfigureNamesReal[i]);
+
+	for (i = 0; ConfigureNamesString[i].name; i++)
+		_ShowOption(PGC_STRING, (struct config_generic *)&ConfigureNamesString[i]);
+}
+
+
 
 
 

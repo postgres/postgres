@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.48 2001/05/08 21:06:42 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.49 2001/06/07 04:50:56 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,9 +39,9 @@
 #endif
 
 
-static bool show_date(void);
-static bool reset_date(void);
-static bool parse_date(char *);
+static bool show_datestyle(void);
+static bool reset_datestyle(void);
+static bool parse_datestyle(char *);
 static bool show_timezone(void);
 static bool reset_timezone(void);
 static bool parse_timezone(char *);
@@ -192,7 +192,7 @@ static int	DefaultDateStyle;
 static bool DefaultEuroDates;
 
 static bool
-parse_date(char *value)
+parse_datestyle(char *value)
 {
 	char	   *tok;
 	int			dcnt = 0,
@@ -200,7 +200,7 @@ parse_date(char *value)
 
 	if (value == NULL)
 	{
-		reset_date();
+		reset_datestyle();
 		return TRUE;
 	}
 
@@ -261,7 +261,7 @@ parse_date(char *value)
 }
 
 static bool
-show_date(void)
+show_datestyle(void)
 {
 	char		buf[64];
 
@@ -291,7 +291,7 @@ show_date(void)
 }
 
 static bool
-reset_date(void)
+reset_datestyle(void)
 {
 	DateStyle = DefaultDateStyle;
 	EuroDates = DefaultEuroDates;
@@ -325,7 +325,7 @@ set_default_datestyle(void)
 	DBDate = strdup(DBDate);
 
 	/* Parse desired setting into DateStyle/EuroDates */
-	parse_date(DBDate);
+	parse_datestyle(DBDate);
 
 	free(DBDate);
 
@@ -396,7 +396,7 @@ show_timezone(void)
 
 	tz = getenv("TZ");
 
-	elog(NOTICE, "Time zone is %s", ((tz != NULL) ? tz : "unknown"));
+	elog(NOTICE, "Time zone is %s", ((tz != NULL) ? tz : "unset"));
 
 	return TRUE;
 }	/* show_timezone() */
@@ -586,7 +586,7 @@ parse_random_seed(char *value)
 static bool
 show_random_seed(void)
 {
-	elog(NOTICE, "Seed for random number generator is not known");
+	elog(NOTICE, "Seed for random number generator is unavailable");
 	return (TRUE);
 }
 
@@ -708,7 +708,7 @@ SetPGVariable(const char *name, const char *value)
 	 * Special cases ought to be removed and handled separately by TCOP
 	 */
 	if (strcasecmp(name, "datestyle") == 0)
-		parse_date(mvalue);
+		parse_datestyle(mvalue);
 	else if (strcasecmp(name, "timezone") == 0)
 		parse_timezone(mvalue);
 	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
@@ -724,18 +724,17 @@ SetPGVariable(const char *name, const char *value)
 	else if (strcasecmp(name, "session_authorization") == 0)
 		SetSessionAuthorization(value);
 	else
-		SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET);
+		SetConfigOption(name, value, superuser() ? PGC_SUSET : PGC_USERSET, false);
 
 	if (mvalue)
 		pfree(mvalue);
 }
 
-
 void
 GetPGVariable(const char *name)
 {
 	if (strcasecmp(name, "datestyle") == 0)
-		show_date();
+		show_datestyle();
 	else if (strcasecmp(name, "timezone") == 0)
 		show_timezone();
 	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
@@ -748,7 +747,17 @@ GetPGVariable(const char *name)
 		show_server_encoding();
 	else if (strcasecmp(name, "seed") == 0)
 		show_random_seed();
-	else
+	else if (strcasecmp(name, "all") == 0)
+	{
+		ShowAllGUCConfig();
+		show_datestyle();
+		show_timezone();
+		show_DefaultXactIsoLevel();
+		show_XactIsoLevel();
+		show_client_encoding();
+		show_server_encoding();
+		show_random_seed();
+	} else
 	{
 		const char *val = GetConfigOption(name);
 
@@ -760,7 +769,7 @@ void
 ResetPGVariable(const char *name)
 {
 	if (strcasecmp(name, "datestyle") == 0)
-		reset_date();
+		reset_datestyle();
 	else if (strcasecmp(name, "timezone") == 0)
 		reset_timezone();
 	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
@@ -773,6 +782,17 @@ ResetPGVariable(const char *name)
 		reset_server_encoding();
 	else if (strcasecmp(name, "seed") == 0)
 		reset_random_seed();
-	else
-		SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET);
+	else if (strcasecmp(name, "all") == 0)
+	{
+		reset_DefaultXactIsoLevel();
+		reset_XactIsoLevel();
+		reset_random_seed();
+		/* reset_server_encoding(); */
+		reset_client_encoding();
+		reset_datestyle();
+		reset_timezone();
+
+		ResetAllOptions();
+	} else
+		SetConfigOption(name, NULL, superuser() ? PGC_SUSET : PGC_USERSET, false);
 }

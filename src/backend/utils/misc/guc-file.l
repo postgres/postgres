@@ -4,7 +4,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.7 2001/06/01 20:29:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc-file.l,v 1.8 2001/06/07 04:50:57 momjian Exp $
  */
 
 %{
@@ -260,13 +260,13 @@ ProcessConfigFile(GucContext context)
 	 */
     for(item = head; item; item=item->next)
 	{
-		if (!set_config_option(item->name, item->value, context, false))
+		if (!set_config_option(item->name, item->value, context, false, false))
 			goto cleanup_exit;
 	}
 
     /* If we got here all the options parsed okay. */
 	for(item = head; item; item=item->next)
-		set_config_option(item->name, item->value, context, true);
+		set_config_option(item->name, item->value, context, true, true);
 
  cleanup_exit:
 	free_name_value_list(head);

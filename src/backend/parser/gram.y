@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.228 2001/06/04 23:27:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.229 2001/06/07 04:50:56 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -860,6 +860,12 @@ VariableShowStmt:  SHOW ColId
 					n->name  = "timezone";
 					$$ = (Node *) n;
 				}
+		| SHOW ALL
+				{
+					VariableShowStmt *n = makeNode(VariableShowStmt);
+					n->name  = "all";
+					$$ = (Node *) n;
+				}
 		| SHOW TRANSACTION ISOLATION LEVEL
 				{
 					VariableShowStmt *n = makeNode(VariableShowStmt);
@@ -884,6 +890,12 @@ VariableResetStmt:	RESET ColId
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = "XactIsoLevel";
+					$$ = (Node *) n;
+				}
+		| RESET ALL
+				{
+					VariableResetStmt *n = makeNode(VariableResetStmt);
+					n->name  = "all";
 					$$ = (Node *) n;
 				}
 		;

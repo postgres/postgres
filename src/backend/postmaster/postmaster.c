@@ -28,7 +28,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.216 2001/06/03 14:53:56 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.217 2001/06/07 04:50:57 momjian Exp $
  *
  * NOTES
  *
@@ -533,7 +533,7 @@ PostmasterMain(int argc, char *argv[])
 							elog(ERROR, "-c %s requires argument", optarg);
 					}
 
-					SetConfigOption(name, value, PGC_POSTMASTER);
+					SetConfigOption(name, value, PGC_POSTMASTER, true);
 					free(name);
 					if (value)
 						free(value);
