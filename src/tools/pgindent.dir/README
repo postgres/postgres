@@ -1,0 +1,29 @@
+This can format all PostgreSQL *.c and *.h files, excluding libpq++,
+*.y, and *.l files.
+
+On 09/06/1997, from the top directory, I ran:
+
+  find . -name '*.[ch]' -type f -print | grep -v '++' | xargs -n100 pgindent
+
+The stock BSD indent has two bugs.  First, a comment after the word 'else' 
+causes the rest of the file to be ignored.  Second, it silently ignores
+typedefs after getting the first 100.
+
+Both problems are worked-around in this script.  We also include a patch
+for the second bug in:
+
+	/src/tools/pgindent/indent.bsd.patch
+
+Even with the workaround, installation of the patch produces better
+output.
+
+GNU indent, version 1.9.1, has several bugs, and is not recommended.
+These bugs become pretty major when you are doing >200k lines of code.
+If you don't believe me, take a directory and make a copy.  Run pgindent
+on the copy using GNU indent, and do a diff -r. You will see what I
+mean. GNU indent does some things better, but mangles too.
+
+We get the list of typedef's included in pgindent by running:
+
+	/src/tools/find_typedef
+
