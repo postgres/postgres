@@ -1,6 +1,8 @@
-/* Copyright comment! */
+/* This is a modified version of src/backend/parser/scan.l */
 %{
 #include "config.h"
+
+#include <ctype.h>
 #include <sys/types.h>
 #include <limits.h>
 #if defined(HAVE_STRING_H)
@@ -8,11 +10,29 @@
 #else
 #include <strings.h>
 #endif
+#include <errno.h>
 
+#include "postgres.h"
+#include "miscadmin.h"
+#include "nodes/pg_list.h"
+#include "nodes/parsenodes.h"
+#include "parser/gramparse.h"
+#include "parser/scansup.h"
 #include "type.h"
 #include "y.tab.h"
+#include "utils/builtins.h"
 
 #include "extern.h"
+
+/* some versions of lex define this as a macro */
+#if defined(yywrap)
+#undef yywrap
+#endif /* yywrap */
+
+int debugging = 0;
+extern YYSTYPE yylval;
+int llen;
+char literal[MAX_PARSE_BUFFER];
 
 struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 		    long		lineno;
@@ -20,89 +40,398 @@ struct _yy_buffer { YY_BUFFER_STATE 	buffer;
 		    struct _yy_buffer * next;
 		  } *yy_buffer = NULL;
 
-#define dbg(arg)       if (debugging) fprintf(stderr, "DEBUG, %d: %s\n", yylineno, #arg);
 %}
 %option yylineno
 %s C SQL incl
-ccomment	\/\*([^*]|\*[^/]|\*\*[^/])*\*\/
-ws	([ \t\n][ \t\n]*|{ccomment})*
-letter	[A-Za-z_]
-digit	[0-9]
-length	{digit}+
-symbol	{letter}({letter}|{digit})*
-label	({letter}|{digit})*
-string	'[^']*'
+/* OK, here is a short description of lex/flex rules behavior.
+ * The longest pattern which matches an input string is always chosen.
+ * For equal-length patterns, the first occurring in the rules list is chosen.
+ * INITIAL is the starting condition, to which all non-conditional rules apply.
+ * When in an exclusive condition, only those rules defined for that condition apply.
+ *
+ * Exclusive states change parsing rules while the state is active.
+ * There are exclusive states for quoted strings, extended comments,
+ *  and to eliminate parsing troubles for numeric strings.
+ * Exclusive states:
+ *  <xb> binary numeric string - thomas 1997-11-16
+ *  <xc> extended C-style comments - tgl 1997-07-12
+ *  <xd> delimited identifiers (double-quoted identifiers) - tgl 1997-10-27
+ *  <xh> hexadecimal numeric string - thomas 1997-11-16
+ *  <xm> numeric strings with embedded minus sign - tgl 1997-09-05
+ *  <xq> quoted strings - tgl 1997-07-30
+ *
+ * The "extended comment" syntax closely resembles allowable operator syntax.
+ * So, when in condition <xc>, only strings which would terminate the
+ *  "extended comment" trigger any action other than "ignore".
+ * Be sure to match _any_ candidate comment, including those with appended
+ *	operator-like symbols. - thomas 1997-07-14
+ */
 
-abort	[aA][bB][oO][rR][tT]
-begin	[bB][eE][gG][iI][nN]
-commit  [cC][oO][mM][mM][iI][tT]
-connect [cC][oO][nN][nN][eE][cC][tT]
-continue [cC][oO][nN][tT][iI][nN][uU][eE]
-declare [dD][eE][cC][lL][aA][rR][eE]
-do      [dD][oO]
-end	[eE][nN][dD]
-exec	[eE][xX][eE][cC]
-execute	[eE][xX][eE][cC][uU][tT][eE]
-fetch   [fF][eE][tT][cC][hH]
-found	[fF][oO][uU][nN][dD]
-from    [fF][rR][oO][mM]
-go	[gG][oO]
-goto    [gG][oO][tT][oO]
-immediate [iI][mM][mM][eE][dD][iI][aA][tT][eE]
+%x xb
+%x xc
+%x xd
+%x xh
+%x xm
+%x xq
+
+/* Binary number
+ */
+xbstart			[bB]{quote}
+xbstop			{quote}
+xbinside		[^']*
+xbcat			{quote}{space}*\n{space}*{quote}
+
+/* Hexadecimal number
+ */
+xhstart			[xX]{quote}
+xhstop			{quote}
+xhinside		[^']*
+xhcat			{quote}{space}*\n{space}*{quote}
+
+/* Extended quote
+ * xqdouble implements SQL92 embedded quote
+ * xqcat allows strings to cross input lines
+ */
+quote			'
+xqstart			{quote}
+xqstop			{quote}
+xqdouble		{quote}{quote}
+xqinside		[^\\']*
+xqembedded		"\\'"
+xqliteral		[\\](.|\n)
+xqcat			{quote}{space}*\n{space}*{quote}
+
+/* Delimited quote
+ * Allows embedded spaces and other special characters into identifiers.
+ */
+dquote			\"
+xdstart			{dquote}
+xdstop			{dquote}
+xdinside		[^"]*
+
+/* Comments
+ * Ignored by the scanner and parser.
+ */
+xcline			[\/][\*].*[\*][\/]{space}*\n*
+xcstart			[\/][\*]{op_and_self}*
+xcstop			{op_and_self}*[\*][\/]({space}*|\n)
+xcinside		[^*]*
+xcstar			[^/]
+
+digit			[0-9]
+number			[-+.0-9Ee]
+letter			[\200-\377_A-Za-z]
+letter_or_digit	[\200-\377_A-Za-z0-9]
+
+identifier		{letter}{letter_or_digit}*
+
+typecast		"::"
+
+self			[,()\[\].$\:\+\-\*\/\<\>\=\|]
+op_and_self		[\~\!\@\#\%\^\&\|\`\?\$\:\+\-\*\/\<\>\=]
+operator		{op_and_self}+
+
+xminteger              {integer}/-
+xmreal                 {real}/{space}*-{digit}
+xmstop			-
+
+integer			-?{digit}+
+real			-?{digit}+\.{digit}+([Ee][-+]?{digit}+)?
+
+param			\${integer}
+
+comment			("--"|"//").*\n
+
+space			[ \t\n\f]
+other			.
+
+/* some stuff needed for ecpg */
+ccomment        \/\*([^*]|\*[^/]|\*\*[^/])*\*\/
+exec    [eE][xX][eE][cC]
 include [iI][nN][cC][lL][uU][dD][eE]
-in	[iI][nN]
-into	[iI][nN][tT][oO]
-not	[nN][oO][tT]
-open	[oO][pP][eE][nN]
-release [rR][eE][lL][eE][aA][sS][eE]
-rollback [rR][oO][lL][lL][bB][aA][cC][kK]
-section	[sS][eE][cC][tT][iI][oO][nN]
-sql	[sS][qQ][lL]
-sqlerror [sS][qQ][lL][eE][rR][rR][oO][rR]
-sqlprint [sS][qQ][lL][pP][rR][iI][nN][tT]
-stop	[sS][tT][oO][pP]
-transaction [tT][rR][aA][nN][sS][aA][cC][tT][iI][oO][nN]
-to    	[tT][oO]
-varchar	[vV][aA][rR][cC][hH][aA][rR]
-varchar2	[vV][aA][rR][cC][hH][aA][rR]2
-whenever [wW][hH][eE][nN][eE][vV][eE][rR]
-work    [wW][oO][rR][kK]
-vacuum	[vV][aA][cC][uU][uU][mM]
+sql     [sS][qQ][lL]
+
+/* DO NOT PUT ANY COMMENTS IN THE FOLLOWING SECTION.
+ * AT&T lex does not properly handle C-style comments in this second lex block.
+ * So, put comments here. tgl - 1997-09-08
+ *
+ * Quoted strings must allow some special characters such as single-quote
+ *  and newline.
+ * Embedded single-quotes are implemented both in the SQL/92-standard
+ *  style of two adjacent single quotes "''" and in the Postgres/Java style
+ *  of escaped-quote "\'".
+ * Other embedded escaped characters are matched explicitly and the leading
+ *  backslash is dropped from the string. - thomas 1997-09-24
+ */
+
 %%
-<C>{exec}{ws}{sql}	{ BEGIN SQL; dbg(SQL_START); return SQL_START; }
-<SQL>";"		{ BEGIN C; dbg(SQL_SEMI); return SQL_SEMI; }
-<SQL>{abort}		{ dbg(SQL_ABORT); return SQL_ABORT; }
-<SQL>{begin}		{ dbg(SQL_BEGIN); return SQL_BEGIN; }
-<SQL>{end}		{ dbg(SQL_END); return SQL_END; }
-<SQL>{declare}		{ dbg(SQL_DECLARE); return SQL_DECLARE; }
-<SQL>{execute}		{ dbg(SQL_EXECUTE); return SQL_EXECUTE; }
-<SQL>{immediate}	{ dbg(SQL_IMMEDIATE); return SQL_IMMEDIATE; }
-<SQL>{section}		{ dbg(SQL_SECTION); return SQL_SECTION; }
-<SQL>{connect}		{ dbg(SQL_CONNECT); return SQL_CONNECT; }
-<SQL>{open}		{ dbg(SQL_OPEN); return SQL_OPEN; }
-<SQL>{commit}		{ dbg(SQL_COMMIT); return SQL_COMMIT; }
-<SQL>{release}		{ dbg(SQL_RELEASE); return SQL_RELEASE; }
-<SQL>{work}		{ dbg(SQL_WORK); return SQL_WORK; }
-<SQL>{fetch}		{ dbg(SQL_FETCH); return SQL_FETCH; }
-<SQL>{rollback}		{ dbg(SQL_ROLLBACK); return SQL_ROLLBACK; }
-<SQL>{whenever}		{ dbg(SQL_WHENEVER); return SQL_WHENEVER; }
-<SQL>{sqlerror}		{ dbg(SQL_SQLERROR); return SQL_SQLERROR; }
-<SQL>{sqlprint}		{ dbg(SQL_SQLPRINT); return SQL_SQLPRINT; }
-<SQL>{not}{ws}{found}	{ dbg(SQL_NOT_FOUND); return SQL_NOT_FOUND; }
-<SQL>{continue}		{ dbg(SQL_CONTINUE); return SQL_CONTINUE; }
-<SQL>{into}		{ dbg(SQL_INTO); return SQL_INTO; }
-<SQL>{in}		{ dbg(SQL_IN); return SQL_IN; }
-<SQL>{goto}		{ dbg(SQL_GOTO); return SQL_GOTO; }
-<SQL>{go}{ws}{to}	{ dbg(SQL_GOTO); return SQL_GOTO; }
-<SQL>{stop}		{ dbg(SQL_STOP); return SQL_STOP; }
-<SQL>{do}		{ dbg(SQL_DO); return SQL_DO; }
-<SQL>{from}		{ dbg(SQL_FROM); return SQL_FROM; }
-<SQL>{transaction}	{ dbg(SQL_TRANSACTION); return SQL_TRANSACTION; }
-<SQL>{vacuum}		{ dbg(SQL_VACUUM); return SQL_VACUUM; }
+<SQL>{comment}		{ /* ignore */ }
+
+<SQL>{xcline}		{ /* ignore */ }
+
+<xc>{xcstar}	|
+<SQL>{xcstart}		{ BEGIN(xc); }
+
+<xc>{xcstop}	{ BEGIN(SQL); }
+
+<xc>{xcinside}	{ /* ignore */ }
+
+<SQL>{xbstart}		{
+					BEGIN(xb);
+					llen = 0;
+					*literal = '\0';
+				}
+<xb>{xbstop}	{
+					char* endptr;
+
+					BEGIN(SQL);
+					errno = 0;
+					yylval.ival = strtol((char *)literal,&endptr,2);
+					if (*endptr != '\0' || errno == ERANGE)
+						yyerror("ERROR: Bad binary integer input!");
+					return (ICONST);
+				}
+<xh>{xhinside}	|
+<xb>{xbinside}	{
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+						yyerror("ERROR: quoted string parse buffer exceeded");
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
+<xh>{xhcat}		|
+<xb>{xbcat}		{
+				}
+
+<SQL>{xhstart}		{
+					BEGIN(xh);
+					llen = 0;
+					*literal = '\0';
+				}
+<xh>{xhstop}	{
+					char* endptr;
+
+					BEGIN(SQL);
+					errno = 0;
+					yylval.ival = strtol((char *)literal,&endptr,16);
+					if (*endptr != '\0' || errno == ERANGE)
+						yyerror("ERROR: Bad hexadecimal integer input");
+					return (ICONST);
+				}
+
+<SQL>{xqstart}		{
+					BEGIN(xq);
+					llen = 0;
+					*literal = '\0';
+				}
+<xq>{xqstop}	{
+					BEGIN(SQL);
+					yylval.str = strdup(scanstr(literal));
+					return (SCONST);
+				}
+<xq>{xqdouble}	|
+<xq>{xqinside}	{
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+						yyerror("ERROR: quoted string parse buffer exceeded");
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
+<xq>{xqembedded} {
+					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
+						yyerror("ERROR: quoted string parse buffer exceeded");
+					memcpy(literal+llen, yytext, yyleng+1);
+					*(literal+llen) = '\'';
+					llen += yyleng;
+				}
+
+<xq>{xqliteral} {
+					if ((llen+yyleng-1) > (MAX_PARSE_BUFFER - 1))
+						yyerror("ERROR: quoted string parse buffer exceeded");
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
+<xq>{xqcat}		{
+				}
 
 
-<C>{exec}{ws}{sql}{ws}{include}	{ BEGIN(incl); }
-<incl>{ws}		/* eat the whitespace */
+<SQL>{xdstart}		{
+					BEGIN(xd);
+					llen = 0;
+					*literal = '\0';
+				}
+<xd>{xdstop}	{
+					BEGIN(SQL);
+					yylval.str = strdup(literal);
+					return (IDENT);
+				}
+<xd>{xdinside}	{
+					if ((llen+yyleng) > (MAX_PARSE_BUFFER - 1))
+						yyerror("ERROR: quoted string parse buffer exceeded");
+					memcpy(literal+llen, yytext, yyleng+1);
+					llen += yyleng;
+				}
+
+
+<xm>{space}*	{ /* ignore */ }
+<xm>{xmstop}	{
+					BEGIN(SQL);
+					return (yytext[0]);
+				}
+
+
+<SQL>{typecast}			{ 	return TYPECAST; }
+
+<SQL>{self}/-[\.0-9]		{
+					return (yytext[0]);
+				}
+<SQL>{self}			{ 	return (yytext[0]); }
+<SQL>{operator}/-[\.0-9]	{
+					yylval.str = strdup((char*)yytext);
+					return (Op);
+				}
+<SQL>{operator}		{
+					if (strcmp((char*)yytext,"!=") == 0)
+						yylval.str = strdup("<>"); /* compatability */
+					else
+						yylval.str = strdup((char*)yytext);
+					return (Op);
+				}
+<SQL>{param}			{
+					yylval.ival = atoi((char*)&yytext[1]);
+					return (PARAM);
+				}
+
+<SQL>{identifier}/{space}*-{number}	{
+					int i;
+					ScanKeyword		*keyword;
+
+					BEGIN(xm);
+					for(i = 0; yytext[i]; i++)
+						if (isupper(yytext[i]))
+							yytext[i] = tolower(yytext[i]);
+
+					keyword = ScanKeywordLookup((char*)yytext);
+					if (keyword != NULL) {
+						return (keyword->value);
+					}
+					else
+					{
+						keyword = ScanECPGKeywordLookup((char*)yytext);
+						if (keyword != NULL) {
+							return (keyword->value);
+						}
+						else
+						{
+							yylval.str = strdup((char*)yytext);
+							return (IDENT);
+						}
+					}
+				}
+{integer}/{space}*-{number}	{
+					char* endptr;
+
+					BEGIN(xm);
+					errno = 0;
+					yylval.ival = strtol((char *)yytext,&endptr,10);
+					if (*endptr != '\0' || errno == ERANGE)
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							yyerror("ERROR: Bad integer input");
+						yyerror("WARNING: Integer input is out of range; promoted to float");
+						return (FCONST);
+					}
+					return (ICONST);
+				}
+{real}/{space}*-{number} {
+					char* endptr;
+
+					BEGIN(xm);
+					errno = 0;
+					yylval.dval = strtod(((char *)yytext),&endptr);
+					if (*endptr != '\0' || errno == ERANGE)
+						yyerror("ERROR: Bad float8 input");
+					return (FCONST);
+				}
+{integer}		{
+					char* endptr;
+
+					errno = 0;
+					yylval.ival = strtol((char *)yytext,&endptr,10);
+					if (*endptr != '\0' || errno == ERANGE)
+					{
+						errno = 0;
+						yylval.dval = strtod(((char *)yytext),&endptr);
+						if (*endptr != '\0' || errno == ERANGE)
+							yyerror("ERROR: Bad integer input");
+						yyerror("WARNING: Integer input is out of range; promoted to float");
+						return (FCONST);
+					}
+					return (ICONST);
+				}
+{real}			{
+					char* endptr;
+
+					errno = 0;
+					yylval.dval = strtod((char *)yytext,&endptr);
+					if (*endptr != '\0' || errno == ERANGE)
+						yyerror("ERROR: Bad float input");
+					return (FCONST);
+				}
+
+<SQL>{identifier}	{
+					int i;
+					ScanKeyword		*keyword;
+
+					for(i = 0; yytext[i]; i++)
+						if (isupper(yytext[i]))
+							yytext[i] = tolower(yytext[i]);
+
+					keyword = ScanKeywordLookup((char*)yytext);
+					if (keyword != NULL) {
+						return (keyword->value);
+					}
+					else
+					{
+						keyword = ScanECPGKeywordLookup((char*)yytext);
+						if (keyword != NULL) {
+							return (keyword->value);
+						}
+						else
+						{
+							yylval.str = strdup((char*)yytext);
+							return (IDENT);
+						}
+					}
+				}
+<SQL>{space}			{ /* ignore */ }
+<SQL>";"	                { BEGIN C; return SQL_SEMI; }
+<SQL>{other}			{ return (yytext[0]); }
+
+<C>{exec}{space}{sql}		{ BEGIN SQL; return SQL_START; }
+<C>{identifier}	{
+					ScanKeyword		*keyword;
+
+					keyword = ScanCKeywordLookup((char*)yytext);
+					if (keyword != NULL) {
+						return (keyword->value);
+					}
+					else
+					{
+						yylval.str = strdup((char*)yytext);
+						return (IDENT);
+					}
+				}
+<C>";"	      	        { return(';'); }
+<C>{space}		{ ECHO; }
+\{			{ return('{'); }
+\}			{ return('}'); }
+\[			{ return('['); }
+\]			{ return(']'); }
+\=			{ return('='); }
+<C>{other}			{ return (S_ANYTHING); }
+<C>{exec}{space}{sql}{space}{include}	{ BEGIN(incl); }
+<incl>{space}		/* eat the whitespace */
 <incl>[^ \t\n]+ 	{ /* got the include file name */
 			  struct _yy_buffer *yb;
 			  struct _include_path *ip;
@@ -125,7 +454,7 @@ vacuum	[vV][aA][cC][uU][uU][mM]
 			  {
 				if (strlen(ip->path) + strlen(yytext) + 3 > PATH_MAX)
 				{
-					fprintf(stderr, "Path %s/%s is too long, skipping.\n", ip->path, yytext);
+					fprintf(stderr, "Error: Path %s/%s is too long in line %d, skipping.\n", ip->path, yytext, yylineno);
 					continue;
 				}
 			  	sprintf (inc_file, "%s/%s", ip->path, yytext);
@@ -142,7 +471,7 @@ vacuum	[vV][aA][cC][uU][uU][mM]
 			  }
 			  if (!yyin)
 			  {
-				fprintf(stderr, "Cannot open include file %s\n", yytext);
+				fprintf(stderr, "Error: Cannot open include file %s in line %d\n", yytext, yylineno);
 				exit(1); 
 			  }
 
@@ -153,79 +482,6 @@ vacuum	[vV][aA][cC][uU][uU][mM]
 			  BEGIN C;
 			}
 <incl>";"		{ BEGIN C; }
-{length}		{ dbg(S_LENGTH); return S_LENGTH; }
-			  
-{varchar}		{ dbg(S_VARCHAR); return S_VARCHAR; }
-{varchar2}		{ dbg(S_VARCHAR2); return S_VARCHAR2; }
-long			{ dbg(S_LONG); return S_LONG; }
-short			{ dbg(S_SHORT); return S_SHORT; }
-int			{ dbg(S_INT); return S_INT; }
-char			{ dbg(S_CHAR); return S_CHAR; }
-float			{ dbg(S_FLOAT); return S_FLOAT; }
-double			{ dbg(S_DOUBLE); return S_DOUBLE; }
-bool                    { dbg(S_BOOL); return S_BOOL; }
-
-static			{ dbg(S_STATIC); return S_STATIC; }
-signed			{ dbg(S_SIGNED); return S_SIGNED; }
-extern			{ dbg(S_EXTERN); return S_EXTERN; }
-auto			{ dbg(S_AUTO); return S_AUTO; }
-const			{ dbg(S_CONST); return S_CONST; }
-register		{ dbg(S_REGISTER); return S_REGISTER; }
-
-struct			{ dbg(S_STRUCT); return S_STRUCT; }
-
-{string}		{ dbg(SQL_STRING); return SQL_STRING; }
-<SQL>{ws}		; 
-{symbol}		{ dbg(S_SYMBOL); return S_SYMBOL; }
-{label}			{ dbg(S_LABEL); return S_LABEL; }
-
-<SQL>"!<"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"!>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"!^"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"!|"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"!~"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"!~*"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"#<"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"#<="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"#<>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"#="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"#>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"#>="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"&&"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"&<"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"&>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"<<"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"<="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"<===>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"<>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"<?>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"===>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"===`"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"=|="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>">="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>">>"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"@@"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"|/"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"||/"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"~*"		{ dbg(S_SYMBOL); return S_SYMBOL; }
-<SQL>"~="		{ dbg(S_SYMBOL); return S_SYMBOL; }
-
-"["			{ dbg([); return '['; }
-"]"			{ dbg(]); return ']'; }
-";"			{ dbg(;); return ';'; }
-"="			{ dbg(=); return '='; }
-","			{ dbg(komma); return ','; }
-\(			{ dbg(braceopen); return '('; }
-\)			{ dbg(braceclose); return ')'; }
-\{			{ dbg(blockstart); return '{'; }
-\}			{ dbg(blockend); return '}'; }
-\*			{ dbg(*); return('*'); }
-
-<SQL>":"		{ dbg(:); return ':'; }
-<SQL>"::"		{ dbg(SQL_CONV); return SQL_CONV; }
-
-{ws}			{ ECHO; }
-.			{ dbg(.); return S_ANYTHING; }
 <<EOF>>			{ if (yy_buffer == NULL)
 				yyterminate();
 			  else
@@ -260,4 +516,3 @@ int yywrap(void)
 { 
     return 1;
 }
-

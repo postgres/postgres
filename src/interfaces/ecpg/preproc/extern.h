@@ -1,3 +1,5 @@
+#include "parser/keywords.h"
+
 /* variables */
 
 extern int	debugging,
@@ -14,9 +16,19 @@ struct _include_path {  char * path;
 
 extern struct _include_path *include_paths;
 
+struct cursor {	char *name;
+		char *command;
+		struct cursor *next;
+	      };
+
+extern struct cursor *cur;
+
 /* functions */
 
 extern void lex_init(void);
 extern char *input_filename;
 extern int	yyparse(void);
 extern void *mm_alloc(size_t), *mm_realloc(void *, size_t);
+ScanKeyword * ScanECPGKeywordLookup(char *);
+ScanKeyword * ScanCKeywordLookup(char *);
+extern void yyerror(char *);

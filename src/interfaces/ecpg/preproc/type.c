@@ -123,22 +123,27 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				  long varcharsize,
 				  long arrsiz, const char *siz, const char *prefix);
 void
-ECPGdump_a_record(FILE *o, const char *name, long arrsiz,
-		  struct ECPGtype * typ, const char *offset, const char *prefix);
+ECPGdump_a_record(FILE *o, const char *name, const char *ind_name, long arrsiz,
+		  struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offset, const char *prefix, const char * ind_prefix);
 
 
 void
-ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *prefix)
+ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *ind_name, struct ECPGtype * ind_typ, const char *prefix, const char *ind_prefix)
 {
 	if (IS_SIMPLE_TYPE(typ->typ))
 	{
 		ECPGdump_a_simple(o, name, typ->typ, typ->size, 0, 0, prefix);
+                ECPGdump_a_simple(o, ind_name, ind_typ->typ, ind_typ->size, 0, 0, ind_prefix);
 	}
 	else if (typ->typ == ECPGt_array)
 	{
 		if (IS_SIMPLE_TYPE(typ->u.element->typ))
+		{
 			ECPGdump_a_simple(o, name, typ->u.element->typ,
 							  typ->u.element->size, typ->size, 0, prefix);
+                	ECPGdump_a_simple(o, ind_name, ind_typ->u.element->typ,
+							  ind_typ->u.element->size, ind_typ->size, 0, prefix);
+		}				  
 		else if (typ->u.element->typ == ECPGt_array)
 		{
 			abort();			/* Array of array, */
@@ -146,7 +151,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *pr
 		else if (typ->u.element->typ == ECPGt_record)
 		{
 			/* Array of records. */
-			ECPGdump_a_record(o, name, typ->size, typ->u.element, 0, prefix);
+			ECPGdump_a_record(o, name, ind_name, typ->size, typ->u.element, ind_typ->u.element, 0, prefix, ind_prefix);
 		}
 		else
 		{
@@ -155,7 +160,7 @@ ECPGdump_a_type(FILE *o, const char *name, struct ECPGtype * typ, const char *pr
 	}
 	else if (typ->typ == ECPGt_record)
 	{
-		ECPGdump_a_record(o, name, 0, typ, 0, prefix);
+		ECPGdump_a_record(o, name, ind_name, 0, typ, ind_typ, 0, prefix, ind_prefix);
 	}
 	else
 	{
@@ -171,7 +176,8 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 				  long varcharsize,
 				  long arrsiz,
 				  const char *siz,
-				  const char *prefix)
+				  const char *prefix
+				  )
 {
 	switch (typ)
 	{
@@ -241,15 +247,19 @@ ECPGdump_a_simple(FILE *o, const char *name, enum ECPGttype typ,
 						varcharsize,
 						arrsiz, siz);
 			break;
+		case ECPGt_NO_INDICATOR: /* no indicator */
+		        fprintf(o, "\n\tECPGt_NO_INDICATOR, NULL , 0L, 0L, 0L, ");
+		        break;
 		default:
 			abort();
 	}
+	                            
 }
 
 
 /* Penetrate a record and dump the contents. */
 void
-ECPGdump_a_record(FILE *o, const char *name, long arrsiz, struct ECPGtype * typ, const char *offsetarg, const char *prefix)
+ECPGdump_a_record(FILE *o, const char *name, const char * ind_name, long arrsiz, struct ECPGtype * typ, struct ECPGtype * ind_typ, const char *offsetarg, const char *prefix, const char *ind_prefix)
 {
 
 	/*
@@ -257,9 +267,9 @@ ECPGdump_a_record(FILE *o, const char *name, long arrsiz, struct ECPGtype * typ,
 	 * then we are in a record in a record and the offset is used as
 	 * offset.
 	 */
-	struct ECPGrecord_member *p;
+	struct ECPGrecord_member *p, *ind_p;
 	char		obuf[BUFSIZ];
-	char		pbuf[BUFSIZ];
+	char		pbuf[BUFSIZ], ind_pbuf[BUFSIZ];
 	const char *offset;
 
 	if (offsetarg == NULL)
@@ -274,63 +284,13 @@ ECPGdump_a_record(FILE *o, const char *name, long arrsiz, struct ECPGtype * typ,
 
 	sprintf(pbuf, "%s%s.", prefix ? prefix : "", name);
 	prefix = pbuf;
+	
+	sprintf(ind_pbuf, "%s%s.", ind_prefix ? ind_prefix : "", ind_name);
+	ind_prefix = ind_pbuf;
 
-	for (p = typ->u.members; p; p = p->next)
+	for (p = typ->u.members, ind_p = ind_typ->u.members; p; p = p->next, ind_p = ind_p->next)
 	{
-#if 0
-		if (IS_SIMPLE_TYPE(p->typ->typ))
-		{
-			sprintf(buf, "%s.%s", name, p->name);
-			ECPGdump_a_simple(o, buf, p->typ->typ, p->typ->size,
-							  arrsiz, offset);
-		}
-		else if (p->typ->typ == ECPGt_array)
-		{
-			int			i;
-
-			for (i = 0; i < p->typ->size; i++)
-			{
-				if (IS_SIMPLE_TYPE(p->typ->u.element->typ))
-				{
-					/* sprintf(buf, "%s.%s[%d]", name, p->name, i); */
-					sprintf(buf, "%s.%s", name, p->name);
-					ECPGdump_a_simple(o, buf, p->typ->u.element->typ, p->typ->u.element->size,
-									  p->typ->u.element->size, offset);
-				}
-				else if (p->typ->u.element->typ == ECPGt_array)
-				{
-					/* Array within an array. NOT implemented. */
-					abort();
-				}
-				else if (p->typ->u.element->typ == ECPGt_record)
-				{
-
-					/*
-					 * Record within array within record. NOT implemented
-					 * yet.
-					 */
-					abort();
-				}
-				else
-				{
-					/* Unknown type */
-					abort();
-				}
-			}
-		}
-		else if (p->typ->typ == ECPGt_record)
-		{
-			/* Record within a record */
-			sprintf(buf, "%s.%s", name, p->name);
-			ECPGdump_a_record(o, buf, arrsiz, p->typ, offset);
-		}
-		else
-		{
-			/* Unknown type */
-			abort();
-		}
-#endif
-		ECPGdump_a_type(o, p->name, p->typ, prefix);
+		ECPGdump_a_type(o, p->name, p->typ, ind_p->name, ind_p->typ, prefix, ind_prefix);
 	}
 }
 

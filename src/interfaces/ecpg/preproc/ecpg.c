@@ -91,7 +91,7 @@ main(int argc, char *const argv[])
 		/* after the options there must not be anything but filenames */
 		for (fnr = optind; fnr < argc; fnr++)
 		{
-			char	*ptr2ext;
+			char	   *output_filename = NULL, *ptr2ext;
 
 			input_filename = mm_alloc(strlen(argv[fnr]) + 5);
 
@@ -113,7 +113,7 @@ main(int argc, char *const argv[])
 
 			if (out_option == 0)/* calculate the output name */
 			{
-				char *output_filename = strdup(input_filename);
+				output_filename = strdup(input_filename);
 				
 				ptr2ext = strrchr(output_filename, '.');
 				/* make extension = .c */
@@ -128,7 +128,6 @@ main(int argc, char *const argv[])
 					free(input_filename);
 					continue;
 				}
-				free(output_filename);
 			}
 
 			yyin = fopen(input_filename, "r");
@@ -136,9 +135,25 @@ main(int argc, char *const argv[])
 				perror(argv[fnr]);
 			else
 			{
+				struct cursor *ptr;
+				
 				/* initialize lex */
 				lex_init();
-
+				
+				/* initialize cursor list */
+				for (ptr = cur; ptr != NULL;)
+				{
+					struct cursor *c;
+					
+					free(ptr->name);
+					free(ptr->command);
+					c = ptr;
+					ptr = ptr->next;
+					free(c);
+				}
+				
+				cur = NULL;
+				
 				/* we need two includes */
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/*These two include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL);
 
@@ -150,6 +165,10 @@ main(int argc, char *const argv[])
 				if (out_option == 0)
 					fclose(yyout);
 			}
+
+			if (output_filename)
+				free(output_filename);
+				
 			free(input_filename);
 		}
 	}

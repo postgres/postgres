@@ -96,10 +96,11 @@ ECPGdo(int lineno, char *query,...)
 	 */
 	while (type != ECPGt_EOIT)
 	{
-		void	   *value = NULL;
-		long		varcharsize;
-		long		size;
-		long		arrsize;
+		void	   *value = NULL, *ind_value;
+		long		varcharsize, ind_varcharsize;
+		long		size, ind_size;
+		long		arrsize, ind_arrsize;
+		enum ECPGttype ind_type;
 
 		char	   *newcopy;
 		char	   *mallocedval = NULL;
@@ -117,9 +118,40 @@ ECPGdo(int lineno, char *query,...)
 		varcharsize = va_arg(ap, long);
 		size = va_arg(ap, long);
 		arrsize = va_arg(ap, long);
+		ind_type = va_arg(ap, enum ECPGttype);
+		ind_value = va_arg(ap, void *);
+		ind_varcharsize = va_arg(ap, long);
+		ind_size = va_arg(ap, long);
+		ind_arrsize = va_arg(ap, long);
 
-		switch (type)
+		buff[0] = '\0';
+		
+		/* check for null value and set input buffer accordingly */
+		switch (ind_type)
 		{
+			case ECPGt_short:
+			case ECPGt_unsigned_short:
+				if (*(short *) ind_value < 0)
+					strcpy(buff, "null");
+				break;
+			case ECPGt_int:
+			case ECPGt_unsigned_int:
+				if (*(int *) ind_value < 0)
+					strcpy(buff, "null");
+				break;
+			case ECPGt_long:
+			case ECPGt_unsigned_long:
+				if (*(long *) ind_value < 0L)
+					strcpy(buff, "null");
+				break;
+			default:
+				break;
+		}
+		
+		if (*buff == '\0')
+		{
+		   switch (type)
+		   {
 			case ECPGt_short:
 			case ECPGt_int:
 				sprintf(buff, "%d", *(int *) value);
@@ -205,7 +237,10 @@ ECPGdo(int lineno, char *query,...)
 							   ECPGtype_name(type), lineno);
 				return false;
 				break;
+		   }
 		}
+		else
+		   tobeinserted = buff;
 
 		/*
 		 * Now tobeinserted points to an area that is to be inserted at
@@ -266,7 +301,7 @@ ECPGdo(int lineno, char *query,...)
 
 	if (committed)
 	{
-		if ((results = PQexec(simple_connection, "begin")) == NULL)
+		if ((results = PQexec(simple_connection, "begin transaction")) == NULL)
 		{
 			register_error(-1, "Error starting transaction line %d.", lineno);
 			return false;
@@ -324,10 +359,11 @@ ECPGdo(int lineno, char *query,...)
 
 				for (x = 0; x < m && status; x++)
 				{
-					void	   *value = NULL;
-					long		varcharsize;
-					long		size;
-					long		arrsize;
+					void		*value = NULL, *ind_value;
+					long		varcharsize, ind_varcharsize;
+					long		size, ind_size;
+					long		arrsize, ind_arrsize;
+					enum ECPGttype  ind_type;
 
 					char	   *pval = PQgetvalue(results, 0, x);
 
@@ -339,14 +375,38 @@ ECPGdo(int lineno, char *query,...)
 
 					ECPGlog("ECPGdo line %d: RESULT: %s\n", lineno, pval ? pval : "");
 
-					/* No the pval is a pointer to the value. */
+					/* Now the pval is a pointer to the value. */
 					/* We will have to decode the value */
 					type = va_arg(ap, enum ECPGttype);
 					value = va_arg(ap, void *);
 					varcharsize = va_arg(ap, long);
 					size = va_arg(ap, long);
 					arrsize = va_arg(ap, long);
-
+					ind_type = va_arg(ap, enum ECPGttype);
+					ind_value = va_arg(ap, void *);
+					ind_varcharsize = va_arg(ap, long);
+					ind_size = va_arg(ap, long);
+					ind_arrsize = va_arg(ap, long);
+					
+					/* check for null value and set indicator accordingly */
+					switch (ind_type)
+					{
+						case ECPGt_short:
+						case ECPGt_unsigned_short:
+							*(short *) ind_value = -PQgetisnull(results, 0, x);
+							break;
+						case ECPGt_int:
+						case ECPGt_unsigned_int:
+							*(int *) ind_value = -PQgetisnull(results, 0, x);
+							break;
+						case ECPGt_long:
+						case ECPGt_unsigned_long:
+							*(long *) ind_value = -PQgetisnull(results, 0, x);
+							break;
+						default:
+							break;
+					}
+										
 					switch (type)
 					{
 							long		res;
@@ -486,7 +546,30 @@ ECPGdo(int lineno, char *query,...)
 									((char *) value)[strlen(pval)] = '\0';
 								}
 								else
+								{
 									strncpy((char *) value, pval, varcharsize);
+									if (varcharsize < strlen(pval))
+									{
+									  	/* truncation */
+										switch (ind_type)
+										{
+											case ECPGt_short:
+											case ECPGt_unsigned_short:
+												*(short *) ind_value = varcharsize;
+												break;
+											case ECPGt_int:
+											case ECPGt_unsigned_int:
+												*(int *) ind_value = varcharsize;
+												break;
+											case ECPGt_long:
+											case ECPGt_unsigned_long:
+												*(long *) ind_value = varcharsize;
+												break;
+											default:
+												break;
+										}
+									}
+								}
 							}
 							break;
 
@@ -498,7 +581,28 @@ ECPGdo(int lineno, char *query,...)
 								strncpy(var->arr, pval, varcharsize);
 								var->len = strlen(pval);
 								if (var->len > varcharsize)
+								{
+								  	/* truncation */
+									switch (ind_type)
+									{
+										case ECPGt_short:
+										case ECPGt_unsigned_short:
+											*(short *) ind_value = varcharsize;
+											break;
+										case ECPGt_int:
+										case ECPGt_unsigned_int:
+											*(int *) ind_value = varcharsize;
+											break;
+										case ECPGt_long:
+										case ECPGt_unsigned_long:
+											*(long *) ind_value = varcharsize;
+											break;
+										default:
+											break;
+									}
+
 									var->len = varcharsize;
+								}
 							}
 							break;
 
@@ -585,19 +689,6 @@ ECPGtrans(int lineno, const char * transaction)
 	PQclear(res);
 	committed = 1;
 	return (TRUE);
-}
-
-/* include these for compatibility */
-bool
-ECPGcommit(int lineno)
-{
-	return(ECPGtrans(lineno, "end"));
-}
-
-bool
-ECPGrollback(int lineno)
-{
-	return(ECPGtrans(lineno, "abort"));
 }
 
 bool

@@ -43,7 +43,8 @@ enum ECPGttype
 	ECPGt_array,
 	ECPGt_record,
 	ECPGt_EOIT,					/* End of insert types. */
-	ECPGt_EORT					/* End of result types. */
+	ECPGt_EORT,					/* End of result types. */
+	ECPGt_NO_INDICATOR				/* no indicator */
 };
 
 #define IS_SIMPLE_TYPE(type) ((type) >= ECPGt_char && (type) <= ECPGt_varchar2)

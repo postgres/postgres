@@ -3,8 +3,8 @@ include $(SRCDIR)/Makefile.global
 
 PQ_INCLUDE=-I$(SRCDIR)/interfaces/libpq
 
-SO_MAJOR_VERSION=1
-SO_MINOR_VERSION=1
+SO_MAJOR_VERSION=2
+SO_MINOR_VERSION=0
 
 PORTNAME=@PORTNAME@
 
@@ -16,6 +16,7 @@ endif
 shlib := 
 install-shlib-dep :=
 ifeq ($(PORTNAME), linux)
+  LINUX_ELF=@LINUX_ELF@
   ifdef LINUX_ELF
     install-shlib-dep := install-shlib
     shlib := libecpg.so.$(SO_MAJOR_VERSION).$(SO_MINOR_VERSION)

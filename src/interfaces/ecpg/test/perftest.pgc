@@ -16,7 +16,8 @@ print_result(long sec, long usec, char *text)
 		usec+=1000000;
 	}
 	printf("I needed %ld seconds and %ld microseconds for the %s test.\n", sec, usec, text);
-	exec sql vacuum analyze;
+	exec sql vacuum;
+	sleep(1);
 }
 
 int
@@ -27,9 +28,9 @@ exec sql begin declare section;
 exec sql end declare section;
 	struct timeval tvs, tve;
 
-	exec sql connect 'mm';
+	exec sql connect mm;
 
-	exec sql create table perftest1(number int4, ascii char16);
+	exec sql create table perftest1(number int4, ascii char(16));
 
 	exec sql create unique index number1 on perftest1(number);
 
@@ -99,6 +100,16 @@ exec sql end declare section;
 	gettimeofday(&tve, NULL);
 
 	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "update");
+
+	gettimeofday(&tvs, NULL);
+
+	exec sql delete from perftest2;
+
+	exec sql commit;
+
+	gettimeofday(&tve, NULL);
+
+	print_result(tve.tv_sec - tvs.tv_sec, tve.tv_usec - tvs.tv_usec, "delete");
 
 	exec sql drop index number2;
 

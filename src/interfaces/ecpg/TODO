@@ -1,15 +1,6 @@
 This list is still from Linus. MM
 
 The variables should be static.
-    
-Preprocessor cannot do syntax checking on your SQL statements Whatever you
-write is copied more or less exactly to the PostgreSQL and you will not be
-able to locate your errors until run-time.
-    
-No restriction to strings only The PQ interface, and most of all the PQexec
-function, that is used by the ecpg relies on that the request is built up as
-a string. In some cases, like when the data contains the null character,
-this will be a serious problem.
 
 There should be different error numbers for the different errors instead of
 just -1 for them all.
@@ -20,12 +11,6 @@ Oracle has array operations that enhances speed. When implementing it in
 ecpg it is done for compatibility reasons only. For them to improve speed
 would require a lot more insight in the postgres internal mechanisms than I
 possess.
-    
-Oracle has indicator variables that tell if a value is null or if it is
-empty. This largely simplifies array operations and provides for a way to
-hack around some design flaws in the handling of VARCHAR2 (like that an
-empty string isn't distinguishable from a null value). I am not sure if this
-is an Oracle extension or part of the ANSI standard.
     
 As well as complex types like records and arrays, typedefs would be a good
 thing to take care of.
@@ -43,8 +28,6 @@ Now comes my list (MM):
 The return code is alway -1 in case of an error. You cannot see which error
 occured by examining the return code.
 
-The cursor is opened when the declare statement is issued.
-
 ecpg does not understand enum datatypes.
 
 There is no exec sql prepare statement.
@@ -59,7 +42,16 @@ There is no way yet to fill a complete array with one call except arrays of
 
 ecpg cannot use pointer variables except [unsigned] char *
 
-List all commands as sqlcommand, not just S_SYMBOL or even better rewrite
-pareser to be equivalent to backend´s parser.
+give back the number of tuples affected via sqlca
 
-Set standard include paths.
+exec sql disconnect {current|default|all|connectionname|connection_hostvar};
+ oder <disconnect statement> ::=
+    DISCONNECT <disconnect object>
+
+ <disconnect object> ::=
+      <connection object>
+    | ALL
+    | CURRENT
+ commit release|commit work release auch disconnect
+
+It is not neccessary to check for sql not found after all commands.

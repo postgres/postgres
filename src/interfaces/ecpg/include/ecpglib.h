@@ -13,11 +13,6 @@ bool		ECPGstatus(void);
 
 void		ECPGlog(const char *format,...);
 
-/* These functions are only kept for compatibility reasons. */
-/* Use ECPGtrans instead. */
-bool		ECPGcommit(int);
-bool		ECPGrollback(int);
-
 #ifdef LIBPQ_FE_H
 bool		ECPGsetdb(PGconn *);
 

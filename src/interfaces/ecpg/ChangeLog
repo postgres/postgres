@@ -86,3 +86,43 @@ Fri Mar 13 13:35:13 CET 1998
 Mon Mar 16 15:09:10 CET 1998
 
 	- fixed parser to print correct filename and line number
+
+Wed Mar 18 14:28:49 CET 1998
+
+	- started working on indicator variables
+
+Mon Mar 23 13:49:15 CET 1998
+
+	- fixed some bugs in indicator variable handling
+	- completely rewrote parser for fetch and insert statements
+	- indicator variables are also allowed in insert statements now
+
+Mon Mar 23 16:09:05 CET 1998
+
+	- fixed whenever command goto to only allow valid lables
+
+Thu Mar 26 13:33:02 MEZ 1998
+
+	- some minor bugfixes
+
+Mon Apr 20 13:06:09 CEST 1998
+
+	- database name no longer has to entered as string constant, i.e.
+	  just remove the '...' around the name
+
+Mon Apr 20 14:38:45 CEST 1998
+
+	- both test cases compile cleanly
+
+Mon Apr 20 16:13:25 CEST 1998
+
+	- Phew! Finally finished parser rewriting.
+
+Mon Apr 20 16:39:23 CEST 1998
+
+	- Cursor is opened when the open command is issued, not at declare time.
+
+Tue Apr 21 12:53:49 CEST 1998
+
+	- Set indicator to amount of data really written (truncation).
+

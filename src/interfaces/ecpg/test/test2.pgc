@@ -2,8 +2,6 @@
 
 exec sql include header_test;
 
-extern void ECPGdebug(int n, FILE *dbgs);
-
 static int not_found = 0;
 static void
 set_not_found(void)
@@ -18,39 +16,53 @@ exec sql begin declare section;
 	struct personal_struct	{	varchar name[8];
 					struct birth_struct {	long born;
 								short age;
-							    } birth;
+					} birth;
 				} personal;
+	struct personal_indicator {	short name;
+					struct birth_indicator {	short born;
+									int age;
+					} ind_birth;
+				  } ind_personal;
+	long ind_married;
+	char married[9]="a";
 exec sql end declare section;
-	char msg[128];
+	char msg[128], command[128];
 	FILE *dbgs;
 
 	if ((dbgs = fopen("log", "w")) != NULL)
-		ECPGdebug(1, dbgs);
+                ECPGdebug(1, dbgs);
 
 	strcpy(msg, "connect");
-	exec sql connect 'mm';
+	exec sql connect mm;
 
 	strcpy(msg, "create");
-	exec sql create table meskes(name char8, born int4, age int2);
+	exec sql create table meskes(name char(8), born integer, age smallint, married char(8));
 
 	strcpy(msg, "insert");
-	exec sql insert into meskes(name, born, age) values ('Petra', 19661202, 31);
-	exec sql insert into meskes(name, born, age) values ('Michael', 19660117, 32);
+	exec sql insert into meskes(name, born, age, married) values ('Petra', 19661202, 31, '19900404');
+	exec sql insert into meskes(name, born, age, married) values ('Michael', 19660117, 32, '19900404');
 	exec sql insert into meskes(name, born, age) values ('Carsten', 19910103, 7);
 	exec sql insert into meskes(name, born, age) values ('Marc', 19930907, 4);
-	exec sql insert into meskes(name, born, age) values ('Chris', 19970923, 0);
+
+	sprintf(command, "insert into meskes(name, born, age) values ('Chris', 19970923, 0)");
+	strcpy(msg, "execute");
+	exec sql execute immediate :command;
+
+	strcpy(msg, "commit");
+	exec sql commit;
 
 	strcpy(msg, "declare");
 	exec sql declare cur cursor for 
-		select name, born, age from meskes;
+		select name, born, age, married from meskes;
 
+	strcpy(msg, "open");
 	exec sql open cur;
 
 	while (not_found == 0) {
 		strcpy(msg, "fetch");
-		exec sql fetch cur into :personal;
+		exec sql fetch cur into :personal:ind_personal, :married:ind_married;
 		if (not_found == 0)
-			printf ("%8.8s was born %d (age = %d)\n", personal.name.arr, personal.birth.born, personal.birth.age);
+			printf ("%8.8s was born %d (age = %d) %s%s\n", personal.name.arr, personal.birth.born, personal.birth.age, ind_married ? "" : "and married ", ind_married ? "" : married);
 	}
 
 	strcpy(msg, "close");
@@ -63,7 +75,7 @@ exec sql end declare section;
 	exec sql commit;
 
 	if (dbgs != NULL)
-		fclose(dbgs);
+                fclose(dbgs);
 
 	return (0);
 }
