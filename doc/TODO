@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Mar 30 16:51:38 EST 2004
+Last updated:		Tue Mar 30 20:01:37 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -259,7 +259,6 @@ Clients
 * Add XML capability to pg_dump and COPY, when backend XML capability
 * -Allow psql \du to show groups, and add \dg for groups
 * Allow clients to query a list of WITH HOLD cursors and prepared statements
-* Prevent unneeded quoting in psql \d output using fmtId()
 * Add a libpq function to support Parse/DescribeStatement capability
 * Prevent libpq's PQfnumber() from lowercasing the column name
 * -Allow pg_dump to dump CREATE CONVERSION (Christopher)
