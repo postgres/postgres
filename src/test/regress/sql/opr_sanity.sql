@@ -240,15 +240,28 @@ WHERE p1.oprcanhash AND NOT
     (p1.oprkind = 'b' AND p1.oprresult = 16 AND p1.oprleft = p1.oprright AND
      p1.oprname = '=' AND p1.oprcom = p1.oid);
 
--- Look for array equality operators that are hashable when the underlying
--- type is not, or vice versa.  This is presumably bogus.
+-- In 6.5 we accepted hashable array equality operators when the array element
+-- type is hashable.  However, what we actually need to make hashjoin work on
+-- an array is a hashable element type *and* no padding between elements in
+-- the array storage (or, perhaps, guaranteed-zero padding).  Currently,
+-- since the padding code in arrayfuncs.c is pretty bogus, it seems safest
+-- to just forbid hashjoin on array equality ops.
+-- This should be reconsidered someday.
 
-SELECT p1.oid, p1.oprcanhash, p2.oid, p2.oprcanhash, t1.typname, t2.typname
-FROM pg_operator AS p1, pg_operator AS p2, pg_type AS t1, pg_type AS t2
-WHERE p1.oprname = '=' AND p1.oprleft = p1.oprright AND 
-    p2.oprname = '=' AND p2.oprleft = p2.oprright AND
-    p1.oprleft = t1.oid AND p2.oprleft = t2.oid AND t1.typelem = t2.oid AND
-    p1.oprcanhash != p2.oprcanhash;
+-- -- Look for array equality operators that are hashable when the underlying
+-- -- type is not, or vice versa.  This is presumably bogus.
+-- 
+-- SELECT p1.oid, p1.oprcanhash, p2.oid, p2.oprcanhash, t1.typname, t2.typname
+-- FROM pg_operator AS p1, pg_operator AS p2, pg_type AS t1, pg_type AS t2
+-- WHERE p1.oprname = '=' AND p1.oprleft = p1.oprright AND 
+--     p2.oprname = '=' AND p2.oprleft = p2.oprright AND
+--     p1.oprleft = t1.oid AND p2.oprleft = t2.oid AND t1.typelem = t2.oid AND
+--     p1.oprcanhash != p2.oprcanhash;
+
+-- Substitute check: forbid hashable array ops, period.
+SELECT p1.oid, p1.oprname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprcanhash AND p1.oprcode = p2.oid AND p2.proname = 'array_eq';
 
 -- Check that each operator defined in pg_operator matches its oprcode entry
 -- in pg_proc.  Easiest to do this separately for each oprkind.

@@ -237,14 +237,11 @@ WHERE p1.oprcanhash AND NOT
 1137|=      
 (2 rows)
 
-QUERY: SELECT p1.oid, p1.oprcanhash, p2.oid, p2.oprcanhash, t1.typname, t2.typname
-FROM pg_operator AS p1, pg_operator AS p2, pg_type AS t1, pg_type AS t2
-WHERE p1.oprname = '=' AND p1.oprleft = p1.oprright AND
-    p2.oprname = '=' AND p2.oprleft = p2.oprright AND
-    p1.oprleft = t1.oid AND p2.oprleft = t2.oid AND t1.typelem = t2.oid AND
-    p1.oprcanhash != p2.oprcanhash;
-oid|oprcanhash|oid|oprcanhash|typname|typname
----+----------+---+----------+-------+-------
+QUERY: SELECT p1.oid, p1.oprname
+FROM pg_operator AS p1, pg_proc AS p2
+WHERE p1.oprcanhash AND p1.oprcode = p2.oid AND p2.proname = 'array_eq';
+oid|oprname
+---+-------
 (0 rows)
 
 QUERY: SELECT p1.oid, p1.oprname, p2.oid, p2.proname
