@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.148 2005/03/20 22:00:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablecmds.c,v 1.149 2005/03/23 07:44:57 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -3829,13 +3829,13 @@ ATAddForeignKeyConstraint(AlteredTableInfo *tab, Relation rel,
 	Oid			constrOid;
 
 	/*
-	 * Grab an exclusive lock on the pk table, so that someone doesn't
-	 * delete rows out from under us. (Although a lesser lock would do for
-	 * that purpose, we'll need exclusive lock anyway to add triggers to
-	 * the pk table; trying to start with a lesser lock will just create a
-	 * risk of deadlock.)
+	 * Grab a lock on the pk table, so that someone doesn't delete
+	 * rows out from under us. We will eventually need to add triggers
+	 * to the table, at which point we'll need to an ExclusiveLock --
+	 * therefore we grab an ExclusiveLock now to prevent possible
+	 * deadlock.
 	 */
-	pkrel = heap_openrv(fkconstraint->pktable, AccessExclusiveLock);
+	pkrel = heap_openrv(fkconstraint->pktable, ExclusiveLock);
 
 	/*
 	 * Validity and permissions checks
