@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.22 1999/03/08 13:35:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/orindxpath.c,v 1.23 1999/03/08 14:01:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,8 +33,7 @@
 
 static void
 best_or_subclause_indices(Query *root, RelOptInfo *rel, List *subclauses,
-List *indices, List *examined_indexids, Cost subcost, List *selectivities,
-						  List **indexids, Cost *cost, List **selecs);
+List *indices, List **indexids, Cost *cost, Cost *selec);
 static void best_or_subclause_index(Query *root, RelOptInfo *rel, Expr *subclause,
 				   List *indices, int *indexid, Cost *cost, Cost *selec);
 
@@ -87,20 +86,17 @@ create_or_index_paths(Query *root,
 			if (index_flag)
 			{					/* used to be a lisp every function */
 				IndexPath  *pathnode = makeNode(IndexPath);
-				List	   *indexids;
+				List	   *indexids = NIL;
 				Cost		cost;
-				List	   *selecs;
+				Cost	    selec;
 
 				best_or_subclause_indices(root,
 										  rel,
 										  clausenode->clause->args,
 										  clausenode->indexids,
-										  NIL,
-										  (Cost) 0,
-										  NIL,
 										  &indexids,
 										  &cost,
-										  &selecs);
+										  &selec);
 
 				pathnode->path.pathtype = T_IndexScan;
 				pathnode->path.parent = rel;
@@ -132,7 +128,7 @@ create_or_index_paths(Query *root,
 					((Path *) pathnode)->path_cost += xfunc_get_path_cost((Path) pathnode);
 				}
 #endif
-				clausenode->selectivity = (Cost) floatVal(lfirst(selecs));
+				clausenode->selectivity = (Cost) selec;
 				t_list = lappend(t_list, pathnode);
 			}
 		}
@@ -154,8 +150,7 @@ create_or_index_paths(Query *root,
  * 'examined_indexids' is a list of those index ids to be used with
  *		subclauses that have already been examined
  * 'subcost' is the cost of using the indices in 'examined_indexids'
- * 'selectivities' is a list of the selectivities of subclauses that
- *		have already been examined
+ * 'selec' is a list of all subclauses that have already been examined
  *
  * Returns a list of the indexids, cost, and selectivities of each
  * subclause, e.g., ((i1 i2 i3) cost (s1 s2 s3)), where 'i' is an OID,
@@ -166,15 +161,15 @@ best_or_subclause_indices(Query *root,
 						  RelOptInfo *rel,
 						  List *subclauses,
 						  List *indices,
-						  List *examined_indexids,
-						  Cost subcost,
-						  List *selectivities,
 						  List **indexids,		/* return value */
-						  Cost *cost,	/* return value */
-						  List **selecs)		/* return value */
+						  Cost *cost,			/* return value */
+						  Cost *selec)			/* return value */
 {
-	List	   *slist;
+	List		*slist;
 
+	*selec = (Cost) 0.0;
+	*cost = (Cost) 0.0;
+	
 	foreach(slist, subclauses)
 	{
 		int			best_indexid;
@@ -184,16 +179,14 @@ best_or_subclause_indices(Query *root,
 		best_or_subclause_index(root, rel, lfirst(slist), lfirst(indices),
 								&best_indexid, &best_cost, &best_selec);
 
-		examined_indexids = lappendi(examined_indexids, best_indexid);
-		subcost += best_cost;
-		selectivities = lappend(selectivities, makeFloat(best_selec));
+		*indexids = lappendi(*indexids, best_indexid);
+		*cost += best_cost;
+		*selec += best_selec;
+		if (*selec > (Cost) 1.0)
+			*selec = (Cost) 1.0;
 
 		indices = lnext(indices);
 	}
-
-	*indexids = examined_indexids;
-	*cost = subcost;
-	*selecs = selectivities;
 
 	return;
 }

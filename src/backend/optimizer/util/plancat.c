@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.26 1999/02/21 03:48:54 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/plancat.c,v 1.27 1999/03/08 14:01:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -545,7 +545,6 @@ IndexSelectivity(Oid indexrelid,
 	select = 1.0;
 	for (n = 0; n < nIndexKeys; ++n)
 	{
-
 		/*
 		 * Find the AM class for this key.
 		 *
