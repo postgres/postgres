@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.342 2003/05/09 18:08:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.343 2003/05/12 16:48:17 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1265,12 +1265,8 @@ exec_bind_message(StringInfo input_message)
 	if (numParams > 0)
 	{
 		bool	isaborted = IsAbortedTransactionBlockState();
-		StringInfoData pbuf;
 		List   *l;
 		MemoryContext oldContext;
-
-		/* Note that the string buffer lives in MessageContext */
-		initStringInfo(&pbuf);
 
 		oldContext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
@@ -1289,14 +1285,7 @@ exec_bind_message(StringInfo input_message)
 
 			if (!isNull)
 			{
-				/* Reset pbuf to empty, and insert raw data into it */
-				pbuf.len = 0;
-				pbuf.data[0] = '\0';
-				pbuf.cursor = 0;
-
-				appendBinaryStringInfo(&pbuf,
-									   pq_getmsgbytes(input_message, plength),
-									   plength);
+				const char *pvalue = pq_getmsgbytes(input_message, plength);
 
 				if (isaborted)
 				{
@@ -1306,6 +1295,8 @@ exec_bind_message(StringInfo input_message)
 				else
 				{
 					int16	pformat;
+					StringInfoData pbuf;
+					char	csave;
 
 					if (numPFormats > 1)
 						pformat = pformats[i];
@@ -1313,6 +1304,23 @@ exec_bind_message(StringInfo input_message)
 						pformat = pformats[0];
 					else
 						pformat = 0;		/* default = text */
+
+					/*
+					 * Rather than copying data around, we just set up a phony
+					 * StringInfo pointing to the correct portion of the
+					 * message buffer.  We assume we can scribble on the
+					 * message buffer so as to maintain the convention that
+					 * StringInfos have a trailing null.  This is grotty but
+					 * is a big win when dealing with very large parameter
+					 * strings.
+					 */
+					pbuf.data = (char *) pvalue;
+					pbuf.maxlen = plength + 1;
+					pbuf.len = plength;
+					pbuf.cursor = 0;
+
+					csave = pbuf.data[plength];
+					pbuf.data[plength] = '\0';
 
 					if (pformat == 0)
 					{
@@ -1322,11 +1330,8 @@ exec_bind_message(StringInfo input_message)
 
 						getTypeInputInfo(ptype, &typInput, &typElem);
 						/*
-						 * Since stringinfo.c keeps a trailing null in
-						 * place even for binary data, the contents of
-						 * pbuf are a valid C string.  We have to do
-						 * encoding conversion before calling the typinput
-						 * routine, though.
+						 * We have to do encoding conversion before calling
+						 * the typinput routine.
 						 */
 						pstring = (char *)
 							pg_client_to_server((unsigned char *) pbuf.data,
@@ -1362,6 +1367,9 @@ exec_bind_message(StringInfo input_message)
 					{
 						elog(ERROR, "Invalid format code %d", pformat);
 					}
+
+					/* Restore message buffer contents */
+					pbuf.data[plength] = csave;
 				}
 			}
 
@@ -2524,7 +2532,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.342 $ $Date: 2003/05/09 18:08:48 $\n");
+		puts("$Revision: 1.343 $ $Date: 2003/05/12 16:48:17 $\n");
 	}
 
 	/*
