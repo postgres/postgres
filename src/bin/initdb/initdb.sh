@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.195 2003/07/15 00:11:14 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.196 2003/07/21 15:20:27 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -786,7 +786,7 @@ CREATE VIEW pg_tables AS \
         C.relhasrules AS hasrules, \
         (C.reltriggers > 0) AS hastriggers \
     FROM pg_class C LEFT JOIN pg_namespace N ON (N.oid = C.relnamespace) \
-    WHERE C.relkind IN ('r', 's');
+    WHERE C.relkind IN ('r', 'S');
 
 CREATE VIEW pg_indexes AS \
     SELECT \
