@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Thu Oct 12 17:21:11 EDT 2000
+   Last updated: Tue Oct 17 00:21:20 EDT 2000
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -448,6 +448,9 @@
      * check to see that you have the proper paths set
      * check that the postgres user owns the proper files
        
+   If you see an error message about oidvector, you definately have a
+   version mismatch.
+   
     3.2) How do I install PostgreSQL somewhere other than /usr/local/pgsql?
     
    The simplest way is to specify the --prefix option when running
