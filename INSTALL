@@ -69,9 +69,10 @@ To upgrade to PostgreSQL v6.1 do the following:
   1) Read any last minute information and platform specific porting
      notes.  There are some platform specific notes at the end of this
      file for Ultrix4.x, Linux, BSD/OS and NeXT.  There are other
-     files in directory /usr/src/pgsql/doc, including platform specific
-     notes for Irix and Linux.  Also look in directory
-     ftp://ftp.postgresql.org/pub.
+     files in directory /usr/src/pgsql/doc, including files FAQ-Irix
+     and FAQ-Linux.  Also look in directory ftp://ftp.postgresql.org/pub.
+     If there is a file called INSTALL in this directory then this
+     file will contain the latest installation information.
 
   2) Create account postgres if it does not already exist.
 
@@ -80,10 +81,11 @@ To upgrade to PostgreSQL v6.1 do the following:
   4) Ftp file ftp://ftp.postgresql.org/pub/postgresql-v6.1.tar.gz from the
      internet.
 
-  5) Some platforms, like Linux and BSD/OS use flex.  If your system uses
-     flex then make sure you have a good version.  Type
+  5) Some platforms use flex.  If your system uses flex then make sure
+     you have a good version.  Type
         flex -- version
 
+     If the flex command is not found then you probably do not need it.
      If the version is 2.5.2 or 2.5.4 or greater then you are okay.  If it
      is 2.5.3 or before 2.5.2 then you will have to upgrade flex.  You may
      get it at ftp://prep.ai.mit.edu/pub/gnu/flex-2.5.4.tar.gz.
@@ -108,7 +110,8 @@ To upgrade to PostgreSQL v6.1 do the following:
      internet, you can apply the patch in /usr/src/pgsql/doc/README.flex
      instead.
 
-  6) If you are upgrading an existing system then back up the current
+  6) If you are upgrading an existing system from any version before
+     version 6.1 beta release 970512 then back up the current
      database.  Type
         cd
         pg_dumpall > db.out
@@ -121,6 +124,12 @@ To upgrade to PostgreSQL v6.1 do the following:
      Please note that if you are upgrading from a version prior to
      Postgres95 v1.09 then you must back up your database, install
      Postgres95 v1.09, restore your database, then back it up again.
+     You should also read files /usr/src/pgsql/migration/*.
+
+     You must make sure that your database is not updated in the middle of
+     your backup.  If necessary, bring down postmaster, edit the permissions
+     in file /usr/local/pgsql/data/pg_hba.conf to allow only you on, then
+     bring postmaster back up.
 
   7) If you are upgrading an existing system then kill the postmaster.  Type
        ps -ax | grep postmaster
@@ -129,11 +138,6 @@ To upgrade to PostgreSQL v6.1 do the following:
      "postmaster".  (Do not use the id for process "grep postmaster".)  Type
        kill ???
      with "???" modified as indicated.
-
-     You must make sure that your database is not updated in the middle of
-     your backup.  If necessary, bring down postmaster, edit the permissions
-     in file /usr/local/pgsql/data/pg_hba.conf to allow only you on, then
-     bring postmaster back up.
 
   8) If you are upgrading an existing system then move the old directories
      out of the way.  If you are short of disk space then you may have to
@@ -200,9 +204,13 @@ To upgrade to PostgreSQL v6.1 do the following:
 
        --disable-locale   Disables USE_LOCALE
 
-       --enable-cassert   Enables ASSERT_CHECKING (default)
+       --enable-cassert   Enables ASSERT_CHECKING
 
        --disable-cassert  Disables ASSERT_CHECKING
+
+                          The default for ASSERT_CHECKING is normally
+                          enabled for development versions and
+                          disabled for release versions of PostgreSQL.
 		
        --with-template=TEMPLATE
                           Use template file TEMPLATE - the template
@@ -226,12 +234,7 @@ To upgrade to PostgreSQL v6.1 do the following:
      Of course, in a real shell, you would type these three lines all
      on the same line.
 
- 12) If you plan to run the regression tests, then turn off the genetic
-     (GEQ) optimizer.  Edit file /usr/src/pgsql/src/include/config.h
-     to comment out the line containing "#define GEQ" near the end of
-     the file.
-
- 13) Compile the program.  Type
+ 12) Compile the program.  Type
         cd /usr/src/pgsql/src
         gmake all &> make.log &
         tail -f make.log
@@ -248,7 +251,12 @@ To upgrade to PostgreSQL v6.1 do the following:
      messages in make.log.  Unless you have problems later on, these
      messages may be safely ignored.
 
- 14) Install the program.  Type
+     If the compiler fails with an error stating that the flex command
+     cannot be found then install flex as described earlier.  Next,
+     change directory back to this directory, type "make clean", then
+     recompile again.
+
+ 13) Install the program.  Type
         cd /usr/src/pgsql/src
         gmake install &> make.install.log &
         tail -f make.install.log
@@ -256,7 +264,7 @@ To upgrade to PostgreSQL v6.1 do the following:
      `/usr/src/pgsql/src/man'".  At this point, or earlier if you wish,
      type control-C to get out of tail.
 
- 15) If necessary, tell UNIX how to find your shared libraries.  If you
+ 14) If necessary, tell UNIX how to find your shared libraries.  If you
      are using Linux-ELF do ONE of the following, preferably the first:
 
        a) As root, edit file /etc/ld.so.conf.  Add line
@@ -277,7 +285,7 @@ To upgrade to PostgreSQL v6.1 do the following:
      load library 'libpq.so'" then the above step was necessary.  Simply
      do this step, then try to create the database again.
 
- 16) If it has not already been done, then prepare account postgres
+ 15) If it has not already been done, then prepare account postgres
      for using PostgreSQL.  Any account that will use PostgreSQL must
      be similarily prepared.  (The following instructions are for a
      bash shell.  Adapt accordingly for other shells.)
@@ -293,11 +301,11 @@ To upgrade to PostgreSQL v6.1 do the following:
      with the remaining steps.  The easiest way to do this is to type:
         source ~/.bash_profile
 
- 17) Create the database.  DO NOT DO THE FOLLOWING AS ROOT!  This would
+ 16) Create the database.  DO NOT DO THE FOLLOWING AS ROOT!  This would
      be a major security hole.  Type
         initdb
 
- 18) Set up permissions to access the database system.  Do this by editing
+ 17) Set up permissions to access the database system.  Do this by editing
      file /usr/local/pgsql/data/pg_hba.conf.  The instructions are
      included in the file.  (If your database is not located in the
      default location, i.e. if PGDATA is set to point elsewhere, then the
@@ -308,24 +316,17 @@ To upgrade to PostgreSQL v6.1 do the following:
      your old database on top of the one in your new database, rather than
      redoing this from scratch.
 
- 19) If you are going to skip the regression tests then skip to step number
-     24.  It is highly recommended that you do these tests in order to
-     make sure that PostgreSQL is working on your system.  However, running
-     them will probably increase your installation time by an hour or so.
-
-     If you did not turn off the genetic optimizer (GEQ) before compiling
-     then you should skip the regression tests.
-
- 20) Log into a second shell as user postgres.  Set the timezone for Berkley,
-     California.  On some systems you may do this by setting environment
-     variable TZ.  I.e., using bash, type
+ 18) Start the postmaster in preparation for the regression tests.  First,
+     set the timezone for Berkley, California.  On some systems you may do
+     this by setting environment variable TZ.  I.e., using bash, type
         export TZ=PST8PDT7,M04.01.0,M10.0503
-     Now run postmaster by typing
-        postmaster
-     Leave this program running until after you finish running the regression
-     tests in the other shell.  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
+     Now start the postmaster daemon running in the background by typing
+        cd
+        nohup postmaster > regress.log 2>&1 &
+     Run postmaster from your postgres super user account (typically
+     account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
 
- 21) Run the regression tests.  From the first shell type
+ 19) Run the regression tests.  Type
 
         cd /usr/src/pgsql/src/test/regress
         gmake clean
@@ -336,54 +337,29 @@ To upgrade to PostgreSQL v6.1 do the following:
 
      You should get on the screen (and also written to file ./regress.out)
      a series of statements stating which tests passed and which tests
-     failed.  Currently, tests sanity_check, float8, select and misc fail.
-     (This may change between the time this note was written and the final
-     release of v6.1.)  See the notes in file README for more detailed
-     explanations.
-
-     If you wish to know why some of the tests failed, you may use diff
-     to compare the files in directories ./results and ./expected.
-
-     If you did not set the timezone as indicated above or if you did not
-     disable the genetic optimizer (GEQ) as described in step 8 then you
-     will get a lot of failures.
+     failed.  Please note that it is normal for some of the tests to
+     "fail".  For the failed tests, use diff to compare the files in
+     directories ./results and ./expected.  "Failed" tests may have
+     failed due to slightly different error messages, output formatting,
+     failure to set the timezone correctly for your platform, etc.
+     "Failures" of this type do not indicate a problem with PostgreSQL.
 
      After running the tests, type
         cd /usr/src/pgsql/src/test/regress
         gmake clean
 
- 22) In the other window that is running postmaster, press control-C to
-     stop the process.  Restore the timezone to normal.  (If you simply
-     set TZ for this one shell, this is as simple of logging out of the
-     shell.)
+ 20) Stop the postmaster as described in step 7.  Then restore the
+     timezone to it's normal setting.  If you changed the timezone by
+     modifying environment variable TZ then one way to do this is to
+     log out of, then back into, account postgres.
 
- 23) Recompile the back end with the genetic optimizer (GEQ) turned on.
-     This is not necessary but is highly recommended if you plan to use
-     large databases.
-
-     Go and restore file /usr/src/pgsql/src/include/config.h to the
-     original state where "#define GEQ" is not commented out.
-
-     Type the following:
-        cd /usr/src/pgsql/src
-        gmake all &> make2.log &
-        tail -f make2.log
-        # Once compiling is done, control-C out of tail.
-        cd /usr/src/pgsql/src
-        gmake install &> make.install2.log &
-        tail -f make.install2.log
-        # Once compiling is done, control-C out of tail.
-
- 24) If you were skipping the regression tests then you skipped steps 20
-     to 23 and continued here.
-
- 25) Start the postmaster daemon running.  Type
+ 21) Start the postmaster daemon running.  Type
         cd
         nohup postmaster > server.log 2>&1 &
-     Run postmaster from your postgres super user account.  DO NOT RUN
-     POSTMASTER FROM THE ROOT ACCOUNT.
+     Run postmaster from your postgres super user account (typically
+     account postgres).  DO NOT RUN POSTMASTER FROM THE ROOT ACCOUNT.
 
- 26) If you haven't already done so, this would be a good time to modify
+ 22) If you haven't already done so, this would be a good time to modify
      your computer so that it will automatically start postmaster whenever
      you boot your computer.
 
@@ -411,38 +387,45 @@ To upgrade to PostgreSQL v6.1 do the following:
           postmaster if it dies, but he doesn't know if there are other side
           effects.)
 
-       c) In FreeBSD edit an unspecified file that will, on boot up, run
-          a file containing the short line followed by the following single
-          line:
+       c) In FreeBSD edit /usr/local/etc/rc.d/pgsql.sh to contain the
+          following two lines, and make it 755 root:bin :
              #!/bin/sh
-             [ -x /usr/local/pgsql/bin/postmaster ] && su -l pgsql -c
-                     '/usr/local/pgsql/bin/postmaster -D/usr/local/pgsql/data
-                     -o -F > /usr/local/pgsql/errlog &' && echo -n ' pgsql'
+             [ -x /usr/local/pgsql/bin/postmaster ] &&
+               su -l pgsql -c '/usr/local/pgsql/bin/postmaster
+               -D/usr/local/pgsql/data -o -F > /usr/local/pgsql/errlog
+               &' && echo -n ' pgsql'
 
-       d) In RedHat v4.0 Linux edit an unspecified file to contain the
-          following single line:
+       d) In RedHat v4.0 Linux create file /etc/rc.d/init.d/postgres.init to
+          contain the following single line:
              su -c "cd ~postgres; nohup /usr/local/pgsql/bin/postmaster
                      -D /usr/local/pgsql/data  > server.log 2>&1 &" postgres
+          Next, type the following:
+             cd /etc/rc3.d
+             ln -s ../init.d/postgres.init S1000postgres
+          Change "1000" to a number of your choice to indicate the
+          loading order of the various programs pointed to in directory
+          /etc/rc3.d.  (Note that this example has not been tested yet.)
 
      You might also want to modify your computer so that cron will run
-     the vacuum command nightly.
+     the vacuum command nightly and do regular backups.  Look at the
+     man page for crontab for a starting point on how to do this.
 
- 27) If you are upgrading an existing system then install your old database.
+ 23) If you are upgrading an existing system then install your old database.
      Type
         cd
         psql -e template1 < db.out
 
- 28) If you are a new user, you may wish to play with postgres as described
+ 24) If you are a new user, you may wish to play with postgres as described
      below.
 
- 29) Clean up after yourself.  Type
+ 25) Clean up after yourself.  Type
         rm -rf /usr/src/pgsql_6_0
         rm -rf /usr/local/pgsql_6_0
         # Also delete old database directory tree if it is not in
         #  /usr/local/pgsql_6_0/data
         rm ~/postgresql-v6.1.tar.gz
 
- 30) You will probably want to print out the documentation.  Here is how
+ 26) You will probably want to print out the documentation.  Here is how
      you might do it if you have Ghostscript on your system and are
      writing to a laserjet printer.
         alias gshp='gs -sDEVICE=laserjet -r300 -dNOPAUSE'
@@ -463,7 +446,7 @@ To upgrade to PostgreSQL v6.1 do the following:
      This is a WWW document located at
      http://www.postgresql.org/docs/impguide.
 
- 31) Now create, access and manipulate databases as desired.  Write client
+ 27) Now create, access and manipulate databases as desired.  Write client
      programs to access the database server.  In other words, ENJOY!
 
 
@@ -517,15 +500,54 @@ You get the idea.
 QUESTIONS?  BUGS?  FEEDBACK?
 ----------------------------
 
-First, read files doc/FAQ in directory /usr/src/pgsql.  The latest version
-of the FAQ may be found at http://www.postgresql.org/ under documentation.
+First, read the files in directory /usr/src/pgsql/doc.  The FAQ in
+this directory may be particularly useful.
 
 If PostgreSQL failed to compile on your computer then fill out the form
-in file /usr/src/pgsql/doc/bug.template and mail it to
-pgsql-ports@postgresql.org.
+in file /usr/src/pgsql/doc/bug.template and mail it to the location
+indicated at the top of the form.
 
 Mail questions to pgsql-questions@postgresql.org.  For more information
 on the various mailing lists, see http://www.postgresql.org under mailing
 lists.
 
+
+----------------------------------------------------------------------
+
+Porting Notes (these notes may be out of date):
+-------------
+
+Ultrix4.x:
+        You need to install the libdl-1.1 package since Ultrix 4.x doesn't
+        have a dynamic loader. It's available in
+           s2k-ftp.CS.Berkeley.EDU:pub/personal/andrew/libdl-1.1.tar.Z
+
+Linux:
+        The linux port defaults to the ELF binary format. (Note that if you're
+        using ELF, you don't need dld because you'll be using the dl library
+        that comes with Linux ELF instead.)
+
+        To compile on non-ELF Linux, comment out the LINUX_ELF line in
+        src/mk/port/postgres.mk.linux. Also, the dld library MUST be obtained
+        and installed on the system. It enables dynamic link loading capability
+        to the postgres port. The dld library can be obtained from the sunsite
+        linux distributions. The current name is dld-3.2.5.
+                                (Jalon Q. Zimmerman
+                                <sneaker@powergrid.electriciti.com> 5/11/95)
+
+        To compile with flex, you need a recent version (2.5.2 or
+        later). Otherwise, you will get a 'yy_flush_buffer' undefined error.
+        Note, however, that flex v2.5.3 has a bug. See the FAQs.
+
+BSD/OS:
+        For BSD/OS 2.0 and 2.01, you will need to get flex version 2.5.2
+        as well as the GNU dld library.  Flex version 2.5.3 has a known bug.
+
+NeXT:
+        The NeXT port was supplied by Tom R. Hageman <tom@basil.icce.rug.nl>.
+        It requires a SysV IPC emulation library and header files for
+        shared libary and semaphore stuff.   Tom just happens to sell such
+        a product so contact him for information.  He has also indicated that
+        binary releases of PostgreSQL for NEXTSTEP will be made available to
+        the general public.  Contact Info@RnA.nl for information.
 
