@@ -584,6 +584,7 @@ nextstep*) PORTNAME='nextstep';;
     irix*) PORTNAME='irix5';;
     hpux*) PORTNAME='hpux';;
      osf*) PORTNAME='alpha';;
+   sysv4*) PORTNAME='svr4';;
  sysv4.2*) 
        case "$host_vendor" in
                univel) PORTNAME='univel';;
