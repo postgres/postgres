@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.156 2003/10/02 22:24:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.157 2003/10/04 18:22:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1048,23 +1048,11 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 				Node	   *expr;
 				List	   *context;
 
-				/* Start off the constraint definition */
-
-				/*
-				 * The consrc for CHECK constraints always seems to be
-				 * bracketed, so we don't add extra brackets here.
-				 */
-				appendStringInfo(&buf, "CHECK ");
-
-				/* If we're pretty-printing we need to add brackets */
-				if (prettyFlags != 0)
-					appendStringInfo(&buf, "(");
-
-				/* Fetch constraint source */
+				/* Fetch constraint expression in parsetree form */
 				val = heap_getattr(tup, Anum_pg_constraint_conbin,
 								   RelationGetDescr(conDesc), &isnull);
 				if (isnull)
-					elog(ERROR, "null consrc for constraint %u",
+					elog(ERROR, "null conbin for constraint %u",
 						 constraintId);
 
 				conbin = DatumGetCString(DirectFunctionCall1(textout, val));
@@ -1078,29 +1066,32 @@ pg_get_constraintdef_worker(Oid constraintId, int prettyFlags)
 				if (expr && IsA(expr, List))
 					expr = (Node *) make_ands_explicit((List *) expr);
 
+				/* Set up deparsing context for Var nodes in constraint */
 				if (conForm->conrelid != InvalidOid)
-					/* It's a Relation */
+				{
+					/* relation constraint */
 					context = deparse_context_for(get_rel_name(conForm->conrelid),
 												  conForm->conrelid);
+				}
 				else
-
-					/*
-					 * Since VARNOs aren't allowed in domain constraints,
-					 * relation context isn't required as anything other
-					 * than a shell.
-					 */
-					context = deparse_context_for(get_typname(conForm->contypid),
-												  InvalidOid);
+				{
+					/* domain constraint --- can't have Vars */
+					context = NIL;
+				}
 
 				consrc = deparse_expression_pretty(expr, context, false, false,
 												   prettyFlags, 0);
 
-				/* Append the constraint source */
-				appendStringInfoString(&buf, consrc);
-
-				/* If we're pretty-printing we need to add brackets */
-				if (prettyFlags != 0)
-					appendStringInfo(&buf, ")");
+				/*
+				 * Now emit the constraint definition.  There are cases where
+				 * the constraint expression will be fully parenthesized and
+				 * we don't need the outer parens ... but there are other
+				 * cases where we do need 'em.  Be conservative for now.
+				 *
+				 * Note that simply checking for leading '(' and trailing ')'
+				 * would NOT be good enough, consider "(x > 0) AND (y > 0)".
+				 */
+				appendStringInfo(&buf, "CHECK (%s)", consrc);
 
 				break;
 			}
