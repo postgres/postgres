@@ -335,7 +335,10 @@ AC_ARG_WITH(CC,
 	esac
 	CC="$withval"
     ],
-    [   AC_PROG_CC])
+    [
+	AC_PROG_CC
+	AC_PROG_GCC_TRADITIONAL
+])
 
 if test "$CC" = "gcc"
 then
@@ -346,11 +349,9 @@ fi
 AC_SUBST(CC_VERSION)
 
 CPPFLAGS="$CPPFLAGS $PGSQL_CPPFLAGS"
-export CPPFLAGS
 echo "- setting CPPFLAGS=$CPPFLAGS"
 
 LDFLAGS="$LDFLAGS $PGSQL_LDFLAGS"
-export LDFLAGS
 echo "- setting LDFLAGS=$LDFLAGS"
 
 dnl Checks for programs.
@@ -668,7 +669,6 @@ main() {
 	AC_MSG_RESULT(assuming not on target machine))
 
 dnl Checks for library functions.
-AC_PROG_GCC_TRADITIONAL
 AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
