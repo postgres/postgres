@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.35 2001/01/16 06:11:34 tgl Exp $
+ * $Id: proc.h,v 1.36 2001/01/16 20:59:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -140,7 +140,7 @@ extern PROC *ProcWakeup(PROC *proc, int errType);
 extern int ProcLockWakeup(LOCKMETHOD lockmethod, LOCK *lock);
 extern void ProcAddLock(SHM_QUEUE *elem);
 extern void ProcReleaseSpins(PROC *proc);
-extern void LockWaitCancel(void);
+extern bool LockWaitCancel(void);
 extern void HandleDeadLock(SIGNAL_ARGS);
 
 #endif	 /* PROC_H */

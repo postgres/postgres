@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.201 2001/01/14 05:08:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.202 2001/01/16 20:59:34 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -940,11 +940,14 @@ die(SIGNAL_ARGS)
 		InterruptPending = true;
 		ProcDiePending = true;
 		/*
-		 * If we're waiting for input, service the interrupt immediately
+		 * If it's safe to interrupt, and we're waiting for input or a lock,
+		 * service the interrupt immediately
 		 */
 		if (ImmediateInterruptOK && CritSectionCount == 0)
 		{
 			DisableNotifyInterrupt();
+			/* Make sure HandleDeadLock won't run while shutting down... */
+			LockWaitCancel();
 			ProcessInterrupts();
 		}
 	}
@@ -967,8 +970,16 @@ QueryCancelHandler(SIGNAL_ARGS)
 		InterruptPending = true;
 		QueryCancelPending = true;
 		/*
-		 * No point in raising Cancel if we are waiting for input ...
+		 * If it's safe to interrupt, and we're waiting for a lock,
+		 * service the interrupt immediately.  No point in interrupting
+		 * if we're waiting for input, however.
 		 */
+		if (ImmediateInterruptOK && CritSectionCount == 0 &&
+			LockWaitCancel())
+		{
+			DisableNotifyInterrupt();
+			ProcessInterrupts();
+		}
 	}
 
 	errno = save_errno;
@@ -1668,7 +1679,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[], const cha
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.201 $ $Date: 2001/01/14 05:08:16 $\n");
+		puts("$Revision: 1.202 $ $Date: 2001/01/16 20:59:34 $\n");
 	}
 
 	/*
