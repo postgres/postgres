@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.110 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/md.c,v 1.111 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -737,9 +737,9 @@ mdsync(void)
 			 * may seem a bit unclean -- md calling smgr?  But it's really
 			 * the best solution.  It ensures that the open file reference
 			 * isn't permanently leaked if we get an error here. (You may
-			 * say "but an unreferenced SMgrRelation is still a leak!"
-			 * Not really, because the only case in which a checkpoint is
-			 * done by a process that isn't about to shut down is in the
+			 * say "but an unreferenced SMgrRelation is still a leak!" Not
+			 * really, because the only case in which a checkpoint is done
+			 * by a process that isn't about to shut down is in the
 			 * bgwriter, and it will periodically do smgrcloseall().  This
 			 * fact justifies our not closing the reln in the success path
 			 * either, which is a good thing since in non-bgwriter cases

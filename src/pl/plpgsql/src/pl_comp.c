@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.80 2004/08/29 05:07:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.81 2004/08/30 02:54:42 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -90,7 +90,7 @@ typedef struct plpgsql_hashent
 {
 	PLpgSQL_func_hashkey key;
 	PLpgSQL_function *function;
-}	plpgsql_HashEnt;
+} plpgsql_HashEnt;
 
 #define FUNCS_PER_USER		128 /* initial table size */
 
@@ -102,7 +102,7 @@ typedef struct
 {
 	const char *label;
 	int			sqlerrstate;
-}	ExceptionLabelMap;
+} ExceptionLabelMap;
 
 static const ExceptionLabelMap exception_label_map[] = {
 #include "plerrcodes.h"
@@ -116,7 +116,7 @@ static const ExceptionLabelMap exception_label_map[] = {
  */
 static PLpgSQL_function *do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey * hashkey,
+		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator);
 static void plpgsql_compile_error_callback(void *arg);
 static char **fetchArgNames(HeapTuple procTup, int nargs);
@@ -124,12 +124,12 @@ static PLpgSQL_row *build_row_var(Oid classOid);
 static PLpgSQL_type *build_datatype(HeapTuple typeTup, int32 typmod);
 static void compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey * hashkey,
+						 PLpgSQL_func_hashkey *hashkey,
 						 bool forValidator);
-static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key);
-static void plpgsql_HashTableInsert(PLpgSQL_function * function,
-						PLpgSQL_func_hashkey * func_key);
-static void plpgsql_HashTableDelete(PLpgSQL_function * function);
+static PLpgSQL_function *plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key);
+static void plpgsql_HashTableDelete(PLpgSQL_function *function);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -254,7 +254,7 @@ plpgsql_compile(FunctionCallInfo fcinfo, bool forValidator)
 static PLpgSQL_function *
 do_compile(FunctionCallInfo fcinfo,
 		   HeapTuple procTup,
-		   PLpgSQL_func_hashkey * hashkey,
+		   PLpgSQL_func_hashkey *hashkey,
 		   bool forValidator)
 {
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
@@ -1437,7 +1437,7 @@ plpgsql_parse_dblwordrowtype(char *word)
  * to the current datum array, and optionally to the current namespace.
  */
 PLpgSQL_variable *
-plpgsql_build_variable(char *refname, int lineno, PLpgSQL_type * dtype,
+plpgsql_build_variable(char *refname, int lineno, PLpgSQL_type *dtype,
 					   bool add2namespace)
 {
 	PLpgSQL_variable *result;
@@ -1789,7 +1789,7 @@ plpgsql_parse_err_condition(char *condname)
  * ----------
  */
 void
-plpgsql_adddatum(PLpgSQL_datum * new)
+plpgsql_adddatum(PLpgSQL_datum *new)
 {
 	if (plpgsql_nDatums == datums_alloc)
 	{
@@ -1865,7 +1865,7 @@ plpgsql_add_initdatums(int **varnos)
 static void
 compute_function_hashkey(FunctionCallInfo fcinfo,
 						 Form_pg_proc procStruct,
-						 PLpgSQL_func_hashkey * hashkey,
+						 PLpgSQL_func_hashkey *hashkey,
 						 bool forValidator)
 {
 	int			i;
@@ -1944,7 +1944,7 @@ plpgsql_HashTableInit(void)
 }
 
 static PLpgSQL_function *
-plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key)
+plpgsql_HashTableLookup(PLpgSQL_func_hashkey *func_key)
 {
 	plpgsql_HashEnt *hentry;
 
@@ -1959,8 +1959,8 @@ plpgsql_HashTableLookup(PLpgSQL_func_hashkey * func_key)
 }
 
 static void
-plpgsql_HashTableInsert(PLpgSQL_function * function,
-						PLpgSQL_func_hashkey * func_key)
+plpgsql_HashTableInsert(PLpgSQL_function *function,
+						PLpgSQL_func_hashkey *func_key)
 {
 	plpgsql_HashEnt *hentry;
 	bool		found;
@@ -1982,7 +1982,7 @@ plpgsql_HashTableInsert(PLpgSQL_function * function,
 }
 
 static void
-plpgsql_HashTableDelete(PLpgSQL_function * function)
+plpgsql_HashTableDelete(PLpgSQL_function *function)
 {
 	plpgsql_HashEnt *hentry;
 

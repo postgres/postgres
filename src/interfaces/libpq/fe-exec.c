@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.161 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-exec.c,v 1.162 2004/08/30 02:54:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -458,7 +458,7 @@ pqPrepareAsyncResult(PGconn *conn)
  * a trailing newline, and should not be more than one line).
  */
 void
-pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
+pqInternalNotice(const PGNoticeHooks *hooks, const char *fmt,...)
 {
 	char		msgBuf[1024];
 	va_list		args;
@@ -503,7 +503,7 @@ pqInternalNotice(const PGNoticeHooks * hooks, const char *fmt,...)
  *	  Returns TRUE if OK, FALSE if not enough memory to add the row
  */
 int
-pqAddTuple(PGresult *res, PGresAttValue * tup)
+pqAddTuple(PGresult *res, PGresAttValue *tup)
 {
 	if (res->ntups >= res->tupArrSize)
 	{
@@ -592,7 +592,7 @@ pqSaveParameterStatus(PGconn *conn, const char *name, const char *value)
 	 * Store new info as a single malloc block
 	 */
 	pstatus = (pgParameterStatus *) malloc(sizeof(pgParameterStatus) +
-									   strlen(name) + strlen(value) + 2);
+										strlen(name) +strlen(value) + 2);
 	if (pstatus)
 	{
 		char	   *ptr;

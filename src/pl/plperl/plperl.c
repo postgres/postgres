@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.49 2004/08/29 05:07:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.50 2004/08/30 02:54:41 momjian Exp $
  *
  **********************************************************************/
 
@@ -88,7 +88,7 @@ typedef struct plperl_proc_desc
 	Oid			arg_typioparam[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
 	SV		   *reference;
-}	plperl_proc_desc;
+} plperl_proc_desc;
 
 
 /**********************************************************************
@@ -275,7 +275,7 @@ plperl_safe_init(void)
  * turn a tuple into a hash expression and add it to a list
  **********************************************************************/
 static void
-plperl_sv_add_tuple_value(SV * rv, HeapTuple tuple, TupleDesc tupdesc)
+plperl_sv_add_tuple_value(SV *rv, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
 	char	   *value;
@@ -384,7 +384,7 @@ plperl_trigger_build_args(FunctionCallInfo fcinfo)
  * check return value from plperl function
  **********************************************************************/
 static int
-plperl_is_set(SV * sv)
+plperl_is_set(SV *sv)
 {
 	int			i = 0;
 	int			len = 0;
@@ -432,7 +432,7 @@ plperl_is_set(SV * sv)
  * extract a list of keys from a hash
  **********************************************************************/
 static AV  *
-plperl_get_keys(HV * hv)
+plperl_get_keys(HV *hv)
 {
 	AV		   *ret;
 	SV		  **svp;
@@ -458,7 +458,7 @@ plperl_get_keys(HV * hv)
  * extract a given key (by index) from a list of keys
  **********************************************************************/
 static char *
-plperl_get_key(AV * keys, int index)
+plperl_get_key(AV *keys, int index)
 {
 	SV		  **svp;
 	int			len;
@@ -478,7 +478,7 @@ plperl_get_key(AV * keys, int index)
  *
  **********************************************************************/
 static char *
-plperl_get_elem(HV * hash, char *key)
+plperl_get_elem(HV *hash, char *key)
 {
 	SV		  **svp;
 
@@ -496,7 +496,7 @@ plperl_get_elem(HV * hash, char *key)
  * set up the new tuple returned from a trigger
  **********************************************************************/
 static HeapTuple
-plperl_modify_tuple(HV * hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
+plperl_modify_tuple(HV *hvTD, TriggerData *tdata, HeapTuple otup, Oid fn_oid)
 {
 	SV		  **svp;
 	HV		   *hvNew;
@@ -700,8 +700,8 @@ plperl_create_sub(char *s, bool trusted)
  *
  **********************************************************************/
 
-EXTERN_C void boot_DynaLoader(pTHX_ CV * cv);
-EXTERN_C void boot_SPI(pTHX_ CV * cv);
+EXTERN_C void boot_DynaLoader(pTHX_ CV *cv);
+EXTERN_C void boot_SPI(pTHX_ CV *cv);
 
 static void
 plperl_init_shared_libs(pTHX)
@@ -717,7 +717,7 @@ plperl_init_shared_libs(pTHX)
  *			stored in the prodesc structure. massages the input parms properly
  **********************************************************************/
 static SV  *
-plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
+plperl_call_perl_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo)
 {
 	dSP;
 	SV		   *retval;
@@ -815,7 +815,7 @@ plperl_call_perl_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo)
  * through the RV stored in the prodesc structure. massages the input parms properly
  **********************************************************************/
 static SV  *
-plperl_call_perl_trigger_func(plperl_proc_desc * desc, FunctionCallInfo fcinfo, SV * td)
+plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, SV *td)
 {
 	dSP;
 	SV		   *retval;

@@ -7,7 +7,7 @@
  *
  * 1999/1/15 Tatsuo Ishii
  *
- * $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/big5.c,v 1.4 2003/11/29 22:40:08 pgsql Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/euc_tw_and_big5/big5.c,v 1.5 2004/08/30 02:54:40 momjian Exp $
  */
 
 /* can be used in either frontend or backend */
@@ -19,7 +19,7 @@ typedef struct
 {
 	unsigned short code,
 				peer;
-}	codes_t;
+} codes_t;
 
 /* map Big5 Level 1 to CNS 11643-1992 Plane 1 */
 static codes_t big5Level1ToCnsPlane1[25] = {	/* range */
@@ -205,7 +205,7 @@ static unsigned short b2c3[][2] = {
 };
 
 static unsigned short BinarySearchRange
-			(codes_t * array, int high, unsigned short code)
+			(codes_t *array, int high, unsigned short code)
 {
 	int			low,
 				mid,

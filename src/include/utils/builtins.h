@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.249 2004/08/29 05:06:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/utils/builtins.h,v 1.250 2004/08/30 02:54:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -718,7 +718,7 @@ extern Datum numeric_in(PG_FUNCTION_ARGS);
 extern Datum numeric_out(PG_FUNCTION_ARGS);
 extern Datum numeric_recv(PG_FUNCTION_ARGS);
 extern Datum numeric_send(PG_FUNCTION_ARGS);
-extern Datum numeric(PG_FUNCTION_ARGS);
+extern Datum numeric (PG_FUNCTION_ARGS);
 extern Datum numeric_abs(PG_FUNCTION_ARGS);
 extern Datum numeric_uminus(PG_FUNCTION_ARGS);
 extern Datum numeric_uplus(PG_FUNCTION_ARGS);

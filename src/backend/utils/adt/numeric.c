@@ -14,7 +14,7 @@
  * Copyright (c) 1998-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.78 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/numeric.c,v 1.79 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -462,7 +462,7 @@ numeric_send(PG_FUNCTION_ARGS)
  *	scale of the attribute have to be applied on the value.
  */
 Datum
-numeric(PG_FUNCTION_ARGS)
+numeric		(PG_FUNCTION_ARGS)
 {
 	Numeric		num = PG_GETARG_NUMERIC(0);
 	int32		typmod = PG_GETARG_INT32(1);

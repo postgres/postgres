@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.101 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/variable.c,v 1.102 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,6 +270,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 													CStringGetDatum(val),
 											ObjectIdGetDatum(InvalidOid),
 													 Int32GetDatum(-1)));
+
 		pfree(val);
 		if (interval->month != 0)
 		{
@@ -284,6 +285,7 @@ assign_timezone(const char *value, bool doit, GucSource source)
 		{
 			/* Here we change from SQL to Unix sign convention */
 			CTimeZone = -interval->time;
+
 			HasCTZSet = true;
 		}
 		pfree(interval);
@@ -448,10 +450,10 @@ show_timezone(void)
 
 	if (HasCTZSet)
 	{
-		Interval	interval;
+		Interval interval;
 
-		interval.month = 0;
-		interval.time = -CTimeZone;
+		interval.	month = 0;
+		interval.	time = -CTimeZone;
 
 		tzn = DatumGetCString(DirectFunctionCall1(interval_out,
 										  IntervalPGetDatum(&interval)));

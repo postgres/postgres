@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.80 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/smgr/smgr.c,v 1.81 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -339,8 +339,8 @@ smgrcreate(SMgrRelation reln, bool isTemp, bool isRedo)
 		return;
 
 	/*
-	 * Make a non-transactional XLOG entry showing the file creation.
-	 * It's non-transactional because we should replay it whether the
+	 * Make a non-transactional XLOG entry showing the file creation. It's
+	 * non-transactional because we should replay it whether the
 	 * transaction commits or not; if not, the file will be dropped at
 	 * abort time.
 	 */

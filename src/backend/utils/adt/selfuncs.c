@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.164 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/selfuncs.c,v 1.165 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2755,7 +2755,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 				return (interval->time + (interval->month * ((365.25 / 12.0) * 86400000000.0)));
 #else
 				return interval->time +
-					interval->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
+				interval  ->month * (365.25 / 12.0 * 24.0 * 60.0 * 60.0);
 #endif
 			}
 		case RELTIMEOID:
@@ -2770,7 +2770,7 @@ convert_timevalue_to_scalar(Datum value, Oid typid)
 
 #ifdef HAVE_INT64_TIMESTAMP
 				if (interval->status != 0)
-					return ((interval->data[1] - interval->data[0]) * 1000000.0);
+					return ((interval->data[1] - interval->data[0]) *1000000.0);
 #else
 				if (interval->status != 0)
 					return interval->data[1] - interval->data[0];

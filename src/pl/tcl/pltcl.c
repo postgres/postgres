@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.90 2004/08/29 05:07:02 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.91 2004/08/30 02:54:42 momjian Exp $
  *
  **********************************************************************/
 
@@ -109,7 +109,7 @@ typedef struct pltcl_proc_desc
 	FmgrInfo	arg_out_func[FUNC_MAX_ARGS];
 	Oid			arg_typioparam[FUNC_MAX_ARGS];
 	bool		arg_is_rowtype[FUNC_MAX_ARGS];
-}	pltcl_proc_desc;
+} pltcl_proc_desc;
 
 
 /**********************************************************************
@@ -123,7 +123,7 @@ typedef struct pltcl_query_desc
 	Oid		   *argtypes;
 	FmgrInfo   *arginfuncs;
 	Oid		   *argtypioparams;
-}	pltcl_query_desc;
+} pltcl_query_desc;
 
 
 /**********************************************************************
@@ -156,9 +156,9 @@ static ErrorData *pltcl_error_in_progress = NULL;
  * Forward declarations
  **********************************************************************/
 static void pltcl_init_all(void);
-static void pltcl_init_interp(Tcl_Interp * interp);
+static void pltcl_init_interp(Tcl_Interp *interp);
 
-static void pltcl_init_load_unknown(Tcl_Interp * interp);
+static void pltcl_init_load_unknown(Tcl_Interp *interp);
 
 Datum		pltcl_call_handler(PG_FUNCTION_ARGS);
 Datum		pltclu_call_handler(PG_FUNCTION_ARGS);
@@ -170,28 +170,28 @@ static HeapTuple pltcl_trigger_handler(PG_FUNCTION_ARGS);
 
 static pltcl_proc_desc *compile_pltcl_function(Oid fn_oid, Oid tgreloid);
 
-static int pltcl_elog(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[]);
-static int pltcl_quote(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 			int argc, CONST84 char *argv[]);
-static int pltcl_argisnull(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 				int argc, CONST84 char *argv[]);
-static int pltcl_returnnull(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 				 int argc, CONST84 char *argv[]);
 
-static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			   int argc, CONST84 char *argv[]);
-static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[]);
-static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				int argc, CONST84 char *argv[]);
-static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp * interp,
+static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[]);
 
-static void pltcl_set_tuple_values(Tcl_Interp * interp, CONST84 char *arrayname,
+static void pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
 static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
-						   Tcl_DString * retval);
+						   Tcl_DString *retval);
 
 
 /*
@@ -292,7 +292,7 @@ pltcl_init_all(void)
  * pltcl_init_interp() - initialize a Tcl interpreter
  **********************************************************************/
 static void
-pltcl_init_interp(Tcl_Interp * interp)
+pltcl_init_interp(Tcl_Interp *interp)
 {
 	/************************************************************
 	 * Install the commands for SPI support in the interpreter
@@ -322,7 +322,7 @@ pltcl_init_interp(Tcl_Interp * interp)
  *				  table pltcl_modules (if it exists)
  **********************************************************************/
 static void
-pltcl_init_load_unknown(Tcl_Interp * interp)
+pltcl_init_load_unknown(Tcl_Interp *interp)
 {
 	int			spi_rc;
 	int			tcl_rc;
@@ -1267,7 +1267,7 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
  * pltcl_elog()		- elog() support for PLTcl
  **********************************************************************/
 static int
-pltcl_elog(ClientData cdata, Tcl_Interp * interp,
+pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 		   int argc, CONST84 char *argv[])
 {
 	volatile int level;
@@ -1339,7 +1339,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp * interp,
  *			  be used in SPI_exec query strings
  **********************************************************************/
 static int
-pltcl_quote(ClientData cdata, Tcl_Interp * interp,
+pltcl_quote(ClientData cdata, Tcl_Interp *interp,
 			int argc, CONST84 char *argv[])
 {
 	char	   *tmp;
@@ -1392,7 +1392,7 @@ pltcl_quote(ClientData cdata, Tcl_Interp * interp,
  * pltcl_argisnull()	- determine if a specific argument is NULL
  **********************************************************************/
 static int
-pltcl_argisnull(ClientData cdata, Tcl_Interp * interp,
+pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 				int argc, CONST84 char *argv[])
 {
 	int			argno;
@@ -1449,7 +1449,7 @@ pltcl_argisnull(ClientData cdata, Tcl_Interp * interp,
  * pltcl_returnnull()	- Cause a NULL return from a function
  **********************************************************************/
 static int
-pltcl_returnnull(ClientData cdata, Tcl_Interp * interp,
+pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 				 int argc, CONST84 char *argv[])
 {
 	FunctionCallInfo fcinfo = pltcl_current_fcinfo;
@@ -1488,7 +1488,7 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp * interp,
  *				  for the Tcl interpreter
  **********************************************************************/
 static int
-pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			   int argc, CONST84 char *argv[])
 {
 	volatile int my_rc;
@@ -1696,7 +1696,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp * interp,
  *				  and not save the plan currently.
  **********************************************************************/
 static int
-pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[])
 {
 	int			nargs;
@@ -1843,7 +1843,7 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp * interp,
  * pltcl_SPI_execp()		- Execute a prepared plan
  **********************************************************************/
 static int
-pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 				int argc, CONST84 char *argv[])
 {
 	volatile int my_rc;
@@ -2046,7 +2046,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
 	 ************************************************************/
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
-		spi_rc = SPI_execp(qdesc->plan, argvalues, nulls, count);
+	spi_rc = SPI_execp(qdesc->plan, argvalues, nulls, count);
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldcontext);
@@ -2168,7 +2168,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp * interp,
  *		  be used after insert queries
  **********************************************************************/
 static int
-pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp * interp,
+pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[])
 {
 	char		buf[64];
@@ -2184,7 +2184,7 @@ pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp * interp,
  *				  of a given tuple
  **********************************************************************/
 static void
-pltcl_set_tuple_values(Tcl_Interp * interp, CONST84 char *arrayname,
+pltcl_set_tuple_values(Tcl_Interp *interp, CONST84 char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc)
 {
 	int			i;
@@ -2281,7 +2281,7 @@ pltcl_set_tuple_values(Tcl_Interp * interp, CONST84 char *arrayname,
  **********************************************************************/
 static void
 pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
-						   Tcl_DString * retval)
+						   Tcl_DString *retval)
 {
 	int			i;
 	char	   *outputstr;

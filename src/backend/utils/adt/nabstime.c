@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.125 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/nabstime.c,v 1.126 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -547,7 +547,7 @@ btabstimecmp(PG_FUNCTION_ARGS)
 Datum
 timestamp_abstime(PG_FUNCTION_ARGS)
 {
-	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
 	AbsoluteTime result;
 	fsec_t		fsec;
 	int			tz;
@@ -816,6 +816,7 @@ tintervalin(PG_FUNCTION_ARGS)
 				t2;
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
+
 	if (istinterval(intervalstr, &t1, &t2) == 0)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_DATETIME_FORMAT),
@@ -823,14 +824,15 @@ tintervalin(PG_FUNCTION_ARGS)
 						intervalstr)));
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		interval->status = T_INTERVAL_INVAL;	/* undefined  */
+		interval  ->status = T_INTERVAL_INVAL;	/* undefined  */
+
 	else
-		interval->status = T_INTERVAL_VALID;
+		interval  ->status = T_INTERVAL_VALID;
 
 	i_start = ABSTIMEMIN(t1, t2);
 	i_end = ABSTIMEMAX(t1, t2);
-	interval->data[0] = i_start;
-	interval->data[1] = i_end;
+	interval  ->data[0] = i_start;
+	interval  ->data[1] = i_end;
 
 	PG_RETURN_TIMEINTERVAL(interval);
 }
@@ -877,15 +879,16 @@ tintervalrecv(PG_FUNCTION_ARGS)
 
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 
-	interval->status = pq_getmsgint(buf, sizeof(interval->status));
+	interval  ->status = pq_getmsgint(buf, sizeof(interval->status));
+
 	if (!(interval->status == T_INTERVAL_INVAL ||
 		  interval->status == T_INTERVAL_VALID))
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_BINARY_REPRESENTATION),
 			  errmsg("invalid status in external \"tinterval\" value")));
 
-	interval->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
-	interval->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));
+	interval  ->data[0] = pq_getmsgint(buf, sizeof(interval->data[0]));
+	interval  ->data[1] = pq_getmsgint(buf, sizeof(interval->data[1]));
 
 	PG_RETURN_TIMEINTERVAL(interval);
 }
@@ -931,7 +934,7 @@ interval_reltime(PG_FUNCTION_ARGS)
 		year = 0;
 		month = 0;
 	}
-	else if (abs(interval->month) >= 12)
+	else if (abs(interval->month) >=12)
 	{
 		year = (interval->month / 12);
 		month = (interval->month % 12);
@@ -1016,12 +1019,13 @@ mktinterval(PG_FUNCTION_ARGS)
 	interval = (TimeInterval) palloc(sizeof(TimeIntervalData));
 
 	if (t1 == INVALID_ABSTIME || t2 == INVALID_ABSTIME)
-		interval->status = T_INTERVAL_INVAL;
+		interval  ->status = T_INTERVAL_INVAL;
+
 	else
 	{
-		interval->status = T_INTERVAL_VALID;
-		interval->data[0] = tstart;
-		interval->data[1] = tend;
+		interval  ->status = T_INTERVAL_VALID;
+		interval  ->data[0] = tstart;
+		interval  ->data[1] = tend;
 	}
 
 	PG_RETURN_TIMEINTERVAL(interval);

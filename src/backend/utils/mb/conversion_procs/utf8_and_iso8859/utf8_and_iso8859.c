@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.9 2004/08/29 04:12:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/mb/conversion_procs/utf8_and_iso8859/utf8_and_iso8859.c,v 1.10 2004/08/30 02:54:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,7 +65,7 @@ typedef struct
 	pg_utf_to_local *map2;		/* from UTF-8 map name */
 	int			size1;			/* size of map1 */
 	int			size2;			/* size of map2 */
-}	pg_conv_map;
+} pg_conv_map;
 
 static pg_conv_map maps[] = {
 	{PG_SQL_ASCII},				/* SQL/ASCII */

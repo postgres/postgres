@@ -344,7 +344,7 @@ typedef NVTYPE NV;
 #else
 #if defined(USE_THREADS)
 static SV  *
-newRV_noinc(SV * sv)
+newRV_noinc(SV *sv)
 {
 	SV		   *nsv = (SV *) newRV(sv);
 
@@ -367,7 +367,7 @@ newRV_noinc(SV * sv)
 #if defined(NEED_newCONSTSUB)
 static
 #else
-extern void newCONSTSUB(HV * stash, char *name, SV * sv);
+extern void newCONSTSUB(HV *stash, char *name, SV *sv);
 #endif
 
 #if defined(NEED_newCONSTSUB) || defined(NEED_newCONSTSUB_GLOBAL)
@@ -545,7 +545,7 @@ SV		   *sv;
 		  ((SvFLAGS(sv) & (SVf_POK|SVf_UTF8)) == (SVf_POK) \
 		   ? ((lp = SvCUR(sv)), SvPVX(sv)) : my_sv_2pvbyte(aTHX_ sv, &lp))
 static char *
-my_sv_2pvbyte(pTHX_ register SV * sv, STRLEN * lp)
+my_sv_2pvbyte(pTHX_ register SV *sv, STRLEN *lp)
 {
 	sv_utf8_downgrade(sv, 0);
 	return SvPV(sv, *lp);
@@ -560,7 +560,7 @@ my_sv_2pvbyte(pTHX_ register SV * sv, STRLEN * lp)
 		((SvFLAGS(sv) & (SVf_POK)) == SVf_POK \
 		 ? SvPVX(sv) : sv_2pv_nolen(sv))
 static char *
-sv_2pv_nolen(pTHX_ register SV * sv)
+sv_2pv_nolen(pTHX_ register SV *sv)
 {
 	STRLEN		n_a;
 

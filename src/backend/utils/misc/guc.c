@@ -10,7 +10,7 @@
  * Written by Peter Eisentraut <peter_e@gmx.net>.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.234 2004/08/29 05:06:51 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/misc/guc.c,v 1.235 2004/08/30 02:54:40 momjian Exp $
  *
  *--------------------------------------------------------------------
  */
@@ -3861,13 +3861,13 @@ flatten_set_variable_args(const char *name, List *args)
 					 * Coerce to interval and back to normalize the value
 					 * and account for any typmod.
 					 */
-					Datum		interval;
+					Datum interval;
 					char	   *intervalout;
 
 					interval =
-						DirectFunctionCall3(interval_in,
-											CStringGetDatum(val),
-											ObjectIdGetDatum(InvalidOid),
+					DirectFunctionCall3(interval_in,
+										CStringGetDatum(val),
+										ObjectIdGetDatum(InvalidOid),
 								   Int32GetDatum(arg->typename->typmod));
 
 					intervalout =

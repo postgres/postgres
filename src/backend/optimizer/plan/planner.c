@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.174 2004/08/29 05:06:44 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/plan/planner.c,v 1.175 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -431,8 +431,8 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	/*
 	 * If it's a qual or havingQual, convert it to implicit-AND format.
 	 * (We don't want to do this before eval_const_expressions, since the
-	 * latter would be unable to simplify a top-level AND correctly.
-	 * Also, SS_process_sublinks expects explicit-AND format.)
+	 * latter would be unable to simplify a top-level AND correctly. Also,
+	 * SS_process_sublinks expects explicit-AND format.)
 	 */
 	if (kind == EXPRKIND_QUAL)
 		expr = (Node *) make_ands_implicit((Expr *) expr);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.82 2004/08/29 04:12:53 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.83 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ static void fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedur
 static void fmgr_info_other_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple);
 static CFuncHashTabEntry *lookup_C_func(HeapTuple procedureTuple);
 static void record_C_func(HeapTuple procedureTuple,
-						  PGFunction user_fn, Pg_finfo_record *inforec);
+			  PGFunction user_fn, Pg_finfo_record *inforec);
 static Datum fmgr_oldstyle(PG_FUNCTION_ARGS);
 static Datum fmgr_security_definer(PG_FUNCTION_ARGS);
 
@@ -244,8 +244,8 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			if (fbp == NULL)
 				ereport(ERROR,
 						(errcode(ERRCODE_UNDEFINED_FUNCTION),
-					   errmsg("internal function \"%s\" is not in internal lookup table",
-							  prosrc)));
+						 errmsg("internal function \"%s\" is not in internal lookup table",
+								prosrc)));
 			pfree(prosrc);
 			/* Should we check that nargs, strict, retset match the table? */
 			finfo->fn_addr = fbp->func;
@@ -300,7 +300,10 @@ fmgr_info_C_lang(Oid functionId, FmgrInfo *finfo, HeapTuple procedureTuple)
 				   *probinstring;
 		void	   *libraryhandle;
 
-		/* Get prosrc and probin strings (link symbol and library filename) */
+		/*
+		 * Get prosrc and probin strings (link symbol and library
+		 * filename)
+		 */
 		prosrcattr = SysCacheGetAttr(PROCOID, procedureTuple,
 									 Anum_pg_proc_prosrc, &isnull);
 		if (isnull)
@@ -470,7 +473,7 @@ fetch_finfo_record(void *filehandle, char *funcname)
 static CFuncHashTabEntry *
 lookup_C_func(HeapTuple procedureTuple)
 {
-	Oid		fn_oid = HeapTupleGetOid(procedureTuple);
+	Oid			fn_oid = HeapTupleGetOid(procedureTuple);
 	CFuncHashTabEntry *entry;
 
 	if (CFuncHash == NULL)
@@ -495,9 +498,9 @@ static void
 record_C_func(HeapTuple procedureTuple,
 			  PGFunction user_fn, Pg_finfo_record *inforec)
 {
-	Oid		fn_oid = HeapTupleGetOid(procedureTuple);
+	Oid			fn_oid = HeapTupleGetOid(procedureTuple);
 	CFuncHashTabEntry *entry;
-	bool	found;
+	bool		found;
 
 	/* Create the hash table if it doesn't exist yet */
 	if (CFuncHash == NULL)
@@ -758,8 +761,8 @@ fmgr_oldstyle(PG_FUNCTION_ARGS)
 			 */
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				   errmsg("function %u has too many arguments (%d, maximum is %d)",
-						  fcinfo->flinfo->fn_oid, n_arguments, 16)));
+					 errmsg("function %u has too many arguments (%d, maximum is %d)",
+							fcinfo->flinfo->fn_oid, n_arguments, 16)));
 			returnValue = NULL; /* keep compiler quiet */
 			break;
 	}
@@ -1622,8 +1625,8 @@ fmgr(Oid procedureId,...)
 		if (n_arguments > FUNC_MAX_ARGS)
 			ereport(ERROR,
 					(errcode(ERRCODE_TOO_MANY_ARGUMENTS),
-				   errmsg("function %u has too many arguments (%d, maximum is %d)",
-						  flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
+					 errmsg("function %u has too many arguments (%d, maximum is %d)",
+							flinfo.fn_oid, n_arguments, FUNC_MAX_ARGS)));
 		va_start(pvar, procedureId);
 		for (i = 0; i < n_arguments; i++)
 			fcinfo.arg[i] = (Datum) va_arg(pvar, char *);

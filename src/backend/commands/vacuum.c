@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.289 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/vacuum.c,v 1.290 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1704,10 +1704,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 			if (!(tuple.t_data->t_infomask & HEAP_XMIN_COMMITTED))
 			{
 				/*
-				 * There cannot be another concurrently running VACUUM.
-				 * If the tuple had been moved in by a previous VACUUM,
-				 * the visibility check would have set XMIN_COMMITTED.	If
-				 * the tuple had been moved in by the currently running
+				 * There cannot be another concurrently running VACUUM. If
+				 * the tuple had been moved in by a previous VACUUM, the
+				 * visibility check would have set XMIN_COMMITTED.	If the
+				 * tuple had been moved in by the currently running
 				 * VACUUM, the loop would have been terminated.  We had
 				 * elog(ERROR, ...) here, but as we are testing for a
 				 * can't-happen condition, Assert() seems more

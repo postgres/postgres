@@ -45,7 +45,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.10 2004/08/29 21:08:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/tablespace.c,v 1.11 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -146,27 +146,27 @@ TablespaceCreateDbspace(Oid spcNode, Oid dbNode, bool isRedo)
 				/* OK, go for it */
 				if (mkdir(dir, S_IRWXU) < 0)
 				{
-					char   *parentdir;
+					char	   *parentdir;
 
 					if (errno != ENOENT || !isRedo)
 						ereport(ERROR,
 								(errcode_for_file_access(),
-								 errmsg("could not create directory \"%s\": %m",
-										dir)));
+						  errmsg("could not create directory \"%s\": %m",
+								 dir)));
 					/* Try to make parent directory too */
 					parentdir = pstrdup(dir);
 					get_parent_directory(parentdir);
 					if (mkdir(parentdir, S_IRWXU) < 0)
 						ereport(ERROR,
 								(errcode_for_file_access(),
-								 errmsg("could not create directory \"%s\": %m",
-										parentdir)));
+						  errmsg("could not create directory \"%s\": %m",
+								 parentdir)));
 					pfree(parentdir);
 					if (mkdir(dir, S_IRWXU) < 0)
 						ereport(ERROR,
 								(errcode_for_file_access(),
-								 errmsg("could not create directory \"%s\": %m",
-										dir)));
+						  errmsg("could not create directory \"%s\": %m",
+								 dir)));
 				}
 			}
 
@@ -444,7 +444,8 @@ DropTableSpace(DropTableSpaceStmt *stmt)
 					   tablespacename);
 
 	/*
-	 * Remove the pg_tablespace tuple (this will roll back if we fail below)
+	 * Remove the pg_tablespace tuple (this will roll back if we fail
+	 * below)
 	 */
 	simple_heap_delete(rel, &tuple->t_self);
 
@@ -598,8 +599,8 @@ remove_tablespace_directories(Oid tablespaceoid, bool redo)
 	/*
 	 * Okay, try to remove the symlink.  We must however deal with the
 	 * possibility that it's a directory instead of a symlink --- this
-	 * could happen during WAL replay (see TablespaceCreateDbspace),
-	 * and it is also the normal case on Windows.
+	 * could happen during WAL replay (see TablespaceCreateDbspace), and
+	 * it is also the normal case on Windows.
 	 */
 	if (lstat(location, &st) == 0 && S_ISDIR(st.st_mode))
 	{
@@ -959,14 +960,14 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 		char	   *linkloc;
 
 		/*
-		 * Attempt to coerce target directory to safe permissions.	If this
-		 * fails, it doesn't exist or has the wrong owner.
+		 * Attempt to coerce target directory to safe permissions.	If
+		 * this fails, it doesn't exist or has the wrong owner.
 		 */
 		if (chmod(location, 0700) != 0)
 			ereport(ERROR,
 					(errcode_for_file_access(),
-					 errmsg("could not set permissions on directory \"%s\": %m",
-							location)));
+			  errmsg("could not set permissions on directory \"%s\": %m",
+					 location)));
 
 		/* Create or re-create the PG_VERSION file in the target directory */
 		set_short_version(location);
@@ -980,8 +981,8 @@ tblspc_redo(XLogRecPtr lsn, XLogRecord *record)
 			if (errno != EEXIST)
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("could not create symbolic link \"%s\": %m",
-								linkloc)));
+					  errmsg("could not create symbolic link \"%s\": %m",
+							 linkloc)));
 		}
 
 		pfree(linkloc);

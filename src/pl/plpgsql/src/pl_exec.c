@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.117 2004/08/29 05:07:01 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.118 2004/08/30 02:54:42 momjian Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -74,98 +74,98 @@ static PLpgSQL_expr *active_simple_exprs = NULL;
  * Local function forward declarations
  ************************************************************/
 static void plpgsql_exec_error_callback(void *arg);
-static PLpgSQL_var *copy_var(PLpgSQL_var * var);
-static PLpgSQL_rec *copy_rec(PLpgSQL_rec * rec);
+static PLpgSQL_var *copy_var(PLpgSQL_var *var);
+static PLpgSQL_rec *copy_rec(PLpgSQL_rec *rec);
 
-static int exec_stmt_block(PLpgSQL_execstate * estate,
-				PLpgSQL_stmt_block * block);
-static int exec_stmts(PLpgSQL_execstate * estate,
-		   PLpgSQL_stmts * stmts);
-static int exec_stmt(PLpgSQL_execstate * estate,
-		  PLpgSQL_stmt * stmt);
-static int exec_stmt_assign(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_assign * stmt);
-static int exec_stmt_perform(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_perform * stmt);
-static int exec_stmt_getdiag(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_getdiag * stmt);
-static int exec_stmt_if(PLpgSQL_execstate * estate,
-			 PLpgSQL_stmt_if * stmt);
-static int exec_stmt_loop(PLpgSQL_execstate * estate,
-			   PLpgSQL_stmt_loop * stmt);
-static int exec_stmt_while(PLpgSQL_execstate * estate,
-				PLpgSQL_stmt_while * stmt);
-static int exec_stmt_fori(PLpgSQL_execstate * estate,
-			   PLpgSQL_stmt_fori * stmt);
-static int exec_stmt_fors(PLpgSQL_execstate * estate,
-			   PLpgSQL_stmt_fors * stmt);
-static int exec_stmt_select(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_select * stmt);
-static int exec_stmt_open(PLpgSQL_execstate * estate,
-			   PLpgSQL_stmt_open * stmt);
-static int exec_stmt_fetch(PLpgSQL_execstate * estate,
-				PLpgSQL_stmt_fetch * stmt);
-static int exec_stmt_close(PLpgSQL_execstate * estate,
-				PLpgSQL_stmt_close * stmt);
-static int exec_stmt_exit(PLpgSQL_execstate * estate,
-			   PLpgSQL_stmt_exit * stmt);
-static int exec_stmt_return(PLpgSQL_execstate * estate,
-				 PLpgSQL_stmt_return * stmt);
-static int exec_stmt_return_next(PLpgSQL_execstate * estate,
-					  PLpgSQL_stmt_return_next * stmt);
-static int exec_stmt_raise(PLpgSQL_execstate * estate,
-				PLpgSQL_stmt_raise * stmt);
-static int exec_stmt_execsql(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_execsql * stmt);
-static int exec_stmt_dynexecute(PLpgSQL_execstate * estate,
-					 PLpgSQL_stmt_dynexecute * stmt);
-static int exec_stmt_dynfors(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_dynfors * stmt);
+static int exec_stmt_block(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_block *block);
+static int exec_stmts(PLpgSQL_execstate *estate,
+		   PLpgSQL_stmts *stmts);
+static int exec_stmt(PLpgSQL_execstate *estate,
+		  PLpgSQL_stmt *stmt);
+static int exec_stmt_assign(PLpgSQL_execstate *estate,
+				 PLpgSQL_stmt_assign *stmt);
+static int exec_stmt_perform(PLpgSQL_execstate *estate,
+				  PLpgSQL_stmt_perform *stmt);
+static int exec_stmt_getdiag(PLpgSQL_execstate *estate,
+				  PLpgSQL_stmt_getdiag *stmt);
+static int exec_stmt_if(PLpgSQL_execstate *estate,
+			 PLpgSQL_stmt_if *stmt);
+static int exec_stmt_loop(PLpgSQL_execstate *estate,
+			   PLpgSQL_stmt_loop *stmt);
+static int exec_stmt_while(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_while *stmt);
+static int exec_stmt_fori(PLpgSQL_execstate *estate,
+			   PLpgSQL_stmt_fori *stmt);
+static int exec_stmt_fors(PLpgSQL_execstate *estate,
+			   PLpgSQL_stmt_fors *stmt);
+static int exec_stmt_select(PLpgSQL_execstate *estate,
+				 PLpgSQL_stmt_select *stmt);
+static int exec_stmt_open(PLpgSQL_execstate *estate,
+			   PLpgSQL_stmt_open *stmt);
+static int exec_stmt_fetch(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_fetch *stmt);
+static int exec_stmt_close(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_close *stmt);
+static int exec_stmt_exit(PLpgSQL_execstate *estate,
+			   PLpgSQL_stmt_exit *stmt);
+static int exec_stmt_return(PLpgSQL_execstate *estate,
+				 PLpgSQL_stmt_return *stmt);
+static int exec_stmt_return_next(PLpgSQL_execstate *estate,
+					  PLpgSQL_stmt_return_next *stmt);
+static int exec_stmt_raise(PLpgSQL_execstate *estate,
+				PLpgSQL_stmt_raise *stmt);
+static int exec_stmt_execsql(PLpgSQL_execstate *estate,
+				  PLpgSQL_stmt_execsql *stmt);
+static int exec_stmt_dynexecute(PLpgSQL_execstate *estate,
+					 PLpgSQL_stmt_dynexecute *stmt);
+static int exec_stmt_dynfors(PLpgSQL_execstate *estate,
+				  PLpgSQL_stmt_dynfors *stmt);
 
-static void plpgsql_estate_setup(PLpgSQL_execstate * estate,
-					 PLpgSQL_function * func,
+static void plpgsql_estate_setup(PLpgSQL_execstate *estate,
+					 PLpgSQL_function *func,
 					 ReturnSetInfo *rsi);
-static void exec_eval_cleanup(PLpgSQL_execstate * estate);
+static void exec_eval_cleanup(PLpgSQL_execstate *estate);
 
-static void exec_prepare_plan(PLpgSQL_execstate * estate,
-				  PLpgSQL_expr * expr);
+static void exec_prepare_plan(PLpgSQL_execstate *estate,
+				  PLpgSQL_expr *expr);
 static bool exec_simple_check_node(Node *node);
-static void exec_simple_check_plan(PLpgSQL_expr * expr);
-static Datum exec_eval_simple_expr(PLpgSQL_execstate * estate,
-					  PLpgSQL_expr * expr,
+static void exec_simple_check_plan(PLpgSQL_expr *expr);
+static Datum exec_eval_simple_expr(PLpgSQL_execstate *estate,
+					  PLpgSQL_expr *expr,
 					  bool *isNull,
 					  Oid *rettype);
 
-static void exec_assign_expr(PLpgSQL_execstate * estate,
-				 PLpgSQL_datum * target,
-				 PLpgSQL_expr * expr);
-static void exec_assign_value(PLpgSQL_execstate * estate,
-				  PLpgSQL_datum * target,
+static void exec_assign_expr(PLpgSQL_execstate *estate,
+				 PLpgSQL_datum *target,
+				 PLpgSQL_expr *expr);
+static void exec_assign_value(PLpgSQL_execstate *estate,
+				  PLpgSQL_datum *target,
 				  Datum value, Oid valtype, bool *isNull);
-static void exec_eval_datum(PLpgSQL_execstate * estate,
-				PLpgSQL_datum * datum,
+static void exec_eval_datum(PLpgSQL_execstate *estate,
+				PLpgSQL_datum *datum,
 				Oid expectedtypeid,
 				Oid *typeid,
 				Datum *value,
 				bool *isnull);
-static int exec_eval_integer(PLpgSQL_execstate * estate,
-				  PLpgSQL_expr * expr,
+static int exec_eval_integer(PLpgSQL_execstate *estate,
+				  PLpgSQL_expr *expr,
 				  bool *isNull);
-static bool exec_eval_boolean(PLpgSQL_execstate * estate,
-				  PLpgSQL_expr * expr,
+static bool exec_eval_boolean(PLpgSQL_execstate *estate,
+				  PLpgSQL_expr *expr,
 				  bool *isNull);
-static Datum exec_eval_expr(PLpgSQL_execstate * estate,
-			   PLpgSQL_expr * expr,
+static Datum exec_eval_expr(PLpgSQL_execstate *estate,
+			   PLpgSQL_expr *expr,
 			   bool *isNull,
 			   Oid *rettype);
-static int exec_run_select(PLpgSQL_execstate * estate,
-				PLpgSQL_expr * expr, int maxtuples, Portal *portalP);
-static void exec_move_row(PLpgSQL_execstate * estate,
-			  PLpgSQL_rec * rec,
-			  PLpgSQL_row * row,
+static int exec_run_select(PLpgSQL_execstate *estate,
+				PLpgSQL_expr *expr, int maxtuples, Portal *portalP);
+static void exec_move_row(PLpgSQL_execstate *estate,
+			  PLpgSQL_rec *rec,
+			  PLpgSQL_row *row,
 			  HeapTuple tup, TupleDesc tupdesc);
-static HeapTuple make_tuple_from_row(PLpgSQL_execstate * estate,
-					PLpgSQL_row * row,
+static HeapTuple make_tuple_from_row(PLpgSQL_execstate *estate,
+					PLpgSQL_row *row,
 					TupleDesc tupdesc);
 static char *convert_value_to_string(Datum value, Oid valtype);
 static Datum exec_cast_value(Datum value, Oid valtype,
@@ -177,9 +177,9 @@ static Datum exec_cast_value(Datum value, Oid valtype,
 static Datum exec_simple_cast_value(Datum value, Oid valtype,
 					   Oid reqtype, int32 reqtypmod,
 					   bool *isnull);
-static void exec_init_tuple_store(PLpgSQL_execstate * estate);
+static void exec_init_tuple_store(PLpgSQL_execstate *estate);
 static bool compatible_tupdesc(TupleDesc td1, TupleDesc td2);
-static void exec_set_found(PLpgSQL_execstate * estate, bool state);
+static void exec_set_found(PLpgSQL_execstate *estate, bool state);
 
 
 /* ----------
@@ -188,7 +188,7 @@ static void exec_set_found(PLpgSQL_execstate * estate, bool state);
  * ----------
  */
 Datum
-plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
+plpgsql_exec_function(PLpgSQL_function *func, FunctionCallInfo fcinfo)
 {
 	PLpgSQL_execstate estate;
 	ErrorContextCallback plerrcontext;
@@ -438,7 +438,7 @@ plpgsql_exec_function(PLpgSQL_function * func, FunctionCallInfo fcinfo)
  * ----------
  */
 HeapTuple
-plpgsql_exec_trigger(PLpgSQL_function * func,
+plpgsql_exec_trigger(PLpgSQL_function *func,
 					 TriggerData *trigdata)
 {
 	PLpgSQL_execstate estate;
@@ -759,7 +759,7 @@ plpgsql_exec_error_callback(void *arg)
  * ----------
  */
 static PLpgSQL_var *
-copy_var(PLpgSQL_var * var)
+copy_var(PLpgSQL_var *var)
 {
 	PLpgSQL_var *new = palloc(sizeof(PLpgSQL_var));
 
@@ -771,7 +771,7 @@ copy_var(PLpgSQL_var * var)
 
 
 static PLpgSQL_rec *
-copy_rec(PLpgSQL_rec * rec)
+copy_rec(PLpgSQL_rec *rec)
 {
 	PLpgSQL_rec *new = palloc(sizeof(PLpgSQL_rec));
 
@@ -786,7 +786,7 @@ copy_rec(PLpgSQL_rec * rec)
 
 
 static bool
-exception_matches_conditions(ErrorData *edata, PLpgSQL_condition * cond)
+exception_matches_conditions(ErrorData *edata, PLpgSQL_condition *cond)
 {
 	for (; cond != NULL; cond = cond->next)
 	{
@@ -818,7 +818,7 @@ exception_matches_conditions(ErrorData *edata, PLpgSQL_condition * cond)
  * ----------
  */
 static int
-exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
+exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 {
 	volatile int rc = -1;
 	int			i;
@@ -912,7 +912,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
 				 SPI_result_code_string(xrc));
 
 		PG_TRY();
-			rc = exec_stmts(estate, block->body);
+		rc = exec_stmts(estate, block->body);
 		PG_CATCH();
 		{
 			ErrorData  *edata;
@@ -1006,7 +1006,7 @@ exec_stmt_block(PLpgSQL_execstate * estate, PLpgSQL_stmt_block * block)
  * ----------
  */
 static int
-exec_stmts(PLpgSQL_execstate * estate, PLpgSQL_stmts * stmts)
+exec_stmts(PLpgSQL_execstate *estate, PLpgSQL_stmts *stmts)
 {
 	int			rc;
 	int			i;
@@ -1028,7 +1028,7 @@ exec_stmts(PLpgSQL_execstate * estate, PLpgSQL_stmts * stmts)
  * ----------
  */
 static int
-exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
+exec_stmt(PLpgSQL_execstate *estate, PLpgSQL_stmt *stmt)
 {
 	PLpgSQL_stmt *save_estmt;
 	int			rc = -1;
@@ -1137,7 +1137,7 @@ exec_stmt(PLpgSQL_execstate * estate, PLpgSQL_stmt * stmt)
  * ----------
  */
 static int
-exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
+exec_stmt_assign(PLpgSQL_execstate *estate, PLpgSQL_stmt_assign *stmt)
 {
 	Assert(stmt->varno >= 0);
 
@@ -1153,7 +1153,7 @@ exec_stmt_assign(PLpgSQL_execstate * estate, PLpgSQL_stmt_assign * stmt)
  * ----------
  */
 static int
-exec_stmt_perform(PLpgSQL_execstate * estate, PLpgSQL_stmt_perform * stmt)
+exec_stmt_perform(PLpgSQL_execstate *estate, PLpgSQL_stmt_perform *stmt)
 {
 	PLpgSQL_expr *expr = stmt->expr;
 	int			rc;
@@ -1183,7 +1183,7 @@ exec_stmt_perform(PLpgSQL_execstate * estate, PLpgSQL_stmt_perform * stmt)
  * ----------
  */
 static int
-exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
+exec_stmt_getdiag(PLpgSQL_execstate *estate, PLpgSQL_stmt_getdiag *stmt)
 {
 	int			i;
 	PLpgSQL_datum *var;
@@ -1233,7 +1233,7 @@ exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
  * ----------
  */
 static int
-exec_stmt_if(PLpgSQL_execstate * estate, PLpgSQL_stmt_if * stmt)
+exec_stmt_if(PLpgSQL_execstate *estate, PLpgSQL_stmt_if *stmt)
 {
 	bool		value;
 	bool		isnull = false;
@@ -1262,7 +1262,7 @@ exec_stmt_if(PLpgSQL_execstate * estate, PLpgSQL_stmt_if * stmt)
  * ----------
  */
 static int
-exec_stmt_loop(PLpgSQL_execstate * estate, PLpgSQL_stmt_loop * stmt)
+exec_stmt_loop(PLpgSQL_execstate *estate, PLpgSQL_stmt_loop *stmt)
 {
 	int			rc;
 
@@ -1304,7 +1304,7 @@ exec_stmt_loop(PLpgSQL_execstate * estate, PLpgSQL_stmt_loop * stmt)
  * ----------
  */
 static int
-exec_stmt_while(PLpgSQL_execstate * estate, PLpgSQL_stmt_while * stmt)
+exec_stmt_while(PLpgSQL_execstate *estate, PLpgSQL_stmt_while *stmt)
 {
 	bool		value;
 	bool		isnull = false;
@@ -1354,7 +1354,7 @@ exec_stmt_while(PLpgSQL_execstate * estate, PLpgSQL_stmt_while * stmt)
  * ----------
  */
 static int
-exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
+exec_stmt_fori(PLpgSQL_execstate *estate, PLpgSQL_stmt_fori *stmt)
 {
 	PLpgSQL_var *var;
 	Datum		value;
@@ -1474,7 +1474,7 @@ exec_stmt_fori(PLpgSQL_execstate * estate, PLpgSQL_stmt_fori * stmt)
  * ----------
  */
 static int
-exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
+exec_stmt_fors(PLpgSQL_execstate *estate, PLpgSQL_stmt_fors *stmt)
 {
 	PLpgSQL_rec *rec = NULL;
 	PLpgSQL_row *row = NULL;
@@ -1604,7 +1604,7 @@ exec_stmt_fors(PLpgSQL_execstate * estate, PLpgSQL_stmt_fors * stmt)
  * ----------
  */
 static int
-exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
+exec_stmt_select(PLpgSQL_execstate *estate, PLpgSQL_stmt_select *stmt)
 {
 	PLpgSQL_rec *rec = NULL;
 	PLpgSQL_row *row = NULL;
@@ -1661,7 +1661,7 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
  * ----------
  */
 static int
-exec_stmt_exit(PLpgSQL_execstate * estate, PLpgSQL_stmt_exit * stmt)
+exec_stmt_exit(PLpgSQL_execstate *estate, PLpgSQL_stmt_exit *stmt)
 {
 	/*
 	 * If the exit has a condition, check that it's true
@@ -1688,7 +1688,7 @@ exec_stmt_exit(PLpgSQL_execstate * estate, PLpgSQL_stmt_exit * stmt)
  * ----------
  */
 static int
-exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
+exec_stmt_return(PLpgSQL_execstate *estate, PLpgSQL_stmt_return *stmt)
 {
 	/*
 	 * If processing a set-returning PL/PgSQL function, the final RETURN
@@ -1772,8 +1772,8 @@ exec_stmt_return(PLpgSQL_execstate * estate, PLpgSQL_stmt_return * stmt)
  * ----------
  */
 static int
-exec_stmt_return_next(PLpgSQL_execstate * estate,
-					  PLpgSQL_stmt_return_next * stmt)
+exec_stmt_return_next(PLpgSQL_execstate *estate,
+					  PLpgSQL_stmt_return_next *stmt)
 {
 	TupleDesc	tupdesc;
 	int			natts;
@@ -1873,7 +1873,7 @@ exec_stmt_return_next(PLpgSQL_execstate * estate,
 }
 
 static void
-exec_init_tuple_store(PLpgSQL_execstate * estate)
+exec_init_tuple_store(PLpgSQL_execstate *estate)
 {
 	ReturnSetInfo *rsi = estate->rsi;
 	MemoryContext oldcxt;
@@ -1902,7 +1902,7 @@ exec_init_tuple_store(PLpgSQL_execstate * estate)
  * ----------
  */
 static int
-exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
+exec_stmt_raise(PLpgSQL_execstate *estate, PLpgSQL_stmt_raise *stmt)
 {
 	Oid			paramtypeid;
 	Datum		paramvalue;
@@ -1972,8 +1972,8 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
  * ----------
  */
 static void
-plpgsql_estate_setup(PLpgSQL_execstate * estate,
-					 PLpgSQL_function * func,
+plpgsql_estate_setup(PLpgSQL_execstate *estate,
+					 PLpgSQL_function *func,
 					 ReturnSetInfo *rsi)
 {
 	estate->retval = (Datum) 0;
@@ -2017,7 +2017,7 @@ plpgsql_estate_setup(PLpgSQL_execstate * estate,
  * ----------
  */
 static void
-exec_eval_cleanup(PLpgSQL_execstate * estate)
+exec_eval_cleanup(PLpgSQL_execstate *estate)
 {
 	/* Clear result of a full SPI_exec */
 	if (estate->eval_tuptable != NULL)
@@ -2035,8 +2035,8 @@ exec_eval_cleanup(PLpgSQL_execstate * estate)
  * ----------
  */
 static void
-exec_prepare_plan(PLpgSQL_execstate * estate,
-				  PLpgSQL_expr * expr)
+exec_prepare_plan(PLpgSQL_execstate *estate,
+				  PLpgSQL_expr *expr)
 {
 	int			i;
 	_SPI_plan  *spi_plan;
@@ -2104,8 +2104,8 @@ exec_prepare_plan(PLpgSQL_execstate * estate,
  * ----------
  */
 static int
-exec_stmt_execsql(PLpgSQL_execstate * estate,
-				  PLpgSQL_stmt_execsql * stmt)
+exec_stmt_execsql(PLpgSQL_execstate *estate,
+				  PLpgSQL_stmt_execsql *stmt)
 {
 	int			i;
 	Datum	   *values;
@@ -2195,8 +2195,8 @@ exec_stmt_execsql(PLpgSQL_execstate * estate,
  * ----------
  */
 static int
-exec_stmt_dynexecute(PLpgSQL_execstate * estate,
-					 PLpgSQL_stmt_dynexecute * stmt)
+exec_stmt_dynexecute(PLpgSQL_execstate *estate,
+					 PLpgSQL_stmt_dynexecute *stmt)
 {
 	Datum		query;
 	bool		isnull = false;
@@ -2309,7 +2309,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
  * ----------
  */
 static int
-exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
+exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 {
 	Datum		query;
 	bool		isnull = false;
@@ -2469,7 +2469,7 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
  * ----------
  */
 static int
-exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
+exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 {
 	PLpgSQL_var *curvar = NULL;
 	char	   *curname = NULL;
@@ -2673,7 +2673,7 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
  * ----------
  */
 static int
-exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
+exec_stmt_fetch(PLpgSQL_execstate *estate, PLpgSQL_stmt_fetch *stmt)
 {
 	PLpgSQL_var *curvar = NULL;
 	PLpgSQL_rec *rec = NULL;
@@ -2746,7 +2746,7 @@ exec_stmt_fetch(PLpgSQL_execstate * estate, PLpgSQL_stmt_fetch * stmt)
  * ----------
  */
 static int
-exec_stmt_close(PLpgSQL_execstate * estate, PLpgSQL_stmt_close * stmt)
+exec_stmt_close(PLpgSQL_execstate *estate, PLpgSQL_stmt_close *stmt)
 {
 	PLpgSQL_var *curvar = NULL;
 	Portal		portal;
@@ -2786,8 +2786,8 @@ exec_stmt_close(PLpgSQL_execstate * estate, PLpgSQL_stmt_close * stmt)
  * ----------
  */
 static void
-exec_assign_expr(PLpgSQL_execstate * estate, PLpgSQL_datum * target,
-				 PLpgSQL_expr * expr)
+exec_assign_expr(PLpgSQL_execstate *estate, PLpgSQL_datum *target,
+				 PLpgSQL_expr *expr)
 {
 	Datum		value;
 	Oid			valtype;
@@ -2804,8 +2804,8 @@ exec_assign_expr(PLpgSQL_execstate * estate, PLpgSQL_datum * target,
  * ----------
  */
 static void
-exec_assign_value(PLpgSQL_execstate * estate,
-				  PLpgSQL_datum * target,
+exec_assign_value(PLpgSQL_execstate *estate,
+				  PLpgSQL_datum *target,
 				  Datum value, Oid valtype, bool *isNull)
 {
 	switch (target->dtype)
@@ -3195,8 +3195,8 @@ exec_assign_value(PLpgSQL_execstate * estate,
  * at the stored value in the case of pass-by-reference datatypes.
  */
 static void
-exec_eval_datum(PLpgSQL_execstate * estate,
-				PLpgSQL_datum * datum,
+exec_eval_datum(PLpgSQL_execstate *estate,
+				PLpgSQL_datum *datum,
 				Oid expectedtypeid,
 				Oid *typeid,
 				Datum *value,
@@ -3348,8 +3348,8 @@ exec_eval_datum(PLpgSQL_execstate * estate,
  * ----------
  */
 static int
-exec_eval_integer(PLpgSQL_execstate * estate,
-				  PLpgSQL_expr * expr,
+exec_eval_integer(PLpgSQL_execstate *estate,
+				  PLpgSQL_expr *expr,
 				  bool *isNull)
 {
 	Datum		exprdatum;
@@ -3370,8 +3370,8 @@ exec_eval_integer(PLpgSQL_execstate * estate,
  * ----------
  */
 static bool
-exec_eval_boolean(PLpgSQL_execstate * estate,
-				  PLpgSQL_expr * expr,
+exec_eval_boolean(PLpgSQL_execstate *estate,
+				  PLpgSQL_expr *expr,
 				  bool *isNull)
 {
 	Datum		exprdatum;
@@ -3392,8 +3392,8 @@ exec_eval_boolean(PLpgSQL_execstate * estate,
  * ----------
  */
 static Datum
-exec_eval_expr(PLpgSQL_execstate * estate,
-			   PLpgSQL_expr * expr,
+exec_eval_expr(PLpgSQL_execstate *estate,
+			   PLpgSQL_expr *expr,
 			   bool *isNull,
 			   Oid *rettype)
 {
@@ -3455,8 +3455,8 @@ exec_eval_expr(PLpgSQL_execstate * estate,
  * ----------
  */
 static int
-exec_run_select(PLpgSQL_execstate * estate,
-				PLpgSQL_expr * expr, int maxtuples, Portal *portalP)
+exec_run_select(PLpgSQL_execstate *estate,
+				PLpgSQL_expr *expr, int maxtuples, Portal *portalP)
 {
 	int			i;
 	Datum	   *values;
@@ -3535,8 +3535,8 @@ exec_run_select(PLpgSQL_execstate * estate,
  * ----------
  */
 static Datum
-exec_eval_simple_expr(PLpgSQL_execstate * estate,
-					  PLpgSQL_expr * expr,
+exec_eval_simple_expr(PLpgSQL_execstate *estate,
+					  PLpgSQL_expr *expr,
 					  bool *isNull,
 					  Oid *rettype)
 {
@@ -3643,9 +3643,9 @@ exec_eval_simple_expr(PLpgSQL_execstate * estate,
  * ----------
  */
 static void
-exec_move_row(PLpgSQL_execstate * estate,
-			  PLpgSQL_rec * rec,
-			  PLpgSQL_row * row,
+exec_move_row(PLpgSQL_execstate *estate,
+			  PLpgSQL_rec *rec,
+			  PLpgSQL_row *row,
 			  HeapTuple tup, TupleDesc tupdesc)
 {
 	/*
@@ -3769,8 +3769,8 @@ exec_move_row(PLpgSQL_execstate * estate,
  * ----------
  */
 static HeapTuple
-make_tuple_from_row(PLpgSQL_execstate * estate,
-					PLpgSQL_row * row,
+make_tuple_from_row(PLpgSQL_execstate *estate,
+					PLpgSQL_row *row,
 					TupleDesc tupdesc)
 {
 	int			natts = tupdesc->natts;
@@ -4127,7 +4127,7 @@ exec_simple_check_node(Node *node)
  * ----------
  */
 static void
-exec_simple_check_plan(PLpgSQL_expr * expr)
+exec_simple_check_plan(PLpgSQL_expr *expr)
 {
 	_SPI_plan  *spi_plan = (_SPI_plan *) expr->plan;
 	Plan	   *plan;
@@ -4214,7 +4214,7 @@ compatible_tupdesc(TupleDesc td1, TupleDesc td2)
  * ----------
  */
 static void
-exec_set_found(PLpgSQL_execstate * estate, bool state)
+exec_set_found(PLpgSQL_execstate *estate, bool state)
 {
 	PLpgSQL_var *var;
 

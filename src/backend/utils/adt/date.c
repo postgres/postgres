@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.102 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/date.c,v 1.103 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,7 +55,7 @@ Datum
 date_in(PG_FUNCTION_ARGS)
 {
 	char	   *str = PG_GETARG_CSTRING(0);
-	DateADT		date;
+	DateADT date;
 	fsec_t		fsec;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -109,13 +109,13 @@ date_in(PG_FUNCTION_ARGS)
 Datum
 date_out(PG_FUNCTION_ARGS)
 {
-	DateADT		date = PG_GETARG_DATEADT(0);
+	DateADT date = PG_GETARG_DATEADT(0);
 	char	   *result;
 	struct pg_tm tt,
 			   *tm = &tt;
 	char		buf[MAXDATELEN + 1];
 
-	j2date(date + POSTGRES_EPOCH_JDATE,
+	j2date(date +POSTGRES_EPOCH_JDATE,
 		   &(tm->tm_year), &(tm->tm_mon), &(tm->tm_mday));
 
 	EncodeDateOnly(tm, DateStyle, buf);
@@ -141,7 +141,7 @@ date_recv(PG_FUNCTION_ARGS)
 Datum
 date_send(PG_FUNCTION_ARGS)
 {
-	DateADT		date = PG_GETARG_DATEADT(0);
+	DateADT date = PG_GETARG_DATEADT(0);
 	StringInfoData buf;
 
 	pq_begintypsend(&buf);
@@ -717,7 +717,7 @@ date_timestamp(PG_FUNCTION_ARGS)
 Datum
 timestamp_date(PG_FUNCTION_ARGS)
 {
-	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
 	DateADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -726,7 +726,7 @@ timestamp_date(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -769,7 +769,7 @@ timestamptz_date(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -823,7 +823,7 @@ Datum
 date_text(PG_FUNCTION_ARGS)
 {
 	/* Input is a Date, but may as well leave it in Datum form */
-	Datum		date = PG_GETARG_DATUM(0);
+	Datum date = PG_GETARG_DATUM(0);
 	text	   *result;
 	char	   *str;
 	int			len;
@@ -1322,7 +1322,7 @@ overlaps_time(PG_FUNCTION_ARGS)
 Datum
 timestamp_time(PG_FUNCTION_ARGS)
 {
-	Timestamp	timestamp = PG_GETARG_TIMESTAMP(0);
+	Timestamp timestamp = PG_GETARG_TIMESTAMP(0);
 	TimeADT		result;
 	struct pg_tm tt,
 			   *tm = &tt;
@@ -1331,7 +1331,7 @@ timestamp_time(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) != 0)
+	if (timestamp2tm(timestamp, NULL, tm, &fsec, NULL) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1368,7 +1368,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -1394,7 +1394,7 @@ timestamptz_time(PG_FUNCTION_ARGS)
 Datum
 datetime_timestamp(PG_FUNCTION_ARGS)
 {
-	DateADT		date = PG_GETARG_DATEADT(0);
+	DateADT date = PG_GETARG_DATEADT(0);
 	TimeADT		time = PG_GETARG_TIMEADT(1);
 	Timestamp	result;
 
@@ -2246,7 +2246,7 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 	if (TIMESTAMP_NOT_FINITE(timestamp))
 		PG_RETURN_NULL();
 
-	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) != 0)
+	if (timestamp2tm(timestamp, &tz, tm, &fsec, &tzn) !=0)
 		ereport(ERROR,
 				(errcode(ERRCODE_DATETIME_VALUE_OUT_OF_RANGE),
 				 errmsg("timestamp out of range")));
@@ -2268,15 +2268,15 @@ timestamptz_timetz(PG_FUNCTION_ARGS)
 Datum
 datetimetz_timestamptz(PG_FUNCTION_ARGS)
 {
-	DateADT		date = PG_GETARG_DATEADT(0);
+	DateADT date = PG_GETARG_DATEADT(0);
 	TimeTzADT  *time = PG_GETARG_TIMETZADT_P(1);
 	TimestampTz result;
 
 #ifdef HAVE_INT64_TIMESTAMP
-	result = (((date * INT64CONST(86400000000)) + time->time)
+	result = (((date *INT64CONST(86400000000)) +time->time)
 			  + (time->zone * INT64CONST(1000000)));
 #else
-	result = (((date * 86400.0) + time->time) + time->zone);
+	result = (((date *86400.0) +time->time) + time->zone);
 #endif
 
 	PG_RETURN_TIMESTAMP(result);

@@ -50,7 +50,7 @@ dt2local(timestamp dt, int tz)
  * Returns -1 on failure (overflow).
  */
 int
-tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp * result)
+tm2timestamp(struct tm * tm, fsec_t fsec, int *tzp, timestamp *result)
 {
 #ifdef HAVE_INT64_TIMESTAMP
 	int			dDate;
@@ -372,7 +372,7 @@ PGTYPEStimestamp_to_asc(timestamp tstamp)
 }
 
 void
-PGTYPEStimestamp_current(timestamp * ts)
+PGTYPEStimestamp_current(timestamp *ts)
 {
 	struct tm	tm;
 
@@ -382,7 +382,7 @@ PGTYPEStimestamp_current(timestamp * ts)
 }
 
 static int
-dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
+dttofmtasc_replace(timestamp *ts, date dDate, int dow, struct tm * tm,
 				   char *output, int *pstr_len, char *fmtstr)
 {
 	union un_fmt_comb replace_val;
@@ -772,7 +772,7 @@ dttofmtasc_replace(timestamp * ts, date dDate, int dow, struct tm * tm,
 
 
 int
-PGTYPEStimestamp_fmt_asc(timestamp * ts, char *output, int str_len, char *fmtstr)
+PGTYPEStimestamp_fmt_asc(timestamp *ts, char *output, int str_len, char *fmtstr)
 {
 	struct tm	tm;
 	fsec_t		fsec;
@@ -787,7 +787,7 @@ PGTYPEStimestamp_fmt_asc(timestamp * ts, char *output, int str_len, char *fmtstr
 }
 
 int
-PGTYPEStimestamp_sub(timestamp * ts1, timestamp * ts2, interval * iv)
+PGTYPEStimestamp_sub(timestamp *ts1, timestamp *ts2, interval *iv)
 {
 	if (TIMESTAMP_NOT_FINITE(*ts1) || TIMESTAMP_NOT_FINITE(*ts2))
 		return PGTYPES_TS_ERR_EINFTIME;
@@ -804,7 +804,7 @@ PGTYPEStimestamp_sub(timestamp * ts1, timestamp * ts2, interval * iv)
 }
 
 int
-PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp * d)
+PGTYPEStimestamp_defmt_asc(char *str, char *fmt, timestamp *d)
 {
 	int			year,
 				month,

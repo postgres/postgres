@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.133 2004/08/29 05:06:49 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/datetime.c,v 1.134 2004/08/30 02:54:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -666,6 +666,7 @@ j2day(int date)
 	unsigned int day;
 
 	day = date;
+
 	day += 1;
 	day %= 7;
 
@@ -1585,7 +1586,7 @@ int
 DetermineLocalTimeZone(struct pg_tm * tm)
 {
 	int			tz;
-	int			date,
+	int date   ,
 				sec;
 	pg_time_t	day,
 				mysec,
@@ -1609,7 +1610,8 @@ DetermineLocalTimeZone(struct pg_tm * tm)
 	if (!IS_VALID_JULIAN(tm->tm_year, tm->tm_mon, tm->tm_mday))
 		goto overflow;
 	date = date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - UNIX_EPOCH_JDATE;
-	day = ((pg_time_t) date) * 86400;
+
+	day = ((pg_time_t) date) *86400;
 	if (day / 86400 != date)
 		goto overflow;
 	sec = tm->tm_sec + (tm->tm_min + tm->tm_hour * 60) * 60;

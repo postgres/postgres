@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.4 2004/08/29 05:06:46 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/port/win32/socket.c,v 1.5 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,15 +33,15 @@ TranslateSocketError(void)
 {
 	switch (WSAGetLastError())
 	{
-			case WSANOTINITIALISED:
-			case WSAENETDOWN:
-			case WSAEINPROGRESS:
-			case WSAEINVAL:
-			case WSAESOCKTNOSUPPORT:
-			case WSAEFAULT:
-			case WSAEINVALIDPROVIDER:
-			case WSAEINVALIDPROCTABLE:
-			case WSAEMSGSIZE:
+		case WSANOTINITIALISED:
+		case WSAENETDOWN:
+		case WSAEINPROGRESS:
+		case WSAEINVAL:
+		case WSAESOCKTNOSUPPORT:
+		case WSAEFAULT:
+		case WSAEINVALIDPROVIDER:
+		case WSAEINVALIDPROCTABLE:
+		case WSAEMSGSIZE:
 			errno = EINVAL;
 			break;
 		case WSAEAFNOSUPPORT:

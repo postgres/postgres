@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.15 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol3.c,v 1.16 2004/08/30 02:54:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,7 @@ static int	getNotify(PGconn *conn);
 static int	getCopyStart(PGconn *conn, ExecStatusType copytype);
 static int	getReadyForQuery(PGconn *conn);
 static int build_startup_packet(const PGconn *conn, char *packet,
-					 const PQEnvironmentOption * options);
+					 const PQEnvironmentOption *options);
 
 
 /*
@@ -1400,7 +1400,7 @@ pqFunctionCall3(PGconn *conn, Oid fnid,
  */
 char *
 pqBuildStartupPacket3(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption * options)
+					  const PQEnvironmentOption *options)
 {
 	char	   *startpacket;
 
@@ -1423,7 +1423,7 @@ pqBuildStartupPacket3(PGconn *conn, int *packetlen,
  */
 static int
 build_startup_packet(const PGconn *conn, char *packet,
-					 const PQEnvironmentOption * options)
+					 const PQEnvironmentOption *options)
 {
 	int			packet_len = 0;
 	const PQEnvironmentOption *next_eo;

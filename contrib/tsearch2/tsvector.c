@@ -1003,47 +1003,47 @@ Datum
 tsvector_cmp(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_INT32(res);
+		PG_RETURN_INT32(res);
 }
 
 Datum
 tsvector_lt(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res < 0) ? true : false);
+		PG_RETURN_BOOL((res < 0) ? true : false);
 }
 
 Datum
 tsvector_le(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res <= 0) ? true : false);
+		PG_RETURN_BOOL((res <= 0) ? true : false);
 }
 
 Datum
 tsvector_eq(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res == 0) ? true : false);
+		PG_RETURN_BOOL((res == 0) ? true : false);
 }
 
 Datum
 tsvector_ge(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res >= 0) ? true : false);
+		PG_RETURN_BOOL((res >= 0) ? true : false);
 }
 
 Datum
 tsvector_gt(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res > 0) ? true : false);
+		PG_RETURN_BOOL((res > 0) ? true : false);
 }
 
 Datum
 tsvector_ne(PG_FUNCTION_ARGS)
 {
 	RUNCMP
-	PG_RETURN_BOOL((res != 0) ? true : false);
+		PG_RETURN_BOOL((res != 0) ? true : false);
 }

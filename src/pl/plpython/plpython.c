@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.54 2004/08/29 05:07:01 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.55 2004/08/30 02:54:42 momjian Exp $
  *
  *********************************************************************
  */
@@ -2114,7 +2114,7 @@ PLy_spi_execute_query(char *query, int limit)
 
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
-		rv = SPI_exec(query, limit);
+	rv = SPI_exec(query, limit);
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldcontext);
@@ -2375,7 +2375,7 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
-		elog(level, "%s", sv);
+	elog(level, "%s", sv);
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldcontext);

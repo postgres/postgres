@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/bin/pgevent/pgevent.c,v 1.2 2004/08/29 05:06:54 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/bin/pgevent/pgevent.c,v 1.3 2004/08/30 02:54:40 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -107,7 +107,7 @@ DllUnregisterServer(void)
  * DllMain --- is an optional entry point into a DLL.
  */
 
-BOOL WINAPI
+BOOL		WINAPI
 DllMain(HANDLE hModule,
 		DWORD ul_reason_for_call,
 		LPVOID lpReserved

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.167 2004/08/29 16:34:47 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlog.c,v 1.168 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2484,9 +2484,9 @@ got_record:;
 	/*
 	 * Allocate or enlarge readRecordBuf as needed.  To avoid useless
 	 * small increases, round its size to a multiple of BLCKSZ, and make
-	 * sure it's at least 4*BLCKSZ to start with.  (That is enough for
-	 * all "normal" records, but very large commit or abort records might
-	 * need more space.)
+	 * sure it's at least 4*BLCKSZ to start with.  (That is enough for all
+	 * "normal" records, but very large commit or abort records might need
+	 * more space.)
 	 */
 	if (total_len > readRecordBufSize)
 	{

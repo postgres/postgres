@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.142 2004/08/29 21:08:47 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.143 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1117,24 +1117,27 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 		xl_dbase_create_rec *xlrec = (xl_dbase_create_rec *) XLogRecGetData(record);
 		char	   *dst_path = xlrec->src_path + strlen(xlrec->src_path) + 1;
 		struct stat st;
+
 #ifndef WIN32
 		char		buf[2 * MAXPGPATH + 100];
 #endif
 
 		/*
-		 * Our theory for replaying a CREATE is to forcibly drop the target
-		 * subdirectory if present, then re-copy the source data.  This
-		 * may be more work than needed, but it is simple to implement.
+		 * Our theory for replaying a CREATE is to forcibly drop the
+		 * target subdirectory if present, then re-copy the source data.
+		 * This may be more work than needed, but it is simple to
+		 * implement.
 		 */
 		if (stat(dst_path, &st) == 0 && S_ISDIR(st.st_mode))
 		{
 			if (!rmtree(dst_path, true))
 				ereport(WARNING,
-						(errmsg("could not remove database directory \"%s\"",
-								dst_path)));
+					(errmsg("could not remove database directory \"%s\"",
+							dst_path)));
 		}
 
 #ifndef WIN32
+
 		/*
 		 * Copy this subdirectory to the new location
 		 *
@@ -1164,7 +1167,10 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_dbase_drop_rec *xlrec = (xl_dbase_drop_rec *) XLogRecGetData(record);
 
-		/* Drop pages for this database that are in the shared buffer cache */
+		/*
+		 * Drop pages for this database that are in the shared buffer
+		 * cache
+		 */
 		DropBuffers(xlrec->db_id);
 
 		if (!rmtree(xlrec->dir_path, true))

@@ -111,7 +111,7 @@ PGTYPESdate_julmdy(date jd, int *mdy)
 }
 
 void
-PGTYPESdate_mdyjul(int *mdy, date * jdate)
+PGTYPESdate_mdyjul(int *mdy, date *jdate)
 {
 	/* month is mdy[0] */
 	/* day	 is mdy[1] */
@@ -124,14 +124,14 @@ int
 PGTYPESdate_dayofweek(date dDate)
 {
 	/*
-	 * Sunday:	0 Monday:	   1 Tuesday:	  2 Wednesday:	 3 Thursday:
-	 * 4 Friday:	  5 Saturday:	 6
+	 * Sunday:	0 Monday:	   1 Tuesday:	  2 Wednesday:	 3 Thursday: 4
+	 * Friday:		5 Saturday:    6
 	 */
 	return (int) (dDate + date2j(2000, 1, 1) + 1) % 7;
 }
 
 void
-PGTYPESdate_today(date * d)
+PGTYPESdate_today(date *d)
 {
 	struct tm	ts;
 
@@ -316,7 +316,7 @@ PGTYPESdate_fmt_asc(date dDate, char *fmtstring, char *outbuf)
 
 #define PGTYPES_DATE_MONTH_MAXLENGTH		20	/* probably even less  :-) */
 int
-PGTYPESdate_defmt_asc(date * d, char *fmt, char *str)
+PGTYPESdate_defmt_asc(date *d, char *fmt, char *str)
 {
 	/*
 	 * token[2] = { 4,6 } means that token 2 starts at position 4 and ends

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.13 2004/08/29 05:07:00 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/interfaces/libpq/fe-protocol2.c,v 1.14 2004/08/30 02:54:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1395,7 +1395,7 @@ pqFunctionCall2(PGconn *conn, Oid fnid,
  */
 char *
 pqBuildStartupPacket2(PGconn *conn, int *packetlen,
-					  const PQEnvironmentOption * options)
+					  const PQEnvironmentOption *options)
 {
 	StartupPacket *startpacket;
 

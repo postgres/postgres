@@ -4,7 +4,7 @@
 
 /* Returns a better readable representaion of variable key ( sets pointer ) */
 
-extern GBT_VARKEY_R
+extern		GBT_VARKEY_R
 gbt_var_key_readable(const GBT_VARKEY * k)
 {
 

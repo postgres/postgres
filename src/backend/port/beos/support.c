@@ -168,7 +168,7 @@ beos_startup(int argc, char **argv)
 		/* Main server loop */
 		for (;;)
 		{
-			int32		opcode = 0;
+			int32 opcode = 0;
 			char		datas[4000];
 
 			/*

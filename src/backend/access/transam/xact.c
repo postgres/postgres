@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.183 2004/08/29 05:06:40 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/transam/xact.c,v 1.184 2004/08/30 02:54:38 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1704,7 +1704,7 @@ CommitTransactionCommand(void)
 			AbortOutOfAnyTransaction();
 			s = CurrentTransactionState;		/* changed by
 												 * AbortOutOfAnyTransaction
-												 *	*/
+												 * */
 			/* AbortOutOfAnyTransaction sets the blockState */
 			break;
 

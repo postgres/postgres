@@ -12,7 +12,7 @@ typedef struct
 #endif
 	long		month;			/* months and years, after time for
 								 * alignment */
-}	interval;
+} interval;
 
 #ifdef __cplusplus
 extern		"C"
