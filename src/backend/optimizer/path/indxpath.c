@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.28 1998/08/11 19:32:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/indxpath.c,v 1.29 1998/08/14 16:13:07 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,6 +39,9 @@
 #include "optimizer/pathnode.h"
 #include "optimizer/xfunc.h"
 #include "parser/parsetree.h"	/* for getrelid() */
+#include "parser/parse_expr.h"	/* for exprType() */
+#include "parser/parse_oper.h"	/* for oprid() and oper() */
+#include "parser/parse_coerce.h"	/* for IS_BINARY_COMPATIBLE() */
 #include "utils/lsyscache.h"
 
 
@@ -80,8 +83,7 @@ static List *add_index_paths(List *indexpaths, List *new_indexpaths);
 static bool function_index_operand(Expr *funcOpnd, RelOptInfo *rel, RelOptInfo *index);
 
 
-/*
- * find-index-paths--
+/* find_index_paths()
  *	  Finds all possible index paths by determining which indices in the
  *	  list 'indices' are usable.
  *
@@ -120,16 +122,16 @@ find_index_paths(Query *root,
 	List	   *joinpaths = NIL;
 	List	   *retval = NIL;
 	List	   *ilist;
-	
+
 	foreach(ilist, indices)
 	{
 		index = (RelOptInfo *) lfirst(ilist);
-	
+
 		/* If this is a partial index, return if it fails the predicate test */
 		if (index->indpred != NIL)
 			if (!pred_test(index->indpred, clauseinfo_list, joininfo_list))
 				continue;
-	
+
 		/*
 		 * 1. Try matching the index against subclauses of an 'or' clause.
 		 * The fields of the clauseinfo nodes are marked with lists of the
@@ -143,7 +145,7 @@ find_index_paths(Query *root,
 								  index->indexkeys[0],
 								  index->classlist[0],
 								  clauseinfo_list);
-	
+
 		/*
 		 * 2. If the keys of this index match any of the available restriction
 		 * clauses, then create pathnodes corresponding to each group of
@@ -154,7 +156,7 @@ find_index_paths(Query *root,
 													 index->indexkeys,
 													 index->classlist,
 													 clauseinfo_list);
-	
+
 		scanpaths = NIL;
 		if (scanclausegroups != NIL)
 			scanpaths = create_index_paths(root,
@@ -162,7 +164,7 @@ find_index_paths(Query *root,
 										   index,
 										   scanclausegroups,
 										   false);
-	
+
 		/*
 		 * 3. If this index can be used with any join clause, then create
 		 * pathnodes for each group of usable clauses.	An index can be used
@@ -172,7 +174,7 @@ find_index_paths(Query *root,
 		 */
 		joinclausegroups = indexable_joinclauses(rel, index, joininfo_list, clauseinfo_list);
 		joinpaths = NIL;
-	
+
 		if (joinclausegroups != NIL)
 		{
 			List	   *new_join_paths = create_index_paths(root, rel,
@@ -180,11 +182,11 @@ find_index_paths(Query *root,
 															joinclausegroups,
 															true);
 			List	   *innerjoin_paths = index_innerjoin(root, rel, joinclausegroups, index);
-	
+
 			rel->innerjoin = nconc(rel->innerjoin, innerjoin_paths);
 			joinpaths = new_join_paths;
 		}
-	
+
 		/*
 		 * Some sanity checks to make sure that the indexpath is valid.
 		 */
@@ -193,7 +195,7 @@ find_index_paths(Query *root,
 		if (scanpaths != NULL)
 			retval = add_index_paths(scanpaths, retval);
 	}
-	
+
 	return retval;
 
 }
@@ -252,8 +254,7 @@ match_index_orclauses(RelOptInfo *rel,
 	}
 }
 
-/*
- * match_index_operand--
+/* match_index_to_operand()
  *	  Generalize test for a match between an existing index's key
  *	  and the operand on the rhs of a restriction clause.  Now check
  *	  for functional indices as well.
@@ -264,17 +265,22 @@ match_index_to_operand(int indexkey,
 					   RelOptInfo *rel,
 					   RelOptInfo *index)
 {
+	bool	result;
 
 	/*
 	 * Normal index.
 	 */
 	if (index->indproc == InvalidOid)
-		return match_indexkey_operand(indexkey, (Var *) operand, rel);
+	{
+		result = match_indexkey_operand(indexkey, (Var *) operand, rel);
+		return result;
+	}
 
 	/*
 	 * functional index check
 	 */
-	return (function_index_operand(operand, rel, index));
+	result = function_index_operand(operand, rel, index);
+	return result;
 }
 
 /*
@@ -320,7 +326,7 @@ match_index_orclause(RelOptInfo *rel,
 	else	matching_indices = other_matching_indices;
 
 	index_list = matching_indices;
-	
+
 	foreach(clist, or_clauses)
 	{
 		clause = lfirst(clist);
@@ -555,8 +561,7 @@ group_clauses_by_ikey_for_joins(RelOptInfo *rel,
  * - vadim 01/22/97
  */
 
-/*
- * match_clause_to-indexkey--
+/* match_clause_to_indexkey()
  *	  Finds the first of a relation's available restriction clauses that
  *	  matches a key of an index.
  *
@@ -609,11 +614,56 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			(rightop && IsA(rightop, Param)))
 		{
 			restrict_op = ((Oper *) ((Expr *) clause)->oper)->opno;
+
 			isIndexable = (op_class(restrict_op, xclass, index->relam) &&
-				 			IndexScanableOperand(leftop,
+						   IndexScanableOperand(leftop,
+												indexkey,
+												rel,
+												index));
+
+#ifndef IGNORE_BINARY_COMPATIBLE_INDICES
+			/* Didn't find an index?
+			 * Then maybe we can find another binary-compatible index instead...
+			 * thomas 1998-08-14
+			 */
+			if (! isIndexable)
+			{
+				Oid   ltype;
+				Oid   rtype;
+
+				ltype = exprType((Node *)leftop);
+				rtype = exprType((Node *)rightop);
+
+				/* make sure we have two different binary-compatible types... */
+				if ((ltype != rtype)
+				 && IS_BINARY_COMPATIBLE(ltype, rtype))
+				{
+					char     *opname;
+					Operator  newop;
+
+					opname = get_opname(restrict_op);
+					newop = oper(opname, ltype, ltype, TRUE);
+
+					/* actually have a different operator to try? */
+					if (HeapTupleIsValid(newop) && (oprid(newop) != restrict_op))
+					{
+						restrict_op = oprid(newop);
+
+						isIndexable =
+							(op_class(restrict_op, xclass, index->relam) &&
+							 IndexScanableOperand(leftop,
 												  indexkey,
 												  rel,
 												  index));
+
+						if (isIndexable)
+						{
+							((Oper *) ((Expr *) clause)->oper)->opno = restrict_op;
+						}
+					}
+				}
+			}
+#endif
 		}
 
 		/*
@@ -625,13 +675,54 @@ match_clause_to_indexkey(RelOptInfo *rel,
 			restrict_op =
 				get_commutator(((Oper *) ((Expr *) clause)->oper)->opno);
 
-			if ((restrict_op != InvalidOid) &&
+			isIndexable = ((restrict_op != InvalidOid) &&
 				op_class(restrict_op, xclass, index->relam) &&
 				IndexScanableOperand(rightop,
-									 indexkey, rel, index))
-			{
-				isIndexable = true;
+									 indexkey, rel, index));
 
+#ifndef IGNORE_BINARY_COMPATIBLE_INDICES
+			if (! isIndexable)
+			{
+				Oid   ltype;
+				Oid   rtype;
+
+				ltype = exprType((Node *)leftop);
+				rtype = exprType((Node *)rightop);
+
+				if ((ltype != rtype)
+				 && IS_BINARY_COMPATIBLE(ltype, rtype))
+				{
+					char     *opname;
+					Operator  newop;
+
+					restrict_op = ((Oper *) ((Expr *) clause)->oper)->opno;
+
+					opname = get_opname(restrict_op);
+					newop = oper(opname, rtype, rtype, TRUE);
+
+					if (HeapTupleIsValid(newop) && (oprid(newop) != restrict_op))
+					{
+						restrict_op =
+							get_commutator(oprid(newop));
+
+						isIndexable = ((restrict_op != InvalidOid) &&
+										op_class(restrict_op, xclass, index->relam) &&
+										IndexScanableOperand(rightop,
+															 indexkey,
+															 rel,
+															 index));
+
+						if (isIndexable)
+						{
+							((Oper *) ((Expr *) clause)->oper)->opno = oprid(newop);
+						}
+					}
+				}
+			}
+#endif
+
+			if (isIndexable)
+			{
 				/*
 				 * In place list modification. (op const var/func) -> (op
 				 * var/func const)
