@@ -15,12 +15,12 @@
 #include <stdio.h>
 #include <locale.h>
 
-#include <ecpgtype.h>
-#include <ecpglib.h>
-#include <ecpgerrno.h>
+#include "ecpgtype.h"
+#include "ecpglib.h"
+#include "ecpgerrno.h"
 #include "extern.h"
-#include <sqlca.h>
-#include <sql3types.h>
+#include "sqlca.h"
+#include "sql3types.h"
 
 /* variables visible to the programs */
 struct sqlca sqlca =
@@ -868,7 +868,7 @@ ECPGdo(int lineno, const char *connection_name, char *query,...)
  *
  * Copyright (c) 2000, Christof Petig <christof.petig@wtal.de>
  *
- * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.6 2000/04/12 17:17:03 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.7 2000/05/29 21:25:00 momjian Exp $
  */
 
 PGconn	   *ECPG_internal_get_connection(char *name);

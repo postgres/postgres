@@ -5,7 +5,7 @@
  *
  */
 #include <iostream.h>
-#include <libpq++.h>
+#include "libpq++.h"
 #include <stdlib.h>
 
 main()

@@ -1,5 +1,5 @@
-#include <postgres.h>
-#include <libpq-fe.h>
+#include "postgres.h"
+#include "libpq-fe.h"
 
 /* Here are some methods used by the lib. */
 /* Returns a pointer to a string containing a simple type name. */

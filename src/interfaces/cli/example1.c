@@ -30,7 +30,7 @@
  * calls.
  */
 
-#include <sqlcli.h>
+#include "sqlcli.h"
 #include <string.h>
 
 #ifndef NULL

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.8 1999/11/28 22:02:17 tgl Exp $
+ *    $Header: /cvsroot/pgsql/src/pl/plpgsql/src/gram.y,v 1.9 2000/05/29 21:25:07 momjian Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -36,8 +36,8 @@
  *
  **********************************************************************/
 
-#include "stdio.h"
-#include "string.h"
+#include <stdio.h>
+#include <string.h>
 #include "plpgsql.h"
 #ifdef YYBISON
 #include "pl_scan.c" /* GNU bison wants it here */

@@ -1,8 +1,8 @@
-#include <ecpgtype.h>
-#include <ecpglib.h>
-#include <ecpgerrno.h>
+#include "ecpgtype.h"
+#include "ecpglib.h"
+#include "ecpgerrno.h"
 #include "extern.h"
-#include <sqlca.h>
+#include "sqlca.h"
 
 static struct connection *all_connections = NULL,
 		   *actual_connection = NULL;

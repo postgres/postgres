@@ -7,12 +7,12 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlo.cc,v 1.7 2000/04/25 21:00:29 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq++/examples/Attic/testlo.cc,v 1.8 2000/05/29 21:25:04 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <iostream.h>
-#include <libpq++.h>
+#include "libpq++.h"
 #include <stdlib.h>
 
 int main(int argc, char **argv)

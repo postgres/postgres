@@ -1,11 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <ecpgtype.h>
-#include <ecpglib.h>
-#include <ecpgerrno.h>
+#include "ecpgtype.h"
+#include "ecpglib.h"
+#include "ecpgerrno.h"
 #include "extern.h"
-#include <sqlca.h>
+#include "sqlca.h"
 
 bool
 get_data(PGresult *results, int act_tuple, int act_field, int lineno,

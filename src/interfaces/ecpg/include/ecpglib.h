@@ -1,5 +1,5 @@
-#include <postgres.h>
-#include <libpq-fe.h>
+#include "postgres.h"
+#include "libpq-fe.h"
 
 #ifdef __cplusplus
 extern		"C"

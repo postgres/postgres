@@ -26,9 +26,9 @@
  *
  */
 
-#include <Python.h>
-#include <libpq-fe.h>
-#include <libpq/libpq-fs.h>
+#include "Python.h"
+#include "libpq-fe.h"
+#include "libpq/libpq-fs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

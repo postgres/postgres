@@ -1,8 +1,8 @@
-#include <ecpgtype.h>
-#include <ecpglib.h>
-#include <ecpgerrno.h>
+#include "ecpgtype.h"
+#include "ecpglib.h"
+#include "ecpgerrno.h"
 #include "extern.h"
-#include <sql3types.h>
+#include "sql3types.h"
 
 struct descriptor
 {

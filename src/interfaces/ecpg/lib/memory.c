@@ -1,6 +1,6 @@
-#include <ecpgtype.h>
-#include <ecpglib.h>
-#include <ecpgerrno.h>
+#include "ecpgtype.h"
+#include "ecpglib.h"
+#include "ecpgerrno.h"
 #include "extern.h"
 
 char *

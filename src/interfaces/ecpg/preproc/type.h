@@ -1,4 +1,4 @@
-#include <ecpgtype.h>
+#include "ecpgtype.h"
 
 struct ECPGtype;
 struct ECPGstruct_member

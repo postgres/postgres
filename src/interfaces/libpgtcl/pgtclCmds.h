@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pgtclCmds.h,v 1.17 2000/04/12 17:17:11 momjian Exp $
+ * $Id: pgtclCmds.h,v 1.18 2000/05/29 21:25:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -14,7 +14,7 @@
 #ifndef PGTCLCMDS_H
 #define PGTCLCMDS_H
 
-#include "tcl.h"
+#include <tcl.h>
 #include "libpq-fe.h"
 
 #define RES_HARD_MAX 128

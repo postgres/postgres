@@ -7,7 +7,7 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include <libpq-fe.h>
+#include "libpq-fe.h"
 #include "halt.h"
 #include "libpgeasy.h"
 

@@ -27,7 +27,7 @@ tuple 1: got
  *
  */
 #include <iostream.h>
-#include <libpq++.h>
+#include "libpq++.h"
 #include <stdlib.h>
 extern "C" {
 #include "postgres.h"		// for Postgres types

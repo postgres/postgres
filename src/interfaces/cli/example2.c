@@ -30,7 +30,7 @@
  * Sample program - uses concise CLI functions to execute
  * interactively an ad hoc statement.
  */
-#include <sqlcli.h>
+#include "sqlcli.h"
 #include <string.h>
 #include <stdlib.h>
 

@@ -14,7 +14,7 @@
 
 #include <tcl.h>
 
-#include <libpgtcl.h>
+#include "libpgtcl.h"
 
 /*
  * The following variable is a special hack that is needed in order for

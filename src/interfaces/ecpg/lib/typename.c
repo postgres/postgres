@@ -1,8 +1,8 @@
 #include <stdlib.h>
-#include <ecpgtype.h>
-#include <ecpglib.h>
+#include "ecpgtype.h"
+#include "ecpglib.h"
 #include "extern.h"
-#include <sql3types.h>
+#include "sql3types.h"
 
 /*
  * This function is used to generate the correct type names.

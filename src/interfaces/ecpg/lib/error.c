@@ -1,10 +1,10 @@
 #include <stdio.h>
 
-#include <ecpgerrno.h>
-#include <ecpgtype.h>
-#include <ecpglib.h>
+#include "ecpgerrno.h"
+#include "ecpgtype.h"
+#include "ecpglib.h"
 #include "extern.h"
-#include <sqlca.h>
+#include "sqlca.h"
 
 void
 ECPGraise(int line, int code, const char *str)

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.8 2000/05/29 01:59:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plperl/plperl.c,v 1.9 2000/05/29 21:25:06 momjian Exp $
  *
  **********************************************************************/
 
@@ -75,8 +75,8 @@
 #ifndef HAS_UNION_SEMUN
 #define HAS_UNION_SEMUN
 #endif
-#include <EXTERN.h>
-#include <perl.h>
+#include "EXTERN.h"
+#include "perl.h"
 
 
 /**********************************************************************

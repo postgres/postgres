@@ -8,7 +8,7 @@
 
 #include <iostream.h>
 #include <iomanip.h>
-#include <libpq++.h>
+#include "libpq++.h"
 
 int main()
 {

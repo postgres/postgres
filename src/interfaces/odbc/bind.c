@@ -30,8 +30,8 @@
 #include "isql.h"
 #include "isqlext.h"
 #else
-#include <sql.h>
-#include <sqlext.h>
+#include "sql.h"
+#include "sqlext.h"
 #endif
 
 /*      Bind parameters on a statement handle */
