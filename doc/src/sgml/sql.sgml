@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.25 2002/03/15 15:55:58 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.26 2002/03/15 16:16:31 momjian Exp $
 -->
 
  <chapter id="sql">
@@ -488,7 +488,7 @@ attributes are taken from. We often write a relation scheme as
 
       <listitem>
        <para>
-	EXCEPT (&minus; or &setmn;): builds the set difference of
+	DIFFERENCE (&minus; or &setmn;): builds the set difference of
 	two tables. Let <classname>R</classname> and <classname>S</classname>
 	again be two tables with the same
 	arity. <classname>R</classname> - <classname>S</classname>
