@@ -48,14 +48,10 @@ class DB:
 	def __init__(self, *args, **kw):
 		self.db = apply(connect, args, kw)
 
-		# Create convience methods, in a way that is still overridable.
-		for e in ( 'query', 'reset', 'close', 'getnotify', 'inserttable',
-					'putline', 'getline', 'endcopy',
-					'host', 'port', 'db', 'options', 
-					'tty', 'error', 'status', 'user',
-					'locreate', 'getlo', 'loimport' ):
-			if not hasattr(self,e) and hasattr(self.db,e):
-				exec 'self.%s = self.db.%s' % ( e, e )
+		# Create convience methods, in a way that is still overridable
+		# (members are not copied because they are actually functions)
+		for e in self.db.__methods__:
+			setattr(self, e, getattr(self.db, e))
 
 		self.__attnames__ = {}
 		self.__pkeys__ = {}
