@@ -337,9 +337,9 @@ WHERE p1.oprlsortop != p1.oprrsortop AND
 -- Hashing only works on simple equality operators "type = sametype",
 -- since the hash itself depends on the bitwise representation of the type.
 -- Check that allegedly hashable operators look like they might be "=".
--- NOTE: in 6.5, this search finds int4eqoid and oideqint4.  Until we have
--- some cleaner way of dealing with binary-equivalent types, just leave
--- those two tuples in the expected output.
+-- NOTE: in 7.2, this search finds int4eqoid, oideqint4, and xideqint4.
+-- Until we have some cleaner way of dealing with binary-equivalent types,
+-- just leave those three tuples in the expected output.
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
 WHERE p1.oprcanhash AND NOT
@@ -347,9 +347,10 @@ WHERE p1.oprcanhash AND NOT
      p1.oprname = '=' AND p1.oprcom = p1.oid);
  oid  | oprname 
 ------+---------
+  353 | =
  1136 | =
  1137 | =
-(2 rows)
+(3 rows)
 
 -- In 6.5 we accepted hashable array equality operators when the array element
 -- type is hashable.  However, what we actually need to make hashjoin work on

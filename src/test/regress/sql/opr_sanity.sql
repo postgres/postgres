@@ -275,9 +275,9 @@ WHERE p1.oprlsortop != p1.oprrsortop AND
 -- Hashing only works on simple equality operators "type = sametype",
 -- since the hash itself depends on the bitwise representation of the type.
 -- Check that allegedly hashable operators look like they might be "=".
--- NOTE: in 6.5, this search finds int4eqoid and oideqint4.  Until we have
--- some cleaner way of dealing with binary-equivalent types, just leave
--- those two tuples in the expected output.
+-- NOTE: in 7.2, this search finds int4eqoid, oideqint4, and xideqint4.
+-- Until we have some cleaner way of dealing with binary-equivalent types,
+-- just leave those three tuples in the expected output.
 
 SELECT p1.oid, p1.oprname
 FROM pg_operator AS p1
