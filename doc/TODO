@@ -155,7 +155,7 @@ MISC
 * Allow cursors to be DECLAREd/OPENed/CLOSEed outside transactions
 * Allow PQrequestCancel() to terminate when in waiting-for-lock state
 * Transaction log, so re-do log can be on a separate disk by
-  with after-row images
+  with after-row images(Vadim)
 * Populate backend status area and write program to dump status data
 * Make oid use unsigned int more reliably, pg_atoi()
 * Allow subqueries in target list
