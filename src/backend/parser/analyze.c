@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.28 1997/05/08 02:45:53 momjian Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.29 1997/07/30 04:42:26 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2369,7 +2369,8 @@ exprIsAggOrGroupCol(Node *expr, List *groupClause)
 {
     List *gl;
     
-    if ( expr == NULL || IsA (expr, Const) || IsA (expr, Aggreg) )
+    if ( expr == NULL || IsA (expr, Const) || 
+    		IsA (expr, Param) || IsA (expr, Aggreg) )
 	return TRUE;
 
     foreach (gl, groupClause)
@@ -2403,7 +2404,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
     Node *expr = tle->expr;
     List *gl;
     
-    if ( expr == NULL || IsA (expr, Const) )
+    if ( expr == NULL || IsA (expr, Const) || IsA (expr, Param) )
 	return TRUE;
 	
     foreach (gl, groupClause)
