@@ -6,7 +6,6 @@
  *-------------------------------------------------------------------------
  */
 #include "executor/spi.h"
-#include "../backend/parser/parse.h"
 #include "fmgr.h"
 
 typedef struct {
