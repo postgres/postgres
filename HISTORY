@@ -14,6 +14,7 @@ fix for buffer cache reference count problem(Vadim)
 Allow strings to span lines, like ANSI(Thomas)
 Fix for backward ORDER BY(Vadim)
 Fix avg(cash) computation(Thomas)
+Fix for specifying a column twice in ORDER BY(Vadim)
 
 
 PostgreSQL 6.2               Thu Oct 02 12:53:46 EDT 1997
