@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Feb 19 15:46:05 EST 2001
+Last updated:		Mon Feb 19 16:52:49 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -321,7 +321,9 @@ MISC
 * Prevent pg_attribute from having duplicate oids for indexes (Tom)
 * Force transactions that commit at near the same time use a single fsync()
 * Make blind writes go through the file descriptor cache
-* LAZY VACUUM (Vadim)
+* Add LAZY VACUUM (Vadim)
+* Add deleted bit to index tuples to reduce heap access
+* Prevent index uniqueness checks when UPDATE does not modify column
 
 SOURCE CODE
 -----------
