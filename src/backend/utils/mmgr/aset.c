@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.28 2000/06/28 03:32:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.29 2000/07/11 14:30:28 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -38,6 +38,9 @@
 
 #include "utils/memutils.h"
 
+/* Define this to detail debug alloc information 
+ */
+/*#define HAVE_ALLOCINFO	1*/
 
 /*
  * AllocSetContext is defined in nodes/memnodes.h.
@@ -79,9 +82,12 @@ typedef struct AllocBlockData
 typedef struct AllocChunkData
 {
 	/* aset is the owning aset if allocated, or the freelist link if free */
-	void	   *aset;
+	void	*aset;
 	/* size is always the size of the usable space in the chunk */
-	Size		size;
+	Size	size;
+#ifdef MEMORY_CONTEXT_CHECKING
+	Size	data_size;	
+#endif			
 } AllocChunkData;
 
 /*
@@ -161,6 +167,11 @@ static void *AllocSetRealloc(MemoryContext context, void *pointer, Size size);
 static void AllocSetInit(MemoryContext context);
 static void AllocSetReset(MemoryContext context);
 static void AllocSetDelete(MemoryContext context);
+
+#ifdef MEMORY_CONTEXT_CHECKING
+static void AllocSetCheck(MemoryContext context);
+#endif
+
 static void AllocSetStats(MemoryContext context);
 
 /*
@@ -173,9 +184,28 @@ static MemoryContextMethods AllocSetMethods = {
 	AllocSetInit,
 	AllocSetReset,
 	AllocSetDelete,
+#ifdef MEMORY_CONTEXT_CHECKING
+	AllocSetCheck,
+#endif
 	AllocSetStats
 };
 
+
+/* ----------
+ * Debug macros
+ * ----------
+ */
+#ifdef HAVE_ALLOCINFO
+#define AllocFreeInfo(_cxt, _chunk) \
+			fprintf(stderr, "AllocFree: %s: %p, %d\n", \
+				(_cxt)->header.name, (_chunk), (_chunk)->size)
+#define AllocAllocInfo(_cxt, _chunk) \
+			fprintf(stderr, "AllocAlloc: %s: %p, %d\n", \
+				(_cxt)->header.name, (_chunk), (_chunk)->size)
+#else
+#define AllocFreeInfo(_cxt, _chunk)
+#define AllocAllocInfo(_cxt, _chunk)
+#endif	
 
 /* ----------
  * AllocSetFreeIndex -
@@ -263,6 +293,11 @@ AllocSetContextCreate(MemoryContext parent,
 		context->blocks = block;
 		/* Mark block as not to be released at reset time */
 		context->keeper = block;
+
+#ifdef MEMORY_CONTEXT_CHECKING
+		/* mark memory for memory leak searching */
+		memset(block->freeptr, 0x7F, blksize - ALLOC_BLOCKHDRSZ);
+#endif
 	}
 
 	return (MemoryContext) context;
@@ -386,38 +421,53 @@ AllocSetAlloc(MemoryContext context, Size size)
 	AllocBlock	block;
 	AllocChunk	chunk;
 	AllocChunk	priorfree = NULL;
-	int			fidx;
+	int		fidx;
 	Size		chunk_size;
 	Size		blksize;
 
 	AssertArg(AllocSetIsValid(set));
 
 	/*
-	 * Lookup in the corresponding free list if there is a free chunk we
-	 * could reuse
+	 * Small size can be in free list 
 	 */
-	fidx = AllocSetFreeIndex(size);
-	for (chunk = set->freelist[fidx]; chunk; chunk = (AllocChunk) chunk->aset)
+	if (size < ALLOC_BIGCHUNK_LIMIT)
 	{
-		if (chunk->size >= size)
-			break;
-		priorfree = chunk;
-	}
+		/*
+		 * Lookup in the corresponding free list if there is a free chunk we
+		 * could reuse
+		 */
+		fidx = AllocSetFreeIndex(size);
+		for (chunk = set->freelist[fidx]; chunk; chunk = (AllocChunk) chunk->aset)
+		{
+			if (chunk->size >= size)
+				break;
+			priorfree = chunk;
+		}
 
-	/*
-	 * If one is found, remove it from the free list, make it again a
-	 * member of the alloc set and return its data address.
-	 */
-	if (chunk != NULL)
-	{
-		if (priorfree == NULL)
-			set->freelist[fidx] = (AllocChunk) chunk->aset;
-		else
-			priorfree->aset = chunk->aset;
+		/*
+		 * If one is found, remove it from the free list, make it again a
+		 * member of the alloc set and return its data address.
+		 */
+		if (chunk != NULL)
+		{
+			if (priorfree == NULL)
+				set->freelist[fidx] = (AllocChunk) chunk->aset;
+			else
+				priorfree->aset = chunk->aset;
+	
+			chunk->aset = (void *) set;
 
-		chunk->aset = (void *) set;
-		return AllocChunkGetPointer(chunk);
-	}
+#ifdef MEMORY_CONTEXT_CHECKING
+			chunk->data_size = size;
+#endif
+			AllocAllocInfo(set, chunk);
+			return AllocChunkGetPointer(chunk);
+		}
+	} 
+	else
+		/* Big chunk
+		 */
+		fidx = ALLOCSET_NUM_FREELISTS - 1;
 
 	/*
 	 * Choose the actual chunk size to allocate.
@@ -474,7 +524,13 @@ AllocSetAlloc(MemoryContext context, Size size)
 			block->next = NULL;
 			set->blocks = block;
 		}
-
+		
+#ifdef MEMORY_CONTEXT_CHECKING
+		chunk->data_size = size;
+		/* mark memory for memory leak searching */
+		memset(AllocChunkGetPointer(chunk), 0x7F, chunk->size);		
+#endif
+		AllocAllocInfo(set, chunk);
 		return AllocChunkGetPointer(chunk);
 	}
 
@@ -524,9 +580,15 @@ AllocSetAlloc(MemoryContext context, Size size)
 
 		if (block == NULL)
 			elog(ERROR, "Memory exhausted in AllocSetAlloc()");
+			
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		block->endptr = ((char *) block) + blksize;
+
+#ifdef MEMORY_CONTEXT_CHECKING
+		/* mark memory for memory leak searching */
+		memset(block->freeptr, 0x7F, blksize - ALLOC_BLOCKHDRSZ);
+#endif
 		block->next = set->blocks;
 
 		set->blocks = block;
@@ -538,9 +600,14 @@ AllocSetAlloc(MemoryContext context, Size size)
 	chunk = (AllocChunk) (block->freeptr);
 	chunk->aset = (void *) set;
 	chunk->size = chunk_size;
+	
+#ifdef MEMORY_CONTEXT_CHECKING
+	chunk->data_size = size;
+#endif	
 	block->freeptr += (chunk_size + ALLOC_CHUNKHDRSZ);
 	Assert(block->freeptr <= block->endptr);
 
+	AllocAllocInfo(set, chunk);
 	return AllocChunkGetPointer(chunk);
 }
 
@@ -554,14 +621,17 @@ AllocSetFree(MemoryContext context, void *pointer)
 	AllocSet	set = (AllocSet) context;
 	AllocChunk	chunk = AllocPointerGetChunk(pointer);
 
-#ifdef CLOBBER_FREED_MEMORY
-	/* Wipe freed memory for debugging purposes */
+#if defined(CLOBBER_FREED_MEMORY) || defined(MEMORY_CONTEXT_CHECKING)
+	/* Wipe freed memory for debugging purposes or for memory leak 
+	 * searching (in freelist[] must be mark memory
+	 */
 	memset(pointer, 0x7F, chunk->size);
 #endif
 
+	AllocFreeInfo(set, chunk);
+
 	if (chunk->size >= ALLOC_BIGCHUNK_LIMIT)
 	{
-
 		/*
 		 * Big chunks are certain to have been allocated as single-chunk
 		 * blocks.	Find the containing block and return it to malloc().
@@ -598,6 +668,10 @@ AllocSetFree(MemoryContext context, void *pointer)
 		int			fidx = AllocSetFreeIndex(chunk->size);
 
 		chunk->aset = (void *) set->freelist[fidx];
+
+#ifdef MEMORY_CONTEXT_CHECKING
+		chunk->data_size = 0;
+#endif		
 		set->freelist[fidx] = chunk;
 	}
 }
@@ -637,6 +711,10 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		AllocBlock	prevblock = NULL;
 		Size		blksize;
 
+#ifdef MEMORY_CONTEXT_CHECKING		
+		Size		data_size = size;
+#endif
+
 		while (block != NULL)
 		{
 			if (chunk == (AllocChunk) (((char *) block) + ALLOC_BLOCKHDRSZ))
@@ -665,6 +743,13 @@ AllocSetRealloc(MemoryContext context, void *pointer, Size size)
 		else
 			prevblock->next = block;
 		chunk->size = size;
+		
+#ifdef MEMORY_CONTEXT_CHECKING
+		/* mark memory for memory leak searching */
+		memset(((char *) chunk) + (ALLOC_CHUNKHDRSZ + data_size), 
+				0x7F, size - data_size);
+		chunk->data_size = data_size;
+#endif
 		return AllocChunkGetPointer(chunk);
 	}
 	else
@@ -720,3 +805,126 @@ AllocSetStats(MemoryContext context)
 			set->header.name, totalspace, nblocks, freespace, nchunks,
 			totalspace - freespace);
 }
+
+
+/* 
+ * AllocSetCheck
+ *		Walk on chunks and check consistence of memory. 
+ */
+#ifdef MEMORY_CONTEXT_CHECKING
+
+static void 
+AllocSetCheck(MemoryContext context)
+{
+	AllocSet	set = (AllocSet) context;	
+	AllocBlock	block = NULL;
+	AllocChunk	chunk = NULL;
+	char		*name = set->header.name;
+
+	for (block = set->blocks; block != NULL; block = block->next)
+	{	
+		char	*bpoz = ((char *) block) + ALLOC_BLOCKHDRSZ;
+	/*	long	blk_size = block->endptr - ((char *) block);*/
+		long	blk_free = block->endptr - block->freeptr; 
+		long	blk_used = block->freeptr - bpoz;
+		long	blk_data = 0;
+		long	nchunks  = 0;
+
+		/*
+		 * Empty block - empty can be keeper-block only
+		 */
+		if (!blk_used)
+		{
+			if (set->keeper == block)
+				continue;
+			else	
+				elog(ERROR, "AllocSetCheck(): %s: empty block %p", 
+						name, block);
+		}	
+		
+		/*
+		 * Chunk walker
+		 */	
+		do {
+			Size	chsize,
+				dsize;
+			char	*chdata_end,
+				*chend;
+				
+			chunk = (AllocChunk) bpoz;
+			
+			chsize = chunk->size;		/* align chunk size */
+			dsize = chunk->data_size;	/* real data */
+			
+			chdata_end = ((char *) chunk) + (ALLOC_CHUNKHDRSZ + dsize);
+			chend = ((char *) chunk) + (ALLOC_CHUNKHDRSZ + chsize);
+			
+			if (!dsize && chsize < dsize)
+				elog(ERROR, "AllocSetCheck(): %s: internal error for chunk %p in block %p",
+						name, chunk, block);			
+			/*
+			 * Check chunk size
+			 */
+			if (chsize < (1 << ALLOC_MINBITS))
+				elog(ERROR, "AllocSetCheck(): %s: bad size '%d' for chunk %p in block %p",
+						name, chsize, chunk, block);
+						
+			/* single-chunk block */
+			if (chsize >= ALLOC_BIGCHUNK_LIMIT &&
+			    chsize + ALLOC_CHUNKHDRSZ != blk_used)
+				elog(ERROR, "AllocSetCheck(): %s: bad singel-chunk %p in block %p",
+						name, chunk, block);
+						
+			/*
+			 * Check in-chunk leak
+			 */		
+			if (dsize < chsize && *chdata_end != 0x7F)
+			{
+				fprintf(stderr, "\n--- Leak %p ---\n", chdata_end);
+				fprintf(stderr, "Chunk dump size: %ld (chunk-header %ld + chunk-size: %d), data must be: %d\n--- dump begin ---\n", 
+					chsize + ALLOC_CHUNKHDRSZ, 
+					ALLOC_CHUNKHDRSZ, chsize, dsize);
+					
+				fwrite((void *) chunk, chsize+ALLOC_CHUNKHDRSZ, sizeof(char), stderr);
+				fputs("\n--- dump end ---\n", stderr);
+				
+				elog(ERROR, "AllocSetCheck(): %s: found in-chunk memory leak (block %p; chunk %p; leak at %p",
+						name, block, chunk, chdata_end);
+			}
+			
+			/*
+			 * Check block-freeptr leak 
+			 */
+			if (chend == block->freeptr && blk_free && 
+							*chdata_end != 0x7F) {
+				
+				fprintf(stderr, "\n--- Leak %p ---\n", chdata_end);
+				fprintf(stderr, "Dump size: %ld (chunk-header %ld + chunk-size: %d + block-freespace: %ld), data must be: %d\n--- dump begin ---\n", 
+					chsize + ALLOC_CHUNKHDRSZ + blk_free, 
+					ALLOC_CHUNKHDRSZ, chsize, blk_free, dsize);
+					
+				fwrite((void *) chunk, chsize+ALLOC_CHUNKHDRSZ+blk_free, sizeof(char), stderr);
+				fputs("\n--- dump end ---\n", stderr);
+				
+				elog(ERROR, "AllocSetCheck(): %s: found block-freeptr memory leak (block %p; chunk %p; leak at %p",
+						name, block, chunk, chdata_end);
+			}			
+			
+			blk_data += chsize;
+			nchunks++;
+			
+			if (chend < block->freeptr)
+				bpoz += ALLOC_CHUNKHDRSZ + chsize;
+			else
+				break;
+
+		} while(block->freeptr > bpoz); /* chunk walker */		
+	
+		
+		if ((blk_data + (nchunks * ALLOC_CHUNKHDRSZ)) != blk_used)
+
+			elog(ERROR, "AllocSetCheck(): %s: found non-consistent memory block %p",
+					name, block);
+	}
+}
+#endif

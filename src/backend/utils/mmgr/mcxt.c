@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.22 2000/06/28 03:32:50 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.23 2000/07/11 14:30:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -237,6 +237,27 @@ MemoryContextStats(MemoryContext context)
 		MemoryContextStats(child);
 	}
 }
+
+
+/*
+ * MemoryContextCheck
+ *		Check all chunks in the named context.
+ *
+ * This is just a debugging utility, so it's not fancy.  
+ */
+#ifdef MEMORY_CONTEXT_CHECKING
+void
+MemoryContextCheck(MemoryContext context)
+{
+	MemoryContext	child;
+
+	(*context->methods->check) (context);
+	for (child = context->firstchild; child != NULL; child = child->nextchild)
+	{
+		MemoryContextCheck(child);
+	}
+}
+#endif
 
 /*
  * MemoryContextContains

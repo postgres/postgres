@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.167 2000/07/08 03:04:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.168 2000/07/11 14:30:27 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -1415,7 +1415,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.167 $ $Date: 2000/07/08 03:04:15 $\n");
+		puts("$Revision: 1.168 $ $Date: 2000/07/11 14:30:27 $\n");
 	}
 
 	/*
@@ -1653,6 +1653,13 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 			if (IsUnderPostmaster)
 				NullCommand(Remote);
 		}
+
+#ifdef MEMORY_CONTEXT_CHECKING
+		/*
+		 * Check all memory after each backend loop
+		 */
+		MemoryContextCheck(TopMemoryContext);	
+#endif
 	}							/* infinite for-loop */
 
 	proc_exit(0);				/* shouldn't get here... */

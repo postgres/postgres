@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.124 2000/07/09 13:14:13 petere Exp $
+ * $Id: config.h.in,v 1.125 2000/07/11 14:30:30 momjian Exp $
  */
 
 #ifndef CONFIG_H
@@ -227,6 +227,12 @@
  */
 #ifdef USE_ASSERT_CHECKING
 #define CLOBBER_FREED_MEMORY
+#endif
+
+/* Define this to check memory leaks
+ */
+#ifdef USE_ASSERT_CHECKING 
+#define MEMORY_CONTEXT_CHECKING
 #endif
 
 /* Define this to force all parse and plan trees to be passed through
