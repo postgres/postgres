@@ -43,6 +43,8 @@ static int		_tocSortCompareByIDNum(const void *p1, const void *p2);
 static ArchiveHandle* 	_allocAH(const char* FileSpec, const ArchiveFormat fmt, 
 				int compression, ArchiveMode mode);
 static int 		_printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt);
+static void		_reconnectAsOwner(ArchiveHandle* AH, TocEntry* te);
+
 static int		_tocEntryRequired(TocEntry* te, RestoreOptions *ropt);
 static void		_disableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
 static void		_enableTriggers(ArchiveHandle *AH, TocEntry *te, RestoreOptions *ropt);
@@ -152,6 +154,12 @@ void RestoreArchive(Archive* AHX, RestoreOptions *ropt)
 
 		/* Work out what, if anything, we want from this entry */
 		reqs = _tocEntryRequired(te, ropt);
+
+		/* Reconnect if necessary */
+		if (reqs != 0)
+		{
+			_reconnectAsOwner(AH, te); 
+		}
 
 		if ( (reqs & 1) != 0) /* We want the schema */
 		{
@@ -773,6 +781,14 @@ void ahlog(ArchiveHandle* AH, int level, const char *fmt, ...)
 }
 
 /*
+ * Single place for logic which says 'We are restoring to a direct DB connection'.
+ */
+int RestoringToDB(ArchiveHandle* AH)
+{
+	return (AH->ropt && AH->ropt->useDB && AH->connection);
+}
+
+/*
  *  Write buffer to the output file (usually stdout). This is user for
  *  outputting 'restore' scripts etc. It is even possible for an archive
  * 	format to create a custom output routine to 'fake' a restore if it
@@ -798,7 +814,7 @@ int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH)
 		 * If we're doing a restore, and it's direct to DB, and we're connected
 	     * then send it to the DB.
 		 */	
-		if (AH->ropt && AH->ropt->useDB && AH->connection)
+		if (RestoringToDB(AH))
 			return ExecuteSqlCommandBuf(AH, (void*)ptr, size*nmemb);
 		else
 			return fwrite((void*)ptr, size, nmemb, AH->OF);
@@ -1335,22 +1351,32 @@ static int _tocEntryRequired(TocEntry* te, RestoreOptions *ropt)
     return res;
 }
 
+static void _reconnectAsOwner(ArchiveHandle* AH, TocEntry* te) 
+{
+    if (te->owner && strlen(te->owner) != 0 && strcmp(AH->currUser, te->owner) != 0) {
+		if (RestoringToDB(AH))
+		{
+			ReconnectDatabase(AH, te->owner);
+			//todo pjw - ???? fix for db connection...
+		}
+		else
+		{
+			ahprintf(AH, "\\connect - %s\n", te->owner);
+		}
+		AH->currUser = te->owner;
+    }
+}
+
 static int _printTocEntry(ArchiveHandle* AH, TocEntry* te, RestoreOptions *ropt) 
 {
     ahprintf(AH, "--\n-- TOC Entry ID %d (OID %s)\n--\n-- Name: %s Type: %s Owner: %s\n",
 	    te->id, te->oid, te->name, te->desc, te->owner);
     if (AH->PrintExtraTocPtr != NULL) {
-	(*AH->PrintExtraTocPtr)(AH, te);
+		(*AH->PrintExtraTocPtr)(AH, te);
     }
     ahprintf(AH, "--\n\n");
 
-    if (te->owner && strlen(te->owner) != 0 && strcmp(AH->currUser, te->owner) != 0) {
-		//todo pjw - fix for db connection...
-		//ahprintf(AH, "\\connect - %s\n", te->owner);
-		AH->currUser = te->owner;
-    }
-
-    ahprintf(AH, "%s\n", te->defn);
+	ahprintf(AH, "%s\n", te->defn);
 
     return 1;
 }

@@ -264,6 +264,8 @@ extern int 				isValidTarHeader(char *header);
 
 extern OutputContext	SetOutput(ArchiveHandle* AH, char *filename, int compression);
 extern void 			ResetOutput(ArchiveHandle* AH, OutputContext savedContext);
+extern int 				RestoringToDB(ArchiveHandle* AH);
+extern int				ReconnectDatabase(ArchiveHandle *AH, char *newUser);
 
 int ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle* AH);
 int ahprintf(ArchiveHandle* AH, const char *fmt, ...);

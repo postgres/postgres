@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.160 2000/07/21 11:40:08 pjw Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.161 2000/07/24 06:24:26 pjw Exp $
  *
  * Modifications - 6/10/96 - dave@bensoft.com - version 1.13.dhb
  *
@@ -883,7 +883,6 @@ main(int argc, char **argv)
 	MoveToEnd(g_fout, "INDEX");
 	MoveToEnd(g_fout, "TRIGGER");
 	MoveToEnd(g_fout, "RULE");
-	MoveToEnd(g_fout, "ACL");
 
 	if (plainText) 
 	{
@@ -3819,6 +3818,7 @@ dumpRules(Archive *fout, const char *tablename,
 
 	int			i_definition;
 	int			i_oid;
+	int			i_owner;
 	int			i_rulename;
 
 	if (g_verbose)
@@ -3837,8 +3837,9 @@ dumpRules(Archive *fout, const char *tablename,
 		 * Get all rules defined for this table
 		 */
 		resetPQExpBuffer(query);
-		appendPQExpBuffer(query, "SELECT pg_get_ruledef(pg_rewrite.rulename) "
-						  "AS definition, pg_rewrite.oid, pg_rewrite.rulename FROM pg_rewrite, pg_class "
+		appendPQExpBuffer(query, "SELECT pg_get_ruledef(pg_rewrite.rulename) AS definition,"
+						  "pg_get_userbyid(pg_class.relowner) AS viewowner, "
+						  "pg_rewrite.oid, pg_rewrite.rulename FROM pg_rewrite, pg_class "
 						  "WHERE pg_class.relname = '%s' "
 						  "AND pg_rewrite.ev_class = pg_class.oid "
 						  "ORDER BY pg_rewrite.oid",
@@ -3854,6 +3855,7 @@ dumpRules(Archive *fout, const char *tablename,
 
 		nrules = PQntuples(res);
 		i_definition = PQfnumber(res, "definition");
+		i_owner = PQfnumber(res, "viewowner");
 		i_oid = PQfnumber(res, "oid");
 		i_rulename = PQfnumber(res, "rulename");
 
@@ -3863,10 +3865,9 @@ dumpRules(Archive *fout, const char *tablename,
 
 		for (i = 0; i < nrules; i++)
 		{
-
 			ArchiveEntry(fout, PQgetvalue(res, i, i_oid), PQgetvalue(res, i, i_rulename),
 							"RULE", NULL, PQgetvalue(res, i, i_definition),
-							"", "", "", NULL, NULL);
+							"", "", PQgetvalue(res, i, i_owner), NULL, NULL);
 
 			/* Dump rule comments */
 

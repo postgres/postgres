@@ -48,20 +48,26 @@ _prompt_for_password(char *username, char *password)
 				   t;
 #endif
 
-	fprintf(stderr, "Username: ");
-	fflush(stderr);
-	fgets(username, 100, stdin);
-	length = strlen(username);
-	/* skip rest of the line */
-	if (length > 0 && username[length - 1] != '\n')
+	/*
+	 * Allow for forcing a specific username
+	 */
+	if (strlen(username) == 0)
 	{
-		do
+		fprintf(stderr, "Username: ");
+		fflush(stderr);
+		fgets(username, 100, stdin);
+		length = strlen(username);
+		/* skip rest of the line */
+		if (length > 0 && username[length - 1] != '\n')
 		{
-			fgets(buf, 512, stdin);
-		} while (buf[strlen(buf) - 1] != '\n');
+			do
+			{
+				fgets(buf, 512, stdin);
+			} while (buf[strlen(buf) - 1] != '\n');
+		}
+		if (length > 0 && username[length - 1] == '\n')
+			username[length - 1] = '\0';
 	}
-	if (length > 0 && username[length - 1] == '\n')
-		username[length - 1] = '\0';
 
 #ifdef HAVE_TERMIOS_H
 	tcgetattr(0, &t);
@@ -125,17 +131,69 @@ _check_database_version(ArchiveHandle *AH, bool ignoreVersion)
 	PQclear(res);
 }
 
+int ReconnectDatabase(ArchiveHandle *AH, char *newUser)
+{
+	int			need_pass;
+	PGconn		*newConn;
+	char		password[100];
+	char		*pwparam = NULL;
+	int			badPwd = 0;
+	int			noPwd = 0;
+
+	ahlog(AH, 1, "Connecting as %s\n", newUser);
+
+	do
+	{
+			need_pass = false;
+			newConn = PQsetdbLogin(PQhost(AH->connection), PQport(AH->connection),
+									NULL, NULL, PQdb(AH->connection), 
+									newUser, pwparam);
+			if (!newConn)
+				die_horribly(AH, "%s: Failed to reconnect (PQsetdbLogin failed).\n", progname);
+
+			if (PQstatus(newConn) == CONNECTION_BAD)
+		    {
+				noPwd = (strcmp(PQerrorMessage(newConn), "fe_sendauth: no password supplied\n") == 0);
+				badPwd = (strncmp(PQerrorMessage(newConn), "Password authentication failed for user", 39)
+							== 0);
+
+				if (noPwd || badPwd) 
+				{
+
+					if (badPwd)
+						fprintf(stderr, "Password incorrect\n");
+
+					fprintf(stderr, "Connecting to %s as %s\n", PQdb(AH->connection), newUser);
+
+					need_pass = true;
+					_prompt_for_password(newUser, password);
+					pwparam = password; 
+				}
+				else
+					die_horribly(AH, "%s: Could not reconnect. %s\n", progname, PQerrorMessage(newConn));
+			}
+
+	} while (need_pass);
+
+	PQfinish(AH->connection);
+	AH->connection = newConn;
+	strcpy(AH->username, newUser);
+
+	return 1;
+}
+
+
 PGconn* ConnectDatabase(Archive *AHX, 
 		const char* 	dbname,
 		const char* 	pghost,
 		const char* 	pgport,
-		const int	reqPwd,
-		const int	ignoreVersion)
+		const int		reqPwd,
+		const int		ignoreVersion)
 {
 	ArchiveHandle	*AH = (ArchiveHandle*)AHX;
-	char		connect_string[512] = "";
-	char		tmp_string[128];
-	char		password[100];
+	char			connect_string[512] = "";
+	char			tmp_string[128];
+	char			password[100];
 
 	if (AH->connection)
 		die_horribly(AH, "%s: already connected to database\n", progname);
@@ -168,6 +226,7 @@ PGconn* ConnectDatabase(Archive *AHX,
 
 	if (reqPwd)
 	{
+		AH->username[0] = '\0';
 		_prompt_for_password(AH->username, password);
 		strcat(connect_string, "authtype=password ");
 		sprintf(tmp_string, "user=%s ", AH->username);
@@ -187,6 +246,8 @@ PGconn* ConnectDatabase(Archive *AHX,
 
 	/* check for version mismatch */
 	_check_database_version(AH, ignoreVersion);
+
+	AH->currUser = PQuser(AH->connection);
 
 	return AH->connection;
 }
