@@ -19,7 +19,7 @@
 # be converted to Method 2.  
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.1 1997/02/05 21:27:04 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/backend/port/Attic/Makefile.in,v 1.2 1997/02/28 10:57:47 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -44,7 +44,7 @@ submake:
 	$(MAKE) -C $(PORTNAME) SUBSYS.o
 
 clean:
-	rm -f $(OBJS)
+	rm -f SUBSYS.o $(OBJS)
 	$(MAKE) -C $(PORTNAME) clean
 
 depend dep:
