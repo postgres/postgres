@@ -1,0 +1,18 @@
+QUERY: SELECT count(*) FROM onek;
+count
+-----
+ 1000
+(1 row)
+
+QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
+count
+-----
+   92
+(1 row)
+
+QUERY: SELECT count(*) FROM onek where oidrand(onek.oid, 10);
+count
+-----
+   98
+(1 row)
+

@@ -1,0 +1,139 @@
+QUERY: SELECT hash_i4_heap.*
+   WHERE hash_i4_heap.random = 843938989;
+seqno|   random
+-----+---------
+   15|843938989
+(1 row)
+
+QUERY: SELECT hash_i4_heap.*
+   WHERE hash_i4_heap.random = 66766766;
+seqno|random
+-----+------
+(0 rows)
+
+QUERY: SELECT hash_c16_heap.*
+   WHERE hash_c16_heap.random = '1505703298'::char16;
+seqno|    random
+-----+----------
+ 9838|1505703298
+(1 row)
+
+QUERY: SELECT hash_c16_heap.*
+   WHERE hash_c16_heap.random = '7777777'::char16;
+seqno|random
+-----+------
+(0 rows)
+
+QUERY: SELECT hash_txt_heap.*
+   WHERE hash_txt_heap.random = '1351610853'::text;
+seqno|    random
+-----+----------
+ 5677|1351610853
+(1 row)
+
+QUERY: SELECT hash_txt_heap.*
+   WHERE hash_txt_heap.random = '111111112222222233333333'::text;
+seqno|random
+-----+------
+(0 rows)
+
+QUERY: SELECT hash_f8_heap.*
+   WHERE hash_f8_heap.random = '444705537'::float8;
+seqno|   random
+-----+---------
+ 7853|444705537
+(1 row)
+
+QUERY: SELECT hash_f8_heap.*
+   WHERE hash_f8_heap.random = '88888888'::float8;
+seqno|random
+-----+------
+(0 rows)
+
+QUERY: UPDATE hash_i4_heap
+   SET random = 1
+   WHERE hash_i4_heap.seqno = 1492;
+QUERY: SELECT h.seqno AS i1492, h.random AS i1
+   FROM hash_i4_heap h
+   WHERE h.random = 1;
+i1492|i1
+-----+--
+ 1492| 1
+(1 row)
+
+QUERY: UPDATE hash_i4_heap
+   SET seqno = 20000
+   WHERE hash_i4_heap.random = 1492795354;
+QUERY: SELECT h.seqno AS i20000
+   FROM hash_i4_heap h
+   WHERE h.random = 1492795354;
+i20000
+------
+ 20000
+(1 row)
+
+QUERY: UPDATE hash_c16_heap
+   SET random = '0123456789abcdef'::char16
+   WHERE hash_c16_heap.seqno = 6543;
+QUERY: SELECT h.seqno AS i6543, h.random AS c0_to_f
+   FROM hash_c16_heap h
+   WHERE h.random = '0123456789abcdef'::char16;
+i6543|c0_to_f         
+-----+----------------
+ 6543|0123456789abcdef
+(1 row)
+
+QUERY: UPDATE hash_c16_heap
+   SET seqno = 20000
+   WHERE hash_c16_heap.random = '76652222'::char16;
+QUERY: SELECT h.seqno AS emptyset
+   FROM hash_c16_heap h
+   WHERE h.random = '76652222'::char16;
+emptyset
+--------
+(0 rows)
+
+QUERY: UPDATE hash_txt_heap
+   SET random = '0123456789abcdefghijklmnop'::text
+   WHERE hash_txt_heap.seqno = 4002;
+QUERY: SELECT h.seqno AS i4002, h.random AS c0_to_p
+   FROM hash_txt_heap h
+   WHERE h.random = '0123456789abcdefghijklmnop'::text;
+i4002|c0_to_p                   
+-----+--------------------------
+ 4002|0123456789abcdefghijklmnop
+(1 row)
+
+QUERY: UPDATE hash_txt_heap
+   SET seqno = 20000
+   WHERE hash_txt_heap.random = '959363399'::text;
+QUERY: SELECT h.seqno AS t20000
+   FROM hash_txt_heap h
+   WHERE h.random = '959363399'::text;
+t20000
+------
+ 20000
+(1 row)
+
+QUERY: UPDATE hash_f8_heap
+   SET random = '-1234.1234'::float8
+   WHERE hash_f8_heap.seqno = 8906;
+QUERY: SELECT h.seqno AS i8096, h.random AS f1234_1234
+   FROM hash_f8_heap h
+   WHERE h.random = '-1234.1234'::float8;
+i8096|f1234_1234
+-----+----------
+ 8906|-1234.1234
+(1 row)
+
+QUERY: UPDATE hash_f8_heap
+   SET seqno = 20000
+   WHERE hash_f8_heap.random = '488912369'::float8;
+QUERY: SELECT h.seqno AS f20000
+   FROM hash_f8_heap h
+   WHERE h.random = '488912369'::float8;
+f20000
+------
+ 20000
+(1 row)
+

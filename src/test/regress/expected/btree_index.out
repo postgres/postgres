@@ -1,0 +1,96 @@
+QUERY: SELECT b.*
+   FROM bt_i4_heap b
+   WHERE b.seqno < 1;
+seqno|    random
+-----+----------
+    0|1935401906
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_i4_heap b
+   WHERE b.seqno >= 9999;
+seqno|    random
+-----+----------
+ 9999|1227676208
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_i4_heap b
+   WHERE b.seqno = 4500;
+seqno|    random
+-----+----------
+ 4500|2080851358
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_c16_heap b
+   WHERE b.seqno < '1'::char16;
+seqno|    random
+-----+----------
+    0|1935401906
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_c16_heap b
+   WHERE b.seqno >= '9999'::char16;
+seqno|    random
+-----+----------
+ 9999|1227676208
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_c16_heap b
+   WHERE b.seqno = '4500'::char16;
+seqno|    random
+-----+----------
+ 4500|2080851358
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_txt_heap b
+   WHERE b.seqno < '1'::text;
+seqno|    random
+-----+----------
+    0|1935401906
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_txt_heap b
+   WHERE b.seqno >= '9999'::text;
+seqno|    random
+-----+----------
+ 9999|1227676208
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_txt_heap b
+   WHERE b.seqno = '4500'::text;
+seqno|    random
+-----+----------
+ 4500|2080851358
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_f8_heap b
+   WHERE b.seqno < '1'::float8;
+seqno|    random
+-----+----------
+    0|1935401906
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_f8_heap b
+   WHERE b.seqno >= '9999'::float8;
+seqno|    random
+-----+----------
+ 9999|1227676208
+(1 row)
+
+QUERY: SELECT b.*
+   FROM bt_f8_heap b
+   WHERE b.seqno = '4500'::float8;
+seqno|    random
+-----+----------
+ 4500|2080851358
+(1 row)
+
