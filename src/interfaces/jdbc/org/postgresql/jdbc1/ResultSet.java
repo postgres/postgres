@@ -163,7 +163,16 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
     wasNullFlag = (this_row[columnIndex - 1] == null);
     if(wasNullFlag)
       return null;
-    return new String(this_row[columnIndex - 1]);
+    String encoding = connection.getEncoding();
+    if (encoding == null)
+        return new String(this_row[columnIndex - 1]);
+    else {
+        try {
+            return new String(this_row[columnIndex - 1], encoding);
+        } catch (UnsupportedEncodingException unse) {
+            throw new PSQLException("postgresql.res.encoding", unse);
+        }
+    }
   }
   
   /**

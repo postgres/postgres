@@ -235,17 +235,22 @@ public class PG_Stream
       }
       return n;
   }
+
+    public String ReceiveString(int maxsize) throws SQLException {
+        return ReceiveString(maxsize, null);
+    }
   
   /**
    * Receives a null-terminated string from the backend.  Maximum of
    * maxsiz bytes - if we don't see a null, then we assume something
    * has gone wrong.
    *
-   * @param maxsiz maximum length of string
+   * @param encoding the charset encoding to use.
+   * @param maxsiz maximum length of string in bytes
    * @return string from back end
    * @exception SQLException if an I/O error occurs
    */
-  public String ReceiveString(int maxsiz) throws SQLException
+  public String ReceiveString(int maxsiz, String encoding) throws SQLException
   {
     byte[] rst = new byte[maxsiz];
     int s = 0;
@@ -267,7 +272,16 @@ public class PG_Stream
       } catch (IOException e) {
 	throw new PSQLException("postgresql.stream.ioerror",e);
       }
-      String v = new String(rst, 0, s);
+      String v = null;
+      if (encoding == null)
+          v = new String(rst, 0, s);
+      else {
+          try {
+              v = new String(rst, 0, s, encoding);
+          } catch (UnsupportedEncodingException unse) {
+              throw new PSQLException("postgresql.stream.encoding", unse);
+          }
+      }
       return v;
   }
   

@@ -4,7 +4,7 @@
 #    Makefile for Java JDBC interface
 #
 # IDENTIFICATION
-#    $Id: Makefile,v 1.23 2000/06/06 11:05:56 peter Exp $
+#    $Id: Makefile,v 1.24 2000/09/12 04:58:46 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -226,7 +226,8 @@ EX2=	example/blobtest.class
 
 # These are really test classes not true examples
 TESTS=	example/metadata.class \
-	example/threadsafe.class
+	example/threadsafe.class \
+	example/Unicode.class
 
 # Non functional/obsolete examples
 #	example/datestyle.class \
@@ -266,6 +267,7 @@ tests:	$(TESTS)
 	@echo The following tests have been built:
 	@echo "  example.metadata     Tests various metadata methods"
 	@echo "  example.threadsafe   Tests the driver's thread safety"
+	@echo "  example.Unicode      Tests unicode charset support"
 	@echo ------------------------------------------------------------
 	@echo
 
@@ -276,6 +278,7 @@ example/psql.class:			example/psql.java
 example/ImageViewer.class:		example/ImageViewer.java
 example/threadsafe.class:		example/threadsafe.java
 example/metadata.class:			example/metadata.java
+example/Unicode.class:                  example/Unicode.java
 
 #######################################################################
 #

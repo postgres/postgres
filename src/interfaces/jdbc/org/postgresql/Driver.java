@@ -90,7 +90,15 @@ public class Driver implements java.sql.Driver
    * <p>The java.util.Properties argument can be used to pass arbitrary
    * string tag/value pairs as connection arguments.  Normally, at least
    * "user" and "password" properties should be included in the 
-   * properties.
+   * properties.  In addition, the "charSet" property can be used to 
+   * set a character set encoding (e.g. "utf-8") other than the platform 
+   * default (typically Latin1).  This is necessary in particular if storing 
+   * multibyte characters in the database.  For a list of supported
+   * character encoding , see 
+   * http://java.sun.com/products/jdk/1.2/docs/guide/internat/encoding.doc.html
+   * Note that you will probably want to have set up the Postgres database
+   * itself to use the same encoding, with the "-E <encoding>" argument
+   * to createdb.
    *
    * Our protocol takes the forms:
    * <PRE>

@@ -10,7 +10,7 @@ import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
 /**
- * $Id: Connection.java,v 1.4 2000/06/06 11:05:59 peter Exp $
+ * $Id: Connection.java,v 1.5 2000/09/12 04:58:47 momjian Exp $
  *
  * This abstract class is used by org.postgresql.Driver to open either the JDBC1 or
  * JDBC2 versions of the Connection class.
@@ -30,6 +30,14 @@ public abstract class Connection
   private String PG_PASSWORD;
   private String PG_DATABASE;
   private boolean PG_STATUS;
+
+  /**
+   *  The encoding to use for this connection.
+   *  If <b>null</b>, the encoding has not been specified by the
+   *  user, and the default encoding for the platform should be
+   *  used.
+   */
+  private String encoding;
   
   public boolean CONNECTION_OK = true;
   public boolean CONNECTION_BAD = false;
@@ -111,6 +119,8 @@ public abstract class Connection
     PG_PORT = port;
     PG_HOST = new String(host);
     PG_STATUS = CONNECTION_BAD;
+
+    encoding = info.getProperty("charSet");  // could be null
     
     // Now make the initial connection
     try
@@ -154,7 +164,8 @@ public abstract class Connection
 		// The most common one to be thrown here is:
 		// "User authentication failed"
 		//
-		throw new SQLException(pg_stream.ReceiveString(4096));
+		throw new SQLException(pg_stream.ReceiveString
+                                       (4096, getEncoding()));
 		
 	      case 'R':
 		// Get the type of request
@@ -224,7 +235,8 @@ public abstract class Connection
           break;
 	case 'E':
 	case 'N':
-           throw new SQLException(pg_stream.ReceiveString(4096));
+           throw new SQLException(pg_stream.ReceiveString
+                                  (4096, getEncoding()));
         default:
           throw new PSQLException("postgresql.con.setup");
       }
@@ -313,7 +325,7 @@ public abstract class Connection
 	    
 	    Field[] fields = null;
 	    Vector tuples = new Vector();
-	    byte[] buf = new byte[sql.length()];
+	    byte[] buf = null;
 	    int fqp = 0;
 	    boolean hfr = false;
 	    String recv_status = null, msg;
@@ -325,6 +337,18 @@ public abstract class Connection
 	    // larger than 8K. Peter June 6 2000
 	    //if (sql.length() > 8192)
 	    //throw new PSQLException("postgresql.con.toolong",sql);
+
+        if (getEncoding() == null)
+            buf = sql.getBytes();
+        else {
+            try {
+                buf = sql.getBytes(getEncoding());
+            } catch (UnsupportedEncodingException unse) {
+                 throw new PSQLException("postgresql.con.encoding",
+                                        unse);
+            }
+        }
+
 	    try
 		{
 		    pg_stream.SendChar('Q');
@@ -512,6 +536,15 @@ public abstract class Connection
     public String getUserName() throws SQLException
     {
 	return PG_USER;
+    }
+
+    /**
+     *  Get the character encoding to use for this connection.
+     *  @return the encoding to use, or <b>null</b> for the 
+     *  default encoding.
+     */
+    public String getEncoding() throws SQLException {
+        return encoding;
     }
     
     /**
