@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.17 2000/01/26 05:58:27 momjian Exp $
+ * $Id: parse_node.h,v 1.18 2000/02/15 03:38:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,11 @@
 #include "nodes/parsenodes.h"
 #include "utils/rel.h"
 
-/* state information used during parse analysis */
+/* State information used during parse analysis
+ * p_join_quals is a list of qualification expressions
+ * found in the FROM clause. Needs to be available later
+ * to merge with other qualifiers from the WHERE clause.
+ */
 typedef struct ParseState
 {
 	int			p_last_resno;
@@ -30,6 +34,9 @@ typedef struct ParseState
 	bool		p_in_where_clause;
 	Relation	p_target_relation;
 	RangeTblEntry *p_target_rangetblentry;
+	List	   *p_shape;
+	List	   *p_alias;
+	Node	   *p_join_quals;
 } ParseState;
 
 extern ParseState *make_parsestate(ParseState *parentParseState);

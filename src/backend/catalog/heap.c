@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.120 2000/01/31 04:35:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.121 2000/02/15 03:36:34 thomas Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -53,6 +53,7 @@
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
 #include "optimizer/var.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_clause.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_relation.h"
@@ -1719,7 +1720,8 @@ StoreAttrDefault(Relation rel, AttrNumber attnum, char *adbin,
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->relname = RelationGetRelationName(rel);
-	rte->refname = RelationGetRelationName(rel);
+	rte->ref = makeNode(Attr);
+	rte->ref->relname = RelationGetRelationName(rel);
 	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -1798,7 +1800,8 @@ StoreRelCheck(Relation rel, char *ccname, char *ccbin)
 	 */
 	rte = makeNode(RangeTblEntry);
 	rte->relname = RelationGetRelationName(rel);
-	rte->refname = RelationGetRelationName(rel);
+	rte->ref = makeNode(Attr);
+	rte->ref->relname = RelationGetRelationName(rel);
 	rte->relid = RelationGetRelid(rel);
 	rte->inh = false;
 	rte->inFromCl = true;
@@ -1919,8 +1922,8 @@ AddRelationRawConstraints(Relation rel,
 	 * its sole rangetable entry.  We need a ParseState for transformExpr.
 	 */
 	pstate = make_parsestate(NULL);
-	makeRangeTable(pstate, NULL, NULL);
-	addRangeTableEntry(pstate, relname, relname, false, true, true);
+	makeRangeTable(pstate, NULL);
+	addRangeTableEntry(pstate, relname, makeAttr(relname, NULL), false, true, true);
 
 	/*
 	 * Process column default expressions.

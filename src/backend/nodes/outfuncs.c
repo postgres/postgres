@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.106 2000/02/07 04:40:57 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.107 2000/02/15 03:37:09 thomas Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -954,8 +954,8 @@ _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
 	appendStringInfo(str, " RTE :relname ");
 	_outToken(str, node->relname);
-	appendStringInfo(str, " :refname ");
-	_outToken(str, node->refname);
+	appendStringInfo(str, " :ref ");
+	_outNode(str, node->ref);
 	appendStringInfo(str,
 					 " :relid %u :inh %s :inFromCl %s :inJoinSet %s :skipAcl %s",
 					 node->relid,
@@ -1273,18 +1273,10 @@ _outIdent(StringInfo str, Ident *node)
 static void
 _outAttr(StringInfo str, Attr *node)
 {
-	List	   *l;
-
-	appendStringInfo(str, " ATTR ");
+	appendStringInfo(str, " ATTR :relname ");
 	_outToken(str, node->relname);
-	appendStringInfo(str, " (");
-	foreach(l, node->attrs)
-	{
-		_outNode(str, lfirst(l));
-		if (lnext(l))
-			appendStringInfo(str, " ");
-	}
-	appendStringInfo(str, ")");
+	appendStringInfo(str, " :attrs ");
+	_outNode(str, node->attrs);
 }
 
 static void

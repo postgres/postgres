@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.67 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.68 2000/02/15 03:37:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -144,12 +144,12 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
-								elog(ERROR, "left-hand side of AND is type '%s', not bool",
-									 typeidTypeName(exprType(lexpr)));
+								elog(ERROR, "left-hand side of AND is type '%s', not '%s'",
+									 typeidTypeName(exprType(lexpr)), typeidTypeName(BOOLOID));
 
 							if (exprType(rexpr) != BOOLOID)
-								elog(ERROR, "right-hand side of AND is type '%s', not bool",
-									 typeidTypeName(exprType(rexpr)));
+								elog(ERROR, "right-hand side of AND is type '%s', not '%s'",
+									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
 
 							expr->typeOid = BOOLOID;
 							expr->opType = AND_EXPR;
@@ -164,11 +164,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(lexpr) != BOOLOID)
-								elog(ERROR, "left-hand side of OR is type '%s', not bool",
-									 typeidTypeName(exprType(lexpr)));
+								elog(ERROR, "left-hand side of OR is type '%s', not '%s'",
+									 typeidTypeName(exprType(lexpr)), typeidTypeName(BOOLOID));
 							if (exprType(rexpr) != BOOLOID)
-								elog(ERROR, "right-hand side of OR is type '%s', not bool",
-									 typeidTypeName(exprType(rexpr)));
+								elog(ERROR, "right-hand side of OR is type '%s', not '%s'",
+									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
 							expr->typeOid = BOOLOID;
 							expr->opType = OR_EXPR;
 							expr->args = makeList(lexpr, rexpr, -1);
@@ -181,8 +181,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							Node	   *rexpr = transformExpr(pstate, a->rexpr, precedence);
 
 							if (exprType(rexpr) != BOOLOID)
-								elog(ERROR, "argument to NOT is type '%s', not bool",
-									 typeidTypeName(exprType(rexpr)));
+								elog(ERROR, "argument to NOT is type '%s', not '%s'",
+									 typeidTypeName(exprType(rexpr)), typeidTypeName(BOOLOID));
 							expr->typeOid = BOOLOID;
 							expr->opType = NOT_EXPR;
 							expr->args = makeList(rexpr, -1);
@@ -223,11 +223,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				pstate->p_hasSubLinks = true;
 				qtrees = parse_analyze(lcons(sublink->subselect, NIL), pstate);
 				if (length(qtrees) != 1)
-					elog(ERROR, "parser: bad query in subselect");
+					elog(ERROR, "Bad query in subselect");
 				qtree = (Query *) lfirst(qtrees);
 				if (qtree->commandType != CMD_SELECT ||
 					qtree->resultRelation != 0)
-					elog(ERROR, "parser: bad query in subselect");
+					elog(ERROR, "Bad query in subselect");
 				sublink->subselect = (Node *) qtree;
 
 				if (sublink->subLinkType == EXISTS_SUBLINK)
@@ -247,11 +247,11 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					 */
 					if (tlist == NIL ||
 						((TargetEntry *) lfirst(tlist))->resdom->resjunk)
-						elog(ERROR, "parser: subselect must have a field");
+						elog(ERROR, "Subselect must have a field");
 					while ((tlist = lnext(tlist)) != NIL)
 					{
 						if (! ((TargetEntry *) lfirst(tlist))->resdom->resjunk)
-							elog(ERROR, "parser: subselect must have only one field");
+							elog(ERROR, "Subselect must have only one field");
 					}
 					/* EXPR needs no lefthand or combining operator.
 					 * These fields should be NIL already, but make sure.
@@ -274,7 +274,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					/* Combining operators other than =/<> is dubious... */
 					if (length(left_list) != 1 &&
 						strcmp(op, "=") != 0 && strcmp(op, "<>") != 0)
-						elog(ERROR, "parser: '%s' is not usable for row comparison",
+						elog(ERROR, "Row comparison cannot use '%s'",
 							 op);
 
 					sublink->oper = NIL;
@@ -297,7 +297,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 							continue;
 
 						if (left_list == NIL)
-							elog(ERROR, "parser: Subselect has too many fields.");
+							elog(ERROR, "Subselect has too many fields");
 						lexpr = lfirst(left_list);
 						left_list = lnext(left_list);
 
@@ -308,7 +308,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						opform = (Form_pg_operator) GETSTRUCT(optup);
 
 						if (opform->oprresult != BOOLOID)
-							elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
+							elog(ERROR, "'%s' result type of '%s' must return '%s'"
+								 " to be used with quantified predicate subquery",
+								 op, typeidTypeName(opform->oprresult),
+								 typeidTypeName(BOOLOID));
 
 						newop = makeOper(oprid(optup),/* opno */
 										 InvalidOid, /* opid */
@@ -318,7 +321,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						sublink->oper = lappend(sublink->oper, newop);
 					}
 					if (left_list != NIL)
-						elog(ERROR, "parser: Subselect has too few fields.");
+						elog(ERROR, "Subselect has too few fields");
 				}
 				result = (Node *) expr;
 				break;
@@ -430,7 +433,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					}
 					else
 					{
-						elog(ERROR, "CASE/ELSE unable to convert to type %s",
+						elog(ERROR, "CASE/ELSE unable to convert to type '%s'",
 							 typeidTypeName(ptype));
 					}
 				}
@@ -457,7 +460,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						}
 						else
 						{
-							elog(ERROR, "CASE/WHEN unable to convert to type %s",
+							elog(ERROR, "CASE/WHEN unable to convert to type '%s'",
 								 typeidTypeName(ptype));
 						}
 					}
@@ -519,8 +522,8 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 			}
 		default:
 			/* should not reach here */
-			elog(ERROR, "transformExpr: does not know how to transform node %d",
-				 nodeTag(expr));
+			elog(ERROR, "transformExpr: does not know how to transform node %d"
+				 " (internal error)", nodeTag(expr));
 			break;
 	}
 
@@ -566,18 +569,22 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 		if ((rte = colnameRangeTableEntry(pstate, ident->name)) != NULL)
 		{
 			/* Convert it to a fully qualified Attr, and transform that */
+#ifndef DISABLE_JOIN_SYNTAX
+			Attr	   *att = makeAttr(rte->ref->relname, ident->name);
+#else
 			Attr	   *att = makeNode(Attr);
 
 			att->relname = rte->refname;
 			att->paramNo = NULL;
 			att->attrs = lcons(makeString(ident->name), NIL);
+#endif
 			att->indirection = ident->indirection;
 			return transformAttr(pstate, att, precedence);
 		}
 	}
 
 	if (result == NULL)
-		elog(ERROR, "attribute '%s' not found", ident->name);
+		elog(ERROR, "Attribute '%s' not found", ident->name);
 
 	return result;
 }
@@ -631,7 +638,7 @@ exprType(Node *expr)
 					TargetEntry *tent;
 
 					if (! qtree || ! IsA(qtree, Query))
-						elog(ERROR, "exprType: can't get type for untransformed sublink");
+						elog(ERROR, "Cannot get type for untransformed sublink");
 					tent = (TargetEntry *) lfirst(qtree->targetList);
 					type = tent->resdom->restype;
 				}
@@ -653,7 +660,7 @@ exprType(Node *expr)
 			type = UNKNOWNOID;
 			break;
 		default:
-			elog(ERROR, "exprType: don't know how to get type for %d node",
+			elog(ERROR, "Do not know how to get type for %d node",
 				 nodeTag(expr));
 			break;
 	}
@@ -728,7 +735,7 @@ parser_typecast_constant(Value *expr, TypeName *typename)
 			break;
 		default:
 			elog(ERROR,
-				 "parser_typecast_constant: cannot cast this expression to type '%s'",
+				 "Cannot cast this expression to type '%s'",
 				 typename->name);
 	}
 

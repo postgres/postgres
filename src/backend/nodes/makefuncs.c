@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.19 2000/01/26 05:56:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/makefuncs.c,v 1.20 2000/02/15 03:37:09 thomas Exp $
  *
  * NOTES
  *	  Creator functions in POSTGRES 4.2 are generated automatically. Most of
@@ -141,3 +141,26 @@ makeConst(Oid consttype,
 	cnst->constiscast = constiscast;
 	return cnst;
 }
+
+/*
+ * makeAttr -
+ *	  creates an Attr node
+ */
+Attr *
+makeAttr(char *relname, char *attname)
+{
+	Attr	   *a = makeNode(Attr);
+
+	a->relname = pstrdup(relname);
+	a->paramNo = NULL;
+	if (attname != NULL)
+		a->attrs = lcons(makeString(pstrdup(attname)), NIL);
+	a->indirection = NULL;
+
+	return a;
+}
+
+
+
+
+

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.34 2000/02/07 04:40:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/Attic/freefuncs.c,v 1.35 2000/02/15 03:37:08 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1013,8 +1013,19 @@ _freeRangeTblEntry(RangeTblEntry *node)
 {
 	if (node->relname)
 		pfree(node->relname);
-	if (node->refname)
-		pfree(node->refname);
+	if (node->ref)
+		freeObject(node->ref);
+
+	pfree(node);
+}
+
+static void
+_freeAttr(Attr *node)
+{
+	if (node->relname)
+		pfree(node->relname);
+	if (node->attrs)
+		freeObject(node->attrs);
 
 	pfree(node);
 }
@@ -1308,6 +1319,9 @@ freeObject(void *node)
 		case T_TypeCast:
 			_freeTypeCast(node);
 			break;
+		case T_Attr:
+			_freeAttr(node);
+			break;
 
 			/*
 			 * VALUE NODES
@@ -1332,3 +1346,10 @@ freeObject(void *node)
 			break;
 	}
 }
+
+
+
+
+
+
+

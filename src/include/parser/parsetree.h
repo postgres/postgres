@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.8 2000/01/26 05:58:27 momjian Exp $
+ * $Id: parsetree.h,v 1.9 2000/02/15 03:38:29 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,8 +39,8 @@
  */
 
 #define rt_relname(rt_entry) \
-	  ((!strcmp(((rt_entry)->refname),"*CURRENT*") ||\
-		!strcmp(((rt_entry)->refname),"*NEW*")) ? ((rt_entry)->refname) : \
+	  ((!strcmp(((rt_entry)->ref->relname),"*CURRENT*") ||\
+		!strcmp(((rt_entry)->ref->relname),"*NEW*")) ? ((rt_entry)->ref->relname) : \
 		((char *)(rt_entry)->relname))
 
 /*

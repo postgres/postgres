@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.34 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.35 2000/02/15 03:37:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,39 @@ static char *attnum_type[SPECIALS] = {
 	"cid",
 };
 
+/* refnameRangeTableEntries()
+ * Given refname, return a list of range table entries
+ * This is possible with JOIN syntax, where tables in a join
+ * acquire the same reference name
+ * - thomas 2000-01-20
+ */
+List *
+refnameRangeTableEntries(ParseState *pstate, char *refname);
+
+List *
+refnameRangeTableEntries(ParseState *pstate, char *refname)
+{
+	List	   *rteList = NULL;
+	List	   *temp;
+
+	while (pstate != NULL)
+	{
+		foreach(temp, pstate->p_rtable)
+		{
+			RangeTblEntry *rte = lfirst(temp);
+
+			if (strcmp(rte->ref->relname, refname) == 0)
+				rteList = lappend(rteList, rte);
+		}
+		/* only allow correlated columns in WHERE clause */
+		if (pstate->p_in_where_clause)
+			pstate = pstate->parentParseState;
+		else
+			break;
+	}
+	return rteList;
+}
+
 /* given refname, return a pointer to the range table entry */
 RangeTblEntry *
 refnameRangeTableEntry(ParseState *pstate, char *refname)
@@ -77,7 +110,11 @@ refnameRangeTableEntry(ParseState *pstate, char *refname)
 		{
 			RangeTblEntry *rte = lfirst(temp);
 
+#ifndef DISABLE_JOIN_SYNTAX
+			if (strcmp(rte->ref->relname, refname) == 0)
+#else
 			if (!strcmp(rte->refname, refname))
+#endif
 				return rte;
 		}
 		/* only allow correlated columns in WHERE clause */
@@ -106,7 +143,11 @@ refnameRangeTablePosn(ParseState *pstate, char *refname, int *sublevels_up)
 		{
 			RangeTblEntry *rte = lfirst(temp);
 
+#ifndef DISABLE_JOIN_SYNTAX
+			if (strcmp(rte->ref->relname, refname) == 0)
+#else
 			if (!strcmp(rte->refname, refname))
+#endif
 				return index;
 			index++;
 		}
@@ -143,24 +184,52 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 
 		foreach(et, rtable)
 		{
+			RangeTblEntry *rte_candidate = NULL;
 			RangeTblEntry *rte = lfirst(et);
 
 			/* only consider RTEs mentioned in FROM or UPDATE/DELETE */
 			if (!rte->inFromCl && rte != pstate->p_target_rangetblentry)
 				continue;
 
-			if (get_attnum(rte->relid, colname) != InvalidAttrNumber)
+			if (rte->ref->attrs != NULL)
 			{
-				if (rte_result != NULL)
+				List *c;
+				foreach (c, rte->ref->attrs)
 				{
-					if (!pstate->p_is_insert ||
-						rte != pstate->p_target_rangetblentry)
-						elog(ERROR, "Column '%s' is ambiguous", colname);
+					if (strcmp(strVal(lfirst(c)), colname) == 0)
+					{
+						if (rte_candidate != NULL)
+							elog(ERROR, "Column '%s' is ambiguous"
+								 " (internal error)", colname);
+						rte_candidate = rte;
+					}
 				}
-				else
-					rte_result = rte;
 			}
+
+			/* Even if we have an attribute list in the RTE,
+			 * look for the column here anyway. This is the only
+			 * way we will find implicit columns like "oid".
+			 * - thomas 2000-02-07
+			 */
+			if ((rte_candidate == NULL)
+				&& (get_attnum(rte->relid, colname) != InvalidAttrNumber))
+			{
+				rte_candidate = rte;
+			}
+
+			if (rte_candidate == NULL)
+				continue;
+
+			if (rte_result != NULL)
+			{
+				if (!pstate->p_is_insert ||
+					rte != pstate->p_target_rangetblentry)
+					elog(ERROR, "Column '%s' is ambiguous", colname);
+			}
+			else
+				rte_result = rte;
 		}
+
 		/* only allow correlated columns in WHERE clause */
 		if (pstate->p_in_where_clause && rte_result == NULL)
 			pstate = pstate->parentParseState;
@@ -177,45 +246,65 @@ colnameRangeTableEntry(ParseState *pstate, char *colname)
 RangeTblEntry *
 addRangeTableEntry(ParseState *pstate,
 				   char *relname,
-				   char *refname,
+				   Attr *ref,
 				   bool inh,
 				   bool inFromCl,
 				   bool inJoinSet)
 {
-	Relation	relation;
-	RangeTblEntry *rte;
-	int			sublevels_up;
+	Relation		rel;
+	RangeTblEntry  *rte;
+	int				maxattrs;
+	int				sublevels_up;
+	int				varattno;
 
+	/* Look for an existing rte, if available... */
 	if (pstate != NULL)
 	{
-		int			rt_index = refnameRangeTablePosn(pstate, refname,
-													 &sublevels_up);
+		int rt_index = refnameRangeTablePosn(pstate, ref->relname,
+											 &sublevels_up);
 
 		if (rt_index != 0 && (!inFromCl || sublevels_up == 0))
 		{
-			if (!strcmp(refname, "*CURRENT*") || !strcmp(refname, "*NEW*"))
+			if (!strcmp(ref->relname, "*CURRENT*") || !strcmp(ref->relname, "*NEW*"))
 				return (RangeTblEntry *) nth(rt_index - 1, pstate->p_rtable);
-			elog(ERROR, "Table name '%s' specified more than once", refname);
+			elog(ERROR, "Table name '%s' specified more than once", ref->relname);
 		}
 	}
 
 	rte = makeNode(RangeTblEntry);
 
-	rte->relname = pstrdup(relname);
-	rte->refname = pstrdup(refname);
+	rte->relname = relname;
+	rte->ref = ref;
 
 	/* Get the rel's OID.  This access also ensures that we have an
 	 * up-to-date relcache entry for the rel.  We don't need to keep
 	 * it open, however.
+	 * Since this is open anyway, let's check that the number of column
+	 * aliases is reasonable.
+	 * - Thomas 2000-02-04
 	 */
-	relation = heap_openr(relname, AccessShareLock);
-	rte->relid = RelationGetRelid(relation);
-	heap_close(relation, AccessShareLock);
+	rel = heap_openr(relname, AccessShareLock);
+	rte->relid = RelationGetRelid(rel);
+	maxattrs = RelationGetNumberOfAttributes(rel);
+	if (maxattrs < length(ref->attrs))
+		elog(ERROR, "Table '%s' has %d columns available but %d columns specified",
+			 relname, maxattrs, length(ref->attrs));
+
+	/* fill in any unspecified alias columns */
+	for (varattno = length(ref->attrs); varattno < maxattrs; varattno++)
+	{
+		char	   *attrname;
+
+		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
+		ref->attrs = lappend(ref->attrs, makeString(attrname));
+	}
+	heap_close(rel, AccessShareLock);
 
 	/*
-	 * Flags: this RTE should be expanded to include descendant tables,
-	 * this RTE is in the FROM clause, this RTE should be included in
-	 * the planner's final join.
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be included in the planner's final join.
 	 */
 	rte->inh = inh;
 	rte->inFromCl = inFromCl;
@@ -231,23 +320,71 @@ addRangeTableEntry(ParseState *pstate,
 	return rte;
 }
 
+/* expandTable()
+ * Populates an Attr with table name and column names
+ * This is similar to expandAll(), but does not create an RTE
+ * if it does not already exist.
+ * - thomas 2000-01-19
+ */
+Attr *
+expandTable(ParseState *pstate, char *refname, bool getaliases)
+{
+	Attr			   *attr;
+	RangeTblEntry	   *rte;
+	Relation			rel;
+	int			varattno,
+				maxattrs;
+
+	rte = refnameRangeTableEntry(pstate, refname);
+
+	if (getaliases && (rte != NULL) && (rte->ref != NULL)
+		&& (length(rte->ref->attrs) > 0))
+	{
+		return rte->ref;
+	}
+
+	if (rte != NULL)
+		rel = heap_open(rte->relid, AccessShareLock);
+	else
+		rel = heap_openr(refname, AccessShareLock);
+
+	if (rel == NULL)
+		elog(ERROR, "Relation '%s' not found", refname);
+
+	maxattrs = RelationGetNumberOfAttributes(rel);
+
+	attr = makeAttr(refname, NULL);
+
+	for (varattno = 0; varattno < maxattrs; varattno++)
+	{
+		char	   *attrname;
+
+		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
+		attr->attrs = lappend(attr->attrs, makeString(attrname));
+	}
+
+	heap_close(rel, AccessShareLock);
+
+	return attr;
+}
+
 /*
  * expandAll -
  *	  makes a list of attributes
  */
 List *
-expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
+expandAll(ParseState *pstate, char *relname, Attr *ref, int *this_resno)
 {
-	List	   *te_list = NIL;
-	RangeTblEntry *rte;
-	Relation	rel;
-	int			varattno,
-				maxattrs;
+	List		   *te_list = NIL;
+	RangeTblEntry  *rte;
+	Relation		rel;
+	int				varattno,
+					maxattrs;
 
-	rte = refnameRangeTableEntry(pstate, refname);
+	rte = refnameRangeTableEntry(pstate, ref->relname);
 	if (rte == NULL)
 	{
-		rte = addRangeTableEntry(pstate, relname, refname,
+		rte = addRangeTableEntry(pstate, relname, ref,
 								 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
 		elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
@@ -262,12 +399,19 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 
 	for (varattno = 0; varattno < maxattrs; varattno++)
 	{
-		char	   *attrname;
-		Var		   *varnode;
-		TargetEntry *te = makeNode(TargetEntry);
+		char		   *attrname;
+		char		   *label;
+		Var			   *varnode;
+		TargetEntry	   *te = makeNode(TargetEntry);
 
 		attrname = pstrdup(NameStr(rel->rd_att->attrs[varattno]->attname));
-		varnode = make_var(pstate, rte->relid, refname, attrname);
+
+		/* varattno is zero-based, so check that length() is always greater */
+		if (length(rte->ref->attrs) > varattno)
+			label = pstrdup(strVal(nth(varattno, rte->ref->attrs)));
+		else
+			label = attrname;
+		varnode = make_var(pstate, rte->relid, relname, attrname);
 
 		/*
 		 * Even if the elements making up a set are complex, the set
@@ -277,7 +421,7 @@ expandAll(ParseState *pstate, char *relname, char *refname, int *this_resno)
 		te->resdom = makeResdom((AttrNumber) (*this_resno)++,
 								varnode->vartype,
 								varnode->vartypmod,
-								attrname,
+								label,
 								(Index) 0,
 								(Oid) 0,
 								false);
@@ -306,15 +450,31 @@ attnameAttNum(Relation rd, char *a)
 		if (!namestrcmp(&(rd->rd_att->attrs[i]->attname), a))
 			return i + 1;
 
-	for (i = 0; i < SPECIALS; i++)
-		if (!strcmp(special_attr[i].field, a))
-			return special_attr[i].code;
+	if ((i = specialAttNum(a)) != InvalidAttrNumber)
+		return i;
 
 	/* on failure */
 	elog(ERROR, "Relation '%s' does not have attribute '%s'",
 		 RelationGetRelationName(rd), a);
-	return 0;					/* lint */
+	return InvalidAttrNumber;		/* lint */
 }
+
+/* specialAttNum()
+ * Check attribute name to see if it is "special", e.g. "oid".
+ * - thomas 2000-02-07
+ */
+int
+specialAttNum(char *a)
+{
+	int			i;
+
+	for (i = 0; i < SPECIALS; i++)
+		if (!strcmp(special_attr[i].field, a))
+			return special_attr[i].code;
+
+	return InvalidAttrNumber;
+}
+
 
 /*
  * Given range variable, return whether attribute of this name
@@ -372,3 +532,8 @@ attnumTypeId(Relation rd, int attid)
 	 */
 	return rd->rd_att->attrs[attid - 1]->atttypid;
 }
+
+
+
+
+

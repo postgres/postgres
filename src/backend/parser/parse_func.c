@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.68 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.69 2000/02/15 03:37:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		if (IsA(first_arg, Ident) && ((Ident *) first_arg)->isRel)
 		{
 			RangeTblEntry *rte;
+			AttrNumber attnum;
 			Ident	   *ident = (Ident *) first_arg;
 
 			/*
@@ -293,7 +294,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
 			{
-				rte = addRangeTableEntry(pstate, refname, refname,
+				rte = addRangeTableEntry(pstate, refname,
+										 makeAttr(refname, NULL),
 										 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
 				elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
@@ -304,12 +306,53 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			relname = rte->relname;
 			relid = rte->relid;
+			attnum = InvalidAttrNumber;
 
 			/*
 			 * If the attr isn't a set, just make a var for it.  If it is
 			 * a set, treat it like a function and drop through.
+			 * Look through the explicit column list first, since we
+			 * now allow column aliases.
+			 * - thomas 2000-02-07
 			 */
-			if (get_attnum(relid, funcname) != InvalidAttrNumber)
+			if (rte->ref->attrs != NULL)
+			{
+				List   *c;
+				/* start counting attributes/columns from one.
+				 * zero is reserved for InvalidAttrNumber.
+				 * - thomas 2000-01-27
+				 */
+				int		i = 1;
+				foreach (c, rte->ref->attrs)
+				{
+					char *colname = strVal(lfirst(c));
+					/* found a match? */
+					if (strcmp(colname, funcname) == 0)
+					{
+						char *basename = get_attname(relid, i);
+
+						if (basename != NULL)
+						{
+							funcname = basename;
+							attnum = i;
+						}
+						/* attnum was initialized to InvalidAttrNumber
+						 * earlier, so no need to reset it if the
+						 * above test fails. - thomas 2000-02-07
+						 */
+						break;
+					}
+					i++;
+				}
+				if (attnum == InvalidAttrNumber)
+					attnum = specialAttNum(funcname);
+			}
+			else
+			{
+				attnum = get_attnum(relid, funcname);
+			}
+
+			if (attnum != InvalidAttrNumber)
 			{
 				return (Node *) make_var(pstate,
 										 relid,
@@ -474,7 +517,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			rte = refnameRangeTableEntry(pstate, refname);
 			if (rte == NULL)
 			{
-				rte = addRangeTableEntry(pstate, refname, refname,
+				rte = addRangeTableEntry(pstate, refname,
+										 makeAttr(refname, NULL),
 										 FALSE, FALSE, TRUE);
 #ifdef WARN_FROM
 				elog(NOTICE,"Adding missing FROM-clause entry%s for table %s",
@@ -485,7 +529,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 
 			relname = rte->relname;
 
-			vnum = refnameRangeTablePosn(pstate, rte->refname, NULL);
+			vnum = refnameRangeTablePosn(pstate, rte->ref->relname, NULL);
 
 			/*
 			 * for func(relname), the param to the function is the tuple
@@ -593,7 +637,9 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 	if (attisset)
 	{
 		if (!strcmp(funcname, "*"))
-			funcnode->func_tlist = expandAll(pstate, relname, refname, curr_resno);
+			funcnode->func_tlist = expandAll(pstate, relname,
+											 makeAttr(refname, NULL),
+											 curr_resno);
 		else
 		{
 			funcnode->func_tlist = setup_tlist(funcname, argrelid);

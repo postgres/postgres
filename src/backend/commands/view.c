@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.41 2000/01/26 05:56:14 momjian Exp $
+ *	$Id: view.c,v 1.42 2000/02/15 03:36:39 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "catalog/heap.h"
 #include "commands/creatinh.h"
 #include "commands/view.h"
+#include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
 #include "rewrite/rewriteDefine.h"
@@ -225,9 +226,11 @@ UpdateRangeTableOfViewParse(char *viewName, Query *viewParse)
 	 * create the 2 new range table entries and form the new range
 	 * table... CURRENT first, then NEW....
 	 */
-	rt_entry1 = addRangeTableEntry(NULL, (char *) viewName, "*CURRENT*",
+	rt_entry1 = addRangeTableEntry(NULL, (char *) viewName,
+								   makeAttr("*CURRENT*", NULL),
 								   FALSE, FALSE, FALSE);
-	rt_entry2 = addRangeTableEntry(NULL, (char *) viewName, "*NEW*",
+	rt_entry2 = addRangeTableEntry(NULL, (char *) viewName,
+								   makeAttr("*NEW*", NULL),
 								   FALSE, FALSE, FALSE);
 	new_rt = lcons(rt_entry2, old_rt);
 	new_rt = lcons(rt_entry1, new_rt);

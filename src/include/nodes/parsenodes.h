@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.97 2000/01/27 18:11:44 tgl Exp $
+ * $Id: parsenodes.h,v 1.98 2000/02/15 03:38:14 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1031,7 +1031,7 @@ typedef struct RangeVar
 {
 	NodeTag		type;
 	RelExpr    *relExpr;		/* the relation expression */
-	char	   *name;			/* the name to be referenced (optional) */
+	Attr	   *name;			/* the name to be referenced (optional) */
 } RangeVar;
 
 /*
@@ -1064,9 +1064,11 @@ typedef struct JoinExpr
 {
 	NodeTag		type;
 	int			jointype;
-	RangeVar   *larg;
-	Node	   *rarg;
-	List	   *quals;
+	bool		isNatural;		/* Natural join? Will need to shape table */
+	Node	   *larg;			/* RangeVar or join expression */
+	Node	   *rarg;			/* RangeVar or join expression */
+	Attr	   *alias;			/* table and column aliases, if any */
+	List	   *quals;			/* qualifiers on join, if any */
 } JoinExpr;
 
 
@@ -1122,8 +1124,10 @@ typedef struct RangeTblEntry
 {
 	NodeTag		type;
 	char	   *relname;		/* real name of the relation */
-	char	   *refname;		/* the reference name (as specified in the
-								 * FROM clause) */
+//	char	   *refname;		/* reference name (given in FROM clause) */
+#ifndef DISABLE_JOIN_SYNTAX
+	Attr	   *ref;			/* reference names (given in FROM clause) */
+#endif
 	Oid			relid;			/* OID of the relation */
 	bool		inh;			/* inheritance requested? */
 	bool		inFromCl;		/* present in FROM clause */

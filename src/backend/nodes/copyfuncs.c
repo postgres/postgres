@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.104 2000/02/07 04:40:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.105 2000/02/15 03:37:08 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -688,6 +688,18 @@ _copyVar(Var *from)
 	return newnode;
 }
 
+static Attr *
+_copyAttr(Attr *from)
+{
+	Attr	   *newnode = makeNode(Attr);
+
+	if (from->relname)
+		newnode->relname = pstrdup(from->relname);
+	Node_Copy(from, newnode, attrs);
+
+	return newnode;
+}
+
 /* ----------------
  *		_copyOper
  * ----------------
@@ -1327,8 +1339,8 @@ _copyRangeTblEntry(RangeTblEntry *from)
 
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
-	if (from->refname)
-		newnode->refname = pstrdup(from->refname);
+	if (from->ref)
+		Node_Copy(from, newnode, ref);
 	newnode->relid = from->relid;
 	newnode->inh = from->inh;
 	newnode->inFromCl = from->inFromCl;
@@ -1570,6 +1582,9 @@ copyObject(void *from)
 			break;
 		case T_Var:
 			retval = _copyVar(from);
+			break;
+		case T_Attr:
+			retval = _copyAttr(from);
 			break;
 		case T_Oper:
 			retval = _copyOper(from);

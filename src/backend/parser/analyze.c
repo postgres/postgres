@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: analyze.c,v 1.136 2000/02/05 00:20:38 wieck Exp $
+ *	$Id: analyze.c,v 1.137 2000/02/15 03:37:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,13 +239,13 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
 	qry->commandType = CMD_DELETE;
 
 	/* set up a range table */
-	makeRangeTable(pstate, NULL, NULL);
+	makeRangeTable(pstate, NULL);
 	setTargetTable(pstate, stmt->relname);
 
 	qry->distinctClause = NIL;
 
 	/* fix where clause */
-	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	qry->rtable = pstate->p_rtable;
 	qry->resultRelation = refnameRangeTablePosn(pstate, stmt->relname, NULL);
@@ -266,7 +266,6 @@ static Query *
 transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
-	Node	   *fromQual;
 	List	   *icolumns;
 	List	   *attrnos;
 	List	   *attnos;
@@ -289,16 +288,16 @@ transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 	 */
 
 	/* set up a range table --- note INSERT target is not in it yet */
-	makeRangeTable(pstate, stmt->fromClause, &fromQual);
+	makeRangeTable(pstate, stmt->fromClause);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause, fromQual);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	/* Initial processing of HAVING clause is just like WHERE clause.
 	 * Additional work will be done in optimizer/plan/planner.c.
 	 */
-	qry->havingQual = transformWhereClause(pstate, stmt->havingClause, NULL);
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
@@ -974,6 +973,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 			 *
 			 */
 			if (fkconstraint->fk_attrs != NIL && fkconstraint->pk_attrs == NIL)
+			{
 				if (strcmp(fkconstraint->pktable_name, stmt->relname) != 0)
 					transformFkeyGetPrimaryKey(fkconstraint);
 				else if (pkey != NULL) 
@@ -997,6 +997,7 @@ transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
 					elog(ERROR, "PRIMARY KEY for referenced table \"%s\" not found",
 						fkconstraint->pktable_name);
 				}
+			}
 
 			/*
 			 * Build a CREATE CONSTRAINT TRIGGER statement for the CHECK
@@ -1207,7 +1208,8 @@ transformIndexStmt(ParseState *pstate, IndexStmt *stmt)
 	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause, NULL);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	stmt->rangetable = pstate->p_rtable;
@@ -1231,7 +1233,8 @@ transformExtendStmt(ParseState *pstate, ExtendStmt *stmt)
 	qry->commandType = CMD_UTILITY;
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause, NULL);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	stmt->rangetable = pstate->p_rtable;
@@ -1268,9 +1271,11 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 
 		nothing_qry->commandType = CMD_NOTHING;
 
-		addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
+		addRangeTableEntry(pstate, stmt->object->relname,
+						   makeAttr("*CURRENT*", NULL),
 						   FALSE, FALSE, FALSE);
-		addRangeTableEntry(pstate, stmt->object->relname, "*NEW*",
+		addRangeTableEntry(pstate, stmt->object->relname,
+						   makeAttr("*NEW*", NULL),
 						   FALSE, FALSE, FALSE);
 
 		nothing_qry->rtable = pstate->p_rtable;
@@ -1290,9 +1295,11 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 		 * NOTE: 'CURRENT' must always have a varno equal to 1 and 'NEW'
 		 * equal to 2.
 		 */
-		addRangeTableEntry(pstate, stmt->object->relname, "*CURRENT*",
+		addRangeTableEntry(pstate, stmt->object->relname,
+						   makeAttr("*CURRENT*", NULL),
 						   FALSE, FALSE, FALSE);
-		addRangeTableEntry(pstate, stmt->object->relname, "*NEW*",
+		addRangeTableEntry(pstate, stmt->object->relname,
+						   makeAttr("*NEW*", NULL),
 						   FALSE, FALSE, FALSE);
 
 		pstate->p_last_resno = 1;
@@ -1306,7 +1313,8 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
 	}
 
 	/* take care of the where clause */
-	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause, NULL);
+	stmt->whereClause = transformWhereClause(pstate, stmt->whereClause);
+
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
 	qry->utilityStmt = (Node *) stmt;
@@ -1323,12 +1331,11 @@ static Query *
 transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
-	Node	   *fromQual;
 
 	qry->commandType = CMD_SELECT;
 
 	/* set up a range table */
-	makeRangeTable(pstate, stmt->fromClause, &fromQual);
+	makeRangeTable(pstate, stmt->fromClause);
 
 	qry->into = stmt->into;
 	qry->isTemp = stmt->istemp;
@@ -1336,12 +1343,12 @@ transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause, fromQual);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	/* Initial processing of HAVING clause is just like WHERE clause.
 	 * Additional work will be done in optimizer/plan/planner.c.
 	 */
-	qry->havingQual = transformWhereClause(pstate, stmt->havingClause, NULL);
+	qry->havingQual = transformWhereClause(pstate, stmt->havingClause);
 
 	qry->groupClause = transformGroupClause(pstate,
 											stmt->groupClause,
@@ -1401,12 +1408,12 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 	 * the FROM clause is non-standard SQL syntax. We used to be able to
 	 * do this with REPLACE in POSTQUEL so we keep the feature.
 	 */
-	makeRangeTable(pstate, stmt->fromClause, NULL);
+	makeRangeTable(pstate, stmt->fromClause);
 	setTargetTable(pstate, stmt->relname);
 
 	qry->targetList = transformTargetList(pstate, stmt->targetList);
 
-	qry->qual = transformWhereClause(pstate, stmt->whereClause, NULL);
+	qry->qual = transformWhereClause(pstate, stmt->whereClause);
 
 	qry->hasSubLinks = pstate->p_hasSubLinks;
 
@@ -1866,7 +1873,7 @@ transformForUpdate(Query *qry, List *forUpdate)
 		i = 1;
 		foreach(l2, qry->rtable)
 		{
-			if (strcmp(((RangeTblEntry *) lfirst(l2))->refname, relname) == 0)
+			if (strcmp(((RangeTblEntry *) lfirst(l2))->ref->relname, relname) == 0)
 			{
 				List	   *l3;
 

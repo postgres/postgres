@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.82 2000/02/07 04:40:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.83 2000/02/15 03:37:09 thomas Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -1322,6 +1322,51 @@ _readTargetEntry()
 	return local_node;
 }
 
+static List *
+_readList()
+{
+	List	   *local_node = NULL;
+	char	   *token;
+	int			length;
+
+	token = lsptok(NULL, &length);		/* eat "(" */
+	token = lsptok(NULL, &length);		/* get "{" */
+	while (strncmp(token, "{", length) == 0)
+	{
+		nconc(local_node, nodeRead(true));
+
+		token = lsptok(NULL, &length);		/* eat ")" */
+		if (strncmp(token, "}", length) != 0)
+			elog(ERROR, "badly formatted attribute list"
+				 " in planstring \"%.10s\"...\n", token);
+		token = lsptok(NULL, &length);		/* "{" or ")" */
+	}
+
+	return local_node;
+}
+
+static Attr *
+_readAttr()
+{
+	Attr	   *local_node;
+	char	   *token;
+	int			length;
+
+	local_node = makeNode(Attr);
+
+	token = lsptok(NULL, &length);		/* eat :relname */
+	token = lsptok(NULL, &length);		/* get relname */
+	if (length == 0)
+		local_node->relname = pstrdup("");
+	else
+		local_node->relname = debackslash(token, length);
+
+	token = lsptok(NULL, &length);		/* eat :attrs */
+	local_node->attrs = _readList();
+
+	return local_node;
+}
+
 /* ----------------
  *		_readRangeTblEntry
  * ----------------
@@ -1342,12 +1387,8 @@ _readRangeTblEntry()
 	else
 		local_node->relname = debackslash(token, length);
 
-	token = lsptok(NULL, &length);		/* eat :refname */
-	token = lsptok(NULL, &length);		/* get :refname */
-	if (length == 0)
-		local_node->refname = NULL;
-	else
-		local_node->refname = debackslash(token, length);
+	token = lsptok(NULL, &length);		/* eat :ref */
+	local_node->ref = nodeRead(true);
 
 	token = lsptok(NULL, &length);		/* eat :relid */
 	token = lsptok(NULL, &length);		/* get :relid */
@@ -1795,6 +1836,8 @@ parsePlanString(void)
 		return_value = _readArray();
 	else if (length == 3 && strncmp(token, "VAR", length) == 0)
 		return_value = _readVar();
+	else if (length == 4 && strncmp(token, "ATTR", length) == 0)
+		return_value = _readAttr();
 	else if (length == 5 && strncmp(token, "CONST", length) == 0)
 		return_value = _readConst();
 	else if (length == 4 && strncmp(token, "FUNC", length) == 0)
@@ -1843,6 +1886,14 @@ parsePlanString(void)
 		return_value = _readCaseWhen();
 	else if (length == 7 && strncmp(token, "ROWMARK", length) == 0)
 		return_value = _readRowMark();
+#if 0
+	else if (length == 1 && strncmp(token, "{", length) == 0)
+	{
+		/* raw list (of strings?) found in Attr structure - thomas 2000-02-09 */
+		return_value = nodeRead(true);
+		token = lsptok(NULL, &length);	/* eat trailing brace */
+	}
+#endif
 	else
 		elog(ERROR, "badly formatted planstring \"%.10s\"...\n", token);
 

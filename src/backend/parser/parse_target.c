@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.54 2000/01/26 05:56:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.55 2000/02/15 03:37:47 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,8 +105,35 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				 * Target item is a single '*', expand all tables
 				 * (eg. SELECT * FROM emp)
 				 */
-				p_target = nconc(p_target,
-								 ExpandAllTables(pstate));
+				if (pstate->p_shape != NULL)
+				{
+					List *s, *a;
+					int i;
+
+					Assert(length(pstate->p_shape) == length(pstate->p_alias));
+
+					s = pstate->p_shape;
+					a = pstate->p_alias;
+					for (i = 0; i < length(pstate->p_shape); i++)
+					{
+						TargetEntry	   *te;
+						char		   *colname;
+						Attr *shape = lfirst(s);
+						Attr *alias = lfirst(a);
+
+						Assert(IsA(shape, Attr) && IsA(alias, Attr));
+
+						colname = strVal(lfirst(alias->attrs));
+						te = transformTargetEntry(pstate, (Node *) shape,
+												  NULL, colname, false);
+						p_target = lappend(p_target, te);
+						s = lnext(s);
+						a = lnext(a);
+					}
+				}
+				else
+					p_target = nconc(p_target,
+									 ExpandAllTables(pstate));
 			}
 			else if (att->attrs != NIL &&
 					 strcmp(strVal(lfirst(att->attrs)), "*") == 0)
@@ -116,9 +143,8 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				 * (eg. SELECT emp.*, dname FROM emp, dept)
 				 */
 				p_target = nconc(p_target,
-								 expandAll(pstate,
-										   att->relname,
-										   att->relname,
+								 expandAll(pstate, att->relname,
+										   makeAttr(att->relname, NULL),
 										   &pstate->p_last_resno));
 			}
 			else
@@ -192,12 +218,18 @@ updateTargetListEntry(ParseState *pstate,
 	 */
 	if (indirection)
 	{
+#ifndef DISABLE_JOIN_SYNTAX
+		Attr	   *att = makeAttr(pstrdup(RelationGetRelationName(rd)), colname);
+#else
 		Attr	   *att = makeNode(Attr);
+#endif
 		Node	   *arrayBase;
 		ArrayRef   *aref;
 
+#ifdef DISABLE_JOIN_SYNTAX
 		att->relname = pstrdup(RelationGetRelationName(rd));
 		att->attrs = lcons(makeString(colname), NIL);
+#endif
 		arrayBase = ParseNestedFuncOrColumn(pstate, att,
 											&pstate->p_last_resno,
 											EXPR_COLUMN_FIRST);
@@ -355,10 +387,9 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 	return cols;
 }
 
-/*
- * ExpandAllTables -
- *	  turns '*' (in the target list) into a list of attributes
- *	   (of all relations in the range table)
+/* ExpandAllTables()
+ * Turns '*' (in the target list) into a list of attributes
+ * (of all relations in the range table)
  */
 static List *
 ExpandAllTables(ParseState *pstate)
@@ -378,7 +409,7 @@ ExpandAllTables(ParseState *pstate)
 
 	/* SELECT *; */
 	if (rtable == NIL)
-		elog(ERROR, "Wildcard with no tables specified.");
+		elog(ERROR, "Wildcard with no tables specified not allowed");
 
 	foreach(rt, rtable)
 	{
@@ -393,7 +424,7 @@ ExpandAllTables(ParseState *pstate)
 			continue;
 
 		target = nconc(target,
-					   expandAll(pstate, rte->relname, rte->refname,
+					   expandAll(pstate, rte->ref->relname, rte->ref,
 								 &pstate->p_last_resno));
 	}
 	return target;

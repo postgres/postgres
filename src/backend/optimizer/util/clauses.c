@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.58 2000/01/26 05:56:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.59 2000/02/15 03:37:36 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -556,7 +556,7 @@ check_subplans_for_ungrouped_vars_walker(Node *node,
 					elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 						 var->varattno, rte->relid);
 				elog(ERROR, "Sub-SELECT uses un-GROUPed attribute %s.%s from outer query",
-					 rte->refname, attname);
+					 rte->ref->relname, attname);
 			}
 		}
 	}

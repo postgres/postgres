@@ -3,7 +3,7 @@
  *			  out of its tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.39 2000/01/15 22:43:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.40 2000/02/15 03:37:56 thomas Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -922,9 +922,9 @@ get_select_query_def(Query *query, deparse_context *context)
 			continue;
 
 		rte = (RangeTblEntry *) lfirst(l);
-		if (!strcmp(rte->refname, "*NEW*"))
+		if (!strcmp(rte->ref->relname, "*NEW*"))
 			continue;
-		if (!strcmp(rte->refname, "*CURRENT*"))
+		if (!strcmp(rte->ref->relname, "*CURRENT*"))
 			continue;
 
 		rt_constonly = FALSE;
@@ -980,10 +980,10 @@ get_select_query_def(Query *query, deparse_context *context)
 			{
 				rte = (RangeTblEntry *) lfirst(l);
 
-				if (!strcmp(rte->refname, "*NEW*"))
+				if (!strcmp(rte->ref->relname, "*NEW*"))
 					continue;
 
-				if (!strcmp(rte->refname, "*CURRENT*"))
+				if (!strcmp(rte->ref->relname, "*CURRENT*"))
 					continue;
 
 				appendStringInfo(buf, sep);
@@ -991,9 +991,19 @@ get_select_query_def(Query *query, deparse_context *context)
 				appendStringInfo(buf, "%s%s",
 								 quote_identifier(rte->relname),
 								 inherit_marker(rte));
-				if (strcmp(rte->relname, rte->refname) != 0)
+				if (strcmp(rte->relname, rte->ref->relname) != 0)
+				{
+					List *col;
 					appendStringInfo(buf, " %s",
-									 quote_identifier(rte->refname));
+									 quote_identifier(rte->ref->relname));
+					appendStringInfo(buf, " (");
+					foreach (col, rte->ref->attrs)
+					{
+						if (col != lfirst(rte->ref->attrs))
+							appendStringInfo(buf, ", ");
+						appendStringInfo(buf, "%s", strVal(col));
+					}
+				}
 			}
 		}
 	}
@@ -1071,9 +1081,9 @@ get_insert_query_def(Query *query, deparse_context *context)
 			continue;
 
 		rte = (RangeTblEntry *) lfirst(l);
-		if (!strcmp(rte->refname, "*NEW*"))
+		if (!strcmp(rte->ref->relname, "*NEW*"))
 			continue;
-		if (!strcmp(rte->refname, "*CURRENT*"))
+		if (!strcmp(rte->ref->relname, "*CURRENT*"))
 			continue;
 
 		rt_constonly = FALSE;
@@ -1241,13 +1251,13 @@ get_rule_expr(Node *node, deparse_context *context)
 
 				if (context->varprefix)
 				{
-					if (!strcmp(rte->refname, "*NEW*"))
+					if (!strcmp(rte->ref->relname, "*NEW*"))
 						appendStringInfo(buf, "new.");
-					else if (!strcmp(rte->refname, "*CURRENT*"))
+					else if (!strcmp(rte->ref->relname, "*CURRENT*"))
 						appendStringInfo(buf, "old.");
 					else
 						appendStringInfo(buf, "%s.",
-										 quote_identifier(rte->refname));
+										 quote_identifier(rte->ref->relname));
 				}
 				appendStringInfo(buf, "%s",
 						quote_identifier(get_attribute_name(rte->relid,
