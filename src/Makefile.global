@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.1 1996/08/19 13:46:05 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Attic/Makefile.global,v 1.19.2.2 1996/08/19 18:37:09 scrappy Exp $
 #
 # NOTES
 #    This is seen by any Makefiles that include mk/postgres.mk. To
@@ -208,7 +208,7 @@ endif
 # location of Tcl/Tk headers and libraries
 #
 # Uncomment this to build the tcl utilities.
-USE_TCL= true
+# USE_TCL= true
 # customize these to your site's needs
 #
 TCL_INCDIR= /home/tools/include
