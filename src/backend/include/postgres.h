@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.3 1996/09/19 20:01:40 scrappy Exp $
+ * $Id: postgres.h,v 1.4 1996/09/23 08:38:45 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,7 +61,7 @@ typedef Oid regproc;
 typedef Oid RegProcedure;
 
 /* ptr to func returning (char *) */
-typedef char *	((*func_ptr)(int, ...));	
+typedef char *	((*func_ptr)());	
 
 
 #define RegProcedureIsValid(p)  OidIsValid(p)
