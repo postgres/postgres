@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.51 2004/08/29 05:06:53 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.52 2004/10/06 17:02:02 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,8 +180,15 @@ main(int argc, char *argv[])
 
 			case 'h':
 				pghost = optarg;
+#ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -h '%s'", pghost);
+#else
+                                appendPQExpBuffer(pgdumpopts, " -h \"%s\"", pghost);
+#endif
+
 				break;
+
+
 
 			case 'i':
 			case 'o':
@@ -194,7 +201,11 @@ main(int argc, char *argv[])
 
 			case 'p':
 				pgport = optarg;
+#ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -p '%s'", pgport);
+#else
+                                appendPQExpBuffer(pgdumpopts, " -p \"%s\"", pgport);
+#endif
 				break;
 
 			case 's':
@@ -203,12 +214,20 @@ main(int argc, char *argv[])
 				break;
 
 			case 'S':
+#ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -S '%s'", optarg);
+#else
+                                appendPQExpBuffer(pgdumpopts, " -S \"%s\"", optarg);
+#endif
 				break;
 
 			case 'U':
 				pguser = optarg;
+#ifndef WIN32
 				appendPQExpBuffer(pgdumpopts, " -U '%s'", pguser);
+#else
+                                appendPQExpBuffer(pgdumpopts, " -U \"%s\"", pguser);
+#endif
 				break;
 
 			case 'v':
