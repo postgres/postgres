@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.204 2003/09/07 15:26:45 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.205 2003/09/11 17:27:38 momjian Exp $
 -->
 
 <Chapter Id="runtime">
@@ -448,14 +448,15 @@ psql: could not connect to server: Connection refused
    </indexterm>
 
    <para>
-    There are a lot of configuration parameters that affect the behavior
-    of the database system. Here we describe how to set them and the
-    following subsections will discuss each in detail.
+    There are a lot of configuration parameters that affect the
+    behavior of the database system. In this subsection, we describe
+    how to set configuration parameters; the following subsections
+    discuss each parameter in detail.
    </para>
 
    <para>
     All parameter names are case-insensitive. Every parameter takes a
-    value of one of the four types: Boolean, integer, floating point,
+    value of one of the four types: boolean, integer, floating point,
     and string. Boolean values are <literal>ON</literal>,
     <literal>OFF</literal>, <literal>TRUE</literal>,
     <literal>FALSE</literal>, <literal>YES</literal>,
@@ -465,18 +466,18 @@ psql: could not connect to server: Connection refused
 
    <para>
     One way to set these options is to edit the file
-    <filename>postgresql.conf</filename><indexterm><primary>postgresql.conf</></> in the data directory. (A
-    default file is installed there.) An example of what this file might
-    look like is:
+    <filename>postgresql.conf</filename><indexterm><primary>postgresql.conf</></>
+    in the data directory. (A default file is installed there.) An
+    example of what this file might look like is:
 <programlisting>
 # This is a comment
 log_connections = yes
 syslog = 2
 search_path = '$user, public'
 </programlisting>
-    As you see, options are one per line. The equal sign between name
-    and value is optional. Whitespace is insignificant and blank lines
-    are ignored. Hash marks (<literal>#</literal>) introduce comments
+    One option is specified per line. The equal sign between name and
+    value is optional. Whitespace is insignificant and blank lines are
+    ignored. Hash marks (<literal>#</literal>) introduce comments
     anywhere.  Parameter values that are not simple identifiers or
     numbers should be single-quoted.
    </para>
@@ -485,12 +486,14 @@ search_path = '$user, public'
     <indexterm>
      <primary>SIGHUP</primary>
     </indexterm>
-    The configuration file is reread whenever the <command>postmaster</command> process receives a
-    <systemitem>SIGHUP</> signal (which is most easily sent by means of
-    <literal>pg_ctl reload</>). The <command>postmaster</command> also propagates this
-    signal to all currently running server processes so that existing
-    sessions also get the new value. Alternatively, you can send the
-    signal to a single server process directly.
+    The configuration file is reread whenever the
+    <command>postmaster</command> process receives a
+    <systemitem>SIGHUP</> signal (which is most easily sent by means
+    of <literal>pg_ctl reload</>). The <command>postmaster</command>
+    also propagates this signal to all currently running server
+    processes so that existing sessions also get the new
+    value. Alternatively, you can send the signal to a single server
+    process directly.
    </para>
 
    <para>
@@ -518,20 +521,21 @@ env PGOPTIONS='-c geqo=off' psql
    </para>
 
    <para>
-    Some options can be changed in individual SQL sessions with the
-    <command>SET</command> command, for example:
+    Some options can be changed in individual <acronym>SQL</acronym>
+    sessions with the <command>SET</command> command, for example:
 <screen>
 SET ENABLE_SEQSCAN TO OFF;
 </screen>
-    See the SQL command language reference for details on the syntax.
+    See the <acronym>SQL</acronym> command language reference for
+    details on the syntax.
    </para>
 
    <para>
     Furthermore, it is possible to assign a set of option settings to
     a user or a database.  Whenever a session is started, the default
     settings for the user and database involved are loaded.  The
-    commands <literal>ALTER DATABASE</literal> and <literal>ALTER
-    USER</literal>, respectively, are used to configure these
+    commands <command>ALTER DATABASE</command> and <command>ALTER
+    USER</command>, respectively, are used to configure these
     settings.  Such per-database settings override anything received
     from the <command>postmaster</command> command-line or the
     configuration file, and in turn are overridden by per-user
@@ -643,9 +647,9 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Determines the maximum number of concurrent connections to the
         database server. The default is typically 100, but may be less
-	if your kernel settings will not support it (as determined
-	during <application>initdb</>).
-	This parameter can only be set at server start.
+        if your kernel settings will not support it (as determined
+        during <application>initdb</>).  This parameter can only be
+        set at server start.
        </para>
 
        <para>
@@ -665,16 +669,16 @@ SET ENABLE_SEQSCAN TO OFF;
        <para>
         Determines the number of <quote>connection slots</quote> that
         are reserved for connections by <productname>PostgreSQL</>
-        superusers.  At most <varname>max_connections</> connections can
+        superusers.  At most <varname>MAX_CONNECTIONS</> connections can
         ever be active simultaneously.  Whenever the number of active
-        concurrent connections is at least <varname>max_connections</> minus
-        <varname>superuser_reserved_connections</varname>, new connections
+        concurrent connections is at least <varname>MAX_CONNECTIONS</> minus
+        <varname>SUPERUSER_RESERVED_CONNECTIONS</varname>, new connections
         will be accepted only for superusers.
        </para>
 
        <para>
         The default value is 2. The value must be less than the value of
-        <varname>max_connections</varname>. This parameter can only be
+        <varname>MAX_CONNECTIONS</varname>. This parameter can only be
         set at server start.
        </para>
       </listitem>
@@ -874,7 +878,7 @@ SET ENABLE_SEQSCAN TO OFF;
    </sect2>
 
    <sect2 id="runtime-config-resource">
-    <title>Resource Usage (Except WAL)</title>
+    <title>Resource Consumption</title>
 
     <sect3 id="runtime-config-resource-memory">
      <title>Memory</title>
@@ -885,16 +889,16 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the number of shared memory buffers used by the database
-        server. The default is typically 1000, but may be less
-	if your kernel settings will not support it (as determined
-	during <application>initdb</>).  Each buffer is 8192
-        bytes, unless a different value of <literal>BLCKSZ</> was chosen
-	when building the server.  This setting must be at least 16,
-	as well as at least twice the value of
-	<varname>MAX_CONNECTIONS</varname>; however, settings significantly
-	higher than the minimum are usually needed for good performance.
-        Values of a few thousand are recommended for production installations.
-	This option can only be set at server start.
+        server. The default is typically 1000, but may be less if your
+        kernel settings will not support it (as determined during
+        <application>initdb</>).  Each buffer is 8192 bytes, unless a
+        different value of <literal>BLCKSZ</> was chosen when building
+        the server.  This setting must be at least 16, as well as at
+        least twice the value of <varname>MAX_CONNECTIONS</varname>;
+        however, settings significantly higher than the minimum are
+        usually needed for good performance.  Values of a few thousand
+        are recommended for production installations.  This option can
+        only be set at server start.
        </para>
 
        <para>
@@ -924,7 +928,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Hash tables are used in hash joins, hash-based aggregation, and
         hash-based processing of <literal>IN</> subqueries.  Because 
         <command>CREATE INDEX</> is used when restoring a database, it might
-        be good to temporary increase this value during a restore.
+        be good to temporarily increase this value during a restore.
        </para>
       </listitem>
      </varlistentry>
@@ -955,7 +959,7 @@ SET ENABLE_SEQSCAN TO OFF;
         Sets the maximum number of disk pages for which free space will
         be tracked in the shared free-space map.  Six bytes of shared memory
         are consumed for each page slot.  This setting must be more than
-        16 * <varname>max_fsm_relations</varname>.  The default is 20000.
+        16 * <varname>MAX_FSM_RELATIONS</varname>.  The default is 20000.
         This option can only be set at server start.
        </para>
       </listitem>
@@ -1008,14 +1012,14 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         This variable specifies one or more shared libraries that are
-        to be preloaded at server start. A parameterless initialization
-	function can optionally be called for each library.  To specify
-	that, add a colon and the name of the initialization function after
-	the library name. For example
+        to be preloaded at server start. A parameterless
+        initialization function can optionally be called for each
+        library.  To specify that, add a colon and the name of the
+        initialization function after the library name. For example
         <literal>'$libdir/mylib:mylib_init'</literal> would cause
         <literal>mylib</> to be preloaded and <literal>mylib_init</>
-        to be executed. If more than one library is to be loaded, separate
-	their names with commas.
+        to be executed. If more than one library is to be loaded,
+        separate their names with commas.
        </para>
 
        <para>
@@ -1024,11 +1028,11 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        PostgreSQL procedural language libraries may be preloaded in this way,
-        typically by using the syntax
-	<literal>'$libdir/plXXX:plXXX_init'</literal>
-	where <literal>XXX</literal> is <literal>pgsql</>, 
-        <literal>perl</>, <literal>tcl</>, or <literal>python</>.
+        PostgreSQL procedural language libraries may be preloaded in
+        this way, typically by using the syntax
+        <literal>'$libdir/plXXX:plXXX_init'</literal> where
+        <literal>XXX</literal> is <literal>pgsql</>, <literal>perl</>,
+        <literal>tcl</>, or <literal>python</>.
        </para>
 
        <para>
@@ -1075,27 +1079,29 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        However, this operation does slow down
-        <productname>PostgreSQL</> because at transaction commit it has
-        wait for the operating system to flush the write-ahead log.
-        Without <function>fsync</>, the operating system is allowed to
-        do its best in buffering, sorting, and delaying writes, which
-        can considerably increase performance. However, if the system
-        crashes, the results of the last few committed transactions may
-        be lost in part or whole. In the worst case, unrecoverable data
-        corruption may occur.
+        However, using <function>fsync()</function> results in a
+        performance penalty: when a transaction is committed,
+        <productname>PostgreSQL</productname> must wait for the
+        operating system to flush the write-ahead log to disk.  When
+        <varname>FSYNC</varname> is disabled, the operating system is
+        allowed to do its best in buffering, ordering, and delaying
+        writes. This can result in significantly improved performance.
+        However, if the system crashes, the results of the last few
+        committed transactions may be lost in part or whole. In the
+        worst case, unrecoverable data corruption may occur.
        </para>
 
        <para>
-        For the above reasons, everyone can decide for himself what to
-        do with the <varname>fsync</> option.  Some administrators
-        always leave it off, some turn it off only for bulk loads,
-        where there is a clear restart point if something goes wrong,
-        and some leave it on just to be on the safe side.  The default
-        is on so that you are on the safe side.  If you trust your
-        operating system, your hardware, and your utility company (or
-        better your battery backup), you can consider disabling
-        <varname>fsync</varname>.
+        Due to the risks involved, there is no universally correct
+        setting for <varname>FSYNC</varname>. Some administrators
+        always disable <varname>FSYNC</varname>, while others only
+        turn it off for bulk loads, where there is a clear restart
+        point if something goes wrong, whereas some administrators
+        always leave <varname>FSYNC</varname> enabled. The default is
+        to enable <varname>FSYNC</varname>, for maximum reliability.
+        If you trust your operating system, your hardware, and your
+        utility company (or your battery backup), you can consider
+        disabling <varname>FSYNC</varname>.
        </para>
 
        <para>
@@ -1143,10 +1149,10 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>CHECKPOINT_SEGMENTS</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Maximum distance between automatic WAL checkpoints, in log file
-        segments (each segment is normally 16 megabytes).
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        Maximum distance between automatic WAL checkpoints, in log
+        file segments (each segment is normally 16 megabytes). The
+        default is three.  This option can only be set at server start
+        or in the <filename>postgresql.conf</filename> file.
        </para>
       </listitem>
      </varlistentry>
@@ -1155,9 +1161,10 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>CHECKPOINT_TIMEOUT</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Maximum time between automatic WAL checkpoints, in seconds.
-        This option can only be set at server start or in the
-        <filename>postgresql.conf</filename> file.
+        Maximum time between automatic WAL checkpoints, in
+        seconds. The default is 300 seconds.  This option can only be
+        set at server start or in the <filename>postgresql.conf</>
+        file.
        </para>
       </listitem>
      </varlistentry>
@@ -1166,9 +1173,10 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>CHECKPOINT_WARNING</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Send a message to the server logs if checkpoints caused by the
-        filling of checkpoint segment files happens more frequently than
-        this number of seconds.  Zero turns off the warning.
+        Write a message to the server logs if checkpoints caused by
+        the filling of checkpoint segment files happens more
+        frequently than this number of seconds.  The default is 30
+        seconds.  Zero turns off the warning.
        </para>
       </listitem>
      </varlistentry>
@@ -1178,16 +1186,17 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>COMMIT_DELAY</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Time delay between writing a commit record to the WAL buffer and
-        flushing the buffer out to disk, in microseconds. A nonzero
-        delay allows multiple transactions to be committed with only one
-        <function>fsync</function> system call, if system load is high
-        enough additional transactions may become ready to commit within
-        the given interval. But the delay is just wasted if no other
-        transactions become ready to commit. Therefore, the delay is
-        only performed if at least <varname>COMMIT_SIBLINGS</varname> other transactions
-        are active at the instant that a server process has written its commit
-        record.
+        Time delay between writing a commit record to the WAL buffer
+        and flushing the buffer out to disk, in microseconds. A
+        nonzero delay allows multiple transactions to be committed
+        with only one <function>fsync()</function> system call, if
+        system load is high enough additional transactions may become
+        ready to commit within the given interval. But the delay is
+        just wasted if no other transactions become ready to
+        commit. Therefore, the delay is only performed if at least
+        <varname>COMMIT_SIBLINGS</varname> other transactions are
+        active at the instant that a server process has written its
+        commit record. The default is zero (no delay).
        </para>
       </listitem>
      </varlistentry>
@@ -1196,10 +1205,11 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>COMMIT_SIBLINGS</varname> (<type>integer</type>)</term>
       <listitem>
        <para>
-        Minimum number of concurrent open transactions to require before
-        performing the <varname>COMMIT_DELAY</> delay. A larger value
-        makes it more probable that at least one other transaction will
-        become ready to commit during the delay interval.
+        Minimum number of concurrent open transactions to require
+        before performing the <varname>COMMIT_DELAY</> delay. A larger
+        value makes it more probable that at least one other
+        transaction will become ready to commit during the delay
+        interval. The default is five.
        </para>
       </listitem>
      </varlistentry>
@@ -1209,20 +1219,36 @@ SET ENABLE_SEQSCAN TO OFF;
    </sect2>
 
    <sect2 id="runtime-config-query">
-    <title>Query Tuning</title>
+    <title>Query Planning</title>
 
     <sect3 id="runtime-config-query-enable">
-     <title>Planner Method Enabling</title>
+     <title>Planner Method Configuration</title>
+
+     <note>
+      <para>
+       These configuration parameters provide a crude method for
+       influencing the query plans chosen by the query optimizer. If
+       the default plan chosen by the optimizer is not optimal, a
+       temporary solution may be found by using one of these
+       configuration parameters to force the optimizer to choose a
+       better plan. Other ways to improve the quality of the plans
+       chosen by the optimizer include configuring the <xref
+       linkend="runtime-config-query-constants"
+       endterm="runtime-config-query-constants-title">, running
+       <command>ANALYZE</command> more frequently, and increasing the
+       amount of statistics collected for a particular column using
+       <command>ALTER TABLE SET STATISTICS</command>.
+      </para>
+     </note>
+
      <variablelist>
-
-
      <varlistentry>
       <term><varname>ENABLE_HASHAGG</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Enables or disables the query planner's use of hashed aggregation
-        plan types. The default is on. This is used for debugging the query
-        planner.
+        Enables or disables the query planner's use of hashed
+        aggregation plan types. The default is on. This is used for
+        debugging the query planner.
        </para>
       </listitem>
      </varlistentry>
@@ -1232,8 +1258,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Enables or disables the query planner's use of hash-join plan
-        types. The default is on. This is used for debugging the
-        query planner.
+        types. The default is on. This is used for debugging the query
+        planner.
        </para>
       </listitem>
      </varlistentry>
@@ -1247,8 +1273,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Enables or disables the query planner's use of index-scan plan
-        types. The default is on. This is used to debugging the
-        query planner.
+        types. The default is on. This is used for debugging the query
+        planner.
        </para>
       </listitem>
      </varlistentry>
@@ -1258,8 +1284,8 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Enables or disables the query planner's use of merge-join plan
-        types. The default is on. This is used for debugging the
-        query planner.
+        types. The default is on. This is used for debugging the query
+        planner.
        </para>
       </listitem>
      </varlistentry>
@@ -1311,9 +1337,9 @@ SET ENABLE_SEQSCAN TO OFF;
       <term><varname>ENABLE_TIDSCAN</varname> (<type>boolean</type>)</term>
       <listitem>
        <para>
-        Enables or disables the query planner's use of <acronym>TID</> scan plan
-        types. The default is on. This is used for debugging the
-        query planner.
+        Enables or disables the query planner's use of <acronym>TID</>
+        scan plan types. The default is on. This is used for debugging
+        the query planner.
        </para>
       </listitem>
      </varlistentry>
@@ -1321,7 +1347,9 @@ SET ENABLE_SEQSCAN TO OFF;
      </variablelist>
      </sect3>
      <sect3 id="runtime-config-query-constants">
-     <title>Planner Cost Constants</title>
+     <title id="runtime-config-query-constants-title">
+      Planner Cost Constants
+     </title>
 
    <note>
     <para>
@@ -1339,10 +1367,10 @@ SET ENABLE_SEQSCAN TO OFF;
       <listitem>
        <para>
         Sets the planner's assumption about the effective size of the
-        disk cache (that is, the portion of the kernel's disk cache that
-        will be used for <productname>PostgreSQL</productname> data
-        files). This is measured in disk pages, which are normally 8 kB
-        each.
+        disk cache (that is, the portion of the kernel's disk cache
+        that will be used for <productname>PostgreSQL</productname>
+        data files). This is measured in disk pages, which are
+        normally 8192 bytes each.
        </para>
       </listitem>
      </varlistentry>
@@ -2002,7 +2030,7 @@ SET ENABLE_SEQSCAN TO OFF;
        </para>
 
        <para>
-        The value for <varname>search_path</varname> has to be a comma-separated
+        The value for <varname>SEARCH_PATH</varname> has to be a comma-separated
         list of schema names.  If one of the list items is
         the special value <literal>$user</literal>, then the schema
         having the name returned by <function>SESSION_USER</> is substituted, if there
@@ -2040,11 +2068,11 @@ SET ENABLE_SEQSCAN TO OFF;
 
        <para>
         The current effective value of the search path can be examined
-        via the SQL function <function>current_schemas()</>.  This is not
-        quite the same as examining the value of
-        <varname>search_path</varname>, since <function>current_schemas()</>
-        shows how the requests appearing in <varname>search_path</varname>
-        were resolved.
+        via the <acronym>SQL</acronym> function
+        <function>current_schemas()</>.  This is not quite the same as
+        examining the value of <varname>SEARCH_PATH</varname>, since
+        <function>current_schemas()</> shows how the requests
+        appearing in <varname>SEARCH_PATH</varname> were resolved.
        </para>
 
        <para>
@@ -2381,8 +2409,8 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
       <listitem>
        <para>
         The shared lock table is sized on the assumption that at most
-        <varname>max_locks_per_transaction</> *
-        <varname>max_connections</varname> distinct objects will need to
+        <varname>MAX_LOCKS_PER_TRANSACTION</> *
+        <varname>MAX_CONNECTIONS</varname> distinct objects will need to
         be locked at any one time. The default, 64, has historically
         proven sufficient, but you might need to raise this value if you
         have clients that touch many different tables in a single
@@ -2590,7 +2618,7 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
        <para>
         Detection of a damaged page header normally causes
         <productname>PostgreSQL</> to report an error, aborting the current
-        transaction.  Setting <varname>zero_damaged_pages</> to true causes
+        transaction.  Setting <varname>ZERO_DAMAGED_PAGES</> to true causes
         the system to instead report a warning, zero out the damaged page,
         and continue processing.  This behavior <emphasis>will destroy data</>,
         namely all the rows on the damaged page.  But it allows you to get
@@ -2786,7 +2814,7 @@ $ <userinput>postmaster -o '-S 1024 -s'</userinput>
       <row>
        <entry><varname>SHMMAX</></>
        <entry>Maximum size of shared memory segment (bytes)</>
-       <entry>250 kB + 8.2 kB * <varname>shared_buffers</> + 14.2 kB * <varname>max_connections</> up to infinity</entry>
+       <entry>250 kB + 8.2 kB * <varname>SHARED_BUFFERS</> + 14.2 kB * <varname>MAX_CONNECTIONS</> up to infinity</entry>
       </row>
 
       <row>
@@ -3331,7 +3359,7 @@ default:\
     processes do so then the system-wide limit can easily be exceeded.
     If you find this happening, and you do not want to alter the system-wide
     limit, you can set <productname>PostgreSQL</productname>'s
-    <varname>max_files_per_process</varname> configuration parameter to
+    <varname>MAX_FILES_PER_PROCESS</varname> configuration parameter to
     limit the consumption of open files.
    </para>
   </sect2>
@@ -3440,7 +3468,7 @@ $ <userinput>kill -INT `head -1 /usr/local/pgsql/data/postmaster.pid`</userinput
    With <acronym>SSL</> support compiled in, the
    <productname>PostgreSQL</> server can be started with
    <acronym>SSL</> enabled by setting the parameter
-   <varname>ssl</varname> to on in <filename>postgresql.conf</>. When
+   <varname>SSL</varname> to on in <filename>postgresql.conf</>. When
    starting in <acronym>SSL</> mode, the server will look for the
    files <filename>server.key</> and <filename>server.crt</> in the
    data directory, which should contain the server private key
