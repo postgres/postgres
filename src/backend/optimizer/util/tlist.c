@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.15 1998/07/20 19:53:48 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/tlist.c,v 1.16 1998/07/20 21:18:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -589,23 +589,3 @@ AddGroupAttrToTlist(List *tlist, List *grpCl)
 }
 
 #endif
-
-/* was ExecTargetListLength() in execQual.c,
-   moved here to reduce dependencies on the executor module */
-int
-exec_tlist_length(List *targetlist)
-{
-	int			len;
-	List	   *tl;
-	TargetEntry *curTle;
-
-	len = 0;
-	foreach(tl, targetlist)
-	{
-		curTle = lfirst(tl);
-
-		if (curTle->resdom != NULL)
-			len++;
-	}
-	return len;
-}

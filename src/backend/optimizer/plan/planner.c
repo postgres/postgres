@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.28 1998/07/19 05:49:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.29 1998/07/20 21:18:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -446,7 +446,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 
 	if (typeTypeRelid(typ) == InvalidOid)
 	{
-		if (exec_tlist_length(tlist) > 1)
+		if (ExecTargetListLength(tlist) > 1)
 			elog(ERROR, "function declared to return %s returns multiple values in final retrieve", typeTypeName(typ));
 
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
@@ -464,7 +464,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	 * is 'retrieve (x = func2())', where func2 has the same return type
 	 * as the function that's calling it.
 	 */
-	if (exec_tlist_length(tlist) == 1)
+	if (ExecTargetListLength(tlist) == 1)
 	{
 		resnode = (Resdom *) ((TargetEntry *) lfirst(tlist))->resdom;
 		if (resnode->restype == rettype)
@@ -485,7 +485,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
 
-	if (exec_tlist_length(tlist) != relnatts)
+	if (ExecTargetListLength(tlist) != relnatts)
 		elog(ERROR, "function declared to return type %s does not retrieve (%s.*)", typeTypeName(typ), typeTypeName(typ));
 
 	/* expect attributes 1 .. n in order */

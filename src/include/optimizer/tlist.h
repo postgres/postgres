@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tlist.h,v 1.11 1998/07/20 20:48:54 momjian Exp $
+ * $Id: tlist.h,v 1.12 1998/07/20 21:18:35 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,7 +17,6 @@
 #include "nodes/parsenodes.h"
 #include "nodes/relation.h"
 
-extern int	exec_tlist_length(List *targelist);
 extern TargetEntry *tlistentry_member(Var *var, List *targetlist);
 extern Expr *matching_tlvar(Var *var, List *targetlist);
 extern void add_tl_element(RelOptInfo *rel, Var *var);
@@ -30,8 +29,7 @@ extern TargetEntry *match_varid(Var *test_var, List *tlist);
 extern List *new_unsorted_tlist(List *targetlist);
 extern List *copy_vars(List *target, List *source);
 extern List *flatten_tlist(List *tlist);
-extern List *
-flatten_tlist_vars(List *full_tlist,
+extern List *flatten_tlist_vars(List *full_tlist,
 				   List *flat_tlist);
 
 #endif							/* TLIST_H */
