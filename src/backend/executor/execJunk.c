@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.33 2002/12/12 15:49:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.34 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,8 +63,6 @@ JunkFilter *
 ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 				   TupleTableSlot *slot)
 {
-	MemoryContext oldContext;
-	MemoryContext junkContext;
 	JunkFilter *junkfilter;
 	List	   *cleanTargetList;
 	int			len,
@@ -78,19 +76,6 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 	AttrNumber	cleanResno;
 	AttrNumber *cleanMap;
 	Expr	   *expr;
-
-	/*
-	 * Make a memory context that will hold the JunkFilter as well as all
-	 * the subsidiary structures we are about to create.  We use smaller-
-	 * than-default sizing parameters since we don't expect a very large
-	 * volume of stuff here.
-	 */
-	junkContext = AllocSetContextCreate(CurrentMemoryContext,
-										"JunkFilterContext",
-										1024,
-										1024,
-										ALLOCSET_DEFAULT_MAXSIZE);
-	oldContext = MemoryContextSwitchTo(junkContext);
 
 	/*
 	 * First find the "clean" target list, i.e. all the entries in the
@@ -174,31 +159,12 @@ ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 	junkfilter->jf_cleanLength = cleanLength;
 	junkfilter->jf_cleanTupType = cleanTupType;
 	junkfilter->jf_cleanMap = cleanMap;
-	junkfilter->jf_junkContext = junkContext;
 	junkfilter->jf_resultSlot = slot;
 
 	if (slot)
 		ExecSetSlotDescriptor(slot, cleanTupType, false);
 
-	MemoryContextSwitchTo(oldContext);
-
 	return junkfilter;
-}
-
-/*-------------------------------------------------------------------------
- * ExecFreeJunkFilter
- *
- * Release the data structures created by ExecInitJunkFilter.
- *-------------------------------------------------------------------------
- */
-void
-ExecFreeJunkFilter(JunkFilter *junkfilter)
-{
-	/*
-	 * Since the junkfilter is inside its own context, we just have to
-	 * delete the context and we're set.
-	 */
-	MemoryContextDelete(junkfilter->jf_junkContext);
 }
 
 /*-------------------------------------------------------------------------

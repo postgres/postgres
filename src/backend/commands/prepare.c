@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.11 2002/12/15 16:17:42 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.12 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,9 +256,9 @@ StoreQuery(const char *stmt_name, List *query_list, List *plan_list,
 	/* Make a permanent memory context for the hashtable entry */
 	entrycxt = AllocSetContextCreate(TopMemoryContext,
 									 stmt_name,
-									 1024,
-									 1024,
-									 ALLOCSET_DEFAULT_MAXSIZE);
+									 ALLOCSET_SMALL_MINSIZE,
+									 ALLOCSET_SMALL_INITSIZE,
+									 ALLOCSET_SMALL_MAXSIZE);
 
 	oldcxt = MemoryContextSwitchTo(entrycxt);
 

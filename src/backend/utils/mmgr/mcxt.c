@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.36 2002/11/13 00:37:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/mcxt.c,v 1.37 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,7 +80,7 @@ MemoryContextInit(void)
 	 */
 	TopMemoryContext = AllocSetContextCreate((MemoryContext) NULL,
 											 "TopMemoryContext",
-											 8 * 1024,
+											 0,
 											 8 * 1024,
 											 8 * 1024);
 

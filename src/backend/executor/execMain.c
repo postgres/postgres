@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.193 2002/12/15 16:17:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.194 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -775,6 +775,12 @@ initResultRelInfo(ResultRelInfo *resultRelInfo,
  *		ExecEndPlan
  *
  *		Cleans up the query plan -- closes files and frees up storage
+ *
+ * NOTE: we are no longer very worried about freeing storage per se
+ * in this code; FreeExecutorState should be guaranteed to release all
+ * memory that needs to be released.  What we are worried about doing
+ * is closing relations and dropping buffer pins.  Thus, for example,
+ * tuple tables must be cleared or dropped to ensure pins are released.
  * ----------------------------------------------------------------
  */
 void
@@ -803,7 +809,7 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 
 	/*
 	 * close the result relation(s) if any, but hold locks until xact
-	 * commit.	Also clean up junkfilters if present.
+	 * commit.
 	 */
 	resultRelInfo = estate->es_result_relations;
 	for (i = estate->es_num_result_relations; i > 0; i--)
@@ -811,9 +817,6 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 		/* Close indices and then the relation itself */
 		ExecCloseIndices(resultRelInfo);
 		heap_close(resultRelInfo->ri_RelationDesc, NoLock);
-		/* Delete the junkfilter if any */
-		if (resultRelInfo->ri_junkFilter != NULL)
-			ExecFreeJunkFilter(resultRelInfo->ri_junkFilter);
 		resultRelInfo++;
 	}
 
@@ -822,16 +825,6 @@ ExecEndPlan(PlanState *planstate, EState *estate)
 	 */
 	if (estate->es_into_relation_descriptor != NULL)
 		heap_close(estate->es_into_relation_descriptor, NoLock);
-
-	/*
-	 * There might be a junkfilter without a result relation.
-	 */
-	if (estate->es_num_result_relations == 0 &&
-		estate->es_junkFilter != NULL)
-	{
-		ExecFreeJunkFilter(estate->es_junkFilter);
-		estate->es_junkFilter = NULL;
-	}
 
 	/*
 	 * close any relations selected FOR UPDATE, again keeping locks

@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.48 2002/09/04 20:31:45 momjian Exp $
+ * $Id: memutils.h,v 1.49 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,8 +116,16 @@ extern MemoryContext AllocSetContextCreate(MemoryContext parent,
  * Recommended default alloc parameters, suitable for "ordinary" contexts
  * that might hold quite a lot of data.
  */
-#define ALLOCSET_DEFAULT_MINSIZE   (8 * 1024)
+#define ALLOCSET_DEFAULT_MINSIZE   0
 #define ALLOCSET_DEFAULT_INITSIZE  (8 * 1024)
 #define ALLOCSET_DEFAULT_MAXSIZE   (8 * 1024 * 1024)
+
+/*
+ * Recommended alloc parameters for "small" contexts that are not expected
+ * to contain much data (for example, a context to contain a query plan).
+ */
+#define ALLOCSET_SMALL_MINSIZE   0
+#define ALLOCSET_SMALL_INITSIZE  (1 * 1024)
+#define ALLOCSET_SMALL_MAXSIZE   (8 * 1024)
 
 #endif   /* MEMUTILS_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.181 2002/11/15 17:18:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.182 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -647,9 +647,9 @@ RelationBuildRuleLock(Relation relation)
 	 */
 	rulescxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 0, /* minsize */
-									 1024,		/* initsize */
-									 1024);		/* maxsize */
+									 ALLOCSET_SMALL_MINSIZE,
+									 ALLOCSET_SMALL_INITSIZE,
+									 ALLOCSET_SMALL_MAXSIZE);
 	relation->rd_rulescxt = rulescxt;
 
 	/*
@@ -994,9 +994,9 @@ RelationInitIndexAccessInfo(Relation relation)
 	 */
 	indexcxt = AllocSetContextCreate(CacheMemoryContext,
 									 RelationGetRelationName(relation),
-									 0, /* minsize */
-									 512,		/* initsize */
-									 1024);		/* maxsize */
+									 ALLOCSET_SMALL_MINSIZE,
+									 ALLOCSET_SMALL_INITSIZE,
+									 ALLOCSET_SMALL_MAXSIZE);
 	relation->rd_indexcxt = indexcxt;
 
 	/*
@@ -2851,9 +2851,9 @@ load_relcache_init_file(void)
 			 */
 			indexcxt = AllocSetContextCreate(CacheMemoryContext,
 											 RelationGetRelationName(rel),
-											 0, /* minsize */
-											 512,		/* initsize */
-											 1024);		/* maxsize */
+											 ALLOCSET_SMALL_MINSIZE,
+											 ALLOCSET_SMALL_INITSIZE,
+											 ALLOCSET_SMALL_MAXSIZE);
 			rel->rd_indexcxt = indexcxt;
 
 			/* next, read the index strategy map */

@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.48 2002/09/04 20:31:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.49 2002/12/15 21:01:34 tgl Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -371,10 +371,11 @@ AllocSetInit(MemoryContext context)
  *		Frees all memory which is allocated in the given set.
  *
  * Actually, this routine has some discretion about what to do.
- * It should mark all allocated chunks freed, but it need not
- * necessarily give back all the resources the set owns.  Our
- * actual implementation is that we hang on to any "keeper"
- * block specified for the set.
+ * It should mark all allocated chunks freed, but it need not necessarily
+ * give back all the resources the set owns.  Our actual implementation is
+ * that we hang onto any "keeper" block specified for the set.  In this way,
+ * we don't thrash malloc() when a context is repeatedly reset after small
+ * allocations, which is typical behavior for per-tuple contexts.
  */
 static void
 AllocSetReset(MemoryContext context)
@@ -696,6 +697,21 @@ AllocSetAlloc(MemoryContext context, Size size)
 		block->aset = set;
 		block->freeptr = ((char *) block) + ALLOC_BLOCKHDRSZ;
 		block->endptr = ((char *) block) + blksize;
+
+		/*
+		 * If this is the first block of the set, make it the "keeper" block.
+		 * Formerly, a keeper block could only be created during context
+		 * creation, but allowing it to happen here lets us have fast reset
+		 * cycling even for contexts created with minContextSize = 0; that
+		 * way we don't have to force space to be allocated in contexts that
+		 * might never need any space.  Don't mark an oversize block as
+		 * a keeper, however.
+		 */
+		if (set->blocks == NULL && blksize == set->initBlockSize)
+		{
+			Assert(set->keeper == NULL);
+			set->keeper = block;
+		}
 
 		block->next = set->blocks;
 		set->blocks = block;

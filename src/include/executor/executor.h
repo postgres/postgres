@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.84 2002/12/15 16:17:54 tgl Exp $
+ * $Id: executor.h,v 1.85 2002/12/15 21:01:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,6 @@ extern bool ExecSupportsMarkRestore(NodeTag plantype);
  */
 extern JunkFilter *ExecInitJunkFilter(List *targetList, TupleDesc tupType,
 				   TupleTableSlot *slot);
-extern void ExecFreeJunkFilter(JunkFilter *junkfilter);
 extern bool ExecGetJunkAttribute(JunkFilter *junkfilter, TupleTableSlot *slot,
 					 char *attrName, Datum *value, bool *isNull);
 extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
