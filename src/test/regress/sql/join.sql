@@ -181,11 +181,11 @@ SELECT '' AS "xxx", *
 
 SELECT '' AS "xxx", *
   FROM J1_TBL FULL OUTER JOIN J2_TBL USING (i)
-  ORDER BY i;
+  ORDER BY i, t;
 
 SELECT '' AS "xxx", *
   FROM J1_TBL FULL JOIN J2_TBL USING (i)
-  ORDER BY i;
+  ORDER BY i, t;
 
 SELECT '' AS "xxx", *
   FROM J1_TBL LEFT JOIN J2_TBL USING (i) WHERE (k = 1);
