@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.67 2001/11/11 19:18:54 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinpath.c,v 1.68 2002/03/12 00:51:42 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 #include "optimizer/paths.h"
 #include "parser/parsetree.h"
 #include "utils/lsyscache.h"
+
 
 static void sort_inner_and_outer(Query *root, RelOptInfo *joinrel,
 					 RelOptInfo *outerrel, RelOptInfo *innerrel,
@@ -720,8 +721,6 @@ hash_inner_and_outer(Query *root,
 					 List *restrictlist,
 					 JoinType jointype)
 {
-	Relids		outerrelids = outerrel->relids;
-	Relids		innerrelids = innerrel->relids;
 	bool		isouterjoin;
 	List	   *i;
 
@@ -773,13 +772,13 @@ hash_inner_and_outer(Query *root,
 		/*
 		 * Check if clause is usable with these input rels.
 		 */
-		if (intMember(left->varno, outerrelids) &&
-			intMember(right->varno, innerrelids))
+		if (VARISRELMEMBER(left->varno, outerrel) &&
+			VARISRELMEMBER(right->varno, innerrel))
 		{
 			/* righthand side is inner */
 		}
-		else if (intMember(left->varno, innerrelids) &&
-				 intMember(right->varno, outerrelids))
+		else if (VARISRELMEMBER(left->varno, innerrel) &&
+				 VARISRELMEMBER(right->varno, outerrel))
 		{
 			/* lefthand side is inner */
 		}
@@ -901,8 +900,6 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 						 JoinType jointype)
 {
 	List	   *result_list = NIL;
-	Relids		outerrelids = outerrel->relids;
-	Relids		innerrelids = innerrel->relids;
 	bool		isouterjoin = IS_OUTER_JOIN(jointype);
 	List	   *i;
 
@@ -952,10 +949,10 @@ select_mergejoin_clauses(RelOptInfo *joinrel,
 		left = get_leftop(clause);
 		right = get_rightop(clause);
 
-		if ((intMember(left->varno, outerrelids) &&
-			 intMember(right->varno, innerrelids)) ||
-			(intMember(left->varno, innerrelids) &&
-			 intMember(right->varno, outerrelids)))
+		if ((VARISRELMEMBER(left->varno, outerrel) &&
+			 VARISRELMEMBER(right->varno, innerrel)) ||
+			(VARISRELMEMBER(left->varno, innerrel) &&
+			 VARISRELMEMBER(right->varno, outerrel)))
 			result_list = lcons(restrictinfo, result_list);
 	}
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.93 2002/01/03 18:01:59 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/clauses.c,v 1.94 2002/03/12 00:51:50 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -1808,12 +1808,8 @@ expression_tree_walker(Node *node,
 					return true;
 				if (walker(join->quals, context))
 					return true;
-				if (walker((Node *) join->colvars, context))
-					return true;
-
 				/*
-				 * alias clause, using list, colnames list are deemed
-				 * uninteresting.
+				 * alias clause, using list are deemed uninteresting.
 				 */
 			}
 			break;
@@ -2186,8 +2182,7 @@ expression_tree_mutator(Node *node,
 				MUTATE(newnode->larg, join->larg, Node *);
 				MUTATE(newnode->rarg, join->rarg, Node *);
 				MUTATE(newnode->quals, join->quals, Node *);
-				MUTATE(newnode->colvars, join->colvars, List *);
-				/* We do not mutate alias, using, or colnames by default */
+				/* We do not mutate alias or using by default */
 				return (Node *) newnode;
 			}
 			break;

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.219 2002/03/10 06:02:23 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.220 2002/03/12 00:51:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -2045,10 +2045,12 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	Node	   *node;
 	List	   *lefttl,
 			   *dtlist,
-			   *targetvars,
+			   *colMods,
 			   *targetnames,
-			   *sv_namespace;
-	JoinExpr   *jnode;
+			   *sv_namespace,
+			   *sv_rtable;
+	RangeTblEntry *jrte;
+	RangeTblRef *jrtr;
 	int			tllen;
 
 	qry->commandType = CMD_SELECT;
@@ -2115,12 +2117,14 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * Generate dummy targetlist for outer query using column names of
 	 * leftmost select and common datatypes of topmost set operation. Also
-	 * make lists of the dummy vars and their names for use in parsing
-	 * ORDER BY.
+	 * make a list of the column names for use in parsing ORDER BY.
+	 *
+	 * XXX colMods is a hack to provide a dummy typmod list below.  We
+	 * should probably keep track of common typmod instead.
 	 */
 	qry->targetList = NIL;
-	targetvars = NIL;
 	targetnames = NIL;
+	colMods = NIL;
 	lefttl = leftmostQuery->targetList;
 	foreach(dtlist, sostmt->colTypes)
 	{
@@ -2135,15 +2139,15 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 							-1,
 							colName,
 							false);
-		expr = (Node *) makeVar(leftmostRTI,
+		expr = (Node *) makeVar(1,
 								leftResdom->resno,
 								colType,
 								-1,
 								0);
 		qry->targetList = lappend(qry->targetList,
 								  makeTargetEntry(resdom, expr));
-		targetvars = lappend(targetvars, expr);
 		targetnames = lappend(targetnames, makeString(colName));
+		colMods = lappendi(colMods, -1);
 		lefttl = lnext(lefttl);
 	}
 
@@ -2190,7 +2194,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	/*
 	 * As a first step towards supporting sort clauses that are
 	 * expressions using the output columns, generate a namespace entry
-	 * that makes the output columns visible.  A JoinExpr node is handy
+	 * that makes the output columns visible.  A Join RTE node is handy
 	 * for this, since we can easily control the Vars generated upon
 	 * matches.
 	 *
@@ -2198,12 +2202,23 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 	 * "ORDER BY upper(foo)" will draw the right error message rather than
 	 * "foo not found".
 	 */
-	jnode = makeNode(JoinExpr);
-	jnode->colnames = targetnames;
-	jnode->colvars = targetvars;
+	jrte = addRangeTableEntryForJoin(NULL,
+									 targetnames,
+									 JOIN_INNER,
+									 sostmt->colTypes,
+									 colMods,
+									 NIL,
+									 NIL,
+									 NULL,
+									 true);
+	jrtr = makeNode(RangeTblRef);
+	jrtr->rtindex = 1;
+
+	sv_rtable = pstate->p_rtable;
+	pstate->p_rtable = makeList1(jrte);
 
 	sv_namespace = pstate->p_namespace;
-	pstate->p_namespace = makeList1(jnode);
+	pstate->p_namespace = makeList1(jrtr);
 
 	/*
 	 * For now, we don't support resjunk sort clauses on the output of a
@@ -2218,6 +2233,7 @@ transformSetOperationStmt(ParseState *pstate, SelectStmt *stmt)
 										  qry->targetList);
 
 	pstate->p_namespace = sv_namespace;
+	pstate->p_rtable = sv_rtable;
 
 	if (tllen != length(qry->targetList))
 		elog(ERROR, "ORDER BY on a UNION/INTERSECT/EXCEPT result must be on one of the result columns");

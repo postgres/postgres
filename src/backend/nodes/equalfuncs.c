@@ -20,7 +20,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.116 2002/03/08 04:37:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/equalfuncs.c,v 1.117 2002/03/12 00:51:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -335,9 +335,7 @@ _equalJoinExpr(JoinExpr *a, JoinExpr *b)
 		return false;
 	if (!equal(a->alias, b->alias))
 		return false;
-	if (!equal(a->colnames, b->colnames))
-		return false;
-	if (!equal(a->colvars, b->colvars))
+	if (a->rtindex != b->rtindex)
 		return false;
 
 	return true;
@@ -1639,11 +1637,23 @@ _equalTargetEntry(TargetEntry *a, TargetEntry *b)
 static bool
 _equalRangeTblEntry(RangeTblEntry *a, RangeTblEntry *b)
 {
+	if (a->rtekind != b->rtekind)
+		return false;
 	if (!equalstr(a->relname, b->relname))
 		return false;
 	if (a->relid != b->relid)
 		return false;
 	if (!equal(a->subquery, b->subquery))
+		return false;
+	if (a->jointype != b->jointype)
+		return false;
+	if (!equali(a->joincoltypes, b->joincoltypes))
+		return false;
+	if (!equali(a->joincoltypmods, b->joincoltypmods))
+		return false;
+	if (!equali(a->joinleftcols, b->joinleftcols))
+		return false;
+	if (!equali(a->joinrightcols, b->joinrightcols))
 		return false;
 	if (!equal(a->alias, b->alias))
 		return false;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.53 2001/11/05 17:46:34 momjian Exp $
+ * $Id: plannodes.h,v 1.54 2002/03/12 00:52:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -254,6 +254,7 @@ typedef struct SubqueryScan
  * jointype:	rule for joining tuples from left and right subtrees
  * joinqual:	qual conditions that came from JOIN/ON or JOIN/USING
  *				(plan.qual contains conditions that came from WHERE)
+ * joinrti:		rtable index of corresponding JOIN RTE, if any (0 if none)
  *
  * When jointype is INNER, joinqual and plan.qual are semantically
  * interchangeable.  For OUTER jointypes, the two are *not* interchangeable;
@@ -262,6 +263,8 @@ typedef struct SubqueryScan
  * (But plan.qual is still applied before actually returning a tuple.)
  * For an outer join, only joinquals are allowed to be used as the merge
  * or hash condition of a merge or hash join.
+ *
+ * joinrti is for the convenience of setrefs.c; it's not used in execution.
  * ----------------
  */
 typedef struct Join
@@ -269,6 +272,7 @@ typedef struct Join
 	Plan		plan;
 	JoinType	jointype;
 	List	   *joinqual;		/* JOIN quals (in addition to plan.qual) */
+	Index		joinrti;		/* JOIN RTE, if any */
 } Join;
 
 /* ----------------

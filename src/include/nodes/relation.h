@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.62 2002/03/01 06:01:20 tgl Exp $
+ * $Id: relation.h,v 1.63 2002/03/12 00:52:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -39,18 +39,39 @@ typedef enum CostSelector
  * RelOptInfo
  *		Per-relation information for planning/optimization
  *
- *		For planning purposes, a "base rel" is either a plain relation (a
- *		table) or the output of a sub-SELECT that appears in the range table.
- *		In either case it is uniquely identified by an RT index.  A "joinrel"
- *		is the joining of two or more base rels.  A joinrel is identified by
- *		the set of RT indexes for its component baserels.
+ * For planning purposes, a "base rel" is either a plain relation (a table)
+ * or the output of a sub-SELECT that appears in the range table.
+ * In either case it is uniquely identified by an RT index.  A "joinrel"
+ * is the joining of two or more base rels.  A joinrel is identified by
+ * the set of RT indexes for its component baserels.  We create RelOptInfo
+ * nodes for each baserel and joinrel, and store them in the Query's
+ * base_rel_list and join_rel_list respectively.
  *
- *		Note that there is only one joinrel for any given set of component
- *		baserels, no matter what order we assemble them in; so an unordered
- *		set is the right datatype to identify it with.
+ * Note that there is only one joinrel for any given set of component
+ * baserels, no matter what order we assemble them in; so an unordered
+ * set is the right datatype to identify it with.
  *
- *		Parts of this data structure are specific to various scan and join
- *		mechanisms.  It didn't seem worth creating new node types for them.
+ * We also have "other rels", which are like base rels in that they refer to
+ * single RT indexes; but they are not part of the join tree, and are stored
+ * in other_rel_list not base_rel_list.  An otherrel is created for each
+ * join RTE as an aid in processing Vars that refer to the join's outputs,
+ * but it serves no other purpose in planning.  It is important not to
+ * confuse this otherrel with the joinrel that represents the matching set
+ * of base relations.
+ *
+ * A second category of otherrels are those made for child relations of an
+ * inheritance scan (SELECT FROM foo*).  The parent table's RTE and
+ * corresponding baserel represent the whole result of the inheritance scan.
+ * The planner creates separate RTEs and associated RelOptInfos for each child
+ * table (including the parent table, in its capacity as a member of the
+ * inheritance set).  These RelOptInfos are physically identical to baserels,
+ * but are otherrels because they are not in the main join tree.  These added
+ * RTEs and otherrels are used to plan the scans of the individual tables in
+ * the inheritance set; then the parent baserel is given an Append plan
+ * comprising the best plans for the individual child tables.
+ *
+ * Parts of this data structure are specific to various scan and join
+ * mechanisms.  It didn't seem worth creating new node types for them.
  *
  *		relids - List of base-relation identifiers; it is a base relation
  *				if there is just one, a join relation if more than one
@@ -69,7 +90,7 @@ typedef enum CostSelector
  *		pruneable - flag to let the planner know whether it can prune the
  *					pathlist of this RelOptInfo or not.
  *
- *	 * If the relation is a base relation it will have these fields set:
+ * If the relation is a base relation it will have these fields set:
  *
  *		issubquery - true if baserel is a subquery RTE rather than a table
  *		indexlist - list of IndexOptInfo nodes for relation's indexes
@@ -82,25 +103,30 @@ typedef enum CostSelector
  *		upon creation of the RelOptInfo object; they are filled in when
  *		set_base_rel_pathlist processes the object.
  *
- *		Note: if a base relation is the root of an inheritance tree
- *		(SELECT FROM foo*) it is still considered a base rel.  We will
- *		generate a list of candidate Paths for accessing that table itself,
- *		and also generate baserel RelOptInfo nodes for each child table,
- *		with their own candidate Path lists.  Then, an AppendPath is built
- *		from the cheapest Path for each of these tables, and set to be the
- *		only available Path for the inheritance baserel.
+ *		For otherrels that are inheritance children, these fields are filled
+ *		in just as for a baserel.  In otherrels for join RTEs, these fields
+ *		are empty --- the only useful field of a join otherrel is its
+ *		outerjoinset.
  *
- *	 * The presence of the remaining fields depends on the restrictions
- *		and joins that the relation participates in:
+ * If the relation is a join relation it will have these fields set:
+ *
+ *		joinrti - RT index of corresponding JOIN RTE, if any; 0 if none
+ *		joinrteids - List of RT indexes of JOIN RTEs included in this join
+ *					 (including joinrti)
+ *
+ * The presence of the remaining fields depends on the restrictions
+ * and joins that the relation participates in:
  *
  *		baserestrictinfo - List of RestrictInfo nodes, containing info about
  *					each qualification clause in which this relation
  *					participates (only used for base rels)
  *		baserestrictcost - Estimated cost of evaluating the baserestrictinfo
  *					clauses at a single tuple (only used for base rels)
- *		outerjoinset - If the rel appears within the nullable side of an outer
- *					join, the list of all relids participating in the highest
- *					such outer join; else NIL (only used for base rels)
+ *		outerjoinset - For a base rel: if the rel appears within the nullable
+ *					side of an outer join, the list of all relids
+ *					participating in the highest such outer join; else NIL.
+ *					For a join otherrel: the list of all baserel relids
+ *					syntactically within the join.  Otherwise, unused.
  *		joininfo  - List of JoinInfo nodes, containing info about each join
  *					clause in which this relation participates
  *		innerjoin - List of Path nodes that represent indices that may be used
@@ -128,10 +154,19 @@ typedef enum CostSelector
  * until after the outer join is performed.
  *----------
  */
+typedef enum RelOptKind
+{
+	RELOPT_BASEREL,
+	RELOPT_JOINREL,
+	RELOPT_OTHER_JOIN_REL,
+	RELOPT_OTHER_CHILD_REL
+} RelOptKind;
 
 typedef struct RelOptInfo
 {
 	NodeTag		type;
+
+	RelOptKind	reloptkind;
 
 	/* all relations included in this RelOptInfo */
 	Relids		relids;			/* integer list of base relids (RT
@@ -154,6 +189,10 @@ typedef struct RelOptInfo
 	long		pages;
 	double		tuples;
 	struct Plan *subplan;
+
+	/* information about a join rel (not set for base rels!) */
+	Index		joinrti;
+	List	   *joinrteids;
 
 	/* used by various scans and joins: */
 	List	   *baserestrictinfo;		/* RestrictInfo structures (if
@@ -227,6 +266,16 @@ typedef struct IndexOptInfo
 	List	   *indpred;		/* if a partial index */
 	bool		unique;			/* if a unique index */
 } IndexOptInfo;
+
+
+/*
+ * A Var is considered to belong to a relation if it's either from one
+ * of the actual base rels making up the relation, or it's a join alias
+ * var that is included in the relation.
+ */
+#define VARISRELMEMBER(varno,rel) (intMember((varno), (rel)->relids) || \
+								   intMember((varno), (rel)->joinrteids))
+
 
 /*
  * PathKeys

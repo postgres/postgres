@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.83 2001/10/25 05:49:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.84 2002/03/12 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,13 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 				   *res_colnames,
 				   *l_colvars,
 				   *r_colvars,
-				   *res_colvars;
+				   *coltypes,
+				   *coltypmods,
+				   *leftcolnos,
+				   *rightcolnos;
+		Index		leftrti,
+					rightrti;
+		RangeTblEntry *rte;
 
 		/*
 		 * Recursively process the left and right subtrees
@@ -525,39 +531,32 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 
 		/*
 		 * Extract column name and var lists from both subtrees
+		 *
+		 * Note: expandRTE returns new lists, safe for me to modify
 		 */
-		if (IsA(j->larg, JoinExpr))
-		{
-			/* Make a copy of the subtree's lists so we can modify! */
-			l_colnames = copyObject(((JoinExpr *) j->larg)->colnames);
-			l_colvars = copyObject(((JoinExpr *) j->larg)->colvars);
-		}
+		if (IsA(j->larg, RangeTblRef))
+			leftrti = ((RangeTblRef *) j->larg)->rtindex;
+		else if (IsA(j->larg, JoinExpr))
+			leftrti = ((JoinExpr *) j->larg)->rtindex;
 		else
 		{
-			RangeTblEntry *rte;
+			elog(ERROR, "transformFromClauseItem: unexpected subtree type");
+			leftrti = 0;		/* keep compiler quiet */
+		}
+		rte = rt_fetch(leftrti, pstate->p_rtable);
+		expandRTE(pstate, rte, &l_colnames, &l_colvars);
 
-			Assert(IsA(j->larg, RangeTblRef));
-			rte = rt_fetch(((RangeTblRef *) j->larg)->rtindex,
-						   pstate->p_rtable);
-			expandRTE(pstate, rte, &l_colnames, &l_colvars);
-			/* expandRTE returns new lists, so no need for copyObject */
-		}
-		if (IsA(j->rarg, JoinExpr))
-		{
-			/* Make a copy of the subtree's lists so we can modify! */
-			r_colnames = copyObject(((JoinExpr *) j->rarg)->colnames);
-			r_colvars = copyObject(((JoinExpr *) j->rarg)->colvars);
-		}
+		if (IsA(j->rarg, RangeTblRef))
+			rightrti = ((RangeTblRef *) j->rarg)->rtindex;
+		else if (IsA(j->rarg, JoinExpr))
+			rightrti = ((JoinExpr *) j->rarg)->rtindex;
 		else
 		{
-			RangeTblEntry *rte;
-
-			Assert(IsA(j->rarg, RangeTblRef));
-			rte = rt_fetch(((RangeTblRef *) j->rarg)->rtindex,
-						   pstate->p_rtable);
-			expandRTE(pstate, rte, &r_colnames, &r_colvars);
-			/* expandRTE returns new lists, so no need for copyObject */
+			elog(ERROR, "transformFromClauseItem: unexpected subtree type");
+			rightrti = 0;		/* keep compiler quiet */
 		}
+		rte = rt_fetch(rightrti, pstate->p_rtable);
+		expandRTE(pstate, rte, &r_colnames, &r_colvars);
 
 		/*
 		 * Natural join does not explicitly specify columns; must generate
@@ -604,7 +603,10 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 		 * Now transform the join qualifications, if any.
 		 */
 		res_colnames = NIL;
-		res_colvars = NIL;
+		coltypes = NIL;
+		coltypmods = NIL;
+		leftcolnos = NIL;
+		rightcolnos = NIL;
 
 		if (j->using)
 		{
@@ -624,9 +626,10 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 			{
 				char	   *u_colname = strVal(lfirst(ucol));
 				List	   *col;
-				Node	   *l_colvar,
-						   *r_colvar,
-						   *colvar;
+				Var		   *l_colvar,
+						   *r_colvar;
+				Oid			outcoltype;
+				int32		outcoltypmod;
 				int			ndx;
 				int			l_index = -1;
 				int			r_index = -1;
@@ -672,34 +675,28 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 
 				res_colnames = lappend(res_colnames,
 									   nth(l_index, l_colnames));
-				switch (j->jointype)
+				/*
+				 * Choose output type if input types are dissimilar.
+				 */
+				outcoltype = l_colvar->vartype;
+				outcoltypmod = l_colvar->vartypmod;
+				if (outcoltype != r_colvar->vartype)
 				{
-					case JOIN_INNER:
-					case JOIN_LEFT:
-						colvar = l_colvar;
-						break;
-					case JOIN_RIGHT:
-						colvar = r_colvar;
-						break;
-					default:
-						{
-							/* Need COALESCE(l_colvar, r_colvar) */
-							CaseExpr   *c = makeNode(CaseExpr);
-							CaseWhen   *w = makeNode(CaseWhen);
-							NullTest   *n = makeNode(NullTest);
-
-							n->arg = l_colvar;
-							n->nulltesttype = IS_NOT_NULL;
-							w->expr = (Node *) n;
-							w->result = l_colvar;
-							c->args = makeList1(w);
-							c->defresult = r_colvar;
-							colvar = transformExpr(pstate, (Node *) c,
-												   EXPR_COLUMN_FIRST);
-							break;
-						}
+					outcoltype =
+						select_common_type(makeListi2(l_colvar->vartype,
+													  r_colvar->vartype),
+										   "JOIN/USING");
+					outcoltypmod = -1; /* ie, unknown */
 				}
-				res_colvars = lappend(res_colvars, colvar);
+				else if (outcoltypmod != r_colvar->vartypmod)
+				{
+					/* same type, but not same typmod */
+					outcoltypmod = -1; /* ie, unknown */
+				}
+				coltypes = lappendi(coltypes, outcoltype);
+				coltypmods = lappendi(coltypmods, outcoltypmod);
+				leftcolnos = lappendi(leftcolnos, l_index+1);
+				rightcolnos = lappendi(rightcolnos, r_index+1);
 			}
 
 			j->quals = transformJoinUsingClause(pstate,
@@ -724,30 +721,53 @@ transformFromClauseItem(ParseState *pstate, Node *n, List **containedRels)
 							 r_colnames, r_colvars,
 							 &r_colnames, &r_colvars);
 		res_colnames = nconc(res_colnames, l_colnames);
-		res_colvars = nconc(res_colvars, l_colvars);
+		while (l_colvars)
+		{
+			Var	   *l_var = (Var *) lfirst(l_colvars);
+
+			coltypes = lappendi(coltypes, l_var->vartype);
+			coltypmods = lappendi(coltypmods, l_var->vartypmod);
+			leftcolnos = lappendi(leftcolnos, l_var->varattno);
+			rightcolnos = lappendi(rightcolnos, 0);
+			l_colvars = lnext(l_colvars);
+		}
 		res_colnames = nconc(res_colnames, r_colnames);
-		res_colvars = nconc(res_colvars, r_colvars);
+		while (r_colvars)
+		{
+			Var	   *r_var = (Var *) lfirst(r_colvars);
+
+			coltypes = lappendi(coltypes, r_var->vartype);
+			coltypmods = lappendi(coltypmods, r_var->vartypmod);
+			leftcolnos = lappendi(leftcolnos, 0);
+			rightcolnos = lappendi(rightcolnos, r_var->varattno);
+			r_colvars = lnext(r_colvars);
+		}
 
 		/*
-		 * Process alias (AS clause), if any.
+		 * Check alias (AS clause), if any.
 		 */
 		if (j->alias)
 		{
-			/*
-			 * If a column alias list is specified, substitute the alias
-			 * names into my output-column list
-			 */
 			if (j->alias->attrs != NIL)
 			{
-				if (length(j->alias->attrs) != length(res_colnames))
-					elog(ERROR, "Column alias list for \"%s\" has wrong number of entries (need %d)",
-						 j->alias->relname, length(res_colnames));
-				res_colnames = j->alias->attrs;
+				if (length(j->alias->attrs) > length(res_colnames))
+					elog(ERROR, "Column alias list for \"%s\" has too many entries",
+						 j->alias->relname);
 			}
 		}
 
-		j->colnames = res_colnames;
-		j->colvars = res_colvars;
+		/*
+		 * Now build an RTE for the result of the join
+		 */
+		rte = addRangeTableEntryForJoin(pstate, res_colnames,
+										j->jointype,
+										coltypes, coltypmods,
+										leftcolnos, rightcolnos,
+										j->alias, true);
+
+		/* assume new rte is at end */
+		j->rtindex = length(pstate->p_rtable);
+		Assert(rte == rt_fetch(j->rtindex, pstate->p_rtable));
 
 		return (Node *) j;
 	}

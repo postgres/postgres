@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.66 2002/03/01 06:01:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/initsplan.c,v 1.67 2002/03/12 00:51:45 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,16 +53,91 @@ static void check_hashjoinable(RestrictInfo *restrictinfo);
 
 /*****************************************************************************
  *
+ *	 JOIN TREES
+ *
+ *****************************************************************************/
+
+/*
+ * add_base_rels_to_query
+ *
+ *	  Scan the query's jointree and create baserel RelOptInfos for all
+ *	  the base relations (ie, table and subquery RTEs) appearing in the
+ *	  jointree.  Also, create otherrel RelOptInfos for join RTEs.
+ *
+ * The return value is a list of all the baserel indexes (but not join RTE
+ * indexes) included in the scanned jointree.  This is actually just an
+ * internal convenience for marking join otherrels properly; no outside
+ * caller uses the result.
+ *
+ * At the end of this process, there should be one baserel RelOptInfo for
+ * every non-join RTE that is used in the query.  Therefore, this routine
+ * is the only place that should call build_base_rel.  But build_other_rel
+ * will be used again later to build rels for inheritance children.
+ */
+List *
+add_base_rels_to_query(Query *root, Node *jtnode)
+{
+	List	   *result = NIL;
+
+	if (jtnode == NULL)
+		return NIL;
+	if (IsA(jtnode, RangeTblRef))
+	{
+		int			varno = ((RangeTblRef *) jtnode)->rtindex;
+
+		build_base_rel(root, varno);
+		result = makeListi1(varno);
+	}
+	else if (IsA(jtnode, FromExpr))
+	{
+		FromExpr   *f = (FromExpr *) jtnode;
+		List	   *l;
+
+		foreach(l, f->fromlist)
+		{
+			result = nconc(result,
+						   add_base_rels_to_query(root, lfirst(l)));
+		}
+	}
+	else if (IsA(jtnode, JoinExpr))
+	{
+		JoinExpr   *j = (JoinExpr *) jtnode;
+		RelOptInfo *jrel;
+
+		result = add_base_rels_to_query(root, j->larg);
+		result = nconc(result,
+					   add_base_rels_to_query(root, j->rarg));
+		/* the join's own rtindex is NOT added to result */
+		jrel = build_other_rel(root, j->rtindex);
+		/*
+		 * Mark the join's otherrel with outerjoinset = list of baserel ids
+		 * included in the join.  Note we must copy here because result list
+		 * is destructively modified by nconcs at higher levels.
+		 */
+		jrel->outerjoinset = listCopy(result);
+		/*
+		 * Safety check: join RTEs should not be SELECT FOR UPDATE targets
+		 */
+		if (intMember(j->rtindex, root->rowMarks))
+			elog(ERROR, "SELECT FOR UPDATE cannot be applied to a join");
+	}
+	else
+		elog(ERROR, "add_base_rels_to_query: unexpected node type %d",
+			 nodeTag(jtnode));
+	return result;
+}
+
+
+/*****************************************************************************
+ *
  *	 TARGET LISTS
  *
  *****************************************************************************/
 
 /*
  * build_base_rel_tlists
- *	  Creates rel nodes for every relation mentioned in the target list
- *	  'tlist' (if a node hasn't already been created) and adds them to
- *	  root->base_rel_list.	Creates targetlist entries for each var seen
- *	  in 'tlist' and adds them to the tlist of the appropriate rel node.
+ *	  Creates targetlist entries for each var seen in 'tlist' and adds
+ *	  them to the tlist of the appropriate rel node.
  */
 void
 build_base_rel_tlists(Query *root, List *tlist)
@@ -75,9 +150,13 @@ build_base_rel_tlists(Query *root, List *tlist)
 
 /*
  * add_vars_to_targetlist
- *	  For each variable appearing in the list, add it to the relation's
- *	  targetlist if not already present.  Corresponding base rel nodes
- *	  will be created if not already present.
+ *	  For each variable appearing in the list, add it to the owning
+ *	  relation's targetlist if not already present.
+ *
+ * Note that join alias variables will be attached to the otherrel for
+ * the join RTE.  They will later be transferred to the tlist of
+ * the corresponding joinrel.  We will also cause entries to be made
+ * for the Vars that the alias will eventually depend on.
  */
 static void
 add_vars_to_targetlist(Query *root, List *vars)
@@ -87,70 +166,25 @@ add_vars_to_targetlist(Query *root, List *vars)
 	foreach(temp, vars)
 	{
 		Var		   *var = (Var *) lfirst(temp);
-		RelOptInfo *rel = build_base_rel(root, var->varno);
+		RelOptInfo *rel = find_base_rel(root, var->varno);
 
 		add_var_to_tlist(rel, var);
-	}
-}
 
-/*----------
- * add_missing_rels_to_query
- *
- *	  If we have a relation listed in the join tree that does not appear
- *	  in the target list nor qualifications, we must add it to the base
- *	  relation list so that it can be processed.  For instance,
- *			select count(*) from foo;
- *	  would fail to scan foo if this routine were not called.  More subtly,
- *			select f.x from foo f, foo f2
- *	  is a join of f and f2.  Note that if we have
- *			select foo.x from foo f
- *	  this also gets turned into a join (between foo as foo and foo as f).
- *
- *	  Returns a list of all the base relations (RelOptInfo nodes) that appear
- *	  in the join tree.  This list can be used for cross-checking in the
- *	  reverse direction, ie, that we have a join tree entry for every
- *	  relation used in the query.
- *----------
- */
-List *
-add_missing_rels_to_query(Query *root, Node *jtnode)
-{
-	List	   *result = NIL;
-
-	if (jtnode == NULL)
-		return NIL;
-	if (IsA(jtnode, RangeTblRef))
-	{
-		int			varno = ((RangeTblRef *) jtnode)->rtindex;
-
-		/* This call to build_base_rel does the primary work... */
-		RelOptInfo *rel = build_base_rel(root, varno);
-
-		result = makeList1(rel);
-	}
-	else if (IsA(jtnode, FromExpr))
-	{
-		FromExpr   *f = (FromExpr *) jtnode;
-		List	   *l;
-
-		foreach(l, f->fromlist)
+		if (rel->reloptkind == RELOPT_OTHER_JOIN_REL)
 		{
-			result = nconc(result,
-						   add_missing_rels_to_query(root, lfirst(l)));
+			/* Var is an alias */
+			Var	   *leftsubvar,
+				   *rightsubvar;
+
+			build_join_alias_subvars(root, var,
+									 &leftsubvar, &rightsubvar);
+
+			rel = find_base_rel(root, leftsubvar->varno);
+			add_var_to_tlist(rel, leftsubvar);
+			rel = find_base_rel(root, rightsubvar->varno);
+			add_var_to_tlist(rel, rightsubvar);
 		}
 	}
-	else if (IsA(jtnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) jtnode;
-
-		result = add_missing_rels_to_query(root, j->larg);
-		result = nconc(result,
-					   add_missing_rels_to_query(root, j->rarg));
-	}
-	else
-		elog(ERROR, "add_missing_rels_to_query: unexpected node type %d",
-			 nodeTag(jtnode));
-	return result;
 }
 
 
@@ -165,10 +199,9 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
  * distribute_quals_to_rels
  *	  Recursively scan the query's join tree for WHERE and JOIN/ON qual
  *	  clauses, and add these to the appropriate RestrictInfo and JoinInfo
- *	  lists belonging to base RelOptInfos.	New base rel entries are created
- *	  as needed.  Also, base RelOptInfos are marked with outerjoinset
- *	  information, to aid in proper positioning of qual clauses that appear
- *	  above outer joins.
+ *	  lists belonging to base RelOptInfos.  Also, base RelOptInfos are marked
+ *	  with outerjoinset information, to aid in proper positioning of qual
+ *	  clauses that appear above outer joins.
  *
  * NOTE: when dealing with inner joins, it is appropriate to let a qual clause
  * be evaluated at the lowest level where all the variables it mentions are
@@ -181,7 +214,7 @@ add_missing_rels_to_query(Query *root, Node *jtnode)
  * a rel, thereby forcing them up the join tree to the right level.
  *
  * To ease the calculation of these values, distribute_quals_to_rels() returns
- * the list of Relids involved in its own level of join.  This is just an
+ * the list of base Relids involved in its own level of join.  This is just an
  * internal convenience; no outside callers pay attention to the result.
  */
 Relids
@@ -302,7 +335,7 @@ mark_baserels_for_outer_join(Query *root, Relids rels, Relids outerrels)
 	foreach(relid, rels)
 	{
 		int			relno = lfirsti(relid);
-		RelOptInfo *rel = build_base_rel(root, relno);
+		RelOptInfo *rel = find_base_rel(root, relno);
 
 		/*
 		 * Since we do this bottom-up, any outer-rels previously marked
@@ -382,11 +415,41 @@ distribute_qual_to_rels(Query *root, Node *clause,
 	clause_get_relids_vars(clause, &relids, &vars);
 
 	/*
-	 * Cross-check: clause should contain no relids not within its scope.
-	 * Otherwise the parser messed up.
+	 * The clause might contain some join alias vars; if so, we want to
+	 * remove the join otherrelids from relids and add the referent joins'
+	 * scope lists instead (thus ensuring that the clause can be evaluated
+	 * no lower than that join node).  We rely here on the marking done
+	 * earlier by add_base_rels_to_query.
+	 *
+	 * We can combine this step with a cross-check that the clause contains
+	 * no relids not within its scope.  If the first crosscheck succeeds,
+	 * the clause contains no aliases and we needn't look more closely.
 	 */
 	if (!is_subseti(relids, qualscope))
-		elog(ERROR, "JOIN qualification may not refer to other relations");
+	{
+		Relids		newrelids = NIL;
+		List	   *relid;
+
+		foreach(relid, relids)
+		{
+			RelOptInfo *rel = find_other_rel(root, lfirsti(relid));
+
+			if (rel && rel->outerjoinset)
+			{
+				/* this relid is for a join RTE */
+				newrelids = set_unioni(newrelids, rel->outerjoinset);
+			}
+			else
+			{
+				/* this relid is for a true baserel */
+				newrelids = lappendi(newrelids, lfirsti(relid));
+			}
+		}
+		relids = newrelids;
+		/* Now repeat the crosscheck */
+		if (!is_subseti(relids, qualscope))
+			elog(ERROR, "JOIN qualification may not refer to other relations");
+	}
 
 	/*
 	 * If the clause is variable-free, we force it to be evaluated at its
@@ -439,7 +502,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		can_be_equijoin = true;
 		foreach(relid, relids)
 		{
-			RelOptInfo *rel = build_base_rel(root, lfirsti(relid));
+			RelOptInfo *rel = find_base_rel(root, lfirsti(relid));
 
 			if (rel->outerjoinset &&
 				!is_subseti(rel->outerjoinset, relids))
@@ -475,7 +538,7 @@ distribute_qual_to_rels(Query *root, Node *clause,
 		 * There is only one relation participating in 'clause', so
 		 * 'clause' is a restriction clause for that relation.
 		 */
-		RelOptInfo *rel = build_base_rel(root, lfirsti(relids));
+		RelOptInfo *rel = find_base_rel(root, lfirsti(relids));
 
 		/*
 		 * Check for a "mergejoinable" clause even though it's not a join
@@ -595,7 +658,7 @@ add_join_info_to_rels(Query *root, RestrictInfo *restrictinfo,
 		 * Find or make the joininfo node for this combination of rels,
 		 * and add the restrictinfo node to it.
 		 */
-		joininfo = find_joininfo_node(build_base_rel(root, cur_relid),
+		joininfo = find_joininfo_node(find_base_rel(root, cur_relid),
 									  unjoined_relids);
 		joininfo->jinfo_restrictinfo = lappend(joininfo->jinfo_restrictinfo,
 											   restrictinfo);
@@ -640,9 +703,6 @@ process_implied_equality(Query *root, Node *item1, Node *item2,
 	 * If both vars belong to same rel, we need to look at that rel's
 	 * baserestrictinfo list.  If different rels, each will have a
 	 * joininfo node for the other, and we can scan either list.
-	 *
-	 * All baserel entries should already exist at this point, so use
-	 * find_base_rel not build_base_rel.
 	 */
 	rel1 = find_base_rel(root, irel1);
 	if (irel1 == irel2)

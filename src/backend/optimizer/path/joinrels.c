@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.55 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/joinrels.c,v 1.56 2002/03/12 00:51:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -340,7 +340,7 @@ make_jointree_rel(Query *root, Node *jtnode)
 	{
 		int			varno = ((RangeTblRef *) jtnode)->rtindex;
 
-		return build_base_rel(root, varno);
+		return find_base_rel(root, varno);
 	}
 	else if (IsA(jtnode, FromExpr))
 	{

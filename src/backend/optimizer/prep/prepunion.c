@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.71 2002/03/05 05:10:24 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.72 2002/03/12 00:51:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -673,7 +673,7 @@ List *
 expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 {
 	RangeTblEntry *rte = rt_fetch(rti, parse->rtable);
-	Oid			parentOID = rte->relid;
+	Oid			parentOID;
 	List	   *inhOIDs;
 	List	   *inhRTIs;
 	List	   *l;
@@ -681,10 +681,11 @@ expand_inherted_rtentry(Query *parse, Index rti, bool dup_parent)
 	/* Does RT entry allow inheritance? */
 	if (!rte->inh)
 		return NIL;
-	Assert(parentOID != InvalidOid && rte->subquery == NULL);
+	Assert(rte->rtekind == RTE_RELATION);
 	/* Always clear the parent's inh flag, see above comments */
 	rte->inh = false;
 	/* Fast path for common case of childless table */
+	parentOID = rte->relid;
 	if (!has_subclass(parentOID))
 		return NIL;
 	/* Scan for all members of inheritance set */
@@ -810,6 +811,19 @@ adjust_inherited_attrs_mutator(Node *node,
 		if (rtr->rtindex == context->old_rt_index)
 			rtr->rtindex = context->new_rt_index;
 		return (Node *) rtr;
+	}
+	if (IsA(node, JoinExpr))
+	{
+		/* Copy the JoinExpr node with correct mutation of subnodes */
+		JoinExpr *j;
+
+		j = (JoinExpr *) expression_tree_mutator(node,
+												 adjust_inherited_attrs_mutator,
+												 (void *) context);
+		/* now fix JoinExpr's rtindex */
+		if (j->rtindex == context->old_rt_index)
+			j->rtindex = context->new_rt_index;
+		return (Node *) j;
 	}
 
 	/*

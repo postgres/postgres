@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.70 2002/03/06 06:09:33 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.71 2002/03/12 00:51:35 tgl Exp $
  *
  */
 
@@ -15,11 +15,14 @@
 #include "executor/instrument.h"
 #include "lib/stringinfo.h"
 #include "nodes/print.h"
+#include "optimizer/clauses.h"
 #include "optimizer/planner.h"
 #include "parser/parsetree.h"
 #include "rewrite/rewriteHandler.h"
 #include "tcop/pquery.h"
+#include "utils/builtins.h"
 #include "utils/relcache.h"
+
 
 typedef struct ExplainState
 {
@@ -32,6 +35,14 @@ typedef struct ExplainState
 
 static StringInfo Explain_PlanToString(Plan *plan, ExplainState *es);
 static void ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest);
+static void show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
+						   int scanrelid,
+						   StringInfo str, int indent, ExplainState *es);
+static void show_upper_qual(List *qual, const char *qlabel,
+							const char *outer_name, int outer_varno, Plan *outer_plan,
+							const char *inner_name, int inner_varno, Plan *inner_plan,
+							StringInfo str, int indent, ExplainState *es);
+static Node *make_ors_ands_explicit(List *orclauses);
 
 /* Convert a null string pointer into "<>" */
 #define stringStringInfo(s) (((s) == NULL) ? "<>" : (s))
@@ -40,7 +51,6 @@ static void ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDes
 /*
  * ExplainQuery -
  *	  print out the execution plan for a given query
- *
  */
 void
 ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
@@ -81,7 +91,6 @@ ExplainQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 /*
  * ExplainOneQuery -
  *	  print out the execution plan for one query
- *
  */
 static void
 ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
@@ -176,9 +185,6 @@ ExplainOneQuery(Query *query, bool verbose, bool analyze, CommandDest dest)
 	pfree(es);
 }
 
-/*****************************************************************************
- *
- *****************************************************************************/
 
 /*
  * explain_outNode -
@@ -341,6 +347,90 @@ explain_outNode(StringInfo str, Plan *plan, int indent, ExplainState *es)
 	}
 	appendStringInfo(str, "\n");
 
+	/* quals */
+	switch (nodeTag(plan))
+	{
+		case T_IndexScan:
+			show_scan_qual(((IndexScan *) plan)->indxqualorig, true,
+						   "indxqual",
+						   ((Scan *) plan)->scanrelid,
+						   str, indent, es);
+			show_scan_qual(plan->qual, false, "qual",
+						   ((Scan *) plan)->scanrelid,
+						   str, indent, es);
+			break;
+		case T_SeqScan:
+		case T_TidScan:
+			show_scan_qual(plan->qual, false, "qual",
+						   ((Scan *) plan)->scanrelid,
+						   str, indent, es);
+			break;
+		case T_NestLoop:
+			show_upper_qual(((NestLoop *) plan)->join.joinqual, "joinqual",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			show_upper_qual(plan->qual, "qual",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			break;
+		case T_MergeJoin:
+			show_upper_qual(((MergeJoin *) plan)->mergeclauses, "merge",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			show_upper_qual(((MergeJoin *) plan)->join.joinqual, "joinqual",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			show_upper_qual(plan->qual, "qual",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			break;
+		case T_HashJoin:
+			show_upper_qual(((HashJoin *) plan)->hashclauses, "hash",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			show_upper_qual(((HashJoin *) plan)->join.joinqual, "joinqual",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			show_upper_qual(plan->qual, "qual",
+							"outer", OUTER, outerPlan(plan),
+							"inner", INNER, innerPlan(plan),
+							str, indent, es);
+			break;
+		case T_SubqueryScan:
+			show_upper_qual(plan->qual, "qual",
+							"subplan", 1, ((SubqueryScan *) plan)->subplan,
+							"", 0, NULL,
+							str, indent, es);
+			break;
+		case T_Agg:
+		case T_Group:
+			show_upper_qual(plan->qual, "qual",
+							"subplan", 0, outerPlan(plan),
+							"", 0, NULL,
+							str, indent, es);
+			break;
+		case T_Result:
+			show_upper_qual((List *) ((Result *) plan)->resconstantqual,
+							"constqual",
+							"subplan", OUTER, outerPlan(plan),
+							"", 0, NULL,
+							str, indent, es);
+			show_upper_qual(plan->qual, "qual",
+							"subplan", OUTER, outerPlan(plan),
+							"", 0, NULL,
+							str, indent, es);
+			break;
+		default:
+			break;
+	}
+
 	/* initPlan-s */
 	if (plan->initPlan)
 	{
@@ -447,4 +537,122 @@ Explain_PlanToString(Plan *plan, ExplainState *es)
 	if (plan != NULL)
 		explain_outNode(str, plan, 0, es);
 	return str;
+}
+
+/*
+ * Show a qualifier expression for a scan plan node
+ */
+static void
+show_scan_qual(List *qual, bool is_or_qual, const char *qlabel,
+			   int scanrelid,
+			   StringInfo str, int indent, ExplainState *es)
+{
+	RangeTblEntry *rte;
+	List	   *context;
+	Node	   *node;
+	char	   *exprstr;
+	int			i;
+
+	/* No work if empty qual */
+	if (qual == NIL)
+		return;
+	if (is_or_qual)
+	{
+		if (lfirst(qual) == NIL && lnext(qual) == NIL)
+			return;
+	}
+
+	/* Generate deparse context */
+	Assert(scanrelid > 0 && scanrelid <= length(es->rtable));
+	rte = rt_fetch(scanrelid, es->rtable);
+
+	/* Assume it's on a real relation */
+	Assert(rte->relname);
+
+	context = deparse_context_for(rte->relname, rte->relid);
+
+	/* Fix qual --- indexqual requires different processing */
+	if (is_or_qual)
+		node = make_ors_ands_explicit(qual);
+	else
+		node = (Node *) make_ands_explicit(qual);
+
+	/* Deparse the expression */
+	exprstr = deparse_expression(node, context, false);
+
+	/* And add to str */
+	for (i = 0; i < indent; i++)
+		appendStringInfo(str, "  ");
+	appendStringInfo(str, "  %s: %s\n", qlabel, exprstr);
+}
+
+/*
+ * Show a qualifier expression for an upper-level plan node
+ */
+static void
+show_upper_qual(List *qual, const char *qlabel,
+				const char *outer_name, int outer_varno, Plan *outer_plan,
+				const char *inner_name, int inner_varno, Plan *inner_plan,
+				StringInfo str, int indent, ExplainState *es)
+{
+	List	   *context;
+	Node	   *outercontext;
+	Node	   *innercontext;
+	Node	   *node;
+	char	   *exprstr;
+	int			i;
+
+	/* No work if empty qual */
+	if (qual == NIL)
+		return;
+
+	/* Generate deparse context */
+	if (outer_plan)
+		outercontext = deparse_context_for_subplan(outer_name,
+												   outer_plan->targetlist,
+												   es->rtable);
+	else
+		outercontext = NULL;
+	if (inner_plan)
+		innercontext = deparse_context_for_subplan(inner_name,
+												   inner_plan->targetlist,
+												   es->rtable);
+	else
+		innercontext = NULL;
+	context = deparse_context_for_plan(outer_varno, outercontext,
+									   inner_varno, innercontext);
+
+	/* Deparse the expression */
+	node = (Node *) make_ands_explicit(qual);
+	exprstr = deparse_expression(node, context, (inner_plan != NULL));
+
+	/* And add to str */
+	for (i = 0; i < indent; i++)
+		appendStringInfo(str, "  ");
+	appendStringInfo(str, "  %s: %s\n", qlabel, exprstr);
+}
+
+/*
+ * Indexscan qual lists have an implicit OR-of-ANDs structure.  Make it
+ * explicit so deparsing works properly.
+ */
+static Node *
+make_ors_ands_explicit(List *orclauses)
+{
+	if (orclauses == NIL)
+		return NULL;			/* probably can't happen */
+	else if (lnext(orclauses) == NIL)
+		return (Node *) make_ands_explicit(lfirst(orclauses));
+	else
+	{
+		List   *args = NIL;
+		List   *orptr;
+
+		foreach(orptr, orclauses)
+		{
+			args = lappend(args, make_ands_explicit(lfirst(orptr)));
+		}
+
+		return (Node *) make_orclause(args);
+	}
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.107 2002/03/07 16:35:36 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.108 2002/03/12 00:51:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -646,7 +646,7 @@ transformIdent(ParseState *pstate, Ident *ident, int precedence)
 	 * appear
 	 */
 	if (ident->indirection == NIL &&
-	 refnameRangeOrJoinEntry(pstate, ident->name, &sublevels_up) != NULL)
+		refnameRangeTblEntry(pstate, ident->name, &sublevels_up) != NULL)
 	{
 		ident->isRel = TRUE;
 		result = (Node *) ident;

@@ -199,9 +199,30 @@ SELECT '' AS "xxx", *
   FROM J1_TBL UNION JOIN J2_TBL;
 
 --
+-- Multiway full join
+--
+
+CREATE TABLE t1 (name TEXT, n INTEGER);
+CREATE TABLE t2 (name TEXT, n INTEGER);
+CREATE TABLE t3 (name TEXT, n INTEGER);
+
+INSERT INTO t1 VALUES ( 'aa', 11 );
+INSERT INTO t2 VALUES ( 'aa', 12 );
+INSERT INTO t2 VALUES ( 'bb', 22 );
+INSERT INTO t2 VALUES ( 'dd', 42 );
+INSERT INTO t3 VALUES ( 'aa', 13 );
+INSERT INTO t3 VALUES ( 'bb', 23 );
+INSERT INTO t3 VALUES ( 'cc', 33 );
+
+SELECT * FROM t1 FULL JOIN t2 USING (name) FULL JOIN t3 USING (name);
+
+--
 -- Clean up
 --
 
+DROP TABLE t1;
+DROP TABLE t2;
+DROP TABLE t3;
+
 DROP TABLE J1_TBL;
 DROP TABLE J2_TBL;
-

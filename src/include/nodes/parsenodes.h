@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.159 2002/03/08 04:37:18 tgl Exp $
+ * $Id: parsenodes.h,v 1.160 2002/03/12 00:52:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -430,9 +430,12 @@ typedef struct TargetEntry
  * RangeTblEntry -
  *	  A range table is a List of RangeTblEntry nodes.
  *
- *	  Currently we use the same node type for both plain relation references
- *	  and sub-selects in the FROM clause.  It might be cleaner to abstract
- *	  the common fields into a "superclass" nodetype.
+ *	  A range table entry may represent a plain relation, a sub-select in
+ *	  FROM, or the result of a JOIN clause.  (Only explicit JOIN syntax
+ *	  produces an RTE, not the implicit join resulting from multiple FROM
+ *	  items.  This is because we only need the RTE to deal with SQL features
+ *	  like outer joins and join-output-column aliasing.)  Other special
+ *	  RTE types also exist, as indicated by RTEKind.
  *
  *	  alias is an Attr node representing the AS alias-clause attached to the
  *	  FROM expression, or NULL if no clause.
@@ -445,7 +448,7 @@ typedef struct TargetEntry
  *
  *	  inh is TRUE for relation references that should be expanded to include
  *	  inheritance children, if the rel has any.  This *must* be FALSE for
- *	  subquery RTEs.
+ *	  RTEs other than RTE_RELATION entries.
  *
  *	  inFromCl marks those range variables that are listed in the FROM clause.
  *	  In SQL, the query can only refer to range variables listed in the
@@ -465,12 +468,28 @@ typedef struct TargetEntry
  *	  (This allows rules to act as setuid gateways.)
  *--------------------
  */
+typedef enum RTEKind
+{
+	RTE_RELATION,				/* ordinary relation reference */
+	RTE_SUBQUERY,				/* subquery in FROM */
+	RTE_JOIN,					/* join */
+	RTE_SPECIAL					/* special rule relation (NEW or OLD) */
+} RTEKind;
+
 typedef struct RangeTblEntry
 {
 	NodeTag		type;
 
+	RTEKind		rtekind;		/* see above */
+
 	/*
-	 * Fields valid for a plain relation RTE (else NULL/zero):
+	 * XXX the fields applicable to only some rte kinds should be merged
+	 * into a union.  I didn't do this yet because the diffs would impact
+	 * a lot of code that is being actively worked on.  FIXME later.
+	 */
+
+	/*
+	 * Fields valid for a plain relation or inh_relation RTE (else NULL/zero):
 	 */
 	char	   *relname;		/* real name of the relation */
 	Oid			relid;			/* OID of the relation */
@@ -479,6 +498,21 @@ typedef struct RangeTblEntry
 	 * Fields valid for a subquery RTE (else NULL):
 	 */
 	Query	   *subquery;		/* the sub-query */
+
+	/*
+	 * Fields valid for a join RTE (else NULL):
+	 *
+	 * joincoltypes/joincoltypmods identify the column datatypes of the
+	 * join result.  joinleftcols and joinrightcols identify the source
+	 * columns from the join's inputs: each entry is either a source column
+	 * AttrNumber or zero.  For normal columns exactly one is nonzero,
+	 * but both are nonzero for a column "merged" by USING or NATURAL.
+	 */
+	JoinType	jointype;		/* type of join */
+	List	   *joincoltypes;	/* integer list of column type OIDs */
+	List	   *joincoltypmods;	/* integer list of column typmods */
+	List	   *joinleftcols;	/* integer list of left-side column #s */
+	List	   *joinrightcols;	/* integer list of right-side column #s */
 
 	/*
 	 * Fields valid in all RTEs:

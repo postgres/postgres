@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.115 2002/03/01 06:01:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/readfuncs.c,v 1.116 2002/03/12 00:51:39 tgl Exp $
  *
  * NOTES
  *	  Most of the read functions for plan nodes are tested. (In fact, they
@@ -421,6 +421,10 @@ _getJoin(Join *node)
 
 	token = pg_strtok(&length); /* skip the :joinqual */
 	node->joinqual = nodeRead(true);	/* get the joinqual */
+
+	token = pg_strtok(&length); /* skip the :joinrti */
+	token = pg_strtok(&length); /* get the joinrti */
+	node->joinrti = atoi(token);
 }
 
 
@@ -1343,7 +1347,7 @@ _readJoinExpr(void)
 	local_node->jointype = (JoinType) atoi(token);
 
 	token = pg_strtok(&length); /* eat :isNatural */
-	token = pg_strtok(&length); /* get :isNatural */
+	token = pg_strtok(&length); /* get isNatural */
 	local_node->isNatural = strtobool(token);
 
 	token = pg_strtok(&length); /* eat :larg */
@@ -1361,11 +1365,9 @@ _readJoinExpr(void)
 	token = pg_strtok(&length); /* eat :alias */
 	local_node->alias = nodeRead(true); /* now read it */
 
-	token = pg_strtok(&length); /* eat :colnames */
-	local_node->colnames = nodeRead(true);		/* now read it */
-
-	token = pg_strtok(&length); /* eat :colvars */
-	local_node->colvars = nodeRead(true);		/* now read it */
+	token = pg_strtok(&length); /* eat :rtindex */
+	token = pg_strtok(&length); /* get rtindex */
+	local_node->rtindex = atoi(token);
 
 	return local_node;
 }
@@ -1424,6 +1426,10 @@ _readRangeTblEntry(void)
 
 	local_node = makeNode(RangeTblEntry);
 
+	token = pg_strtok(&length); /* eat :rtekind */
+	token = pg_strtok(&length); /* get :rtekind */
+	local_node->rtekind = (RTEKind) atoi(token);
+
 	token = pg_strtok(&length); /* eat :relname */
 	token = pg_strtok(&length); /* get :relname */
 	local_node->relname = nullable_string(token, length);
@@ -1434,6 +1440,22 @@ _readRangeTblEntry(void)
 
 	token = pg_strtok(&length); /* eat :subquery */
 	local_node->subquery = nodeRead(true);		/* now read it */
+
+	token = pg_strtok(&length); /* eat :jointype */
+	token = pg_strtok(&length); /* get jointype */
+	local_node->jointype = (JoinType) atoi(token);
+
+	token = pg_strtok(&length); /* eat :joincoltypes */
+	local_node->joincoltypes = toOidList(nodeRead(true));
+
+	token = pg_strtok(&length); /* eat :joincoltypmods */
+	local_node->joincoltypmods = toIntList(nodeRead(true));
+
+	token = pg_strtok(&length); /* eat :joinleftcols */
+	local_node->joinleftcols = toIntList(nodeRead(true));
+
+	token = pg_strtok(&length); /* eat :joinrightcols */
+	local_node->joinrightcols = toIntList(nodeRead(true));
 
 	token = pg_strtok(&length); /* eat :alias */
 	local_node->alias = nodeRead(true); /* now read it */

@@ -8,12 +8,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.76 2001/11/05 17:46:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.77 2002/03/12 00:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
+
 #include "nodes/makefuncs.h"
 #include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
@@ -118,30 +119,16 @@ transformTargetList(ParseState *pstate, List *targetlist)
 				 * Target item is relation.*, expand that table (eg.
 				 * SELECT emp.*, dname FROM emp, dept)
 				 */
-				Node	   *rteorjoin;
+				RangeTblEntry *rte;
 				int			sublevels_up;
 
-				rteorjoin = refnameRangeOrJoinEntry(pstate, att->relname,
-													&sublevels_up);
+				rte = refnameRangeTblEntry(pstate, att->relname,
+										   &sublevels_up);
+				if (rte == NULL)
+					rte = addImplicitRTE(pstate, att->relname);
 
-				if (rteorjoin == NULL)
-				{
-					rteorjoin = (Node *) addImplicitRTE(pstate, att->relname);
-					sublevels_up = 0;
-				}
-
-				if (IsA(rteorjoin, RangeTblEntry))
-					p_target = nconc(p_target,
-									 expandRelAttrs(pstate,
-										   (RangeTblEntry *) rteorjoin));
-				else if (IsA(rteorjoin, JoinExpr))
-					p_target = nconc(p_target,
-									 expandJoinAttrs(pstate,
-												  (JoinExpr *) rteorjoin,
-													 sublevels_up));
-				else
-					elog(ERROR, "transformTargetList: unexpected node type %d",
-						 nodeTag(rteorjoin));
+				p_target = nconc(p_target,
+								 expandRelAttrs(pstate, rte));
 			}
 			else
 			{
@@ -405,34 +392,29 @@ ExpandAllTables(ParseState *pstate)
 	foreach(ns, pstate->p_namespace)
 	{
 		Node	   *n = (Node *) lfirst(ns);
+		RangeTblEntry *rte;
 
 		if (IsA(n, RangeTblRef))
-		{
-			RangeTblEntry *rte;
-
 			rte = rt_fetch(((RangeTblRef *) n)->rtindex,
 						   pstate->p_rtable);
-
-			/*
-			 * Ignore added-on relations that were not listed in the FROM
-			 * clause.
-			 */
-			if (!rte->inFromCl)
-				continue;
-
-			target = nconc(target, expandRelAttrs(pstate, rte));
-		}
 		else if (IsA(n, JoinExpr))
-		{
-			/* A newfangled join expression */
-			JoinExpr   *j = (JoinExpr *) n;
-
-			/* Currently, a join expr could only have come from FROM. */
-			target = nconc(target, expandJoinAttrs(pstate, j, 0));
-		}
+			rte = rt_fetch(((JoinExpr *) n)->rtindex,
+						   pstate->p_rtable);
 		else
+		{
 			elog(ERROR, "ExpandAllTables: unexpected node (internal error)"
 				 "\n\t%s", nodeToString(n));
+			rte = NULL;			/* keep compiler quiet */
+		}
+
+		/*
+		 * Ignore added-on relations that were not listed in the FROM
+		 * clause.
+		 */
+		if (!rte->inFromCl)
+			continue;
+
+		target = nconc(target, expandRelAttrs(pstate, rte));
 	}
 
 	/* Check for SELECT *; */

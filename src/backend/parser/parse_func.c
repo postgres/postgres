@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.116 2002/02/19 20:11:15 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.117 2002/03/12 00:51:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -316,7 +316,6 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 		{
 			RangeTblEntry *rte;
 			int			vnum;
-			Node	   *rteorjoin;
 			int			sublevels_up;
 
 			/*
@@ -324,49 +323,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 */
 			refname = ((Ident *) arg)->name;
 
-			rteorjoin = refnameRangeOrJoinEntry(pstate, refname,
-												&sublevels_up);
+			rte = refnameRangeTblEntry(pstate, refname,
+									   &sublevels_up);
 
-			if (rteorjoin == NULL)
+			if (rte == NULL)
 				rte = addImplicitRTE(pstate, refname);
-			else if (IsA(rteorjoin, RangeTblEntry))
-				rte = (RangeTblEntry *) rteorjoin;
-			else if (IsA(rteorjoin, JoinExpr))
-			{
-				/*
-				 * The relation name refers to a join.	We can't support
-				 * functions on join tuples (since we don't have a named
-				 * type for the join tuples), so error out.
-				 */
-				if (nargs == 1)
-				{
-					/*
-					 * We have f(x) or more likely x.f where x is a join
-					 * and f is not one of the attribute names of the join
-					 * (else we'd have recognized it above).  Give an
-					 * appropriately vague error message.  Would be nicer
-					 * to know which syntax was used...
-					 */
-					elog(ERROR, "No such attribute or function %s.%s",
-						 refname, funcname);
-				}
-				else
-				{
-					/*
-					 * There are multiple arguments, so it must be a
-					 * function call.
-					 */
-					elog(ERROR, "Cannot pass result of join %s to a function",
-						 refname);
-				}
-				rte = NULL;		/* keep compiler quiet */
-			}
-			else
-			{
-				elog(ERROR, "ParseFuncOrColumn: unexpected node type %d",
-					 nodeTag(rteorjoin));
-				rte = NULL;		/* keep compiler quiet */
-			}
 
 			vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
@@ -379,11 +340,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			 * sizeof(Pointer) to signal that the runtime representation
 			 * will be a pointer not an Oid.
 			 */
-			if (rte->relname == NULL)
+			if (rte->rtekind != RTE_RELATION)
 			{
 				/*
-				 * RTE is a subselect; must fail for lack of a specific
-				 * type
+				 * RTE is a join or subselect; must fail for lack of a
+				 * named tuple type
 				 */
 				if (nargs == 1)
 				{
@@ -397,7 +358,7 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				}
 				else
 				{
-					elog(ERROR, "Cannot pass result of sub-select %s to a function",
+					elog(ERROR, "Cannot pass result of sub-select or join %s to a function",
 						 refname);
 				}
 			}

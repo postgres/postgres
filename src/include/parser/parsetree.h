@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsetree.h,v 1.16 2001/11/05 17:46:35 momjian Exp $
+ * $Id: parsetree.h,v 1.17 2002/03/12 00:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,7 +41,7 @@
  *
  *		Given the range index of a relation, return the corresponding
  *		relation OID.  Note that InvalidOid will be returned if the
- *		RTE is for a sub-select rather than a relation.
+ *		RTE is for a non-relation-type RTE.
  */
 #define getrelid(rangeindex,rangetable) \
 	(rt_fetch(rangeindex, rangetable)->relid)
@@ -51,5 +51,12 @@
  * variable name or alias for that attribute of that RTE.
  */
 extern char *get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum);
+
+/*
+ * Given an RTE and an attribute number, return the appropriate
+ * type and typemod info for that attribute of that RTE.
+ */
+extern void get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
+								   Oid *vartype, int32 *vartypmod);
 
 #endif   /* PARSETREE_H */

@@ -3,7 +3,7 @@
  *				back to source text
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.92 2002/03/06 19:58:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.93 2002/03/12 00:51:59 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -73,17 +73,22 @@ typedef struct
 
 /*
  * Each level of query context around a subtree needs a level of Var namespace.
- * The rangetable is the list of actual RTEs, and the namespace indicates
- * which parts of the rangetable are accessible (and under what aliases)
- * in the expression currently being looked at.  A Var having varlevelsup=N
- * refers to the N'th item (counting from 0) in the current context's
- * namespaces list.
+ * A Var having varlevelsup=N refers to the N'th item (counting from 0) in
+ * the current context's namespaces list.
+ *
+ * The rangetable is the list of actual RTEs from the query tree.
+ *
+ * For deparsing plan trees, we allow two special RTE entries that are not
+ * part of the rtable list (mainly because they don't have consecutively
+ * allocated varnos).
  */
 typedef struct
 {
 	List	   *rtable;			/* List of RangeTblEntry nodes */
-	List	   *namespace;		/* List of joinlist items (RangeTblRef and
-								 * JoinExpr nodes) */
+	int			outer_varno;	/* varno for outer_rte */
+	RangeTblEntry *outer_rte;	/* special RangeTblEntry, or NULL */
+	int			inner_varno;	/* varno for inner_rte */
+	RangeTblEntry *inner_rte;	/* special RangeTblEntry, or NULL */
 } deparse_namespace;
 
 
@@ -122,12 +127,6 @@ static void get_rule_sortgroupclause(SortClause *srt, List *tlist,
 						 deparse_context *context);
 static void get_names_for_var(Var *var, deparse_context *context,
 				  char **refname, char **attname);
-static bool get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
-				   char **refname, char **attname);
-static bool find_alias_in_namespace(Node *nsnode, Node *expr,
-						List *rangetable, int levelsup,
-						char **refname, char **attname);
-static bool phony_equal(Node *expr1, Node *expr2, int levelsup);
 static void get_rule_expr(Node *node, deparse_context *context);
 static void get_func_expr(Expr *expr, deparse_context *context);
 static Node *strip_type_coercion(Node *expr, Oid resultType);
@@ -644,7 +643,7 @@ deparse_expression(Node *expr, List *dpcontext, bool forceprefix)
  *
  * Given the name and OID of a relation, build deparsing context for an
  * expression referencing only that relation (as varno 1, varlevelsup 0).
- * This is presently sufficient for the external uses of deparse_expression.
+ * This is sufficient for many uses of deparse_expression.
  * ----------
  */
 List *
@@ -652,28 +651,117 @@ deparse_context_for(char *relname, Oid relid)
 {
 	deparse_namespace *dpns;
 	RangeTblEntry *rte;
-	RangeTblRef *rtr;
 
 	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
 
 	/* Build a minimal RTE for the rel */
 	rte = makeNode(RangeTblEntry);
+	rte->rtekind = RTE_RELATION;
 	rte->relname = relname;
 	rte->relid = relid;
 	rte->eref = makeNode(Attr);
 	rte->eref->relname = relname;
 	rte->inh = false;
 	rte->inFromCl = true;
+
 	/* Build one-element rtable */
 	dpns->rtable = makeList1(rte);
-
-	/* Build a namespace list referencing this RTE only */
-	rtr = makeNode(RangeTblRef);
-	rtr->rtindex = 1;
-	dpns->namespace = makeList1(rtr);
+	dpns->outer_varno = dpns->inner_varno = 0;
+	dpns->outer_rte = dpns->inner_rte = NULL;
 
 	/* Return a one-deep namespace stack */
 	return makeList1(dpns);
+}
+
+/*
+ * deparse_context_for_plan		- Build deparse context for a plan node
+ *
+ * We assume we are dealing with an upper-level plan node having either
+ * one or two referenceable children (pass innercontext = NULL if only one).
+ * The passed-in Nodes should be made using deparse_context_for_subplan.
+ * The resulting context will work for deparsing quals, tlists, etc of the
+ * plan node.
+ */
+List *
+deparse_context_for_plan(int outer_varno, Node *outercontext,
+						 int inner_varno, Node *innercontext)
+{
+	deparse_namespace *dpns;
+
+	dpns = (deparse_namespace *) palloc(sizeof(deparse_namespace));
+
+	dpns->rtable = NIL;
+	dpns->outer_varno = outer_varno;
+	dpns->outer_rte = (RangeTblEntry *) outercontext;
+	dpns->inner_varno = inner_varno;
+	dpns->inner_rte = (RangeTblEntry *) innercontext;
+
+	/* Return a one-deep namespace stack */
+	return makeList1(dpns);
+}
+
+/*
+ * deparse_context_for_subplan	- Build deparse context for a plan node
+ *
+ * Helper routine to build one of the inputs for deparse_context_for_plan.
+ * Pass the tlist of the subplan node, plus the query rangetable.
+ *
+ * The returned node is actually a RangeTblEntry, but we declare it as just
+ * Node to discourage callers from assuming anything.
+ */
+Node *
+deparse_context_for_subplan(const char *name, List *tlist,
+							List *rtable)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	List	   *attrs = NIL;
+	int			nattrs = 0;
+	int			rtablelength = length(rtable);
+	List	   *tl;
+	char		buf[32];
+
+	foreach(tl, tlist)
+	{
+		TargetEntry *tle = lfirst(tl);
+		Resdom *resdom = tle->resdom;
+
+		nattrs++;
+		Assert(resdom->resno == nattrs);
+		if (resdom->resname)
+		{
+			attrs = lappend(attrs, makeString(resdom->resname));
+			continue;
+		}
+		if (tle->expr && IsA(tle->expr, Var))
+		{
+			Var	   *var = (Var *) tle->expr;
+
+			/* varno/varattno won't be any good, but varnoold might be */
+			if (var->varnoold > 0 && var->varnoold <= rtablelength)
+			{
+				RangeTblEntry *varrte = rt_fetch(var->varnoold, rtable);
+				char *varname;
+
+				varname = get_rte_attribute_name(varrte, var->varoattno);
+				attrs = lappend(attrs, makeString(varname));
+				continue;
+			}
+		}
+		/* Fallback if can't get name */
+		snprintf(buf, sizeof(buf), "?column%d?", resdom->resno);
+		attrs = lappend(attrs, makeString(pstrdup(buf)));
+	}
+
+	rte->rtekind = RTE_SPECIAL;	/* XXX */
+	rte->relname = pstrdup(name);
+	rte->relid = InvalidOid;
+	rte->eref = makeNode(Attr);
+	rte->eref->relname = rte->relname;
+	rte->eref->attrs = attrs;
+	rte->inh = false;
+	rte->inFromCl = true;
+
+	return (Node *) rte;
 }
 
 /* ----------
@@ -789,7 +877,8 @@ make_ruledef(StringInfo buf, HeapTuple ruletup, TupleDesc rulettc)
 		context.namespaces = makeList1(&dpns);
 		context.varprefix = (length(query->rtable) != 1);
 		dpns.rtable = query->rtable;
-		dpns.namespace = query->jointree ? query->jointree->fromlist : NIL;
+		dpns.outer_varno = dpns.inner_varno = 0;
+		dpns.outer_rte = dpns.inner_rte = NULL;
 
 		get_rule_expr(qual, &context);
 	}
@@ -912,7 +1001,8 @@ get_query_def(Query *query, StringInfo buf, List *parentnamespace)
 	context.varprefix = (parentnamespace != NIL ||
 						 length(query->rtable) != 1);
 	dpns.rtable = query->rtable;
-	dpns.namespace = query->jointree ? query->jointree->fromlist : NIL;
+	dpns.outer_varno = dpns.inner_varno = 0;
+	dpns.outer_rte = dpns.inner_rte = NULL;
 
 	switch (query->commandType)
 	{
@@ -1382,12 +1472,11 @@ get_utility_query_def(Query *query, deparse_context *context)
 /*
  * Get the relation refname and attname for a (possibly nonlocal) Var.
  *
+ * refname will be returned as NULL if the Var references an unnamed join.
+ * In this case the Var *must* be displayed without any qualification.
+ *
  * attname will be returned as NULL if the Var represents a whole tuple
  * of the relation.
- *
- * This is trickier than it ought to be because of the possibility of aliases
- * and limited scope of refnames.  We have to try to return the correct alias
- * with respect to the current namespace given by the context.
  */
 static void
 get_names_for_var(Var *var, deparse_context *context,
@@ -1406,260 +1495,29 @@ get_names_for_var(Var *var, deparse_context *context,
 			 var->varlevelsup);
 	dpns = (deparse_namespace *) lfirst(nslist);
 
-	/* Scan namespace to see if we can find an alias for the var */
-	if (find_alias_in_namespace((Node *) dpns->namespace, (Node *) var,
-								dpns->rtable, var->varlevelsup,
-								refname, attname))
-		return;
+	/* Find the relevant RTE */
+	if (var->varno >= 1 && var->varno <= length(dpns->rtable))
+		rte = rt_fetch(var->varno, dpns->rtable);
+	else if (var->varno == dpns->outer_varno)
+		rte = dpns->outer_rte;
+	else if (var->varno == dpns->inner_varno)
+		rte = dpns->inner_rte;
+	else
+		rte = NULL;
+	if (rte == NULL)
+		elog(ERROR, "get_names_for_var: bogus varno %d",
+			 var->varno);
 
-	/*
-	 * Otherwise, fall back on the rangetable entry.  This should happen
-	 * only for uses of special RTEs like *NEW* and *OLD*, which won't get
-	 * placed in our namespace.
-	 */
-	rte = rt_fetch(var->varno, dpns->rtable);
-	*refname = rte->eref->relname;
+	/* Emit results */
+	if (rte->rtekind == RTE_JOIN && rte->alias == NULL)
+		*refname = NULL;
+	else
+		*refname = rte->eref->relname;
+
 	if (var->varattno == InvalidAttrNumber)
 		*attname = NULL;
 	else
 		*attname = get_rte_attribute_name(rte, var->varattno);
-}
-
-/*
- * Check to see if a CASE expression matches a FULL JOIN's output expression.
- * If so, return the refname and alias it should be expressed as.
- */
-static bool
-get_alias_for_case(CaseExpr *caseexpr, deparse_context *context,
-				   char **refname, char **attname)
-{
-	List	   *nslist;
-	int			sup;
-
-	/*
-	 * This could be done more efficiently if we first groveled through
-	 * the CASE to find varlevelsup values, but it's probably not worth
-	 * the trouble.  All this code will go away someday anyway ...
-	 */
-
-	sup = 0;
-	foreach(nslist, context->namespaces)
-	{
-		deparse_namespace *dpns = (deparse_namespace *) lfirst(nslist);
-
-		if (find_alias_in_namespace((Node *) dpns->namespace,
-									(Node *) caseexpr,
-									dpns->rtable, sup,
-									refname, attname))
-			return true;
-		sup++;
-	}
-	return false;
-}
-
-/*
- * Recursively scan a namespace (same representation as a jointree) to see
- * if we can find an alias for the given expression.  If so, return the
- * correct alias refname and attname.  The expression may be either a plain
- * Var or a CASE expression (which may be a FULL JOIN reference).
- */
-static bool
-find_alias_in_namespace(Node *nsnode, Node *expr,
-						List *rangetable, int levelsup,
-						char **refname, char **attname)
-{
-	if (nsnode == NULL)
-		return false;
-	if (IsA(nsnode, RangeTblRef))
-	{
-		if (IsA(expr, Var))
-		{
-			Var		   *var = (Var *) expr;
-			int			rtindex = ((RangeTblRef *) nsnode)->rtindex;
-
-			if (var->varno == rtindex && var->varlevelsup == levelsup)
-			{
-				RangeTblEntry *rte = rt_fetch(rtindex, rangetable);
-
-				*refname = rte->eref->relname;
-				if (var->varattno == InvalidAttrNumber)
-					*attname = NULL;
-				else
-					*attname = get_rte_attribute_name(rte, var->varattno);
-				return true;
-			}
-		}
-	}
-	else if (IsA(nsnode, JoinExpr))
-	{
-		JoinExpr   *j = (JoinExpr *) nsnode;
-
-		if (j->alias)
-		{
-			List	   *vlist;
-			List	   *nlist;
-
-			/*
-			 * Does the expr match any of the output columns of the join?
-			 *
-			 * We can't just use equal() here, because the given expr may
-			 * have nonzero levelsup, whereas the saved expression in the
-			 * JoinExpr should have zero levelsup.
-			 */
-			nlist = j->colnames;
-			foreach(vlist, j->colvars)
-			{
-				if (phony_equal(lfirst(vlist), expr, levelsup))
-				{
-					*refname = j->alias->relname;
-					*attname = strVal(lfirst(nlist));
-					return true;
-				}
-				nlist = lnext(nlist);
-			}
-
-			/*
-			 * Tables within an aliased join are invisible from outside
-			 * the join, according to the scope rules of SQL92 (the join
-			 * is considered a subquery).  So, stop here.
-			 */
-			return false;
-		}
-		if (find_alias_in_namespace(j->larg, expr,
-									rangetable, levelsup,
-									refname, attname))
-			return true;
-		if (find_alias_in_namespace(j->rarg, expr,
-									rangetable, levelsup,
-									refname, attname))
-			return true;
-	}
-	else if (IsA(nsnode, List))
-	{
-		List	   *l;
-
-		foreach(l, (List *) nsnode)
-		{
-			if (find_alias_in_namespace(lfirst(l), expr,
-										rangetable, levelsup,
-										refname, attname))
-				return true;
-		}
-	}
-	else
-		elog(ERROR, "find_alias_in_namespace: unexpected node type %d",
-			 nodeTag(nsnode));
-	return false;
-}
-
-/*
- * Check for equality of two expressions, with the proviso that all Vars in
- * expr1 should have varlevelsup = 0, while all Vars in expr2 should have
- * varlevelsup = levelsup.
- *
- * In reality we only need to support equality checks on Vars and the type
- * of CASE expression that is used for FULL JOIN outputs, so not all node
- * types need be handled here.
- *
- * Otherwise, this code is a straight ripoff from equalfuncs.c.
- */
-static bool
-phony_equal(Node *expr1, Node *expr2, int levelsup)
-{
-	if (expr1 == NULL || expr2 == NULL)
-		return (expr1 == expr2);
-	if (nodeTag(expr1) != nodeTag(expr2))
-		return false;
-	if (IsA(expr1, Var))
-	{
-		Var		   *a = (Var *) expr1;
-		Var		   *b = (Var *) expr2;
-
-		if (a->varno != b->varno)
-			return false;
-		if (a->varattno != b->varattno)
-			return false;
-		if (a->vartype != b->vartype)
-			return false;
-		if (a->vartypmod != b->vartypmod)
-			return false;
-		if (a->varlevelsup != 0 || b->varlevelsup != levelsup)
-			return false;
-		if (a->varnoold != b->varnoold)
-			return false;
-		if (a->varoattno != b->varoattno)
-			return false;
-		return true;
-	}
-	if (IsA(expr1, CaseExpr))
-	{
-		CaseExpr   *a = (CaseExpr *) expr1;
-		CaseExpr   *b = (CaseExpr *) expr2;
-
-		if (a->casetype != b->casetype)
-			return false;
-		if (!phony_equal(a->arg, b->arg, levelsup))
-			return false;
-		if (!phony_equal((Node *) a->args, (Node *) b->args, levelsup))
-			return false;
-		if (!phony_equal(a->defresult, b->defresult, levelsup))
-			return false;
-		return true;
-	}
-	if (IsA(expr1, CaseWhen))
-	{
-		CaseWhen   *a = (CaseWhen *) expr1;
-		CaseWhen   *b = (CaseWhen *) expr2;
-
-		if (!phony_equal(a->expr, b->expr, levelsup))
-			return false;
-		if (!phony_equal(a->result, b->result, levelsup))
-			return false;
-		return true;
-	}
-	if (IsA(expr1, Expr))
-	{
-		Expr	   *a = (Expr *) expr1;
-		Expr	   *b = (Expr *) expr2;
-
-		if (a->opType != b->opType)
-			return false;
-		if (!phony_equal(a->oper, b->oper, levelsup))
-			return false;
-		if (!phony_equal((Node *) a->args, (Node *) b->args, levelsup))
-			return false;
-		return true;
-	}
-	if (IsA(expr1, Func))
-	{
-		Func	   *a = (Func *) expr1;
-		Func	   *b = (Func *) expr2;
-
-		if (a->funcid != b->funcid)
-			return false;
-		if (a->functype != b->functype)
-			return false;
-		return true;
-	}
-	if (IsA(expr1, List))
-	{
-		List	   *la = (List *) expr1;
-		List	   *lb = (List *) expr2;
-		List	   *l;
-
-		if (length(la) != length(lb))
-			return false;
-		foreach(l, la)
-		{
-			if (!phony_equal(lfirst(l), lfirst(lb), levelsup))
-				return false;
-			lb = lnext(lb);
-		}
-		return true;
-	}
-	/* If we get here, there was something weird in a JOIN's colvars list */
-	elog(ERROR, "phony_equal: unexpected node type %d", nodeTag(expr1));
-	return false;
 }
 
 /* ----------
@@ -1695,7 +1553,7 @@ get_rule_expr(Node *node, deparse_context *context)
 				char	   *attname;
 
 				get_names_for_var(var, context, &refname, &attname);
-				if (context->varprefix || attname == NULL)
+				if (refname && (context->varprefix || attname == NULL))
 				{
 					if (strcmp(refname, "*NEW*") == 0)
 						appendStringInfo(buf, "new");
@@ -1767,6 +1625,10 @@ get_rule_expr(Node *node, deparse_context *context)
 						appendStringInfoChar(buf, ')');
 						break;
 
+					case FUNC_EXPR:
+						get_func_expr((Expr *) node, context);
+						break;
+
 					case OR_EXPR:
 						appendStringInfoChar(buf, '(');
 						get_rule_expr((Node *) lfirst(args), context);
@@ -1795,8 +1657,13 @@ get_rule_expr(Node *node, deparse_context *context)
 						appendStringInfoChar(buf, ')');
 						break;
 
-					case FUNC_EXPR:
-						get_func_expr((Expr *) node, context);
+					case SUBPLAN_EXPR:
+						/*
+						 * We cannot see an already-planned subplan in rule
+						 * deparsing, only while EXPLAINing a query plan.
+						 * For now, just punt.
+						 */
+						appendStringInfo(buf, "(subplan)");
 						break;
 
 					default:
@@ -1927,19 +1794,6 @@ get_rule_expr(Node *node, deparse_context *context)
 			{
 				CaseExpr   *caseexpr = (CaseExpr *) node;
 				List	   *temp;
-				char	   *refname;
-				char	   *attname;
-
-				/* Hack for providing aliases for FULL JOIN outputs */
-				if (get_alias_for_case(caseexpr, context,
-									   &refname, &attname))
-				{
-					if (context->varprefix)
-						appendStringInfo(buf, "%s.",
-										 quote_identifier(refname));
-					appendStringInfo(buf, "%s", quote_identifier(attname));
-					break;
-				}
 
 				appendStringInfo(buf, "CASE");
 				foreach(temp, caseexpr->args)
@@ -2013,6 +1867,28 @@ get_rule_expr(Node *node, deparse_context *context)
 
 		case T_SubLink:
 			get_sublink_expr(node, context);
+			break;
+
+		case T_Param:
+			{
+				Param	   *param = (Param *) node;
+
+				switch (param->paramkind)
+				{
+					case PARAM_NAMED:
+					case PARAM_NEW:
+					case PARAM_OLD:
+						appendStringInfo(buf, "$%s", param->paramname);
+						break;
+					case PARAM_NUM:
+					case PARAM_EXEC:
+						appendStringInfo(buf, "$%d", param->paramid);
+						break;
+					default:
+						appendStringInfo(buf, "(param)");
+						break;
+				}
+			}
 			break;
 
 		default:
@@ -2442,16 +2318,6 @@ static void
 get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 {
 	StringInfo	buf = context->buf;
-	deparse_namespace *dpns;
-	List	   *sv_namespace;
-
-	/*
-	 * FROM-clause items have limited visibility of query's namespace.
-	 * Save and restore the outer namespace setting while we munge it.
-	 */
-	dpns = (deparse_namespace *) lfirst(context->namespaces);
-	sv_namespace = dpns->namespace;
-	dpns->namespace = NIL;
 
 	if (IsA(jtnode, RangeTblRef))
 	{
@@ -2544,7 +2410,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 			}
 			else if (j->quals)
 			{
-				dpns->namespace = makeList2(j->larg, j->rarg);
 				appendStringInfo(buf, " ON (");
 				get_rule_expr(j->quals, context);
 				appendStringInfoChar(buf, ')');
@@ -2575,8 +2440,6 @@ get_from_clause_item(Node *jtnode, Query *query, deparse_context *context)
 	else
 		elog(ERROR, "get_from_clause_item: unexpected node type %d",
 			 nodeTag(jtnode));
-
-	dpns->namespace = sv_namespace;
 }
 
 /* ----------

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_relation.h,v 1.28 2001/11/05 17:46:35 momjian Exp $
+ * $Id: parse_relation.h,v 1.29 2002/03/12 00:52:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,7 @@
 
 #include "parser/parse_node.h"
 
-extern Node *refnameRangeOrJoinEntry(ParseState *pstate,
+extern RangeTblEntry *refnameRangeTblEntry(ParseState *pstate,
 						char *refname,
 						int *sublevels_up);
 extern void checkNameSpaceConflicts(ParseState *pstate, Node *namespace1,
@@ -36,14 +36,21 @@ extern RangeTblEntry *addRangeTableEntryForSubquery(ParseState *pstate,
 							  Query *subquery,
 							  Attr *alias,
 							  bool inFromCl);
+extern RangeTblEntry *addRangeTableEntryForJoin(ParseState *pstate,
+						  List *colnames,
+						  JoinType jointype,
+						  List *coltypes,
+						  List *coltypmods,
+						  List *leftcols,
+						  List *rightcols,
+						  Attr *alias,
+						  bool inFromCl);
 extern void addRTEtoQuery(ParseState *pstate, RangeTblEntry *rte,
 			  bool addToJoinList, bool addToNameSpace);
 extern RangeTblEntry *addImplicitRTE(ParseState *pstate, char *relname);
 extern void expandRTE(ParseState *pstate, RangeTblEntry *rte,
 		  List **colnames, List **colvars);
 extern List *expandRelAttrs(ParseState *pstate, RangeTblEntry *rte);
-extern List *expandJoinAttrs(ParseState *pstate, JoinExpr *join,
-				int sublevels_up);
 extern int	attnameAttNum(Relation rd, char *a);
 extern Name attnumAttName(Relation rd, int attid);
 extern Oid	attnumTypeId(Relation rd, int attid);

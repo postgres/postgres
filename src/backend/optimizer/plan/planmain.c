@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.67 2001/10/25 05:49:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planmain.c,v 1.68 2002/03/12 00:51:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,48 +176,32 @@ subplanner(Query *root,
 		   List *flat_tlist,
 		   double tuple_fraction)
 {
-	List	   *joined_rels;
-	List	   *brel;
 	RelOptInfo *final_rel;
 	Plan	   *resultplan;
 	Path	   *cheapestpath;
 	Path	   *presortedpath;
 
-	/*
-	 * Examine the targetlist and qualifications, adding entries to
-	 * base_rel_list as relation references are found (e.g., in the
-	 * qualification, the targetlist, etc.).  Restrict and join clauses
-	 * are added to appropriate lists belonging to the mentioned
-	 * relations.  We also build lists of equijoined keys for pathkey
-	 * construction.
-	 */
+	/* init lists to empty */
 	root->base_rel_list = NIL;
 	root->other_rel_list = NIL;
 	root->join_rel_list = NIL;
 	root->equi_key_list = NIL;
 
+	/*
+	 * Construct RelOptInfo nodes for all base relations in query.
+	 */
+	(void) add_base_rels_to_query(root, (Node *) root->jointree);
+
+	/*
+	 * Examine the targetlist and qualifications, adding entries to
+	 * baserel targetlists for all referenced Vars.  Restrict and join
+	 * clauses are added to appropriate lists belonging to the mentioned
+	 * relations.  We also build lists of equijoined keys for pathkey
+	 * construction.
+	 */
 	build_base_rel_tlists(root, flat_tlist);
 
 	(void) distribute_quals_to_rels(root, (Node *) root->jointree);
-
-	/*
-	 * Make sure we have RelOptInfo nodes for all relations to be joined.
-	 */
-	joined_rels = add_missing_rels_to_query(root, (Node *) root->jointree);
-
-	/*
-	 * Check that the join tree includes all the base relations used in
-	 * the query --- otherwise, the parser or rewriter messed up.
-	 */
-	foreach(brel, root->base_rel_list)
-	{
-		RelOptInfo *baserel = (RelOptInfo *) lfirst(brel);
-		int			relid = lfirsti(baserel->relids);
-
-		if (!ptrMember(baserel, joined_rels))
-			elog(ERROR, "Internal error: no jointree entry for rel %s (%d)",
-				 rt_fetch(relid, root->rtable)->eref->relname, relid);
-	}
 
 	/*
 	 * Use the completed lists of equijoined keys to deduce any implied

@@ -8,21 +8,22 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.58 2002/03/06 06:09:54 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.59 2002/03/12 00:51:55 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
+#include "postgres.h"
+
 #include <ctype.h>
 #include <errno.h>
 #include <float.h>
-
-#include "postgres.h"
 
 #include "access/heapam.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_type.h"
 #include "fmgr.h"
 #include "nodes/makefuncs.h"
+#include "parser/parsetree.h"
 #include "parser/parse_coerce.h"
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
@@ -165,51 +166,11 @@ make_var(ParseState *pstate, RangeTblEntry *rte, int attrno)
 {
 	int			vnum,
 				sublevels_up;
-	Oid			vartypeid = 0;
-	int32		type_mod = 0;
+	Oid			vartypeid;
+	int32		type_mod;
 
 	vnum = RTERangeTablePosn(pstate, rte, &sublevels_up);
-
-	if (rte->relid != InvalidOid)
-	{
-		/* Plain relation RTE --- get the attribute's type info */
-		HeapTuple	tp;
-		Form_pg_attribute att_tup;
-
-		tp = SearchSysCache(ATTNUM,
-							ObjectIdGetDatum(rte->relid),
-							Int16GetDatum(attrno),
-							0, 0);
-		/* this shouldn't happen... */
-		if (!HeapTupleIsValid(tp))
-			elog(ERROR, "Relation %s does not have attribute %d",
-				 rte->relname, attrno);
-		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		vartypeid = att_tup->atttypid;
-		type_mod = att_tup->atttypmod;
-		ReleaseSysCache(tp);
-	}
-	else
-	{
-		/* Subselect RTE --- get type info from subselect's tlist */
-		List	   *tlistitem;
-
-		foreach(tlistitem, rte->subquery->targetList)
-		{
-			TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
-
-			if (te->resdom->resjunk || te->resdom->resno != attrno)
-				continue;
-			vartypeid = te->resdom->restype;
-			type_mod = te->resdom->restypmod;
-			break;
-		}
-		/* falling off end of list shouldn't happen... */
-		if (tlistitem == NIL)
-			elog(ERROR, "Subquery %s does not have attribute %d",
-				 rte->eref->relname, attrno);
-	}
-
+	get_rte_attribute_type(rte, attrno, &vartypeid, &type_mod);
 	return makeVar(vnum, attrno, vartypeid, type_mod, sublevels_up);
 }
 

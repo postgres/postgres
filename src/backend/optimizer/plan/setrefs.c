@@ -9,25 +9,29 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.73 2001/11/05 17:46:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/setrefs.c,v 1.74 2002/03/12 00:51:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
-#include <sys/types.h>
-
 #include "postgres.h"
+
+#include <sys/types.h>
 
 #include "nodes/makefuncs.h"
 #include "nodes/nodeFuncs.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/tlist.h"
+#include "optimizer/var.h"
+
 
 typedef struct
 {
+	Query	   *root;
 	List	   *outer_tlist;
 	List	   *inner_tlist;
 	Index		acceptable_rel;
+	Index		join_rti;
 } join_references_context;
 
 typedef struct
@@ -38,7 +42,7 @@ typedef struct
 } replace_vars_with_subplan_refs_context;
 
 static void fix_expr_references(Plan *plan, Node *node);
-static void set_join_references(Join *join);
+static void set_join_references(Query *root, Join *join);
 static void set_uppernode_references(Plan *plan, Index subvarno);
 static Node *join_references_mutator(Node *node,
 						join_references_context *context);
@@ -71,7 +75,7 @@ static bool fix_opids_walker(Node *node, void *context);
  * Returns nothing of interest, but modifies internal fields of nodes.
  */
 void
-set_plan_references(Plan *plan)
+set_plan_references(Query *root, Plan *plan)
 {
 	List	   *pl;
 
@@ -115,16 +119,16 @@ set_plan_references(Plan *plan)
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			/* Recurse into subplan too */
-			set_plan_references(((SubqueryScan *) plan)->subplan);
+			set_plan_references(root, ((SubqueryScan *) plan)->subplan);
 			break;
 		case T_NestLoop:
-			set_join_references((Join *) plan);
+			set_join_references(root, (Join *) plan);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
 			break;
 		case T_MergeJoin:
-			set_join_references((Join *) plan);
+			set_join_references(root, (Join *) plan);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
@@ -132,7 +136,7 @@ set_plan_references(Plan *plan)
 							(Node *) ((MergeJoin *) plan)->mergeclauses);
 			break;
 		case T_HashJoin:
-			set_join_references((Join *) plan);
+			set_join_references(root, (Join *) plan);
 			fix_expr_references(plan, (Node *) plan->targetlist);
 			fix_expr_references(plan, (Node *) plan->qual);
 			fix_expr_references(plan, (Node *) ((Join *) plan)->joinqual);
@@ -186,7 +190,7 @@ set_plan_references(Plan *plan)
 			 * recurse into subplans.
 			 */
 			foreach(pl, ((Append *) plan)->appendplans)
-				set_plan_references((Plan *) lfirst(pl));
+				set_plan_references(root, (Plan *) lfirst(pl));
 			break;
 		default:
 			elog(ERROR, "set_plan_references: unknown plan type %d",
@@ -203,21 +207,21 @@ set_plan_references(Plan *plan)
 	 * plan's var nodes against the already-modified nodes of the
 	 * subplans.
 	 */
-	set_plan_references(plan->lefttree);
-	set_plan_references(plan->righttree);
+	set_plan_references(root, plan->lefttree);
+	set_plan_references(root, plan->righttree);
 	foreach(pl, plan->initPlan)
 	{
 		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
-		set_plan_references(sp->plan);
+		set_plan_references(root, sp->plan);
 	}
 	foreach(pl, plan->subPlan)
 	{
 		SubPlan    *sp = (SubPlan *) lfirst(pl);
 
 		Assert(IsA(sp, SubPlan));
-		set_plan_references(sp->plan);
+		set_plan_references(root, sp->plan);
 	}
 }
 
@@ -256,7 +260,7 @@ fix_expr_references(Plan *plan, Node *node)
  * 'join' is a join plan node
  */
 static void
-set_join_references(Join *join)
+set_join_references(Query *root, Join *join)
 {
 	Plan	   *outer = join->plan.lefttree;
 	Plan	   *inner = join->plan.righttree;
@@ -264,9 +268,11 @@ set_join_references(Join *join)
 	List	   *inner_tlist = ((inner == NULL) ? NIL : inner->targetlist);
 
 	join->plan.targetlist = join_references(join->plan.targetlist,
+											root,
 											outer_tlist,
 											inner_tlist,
-											(Index) 0);
+											(Index) 0,
+											join->joinrti);
 }
 
 /*
@@ -343,7 +349,8 @@ set_uppernode_references(Plan *plan, Index subvarno)
  *	   Creates a new set of targetlist entries or join qual clauses by
  *	   changing the varno/varattno values of variables in the clauses
  *	   to reference target list values from the outer and inner join
- *	   relation target lists.
+ *	   relation target lists.  Also, any join alias variables in the
+ *	   clauses are expanded into references to their component variables.
  *
  * This is used in two different scenarios: a normal join clause, where
  * all the Vars in the clause *must* be replaced by OUTER or INNER references;
@@ -360,21 +367,27 @@ set_uppernode_references(Plan *plan, Index subvarno)
  * 'inner_tlist' is the target list of the inner join relation, or NIL
  * 'acceptable_rel' is either zero or the rangetable index of a relation
  *		whose Vars may appear in the clause without provoking an error.
+ * 'join_rti' is either zero or the join RTE index of join alias variables
+ *		that should be expanded.
  *
  * Returns the new expression tree.  The original clause structure is
  * not modified.
  */
 List *
 join_references(List *clauses,
+				Query *root,
 				List *outer_tlist,
 				List *inner_tlist,
-				Index acceptable_rel)
+				Index acceptable_rel,
+				Index join_rti)
 {
 	join_references_context context;
 
+	context.root = root;
 	context.outer_tlist = outer_tlist;
 	context.inner_tlist = inner_tlist;
 	context.acceptable_rel = acceptable_rel;
+	context.join_rti = join_rti;
 	return (List *) join_references_mutator((Node *) clauses, &context);
 }
 
@@ -387,12 +400,14 @@ join_references_mutator(Node *node,
 	if (IsA(node, Var))
 	{
 		Var		   *var = (Var *) node;
-		Var		   *newvar = (Var *) copyObject(var);
 		Resdom	   *resdom;
 
+		/* First look for the var in the input tlists */
 		resdom = tlist_member((Node *) var, context->outer_tlist);
 		if (resdom)
 		{
+			Var	   *newvar = (Var *) copyObject(var);
+
 			newvar->varno = OUTER;
 			newvar->varattno = resdom->resno;
 			return (Node *) newvar;
@@ -400,18 +415,33 @@ join_references_mutator(Node *node,
 		resdom = tlist_member((Node *) var, context->inner_tlist);
 		if (resdom)
 		{
+			Var	   *newvar = (Var *) copyObject(var);
+
 			newvar->varno = INNER;
 			newvar->varattno = resdom->resno;
 			return (Node *) newvar;
 		}
 
+		/* Perhaps it's a join alias that can be resolved to input vars? */
+		if (var->varno == context->join_rti)
+		{
+			Node   *newnode;
+
+			newnode = flatten_join_alias_vars((Node *) var,
+											  context->root,
+											  context->join_rti);
+			/* Must now resolve the input vars... */
+			newnode = join_references_mutator(newnode, context);
+			return newnode;
+		}
+
 		/*
-		 * Var not in either tlist --- either raise an error, or return
-		 * the Var unmodified.
+		 * No referent found for Var --- either raise an error, or return
+		 * the Var unmodified if it's for acceptable_rel.
 		 */
 		if (var->varno != context->acceptable_rel)
 			elog(ERROR, "join_references: variable not in subplan target lists");
-		return (Node *) newvar;
+		return (Node *) copyObject(var);
 	}
 	return expression_tree_mutator(node,
 								   join_references_mutator,

@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.148 2002/03/06 06:09:49 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.149 2002/03/12 00:51:39 tgl Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -410,6 +410,8 @@ _outJoin(StringInfo str, Join *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->jointype);
 	_outNode(str, node->joinqual);
+	appendStringInfo(str, " :joinrti %d ",
+					 node->joinrti);
 }
 
 /*
@@ -423,6 +425,8 @@ _outNestLoop(StringInfo str, NestLoop *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->join.jointype);
 	_outNode(str, node->join.joinqual);
+	appendStringInfo(str, " :joinrti %d ",
+					 node->join.joinrti);
 }
 
 /*
@@ -436,6 +440,8 @@ _outMergeJoin(StringInfo str, MergeJoin *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->join.jointype);
 	_outNode(str, node->join.joinqual);
+	appendStringInfo(str, " :joinrti %d ",
+					 node->join.joinrti);
 
 	appendStringInfo(str, " :mergeclauses ");
 	_outNode(str, node->mergeclauses);
@@ -452,6 +458,8 @@ _outHashJoin(StringInfo str, HashJoin *node)
 	appendStringInfo(str, " :jointype %d :joinqual ",
 					 (int) node->join.jointype);
 	_outNode(str, node->join.joinqual);
+	appendStringInfo(str, " :joinrti %d ",
+					 node->join.joinrti);
 
 	appendStringInfo(str, " :hashclauses ");
 	_outNode(str, node->hashclauses);
@@ -939,10 +947,7 @@ _outJoinExpr(StringInfo str, JoinExpr *node)
 	_outNode(str, node->quals);
 	appendStringInfo(str, " :alias ");
 	_outNode(str, node->alias);
-	appendStringInfo(str, " :colnames ");
-	_outNode(str, node->colnames);
-	appendStringInfo(str, " :colvars ");
-	_outNode(str, node->colvars);
+	appendStringInfo(str, " :rtindex %d ", node->rtindex);
 }
 
 /*
@@ -961,12 +966,21 @@ _outTargetEntry(StringInfo str, TargetEntry *node)
 static void
 _outRangeTblEntry(StringInfo str, RangeTblEntry *node)
 {
-	appendStringInfo(str, " RTE :relname ");
+	appendStringInfo(str, " RTE :rtekind %d :relname ",
+					 (int) node->rtekind);
 	_outToken(str, node->relname);
-	appendStringInfo(str, " :relid %u ",
+	appendStringInfo(str, " :relid %u :subquery ",
 					 node->relid);
-	appendStringInfo(str, " :subquery ");
 	_outNode(str, node->subquery);
+	appendStringInfo(str, " :jointype %d :joincoltypes ",
+					 (int) node->jointype);
+	_outOidList(str, node->joincoltypes);
+	appendStringInfo(str, " :joincoltypmods ");
+	_outIntList(str, node->joincoltypmods);
+	appendStringInfo(str, " :joinleftcols ");
+	_outIntList(str, node->joinleftcols);
+	appendStringInfo(str, " :joinrightcols ");
+	_outIntList(str, node->joinrightcols);
 	appendStringInfo(str, " :alias ");
 	_outNode(str, node->alias);
 	appendStringInfo(str, " :eref ");

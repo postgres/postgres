@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.168 2002/03/08 04:37:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.169 2002/03/12 00:51:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -323,6 +323,7 @@ CopyJoinFields(Join *from, Join *newnode)
 {
 	newnode->jointype = from->jointype;
 	Node_Copy(from, newnode, joinqual);
+	newnode->joinrti = from->joinrti;
 	/* subPlan list must point to subplans in the new subtree, not the old */
 	if (from->plan.subPlan != NIL)
 		newnode->plan.subPlan = nconc(newnode->plan.subPlan,
@@ -970,8 +971,7 @@ _copyJoinExpr(JoinExpr *from)
 	Node_Copy(from, newnode, using);
 	Node_Copy(from, newnode, quals);
 	Node_Copy(from, newnode, alias);
-	Node_Copy(from, newnode, colnames);
-	Node_Copy(from, newnode, colvars);
+	newnode->rtindex = from->rtindex;
 
 	return newnode;
 }
@@ -1081,15 +1081,12 @@ _copyArrayRef(ArrayRef *from)
  *		_copyRelOptInfo
  * ----------------
  */
-/*
- *	when you change this, also make sure to fix up xfunc_copyRelOptInfo in
- *	planner/path/xfunc.c accordingly!!!
- *		-- JMH, 8/2/93
- */
 static RelOptInfo *
 _copyRelOptInfo(RelOptInfo *from)
 {
 	RelOptInfo *newnode = makeNode(RelOptInfo);
+
+	newnode->reloptkind = from->reloptkind;
 
 	newnode->relids = listCopy(from->relids);
 
@@ -1108,6 +1105,9 @@ _copyRelOptInfo(RelOptInfo *from)
 	newnode->pages = from->pages;
 	newnode->tuples = from->tuples;
 	Node_Copy(from, newnode, subplan);
+
+	newnode->joinrti = from->joinrti;
+	newnode->joinrteids = listCopy(from->joinrteids);
 
 	Node_Copy(from, newnode, baserestrictinfo);
 	newnode->baserestrictcost = from->baserestrictcost;
@@ -1487,10 +1487,16 @@ _copyRangeTblEntry(RangeTblEntry *from)
 {
 	RangeTblEntry *newnode = makeNode(RangeTblEntry);
 
+	newnode->rtekind = from->rtekind;
 	if (from->relname)
 		newnode->relname = pstrdup(from->relname);
 	newnode->relid = from->relid;
 	Node_Copy(from, newnode, subquery);
+	newnode->jointype = from->jointype;
+	newnode->joincoltypes = listCopy(from->joincoltypes);
+	newnode->joincoltypmods = listCopy(from->joincoltypmods);
+	newnode->joinleftcols = listCopy(from->joinleftcols);
+	newnode->joinrightcols = listCopy(from->joinrightcols);
 	Node_Copy(from, newnode, alias);
 	Node_Copy(from, newnode, eref);
 	newnode->inh = from->inh;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.114 2001/12/10 22:54:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.115 2002/03/12 00:51:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ planner(Query *parse)
 	result_plan->nParamExec = length(PlannerParamVar);
 
 	/* final cleanup of the plan */
-	set_plan_references(result_plan);
+	set_plan_references(parse, result_plan);
 
 	/* restore state for outer planner, if any */
 	PlannerQueryLevel = save_PlannerQueryLevel;
@@ -616,6 +616,9 @@ preprocess_jointree(Query *parse, Node *jtnode)
 static Node *
 preprocess_expression(Query *parse, Node *expr, int kind)
 {
+	bool		has_join_rtes;
+	List	   *rt;
+
 	/*
 	 * Simplify constant expressions.
 	 *
@@ -650,6 +653,29 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 	/* Replace uplevel vars with Param nodes */
 	if (PlannerQueryLevel > 1)
 		expr = SS_replace_correlation_vars(expr);
+
+	/*
+	 * If the query has any join RTEs, try to replace join alias variables
+	 * with base-relation variables, to allow quals to be pushed down.
+	 * We must do this after sublink processing, since it does not recurse
+	 * into sublinks.
+	 *
+	 * The flattening pass is expensive enough that it seems worthwhile to
+	 * scan the rangetable to see if we can avoid it.
+	 */
+	has_join_rtes = false;
+	foreach(rt, parse->rtable)
+	{
+		RangeTblEntry *rte = lfirst(rt);
+
+		if (rte->rtekind == RTE_JOIN)
+		{
+			has_join_rtes = true;
+			break;
+		}
+	}
+	if (has_join_rtes)
+		expr = flatten_join_alias_vars(expr, parse, 0);
 
 	return expr;
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.62 2002/03/06 06:09:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.63 2002/03/12 00:51:56 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,38 +36,41 @@ static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 						char *refname);
 static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname);
-static Node *scanJoinForColumn(JoinExpr *join, char *colname,
-				  int sublevels_up);
 static bool isForUpdate(ParseState *pstate, char *relname);
-static List *expandNamesVars(ParseState *pstate, List *names, List *vars);
 static int	specialAttNum(char *a);
 static void warnAutoRange(ParseState *pstate, char *refname);
 
 
 /*
- * refnameRangeOrJoinEntry
- *	  Given a refname, look to see if it matches any RTE or join table.
- *	  If so, return a pointer to the RangeTblEntry or JoinExpr.
+ * refnameRangeTblEntry
+ *	  Given a refname, look to see if it matches any RTE.
+ *	  If so, return a pointer to the RangeTblEntry.
  *	  Optionally get its nesting depth (0 = current).	If sublevels_up
  *	  is NULL, only consider items at the current nesting level.
  */
-Node *
-refnameRangeOrJoinEntry(ParseState *pstate,
-						char *refname,
-						int *sublevels_up)
+RangeTblEntry *
+refnameRangeTblEntry(ParseState *pstate,
+					 char *refname,
+					 int *sublevels_up)
 {
 	if (sublevels_up)
 		*sublevels_up = 0;
 
 	while (pstate != NULL)
 	{
-		Node	   *rte;
+		Node	   *nsnode;
 
-		rte = scanNameSpaceForRefname(pstate,
-									  (Node *) pstate->p_namespace,
-									  refname);
-		if (rte)
-			return rte;
+		nsnode = scanNameSpaceForRefname(pstate,
+										 (Node *) pstate->p_namespace,
+										 refname);
+		if (nsnode)
+		{
+			/* should get an RTE or JoinExpr */
+			if (IsA(nsnode, RangeTblEntry))
+				return (RangeTblEntry *) nsnode;
+			Assert(IsA(nsnode, JoinExpr));
+			return rt_fetch(((JoinExpr *) nsnode)->rtindex, pstate->p_rtable);
+		}
 
 		pstate = pstate->parentParseState;
 		if (sublevels_up)
@@ -247,6 +250,12 @@ RTERangeTablePosn(ParseState *pstate, RangeTblEntry *rte, int *sublevels_up)
  *
  * Side effect: if we find a match, mark the RTE as requiring read access.
  * See comments in setTargetTable().
+ *
+ * NOTE: if the RTE is for a join, marking it as requiring read access does
+ * nothing.  It might seem that we need to propagate the mark to all the
+ * contained RTEs, but that is not necessary.  This is so because a join
+ * expression can only appear in a FROM clause, and any table named in
+ * FROM will be marked checkForRead from the beginning.
  */
 static Node *
 scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
@@ -279,10 +288,9 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 		return result;
 
 	/*
-	 * If the RTE represents a table (not a sub-select), consider system
-	 * column names.
+	 * If the RTE represents a real table, consider system column names.
 	 */
-	if (rte->relid != InvalidOid)
+	if (rte->rtekind == RTE_RELATION)
 	{
 		/* quick check to see if name could be a system column */
 		attnum = specialAttNum(colname);
@@ -300,44 +308,6 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 		}
 	}
 
-	return result;
-}
-
-/*
- * scanJoinForColumn
- *	  Search the column names of a single join table for the given name.
- *	  If found, return an appropriate Var node or expression, else return NULL.
- *	  If the name proves ambiguous within this jointable, raise error.
- *
- * NOTE: unlike scanRTEForColumn, there's no need to worry about forcing
- * checkForRead true for the referenced tables.  This is so because a join
- * expression can only appear in a FROM clause, and any table named in
- * FROM will be marked checkForRead from the beginning.
- */
-static Node *
-scanJoinForColumn(JoinExpr *join, char *colname, int sublevels_up)
-{
-	Node	   *result = NULL;
-	int			attnum = 0;
-	List	   *c;
-
-	foreach(c, join->colnames)
-	{
-		attnum++;
-		if (strcmp(strVal(lfirst(c)), colname) == 0)
-		{
-			if (result)
-				elog(ERROR, "Column reference \"%s\" is ambiguous", colname);
-			result = copyObject(nth(attnum - 1, join->colvars));
-
-			/*
-			 * If referencing an uplevel join item, we must adjust
-			 * sublevels settings in the copied expression.
-			 */
-			if (sublevels_up > 0)
-				IncrementVarSublevelsUp(result, sublevels_up, 0);
-		}
-	}
 	return result;
 }
 
@@ -382,9 +352,13 @@ colnameToVar(ParseState *pstate, char *colname)
 			}
 			else if (IsA(nsnode, JoinExpr))
 			{
-				JoinExpr   *j = (JoinExpr *) nsnode;
+				int			varno = ((JoinExpr *) nsnode)->rtindex;
+				RangeTblEntry *rte = rt_fetch(varno, pstate->p_rtable);
 
-				newresult = scanJoinForColumn(j, colname, levels_up);
+				/* joins are always inFromCl, so no need to check */
+
+				/* use orig_pstate here to get the right sublevels_up */
+				newresult = scanRTEForColumn(orig_pstate, rte, colname);
 			}
 			else
 				elog(ERROR, "colnameToVar: unexpected node type %d",
@@ -412,41 +386,26 @@ colnameToVar(ParseState *pstate, char *colname)
 /*
  * qualifiedNameToVar
  *	  Search for a qualified column name (refname + column name).
- *	  If found, return the appropriate Var node (or expression).
+ *	  If found, return the appropriate Var node.
  *	  If not found, return NULL.  If the name proves ambiguous, raise error.
  */
 Node *
 qualifiedNameToVar(ParseState *pstate, char *refname, char *colname,
 				   bool implicitRTEOK)
 {
-	Node	   *result;
-	Node	   *rteorjoin;
+	RangeTblEntry *rte;
 	int			sublevels_up;
 
-	rteorjoin = refnameRangeOrJoinEntry(pstate, refname, &sublevels_up);
+	rte = refnameRangeTblEntry(pstate, refname, &sublevels_up);
 
-	if (rteorjoin == NULL)
+	if (rte == NULL)
 	{
 		if (!implicitRTEOK)
 			return NULL;
-		rteorjoin = (Node *) addImplicitRTE(pstate, refname);
-		sublevels_up = 0;
+		rte = addImplicitRTE(pstate, refname);
 	}
 
-	if (IsA(rteorjoin, RangeTblEntry))
-		result = scanRTEForColumn(pstate, (RangeTblEntry *) rteorjoin,
-								  colname);
-	else if (IsA(rteorjoin, JoinExpr))
-		result = scanJoinForColumn((JoinExpr *) rteorjoin,
-								   colname, sublevels_up);
-	else
-	{
-		elog(ERROR, "qualifiedNameToVar: unexpected node type %d",
-			 nodeTag(rteorjoin));
-		result = NULL;			/* keep compiler quiet */
-	}
-
-	return result;
+	return scanRTEForColumn(pstate, rte, colname);
 }
 
 /*
@@ -474,9 +433,9 @@ addRangeTableEntry(ParseState *pstate,
 	int			numaliases;
 	int			varattno;
 
+	rte->rtekind = RTE_RELATION;
 	rte->relname = relname;
 	rte->alias = alias;
-	rte->subquery = NULL;
 
 	/*
 	 * Get the rel's OID.  This access also ensures that we have an
@@ -563,6 +522,7 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	int			varattno;
 	List	   *tlistitem;
 
+	rte->rtekind = RTE_SUBQUERY;
 	rte->relname = NULL;
 	rte->relid = InvalidOid;
 	rte->subquery = subquery;
@@ -605,6 +565,76 @@ addRangeTableEntryForSubquery(ParseState *pstate,
 	 *----------
 	 */
 	rte->inh = false;			/* never true for subqueries */
+	rte->inFromCl = inFromCl;
+	rte->checkForRead = false;
+	rte->checkForWrite = false;
+
+	rte->checkAsUser = InvalidOid;
+
+	/*
+	 * Add completed RTE to pstate's range table list, but not to join
+	 * list nor namespace --- caller must do that if appropriate.
+	 */
+	if (pstate != NULL)
+		pstate->p_rtable = lappend(pstate->p_rtable, rte);
+
+	return rte;
+}
+
+/*
+ * Add an entry for a join to the pstate's range table (p_rtable).
+ *
+ * This is much like addRangeTableEntry() except that it makes a join RTE.
+ */
+RangeTblEntry *
+addRangeTableEntryForJoin(ParseState *pstate,
+						  List *colnames,
+						  JoinType jointype,
+						  List *coltypes,
+						  List *coltypmods,
+						  List *leftcols,
+						  List *rightcols,
+						  Attr *alias,
+						  bool inFromCl)
+{
+	RangeTblEntry *rte = makeNode(RangeTblEntry);
+	Attr	   *eref;
+	int			numaliases;
+
+	rte->rtekind = RTE_JOIN;
+	rte->relname = NULL;
+	rte->relid = InvalidOid;
+	rte->subquery = NULL;
+	rte->jointype = jointype;
+	rte->joincoltypes = coltypes;
+	rte->joincoltypmods = coltypmods;
+	rte->joinleftcols = leftcols;
+	rte->joinrightcols = rightcols;
+	rte->alias = alias;
+
+	eref = alias ? (Attr *) copyObject(alias) : makeAttr("unnamed_join", NULL);
+	numaliases = length(eref->attrs);
+
+	/* fill in any unspecified alias columns */
+	if (numaliases < length(colnames))
+	{
+		while (numaliases-- > 0)
+			colnames = lnext(colnames);
+		eref->attrs = nconc(eref->attrs, colnames);
+	}
+
+	rte->eref = eref;
+
+	/*----------
+	 * Flags:
+	 * - this RTE should be expanded to include descendant tables,
+	 * - this RTE is in the FROM clause,
+	 * - this RTE should be checked for read/write access rights.
+	 *
+	 * Joins are never checked for access rights.
+	 *----------
+	 */
+	rte->inh = false;			/* never true for joins */
 	rte->inFromCl = inFromCl;
 	rte->checkForRead = false;
 	rte->checkForWrite = false;
@@ -720,15 +750,16 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 	/* Need the RT index of the entry for creating Vars */
 	rtindex = RTERangeTablePosn(pstate, rte, &sublevels_up);
 
-	if (rte->relname)
+	if (rte->rtekind == RTE_RELATION)
 	{
 		/* Ordinary relation RTE */
 		Relation	rel;
 		int			maxattrs;
+		int			numaliases;
 
 		rel = heap_openr(rte->relname, AccessShareLock);
-
 		maxattrs = RelationGetNumberOfAttributes(rel);
+		numaliases = length(rte->eref->attrs);
 
 		for (varattno = 0; varattno < maxattrs; varattno++)
 		{
@@ -743,7 +774,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 			{
 				char	   *label;
 
-				if (varattno < length(rte->eref->attrs))
+				if (varattno < numaliases)
 					label = strVal(nth(varattno, rte->eref->attrs));
 				else
 					label = NameStr(attr->attname);
@@ -764,7 +795,7 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 
 		heap_close(rel, AccessShareLock);
 	}
-	else
+	else if (rte->rtekind == RTE_SUBQUERY)
 	{
 		/* Subquery RTE */
 		List	   *aliasp = rte->eref->attrs;
@@ -802,55 +833,62 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 			}
 		}
 	}
+	else if (rte->rtekind == RTE_JOIN)
+	{
+		/* Join RTE */
+		List	   *aliasp = rte->eref->attrs;
+		List	   *coltypes = rte->joincoltypes;
+		List	   *coltypmods = rte->joincoltypmods;
+
+		varattno = 0;
+		while (aliasp)
+		{
+			Assert(coltypes && coltypmods);
+			varattno++;
+
+			if (colnames)
+			{
+				char	   *label = strVal(lfirst(aliasp));
+
+				*colnames = lappend(*colnames, makeString(pstrdup(label)));
+			}
+
+			if (colvars)
+			{
+				Var		   *varnode;
+
+				varnode = makeVar(rtindex, varattno,
+								  (Oid) lfirsti(coltypes),
+								  (int32) lfirsti(coltypmods),
+								  sublevels_up);
+
+				*colvars = lappend(*colvars, varnode);
+			}
+
+			aliasp = lnext(aliasp);
+			coltypes = lnext(coltypes);
+			coltypmods = lnext(coltypmods);
+		}
+		Assert(coltypes == NIL && coltypmods == NIL);
+	}
+	else
+		elog(ERROR, "expandRTE: unsupported RTE kind %d",
+			 (int) rte->rtekind);
 }
 
 /*
  * expandRelAttrs -
- *	  makes a list of TargetEntry nodes for the attributes of the rel
+ *	  Workhorse for "*" expansion: produce a list of targetentries
+ *	  for the attributes of the rte
  */
 List *
 expandRelAttrs(ParseState *pstate, RangeTblEntry *rte)
 {
-	List	   *name_list,
-			   *var_list;
-
-	expandRTE(pstate, rte, &name_list, &var_list);
-
-	return expandNamesVars(pstate, name_list, var_list);
-}
-
-/*
- * expandJoinAttrs -
- *	  makes a list of TargetEntry nodes for the attributes of the join
- */
-List *
-expandJoinAttrs(ParseState *pstate, JoinExpr *join, int sublevels_up)
-{
-	List	   *vars;
-
-	vars = copyObject(join->colvars);
-
-	/*
-	 * If referencing an uplevel join item, we must adjust sublevels
-	 * settings in the copied expression.
-	 */
-	if (sublevels_up > 0)
-		IncrementVarSublevelsUp((Node *) vars, sublevels_up, 0);
-
-	return expandNamesVars(pstate,
-						   copyObject(join->colnames),
-						   vars);
-}
-
-/*
- * expandNamesVars -
- *		Workhorse for "*" expansion: produce a list of targetentries
- *		given lists of column names (as String nodes) and var references.
- */
-static List *
-expandNamesVars(ParseState *pstate, List *names, List *vars)
-{
+	List	   *names,
+			   *vars;
 	List	   *te_list = NIL;
+
+	expandRTE(pstate, rte, &names, &vars);
 
 	while (names)
 	{
@@ -875,22 +913,16 @@ expandNamesVars(ParseState *pstate, List *names, List *vars)
 	return te_list;
 }
 
-/* ----------
+/*
  * get_rte_attribute_name
  *		Get an attribute name from a RangeTblEntry
  *
  * This is unlike get_attname() because we use aliases if available.
- * In particular, it will work on an RTE for a subselect, whereas
+ * In particular, it will work on an RTE for a subselect or join, whereas
  * get_attname() only works on real relations.
  *
  * "*" is returned if the given attnum is InvalidAttrNumber --- this case
  * occurs when a Var represents a whole tuple of a relation.
- *
- * XXX Actually, this is completely bogus, because refnames of RTEs are
- * not guaranteed unique, and may not even have scope across the whole
- * query.  Cleanest fix would be to add refname/attname to Var nodes and
- * just print those, rather than indulging in this hack.
- * ----------
  */
 char *
 get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
@@ -901,7 +933,8 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 		return "*";
 
 	/*
-	 * If there is an alias, use it
+	 * If there is an alias, use it.  (This path should always be taken
+	 * for non-relation RTEs.)
 	 */
 	if (attnum > 0 && attnum <= length(rte->eref->attrs))
 		return strVal(nth(attnum - 1, rte->eref->attrs));
@@ -909,9 +942,9 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 	/*
 	 * Can get here for a system attribute (which never has an alias), or
 	 * if alias name list is too short (which probably can't happen
-	 * anymore).  Neither of these cases is valid for a subselect RTE.
+	 * anymore).  Neither of these cases is valid for a non-relation RTE.
 	 */
-	if (rte->relid == InvalidOid)
+	if (rte->rtekind != RTE_RELATION)
 		elog(ERROR, "Invalid attnum %d for rangetable entry %s",
 			 attnum, rte->eref->relname);
 
@@ -923,6 +956,64 @@ get_rte_attribute_name(RangeTblEntry *rte, AttrNumber attnum)
 		elog(ERROR, "cache lookup of attribute %d in relation %u failed",
 			 attnum, rte->relid);
 	return attname;
+}
+
+/*
+ * get_rte_attribute_type
+ *		Get attribute type information from a RangeTblEntry
+ */
+void
+get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
+					   Oid *vartype, int32 *vartypmod)
+{
+	if (rte->rtekind == RTE_RELATION)
+	{
+		/* Plain relation RTE --- get the attribute's type info */
+		HeapTuple	tp;
+		Form_pg_attribute att_tup;
+
+		tp = SearchSysCache(ATTNUM,
+							ObjectIdGetDatum(rte->relid),
+							Int16GetDatum(attnum),
+							0, 0);
+		/* this shouldn't happen... */
+		if (!HeapTupleIsValid(tp))
+			elog(ERROR, "Relation %s does not have attribute %d",
+				 rte->relname, attnum);
+		att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+		*vartype = att_tup->atttypid;
+		*vartypmod = att_tup->atttypmod;
+		ReleaseSysCache(tp);
+	}
+	else if (rte->rtekind == RTE_SUBQUERY)
+	{
+		/* Subselect RTE --- get type info from subselect's tlist */
+		List	   *tlistitem;
+
+		foreach(tlistitem, rte->subquery->targetList)
+		{
+			TargetEntry *te = (TargetEntry *) lfirst(tlistitem);
+
+			if (te->resdom->resjunk || te->resdom->resno != attnum)
+				continue;
+			*vartype = te->resdom->restype;
+			*vartypmod = te->resdom->restypmod;
+			return;
+		}
+		/* falling off end of list shouldn't happen... */
+		elog(ERROR, "Subquery %s does not have attribute %d",
+			 rte->eref->relname, attnum);
+	}
+	else if (rte->rtekind == RTE_JOIN)
+	{
+		/* Join RTE --- get type info directly from join RTE */
+		Assert(attnum > 0 && attnum <= length(rte->joincoltypes));
+		*vartype = (Oid) nthi(attnum-1, rte->joincoltypes);
+		*vartypmod = nthi(attnum-1, rte->joincoltypmods);
+	}
+	else
+		elog(ERROR, "get_rte_attribute_type: unsupported RTE kind %d",
+			 (int) rte->rtekind);
 }
 
 /*

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.35 2001/10/25 05:49:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/relnode.c,v 1.36 2002/03/12 00:51:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,26 +40,26 @@ static void subbuild_joinrel_joinlist(RelOptInfo *joinrel,
 
 /*
  * build_base_rel
- *	  Returns relation entry corresponding to 'relid', creating a new one
- *	  if necessary.  This is for base relations.
+ *	  Construct a new base relation RelOptInfo, and put it in the query's
+ *	  base_rel_list.
  */
-RelOptInfo *
+void
 build_base_rel(Query *root, int relid)
 {
 	List	   *rels;
 	RelOptInfo *rel;
 
-	/* Already made? */
+	/* Rel should not exist already */
 	foreach(rels, root->base_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
 
 		/* length(rel->relids) == 1 for all members of base_rel_list */
 		if (lfirsti(rel->relids) == relid)
-			return rel;
+			elog(ERROR, "build_base_rel: rel already exists");
 	}
 
-	/* It should not exist as an "other" rel */
+	/* It should not exist as an "other" rel, either */
 	foreach(rels, root->other_rel_list)
 	{
 		rel = (RelOptInfo *) lfirst(rels);
@@ -73,14 +73,12 @@ build_base_rel(Query *root, int relid)
 
 	/* and add it to the list */
 	root->base_rel_list = lcons(rel, root->base_rel_list);
-
-	return rel;
 }
 
 /*
  * build_other_rel
  *	  Returns relation entry corresponding to 'relid', creating a new one
- *	  if necessary.  This is for 'other' relations, which are just like
+ *	  if necessary.  This is for 'other' relations, which are much like
  *	  base relations except that they live in a different list.
  */
 RelOptInfo *
@@ -111,6 +109,10 @@ build_other_rel(Query *root, int relid)
 	/* No existing RelOptInfo for this other rel, so make a new one */
 	rel = make_base_rel(root, relid);
 
+	/* if it's not a join rel, must be a child rel */
+	if (rel->reloptkind == RELOPT_BASEREL)
+		rel->reloptkind = RELOPT_OTHER_CHILD_REL;
+
 	/* and add it to the list */
 	root->other_rel_list = lcons(rel, root->other_rel_list);
 
@@ -127,8 +129,9 @@ static RelOptInfo *
 make_base_rel(Query *root, int relid)
 {
 	RelOptInfo *rel = makeNode(RelOptInfo);
-	Oid			relationObjectId;
+	RangeTblEntry *rte = rt_fetch(relid, root->rtable);
 
+	rel->reloptkind = RELOPT_BASEREL;
 	rel->relids = makeListi1(relid);
 	rel->rows = 0;
 	rel->width = 0;
@@ -142,29 +145,40 @@ make_base_rel(Query *root, int relid)
 	rel->pages = 0;
 	rel->tuples = 0;
 	rel->subplan = NULL;
+	rel->joinrti = 0;
+	rel->joinrteids = NIL;
 	rel->baserestrictinfo = NIL;
 	rel->baserestrictcost = 0;
 	rel->outerjoinset = NIL;
 	rel->joininfo = NIL;
 	rel->innerjoin = NIL;
 
-	/* Check rtable to see if it's a plain relation or a subquery */
-	relationObjectId = getrelid(relid, root->rtable);
-
-	if (relationObjectId != InvalidOid)
+	/* Check type of rtable entry */
+	switch (rte->rtekind)
 	{
-		/* Plain relation --- retrieve statistics from the system catalogs */
-		bool		indexed;
+		case RTE_RELATION:
+		{
+			/* Table --- retrieve statistics from the system catalogs */
+			bool		indexed;
 
-		get_relation_info(relationObjectId,
-						  &indexed, &rel->pages, &rel->tuples);
-		if (indexed)
-			rel->indexlist = find_secondary_indexes(relationObjectId);
-	}
-	else
-	{
-		/* subquery --- mark it as such for later processing */
-		rel->issubquery = true;
+			get_relation_info(rte->relid,
+							  &indexed, &rel->pages, &rel->tuples);
+			if (indexed)
+				rel->indexlist = find_secondary_indexes(rte->relid);
+			break;
+		}
+		case RTE_SUBQUERY:
+			/* Subquery --- mark it as such for later processing */
+			rel->issubquery = true;
+			break;
+		case RTE_JOIN:
+			/* Join --- must be an otherrel */
+			rel->reloptkind = RELOPT_OTHER_JOIN_REL;
+			break;
+		default:
+			elog(ERROR, "make_base_rel: unsupported RTE kind %d",
+				 (int) rte->rtekind);
+			break;
 	}
 
 	return rel;
@@ -201,6 +215,47 @@ find_base_rel(Query *root, int relid)
 	elog(ERROR, "find_base_rel: no relation entry for relid %d", relid);
 
 	return NULL;				/* keep compiler quiet */
+}
+
+/*
+ * find_other_rel
+ *	  Find an otherrel entry, if one exists for the given relid.
+ *	  Return NULL if no entry.
+ */
+RelOptInfo *
+find_other_rel(Query *root, int relid)
+{
+	List	   *rels;
+
+	foreach(rels, root->other_rel_list)
+	{
+		RelOptInfo *rel = (RelOptInfo *) lfirst(rels);
+
+		if (lfirsti(rel->relids) == relid)
+			return rel;
+	}
+	return NULL;
+}
+
+/*
+ * find_other_rel_for_join
+ *	  Look for an otherrel for a join RTE matching the given baserel set.
+ *	  Return NULL if no entry.
+ */
+RelOptInfo *
+find_other_rel_for_join(Query *root, List *relids)
+{
+	List	   *rels;
+
+	foreach(rels, root->other_rel_list)
+	{
+		RelOptInfo *rel = (RelOptInfo *) lfirst(rels);
+
+		if (rel->reloptkind == RELOPT_OTHER_JOIN_REL
+			&& sameseti(relids, rel->outerjoinset))
+			return rel;
+	}
+	return NULL;
 }
 
 /*
@@ -252,6 +307,7 @@ build_join_rel(Query *root,
 {
 	List	   *joinrelids;
 	RelOptInfo *joinrel;
+	RelOptInfo *joinrterel;
 	List	   *restrictlist;
 	List	   *new_outer_tlist;
 	List	   *new_inner_tlist;
@@ -286,6 +342,7 @@ build_join_rel(Query *root,
 	 * Nope, so make one.
 	 */
 	joinrel = makeNode(RelOptInfo);
+	joinrel->reloptkind = RELOPT_JOINREL;
 	joinrel->relids = joinrelids;
 	joinrel->rows = 0;
 	joinrel->width = 0;
@@ -299,29 +356,60 @@ build_join_rel(Query *root,
 	joinrel->pages = 0;
 	joinrel->tuples = 0;
 	joinrel->subplan = NULL;
+	joinrel->joinrti = 0;
+	joinrel->joinrteids = nconc(listCopy(outer_rel->joinrteids),
+								inner_rel->joinrteids);
 	joinrel->baserestrictinfo = NIL;
 	joinrel->baserestrictcost = 0;
 	joinrel->outerjoinset = NIL;
 	joinrel->joininfo = NIL;
 	joinrel->innerjoin = NIL;
 
+	/* Is there a join RTE matching this join? */
+	joinrterel = find_other_rel_for_join(root, joinrelids);
+	if (joinrterel)
+	{
+		/* Yes, remember its RT index */
+		joinrel->joinrti = lfirsti(joinrterel->relids);
+		joinrel->joinrteids = lconsi(joinrel->joinrti, joinrel->joinrteids);
+	}
+
 	/*
 	 * Create a new tlist by removing irrelevant elements from both tlists
 	 * of the outer and inner join relations and then merging the results
 	 * together.
 	 *
+	 * XXX right now we don't remove any irrelevant elements, we just
+	 * append the two tlists together.  Someday consider pruning vars from the
+	 * join's targetlist if they are needed only to evaluate restriction
+	 * clauses of this join, and will never be accessed at higher levels of
+	 * the plantree.
+	 *
 	 * NOTE: the tlist order for a join rel will depend on which pair of
 	 * outer and inner rels we first try to build it from.	But the
 	 * contents should be the same regardless.
-	 *
-	 * XXX someday: consider pruning vars from the join's targetlist if they
-	 * are needed only to evaluate restriction clauses of this join, and
-	 * will never be accessed at higher levels of the plantree.
 	 */
 	new_outer_tlist = new_join_tlist(outer_rel->targetlist, 1);
 	new_inner_tlist = new_join_tlist(inner_rel->targetlist,
 									 length(new_outer_tlist) + 1);
 	joinrel->targetlist = nconc(new_outer_tlist, new_inner_tlist);
+
+	/*
+	 * If there are any alias variables attached to the matching join RTE,
+	 * attach them to the tlist too, so that they will be evaluated for use
+	 * at higher plan levels.
+	 */
+	if (joinrterel)
+	{
+		List   *jrtetl;
+
+		foreach(jrtetl, joinrterel->targetlist)
+		{
+			TargetEntry *jrtete = lfirst(jrtetl);
+
+			add_var_to_tlist(joinrel, (Var *) jrtete->expr);
+		}
+	}
 
 	/*
 	 * Construct restrict and join clause lists for the new joinrel. (The

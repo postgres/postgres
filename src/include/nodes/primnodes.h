@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.57 2001/11/05 17:46:34 momjian Exp $
+ * $Id: primnodes.h,v 1.58 2002/03/12 00:52:02 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -513,10 +513,9 @@ typedef struct RangeTblRef
  * alias has a critical impact on semantics, because a join with an alias
  * restricts visibility of the tables/columns inside it.
  *
- * During parse analysis, colnames is filled with a list of String nodes
- * giving the column names (real or alias) of the output of the join,
- * and colvars is filled with a list of expressions that can be copied to
- * reference the output columns.
+ * During parse analysis, an RTE is created for the Join, and its index
+ * is filled into rtindex.  This RTE is present mainly so that Vars can
+ * be created that refer to the outputs of the join.
  *----------
  */
 typedef struct JoinExpr
@@ -529,9 +528,7 @@ typedef struct JoinExpr
 	List	   *using;			/* USING clause, if any (list of String) */
 	Node	   *quals;			/* qualifiers on join, if any */
 	struct Attr *alias;			/* user-written alias clause, if any */
-	List	   *colnames;		/* output column names (list of String) */
-	List	   *colvars;		/* output column nodes (list of
-								 * expressions) */
+	int			rtindex;		/* RT index assigned for join */
 } JoinExpr;
 
 /*----------

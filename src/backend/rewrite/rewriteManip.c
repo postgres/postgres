@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.61 2001/11/05 17:46:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.62 2002/03/12 00:51:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,8 +101,8 @@ checkExprHasSubLink_walker(Node *node, void *context)
  *
  * Find all Var nodes in the given tree with varlevelsup == sublevels_up,
  * and increment their varno fields (rangetable indexes) by 'offset'.
- * The varnoold fields are adjusted similarly.	Also, RangeTblRef nodes
- * in join trees and setOp trees are adjusted.
+ * The varnoold fields are adjusted similarly.	Also, RangeTblRef and
+ * JoinExpr nodes in join trees and setOp trees are adjusted.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	The given expression tree should have been copied
@@ -139,6 +139,14 @@ OffsetVarNodes_walker(Node *node, OffsetVarNodes_context *context)
 			rtr->rtindex += context->offset;
 		/* the subquery itself is visited separately */
 		return false;
+	}
+	if (IsA(node, JoinExpr))
+	{
+		JoinExpr *j = (JoinExpr *) node;
+
+		if (context->sublevels_up == 0)
+			j->rtindex += context->offset;
+		/* fall through to examine children */
 	}
 	if (IsA(node, Query))
 	{
@@ -200,7 +208,7 @@ OffsetVarNodes(Node *node, int offset, int sublevels_up)
  * Find all Var nodes in the given tree belonging to a specific relation
  * (identified by sublevels_up and rt_index), and change their varno fields
  * to 'new_index'.	The varnoold fields are changed too.  Also, RangeTblRef
- * nodes in join trees and setOp trees are adjusted.
+ * and JoinExpr nodes in join trees and setOp trees are adjusted.
  *
  * NOTE: although this has the form of a walker, we cheat and modify the
  * nodes in-place.	The given expression tree should have been copied
@@ -240,6 +248,15 @@ ChangeVarNodes_walker(Node *node, ChangeVarNodes_context *context)
 			rtr->rtindex = context->new_index;
 		/* the subquery itself is visited separately */
 		return false;
+	}
+	if (IsA(node, JoinExpr))
+	{
+		JoinExpr *j = (JoinExpr *) node;
+
+		if (context->sublevels_up == 0 &&
+			j->rtindex == context->rt_index)
+			j->rtindex = context->new_index;
+		/* fall through to examine children */
 	}
 	if (IsA(node, Query))
 	{
@@ -409,6 +426,15 @@ rangeTableEntry_used_walker(Node *node,
 			return true;
 		/* the subquery itself is visited separately */
 		return false;
+	}
+	if (IsA(node, JoinExpr))
+	{
+		JoinExpr *j = (JoinExpr *) node;
+
+		if (j->rtindex == context->rt_index &&
+			context->sublevels_up == 0)
+			return true;
+		/* fall through to examine children */
 	}
 	if (IsA(node, Query))
 	{

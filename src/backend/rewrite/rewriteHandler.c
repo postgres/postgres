@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.98 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.99 2002/03/12 00:51:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,6 +289,7 @@ ApplyRetrieveRule(Query *parsetree,
 	 */
 	rte = rt_fetch(rt_index, parsetree->rtable);
 
+	rte->rtekind = RTE_SUBQUERY;
 	rte->relname = NULL;
 	rte->relid = InvalidOid;
 	rte->subquery = rule_action;
@@ -354,16 +355,16 @@ markQueryForUpdate(Query *qry, bool skipOldNew)
 			(rti == PRS2_OLD_VARNO || rti == PRS2_NEW_VARNO))
 			continue;
 
-		if (rte->subquery)
-		{
-			/* FOR UPDATE of subquery is propagated to subquery's rels */
-			markQueryForUpdate(rte->subquery, false);
-		}
-		else
+		if (rte->rtekind == RTE_RELATION)
 		{
 			if (!intMember(rti, qry->rowMarks))
 				qry->rowMarks = lappendi(qry->rowMarks, rti);
 			rte->checkForWrite = true;
+		}
+		else if (rte->rtekind == RTE_SUBQUERY)
+		{
+			/* FOR UPDATE of subquery is propagated to subquery's rels */
+			markQueryForUpdate(rte->subquery, false);
 		}
 	}
 }
@@ -440,11 +441,17 @@ fireRIRrules(Query *parsetree)
 		 * to do to this level of the query, but we must recurse into the
 		 * subquery to expand any rule references in it.
 		 */
-		if (rte->subquery)
+		if (rte->rtekind == RTE_SUBQUERY)
 		{
 			rte->subquery = fireRIRrules(rte->subquery);
 			continue;
 		}
+
+		/*
+		 * Joins and other non-relation RTEs can be ignored completely.
+		 */
+		if (rte->rtekind != RTE_RELATION)
+			continue;
 
 		/*
 		 * If the table is not referenced in the query, then we ignore it.
@@ -756,6 +763,7 @@ RewriteQuery(Query *parsetree, bool *instead_flag, List **qual_products)
 	result_relation = parsetree->resultRelation;
 	Assert(result_relation != 0);
 	rt_entry = rt_fetch(result_relation, parsetree->rtable);
+	Assert(rt_entry->rtekind == RTE_RELATION);
 
 	/*
 	 * This may well be the first access to the result relation during the
@@ -945,7 +953,7 @@ QueryRewrite(Query *parsetree)
 			RangeTblEntry *rte = rt_fetch(query->resultRelation,
 										  query->rtable);
 
-			if (rte->subquery)
+			if (rte->rtekind == RTE_SUBQUERY)
 			{
 				switch (query->commandType)
 				{
