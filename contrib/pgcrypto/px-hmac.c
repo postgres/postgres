@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-hmac.c,v 1.3 2001/11/20 15:50:53 momjian Exp $
+ * $Id: px-hmac.c,v 1.4 2001/11/20 18:54:07 momjian Exp $
  */
 
 
@@ -37,13 +37,13 @@
 #define HMAC_IPAD 0x36
 #define HMAC_OPAD 0x5C
 
-static uint
+static unsigned
 hmac_result_size(PX_HMAC * h)
 {
 	return px_md_result_size(h->md);
 }
 
-static uint
+static unsigned
 hmac_block_size(PX_HMAC * h)
 {
 	return px_md_block_size(h->md);

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: internal.c,v 1.9 2001/11/20 15:50:53 momjian Exp $
+ * $Id: internal.c,v 1.10 2001/11/20 18:54:07 momjian Exp $
  */
 
 
@@ -77,13 +77,13 @@ static struct int_digest
 
 /* MD5 */
 
-static uint
+static unsigned
 int_md5_len(PX_MD * h)
 {
 	return MD5_DIGEST_LENGTH;
 }
 
-static uint
+static unsigned
 int_md5_block_len(PX_MD * h)
 {
 	return MD5_BLOCK_SIZE;
@@ -124,13 +124,13 @@ int_md5_free(PX_MD * h)
 
 /* SHA1 */
 
-static uint
+static unsigned
 int_sha1_len(PX_MD * h)
 {
 	return SHA1_DIGEST_LENGTH;
 }
 
-static uint
+static unsigned
 int_sha1_block_len(PX_MD * h)
 {
 	return SHA1_BLOCK_SIZE;
@@ -250,19 +250,19 @@ intctx_free(PX_Cipher * c)
 #define MODE_ECB 0
 #define MODE_CBC 1
 
-static uint
+static unsigned
 rj_block_size(PX_Cipher * c)
 {
 	return 128 / 8;
 }
 
-static uint
+static unsigned
 rj_key_size(PX_Cipher * c)
 {
 	return 256 / 8;
 }
 
-static uint
+static unsigned
 rj_iv_size(PX_Cipher * c)
 {
 	return 128 / 8;
@@ -388,19 +388,19 @@ rj_load(int mode)
  * blowfish
  */
 
-static uint
+static unsigned
 bf_block_size(PX_Cipher * c)
 {
 	return 8;
 }
 
-static uint
+static unsigned
 bf_key_size(PX_Cipher * c)
 {
 	return BLF_MAXKEYLEN;
 }
 
-static uint
+static unsigned
 bf_iv_size(PX_Cipher * c)
 {
 	return 8;

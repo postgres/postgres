@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-crypt.c,v 1.5 2001/11/05 17:46:23 momjian Exp $
+ * $Id: px-crypt.c,v 1.6 2001/11/20 18:54:07 momjian Exp $
  */
 
 #include <postgres.h>
@@ -158,7 +158,7 @@ static struct generator gen_list[] = {
 	{NULL, NULL, 0, 0, 0}
 };
 
-uint
+unsigned
 px_gen_salt(const char *salt_type, char *buf, int rounds)
 {
 	int			i,

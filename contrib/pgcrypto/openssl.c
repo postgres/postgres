@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openssl.c,v 1.9 2001/11/20 15:50:53 momjian Exp $
+ * $Id: openssl.c,v 1.10 2001/11/20 18:54:07 momjian Exp $
  */
 
 #include <postgres.h>
@@ -36,13 +36,13 @@
 #include <openssl/evp.h>
 #include <openssl/blowfish.h>
 
-static uint
+static unsigned
 digest_result_size(PX_MD * h)
 {
 	return EVP_MD_CTX_size((EVP_MD_CTX *) h->p.ptr);
 }
 
-static uint
+static unsigned
 digest_block_size(PX_MD * h)
 {
 	return EVP_MD_CTX_block_size((EVP_MD_CTX *) h->p.ptr);
@@ -114,7 +114,7 @@ typedef struct
 
 /* generic EVP */
 
-static uint
+static unsigned
 gen_evp_block_size(PX_Cipher * c)
 {
 	ossldata   *od = (ossldata *) c->ptr;
@@ -122,7 +122,7 @@ gen_evp_block_size(PX_Cipher * c)
 	return EVP_CIPHER_block_size(od->evp_ciph);
 }
 
-static uint
+static unsigned
 gen_evp_key_size(PX_Cipher * c)
 {
 	ossldata   *od = (ossldata *) c->ptr;
@@ -130,7 +130,7 @@ gen_evp_key_size(PX_Cipher * c)
 	return EVP_CIPHER_key_length(od->evp_ciph);
 }
 
-static uint
+static unsigned
 gen_evp_iv_size(PX_Cipher * c)
 {
 	unsigned	ivlen;

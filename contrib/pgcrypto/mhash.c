@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: mhash.c,v 1.6 2001/11/20 15:50:53 momjian Exp $
+ * $Id: mhash.c,v 1.7 2001/11/20 18:54:07 momjian Exp $
  */
 
 #include <postgres.h>
@@ -44,7 +44,7 @@
 
 /* DIGEST */
 
-static uint
+static unsigned
 digest_result_size(PX_MD * h)
 {
 	MHASH		mh = (MHASH) h->p.ptr;
@@ -53,7 +53,7 @@ digest_result_size(PX_MD * h)
 	return mhash_get_block_size(id);
 }
 
-static uint
+static unsigned
 digest_block_size(PX_MD * h)
 {
 	MHASH		mh = (MHASH) h->p.ptr;
@@ -110,7 +110,7 @@ digest_free(PX_MD * h)
 
 /* ENCRYPT / DECRYPT */
 
-static uint
+static unsigned
 cipher_block_size(PX_Cipher * c)
 {
 	MCRYPT		ctx = (MCRYPT) c->ptr;
@@ -118,7 +118,7 @@ cipher_block_size(PX_Cipher * c)
 	return mcrypt_enc_get_block_size(ctx);
 }
 
-static uint
+static unsigned
 cipher_key_size(PX_Cipher * c)
 {
 	MCRYPT		ctx = (MCRYPT) c->ptr;
@@ -126,7 +126,7 @@ cipher_key_size(PX_Cipher * c)
 	return mcrypt_enc_get_key_size(ctx);
 }
 
-static uint
+static unsigned
 cipher_iv_size(PX_Cipher * c)
 {
 	MCRYPT		ctx = (MCRYPT) c->ptr;

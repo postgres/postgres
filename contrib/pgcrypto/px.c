@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px.c,v 1.5 2001/11/20 15:50:53 momjian Exp $
+ * $Id: px.c,v 1.6 2001/11/20 18:54:07 momjian Exp $
  */
 
 #include <postgres.h>
@@ -50,13 +50,13 @@ px_resolve_alias(const PX_Alias * list, const char *name)
  * combo - cipher + padding (+ checksum)
  */
 
-static uint
+static unsigned
 combo_encrypt_len(PX_Combo * cx, unsigned dlen)
 {
 	return dlen + 512;
 }
 
-static uint
+static unsigned
 combo_decrypt_len(PX_Combo * cx, unsigned dlen)
 {
 	return dlen;
