@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.45 1998/10/06 14:16:49 tgl Exp $
+ * $Id: libpq-fe.h,v 1.46 1999/02/04 03:20:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -100,9 +100,9 @@ extern		"C"
 		pqbool		html3;		/* output html tables */
 		pqbool		expanded;	/* expand tables */
 		pqbool		pager;		/* use pager for output if needed */
-		char	   *fieldSep;	/* field separator */
-		char	   *tableOpt;	/* insert to HTML <table ...> */
-		char	   *caption;	/* HTML <caption> */
+		const char *fieldSep;	/* field separator */
+		const char *tableOpt;	/* insert to HTML <table ...> */
+		const char *caption;	/* HTML <caption> */
 		char	  **fieldName;	/* null terminated array of repalcement
 								 * field names */
 	} PQprintOpt;
@@ -113,12 +113,12 @@ extern		"C"
  */
 	typedef struct _PQconninfoOption
 	{
-		char	   *keyword;	/* The keyword of the option			*/
-		char	   *envvar;	/* Fallback environment variable name	*/
-		char	   *compiled;	/* Fallback compiled in default value	*/
-		char	   *val;		/* Options value						*/
-		char	   *label;		/* Label for field in connect dialog	*/
-		char	   *dispchar;	/* Character to display for this field	*/
+		const char	*keyword;	/* The keyword of the option			*/
+		const char	*envvar;	/* Fallback environment variable name	*/
+		const char	*compiled;	/* Fallback compiled in default value	*/
+		char		*val;		/* Options value						*/
+		const char	*label;		/* Label for field in connect dialog	*/
+		const char	*dispchar;	/* Character to display for this field	*/
 								/* in a connect dialog. Values are:		*/
 								/* ""	Display entered value as is  */
 								/* "*"	Password field - hide value  */

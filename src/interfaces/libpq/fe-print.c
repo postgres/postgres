@@ -9,7 +9,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.17 1999/02/03 21:17:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.18 1999/02/04 03:20:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -679,7 +679,7 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int *fieldMax,
 		p = border;
 		if (po->standard)
 		{
-			char	   *fs = po->fieldSep;
+			const char	   *fs = po->fieldSep;
 
 			while (*fs++)
 				*p++ = '+';
@@ -691,7 +691,7 @@ do_header(FILE *fout, PQprintOpt *po, const int nFields, int *fieldMax,
 			for (len = fieldMax[j] + (po->standard ? 2 : 0); len--; *p++ = '-');
 			if (po->standard || (j + 1) < nFields)
 			{
-				char	   *fs = po->fieldSep;
+				const char	   *fs = po->fieldSep;
 
 				while (*fs++)
 					*p++ = '+';

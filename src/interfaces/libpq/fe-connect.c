@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.89 1999/01/27 01:18:22 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.90 1999/02/04 03:20:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,7 +48,7 @@ static PGconn *makeEmptyPGconn(void);
 static void freePGconn(PGconn *conn);
 static void closePGconn(PGconn *conn);
 static int	conninfo_parse(const char *conninfo, char *errorMessage);
-static char *conninfo_getval(char *keyword);
+static const char *conninfo_getval(const char *keyword);
 static void conninfo_free(void);
 static void defaultNoticeProcessor(void *arg, const char *message);
 
@@ -172,8 +172,8 @@ static struct EnvironmentOptions
 PGconn *
 PQconnectdb(const char *conninfo)
 {
-	PGconn	   *conn;
-	char	   *tmp;
+	PGconn		   *conn;
+	const char	   *tmp;
 
 	/* ----------
 	 * Allocate memory for the conn structure
@@ -284,8 +284,8 @@ PQconndefaults(void)
 PGconn *
 PQsetdbLogin(const char *pghost, const char *pgport, const char *pgoptions, const char *pgtty, const char *dbName, const char *login, const char *pwd)
 {
-	PGconn	   *conn;
-	char	   *tmp;
+	PGconn		*conn;
+	const char	*tmp;
 
 	/* An error message from some service we call. */
 	bool		error = FALSE;
@@ -1137,7 +1137,7 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 	char	   *pname;
 	char	   *pval;
 	char	   *buf;
-	char	   *tmp;
+	const char *tmp;
 	char	   *cp;
 	char	   *cp2;
 	PQconninfoOption *option;
@@ -1343,8 +1343,8 @@ conninfo_parse(const char *conninfo, char *errorMessage)
 }
 
 
-static char *
-conninfo_getval(char *keyword)
+static const char *
+conninfo_getval(const char *keyword)
 {
 	PQconninfoOption *option;
 
