@@ -3,7 +3,7 @@
 # pg_upgrade: update a database without needing a full dump/reload cycle.
 # CAUTION: Read the manual page before trying to use this!
 
-# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.31 2002/01/13 01:22:27 momjian Exp $
+# $Header: /cvsroot/pgsql/src/bin/pg_dump/Attic/pg_upgrade,v 1.32 2002/01/13 04:55:44 momjian Exp $
 #
 # NOTE: we must be sure to update the version-checking code a few dozen lines
 # below for each new PostgreSQL release.
@@ -12,6 +12,16 @@
 
 # Set this to "Y" to enable this program
 ENABLE="N"
+
+if [ "$ENABLE" != "Y" ]
+then
+	echo "Sorry, $0 cannot upgrade database
+version $SRC_VERSION to $DST_VERSION." 1>&2
+	echo "The on-disk structure of tables has changed." 1>&2
+	echo "You will need to dump and restore using pg_dumpall." 1>&2
+	exit 1
+fi
+
 
 # UPGRADE_VERSION is the expected old database version
 UPGRADE_VERSION="7.1"
@@ -52,7 +62,7 @@ OLDDIR="$INFODIR/data"
 make_dbobjoidmap()
 {
 	psql -d template1 -At -c "SELECT datname FROM pg_database" |
-	grep -v '^template0$' | # template1 OK
+	grep -v '^template0$' |
 	while read DB
 	do	
 		QUERY="`echo \"	SELECT 	relname, oid
@@ -78,7 +88,8 @@ make_dbobjoidmap()
 make_dboidmap()
 {
 	psql -d template1 -At -F'	' -c \
-		'SELECT datname, oid FROM pg_database;'
+		'SELECT datname, oid FROM pg_database;' |
+	grep -v '^template0$'
 }
 
 
@@ -149,23 +160,9 @@ $0 aborted." 1>&2
 		echo 
 	"However, your database is version $SRC_VERSION;
 $0 aborted." 1>&2
-		exit 1
-	fi
-
-	# Check that input database is of a compatible version (anything with the same
-	# physical layout of user tables and indexes should be OK).  I did not write
-	# something like "$SRC_VERSION -ge $UPGRADE_VERSION" because test(1) isn't bright
-	# enough to compare dotted version strings properly.  Using a case statement
-	# looks uglier but is more flexible.
-	if [ "$ENABLE" != "Y" ]
-	then
-		echo "Sorry, $0 cannot upgrade database
-version $SRC_VERSION to $DST_VERSION." 1>&2
-		echo "The on-disk structure of tables has changed." 1>&2
 		echo "You will need to dump and restore using pg_dumpall." 1>&2
 		exit 1
 	fi
-
 
 	# Start server, if needed, so we can do some work.
 	if ! pg_ctl status | head -1 | grep -q "is running"
@@ -220,17 +217,18 @@ $0 aborted." 1>&2
 	if [ "$SRC_VERSION" = "7.1" ]
 	then
 		psql -d template1 -At -c "SELECT datname FROM pg_database" |
-		grep -v '^template0$' | # template1 OK
+		grep -v '^template0$' |
 		while read DB
-		do	
-			echo "\\connect $DB"
+		do
+			# We use awk as a portable way to output a backslash
+			awk 'BEGIN {print "\\connect '"$DB"'"}'
 			psql -d "$DB" -At -c "
 				SELECT 	relname
 				FROM 	pg_class
 				WHERE 	relkind = 'S';" |
 			while read SEQUENCE
 			do
-				VALUE=`psql -d template1 -At -c "SELECT last_value 
+				VALUE=`psql -d "$DB" -At -c "SELECT last_value 
 								 FROM \"$SEQUENCE\";"`
 				echo "SELECT setval ('$SEQUENCE', $VALUE, true);"
 			done
@@ -263,7 +261,8 @@ $0 aborted." 1>&2
 $0 aborted." 1>&2
 		exit 1
 	fi
-	echo "Plase 1 completed.  Continue with the steps outlined in the $0 manual page."
+	echo "Plase 1 completed.
+Continue with the steps outlined in the $0 manual page."
 	exit 0
 fi
 
@@ -520,6 +519,8 @@ $0 aborted." 1>&2
 	fi
 fi
 
+echo
+echo
 echo "You may remove the old database files with 'rm -r pg_upgrade'."
 
 exit 0
