@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.31 1998/02/19 15:04:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.32 1998/02/24 19:58:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@
  *		This is so that we can support more backends. (system-wide semaphore
  *		sets run out pretty fast.)				  -ay 4/95
  *
- * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.31 1998/02/19 15:04:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.32 1998/02/24 19:58:26 momjian Exp $
  */
 #include <sys/time.h>
 #include <unistd.h>
@@ -451,7 +451,7 @@ ProcSleep(PROC_QUEUE *waitQueue,
 		  int prio,
 		  LOCK *lock)
 {
-	int			i = 0;
+	int			i;
 	PROC	   *proc;
 	struct itimerval timeval,
 				dummy;
@@ -481,7 +481,8 @@ ProcSleep(PROC_QUEUE *waitQueue,
 	proc = (PROC *) MAKE_PTR(waitQueue->links.prev);
 
 	/* If we are a reader, and they are writers, skip past them */
-	while (i++ < waitQueue->size && proc->prio > prio)
+
+	for (i = 0; i < waitQueue->size && proc->prio > prio; i++)
 		proc = (PROC *) MAKE_PTR(proc->links.prev);
 
 	/* The rest of the queue is FIFO, with readers first, writers last */
