@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.34 2000/06/26 14:16:34 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.35 2000/07/17 18:24:32 petere Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -111,6 +111,9 @@ HandleSlashCmds(const char *line,
 	{
 		continue_parse = &my_line[blank_loc];
 		my_line[blank_loc] = '\0';
+		/* If it's a double backslash, we skip it. */
+		if (my_line[blank_loc + 1] == '\\')
+			continue_parse += 2;
 	}
 	/* do we have an option string? */
 	else if (my_line[blank_loc] != '\0')

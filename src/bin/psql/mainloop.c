@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.33 2000/07/14 15:43:49 thomas Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.34 2000/07/17 18:24:33 petere Exp $
  */
 #include "postgres.h"
 #include "mainloop.h"
@@ -247,17 +247,6 @@ MainLoop(FILE *source)
 			count_eof = 0;
 
 		pset.lineno++;
-
-		/* strip trailing backslashes, they don't have a clear meaning */
-		while (1)
-		{
-			char	   *cp = strrchr(line, '\\');
-
-			if (cp && (*(cp + 1) == '\0'))
-				*cp = '\0';
-			else
-				break;
-		}
 
 		/* nothing left on line? then ignore */
 		if (line[0] == '\0')
