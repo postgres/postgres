@@ -62,7 +62,7 @@ static struct {
 
 
 RETCODE SQL_API SQLAllocStmt(HDBC      hdbc,
-                             HSTMT FAR *phstmt)
+			     HSTMT FAR *phstmt)
 {
 static char *func="SQLAllocStmt";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
@@ -88,12 +88,12 @@ StatementClass *stmt;
 	}
 
     if ( ! CC_add_statement(conn, stmt)) {
-        conn->errormsg = "Maximum number of connections exceeded.";
-        conn->errornumber = CONN_STMT_ALLOC_ERROR;
+	conn->errormsg = "Maximum number of connections exceeded.";
+	conn->errornumber = CONN_STMT_ALLOC_ERROR;
 		CC_log_error(func, "", conn);
-        SC_Destructor(stmt);
+	SC_Destructor(stmt);
 		*phstmt = SQL_NULL_HSTMT;
-        return SQL_ERROR;
+	return SQL_ERROR;
     }
 
 	*phstmt = (HSTMT) stmt;
@@ -111,7 +111,7 @@ StatementClass *stmt;
 
 
 RETCODE SQL_API SQLFreeStmt(HSTMT     hstmt,
-                            UWORD     fOption)
+			    UWORD     fOption)
 {
 static char *func="SQLFreeStmt";
 StatementClass *stmt = (StatementClass *) hstmt;
@@ -151,22 +151,22 @@ StatementClass *stmt = (StatementClass *) hstmt;
     } else if (fOption == SQL_CLOSE) {
 		/* this should discard all the results, but leave the statement */
 		/* itself in place (it can be executed again) */
-        if (!SC_recycle_statement(stmt)) {
+	if (!SC_recycle_statement(stmt)) {
 			//	errormsg passed in above
 			SC_log_error(func, "", stmt);
-            return SQL_ERROR;
+	    return SQL_ERROR;
 		}
 
     } else if(fOption == SQL_RESET_PARAMS) {
 		SC_free_params(stmt, STMT_FREE_PARAMS_ALL);
 
     } else {
-        stmt->errormsg = "Invalid option passed to SQLFreeStmt.";
-        stmt->errornumber = STMT_OPTION_OUT_OF_RANGE_ERROR;
+	stmt->errormsg = "Invalid option passed to SQLFreeStmt.";
+	stmt->errornumber = STMT_OPTION_OUT_OF_RANGE_ERROR;
 		SC_log_error(func, "", stmt);
-        return SQL_ERROR;
+	return SQL_ERROR;
     }
-    
+
     return SQL_SUCCESS;
 }
 
@@ -306,7 +306,7 @@ SC_Destructor(StatementClass *self)
 	return TRUE;
 }
 
-/*	Free parameters and free the memory from the 
+/*	Free parameters and free the memory from the
 	data-at-execution parameters that was allocated in SQLPutData.
 */
 void
@@ -348,7 +348,7 @@ int i;
 }
 
 
-int 
+int
 statement_type(char *statement)
 {
 int i;
@@ -365,14 +365,14 @@ int i;
 	from SQLExecute if STMT_FINISHED, or
 	from SQLFreeStmt(SQL_CLOSE)
  */
-char 
+char
 SC_recycle_statement(StatementClass *self)
 {
 ConnectionClass *conn;
 
 mylog("recycle statement: self= %u\n", self);
 
-	/*	This would not happen */    
+	/*	This would not happen */
 	if (self->status == STMT_EXECUTING) {
 		self->errornumber = STMT_SEQUENCE_ERROR;
 		self->errormsg = "Statement is currently executing a transaction.";
@@ -396,7 +396,7 @@ mylog("recycle statement: self= %u\n", self);
 			If so, we have to rollback that transaction.
 		*/
 		conn = SC_get_conn(self);
-		if ( ! CC_is_in_autocommit(conn) && CC_is_in_trans(conn)) {             
+		if ( ! CC_is_in_autocommit(conn) && CC_is_in_trans(conn)) {
 
 			CC_send_query(conn, "ABORT", NULL);
 			CC_set_no_trans(conn);
@@ -470,7 +470,7 @@ mylog("recycle statement: self= %u\n", self);
 }
 
 /* Pre-execute a statement (SQLPrepare/SQLDescribeCol) */
-void 
+void
 SC_pre_execute(StatementClass *self)
 {
 
@@ -485,11 +485,11 @@ SC_pre_execute(StatementClass *self)
 			mylog("              preprocess: after status = FINISHED, so set PREMATURE\n");
 			self->status = STMT_PREMATURE;
 		}
-	}  
+	}
 }
 
 /* This is only called from SQLFreeStmt(SQL_UNBIND) */
-char 
+char
 SC_unbind_cols(StatementClass *self)
 {
 Int2 lf;
@@ -508,7 +508,7 @@ Int2 lf;
     return 1;
 }
 
-void 
+void
 SC_clear_error(StatementClass *self)
 {
 	self->errornumber = 0;
@@ -552,7 +552,7 @@ static char msg[4096];
 	return msg;
 }
 
-char 
+char
 SC_get_error(StatementClass *self, int *number, char **message)
 {
 char rv;
@@ -576,13 +576,13 @@ char rv;
 }
 
 /*	Currently, the driver offers very simple bookmark support -- it is
-	just the current row number.  But it could be more sophisticated 
+	just the current row number.  But it could be more sophisticated
 	someday, such as mapping a key to a 32 bit value
 */
 unsigned long
 SC_get_bookmark(StatementClass *self)
 {
-	return (self->currTuple + 1);	
+	return (self->currTuple + 1);
 }
 
 RETCODE
@@ -601,19 +601,19 @@ ColumnInfoClass *ci;
 	ci = QR_get_fields(res);		/* the column info */
 
 	mylog("manual_result = %d, use_declarefetch = %d\n", self->manual_result, globals.use_declarefetch);
- 
+
 	if ( self->manual_result || ! globals.use_declarefetch) {
 
-		if (self->currTuple >= QR_get_num_tuples(res) -1 || 
+		if (self->currTuple >= QR_get_num_tuples(res) -1 ||
 			(self->options.maxRows > 0 && self->currTuple == self->options.maxRows - 1)) {
 
-			/*	if at the end of the tuples, return "no data found" 
-				and set the cursor past the end of the result set 
+			/*	if at the end of the tuples, return "no data found"
+				and set the cursor past the end of the result set
 			*/
-			self->currTuple = QR_get_num_tuples(res);	
+			self->currTuple = QR_get_num_tuples(res);
 			return SQL_NO_DATA_FOUND;
 		}
- 
+
 		mylog("**** SQLFetch: manual_result\n");
 		(self->currTuple)++;
 	}
@@ -643,7 +643,7 @@ ColumnInfoClass *ci;
 	self->last_fetch_count = 1;
 
 	/*	If the bookmark column was bound then return a bookmark.
-		Since this is used with SQLExtendedFetch, and the rowset size 
+		Since this is used with SQLExtendedFetch, and the rowset size
 		may be greater than 1, and an application can use row or column wise
 		binding, use the code in copy_and_convert_field() to handle that.
 	*/
@@ -651,7 +651,7 @@ ColumnInfoClass *ci;
 		char buf[32];
 
 		sprintf(buf, "%ld", SC_get_bookmark(self));
-		result = copy_and_convert_field(self, 0, buf, 
+		result = copy_and_convert_field(self, 0, buf,
 								SQL_C_ULONG, self->bookmark.buffer, 0, self->bookmark.used);
 	}
 
@@ -663,9 +663,9 @@ ColumnInfoClass *ci;
 		self->bindings[lf].data_left = -1;
 
 		if (self->bindings[lf].buffer != NULL) {
-            // this column has a binding
+	    // this column has a binding
 
-            // type = QR_get_field_type(res, lf);
+	    // type = QR_get_field_type(res, lf);
 			type = CI_get_oid(ci, lf);		/* speed things up */
 
 			mylog("type = %d\n", type);
@@ -759,13 +759,13 @@ QueryInfo qi;
 			SC_log_error(func, "", self);
 			return SQL_ERROR;
 		}
-		
-		ok = QR_command_successful(res);   
-		
+
+		ok = QR_command_successful(res);
+
 		mylog("SQLExecute: ok = %d, status = %d\n", ok, QR_get_status(res));
-		
+
 		QR_Destructor(res);
-		
+
 		if (!ok) {
 			self->errormsg = "Could not begin a transaction";
 			self->errornumber = STMT_EXEC_ERROR;
@@ -805,32 +805,33 @@ QueryInfo qi;
 			qi.cursor = self->cursor_name;
 			qi.row_size = globals.fetch_max;
 
-			/*	Most likely the rowset size will not be set by the application until 
-				after the statement	is executed, so might as well use the cache size.  
-				The qr_next_tuple() function will correct for any discrepancies in 
+			/*	Most likely the rowset size will not be set by the application until
+				after the statement	is executed, so might as well use the cache size.
+				The qr_next_tuple() function will correct for any discrepancies in
 				sizes and adjust the cache accordingly.
 			*/
 
 			sprintf(fetch, "fetch %d in %s", qi.row_size, self->cursor_name);
-			
+
 			self->result = CC_send_query( conn, fetch, &qi);
 		}
 
 		mylog("     done sending the query:\n");
 
 
-		
+
 	}
-	else  { // not a SELECT statement so don't use a cursor 		 
+	else  { // not a SELECT statement so don't use a cursor
 		mylog("      it's NOT a select statement: stmt=%u\n", self);
 		self->result = CC_send_query(conn, self->stmt_with_params, NULL);
-		
+
 		//	If we are in autocommit, we must send the commit.
 		if ( ! self->internal && CC_is_in_autocommit(conn) && STMT_UPDATE(self)) {
-			CC_send_query(conn, "COMMIT", NULL);
-			CC_set_no_trans(conn);
+	    res = CC_send_query(conn, "COMMIT", NULL);
+	    QR_Destructor(res);
+	    CC_set_no_trans(conn);
 		}
-		
+
 	}
 
 	conn->status = oldstatus;
@@ -841,19 +842,19 @@ QueryInfo qi;
 
 		was_ok = QR_command_successful(self->result);
 		was_nonfatal = QR_command_nonfatal(self->result);
-		
+
 		if ( was_ok)
 			self->errornumber = STMT_OK;
 		else
 			self->errornumber = was_nonfatal ? STMT_INFO_ONLY : STMT_ERROR_TAKEN_FROM_BACKEND;
-		
+
 		self->currTuple = -1; /* set cursor before the first tuple in the list */
 		self->current_col = -1;
 		self->rowset_start = -1;
-		
+
 		/* see if the query did return any result columns */
 		numcols = QR_NumResultCols(self->result);
-		
+
 		/* now allocate the array to hold the binding info */
 		if (numcols > 0) {
 			extend_bindings(self, numcols);
@@ -864,7 +865,7 @@ QueryInfo qi;
 				return SQL_ERROR;
 			}
 		}
-		
+
 	} else {		/* Bad Error -- The error message will be in the Connection */
 
 		if (self->statement_type == STMT_TYPE_CREATE) {
@@ -927,7 +928,7 @@ SC_log_error(char *func, char *desc, StatementClass *self)
 		qlog("                 message='%s', command='%s', notice='%s'\n", nullcheck(res->message), nullcheck(res->command), nullcheck(res->notice));
 		qlog("                 status=%d, inTuples=%d\n", res->status, res->inTuples);
 		}
-	
+
 		//	Log the connection error if there is one
 		CC_log_error(func, desc, self->hdbc);
 	}
