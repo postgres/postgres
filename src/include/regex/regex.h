@@ -1,110 +1,165 @@
-/*-
- * Copyright (c) 1992 Henry Spencer.
- * Copyright (c) 1992, 1993
- *		The Regents of the University of California.  All rights reserved.
+#ifndef _REGEX_H_
+#define	_REGEX_H_	/* never again */
+/*
+ * regular expressions
  *
- * This code is derived from software contributed to Berkeley by
- * Henry Spencer of the University of Toronto.
+ * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
+ * 
+ * Development of this software was funded, in part, by Cray Research Inc.,
+ * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
+ * Corporation, none of whom are responsible for the results.  The author
+ * thanks all of them. 
+ * 
+ * Redistribution and use in source and binary forms -- with or without
+ * modification -- are permitted for any purpose, provided that
+ * redistributions in source form retain this entire copyright notice and
+ * indicate the origin and nature of any modifications.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *	  notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *	  notice, this list of conditions and the following disclaimer in the
- *	  documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	  must display the following acknowledgement:
- *		This product includes software developed by the University of
- *		California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *	  may be used to endorse or promote products derived from this software
- *	  without specific prior written permission.
+ * I'd appreciate being given credit for this package in the documentation
+ * of software which uses it, but that is not a requirement.
+ * 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * HENRY SPENCER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *		@(#)regex.h		8.2 (Berkeley) 1/3/94
+ * $Id: regex.h,v 1.23 2003/02/05 17:41:32 tgl Exp $
  */
 
-#ifndef _REGEX_H_
-#define _REGEX_H_
-
-#include <sys/types.h>
+/*
+ * Add your own defines, if needed, here.
+ */
 #include "mb/pg_wchar.h"
 
-/* types */
-typedef off_t regoff_t;
+/*
+ * interface types etc.
+ */
 
-typedef struct
-{
-	int			re_magic;
-	size_t		re_nsub;		/* number of parenthesized subexpressions */
-	const pg_wchar *re_endp;	/* end pointer for REG_PEND */
-	struct re_guts *re_g;		/* none of your business :-) */
-	pg_wchar   *patsave;		/* me too :-) */
+/*
+ * regoff_t has to be large enough to hold either off_t or ssize_t,
+ * and must be signed; it's only a guess that long is suitable.
+ */
+typedef long regoff_t;
+
+/*
+ * other interface types
+ */
+
+/* the biggie, a compiled RE (or rather, a front end to same) */
+typedef struct {
+	int re_magic;		/* magic number */
+	size_t re_nsub;		/* number of subexpressions */
+	long re_info;		/* information about RE */
+#		define	REG_UBACKREF		000001
+#		define	REG_ULOOKAHEAD		000002
+#		define	REG_UBOUNDS		000004
+#		define	REG_UBRACES		000010
+#		define	REG_UBSALNUM		000020
+#		define	REG_UPBOTCH		000040
+#		define	REG_UBBS		000100
+#		define	REG_UNONPOSIX		000200
+#		define	REG_UUNSPEC		000400
+#		define	REG_UUNPORT		001000
+#		define	REG_ULOCALE		002000
+#		define	REG_UEMPTYMATCH		004000
+#		define	REG_UIMPOSSIBLE		010000
+#		define	REG_USHORTEST		020000
+	int re_csize;		/* sizeof(character) */
+	char *re_endp;		/* backward compatibility kludge */
+	/* the rest is opaque pointers to hidden innards */
+	char *re_guts;		/* `char *' is more portable than `void *' */
+	char *re_fns;
 } regex_t;
 
-typedef struct
-{
-	regoff_t	rm_so;			/* start of match */
-	regoff_t	rm_eo;			/* end of match */
+/* result reporting (may acquire more fields later) */
+typedef struct {
+	regoff_t rm_so;		/* start of substring */
+	regoff_t rm_eo;		/* end of substring */
 } regmatch_t;
 
-/* regcomp() flags */
-#define REG_BASIC		0000
-#define REG_EXTENDED	0001
-#define REG_ICASE		0002
-#define REG_NOSUB		0004
-#define REG_NEWLINE		0010
-#define REG_NOSPEC		0020
-#define REG_PEND		0040
-#define REG_DUMP		0200
+/* supplementary control and reporting */
+typedef struct {
+	regmatch_t rm_extend;	/* see REG_EXPECT */
+} rm_detail_t;
 
-/* regerror() flags */
-#define REG_NOMATCH		 1
-#define REG_BADPAT		 2
-#define REG_ECOLLATE	 3
-#define REG_ECTYPE		 4
-#define REG_EESCAPE		 5
-#define REG_ESUBREG		 6
-#define REG_EBRACK		 7
-#define REG_EPAREN		 8
-#define REG_EBRACE		 9
-#define REG_BADBR		10
-#define REG_ERANGE		11
-#define REG_ESPACE		12
-#define REG_BADRPT		13
-#define REG_EMPTY		14
-#define REG_ASSERT		15
-#define REG_INVARG		16
-#define REG_ATOI		255		/* convert name to number (!) */
-#define REG_ITOA		0400	/* convert number to name (!) */
 
-/* regexec() flags */
-#define REG_NOTBOL		00001
-#define REG_NOTEOL		00002
-#define REG_STARTEND	00004
-#define REG_TRACE		00400	/* tracing of execution */
-#define REG_LARGE		01000	/* force large representation */
-#define REG_BACKR		02000	/* force use of backref code */
 
-extern int	pg_regcomp(regex_t *preg, const char *pattern, int cflags);
-extern size_t pg_regerror(int errcode, const regex_t *preg,
-			char *errbuf, size_t errbuf_size);
-extern int pg_regexec(const regex_t *preg, const char *string,
-		   size_t nmatch,
-		   regmatch_t *pmatch, int eflags);
-extern void pg_regfree(regex_t *preg);
+/*
+ * regex compilation flags
+ */
+#define	REG_BASIC	000000	/* BREs (convenience) */
+#define	REG_EXTENDED	000001	/* EREs */
+#define	REG_ADVF	000002	/* advanced features in EREs */
+#define	REG_ADVANCED	000003	/* AREs (which are also EREs) */
+#define	REG_QUOTE	000004	/* no special characters, none */
+#define	REG_NOSPEC	REG_QUOTE	/* historical synonym */
+#define	REG_ICASE	000010	/* ignore case */
+#define	REG_NOSUB	000020	/* don't care about subexpressions */
+#define	REG_EXPANDED	000040	/* expanded format, white space & comments */
+#define	REG_NLSTOP	000100	/* \n doesn't match . or [^ ] */
+#define	REG_NLANCH	000200	/* ^ matches after \n, $ before */
+#define	REG_NEWLINE	000300	/* newlines are line terminators */
+#define	REG_PEND	000400	/* ugh -- backward-compatibility hack */
+#define	REG_EXPECT	001000	/* report details on partial/limited matches */
+#define	REG_BOSONLY	002000	/* temporary kludge for BOS-only matches */
+#define	REG_DUMP	004000	/* none of your business :-) */
+#define	REG_FAKE	010000	/* none of your business :-) */
+#define	REG_PROGRESS	020000	/* none of your business :-) */
 
-#endif   /* !_REGEX_H_ */
+
+
+/*
+ * regex execution flags
+ */
+#define	REG_NOTBOL	0001	/* BOS is not BOL */
+#define	REG_NOTEOL	0002	/* EOS is not EOL */
+#define	REG_STARTEND	0004	/* backward compatibility kludge */
+#define	REG_FTRACE	0010	/* none of your business */
+#define	REG_MTRACE	0020	/* none of your business */
+#define	REG_SMALL	0040	/* none of your business */
+
+
+/*
+ * error reporting
+ * Be careful if modifying the list of error codes -- the table used by
+ * regerror() is generated automatically from this file!
+ */
+#define	REG_OKAY	 0	/* no errors detected */
+#define	REG_NOMATCH	 1	/* failed to match */
+#define	REG_BADPAT	 2	/* invalid regexp */
+#define	REG_ECOLLATE	 3	/* invalid collating element */
+#define	REG_ECTYPE	 4	/* invalid character class */
+#define	REG_EESCAPE	 5	/* invalid escape \ sequence */
+#define	REG_ESUBREG	 6	/* invalid backreference number */
+#define	REG_EBRACK	 7	/* brackets [] not balanced */
+#define	REG_EPAREN	 8	/* parentheses () not balanced */
+#define	REG_EBRACE	 9	/* braces {} not balanced */
+#define	REG_BADBR	10	/* invalid repetition count(s) */
+#define	REG_ERANGE	11	/* invalid character range */
+#define	REG_ESPACE	12	/* out of memory */
+#define	REG_BADRPT	13	/* quantifier operand invalid */
+#define	REG_ASSERT	15	/* "can't happen" -- you found a bug */
+#define	REG_INVARG	16	/* invalid argument to regex function */
+#define	REG_MIXED	17	/* character widths of regex and string differ */
+#define	REG_BADOPT	18	/* invalid embedded option */
+/* two specials for debugging and testing */
+#define	REG_ATOI	101	/* convert error-code name to number */
+#define	REG_ITOA	102	/* convert error-code number to name */
+
+
+
+/*
+ * the prototypes for exported functions
+ */
+extern int pg_regcomp(regex_t *, const pg_wchar *, size_t, int);
+extern int pg_regexec(regex_t *, const pg_wchar *, size_t, rm_detail_t *, size_t, regmatch_t [], int);
+extern void pg_regfree(regex_t *);
+extern size_t pg_regerror(int, const regex_t *, char *, size_t);
+
+#endif /* _REGEX_H_ */

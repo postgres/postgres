@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.136 2003/01/23 23:38:51 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.137 2003/02/05 17:41:32 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -424,7 +424,7 @@ PostgreSQL documentation
       <row>
        <entry> <literal>&amp;</literal> </entry>
        <entry>binary AND</entry>
-       <entry>91 & 15</entry>
+       <entry>91 &amp; 15</entry>
        <entry>11</entry>
       </row>
 
@@ -471,7 +471,7 @@ PostgreSQL documentation
     The <quote>binary</quote> operators are also available for the bit
     string types <type>BIT</type> and <type>BIT VARYING</type>, as
     shown in <xref linkend="functions-math-bit-table">.
-    Bit string arguments to <literal>&</literal>, <literal>|</literal>,
+    Bit string arguments to <literal>&amp;</literal>, <literal>|</literal>,
     and <literal>#</literal> must be of equal length.  When bit
     shifting, the original length of the string is preserved, as shown
     in the table.
@@ -490,7 +490,7 @@ PostgreSQL documentation
 
       <tbody>
        <row>
-        <entry>B'10001' & B'01101'</entry>
+        <entry>B'10001' &amp; B'01101'</entry>
         <entry>00001</entry>
        </row>
        <row>
@@ -2629,7 +2629,7 @@ SUBSTRING('foobar' FROM '#"o_b#"%' FOR '#')    <lineannotation>NULL</lineannotat
      one whose left parenthesis comes first) is
      returned.  You can always put parentheses around the whole expression
      if you want to use parentheses within it without triggering this
-     exception.
+     exception.  Also see the non-capturing parentheses described below.
     </para>
 
    <para>
@@ -2640,110 +2640,319 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
 </programlisting>
    </para>
 
-<!-- derived from the re_format.7 man page -->
+   <para>
+    <productname>PostgreSQL</productname>'s regular expressions are implemented
+    using a package written by Henry Spencer.  Much of
+    the description of regular expressions below is copied verbatim from his
+    manual entry.
+   </para>
+
+<!-- derived from the re_syntax.n man page -->
+
+   <sect3 id="posix-syntax-details">
+    <title>Regular Expression Details</title>
+
    <para>
     Regular expressions (<acronym>RE</acronym>s), as defined in
-     <acronym>POSIX</acronym> 
-    1003.2, come in two forms: modern <acronym>RE</acronym>s (roughly those of
-    <command>egrep</command>; 1003.2 calls these
-    <quote>extended</quote> <acronym>RE</acronym>s) and obsolete <acronym>RE</acronym>s (roughly those of
-    <command>ed</command>; 1003.2 <quote>basic</quote> <acronym>RE</acronym>s).
-    <productname>PostgreSQL</productname> implements the modern form.
+    <acronym>POSIX</acronym> 1003.2, come in two forms:
+    <firstterm>extended</> <acronym>RE</acronym>s or <acronym>ERE</>s
+    (roughly those of <command>egrep</command>), and
+    <firstterm>basic</> <acronym>RE</acronym>s or <acronym>BRE</>s
+    (roughly those of <command>ed</command>).
+    <productname>PostgreSQL</productname> supports both forms, and
+    also implements some extensions
+    that are not in the POSIX standard, but have become widely used anyway
+    due to their availability in programming languages such as Perl and Tcl.
+    <acronym>RE</acronym>s using these non-POSIX extensions are called
+    <firstterm>advanced</> <acronym>RE</acronym>s or <acronym>ARE</>s
+    in this documentation.  We first describe the ERE/ARE flavor and then
+    mention the restrictions of the BRE form.
    </para>
 
    <para>
-    A (modern) RE is one or more non-empty
+    A regular expression is defined as one or more
     <firstterm>branches</firstterm>, separated by
     <literal>|</literal>.  It matches anything that matches one of the
     branches.
    </para>
 
    <para>
-    A branch is one or more <firstterm>pieces</firstterm>,
-    concatenated.  It matches a match for the first, followed by a
-    match for the second, etc.
+    A branch is zero or more <firstterm>quantified atoms</> or
+    <firstterm>constraints</>, concatenated.
+    It matches a match for the first, followed by a match for the second, etc;
+    an empty branch matches the empty string.
    </para>
 
    <para>
-    A piece is an <firstterm>atom</firstterm> possibly followed by a
-    single <literal>*</literal>, <literal>+</literal>,
-    <literal>?</literal>, or <firstterm>bound</firstterm>.  An atom
-    followed by <literal>*</literal> matches a sequence of 0 or more
-    matches of the atom.  An atom followed by <literal>+</literal>
-    matches a sequence of 1 or more matches of the atom.  An atom
-    followed by <literal>?</literal> matches a sequence of 0 or 1
-    matches of the atom.
+    A quantified atom is an <firstterm>atom</> possibly followed
+    by a single <firstterm>quantifier</>.
+    Without a quantifier, it matches a match for the atom.
+    With a quantifier, it can match some number of matches of the atom.
+    An <firstterm>atom</firstterm> can be any of the possibilities
+    shown in <xref linkend="posix-atoms-table">.
+    The possible quantifiers and their meanings are shown in
+    <xref linkend="posix-quantifiers-table">.
    </para>
 
    <para>
-    A <firstterm>bound</firstterm> is <literal>{</literal> followed by
-    an unsigned decimal integer, possibly followed by
-    <literal>,</literal> possibly followed by another unsigned decimal
-    integer, always followed by <literal>}</literal>.  The integers
-    must lie between 0 and <symbol>RE_DUP_MAX</symbol> (255)
-    inclusive, and if there are two of them, the first may not exceed
-    the second.  An atom followed by a bound containing one integer
-    <replaceable>i</replaceable> and no comma matches a sequence of
-    exactly <replaceable>i</replaceable> matches of the atom.  An atom
-    followed by a bound containing one integer
-    <replaceable>i</replaceable> and a comma matches a sequence of
-    <replaceable>i</replaceable> or more matches of the atom.  An atom
-    followed by a bound containing two integers
-    <replaceable>i</replaceable> and <replaceable>j</replaceable>
-    matches a sequence of <replaceable>i</replaceable> through
-    <replaceable>j</replaceable> (inclusive) matches of the atom.
+    A <firstterm>constraint</> matches an empty string, but matches only when
+    specific conditions are met.  A constraint can be used where an atom
+    could be used, except it may not be followed by a quantifier.
+    The simple constraints are shown in
+    <xref linkend="posix-constraints-table">;
+    some more constraints are described later.
+   </para>
+
+
+   <table id="posix-atoms-table">
+    <title>Regular Expression Atoms</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Atom</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>(</><replaceable>re</><literal>)</> </entry>
+       <entry> (where <replaceable>re</> is any regular expression)
+       matches a match for
+       <replaceable>re</>, with the match noted for possible reporting </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?:</><replaceable>re</><literal>)</> </entry>
+       <entry> as above, but the match is not noted for reporting
+       (a <quote>non-capturing</> set of parentheses)
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>.</> </entry>
+       <entry> matches any single character </entry>
+       </row>
+
+       <row>
+       <entry> <literal>[</><replaceable>chars</><literal>]</> </entry>
+       <entry> a <firstterm>bracket expression</>,
+       matching any one of the <replaceable>chars</> (see
+       <xref linkend="posix-bracket-expressions"> for more detail) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</><replaceable>k</> </entry>
+       <entry> (where <replaceable>k</> is a non-alphanumeric character)
+       matches that character taken as an ordinary character,
+       e.g. <literal>\\</> matches a backslash character </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</><replaceable>c</> </entry>
+       <entry> where <replaceable>c</> is alphanumeric
+       (possibly followed by other characters)
+       is an <firstterm>escape</>, see <xref linkend="posix-escape-sequences">
+       (AREs only; in EREs and BREs, this matches <replaceable>c</>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</> </entry>
+       <entry> when followed by a character other than a digit,
+       matches the left-brace character <literal>{</>;
+       when followed by a digit, it is the beginning of a
+       <replaceable>bound</> (see below) </entry>
+       </row>
+
+       <row>
+       <entry> <replaceable>x</> </entry>
+       <entry> where <replaceable>x</> is a single character with no other
+       significance, matches that character </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    An RE may not end with <literal>\</>.
    </para>
 
    <note>
     <para>
-     A repetition operator (<literal>?</literal>,
-     <literal>*</literal>, <literal>+</literal>, or bounds) cannot
-     follow another repetition operator.  A repetition operator cannot
+     Remember that the backslash (<literal>\</literal>) already has a special
+     meaning in <productname>PostgreSQL</> string literals.
+     To write a pattern constant that contains a backslash,
+     you must write two backslashes in the query.
+   </para>
+   </note>
+
+   <table id="posix-quantifiers-table">
+    <title>Regular Expression Quantifiers</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Quantifier</entry>
+       <entry>Matches</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>*</> </entry>
+       <entry> a sequence of 0 or more matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>+</> </entry>
+       <entry> a sequence of 1 or more matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>?</> </entry>
+       <entry> a sequence of 0 or 1 matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</><replaceable>m</><literal>}</> </entry>
+       <entry> a sequence of exactly <replaceable>m</> matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</><replaceable>m</><literal>,}</> </entry>
+       <entry> a sequence of <replaceable>m</> or more matches of the atom </entry>
+       </row>
+
+       <row>
+       <entry>
+       <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</> </entry>
+       <entry> a sequence of <replaceable>m</> through <replaceable>n</>
+       (inclusive) matches of the atom; <replaceable>m</> may not exceed
+       <replaceable>n</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>*?</> </entry>
+       <entry> non-greedy version of <literal>*</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>+?</> </entry>
+       <entry> non-greedy version of <literal>+</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>??</> </entry>
+       <entry> non-greedy version of <literal>?</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</><replaceable>m</><literal>}?</> </entry>
+       <entry> non-greedy version of <literal>{</><replaceable>m</><literal>}</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>{</><replaceable>m</><literal>,}?</> </entry>
+       <entry> non-greedy version of <literal>{</><replaceable>m</><literal>,}</> </entry>
+       </row>
+
+       <row>
+       <entry>
+       <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}?</> </entry>
+       <entry> non-greedy version of <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    The forms using <literal>{</><replaceable>...</><literal>}</>
+    are known as <firstterm>bound</>s.
+    The numbers <replaceable>m</> and <replaceable>n</> within a bound are
+    unsigned decimal integers with permissible values from 0 to 255 inclusive.
+   </para>
+
+    <para>
+     <firstterm>Non-greedy</> quantifiers (available in AREs only) match the
+     same possibilities as their corresponding normal (<firstterm>greedy</>)
+     counterparts, but prefer the smallest number rather than the largest
+     number of matches.
+     See <xref linkend="posix-matching-rules"> for more detail.
+   </para>
+
+   <note>
+    <para>
+     A quantifier cannot immediately follow another quantifier.
+     A quantifier cannot
      begin an expression or subexpression or follow
      <literal>^</literal> or <literal>|</literal>.
     </para>
    </note>
 
-   <para>
-    An <firstterm>atom</firstterm> is a regular expression enclosed in
-    <literal>()</literal> (matching a match for the regular
-    expression), an empty set of <literal>()</literal> (matching the
-    null string), a <firstterm>bracket expression</firstterm> (see
-    below), <literal>.</literal> (matching any single character),
-    <literal>^</literal> (matching the null string at the beginning of the
-    input string), <literal>$</literal> (matching the null string at the end
-    of the input string), a <literal>\</literal> followed by one of the
-    characters <literal>^.[$()|*+?{\</literal> (matching that
-    character taken as an ordinary character), a <literal>\</literal>
-    followed by any other character (matching that character taken as
-    an ordinary character, as if the <literal>\</literal> had not been
-    present), or a single character with no other significance
-    (matching that character).  A <literal>{</literal> followed by a
-    character other than a digit is an ordinary character, not the
-    beginning of a bound.  It is illegal to end an RE with
-    <literal>\</literal>.
-   </para>
+   <table id="posix-constraints-table">
+    <title>Regular Expression Constraints</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Constraint</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>^</> </entry>
+       <entry> matches at the beginning of the string </entry>
+       </row>
+
+       <row>
+       <entry> <literal>$</> </entry>
+       <entry> matches at the end of the string </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?=</><replaceable>re</><literal>)</> </entry>
+       <entry> <firstterm>positive lookahead</> matches at any point
+       where a substring matching <replaceable>re</> begins
+       (AREs only) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>(?!</><replaceable>re</><literal>)</> </entry>
+       <entry> <firstterm>negative lookahead</> matches at any point
+       where no substring matching <replaceable>re</> begins
+       (AREs only) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
 
    <para>
-    Note that the backslash (<literal>\</literal>) already has a special
-    meaning in string
-    literals, so to write a pattern constant that contains a backslash
-    you must write two backslashes in the query.
+    Lookahead constraints may not contain <firstterm>back references</>
+    (see <xref linkend="posix-escape-sequences">),
+    and all parentheses within them are considered non-capturing.
    </para>
+   </sect3>
+
+   <sect3 id="posix-bracket-expressions">
+    <title>Bracket Expressions</title>
 
    <para>
     A <firstterm>bracket expression</firstterm> is a list of
     characters enclosed in <literal>[]</literal>.  It normally matches
     any single character from the list (but see below).  If the list
     begins with <literal>^</literal>, it matches any single character
-    (but see below) not from the rest of the list.  If two characters
+    <emphasis>not</> from the rest of the list.
+    If two characters
     in the list are separated by <literal>-</literal>, this is
     shorthand for the full range of characters between those two
     (inclusive) in the collating sequence,
     e.g. <literal>[0-9]</literal> in <acronym>ASCII</acronym> matches
     any decimal digit.  It is illegal for two ranges to share an
     endpoint, e.g.  <literal>a-c-e</literal>.  Ranges are very
-    collating-sequence-dependent, and portable programs should avoid
+    collating-sequence-dependent, so portable programs should avoid
     relying on them.
    </para>
 
@@ -2754,11 +2963,13 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
     character, or the second endpoint of a range.  To use a literal
     <literal>-</literal> as the first endpoint of a range, enclose it
     in <literal>[.</literal> and <literal>.]</literal> to make it a
-    collating element (see below).  With the exception of these and
-    some combinations using <literal>[</literal> (see next
-    paragraphs), all other special characters, including
-    <literal>\</literal>, lose their special significance within a
-    bracket expression.
+    collating element (see below).  With the exception of these characters,
+    some combinations using <literal>[</literal>
+    (see next paragraphs), and escapes (AREs only), all other special
+    characters lose their special significance within a bracket expression.
+    In particular, <literal>\</literal> is not special when following
+    ERE or BRE rules, though it is special (as introducing an escape)
+    in AREs.
    </para>
 
    <para>
@@ -2774,6 +2985,13 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
     <literal>[[.ch.]]*c</literal> matches the first five characters of
     <literal>chchcc</literal>.
    </para>
+
+   <note>
+    <para>
+     <productname>PostgreSQL</> currently has no multi-character collating
+     elements. This information describes possible future behavior.
+    </para>
+   </note>
 
    <para>
     Within a bracket expression, a collating element enclosed in
@@ -2809,76 +3027,732 @@ SUBSTRING('foobar' FROM 'o(.)b')   <lineannotation>o</lineannotation>
    <para>
     There are two special cases of bracket expressions:  the bracket
     expressions <literal>[[:&lt;:]]</literal> and
-    <literal>[[:>:]]</literal> match the null string at the beginning
+    <literal>[[:&gt;:]]</literal> are constraints,
+    matching empty strings at the beginning
     and end of a word respectively.  A word is defined as a sequence
-    of word characters which is neither preceded nor followed by word
-    characters.  A word character is an alnum character (as defined by
+    of word characters that is neither preceded nor followed by word
+    characters.  A word character is an <literal>alnum</> character (as
+    defined by
     <citerefentry><refentrytitle>ctype</refentrytitle><manvolnum>3</manvolnum></citerefentry>)
     or an underscore.  This is an extension, compatible with but not
-    specified by <acronym>POSIX</acronym> 1003.2, and should be used with caution in
-    software intended to be portable to other systems.
+    specified by <acronym>POSIX</acronym> 1003.2, and should be used with
+    caution in software intended to be portable to other systems.
+    The constraint escapes described below are usually preferable (they
+    are no more standard, but are certainly easier to type).
+   </para>
+   </sect3>
+
+   <sect3 id="posix-escape-sequences">
+    <title>Regular Expression Escapes</title>
+
+   <para>
+    <firstterm>Escapes</> are special sequences beginning with <literal>\</>
+    followed by an alphanumeric character. Escapes come in several varieties:
+    character entry, class shorthands, constraint escapes, and back references.
+    A <literal>\</> followed by an alphanumeric character but not constituting
+    a valid escape is illegal in AREs.
+    In EREs, there are no escapes: outside a bracket expression,
+    a <literal>\</> followed by an alphanumeric character merely stands for
+    that character as an ordinary character, and inside a bracket expression,
+    <literal>\</> is an ordinary character.
+    (The latter is the one actual incompatibility between EREs and AREs.)
    </para>
 
    <para>
-    In the event that an RE could match more than one substring of a
-    given string, the RE matches the one starting earliest in the
-    string.  If the RE could match more than one substring starting at
-    that point, it matches the longest.  Subexpressions also match the
-    longest possible substrings, subject to the constraint that the
-    whole match be as long as possible, with subexpressions starting
-    earlier in the RE taking priority over ones starting later.  Note
-    that higher-level subexpressions thus take priority over their
-    lower-level component subexpressions.
+    <firstterm>Character-entry escapes</> exist to make it easier to specify
+    non-printing and otherwise inconvenient characters in REs.  They are
+    shown in <xref linkend="posix-character-entry-escapes-table">.
    </para>
 
    <para>
-    Match lengths are measured in characters, not collating
-    elements.  A null string is considered longer than no match at
-    all.  For example, <literal>bb*</literal> matches the three middle
-    characters of <literal>abbbc</literal>,
-    <literal>(wee|week)(knights|nights)</literal> matches all ten
-    characters of <literal>weeknights</literal>, when
-    <literal>(.*).*</literal> is matched against
-    <literal>abc</literal> the parenthesized subexpression matches all
-    three characters, and when <literal>(a*)*</literal> is matched
-    against <literal>bc</literal> both the whole RE and the
-    parenthesized subexpression match the null string.
+    <firstterm>Class-shorthand escapes</> provide shorthands for certain
+    commonly-used character classes.  They are
+    shown in <xref linkend="posix-class-shorthand-escapes-table">.
    </para>
 
    <para>
-    If case-independent matching is specified, the effect is much as
-    if all case distinctions had vanished from the alphabet.  When an
-    alphabetic that exists in multiple cases appears as an ordinary
-    character outside a bracket expression, it is effectively
+    A <firstterm>constraint escape</> is a constraint,
+    matching the empty string if specific conditions are met,
+    written as an escape.  They are
+    shown in <xref linkend="posix-constraint-escapes-table">.
+   </para>
+
+   <para>
+    A <firstterm>back reference</> (<literal>\</><replaceable>n</>) matches the
+    same string matched by the previous parenthesized subexpression specified
+    by the number <replaceable>n</>
+    (see <xref linkend="posix-constraint-backref-table">).  For example,
+    <literal>([bc])\1</> matches <literal>bb</> or <literal>cc</>
+    but not <literal>bc</> or <literal>cb</>.
+    The subexpression must entirely precede the back reference in the RE.
+    Subexpressions are numbered in the order of their leading parentheses.
+    Non-capturing parentheses do not define subexpressions.
+   </para>
+
+   <note>
+    <para>
+     Keep in mind that an escape's leading <literal>\</> will need to be
+     doubled when entering the pattern as an SQL string constant.
+    </para>
+   </note>
+
+   <table id="posix-character-entry-escapes-table">
+    <title>Regular Expression Character-Entry Escapes</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\a</> </entry>
+       <entry> alert (bell) character, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\b</> </entry>
+       <entry> backspace, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\B</> </entry>
+       <entry> synonym for <literal>\</> to help reduce the need for backslash
+       doubling </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\c</><replaceable>X</> </entry>
+       <entry> (where <replaceable>X</> is any character) the character whose
+       low-order 5 bits are the same as those of
+       <replaceable>X</>, and whose other bits are all zero </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\e</> </entry>
+       <entry> the character whose collating-sequence name
+       is <literal>ESC</>,
+       or failing that, the character with octal value 033 </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\f</> </entry>
+       <entry> formfeed, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\n</> </entry>
+       <entry> newline, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\r</> </entry>
+       <entry> carriage return, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\t</> </entry>
+       <entry> horizontal tab, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\u</><replaceable>wxyz</> </entry>
+       <entry> (where <replaceable>wxyz</> is exactly four hexadecimal digits)
+       the Unicode character <literal>U+</><replaceable>wxyz</>
+       in the local byte ordering </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\U</><replaceable>stuvwxyz</> </entry>
+       <entry> (where <replaceable>stuvwxyz</> is exactly eight hexadecimal
+       digits)
+       reserved for a somewhat-hypothetical Unicode extension to 32 bits
+       </entry> 
+       </row>
+
+       <row>
+       <entry> <literal>\v</> </entry>
+       <entry> vertical tab, as in C </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\x</><replaceable>hhh</> </entry>
+       <entry> (where <replaceable>hhh</> is any sequence of hexadecimal
+       digits)
+       the character whose hexadecimal value is
+       <literal>0x</><replaceable>hhh</>
+       (a single character no matter how many hexadecimal digits are used)
+       </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\0</> </entry>
+       <entry> the character whose value is <literal>0</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</><replaceable>xy</> </entry>
+       <entry> (where <replaceable>xy</> is exactly two octal digits,
+       and is not a <firstterm>back reference</>)
+       the character whose octal value is
+       <literal>0</><replaceable>xy</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</><replaceable>xyz</> </entry>
+       <entry> (where <replaceable>xyz</> is exactly three octal digits,
+       and is not a <firstterm>back reference</>)
+       the character whose octal value is
+       <literal>0</><replaceable>xyz</> </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    Hexadecimal digits are <literal>0</>-<literal>9</>,
+    <literal>a</>-<literal>f</>, and <literal>A</>-<literal>F</>.
+    Octal digits are <literal>0</>-<literal>7</>.
+   </para>
+
+   <para>
+    The character-entry escapes are always taken as ordinary characters.
+    For example, <literal>\135</> is <literal>]</> in ASCII, but
+    <literal>\135</> does not terminate a bracket expression.
+   </para>
+
+   <table id="posix-class-shorthand-escapes-table">
+    <title>Regular Expression Class-Shorthand Escapes</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\d</> </entry>
+       <entry> <literal>[[:digit:]]</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\s</> </entry>
+       <entry> <literal>[[:space:]]</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\w</> </entry>
+       <entry> <literal>[[:alnum:]_]</>
+       (note underscore is included) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\D</> </entry>
+       <entry> <literal>[^[:digit:]]</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\S</> </entry>
+       <entry> <literal>[^[:space:]]</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\W</> </entry>
+       <entry> <literal>[^[:alnum:]_]</>
+       (note underscore is included) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    Within bracket expressions, <literal>\d</>, <literal>\s</>,
+    and <literal>\w</> lose their outer brackets,
+    and <literal>\D</>, <literal>\S</>, and <literal>\W</> are illegal.
+    (So, for example, <literal>[a-c\d]</> is equivalent to
+    <literal>[a-c[:digit:]]</>.
+    Also, <literal>[a-c\D]</>, which is equivalent to
+    <literal>[a-c^[:digit:]]</>, is illegal.)
+   </para>
+
+   <table id="posix-constraint-escapes-table">
+    <title>Regular Expression Constraint Escapes</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\A</> </entry>
+       <entry> matches only at the beginning of the string
+       (see <xref linkend="posix-matching-rules"> for how this differs from
+       <literal>^</>) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\m</> </entry>
+       <entry> matches only at the beginning of a word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\M</> </entry>
+       <entry> matches only at the end of a word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\y</> </entry>
+       <entry> matches only at the beginning or end of a word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\Y</> </entry>
+       <entry> matches only at a point that is not the beginning or end of a
+       word </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\Z</> </entry>
+       <entry> matches only at the end of the string
+       (see <xref linkend="posix-matching-rules"> for how this differs from
+       <literal>$</>) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    A word is defined as in the specification of
+    <literal>[[:&lt;:]]</> and <literal>[[:&gt;:]]</> above.
+    Constraint escapes are illegal within bracket expressions.
+   </para>
+
+   <table id="posix-constraint-backref-table">
+    <title>Regular Expression Back References</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Escape</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>\</><replaceable>m</> </entry>
+       <entry> (where <replaceable>m</> is a nonzero digit)
+       a back reference to the <replaceable>m</>'th subexpression </entry>
+       </row>
+
+       <row>
+       <entry> <literal>\</><replaceable>mnn</> </entry>
+       <entry> (where <replaceable>m</> is a nonzero digit, and
+       <replaceable>nn</> is some more digits, and the decimal value
+       <replaceable>mnn</> is not greater than the number of closing capturing
+       parentheses seen so far) 
+       a back reference to the <replaceable>mnn</>'th subexpression </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <note>
+    <para>
+     There is an inherent historical ambiguity between octal character-entry 
+     escapes and back references, which is resolved by heuristics,
+     as hinted at above.
+     A leading zero always indicates an octal escape.
+     A single non-zero digit, not followed by another digit,
+     is always taken as a back reference.
+     A multi-digit sequence not starting with a zero is taken as a back 
+     reference if it comes after a suitable subexpression
+     (i.e. the number is in the legal range for a back reference),
+     and otherwise is taken as octal.
+    </para>
+   </note>
+   </sect3>
+
+   <sect3 id="posix-metasyntax">
+    <title>Regular Expression Metasyntax</title>
+
+   <para>
+    In addition to the main syntax described above, there are some special
+    forms and miscellaneous syntactic facilities available.
+   </para>
+
+   <para>
+    Normally the flavor of RE being used is specified by
+    application-dependent means.
+    However, this can be overridden by a <firstterm>director</>.
+    If an RE of any flavor begins with <literal>***:</>,
+    the rest of the RE is an ARE.
+    If an RE of any flavor begins with <literal>***=</>,
+    the rest of the RE is taken to be a literal string,
+    with all characters considered ordinary characters.
+   </para>
+
+   <para>
+    An ARE may begin with <firstterm>embedded options</>:
+    a sequence <literal>(?</><replaceable>xyz</><literal>)</>
+    (where <replaceable>xyz</> is one or more alphabetic characters)
+    specifies options affecting the rest of the RE.
+    These supplement, and can override,
+    any options specified externally.
+    The available option letters are
+    shown in <xref linkend="posix-embedded-options-table">.
+   </para>
+
+   <table id="posix-embedded-options-table">
+    <title>ARE Embedded-Option Letters</title>
+
+    <tgroup cols="2">
+     <thead>
+      <row>
+       <entry>Option</entry>
+       <entry>Description</entry>
+      </row>
+     </thead>
+
+      <tbody>
+       <row>
+       <entry> <literal>b</> </entry>
+       <entry> rest of RE is a BRE </entry>
+       </row>
+
+       <row>
+       <entry> <literal>c</> </entry>
+       <entry> case-sensitive matching (usual default) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>e</> </entry>
+       <entry> rest of RE is an ERE </entry>
+       </row>
+
+       <row>
+       <entry> <literal>i</> </entry>
+       <entry> case-insensitive matching (see
+       <xref linkend="posix-matching-rules">) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>m</> </entry>
+       <entry> historical synonym for <literal>n</> </entry>
+       </row>
+
+       <row>
+       <entry> <literal>n</> </entry>
+       <entry> newline-sensitive matching (see
+       <xref linkend="posix-matching-rules">) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>p</> </entry>
+       <entry> partial newline-sensitive matching (see
+       <xref linkend="posix-matching-rules">) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>q</> </entry>
+       <entry> rest of RE is a literal (<quote>quoted</>) string, all ordinary
+       characters </entry>
+       </row>
+
+       <row>
+       <entry> <literal>s</> </entry>
+       <entry> non-newline-sensitive matching (usual default) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>t</> </entry>
+       <entry> tight syntax (usual default; see below) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>w</> </entry>
+       <entry> inverse partial newline-sensitive (<quote>weird</>) matching
+       (see <xref linkend="posix-matching-rules">) </entry>
+       </row>
+
+       <row>
+       <entry> <literal>x</> </entry>
+       <entry> expanded syntax (see below) </entry>
+       </row>
+      </tbody>
+     </tgroup>
+    </table>
+
+   <para>
+    Embedded options take effect at the <literal>)</> terminating the sequence.
+    They are available only at the start of an ARE,
+    and may not be used later within it.
+   </para>
+
+   <para>
+    In addition to the usual (<firstterm>tight</>) RE syntax, in which all
+    characters are significant, there is an <firstterm>expanded</> syntax,
+    available by specifying the embedded <literal>x</> option.
+    In the expanded syntax,
+    white-space characters in the RE are ignored, as are
+    all characters between a <literal>#</>
+    and the following newline (or the end of the RE).  This
+    permits paragraphing and commenting a complex RE.
+    There are three exceptions to that basic rule:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       a white-space character or <literal>#</> preceded by <literal>\</> is
+       retained
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       white space or <literal>#</> within a bracket expression is retained
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       white space and comments are illegal within multi-character symbols,
+       like the ARE <literal>(?:</> or the BRE <literal>\(</>
+      </para>
+     </listitem>
+    </itemizedlist>
+
+    Expanded-syntax white-space characters are blank, tab, newline, and
+    any character that belongs to the <replaceable>space</> character class.
+   </para>
+
+   <para>
+    Finally, in an ARE, outside bracket expressions, the sequence
+    <literal>(?#</><replaceable>ttt</><literal>)</>
+    (where <replaceable>ttt</> is any text not containing a <literal>)</>)
+    is a comment, completely ignored.
+    Again, this is not allowed between the characters of
+    multi-character symbols, like <literal>(?:</>.
+    Such comments are more a historical artifact than a useful facility,
+    and their use is deprecated; use the expanded syntax instead.
+   </para>
+
+   <para>
+    <emphasis>None</> of these metasyntax extensions is available if
+    an initial <literal>***=</> director
+    has specified that the user's input be treated as a literal string
+    rather than as an RE.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-matching-rules">
+    <title>Regular Expression Matching Rules</title>
+
+   <para>
+    In the event that an RE could match more than one substring of a given
+    string, the RE matches the one starting earliest in the string.
+    If the RE could match more than one substring starting at that point,
+    its choice is determined by its <firstterm>preference</>:
+    either the longest substring, or the shortest.
+   </para>
+
+   <para>
+    Most atoms, and all constraints, have no preference.
+    A parenthesized RE has the same preference (possibly none) as the RE.
+    A quantified atom with quantifier
+    <literal>{</><replaceable>m</><literal>}</>
+    or
+    <literal>{</><replaceable>m</><literal>}?</>
+    has the same preference (possibly none) as the atom itself.
+    A quantified atom with other normal quantifiers (including
+    <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}</>
+    with <replaceable>m</> equal to <replaceable>n</>)
+    prefers longest match.
+    A quantified atom with other non-greedy quantifiers (including
+    <literal>{</><replaceable>m</><literal>,</><replaceable>n</><literal>}?</>
+    with <replaceable>m</> equal to <replaceable>n</>)
+    prefers shortest match.
+    A branch has the same preference as the first quantified atom in it
+    which has a preference.
+    An RE consisting of two or more branches connected by the
+    <literal>|</> operator prefers longest match.
+   </para>
+
+   <para>
+    Subject to the constraints imposed by the rules for matching the whole RE,
+    subexpressions also match the longest or shortest possible substrings,
+    based on their preferences,
+    with subexpressions starting earlier in the RE taking priority over
+    ones starting later.
+    Note that outer subexpressions thus take priority over
+    their component subexpressions.
+   </para>
+
+   <para>
+    The quantifiers <literal>{1,1}</> and <literal>{1,1}?</>
+    can be used to force longest and shortest preference, respectively,
+    on a subexpression or a whole RE.
+   </para>
+
+   <para>
+    Match lengths are measured in characters, not collating elements.
+    An empty string is considered longer than no match at all.
+    For example:
+    <literal>bb*</>
+    matches the three middle characters of <literal>abbbc</>;
+    <literal>(week|wee)(night|knights)</>
+    matches all ten characters of <literal>weeknights</>;
+    when <literal>(.*).*</>
+    is matched against <literal>abc</> the parenthesized subexpression
+    matches all three characters; and when
+    <literal>(a*)*</> is matched against <literal>bc</>
+    both the whole RE and the parenthesized
+    subexpression match an empty string.
+   </para>
+
+   <para>
+    If case-independent matching is specified,
+    the effect is much as if all case distinctions had vanished from the
+    alphabet.
+    When an alphabetic that exists in multiple cases appears as an
+    ordinary character outside a bracket expression, it is effectively
     transformed into a bracket expression containing both cases,
-    e.g. <literal>x</literal> becomes <literal>[xX]</literal>.  When
-    it appears inside a bracket expression, all case counterparts of
-    it are added to the bracket expression, so that (e.g.)
-    <literal>[x]</literal> becomes <literal>[xX]</literal> and
-    <literal>[^x]</literal> becomes <literal>[^xX]</literal>.
+    e.g. <literal>x</> becomes <literal>[xX]</>.
+    When it appears inside a bracket expression, all case counterparts
+    of it are added to the bracket expression, e.g.
+    <literal>[x]</> becomes <literal>[xX]</>
+    and <literal>[^x]</> becomes <literal>[^xX]</>.
    </para>
 
    <para>
-    There is no particular limit on the length of <acronym>RE</acronym>s, except insofar
-    as memory is limited.  Memory usage is approximately linear in RE
-    size, and largely insensitive to RE complexity, except for bounded
-    repetitions.  Bounded repetitions are implemented by macro
-    expansion, which is costly in time and space if counts are large
-    or bounded repetitions are nested.  An RE like, say,
-    <literal>((((a{1,100}){1,100}){1,100}){1,100}){1,100}</literal>
-    will (eventually) run almost any existing machine out of swap
-    space.
-    <footnote>
-     <para>
-      This was written in 1994, mind you.  The
-      numbers have probably changed, but the problem
-      persists.
-     </para>
-    </footnote>
+    If newline-sensitive matching is specified, <literal>.</>
+    and bracket expressions using <literal>^</>
+    will never match the newline character
+    (so that matches will never cross newlines unless the RE
+    explicitly arranges it)
+    and <literal>^</>and <literal>$</>
+    will match the empty string after and before a newline
+    respectively, in addition to matching at beginning and end of string
+    respectively.
+    But the ARE escapes <literal>\A</> and <literal>\Z</>
+    continue to match beginning or end of string <emphasis>only</>.
    </para>
-<!-- end re_format.7 man page -->
-  </sect2>
 
+   <para>
+    If partial newline-sensitive matching is specified,
+    this affects <literal>.</> and bracket expressions
+    as with newline-sensitive matching, but not <literal>^</>
+    and <literal>$</>.
+   </para>
+
+   <para>
+    If inverse partial newline-sensitive matching is specified,
+    this affects <literal>^</> and <literal>$</>
+    as with newline-sensitive matching, but not <literal>.</>
+    and bracket expressions.
+    This isn't very useful but is provided for symmetry.
+   </para>
+   </sect3>
+
+   <sect3 id="posix-limits-compatibility">
+    <title>Limits and Compatibility</title>
+
+   <para>
+    No particular limit is imposed on the length of REs in this
+    implementation.  However,
+    programs intended to be highly portable should not employ REs longer
+    than 256 bytes,
+    as a POSIX-compliant implementation can refuse to accept such REs.
+   </para>
+
+   <para>
+    The only feature of AREs that is actually incompatible with
+    POSIX EREs is that <literal>\</> does not lose its special
+    significance inside bracket expressions.
+    All other ARE features use syntax which is illegal or has
+    undefined or unspecified effects in POSIX EREs;
+    the <literal>***</> syntax of directors likewise is outside the POSIX
+    syntax for both BREs and EREs.
+   </para>
+
+   <para>
+    Many of the ARE extensions are borrowed from Perl, but some have
+    been changed to clean them up, and a few Perl extensions are not present.
+    Incompatibilities of note include <literal>\b</>, <literal>\B</>,
+    the lack of special treatment for a trailing newline,
+    the addition of complemented bracket expressions to the things
+    affected by newline-sensitive matching,
+    the restrictions on parentheses and back references in lookahead
+    constraints, and the longest/shortest-match (rather than first-match)
+    matching semantics.
+   </para>
+
+   <para>
+    Two significant incompatibilites exist between AREs and the ERE syntax
+    recognized by pre-7.4 releases of <productname>PostgreSQL</>:
+
+    <itemizedlist>
+     <listitem>
+      <para>
+       In AREs, <literal>\</> followed by an alphanumeric character is either
+       an escape or an error, while in previous releases, it was just another
+       way of writing the alphanumeric.
+       This should not be much of a problem because there was no reason to
+       write such a sequence in earlier releases.
+      </para>
+     </listitem>
+     <listitem>
+      <para>
+       In AREs, <literal>\</> remains a special character within
+       <literal>[]</>, so a literal <literal>\</> within a bracket
+       expression must be written <literal>\\</>.
+      </para>
+     </listitem>
+    </itemizedlist>
+   </para>
+   </sect3>
+
+   <sect3 id="posix-basic-regexes">
+    <title>Basic Regular Expressions</title>
+
+   <para>
+    BREs differ from EREs in several respects.
+    <literal>|</>, <literal>+</>, and <literal>?</>
+    are ordinary characters and there is no equivalent
+    for their functionality.
+    The delimiters for bounds are
+    <literal>\{</> and <literal>\}</>,
+    with <literal>{</> and <literal>}</>
+    by themselves ordinary characters.
+    The parentheses for nested subexpressions are
+    <literal>\(</> and <literal>\)</>,
+    with <literal>(</> and <literal>)</> by themselves ordinary characters.
+    <literal>^</> is an ordinary character except at the beginning of the
+    RE or the beginning of a parenthesized subexpression,
+    <literal>$</> is an ordinary character except at the end of the
+    RE or the end of a parenthesized subexpression,
+    and <literal>*</> is an ordinary character if it appears at the beginning
+    of the RE or the beginning of a parenthesized subexpression
+    (after a possible leading <literal>^</>).
+    Finally, single-digit back references are available, and
+    <literal>\&lt;</> and <literal>\&gt;</>
+    are synonyms for
+    <literal>[[:&lt;:]]</> and <literal>[[:&gt;:]]</>
+    respectively; no other escapes are available.
+   </para>
+   </sect3>
+
+<!-- end re_syntax.n man page -->
+
+  </sect2>
  </sect1>
 
 

@@ -1,6 +1,4 @@
 /*
- * regfree - free an RE
- *
  * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
  * 
  * Development of this software was funded, in part, by Cray Research Inc.,
@@ -27,28 +25,40 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Header: /cvsroot/pgsql/src/backend/regex/regfree.c,v 1.16 2003/02/05 17:41:33 tgl Exp $
- *
- *
- * You might think that this could be incorporated into regcomp.c, and
- * that would be a reasonable idea... except that this is a generic
- * function (with a generic name), applicable to all compiled REs
- * regardless of the size of their characters, whereas the stuff in
- * regcomp.c gets compiled once per character size.
+ * $Id: regcustom.h,v 1.1 2003/02/05 17:41:32 tgl Exp $
  */
 
-#include "regex/regguts.h"
+/* headers if any */
+#include "postgres.h"
+
+#include <ctype.h>
+#include <limits.h>
+
+#include "mb/pg_wchar.h"
 
 
-/*
- * pg_regfree - free an RE (generic function, punts to RE-specific function)
- *
- * Ignoring invocation with NULL is a convenience.
- */
-void
-pg_regfree(regex_t *re)
-{
-	if (re == NULL)
-		return;
-	(*((struct fns *)re->re_fns)->free)(re);
-}
+/* overrides for regguts.h definitions, if any */
+#define	FUNCPTR(name, args)	(*name) args
+#define	MALLOC(n)		malloc(n)
+#define	FREE(p)			free(VS(p))
+#define	REALLOC(p,n)		realloc(VS(p),n)
+
+/* internal character type and related */
+typedef pg_wchar chr;	/* the type itself */
+typedef unsigned uchr;		/* unsigned type that will hold a chr */
+typedef int celt;		/* type to hold chr, MCCE number, or NOCELT */
+#define	NOCELT	(-1)		/* celt value which is not valid chr or MCCE */
+#define	CHR(c)	((unsigned char) (c)) /* turn char literal into chr literal */
+#define	DIGITVAL(c)	((c)-'0')	/* turn chr digit into its value */
+#define	CHRBITS	32		/* bits in a chr; must not use sizeof */
+#define	CHR_MIN	0x00000000		/* smallest and largest chr; the value */
+#define	CHR_MAX	0xfffffffe		/*  CHR_MAX-CHR_MIN+1 should fit in uchr */
+
+/* functions operating on chr */
+#define	iscalnum(x)	pg_isalnum(x)
+#define	iscalpha(x)	pg_isalpha(x)
+#define	iscdigit(x)	pg_isdigit(x)
+#define	iscspace(x)	pg_isspace(x)
+
+/* and pick up the standard header */
+#include "regex.h"

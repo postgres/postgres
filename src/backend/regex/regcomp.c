@@ -1,1787 +1,2131 @@
-/*-
- * Copyright (c) 1992, 1993, 1994 Henry Spencer.
- * Copyright (c) 1992, 1993, 1994
- *		The Regents of the University of California.  All rights reserved.
+/*
+ * re_*comp and friends - compile REs
+ * This file #includes several others (see the bottom).
  *
- * This code is derived from software contributed to Berkeley by
- * Henry Spencer.
+ * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
+ * 
+ * Development of this software was funded, in part, by Cray Research Inc.,
+ * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
+ * Corporation, none of whom are responsible for the results.  The author
+ * thanks all of them. 
+ * 
+ * Redistribution and use in source and binary forms -- with or without
+ * modification -- are permitted for any purpose, provided that
+ * redistributions in source form retain this entire copyright notice and
+ * indicate the origin and nature of any modifications.
+ * 
+ * I'd appreciate being given credit for this package in the documentation
+ * of software which uses it, but that is not a requirement.
+ * 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * HENRY SPENCER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *	  notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *	  notice, this list of conditions and the following disclaimer in the
- *	  documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	  must display the following acknowledgement:
- *		This product includes software developed by the University of
- *		California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *	  may be used to endorse or promote products derived from this software
- *	  without specific prior written permission.
+ * $Header: /cvsroot/pgsql/src/backend/regex/regcomp.c,v 1.36 2003/02/05 17:41:33 tgl Exp $
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *		@(#)regcomp.c	8.5 (Berkeley) 3/20/94
  */
 
-#include "postgres.h"
-
-#include <ctype.h>
-#include <limits.h>
-#include <assert.h>
-
-#include "regex/regex.h"
-#include "regex/utils.h"
-#include "regex/regex2.h"
-#include "regex/cname.h"
-
-struct cclass
-{
-	char	   *name;
-	char	   *chars;
-	char	   *multis;
-};
-static struct cclass *cclasses = NULL;
-static struct cclass *cclass_init(void);
+#include "regex/regguts.h"
 
 /*
- * parse structure, passed up and down to avoid global variables and
- * other clumsinesses
+ * forward declarations, up here so forward datatypes etc. are defined early
  */
-struct parse
-{
-	pg_wchar   *next;			/* next character in RE */
-	pg_wchar   *end;			/* end of string (-> NUL normally) */
-	int			error;			/* has an error been seen? */
-	sop		   *strip;			/* malloced strip */
-	sopno		ssize;			/* malloced strip size (allocated) */
-	sopno		slen;			/* malloced strip length (used) */
-	int			ncsalloc;		/* number of csets allocated */
-	struct re_guts *g;
-#define  NPAREN  10				/* we need to remember () 1-9 for back
-								 * refs */
-	sopno		pbegin[NPAREN]; /* -> ( ([0] unused) */
-	sopno		pend[NPAREN];	/* -> ) ([0] unused) */
-};
-
-static void p_ere(struct parse * p, int stop);
-static void p_ere_exp(struct parse * p);
-static void p_str(struct parse * p);
-static void p_bre(struct parse * p, int end1, int end2);
-static int	p_simp_re(struct parse * p, int starordinary);
-static int	p_count(struct parse * p);
-static void p_bracket(struct parse * p);
-static void p_b_term(struct parse * p, cset *cs);
-static void p_b_cclass(struct parse * p, cset *cs);
-static void p_b_eclass(struct parse * p, cset *cs);
-static pg_wchar p_b_symbol(struct parse * p);
-static char p_b_coll_elem(struct parse * p, int endc);
-static unsigned char othercase(int ch);
-static void bothcases(struct parse * p, int ch);
-static void ordinary(struct parse * p, int ch);
-static void nonnewline(struct parse * p);
-static void repeat(struct parse * p, sopno start, int from, int to);
-static int	seterr(struct parse * p, int e);
-static cset *allocset(struct parse * p);
-static void freeset(struct parse * p, cset *cs);
-static int	freezeset(struct parse * p, cset *cs);
-static int	firstch(struct parse * p, cset *cs);
-static int	nch(struct parse * p, cset *cs);
-static void mcadd(struct parse * p, cset *cs, char *cp);
-static void mcinvert(struct parse * p, cset *cs);
-static void mccase(struct parse * p, cset *cs);
-static int	isinsets(struct re_guts * g, int c);
-static int	samesets(struct re_guts * g, int c1, int c2);
-static void categorize(struct parse * p, struct re_guts * g);
-static sopno dupl(struct parse * p, sopno start, sopno finish);
-static void doemit(struct parse * p, sop op, size_t opnd);
-static void doinsert(struct parse * p, sop op, size_t opnd, sopno pos);
-static void dofwd(struct parse * p, sopno pos, sop value);
-static void enlarge(struct parse * p, sopno size);
-static void stripsnug(struct parse * p, struct re_guts * g);
-static void findmust(struct parse * p, struct re_guts * g);
-static sopno pluscount(struct parse * p, struct re_guts * g);
-static int	pg_isdigit(int c);
-static int	pg_isalpha(int c);
-static int	pg_isalnum(int c);
-static int	pg_isupper(int c);
-static int	pg_islower(int c);
-static int	pg_iscntrl(int c);
-static int	pg_isgraph(int c);
-static int	pg_isprint(int c);
-static int	pg_ispunct(int c);
-
-static pg_wchar nuls[10];		/* place to point scanner in event of
-								 * error */
-
-/*
- * macros for use with parse structure
- * BEWARE:	these know that the parse structure is named `p' !!!
- */
-#define PEEK()	(*p->next)
-#define PEEK2() (*(p->next+1))
-#define MORE()	(p->next < p->end)
-#define MORE2() (p->next+1 < p->end)
-#define SEE(c)	(MORE() && PEEK() == (c))
-#define SEETWO(a, b)	(MORE() && MORE2() && PEEK() == (a) && PEEK2() == (b))
-#define EAT(c)	((SEE(c)) ? (NEXT(), 1) : 0)
-#define EATTWO(a, b)	((SEETWO(a, b)) ? (NEXT2(), 1) : 0)
-#define NEXT()	(p->next++)
-#define NEXT2() (p->next += 2)
-#define NEXTn(n)		(p->next += (n))
-#define GETNEXT()		(*p->next++)
-#define SETERROR(e)		seterr(p, (e))
-#define REQUIRE(co, e)	if (!(co)) SETERROR(e)
-#define MUSTSEE(c, e)	REQUIRE(MORE() && PEEK() == (c), e)
-#define MUSTEAT(c, e)	REQUIRE(MORE() && GETNEXT() == (c), e)
-#define MUSTNOTSEE(c, e)		REQUIRE(!MORE() || PEEK() != (c), e)
-#define EMIT(op, sopnd) doemit(p, (sop)(op), (size_t)(sopnd))
-#define INSERT(op, pos) doinsert(p, (sop)(op), HERE()-(pos)+1, pos)
-#define AHEAD(pos)				dofwd(p, pos, HERE()-(pos))
-#define ASTERN(sop, pos)		EMIT(sop, HERE()-pos)
-#define HERE()			(p->slen)
-#define THERE()			(p->slen - 1)
-#define THERETHERE()	(p->slen - 2)
-#define DROP(n) (p->slen -= (n))
-
-#ifndef NDEBUG
-static int	never = 0;			/* for use in asserts; shuts lint up */
-
-#else
-#define never	0				/* some <assert.h>s have bugs too */
+/* === regcomp.c === */
+static void moresubs (struct vars *, int);
+static int freev (struct vars *, int);
+static void makesearch (struct vars *, struct nfa *);
+static struct subre *parse (struct vars *, int, int, struct state *, struct state *);
+static struct subre *parsebranch (struct vars *, int, int, struct state *, struct state *, int);
+static void parseqatom (struct vars *, int, int, struct state *, struct state *, struct subre *);
+static void nonword (struct vars *, int, struct state *, struct state *);
+static void word (struct vars *, int, struct state *, struct state *);
+static int scannum (struct vars *);
+static void repeat (struct vars *, struct state *, struct state *, int, int);
+static void bracket (struct vars *, struct state *, struct state *);
+static void cbracket (struct vars *, struct state *, struct state *);
+static void brackpart (struct vars *, struct state *, struct state *);
+static chr *scanplain (struct vars *);
+static void leaders (struct vars *, struct cvec *);
+static void onechr (struct vars *, chr, struct state *, struct state *);
+static void dovec (struct vars *, struct cvec *, struct state *, struct state *);
+static celt nextleader (struct vars *, chr, chr);
+static void wordchrs (struct vars *);
+static struct subre *subre (struct vars *, int, int, struct state *, struct state *);
+static void freesubre (struct vars *, struct subre *);
+static void freesrnode (struct vars *, struct subre *);
+static void optst (struct vars *, struct subre *);
+static int numst (struct subre *, int);
+static void markst (struct subre *);
+static void cleanst (struct vars *);
+static long nfatree (struct vars *, struct subre *, FILE *);
+static long nfanode (struct vars *, struct subre *, FILE *);
+static int newlacon (struct vars *, struct state *, struct state *, int);
+static void freelacons (struct subre *, int);
+static void rfree (regex_t *);
+#ifdef REG_DEBUG
+static void dump (regex_t *, FILE *);
+static void dumpst (struct subre *, FILE *, int);
+static void stdump (struct subre *, FILE *, int);
+static char *stid (struct subre *, char *, size_t);
 #endif
+/* === regc_lex.c === */
+static void lexstart (struct vars *);
+static void prefixes (struct vars *);
+static void lexnest (struct vars *, chr *, chr *);
+static void lexword (struct vars *);
+static int next (struct vars *);
+static int lexescape (struct vars *);
+static chr lexdigits (struct vars *, int, int, int);
+static int brenext (struct vars *, chr);
+static void skip (struct vars *);
+static chr newline (void);
+static chr chrnamed (struct vars *, chr *, chr *, chr);
+/* === regc_color.c === */
+static void initcm (struct vars *, struct colormap *);
+static void freecm (struct colormap *);
+static void cmtreefree (struct colormap *, union tree *, int);
+static color setcolor (struct colormap *, chr, pcolor);
+static color maxcolor (struct colormap *);
+static color newcolor (struct colormap *);
+static void freecolor (struct colormap *, pcolor);
+static color pseudocolor (struct colormap *);
+static color subcolor (struct colormap *, chr c);
+static color newsub (struct colormap *, pcolor);
+static void subrange (struct vars *, chr, chr, struct state *, struct state *);
+static void subblock (struct vars *, chr, struct state *, struct state *);
+static void okcolors (struct nfa *, struct colormap *);
+static void colorchain (struct colormap *, struct arc *);
+static void uncolorchain (struct colormap *, struct arc *);
+static int singleton (struct colormap *, chr c);
+static void rainbow (struct nfa *, struct colormap *, int, pcolor, struct state *, struct state *);
+static void colorcomplement (struct nfa *, struct colormap *, int, struct state *, struct state *, struct state *);
+#ifdef REG_DEBUG
+static void dumpcolors (struct colormap *, FILE *);
+static void fillcheck (struct colormap *, union tree *, int, FILE *);
+static void dumpchr (chr, FILE *);
+#endif
+/* === regc_nfa.c === */
+static struct nfa *newnfa (struct vars *, struct colormap *, struct nfa *);
+static void freenfa (struct nfa *);
+static struct state *newstate (struct nfa *);
+static struct state *newfstate (struct nfa *, int flag);
+static void dropstate (struct nfa *, struct state *);
+static void freestate (struct nfa *, struct state *);
+static void destroystate (struct nfa *, struct state *);
+static void newarc (struct nfa *, int, pcolor, struct state *, struct state *);
+static struct arc *allocarc (struct nfa *, struct state *);
+static void freearc (struct nfa *, struct arc *);
+static struct arc *findarc (struct state *, int, pcolor);
+static void cparc (struct nfa *, struct arc *, struct state *, struct state *);
+static void moveins (struct nfa *, struct state *, struct state *);
+static void copyins (struct nfa *, struct state *, struct state *);
+static void moveouts (struct nfa *, struct state *, struct state *);
+static void copyouts (struct nfa *, struct state *, struct state *);
+static void cloneouts (struct nfa *, struct state *, struct state *, struct state *, int);
+static void delsub (struct nfa *, struct state *, struct state *);
+static void deltraverse (struct nfa *, struct state *, struct state *);
+static void dupnfa (struct nfa *, struct state *, struct state *, struct state *, struct state *);
+static void duptraverse (struct nfa *, struct state *, struct state *);
+static void cleartraverse (struct nfa *, struct state *);
+static void specialcolors (struct nfa *);
+static long optimize (struct nfa *, FILE *);
+static void pullback (struct nfa *, FILE *);
+static int pull (struct nfa *, struct arc *);
+static void pushfwd (struct nfa *, FILE *);
+static int push (struct nfa *, struct arc *);
+#define	INCOMPATIBLE	1	/* destroys arc */
+#define	SATISFIED	2	/* constraint satisfied */
+#define	COMPATIBLE	3	/* compatible but not satisfied yet */
+static int combine (struct arc *, struct arc *);
+static void fixempties (struct nfa *, FILE *);
+static int unempty (struct nfa *, struct arc *);
+static void cleanup (struct nfa *);
+static void markreachable (struct nfa *, struct state *, struct state *, struct state *);
+static void markcanreach (struct nfa *, struct state *, struct state *, struct state *);
+static long analyze (struct nfa *);
+static void compact (struct nfa *, struct cnfa *);
+static void carcsort (struct carc *, struct carc *);
+static void freecnfa (struct cnfa *);
+static void dumpnfa (struct nfa *, FILE *);
+#ifdef REG_DEBUG
+static void dumpstate (struct state *, FILE *);
+static void dumparcs (struct state *, FILE *);
+static int dumprarcs (struct arc *, struct state *, FILE *, int);
+static void dumparc (struct arc *, struct state *, FILE *);
+static void dumpcnfa (struct cnfa *, FILE *);
+static void dumpcstate (int, struct carc *, struct cnfa *, FILE *);
+#endif
+/* === regc_cvec.c === */
+static struct cvec *newcvec (int, int, int);
+static struct cvec *clearcvec (struct cvec *);
+static void addchr (struct cvec *, chr);
+static void addrange (struct cvec *, chr, chr);
+static void addmcce (struct cvec *, chr *, chr *);
+static int haschr (struct cvec *, chr);
+static struct cvec *getcvec (struct vars *, int, int, int);
+static void freecvec (struct cvec *);
+/* === regc_locale.c === */
+static int pg_isdigit(pg_wchar c);
+static int pg_isalpha(pg_wchar c);
+static int pg_isalnum(pg_wchar c);
+static int pg_isupper(pg_wchar c);
+static int pg_islower(pg_wchar c);
+static int pg_isgraph(pg_wchar c);
+static int pg_ispunct(pg_wchar c);
+static int pg_isspace(pg_wchar c);
+static pg_wchar pg_toupper(pg_wchar c);
+static pg_wchar pg_tolower(pg_wchar c);
+static int nmcces (struct vars *);
+static int nleaders (struct vars *);
+static struct cvec *allmcces (struct vars *, struct cvec *);
+static celt element (struct vars *, chr *, chr *);
+static struct cvec *range (struct vars *, celt, celt, int);
+static int before (celt, celt);
+static struct cvec *eclass (struct vars *, celt, int);
+static struct cvec *cclass (struct vars *, chr *, chr *, int);
+static struct cvec *allcases (struct vars *, chr);
+static int cmp (const chr *, const chr *, size_t);
+static int casecmp (const chr *, const chr *, size_t);
+
+
+/* internal variables, bundled for easy passing around */
+struct vars {
+	regex_t *re;
+	chr *now;		/* scan pointer into string */
+	chr *stop;		/* end of string */
+	chr *savenow;		/* saved now and stop for "subroutine call" */
+	chr *savestop;
+	int err;		/* error code (0 if none) */
+	int cflags;		/* copy of compile flags */
+	int lasttype;		/* type of previous token */
+	int nexttype;		/* type of next token */
+	chr nextvalue;		/* value (if any) of next token */
+	int lexcon;		/* lexical context type (see lex.c) */
+	int nsubexp;		/* subexpression count */
+	struct subre **subs;	/* subRE pointer vector */
+	size_t nsubs;		/* length of vector */
+	struct subre *sub10[10];	/* initial vector, enough for most */
+	struct nfa *nfa;	/* the NFA */
+	struct colormap *cm;	/* character color map */
+	color nlcolor;		/* color of newline */
+	struct state *wordchrs;	/* state in nfa holding word-char outarcs */
+	struct subre *tree;	/* subexpression tree */
+	struct subre *treechain;	/* all tree nodes allocated */
+	struct subre *treefree;		/* any free tree nodes */
+	int ntree;		/* number of tree nodes */
+	struct cvec *cv;	/* interface cvec */
+	struct cvec *cv2;	/* utility cvec */
+	struct cvec *mcces;	/* collating-element information */
+#		define	ISCELEADER(v,c)	(v->mcces != NULL && haschr(v->mcces, (c)))
+	struct state *mccepbegin;	/* in nfa, start of MCCE prototypes */
+	struct state *mccepend;	/* in nfa, end of MCCE prototypes */
+	struct subre *lacons;	/* lookahead-constraint vector */
+	int nlacons;		/* size of lacons */
+};
+
+/* parsing macros; most know that `v' is the struct vars pointer */
+#define	NEXT()	(next(v))		/* advance by one token */
+#define	SEE(t)	(v->nexttype == (t))	/* is next token this? */
+#define	EAT(t)	(SEE(t) && next(v))	/* if next is this, swallow it */
+#define	VISERR(vv)	((vv)->err != 0)	/* have we seen an error yet? */
+#define	ISERR()	VISERR(v)
+#define	VERR(vv,e)	((vv)->nexttype = EOS, ((vv)->err) ? (vv)->err :\
+							((vv)->err = (e)))
+#define	ERR(e)	VERR(v, e)		/* record an error */
+#define	NOERR()	{if (ISERR()) return;}	/* if error seen, return */
+#define	NOERRN()	{if (ISERR()) return NULL;}	/* NOERR with retval */
+#define	NOERRZ()	{if (ISERR()) return 0;}	/* NOERR with retval */
+#define	INSIST(c, e)	((c) ? 0 : ERR(e))	/* if condition false, error */
+#define	NOTE(b)	(v->re->re_info |= (b))		/* note visible condition */
+#define	EMPTYARC(x, y)	newarc(v->nfa, EMPTY, 0, x, y)
+
+/* token type codes, some also used as NFA arc types */
+#define	EMPTY	'n'		/* no token present */
+#define	EOS	'e'		/* end of string */
+#define	PLAIN	'p'		/* ordinary character */
+#define	DIGIT	'd'		/* digit (in bound) */
+#define	BACKREF	'b'		/* back reference */
+#define	COLLEL	'I'		/* start of [. */
+#define	ECLASS	'E'		/* start of [= */
+#define	CCLASS	'C'		/* start of [: */
+#define	END	'X'		/* end of [. [= [: */
+#define	RANGE	'R'		/* - within [] which might be range delim. */
+#define	LACON	'L'		/* lookahead constraint subRE */
+#define	AHEAD	'a'		/* color-lookahead arc */
+#define	BEHIND	'r'		/* color-lookbehind arc */
+#define	WBDRY	'w'		/* word boundary constraint */
+#define	NWBDRY	'W'		/* non-word-boundary constraint */
+#define	SBEGIN	'A'		/* beginning of string (even if not BOL) */
+#define	SEND	'Z'		/* end of string (even if not EOL) */
+#define	PREFER	'P'		/* length preference */
+
+/* is an arc colored, and hence on a color chain? */
+#define	COLORED(a)	((a)->type == PLAIN || (a)->type == AHEAD || \
+							(a)->type == BEHIND)
+
+
+
+/* static function list */
+static struct fns functions = {
+	rfree,			/* regfree insides */
+};
+
+
 
 /*
- * regcomp - interface for parser and compilation
- * returns 0 success, otherwise REG_something
+ * pg_regcomp - compile regular expression
  */
 int
-pg_regcomp(regex_t *preg, const char *pattern, int cflags)
+pg_regcomp(regex_t *re,
+		   const chr *string,
+		   size_t len,
+		   int flags)
 {
-	struct parse pa;
-	struct re_guts *g;
-	struct parse *p = &pa;
-	int			i;
-	size_t		len;
-	pg_wchar   *wcp;
-
-	if (cclasses == NULL)
-		cclasses = cclass_init();
-
-#ifdef REDEBUG
-#define  GOODFLAGS(f)	 (f)
+	struct vars var;
+	struct vars *v = &var;
+	struct guts *g;
+	int i;
+	size_t j;
+#ifdef REG_DEBUG
+	FILE *debug = (flags&REG_PROGRESS) ? stdout : (FILE *)NULL;
 #else
-#define  GOODFLAGS(f)	 ((f)&~REG_DUMP)
+	FILE *debug = (FILE *) NULL;
 #endif
 
-	cflags = GOODFLAGS(cflags);
-	if ((cflags & REG_EXTENDED) && (cflags & REG_NOSPEC))
+#	define	CNOERR()	{ if (ISERR()) return freev(v, v->err); }
+
+	/* sanity checks */
+
+	if (re == NULL || string == NULL)
+		return REG_INVARG;
+	if ((flags&REG_QUOTE) &&
+			(flags&(REG_ADVANCED|REG_EXPANDED|REG_NEWLINE)))
+		return REG_INVARG;
+	if (!(flags&REG_EXTENDED) && (flags&REG_ADVF))
 		return REG_INVARG;
 
-	if (cflags & REG_PEND)
-	{
-		wcp = preg->patsave;
-		if (preg->re_endp < wcp)
-			return REG_INVARG;
-		len = preg->re_endp - wcp;
+	/* initial setup (after which freev() is callable) */
+	v->re = re;
+	v->now = (chr *)string;
+	v->stop = v->now + len;
+	v->savenow = v->savestop = NULL;
+	v->err = 0;
+	v->cflags = flags;
+	v->nsubexp = 0;
+	v->subs = v->sub10;
+	v->nsubs = 10;
+	for (j = 0; j < v->nsubs; j++)
+		v->subs[j] = NULL;
+	v->nfa = NULL;
+	v->cm = NULL;
+	v->nlcolor = COLORLESS;
+	v->wordchrs = NULL;
+	v->tree = NULL;
+	v->treechain = NULL;
+	v->treefree = NULL;
+	v->cv = NULL;
+	v->cv2 = NULL;
+	v->mcces = NULL;
+	v->lacons = NULL;
+	v->nlacons = 0;
+	re->re_magic = REMAGIC;
+	re->re_info = 0;		/* bits get set during parse */
+	re->re_csize = sizeof(chr);
+	re->re_guts = NULL;
+	re->re_fns = VS(&functions);
+
+	/* more complex setup, malloced things */
+	re->re_guts = VS(MALLOC(sizeof(struct guts)));
+	if (re->re_guts == NULL)
+		return freev(v, REG_ESPACE);
+	g = (struct guts *)re->re_guts;
+	g->tree = NULL;
+	initcm(v, &g->cmap);
+	v->cm = &g->cmap;
+	g->lacons = NULL;
+	g->nlacons = 0;
+	ZAPCNFA(g->search);
+	v->nfa = newnfa(v, v->cm, (struct nfa *)NULL);
+	CNOERR();
+	v->cv = newcvec(100, 20, 10);
+	if (v->cv == NULL)
+		return freev(v, REG_ESPACE);
+	i = nmcces(v);
+	if (i > 0) {
+		v->mcces = newcvec(nleaders(v), 0, i);
+		CNOERR();
+		v->mcces = allmcces(v, v->mcces);
+		leaders(v, v->mcces);
+		addmcce(v->mcces, (chr *)NULL, (chr *)NULL);	/* dummy */
 	}
-	else
-	{
-		wcp = (pg_wchar *) malloc((strlen(pattern) + 1) * sizeof(pg_wchar));
-		if (wcp == NULL)
-			return REG_ESPACE;
-		preg->patsave = wcp;
-		(void) pg_mb2wchar((unsigned char *) pattern, wcp);
-		len = pg_wchar_strlen(wcp);
+	CNOERR();
+
+	/* parsing */
+	lexstart(v);			/* also handles prefixes */
+	if ((v->cflags&REG_NLSTOP) || (v->cflags&REG_NLANCH)) {
+		/* assign newline a unique color */
+		v->nlcolor = subcolor(v->cm, newline());
+		okcolors(v->nfa, v->cm);
 	}
+	CNOERR();
+	v->tree = parse(v, EOS, PLAIN, v->nfa->init, v->nfa->final);
+	assert(SEE(EOS));		/* even if error; ISERR() => SEE(EOS) */
+	CNOERR();
+	assert(v->tree != NULL);
 
-	/* do the mallocs early so failure handling is easy */
-	g = (struct re_guts *) malloc(sizeof(struct re_guts) +
-								  (NC - 1) * sizeof(cat_t));
-	if (g == NULL)
-		return REG_ESPACE;
-	p->ssize = len / (size_t) 2 *(size_t) 3 + (size_t) 1;		/* ugh */
-
-	p->strip = (sop *) malloc(p->ssize * sizeof(sop));
-	p->slen = 0;
-	if (p->strip == NULL)
-	{
-		free((char *) g);
-		return REG_ESPACE;
+	/* finish setup of nfa and its subre tree */
+	specialcolors(v->nfa);
+	CNOERR();
+#ifdef REG_DEBUG
+	if (debug != NULL) {
+		fprintf(debug, "\n\n\n========= RAW ==========\n");
+		dumpnfa(v->nfa, debug);
+		dumpst(v->tree, debug, 1);
 	}
-
-	/* set things up */
-	p->g = g;
-	p->next = wcp;
-	p->end = p->next + len;
-	p->error = 0;
-	p->ncsalloc = 0;
-	for (i = 0; i < NPAREN; i++)
-	{
-		p->pbegin[i] = 0;
-		p->pend[i] = 0;
+#endif
+	optst(v, v->tree);
+	v->ntree = numst(v->tree, 1);
+	markst(v->tree);
+	cleanst(v);
+#ifdef REG_DEBUG
+	if (debug != NULL) {
+		fprintf(debug, "\n\n\n========= TREE FIXED ==========\n");
+		dumpst(v->tree, debug, 1);
 	}
-	g->csetsize = NC;
-	g->sets = NULL;
-	g->setbits = NULL;
-	g->ncsets = 0;
-	g->cflags = cflags;
-	g->iflags = 0;
-	g->nbol = 0;
-	g->neol = 0;
-	g->must = NULL;
-	g->mlen = 0;
-	g->nsub = 0;
-	g->ncategories = 1;			/* category 0 is "everything else" */
-	g->categories = &g->catspace[-(CHAR_MIN)];
-	memset((char *) g->catspace, 0, NC * sizeof(cat_t));
-	g->backrefs = 0;
-
-	/* do it */
-	EMIT(OEND, 0);
-	g->firststate = THERE();
-	if (cflags & REG_EXTENDED)
-		p_ere(p, OUT);
-	else if (cflags & REG_NOSPEC)
-		p_str(p);
-	else
-		p_bre(p, OUT, OUT);
-	EMIT(OEND, 0);
-	g->laststate = THERE();
-
-	/* tidy up loose ends and fill things in */
-	categorize(p, g);
-	stripsnug(p, g);
-	findmust(p, g);
-	g->nplus = pluscount(p, g);
-	g->magic = MAGIC2;
-	preg->re_nsub = g->nsub;
-	preg->re_g = g;
-	preg->re_magic = MAGIC1;
-#ifndef REDEBUG
-	/* not debugging, so can't rely on the assert() in regexec() */
-	if (g->iflags & BAD)
-		SETERROR(REG_ASSERT);
 #endif
 
-	/* win or lose, we're done */
-	if (p->error != 0)			/* lose */
-		pg_regfree(preg);
-	return p->error;
-}
-
-/*
- * p_ere - ERE parser top level, concatenation and alternation
- */
-static void
-p_ere(struct parse * p,
-	  int stop)					/* character this ERE should end at */
-{
-	char		c;
-	sopno		prevback = 0;
-	sopno		prevfwd = 0;
-	sopno		conc;
-	int			first = 1;		/* is this the first alternative? */
-
-	for (;;)
-	{
-		/* do a bunch of concatenated expressions */
-		conc = HERE();
-		while (MORE() && (c = PEEK()) != '|' && c != stop)
-			p_ere_exp(p);
-		REQUIRE(HERE() != conc, REG_EMPTY);		/* require nonempty */
-
-		if (!EAT('|'))
-			break;				/* NOTE BREAK OUT */
-
-		if (first)
-		{
-			INSERT(OCH_, conc); /* offset is wrong */
-			prevfwd = conc;
-			prevback = conc;
-			first = 0;
-		}
-		ASTERN(OOR1, prevback);
-		prevback = THERE();
-		AHEAD(prevfwd);			/* fix previous offset */
-		prevfwd = HERE();
-		EMIT(OOR2, 0);			/* offset is very wrong */
-	}
-
-	if (!first)
-	{							/* tail-end fixups */
-		AHEAD(prevfwd);
-		ASTERN(O_CH, prevback);
-	}
-
-	assert(!MORE() || SEE(stop));
-}
-
-/*
- * p_ere_exp - parse one subERE, an atom possibly followed by a repetition op
- */
-static void
-p_ere_exp(struct parse * p)
-{
-	pg_wchar	c;
-	sopno		pos;
-	int			count;
-	int			count2;
-	sopno		subno;
-	int			wascaret = 0;
-
-	assert(MORE());				/* caller should have ensured this */
-	c = GETNEXT();
-
-	pos = HERE();
-	switch (c)
-	{
-		case '(':
-			REQUIRE(MORE(), REG_EPAREN);
-			p->g->nsub++;
-			subno = p->g->nsub;
-			if (subno < NPAREN)
-				p->pbegin[subno] = HERE();
-			EMIT(OLPAREN, subno);
-			if (!SEE(')'))
-				p_ere(p, ')');
-			if (subno < NPAREN)
-			{
-				p->pend[subno] = HERE();
-				assert(p->pend[subno] != 0);
-			}
-			EMIT(ORPAREN, subno);
-			MUSTEAT(')', REG_EPAREN);
-			break;
-#ifndef POSIX_MISTAKE
-		case ')':				/* happens only if no current unmatched ( */
-
-			/*
-			 * You may ask, why the ifndef?  Because I didn't notice this
-			 * until slightly too late for 1003.2, and none of the other
-			 * 1003.2 regular-expression reviewers noticed it at all.  So
-			 * an unmatched ) is legal POSIX, at least until we can get it
-			 * fixed.
-			 */
-			SETERROR(REG_EPAREN);
-			break;
+	/* build compacted NFAs for tree and lacons */
+	re->re_info |= nfatree(v, v->tree, debug);
+	CNOERR();
+	assert(v->nlacons == 0 || v->lacons != NULL);
+	for (i = 1; i < v->nlacons; i++) {
+#ifdef REG_DEBUG
+		if (debug != NULL)
+			fprintf(debug, "\n\n\n========= LA%d ==========\n", i);
 #endif
-		case '^':
-			EMIT(OBOL, 0);
-			p->g->iflags |= USEBOL;
-			p->g->nbol++;
-			wascaret = 1;
-			break;
-		case '$':
-			EMIT(OEOL, 0);
-			p->g->iflags |= USEEOL;
-			p->g->neol++;
-			break;
-		case '|':
-			SETERROR(REG_EMPTY);
-			break;
-		case '*':
-		case '+':
-		case '?':
-			SETERROR(REG_BADRPT);
-			break;
-		case '.':
-			if (p->g->cflags & REG_NEWLINE)
-				nonnewline(p);
-			else
-				EMIT(OANY, 0);
-			break;
-		case '[':
-			p_bracket(p);
-			break;
-		case '\\':
-			REQUIRE(MORE(), REG_EESCAPE);
-			c = GETNEXT();
-			ordinary(p, c);
-			break;
-		case '{':				/* okay as ordinary except if digit
-								 * follows */
-			REQUIRE(!MORE() || !pg_isdigit(PEEK()), REG_BADRPT);
-			/* FALLTHROUGH */
-		default:
-			ordinary(p, c);
-			break;
+		nfanode(v, &v->lacons[i], debug);
 	}
+	CNOERR();
+	if (v->tree->flags&SHORTER)
+		NOTE(REG_USHORTEST);
 
-	if (!MORE())
-		return;
-	c = PEEK();
-	/* we call { a repetition if followed by a digit */
-	if (!(c == '*' || c == '+' || c == '?' ||
-		  (c == '{' && MORE2() && pg_isdigit(PEEK2()))))
-		return;					/* no repetition, we're done */
-	NEXT();
+	/* build compacted NFAs for tree, lacons, fast search */
+#ifdef REG_DEBUG
+	if (debug != NULL)
+		fprintf(debug, "\n\n\n========= SEARCH ==========\n");
+#endif
+	/* can sacrifice main NFA now, so use it as work area */
+	(DISCARD)optimize(v->nfa, debug);
+	CNOERR();
+	makesearch(v, v->nfa);
+	CNOERR();
+	compact(v->nfa, &g->search);
+	CNOERR();
 
-	REQUIRE(!wascaret, REG_BADRPT);
-	switch (c)
-	{
-		case '*':				/* implemented as +? */
-			/* this case does not require the (y|) trick, noKLUDGE */
-			INSERT(OPLUS_, pos);
-			ASTERN(O_PLUS, pos);
-			INSERT(OQUEST_, pos);
-			ASTERN(O_QUEST, pos);
-			break;
-		case '+':
-			INSERT(OPLUS_, pos);
-			ASTERN(O_PLUS, pos);
-			break;
-		case '?':
-			/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
-			INSERT(OCH_, pos);	/* offset slightly wrong */
-			ASTERN(OOR1, pos);	/* this one's right */
-			AHEAD(pos);			/* fix the OCH_ */
-			EMIT(OOR2, 0);		/* offset very wrong... */
-			AHEAD(THERE());		/* ...so fix it */
-			ASTERN(O_CH, THERETHERE());
-			break;
-		case '{':
-			count = p_count(p);
-			if (EAT(','))
-			{
-				if (pg_isdigit(PEEK()))
-				{
-					count2 = p_count(p);
-					REQUIRE(count <= count2, REG_BADBR);
-				}
-				else
-/* single number with comma */
-					count2 = INFINITY;
-			}
-			else
-/* just a single number */
-				count2 = count;
-			repeat(p, pos, count, count2);
-			if (!EAT('}'))
-			{					/* error heuristics */
-				while (MORE() && PEEK() != '}')
-					NEXT();
-				REQUIRE(MORE(), REG_EBRACE);
-				SETERROR(REG_BADBR);
-			}
-			break;
-	}
+	/* looks okay, package it up */
+	re->re_nsub = v->nsubexp;
+	v->re = NULL;			/* freev no longer frees re */
+	g->magic = GUTSMAGIC;
+	g->cflags = v->cflags;
+	g->info = re->re_info;
+	g->nsub = re->re_nsub;
+	g->tree = v->tree;
+	v->tree = NULL;
+	g->ntree = v->ntree;
+	g->compare = (v->cflags&REG_ICASE) ? casecmp : cmp;
+	g->lacons = v->lacons;
+	v->lacons = NULL;
+	g->nlacons = v->nlacons;
 
-	if (!MORE())
-		return;
-	c = PEEK();
-	if (!(c == '*' || c == '+' || c == '?' ||
-		  (c == '{' && MORE2() && pg_isdigit(PEEK2()))))
-		return;
-	SETERROR(REG_BADRPT);
+#ifdef REG_DEBUG
+	if (flags&REG_DUMP)
+		dump(re, stdout);
+#endif
+
+	assert(v->err == 0);
+	return freev(v, 0);
 }
 
 /*
- * p_str - string (no metacharacters) "parser"
+ * moresubs - enlarge subRE vector
  */
 static void
-p_str(struct parse * p)
+moresubs(struct vars *v,
+		 int wanted)			/* want enough room for this one */
 {
-	REQUIRE(MORE(), REG_EMPTY);
-	while (MORE())
-		ordinary(p, GETNEXT());
+	struct subre **p;
+	size_t n;
+
+	assert(wanted > 0 && (size_t)wanted >= v->nsubs);
+	n = (size_t)wanted * 3 / 2 + 1;
+	if (v->subs == v->sub10) {
+		p = (struct subre **)MALLOC(n * sizeof(struct subre *));
+		if (p != NULL)
+			memcpy(VS(p), VS(v->subs),
+					v->nsubs * sizeof(struct subre *));
+	} else
+		p = (struct subre **)REALLOC(v->subs, n*sizeof(struct subre *));
+	if (p == NULL) {
+		ERR(REG_ESPACE);
+		return;
+	}
+	v->subs = p;
+	for (p = &v->subs[v->nsubs]; v->nsubs < n; p++, v->nsubs++)
+		*p = NULL;
+	assert(v->nsubs == n);
+	assert((size_t)wanted < v->nsubs);
 }
 
 /*
- * p_bre - BRE parser top level, anchoring and concatenation
+ * freev - free vars struct's substructures where necessary
  *
- * Giving end1 as OUT essentially eliminates the end1/end2 check.
- *
- * This implementation is a bit of a kludge, in that a trailing $ is first
- * taken as an ordinary character and then revised to be an anchor.  The
- * only undesirable side effect is that '$' gets included as a character
- * category in such cases.	This is fairly harmless; not worth fixing.
- * The amount of lookahead needed to avoid this kludge is excessive.
- */
-static void
-p_bre(struct parse * p,
-	  int end1,					/* first terminating character */
-	  int end2)					/* second terminating character */
-{
-	sopno		start = HERE();
-	int			first = 1;		/* first subexpression? */
-	int			wasdollar = 0;
-
-	if (EAT('^'))
-	{
-		EMIT(OBOL, 0);
-		p->g->iflags |= USEBOL;
-		p->g->nbol++;
-	}
-	while (MORE() && !SEETWO(end1, end2))
-	{
-		wasdollar = p_simp_re(p, first);
-		first = 0;
-	}
-	if (wasdollar)
-	{							/* oops, that was a trailing anchor */
-		DROP(1);
-		EMIT(OEOL, 0);
-		p->g->iflags |= USEEOL;
-		p->g->neol++;
-	}
-
-	REQUIRE(HERE() != start, REG_EMPTY);		/* require nonempty */
-}
-
-/*
- * p_simp_re - parse a simple RE, an atom possibly followed by a repetition
- */
-static int						/* was the simple RE an unbackslashed $? */
-p_simp_re(struct parse * p,
-		  int starordinary)		/* is a leading * an ordinary character? */
-{
-	int			c;
-	int			count;
-	int			count2;
-	sopno		pos;
-	int			i;
-	sopno		subno;
-
-#define  BACKSL  (1<<24)
-
-	pos = HERE();				/* repetion op, if any, covers from here */
-
-	assert(MORE());				/* caller should have ensured this */
-	c = GETNEXT();
-	if (c == '\\')
-	{
-		REQUIRE(MORE(), REG_EESCAPE);
-		c = BACKSL | (pg_wchar) GETNEXT();
-	}
-	switch (c)
-	{
-		case '.':
-			if (p->g->cflags & REG_NEWLINE)
-				nonnewline(p);
-			else
-				EMIT(OANY, 0);
-			break;
-		case '[':
-			p_bracket(p);
-			break;
-		case BACKSL | '{':
-			SETERROR(REG_BADRPT);
-			break;
-		case BACKSL | '(':
-			p->g->nsub++;
-			subno = p->g->nsub;
-			if (subno < NPAREN)
-				p->pbegin[subno] = HERE();
-			EMIT(OLPAREN, subno);
-			/* the MORE here is an error heuristic */
-			if (MORE() && !SEETWO('\\', ')'))
-				p_bre(p, '\\', ')');
-			if (subno < NPAREN)
-			{
-				p->pend[subno] = HERE();
-				assert(p->pend[subno] != 0);
-			}
-			EMIT(ORPAREN, subno);
-			REQUIRE(EATTWO('\\', ')'), REG_EPAREN);
-			break;
-		case BACKSL | ')':		/* should not get here -- must be user */
-		case BACKSL | '}':
-			SETERROR(REG_EPAREN);
-			break;
-		case BACKSL | '1':
-		case BACKSL | '2':
-		case BACKSL | '3':
-		case BACKSL | '4':
-		case BACKSL | '5':
-		case BACKSL | '6':
-		case BACKSL | '7':
-		case BACKSL | '8':
-		case BACKSL | '9':
-			i = (c & ~BACKSL) - '0';
-			assert(i < NPAREN);
-			if (p->pend[i] != 0)
-			{
-				assert(i <= p->g->nsub);
-				EMIT(OBACK_, i);
-				assert(p->pbegin[i] != 0);
-				assert(OP(p->strip[p->pbegin[i]]) == OLPAREN);
-				assert(OP(p->strip[p->pend[i]]) == ORPAREN);
-				dupl(p, p->pbegin[i] + 1, p->pend[i]);
-				EMIT(O_BACK, i);
-			}
-			else
-				SETERROR(REG_ESUBREG);
-			p->g->backrefs = 1;
-			break;
-		case '*':
-			REQUIRE(starordinary, REG_BADRPT);
-			/* FALLTHROUGH */
-		default:
-			ordinary(p, c & ~BACKSL);
-			break;
-	}
-
-	if (EAT('*'))
-	{							/* implemented as +? */
-		/* this case does not require the (y|) trick, noKLUDGE */
-		INSERT(OPLUS_, pos);
-		ASTERN(O_PLUS, pos);
-		INSERT(OQUEST_, pos);
-		ASTERN(O_QUEST, pos);
-	}
-	else if (EATTWO('\\', '{'))
-	{
-		count = p_count(p);
-		if (EAT(','))
-		{
-			if (MORE() && pg_isdigit(PEEK()))
-			{
-				count2 = p_count(p);
-				REQUIRE(count <= count2, REG_BADBR);
-			}
-			else
-/* single number with comma */
-				count2 = INFINITY;
-		}
-		else
-/* just a single number */
-			count2 = count;
-		repeat(p, pos, count, count2);
-		if (!EATTWO('\\', '}'))
-		{						/* error heuristics */
-			while (MORE() && !SEETWO('\\', '}'))
-				NEXT();
-			REQUIRE(MORE(), REG_EBRACE);
-			SETERROR(REG_BADBR);
-		}
-	}
-	else if (c == (unsigned char) '$')	/* $ (but not \$) ends it */
-		return 1;
-
-	return 0;
-}
-
-/*
- * p_count - parse a repetition count
- */
-static int						/* the value */
-p_count(struct parse * p)
-{
-	int			count = 0;
-	int			ndigits = 0;
-
-	while (MORE() && pg_isdigit(PEEK()) && count <= DUPMAX)
-	{
-		count = count * 10 + (GETNEXT() - '0');
-		ndigits++;
-	}
-
-	REQUIRE(ndigits > 0 && count <= DUPMAX, REG_BADBR);
-	return count;
-}
-
-/*
- * p_bracket - parse a bracketed character list
- *
- * Note a significant property of this code:  if the allocset() did SETERROR,
- * no set operations are done.
- */
-static void
-p_bracket(struct parse * p)
-{
-	cset	   *cs = allocset(p);
-	int			invert = 0;
-
-	pg_wchar	sp1[] = {'[', ':', '<', ':', ']', ']'};
-	pg_wchar	sp2[] = {'[', ':', '>', ':', ']', ']'};
-
-	/* Dept of Truly Sickening Special-Case Kludges */
-	if (p->next + 5 < p->end && pg_wchar_strncmp(p->next, sp1, 6) == 0)
-	{
-		EMIT(OBOW, 0);
-		NEXTn(6);
-		return;
-	}
-	if (p->next + 5 < p->end && pg_wchar_strncmp(p->next, sp2, 6) == 0)
-	{
-		EMIT(OEOW, 0);
-		NEXTn(6);
-		return;
-	}
-
-	if (EAT('^'))
-		invert++;				/* make note to invert set at end */
-	if (EAT(']'))
-		CHadd(cs, ']');
-	else if (EAT('-'))
-		CHadd(cs, '-');
-	while (MORE() && PEEK() != ']' && !SEETWO('-', ']'))
-		p_b_term(p, cs);
-	if (EAT('-'))
-		CHadd(cs, '-');
-	MUSTEAT(']', REG_EBRACK);
-
-	if (p->error != 0)			/* don't mess things up further */
-		return;
-
-	if (p->g->cflags & REG_ICASE)
-	{
-		int			i;
-		int			ci;
-
-		for (i = p->g->csetsize - 1; i >= 0; i--)
-			if (CHIN(cs, i) && pg_isalpha(i))
-			{
-				ci = othercase(i);
-				if (ci != i)
-					CHadd(cs, ci);
-			}
-		if (cs->multis != NULL)
-			mccase(p, cs);
-	}
-	if (invert)
-	{
-		int			i;
-
-		for (i = p->g->csetsize - 1; i >= 0; i--)
-			if (CHIN(cs, i))
-				CHsub(cs, i);
-			else
-				CHadd(cs, i);
-		if (p->g->cflags & REG_NEWLINE)
-			CHsub(cs, '\n');
-		if (cs->multis != NULL)
-			mcinvert(p, cs);
-	}
-
-	assert(cs->multis == NULL); /* xxx */
-
-	if (nch(p, cs) == 1)
-	{							/* optimize singleton sets */
-		ordinary(p, firstch(p, cs));
-		freeset(p, cs);
-	}
-	else
-		EMIT(OANYOF, freezeset(p, cs));
-}
-
-/*
- * p_b_term - parse one term of a bracketed character list
- */
-static void
-p_b_term(struct parse * p, cset *cs)
-{
-	pg_wchar	c;
-	pg_wchar	start,
-				finish;
-	int			i;
-
-	/* classify what we've got */
-	switch ((MORE()) ? PEEK() : '\0')
-	{
-		case '[':
-			c = (MORE2()) ? PEEK2() : '\0';
-			break;
-		case '-':
-			SETERROR(REG_ERANGE);
-			return;				/* NOTE RETURN */
-			break;
-		default:
-			c = '\0';
-			break;
-	}
-
-	switch (c)
-	{
-		case ':':				/* character class */
-			NEXT2();
-			REQUIRE(MORE(), REG_EBRACK);
-			c = PEEK();
-			REQUIRE(c != '-' && c != ']', REG_ECTYPE);
-			p_b_cclass(p, cs);
-			REQUIRE(MORE(), REG_EBRACK);
-			REQUIRE(EATTWO(':', ']'), REG_ECTYPE);
-			break;
-		case '=':				/* equivalence class */
-			NEXT2();
-			REQUIRE(MORE(), REG_EBRACK);
-			c = PEEK();
-			REQUIRE(c != '-' && c != ']', REG_ECOLLATE);
-			p_b_eclass(p, cs);
-			REQUIRE(MORE(), REG_EBRACK);
-			REQUIRE(EATTWO('=', ']'), REG_ECOLLATE);
-			break;
-		default:				/* symbol, ordinary character, or range */
-/* xxx revision needed for multichar stuff */
-			start = p_b_symbol(p);
-			if (SEE('-') && MORE2() && PEEK2() != ']')
-			{
-				/* range */
-				NEXT();
-				if (EAT('-'))
-					finish = '-';
-				else
-					finish = p_b_symbol(p);
-			}
-			else
-				finish = start;
-/* xxx what about signed chars here... */
-			REQUIRE(start <= finish, REG_ERANGE);
-
-			if (CHlc(start) != CHlc(finish))
-				SETERROR(REG_ERANGE);
-
-			for (i = start; i <= finish; i++)
-				CHadd(cs, i);
-			break;
-	}
-}
-
-/*
- * p_b_cclass - parse a character-class name and deal with it
- */
-static void
-p_b_cclass(struct parse * p, cset *cs)
-{
-	pg_wchar   *sp = p->next;
-	struct cclass *cp;
-	size_t		len;
-	char	   *u;
-	unsigned char c;
-
-	while (MORE() && pg_isalpha(PEEK()))
-		NEXT();
-	len = p->next - sp;
-
-	for (cp = cclasses; cp->name != NULL; cp++)
-		if (pg_char_and_wchar_strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
-			break;
-
-	if (cp->name == NULL)
-	{
-		/* oops, didn't find it */
-		SETERROR(REG_ECTYPE);
-		return;
-	}
-
-	u = cp->chars;
-	while ((c = *u++) != '\0')
-		CHadd(cs, c);
-	for (u = cp->multis; *u != '\0'; u += strlen(u) + 1)
-		MCadd(p, cs, u);
-}
-
-/*
- * p_b_eclass - parse an equivalence-class name and deal with it
- *
- * This implementation is incomplete. xxx
- */
-static void
-p_b_eclass(struct parse * p, cset *cs)
-{
-	char		c;
-
-	c = p_b_coll_elem(p, '=');
-	CHadd(cs, c);
-}
-
-/*
- * p_b_symbol - parse a character or [..]ed multicharacter collating symbol
- */
-static pg_wchar					/* value of symbol */
-p_b_symbol(struct parse * p)
-{
-	pg_wchar	value;
-
-	REQUIRE(MORE(), REG_EBRACK);
-	if (!EATTWO('[', '.'))
-		return GETNEXT();
-
-	/* collating symbol */
-	value = p_b_coll_elem(p, '.');
-	REQUIRE(EATTWO('.', ']'), REG_ECOLLATE);
-	return value;
-}
-
-/*
- * p_b_coll_elem - parse a collating-element name and look it up
- */
-static char						/* value of collating element */
-p_b_coll_elem(struct parse * p, int endc)
-{
-	pg_wchar   *sp = p->next;
-	struct cname *cp;
-	int			len;
-
-	while (MORE() && !SEETWO(endc, ']'))
-		NEXT();
-	if (!MORE())
-	{
-		SETERROR(REG_EBRACK);
-		return 0;
-	}
-	len = p->next - sp;
-
-	for (cp = cnames; cp->name != NULL; cp++)
-		if (pg_char_and_wchar_strncmp(cp->name, sp, len) == 0 && cp->name[len] == '\0')
-			return cp->code;	/* known name */
-
-	if (len == 1)
-		return *sp;				/* single character */
-	SETERROR(REG_ECOLLATE);		/* neither */
-	return 0;
-}
-
-/*
- * othercase - return the case counterpart of an alphabetic
- */
-static unsigned char			/* if no counterpart, return ch */
-othercase(int ch)
-{
-	assert(pg_isalpha(ch));
-	if (pg_isupper(ch))
-		return (unsigned char) tolower((unsigned char) ch);
-	else if (pg_islower(ch))
-		return (unsigned char) toupper((unsigned char) ch);
-	else
-/* peculiar, but could happen */
-		return (unsigned char) ch;
-}
-
-/*
- * bothcases - emit a dualcase version of a two-case character
- *
- * Boy, is this implementation ever a kludge...
- */
-static void
-bothcases(struct parse * p, int ch)
-{
-	pg_wchar   *oldnext = p->next;
-	pg_wchar   *oldend = p->end;
-	pg_wchar	bracket[3];
-
-	assert(othercase(ch) != ch);	/* p_bracket() would recurse */
-	p->next = bracket;
-	p->end = bracket + 2;
-	bracket[0] = ch;
-	bracket[1] = ']';
-	bracket[2] = '\0';
-	p_bracket(p);
-	assert(p->next == bracket + 2);
-	p->next = oldnext;
-	p->end = oldend;
-}
-
-/*
- * ordinary - emit an ordinary character
- */
-static void
-ordinary(struct parse * p, int ch)
-{
-	cat_t	   *cap = p->g->categories;
-
-	if ((p->g->cflags & REG_ICASE) && pg_isalpha(ch) && othercase(ch) != ch)
-		bothcases(p, ch);
-	else
-	{
-		EMIT(OCHAR, (pg_wchar) ch);
-		if (ch >= CHAR_MIN && ch <= CHAR_MAX && cap[ch] == 0)
-			cap[ch] = p->g->ncategories++;
-	}
-}
-
-/*
- * nonnewline - emit REG_NEWLINE version of OANY
- *
- * Boy, is this implementation ever a kludge...
- */
-static void
-nonnewline(struct parse * p)
-{
-	pg_wchar   *oldnext = p->next;
-	pg_wchar   *oldend = p->end;
-	pg_wchar	bracket[4];
-
-	p->next = bracket;
-	p->end = bracket + 3;
-	bracket[0] = '^';
-	bracket[1] = '\n';
-	bracket[2] = ']';
-	bracket[3] = '\0';
-	p_bracket(p);
-	assert(p->next == bracket + 3);
-	p->next = oldnext;
-	p->end = oldend;
-}
-
-/*
- * repeat - generate code for a bounded repetition, recursively if needed
- */
-static void
-repeat(struct parse * p,
-	   sopno start,				/* operand from here to end of strip */
-	   int from,				/* repeated from this number */
-	   int to)					/* to this number of times (maybe
-								 * INFINITY) */
-{
-	sopno		finish = HERE();
-
-#define  N		 2
-#define  INF	 3
-#define  REP(f, t)		 ((f)*8 + (t))
-#define  MAP(n)  (((n) <= 1) ? (n) : ((n) == INFINITY) ? INF : N)
-	sopno		copy;
-
-	if (p->error != 0)			/* head off possible runaway recursion */
-		return;
-
-	assert(from <= to);
-
-	switch (REP(MAP(from), MAP(to)))
-	{
-		case REP(0, 0): /* must be user doing this */
-			DROP(finish - start);		/* drop the operand */
-			break;
-		case REP(0, 1): /* as x{1,1}? */
-		case REP(0, N): /* as x{1,n}? */
-		case REP(0, INF):		/* as x{1,}? */
-			/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
-			INSERT(OCH_, start);	/* offset is wrong... */
-			repeat(p, start + 1, 1, to);
-			ASTERN(OOR1, start);
-			AHEAD(start);		/* ... fix it */
-			EMIT(OOR2, 0);
-			AHEAD(THERE());
-			ASTERN(O_CH, THERETHERE());
-			break;
-		case REP(1, 1): /* trivial case */
-			/* done */
-			break;
-		case REP(1, N): /* as x?x{1,n-1} */
-			/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
-			INSERT(OCH_, start);
-			ASTERN(OOR1, start);
-			AHEAD(start);
-			EMIT(OOR2, 0);		/* offset very wrong... */
-			AHEAD(THERE());		/* ...so fix it */
-			ASTERN(O_CH, THERETHERE());
-			copy = dupl(p, start + 1, finish + 1);
-			assert(copy == finish + 4);
-			repeat(p, copy, 1, to - 1);
-			break;
-		case REP(1, INF):		/* as x+ */
-			INSERT(OPLUS_, start);
-			ASTERN(O_PLUS, start);
-			break;
-		case REP(N, N): /* as xx{m-1,n-1} */
-			copy = dupl(p, start, finish);
-			repeat(p, copy, from - 1, to - 1);
-			break;
-		case REP(N, INF):		/* as xx{n-1,INF} */
-			copy = dupl(p, start, finish);
-			repeat(p, copy, from - 1, to);
-			break;
-		default:				/* "can't happen" */
-			SETERROR(REG_ASSERT);		/* just in case */
-			break;
-	}
-}
-
-/*
- * seterr - set an error condition
- */
-static int						/* useless but makes type checking happy */
-seterr(struct parse * p, int e)
-{
-	if (p->error == 0)			/* keep earliest error condition */
-		p->error = e;
-	p->next = nuls;				/* try to bring things to a halt */
-	p->end = nuls;
-	return 0;					/* make the return value well-defined */
-}
-
-/*
- * allocset - allocate a set of characters for []
- */
-static cset *
-allocset(struct parse * p)
-{
-	int			no = p->g->ncsets++;
-	size_t		nc;
-	size_t		nbytes;
-	cset	   *cs;
-	size_t		css = (size_t) p->g->csetsize;
-	int			i;
-
-	if (no >= p->ncsalloc)
-	{							/* need another column of space */
-		p->ncsalloc += CHAR_BIT;
-		nc = p->ncsalloc;
-		assert(nc % CHAR_BIT == 0);
-		nbytes = nc / CHAR_BIT * css;
-		if (p->g->sets == NULL)
-			p->g->sets = (cset *) malloc(nc * sizeof(cset));
-		else
-			p->g->sets = (cset *) realloc((char *) p->g->sets,
-										  nc * sizeof(cset));
-		if (p->g->setbits == NULL)
-			p->g->setbits = (uch *) malloc(nbytes);
-		else
-		{
-			p->g->setbits = (uch *) realloc((char *) p->g->setbits,
-											nbytes);
-			/* xxx this isn't right if setbits is now NULL */
-			for (i = 0; i < no; i++)
-				p->g->sets[i].ptr = p->g->setbits + css * (i / CHAR_BIT);
-		}
-		if (p->g->sets != NULL && p->g->setbits != NULL)
-			memset((char *) p->g->setbits + (nbytes - css),
-				   0, css);
-		else
-		{
-			no = 0;
-			SETERROR(REG_ESPACE);
-			/* caller's responsibility not to do set ops */
-		}
-	}
-
-	assert(p->g->sets != NULL); /* xxx */
-	cs = &p->g->sets[no];
-	cs->ptr = p->g->setbits + css * ((no) / CHAR_BIT);
-	cs->mask = 1 << ((no) % CHAR_BIT);
-	cs->hash = 0;
-	cs->smultis = 0;
-	cs->multis = NULL;
-
-	return cs;
-}
-
-/*
- * freeset - free a now-unused set
- */
-static void
-freeset(struct parse * p, cset *cs)
-{
-	int			i;
-	cset	   *top = &p->g->sets[p->g->ncsets];
-	size_t		css = (size_t) p->g->csetsize;
-
-	for (i = 0; i < css; i++)
-		CHsub(cs, i);
-	if (cs == top - 1)			/* recover only the easy case */
-		p->g->ncsets--;
-}
-
-/*
- * freezeset - final processing on a set of characters
- *
- * The main task here is merging identical sets.  This is usually a waste
- * of time (although the hash code minimizes the overhead), but can win
- * big if REG_ICASE is being used.	REG_ICASE, by the way, is why the hash
- * is done using addition rather than xor -- all ASCII [aA] sets xor to
- * the same value!
- */
-static int						/* set number */
-freezeset(struct parse * p, cset *cs)
-{
-	uch			h = cs->hash;
-	int			i;
-	cset	   *top = &p->g->sets[p->g->ncsets];
-	cset	   *cs2;
-	size_t		css = (size_t) p->g->csetsize;
-
-	/* look for an earlier one which is the same */
-	for (cs2 = &p->g->sets[0]; cs2 < top; cs2++)
-		if (cs2->hash == h && cs2 != cs)
-		{
-			/* maybe */
-			for (i = 0; i < css; i++)
-				if (!!CHIN(cs2, i) != !!CHIN(cs, i))
-					break;		/* no */
-			if (i == css)
-				break;			/* yes */
-		}
-
-	if (cs2 < top)
-	{							/* found one */
-		freeset(p, cs);
-		cs = cs2;
-	}
-
-	return (int) (cs - p->g->sets);
-}
-
-/*
- * firstch - return first character in a set (which must have at least one)
- */
-static int						/* character; there is no "none" value */
-firstch(struct parse * p, cset *cs)
-{
-	int			i;
-	size_t		css = (size_t) p->g->csetsize;
-
-	for (i = 0; i < css; i++)
-		if (CHIN(cs, i))
-			return i;
-	assert(never);
-	return 0;					/* arbitrary */
-}
-
-/*
- * nch - number of characters in a set
+ * Optionally does error-number setting, and always returns error code
+ * (if any), to make error-handling code terser.
  */
 static int
-nch(struct parse * p, cset *cs)
+freev(struct vars *v,
+	  int err)
 {
-	int			i;
-	size_t		css = (size_t) p->g->csetsize;
-	int			n = 0;
+	if (v->re != NULL)
+		rfree(v->re);
+	if (v->subs != v->sub10)
+		FREE(v->subs);
+	if (v->nfa != NULL)
+		freenfa(v->nfa);
+	if (v->tree != NULL)
+		freesubre(v, v->tree);
+	if (v->treechain != NULL)
+		cleanst(v);
+	if (v->cv != NULL)
+		freecvec(v->cv);
+	if (v->cv2 != NULL)
+		freecvec(v->cv2);
+	if (v->mcces != NULL)
+		freecvec(v->mcces);
+	if (v->lacons != NULL)
+		freelacons(v->lacons, v->nlacons);
+	ERR(err);			/* nop if err==0 */
 
-	for (i = 0; i < css; i++)
-		if (CHIN(cs, i))
-			n++;
+	return v->err;
+}
+
+/*
+ * makesearch - turn an NFA into a search NFA (implicit prepend of .*?)
+ * NFA must have been optimize()d already.
+ */
+static void
+makesearch(struct vars *v,
+		   struct nfa *nfa)
+{
+	struct arc *a;
+	struct arc *b;
+	struct state *pre = nfa->pre;
+	struct state *s;
+	struct state *s2;
+	struct state *slist;
+
+	/* no loops are needed if it's anchored */
+	for (a = pre->outs; a != NULL; a = a->outchain) {
+		assert(a->type == PLAIN);
+		if (a->co != nfa->bos[0] && a->co != nfa->bos[1])
+			break;
+	}
+	if (a != NULL) {
+		/* add implicit .* in front */
+		rainbow(nfa, v->cm, PLAIN, COLORLESS, pre, pre);
+
+		/* and ^* and \A* too -- not always necessary, but harmless */
+		newarc(nfa, PLAIN, nfa->bos[0], pre, pre);
+		newarc(nfa, PLAIN, nfa->bos[1], pre, pre);
+	}
+
+	/*
+	 * Now here's the subtle part.  Because many REs have no lookback
+	 * constraints, often knowing when you were in the pre state tells
+	 * you little; it's the next state(s) that are informative.  But
+	 * some of them may have other inarcs, i.e. it may be possible to
+	 * make actual progress and then return to one of them.  We must
+	 * de-optimize such cases, splitting each such state into progress
+	 * and no-progress states.
+	 */
+
+	/* first, make a list of the states */
+	slist = NULL;
+	for (a = pre->outs; a != NULL; a = a->outchain) {
+		s = a->to;
+		for (b = s->ins; b != NULL; b = b->inchain)
+			if (b->from != pre)
+				break;
+		if (b != NULL) {		/* must be split */
+			s->tmp = slist;
+			slist = s;
+		}
+	}
+
+	/* do the splits */
+	for (s = slist; s != NULL; s = s2) {
+		s2 = newstate(nfa);
+		copyouts(nfa, s, s2);
+		for (a = s->ins; a != NULL; a = b) {
+			b = a->inchain;
+			if (a->from != pre) {
+				cparc(nfa, a, a->from, s2);
+				freearc(nfa, a);
+			}
+		}
+		s2 = s->tmp;
+		s->tmp = NULL;		/* clean up while we're at it */
+	}
+}
+
+/*
+ * parse - parse an RE
+ *
+ * This is actually just the top level, which parses a bunch of branches
+ * tied together with '|'.  They appear in the tree as the left children
+ * of a chain of '|' subres.
+ */
+static struct subre *
+parse(struct vars *v,
+	  int stopper,			/* EOS or ')' */
+	  int type,			/* LACON (lookahead subRE) or PLAIN */
+	  struct state *init,		/* initial state */
+	  struct state *final)		/* final state */
+{
+	struct state *left;	/* scaffolding for branch */
+	struct state *right;
+	struct subre *branches;	/* top level */
+	struct subre *branch;	/* current branch */
+	struct subre *t;	/* temporary */
+	int firstbranch;	/* is this the first branch? */
+
+	assert(stopper == ')' || stopper == EOS);
+
+	branches = subre(v, '|', LONGER, init, final);
+	NOERRN();
+	branch = branches;
+	firstbranch = 1;
+	do {	/* a branch */
+		if (!firstbranch) {
+			/* need a place to hang it */
+			branch->right = subre(v, '|', LONGER, init, final);
+			NOERRN();
+			branch = branch->right;
+		}
+		firstbranch = 0;
+		left = newstate(v->nfa);
+		right = newstate(v->nfa);
+		NOERRN();
+		EMPTYARC(init, left);
+		EMPTYARC(right, final);
+		NOERRN();
+		branch->left = parsebranch(v, stopper, type, left, right, 0);
+		NOERRN();
+		branch->flags |= UP(branch->flags | branch->left->flags);
+		if ((branch->flags &~ branches->flags) != 0)	/* new flags */
+			for (t = branches; t != branch; t = t->right)
+				t->flags |= branch->flags;
+	} while (EAT('|'));
+	assert(SEE(stopper) || SEE(EOS));
+
+	if (!SEE(stopper)) {
+		assert(stopper == ')' && SEE(EOS));
+		ERR(REG_EPAREN);
+	}
+
+	/* optimize out simple cases */
+	if (branch == branches) {	/* only one branch */
+		assert(branch->right == NULL);
+		t = branch->left;
+		branch->left = NULL;
+		freesubre(v, branches);
+		branches = t;
+	} else if (!MESSY(branches->flags)) {	/* no interesting innards */
+		freesubre(v, branches->left);
+		branches->left = NULL;
+		freesubre(v, branches->right);
+		branches->right = NULL;
+		branches->op = '=';
+	}
+
+	return branches;
+}
+
+/*
+ * parsebranch - parse one branch of an RE
+ *
+ * This mostly manages concatenation, working closely with parseqatom().
+ * Concatenated things are bundled up as much as possible, with separate
+ * ',' nodes introduced only when necessary due to substructure.
+ */
+static struct subre *
+parsebranch(struct vars *v,
+			int stopper,			/* EOS or ')' */
+			int type,			/* LACON (lookahead subRE) or PLAIN */
+			struct state *left,		/* leftmost state */
+			struct state *right,		/* rightmost state */
+			int partial)			/* is this only part of a branch? */
+{
+	struct state *lp;	/* left end of current construct */
+	int seencontent;	/* is there anything in this branch yet? */
+	struct subre *t;
+
+	lp = left;
+	seencontent = 0;
+	t = subre(v, '=', 0, left, right);	/* op '=' is tentative */
+	NOERRN();
+	while (!SEE('|') && !SEE(stopper) && !SEE(EOS)) {
+		if (seencontent) {	/* implicit concat operator */
+			lp = newstate(v->nfa);
+			NOERRN();
+			moveins(v->nfa, right, lp);
+		}
+		seencontent = 1;
+
+		/* NB, recursion in parseqatom() may swallow rest of branch */
+		parseqatom(v, stopper, type, lp, right, t);
+	}
+
+	if (!seencontent) {		/* empty branch */
+		if (!partial)
+			NOTE(REG_UUNSPEC);
+		assert(lp == left);
+		EMPTYARC(left, right);
+	}
+
+	return t;
+}
+
+/*
+ * parseqatom - parse one quantified atom or constraint of an RE
+ *
+ * The bookkeeping near the end cooperates very closely with parsebranch();
+ * in particular, it contains a recursion that can involve parsing the rest
+ * of the branch, making this function's name somewhat inaccurate.
+ */
+static void
+parseqatom(struct vars *v,
+		   int stopper,			/* EOS or ')' */
+		   int type,			/* LACON (lookahead subRE) or PLAIN */
+		   struct state *lp,		/* left state to hang it on */
+		   struct state *rp,		/* right state to hang it on */
+		   struct subre *top)		/* subtree top */
+{
+	struct state *s;	/* temporaries for new states */
+	struct state *s2;
+#	define	ARCV(t, val)	newarc(v->nfa, t, val, lp, rp)
+	int m, n;
+	struct subre *atom;	/* atom's subtree */
+	struct subre *t;
+	int cap;		/* capturing parens? */
+	int pos;		/* positive lookahead? */
+	int subno;		/* capturing-parens or backref number */
+	int atomtype;
+	int qprefer;		/* quantifier short/long preference */
+	int f;
+	struct subre **atomp;	/* where the pointer to atom is */
+
+	/* initial bookkeeping */
+	atom = NULL;
+	assert(lp->nouts == 0);	/* must string new code */
+	assert(rp->nins == 0);	/*  between lp and rp */
+	subno = 0;		/* just to shut lint up */
+
+	/* an atom or constraint... */
+	atomtype = v->nexttype;
+	switch (atomtype) {
+	/* first, constraints, which end by returning */
+	case '^':
+		ARCV('^', 1);
+		if (v->cflags&REG_NLANCH)
+			ARCV(BEHIND, v->nlcolor);
+		NEXT();
+		return;
+		break;
+	case '$':
+		ARCV('$', 1);
+		if (v->cflags&REG_NLANCH)
+			ARCV(AHEAD, v->nlcolor);
+		NEXT();
+		return;
+		break;
+	case SBEGIN:
+		ARCV('^', 1);	/* BOL */
+		ARCV('^', 0);	/* or BOS */
+		NEXT();
+		return;
+		break;
+	case SEND:
+		ARCV('$', 1);	/* EOL */
+		ARCV('$', 0);	/* or EOS */
+		NEXT();
+		return;
+		break;
+	case '<':
+		wordchrs(v);	/* does NEXT() */
+		s = newstate(v->nfa);
+		NOERR();
+		nonword(v, BEHIND, lp, s);
+		word(v, AHEAD, s, rp);
+		return;
+		break;
+	case '>':
+		wordchrs(v);	/* does NEXT() */
+		s = newstate(v->nfa);
+		NOERR();
+		word(v, BEHIND, lp, s);
+		nonword(v, AHEAD, s, rp);
+		return;
+		break;
+	case WBDRY:
+		wordchrs(v);	/* does NEXT() */
+		s = newstate(v->nfa);
+		NOERR();
+		nonword(v, BEHIND, lp, s);
+		word(v, AHEAD, s, rp);
+		s = newstate(v->nfa);
+		NOERR();
+		word(v, BEHIND, lp, s);
+		nonword(v, AHEAD, s, rp);
+		return;
+		break;
+	case NWBDRY:
+		wordchrs(v);	/* does NEXT() */
+		s = newstate(v->nfa);
+		NOERR();
+		word(v, BEHIND, lp, s);
+		word(v, AHEAD, s, rp);
+		s = newstate(v->nfa);
+		NOERR();
+		nonword(v, BEHIND, lp, s);
+		nonword(v, AHEAD, s, rp);
+		return;
+		break;
+	case LACON:	/* lookahead constraint */
+		pos = v->nextvalue;
+		NEXT();
+		s = newstate(v->nfa);
+		s2 = newstate(v->nfa);
+		NOERR();
+		t = parse(v, ')', LACON, s, s2);
+		freesubre(v, t);	/* internal structure irrelevant */
+		assert(SEE(')') || ISERR());
+		NEXT();
+		n = newlacon(v, s, s2, pos);
+		NOERR();
+		ARCV(LACON, n);
+		return;
+		break;
+	/* then errors, to get them out of the way */
+	case '*':
+	case '+':
+	case '?':
+	case '{':
+		ERR(REG_BADRPT);
+		return;
+		break;
+	default:
+		ERR(REG_ASSERT);
+		return;
+		break;
+	/* then plain characters, and minor variants on that theme */
+	case ')':		/* unbalanced paren */
+		if ((v->cflags&REG_ADVANCED) != REG_EXTENDED) {
+			ERR(REG_EPAREN);
+			return;
+		}
+		/* legal in EREs due to specification botch */
+		NOTE(REG_UPBOTCH);
+		/* fallthrough into case PLAIN */
+	case PLAIN:
+		onechr(v, v->nextvalue, lp, rp);
+		okcolors(v->nfa, v->cm);
+		NOERR();
+		NEXT();
+		break;
+	case '[':
+		if (v->nextvalue == 1)
+			bracket(v, lp, rp);
+		else
+			cbracket(v, lp, rp);
+		assert(SEE(']') || ISERR());
+		NEXT();
+		break;
+	case '.':
+		rainbow(v->nfa, v->cm, PLAIN,
+				(v->cflags&REG_NLSTOP) ? v->nlcolor : COLORLESS,
+				lp, rp);
+		NEXT();
+		break;
+	/* and finally the ugly stuff */
+	case '(':	/* value flags as capturing or non */
+		cap = (type == LACON) ? 0 : v->nextvalue;
+		if (cap) {
+			v->nsubexp++;
+			subno = v->nsubexp;
+			if ((size_t)subno >= v->nsubs)
+				moresubs(v, subno);
+			assert((size_t)subno < v->nsubs);
+		} else
+			atomtype = PLAIN;	/* something that's not '(' */
+		NEXT();
+		/* need new endpoints because tree will contain pointers */
+		s = newstate(v->nfa);
+		s2 = newstate(v->nfa);
+		NOERR();
+		EMPTYARC(lp, s);
+		EMPTYARC(s2, rp);
+		NOERR();
+		atom = parse(v, ')', PLAIN, s, s2);
+		assert(SEE(')') || ISERR());
+		NEXT();
+		NOERR();
+		if (cap) {
+			v->subs[subno] = atom;
+			t = subre(v, '(', atom->flags|CAP, lp, rp);
+			NOERR();
+			t->subno = subno;
+			t->left = atom;
+			atom = t;
+		}
+		/* postpone everything else pending possible {0} */
+		break;
+	case BACKREF:	/* the Feature From The Black Lagoon */
+		INSIST(type != LACON, REG_ESUBREG);
+		INSIST(v->nextvalue < v->nsubs, REG_ESUBREG);
+		INSIST(v->subs[v->nextvalue] != NULL, REG_ESUBREG);
+		NOERR();
+		assert(v->nextvalue > 0);
+		atom = subre(v, 'b', BACKR, lp, rp);
+		subno = v->nextvalue;
+		atom->subno = subno;
+		EMPTYARC(lp, rp);	/* temporarily, so there's something */
+		NEXT();
+		break;
+	}
+
+	/* ...and an atom may be followed by a quantifier */
+	switch (v->nexttype) {
+	case '*':
+		m = 0;
+		n = INFINITY;
+		qprefer = (v->nextvalue) ? LONGER : SHORTER;
+		NEXT();
+		break;
+	case '+':
+		m = 1;
+		n = INFINITY;
+		qprefer = (v->nextvalue) ? LONGER : SHORTER;
+		NEXT();
+		break;
+	case '?':
+		m = 0;
+		n = 1;
+		qprefer = (v->nextvalue) ? LONGER : SHORTER;
+		NEXT();
+		break;
+	case '{':
+		NEXT();
+		m = scannum(v);
+		if (EAT(',')) {
+			if (SEE(DIGIT))
+				n = scannum(v);
+			else
+				n = INFINITY;
+			if (m > n) {
+				ERR(REG_BADBR);
+				return;
+			}
+			/* {m,n} exercises preference, even if it's {m,m} */
+			qprefer = (v->nextvalue) ? LONGER : SHORTER;
+		} else {
+			n = m;
+			/* {m} passes operand's preference through */
+			qprefer = 0;
+		}
+		if (!SEE('}')) {	/* catches errors too */
+			ERR(REG_BADBR);
+			return;
+		}
+		NEXT();
+		break;
+	default:		/* no quantifier */
+		m = n = 1;
+		qprefer = 0;
+		break;
+	}
+
+	/* annoying special case:  {0} or {0,0} cancels everything */
+	if (m == 0 && n == 0) {
+		if (atom != NULL)
+			freesubre(v, atom);
+		if (atomtype == '(')
+			v->subs[subno] = NULL;
+		delsub(v->nfa, lp, rp);
+		EMPTYARC(lp, rp);
+		return;
+	}
+
+	/* if not a messy case, avoid hard part */
+	assert(!MESSY(top->flags));
+	f = top->flags | qprefer | ((atom != NULL) ? atom->flags : 0);
+	if (atomtype != '(' && atomtype != BACKREF && !MESSY(UP(f))) {
+		if (!(m == 1 && n == 1))
+			repeat(v, lp, rp, m, n);
+		if (atom != NULL)
+			freesubre(v, atom);
+		top->flags = f;
+		return;
+	}
+
+	/*
+	 * hard part:  something messy
+	 * That is, capturing parens, back reference, short/long clash, or
+	 * an atom with substructure containing one of those.
+	 */
+
+	/* now we'll need a subre for the contents even if they're boring */
+	if (atom == NULL) {
+		atom = subre(v, '=', 0, lp, rp);
+		NOERR();
+	}
+
+	/*
+	 * prepare a general-purpose state skeleton
+	 *
+	 *    ---> [s] ---prefix---> [begin] ---atom---> [end] ----rest---> [rp]
+	 *   /                                            /
+	 * [lp] ----> [s2] ----bypass---------------------
+	 *
+	 * where bypass is an empty, and prefix is some repetitions of atom
+	 */
+	s = newstate(v->nfa);		/* first, new endpoints for the atom */
+	s2 = newstate(v->nfa);
+	NOERR();
+	moveouts(v->nfa, lp, s);
+	moveins(v->nfa, rp, s2);
+	NOERR();
+	atom->begin = s;
+	atom->end = s2;
+	s = newstate(v->nfa);		/* and spots for prefix and bypass */
+	s2 = newstate(v->nfa);
+	NOERR();
+	EMPTYARC(lp, s);
+	EMPTYARC(lp, s2);
+	NOERR();
+
+	/* break remaining subRE into x{...} and what follows */
+	t = subre(v, '.', COMBINE(qprefer, atom->flags), lp, rp);
+	t->left = atom;
+	atomp = &t->left;
+	/* here we should recurse... but we must postpone that to the end */
+
+	/* split top into prefix and remaining */
+	assert(top->op == '=' && top->left == NULL && top->right == NULL);
+	top->left = subre(v, '=', top->flags, top->begin, lp);
+	top->op = '.';
+	top->right = t;
+
+	/* if it's a backref, now is the time to replicate the subNFA */
+	if (atomtype == BACKREF) {
+		assert(atom->begin->nouts == 1);	/* just the EMPTY */
+		delsub(v->nfa, atom->begin, atom->end);
+		assert(v->subs[subno] != NULL);
+		/* and here's why the recursion got postponed:  it must */
+		/* wait until the skeleton is filled in, because it may */
+		/* hit a backref that wants to copy the filled-in skeleton */
+		dupnfa(v->nfa, v->subs[subno]->begin, v->subs[subno]->end,
+						atom->begin, atom->end);
+		NOERR();
+	}
+
+	/* it's quantifier time; first, turn x{0,...} into x{1,...}|empty */
+	if (m == 0) {
+		EMPTYARC(s2, atom->end);		/* the bypass */
+		assert(PREF(qprefer) != 0);
+		f = COMBINE(qprefer, atom->flags);
+		t = subre(v, '|', f, lp, atom->end);
+		NOERR();
+		t->left = atom;
+		t->right = subre(v, '|', PREF(f), s2, atom->end);
+		NOERR();
+		t->right->left = subre(v, '=', 0, s2, atom->end);
+		NOERR();
+		*atomp = t;
+		atomp = &t->left;
+		m = 1;
+	}
+
+	/* deal with the rest of the quantifier */
+	if (atomtype == BACKREF) {
+		/* special case:  backrefs have internal quantifiers */
+		EMPTYARC(s, atom->begin);	/* empty prefix */
+		/* just stuff everything into atom */
+		repeat(v, atom->begin, atom->end, m, n);
+		atom->min = (short)m;
+		atom->max = (short)n;
+		atom->flags |= COMBINE(qprefer, atom->flags);
+	} else if (m == 1 && n == 1) {
+		/* no/vacuous quantifier:  done */
+		EMPTYARC(s, atom->begin);	/* empty prefix */
+	} else {
+		/* turn x{m,n} into x{m-1,n-1}x, with capturing */
+		/*  parens in only second x */
+		dupnfa(v->nfa, atom->begin, atom->end, s, atom->begin);
+		assert(m >= 1 && m != INFINITY && n >= 1);
+		repeat(v, s, atom->begin, m-1, (n == INFINITY) ? n : n-1);
+		f = COMBINE(qprefer, atom->flags);
+		t = subre(v, '.', f, s, atom->end);	/* prefix and atom */
+		NOERR();
+		t->left = subre(v, '=', PREF(f), s, atom->begin);
+		NOERR();
+		t->right = atom;
+		*atomp = t;
+	}
+
+	/* and finally, look after that postponed recursion */
+	t = top->right;
+	if (!(SEE('|') || SEE(stopper) || SEE(EOS)))
+		t->right = parsebranch(v, stopper, type, atom->end, rp, 1);
+	else {
+		EMPTYARC(atom->end, rp);
+		t->right = subre(v, '=', 0, atom->end, rp);
+	}
+	assert(SEE('|') || SEE(stopper) || SEE(EOS));
+	t->flags |= COMBINE(t->flags, t->right->flags);
+	top->flags |= COMBINE(top->flags, t->flags);
+}
+
+/*
+ * nonword - generate arcs for non-word-character ahead or behind
+ */
+static void
+nonword(struct vars *v,
+		int dir,			/* AHEAD or BEHIND */
+		struct state *lp,
+		struct state *rp)
+{
+	int anchor = (dir == AHEAD) ? '$' : '^';
+
+	assert(dir == AHEAD || dir == BEHIND);
+	newarc(v->nfa, anchor, 1, lp, rp);
+	newarc(v->nfa, anchor, 0, lp, rp);
+	colorcomplement(v->nfa, v->cm, dir, v->wordchrs, lp, rp);
+	/* (no need for special attention to \n) */
+}
+
+/*
+ * word - generate arcs for word character ahead or behind
+ */
+static void
+word(struct vars *v,
+	 int dir,			/* AHEAD or BEHIND */
+	 struct state *lp,
+	 struct state *rp)
+{
+	assert(dir == AHEAD || dir == BEHIND);
+	cloneouts(v->nfa, v->wordchrs, lp, rp, dir);
+	/* (no need for special attention to \n) */
+}
+
+/*
+ * scannum - scan a number
+ */
+static int			/* value, <= DUPMAX */
+scannum(struct vars *v)
+{
+	int n = 0;
+
+	while (SEE(DIGIT) && n < DUPMAX) {
+		n = n*10 + v->nextvalue;
+		NEXT();
+	}
+	if (SEE(DIGIT) || n > DUPMAX) {
+		ERR(REG_BADBR);
+		return 0;
+	}
 	return n;
 }
 
 /*
- * mcadd - add a collating element to a cset
+ * repeat - replicate subNFA for quantifiers
+ *
+ * The duplication sequences used here are chosen carefully so that any
+ * pointers starting out pointing into the subexpression end up pointing into
+ * the last occurrence.  (Note that it may not be strung between the same
+ * left and right end states, however!)  This used to be important for the
+ * subRE tree, although the important bits are now handled by the in-line
+ * code in parse(), and when this is called, it doesn't matter any more.
  */
 static void
-mcadd(struct parse * p, cset *cs, char *cp)
+repeat(struct vars *v,
+	   struct state *lp,
+	   struct state *rp,
+	   int m,
+	   int n)
 {
-	size_t		oldend = cs->smultis;
+#	define	SOME	2
+#	define	INF	3
+#	define	PAIR(x, y)	((x)*4 + (y))
+#	define	REDUCE(x)	( ((x) == INFINITY) ? INF : (((x) > 1) ? SOME : (x)) )
+	const int rm = REDUCE(m);
+	const int rn = REDUCE(n);
+	struct state *s;
+	struct state *s2;
 
-	cs->smultis += strlen(cp) + 1;
-	if (cs->multis == NULL)
-		cs->multis = malloc(cs->smultis);
-	else
-		cs->multis = realloc(cs->multis, cs->smultis);
-	if (cs->multis == NULL)
-	{
-		SETERROR(REG_ESPACE);
+	switch (PAIR(rm, rn)) {
+	case PAIR(0, 0):		/* empty string */
+		delsub(v->nfa, lp, rp);
+		EMPTYARC(lp, rp);
+		break;
+	case PAIR(0, 1):		/* do as x| */
+		EMPTYARC(lp, rp);
+		break;
+	case PAIR(0, SOME):		/* do as x{1,n}| */
+		repeat(v, lp, rp, 1, n);
+		NOERR();
+		EMPTYARC(lp, rp);
+		break;
+	case PAIR(0, INF):		/* loop x around */
+		s = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, lp, s);
+		moveins(v->nfa, rp, s);
+		EMPTYARC(lp, s);
+		EMPTYARC(s, rp);
+		break;
+	case PAIR(1, 1):		/* no action required */
+		break;
+	case PAIR(1, SOME):		/* do as x{0,n-1}x = (x{1,n-1}|)x */
+		s = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, lp, s);
+		dupnfa(v->nfa, s, rp, lp, s);
+		NOERR();
+		repeat(v, lp, s, 1, n-1);
+		NOERR();
+		EMPTYARC(lp, s);
+		break;
+	case PAIR(1, INF):		/* add loopback arc */
+		s = newstate(v->nfa);
+		s2 = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, lp, s);
+		moveins(v->nfa, rp, s2);
+		EMPTYARC(lp, s);
+		EMPTYARC(s2, rp);
+		EMPTYARC(s2, s);
+		break;
+	case PAIR(SOME, SOME):		/* do as x{m-1,n-1}x */
+		s = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, lp, s);
+		dupnfa(v->nfa, s, rp, lp, s);
+		NOERR();
+		repeat(v, lp, s, m-1, n-1);
+		break;
+	case PAIR(SOME, INF):		/* do as x{m-1,}x */
+		s = newstate(v->nfa);
+		NOERR();
+		moveouts(v->nfa, lp, s);
+		dupnfa(v->nfa, s, rp, lp, s);
+		NOERR();
+		repeat(v, lp, s, m-1, n);
+		break;
+	default:
+		ERR(REG_ASSERT);
+		break;
+	}
+}
+
+/*
+ * bracket - handle non-complemented bracket expression
+ * Also called from cbracket for complemented bracket expressions.
+ */
+static void
+bracket(struct vars *v,
+		struct state *lp,
+		struct state *rp)
+{
+	assert(SEE('['));
+	NEXT();
+	while (!SEE(']') && !SEE(EOS))
+		brackpart(v, lp, rp);
+	assert(SEE(']') || ISERR());
+	okcolors(v->nfa, v->cm);
+}
+
+/*
+ * cbracket - handle complemented bracket expression
+ * We do it by calling bracket() with dummy endpoints, and then complementing
+ * the result.  The alternative would be to invoke rainbow(), and then delete
+ * arcs as the b.e. is seen... but that gets messy.
+ */
+static void
+cbracket(struct vars *v,
+		 struct state *lp,
+		 struct state *rp)
+{
+	struct state *left = newstate(v->nfa);
+	struct state *right = newstate(v->nfa);
+	struct state *s;
+	struct arc *a;			/* arc from lp */
+	struct arc *ba;			/* arc from left, from bracket() */
+	struct arc *pa;			/* MCCE-prototype arc */
+	color co;
+	chr *p;
+	int i;
+
+	NOERR();
+	bracket(v, left, right);
+	if (v->cflags&REG_NLSTOP)
+		newarc(v->nfa, PLAIN, v->nlcolor, left, right);
+	NOERR();
+
+	assert(lp->nouts == 0);		/* all outarcs will be ours */
+
+	/* easy part of complementing */
+	colorcomplement(v->nfa, v->cm, PLAIN, left, lp, rp);
+	NOERR();
+	if (v->mcces == NULL) {		/* no MCCEs -- we're done */
+		dropstate(v->nfa, left);
+		assert(right->nins == 0);
+		freestate(v->nfa, right);
 		return;
 	}
 
-	strcpy(cs->multis + oldend - 1, cp);
-	cs->multis[cs->smultis - 1] = '\0';
+	/* but complementing gets messy in the presence of MCCEs... */
+	NOTE(REG_ULOCALE);
+	for (p = v->mcces->chrs, i = v->mcces->nchrs; i > 0; p++, i--) {
+		co = GETCOLOR(v->cm, *p);
+		a = findarc(lp, PLAIN, co);
+		ba = findarc(left, PLAIN, co);
+		if (ba == NULL) {
+			assert(a != NULL);
+			freearc(v->nfa, a);
+		} else {
+			assert(a == NULL);
+		}
+		s = newstate(v->nfa);
+		NOERR();
+		newarc(v->nfa, PLAIN, co, lp, s);
+		NOERR();
+		pa = findarc(v->mccepbegin, PLAIN, co);
+		assert(pa != NULL);
+		if (ba == NULL) {	/* easy case, need all of them */
+			cloneouts(v->nfa, pa->to, s, rp, PLAIN);
+			newarc(v->nfa, '$', 1, s, rp);
+			newarc(v->nfa, '$', 0, s, rp);
+			colorcomplement(v->nfa, v->cm, AHEAD, pa->to, s, rp);
+		} else {		/* must be selective */
+			if (findarc(ba->to, '$', 1) == NULL) {
+				newarc(v->nfa, '$', 1, s, rp);
+				newarc(v->nfa, '$', 0, s, rp);
+				colorcomplement(v->nfa, v->cm, AHEAD, pa->to,
+									 s, rp);
+			}
+			for (pa = pa->to->outs; pa != NULL; pa = pa->outchain)
+				if (findarc(ba->to, PLAIN, pa->co) == NULL)
+					newarc(v->nfa, PLAIN, pa->co, s, rp);
+			if (s->nouts == 0)	/* limit of selectivity: none */
+				dropstate(v->nfa, s);	/* frees arc too */
+		}
+		NOERR();
+	}
+
+	delsub(v->nfa, left, right);
+	assert(left->nouts == 0);
+	freestate(v->nfa, left);
+	assert(right->nins == 0);
+	freestate(v->nfa, right);
+}
+			
+/*
+ * brackpart - handle one item (or range) within a bracket expression
+ */
+static void
+brackpart(struct vars *v,
+		  struct state *lp,
+		  struct state *rp)
+{
+	celt startc;
+	celt endc;
+	struct cvec *cv;
+	chr *startp;
+	chr *endp;
+	chr c[1];
+
+	/* parse something, get rid of special cases, take shortcuts */
+	switch (v->nexttype) {
+	case RANGE:			/* a-b-c or other botch */
+		ERR(REG_ERANGE);
+		return;
+		break;
+	case PLAIN:
+		c[0] = v->nextvalue;
+		NEXT();
+		/* shortcut for ordinary chr (not range, not MCCE leader) */
+		if (!SEE(RANGE) && !ISCELEADER(v, c[0])) {
+			onechr(v, c[0], lp, rp);
+			return;
+		}
+		startc = element(v, c, c+1);
+		NOERR();
+		break;
+	case COLLEL:
+		startp = v->now;
+		endp = scanplain(v);
+		INSIST(startp < endp, REG_ECOLLATE);
+		NOERR();
+		startc = element(v, startp, endp);
+		NOERR();
+		break;
+	case ECLASS:
+		startp = v->now;
+		endp = scanplain(v);
+		INSIST(startp < endp, REG_ECOLLATE);
+		NOERR();
+		startc = element(v, startp, endp);
+		NOERR();
+		cv = eclass(v, startc, (v->cflags&REG_ICASE));
+		NOERR();
+		dovec(v, cv, lp, rp);
+		return;
+		break;
+	case CCLASS:
+		startp = v->now;
+		endp = scanplain(v);
+		INSIST(startp < endp, REG_ECTYPE);
+		NOERR();
+		cv = cclass(v, startp, endp, (v->cflags&REG_ICASE));
+		NOERR();
+		dovec(v, cv, lp, rp);
+		return;
+		break;
+	default:
+		ERR(REG_ASSERT);
+		return;
+		break;
+	}
+
+	if (SEE(RANGE)) {
+		NEXT();
+		switch (v->nexttype) {
+		case PLAIN:
+		case RANGE:
+			c[0] = v->nextvalue;
+			NEXT();
+			endc = element(v, c, c+1);
+			NOERR();
+			break;
+		case COLLEL:
+			startp = v->now;
+			endp = scanplain(v);
+			INSIST(startp < endp, REG_ECOLLATE);
+			NOERR();
+			endc = element(v, startp, endp);
+			NOERR();
+			break;
+		default:
+			ERR(REG_ERANGE);
+			return;
+			break;
+		}
+	} else
+		endc = startc;
+
+	/*
+	 * Ranges are unportable.  Actually, standard C does
+	 * guarantee that digits are contiguous, but making
+	 * that an exception is just too complicated.
+	 */
+	if (startc != endc)
+		NOTE(REG_UUNPORT);
+	cv = range(v, startc, endc, (v->cflags&REG_ICASE));
+	NOERR();
+	dovec(v, cv, lp, rp);
 }
 
 /*
- * mcinvert - invert the list of collating elements in a cset
+ * scanplain - scan PLAIN contents of [. etc.
  *
- * This would have to know the set of possibilities.  Implementation
- * is deferred.
+ * Certain bits of trickery in lex.c know that this code does not try
+ * to look past the final bracket of the [. etc.
+ */
+static chr *			/* just after end of sequence */
+scanplain(struct vars *v)
+{
+	chr *endp;
+
+	assert(SEE(COLLEL) || SEE(ECLASS) || SEE(CCLASS));
+	NEXT();
+
+	endp = v->now;
+	while (SEE(PLAIN)) {
+		endp = v->now;
+		NEXT();
+	}
+
+	assert(SEE(END) || ISERR());
+	NEXT();
+
+	return endp;
+}
+
+/*
+ * leaders - process a cvec of collating elements to also include leaders
+ * Also gives all characters involved their own colors, which is almost
+ * certainly necessary, and sets up little disconnected subNFA.
  */
 static void
-mcinvert(struct parse * p, cset *cs)
+leaders(struct vars *v,
+		struct cvec *cv)
 {
-	assert(cs->multis == NULL); /* xxx */
+	int mcce;
+	chr *p;
+	chr leader;
+	struct state *s;
+	struct arc *a;
+
+	v->mccepbegin = newstate(v->nfa);
+	v->mccepend = newstate(v->nfa);
+	NOERR();
+
+	for (mcce = 0; mcce < cv->nmcces; mcce++) {
+		p = cv->mcces[mcce];
+		leader = *p;
+		if (!haschr(cv, leader)) {
+			addchr(cv, leader);
+			s = newstate(v->nfa);
+			newarc(v->nfa, PLAIN, subcolor(v->cm, leader),
+							v->mccepbegin, s);
+			okcolors(v->nfa, v->cm);
+		} else {
+			a = findarc(v->mccepbegin, PLAIN,
+						GETCOLOR(v->cm, leader));
+			assert(a != NULL);
+			s = a->to;
+			assert(s != v->mccepend);
+		}
+		p++;
+		assert(*p != 0 && *(p+1) == 0);	/* only 2-char MCCEs for now */
+		newarc(v->nfa, PLAIN, subcolor(v->cm, *p), s, v->mccepend);
+		okcolors(v->nfa, v->cm);
+	}
 }
 
 /*
- * mccase - add case counterparts of the list of collating elements in a cset
- *
- * This would have to know the set of possibilities.  Implementation
- * is deferred.
+ * onechr - fill in arcs for a plain character, and possible case complements
+ * This is mostly a shortcut for efficient handling of the common case.
  */
 static void
-mccase(struct parse * p, cset *cs)
+onechr(struct vars *v,
+	   chr c,
+	   struct state *lp,
+	   struct state *rp)
 {
-	assert(cs->multis == NULL); /* xxx */
+	if (!(v->cflags&REG_ICASE)) {
+		newarc(v->nfa, PLAIN, subcolor(v->cm, c), lp, rp);
+		return;
+	}
+
+	/* rats, need general case anyway... */
+	dovec(v, allcases(v, c), lp, rp);
 }
 
 /*
- * isinsets - is this character in any sets?
- */
-static int						/* predicate */
-isinsets(struct re_guts * g, int c)
-{
-	uch		   *col;
-	int			i;
-	int			ncols = (g->ncsets + (CHAR_BIT - 1)) / CHAR_BIT;
-	unsigned	uc = (unsigned char) c;
-
-	for (i = 0, col = g->setbits; i < ncols; i++, col += g->csetsize)
-		if (col[uc] != 0)
-			return 1;
-	return 0;
-}
-
-/*
- * samesets - are these two characters in exactly the same sets?
- */
-static int						/* predicate */
-samesets(struct re_guts * g, int c1, int c2)
-{
-	uch		   *col;
-	int			i;
-	int			ncols = (g->ncsets + (CHAR_BIT - 1)) / CHAR_BIT;
-	unsigned	uc1 = (unsigned char) c1;
-	unsigned	uc2 = (unsigned char) c2;
-
-	for (i = 0, col = g->setbits; i < ncols; i++, col += g->csetsize)
-		if (col[uc1] != col[uc2])
-			return 0;
-	return 1;
-}
-
-/*
- * categorize - sort out character categories
+ * dovec - fill in arcs for each element of a cvec
+ * This one has to handle the messy cases, like MCCEs and MCCE leaders.
  */
 static void
-categorize(struct parse * p, struct re_guts * g)
+dovec(struct vars *v,
+	  struct cvec *cv,
+	  struct state *lp,
+	  struct state *rp)
 {
-	cat_t	   *cats = g->categories;
-	int			c;
-	int			c2;
-	cat_t		cat;
+	chr ch, from, to;
+	celt ce;
+	chr *p;
+	int i;
+	color co;
+	struct cvec *leads;
+	struct arc *a;
+	struct arc *pa;		/* arc in prototype */
+	struct state *s;
+	struct state *ps;	/* state in prototype */
 
-	/* avoid making error situations worse */
-	if (p->error != 0)
+	/* need a place to store leaders, if any */
+	if (nmcces(v) > 0) {
+		assert(v->mcces != NULL);
+		if (v->cv2 == NULL || v->cv2->nchrs < v->mcces->nchrs) {
+			if (v->cv2 != NULL)
+				free(v->cv2);
+			v->cv2 = newcvec(v->mcces->nchrs, 0, v->mcces->nmcces);
+			NOERR();
+			leads = v->cv2;
+		} else
+			leads = clearcvec(v->cv2);
+	} else
+		leads = NULL;
+
+	/* first, get the ordinary characters out of the way */
+	for (p = cv->chrs, i = cv->nchrs; i > 0; p++, i--) {
+		ch = *p;
+		if (!ISCELEADER(v, ch))
+			newarc(v->nfa, PLAIN, subcolor(v->cm, ch), lp, rp);
+		else {
+			assert(singleton(v->cm, ch));
+			assert(leads != NULL);
+			if (!haschr(leads, ch))
+				addchr(leads, ch);
+		}
+	}
+
+	/* and the ranges */
+	for (p = cv->ranges, i = cv->nranges; i > 0; p += 2, i--) {
+		from = *p;
+		to = *(p+1);
+		while (from <= to && (ce = nextleader(v, from, to)) != NOCELT) {
+			if (from < ce)
+				subrange(v, from, ce - 1, lp, rp);
+			assert(singleton(v->cm, ce));
+			assert(leads != NULL);
+			if (!haschr(leads, ce))
+				addchr(leads, ce);
+			from = ce + 1;
+		}
+		if (from <= to)
+			subrange(v, from, to, lp, rp);
+	}
+
+	if ((leads == NULL || leads->nchrs == 0) && cv->nmcces == 0)
 		return;
 
-	for (c = CHAR_MIN; c <= CHAR_MAX; c++)
-		if (cats[c] == 0 && isinsets(g, c))
-		{
-			cat = g->ncategories++;
-			cats[c] = cat;
-			for (c2 = c + 1; c2 <= CHAR_MAX; c2++)
-				if (cats[c2] == 0 && samesets(g, c, c2))
-					cats[c2] = cat;
+	/* deal with the MCCE leaders */
+	NOTE(REG_ULOCALE);
+	for (p = leads->chrs, i = leads->nchrs; i > 0; p++, i--) {
+		co = GETCOLOR(v->cm, *p);
+		a = findarc(lp, PLAIN, co);
+		if (a != NULL)
+			s = a->to;
+		else {
+			s = newstate(v->nfa);
+			NOERR();
+			newarc(v->nfa, PLAIN, co, lp, s);
+			NOERR();
 		}
+		pa = findarc(v->mccepbegin, PLAIN, co);
+		assert(pa != NULL);
+		ps = pa->to;
+		newarc(v->nfa, '$', 1, s, rp);
+		newarc(v->nfa, '$', 0, s, rp);
+		colorcomplement(v->nfa, v->cm, AHEAD, ps, s, rp);
+		NOERR();
+	}
+
+	/* and the MCCEs */
+	for (i = 0; i < cv->nmcces; i++) {
+		p = cv->mcces[i];
+		assert(singleton(v->cm, *p));
+		if (!singleton(v->cm, *p)) {
+			ERR(REG_ASSERT);
+			return;
+		}
+		ch = *p++;
+		co = GETCOLOR(v->cm, ch);
+		a = findarc(lp, PLAIN, co);
+		if (a != NULL)
+			s = a->to;
+		else {
+			s = newstate(v->nfa);
+			NOERR();
+			newarc(v->nfa, PLAIN, co, lp, s);
+			NOERR();
+		}
+		assert(*p != 0);	/* at least two chars */
+		assert(singleton(v->cm, *p));
+		ch = *p++;
+		co = GETCOLOR(v->cm, ch);
+		assert(*p == 0);	/* and only two, for now */
+		newarc(v->nfa, PLAIN, co, s, rp);
+		NOERR();
+	}
 }
 
 /*
- * dupl - emit a duplicate of a bunch of sops
+ * nextleader - find next MCCE leader within range
  */
-static sopno					/* start of duplicate */
-dupl(struct parse * p,
-	 sopno start,				/* from here */
-	 sopno finish)				/* to this less one */
+static celt			/* NOCELT means none */
+nextleader(struct vars *v,
+		   chr from,
+		   chr to)
 {
-	sopno		ret = HERE();
-	sopno		len = finish - start;
+	int i;
+	chr *p;
+	chr ch;
+	celt it = NOCELT;
 
-	assert(finish >= start);
-	if (len == 0)
-		return ret;
-	enlarge(p, p->ssize + len); /* this many unexpected additions */
-	assert(p->ssize >= p->slen + len);
-	memcpy((char *) (p->strip + p->slen),
-		   (char *) (p->strip + start), (size_t) len * sizeof(sop));
-	p->slen += len;
+	if (v->mcces == NULL)
+		return it;
+
+	for (i = v->mcces->nchrs, p = v->mcces->chrs; i > 0; i--, p++) {
+		ch = *p;
+		if (from <= ch && ch <= to)
+			if (it == NOCELT || ch < it)
+				it = ch;
+	}
+	return it;
+}
+
+/*
+ * wordchrs - set up word-chr list for word-boundary stuff, if needed
+ *
+ * The list is kept as a bunch of arcs between two dummy states; it's
+ * disposed of by the unreachable-states sweep in NFA optimization.
+ * Does NEXT().  Must not be called from any unusual lexical context.
+ * This should be reconciled with the \w etc. handling in lex.c, and
+ * should be cleaned up to reduce dependencies on input scanning.
+ */
+static void
+wordchrs(struct vars *v)
+{
+	struct state *left;
+	struct state *right;
+
+	if (v->wordchrs != NULL) {
+		NEXT();		/* for consistency */
+		return;
+	}
+
+	left = newstate(v->nfa);
+	right = newstate(v->nfa);
+	NOERR();
+	/* fine point:  implemented with [::], and lexer will set REG_ULOCALE */
+	lexword(v);
+	NEXT();
+	assert(v->savenow != NULL && SEE('['));
+	bracket(v, left, right);
+	assert((v->savenow != NULL && SEE(']')) || ISERR());
+	NEXT();
+	NOERR();
+	v->wordchrs = left;
+}
+
+/*
+ * subre - allocate a subre
+ */
+static struct subre *
+subre(struct vars *v,
+	  int op,
+	  int flags,
+	  struct state *begin,
+	  struct state *end)
+{
+	struct subre *ret;
+
+	ret = v->treefree;
+	if (ret != NULL)
+		v->treefree = ret->left;
+	else {
+		ret = (struct subre *)MALLOC(sizeof(struct subre));
+		if (ret == NULL) {
+			ERR(REG_ESPACE);
+			return NULL;
+		}
+		ret->chain = v->treechain;
+		v->treechain = ret;
+	}
+
+	assert(strchr("|.b(=", op) != NULL);
+
+	ret->op = op;
+	ret->flags = flags;
+	ret->retry = 0;
+	ret->subno = 0;
+	ret->min = ret->max = 1;
+	ret->left = NULL;
+	ret->right = NULL;
+	ret->begin = begin;
+	ret->end = end;
+	ZAPCNFA(ret->cnfa);
+
 	return ret;
 }
 
 /*
- * doemit - emit a strip operator
- *
- * It might seem better to implement this as a macro with a function as
- * hard-case backup, but it's just too big and messy unless there are
- * some changes to the data structures.  Maybe later.
+ * freesubre - free a subRE subtree
  */
 static void
-doemit(struct parse * p, sop op, size_t opnd)
+freesubre(struct vars *v,			/* might be NULL */
+		  struct subre *sr)
 {
-	/* avoid making error situations worse */
-	if (p->error != 0)
+	if (sr == NULL)
 		return;
 
-	/* deal with oversize operands ("can't happen", more or less) */
-	assert(opnd < 1 << OPSHIFT);
+	if (sr->left != NULL)
+		freesubre(v, sr->left);
+	if (sr->right != NULL)
+		freesubre(v, sr->right);
 
-	/* deal with undersized strip */
-	if (p->slen >= p->ssize)
-		enlarge(p, (p->ssize + 1) / 2 * 3);		/* +50% */
-	assert(p->slen < p->ssize);
-
-	/* finally, it's all reduced to the easy case */
-	p->strip[p->slen++] = SOP(op, opnd);
+	freesrnode(v, sr);
 }
 
 /*
- * doinsert - insert a sop into the strip
+ * freesrnode - free one node in a subRE subtree
  */
 static void
-doinsert(struct parse * p, sop op, size_t opnd, sopno pos)
+freesrnode(struct vars *v,			/* might be NULL */
+		   struct subre *sr)
 {
-	sopno		sn;
-	sop			s;
-	int			i;
-
-	/* avoid making error situations worse */
-	if (p->error != 0)
+	if (sr == NULL)
 		return;
 
-	sn = HERE();
-	EMIT(op, opnd);				/* do checks, ensure space */
-	assert(HERE() == sn + 1);
-	s = p->strip[sn];
+	if (!NULLCNFA(sr->cnfa))
+		freecnfa(&sr->cnfa);
+	sr->flags = 0;
 
-	/* adjust paren pointers */
-	assert(pos > 0);
-	for (i = 1; i < NPAREN; i++)
-	{
-		if (p->pbegin[i] >= pos)
-			p->pbegin[i]++;
-		if (p->pend[i] >= pos)
-			p->pend[i]++;
-	}
-
-	memmove((char *) &p->strip[pos + 1], (char *) &p->strip[pos],
-			(HERE() - pos - 1) * sizeof(sop));
-	p->strip[pos] = s;
+	if (v != NULL) {
+		sr->left = v->treefree;
+		v->treefree = sr;
+	} else
+		FREE(sr);
 }
 
 /*
- * dofwd - complete a forward reference
+ * optst - optimize a subRE subtree
  */
 static void
-dofwd(struct parse * p, sopno pos, sop value)
+optst(struct vars *v,
+	  struct subre *t)
 {
-	/* avoid making error situations worse */
-	if (p->error != 0)
+	if (t == NULL)
 		return;
 
-	assert(value < 1 << OPSHIFT);
-	p->strip[pos] = OP(p->strip[pos]) | value;
+	/* recurse through children */
+	if (t->left != NULL)
+		optst(v, t->left);
+	if (t->right != NULL)
+		optst(v, t->right);
 }
 
 /*
- * enlarge - enlarge the strip
+ * numst - number tree nodes (assigning retry indexes)
+ */
+static int			/* next number */
+numst(struct subre *t,
+	  int start)			/* starting point for subtree numbers */
+{
+	int i;
+
+	assert(t != NULL);
+
+	i = start;
+	t->retry = (short)i++;
+	if (t->left != NULL)
+		i = numst(t->left, i);
+	if (t->right != NULL)
+		i = numst(t->right, i);
+	return i;
+}
+
+/*
+ * markst - mark tree nodes as INUSE
  */
 static void
-enlarge(struct parse * p, sopno size)
+markst(struct subre *t)
 {
-	sop		   *sp;
+	assert(t != NULL);
 
-	if (p->ssize >= size)
-		return;
-
-	sp = (sop *) realloc(p->strip, size * sizeof(sop));
-	if (sp == NULL)
-	{
-		SETERROR(REG_ESPACE);
-		return;
-	}
-	p->strip = sp;
-	p->ssize = size;
+	t->flags |= INUSE;
+	if (t->left != NULL)
+		markst(t->left);
+	if (t->right != NULL)
+		markst(t->right);
 }
 
 /*
- * stripsnug - compact the strip
+ * cleanst - free any tree nodes not marked INUSE
  */
 static void
-stripsnug(struct parse * p, struct re_guts * g)
+cleanst(struct vars *v)
 {
-	g->nstates = p->slen;
-	g->strip = (sop *) realloc((char *) p->strip, p->slen * sizeof(sop));
-	if (g->strip == NULL)
-	{
-		SETERROR(REG_ESPACE);
-		g->strip = p->strip;
+	struct subre *t;
+	struct subre *next;
+
+	for (t = v->treechain; t != NULL; t = next) {
+		next = t->chain;
+		if (!(t->flags&INUSE))
+			FREE(t);
 	}
+	v->treechain = NULL;
+	v->treefree = NULL;		/* just on general principles */
 }
 
 /*
- * findmust - fill in must and mlen with longest mandatory literal string
- *
- * This algorithm could do fancy things like analyzing the operands of |
- * for common subsequences.  Someday.  This code is simple and finds most
- * of the interesting cases.
- *
- * Note that must and mlen got initialized during setup.
+ * nfatree - turn a subRE subtree into a tree of compacted NFAs
+ */
+static long			/* optimize results from top node */
+nfatree(struct vars *v,
+		struct subre *t,
+		FILE *f)				/* for debug output */
+{
+	assert(t != NULL && t->begin != NULL);
+
+	if (t->left != NULL)
+		(DISCARD)nfatree(v, t->left, f);
+	if (t->right != NULL)
+		(DISCARD)nfatree(v, t->right, f);
+
+	return nfanode(v, t, f);
+}
+
+/*
+ * nfanode - do one NFA for nfatree
+ */
+static long			/* optimize results */
+nfanode(struct vars *v,
+		struct subre *t,
+		FILE *f)				/* for debug output */
+{
+	struct nfa *nfa;
+	long ret = 0;
+
+	assert(t->begin != NULL);
+
+#ifdef REG_DEBUG
+	if (f != NULL)
+	{
+		char idbuf[50];
+
+		fprintf(f, "\n\n\n========= TREE NODE %s ==========\n",
+						stid(t, idbuf, sizeof(idbuf)));
+	}
+#endif
+	nfa = newnfa(v, v->cm, v->nfa);
+	NOERRZ();
+	dupnfa(nfa, t->begin, t->end, nfa->init, nfa->final);
+	if (!ISERR()) {
+		specialcolors(nfa);
+		ret = optimize(nfa, f);
+	}
+	if (!ISERR())
+		compact(nfa, &t->cnfa);
+
+	freenfa(nfa);
+	return ret;
+}
+
+/*
+ * newlacon - allocate a lookahead-constraint subRE
+ */
+static int			/* lacon number */
+newlacon(struct vars *v,
+		 struct state *begin,
+		 struct state *end,
+		 int pos)
+{
+	int n;
+	struct subre *sub;
+
+	if (v->nlacons == 0) {
+		v->lacons = (struct subre *)MALLOC(2 * sizeof(struct subre));
+		n = 1;		/* skip 0th */
+		v->nlacons = 2;
+	} else {
+		v->lacons = (struct subre *)REALLOC(v->lacons,
+					(v->nlacons+1)*sizeof(struct subre));
+		n = v->nlacons++;
+	}
+	if (v->lacons == NULL) {
+		ERR(REG_ESPACE);
+		return 0;
+	}
+	sub = &v->lacons[n];
+	sub->begin = begin;
+	sub->end = end;
+	sub->subno = pos;
+	ZAPCNFA(sub->cnfa);
+	return n;
+}
+
+/*
+ * freelacons - free lookahead-constraint subRE vector
  */
 static void
-findmust(struct parse * p, struct re_guts * g)
+freelacons(struct subre *subs,
+		   int n)
 {
-	sop		   *scan;
-	sop		   *start = 0;
-	sop		   *newstart = 0;
-	sopno		newlen;
-	sop			s;
-	pg_wchar   *cp;
-	sopno		i;
+	struct subre *sub;
+	int i;
 
-	/* avoid making error situations worse */
-	if (p->error != 0)
-		return;
-
-	/* find the longest OCHAR sequence in strip */
-	newlen = 0;
-	scan = g->strip + 1;
-	do
-	{
-		s = *scan++;
-		switch (OP(s))
-		{
-			case OCHAR: /* sequence member */
-				if (newlen == 0)	/* new sequence */
-					newstart = scan - 1;
-				newlen++;
-				break;
-			case OPLUS_:		/* things that don't break one */
-			case OLPAREN:
-			case ORPAREN:
-				break;
-			case OQUEST_:		/* things that must be skipped */
-			case OCH_:
-				scan--;
-				do
-				{
-					scan += OPND(s);
-					s = *scan;
-					/* assert() interferes w debug printouts */
-					if (OP(s) != O_QUEST && OP(s) != O_CH &&
-						OP(s) != OOR2)
-					{
-						g->iflags |= BAD;
-						return;
-					}
-				} while (OP(s) != O_QUEST && OP(s) != O_CH);
-				/* fallthrough */
-			default:			/* things that break a sequence */
-				if (newlen > g->mlen)
-				{				/* ends one */
-					start = newstart;
-					g->mlen = newlen;
-				}
-				newlen = 0;
-				break;
-		}
-	} while (OP(s) != OEND);
-
-	if (g->mlen == 0)			/* there isn't one */
-		return;
-
-	/* turn it into a character string */
-	g->must = (pg_wchar *) malloc((size_t) (g->mlen + 1) * sizeof(pg_wchar));
-	if (g->must == NULL)
-	{							/* argh; just forget it */
-		g->mlen = 0;
-		return;
-	}
-	cp = g->must;
-	scan = start;
-	for (i = g->mlen; i > 0; i--)
-	{
-		while (OP(s = *scan++) != OCHAR)
-			continue;
-		assert(cp < g->must + g->mlen);
-		*cp++ = (pg_wchar) OPND(s);
-	}
-	assert(cp == g->must + g->mlen);
-	*cp++ = '\0';				/* just on general principles */
+	assert(n > 0);
+	for (sub = subs + 1, i = n - 1; i > 0; sub++, i--)	/* no 0th */
+		if (!NULLCNFA(sub->cnfa))
+			freecnfa(&sub->cnfa);
+	FREE(subs);
 }
 
 /*
- * pluscount - count + nesting
+ * rfree - free a whole RE (insides of regfree)
  */
-static sopno					/* nesting depth */
-pluscount(struct parse * p, struct re_guts * g)
+static void
+rfree(regex_t *re)
 {
-	sop		   *scan;
-	sop			s;
-	sopno		plusnest = 0;
-	sopno		maxnest = 0;
+	struct guts *g;
 
-	if (p->error != 0)
-		return 0;				/* there may not be an OEND */
+	if (re == NULL || re->re_magic != REMAGIC)
+		return;
 
-	scan = g->strip + 1;
-	do
-	{
-		s = *scan++;
-		switch (OP(s))
-		{
-			case OPLUS_:
-				plusnest++;
-				break;
-			case O_PLUS:
-				if (plusnest > maxnest)
-					maxnest = plusnest;
-				plusnest--;
-				break;
-		}
-	} while (OP(s) != OEND);
-	if (plusnest != 0)
-		g->iflags |= BAD;
-	return maxnest;
+	re->re_magic = 0;	/* invalidate RE */
+	g = (struct guts *)re->re_guts;
+	re->re_guts = NULL;
+	re->re_fns = NULL;
+	g->magic = 0;
+	freecm(&g->cmap);
+	if (g->tree != NULL)
+		freesubre((struct vars *)NULL, g->tree);
+	if (g->lacons != NULL)
+		freelacons(g->lacons, g->nlacons);
+	if (!NULLCNFA(g->search))
+		freecnfa(&g->search);
+	FREE(g);
+}
+
+#ifdef REG_DEBUG
+
+/*
+ * dump - dump an RE in human-readable form
+ */
+static void
+dump(regex_t *re,
+	 FILE *f)
+{
+	struct guts *g;
+	int i;
+
+	if (re->re_magic != REMAGIC)
+		fprintf(f, "bad magic number (0x%x not 0x%x)\n", re->re_magic,
+								REMAGIC);
+	if (re->re_guts == NULL) {
+		fprintf(f, "NULL guts!!!\n");
+		return;
+	}
+	g = (struct guts *)re->re_guts;
+	if (g->magic != GUTSMAGIC)
+		fprintf(f, "bad guts magic number (0x%x not 0x%x)\n", g->magic,
+								GUTSMAGIC);
+
+	fprintf(f, "\n\n\n========= DUMP ==========\n");
+	fprintf(f, "nsub %d, info 0%lo, csize %d, ntree %d\n", 
+		re->re_nsub, re->re_info, re->re_csize, g->ntree);
+
+	dumpcolors(&g->cmap, f);
+	if (!NULLCNFA(g->search)) {
+		printf("\nsearch:\n");
+		dumpcnfa(&g->search, f);
+	}
+	for (i = 1; i < g->nlacons; i++) {
+		fprintf(f, "\nla%d (%s):\n", i,
+				(g->lacons[i].subno) ? "positive" : "negative");
+		dumpcnfa(&g->lacons[i].cnfa, f);
+	}
+	fprintf(f, "\n");
+	dumpst(g->tree, f, 0);
 }
 
 /*
- * some ctype functions with non-ascii-char guard
+ * dumpst - dump a subRE tree
  */
-static int
-pg_isdigit(int c)
+static void
+dumpst(struct subre *t,
+	   FILE *f,
+	   int nfapresent)			/* is the original NFA still around? */
 {
-	return (c >= 0 && c <= UCHAR_MAX && isdigit((unsigned char) c));
+	if (t == NULL)
+		fprintf(f, "null tree\n");
+	else
+		stdump(t, f, nfapresent);
+	fflush(f);
 }
 
-static int
-pg_isalpha(int c)
+/*
+ * stdump - recursive guts of dumpst
+ */
+static void
+stdump(struct subre *t,
+	   FILE *f,
+	   int nfapresent)			/* is the original NFA still around? */
 {
-	return (c >= 0 && c <= UCHAR_MAX && isalpha((unsigned char) c));
-}
+	char idbuf[50];
 
-static int
-pg_isalnum(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && isalnum((unsigned char) c));
-}
-
-static int
-pg_isupper(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && isupper((unsigned char) c));
-}
-
-static int
-pg_islower(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && islower((unsigned char) c));
-}
-
-static int
-pg_iscntrl(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && iscntrl((unsigned char) c));
-}
-
-static int
-pg_isgraph(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && isgraph((unsigned char) c));
-}
-
-static int
-pg_isprint(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && isprint((unsigned char) c));
-}
-
-static int
-pg_ispunct(int c)
-{
-	return (c >= 0 && c <= UCHAR_MAX && ispunct((unsigned char) c));
-}
-
-static struct cclass *
-cclass_init(void)
-{
-	static struct cclass cclasses_C[] = {
-		{"alnum", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789", ""},
-		{"alpha", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz", ""},
-		{"blank", " \t", ""},
-		{"cntrl", "\007\b\t\n\v\f\r\1\2\3\4\5\6\16\17\20\21\22\23\24\25\26\27\30\31\32\33\34\35\36\37\177", ""},
-		{"digit", "0123456789", ""},
-		{"graph", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", ""},
-		{"lower", "abcdefghijklmnopqrstuvwxyz", ""},
-		{"print", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ", ""},
-		{"punct", "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~", ""},
-		{"space", "\t\n\v\f\r ", ""},
-		{"upper", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", ""},
-		{"xdigit", "0123456789ABCDEFabcdef", ""},
-		{NULL, NULL, ""}
-	};
-	struct cclass *cp = NULL;
-	struct cclass *classes = NULL;
-	struct cclass_factory
-	{
-		char	   *name;
-		int			(*func) (int);
-		char	   *chars;
-	}			cclass_factories[] =
-	{
-		{
-			"alnum", pg_isalnum, NULL
-		},
-		{
-			"alpha", pg_isalpha, NULL
-		},
-		{
-			"blank", NULL, " \t"
-		},
-		{
-			"cntrl", pg_iscntrl, NULL
-		},
-		{
-			"digit", NULL, "0123456789"
-		},
-		{
-			"graph", pg_isgraph, NULL
-		},
-		{
-			"lower", pg_islower, NULL
-		},
-		{
-			"print", pg_isprint, NULL
-		},
-		{
-			"punct", pg_ispunct, NULL
-		},
-		{
-			"space", NULL, "\t\n\v\f\r "
-		},
-		{
-			"upper", pg_isupper, NULL
-		},
-		{
-			"xdigit", NULL, "0123456789ABCDEFabcdef"
-		},
-		{
-			NULL, NULL, NULL
-		}
-	};
-	struct cclass_factory *cf = NULL;
-
-	if (strcmp(setlocale(LC_CTYPE, NULL), "C") == 0)
-		return cclasses_C;
-
-	classes = malloc(sizeof(struct cclass) * (sizeof(cclass_factories) / sizeof(struct cclass_factory)));
-	if (classes == NULL)
-		elog(ERROR, "cclass_init: out of memory");
-
-	cp = classes;
-	for (cf = cclass_factories; cf->name != NULL; cf++)
-	{
-		cp->name = strdup(cf->name);
-		if (cf->chars)
-			cp->chars = strdup(cf->chars);
-		else
-		{
-			int			x = 0,
-						y = 0;
-
-			cp->chars = malloc(sizeof(char) * 256);
-			if (cp->chars == NULL)
-				elog(ERROR, "cclass_init: out of memory");
-			for (x = 0; x < 256; x++)
-			{
-				if ((cf->func) (x))
-					*(cp->chars + y++) = x;
-			}
-			*(cp->chars + y) = '\0';
-		}
-		cp->multis = "";
-		cp++;
+	fprintf(f, "%s. `%c'", stid(t, idbuf, sizeof(idbuf)), t->op);
+	if (t->flags&LONGER)
+		fprintf(f, " longest");
+	if (t->flags&SHORTER)
+		fprintf(f, " shortest");
+	if (t->flags&MIXED)
+		fprintf(f, " hasmixed");
+	if (t->flags&CAP)
+		fprintf(f, " hascapture");
+	if (t->flags&BACKR)
+		fprintf(f, " hasbackref");
+	if (!(t->flags&INUSE))
+		fprintf(f, " UNUSED");
+	if (t->subno != 0)
+		fprintf(f, " (#%d)", t->subno);
+	if (t->min != 1 || t->max != 1) {
+		fprintf(f, " {%d,", t->min);
+		if (t->max != INFINITY)
+			fprintf(f, "%d", t->max);
+		fprintf(f, "}");
 	}
-	cp->name = cp->chars = NULL;
-	cp->multis = "";
-
-	return classes;
+	if (nfapresent)
+		fprintf(f, " %ld-%ld", (long)t->begin->no, (long)t->end->no);
+	if (t->left != NULL)
+		fprintf(f, " L:%s", stid(t->left, idbuf, sizeof(idbuf)));
+	if (t->right != NULL)
+		fprintf(f, " R:%s", stid(t->right, idbuf, sizeof(idbuf)));
+	if (!NULLCNFA(t->cnfa)) {
+		fprintf(f, "\n");
+		dumpcnfa(&t->cnfa, f);
+		fprintf(f, "\n");
+	}
+	if (t->left != NULL)
+		stdump(t->left, f, nfapresent);
+	if (t->right != NULL)
+		stdump(t->right, f, nfapresent);
 }
+
+/*
+ * stid - identify a subtree node for dumping
+ */
+static char *			/* points to buf or constant string */
+stid(struct subre *t,
+	 char *buf,
+	 size_t bufsize)
+{
+	/* big enough for hex int or decimal t->retry? */
+	if (bufsize < sizeof(int)*2 + 3 || bufsize < sizeof(t->retry)*3 + 1)
+		return "unable";
+	if (t->retry != 0)
+		sprintf(buf, "%d", t->retry);
+	else
+		sprintf(buf, "0x%x", (int)t);	/* may lose bits, that's okay */
+	return buf;
+}
+
+#endif /* REG_DEBUG */
+
+
+#include "regc_lex.c"
+#include "regc_color.c"
+#include "regc_nfa.c"
+#include "regc_cvec.c"
+#include "regc_locale.c"

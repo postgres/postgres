@@ -1,181 +1,110 @@
-/*-
- * Copyright (c) 1992, 1993, 1994 Henry Spencer.
- * Copyright (c) 1992, 1993, 1994
- *		The Regents of the University of California.  All rights reserved.
+/*
+ * regerror - error-code expansion
  *
- * This code is derived from software contributed to Berkeley by
- * Henry Spencer.
+ * Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
+ * 
+ * Development of this software was funded, in part, by Cray Research Inc.,
+ * UUNET Communications Services Inc., Sun Microsystems Inc., and Scriptics
+ * Corporation, none of whom are responsible for the results.  The author
+ * thanks all of them. 
+ * 
+ * Redistribution and use in source and binary forms -- with or without
+ * modification -- are permitted for any purpose, provided that
+ * redistributions in source form retain this entire copyright notice and
+ * indicate the origin and nature of any modifications.
+ * 
+ * I'd appreciate being given credit for this package in the documentation
+ * of software which uses it, but that is not a requirement.
+ * 
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ * INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ * AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+ * HENRY SPENCER BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+ * OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+ * WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+ * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+ * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *	  notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *	  notice, this list of conditions and the following disclaimer in the
- *	  documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	  must display the following acknowledgement:
- *		This product includes software developed by the University of
- *		California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *	  may be used to endorse or promote products derived from this software
- *	  without specific prior written permission.
+ * $Header: /cvsroot/pgsql/src/backend/regex/regerror.c,v 1.25 2003/02/05 17:41:33 tgl Exp $
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.	IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *		@(#)regerror.c	8.4 (Berkeley) 3/20/94
  */
 
-#include "postgres.h"
+#include "regex/regguts.h"
 
-#include <ctype.h>
-#include <limits.h>
-#include <assert.h>
+/* unknown-error explanation */
+static char unk[] = "*** unknown regex error code 0x%x ***";
 
-#include "regex/regex.h"
-#include "regex/utils.h"
-#include "regex/regex2.h"
-
-static char *regatoi(const regex_t *preg, char *localbuf);
-
-static struct rerr
-{
-	int			code;
-	char	   *name;
-	char	   *explain;
-}	rerrs[] =
-
-{
-	{
-		/* NOMATCH is not really an error condition, it just says no match */
-		REG_NOMATCH, "REG_NOMATCH", "no pattern match found"
-	},
-	{
-		REG_BADPAT, "REG_BADPAT", "invalid regex struct"
-	},
-	{
-		REG_ECOLLATE, "REG_ECOLLATE", "invalid collating element"
-	},
-	{
-		REG_ECTYPE, "REG_ECTYPE", "invalid character class"
-	},
-	{
-		REG_EESCAPE, "REG_EESCAPE", "trailing backslash (\\)"
-	},
-	{
-		REG_ESUBREG, "REG_ESUBREG", "invalid backreference number"
-	},
-	{
-		REG_EBRACK, "REG_EBRACK", "brackets [ ] not balanced"
-	},
-	{
-		REG_EPAREN, "REG_EPAREN", "parentheses ( ) not balanced"
-	},
-	{
-		REG_EBRACE, "REG_EBRACE", "braces { } not balanced"
-	},
-	{
-		REG_BADBR, "REG_BADBR", "invalid repetition count(s) in { }"
-	},
-	{
-		REG_ERANGE, "REG_ERANGE", "invalid character range in [ ]"
-	},
-	{
-		REG_ESPACE, "REG_ESPACE", "ran out of memory"
-	},
-	{
-		REG_BADRPT, "REG_BADRPT", "?, *, or + operand invalid"
-	},
-	{
-		REG_EMPTY, "REG_EMPTY", "empty expression or subexpression"
-	},
-	{
-		REG_ASSERT, "REG_ASSERT", "\"can't happen\" -- you found a bug"
-	},
-	{
-		REG_INVARG, "REG_INVARG", "invalid argument to regex routine"
-	},
-	{
-		0, "", "*** unknown regexp error code ***"
-	}
+/* struct to map among codes, code names, and explanations */
+static struct rerr {
+	int code;
+	char *name;
+	char *explain;
+} rerrs[] = {
+	/* the actual table is built from regex.h */
+#include "regex/regerrs.h"
+	{ -1,	"",	"oops" },	/* explanation special-cased in code */
 };
 
 /*
- * regerror - the interface to error numbers
+ * pg_regerror - the interface to error numbers
  */
 /* ARGSUSED */
-size_t
-pg_regerror(int errcode, const regex_t *preg,
-			char *errbuf, size_t errbuf_size)
+size_t				/* actual space needed (including NUL) */
+pg_regerror(int errcode,		/* error code, or REG_ATOI or REG_ITOA */
+			const regex_t *preg, /* associated regex_t (unused at present) */
+			char *errbuf,		/* result buffer (unless errbuf_size==0) */
+			size_t errbuf_size)	/* available space in errbuf, can be 0 */
 {
 	struct rerr *r;
-	size_t		len;
-	int			target = errcode & ~REG_ITOA;
-	char	   *s;
-	char		convbuf[50];
+	char *msg;
+	char convbuf[sizeof(unk)+50];	/* 50 = plenty for int */
+	size_t len;
+	int icode;
 
-	if (errcode == REG_ATOI)
-		s = regatoi(preg, convbuf);
-	else
-	{
-		for (r = rerrs; r->code != 0; r++)
-			if (r->code == target)
+	switch (errcode) {
+	case REG_ATOI:		/* convert name to number */
+		for (r = rerrs; r->code >= 0; r++)
+			if (strcmp(r->name, errbuf) == 0)
 				break;
-
-		if (errcode & REG_ITOA)
-		{
-			if (r->code != 0)
-				strcpy(convbuf, r->name);
-			else
-				sprintf(convbuf, "REG_0x%x", target);
-			assert(strlen(convbuf) < sizeof(convbuf));
-			s = convbuf;
+		sprintf(convbuf, "%d", r->code);	/* -1 for unknown */
+		msg = convbuf;
+		break;
+	case REG_ITOA:		/* convert number to name */
+		icode = atoi(errbuf);	/* not our problem if this fails */
+		for (r = rerrs; r->code >= 0; r++)
+			if (r->code == icode)
+				break;
+		if (r->code >= 0)
+			msg = r->name;
+		else {			/* unknown; tell him the number */
+			sprintf(convbuf, "REG_%u", (unsigned)icode);
+			msg = convbuf;
 		}
-		else
-			s = r->explain;
+		break;
+	default:		/* a real, normal error code */
+		for (r = rerrs; r->code >= 0; r++)
+			if (r->code == errcode)
+				break;
+		if (r->code >= 0)
+			msg = r->explain;
+		else {			/* unknown; say so */
+			sprintf(convbuf, unk, errcode);
+			msg = convbuf;
+		}
+		break;
 	}
 
-	len = strlen(s) + 1;
-	if (errbuf_size > 0)
-	{
+	len = strlen(msg) + 1;		/* space needed, including NUL */
+	if (errbuf_size > 0) {
 		if (errbuf_size > len)
-			strcpy(errbuf, s);
-		else
-		{
-			strncpy(errbuf, s, errbuf_size - 1);
-			errbuf[errbuf_size - 1] = '\0';
+			strcpy(errbuf, msg);
+		else {			/* truncate to fit */
+			strncpy(errbuf, msg, errbuf_size-1);
+			errbuf[errbuf_size-1] = '\0';
 		}
 	}
 
 	return len;
-}
-
-/*
- * regatoi - internal routine to implement REG_ATOI
- */
-static char *
-regatoi(const regex_t *preg, char *localbuf)
-{
-	struct rerr *r;
-
-	for (r = rerrs; r->code != 0; r++)
-		if (pg_char_and_wchar_strcmp(r->name, preg->re_endp) == 0)
-			break;
-
-	if (r->code == 0)
-		return "0";
-
-	sprintf(localbuf, "%d", r->code);
-	return localbuf;
 }

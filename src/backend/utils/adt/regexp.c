@@ -1,14 +1,14 @@
 /*-------------------------------------------------------------------------
  *
  * regexp.c
- *	  regular expression handling code.
+ *	  Postgres' interface to the regular expression package.
  *
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.43 2002/09/22 17:27:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.44 2003/02/05 17:41:32 tgl Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -30,171 +30,189 @@
 #include "postgres.h"
 
 #include "regex/regex.h"
+#include "mb/pg_wchar.h"
 #include "utils/builtins.h"
 
-#if defined(DISABLE_XOPEN_NLS)
-#undef _XOPEN_SOURCE
-#endif   /* DISABLE_XOPEN_NLS */
 
-/* this is the number of cached regular expressions held. */
+/*
+ * We cache precompiled regular expressions using a "self organizing list"
+ * structure, in which recently-used items tend to be near the front.
+ * Whenever we use an entry, it's moved up to the front of the list.
+ * Over time, an item's average position corresponds to its frequency of use.
+ *
+ * When we first create an entry, it's inserted at the front of
+ * the array, dropping the entry at the end of the array if necessary to
+ * make room.  (This might seem to be weighting the new entry too heavily,
+ * but if we insert new entries further back, we'll be unable to adjust to
+ * a sudden shift in the query mix where we are presented with MAX_CACHED_RES
+ * never-before-seen items used circularly.  We ought to be able to handle
+ * that case, so we have to insert at the front.)
+ *
+ * Knuth mentions a variant strategy in which a used item is moved up just
+ * one place in the list.  Although he says this uses fewer comparisons on
+ * average, it seems not to adapt very well to the situation where you have
+ * both some reusable patterns and a steady stream of non-reusable patterns.
+ * A reusable pattern that isn't used at least as often as non-reusable
+ * patterns are seen will "fail to keep up" and will drop off the end of the
+ * cache.  With move-to-front, a reusable pattern is guaranteed to stay in
+ * the cache as long as it's used at least once in every MAX_CACHED_RES uses.
+ */
+
+/* this is the maximum number of cached regular expressions */
 #ifndef MAX_CACHED_RES
 #define MAX_CACHED_RES	32
 #endif
 
-/* this structure describes a cached regular expression */
-struct cached_re_str
+/* this structure describes one cached regular expression */
+typedef struct cached_re_str
 {
-	char	   *cre_s;			/* pattern as null-terminated string */
-	int			cre_type;		/* compiled-type: extended,icase etc */
+	text	   *cre_pat;		/* original RE (untoasted TEXT form) */
+	int			cre_flags;		/* compile flags: extended,icase etc */
 	regex_t		cre_re;			/* the compiled regular expression */
-	unsigned long cre_lru;		/* lru tag */
-};
+} cached_re_str;
 
-static int	rec = 0;			/* # of cached re's */
-static struct cached_re_str rev[MAX_CACHED_RES];		/* cached re's */
-static unsigned long lru;		/* system lru tag */
-static int	pg_lastrec = 0;
-
-/* attempt to compile `re' as an re, then match it against text */
-/* cflags - flag to regcomp indicates case sensitivity */
-static bool
-RE_compile_and_execute(text *text_re, char *text, int cflags,
-					   int nmatch, regmatch_t *pmatch)
-{
-	char	   *re;
-	int			oldest;
-	int			i;
-	int			regcomp_result;
-
-	/* Convert 'text' pattern to null-terminated string */
-	re = DatumGetCString(DirectFunctionCall1(textout,
-											 PointerGetDatum(text_re)));
-
-	/*
-	 * Find a previously compiled regular expression. Run the cache as a
-	 * ring buffer, starting the search from the previous match if any.
-	 */
-	i = pg_lastrec;
-	while (i < rec)
-	{
-		if (rev[i].cre_s != NULL)
-		{
-			if (strcmp(rev[i].cre_s, re) == 0 &&
-				rev[i].cre_type == cflags)
-			{
-				pg_lastrec = i;
-				rev[i].cre_lru = ++lru;
-				pfree(re);
-				return (pg_regexec(&rev[i].cre_re,
-								   text, nmatch,
-								   pmatch, 0) == 0);
-			}
-		}
-		i++;
-
-		/*
-		 * If we were not at the first slot to start, then think about
-		 * wrapping if necessary.
-		 */
-		if (pg_lastrec != 0)
-		{
-			if (i >= rec)
-				i = 0;
-			else if (i == pg_lastrec)
-				break;
-		}
-	}
-
-	/* we didn't find it - make room in the cache for it */
-	if (rec >= MAX_CACHED_RES)
-	{
-		/* cache is full - find the oldest entry */
-		for (oldest = 0, i = 1; i < rec; i++)
-		{
-			if (rev[i].cre_lru < rev[oldest].cre_lru)
-				oldest = i;
-		}
-	}
-	else
-		oldest = rec++;
-
-	/* if there was an old re, then de-allocate the space it used */
-	if (rev[oldest].cre_s != (char *) NULL)
-	{
-		for (lru = i = 0; i < rec; i++)
-		{
-			/* downweight all of the other cached entries */
-			rev[i].cre_lru = (rev[i].cre_lru - rev[oldest].cre_lru) / 2;
-			if (rev[i].cre_lru > lru)
-				lru = rev[i].cre_lru;
-		}
-		pg_regfree(&rev[oldest].cre_re);
-
-		/*
-		 * use malloc/free for the cre_s field because the storage has to
-		 * persist across transactions
-		 */
-		free(rev[oldest].cre_s);
-		rev[oldest].cre_s = (char *) NULL;
-	}
-
-	/* compile the re */
-	regcomp_result = pg_regcomp(&rev[oldest].cre_re, re, cflags);
-	if (regcomp_result == 0)
-	{
-		pg_lastrec = oldest;
-
-		/*
-		 * use malloc/free for the cre_s field because the storage has to
-		 * persist across transactions
-		 */
-		rev[oldest].cre_s = strdup(re);
-		rev[oldest].cre_lru = ++lru;
-		rev[oldest].cre_type = cflags;
-		pfree(re);
-		/* agc - fixed an old typo here */
-		return (pg_regexec(&rev[oldest].cre_re, text,
-						   nmatch, pmatch, 0) == 0);
-	}
-	else
-	{
-		char		errMsg[1000];
-
-		/* re didn't compile */
-		pg_regerror(regcomp_result, &rev[oldest].cre_re, errMsg,
-					sizeof(errMsg));
-		elog(ERROR, "Invalid regular expression: %s", errMsg);
-	}
-
-	/* not reached */
-	return false;
-}
+static int	num_res = 0;		/* # of cached re's */
+static cached_re_str re_array[MAX_CACHED_RES]; /* cached re's */
 
 
 /*
-   fixedlen_regexeq:
-
-   a generic fixed length regexp routine
-		 s		- the string to match against (not necessarily null-terminated)
-		 p		- the pattern (as a text*)
-		 charlen   - the length of the string
-*/
+ * RE_compile_and_execute - compile and execute a RE, caching if possible
+ *
+ * Returns TRUE on match, FALSE on no match
+ *
+ *	text_re --- the pattern, expressed as an *untoasted* TEXT object
+ *	dat --- the data to match against (need not be null-terminated)
+ *	dat_len --- the length of the data string
+ *	cflags --- compile options for the pattern
+ *	nmatch, pmatch  --- optional return area for match details
+ *
+ * Both pattern and data are given in the database encoding.  We internally
+ * convert to array of pg_wchar which is what Spencer's regex package wants.
+ */
 static bool
-fixedlen_regexeq(char *s, text *p, int charlen, int cflags)
+RE_compile_and_execute(text *text_re, unsigned char *dat, int dat_len,
+					   int cflags, int nmatch, regmatch_t *pmatch)
 {
-	char	   *sterm;
-	bool		result;
+	int			text_re_len = VARSIZE(text_re);
+	pg_wchar   *data;
+	size_t		data_len;
+	pg_wchar   *pattern;
+	size_t		pattern_len;
+	int			i;
+	int			regcomp_result;
+	int			regexec_result;
+	cached_re_str	re_temp;
 
-	/* be sure sterm is null-terminated */
-	sterm = (char *) palloc(charlen + 1);
-	memcpy(sterm, s, charlen);
-	sterm[charlen] = '\0';
+	/* Convert data string to wide characters */
+	data = (pg_wchar *) palloc((dat_len + 1) * sizeof(pg_wchar));
+	data_len = pg_mb2wchar_with_len(dat, data, dat_len);
 
-	result = RE_compile_and_execute(p, sterm, cflags, 0, NULL);
+	/*
+	 * Look for a match among previously compiled REs.  Since the data
+	 * structure is self-organizing with most-used entries at the front,
+	 * our search strategy can just be to scan from the front.
+	 */
+	for (i = 0; i < num_res; i++)
+	{
+		if (memcmp(re_array[i].cre_pat, text_re, text_re_len) == 0 &&
+			re_array[i].cre_flags == cflags)
+		{
+			/*
+			 * Found a match; move it to front if not there already.
+			 */
+			if (i > 0)
+			{
+				re_temp = re_array[i];
+				memmove(&re_array[1], &re_array[0], i * sizeof(cached_re_str));
+				re_array[0] = re_temp;
+			}
 
-	pfree(sterm);
+			/* Perform RE match and return result */
+			regexec_result = pg_regexec(&re_array[0].cre_re,
+										data,
+										data_len,
+										NULL, /* no details */
+										nmatch,
+										pmatch,
+										0);
 
-	return result;
+			pfree(data);
+
+			return (regexec_result == 0);
+		}
+	}
+
+	/*
+	 * Couldn't find it, so try to compile the new RE.  To avoid leaking
+	 * resources on failure, we build into the re_temp local.
+	 */
+
+	/* Convert pattern string to wide characters */
+	pattern = (pg_wchar *) palloc((text_re_len - VARHDRSZ + 1) * sizeof(pg_wchar));
+	pattern_len = pg_mb2wchar_with_len((unsigned char *) VARDATA(text_re),
+									   pattern,
+									   text_re_len - VARHDRSZ);
+
+	regcomp_result = pg_regcomp(&re_temp.cre_re,
+								pattern,
+								pattern_len,
+								cflags);
+
+	pfree(pattern);
+
+	if (regcomp_result != 0)
+	{
+		/* re didn't compile */
+		char		errMsg[100];
+
+		pg_regerror(regcomp_result, &re_temp.cre_re, errMsg, sizeof(errMsg));
+		/* XXX should we pg_regfree here? */
+		elog(ERROR, "Invalid regular expression: %s", errMsg);
+	}
+
+	/*
+	 * use malloc/free for the cre_pat field because the storage has to
+	 * persist across transactions
+	 */
+	re_temp.cre_pat = malloc(text_re_len);
+	if (re_temp.cre_pat == NULL)
+	{
+		pg_regfree(&re_temp.cre_re);
+		elog(ERROR, "Out of memory");
+	}
+	memcpy(re_temp.cre_pat, text_re, text_re_len);
+	re_temp.cre_flags = cflags;
+
+	/*
+	 * Okay, we have a valid new item in re_temp; insert it into the
+	 * storage array.  Discard last entry if needed.
+	 */
+	if (num_res >= MAX_CACHED_RES)
+	{
+		--num_res;
+		Assert(num_res < MAX_CACHED_RES);
+		pg_regfree(&re_array[num_res].cre_re);
+		free(re_array[num_res].cre_pat);
+	}
+
+	if (num_res > 0)
+		memmove(&re_array[1], &re_array[0], num_res * sizeof(cached_re_str));
+
+	re_array[0] = re_temp;
+	num_res++;
+
+	/* Perform RE match and return result */
+	regexec_result = pg_regexec(&re_array[0].cre_re,
+								data,
+								data_len,
+								NULL, /* no details */
+								nmatch,
+								pmatch,
+								0);
+
+	pfree(data);
+
+	return (regexec_result == 0);
 }
 
 
@@ -208,10 +226,11 @@ nameregexeq(PG_FUNCTION_ARGS)
 	Name		n = PG_GETARG_NAME(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(fixedlen_regexeq(NameStr(*n),
-									p,
-									strlen(NameStr(*n)),
-									REG_EXTENDED));
+	PG_RETURN_BOOL(RE_compile_and_execute(p,
+										  (unsigned char *) NameStr(*n),
+										  strlen(NameStr(*n)),
+										  REG_ADVANCED,
+										  0, NULL));
 }
 
 Datum
@@ -220,10 +239,11 @@ nameregexne(PG_FUNCTION_ARGS)
 	Name		n = PG_GETARG_NAME(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(!fixedlen_regexeq(NameStr(*n),
-									 p,
-									 strlen(NameStr(*n)),
-									 REG_EXTENDED));
+	PG_RETURN_BOOL(!RE_compile_and_execute(p,
+										   (unsigned char *) NameStr(*n),
+										   strlen(NameStr(*n)),
+										   REG_ADVANCED,
+										   0, NULL));
 }
 
 Datum
@@ -232,10 +252,11 @@ textregexeq(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(fixedlen_regexeq(VARDATA(s),
-									p,
-									VARSIZE(s) - VARHDRSZ,
-									REG_EXTENDED));
+	PG_RETURN_BOOL(RE_compile_and_execute(p,
+										  (unsigned char *) VARDATA(s),
+										  VARSIZE(s) - VARHDRSZ,
+										  REG_ADVANCED,
+										  0, NULL));
 }
 
 Datum
@@ -244,10 +265,11 @@ textregexne(PG_FUNCTION_ARGS)
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(!fixedlen_regexeq(VARDATA(s),
-									 p,
-									 VARSIZE(s) - VARHDRSZ,
-									 REG_EXTENDED));
+	PG_RETURN_BOOL(!RE_compile_and_execute(p,
+										   (unsigned char *) VARDATA(s),
+										   VARSIZE(s) - VARHDRSZ,
+										   REG_ADVANCED,
+										   0, NULL));
 }
 
 
@@ -258,39 +280,16 @@ textregexne(PG_FUNCTION_ARGS)
 
 
 Datum
-texticregexeq(PG_FUNCTION_ARGS)
-{
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-
-	PG_RETURN_BOOL(fixedlen_regexeq(VARDATA(s),
-									p,
-									VARSIZE(s) - VARHDRSZ,
-									REG_ICASE | REG_EXTENDED));
-}
-
-Datum
-texticregexne(PG_FUNCTION_ARGS)
-{
-	text	   *s = PG_GETARG_TEXT_P(0);
-	text	   *p = PG_GETARG_TEXT_P(1);
-
-	PG_RETURN_BOOL(!fixedlen_regexeq(VARDATA(s),
-									 p,
-									 VARSIZE(s) - VARHDRSZ,
-									 REG_ICASE | REG_EXTENDED));
-}
-
-Datum
 nameicregexeq(PG_FUNCTION_ARGS)
 {
 	Name		n = PG_GETARG_NAME(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(fixedlen_regexeq(NameStr(*n),
-									p,
-									strlen(NameStr(*n)),
-									REG_ICASE | REG_EXTENDED));
+	PG_RETURN_BOOL(RE_compile_and_execute(p,
+										  (unsigned char *) NameStr(*n),
+										  strlen(NameStr(*n)),
+										  REG_ICASE | REG_ADVANCED,
+										  0, NULL));
 }
 
 Datum
@@ -299,31 +298,51 @@ nameicregexne(PG_FUNCTION_ARGS)
 	Name		n = PG_GETARG_NAME(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
 
-	PG_RETURN_BOOL(!fixedlen_regexeq(NameStr(*n),
-									 p,
-									 strlen(NameStr(*n)),
-									 REG_ICASE | REG_EXTENDED));
+	PG_RETURN_BOOL(!RE_compile_and_execute(p,
+										   (unsigned char *) NameStr(*n),
+										   strlen(NameStr(*n)),
+										   REG_ICASE | REG_ADVANCED,
+										   0, NULL));
+}
+
+Datum
+texticregexeq(PG_FUNCTION_ARGS)
+{
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(RE_compile_and_execute(p,
+										  (unsigned char *) VARDATA(s),
+										  VARSIZE(s) - VARHDRSZ,
+										  REG_ICASE | REG_ADVANCED,
+										  0, NULL));
+}
+
+Datum
+texticregexne(PG_FUNCTION_ARGS)
+{
+	text	   *s = PG_GETARG_TEXT_P(0);
+	text	   *p = PG_GETARG_TEXT_P(1);
+
+	PG_RETURN_BOOL(!RE_compile_and_execute(p,
+										   (unsigned char *) VARDATA(s),
+										   VARSIZE(s) - VARHDRSZ,
+										   REG_ICASE | REG_ADVANCED,
+										   0, NULL));
 }
 
 
-/* textregexsubstr()
- * Return a substring matched by a regular expression.
+/*
+ * textregexsubstr()
+ *		Return a substring matched by a regular expression.
  */
 Datum
 textregexsubstr(PG_FUNCTION_ARGS)
 {
 	text	   *s = PG_GETARG_TEXT_P(0);
 	text	   *p = PG_GETARG_TEXT_P(1);
-	char	   *sterm;
-	int			len;
 	bool		match;
 	regmatch_t	pmatch[2];
-
-	/* be sure sterm is null-terminated */
-	len = VARSIZE(s) - VARHDRSZ;
-	sterm = (char *) palloc(len + 1);
-	memcpy(sterm, VARDATA(s), len);
-	sterm[len] = '\0';
 
 	/*
 	 * We pass two regmatch_t structs to get info about the overall match
@@ -331,9 +350,11 @@ textregexsubstr(PG_FUNCTION_ARGS)
 	 * If there is a parenthesized subexpression, we return what it matched;
 	 * else return what the whole regexp matched.
 	 */
-	match = RE_compile_and_execute(p, sterm, REG_EXTENDED, 2, pmatch);
-
-	pfree(sterm);
+	match = RE_compile_and_execute(p,
+								   (unsigned char *) VARDATA(s),
+								   VARSIZE(s) - VARHDRSZ,
+								   REG_ADVANCED,
+								   2, pmatch);
 
 	/* match? then return the substring matching the pattern */
 	if (match)
