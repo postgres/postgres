@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.92 2003/08/08 21:42:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/timestamp.c,v 1.93 2003/08/26 21:31:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1046,8 +1046,8 @@ timestamp2tm(Timestamp dt, int *tzp, struct tm * tm, fsec_t *fsec, char **tzn)
  * Argh! My Linux box puts in a 1 second offset for dates less than 1970
  *	but only if the seconds field was non-zero. So, don't copy the seconds
  *	field and instead carry forward from the original - thomas 97/06/18
- * Note that GNU/Linux uses the standard freeware zic package as do
- *	many other platforms so this may not be GNU/Linux/ix86-specific.
+ * Note that Linux uses the standard freeware zic package as do
+ *	many other platforms so this may not be Linux/ix86-specific.
  * Still shows a problem on my up to date Linux box - thomas 2001-01-17
  */
 			tm->tm_sec = tx->tm_sec;
