@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.61 2000/07/21 19:21:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.62 2000/08/25 23:13:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -289,9 +289,11 @@ _bt_check_unique(Relation rel, BTItem btitem, Relation heapRel,
  *		if the new key is equal to the page's "high key" we can place it on
  *		the next page.  If it is equal to the high key, and there's not room
  *		to insert the new tuple on the current page without splitting, then
- *		we move right hoping to find more free space and avoid a split.
- *		Ordinarily, though, we'll insert it before the existing equal keys
- *		because of the way _bt_binsrch() works.
+ *		we can move right hoping to find more free space and avoid a split.
+ *		(We should not move right indefinitely, however, since that leads to
+ *		O(N^2) insertion behavior in the presence of many equal keys.)
+ *		Once we have chosen the page to put the key on, we'll insert it before
+ *		any existing equal keys because of the way _bt_binsrch() works.
  *
  *		The locking interactions in this code are critical.  You should
  *		grok Lehman and Yao's paper before making any changes.  In addition,
@@ -351,15 +353,30 @@ _bt_insertonpg(Relation rel,
 	}
 	else
 	{
-		/*
+		/*----------
 		 * If we will need to split the page to put the item here,
 		 * check whether we can put the tuple somewhere to the right,
-		 * instead.  Keep scanning until we find enough free space or
-		 * reach the last page where the tuple can legally go.
+		 * instead.  Keep scanning right until we
+		 *		(a) find a page with enough free space,
+		 *		(b) reach the last page where the tuple can legally go, or
+		 *		(c) get tired of searching.
+		 * (c) is not flippant; it is important because if there are many
+		 * pages' worth of equal keys, it's better to split one of the early
+		 * pages than to scan all the way to the end of the run of equal keys
+		 * on every insert.  We implement "get tired" as a random choice,
+		 * since stopping after scanning a fixed number of pages wouldn't work
+		 * well (we'd never reach the right-hand side of previously split
+		 * pages).  Currently the probability of moving right is set at 0.99,
+		 * which may seem too high to change the behavior much, but it does an
+		 * excellent job of preventing O(N^2) behavior with many equal keys.
+		 *----------
 		 */
+		bool	movedright = false;
+
 		while (PageGetFreeSpace(page) < itemsz &&
 			   !P_RIGHTMOST(lpageop) &&
-			   _bt_compare(rel, keysz, scankey, page, P_HIKEY) == 0)
+			   _bt_compare(rel, keysz, scankey, page, P_HIKEY) == 0 &&
+			   random() > (MAX_RANDOM_VALUE / 100))
 		{
 			/* step right one page */
 			BlockNumber		rblkno = lpageop->btpo_next;
@@ -368,11 +385,17 @@ _bt_insertonpg(Relation rel,
 			buf = _bt_getbuf(rel, rblkno, BT_WRITE);
 			page = BufferGetPage(buf);
 			lpageop = (BTPageOpaque) PageGetSpecialPointer(page);
+			movedright = true;
 		}
 		/*
-		 * This is it, so find the position...
+		 * Now we are on the right page, so find the insert position.
+		 * If we moved right at all, we know we should insert at the
+		 * start of the page, else must find the position by searching.
 		 */
-		newitemoff = _bt_binsrch(rel, buf, keysz, scankey);
+		if (movedright)
+			newitemoff = P_FIRSTDATAKEY(lpageop);
+		else
+			newitemoff = _bt_binsrch(rel, buf, keysz, scankey);
 	}
 
 	/*
