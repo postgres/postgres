@@ -7,7 +7,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PSQLException.java,v 1.11 2003/03/14 01:21:47 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PSQLException.java,v 1.12 2003/08/11 21:18:47 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -126,13 +126,5 @@ public class PSQLException extends SQLException
 	public String getMessage()
 	{
 		return message;
-	}
-
-	/*
-	 * Overides Object
-	 */
-	public String toString()
-	{
-		return message != null ? message : "";
 	}
 }

@@ -6,7 +6,7 @@
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.22 2003/05/29 03:21:32 barry Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/QueryExecutor.java,v 1.23 2003/08/11 21:18:47 barry Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -192,7 +192,7 @@ public class QueryExecutor
 
 			// did we get an error during this query?
 			if ( errorMessage != null )
-				throw new SQLException( errorMessage.toString() );
+				throw new SQLException( errorMessage.toString().trim() );
 
 
 			//if an existing result set was passed in reuse it, else
@@ -283,7 +283,7 @@ public class QueryExecutor
 
 			// did we get an error during this query?
 			if ( errorMessage != null )
-				throw new SQLException( errorMessage.toString() );
+				throw new SQLException( errorMessage.toString().trim() );
 
 
 			//if an existing result set was passed in reuse it, else
