@@ -4,6 +4,7 @@ include $(top_builddir)/src/Makefile.global
 
 
 override CPPFLAGS := -I$(srcdir) -I$(srcdir)/.. $(CPPFLAGS)
+override CFLAGS += $(CFLAGS_SL)
 
 SUBOBJS =  parser.o deflex.o
 
