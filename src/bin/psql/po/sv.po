@@ -2,16 +2,16 @@
 # Peter Eisentraut <peter_e@gmx.net>, 2001.
 # Dennis Björklund <db@zigo.dhs.org>, 2002, 2003, 2004.
 #
-# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.14 2004/01/08 10:47:40 dennis Exp $
+# $PostgreSQL: pgsql/src/bin/psql/po/sv.po,v 1.15 2004/01/11 06:50:27 dennis Exp $
 #
 # Use these quotes: "%s"
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
+"Project-Id-Version: PostgreSQL 7.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-01-08 09:40+0100\n"
-"PO-Revision-Date: 2004-01-08 11:45+0100\n"
+"POT-Creation-Date: 2004-01-11 07:42+0100\n"
+"PO-Revision-Date: 2004-01-11 07:44+0100\n"
 "Last-Translator: Dennis Björklund <db@zigo.dhs.org>\n"
 "Language-Team: Swedish <sv@li.org>\n"
 "MIME-Version: 1.0\n"
@@ -42,208 +42,209 @@ msgstr "kunde inte hämta hemkatalogen: %s\n"
 msgid "\\%s: could not change directory to \"%s\": %s\n"
 msgstr "\\%s: kunde inte byta katalog till \"%s\": %s\n"
 
-#: command.c:410 command.c:768
+#: command.c:410 command.c:781
 msgid "no query buffer\n"
 msgstr "ingen frågebuffert\n"
 
-#: command.c:467
+#: command.c:468
 #, c-format
 msgid "%s: invalid encoding name or conversion procedure not found\n"
 msgstr "%s: ogiltigt kodningsnamn eller konverteringsprocedur hittades inte\n"
 
-#: command.c:529 command.c:560 command.c:571 command.c:585 command.c:627
-#: command.c:748 command.c:777
+#: command.c:533 command.c:565 command.c:579 command.c:596 command.c:639
+#: command.c:761 command.c:791
 #, c-format
 msgid "\\%s: missing required argument\n"
 msgstr "\\%s: obligatoriskt argument saknas\n"
 
-#: command.c:615
+#: command.c:627
 msgid "Query buffer is empty."
 msgstr "Frågebufferten är tom."
 
-#: command.c:648
+#: command.c:660
 msgid "Query buffer reset (cleared)."
 msgstr "Frågebufferten har blivit borttagen."
 
-#: command.c:659
+#: command.c:672
 #, c-format
 msgid "Wrote history to file \"%s\".\n"
 msgstr "Kommandohistorien har skrivits till \"%s\".\n"
 
-#: command.c:691 command.c:1148 command.c:1243 command.c:1951 common.c:86
-#: copy.c:87 copy.c:115 mainloop.c:78 mainloop.c:341 describe.c:51
+#: command.c:704 command.c:1162 command.c:1257 command.c:1965 common.c:86
+#: common.c:865 copy.c:87 copy.c:115 mainloop.c:78 mainloop.c:341
+#: describe.c:51
 msgid "out of memory\n"
 msgstr "minnet slut\n"
 
-#: command.c:706 command.c:753
+#: command.c:719 command.c:766
 #, c-format
 msgid "\\%s: error\n"
 msgstr "\\%s: fel\n"
 
-#: command.c:735
+#: command.c:748
 msgid "Timing is on."
 msgstr "Tidtagning är på."
 
-#: command.c:737
+#: command.c:750
 msgid "Timing is off."
 msgstr "Tidtagning är av."
 
-#: command.c:792 command.c:812 command.c:1010 command.c:1023 command.c:1034
-#: command.c:1598 command.c:1611 command.c:1623 command.c:1636 command.c:1650
-#: command.c:1672 command.c:1702 common.c:135 copy.c:377
+#: command.c:806 command.c:826 command.c:1024 command.c:1037 command.c:1048
+#: command.c:1612 command.c:1625 command.c:1637 command.c:1650 command.c:1664
+#: command.c:1686 command.c:1716 common.c:135 copy.c:378
 #, c-format
 msgid "%s: %s\n"
 msgstr "%s: %s\n"
 
-#: command.c:878
+#: command.c:892
 #, c-format
 msgid "\\%s: extra argument \"%s\" ignored\n"
 msgstr "\\%s: extra argument \"%s\" ignorerat\n"
 
-#: command.c:971 command.c:999 command.c:1121
+#: command.c:985 command.c:1013 command.c:1135
 msgid "parse error at the end of line\n"
 msgstr "parsfel vid radslutet\n"
 
-#: command.c:1348 command.c:1372 startup.c:177 startup.c:195
+#: command.c:1362 command.c:1386 startup.c:177 startup.c:195
 msgid "Password: "
 msgstr "Lösenord: "
 
-#: command.c:1386 common.c:181 common.c:352 common.c:406 common.c:653
+#: command.c:1400 common.c:181 common.c:352 common.c:406 common.c:653
 #, c-format
 msgid "%s"
 msgstr "%s"
 
-#: command.c:1390
+#: command.c:1404
 msgid "Previous connection kept\n"
 msgstr "Föregående förbindelse bevarad\n"
 
-#: command.c:1402
+#: command.c:1416
 #, c-format
 msgid "\\connect: %s"
 msgstr "\\connect: %s"
 
-#: command.c:1414
+#: command.c:1428
 #, c-format
 msgid "You are now connected to database \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\".\n"
 
-#: command.c:1416
+#: command.c:1430
 #, c-format
 msgid "You are now connected as new user \"%s\".\n"
 msgstr "Du är nu uppkopplad som ny användare \"%s\".\n"
 
-#: command.c:1419
+#: command.c:1433
 #, c-format
 msgid "You are now connected to database \"%s\" as user \"%s\".\n"
 msgstr "Du är nu uppkopplad mot databasen \"%s\" som användare \"%s\".\n"
 
-#: command.c:1536
+#: command.c:1550
 #, c-format
 msgid "could not start editor \"%s\"\n"
 msgstr "kunde inte starta editorn \"%s\"\n"
 
-#: command.c:1538
+#: command.c:1552
 msgid "could not start /bin/sh\n"
 msgstr "kunde inte starta /bin/sh\n"
 
-#: command.c:1583
+#: command.c:1597
 #, c-format
 msgid "could not open temporary file \"%s\": %s\n"
 msgstr "kunde inte öppna temporär fil \"%s\": %s\n"
 
-#: command.c:1770
+#: command.c:1784
 msgid "\\pset: allowed formats are unaligned, aligned, html, latex\n"
 msgstr "\\pset: tillåtna formaten är unaligned, aligned, html, latex\n"
 
-#: command.c:1775
+#: command.c:1789
 #, c-format
 msgid "Output format is %s.\n"
 msgstr "Utdataformatet är \"%s\".\n"
 
-#: command.c:1785
+#: command.c:1799
 #, c-format
 msgid "Border style is %d.\n"
 msgstr "Ramstil är %d.\n"
 
-#: command.c:1794
+#: command.c:1808
 msgid "Expanded display is on.\n"
 msgstr "Utökad visning är på.\n"
 
-#: command.c:1795
+#: command.c:1809
 msgid "Expanded display is off.\n"
 msgstr "Utökad visning är av.\n"
 
-#: command.c:1807
+#: command.c:1821
 #, c-format
 msgid "Null display is \"%s\".\n"
 msgstr "Null-visare är \"%s\".\n"
 
-#: command.c:1819
+#: command.c:1833
 #, c-format
 msgid "Field separator is \"%s\".\n"
 msgstr "Fältseparatorn är \"%s\".\n"
 
-#: command.c:1833
+#: command.c:1847
 msgid "Record separator is <newline>."
 msgstr "Postseparatorn är <nyrad>."
 
-#: command.c:1835
+#: command.c:1849
 #, c-format
 msgid "Record separator is \"%s\".\n"
 msgstr "Postseparatorn är \"%s\".\n"
 
-#: command.c:1846
+#: command.c:1860
 msgid "Showing only tuples."
 msgstr "Visar bara tupler."
 
-#: command.c:1848
+#: command.c:1862
 msgid "Tuples only is off."
 msgstr "Visa bara tupler är av."
 
-#: command.c:1864
+#: command.c:1878
 #, c-format
 msgid "Title is \"%s\".\n"
 msgstr "Titeln är \"%s\".\n"
 
-#: command.c:1866
+#: command.c:1880
 msgid "Title is unset.\n"
 msgstr "Titeln är inte satt.\n"
 
-#: command.c:1882
+#: command.c:1896
 #, c-format
 msgid "Table attribute is \"%s\".\n"
 msgstr "Tabellattribut är \"%s\".\n"
 
-#: command.c:1884
+#: command.c:1898
 msgid "Table attributes unset.\n"
 msgstr "Tabellattribut är ej satt.\n"
 
-#: command.c:1900
+#: command.c:1914
 msgid "Pager is used for long output."
 msgstr "Siduppdelare är på för lång utdata."
 
-#: command.c:1902
+#: command.c:1916
 msgid "Pager is always used."
 msgstr "Siduppdelare används alltid."
 
-#: command.c:1904
+#: command.c:1918
 msgid "Pager usage is off."
 msgstr "Siduppdelare är av."
 
-#: command.c:1915
+#: command.c:1929
 msgid "Default footer is on."
 msgstr "Standard sidfot är på."
 
-#: command.c:1917
+#: command.c:1931
 msgid "Default footer is off."
 msgstr "Standard sidfot är av."
 
-#: command.c:1923
+#: command.c:1937
 #, c-format
 msgid "\\pset: unknown option: %s\n"
 msgstr "\\pset: okänd parameter: %s\n"
 
-#: command.c:1970
+#: command.c:1984
 msgid "\\!: failed\n"
 msgstr "\\!: misslyckades\n"
 
@@ -310,26 +311,26 @@ msgstr "Tid: %.3f ms\n"
 msgid "\\copy: arguments required\n"
 msgstr "\\copy: argument krävs\n"
 
-#: copy.c:288
+#: copy.c:289
 #, c-format
 msgid "\\copy: parse error at \"%s\"\n"
 msgstr "\\copy: parsfel vid \"%s\"\n"
 
-#: copy.c:290
+#: copy.c:291
 msgid "\\copy: parse error at end of line\n"
 msgstr "\\copy: parsfel vid radslutet\n"
 
-#: copy.c:388
+#: copy.c:389
 #, c-format
 msgid "%s: cannot copy from/to a directory\n"
 msgstr "%s: kan inte kopiera från/till en katalog\n"
 
-#: copy.c:409
+#: copy.c:410
 #, c-format
 msgid "\\copy: %s"
 msgstr "\\copy: %s"
 
-#: copy.c:413
+#: copy.c:414
 #, c-format
 msgid "\\copy: unexpected response (%d)\n"
 msgstr "\\copy: oväntat svar (%d)\n"
@@ -455,8 +456,7 @@ msgstr ""
 
 #: help.c:113
 msgid "  -A              unaligned table output mode (-P format=unaligned)"
-msgstr ""
-"  -A              ojusterad utskrift av tabeller (-P format=unaligned)\""
+msgstr "  -A              ojusterad utskrift av tabeller (-P format=unaligned)"
 
 #: help.c:114
 msgid "  -H              HTML table output mode (-P format=html)"
@@ -639,7 +639,8 @@ msgid "  \\s [FILE]      display history or save it to file\n"
 msgstr "  \\s [FILNAMN]   visa kommandohistorien eller spara den i fil\n"
 
 #: help.c:198
-msgid "  \\w [FILE]      write query buffer to file\n"
+#, fuzzy
+msgid "  \\w FILE        write query buffer to file\n"
 msgstr "  \\w [FILNAMN]   skriv frågebuffert till fil\n"
 
 #: help.c:201
@@ -1183,6 +1184,11 @@ msgstr "UNIK, "
 msgid "for table \"%s.%s\""
 msgstr "för tabell \"%s.%s\""
 
+#: describe.c:895
+#, c-format
+msgid ", predicate (%s)"
+msgstr ""
+
 #: describe.c:929
 #, c-format
 msgid ""
@@ -1607,8 +1613,16 @@ msgid "start a transaction block"
 msgstr "starta ett transaktionsblock"
 
 #: sql_help.h:86
-msgid "BEGIN [ WORK | TRANSACTION ]"
-msgstr "BEGIN [ WORK | TRANSACTION ]"
+#, fuzzy
+msgid ""
+"BEGIN [ WORK | TRANSACTION ]\n"
+"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
+"| SERIALIZABLE } ]\n"
+"    [ READ WRITE | READ ONLY ]"
+msgstr ""
+"START TRANSACTION [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | "
+"REPEATABLE READ | SERIALIZABLE } ]\n"
+"    [ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:89
 msgid "force a transaction log checkpoint"
@@ -2057,9 +2071,11 @@ msgid ""
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn (\n"
-"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor [ ... ] ]\n"
+"    { kolumnname datatyp [ DEFAULT default_uttryck ] [ kolumnvillkor "
+"[ ... ] ]\n"
 "    | tabellvillkor\n"
-"    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  [, ... ]\n"
+"    | LIKE föräldratabell [ { INCLUDING | EXCLUDING } DEFAULTS ] }  "
+"[, ... ]\n"
 ")\n"
 "[ INHERITS ( föräldratabell [, ... ] ) ]\n"
 "[ WITH OIDS | WITHOUT OIDS ]\n"
@@ -2070,9 +2086,11 @@ msgstr ""
 "[ CONSTRAINT villkorsnamn ]\n"
 "{ NOT NULL | NULL | UNIQUE | PRIMARY KEY |\n"
 "  CHECK (uttryck) |\n"
-"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ]\n"
+"  REFERENCES reftabell [ ( refkolumn ) ] [ MATCH FULL | MATCH PARTIAL | "
+"MATCH SIMPLE ]\n"
 "    [ ON DELETE action ] [ ON UPDATE action ] }\n"
-"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]\n"
+"[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY "
+"IMMEDIATE ]\n"
 "\n"
 "och tabellvillkor är:\n"
 "\n"
@@ -2080,8 +2098,10 @@ msgstr ""
 "{ UNIQUE ( kolumnnamn [, ... ] ) |\n"
 "  PRIMARY KEY ( kolumnnamn [, ... ] ) |\n"
 "  CHECK ( uttryck ) |\n"
-"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn [, ... ] ) ]\n"
-"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON UPDATE action ] }\n"
+"  FOREIGN KEY ( kolumnnamn [, ... ] ) REFERENCES reftabell [ ( refkolumn "
+"[, ... ] ) ]\n"
+"    [ MATCH FULL | MATCH PARTIAL | MATCH SIMPLE ] [ ON DELETE action ] [ ON "
+"UPDATE action ] }\n"
 "[ DEFERRABLE | NOT DEFERRABLE ] [ INITIALLY DEFERRED | INITIALLY IMMEDIATE ]"
 
 #: sql_help.h:177 sql_help.h:353
@@ -2089,9 +2109,10 @@ msgid "create a new table from the results of a query"
 msgstr "skapa en ny tabell från resultatet av en fråga"
 
 #: sql_help.h:178
+#, fuzzy
 msgid ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE table_name "
-"[ (column_name [, ...] ) ]\n"
+"[ (column_name [, ...] ) ] [ [ WITH | WITHOUT ] OIDS ]\n"
 "    AS query"
 msgstr ""
 "CREATE [ [ GLOBAL | LOCAL ] { TEMPORARY | TEMP } ] TABLE tabellnamn "
@@ -2792,10 +2813,12 @@ msgid ""
 "    [ READ WRITE | READ ONLY ]"
 msgstr ""
 "SET TRANSACTION\n"
-"    [ ISOLATION LEVEL {  READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
+"    [ ISOLATION LEVEL {  READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
+"| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]\n"
 "SET SESSION CHARACTERISTICS AS TRANSACTION\n"
-"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
+"    [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ "
+"| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:373
@@ -2817,7 +2840,8 @@ msgid ""
 "| SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 msgstr ""
-"START TRANSACTION [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | REPEATABLE READ | SERIALIZABLE } ]\n"
+"START TRANSACTION [ ISOLATION LEVEL { READ UNCOMMITTED | READ COMMITTED | "
+"REPEATABLE READ | SERIALIZABLE } ]\n"
 "    [ READ WRITE | READ ONLY ]"
 
 #: sql_help.h:381
@@ -2864,3 +2888,5 @@ msgstr ""
 "VACUUM [ FULL ] [ FREEZE ] [ VERBOSE ] ANALYZE [ tabell [ (kolumn "
 "[, ...] ) ] ]"
 
+#~ msgid "BEGIN [ WORK | TRANSACTION ]"
+#~ msgstr "BEGIN [ WORK | TRANSACTION ]"
