@@ -2,16 +2,17 @@ dnl Process this file with autoconf to produce a configure script.
 AC_INIT(backend/access/common/heaptuple.c)
 AC_CANONICAL_HOST
 case "$host_os" in
-solaris*)
-  case "$host_cpu" in
-    sparc) PORTNAME='sparc_solaris' ;;
-     i386) PORTNAME='i386_solaris' ;;
-  esac ;;
-  linux*) PORTNAME='linux' ;;
-   bsdi*) PORTNAME='bsdi' ;;
-freebsd*) PORTNAME='BSD44_derived' ;;
-   dgux*) PORTNAME='dgux';;
-    aix*) PORTNAME='aix';;
+ solaris*)
+        case "$host_cpu" in
+          sparc) PORTNAME='sparc_solaris' ;;
+           i386) PORTNAME='i386_solaris' ;;
+        esac ;;
+   linux*) PORTNAME='linux' ;;
+    bsdi*) PORTNAME='bsdi' ;;
+ freebsd*) PORTNAME='BSD44_derived' ;;
+    dgux*) PORTNAME='dgux';;
+     aix*) PORTNAME='aix';;
+nextstep*) PORTNAME='nextstep';;
 *) echo ""
    echo "*************************************************************"
    echo "configure does not currently recognize your operating system,"
