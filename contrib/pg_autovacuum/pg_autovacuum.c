@@ -4,7 +4,7 @@
  * Revisions by Christopher B. Browne, Liberty RMS
  * Win32 Service code added by Dave Page
  *
- * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.26 2004/12/02 20:31:17 momjian Exp $
+ * $PostgreSQL: pgsql/contrib/pg_autovacuum/pg_autovacuum.c,v 1.27 2004/12/02 22:48:10 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -1100,7 +1100,7 @@ get_cmd_args(int argc, char *argv[])
 #ifndef WIN32
 	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hDc:C:m:n:l:")) != -1)
 #else
-	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:c:C:m:n:l:")) != -1)
+	while ((c = getopt(argc, argv, "s:S:v:V:a:A:d:U:P:H:L:p:hIRN:W:E:c:C:m:n:l:")) != -1)
 #endif
 	{
 		switch (c)
@@ -1165,6 +1165,9 @@ get_cmd_args(int argc, char *argv[])
 				usage();
 				exit(0);
 #ifdef WIN32
+			case 'E':
+				args->service_dependencies = optarg;
+				break;
 			case 'I':
 				args->install_as_service++;
 				break;
@@ -1216,6 +1219,7 @@ usage(void)
 	fprintf(stderr, "   [-R] Remove as a Windows service (all other options will be ignored)\n");
 	fprintf(stderr, "   [-N] Username to run service as (only useful when installing as a Windows service)\n");
 	fprintf(stderr, "   [-W] Password to run service with (only useful when installing as a Windows service)\n");
+	fprintf(stderr, "   [-E] Dependent service that must start before this service (only useful when installing as a Windows service)\n");
 #endif
 	i = AUTOVACUUM_DEBUG;
 	fprintf(stderr, "   [-d] debug (debug level=0,1,2,3; default=%d)\n", i);
@@ -1272,6 +1276,8 @@ print_cmd_args(void)
 	sprintf(logbuffer, "  args->install_as_service=%d", args->install_as_service);
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->remove_as_service=%d", args->remove_as_service);
+	log_entry(logbuffer, LVL_INFO);
+	sprintf(logbuffer, "  args->service_dependencies=%s", (args->service_dependencies) ? args->service_dependencies : "(null)");
 	log_entry(logbuffer, LVL_INFO);
 	sprintf(logbuffer, "  args->service_user=%s", (args->service_user) ? args->service_user : "(null)");
 	log_entry(logbuffer, LVL_INFO);
@@ -1385,7 +1391,7 @@ InstallService()
 							   szFilename,		/* Service binary */
 							   NULL,	/* No load ordering group */
 							   NULL,	/* No tag identifier */
-							   NULL,	/* Dependencies */
+							   args->service_dependencies,	/* Dependencies */
 							   args->service_user,		/* Service account */
 							   args->service_password); /* Account password */
 
@@ -1406,11 +1412,11 @@ InstallService()
 	if (args->port)
 		sprintf(szCommand, "%s -p %s", szCommand, args->port);
 	if (args->user)
-		sprintf(szCommand, "%s -U %s", szCommand, args->user);
+		sprintf(szCommand, "%s -U \"%s\"", szCommand, args->user);
 	if (args->password)
-		sprintf(szCommand, "%s -P %s", szCommand, args->password);
+		sprintf(szCommand, "%s -P \"%s\"", szCommand, args->password);
 	if (args->logfile)
-		sprintf(szCommand, "%s -L %s", szCommand, args->logfile);
+		sprintf(szCommand, "%s -L \"%s\"", szCommand, args->logfile);
 	if (args->sleep_base_value != (int) SLEEPBASEVALUE)
 		sprintf(szCommand, "%s -s %d", szCommand, args->sleep_base_value);
 	if (args->sleep_scaling_factor != (float) SLEEPSCALINGFACTOR)

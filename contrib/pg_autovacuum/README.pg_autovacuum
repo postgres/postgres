@@ -163,11 +163,16 @@ The following arguments are used on Windows only:
    be stored in plain text.
 	     
 -N service user: Name of the Windows user account under which the service
-   will run.
+   will run. Only used when installing as a Windows service.
    
--W service password: The password for the service account.
+-W service password: The password for the service account.Only used when 
+   installing as a Windows service.
 
 -R Uninstall pg_autovacuum as a service.
+
+-E Dependent service that must start before this service. Normally this will be
+   a PostgreSQL instance, e.g. "-E pgsql-8.0.0". Only used when installing as 
+   a Windows service.
 
 Vacuum and Analyze:
 -------------------
