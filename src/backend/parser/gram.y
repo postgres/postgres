@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.273 2001/11/10 22:31:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.274 2001/11/12 21:04:45 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4156,7 +4156,7 @@ opt_numeric:  '(' Iconst ',' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					/* Insert "-1" meaning "default"; may be replaced later */
+					/* Insert "-1" meaning "no limit" */
 					$$ = -1;
 				}
 		;
@@ -4182,7 +4182,7 @@ opt_decimal:  '(' Iconst ',' Iconst ')'
 				}
 		| /*EMPTY*/
 				{
-					/* Insert "-1" meaning "default"; may be replaced later */
+					/* Insert "-1" meaning "no limit" */
 					$$ = -1;
 				}
 		;
@@ -4208,8 +4208,11 @@ Bit:  bit '(' Iconst ')'
 				{
 					$$ = makeNode(TypeName);
 					$$->name = $1;
-					/* default length, if needed, will be inserted later */
-					$$->typmod = -1;
+					/* bit defaults to bit(1), varbit to no limit */
+					if (strcmp($1, "bit") == 0)
+						$$->typmod = 1;
+					else
+						$$->typmod = -1;
 				}
 		;
 
@@ -4259,8 +4262,11 @@ Character:  character '(' Iconst ')' opt_charset
 				{
 					$$ = makeNode(TypeName);
 					$$->name = $1;
-					/* default length, if needed, will be inserted later */
-					$$->typmod = -1;
+					/* char defaults to char(1), varchar to no limit */
+					if (strcmp($1, "bpchar") == 0)
+						$$->typmod = VARHDRSZ + 1;
+					else
+						$$->typmod = -1;
 
 					if (($2 != NULL) && (strcmp($2, "sql_text") != 0)) {
 						char *type;

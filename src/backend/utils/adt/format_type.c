@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.21 2001/10/25 05:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/format_type.c,v 1.22 2001/11/12 21:04:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -163,6 +163,21 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 
 	switch (type_oid)
 	{
+		case BITOID:
+			if (with_typemod)
+				buf = psnprintf(5 + MAX_INT32_LEN + 1, "bit(%d)",
+								(int) typemod);
+			else
+			{
+				/*
+				 * bit with no typmod is not the same as BIT, which means
+				 * BIT(1) per SQL spec.  Report it as the quoted typename
+				 * so that parser will not assign a bogus typmod.
+				 */
+				buf = pstrdup("\"bit\"");
+			}
+			break;
+
 		case BOOLOID:
 			buf = pstrdup("boolean");
 			break;
@@ -172,11 +187,17 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 				buf = psnprintf(11 + MAX_INT32_LEN + 1, "character(%d)",
 								(int) (typemod - VARHDRSZ));
 			else
-				buf = pstrdup("character");
+			{
+				/*
+				 * bpchar with no typmod is not the same as CHARACTER,
+				 * which means CHARACTER(1) per SQL spec.  Report it as
+				 * bpchar so that parser will not assign a bogus typmod.
+				 */
+				buf = pstrdup("bpchar");
+			}
 			break;
 
 		case CHAROID:
-
 			/*
 			 * This char type is the single-byte version. You have to
 			 * double-quote it to get at it in the parser.
@@ -327,14 +348,6 @@ format_type_internal(Oid type_oid, int32 typemod, bool allow_invalid)
 								(int) (typemod - VARHDRSZ));
 			else
 				buf = pstrdup("character varying");
-			break;
-
-		case BITOID:
-			if (with_typemod)
-				buf = psnprintf(5 + MAX_INT32_LEN + 1, "bit(%d)",
-								(int) typemod);
-			else
-				buf = pstrdup("bit");
 			break;
 
 		default:
