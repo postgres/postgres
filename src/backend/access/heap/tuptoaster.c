@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.42 2004/06/04 20:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/tuptoaster.c,v 1.43 2004/06/05 01:55:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -35,6 +35,7 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/pg_lzcompress.h"
+#include "utils/typcache.h"
 
 
 #undef TOAST_DEBUG
@@ -458,10 +459,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			 * still in the tuple must be someone else's we cannot reuse.
 			 * Expand it to plain (and, probably, toast it again below).
 			 */
-			if (VARATT_IS_EXTERNAL(DatumGetPointer(toast_values[i])))
+			if (VARATT_IS_EXTERNAL(new_value))
 			{
-				toast_values[i] = PointerGetDatum(heap_tuple_untoast_attr(
-						(varattrib *) DatumGetPointer(toast_values[i])));
+				new_value = heap_tuple_untoast_attr(new_value);
+				toast_values[i] = PointerGetDatum(new_value);
 				toast_free[i] = true;
 				need_change = true;
 				need_free = true;
@@ -470,7 +471,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			/*
 			 * Remember the size of this attribute
 			 */
-			toast_sizes[i] = VARATT_SIZE(DatumGetPointer(toast_values[i]));
+			toast_sizes[i] = VARATT_SIZE(new_value);
 		}
 		else
 		{
@@ -782,6 +783,128 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		for (i = 0; i < numAttrs; i++)
 			if (toast_delold[i])
 				toast_delete_datum(rel, toast_oldvalues[i]);
+}
+
+
+/* ----------
+ * toast_flatten_tuple_attribute -
+ *
+ *	If a Datum is of composite type, "flatten" it to contain no toasted fields.
+ *	This must be invoked on any potentially-composite field that is to be
+ *	inserted into a tuple.  Doing this preserves the invariant that toasting
+ *	goes only one level deep in a tuple.
+ * ----------
+ */
+Datum
+toast_flatten_tuple_attribute(Datum value,
+							  Oid typeId, int32 typeMod)
+{
+	TupleDesc	tupleDesc;
+	HeapTupleHeader olddata;
+	HeapTupleHeader new_data;
+	int32		new_len;
+	HeapTupleData tmptup;
+	Form_pg_attribute *att;
+	int			numAttrs;
+	int			i;
+	bool		need_change = false;
+	bool		has_nulls = false;
+	Datum		toast_values[MaxTupleAttributeNumber];
+	char		toast_nulls[MaxTupleAttributeNumber];
+	bool		toast_free[MaxTupleAttributeNumber];
+
+	/*
+	 * See if it's a composite type, and get the tupdesc if so.
+	 */
+	tupleDesc = lookup_rowtype_tupdesc_noerror(typeId, typeMod, true);
+	if (tupleDesc == NULL)
+		return value;			/* not a composite type */
+
+	att = tupleDesc->attrs;
+	numAttrs = tupleDesc->natts;
+
+	/*
+	 * Break down the tuple into fields.
+	 */
+	olddata = DatumGetHeapTupleHeader(value);
+	Assert(typeId == HeapTupleHeaderGetTypeId(olddata));
+	Assert(typeMod == HeapTupleHeaderGetTypMod(olddata));
+	/* Build a temporary HeapTuple control structure */
+	tmptup.t_len = HeapTupleHeaderGetDatumLength(olddata);
+	ItemPointerSetInvalid(&(tmptup.t_self));
+	tmptup.t_tableOid = InvalidOid;
+	tmptup.t_data = olddata;
+
+	Assert(numAttrs <= MaxTupleAttributeNumber);
+	heap_deformtuple(&tmptup, tupleDesc, toast_values, toast_nulls);
+
+	memset(toast_free, 0, numAttrs * sizeof(bool));
+
+	for (i = 0; i < numAttrs; i++)
+	{
+		/*
+		 * Look at non-null varlena attributes
+		 */
+		if (toast_nulls[i] == 'n')
+			has_nulls = true;
+		else if (att[i]->attlen == -1)
+		{
+			varattrib  *new_value;
+
+			new_value = (varattrib *) DatumGetPointer(toast_values[i]);
+			if (VARATT_IS_EXTENDED(new_value))
+			{
+				new_value = heap_tuple_untoast_attr(new_value);
+				toast_values[i] = PointerGetDatum(new_value);
+				toast_free[i] = true;
+				need_change = true;
+			}
+		}
+	}
+
+	/*
+	 * If nothing to untoast, just return the original tuple.
+	 */
+	if (!need_change)
+		return value;
+
+	/*
+	 * Calculate the new size of the tuple.  Header size should not
+	 * change, but data size might.
+	 */
+	new_len = offsetof(HeapTupleHeaderData, t_bits);
+	if (has_nulls)
+		new_len += BITMAPLEN(numAttrs);
+	if (olddata->t_infomask & HEAP_HASOID)
+		new_len += sizeof(Oid);
+	new_len = MAXALIGN(new_len);
+	Assert(new_len == olddata->t_hoff);
+	new_len += ComputeDataSize(tupleDesc, toast_values, toast_nulls);
+
+	new_data = (HeapTupleHeader) palloc0(new_len);
+
+	/*
+	 * Put the tuple header and the changed values into place
+	 */
+	memcpy(new_data, olddata, olddata->t_hoff);
+
+	HeapTupleHeaderSetDatumLength(new_data, new_len);
+
+	DataFill((char *) new_data + olddata->t_hoff,
+			 tupleDesc,
+			 toast_values,
+			 toast_nulls,
+			 &(new_data->t_infomask),
+			 has_nulls ? new_data->t_bits : NULL);
+
+	/*
+	 * Free allocated temp values
+	 */
+	for (i = 0; i < numAttrs; i++)
+		if (toast_free[i])
+			pfree(DatumGetPointer(toast_values[i]));
+
+	return PointerGetDatum(new_data);
 }
 
 

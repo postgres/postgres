@@ -14,13 +14,14 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.112 2004/05/30 23:40:29 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/prep/prepunion.c,v 1.113 2004/06/05 01:55:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
 
+#include "access/heapam.h"
 #include "catalog/pg_type.h"
 #include "nodes/makefuncs.h"
 #include "optimizer/clauses.h"
@@ -39,8 +40,10 @@ typedef struct
 {
 	Index		old_rt_index;
 	Index		new_rt_index;
-	Oid			old_relid;
-	Oid			new_relid;
+	TupleDesc	old_tupdesc;
+	TupleDesc	new_tupdesc;
+	char	   *old_rel_name;
+	char	   *new_rel_name;
 } adjust_inherited_attrs_context;
 
 static Plan *recurse_set_operations(Node *setOp, Query *parse,
@@ -65,7 +68,8 @@ static bool tlist_same_datatypes(List *tlist, List *colTypes, bool junkOK);
 static Node *adjust_inherited_attrs_mutator(Node *node,
 							   adjust_inherited_attrs_context *context);
 static Relids adjust_relid_set(Relids relids, Index oldrelid, Index newrelid);
-static List *adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid);
+static List *adjust_inherited_tlist(List *tlist,
+									adjust_inherited_attrs_context *context);
 
 
 /*
@@ -787,17 +791,17 @@ expand_inherited_rtentry(Query *parse, Index rti, bool dup_parent)
  * We also adjust varattno to match the new table by column name, rather
  * than column number.	This hack makes it possible for child tables to have
  * different column positions for the "same" attribute as a parent, which
- * helps ALTER TABLE ADD COLUMN.  Unfortunately this isn't nearly enough to
- * make it work transparently; there are other places where things fall down
- * if children and parents don't have the same column numbers for inherited
- * attributes.	It'd be better to rip this code out and fix ALTER TABLE...
+ * is necessary for ALTER TABLE ADD COLUMN.
  */
 Node *
 adjust_inherited_attrs(Node *node,
 					   Index old_rt_index, Oid old_relid,
 					   Index new_rt_index, Oid new_relid)
 {
+	Node	   *result;
 	adjust_inherited_attrs_context context;
+	Relation	oldrelation;
+	Relation	newrelation;
 
 	/* Handle simple case simply... */
 	if (old_rt_index == new_rt_index)
@@ -806,10 +810,19 @@ adjust_inherited_attrs(Node *node,
 		return copyObject(node);
 	}
 
+	/*
+	 * We assume that by now the planner has acquired at least AccessShareLock
+	 * on both rels, and so we need no additional lock now.
+	 */
+	oldrelation = heap_open(old_relid, NoLock);
+	newrelation = heap_open(new_relid, NoLock);
+
 	context.old_rt_index = old_rt_index;
 	context.new_rt_index = new_rt_index;
-	context.old_relid = old_relid;
-	context.new_relid = new_relid;
+	context.old_tupdesc = RelationGetDescr(oldrelation);
+	context.new_tupdesc = RelationGetDescr(newrelation);
+	context.old_rel_name = RelationGetRelationName(oldrelation);
+	context.new_rel_name = RelationGetRelationName(newrelation);
 
 	/*
 	 * Must be prepared to start with a Query or a bare expression tree.
@@ -829,13 +842,109 @@ adjust_inherited_attrs(Node *node,
 			if (newnode->commandType == CMD_UPDATE)
 				newnode->targetList =
 					adjust_inherited_tlist(newnode->targetList,
-										   old_relid,
-										   new_relid);
+										   &context);
 		}
-		return (Node *) newnode;
+		result = (Node *) newnode;
 	}
 	else
-		return adjust_inherited_attrs_mutator(node, &context);
+		result = adjust_inherited_attrs_mutator(node, &context);
+
+	heap_close(oldrelation, NoLock);
+	heap_close(newrelation, NoLock);
+
+	return result;
+}
+
+/*
+ * Translate parent's attribute number into child's.
+ *
+ * For paranoia's sake, we match type as well as attribute name.
+ */
+static AttrNumber
+translate_inherited_attnum(AttrNumber old_attno,
+						   adjust_inherited_attrs_context *context)
+{
+	Form_pg_attribute att;
+	char	   *attname;
+	Oid			atttypid;
+	int32		atttypmod;
+	int			newnatts;
+	int			i;
+
+	if (old_attno <= 0 || old_attno > context->old_tupdesc->natts)
+		elog(ERROR, "attribute %d of relation \"%s\" does not exist",
+			 (int) old_attno, context->old_rel_name);
+	att = context->old_tupdesc->attrs[old_attno - 1];
+	if (att->attisdropped)
+		elog(ERROR, "attribute %d of relation \"%s\" does not exist",
+			 (int) old_attno, context->old_rel_name);
+	attname = NameStr(att->attname);
+	atttypid = att->atttypid;
+	atttypmod = att->atttypmod;
+
+	newnatts = context->new_tupdesc->natts;
+	for (i = 0; i < newnatts; i++)
+	{
+		att = context->new_tupdesc->attrs[i];
+		if (att->attisdropped)
+			continue;
+		if (strcmp(attname, NameStr(att->attname)) == 0)
+		{
+			/* Found it, check type */
+			if (atttypid != att->atttypid || atttypmod != att->atttypmod)
+				elog(ERROR, "attribute \"%s\" of relation \"%s\" does not match parent's type",
+					 attname, context->new_rel_name);
+			return (AttrNumber) (i + 1);
+		}
+	}
+
+	elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
+		 attname, context->new_rel_name);
+	return 0;					/* keep compiler quiet */
+}
+
+/*
+ * Translate a whole-row Var to be correct for a child table.
+ *
+ * In general the child will not have a suitable field layout to be used
+ * directly, so we translate the simple whole-row Var into a ROW() construct.
+ */
+static Node *
+generate_whole_row(Var *var,
+				   adjust_inherited_attrs_context *context)
+{
+	RowExpr		*rowexpr;
+	List		*fields = NIL;
+	int			oldnatts = context->old_tupdesc->natts;
+	int			i;
+
+	for (i = 0; i < oldnatts; i++)
+	{
+		Form_pg_attribute att = context->old_tupdesc->attrs[i];
+		Var		*newvar;
+
+		if (att->attisdropped)
+		{
+			/*
+			 * can't use atttypid here, but it doesn't really matter
+			 * what type the Const claims to be.
+			 */
+			newvar = (Var *) makeNullConst(INT4OID);
+		}
+		else
+			newvar = makeVar(context->new_rt_index,
+							 translate_inherited_attnum(i + 1, context),
+							 att->atttypid,
+							 att->atttypmod,
+							 0);
+		fields = lappend(fields, newvar);
+	}
+	rowexpr = makeNode(RowExpr);
+	rowexpr->args = fields;
+	rowexpr->row_typeid = var->vartype;	/* report parent's rowtype */
+	rowexpr->row_format = COERCE_IMPLICIT_CAST;
+
+	return (Node *) rowexpr;
 }
 
 static Node *
@@ -855,17 +964,16 @@ adjust_inherited_attrs_mutator(Node *node,
 			var->varnoold = context->new_rt_index;
 			if (var->varattno > 0)
 			{
-				char	   *attname;
-
-				attname = get_relid_attribute_name(context->old_relid,
-												   var->varattno);
-				var->varattno = get_attnum(context->new_relid, attname);
-				if (var->varattno == InvalidAttrNumber)
-					elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
-						 attname, get_rel_name(context->new_relid));
+				var->varattno = translate_inherited_attnum(var->varattno,
+														   context);
 				var->varoattno = var->varattno;
-				pfree(attname);
 			}
+			else if (var->varattno == 0)
+			{
+				/* expand whole-row reference into a ROW() construct */
+				return generate_whole_row(var, context);
+			}
+			/* system attributes don't need any translation */
 		}
 		return (Node *) var;
 	}
@@ -1022,7 +1130,8 @@ adjust_relid_set(Relids relids, Index oldrelid, Index newrelid)
  * Note that this is not needed for INSERT because INSERT isn't inheritable.
  */
 static List *
-adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid)
+adjust_inherited_tlist(List *tlist,
+					   adjust_inherited_attrs_context *context)
 {
 	bool		changed_it = false;
 	ListCell   *tl;
@@ -1035,26 +1144,19 @@ adjust_inherited_tlist(List *tlist, Oid old_relid, Oid new_relid)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tl);
 		Resdom	   *resdom = tle->resdom;
-		char	   *attname;
 
 		if (resdom->resjunk)
 			continue;			/* ignore junk items */
 
-		attname = get_relid_attribute_name(old_relid, resdom->resno);
-		attrno = get_attnum(new_relid, attname);
-		if (attrno == InvalidAttrNumber)
-			elog(ERROR, "attribute \"%s\" of relation \"%s\" does not exist",
-				 attname, get_rel_name(new_relid));
+		attrno = translate_inherited_attnum(resdom->resno, context);
+
 		if (resdom->resno != attrno)
 		{
 			resdom = (Resdom *) copyObject((Node *) resdom);
 			resdom->resno = attrno;
-			resdom->resname = attname;
 			tle->resdom = resdom;
 			changed_it = true;
 		}
-		else
-			pfree(attname);
 	}
 
 	/*

@@ -36,7 +36,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.6 2004/05/26 04:41:40 neilc Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/cache/typcache.c,v 1.7 2004/06/05 01:55:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,6 +385,19 @@ lookup_default_opclass(Oid type_id, Oid am_id)
 TupleDesc
 lookup_rowtype_tupdesc(Oid type_id, int32 typmod)
 {
+	return lookup_rowtype_tupdesc_noerror(type_id, typmod, false);
+}
+
+/*
+ * lookup_rowtype_tupdesc_noerror
+ *
+ * As above, but if the type is not a known composite type and noError
+ * is true, returns NULL instead of ereport'ing.  (Note that if a bogus
+ * type_id is passed, you'll get an ereport anyway.)
+ */
+TupleDesc
+lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod, bool noError)
+{
 	if (type_id != RECORDOID)
 	{
 		/*
@@ -393,8 +406,7 @@ lookup_rowtype_tupdesc(Oid type_id, int32 typmod)
 		TypeCacheEntry *typentry;
 
 		typentry = lookup_type_cache(type_id, TYPECACHE_TUPDESC);
-		/* this should not happen unless caller messed up: */
-		if (typentry->tupDesc == NULL)
+		if (typentry->tupDesc == NULL && !noError)
 			ereport(ERROR,
 					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
 					 errmsg("type %u is not composite",
@@ -408,9 +420,11 @@ lookup_rowtype_tupdesc(Oid type_id, int32 typmod)
 		 */
 		if (typmod < 0 || typmod >= NextRecordTypmod)
 		{
-			ereport(ERROR,
-					(errcode(ERRCODE_WRONG_OBJECT_TYPE),
-					 errmsg("record type has not been registered")));
+			if (!noError)
+				ereport(ERROR,
+						(errcode(ERRCODE_WRONG_OBJECT_TYPE),
+						 errmsg("record type has not been registered")));
+			return NULL;
 		}
 		return RecordCacheArray[typmod];
 	}

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.91 2004/06/04 20:35:21 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/common/heaptuple.c,v 1.92 2004/06/05 01:55:04 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -21,6 +21,7 @@
 #include "postgres.h"
 
 #include "access/heapam.h"
+#include "access/tuptoaster.h"
 #include "catalog/pg_type.h"
 
 
@@ -567,8 +568,9 @@ heap_formtuple(TupleDesc tupleDescriptor,
 	unsigned long len;
 	int			hoff;
 	bool		hasnull = false;
-	int			i;
+	Form_pg_attribute *att = tupleDescriptor->attrs;
 	int			numberOfAttributes = tupleDescriptor->natts;
+	int			i;
 
 	if (numberOfAttributes > MaxTupleAttributeNumber)
 		ereport(ERROR,
@@ -577,17 +579,34 @@ heap_formtuple(TupleDesc tupleDescriptor,
 						numberOfAttributes, MaxTupleAttributeNumber)));
 
 	/*
-	 * Determine total space needed
+	 * Check for nulls and embedded tuples; expand any toasted attributes
+	 * in embedded tuples.  This preserves the invariant that toasting can
+	 * only go one level deep.
+	 *
+	 * We can skip calling toast_flatten_tuple_attribute() if the attribute
+	 * couldn't possibly be of composite type.  All composite datums are
+	 * varlena and have alignment 'd'; furthermore they aren't arrays.
+	 * Also, if an attribute is already toasted, it must have been sent to
+	 * disk already and so cannot contain toasted attributes.
 	 */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
 		if (nulls[i] != ' ')
-		{
 			hasnull = true;
-			break;
+		else if (att[i]->attlen == -1 &&
+				 att[i]->attalign == 'd' &&
+				 att[i]->attndims == 0 &&
+				 !VARATT_IS_EXTENDED(values[i]))
+		{
+			values[i] = toast_flatten_tuple_attribute(values[i],
+													  att[i]->atttypid,
+													  att[i]->atttypmod);
 		}
 	}
 
+	/*
+	 * Determine total space needed
+	 */
 	len = offsetof(HeapTupleHeaderData, t_bits);
 
 	if (hasnull)
@@ -744,7 +763,11 @@ heap_deformtuple(HeapTuple tuple,
 	bool		slow = false;	/* can we use/set attcacheoff? */
 
 	natts = tup->t_natts;
-	/* This min() operation is pure paranoia */
+	/*
+	 * In inheritance situations, it is possible that the given tuple actually
+	 * has more fields than the caller is expecting.  Don't run off the end
+	 * of the caller's arrays.
+	 */
 	natts = Min(natts, tdesc_natts);
 
 	tp = (char *) tup + tup->t_hoff;

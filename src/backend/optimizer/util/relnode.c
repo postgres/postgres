@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.59 2004/06/01 03:03:02 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/util/relnode.c,v 1.60 2004/06/05 01:55:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -380,6 +380,9 @@ build_joinrel_tlist(Query *root, RelOptInfo *joinrel)
 		{
 			Var		   *var = (Var *) lfirst(vars);
 			int			ndx = var->varattno - baserel->min_attr;
+
+			/* We can't run into any child RowExprs here */
+			Assert(IsA(var, Var));
 
 			if (bms_nonempty_difference(baserel->attr_needed[ndx], relids))
 			{

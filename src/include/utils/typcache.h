@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.3 2004/04/01 21:28:46 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/typcache.h,v 1.4 2004/06/05 01:55:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,6 +75,9 @@ typedef struct TypeCacheEntry
 extern TypeCacheEntry *lookup_type_cache(Oid type_id, int flags);
 
 extern TupleDesc lookup_rowtype_tupdesc(Oid type_id, int32 typmod);
+
+extern TupleDesc lookup_rowtype_tupdesc_noerror(Oid type_id, int32 typmod,
+												bool noError);
 
 extern void assign_record_type_typmod(TupleDesc tupDesc);
 

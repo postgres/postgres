@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.95 2004/06/01 03:03:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/relation.h,v 1.96 2004/06/05 01:55:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -91,6 +91,7 @@ typedef struct QualCost
  *				appropriate projections have been done (ie, output width)
  *		reltargetlist - List of Var nodes for the attributes we need to
  *						output from this relation (in no particular order)
+ *						NOTE: in a child relation, may contain RowExprs
  *		pathlist - List of Path nodes, one for each potentially useful
  *				   method of generating the relation
  *		cheapest_startup_path - the pathlist member with lowest startup cost

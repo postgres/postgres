@@ -49,7 +49,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.129 2004/06/01 03:02:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/optimizer/path/costsize.c,v 1.130 2004/06/05 01:55:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1704,11 +1704,18 @@ set_rel_width(Query *root, RelOptInfo *rel)
 	foreach(tllist, rel->reltargetlist)
 	{
 		Var		   *var = (Var *) lfirst(tllist);
-		int			ndx = var->varattno - rel->min_attr;
+		int			ndx;
 		Oid			relid;
 		int32		item_width;
 
-		Assert(IsA(var, Var));
+		/* For now, punt on whole-row child Vars */
+		if (!IsA(var, Var))
+		{
+			tuple_width += 32;	/* arbitrary */
+			continue;
+		}
+
+		ndx = var->varattno - rel->min_attr;
 
 		/*
 		 * The width probably hasn't been cached yet, but may as well
