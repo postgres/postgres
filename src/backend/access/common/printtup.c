@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.1.1.1 1996/07/09 06:21:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.2 1996/10/18 04:54:47 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,8 +196,6 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
     }
     printf("\t----\n");
 }
-
-/*#define IPORTAL_DEBUG*/
 
 /* ----------------
  *	printtup_internal
