@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.13 2003/08/04 00:43:32 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/misc.c,v 1.14 2003/08/08 13:17:58 petere Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -263,7 +263,7 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 	{
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
-			*((char *) ptr) = 0x00;
+			*((char *) ptr) = '\0';
 			break;
 		case ECPGt_short:
 		case ECPGt_unsigned_short:
@@ -294,9 +294,11 @@ ECPGset_informix_null(enum ECPGttype type, void *ptr)
 			*(((struct ECPGgeneric_varchar *) ptr)->arr) = 0x00;
 			break;
 		case ECPGt_decimal:
+			memset((char *) ptr, 0, sizeof(Decimal));
 			((Decimal *) ptr)->sign = NUMERIC_NAN;
 			break;
 		case ECPGt_numeric:
+			memset((char *) ptr, 0, sizeof(Numeric));
 			((Numeric *) ptr)->sign = NUMERIC_NAN;
 			break;
 		case ECPGt_interval:
@@ -326,7 +328,7 @@ ECPGis_informix_null(enum ECPGttype type, void *ptr)
 	{
 		case ECPGt_char:
 		case ECPGt_unsigned_char:
-			if (*((char *) ptr) == 0x00)
+			if (*((char *) ptr) == '\0')
 				return true;
 			break;
 		case ECPGt_short:
