@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.65 2000/02/21 18:47:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/scan.l,v 1.66 2000/03/11 05:14:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,22 +133,24 @@ xdstop			{dquote}
 xdinside		[^"]+
 
 /* C-style comments
- * Ignored by the scanner and parser.
  *
  * The "extended comment" syntax closely resembles allowable operator syntax.
  * The tricky part here is to get lex to recognize a string starting with
  * slash-star as a comment, when interpreting it as an operator would produce
- * a longer match --- remember lex will prefer a longer match!  So, we have
- * to provide a special rule for xcline (a complete comment that could
- * otherwise look like an operator), as well as append {op_and_self}* to
- * xcstart so that it matches at least as much as {operator} would.
- * Then the tie-breaker (first matching rule of same length) wins.
- * There is still a problem if someone writes, eg, slash-star-star-slash-plus.
- * It'll be taken as an xcstart, rather than xcline and an operator as one
- * could wish.  I don't see any way around that given lex's behavior;
- * that someone will just have to write a space after the comment.
+ * a longer match --- remember lex will prefer a longer match!  Also, if we
+ * have something like plus-slash-star, lex will think this is a 3-character
+ * operator whereas we want to see it as a + operator and a comment start.
+ * The solution is two-fold:
+ * 1. append {op_and_self}* to xcstart so that it matches as much text as
+ *    {operator} would. Then the tie-breaker (first matching rule of same
+ *    length) ensures xcstart wins.  We put back the extra stuff with yyless()
+ *    in case it contains a star-slash that should terminate the comment.
+ * 2. In the operator rule, check for slash-star within the operator, and
+ *    if found throw it back with yyless().  This handles the plus-slash-star
+ *    problem.
+ * SQL92-style comments, which start with dash-dash, have similar interactions
+ * with the operator rule.
  */
-xcline			\/\*{op_and_self}*\*\/
 xcstart			\/\*{op_and_self}*
 xcstop			\*+\/
 xcinside		([^*]+)|(\*+[^/])
@@ -161,6 +163,7 @@ identifier		{letter}{letter_or_digit}*
 
 typecast		"::"
 
+/* NB: if you change "self", fix the copy in the operator rule too! */
 self			[,()\[\].;$\:\+\-\*\/\%\^\<\>\=\|]
 op_and_self		[\~\!\@\#\^\&\|\`\?\$\:\+\-\*\/\%\<\>\=]
 operator		{op_and_self}+
@@ -218,26 +221,29 @@ other			.
  *
  * Quoted strings must allow some special characters such as single-quote
  *  and newline.
- * Embedded single-quotes are implemented both in the SQL/92-standard
+ * Embedded single-quotes are implemented both in the SQL92-standard
  *  style of two adjacent single quotes "''" and in the Postgres/Java style
  *  of escaped-quote "\'".
  * Other embedded escaped characters are matched explicitly and the leading
  *  backslash is dropped from the string. - thomas 1997-09-24
- * Note that xcline must appear before xcstart, which must appear before
- *  operator, as explained above!  Also whitespace (comment) must appear
- *  before operator.
+ * Note that xcstart must appear before operator, as explained above!
+ *  Also whitespace (comment) must appear before operator.
  */
 
 %%
 {whitespace}	{ /* ignore */ }
 
-{xcline}		{ /* ignore */ }
-
-{xcstart}		{ BEGIN(xc); }
+{xcstart}		{
+					BEGIN(xc);
+					/* Put back any characters past slash-star; see above */
+					yyless(2);
+				}
 
 <xc>{xcstop}	{ BEGIN(INITIAL); }
 
 <xc>{xcinside}	{ /* ignore */ }
+
+<xc><<EOF>>		{ elog(ERROR, "Unterminated /* comment"); }
 
 {xbstart}		{
 					BEGIN(xb);
@@ -262,6 +268,7 @@ other			.
 <xb>{xbcat}		{
 					/* ignore */
 				}
+<xb><<EOF>>		{ elog(ERROR, "Unterminated binary integer"); }
 
 {xhstart}		{
 					BEGIN(xh);
@@ -278,6 +285,7 @@ other			.
 							 literalbuf);
 					return ICONST;
 				}
+<xh><<EOF>>		{ elog(ERROR, "Unterminated hexadecimal integer"); }
 
 {xqstart}		{
 					BEGIN(xq);
@@ -296,6 +304,7 @@ other			.
 <xq>{xqcat}		{
 					/* ignore */
 				}
+<xq><<EOF>>		{ elog(ERROR, "Unterminated quoted string"); }
 
 
 {xdstart}		{
@@ -310,12 +319,39 @@ other			.
 <xd>{xdinside}	{
 					addlit(yytext, yyleng);
 				}
+<xd><<EOF>>		{ elog(ERROR, "Unterminated quoted identifier"); }
 
 {typecast}		{ return TYPECAST; }
 
 {self}			{ return yytext[0]; }
 
 {operator}		{
+					/* Check for embedded slash-star or dash-dash */
+					char *slashstar = strstr((char*)yytext, "/*");
+					char *dashdash = strstr((char*)yytext, "--");
+
+					if (slashstar && dashdash)
+					{
+						if (slashstar > dashdash)
+							slashstar = dashdash;
+					}
+					else if (!slashstar)
+						slashstar = dashdash;
+
+					if (slashstar)
+					{
+						int nchars = slashstar - ((char*)yytext);
+						yyless(nchars);
+						/* If what we have left is only one char, and it's
+						 * one of the characters matching "self", then
+						 * return it as a character token the same way
+						 * that the "self" rule would have.
+						 */
+						if (nchars == 1 &&
+							strchr(",()[].;$:+-*/%^<>=|", yytext[0]))
+							return yytext[0];
+					}
+
 					if (strcmp((char*)yytext, "!=") == 0)
 						yylval.str = pstrdup("<>"); /* compatibility */
 					else
