@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.30 1997/04/16 06:29:19 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.31 1997/04/17 20:39:23 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,6 +196,7 @@ PQconnectdb(const char *conninfo)
      * Setup the conn structure
      * ----------
      */
+    conn->lobjfuncs = (PGlobjfuncs *) NULL;
     conn->Pfout = NULL;
     conn->Pfin = NULL;
     conn->Pfdebug = NULL;
