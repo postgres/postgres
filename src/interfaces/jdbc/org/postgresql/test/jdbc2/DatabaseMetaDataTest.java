@@ -9,7 +9,7 @@ import java.sql.*;
  *
  * PS: Do you know how difficult it is to type on a train? ;-)
  *
- * $Id: DatabaseMetaDataTest.java,v 1.9 2002/07/23 03:59:55 barry Exp $
+ * $Id: DatabaseMetaDataTest.java,v 1.10 2002/07/30 13:22:38 davec Exp $
  */
 
 public class DatabaseMetaDataTest extends TestCase
@@ -48,7 +48,8 @@ public class DatabaseMetaDataTest extends TestCase
 
 			ResultSet rs = dbmd.getTables( null, null, "test%", new String[] {"TABLE"});
 			assertTrue( rs.next() );
-			assertTrue( rs.getString("TABLE_NAME").equals("testmetadata") );
+      String tableName = rs.getString("TABLE_NAME");
+			assertTrue( tableName.equals("testmetadata") );
 
 			rs.close();
 
@@ -101,7 +102,7 @@ public class DatabaseMetaDataTest extends TestCase
 			assertTrue(dbmd.supportsMinimumSQLGrammar());
 			assertTrue(!dbmd.supportsCoreSQLGrammar());
 			assertTrue(!dbmd.supportsExtendedSQLGrammar());
-			assertTrue(!dbmd.supportsANSI92EntryLevelSQL());
+			assertTrue(dbmd.supportsANSI92EntryLevelSQL());
 			assertTrue(!dbmd.supportsANSI92IntermediateSQL());
 			assertTrue(!dbmd.supportsANSI92FullSQL());
 
@@ -228,6 +229,57 @@ public class DatabaseMetaDataTest extends TestCase
 		}
 	}
 
+  public void testCrossReference()
+  {
+		try
+		{
+		  Connection con1 = JDBC2Tests.openDB();
+
+		  JDBC2Tests.createTable( con1, "vv", "a int not null, b int not null, primary key ( a, b )" );
+
+		  JDBC2Tests.createTable( con1, "ww", "m int not null, n int not null, primary key ( m, n ), foreign key ( m, n ) references vv ( a, b )" );
+
+
+			DatabaseMetaData dbmd = con.getMetaData();
+			assertNotNull(dbmd);
+
+      ResultSet rs = dbmd.getCrossReference(null, "", "vv", null, "", "ww" );
+
+      for (int j=1; rs.next(); j++ )
+      {
+
+         String pkTableName = rs.getString( "PKTABLE_NAME" );
+         assertTrue (  pkTableName.equals("vv")  );
+
+         String pkColumnName = rs.getString( "PKCOLUMN_NAME" );
+         assertTrue( pkColumnName.equals("a") || pkColumnName.equals("b"));
+
+         String fkTableName = rs.getString( "FKTABLE_NAME" );
+         assertTrue( fkTableName.equals( "ww" ) );
+
+         String fkColumnName = rs.getString( "FKCOLUMN_NAME" );
+         assertTrue( fkColumnName.equals( "m" ) || fkColumnName.equals( "n" ) ) ;
+
+         String fkName = rs.getString( "FK_NAME" );
+         assertTrue( fkName.equals( "<unnamed>") );
+
+         String pkName = rs.getString( "PK_NAME" );
+         assertTrue( pkName.equals("vv_pkey") );
+
+         int keySeq  = rs.getInt( "KEY_SEQ" );
+         assertTrue( keySeq == j );
+      }
+
+
+      JDBC2Tests.dropTable( con1, "vv" );
+      JDBC2Tests.dropTable( con1, "ww" );
+
+		}
+		catch (SQLException ex)
+		{
+			fail(ex.getMessage());
+		}
+  }
   public void testForeignKeys()
   {
 		try
@@ -262,10 +314,10 @@ public class DatabaseMetaDataTest extends TestCase
          assertTrue( fkColumnName.equals( "people_id" ) || fkColumnName.equals( "policy_id" ) ) ;
 
          String fkName = rs.getString( "FK_NAME" );
-         assertTrue( fkName.equals( "people_pkey") || fkName.equals( "policy_pkey" ) );
+         assertTrue( fkName.equals( "people") || fkName.equals( "policy" ) );
 
          String pkName = rs.getString( "PK_NAME" );
-//         assertTrue( pkName.equals("users") );
+         assertTrue( pkName.equals( "people_pkey") || pkName.equals( "policy_pkey" ) );
 
       }
 
@@ -282,7 +334,7 @@ public class DatabaseMetaDataTest extends TestCase
       assertTrue( rs.getString( "FKTABLE_NAME" ).equals( "users" ) );
       assertTrue( rs.getString( "FKCOLUMN_NAME" ).equals( "people_id" ) );
 
-      assertTrue( rs.getString( "FK_NAME" ).equals( "people_pkey" ) );
+      assertTrue( rs.getString( "FK_NAME" ).equals( "people" ) );
 
 
       JDBC2Tests.dropTable( con1, "users" );
