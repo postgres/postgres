@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.71 2003/08/08 21:41:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.72 2003/09/29 18:22:48 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -674,16 +674,20 @@ TupleDescGetAttInMetadata(TupleDesc tupdesc)
 	 * Gather info needed later to call the "in" function for each
 	 * attribute
 	 */
-	attinfuncinfo = (FmgrInfo *) palloc(natts * sizeof(FmgrInfo));
-	attelems = (Oid *) palloc(natts * sizeof(Oid));
-	atttypmods = (int32 *) palloc(natts * sizeof(int32));
+	attinfuncinfo = (FmgrInfo *) palloc0(natts * sizeof(FmgrInfo));
+	attelems = (Oid *) palloc0(natts * sizeof(Oid));
+	atttypmods = (int32 *) palloc0(natts * sizeof(int32));
 
 	for (i = 0; i < natts; i++)
 	{
-		atttypeid = tupdesc->attrs[i]->atttypid;
-		getTypeInputInfo(atttypeid, &attinfuncid, &attelems[i]);
-		fmgr_info(attinfuncid, &attinfuncinfo[i]);
-		atttypmods[i] = tupdesc->attrs[i]->atttypmod;
+		/* Ignore dropped attributes */
+		if (!tupdesc->attrs[i]->attisdropped)
+		{
+			atttypeid = tupdesc->attrs[i]->atttypid;
+			getTypeInputInfo(atttypeid, &attinfuncid, &attelems[i]);
+			fmgr_info(attinfuncid, &attinfuncinfo[i]);
+			atttypmods[i] = tupdesc->attrs[i]->atttypmod;
+		}
 	}
 	attinmeta->tupdesc = tupdesc;
 	attinmeta->attinfuncs = attinfuncinfo;
@@ -712,22 +716,32 @@ BuildTupleFromCStrings(AttInMetadata *attinmeta, char **values)
 	dvalues = (Datum *) palloc(natts * sizeof(Datum));
 	nulls = (char *) palloc(natts * sizeof(char));
 
-	/* Call the "in" function for each non-null attribute */
+	/* Call the "in" function for each non-null, non-dropped attribute */
 	for (i = 0; i < natts; i++)
 	{
-		if (values[i] != NULL)
+		if (!tupdesc->attrs[i]->attisdropped)
 		{
-			attelem = attinmeta->attelems[i];
-			atttypmod = attinmeta->atttypmods[i];
+			/* Non-dropped attributes */
+			if (values[i] != NULL)
+			{
+				attelem = attinmeta->attelems[i];
+				atttypmod = attinmeta->atttypmods[i];
 
-			dvalues[i] = FunctionCall3(&attinmeta->attinfuncs[i],
-									   CStringGetDatum(values[i]),
-									   ObjectIdGetDatum(attelem),
-									   Int32GetDatum(atttypmod));
-			nulls[i] = ' ';
+				dvalues[i] = FunctionCall3(&attinmeta->attinfuncs[i],
+										   CStringGetDatum(values[i]),
+										   ObjectIdGetDatum(attelem),
+										   Int32GetDatum(atttypmod));
+				nulls[i] = ' ';
+			}
+			else
+			{
+				dvalues[i] = (Datum) 0;
+				nulls[i] = 'n';
+			}
 		}
 		else
 		{
+			/* Handle dropped attributes by setting to NULL */
 			dvalues[i] = (Datum) 0;
 			nulls[i] = 'n';
 		}
