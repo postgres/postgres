@@ -16,7 +16,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.20 2001/10/28 06:25:58 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_tar.c,v 1.21 2002/04/24 02:21:04 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -157,6 +157,12 @@ InitArchiveFmt_Tar(ArchiveHandle *AH)
 	ctx = (lclContext *) malloc(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
+	
+	/* Initialize LO buffering */
+	AH->lo_buf_size = LOBBUFSIZE;
+	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
+	if(AH->lo_buf == NULL)
+                die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * Now open the TOC file

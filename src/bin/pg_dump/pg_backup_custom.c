@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.17 2001/11/27 23:48:12 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_custom.c,v 1.18 2002/04/24 02:21:04 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -152,6 +152,12 @@ InitArchiveFmt_Custom(ArchiveHandle *AH)
 	ctx->zp = (z_streamp) malloc(sizeof(z_stream));
 	if (ctx->zp == NULL)
 		die_horribly(AH, modulename, "out of memory\n");
+
+	/* Initialize LO buffering */
+	AH->lo_buf_size = LOBBUFSIZE;
+	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
+	if(AH->lo_buf == NULL)
+                die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * zlibOutSize is the buffer size we tell zlib it can output to.  We

@@ -20,7 +20,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.14 2001/10/25 05:49:52 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_files.c,v 1.15 2002/04/24 02:21:04 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -112,6 +112,12 @@ InitArchiveFmt_Files(ArchiveHandle *AH)
 	ctx = (lclContext *) malloc(sizeof(lclContext));
 	AH->formatData = (void *) ctx;
 	ctx->filePos = 0;
+
+	/* Initialize LO buffering */
+	AH->lo_buf_size = LOBBUFSIZE;
+	AH->lo_buf = (void *)malloc(LOBBUFSIZE);
+	if(AH->lo_buf == NULL)
+                die_horribly(AH, modulename, "out of memory\n");
 
 	/*
 	 * Now open the TOC file

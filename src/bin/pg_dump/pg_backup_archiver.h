@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.41 2001/11/05 17:46:30 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.42 2002/04/24 02:21:04 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -41,6 +41,7 @@
 #include <errno.h>
 
 #include "pqexpbuffer.h"
+#define LOBBUFSIZE 32768
 
 #ifdef HAVE_LIBZ
 #include <zlib.h>
@@ -240,6 +241,9 @@ typedef struct _archiveHandle
 
 	RestoreOptions *ropt;		/* Used to check restore options in
 								 * ahwrite etc */
+	void                    *lo_buf;
+	int                     lo_buf_used;
+	int                     lo_buf_size;
 } ArchiveHandle;
 
 typedef struct _tocEntry

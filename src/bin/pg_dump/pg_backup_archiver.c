@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.42 2002/02/11 00:18:20 tgl Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.c,v 1.43 2002/04/24 02:21:04 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -819,6 +819,9 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 		AH->createdBlobXref = 1;
 	}
 
+	/* Initialize the LO Buffer */
+	AH->lo_buf_used = 0;
+
 	/*
 	 * Start long-running TXs if necessary
 	 */
@@ -848,6 +851,19 @@ StartRestoreBlob(ArchiveHandle *AH, Oid oid)
 void
 EndRestoreBlob(ArchiveHandle *AH, Oid oid)
 {
+        if(AH->lo_buf_used > 0) {
+	  /* Write remaining bytes from the LO buffer */
+  	  int res;
+          res = lo_write(AH->connection, AH->loFd, (void *) AH->lo_buf, AH->lo_buf_used);
+
+	  ahlog(AH, 5, "wrote remaining %d bytes of large object data (result = %d)\n",
+	  	  (int)AH->lo_buf_used, res);
+	  if (res != AH->lo_buf_used)
+		die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
+			 res, AH->lo_buf_used);
+          AH->lo_buf_used = 0;
+        }
+
 	lo_close(AH->connection, AH->loFd);
 	AH->writingBlob = 0;
 
@@ -1228,14 +1244,27 @@ ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH)
 
 	if (AH->writingBlob)
 	{
-		res = lo_write(AH->connection, AH->loFd, (void *) ptr, size * nmemb);
-		ahlog(AH, 5, "wrote %d bytes of large object data (result = %d)\n",
-			  (int) (size * nmemb), res);
-		if (res != size * nmemb)
-			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
-						 res, (int) (size * nmemb));
+	        if(AH->lo_buf_used + size * nmemb > AH->lo_buf_size) {
+		  /* Split LO buffer */
+		  int remaining = AH->lo_buf_size - AH->lo_buf_used;
+		  int slack = nmemb * size - remaining;
 
-		return res;
+		  memcpy(AH->lo_buf + AH->lo_buf_used, ptr, remaining);
+		  res = lo_write(AH->connection, AH->loFd, AH->lo_buf, AH->lo_buf_size);
+		  ahlog(AH, 5, "wrote %d bytes of large object data (result = %d)\n",
+		  	        AH->lo_buf_size, res);
+		  if (res != AH->lo_buf_size)
+			die_horribly(AH, modulename, "could not write to large object (result: %d, expected: %d)\n",
+						 res, AH->lo_buf_size);
+	          memcpy(AH->lo_buf, ptr + remaining, slack);
+		  AH->lo_buf_used = slack;
+	       } else {
+	         /* LO Buffer is still large enough, buffer it */
+		 memcpy(AH->lo_buf + AH->lo_buf_used, ptr, size * nmemb);
+		 AH->lo_buf_used += size * nmemb;
+	       }
+
+	       return size * nmemb;
 	}
 	else if (AH->gzOut)
 	{

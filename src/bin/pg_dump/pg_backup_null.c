@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.7 2001/06/27 21:21:37 petere Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_null.c,v 1.8 2002/04/24 02:21:04 momjian Exp $
  *
  * Modifications - 09-Jul-2000 - pjw@rhyme.com.au
  *
@@ -64,7 +64,6 @@ InitArchiveFmt_Null(ArchiveHandle *AH)
 	 */
 	if (AH->mode == archModeRead)
 		die_horribly(AH, NULL, "this format cannot be read\n");
-
 }
 
 /*
