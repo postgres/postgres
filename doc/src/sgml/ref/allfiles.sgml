@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.26 2000/11/24 20:16:38 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/allfiles.sgml,v 1.27 2001/01/13 03:11:12 petere Exp $
 Postgres documentation
 Complete list of usable sgml source files in this directory.
 -->
@@ -41,6 +41,7 @@ Complete list of usable sgml source files in this directory.
 <!entity alterTable         system "alter_table.sgml">
 <!entity alterUser          system "alter_user.sgml">
 <!entity begin              system "begin.sgml">
+<!entity checkpoint         system "checkpoint.sgml">
 <!entity close              system "close.sgml">
 <!entity cluster            system "cluster.sgml">
 <!entity commentOn          system "comment.sgml">

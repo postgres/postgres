@@ -1,0 +1,48 @@
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/checkpoint.sgml,v 1.1 2001/01/13 03:11:12 petere Exp $ -->
+
+<refentry id="sql-checkpoint">
+ <docinfo>
+  <date>2001-01-13</date>
+ </docinfo>
+
+ <refmeta>
+  <refentrytitle id="sql-checkpoint-title">CHECKPOINT</refentrytitle>
+  <refmiscinfo>SQL - Language Statements</refmiscinfo>
+ </refmeta>
+
+ <refnamediv>
+  <refname>CHECKPOINT</refname>
+  <refpurpose>Force transaction log to disk</refpurpose>
+ </refnamediv>
+
+ <refsynopsisdiv>
+<synopsis>
+CHECKPOINT
+</synopsis>
+ </refsynopsisdiv>
+
+ <refsect1>
+  <title>Description</title>
+
+  <para>
+   This documentation needs to be written.
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>See Also</title>
+
+  <para>
+   <citetitle>PostgreSQL Administrator's Guide</citetitle>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Compatibility</title>
+
+  <para>
+   The <command>CHECKPOINT</command> command is a
+   <productname>PostgreSQL</productname> language extension.
+  </para>
+ </refsect1>
+</refentry>
