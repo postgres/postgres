@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_conversion.h,v 1.2 2002/07/25 10:07:13 ishii Exp $
+ * $Id: pg_conversion.h,v 1.3 2002/08/04 06:54:10 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -33,7 +33,7 @@
  *
  *	conname				name of the conversion
  *	connamespace		name space which the conversion belongs to
- *	conowner			ower of the conversion
+ *	conowner			owner of the conversion
  *	conforencoding		FOR encoding id
  *	contoencoding		TO encoding id
  *  conproc				OID of the conversion proc

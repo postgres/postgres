@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.25 2002/06/20 20:29:44 momjian Exp $
+ * $Id: pg_database.h,v 1.26 2002/08/04 06:54:10 thomas Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -41,7 +41,7 @@ CATALOG(pg_database) BOOTSTRAP BKI_SHARED_RELATION
 	Oid			datlastsysoid;	/* highest OID to consider a system OID */
 	TransactionId datvacuumxid; /* all XIDs before this are vacuumed */
 	TransactionId datfrozenxid; /* all XIDs before this are frozen */
-	text		datpath;		/* VARIABLE LENGTH FIELD */
+	text		datpath;		/* default database location (VAR LENGTH) */
 	text		datconfig[1];	/* database-specific GUC (VAR LENGTH) */
 	aclitem		datacl[1];		/* access permissions (VAR LENGTH) */
 } FormData_pg_database;
