@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.121 2000/06/30 07:04:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.122 2000/07/04 06:11:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -946,7 +946,8 @@ index_create(char *heapRelationName,
 			 Node *predicate,
 			 bool islossy,
 			 bool unique,
-			 bool primary)
+			 bool primary,
+			 bool allow_system_table_mods)
 {
 	Relation	heapRelation;
 	Relation	indexRelation;
@@ -989,13 +990,13 @@ index_create(char *heapRelationName,
 												numatts,
 												attNums);
 
-	/* save user relation name because heap_create changes it */
 	if (istemp)
 	{
-		temp_relname = pstrdup(indexRelationName);		/* save original value */
+		/* save user relation name because heap_create changes it */
+		temp_relname = pstrdup(indexRelationName);	/* save original value */
 		indexRelationName = palloc(NAMEDATALEN);
-		strcpy(indexRelationName, temp_relname);		/* heap_create will
-														 * change this */
+		strcpy(indexRelationName, temp_relname);	/* heap_create will
+													 * change this */
 	}
 
 	/* ----------------
@@ -1003,7 +1004,7 @@ index_create(char *heapRelationName,
 	 * ----------------
 	 */
 	indexRelation = heap_create(indexRelationName, indexTupDesc,
-								istemp, false);
+								istemp, false, allow_system_table_mods);
 
 	/* ----------------
 	 *	  construct the index relation descriptor

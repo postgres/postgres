@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.118 2000/06/17 21:48:47 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.119 2000/07/04 06:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -877,8 +877,12 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 				 */
 				tupdesc = CreateTupleDescCopy(tupType);
 
-				intoRelationId = heap_create_with_catalog(intoName,
-						   tupdesc, RELKIND_RELATION, parseTree->isTemp);
+				intoRelationId =
+					heap_create_with_catalog(intoName,
+											 tupdesc,
+											 RELKIND_RELATION,
+											 parseTree->isTemp,
+											 allowSystemTableMods);
 
 				FreeTupleDesc(tupdesc);
 

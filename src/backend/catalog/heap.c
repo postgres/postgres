@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.137 2000/07/03 23:09:27 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.138 2000/07/04 06:11:23 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -172,7 +172,8 @@ Relation
 heap_create(char *relname,
 			TupleDesc tupDesc,
 			bool istemp,
-			bool storage_create)
+			bool storage_create,
+			bool allow_system_table_mods)
 {
 	static unsigned int uniqueId = 0;
 
@@ -189,7 +190,7 @@ heap_create(char *relname,
 	 */
 	AssertArg(natts > 0);
 
-	if (relname && !allowSystemTableMods &&
+	if (relname && !allow_system_table_mods &&
 		IsSystemRelationName(relname) && IsNormalProcessingMode())
 	{
 		elog(ERROR, "Illegal class name '%s'"
@@ -744,7 +745,8 @@ Oid
 heap_create_with_catalog(char *relname,
 						 TupleDesc tupdesc,
 						 char relkind,
-						 bool istemp)
+						 bool istemp,
+						 bool allow_system_table_mods)
 {
 	Relation	pg_class_desc;
 	Relation	new_rel_desc;
@@ -769,9 +771,9 @@ heap_create_with_catalog(char *relname,
 		(istemp && get_temp_rel_by_username(relname) != NULL))
 		elog(ERROR, "Relation '%s' already exists", relname);
 
-	/* save user relation name because heap_create changes it */
 	if (istemp)
 	{
+		/* save user relation name because heap_create changes it */
 		temp_relname = pstrdup(relname);		/* save original value */
 		relname = palloc(NAMEDATALEN);
 		strcpy(relname, temp_relname);	/* heap_create will change this */
@@ -797,7 +799,8 @@ heap_create_with_catalog(char *relname,
 	 *	work of creating the disk file for the relation.
 	 * ----------------
 	 */
-	new_rel_desc = heap_create(relname, tupdesc, istemp, false);
+	new_rel_desc = heap_create(relname, tupdesc, istemp, false,
+							   allow_system_table_mods);
 
 	new_rel_oid = new_rel_desc->rd_att->attrs[0]->attrelid;
 
@@ -1419,7 +1422,8 @@ DeleteTypeTuple(Relation rel)
  * --------------------------------
  */
 void
-heap_drop_with_catalog(const char *relname)
+heap_drop_with_catalog(const char *relname,
+					   bool allow_system_table_mods)
 {
 	Relation	rel;
 	Oid			rid;
@@ -1438,7 +1442,7 @@ heap_drop_with_catalog(const char *relname)
 	 * ----------------
 	 */
 	/* allow temp of pg_class? Guess so. */
-	if (!istemp && !allowSystemTableMods &&
+	if (!istemp && !allow_system_table_mods &&
 		IsSystemRelationName(RelationGetRelationName(rel)))
 		elog(ERROR, "System relation '%s' cannot be destroyed",
 			 RelationGetRelationName(rel));
@@ -1546,15 +1550,9 @@ heap_drop_with_catalog(const char *relname)
 	if (has_toasttable)
 	{
 		char	toast_relname[NAMEDATALEN];
-		bool	old_allow;
 
-		old_allow = allowSystemTableMods;
-		allowSystemTableMods = true;
-
-		sprintf(toast_relname, "pg_toast_%d", rid);
-		heap_drop_with_catalog(toast_relname);
-
-		allowSystemTableMods = old_allow;
+		sprintf(toast_relname, "pg_toast_%u", rid);
+		heap_drop_with_catalog(toast_relname, true);
 	}
 }
 

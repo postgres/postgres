@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.165 2000/07/03 20:48:37 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.166 2000/07/04 06:11:43 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -538,7 +538,7 @@ pg_plan_query(Query *querytree)
  *
  * parse_context references a context suitable for holding the
  * parse/rewrite trees (typically this will be QueryContext).
- * This context must be longer-lived than the CurrentMemoryContext!
+ * This context *must* be longer-lived than the CurrentMemoryContext!
  * In fact, if the query string might contain BEGIN/COMMIT commands,
  * parse_context had better outlive TopTransactionContext!
  *
@@ -558,6 +558,16 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 	MemoryContext oldcontext;
 	List	   *querytree_list,
 			   *querytree_item;
+
+	/*
+	 * If you called this routine with parse_context = CurrentMemoryContext,
+	 * you blew it.  They *must* be different, else the context reset
+	 * at the bottom of the loop will destroy the querytree list.
+	 * (We really ought to check that parse_context isn't a child of
+	 * CurrentMemoryContext either, but that would take more cycles than
+	 * it's likely to be worth.)
+	 */
+	Assert(parse_context != CurrentMemoryContext);
 
 	/*
 	 * Switch to appropriate context for constructing parsetrees.
@@ -1404,7 +1414,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.165 $ $Date: 2000/07/03 20:48:37 $\n");
+		puts("$Revision: 1.166 $ $Date: 2000/07/04 06:11:43 $\n");
 	}
 
 	/*

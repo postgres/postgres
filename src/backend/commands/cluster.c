@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.56 2000/06/17 23:41:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/cluster.c,v 1.57 2000/07/04 06:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,6 +30,7 @@
 #include "catalog/pg_proc.h"
 #include "commands/cluster.h"
 #include "commands/rename.h"
+#include "miscadmin.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 
@@ -140,7 +141,7 @@ cluster(char *oldrelname, char *oldindexname)
 	StartTransactionCommand();
 
 	/* Destroy old heap (along with its index) and rename new. */
-	heap_drop_with_catalog(saveoldrelname);
+	heap_drop_with_catalog(saveoldrelname, allowSystemTableMods);
 
 	CommitTransactionCommand();
 	StartTransactionCommand();
@@ -176,7 +177,8 @@ copy_heap(Oid OIDOldHeap)
 	tupdesc = CreateTupleDescCopy(OldHeapDesc);
 
 	OIDNewHeap = heap_create_with_catalog(NewName, tupdesc,
-										  RELKIND_RELATION, false);
+										  RELKIND_RELATION, false,
+										  allowSystemTableMods);
 
 	if (!OidIsValid(OIDNewHeap))
 		elog(ERROR, "clusterheap: cannot create temporary heap relation\n");
@@ -276,7 +278,8 @@ copy_index(Oid OIDOldIndex, Oid OIDNewHeap)
 				 (Node *) NULL,	/* XXX where's the predicate? */
 				 Old_pg_index_Form->indislossy,
 				 Old_pg_index_Form->indisunique,
-				 Old_pg_index_Form->indisprimary);
+				 Old_pg_index_Form->indisprimary,
+				 allowSystemTableMods);
 
 	setRelhasindexInplace(OIDNewHeap, true, false);
 

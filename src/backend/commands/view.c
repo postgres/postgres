@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: view.c,v 1.44 2000/06/30 07:06:05 tgl Exp $
+ *	$Id: view.c,v 1.45 2000/07/04 06:11:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "catalog/heap.h"
 #include "commands/creatinh.h"
 #include "commands/view.h"
+#include "miscadmin.h"
 #include "nodes/makefuncs.h"
 #include "parser/parse_relation.h"
 #include "parser/parse_type.h"
@@ -296,5 +297,5 @@ RemoveView(char *viewName)
 	 * We just have to drop the relation; the associated rules will
 	 * be cleaned up automatically.
 	 */
-	heap_drop_with_catalog(viewName);
+	heap_drop_with_catalog(viewName, allowSystemTableMods);
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: index.h,v 1.26 2000/06/30 07:04:06 tgl Exp $
+ * $Id: index.h,v 1.27 2000/07/04 06:11:54 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,8 @@ extern void index_create(char *heapRelationName,
 			 Node *predicate,
 			 bool islossy,
 			 bool unique,
-			 bool primary);
+			 bool primary,
+			 bool allow_system_table_mods);
 
 extern void index_drop(Oid indexId);
 

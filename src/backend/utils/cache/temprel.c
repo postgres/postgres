@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.25 2000/06/28 03:32:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/Attic/temprel.c,v 1.26 2000/07/04 06:11:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,7 @@
 
 #include "catalog/heap.h"
 #include "catalog/index.h"
+#include "miscadmin.h"
 #include "utils/catcache.h"
 #include "utils/temprel.h"
 
@@ -112,7 +113,7 @@ remove_all_temp_relations(void)
 
 			/* safe from deallocation */
 			strcpy(relname, temp_rel->user_relname);
-			heap_drop_with_catalog(relname);
+			heap_drop_with_catalog(relname, allowSystemTableMods);
 		}
 		else
 			index_drop(temp_rel->relid);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.32 2000/06/28 03:31:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.33 2000/07/04 06:11:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 
 #include "access/genam.h"
 #include "access/heapam.h"
+#include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/heap.h"
 #include "catalog/index.h"
@@ -28,6 +29,7 @@
 #include "catalog/pg_proc.h"
 #include "catalog/pg_shadow.h"
 #include "commands/defrem.h"
+#include "miscadmin.h"
 #include "optimizer/clauses.h"
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
@@ -38,8 +40,6 @@
 #include "utils/builtins.h"
 #include "utils/fmgroids.h"
 #include "utils/syscache.h"
-#include "miscadmin.h"			/* ReindexDatabase() */
-#include "catalog/catalog.h"	/* ReindexDatabase() */
 
 #define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
 
@@ -197,7 +197,7 @@ DefineIndex(char *heapRelationName,
 					 accessMethodId, numberOfAttributes, attributeNumberA,
 					 classObjectId,
 					 (Node *) cnfPred,
-					 lossy, unique, primary);
+					 lossy, unique, primary, allowSystemTableMods);
 	}
 	else
 	{
@@ -215,7 +215,7 @@ DefineIndex(char *heapRelationName,
 					 accessMethodId, numberOfAttributes, attributeNumberA,
 					 classObjectId,
 					 (Node *) cnfPred,
-					 lossy, unique, primary);
+					 lossy, unique, primary, allowSystemTableMods);
 	}
 
 	/*

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.72 2000/06/28 03:32:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.73 2000/07/04 06:11:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,8 @@ inv_create(int flags)
 	 * be located on whatever storage manager the user requested.
 	 */
 
-	heap_create_with_catalog(objname, tupdesc, RELKIND_LOBJECT, false);
+	heap_create_with_catalog(objname, tupdesc, RELKIND_LOBJECT,
+							 false, false);
 
 	/* make the relation visible in this transaction */
 	CommandCounterIncrement();
@@ -165,7 +166,7 @@ inv_create(int flags)
 	classObjectId[0] = INT4_OPS_OID;
 	index_create(objname, indname, NULL, NULL, BTREE_AM_OID,
 				 1, &attNums[0], &classObjectId[0],
-				 (Node *) NULL, false, false, false);
+				 (Node *) NULL, false, false, false, false);
 
 	/* make the index visible in this transaction */
 	CommandCounterIncrement();
@@ -297,7 +298,7 @@ inv_drop(Oid lobjId)
 	 * Since heap_drop_with_catalog will destroy the relcache entry,
 	 * there's no need to drop the refcount in this path.
 	 */
-	heap_drop_with_catalog(RelationGetRelationName(r));
+	heap_drop_with_catalog(RelationGetRelationName(r), false);
 	return 1;
 }
 

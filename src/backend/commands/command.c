@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.82 2000/07/03 23:09:33 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.83 2000/07/04 06:11:27 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -21,8 +21,10 @@
 
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
+#include "catalog/index.h"
 #include "catalog/indexing.h"
 #include "catalog/pg_attrdef.h"
+#include "catalog/pg_opclass.h"
 #include "commands/command.h"
 #include "executor/spi.h"
 #include "catalog/heap.h"
@@ -1184,22 +1186,18 @@ AlterTableCreateToastTable(const char *relationName)
 	Form_pg_attribute  *att;
 	Relation			class_rel;
 	Relation			ridescs[Num_pg_class_indices];
-	Oid					toast_relid = 2;
-	Oid					toast_idxid = 2;
+	Oid					toast_relid;
+	Oid					toast_idxid;
 	bool				has_toastable_attrs = false;
-	bool				old_allow;
 	int					i;
-
 	char				toast_relname[NAMEDATALEN];
 	char				toast_idxname[NAMEDATALEN];
-	char				tmp_query[1024];
 	Relation			toast_rel;
+	AttrNumber			attNums[1];
+	Oid					classObjectId[1];
 
 	/*
-	 * permissions checking.  this would normally be done in utility.c,
-	 * but this particular routine is recursive.
-	 *
-	 * normally, only the owner of a class can change its schema.
+	 * permissions checking.  XXX exactly what is appropriate here?
 	 */
 /*
 	if (!allowSystemTableMods && IsSystemRelationName(relationName))
@@ -1215,7 +1213,7 @@ AlterTableCreateToastTable(const char *relationName)
 	 * Grab an exclusive lock on the target table, which we will NOT
 	 * release until end of transaction.
 	 */
-	rel = heap_openr(relationName, RowExclusiveLock);
+	rel = heap_openr(relationName, AccessExclusiveLock);
 	myrelid = RelationGetRelid(rel);
 
 	/*
@@ -1240,8 +1238,8 @@ AlterTableCreateToastTable(const char *relationName)
 	 * Get the pg_class tuple for the relation
 	 */
 	reltup = SearchSysCacheTuple(RELNAME,
-									 PointerGetDatum(relationName),
-									 0, 0, 0);
+								 PointerGetDatum(relationName),
+								 0, 0, 0);
 
 	if (!HeapTupleIsValid(reltup))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
@@ -1261,26 +1259,43 @@ AlterTableCreateToastTable(const char *relationName)
 				relationName);
 
 	/*
-	 * Create the toast table and it's index
-	 * This is bad and ugly, because we need to override
-	 * allowSystemTableMods in order to keep the toast
-	 * table- and index-name out of the users namespace.
+	 * Create the toast table and its index
 	 */
-	sprintf(toast_relname, "pg_toast_%d", myrelid);
-	sprintf(toast_idxname, "pg_toast_%d_idx", myrelid);
+	sprintf(toast_relname, "pg_toast_%u", myrelid);
+	sprintf(toast_idxname, "pg_toast_%u_idx", myrelid);
 
-	old_allow = allowSystemTableMods;
-	allowSystemTableMods = true;
+	/* this is pretty painful...  need a tuple descriptor */
+	tupdesc = CreateTemplateTupleDesc(3);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 1,
+					   "chunk_id",
+					   OIDOID,
+					   -1, 0, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 2,
+					   "chunk_seq",
+					   INT4OID,
+					   -1, 0, false);
+	TupleDescInitEntry(tupdesc, (AttrNumber) 3,
+					   "chunk_data",
+					   TEXTOID,	/* XXX wouldn't BYTEAOID be better? */
+					   -1, 0, false);
 
-	sprintf(tmp_query, "create table \"%s\" (chunk_id oid, chunk_seq int4, chunk_data text)",
-			toast_relname);
-	pg_exec_query_dest(tmp_query, None, CurrentMemoryContext);
+	/* XXX use RELKIND_TOASTVALUE here? */
+	/* XXX what if owning relation is temp?  need we mark toasttable too? */
+	heap_create_with_catalog(toast_relname, tupdesc, RELKIND_RELATION,
+							 false, true);
 
-	sprintf(tmp_query, "create index \"%s\" on \"%s\" (chunk_id)",
-			toast_idxname, toast_relname);
-	pg_exec_query_dest(tmp_query, None, CurrentMemoryContext);
+	/* make the toast relation visible, else index creation will fail */
+	CommandCounterIncrement();
 
-	allowSystemTableMods = old_allow;
+	/* create index on chunk_id */
+	attNums[0] = 1;
+	classObjectId[0] = OID_OPS_OID;
+	index_create(toast_relname, toast_idxname, NULL, NULL, BTREE_AM_OID,
+				 1, attNums, classObjectId,
+				 (Node *) NULL, false, false, false, true);
+
+	/* make the index visible in this transaction */
+	CommandCounterIncrement();
 
 	/*
 	 * Get the OIDs of the newly created objects
@@ -1318,8 +1333,8 @@ AlterTableCreateToastTable(const char *relationName)
 
 	heap_freetuple(reltup);
 
+	heap_close(class_rel, RowExclusiveLock);
 	heap_close(rel, NoLock);
-	heap_close(class_rel, NoLock);
 }
 
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 2000, PostgreSQL Development Team
  *
- * $Id: tuptoaster.h,v 1.4 2000/07/04 00:04:03 tgl Exp $
+ * $Id: tuptoaster.h,v 1.5 2000/07/04 06:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,10 +33,6 @@ extern void heap_tuple_toast_attrs(Relation rel,
 				HeapTuple newtup, HeapTuple oldtup);
 
 extern varattrib *heap_tuple_untoast_attr(varattrib * attr);
-
-extern void heap_create_toast_table(Oid new_reloid,
-				TupleDesc new_tupdesc, bool istemp);
-				
 
 #endif	 /* TUPLE_TOASTER_ACTIVE */
 
