@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.20 2002/12/06 05:00:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/typecmds.c,v 1.21 2002/12/09 20:31:05 tgl Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -63,7 +63,6 @@
 static Oid	findTypeIOFunction(List *procname, Oid typeOid, bool isOutput);
 static List *get_rels_with_domain(Oid domainOid);
 static void domainPermissionCheck(HeapTuple tup, TypeName *typename);
-static void domainCheckForUnsupportedConstraints(Node *newConstraint);
 static char *domainAddConstraint(Oid domainOid, Oid domainNamespace,
 								 Oid baseTypeOid,
 								 int typMod, Constraint *constr,
@@ -519,24 +518,23 @@ DefineDomain(CreateDomainStmt *stmt)
 		Constraint *colDef;
 		ParseState *pstate;
 
-		/*
-		 * Check for constraint types which are not supported by
-		 * domains.  Throws an error if it finds one.
-		 */
-		domainCheckForUnsupportedConstraints(newConstraint);
+		/* Check for unsupported constraint types */
+		if (IsA(newConstraint, FkConstraint))
+			elog(ERROR, "CREATE DOMAIN / FOREIGN KEY constraints not supported");
 
-		/* Assume its a CHECK, DEFAULT, NULL or NOT NULL constraint */
+		/* this case should not happen */
+		if (!IsA(newConstraint, Constraint))
+			elog(ERROR, "DefineDomain: unexpected constraint node type");
+
 		colDef = (Constraint *) newConstraint;
+
 		switch (colDef->contype)
 		{
+			case CONSTR_DEFAULT:
 				/*
 				 * The inherited default value may be overridden by the
 				 * user with the DEFAULT <expr> statement.
-				 *
-				 * We have to search the entire constraint tree returned as
-				 * we don't want to cook or fiddle too much.
 				 */
-			case CONSTR_DEFAULT:
 				if (defaultExpr)
 					elog(ERROR, "CREATE DOMAIN has multiple DEFAULT expressions");
 				/* Create a dummy ParseState for transformExpr */
@@ -563,9 +561,6 @@ DefineDomain(CreateDomainStmt *stmt)
 				defaultValueBin = nodeToString(defaultExpr);
 				break;
 
-				/*
-				 * Find the NULL constraint.
-				 */
 			case CONSTR_NOTNULL:
 				if (nullDefined)
 					elog(ERROR, "CREATE DOMAIN has conflicting NULL / NOT NULL constraint");
@@ -580,19 +575,34 @@ DefineDomain(CreateDomainStmt *stmt)
 				nullDefined = true;
 		  		break;
 
-			/*
-			 * Check constraints are handled after domain creation, as they require
-			 * the Oid of the domain
-			 */
 		  	case CONSTR_CHECK:
+				/*
+				 * Check constraints are handled after domain creation, as they
+				 * require the Oid of the domain
+				 */
 		  		break;
 
-			/*
-			 * If we reach this, then domainCheckForUnsupportedConstraints()
-			 * doesn't have a complete list of unsupported domain constraints
-			 */
+				/*
+				 * All else are error cases
+				 */
+		  	case CONSTR_UNIQUE:
+		  		elog(ERROR, "CREATE DOMAIN / UNIQUE not supported");
+		  		break;
+
+		  	case CONSTR_PRIMARY:
+		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY not supported");
+		  		break;
+
+		  	case CONSTR_ATTR_DEFERRABLE:
+		  	case CONSTR_ATTR_NOT_DEFERRABLE:
+		  	case CONSTR_ATTR_DEFERRED:
+		  	case CONSTR_ATTR_IMMEDIATE:
+		  		elog(ERROR, "CREATE DOMAIN: DEFERRABLE, NON DEFERRABLE, DEFERRED"
+							" and IMMEDIATE not supported");
+		  		break;
+
 			default:
-				elog(ERROR, "DefineDomain: unrecognized constraint node type");
+				elog(ERROR, "DefineDomain: unrecognized constraint subtype");
 				break;
 		}
 	}
@@ -629,6 +639,8 @@ DefineDomain(CreateDomainStmt *stmt)
 	{
 		Constraint *constr = lfirst(listptr);
 
+		/* it must be a Constraint, per check above */
+
 		switch (constr->contype)
 		{
 		  	case CONSTR_CHECK:
@@ -642,7 +654,8 @@ DefineDomain(CreateDomainStmt *stmt)
 				}
 		  		break;
 
-			/* Errors for other constraints are taken care of prior to domain creation */
+			/* Other constraint types were fully processed above */
+
 			default:
 		  		break;
 		}
@@ -1262,21 +1275,21 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 		elog(ERROR, "AlterDomain: type \"%s\" does not exist",
 			 TypeNameToString(typename));
 
+	typTup = (Form_pg_type) GETSTRUCT(tup);
 
 	/* Doesn't return if user isn't allowed to alter the domain */ 
 	domainPermissionCheck(tup, typename);
 
-	typTup = (Form_pg_type) GETSTRUCT(tup);
+	/* Check for unsupported constraint types */
+	if (IsA(newConstraint, FkConstraint))
+		elog(ERROR, "ALTER DOMAIN / FOREIGN KEY constraints not supported");
 
+	/* this case should not happen */
+	if (!IsA(newConstraint, Constraint))
+		elog(ERROR, "AlterDomainAddConstraint: unexpected constraint node type");
 
-	/*
-	 * Check for constraint types which are not supported by
-	 * domains.  Throws an error if it finds one.
-	 */
-	domainCheckForUnsupportedConstraints(newConstraint);
-
-	/* Assume its a CHECK, DEFAULT, NULL or NOT NULL constraint */
 	constr = (Constraint *) newConstraint;
+
 	switch (constr->contype)
 	{
 		case CONSTR_DEFAULT:
@@ -1288,32 +1301,42 @@ AlterDomainAddConstraint(List *names, Node *newConstraint)
 			elog(ERROR, "Use ALTER DOMAIN .. [ SET | DROP ] NOT NULL instead");
 			break;
 
-			/*
-			 * Check constraints are handled after domain creation, as they require
-			 * the Oid of the domain
-			 */
 	  	case CONSTR_CHECK:
-			{
-				/* Returns the cooked constraint which is not needed during creation */
-				ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
-											typTup->typbasetype, typTup->typtypmod,
-											constr, &counter, NameStr(typTup->typname));
-			}
+			/* processed below */
 	  		break;
 
-		/*
-		 * If we reach this, then domainCheckForUnsupportedConstraints()
-		 * doesn't have a complete list of unsupported domain constraints
-		 */
+		case CONSTR_UNIQUE:
+			elog(ERROR, "ALTER DOMAIN / UNIQUE indexes not supported");
+			break;
+
+		case CONSTR_PRIMARY:
+			elog(ERROR, "ALTER DOMAIN / PRIMARY KEY indexes not supported");
+			break;
+
+		case CONSTR_ATTR_DEFERRABLE:
+		case CONSTR_ATTR_NOT_DEFERRABLE:
+		case CONSTR_ATTR_DEFERRED:
+		case CONSTR_ATTR_IMMEDIATE:
+			elog(ERROR, "ALTER DOMAIN: DEFERRABLE, NON DEFERRABLE, DEFERRED"
+				 " and IMMEDIATE not supported");
+			break;
+
 		default:
-			elog(ERROR, "DefineDomain: unrecognized constraint node type");
+			elog(ERROR, "AlterDomainAddConstraint: unrecognized constraint node type");
 			break;
 	}
 
 	/*
 	 * Since all other constraint types throw errors, this must be
-	 * a check constraint, and ccbin must be set.
-	 *
+	 * a check constraint.
+	 */
+
+	/* Returns the cooked constraint which is not needed during creation */
+	ccbin = domainAddConstraint(HeapTupleGetOid(tup), typTup->typnamespace,
+								typTup->typbasetype, typTup->typtypmod,
+								constr, &counter, NameStr(typTup->typname));
+
+	/*
 	 * Test all values stored in the attributes based on the domain
 	 * the constraint is being added to.
 	 */
@@ -1424,7 +1447,7 @@ get_rels_with_domain(Oid domainOid)
 	/* Scan through pg_class for tables */
 	while ((classTup = heap_getnext(classScan, ForwardScanDirection)) != NULL)
 	{
-		bool		addToList = true;
+		relToCheck *rtc = NULL;
 		int			nkeys = 0;
 		HeapTuple	attTup;
 		HeapScanDesc	attScan;
@@ -1447,13 +1470,9 @@ get_rels_with_domain(Oid domainOid)
 		/* Scan through pg_attribute for attributes based on the domain */
 		while ((attTup = heap_getnext(attScan, ForwardScanDirection)) != NULL)
 		{
-			relToCheck *rtc;
-
-			/* Make the list entries for the relation */
-			if (addToList)
+			if (rtc == NULL)
 			{
-				addToList = false;
-
+				/* First one found for this rel */
 				rtc = (relToCheck *)palloc(sizeof(relToCheck));
 				rtc->atts = (int *)palloc(sizeof(int) * pg_class->relnatts);
 				rtc->relOid = HeapTupleGetOid(classTup);
@@ -1624,43 +1643,4 @@ domainAddConstraint(Oid domainOid, Oid domainNamespace, Oid baseTypeOid,
 	 * required tests.
 	 */
 	return ccbin;
-}
-
-/*
- * domainCheckForUnsupportedConstraints
- *
- * Throws an error on constraints that are unsupported by the
- * domains.
- */
-void 
-domainCheckForUnsupportedConstraints(Node *newConstraint)
-{
-	Constraint *colDef;
-
-	if (nodeTag(newConstraint) == T_FkConstraint)
-		elog(ERROR, "CREATE DOMAIN / FOREIGN KEY constraints not supported");
-
-	colDef = (Constraint *) newConstraint;
-
-	switch (colDef->contype)
-		{
-		  	case CONSTR_UNIQUE:
-		  		elog(ERROR, "CREATE DOMAIN / UNIQUE indexes not supported");
-		  		break;
-
-		  	case CONSTR_PRIMARY:
-		  		elog(ERROR, "CREATE DOMAIN / PRIMARY KEY indexes not supported");
-		  		break;
-
-		  	case CONSTR_ATTR_DEFERRABLE:
-		  	case CONSTR_ATTR_NOT_DEFERRABLE:
-		  	case CONSTR_ATTR_DEFERRED:
-		  	case CONSTR_ATTR_IMMEDIATE:
-		  		elog(ERROR, "DefineDomain: DEFERRABLE, NON DEFERRABLE, DEFERRED"
-							" and IMMEDIATE not supported");
-		  		break;
-
-			default:
-				break;
-		}
 }
