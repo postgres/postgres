@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.101 1999/09/28 14:31:19 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.102 1999/09/28 14:38:02 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4103,6 +4103,16 @@ a_expr:  attr
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
+		| a_expr '*' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
 		| a_expr '/' '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4123,11 +4133,21 @@ a_expr:  attr
 					n->subselect = $4;
 					$$ = (Node *)n;
 				}
-		| a_expr '*' '(' SubSelect ')'
+		| a_expr '^' '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NULL);
-					n->oper = lcons("*",NIL);
+					n->oper = lcons("^",NIL);
+					n->useor = false;
+					n->subLinkType = EXPR_SUBLINK;
+					n->subselect = $4;
+					$$ = (Node *)n;
+				}
+		| a_expr '|' '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("|",NIL);
 					n->useor = false;
 					n->subLinkType = EXPR_SUBLINK;
 					n->subselect = $4;
@@ -4193,6 +4213,16 @@ a_expr:  attr
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '*' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr '/' ANY '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4213,11 +4243,21 @@ a_expr:  attr
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| a_expr '*' ANY '(' SubSelect ')'
+		| a_expr '^' ANY '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1,NIL);
-					n->oper = lcons("*",NIL);
+					n->oper = lcons("^",NIL);
+					n->useor = false;
+					n->subLinkType = ANY_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '|' ANY '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1,NIL);
+					n->oper = lcons("|",NIL);
 					n->useor = false;
 					n->subLinkType = ANY_SUBLINK;
 					n->subselect = $5;
@@ -4283,6 +4323,16 @@ a_expr:  attr
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
+		| a_expr '*' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("*",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
 		| a_expr '/' ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
@@ -4303,11 +4353,21 @@ a_expr:  attr
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| a_expr '*' ALL '(' SubSelect ')'
+		| a_expr '^' ALL '(' SubSelect ')'
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = lcons($1, NULL);
-					n->oper = lcons("*",NIL);
+					n->oper = lcons("^",NIL);
+					n->useor = false;
+					n->subLinkType = ALL_SUBLINK;
+					n->subselect = $5;
+					$$ = (Node *)n;
+				}
+		| a_expr '|' ALL '(' SubSelect ')'
+				{
+					SubLink *n = makeNode(SubLink);
+					n->lefthand = lcons($1, NULL);
+					n->oper = lcons("|",NIL);
 					n->useor = false;
 					n->subLinkType = ALL_SUBLINK;
 					n->subselect = $5;
