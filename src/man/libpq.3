@@ -1,6 +1,6 @@
 .\" This is -*-nroff-*-
 .\" XXX standard disclaimer belongs here....
-.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.7 1997/10/17 02:11:49 momjian Exp $
+.\" $Header: /cvsroot/pgsql/src/man/Attic/libpq.3,v 1.8 1997/10/22 02:08:38 momjian Exp $
 .TH LIBPQ INTRO 03/12/94 PostgreSQL PostgreSQL
 .SH DESCRIPTION
 Libpq is the programmer's interface to Postgres.  Libpq is a set of
@@ -506,7 +506,7 @@ Sends a null-terminated
 .I string
 to the backend server.
 .IP
-The application must explicitly send the single character \*(lq.\*(rq
+The application must explicitly send the characters \*(lq\\.\*(rq
 to indicate to the backend that it has finished sending its data.
 .nf
 void PQputline(PGconn *conn,
@@ -536,7 +536,7 @@ PQexec(conn, "copy foo from stdin");
 PQputline(conn, "3<TAB>hello world<TAB>4.5\en");
 PQputline(conn,"4<TAB>goodbye world<TAB>7.11\en");
 \&...
-PQputline(conn,".\en");
+PQputline(conn,"\\.\en");
 PQendcopy(conn);
 .fi
 .PP
