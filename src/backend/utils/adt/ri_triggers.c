@@ -17,7 +17,7 @@
  *
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  *
- * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.72 2004/09/10 18:40:04 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/utils/adt/ri_triggers.c,v 1.73 2004/09/13 20:07:13 tgl Exp $
  *
  * ----------
  */
@@ -2698,16 +2698,20 @@ RI_Initial_Check(FkConstraint *fkconstraint, Relation rel, Relation pkrel)
 		elog(ERROR, "SPI_prepare returned %d for %s", SPI_result, querystr);
 
 	/*
-	 * Run the plan.  For safety we force a current query snapshot to be
-	 * used.  (In serializable mode, this arguably violates
-	 * serializability, but we really haven't got much choice.)  We need
-	 * at most one tuple returned, so pass limit = 1.
+	 * Run the plan.  For safety we force a current snapshot to be used.
+	 * (In serializable mode, this arguably violates serializability, but we
+	 * really haven't got much choice.)  We need at most one tuple returned,
+	 * so pass limit = 1.
 	 */
-	spi_result = SPI_execp_current(qplan, NULL, NULL, true, 1);
+	spi_result = SPI_execute_snapshot(qplan,
+									  NULL, NULL,
+									  CopySnapshot(GetLatestSnapshot()),
+									  InvalidSnapshot,
+									  true, 1);
 
 	/* Check result */
 	if (spi_result != SPI_OK_SELECT)
-		elog(ERROR, "SPI_execp_current returned %d", spi_result);
+		elog(ERROR, "SPI_execute_snapshot returned %d", spi_result);
 
 	/* Did we find a tuple violating the constraint? */
 	if (SPI_processed > 0)
@@ -3043,7 +3047,8 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	Relation	query_rel,
 				source_rel;
 	int			key_idx;
-	bool		useCurrentSnapshot;
+	Snapshot	test_snapshot;
+	Snapshot	crosscheck_snapshot;
 	int			limit;
 	int			spi_result;
 	AclId		save_uid;
@@ -3094,21 +3099,26 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	}
 
 	/*
-	 * In READ COMMITTED mode, we just need to make sure the regular query
-	 * snapshot is up-to-date, and we will see all rows that could be
-	 * interesting.  In SERIALIZABLE mode, we can't update the regular
-	 * query snapshot.	If the caller passes detectNewRows == false then
-	 * it's okay to do the query with the transaction snapshot; otherwise
-	 * we tell the executor to force a current snapshot (and error out if
-	 * it finds any rows under current snapshot that wouldn't be visible
-	 * per the transaction snapshot).
+	 * In READ COMMITTED mode, we just need to use an up-to-date regular
+	 * snapshot, and we will see all rows that could be interesting.
+	 * But in SERIALIZABLE mode, we can't change the transaction snapshot.
+	 * If the caller passes detectNewRows == false then it's okay to do the
+	 * query with the transaction snapshot; otherwise we use a current
+	 * snapshot, and tell the executor to error out if it finds any rows under
+	 * the current snapshot that wouldn't be visible per the transaction
+	 * snapshot.
 	 */
-	if (IsXactIsoLevelSerializable)
-		useCurrentSnapshot = detectNewRows;
+	if (IsXactIsoLevelSerializable && detectNewRows)
+	{
+		CommandCounterIncrement();	/* be sure all my own work is visible */
+		test_snapshot = CopySnapshot(GetLatestSnapshot());
+		crosscheck_snapshot = CopySnapshot(GetTransactionSnapshot());
+	}
 	else
 	{
-		SetQuerySnapshot();
-		useCurrentSnapshot = false;
+		/* the default SPI behavior is okay */
+		test_snapshot = InvalidSnapshot;
+		crosscheck_snapshot = InvalidSnapshot;
 	}
 
 	/*
@@ -3124,15 +3134,17 @@ ri_PerformCheck(RI_QueryKey *qkey, void *qplan,
 	SetUserId(RelationGetForm(query_rel)->relowner);
 
 	/* Finally we can run the query. */
-	spi_result = SPI_execp_current(qplan, vals, nulls,
-								   useCurrentSnapshot, limit);
+	spi_result = SPI_execute_snapshot(qplan,
+									  vals, nulls,
+									  test_snapshot, crosscheck_snapshot,
+									  false, limit);
 
 	/* Restore UID */
 	SetUserId(save_uid);
 
 	/* Check result */
 	if (spi_result < 0)
-		elog(ERROR, "SPI_execp_current returned %d", spi_result);
+		elog(ERROR, "SPI_execute_snapshot returned %d", spi_result);
 
 	if (expect_OK >= 0 && spi_result != expect_OK)
 		ri_ReportViolation(qkey, constrname ? constrname : "",

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.53 2004/08/30 02:54:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.54 2004/09/13 20:09:21 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -585,6 +585,7 @@ typedef struct PLpgSQL_function
 	Oid			fn_rettypioparam;
 	bool		fn_retistuple;
 	bool		fn_retset;
+	bool		fn_readonly;
 
 	int			fn_nargs;
 	int			fn_argvarnos[FUNC_MAX_ARGS];
@@ -614,6 +615,8 @@ typedef struct
 	Oid			fn_rettype;		/* info about declared function rettype */
 	bool		retistuple;
 	bool		retisset;
+
+	bool		readonly_func;
 
 	TupleDesc	rettupdesc;
 	char	   *exitlabel;

@@ -386,7 +386,7 @@ crosstab(PG_FUNCTION_ARGS)
 			elog(ERROR, "crosstab: SPI_connect returned %d", ret);
 
 		/* Retrieve the desired rows */
-		ret = SPI_exec(sql, 0);
+		ret = SPI_execute(sql, true, 0);
 		proc = SPI_processed;
 
 		/* Check for qualifying tuples */
@@ -777,7 +777,7 @@ load_categories_hash(char *cats_sql, MemoryContext per_query_ctx)
 		elog(ERROR, "load_categories_hash: SPI_connect returned %d", ret);
 
 	/* Retrieve the category name rows */
-	ret = SPI_exec(cats_sql, 0);
+	ret = SPI_execute(cats_sql, true, 0);
 	num_categories = proc = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -855,7 +855,7 @@ get_crosstab_tuplestore(char *sql,
 		elog(ERROR, "get_crosstab_tuplestore: SPI_connect returned %d", ret);
 
 	/* Now retrieve the crosstab source rows */
-	ret = SPI_exec(sql, 0);
+	ret = SPI_execute(sql, true, 0);
 	proc = SPI_processed;
 
 	/* Check for qualifying tuples */
@@ -1376,7 +1376,7 @@ build_tuplestore_recursively(char *key_fld,
 	}
 
 	/* Retrieve the desired rows */
-	ret = SPI_exec(sql->data, 0);
+	ret = SPI_execute(sql->data, true, 0);
 	proc = SPI_processed;
 
 	/* Check for qualifying tuples */

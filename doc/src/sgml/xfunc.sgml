@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.86 2004/08/24 00:06:50 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/xfunc.sgml,v 1.87 2004/09/13 20:05:25 tgl Exp $
 -->
 
  <sect1 id="xfunc">
@@ -2405,14 +2405,6 @@ CREATE FUNCTION make_array(anyelement) RETURNS anyarray
    </para>
 
    <para>
-    A function may also have the same name as an attribute.  (Recall
-    that <literal>attribute(table)</literal> is equivalent to
-    <literal>table.attribute</literal>.)  In the case that there is an
-    ambiguity between a function on a complex type and an attribute of
-    the complex type, the attribute will always be used.
-   </para>
-
-   <para>
     When creating a family of overloaded functions, one should be
     careful not to create ambiguities.  For instance, given the
     functions
@@ -2428,6 +2420,18 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
    </para>
 
    <para>
+    A function that takes a single argument of a composite type should
+    generally not have the same name as any attribute (field) of that type.
+    Recall that <literal>attribute(table)</literal> is considered equivalent
+    to <literal>table.attribute</literal>.  In the case that there is an
+    ambiguity between a function on a composite type and an attribute of
+    the composite type, the attribute will always be used.  It is possible
+    to override that choice by schema-qualifying the function name
+    (that is, <literal>schema.func(table)</literal>) but it's better to
+    avoid the problem by not choosing conflicting names.
+   </para>
+
+   <para>
     When overloading C-language functions, there is an additional
     constraint: The C name of each function in the family of
     overloaded functions must be different from the C names of all
@@ -2437,7 +2441,7 @@ CREATE FUNCTION test(smallint, double precision) RETURNS ...
     (usually the internal one).  The alternative form of the
     <literal>AS</> clause for the SQL <command>CREATE
     FUNCTION</command> command decouples the SQL function name from
-    the function name in the C source code.  E.g.,
+    the function name in the C source code.  For instance,
 <programlisting>
 CREATE FUNCTION test(int) RETURNS int
     AS '<replaceable>filename</>', 'test_1arg'
@@ -2448,6 +2452,128 @@ CREATE FUNCTION test(int, int) RETURNS int
 </programlisting>
     The names of the C functions here reflect one of many possible conventions.
    </para>
+  </sect1>
+
+  <sect1 id="xfunc-volatility">
+   <title>Function Volatility Categories</title>
+
+   <indexterm zone="xfunc-volatility">
+    <primary>volatility</primary>
+    <secondary>functions</secondary>
+   </indexterm>
+
+   <para>
+    Every function has a <firstterm>volatility</> classification, with
+    the possibilities being <literal>VOLATILE</>, <literal>STABLE</>, or
+    <literal>IMMUTABLE</>.  <literal>VOLATILE</> is the default if the
+    <command>CREATE FUNCTION</command> command does not specify a category.
+    The volatility category is a promise to the optimizer about the behavior
+    of the function:
+
+   <itemizedlist>
+    <listitem>
+     <para>
+      A <literal>VOLATILE</> function can do anything, including modifying
+      the database.  It can return different results on successive calls with
+      the same arguments.  The optimizer makes no assumptions about the
+      behavior of such functions.  A query using a volatile function will
+      re-evaluate the function at every row where its value is needed.
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      A <literal>STABLE</> function cannot modify the database and is
+      guaranteed to return the same results given the same arguments
+      for all calls within a single surrounding query.  This category
+      allows the optimizer to optimize away multiple calls of the function
+      within a single query.  In particular, it is safe to use an expression
+      containing such a function in an indexscan condition.  (Since an
+      indexscan will evaluate the comparison value only once, not once at
+      each row, it is not valid to use a <literal>VOLATILE</> function in
+      an indexscan condition.)
+     </para>
+    </listitem>
+    <listitem>
+     <para>
+      An <literal>IMMUTABLE</> function cannot modify the database and is
+      guaranteed to return the same results given the same arguments forever.
+      This category allows the optimizer to pre-evaluate the function when
+      a query calls it with constant arguments.  For example, a query like
+      <literal>SELECT ... WHERE x = 2 + 2</> can be simplified on sight to
+      <literal>SELECT ... WHERE x = 4</>, because the function underlying
+      the integer addition operator is marked <literal>IMMUTABLE</>.
+     </para>
+    </listitem>
+   </itemizedlist>
+   </para>
+
+   <para>
+    For best optimization results, you should label your functions with the
+    strictest volatility category that is valid for them.
+   </para>
+
+   <para>
+    Any function with side-effects <emphasis>must</> be labeled
+    <literal>VOLATILE</>, so that calls to it cannot be optimized away.
+    Even a function with no side-effects needs to be labeled
+    <literal>VOLATILE</> if its value can change within a single query;
+    some examples are <literal>random()</>, <literal>currval()</>,
+    <literal>timeofday()</>.
+   </para>
+
+   <para>
+    There is relatively little difference between <literal>STABLE</> and
+    <literal>IMMUTABLE</> categories when considering simple interactive
+    queries that are planned and immediately executed: it doesn't matter
+    a lot whether a function is executed once during planning or once during
+    query execution startup.  But there is a big difference if the plan is
+    saved and reused later.  Labeling a function <literal>IMMUTABLE</> when
+    it really isn't may allow it to be prematurely folded to a constant during
+    planning, resulting in a stale value being re-used during subsequent uses
+    of the plan.  This is a hazard when using prepared statements or when
+    using function languages that cache plans (such as
+    <application>PL/pgSQL</>).
+   </para>
+
+   <para>
+    Because of the snapshotting behavior of MVCC (see <xref linkend="mvcc">)
+    a function containing only <command>SELECT</> commands can safely be
+    marked <literal>STABLE</>, even if it selects from tables that might be
+    undergoing modifications by concurrent queries.
+    <productname>PostgreSQL</productname> will execute a <literal>STABLE</>
+    function using the snapshot established for the calling query, and so it
+    will see a fixed view of the database throughout that query.
+    Also note
+    that the <function>current_timestamp</> family of functions qualify
+    as stable, since their values do not change within a transaction.
+   </para>
+
+   <para>
+    The same snapshotting behavior is used for <command>SELECT</> commands
+    within <literal>IMMUTABLE</> functions.  It is generally unwise to select
+    from database tables within an <literal>IMMUTABLE</> function at all,
+    since the immutability will be broken if the table contents ever change.
+    However, <productname>PostgreSQL</productname> does not enforce that you
+    do not do that.
+   </para>
+
+   <para>
+    A common error is to label a function <literal>IMMUTABLE</> when its
+    results depend on a configuration parameter.  For example, a function
+    that manipulates timestamps might well have results that depend on the
+    <xref linkend="guc-timezone"> setting.  For safety, such functions should
+    be labeled <literal>STABLE</> instead.
+   </para>
+
+   <note>
+    <para>
+     Before <productname>PostgreSQL</productname> release 8.0, the requirement
+     that <literal>STABLE</> and <literal>IMMUTABLE</> functions cannot modify
+     the database was not enforced by the system.  Release 8.0 enforces it
+     by requiring SQL functions and procedural language functions of these
+     categories to contain no SQL commands other than <command>SELECT</>.
+    </para>
+   </note>
   </sect1>
 
 <!-- Keep this comment at the end of the file

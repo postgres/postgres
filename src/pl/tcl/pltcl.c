@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.91 2004/08/30 02:54:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.92 2004/09/13 20:09:39 tgl Exp $
  *
  **********************************************************************/
 
@@ -87,12 +87,16 @@ utf_e2u(unsigned char *src)
 					pfree(_pltcl_utf_dst); } while (0)
 #define UTF_U2E(x)	 (_pltcl_utf_dst=utf_u2e(_pltcl_utf_src=(x)))
 #define UTF_E2U(x)	 (_pltcl_utf_dst=utf_e2u(_pltcl_utf_src=(x)))
-#else							/* PLTCL_UTF */
+
+#else							/* !PLTCL_UTF */
+
 #define  UTF_BEGIN
 #define  UTF_END
 #define  UTF_U2E(x)  (x)
 #define  UTF_E2U(x)  (x)
+
 #endif   /* PLTCL_UTF */
+
 
 /**********************************************************************
  * The information we cache about loaded procedures
@@ -102,6 +106,7 @@ typedef struct pltcl_proc_desc
 	char	   *proname;
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
+	bool		fn_readonly;
 	bool		lanpltrusted;
 	FmgrInfo	result_in_func;
 	Oid			result_typioparam;
@@ -137,7 +142,10 @@ static Tcl_Interp *pltcl_safe_interp = NULL;
 static Tcl_HashTable *pltcl_proc_hash = NULL;
 static Tcl_HashTable *pltcl_norm_query_hash = NULL;
 static Tcl_HashTable *pltcl_safe_query_hash = NULL;
+
+/* these are saved and restored by pltcl_call_handler */
 static FunctionCallInfo pltcl_current_fcinfo = NULL;
+static pltcl_proc_desc *pltcl_current_prodesc = NULL;
 
 /*
  * When a callback from Tcl into PG incurs an error, we temporarily store
@@ -179,11 +187,11 @@ static int pltcl_argisnull(ClientData cdata, Tcl_Interp *interp,
 static int pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 				 int argc, CONST84 char *argv[]);
 
-static int pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
+static int pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
 			   int argc, CONST84 char *argv[]);
 static int pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[]);
-static int pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
+static int pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
 				int argc, CONST84 char *argv[]);
 static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
 				  int argc, CONST84 char *argv[]);
@@ -307,11 +315,11 @@ pltcl_init_interp(Tcl_Interp *interp)
 					  pltcl_returnnull, NULL, NULL);
 
 	Tcl_CreateCommand(interp, "spi_exec",
-					  pltcl_SPI_exec, NULL, NULL);
+					  pltcl_SPI_execute, NULL, NULL);
 	Tcl_CreateCommand(interp, "spi_prepare",
 					  pltcl_SPI_prepare, NULL, NULL);
 	Tcl_CreateCommand(interp, "spi_execp",
-					  pltcl_SPI_execp, NULL, NULL);
+					  pltcl_SPI_execute_plan, NULL, NULL);
 	Tcl_CreateCommand(interp, "spi_lastoid",
 					  pltcl_SPI_lastoid, NULL, NULL);
 }
@@ -334,8 +342,9 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	/************************************************************
 	 * Check if table pltcl_modules exists
 	 ************************************************************/
-	spi_rc = SPI_exec("select 1 from pg_catalog.pg_class "
-					  "where relname = 'pltcl_modules'", 1);
+	spi_rc = SPI_execute("select 1 from pg_catalog.pg_class "
+						 "where relname = 'pltcl_modules'",
+						 false, 1);
 	SPI_freetuptable(SPI_tuptable);
 	if (spi_rc != SPI_OK_SELECT)
 		elog(ERROR, "select from pg_class failed");
@@ -348,9 +357,10 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 	 ************************************************************/
 	Tcl_DStringInit(&unknown_src);
 
-	spi_rc = SPI_exec("select modseq, modsrc from pltcl_modules "
-					  "where modname = 'unknown' "
-					  "order by modseq", 0);
+	spi_rc = SPI_execute("select modseq, modsrc from pltcl_modules "
+						 "where modname = 'unknown' "
+						 "order by modseq",
+						 false, 0);
 	if (spi_rc != SPI_OK_SELECT)
 		elog(ERROR, "select from pltcl_modules failed");
 
@@ -405,30 +415,46 @@ pltcl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
 	FunctionCallInfo save_fcinfo;
+	pltcl_proc_desc *save_prodesc;
 
-	/************************************************************
+	/*
 	 * Initialize interpreters if first time through
-	 ************************************************************/
+	 */
 	pltcl_init_all();
 
-	/************************************************************
-	 * Determine if called as function or trigger and
-	 * call appropriate subhandler
-	 ************************************************************/
+	/*
+	 * Ensure that static pointers are saved/restored properly
+	 */
 	save_fcinfo = pltcl_current_fcinfo;
+	save_prodesc = pltcl_current_prodesc;
 
-	if (CALLED_AS_TRIGGER(fcinfo))
+	PG_TRY();
 	{
-		pltcl_current_fcinfo = NULL;
-		retval = PointerGetDatum(pltcl_trigger_handler(fcinfo));
+		/*
+		 * Determine if called as function or trigger and
+		 * call appropriate subhandler
+		 */
+		if (CALLED_AS_TRIGGER(fcinfo))
+		{
+			pltcl_current_fcinfo = NULL;
+			retval = PointerGetDatum(pltcl_trigger_handler(fcinfo));
+		}
+		else
+		{
+			pltcl_current_fcinfo = fcinfo;
+			retval = pltcl_func_handler(fcinfo);
+		}
 	}
-	else
+	PG_CATCH();
 	{
-		pltcl_current_fcinfo = fcinfo;
-		retval = pltcl_func_handler(fcinfo);
+		pltcl_current_fcinfo = save_fcinfo;
+		pltcl_current_prodesc = save_prodesc;
+		PG_RE_THROW();
 	}
+	PG_END_TRY();
 
 	pltcl_current_fcinfo = save_fcinfo;
+	pltcl_current_prodesc = save_prodesc;
 
 	return retval;
 }
@@ -466,6 +492,8 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid, InvalidOid);
+
+	pltcl_current_prodesc = prodesc;
 
 	if (prodesc->lanpltrusted)
 		interp = pltcl_safe_interp;
@@ -642,6 +670,8 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 	/* Find or compile the function */
 	prodesc = compile_pltcl_function(fcinfo->flinfo->fn_oid,
 								RelationGetRelid(trigdata->tg_relation));
+
+	pltcl_current_prodesc = prodesc;
 
 	if (prodesc->lanpltrusted)
 		interp = pltcl_safe_interp;
@@ -1030,6 +1060,10 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 		prodesc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
 
+		/* Remember if function is STABLE/IMMUTABLE */
+		prodesc->fn_readonly =
+			(procStruct->provolatile != PROVOLATILE_VOLATILE);
+
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
 		 ************************************************************/
@@ -1336,7 +1370,7 @@ pltcl_elog(ClientData cdata, Tcl_Interp *interp,
 
 /**********************************************************************
  * pltcl_quote()	- quote literal strings that are to
- *			  be used in SPI_exec query strings
+ *			  be used in SPI_execute query strings
  **********************************************************************/
 static int
 pltcl_quote(ClientData cdata, Tcl_Interp *interp,
@@ -1484,12 +1518,12 @@ pltcl_returnnull(ClientData cdata, Tcl_Interp *interp,
 
 
 /**********************************************************************
- * pltcl_SPI_exec()		- The builtin SPI_exec command
+ * pltcl_SPI_execute()		- The builtin SPI_execute command
  *				  for the Tcl interpreter
  **********************************************************************/
 static int
-pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
-			   int argc, CONST84 char *argv[])
+pltcl_SPI_execute(ClientData cdata, Tcl_Interp *interp,
+				  int argc, CONST84 char *argv[])
 {
 	volatile int my_rc;
 	int			spi_rc;
@@ -1570,7 +1604,8 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	PG_TRY();
 	{
 		UTF_BEGIN;
-		spi_rc = SPI_exec(UTF_U2E(argv[query_idx]), count);
+		spi_rc = SPI_execute(UTF_U2E(argv[query_idx]),
+							 pltcl_current_prodesc->fn_readonly, count);
 		UTF_END;
 	}
 	PG_CATCH();
@@ -1603,7 +1638,7 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 			break;
 
 		default:
-			Tcl_AppendResult(interp, "pltcl: SPI_exec failed: ",
+			Tcl_AppendResult(interp, "pltcl: SPI_execute failed: ",
 							 SPI_result_code_string(spi_rc), NULL);
 			SPI_freetuptable(SPI_tuptable);
 			return TCL_ERROR;
@@ -1840,11 +1875,11 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 
 
 /**********************************************************************
- * pltcl_SPI_execp()		- Execute a prepared plan
+ * pltcl_SPI_execute_plan()		- Execute a prepared plan
  **********************************************************************/
 static int
-pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
-				int argc, CONST84 char *argv[])
+pltcl_SPI_execute_plan(ClientData cdata, Tcl_Interp *interp,
+					   int argc, CONST84 char *argv[])
 {
 	volatile int my_rc;
 	int			spi_rc;
@@ -1992,7 +2027,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		}
 
 		/************************************************************
-		 * Setup the value array for the SPI_execp() using
+		 * Setup the value array for SPI_execute_plan() using
 		 * the type specific input functions
 		 ************************************************************/
 		oldcontext = CurrentMemoryContext;
@@ -2046,7 +2081,10 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
-	spi_rc = SPI_execp(qdesc->plan, argvalues, nulls, count);
+	{
+		spi_rc = SPI_execute_plan(qdesc->plan, argvalues, nulls,
+								  pltcl_current_prodesc->fn_readonly, count);
+	}
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldcontext);
@@ -2058,7 +2096,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	PG_END_TRY();
 
 	/************************************************************
-	 * Check the return code from SPI_execp()
+	 * Check the return code from SPI_execute_plan()
 	 ************************************************************/
 	switch (spi_rc)
 	{
@@ -2080,7 +2118,7 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 			break;
 
 		default:
-			Tcl_AppendResult(interp, "pltcl: SPI_execp failed: ",
+			Tcl_AppendResult(interp, "pltcl: SPI_execute_plan failed: ",
 							 SPI_result_code_string(spi_rc), NULL);
 			SPI_freetuptable(SPI_tuptable);
 			return TCL_ERROR;

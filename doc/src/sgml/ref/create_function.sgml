@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.58 2004/07/11 23:23:43 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/create_function.sgml,v 1.59 2004/09/13 20:05:38 tgl Exp $
 -->
 
 <refentry id="SQL-CREATEFUNCTION">
@@ -172,7 +172,7 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        These attributes inform the system whether it is safe to
        replace multiple evaluations of the function with a single
        evaluation, for run-time optimization.  At most one choice
-       should be specified.  If none of these appear,
+       may be specified.  If none of these appear,
        <literal>VOLATILE</literal> is the default assumption.
       </para>
 
@@ -205,6 +205,10 @@ CREATE [ OR REPLACE ] FUNCTION <replaceable class="parameter">name</replaceable>
        must be classified volatile, even if its result is quite predictable,
        to prevent calls from being optimized away; an example is
        <literal>setval()</>.
+      </para>
+
+      <para>
+       For additional details see <xref linkend="xfunc-volatility">.
       </para>
      </listitem>
     </varlistentry>

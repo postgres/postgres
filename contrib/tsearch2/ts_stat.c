@@ -446,7 +446,7 @@ ts_stat_sql(text *txt, text *ws)
 		/* internal error */
 		elog(ERROR, "SPI_prepare('%s') returns NULL", query);
 
-	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL)) == NULL)
+	if ((portal = SPI_cursor_open(NULL, plan, NULL, NULL, false)) == NULL)
 		/* internal error */
 		elog(ERROR, "SPI_cursor_open('%s') returns NULL", query);
 

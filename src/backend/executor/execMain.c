@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.237 2004/09/11 18:28:34 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execMain.c,v 1.238 2004/09/13 20:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,15 +106,6 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * field of the QueryDesc is filled in to describe the tuples that will be
  * returned, and the internal fields (estate and planstate) are set up.
  *
- * If useCurrentSnapshot is true, run the query with the latest available
- * snapshot, instead of the normal QuerySnapshot.  Also, if it's an update
- * or delete query, check that the rows to be updated or deleted would be
- * visible to the normal QuerySnapshot.  (This is a special-case behavior
- * needed for referential integrity updates in serializable transactions.
- * We must check all currently-committed rows, but we want to throw a
- * can't-serialize error if any rows that would need updates would not be
- * visible under the normal serializable snapshot.)
- *
  * If explainOnly is true, we are not actually intending to run the plan,
  * only to set up for EXPLAIN; so skip unwanted side-effects.
  *
@@ -123,7 +114,7 @@ static void EvalPlanQualStop(evalPlanQual *epq);
  * ----------------------------------------------------------------
  */
 void
-ExecutorStart(QueryDesc *queryDesc, bool useCurrentSnapshot, bool explainOnly)
+ExecutorStart(QueryDesc *queryDesc, bool explainOnly)
 {
 	EState	   *estate;
 	MemoryContext oldcontext;
@@ -156,28 +147,12 @@ ExecutorStart(QueryDesc *queryDesc, bool useCurrentSnapshot, bool explainOnly)
 		estate->es_param_exec_vals = (ParamExecData *)
 			palloc0(queryDesc->plantree->nParamExec * sizeof(ParamExecData));
 
-	estate->es_instrument = queryDesc->doInstrument;
-
 	/*
-	 * Make our own private copy of the current query snapshot data.
-	 *
-	 * This "freezes" our idea of which tuples are good and which are not for
-	 * the life of this query, even if it outlives the current command and
-	 * current snapshot.
+	 * Copy other important information into the EState
 	 */
-	if (useCurrentSnapshot)
-	{
-		/* RI update/delete query --- must use an up-to-date snapshot */
-		estate->es_snapshot = CopyCurrentSnapshot();
-		/* crosscheck updates/deletes against transaction snapshot */
-		estate->es_crosscheck_snapshot = CopyQuerySnapshot();
-	}
-	else
-	{
-		/* normal query --- use query snapshot, no crosscheck */
-		estate->es_snapshot = CopyQuerySnapshot();
-		estate->es_crosscheck_snapshot = InvalidSnapshot;
-	}
+	estate->es_snapshot = queryDesc->snapshot;
+	estate->es_crosscheck_snapshot = queryDesc->crosscheck_snapshot;
+	estate->es_instrument = queryDesc->doInstrument;
 
 	/*
 	 * Initialize the plan state tree
@@ -1454,6 +1429,11 @@ ExecDelete(TupleTableSlot *slot,
 
 	/*
 	 * delete the tuple
+	 *
+	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
+	 * the row to be deleted is visible to that snapshot, and throw a can't-
+	 * serialize error if not.  This is a special-case behavior needed for
+	 * referential integrity updates in serializable transactions.
 	 */
 ldelete:;
 	result = heap_delete(resultRelationDesc, tupleid,
@@ -1591,6 +1571,11 @@ lreplace:;
 
 	/*
 	 * replace the heap tuple
+	 *
+	 * Note: if es_crosscheck_snapshot isn't InvalidSnapshot, we check that
+	 * the row to be updated is visible to that snapshot, and throw a can't-
+	 * serialize error if not.  This is a special-case behavior needed for
+	 * referential integrity updates in serializable transactions.
 	 */
 	result = heap_update(resultRelationDesc, tupleid, tuple,
 						 &ctid,

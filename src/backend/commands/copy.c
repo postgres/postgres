@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.231 2004/09/10 18:39:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/copy.c,v 1.232 2004/09/13 20:06:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1182,7 +1182,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	Oid		   *typioparams;
 	bool	   *isvarlena;
 	char	   *string;
-	Snapshot	mySnapshot;
 	ListCell   *cur;
 	MemoryContext oldcontext;
 	MemoryContext mycontext;
@@ -1260,9 +1259,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 									strlen(null_print));
 	}
 
-	mySnapshot = CopyQuerySnapshot();
-
-	scandesc = heap_beginscan(rel, mySnapshot, 0, NULL);
+	scandesc = heap_beginscan(rel, ActiveSnapshot, 0, NULL);
 
 	while ((tuple = heap_getnext(scandesc, ForwardScanDirection)) != NULL)
 	{

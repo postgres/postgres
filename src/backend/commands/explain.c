@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.125 2004/09/10 18:39:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/explain.c,v 1.126 2004/09/13 20:06:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,7 +180,9 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 	plan = planner(query, isCursor, cursorOptions, NULL);
 
 	/* Create a QueryDesc requesting no output */
-	queryDesc = CreateQueryDesc(query, plan, None_Receiver, NULL,
+	queryDesc = CreateQueryDesc(query, plan,
+								ActiveSnapshot, InvalidSnapshot,
+								None_Receiver, NULL,
 								stmt->analyze);
 
 	ExplainOnePlan(queryDesc, stmt, tstate);
@@ -212,7 +214,7 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 		AfterTriggerBeginQuery();
 
 	/* call ExecutorStart to prepare the plan for execution */
-	ExecutorStart(queryDesc, false, !stmt->analyze);
+	ExecutorStart(queryDesc, !stmt->analyze);
 
 	/* Execute the plan for statistics if asked for */
 	if (stmt->analyze)
@@ -272,7 +274,9 @@ ExplainOnePlan(QueryDesc *queryDesc, ExplainStmt *stmt,
 
 	FreeQueryDesc(queryDesc);
 
-	CommandCounterIncrement();
+	/* We need a CCI just in case query expanded to multiple plans */
+	if (stmt->analyze)
+		CommandCounterIncrement();
 
 	totaltime += elapsed_time(&starttime);
 

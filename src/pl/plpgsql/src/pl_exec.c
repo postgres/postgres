@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.118 2004/08/30 02:54:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.119 2004/09/13 20:09:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -897,6 +897,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		 * sub-transaction
 		 */
 		MemoryContext oldcontext = CurrentMemoryContext;
+		ResourceOwner oldowner = CurrentResourceOwner;
 		volatile bool caught = false;
 		int			xrc;
 
@@ -907,12 +908,15 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 		BeginInternalSubTransaction(NULL);
 		/* Want to run statements inside function's memory context */
 		MemoryContextSwitchTo(oldcontext);
+
 		if ((xrc = SPI_connect()) != SPI_OK_CONNECT)
 			elog(ERROR, "SPI_connect failed: %s",
 				 SPI_result_code_string(xrc));
 
 		PG_TRY();
-		rc = exec_stmts(estate, block->body);
+		{
+			rc = exec_stmts(estate, block->body);
+		}
 		PG_CATCH();
 		{
 			ErrorData  *edata;
@@ -927,6 +931,7 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			/* Abort the inner transaction (and inner SPI connection) */
 			RollbackAndReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
 
 			SPI_pop();
 
@@ -958,8 +963,11 @@ exec_stmt_block(PLpgSQL_execstate *estate, PLpgSQL_stmt_block *block)
 			if ((xrc = SPI_finish()) != SPI_OK_FINISH)
 				elog(ERROR, "SPI_finish failed: %s",
 					 SPI_result_code_string(xrc));
+
 			ReleaseCurrentSubTransaction();
 			MemoryContextSwitchTo(oldcontext);
+			CurrentResourceOwner = oldowner;
+
 			SPI_pop();
 		}
 	}
@@ -1984,6 +1992,8 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 	estate->retistuple = func->fn_retistuple;
 	estate->retisset = func->fn_retset;
 
+	estate->readonly_func = func->fn_readonly;
+
 	estate->rettupdesc = NULL;
 	estate->exitlabel = NULL;
 
@@ -2019,7 +2029,7 @@ plpgsql_estate_setup(PLpgSQL_execstate *estate,
 static void
 exec_eval_cleanup(PLpgSQL_execstate *estate)
 {
-	/* Clear result of a full SPI_exec */
+	/* Clear result of a full SPI_execute */
 	if (estate->eval_tuptable != NULL)
 		SPI_freetuptable(estate->eval_tuptable);
 	estate->eval_tuptable = NULL;
@@ -2120,7 +2130,7 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 		exec_prepare_plan(estate, expr);
 
 	/*
-	 * Now build up the values and nulls arguments for SPI_execp()
+	 * Now build up the values and nulls arguments for SPI_execute_plan()
 	 */
 	values = (Datum *) palloc(expr->nparams * sizeof(Datum));
 	nulls = (char *) palloc(expr->nparams * sizeof(char));
@@ -2142,7 +2152,8 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 	/*
 	 * Execute the plan
 	 */
-	rc = SPI_execp(expr->plan, values, nulls, 0);
+	rc = SPI_execute_plan(expr->plan, values, nulls,
+						  estate->readonly_func, 0);
 	switch (rc)
 	{
 		case SPI_OK_UTILITY:
@@ -2168,12 +2179,12 @@ exec_stmt_execsql(PLpgSQL_execstate *estate,
 					 errhint("If you want to discard the results, use PERFORM instead.")));
 
 		default:
-			elog(ERROR, "SPI_execp failed executing query \"%s\": %s",
+			elog(ERROR, "SPI_execute_plan failed executing query \"%s\": %s",
 				 expr->query, SPI_result_code_string(rc));
 	}
 
 	/*
-	 * Release any result tuples from SPI_execp (probably shouldn't be
+	 * Release any result tuples from SPI_execute_plan (probably shouldn't be
 	 * any)
 	 */
 	SPI_freetuptable(SPI_tuptable);
@@ -2220,11 +2231,11 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 	exec_eval_cleanup(estate);
 
 	/*
-	 * Call SPI_exec() without preparing a saved plan. The returncode can
+	 * Call SPI_execute() without preparing a saved plan. The returncode can
 	 * be any standard OK.	Note that while a SELECT is allowed, its
 	 * results will be discarded.
 	 */
-	exec_res = SPI_exec(querystr, 0);
+	exec_res = SPI_execute(querystr, estate->readonly_func, 0);
 	switch (exec_res)
 	{
 		case SPI_OK_SELECT:
@@ -2249,7 +2260,7 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 			 * behavior is not consistent with SELECT INTO in a normal
 			 * plpgsql context. (We need to reimplement EXECUTE to parse
 			 * the string as a plpgsql command, not just feed it to
-			 * SPI_exec.) However, CREATE AS should be allowed ... and
+			 * SPI_execute.) However, CREATE AS should be allowed ... and
 			 * since it produces the same parsetree as SELECT INTO,
 			 * there's no way to tell the difference except to look at the
 			 * source text.  Wotta kluge!
@@ -2284,12 +2295,12 @@ exec_stmt_dynexecute(PLpgSQL_execstate *estate,
 					 errhint("Use a BEGIN block with an EXCEPTION clause instead.")));
 
 		default:
-			elog(ERROR, "SPI_exec failed executing query \"%s\": %s",
+			elog(ERROR, "SPI_execute failed executing query \"%s\": %s",
 				 querystr, SPI_result_code_string(exec_res));
 			break;
 	}
 
-	/* Release any result from SPI_exec, as well as the querystring */
+	/* Release any result from SPI_execute, as well as the querystring */
 	SPI_freetuptable(SPI_tuptable);
 	pfree(querystr);
 
@@ -2357,7 +2368,8 @@ exec_stmt_dynfors(PLpgSQL_execstate *estate, PLpgSQL_stmt_dynfors *stmt)
 	if (plan == NULL)
 		elog(ERROR, "SPI_prepare failed for \"%s\": %s",
 			 querystr, SPI_result_code_string(SPI_result));
-	portal = SPI_cursor_open(NULL, plan, NULL, NULL);
+	portal = SPI_cursor_open(NULL, plan, NULL, NULL,
+							 estate->readonly_func);
 	if (portal == NULL)
 		elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 			 querystr, SPI_result_code_string(SPI_result));
@@ -2549,7 +2561,8 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 		if (curplan == NULL)
 			elog(ERROR, "SPI_prepare failed for \"%s\": %s",
 				 querystr, SPI_result_code_string(SPI_result));
-		portal = SPI_cursor_open(curname, curplan, NULL, NULL);
+		portal = SPI_cursor_open(curname, curplan, NULL, NULL,
+								 estate->readonly_func);
 		if (portal == NULL)
 			elog(ERROR, "could not open cursor for query \"%s\": %s",
 				 querystr, SPI_result_code_string(SPI_result));
@@ -2643,7 +2656,8 @@ exec_stmt_open(PLpgSQL_execstate *estate, PLpgSQL_stmt_open *stmt)
 	 * Open the cursor
 	 * ----------
 	 */
-	portal = SPI_cursor_open(curname, query->plan, values, nulls);
+	portal = SPI_cursor_open(curname, query->plan, values, nulls,
+							 estate->readonly_func);
 	if (portal == NULL)
 		elog(ERROR, "could not open cursor: %s",
 			 SPI_result_code_string(SPI_result));
@@ -3470,7 +3484,7 @@ exec_run_select(PLpgSQL_execstate *estate,
 		exec_prepare_plan(estate, expr);
 
 	/*
-	 * Now build up the values and nulls arguments for SPI_execp()
+	 * Now build up the values and nulls arguments for SPI_execute_plan()
 	 */
 	values = (Datum *) palloc(expr->nparams * sizeof(Datum));
 	nulls = (char *) palloc(expr->nparams * sizeof(char));
@@ -3494,7 +3508,8 @@ exec_run_select(PLpgSQL_execstate *estate,
 	 */
 	if (portalP != NULL)
 	{
-		*portalP = SPI_cursor_open(NULL, expr->plan, values, nulls);
+		*portalP = SPI_cursor_open(NULL, expr->plan, values, nulls,
+								   estate->readonly_func);
 		if (*portalP == NULL)
 			elog(ERROR, "could not open implicit cursor for query \"%s\": %s",
 				 expr->query, SPI_result_code_string(SPI_result));
@@ -3506,7 +3521,8 @@ exec_run_select(PLpgSQL_execstate *estate,
 	/*
 	 * Execute the query
 	 */
-	rc = SPI_execp(expr->plan, values, nulls, maxtuples);
+	rc = SPI_execute_plan(expr->plan, values, nulls,
+						  estate->readonly_func, maxtuples);
 	if (rc != SPI_OK_SELECT)
 		ereport(ERROR,
 				(errcode(ERRCODE_SYNTAX_ERROR),

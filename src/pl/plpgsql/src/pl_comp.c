@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.81 2004/08/30 02:54:42 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.82 2004/09/13 20:09:20 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -577,6 +577,9 @@ do_compile(FunctionCallInfo fcinfo,
 			elog(ERROR, "unrecognized function typecode: %u", functype);
 			break;
 	}
+
+	/* Remember if function is STABLE/IMMUTABLE */
+	function->fn_readonly = (procStruct->provolatile != PROVOLATILE_VOLATILE);
 
 	/*
 	 * Create the magic FOUND variable.

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.112 2004/08/29 05:06:56 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/executor.h,v 1.113 2004/09/13 20:07:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -95,8 +95,7 @@ extern HeapTuple ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot);
 /*
  * prototypes from functions in execMain.c
  */
-extern void ExecutorStart(QueryDesc *queryDesc, bool useCurrentSnapshot,
-			  bool explainOnly);
+extern void ExecutorStart(QueryDesc *queryDesc, bool explainOnly);
 extern TupleTableSlot *ExecutorRun(QueryDesc *queryDesc,
 			ScanDirection direction, long count);
 extern void ExecutorEnd(QueryDesc *queryDesc);

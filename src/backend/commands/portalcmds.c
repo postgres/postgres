@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.34 2004/09/10 18:39:56 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/portalcmds.c,v 1.35 2004/09/13 20:06:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -135,7 +135,7 @@ PerformCursorOpen(DeclareCursorStmt *stmt, ParamListInfo params)
 	/*
 	 * Start execution, inserting parameters if any.
 	 */
-	PortalStart(portal, params);
+	PortalStart(portal, params, ActiveSnapshot);
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 

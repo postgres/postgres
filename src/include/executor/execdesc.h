@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.28 2004/08/29 04:13:06 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/executor/execdesc.h,v 1.29 2004/09/13 20:07:52 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,6 +33,8 @@ typedef struct QueryDesc
 	CmdType		operation;		/* CMD_SELECT, CMD_UPDATE, etc. */
 	Query	   *parsetree;		/* rewritten parsetree */
 	Plan	   *plantree;		/* planner's output */
+	Snapshot	snapshot;		/* snapshot to use for query */
+	Snapshot	crosscheck_snapshot;	/* crosscheck for RI update/delete */
 	DestReceiver *dest;			/* the destination for tuple output */
 	ParamListInfo params;		/* param values being passed in */
 	bool		doInstrument;	/* TRUE requests runtime instrumentation */
@@ -45,6 +47,8 @@ typedef struct QueryDesc
 
 /* in pquery.c */
 extern QueryDesc *CreateQueryDesc(Query *parsetree, Plan *plantree,
+				Snapshot snapshot,
+				Snapshot crosscheck_snapshot,
 				DestReceiver *dest,
 				ParamListInfo params,
 				bool doInstrument);

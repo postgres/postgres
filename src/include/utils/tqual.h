@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.51 2004/09/11 18:28:34 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/tqual.h,v 1.52 2004/09/13 20:08:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -54,8 +54,10 @@ typedef SnapshotData *Snapshot;
 #define SnapshotToast				((Snapshot) 0x4)
 
 extern DLLIMPORT Snapshot SnapshotDirty;
-extern DLLIMPORT Snapshot QuerySnapshot;
+
 extern DLLIMPORT Snapshot SerializableSnapshot;
+extern DLLIMPORT Snapshot LatestSnapshot;
+extern DLLIMPORT Snapshot ActiveSnapshot;
 
 extern TransactionId RecentXmin;
 extern TransactionId RecentGlobalXmin;
@@ -121,10 +123,13 @@ extern int HeapTupleSatisfiesUpdate(HeapTupleHeader tuple,
 extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 						 TransactionId OldestXmin);
 
-extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
-extern void SetQuerySnapshot(void);
-extern Snapshot CopyQuerySnapshot(void);
-extern Snapshot CopyCurrentSnapshot(void);
+extern Snapshot GetTransactionSnapshot(void);
+extern Snapshot GetLatestSnapshot(void);
+extern Snapshot CopySnapshot(Snapshot snapshot);
+extern void FreeSnapshot(Snapshot snapshot);
 extern void FreeXactSnapshot(void);
+
+/* in sinval.c; declared here to avoid including tqual.h in sinval.h: */
+extern Snapshot GetSnapshotData(Snapshot snapshot, bool serializable);
 
 #endif   /* TQUAL_H */

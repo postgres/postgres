@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.129 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/cluster.c,v 1.130 2004/09/13 20:06:23 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -202,8 +202,8 @@ cluster(ClusterStmt *stmt)
 
 			/* Start a new transaction for each relation. */
 			StartTransactionCommand();
-			SetQuerySnapshot(); /* might be needed for functions in
-								 * indexes */
+			/* functions in indexes may want a snapshot set */
+			ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 			cluster_rel(rvtc, true);
 			CommitTransactionCommand();
 		}

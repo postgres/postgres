@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.295 2004/09/10 18:39:54 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.296 2004/09/13 20:05:18 tgl Exp $
 -->
 
 <appendix id="release">
@@ -334,6 +334,26 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.295 2004/09/10 18:39:54 tgl Exp
        Also changed behavior with respect to whitespace surrounding array
        elements: trailing whitespace is now ignored, for symmetry with leading
        whitespace (which has always been ignored).
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       In <literal>READ COMMITTED</> serialization mode, volatile functions
+       now see the results of concurrent transactions committed up to the
+       beginning of each statement within the function, rather than up to the
+       beginning of the interactive command that called the function.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Functions declared <literal>STABLE</> or <literal>IMMUTABLE</> always
+       use the snapshot of the calling query, and therefore do not see the
+       effects of actions taken after the calling query starts, whether in
+       their own transaction or other transactions.  Such a function must be
+       read-only, too, meaning that it cannot use any SQL commands other than
+       <command>SELECT</>.
       </para>
      </listitem>
 
@@ -1433,6 +1453,26 @@ $PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.295 2004/09/10 18:39:54 tgl Exp
   <sect3>
    <title>Server-Side Language Changes</title>
    <itemizedlist>
+
+    <listitem>
+     <para>
+      In <literal>READ COMMITTED</> serialization mode, volatile functions
+      now see the results of concurrent transactions committed up to the
+      beginning of each statement within the function, rather than up to the
+      beginning of the interactive command that called the function.
+     </para>
+    </listitem>
+
+    <listitem>
+     <para>
+      Functions declared <literal>STABLE</> or <literal>IMMUTABLE</> always
+      use the snapshot of the calling query, and therefore do not see the
+      effects of actions taken after the calling query starts, whether in
+      their own transaction or other transactions.  Such a function must be
+      read-only, too, meaning that it cannot use any SQL commands other than
+      <command>SELECT</>.
+     </para>
+    </listitem>
 
     <listitem>
      <para>

@@ -231,6 +231,49 @@ BEGIN;
 	FETCH 10 FROM c;
 COMMIT;
 
+--
+-- Check that "stable" functions are really stable.  They should not be
+-- able to see the partial results of the calling query.  (Ideally we would
+-- also check that they don't see commits of concurrent transactions, but
+-- that's a mite hard to do within the limitations of pg_regress.)
+--
+select * from xacttest;
+
+create or replace function max_xacttest() returns smallint language sql as
+'select max(a) from xacttest' stable;
+
+begin;
+update xacttest set a = max_xacttest() + 10 where a > 0;
+select * from xacttest;
+rollback;
+
+-- But a volatile function can see the partial results of the calling query
+create or replace function max_xacttest() returns smallint language sql as
+'select max(a) from xacttest' volatile;
+
+begin;
+update xacttest set a = max_xacttest() + 10 where a > 0;
+select * from xacttest;
+rollback;
+
+-- Now the same test with plpgsql (since it depends on SPI which is different)
+create or replace function max_xacttest() returns smallint language plpgsql as
+'begin return max(a) from xacttest; end' stable;
+
+begin;
+update xacttest set a = max_xacttest() + 10 where a > 0;
+select * from xacttest;
+rollback;
+
+create or replace function max_xacttest() returns smallint language plpgsql as
+'begin return max(a) from xacttest; end' volatile;
+
+begin;
+update xacttest set a = max_xacttest() + 10 where a > 0;
+select * from xacttest;
+rollback;
+
+
 -- test case for problems with dropping an open relation during abort
 BEGIN;
 	savepoint x;

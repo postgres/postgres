@@ -16,7 +16,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.77 2004/08/29 05:06:52 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/time/tqual.c,v 1.78 2004/09/13 20:07:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,18 +28,24 @@
 #include "utils/tqual.h"
 
 /*
- * The SnapshotData structs are static to simplify memory allocation
+ * These SnapshotData structs are static to simplify memory allocation
  * (see the hack in GetSnapshotData to avoid repeated malloc/free).
  */
-static SnapshotData QuerySnapshotData;
-static SnapshotData SerializableSnapshotData;
-static SnapshotData CurrentSnapshotData;
 static SnapshotData SnapshotDirtyData;
+static SnapshotData SerializableSnapshotData;
+static SnapshotData LatestSnapshotData;
 
 /* Externally visible pointers to valid snapshots: */
-Snapshot	QuerySnapshot = NULL;
-Snapshot	SerializableSnapshot = NULL;
 Snapshot	SnapshotDirty = &SnapshotDirtyData;
+Snapshot	SerializableSnapshot = NULL;
+Snapshot	LatestSnapshot = NULL;
+
+/*
+ * This pointer is not maintained by this module, but it's convenient
+ * to declare it here anyway.  Callers typically assign a copy of
+ * GetTransactionSnapshot's result to ActiveSnapshot.
+ */
+Snapshot	ActiveSnapshot = NULL;
 
 /* These are updated by GetSnapshotData: */
 TransactionId RecentXmin = InvalidTransactionId;
@@ -1028,101 +1034,94 @@ HeapTupleSatisfiesVacuum(HeapTupleHeader tuple, TransactionId OldestXmin)
 
 
 /*
- * SetQuerySnapshot
- *		Initialize query snapshot for a new query
+ * GetTransactionSnapshot
+ *		Get the appropriate snapshot for a new query in a transaction.
  *
  * The SerializableSnapshot is the first one taken in a transaction.
  * In serializable mode we just use that one throughout the transaction.
- * In read-committed mode, we take a new snapshot at the start of each query.
+ * In read-committed mode, we take a new snapshot each time we are called.
+ *
+ * Note that the return value points at static storage that will be modified
+ * by future calls and by CommandCounterIncrement().  Callers should copy
+ * the result with CopySnapshot() if it is to be used very long.
  */
-void
-SetQuerySnapshot(void)
+Snapshot
+GetTransactionSnapshot(void)
 {
-	/* 1st call in xaction? */
+	/* First call in transaction? */
 	if (SerializableSnapshot == NULL)
 	{
 		SerializableSnapshot = GetSnapshotData(&SerializableSnapshotData, true);
-		QuerySnapshot = SerializableSnapshot;
-		Assert(QuerySnapshot != NULL);
-		return;
+		return SerializableSnapshot;
 	}
 
 	if (IsXactIsoLevelSerializable)
-		QuerySnapshot = SerializableSnapshot;
-	else
-		QuerySnapshot = GetSnapshotData(&QuerySnapshotData, false);
+		return SerializableSnapshot;
 
-	Assert(QuerySnapshot != NULL);
+	LatestSnapshot = GetSnapshotData(&LatestSnapshotData, false);
+
+	return LatestSnapshot;
 }
 
 /*
- * CopyQuerySnapshot
- *		Copy the current query snapshot.
- *
- * Copying the snapshot is done so that a query is guaranteed to use a
- * consistent snapshot for its entire execution life, even if the command
- * counter is incremented or SetQuerySnapshot() is called while it runs
- * (as could easily happen, due to triggers etc. executing queries).
- *
- * The copy is palloc'd in the current memory context.
+ * GetLatestSnapshot
+ *		Get a snapshot that is up-to-date as of the current instant,
+ *		even if we are executing in SERIALIZABLE mode.
  */
 Snapshot
-CopyQuerySnapshot(void)
+GetLatestSnapshot(void)
 {
-	Snapshot	snapshot;
-
-	if (QuerySnapshot == NULL)	/* should be set beforehand */
+	/* Should not be first call in transaction */
+	if (SerializableSnapshot == NULL)
 		elog(ERROR, "no snapshot has been set");
 
-	snapshot = (Snapshot) palloc(sizeof(SnapshotData));
-	memcpy(snapshot, QuerySnapshot, sizeof(SnapshotData));
-	if (snapshot->xcnt > 0)
-	{
-		snapshot->xip = (TransactionId *)
-			palloc(snapshot->xcnt * sizeof(TransactionId));
-		memcpy(snapshot->xip, QuerySnapshot->xip,
-			   snapshot->xcnt * sizeof(TransactionId));
-	}
-	else
-		snapshot->xip = NULL;
+	LatestSnapshot = GetSnapshotData(&LatestSnapshotData, false);
 
-	return snapshot;
+	return LatestSnapshot;
 }
 
 /*
- * CopyCurrentSnapshot
- *		Make a snapshot that is up-to-date as of the current instant,
- *		and return a copy.
+ * CopySnapshot
+ *		Copy the given snapshot.
  *
  * The copy is palloc'd in the current memory context.
+ *
+ * Note that this will not work on "special" snapshots.
  */
 Snapshot
-CopyCurrentSnapshot(void)
+CopySnapshot(Snapshot snapshot)
 {
-	Snapshot	currentSnapshot;
-	Snapshot	snapshot;
+	Snapshot	newsnap;
 
-	if (QuerySnapshot == NULL)	/* should not be first call in xact */
-		elog(ERROR, "no snapshot has been set");
-
-	/* Update the static struct */
-	currentSnapshot = GetSnapshotData(&CurrentSnapshotData, false);
-	currentSnapshot->curcid = GetCurrentCommandId();
-
-	/* Make a copy */
-	snapshot = (Snapshot) palloc(sizeof(SnapshotData));
-	memcpy(snapshot, currentSnapshot, sizeof(SnapshotData));
+	/* We allocate any XID array needed in the same palloc block. */
+	newsnap = (Snapshot) palloc(sizeof(SnapshotData) +
+								snapshot->xcnt * sizeof(TransactionId));
+	memcpy(newsnap, snapshot, sizeof(SnapshotData));
 	if (snapshot->xcnt > 0)
 	{
-		snapshot->xip = (TransactionId *)
-			palloc(snapshot->xcnt * sizeof(TransactionId));
-		memcpy(snapshot->xip, currentSnapshot->xip,
+		newsnap->xip = (TransactionId *) (newsnap + 1);
+		memcpy(newsnap->xip, snapshot->xip,
 			   snapshot->xcnt * sizeof(TransactionId));
 	}
 	else
-		snapshot->xip = NULL;
+		newsnap->xip = NULL;
 
-	return snapshot;
+	return newsnap;
+}
+
+/*
+ * FreeSnapshot
+ *		Free a snapshot previously copied with CopySnapshot.
+ *
+ * This is currently identical to pfree, but is provided for cleanliness.
+ *
+ * Do *not* apply this to the results of GetTransactionSnapshot or
+ * GetLatestSnapshot.
+ */
+void
+FreeSnapshot(Snapshot snapshot)
+{
+	pfree(snapshot);
 }
 
 /*
@@ -1133,10 +1132,11 @@ void
 FreeXactSnapshot(void)
 {
 	/*
-	 * We do not free the xip arrays for the snapshot structs; they will
-	 * be reused soon.	So this is now just a state change to prevent
+	 * We do not free the xip arrays for the static snapshot structs; they
+	 * will be reused soon. So this is now just a state change to prevent
 	 * outside callers from accessing the snapshots.
 	 */
-	QuerySnapshot = NULL;
 	SerializableSnapshot = NULL;
+	LatestSnapshot = NULL;
+	ActiveSnapshot = NULL;		/* just for cleanliness */
 }

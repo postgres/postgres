@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.126 2004/09/10 18:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/spi.c,v 1.127 2004/09/13 20:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,13 +34,14 @@ static int	_SPI_stack_depth = 0;		/* allocated size of _SPI_stack */
 static int	_SPI_connected = -1;
 static int	_SPI_curid = -1;
 
-static int	_SPI_execute(const char *src, int tcount, _SPI_plan *plan);
-static int _SPI_pquery(QueryDesc *queryDesc, bool runit,
-			bool useCurrentSnapshot, int tcount);
+static void _SPI_prepare_plan(const char *src, _SPI_plan *plan);
 
 static int _SPI_execute_plan(_SPI_plan *plan,
-				  Datum *Values, const char *Nulls,
-				  bool useCurrentSnapshot, int tcount);
+							 Datum *Values, const char *Nulls,
+							 Snapshot snapshot, Snapshot crosscheck_snapshot,
+							 bool read_only, int tcount);
+
+static int _SPI_pquery(QueryDesc *queryDesc, int tcount);
 
 static void _SPI_error_callback(void *arg);
 
@@ -252,9 +253,11 @@ SPI_pop(void)
 	_SPI_curid--;
 }
 
+/* Parse, plan, and execute a querystring */
 int
-SPI_exec(const char *src, int tcount)
+SPI_execute(const char *src, bool read_only, int tcount)
 {
+	_SPI_plan	plan;
 	int			res;
 
 	if (src == NULL || tcount < 0)
@@ -264,42 +267,75 @@ SPI_exec(const char *src, int tcount)
 	if (res < 0)
 		return res;
 
-	res = _SPI_execute(src, tcount, NULL);
+	plan.plancxt = NULL;		/* doesn't have own context */
+	plan.query = src;
+	plan.nargs = 0;
+	plan.argtypes = NULL;
+
+	_SPI_prepare_plan(src, &plan);
+
+	res = _SPI_execute_plan(&plan, NULL, NULL,
+							InvalidSnapshot, InvalidSnapshot,
+							read_only, tcount);
 
 	_SPI_end_call(true);
 	return res;
 }
 
+/* Obsolete version of SPI_execute */
+int
+SPI_exec(const char *src, int tcount)
+{
+	return SPI_execute(src, false, tcount);
+}
+
+/* Execute a previously prepared plan */
+int
+SPI_execute_plan(void *plan, Datum *Values, const char *Nulls,
+				 bool read_only, int tcount)
+{
+	int			res;
+
+	if (plan == NULL || tcount < 0)
+		return SPI_ERROR_ARGUMENT;
+
+	if (((_SPI_plan *) plan)->nargs > 0 && Values == NULL)
+		return SPI_ERROR_PARAM;
+
+	res = _SPI_begin_call(true);
+	if (res < 0)
+		return res;
+
+	res = _SPI_execute_plan((_SPI_plan *) plan,
+							Values, Nulls,
+							InvalidSnapshot, InvalidSnapshot,
+							read_only, tcount);
+
+	_SPI_end_call(true);
+	return res;
+}
+
+/* Obsolete version of SPI_execute_plan */
 int
 SPI_execp(void *plan, Datum *Values, const char *Nulls, int tcount)
 {
-	int			res;
-
-	if (plan == NULL || tcount < 0)
-		return SPI_ERROR_ARGUMENT;
-
-	if (((_SPI_plan *) plan)->nargs > 0 && Values == NULL)
-		return SPI_ERROR_PARAM;
-
-	res = _SPI_begin_call(true);
-	if (res < 0)
-		return res;
-
-	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls, false, tcount);
-
-	_SPI_end_call(true);
-	return res;
+	return SPI_execute_plan(plan, Values, Nulls, false, tcount);
 }
 
 /*
- * SPI_execp_current -- identical to SPI_execp, except that we expose the
- * Executor option to use a current snapshot instead of the normal
- * QuerySnapshot.  This is currently not documented in spi.sgml because
- * it is only intended for use by RI triggers.
+ * SPI_execute_snapshot -- identical to SPI_execute_plan, except that we allow
+ * the caller to specify exactly which snapshots to use.  This is currently
+ * not documented in spi.sgml because it is only intended for use by RI
+ * triggers.
+ *
+ * Passing snapshot == InvalidSnapshot will select the normal behavior of
+ * fetching a new snapshot for each query.
  */
-int
-SPI_execp_current(void *plan, Datum *Values, const char *Nulls,
-				  bool useCurrentSnapshot, int tcount)
+extern int
+SPI_execute_snapshot(void *plan,
+					 Datum *Values, const char *Nulls,
+					 Snapshot snapshot, Snapshot crosscheck_snapshot,
+					 bool read_only, int tcount)
 {
 	int			res;
 
@@ -313,8 +349,10 @@ SPI_execp_current(void *plan, Datum *Values, const char *Nulls,
 	if (res < 0)
 		return res;
 
-	res = _SPI_execute_plan((_SPI_plan *) plan, Values, Nulls,
-							useCurrentSnapshot, tcount);
+	res = _SPI_execute_plan((_SPI_plan *) plan,
+							Values, Nulls,
+							snapshot, crosscheck_snapshot,
+							read_only, tcount);
 
 	_SPI_end_call(true);
 	return res;
@@ -341,12 +379,10 @@ SPI_prepare(const char *src, int nargs, Oid *argtypes)
 	plan.nargs = nargs;
 	plan.argtypes = argtypes;
 
-	SPI_result = _SPI_execute(src, 0, &plan);
+	_SPI_prepare_plan(src, &plan);
 
-	if (SPI_result >= 0)		/* copy plan to procedure context */
-		result = _SPI_copy_plan(&plan, _SPI_CPLAN_PROCXT);
-	else
-		result = NULL;
+	/* copy plan to procedure context */
+	result = _SPI_copy_plan(&plan, _SPI_CPLAN_PROCXT);
 
 	_SPI_end_call(true);
 
@@ -756,7 +792,9 @@ SPI_freetuptable(SPITupleTable *tuptable)
  *	Open a prepared SPI plan as a portal
  */
 Portal
-SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
+SPI_cursor_open(const char *name, void *plan,
+				Datum *Values, const char *Nulls,
+				bool read_only)
 {
 	_SPI_plan  *spiplan = (_SPI_plan *) plan;
 	List	   *qtlist = spiplan->qtlist;
@@ -764,6 +802,7 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 	Query	   *queryTree;
 	Plan	   *planTree;
 	ParamListInfo paramLI;
+	Snapshot	snapshot;
 	MemoryContext oldcontext;
 	Portal		portal;
 	int			k;
@@ -784,9 +823,6 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 		ereport(ERROR,
 				(errcode(ERRCODE_INVALID_CURSOR_DEFINITION),
 				 errmsg("cannot open SELECT INTO query as cursor")));
-
-	/* Increment CommandCounter to see changes made by now */
-	CommandCounterIncrement();
 
 	/* Reset SPI result */
 	SPI_processed = 0;
@@ -867,9 +903,21 @@ SPI_cursor_open(const char *name, void *plan, Datum *Values, const char *Nulls)
 		portal->cursorOptions |= CURSOR_OPT_NO_SCROLL;
 
 	/*
+	 * Set up the snapshot to use.  (PortalStart will do CopySnapshot,
+	 * so we skip that here.)
+	 */
+	if (read_only)
+		snapshot = ActiveSnapshot;
+	else
+	{
+		CommandCounterIncrement();
+		snapshot = GetTransactionSnapshot();
+	}
+
+	/*
 	 * Start portal execution.
 	 */
-	PortalStart(portal, paramLI);
+	PortalStart(portal, paramLI, snapshot);
 
 	Assert(portal->strategy == PORTAL_ONE_SELECT);
 
@@ -1143,37 +1191,30 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver *self)
  */
 
 /*
- * Plan and optionally execute a querystring.
+ * Parse and plan a querystring.
  *
- * If plan != NULL, just prepare plan trees and save them in *plan;
- * else execute immediately.
+ * At entry, plan->argtypes and plan->nargs must be valid.
+ *
+ * Query and plan lists are stored into *plan.
  */
-static int
-_SPI_execute(const char *src, int tcount, _SPI_plan *plan)
+static void
+_SPI_prepare_plan(const char *src, _SPI_plan *plan)
 {
 	List	   *raw_parsetree_list;
 	List	   *query_list_list;
 	List	   *plan_list;
 	ListCell   *list_item;
 	ErrorContextCallback spierrcontext;
-	int			nargs = 0;
-	Oid		   *argtypes = NULL;
-	int			res = 0;
+	Oid		   *argtypes = plan->argtypes;
+	int			nargs = plan->nargs;
 
-	if (plan)
-	{
-		nargs = plan->nargs;
-		argtypes = plan->argtypes;
-	}
-
-	/* Increment CommandCounter to see changes made by now */
+	/*
+	 * Increment CommandCounter to see changes made by now.  We must do
+	 * this to be sure of seeing any schema changes made by a just-preceding
+	 * SPI command.  (But we don't bother advancing the snapshot, since the
+	 * planner generally operates under SnapshotNow rules anyway.)
+	 */
 	CommandCounterIncrement();
-
-	/* Reset state (only needed in case string is empty) */
-	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
-	SPI_tuptable = NULL;
-	_SPI_current->tuptable = NULL;
 
 	/*
 	 * Setup error traceback support for ereport()
@@ -1191,9 +1232,9 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	/*
 	 * Do parse analysis and rule rewrite for each raw parsetree.
 	 *
-	 * We save the querytrees from each raw parsetree as a separate sublist.
-	 * This allows _SPI_execute_plan() to know where the boundaries
-	 * between original queries fall.
+	 * We save the querytrees from each raw parsetree as a separate
+	 * sublist.  This allows _SPI_execute_plan() to know where the
+	 * boundaries between original queries fall.
 	 */
 	query_list_list = NIL;
 	plan_list = NIL;
@@ -1202,203 +1243,221 @@ _SPI_execute(const char *src, int tcount, _SPI_plan *plan)
 	{
 		Node	   *parsetree = (Node *) lfirst(list_item);
 		List	   *query_list;
-		ListCell   *query_list_item;
 
 		query_list = pg_analyze_and_rewrite(parsetree, argtypes, nargs);
 
 		query_list_list = lappend(query_list_list, query_list);
 
-		/* Reset state for each original parsetree */
-		/* (at most one of its querytrees will be marked canSetTag) */
+		plan_list = list_concat(plan_list,
+								pg_plan_queries(query_list, NULL, false));
+	}
+
+	plan->qtlist = query_list_list;
+	plan->ptlist = plan_list;
+
+	/*
+	 * Pop the error context stack
+	 */
+	error_context_stack = spierrcontext.previous;
+}
+
+/*
+ * Execute the given plan with the given parameter values
+ *
+ * snapshot: query snapshot to use, or InvalidSnapshot for the normal
+ *		behavior of taking a new snapshot for each query.
+ * crosscheck_snapshot: for RI use, all others pass InvalidSnapshot
+ * read_only: TRUE for read-only execution (no CommandCounterIncrement)
+ * tcount: execution tuple-count limit, or 0 for none
+ */
+static int
+_SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
+				  Snapshot snapshot, Snapshot crosscheck_snapshot,
+				  bool read_only, int tcount)
+{
+	volatile int res = 0;
+	Snapshot	saveActiveSnapshot;
+
+	/* Be sure to restore ActiveSnapshot on error exit */
+	saveActiveSnapshot = ActiveSnapshot;
+	PG_TRY();
+	{
+		List	   *query_list_list = plan->qtlist;
+		ListCell   *plan_list_item = list_head(plan->ptlist);
+		ListCell   *query_list_list_item;
+		ErrorContextCallback spierrcontext;
+		int			nargs = plan->nargs;
+		ParamListInfo paramLI;
+
+		/* Convert parameters to form wanted by executor */
+		if (nargs > 0)
+		{
+			int			k;
+
+			paramLI = (ParamListInfo)
+				palloc0((nargs + 1) * sizeof(ParamListInfoData));
+
+			for (k = 0; k < nargs; k++)
+			{
+				paramLI[k].kind = PARAM_NUM;
+				paramLI[k].id = k + 1;
+				paramLI[k].ptype = plan->argtypes[k];
+				paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
+				paramLI[k].value = Values[k];
+			}
+			paramLI[k].kind = PARAM_INVALID;
+		}
+		else
+			paramLI = NULL;
+
+		/* Reset state (only needed in case string is empty) */
 		SPI_processed = 0;
 		SPI_lastoid = InvalidOid;
 		SPI_tuptable = NULL;
 		_SPI_current->tuptable = NULL;
 
-		foreach(query_list_item, query_list)
+		/*
+		 * Setup error traceback support for ereport()
+		 */
+		spierrcontext.callback = _SPI_error_callback;
+		spierrcontext.arg = (void *) plan->query;
+		spierrcontext.previous = error_context_stack;
+		error_context_stack = &spierrcontext;
+
+		foreach(query_list_list_item, query_list_list)
 		{
-			Query	   *queryTree = (Query *) lfirst(query_list_item);
-			Plan	   *planTree;
-			QueryDesc  *qdesc;
-			DestReceiver *dest;
+			List	   *query_list = lfirst(query_list_list_item);
+			ListCell   *query_list_item;
 
-			planTree = pg_plan_query(queryTree, NULL);
-			plan_list = lappend(plan_list, planTree);
+			/* Reset state for each original parsetree */
+			/* (at most one of its querytrees will be marked canSetTag) */
+			SPI_processed = 0;
+			SPI_lastoid = InvalidOid;
+			SPI_tuptable = NULL;
+			_SPI_current->tuptable = NULL;
 
-			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None, NULL);
-			if (queryTree->commandType == CMD_UTILITY)
+			foreach(query_list_item, query_list)
 			{
-				if (IsA(queryTree->utilityStmt, CopyStmt))
-				{
-					CopyStmt   *stmt = (CopyStmt *) queryTree->utilityStmt;
+				Query	   *queryTree = (Query *) lfirst(query_list_item);
+				Plan	   *planTree;
+				QueryDesc  *qdesc;
+				DestReceiver *dest;
 
-					if (stmt->filename == NULL)
+				planTree = lfirst(plan_list_item);
+				plan_list_item = lnext(plan_list_item);
+
+				if (queryTree->commandType == CMD_UTILITY)
+				{
+					if (IsA(queryTree->utilityStmt, CopyStmt))
 					{
-						res = SPI_ERROR_COPY;
+						CopyStmt   *stmt = (CopyStmt *) queryTree->utilityStmt;
+
+						if (stmt->filename == NULL)
+						{
+							res = SPI_ERROR_COPY;
+							goto fail;
+						}
+					}
+					else if (IsA(queryTree->utilityStmt, DeclareCursorStmt) ||
+							 IsA(queryTree->utilityStmt, ClosePortalStmt) ||
+							 IsA(queryTree->utilityStmt, FetchStmt))
+					{
+						res = SPI_ERROR_CURSOR;
+						goto fail;
+					}
+					else if (IsA(queryTree->utilityStmt, TransactionStmt))
+					{
+						res = SPI_ERROR_TRANSACTION;
 						goto fail;
 					}
 				}
-				else if (IsA(queryTree->utilityStmt, DeclareCursorStmt) ||
-						 IsA(queryTree->utilityStmt, ClosePortalStmt) ||
-						 IsA(queryTree->utilityStmt, FetchStmt))
-				{
-					res = SPI_ERROR_CURSOR;
-					goto fail;
-				}
-				else if (IsA(queryTree->utilityStmt, TransactionStmt))
-				{
-					res = SPI_ERROR_TRANSACTION;
-					goto fail;
-				}
-				res = SPI_OK_UTILITY;
-				if (plan == NULL)
-				{
-					ProcessUtility(queryTree->utilityStmt, NULL, dest, NULL);
+
+				if (read_only && !QueryIsReadOnly(queryTree))
+					ereport(ERROR,
+							(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+							 /* translator: %s is a SQL statement name */
+							 errmsg("%s is not allowed in a non-volatile function",
+									CreateQueryTag(queryTree))));
+				/*
+				 * If not read-only mode, advance the command counter before
+				 * each command.
+				 */
+				if (!read_only)
 					CommandCounterIncrement();
+
+				dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None,
+										  NULL);
+
+				if (snapshot == InvalidSnapshot)
+				{
+					/*
+					 * Default read_only behavior is to use the entry-time
+					 * ActiveSnapshot; if read-write, grab a full new snap.
+					 */
+					if (read_only)
+						ActiveSnapshot = CopySnapshot(saveActiveSnapshot);
+					else
+						ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 				}
-			}
-			else if (plan == NULL)
-			{
-				qdesc = CreateQueryDesc(queryTree, planTree, dest,
-										NULL, false);
-				res = _SPI_pquery(qdesc, true, false,
-								  queryTree->canSetTag ? tcount : 0);
-				if (res < 0)
-					goto fail;
-				CommandCounterIncrement();
-			}
-			else
-			{
-				qdesc = CreateQueryDesc(queryTree, planTree, dest,
-										NULL, false);
-				res = _SPI_pquery(qdesc, false, false, 0);
+				else
+				{
+					/*
+					 * We interpret read_only with a specified snapshot to be
+					 * exactly that snapshot, but read-write means use the
+					 * snap with advancing of command ID.
+					 */
+					ActiveSnapshot = CopySnapshot(snapshot);
+					if (!read_only)
+						ActiveSnapshot->curcid = GetCurrentCommandId();
+				}
+
+				if (queryTree->commandType == CMD_UTILITY)
+				{
+					ProcessUtility(queryTree->utilityStmt, paramLI,
+								   dest, NULL);
+					res = SPI_OK_UTILITY;
+				}
+				else
+				{
+					qdesc = CreateQueryDesc(queryTree, planTree,
+											ActiveSnapshot,
+											crosscheck_snapshot,
+											dest,
+											paramLI, false);
+					res = _SPI_pquery(qdesc,
+									  queryTree->canSetTag ? tcount : 0);
+					FreeQueryDesc(qdesc);
+				}
+				FreeSnapshot(ActiveSnapshot);
+				ActiveSnapshot = NULL;
+				/* we know that the receiver doesn't need a destroy call */
 				if (res < 0)
 					goto fail;
 			}
 		}
-	}
-
-	if (plan)
-	{
-		plan->qtlist = query_list_list;
-		plan->ptlist = plan_list;
-	}
 
 fail:
 
-	/*
-	 * Pop the error context stack
-	 */
-	error_context_stack = spierrcontext.previous;
+		/*
+		 * Pop the error context stack
+		 */
+		error_context_stack = spierrcontext.previous;
+	}
+	PG_CATCH();
+	{
+		/* Restore global vars and propagate error */
+		ActiveSnapshot = saveActiveSnapshot;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	ActiveSnapshot = saveActiveSnapshot;
 
 	return res;
 }
 
 static int
-_SPI_execute_plan(_SPI_plan *plan, Datum *Values, const char *Nulls,
-				  bool useCurrentSnapshot, int tcount)
-{
-	List	   *query_list_list = plan->qtlist;
-	ListCell   *plan_list_item = list_head(plan->ptlist);
-	ListCell   *query_list_list_item;
-	ErrorContextCallback spierrcontext;
-	int			nargs = plan->nargs;
-	int			res = 0;
-	ParamListInfo paramLI;
-
-	/* Increment CommandCounter to see changes made by now */
-	CommandCounterIncrement();
-
-	/* Convert parameters to form wanted by executor */
-	if (nargs > 0)
-	{
-		int			k;
-
-		paramLI = (ParamListInfo)
-			palloc0((nargs + 1) * sizeof(ParamListInfoData));
-
-		for (k = 0; k < nargs; k++)
-		{
-			paramLI[k].kind = PARAM_NUM;
-			paramLI[k].id = k + 1;
-			paramLI[k].ptype = plan->argtypes[k];
-			paramLI[k].isnull = (Nulls && Nulls[k] == 'n');
-			paramLI[k].value = Values[k];
-		}
-		paramLI[k].kind = PARAM_INVALID;
-	}
-	else
-		paramLI = NULL;
-
-	/* Reset state (only needed in case string is empty) */
-	SPI_processed = 0;
-	SPI_lastoid = InvalidOid;
-	SPI_tuptable = NULL;
-	_SPI_current->tuptable = NULL;
-
-	/*
-	 * Setup error traceback support for ereport()
-	 */
-	spierrcontext.callback = _SPI_error_callback;
-	spierrcontext.arg = (void *) plan->query;
-	spierrcontext.previous = error_context_stack;
-	error_context_stack = &spierrcontext;
-
-	foreach(query_list_list_item, query_list_list)
-	{
-		List	   *query_list = lfirst(query_list_list_item);
-		ListCell   *query_list_item;
-
-		/* Reset state for each original parsetree */
-		/* (at most one of its querytrees will be marked canSetTag) */
-		SPI_processed = 0;
-		SPI_lastoid = InvalidOid;
-		SPI_tuptable = NULL;
-		_SPI_current->tuptable = NULL;
-
-		foreach(query_list_item, query_list)
-		{
-			Query	   *queryTree = (Query *) lfirst(query_list_item);
-			Plan	   *planTree;
-			QueryDesc  *qdesc;
-			DestReceiver *dest;
-
-			planTree = lfirst(plan_list_item);
-			plan_list_item = lnext(plan_list_item);
-
-			dest = CreateDestReceiver(queryTree->canSetTag ? SPI : None, NULL);
-			if (queryTree->commandType == CMD_UTILITY)
-			{
-				ProcessUtility(queryTree->utilityStmt, paramLI, dest, NULL);
-				res = SPI_OK_UTILITY;
-				CommandCounterIncrement();
-			}
-			else
-			{
-				qdesc = CreateQueryDesc(queryTree, planTree, dest,
-										paramLI, false);
-				res = _SPI_pquery(qdesc, true, useCurrentSnapshot,
-								  queryTree->canSetTag ? tcount : 0);
-				if (res < 0)
-					goto fail;
-				CommandCounterIncrement();
-			}
-		}
-	}
-
-fail:
-
-	/*
-	 * Pop the error context stack
-	 */
-	error_context_stack = spierrcontext.previous;
-
-	return res;
-}
-
-static int
-_SPI_pquery(QueryDesc *queryDesc, bool runit,
-			bool useCurrentSnapshot, int tcount)
+_SPI_pquery(QueryDesc *queryDesc, int tcount)
 {
 	int			operation = queryDesc->operation;
 	int			res;
@@ -1427,9 +1486,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 			return SPI_ERROR_OPUNKNOWN;
 	}
 
-	if (!runit)					/* plan preparation, don't execute */
-		return res;
-
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
 		ResetUsage();
@@ -1437,7 +1493,7 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 
 	AfterTriggerBeginQuery();
 
-	ExecutorStart(queryDesc, useCurrentSnapshot, false);
+	ExecutorStart(queryDesc, false);
 
 	ExecutorRun(queryDesc, ForwardScanDirection, (long) tcount);
 
@@ -1466,8 +1522,6 @@ _SPI_pquery(QueryDesc *queryDesc, bool runit,
 		/* Don't return SPI_OK_SELECT if we discarded the result */
 		res = SPI_OK_UTILITY;
 	}
-
-	FreeQueryDesc(queryDesc);
 
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)

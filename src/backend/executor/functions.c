@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.88 2004/09/10 18:39:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.89 2004/09/13 20:06:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,6 +65,7 @@ typedef struct
 	bool		typbyval;		/* true if return type is pass by value */
 	bool		returnsTuple;	/* true if returning whole tuple result */
 	bool		shutdown_reg;	/* true if registered shutdown callback */
+	bool		readonly_func;	/* true to run in "read only" mode */
 
 	ParamListInfo paramLI;		/* Param list representing current args */
 
@@ -76,11 +77,12 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 
 /* non-export function prototypes */
-static execution_state *init_execution_state(List *queryTree_list);
+static execution_state *init_execution_state(List *queryTree_list,
+											 bool readonly_func);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
-static void postquel_end(execution_state *es);
+static void postquel_end(execution_state *es, SQLFunctionCachePtr fcache);
 static void postquel_sub_params(SQLFunctionCachePtr fcache,
 					FunctionCallInfo fcinfo);
 static Datum postquel_execute(execution_state *es,
@@ -91,7 +93,7 @@ static void ShutdownSQLFunction(Datum arg);
 
 
 static execution_state *
-init_execution_state(List *queryTree_list)
+init_execution_state(List *queryTree_list, bool readonly_func)
 {
 	execution_state *firstes = NULL;
 	execution_state *preves = NULL;
@@ -102,6 +104,22 @@ init_execution_state(List *queryTree_list)
 		Query	   *queryTree = lfirst(qtl_item);
 		Plan	   *planTree;
 		execution_state *newes;
+
+		/* Precheck all commands for validity in a function */
+		if (queryTree->commandType == CMD_UTILITY &&
+			IsA(queryTree->utilityStmt, TransactionStmt))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 /* translator: %s is a SQL statement name */
+					 errmsg("%s is not allowed in a SQL function",
+							CreateQueryTag(queryTree))));
+
+		if (readonly_func && !QueryIsReadOnly(queryTree))
+			ereport(ERROR,
+					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
+					 /* translator: %s is a SQL statement name */
+					 errmsg("%s is not allowed in a non-volatile function",
+							CreateQueryTag(queryTree))));
 
 		planTree = pg_plan_query(queryTree, NULL);
 
@@ -171,6 +189,10 @@ init_sql_fcache(FmgrInfo *finfo)
 	}
 
 	fcache->rettype = rettype;
+
+	/* Remember if function is STABLE/IMMUTABLE */
+	fcache->readonly_func =
+		(procedureStruct->provolatile != PROVOLATILE_VOLATILE);
 
 	/* Now look up the actual result type */
 	typeTuple = SearchSysCache(TYPEOID,
@@ -253,7 +275,8 @@ init_sql_fcache(FmgrInfo *finfo)
 												   queryTree_list);
 
 	/* Finally, plan the queries */
-	fcache->func_state = init_execution_state(queryTree_list);
+	fcache->func_state = init_execution_state(queryTree_list,
+											  fcache->readonly_func);
 
 	pfree(src);
 
@@ -267,16 +290,37 @@ init_sql_fcache(FmgrInfo *finfo)
 static void
 postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 {
+	Snapshot	snapshot;
+
 	Assert(es->qd == NULL);
+
+	/*
+	 * In a read-only function, use the surrounding query's snapshot;
+	 * otherwise take a new snapshot for each query.  The snapshot should
+	 * include a fresh command ID so that all work to date in this
+	 * transaction is visible.  We copy in both cases so that postquel_end
+	 * can unconditionally do FreeSnapshot.
+	 */
+	if (fcache->readonly_func)
+		snapshot = CopySnapshot(ActiveSnapshot);
+	else
+	{
+		CommandCounterIncrement();
+		snapshot = CopySnapshot(GetTransactionSnapshot());
+	}
+
 	es->qd = CreateQueryDesc(es->query, es->plan,
+							 snapshot, InvalidSnapshot,
 							 None_Receiver,
 							 fcache->paramLI, false);
+
+	/* We assume we don't need to set up ActiveSnapshot for ExecutorStart */
 
 	/* Utility commands don't need Executor. */
 	if (es->qd->operation != CMD_UTILITY)
 	{
 		AfterTriggerBeginQuery();
-		ExecutorStart(es->qd, false, false);
+		ExecutorStart(es->qd, false);
 	}
 
 	es->status = F_EXEC_RUN;
@@ -285,46 +329,82 @@ postquel_start(execution_state *es, SQLFunctionCachePtr fcache)
 static TupleTableSlot *
 postquel_getnext(execution_state *es)
 {
+	TupleTableSlot *result;
+	Snapshot	saveActiveSnapshot;
 	long		count;
 
-	if (es->qd->operation == CMD_UTILITY)
+	/* Make our snapshot the active one for any called functions */
+	saveActiveSnapshot = ActiveSnapshot;
+	PG_TRY();
 	{
-		/* Can't handle starting or committing a transaction */
-		if (IsA(es->qd->parsetree->utilityStmt, TransactionStmt))
-			ereport(ERROR,
-					(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-					 errmsg("cannot begin/end transactions in SQL functions")));
-		ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->params,
-					   es->qd->dest, NULL);
-		return NULL;
+		ActiveSnapshot = es->qd->snapshot;
+
+		if (es->qd->operation == CMD_UTILITY)
+		{
+			ProcessUtility(es->qd->parsetree->utilityStmt, es->qd->params,
+						   es->qd->dest, NULL);
+			result = NULL;
+		}
+		else
+		{
+			/*
+			 * If it's the function's last command, and it's a SELECT, fetch
+			 * one row at a time so we can return the results. Otherwise just
+			 * run it to completion.  (If we run to completion then
+			 * ExecutorRun is guaranteed to return NULL.)
+			 */
+			if (LAST_POSTQUEL_COMMAND(es) && es->qd->operation == CMD_SELECT)
+				count = 1L;
+			else
+				count = 0L;
+
+			result = ExecutorRun(es->qd, ForwardScanDirection, count);
+		}
 	}
+	PG_CATCH();
+	{
+		/* Restore global vars and propagate error */
+		ActiveSnapshot = saveActiveSnapshot;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
 
-	/*
-	 * If it's the function's last command, and it's a SELECT, fetch one
-	 * row at a time so we can return the results.	Otherwise just run it
-	 * to completion.
-	 */
-	if (LAST_POSTQUEL_COMMAND(es) && es->qd->operation == CMD_SELECT)
-		count = 1L;
-	else
-		count = 0L;
+	ActiveSnapshot = saveActiveSnapshot;
 
-	return ExecutorRun(es->qd, ForwardScanDirection, count);
+	return result;
 }
 
 static void
-postquel_end(execution_state *es)
+postquel_end(execution_state *es, SQLFunctionCachePtr fcache)
 {
+	Snapshot	saveActiveSnapshot;
+
 	/* mark status done to ensure we don't do ExecutorEnd twice */
 	es->status = F_EXEC_DONE;
 
 	/* Utility commands don't need Executor. */
 	if (es->qd->operation != CMD_UTILITY)
 	{
-		ExecutorEnd(es->qd);
-		AfterTriggerEndQuery();
+		/* Make our snapshot the active one for any called functions */
+		saveActiveSnapshot = ActiveSnapshot;
+		PG_TRY();
+		{
+			ActiveSnapshot = es->qd->snapshot;
+
+			ExecutorEnd(es->qd);
+			AfterTriggerEndQuery();
+		}
+		PG_CATCH();
+		{
+			/* Restore global vars and propagate error */
+			ActiveSnapshot = saveActiveSnapshot;
+			PG_RE_THROW();
+		}
+		PG_END_TRY();
+		ActiveSnapshot = saveActiveSnapshot;
 	}
 
+	FreeSnapshot(es->qd->snapshot);
 	FreeQueryDesc(es->qd);
 	es->qd = NULL;
 }
@@ -368,6 +448,8 @@ postquel_execute(execution_state *es,
 				 SQLFunctionCachePtr fcache)
 {
 	TupleTableSlot *slot;
+	HeapTuple	tup;
+	TupleDesc	tupDesc;
 	Datum		value;
 
 	if (es->status == F_EXEC_START)
@@ -377,101 +459,92 @@ postquel_execute(execution_state *es,
 
 	if (TupIsNull(slot))
 	{
-		postquel_end(es);
-		fcinfo->isnull = true;
-
 		/*
-		 * If this isn't the last command for the function we have to
-		 * increment the command counter so that subsequent commands can
-		 * see changes made by previous ones.
+		 * We fall out here for all cases except where we have obtained
+		 * a row from a function's final SELECT.
 		 */
-		if (!LAST_POSTQUEL_COMMAND(es))
-			CommandCounterIncrement();
+		postquel_end(es, fcache);
+		fcinfo->isnull = true;
 		return (Datum) NULL;
 	}
 
-	if (LAST_POSTQUEL_COMMAND(es))
+	/*
+	 * If we got a row from a command within the function it has to be
+	 * the final command.  All others shouldn't be returning anything.
+	 */
+	Assert(LAST_POSTQUEL_COMMAND(es));
+
+	/*
+	 * Set up to return the function value.
+	 */
+	tup = slot->val;
+	tupDesc = slot->ttc_tupleDescriptor;
+
+	if (fcache->returnsTuple)
 	{
 		/*
-		 * Set up to return the function value.
+		 * We are returning the whole tuple, so copy it into current
+		 * execution context and make sure it is a valid Datum.
+		 *
+		 * XXX do we need to remove junk attrs from the result tuple?
+		 * Probably OK to leave them, as long as they are at the end.
 		 */
-		HeapTuple	tup = slot->val;
-		TupleDesc	tupDesc = slot->ttc_tupleDescriptor;
+		HeapTupleHeader dtup;
+		Oid			dtuptype;
+		int32		dtuptypmod;
 
-		if (fcache->returnsTuple)
+		dtup = (HeapTupleHeader) palloc(tup->t_len);
+		memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
+
+		/*
+		 * Use the declared return type if it's not RECORD; else take
+		 * the type from the computed result, making sure a typmod has
+		 * been assigned.
+		 */
+		if (fcache->rettype != RECORDOID)
 		{
-			/*
-			 * We are returning the whole tuple, so copy it into current
-			 * execution context and make sure it is a valid Datum.
-			 *
-			 * XXX do we need to remove junk attrs from the result tuple?
-			 * Probably OK to leave them, as long as they are at the end.
-			 */
-			HeapTupleHeader dtup;
-			Oid			dtuptype;
-			int32		dtuptypmod;
-
-			dtup = (HeapTupleHeader) palloc(tup->t_len);
-			memcpy((char *) dtup, (char *) tup->t_data, tup->t_len);
-
-			/*
-			 * Use the declared return type if it's not RECORD; else take
-			 * the type from the computed result, making sure a typmod has
-			 * been assigned.
-			 */
-			if (fcache->rettype != RECORDOID)
-			{
-				/* function has a named composite return type */
-				dtuptype = fcache->rettype;
-				dtuptypmod = -1;
-			}
-			else
-			{
-				/* function is declared to return RECORD */
-				if (tupDesc->tdtypeid == RECORDOID &&
-					tupDesc->tdtypmod < 0)
-					assign_record_type_typmod(tupDesc);
-				dtuptype = tupDesc->tdtypeid;
-				dtuptypmod = tupDesc->tdtypmod;
-			}
-
-			HeapTupleHeaderSetDatumLength(dtup, tup->t_len);
-			HeapTupleHeaderSetTypeId(dtup, dtuptype);
-			HeapTupleHeaderSetTypMod(dtup, dtuptypmod);
-
-			value = PointerGetDatum(dtup);
-			fcinfo->isnull = false;
+			/* function has a named composite return type */
+			dtuptype = fcache->rettype;
+			dtuptypmod = -1;
 		}
 		else
 		{
-			/*
-			 * Returning a scalar, which we have to extract from the first
-			 * column of the SELECT result, and then copy into current
-			 * execution context if needed.
-			 */
-			value = heap_getattr(tup, 1, tupDesc, &(fcinfo->isnull));
-
-			if (!fcinfo->isnull)
-				value = datumCopy(value, fcache->typbyval, fcache->typlen);
+			/* function is declared to return RECORD */
+			if (tupDesc->tdtypeid == RECORDOID &&
+				tupDesc->tdtypmod < 0)
+				assign_record_type_typmod(tupDesc);
+			dtuptype = tupDesc->tdtypeid;
+			dtuptypmod = tupDesc->tdtypmod;
 		}
 
-		/*
-		 * If this is a single valued function we have to end the function
-		 * execution now.
-		 */
-		if (!fcinfo->flinfo->fn_retset)
-			postquel_end(es);
+		HeapTupleHeaderSetDatumLength(dtup, tup->t_len);
+		HeapTupleHeaderSetTypeId(dtup, dtuptype);
+		HeapTupleHeaderSetTypMod(dtup, dtuptypmod);
 
-		return value;
+		value = PointerGetDatum(dtup);
+		fcinfo->isnull = false;
+	}
+	else
+	{
+		/*
+		 * Returning a scalar, which we have to extract from the first
+		 * column of the SELECT result, and then copy into current
+		 * execution context if needed.
+		 */
+		value = heap_getattr(tup, 1, tupDesc, &(fcinfo->isnull));
+
+		if (!fcinfo->isnull)
+			value = datumCopy(value, fcache->typbyval, fcache->typlen);
 	}
 
 	/*
-	 * If this isn't the last command for the function, we don't return
-	 * any results, but we have to increment the command counter so that
-	 * subsequent commands can see changes made by previous ones.
+	 * If this is a single valued function we have to end the function
+	 * execution now.
 	 */
-	CommandCounterIncrement();
-	return (Datum) NULL;
+	if (!fcinfo->flinfo->fn_retset)
+		postquel_end(es, fcache);
+
+	return value;
 }
 
 Datum
@@ -726,7 +799,7 @@ ShutdownSQLFunction(Datum arg)
 	{
 		/* Shut down anything still running */
 		if (es->status == F_EXEC_RUN)
-			postquel_end(es);
+			postquel_end(es, fcache);
 		/* Reset states to START in case we're called again */
 		es->status = F_EXEC_START;
 		es = es->next;

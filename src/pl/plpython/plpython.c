@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.55 2004/08/30 02:54:42 momjian Exp $
+ *	$PostgreSQL: pgsql/src/pl/plpython/plpython.c,v 1.56 2004/09/13 20:09:30 tgl Exp $
  *
  *********************************************************************
  */
@@ -131,6 +131,7 @@ typedef struct PLyProcedure
 	char	   *pyname;			/* Python name of procedure */
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
+	bool		fn_readonly;
 	PLyTypeInfo result;			/* also used to store info for trigger
 								 * tuple type */
 	PLyTypeInfo args[FUNC_MAX_ARGS];
@@ -257,11 +258,9 @@ static PyObject *PLyString_FromString(const char *);
 static int	PLy_first_call = 1;
 
 /*
- * Last function called by postgres backend
- *
- * XXX replace this with errcontext mechanism
+ * Currently active plpython function
  */
-static PLyProcedure *PLy_last_procedure = NULL;
+static PLyProcedure *PLy_curr_procedure = NULL;
 
 /*
  * When a callback from Python into PG incurs an error, we temporarily store
@@ -322,12 +321,15 @@ Datum
 plpython_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
+	PLyProcedure *save_curr_proc;
 	PLyProcedure *volatile proc = NULL;
 
 	PLy_init_all();
 
 	if (SPI_connect() != SPI_OK_CONNECT)
 		elog(ERROR, "could not connect to SPI manager");
+
+	save_curr_proc = PLy_curr_procedure;
 
 	PG_TRY();
 	{
@@ -338,17 +340,20 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 
 			proc = PLy_procedure_get(fcinfo,
 								   RelationGetRelid(tdata->tg_relation));
+			PLy_curr_procedure = proc;
 			trv = PLy_trigger_handler(fcinfo, proc);
 			retval = PointerGetDatum(trv);
 		}
 		else
 		{
 			proc = PLy_procedure_get(fcinfo, InvalidOid);
+			PLy_curr_procedure = proc;
 			retval = PLy_function_handler(fcinfo, proc);
 		}
 	}
 	PG_CATCH();
 	{
+		PLy_curr_procedure = save_curr_proc;
 		if (proc)
 		{
 			/* note: Py_DECREF needs braces around it, as of 2003/08 */
@@ -358,6 +363,8 @@ plpython_call_handler(PG_FUNCTION_ARGS)
 		PG_RE_THROW();
 	}
 	PG_END_TRY();
+
+	PLy_curr_procedure = save_curr_proc;
 
 	Py_DECREF(proc->me);
 
@@ -795,14 +802,10 @@ static PyObject *
 PLy_procedure_call(PLyProcedure * proc, char *kargs, PyObject * vargs)
 {
 	PyObject   *rv;
-	PLyProcedure *current;
 
-	current = PLy_last_procedure;
-	PLy_last_procedure = proc;
 	PyDict_SetItemString(proc->globals, kargs, vargs);
 	rv = PyEval_EvalCode((PyCodeObject *) proc->code,
 						 proc->globals, proc->globals);
-	PLy_last_procedure = current;
 
 	/*
 	 * If there was an error in a PG callback, propagate that no matter
@@ -1005,6 +1008,9 @@ PLy_procedure_create(FunctionCallInfo fcinfo, Oid tgreloid,
 	strcpy(proc->pyname, procName);
 	proc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 	proc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
+	/* Remember if function is STABLE/IMMUTABLE */
+	proc->fn_readonly =
+		(procStruct->provolatile != PROVOLATILE_VOLATILE);
 	PLy_typeinfo_init(&proc->result);
 	for (i = 0; i < FUNC_MAX_ARGS; i++)
 		PLy_typeinfo_init(&proc->args[i]);
@@ -1935,7 +1941,8 @@ PLy_spi_prepare(PyObject * self, PyObject * args)
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_prepare");
 		/* XXX this oughta be replaced with errcontext mechanism */
-		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
+		PLy_elog(WARNING, "in function %s:",
+				 PLy_procedure_name(PLy_curr_procedure));
 		return NULL;
 	}
 	PG_END_TRY();
@@ -2054,7 +2061,8 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 			}
 		}
 
-		rv = SPI_execp(plan->plan, plan->values, nulls, limit);
+		rv = SPI_execute_plan(plan->plan, plan->values, nulls,
+							  PLy_curr_procedure->fn_readonly, limit);
 
 		pfree(nulls);
 	}
@@ -2080,7 +2088,9 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_error,
 							"Unknown error in PLy_spi_execute_plan");
-		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
+		/* XXX this oughta be replaced with errcontext mechanism */
+		PLy_elog(WARNING, "in function %s:",
+				 PLy_procedure_name(PLy_curr_procedure));
 		return NULL;
 	}
 	PG_END_TRY();
@@ -2098,7 +2108,7 @@ PLy_spi_execute_plan(PyObject * ob, PyObject * list, int limit)
 	if (rv < 0)
 	{
 		PLy_exception_set(PLy_exc_spi_error,
-						  "SPI_execp failed: %s",
+						  "SPI_execute_plan failed: %s",
 						  SPI_result_code_string(rv));
 		return NULL;
 	}
@@ -2114,7 +2124,9 @@ PLy_spi_execute_query(char *query, int limit)
 
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
-	rv = SPI_exec(query, limit);
+	{
+		rv = SPI_execute(query, PLy_curr_procedure->fn_readonly, limit);
+	}
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldcontext);
@@ -2123,7 +2135,9 @@ PLy_spi_execute_query(char *query, int limit)
 		if (!PyErr_Occurred())
 			PyErr_SetString(PLy_exc_spi_error,
 							"Unknown error in PLy_spi_execute_query");
-		PLy_elog(WARNING, "in function %s:", PLy_procedure_name(PLy_last_procedure));
+		/* XXX this oughta be replaced with errcontext mechanism */
+		PLy_elog(WARNING, "in function %s:",
+				 PLy_procedure_name(PLy_curr_procedure));
 		return NULL;
 	}
 	PG_END_TRY();
@@ -2131,7 +2145,7 @@ PLy_spi_execute_query(char *query, int limit)
 	if (rv < 0)
 	{
 		PLy_exception_set(PLy_exc_spi_error,
-						  "SPI_exec failed: %s",
+						  "SPI_execute failed: %s",
 						  SPI_result_code_string(rv));
 		return NULL;
 	}
@@ -2375,7 +2389,9 @@ PLy_output(volatile int level, PyObject * self, PyObject * args)
 
 	oldcontext = CurrentMemoryContext;
 	PG_TRY();
-	elog(level, "%s", sv);
+	{
+		elog(level, "%s", sv);
+	}
 	PG_CATCH();
 	{
 		MemoryContextSwitchTo(oldcontext);

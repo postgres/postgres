@@ -1,4 +1,4 @@
-<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.23 2004/05/16 23:22:07 neilc Exp $ -->
+<!-- $PostgreSQL: pgsql/doc/src/sgml/plpython.sgml,v 1.24 2004/09/13 20:05:18 tgl Exp $ -->
 
 <chapter id="plpython">
  <title>PL/Python - Python Procedural Language</title>
@@ -175,7 +175,7 @@ def __plpython_procedure_myfunc_23456():
    row number and column name.  It has these additional methods:
    <function>nrows</function> which returns the number of rows
    returned by the query, and <function>status</function> which is the
-   <function>SPI_exec()</function> return value.  The result object
+   <function>SPI_execute()</function> return value.  The result object
    can be modified.
   </para>
 

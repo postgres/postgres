@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.229 2004/09/10 18:40:00 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/utility.c,v 1.230 2004/09/13 20:07:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,6 +222,46 @@ CheckRelationOwnership(RangeVar *rel, bool noCatalogs)
 }
 
 
+/*
+ * QueryIsReadOnly: is an analyzed/rewritten query read-only?
+ *
+ * This is a much stricter test than we apply for XactReadOnly mode;
+ * the query must be *in truth* read-only, because the caller wishes
+ * not to do CommandCounterIncrement for it.
+ */
+bool
+QueryIsReadOnly(Query *parsetree)
+{
+	switch (parsetree->commandType)
+	{
+		case CMD_SELECT:
+			if (parsetree->into != NULL)
+				return false;					/* SELECT INTO */
+			else if (parsetree->rowMarks != NIL)
+				return false;					/* SELECT FOR UPDATE */
+			else
+				return true;
+		case CMD_UPDATE:
+		case CMD_INSERT:
+		case CMD_DELETE:
+			return false;
+		case CMD_UTILITY:
+			/* For now, treat all utility commands as read/write */
+			return false;
+		default:
+			elog(WARNING, "unrecognized commandType: %d",
+				 (int) parsetree->commandType);
+			break;
+	}
+	return false;
+}
+
+/*
+ * check_xact_readonly: is a utility command read-only?
+ *
+ * Here we use the loose rules of XactReadOnly mode: no permanent effects
+ * on the database are allowed.
+ */
 static void
 check_xact_readonly(Node *parsetree)
 {
@@ -299,8 +339,7 @@ check_xact_readonly(Node *parsetree)
  *	completionTag: points to a buffer of size COMPLETION_TAG_BUFSIZE
  *		in which to store a command completion status string.
  *
- * completionTag is only set nonempty if we want to return a nondefault
- * status (currently, only used for MOVE/FETCH).
+ * completionTag is only set nonempty if we want to return a nondefault status.
  *
  * completionTag may be NULL if caller doesn't want a status string.
  */
@@ -1580,6 +1619,54 @@ CreateCommandTag(Node *parsetree)
 		default:
 			elog(WARNING, "unrecognized node type: %d",
 				 (int) nodeTag(parsetree));
+			tag = "???";
+			break;
+	}
+
+	return tag;
+}
+
+/*
+ * CreateQueryTag
+ *		utility to get a string representation of a Query operation.
+ *
+ * This is exactly like CreateCommandTag, except it works on a Query
+ * that has already been through parse analysis (and possibly further).
+ */
+const char *
+CreateQueryTag(Query *parsetree)
+{
+	const char *tag;
+
+	switch (parsetree->commandType)
+	{
+		case CMD_SELECT:
+			/*
+			 * We take a little extra care here so that the result will
+			 * be useful for complaints about read-only statements
+			 */
+			if (parsetree->into != NULL)
+				tag = "SELECT INTO";
+			else if (parsetree->rowMarks != NIL)
+				tag = "SELECT FOR UPDATE";
+			else
+				tag = "SELECT";
+			break;
+		case CMD_UPDATE:
+			tag = "UPDATE";
+			break;
+		case CMD_INSERT:
+			tag = "INSERT";
+			break;
+		case CMD_DELETE:
+			tag = "DELETE";
+			break;
+		case CMD_UTILITY:
+			tag = CreateCommandTag(parsetree->utilityStmt);
+			break;
+		default:
+			elog(WARNING, "unrecognized commandType: %d",
+				 (int) parsetree->commandType);
 			tag = "???";
 			break;
 	}

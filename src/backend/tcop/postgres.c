@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.431 2004/09/10 18:39:59 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/postgres.c,v 1.432 2004/09/13 20:07:05 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -700,7 +700,7 @@ pg_plan_queries(List *querytrees, ParamListInfo boundParams,
 		{
 			if (needSnapshot)
 			{
-				SetQuerySnapshot();
+				ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 				needSnapshot = false;
 			}
 			plan = pg_plan_query(query, boundParams);
@@ -883,7 +883,7 @@ exec_simple_query(const char *query_string)
 		/*
 		 * Start the portal.  No parameters here.
 		 */
-		PortalStart(portal, NULL);
+		PortalStart(portal, NULL, InvalidSnapshot);
 
 		/*
 		 * Select the appropriate output format: text unless we are doing
@@ -1539,7 +1539,7 @@ exec_bind_message(StringInfo input_message)
 					  pstmt->plan_list,
 					  pstmt->context);
 
-	PortalStart(portal, params);
+	PortalStart(portal, params, InvalidSnapshot);
 
 	/*
 	 * Apply the result format requests to the portal.
@@ -3026,6 +3026,9 @@ PostgresMain(int argc, char *argv[], const char *username)
 
 				/* switch back to message context */
 				MemoryContextSwitchTo(MessageContext);
+
+				/* set snapshot in case function needs one */
+				ActiveSnapshot = CopySnapshot(GetTransactionSnapshot());
 
 				if (HandleFunctionRequest(&input_message) == EOF)
 				{

@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.50 2004/08/30 02:54:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.51 2004/09/13 20:08:59 tgl Exp $
  *
  **********************************************************************/
 
@@ -53,6 +53,7 @@
 #include "executor/spi.h"
 #include "fmgr.h"
 #include "tcop/tcopprot.h"
+#include "utils/lsyscache.h"
 #include "utils/syscache.h"
 #include "utils/typcache.h"
 
@@ -77,6 +78,7 @@ typedef struct plperl_proc_desc
 	char	   *proname;
 	TransactionId fn_xmin;
 	CommandId	fn_cmin;
+	bool		fn_readonly;
 	bool		lanpltrusted;
 	bool		fn_retistuple;	/* true, if function returns tuple */
 	bool		fn_retisset;	/* true, if function returns set */
@@ -98,10 +100,12 @@ static int	plperl_firstcall = 1;
 static bool plperl_safe_init_done = false;
 static PerlInterpreter *plperl_interp = NULL;
 static HV  *plperl_proc_hash = NULL;
-static AV  *g_row_keys = NULL;
 static AV  *g_column_keys = NULL;
 static SV  *srf_perlret = NULL; /* keep returned value */
 static int	g_attr_num = 0;
+
+/* this is saved and restored by plperl_call_handler */
+static plperl_proc_desc *plperl_current_prodesc = NULL;
 
 /**********************************************************************
  * Forward declarations
@@ -119,6 +123,7 @@ static plperl_proc_desc *compile_plperl_function(Oid fn_oid, bool is_trigger);
 
 static SV  *plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc);
 static void plperl_init_shared_libs(pTHX);
+static HV  *plperl_spi_execute_fetch_result(SPITupleTable *, int, int);
 
 
 /*
@@ -435,7 +440,6 @@ static AV  *
 plperl_get_keys(HV *hv)
 {
 	AV		   *ret;
-	SV		  **svp;
 	int			key_count;
 	SV		   *val;
 	char	   *key;
@@ -445,7 +449,7 @@ plperl_get_keys(HV *hv)
 	ret = newAV();
 
 	hv_iterinit(hv);
-	while (val = hv_iternextsv(hv, (char **) &key, &klen))
+	while ((val = hv_iternextsv(hv, (char **) &key, &klen)))
 	{
 		av_store(ret, key_count, eval_pv(key, TRUE));
 		key_count++;
@@ -592,26 +596,43 @@ Datum
 plperl_call_handler(PG_FUNCTION_ARGS)
 {
 	Datum		retval;
+	plperl_proc_desc *save_prodesc;
 
-	/************************************************************
-	 * Initialize interpreter
-	 ************************************************************/
+	/*
+	 * Initialize interpreter if first time through
+	 */
 	plperl_init_all();
 
-	/************************************************************
-	 * Connect to SPI manager
-	 ************************************************************/
-	if (SPI_connect() != SPI_OK_CONNECT)
-		elog(ERROR, "could not connect to SPI manager");
+	/*
+	 * Ensure that static pointers are saved/restored properly
+	 */
+	save_prodesc = plperl_current_prodesc;
 
-	/************************************************************
-	 * Determine if called as function or trigger and
-	 * call appropriate subhandler
-	 ************************************************************/
-	if (CALLED_AS_TRIGGER(fcinfo))
-		retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
-	else
-		retval = plperl_func_handler(fcinfo);
+	PG_TRY();
+	{
+		/************************************************************
+		 * Connect to SPI manager
+		 ************************************************************/
+		if (SPI_connect() != SPI_OK_CONNECT)
+			elog(ERROR, "could not connect to SPI manager");
+
+		/************************************************************
+		 * Determine if called as function or trigger and
+		 * call appropriate subhandler
+		 ************************************************************/
+		if (CALLED_AS_TRIGGER(fcinfo))
+			retval = PointerGetDatum(plperl_trigger_handler(fcinfo));
+		else
+			retval = plperl_func_handler(fcinfo);
+	}
+	PG_CATCH();
+	{
+		plperl_current_prodesc = save_prodesc;
+		PG_RE_THROW();
+	}
+	PG_END_TRY();
+
+	plperl_current_prodesc = save_prodesc;
 
 	return retval;
 }
@@ -821,7 +842,6 @@ plperl_call_perl_trigger_func(plperl_proc_desc *desc, FunctionCallInfo fcinfo, S
 	SV		   *retval;
 	int			i;
 	int			count;
-	char	   *ret_test;
 
 	ENTER;
 	SAVETMPS;
@@ -874,6 +894,9 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, false);
+
+	plperl_current_prodesc = prodesc;
+
 	/************************************************************
 	 * Call the Perl function if not returning set
 	 ************************************************************/
@@ -1002,7 +1025,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			{
 				HV		   *row_hv;
 				SV		  **svp;
-				char	   *row_key;
 
 				svp = av_fetch(ret_av, call_cntr, FALSE);
 
@@ -1052,7 +1074,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 		if (SRF_IS_FIRSTCALL())
 		{
 			MemoryContext oldcontext;
-			int			i;
 
 			funcctx = SRF_FIRSTCALL_INIT();
 			oldcontext = MemoryContextSwitchTo(funcctx->multi_call_memory_ctx);
@@ -1067,7 +1088,6 @@ plperl_func_handler(PG_FUNCTION_ARGS)
 			Datum		result;
 			AV		   *array;
 			SV		  **svp;
-			int			i;
 
 			array = (AV *) SvRV(perlret);
 			svp = av_fetch(array, funcctx->call_cntr, FALSE);
@@ -1157,6 +1177,8 @@ plperl_trigger_handler(PG_FUNCTION_ARGS)
 
 	/* Find or compile the function */
 	prodesc = compile_plperl_function(fcinfo->flinfo->fn_oid, true);
+
+	plperl_current_prodesc = prodesc;
 
 	/************************************************************
 	* Call the Perl function
@@ -1322,6 +1344,10 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		prodesc->proname = strdup(internal_proname);
 		prodesc->fn_xmin = HeapTupleHeaderGetXmin(procTup->t_data);
 		prodesc->fn_cmin = HeapTupleHeaderGetCmin(procTup->t_data);
+
+		/* Remember if function is STABLE/IMMUTABLE */
+		prodesc->fn_readonly =
+			(procStruct->provolatile != PROVOLATILE_VOLATILE);
 
 		/************************************************************
 		 * Lookup the pg_language tuple by Oid
@@ -1559,4 +1585,83 @@ plperl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc)
 	sv_catpv(output, "}");
 	output = perl_eval_pv(SvPV(output, PL_na), TRUE);
 	return output;
+}
+
+
+HV *
+plperl_spi_exec(char *query, int limit)
+{
+	HV		   *ret_hv;
+	int			spi_rv;
+
+	spi_rv = SPI_execute(query, plperl_current_prodesc->fn_readonly, limit);
+	ret_hv = plperl_spi_execute_fetch_result(SPI_tuptable, SPI_processed, spi_rv);
+
+	return ret_hv;
+}
+
+static HV  *
+plperl_hash_from_tuple(HeapTuple tuple, TupleDesc tupdesc)
+{
+	int			i;
+	char	   *attname;
+	char	   *attdata;
+
+	HV		   *array;
+
+	array = newHV();
+
+	for (i = 0; i < tupdesc->natts; i++)
+	{
+		/************************************************************
+		* Get the attribute name
+		************************************************************/
+		attname = tupdesc->attrs[i]->attname.data;
+
+		/************************************************************
+		* Get the attributes value
+		************************************************************/
+		attdata = SPI_getvalue(tuple, tupdesc, i + 1);
+		if (attdata)
+			hv_store(array, attname, strlen(attname), newSVpv(attdata, 0), 0);
+		else
+			hv_store(array, attname, strlen(attname), newSVpv("undef", 0), 0);
+	}
+	return array;
+}
+
+static HV  *
+plperl_spi_execute_fetch_result(SPITupleTable *tuptable, int processed, int status)
+{
+	HV		   *result;
+
+	result = newHV();
+
+	hv_store(result, "status", strlen("status"),
+			 newSVpv((char *) SPI_result_code_string(status), 0), 0);
+	hv_store(result, "processed", strlen("processed"),
+			 newSViv(processed), 0);
+
+	if (status == SPI_OK_SELECT)
+	{
+		if (processed)
+		{
+			AV		   *rows;
+			HV		   *row;
+			int			i;
+
+			rows = newAV();
+			for (i = 0; i < processed; i++)
+			{
+				row = plperl_hash_from_tuple(tuptable->vals[i], tuptable->tupdesc);
+				av_store(rows, i, newRV_noinc((SV *) row));
+			}
+			hv_store(result, "rows", strlen("rows"),
+					 newRV_noinc((SV *) rows), 0);
+		}
+	}
+
+	SPI_freetuptable(tuptable);
+
+	return result;
 }

@@ -10,7 +10,7 @@
  * Copyright (c) 2002-2004, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.31 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/prepare.c,v 1.32 2004/09/13 20:06:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -186,7 +186,7 @@ ExecuteQuery(ExecuteStmt *stmt, DestReceiver *dest, char *completionTag)
 	/*
 	 * Run the portal to completion.
 	 */
-	PortalStart(portal, paramLI);
+	PortalStart(portal, paramLI, ActiveSnapshot);
 
 	(void) PortalRun(portal, FETCH_ALL, dest, dest, completionTag);
 
@@ -544,7 +544,9 @@ ExplainExecuteQuery(ExplainStmt *stmt, TupOutputState *tstate)
 			}
 
 			/* Create a QueryDesc requesting no output */
-			qdesc = CreateQueryDesc(query, plan, None_Receiver,
+			qdesc = CreateQueryDesc(query, plan,
+									ActiveSnapshot, InvalidSnapshot,
+									None_Receiver,
 									paramLI, stmt->analyze);
 
 			ExplainOnePlan(qdesc, stmt, tstate);
