@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.51 1999/07/30 04:07:25 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/util/pathnode.c,v 1.52 1999/07/30 22:34:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -412,14 +412,18 @@ create_index_path(Query *root,
 		/*
 		 * Set selectivities of clauses used with index to the selectivity
 		 * of this index, subdividing the selectivity equally over each of
-		 * the clauses.
+		 * the clauses.  To the extent that index_selectivity() can make a
+		 * better estimate of the joint selectivity of these clauses than
+		 * the product of individual estimates from compute_clause_selec()
+		 * would be, this should give us a more accurate estimate of the
+		 * total selectivity of all the clauses.
 		 *
-		 * XXX Can this divide the selectivities in a better way?
-		 *
-		 * XXX In fact, why the heck are we doing this at all?  We already
-		 * set the cost for the indexpath, and it's far from obvious that
-		 * the selectivity of the path should have any effect on estimates
-		 * made for other contexts...
+		 * XXX If there is more than one useful index for this rel, and the
+		 * indexes can be used with different but overlapping groups of
+		 * restriction clauses, we may end up with too optimistic an estimate,
+		 * since set_clause_selectivities() will save the minimum of the
+		 * per-clause selectivity estimated with each index.  But that should
+		 * be fairly unlikely for typical index usage.
 		 */
 		clausesel = pow(selec, 1.0 / (double) length(restriction_clauses));
 		set_clause_selectivities(restriction_clauses, clausesel);

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.51 1999/07/24 23:21:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.52 1999/07/30 22:34:17 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,9 @@ make_one_rel(Query *root, List *rels)
 	if (levels_needed <= 0)
 		return NULL;
 
+	/*
+	 * Generate access paths for the base rels.
+	 */
 	set_base_rel_pathlist(root, rels);
 
 	if (levels_needed <= 1)
@@ -73,8 +76,10 @@ make_one_rel(Query *root, List *rels)
 	{
 
 		/*
-		 * This means that joins or sorts are required. set selectivities
-		 * of clauses that have not been set by an index.
+		 * This means that joins or sorts are required. Set selectivities
+		 * of any clauses not yet set.  (I think that this is redundant;
+		 * set_base_rel_pathlist should have set them all already.  But
+		 * a scan to check that they are all set doesn't cost much...)
 		 */
 		set_rest_relselec(root, rels);
 
@@ -131,11 +136,15 @@ set_base_rel_pathlist(Query *root, List *rels)
 
 		set_cheapest(rel, rel->pathlist);
 
-		/*
-		 * if there is a qualification of sequential scan the selec. value
-		 * is not set -- so set it explicitly -- Sunita
+		/* Set the selectivity estimates for any restriction clauses that
+		 * didn't get set as a byproduct of index-path selectivity estimation
+		 * (see create_index_path()).
 		 */
 		set_rest_selec(root, rel->restrictinfo);
+
+		/* Calculate the estimated size (post-restrictions) and tuple width
+		 * for this base rel.  This uses the restriction clause selectivities.
+		 */
 		rel->size = compute_rel_size(rel);
 		rel->width = compute_rel_width(rel);
 	}
