@@ -354,7 +354,7 @@ alter table atacc1 add constraint atacc_test1 unique (test);
 insert into atacc1 (test) values (3);
 drop table atacc1;
 
--- let's do one where the unique contsraint fails
+-- let's do one where the unique constraint fails
 -- because the column doesn't exist
 create table atacc1 ( test int );
 -- add a unique constraint (fails)
@@ -381,4 +381,74 @@ alter table atacc1 add unique (test2);
 -- should fail for @@ second one @@
 insert into atacc1 (test2, test) values (3, 3);
 insert into atacc1 (test2, test) values (2, 3);
+drop table atacc1;
+
+-- test primary key constraint adding
+
+create table atacc1 ( test int );
+-- add a primary key constraint
+alter table atacc1 add constraint atacc_test1 primary key (test);
+-- insert first value
+insert into atacc1 (test) values (2);
+-- should fail
+insert into atacc1 (test) values (2);
+-- should succeed
+insert into atacc1 (test) values (4);
+-- inserting NULL should fail
+insert into atacc1 (test) values(NULL);
+-- try adding a primary key oid constraint
+alter table atacc1 add constraint atacc_oid1 primary key(oid);
+drop table atacc1;
+
+-- let's do one where the primary key constraint fails when added
+create table atacc1 ( test int );
+-- insert soon to be failing rows
+insert into atacc1 (test) values (2);
+insert into atacc1 (test) values (2);
+-- add a primary key (fails)
+alter table atacc1 add constraint atacc_test1 primary key (test);
+insert into atacc1 (test) values (3);
+drop table atacc1;
+
+-- let's do another one where the primary key constraint fails when added
+create table atacc1 ( test int );
+-- insert soon to be failing row
+insert into atacc1 (test) values (NULL);
+-- add a primary key (fails)
+alter table atacc1 add constraint atacc_test1 primary key (test);
+insert into atacc1 (test) values (3);
+drop table atacc1;
+
+-- let's do one where the primary key constraint fails
+-- because the column doesn't exist
+create table atacc1 ( test int );
+-- add a primary key constraint (fails)
+alter table atacc1 add constraint atacc_test1 primary key (test1);
+drop table atacc1;
+
+-- something a little more complicated
+create table atacc1 ( test int, test2 int);
+-- add a primary key constraint
+alter table atacc1 add constraint atacc_test1 primary key (test, test2);
+-- try adding a second primary key - should fail
+alter table atacc1 add constraint atacc_test2 primary key (test);
+-- insert initial value
+insert into atacc1 (test,test2) values (4,4);
+-- should fail
+insert into atacc1 (test,test2) values (4,4);
+insert into atacc1 (test,test2) values (NULL,3);
+insert into atacc1 (test,test2) values (3, NULL);
+insert into atacc1 (test,test2) values (NULL,NULL);
+-- should all succeed
+insert into atacc1 (test,test2) values (4,5);
+insert into atacc1 (test,test2) values (5,4);
+insert into atacc1 (test,test2) values (5,5);
+drop table atacc1;
+
+-- lets do some naming tests
+create table atacc1 (test int, test2 int, primary key(test));
+-- only first should succeed
+insert into atacc1 (test2, test) values (3, 3);
+insert into atacc1 (test2, test) values (2, 3);
+insert into atacc1 (test2, test) values (1, NULL);
 drop table atacc1;
