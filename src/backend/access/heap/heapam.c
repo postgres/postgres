@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.115 2001/05/16 22:35:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.116 2001/05/17 15:22:12 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1166,7 +1166,6 @@ heap_fetch(Relation relation,
 	}
 	else
 	{
-
 		/*
 		 * All checks passed, so return the tuple as valid. Caller is now
 		 * responsible for releasing the buffer.
