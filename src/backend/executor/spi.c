@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface
  *
- * $Id: spi.c,v 1.36 1999/03/30 01:37:23 momjian Exp $
+ * $Id: spi.c,v 1.37 1999/05/13 07:28:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -602,18 +602,18 @@ spi_printtup(HeapTuple tuple, TupleDesc tupdesc, DestReceiver* self)
 static int
 _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 {
-	QueryTreeList *queryTree_list;
+	List	   *queryTree_list;
 	List	   *planTree_list;
+	List	   *queryTree_list_item;
 	List	   *ptlist;
 	QueryDesc  *qdesc;
 	Query	   *queryTree;
 	Plan	   *planTree;
 	EState	   *state;
-	int			qlen;
 	int			nargs = 0;
 	Oid		   *argtypes = NULL;
-	int			res;
-	int			i;
+	int			res = 0;
+	bool		islastquery;
 
 	/* Increment CommandCounter to see changes made by now */
 	CommandCounterIncrement();
@@ -628,18 +628,17 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		nargs = plan->nargs;
 		argtypes = plan->argtypes;
 	}
-	ptlist = planTree_list = (List *)
+	ptlist = planTree_list =
 		pg_parse_and_plan(src, argtypes, nargs, &queryTree_list, None, FALSE);
 
 	_SPI_current->qtlist = queryTree_list;
 
-	qlen = queryTree_list->len;
-	for (i = 0;; i++)
+	foreach (queryTree_list_item, queryTree_list)
 	{
-		queryTree = (Query *) (queryTree_list->qtrees[i]);
+		queryTree = (Query *) lfirst(queryTree_list_item);
 		planTree = lfirst(planTree_list);
-
 		planTree_list = lnext(planTree_list);
+		islastquery = (planTree_list == NIL); /* assume lists are same len */
 
 		if (queryTree->commandType == CMD_UTILITY)
 		{
@@ -659,32 +658,32 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 			if (plan == NULL)
 			{
 				ProcessUtility(queryTree->utilityStmt, None);
-				if (i < qlen - 1)
+				if (! islastquery)
 					CommandCounterIncrement();
 				else
 					return res;
 			}
-			else if (i >= qlen - 1)
+			else if (islastquery)
 				break;
 		}
 		else if (plan == NULL)
 		{
 			qdesc = CreateQueryDesc(queryTree, planTree,
-									(i < qlen - 1) ? None : SPI);
+									islastquery ? SPI : None);
 			state = CreateExecutorState();
-			res = _SPI_pquery(qdesc, state, (i < qlen - 1) ? 0 : tcount);
-			if (res < 0 || i >= qlen - 1)
+			res = _SPI_pquery(qdesc, state, islastquery ? tcount : 0);
+			if (res < 0 || islastquery)
 				return res;
 			CommandCounterIncrement();
 		}
 		else
 		{
 			qdesc = CreateQueryDesc(queryTree, planTree,
-									(i < qlen - 1) ? None : SPI);
-			res = _SPI_pquery(qdesc, NULL, (i < qlen - 1) ? 0 : tcount);
+									islastquery ? SPI : None);
+			res = _SPI_pquery(qdesc, NULL, islastquery ? tcount : 0);
 			if (res < 0)
 				return res;
-			if (i >= qlen - 1)
+			if (islastquery)
 				break;
 		}
 	}
@@ -693,23 +692,22 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 	plan->ptlist = ptlist;
 
 	return res;
-
 }
 
 static int
 _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 {
-	QueryTreeList *queryTree_list = plan->qtlist;
+	List	   *queryTree_list = plan->qtlist;
 	List	   *planTree_list = plan->ptlist;
+	List	   *queryTree_list_item;
 	QueryDesc  *qdesc;
 	Query	   *queryTree;
 	Plan	   *planTree;
 	EState	   *state;
 	int			nargs = plan->nargs;
-	int			qlen = queryTree_list->len;
-	int			res;
-	int			i,
-				k;
+	int			res = 0;
+	bool		islastquery;
+	int			k;
 
 	/* Increment CommandCounter to see changes made by now */
 	CommandCounterIncrement();
@@ -719,17 +717,17 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 	_SPI_current->tuptable = NULL;
 	_SPI_current->qtlist = NULL;
 
-	for (i = 0;; i++)
+	foreach (queryTree_list_item, queryTree_list)
 	{
-		queryTree = (Query *) (queryTree_list->qtrees[i]);
+		queryTree = (Query *) lfirst(queryTree_list_item);
 		planTree = lfirst(planTree_list);
-
 		planTree_list = lnext(planTree_list);
+		islastquery = (planTree_list == NIL); /* assume lists are same len */
 
 		if (queryTree->commandType == CMD_UTILITY)
 		{
 			ProcessUtility(queryTree->utilityStmt, None);
-			if (i < qlen - 1)
+			if (! islastquery)
 				CommandCounterIncrement();
 			else
 				return SPI_OK_UTILITY;
@@ -737,7 +735,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 		else
 		{
 			qdesc = CreateQueryDesc(queryTree, planTree,
-									(i < qlen - 1) ? None : SPI);
+									islastquery ? SPI : None);
 			state = CreateExecutorState();
 			if (nargs > 0)
 			{
@@ -756,15 +754,14 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 			}
 			else
 				state->es_param_list_info = NULL;
-			res = _SPI_pquery(qdesc, state, (i < qlen - 1) ? 0 : tcount);
-			if (res < 0 || i >= qlen - 1)
+			res = _SPI_pquery(qdesc, state, islastquery ? tcount : 0);
+			if (res < 0 || islastquery)
 				return res;
 			CommandCounterIncrement();
 		}
 	}
 
 	return res;
-
 }
 
 static int
@@ -955,12 +952,7 @@ _SPI_end_call(bool procmem)
 	 */
 	_SPI_curid--;
 
-	if (_SPI_current->qtlist)	/* free _SPI_plan allocations */
-	{
-		free(_SPI_current->qtlist->qtrees);
-		free(_SPI_current->qtlist);
-		_SPI_current->qtlist = NULL;
-	}
+	_SPI_current->qtlist = NULL;
 
 	if (procmem)				/* switch to the procedure memory context */
 	{							/* but free Executor memory before */
@@ -1000,7 +992,6 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 {
 	_SPI_plan  *newplan;
 	MemoryContext oldcxt = NULL;
-	int			i;
 
 	if (location == _SPI_CPLAN_PROCXT)
 		oldcxt = MemoryContextSwitchTo((MemoryContext)
@@ -1009,14 +1000,7 @@ _SPI_copy_plan(_SPI_plan *plan, int location)
 		oldcxt = MemoryContextSwitchTo(TopMemoryContext);
 
 	newplan = (_SPI_plan *) palloc(sizeof(_SPI_plan));
-	newplan->qtlist = (QueryTreeList *) palloc(sizeof(QueryTreeList));
-	newplan->qtlist->len = plan->qtlist->len;
-	newplan->qtlist->qtrees = (Query **) palloc(plan->qtlist->len *
-												sizeof(Query *));
-	for (i = 0; i < plan->qtlist->len; i++)
-		newplan->qtlist->qtrees[i] = (Query *)
-			copyObject(plan->qtlist->qtrees[i]);
-
+	newplan->qtlist = (List *) copyObject(plan->qtlist);
 	newplan->ptlist = (List *) copyObject(plan->ptlist);
 	newplan->nargs = plan->nargs;
 	if (plan->nargs > 0)

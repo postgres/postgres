@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.11 1998/09/01 04:37:35 momjian Exp $
+ * $Id: parse_node.h,v 1.12 1999/05/13 07:29:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,12 +18,6 @@
 #include <nodes/parsenodes.h>
 #include <parser/parse_type.h>
 #include <utils/rel.h>
-
-typedef struct QueryTreeList
-{
-	int			len;			/* number of queries */
-	Query	  **qtrees;
-} QueryTreeList;
 
 /* state information used during parse analysis */
 typedef struct ParseState

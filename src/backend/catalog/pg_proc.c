@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.27 1999/04/18 02:57:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.28 1999/05/13 07:28:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,7 @@ ProcedureCreate(char *procedureName,
 	Oid			languageObjectId;
 	Oid			typeObjectId;
 	List	   *x;
-	QueryTreeList *querytree_list;
+	List	   *querytree_list;
 	List	   *plan_list;
 	Oid			typev[8];
 	Oid			relid;

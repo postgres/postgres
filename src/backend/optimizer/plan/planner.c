@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.51 1999/05/12 15:01:37 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.52 1999/05/13 07:28:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -671,7 +671,7 @@ make_sortplan(List *tlist, List *sortcls, Plan *plannode)
  * XXX Why is this function in this module?
  */
 void
-pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
+pg_checkretval(Oid rettype, List *queryTreeList)
 {
 	Query	   *parse;
 	List	   *tlist;
@@ -686,7 +686,7 @@ pg_checkretval(Oid rettype, QueryTreeList *queryTreeList)
 	int			i;
 
 	/* find the final query */
-	parse = queryTreeList->qtrees[queryTreeList->len - 1];
+	parse = (Query *) nth(length(queryTreeList)-1, queryTreeList);
 
 	/*
 	 * test 1:	if the last query is a utility invocation, then there had

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.30 1999/05/12 15:01:50 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_clause.c,v 1.31 1999/05/13 07:28:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -752,23 +752,24 @@ List *
 transformUnionClause(List *unionClause, List *targetlist)
 {
 	List	   *union_list = NIL;
-	QueryTreeList *qlist;
-	int			i;
+	List	   *qlist,
+			   *qlist_item;
 
 	if (unionClause)
 	{
 		/* recursion */
 		qlist = parse_analyze(unionClause, NULL);
 
-		for (i = 0; i < qlist->len; i++)
+		foreach (qlist_item, qlist)
 		{
+			Query	   *query = (Query *) lfirst(qlist_item);
 			List	   *prev_target = targetlist;
 			List	   *next_target;
 
-			if (length(targetlist) != length(qlist->qtrees[i]->targetList))
+			if (length(targetlist) != length(query->targetList))
 				elog(ERROR, "Each UNION clause must have the same number of columns");
 
-			foreach(next_target, qlist->qtrees[i]->targetList)
+			foreach(next_target, query->targetList)
 			{
 				Oid			itype;
 				Oid			otype;
@@ -819,7 +820,7 @@ transformUnionClause(List *unionClause, List *targetlist)
 				}
 				prev_target = lnext(prev_target);
 			}
-			union_list = lappend(union_list, qlist->qtrees[i]);
+			union_list = lappend(union_list, query);
 		}
 		return union_list;
 	}

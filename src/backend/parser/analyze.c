@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *  $Id: analyze.c,v 1.102 1999/05/12 07:17:18 thomas Exp $
+ *  $Id: analyze.c,v 1.103 1999/05/13 07:28:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,17 +59,12 @@ List	   *extras_after = NIL;
  * all transformed to Query while the rest stays the same.
  *
  */
-QueryTreeList *
+List *
 parse_analyze(List *pl, ParseState *parentParseState)
 {
-	QueryTreeList *result;
+	List *result = NIL;
 	ParseState *pstate;
 	Query *parsetree;
-	int			i = 0;
-
-	result = malloc(sizeof(QueryTreeList));
-	result->len = length(pl);
-	result->qtrees = (Query **) malloc(result->len * sizeof(Query *));
 
 	while (pl != NIL)
 	{
@@ -78,35 +73,25 @@ parse_analyze(List *pl, ParseState *parentParseState)
 		if (pstate->p_target_relation != NULL)
 			heap_close(pstate->p_target_relation);
 
-		if (extras_before != NIL)
+		while (extras_before != NIL)
 		{
-			result->len += length(extras_before);
-			result->qtrees = (Query **) realloc(result->qtrees, result->len * sizeof(Query *));
-			while (extras_before != NIL)
-			{
-				result->qtrees[i++] = transformStmt(pstate, lfirst(extras_before));
-				if (pstate->p_target_relation != NULL)
-					heap_close(pstate->p_target_relation);
-				extras_before = lnext(extras_before);
-			}
+			result = lappend(result,
+							 transformStmt(pstate, lfirst(extras_before)));
+			if (pstate->p_target_relation != NULL)
+				heap_close(pstate->p_target_relation);
+			extras_before = lnext(extras_before);
 		}
-		extras_before = NIL;
 
-		result->qtrees[i++] = parsetree;
+		result = lappend(result, parsetree);
 
-		if (extras_after != NIL)
+		while (extras_after != NIL)
 		{
-			result->len += length(extras_after);
-			result->qtrees = (Query **) realloc(result->qtrees, result->len * sizeof(Query *));
-			while (extras_after != NIL)
-			{
-				result->qtrees[i++] = transformStmt(pstate, lfirst(extras_after));
-				if (pstate->p_target_relation != NULL)
-					heap_close(pstate->p_target_relation);
-				extras_after = lnext(extras_after);
-			}
+			result = lappend(result,
+							 transformStmt(pstate, lfirst(extras_after)));
+			if (pstate->p_target_relation != NULL)
+				heap_close(pstate->p_target_relation);
+			extras_after = lnext(extras_after);
 		}
-		extras_after = NIL;
 
 		pl = lnext(pl);
 		pfree(pstate);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.10 1999/02/13 23:21:51 momjian Exp $
+ * $Id: planner.h,v 1.11 1999/05/13 07:29:11 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,6 @@
 
 extern Plan *planner(Query *parse);
 extern Plan *union_planner(Query *parse);
-extern void pg_checkretval(Oid rettype, QueryTreeList *querytree_list);
+extern void pg_checkretval(Oid rettype, List *querytree_list);
 
 #endif	 /* PLANNER_H */

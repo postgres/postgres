@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.112 1999/05/11 09:06:31 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.113 1999/05/13 07:28:46 tgl Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -389,19 +389,17 @@ List *
 pg_parse_and_plan(char *query_string,	/* string to execute */
 				  Oid *typev,	/* argument types */
 				  int nargs,	/* number of arguments */
-				  QueryTreeList **queryListP,	/* pointer to the parse
-												 * trees */
+				  List **queryListP,	/* returned pointer to the parse trees */
 				  CommandDest dest,		/* where results should go */
 				  bool aclOverride)
 {
-	QueryTreeList *querytree_list;
-	int			i;
+	List	   *querytree_list = NIL;
 	List	   *plan_list = NIL;
-	Plan	   *plan;
-	int			j;
-	QueryTreeList *new_list;
-	List	   *rewritten = NIL;
+	List	   *querytree_list_item;
 	Query	   *querytree;
+	Plan	   *plan;
+	List	   *new_list;
+	List	   *rewritten;
 
 	if (DebugPrintQuery)
 	{
@@ -461,22 +459,17 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		ShowUsage();
 	}
 
-	/* new_list holds the rewritten queries */
-	new_list = (QueryTreeList *) malloc(sizeof(QueryTreeList));
-	new_list->len = querytree_list->len;
-	new_list->qtrees = (Query **) malloc(new_list->len * sizeof(Query *));
-
 	/* ----------------
 	 *	(2) rewrite the queries, as necessary
 	 *
-	 *  j counts queries output into new_list; the number of rewritten
-	 *  queries can be different from the original number.
+	 *  rewritten queries are collected in new_list.  Note there may be
+	 *  more or fewer than in the original list.
 	 * ----------------
 	 */
-	j = 0;
-	for (i = 0; i < querytree_list->len; i++)
+	new_list = NIL;
+	foreach (querytree_list_item, querytree_list)
 	{
-		querytree = querytree_list->qtrees[i];
+		querytree = (Query *) lfirst(querytree_list_item);
 
 		if (DebugPrintParse || DebugPPrintParse)
 		{
@@ -489,45 +482,18 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			}
 		}
 
-		/* don't rewrite utilites, just dump 'em into new_list */
 		if (querytree->commandType == CMD_UTILITY)
 		{
-			new_list->qtrees[j++] = querytree;
-			continue;
+			/* don't rewrite utilities, just dump 'em into new_list */
+			new_list = lappend(new_list, querytree);
 		}
-
-		/* rewrite regular queries */
-		rewritten = QueryRewrite(querytree);
-
-		if (rewritten != NIL)
+		else
 		{
-			int			len,
-						k;
-
-			len = length(rewritten);
-			if (len == 1)
-				new_list->qtrees[j++] = (Query *) lfirst(rewritten);
-			else
-			{
-				/* rewritten queries are longer than original query */
-				/* grow the new_list to accommodate */
-				new_list->len += len - 1;		/* - 1 because originally
-												 * we allocated one space
-												 * for the query */
-				new_list->qtrees = realloc(new_list->qtrees,
-										   new_list->len * sizeof(Query *));
-				for (k = 0; k < len; k++)
-					new_list->qtrees[j++] = (Query *) nth(k, rewritten);
-			}
+			/* rewrite regular queries */
+			rewritten = QueryRewrite(querytree);
+			new_list = nconc(new_list, rewritten);
 		}
 	}
-
-	/* Update new_list with correct final length */
-	new_list->len = j;
-
-	/* we're done with the original lists, free it */
-	free(querytree_list->qtrees);
-	free(querytree_list);
 
 	querytree_list = new_list;
 
@@ -536,18 +502,18 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 	 */
 	if (aclOverride)
 	{
-		for (i = 0; i < querytree_list->len; i++)
+		foreach (querytree_list_item, querytree_list)
 		{
-			RangeTblEntry *rte;
 			List	   *l;
 
-			querytree = querytree_list->qtrees[i];
+			querytree = (Query *) lfirst(querytree_list_item);
+
 			if (querytree->commandType == CMD_UTILITY)
 				continue;
 
 			foreach(l, querytree->rtable)
 			{
-				rte = (RangeTblEntry *) lfirst(l);
+				RangeTblEntry *rte = (RangeTblEntry *) lfirst(l);
 
 				rte->skipAcl = TRUE;
 			}
@@ -559,24 +525,26 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		if (DebugPPrintRewrittenParsetree) {
 			TPRINTF(TRACE_PRETTY_REWRITTEN, "after rewriting:");
 
-			for (i = 0; i < querytree_list->len; i++)
+			foreach (querytree_list_item, querytree_list)
 			{
-				nodeDisplay(querytree_list->qtrees[i]);
+				querytree = (Query *) lfirst(querytree_list_item);
+				nodeDisplay(querytree);
 				printf("\n");
 			}
 		} else {
 			TPRINTF(TRACE_REWRITTEN, "after rewriting:");
 
-			for (i = 0; i < querytree_list->len; i++)
+			foreach (querytree_list_item, querytree_list)
 			{
-				printf("\n%s\n\n", nodeToString(querytree_list->qtrees[i]));
+				querytree = (Query *) lfirst(querytree_list_item);
+				printf("\n%s\n\n", nodeToString(querytree));
 			}
 		}
 	}
 
-	for (i = 0; i < querytree_list->len; i++)
+	foreach (querytree_list_item, querytree_list)
 	{
-		querytree = querytree_list->qtrees[i];
+		querytree = (Query *) lfirst(querytree_list_item);
 
 		/*
 		 * For each query that isn't a utility invocation, generate a
@@ -600,11 +568,9 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 				elog(NOTICE, "(transaction aborted): %s",
 					 "queries ignored until END");
 
-				free(querytree_list->qtrees);
-				free(querytree_list);
 				if (queryListP)
-					*queryListP = (QueryTreeList *) NULL;
-				return (List *) NULL;
+					*queryListP = NIL;
+				return NIL;
 			}
 
 			if (ShowPlannerStats)
@@ -638,8 +604,6 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 			}
 #endif
 		}
-#ifdef FUNC_UTIL_PATCH
-
 		/*
 		 * If the command is an utility append a null plan. This is needed
 		 * to keep the plan_list aligned with the querytree_list or the
@@ -647,18 +611,6 @@ pg_parse_and_plan(char *query_string,	/* string to execute */
 		 */
 		else
 			plan_list = lappend(plan_list, NULL);
-#endif
-	}
-
-	/* ----------
-	 * Check if the rewriting had thrown away everything
-	 * ----------
-	 */
-	if (querytree_list->len == 0)
-	{
-		free(querytree_list->qtrees);
-		free(querytree_list);
-		querytree_list = NULL;
 	}
 
 	if (queryListP)
@@ -702,36 +654,39 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 				   bool aclOverride)	/* to give utility commands power
 										 * of superusers */
 {
+	List	   *querytree_list;
 	List	   *plan_list;
-	Plan	   *plan;
 	Query	   *querytree;
-	int			i,
-				j;
-	QueryTreeList *querytree_list;
+	Plan	   *plan;
+	int			j;
 
 	/* plan the queries */
-	plan_list = pg_parse_and_plan(query_string, NULL, 0, &querytree_list, dest, aclOverride);
+	plan_list = pg_parse_and_plan(query_string, NULL, 0,
+								  &querytree_list, dest, aclOverride);
 
+	/* if we got a cancel signal whilst planning, quit */
 	if (QueryCancel)
 		CancelQuery();
 
-	/* pg_parse_and_plan could have failed */
-	if (querytree_list == NULL)
-		return;
+	/* OK, do it to it! */
 
-	for (i = 0; i < querytree_list->len; i++)
+	/* NOTE: we do not use "foreach" here because we want to be sure
+	 * the list pointers have been advanced before the query is executed.
+	 * We need to do that because VACUUM has a nasty little habit of doing
+	 * CommitTransactionCommand at startup, and that will release the
+	 * memory holding our parse/plan lists :-(.  This needs a better
+	 * solution --- currently, the code will crash if someone submits
+	 * "vacuum; something-else" in a single query string.  But memory
+	 * allocation needs redesigned anyway, so this will have to do for now.
+	 */
+
+	while (querytree_list)
 	{
-		querytree = querytree_list->qtrees[i];
-
-#ifdef FUNC_UTIL_PATCH
-
-		/*
-		 * Advance on the plan_list in every case.	Now the plan_list has
-		 * the same length of the querytree_list.  DZ - 30-8-1996
-		 */
+		querytree = (Query *) lfirst(querytree_list);
+		querytree_list = lnext(querytree_list);
 		plan = (Plan *) lfirst(plan_list);
 		plan_list = lnext(plan_list);
-#endif
+
 		if (querytree->commandType == CMD_UTILITY)
 		{
 			/* ----------------
@@ -747,19 +702,9 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 				TPRINTF(TRACE_VERBOSE, "ProcessUtility");
 
 			ProcessUtility(querytree->utilityStmt, dest);
-
 		}
 		else
 		{
-#ifndef FUNC_UTIL_PATCH
-
-			/*
-			 * Moved before the if.  DZ - 30-8-1996
-			 */
-			plan = (Plan *) lfirst(plan_list);
-			plan_list = lnext(plan_list);
-#endif
-
 #ifdef INDEXSCAN_PATCH
 
 			/*
@@ -810,12 +755,8 @@ pg_exec_query_dest(char *query_string,	/* string to execute */
 		 * visible to subsequent ones.
 		 */
 
-		if (querytree_list)
-			CommandCounterIncrement();
+		CommandCounterIncrement();
 	}
-
-	free(querytree_list->qtrees);
-	free(querytree_list);
 }
 
 /* --------------------------------
@@ -1544,7 +1485,7 @@ PostgresMain(int argc, char *argv[], int real_argc, char *real_argv[])
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.112 $ $Date: 1999/05/11 09:06:31 $\n");
+		puts("$Revision: 1.113 $ $Date: 1999/05/13 07:28:46 $\n");
 	}
 
 	/* ----------------

@@ -3,7 +3,7 @@
  * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.2 1999/02/13 23:21:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.3 1999/05/13 07:28:58 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,7 +15,7 @@
 
 typedef struct
 {
-	QueryTreeList *qtlist;		/* malloced */
+	List	   *qtlist;
 	uint32		processed;		/* by Executor */
 	SPITupleTable *tuptable;
 	Portal		portal;			/* portal per procedure */
@@ -25,7 +25,7 @@ typedef struct
 
 typedef struct
 {
-	QueryTreeList *qtlist;
+	List	   *qtlist;
 	List	   *ptlist;
 	int			nargs;
 	Oid		   *argtypes;

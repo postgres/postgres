@@ -3758,7 +3758,7 @@ $\ldots$/src/backend/tcop/postgres.c}.
   List *
   pg_parse_and_plan(char *query_string, Oid *typev,
                     int nargs, 
-                    QueryTreeList **queryListP,
+                    List **queryListP,
                     CommandDest dest) 
   {
                             .
@@ -4032,7 +4032,7 @@ instead.
 
     if(IsA(tree, SelectStmt))
     {
-      QueryTreeList *qtree;
+      List *qtrees;
 
       /* If we get to the tree given in first_select 
        * return parsetree instead of performing 
@@ -4044,9 +4044,8 @@ instead.
       else 
       {    
         /* transform the unprocessed Query nodes */ 
-        qtree = 
-             parse_analyze(lcons(tree, NIL), NULL);
-        result = (Node *)qtree->qtrees[0];      
+        qtrees = parse_analyze(lcons(tree, NIL), NULL);
+        result = (Node *) lfirst(qtrees);
       }      
     }  
     if(IsA(tree,Expr))

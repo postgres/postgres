@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.79 1999/05/10 04:02:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.80 1999/05/13 07:28:26 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1498,9 +1498,9 @@ StoreAttrDefault(Relation rel, AttrDefault *attrdef)
 	char		str[MAX_PARSE_BUFFER];
 	char		cast[2 * NAMEDATALEN] = {0};
 	Form_pg_attribute atp = rel->rd_att->attrs[attrdef->adnum - 1];
-	QueryTreeList *queryTree_list;
-	Query	   *query;
+	List	   *queryTree_list;
 	List	   *planTree_list;
+	Query	   *query;
 	TargetEntry *te;
 	Resdom	   *resdom;
 	Node	   *expr;
@@ -1522,9 +1522,10 @@ start:;
 			 "select %s%s from \"%.*s\"", attrdef->adsrc, cast,
 			 NAMEDATALEN, rel->rd_rel->relname.data);
 	setheapoverride(true);
-	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None, FALSE);
+	planTree_list = pg_parse_and_plan(str, NULL, 0,
+									  &queryTree_list, None, FALSE);
 	setheapoverride(false);
-	query = (Query *) (queryTree_list->qtrees[0]);
+	query = (Query *) lfirst(queryTree_list);
 
 	if (length(query->rtable) > 1 ||
 		flatten_tlist(query->targetList) != NIL)
@@ -1582,9 +1583,9 @@ static void
 StoreRelCheck(Relation rel, ConstrCheck *check)
 {
 	char		str[MAX_PARSE_BUFFER];
-	QueryTreeList *queryTree_list;
-	Query	   *query;
+	List	   *queryTree_list;
 	List	   *planTree_list;
+	Query	   *query;
 	Plan	   *plan;
 	List	   *qual;
 	char	   *ccbin;
@@ -1603,9 +1604,10 @@ StoreRelCheck(Relation rel, ConstrCheck *check)
 			"select 1 from \"%.*s\" where %s",
 			NAMEDATALEN, rel->rd_rel->relname.data, check->ccsrc);
 	setheapoverride(true);
-	planTree_list = (List *) pg_parse_and_plan(str, NULL, 0, &queryTree_list, None, FALSE);
+	planTree_list = pg_parse_and_plan(str, NULL, 0,
+									  &queryTree_list, None, FALSE);
 	setheapoverride(false);
-	query = (Query *) (queryTree_list->qtrees[0]);
+	query = (Query *) lfirst(queryTree_list);
 
 	if (length(query->rtable) > 1)
 		elog(ERROR, "Only relation '%.*s' can be referenced",

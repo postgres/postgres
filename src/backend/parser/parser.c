@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.37 1999/02/13 23:17:10 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parser.c,v 1.38 1999/05/13 07:28:39 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,34 +20,32 @@
 #include "parser/parse_node.h"
 #include "parser/parser.h"
 
+#if defined(FLEX_SCANNER)
+extern void DeleteBuffer(void);
+#endif	 /* FLEX_SCANNER */
+
 char	   *parseString;		/* the char* which holds the string to be
 								 * parsed */
-List	   *parsetree = NIL;
+List	   *parsetree;			/* result of parsing is left here */
 
 #ifdef SETS_FIXED
 static void fixupsets();
 static void define_sets();
-
 #endif
+
 /*
  * parser-- returns a list of parse trees
- *
- *	CALLER is responsible for free'ing the list returned
  */
-QueryTreeList *
+List *
 parser(char *str, Oid *typev, int nargs)
 {
-	QueryTreeList *queryList;
+	List	   *queryList;
 	int			yyresult;
-
-#if defined(FLEX_SCANNER)
-	extern void DeleteBuffer(void);
-
-#endif	 /* FLEX_SCANNER */
 
 	init_io();
 
 	parseString = pstrdup(str);
+	parsetree = NIL;			/* in case parser forgets to set it */
 
 	parser_init(typev, nargs);
 	yyresult = yyparse();
@@ -59,7 +57,7 @@ parser(char *str, Oid *typev, int nargs)
 	clearerr(stdin);
 
 	if (yyresult)				/* error */
-		return (QueryTreeList *) NULL;
+		return (List *) NULL;
 
 	queryList = parse_analyze(parsetree, NULL);
 

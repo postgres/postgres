@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.18 1999/04/20 02:19:55 tgl Exp $
+ * $Id: tcopprot.h,v 1.19 1999/05/13 07:29:22 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -41,8 +41,8 @@ extern bool InError;
 
 #ifndef BOOTSTRAP_INCLUDE
 extern List *pg_parse_and_plan(char *query_string, Oid *typev, int nargs,
-				  QueryTreeList **queryListP, CommandDest dest,
-				  bool aclOverride);
+							   List **queryListP, CommandDest dest,
+							   bool aclOverride);
 extern void pg_exec_query(char *query_string);
 extern void pg_exec_query_acl_override(char *query_string);
 extern void
