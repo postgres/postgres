@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.52 2004/02/10 01:55:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/localbuf.c,v 1.53 2004/04/21 18:06:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -36,19 +36,25 @@ static int	nextFreeLocalBuf = 0;
 /*
  * LocalBufferAlloc -
  *	  allocate a local buffer. We do round robin allocation for now.
+ *
+ * API is similar to bufmgr.c's BufferAlloc, except that we do not need
+ * to have the BufMgrLock since this is all local.  Also, IO_IN_PROGRESS
+ * does not get set.
  */
 BufferDesc *
 LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 {
+	BufferTag	newTag;			/* identity of requested block */
 	int			i;
-	BufferDesc *bufHdr = NULL;
+	BufferDesc *bufHdr;
+
+	INIT_BUFFERTAG(newTag, reln, blockNum);
 
 	/* a low tech search for now -- not optimized for scans */
 	for (i = 0; i < NLocBuffer; i++)
 	{
-		if (LocalBufferDescriptors[i].tag.rnode.relNode ==
-			reln->rd_node.relNode &&
-			LocalBufferDescriptors[i].tag.blockNum == blockNum)
+		bufHdr = &LocalBufferDescriptors[i];
+		if (BUFFERTAGS_EQUAL(bufHdr->tag, newTag))
 		{
 #ifdef LBDEBUG
 			fprintf(stderr, "LB ALLOC (%u,%d) %d\n",
@@ -56,8 +62,14 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 #endif
 
 			LocalRefCount[i]++;
-			*foundPtr = TRUE;
-			return &LocalBufferDescriptors[i];
+			if (bufHdr->flags & BM_VALID)
+				*foundPtr = TRUE;
+			else
+			{
+				/* Previous read attempt must have failed; try again */
+				*foundPtr = FALSE;
+			}
+			return bufHdr;
 		}
 	}
 
@@ -67,6 +79,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 #endif
 
 	/* need to get a new buffer (round robin for now) */
+	bufHdr = NULL;
 	for (i = 0; i < NLocBuffer; i++)
 	{
 		int			b = (nextFreeLocalBuf + i) % NLocBuffer;
@@ -108,7 +121,7 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	 *
 	 * Note this path cannot be taken for a buffer that was previously in
 	 * use, so it's okay to do it (and possibly error out) before marking
-	 * the buffer as valid.
+	 * the buffer as not dirty.
 	 */
 	if (bufHdr->data == (SHMEM_OFFSET) 0)
 	{
@@ -135,9 +148,8 @@ LocalBufferAlloc(Relation reln, BlockNumber blockNum, bool *foundPtr)
 	/*
 	 * it's all ours now.
 	 */
-	bufHdr->tag.rnode = reln->rd_node;
-	bufHdr->tag.blockNum = blockNum;
-	bufHdr->flags &= ~BM_DIRTY;
+	bufHdr->tag = newTag;
+	bufHdr->flags &= ~(BM_VALID | BM_DIRTY | BM_JUST_DIRTIED | BM_IO_ERROR);
 	bufHdr->cntxDirty = false;
 
 	*foundPtr = FALSE;

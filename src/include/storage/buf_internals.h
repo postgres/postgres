@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.69 2004/04/19 23:27:17 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/storage/buf_internals.h,v 1.70 2004/04/21 18:06:29 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,13 +24,12 @@
 /*
  * Flags for buffer descriptors
  */
-#define BM_DIRTY				(1 << 0)
-#define BM_VALID				(1 << 1)
-#define BM_DELETED				(1 << 2)
-#define BM_IO_IN_PROGRESS		(1 << 3)
-#define BM_IO_ERROR				(1 << 4)
-#define BM_JUST_DIRTIED			(1 << 5)
-#define BM_PIN_COUNT_WAITER		(1 << 6)
+#define BM_DIRTY				(1 << 0) /* data needs writing */
+#define BM_VALID				(1 << 1) /* data is valid */
+#define BM_IO_IN_PROGRESS		(1 << 2) /* read or write in progress */
+#define BM_IO_ERROR				(1 << 3) /* previous I/O failed */
+#define BM_JUST_DIRTIED			(1 << 4) /* dirtied since write started */
+#define BM_PIN_COUNT_WAITER		(1 << 5) /* have waiter for sole pin */
 
 typedef bits16 BufFlags;
 
@@ -54,22 +53,21 @@ typedef struct buftag
 
 #define CLEAR_BUFFERTAG(a) \
 ( \
-	(a)->rnode.tblNode = InvalidOid, \
-	(a)->rnode.relNode = InvalidOid, \
-	(a)->blockNum = InvalidBlockNumber \
+	(a).rnode.tblNode = InvalidOid, \
+	(a).rnode.relNode = InvalidOid, \
+	(a).blockNum = InvalidBlockNumber \
 )
 
 #define INIT_BUFFERTAG(a,xx_reln,xx_blockNum) \
 ( \
-	(a)->blockNum = (xx_blockNum), \
-	(a)->rnode = (xx_reln)->rd_node \
+	(a).rnode = (xx_reln)->rd_node, \
+	(a).blockNum = (xx_blockNum) \
 )
 
 #define BUFFERTAGS_EQUAL(a,b) \
 ( \
-	(a)->rnode.tblNode == (b)->rnode.tblNode && \
-	(a)->rnode.relNode == (b)->rnode.relNode && \
-	(a)->blockNum == (b)->blockNum \
+	RelFileNodeEquals((a).rnode, (b).rnode) && \
+	(a).blockNum == (b).blockNum \
 )
 
 /*

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.75 2004/02/04 01:24:53 wieck Exp $
+ * $PostgreSQL: pgsql/src/include/storage/bufmgr.h,v 1.76 2004/04/21 18:06:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -142,7 +142,7 @@ extern long *LocalRefCount;
  * prototypes for functions in bufmgr.c
  */
 extern Buffer ReadBuffer(Relation reln, BlockNumber blockNum);
-extern int	ReleaseBuffer(Buffer buffer);
+extern void ReleaseBuffer(Buffer buffer);
 extern void WriteBuffer(Buffer buffer);
 extern void WriteNoReleaseBuffer(Buffer buffer);
 extern Buffer ReleaseAndReadBuffer(Buffer buffer, Relation relation,

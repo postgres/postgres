@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.63 2004/04/19 23:27:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/buf_init.c,v 1.64 2004/04/21 18:06:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -133,11 +133,11 @@ InitBufferPool(void)
 
 			buf->bufNext = i + 1;
 
-			CLEAR_BUFFERTAG(&(buf->tag));
+			CLEAR_BUFFERTAG(buf->tag);
 			buf->buf_id = i;
 
 			buf->data = MAKE_OFFSET(block);
-			buf->flags = (BM_DELETED | BM_VALID);
+			buf->flags = 0;
 			buf->refcount = 0;
 			buf->io_in_progress_lock = LWLockAssign();
 			buf->cntx_lock = LWLockAssign();

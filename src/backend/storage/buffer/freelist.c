@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.42 2004/04/19 23:27:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/buffer/freelist.c,v 1.43 2004/04/21 18:06:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -501,7 +501,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 
 		/* Assert that the buffer remembered in cdb_found is the one */
 		/* the buffer manager is currently faulting in */
-		Assert(BUFFERTAGS_EQUAL(&(cdb_found->buf_tag), newTag));
+		Assert(BUFFERTAGS_EQUAL(cdb_found->buf_tag, *newTag));
 		
 		if (cdb_replace_index >= 0)
 		{
@@ -513,7 +513,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			Assert(cdb_replace->list == STRAT_LIST_T1 || 
 				   cdb_replace->list == STRAT_LIST_T2);
 			Assert(cdb_replace->buf_id == buf->buf_id);
-			Assert(BUFFERTAGS_EQUAL(&(cdb_replace->buf_tag), &(buf->tag)));
+			Assert(BUFFERTAGS_EQUAL(cdb_replace->buf_tag, buf->tag));
 
 			/*
 			 * Under normal circumstances we move the evicted T list entry to
@@ -606,7 +606,7 @@ StrategyReplaceBuffer(BufferDesc *buf, BufferTag *newTag,
 			Assert(cdb_replace->list == STRAT_LIST_T1 || 
 				   cdb_replace->list == STRAT_LIST_T2);
 			Assert(cdb_replace->buf_id == buf->buf_id);
-			Assert(BUFFERTAGS_EQUAL(&(cdb_replace->buf_tag), &(buf->tag)));
+			Assert(BUFFERTAGS_EQUAL(cdb_replace->buf_tag, buf->tag));
 
 			if (cdb_replace->list == STRAT_LIST_T1)
 			{
@@ -673,7 +673,7 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	BufferStrategyCDB  *cdb;
 
 	/* The buffer cannot be dirty or pinned */
-	Assert(!(buf->flags & BM_DIRTY));
+	Assert(!(buf->flags & BM_DIRTY) || !(buf->flags & BM_VALID));
 	Assert(buf->refcount == 0);
 
 	/*
@@ -695,16 +695,18 @@ StrategyInvalidateBuffer(BufferDesc *buf)
 	 * Clear out the CDB's buffer tag and association with the buffer
 	 * and add it to the list of unused CDB's
 	 */
-	CLEAR_BUFFERTAG(&(cdb->buf_tag));
+	CLEAR_BUFFERTAG(cdb->buf_tag);
 	cdb->buf_id = -1;
 	cdb->next = StrategyControl->listUnusedCDB;
 	StrategyControl->listUnusedCDB = cdb_id;
 
 	/*
 	 * Clear out the buffer's tag and add it to the list of
-	 * currently unused buffers.
+	 * currently unused buffers.  We must do this to ensure that linear
+	 * scans of the buffer array don't think the buffer is valid.
 	 */
-	CLEAR_BUFFERTAG(&(buf->tag));
+	CLEAR_BUFFERTAG(buf->tag);
+	buf->flags &= ~(BM_VALID | BM_DIRTY);
 	buf->bufNext = StrategyControl->listFreeBuffers;
 	StrategyControl->listFreeBuffers = buf->buf_id;
 }
@@ -864,7 +866,7 @@ StrategyInitialize(bool init)
 		{
 			StrategyCDB[i].next = i + 1;
 			StrategyCDB[i].list = STRAT_LIST_UNUSED;
-			CLEAR_BUFFERTAG(&(StrategyCDB[i].buf_tag));
+			CLEAR_BUFFERTAG(StrategyCDB[i].buf_tag);
 			StrategyCDB[i].buf_id = -1;
 		}
 		StrategyCDB[NBuffers * 2 - 1].next = -1;
