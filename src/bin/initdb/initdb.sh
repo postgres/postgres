@@ -26,7 +26,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.75 1999/12/18 04:04:24 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.76 1999/12/20 05:39:40 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ then
     exit 1
 fi
 
-EffectiveUser=`id -n -u 2> /dev/null` || EffectiveUser=`whoami 2> /dev/null`
+EffectiveUser=`id -n -u 2>/dev/null || whoami 2>/dev/null`
 TEMPFILE="/tmp/initdb.$$"
 
 #
