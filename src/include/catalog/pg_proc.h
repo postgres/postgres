@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.7 1996/11/14 21:39:14 scrappy Exp $
+ * $Id: pg_proc.h,v 1.8 1997/03/04 05:32:11 scrappy Exp $
  *
  * NOTES
  *    The script catalog/genbki.sh reads this file and generates .bki
@@ -757,6 +757,17 @@ DATA(insert OID =  1238 (  texticregexeq       PGUID 11 f t f 2 f 16 "25 25" 100
 DATA(insert OID =  1239 (  texticregexne       PGUID 11 f t f 2 f 16 "25 25" 100 0 1 0  foo bar ));
 DATA(insert OID =  1240 (  nameicregexeq     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
 DATA(insert OID =  1241 (  nameicregexne     PGUID 11 f t f 2 f 16 "19 25" 100 0 0 100  foo bar ));
+
+/* Oracle Compatibility Related Functions - By Edmund Mergl <E.Mergl@bawue.de> */
+DATA(insert OID =  1260 (  lower             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1261 (  upper             PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1262 (  initcap           PGUID 11 f t f 1 f 25 "25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1263 (  lpad              PGUID 11 f t f 3 f 25 "25 23 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1264 (  rpad              PGUID 11 f t f 3 f 25 "25 23 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1265 (  ltrim             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1266 (  rtrim             PGUID 11 f t f 2 f 25 "25 25" 100 0 0 100  foo bar ));
+DATA(insert OID =  1267 (  substr            PGUID 11 f t f 3 f 25 "25 23 23" 100 0 0 100  foo bar ));
+DATA(insert OID =  1268 (  translate         PGUID 11 f t f 3 f 25 "25 18 18" 100 0 0 100  foo bar ));
 
 /* 
  * prototypes for functions pg_proc.c 

@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.4 1996/11/04 04:00:48 momjian Exp $
+ * $Id: memutils.h,v 1.5 1997/03/04 05:32:26 scrappy Exp $
  *
  * NOTES
  *    some of the information in this file will be moved to
@@ -243,8 +243,6 @@ extern void AllocSetDump(AllocSet set);
  * 
  */
 typedef int	LibCCopyLength;
-
-typedef 	CLibCopyLength;
 
 /*
  * MemoryCopy --
