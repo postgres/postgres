@@ -11,7 +11,7 @@
 <surname>Momjian</surname>
 </author>
 </authorgroup>
-<date>1998-06-01</date>
+<date>1998-06-09</date>
 </docinfo>
 -->
 
@@ -42,8 +42,12 @@
 	system.  This is all performed without having to allocate a lock for
 	every row like traditional database systems.  So, basically, we no
 	longer are restricted by simple table-level locking;
-	we have something better than row-level
-	locking.
+	we have something better than row-level locking.
+       </para>
+       <para>
+	Another big benefit of MVCC is that <application>pg_dump</application>
+ 	can now generate consistent backups of live, active databases, without
+	blocking active transactions.
        </para>
       </listitem>
      </varlistentry>
@@ -154,10 +158,12 @@
     <title>Migration to v6.5</title>
 
     <para>
-     A dump/restore using <application>pg_dump</application> 
-     or <application>pg_dumpall</application>
+     A dump/restore using <application>pg_dump</application>
      is required for those wishing to migrate data from any
      previous release of <productname>Postgres</productname>.
+     <application>pg_upgrade</application> can <emphasis>not</emphasis>
+     be used to upgrade to this release because the on-disk structure
+     of the tables has changed compared to previous releases.
     </para>
 
     <para>
@@ -365,6 +371,7 @@ fix for large object memory leakage, fix for pg_dumping(Tom)
 INET type now respects netmask for comparisons
 Make VACUUM ANALYZE only use a readlock(Vadim)
 Allow VIEWs on UNIONS(Jan)
+pg_dump now can generate consistent snapshots on active databases(Vadim)
 
 Source Tree Changes
 -------------------
