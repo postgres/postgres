@@ -11,7 +11,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.4 2002/09/27 17:51:10 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/clusterdb,v 1.5 2002/10/16 03:24:09 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -176,7 +176,7 @@ do
 		idx=`echo $tabs | cut -d: -f3`
 		query="$query CLUSTER $idx ON $nspc.$tab;"
 	done
-	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "$query" -d $db
+	${PATHNAME}psql $PSQLOPT $ECHOOPT -c "SET autocommit = 'on';$query" -d $db
 	if [ "$?" -ne 0 ]
 	then
 		echo "$CMDNAME: While clustering $db, the following failed: $query" 1>&2

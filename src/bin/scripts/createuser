@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.26 2002/06/20 20:29:42 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createuser,v 1.27 2002/10/16 03:24:09 momjian Exp $
 #
 # Note - this should NOT be setuid.
 #
@@ -253,7 +253,7 @@ SUBQUERY=
 [ "$CanAddUser" = t ] &&  QUERY="$QUERY CREATEUSER"
 [ "$CanAddUser" = f ] &&  QUERY="$QUERY NOCREATEUSER"
 
-${PATHNAME}psql -c "$QUERY" -d template1 $PSQLOPT
+${PATHNAME}psql -c "SET autocommit = 'on';$QUERY" -d template1 $PSQLOPT
 if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: creation of user \"$NewUser\" failed" 1>&2
 	exit 1

@@ -12,7 +12,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.25 2002/09/03 21:45:43 petere Exp $
+#    $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createdb,v 1.26 2002/10/16 03:24:09 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -189,7 +189,7 @@ withstring=
 [ "$TEMPLATE" ] &&   withstring="$withstring TEMPLATE = \"$TEMPLATE\""
 [ "$withstring" ] && withstring=" WITH$withstring"
 
-${PATHNAME}psql $PSQLOPT -d template1 -c "CREATE DATABASE \"$dbname\"$withstring"
+${PATHNAME}psql $PSQLOPT -d template1 -c "SET autocommit = 'on';CREATE DATABASE \"$dbname\"$withstring"
 if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: database creation failed" 1>&2
 	exit 1
@@ -200,7 +200,7 @@ fi
 
 dbcomment=`echo "$dbcomment" | sed "s/'/\\\\\'/g"`
 
-${PATHNAME}psql $PSQLOPT -d "$dbname" -c "COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
+${PATHNAME}psql $PSQLOPT -d "$dbname" -c "SET autocommit = 'on';COMMENT ON DATABASE \"$dbname\" IS '$dbcomment'"
 if [ "$?" -ne 0 ]; then
 	echo "$CMDNAME: comment creation failed (database was created)" 1>&2
 	exit 1
