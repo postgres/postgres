@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.92 2003/09/28 23:37:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/plpgsql/src/pl_exec.c,v 1.93 2003/10/01 21:47:42 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -52,7 +52,6 @@
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "utils/syscache.h"
 
 
 static const char *const raise_skip_msg = "RAISE";
@@ -151,6 +150,9 @@ static void exec_eval_datum(PLpgSQL_execstate * estate,
 static int exec_eval_integer(PLpgSQL_execstate * estate,
 					PLpgSQL_expr * expr,
 					bool *isNull);
+static bool exec_eval_boolean(PLpgSQL_execstate * estate,
+							  PLpgSQL_expr * expr,
+							  bool *isNull);
 static Datum exec_eval_expr(PLpgSQL_execstate * estate,
 			   PLpgSQL_expr * expr,
 			   bool *isNull,
@@ -164,6 +166,7 @@ static void exec_move_row(PLpgSQL_execstate * estate,
 static HeapTuple make_tuple_from_row(PLpgSQL_execstate * estate,
 									 PLpgSQL_row * row,
 									 TupleDesc tupdesc);
+static char *convert_value_to_string(Datum value, Oid valtype);
 static Datum exec_cast_value(Datum value, Oid valtype,
 				Oid reqtype,
 				FmgrInfo *reqinput,
@@ -1111,14 +1114,13 @@ exec_stmt_getdiag(PLpgSQL_execstate * estate, PLpgSQL_stmt_getdiag * stmt)
 static int
 exec_stmt_if(PLpgSQL_execstate * estate, PLpgSQL_stmt_if * stmt)
 {
-	Datum		value;
-	Oid			valtype;
+	bool		value;
 	bool		isnull = false;
 
-	value = exec_eval_expr(estate, stmt->cond, &isnull, &valtype);
+	value = exec_eval_boolean(estate, stmt->cond, &isnull);
 	exec_eval_cleanup(estate);
 
-	if (!isnull && DatumGetBool(value))
+	if (!isnull && value)
 	{
 		if (stmt->true_body != NULL)
 			return exec_stmts(estate, stmt->true_body);
@@ -1183,16 +1185,16 @@ exec_stmt_loop(PLpgSQL_execstate * estate, PLpgSQL_stmt_loop * stmt)
 static int
 exec_stmt_while(PLpgSQL_execstate * estate, PLpgSQL_stmt_while * stmt)
 {
-	Datum		value;
-	Oid			valtype;
+	bool		value;
 	bool		isnull = false;
 	int			rc;
 
 	for (;;)
 	{
-		value = exec_eval_expr(estate, stmt->cond, &isnull, &valtype);
+		value = exec_eval_boolean(estate, stmt->cond, &isnull);
 		exec_eval_cleanup(estate);
-		if (isnull || !DatumGetBool(value))
+
+		if (isnull || !value)
 			break;
 
 		rc = exec_stmts(estate, stmt->body);
@@ -1540,18 +1542,17 @@ exec_stmt_select(PLpgSQL_execstate * estate, PLpgSQL_stmt_select * stmt)
 static int
 exec_stmt_exit(PLpgSQL_execstate * estate, PLpgSQL_stmt_exit * stmt)
 {
-	Datum		value;
-	Oid			valtype;
-	bool		isnull = false;
-
 	/*
 	 * If the exit has a condition, check that it's true
 	 */
 	if (stmt->cond != NULL)
 	{
-		value = exec_eval_expr(estate, stmt->cond, &isnull, &valtype);
+		bool		value;
+		bool		isnull = false;
+
+		value = exec_eval_boolean(estate, stmt->cond, &isnull);
 		exec_eval_cleanup(estate);
-		if (isnull || !DatumGetBool(value))
+		if (isnull || !value)
 			return PLPGSQL_RC_OK;
 	}
 
@@ -1785,9 +1786,6 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 	Oid			paramtypeid;
 	Datum		paramvalue;
 	bool		paramisnull;
-	HeapTuple	typetup;
-	Form_pg_type typeStruct;
-	FmgrInfo	finfo_output;
 	char	   *extval;
 	int			pidx = 0;
 	char		c[2] = {0, 0};
@@ -1822,22 +1820,7 @@ exec_stmt_raise(PLpgSQL_execstate * estate, PLpgSQL_stmt_raise * stmt)
 			if (paramisnull)
 				extval = "<NULL>";
 			else
-			{
-				typetup = SearchSysCache(TYPEOID,
-										 ObjectIdGetDatum(paramtypeid),
-										 0, 0, 0);
-				if (!HeapTupleIsValid(typetup))
-					elog(ERROR, "cache lookup failed for type %u",
-						 paramtypeid);
-				typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-
-				fmgr_info(typeStruct->typoutput, &finfo_output);
-				extval = DatumGetCString(FunctionCall3(&finfo_output,
-													   paramvalue,
-								   ObjectIdGetDatum(typeStruct->typelem),
-													 Int32GetDatum(-1)));
-				ReleaseSysCache(typetup);
-			}
+				extval = convert_value_to_string(paramvalue, paramtypeid);
 			plpgsql_dstring_append(&ds, extval);
 			pidx++;
 			continue;
@@ -2091,9 +2074,6 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 	bool		isnull = false;
 	Oid			restype;
 	char	   *querystr;
-	HeapTuple	typetup;
-	Form_pg_type typeStruct;
-	FmgrInfo	finfo_output;
 	int			exec_res;
 
 	/*
@@ -2106,23 +2086,9 @@ exec_stmt_dynexecute(PLpgSQL_execstate * estate,
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("cannot EXECUTE a null querystring")));
 
-	/*
-	 * Get the C-String representation.
-	 */
-	typetup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(restype),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup failed for type %u", restype);
-	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+	/* Get the C-String representation */
+	querystr = convert_value_to_string(query, restype);
 
-	fmgr_info(typeStruct->typoutput, &finfo_output);
-	querystr = DatumGetCString(FunctionCall3(&finfo_output,
-											 query,
-								   ObjectIdGetDatum(typeStruct->typelem),
-											 Int32GetDatum(-1)));
-
-	ReleaseSysCache(typetup);
 	exec_eval_cleanup(estate);
 
 	/*
@@ -2211,9 +2177,6 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 	int			rc = PLPGSQL_RC_OK;
 	int			i;
 	int			n;
-	HeapTuple	typetup;
-	Form_pg_type typeStruct;
-	FmgrInfo	finfo_output;
 	void	   *plan;
 	Portal		portal;
 	bool		found = false;
@@ -2238,23 +2201,9 @@ exec_stmt_dynfors(PLpgSQL_execstate * estate, PLpgSQL_stmt_dynfors * stmt)
 				(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 				 errmsg("cannot EXECUTE a null querystring")));
 
-	/*
-	 * Get the C-String representation.
-	 */
-	typetup = SearchSysCache(TYPEOID,
-							 ObjectIdGetDatum(restype),
-							 0, 0, 0);
-	if (!HeapTupleIsValid(typetup))
-		elog(ERROR, "cache lookup failed for type %u", restype);
-	typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+	/* Get the C-String representation */
+	querystr = convert_value_to_string(query, restype);
 
-	fmgr_info(typeStruct->typoutput, &finfo_output);
-	querystr = DatumGetCString(FunctionCall3(&finfo_output,
-											 query,
-								   ObjectIdGetDatum(typeStruct->typelem),
-											 Int32GetDatum(-1)));
-
-	ReleaseSysCache(typetup);
 	exec_eval_cleanup(estate);
 
 	/*
@@ -2428,9 +2377,6 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 		Datum		queryD;
 		Oid			restype;
 		char	   *querystr;
-		HeapTuple	typetup;
-		Form_pg_type typeStruct;
-		FmgrInfo	finfo_output;
 		void	   *curplan;
 
 		/* ----------
@@ -2445,24 +2391,9 @@ exec_stmt_open(PLpgSQL_execstate * estate, PLpgSQL_stmt_open * stmt)
 					(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
 					 errmsg("cannot EXECUTE a null querystring")));
 
-		/* ----------
-		 * Get the C-String representation.
-		 * ----------
-		 */
-		typetup = SearchSysCache(TYPEOID,
-								 ObjectIdGetDatum(restype),
-								 0, 0, 0);
-		if (!HeapTupleIsValid(typetup))
-			elog(ERROR, "cache lookup failed for type %u", restype);
-		typeStruct = (Form_pg_type) GETSTRUCT(typetup);
+		/* Get the C-String representation */
+		querystr = convert_value_to_string(queryD, restype);
 
-		fmgr_info(typeStruct->typoutput, &finfo_output);
-		querystr = DatumGetCString(FunctionCall3(&finfo_output,
-												 queryD,
-								   ObjectIdGetDatum(typeStruct->typelem),
-												 Int32GetDatum(-1)));
-
-		ReleaseSysCache(typetup);
 		exec_eval_cleanup(estate);
 
 		/* ----------
@@ -3132,6 +3063,28 @@ exec_eval_integer(PLpgSQL_execstate * estate,
 }
 
 /* ----------
+ * exec_eval_boolean		Evaluate an expression, coerce result to bool
+ *
+ * Note we do not do exec_eval_cleanup here; the caller must do it at
+ * some later point.
+ * ----------
+ */
+static bool
+exec_eval_boolean(PLpgSQL_execstate * estate,
+				  PLpgSQL_expr * expr,
+				  bool *isNull)
+{
+	Datum		exprdatum;
+	Oid			exprtypeid;
+
+	exprdatum = exec_eval_expr(estate, expr, isNull, &exprtypeid);
+	exprdatum = exec_simple_cast_value(exprdatum, exprtypeid,
+									   BOOLOID, -1,
+									   isNull);
+	return DatumGetBool(exprdatum);
+}
+
+/* ----------
  * exec_eval_expr			Evaluate an expression and return
  *					the result Datum.
  *
@@ -3561,6 +3514,31 @@ make_tuple_from_row(PLpgSQL_execstate * estate,
 }
 
 /* ----------
+ * convert_value_to_string			Convert a non-null Datum to C string
+ *
+ * Note: callers generally assume that the result is a palloc'd string and
+ * should be pfree'd.  This is not all that safe an assumption ...
+ * ----------
+ */
+static char *
+convert_value_to_string(Datum value, Oid valtype)
+{
+	Oid			typOutput;
+	Oid			typElem;
+	bool		typIsVarlena;
+	FmgrInfo	finfo_output;
+
+	getTypeOutputInfo(valtype, &typOutput, &typElem, &typIsVarlena);
+
+	fmgr_info(typOutput, &finfo_output);
+
+	return DatumGetCString(FunctionCall3(&finfo_output,
+										 value,
+										 ObjectIdGetDatum(typElem),
+										 Int32GetDatum(-1)));
+}
+
+/* ----------
  * exec_cast_value			Cast a value if required
  * ----------
  */
@@ -3580,29 +3558,14 @@ exec_cast_value(Datum value, Oid valtype,
 		 */
 		if (valtype != reqtype || reqtypmod != -1)
 		{
-			HeapTuple	typetup;
-			Form_pg_type typeStruct;
-			FmgrInfo	finfo_output;
 			char	   *extval;
 
-			typetup = SearchSysCache(TYPEOID,
-									 ObjectIdGetDatum(valtype),
-									 0, 0, 0);
-			if (!HeapTupleIsValid(typetup))
-				elog(ERROR, "cache lookup failed for type %u", valtype);
-			typeStruct = (Form_pg_type) GETSTRUCT(typetup);
-
-			fmgr_info(typeStruct->typoutput, &finfo_output);
-			extval = DatumGetCString(FunctionCall3(&finfo_output,
-												   value,
-								   ObjectIdGetDatum(typeStruct->typelem),
-												   Int32GetDatum(-1)));
+			extval = convert_value_to_string(value, valtype);
 			value = FunctionCall3(reqinput,
 								  CStringGetDatum(extval),
 								  ObjectIdGetDatum(reqtypelem),
 								  Int32GetDatum(reqtypmod));
 			pfree(extval);
-			ReleaseSysCache(typetup);
 		}
 	}
 
@@ -3631,6 +3594,7 @@ exec_simple_cast_value(Datum value, Oid valtype,
 			FmgrInfo	finfo_input;
 
 			getTypeInputInfo(reqtype, &typInput, &typElem);
+
 			fmgr_info(typInput, &finfo_input);
 
 			value = exec_cast_value(value,
