@@ -1,0 +1,246 @@
+=======================================================
+Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
+SCO UnixWare and OpenServer Specific
+TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
+=======================================================
+last updated:           Tue May 25 12:00:00 PDT 1999
+
+current maintainer:     Andrew Merrill (andrew@compclass.com)
+original author:        Andrew Merrill (andrew@compclass.com)
+
+
+PostgreSQL 6.5 can be built on SCO UnixWare 7 and SCO OpenServer 5.
+On OpenServer, you can use either the OpenServer Development Kit or 
+the Universal Development Kit.
+
+However, some tweaking may be needed, as described below.
+
+Topics:
+*) Skunkware
+*) GNU Make
+*) C++ and libpq++
+*) Readline
+*) Using the UDK on OpenServer
+*) Shared Memory and SHMMAX
+*) Java and JDBC
+*) Reading the PostgreSQL man pages on UnixWare
+
+
+***************************************************************************
+*) Skunkware
+
+You should locate your copy of the SCO Skunkware CD.  The Skunkware CD
+is included with UnixWare 7 and current versions of OpenServer 5.
+
+Skunkware includes ready-to-install versions of many popular programs that
+are available on the Internet.  For example, gzip, gunzip, GNU make, flex,
+and bison are all included.
+
+If you do not have this CD, the software on it
+is available via anonymous ftp from ftp.sco.com/skunkware.
+
+For UnixWare 7.1, this CD is now labeled "Open License Software Supplement".
+
+Skunkware has different versions for UnixWare and
+OpenServer.  Make sure you install the correct version for your
+operating system, except as noted below.
+
+
+***************************************************************************
+*) GNU Make
+
+You need to use the GNU make program, which is on the Skunkware CD.
+By default, it installs as /usr/local/bin/make.  To avoid confusion
+with the SCO make program, you may want to rename GNU make to gmake.
+
+
+***************************************************************************
+*) C++ and libpq++
+
+I have not been able to build libpq++, the PostgreSQL C++ interface, with
+the UnixWare or OpenServer C++ compilers.  By default, building PostgreSQL
+also builds the libpq++ interface.  When that fails, it causes the entire
+build of PostgreSQL to fail.
+
+This is the problem if you see the following error message:
+
+"pgenv.cc", line 47: error: no default constructor exists for class "string"
+
+If you have this problem, you can disable building of libpq++ with the 
+following configure option:
+
+configure --without-CXX
+
+
+***************************************************************************
+*) Readline
+
+If you install the readline library, then psql (the PostgreSQL command
+line SQL interpreter) remembers each command you type, and allows
+you to use arrow keys to recall and edit previous commands.  This is
+very helpful, and is strongly recommended.  The readline library is
+on the Skunkware CD.
+
+The readline library is not included on the UnixWare 7.1 Skunkware CD.  If
+you have the UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it
+from there.  Otherwise, try ftp.sco.com/skunkware.
+
+By default, readline installs into /usr/local/lib and /usr/local/include.
+However, the PostgreSQL configure program will not find it there without
+help.  If you installed readline, then use the following options to configure:
+
+configure --with-libs=/usr/local/lib --with-includes=/usr/local/include
+
+Putting this together with the no-C++ option above yields:
+
+configure --with-libs=/usr/local/lib --with-includes=/usr/local/include --without-CXX
+
+
+***************************************************************************
+*) Using the UDK on OpenServer
+
+If you are using the new Universal Development Kit (UDK) compiler on
+OpenServer, you need to use different arguments to the configure program.
+
+First, you need to specify the "unixware" template instead of the default.
+
+Second, you need to specify the locations of the UDK libraries.
+
+Putting these together:
+
+configure --with-template=unixware --with-libs=/udk/usr/lib --with-includes=/udk/usr/include
+
+Putting these together with the no-C++ and readline options from above:
+
+./configure --with-template=unixware --with-libs="/udk/usr/lib /usr/local/lib" --with-includes="/udk/usr/include /usr/local/include" --without-CXX
+
+
+***************************************************************************
+*) Shared Memory and SHMMAX
+
+PostgreSQL supports multiple backend daemons running at once.  A block
+of shared memory is used by the backend processes.  A larger block
+of shared memory allows PostgreSQL to run faster and support more
+complicated queries.
+
+By default, UnixWare 7 and OpenServer are confiugured to support shared memory
+blocks that are no larger than 524288 bytes, or 512K.  By default, PostgreSQL
+tries to allocate a shared memory block that is larger than this.  If
+you don't do anything, this allocation will fail, and the postmaster
+daemon will not be able to run.
+
+The error message looks like this (the numbers may be different):
+
+IpcMemoryCreate: shmget failed (Invalid argument) key=5432001, size=831176, permission=600
+FATAL 1:  ShmemCreate: cannot create region
+
+You have two choices: tell PostgreSQL to allocate a smaller shared memory
+block, or tell Unix to allow larger shared memory blocks.  The latter
+is the preferred solution, but it requires a kernel tunable change and a 
+reboot to implement.
+
+To configure the size of the PostgreSQL shared memory block, use the -B
+option to the postmaster command, which configures the number of buffers
+used by PostgresSQL.  (The shared memory block consists of these buffers
+and around 300K of other stuff.)  Each buffer uses 8K, and by default
+there are 64 buffers, or 64*8*1024 = 524288 bytes (plus the ~300K of other
+stuff).
+
+To use PostgreSQL without doing any kernel tuning, use a -B value of 
+about 24.  This would take up 24*8*1024 = 196608 bytes, plus ~300K
+of other stuff, yields about 500000, which will fit in under the
+default 512K limit.
+
+Example: postmaster -B 24
+
+The recommended option is to instead raise the kernel tunable SHMMAX, 
+which controls the size of the largest allowed shared memory block.
+
+*** Tuning SHMMAX on UnixWare ***
+
+To display the current value of SHMMAX, run:
+/etc/conf/bin/idtune -g SHMMAX
+which displays the current, default, minimum, and maximum values, in bytes.
+
+To set a new value for SHMMAX, run:
+/etc/conf/bin/idtune SHMMAX value
+where value is the new value you want to use (in bytes).
+
+After setting SHMMAX, rebuild the kernel and reboot.
+To rebuild the kernel:
+/etc/conf/bin/idbuild -B
+
+*** Tuning SHMMAX on OpenServer ***
+
+First, cd to /etc/conf/cf.d.
+
+To display the current value of SHMMAX, in bytes, run:
+./configure -y SHMMAX
+
+To set a new value for SHMMAX, run:
+./configure SHMMAX=value
+where value is the new value you want to use (in bytes).
+
+After setting SHMMAX, rebuild the kernel and reboot.
+To rebuild the kernel:
+./link_unix
+
+
+***************************************************************************
+*) Java and JDBC
+
+The JDBC interface will not build on UnixWare or OpenServer without changes.  
+The JDBC Makefile in src/interfaces/jdbc/Makefile uses the $$( ) construction
+to run an external shell command, instead of the older ` ` syntax.
+However, the $$( ) syntax does not work on UnixWare or OpenServer.  
+So, each of the two uses of it must be replaced with backquotes.  You can 
+search for $$( to locate the two lines that need changing.
+
+In the file src/interfaces/jdbc/Makefile :
+
+change:
+    make $$($(JAVA) makeVersion)
+to:
+    make `$(JAVA) makeVersion`
+
+and change:
+    $(JAR) -c0f $@ $$($(FIND) postgresql -name "*.class" -print)
+to:
+    $(JAR) -c0f $@ `$(FIND) postgresql -name "*.class" -print`
+
+Of course, you also need to have installed Java on your system, and 
+make sure that /usr/java/bin is in your PATH.
+
+And, remember to use GNU make, as always.
+
+
+***************************************************************************
+*) Reading the PostgreSQL man pages on UnixWare
+
+By default, the PostgreSQL man pages are installed into /usr/local/pgsql/man.
+By default, UnixWare does not look there for man pages, so you will not
+be able to read them.
+
+You need to make two changes to access the PostgreSQL man pages from UnixWare.
+
+1) You need to modify the MANPATH environment variable.  I use:
+
+MANPATH=/usr/local/pgsql/man:/usr/dt/man:/usr/man:/usr/share/man:scohelp
+export MANPATH
+
+2) The man pages for SQL commands are, by default, placed in section l
+(normally used for "l"ocal pages).  UnixWare does not support the l section.
+
+The solution I use is to move all these pages from section l to an unused
+section, such as section 6.  To accomplish that:
+
+cd /usr/local/pgsql/man
+mv manl man6
+cd man6
+for file in *.l
+do
+	mv $file `basename $file .l`.6
+done
+
+I have not tried using the PostgreSQL man pages on OpenServer.  Volunteers??
+

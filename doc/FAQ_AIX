@@ -1,0 +1,51 @@
+From - Thu May 27 03:10:25 1999
+Received: from localhost (lockhart@localhost [127.0.0.1])
+	by localhost (8.8.7/8.8.7) with ESMTP id RAA08251
+	for <lockhart@localhost>; Wed, 26 May 1999 17:49:20 GMT
+Received: from apop-server.alumni.caltech.edu
+	by localhost with POP3 (fetchmail-4.7.9)
+	for lockhart@localhost (single-drop); Wed, 26 May 1999 17:49:20 +0000 (UTC)
+Received: from gandalf.telecom.at (gandalf.telecom.at [194.118.26.84])
+	by alumnus.caltech.edu (8.9.1/8.9.1) with ESMTP id KAA01676
+	for <lockhart@alumni.caltech.edu>; Wed, 26 May 1999 10:46:19 -0700 (PDT)
+Received: from sdexcgtw01.sd.spardat.at (sdexcgtw01.sd.spardat.at [172.18.99.31])
+	by gandalf.telecom.at (xxx/xxx) with ESMTP id MAA12220;
+	Wed, 26 May 1999 12:02:50 +0200
+Received: by sdexcgtw01.f000.d0188.sd.spardat.at with Internet Mail Service (5.5.2448.0)
+	id <K49AQPB3>; Wed, 26 May 1999 12:02:51 +0200
+Message-ID: <219F68D65015D011A8E000006F8590C60267B37B@sdexcsrv1.f000.d0188.sd.spardat.at>
+From: ZEUGSWETTER Andreas IZ5 <Andreas.Zeugswetter@telecom.at>
+To: "'Thomas Lockhart'" <lockhart@alumni.caltech.edu>
+Cc: "'hackers@postgresql.org'" <hackers@postgresql.org>
+Subject: AW: [HACKERS] Call for updates!
+Date: Wed, 26 May 1999 12:02:48 +0200
+MIME-Version: 1.0
+X-Mailer: Internet Mail Service (5.5.2448.0)
+Content-Type: text/plain
+X-UIDL: 220301b41f1310903e8d55cb7ecc5f4b
+X-Mozilla-Status: 8001
+X-Mozilla-Status2: 00000000
+
+
+> Hi. I'd like to update the ports list in the docs to include
+> references to v6.5 for the various platforms for which PostgreSQL-6.5b
+> has been tested.
+> 
+Current CVS (after pgindent) compiles and regresses ok on AIX 4.3.2 
+using the IBM compiler. It has the following problems:
+1. AIX has int8,int16,int32,int64 in /usr/include/inttypes.h 
+	--> configure fails to find snprintf support for int8 (because it
+includes stdio.h)
+	I feel this is an IBM problem. I changed my inttypes.h
+2. No AIX in Makefile.shlib --> plpgsql.so is not built / no rule.
+	a number of other platforms are also missing there
+	a working rule is often in Makefile.port, but only for a single
+object
+	not multiple, which plpgsql has.
+	The single object rule in Makefile.aix can be used to make a
+plpgsql.so
+	from libplpgsql.a. I built it manually.
+3. libpq++ does not work because xlC does not have the string type/class ? 
+
+Andreas
+
