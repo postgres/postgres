@@ -30,7 +30,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.155 2003/06/08 17:43:00 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqcomm.c,v 1.156 2003/06/09 17:59:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,7 +242,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		elog(LOG, "server socket failure: getaddrinfo2(): %s",
 			 gai_strerror(ret));
-		freeaddrinfo2(addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -250,7 +250,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		elog(LOG, "server socket failure: socket(): %s",
 			 strerror(errno));
-		freeaddrinfo2(addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -261,7 +261,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 		{
 			elog(LOG, "server socket failure: setsockopt(SO_REUSEADDR): %s",
 				 strerror(errno));
-			freeaddrinfo2(addrs);
+			freeaddrinfo2(hint.ai_family, addrs);
 			return STATUS_ERROR;
 		}
 	}
@@ -278,7 +278,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 				 sock_path);
 		else
 			elog(LOG, "\tIf not, wait a few seconds and retry.");
-		freeaddrinfo2(addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
@@ -287,7 +287,7 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		if (Setup_AF_UNIX() != STATUS_OK)
 		{
-			freeaddrinfo2(addrs);
+			freeaddrinfo2(hint.ai_family, addrs);
 			return STATUS_ERROR;
 		}
 	}
@@ -307,14 +307,13 @@ StreamServerPort(int family, char *hostName, unsigned short portNumber,
 	{
 		elog(LOG, "server socket failure: listen(): %s",
 			 strerror(errno));
-		freeaddrinfo2(addrs);
+		freeaddrinfo2(hint.ai_family, addrs);
 		return STATUS_ERROR;
 	}
 
 	*fdP = fd;
-	freeaddrinfo2(addrs);
+	freeaddrinfo2(hint.ai_family, addrs);
 	return STATUS_OK;
-
 }
 
 

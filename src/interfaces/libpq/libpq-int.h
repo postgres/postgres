@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.71 2003/06/08 17:43:00 tgl Exp $
+ * $Id: libpq-int.h,v 1.72 2003/06/09 17:59:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -270,6 +270,7 @@ struct pg_conn
 	/* Transient state needed while establishing connection */
 	struct addrinfo *addrlist;	/* list of possible backend addresses */
 	struct addrinfo *addr_cur;	/* the one currently being tried */
+	int			addrlist_family; /* needed to know how to free addrlist */
 	PGSetenvStatusType setenv_state; /* for 2.0 protocol only */
 	const PQEnvironmentOption *next_eo;
 

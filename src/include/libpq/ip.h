@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2003, PostgreSQL Global Development Group
  *
- * $Id: ip.h,v 1.4 2003/06/08 17:43:00 tgl Exp $
+ * $Id: ip.h,v 1.5 2003/06/09 17:59:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,7 @@
 extern int   getaddrinfo2(const char *hostname, const char *servname,
 						  const struct addrinfo *hintp,
 						  struct addrinfo **result);
-extern void  freeaddrinfo2(struct addrinfo *ai);
+extern void  freeaddrinfo2(int hint_ai_family, struct addrinfo *ai);
 
 extern char *SockAddr_ntop(const SockAddr *sa, char *dst, size_t cnt,
 						   int v4conv);
