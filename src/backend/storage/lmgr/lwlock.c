@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.10 2002/05/05 00:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lwlock.c,v 1.11 2002/06/11 13:40:51 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,12 +29,12 @@
 
 typedef struct LWLock
 {
-	slock_t		mutex;			/* Protects LWLock and queue of PROCs */
+	slock_t		mutex;			/* Protects LWLock and queue of PGPROCs */
 	bool		releaseOK;		/* T if ok to release waiters */
 	char		exclusive;		/* # of exclusive holders (0 or 1) */
 	int			shared;			/* # of shared holders (0..MaxBackends) */
-	PROC	   *head;			/* head of list of waiting PROCs */
-	PROC	   *tail;			/* tail of list of waiting PROCs */
+	PGPROC	   *head;			/* head of list of waiting PGPROCs */
+	PGPROC	   *tail;			/* tail of list of waiting PGPROCs */
 	/* tail is undefined when head is NULL */
 } LWLock;
 
@@ -197,7 +197,7 @@ void
 LWLockAcquire(LWLockId lockid, LWLockMode mode)
 {
 	volatile LWLock *lock = LWLockArray + lockid;
-	PROC	   *proc = MyProc;
+	PGPROC	   *proc = MyProc;
 	bool		retry = false;
 	int			extraWaits = 0;
 
@@ -266,12 +266,12 @@ LWLockAcquire(LWLockId lockid, LWLockMode mode)
 		/*
 		 * Add myself to wait queue.
 		 *
-		 * If we don't have a PROC structure, there's no way to wait. This
+		 * If we don't have a PGPROC structure, there's no way to wait. This
 		 * should never occur, since MyProc should only be null during
 		 * shared memory initialization.
 		 */
 		if (proc == NULL)
-			elog(FATAL, "LWLockAcquire: can't wait without a PROC structure");
+			elog(FATAL, "LWLockAcquire: can't wait without a PGPROC structure");
 
 		proc->lwWaiting = true;
 		proc->lwExclusive = (mode == LW_EXCLUSIVE);
@@ -401,8 +401,8 @@ void
 LWLockRelease(LWLockId lockid)
 {
 	volatile LWLock *lock = LWLockArray + lockid;
-	PROC	   *head;
-	PROC	   *proc;
+	PGPROC	   *head;
+	PGPROC	   *proc;
 	int			i;
 
 	PRINT_LWDEBUG("LWLockRelease", lockid, lock);
@@ -446,7 +446,7 @@ LWLockRelease(LWLockId lockid)
 		if (lock->exclusive == 0 && lock->shared == 0 && lock->releaseOK)
 		{
 			/*
-			 * Remove the to-be-awakened PROCs from the queue.  If the
+			 * Remove the to-be-awakened PGPROCs from the queue.  If the
 			 * front waiter wants exclusive lock, awaken him only.
 			 * Otherwise awaken as many waiters as want shared access.
 			 */
@@ -459,7 +459,7 @@ LWLockRelease(LWLockId lockid)
 					proc = proc->lwWaitLink;
 				}
 			}
-			/* proc is now the last PROC to be released */
+			/* proc is now the last PGPROC to be released */
 			lock->head = proc->lwWaitLink;
 			proc->lwWaitLink = NULL;
 			/* prevent additional wakeups until retryer gets to run */

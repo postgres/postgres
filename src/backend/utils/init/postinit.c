@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.106 2002/05/20 23:51:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.107 2002/06/11 13:40:52 wieck Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -286,9 +286,9 @@ InitPostgres(const char *dbname, const char *username)
 	 */
 
 	/*
-	 * Set up my per-backend PROC struct in shared memory.	(We need to
+	 * Set up my per-backend PGPROC struct in shared memory.	(We need to
 	 * know MyDatabaseId before we can do this, since it's entered into
-	 * the PROC struct.)
+	 * the PGPROC struct.)
 	 */
 	InitProcess();
 

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.104 2002/05/17 01:19:19 tgl Exp $
+ * $Id: miscadmin.h,v 1.105 2002/06/11 13:40:52 wieck Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -203,7 +203,7 @@ extern char *ExpandDatabasePath(const char *path);
 extern void SetDatabaseName(const char *name);
 extern void SetDatabasePath(const char *path);
 
-extern char *GetUserName(Oid userid);
+extern char *GetUserNameFromId(Oid userid);
 
 extern Oid	GetUserId(void);
 extern void SetUserId(Oid userid);

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.189 2002/05/20 09:29:41 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.190 2002/06/11 13:40:52 wieck Exp $ */
 
 /* Copyright comment */
 %{
@@ -184,24 +184,24 @@ make_name(void)
         BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
         BOOLEAN, BY,
 
-        CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR, CHARACTER,
+        CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P, CHARACTER,
         CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE, CLUSTER, COALESCE, COLLATE,
         COLUMN, COMMENT, COMMIT, COMMITTED, CONSTRAINT, CONSTRAINTS, COPY,
         CREATE, CREATEDB, CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
         CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
         DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DEFERRABLE, DEFERRED,
-        DEFINER, DELETE, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+        DEFINER, DELETE_P, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
         EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXCLUSIVE,
         EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
 
-        FALSE_P, FETCH, FLOAT, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
+        FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
         FULL, FUNCTION,
 
-	GLOBAL, GRANT, GROUP,
+	GLOBAL, GRANT, GROUP_P,
         HANDLER, HAVING, HOUR_P,
 
-	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN, INCREMENT, INDEX, INHERITS,
+	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT, INDEX, INHERITS,
         INITIALLY, INNER_P, INOUT, INPUT, INSENSITIVE, INSERT, INSTEAD, INT,
         INTEGER, INTERSECT, INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
 			
@@ -218,7 +218,7 @@ make_name(void)
         NUMERIC,
 
 	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR, ORDER,
-        OUT, OUTER_P, OVERLAPS, OWNER,
+        OUT_P, OUTER_P, OVERLAPS, OWNER,
 
 	PARTIAL, PASSWORD, PATH_P, PENDANT, POSITION, PRECISION, PRIMARY,
 	PRIOR, PRIVILEGES, PROCEDURE, PROCEDURAL,
@@ -268,7 +268,7 @@ make_name(void)
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
-%nonassoc	IN
+%nonassoc	IN_P
 %left			POSTFIXOP					/* dummy for postfix Op rules */
 %left		Op				/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
@@ -713,7 +713,7 @@ OptUserElem:  PASSWORD Sconst
 			{ $$ = make_str("createuser"); }
 		| NOCREATEUSER
 			{ $$ = make_str("nocreateuser"); }
-		| IN GROUP user_list
+		| IN_P GROUP_P user_list
 			{ $$ = cat2_str(make_str("in group"), $3); }
 		| VALID UNTIL Sconst
 			{ $$ = cat2_str(make_str("valid until"), $3); }
@@ -731,9 +731,9 @@ user_list:	user_list ',' UserId
  *
  *
  ****************************************************************************/
-CreateGroupStmt:  CREATE GROUP UserId OptGroupList
+CreateGroupStmt:  CREATE GROUP_P UserId OptGroupList
 			{ $$ = cat_str(3, make_str("create group"), $3, $4); }
-		| CREATE GROUP UserId WITH OptGroupList
+		| CREATE GROUP_P UserId WITH OptGroupList
 			{ $$ = cat_str(4, make_str("create group"), $3, make_str("with"), $5); }
 		;
 
@@ -757,9 +757,9 @@ OptGroupElem:  USER user_list
  *
  *
  *****************************************************************************/
-AlterGroupStmt: ALTER GROUP UserId ADD USER user_list
+AlterGroupStmt: ALTER GROUP_P UserId ADD USER user_list
 			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("add user"), $6); }
-		| ALTER GROUP UserId DROP USER user_list
+		| ALTER GROUP_P UserId DROP USER user_list
 			{ $$ = cat_str(4, make_str("alter group"), $3, make_str("drop user"), $6); }
 		;
 
@@ -769,7 +769,7 @@ AlterGroupStmt: ALTER GROUP UserId ADD USER user_list
  *
  *
  *****************************************************************************/
-DropGroupStmt: DROP GROUP UserId
+DropGroupStmt: DROP GROUP_P UserId
 			{ $$ = cat2_str(make_str("drop group"), $3); }
 		;
 
@@ -1234,7 +1234,7 @@ key_actions:  key_delete			{ $$ = $1; }
 		| /*EMPTY*/					{ $$ = EMPTY; }
 		;
 
-key_delete: ON DELETE key_reference 
+key_delete: ON DELETE_P key_reference 
 			{ $$ = cat2_str(make_str("on delete"), $3); }
 		;
 
@@ -1396,7 +1396,7 @@ TriggerEvents:	TriggerOneEvent
 		;
 
 TriggerOneEvent:  INSERT	{ $$ = make_str("insert"); }
-		| DELETE			{ $$ = make_str("delete"); }
+		| DELETE_P			{ $$ = make_str("delete"); }
 		| UPDATE			{ $$ = make_str("update"); }
 		;
 
@@ -1611,7 +1611,7 @@ fetch_how_many: IntConst	{ $$ = $1; }
 		| PRIOR				{ $$ = make_str("prior"); }
 		;
 
-from_in: IN					{ $$ = make_str("in"); }
+from_in: IN_P				{ $$ = make_str("in"); }
 		| FROM				{ $$ = make_str("from"); }
 		;
 
@@ -1687,7 +1687,7 @@ privilege_list:  privilege
 privilege:	SELECT			{ $$ = make_str("select"); }
 		| INSERT			{ $$ = make_str("insert"); }
 		| UPDATE			{ $$ = make_str("update"); }
-		| DELETE			{ $$ = make_str("delete"); }
+		| DELETE_P			{ $$ = make_str("delete"); }
 		| RULE				{ $$ = make_str("rule"); }
 		| REFERENCES		{ $$ = make_str("references"); }
 		| TRIGGER			{ $$ = make_str("trigger"); }
@@ -1719,7 +1719,7 @@ grantee_list: grantee
 		;
 
 grantee:  ColId			{ $$ = $1; }
-		| GROUP ColId		{ $$ = cat2_str(make_str("group"), $2); }
+		| GROUP_P ColId		{ $$ = cat2_str(make_str("group"), $2); }
 		;
 
 opt_grant_grant_option:  WITH GRANT OPTION
@@ -1854,8 +1854,8 @@ func_arg:  opt_arg func_type
 		| func_type		{ $$ = $1; }
 		;
 
-opt_arg:  IN	{ $$ = make_str("in"); }
-		| OUT
+opt_arg:  IN_P	{ $$ = make_str("in"); }
+		| OUT_P
 		{
 			mmerror(PARSE_ERROR, ET_WARNING, "Currently unsupported CREATE FUNCTION/OUT will be passed to backend");
 
@@ -2049,7 +2049,7 @@ RuleActionStmtOrEmpty: RuleActionStmt	{ $$ = $1; }
 /* change me to select, update, etc. some day */
 event:	SELECT				{ $$ = make_str("select"); }
 		| UPDATE			{ $$ = make_str("update"); }
-		| DELETE			{ $$ = make_str("delete"); }
+		| DELETE_P			{ $$ = make_str("delete"); }
 		| INSERT			{ $$ = make_str("insert"); }
 		 ;
 
@@ -2354,7 +2354,7 @@ insert_column_item:  ColId opt_indirection
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE FROM relation_expr where_clause
+DeleteStmt:  DELETE_P FROM relation_expr where_clause
 			{ $$ = cat_str(3, make_str("delete from"), $3, $4); }
 		;
 
@@ -2362,7 +2362,7 @@ LockStmt:  LOCK_P opt_table qualified_name_list opt_lock
 			{ $$ = cat_str(4, make_str("lock"), $2, $3, $4); }
 		;
 
-opt_lock:  IN lock_type MODE
+opt_lock:  IN_P lock_type MODE
 			{ $$ = cat_str(3, make_str("in"), $2, make_str("mode")); }
 		| /*EMPTY*/
 			{ $$ = EMPTY;}
@@ -2600,7 +2600,7 @@ select_offset_value:	PosIntConst
  *	...however, recursive addattr and rename supported.  make special
  *	cases for these.
  */
-group_clause:  GROUP BY expr_list
+group_clause:  GROUP_P BY expr_list
 			{ $$ = cat2_str(make_str("group by"), $3); }
 		| /*EMPTY*/
 			{ $$ = EMPTY; }
@@ -2837,7 +2837,7 @@ Numeric:  INT
 			{ $$ = make_str("bigint"); }
 		| REAL
 			{ $$ = make_str("real"); }
-		| FLOAT opt_float
+		| FLOAT_P opt_float
 			{ $$ = cat2_str(make_str("float"), $2); }
 		| DOUBLE PRECISION
 			{ $$ = make_str("double precision"); }
@@ -2896,13 +2896,13 @@ Character:	character '(' PosIntConst ')' opt_charset
 
 character:	CHARACTER opt_varying
 			{ $$ = cat2_str(make_str("character"), $2); }
-		| CHAR opt_varying
+		| CHAR_P opt_varying
 			{ $$ = cat2_str(make_str("char"), $2); }
 		| VARCHAR
 			{ $$ = make_str("varchar"); }
 		| NATIONAL CHARACTER opt_varying
 			{ $$ = cat2_str(make_str("national character"), $3); }
-		| NATIONAL CHAR opt_varying
+		| NATIONAL CHAR_P opt_varying
 			{ $$ = cat2_str(make_str("national char"), $3); }
 		| NCHAR opt_varying
 			{ $$ = cat2_str(make_str("nchar"), $2); }
@@ -2975,9 +2975,9 @@ opt_interval:  YEAR_P			{ $$ = make_str("year"); }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *	with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN select_with_parens
+row_expr: '(' row_descriptor ')' IN_P select_with_parens
 			{ $$ = cat_str(4, make_str("("), $2, make_str(") in "), $5); }
-		| '(' row_descriptor ')' NOT IN select_with_parens
+		| '(' row_descriptor ')' NOT IN_P select_with_parens
 			{ $$ = cat_str(4, make_str("("), $2, make_str(") not in "), $6); }
 		| '(' row_descriptor ')' all_Op sub_type select_with_parens
 			{ $$ = cat_str(6, make_str("("), $2, make_str(")"), $4, $5, $6); }
@@ -3140,9 +3140,9 @@ a_expr:  c_expr
 			{ $$ = cat_str(5, $1, make_str("between"), $3, make_str("and"), $5); }
 		| a_expr NOT BETWEEN b_expr AND b_expr	%prec BETWEEN
 			{ $$ = cat_str(5, $1, make_str("not between"), $4, make_str("and"), $6); }
-		| a_expr IN in_expr
+		| a_expr IN_P in_expr
 			{ $$ = cat_str(3, $1, make_str(" in"), $3); }
-		| a_expr NOT IN in_expr
+		| a_expr NOT IN_P in_expr
 			{ $$ = cat_str(3, $1, make_str(" not in "), $4); }
 		| a_expr all_Op sub_type select_with_parens %prec Op
 			{ $$ = cat_str(4, $1, $2, $3, $4); }
@@ -3307,7 +3307,7 @@ extract_arg:  IDENT				{ $$ = $1; }
 		;
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
-position_list:	b_expr IN b_expr
+position_list:	b_expr IN_P b_expr
 			{ $$ = cat_str(3, $1, make_str("in"), $3); }
 		| /* EMPTY */
 			{ $$ = EMPTY; }
@@ -4146,7 +4146,7 @@ unsigned_type: SQL_UNSIGNED SQL_SHORT		{ $$ = ECPGt_unsigned_short; }
 			$$ = ECPGt_unsigned_long;
 #endif
 		}
-		| SQL_UNSIGNED CHAR			{ $$ = ECPGt_unsigned_char; }
+		| SQL_UNSIGNED CHAR_P			{ $$ = ECPGt_unsigned_char; }
 		;
 
 signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
@@ -4171,7 +4171,7 @@ signed_type: SQL_SHORT				{ $$ = ECPGt_short; }
 #endif
 		}
 		| SQL_BOOL					{ $$ = ECPGt_bool; }
-		| CHAR						{ $$ = ECPGt_char; }
+		| CHAR_P					{ $$ = ECPGt_char; }
 		;
 
 opt_signed: SQL_SIGNED
@@ -4823,7 +4823,7 @@ ColId:	ident							{ $$ = $1; }
 		| unreserved_keyword			{ $$ = $1; }
 		| col_name_keyword				{ $$ = $1; }
 		| ECPGKeywords					{ $$ = $1; }
-		| CHAR							{ $$ = make_str("char"); }
+		| CHAR_P						{ $$ = make_str("char"); }
 		;
 
 /* Type identifier --- names that can be type names.
@@ -4847,7 +4847,7 @@ function_name:	ident						{ $$ = $1; }
  */
 ColLabel:  ECPGColLabel					{ $$ = $1; }
 		| ECPGTypeName					{ $$ = $1; }
-		| CHAR							{ $$ = make_str("char"); }
+		| CHAR_P						{ $$ = make_str("char"); }
 		| INT							{ $$ = make_str("int"); }
 		| UNION							{ $$ = make_str("union"); }
 		;
@@ -4907,7 +4907,7 @@ unreserved_keyword:
 		| DAY_P							{ $$ = make_str("day"); }
 		| DECLARE						{ $$ = make_str("declare"); }
 		| DEFERRED						{ $$ = make_str("deferred"); }
-		| DELETE						{ $$ = make_str("delete"); }
+		| DELETE_P						{ $$ = make_str("delete"); }
 		| DELIMITERS					{ $$ = make_str("delimiters"); }
 		| DOMAIN_P					{ $$ = make_str("domain"); }
 		| DOUBLE						{ $$ = make_str("double"); }
@@ -4963,7 +4963,7 @@ unreserved_keyword:
 		| OIDS							{ $$ = make_str("oids"); }
 		| OPERATOR						{ $$ = make_str("operator"); }
 		| OPTION						{ $$ = make_str("option"); }
-		| OUT							{ $$ = make_str("out"); }
+		| OUT_P							{ $$ = make_str("out"); }
 		| OWNER							{ $$ = make_str("owner"); }
 		| PARTIAL						{ $$ = make_str("partial"); }
 		| PASSWORD						{ $$ = make_str("password"); }
@@ -5044,7 +5044,7 @@ col_name_keyword:
 		BIGINT			{ $$ = make_str("bigint");}
 		| BIT			{ $$ = make_str("bit"); }
 /* CHAR must be excluded from ECPGColLabel because of conflict with UNSIGNED
-		| CHAR			{ $$ = make_str("char"); }
+		| CHAR_P		{ $$ = make_str("char"); }
  */
 		| CHARACTER		{ $$ = make_str("character"); }
 		| COALESCE		{ $$ = make_str("coalesce"); }
@@ -5052,7 +5052,7 @@ col_name_keyword:
 		| DECIMAL		{ $$ = make_str("decimal"); }
 		| EXISTS		{ $$ = make_str("exists"); }
 		| EXTRACT		{ $$ = make_str("extract"); }
-		| FLOAT			{ $$ = make_str("float"); }
+		| FLOAT_P		{ $$ = make_str("float"); }
 /* INT must be excluded from ECPGColLabel because of conflict 
 		| INT			{ $$ = make_str("int"); }
  */
@@ -5091,7 +5091,7 @@ func_name_keyword:
 		| FREEZE						{ $$ = make_str("freeze"); }
 		| FULL							{ $$ = make_str("full"); }
 		| ILIKE							{ $$ = make_str("ilike"); }
-		| IN							{ $$ = make_str("in"); }
+		| IN_P							{ $$ = make_str("in"); }
 		| INNER_P						{ $$ = make_str("inner"); }
 		| IS							{ $$ = make_str("is"); }
 		| ISNULL						{ $$ = make_str("isnull"); }
@@ -5145,7 +5145,7 @@ reserved_keyword:
 		| FOREIGN						{ $$ = make_str("foreign"); }
 		| FROM							{ $$ = make_str("from"); }
 		| GRANT							{ $$ = make_str("grant"); }
-		| GROUP							{ $$ = make_str("group"); }
+		| GROUP_P						{ $$ = make_str("group"); }
 		| HAVING						{ $$ = make_str("having"); }
 		| INITIALLY						{ $$ = make_str("initially"); }
 		| INTERSECT						{ $$ = make_str("intersect"); }
@@ -5305,9 +5305,9 @@ c_anything:  IDENT					{ $$ = $1; }
 		| SQL_SIGNED				{ $$ = make_str("signed"); }
 		| SQL_STRUCT				{ $$ = make_str("struct"); }
 		| SQL_UNSIGNED				{ $$ = make_str("unsigned"); }
-		| CHAR						{ $$ = make_str("char"); }
+		| CHAR_P					{ $$ = make_str("char"); }
 		| DOUBLE					{ $$ = make_str("double"); }
-		| FLOAT						{ $$ = make_str("float"); }
+		| FLOAT_P					{ $$ = make_str("float"); }
 		| UNION						{ $$ = make_str("union"); }
 		| VARCHAR					{ $$ = make_str("varchar"); }
 		| '['						{ $$ = make_str("["); }

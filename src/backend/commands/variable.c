@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.67 2002/05/17 01:19:17 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.68 2002/06/11 13:40:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -583,5 +583,5 @@ assign_session_authorization(const char *value, bool doit, bool interactive)
 const char *
 show_session_authorization(void)
 {
-	return GetUserName(GetSessionUserId());
+	return GetUserNameFromId(GetSessionUserId());
 }

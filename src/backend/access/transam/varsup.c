@@ -6,7 +6,7 @@
  * Copyright (c) 2000, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.49 2002/05/25 20:00:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/varsup.c,v 1.50 2002/06/11 13:40:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -61,23 +61,23 @@ GetNewTransactionId(void)
 	 * Must set MyProc->xid before releasing XidGenLock.  This ensures
 	 * that when GetSnapshotData calls ReadNewTransactionId, all active
 	 * XIDs before the returned value of nextXid are already present in
-	 * the shared PROC array.  Else we have a race condition.
+	 * the shared PGPROC array.  Else we have a race condition.
 	 *
 	 * XXX by storing xid into MyProc without acquiring SInvalLock, we are
 	 * relying on fetch/store of an xid to be atomic, else other backends
 	 * might see a partially-set xid here.	But holding both locks at once
 	 * would be a nasty concurrency hit (and in fact could cause a
 	 * deadlock against GetSnapshotData).  So for now, assume atomicity.
-	 * Note that readers of PROC xid field should be careful to fetch the
+	 * Note that readers of PGPROC xid field should be careful to fetch the
 	 * value only once, rather than assume they can read it multiple times
 	 * and get the same answer each time.
 	 *
-	 * A solution to the atomic-store problem would be to give each PROC its
-	 * own spinlock used only for fetching/storing that PROC's xid.
+	 * A solution to the atomic-store problem would be to give each PGPROC its
+	 * own spinlock used only for fetching/storing that PGPROC's xid.
 	 * (SInvalLock would then mean primarily that PROCs couldn't be added/
 	 * removed while holding the lock.)
 	 */
-	if (MyProc != (PROC *) NULL)
+	if (MyProc != (PGPROC *) NULL)
 		MyProc->xid = xid;
 
 	LWLockRelease(XidGenLock);

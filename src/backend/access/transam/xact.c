@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.125 2002/05/25 20:00:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.126 2002/06/11 13:40:50 wieck Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -602,7 +602,7 @@ RecordTransactionCommit(void)
 	MyLastRecPtr.xrecoff = 0;
 	MyXactMadeXLogEntry = false;
 
-	/* Show myself as out of the transaction in PROC array */
+	/* Show myself as out of the transaction in PGPROC array */
 	MyProc->logRec.xrecoff = 0;
 
 	if (leak)
@@ -727,7 +727,7 @@ RecordTransactionAbort(void)
 	MyLastRecPtr.xrecoff = 0;
 	MyXactMadeXLogEntry = false;
 
-	/* Show myself as out of the transaction in PROC array */
+	/* Show myself as out of the transaction in PGPROC array */
 	MyProc->logRec.xrecoff = 0;
 
 	/*
@@ -960,7 +960,7 @@ CommitTransaction(void)
 	 * as running as well or it will see two tuple versions - one deleted
 	 * by xid 1 and one inserted by xid 0.	See notes in GetSnapshotData.
 	 */
-	if (MyProc != (PROC *) NULL)
+	if (MyProc != (PGPROC *) NULL)
 	{
 		/* Lock SInvalLock because that's what GetSnapshotData uses. */
 		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);
@@ -1069,7 +1069,7 @@ AbortTransaction(void)
 	 * this must be done _before_ releasing locks we hold and _after_
 	 * RecordTransactionAbort.
 	 */
-	if (MyProc != (PROC *) NULL)
+	if (MyProc != (PGPROC *) NULL)
 	{
 		/* Lock SInvalLock because that's what GetSnapshotData uses. */
 		LWLockAcquire(SInvalLock, LW_EXCLUSIVE);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.106 2002/03/06 06:10:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.107 2002/06/11 13:40:51 wieck Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -49,7 +49,7 @@ int			max_locks_per_xact; /* set by guc.c */
 
 static int WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
 		   LOCK *lock, HOLDER *holder);
-static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc,
+static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc,
 				 int *myHolding);
 
 static char *lock_mode_names[] =
@@ -746,7 +746,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 				   LOCKMODE lockmode,
 				   LOCK *lock,
 				   HOLDER *holder,
-				   PROC *proc,
+				   PGPROC *proc,
 				   int *myHolding)		/* myHolding[] array or NULL */
 {
 	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
@@ -820,7 +820,7 @@ LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
  * be a net slowdown.
  */
 static void
-LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc, int *myHolding)
+LockCountMyLocks(SHMEM_OFFSET lockOffset, PGPROC *proc, int *myHolding)
 {
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
 	HOLDER	   *holder;
@@ -944,7 +944,7 @@ WaitOnLock(LOCKMETHOD lockmethod, LOCKMODE lockmode,
  * this routine can only happen if we are aborting the transaction.)
  */
 void
-RemoveFromWaitQueue(PROC *proc)
+RemoveFromWaitQueue(PGPROC *proc)
 {
 	LOCK	   *waitLock = proc->waitLock;
 	LOCKMODE	lockmode = proc->waitLockMode;
@@ -1182,7 +1182,7 @@ LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
  * specified XID are released.
  */
 bool
-LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
+LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 			   bool allxids, TransactionId xid)
 {
 	SHM_QUEUE  *procHolders = &(proc->procHolders);
@@ -1354,7 +1354,7 @@ LockShmemSize(int maxBackends)
 	long		max_table_size = NLOCKENTS(maxBackends);
 
 	size += MAXALIGN(sizeof(PROC_HDR)); /* ProcGlobal */
-	size += maxBackends * MAXALIGN(sizeof(PROC));		/* each MyProc */
+	size += maxBackends * MAXALIGN(sizeof(PGPROC));		/* each MyProc */
 	size += MAX_LOCK_METHODS * MAXALIGN(sizeof(LOCKMETHODCTL)); /* each
 																 * lockMethodTable->ctl */
 
@@ -1383,7 +1383,7 @@ LockShmemSize(int maxBackends)
 void
 DumpLocks(void)
 {
-	PROC	   *proc;
+	PGPROC	   *proc;
 	SHM_QUEUE  *procHolders;
 	HOLDER	   *holder;
 	LOCK	   *lock;
@@ -1427,7 +1427,7 @@ DumpLocks(void)
 void
 DumpAllLocks(void)
 {
-	PROC	   *proc;
+	PGPROC	   *proc;
 	HOLDER	   *holder;
 	LOCK	   *lock;
 	int			lockmethod = DEFAULT_LOCKMETHOD;

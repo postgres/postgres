@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.30 2001/11/05 17:46:35 momjian Exp $
+ * $Id: sinvaladt.h,v 1.31 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,7 +71,7 @@ typedef struct ProcState
 	/* nextMsgNum is -1 in an inactive ProcState array entry. */
 	int			nextMsgNum;		/* next message number to read, or -1 */
 	bool		resetState;		/* true, if backend has to reset its state */
-	SHMEM_OFFSET procStruct;	/* location of backend's PROC struct */
+	SHMEM_OFFSET procStruct;	/* location of backend's PGPROC struct */
 } ProcState;
 
 /* Shared cache invalidation memory segment */

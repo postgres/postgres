@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.55 2002/05/05 00:03:29 tgl Exp $
+ * $Id: proc.h,v 1.56 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,14 +21,14 @@
 
 
 /*
- * Each backend has a PROC struct in shared memory.  There is also a list of
- * currently-unused PROC structs that will be reallocated to new backends.
+ * Each backend has a PGPROC struct in shared memory.  There is also a list of
+ * currently-unused PGPROC structs that will be reallocated to new backends.
  *
- * links: list link for any list the PROC is in.  When waiting for a lock,
- * the PROC is linked into that lock's waitProcs queue.  A recycled PROC
+ * links: list link for any list the PGPROC is in.  When waiting for a lock,
+ * the PGPROC is linked into that lock's waitProcs queue.  A recycled PGPROC
  * is linked into ProcGlobal's freeProcs list.
  */
-struct PROC
+struct PGPROC
 {
 	/* proc->links MUST BE FIRST IN STRUCT (see ProcSleep,ProcWakeup,etc) */
 	SHM_QUEUE	links;			/* list link if process is in a list */
@@ -56,7 +56,7 @@ struct PROC
 	/* Info about LWLock the process is currently waiting for, if any. */
 	bool		lwWaiting;		/* true if waiting for an LW lock */
 	bool		lwExclusive;	/* true if waiting for exclusive access */
-	struct PROC *lwWaitLink;	/* next waiter for same LW lock */
+	struct PGPROC *lwWaitLink;	/* next waiter for same LW lock */
 
 	/* Info about lock the process is currently waiting for, if any. */
 	/* waitLock and waitHolder are NULL if not currently waiting. */
@@ -70,10 +70,10 @@ struct PROC
 								 * or awaited by this backend */
 };
 
-/* NOTE: "typedef struct PROC PROC" appears in storage/lock.h. */
+/* NOTE: "typedef struct PGPROC PGPROC" appears in storage/lock.h. */
 
 
-extern PROC *MyProc;
+extern PGPROC *MyProc;
 
 
 /*
@@ -81,7 +81,7 @@ extern PROC *MyProc;
  */
 typedef struct PROC_HDR
 {
-	/* Head of list of free PROC structures */
+	/* Head of list of free PGPROC structures */
 	SHMEM_OFFSET freeProcs;
 } PROC_HDR;
 
@@ -102,7 +102,7 @@ extern void ProcReleaseLocks(bool isCommit);
 extern void ProcQueueInit(PROC_QUEUE *queue);
 extern int ProcSleep(LOCKMETHODTABLE *lockMethodTable, LOCKMODE lockmode,
 		  LOCK *lock, HOLDER *holder);
-extern PROC *ProcWakeup(PROC *proc, int errType);
+extern PGPROC *ProcWakeup(PGPROC *proc, int errType);
 extern void ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock);
 extern bool LockWaitCancel(void);
 extern void HandleDeadLock(SIGNAL_ARGS);

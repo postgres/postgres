@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.90 2002/05/17 01:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.91 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,7 @@ static datetkn datetktbl[] = {
 	{"acst", DTZ, NEG(24)},		/* Atlantic/Porto Acre */
 	{"act", TZ, NEG(30)},		/* Atlantic/Porto Acre */
 	{DA_D, ADBC, AD},			/* "ad" for years >= 0 */
-	{"abstime", IGNORE, 0},		/* for pre-v6.1 "Invalid Abstime" */
+	{"abstime", IGNORE_DTF, 0},		/* for pre-v6.1 "Invalid Abstime" */
 	{"adt", DTZ, NEG(18)},		/* Atlantic Daylight Time */
 	{"aesst", DTZ, 66},			/* E. Australia */
 	{"aest", TZ, 60},			/* Australia Eastern Std Time */
@@ -115,7 +115,7 @@ ast /* Atlantic Standard Time, Arabia Standard Time, Acre Standard Time */
 	{"apr", MONTH, 4},
 	{"april", MONTH, 4},
 	{"ast", TZ, NEG(24)},		/* Atlantic Std Time (Canada) */
-	{"at", IGNORE, 0},			/* "at" (throwaway) */
+	{"at", IGNORE_DTF, 0},			/* "at" (throwaway) */
 	{"aug", MONTH, 8},
 	{"august", MONTH, 8},
 	{"awsst", DTZ, 54},			/* W. Australia */
@@ -348,7 +348,7 @@ ncst
 	{"october", MONTH, 10},
 	{"omsst", DTZ, 42},			/* Omsk Summer Time */
 	{"omst", TZ, 36},			/* Omsk Time */
-	{"on", IGNORE, 0},			/* "on" (throwaway) */
+	{"on", IGNORE_DTF, 0},			/* "on" (throwaway) */
 	{"pdt", DTZ, NEG(42)},		/* Pacific Daylight Time */
 #if 0
 pest
@@ -494,7 +494,7 @@ sizeof australian_datetktbl[0];
 
 static datetkn deltatktbl[] = {
 	/* text, token, lexval */
-	{"@", IGNORE, 0},			/* postgres relative prefix */
+	{"@", IGNORE_DTF, 0},			/* postgres relative prefix */
 	{DAGO, AGO, 0},				/* "ago" indicates negative time offset */
 	{"c", UNITS, DTK_CENTURY},	/* "century" relative */
 	{"cent", UNITS, DTK_CENTURY},		/* "century" relative */
@@ -536,7 +536,7 @@ static datetkn deltatktbl[] = {
 	{"msecs", UNITS, DTK_MILLISEC},
 	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
 	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
-	{"reltime", IGNORE, 0},		/* pre-v6.1 "Undefined Reltime" */
+	{"reltime", IGNORE_DTF, 0},		/* pre-v6.1 "Undefined Reltime" */
 	{"s", UNITS, DTK_SECOND},
 	{"sec", UNITS, DTK_SECOND},
 	{DSECOND, UNITS, DTK_SECOND},
@@ -1198,7 +1198,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				type = DecodeSpecial(i, field[i], &val);
-				if (type == IGNORE)
+				if (type == IGNORE_DTF)
 					continue;
 
 				tmask = DTK_M(type);
@@ -1223,7 +1223,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_YESTERDAY:
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
-								GetCurrentTime(tm);
+								GetCurrentDateTime(tm);
 								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) - 1),
 								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
@@ -1234,7 +1234,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_TODAY:
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
-								GetCurrentTime(tm);
+								GetCurrentDateTime(tm);
 								tm->tm_hour = 0;
 								tm->tm_min = 0;
 								tm->tm_sec = 0;
@@ -1243,7 +1243,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 							case DTK_TOMORROW:
 								tmask = DTK_DATE_M;
 								*dtype = DTK_DATE;
-								GetCurrentTime(tm);
+								GetCurrentDateTime(tm);
 								j2date((date2j(tm->tm_year, tm->tm_mon, tm->tm_mday) + 1),
 								&tm->tm_year, &tm->tm_mon, &tm->tm_mday);
 								tm->tm_hour = 0;
@@ -1319,7 +1319,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 						ftype[i] = DTK_TZ;
 						break;
 
-					case IGNORE:
+					case IGNORE_DTF:
 						break;
 
 					case AMPM:
@@ -1815,7 +1815,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				type = DecodeSpecial(i, field[i], &val);
-				if (type == IGNORE)
+				if (type == IGNORE_DTF)
 					continue;
 
 				tmask = DTK_M(type);
@@ -1885,7 +1885,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 						ftype[i] = DTK_TZ;
 						break;
 
-					case IGNORE:
+					case IGNORE_DTF:
 						break;
 
 					case AMPM:
@@ -1967,7 +1967,7 @@ DecodeTimeOnly(char **field, int *ftype, int nf,
 
 		if ((fmask & DTK_DATE_M) == 0)
 		{
-			GetCurrentTime(tmp);
+			GetCurrentDateTime(tmp);
 		}
 		else
 		{
@@ -2043,7 +2043,7 @@ DecodeDate(char *str, int fmask, int *tmask, struct tm * tm)
 		if (isalpha((unsigned char) *field[i]))
 		{
 			type = DecodeSpecial(i, field[i], &val);
-			if (type == IGNORE)
+			if (type == IGNORE_DTF)
 				continue;
 
 			dmask = DTK_M(type);
@@ -2576,7 +2576,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 
 	*dtype = DTK_DELTA;
 
-	type = IGNORE;
+	type = IGNORE_DTF;
 	tm->tm_year = 0;
 	tm->tm_mon = 0;
 	tm->tm_mday = 0;
@@ -2633,7 +2633,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 					tmask = DTK_M(TZ);
 					break;
 				}
-				else if (type == IGNORE)
+				else if (type == IGNORE_DTF)
 				{
 					if (*cp == '.')
 					{
@@ -2658,7 +2658,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 			case DTK_NUMBER:
 				val = strtol(field[i], &cp, 10);
 
-				if (type == IGNORE)
+				if (type == IGNORE_DTF)
 					type = DTK_SECOND;
 
 				if (*cp == '.')
@@ -2826,7 +2826,7 @@ DecodeInterval(char **field, int *ftype, int nf, int *dtype, struct tm * tm, fse
 			case DTK_STRING:
 			case DTK_SPECIAL:
 				type = DecodeUnits(i, field[i], &val);
-				if (type == IGNORE)
+				if (type == IGNORE_DTF)
 					continue;
 
 				tmask = 0;		/* DTK_M(type); */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.26 2002/03/03 17:47:56 tgl Exp $
+ * $Id: sinval.h,v 1.27 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,7 +86,7 @@ extern bool TransactionIdIsInProgress(TransactionId xid);
 extern TransactionId GetOldestXmin(bool allDbs);
 extern int	CountActiveBackends(void);
 
-/* Use "struct PROC", not PROC, to avoid including proc.h here */
-extern struct PROC *BackendIdGetProc(BackendId procId);
+/* Use "struct PGPROC", not PGPROC, to avoid including proc.h here */
+extern struct PGPROC *BackendIdGetProc(BackendId procId);
 
 #endif   /* SINVAL_H */

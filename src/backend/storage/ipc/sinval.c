@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.47 2002/05/24 18:57:56 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/sinval.c,v 1.48 2002/06/11 13:40:51 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ ReceiveSharedInvalidMessages(
 		 * The routines later in this file that use shared mode are okay with
 		 * this, because they aren't looking at the ProcState fields
 		 * associated with SI message transfer; they only use the
-		 * ProcState array as an easy way to find all the PROC structures.
+		 * ProcState array as an easy way to find all the PGPROC structures.
 		 */
 		LWLockAcquire(SInvalLock, LW_SHARED);
 		getResult = SIGetDataEntry(shmInvalBuffer, MyBackendId, &data);
@@ -130,12 +130,12 @@ ReceiveSharedInvalidMessages(
 
 
 /****************************************************************************/
-/* Functions that need to scan the PROC structures of all running backends. */
+/* Functions that need to scan the PGPROC structures of all running backends. */
 /* It's a bit strange to keep these in sinval.c, since they don't have any	*/
 /* direct relationship to shared-cache invalidation.  But the procState		*/
 /* array in the SI segment is the only place in the system where we have	*/
 /* an array of per-backend data, so it is the most convenient place to keep */
-/* pointers to the backends' PROC structures.  We used to implement these	*/
+/* pointers to the backends' PGPROC structures.  We used to implement these	*/
 /* functions with a slow, ugly search through the ShmemIndex hash table --- */
 /* now they are simple loops over the SI ProcState array.					*/
 /****************************************************************************/
@@ -171,7 +171,7 @@ DatabaseHasActiveBackends(Oid databaseId, bool ignoreMyself)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			if (proc->databaseId == databaseId)
 			{
@@ -208,7 +208,7 @@ TransactionIdIsInProgress(TransactionId xid)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId pxid = proc->xid;
@@ -260,7 +260,7 @@ GetOldestXmin(bool allDbs)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			if (allDbs || proc->databaseId == MyDatabaseId)
 			{
@@ -371,7 +371,7 @@ GetSnapshotData(bool serializable)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			/* Fetch xid just once - see GetNewTransactionId */
 			TransactionId xid = proc->xid;
@@ -460,7 +460,7 @@ CountActiveBackends(void)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			if (proc == MyProc)
 				continue;		/* do not count myself */
@@ -476,7 +476,7 @@ CountActiveBackends(void)
 }
 
 /*
- * GetUndoRecPtr -- returns oldest PROC->logRec.
+ * GetUndoRecPtr -- returns oldest PGPROC->logRec.
  */
 XLogRecPtr
 GetUndoRecPtr(void)
@@ -495,7 +495,7 @@ GetUndoRecPtr(void)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			tempr = proc->logRec;
 			if (tempr.xrecoff == 0)
@@ -512,13 +512,13 @@ GetUndoRecPtr(void)
 }
 
 /*
- * BackendIdGetProc - given a BackendId, find its PROC structure
+ * BackendIdGetProc - given a BackendId, find its PGPROC structure
  *
  * This is a trivial lookup in the ProcState array.  We assume that the caller
  * knows that the backend isn't going to go away, so we do not bother with
  * locking.
  */
-struct PROC *
+struct PGPROC *
 BackendIdGetProc(BackendId procId)
 {
 	SISeg	   *segP = shmInvalBuffer;
@@ -530,7 +530,7 @@ BackendIdGetProc(BackendId procId)
 
 		if (pOffset != INVALID_OFFSET)
 		{
-			PROC	   *proc = (PROC *) MAKE_PTR(pOffset);
+			PGPROC	   *proc = (PGPROC *) MAKE_PTR(pOffset);
 
 			return proc;
 		}

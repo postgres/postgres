@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.67 2002/06/01 15:52:15 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.68 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -69,7 +69,7 @@ date_in(PG_FUNCTION_ARGS)
 		case DTK_CURRENT:
 			elog(ERROR, "Date CURRENT no longer supported"
 				 "\n\tdate_in() internal coding error");
-			GetCurrentTime(tm);
+			GetCurrentDateTime(tm);
 			break;
 
 		case DTK_EPOCH:
@@ -1697,7 +1697,7 @@ time_timetz(PG_FUNCTION_ARGS)
 	fsec_t		fsec;
 	int			tz;
 
-	GetCurrentTime(tm);
+	GetCurrentDateTime(tm);
 	time2tm(time, tm, &fsec);
 	tz = DetermineLocalTimeZone(tm);
 

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.319 2002/05/22 17:20:59 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.320 2002/06/11 13:40:50 wieck Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -321,25 +321,25 @@ static void doNegateFloat(Value *v);
 	BACKWARD, BEFORE, BEGIN_TRANS, BETWEEN, BIGINT, BINARY, BIT, BOTH,
 	BOOLEAN, BY,
 
-	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR, CHARACTER,
+	CACHE, CALLED, CASCADE, CASE, CAST, CHAIN, CHAR_P, CHARACTER,
 	CHARACTERISTICS, CHECK, CHECKPOINT, CLOSE, CLUSTER, COALESCE, COLLATE,
 	COLUMN, COMMENT, COMMIT, COMMITTED, CONSTRAINT, CONSTRAINTS, COPY,
 	CREATE, CREATEDB, CREATEUSER, CROSS, CURRENT_DATE, CURRENT_TIME,
 	CURRENT_TIMESTAMP, CURRENT_USER, CURSOR, CYCLE,
 
 	DATABASE, DAY_P, DEC, DECIMAL, DECLARE, DEFAULT, DEFERRABLE, DEFERRED,
-	DEFINER, DELETE, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
+	DEFINER, DELETE_P, DELIMITERS, DESC, DISTINCT, DO, DOMAIN_P, DOUBLE, DROP,
 
 	EACH, ELSE, ENCODING, ENCRYPTED, END_TRANS, ESCAPE, EXCEPT, EXCLUSIVE,
 	EXECUTE, EXISTS, EXPLAIN, EXTERNAL, EXTRACT,
 
-	FALSE_P, FETCH, FLOAT, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
+	FALSE_P, FETCH, FLOAT_P, FOR, FORCE, FOREIGN, FORWARD, FREEZE, FROM,
 	FULL, FUNCTION,
 
-	GLOBAL, GRANT, GROUP,
+	GLOBAL, GRANT, GROUP_P,
 	HANDLER, HAVING, HOUR_P,
 
-	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN, INCREMENT, INDEX, INHERITS,
+	ILIKE, IMMEDIATE, IMMUTABLE, IMPLICIT, IN_P, INCREMENT, INDEX, INHERITS,
 	INITIALLY, INNER_P, INOUT, INPUT, INSENSITIVE, INSERT, INSTEAD, INT,
 	INTEGER, INTERSECT, INTERVAL, INTO, INVOKER, IS, ISNULL, ISOLATION,
 
@@ -356,7 +356,7 @@ static void doNegateFloat(Value *v);
 	NUMERIC,
 
 	OF, OFF, OFFSET, OIDS, OLD, ON, ONLY, OPERATOR, OPTION, OR, ORDER,
-	OUT, OUTER_P, OVERLAPS, OWNER,
+	OUT_P, OUTER_P, OVERLAPS, OWNER,
 
 	PARTIAL, PASSWORD, PATH_P, PENDANT, POSITION, PRECISION, PRIMARY,
 	PRIOR, PRIVILEGES, PROCEDURE, PROCEDURAL,
@@ -406,7 +406,7 @@ static void doNegateFloat(Value *v);
 %nonassoc	ESCAPE
 %nonassoc	OVERLAPS
 %nonassoc	BETWEEN
-%nonassoc	IN
+%nonassoc	IN_P
 %left		POSTFIXOP		/* dummy for postfix Op rules */
 %left		Op OPERATOR		/* multi-character ops and user-defined operators */
 %nonassoc	NOTNULL
@@ -647,7 +647,7 @@ OptUserElem:  PASSWORD Sconst
 					$$->defname = "createuser";
 					$$->arg = (Node *)makeInteger(FALSE);
 				}
-			| IN GROUP user_list
+			| IN_P GROUP_P user_list
 				{ 
 					$$ = makeNode(DefElem);
 					$$->defname = "groupElts";
@@ -680,14 +680,14 @@ user_list:  user_list ',' UserId
  *
  *****************************************************************************/
 
-CreateGroupStmt:  CREATE GROUP UserId OptGroupList
+CreateGroupStmt:  CREATE GROUP_P UserId OptGroupList
 				{
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
 					n->options = $4;
 					$$ = (Node *)n;
 				}
-			| CREATE GROUP UserId WITH OptGroupList
+			| CREATE GROUP_P UserId WITH OptGroupList
 				{
 					CreateGroupStmt *n = makeNode(CreateGroupStmt);
 					n->name = $3;
@@ -725,7 +725,7 @@ OptGroupElem:  USER user_list
  *
  *****************************************************************************/
 
-AlterGroupStmt:  ALTER GROUP UserId ADD USER user_list
+AlterGroupStmt:  ALTER GROUP_P UserId ADD USER user_list
 				{
 					AlterGroupStmt *n = makeNode(AlterGroupStmt);
 					n->name = $3;
@@ -733,7 +733,7 @@ AlterGroupStmt:  ALTER GROUP UserId ADD USER user_list
 					n->listUsers = $6;
 					$$ = (Node *)n;
 				}
-			| ALTER GROUP UserId DROP USER user_list
+			| ALTER GROUP_P UserId DROP USER user_list
 				{
 					AlterGroupStmt *n = makeNode(AlterGroupStmt);
 					n->name = $3;
@@ -751,7 +751,7 @@ AlterGroupStmt:  ALTER GROUP UserId ADD USER user_list
  *
  *****************************************************************************/
 
-DropGroupStmt: DROP GROUP UserId
+DropGroupStmt: DROP GROUP_P UserId
 				{
 					DropGroupStmt *n = makeNode(DropGroupStmt);
 					n->name = $3;
@@ -1671,7 +1671,7 @@ key_actions:  key_delete				{ $$ = $1; }
 		| /*EMPTY*/						{ $$ = 0; }
 		;
 
-key_delete:  ON DELETE key_reference	{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
+key_delete:  ON DELETE_P key_reference	{ $$ = $3 << FKCONSTR_ON_DELETE_SHIFT; }
 		;
 
 key_update:  ON UPDATE key_reference	{ $$ = $3 << FKCONSTR_ON_UPDATE_SHIFT; }
@@ -1963,7 +1963,7 @@ TriggerEvents:	TriggerOneEvent
 		;
 
 TriggerOneEvent:  INSERT					{ $$ = 'i'; }
-			| DELETE						{ $$ = 'd'; }
+			| DELETE_P						{ $$ = 'd'; }
 			| UPDATE						{ $$ = 'u'; }
 		;
 
@@ -2472,7 +2472,7 @@ fetch_how_many:  Iconst					{ $$ = $1; }
 		| PRIOR							{ $$ = -1; }
 		;
 
-from_in:  IN							{ }
+from_in:  IN_P							{ }
 	| FROM								{ }
 	;
 
@@ -2524,7 +2524,7 @@ privilege_list: privilege { $$ = makeListi1($1); }
 privilege: SELECT    { $$ = ACL_SELECT; }
 		| INSERT     { $$ = ACL_INSERT; }
 		| UPDATE     { $$ = ACL_UPDATE; }
-		| DELETE     { $$ = ACL_DELETE; }
+		| DELETE_P   { $$ = ACL_DELETE; }
 		| RULE       { $$ = ACL_RULE; }
 		| REFERENCES { $$ = ACL_REFERENCES; }
 		| TRIGGER    { $$ = ACL_TRIGGER; }
@@ -2598,7 +2598,7 @@ grantee:  ColId
 					n->groupname = NULL;
 					$$ = (Node *)n;
 				}
-		| GROUP ColId
+		| GROUP_P ColId
 				{
 					PrivGrantee *n = makeNode(PrivGrantee);
 					/* Treat GROUP PUBLIC as a synonym for PUBLIC */
@@ -2807,11 +2807,11 @@ func_arg:  opt_arg func_type
 				}
 		;
 
-opt_arg:  IN
+opt_arg:  IN_P
 				{
 					$$ = FALSE;
 				}
-		| OUT
+		| OUT_P
 				{
 					elog(ERROR, "CREATE FUNCTION / OUT parameters are not supported");
 					$$ = TRUE;
@@ -3143,7 +3143,7 @@ RuleActionStmtOrEmpty:	RuleActionStmt
 /* change me to select, update, etc. some day */
 event:	SELECT							{ $$ = CMD_SELECT; }
 		| UPDATE						{ $$ = CMD_UPDATE; }
-		| DELETE						{ $$ = CMD_DELETE; }
+		| DELETE_P						{ $$ = CMD_DELETE; }
 		| INSERT						{ $$ = CMD_INSERT; }
 		 ;
 
@@ -3728,7 +3728,7 @@ insert_column_item:  ColId opt_indirection
  *
  *****************************************************************************/
 
-DeleteStmt:  DELETE FROM relation_expr where_clause
+DeleteStmt:  DELETE_P FROM relation_expr where_clause
 				{
 					DeleteStmt *n = makeNode(DeleteStmt);
 					n->relation = $3;
@@ -3747,7 +3747,7 @@ LockStmt:	LOCK_P opt_table qualified_name_list opt_lock
 				}
 		;
 
-opt_lock:  IN lock_type MODE	{ $$ = $2; }
+opt_lock:  IN_P lock_type MODE	{ $$ = $2; }
 		| /*EMPTY*/				{ $$ = AccessExclusiveLock; }
 		;
 
@@ -4134,7 +4134,7 @@ select_offset_value:	Iconst
  *	cases for these.
  */
 
-group_clause:  GROUP BY expr_list				{ $$ = $3; }
+group_clause:  GROUP_P BY expr_list				{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NIL; }
 		;
 
@@ -4535,7 +4535,7 @@ Numeric:  INT
 				{
 					$$ = SystemTypeName("float4");
 				}
-		| FLOAT opt_float
+		| FLOAT_P opt_float
 				{
 					$$ = $2;
 				}
@@ -4726,10 +4726,10 @@ Character:  character '(' Iconst ')' opt_charset
 		;
 
 character:  CHARACTER opt_varying				{ $$ = $2 ? "varchar": "bpchar"; }
-		| CHAR opt_varying						{ $$ = $2 ? "varchar": "bpchar"; }
+		| CHAR_P opt_varying						{ $$ = $2 ? "varchar": "bpchar"; }
 		| VARCHAR								{ $$ = "varchar"; }
 		| NATIONAL CHARACTER opt_varying		{ $$ = $3 ? "varchar": "bpchar"; }
-		| NATIONAL CHAR opt_varying				{ $$ = $3 ? "varchar": "bpchar"; }
+		| NATIONAL CHAR_P opt_varying				{ $$ = $3 ? "varchar": "bpchar"; }
 		| NCHAR opt_varying						{ $$ = $2 ? "varchar": "bpchar"; }
 		;
 
@@ -4842,7 +4842,7 @@ opt_interval:  YEAR_P							{ $$ = MASK(YEAR); }
  * Define row_descriptor to allow yacc to break the reduce/reduce conflict
  *  with singleton expressions.
  */
-row_expr: '(' row_descriptor ')' IN select_with_parens
+row_expr: '(' row_descriptor ')' IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -4852,7 +4852,7 @@ row_expr: '(' row_descriptor ')' IN select_with_parens
 					n->subselect = $5;
 					$$ = (Node *)n;
 				}
-		| '(' row_descriptor ')' NOT IN select_with_parens
+		| '(' row_descriptor ')' NOT IN_P select_with_parens
 				{
 					SubLink *n = makeNode(SubLink);
 					n->lefthand = $2;
@@ -5190,7 +5190,7 @@ a_expr:  c_expr
 						(Node *) makeSimpleA_Expr(OP, "<", $1, $4),
 						(Node *) makeSimpleA_Expr(OP, ">", $1, $6));
 				}
-		| a_expr IN in_expr
+		| a_expr IN_P in_expr
 				{
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA($3, SubLink))
@@ -5220,7 +5220,7 @@ a_expr:  c_expr
 						$$ = n;
 					}
 				}
-		| a_expr NOT IN in_expr
+		| a_expr NOT IN_P in_expr
 				{
 					/* in_expr returns a SubLink or a list of a_exprs */
 					if (IsA($4, SubLink))
@@ -5708,7 +5708,7 @@ extract_arg:  IDENT						{ $$ = $1; }
 
 /* position_list uses b_expr not a_expr to avoid conflict with general IN */
 
-position_list:  b_expr IN b_expr
+position_list:  b_expr IN_P b_expr
 				{	$$ = makeList2($3, $1); }
 		| /*EMPTY*/
 				{	$$ = NIL; }
@@ -6242,7 +6242,7 @@ unreserved_keyword:
 		| DECLARE
 		| DEFERRED
 		| DEFINER
-		| DELETE
+		| DELETE_P
 		| DELIMITERS
 		| DOMAIN_P
 		| DOUBLE
@@ -6303,7 +6303,7 @@ unreserved_keyword:
 		| OIDS
 		| OPERATOR
 		| OPTION
-		| OUT
+		| OUT_P
 		| OWNER
 		| PARTIAL
 		| PASSWORD
@@ -6389,14 +6389,14 @@ col_name_keyword:
 		  BIGINT
 		| BIT
 		| BOOLEAN
-		| CHAR
+		| CHAR_P
 		| CHARACTER
 		| COALESCE
 		| DEC
 		| DECIMAL
 		| EXISTS
 		| EXTRACT
-		| FLOAT
+		| FLOAT_P
 		| INT
 		| INTEGER
 		| INTERVAL
@@ -6433,7 +6433,7 @@ func_name_keyword:
 		| FREEZE
 		| FULL
 		| ILIKE
-		| IN
+		| IN_P
 		| INNER_P
 		| IS
 		| ISNULL
@@ -6487,7 +6487,7 @@ reserved_keyword:
 		| FOREIGN
 		| FROM
 		| GRANT
-		| GROUP
+		| GROUP_P
 		| HAVING
 		| INITIALLY
 		| INTERSECT

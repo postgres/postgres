@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.91 2002/05/17 01:19:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.92 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -676,7 +676,7 @@ SetSessionAuthorization(Oid userid)
  * Get user name from user id
  */
 char *
-GetUserName(Oid userid)
+GetUserNameFromId(Oid userid)
 {
 	HeapTuple	tuple;
 	char	   *result;

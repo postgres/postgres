@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.119 2002/05/05 00:03:28 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/proc.c,v 1.120 2002/06/11 13:40:51 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,12 +55,12 @@
 
 int			DeadlockTimeout = 1000;
 
-PROC	   *MyProc = NULL;
+PGPROC	   *MyProc = NULL;
 
 /*
- * This spinlock protects the freelist of recycled PROC structures.
+ * This spinlock protects the freelist of recycled PGPROC structures.
  * We cannot use an LWLock because the LWLock manager depends on already
- * having a PROC and a wait semaphore!  But these structures are touched
+ * having a PGPROC and a wait semaphore!  But these structures are touched
  * relatively infrequently (only at backend startup or shutdown) and not for
  * very long, so a spinlock is okay.
  */
@@ -68,7 +68,7 @@ static slock_t *ProcStructLock = NULL;
 
 static PROC_HDR *ProcGlobal = NULL;
 
-static PROC *DummyProc = NULL;
+static PGPROC *DummyProc = NULL;
 
 static bool waitingForLock = false;
 static bool waitingForSignal = false;
@@ -129,29 +129,29 @@ InitProcGlobal(int maxBackends)
 		ProcGlobal->freeProcs = INVALID_OFFSET;
 
 		/*
-		 * Pre-create the PROC structures and create a semaphore for each.
+		 * Pre-create the PGPROC structures and create a semaphore for each.
 		 */
 		for (i = 0; i < maxBackends; i++)
 		{
-			PROC   *proc;
+			PGPROC   *proc;
 
-			proc = (PROC *) ShmemAlloc(sizeof(PROC));
+			proc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
 			if (!proc)
 				elog(FATAL, "cannot create new proc: out of memory");
-			MemSet(proc, 0, sizeof(PROC));
+			MemSet(proc, 0, sizeof(PGPROC));
 			PGSemaphoreCreate(&proc->sem);
 			proc->links.next = ProcGlobal->freeProcs;
 			ProcGlobal->freeProcs = MAKE_OFFSET(proc);
 		}
 
 		/*
-		 * Pre-allocate a PROC structure for dummy (checkpoint) processes,
+		 * Pre-allocate a PGPROC structure for dummy (checkpoint) processes,
 		 * too.  This does not get linked into the freeProcs list.
 		 */
-		DummyProc = (PROC *) ShmemAlloc(sizeof(PROC));
+		DummyProc = (PGPROC *) ShmemAlloc(sizeof(PGPROC));
 		if (!DummyProc)
 			elog(FATAL, "cannot create new proc: out of memory");
-		MemSet(DummyProc, 0, sizeof(PROC));
+		MemSet(DummyProc, 0, sizeof(PGPROC));
 		DummyProc->pid = 0;		/* marks DummyProc as not in use */
 		PGSemaphoreCreate(&DummyProc->sem);
 
@@ -183,7 +183,7 @@ InitProcess(void)
 
 	/*
 	 * Try to get a proc struct from the free list.  If this fails,
-	 * we must be out of PROC structures (not to mention semaphores).
+	 * we must be out of PGPROC structures (not to mention semaphores).
 	 */
 	SpinLockAcquire(ProcStructLock);
 
@@ -191,14 +191,14 @@ InitProcess(void)
 
 	if (myOffset != INVALID_OFFSET)
 	{
-		MyProc = (PROC *) MAKE_PTR(myOffset);
+		MyProc = (PGPROC *) MAKE_PTR(myOffset);
 		procglobal->freeProcs = MyProc->links.next;
 		SpinLockRelease(ProcStructLock);
 	}
 	else
 	{
 		/*
-		 * If we reach here, all the PROCs are in use.  This is one of
+		 * If we reach here, all the PGPROCs are in use.  This is one of
 		 * the possible places to detect "too many backends", so give the
 		 * standard error message.
 		 */
@@ -236,7 +236,7 @@ InitProcess(void)
 	PGSemaphoreReset(&MyProc->sem);
 
 	/*
-	 * Now that we have a PROC, we could try to acquire locks, so
+	 * Now that we have a PGPROC, we could try to acquire locks, so
 	 * initialize the deadlock checker.
 	 */
 	InitDeadLockChecking();
@@ -246,7 +246,7 @@ InitProcess(void)
  * InitDummyProcess -- create a dummy per-process data structure
  *
  * This is called by checkpoint processes so that they will have a MyProc
- * value that's real enough to let them wait for LWLocks.  The PROC and
+ * value that's real enough to let them wait for LWLocks.  The PGPROC and
  * sema that are assigned are the extra ones created during InitProcGlobal.
  */
 void
@@ -402,11 +402,11 @@ ProcKill(void)
 
 	SpinLockAcquire(ProcStructLock);
 
-	/* Return PROC structure (and semaphore) to freelist */
+	/* Return PGPROC structure (and semaphore) to freelist */
 	MyProc->links.next = procglobal->freeProcs;
 	procglobal->freeProcs = MAKE_OFFSET(MyProc);
 
-	/* PROC struct isn't mine anymore */
+	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
 
 	SpinLockRelease(ProcStructLock);
@@ -414,7 +414,7 @@ ProcKill(void)
 
 /*
  * DummyProcKill() -- Cut-down version of ProcKill for dummy (checkpoint)
- *		processes.	The PROC and sema are not released, only marked
+ *		processes.	The PGPROC and sema are not released, only marked
  *		as not-in-use.
  */
 static void
@@ -433,7 +433,7 @@ DummyProcKill(void)
 	/* Mark DummyProc no longer in use */
 	MyProc->pid = 0;
 
-	/* PROC struct isn't mine anymore */
+	/* PGPROC struct isn't mine anymore */
 	MyProc = NULL;
 }
 
@@ -506,7 +506,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			myHeldLocks = MyProc->heldLocks;
 	bool		early_deadlock = false;
-	PROC	   *proc;
+	PGPROC	   *proc;
 	int			i;
 
 	/*
@@ -531,7 +531,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	{
 		int			aheadRequests = 0;
 
-		proc = (PROC *) MAKE_PTR(waitQueue->links.next);
+		proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
 		for (i = 0; i < waitQueue->size; i++)
 		{
 			/* Must he wait for me? */
@@ -568,7 +568,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 			}
 			/* Nope, so advance to next waiter */
 			aheadRequests |= (1 << proc->waitLockMode);
-			proc = (PROC *) MAKE_PTR(proc->links.next);
+			proc = (PGPROC *) MAKE_PTR(proc->links.next);
 		}
 
 		/*
@@ -579,7 +579,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 	else
 	{
 		/* I hold no locks, so I can't push in front of anyone. */
-		proc = (PROC *) &(waitQueue->links);
+		proc = (PGPROC *) &(waitQueue->links);
 	}
 
 	/*
@@ -591,7 +591,7 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
 
 	lock->waitMask |= (1 << lockmode);
 
-	/* Set up wait information in PROC object, too */
+	/* Set up wait information in PGPROC object, too */
 	MyProc->waitLock = lock;
 	MyProc->waitHolder = holder;
 	MyProc->waitLockMode = lockmode;
@@ -685,20 +685,20 @@ ProcSleep(LOCKMETHODTABLE *lockMethodTable,
  * works correctly for that case.  To clean up in failure case, would need
  * to twiddle the lock's request counts too --- see RemoveFromWaitQueue.
  */
-PROC *
-ProcWakeup(PROC *proc, int errType)
+PGPROC *
+ProcWakeup(PGPROC *proc, int errType)
 {
-	PROC	   *retProc;
+	PGPROC	   *retProc;
 
 	/* assume that masterLock has been acquired */
 
 	/* Proc should be sleeping ... */
 	if (proc->links.prev == INVALID_OFFSET ||
 		proc->links.next == INVALID_OFFSET)
-		return (PROC *) NULL;
+		return (PGPROC *) NULL;
 
 	/* Save next process before we zap the list link */
-	retProc = (PROC *) MAKE_PTR(proc->links.next);
+	retProc = (PGPROC *) MAKE_PTR(proc->links.next);
 
 	/* Remove process from wait queue */
 	SHMQueueDelete(&(proc->links));
@@ -726,7 +726,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 	LOCKMETHODCTL *lockctl = lockMethodTable->ctl;
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
-	PROC	   *proc;
+	PGPROC	   *proc;
 	int			aheadRequests = 0;
 
 	Assert(queue_size >= 0);
@@ -734,7 +734,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 	if (queue_size == 0)
 		return;
 
-	proc = (PROC *) MAKE_PTR(waitQueue->links.next);
+	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
 
 	while (queue_size-- > 0)
 	{
@@ -769,7 +769,7 @@ ProcLockWakeup(LOCKMETHODTABLE *lockMethodTable, LOCK *lock)
 			 * checks.
 			 */
 			aheadRequests |= (1 << lockmode);
-			proc = (PROC *) MAKE_PTR(proc->links.next);
+			proc = (PGPROC *) MAKE_PTR(proc->links.next);
 		}
 	}
 
@@ -902,7 +902,7 @@ ProcCancelWaitForSignal(void)
 void
 ProcSendSignal(BackendId procId)
 {
-	PROC	   *proc = BackendIdGetProc(procId);
+	PGPROC	   *proc = BackendIdGetProc(procId);
 
 	if (proc != NULL)
 		PGSemaphoreUnlock(&proc->sem);

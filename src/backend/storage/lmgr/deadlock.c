@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.8 2001/10/28 06:25:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.9 2002/06/11 13:40:51 wieck Exp $
  *
  *	Interface:
  *
@@ -31,8 +31,8 @@
 /* One edge in the waits-for graph */
 typedef struct
 {
-	PROC	   *waiter;			/* the waiting process */
-	PROC	   *blocker;		/* the process it is waiting for */
+	PGPROC	   *waiter;			/* the waiting process */
+	PGPROC	   *blocker;		/* the process it is waiting for */
 	int			pred;			/* workspace for TopoSort */
 	int			link;			/* workspace for TopoSort */
 } EDGE;
@@ -41,20 +41,20 @@ typedef struct
 typedef struct
 {
 	LOCK	   *lock;			/* the lock whose wait queue is described */
-	PROC	  **procs;			/* array of PROC *'s in new wait order */
+	PGPROC	  **procs;			/* array of PGPROC *'s in new wait order */
 	int			nProcs;
 } WAIT_ORDER;
 
 
-static bool DeadLockCheckRecurse(PROC *proc);
-static bool TestConfiguration(PROC *startProc);
-static bool FindLockCycle(PROC *checkProc,
+static bool DeadLockCheckRecurse(PGPROC *proc);
+static bool TestConfiguration(PGPROC *startProc);
+static bool FindLockCycle(PGPROC *checkProc,
 			  EDGE *softEdges, int *nSoftEdges);
-static bool FindLockCycleRecurse(PROC *checkProc,
+static bool FindLockCycleRecurse(PGPROC *checkProc,
 					 EDGE *softEdges, int *nSoftEdges);
 static bool ExpandConstraints(EDGE *constraints, int nConstraints);
 static bool TopoSort(LOCK *lock, EDGE *constraints, int nConstraints,
-		 PROC **ordering);
+		 PGPROC **ordering);
 
 #ifdef DEBUG_DEADLOCK
 static void PrintLockQueue(LOCK *lock, const char *info);
@@ -66,18 +66,18 @@ static void PrintLockQueue(LOCK *lock, const char *info);
  */
 
 /* Workspace for FindLockCycle */
-static PROC **visitedProcs;		/* Array of visited procs */
+static PGPROC **visitedProcs;		/* Array of visited procs */
 static int	nVisitedProcs;
 
 /* Workspace for TopoSort */
-static PROC **topoProcs;		/* Array of not-yet-output procs */
+static PGPROC **topoProcs;		/* Array of not-yet-output procs */
 static int *beforeConstraints;	/* Counts of remaining before-constraints */
 static int *afterConstraints;	/* List head for after-constraints */
 
 /* Output area for ExpandConstraints */
 static WAIT_ORDER *waitOrders;	/* Array of proposed queue rearrangements */
 static int	nWaitOrders;
-static PROC **waitOrderProcs;	/* Space for waitOrders queue contents */
+static PGPROC **waitOrderProcs;	/* Space for waitOrders queue contents */
 
 /* Current list of constraints being considered */
 static EDGE *curConstraints;
@@ -111,7 +111,7 @@ InitDeadLockChecking(void)
 	/*
 	 * FindLockCycle needs at most MaxBackends entries in visitedProcs[]
 	 */
-	visitedProcs = (PROC **) palloc(MaxBackends * sizeof(PROC *));
+	visitedProcs = (PGPROC **) palloc(MaxBackends * sizeof(PGPROC *));
 
 	/*
 	 * TopoSort needs to consider at most MaxBackends wait-queue entries,
@@ -128,7 +128,7 @@ InitDeadLockChecking(void)
 	 * than MaxBackends total waiters.
 	 */
 	waitOrders = (WAIT_ORDER *) palloc((MaxBackends / 2) * sizeof(WAIT_ORDER));
-	waitOrderProcs = (PROC **) palloc(MaxBackends * sizeof(PROC *));
+	waitOrderProcs = (PGPROC **) palloc(MaxBackends * sizeof(PGPROC *));
 
 	/*
 	 * Allow at most MaxBackends distinct constraints in a configuration.
@@ -176,7 +176,7 @@ InitDeadLockChecking(void)
  * interlocked!
  */
 bool
-DeadLockCheck(PROC *proc)
+DeadLockCheck(PGPROC *proc)
 {
 	int			i,
 				j;
@@ -194,7 +194,7 @@ DeadLockCheck(PROC *proc)
 	for (i = 0; i < nWaitOrders; i++)
 	{
 		LOCK	   *lock = waitOrders[i].lock;
-		PROC	  **procs = waitOrders[i].procs;
+		PGPROC	  **procs = waitOrders[i].procs;
 		int			nProcs = waitOrders[i].nProcs;
 		PROC_QUEUE *waitQueue = &(lock->waitProcs);
 
@@ -234,7 +234,7 @@ DeadLockCheck(PROC *proc)
  * rearrangements of lock wait queues (if any).
  */
 static bool
-DeadLockCheckRecurse(PROC *proc)
+DeadLockCheckRecurse(PGPROC *proc)
 {
 	int			nEdges;
 	int			oldPossibleConstraints;
@@ -300,7 +300,7 @@ DeadLockCheckRecurse(PROC *proc)
  *--------------------
  */
 static bool
-TestConfiguration(PROC *startProc)
+TestConfiguration(PGPROC *startProc)
 {
 	int			softFound = 0;
 	EDGE	   *softEdges = possibleConstraints + nPossibleConstraints;
@@ -365,7 +365,7 @@ TestConfiguration(PROC *startProc)
  * be believed in preference to the actual ordering seen in the locktable.
  */
 static bool
-FindLockCycle(PROC *checkProc,
+FindLockCycle(PGPROC *checkProc,
 			  EDGE *softEdges,	/* output argument */
 			  int *nSoftEdges)	/* output argument */
 {
@@ -375,11 +375,11 @@ FindLockCycle(PROC *checkProc,
 }
 
 static bool
-FindLockCycleRecurse(PROC *checkProc,
+FindLockCycleRecurse(PGPROC *checkProc,
 					 EDGE *softEdges,	/* output argument */
 					 int *nSoftEdges)	/* output argument */
 {
-	PROC	   *proc;
+	PGPROC	   *proc;
 	LOCK	   *lock;
 	HOLDER	   *holder;
 	SHM_QUEUE  *lockHolders;
@@ -438,7 +438,7 @@ FindLockCycleRecurse(PROC *checkProc,
 
 	while (holder)
 	{
-		proc = (PROC *) MAKE_PTR(holder->tag.proc);
+		proc = (PGPROC *) MAKE_PTR(holder->tag.proc);
 
 		/* A proc never blocks itself */
 		if (proc != checkProc)
@@ -480,7 +480,7 @@ FindLockCycleRecurse(PROC *checkProc,
 	if (i < nWaitOrders)
 	{
 		/* Use the given hypothetical wait queue order */
-		PROC	  **procs = waitOrders[i].procs;
+		PGPROC	  **procs = waitOrders[i].procs;
 
 		queue_size = waitOrders[i].nProcs;
 
@@ -517,7 +517,7 @@ FindLockCycleRecurse(PROC *checkProc,
 		waitQueue = &(lock->waitProcs);
 		queue_size = waitQueue->size;
 
-		proc = (PROC *) MAKE_PTR(waitQueue->links.next);
+		proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
 
 		while (queue_size-- > 0)
 		{
@@ -543,7 +543,7 @@ FindLockCycleRecurse(PROC *checkProc,
 				}
 			}
 
-			proc = (PROC *) MAKE_PTR(proc->links.next);
+			proc = (PGPROC *) MAKE_PTR(proc->links.next);
 		}
 	}
 
@@ -559,7 +559,7 @@ FindLockCycleRecurse(PROC *checkProc,
  *		specific new orderings for affected wait queues
  *
  * Input is a list of soft edges to be reversed.  The output is a list
- * of nWaitOrders WAIT_ORDER structs in waitOrders[], with PROC array
+ * of nWaitOrders WAIT_ORDER structs in waitOrders[], with PGPROC array
  * workspace in waitOrderProcs[].
  *
  * Returns TRUE if able to build an ordering that satisfies all the
@@ -582,7 +582,7 @@ ExpandConstraints(EDGE *constraints,
 	 */
 	for (i = nConstraints; --i >= 0;)
 	{
-		PROC	   *proc = constraints[i].waiter;
+		PGPROC	   *proc = constraints[i].waiter;
 		LOCK	   *lock = proc->waitLock;
 
 		/* Did we already make a list for this lock? */
@@ -628,7 +628,7 @@ ExpandConstraints(EDGE *constraints,
  * slowness of the algorithm won't really matter.
  *
  * The initial queue ordering is taken directly from the lock's wait queue.
- * The output is an array of PROC pointers, of length equal to the lock's
+ * The output is an array of PGPROC pointers, of length equal to the lock's
  * wait queue length (the caller is responsible for providing this space).
  * The partial order is specified by an array of EDGE structs.	Each EDGE
  * is one that we need to reverse, therefore the "waiter" must appear before
@@ -642,22 +642,22 @@ static bool
 TopoSort(LOCK *lock,
 		 EDGE *constraints,
 		 int nConstraints,
-		 PROC **ordering)		/* output argument */
+		 PGPROC **ordering)		/* output argument */
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
-	PROC	   *proc;
+	PGPROC	   *proc;
 	int			i,
 				j,
 				k,
 				last;
 
 	/* First, fill topoProcs[] array with the procs in their current order */
-	proc = (PROC *) MAKE_PTR(waitQueue->links.next);
+	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
 	for (i = 0; i < queue_size; i++)
 	{
 		topoProcs[i] = proc;
-		proc = (PROC *) MAKE_PTR(proc->links.next);
+		proc = (PGPROC *) MAKE_PTR(proc->links.next);
 	}
 
 	/*
@@ -743,15 +743,15 @@ PrintLockQueue(LOCK *lock, const char *info)
 {
 	PROC_QUEUE *waitQueue = &(lock->waitProcs);
 	int			queue_size = waitQueue->size;
-	PROC	   *proc;
+	PGPROC	   *proc;
 	int			i;
 
 	printf("%s lock %lx queue ", info, MAKE_OFFSET(lock));
-	proc = (PROC *) MAKE_PTR(waitQueue->links.next);
+	proc = (PGPROC *) MAKE_PTR(waitQueue->links.next);
 	for (i = 0; i < queue_size; i++)
 	{
 		printf(" %d", proc->pid);
-		proc = (PROC *) MAKE_PTR(proc->links.next);
+		proc = (PGPROC *) MAKE_PTR(proc->links.next);
 	}
 	printf("\n");
 	fflush(stdout);

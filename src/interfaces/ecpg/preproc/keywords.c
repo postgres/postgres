@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.48 2002/05/19 20:00:53 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/keywords.c,v 1.49 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,7 +62,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"case", CASE},
 	{"cast", CAST},
 	{"chain", CHAIN},
-	{"char", CHAR},
+	{"char", CHAR_P},
 	{"character", CHARACTER},
 	{"characteristics", CHARACTERISTICS},
 	{"check", CHECK},
@@ -97,7 +97,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"deferrable", DEFERRABLE},
 	{"deferred", DEFERRED},
 	{"definer", DEFINER},
-	{"delete", DELETE},
+	{"delete", DELETE_P},
 	{"delimiters", DELIMITERS},
 	{"desc", DESC},
 	{"distinct", DISTINCT},
@@ -120,7 +120,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"extract", EXTRACT},
 	{"false", FALSE_P},
 	{"fetch", FETCH},
-	{"float", FLOAT},
+	{"float", FLOAT_P},
 	{"for", FOR},
 	{"force", FORCE},
 	{"foreign", FOREIGN},
@@ -131,7 +131,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"function", FUNCTION},
 	{"global", GLOBAL},
 	{"grant", GRANT},
-	{"group", GROUP},
+	{"group", GROUP_P},
 	{"handler", HANDLER},
 	{"having", HAVING},
 	{"hour", HOUR_P},
@@ -139,7 +139,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"immediate", IMMEDIATE},
 	{"immutable", IMMUTABLE},
 	{"implicit", IMPLICIT},
-	{"in", IN},
+	{"in", IN_P},
 	{"increment", INCREMENT},
 	{"index", INDEX},
 	{"inherits", INHERITS},
@@ -208,7 +208,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"option", OPTION},
 	{"or", OR},
 	{"order", ORDER},
-	{"out", OUT},
+	{"out", OUT_P},
 	{"outer", OUTER_P},
 	{"overlaps", OVERLAPS},
 	{"owner", OWNER},

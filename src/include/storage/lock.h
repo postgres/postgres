@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lock.h,v 1.59 2001/11/05 17:46:35 momjian Exp $
+ * $Id: lock.h,v 1.60 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,12 +22,12 @@
 /* originally in procq.h */
 typedef struct PROC_QUEUE
 {
-	SHM_QUEUE	links;			/* head of list of PROC objects */
+	SHM_QUEUE	links;			/* head of list of PGPROC objects */
 	int			size;			/* number of entries in list */
 } PROC_QUEUE;
 
-/* struct PROC is declared in storage/proc.h, but must forward-reference it */
-typedef struct PROC PROC;
+/* struct PGPROC is declared in storage/proc.h, but must forward-reference it */
+typedef struct PGPROC PGPROC;
 
 
 extern int	max_locks_per_xact;
@@ -161,7 +161,7 @@ typedef struct LOCK
 	int			grantMask;		/* bitmask for lock types already granted */
 	int			waitMask;		/* bitmask for lock types awaited */
 	SHM_QUEUE	lockHolders;	/* list of HOLDER objects assoc. with lock */
-	PROC_QUEUE	waitProcs;		/* list of PROC objects waiting on lock */
+	PROC_QUEUE	waitProcs;		/* list of PGPROC objects waiting on lock */
 	int			requested[MAX_LOCKMODES];		/* counts of requested
 												 * locks */
 	int			nRequested;		/* total of requested[] array */
@@ -181,8 +181,8 @@ typedef struct LOCK
  * holder hashtable.  A HOLDERTAG value uniquely identifies a lock holder.
  *
  * There are two possible kinds of holder tags: a transaction (identified
- * both by the PROC of the backend running it, and the xact's own ID) and
- * a session (identified by backend PROC, with xid = InvalidTransactionId).
+ * both by the PGPROC of the backend running it, and the xact's own ID) and
+ * a session (identified by backend PGPROC, with xid = InvalidTransactionId).
  *
  * Currently, session holders are used for user locks and for cross-xact
  * locks obtained for VACUUM.  We assume that a session lock never conflicts
@@ -195,15 +195,15 @@ typedef struct LOCK
  * as soon as convenient.
  *
  * Each HOLDER object is linked into lists for both the associated LOCK object
- * and the owning PROC object.	Note that the HOLDER is entered into these
+ * and the owning PGPROC object.	Note that the HOLDER is entered into these
  * lists as soon as it is created, even if no lock has yet been granted.
- * A PROC that is waiting for a lock to be granted will also be linked into
+ * A PGPROC that is waiting for a lock to be granted will also be linked into
  * the lock's waitProcs queue.
  */
 typedef struct HOLDERTAG
 {
 	SHMEM_OFFSET lock;			/* link to per-lockable-object information */
-	SHMEM_OFFSET proc;			/* link to PROC of owning backend */
+	SHMEM_OFFSET proc;			/* link to PGPROC of owning backend */
 	TransactionId xid;			/* xact ID, or InvalidTransactionId */
 } HOLDERTAG;
 
@@ -235,16 +235,16 @@ extern bool LockAcquire(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode, bool dontWait);
 extern bool LockRelease(LOCKMETHOD lockmethod, LOCKTAG *locktag,
 			TransactionId xid, LOCKMODE lockmode);
-extern bool LockReleaseAll(LOCKMETHOD lockmethod, PROC *proc,
+extern bool LockReleaseAll(LOCKMETHOD lockmethod, PGPROC *proc,
 			   bool allxids, TransactionId xid);
 extern int LockCheckConflicts(LOCKMETHODTABLE *lockMethodTable,
 				   LOCKMODE lockmode,
-				   LOCK *lock, HOLDER *holder, PROC *proc,
+				   LOCK *lock, HOLDER *holder, PGPROC *proc,
 				   int *myHolding);
 extern void GrantLock(LOCK *lock, HOLDER *holder, LOCKMODE lockmode);
-extern void RemoveFromWaitQueue(PROC *proc);
+extern void RemoveFromWaitQueue(PGPROC *proc);
 extern int	LockShmemSize(int maxBackends);
-extern bool DeadLockCheck(PROC *proc);
+extern bool DeadLockCheck(PGPROC *proc);
 extern void InitDeadLockChecking(void);
 
 #ifdef LOCK_DEBUG

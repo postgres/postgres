@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.22 2002/04/27 21:24:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootscanner.l,v 1.23 2002/06/11 13:40:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,7 +121,7 @@ insert			{ return(INSERT_TUPLE); }
 (-)?{D}*"."{D}+({Exp})? |
 (-)?{D}+{Exp}			{
 							yylval.ival = EnterString((char*)yytext);
-							return(CONST);
+							return(CONST_P);
 						}
 
 .				{

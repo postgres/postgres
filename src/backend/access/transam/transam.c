@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.51 2002/05/25 20:00:11 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/transam.c,v 1.52 2002/06/11 13:40:50 wieck Exp $
  *
  * NOTES
  *	  This file contains the high level access-method interface to the
@@ -201,7 +201,7 @@ TransactionIdDidAbort(TransactionId transactionId)
 
 /*
  * Now this func in shmem.c and gives quality answer by scanning
- * PROC structures of all running backend. - vadim 11/26/96
+ * PGPROC structures of all running backend. - vadim 11/26/96
  *
  * Old comments:
  * true if given transaction has neither committed nor aborted

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.93 2002/04/21 19:48:12 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/nabstime.c,v 1.94 2002/06/11 13:40:52 wieck Exp $
  *
  * NOTES
  *
@@ -239,14 +239,14 @@ GetCurrentAbsoluteTimeUsec(int *usec)
 
 
 void
-GetCurrentTime(struct tm * tm)
+GetCurrentDateTime(struct tm * tm)
 {
 	int			tz;
 
 	abstime2tm(GetCurrentTransactionStartTime(), &tz, tm, NULL);
 
 	return;
-}	/* GetCurrentTime() */
+}	/* GetCurrentDateTime() */
 
 
 void

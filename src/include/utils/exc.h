@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.22 2001/11/05 17:46:36 momjian Exp $
+ * $Id: exc.h,v 1.23 2002/06/11 13:40:52 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,7 +40,7 @@ extern ExcFrame *ExcCurFrameP;
 /* These are not used anywhere 1998/6/15 */
 #define ExcBegin() \
 do { \
-	ExcFrame		exception; \
+	ExcFrame	exception; \
 	\
 	exception.link = ExcCurFrameP; \
 	if (sigsetjmp(exception.context, 1) == 0) \

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.46 2002/04/27 21:24:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.47 2002/06/11 13:40:50 wieck Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -93,7 +93,7 @@ int num_columns_read = 0;
 %type <ival>  boot_tuple boot_tuplelist
 %type <oidval> optoideq
 
-%token <ival> CONST ID
+%token <ival> CONST_P ID
 %token OPEN XCLOSE XCREATE INSERT_TUPLE
 %token STRING XDEFINE
 %token XDECLARE INDEX ON USING XBUILD INDICES UNIQUE
@@ -329,7 +329,7 @@ boot_tuple:
 		;
 
 boot_const :
-		  CONST { $$=yylval.ival; }
+		  CONST_P { $$=yylval.ival; }
 		;
 
 boot_ident :
