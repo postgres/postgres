@@ -1,14 +1,29 @@
+/*-------------------------------------------------------------------------
+ *
+ * pgstatfuncs.c
+ *	  Functions for accessing the statistics collector data
+ *
+ * Portions Copyright (c) 1996-2004, PostgreSQL Global Development Group
+ * Portions Copyright (c) 1994, Regents of the University of California
+ *
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/pgstatfuncs.c,v 1.19 2004/10/01 21:03:42 tgl Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 #include "postgres.h"
 
-#include "fmgr.h"
-#include "miscadmin.h"
-#include "utils/hsearch.h"
 #include "access/xact.h"
 #include "catalog/pg_shadow.h"
+#include "fmgr.h"
+#include "funcapi.h"
+#include "miscadmin.h"
 #include "nodes/execnodes.h"
-
 #include "pgstat.h"
+#include "utils/hsearch.h"
 
+/* bogus ... these externs should be in a header file */
 extern Datum pg_stat_get_numscans(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_returned(PG_FUNCTION_ARGS);
 extern Datum pg_stat_get_tuples_fetched(PG_FUNCTION_ARGS);
@@ -181,40 +196,41 @@ pg_stat_get_blocks_hit(PG_FUNCTION_ARGS)
 Datum
 pg_stat_get_backend_idset(PG_FUNCTION_ARGS)
 {
-	FmgrInfo   *fmgr_info = fcinfo->flinfo;
+	FuncCallContext *funcctx;
+	int		   *fctx;
 	int32		result;
 
-	if (fcinfo->resultinfo == NULL ||
-		!IsA(fcinfo->resultinfo, ReturnSetInfo))
-		ereport(ERROR,
-				(errcode(ERRCODE_FEATURE_NOT_SUPPORTED),
-				 errmsg("set-valued function called in context that "
-						"cannot accept a set")));
-
-	if (fmgr_info->fn_extra == NULL)
+	/* stuff done only on the first call of the function */
+	if (SRF_IS_FIRSTCALL())
 	{
-		if (fmgr_info->fn_mcxt == NULL)
-			elog(ERROR, "no function memory context in set-function");
+		/* create a function context for cross-call persistence */
+		funcctx = SRF_FIRSTCALL_INIT();
 
-		fmgr_info->fn_extra = MemoryContextAlloc(fmgr_info->fn_mcxt,
-												 2 * sizeof(int));
-		((int *) (fmgr_info->fn_extra))[0] = 0;
-		((int *) (fmgr_info->fn_extra))[1] = pgstat_fetch_stat_numbackends();
+		fctx = MemoryContextAlloc(funcctx->multi_call_memory_ctx,
+								  2 * sizeof(int));
+		funcctx->user_fctx = fctx;
+
+		fctx[0] = 0;
+		fctx[1] = pgstat_fetch_stat_numbackends();
 	}
 
-	((int *) (fmgr_info->fn_extra))[0] += 1;
-	result = ((int *) (fmgr_info->fn_extra))[0];
+	/* stuff done on every call of the function */
+	funcctx = SRF_PERCALL_SETUP();
+	fctx = funcctx->user_fctx;
 
-	if (result > ((int *) (fmgr_info->fn_extra))[1])
+	fctx[0] += 1;
+	result = fctx[0];
+
+	if (result <= fctx[1])
 	{
-		pfree(fmgr_info->fn_extra);
-		fmgr_info->fn_extra = NULL;
-		((ReturnSetInfo *) (fcinfo->resultinfo))->isDone = ExprEndResult;
-		PG_RETURN_NULL();
+		/* do when there is more left to send */
+		SRF_RETURN_NEXT(funcctx, Int32GetDatum(result));
 	}
-
-	((ReturnSetInfo *) (fcinfo->resultinfo))->isDone = ExprMultipleResult;
-	PG_RETURN_INT32(result);
+	else
+	{
+		/* do when there is no more left */
+		SRF_RETURN_DONE(funcctx);
+	}
 }
 
 
