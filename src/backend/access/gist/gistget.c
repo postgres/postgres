@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *    /usr/local/devel/pglite/cvs/src/backend/access/gisr/gistget.c,v 1.9 1995/08/01 20:16:02 jolly Exp
+ *    /usr/local/devel/pglite/cvs/src/backend/access/gisr/gistget.c,v 1.9.1 1996/11/21 01:00:00 vadim Exp
  *
  *-------------------------------------------------------------------------
  */
@@ -67,7 +67,6 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
     GISTSTACK *stk;
     BlockNumber blk;
     IndexTuple it;
-    ItemPointer ip;
 
     b = ReadBuffer(s->relation, GISTP_ROOT);
     p = BufferGetPage(b);
@@ -107,13 +106,10 @@ gistfirst(IndexScanDesc s, ScanDirection dir)
 	    ItemPointerSet(&(s->currentItemData), BufferGetBlockNumber(b), n);
 	    
 	    it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-	    ip = (ItemPointer) palloc(sizeof(ItemPointerData));
-	    memmove((char *) ip, (char *) &(it->t_tid),
-		    sizeof(ItemPointerData));
+
+	    res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+	    
 	    ReleaseBuffer(b);
-	    
-	    res = FormRetrieveIndexResult(&(s->currentItemData), ip);
-	    
 	    return (res);
 	} else {
 	    stk = (GISTSTACK *) palloc(sizeof(GISTSTACK));
@@ -146,7 +142,6 @@ gistnext(IndexScanDesc s, ScanDirection dir)
     GISTSTACK *stk;
     BlockNumber blk;
     IndexTuple it;
-    ItemPointer ip;
     
     blk = ItemPointerGetBlockNumber(&(s->currentItemData));
     n = ItemPointerGetOffsetNumber(&(s->currentItemData));
@@ -192,13 +187,10 @@ gistnext(IndexScanDesc s, ScanDirection dir)
 	    ItemPointerSet(&(s->currentItemData), BufferGetBlockNumber(b), n);
 	    
 	    it = (IndexTuple) PageGetItem(p, PageGetItemId(p, n));
-	    ip = (ItemPointer) palloc(sizeof(ItemPointerData));
-	    memmove((char *) ip, (char *) &(it->t_tid),
-		    sizeof(ItemPointerData));
+	    
+	    res = FormRetrieveIndexResult(&(s->currentItemData), &(it->t_tid));
+	    
 	    ReleaseBuffer(b);
-	    
-	    res = FormRetrieveIndexResult(&(s->currentItemData), ip);
-	    
 	    return (res);
 	} else {
 	    stk = (GISTSTACK *) palloc(sizeof(GISTSTACK));
@@ -340,6 +332,8 @@ gistscancache(IndexScanDesc s, ScanDirection dir)
 	res = FormRetrieveIndexResult(&(s->currentItemData), ip);
     else
 	res = (RetrieveIndexResult) NULL;
+
+    pfree (ip);
     
     return (res);
 }
