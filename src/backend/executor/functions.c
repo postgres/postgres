@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.79 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/functions.c,v 1.80 2004/04/02 23:14:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -73,9 +73,7 @@ typedef SQLFunctionCache *SQLFunctionCachePtr;
 
 
 /* non-export function prototypes */
-static execution_state *init_execution_state(char *src,
-					 Oid *argOidVect, int nargs,
-					 Oid rettype, bool haspolyarg);
+static execution_state *init_execution_state(List *queryTree_list);
 static void init_sql_fcache(FmgrInfo *finfo);
 static void postquel_start(execution_state *es, SQLFunctionCachePtr fcache);
 static TupleTableSlot *postquel_getnext(execution_state *es);
@@ -90,25 +88,11 @@ static void ShutdownSQLFunction(Datum arg);
 
 
 static execution_state *
-init_execution_state(char *src, Oid *argOidVect, int nargs,
-					 Oid rettype, bool haspolyarg)
+init_execution_state(List *queryTree_list)
 {
-	execution_state *firstes;
-	execution_state *preves;
-	List	   *queryTree_list,
-			   *qtl_item;
-
-	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
-
-	/*
-	 * If the function has any arguments declared as polymorphic types,
-	 * then it wasn't type-checked at definition time; must do so now.
-	 */
-	if (haspolyarg)
-		check_sql_fn_retval(rettype, get_typtype(rettype), queryTree_list);
-
-	firstes = NULL;
-	preves = NULL;
+	execution_state *firstes = NULL;
+	execution_state *preves = NULL;
+	List	   *qtl_item;
 
 	foreach(qtl_item, queryTree_list)
 	{
@@ -151,6 +135,7 @@ init_sql_fcache(FmgrInfo *finfo)
 	bool		haspolyarg;
 	char	   *src;
 	int			nargs;
+	List	   *queryTree_list;
 	Datum		tmp;
 	bool		isNull;
 
@@ -191,7 +176,9 @@ init_sql_fcache(FmgrInfo *finfo)
 	typeStruct = (Form_pg_type) GETSTRUCT(typeTuple);
 
 	/*
-	 * get the type length and by-value flag from the type tuple
+	 * get the type length and by-value flag from the type tuple; also
+	 * do a preliminary check for returnsTuple (this may prove inaccurate,
+	 * see below).
 	 */
 	fcache->typlen = typeStruct->typlen;
 	fcache->typbyval = typeStruct->typbyval;
@@ -199,7 +186,7 @@ init_sql_fcache(FmgrInfo *finfo)
 							rettype == RECORDOID);
 
 	/*
-	 * Parse and plan the queries.	We need the argument type info to pass
+	 * Parse and rewrite the queries.  We need the argument type info to pass
 	 * to the parser.
 	 */
 	nargs = procedureStruct->pronargs;
@@ -242,8 +229,25 @@ init_sql_fcache(FmgrInfo *finfo)
 		elog(ERROR, "null prosrc for function %u", foid);
 	src = DatumGetCString(DirectFunctionCall1(textout, tmp));
 
-	fcache->func_state = init_execution_state(src, argOidVect, nargs,
-											  rettype, haspolyarg);
+	queryTree_list = pg_parse_and_rewrite(src, argOidVect, nargs);
+
+	/*
+	 * If the function has any arguments declared as polymorphic types,
+	 * then it wasn't type-checked at definition time; must do so now.
+	 *
+	 * Also, force a type-check if the declared return type is a rowtype;
+	 * we need to find out whether we are actually returning the whole
+	 * tuple result, or just regurgitating a rowtype expression result.
+	 * In the latter case we clear returnsTuple because we need not act
+	 * different from the scalar result case.
+	 */
+	if (haspolyarg || fcache->returnsTuple)
+		fcache->returnsTuple = check_sql_fn_retval(rettype,
+												   get_typtype(rettype),
+												   queryTree_list);
+
+	/* Finally, plan the queries */
+	fcache->func_state = init_execution_state(queryTree_list);
 
 	pfree(src);
 

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.114 2004/04/01 21:28:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.115 2004/04/02 23:14:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -362,8 +362,13 @@ create_parameternames_array(int parameterCount, const char *parameterNames[])
  * function execution startup.	The rettype is then the actual resolved
  * output type of the function, rather than the declared type.	(Therefore,
  * we should never see ANYARRAY or ANYELEMENT as rettype.)
+ *
+ * The return value is true if the function returns the entire tuple result
+ * of its final SELECT, and false otherwise.  Note that because we allow
+ * "SELECT rowtype_expression", this may be false even when the declared
+ * function return type is a rowtype.
  */
-void
+bool
 check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 {
 	Query	   *parse;
@@ -387,7 +392,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 					 errmsg("return type mismatch in function declared to return %s",
 							format_type_be(rettype)),
 			 errdetail("Function's final statement must be a SELECT.")));
-		return;
+		return false;
 	}
 
 	/* find the final query */
@@ -408,7 +413,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 					 errmsg("return type mismatch in function declared to return %s",
 							format_type_be(rettype)),
 					 errdetail("Function's final statement must not be a SELECT.")));
-		return;
+		return false;
 	}
 
 	/* by here, the function is declared to return some type */
@@ -468,7 +473,7 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 		{
 			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
 			if (IsBinaryCoercible(restype, rettype))
-				return;
+				return false;	/* NOT returning whole tuple */
 		}
 
 		/*
@@ -536,16 +541,31 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 					 errdetail("Final SELECT returns too few columns.")));
 
 		relation_close(reln, AccessShareLock);
+
+		/* Report that we are returning entire tuple result */
+		return true;
 	}
 	else if (rettype == RECORDOID)
 	{
-		/* Shouldn't have a typerelid */
-		Assert(typerelid == InvalidOid);
+		/*
+		 * If the target list is of length 1, and the type of the varnode
+		 * in the target list matches the declared return type, this is
+		 * okay. This can happen, for example, where the body of the
+		 * function is 'SELECT func2()', where func2 has the same return
+		 * type as the function that's calling it.
+		 */
+		if (tlistlen == 1)
+		{
+			restype = ((TargetEntry *) lfirst(tlist))->resdom->restype;
+			if (IsBinaryCoercible(restype, rettype))
+				return false;	/* NOT returning whole tuple */
+		}
 
 		/*
-		 * For RECORD return type, defer this check until we get the first
-		 * tuple.
+		 * Otherwise assume we are returning the whole tuple.  Crosschecking
+		 * against what the caller expects will happen at runtime.
 		 */
+		return true;
 	}
 	else if (rettype == ANYARRAYOID || rettype == ANYELEMENTOID)
 	{
@@ -560,6 +580,8 @@ check_sql_fn_retval(Oid rettype, char fn_typtype, List *queryTreeList)
 				(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 			  errmsg("return type %s is not supported for SQL functions",
 					 format_type_be(rettype))));
+
+	return false;
 }
 
 
@@ -751,7 +773,8 @@ fmgr_sql_validator(PG_FUNCTION_ARGS)
 			querytree_list = pg_parse_and_rewrite(prosrc,
 												  proc->proargtypes,
 												  proc->pronargs);
-			check_sql_fn_retval(proc->prorettype, functyptype, querytree_list);
+			(void) check_sql_fn_retval(proc->prorettype, functyptype,
+									   querytree_list);
 		}
 		else
 			querytree_list = pg_parse_query(prosrc);
