@@ -1,0 +1,628 @@
+# Korean message translation file for libpq
+# Ioseph Kim. <ioseph@uri.sarang.net>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PostgreSQL 8.0\n"
+"POT-Creation-Date: 2004-12-13 21:53+0900\n"
+"PO-Revision-Date: 2004-12-13 22:19+0900\n"
+"Last-Translator: Ioseph Kim <ioseph@uri.sarang.net>\n"
+"Language-Team: Korean <ioseph@uri.sarang.net>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=euc-kr\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: fe-auth.c:232
+#, c-format
+msgid "Kerberos 4 error: %s\n"
+msgstr "Kerberos 4 오류: %s\n"
+
+#: fe-auth.c:394
+#, c-format
+msgid "could not set socket to blocking mode: %s\n"
+msgstr "소켓을 blocking 모드로 지정할 수 없음: %s\n"
+
+#: fe-auth.c:411 fe-auth.c:415
+#, c-format
+msgid "Kerberos 5 authentication rejected: %*s\n"
+msgstr "Kerberos 5 인증 거절됨: %*s\n"
+
+#: fe-auth.c:441
+#, c-format
+msgid "could not restore non-blocking mode on socket: %s\n"
+msgstr "소켓을 non-blocking 모드로 되돌릴 수 없음: %s\n"
+
+#: fe-auth.c:508
+msgid "SCM_CRED authentication method not supported\n"
+msgstr "SCM_CRED 인증 방법이 지원되지 않음\n"
+
+#: fe-auth.c:530 fe-connect.c:1410 fe-connect.c:2625 fe-connect.c:2634
+#: fe-connect.c:3213 fe-lobj.c:556 fe-protocol2.c:1007 fe-protocol3.c:958
+msgid "out of memory\n"
+msgstr "메모리 부족\n"
+
+#: fe-auth.c:600
+msgid "Kerberos 4 authentication failed\n"
+msgstr "Kerberos 4 인증 실패됨\n"
+
+#: fe-auth.c:608
+msgid "Kerberos 4 authentication not supported\n"
+msgstr "Kerberos 4 인증 방법이 지원되지 않음\n"
+
+#: fe-auth.c:619
+msgid "Kerberos 5 authentication failed\n"
+msgstr "Kerberos 5 인증 실패됨\n"
+
+#: fe-auth.c:627
+msgid "Kerberos 5 authentication not supported\n"
+msgstr "Kerberos 5 인증 방법이 지원되지 않음\n"
+
+#: fe-auth.c:655
+#, c-format
+msgid "authentication method %u not supported\n"
+msgstr "%u 인증 방법이 지원되지 않음\n"
+
+#: fe-auth.c:692
+#, c-format
+msgid "invalid authentication service name \"%s\", ignored\n"
+msgstr "잘못된 인증 서비스 이름: \"%s\", 무시됨\n"
+
+#: fe-auth.c:764
+#, c-format
+msgid "fe_getauthname: invalid authentication system: %d\n"
+msgstr "fe_getauthname: 잘못된 인증 시스템: %d\n"
+
+#: fe-connect.c:463
+#, c-format
+msgid "invalid sslmode value: \"%s\"\n"
+msgstr "잘못된 sslmode 값: \"%s\"\n"
+
+#: fe-connect.c:483
+#, c-format
+msgid "sslmode value \"%s\" invalid when SSL support is not compiled in\n"
+msgstr ""
+"SSL 연결 기능을 지원하지 않고 컴파일 된 경우는 sslmode 값으로  \"%s\" 값은 타"
+"당치 않습니다\n"
+
+#: fe-connect.c:799
+#, c-format
+msgid "could not set socket to TCP no delay mode: %s\n"
+msgstr "소켓을 TCP에 no delay 모드로 지정할 수 없음: %s\n"
+
+#: fe-connect.c:830
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running locally and accepting\n"
+"\tconnections on Unix domain socket \"%s\"?\n"
+msgstr ""
+"서버에 연결할 수 없음: %s\n"
+"\t로컬호스트에 서버가 가동 중인지,\n"
+"\t\"%s\" 유닉스 도메인 소켓 접근이 가능한지 살펴보십시오.\n"
+
+#: fe-connect.c:842
+#, c-format
+msgid ""
+"could not connect to server: %s\n"
+"\tIs the server running on host \"%s\" and accepting\n"
+"\tTCP/IP connections on port %s?\n"
+msgstr ""
+"서버에 연결할 수 없음: %s\n"
+"\t\"%s\" 호스트에 서버가 가동 중인지,\n"
+"\t%s 포트로 TCP/IP 연결이 가능한지 살펴보십시오.\n"
+
+#: fe-connect.c:926
+#, c-format
+msgid "could not translate host name \"%s\" to address: %s\n"
+msgstr "\"%s\" 호스트 이름을 전송할 수 없습니다: 대상 주소: %s\n"
+
+#: fe-connect.c:930
+#, c-format
+msgid "could not translate Unix-domain socket path \"%s\" to address: %s\n"
+msgstr "\"%s\" 유닉스 도메인 소켓 경로를 전송할 수 없습니다: 대상 주소: %s\n"
+
+#: fe-connect.c:1134
+msgid "invalid connection state, probably indicative of memory corruption\n"
+msgstr "잘못된 연결 상태, 메모리 손상일 가능성이 큼\n"
+
+#: fe-connect.c:1177
+#, c-format
+msgid "could not create socket: %s\n"
+msgstr "소켓을 만들 수 없음: %s\n"
+
+#: fe-connect.c:1200
+#, c-format
+msgid "could not set socket to non-blocking mode: %s\n"
+msgstr "소켓을 non-blocking 모드로 지정할 수 없음: %s\n"
+
+#: fe-connect.c:1212
+#, c-format
+msgid "could not set socket to close-on-exec mode: %s\n"
+msgstr "소켓을 close-on-exec 모드로 지정할 수 없음: %s\n"
+
+#: fe-connect.c:1304
+#, c-format
+msgid "could not get socket error status: %s\n"
+msgstr "소켓 오류 상태를 구할 수 없음: %s\n"
+
+#: fe-connect.c:1343
+#, c-format
+msgid "could not get client address from socket: %s\n"
+msgstr "소켓에서 클라이언트 주소를 구할 수 없음: %s\n"
+
+#: fe-connect.c:1388
+#, c-format
+msgid "could not send SSL negotiation packet: %s\n"
+msgstr "SSL 교섭 패킷을 보낼 수 없음: %s\n"
+
+#: fe-connect.c:1423
+#, c-format
+msgid "could not send startup packet: %s\n"
+msgstr "시작 패킷을 보낼 수 없음: %s\n"
+
+#: fe-connect.c:1463
+#, c-format
+msgid "could not receive server response to SSL negotiation packet: %s\n"
+msgstr "SSL 교섭 패킷에 대한 서버의 반응을 감지할 수 없음: %s\n"
+
+#: fe-connect.c:1482 fe-connect.c:1499
+msgid "server does not support SSL, but SSL was required\n"
+msgstr "서버가 SSL 기능을 지원하지 않는데, SSL 기능을 요구했음\n"
+
+#: fe-connect.c:1515
+#, c-format
+msgid "received invalid response to SSL negotiation: %c\n"
+msgstr "SSL 교섭에 대한 잘못된 응답을 감지했음: %c\n"
+
+#: fe-connect.c:1572 fe-connect.c:1604
+#, c-format
+msgid "expected authentication request from server, but received %c\n"
+msgstr "서버가 인증을 요구했지만, %c 받았음\n"
+
+#: fe-connect.c:1840
+msgid "unexpected message from server during startup\n"
+msgstr "시작하는 동안 서버로부터 기대되지 않는 메시지\n"
+
+#: fe-connect.c:1910
+#, c-format
+msgid "invalid connection state %c, probably indicative of memory corruption\n"
+msgstr "잘못된 연결 상태 %c,  메모리 손상일 가능성이 큼\n"
+
+#: fe-connect.c:2673
+#, c-format
+msgid "missing \"=\" after \"%s\" in connection info string\n"
+msgstr "연결문자열에서 \"%s\" 다음에 \"=\" 문자 빠졌음\n"
+
+#: fe-connect.c:2722
+msgid "unterminated quoted string in connection info string\n"
+msgstr "연결문자열에서 완성되지 못한 따옴표문자열이 있음\n"
+
+#: fe-connect.c:2756
+#, c-format
+msgid "invalid connection option \"%s\"\n"
+msgstr "잘못된 연결 옵션 \"%s\"\n"
+
+#: fe-connect.c:2978
+msgid "connection pointer is NULL\n"
+msgstr "연결 포인터가 NULL\n"
+
+#: fe-connect.c:3235
+#, c-format
+msgid ""
+"WARNING: Password file %s has world or group read access; permission should "
+"be u=rw (0600)\n"
+msgstr ""
+"경고: %s 패스워드 파일의 읽기 권한이 적당치 않습니다: 적당한 권한: u=rw "
+"(0600), chmod 쉘명령으로 변경해 주십시오\n"
+
+#: fe-exec.c:479
+msgid "NOTICE"
+msgstr "알림"
+
+#: fe-exec.c:648 fe-exec.c:700 fe-exec.c:740
+msgid "command string is a null pointer\n"
+msgstr "명령 문자열이 null 포인터\n"
+
+#: fe-exec.c:733 fe-exec.c:823
+msgid "statement name is a null pointer\n"
+msgstr "실행 구문 이름이 null 포인트(값이 없음)입니다\n"
+
+#: fe-exec.c:748 fe-exec.c:897 fe-exec.c:1572
+msgid "function requires at least protocol version 3.0\n"
+msgstr "함수는 적어도 버전 3의 프로토콜을 요구하고 있습니다\n"
+
+#: fe-exec.c:854
+msgid "no connection to the server\n"
+msgstr "서버에 대한 연결이 없음\n"
+
+#: fe-exec.c:861
+msgid "another command is already in progress\n"
+msgstr "처리 중에 이미 다른 명령이 존재함\n"
+
+#: fe-exec.c:1199
+#, c-format
+msgid "unexpected asyncStatus: %d\n"
+msgstr "기대되지 않은 동기화상태: %d\n"
+
+#: fe-exec.c:1326
+msgid "COPY terminated by new PQexec"
+msgstr "새 PQexec 호출로 COPY 작업이 중지 되었습니다"
+
+#: fe-exec.c:1334
+msgid "COPY IN state must be terminated first\n"
+msgstr "COPY IN 상태가 먼저 끝나야함\n"
+
+#: fe-exec.c:1354
+msgid "COPY OUT state must be terminated first\n"
+msgstr "COPY OUT 상태가 먼저 끝나야함\n"
+
+#: fe-exec.c:1464 fe-exec.c:1529 fe-exec.c:1614 fe-protocol2.c:1153
+#: fe-protocol3.c:1115
+msgid "no COPY in progress\n"
+msgstr "처리 가운데 COPY가 없음\n"
+
+#: fe-exec.c:1806
+msgid "connection in wrong state\n"
+msgstr "잘못된 상태의 연결\n"
+
+#: fe-exec.c:1837
+msgid "invalid ExecStatusType code"
+msgstr "잘못된 ExecStatusType 코드"
+
+#: fe-exec.c:1901 fe-exec.c:1924
+#, c-format
+msgid "column number %d is out of range 0..%d"
+msgstr "%d 번째 컬럼은 0..%d 범위를 벗어났음"
+
+#: fe-exec.c:1917
+#, c-format
+msgid "row number %d is out of range 0..%d"
+msgstr "%d 번째 로우(row)는 0..%d 범위를 벗어났음"
+
+#: fe-exec.c:2199
+#, c-format
+msgid "could not interpret result from server: %s"
+msgstr "서버로부터 결과처리를 중지 시킬 수 없음: %s"
+
+#: fe-lobj.c:410 fe-lobj.c:495
+#, c-format
+msgid "could not open file \"%s\": %s\n"
+msgstr "\"%s\" 파일을 열 수 없음: %s\n"
+
+#: fe-lobj.c:422
+#, c-format
+msgid "could not create large object for file \"%s\"\n"
+msgstr "\"%s\" 파일을 위한 large object를 생성할 수 없음\n"
+
+#: fe-lobj.c:432 fe-lobj.c:482
+#, c-format
+msgid "could not open large object %u\n"
+msgstr "%u large object를 열 수 없음\n"
+
+#: fe-lobj.c:447
+#, c-format
+msgid "error while reading file \"%s\"\n"
+msgstr "\"%s\" 파일을 읽는 동안 오류 발생\n"
+
+#: fe-lobj.c:510 fe-lobj.c:523
+#, c-format
+msgid "error while writing to file \"%s\"\n"
+msgstr "\"%s\" 파일을 쓰는 동안 오류 발생\n"
+
+#: fe-lobj.c:601
+msgid "query to initialize large object functions did not return data\n"
+msgstr "large object function을 초기화 하는 쿼리가 데이터를 리턴하지 않았음\n"
+
+#: fe-lobj.c:639
+msgid "cannot determine OID of function lo_open\n"
+msgstr "lo_open 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:646
+msgid "cannot determine OID of function lo_close\n"
+msgstr "lo_close 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:653
+msgid "cannot determine OID of function lo_creat\n"
+msgstr "lo_create 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:660
+msgid "cannot determine OID of function lo_unlink\n"
+msgstr "lo_unlink 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:667
+msgid "cannot determine OID of function lo_lseek\n"
+msgstr "lo_lseek 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:674
+msgid "cannot determine OID of function lo_tell\n"
+msgstr "lo_tell 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:681
+msgid "cannot determine OID of function loread\n"
+msgstr "loread 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-lobj.c:688
+msgid "cannot determine OID of function lowrite\n"
+msgstr "lowrite 함수의 OID 조사를 할 수 없음\n"
+
+#: fe-misc.c:228
+#, c-format
+msgid "integer of size %lu not supported by pqGetInt"
+msgstr "%lu 정수형 크기는 pqGetInt 함수에서 지원하지 않음"
+
+#: fe-misc.c:264
+#, c-format
+msgid "integer of size %lu not supported by pqPutInt"
+msgstr "%lu 정수형 크기는 pqPutInt 함수에서 지원하지 않음"
+
+#: fe-misc.c:544 fe-misc.c:748
+msgid "connection not open\n"
+msgstr "연결 열기 실패\n"
+
+#: fe-misc.c:610 fe-misc.c:701
+#, c-format
+msgid "could not receive data from server: %s\n"
+msgstr "서버로부터 데이터를 받지 못했음: %s\n"
+
+#: fe-misc.c:718 fe-misc.c:786
+msgid ""
+"server closed the connection unexpectedly\n"
+"\tThis probably means the server terminated abnormally\n"
+"\tbefore or while processing the request.\n"
+msgstr ""
+"서버가 갑자기 연결을 닫았음\n"
+"\t이런 처리는 클라이언트의 요구를 처리하는 동안이나\n"
+"\t처리하기 전에 서버가 갑자기 종료되었음을 의미함\n"
+
+#: fe-misc.c:803
+#, c-format
+msgid "could not send data to server: %s\n"
+msgstr "서버에 데이터를 보낼 수 없음: %s\n"
+
+#: fe-misc.c:923
+msgid "timeout expired\n"
+msgstr "시간 초과\n"
+
+#: fe-misc.c:968
+msgid "socket not open\n"
+msgstr "소캣 열기 실패\n"
+
+#: fe-misc.c:991
+#, c-format
+msgid "select() failed: %s\n"
+msgstr "select() 실패: %s\n"
+
+#: fe-protocol2.c:91
+#, c-format
+msgid "invalid setenv state %c, probably indicative of memory corruption\n"
+msgstr "잘못된 환경변수 상태 %c,  메모리 손상일 가능성이 큼\n"
+
+#: fe-protocol2.c:333
+#, c-format
+msgid "invalid state %c, probably indicative of memory corruption\n"
+msgstr "잘못된 상태 %c,  메모리 손상일 가능성이 큼\n"
+
+#: fe-protocol2.c:423 fe-protocol3.c:183
+#, c-format
+msgid "message type 0x%02x arrived from server while idle"
+msgstr "휴지(idle)동안 서버로 부터 0x%02x 형태 메시지를 받았음"
+
+#: fe-protocol2.c:462
+#, c-format
+msgid "unexpected character %c following empty query response (\"I\" message)"
+msgstr "비어있는 쿼리 응답(\"I\" 메시지)에 뒤이어 %c의 잘못된 문자가 있음"
+
+#: fe-protocol2.c:517
+msgid ""
+"server sent data (\"D\" message) without prior row description (\"T\" "
+"message)"
+msgstr ""
+"서버에서 먼저 로우(row) 설명(\"T\" 메시지) 없이 자료(\"D\" 메시지)를 보냈음"
+
+#: fe-protocol2.c:533
+msgid ""
+"server sent binary data (\"B\" message) without prior row description (\"T\" "
+"message)"
+msgstr ""
+"서버에서 먼저 로우(row) 설명(\"T\" 메시지) 없이 이진 자료(\"B\" 메시지)를 보냈음"
+
+#: fe-protocol2.c:548 fe-protocol3.c:344
+#, c-format
+msgid "unexpected response from server; first received character was \"%c\"\n"
+msgstr "서버로부터 예상치 못한 응답을 받았음; \"%c\" 문자를 첫문자로 받았음\n"
+
+#: fe-protocol2.c:760 fe-protocol3.c:577
+msgid "out of memory for query result\n"
+msgstr "쿼리 결과 처리를 위한 메모리 부족\n"
+
+#: fe-protocol2.c:1196 fe-protocol3.c:1184
+#, c-format
+msgid "%s"
+msgstr "%s"
+
+#: fe-protocol2.c:1208
+msgid "lost synchronization with server, resetting connection"
+msgstr "서버와의 동기화가 끊김, 연결을 재 시도함"
+
+#: fe-protocol2.c:1343 fe-protocol2.c:1375 fe-protocol3.c:1387
+#, c-format
+msgid "protocol error: id=0x%x\n"
+msgstr "프로토콜 오류: id=0x%x\n"
+
+#: fe-protocol3.c:306
+msgid ""
+"server sent data (\"D\" message) without prior row description (\"T\" "
+"message)\n"
+msgstr ""
+"서버에서 먼저 로우(row) 설명(\"T\" 메시지) 없이 자료(\"D\" 메시지)를 보냈음\n"
+
+#: fe-protocol3.c:365
+#, c-format
+msgid "message contents do not agree with length in message type \"%c\"\n"
+msgstr "메시지 내용이 \"%c\" 메시지 형태의 길이를 허락하지 않음\n"
+
+#: fe-protocol3.c:386
+#, c-format
+msgid "lost synchronization with server: got message type \"%c\", length %d\n"
+msgstr "서버와의 동기화가 끊김:  \"%c\" 형태 길이 %d 메시지 받음\n"
+
+#: fe-protocol3.c:522
+msgid "unexpected field count in \"D\" message\n"
+msgstr "\"D\" 메시지에서 예상치 못한 개수 계산\n"
+
+#. translator: %s represents a digit string
+#: fe-protocol3.c:651 fe-protocol3.c:659
+#, c-format
+msgid " at character %s"
+msgstr " 위치: %s"
+
+#: fe-protocol3.c:668
+#, c-format
+msgid "DETAIL:  %s\n"
+msgstr "상세정보:  %s\n"
+
+#: fe-protocol3.c:671
+#, c-format
+msgid "HINT:  %s\n"
+msgstr "힌트:  %s\n"
+
+#: fe-protocol3.c:674
+#, c-format
+msgid "QUERY:  %s\n"
+msgstr "쿼리:  %s\n"
+
+#: fe-protocol3.c:677
+#, c-format
+msgid "CONTEXT:  %s\n"
+msgstr "구문:  %s\n"
+
+#: fe-protocol3.c:689
+msgid "LOCATION:  "
+msgstr "위치:  "
+
+#: fe-protocol3.c:691
+#, c-format
+msgid "%s, "
+msgstr "%s, "
+
+#: fe-protocol3.c:693
+#, c-format
+msgid "%s:%s"
+msgstr "%s:%s"
+
+#: fe-protocol3.c:1000
+msgid "PQgetline: not doing text COPY OUT\n"
+msgstr "PQgetline: text COPY OUT 작업을 할 수 없음\n"
+
+#: fe-secure.c:271
+#, c-format
+msgid "could not establish SSL connection: %s\n"
+msgstr "SSL 연결을 확립할 수 없음: %s\n"
+
+#: fe-secure.c:342 fe-secure.c:437 fe-secure.c:1057
+#, c-format
+msgid "SSL SYSCALL error: %s\n"
+msgstr "SSL SYSCALL 오류: %s\n"
+
+#: fe-secure.c:347 fe-secure.c:443 fe-secure.c:1061
+msgid "SSL SYSCALL error: EOF detected\n"
+msgstr "SSL SYSCALL 오류: EOF 감지됨\n"
+
+#: fe-secure.c:359 fe-secure.c:454 fe-secure.c:1080
+#, c-format
+msgid "SSL error: %s\n"
+msgstr "SSL 오류: %s\n"
+
+#: fe-secure.c:369 fe-secure.c:464 fe-secure.c:1090
+#, c-format
+msgid "unrecognized SSL error code: %d\n"
+msgstr "알 수 없는 SSL 오류 코드: %d\n"
+
+#: fe-secure.c:533
+#, c-format
+msgid "error querying socket: %s\n"
+msgstr "소켓 조사 오류: %s\n"
+
+#: fe-secure.c:561
+#, c-format
+msgid "could not get information about host \"%s\": %s\n"
+msgstr "\"%s\" 호스트에 대한 정보를 구할 수 없음: %s\n"
+
+#: fe-secure.c:580
+msgid "unsupported protocol\n"
+msgstr "지원하지 않는 프로토콜\n"
+
+#: fe-secure.c:602
+#, c-format
+msgid "server common name \"%s\" does not resolve to %ld.%ld.%ld.%ld\n"
+msgstr ""
+"\"%s\" 서버 일반적인 이름이 %ld.%ld.%ld.%ld 주소로 변경되지 못합니다.\n"
+
+#: fe-secure.c:609
+#, c-format
+msgid "server common name \"%s\" does not resolve to peer address\n"
+msgstr "\"%s\" 서버 일반적인 이름이 peer 주소로 변경되지 못합니다\n"
+
+#: fe-secure.c:791
+msgid "could not get user information\n"
+msgstr "사용자 정보를 구할 수 없음\n"
+
+#: fe-secure.c:801
+#, c-format
+msgid "could not open certificate file \"%s\": %s\n"
+msgstr "\"%s\" 인증서 파일을 열수 없음: %s\n"
+
+#: fe-secure.c:810
+#, c-format
+msgid "could not read certificate file \"%s\": %s\n"
+msgstr "\"%s\" 인증서 파일을 읽을 수 없음: %s\n"
+
+#: fe-secure.c:824
+#, c-format
+msgid "certificate present, but not private key file \"%s\"\n"
+msgstr "인증서가 있지만, \"%s\" 개인키가 아닙니다.\n"
+
+#: fe-secure.c:832
+#, c-format
+msgid "private key file \"%s\" has wrong permissions\n"
+msgstr "\"%s\" 개인키의 접근권한이 잘못되어있습니다\n"
+
+#: fe-secure.c:839
+#, c-format
+msgid "could not open private key file \"%s\": %s\n"
+msgstr "\"%s\" 개인키 파일을 열 수 없음: %s\n"
+
+#: fe-secure.c:847
+#, c-format
+msgid "private key file \"%s\" changed during execution\n"
+msgstr "처리하는 동안 \"%s\" 개인키가 변경되었습니다\n"
+
+#: fe-secure.c:855
+#, c-format
+msgid "could not read private key file \"%s\": %s\n"
+msgstr "\"%s\" 개인키 파일을 읽을 수 없음: %s\n"
+
+#: fe-secure.c:869
+#, c-format
+msgid "certificate does not match private key file \"%s\": %s\n"
+msgstr "인증서가 \"%s\" 개인키 파일과 맞지 않습니다: %s\n"
+
+#: fe-secure.c:951
+#, c-format
+msgid "could not create SSL context: %s\n"
+msgstr "SSL context를 만들 수 없음: %s\n"
+
+#: fe-secure.c:996
+#, c-format
+msgid "could not read root certificate file \"%s\": %s\n"
+msgstr "\"%s\" 루트 인증서 파일을 읽을 수 없음: %s\n"
+
+#: fe-secure.c:1110
+#, c-format
+msgid "certificate could not be validated: %s\n"
+msgstr "인증서가 타당치 못합니다: %s\n"
+
+#: fe-secure.c:1124
+#, c-format
+msgid "certificate could not be obtained: %s\n"
+msgstr "인증서를 구하질 못했습니다: %s\n"
