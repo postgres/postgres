@@ -69,7 +69,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	typ_tuple = SearchSysCacheTuple(TYPEOID, ObjectIdGetDatum(elemtype), 0, 0, 0);
 	if (!HeapTupleIsValid(typ_tuple))
 	{
-		elog(ERROR, "array_iterator: cache lookup failed for type %d", elemtype);
+		elog(ERROR, "array_iterator: cache lookup failed for type %u", elemtype);
 		return 0;
 	}
 	typ_struct = (Form_pg_type) GETSTRUCT(typ_tuple);
@@ -83,7 +83,7 @@ array_iterator(Oid elemtype, Oid proc, int and, ArrayType *array, Datum value)
 	pronargs = finf.fn_nargs;	/* Tobias Gabele Jan 18 1999 */
 	if ((proc_fn == NULL) || (pronargs != 2))
 	{
-		elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %d", proc);
+		elog(ERROR, "array_iterator: fmgr_info lookup failed for oid %u", proc);
 		return (0);
 	}
 
