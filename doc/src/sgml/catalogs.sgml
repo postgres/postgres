@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.50 2002/07/31 17:19:49 tgl Exp $
+ $Header: /cvsroot/pgsql/doc/src/sgml/catalogs.sgml,v 2.51 2002/08/02 18:15:04 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -807,6 +807,17 @@
        This column has a default value, in which case there will be a
        corresponding entry in the <structname>pg_attrdef</structname>
        catalog that actually defines the value.
+      </entry>
+     </row>
+
+     <row>
+      <entry>attisdropped</entry>
+      <entry><type>bool</type></entry>
+      <entry></entry>
+      <entry>
+       This column has been dropped and is no longer valid.  A dropped
+       column is still physically present in the table, but is
+       ignored by the parser and so cannot be accessed via SQL.
       </entry>
      </row>
 

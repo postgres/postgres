@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.239 2002/07/16 22:12:19 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.240 2002/08/02 18:15:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1143,6 +1143,8 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 						Form_pg_attribute inhattr = rel->rd_att->attrs[count];
 						char	   *inhname = NameStr(inhattr->attname);
 
+						if (inhattr->attisdropped)
+							continue;
 						if (strcmp(key->name, inhname) == 0)
 						{
 							found = true;
@@ -1178,10 +1180,7 @@ transformIndexConstraints(ParseState *pstate, CreateStmtContext *cxt)
 				/* ALTER TABLE case: does column already exist? */
 				HeapTuple	atttuple;
 
-				atttuple = SearchSysCache(ATTNAME,
-										  ObjectIdGetDatum(cxt->relOid),
-										  PointerGetDatum(key->name),
-										  0, 0);
+				atttuple = SearchSysCacheAttName(cxt->relOid, key->name);
 				if (HeapTupleIsValid(atttuple))
 				{
 					found = true;
@@ -2369,7 +2368,7 @@ transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 		origTarget = (ResTarget *) lfirst(origTargetList);
 		updateTargetListEntry(pstate, tle, origTarget->name,
 							  attnameAttNum(pstate->p_target_relation,
-											origTarget->name),
+											origTarget->name, true),
 							  origTarget->indirection);
 		origTargetList = lnext(origTargetList);
 	}
@@ -2820,11 +2819,14 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 				 inh->relname);
 		for (count = 0; count < rel->rd_att->natts; count++)
 		{
-			char	   *name = NameStr(rel->rd_att->attrs[count]->attname);
+			Form_pg_attribute inhattr = rel->rd_att->attrs[count];
+			char	   *inhname = NameStr(inhattr->attname);
 
-			if (strcmp(name, colname) == 0)
+			if (inhattr->attisdropped)
+				continue;
+			if (strcmp(inhname, colname) == 0)
 			{
-				result = rel->rd_att->attrs[count]->atttypid;
+				result = inhattr->atttypid;
 				heap_close(rel, NoLock);
 				return result;
 			}
@@ -2836,10 +2838,7 @@ transformFkeyGetColType(CreateStmtContext *cxt, char *colname)
 	{
 		HeapTuple	atttuple;
 
-		atttuple = SearchSysCache(ATTNAME,
-								  ObjectIdGetDatum(cxt->relOid),
-								  PointerGetDatum(colname),
-								  0, 0);
+		atttuple = SearchSysCacheAttName(cxt->relOid, colname);
 		if (HeapTupleIsValid(atttuple))
 		{
 			result = ((Form_pg_attribute) GETSTRUCT(atttuple))->atttypid;

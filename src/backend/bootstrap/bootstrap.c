@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.133 2002/07/20 05:16:56 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.134 2002/08/02 18:15:04 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -522,19 +522,6 @@ boot_openrel(char *relname)
 				(char *) boot_reldesc->rd_att->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
 
-		/* Some old pg_attribute tuples might not have attisset. */
-
-		/*
-		 * If the attname is attisset, don't look for it - it may not be
-		 * defined yet.
-		 */
-		if (namestrcmp(&attrtypes[i]->attname, "attisset") == 0)
-			attrtypes[i]->attisset =
-				get_attisset(RelationGetRelid(boot_reldesc),
-							 NameStr(attrtypes[i]->attname));
-		else
-			attrtypes[i]->attisset = false;
-
 		{
 			Form_pg_attribute at = attrtypes[i];
 
@@ -598,15 +585,19 @@ DefineAttr(char *name, char *type, int attnum)
 		closerel(relname);
 	}
 
-	typeoid = gettype(type);
 	if (attrtypes[attnum] == (Form_pg_attribute) NULL)
 		attrtypes[attnum] = AllocateAttribute();
+	MemSet(attrtypes[attnum], 0, ATTRIBUTE_TUPLE_SIZE);
+
+	namestrcpy(&attrtypes[attnum]->attname, name);
+	elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
+	attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
+
+	typeoid = gettype(type);
+
 	if (Typ != (struct typmap **) NULL)
 	{
 		attrtypes[attnum]->atttypid = Ap->am_oid;
-		namestrcpy(&attrtypes[attnum]->attname, name);
-		elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Ap->am_typ.typlen;
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
 		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
@@ -615,9 +606,6 @@ DefineAttr(char *name, char *type, int attnum)
 	else
 	{
 		attrtypes[attnum]->atttypid = Procid[typeoid].oid;
-		namestrcpy(&attrtypes[attnum]->attname, name);
-		elog(DEBUG3, "column %s %s", NameStr(attrtypes[attnum]->attname), type);
-		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
 
 		/*
@@ -656,6 +644,23 @@ DefineAttr(char *name, char *type, int attnum)
 	}
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
+	/*
+	 * Mark as "not null" if type is fixed-width and prior columns are too.
+	 * This corresponds to case where column can be accessed directly via
+	 * C struct declaration.
+	 */
+	if (attlen > 0)
+	{
+		int		i;
+
+		for (i = 0; i < attnum; i++)
+		{
+			if (attrtypes[i]->attlen <= 0)
+				break;
+		}
+		if (i == attnum)
+			attrtypes[attnum]->attnotnull = true;
+	}
 }
 
 
@@ -896,8 +901,8 @@ gettype(char *type)
  *		AllocateAttribute
  * ----------------
  */
-static Form_pg_attribute		/* XXX */
-AllocateAttribute()
+static Form_pg_attribute
+AllocateAttribute(void)
 {
 	Form_pg_attribute attribute = (Form_pg_attribute) malloc(ATTRIBUTE_TUPLE_SIZE);
 

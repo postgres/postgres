@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.214 2002/07/31 17:19:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/heap.c,v 1.215 2002/08/02 18:15:05 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -97,37 +97,37 @@ static void RemoveStatistics(Relation rel);
 static FormData_pg_attribute a1 = {
 	0, {"ctid"}, TIDOID, 0, sizeof(ItemPointerData),
 	SelfItemPointerAttributeNumber, 0, -1, -1,
-	false, 'p', false, 'i', true, false
+	false, 'p', false, 'i', true, false, false
 };
 
 static FormData_pg_attribute a2 = {
 	0, {"oid"}, OIDOID, 0, sizeof(Oid),
 	ObjectIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false
+	true, 'p', false, 'i', true, false, false
 };
 
 static FormData_pg_attribute a3 = {
 	0, {"xmin"}, XIDOID, 0, sizeof(TransactionId),
 	MinTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false
+	true, 'p', false, 'i', true, false, false
 };
 
 static FormData_pg_attribute a4 = {
 	0, {"cmin"}, CIDOID, 0, sizeof(CommandId),
 	MinCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false
+	true, 'p', false, 'i', true, false, false
 };
 
 static FormData_pg_attribute a5 = {
 	0, {"xmax"}, XIDOID, 0, sizeof(TransactionId),
 	MaxTransactionIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false
+	true, 'p', false, 'i', true, false, false
 };
 
 static FormData_pg_attribute a6 = {
 	0, {"cmax"}, CIDOID, 0, sizeof(CommandId),
 	MaxCommandIdAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false
+	true, 'p', false, 'i', true, false, false
 };
 
 /*
@@ -139,7 +139,7 @@ static FormData_pg_attribute a6 = {
 static FormData_pg_attribute a7 = {
 	0, {"tableoid"}, OIDOID, 0, sizeof(Oid),
 	TableOidAttributeNumber, 0, -1, -1,
-	true, 'p', false, 'i', true, false
+	true, 'p', false, 'i', true, false, false
 };
 
 static Form_pg_attribute SysAtt[] = {&a1, &a2, &a3, &a4, &a5, &a6, &a7};
@@ -890,6 +890,78 @@ DeleteAttributeTuples(Oid relid)
 	/* Clean up after the scan */
 	systable_endscan(scan);
 	heap_close(attrel, RowExclusiveLock);
+}
+
+/*
+ *		RemoveAttributeById
+ *
+ * This is the guts of ALTER TABLE DROP COLUMN: actually mark the attribute
+ * deleted in pg_attribute.  (Everything else needed, such as getting rid
+ * of any pg_attrdef entry, is handled by dependency.c.)
+ */
+void
+RemoveAttributeById(Oid relid, AttrNumber attnum)
+{
+	Relation	rel;
+	Relation	attr_rel;
+	HeapTuple	tuple;
+	Form_pg_attribute attStruct;
+	char		newattname[NAMEDATALEN];
+
+	/*
+	 * Grab an exclusive lock on the target table, which we will NOT
+	 * release until end of transaction.  (In the simple case where
+	 * we are directly dropping this column, AlterTableDropColumn already
+	 * did this ... but when cascading from a drop of some other object,
+	 * we may not have any lock.)
+	 */
+	rel = heap_open(relid, AccessExclusiveLock);
+
+	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
+
+	tuple = SearchSysCacheCopy(ATTNUM,
+							   ObjectIdGetDatum(relid),
+							   Int16GetDatum(attnum),
+							   0, 0);
+	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
+		elog(ERROR, "RemoveAttributeById: Failed to find attribute %d in relation %u",
+			 attnum, relid);
+	attStruct = (Form_pg_attribute) GETSTRUCT(tuple);
+
+	/* Mark the attribute as dropped */
+	attStruct->attisdropped = true;
+
+	/* Remove any NOT NULL constraint the column may have */
+	attStruct->attnotnull = false;
+
+	/* We don't want to keep stats for it anymore */
+	attStruct->attstattarget = 0;
+
+	/* Change the column name to something that isn't likely to conflict */
+	snprintf(newattname, NAMEDATALEN, "........pg.dropped.%d........", attnum);
+	namestrcpy(&(attStruct->attname), newattname);
+
+	simple_heap_update(attr_rel, &tuple->t_self, tuple);
+
+	/* keep the system catalog indices current */
+	if (RelationGetForm(attr_rel)->relhasindex)
+	{
+		Relation	idescs[Num_pg_attr_indices];
+
+		CatalogOpenIndices(Num_pg_attr_indices, Name_pg_attr_indices, idescs);
+		CatalogIndexInsert(idescs, Num_pg_attr_indices, attr_rel, tuple);
+		CatalogCloseIndices(Num_pg_attr_indices, idescs);
+	}
+
+	/*
+	 * Because updating the pg_attribute row will trigger a relcache flush
+	 * for the target relation, we need not do anything else to notify
+	 * other backends of the change.
+	 */
+
+	heap_close(attr_rel, RowExclusiveLock);
+
+	heap_close(rel, NoLock);
 }
 
 /*

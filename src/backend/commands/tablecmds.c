@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.25 2002/07/31 17:19:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/tablecmds.c,v 1.26 2002/08/02 18:15:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -503,7 +503,7 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 		/*
 		 * newattno[] will contain the child-table attribute numbers for
 		 * the attributes of this parent table.  (They are not the same
-		 * for parents after the first one.)
+		 * for parents after the first one, nor if we have dropped columns.)
 		 */
 		newattno = (AttrNumber *) palloc(tupleDesc->natts * sizeof(AttrNumber));
 
@@ -515,6 +515,19 @@ MergeAttributes(List *schema, List *supers, bool istemp,
 			int			exist_attno;
 			ColumnDef  *def;
 			TypeName   *typename;
+
+			/*
+			 * Ignore dropped columns in the parent.
+			 */
+			if (attribute->attisdropped)
+			{
+				/* 
+				 * change_varattnos_of_a_node asserts that this is greater than
+				 * zero, so if anything tries to use it, we should find out.
+				 */
+				newattno[parent_attno - 1] = 0;
+				continue;
+			}
 
 			/*
 			 * Does it conflict with some previously inherited column?
@@ -1062,17 +1075,17 @@ renameatt(Oid relid,
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	atttup = SearchSysCacheCopy(ATTNAME,
-								ObjectIdGetDatum(relid),
-								PointerGetDatum(oldattname),
-								0, 0);
+	atttup = SearchSysCacheCopyAttName(relid, oldattname);
 	if (!HeapTupleIsValid(atttup))
-		elog(ERROR, "renameatt: attribute \"%s\" does not exist", oldattname);
+		elog(ERROR, "renameatt: attribute \"%s\" does not exist",
+			 oldattname);
 
 	if (((Form_pg_attribute) GETSTRUCT(atttup))->attnum < 0)
-		elog(ERROR, "renameatt: system attribute \"%s\" not renamed", oldattname);
+		elog(ERROR, "renameatt: system attribute \"%s\" may not be renamed",
+			 oldattname);
 
 	/* should not already exist */
+	/* this test is deliberately not attisdropped-aware */
 	if (SearchSysCacheExists(ATTNAME,
 							 ObjectIdGetDatum(relid),
 							 PointerGetDatum(newattname),
@@ -1126,10 +1139,7 @@ renameatt(Oid relid,
 		 * Okay, look to see if any column name of the index matches the
 		 * old attribute name.
 		 */
-		atttup = SearchSysCacheCopy(ATTNAME,
-									ObjectIdGetDatum(indexoid),
-									PointerGetDatum(oldattname),
-									0, 0);
+		atttup = SearchSysCacheCopyAttName(indexoid, oldattname);
 		if (!HeapTupleIsValid(atttup))
 			continue;			/* Nope, so ignore it */
 
@@ -1634,6 +1644,10 @@ AlterTableAddColumn(Oid myrelid,
 		elog(ERROR, "ALTER TABLE: relation \"%s\" not found",
 			 RelationGetRelationName(rel));
 
+	/*
+	 * this test is deliberately not attisdropped-aware, since if one tries
+	 * to add a column matching a dropped column name, it's gonna fail anyway.
+	 */
 	if (SearchSysCacheExists(ATTNAME,
 							 ObjectIdGetDatum(myrelid),
 							 PointerGetDatum(colDef->colname),
@@ -1681,6 +1695,7 @@ AlterTableAddColumn(Oid myrelid,
 	attribute->attnotnull = colDef->is_not_null;
 	attribute->atthasdef = (colDef->raw_default != NULL ||
 							colDef->cooked_default != NULL);
+	attribute->attisdropped = false;
 
 	ReleaseSysCache(typeTuple);
 
@@ -1821,16 +1836,10 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 	/*
 	 * get the number of the attribute
 	 */
-	tuple = SearchSysCache(ATTNAME,
-						   ObjectIdGetDatum(myrelid),
-						   PointerGetDatum(colName),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+	attnum = get_attnum(myrelid, colName);
+	if (attnum == InvalidAttrNumber)
+		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
-
-	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
-	ReleaseSysCache(tuple);
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
@@ -1884,10 +1893,7 @@ AlterTableAlterColumnDropNotNull(Oid myrelid,
 	 */
 	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(ATTNAME,
-							   ObjectIdGetDatum(myrelid),
-							   PointerGetDatum(colName),
-							   0, 0);
+	tuple = SearchSysCacheCopyAttName(myrelid, colName);
 	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
@@ -1971,16 +1977,10 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 	/*
 	 * get the number of the attribute
 	 */
-	tuple = SearchSysCache(ATTNAME,
-						   ObjectIdGetDatum(myrelid),
-						   PointerGetDatum(colName),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+	attnum = get_attnum(myrelid, colName);
+	if (attnum == InvalidAttrNumber)
+		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
-
-	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
-	ReleaseSysCache(tuple);
 
 	/* Prevent them from altering a system attribute */
 	if (attnum < 0)
@@ -2014,10 +2014,7 @@ AlterTableAlterColumnSetNotNull(Oid myrelid,
 	 */
 	attr_rel = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(ATTNAME,
-							   ObjectIdGetDatum(myrelid),
-							   PointerGetDatum(colName),
-							   0, 0);
+	tuple = SearchSysCacheCopyAttName(myrelid, colName);
 	if (!HeapTupleIsValid(tuple)) /* shouldn't happen */
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
@@ -2051,7 +2048,6 @@ AlterTableAlterColumnDefault(Oid myrelid,
 							 Node *newDefault)
 {
 	Relation	rel;
-	HeapTuple	tuple;
 	AttrNumber	attnum;
 
 	rel = heap_open(myrelid, AccessExclusiveLock);
@@ -2106,16 +2102,15 @@ AlterTableAlterColumnDefault(Oid myrelid,
 	/*
 	 * get the number of the attribute
 	 */
-	tuple = SearchSysCache(ATTNAME,
-						   ObjectIdGetDatum(myrelid),
-						   PointerGetDatum(colName),
-						   0, 0);
-	if (!HeapTupleIsValid(tuple))
-		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
+	attnum = get_attnum(myrelid, colName);
+	if (attnum == InvalidAttrNumber)
+		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
 
-	attnum = ((Form_pg_attribute) GETSTRUCT(tuple))->attnum;
-	ReleaseSysCache(tuple);
+	/* Prevent them from altering a system attribute */
+	if (attnum < 0)
+		elog(ERROR, "ALTER TABLE: Cannot alter system attribute \"%s\"",
+			 colName);
 
 	/*
 	 * Remove any old default for the column.  We use RESTRICT here for
@@ -2254,10 +2249,7 @@ AlterTableAlterColumnFlags(Oid myrelid,
 
 	attrelation = heap_openr(AttributeRelationName, RowExclusiveLock);
 
-	tuple = SearchSysCacheCopy(ATTNAME,
-							   ObjectIdGetDatum(myrelid),
-							   PointerGetDatum(colName),
-							   0, 0);
+	tuple = SearchSysCacheCopyAttName(myrelid, colName);
 	if (!HeapTupleIsValid(tuple))
 		elog(ERROR, "ALTER TABLE: relation \"%s\" has no column \"%s\"",
 			 RelationGetRelationName(rel), colName);
@@ -2309,7 +2301,99 @@ AlterTableDropColumn(Oid myrelid,
 					 bool inh, const char *colName,
 					 DropBehavior behavior)
 {
-	elog(ERROR, "ALTER TABLE / DROP COLUMN is not implemented");
+	Relation	rel;
+	AttrNumber	attnum;
+	AttrNumber	n;
+	TupleDesc	tupleDesc;
+	bool		success;
+	ObjectAddress	object;
+
+	rel = heap_open(myrelid, AccessExclusiveLock);
+
+	if (rel->rd_rel->relkind != RELKIND_RELATION)
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is not a table",
+			 RelationGetRelationName(rel));
+
+	if (!allowSystemTableMods
+		&& IsSystemRelation(rel))
+		elog(ERROR, "ALTER TABLE: relation \"%s\" is a system catalog",
+			 RelationGetRelationName(rel));
+
+	if (!pg_class_ownercheck(myrelid, GetUserId()))
+		aclcheck_error(ACLCHECK_NOT_OWNER, RelationGetRelationName(rel));
+
+	/*
+	 * get the number of the attribute
+	 */
+	attnum = get_attnum(myrelid, colName);
+	if (attnum == InvalidAttrNumber)
+		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+			 RelationGetRelationName(rel), colName);
+
+	/* Can't drop a system attribute */
+	if (attnum < 0)
+		elog(ERROR, "ALTER TABLE: Cannot drop system attribute \"%s\"",
+			 colName);
+
+	/*
+	 * Make sure there will be at least one user column left in the relation
+	 * after we drop this one.  Zero-length tuples tend to confuse us.
+	 */
+	tupleDesc = RelationGetDescr(rel);
+
+	success = false;
+	for (n = 1; n <= tupleDesc->natts; n++)
+	{
+		Form_pg_attribute attribute = tupleDesc->attrs[n - 1];
+
+		if (!attribute->attisdropped && n != attnum)
+		{
+			success = true;
+			break;
+		}
+	}
+
+	if (!success)
+		elog(ERROR, "ALTER TABLE: Cannot drop last column from table \"%s\"",
+			RelationGetRelationName(rel));
+
+	/*
+	 * Propagate to children if desired
+	 */
+	if (inh)
+	{
+		List	   *child,
+			   *children;
+
+		/* this routine is actually in the planner */
+		children = find_all_inheritors(myrelid);
+
+		/*
+		 * find_all_inheritors does the recursive search of the
+		 * inheritance hierarchy, so all we have to do is process all of
+		 * the relids in the list that it returns.
+		 */
+		foreach(child, children)
+		{
+			Oid			childrelid = lfirsti(child);
+
+			if (childrelid == myrelid)
+				continue;
+			AlterTableDropColumn(childrelid,
+								false, colName, behavior);
+		}
+	}
+
+	/*
+	 * Perform the actual deletion
+	 */
+	object.classId = RelOid_pg_class;
+	object.objectId = myrelid;
+	object.objectSubId = attnum;
+
+	performDeletion(&object, behavior);
+
+	heap_close(rel, NoLock);	/* close rel, but keep lock! */
 }
 
 
@@ -2722,8 +2806,13 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 	foreach(l, fkconstraint->fk_attrs)
 	{
 		Ident *id = (Ident *) lfirst(l);
+		AttrNumber	attno;
 
-		fkattr[i++] = get_attnum(RelationGetRelid(rel), id->name);
+		attno = get_attnum(RelationGetRelid(rel), id->name);
+		if (attno == InvalidAttrNumber)
+			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+				 RelationGetRelationName(rel), id->name);
+		fkattr[i++] = attno;
 	}
 
 	/* The same for the referenced primary key attrs */
@@ -2733,8 +2822,13 @@ createForeignKeyConstraint(Relation rel, Relation pkrel,
 	foreach(l, fkconstraint->pk_attrs)
 	{
 		Ident *id = (Ident *) lfirst(l);
+		AttrNumber	attno;
 
-		pkattr[i++] = get_attnum(RelationGetRelid(pkrel), id->name);
+		attno = get_attnum(RelationGetRelid(pkrel), id->name);
+		if (attno == InvalidAttrNumber)
+			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+				 RelationGetRelationName(pkrel), id->name);
+		pkattr[i++] = attno;
 	}
 
 	/* Now we can make the pg_constraint entry */

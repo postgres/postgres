@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.53 2002/07/31 17:19:53 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/tab-complete.c,v 1.54 2002/08/02 18:15:09 tgl Exp $
  */
 
 /*----------------------------------------------------------------------
@@ -156,7 +156,7 @@ pgsql_thing_t words_after_create[] = {
 #define Query_for_list_of_tables words_after_create[9].query
 #define Query_for_list_of_indexes words_after_create[4].query
 #define Query_for_list_of_databases words_after_create[1].query
-#define Query_for_list_of_attributes "SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and substr(a.attname,1,%d)='%s' and c.relname='%s'"
+#define Query_for_list_of_attributes "SELECT a.attname FROM pg_catalog.pg_attribute a, pg_catalog.pg_class c WHERE c.oid = a.attrelid and a.attnum>0 and not a.attisdropped and substr(a.attname,1,%d)='%s' and c.relname='%s'"
 #define Query_for_list_of_users words_after_create[14].query
 
 /* A couple of macros to ease typing. You can use these to complete the given

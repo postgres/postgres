@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.75 2002/07/16 05:53:34 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteDefine.c,v 1.76 2002/08/02 18:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -256,6 +256,16 @@ DefineQueryRewrite(RuleStmt *stmt)
 
 			attr = event_relation->rd_att->attrs[i - 1];
 			attname = NameStr(attr->attname);
+
+			/*
+			 * Disallow dropped columns in the relation.  This won't happen
+			 * in the cases we actually care about (namely creating a view
+			 * via CREATE TABLE then CREATE RULE).  Trying to cope with it
+			 * is much more trouble than it's worth, because we'd have to
+			 * modify the rule to insert dummy NULLs at the right positions.
+			 */
+			if (attr->attisdropped)
+				elog(ERROR, "cannot convert relation containing dropped columns to view");
 
 			if (strcmp(resdom->resname, attname) != 0)
 				elog(ERROR, "select rule's target entry %d has different column name from %s", i, attname);

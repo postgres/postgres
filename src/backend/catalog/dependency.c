@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.7 2002/07/29 22:14:10 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/dependency.c,v 1.8 2002/08/02 18:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -567,7 +567,8 @@ doDeletion(const ObjectAddress *object)
 			else
 			{
 				if (object->objectSubId != 0)
-					elog(ERROR, "DROP COLUMN not implemented yet");
+					RemoveAttributeById(object->objectId,
+										object->objectSubId);
 				else
 					heap_drop_with_catalog(object->objectId);
 			}

@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.74 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.75 2002/08/02 18:15:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -797,9 +797,16 @@ adjust_inherited_attrs_mutator(Node *node,
 		{
 			var->varno = context->new_rt_index;
 			if (var->varattno > 0)
-				var->varattno = get_attnum(context->new_relid,
-										   get_attname(context->old_relid,
-													   var->varattno));
+			{
+				char *attname = get_attname(context->old_relid,
+											var->varattno);
+
+				var->varattno = get_attnum(context->new_relid, attname);
+				if (var->varattno == InvalidAttrNumber)
+					elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+						 get_rel_name(context->new_relid), attname);
+				pfree(attname);
+			}
 		}
 		return (Node *) var;
 	}

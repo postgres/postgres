@@ -829,8 +829,9 @@ dblink_replace_text(PG_FUNCTION_ARGS)
 		left_text = DatumGetTextP(DirectFunctionCall3(text_substr, PointerGetDatum(buf_text), 1, DatumGetInt32(DirectFunctionCall2(textpos, PointerGetDatum(buf_text), PointerGetDatum(from_sub_text))) - 1));
 		right_text = DatumGetTextP(DirectFunctionCall3(text_substr, PointerGetDatum(buf_text), DatumGetInt32(DirectFunctionCall2(textpos, PointerGetDatum(buf_text), PointerGetDatum(from_sub_text))) + from_sub_text_len, -1));
 
-		appendStringInfo(str, DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(left_text))));
-		appendStringInfo(str, to_sub_str);
+		appendStringInfo(str, "%s",
+						 DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(left_text))));
+		appendStringInfo(str, "%s", to_sub_str);
 
 		pfree(buf_text);
 		pfree(left_text);
@@ -838,7 +839,8 @@ dblink_replace_text(PG_FUNCTION_ARGS)
 		curr_posn = DatumGetInt32(DirectFunctionCall2(textpos, PointerGetDatum(buf_text), PointerGetDatum(from_sub_text)));
 	}
 
-	appendStringInfo(str, DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(buf_text))));
+	appendStringInfo(str, "%s",
+					 DatumGetCString(DirectFunctionCall1(textout, PointerGetDatum(buf_text))));
 	pfree(buf_text);
 
 	ret_str = pstrdup(str->data);
@@ -1013,10 +1015,11 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	TupleDesc		tupdesc;
 	int				natts;
 	StringInfo		str = makeStringInfo();
-	char			*sql = NULL;
-	char			*val = NULL;
+	char			*sql;
+	char			*val;
 	int16			key;
-	unsigned int	i;
+	int				i;
+	bool			needComma;
 
 	/*
 	 * Open relation using relid
@@ -1029,12 +1032,19 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	tuple = get_tuple_of_interest(relid, pkattnums, pknumatts, src_pkattvals);
 
 	appendStringInfo(str, "INSERT INTO %s(", quote_ident_cstr(relname));
+
+	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
-		if (i > 0)
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
+		if (needComma)
 			appendStringInfo(str, ",");
 
-		appendStringInfo(str, NameStr(tupdesc->attrs[i]->attname));
+		appendStringInfo(str, "%s",
+						 quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
+		needComma = true;
 	}
 
 	appendStringInfo(str, ") VALUES(");
@@ -1042,9 +1052,13 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	/*
 	 * remember attvals are 1 based
 	 */
+	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
-		if (i > 0)
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
+
+		if (needComma)
 			appendStringInfo(str, ",");
 
 		if (tgt_pkattvals != NULL)
@@ -1059,11 +1073,12 @@ get_sql_insert(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, quote_literal_cstr(val));
+			appendStringInfo(str, "%s", quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
 			appendStringInfo(str, "NULL");
+		needComma = true;
 	}
 	appendStringInfo(str, ")");
 
@@ -1083,9 +1098,9 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 	TupleDesc		tupdesc;
 	int				natts;
 	StringInfo		str = makeStringInfo();
-	char			*sql = NULL;
-	char			*val = NULL;
-	unsigned int	i;
+	char			*sql;
+	char			*val;
+	int				i;
 
 	/*
 	 * Open relation using relid
@@ -1103,21 +1118,24 @@ get_sql_delete(Oid relid, int16 *pkattnums, int16 pknumatts, char **tgt_pkattval
 		if (i > 0)
 			appendStringInfo(str, " AND ");
 
-		appendStringInfo(str, NameStr(tupdesc->attrs[pkattnum - 1]->attname));
+		appendStringInfo(str, "%s",
+						 quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
 		else
+		{
 			elog(ERROR, "Target key array must not be NULL");
+			val = NULL;			/* keep compiler quiet */
+		}
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, "=");
-			appendStringInfo(str, quote_literal_cstr(val));
+			appendStringInfo(str, " = %s", quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
-			appendStringInfo(str, "IS NULL");
+			appendStringInfo(str, " IS NULL");
 	}
 
 	sql = pstrdup(str->data);
@@ -1137,10 +1155,11 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 	TupleDesc		tupdesc;
 	int				natts;
 	StringInfo		str = makeStringInfo();
-	char			*sql = NULL;
-	char			*val = NULL;
+	char			*sql;
+	char			*val;
 	int16			key;
 	int				i;
+	bool			needComma;
 
 	/*
 	 * Open relation using relid
@@ -1154,13 +1173,17 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 	appendStringInfo(str, "UPDATE %s SET ", quote_ident_cstr(relname));
 
+	needComma = false;
 	for (i = 0; i < natts; i++)
 	{
-		if (i > 0)
-			appendStringInfo(str, ",");
+		if (tupdesc->attrs[i]->attisdropped)
+			continue;
 
-		appendStringInfo(str, NameStr(tupdesc->attrs[i]->attname));
-		appendStringInfo(str, "=");
+		if (needComma)
+			appendStringInfo(str, ", ");
+
+		appendStringInfo(str, "%s = ",
+						 quote_ident_cstr(NameStr(tupdesc->attrs[i]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			key = get_attnum_pk_pos(pkattnums, pknumatts, i + 1);
@@ -1174,11 +1197,12 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, quote_literal_cstr(val));
+			appendStringInfo(str, "%s", quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
 			appendStringInfo(str, "NULL");
+		needComma = true;
 	}
 
 	appendStringInfo(str, " WHERE ");
@@ -1190,7 +1214,8 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 		if (i > 0)
 			appendStringInfo(str, " AND ");
 
-		appendStringInfo(str, NameStr(tupdesc->attrs[pkattnum - 1]->attname));
+		appendStringInfo(str, "%s",
+						 quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		if (tgt_pkattvals != NULL)
 			val = pstrdup(tgt_pkattvals[i]);
@@ -1199,12 +1224,11 @@ get_sql_update(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_pkattval
 
 		if (val != NULL)
 		{
-			appendStringInfo(str, "=");
-			appendStringInfo(str, quote_literal_cstr(val));
+			appendStringInfo(str, " = %s", quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
-			appendStringInfo(str, "IS NULL");
+			appendStringInfo(str, " IS NULL");
 	}
 
 	sql = pstrdup(str->data);
@@ -1297,7 +1321,7 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 	 * Build sql statement to look up tuple of interest
 	 * Use src_pkattvals as the criteria.
 	 */
-	appendStringInfo(str, "SELECT * from %s WHERE ", relname);
+	appendStringInfo(str, "SELECT * FROM %s WHERE ", quote_ident_cstr(relname));
 
 	for (i = 0; i < pknumatts; i++)
 	{
@@ -1306,17 +1330,17 @@ get_tuple_of_interest(Oid relid, int16 *pkattnums, int16 pknumatts, char **src_p
 		if (i > 0)
 			appendStringInfo(str, " AND ");
 
-		appendStringInfo(str, NameStr(tupdesc->attrs[pkattnum - 1]->attname));
+		appendStringInfo(str, "%s",
+						 quote_ident_cstr(NameStr(tupdesc->attrs[pkattnum - 1]->attname)));
 
 		val = pstrdup(src_pkattvals[i]);
 		if (val != NULL)
 		{
-			appendStringInfo(str, "=");
-			appendStringInfo(str, quote_literal_cstr(val));
+			appendStringInfo(str, " = %s", quote_literal_cstr(val));
 			pfree(val);
 		}
 		else
-			appendStringInfo(str, "IS NULL");
+			appendStringInfo(str, " IS NULL");
 	}
 
 	sql = pstrdup(str->data);

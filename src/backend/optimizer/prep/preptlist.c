@@ -15,7 +15,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.53 2002/06/20 20:29:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/preptlist.c,v 1.54 2002/08/02 18:15:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -165,6 +165,8 @@ expand_targetlist(List *tlist, int command_type,
 			 *
 			 * For UPDATE, generate a Var reference to the existing value of
 			 * the attribute, so that it gets copied to the new tuple.
+			 * But generate a NULL for dropped columns (we want to drop any
+			 * old values).
 			 */
 			Oid			atttype = att_tup->atttypid;
 			int32		atttypmod = att_tup->atttypmod;
@@ -182,11 +184,21 @@ expand_targetlist(List *tlist, int command_type,
 												  false);
 					break;
 				case CMD_UPDATE:
-					new_expr = (Node *) makeVar(result_relation,
-												attrno,
-												atttype,
-												atttypmod,
-												0);
+					/* Insert NULLs for dropped columns */
+					if (att_tup->attisdropped)
+						new_expr = (Node *) makeConst(atttype,
+													  att_tup->attlen,
+													  (Datum) 0,
+													  true,		/* isnull */
+													  att_tup->attbyval,
+													  false,	/* not a set */
+													  false);
+					else
+						new_expr = (Node *) makeVar(result_relation,
+													attrno,
+													atttype,
+													atttypmod,
+													0);
 					break;
 				default:
 					elog(ERROR, "expand_targetlist: unexpected command_type");
@@ -210,7 +222,8 @@ expand_targetlist(List *tlist, int command_type,
 	 * the end of the new tlist, making sure they have resnos higher than
 	 * the last real attribute.  (Note: although the rewriter already did
 	 * such renumbering, we have to do it again here in case we are doing
-	 * an UPDATE in an inheritance child table with more columns.)
+	 * an UPDATE in a table with dropped columns, or an inheritance child
+	 * table with extra columns.)
 	 */
 	while (tlist)
 	{

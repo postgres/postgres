@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.84 2002/07/25 10:07:12 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.85 2002/08/02 18:15:08 tgl Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -621,6 +621,71 @@ GetSysCacheOid(int cacheId,
 	ReleaseSysCache(tuple);
 	return result;
 }
+
+
+/*
+ * SearchSysCacheAttName
+ *
+ * This routine is equivalent to SearchSysCache on the ATTNAME cache,
+ * except that it will return NULL if the found attribute is marked
+ * attisdropped.  This is convenient for callers that want to act as
+ * though dropped attributes don't exist.
+ */
+HeapTuple
+SearchSysCacheAttName(Oid relid, const char *attname)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCache(ATTNAME,
+						   ObjectIdGetDatum(relid),
+						   CStringGetDatum(attname),
+						   0, 0);
+	if (!HeapTupleIsValid(tuple))
+		return NULL;
+	if (((Form_pg_attribute) GETSTRUCT(tuple))->attisdropped)
+	{
+		ReleaseSysCache(tuple);
+		return NULL;
+	}
+	return tuple;
+}
+
+/*
+ * SearchSysCacheCopyAttName
+ *
+ * As above, an attisdropped-aware version of SearchSysCacheCopy.
+ */
+HeapTuple
+SearchSysCacheCopyAttName(Oid relid, const char *attname)
+{
+	HeapTuple	tuple,
+				newtuple;
+
+	tuple = SearchSysCacheAttName(relid, attname);
+	if (!HeapTupleIsValid(tuple))
+		return tuple;
+	newtuple = heap_copytuple(tuple);
+	ReleaseSysCache(tuple);
+	return newtuple;
+}
+
+/*
+ * SearchSysCacheExistsAttName
+ *
+ * As above, an attisdropped-aware version of SearchSysCacheExists.
+ */
+bool
+SearchSysCacheExistsAttName(Oid relid, const char *attname)
+{
+	HeapTuple	tuple;
+
+	tuple = SearchSysCacheAttName(relid, attname);
+	if (!HeapTupleIsValid(tuple))
+		return false;
+	ReleaseSysCache(tuple);
+	return true;
+}
+
 
 /*
  * SysCacheGetAttr

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.46 2002/07/29 23:46:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_type.c,v 1.47 2002/08/02 18:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -85,8 +85,8 @@ LookupTypeName(const TypeName *typename)
 		relid = RangeVarGetRelid(rel, false);
 		attnum = get_attnum(relid, field);
 		if (attnum == InvalidAttrNumber)
-			elog(ERROR, "'%s' is not an attribute of class '%s'",
-				 field, rel->relname);
+			elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+				 rel->relname, field);
 		restype = get_atttype(relid, attnum);
 
 		/* this construct should never have an array indicator */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.70 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_relation.c,v 1.71 2002/08/02 18:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -37,7 +37,9 @@ static Node *scanNameSpaceForRefname(ParseState *pstate, Node *nsnode,
 static Node *scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte,
 				 char *colname);
 static bool isForUpdate(ParseState *pstate, char *refname);
-static int	specialAttNum(char *a);
+static bool get_rte_attribute_is_dropped(RangeTblEntry *rte,
+										 AttrNumber attnum);
+static int	specialAttNum(const char *attname);
 static void warnAutoRange(ParseState *pstate, RangeVar *relation);
 
 
@@ -267,12 +269,28 @@ scanRTEForColumn(ParseState *pstate, RangeTblEntry *rte, char *colname)
 	/*
 	 * Scan the user column names (or aliases) for a match. Complain if
 	 * multiple matches.
+	 *
+	 * Note: because eref->colnames may include names of dropped columns,
+	 * we need to check for non-droppedness before accepting a match.
+	 * This takes an extra cache lookup, but we can skip the lookup most
+	 * of the time by exploiting the knowledge that dropped columns are
+	 * assigned dummy names starting with '.', which is an unusual choice
+	 * for actual column names.
+	 *
+	 * Should the user try to fool us by altering pg_attribute.attname
+	 * for a dropped column, we'll still catch it by virtue of the checks
+	 * in get_rte_attribute_type(), which is called by make_var().  That
+	 * routine has to do a cache lookup anyway, so the check there is
+	 * cheap.
 	 */
 	foreach(c, rte->eref->colnames)
 	{
 		attnum++;
 		if (strcmp(strVal(lfirst(c)), colname) == 0)
 		{
+			if (colname[0] == '.' && /* see note above */
+				get_rte_attribute_is_dropped(rte, attnum))
+				continue;
 			if (result)
 				elog(ERROR, "Column reference \"%s\" is ambiguous", colname);
 			result = (Node *) make_var(pstate, rte, attnum);
@@ -962,6 +980,9 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 				{
 					Form_pg_attribute attr = rel->rd_att->attrs[varattno];
 
+					if (attr->attisdropped)
+						continue;
+
 					if (colnames)
 					{
 						char	   *label;
@@ -1050,6 +1071,9 @@ expandRTE(ParseState *pstate, RangeTblEntry *rte,
 					for (varattno = 0; varattno < maxattrs; varattno++)
 					{
 						Form_pg_attribute attr = rel->rd_att->attrs[varattno];
+
+						if (attr->attisdropped)
+							continue;
 
 						if (colnames)
 						{
@@ -1246,9 +1270,16 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 									0, 0);
 				/* this shouldn't happen... */
 				if (!HeapTupleIsValid(tp))
-					elog(ERROR, "Relation %s does not have attribute %d",
+					elog(ERROR, "Relation \"%s\" does not have attribute %d",
 						 get_rel_name(rte->relid), attnum);
 				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+				/*
+				 * If dropped column, pretend it ain't there.  See notes
+				 * in scanRTEForColumn.
+				 */
+				if (att_tup->attisdropped)
+					elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+						 get_rel_name(rte->relid), NameStr(att_tup->attname));
 				*vartype = att_tup->atttypid;
 				*vartypmod = att_tup->atttypmod;
 				ReleaseSysCache(tp);
@@ -1298,6 +1329,14 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 						elog(ERROR, "Relation %s does not have attribute %d",
 							 get_rel_name(funcrelid), attnum);
 					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+					/*
+					 * If dropped column, pretend it ain't there.  See notes
+					 * in scanRTEForColumn.
+					 */
+					if (att_tup->attisdropped)
+						elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+							 get_rel_name(funcrelid),
+							 NameStr(att_tup->attname));
 					*vartype = att_tup->atttypid;
 					*vartypmod = att_tup->atttypmod;
 					ReleaseSysCache(tp);
@@ -1330,6 +1369,86 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
 }
 
 /*
+ * get_rte_attribute_is_dropped
+ *		Check whether attempted attribute ref is to a dropped column
+ */
+static bool
+get_rte_attribute_is_dropped(RangeTblEntry *rte, AttrNumber attnum)
+{
+	bool result;
+
+	switch (rte->rtekind)
+	{
+		case RTE_RELATION:
+			{
+				/* Plain relation RTE --- get the attribute's type info */
+				HeapTuple	tp;
+				Form_pg_attribute att_tup;
+
+				tp = SearchSysCache(ATTNUM,
+									ObjectIdGetDatum(rte->relid),
+									Int16GetDatum(attnum),
+									0, 0);
+				/* this shouldn't happen... */
+				if (!HeapTupleIsValid(tp))
+					elog(ERROR, "Relation \"%s\" does not have attribute %d",
+						 get_rel_name(rte->relid), attnum);
+				att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+				result = att_tup->attisdropped;
+				ReleaseSysCache(tp);
+			}
+			break;
+		case RTE_SUBQUERY:
+		case RTE_JOIN:
+			/* Subselect and join RTEs never have dropped columns */
+			result = false;
+			break;
+		case RTE_FUNCTION:
+			{
+				/* Function RTE */
+				Oid			funcrettype = exprType(rte->funcexpr);
+				Oid			funcrelid = typeidTypeRelid(funcrettype);
+
+				if (OidIsValid(funcrelid))
+				{
+					/*
+					 * Composite data type, i.e. a table's row type
+					 * Same as ordinary relation RTE
+					 */
+					HeapTuple			tp;
+					Form_pg_attribute	att_tup;
+
+					tp = SearchSysCache(ATTNUM,
+										ObjectIdGetDatum(funcrelid),
+										Int16GetDatum(attnum),
+										0, 0);
+					/* this shouldn't happen... */
+					if (!HeapTupleIsValid(tp))
+						elog(ERROR, "Relation %s does not have attribute %d",
+							 get_rel_name(funcrelid), attnum);
+					att_tup = (Form_pg_attribute) GETSTRUCT(tp);
+					result = att_tup->attisdropped;
+					ReleaseSysCache(tp);
+				}
+				else
+				{
+					/*
+					 * Must be a base data type, i.e. scalar
+					 */
+					result = false;
+				}
+			}
+			break;
+		default:
+			elog(ERROR, "get_rte_attribute_is_dropped: unsupported RTE kind %d",
+				 (int) rte->rtekind);
+			result = false;		/* keep compiler quiet */
+	}
+
+	return result;
+}
+
+/*
  *	given relation and att name, return id of variable
  *
  *	This should only be used if the relation is already
@@ -1337,23 +1456,30 @@ get_rte_attribute_type(RangeTblEntry *rte, AttrNumber attnum,
  *	for access to non-opened relations.
  */
 int
-attnameAttNum(Relation rd, char *a)
+attnameAttNum(Relation rd, const char *attname, bool sysColOK)
 {
 	int			i;
 
 	for (i = 0; i < rd->rd_rel->relnatts; i++)
-		if (namestrcmp(&(rd->rd_att->attrs[i]->attname), a) == 0)
-			return i + 1;
-
-	if ((i = specialAttNum(a)) != InvalidAttrNumber)
 	{
-		if (i != ObjectIdAttributeNumber || rd->rd_rel->relhasoids)
-			return i;
+		Form_pg_attribute	att = rd->rd_att->attrs[i];
+
+		if (namestrcmp(&(att->attname), attname) == 0 && !att->attisdropped)
+			return i + 1;
+	}
+
+	if (sysColOK)
+	{
+		if ((i = specialAttNum(attname)) != InvalidAttrNumber)
+		{
+			if (i != ObjectIdAttributeNumber || rd->rd_rel->relhasoids)
+				return i;
+		}
 	}
 
 	/* on failure */
-	elog(ERROR, "Relation '%s' does not have attribute '%s'",
-		 RelationGetRelationName(rd), a);
+	elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+		 RelationGetRelationName(rd), attname);
 	return InvalidAttrNumber;	/* lint */
 }
 
@@ -1367,11 +1493,12 @@ attnameAttNum(Relation rd, char *a)
  * at least in the case of "oid", which is now optional.
  */
 static int
-specialAttNum(char *a)
+specialAttNum(const char *attname)
 {
 	Form_pg_attribute sysatt;
 
-	sysatt = SystemAttributeByName(a, true /* "oid" will be accepted */ );
+	sysatt = SystemAttributeByName(attname,
+								   true /* "oid" will be accepted */ );
 	if (sysatt != NULL)
 		return sysatt->attnum;
 	return InvalidAttrNumber;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.39 2002/07/31 17:19:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.40 2002/08/02 18:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "commands/vacuum.h"
 #include "miscadmin.h"
 #include "parser/parse_oper.h"
+#include "parser/parse_relation.h"
 #include "utils/acl.h"
 #include "utils/builtins.h"
 #include "utils/datum.h"
@@ -147,7 +148,6 @@ void
 analyze_rel(Oid relid, VacuumStmt *vacstmt)
 {
 	Relation	onerel;
-	Form_pg_attribute *attr;
 	int			attr_cnt,
 				tcnt,
 				i;
@@ -234,9 +234,6 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	 *
 	 * Note that system attributes are never analyzed.
 	 */
-	attr = onerel->rd_att->attrs;
-	attr_cnt = onerel->rd_att->natts;
-
 	if (vacstmt->va_cols != NIL)
 	{
 		List	   *le;
@@ -248,15 +245,8 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 		{
 			char	   *col = strVal(lfirst(le));
 
-			for (i = 0; i < attr_cnt; i++)
-			{
-				if (namestrcmp(&(attr[i]->attname), col) == 0)
-					break;
-			}
-			if (i >= attr_cnt)
-				elog(ERROR, "ANALYZE: there is no attribute %s in %s",
-					 col, RelationGetRelationName(onerel));
-			vacattrstats[tcnt] = examine_attribute(onerel, i + 1);
+			i = attnameAttNum(onerel, col, false);
+			vacattrstats[tcnt] = examine_attribute(onerel, i);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -264,12 +254,13 @@ analyze_rel(Oid relid, VacuumStmt *vacstmt)
 	}
 	else
 	{
+		attr_cnt = onerel->rd_att->natts;
 		vacattrstats = (VacAttrStats **) palloc(attr_cnt *
 												sizeof(VacAttrStats *));
 		tcnt = 0;
-		for (i = 0; i < attr_cnt; i++)
+		for (i = 1; i <= attr_cnt; i++)
 		{
-			vacattrstats[tcnt] = examine_attribute(onerel, i + 1);
+			vacattrstats[tcnt] = examine_attribute(onerel, i);
 			if (vacattrstats[tcnt] != NULL)
 				tcnt++;
 		}
@@ -387,6 +378,10 @@ examine_attribute(Relation onerel, int attnum)
 	Oid			eqfunc = InvalidOid;
 	Oid			ltopr = InvalidOid;
 	VacAttrStats *stats;
+
+	/* Don't analyze dropped columns */
+	if (attr->attisdropped)
+		return NULL;
 
 	/* Don't analyze column if user has specified not to */
 	if (attr->attstattarget == 0)

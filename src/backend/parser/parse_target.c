@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.85 2002/06/20 20:29:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_target.c,v 1.86 2002/08/02 18:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -385,8 +385,12 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 
 		for (i = 0; i < numcol; i++)
 		{
-			ResTarget	   *col = makeNode(ResTarget);
+			ResTarget	   *col;
 
+			if (attr[i]->attisdropped)
+				continue;
+
+			col = makeNode(ResTarget);
 			col->name = pstrdup(NameStr(attr[i]->attname));
 			col->indirection = NIL;
 			col->val = NULL;
@@ -407,7 +411,7 @@ checkInsertTargets(ParseState *pstate, List *cols, List **attrnos)
 			int			attrno;
 
 			/* Lookup column name, elog on failure */
-			attrno = attnameAttNum(pstate->p_target_relation, name);
+			attrno = attnameAttNum(pstate->p_target_relation, name, false);
 			/* Check for duplicates */
 			if (intMember(attrno, *attrnos))
 				elog(ERROR, "Attribute '%s' specified more than once", name);

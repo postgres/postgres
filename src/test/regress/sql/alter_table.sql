@@ -571,3 +571,163 @@ select * from def_view_test;
 drop rule def_view_test_ins on def_view_test;
 drop view def_view_test;
 drop table def_test;
+
+-- alter table / drop column tests
+-- try altering system catalogs, should fail
+alter table pg_class drop column relname;
+
+-- try altering non-existent table, should fail
+alter table foo drop column bar;
+
+-- test dropping columns
+create table atacc1 (a int4 not null, b int4, c int4 not null, d int4);
+insert into atacc1 values (1, 2, 3, 4);
+alter table atacc1 drop a;
+alter table atacc1 drop a;
+
+-- SELECTs
+select * from atacc1;
+select * from atacc1 order by a;
+select * from atacc1 order by "........pg.dropped.1........";
+select * from atacc1 group by a;
+select * from atacc1 group by "........pg.dropped.1........";
+select atacc1.* from atacc1;
+select a from atacc1;
+select atacc1.a from atacc1;
+select b,c,d from atacc1;
+select a,b,c,d from atacc1;
+select * from atacc1 where a = 1;
+select "........pg.dropped.1........" from atacc1;
+select atacc1."........pg.dropped.1........" from atacc1;
+select "........pg.dropped.1........",b,c,d from atacc1;
+select * from atacc1 where "........pg.dropped.1........" = 1;
+
+-- UPDATEs
+update atacc1 set a = 3;
+update atacc1 set b = 2 where a = 3;
+update atacc1 set "........pg.dropped.1........" = 3;
+update atacc1 set b = 2 where "........pg.dropped.1........" = 3;
+
+-- INSERTs
+insert into atacc1 values (10, 11, 12, 13);
+insert into atacc1 values (default, 11, 12, 13);
+insert into atacc1 values (11, 12, 13);
+insert into atacc1 (a) values (10);
+insert into atacc1 (a) values (default);
+insert into atacc1 (a,b,c,d) values (10,11,12,13);
+insert into atacc1 (a,b,c,d) values (default,11,12,13);
+insert into atacc1 (b,c,d) values (11,12,13);
+insert into atacc1 ("........pg.dropped.1........") values (10);
+insert into atacc1 ("........pg.dropped.1........") values (default);
+insert into atacc1 ("........pg.dropped.1........",b,c,d) values (10,11,12,13);
+insert into atacc1 ("........pg.dropped.1........",b,c,d) values (default,11,12,13);
+
+-- DELETEs
+delete from atacc1 where a = 3;
+delete from atacc1 where "........pg.dropped.1........" = 3;
+delete from atacc1;
+
+-- try dropping a non-existent column, should fail
+alter table atacc1 drop bar;
+
+-- try dropping the oid column, should fail
+alter table atacc1 drop oid;
+
+-- try creating a view and altering that, should fail
+create view myview as select * from atacc1;
+select * from myview;
+alter table myview drop d;
+drop view myview;
+
+-- test some commands to make sure they fail on the dropped column
+analyze atacc1(a);
+analyze atacc1("........pg.dropped.1........");
+vacuum analyze atacc1(a);
+vacuum analyze atacc1("........pg.dropped.1........");
+comment on column atacc1.a is 'testing';
+comment on column atacc1."........pg.dropped.1........" is 'testing';
+alter table atacc1 alter a set storage plain;
+alter table atacc1 alter "........pg.dropped.1........" set storage plain;
+alter table atacc1 alter a set statistics 0;
+alter table atacc1 alter "........pg.dropped.1........" set statistics 0;
+alter table atacc1 alter a set default 3;
+alter table atacc1 alter "........pg.dropped.1........" set default 3;
+alter table atacc1 alter a drop default;
+alter table atacc1 alter "........pg.dropped.1........" drop default;
+alter table atacc1 alter a set not null;
+alter table atacc1 alter "........pg.dropped.1........" set not null;
+alter table atacc1 alter a drop not null;
+alter table atacc1 alter "........pg.dropped.1........" drop not null;
+alter table atacc1 rename a to x;
+alter table atacc1 rename "........pg.dropped.1........" to x;
+alter table atacc1 add primary key(a);
+alter table atacc1 add primary key("........pg.dropped.1........");
+alter table atacc1 add unique(a);
+alter table atacc1 add unique("........pg.dropped.1........");
+alter table atacc1 add check (a > 3);
+alter table atacc1 add check ("........pg.dropped.1........" > 3);
+create table atacc2 (id int4 unique);
+alter table atacc1 add foreign key (a) references atacc2(id);
+alter table atacc1 add foreign key ("........pg.dropped.1........") references atacc2(id);
+alter table atacc2 add foreign key (id) references atacc1(a);
+alter table atacc2 add foreign key (id) references atacc1("........pg.dropped.1........");
+drop table atacc2;
+create index "testing_idx" on atacc1(a);
+create index "testing_idx" on atacc1("........pg.dropped.1........");
+
+-- test create as and select into
+insert into atacc1 values (21, 22, 23);
+create table test1 as select * from atacc1;
+select * from test1;
+drop table test1;
+select * into test2 from atacc1;
+select * from test2;
+drop table test2;
+
+-- try dropping all columns
+alter table atacc1 drop c;
+alter table atacc1 drop d;
+alter table atacc1 drop b;
+select * from atacc1;
+
+drop table atacc1;
+
+-- test inheritance
+create table parent (a int, b int, c int);
+insert into parent values (1, 2, 3);
+alter table parent drop a;
+create table child (d varchar(255)) inherits (parent);
+insert into child values (12, 13, 'testing');
+
+select * from parent;
+select * from child;
+alter table parent drop c;
+select * from parent;
+select * from child;
+
+drop table child;
+drop table parent;
+
+-- test copy in/out
+create table test (a int4, b int4, c int4);
+insert into test values (1,2,3);
+alter table test drop a;
+copy test to stdout;
+copy test(a) to stdout;
+copy test("........pg.dropped.1........") to stdout;
+copy test from stdin;
+10	11	12
+\.
+select * from test;
+copy test from stdin;
+21	22
+\.
+select * from test;
+copy test(a) from stdin;
+copy test("........pg.dropped.1........") from stdin;
+copy test(b,c) from stdin;
+31	32
+\.
+select * from test;
+drop table test;
+

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.47 2002/07/31 17:19:50 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/alter_table.sgml,v 1.48 2002/08/02 18:15:04 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -23,6 +23,8 @@ PostgreSQL documentation
   <synopsis>
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ADD [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> <replaceable class="PARAMETER">type</replaceable> [ <replaceable class="PARAMETER">column_constraint</replaceable> [ ... ] ]
+ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
+    DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> [ RESTRICT | CASCADE ]
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
     ALTER [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { SET DEFAULT <replaceable class="PARAMETER">value</replaceable> | DROP DEFAULT }
 ALTER TABLE [ ONLY ] <replaceable class="PARAMETER">table</replaceable> [ * ]
@@ -126,6 +128,26 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
       </listitem>
      </varlistentry>
 
+     <varlistentry>
+      <term>CASCADE</term>
+      <listitem>
+       <para>
+        Automatically drop objects that depend on the dropped column
+	or constraint (for example, views referencing the column).
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term>RESTRICT</term>
+      <listitem>
+       <para>
+        Refuse to drop the column or constraint if there are any dependent
+	objects. This is the default behavior.
+       </para>
+      </listitem>
+     </varlistentry>
+
     </variablelist>
    </para>
   </refsect2>
@@ -182,6 +204,19 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
      <para>
       This form adds a new column to the table using the same syntax as
       <xref linkend="SQL-CREATETABLE" endterm="SQL-CREATETABLE-TITLE">.
+     </para>
+    </listitem>
+   </varlistentry>
+
+   <varlistentry>
+    <term>DROP COLUMN</term>
+    <listitem>
+     <para>
+      This form drops a column from a table.  Note that indexes and
+      table constraints involving the column will be automatically
+      dropped as well.  You will need to say <literal>CASCADE</> if
+      anything outside the table depends on the column --- for example,
+      foreign key references, views, etc.
      </para>
     </listitem>
    </varlistentry>
@@ -318,6 +353,22 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    </para>
 
    <para>
+    The <literal>DROP COLUMN</literal> command does not physically remove
+    the column, but simply makes it invisible to SQL operations.  Subsequent
+    inserts and updates of the table will store a NULL for the column.
+    Thus, dropping a column is quick but it will not immediately reduce the
+    on-disk size of your table, as the space occupied 
+    by the dropped column is not reclaimed.  The space will be
+    reclaimed over time as existing rows are updated.
+    To reclaim the space at once, do a dummy <command>UPDATE</> of all rows
+    and then vacuum, as in:
+     <programlisting>
+UPDATE table SET col = col;
+VACUUM FULL table;
+    </programlisting>
+   </para>
+
+   <para>
     Changing any  part  of  the schema of a system
     catalog is not permitted.
    </para>
@@ -339,6 +390,13 @@ ALTER TABLE <replaceable class="PARAMETER">table</replaceable>
    To add a column of type <type>varchar</type> to a table:
    <programlisting>
 ALTER TABLE distributors ADD COLUMN address VARCHAR(30);
+   </programlisting>
+  </para>
+
+  <para>
+   To drop a column from a table:
+   <programlisting>
+ALTER TABLE distributors DROP COLUMN address RESTRICT;
    </programlisting>
   </para>
 
@@ -419,38 +477,6 @@ ALTER TABLE distributors ADD PRIMARY KEY (dist_id);
      it does not support defaults and NOT NULL constraints, as explained above.
      The <literal>ALTER COLUMN</literal> form is in full compliance.
     </para>
-
-    <para>
-     SQL92 specifies some additional capabilities for <command>ALTER TABLE</command>
-     statement which are not yet directly supported by <productname>PostgreSQL</productname>:
-
-    <variablelist>
-    <varlistentry>
-     <term>
-      <synopsis>
-ALTER TABLE <replaceable class="PARAMETER">table</replaceable> DROP [ COLUMN ] <replaceable class="PARAMETER">column</replaceable> { RESTRICT | CASCADE }
-      </synopsis>
-     </term>
-     <listitem>
-      <para>
-       Removes a column from a table.
-       Currently, to remove an existing column the table must be
-       recreated and reloaded:
-       <programlisting>
-CREATE TABLE temp AS SELECT did, city FROM distributors;    
-DROP TABLE distributors;
-CREATE TABLE distributors (
-    did      DECIMAL(3)  DEFAULT 1,
-    name     VARCHAR(40) NOT NULL
-);
-INSERT INTO distributors SELECT * FROM temp;
-DROP TABLE temp;
-       </programlisting>
-      </para>
-     </listitem>
-    </varlistentry>
-   </variablelist>
-   </para>
 
    <para>
     The clauses to rename tables, columns, indexes, and sequences are

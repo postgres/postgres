@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.76 2002/07/12 18:43:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/lsyscache.c,v 1.77 2002/08/02 18:15:08 tgl Exp $
  *
  * NOTES
  *	  Eventually, the index information should go through here, too.
@@ -115,16 +115,15 @@ get_attname(Oid relid, AttrNumber attnum)
  *
  *		Given the relation id and the attribute name,
  *		return the "attnum" field from the attribute relation.
+ *
+ *		Returns InvalidAttrNumber if the attr doesn't exist (or is dropped).
  */
 AttrNumber
-get_attnum(Oid relid, char *attname)
+get_attnum(Oid relid, const char *attname)
 {
 	HeapTuple	tp;
 
-	tp = SearchSysCache(ATTNAME,
-						ObjectIdGetDatum(relid),
-						PointerGetDatum(attname),
-						0, 0);
+	tp = SearchSysCacheAttName(relid, attname);
 	if (HeapTupleIsValid(tp))
 	{
 		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
@@ -164,32 +163,6 @@ get_atttype(Oid relid, AttrNumber attnum)
 	}
 	else
 		return InvalidOid;
-}
-
-/* This routine uses the attname instead of the attnum because it
- * replaces the routine find_atttype, which is called sometimes when
- * only the attname, not the attno, is available.
- */
-bool
-get_attisset(Oid relid, char *attname)
-{
-	HeapTuple	tp;
-
-	tp = SearchSysCache(ATTNAME,
-						ObjectIdGetDatum(relid),
-						PointerGetDatum(attname),
-						0, 0);
-	if (HeapTupleIsValid(tp))
-	{
-		Form_pg_attribute att_tup = (Form_pg_attribute) GETSTRUCT(tp);
-		bool		result;
-
-		result = att_tup->attisset;
-		ReleaseSysCache(tp);
-		return result;
-	}
-	else
-		return false;
 }
 
 /*

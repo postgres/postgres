@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.82 2002/07/31 17:19:51 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.83 2002/08/02 18:15:04 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -111,7 +111,7 @@ CreateTupleDescCopy(TupleDesc tupdesc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-		memmove(desc->attrs[i],
+		memcpy(desc->attrs[i],
 				tupdesc->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
 		desc->attrs[i]->attnotnull = false;
@@ -146,7 +146,7 @@ CreateTupleDescCopyConstr(TupleDesc tupdesc)
 	for (i = 0; i < desc->natts; i++)
 	{
 		desc->attrs[i] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-		memmove(desc->attrs[i],
+		memcpy(desc->attrs[i],
 				tupdesc->attrs[i],
 				ATTRIBUTE_TUPLE_SIZE);
 	}
@@ -262,6 +262,8 @@ equalTupleDescs(TupleDesc tupdesc1, TupleDesc tupdesc2)
 		if (attr1->attstorage != attr2->attstorage)
 			return false;
 		if (attr1->attnotnull != attr2->attnotnull)
+			return false;
+		if (attr1->attisdropped != attr2->attisdropped)
 			return false;
 	}
 	if (tupdesc1->constr != NULL)
@@ -385,6 +387,7 @@ TupleDescInitEntry(TupleDesc desc,
 
 	att->attnotnull = false;
 	att->atthasdef = false;
+	att->attisdropped = false;
 
 	tuple = SearchSysCache(TYPEOID,
 						   ObjectIdGetDatum(oidtypeid),

@@ -76,6 +76,9 @@ COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
 500000,x,45,80,90
 \.
 
+-- check results of copy in
+SELECT * FROM x;
+
 -- COPY w/ oids on a table w/o oids should fail
 CREATE TABLE no_oids (
 	a	int,
@@ -89,8 +92,11 @@ INSERT INTO no_oids (a, b) VALUES (20, 30);
 COPY no_oids FROM stdin WITH OIDS;
 COPY no_oids TO stdout WITH OIDS;
 
+-- check copy out
 COPY x TO stdout;
 COPY x (c, e) TO stdout;
+COPY x (b, e) TO stdout WITH NULL 'I''m null';
+
 DROP TABLE x;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

@@ -7,7 +7,7 @@
  * Copyright (c) 1996-2001, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.53 2002/07/29 23:46:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/comment.c,v 1.54 2002/08/02 18:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -382,8 +382,8 @@ CommentAttribute(List *qualname, char *comment)
 
 	attnum = get_attnum(RelationGetRelid(relation), attrname);
 	if (attnum == InvalidAttrNumber)
-		elog(ERROR, "\"%s\" is not an attribute of class \"%s\"",
-			 attrname, RelationGetRelationName(relation));
+		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+			 RelationGetRelationName(relation), attrname);
 
 	/* Create the comment using the relation's oid */
 

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.56 2002/07/20 05:57:31 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.57 2002/08/02 18:15:08 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -536,7 +536,7 @@ describeTableDetails(const char *name, bool desc)
 	appendPQExpBuffer(&buf, "\nFROM pg_class c, pg_attribute a");
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, ", pg_index i");
-	appendPQExpBuffer(&buf, "\nWHERE c.relname = '%s'\n  AND a.attnum > 0 AND a.attrelid = c.oid", name);
+	appendPQExpBuffer(&buf, "\nWHERE c.relname = '%s'\n  AND a.attnum > 0 AND NOT a.attisdropped AND a.attrelid = c.oid", name);
 	if (tableinfo.relkind == 'i')
 		appendPQExpBuffer(&buf, " AND a.attrelid = i.indexrelid");
 	appendPQExpBuffer(&buf, "\nORDER BY a.attnum");

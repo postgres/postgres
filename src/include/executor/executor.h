@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.72 2002/07/20 15:12:55 tgl Exp $
+ * $Id: executor.h,v 1.73 2002/08/02 18:15:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -159,7 +159,6 @@ extern void ExecAssignScanType(CommonScanState *csstate,
 				   TupleDesc tupDesc, bool shouldFree);
 extern void ExecAssignScanTypeFromOuterPlan(Plan *node,
 								CommonScanState *csstate);
-extern Form_pg_attribute ExecGetTypeInfo(Relation relDesc);
 
 extern ExprContext *MakeExprContext(TupleTableSlot *slot,
 				MemoryContext queryContext);

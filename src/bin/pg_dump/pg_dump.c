@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.278 2002/07/31 17:19:52 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.279 2002/08/02 18:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -863,13 +863,15 @@ dumpClasses_nodumpData(Archive *fout, char *oid, void *dctxv)
 	{
 		appendPQExpBuffer(q, "COPY %s %s WITH OIDS TO stdout;",
 						  fmtQualifiedId(tbinfo->relnamespace->nspname,
-										 classname),column_list);
+										 classname),
+						  column_list);
 	}
 	else
 	{
 		appendPQExpBuffer(q, "COPY %s %s TO stdout;",
 						  fmtQualifiedId(tbinfo->relnamespace->nspname,
-										 classname), column_list);
+										 classname),
+						  column_list);
 	}
 	res = PQexec(g_conn, q->data);
 	if (!res ||
@@ -1193,10 +1195,13 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 			if (!dumpData)
 			{
 				/* Dump/restore using COPY */
+				const char *column_list;
+
 				dumpFn = dumpClasses_nodumpData;
+				column_list = fmtCopyColumnList(&(tblinfo[i]));
 				sprintf(copyBuf, "COPY %s %s %sFROM stdin;\n",
-						fmtQualifiedId(tblinfo[i].relnamespace->nspname,tblinfo[i].relname),
-						fmtCopyColumnList(&(tblinfo[i])),
+						fmtId(tblinfo[i].relname, force_quotes),
+						column_list,
 						(oids && tblinfo[i].hasoids) ? "WITH OIDS " : "");
 				copyStmt = copyBuf;
 			}
@@ -2347,6 +2352,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 	int			i_attstattarget;
 	int			i_attnotnull;
 	int			i_atthasdef;
+	int			i_attisdropped;
 	PGresult   *res;
 	int			ntups;
 	bool		hasdefaults;
@@ -2386,7 +2392,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		if (g_fout->remoteVersion >= 70300)
 		{
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, attstattarget, "
-							  "attnotnull, atthasdef, "
+							  "attnotnull, atthasdef, attisdropped, "
 							  "pg_catalog.format_type(atttypid,atttypmod) as atttypname "
 							  "from pg_catalog.pg_attribute a "
 							  "where attrelid = '%s'::pg_catalog.oid "
@@ -2402,7 +2408,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			 * explicitly set or was just a default.
 			 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
-							  "attnotnull, atthasdef, "
+							  "attnotnull, atthasdef, false as attisdropped, "
 							  "format_type(atttypid,atttypmod) as atttypname "
 							  "from pg_attribute a "
 							  "where attrelid = '%s'::oid "
@@ -2414,7 +2420,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		{
 			/* format_type not available before 7.1 */
 			appendPQExpBuffer(q, "SELECT attnum, attname, atttypmod, -1 as attstattarget, "
-							  "attnotnull, atthasdef, "
+							  "attnotnull, atthasdef, false as attisdropped, "
 							  "(select typname from pg_type where oid = atttypid) as atttypname "
 							  "from pg_attribute a "
 							  "where attrelid = '%s'::oid "
@@ -2439,12 +2445,14 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 		i_attstattarget = PQfnumber(res, "attstattarget");
 		i_attnotnull = PQfnumber(res, "attnotnull");
 		i_atthasdef = PQfnumber(res, "atthasdef");
+		i_attisdropped = PQfnumber(res, "attisdropped");
 
 		tblinfo[i].numatts = ntups;
 		tblinfo[i].attnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].atttypnames = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].atttypmod = (int *) malloc(ntups * sizeof(int));
 		tblinfo[i].attstattarget = (int *) malloc(ntups * sizeof(int));
+		tblinfo[i].attisdropped = (bool *) malloc(ntups * sizeof(bool));
 		tblinfo[i].notnull = (bool *) malloc(ntups * sizeof(bool));
 		tblinfo[i].adef_expr = (char **) malloc(ntups * sizeof(char *));
 		tblinfo[i].inhAttrs = (bool *) malloc(ntups * sizeof(bool));
@@ -2458,6 +2466,7 @@ getTableAttrs(TableInfo *tblinfo, int numTables)
 			tblinfo[i].atttypnames[j] = strdup(PQgetvalue(res, j, i_atttypname));
 			tblinfo[i].atttypmod[j] = atoi(PQgetvalue(res, j, i_atttypmod));
 			tblinfo[i].attstattarget[j] = atoi(PQgetvalue(res, j, i_attstattarget));
+			tblinfo[i].attisdropped[j] = (PQgetvalue(res, j, i_attisdropped)[0] == 't');
 			tblinfo[i].notnull[j] = (PQgetvalue(res, j, i_attnotnull)[0] == 't');
 			tblinfo[i].adef_expr[j] = NULL;	/* fix below */
 			if (PQgetvalue(res, j, i_atthasdef)[0] == 't')
@@ -4999,8 +5008,8 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 		actual_atts = 0;
 		for (j = 0; j < tbinfo->numatts; j++)
 		{
-			/* Is this one of the table's own attrs ? */
-			if (!tbinfo->inhAttrs[j])
+			/* Is this one of the table's own attrs, and not dropped ? */
+			if (!tbinfo->inhAttrs[j] && !tbinfo->attisdropped[j])
 			{
 				/* Format properly if not first attr */
 				if (actual_atts > 0)
@@ -5161,7 +5170,8 @@ dumpOneTable(Archive *fout, TableInfo *tbinfo, TableInfo *g_tblinfo)
 		 */
 		for (j = 0; j  < tbinfo->numatts; j++)
 		{
-			if (tbinfo->attstattarget[j] >= 0)
+			if (tbinfo->attstattarget[j] >= 0 &&
+				!tbinfo->attisdropped[j])
 			{
 				appendPQExpBuffer(q, "ALTER TABLE %s ",
 								  fmtId(tbinfo->relname, force_quotes));
@@ -6274,7 +6284,7 @@ fmtQualifiedId(const char *schema, const char *id)
 }
 
 /*
- * return a column list clause for the qualified relname.
+ * return a column list clause for the given relation.
  * returns an empty string if the remote server is older than
  * 7.3.
  */
@@ -6284,9 +6294,11 @@ fmtCopyColumnList(const TableInfo* ti)
 	static PQExpBuffer q = NULL;
 	int			numatts = ti->numatts;
 	char**  attnames = ti->attnames;
+	bool*	attisdropped = ti->attisdropped;
+	bool	needComma;
 	int i;
 
-	if (g_fout->remoteVersion < 70300 )
+	if (g_fout->remoteVersion < 70300)
 		return "";
 
 	if (q)				/* first time through? */
@@ -6295,15 +6307,18 @@ fmtCopyColumnList(const TableInfo* ti)
 		q = createPQExpBuffer();
 
 	resetPQExpBuffer(q);
-	
-	appendPQExpBuffer(q,"(");
+
+	appendPQExpBuffer(q, "(");
+	needComma = false;
 	for (i = 0; i < numatts; i++)
 	{
-		if( i > 0 )
-			appendPQExpBuffer(q,",");
-		appendPQExpBuffer(q, fmtId(attnames[i], force_quotes));
+		if (attisdropped[i])
+			continue;
+		if (needComma)
+			appendPQExpBuffer(q, ",");
+		appendPQExpBuffer(q, "%s", fmtId(attnames[i], force_quotes));
+		needComma = true;
 	}
 	appendPQExpBuffer(q, ")");
 	return q->data;
 }
-

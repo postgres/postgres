@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.79 2002/07/29 23:46:35 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.80 2002/08/02 18:15:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -294,10 +294,7 @@ FuncIndexArgs(IndexInfo *indexInfo,
 		HeapTuple	tuple;
 		Form_pg_attribute att;
 
-		tuple = SearchSysCache(ATTNAME,
-							   ObjectIdGetDatum(relId),
-							   PointerGetDatum(arg),
-							   0, 0);
+		tuple = SearchSysCacheAttName(relId, arg);
 		if (!HeapTupleIsValid(tuple))
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found", arg);
 		att = (Form_pg_attribute) GETSTRUCT(tuple);
@@ -387,10 +384,7 @@ NormIndexAttrs(IndexInfo *indexInfo,
 		if (attribute->name == NULL)
 			elog(ERROR, "missing attribute for define index");
 
-		atttuple = SearchSysCache(ATTNAME,
-								  ObjectIdGetDatum(relId),
-								  PointerGetDatum(attribute->name),
-								  0, 0);
+		atttuple = SearchSysCacheAttName(relId, attribute->name);
 		if (!HeapTupleIsValid(atttuple))
 			elog(ERROR, "DefineIndex: attribute \"%s\" not found",
 				 attribute->name);

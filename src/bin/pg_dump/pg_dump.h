@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_dump.h,v 1.93 2002/07/31 17:19:53 tgl Exp $
+ * $Id: pg_dump.h,v 1.94 2002/08/02 18:15:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -128,6 +128,7 @@ typedef struct _tableInfo
 	 * all interesting tables so that we can tell which constraints were
 	 * inherited.
 	 */
+	bool	   *attisdropped;	/* true if attr is dropped; don't dump it */
 	bool	   *notnull;		/* Not null constraints on attributes */
 	char	  **adef_expr;		/* DEFAULT expressions */
 	bool	   *inhAttrs;		/* true if each attribute is inherited */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.161 2002/07/30 16:55:06 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.162 2002/08/02 18:15:06 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,6 +31,7 @@
 #include "rewrite/rewriteHandler.h"
 #include "libpq/libpq.h"
 #include "miscadmin.h"
+#include "parser/parse_relation.h"
 #include "tcop/pquery.h"
 #include "tcop/tcopprot.h"
 #include "utils/acl.h"
@@ -53,13 +54,15 @@ typedef enum CopyReadResult
 } CopyReadResult;
 
 /* non-export function prototypes */
-static void CopyTo(Relation rel, List *attlist, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
-static void CopyFrom(Relation rel, List *attlist, bool binary, bool oids, FILE *fp, char *delim, char *null_print);
+static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
+				   FILE *fp, char *delim, char *null_print);
+static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
+					 FILE *fp, char *delim, char *null_print);
 static Oid	GetInputFunction(Oid type);
 static Oid	GetTypeElement(Oid type);
 static char *CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result);
 static void CopyAttributeOut(FILE *fp, char *string, char *delim);
-static void CopyCheckAttlist(Relation rel, List *attlist);
+static List *CopyGetAttnums(Relation rel, List *attnamelist);
 
 static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
 
@@ -275,7 +278,8 @@ DoCopy(const CopyStmt *stmt)
 	bool is_from = stmt->is_from;
 	bool pipe = (stmt->filename == NULL);
 	List *option;
-	List *attlist = stmt->attlist;
+	List *attnamelist = stmt->attlist;
+	List *attnumlist;
 	bool binary = false;
 	bool oids = false;
 	char *delim = NULL;
@@ -374,6 +378,11 @@ DoCopy(const CopyStmt *stmt)
 			 RelationGetRelationName(rel));
 
 	/*
+	 * Generate or convert list of attributes to process
+	 */
+	attnumlist = CopyGetAttnums(rel, attnamelist);
+
+	/*
 	 * Set up variables to avoid per-attribute overhead.
 	 */
 	initStringInfo(&attribute_buf);
@@ -382,26 +391,6 @@ DoCopy(const CopyStmt *stmt)
 	server_encoding = GetDatabaseEncoding();
 #endif
 
-	if (attlist == NIL)
-	{
-		/* get list of attributes in the relation */
- 		TupleDesc desc = RelationGetDescr(rel);
- 		int i;
- 		for (i = 0; i < desc->natts; ++i)
-		{
- 			Ident *id = makeNode(Ident);
- 			id->name = NameStr(desc->attrs[i]->attname);
- 			attlist = lappend(attlist,id);
- 		}
-	}
-	else
-	{
-		if (binary)
-			elog(ERROR,"COPY: BINARY format cannot be used with specific column list");
-
-		CopyCheckAttlist(rel, attlist);
-	}
-	
 	if (is_from)
 	{							/* copy from file to database */
 		if (rel->rd_rel->relkind != RELKIND_RELATION)
@@ -442,10 +431,10 @@ DoCopy(const CopyStmt *stmt)
 			if (S_ISDIR(st.st_mode))
 			{
 				FreeFile(fp);
-				elog(ERROR, "COPY: %s is a directory.", filename);
+				elog(ERROR, "COPY: %s is a directory", filename);
 			}
 		}
-		CopyFrom(rel, attlist, binary, oids, fp, delim, null_print);
+		CopyFrom(rel, attnumlist, binary, oids, fp, delim, null_print);
 	}
 	else
 	{							/* copy from database to file */
@@ -483,7 +472,7 @@ DoCopy(const CopyStmt *stmt)
 			 */
 			if (filename[0] != '/')
 				elog(ERROR, "Relative path not allowed for server side"
-					 " COPY command.");
+					 " COPY command");
 
 			oumask = umask((mode_t) 022);
 			fp = AllocateFile(filename, PG_BINARY_W);
@@ -498,10 +487,10 @@ DoCopy(const CopyStmt *stmt)
 			if (S_ISDIR(st.st_mode))
 			{
 				FreeFile(fp);
-				elog(ERROR, "COPY: %s is a directory.", filename);
+				elog(ERROR, "COPY: %s is a directory", filename);
 			}
 		}
-		CopyTo(rel, attlist, binary, oids, fp, delim, null_print);
+		CopyTo(rel, attnumlist, binary, oids, fp, delim, null_print);
 	}
 
 	if (!pipe)
@@ -529,14 +518,14 @@ DoCopy(const CopyStmt *stmt)
  * Copy from relation TO file.
  */
 static void
-CopyTo(Relation rel, List *attlist, bool binary, bool oids, 
+CopyTo(Relation rel, List *attnumlist, bool binary, bool oids, 
 		 FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
 	HeapScanDesc scandesc;
-	int			attr_count,
-				i;
+	int			num_phys_attrs;
+	int			attr_count;
 	Form_pg_attribute *attr;
 	FmgrInfo   *out_functions;
 	Oid		   *elements;
@@ -544,48 +533,33 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
 	int16		fld_size;
 	char	   *string;
 	Snapshot	mySnapshot;
-	int			copy_attr_count;
-	int		   *attmap;
-	int			p = 0;
 	List	   *cur;
 
 	tupDesc = rel->rd_att;
-	attr_count = rel->rd_att->natts;
-	attr = rel->rd_att->attrs;
-
-	copy_attr_count = length(attlist);
-	attmap = (int *) palloc(copy_attr_count * sizeof(int));
-
-	foreach(cur, attlist)
-	{
-		const char *currAtt = strVal(lfirst(cur));
-
-		for (i = 0; i < attr_count; i++)
-		{
-			if (namestrcmp(&attr[i]->attname, currAtt) == 0)
-			{
-				attmap[p++] = i;
-				continue;
-			}
-		}
-	}
+	attr = tupDesc->attrs;
+	num_phys_attrs = tupDesc->natts;
+	attr_count = length(attnumlist);
 
 	/*
+	 * Get info about the columns we need to process.
+	 *
 	 * For binary copy we really only need isvarlena, but compute it
 	 * all...
 	 */
-	out_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
-	elements = (Oid *) palloc(attr_count * sizeof(Oid));
-	isvarlena = (bool *) palloc(attr_count * sizeof(bool));
-	for (i = 0; i < attr_count; i++)
+	out_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
+	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+	isvarlena = (bool *) palloc(num_phys_attrs * sizeof(bool));
+	foreach(cur, attnumlist)
 	{
+		int		attnum = lfirsti(cur);
 		Oid			out_func_oid;
 
-		if (!getTypeOutputInfo(attr[i]->atttypid,
-							 &out_func_oid, &elements[i], &isvarlena[i]))
+		if (!getTypeOutputInfo(attr[attnum-1]->atttypid,
+							   &out_func_oid, &elements[attnum-1],
+							   &isvarlena[attnum-1]))
 			elog(ERROR, "COPY: couldn't lookup info for type %u",
-				 attr[i]->atttypid);
-		fmgr_info(out_func_oid, &out_functions[i]);
+				 attr[attnum-1]->atttypid);
+		fmgr_info(out_func_oid, &out_functions[attnum-1]);
 	}
 
 	if (binary)
@@ -650,14 +624,14 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
 			}
 		}
 
-		for (i = 0; i < copy_attr_count; i++)
+		foreach(cur, attnumlist)
 		{
+			int		attnum = lfirsti(cur);
 			Datum		origvalue,
 						value;
 			bool		isnull;
-			int			mi = attmap[i];
 
-			origvalue = heap_getattr(tuple, mi + 1, tupDesc, &isnull);
+			origvalue = heap_getattr(tuple, attnum, tupDesc, &isnull);
 
 			if (!binary)
 			{
@@ -686,25 +660,25 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
 				 * (or for binary case, becase we must output untoasted
 				 * value).
 				 */
-				if (isvarlena[mi])
+				if (isvarlena[attnum-1])
 					value = PointerGetDatum(PG_DETOAST_DATUM(origvalue));
 				else
 					value = origvalue;
 
 				if (!binary)
 				{
-					string = DatumGetCString(FunctionCall3(&out_functions[mi],
+					string = DatumGetCString(FunctionCall3(&out_functions[attnum-1],
 														   value,
-										   ObjectIdGetDatum(elements[mi]),
-									 Int32GetDatum(attr[mi]->atttypmod)));
+										   ObjectIdGetDatum(elements[attnum-1]),
+									 Int32GetDatum(attr[attnum-1]->atttypmod)));
 					CopyAttributeOut(fp, string, delim);
 					pfree(string);
 				}
 				else
 				{
-					fld_size = attr[mi]->attlen;
+					fld_size = attr[attnum-1]->attlen;
 					CopySendData(&fld_size, sizeof(int16), fp);
-					if (isvarlena[mi])
+					if (isvarlena[attnum-1])
 					{
 						/* varlena */
 						Assert(fld_size == -1);
@@ -712,7 +686,7 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
 									 VARSIZE(value),
 									 fp);
 					}
-					else if (!attr[mi]->attbyval)
+					else if (!attr[attnum-1]->attbyval)
 					{
 						/* fixed-length pass-by-reference */
 						Assert(fld_size > 0);
@@ -767,36 +741,36 @@ CopyTo(Relation rel, List *attlist, bool binary, bool oids,
  * Copy FROM file to relation.
  */
 static void
-CopyFrom(Relation rel, List *attlist, bool binary, bool oids, 
+CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids, 
 		 FILE *fp, char *delim, char *null_print)
 {
 	HeapTuple	tuple;
 	TupleDesc	tupDesc;
 	Form_pg_attribute *attr;
-	AttrNumber	attr_count, copy_attr_count, def_attr_count;
+	AttrNumber	num_phys_attrs, attr_count, num_defaults;
 	FmgrInfo   *in_functions;
 	Oid		   *elements;
 	int			i;
+	List	   *cur;
 	Oid			in_func_oid;
 	Datum	   *values;
 	char	   *nulls;
-	int			done = 0;
+	bool		done = false;
 	ResultRelInfo *resultRelInfo;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTable	tupleTable;
 	TupleTableSlot *slot;
 	bool		file_has_oids;
-	int		   *attmap = NULL;
-	int		   *defmap = NULL;
-	Node	  **defexprs = NULL; /* array of default att expressions */
+	int		   *defmap;
+	Node	  **defexprs; /* array of default att expressions */
 	ExprContext *econtext; /* used for ExecEvalExpr for default atts */
-	ExprDoneCond isdone;
+	MemoryContext oldcontext = CurrentMemoryContext;
 
 	tupDesc = RelationGetDescr(rel);
 	attr = tupDesc->attrs;
-	attr_count = tupDesc->natts;
-	copy_attr_count = length(attlist);
-	def_attr_count = 0;
+	num_phys_attrs = tupDesc->natts;
+	attr_count = length(attnumlist);
+	num_defaults = 0;
 
 	/*
 	 * We need a ResultRelInfo so we can use the regular executor's
@@ -819,50 +793,40 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 	slot = ExecAllocTableSlot(tupleTable);
 	ExecSetSlotDescriptor(slot, tupDesc, false);
 
-	if (!binary)
+	/*
+	 * pick up the input function and default expression (if any) for 
+	 * each attribute in the relation.  (We don't actually use the
+	 * input function if it's a binary copy.)
+	 */
+	defmap = (int *) palloc(sizeof(int) * num_phys_attrs);
+	defexprs = (Node **) palloc(sizeof(Node *) * num_phys_attrs);
+	in_functions = (FmgrInfo *) palloc(num_phys_attrs * sizeof(FmgrInfo));
+	elements = (Oid *) palloc(num_phys_attrs * sizeof(Oid));
+
+	for (i = 0; i < num_phys_attrs; i++)
 	{
-		/*
-		 * pick up the input function and default expression (if any) for 
-		 * each attribute in the relation.
-		 */
-		attmap = (int *) palloc(sizeof(int) * attr_count);
-		defmap = (int *) palloc(sizeof(int) * attr_count);
-		defexprs = (Node **) palloc(sizeof(Node *) * attr_count);
-		in_functions = (FmgrInfo *) palloc(attr_count * sizeof(FmgrInfo));
-		elements = (Oid *) palloc(attr_count * sizeof(Oid));
-		for (i = 0; i < attr_count; i++)
+		/* We don't need info for dropped attributes */
+		if (attr[i]->attisdropped)
+			continue;
+
+		in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
+		fmgr_info(in_func_oid, &in_functions[i]);
+		elements[i] = GetTypeElement(attr[i]->atttypid);
+
+		/* if column not specified, use default value if one exists */
+		if (!intMember(i + 1, attnumlist))
 		{
-			List	*l;
-			int		 p = 0;
-			bool	 specified = false;
-
-			in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
-			fmgr_info(in_func_oid, &in_functions[i]);
-			elements[i] = GetTypeElement(attr[i]->atttypid);
-
-			foreach(l, attlist)
+			defexprs[num_defaults] = build_column_default(rel, i + 1);
+			if (defexprs[num_defaults] != NULL)
 			{
-				if (namestrcmp(&attr[i]->attname, strVal(lfirst(l))) == 0)
-				{
-					attmap[p] = i;
-					specified = true;
-					continue;
-				}
-				p++;
-			}
-
-			/* if column not specified, use default value if one exists */
-			if (! specified)
-			{
-				defexprs[def_attr_count] = build_column_default(rel, i + 1);
-
-				if (defexprs[def_attr_count] != NULL)
-				{
-					defmap[def_attr_count] = i;
-					def_attr_count++;
-				}
+				defmap[num_defaults] = i;
+				num_defaults++;
 			}
 		}
+	}
+
+	if (!binary)
+	{
 		file_has_oids = oids;	/* must rely on user to tell us this... */
 	}
 	else
@@ -898,13 +862,10 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 			if (CopyGetEof(fp))
 				elog(ERROR, "COPY BINARY: bogus file header (wrong length)");
 		}
-
-		in_functions = NULL;
-		elements = NULL;
 	}
 
-	values = (Datum *) palloc(attr_count * sizeof(Datum));
-	nulls = (char *) palloc(attr_count * sizeof(char));
+	values = (Datum *) palloc(num_phys_attrs * sizeof(Datum));
+	nulls = (char *) palloc(num_phys_attrs * sizeof(char));
 
 	copy_lineno = 0;
 	fe_eof = false;
@@ -914,58 +875,77 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 	while (!done)
 	{
 		bool	skip_tuple;
-		Oid		loaded_oid;
+		Oid		loaded_oid = InvalidOid;
 
 		CHECK_FOR_INTERRUPTS();
 
 		copy_lineno++;
 		
-		/* Reset the per-output-tuple exprcontext */
+		/* Reset the per-tuple exprcontext */
 		ResetPerTupleExprContext(estate);
 
+		/* Switch to and reset per-tuple memory context, too */
+		MemoryContextSwitchTo(GetPerTupleMemoryContext(estate));
+		MemoryContextReset(CurrentMemoryContext);
+
 		/* Initialize all values for row to NULL */
-		MemSet(values, 0, attr_count * sizeof(Datum));
-		MemSet(nulls, 'n', attr_count * sizeof(char));
+		MemSet(values, 0, num_phys_attrs * sizeof(Datum));
+		MemSet(nulls, 'n', num_phys_attrs * sizeof(char));
 
 		if (!binary)
 		{
-			CopyReadResult	 result;
+			CopyReadResult	 result = NORMAL_ATTR;
 			char			*string;
 
 			if (file_has_oids)
 			{
 				string = CopyReadAttribute(fp, delim, &result);
 
-				if (result == END_OF_FILE)
-					done = 1;
-				else if (string == NULL || strcmp(string, null_print) == 0)
-					elog(ERROR, "COPY TEXT: NULL Oid");
+				if (result == END_OF_FILE && *string == '\0')
+				{
+					/* EOF at start of line: all is well */
+					done = true;
+					break;
+				}
+
+				if (strcmp(string, null_print) == 0)
+					elog(ERROR, "NULL Oid");
 				else
 				{
 					loaded_oid = DatumGetObjectId(DirectFunctionCall1(oidin,
 											   CStringGetDatum(string)));
 					if (loaded_oid == InvalidOid)
-						elog(ERROR, "COPY TEXT: Invalid Oid");
+						elog(ERROR, "Invalid Oid");
 				}
 			}
       
-			/* 
-			 * here, we only try to read as many attributes as 
-			 * were specified.
+			/*
+			 * Loop to read the user attributes on the line.
 			 */
-			for (i = 0; i < copy_attr_count && !done; i++)
+			foreach(cur, attnumlist)
 			{
-				int m = attmap[i];
+				int		attnum = lfirsti(cur);
+				int		m = attnum - 1;
+
+				/*
+				 * If prior attr on this line was ended by newline or EOF,
+				 * complain.
+				 */
+				if (result != NORMAL_ATTR)
+					elog(ERROR, "Missing data for column \"%s\"",
+						 NameStr(attr[m]->attname));
 
 				string = CopyReadAttribute(fp, delim, &result);
 
-				/* If we got an end-of-line before we expected, bail out */
-				if (result == END_OF_LINE && i < (copy_attr_count - 1))
-					elog(ERROR, "COPY TEXT: Missing data for attribute %d", i + 1);
+				if (result == END_OF_FILE && *string == '\0' &&
+					cur == attnumlist && !file_has_oids)
+				{
+					/* EOF at start of line: all is well */
+					done = true;
+					break;		/* out of per-attr loop */
+				}
 
-				if (result == END_OF_FILE)
-					done = 1;
-				else if (strcmp(string, null_print) == 0)
+				if (strcmp(string, null_print) == 0)
 				{
 					/* we read an SQL NULL, no need to do anything */
 				}
@@ -979,123 +959,148 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 				}
 			}
 
-			if (result == NORMAL_ATTR && !done)
-				elog(ERROR, "COPY TEXT: Extra data encountered");
+			if (done)
+				break;			/* out of per-row loop */
+
+			/* Complain if there are more fields on the input line */
+			if (result == NORMAL_ATTR)
+				elog(ERROR, "Extra data after last expected column");
 
 			/*
-			 * as above, we only try a default lookup if one is
-			 * known to be available
+			 * If we got some data on the line, but it was ended by EOF,
+			 * process the line normally but set flag to exit the loop
+			 * when we return to the top.
 			 */
-			for (i = 0; i < def_attr_count && !done; i++)
-			{
-				bool isnull;
-				values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
-												 &isnull, &isdone);
-
-				if (! isnull)
-					nulls[defmap[i]] = ' ';
-			}
+			if (result == END_OF_FILE)
+				done = true;
 		}
 		else
-		{						/* binary */
+		{
+			/* binary */
 			int16		fld_count,
 						fld_size;
 
 			CopyGetData(&fld_count, sizeof(int16), fp);
 			if (CopyGetEof(fp) || fld_count == -1)
-				done = 1;
-			else
 			{
-				if (fld_count <= 0 || fld_count > attr_count)
-					elog(ERROR, "COPY BINARY: tuple field count is %d, expected %d",
-						 (int) fld_count, attr_count);
+				done = true;
+				break;
+			}
 
-				if (file_has_oids)
+			if (fld_count != attr_count)
+				elog(ERROR, "COPY BINARY: tuple field count is %d, expected %d",
+					 (int) fld_count, attr_count);
+
+			if (file_has_oids)
+			{
+				CopyGetData(&fld_size, sizeof(int16), fp);
+				if (CopyGetEof(fp))
+					elog(ERROR, "COPY BINARY: unexpected EOF");
+				if (fld_size != (int16) sizeof(Oid))
+					elog(ERROR, "COPY BINARY: sizeof(Oid) is %d, expected %d",
+						 (int) fld_size, (int) sizeof(Oid));
+				CopyGetData(&loaded_oid, sizeof(Oid), fp);
+				if (CopyGetEof(fp))
+					elog(ERROR, "COPY BINARY: unexpected EOF");
+				if (loaded_oid == InvalidOid)
+					elog(ERROR, "COPY BINARY: Invalid Oid");
+			}
+
+			i = 0;
+			foreach(cur, attnumlist)
+			{
+				int		attnum = lfirsti(cur);
+
+				i++;
+
+				CopyGetData(&fld_size, sizeof(int16), fp);
+				if (CopyGetEof(fp))
+					elog(ERROR, "COPY BINARY: unexpected EOF");
+				if (fld_size == 0)
+					continue;	/* it's NULL; nulls[attnum-1] already set */
+				if (fld_size != attr[attnum-1]->attlen)
+					elog(ERROR, "COPY BINARY: sizeof(field %d) is %d, expected %d",
+						 i, (int) fld_size, (int) attr[attnum-1]->attlen);
+				if (fld_size == -1)
 				{
-					CopyGetData(&fld_size, sizeof(int16), fp);
+					/* varlena field */
+					int32		varlena_size;
+					Pointer		varlena_ptr;
+
+					CopyGetData(&varlena_size, sizeof(int32), fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					if (fld_size != (int16) sizeof(Oid))
-						elog(ERROR, "COPY BINARY: sizeof(Oid) is %d, expected %d",
-							 (int) fld_size, (int) sizeof(Oid));
-					CopyGetData(&loaded_oid, sizeof(Oid), fp);
+					if (varlena_size < (int32) sizeof(int32))
+						elog(ERROR, "COPY BINARY: bogus varlena length");
+					varlena_ptr = (Pointer) palloc(varlena_size);
+					VARATT_SIZEP(varlena_ptr) = varlena_size;
+					CopyGetData(VARDATA(varlena_ptr),
+								varlena_size - sizeof(int32),
+								fp);
 					if (CopyGetEof(fp))
 						elog(ERROR, "COPY BINARY: unexpected EOF");
-					if (loaded_oid == InvalidOid)
-						elog(ERROR, "COPY BINARY: Invalid Oid");
+					values[attnum-1] = PointerGetDatum(varlena_ptr);
+				}
+				else if (!attr[attnum-1]->attbyval)
+				{
+					/* fixed-length pass-by-reference */
+					Pointer		refval_ptr;
+
+					Assert(fld_size > 0);
+					refval_ptr = (Pointer) palloc(fld_size);
+					CopyGetData(refval_ptr, fld_size, fp);
+					if (CopyGetEof(fp))
+						elog(ERROR, "COPY BINARY: unexpected EOF");
+					values[attnum-1] = PointerGetDatum(refval_ptr);
+				}
+				else
+				{
+					/* pass-by-value */
+					Datum		datumBuf;
+
+					/*
+					 * We need this horsing around because we don't
+					 * know how shorter data values are aligned within
+					 * a Datum.
+					 */
+					Assert(fld_size > 0 && fld_size <= sizeof(Datum));
+					CopyGetData(&datumBuf, fld_size, fp);
+					if (CopyGetEof(fp))
+						elog(ERROR, "COPY BINARY: unexpected EOF");
+					values[attnum-1] = fetch_att(&datumBuf, true, fld_size);
 				}
 
-				for (i = 0; i < (int) fld_count; i++)
-				{
-					CopyGetData(&fld_size, sizeof(int16), fp);
-					if (CopyGetEof(fp))
-						elog(ERROR, "COPY BINARY: unexpected EOF");
-					if (fld_size == 0)
-						continue;		/* it's NULL; nulls[i] already set */
-					if (fld_size != attr[i]->attlen)
-						elog(ERROR, "COPY BINARY: sizeof(field %d) is %d, expected %d",
-						   i + 1, (int) fld_size, (int) attr[i]->attlen);
-					if (fld_size == -1)
-					{
-						/* varlena field */
-						int32		varlena_size;
-						Pointer		varlena_ptr;
-
-						CopyGetData(&varlena_size, sizeof(int32), fp);
-						if (CopyGetEof(fp))
-							elog(ERROR, "COPY BINARY: unexpected EOF");
-						if (varlena_size < (int32) sizeof(int32))
-							elog(ERROR, "COPY BINARY: bogus varlena length");
-						varlena_ptr = (Pointer) palloc(varlena_size);
-						VARATT_SIZEP(varlena_ptr) = varlena_size;
-						CopyGetData(VARDATA(varlena_ptr),
-									varlena_size - sizeof(int32),
-									fp);
-						if (CopyGetEof(fp))
-							elog(ERROR, "COPY BINARY: unexpected EOF");
-						values[i] = PointerGetDatum(varlena_ptr);
-					}
-					else if (!attr[i]->attbyval)
-					{
-						/* fixed-length pass-by-reference */
-						Pointer		refval_ptr;
-
-						Assert(fld_size > 0);
-						refval_ptr = (Pointer) palloc(fld_size);
-						CopyGetData(refval_ptr, fld_size, fp);
-						if (CopyGetEof(fp))
-							elog(ERROR, "COPY BINARY: unexpected EOF");
-						values[i] = PointerGetDatum(refval_ptr);
-					}
-					else
-					{
-						/* pass-by-value */
-						Datum		datumBuf;
-
-						/*
-						 * We need this horsing around because we don't
-						 * know how shorter data values are aligned within
-						 * a Datum.
-						 */
-						Assert(fld_size > 0 && fld_size <= sizeof(Datum));
-						CopyGetData(&datumBuf, fld_size, fp);
-						if (CopyGetEof(fp))
-							elog(ERROR, "COPY BINARY: unexpected EOF");
-						values[i] = fetch_att(&datumBuf, true, fld_size);
-					}
-
-					nulls[i] = ' ';
-				}
+				nulls[attnum-1] = ' ';
 			}
 		}
 
-		if (done)
-			break;
+		/*
+		 * Now compute and insert any defaults available for the
+		 * columns not provided by the input data.  Anything not
+		 * processed here or above will remain NULL.
+		 */
+		for (i = 0; i < num_defaults; i++)
+		{
+			bool isnull;
 
+			values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
+											 &isnull, NULL);
+			if (!isnull)
+				nulls[defmap[i]] = ' ';
+		}
+
+		/*
+		 * And now we can form the input tuple.
+		 */
 		tuple = heap_formtuple(tupDesc, values, nulls);
   	
 		if (oids && file_has_oids)
 			HeapTupleSetOid(tuple, loaded_oid);
+
+		/*
+		 * Triggers and stuff need to be invoked in query context.
+		 */
+		MemoryContextSwitchTo(oldcontext);
 
 		skip_tuple = false;
 
@@ -1118,6 +1123,7 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 
 		if (!skip_tuple)
 		{
+			/* Place tuple in tuple slot */
 			ExecStoreTuple(tuple, slot, InvalidBuffer, false);
 
 			/*
@@ -1138,14 +1144,14 @@ CopyFrom(Relation rel, List *attlist, bool binary, bool oids,
 			if (resultRelInfo->ri_TrigDesc)
 				ExecARInsertTriggers(estate, resultRelInfo, tuple);
 		}
-
-		heap_freetuple(tuple);
 	}
 
 	/*
 	 * Done, clean up
 	 */
 	copy_lineno = 0;
+
+	MemoryContextSwitchTo(oldcontext);
 
 	pfree(values);
 	pfree(nulls);
@@ -1197,12 +1203,11 @@ GetTypeElement(Oid type)
 /*
  * Read the value of a single attribute.
  *
- * Results are returned in the status indicator, as well as the
- * return value. If a value was successfully read but there is
- * more to read before EOL, NORMAL_ATTR is set and the value read
- * is returned. If a value was read and we hit EOL, END_OF_LINE
- * is set and the value read is returned. If we hit the EOF,
- * END_OF_FILE is set and NULL is returned.
+ * *result is set to indicate what terminated the read:
+ *		NORMAL_ATTR:	column delimiter
+ *		END_OF_LINE:	newline
+ *		END_OF_FILE:	EOF indication
+ * In all cases, the string read up to the terminator is returned.
  *
  * Note: This function does not care about SQL NULL values -- it
  * is the caller's responsibility to check if the returned string
@@ -1215,8 +1220,7 @@ static char *
 CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 {
 	int			c;
-	int			delimc = (unsigned char)delim[0];
-
+	int			delimc = (unsigned char) delim[0];
 #ifdef MULTIBYTE
 	int			mblen;
 	unsigned char s[2];
@@ -1230,7 +1234,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 	attribute_buf.len = 0;
 	attribute_buf.data[0] = '\0';
 
-	/* set default */
+	/* set default status */
 	*result = NORMAL_ATTR;
 
 	for (;;)
@@ -1239,7 +1243,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 		if (c == EOF)
 		{
 			*result = END_OF_FILE;
-			return NULL;
+			goto copy_eof;
 		}
 		if (c == '\n')
 		{
@@ -1254,7 +1258,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 			if (c == EOF)
 			{
 				*result = END_OF_FILE;
-				return NULL;
+				goto copy_eof;
 			}
 			switch (c)
 			{
@@ -1286,7 +1290,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 								if (c == EOF)
 								{
 									*result = END_OF_FILE;
-									return NULL;
+									goto copy_eof;
 								}
 								CopyDonePeek(fp, c, false /* put back */ );
 							}
@@ -1296,7 +1300,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 							if (c == EOF)
 							{
 								*result = END_OF_FILE;
-								return NULL;
+								goto copy_eof;
 							}
 							CopyDonePeek(fp, c, false /* put back */ );
 						}
@@ -1336,7 +1340,7 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 					if (c != '\n')
 						elog(ERROR, "CopyReadAttribute: end of record marker corrupted");
 					*result = END_OF_FILE;
-					return NULL;
+					goto copy_eof;
 			}
 		}
 		appendStringInfoCharMacro(&attribute_buf, c);
@@ -1353,13 +1357,15 @@ CopyReadAttribute(FILE *fp, const char *delim, CopyReadResult *result)
 				if (c == EOF)
 				{
 					*result = END_OF_FILE;
-					return NULL;
+					goto copy_eof;
 				}
 				appendStringInfoCharMacro(&attribute_buf, c);
 			}
 		}
 #endif
 	}
+
+copy_eof:
 
 #ifdef MULTIBYTE
 	if (client_encoding != server_encoding)
@@ -1468,50 +1474,51 @@ CopyAttributeOut(FILE *fp, char *server_string, char *delim)
 }
 
 /*
- * CopyCheckAttlist: elog(ERROR,...) if the specified attlist
- *                    is not valid for the Relation
+ * CopyGetAttnums - build an integer list of attnums to be copied
+ *
+ * The input attnamelist is either the user-specified column list,
+ * or NIL if there was none (in which case we want all the non-dropped
+ * columns).
  */
-static void
-CopyCheckAttlist(Relation rel, List *attlist)
+static List *
+CopyGetAttnums(Relation rel, List *attnamelist)
 {
-	TupleDesc	 tupDesc;
-	int			 attr_count;
-	List		*l;
+	List		*attnums = NIL;
 
-	if (attlist == NIL)
-		return;
-
-	tupDesc = RelationGetDescr(rel);
-	Assert(tupDesc != NULL);
- 
-	/*
-	 * make sure there aren't more columns specified than are in the table 
-	 */
-	attr_count = tupDesc->natts;
-	if (attr_count < length(attlist))
-		elog(ERROR, "COPY: Too many columns specified");
-
-	/* 
-	 * make sure no columns are specified that don't exist in the table 
-	 */
-	foreach(l, attlist)
+	if (attnamelist == NIL)
 	{
-		char	*colName = strVal(lfirst(l));
-		bool	 found = false;
-		int		 i;
+		/* Generate default column list */
+		TupleDesc	 tupDesc = RelationGetDescr(rel);
+		Form_pg_attribute *attr = tupDesc->attrs;
+		int			 attr_count = tupDesc->natts;
+		int			i;
 
 		for (i = 0; i < attr_count; i++)
 		{
-			if (namestrcmp(&tupDesc->attrs[i]->attname, colName) == 0)
-			{
-				found = true;
-				break;
-			}
+			if (attr[i]->attisdropped)
+				continue;
+			attnums = lappendi(attnums, i + 1);
 		}
-		
-		if (!found)
-			elog(ERROR, "COPY: Specified column \"%s\" does not exist",
-				 colName);
 	}
-}
+	else
+	{
+		/* Validate the user-supplied list and extract attnums */
+		List	   *l;
 
+		foreach(l, attnamelist)
+		{
+			char	   *name = strVal(lfirst(l));
+			int			attnum;
+
+			/* Lookup column name, elog on failure */
+			/* Note we disallow system columns here */
+			attnum = attnameAttNum(rel, name, false);
+			/* Check for duplicates */
+			if (intMember(attnum, attnums))
+				elog(ERROR, "Attribute \"%s\" specified more than once", name);
+			attnums = lappendi(attnums, attnum);
+		}
+	}
+
+	return attnums;
+}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.132 2002/06/20 20:29:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.133 2002/08/02 18:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1150,6 +1150,9 @@ setup_field_select(Node *input, char *attname, Oid relid)
 	AttrNumber	attno;
 
 	attno = get_attnum(relid, attname);
+	if (attno == InvalidAttrNumber)
+		elog(ERROR, "Relation \"%s\" has no column \"%s\"",
+			 get_rel_name(relid), attname);
 
 	fselect->arg = input;
 	fselect->fieldnum = attno;

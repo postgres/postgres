@@ -29,26 +29,44 @@ COPY x (b, d) from stdin;
 COPY x (a, b, c, d, e) from stdin;
 -- non-existent column in column list: should fail
 COPY x (xyz) from stdin;
-ERROR:  COPY: Specified column "xyz" does not exist
+ERROR:  Relation "x" has no column "xyz"
 -- too many columns in column list: should fail
 COPY x (a, b, c, d, e, d, c) from stdin;
-ERROR:  COPY: Too many columns specified
+ERROR:  Attribute "d" specified more than once
 -- missing data: should fail
 COPY x from stdin;
-ERROR:  copy: line 1, COPY TEXT: Missing data for attribute 1
+ERROR:  copy: line 1, Missing data for column "b"
 lost synchronization with server, resetting connection
 COPY x from stdin;
-ERROR:  copy: line 1, COPY TEXT: Missing data for attribute 4
+ERROR:  copy: line 1, Missing data for column "e"
 lost synchronization with server, resetting connection
 COPY x from stdin;
-ERROR:  copy: line 1, COPY TEXT: Missing data for attribute 4
+ERROR:  copy: line 1, Missing data for column "e"
 lost synchronization with server, resetting connection
 -- extra data: should fail
 COPY x from stdin;
-ERROR:  copy: line 1, COPY TEXT: Extra data encountered
+ERROR:  copy: line 1, Extra data after last expected column
 lost synchronization with server, resetting connection
 -- various COPY options: delimiters, oids, NULL string
 COPY x (b, c, d, e) from stdin with oids delimiter ',' null 'x';
+-- check results of copy in
+SELECT * FROM x;
+   a   | b  |   c   |   d    |          e           
+-------+----+-------+--------+----------------------
+ 10000 | 21 | 31    | 41     | before trigger fired
+ 10001 | 22 | 32    | 42     | before trigger fired
+ 10002 | 23 | 33    | 43     | before trigger fired
+ 10003 | 24 | 34    | 44     | before trigger fired
+ 10004 | 25 | 35    | 45     | before trigger fired
+ 10005 | 26 | 36    | 46     | before trigger fired
+     6 |    | 45    | 80     | before trigger fired
+     1 |  1 | stuff | test_1 | after trigger fired
+     2 |  2 | stuff | test_2 | after trigger fired
+     3 |  3 | stuff | test_3 | after trigger fired
+     4 |  4 | stuff | test_4 | after trigger fired
+     5 |  5 | stuff | test_5 | after trigger fired
+(12 rows)
+
 -- COPY w/ oids on a table w/o oids should fail
 CREATE TABLE no_oids (
 	a	int,
@@ -61,6 +79,7 @@ COPY no_oids FROM stdin WITH OIDS;
 ERROR:  COPY: table "no_oids" does not have OIDs
 COPY no_oids TO stdout WITH OIDS;
 ERROR:  COPY: table "no_oids" does not have OIDs
+-- check copy out
 COPY x TO stdout;
 10000	21	31	41	before trigger fired
 10001	22	32	42	before trigger fired
@@ -87,6 +106,19 @@ stuff	after trigger fired
 stuff	after trigger fired
 stuff	after trigger fired
 stuff	after trigger fired
+COPY x (b, e) TO stdout WITH NULL 'I''m null';
+21	before trigger fired
+22	before trigger fired
+23	before trigger fired
+24	before trigger fired
+25	before trigger fired
+26	before trigger fired
+I'm null	before trigger fired
+1	after trigger fired
+2	after trigger fired
+3	after trigger fired
+4	after trigger fired
+5	after trigger fired
 DROP TABLE x;
 DROP FUNCTION fn_x_before();
 DROP FUNCTION fn_x_after();

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.81 2002/07/24 19:11:09 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/pg_proc.c,v 1.82 2002/08/02 18:15:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -327,9 +327,9 @@ checkretval(Oid rettype, List *queryTreeList)
 	Oid			typerelid;
 	Oid			restype;
 	Relation	reln;
-	Oid			relid;
-	int			relnatts;
-	int			i;
+	int			relnatts;		/* physical number of columns in rel */
+	int			rellogcols;		/* # of nondeleted columns in rel */
+	int			colindex;		/* physical column index */
 
 	/* guard against empty function body; OK only if no return type */
 	if (queryTreeList == NIL)
@@ -404,42 +404,55 @@ checkretval(Oid rettype, List *queryTreeList)
 	/*
 	 * By here, the procedure returns a tuple or set of tuples.  This part
 	 * of the typechecking is a hack. We look up the relation that is the
-	 * declared return type, and be sure that attributes 1 .. n in the
-	 * target list match the declared types.
+	 * declared return type, and scan the non-deleted attributes to ensure
+	 * that they match the datatypes of the non-resjunk columns.
 	 */
 	reln = heap_open(typerelid, AccessShareLock);
-	relid = reln->rd_id;
 	relnatts = reln->rd_rel->relnatts;
+	rellogcols = 0;				/* we'll count nondeleted cols as we go */
+	colindex = 0;
 
-	if (tlistlen != relnatts)
-		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-			 format_type_be(rettype), relnatts);
-
-	/* expect attributes 1 .. n in order */
-	i = 0;
 	foreach(tlistitem, tlist)
 	{
 		TargetEntry *tle = (TargetEntry *) lfirst(tlistitem);
+		Form_pg_attribute attr;
 		Oid			tletype;
 		Oid			atttype;
 
 		if (tle->resdom->resjunk)
 			continue;
+
+		do {
+			colindex++;
+			if (colindex > relnatts)
+				elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
+					 format_type_be(rettype), rellogcols);
+			attr = reln->rd_att->attrs[colindex - 1];
+		} while (attr->attisdropped);
+		rellogcols++;
+
 		tletype = exprType(tle->expr);
-		atttype = reln->rd_att->attrs[i]->atttypid;
+		atttype = attr->atttypid;
 		if (!IsBinaryCompatible(tletype, atttype))
 			elog(ERROR, "function declared to return %s returns %s instead of %s at column %d",
 				 format_type_be(rettype),
 				 format_type_be(tletype),
 				 format_type_be(atttype),
-				 i + 1);
-		i++;
+				 rellogcols);
 	}
 
-	/* this shouldn't happen, but let's just check... */
-	if (i != relnatts)
+	for (;;)
+	{
+		colindex++;
+		if (colindex > relnatts)
+			break;
+		if (!reln->rd_att->attrs[colindex - 1]->attisdropped)
+			rellogcols++;
+	}
+
+	if (tlistlen != rellogcols)
 		elog(ERROR, "function declared to return %s does not SELECT the right number of columns (%d)",
-			 format_type_be(rettype), relnatts);
+			 format_type_be(rettype), rellogcols);
 
 	heap_close(reln, AccessShareLock);
 }

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.30 2002/06/20 20:29:37 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.31 2002/08/02 18:15:07 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,9 +28,9 @@
 
 #include "access/heapam.h"
 #include "catalog/namespace.h"
+#include "parser/parse_relation.h"
 #include "utils/builtins.h"
 
-static int	my_varattno(Relation rd, char *a);
 
 /* ----------------------------------------------------------------
  *
@@ -65,15 +65,10 @@ int4notin(PG_FUNCTION_ARGS)
 	relrv = makeRangeVarFromNameList(names);
 
 	/* Open the relation and get a relation descriptor */
-
 	relation_to_scan = heap_openrv(relrv, AccessShareLock);
 
 	/* Find the column to search */
-
-	attrid = my_varattno(relation_to_scan, attribute);
-	if (attrid < 0)
-		elog(ERROR, "int4notin: unknown attribute %s for relation %s",
-			 attribute, RelationGetRelationName(relation_to_scan));
+	attrid = attnameAttNum(relation_to_scan, attribute, true);
 
 	scan_descriptor = heap_beginscan(relation_to_scan, SnapshotNow,
 									 0, (ScanKey) NULL);
@@ -117,22 +112,4 @@ oidnotin(PG_FUNCTION_ARGS)
 		PG_RETURN_BOOL(false);
 	/* XXX assume oid maps to int4 */
 	return int4notin(fcinfo);
-}
-
-/*
- * XXX
- * If varattno (in parser/catalog_utils.h) ever is added to
- * cinterface.a, this routine should go away
- */
-static int
-my_varattno(Relation rd, char *a)
-{
-	int			i;
-
-	for (i = 0; i < rd->rd_rel->relnatts; i++)
-	{
-		if (namestrcmp(&rd->rd_att->attrs[i]->attname, a) == 0)
-			return i + 1;
-	}
-	return -1;
 }
