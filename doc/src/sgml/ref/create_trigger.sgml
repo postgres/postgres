@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.17 2001/09/13 18:17:44 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_trigger.sgml,v 1.18 2001/11/19 03:58:25 tgl Exp $
 Postgres documentation
 -->
 
@@ -44,7 +44,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
-	The name of an existing trigger.
+	The name to give the new trigger.
        </para>
       </listitem>
      </varlistentry>
@@ -52,7 +52,7 @@ CREATE TRIGGER <replaceable class="PARAMETER">name</replaceable> { BEFORE | AFTE
       <term><replaceable class="parameter">table</replaceable></term>
       <listitem>
        <para>
-	The name of a table.
+	The name of an existing table.
        </para>
       </listitem>
      </varlistentry>

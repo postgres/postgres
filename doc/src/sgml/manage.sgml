@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.18 2001/11/18 00:38:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/manage.sgml,v 1.19 2001/11/19 03:58:24 tgl Exp $
 -->
 
  <Chapter Id="manage">
@@ -90,32 +90,37 @@ ERROR:  CREATE DATABASE: Permission denied.
      Once you have constructed a database, you can access it
      by:
 
-<ItemizedList Mark="bullet" Spacing="compact">
-<ListItem>
-<Para>
-running the <ProductName>PostgreSQL</ProductName>  interactive terminal
-<Application>psql</Application> which allows you to interactively
-enter, edit, and execute <Acronym>SQL</Acronym> commands.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-writing a  C  program  using  the  <application>LIBPQ</application> subroutine
-library.   This  allows  you  to submit <Acronym>SQL</Acronym> commands
-from C and get answers and status messages  back  to
-your  program.   This interface is discussed further
-in <citetitle>The PostgreSQL Programmer's Guide</citetitle>.
-</Para>
-</ListItem>
-<ListItem>
-<Para>
-writing a program in other languages for which there are available interface
-libraries.
-</Para>
-</ListItem>
-</ItemizedList>
+    <itemizedlist spacing="compact" mark="bullet">
+     <listitem>
+      <para>
+       Running the <productname>PostgreSQL</productname> interactive
+       terminal program, called <quote>psql</quote>, which allows you
+       to interactively enter, edit, and execute
+       <acronym>SQL</acronym> commands.
+      </para>
+     </listitem>
 
-You might want to start up <Application>psql</Application>, 
+     <listitem>
+      <para>
+       Using an existing graphical frontend tool like
+       <application>PgAccess</application> or
+       <application>ApplixWare</application> (via
+       <acronym>ODBC</acronym>) to create and manipulate a database.
+       These possibilities are not covered in this tutorial.
+      </para>
+     </listitem>
+
+     <listitem>
+      <para>
+       Writing a custom application, using one of the several
+       available language bindings.  These possibilities are discussed
+       further in <citetitle>The PostgreSQL Programmer's
+       Guide</citetitle>.
+      </para>
+     </listitem>
+    </itemizedlist>
+
+You probably want to start up <Application>psql</Application>, 
 to try out the examples in this manual.
  It can be activated for the <Database>mydb</Database>
      database by typing the command:
@@ -164,7 +169,7 @@ mydb=> \g
      To read queries from a file,  say  <filename>myFile</filename>,  instead  of
      entering them interactively, type:
 <ProgramListing>
-mydb=> \i fileName
+mydb=> \i myFile
 </ProgramListing>
 
      To get out of <Application>psql</Application> and return to Unix, type

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.69 2001/11/12 21:04:45 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.70 2001/11/19 03:58:22 tgl Exp $
 -->
 
  <chapter id="datatype">
@@ -382,7 +382,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.69 2001/11/12 21:04:45 tg
 	<entry><type>bigint</></entry>
 	<entry>8 bytes</entry>
 	<entry>Very large range fixed-precision</entry>
-	<entry>about 18 decimal digits</entry>
+	<entry>-9223372036854775807 to 9223372036854775807</entry>
        </row>
 
        <row>
@@ -1538,22 +1538,29 @@ January 8 04:05:06 1999 PST
      </indexterm>
 
       <para>
-       <type>interval</type>s can be specified with the following syntax:
+       <type>interval</type> values can be written with the following syntax:
 
 <programlisting>
   Quantity Unit [Quantity Unit...] [Direction]
-@ Quantity Unit [Direction]
+@ Quantity Unit [Quantity Unit...] [Direction]
 </programlisting>
 
-      where: <literal>Quantity</literal> is ..., <literal>-1</literal>,
-      <literal>0</literal>, <literal>1</literal>, <literal>2</literal>, ...;
+      where: <literal>Quantity</literal> is an integer (possibly signed);
       <literal>Unit</literal> is <literal>second</literal>,
       <literal>minute</literal>, <literal>hour</literal>, <literal>day</literal>,
       <literal>week</literal>, <literal>month</literal>, <literal>year</literal>,
       <literal>decade</literal>, <literal>century</literal>, <literal>millennium</literal>,
       or abbreviations or plurals of these units;
       <literal>Direction</literal> can be <literal>ago</literal> or
-      empty.
+      empty.  The at sign (<literal>@</>) is optional noise.  The amounts
+      of different quantities are implicitly added up with appropriate
+      sign accounting.
+     </para>
+
+     <para>
+      Quantities of days, hours, minutes, and seconds can be specified without
+      explicit unit markings: for example, <literal>'1 12:59:10'</> is read
+      the same as <literal>'1 day 12 hours 59 min 10 sec'</>.
      </para>
     </sect3>
 

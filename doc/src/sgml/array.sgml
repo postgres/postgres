@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.13 2001/11/03 21:42:47 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/array.sgml,v 1.14 2001/11/19 03:58:23 tgl Exp $ -->
 
 <chapter id="arrays">
  <title>Arrays</title>
@@ -19,6 +19,8 @@ CREATE TABLE sal_emp (
     schedule        text[][]
 );
 </programlisting>
+  As shown, an array data type is named by appending square brackets
+  (<literal>[ ]</>) to the data type name of the array elements.
   The above query will create a table named
   <structname>sal_emp</structname> with a <type>text</type> string
   (<structfield>name</structfield>), a one-dimensional array of type
@@ -31,7 +33,7 @@ CREATE TABLE sal_emp (
 
  <para>
   Now we do some <command>INSERT</command>s.  Observe that to write an array
-  value, we enclose the element values within braces and separate them
+  value, we enclose the element values within curly braces and separate them
   by commas.  If you know C, this is not unlike the syntax for
   initializing structures.
      
@@ -63,6 +65,7 @@ SELECT name FROM sal_emp WHERE pay_by_quarter[1] &lt;&gt; pay_by_quarter[2];
 (1 row)
 </programlisting>
 
+  The array subscript numbers are written within square brackets.
   <productname>Postgres</productname> uses the
   <quote>one-based</quote> numbering convention for arrays, that is,
   an array of n elements starts with <literal>array[1]</literal> and
@@ -163,7 +166,7 @@ CREATE TABLE tictactoe (
 
  <para>
   Actually, the current implementation does not enforce the declared
-  number of dimensions either.  Arrays of a particular base type are
+  number of dimensions either.  Arrays of a particular element type are
   all considered to be of the same type, regardless of size or number
   of dimensions.
  </para>
@@ -235,5 +238,14 @@ SELECT * FROM sal_emp WHERE pay_by_quarter **= 10000;
    Tables can obviously be searched easily.
   </para>
  </tip>
+
+ <note>
+  <para>
+   A limitation of the present array implementation is that individual
+   elements of an array cannot be SQL NULLs.  The entire array can be set
+   to NULL, but you can't have an array with some elements NULL and some
+   not.  Fixing this is on the TODO list.
+  </para>
+ </note>
 
 </chapter>

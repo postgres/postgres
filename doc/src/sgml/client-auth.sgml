@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.27 2001/11/18 23:24:16 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/client-auth.sgml,v 1.28 2001/11/19 03:58:24 tgl Exp $ -->
 
 <chapter id="client-authentication">
  <title>Client Authentication</title>
@@ -541,14 +541,34 @@ local        all                                          md5  admins
     In order to use <productname>Kerberos</>, support for it must be
     enabled at build time. Both Kerberos 4 and 5 are supported
     (<literal>./configure --with-krb4</> or <literal>./configure
-    --with-krb5</> respectively).
+    --with-krb5</> respectively), although only one version can be
+    supported in any one build.
    </para>
 
    <para>
-    <productname>Postgres</> should operate like a normal Kerberos
-    service. The name of the service principal is normally
-    <literal>postgres</literal>, unless it was changed during the
-    build. Make sure that your server key file is readable (and
+    <productname>Postgres</> operates like a normal Kerberos service.
+    The name of the service principal is
+    <replaceable>servicename/hostname@realm</>, where 
+    <replaceable>servicename</> is <literal>postgres</literal>
+    (unless a different service name was selected at configure time
+    with <literal>./configure --with-krb-srvnam=whatever</>).
+    <replaceable>hostname</> is the fully qualified domain name of the server
+    machine.  The service principal's realm is the preferred realm of the
+    server machine.
+   </para>
+
+   <para>
+    Client principals must have their <productname>Postgres</> username as
+    their first component, for example
+    <replaceable>pgusername/otherstuff@realm</>.
+    At present the realm of the client is not checked by
+    <productname>Postgres</>; so
+    if you have cross-realm authentication enabled, then any principal
+    in any realm that can communicate with yours will be accepted.
+   </para>
+
+   <para>
+    Make sure that your server key file is readable (and
     preferably only readable) by the Postgres server account (see
     <xref linkend="postgres-user">). The location of the key file
     is specified with the <varname>krb_server_keyfile</> run time
@@ -569,49 +589,12 @@ local        all                                          md5  admins
    </para>
 
    <para>
-    In the <productname>Kerberos</> 5 hooks, the following assumptions
-    are made about user and service naming:
-
-    <itemizedlist>
-     <listitem>
-      <para>
-       User principal names (anames) are assumed to contain the actual
-       Unix/<productname>Postgres</> user name in the first component.
-      </para>
-     </listitem>
-     <listitem>
-      <para>
-       The <productname>Postgres</> service is assumed to be have two
-       components, the service name and a host name, canonicalized as
-       in Version 4 (i.e., with all domain suffixes removed).
-      </para>
-     </listitem>
-    </itemizedlist>
-
-    <informaltable>
-     <tgroup cols="2">
-      <thead>
-       <row>
-        <entry>Parameter</>
-	<entry>Example</>
-       </row>
-      </thead>
-      <tbody>
-       <row>
-	<entry>user</>
-	<entry>frew@S2K.ORG</>
-       </row>
-       <row>
-	<entry>user</>
-	<entry>aoki/HOST=miyu.S2K.Berkeley.EDU@S2K.ORG</>
-       </row>	   
-       <row>
-	<entry>host</>
-	<entry>postgres_dbms/ucbvax@S2K.ORG</>
-       </row>
-      </tbody>
-     </tgroup>
-    </informaltable>
+    When connecting to the database make sure you have a ticket for a
+    principal matching the requested database username. 
+    An example: For database username <literal>fred</>, both principal
+    <literal>fred@EXAMPLE.COM</> and
+    <literal>fred/users.example.com@EXAMPLE.COM</> can be
+    used to authenticate to the database server. 
    </para>
 
    <para>

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.15 2001/09/13 15:55:22 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/inherit.sgml,v 1.16 2001/11/19 03:58:23 tgl Exp $
 -->
 
  <chapter id="inherit">
@@ -171,6 +171,16 @@ SET SQL_Inheritance TO OFF;
      or add a line in your <filename>postgresql.conf</filename> file.
    </para>
   </note>
+
+  <para>
+   A limitation of the inheritance feature is that indexes (including
+   unique constraints) and foreign key constraints only apply to single
+   tables, not to their inheritance children.  Thus, in the above example,
+   specifying that another table's column <literal>REFERENCES cities(name)</>
+   would allow the other table to contain city names but not capital names.
+   This deficiency will probably be fixed in some future release.
+  </para>
+
  </chapter>
 
 <!-- Keep this comment at the end of the file

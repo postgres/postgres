@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.9 2001/09/21 21:10:56 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_ctl-ref.sgml,v 1.10 2001/11/19 03:58:25 tgl Exp $
 Postgres documentation
 -->
 
@@ -103,9 +103,11 @@ Postgres documentation
    shutdown methods can be selected with the <option>-m</option>
    option: <quote>Smart</quote> mode waits for all the clients to
    disconnect.  This is the default.  <quote>Fast</quote> mode does
-   not wait for clients to disconnect.  All active transactions will
-   be rolled back.  <quote>Immediate</quote> mode will abort without
-   complete shutdown.  This will lead to a recovery run on restart.
+   not wait for clients to disconnect.  All active transactions are
+   rolled back and clients are forcibly disconnected, then the
+   database is shut down.  <quote>Immediate</quote> mode will abort
+   all server processes without clean shutdown.  This will lead to a recovery
+   run on restart.
   </para>
 
   <para>
@@ -337,7 +339,7 @@ Command line was:
 
   <para>
    Waiting for complete start is not a well-defined operation and may
-   fail if access control is set up in way that a local client cannot
+   fail if access control is set up so that a local client cannot
    connect without manual interaction.  It should be avoided.
   </para>
  </refsect1>

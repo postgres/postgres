@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.14 2001/09/13 19:40:34 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/drop_function.sgml,v 1.15 2001/11/19 03:58:25 tgl Exp $
 Postgres documentation
 -->
 
@@ -36,7 +36,7 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="parameter"> name</replaceable></term>
+      <term><replaceable class="parameter">name</replaceable></term>
       <listitem>
        <para>
 	The name of an existing function.
@@ -47,7 +47,7 @@ DROP FUNCTION <replaceable class="parameter">name</replaceable> ( [ <replaceable
       <term><replaceable class="parameter">type</replaceable></term>
       <listitem>
        <para>
-	The type of function parameters.
+	The type of the function's parameters.
        </para>
       </listitem>
      </varlistentry>
@@ -99,11 +99,11 @@ NOTICE RemoveFunction: Function "<replaceable class="parameter">name</replaceabl
    Description
   </title>
   <para>
-   DROP FUNCTION will remove references to an existing C
+   DROP FUNCTION will remove the definition of an existing
    function. To execute this command the user must be the
    owner of the function. The input argument types to the
-   function must be specified, as only the function with the
-   given name and argument types will be removed.
+   function must be specified, since several different functions
+   may exist with the same name and different argument lists.
   </para>
  </refsect1>
 
@@ -117,8 +117,8 @@ NOTICE RemoveFunction: Function "<replaceable class="parameter">name</replaceabl
    </para>
 
    <para>
-    No checks are made to ensure that types, operators or access
-    methods that rely on the function have been removed first.
+    No checks are made to ensure that types, operators, access
+    methods, or triggers that rely on the function have been removed first.
    </para>
  </refsect1>
 

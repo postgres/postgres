@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.15 2001/10/13 04:23:50 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.16 2001/11/19 03:58:24 tgl Exp $
 -->
 
  <chapter id="pltcl">
@@ -463,7 +463,7 @@ spi_exec -array C "SELECT * FROM pg_class" {
      </varlistentry>
 
      <varlistentry>
-      <term><function>spi_exec</> <literal>?-count <replaceable>n</replaceable>? ?-array<replaceable>name</replaceable>? ?-nulls<replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</literal></term>
+      <term><function>spi_execp</> <literal>?-count <replaceable>n</replaceable>? ?-array<replaceable>name</replaceable>? ?-nulls<replaceable>string</replaceable>? <replaceable>queryid</replaceable> ?<replaceable>value-list</replaceable>? ?<replaceable>loop-body</replaceable>?</literal></term>
       <listitem>
        <para>
 	Execute a prepared plan from <function>spi_prepare</> with variable substitution.

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.80 2001/11/18 21:17:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.81 2001/11/19 03:58:23 tgl Exp $
 Postgres documentation
 -->
 
@@ -825,7 +825,7 @@ Postgres documentation
      </row>
 
      <row>
-      <entry><function>char_length</function>(<parameter>string</parameter>) or character_length(<parameter>string</parameter>)</entry>
+      <entry><function>char_length</function>(<parameter>string</parameter>) or <function>character_length</function>(<parameter>string</parameter>)</entry>
       <entry><type>integer</type></entry>
       <entry>
        length of string
@@ -979,6 +979,25 @@ Postgres documentation
       <entry>Converts first letter of each word (whitespace separated) to upper case.</entry>
       <entry><literal>initcap('hi thomas')</literal></entry>
       <entry><literal>Hi Thomas</literal></entry>
+     </row>
+
+     <row>
+      <entry><function>length</function>(<parameter>string</parameter>)</entry>
+      <entry><type>integer</type></entry>
+      <entry>
+       length of string
+       <indexterm>
+        <primary>character strings</primary>
+	<secondary>length</secondary>
+       </indexterm>
+       <indexterm>
+        <primary>length</primary>
+	<secondary>character strings</secondary>
+	<see>character strings, length</see>
+       </indexterm>
+      </entry>
+      <entry><literal>length('jose')</></entry>
+      <entry><literal>4</></entry>
      </row>
 
      <row>
@@ -4082,6 +4101,32 @@ SELECT NULLIF(value, '(none)') ...
     values <literal>SELECT</>, <literal>INSERT</>, <literal>UPDATE</>,
     <literal>DELETE</>, <literal>RULE</>, <literal>REFERENCES</>, or
     <literal>TRIGGER</>.  (Case of the string is not significant, however.)
+   </para>
+
+   <table>
+    <title>System Information Functions</>
+    <tgroup cols="3">
+     <thead>
+      <row><entry>Name</> <entry>Return Type</> <entry>Description</></row>
+     </thead>
+
+     <tbody>
+      <row>
+       <entry>version</>
+       <entry>text</>
+       <entry>PostgreSQL version information</>
+      </row>
+     </tbody>
+    </tgroup>
+   </table>
+
+   <indexterm zone="functions-misc">
+    <primary>version</primary>
+   </indexterm>
+
+   <para>
+    <function>version()</> returns a string describing the PostgreSQL
+    server's version.
    </para>
 
   </sect1>

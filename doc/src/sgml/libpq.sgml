@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.76 2001/11/18 21:28:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/libpq.sgml,v 1.77 2001/11/19 03:58:23 tgl Exp $
 -->
 
  <chapter id="libpq">
@@ -78,11 +78,12 @@ PGconn *PQconnectdb(const char *conninfo)
 
    <para>
    Each parameter setting is in the form <literal>keyword = value</literal>.
-   (To write a null value or a value containing
+   (To write an empty value or a value containing
    spaces, surround it with single quotes, e.g.,
    <literal>keyword = 'a value'</literal>.
-   Single quotes within the value must be written as <literal>\'</literal>.
-   Spaces around the equal sign are optional.)  The currently recognized
+   Single quotes and backslashes within the value must be escaped with a
+   backslash, e.g., <literal>\'</literal> or <literal>\\</literal>.)
+   Spaces around the equal sign are optional.  The currently recognized
    parameter keywords are:
 
    <variablelist>

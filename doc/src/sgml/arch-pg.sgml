@@ -5,7 +5,7 @@
 <Title><ProductName>Postgres</ProductName> Architectural Concepts</Title>
 
 <Para>
-     Before we continue, you  should  understand  the  basic
+     Before we begin, you  should  understand  the  basic
      <ProductName>Postgres</ProductName>  system  architecture.   Understanding how the
      parts of <ProductName>Postgres</ProductName> interact will make the  next  chapter
      somewhat clearer.
@@ -16,7 +16,7 @@
 <ItemizedList>
 <ListItem>
 <Para>
-      	A supervisory daemon process (<Application>postmaster</Application>),
+      	A supervisory daemon process (the <Application>postmaster</Application>),
 </Para>
 </ListItem>
 <ListItem>
@@ -26,7 +26,7 @@
 </ListItem>
 <ListItem>
 <Para>
-      	the  one or more backend database servers (the <Application>postgres</Application> process itself).
+      	one or more backend database servers (the <Application>postgres</Application> process itself).
 </Para>
 </ListItem>
 </ItemizedList>
@@ -34,9 +34,10 @@
 <Para>
      A single  <Application>postmaster</Application>  manages  a  given  collection  of
      databases  on  a  single  host.   Such  a collection of
-     databases is called a cluster (of databases).   Frontend
-     applications  that  wish  to  access  a  given database
-     within a cluster make calls to the   library.
+     databases is called a cluster (of databases).   A frontend
+     application  that  wishes  to  access  a  given database
+     within a cluster makes calls to an interface library (eg, libpq)
+     that is linked into the application.
      The library sends user requests over the network to the
      <Application>postmaster</Application>
 (<XRef LinkEnd="PGARCH-CONNECTIONS">(a)), 
@@ -58,30 +59,39 @@ which in turn  starts  a  new backend  server  process
 From that  point  on,  the  frontend process and the backend
      server communicate without intervention by the 
      <Application>postmaster</Application>.   Hence, the <Application>postmaster</Application> is always running, waiting
-     for requests, whereas frontend  and  backend  processes
+     for connection requests, whereas frontend  and  backend  processes
      come  and  go.  The <FileName>libpq</FileName> library allows a single 
      frontend to make multiple connections to backend processes.
-     However,  the  frontend  application is still a 
-     single-threaded process.  Multithreaded frontend/backend  
-     connections are not currently supported in <FileName>libpq</FileName>.
+     However,  each backend process is a single-threaded process that can
+     only execute one query at a time; so the communication over any one
+     frontend-to-backend connection is single-threaded.
+</Para>
+
+<Para>
      One  implication of this architecture is that the 
-     <Application>postmaster</Application> and the backend always run on the  same  
-     machine (the  database  server), while the frontend 
+     <Application>postmaster</Application> and the backend always run on the
+     same machine (the  database  server), while the frontend 
      application may run  anywhere.   You  should  keep  this  
      in  mind,
      because  the  files  that  can  be accessed on a client
      machine may not be accessible (or may only be  accessed
-     using  a  different  file name)  on  the database server
+     using  a  different  path name)  on  the database server
      machine.
+</Para>
+
+<Para>
      You should also be aware that the <Application>postmaster</Application> and  
      postgres  servers  run  with  the  user-id  of the <ProductName>Postgres</ProductName>
-     "superuser."  
+     <quote>superuser</>.
 Note that the <ProductName>Postgres</ProductName> superuser does not
-have  to  be  a special user (e.g., a user named 
+have  to  be  any particular user (e.g., a user named 
 <literal>postgres</literal>), although many systems are installed that way.
 Furthermore,  the  <ProductName>Postgres</ProductName>  superuser should
-     definitely  not  be the Unix superuser, <literal>root</literal>!  In any
-     case, all files relating to a database should belong to
+definitely  not  be the Unix superuser, <literal>root</literal>!
+It is safest if the <ProductName>Postgres</ProductName>  superuser is an
+ordinary, unprivileged user so far as the surrounding Unix system is
+concerned.
+     In any case, all files relating to a database should belong to
      this <ProductName>Postgres</ProductName> superuser.
 </Para>
 </sect1>

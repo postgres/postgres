@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.63 2001/10/31 20:35:02 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.64 2001/11/19 03:58:24 tgl Exp $ -->
 
 <chapter id="installation">
  <title><![%standalone-include[<productname>PostgreSQL</>]]>
@@ -162,7 +162,8 @@ su - postgres
   <title>Getting The Source</title>
 
   <para>
-   The <productname>PostgreSQL</> &version; sources can by obtained from <ulink
+   The <productname>PostgreSQL</> &version; sources can be obtained by
+   anonymous FTP from <ulink
    url="ftp://ftp.postgresql.org/pub/postgresql-&version;.tar.gz"></ulink>.
    Use a mirror if possible. Then unpack it:
 <screen>
@@ -904,6 +905,7 @@ All of PostgreSQL is successfully made. Ready to install.
 <screen>
 <userinput>gmake check</userinput>
 </screen>
+    (This won't work as root; do it as an unprivileged user.)
     It is possible that some tests fail, due to differences in error
     message wording or floating point results.
     <![%standalone-include[The file
@@ -1120,7 +1122,7 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
     shell start-up file, such as <filename>~/.bash_profile</> (or
     <filename>/etc/profile</>, if you want it to affect every user):
 <programlisting>
-PATH=$PATH:/usr/local/pgsql/bin
+PATH=/usr/local/pgsql/bin:$PATH
 </programlisting>
     If you are using <command>csh</> or <command>tcsh</>, then use this command:
 <programlisting>
@@ -1137,7 +1139,7 @@ set path = ( /usr/local/pgsql/bin $path )
     documentation, you need to add a line like the following to a
     shell start-up file:
 <programlisting>
-MANPATH=$MANPATH:/usr/local/pgsql/man
+MANPATH=/usr/local/pgsql/man:$MANPATH
 </programlisting>
    </para>
 

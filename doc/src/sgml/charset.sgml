@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.16 2001/11/18 20:33:32 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/charset.sgml,v 2.17 2001/11/19 03:58:24 tgl Exp $ -->
 
 <chapter id="charset">
  <title>Localization</>
@@ -176,11 +176,11 @@ export LANG=sv_SE
     for any particular database cluster, or indexes on text columns will
     become corrupt.  <productname>Postgres</productname> enforces this
     by recording the values of <envar>LC_COLLATE</> and <envar>LC_CTYPE</>
-    that are seen by <command>initdb</>.  The server automatically adopts
+    that are seen by <application>initdb</>.  The server automatically adopts
     those two values when it is started; only the other <envar>LC_</>
     categories can be set from the environment at server startup.
     In short, only one collation order can be used in a database cluster,
-    and it is chosen at <command>initdb</> time.
+    and it is chosen at <application>initdb</> time.
    </para>
   </sect2>
 
@@ -254,6 +254,18 @@ perl: warning: Falling back to the standard locale ("C").
     <systemitem class="osname">Solaris</>), <filename>/usr/share/locale</filename> (<systemitem class="osname">Linux</>),
     <filename>/usr/lib/nls/loc</filename> (<systemitem class="osname">DUX 4.0</>).  Check the locale
     man page of your system if you are not sure.
+   </para>
+
+   <para>
+    Check that <productname>PostgreSQL</> is actually using the locale that
+    you think it is.  <envar>LC_COLLATE</> and <envar>LC_CTYPE</> settings are
+    determined at <application>initdb</> time and cannot be changed without
+    repeating <application>initdb</>.  Other locale settings including
+    <envar>LC_MESSAGES</> and <envar>LC_MONETARY</> are determined by the 
+    environment the postmaster is started in, and can be changed with a simple
+    postmaster restart.  You can check the <envar>LC_COLLATE</> and
+    <envar>LC_CTYPE</> settings of
+    a database with the <filename>contrib/pg_controldata</> utility program.
    </para>
 
    <para>

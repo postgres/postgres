@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.33 2001/10/12 23:32:34 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.34 2001/11/19 03:58:24 tgl Exp $
 -->
 
  <chapter id="libpqplusplus">
@@ -217,6 +217,9 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpq++.sgml,v 1.33 2001/10/12 23:32:
        <synopsis>
 	PgConnection::PgConnection(const char *conninfo)
        </synopsis>
+       The <quote>conninfo</> string is the same as for the underlying
+       libpq <function>PQconnectdb</> function.
+
        Although typically called from one of the access classes, a connection to
        a backend server is possible by creating a <classname>PgConnection</> object.
       </para>

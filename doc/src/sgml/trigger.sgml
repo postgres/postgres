@@ -20,7 +20,7 @@
    </para>
 
    <para>
-    The trigger function must be created before the trigger is created as a
+    The trigger function must be defined before the trigger is created as a
     function taking no arguments and returning opaque.  If the function is
     written in C, it must use the <quote>version 1</> function manager interface.
    </para>

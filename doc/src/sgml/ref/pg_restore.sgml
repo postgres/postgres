@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.18 2001/10/23 22:11:22 tgl Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/pg_restore.sgml,v 1.19 2001/11/19 03:58:25 tgl Exp $ -->
 
 <refentry id="APP-PGRESTORE">
  <docinfo>
@@ -584,7 +584,7 @@ connectDBStart() -- connect() failed: No such file or directory
    To reorder database items, it is first necessary to dump the table of
    contents of the archive:
 <screen>
-<prompt>$</prompt> <userinput>pg_restore archive.file -l &gt; archive.list</userinput>
+<prompt>$</prompt> <userinput>pg_restore -l archive.file &gt; archive.list</userinput>
 </screen>
    The listing file consists of a header and one line for each item, e.g.,
 <programlisting>
@@ -628,7 +628,7 @@ connectDBStart() -- connect() failed: No such file or directory
    could be used as input to <command>pg_restore</command> and would only restore
    items 10 and 6, in that order.
 <screen>
-<prompt>$</prompt> <userinput>pg_restore archive.file -L archive.list</userinput>
+<prompt>$</prompt> <userinput>pg_restore -L archive.list archive.file</userinput>
 </screen>
   </para>
 

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.94 2001/11/12 19:19:39 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.95 2001/11/19 03:58:24 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -324,8 +324,8 @@ su - postgres -c "/usr/local/pgsql/bin/pg_ctl start -l logfile -D /usr/local/pgs
 FATAL: StreamServerPort: bind() failed: Address already in use
         Is another postmaster already running on that port?
 </screen>
-     This usually means just what it suggests: you accidentally
-     started a second postmaster on the same port where one is already
+     This usually means just what it suggests: you tried to
+     start a second postmaster on the same port where one is already
      running. However, if the kernel error message is not
      <computeroutput>Address already in use</computeroutput> or some
      variant of that wording, there may be a different problem. For

@@ -27,7 +27,7 @@
 
  <tip>
   <para>
-   If you are using Windows NT/2000 you can build and use all of
+   If you are using Windows 98 or newer you can build and use all of
    <productname>PostgreSQL</productname> <quote>the Unix way</quote>
    if you install the <productname>Cygwin</productname> toolkit first.
    In that case see <xref linkend="installation">.

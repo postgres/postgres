@@ -976,9 +976,10 @@ The following describes the methods and variables of this class.
  Parameters: 
    table - name of table
  Returns:
-   List of attribute names
+   Dictionary of attribute names (the names are the keys, the values
+   are the names of the attributes' types)
  Description:
-   Given the name of a table, digs out the list of attribute names.
+   Given the name of a table, digs out the set of attribute names.
 
  3.6. get - get a tuple from a database table
  --------------------------------------------
