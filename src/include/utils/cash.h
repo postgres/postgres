@@ -10,7 +10,7 @@
 #define CASH_H
 
 /* if we store this as 4 bytes, we better make it int, not long, bjm */
-typedef signed int Cash;
+typedef int32 Cash;
 
 extern Datum cash_in(PG_FUNCTION_ARGS);
 extern Datum cash_out(PG_FUNCTION_ARGS);
