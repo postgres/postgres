@@ -1,7 +1,7 @@
 
                 Frequently Asked Questions (FAQ) for PostgreSQL
                                        
-   Last updated: Sun Oct 20 20:47:14 EDT 2002
+   Last updated: Thu Dec 5 00:47:26 EST 2002
    
    Current maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
@@ -34,8 +34,7 @@
                                       
    2.1) Are there ODBC drivers for PostgreSQL?
    2.2) What tools are available for using PostgreSQL with Web pages?
-   2.3) Does PostgreSQL have a graphical user interface? A report
-   generator? An embedded query language interface?
+   2.3) Does PostgreSQL have a graphical user interface?
    2.4) What languages are available to communicate with PostgreSQL?
    
                           Administrative Questions
@@ -391,8 +390,8 @@
     
    There are two ODBC drivers available, PsqlODBC and OpenLink ODBC.
    
-   PsqlODBC is included in the distribution. More information about it
-   can be gotten from ftp://ftp.PostgreSQL.org/pub/odbc/.
+   You can download PsqlODBC from
+   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php.
    
    OpenLink ODBC can be gotten from http://www.openlinksw.com. It works
    with their standard ODBC client software so you'll have PostgreSQL
@@ -402,8 +401,6 @@
    They will probably be selling this product to people who need
    commercial-quality support, but a freeware version will always be
    available. Please send questions to postgres95@openlink.co.uk.
-   
-   See also the ODBC chapter of the Programmer's Guide.
    
     2.2) What tools are available for using PostgreSQL with Web pages?
     
@@ -415,33 +412,34 @@
    
    For complex cases, many use the Perl interface and CGI.pm or mod_perl.
    
-    2.3) Does PostgreSQL have a graphical user interface? A report generator?
-    An embedded query language interface?
+    2.3) Does PostgreSQL have a graphical user interface?
     
+   Yes, there are several graphical interfaces to PostgreSQL available.
+   These include PgAccess http://www.pgaccess.com), PgAdmin II
+   (http://www.pgadmin.org, Win32-only), RHDB Admin
+   (http://sources.redhat.com/rhdb/ ) and Rekall (
+   http://www.thekompany.com/products/rekall/, proprietary). There is
+   also PHPPgAdmin ( http://phppgadmin.sourceforge.net/ ), a web-based
+   interface to PostgreSQL.
+   
    We have a nice graphical user interface called PgAccess which can also
    be used as a report generator. The Web page is
    http://www.pgaccess.org/.
    
-   We also include ecpg, which is an embedded SQL query language
-   interface for C.
-   
     2.4) What languages are able to communicate with PostgreSQL?
     
-   We have:
+   Most popular programming languages contain an interface to PostgreSQL.
+   Check your programming language's list of extension modules.
+   
+   The following interfaces are included in the PostgreSQL distribution:
      * C (libpq)
-     * C++ (libpq++)
      * Embedded C (ecpg)
      * Java (jdbc)
-     * Perl (DBD::Pg and perl5)
-     * ODBC (odbc)
      * Python (PyGreSQL)
      * TCL (libpgtcl)
-     * C Easy API (libpgeasy)
-     * PHP ('pg_' functions, Pear::DB)
        
-   Additional interfaces are available at
-   http://www.PostgreSQL.org/interfaces.html and
-   http://gborg.PostgreSQL.org.
+   Additional interfaces are available at http://gborg.postgresql.org in
+   the Drivers/Interfaces section.
      _________________________________________________________________
    
                           Administrative Questions

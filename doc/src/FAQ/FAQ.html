@@ -10,7 +10,7 @@
   alink="#0000ff">
     <H1>Frequently Asked Questions (FAQ) for PostgreSQL</H1>
 
-    <P>Last updated: Sun Oct 20 20:47:14 EDT 2002</P>
+    <P>Last updated: Thu Dec  5 00:47:26 EST 2002</P>
 
     <P>Current maintainer: Bruce Momjian (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -52,7 +52,6 @@
      <A href="#2.2">2.2</A>) What tools are available for using
     PostgreSQL with Web pages?<BR>
      <A href="#2.3">2.3</A>) Does PostgreSQL have a graphical user
-    interface? A report generator? An embedded query language
     interface?<BR>
      <A href="#2.4">2.4</A>) What languages are available to
     communicate with PostgreSQL?<BR>
@@ -507,9 +506,9 @@
     <P>There are two <SMALL>ODBC</SMALL> drivers available, PsqlODBC
     and OpenLink <SMALL>ODBC</SMALL>.</P>
 
-    <P>PsqlODBC is included in the distribution. More information about
-    it can be gotten from <A href=
-    "ftp://ftp.PostgreSQL.org/pub/odbc/">ftp://ftp.PostgreSQL.org/pub/odbc/</A>.</P>
+    <P>You can download PsqlODBC from <A href=
+    "http://gborg.postgresql.org/project/psqlodbc/projdisplay.php">
+    http://gborg.postgresql.org/project/psqlodbc/projdisplay.php</A>.</P>
 
     <P>OpenLink <SMALL>ODBC</SMALL> can be gotten from <A href=
     "http://www.openlinksw.com/">http://www.openlinksw.com</A>. It
@@ -521,10 +520,6 @@
     commercial-quality support, but a freeware version will always be
     available. Please send questions to <A href=
     "mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>.</P>
-
-    <P>See also the <A href=
-    "http://www.postgresql.org/devel-corner/docs/programmer/odbc.html">ODBC
-    chapter of the Programmer's Guide</A>.</P>
 
     <H4><A name="2.2">2.2</A>) What tools are available for using
     PostgreSQL with Web pages?</H4>
@@ -538,45 +533,49 @@
     <P>For complex cases, many use the Perl interface and CGI.pm or mod_perl.</P>
 
     <H4><A name="2.3">2.3</A>) Does PostgreSQL have a graphical user
-    interface? A report generator? An embedded query language
     interface?</H4>
+
+    Yes, there are several graphical interfaces to PostgreSQL available.
+    These include PgAccess <a href="http://www.pgaccess.com">
+    http://www.pgaccess.com</a>), PgAdmin II (<a
+    href="http://www.pgadmin.org">http://www.pgadmin.org</a>,
+    Win32-only), RHDB Admin (<a
+    href="http://sources.redhat.com/rhdb/">http://sources.redhat.com/rhdb/
+    </a>) and Rekall (<a href="http://www.thekompany.com/products/rekall/">
+    http://www.thekompany.com/products/rekall/</a>, proprietary). There is 
+    also PHPPgAdmin (<a href="http://phppgadmin.sourceforge.net/">
+    http://phppgadmin.sourceforge.net/ </a>), a web-based interface to 
+    PostgreSQL.
 
     <P>We have a nice graphical user interface called PgAccess which can
     also be used as a report generator. The Web page is
     <A href="http://www.pgaccess.org/">http://www.pgaccess.org/</A>.</P>
 
-    <P>We also include <I>ecpg</I>, which is an embedded SQL query
-    language interface for C.</P>
+    <H4><A name="2.4">2.4</A>) What languages are able to communicate with 
+    PostgreSQL?</H4>
 
-    <H4><A name="2.4">2.4</A>) What languages are able to communicate with PostgreSQL?</H4>
+    <P>Most popular programming languages contain an interface to
+    PostgreSQL. Check your programming language's list of extension
+    modules.</P>
 
-    <P>We have:</P>
+    <P>The following interfaces are included in the PostgreSQL
+    distribution:</P>
 
     <UL>
       <LI>C (libpq)</LI>
-
-      <LI>C++ (libpq++)</LI>
 
       <LI>Embedded C (ecpg)</LI>
 
       <LI>Java (jdbc)</LI>
 
-      <LI>Perl (DBD::Pg and perl5)</LI>
-
-      <LI>ODBC (odbc)</LI>
-
       <LI>Python (PyGreSQL)</LI>
 
       <LI>TCL (libpgtcl)</LI>
 
-      <LI>C Easy API (libpgeasy)</LI>
-
-      <LI>PHP ('pg_' functions, Pear::DB)</LI>
     </UL>
     <P>Additional interfaces are available at 
-    <a href="http://www.PostgreSQL.org/interfaces.html">http://www.PostgreSQL.org/interfaces.html</A>
-    and
-    <a href="http://gborg.PostgreSQL.org">http://gborg.PostgreSQL.org</A>.
+    <a href="http://gborg.postgresql.org">http://gborg.postgresql.org</A>
+    in the <I>Drivers/Interfaces</I> section.
     </P>
     <HR>
 
