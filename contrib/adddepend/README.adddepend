@@ -16,9 +16,9 @@ individually.
 created but there was no indication that the index was created as a
 UNIQUE column constraint.
 
-Fortunately, 7.3 now tracks such dependencies and handles these cases. 
-Unfortunately, PostgreSQL dumps from prior releases don't contain
-such dependency information.
+Fortunately, PostgreSQL 7.3 and later now tracks such dependencies 
+and handles these cases.  Unfortunately, PostgreSQL dumps from prior
+releases don't contain such dependency information.
 
 This script operates on >= 7.3 databases and adds dependency information
 for the objects listed above.  It prompts the user on whether to create
@@ -42,4 +42,4 @@ Options:
                   the conversion for each item found.  This forces YES to all
                   questions.
 
-Rod Taylor <rbt@rbt.ca>
+Rod Taylor <pg@rbt.ca>

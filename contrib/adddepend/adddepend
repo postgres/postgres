@@ -1,8 +1,8 @@
 #!/usr/bin/perl
-# $Id: adddepend,v 1.4 2003/05/14 03:25:55 tgl Exp $
+# $Id: adddepend,v 1.5 2003/06/25 01:11:09 momjian Exp $
 
 # Project exists to assist PostgreSQL users with their structural upgrade 
-# from 7.2 (or prior) to 7.3 (possibly later).  Must be run against a 7.3
+# from PostgreSQL 7.2 (or prior) to 7.3 or 7.4.  Must be run against a 7.3 or 7.4
 # database system (dump, upgrade daemon, restore, run this script)
 #
 # - Replace old style Foreign Keys with new style
@@ -125,6 +125,20 @@ my $dbh = DBI->connect($dsn, $dbuser, $dbpass);
 # We want to control commits
 $dbh->{'AutoCommit'} = 0;
 
+# PostgreSQL's version is used to determine what queries are required
+# to retrieve a given information set.
+my $sql_GetVersion = qq{
+  SELECT cast(substr(version(), 12, 1) as integer) * 10000
+		 + cast(substr(version(), 14, 1) as integer) * 100
+		 as version;
+};
+
+my $sth_GetVersion = $dbh->prepare($sql_GetVersion);
+$sth_GetVersion->execute();
+my $version   = $sth_GetVersion->fetchrow_hashref;
+my $pgversion = $version->{'version'}; 
+
+
 # control where things get created
 my $sql = qq{
     SET search_path = public;
@@ -210,13 +224,13 @@ sub findForeignKeys
 			}
 
 			# Start off our column lists
-			my $key_cols = "$lcolumn_name";
-			my $ref_cols = "$fcolumn_name";
+			my $key_cols = "\"$lcolumn_name\"";
+			my $ref_cols = "\"$fcolumn_name\"";
 
 			# Perhaps there is more than a single column
 			while ($lcolumn_name = shift(@junk) and $fcolumn_name = shift(@junk)) {
-				$key_cols .= ", $lcolumn_name";
-				$ref_cols .= ", $fcolumn_name";
+				$key_cols .= ", \"$lcolumn_name\"";
+				$ref_cols .= ", \"$fcolumn_name\"";
 			}
 
 			my $trigsql = qq{
@@ -252,7 +266,7 @@ sub findForeignKeys
 				/^RI_FKey_noaction_upd$/	&& do {$updatetype = "ON UPDATE NO ACTION"; last;};
 				}
 
-				$triglist .= "	DROP TRIGGER \"$trigname\" ON $tablename;\n";
+				$triglist .= "	DROP TRIGGER \"$trigname\" ON \"$tablename\";\n";
 			}
 
 
@@ -264,8 +278,8 @@ sub findForeignKeys
 
 			my $fkey = qq{
 $triglist
-	ALTER TABLE $table ADD $constraint FOREIGN KEY ($key_cols)
-		 REFERENCES $ftable($ref_cols) $matchtype $updatetype $deletetype;
+	ALTER TABLE \"$table\" ADD $constraint FOREIGN KEY ($key_cols)
+		 REFERENCES \"$ftable\"($ref_cols) $matchtype $updatetype $deletetype;
 			};
 
 			# Does the user want to upgrade this sequence?
@@ -291,32 +305,82 @@ MSG
 #   the corresponding entry in pg_constraint)
 sub findUniqueConstraints
 {
-	my $sql = qq{
-	    SELECT ci.relname AS index_name
-             , ct.relname AS table_name
-             , pg_catalog.pg_get_indexdef(indexrelid) AS constraint_definition
-          FROM pg_class AS ci
-          JOIN pg_index ON (ci.oid = indexrelid)
-          JOIN pg_class AS ct ON (ct.oid = indrelid)
-	      JOIN pg_catalog.pg_namespace ON (ct.relnamespace = pg_namespace.oid)
-         WHERE indisunique
-           AND NOT EXISTS (SELECT TRUE
-                             FROM pg_catalog.pg_depend
-	                         JOIN pg_catalog.pg_constraint ON (refobjid = pg_constraint.oid)
-                            WHERE objid = indexrelid
-                              AND objsubid = 0)
-	       AND nspname NOT IN ('pg_catalog', 'pg_toast');
+	my $sql;
+	if ( $pgversion >= 70400 ) {
+		$sql = qq{
+		    SELECT pg_index.*, quote_ident(ci.relname) AS index_name
+	             , quote_ident(ct.relname) AS table_name
+	             , pg_catalog.pg_get_indexdef(indexrelid) AS constraint_definition
+		         , indclass
+	          FROM pg_catalog.pg_class AS ci
+    	      JOIN pg_catalog.pg_index ON (ci.oid = indexrelid)
+	          JOIN pg_catalog.pg_class AS ct ON (ct.oid = indrelid)
+		      JOIN pg_catalog.pg_namespace ON (ct.relnamespace = pg_namespace.oid)
+	         WHERE indisunique     -- Unique indexes only
+	           AND indpred IS NULL -- No Partial Indexes
+		       AND indexprs IS NULL -- No expressional indexes
+	           AND NOT EXISTS (SELECT TRUE
+	                             FROM pg_catalog.pg_depend
+		                         JOIN pg_catalog.pg_constraint
+		                           ON (refobjid = pg_constraint.oid)
+	                            WHERE objid = indexrelid
+	                              AND objsubid = 0)
+		       AND nspname NOT IN ('pg_catalog', 'pg_toast');
+		};
+	}
+	else
+	{
+		$sql = qq{
+		    SELECT pg_index.*, quote_ident(ci.relname) AS index_name
+	             , quote_ident(ct.relname) AS table_name
+	             , pg_catalog.pg_get_indexdef(indexrelid) AS constraint_definition
+		         , indclass
+	          FROM pg_catalog.pg_class AS ci
+    	      JOIN pg_catalog.pg_index ON (ci.oid = indexrelid)
+	          JOIN pg_catalog.pg_class AS ct ON (ct.oid = indrelid)
+		      JOIN pg_catalog.pg_namespace ON (ct.relnamespace = pg_namespace.oid)
+	         WHERE indisunique     -- Unique indexes only
+	           AND indpred = '' -- No Partial Indexes
+		       AND indproc = 0  -- No expressional indexes
+	           AND NOT EXISTS (SELECT TRUE
+	                             FROM pg_catalog.pg_depend
+		                         JOIN pg_catalog.pg_constraint
+		                           ON (refobjid = pg_constraint.oid)
+	                            WHERE objid = indexrelid
+	                              AND objsubid = 0)
+		       AND nspname NOT IN ('pg_catalog', 'pg_toast');
+		};
+	}
+
+	my $opclass_sql = qq{
+	    SELECT TRUE
+          FROM pg_catalog.pg_opclass
+          JOIN pg_catalog.pg_am ON (opcamid = pg_am.oid)
+         WHERE amname = 'btree'
+	       AND pg_opclass.oid = ?
+	       AND pg_opclass.oid < 15000;
 	};
 	
 	my $sth = $dbh->prepare($sql) || triggerError($!);
+	my $opclass_sth = $dbh->prepare($opclass_sql) || triggerError($!);
 	$sth->execute();
 
+ITERATION:
 	while (my $row = $sth->fetchrow_hashref)
 	{
 		# Fetch vars
 		my $constraint_name = $row->{'index_name'};
 		my $table = $row->{'table_name'};
 		my $columns = $row->{'constraint_definition'};
+
+		# Test the opclass is BTree and was not added after installation
+		my @classes = split(/ /, $row->{'indclass'});
+		while (my $class = pop(@classes))
+		{
+			$opclass_sth->execute($class);
+
+			next ITERATION if ($sth->rows == 0);
+		}
 
 		# Extract the columns from the index definition
 		$columns =~ s|.*\(([^\)]+)\).*|$1|g;
@@ -358,9 +422,9 @@ MSG
 sub findSerials
 {
 	my $sql = qq{
-	    SELECT nspname
-	         , relname
-	         , attname
+	    SELECT nspname AS nspname
+	         , relname AS relname
+	         , attname AS attname
 	         , adsrc
 	      FROM pg_catalog.pg_class as c
 
