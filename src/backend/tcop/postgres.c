@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.20 1996/11/16 09:03:44 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.21 1996/11/18 02:26:57 bryanh Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -16,12 +16,6 @@
  *-------------------------------------------------------------------------
  */
 #include "libpq/pqsignal.h"     /* substitute for <signal.h> */
-
-#if defined(linux)
-#ifndef __USE_POSIX
-#define __USE_POSIX
-#endif
-#endif /* defined(linux) */
 
 #include <unistd.h>
 #include <stdio.h>
@@ -1268,7 +1262,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
         puts("\nPOSTGRES backend interactive interface");
-        puts("$Revision: 1.20 $ $Date: 1996/11/16 09:03:44 $");
+        puts("$Revision: 1.21 $ $Date: 1996/11/18 02:26:57 $");
     }
     
     /* ----------------
