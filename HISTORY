@@ -161,7 +161,7 @@ Allow subselects on the left side of comparison operators (Tom)
 New parallel regression test (Jan)
 Change backend-side COPY to write files with permissions 644 not 666 (Tom)
 Force permissions on PGDATA directory to be secure, even if it exists (Tom)
-Added psql LastOid variable to return last inserted oid (Peter E)
+Added psql LASTOID variable to return last inserted oid (Peter E)
 Allow concurrent vacuum and remove pg_vlock vacuum lock file (Tom)
 Add permissions check so only Postgres superuser or table owner can
 vacuum (Peter E)
@@ -182,7 +182,7 @@ Allow flag to control COPY input/output of NULLs (Peter E)
 Make postgres user have a password by default (Peter E)
 Add CREATE/ALTER/DROP GROUP (Peter E)
 All administration scripts now support --long options (Peter E, Karel)
-Vacuumdb script now supports --alldb option (Peter E)
+Vacuumdb script now supports --all option (Peter E)
 ecpg new portable FETCH syntax
 Add ecpg EXEC SQL IFDEF, EXEC SQL IFNDEF, EXEC SQL ELSE, EXEC SQL ELIF
         and EXEC SQL ENDIF directives
