@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.55 1999/03/10 05:02:34 tgl Exp $
+ * $Id: pg_type.h,v 1.56 1999/03/25 03:49:25 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -21,7 +21,7 @@
 #include <utils/rel.h>
 
 /* ----------------
- *		postgres.h contains the system type definintions and the
+ *		postgres.h contains the system type definitions and the
  *		CATALOG(), BOOTSTRAP and DATA() sugar words so this file
  *		can be read by both genbki.sh and the C compiler.
  * ----------------
@@ -53,36 +53,30 @@ CATALOG(pg_type) BOOTSTRAP
 
 	/*
 	 * typbyval determines whether internal Postgres routines pass a value
-	 * of this type by value or by reference.  Postgres uses a 4 byte area
-	 * for passing a field value info, so if the value is not 1, 2, or 4
-	 * bytes long, Postgres does not have the option of passing by value
-	 * and ignores typbyval.
-	 *
-	 * (I don't understand why this column exists.  The above description may
-	 * be an oversimplification.  Also, there appear to be bugs in which
-	 * Postgres doesn't ignore typbyval when it should, but I'm afraid to
-	 * change them until I see proof of damage. -BRYANH 96.08).
-	 *
-	 * (Postgres crashes if typbyval is true, the declared length is 8, and
-	 * the I/O routines are written to expect pass by reference. Note that
-	 * float4 is written for pass by reference and has a declared length
-	 * of 4 bytes, so it looks like pass by reference must be consistant
-	 * with the declared length, and typbyval is used somewhere. - tgl
-	 * 1997-03-20).
+	 * of this type by value or by reference.  Only char, short, and int-
+	 * equivalent items can be passed by value, so if the type is not
+	 * 1, 2, or 4 bytes long, Postgres does not have the option of passing
+	 * by value and so typbyval had better be FALSE.  Variable-length types
+	 * are always passed by reference.
+	 * Note that typbyval can be false even if the length would allow
+	 * pass-by-value; this is currently true for type float4, for example.
 	 */
 	char		typtype;
+
+	/*
+	 * typtype is 'b' for a basic type and 'c' for a catalog type (ie a class).
+	 * If typtype is 'c', typrelid is the OID of the class' entry in pg_class.
+	 * (Why do we need an entry in pg_type for classes, anyway?)
+	 */
 	bool		typisdefined;
 	char		typdelim;
-	Oid			typrelid;
+	Oid			typrelid;		/* 0 if not a class type */
 	Oid			typelem;
 
 	/*
-	 * typelem is NULL if this is not an array type.  If this is an array
+	 * typelem is 0 if this is not an array type.  If this is an array
 	 * type, typelem is the OID of the type of the elements of the array
 	 * (it identifies another row in Table pg_type).
-	 *
-	 * (Note that zero ("0") rather than _null_ is used in the declarations.
-	 * - tgl 97/03/20)
 	 */
 	regproc		typinput;
 	regproc		typoutput;
@@ -90,7 +84,7 @@ CATALOG(pg_type) BOOTSTRAP
 	regproc		typsend;
 	char		typalign;
 
-	/*
+	/* ----------------
 	 * typalign is the alignment required when storing a value of this
 	 * type.  It applies to storage on disk as well as most
 	 * representations of the value inside Postgres.  When multiple values
@@ -99,11 +93,18 @@ CATALOG(pg_type) BOOTSTRAP
 	 * type so that it begins on the specified boundary.  The alignment
 	 * reference is the beginning of the first datum in the sequence.
 	 *
-	 * 'c' = 1 byte alignment. 's' = 2 byte alignment. 'i' = 4 byte
-	 * alignment. 'd' = 8 byte alignment.
+	 * 'c' = CHAR alignment, ie no alignment needed.
+	 * 's' = SHORT alignment (2 bytes on most machines).
+	 * 'i' = INT alignment (4 bytes on most machines).
+	 * 'd' = DOUBLE alignment (8 bytes on many machines, but by no means all).
 	 *
-	 * (This might actually be flexible depending on machine architecture,
-	 * but I doubt it - BRYANH 96.08).
+	 * See include/utils/memutils.h for the macros that compute these
+	 * alignment requirements.
+	 *
+	 * NOTE: for types used in system tables, it is critical that the
+	 * size and alignment defined in pg_type agree with the way that the
+	 * compiler will lay out the field in a struct representing a table row.
+	 * ----------------
 	 */
 	text		typdefault;		/* VARIABLE LENGTH FIELD */
 } FormData_pg_type;
@@ -218,21 +219,21 @@ DESCR("array of 8 oid, used in system tables");
 DATA(insert OID = 32 (	SET		   PGUID -1  -1 f r t \054 0  -1 textin textout textin textout i _null_ ));
 DESCR("set of tuples");
 
-DATA(insert OID = 71 (	pg_type		 PGUID -1 -1 t b t \054 1247 0 foo bar foo bar c _null_));
-DATA(insert OID = 75 (	pg_attribute PGUID -1 -1 t b t \054 1249 0 foo bar foo bar c _null_));
-DATA(insert OID = 81 (	pg_proc		 PGUID -1 -1 t b t \054 1255 0 foo bar foo bar c _null_));
-DATA(insert OID = 83 (	pg_class	 PGUID -1 -1 t b t \054 1259 0 foo bar foo bar c _null_));
-DATA(insert OID = 86 (	pg_shadow	 PGUID -1 -1 t b t \054 1260 0 foo bar foo bar c _null_));
-DATA(insert OID = 87 (	pg_group	 PGUID -1 -1 t b t \054 1261 0 foo bar foo bar c _null_));
-DATA(insert OID = 88 (	pg_database  PGUID -1 -1 t b t \054 1262 0 foo bar foo bar c _null_));
-DATA(insert OID = 90 (	pg_variable  PGUID -1 -1 t b t \054 1264 0 foo bar foo bar c _null_));
-DATA(insert OID = 99 (	pg_log		 PGUID -1 -1 t b t \054 1269 0 foo bar foo bar c _null_));
+DATA(insert OID = 71 (	pg_type		 PGUID 4 4 t c t \054 1247 0 foo bar foo bar i _null_));
+DATA(insert OID = 75 (	pg_attribute PGUID 4 4 t c t \054 1249 0 foo bar foo bar i _null_));
+DATA(insert OID = 81 (	pg_proc		 PGUID 4 4 t c t \054 1255 0 foo bar foo bar i _null_));
+DATA(insert OID = 83 (	pg_class	 PGUID 4 4 t c t \054 1259 0 foo bar foo bar i _null_));
+DATA(insert OID = 86 (	pg_shadow	 PGUID 4 4 t c t \054 1260 0 foo bar foo bar i _null_));
+DATA(insert OID = 87 (	pg_group	 PGUID 4 4 t c t \054 1261 0 foo bar foo bar i _null_));
+DATA(insert OID = 88 (	pg_database  PGUID 4 4 t c t \054 1262 0 foo bar foo bar i _null_));
+DATA(insert OID = 90 (	pg_variable  PGUID 4 4 t c t \054 1264 0 foo bar foo bar i _null_));
+DATA(insert OID = 99 (	pg_log		 PGUID 4 4 t c t \054 1269 0 foo bar foo bar i _null_));
 
 /* OIDS 100 - 199 */
 
-DATA(insert OID = 109 (  pg_attrdef  PGUID -1 -1 t b t \054 1215 0 foo bar foo bar c _null_));
-DATA(insert OID = 110 (  pg_relcheck PGUID -1 -1 t b t \054 1216 0 foo bar foo bar c _null_));
-DATA(insert OID = 111 (  pg_trigger  PGUID -1 -1 t b t \054 1219 0 foo bar foo bar c _null_));
+DATA(insert OID = 109 (  pg_attrdef  PGUID 4 4 t c t \054 1215 0 foo bar foo bar i _null_));
+DATA(insert OID = 110 (  pg_relcheck PGUID 4 4 t c t \054 1216 0 foo bar foo bar i _null_));
+DATA(insert OID = 111 (  pg_trigger  PGUID 4 4 t c t \054 1219 0 foo bar foo bar i _null_));
 
 /* OIDS 200 - 299 */
 

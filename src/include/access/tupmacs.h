@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tupmacs.h,v 1.8 1999/02/13 23:20:59 momjian Exp $
+ * $Id: tupmacs.h,v 1.9 1999/03/25 03:49:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,43 +62,22 @@
 	(char *) (T) \
 )
 
+/* att_align aligns the given offset as needed for a datum of length attlen
+ * and alignment requirement attalign.  In practice we don't need the length.
+ * The attalign cases are tested in what is hopefully something like their
+ * frequency of occurrence.
+ */
 #define att_align(cur_offset, attlen, attalign) \
 ( \
-	((attlen) < sizeof(int32)) ? \
-	( \
-		((attlen) == -1) ? \
+	((attalign) == 'i') ? INTALIGN(cur_offset) : \
+	 (((attalign) == 'c') ? ((long)(cur_offset)) : \
+	  (((attalign) == 'd') ? DOUBLEALIGN(cur_offset) : \
 		( \
-			((attalign) == 'd') ? 	DOUBLEALIGN(cur_offset) : \
-									INTALIGN(cur_offset) \
-		) \
-		: \
-		( \
-			((attlen) == sizeof(char)) ? \
-			( \
-				(long)(cur_offset) \
-			) \
-			: \
-			( \
-				AssertMacro((attlen) == sizeof(short)), \
-				SHORTALIGN(cur_offset) \
-			) \
-		) \
-	) \
-	: \
-	( \
-		((attlen) == sizeof(int32)) ? \
-		( \
-			INTALIGN(cur_offset) \
-		) \
-		: \
-		( \
-			AssertMacro((attlen) > sizeof(int32)), \
-			((attalign) == 'd') ? 	DOUBLEALIGN(cur_offset) : \
-									LONGALIGN(cur_offset) \
-		) \
-	) \
+			AssertMacro((attalign) == 's'), \
+			SHORTALIGN(cur_offset) \
+		))) \
 )
-	
+
 #define att_addlength(cur_offset, attlen, attval) \
 ( \
 	((attlen) != -1) ? \

@@ -15,7 +15,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: memutils.h,v 1.21 1999/02/13 23:22:25 momjian Exp $
+ * $Id: memutils.h,v 1.22 1999/03/25 03:49:34 tgl Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -27,76 +27,52 @@
 #define MEMUTILS_H
 
 
-#ifdef NOT_USED
-/*****************************************************************************
- *		align.h			- alignment macros									 *
- ****************************************************************************
- [TRH] Let the compiler decide what alignment it uses instead of
-tending
-   we know better.
-   GCC (at least v2.5.8 and up) has an __alignof__ keyword.
-   However, we cannot use it here since on some architectures it reports
-   just a _recommended_ alignment instead of the actual alignment used in
-   padding structures (or at least, this is how I understand gcc).
-   So define a macro that gives us the _actual_ alignment inside a struct.
-   {{note: assumes that alignment size is always a power of 2.}}
+/* ----------------
+ * Alignment macros: align a length or address appropriately for a given type.
+ *
+ * It'd be best to use offsetof to check how the compiler aligns stuff,
+ * but not all compilers support that (still true)?  So we make the
+ * conservative assumption that a type must be aligned on a boundary equal
+ * to its own size, except on a few architectures where we know better.
+ *
+ * CAUTION: for the system tables, the struct declarations found in
+ * src/include/pg_*.h had better be interpreted by the compiler in a way
+ * that agrees with the workings of these macros.  In practice that means
+ * being careful to lay out the columns of a system table in a way that avoids
+ * wasted pad space.
+ *
+ * CAUTION: _ALIGN will not work if sizeof(TYPE) is not a power of 2.
+ * There are machines where sizeof(double) is not, for example.
+ * But such a size is almost certainly not an alignment boundary anyway.
+ * ----------------
  */
-#define _ALIGNSIZE(TYPE)		offsetof(struct { char __c; TYPE __t;}, __t)
-#define _ALIGN(TYPE, LEN) \
-		(((long)(LEN) + (_ALIGNSIZE(TYPE) - 1)) & ~(_ALIGNSIZE(TYPE) - 1))
+
+#define _ALIGN(TYPE,LEN) \
+		(((long)(LEN) + (sizeof(TYPE) - 1)) & ~(sizeof(TYPE) - 1))
+
 #define SHORTALIGN(LEN)			_ALIGN(short, (LEN))
+
+#if defined(m68k)
+#define INTALIGN(LEN)			_ALIGN(short, (LEN))
+#else
 #define INTALIGN(LEN)			_ALIGN(int, (LEN))
+#endif
+
+#if (defined(sun) && ! defined(sparc)) || defined(m68k)
+#define LONGALIGN(LEN)			_ALIGN(short, (LEN))
+#else
 #define LONGALIGN(LEN)			_ALIGN(long, (LEN))
+#endif
+
+#if defined(m68k)
+#define DOUBLEALIGN(LEN)		_ALIGN(short, (LEN))
+#define MAXALIGN(LEN)			_ALIGN(short, (LEN))
+#elif defined(sco)
+#define DOUBLEALIGN(LEN)		_ALIGN(int, (LEN))
+#define MAXALIGN(LEN)			_ALIGN(int, (LEN))
+#else
 #define DOUBLEALIGN(LEN)		_ALIGN(double, (LEN))
 #define MAXALIGN(LEN)			_ALIGN(double, (LEN))
-
-#endif	 /* 0 */
-
-/*
- *		SHORTALIGN(LEN) - length (or address) aligned for shorts
- */
-#define SHORTALIGN(LEN)\
-		(((long)(LEN) + (sizeof (short) - 1)) & ~(sizeof (short) - 1))
-
-#if defined(m68k)
-#define INTALIGN(LEN)	 SHORTALIGN(LEN)
-#else
-#define INTALIGN(LEN)\
-		(((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
-#endif
-
-/*
- *		LONGALIGN(LEN)	- length (or address) aligned for longs
- */
-#if (defined(sun) && ! defined(sparc)) || defined(m68k)
-#define LONGALIGN(LEN)	SHORTALIGN(LEN)
-#elif defined (__alpha)
-
- /*
-  * even though "long alignment" should really be on 8-byte boundaries for
-  * linuxalpha, we want the strictest alignment to be on 4-byte (int)
-  * boundaries, because otherwise things break when they try to use the
-  * FormData_pg_* structures.  --djm 12/12/96
-  */
-#define LONGALIGN(LEN)\
-		(((long)(LEN) + (sizeof (int) - 1)) & ~(sizeof (int) -1))
-#else
-#define LONGALIGN(LEN)\
-		(((long)(LEN) + (sizeof (long) - 1)) & ~(sizeof (long) -1))
-#endif
-
-#if defined(m68k)
-#define DOUBLEALIGN(LEN) SHORTALIGN(LEN)
-#define MAXALIGN(LEN)	 SHORTALIGN(LEN)
-#elif ! defined(sco)
-#define DOUBLEALIGN(LEN)\
-		(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
-
-#define MAXALIGN(LEN)\
-		(((long)(LEN) + (sizeof (double) - 1)) & ~(sizeof (double) -1))
-#else
-#define DOUBLEALIGN(LEN) INTALIGN(LEN)
-#define MAXALIGN(LEN)	 INTALIGN(LEN)
 #endif
 
 /*****************************************************************************

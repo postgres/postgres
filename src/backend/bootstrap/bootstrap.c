@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.56 1999/03/17 22:52:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.57 1999/03/25 03:49:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -605,8 +605,28 @@ DefineAttr(char *name, char *type, int attnum)
 			printf("<%s %s> ", attrtypes[attnum]->attname.data, type);
 		attrtypes[attnum]->attnum = 1 + attnum; /* fillatt */
 		attlen = attrtypes[attnum]->attlen = Procid[typeoid].len;
-		attrtypes[attnum]->attbyval = (attlen == 1) || (attlen == 2) || (attlen == 4);
-		attrtypes[attnum]->attalign = 'i';
+		/* Cheat like mad to fill in these items from the length only.
+		 * This only has to work for types used in the system catalogs...
+		 */
+		switch (attlen)
+		{
+			case 1:
+				attrtypes[attnum]->attbyval = true;
+				attrtypes[attnum]->attalign = 'c';
+				break;
+			case 2:
+				attrtypes[attnum]->attbyval = true;
+				attrtypes[attnum]->attalign = 's';
+				break;
+			case 4:
+				attrtypes[attnum]->attbyval = true;
+				attrtypes[attnum]->attalign = 'i';
+				break;
+			default:
+				attrtypes[attnum]->attbyval = false;
+				attrtypes[attnum]->attalign = 'i';
+				break;
+		}
 	}
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
