@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.75 2004/03/05 00:21:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/tcop/pquery.c,v 1.76 2004/03/18 23:26:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,17 +406,14 @@ PortalRun(Portal portal, long count,
 	if (completionTag)
 		completionTag[0] = '\0';
 
-	if (portal->strategy != PORTAL_MULTI_QUERY)
+	if (log_executor_stats && portal->strategy != PORTAL_MULTI_QUERY)
 	{
 		ereport(DEBUG3,
 			(errmsg_internal("PortalRun")));
 		/* PORTAL_MULTI_QUERY logs its own stats per query */
-		if (log_executor_stats)
-			ResetUsage();
+		ResetUsage();
 	}
 	
-	if (log_executor_stats && portal->strategy != PORTAL_MULTI_QUERY)
-
 	/*
 	 * Check for improper portal use, and mark portal active.
 	 */
