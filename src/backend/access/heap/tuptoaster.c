@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.12 2000/08/04 04:16:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/tuptoaster.c,v 1.13 2000/10/23 23:42:04 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -247,6 +247,11 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 
 	/* ----------
 	 * Then collect information about the values given
+	 *
+	 * NOTE: toast_action[i] can have these values:
+	 *		' '		default handling
+	 *		'p'		already processed --- don't touch it
+	 *		'x'		incompressible, but OK to move off
 	 * ----------
 	 */
 	memset(toast_action,    ' ', numAttrs * sizeof(char));
@@ -397,6 +402,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		int		biggest_attno = -1;
 		int32	biggest_size  = MAXALIGN(sizeof(varattrib));
 		Datum	old_value;
+		Datum	new_value;
 
 		/* ----------
 		 * Search for the biggest yet uncompressed internal attribute
@@ -404,7 +410,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 */
 		for (i = 0; i < numAttrs; i++)
 		{
-			if (toast_action[i] == 'p')
+			if (toast_action[i] != ' ')
 				continue;
 			if (VARATT_IS_EXTENDED(toast_values[i]))
 				continue;
@@ -421,20 +427,29 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			break;
 
 		/* ----------
-		 * Compress it inline
+		 * Attempt to compress it inline
 		 * ----------
 		 */
 		i					= biggest_attno;
 		old_value			= toast_values[i];
+		new_value			= toast_compress_datum(old_value);
 
-		toast_values[i]		= toast_compress_datum(toast_values[i]);
-		if (toast_free[i])
-			pfree(DatumGetPointer(old_value));
-		toast_free[i]		= true;
-		toast_sizes[i]		= VARATT_SIZE(toast_values[i]);
-
-		need_change = true;
-		need_free   = true;
+		if (DatumGetPointer(new_value) != NULL)
+		{
+			/* successful compression */
+			if (toast_free[i])
+				pfree(DatumGetPointer(old_value));
+			toast_values[i]	= new_value;
+			toast_free[i]	= true;
+			toast_sizes[i]	= VARATT_SIZE(toast_values[i]);
+			need_change		= true;
+			need_free		= true;
+		}
+		else
+		{
+			/* incompressible data, ignore on subsequent compression passes */
+			toast_action[i] = 'x';
+		}
 	}
 
 	/* ----------
@@ -504,6 +519,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		int		biggest_attno = -1;
 		int32	biggest_size  = MAXALIGN(sizeof(varattrib));
 		Datum	old_value;
+		Datum	new_value;
 
 		/* ----------
 		 * Search for the biggest yet uncompressed internal attribute
@@ -511,7 +527,7 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 		 */
 		for (i = 0; i < numAttrs; i++)
 		{
-			if (toast_action[i] == 'p')
+			if (toast_action[i] != ' ')
 				continue;
 			if (VARATT_IS_EXTENDED(toast_values[i]))
 				continue;
@@ -528,22 +544,29 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
 			break;
 
 		/* ----------
-		 * Compress it inline
+		 * Attempt to compress it inline
 		 * ----------
 		 */
 		i					= biggest_attno;
 		old_value			= toast_values[i];
+		new_value			= toast_compress_datum(old_value);
 
-		toast_values[i]		= toast_compress_datum(toast_values[i]);
-									
-		if (toast_free[i])
-			pfree(DatumGetPointer(old_value));
-
-		toast_free[i]		= true;
-		toast_sizes[i]		= VARATT_SIZE(toast_values[i]);
-
-		need_change = true;
-		need_free   = true;
+		if (DatumGetPointer(new_value) != NULL)
+		{
+			/* successful compression */
+			if (toast_free[i])
+				pfree(DatumGetPointer(old_value));
+			toast_values[i]	= new_value;
+			toast_free[i]	= true;
+			toast_sizes[i]	= VARATT_SIZE(toast_values[i]);
+			need_change		= true;
+			need_free		= true;
+		}
+		else
+		{
+			/* incompressible data, ignore on subsequent compression passes */
+			toast_action[i] = 'x';
+		}
 	}
 
 	/* ----------
@@ -690,6 +713,10 @@ toast_insert_or_update(Relation rel, HeapTuple newtup, HeapTuple oldtup)
  * toast_compress_datum -
  *
  *	Create a compressed version of a varlena datum
+ *
+ *	If we fail (ie, compressed result is actually bigger than original)
+ *	then return NULL.  We must not use compressed data if it'd expand
+ *	the tuple!
  * ----------
  */
 static Datum
@@ -697,13 +724,22 @@ toast_compress_datum(Datum value)
 {
 	varattrib	   *tmp;
 
-	tmp = (varattrib *)palloc(sizeof(PGLZ_Header) + VARATT_SIZE(value));
+	tmp = (varattrib *) palloc(sizeof(PGLZ_Header) + VARATT_SIZE(value));
 	pglz_compress(VARATT_DATA(value), VARATT_SIZE(value) - VARHDRSZ,
-				(PGLZ_Header *)tmp,
-				PGLZ_strategy_default);
-	VARATT_SIZEP(tmp) |= VARATT_FLAG_COMPRESSED;
-
-	return PointerGetDatum(tmp);
+				  (PGLZ_Header *) tmp,
+				  PGLZ_strategy_default);
+	if (VARATT_SIZE(tmp) < VARATT_SIZE(value))
+	{
+		/* successful compression */
+		VARATT_SIZEP(tmp) |= VARATT_FLAG_COMPRESSED;
+		return PointerGetDatum(tmp);
+	}
+	else
+	{
+		/* incompressible data */
+		pfree(tmp);
+		return PointerGetDatum(NULL);
+	}
 }
 
 
