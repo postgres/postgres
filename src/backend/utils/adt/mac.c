@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.13 1999/07/17 20:17:57 momjian Exp $
+ *	$Id: mac.c,v 1.14 1999/12/16 01:30:49 momjian Exp $
  */
 
 
@@ -132,7 +132,7 @@ manufacturer manufacturers[] = {
   ((unsigned long)((addr->a<<16)|(addr->b<<8)|(addr->c)))
 
 #define lobits(addr) \
-  ((unsigned long)((addr->c<<16)|(addr->e<<8)|(addr->f)))
+  ((unsigned long)((addr->d<<16)|(addr->e<<8)|(addr->f)))
 
 /*
  *	MAC address reader.  Accepts several common notations.
