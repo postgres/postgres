@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan  4 03:24:53 EST 2001
+Last updated:		Thu Jan  4 13:51:05 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -46,7 +46,7 @@ MISC
 * -SELECT ... UNION ... ORDER BY fails when sort expr not in result list
 * -SELECT ... UNION ... GROUP BY fails if column types disagree, no type
   promotion occurs
-* -Modification  of  pg_class  can  happen while table in use by
+* Modification  of  pg_class  can  happen while table in use by
   another backend.  Might  lead  to  MVCC  inside  of  syscache
 * Permission to DELETE table allows UPDATE also
 
@@ -187,13 +187,11 @@ CLIENTS
 REFERENTIAL INTEGRITY
 
 * Add MATCH PARTIAL referential integrity
-* Foreign key does not check that columns referenced form a primary key
-  or constrained by UNIQUE 
 * Check that primary key exists at foreign key definition time
 * Prevent column dropping if column is used by foreign key
 * Propagate column or table renaming to foreign key constraints
 * -Emit a warning at foreign key creation time if no UNIQUE index
-  exists on referenced primary key attributes (Tom)
+  exists on referenced primary key attributes
 * Add deferred trigger queue file (Jan)
 * Allow oid to act as a foreign key
 * Implement dirty reads and use them in RI triggers
