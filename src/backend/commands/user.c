@@ -20,7 +20,11 @@
 
 #include <miscadmin.h>
 #include <catalog/catname.h>
+#ifdef MB
+#include <catalog/pg_database_mb.h>
+#else
 #include <catalog/pg_database.h>
+#endif
 #include <catalog/pg_shadow.h>
 #include <libpq/crypt.h>
 #include <access/heapam.h>

@@ -1,9 +1,10 @@
 /*
- * misc conversion functions between pg_wchar and other encodings.
+ * conversion functions between pg_wchar and multi-byte streams.
  * Tatsuo Ishii
- * $Id: utils.c,v 1.4 1998/07/18 18:34:08 momjian Exp $
+ * $Id: wchar.c,v 1.1 1998/07/24 03:31:57 scrappy Exp $
  */
-#include <regex/pg_wchar.h>
+
+#include "mb/pg_wchar.h"
 
 /*
  * conversion to pg_wchar is done by "table driven."
@@ -12,11 +13,6 @@
  * supported in the client, you don't need to define 
  * mb2wchar_with_len() function (SJIS is the case).
  */
-typedef struct {
-  void	(*mb2wchar_with_len)();	/* convert a multi-byte string to a wchar */
-  int	(*mblen)();		/* returns the length of a multi-byte word */
-} pg_wchar_tbl;
-
 static void pg_euc2wchar_with_len
 (const unsigned char *from, pg_wchar *to, int len)
 {
@@ -268,7 +264,7 @@ static void pg_mule2wchar_with_len(const unsigned char *from, pg_wchar *to, int 
   *to = 0;
 }
 
-static int pg_mule_mblen(const unsigned char *s)
+int pg_mule_mblen(const unsigned char *s)
 {
   int len;
 
@@ -319,7 +315,7 @@ static int pg_sjis_mblen(const unsigned char *s)
   return(len);
 }
 
-static pg_wchar_tbl pg_wchar_table[] = {
+pg_wchar_tbl pg_wchar_table[] = {
   {pg_eucjp2wchar_with_len, pg_eucjp_mblen},
   {pg_euccn2wchar_with_len, pg_euccn_mblen},
   {pg_euckr2wchar_with_len, pg_euckr_mblen},
@@ -327,6 +323,22 @@ static pg_wchar_tbl pg_wchar_table[] = {
   {pg_utf2wchar_with_len, pg_utf_mblen},
   {pg_mule2wchar_with_len, pg_mule_mblen},
   {pg_latin12wchar_with_len, pg_latin1_mblen},
+  {pg_latin12wchar_with_len, pg_latin1_mblen},
+  {pg_latin12wchar_with_len, pg_latin1_mblen},
+  {pg_latin12wchar_with_len, pg_latin1_mblen},
+  {pg_latin12wchar_with_len, pg_latin1_mblen},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
+  {0, 0},
   {0, 0},
   {0, 0},
   {0, 0},
@@ -339,66 +351,8 @@ static pg_wchar_tbl pg_wchar_table[] = {
   {0, pg_sjis_mblen}
 };
 
-/*
- *########################################################################
- *
- * Public functions
- *
- *########################################################################
- */
-
-/* convert a multi-byte string to a wchar */
-void pg_mb2wchar(const unsigned char *from, pg_wchar *to)
-{
-  (*pg_wchar_table[MULTIBYTE].mb2wchar_with_len)(from,to,strlen(from));
-}
-
-/* convert a multi-byte string to a wchar with a limited length */
-void pg_mb2wchar_with_len(const unsigned char *from, pg_wchar *to, int len)
-{
-  (*pg_wchar_table[MULTIBYTE].mb2wchar_with_len)(from,to,len);
-}
-
-/* returns the byte length of a multi-byte word */
-int pg_mblen(const unsigned char *mbstr)
-{
-  return((*pg_wchar_table[MULTIBYTE].mblen)(mbstr));
-}
-
-/* returns the byte length of a multi-byte word for an encoding */
-int pg_encoding_mblen(int encoding, const unsigned char *mbstr)
-{
-  return((*pg_wchar_table[encoding].mblen)(mbstr));
-}
-
 /* returns the byte length of a word for mule internal code */
 int pg_mic_mblen(const unsigned char *mbstr)
 {
   return(pg_mule_mblen(mbstr));
-}
-
-/* returns the length (counted as a wchar) of a multi-byte string */
-int pg_mbstrlen(const unsigned char *mbstr)
-{
-  int len = 0;
-  while (*mbstr) {
-    mbstr += pg_mblen(mbstr);
-    len++;
-  }
-  return(len);
-}
-
-/* returns the length (counted as a wchar) of a multi-byte string 
-   (not necessarily  NULL terminated) */
-int pg_mbstrlen_with_len(const unsigned char *mbstr, int limit)
-{
-  int len = 0;
-  int l;
-  while (*mbstr && limit > 0) {
-    l = pg_mblen(mbstr);
-    limit -= l;
-    mbstr += l;
-    len++;
-  }
-  return(len);
 }

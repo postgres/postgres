@@ -2,18 +2,13 @@
  * conversion between client encoding and server internal encoding
  * (currently mule internal code (mic) is used)
  * Tatsuo Ishii
- * $Id: mbutils.c,v 1.2 1998/07/18 18:34:01 momjian Exp $
+ * $Id: conv.c,v 1.1 1998/07/24 03:31:56 scrappy Exp $
  */
 #include <stdio.h>
 #include <string.h>
 
-#include "postgres.h"
-#include "miscadmin.h"
-#include "regex/pg_wchar.h"
-#include "commands/variable.h"
+#include "mb/pg_wchar.h"
 
-static int client_encoding = MULTIBYTE;	/* defalut client encoding is set to
-					   same as the server encoding */
 /*
  * convert bogus chars that cannot be represented in the current encoding
  * system.
@@ -296,15 +291,15 @@ static void mic2euc_tw(unsigned char *mic, unsigned char *p, int len)
 }
 
 /*
- * LATIN1 ---> MIC
+ * LATINn ---> MIC
  */
-static void latin12mic(unsigned char *l, unsigned char *p, int len)
+static void latin2mic(unsigned char *l, unsigned char *p, int len, int lc)
 {
   int c1;
 
   while (len-- > 0 && (c1 = *l++)) {
     if (c1 > 0x7f) {	/* Latin1? */
-      *p++ = LC_ISO8859_1;
+      *p++ = lc;
     }
     *p++ = c1;
   }
@@ -312,16 +307,16 @@ static void latin12mic(unsigned char *l, unsigned char *p, int len)
 }
 
 /*
- * MIC ---> LATIN1
+ * MIC ---> LATINn
  */
-static void mic2latin1(unsigned char *mic, unsigned char *p, int len)
+static void mic2latin(unsigned char *mic, unsigned char *p, int len, int lc)
 {
   int c1;
 
   while (len > 0 && (c1 = *mic)) {
     len -= pg_mic_mblen(mic++);
 
-    if (c1 == LC_ISO8859_1) {
+    if (c1 == lc) {
       *p++ = *mic++;
     } else if (c1 > 0x7f) {
       mic--;
@@ -333,16 +328,48 @@ static void mic2latin1(unsigned char *mic, unsigned char *p, int len)
   *p = '\0';
 }
 
-typedef struct {
-  int encoding;		/* encoding symbol value */
-  char *name;		/* encoding name */
-  int is_client_only;	/* 0: server/client bothg supported
-			   1: client only */
-  void (*to_mic)();	/* client encoding to MIC */
-  void (*from_mic)();	/* MIC to client encoding */
-} pg_encoding_conv_tbl;
+static void latin12mic(unsigned char *l, unsigned char *p, int len)
+{
+  latin2mic(l, p, len, LC_ISO8859_1);
+}
+static void mic2latin1(unsigned char *mic, unsigned char *p, int len)
+{
+  mic2latin(mic, p, len, LC_ISO8859_1);
+}
+static void latin22mic(unsigned char *l, unsigned char *p, int len)
+{
+  latin2mic(l, p, len, LC_ISO8859_2);
+}
+static void mic2latin2(unsigned char *mic, unsigned char *p, int len)
+{
+  mic2latin(mic, p, len, LC_ISO8859_2);
+}
+static void latin32mic(unsigned char *l, unsigned char *p, int len)
+{
+  latin2mic(l, p, len, LC_ISO8859_3);
+}
+static void mic2latin3(unsigned char *mic, unsigned char *p, int len)
+{
+  mic2latin(mic, p, len, LC_ISO8859_3);
+}
+static void latin42mic(unsigned char *l, unsigned char *p, int len)
+{
+  latin2mic(l, p, len, LC_ISO8859_4);
+}
+static void mic2latin4(unsigned char *mic, unsigned char *p, int len)
+{
+  mic2latin(mic, p, len, LC_ISO8859_4);
+}
+static void latin52mic(unsigned char *l, unsigned char *p, int len)
+{
+  latin2mic(l, p, len, LC_ISO8859_5);
+}
+static void mic2latin5(unsigned char *mic, unsigned char *p, int len)
+{
+  mic2latin(mic, p, len, LC_ISO8859_5);
+}
 
-static pg_encoding_conv_tbl conv_tbl[] = {
+pg_encoding_conv_tbl pg_conv_tbl[] = {
   {EUC_JP, "EUC_JP", 0, euc_jp2mic, mic2euc_jp},	/* EUC_JP */
   {EUC_CN, "EUC_CN", 0, euc_cn2mic, mic2euc_cn},	/* EUC_CN */
   {EUC_KR, "EUC_KR", 0, euc_kr2mic, mic2euc_kr},	/* EUC_KR */
@@ -350,178 +377,10 @@ static pg_encoding_conv_tbl conv_tbl[] = {
   {UNICODE, "UNICODE", 0, 0, 0},			/* UNICODE */
   {MULE_INTERNAL, "MULE_INTERNAL", 0, 0, 0},		/* MULE_INTERNAL */
   {LATIN1, "LATIN1", 0, latin12mic, mic2latin1},	/* ISO 8859 Latin 1 */
+  {LATIN2, "LATIN2", 0, latin22mic, mic2latin2},	/* ISO 8859 Latin 2 */
+  {LATIN3, "LATIN3", 0, latin32mic, mic2latin3},	/* ISO 8859 Latin 3 */
+  {LATIN4, "LATIN4", 0, latin42mic, mic2latin4},	/* ISO 8859 Latin 4 */
+  {LATIN5, "LATIN5", 0, latin52mic, mic2latin5},	/* ISO 8859 Latin 5 */
   {SJIS, "SJIS", 1, sjis2mic, mic2sjis},		/* SJIS */
   {-1, "", 0, 0, 0}					/* end mark */
 };
-
-/*
- * find encoding table entry by encoding
- */
-static pg_encoding_conv_tbl *get_enc_ent(int encoding)
-{
-  pg_encoding_conv_tbl *p = conv_tbl;
-  for(;p->encoding >= 0;p++) {
-    if (p->encoding == encoding) {
-      return(p);
-    }
-  }
-  return(0);
-}
-
-void (*client_to_mic)();	/* something to MIC */
-void (*client_from_mic)();	/* MIC to something */
-void (*server_to_mic)();	/* something to MIC */
-void (*server_from_mic)();	/* MIC to something */
-
-/*
- * set the client encoding. if client/server encoding is
- * not supported, returns -1
- */
-int pg_set_client_encoding(int encoding)
-{
-  client_encoding = encoding;
-
-  if (client_encoding == MULTIBYTE) {	/* server == client? */
-    client_to_mic = client_from_mic = 0;
-    server_to_mic = server_from_mic = 0;
-  } else if (MULTIBYTE == MULE_INTERNAL) {	/* server == MULE_INETRNAL? */
-    client_to_mic = get_enc_ent(encoding)->to_mic;
-    client_from_mic = get_enc_ent(encoding)->from_mic;
-    server_to_mic = server_from_mic = 0;
-    if (client_to_mic == 0 || client_from_mic == 0) {
-      return(-1);
-    }
-  } else if (encoding == MULE_INTERNAL) {	/* client == MULE_INETRNAL? */
-    client_to_mic = client_from_mic = 0;
-    server_to_mic = get_enc_ent(MULTIBYTE)->to_mic;
-    server_from_mic = get_enc_ent(MULTIBYTE)->from_mic;
-    if (server_to_mic == 0 || server_from_mic == 0) {
-      return(-1);
-    }
-  } else {
-    client_to_mic = get_enc_ent(encoding)->to_mic;
-    client_from_mic = get_enc_ent(encoding)->from_mic;
-    server_to_mic = get_enc_ent(MULTIBYTE)->to_mic;
-    server_from_mic = get_enc_ent(MULTIBYTE)->from_mic;
-    if (client_to_mic == 0 || client_from_mic == 0) {
-      return(-1);
-    }
-    if (server_to_mic == 0 || server_from_mic == 0) {
-      return(-1);
-    }
-  }
-  return(0);
-}
-
-/*
- * returns the current client encoding
- */
-int pg_get_client_encoding()
-{
-  return(client_encoding);
-}
-
-/*
- * convert client encoding to server encoding
- */
-unsigned char *pg_client_to_server(unsigned char *s, int len)
-{
-  static unsigned char b1[MAX_PARSE_BUFFER*4];	/* is this enough? */
-  static unsigned char b2[MAX_PARSE_BUFFER*4];	/* is this enough? */
-  unsigned char *p;
-
-  if (client_to_mic) {
-    (*client_to_mic)(s, b1, len);
-    len = strlen(b1);
-    p = b1;
-  } else {
-    p = s;
-  }
-  if (server_from_mic) {
-    (*server_from_mic)(p, b2, len);
-    p = b2;
-  }
-  return(p);
-}
-
-/*
- * convert server encoding to client encoding
- */
-unsigned char *pg_server_to_client(unsigned char *s, int len)
-{
-  static unsigned char b1[MAX_PARSE_BUFFER*4];	/* is this enough? */
-  static unsigned char b2[MAX_PARSE_BUFFER*4];	/* is this enough? */
-  unsigned char *p;
-
-  if (server_to_mic) {
-    (*server_to_mic)(s, b1, len);
-    len = strlen(b1);
-    p = b1;
-  } else {
-    p = s;
-  }
-  if (client_from_mic) {
-    (*client_from_mic)(p, b2, len);
-    p = b2;
-  }
-  return(p);
-}
-
-/*
- * convert encoding char to encoding symbol value.
- * case is ignored.
- * if there's no valid encoding, returns -1
- */
-int pg_char_to_encoding(const char *s)
-{
-  pg_encoding_conv_tbl *p = conv_tbl;
-
-  for(;p->encoding >= 0;p++) {
-    if (!strcasecmp(s, p->name)) {
-      break;
-    }
-  }
-  return(p->encoding);
-}
-
-/*
- * check to see if encoding name is valid
- */
-int pg_valid_client_encoding(const char *name)
-{
-  return(pg_char_to_encoding(name));
-}
-
-/*
- * convert encoding symbol to encoding char.
- * if there's no valid encoding symbol, returns ""
- */
-const char *pg_encoding_to_char(int encoding)
-{
-  pg_encoding_conv_tbl *p = get_enc_ent(encoding);
-
-  if (!p) return("");
-  return(p->name);
-}
-
-#ifdef MULTIBYTEUTILSDEBUG
-#include <stdio.h>
-
-main()
-{
-  unsigned char sbuf[2048],ebuf[2048];
-  unsigned char *p = sbuf;
-
-  int c;
-  while ((c = getchar()) != EOF) {
-    *p++ = c;
-  }
-  *p = '\0';
-
-  /*
-  mic2sjis(sbuf,ebuf,2048);
-  */
-  euc_jp2mic(sbuf,ebuf,2048);
-  printf("%s",ebuf);
-}
-#endif

@@ -4,7 +4,7 @@
 #    Makefile for the bootstrap module
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.13 1998/04/06 00:22:02 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/bootstrap/Makefile,v 1.14 1998/07/24 03:31:06 scrappy Exp $
 #
 #
 # We must build bootparse.c and bootscanner.c with yacc and lex and sed,
@@ -22,6 +22,9 @@ SRCDIR= ../..
 include ../../Makefile.global
 
 CFLAGS += -I..
+ifdef MB
+CFLAGS += -DMB=$(MB)
+endif
 
 ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error

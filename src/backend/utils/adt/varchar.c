@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.36 1998/07/18 18:34:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varchar.c,v 1.37 1998/07/24 03:31:42 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,7 +21,7 @@ char	   *convertstr(char *, int, int);
 
 #endif
 
-#include "regex/pg_wchar.h"
+#include "mb/pg_wchar.h"
 
 /*
  * CHAR() and VARCHAR() types are part of the ANSI SQL standard. CHAR()

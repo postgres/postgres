@@ -4,7 +4,7 @@
 #    Makefile for parser
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.17 1998/05/13 04:54:16 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/backend/parser/Makefile,v 1.18 1998/07/24 03:31:21 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,6 +17,9 @@ ifeq ($(CC), gcc)
 CFLAGS+= -Wno-error
 endif
 
+ifdef MB
+CFLAGS+= -DMB=$(MB)
+endif
 
 OBJS= analyze.o gram.o keywords.o parser.o parse_agg.o parse_clause.o \
       parse_expr.o parse_func.o parse_node.o parse_oper.o parse_relation.o \

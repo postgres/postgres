@@ -4,7 +4,7 @@
 #    Makefile for catalog
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.10 1998/04/06 00:22:13 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Makefile,v 1.11 1998/07/24 03:31:09 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -24,11 +24,28 @@ SUBSYS.o: $(OBJS)
 
 GENBKI= ./genbki.sh
 
+ifdef MB
+GLOBALBKI_SRCS= $(addprefix ../../include/catalog/, \
+                  pg_database_mb.h pg_variable.h pg_shadow.h \
+                  pg_group.h pg_log.h \
+                 )
+else
 GLOBALBKI_SRCS= $(addprefix ../../include/catalog/, \
                   pg_database.h pg_variable.h pg_shadow.h \
                   pg_group.h pg_log.h \
                  )
+endif
 
+ifdef MB
+LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \
+                 pg_proc.h pg_type.h pg_attribute_mb.h pg_class_mb.h \
+                 pg_inherits.h pg_index.h pg_version.h pg_statistic.h \
+                 pg_operator.h pg_opclass.h pg_am.h pg_amop.h pg_amproc.h \
+                 pg_language.h pg_parg.h \
+                 pg_aggregate.h pg_ipl.h pg_inheritproc.h \
+                 pg_rewrite.h pg_listener.h pg_description.h indexing.h \
+                )
+else
 LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \
                  pg_proc.h pg_type.h pg_attribute.h pg_class.h \
                  pg_inherits.h pg_index.h pg_version.h pg_statistic.h \
@@ -37,7 +54,7 @@ LOCALBKI_SRCS= $(addprefix ../../include/catalog/, \
                  pg_aggregate.h pg_ipl.h pg_inheritproc.h \
                  pg_rewrite.h pg_listener.h pg_description.h indexing.h \
                 )
-
+endif
 global1.bki.source: $(GENBKI) $(GLOBALBKI_SRCS)
 	sh $(SHOPTS) $(GENBKI) $(BKIOPTS) $(GLOBALBKI_SRCS) > $@ 2>global1.description
 

@@ -4,7 +4,7 @@
 #    Makefile for storage/lmgr
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.6 1998/04/06 00:25:43 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/storage/lmgr/Makefile,v 1.7 1998/07/24 03:31:32 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,9 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
+ifdef MB
+CFLAGS += -DMB=$(MB)
+endif
 
 OBJS = lmgr.o lock.o multi.o proc.o single.o
 

@@ -7,7 +7,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.44 1998/06/27 04:53:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.45 1998/07/24 03:31:08 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,8 +41,13 @@
 #include "catalog/catname.h"
 #include "catalog/index.h"
 #include "catalog/pg_am.h"
+#ifdef MB
+#include "catalog/pg_attribute_mb.h"
+#include "catalog/pg_class_mb.h"
+#else
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
+#endif
 #include "catalog/pg_type.h"
 #include "executor/execdesc.h"
 #include "executor/hashjoin.h"

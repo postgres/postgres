@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.11 1998/01/05 16:38:59 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/rename.c,v 1.12 1998/07/24 03:31:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,11 @@
 #include <utils/excid.h>
 #include <utils/mcxt.h>
 #include <catalog/pg_proc.h>
+#ifdef MB
+#include <catalog/pg_class_mb.h>
+#else
 #include <catalog/pg_class.h>
+#endif
 #include <optimizer/internal.h>
 #include <optimizer/prep.h>		/* for find_all_inheritors */
 #ifndef NO_SECURITY

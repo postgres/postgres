@@ -1,9 +1,11 @@
-/* $Id: pg_wchar.h,v 1.4 1998/07/18 18:34:24 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.1 1998/07/24 03:32:24 scrappy Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
 
 #include <sys/types.h>
+#include "postgres.h"
+#include "miscadmin.h"	/* for getdatabaseencoding() */
 
 #define EUC_JP 0	/* EUC for Japanese */
 #define EUC_CN 1	/* EUC for Chinese */
@@ -16,15 +18,15 @@
 #define LATIN3 8	/* ISO-8859 Latin 3 */
 #define LATIN4 9	/* ISO-8859 Latin 4 */
 #define LATIN5 10	/* ISO-8859 Latin 5 */
+#define LATIN6 11	/* ISO-8859 Latin 6 */
+#define LATIN7 12	/* ISO-8859 Latin 7 */
+#define LATIN8 13	/* ISO-8859 Latin 8 */
+#define LATIN9 14	/* ISO-8859 Latin 9 */
 /* followings are for client encoding only */
-#define SJIS 16		/* Shift JIS */
+#define SJIS 32		/* Shift JIS */
 
-#ifdef MULTIBYTE
-# if LATIN1 <= MULTIBYTE && MULTIBYTE <= LATIN5
-typedef unsigned char pg_wchar;
-# else
+#ifdef MB
 typedef unsigned int pg_wchar;
-# endif
 #else
 #define pg_wchar char
 #endif
@@ -65,7 +67,25 @@ typedef unsigned int pg_wchar;
 #define	LC_CNS11643_6	0xf9	/* CNS 11643-1992 Plane 6 */
 #define	LC_CNS11643_7	0xfa	/* CNS 11643-1992 Plane 7 */
 
-#ifdef MULTIBYTE
+#ifdef MB
+typedef struct {
+  int encoding;		/* encoding symbol value */
+  char *name;		/* encoding name */
+  int is_client_only;	/* 0: server/client bothg supported
+			   1: client only */
+  void (*to_mic)();	/* client encoding to MIC */
+  void (*from_mic)();	/* MIC to client encoding */
+} pg_encoding_conv_tbl;
+
+extern pg_encoding_conv_tbl pg_conv_tbl[];
+
+typedef struct {
+  void	(*mb2wchar_with_len)();	/* convert a multi-byte string to a wchar */
+  int	(*mblen)();		/* returns the length of a multi-byte word */
+} pg_wchar_tbl;
+
+extern pg_wchar_tbl pg_wchar_table[];
+
 extern void pg_mb2wchar(const unsigned char *, pg_wchar *);
 extern void pg_mb2wchar_with_len(const unsigned char *, pg_wchar *, int);
 extern int pg_char_and_wchar_strcmp(const char *, const pg_wchar *);
@@ -74,9 +94,29 @@ extern int pg_char_and_wchar_strncmp(const char *, const pg_wchar *, size_t);
 extern size_t pg_wchar_strlen(const pg_wchar *);
 extern int pg_mblen(const unsigned char *);
 extern int pg_encoding_mblen(int, const unsigned char *);
+extern int pg_mule_mblen(const unsigned char *);
 extern int pg_mic_mblen(const unsigned char *);
 extern int pg_mbstrlen(const unsigned char *);
 extern int pg_mbstrlen_with_len(const unsigned char *, int);
-#endif
+extern pg_encoding_conv_tbl *pg_get_encent_by_encoding(int);
+extern bool show_client_encoding(void);
+extern bool reset_client_encoding(void);
+extern bool parse_client_encoding(const char *);
+extern bool show_server_encoding(void);
+extern bool reset_server_encoding(void);
+extern bool parse_server_encoding(const char *);
+extern int pg_set_client_encoding(int);
+extern int pg_get_client_encoding(void);
+extern unsigned char *pg_client_to_server(unsigned char *, int);
+extern unsigned char *pg_server_to_client(unsigned char *, int);
+extern int pg_valid_client_encoding(const char *);
+extern const char *pg_encoding_to_char(int);
+extern int pg_char_to_encoding(const char *);
+extern int GetDatabaseEncoding(void);
+extern void SetDatabaseEncoding(int);
+extern void SetTemplateEncoding(int);
+extern int GetTemplateEncoding(void);
 
-#endif
+#endif	/* MB */
+
+#endif	/* PG_WCHAR_H */

@@ -4,7 +4,7 @@
 #    Makefile for commands
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.13 1998/06/16 07:29:20 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/commands/Makefile,v 1.14 1998/07/24 03:31:11 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -21,10 +21,6 @@ OBJS = async.o creatinh.o command.o copy.o defind.o define.o \
        remove.o rename.o vacuum.o version.o view.o cluster.o \
        recipe.o explain.o sequence.o trigger.o user.o proclang.o \
        dbcommands.o variable.o
-
-ifdef MB
-OBJS += mbutils.o
-endif
 
 all: SUBSYS.o
 

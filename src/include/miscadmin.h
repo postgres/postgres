@@ -11,7 +11,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.27 1998/07/09 03:28:55 scrappy Exp $
+ * $Id: miscadmin.h,v 1.28 1998/07/24 03:32:13 scrappy Exp $
  *
  * NOTES
  *	  some of the information in this file will be moved to
@@ -116,13 +116,22 @@ extern char *DatabaseName;
 extern char *DatabasePath;
 
 /* in utils/misc/database.c */
+#ifdef MB
+extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path, int *encoding);
+#else
 extern void GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path);
+#endif
 extern int	GetDatabaseInfo(char *name, Oid *owner, char *path);
 extern char *ExpandDatabasePath(char *path);
 
 /* now in utils/init/miscinit.c */
 extern void SetDatabaseName(char *name);
 extern void SetDatabasePath(char *path);
+/* even if MB is not enabled, this function is neccesary
+ * since pg_proc.h does have.
+ */
+extern const char *getdatabaseencoding(void);
+
 extern char *getpgusername(void);
 extern void SetPgUserName(void);
 extern Oid	GetUserId(void);

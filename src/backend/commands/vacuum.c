@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.66 1998/07/12 04:37:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.67 1998/07/24 03:31:20 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,7 +27,11 @@
 #include "catalog/catalog.h"
 #include "catalog/catname.h"
 #include "catalog/index.h"
+#ifdef MB
+#include "catalog/pg_class_mb.h"
+#else
 #include "catalog/pg_class.h"
+#endif
 #include "catalog/pg_index.h"
 #include "catalog/pg_operator.h"
 #include "catalog/pg_statistic.h"

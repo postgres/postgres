@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.16 1998/04/26 04:05:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootparse.y,v 1.17 1998/07/24 03:31:07 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,8 +31,13 @@
 #include "bootstrap/bootstrap.h"
 #include "catalog/heap.h"
 #include "catalog/pg_am.h"
+#ifdef MB
+#include "catalog/pg_attribute_mb.h"
+#include "catalog/pg_class_mb.h"
+#else
 #include "catalog/pg_attribute.h"
 #include "catalog/pg_class.h"
+#endif
 #include "commands/defrem.h"
 #include "nodes/nodes.h"
 #include "nodes/parsenodes.h"

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_proc.h,v 1.62 1998/07/18 18:34:17 momjian Exp $
+ * $Id: pg_proc.h,v 1.63 1998/07/24 03:32:16 scrappy Exp $
  *
  * NOTES
  *	  The script catalog/genbki.sh reads this file and generates .bki
@@ -2077,12 +2077,15 @@ DESCR("trim both ends of string");
 DATA(insert OID =  885 (  btrim		   PGUID 14 f t f 1 f 25 "25" 100 0 0 100  "select btrim($1, \' \')" - ));
 DESCR("trim both ends of string");
 
+
 /* SEQUENCEs nextval & currval functions */
 DATA(insert OID =  1317 (  nextval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 DESCR("sequence next value");
 DATA(insert OID =  1319 (  currval	   PGUID 11 f t f 1 f 23 "25" 100 0 0 100  foo bar ));
 DESCR("sequence current value");
 
+/* for multi-byte support */
+DATA(insert OID = 1039 (  getdatabaseencoding	   PGUID 11 f t f 0 f 19 "0" 100 0 0 100  foo bar ));
 
 /*
  * prototypes for functions pg_proc.c

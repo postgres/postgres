@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.75 1998/07/18 18:34:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-connect.c,v 1.76 1998/07/24 03:32:33 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,6 +44,9 @@
 #include <crypt.h>
 #endif
 
+#ifdef MB
+#include "mb/pg_wchar.h"
+#endif
 
 static ConnStatusType connectDB(PGconn *conn);
 static PGconn *makeEmptyPGconn(void);
@@ -789,6 +792,34 @@ PQsetenv(PGconn *conn)
 {
 	struct EnvironmentOptions *eo;
 	char		setQuery[80];	/* mjl: size okay? XXX */
+#ifdef MB
+	char	*envname = "PGCLIENTENCODING";
+	char	envbuf[64];
+	char	*env;
+	char	*encoding = 0;
+	PGresult   *rtn;
+#endif
+
+#ifdef MB
+	/* query server encoding */
+	env = getenv(envname);
+	if (!env) {
+	  rtn = PQexec(conn, "select getdatabaseencoding()");
+	  if (rtn && PQresultStatus(rtn) == PGRES_TUPLES_OK) {
+	    encoding = PQgetvalue(rtn,0,0);
+	    if (encoding) {
+	      /* set client encoding */
+	      sprintf(envbuf,"%s=%s",envname,encoding);
+	      putenv(envbuf);
+	    }
+	    PQclear(rtn);
+	  }
+	  if (!encoding) {	/* this should not happen */
+	    sprintf(envbuf,"%s=%s",envname,pg_encoding_to_char(MB));
+	    putenv(envbuf);
+	  }
+	}
+#endif
 
 	for (eo = EnvironmentOptions; eo->envName; eo++)
 	{

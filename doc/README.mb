@@ -1,4 +1,4 @@
-postgresql 6.4 multi-byte (MB) support README	  Jun 5 1998
+postgresql 6.4 multi-byte (MB) support README	  Jul 22 1998
 
 						Tatsuo Ishii
 						t-ishii@sra.co.jp
@@ -10,7 +10,10 @@ The MB support is intended for allowing PostgreSQL to handle
 multi-byte character sets such as EUC(Extended Unix Code), Unicode and
 Mule internal code. With the MB enabled you can use multi-byte
 character sets in regexp ,LIKE and some functions. The encoding system
-chosen is determined at the compile time.
+chosen is determined when initializing your PostgreSQL installation
+using initdb(1). Note that this can be overrided when creating a
+database using createdb(1) or create database SQL command. So you
+could have multiple databases with different encoding system.
 
 MB also fixes some problems concerning with 8-bit single byte
 character sets including ISO8859. (I would not say all of problems
@@ -36,7 +39,11 @@ where encoding_system is one of:
 	EUC_TW			Taiwan EUC
 	UNICODE			Unicode(UTF-8)
 	MULE_INTERNAL		Mule internal
-	LATIN1			ISO 8859-1 English and some European laguages
+	LATIN1			ISO 8859-1 English and some European languages
+	LATIN2			ISO 8859-2 English and some European languages
+	LATIN3			ISO 8859-3 English and some European languages
+	LATIN4			ISO 8859-4 English and some European languages
+	LATIN5			ISO 8859-5 English and some European languages
 
 Example:
 
@@ -50,7 +57,28 @@ Example:
 If MB is disabled, nothing is changed except better supporting for
 8-bit single byte character sets.
 
-2. PGCLIENTENCODING
+2. How to set encoding
+
+initdb command defines the default encoding for a PostgreSQL
+installation. For example:
+
+	% initdb -e EUC_JP
+
+sets the default encoding to EUC_JP(Extended Unix Code for Japanese).
+Note that you can use "-pgencoding" instead of "-e" if you like longer
+option string:-) If no -e or -pgencoding option is given, the encoding
+specified at the compile time is used.
+
+You can create a database with a different encoding.
+
+	% createdb -E EUC_KR korean
+
+will create a database named "korean" with EUC_KR encoding. The
+another way to accomplish this is to use a SQL command:
+
+	CREATE DATABASE korean WITH ENCODING = 'EUC_KR';
+
+3. PGCLIENTENCODING
 
 If an environment variable PGCLIENTENCODING is defined on the
 frontend, automatic encoding translation is done by the backend. For
@@ -68,7 +96,11 @@ Supported encodings for PGCLIENTENCODING are:
 	EUC_KR			Korean EUC
 	EUC_TW			Taiwan EUC
 	MULE_INTERNAL		Mule internal
-	LATIN1			ISO 8859-1 English and some European laguages
+	LATIN1			ISO 8859-1 English and some European languages
+	LATIN2			ISO 8859-2 English and some European languages
+	LATIN3			ISO 8859-3 English and some European languages
+	LATIN4			ISO 8859-4 English and some European languages
+	LATIN5			ISO 8859-5 English and some European languages
 
 Note that UNICODE is not supported(yet). Also note that the
 translation is not always possible. Suppose you choose EUC_JP for the
@@ -86,7 +118,12 @@ new command:
 	SET CLIENT_ENCODING TO 'encoding';
 
 where encoding is one of the encodings those can be set to
-PGCLIENTENCODING.  To query the current the frontend encoding:
+PGCLIENTENCODING. Also you can use SQL92 syntax "SET NAMES" for this
+purpose:
+
+	SET NAMES 'encoding';
+
+To query the current the frontend encoding:
 
 	SHOW CLIENT_ENCODING;
 
@@ -114,7 +151,16 @@ Unicode: http://www.unicode.org/
 
 5. History
 
-Jun 5, 1988
+Jul 22, 1998
+	* determine encoding at initdb/createdb rather than compile time
+	* support for PGCLIENTENCODING when issuing COPY command
+	* support for SQL92 syntax "SET NAMES"
+	* support for LATIN2-5
+	* add UNICODE regression test case
+	* new test suite for MB
+	* clean up source files
+
+Jun 5, 1998
 	* add support for the encoding translation between the backend
 	  and the frontend
 	* new command SET CLIENT_ENCODING etc. added

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.15 1998/07/19 05:49:22 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.16 1998/07/24 03:31:23 scrappy Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -45,6 +45,10 @@
 #include "catalog/catname.h"
 #include "utils/elog.h"
 #include "access/xact.h"
+
+#ifdef MB
+#include "mb/pg_wchar.h"
+#endif
 
 static char saved_relname[NAMEDATALEN];  /* need this for complex attributes */
 static bool QueryIsRule = FALSE;
@@ -126,7 +130,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt
 
-%type <str>		opt_database, location
+%type <str>	opt_database1, opt_database2, location, encoding
 
 %type <pboolean> user_createdb_clause, user_createuser_clause
 %type <str>   user_passwd_clause
@@ -262,7 +266,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		GRANT, GROUP, HAVING, HOUR_P,
 		IN, INNER_P, INSERT, INTERVAL, INTO, IS,
 		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
-		MATCH, MINUTE_P, MONTH_P,
+		MATCH, MINUTE_P, MONTH_P, NAMES,
 		NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NULL_P, NUMERIC,
 		ON, OPTION, OR, ORDER, OUTER_P,
 		PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
@@ -290,7 +294,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		NEW, NONE, NOTHING, NOTNULL, OIDS, OPERATOR, PROCEDURAL,
 		RECIPE, RENAME, RESET, RETURNS, ROW, RULE,
 		SEQUENCE, SETOF, SHOW, START, STATEMENT, STDIN, STDOUT, TRUSTED, 
-		VACUUM, VERBOSE, VERSION
+		VACUUM, VERBOSE, VERSION, ENCODING
 
 /* Keywords (obsolete; retain through next version for parser - thomas 1997-12-04) */
 %token	ARCHIVE
@@ -534,6 +538,17 @@ VariableSetStmt:  SET ColId TO var_value
 					n->name  = "timezone";
 					n->value = $4;
 					$$ = (Node *) n;
+				}
+		| SET NAMES encoding
+				{
+#ifdef MB
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name  = "client_encoding";
+					n->value = $3;
+					$$ = (Node *) n;
+#else
+					elog(ERROR, "SET NAMES is not supported");
+#endif
 				}
 		;
 
@@ -2094,20 +2109,54 @@ LoadStmt:  LOAD file_name
  *
  *****************************************************************************/
 
-CreatedbStmt:  CREATE DATABASE database_name opt_database
+CreatedbStmt:  CREATE DATABASE database_name WITH opt_database1 opt_database2
+				{
+					CreatedbStmt *n = makeNode(CreatedbStmt);
+					if ($5 == NULL && $6 == NULL) {
+						elog(ERROR, "CREATE DATABASE WITH requires at least an option");
+					}
+					n->dbname = $3;
+					n->dbpath = $5;
+#ifdef MB
+					if ($6 != NULL) {
+						n->encoding = pg_char_to_encoding($6);
+						if (n->encoding < 0) {
+							elog(ERROR, "invalid encoding name %s", $6);
+						}
+					} else {
+						n->encoding = GetTemplateEncoding();
+					}
+#else
+					elog(ERROR, "WITH ENCODING is not supported");
+#endif
+					$$ = (Node *)n;
+				}
+		| CREATE DATABASE database_name
 				{
 					CreatedbStmt *n = makeNode(CreatedbStmt);
 					n->dbname = $3;
-					n->dbpath = $4;
+					n->dbpath = NULL;
+#ifdef MB
+					n->encoding = GetTemplateEncoding();
+#endif
 					$$ = (Node *)n;
 				}
 		;
 
-opt_database:  WITH LOCATION '=' location		{ $$ = $4; }
+opt_database1:  LOCATION '=' location			{ $$ = $3; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+opt_database2:  ENCODING '=' encoding			{ $$ = $3; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
 
 location:  Sconst								{ $$ = $1; }
+		| DEFAULT								{ $$ = NULL; }
+		| /*EMPTY*/								{ $$ = NULL; }
+		;
+
+encoding:  Sconst								{ $$ = $1; }
 		| DEFAULT								{ $$ = NULL; }
 		| /*EMPTY*/								{ $$ = NULL; }
 		;
@@ -4487,6 +4536,7 @@ ColId:  IDENT							{ $$ = $1; }
 		| DELIMITERS					{ $$ = "delimiters"; }
 		| DOUBLE						{ $$ = "double"; }
 		| EACH							{ $$ = "each"; }
+		| ENCODING						{ $$ = "encoding"; }
 		| FUNCTION						{ $$ = "function"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }

@@ -1,0 +1,10 @@
+common.c:	public functions for both the backend and the frontend.
+		requires conv.c and wchar.c
+conv.c:		static functions and a public table for code conversion
+wchar.c:	mostly static functions and a public table for mb string and
+		multi-byte conversion
+mbutilc.c:	public functions for the backend only.
+		requires conv.c and wchar.c
+wstrcmp.c:	strcmp for mb
+wstrncmp.c:	strncmp for mb
+varable.c:	public functions for show/set/reset variable commands

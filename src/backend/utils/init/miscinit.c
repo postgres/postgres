@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.16 1998/06/27 04:53:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.17 1998/07/24 03:31:50 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -233,6 +233,18 @@ SetDatabaseName(char *name)
 	DatabaseName = malloc(strlen(name) + 1);
 	strcpy(DatabaseName, name);
 }
+
+#ifndef MB
+/* even if MB is not enabled, this function is neccesary
+ * since pg_proc.h does have.
+ */
+const char *
+getdatabaseencoding()
+{
+  elog(ERROR, "you need to enable MB to use this function");
+  return("");
+}
+#endif
 
 #ifdef CYR_RECODE
 #define MAX_TOKEN	80

@@ -1,4 +1,4 @@
-postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
+postgresql 6.4 multi-byte (MB) support README	       1998/7/22 作成
 
 							石井達夫
 						t-ishii@sra.co.jp
@@ -9,7 +9,7 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
   PostgreSQL におけるマルチバイトサポートは以下のような特徴を持っています。
 
     1.マルチバイト文字として、日本語、中国語などの各国の EUC、Unicode、
-      mule internal code, ISO-8859-1 がコンパイル時に選択可能。
+      mule internal code, ISO-8859-1 がデータベース作成時に選択可能。
       データベースにはこのコードのまま格納されます。
     2.テーブル名にマルチバイト文字が使用可能(ただし、OS がマルチバイト
       のファイル名を許していることが必要)
@@ -23,6 +23,7 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
       がバックエンド側と異る場合に、自動的にコード変換を行ないます。
 
 インストール：
+
   デフォルトでは PostgreSQL はマルチバイトをサポートしていません。
   マルチバイトサポートを有効にする方法を説明します。
 
@@ -34,9 +35,11 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
 
   % configure --with-mb=EUC_JP
 
-  文字コードとしては EUC_JP を含め、以下のコードが指定できます。
-  (現在の実装では、文字コードはコンパイル時に決定され、実行時に
-   動的に変更することはできません)
+  文字コードとしては EUC_JP を含め、以下のコードが initdb による
+  データベース初期化時およびデータベース作成時
+  (Unix コマンドの createdb もしくは SQL の create database)
+  に指定できます。Makefile.custom あるいは configure で指定した文字コー
+  ドは initdb の省略時の文字コードになります。
 
 	EUC_JP		日本語 EUC
 	EUC_CN		GB をベースにした中文EUC。code set 2 は
@@ -48,9 +51,9 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
 			すなわち 0xffff までです。
 	MULE_INTERNAL	mule の内部コード。ただし、Type N の不定長文字は
 			サポートしていません。
-	LATIN1		ISO8859 Latin 1。シングルバイトなんですけど、
-			試しということで:-)ちなみに、LATIN2 etc. は
-			未サポート。
+	LATIN*		ISO8859 Latin シリーズ。* は 1 から 5 まで指定
+			できます。シングルバイトなんですけど、
+			試しということで:-)
 
   選択の目安としては、英語と日本語しか使わない場合は EUC_JP(同様に、中
   国語しか使わない場合は EUC_CN... などとなります)、その他の言語も使いた
@@ -69,13 +72,42 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
   http://www.sra.co.jp/people/t-ishii/PostgreSQL/ でも簡単なインストー
   ル方法を紹介しています。
 
+initdb/createdb/create database における文字コードの指定について
+
+  initdb では以下のオプションで文字コードが指定できます。
+
+	-e 文字コード
+	-pgencoding 文字コード
+
+  ここで指定した文字コードは、以後 createdb/create database で文字コードを
+  省略した場合に設定される文字コードになります。-e または -pgencoding
+  オプションを省略した場合は、Makefile.custom あるいは configure で指
+  定した文字コードが採用されます。
+
+  createdb では以下のオプションで文字コードが指定できます。
+
+	-E 文字コード
+
+  create database では以下のオプションで文字コードが指定できます。
+
+	CREATE DATABASE dbanme WITH ENCODING = '文字コード';
+
+  LOCATION を同時に指定する場合は以下のようになります。
+
+	CREATE DATABASE dbanme WITH LOCATION = 'path' ENCODING = '文字コード';
+
+  createdb/create database は、文字コード指定を省略した場合は、initdb 
+  で指定した文字コードが採用されます。
+
 環境変数 PGCLIENTENCODING について：
 
-  デフォルトでは、コンパイル時に指定したサーバ側の文字コードと、psql 
-  などのクライアント側の文字コードが一致しているものと見倣されます。サー
-  バ側と異る文字コードを使いたい場合は、環境変数 PGCLIENTENCODING を設
-  定します。設定可能な文字コードは、上記に加え、SJIS (シフトJIS)
-  が指定できます。
+  環境変数 PGCLIENTENCODING が設定されていない場合、libpq はセッション
+  開始時にサーバ側に文字コードを問い合わせ、その値を環境変数 
+  PGCLIENTENCODING に設定します。
+
+  環境変数 PGCLIENTENCODING が設定されている場合はその値が優先され、サー
+  バ側と異なる文字コードが使用できます。設定可能な文字コードは、上記に
+  加え、SJIS (シフトJIS)が指定できます。
 
 	ちなみに、SJIS は JISX0201 の 1バイトカナ、いわゆる「半角カタ
 	カナ」もサポートしています(決して「半角カタカナ」の使用をお勧
@@ -149,6 +181,18 @@ postgresql 6.3.2 multi-byte (MB) support README	       1998/5/25 作成
     ただきました。
 
 改定履歴：
+
+  1998/7/22 6.4 α向けにパッチをリリース。
+	* initdb/createdb/create database でサーバ側の文字コードを設定
+          できる機能実装。このため、システムカタログの pg_database に
+          新しいカラム encoding を追加(MBが有効な時だけ)
+	* copy が PGCLIENTENCODING に対応
+	* SQL92 の "SET NAMES" をサポート(MBが有効な時だけ)
+	* LATIN2-5 をサポート
+	* regression test に unicode のテストケースを追加
+	* MB 専用の regression テストディレクトリ test/mb を追加
+	* ソースファイルの置き場所を大幅見直し。MB 関係は
+	  include/mb, backend/utils/mb に置くようにした
 
   1998/5/25 バグ修正(mb_b3.patch として pgsql-jp ML にリリース、
 	本家では 6.4 snapshot に取り込まれる予定)	

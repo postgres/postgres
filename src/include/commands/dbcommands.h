@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dbcommands.h,v 1.2 1998/07/09 03:28:56 scrappy Exp $
+ * $Id: dbcommands.h,v 1.3 1998/07/24 03:32:19 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,7 +19,11 @@
  */
 #define SIGKILLDAEMON1	SIGTERM
 
+#ifdef MB
+extern void createdb(char *dbname, char *dbpath, int encoding);
+#else
 extern void createdb(char *dbname, char *dbpath);
+#endif
 extern void destroydb(char *dbname);
 
 #endif							/* DBCOMMANDS_H */

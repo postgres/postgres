@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.37 1998/05/09 23:28:49 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.38 1998/07/24 03:31:24 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,6 +86,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"double", DOUBLE},
 	{"drop", DROP},
 	{"each", EACH},
+	{"encoding", ENCODING},
 	{"end", END_TRANS},
 	{"execute", EXECUTE},
 	{"exists", EXISTS},
@@ -135,6 +136,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"minvalue", MINVALUE},
 	{"month", MONTH_P},
 	{"move", MOVE},
+	{"names", NAMES},
 	{"national", NATIONAL},
 	{"natural", NATURAL},
 	{"nchar", NCHAR},

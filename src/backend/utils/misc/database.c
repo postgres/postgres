@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.11 1998/07/20 16:14:18 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/Attic/database.c,v 1.12 1998/07/24 03:31:59 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,12 @@
 #include "access/heapam.h"
 #include "access/xact.h"
 #include "catalog/catname.h"
+#ifdef MB
+#include "catalog/pg_database_mb.h"
+#include "mb/pg_wchar.h"
+#else
 #include "catalog/pg_database.h"
+#endif
 #include "fmgr.h"
 #include "miscadmin.h"
 #include "storage/bufmgr.h"
@@ -179,7 +184,11 @@ ExpandDatabasePath(char *dbpath)
  * --------------------------------
  */
 void
+#ifdef MB
+GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path, int *encoding)
+#else
 GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path)
+#endif
 {
 	int			dbfd;
 	int			fileflags;
@@ -273,7 +282,9 @@ GetRawDatabaseInfo(char *name, Oid *owner, Oid *db_id, char *path)
 				strncpy(path, VARDATA(&(tup_db->datpath)),
 						(VARSIZE(&(tup_db->datpath)) - VARHDRSZ));
 				*(path + VARSIZE(&(tup_db->datpath)) - VARHDRSZ) = '\0';
-
+#ifdef MB
+				*encoding = tup_db->encoding;
+#endif
 				goto done;
 			}
 		}

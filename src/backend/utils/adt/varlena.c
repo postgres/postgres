@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.38 1998/07/18 18:34:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/varlena.c,v 1.39 1998/07/24 03:31:43 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,7 +18,7 @@
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where function declarations go */
 
-#include "regex/pg_wchar.h"
+#include "mb/pg_wchar.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

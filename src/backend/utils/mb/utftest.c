@@ -1,6 +1,6 @@
 /*
  * testing of utf2wchar()
- * $Id: utftest.c,v 1.1 1998/03/15 07:38:37 scrappy Exp $
+ * $Id: utftest.c,v 1.1 1998/07/24 03:31:57 scrappy Exp $
  */
 #include <regex/regex.h>
 #include <regex/utils.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.21 1998/06/15 19:29:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteSupport.c,v 1.22 1998/07/24 03:31:31 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -16,7 +16,11 @@
 #include "access/heapam.h"
 #include "catalog/catname.h"
 #include "catalog/indexing.h"
+#ifdef MB
+#include "catalog/pg_class_mb.h"
+#else
 #include "catalog/pg_class.h"
+#endif
 #include "catalog/pg_rewrite.h"
 #include "fmgr.h"
 #include "nodes/parsenodes.h"

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.15 1998/06/15 19:28:14 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.16 1998/07/24 03:31:15 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,11 @@
 #include "access/htup.h"
 #include "access/relscan.h"
 #include "catalog/catname.h"
+#ifdef MB
+#include "catalog/pg_database_mb.h"
+#else
 #include "catalog/pg_database.h"
+#endif
 #include "catalog/pg_shadow.h"
 #include "commands/dbcommands.h"
 #include "fmgr.h"
@@ -43,7 +47,11 @@ static HeapTuple get_pg_dbtup(char *command, char *dbname, Relation dbrel);
 static void stop_vacuum(char *dbpath, char *dbname);
 
 void
+#ifdef MB
+createdb(char *dbname, char *dbpath, int encoding)
+#else
 createdb(char *dbname, char *dbpath)
+#endif
 {
 	Oid			db_id,
 				user_id;
@@ -90,8 +98,13 @@ createdb(char *dbname, char *dbpath)
 			dbname, user_id, dbname);
 #endif
 
+#ifdef MB
+	sprintf(buf, "insert into pg_database (datname, datdba, encoding, datpath)"
+			" values (\'%s\', \'%d\', \'%d\', \'%s\');", dbname, user_id, encoding, loc);
+#else
 	sprintf(buf, "insert into pg_database (datname, datdba, datpath)"
 			" values (\'%s\', \'%d\', \'%s\');", dbname, user_id, loc);
+#endif
 
 	pg_exec_query(buf);
 }

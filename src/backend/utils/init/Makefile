@@ -4,7 +4,7 @@
 #    Makefile for utils/init
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.7 1998/04/06 00:27:07 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/init/Makefile,v 1.8 1998/07/24 03:31:49 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,9 @@ SRCDIR = ../../..
 include ../../../Makefile.global
 
 CFLAGS += -I../..
+ifdef MB
+CFLAGS += -DMB=$(MB)
+endif
 
 OBJS = enbl.o findbe.o globals.o miscinit.o postinit.o
 

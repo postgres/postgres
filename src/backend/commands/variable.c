@@ -2,7 +2,7 @@
  * Routines for handling of 'SET var TO',
  *	'SHOW var' and 'RESET var' statements.
  *
- * $Id: variable.c,v 1.8 1998/07/18 18:34:01 momjian Exp $
+ * $Id: variable.c,v 1.9 1998/07/24 03:31:20 scrappy Exp $
  *
  */
 
@@ -601,6 +601,9 @@ struct VariableParsers
 #ifdef MULTIBYTE
 	{
 		"client_encoding", parse_client_encoding, show_client_encoding, reset_client_encoding
+	},
+       {
+		"server_encoding", parse_server_encoding, show_server_encoding, reset_server_encoding
 	},
 #endif
 	{

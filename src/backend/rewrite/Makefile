@@ -4,7 +4,7 @@
 #    Makefile for rewrite
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.6 1998/04/06 00:24:49 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/backend/rewrite/Makefile,v 1.7 1998/07/24 03:31:30 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -12,6 +12,9 @@ SRCDIR = ../..
 include ../../Makefile.global
 
 CFLAGS += -I..
+ifdef MB
+CFLAGS += -DMB=$(MB)
+endif
 
 OBJS = rewriteRemove.o rewriteDefine.o \
        rewriteHandler.o rewriteManip.o rewriteSupport.o locks.o

@@ -1,8 +1,9 @@
-/*
- * Copyright (c) 1989, 1993
+/*-
+ * Copyright (c) 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from FreeBSD 2.2.1-RELEASE software.
+ * This code is derived from software contributed to Berkeley by
+ * Chris Torek.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,51 +34,15 @@
  * SUCH DAMAGE.
  */
 
-#include <regex/pg_wchar.h>
+#include <mb/pg_wchar.h>
 
 int
-pg_wchar_strncmp(s1, s2, n)
-	register const pg_wchar *s1, *s2;
-	register size_t n;
-{
-
-	if (n == 0)
-		return (0);
-	do {
-		if (*s1 != *s2++)
-			return (*(const pg_wchar *)s1 -
-				*(const pg_wchar *)(s2 - 1));
-		if (*s1++ == 0)
-			break;
-	} while (--n != 0);
-	return (0);
-}
-
-int
-pg_char_and_wchar_strncmp(s1, s2, n)
+pg_char_and_wchar_strcmp(s1, s2)
 	register const char *s1;
 	register const pg_wchar *s2;
-	register size_t n;
 {
-
-	if (n == 0)
-		return (0);
-	do {
-		if ((pg_wchar )*s1 != *s2++)
-			return (*(const pg_wchar *)s1 -
-				*(const pg_wchar *)(s2 - 1));
+	while ((pg_wchar)*s1 == *s2++)
 		if (*s1++ == 0)
-			break;
-	} while (--n != 0);
-	return (0);
-}
-
-size_t
-pg_wchar_strlen(str)
-	const pg_wchar *str;
-{
-	register const pg_wchar *s;
-
-	for (s = str; *s; ++s);
-	return(s - str);
+			return (0);
+	return (*(const unsigned char *)s1 - *(const pg_wchar *)(s2 - 1));
 }

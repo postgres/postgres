@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: psqlHelp.h,v 1.46 1998/07/18 18:34:16 momjian Exp $
+ * $Id: psqlHelp.h,v 1.47 1998/07/24 03:32:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -292,7 +292,7 @@ static struct _helpStruct QL_HELP[] = {
 	"set DateStyle to {'ISO' | 'SQL' | 'Postgres' | 'European' | 'US' | 'NonEuropean'}\n\
 set GEQO to {'ON[=#]' | 'OFF'}\n\
 set R_PLANS to {'ON' | 'OFF'}\n\
-set CLIENT_ENCODING to {'EUC_JP' | 'SJIS' | 'EUC_CN' | 'EUC_KR' | 'EUC_TW' | 'MULE_INTERNAL' | 'LATIN1'}"},
+set CLIENT_ENCODING to {'EUC_JP' | 'SJIS' | 'EUC_CN' | 'EUC_KR' | 'EUC_TW' | 'MULE_INTERNAL' | 'LATIN1' | 'LATIN2' | 'LATIN3' | 'LATIN4' | 'LATIN5'}"},
 #else
 	"set DateStyle to {'ISO' | 'SQL' | 'Postgres' | 'European' | 'US' | 'NonEuropean'}\n\
 set GEQO to {'ON[=#]' | 'OFF'}\n\
