@@ -1,7 +1,7 @@
 /* -----------------------------------------------------------------------
  * formatting.c
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.46 2001/12/05 02:06:19 ishii Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/formatting.c,v 1.47 2001/12/10 15:34:05 tgl Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -1476,7 +1476,7 @@ seq_search(char *name, char **array, int type, int max, int *len)
 		return -1;
 
 	/* set first char */
-	if (type == ONE_UPPER || ALL_UPPER)
+	if (type == ONE_UPPER || type == ALL_UPPER)
 		*name = toupper((unsigned char) *name);
 	else if (type == ALL_LOWER)
 		*name = tolower((unsigned char) *name);
@@ -2521,7 +2521,7 @@ dch_date(int arg, char *inout, int suf, int flag, FormatNode *node, void *data)
 			}
 			else if (flag == FROM_CHAR)
 			{
-				tmfc->mm = 12 - seq_search(inout, rm_months_lower, ALL_UPPER, FULL_SIZ, &len);
+				tmfc->mm = 12 - seq_search(inout, rm_months_lower, ALL_LOWER, FULL_SIZ, &len);
 				CHECK_SEQ_SEARCH(len, "rm");
 				if (S_FM(suf))
 					return len - 1;
