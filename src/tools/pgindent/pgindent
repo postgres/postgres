@@ -33,6 +33,11 @@ do
 	sed 's;\([} 	]\)else[ 	]*\(/\*.*\)$;\1else\
 \2;g' | 
 	detab -t4 -qc |
+# work around bug where function that defines no local variables misindents
+# switch() case lines and line after #else
+	sed 's,^{$,{\
+int	pgindent_func_no_var_fix;\
+,g' |
 # protect backslashes in DATA()
 	sed 's;^DATA(.*$;/*&*/;' >/tmp/$$a
 
@@ -1309,7 +1314,21 @@ do
 # workaround indent bug
 	sed 's;^static[ 	][ 	]*;static ;g' |
 	sed 's;^}[ 	][ 	]*/\*;}   /*;' |
+# pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
+# add space after comments that start on tab stops
+	sed 's,;\(/\*.*\*/\)$,;	\1,' |
+# work around #else indenting next line if #ifdef defines variables at top
+# work around case misindenting function has no variables defined
+	awk '
+	{
+		if ($0 ~ "^[ 	]*int[ 	]*pgindent_func_no_var_fix;")
+		{
+			if (getline && $0 != "")
+				print $0;
+		}
+		else 	print $0;
+	}' |
 	detab -t8 -qc |
 	entab -t4 -qc |
 # move trailing * in function return type
@@ -1372,6 +1391,30 @@ do
 				print line1;
 			if (skips <= 2)
 				print line2;
+	}' |
+# remove blank line before #endif
+	awk '
+	{	
+			line2 = $0;  
+			if (skips > 0)
+				skips--;
+			if (line1 ~ "^$" &&
+			    line2 ~ "^#endif")
+			{
+				print line2;
+				line1 = "";
+				line2 = "";
+				skips = 2;
+			}
+			else
+	 			if (skips == 0 && NR >= 2)
+					print line1;
+			line1 = line2;
+			line2 = "";
+		}
+		END {
+			if (skips <= 1)
+				print line1;
 	}' |
 #  Move prototype names to the same line as return type.  Useful for ctags. 
 #  Indent should do this, but it does not.  It formats prototypes just
