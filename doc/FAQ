@@ -335,11 +335,11 @@
    
    Features
           PostgreSQL has most features present in large commercial
-          DBMS's, like transactions, subselects, triggers, views, and
-          sophisticated locking. We have some features they don't have,
-          like user-defined types, inheritance, rules, and multi-version
-          concurrency control to reduce lock contention. We don't have
-          foreign key referential integrity or outer joins, but are
+          DBMS's, like transactions, subselects, triggers, views, foreign
+          key referential integrity, and sophisticated locking. We have
+          some features they don't have, like user-defined types,
+          inheritance, rules, and multi-version concurrency control to
+          reduce lock contention. We don't have outer joins, but are
           working on them for our next release.
           
    Performance
@@ -396,10 +396,10 @@
                                       
     2.1) Are there ODBC drivers for PostgreSQL?
     
-   There are two ODBC drivers available, PostODBC and OpenLink ODBC.
+   There are two ODBC drivers available, PsqlODBC and OpenLink ODBC.
    
-   PostODBC is included in the distribution. More information about it
-   can be gotten from: http://www.insightdist.com/psqlodbc
+   PsqlODBC is included in the distribution. More information about it
+   can be gotten from: ftp://ftp.postgresql.org/pub/odbc/index.html
    
    OpenLink ODBC can be gotten from http://www.openlinksw.com. It works
    with their standard ODBC client software so you'll have PostgreSQL
@@ -409,6 +409,8 @@
    They will probably be selling this product to people who need
    commercial-quality support, but a freeware version will always be
    available. Questions to postgres95@openlink.co.uk.
+   
+   See also the ODBC chapter of the Programmer's Guide.
    
     2.2) What tools are available for hooking PostgreSQL to Web pages?
     
@@ -972,11 +974,8 @@ BYTEA           bytea           variable-length array of bytes
    
     4.22) How do I create a column that will default to the current time?
     
-   This way always works:
+   Use now():
         CREATE TABLE test (x int, modtime timestamp default now() );
-
-   In releases 7.0 and later, you may use:
-        create table test (x int, modtime timestamp default 'now');
 
     4.23) Why are my subqueries using IN so slow?
     

@@ -434,10 +434,10 @@ reliability, support, and price.<P>
 <DD>
 
 PostgreSQL has most features present in large commercial DBMS's, like
-transactions, subselects, triggers, views, and sophisticated locking. 
-We have some features they don't have, like user-defined types,
-inheritance, rules, and multi-version concurrency control to reduce lock
-contention.  We don't have foreign key referential integrity or outer
+transactions, subselects, triggers, views, foreign key referential
+integrity, and sophisticated locking.  We have some features they don't
+have, like user-defined types, inheritance, rules, and multi-version
+concurrency control to reduce lock contention.  We don't have outer
 joins, but are working on them for our next release.<BR><BR>
 
 <DT> <B>Performance</B>
@@ -506,11 +506,11 @@ in our BSD-style license stated above.<BR><BR>
 
 <H4><A NAME="2.1">2.1</A>) Are there ODBC drivers for PostgreSQL?</H4><P>
 
-There are two ODBC drivers available, PostODBC and OpenLink ODBC.<P>
+There are two ODBC drivers available, PsqlODBC and OpenLink ODBC.<P>
 
-PostODBC is included in the distribution. More information about it can
-be gotten from: <A HREF="http://www.insightdist.com/psqlodbc">
-http://www.insightdist.com/psqlodbc</A><P>
+PsqlODBC is included in the distribution. More information about it can
+be gotten from: <A HREF="ftp://ftp.postgresql.org/pub/odbc/index.html">
+ftp://ftp.postgresql.org/pub/odbc/index.html</A><P>
 
 OpenLink ODBC can be gotten from <A HREF="http://www.openlinksw.com/">
 http://www.openlinksw.com</A>. It works with their standard ODBC client
@@ -522,6 +522,8 @@ commercial-quality support, but a freeware version will always be
 available. Questions to  <A
 HREF="mailto:postgres95@openlink.co.uk">postgres95@openlink.co.uk</A>.<P>
 
+See also the <A HREF="http://www.postgresql.org/docs/programmer/odbc.htm">
+ODBC chapter of the Programmer's Guide</A>.<P>
 
 
 <H4><A NAME="2.2">2.2</A>) What tools are available for hooking
@@ -1054,7 +1056,7 @@ you need to dump and reload the database, you need to use <I>pg_dump's -o</I>
 option or <SMALL>COPY WITH OIDS</SMALL> option to preserve the oids.<P>
 
 For more details, see Bruce Momjian's chapter on 
-<A HREF="http://www.postgresql.org/docs/aw_pgsql_book/node74.html">Numbering Rows.</A>
+<A HREF="http://www.postgresql.org/docs/aw_pgsql_book">Numbering Rows.</A>
 
 <H4><A NAME="4.16.2">4.16.2</A>) How do I get the back the generated SERIAL value after an insert?</H4><P>
 Probably the simplest approach is to to retrieve the next SERIAL value from the sequence object with the <I>nextval()</I> function <I>before</I> inserting and then insert it explicitly.  Using the example table in <A HREF="#4.16.1">4.16.1</A>, that might look like this:
