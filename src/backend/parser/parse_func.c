@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.31 1998/11/27 19:52:13 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.32 1998/12/08 06:18:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,6 +25,7 @@
 #include "catalog/pg_inherits.h"
 #include "catalog/pg_proc.h"
 #include "catalog/pg_type.h"
+#include "catalog/pg_aggregate.h"
 #include "fmgr.h"
 #include "lib/dllist.h"
 #include "miscadmin.h"
@@ -76,6 +77,8 @@ static List *setup_tlist(char *attname, Oid relid);
 static List *setup_base_tlist(Oid typeid);
 static Oid *func_select_candidate(int nargs, Oid *input_typeids,
 				CandidateList candidates);
+static int agg_get_candidates(char *aggname, Oid typeId, CandidateList *candidates);
+static Oid agg_select_candidate(Oid typeid, CandidateList candidates);
 
 #define ISCOMPLEX(type) (typeidTypeRelid(type) ? true : false)
 
@@ -129,6 +132,108 @@ ParseNestedFuncOrColumn(ParseState *pstate, Attr *attr, int *curr_resno, int pre
 
 	return retval;
 }
+
+static int
+agg_get_candidates(char *aggname,
+				   Oid typeId,
+				   CandidateList *candidates)
+{
+	CandidateList		current_candidate;
+	Relation			pg_aggregate_desc;
+	HeapScanDesc		pg_aggregate_scan;
+	HeapTuple			tup;
+	Form_pg_aggregate	agg;
+	int					ncandidates = 0;
+
+	static ScanKeyData aggKey[1] = {
+	{0, Anum_pg_aggregate_aggname, F_NAMEEQ}};
+
+	*candidates = NULL;
+
+	fmgr_info(F_NAMEEQ, (FmgrInfo *) &aggKey[0].sk_func);
+	aggKey[0].sk_argument = NameGetDatum(aggname);
+
+	pg_aggregate_desc = heap_openr(AggregateRelationName);
+	pg_aggregate_scan = heap_beginscan(pg_aggregate_desc,
+									   0,
+									   SnapshotSelf,     /* ??? */
+									   1,
+									   aggKey);
+
+	while (HeapTupleIsValid(tup = heap_getnext(pg_aggregate_scan, 0)))
+	{
+		current_candidate = (CandidateList) palloc(sizeof(struct _CandidateList));
+		current_candidate->args = (Oid *) palloc(sizeof(Oid));
+
+		agg = (Form_pg_aggregate) GETSTRUCT(tup);
+		current_candidate->args[0] = agg->aggbasetype;
+		current_candidate->next = *candidates;
+		*candidates = current_candidate;
+		ncandidates++;
+	}
+
+	heap_endscan(pg_aggregate_scan);
+	heap_close(pg_aggregate_desc);
+
+	return ncandidates;
+}	/* agg_get_candidates() */
+
+/* agg_select_candidate()
+ * Try to choose only one candidate aggregate function from a list of possibles.
+ */
+static Oid
+agg_select_candidate(Oid typeid, CandidateList candidates)
+{
+	CandidateList	current_candidate;
+	CandidateList	last_candidate;
+	Oid				current_typeid;
+	int				ncandidates;
+	CATEGORY		category,
+					current_category;
+
+/*
+ * Look for candidates which allow coersion and have a preferred type.
+ * Keep all candidates if none match.
+ */
+	category = TypeCategory(typeid);
+	ncandidates = 0;
+	last_candidate = NULL;
+	for (current_candidate = candidates;
+		 current_candidate != NULL;
+		 current_candidate = current_candidate->next)
+	{
+		current_typeid = current_candidate->args[0];
+		current_category = TypeCategory(current_typeid);
+
+		if ((current_category == category)
+			&& IsPreferredType(current_category, current_typeid)
+			&& can_coerce_type(1, &typeid, &current_typeid))
+		{
+			/* only one so far? then keep it... */
+			if (last_candidate == NULL)
+			{
+				candidates = current_candidate;
+				last_candidate = current_candidate;
+				ncandidates = 1;
+			}
+			/* otherwise, keep this one too... */
+			else
+			{
+				last_candidate->next = current_candidate;
+				last_candidate = current_candidate;
+				ncandidates++;
+			}
+		}
+		/* otherwise, don't bother keeping this one around... */
+		else
+		{
+			last_candidate->next = NULL;
+		}
+	}
+
+	return ((ncandidates == 1) ? candidates->args[0] : 0);
+}   /* agg_select_candidate() */
+
 
 /*
  * parse function
@@ -250,8 +355,11 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 			/*
 			 * Parsing aggregates.
 			 */
-			Type		tp;
-			Oid			basetype;
+			Type			tp;
+			Oid				basetype;
+			int				ncandidates;
+			CandidateList	candidates;
+
 
 			/*
 			 * the aggregate COUNT is a special case, ignore its base
@@ -261,6 +369,8 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 				basetype = 0;
 			else
 				basetype = exprType(lfirst(fargs));
+
+			/* try for exact match first... */
 			if (SearchSysCacheTuple(AGGNAME,
 									PointerGetDatum(funcname),
 									ObjectIdGetDatum(basetype),
@@ -269,15 +379,46 @@ ParseFuncOrColumn(ParseState *pstate, char *funcname, List *fargs,
 										 fargs, precedence);
 
 			/*
+			 * No exact match yet, so see if there is another entry
+			 * in the aggregate table which is compatible.
+			 * - thomas 1998-12-05
+			 */
+			ncandidates = agg_get_candidates(funcname, basetype, &candidates);
+			if (ncandidates > 0)
+			{
+				Oid		type;
+
+				type = agg_select_candidate(basetype, candidates);
+				if (OidIsValid(type))
+				{
+					lfirst(fargs) = coerce_type(pstate, lfirst(fargs), basetype, type);
+					basetype = type;
+
+					return (Node *) ParseAgg(pstate, funcname, basetype,
+											 fargs, precedence);
+				}
+				else
+				{
+					elog(ERROR,"Unable to select an aggregate function for type %s",
+						 typeidTypeName(basetype));
+				}
+			}
+
+			/*
 			 * See if this is a single argument function with the function
 			 * name also a type name and the input argument and type name
 			 * binary compatible...
+			 * This means that you are trying for a type conversion which does not
+			 * need to take place, so we'll just pass through the argument itself.
+			 * (make this clearer with some extra brackets - thomas 1998-12-05)
 			 */
 			if ((HeapTupleIsValid(tp = SearchSysCacheTuple(TYPNAME,
-											   PointerGetDatum(funcname),
+														   PointerGetDatum(funcname),
 														   0, 0, 0)))
 				&& IS_BINARY_COMPATIBLE(typeTypeId(tp), basetype))
+			{
 				return ((Node *) lfirst(fargs));
+			}
 		}
 	}
 

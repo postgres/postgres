@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.14 1998/09/09 03:48:17 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_agg.c,v 1.15 1998/12/08 06:18:56 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,6 +27,7 @@
 #include "parser/parse_expr.h"
 #include "parser/parse_node.h"
 #include "parser/parse_target.h"
+#include "parser/parse_coerce.h"
 #include "utils/syscache.h"
 #include "utils/lsyscache.h"
 
@@ -149,7 +150,7 @@ tleIsAggOrGroupCol(TargetEntry *tle, List *groupClause)
 		if (tle->resdom->resno == grpcl->entry->resdom->resno)
 		{
 			if (contain_agg_clause((Node *) expr))
-				elog(ERROR, "parser: aggregates not allowed in GROUP BY clause");
+				elog(ERROR, "Aggregates not allowed in GROUP BY clause");
 			return TRUE;
 		}
 	}
@@ -189,7 +190,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 	 * non-group column in target list may fail.)
 	 */
 	if (contain_agg_clause(qry->qual))
-		elog(ERROR, "parser: aggregates not allowed in WHERE clause");
+		elog(ERROR, "Aggregates not allowed in WHERE clause");
 
 	/*
 	 * the target list can only contain aggregates, group columns and
@@ -201,7 +202,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 		if (!tleIsAggOrGroupCol(tle, qry->groupClause))
 			elog(ERROR,
-				 "parser: illegal use of aggregates or non-group column in target list");
+				 "Illegal use of aggregates or non-group column in target list");
 	}
 
 	/*
@@ -211,7 +212,7 @@ parseCheckAggregates(ParseState *pstate, Query *qry)
 
 	if (!exprIsAggOrGroupCol(qry->havingQual, qry->groupClause))
 		elog(ERROR,
-			 "parser: illegal use of aggregates or non-group column in HAVING clause");
+			 "Illegal use of aggregates or non-group column in HAVING clause");
 	return;
 }
 
@@ -233,7 +234,7 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 									  ObjectIdGetDatum(basetype),
 									  0, 0);
 	if (!HeapTupleIsValid(theAggTuple))
-		elog(ERROR, "aggregate %s does not exist", aggname);
+		elog(ERROR, "Aggregate %s does not exist", aggname);
 
 	/*
 	 * We do a major hack for count(*) here.
@@ -309,16 +310,17 @@ ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		else
 			vartype = ((Expr *) lfirst(target))->typeOid;
 
-		if (basetype != vartype)
+		if ((basetype != vartype)
+			&& (! IS_BINARY_COMPATIBLE(basetype, vartype)))
 		{
 			Type		tp1,
 						tp2;
 
 			tp1 = typeidType(basetype);
 			tp2 = typeidType(vartype);
-			elog(NOTICE, "Aggregate type mismatch:");
-			elog(ERROR, "%s works on %s, not %s", aggname,
-				 typeTypeName(tp1), typeTypeName(tp2));
+			elog(ERROR, "Aggregate type mismatch"
+						"\n\t%s() works on %s, not on %s",
+						 aggname, typeTypeName(tp1), typeTypeName(tp2));
 		}
 	}
 

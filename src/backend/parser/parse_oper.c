@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.21 1998/11/27 19:52:14 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_oper.c,v 1.22 1998/12/08 06:18:57 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -210,6 +210,7 @@ oper_select_candidate(int nargs,
 				nmatch++;
 		}
 
+		/* take this one as the best choice so far? */
 		if ((nmatch > nbestMatch) || (last_candidate == NULL))
 		{
 			nbestMatch = nmatch;
@@ -217,12 +218,14 @@ oper_select_candidate(int nargs,
 			last_candidate = current_candidate;
 			ncandidates = 1;
 		}
+		/* no worse than the last choice, so keep this one too? */
 		else if (nmatch == nbestMatch)
 		{
 			last_candidate->next = current_candidate;
 			last_candidate = current_candidate;
 			ncandidates++;
 		}
+		/* otherwise, don't bother keeping this one... */
 		else
 		{
 			last_candidate->next = NULL;
