@@ -39,11 +39,6 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	// Some performance caches
 	private StringBuffer sbuf = new StringBuffer();
 
-	// We use ThreadLocal for SimpleDateFormat's because they are not that
-	// thread safe, so each calling thread has its own object.
-	private static ThreadLocal tl_df = new ThreadLocal(); // setDate() SimpleDateFormat
-	private static ThreadLocal tl_tsdf = new ThreadLocal(); // setTimestamp() SimpleDateFormat
-
 	/*
 	 * Constructor for the PreparedStatement class.
 	 * Split the SQL statement into segments - separated by the arguments.
@@ -355,24 +350,8 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 		}
 		else
 		{
-			SimpleDateFormat df = (SimpleDateFormat) tl_df.get();
-			if (df == null)
-			{
-				df = new SimpleDateFormat("''yyyy-MM-dd''");
-				tl_df.set(df);
-			}
-			set(parameterIndex, df.format(x));
+			set(parameterIndex, "'" + x.toString() + "'");
 		}
-		// The above is how the date should be handled.
-		//
-		// However, in JDK's prior to 1.1.6 (confirmed with the
-		// Linux jdk1.1.3 and the Win95 JRE1.1.5), SimpleDateFormat seems
-		// to format a date to the previous day. So the fix is to add a day
-		// before formatting.
-		//
-		// PS: 86400000 is one day
-		//
-		//set(parameterIndex, df.format(new java.util.Date(x.getTime()+86400000)));
 	}
 
 	/*
@@ -410,36 +389,75 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 			setNull(parameterIndex, Types.OTHER);
 		}
 		else
-		{
-			SimpleDateFormat df = (SimpleDateFormat) tl_tsdf.get();
-			if (df == null)
-			{
-				df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-				df.setTimeZone(TimeZone.getTimeZone("GMT"));
-				tl_tsdf.set(df);
-			}
-
-			// Make decimal from nanos.
-			StringBuffer decimal = new StringBuffer("000000000");	// max nanos length
-			String nanos = String.valueOf(x.getNanos());
-                        decimal.setLength(decimal.length() - nanos.length());
-			decimal.append(nanos);
-			if (! connection.haveMinimumServerVersion("7.2")) {
-				// Because 7.1 include bug that "hh:mm:59.999" becomes "hh:mm:60.00".
-				decimal.setLength(2);
-			}
-
+		    {
 			// Use the shared StringBuffer
 			synchronized (sbuf)
 			{
 				sbuf.setLength(0);
-				sbuf.append("'").append(df.format(x)).append('.').append(decimal).append("+00'");
+				sbuf.append("'");
+                                //format the timestamp
+                                //we do our own formating so that we can get a format
+                                //that works with both timestamp with time zone and
+                                //timestamp without time zone datatypes.
+                                //The format is '2002-01-01 23:59:59.123456-0130'
+                                //we need to include the local time and timezone offset
+                                //so that timestamp without time zone works correctly
+		                int l_year = x.getYear() + 1900;
+                                sbuf.append(l_year);
+                                sbuf.append('-');
+		                int l_month = x.getMonth() + 1;
+                                if (l_month < 10) sbuf.append('0');
+                                sbuf.append(l_month);
+                                sbuf.append('-');
+		                int l_day = x.getDate();
+                                if (l_day < 10) sbuf.append('0');
+                                sbuf.append(l_day);
+                                sbuf.append(' ');
+		                int l_hours = x.getHours();
+                                if (l_hours < 10) sbuf.append('0');
+                                sbuf.append(l_hours);
+                                sbuf.append(':');
+		                int l_minutes = x.getMinutes();
+                                if (l_minutes < 10) sbuf.append('0');
+                                sbuf.append(l_minutes);
+                                sbuf.append(':');
+                                int l_seconds = x.getSeconds();
+                                if (l_seconds < 10) sbuf.append('0');
+                                sbuf.append(l_seconds);
+                                // Make decimal from nanos.
+                                char[] l_decimal = {'0','0','0','0','0','0','0','0','0'};
+                                char[] l_nanos = Integer.toString(x.getNanos()).toCharArray();
+                                System.arraycopy(l_nanos, 0, l_decimal, l_decimal.length - l_nanos.length, l_nanos.length);
+                                sbuf.append('.');
+                                if (connection.haveMinimumServerVersion("7.2")) {
+                                  sbuf.append(l_decimal,0,6);
+                                } else {
+                                  // Because 7.1 include bug that "hh:mm:59.999" becomes "hh:mm:60.00".
+                                  sbuf.append(l_decimal,0,2);
+                                }
+                                //add timezone offset
+                                int l_offset = -(x.getTimezoneOffset());
+                                int l_houros = l_offset/60;
+                                if (l_houros >= 0) {
+                                  sbuf.append('+');
+                                } else {
+                                  sbuf.append('-');
+                                }
+                                if (l_houros > -10 && l_houros < 10) sbuf.append('0');
+                                if (l_houros >= 0) {
+                                  sbuf.append(l_houros);
+                                } else {
+                                  sbuf.append(-l_houros);
+                                }
+                                int l_minos = l_offset - (l_houros *60);
+                                if (l_minos != 0) {
+                                  if (l_minos < 10) sbuf.append('0');
+                                  sbuf.append(l_minos);
+                                }
+				sbuf.append("'");
 				set(parameterIndex, sbuf.toString());
 			}
 
-			// The above works, but so does the following. I'm leaving the above in, but this seems
-			// to be identical. Pays to read the docs ;-)
-			//set(parameterIndex,"'"+x.toString()+"'");
 		}
 	}
 
