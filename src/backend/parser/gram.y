@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.76 1997/12/04 00:26:57 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.77 1997/12/04 23:07:23 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -39,6 +39,7 @@
 #include "nodes/parsenodes.h"
 #include "nodes/print.h"
 #include "parser/gramparse.h"
+#include "parser/parse_type.h"
 #include "utils/acl.h"
 #include "utils/palloc.h"
 #include "catalog/catname.h"
@@ -91,8 +92,6 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 	Attr				*attr;
 
-	ColumnDef			*coldef;
-	ConstraintDef		*constrdef;
 	TypeName			*typnam;
 	DefElem				*defelt;
 	ParamString			*param;
@@ -149,8 +148,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <chr>		operation, TriggerOneEvent
 
 %type <list>	stmtblock, stmtmulti,
-		relation_name_list, OptTableElementList, tableElementList,
-		OptInherit, OptConstraint, ConstraintList, definition,
+		relation_name_list, OptTableElementList,
+		OptInherit, definition,
 		opt_with, def_args, def_name_list, func_argtypes,
 		oper_argtypes, OptStmtList, OptStmtBlock, OptStmtMulti,
 		opt_column_list, columnList, opt_va_list, va_list,
@@ -184,7 +183,8 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <dstmt>	def_rest
 %type <astmt>	insert_rest
 
-%type <coldef>	columnDef, alter_clause
+%type <node>	OptTableElement, ConstraintElem
+%type <node>	columnDef, alter_clause
 %type <defelt>	def_elem
 %type <node>	def_arg, columnElem, where_clause,
 				a_expr, a_expr_or_null, AexprConst,
@@ -211,12 +211,11 @@ Oid	param_type(int t); /* used in parse_expr.c */
 %type <str>		Id, var_value, zone_value
 %type <str>		ColId, ColLabel
 
-%type <constrdef>	ConstraintElem, ConstraintDef
-
-%type <list>	constraint_elem
+%type <node>	TableConstraint
+%type <list>	constraint_expr
 %type <list>	default_expr
-%type <str>		opt_default
-%type <boolean>	opt_constraint
+%type <list>	ColQualList
+%type <node>	ColConstraint, ColConstraintElem
 %type <list>	key_actions, key_action
 %type <str>		key_match, key_reference
 
@@ -236,7 +235,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ACTION, ADD, ALL, ALTER, AND, ARCHIVE, AS, ASC,
+%token	ACTION, ADD, ALL, ALTER, AND, AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
@@ -275,6 +274,9 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		RECIPE, RENAME, REPLACE, RESET, RETRIEVE, RETURNS, RULE,
 		SEQUENCE, SETOF, SHOW, STDIN, STDOUT, TRUSTED, 
 		VACUUM, VERBOSE, VERSION
+
+/* Keywords (obsolete; retain temporarily for parser - thomas 1997-12-04) */
+%token	ARCHIVE
 
 /*
  * Tokens for pg_passwd support.  The CREATEDB and CREATEUSER tokens should go away
@@ -566,9 +568,9 @@ alter_clause:  ADD opt_column columnDef
 				{
 					$$ = $3;
 				}
-			| ADD '(' tableElementList ')'
+			| ADD '(' OptTableElementList ')'
 				{
-					ColumnDef *lp = lfirst($3);
+					Node *lp = lfirst($3);
 
 					if (length($3) != 1)
 						elog(WARN,"ALTER TABLE/ADD() allows one column only",NULL);
@@ -576,136 +578,12 @@ alter_clause:  ADD opt_column columnDef
 				}
 			| DROP opt_column ColId
 				{	elog(WARN,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
-			| ALTER opt_column ColId SET opt_default
+			| ALTER opt_column ColId SET DEFAULT default_expr
 				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented",NULL); }
 			| ALTER opt_column ColId DROP DEFAULT
 				{	elog(WARN,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented",NULL); }
 			| ADD ConstraintElem
 				{	elog(WARN,"ALTER TABLE/ADD CONSTRAINT not yet implemented",NULL); }
-		;
-
-columnDef:  ColId Typename opt_default opt_constraint
-				{
-					$$ = makeNode(ColumnDef);
-					$$->colname = $1;
-					$$->typename = $2;
-					$$->defval = $3;
-					$$->is_not_null = $4;
-				}
-		;
-
-opt_default:  DEFAULT default_expr
-				{
-					$$ = FlattenStringList($2);
-				}
-			| /*EMPTY*/		{ $$ = NULL; }
-	;
-
-default_expr:  AexprConst
-				{	$$ = makeConstantList((A_Const *) $1); }
-			| Pnull
-				{	$$ = lcons( makeString("NULL"), NIL); }
-			| '-' default_expr %prec UMINUS
-				{	$$ = lcons( makeString( "-"), $2); }
-			| default_expr '+' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
-			| default_expr '-' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
-			| default_expr '/' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
-			| default_expr '*' default_expr
-				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
-			| default_expr '=' default_expr
-				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
-			| default_expr '<' default_expr
-				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
-			| default_expr '>' default_expr
-				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
-			| ':' default_expr
-				{	$$ = lcons( makeString( ":"), $2); }
-			| ';' default_expr
-				{	$$ = lcons( makeString( ";"), $2); }
-			| '|' default_expr
-				{	$$ = lcons( makeString( "|"), $2); }
-			| default_expr TYPECAST Typename
-				{
-					$3->name = fmtId($3->name);
-					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
-				}
-			| CAST default_expr AS Typename
-				{
-					$4->name = fmtId($4->name);
-					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
-				}
-			| '(' default_expr ')'
-				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| name '(' default_expr ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = nconc( $$, $3);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| name '(' ')'
-				{
-					$$ = makeList( makeString($1), makeString("("), -1);
-					$$ = lappend( $$, makeString(")"));
-				}
-			| default_expr Op default_expr
-				{
-					if (!strcmp("<=", $2) || !strcmp(">=", $2))
-						elog(WARN,"boolean expressions not supported in DEFAULT",NULL);
-					$$ = nconc( $1, lcons( makeString( $2), $3));
-				}
-			| Op default_expr
-				{	$$ = lcons( makeString( $1), $2); }
-			| default_expr Op
-				{	$$ = lappend( $1, makeString( $2)); }
-			/* XXX - thomas 1997-10-07 v6.2 function-specific code to be changed */
-			| CURRENT_DATE
-				{	$$ = lcons( makeString( "date( 'current'::datetime + '0 sec')"), NIL); }
-			| CURRENT_TIME
-				{	$$ = lcons( makeString( "'now'::time"), NIL); }
-			| CURRENT_TIME '(' Iconst ')'
-				{
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIME(p) precision must be zero",NULL);
-					$$ = lcons( makeString( "'now'::time"), NIL);
-				}
-			| CURRENT_TIMESTAMP
-				{	$$ = lcons( makeString( "now()"), NIL); }
-			| CURRENT_TIMESTAMP '(' Iconst ')'
-				{
-					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIMESTAMP(p) precision must be zero",NULL);
-					$$ = lcons( makeString( "now()"), NIL);
-				}
-			| CURRENT_USER
-				{	$$ = lcons( makeString( "CURRENT_USER"), NIL); }
-		;
-
-opt_constraint:  NOT NULL_P						{ $$ = TRUE; }
-			| NOT NULL_P UNIQUE
-				{
-					elog(NOTICE,"UNIQUE clause ignored; not yet implemented",NULL);
-					$$ = TRUE;
-				}
-			| NOTNULL							{ $$ = TRUE; }
-			| UNIQUE
-				{
-					elog(NOTICE,"UNIQUE clause ignored; not yet implemented",NULL);
-					$$ = FALSE;
-				}
-			| PRIMARY KEY
-				{
-					elog(NOTICE,"PRIMARY KEY clause ignored; not yet implemented",NULL);
-					$$ = FALSE;
-				}
-			| REFERENCES ColId opt_column_list key_match key_actions
-				{
-					elog(NOTICE,"FOREIGN KEY clause ignored; not yet implemented",NULL);
-					$$ = FALSE;
-				}
-			| /* EMPTY */						{ $$ = FALSE; }
 		;
 
 
@@ -786,141 +664,318 @@ copy_delimiter:  USING DELIMITERS Sconst { $$ = $3;}
  *****************************************************************************/
 
 CreateStmt:  CREATE TABLE relation_name '(' OptTableElementList ')'
-				OptInherit OptConstraint OptArchiveType
+				OptInherit OptArchiveType
 				{
 					CreateStmt *n = makeNode(CreateStmt);
 					n->relname = $3;
 					n->tableElts = $5;
 					n->inhRelnames = $7;
-					n->constraints = $8;
+					n->constraints = NIL;
 					$$ = (Node *)n;
 				}
 		;
 
-OptTableElementList:  tableElementList			{ $$ = $1; }
-		| /* EMPTY */							{ $$ = NULL; }
+OptTableElementList:  OptTableElementList ',' OptTableElement
+												{ $$ = lappend($1, $3); }
+			| OptTableElement					{ $$ = lcons($1, NIL); }
+			| /*EMPTY*/							{ $$ = NULL; }
 		;
 
-tableElementList :
-		  tableElementList ',' columnDef
-				{ $$ = lappend($1, $3); }
-		| columnDef
-				{ $$ = lcons($1, NIL); }
+OptTableElement:  columnDef						{ $$ = $1; }
+			| TableConstraint					{ $$ = $1; }
 		;
 
-/*
- *	This was removed in 6.3, but we keep it so people can upgrade
- *	with old pg_dump scripts.
- */
-OptArchiveType:  ARCHIVE '=' NONE						{ }
-		| /*EMPTY*/										{ }
-		;
-
-OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
-		| /*EMPTY*/										{ $$ = NIL; }
-		;
-
-OptConstraint:	ConstraintList							{ $$ = $1; }
-		| /*EMPTY*/										{ $$ = NULL; }
-		;
-
-ConstraintList:
-		  ConstraintList ',' ConstraintElem
-				{ $$ = lappend($1, $3); }
-		| ConstraintElem
-				{ $$ = lcons($1, NIL); }
-		;
-
-ConstraintElem:
-		CONSTRAINT name ConstraintDef
+columnDef:  ColId Typename ColQualList
 				{
-						$3->name = fmtId($2);
+					ColumnDef *n = makeNode(ColumnDef);
+					n->colname = $1;
+					n->typename = $2;
+					n->defval = NULL;
+					n->is_not_null = FALSE;
+					n->constraints = $3;
+					$$ = (Node *)n;
+				}
+		;
+
+/* ColQualList decodes column-specific qualifiers.
+ * Seem to need to specify the explicit combinations
+ *  to eliminate reduce/reduce conflicts.
+ * I think this is because there are no explicit delimiters
+ *  (like commas) between clauses.
+ * - thomas 1997-12-03
+ */
+ColQualList:  ColConstraint ColConstraint ColConstraint ColConstraint
+				{ $$ = lappend(lappend(lappend(lcons($1, NIL), $2), $3), $4); }
+			| ColConstraint ColConstraint ColConstraint
+				{ $$ = lappend(lappend(lcons($1, NIL), $2), $3); }
+			| ColConstraint ColConstraint		{ $$ = lappend(lcons($1, NIL), $2); }
+			| ColConstraint						{ $$ = lcons($1, NIL); }
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
+
+ColConstraint:
+		CONSTRAINT name ColConstraintElem
+				{
+						Constraint *n = (Constraint *)$3;
+						n->name = fmtId($2);
 						$$ = $3;
 				}
-		| ConstraintDef			{ $$ = $1; }
+		| ColConstraintElem
+				{ $$ = $1; }
 		;
 
-ConstraintDef:	CHECK constraint_elem
+ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
-					ConstraintDef *constr = palloc (sizeof(ConstraintDef));
-					constr->type = CONSTR_CHECK;
-					constr->name = NULL;
-					constr->def = FlattenStringList($2);
-					$$ = constr;
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_CHECK;
+					n->name = NULL;
+					n->def = FlattenStringList($3);
+					n->keys = NULL;
+					$$ = (Node *)n;
 				}
-		| UNIQUE '(' columnList ')'
-				{	elog(NOTICE,"CREATE TABLE/UNIQUE clause ignored; not yet implemented",NULL); }
-		| PRIMARY KEY '(' columnList ')'
-				{	elog(NOTICE,"CREATE TABLE/PRIMARY KEY clause ignored; not yet implemented",NULL); }
-		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
-				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL); }
+			| DEFAULT default_expr
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_DEFAULT;
+					n->name = NULL;
+					n->def = FlattenStringList($2);
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| NOT NULL_P
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_NOTNULL;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| NOTNULL
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_NOTNULL;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| UNIQUE
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_UNIQUE;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| PRIMARY KEY
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = NULL;
+					$$ = (Node *)n;
+				}
+			| REFERENCES ColId opt_column_list key_match key_actions
+				{
+					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL);
+					$$ = NULL;
+				}
 		;
 
-constraint_elem:  AexprConst
+default_expr:  AexprConst
 				{	$$ = makeConstantList((A_Const *) $1); }
-			| Pnull
+			| NULL_P
 				{	$$ = lcons( makeString("NULL"), NIL); }
-			| ColId
-				{
-					$$ = lcons( makeString(fmtId($1)), NIL);
-				}
-			| '-' constraint_elem %prec UMINUS
+			| '-' default_expr %prec UMINUS
 				{	$$ = lcons( makeString( "-"), $2); }
-			| constraint_elem '+' constraint_elem
+			| default_expr '+' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
-			| constraint_elem '-' constraint_elem
+			| default_expr '-' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
-			| constraint_elem '/' constraint_elem
+			| default_expr '/' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
-			| constraint_elem '*' constraint_elem
+			| default_expr '*' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
-			| constraint_elem '=' constraint_elem
-				{	$$ = nconc( $1, lcons( makeString( "="), $3)); }
-			| constraint_elem '<' constraint_elem
-				{	$$ = nconc( $1, lcons( makeString( "<"), $3)); }
-			| constraint_elem '>' constraint_elem
-				{	$$ = nconc( $1, lcons( makeString( ">"), $3)); }
-			| ':' constraint_elem
+			| default_expr '=' default_expr
+				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+			| default_expr '<' default_expr
+				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+			| default_expr '>' default_expr
+				{	elog(WARN,"boolean expressions not supported in DEFAULT",NULL); }
+			| ':' default_expr
 				{	$$ = lcons( makeString( ":"), $2); }
-			| ';' constraint_elem
+			| ';' default_expr
 				{	$$ = lcons( makeString( ";"), $2); }
-			| '|' constraint_elem
+			| '|' default_expr
 				{	$$ = lcons( makeString( "|"), $2); }
-			| constraint_elem TYPECAST Typename
+			| default_expr TYPECAST Typename
 				{
 					$3->name = fmtId($3->name);
 					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
 				}
-			| CAST constraint_elem AS Typename
+			| CAST default_expr AS Typename
 				{
 					$4->name = fmtId($4->name);
 					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
 				}
-			| '(' constraint_elem ')'
+			| '(' default_expr ')'
 				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
-			| name '(' constraint_elem ')'
+			| name '(' default_expr ')'
 				{
 					$$ = makeList( makeString($1), makeString("("), -1);
 					$$ = nconc( $$, $3);
 					$$ = lappend( $$, makeString(")"));
 				}
-			| constraint_elem Op constraint_elem
-				{	$$ = nconc( $1, lcons( makeString( $2), $3)); }
-			| constraint_elem AND constraint_elem
-				{	$$ = nconc( $1, lcons( makeString( "AND"), $3)); }
-			| constraint_elem OR constraint_elem
-				{	$$ = nconc( $1, lcons( makeString( "OR"), $3)); }
-			| Op constraint_elem
+			| name '(' ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| default_expr Op default_expr
+				{
+					if (!strcmp("<=", $2) || !strcmp(">=", $2))
+						elog(WARN,"boolean expressions not supported in DEFAULT",NULL);
+					$$ = nconc( $1, lcons( makeString( $2), $3));
+				}
+			| Op default_expr
 				{	$$ = lcons( makeString( $1), $2); }
-			| constraint_elem Op
+			| default_expr Op
 				{	$$ = lappend( $1, makeString( $2)); }
-			| constraint_elem IS TRUE_P
+			/* XXX - thomas 1997-10-07 v6.2 function-specific code to be changed */
+			| CURRENT_DATE
+				{	$$ = lcons( makeString( "date( 'current'::datetime + '0 sec')"), NIL); }
+			| CURRENT_TIME
+				{	$$ = lcons( makeString( "'now'::time"), NIL); }
+			| CURRENT_TIME '(' Iconst ')'
+				{
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
+					$$ = lcons( makeString( "'now'::time"), NIL);
+				}
+			| CURRENT_TIMESTAMP
+				{	$$ = lcons( makeString( "now()"), NIL); }
+			| CURRENT_TIMESTAMP '(' Iconst ')'
+				{
+					if ($3 != 0)
+						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
+					$$ = lcons( makeString( "now()"), NIL);
+				}
+			| CURRENT_USER
+				{	$$ = lcons( makeString( "CURRENT_USER"), NIL); }
+		;
+
+/* ConstraintElem specifies constraint syntax which is not embedded into
+ *  a column definition. ColConstraintElem specifies the embedded form.
+ * - thomas 1997-12-03
+ */
+TableConstraint:  CONSTRAINT name ConstraintElem
+				{
+						Constraint *n = (Constraint *)$3;
+						n->name = fmtId($2);
+						$$ = $3;
+				}
+		| ConstraintElem
+				{ $$ = $1; }
+		;
+
+ConstraintElem:  CHECK '(' constraint_expr ')'
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_CHECK;
+					n->name = NULL;
+					n->def = FlattenStringList($3);
+					$$ = (Node *)n;
+				}
+		| UNIQUE '(' columnList ')'
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_UNIQUE;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = $3;
+					$$ = (Node *)n;
+				}
+		| PRIMARY KEY '(' columnList ')'
+				{
+					Constraint *n = makeNode(Constraint);
+					n->contype = CONSTR_PRIMARY;
+					n->name = NULL;
+					n->def = NULL;
+					n->keys = $4;
+					$$ = (Node *)n;
+				}
+		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
+				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL); }
+		;
+
+constraint_expr:  AexprConst
+				{	$$ = makeConstantList((A_Const *) $1); }
+			| NULL_P
+				{	$$ = lcons( makeString("NULL"), NIL); }
+			| ColId
+				{
+					$$ = lcons( makeString(fmtId($1)), NIL);
+				}
+			| '-' constraint_expr %prec UMINUS
+				{	$$ = lcons( makeString( "-"), $2); }
+			| constraint_expr '+' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "+"), $3)); }
+			| constraint_expr '-' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "-"), $3)); }
+			| constraint_expr '/' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "/"), $3)); }
+			| constraint_expr '*' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
+			| constraint_expr '=' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "="), $3)); }
+			| constraint_expr '<' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "<"), $3)); }
+			| constraint_expr '>' constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( ">"), $3)); }
+			| ':' constraint_expr
+				{	$$ = lcons( makeString( ":"), $2); }
+			| ';' constraint_expr
+				{	$$ = lcons( makeString( ";"), $2); }
+			| '|' constraint_expr
+				{	$$ = lcons( makeString( "|"), $2); }
+			| constraint_expr TYPECAST Typename
+				{
+					$3->name = fmtId($3->name);
+					$$ = nconc( lcons( makeString( "CAST"), $1), makeList( makeString("AS"), $3, -1));
+				}
+			| CAST constraint_expr AS Typename
+				{
+					$4->name = fmtId($4->name);
+					$$ = nconc( lcons( makeString( "CAST"), $2), makeList( makeString("AS"), $4, -1));
+				}
+			| '(' constraint_expr ')'
+				{	$$ = lappend( lcons( makeString( "("), $2), makeString( ")")); }
+			| name '(' constraint_expr ')'
+				{
+					$$ = makeList( makeString($1), makeString("("), -1);
+					$$ = nconc( $$, $3);
+					$$ = lappend( $$, makeString(")"));
+				}
+			| constraint_expr Op constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( $2), $3)); }
+			| constraint_expr AND constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "AND"), $3)); }
+			| constraint_expr OR constraint_expr
+				{	$$ = nconc( $1, lcons( makeString( "OR"), $3)); }
+			| Op constraint_expr
+				{	$$ = lcons( makeString( $1), $2); }
+			| constraint_expr Op
+				{	$$ = lappend( $1, makeString( $2)); }
+			| constraint_expr IS TRUE_P
 				{	$$ = lappend( $1, makeString( "IS TRUE")); }
-			| constraint_elem IS FALSE_P
+			| constraint_expr IS FALSE_P
 				{	$$ = lappend( $1, makeString( "IS FALSE")); }
-			| constraint_elem IS NOT TRUE_P
+			| constraint_expr IS NOT TRUE_P
 				{	$$ = lappend( $1, makeString( "IS NOT TRUE")); }
-			| constraint_elem IS NOT FALSE_P
+			| constraint_expr IS NOT FALSE_P
 				{	$$ = lappend( $1, makeString( "IS NOT FALSE")); }
 		;
 
@@ -942,6 +997,18 @@ key_reference:  NO ACTION				{ $$ = NULL; }
 		| CASCADE						{ $$ = NULL; }
 		| SET DEFAULT					{ $$ = NULL; }
 		| SET NULL_P					{ $$ = NULL; }
+		;
+
+OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
+		| /*EMPTY*/										{ $$ = NIL; }
+		;
+
+/*
+ *	"ARCHIVE" keyword was removed in 6.3, but we keep it for now
+ *  so people can upgrade with old pg_dump scripts. - momjian 1997-11-20(?)
+ */
+OptArchiveType:  ARCHIVE '=' NONE						{ }
+		| /*EMPTY*/										{ }
 		;
 
 
@@ -1133,7 +1200,7 @@ def_rest:  def_name definition
 		;
 
 def_type:  OPERATOR							{ $$ = OPERATOR; }
-		| Type								{ $$ = TYPE_P; }
+		| TYPE_P							{ $$ = TYPE_P; }
 		| AGGREGATE							{ $$ = AGGREGATE; }
 		;
 
@@ -1537,7 +1604,7 @@ RemoveStmt:  DROP remove_type name
 				}
 		;
 
-remove_type:  Type								{  $$ = TYPE_P; }
+remove_type:  TYPE_P							{  $$ = TYPE_P; }
 		| INDEX									{  $$ = INDEX; }
 		| RULE									{  $$ = RULE; }
 		| VIEW									{  $$ = VIEW; }
@@ -2694,7 +2761,7 @@ opt_interval:  datetime							{ $$ = lcons($1, NIL); }
 
 a_expr_or_null:  a_expr
 				{ $$ = $1;}
-		| Pnull
+		| NULL_P
 				{
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_Null;
@@ -2845,7 +2912,7 @@ a_expr:  attr opt_indirection
 					t->setof = FALSE;
 
 					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIME(p) precision must be zero",NULL);
+						elog(NOTICE,"CURRENT_TIME(%d) precision not implemented; zero used instead",$3);
 
 					$$ = (Node *)n;
 				}
@@ -2880,7 +2947,7 @@ a_expr:  attr opt_indirection
 					t->setof = FALSE;
 
 					if ($3 != 0)
-						elog(NOTICE,"CURRENT_TIMESTAMP(p) precision must be zero",NULL);
+						elog(NOTICE,"CURRENT_TIMESTAMP(%d) precision not implemented; zero used instead",$3);
 
 					$$ = (Node *)n;
 				}
@@ -3565,9 +3632,6 @@ SpecialRuleRelation:  CURRENT
 						elog(WARN,"NEW used in non-rule query",NULL);
 				}
 		;
-
-Type:	TYPE_P;
-Pnull:	NULL_P;
 
 %%
 

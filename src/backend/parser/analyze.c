@@ -7,13 +7,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.51 1997/11/26 01:11:03 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.52 1997/12/04 23:07:18 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 
 #include "postgres.h"
@@ -39,7 +40,9 @@ static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
 static Query *transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt);
 static Query *transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, CursorStmt *stmt);
+static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
+List   *extras = NIL;
 
 /*
  * parse_analyze -
@@ -65,6 +68,17 @@ parse_analyze(List *pl)
 	{
 		pstate = make_parsestate();
 		result->qtrees[i++] = transformStmt(pstate, lfirst(pl));
+		if (extras != NIL)
+		{
+			result->len += length(extras);
+			result->qtrees = (Query **) realloc(result->qtrees, result->len * sizeof(Query *));
+			while (extras != NIL)
+			{
+				result->qtrees[i++] = transformStmt(pstate, lfirst(extras));
+				extras = lnext(extras);
+			}
+		}
+		extras = NIL;
 		pl = lnext(pl);
 		if (pstate->p_target_relation != NULL)
 			heap_close(pstate->p_target_relation);
@@ -90,6 +104,10 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			 *	Non-optimizable statements
 			 *------------------------
 			 */
+		case T_CreateStmt:
+			result = transformCreateStmt(pstate, (CreateStmt *) parseTree);
+			break;
+
 		case T_IndexStmt:
 			result = transformIndexStmt(pstate, (IndexStmt *) parseTree);
 			break;
@@ -308,6 +326,316 @@ transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
 
 	return (Query *) qry;
 }
+
+/* makeTableName()
+ * Create a table name from a list of fields.
+ */
+static char *
+makeTableName(void *elem,...);
+
+static char *
+makeTableName(void *elem,...)
+{
+	va_list	args;
+
+	char   *name;
+	char	buf[NAMEDATALEN+1];
+
+	strcpy(buf,"");
+
+	va_start(args,elem);
+
+	name = elem;
+	while (name != NULL)
+	{
+		/* not enough room for next part? then return nothing */
+		if ((strlen(buf)+strlen(name)) >= (sizeof(buf)-1))
+			return (NULL);
+
+		if (strlen(buf) > 0) strcat(buf,"_");
+		strcat(buf,name);
+
+		name = va_arg(args,void *);
+	}
+
+	va_end(args);
+
+	name = palloc(strlen(buf)+1);
+	strcpy(name,buf);
+
+	return (name);
+} /* makeTableName() */
+
+/*
+ * transformCreateStmt -
+ *	  transforms the "create table" statement
+ *	  SQL92 allows constraints to be scattered all over, so thumb through
+ *	   the columns and collect all constraints into one place.
+ *	  If there are any implied indices (e.g. UNIQUE or PRIMARY KEY)
+ *	   then expand those into multiple IndexStmt blocks.
+ *	  - thomas 1997-12-02
+ */
+static Query *
+transformCreateStmt(ParseState *pstate, CreateStmt *stmt)
+{
+	Query	   *q;
+	List	   *elements;
+	Node	   *element;
+	List	   *columns;
+	List	   *dlist;
+	ColumnDef  *column;
+	List	   *constraints, *clist;
+	Constraint *constraint;
+	List	   *keys;
+	Ident	   *key;
+	List	   *ilist;
+	IndexStmt  *index;
+	IndexElem  *iparam;
+
+	q = makeNode(Query);
+	q->commandType = CMD_UTILITY;
+
+	elements = stmt->tableElts;
+	constraints = stmt->constraints;
+	columns = NIL;
+	dlist = NIL;
+
+	while (elements != NIL)
+	{
+		element = lfirst(elements);
+		switch (nodeTag(element))
+		{
+			case T_ColumnDef:
+				column = (ColumnDef *) element;
+#if PARSEDEBUG
+printf("transformCreateStmt- found column %s\n",column->colname);
+#endif
+				columns = lappend(columns,column);
+				if (column->constraints != NIL)
+				{
+#if PARSEDEBUG
+printf("transformCreateStmt- found constraint(s) on column %s\n",column->colname);
+#endif
+					clist = column->constraints;
+					while (clist != NIL)
+					{
+						constraint = lfirst(clist);
+						switch (constraint->contype)
+						{
+							case CONSTR_NOTNULL:
+#if PARSEDEBUG
+printf("transformCreateStmt- found NOT NULL constraint on column %s\n",column->colname);
+#endif
+								if (column->is_not_null)
+									elog(WARN,"CREATE TABLE/NOT NULL already specified"
+										" for %s.%s", stmt->relname, column->colname);
+								column->is_not_null = TRUE;
+								break;
+
+							case CONSTR_DEFAULT:
+#if PARSEDEBUG
+printf("transformCreateStmt- found DEFAULT clause on column %s\n",column->colname);
+#endif
+								if (column->defval != NULL)
+									elog(WARN,"CREATE TABLE/DEFAULT multiple values specified"
+										" for %s.%s", stmt->relname, column->colname);
+								column->defval = constraint->def;
+								break;
+
+							case CONSTR_PRIMARY:
+#if PARSEDEBUG
+printf("transformCreateStmt- found PRIMARY KEY clause on column %s\n",column->colname);
+#endif
+								if (constraint->name == NULL)
+									constraint->name = makeTableName(stmt->relname, "pkey", NULL);
+								if (constraint->keys == NIL)
+									constraint->keys = lappend(constraint->keys, column);
+								dlist = lappend(dlist, constraint);
+								break;
+
+							case CONSTR_UNIQUE:
+#if PARSEDEBUG
+printf("transformCreateStmt- found UNIQUE clause on column %s\n",column->colname);
+#endif
+								if (constraint->name == NULL)
+									constraint->name = makeTableName(stmt->relname, column->colname, "key", NULL);
+								if (constraint->keys == NIL)
+									constraint->keys = lappend(constraint->keys, column);
+								dlist = lappend(dlist, constraint);
+								break;
+
+							case CONSTR_CHECK:
+#if PARSEDEBUG
+printf("transformCreateStmt- found CHECK clause on column %s\n",column->colname);
+#endif
+								constraints = lappend(constraints, constraint);
+								if (constraint->name == NULL)
+									constraint->name = makeTableName(stmt->relname, ".", column->colname, NULL);
+								break;
+
+							default:
+								elog(WARN,"parser: internal error; unrecognized constraint",NULL);
+								break;
+						}
+						clist = lnext(clist);
+					}
+				}
+				break;
+
+			case T_Constraint:
+				constraint = (Constraint *) element;
+#if PARSEDEBUG
+printf("transformCreateStmt- found constraint %s\n", ((constraint->name != NULL)? constraint->name: "(unknown)"));
+#endif
+				switch (constraint->contype)
+				{
+					case CONSTR_PRIMARY:
+#if PARSEDEBUG
+printf("transformCreateStmt- found PRIMARY KEY clause\n");
+#endif
+						if (constraint->name == NULL)
+							constraint->name = makeTableName(stmt->relname, "pkey", NULL);
+						dlist = lappend(dlist, constraint);
+						break;
+
+					case CONSTR_UNIQUE:
+#if PARSEDEBUG
+printf("transformCreateStmt- found UNIQUE clause\n");
+#endif
+#if FALSE
+						if (constraint->name == NULL)
+							constraint->name = makeTableName(stmt->relname, "key", NULL);
+#endif
+						dlist = lappend(dlist, constraint);
+						break;
+
+					case CONSTR_CHECK:
+#if PARSEDEBUG
+printf("transformCreateStmt- found CHECK clause\n");
+#endif
+						constraints = lappend(constraints, constraint);
+						break;
+
+					case CONSTR_NOTNULL:
+					case CONSTR_DEFAULT:
+						elog(WARN,"parser: internal error; illegal context for constraint",NULL);
+						break;
+					default:
+						elog(WARN,"parser: internal error; unrecognized constraint",NULL);
+						break;
+				}
+				break;
+
+			default:
+				elog(WARN,"parser: internal error; unrecognized node",NULL);
+		}
+
+		elements = lnext(elements);
+	}
+
+	stmt->tableElts = columns;
+	stmt->constraints = constraints;
+
+/* Now run through the "deferred list" to complete the query transformation.
+ * For PRIMARY KEYs, mark each column as NOT NULL and create an index.
+ * For UNIQUE, create an index as for PRIMARY KEYS, but do not insist on NOT NULL.
+ *
+ * Note that this code does not currently look for all possible redundant cases
+ *  and either ignore or stop with warning. The create will fail later when
+ *  names for indices turn out to be redundant, or a user might just find
+ *  extra useless indices which might kill performance. - thomas 1997-12-04
+ */
+	ilist = NIL;
+	while (dlist != NIL)
+	{
+		constraint = lfirst(dlist);
+		if (nodeTag(constraint) != T_Constraint)
+			elog(WARN,"parser: internal error; unrecognized deferred node",NULL);
+
+		if ((constraint->contype != CONSTR_PRIMARY)
+		 && (constraint->contype != CONSTR_UNIQUE))
+			elog(WARN,"parser: internal error; illegal deferred constraint",NULL);
+
+#if PARSEDEBUG
+printf("transformCreateStmt- found deferred constraint %s\n",
+ ((constraint->name != NULL)? constraint->name: "(unknown)"));
+#endif
+
+#if PARSEDEBUG
+printf("transformCreateStmt- found deferred %s clause\n",
+ (constraint->contype == CONSTR_PRIMARY? "PRIMARY KEY": "UNIQUE"));
+#endif
+		index = makeNode(IndexStmt);
+		ilist = lappend(ilist, index);
+
+		index->unique = TRUE;
+		if (constraint->name != NULL)
+			index->idxname = constraint->name;
+		else if (constraint->contype == CONSTR_PRIMARY)
+			index->idxname = makeTableName(stmt->relname, "pkey", NULL);
+		else
+			index->idxname = NULL;
+
+		index->relname = stmt->relname;
+		index->accessMethod = "btree";
+		index->indexParams = NIL;
+		index->withClause = NIL;
+		index->whereClause = NULL;
+ 
+		keys = constraint->keys;
+		while (keys != NIL)
+		{
+			key = lfirst(keys);
+#if PARSEDEBUG
+printf("transformCreateStmt- check key %s for column match\n", key->name);
+#endif
+			columns = stmt->tableElts;
+			column = NULL;
+			while (columns != NIL)
+			{
+				column = lfirst(columns);
+#if PARSEDEBUG
+printf("transformCreateStmt- check column %s for key match\n", column->colname);
+#endif
+				if (strcasecmp(column->colname,key->name) == 0) break;
+				else column = NULL;
+				columns = lnext(columns);
+			}
+			if (column == NULL)
+				elog(WARN,"parser: column '%s' in key does not exist",key->name);
+
+			if (constraint->contype == CONSTR_PRIMARY)
+			{
+#if PARSEDEBUG
+printf("transformCreateStmt- mark column %s as NOT NULL\n", column->colname);
+#endif
+				column->is_not_null = TRUE;
+			}
+			iparam = makeNode(IndexElem);
+			iparam->name = strcpy(palloc(strlen(column->colname)+1), column->colname);
+			iparam->args = NIL;
+			iparam->class = NULL;
+			iparam->tname = NULL;
+			index->indexParams = lappend(index->indexParams, iparam);
+
+			if (index->idxname == NULL)
+				index->idxname = makeTableName(stmt->relname, iparam->name, "key", NULL);
+
+			keys = lnext(keys);
+		}
+
+		if (index->idxname == NULL)
+			elog(WARN,"parser: unable to construct implicit index for table %s"
+				"; name too long", stmt->relname);
+
+		dlist = lnext(dlist);
+	}
+
+	q->utilityStmt = (Node *) stmt;
+	extras = ilist;
+
+	return q;
+} /* transformCreateStmt() */
 
 /*
  * transformIndexStmt -
