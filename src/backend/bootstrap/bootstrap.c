@@ -7,18 +7,13 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.6 1996/08/17 06:41:10 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.7 1996/10/18 05:47:12 scrappy Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <string.h>
 #include <unistd.h>
 #include "libpq/pqsignal.h"	/* substitute for <signal.h> */
-#if defined(PORTNAME_linux)
-#ifndef __USE_POSIX
-#define __USE_POSIX
-#endif
-#endif /* defined(PORTNAME_linux) */
 #include <setjmp.h>
 
 #define BOOTSTRAP_INCLUDE	/* mask out stuff in tcop/tcopprot.h */
@@ -136,11 +131,9 @@ static char *relname;                   /* current relation name */
 AttributeTupleForm attrtypes[MAXATTR];  /* points to attribute info */
 static char	*values[MAXATTR];	/* cooresponding attribute values */
 int		numattr;		/* number of attributes for cur. rel */
-#ifdef OPENLINK_PATCHES
 extern int    fsyncOff;                 /* do not fsync the database */
-#endif
 
-#if defined(WIN32) || defined(PORTNAME_next)
+#ifdef NEED_SIG_JMP
 static jmp_buf    Warn_restart;
 #define sigsetjmp(x,y)  setjmp(x)
 #define siglongjmp longjmp
@@ -198,17 +191,11 @@ void err_out()
 */
 static void
 usage()
-{
-#ifdef OPENLINK_PATCHES
-    fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-F] [-O] [-Q] [-P portno] [dbName]\n");
-#else
-    fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-O] [-Q] [-P portno] [dbName]\n");
-#endif
+    fprintf(stderr,"Usage: postgres -boot [-d] [-C] [-F] [-O] [-Q] ");
+    fprintf(stderr,"[-P portno] [dbName]\n");
     fprintf(stderr,"     d: debug mode\n");
     fprintf(stderr,"     C: disable version checking\n");
-#ifdef OPENLINK_PATCHES
     fprintf(stderr,"     F: turn off fsync\n");
-#endif
     fprintf(stderr,"     O: set BootstrapProcessing mode\n");
     fprintf(stderr,"     P portno: specify port number\n");
 
@@ -245,10 +232,10 @@ BootstrapMain(int argc, char *argv[])
      * ----------------
      */
     signal(SIGINT, (sig_func) die);
-#ifndef WIN32
+#ifndef win32
     signal(SIGHUP, (sig_func) die); 
     signal(SIGTERM, (sig_func) die);
-#endif /* WIN32 */    
+#endif /* win32 */    
 
     /* --------------------
      *	initialize globals 
@@ -265,11 +252,7 @@ BootstrapMain(int argc, char *argv[])
     Noversion = 0;
     dbName = NULL;
     
-#ifdef OPENLINK_PATCHES
     while ((flag = getopt(argc, argv, "dCOQP:F")) != EOF) {
-#else
-    while ((flag = getopt(argc, argv, "dCOQP")) != EOF) {
-#endif
 	switch (flag) {
 	case 'd':
 	    DebugMode = 1; /* print out debuggin info while parsing */
@@ -277,11 +260,9 @@ BootstrapMain(int argc, char *argv[])
 	case 'C':
 	    Noversion = 1; 
 	    break;
-#ifdef OPENLINK_PATCHES
         case 'F':
             fsyncOff = 1;
             break;
-#endif
 	case 'O':
 	    override = true;
 	    break;
@@ -322,10 +303,10 @@ BootstrapMain(int argc, char *argv[])
 	exitpg(1);
     }
     
-#ifdef WIN32
+#ifdef win32
     _nt_init();
     _nt_attach();
-#endif /* WIN32 */
+#endif /* win32 */
 
 
     /* ----------------
@@ -349,13 +330,13 @@ BootstrapMain(int argc, char *argv[])
      *	abort processing resumes here  - What to do in WIN32?
      * ----------------
      */
-#ifndef WIN32    
+#ifndef win32    
     signal(SIGHUP, handle_warn);
 
     if (sigsetjmp(Warn_restart, 1) != 0) {
 #else
     if (setjmp(Warn_restart) != 0) {
-#endif /* WIN32 */
+#endif /* win32 */
 	Warnings++;
 	AbortCurrentTransaction();
     }
