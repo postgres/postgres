@@ -1,4 +1,6 @@
+#ifdef CYGWIN
 #include <cygwin/version.h>
+#endif
 #if CYGWIN_VERSION_DLL_MAJOR < 1001
 
 /* dllinit.c -- Portable DLL initialization.

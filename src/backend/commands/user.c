@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.135 2004/02/02 16:37:46 momjian Exp $
+ * $PostgreSQL: pgsql/src/backend/commands/user.c,v 1.136 2004/02/02 17:21:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -470,7 +470,7 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 			/* Rename active file while not holding an exclusive lock */
 			char *filename = user_getfilename(), *filename_new;
 
-			filename_new = palloc(strlen(filename) + 1 + strlen(".new")));
+			filename_new = palloc(strlen(filename) + 1 + strlen(".new"));
 			sprintf(filename_new, "%s.new", filename);
 			rename(filename_new, filename);
 			pfree(filename);
@@ -489,7 +489,7 @@ AtEOXact_UpdatePasswordFile(bool isCommit)
 			/* Rename active file while not holding an exclusive lock */
 			char *filename = group_getfilename(), *filename_new;
 
-			filename_new = palloc(strlen(filename) + 1 + strlen(".new")));
+			filename_new = palloc(strlen(filename) + 1 + strlen(".new"));
 			sprintf(filename_new, "%s.new", filename);
 			rename(filename_new, filename);
 			pfree(filename);
