@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.41 2000/06/06 22:01:01 petere Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpgtcl/Attic/Makefile.in,v 1.42 2000/06/13 09:16:39 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -18,6 +18,14 @@ SRCDIR= ../..
 include $(SRCDIR)/Makefile.global
 
 CFLAGS+= -I$(LIBPQDIR)
+
+#
+# Include definitions from the tclConfig.sh file
+#
+include Makefile.tcldefs
+ifeq ($(USE_TK), true)
+include Makefile.tkdefs
+endif
 
 ifdef KRBVERS
 CFLAGS+= $(KRBFLAGS)
@@ -46,6 +54,11 @@ install-headers: beforeinstall-headers libpgtcl.h
 beforeinstall-headers:
 	-@if [ ! -d $(HEADERDIR) ]; then mkdir $(HEADERDIR); fi
 
+Makefile.tcldefs: mkMakefile.tcldefs.sh
+	/bin/sh mkMakefile.tcldefs.sh
+
+Makefile.tkdefs: mkMakefile.tkdefs.sh
+	/bin/sh mkMakefile.tkdefs.sh
 
 .PHONY: clean
 
