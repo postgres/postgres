@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.4 2002/01/20 22:19:57 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_session_auth.sgml,v 1.5 2002/05/06 19:47:30 tgl Exp $ -->
 <refentry id="SQL-SET-SESSION-AUTHORIZATION">
  <docinfo>
   <date>2001-04-21</date>
@@ -16,7 +16,9 @@
 
  <refsynopsisdiv>
 <synopsis>
-SET SESSION AUTHORIZATION '<parameter>username</parameter>'
+SET SESSION AUTHORIZATION <parameter>username</parameter>
+SET SESSION AUTHORIZATION DEFAULT
+RESET SESSION AUTHORIZATION
 </synopsis>
  </refsynopsisdiv>
 
@@ -26,7 +28,11 @@ SET SESSION AUTHORIZATION '<parameter>username</parameter>'
   <para>
    This command sets the session user identifier and the current user
    identifier of the current SQL-session context to be
-   <parameter>username</parameter>.
+   <parameter>username</parameter>.  The user name may be written as
+   either an identifier or a string literal.
+   The session user identifier is valid for the duration of a
+   connection; for example, it is possible to temporarily become an
+   unprivileged user and later switch back to become a superuser.
   </para>
 
   <para>
@@ -39,12 +45,18 @@ SET SESSION AUTHORIZATION '<parameter>username</parameter>'
   </para>
 
   <para>
-   Execution of this command is only permitted if the initial session
+   The session user identifier may be changed only if the initial session
    user (the <firstterm>authenticated user</firstterm>) had the
-   superuser privilege.  This permission is kept for the duration of a
-   connection; for example, it is possible to temporarily become an
-   unprivileged user and later switch back to become a superuser.
+   superuser privilege.  Otherwise, the command is accepted only if it
+   specifies the authenticated username.
   </para>
+
+  <para>
+   The <literal>DEFAULT</> and <literal>RESET</> forms reset the session
+   and current user identifiers to be the originally authenticated user
+   name.  These forms are always accepted.
+  </para>
+
  </refsect1>
 
  <refsect1>

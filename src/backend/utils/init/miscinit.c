@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.89 2002/05/05 00:03:29 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/miscinit.c,v 1.90 2002/05/06 19:47:30 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -529,15 +529,17 @@ GetCharSetByHost(char *TableName, int host, const char *DataDir)
 /* ----------------------------------------------------------------
  *	User ID things
  *
- * The session user is determined at connection start and never
- * changes.  The current user may change when "setuid" functions
+ * The authenticated user is determined at connection start and never
+ * changes.  The session user can be changed only by SET SESSION
+ * AUTHORIZATION.  The current user may change when "setuid" functions
  * are implemented.  Conceptually there is a stack, whose bottom
  * is the session user.  You are yourself responsible to save and
  * restore the current user id if you need to change it.
  * ----------------------------------------------------------------
  */
-static Oid	CurrentUserId = InvalidOid;
+static Oid	AuthenticatedUserId = InvalidOid;
 static Oid	SessionUserId = InvalidOid;
+static Oid	CurrentUserId = InvalidOid;
 
 static bool AuthenticatedUserIsSuperuser = false;
 
@@ -588,6 +590,7 @@ InitializeSessionUserId(const char *username)
 	HeapTuple	userTup;
 	Datum		datum;
 	bool		isnull;
+	Oid			usesysid;
 
 	/*
 	 * Don't do scans if we're bootstrapping, none of the system catalogs
@@ -596,7 +599,7 @@ InitializeSessionUserId(const char *username)
 	AssertState(!IsBootstrapProcessingMode());
 
 	/* call only once */
-	AssertState(!OidIsValid(SessionUserId));
+	AssertState(!OidIsValid(AuthenticatedUserId));
 
 	userTup = SearchSysCache(SHADOWNAME,
 							 PointerGetDatum(username),
@@ -604,9 +607,13 @@ InitializeSessionUserId(const char *username)
 	if (!HeapTupleIsValid(userTup))
 		elog(FATAL, "user \"%s\" does not exist", username);
 
-	SetSessionUserId(((Form_pg_shadow) GETSTRUCT(userTup))->usesysid);
+	usesysid = ((Form_pg_shadow) GETSTRUCT(userTup))->usesysid;
 
+	AuthenticatedUserId = usesysid;
 	AuthenticatedUserIsSuperuser = ((Form_pg_shadow) GETSTRUCT(userTup))->usesuper;
+
+	SetSessionUserId(usesysid);	/* sets CurrentUserId too */
+
 
 	/*
 	 * Set up user-specific configuration variables.  This is a good
@@ -633,25 +640,36 @@ InitializeSessionUserIdStandalone(void)
 	AssertState(!IsUnderPostmaster);
 
 	/* call only once */
-	AssertState(!OidIsValid(SessionUserId));
+	AssertState(!OidIsValid(AuthenticatedUserId));
+
+	AuthenticatedUserId = BOOTSTRAP_USESYSID;
+	AuthenticatedUserIsSuperuser = true;
 
 	SetSessionUserId(BOOTSTRAP_USESYSID);
-	AuthenticatedUserIsSuperuser = true;
 }
 
 
 /*
  * Change session auth ID while running
+ *
+ * Only a superuser may set auth ID to something other than himself.
+ *
+ * username == NULL implies reset to default (AuthenticatedUserId).
  */
 void
 SetSessionAuthorization(const char *username)
 {
-	int32		userid;
+	Oid		userid;
 
-	if (!AuthenticatedUserIsSuperuser)
-		elog(ERROR, "permission denied");
-
-	userid = get_usesysid(username);
+	if (username == NULL)
+		userid = AuthenticatedUserId;
+	else
+	{
+		userid = get_usesysid(username);
+		if (userid != AuthenticatedUserId &&
+			!AuthenticatedUserIsSuperuser)
+			elog(ERROR, "permission denied");
+	}
 
 	SetSessionUserId(userid);
 	SetUserId(userid);

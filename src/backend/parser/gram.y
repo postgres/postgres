@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.312 2002/05/03 00:32:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.313 2002/05/06 19:47:30 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -281,7 +281,7 @@ static void doNegateFloat(Value *v);
 %type <ival>	Iconst
 %type <str>		Sconst, comment_text
 %type <str>		UserId, opt_boolean, ColId_or_Sconst
-%type <list>	var_list
+%type <list>	var_list, var_list_or_default
 %type <str>		ColId, ColLabel, type_name
 %type <node>	var_value, zone_value
 
@@ -833,14 +833,14 @@ schema_stmt: CreateStmt
  *
  *****************************************************************************/
 
-VariableSetStmt:  SET ColId TO var_list
+VariableSetStmt:  SET ColId TO var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
 					n->args = $4;
 					$$ = (Node *) n;
 				}
-		| SET ColId '=' var_list
+		| SET ColId '=' var_list_or_default
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
 					n->name  = $2;
@@ -884,14 +884,25 @@ VariableSetStmt:  SET ColId TO var_list
 					n->args = makeList1(makeStringConst($4, NULL));
 					$$ = (Node *) n;
 				}
+		| SET SESSION AUTHORIZATION DEFAULT
+				{
+					VariableSetStmt *n = makeNode(VariableSetStmt);
+					n->name = "session_authorization";
+					n->args = NIL;
+					$$ = (Node *) n;
+				}
+		;
+
+var_list_or_default:  var_list
+				{ $$ = $1; }
+		| DEFAULT
+				{ $$ = NIL; }
 		;
 
 var_list:  var_value
 				{	$$ = makeList1($1); }
 		| var_list ',' var_value
 				{	$$ = lappend($1, $3); }
-		| DEFAULT
-				{ $$ = NIL; }
 		;
 
 var_value:  opt_boolean
@@ -1015,6 +1026,12 @@ VariableResetStmt:	RESET ColId
 				{
 					VariableResetStmt *n = makeNode(VariableResetStmt);
 					n->name  = "XactIsoLevel";
+					$$ = (Node *) n;
+				}
+		| RESET SESSION AUTHORIZATION
+				{
+					VariableResetStmt *n = makeNode(VariableResetStmt);
+					n->name = "session_authorization";
 					$$ = (Node *) n;
 				}
 		| RESET ALL
