@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Sep  2 11:30:39 EDT 2002
+Last updated:		Mon Sep  2 12:20:47 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -194,10 +194,11 @@ Commands
 	o -Add ALTER TABLE DROP non-CHECK CONSTRAINT
 	o -ALTER TABLE ADD PRIMARY KEY (Christopher)
 	o -ALTER TABLE ADD UNIQUE (Christopher)
-	o -ALTER TABLE ALTER COLUMN SET/DROP NOT NULL (Christopher Kings-Lynne)
-	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence
+	o -ALTER TABLE ALTER COLUMN SET/DROP NOT NULL (Christopher)
 	o ALTER TABLE ADD COLUMN column DEFAULT should fill existing
 	  rows with DEFAULT value
+	o ALTER TABLE ADD COLUMN column SERIAL doesn't create sequence because
+          of the item above
 	o -Have ALTER TABLE OWNER change all dependant objects like indexes
 	o Add ALTER TABLE tab SET WITHOUT OIDS
 
@@ -229,7 +230,7 @@ Commands
 	o Allow INSERT/UPDATE of system-generated oid value for a row
 	o Allow INSERT INTO tab (col1, ..) VALUES (val1, ..), (val2, ..)
 	o -Allow INSERT INTO my_table VALUES (a, b, c, DEFAULT, x, y, z, ...)
-	o -Disallow missing columns in INSERT ... VALUES, per ANSI
+	o -Disallow missing columns in INSERT ... (col) VALUES, per ANSI
 	o Allow INSERT/UPDATE ... RETURNING new.col or old.col; handle
 	  RULE cases (Philip)
 
@@ -332,8 +333,6 @@ Dependency Checking
   depend_sysrelid, depend_oid, name
 * -Auto-destroy sequence on DROP of table with SERIAL; perhaps a separate
   SERIAL type
-* Have SERIAL generate non-colliding sequence names when we have 
-  auto-destruction
 * -Prevent column dropping if column is used by foreign key
 * -Propagate column or table renaming to foreign key constraints
 * -Automatically drop constraints/functions when object is dropped
