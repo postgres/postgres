@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Mar  5 21:29:28 EST 2003
+Last updated:		Thu Mar  6 13:04:52 EST 2003
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -430,7 +430,7 @@ Source Code
 * Move some things from /contrib into main tree
 * Remove warnings created by -Wcast-align
 * Move platform-specific ps status display info from ps_status.c to ports
-* Modify regression tests to prevent failures do to minor numeric rounding
+* -Modify regression tests to prevent failures do to minor numeric rounding
 * -Add OpenBSD's getpeereid() call for local socket authentication
 * Improve access-permissions check on data directory in Cygwin (Tom)
 * Add --port flag to regression tests
