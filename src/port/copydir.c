@@ -1,7 +1,9 @@
 /*
  *	While "xcopy /e /i /q" works fine for copying directories, on Windows XP
- *	it requires an Window handle which prevents it from working when invoked
+ *	it requires a Window handle which prevents it from working when invoked
  *	as a service.
+ *
+ * $Header: /cvsroot/pgsql/src/port/Attic/copydir.c,v 1.5 2003/09/10 20:12:01 tgl Exp $
  */
 
 #include "postgres.h"
@@ -12,6 +14,14 @@
 #include <dirent.h>
 
 
+/*
+ * copydir: copy a directory (we only need to go one level deep)
+ *
+ * Return 0 on success, nonzero on failure.
+ *
+ * NB: do not elog(ERROR) on failure.  Return to caller so it can try to
+ * clean up.
+ */
 int
 copydir(char *fromdir, char *todir)
 {
@@ -22,18 +32,18 @@ copydir(char *fromdir, char *todir)
 
 	if (mkdir(todir) != 0)
 	{
-		ereport(ERROR,
+		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not create directory \"%s\": %m", todir)));
-		return 1;
+		return -1;
 	}
 	xldir = opendir(fromdir);
 	if (xldir == NULL)
 	{
-		ereport(ERROR,
+		ereport(WARNING,
 				(errcode_for_file_access(),
 				 errmsg("could not open directory \"%s\": %m", fromdir)));
-		return 1;
+		return -1;
 	}
 
 	while ((xlde = readdir(xldir)) != NULL)
@@ -42,14 +52,11 @@ copydir(char *fromdir, char *todir)
 		snprintf(tofl, MAXPGPATH, "%s/%s", todir, xlde->d_name);
 		if (CopyFile(fromfl, tofl, TRUE) < 0)
 		{
-			int			save_errno = errno;
-
-			closedir(xldir);
-			errno = save_errno;
-			ereport(ERROR,
+			ereport(WARNING,
 					(errcode_for_file_access(),
 					 errmsg("could not copy file \"%s\": %m", fromfl)));
-			return 1;
+			closedir(xldir);
+			return -1;
 		}
 	}
 
