@@ -25,8 +25,6 @@ DROP SCHEMA information_schema CASCADE;
    
 Changes
 
-   Changes as of 2003-12-14
-   
      * Fixed bug in "CREATE SCHEMA" parsing in ECPG (Michael)
      * Fix compile error when "--enable-thread-safety" and "--with-perl"
        are used together (Peter)
@@ -63,6 +61,24 @@ Changes
        encodings. This fix escapes all bytes that might be affected.
      * Added missing SPI_finish() calls to dblink's
        get_tuple_of_interest() (Joe)
+     * New Czech FAQ
+     * Fix information schema constraint_column_usage for foreign keys
+       (Peter)
+     * Ecpg fixes (Michael)
+     * Fix bug with multiple IN subqueries and joins in the subqueries
+       (Tom)
+     * Alllow COUNT('x') to work (Tom)
+     * Install Informix ecpg include files into separate /informix
+       directory (Peter)
+       Some Informix ecpg include file names conflicted with operating
+       system include files. By installing them in their own directory,
+       name conflicts have been reduced.
+     * Fix SSL memory leak (Neil)
+       This release fixes a bug in 7.4 where SSL didn't free all memory
+       it allocated.
+     * Prevent pg_service.conf from using service name as default dbname
+       (Bruce)
+     * Fix local 'ident' on FreeBSD (Tom)
      _________________________________________________________________
    
                                 Release 7.4

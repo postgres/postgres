@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.249 2003/12/19 20:06:20 petere Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.250 2003/12/21 05:23:36 momjian Exp $
 -->
 
 <appendix id="release">
@@ -46,7 +46,6 @@ DROP SCHEMA information_schema CASCADE;
    <sect2>
     <title>Changes</title>
 
-<para>Changes as of 2003-12-14</para>
 <itemizedlist>
 <listitem><para>Fixed bug in <command>CREATE SCHEMA</command> parsing in ECPG (Michael)</para></listitem>
 <listitem><para>Fix compile error when <option>--enable-thread-safety</option> and <option>--with-perl</option> are used together (Peter)</para></listitem>
@@ -95,6 +94,24 @@ DROP SCHEMA information_schema CASCADE;
 </para>
 </listitem>
 <listitem><para>Added missing <function>SPI_finish()</function> calls to dblink's <function>get_tuple_of_interest()</function> (Joe)</para></listitem>
+<listitem><para>New Czech FAQ</para></listitem>
+<listitem><para>Fix information schema constraint_column_usage for foreign keys (Peter)</para></listitem>
+<listitem><para>Ecpg fixes (Michael)</para></listitem>
+<listitem><para>Fix bug with multiple IN subqueries and joins in the subqueries (Tom)</para></listitem>
+<listitem><para>Alllow COUNT('x') to work (Tom)</para></listitem>
+<listitem><para>Install Informix ecpg include files into separate /informix directory (Peter)</para>
+<para>
+  Some Informix ecpg include file names conflicted with operating system include files.
+  By installing them in their own directory, name conflicts have been reduced.
+</para>
+</listitem>
+<listitem><para>Fix SSL memory leak (Neil)</para>
+<para>
+  This release fixes a bug in 7.4 where SSL didn't free all memory it allocated.
+</para>
+</listitem>
+<listitem><para>Prevent pg_service.conf from using service name as default dbname (Bruce)</para></listitem>
+<listitem><para>Fix local 'ident' on FreeBSD (Tom)</para></listitem>
 </itemizedlist>
 
   </sect2>
