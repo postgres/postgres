@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Mar  4 22:31:55 EST 2002
+Last updated:		Tue Mar  5 22:14:41 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -158,7 +158,7 @@ INDEXES
   float4, numeric/decimal too [optimizer]
 * Improve concurrency in GIST
 * Add FILLFACTOR to index creation
-* Improve concurrency of hash indexes
+* Improve concurrency of hash indexes (Neil Conway)
 * Test hash index performance and recommend or discourage usage
 
 
