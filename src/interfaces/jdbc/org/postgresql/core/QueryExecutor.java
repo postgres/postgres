@@ -13,7 +13,7 @@ import org.postgresql.util.PSQLException;
  * <p>The lifetime of a QueryExecutor object is from sending the query
  * until the response has been received from the backend.
  *
- * $Id: QueryExecutor.java,v 1.9 2002/03/16 02:15:23 davec Exp $
+ * $Id: QueryExecutor.java,v 1.10 2002/03/18 04:16:33 davec Exp $
  */
 
 public class QueryExecutor
@@ -104,6 +104,7 @@ public class QueryExecutor
 
 						errorMessage.append(pg_stream.ReceiveString(connection.getEncoding()));
 						// keep processing
+						hfr = true;
 						break;
 
 					case 'I':	// Empty Query
