@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.45 2004/08/07 18:07:46 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.46 2004/08/08 04:34:43 tgl Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -923,6 +923,16 @@ restore_command = 'cp /mnt/server/archivedir/%f %p'
     </para>
    </listitem>
   </itemizedlist>
+   </para>
+
+   <para>
+    It should also be noted that the present <acronym>WAL</acronym>
+    format is extremely bulky since it includes many disk page
+    snapshots.  This is appropriate for crash recovery purposes,
+    since we may need to fix partially-written disk pages.  It is not
+    necessary to store so many page copies for PITR operations, however.
+    An area for future development is to compress archived WAL data by
+    removing unnecesssary page copies.
    </para>
   </sect2>
  </sect1>
