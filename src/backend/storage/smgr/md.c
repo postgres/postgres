@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.46.2.1 1999/09/02 04:07:16 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.46.2.2 1999/09/06 20:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -284,13 +284,23 @@ mdopen(Relation reln)
 	fd = FileNameOpenFile(path, O_RDWR | O_BINARY, 0600);
 #endif
 
-	/* this should only happen during bootstrap processing */
 	if (fd < 0)
+	{
+		/* in bootstrap mode, accept mdopen as substitute for mdcreate */
+		if (IsBootstrapProcessingMode())
+		{
 #ifndef __CYGWIN32__
-		fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
+			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL, 0600);
 #else
-		fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
+			fd = FileNameOpenFile(path, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
 #endif
+		}
+		if (fd < 0)
+		{
+			elog(ERROR, "mdopen: couldn't open %s: %m", path);
+			return -1;
+		}
+	}
 
 	vfd = _fdvec_alloc();
 	if (vfd < 0)
@@ -755,7 +765,16 @@ mdtruncate(Relation reln, int nblocks)
 			 * a big file...
 			 */
 			FileTruncate(v->mdfd_vfd, 0);
+			/* In 6.5, it is not safe to unlink apparently-unused segments,
+			 * because another backend could store tuples in one of those
+			 * segments before it notices the shared-cache-invalidation
+			 * message that would warn it to re-open the file.  So, don't
+			 * unlink 'em, just truncate 'em.  This is fixed properly for 6.6
+			 * but back-patching the changes was judged too risky.
+			 */
+#if 0
 			FileUnlink(v->mdfd_vfd);
+#endif
 			v = v->mdfd_chain;
 			Assert(ov != &Md_fdvec[fd]); /* we never drop the 1st segment */
 			pfree(ov);
