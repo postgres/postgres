@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.79 1999/05/29 10:25:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.80 1999/06/12 20:41:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,23 +239,11 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
   the class.
 ----------------------------------------------------------------------------*/
 
-	static FILE *fp;			/* static for cleanup */
-	static bool file_opened = false;	/* static for cleanup */
+	FILE	   *fp;
 	Relation	rel;
 	extern char *UserName;		/* defined in global.c */
 	const AclMode required_access = from ? ACL_WR : ACL_RD;
 	int			result;
-
-	/*
-	 * Close previous file opened for COPY but failed with elog(). There
-	 * should be a better way, but would not be modular. Prevents file
-	 * descriptor leak.  bjm 1998/08/29
-	 */
-	if (file_opened)
-	{
-		FreeFile(fp);
-		file_opened = false;
-	}
 
 	rel = heap_openr(relname);
 	if (rel == NULL)
@@ -299,7 +287,6 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 						 "effective uid %d, could not open file '%s' for "
 						 "reading.  Errno = %s (%d).",
 						 geteuid(), filename, strerror(errno), errno);
-				file_opened = true;
 			}
 			CopyFrom(rel, binary, oids, fp, delim);
 		}
@@ -332,14 +319,12 @@ DoCopy(char *relname, bool binary, bool oids, bool from, bool pipe,
 						 "effective uid %d, could not open file '%s' for "
 						 "writing.  Errno = %s (%d).",
 						 geteuid(), filename, strerror(errno), errno);
-				file_opened = true;
 			}
 			CopyTo(rel, binary, oids, fp, delim);
 		}
 		if (!pipe)
 		{
 			FreeFile(fp);
-			file_opened = false;
 		}
 		else if (!from)
 		{
