@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.29 1999/09/24 00:24:23 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.30 1999/10/16 21:31:26 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -74,6 +74,7 @@
 #include "executor/nodeMergejoin.h"
 #include "utils/lsyscache.h"
 #include "utils/psort.h"
+#include "utils/syscache.h"
 
 
 static bool MergeCompare(List *eqQual, List *compareQual, ExprContext *econtext);
