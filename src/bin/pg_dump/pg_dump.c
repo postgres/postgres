@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.1 2002/05/14 02:08:22 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.241.2.2 2002/05/28 15:40:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1910,7 +1910,10 @@ getAggregates(int *numAggs)
 		agginfo[i].aggfinalfn = strdup(PQgetvalue(res, i, i_aggfinalfn));
 		agginfo[i].aggtranstype = strdup(PQgetvalue(res, i, i_aggtranstype));
 		agginfo[i].aggbasetype = strdup(PQgetvalue(res, i, i_aggbasetype));
-		agginfo[i].agginitval = strdup(PQgetvalue(res, i, i_agginitval));
+		if (PQgetisnull(res, i, i_agginitval))
+			agginfo[i].agginitval = NULL;
+		else
+			agginfo[i].agginitval = strdup(PQgetvalue(res, i, i_agginitval));
 		agginfo[i].usename = strdup(PQgetvalue(res, i, i_usename));
 		if (strlen(agginfo[i].usename) == 0)
 			write_msg(NULL, "WARNING: owner of aggregate function \"%s\" appears to be invalid\n",
