@@ -1514,6 +1514,16 @@ Fri Jun 20 15:34:29 CEST 2003
 Sun Jun 22 11:20:29 CEST 2003
 
 	- Fixed missing '\0' in output char pointer.
+	
+Wed Jun 25 09:29:34 CEST 2003
+
+	- Synced keyword.x and preproc.y/gram.y.
+	- Implemented Informix special way to treat NULLs.
+	
+Thu Jun 26 13:26:13 CEST 2003
+
+	- Added another compatibility level INFORMIX_SE.
+	- Synced again.
 	- Set ecpg version to 3.0.0
 	- Set ecpg library to 4.0.0
 	- Set pgtypes library to 1.0.0

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.74 2003/06/25 10:44:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.75 2003/06/26 11:37:05 meskes Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -45,7 +45,9 @@ help(const char *progname)
 	printf("  -d             generate parser debug output\n");
 #endif
 	printf("  -C <mode>      set compatibility mode\n"
-		   "                 mode may be \"INFORMIX\" only at the moment\n");
+		   "                 mode may be one of\n"
+		   "                 \"INFORMIX\"\n"
+		   "                 \"INFORMIX_SE\"\n");
 	printf("  -r <option>    specify runtime behaviour\n"
 	           "		     option may be only \"no_indicator\" at the moment\n");	
 	printf("  -D SYMBOL      define SYMBOL\n");
@@ -165,9 +167,9 @@ main(int argc, char *const argv[])
 				system_includes = true;
 				break;
 			case 'C':
-				if (strcmp(optarg, "INFORMIX") == 0)
+				if (strncmp(optarg, "INFORMIX", strlen("INFORMIX")) == 0)
 				{
-					compat = ECPG_COMPAT_INFORMIX;
+					compat = (strcmp(optarg, "INFORMIX") == 0) ? ECPG_COMPAT_INFORMIX : ECPG_COMPAT_INFORMIX_SE;
 					/* system_includes = true; */
 					add_preprocessor_define("dec_t=Numeric");
 					add_preprocessor_define("intrvl_t=Interval");
@@ -383,7 +385,7 @@ main(int argc, char *const argv[])
 				fprintf(yyout, "/* Processed by ecpg (%d.%d.%d) */\n/* These four include files are added by the preprocessor */\n#include <ecpgtype.h>\n#include <ecpglib.h>\n#include <ecpgerrno.h>\n#include <sqlca.h>\n#line 1 \"%s\"\n", MAJOR_VERSION, MINOR_VERSION, PATCHLEVEL, input_filename);
 
 				/* add some compatibility headers */
-				if (compat == ECPG_COMPAT_INFORMIX)
+				if (INFORMIX_MODE)
 					fprintf(yyout, "/* Needed for informix compatibility */\n#include <ecpg_informix.h>\n");
 
 				/* and parse the source */

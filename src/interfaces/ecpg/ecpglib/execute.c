@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.12 2003/06/25 10:44:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/execute.c,v 1.13 2003/06/26 11:37:05 meskes Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -508,7 +508,7 @@ ECPGstore_input(const struct statement * stmt, const struct variable * var,
 			break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 		case ECPGt_NO_INDICATOR:
-			if (stmt->force_indicator == false && stmt->compat == ECPG_COMPAT_INFORMIX)
+			if (stmt->force_indicator == false)
 			{
 				if (ECPGis_informix_null(var->type, var->value))
 					*tobeinserted_p = "null";
@@ -1186,7 +1186,9 @@ ECPGexecute(struct statement * stmt)
 				sqlca->sqlerrd[1] = PQoidValue(results);
 				sqlca->sqlerrd[2] = atol(PQcmdTuples(results));
 				ECPGlog("ECPGexecute line %d Ok: %s\n", stmt->lineno, cmdstat);
-				if (!sqlca->sqlerrd[2] && (   !strncmp(cmdstat, "UPDATE", 6)
+				if (stmt->compat != ECPG_COMPAT_INFORMIX_SE &&
+						!sqlca->sqlerrd[2] &&
+							( !strncmp(cmdstat, "UPDATE", 6)
 							  || !strncmp(cmdstat, "INSERT", 6)
 							  || !strncmp(cmdstat, "DELETE", 6)))
 					ECPGraise(stmt->lineno, ECPG_NOT_FOUND, NULL);

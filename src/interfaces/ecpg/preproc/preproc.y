@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.239 2003/06/25 21:30:33 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.240 2003/06/26 11:37:05 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -2674,7 +2674,7 @@ DeclareCursorStmt:  DECLARE name cursor_options CURSOR opt_hold FOR SelectStmt
 			argsinsert = argsresult = NULL;
 			cur = this;
 
-			if (compat == ECPG_COMPAT_INFORMIX)
+			if (INFORMIX_MODE)
 				$$ = cat_str(5, adjust_informix(this->argsinsert), adjust_informix(this->argsresult), make_str("/*"), mm_strdup(this->command), make_str("*/"));
 			else
 				$$ = cat_str(3, make_str("/*"), mm_strdup(this->command), make_str("*/"));
@@ -3476,8 +3476,6 @@ a_expr:  c_expr
 			{ $$ = cat_str(3, $1, make_str("not in"), $4); }
 		| a_expr qual_all_Op sub_type select_with_parens %prec Op
 			{ $$ = cat_str(4, $1, $2, $3, $4); }
-		| a_expr qual_all_Op sub_type '(' a_expr ')' %prec Op
-			{ $$ = cat_str(6, $1, $2, $3, make_str("("), $5, make_str(")")); }
 		| UNIQUE select_with_parens %prec Op
 			{ $$ = cat2_str(make_str("unique"), $2); }
 		| r_expr

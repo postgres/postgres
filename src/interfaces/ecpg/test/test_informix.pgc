@@ -34,8 +34,13 @@ int main()
 		else
 			printf("%d %d\n", i, j);
 	}
-	
+
+	$delete from test where i=87;
+	printf("delete: %ld\n", sqlca.sqlcode);
+
+	$commit;
 	$drop table test;
+	$commit;
 
 	$disconnect;
 

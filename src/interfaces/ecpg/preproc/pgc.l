@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.117 2003/06/20 15:16:06 meskes Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/pgc.l,v 1.118 2003/06/26 11:37:05 meskes Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -420,7 +420,7 @@ cppline			{space}*#(.*\\{space})+.*
 <SQL>{typecast}		{ return TYPECAST; }
 <SQL>{informix_special}	{
 			  /* are we simulating Informix? */
-                          if (compat == ECPG_COMPAT_INFORMIX)
+                          if (INFORMIX_MODE)
 			  {
 			  	unput(':');
 			  }
@@ -605,7 +605,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C>{exec_sql}		{ BEGIN SQL; return SQL_START; }
 <C>{informix_special}	{ 
 			  /* are we simulating Informix? */
-			  if (compat == ECPG_COMPAT_INFORMIX)
+			  if (INFORMIX_MODE)
 			  {
 			  	BEGIN SQL;
 				return SQL_START;
@@ -715,7 +715,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C>{exec_sql}{define}{space}*	{ BEGIN(def_ident); }
 <C>{informix_special}{define}{space}*	{
 						/* are we simulating Informix? */
-						if (compat == ECPG_COMPAT_INFORMIX)
+						if (INFORMIX_MODE)
 						{
 							BEGIN(def_ident);
 						}
@@ -730,7 +730,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C>{exec_sql}{include}{space}*	{ BEGIN(incl); }
 <C>{informix_special}{include}{space}* { 
 					  /* are we simulating Informix? */
-					  if (compat == ECPG_COMPAT_INFORMIX)
+					  if (INFORMIX_MODE)
 					  {
 					  	BEGIN(incl);
 					  }
@@ -745,7 +745,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C,xskip>{exec_sql}{ifdef}{space}*	{ ifcond = TRUE; BEGIN(xcond); }
 <C,xskip>{informix_special}{ifdef}{space}* { 
 					  /* are we simulating Informix? */
-					  if (compat == ECPG_COMPAT_INFORMIX)
+					  if (INFORMIX_MODE)
 					  {
 					  	ifcond = TRUE;
 						BEGIN(xcond);
@@ -761,7 +761,7 @@ cppline			{space}*#(.*\\{space})+.*
 <C,xskip>{exec_sql}{ifndef}{space}* { ifcond = FALSE; BEGIN(xcond); }
 <C,xskip>{informix_special}{ifndef}{space}* { 
 					  /* are we simulating Informix? */
-					  if (compat == ECPG_COMPAT_INFORMIX)
+					  if (INFORMIX_MODE)
 					  {
 					  	ifcond = FALSE;
 						BEGIN(xcond);
@@ -787,7 +787,7 @@ cppline			{space}*#(.*\\{space})+.*
 					}
 <C,xskip>{informix_special}{elif}{space}* { 
 					  /* are we simulating Informix? */
-					  if (compat == ECPG_COMPAT_INFORMIX)
+					  if (INFORMIX_MODE)
 					  {
 						if ( preproc_tos == 0 ) {
 							mmerror(PARSE_ERROR, ET_FATAL, "Missing matching 'EXEC SQL IFDEF / EXEC SQL IFNDEF'");
@@ -826,7 +826,7 @@ cppline			{space}*#(.*\\{space})+.*
 					}
 <C,xskip>{informix_special}{else}{space}*	{
 					  /* are we simulating Informix? */
-					  if (compat == ECPG_COMPAT_INFORMIX)
+					  if (INFORMIX_MODE)
 					  {
 						if ( stacked_if_value[preproc_tos].else_branch ) {
 							mmerror(PARSE_ERROR, ET_FATAL, "Duplicated 'EXEC SQL ELSE;'");
@@ -864,7 +864,7 @@ cppline			{space}*#(.*\\{space})+.*
 					}
 <C,xskip>{informix_special}{endif}{space}*";"	{
 					  /* are we simulating Informix? */
-					  if (compat == ECPG_COMPAT_INFORMIX)
+					  if (INFORMIX_MODE)
 					  {
 						if ( preproc_tos == 0 )
 							mmerror(PARSE_ERROR, ET_FATAL, "Unmatched 'EXEC SQL ENDIF;'");

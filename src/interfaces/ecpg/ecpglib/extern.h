@@ -5,7 +5,8 @@
 #include "libpq-fe.h"
 #include "sqlca.h"
 
-enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX};
+enum COMPAT_MODE { ECPG_COMPAT_PGSQL = 0, ECPG_COMPAT_INFORMIX, ECPG_COMPAT_INFORMIX_SE};
+#define INFORMIX_MODE(X) ((X) == ECPG_COMPAT_INFORMIX || (X) == ECPG_COMPAT_INFORMIX_SE)
 
 /* Here are some methods used by the lib. */
 

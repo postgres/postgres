@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.8 2003/06/25 10:44:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/data.c,v 1.9 2003/06/26 11:37:05 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -78,7 +78,7 @@ ECPGget_data(const PGresult *results, int act_tuple, int act_field, int lineno,
 				break;
 #endif   /* HAVE_LONG_LONG_INT_64 */
 			case ECPGt_NO_INDICATOR:
-				if (force_indicator == false && compat == ECPG_COMPAT_INFORMIX)
+				if (force_indicator == false)
 				{
 					/* Informix has an additional way to specify NULLs
 					 * note that this uses special values to denote NULL */

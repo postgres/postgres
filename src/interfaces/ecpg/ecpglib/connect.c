@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.8 2003/06/25 10:44:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/connect.c,v 1.9 2003/06/26 11:37:05 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -304,7 +304,7 @@ ECPGconnect(int lineno, int c, const char *name, const char *user, const char *p
 
 	ECPGinit_sqlca(sqlca);
 	
-	if (compat == ECPG_COMPAT_INFORMIX)
+	if (INFORMIX_MODE(compat))
 	{
 		char *envname;
 		

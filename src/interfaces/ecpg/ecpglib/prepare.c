@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.4 2003/06/25 10:44:21 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/ecpglib/prepare.c,v 1.5 2003/06/26 11:37:05 meskes Exp $ */
 
 #define POSTGRES_ECPG_INTERNAL
 #include "postgres_fe.h"
@@ -110,7 +110,7 @@ ECPGdeallocate(int lineno, int c, char *name)
 	bool ret = ECPGdeallocate_one(lineno, name);
 	enum COMPAT_MODE compat = c;
 
-	if (compat == ECPG_COMPAT_INFORMIX)
+	if (INFORMIX_MODE(compat))
 	{
 		/* Just ignore all errors since we do not know the list of cursors we
 		 * are allowed to free. We have to trust that the software. */
