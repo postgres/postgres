@@ -1,6 +1,5 @@
 AROPT:crs
-# -qhalt=w  re-add when ecpg is fixed, bjm 2000-04-17
-CFLAGS:-qmaxmem=16384 -qsrcmsg -qlanglvl=extended -qlonglong
+CFLAGS:-qmaxmem=16384 -qhalt=w -qsrcmsg -qlanglvl=extended -qlonglong
 SHARED_LIB:-lc
 ALL:
 SRCH_INC:
