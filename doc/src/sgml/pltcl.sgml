@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.11 2001/06/09 02:19:07 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/pltcl.sgml,v 2.12 2001/08/02 15:45:55 momjian Exp $
 -->
 
  <chapter id="pltcl">
@@ -390,6 +390,18 @@ CREATE TRIGGER trig_mytab_modcount BEFORE INSERT OR UPDATE ON mytab
 	<programlisting>
 "SELECT '[ quote $val ]' AS ret"
 	</programlisting>
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <indexterm>
+       <primary>spi_lastoid</primary>
+      </indexterm>
+      <term>spi_lastoid</term>
+      <listitem>
+       <para>
+	Returns the OID of the last query if it was an INSERT.
        </para>
       </listitem>
      </varlistentry>

@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.37 2001/06/09 02:19:07 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.38 2001/08/02 15:45:55 momjian Exp $
  *
  **********************************************************************/
 
@@ -144,6 +144,8 @@ static void pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 					   int tupno, HeapTuple tuple, TupleDesc tupdesc);
 static void pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 						   Tcl_DString *retval);
+static int pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
+				int argc, char *argv[]);
 
 /*
  * This routine is a crock, and so is everyplace that calls it.  The problem
@@ -251,7 +253,9 @@ pltcl_init_interp(Tcl_Interp *interp)
 					  pltcl_SPI_prepare, NULL, NULL);
 	Tcl_CreateCommand(interp, "spi_execp",
 					  pltcl_SPI_execp, NULL, NULL);
-
+	Tcl_CreateCommand(interp, "spi_lastoid",
+					  pltcl_SPI_lastoid, NULL, NULL);
+					  
 #ifdef ENABLE_PLTCL_UNKNOWN
 	/************************************************************
 	 * Try to load the unknown procedure from pltcl_modules
@@ -2270,6 +2274,21 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 	 ************************************************************/
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 	sprintf(buf, "%d", ntuples);
+	Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	return TCL_OK;
+}
+
+
+/**********************************************************************
+ * pltcl_SPI_lastoid()  - return the last oid. To
+ *        be used after insert queries
+ **********************************************************************/
+static int
+pltcl_SPI_lastoid(ClientData cdata, Tcl_Interp *interp,
+				  int argc, char *argv[])
+{
+	char buf[64];
+	sprintf(buf,"%u",SPI_lastoid);
 	Tcl_SetResult(interp, buf, TCL_VOLATILE);
 	return TCL_OK;
 }
