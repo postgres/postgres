@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.46 1998/05/21 03:53:50 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.47 1998/05/26 03:44:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -530,7 +530,8 @@ InitPlan(CmdType operation, Query *parseTree, Plan *plan, EState *estate)
 		JunkFilter *j = (JunkFilter *) ExecInitJunkFilter(targetList);
 		estate->es_junkFilter = j;
 
-		tupType = j->jf_cleanTupType;       /*  Added by daveh@insightdist.com  5/20/98   */
+		if (operation == CMD_SELECT)
+			tupType = j->jf_cleanTupType;
 	}
 	else
 		estate->es_junkFilter = NULL;
