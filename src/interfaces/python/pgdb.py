@@ -147,7 +147,7 @@ class pgdbTypeCache:
 			return self.__type_cache[oid]
 		except:
 			self.__source.execute(
-				"SELECT typname, typprtlen, typlen "
+				"SELECT typname, typlen "
 				"FROM pg_type WHERE oid = %s" % oid
 			)
 			res = self.__source.fetch(1)[0]
@@ -155,7 +155,7 @@ class pgdbTypeCache:
 			# have to be prepended by the caller.
 			res = (
 				res[0],
-				string.atoi(res[1]), string.atoi(res[2]),
+				None, string.atoi(res[1]),
 				None, None, None
 			)
 			self.__type_cache[oid] = res
@@ -180,7 +180,7 @@ class pgdbCursor:
 	def execute(self, operation, params = None):
 		# "The parameters may also be specified as list of
 		# tuples to e.g. insert multiple rows in a single
-		# operation, but this kind of usage is depreciated:
+		# operation, but this kind of usage is deprecated:
 		if params and type(params) == types.ListType and \
 					type(params[0]) == types.TupleType:
 			self.executemany(operation, params)
@@ -240,7 +240,10 @@ class pgdbCursor:
 			size = self.arraysize
 		if keep == 1:
 			self.arraysize = size
-		res = self.__source.fetch(size)
+
+		try: res = self.__source.fetch(size)
+		except _pg.error, e: raise DatabaseError, str(e)
+
 		result = []
 		for r in res:
 			row = []
@@ -252,6 +255,9 @@ class pgdbCursor:
 				)
 			result.append(row)
 		return result
+
+	def nextset(self):
+		raise NotSupportedError, "nextset() is not supported"
 
 	def setinputsizes(self, sizes):
 		pass
