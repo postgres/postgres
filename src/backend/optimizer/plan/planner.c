@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.98 2000/12/14 22:30:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/planner.c,v 1.99 2001/01/18 07:12:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -132,6 +132,7 @@ subquery_planner(Query *parse, double tuple_fraction)
 	List	   *saved_initplan = PlannerInitPlan;
 	int			saved_planid = PlannerPlanId;
 	Plan	   *plan;
+	List	   *newHaving;
 	List	   *lst;
 
 	/* Set up for a new level of subquery */
@@ -156,20 +157,6 @@ subquery_planner(Query *parse, double tuple_fraction)
 		preprocess_jointree(parse, (Node *) parse->jointree);
 
 	/*
-	 * A HAVING clause without aggregates is equivalent to a WHERE clause
-	 * (except it can only refer to grouped fields).  If there are no aggs
-	 * anywhere in the query, then we don't want to create an Agg plan
-	 * node, so merge the HAVING condition into WHERE.	(We used to
-	 * consider this an error condition, but it seems to be legal SQL.)
-	 */
-	if (parse->havingQual != NULL && !parse->hasAggs)
-	{
-		parse->jointree->quals = make_and_qual(parse->jointree->quals,
-											   parse->havingQual);
-		parse->havingQual = NULL;
-	}
-
-	/*
 	 * Do expression preprocessing on targetlist and quals.
 	 */
 	parse->targetList = (List *)
@@ -180,6 +167,37 @@ subquery_planner(Query *parse, double tuple_fraction)
 
 	parse->havingQual = preprocess_expression(parse, parse->havingQual,
 											  EXPRKIND_HAVING);
+
+	/*
+	 * A HAVING clause without aggregates is equivalent to a WHERE clause
+	 * (except it can only refer to grouped fields).  Transfer any agg-free
+	 * clauses of the HAVING qual into WHERE.  This may seem like wasting
+	 * cycles to cater to stupidly-written queries, but there are other
+	 * reasons for doing it.  Firstly, if the query contains no aggs at all,
+	 * then we aren't going to generate an Agg plan node, and so there'll be
+	 * no place to execute HAVING conditions; without this transfer, we'd
+	 * lose the HAVING condition entirely, which is wrong.  Secondly, when
+	 * we push down a qual condition into a sub-query, it's easiest to push
+	 * the qual into HAVING always, in case it contains aggs, and then let
+	 * this code sort it out.
+	 *
+	 * Note that both havingQual and parse->jointree->quals are in
+	 * implicitly-ANDed-list form at this point, even though they are
+	 * declared as Node *.  Also note that contain_agg_clause does not
+	 * recurse into sub-selects, which is exactly what we need here.
+	 */
+	newHaving = NIL;
+	foreach(lst, (List *) parse->havingQual)
+	{
+		Node   *havingclause = (Node *) lfirst(lst);
+
+		if (contain_agg_clause(havingclause))
+			newHaving = lappend(newHaving, havingclause);
+		else
+			parse->jointree->quals = (Node *)
+				lappend((List *) parse->jointree->quals, havingclause);
+	}
+	parse->havingQual = (Node *) newHaving;
 
 	/*
 	 * Do the main planning.  If we have an inherited target relation,
@@ -554,12 +572,6 @@ preprocess_expression(Query *parse, Node *expr, int kind)
 			 * Check for ungrouped variables passed to subplans.  Note we
 			 * do NOT do this for subplans in WHERE (or JOIN/ON); it's legal
 			 * there because WHERE is evaluated pre-GROUP.
-			 *
-			 * An interesting fine point: if subquery_planner reassigned a
-			 * HAVING qual into WHERE, then we will accept references to
-			 * ungrouped vars from subplans in the HAVING qual.  This is not
-			 * entirely consistent, but it doesn't seem particularly
-			 * harmful...
 			 */
 			check_subplans_for_ungrouped_vars(expr, parse);
 		}
@@ -1048,6 +1060,11 @@ grouping_planner(Query *parse, double tuple_fraction)
 										(List *) parse->havingQual,
 										result_plan);
 		/* Note: Agg does not affect any existing sort order of the tuples */
+	}
+	else
+	{
+		/* If there are no Aggs, we shouldn't have any HAVING qual anymore */
+		Assert(parse->havingQual == NULL);
 	}
 
 	/*

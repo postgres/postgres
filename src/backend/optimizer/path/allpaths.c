@@ -8,13 +8,14 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.68 2000/12/14 22:30:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.69 2001/01/18 07:12:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 
 #include "postgres.h"
 
+#include "optimizer/clauses.h"
 #include "optimizer/cost.h"
 #include "optimizer/geqo.h"
 #include "optimizer/pathnode.h"
@@ -23,6 +24,7 @@
 #include "optimizer/planner.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
+#include "rewrite/rewriteManip.h"
 
 
 bool		enable_geqo = true;
@@ -99,12 +101,65 @@ set_base_rel_pathlists(Query *root)
 		if (rel->issubquery)
 		{
 			/* Subquery --- generate a separate plan for it */
+			List	   *upperrestrictlist;
+			List	   *lst;
 
 			/*
-			 * XXX for now, we just apply any restrict clauses that came
-			 * from the outer query as qpquals of the SubqueryScan node.
-			 * Later, think about pushing them down into the subquery itself.
+			 * If there are any restriction clauses that have been attached
+			 * to the subquery relation, consider pushing them down to become
+			 * HAVING quals of the subquery itself.  (Not WHERE clauses, since
+			 * they may refer to subquery outputs that are aggregate results.
+			 * But planner.c will transfer them into the subquery's WHERE if
+			 * they do not.)  This transformation is useful because it may
+			 * allow us to generate a better plan for the subquery than
+			 * evaluating all the subquery output rows and then filtering
+			 * them.
+			 *
+			 * Currently, we do not push down clauses that contain subselects,
+			 * mainly because I'm not sure it will work correctly (the
+			 * subplan hasn't yet transformed sublinks to subselects).
+			 * Non-pushed-down clauses will get evaluated as qpquals of
+			 * the SubqueryScan node.
+			 *
+			 * XXX Are there any cases where we want to make a policy
+			 * decision not to push down, because it'd result in a worse
+			 * plan?
 			 */
+			upperrestrictlist = NIL;
+			foreach(lst, rel->baserestrictinfo)
+			{
+				RestrictInfo   *rinfo = (RestrictInfo *) lfirst(lst);
+				Node		   *clause = (Node *) rinfo->clause;
+
+				if (contain_subplans(clause))
+				{
+					/* Keep it in the upper query */
+					upperrestrictlist = lappend(upperrestrictlist, rinfo);
+				}
+				else
+				{
+					/*
+					 * We need to replace Vars in the clause (which must
+					 * refer to outputs of the subquery) with copies of the
+					 * subquery's targetlist expressions.  Note that at this
+					 * point, any uplevel Vars in the clause should have been
+					 * replaced with Params, so they need no work.
+					 */
+					clause = ResolveNew(clause, rti, 0,
+										rte->subquery->targetList,
+										CMD_SELECT, 0);
+					rte->subquery->havingQual =
+						make_and_qual(rte->subquery->havingQual,
+									  clause);
+					/*
+					 * We need not change the subquery's hasAggs or
+					 * hasSublinks flags, since we can't be pushing down
+					 * any aggregates that weren't there before, and we
+					 * don't push down subselects at all.
+					 */
+				}
+			}
+			rel->baserestrictinfo = upperrestrictlist;
 
 			/* Generate the plan for the subquery */
 			rel->subplan = subquery_planner(rte->subquery,
