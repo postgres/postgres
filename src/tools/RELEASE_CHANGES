@@ -5,7 +5,7 @@ register.txt
 doc/Machine-specific FAQ's
 doc/TODO
 doc/bug.template
-update include/version.h after release
+update include/version.h after release, including subversion
 update backend/parser/scan.c and gram.c so  flex/bison not necessary
 update pgaccess
 update odbc
