@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.169 2000/10/22 19:49:43 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.170 2000/10/24 09:56:15 vadim Exp $
  *
 
  *-------------------------------------------------------------------------
@@ -47,6 +47,11 @@
 #include <sys/resource.h>
 #endif
 
+#ifdef XLOG
+#include "access/xlog.h"
+XLogRecPtr	log_heap_move(Relation reln, 
+				ItemPointerData from, HeapTuple newtup);
+#endif
 
 static MemoryContext vac_context = NULL;
 
@@ -1401,11 +1406,23 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				{
 					VacPage	destvacpage = vtmove[ti].vacpage;
 
-					/* Get tuple from chain */
+					/* Get page to move from */
 					tuple.t_self = vtmove[ti].tid;
 					Cbuf = ReadBuffer(onerel,
 							 ItemPointerGetBlockNumber(&(tuple.t_self)));
+
+					/* Get page to move to */
+					cur_buffer = ReadBuffer(onerel, destvacpage->blkno);
+
+					LockBuffer(cur_buffer, BUFFER_LOCK_EXCLUSIVE);
+					if (cur_buffer != Cbuf)
+						LockBuffer(Cbuf, BUFFER_LOCK_EXCLUSIVE);
+
+					ToPage = BufferGetPage(cur_buffer);
 					Cpage = BufferGetPage(Cbuf);
+
+					/* NO ELOG(ERROR) TILL CHANGES ARE LOGGED */
+
 					Citemid = PageGetItemId(Cpage,
 							ItemPointerGetOffsetNumber(&(tuple.t_self)));
 					tuple.t_datamcxt = NULL;
@@ -1424,19 +1441,6 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					tuple.t_data->t_infomask &=
 						~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 					tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
-
-					/* Get page to move to */
-					cur_buffer = ReadBuffer(onerel, destvacpage->blkno);
-
-					/*
-					 * We should LockBuffer(cur_buffer) but don't, at the
-					 * moment.  This should be safe enough, since we have
-					 * exclusive lock on the whole relation.
-					 * If you'll do LockBuffer then UNLOCK it before
-					 * index_insert: unique btree-s call heap_fetch to get
-					 * t_infomask of inserted heap tuple !!!
-					 */
-					ToPage = BufferGetPage(cur_buffer);
 
 					/*
 					 * If this page was not used before - clean it.
@@ -1480,7 +1484,7 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 										 InvalidOffsetNumber, LP_USED);
 					if (newoff == InvalidOffsetNumber)
 					{
-						elog(ERROR, "moving chain: failed to add item with len = %u to page %u",
+						elog(STOP, "moving chain: failed to add item with len = %u to page %u",
 							 tuple_len, destvacpage->blkno);
 					}
 					newitemid = PageGetItemId(ToPage, newoff);
@@ -1488,6 +1492,22 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 					newtup.t_datamcxt = NULL;
 					newtup.t_data = (HeapTupleHeader) PageGetItem(ToPage, newitemid);
 					ItemPointerSet(&(newtup.t_self), destvacpage->blkno, newoff);
+
+#ifdef XLOG
+					{
+						XLogRecPtr	recptr = 
+							log_heap_move(onerel, tuple.t_self, &newtup);
+
+						if (Cbuf != cur_buffer)
+						{
+							PageSetLSN(Cpage, recptr);
+							PageSetSUI(Cpage, ThisStartUpID);
+						}
+						PageSetLSN(ToPage, recptr);
+						PageSetSUI(ToPage, ThisStartUpID);
+					}
+#endif
+
 					if (((int) destvacpage->blkno) > last_move_dest_block)
 						last_move_dest_block = destvacpage->blkno;
 
@@ -1512,6 +1532,10 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 							ItemPointerGetOffsetNumber(&(tuple.t_self));
 					else
 						keep_tuples++;
+
+					LockBuffer(cur_buffer, BUFFER_LOCK_UNLOCK);
+					if (cur_buffer != Cbuf)
+						LockBuffer(Cbuf, BUFFER_LOCK_UNLOCK);
 
 					if (Irel != (Relation *) NULL)
 					{
@@ -1581,11 +1605,16 @@ repair_frag(VRelStats *vacrelstats, Relation onerel,
 				cur_item = i;
 				cur_page = fraged_pages->pagedesc[cur_item];
 				cur_buffer = ReadBuffer(onerel, cur_page->blkno);
+				LockBuffer(cur_buffer, BUFFER_LOCK_EXCLUSIVE);
 				ToPage = BufferGetPage(cur_buffer);
 				/* if this page was not used before - clean it */
 				if (!PageIsEmpty(ToPage) && cur_page->offsets_used == 0)
 					vacuum_page(ToPage, cur_page);
 			}
+			else
+				LockBuffer(cur_buffer, BUFFER_LOCK_EXCLUSIVE);
+
+			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 
 			/* copy tuple */
 			heap_copytuple_with_tuple(&tuple, &newtup);
@@ -1627,6 +1656,18 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
 			tuple.t_data->t_infomask |= HEAP_MOVED_OFF;
 
+#ifdef XLOG
+			{
+				XLogRecPtr	recptr = 
+					log_heap_move(onerel, tuple.t_self, &newtup);
+
+				PageSetLSN(page, recptr);
+				PageSetSUI(page, ThisStartUpID);
+				PageSetLSN(ToPage, recptr);
+				PageSetSUI(ToPage, ThisStartUpID);
+			}
+#endif
+
 			cur_page->offsets_used++;
 			num_moved++;
 			cur_page->free = ((PageHeader) ToPage)->pd_upper - ((PageHeader) ToPage)->pd_lower;
@@ -1634,6 +1675,9 @@ failed to add item with len = %u to page %u (free space %u, nusd %u, noff %u)",
 				last_move_dest_block = cur_page->blkno;
 
 			vacpage->offsets[vacpage->offsets_free++] = offnum;
+
+			LockBuffer(cur_buffer, BUFFER_LOCK_UNLOCK);
+			LockBuffer(buf, BUFFER_LOCK_UNLOCK);
 
 			/* insert index' tuples if needed */
 			if (Irel != (Relation *) NULL)

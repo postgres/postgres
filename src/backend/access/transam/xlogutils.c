@@ -14,6 +14,7 @@
 #include "postgres.h"
 
 #include "access/xlog.h"
+#include "access/transam.h"
 #include "access/xact.h"
 #include "storage/bufpage.h"
 #include "storage/bufmgr.h"
@@ -134,10 +135,16 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 
 	/* MUST CHECK WASN'T TUPLE INSERTED IN PREV STARTUP */
 
-	if (XLogIsAborted(htup->t_xmin))
+	if (!(htup->t_infomask & HEAP_XMIN_COMMITTED))
 	{
-		UnlockAndReleaseBuffer(buffer);
-		return(false);
+		if (htup->t_infomask & HEAP_XMIN_INVALID ||
+			(htup->t_infomask & HEAP_MOVED_IN &&
+			TransactionIdDidAbort((TransactionId)htup->t_cmin)) ||
+			TransactionIdDidAbort(htup->t_xmin))
+		{
+			UnlockAndReleaseBuffer(buffer);
+			return(false);
+		}
 	}
 
 	UnlockAndReleaseBuffer(buffer);
@@ -145,40 +152,31 @@ XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
 }
 
 /*
- * ---------------------------------------------------------------
- *
- * Transaction support functions for recovery
- *
- * On recovery we create tmp file to know what xactions were
- * committed/aborted (2 bits per xaction).
- *
- *----------------------------------------------------------------
+ * Open pg_log in recovery
  */
-
-bool
-XLogIsAborted(TransactionId xid)
-{
-	return(false);
-}
-
-bool
-XLogIsCommitted(TransactionId xid)
-{
-	return(true);
-}
+extern Relation	LogRelation;	/* pg_log relation */
 
 void
-XLogMarkAborted(TransactionId xid)
+XLogOpenLogRelation(void)
 {
-	return;
-}
+	Relation	logRelation;
 
-void
-XLogMarkCommitted(TransactionId xid)
-{
-	return;
-}
+	Assert(!LogRelation);
+	logRelation = (Relation) malloc(sizeof(RelationData));
+	memset(logRelation, 0, sizeof(RelationData));
+	logRelation->rd_rel = (Form_pg_class) malloc(sizeof(FormData_pg_class));
+	memset(logRelation->rd_rel, 0, sizeof(FormData_pg_class));
 
+	sprintf(RelationGetPhysicalRelationName(logRelation), "pg_log");
+	logRelation->rd_node.tblNode = InvalidOid;
+	logRelation->rd_node.relNode = RelOid_pg_log;
+	logRelation->rd_unlinked = false;	/* must exists */
+	logRelation->rd_fd = -1;
+	logRelation->rd_fd = smgropen(DEFAULT_SMGR, logRelation);
+	if (logRelation->rd_fd < 0)
+		elog(STOP, "XLogOpenLogRelation: failed to open pg_log");
+	LogRelation = logRelation;
+}
 
 /*
  * ---------------------------------------------------------------
@@ -274,7 +272,7 @@ _xl_init_rel_cache(void)
 	_xlrelarr = (XLogRelDesc*) malloc(sizeof(XLogRelDesc) * _xlcnt);
 	memset(_xlrelarr, 0, sizeof(XLogRelDesc) * _xlcnt);
 	_xlpgcarr = (Form_pg_class) malloc(sizeof(FormData_pg_class) * _xlcnt);
-	memset(_xlpgcarr, 0, sizeof(XLogRelDesc) * _xlcnt);
+	memset(_xlpgcarr, 0, sizeof(FormData_pg_class) * _xlcnt);
 
 	_xlrelarr[0].moreRecently = &(_xlrelarr[0]);
 	_xlrelarr[0].lessRecently = &(_xlrelarr[0]);

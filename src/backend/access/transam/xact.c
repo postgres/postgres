@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.75 2000/10/23 04:10:05 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/transam/xact.c,v 1.76 2000/10/24 09:56:08 vadim Exp $
  *
  * NOTES
  *		Transaction aborts can now occur two ways:
@@ -220,7 +220,7 @@ int			XactIsoLevel;
 #ifdef XLOG
 #include "access/xlogutils.h"
 
-int			CommitDelay;
+int			CommitDelay = 100;
 
 void		xact_redo(XLogRecPtr lsn, XLogRecord *record);
 void		xact_undo(XLogRecPtr lsn, XLogRecord *record);
@@ -676,7 +676,36 @@ RecordTransactionCommit()
 	 */
 	leak = BufferPoolCheckLeak();
 
-#ifndef XLOG
+#ifdef XLOG
+	if (MyLastRecPtr.xlogid != 0 || MyLastRecPtr.xrecoff != 0)
+	{
+		xl_xact_commit	xlrec;
+		struct timeval	delay;
+		XLogRecPtr		recptr;
+
+		xlrec.xtime = time(NULL);
+		/*
+		 * MUST SAVE ARRAY OF RELFILENODE-s TO DROP
+		 */
+		recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT,
+			(char*) &xlrec, SizeOfXactCommit, NULL, 0);
+
+		/* 
+		 * Sleep before commit! So we can flush more than one
+		 * commit records per single fsync.
+		 */
+		delay.tv_sec = 0;
+		delay.tv_usec = CommitDelay;
+		(void) select(0, NULL, NULL, NULL, &delay);
+		XLogFlush(recptr);
+		MyLastRecPtr.xlogid = 0;
+		MyLastRecPtr.xrecoff = 0;
+
+		TransactionIdCommit(xid);
+
+		MyProc->logRec.xrecoff = 0;
+	}
+#else
 	/*
 	 * If no one shared buffer was changed by this transaction then we
 	 * don't flush shared buffers and don't record commit status.
@@ -687,39 +716,12 @@ RecordTransactionCommit()
 		if (leak)
 			ResetBufferPool(true);
 
-#endif
 		/*
 		 * have the transaction access methods record the status of this
 		 * transaction id in the pg_log relation.
 		 */
 		TransactionIdCommit(xid);
 
-#ifdef XLOG
-		if (MyLastRecPtr.xlogid != 0 || MyLastRecPtr.xrecoff != 0)
-		{
-			xl_xact_commit	xlrec;
-			struct timeval	delay;
-			XLogRecPtr		recptr;
-
-			xlrec.xtime = time(NULL);
-			/*
-			 * MUST SAVE ARRAY OF RELFILENODE-s TO DROP
-			 */
-			recptr = XLogInsert(RM_XACT_ID, XLOG_XACT_COMMIT,
-				(char*) &xlrec, SizeOfXactCommit, NULL, 0);
-
-			/* 
-			 * Sleep before commit! So we can flush more than one
-			 * commit records per single fsync.
-			 */
-			delay.tv_sec = 0;
-			delay.tv_usec = CommitDelay;
-			(void) select(0, NULL, NULL, NULL, &delay);
-			XLogFlush(recptr);
-			MyLastRecPtr.xlogid = 0;
-			MyLastRecPtr.xrecoff = 0;
-		}
-#else
 		/*
 		 * Now write the log info to the disk too.
 		 */
@@ -1737,12 +1739,12 @@ xact_redo(XLogRecPtr lsn, XLogRecord *record)
 	{
 		xl_xact_commit	*xlrec = (xl_xact_commit*) XLogRecGetData(record);
 
-		XLogMarkCommitted(record->xl_xid);
+		TransactionIdCommit(record->xl_xid);
 		/* MUST REMOVE FILES OF ALL DROPPED RELATIONS */
 	}
 	else if (info == XLOG_XACT_ABORT)
 	{
-		XLogMarkAborted(record->xl_xid);
+		TransactionIdAbort(record->xl_xid);
 	}
 	else
 		elog(STOP, "xact_redo: unknown op code %u", info);

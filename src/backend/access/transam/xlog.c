@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.20 2000/10/23 04:10:05 vadim Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.21 2000/10/24 09:56:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,13 +19,14 @@
 
 #include "postgres.h"
 
-#include "access/xlog.h"
 #include "access/xact.h"
 #include "catalog/catversion.h"
 #include "storage/sinval.h"
 #include "storage/proc.h"
 #include "storage/spin.h"
 #include "storage/s_lock.h"
+#include "access/xlog.h"
+#include "access/xlogutils.h"
 
 #include "miscadmin.h"
 
@@ -1343,9 +1344,10 @@ StartupXLOG()
 		elog(STOP, "Invalid length of checkPoint record");
 	checkPoint = *((CheckPoint *) ((char *) record + SizeOfXLogRecord));
 
-	elog(LOG, "Redo record at (%u, %u); Undo record at (%u, %u)",
+	elog(LOG, "Redo record at (%u, %u); Undo record at (%u, %u); Shutdown %s",
 		 checkPoint.redo.xlogid, checkPoint.redo.xrecoff,
-		 checkPoint.undo.xlogid, checkPoint.undo.xrecoff);
+		 checkPoint.undo.xlogid, checkPoint.undo.xrecoff,
+		 (checkPoint.Shutdown) ? "TRUE" : "FALSE");
 	elog(LOG, "NextTransactionId: %u; NextOid: %u",
 		 checkPoint.nextXid, checkPoint.nextOid);
 	if (checkPoint.nextXid < FirstTransactionId ||
@@ -1371,16 +1373,23 @@ StartupXLOG()
 	if (XLByteLT(RecPtr, checkPoint.undo))
 		elog(STOP, "Invalid undo in checkPoint record");
 
-	if (XLByteLT(checkPoint.undo, RecPtr) || XLByteLT(checkPoint.redo, RecPtr))
+	if (XLByteLT(checkPoint.undo, RecPtr) || 
+		XLByteLT(checkPoint.redo, RecPtr))
 	{
+		if (checkPoint.Shutdown)
+			elog(STOP, "Invalid Redo/Undo record in shutdown checkpoint");
 		if (ControlFile->state == DB_SHUTDOWNED)
 			elog(STOP, "Invalid Redo/Undo record in Shutdowned state");
-		recovery = 2;
+		recovery = 1;
 	}
 	else if (ControlFile->state != DB_SHUTDOWNED)
-		recovery = 2;
+	{
+		if (checkPoint.Shutdown)
+			elog(STOP, "Invalid state in control file");
+		recovery = 1;
+	}
 
-	if (recovery > 0)
+	if (recovery)
 	{
 		elog(LOG, "The DataBase system was not properly shut down\n"
 			 "\tAutomatic recovery is in progress...");
@@ -1390,6 +1399,8 @@ StartupXLOG()
 
 		sie_saved = StopIfError;
 		StopIfError = true;
+
+		XLogOpenLogRelation();	/* open pg_log */
 
 		/* Is REDO required ? */
 		if (XLByteLT(checkPoint.redo, RecPtr))
@@ -1432,11 +1443,9 @@ StartupXLOG()
 			LastRec = ReadRecPtr;
 		}
 		else
-		{
 			elog(LOG, "Redo is not required");
-			recovery--;
-		}
 
+#ifdef NOT_USED
 		/* UNDO */
 		RecPtr = ReadRecPtr;
 		if (XLByteLT(checkPoint.undo, RecPtr))
@@ -1455,10 +1464,8 @@ StartupXLOG()
 				 ReadRecPtr.xlogid, ReadRecPtr.xrecoff);
 		}
 		else
-		{
 			elog(LOG, "Undo is not required");
-			recovery--;
-		}
+#endif
 	}
 
 	/* Init xlog buffer cache */
@@ -1476,17 +1483,8 @@ StartupXLOG()
 		(EndRecPtr.xrecoff + BLCKSZ - XLogCtl->xlblocks[0].xrecoff);
 	Insert->PrevRecord = ControlFile->checkPoint;
 
-	if (recovery > 0)
+	if (recovery)
 	{
-#ifdef NOT_USED
-		int			i;
-
-		/*
-		 * Let resource managers know that recovery is done
-		 */
-		for (i = 0; i <= RM_MAX_ID; i++)
-			RmgrTable[record->xl_rmid].rm_redo(ReadRecPtr, NULL);
-#endif
 		CreateCheckPoint(true);
 		StopIfError = sie_saved;
 	}
@@ -1586,7 +1584,7 @@ CreateCheckPoint(bool shutdown)
 
 	FlushBufferPool();
 
-	/* Get UNDO record ptr */
+	/* Get UNDO record ptr - should use oldest of PROC->logRec */
 	checkPoint.undo.xrecoff = 0;
 
 	if (shutdown && checkPoint.undo.xrecoff != 0)

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.94 2000/10/21 15:43:24 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/bootstrap/bootstrap.c,v 1.95 2000/10/24 09:56:09 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -398,6 +398,10 @@ BootstrapMain(int argc, char *argv[])
 	 * bootstrap parser to avoid conflicts with the normal SQL parser
 	 */
 	Int_yyparse();
+
+#ifdef XLOG
+	FlushBufferPool();
+#endif
 
 	/* clean up processing */
 	StartTransactionCommand();

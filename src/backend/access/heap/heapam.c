@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.90 2000/10/21 15:43:14 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.91 2000/10/24 09:56:07 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -93,9 +93,13 @@ void heap_redo(XLogRecPtr lsn, XLogRecord *record);
 void heap_undo(XLogRecPtr lsn, XLogRecord *record);
 void heap_desc(char *buf, uint8 xl_info, char* rec);
 
+XLogRecPtr	log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup);
+
 /* comments are in heap_update */
 static xl_heaptid	_locked_tuple_;
 static void _heap_unlock_tuple(void *data);
+static XLogRecPtr log_heap_update(Relation reln, ItemPointerData from, 
+									HeapTuple newtup, bool move);
 
 static void HeapPageCleanup(Buffer buffer);
 
@@ -1706,22 +1710,8 @@ l2:
 #ifdef XLOG
 	/* XLOG stuff */
 	{
-		xl_heap_update	xlrec;
-		XLogRecPtr		recptr;
-
-		xlrec.target.node = relation->rd_node;
-		xlrec.target.cid = GetCurrentCommandId();
-		xlrec.target.tid = oldtup.t_self;
-		xlrec.newtid = newtup->t_self;
-		xlrec.t_natts = newtup->t_data->t_natts;
-		xlrec.t_oid = newtup->t_data->t_oid;
-		xlrec.t_hoff = newtup->t_data->t_hoff;
-		xlrec.mask = newtup->t_data->t_infomask;
-		
-		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_UPDATE,
-			(char*) &xlrec, SizeOfHeapUpdate, 
-			(char*) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits), 
-			newtup->t_len - offsetof(HeapTupleHeaderData, t_bits));
+		XLogRecPtr	recptr = log_heap_update(relation, 
+								oldtup.t_self, newtup, false);
 
 		if (newbuf != buffer)
 		{
@@ -2019,6 +2009,54 @@ heap_restrpos(HeapScanDesc scan)
 
 #ifdef XLOG
 
+static XLogRecPtr
+log_heap_update(Relation reln, ItemPointerData from, 
+	HeapTuple newtup, bool move)
+{
+	char			tbuf[sizeof(xl_heap_update) + 2 * sizeof(TransactionId)];
+	xl_heap_update *xlrec = (xl_heap_update*) tbuf;
+	int				hsize = SizeOfHeapUpdate;
+	XLogRecPtr		recptr;
+
+	xlrec->target.node = reln->rd_node;
+	xlrec->target.tid = from;
+	xlrec->newtid = newtup->t_self;
+	xlrec->t_natts = newtup->t_data->t_natts;
+	xlrec->t_oid = newtup->t_data->t_oid;
+	xlrec->t_hoff = newtup->t_data->t_hoff;
+	xlrec->mask = newtup->t_data->t_infomask;
+
+	if (move)	/* remember xmin & xmax */
+	{
+		TransactionId	xmax;
+
+		xlrec->target.cid = (CommandId) newtup->t_data->t_xmin;
+		if (newtup->t_data->t_infomask & HEAP_XMAX_INVALID ||
+			newtup->t_data->t_infomask & HEAP_MARKED_FOR_UPDATE)
+			xmax = InvalidTransactionId;
+		else
+			xmax = newtup->t_data->t_xmax;
+		memcpy(tbuf + hsize, &xmax, sizeof(TransactionId));
+		hsize += sizeof(TransactionId);
+	}
+	else
+		xlrec->target.cid = GetCurrentCommandId();
+		
+	recptr = XLogInsert(RM_HEAP_ID, 
+			(move) ? XLOG_HEAP_MOVE : XLOG_HEAP_UPDATE,
+			tbuf, hsize, 
+			(char*) newtup->t_data + offsetof(HeapTupleHeaderData, t_bits), 
+			newtup->t_len - offsetof(HeapTupleHeaderData, t_bits));
+
+	return(recptr);
+}
+
+XLogRecPtr
+log_heap_move(Relation reln, ItemPointerData from, HeapTuple newtup)
+{
+	return(log_heap_update(reln, from, newtup, true));
+}
+
 static void
 heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
@@ -2159,6 +2197,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		htup->t_hoff = xlrec->t_hoff;
 		htup->t_xmin = record->xl_xid;
 		htup->t_cmin = xlrec->target.cid;
+		htup->t_xmax = htup->t_cmax = 0;
 		htup->t_infomask = HEAP_XMAX_INVALID | HEAP_XMIN_COMMITTED | xlrec->mask;
 		
 		offnum = PageAddItem(page, (Item)htup, newlen, 
@@ -2210,8 +2249,11 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 }
 
+/*
+ * Handles UPDATE & MOVE
+ */
 static void
-heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record)
+heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 {
 	xl_heap_update *xlrec = (xl_heap_update*) XLogRecGetData(record);
 	Relation		reln = XLogOpenRelation(redo, RM_HEAP_ID, xlrec->target.node);
@@ -2282,10 +2324,20 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record)
 
 	if (redo)
 	{
-		htup->t_xmax = record->xl_xid;
-		htup->t_cmax = xlrec->target.cid;
-		htup->t_infomask &= ~(HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
-		htup->t_infomask |= HEAP_XMAX_COMMITTED;
+		if (move)
+		{
+			TransactionIdStore(record->xl_xid, (TransactionId *) &(htup->t_cmin));
+			htup->t_infomask &= 
+				~(HEAP_XMIN_COMMITTED | HEAP_XMIN_INVALID | HEAP_MOVED_IN);
+			htup->t_infomask |= HEAP_MOVED_OFF;
+		}
+		else
+		{
+			htup->t_xmax = record->xl_xid;
+			htup->t_cmax = xlrec->target.cid;
+			htup->t_infomask &= ~(HEAP_XMAX_COMMITTED |
+								HEAP_XMAX_INVALID | HEAP_MARKED_FOR_UPDATE);
+		}
 		PageSetLSN(page, lsn);
 		PageSetSUI(page, ThisStartUpID);
 		UnlockAndWriteBuffer(buffer);
@@ -2293,7 +2345,10 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	/* undo... is it our tuple ? */
-	if (htup->t_xmax != record->xl_xid || htup->t_cmax != xlrec->target.cid)
+	if ((! move && (htup->t_xmax != record->xl_xid || 
+					htup->t_cmax != xlrec->target.cid)) ||
+		xlrec->target.cid != (CommandId) htup->t_xmin ||
+		htup->t_cmin != (CommandId) record->xl_xid)
 	{
 		if (!InRecovery)
 			elog(STOP, "heap_update_undo: invalid old tuple in rollback");
@@ -2301,7 +2356,14 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	}
 	else	/* undo */
 	{
-		htup->t_infomask |= HEAP_XMAX_INVALID;
+		if (move)
+		{
+			htup->t_infomask &= ~(HEAP_XMIN_INVALID | 
+									HEAP_MOVED_IN | HEAP_MOVED_OFF);
+			htup->t_infomask |= HEAP_XMIN_COMMITTED;
+		}
+		else
+			htup->t_infomask |= HEAP_XMAX_INVALID;
 		UnlockAndWriteBuffer(buffer);
 	}
 
@@ -2329,8 +2391,9 @@ newt:;
 
 	if (redo)
 	{
-		char			tbuf[MaxTupleSize];
-		uint32			newlen = record->xl_len - SizeOfHeapUpdate;
+		char	tbuf[MaxTupleSize];
+		int		hsize;
+		uint32	newlen;
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
@@ -2338,16 +2401,35 @@ newt:;
 			return;
 		}
 
+		hsize = SizeOfHeapUpdate;
+		if (move)
+			hsize += sizeof(TransactionId);
+		newlen = record->xl_len - hsize;
+
 		htup = (HeapTupleHeader) tbuf;
 		memcpy(tbuf + offsetof(HeapTupleHeaderData, t_bits), 
-			(char*)xlrec + SizeOfHeapUpdate, newlen);
+			(char*)xlrec + hsize, newlen);
 		newlen += offsetof(HeapTupleHeaderData, t_bits);
 		htup->t_oid = xlrec->t_oid;
 		htup->t_natts = xlrec->t_natts;
 		htup->t_hoff = xlrec->t_hoff;
-		htup->t_xmin = record->xl_xid;
-		htup->t_cmin = xlrec->target.cid;
-		htup->t_infomask = HEAP_XMAX_INVALID | HEAP_XMIN_COMMITTED | xlrec->mask;
+		if (move)
+		{
+			htup->t_xmin = (TransactionId) xlrec->target.cid;
+			memcpy(&(htup->t_xmax), 
+					(char*)xlrec + SizeOfHeapUpdate, sizeof(TransactionId));
+			htup->t_infomask = xlrec->mask;
+			htup->t_infomask &= ~(HEAP_XMIN_COMMITTED | 
+						HEAP_XMIN_INVALID | HEAP_MOVED_OFF);
+			htup->t_infomask |= HEAP_MOVED_IN;
+		}
+		else
+		{
+			htup->t_xmin = record->xl_xid;
+			htup->t_cmin = xlrec->target.cid;
+			htup->t_xmax = htup->t_cmax = 0;
+			htup->t_infomask = HEAP_XMAX_INVALID | xlrec->mask;
+		}
 		
 		offnum = PageAddItem(page, (Item)htup, newlen, 
 			ItemPointerGetOffsetNumber(&(xlrec->newtid)), 
@@ -2385,7 +2467,10 @@ newt:;
 
 	/* is it our tuple ? */
 	Assert(PageGetSUI(page) == ThisStartUpID);
-	if (htup->t_xmin != record->xl_xid || htup->t_cmin != xlrec->target.cid)
+	if ((! move && (htup->t_xmin != record->xl_xid || 
+					htup->t_cmin != xlrec->target.cid)) ||
+		xlrec->target.cid != (CommandId) htup->t_xmin ||
+		htup->t_cmin != (CommandId) record->xl_xid)
 	{
 		if (!InRecovery)
 			elog(STOP, "heap_update_undo: invalid new tuple in rollback");
@@ -2448,11 +2533,9 @@ void heap_redo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_HEAP_DELETE)
 		heap_xlog_delete(true, lsn, record);
 	else if (info == XLOG_HEAP_UPDATE)
-		heap_xlog_update(true, lsn, record);
-#ifdef NOT_USED
+		heap_xlog_update(true, lsn, record, false);
 	else if (info == XLOG_HEAP_MOVE)
-		heap_xlog_move(true, lsn, record);
-#endif
+		heap_xlog_update(true, lsn, record, true);
 	else
 		elog(STOP, "heap_redo: unknown op code %u", info);
 }
@@ -2466,11 +2549,9 @@ void heap_undo(XLogRecPtr lsn, XLogRecord *record)
 	else if (info == XLOG_HEAP_DELETE)
 		heap_xlog_delete(false, lsn, record);
 	else if (info == XLOG_HEAP_UPDATE)
-		heap_xlog_update(false, lsn, record);
-#ifdef NOT_USED
+		heap_xlog_update(false, lsn, record, false);
 	else if (info == XLOG_HEAP_MOVE)
-		heap_xlog_move(false, lsn, record);
-#endif
+		heap_xlog_update(false, lsn, record, true);
 	else
 		elog(STOP, "heap_undo: unknown op code %u", info);
 }
@@ -2509,19 +2590,13 @@ heap_desc(char *buf, uint8 xl_info, char* rec)
 		strcat(buf, "delete: ");
 		out_target(buf, &(xlrec->target));
 	}
-	else if (info == XLOG_HEAP_UPDATE)
+	else if (info == XLOG_HEAP_UPDATE || info == XLOG_HEAP_MOVE)
 	{
 		xl_heap_update	*xlrec = (xl_heap_update*) rec;
-		strcat(buf, "update: ");
-		out_target(buf, &(xlrec->target));
-		sprintf(buf + strlen(buf), "; new %u/%u",
-			ItemPointerGetBlockNumber(&(xlrec->newtid)), 
-			ItemPointerGetOffsetNumber(&(xlrec->newtid)));
-	}
-	else if (info == XLOG_HEAP_MOVE)
-	{
-		xl_heap_move	*xlrec = (xl_heap_move*) rec;
-		strcat(buf, "move: ");
+		if (info == XLOG_HEAP_UPDATE)
+			strcat(buf, "update: ");
+		else
+			strcat(buf, "move: ");
 		out_target(buf, &(xlrec->target));
 		sprintf(buf + strlen(buf), "; new %u/%u",
 			ItemPointerGetBlockNumber(&(xlrec->newtid)), 
