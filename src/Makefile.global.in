@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.50 1998/10/14 16:02:10 thomas Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.51 1998/10/15 15:58:12 momjian Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -136,7 +136,11 @@ KRBLIBS+= -lkrb5 -lcrypto -lcom_err -lisode
    endif
 endif
 
+#
+# Please do not edit USE_TCL and USE_TK by hand.
+#
 USE_TCL= @USE_TCL@
+USE_TK= @USE_TK@
 
 USE_PERL= @USE_PERL@
 

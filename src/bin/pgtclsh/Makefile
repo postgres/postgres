@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.21 1998/10/13 16:30:48 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pgtclsh/Attic/Makefile,v 1.22 1998/10/15 15:58:15 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -17,7 +17,10 @@ include ../../Makefile.global
 #
 # Include definitions from the tclConfig.sh file
 #
-include Makefile.tcltkdefs
+include Makefile.tcldefs
+ifeq ($(USE_TK), true)
+	include Makefile.tkdefs
+endif
 
 CFLAGS+= $(X_CFLAGS) -I$(SRCDIR)/interfaces/libpgtcl 
 
@@ -30,10 +33,23 @@ endif
 LIBPGTCL= -L$(SRCDIR)/interfaces/libpgtcl -lpgtcl
 LIBPQ= -L$(LIBPQDIR) -lpq
 
-all: pgtclsh pgtksh
+# If we are here then TCL is available
+PGMS = pgtclsh
+INSTPGMS = install_tcl
 
-Makefile.tcltkdefs:
-	/bin/sh mkMakefile.tcltkdefs.sh
+# Add TK targets if TK is available
+ifeq ($(USE_TK), true)
+	PGMS += pgtksh
+	INSTPGMS += install_tk
+endif
+
+all: $(PGMS)
+
+Makefile.tcldefs:
+	/bin/sh mkMakefile.tcldefs.sh
+
+Makefile.tkdefs:
+	/bin/sh mkMakefile.tkdefs.sh
 
 pgtclsh: pgtclAppInit.o
 	$(CC) $(CFLAGS) $(TCL_DEFS) -o $@ pgtclAppInit.o \
@@ -44,8 +60,12 @@ pgtksh: pgtkAppInit.o
 	  $(LIBPGTCL) $(LIBPQ) $(X_LIBS) $(TK_LIB_SPEC) $(TK_LIBS) \
 	  $(TCL_LIB_SPEC) $(X11_LIBS) $(LDFLAGS)
 
-install: pgtclsh pgtksh
+install: $(INSTPGMS)
+
+install_tcl: pgtclsh
 	$(INSTALL) $(INSTL_EXE_OPTS) pgtclsh $(BINDIR)/pgtclsh
+
+install_tk: pgtksh
 	$(INSTALL) $(INSTL_EXE_OPTS) pgtksh $(BINDIR)/pgtksh
 
 clean:

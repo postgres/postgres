@@ -222,35 +222,15 @@ AC_ARG_WITH(
    [  --with-tcl              use tcl ],
    [
 	case "$withval" in
-	y | ye | yes)		USE_TCL=true; AC_MSG_RESULT(enabled) ;;
-	*)			USE_TCL=false; AC_MSG_RESULT(disabled) ;;
+	y | ye | yes)		USE_TCL=true; USE_TK=true; AC_MSG_RESULT(enabled) ;;
+	*)			USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled) ;;
 	esac
    ],
-   [ USE_TCL=false; AC_MSG_RESULT(disabled) ]
+   [ USE_TCL=; USE_TK=; AC_MSG_RESULT(disabled) ]
 )
 
-dnl Add tcl/tk candidate directories to CPPFLAGS
-if test "$USE_TCL"; then
-	header_dirs="/usr/include $INCLUDE_DIRS"
-	tcl_dirs="tcl8.0 tcl80 tcl7.6 tcl76"
-	tk_dirs="tk8.0 tk4.2"
-	for dir in $header_dirs; do
-		for tcl_dir in $tcl_dirs; do
-			if test -d "$dir/$tcl_dir"; then
-				PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tcl_dir"
-			fi
-		done
-	done
-	for dir in $header_dirs; do
-		for tk_dir in $tk_dirs; do
-			if test -d "$dir/$tk_dir"; then
-			PGSQL_CPPFLAGS="$PGSQL_CPPFLAGS -I$dir/$tk_dir"
-			fi
-		done
-	done
-fi
 export USE_TCL
-USE_X=$USE_TCL
+export USE_TK
 
 dnl We exclude perl support unless we override it with --with-perl
 AC_MSG_CHECKING(setting USE_PERL)
@@ -266,9 +246,9 @@ AC_ARG_WITH(
    [ USE_PERL=false; AC_MSG_RESULT(disabled) ]
 )
 
-#dnl Verify that postgres is already installed
-#dnl per instructions for perl interface installation
-if test "$USE_PERL" = "true"
+dnl Verify that postgres is already installed
+dnl per instructions for perl interface installation
+if test "$USE_PERL" = true
 then
 	if test "$WHOAMI" != "root"
 	then	AC_MSG_WARN(perl support disabled; must be root to install)
@@ -411,6 +391,7 @@ AC_SUBST(CFLAGS)
 AC_SUBST(DLSUFFIX)
 AC_SUBST(DL_LIB)
 AC_SUBST(USE_TCL)
+AC_SUBST(USE_TK)
 AC_SUBST(USE_PERL)
 AC_SUBST(USE_ODBC)
 AC_SUBST(MULTIBYTE)
@@ -782,6 +763,67 @@ fi
 	      AC_CHECK_LIB(m, rint, AC_DEFINE(HAVE_RINT), , $SPECIALMATHLIB)
 ])
 
+dnl Check for Tcl configuration script tclConfig.sh
+
+AC_PATH_PROG(TCLSH, tclsh)
+
+if test -z "$TCLSH"
+then
+	AC_MSG_WARN(TCL/TK support disabled; tclsh is not in your path)
+	USE_TCL=
+fi
+	
+if test "$USE_TCL" = true
+then
+	AC_MSG_CHECKING(for tclConfig.sh)
+	TCL_CONFIG_SH=
+	library_dirs=`echo 'puts $auto_path' | $TCLSH`
+	library_dirs="$LIBRARY_DIRS $library_dirs"
+	for dir in $library_dirs; do
+		if test -d "$dir" -a -r "$dir/tclConfig.sh"; then
+			TCL_CONFIG_SH=$dir/tclConfig.sh
+			break
+		fi
+	done
+	if test -z "$TCL_CONFIG_SH"; then
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN(TCL/TK support disabled; Tcl configuration script missing)
+		USE_TCL=
+	else
+		AC_MSG_RESULT($TCL_CONFIG_SH)
+		AC_SUBST(TCL_CONFIG_SH)
+	fi
+fi
+
+USE_TK=$USE_TCL		# If TCL is disabled, disable TK
+
+dnl Check for Tk configuration script tkConfig.sh
+if test "$USE_TK" = true
+then
+	AC_MSG_CHECKING(for tkConfig.sh)
+	TK_CONFIG_SH=
+	# library_dirs are set in the check for TCL
+	for dir in $library_dirs
+	do
+		if test -d "$dir" -a -r "$dir/tkConfig.sh"
+		then
+			TK_CONFIG_SH=$dir/tkConfig.sh
+			break
+		fi
+	done
+	if test -z "$TK_CONFIG_SH"
+	then
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN(TK support disabled; Tk configuration script missing)
+		USE_TK=
+	else
+		AC_MSG_RESULT($TK_CONFIG_SH)
+		AC_SUBST(TK_CONFIG_SH)
+	fi
+fi
+
+USE_X=$USE_TK
+
 dnl Check for X libraries
 
 if test "$USE_X" = true; then
@@ -819,64 +861,6 @@ if test "$USE_X" = true; then
 	LDFLAGS="$ice_save_LDFLAGS"
 fi
 
-dnl Check for Tcl configuration script tclConfig.sh
-if test "$USE_TCL"; then
-	AC_MSG_CHECKING(for tclConfig.sh)
-	library_dirs="$LIBRARY_DIRS /usr/lib"
-	TCL_CONFIG_SH=
-	for dir in $library_dirs; do
-		for tcl_dir in $tcl_dirs; do
-			if test -z "$TCL_CONFIG_SH"; then
-				if test -d "$dir/$tcl_dir" -a -r "$dir/$tcl_dir/tclConfig.sh"; then
-					TCL_CONFIG_SH=$dir/$tcl_dir/tclConfig.sh
-				fi
-			fi
-		done
-		if test -z "$TCL_CONFIG_SH"; then
-			if test -d "$dir" -a -r "$dir/tclConfig.sh"; then
-				TCL_CONFIG_SH=$dir/tclConfig.sh
-			fi
-		fi
-	done
-	if test -z "$TCL_CONFIG_SH"; then
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN(tcl support disabled; Tcl configuration script missing)
-		USE_TCL=
-	else
-		AC_MSG_RESULT($TCL_CONFIG_SH)
-		AC_SUBST(TCL_CONFIG_SH)
-	fi
-fi
-
-dnl Check for Tk configuration script tkConfig.sh
-if test "$USE_TCL"; then
-	AC_MSG_CHECKING(for tkConfig.sh)
-	library_dirs="$LIBRARY_DIRS /usr/lib"
-	TK_CONFIG_SH=
-	for dir in $library_dirs; do
-		for tk_dir in $tk_dirs; do
-			if test -z "$TK_CONFIG_SH"; then
-				if test -d "$dir/$tk_dir" -a -r "$dir/$tk_dir/tkConfig.sh"; then
-					TK_CONFIG_SH=$dir/$tk_dir/tkConfig.sh
-				fi
-			fi
-		done
-		if test -z "$TK_CONFIG_SH"; then
-			if test -d "$dir" -a -r "$dir/tkConfig.sh"; then
-				TK_CONFIG_SH=$dir/tkConfig.sh
-			fi
-		fi
-	done
-	if test -z "$TK_CONFIG_SH"; then
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN(tcl support disabled; Tk configuration script missing)
-		USE_TCL=
-	else
-		AC_MSG_RESULT($TK_CONFIG_SH)
-		AC_SUBST(TK_CONFIG_SH)
-	fi
-fi
-
 dnl cause configure to recurse into subdirectories with their own configure
 dnl Darn, setting AC_CONFIG_SUBDIRS sets a list $subdirs$ in the configure output
 dnl  file, but then configure doesn't bother using that list. Probably a bug in
@@ -909,7 +893,8 @@ AC_OUTPUT(
 	bin/pg_dump/Makefile
 	bin/pg_version/Makefile
 	bin/psql/Makefile
-	bin/pgtclsh/mkMakefile.tcltkdefs.sh
+	bin/pgtclsh/mkMakefile.tcldefs.sh
+	bin/pgtclsh/mkMakefile.tkdefs.sh
 	include/version.h
 	interfaces/libpq/Makefile
 	interfaces/ecpg/lib/Makefile
