@@ -1,35 +1,25 @@
 
-In order to co-ordinate both usage and development of Postgres95,
-there are currently two mailing lists available:
+PostgreSQL Mailing Lists
 
+General Users/Questions
 
-General Discussion
-	- mainly geared towards usage of PostGres95 and associated
-	  support & third-party software
+     This list is designed as a forum geared towards installation and usage
+     problems related to PostgreSQL, as well as a place to discuss general
+     SQL related problems.
 
-	- send a message of subscribe to postgres95-request@postgres95.vnet.net
+     To subscribe, send a message of subscribe to:
+     questions-request@postgreSQL.org
 
-	- a digest version of this list is available. To subscribe, send
-	  a message of subscribe to:
-		postgres95-digest-request@postgres95.vnet.net
+Hackers/Development Discussions
 
-	- archives and back issues of these lists are stored on:
-		ftp://postgres95.vnet.net/pub/postgres95/archives
-		ftp://postgres95.vnet.net/pub/postgres95/digests
+     This list is where bugs reports and server improvements are discussed,
+     providing the developers with an area seperate from the general
+     questions, while allowing both end-users and administrators a chance to
+     join in and follow the discussions.
 
-Developers Mailling List
-	- those wishing to help improve Postgres95 and further develop it
+     To subscribe, send a message of subscribe to:
+     hackers-request@postgreSQL.org
 
-	- send a message of subscribe to pg95-dev-request@ki.net
-
-
-WWW: http://www.ki.net/postgres95
-FTP: ftp://ftp.ki.net/pub/postgres95
-
-	The current source tree, with all patches installed, is available
-via sup @ sup.ki.net, or in a .tar.gz file available at:
-
-	ftp://ftp.ki.net/pub/postgres95
-
-
+All the mailing lists are archived, with archives available at:
+ftp://ftp.postgreSQL.org/pub/majordomo
 
