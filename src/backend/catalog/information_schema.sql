@@ -4,7 +4,7 @@
  *
  * Copyright 2002, PostgreSQL Global Development Group
  *
- * $Id: information_schema.sql,v 1.3 2003/01/15 23:37:27 petere Exp $
+ * $Id: information_schema.sql,v 1.4 2003/03/20 05:06:55 momjian Exp $
  */
 
 
@@ -76,9 +76,13 @@ CREATE VIEW check_constraints AS
            CAST(rs.nspname AS sql_identifier) AS constraint_schema,
            CAST(con.conname AS sql_identifier) AS constraint_name,
            CAST(con.consrc AS character_data) AS check_clause
-    FROM pg_namespace rs, pg_class c, pg_constraint con, pg_user u
-    WHERE rs.oid = c.relnamespace AND c.oid = con.conrelid
-          AND c.relowner = u.usesysid AND u.usename = current_user
+    FROM pg_namespace rs, pg_constraint con
+         left outer join pg_class c on (c.oid = con.conrelid)
+         left outer join pg_type t on (t.oid = con.contypid),
+         pg_user u
+    WHERE rs.oid = con.connamespace
+          AND u.usesysid IN (c.relowner, t.typowner)
+          AND u.usename = current_user
           AND con.contype = 'c';
 
 GRANT SELECT ON check_constraints TO PUBLIC;
@@ -234,6 +238,130 @@ CREATE VIEW columns AS
                  AND a.attnum > 0 AND NOT a.attisdropped AND c.relkind in ('r', 'v');
 
 GRANT SELECT ON columns TO PUBLIC;
+
+
+/*
+ * 20.24
+ * DOMAIN_CONSTRAINTS view
+ */
+
+CREATE VIEW domain_constraints AS
+    SELECT CAST(current_database() AS sql_identifier) AS constraint_catalog,
+           CAST(rs.nspname AS sql_identifier) AS constraint_schema,
+           CAST(con.conname AS sql_identifier) AS constraint_name,
+           CAST(current_database() AS sql_identifier) AS domain_catalog,
+           CAST(n.nspname AS sql_identifier) AS domain_schema,
+           CAST(t.typname AS sql_identifier) AS domain_name,
+           CAST(CASE WHEN condeferrable THEN 'YES' ELSE 'NO' END
+             AS character_data) AS is_deferrable,
+           CAST(CASE WHEN condeferred THEN 'YES' ELSE 'NO' END
+             AS character_data) AS initially_deferred
+    FROM pg_namespace rs, pg_namespace n, pg_constraint con, pg_type t, pg_user u
+    WHERE rs.oid = con.connamespace
+          AND n.oid = t.typnamespace
+          AND u.usesysid = t.typowner
+          AND u.usename = current_user
+          AND t.oid = con.contypid;
+
+GRANT SELECT ON domain_constraints TO PUBLIC;
+
+
+/*
+ * 20.26
+ * DOMAINS view
+ */
+
+CREATE VIEW domains AS
+    SELECT CAST(current_database() AS sql_identifier) AS domain_catalog,
+           CAST(rs.nspname AS sql_identifier) AS domain_schema,
+           CAST(t.typname AS sql_identifier) AS domain_name,
+           CAST(format_type(t.typbasetype, null) AS character_data)
+             AS data_type,
+
+           CAST(
+             CASE WHEN t.typbasetype IN (25, 1042, 1043, 1560, 1562) AND t.typtypmod <> -1
+                  THEN t.typtypmod - 4
+                  ELSE null END
+             AS cardinal_number)
+             AS character_maximum_length,
+
+           CAST(
+             CASE WHEN t.typbasetype IN (25, 1042, 1043) THEN 2^30 ELSE null END
+             AS cardinal_number)
+             AS character_octet_length,
+           CAST(null AS sql_identifier) AS character_set_catalog,
+           CAST(null AS sql_identifier) AS character_set_schema,
+           CAST(null AS sql_identifier) AS character_set_name,
+
+           CAST(null AS sql_identifier) AS collation_catalog,
+           CAST(null AS sql_identifier) AS collation_schema,
+           CAST(null AS sql_identifier) AS collation_name,
+
+           CAST(
+             CASE WHEN t.typbasetype IN (1700) THEN ((t.typtypmod - 4) >> 16) & 65535 ELSE null END
+             AS cardinal_number)
+             AS numeric_precision,
+
+           CAST(
+             CASE WHEN t.typbasetype IN (1700) THEN 10 ELSE null END
+             AS cardinal_number)
+             AS numeric_precision_radix,
+
+           CAST(
+             CASE WHEN t.typbasetype IN (1700) THEN (t.typtypmod - 4) & 65535 ELSE null END
+             AS cardinal_number)
+             AS numeric_scale,
+
+           CAST(
+             CASE WHEN t.typbasetype IN (1083, 1114, 1184, 1266)
+                  THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod ELSE null END)
+                  WHEN t.typbasetype IN (1186)
+                  THEN (CASE WHEN t.typtypmod <> -1 THEN t.typtypmod & 65535 ELSE null END)
+                  ELSE null END
+             AS cardinal_number)
+             AS datetime_precision,
+
+           CAST(null AS character_data) AS interval_type, -- XXX
+           CAST(null AS character_data) AS interval_precision, -- XXX
+
+           CAST(typdefault AS character_data) AS domain_default,
+
+           CAST(CASE WHEN t.typbasetype = 0 THEN current_database() ELSE null END
+             AS sql_identifier) AS udt_catalog,
+           CAST(CASE WHEN t.typbasetype = 0 THEN rs.nspname ELSE null END
+             AS sql_identifier) AS udt_schema,
+           CAST(CASE WHEN t.typbasetype = 0 THEN t.typname ELSE null END
+             AS sql_identifier) AS udt_name,
+
+           CAST(null AS sql_identifier) AS scope_catalog,
+           CAST(null AS sql_identifier) AS scope_schema,
+           CAST(null AS sql_identifier) AS scope_name,
+
+           CAST(null AS cardinal_number) AS maximum_cardinality,
+           CAST(null AS sql_identifier) AS dtd_identifier
+
+    FROM pg_namespace rs,
+         pg_type t,
+         pg_user u
+
+    WHERE rs.oid = t.typnamespace
+          AND t.typtype = 'd'
+          AND t.typowner = u.usesysid
+          AND (u.usename = CURRENT_USER
+              OR EXISTS (SELECT 1
+                         FROM pg_user AS u2
+                         WHERE rs.nspowner = u2.usesysid
+                           AND u2.usename = CURRENT_USER)
+              OR EXISTS (SELECT 1
+                         FROM pg_user AS u3,
+                              pg_attribute AS a3,
+                              pg_class AS c3
+                         WHERE u3.usesysid = c3.relowner
+                           AND a3.attrelid = c3.oid
+                           AND a3.atttypid = t.oid));
+
+
+GRANT SELECT ON domains TO PUBLIC;
 
 
 /*
