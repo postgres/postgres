@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.57 2004/12/31 21:59:38 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/catalog.c,v 1.58 2005/03/07 04:15:34 neilc Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ relpath(RelFileNode rnode)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = strlen(DataDir) + 16 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = strlen(DataDir) + 11 + OIDCHARS + 1 + OIDCHARS + 1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
 		snprintf(path, pathlen, "%s/pg_tblspc/%u/%u/%u",
 				 DataDir, rnode.spcNode, rnode.dbNode, rnode.relNode);
@@ -99,7 +99,7 @@ GetDatabasePath(Oid dbNode, Oid spcNode)
 	else
 	{
 		/* All other tablespaces are accessed via symlinks */
-		pathlen = strlen(DataDir) + 16 + OIDCHARS + 1 + OIDCHARS + 1;
+		pathlen = strlen(DataDir) + 11 + OIDCHARS + 1 + OIDCHARS + 1;
 		path = (char *) palloc(pathlen);
 		snprintf(path, pathlen, "%s/pg_tblspc/%u/%u",
 				 DataDir, spcNode, dbNode);
