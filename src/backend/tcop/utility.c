@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.146 2002/04/09 20:35:53 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/utility.c,v 1.147 2002/04/12 09:17:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,7 +423,7 @@ ProcessUtility(Node *parsetree,
 											(ColumnDef *) stmt->def);
 						break;
 					case 'T':	/* ALTER COLUMN DEFAULT */
-						/* 
+						/*
 						 * Recursively alter column default for table and,
 						 * if requested, for descendants
 						 */
@@ -455,7 +455,7 @@ ProcessUtility(Node *parsetree,
 												   &(stmt->subtype));
 						break;
 					case 'D':	/* DROP COLUMN */
-						/* 
+						/*
 						 * XXX We don't actually recurse yet, but what we should do would be:
 						 * Recursively drop column from table and,
 						 * if requested, from descendants
@@ -471,16 +471,16 @@ ProcessUtility(Node *parsetree,
 						 * if requested, to descendants
 						 */
 						AlterTableAddConstraint(RangeVarGetRelid(stmt->relation, false),
-											 	interpretInhOption(stmt->relation->inhOpt),
+												interpretInhOption(stmt->relation->inhOpt),
 												(List *) stmt->def);
 						break;
 					case 'X':	/* DROP CONSTRAINT */
-						/* 
+						/*
 						 * Recursively drop constraint from table and,
 						 * if requested, from descendants
 						 */
 						AlterTableDropConstraint(RangeVarGetRelid(stmt->relation, false),
-											 	 interpretInhOption(stmt->relation->inhOpt),
+												 interpretInhOption(stmt->relation->inhOpt),
 												 stmt->name,
 												 stmt->behavior);
 						break;

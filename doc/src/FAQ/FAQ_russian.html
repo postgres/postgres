@@ -14,7 +14,7 @@
   alink="#0000ff">
     <H1>Ответы на часто задаваемые вопросы по PostgreSQL</H1>
 
-    <P>Дата последнего обновления: Воскресенье 3 Марта 13:35:39 EST 2002</P>
+    <P>Дата последнего обновления: Вторник 9 Апреля 10:53:30 EDT 2002</P>
 
     <P>Английский вариант сопровождает: Брюс Момьян (Bruce Momjian) (<A href=
     "mailto:pgman@candle.pha.pa.us">pgman@candle.pha.pa.us</A>)<BR>
@@ -137,6 +137,7 @@
      <A href="#4.23">4.23</A>) Как выполнить внешнее связывание?<BR>
      <A href="#4.24">4.24</A>) Как выполнять запросы, использующие несколько
      баз данных?<BR>
+     <A href="#4.25">4.25</A>) Как мне вернуть из функции несколько записей?<BR>
      
 
     <H2 align="center">Расширения PostgreSQL</H2>
@@ -337,7 +338,7 @@
      и <a href="http://www.commandprompt.com/ppbook/">http://www.commandprompt.com/ppbook/</a>.
      Список книг по PostgreSQL, которые можно купить доступен по адресу
      <a href="http://www.postgresql.org/books/">http://www.postgresql.org/books/</a>.
-     Кроме того, по адресу <a href="http://techdocs.postgresql.org/">http://techdocs.postgresql.org/</a>
+     Кроме того, по адресу <a href="http://techdocs.postgresql.org">http://techdocs.postgresql.org/</a>
      вы можете найти коллекцию технических статей посвященных PostgreSQL.</p>
 
 
@@ -1340,6 +1341,14 @@ BYTEA           bytea           массив байт переменной длины (можно использовать
 
     <P>Разумеется, клиент может одновременно устанавливать соедиенения с
     различными базами данных и таких образом объединять информацию из них.</P>
+
+    <H4><A name="4.25">4.25</A>) Как мне вернуть из функции несколько записей?</H4>
+
+    <P>Вы можете возвращать из функций PL/pgSQL списки результатов, используя
+    <i>refcursors</i>. Смотрите <a
+     href="http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html">
+     http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,</a>
+     секцию 23.7.3.3.</P>
     <HR>
 
     <H2 align="center">Расширения PostgreSQL</H2>
