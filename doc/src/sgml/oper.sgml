@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.17 2000/08/12 05:15:24 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/oper.sgml,v 1.18 2000/09/15 20:20:11 tgl Exp $
 -->
 
  <Chapter Id="operators">
@@ -380,6 +380,16 @@ logical union
 	<ENTRY> !~~ </ENTRY>
 	<ENTRY>NOT LIKE</ENTRY>
 	<ENTRY>'bruce' !~~ '%al%'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> ~~* </ENTRY>
+	<ENTRY>ILIKE</ENTRY>
+	<ENTRY>'scrappy,marc,hermit' ~~* '%Scrappy%'</ENTRY>
+       </ROW>
+       <ROW>
+	<ENTRY> !~~* </ENTRY>
+	<ENTRY>NOT ILIKE</ENTRY>
+	<ENTRY>'Bruce' !~~* '%al%'</ENTRY>
        </ROW>
        <ROW>
 	<ENTRY> ~ </ENTRY>
