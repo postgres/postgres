@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jul  8 01:04:06 EDT 1999
+Last updated:		Thu Jul 15 09:45:53 EDT 1999
 
 Current maintainer:	Bruce Momjian (maillist@candle.pha.pa.us)
 
@@ -95,6 +95,7 @@ TYPES
 * Declare typein/out functions in pg_proc with a special "C string" data type
 * Add non-large-object binary field
 * Add index on NUMERIC type
+* Make Absolutetime/Relativetime int4 because time_t can be int8 on some ports
 
 VIEWS
 
@@ -202,6 +203,7 @@ INDEXES
 * Create more system table indexes for faster cache lookups
 * fix indexscan() so it does leak memory by not requiring caller to free
 * Improve _bt_binsrch() to handle equal keys better, remove _bt_firsteq()(Tom)
+* Allow SELECT * FROM tab WHERE int2col = 4 use int2col index
 
 CACHE
 
