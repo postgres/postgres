@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/bin/scripts/dropdb.c,v 1.6 2003/08/04 00:43:29 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/scripts/dropdb.c,v 1.6.4.1 2004/01/01 19:27:28 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,7 +131,10 @@ main(int argc, char *argv[])
 
 	PQfinish(conn);
 	if (!quiet)
+	{
 		puts("DROP DATABASE");
+		fflush(stdout);
+	}
 	exit(0);
 }
 
