@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.194 2002/07/21 08:20:07 meskes Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/Attic/preproc.y,v 1.195 2002/07/21 11:09:41 meskes Exp $ */
 
 /* Copyright comment */
 %{
@@ -398,8 +398,6 @@ make_name(void)
 %type  <index>	opt_array_bounds opt_type_array_bounds
 
 %type  <ival>	Iresult
-
-%token YYERROR_VERBOSE
 %%
 prog: statements;
 
