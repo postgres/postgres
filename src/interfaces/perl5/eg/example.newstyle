@@ -1,49 +1,33 @@
-#!/usr/local/bin/perl -w
+#!/usr/local/bin/perl
 
-#-------------------------------------------------------
-#
-# $Id: example.newstyle,v 1.5 1998/06/01 16:41:27 mergl Exp $
-#
-# Copyright (c) 1997, 1998  Edmund Mergl
-#
-#-------------------------------------------------------
+# $Id: example.newstyle,v 1.6 1998/09/27 19:12:34 mergl Exp $
 
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
+######################### globals
 
-######################### We start with some black magic to print on failure.
-
-BEGIN { $| = 1; print "1..56\n"; }
-END {print "not ok 1\n" unless $loaded;}
+$| = 1;
 use Pg;
-$loaded = 1;
-print "ok 1\n";
-
-######################### End of black magic.
 
 $dbmain = 'template1';
 $dbname = 'pgperltest';
 $trace  = '/tmp/pgtrace.out';
-$cnt    = 2;
 $DEBUG  = 0; # set this to 1 for traces
 
-$| = 1;
-
-######################### the following methods will be tested
+######################### the following methods will be used
 
 #	connectdb
+#	conndefaults
 #	db
 #	user
 #	port
-#	finish
 #	status
 #	errorMessage
 #	trace
 #	untrace
 #	exec
+#	consumeInput
 #	getline
-#	endcopy
 #	putline
+#	endcopy
 #	resultStatus
 #	ntuples
 #	nfields
@@ -61,14 +45,25 @@ $| = 1;
 #	lo_export
 #	lo_unlink
 
-######################### the following methods will not be tested
+######################### the following methods will not be used
 
 #	setdb
-#	conndefaults
+#	setdbLogin
 #	reset
-#	options
+#	requestCancel
+#	pass
 #	host
 #	tty
+#	options
+#	socket
+#	backendPID
+#	sendQuery
+#	getResult
+#	isBusy
+#	getlineAsync
+#	putnbytes
+#	makeEmptyPGresult
+#	fmod
 #	getlength
 #	getisnull
 #	displayTuples
@@ -86,82 +81,89 @@ $| = 1;
 $SIG{PIPE} = sub { print "broken pipe\n" };
 
 ######################### create and connect to test database
-# 2-4
+
+$Option_ref = Pg::conndefaults();
+($key, $val);
+print "connection defaults:\n";
+while (($key, $val) = each %$Option_ref) {
+    printf "  keyword = %-12.12s val = >%s<\n", $key, $val;
+}
 
 $conn = Pg::connectdb("dbname=$dbmain");
-cmp_eq(PGRES_CONNECTION_OK, $conn->status);
+die $conn->errorMessage unless PGRES_CONNECTION_OK eq $conn->status;
+print "connected to $dbmain\n";
 
-# might fail if $dbname doesn't exist => don't check resultStatus
-$result = $conn->exec("DROP DATABASE $dbname");
+# do not complain when dropping $dbname
+$conn->exec("DROP DATABASE $dbname");
 
 $result = $conn->exec("CREATE DATABASE $dbname");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+print "created database $dbname\n";
 
 $conn = Pg::connectdb("dbname=$dbname");
-cmp_eq(PGRES_CONNECTION_OK, $conn->status);
+die $conn->errorMessage unless PGRES_CONNECTION_OK eq $conn->status;
+print "connected to $dbname\n";
 
-######################### debug, PQtrace
+######################### debug, trace
 
 if ($DEBUG) {
     open(TRACE, ">$trace") || die "can not open $trace: $!";
     $conn->trace(TRACE);
+    print "enabled tracing into $trace\n";
 }
 
 ######################### check PGconn
-# 5-7
 
 $db = $conn->db;
-cmp_eq($dbname, $db);
+print "  database: $db\n";
 
 $user = $conn->user;
-cmp_ne("", $user);
+print "  user:     $user\n";
 
 $port = $conn->port;
-cmp_ne("", $port);
+print "  port:     $port\n";
 
 ######################### create and insert into table
-# 8-19
 
 $result = $conn->exec("CREATE TABLE person (id int4, name char(16))");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-cmp_eq("CREATE", $result->cmdStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+print "created table, status = ", $result->cmdStatus, "\n";
 
 for ($i = 1; $i <= 5; $i++) {
     $result = $conn->exec("INSERT INTO person VALUES ($i, 'Edmund Mergl')");
-    cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-    cmp_ne(0, $result->oidStatus);
+    die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 }
+print "insert into table, last oid = ", $result->oidStatus, "\n";
 
-######################### copy to stdout, PQgetline
-# 20-26
+######################### copy to stdout, getline
 
 $result = $conn->exec("COPY person TO STDOUT");
-cmp_eq(PGRES_COPY_OUT, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COPY_OUT eq $result->resultStatus;
+print "copy table to STDOUT:\n";
 
-$i   = 1;
 $ret = 0;
+$i   = 1;
 while (-1 != $ret) {
     $ret = $conn->getline($string, 256);
     last if $string eq "\\.";
-    cmp_eq("$i	Edmund Mergl    ", $string);
+    print "  ", $string, "\n";
     $i ++;
 }
 
-cmp_eq(0, $conn->endcopy);
+die $conn->errorMessage unless 0 == $conn->endcopy;
 
-######################### delete and copy from stdin, PQputline
-# 27-33
+######################### delete and copy from stdin, putline
 
 $result = $conn->exec("BEGIN");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 
 $result = $conn->exec("DELETE FROM person");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-cmp_eq("DELETE 5", $result->cmdStatus);
-cmp_eq("5", $result->cmdTuples);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+print "delete from table, command status = ", $result->cmdStatus, ", no. of tuples = ", $result->cmdTuples, "\n";
 
 $result = $conn->exec("COPY person FROM STDIN");
-cmp_eq(PGRES_COPY_IN, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COPY_IN eq $result->resultStatus;
+print "copy table from STDIN: ";
 
 for ($i = 1; $i <= 5; $i++) {
     # watch the tabs and do not forget the newlines
@@ -169,47 +171,32 @@ for ($i = 1; $i <= 5; $i++) {
 }
 $conn->putline("\\.\n");
 
-cmp_eq(0, $conn->endcopy);
+die $conn->errorMessage unless 0 == $conn->endcopy;
 
 $result = $conn->exec("END");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+print "ok\n";
 
-######################### select from person, PQgetvalue
-# 34-47
+######################### select from person, getvalue
 
 $result = $conn->exec("SELECT * FROM person");
-cmp_eq(PGRES_TUPLES_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_TUPLES_OK eq $result->resultStatus;
+print "select from table:\n";
 
 for ($k = 0; $k < $result->nfields; $k++) {
-    $fname = $result->fname($k);
-    $ftype = $result->ftype($k);
-    $fsize = $result->fsize($k);
-    if (0 == $k) {
-        cmp_eq("id", $fname);
-        cmp_eq(23, $ftype);
-        cmp_eq(4, $fsize);
-    } else {
-        cmp_eq("name", $fname);
-        cmp_eq(1042, $ftype);
-        cmp_eq(-1, $fsize);
-    }
-    $fnumber = $result->fnumber($fname);
-    cmp_eq($k, $fnumber);
+    print "  field = ", $k, "\tfname = ", $result->fname($k), "\tftype = ", $result->ftype($k), "\tfsize = ", $result->fsize($k), "\tfnumber = ", $result->fnumber($result->fname($k)), "\n";
 }
 
-$string = "";
 while (@row = $result->fetchrow) {
-    $string = join(" ", @row);
+    print " ", join(" ", @row), "\n";
 }
-cmp_eq("5 Edmund Mergl    ", $string);
 
-######################### PQnotifies
-# 43-46
+######################### notifies
 
 if (! defined($pid = fork)) {
     die "can not fork: $!";
 } elsif (! $pid) {
-    # i'm the child
+    # I'm the child
     sleep 2;
     bless $conn;
     $conn = Pg::connectdb("dbname=$dbname");
@@ -218,102 +205,70 @@ if (! defined($pid = fork)) {
 }
 
 $result = $conn->exec("LISTEN person");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-cmp_eq("LISTEN", $result->cmdStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+print "listen table: status = ", $result->cmdStatus, "\n";
 
 while (1) {
-    $result = $conn->exec(" ");
+    $conn->consumeInput;
     ($table, $pid) = $conn->notifies;
     last if $pid;
 }
+print "got notification: table = ", $table, "  pid = ", $pid, "\n";
 
-cmp_eq("person", $table);
+######################### print
 
-######################### PQprint
-# 47-48
+$result = $conn->exec("SELECT * FROM person");
+die $conn->errorMessage unless PGRES_TUPLES_OK eq $result->resultStatus;
+print "select from table and print:\n";
+$result->print(STDOUT, 0, 0, 0, 0, 0, 0, " ", "", "", "");
 
-$result = $conn->exec("SELECT name FROM person WHERE id = 2");
-cmp_eq(PGRES_TUPLES_OK, $result->resultStatus);
-open(PRINT, "| read IN; read IN; if [ \"\$IN\" = \"myName Edmund Mergl\" ]; then echo \"ok $cnt\"; else echo \"not ok $cnt\"; fi ") || die "can not fork: $|";
-$cnt ++;
-$result->print(PRINT, 0, 0, 0, 0, 1, 0, " ", "", "", "myName");
-close(PRINT) || die "bad PRINT: $!";
+######################### lo_import, lo_export, lo_unlink
 
-######################### PQlo_import, PQlo_export, PQlo_unlink
-# 49-54
+$lobject_in  = '/tmp/gaga.in';
+$lobject_out = '/tmp/gaga.out';
 
-$filename = 'ApachePg.pl';
-$cwd = `pwd`;
-chop $cwd;
+$data = "testing large objects using lo_import and lo_export";
+open(FD, ">$lobject_in") or die "can not open $lobject_in";
+print(FD $data);
+close(FD);
 
 $result = $conn->exec("BEGIN");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 
-$lobjOid = $conn->lo_import("$cwd/$filename");
-cmp_ne(0, $lobjOid);
+$lobjOid = $conn->lo_import("$lobject_in") or die $conn->errorMessage;
+print "importing file as large object, Oid = ", $lobjOid, "\n";
 
-cmp_ne(-1, $conn->lo_export($lobjOid, "/tmp/$filename"));
-
-cmp_eq(-s "$cwd/$filename", -s "/tmp/$filename");
+die $conn->errorMessage unless 1 == $conn->lo_export($lobjOid, "$lobject_out");
+print "exporting large object as temporary file\n";
 
 $result = $conn->exec("END");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 
-cmp_ne(-1, $conn->lo_unlink($lobjOid));
-unlink "/tmp/$filename";
+print "comparing imported file with exported file: ";
+print "not " unless (-s "$lobject_in" == -s "$lobject_out");
+print "ok\n";
 
-######################### debug, PQuntrace
+die $conn->errorMessage if -1 == $conn->lo_unlink($lobjOid);
+unlink $lobject_in;
+unlink $lobject_out;
+print "unlink large object\n";
+
+######################### debug, untrace
 
 if ($DEBUG) {
     close(TRACE) || die "bad TRACE: $!";
     $conn->untrace;
+    print "tracing disabled\n";
 }
 
 ######################### disconnect and drop test database
-# 55-56
 
 $conn = Pg::connectdb("dbname=$dbmain");
-cmp_eq(PGRES_CONNECTION_OK, $conn->status);
+die $conn->errorMessage unless PGRES_CONNECTION_OK eq $conn->status;
+print "connected to $dbmain\n";
 
 $result = $conn->exec("DROP DATABASE $dbname");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-
-######################### hopefully
-
-print "test sequence finished.\n" if 62 == $cnt;
-
-######################### utility functions
-
-sub cmp_eq {
-
-    my $cmp = shift;
-    my $ret = shift;
-    my $msg;
-
-    if ("$cmp" eq "$ret") {
-	print "ok $cnt\n";
-    } else {
-        $msg = $conn->errorMessage;
-	print "not ok $cnt: $cmp, $ret\n$msg\n";
-        exit;
-    }
-    $cnt++;
-}
-
-sub cmp_ne {
-
-    my $cmp = shift;
-    my $ret = shift;
-    my $msg;
-
-    if ("$cmp" ne "$ret") {
-	print "ok $cnt\n";
-    } else {
-        $msg = $conn->errorMessage;
-	print "not ok $cnt: $cmp, $ret\n$msg\n";
-        exit;
-    }
-    $cnt++;
-}
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+print "drop database\n";
 
 ######################### EOF

@@ -1,52 +1,43 @@
 #!/usr/local/bin/perl -w
 
-#-------------------------------------------------------
-#
-# $Id: test.pl,v 1.8 1998/06/01 16:41:20 mergl Exp $
-#
-# Copyright (c) 1997, 1998  Edmund Mergl
-#
-#-------------------------------------------------------
+# $Id: test.pl,v 1.9 1998/09/27 19:12:26 mergl Exp $
 
 # Before `make install' is performed this script should be runnable with
 # `make test'. After `make install' it should work as `perl test.pl'
 
 ######################### We start with some black magic to print on failure.
 
-BEGIN { $| = 1; print "1..45\n"; }
-END {print "not ok 1\n" unless $loaded;}
+BEGIN { $| = 1; }
+END {print "test failed\n" unless $loaded;}
 use Pg;
 $loaded = 1;
-print "ok 1\n";
+use strict;
 
 ######################### End of black magic.
 
-$dbmain = 'template1';
-$dbname = 'pgperltest';
-$trace  = '/tmp/pgtrace.out';
-$cnt    = 2;
-$DEBUG  = 0; # set this to 1 for traces
+my $dbmain = 'template1';
+my $dbname = 'pgperltest';
+my $trace  = '/tmp/pgtrace.out';
+my ($conn, $result, $i);
 
-$| = 1;
+my $DEBUG  = 0; # set this to 1 for traces
 
 ######################### the following methods will be tested
 
 #	connectdb
+#	conndefaults
 #	db
 #	user
 #	port
-#	finish
 #	status
 #	errorMessage
 #	trace
 #	untrace
 #	exec
 #	getline
-#	endcopy
 #	putline
+#	endcopy
 #	resultStatus
-#	ntuples
-#	nfields
 #	fname
 #	fnumber
 #	ftype
@@ -54,20 +45,36 @@ $| = 1;
 #	cmdStatus
 #	oidStatus
 #	cmdTuples
-#	getvalue
+#	fetchrow
 
 ######################### the following methods will not be tested
 
 #	setdb
-#	conndefaults
+#	setdbLogin
 #	reset
-#	options
+#	requestCancel
+#	pass
 #	host
 #	tty
+#	options
+#	socket
+#	backendPID
+#	notifies
+#	sendQuery
+#	getResult
+#	isBusy
+#	consumeInput
+#	getlineAsync
+#	putnbytes
+#	makeEmptyPGresult
+#	ntuples
+#	nfields
+#	binaryTuples
+#	fmod
+#	getvalue
 #	getlength
 #	getisnull
 #	print
-#	notifies
 #	displayTuples
 #	printTuples
 #	lo_import
@@ -86,82 +93,114 @@ $| = 1;
 $SIG{PIPE} = sub { print "broken pipe\n" };
 
 ######################### create and connect to test database
-# 2-4
+
+my $Option_ref = Pg::conndefaults();
+my ($key, $val);
+( $$Option_ref{port} ne "" && $$Option_ref{dbname} ne "" && $$Option_ref{user} ne "" )
+    and print "Pg::conndefaults ........ ok\n"
+    or  die   "Pg::conndefaults ........ not ok: ", $conn->errorMessage;
 
 $conn = Pg::connectdb("dbname=$dbmain");
-cmp_eq(PGRES_CONNECTION_OK, $conn->status);
+( PGRES_CONNECTION_OK eq $conn->status )
+    and print "Pg::connectdb ........... ok\n"
+    or  die   "Pg::connectdb ........... not ok: ", $conn->errorMessage;
 
-# might fail if $dbname doesn't exist => don't check resultStatus
-$result = $conn->exec("DROP DATABASE $dbname");
+# do not complain when dropping $dbname
+$conn->exec("DROP DATABASE $dbname");
 
 $result = $conn->exec("CREATE DATABASE $dbname");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+( PGRES_COMMAND_OK eq $result->resultStatus )
+    and print "\$conn->exec ............. ok\n"
+    or  die   "\$conn->exec ............. not ok: ", $conn->errorMessage;
+
+$conn = Pg::connectdb("dbname=rumpumpel");
+( $conn->errorMessage =~ 'Database rumpumpel does not exist' )
+    and print "\$conn->errorMessage ..... ok\n"
+    or  die   "\$conn->errorMessage ..... not ok: ", $conn->errorMessage;
 
 $conn = Pg::connectdb("dbname=$dbname");
-cmp_eq(PGRES_CONNECTION_OK, $conn->status);
+die $conn->errorMessage unless PGRES_CONNECTION_OK eq $conn->status;
 
 ######################### debug, PQtrace
 
 if ($DEBUG) {
-    open(TRACE, ">$trace") || die "can not open $trace: $!";
-    $conn->trace(TRACE);
+    open(FD, ">$trace") || die "can not open $trace: $!";
+    $conn->trace("FD");
 }
 
 ######################### check PGconn
-# 5-7
 
-$db = $conn->db;
-cmp_eq($dbname, $db);
+my $db = $conn->db;
+( $dbname eq $db )
+    and print "\$conn->db ............... ok\n"
+    or  print "\$conn->db ............... not ok: $db\n";
 
-$user = $conn->user;
-cmp_ne("", $user);
+my $user = $conn->user;
+( "" ne $user )
+    and print "\$conn->user ............. ok\n"
+    or  print "\$conn->user ............. not ok: $user\n";
 
-$port = $conn->port;
-cmp_ne("", $port);
+my $port = $conn->port;
+( "" ne $port )
+    and print "\$conn->port ............. ok\n"
+    or  print "\$conn->port ............. not ok: $port\n";
 
 ######################### create and insert into table
-# 8-19
 
 $result = $conn->exec("CREATE TABLE person (id int4, name char(16))");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-cmp_eq("CREATE", $result->cmdStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+my $cmd = $result->cmdStatus;
+( "CREATE" eq $cmd )
+    and print "\$conn->cmdStatus ........ ok\n"
+    or  print "\$conn->cmdStatus ........ not ok: $cmd\n";
 
 for ($i = 1; $i <= 5; $i++) {
     $result = $conn->exec("INSERT INTO person VALUES ($i, 'Edmund Mergl')");
-    cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-    cmp_ne(0, $result->oidStatus);
+    die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 }
+my $oid = $result->oidStatus;
+( 0 != $oid )
+    and print "\$conn->oidStatus ........ ok\n"
+    or  print "\$conn->oidStatus ........ not ok: $oid\n";
 
 ######################### copy to stdout, PQgetline
-# 20-26
 
 $result = $conn->exec("COPY person TO STDOUT");
-cmp_eq(PGRES_COPY_OUT, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COPY_OUT eq $result->resultStatus;
 
-$i   = 1;
-$ret = 0;
+my $ret = 0;
+my $buf;
+my $string;
+$i = 1;
 while (-1 != $ret) {
-    $ret = $conn->getline($string, 256);
-    last if $string eq "\\.";
-    cmp_eq("$i	Edmund Mergl    ", $string);
+    $ret = $conn->getline($buf, 256);
+    last if $buf eq "\\.";
+    $string = $buf if 1 == $i;
     $i++;
 }
+( "1	Edmund Mergl    " eq $string )
+    and print "\$conn->getline .......... ok\n"
+    or  print "\$conn->getline .......... not ok: $string\n";
 
-cmp_eq(0, $conn->endcopy);
+$ret = $conn->endcopy;
+( 0 == $ret )
+    and print "\$conn->endcopy .......... ok\n"
+    or  print "\$conn->endcopy .......... not ok: $ret\n";
 
 ######################### delete and copy from stdin, PQputline
-# 27-33
 
 $result = $conn->exec("BEGIN");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 
 $result = $conn->exec("DELETE FROM person");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
-cmp_eq("DELETE 5", $result->cmdStatus);
-cmp_eq("5", $result->cmdTuples);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
+$ret = $result->cmdTuples;
+( 5 == $ret )
+    and print "\$result->cmdTuples ...... ok\n"
+    or  print "\$result->cmdTuples ...... not ok: $ret\n";
 
 $result = $conn->exec("COPY person FROM STDIN");
-cmp_eq(PGRES_COPY_IN, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COPY_IN eq $result->resultStatus;
 
 for ($i = 1; $i <= 5; $i++) {
     # watch the tabs and do not forget the newlines
@@ -169,92 +208,60 @@ for ($i = 1; $i <= 5; $i++) {
 }
 $conn->putline("\\.\n");
 
-cmp_eq(0, $conn->endcopy);
+die $conn->errorMessage if $conn->endcopy;
 
 $result = $conn->exec("END");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 
 ######################### select from person, PQgetvalue
-# 34-43
 
 $result = $conn->exec("SELECT * FROM person");
-cmp_eq(PGRES_TUPLES_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_TUPLES_OK eq $result->resultStatus;
 
-for ($k = 0; $k < $result->nfields; $k++) {
-    $fname = $result->fname($k);
-    $ftype = $result->ftype($k);
-    $fsize = $result->fsize($k);
-    if (0 == $k) {
-        cmp_eq("id", $fname);
-        cmp_eq(23, $ftype);
-        cmp_eq(4, $fsize);
-    } else {
-        cmp_eq("name", $fname);
-        cmp_eq(1042, $ftype);
-        cmp_eq(-1, $fsize);
-    }
-    $fnumber = $result->fnumber($fname);
-    cmp_eq($k, $fnumber);
-}
+my $fname = $result->fname(0);
+( "id" eq $fname )
+    and print "\$result->fname .......... ok\n"
+    or  print "\$result->fname .......... not ok: $fname\n";
+
+my $ftype = $result->ftype(0);
+( 23 == $ftype )
+    and print "\$result->ftype .......... ok\n"
+    or  print "\$result->ftype .......... not ok: $ftype\n";
+
+my $fsize = $result->fsize(0);
+( 4 == $fsize )
+    and print "\$result->fsize .......... ok\n"
+    or  print "\$result->fsize .......... not ok: $fsize\n";
+
+my $fnumber = $result->fnumber($fname);
+( 0 == $fnumber )
+    and print "\$result->fnumber ........ ok\n"
+    or  print "\$result->fnumber ........ not ok: $fnumber\n";
 
 $string = "";
+my @row;
 while (@row = $result->fetchrow) {
     $string = join(" ", @row);
 }
-cmp_eq("5 Edmund Mergl    ", $string);
+( "5 Edmund Mergl    " eq $string )
+    and print "\$result->fetchrow ....... ok\n"
+    or  print "\$result->fetchrow ....... not ok: $string\n";
 
 ######################### debug, PQuntrace
 
 if ($DEBUG) {
-    close(TRACE) || die "bad TRACE: $!";
+    close(FD) || die "bad TRACE: $!";
     $conn->untrace;
 }
 
 ######################### disconnect and drop test database
-# 44-45
 
 $conn = Pg::connectdb("dbname=$dbmain");
-cmp_eq(PGRES_CONNECTION_OK, $conn->status);
+die $conn->errorMessage unless PGRES_CONNECTION_OK eq $conn->status;
 
 $result = $conn->exec("DROP DATABASE $dbname");
-cmp_eq(PGRES_COMMAND_OK, $result->resultStatus);
+die $conn->errorMessage unless PGRES_COMMAND_OK eq $result->resultStatus;
 
-######################### hopefully
-
-print "test sequence finished.\n" if 51 == $cnt;
-
-######################### utility functions
-
-sub cmp_eq {
-
-    my $cmp = shift;
-    my $ret = shift;
-    my $msg;
-
-    if ("$cmp" eq "$ret") {
-	print "ok $cnt\n";
-    } else {
-        $msg = $conn->errorMessage;
-	print "not ok $cnt: $cmp, $ret\n$msg\n";
-        exit;
-    }
-    $cnt++;
-}
-
-sub cmp_ne {
-
-    my $cmp = shift;
-    my $ret = shift;
-    my $msg;
-
-    if ("$cmp" ne "$ret") {
-	print "ok $cnt\n";
-    } else {
-        $msg = $conn->errorMessage;
-	print "not ok $cnt: $cmp, $ret\n$msg\n";
-        exit;
-    }
-    $cnt++;
-}
+print "test sequence finished.\n";
 
 ######################### EOF

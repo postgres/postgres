@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Changes,v 1.7 1998/06/01 16:41:18 mergl Exp $
+# $Id: Changes,v 1.8 1998/09/27 19:12:20 mergl Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -8,6 +8,25 @@
 
 Revision history for Perl extension Pg.
 
+1.8.0   Sep 27 1998
+	- adapted to PostgreSQL-6.4:
+	  added support for 
+	  o PQsetdbLogin
+	  o PQpass
+	  o PQsocket
+	  o PQbackendPID
+	  o PQsendQuery
+	  o PQgetResult
+	  o PQisBusy
+	  o PQconsumeInput
+	  o PQrequestCancel
+	  o PQgetlineAsync
+	  o PQputnbytes
+	  o PQmakeEmptyPGresult
+	  o PQbinaryTuples
+	  o PQfmod
+	- fixed conndefaults()
+	- fixed lo_read
 
 1.7.4   May 28 1998
 	- applied patches from 

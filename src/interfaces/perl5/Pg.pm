@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Pg.pm,v 1.7 1998/06/01 16:41:19 mergl Exp $
+# $Id: Pg.pm,v 1.8 1998/09/27 19:12:22 mergl Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -22,32 +22,46 @@ require 5.002;
 # Items to export into callers namespace by default.
 @EXPORT = qw(
 	PQconnectdb
-	PQconndefaults
+	PQsetdbLogin
 	PQsetdb
+	PQconndefaults
 	PQfinish
 	PQreset
+	PQrequestCancel
 	PQdb
 	PQuser
+	PQpass
 	PQhost
-	PQoptions
 	PQport
 	PQtty
+	PQoptions
 	PQstatus
 	PQerrorMessage
+	PQsocket
+	PQbackendPID
 	PQtrace
 	PQuntrace
 	PQexec
-	PQgetline
-	PQendcopy
-	PQputline
 	PQnotifies
+	PQsendQuery
+	PQgetResult
+	PQisBusy
+	PQconsumeInput
+	PQgetline
+	PQputline
+	PQgetlineAsync
+	PQputnbytes
+	PQendcopy
+	PQmakeEmptyPGresult
 	PQresultStatus
 	PQntuples
 	PQnfields
+	PQbinaryTuples
 	PQfname
 	PQfnumber
 	PQftype
 	PQfsize
+	PQfmod
 	PQcmdStatus
 	PQoidStatus
 	PQcmdTuples
@@ -55,8 +69,9 @@ require 5.002;
 	PQgetlength
 	PQgetisnull
 	PQclear
-	PQprintTuples
 	PQprint
+	PQdisplayTuples
+	PQprintTuples
 	PQlo_open
 	PQlo_close
 	PQlo_read
@@ -84,7 +99,7 @@ require 5.002;
 	PGRES_InvalidOid
 );
 
-$Pg::VERSION = '1.7.4';
+$Pg::VERSION = '1.8.0';
 
 sub AUTOLOAD {
     # This AUTOLOAD is used to 'autoload' constants from the constant()
@@ -145,15 +160,15 @@ Pg - Perl5 extension for PostgreSQL
 new style:
 
     use Pg;
-    $conn = Pg::connectdb("dbname = template1");
-    $result = $conn->exec("create database test");
+    $conn = Pg::connectdb("dbname=template1");
+    $result = $conn->exec("create database pgtest");
 
 
-you may also use the old style:
+old style (depreciated):
 
     use Pg;
     $conn = PQsetdb('', '', '', '', template1);
-    $result = PQexec($conn, "create database test");
+    $result = PQexec($conn, "create database pgtest");
     PQclear($result);
     PQfinish($conn);
 
@@ -232,41 +247,58 @@ implemented in perl using lists or hash.
 =head1 FUNCTIONS
 
 The functions have been divided into three sections: 
-Connection, Result, Large Objects.
+Connection, Result, Large Objects. For details please 
+read L<libpq>.
 
 
 =head2 1. Connection
 
 With these functions you can establish and close a connection to a 
 database. In Libpq a connection is represented by a structure called
-PGconn. Using the appropriate methods you can access almost all 
-fields of this structure.
+PGconn. 
+
+When opening a connection a given database name is always converted to 
+lower-case, unless it is surrounded by double quotes. All unspecified 
+parameters are replaced by environment variables or by hard coded defaults: 
+
+    parameter  environment variable  hard coded default
+    --------------------------------------------------
+    host       PGHOST                localhost
+    port       PGPORT                5432
+    options    PGOPTIONS             ""
+    tty        PGTTY                 ""
+    dbname     PGDATABASE            current userid
+    user       PGUSER                current userid
+    password   PGPASSWORD            ""
+
+Using appropriate methods you can access almost all fields of the 
+returned PGconn structure. 
+
+    $conn = Pg::setdbLogin($pghost, $pgport, $pgoptions, $pgtty, $dbname, $login, $pwd)
+
+Opens a new connection to the backend. The connection identifier $conn 
+( a pointer to the PGconn structure ) must be used in subsequent commands 
+for unique identification. Before using $conn you should call $conn->status 
+to ensure, that the connection was properly made. 
 
     $conn = Pg::setdb($pghost, $pgport, $pgoptions, $pgtty, $dbname)
 
-Opens a new connection to the backend. You may use an empty string for
-any argument, in which case first the environment is checked and then 
-hard-coded defaults are used. The connection identifier $conn ( a pointer 
-to the PGconn structure ) must be used in subsequent commands for unique 
-identification. Before using $conn you should call $conn->status to ensure, 
-that the connection was properly made. Use the methods below to access 
-the contents of the PGconn structure.
+The method setdb should be used when username/password authentication is 
+not needed. 
 
     $conn = Pg::connectdb("option1=value option2=value ...")
 
-Opens a new connection to the backend using connection information in a string. 
-Possible options are: dbname, host, user, password, authtype, port, tty, options. 
-The database-name will be converted to lower-case, unless it is surrounded by 
-double quotes. The connection identifier $conn (a pointer to the PGconn structure) 
-must be used in subsequent commands for unique identification. Before using $conn 
-you should call $conn->status to ensure, that the connection was properly made. 
-Use the methods below to access the contents of the PGconn structure.
+Opens a new connection to the backend using connection information in a 
+string. Possible options are: host, port, options, tty, dbname, user, password. 
+The connection identifier $conn (a pointer to the PGconn structure) 
+must be used in subsequent commands for unique identification. Before using 
+$conn you should call $conn->status to ensure, that the connection was 
+properly made. 
 
     $Option_ref = Pg::conndefaults()
 
     while(($key, $val) = each %$Option_ref) {
         print "$key, $val\n";
-    }
 
 Returns a reference to a hash containing as keys all possible options for 
 connectdb(). The values are the current defaults. This function differs from 
@@ -275,12 +307,19 @@ his C-counterpart, which returns the complete conninfoOption structure.
     PQfinish($conn)
 
 Old style only !
-Closes the connection to the backend and frees all memory. 
+Closes the connection to the backend and frees the connection data structure. 
 
     $conn->reset
 
 Resets the communication port with the backend and tries
 to establish a new connection.
+
+    $ret = $conn->requestCancel
+
+Abandon processing of the current query. Regardless  of the return value of 
+requestCancel, the application must continue with the normal result-reading 
+sequence using getResult. If the current query is part of a transaction, 
+cancellation will abort the whole transaction. 
 
     $dbname = $conn->db
 
@@ -290,13 +329,13 @@ Returns the database name of the connection.
 
 Returns the Postgres user name of the connection.
 
+    $pguser = $conn->pass
+
+Returns the Postgres password of the connection.
+
     $pghost = $conn->host
 
 Returns the host name of the connection.
-
-    $pgoptions = $conn->options
-
-Returns the options used in the connection.
 
     $pgport = $conn->port
 
@@ -305,6 +344,10 @@ Returns the port of the connection.
     $pgtty = $conn->tty
 
 Returns the tty of the connection.
+
+    $pgoptions = $conn->options
+
+Returns the options used in the connection.
 
     $status = $conn->status
 
@@ -317,6 +360,15 @@ you may use the following constants:
     $errorMessage = $conn->errorMessage
 
 Returns the last error message associated with this connection.
+
+    $fd = $conn->socket
+
+Obtain the file descriptor number for the backend connection socket. 
+A result of -1 indicates that no backend connection is currently open. 
+
+    $pid = $conn->backendPID
+
+Returns the process-id of the corresponding backend proceess. 
 
     $conn->trace(debug_port)
 
@@ -338,28 +390,6 @@ structure has to be freed using PQfree. Before using $result you
 should call resultStatus to ensure, that the query was 
 properly executed. 
 
-    $ret = $conn->getline($string, $length)
-
-Reads a string up to $length - 1 characters from the backend. 
-getline returns EOF at EOF, 0 if the entire line has been read, 
-and 1 if the buffer is full. If a line consists of the two 
-characters "\." the backend has finished sending the results of 
-the copy command. 
-
-    $conn->putline($string)
-
-Sends a string to the backend. The application must explicitly 
-send the two characters "\." to indicate to the backend that 
-it has finished sending its data. 
-
-    $ret = $conn->endcopy
-
-This function waits  until the backend has finished the copy. 
-It should either be issued when the last string has been sent 
-to  the  backend  using  putline or when the last string has 
-been received from the backend using getline. endcopy returns 
-0 on success, nonzero otherwise. 
-
     ($table, $pid) = $conn->notifies
 
 Checks for asynchronous notifications. This functions differs from 
@@ -368,12 +398,90 @@ whereas the perl implementation returns a list. $table is the table
 which has been listened to and $pid is the process id of the backend. 
 
 
+    $ret = $conn->sendQuery($string, $query)
+
+Submit a query to Postgres without waiting for the result(s). After 
+successfully calling PQsendQuery, call PQgetResult one or more times 
+to obtain the query results.  PQsendQuery may not be called again until 
+getResult has returned NULL, indicating that the query is done. 
+
+    $result = $conn->getResult
+
+Wait for the next result from a prior PQsendQuery, and return it.  NULL 
+is returned when the query is complete and there will be no more results. 
+getResult  will block only if a query is active and the necessary response 
+data has not yet been read by PQconsumeInput. 
+
+    $ret = $conn->isBusy
+
+Returns TRUE if a query is busy, that is, PQgetResult would block waiting 
+for input.  A FALSE  return indicates that PQgetResult can be called with 
+assurance of not blocking.
+
+    $result = $conn->consumeInput
+
+If input is available from the backend, consume it. After calling consumeInput, 
+the application may check isBusy and/or notifies to see if their state has changed. 
+
+    $ret = $conn->getline($string, $length)
+
+Reads a string up to $length - 1 characters from the backend. 
+getline returns EOF at EOF, 0 if the entire line has been read, 
+and 1 if the buffer is full. If a line consists of the two 
+characters "\." the backend has finished sending the results of 
+the copy command. 
+
+    $ret = $conn->putline($string)
+
+Sends a string to the backend. The application must explicitly 
+send the two characters "\." to indicate to the backend that 
+it has finished sending its data. 
+
+    $ret = $conn->getlineAsync($buffer, $bufsize)
+
+Non-blocking version of getline. It reads up to $bufsize 
+characters from the backend. getlineAsync returns -1 if 
+the end-of-copy-marker has been recognized, 0 if no data 
+is avilable, and >0 the number of bytes returned. 
+
+    $ret = $conn->putnbytes($buffer, $nbytes)
+
+Sends n bytes to the backend. Returns 0 if OK, EOF if not. 
+
+    $ret = $conn->endcopy
+
+This function waits  until the backend has finished the copy. 
+It should either be issued when the last string has been sent 
+to  the  backend  using  putline or when the last string has 
+been received from the backend using getline. endcopy returns 
+0 on success, 1 on failure. 
+
+    $result = $conn->makeEmptyPGresult($status);
+
+Returns a newly allocated, initialized result with given status. 
+
+
 =head2 2. Result
 
 With these functions you can send commands to a database and
 investigate the results. In Libpq the result of a command is 
 represented by a structure called PGresult. Using the appropriate 
 methods you can access almost all fields of this structure.
+
+    $result_status = $result->resultStatus
+
+Returns the status of the result. For comparing the status you 
+may use one of the following constants depending upon the 
+command executed:
+
+  - PGRES_EMPTY_QUERY
+  - PGRES_COMMAND_OK
+  - PGRES_TUPLES_OK
+  - PGRES_COPY_OUT
+  - PGRES_COPY_IN
+  - PGRES_BAD_RESPONSE
+  - PGRES_NONFATAL_ERROR
+  - PGRES_FATAL_ERROR
 
 Use the functions below to access the contents of the PGresult structure.
 
@@ -384,6 +492,10 @@ Returns the number of tuples in the query result.
     $nfields = $result->nfields
 
 Returns the number of fields in the query result.
+
+    $ret = $result->binaryTuples
+
+Returns 1 if the tuples in the query result are bianry. 
 
     $fname = $result->fname($field_num)
 
@@ -402,34 +514,10 @@ Returns the oid of the type of the given field number.
 Returns the size in bytes of the type of the given field number. 
 It returns -1 if the field has a variable length.
 
-    $value = $result->getvalue($tup_num, $field_num)
+    $fmod = $result->fmod($field_num)
 
-Returns the value of the given tuple and field. This is 
-a null-terminated ASCII string. Binary cursors will not
-work. 
-
-    $length = $result->getlength($tup_num, $field_num)
-
-Returns the length of the value for a given tuple and field. 
-
-    $null_status = $result->getisnull($tup_num, $field_num)
-
-Returns the NULL status for a given tuple and field. 
-
-    $result_status = $result->resultStatus
-
-Returns the status of the result. For comparing the status you 
-may use one of the following constants depending upon the 
-command executed:
-
-  - PGRES_EMPTY_QUERY
-  - PGRES_COMMAND_OK
-  - PGRES_TUPLES_OK
-  - PGRES_COPY_OUT
-  - PGRES_COPY_IN
-  - PGRES_BAD_RESPONSE
-  - PGRES_NONFATAL_ERROR
-  - PGRES_FATAL_ERROR
+Returns the type-specific modification data of the field associated  
+with the given field index. Field indices start at 0. 
 
     $cmdStatus = $result->cmdStatus
 
@@ -449,9 +537,30 @@ inserted tuple.
 In case the last query was an INSERT or DELETE command it returns the 
 number of affected tuples. 
 
-    $result->printTuples($fout, $printAttName, $terseOutput, $width)
+    $value = $result->getvalue($tup_num, $field_num)
 
-Kept for backward compatibility. Use print.
+Returns the value of the given tuple and field. This is 
+a null-terminated ASCII string. Binary cursors will not
+work. 
+
+    $length = $result->getlength($tup_num, $field_num)
+
+Returns the length of the value for a given tuple and field. 
+
+    $null_status = $result->getisnull($tup_num, $field_num)
+
+Returns the NULL status for a given tuple and field. 
+
+    PQclear($result)
+
+Old style only !
+Frees all memory of the given result. 
+
+    $res->fetchrow
+
+New style only ! 
+Fetches the next row from the server and returns NULL if all rows 
+have been processed. Columns which have NULL as value will be set to C<undef>.
 
     $result->print($fout, $header, $align, $standard, $html3, $expanded, $pager, $fieldSep, $tableOpt, $caption, ...)
 
@@ -464,10 +573,13 @@ are boolean flags. The arguments $fieldSep, $tableOpt, $caption
 are strings. You may append additional strings, which will be 
 taken as replacement for the field names. 
 
-    PQclear($result)
+    $result->displayTuples($fp, $fillAlign, $fieldSep, $printHeader, qiet)
 
-Old style only !
-Frees all memory of the given result. 
+Kept for backward compatibility. Use print.
+
+    $result->printTuples($fout, $printAttName, $terseOutput, $width)
+
+Kept for backward compatibility. Use print.
 
 
 =head2 3. Large Objects
@@ -477,22 +589,6 @@ The large object interface is modeled after the Unix file
 system interface with analogies of open, close, read, write, 
 lseek, tell. In order to get a consistent naming, all function 
 names have been prepended with 'PQ' (old style only). 
-
-    $lobjId = $conn->lo_creat($mode)
-
-Creates a new large object. $mode is a bit-mask describing 
-different attributes of the new object. Use the following constants: 
-
-  - PGRES_INV_SMGRMASK
-  - PGRES_INV_ARCHIVE
-  - PGRES_INV_WRITE
-  - PGRES_INV_READ
-
-Upon failure it returns PGRES_InvalidOid. 
-
-    $ret = $conn->lo_unlink($lobjId)
-
-Deletes a large object. Returns -1 upon failure. 
 
     $lobj_fd = $conn->lo_open($lobjId, $mode)
 
@@ -519,10 +615,26 @@ Returns the number of bytes written and -1 upon failure.
 Change the current read or write location on the large object 
 $obj_id. Currently $whence can only be 0 (L_SET). 
 
+    $lobjId = $conn->lo_creat($mode)
+
+Creates a new large object. $mode is a bit-mask describing 
+different attributes of the new object. Use the following constants: 
+
+  - PGRES_INV_SMGRMASK
+  - PGRES_INV_ARCHIVE
+  - PGRES_INV_WRITE
+  - PGRES_INV_READ
+
+Upon failure it returns PGRES_InvalidOid. 
+
     $location = $conn->lo_tell($lobj_fd)
 
 Returns the current read or write location on the large object 
 $lobj_fd. 
+
+    $ret = $conn->lo_unlink($lobjId)
+
+Deletes a large object. Returns -1 upon failure. 
 
     $lobjId = $conn->lo_import($filename)
 

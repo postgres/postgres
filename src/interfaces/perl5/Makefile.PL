@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: Makefile.PL,v 1.8 1998/06/01 16:41:19 mergl Exp $
+# $Id: Makefile.PL,v 1.9 1998/09/27 19:12:21 mergl Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #

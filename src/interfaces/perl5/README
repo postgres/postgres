@@ -1,6 +1,6 @@
 #-------------------------------------------------------
 #
-# $Id: README,v 1.7 1998/06/01 16:41:19 mergl Exp $
+# $Id: README,v 1.8 1998/09/27 19:12:24 mergl Exp $
 #
 # Copyright (c) 1997, 1998  Edmund Mergl
 #
@@ -9,7 +9,7 @@
 DESCRIPTION:
 ------------
 
-This is version 1.7.4 of pgsql_perl5 (previously called pg95perl5).
+This is version 1.8.0 of pgsql_perl5 (previously called pg95perl5).
 
 Pgsql_perl5 is an interface between Larry Wall's language perl version 5 and 
 the database PostgreSQL (previously Postgres95). This has been done by using 
@@ -22,6 +22,9 @@ interface and a new one, using a more Perl-ish like style. The old style
 has the benefit, that existing Libpq applications can easily be ported to 
 perl. The new style uses class packages and might be more familiar for C++-
 programmers. 
+
+NOTE: it is planned to drop the old C-style interface in the next major release 
+      of PostgreSQL. 
 
 
 
@@ -36,7 +39,7 @@ License or the Artistic License, as specified in the Perl README file.
 IF YOU HAVE PROBLEMS:
 ---------------------
 
-Please send comments and bug-reports to <E.Mergl@bawue.de>
+Please send comments and bug-reports to <pgsql-interfaces@postgresql.org>
 
 Please include the output of perl -v,
                          and perl -V,
@@ -48,8 +51,8 @@ in your bug-report.
 REQUIREMENTS:
 -------------
 
-  - build, test and install Perl 5         (at least 5.002)
-  - build, test and install PostgreSQL     (at least 6.3)
+  - build, test and install Perl5          (at least 5.002)
+  - build, test and install PostgreSQL     (at least 6.4)
 
 
 PLATFORMS:
@@ -129,6 +132,6 @@ installation to read the documentation.
 
 ---------------------------------------------------------------------------
 
-   Edmund Mergl <E.Mergl@bawue.de>                            May 28, 1998
+   Edmund Mergl <E.Mergl@bawue.de>                       September 27, 1998
 
 ---------------------------------------------------------------------------

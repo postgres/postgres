@@ -1,18 +1,12 @@
 #!/usr/local/bin/perl
 
-#-------------------------------------------------------
-#
-# $Id: ApachePg.pl,v 1.4 1998/06/01 16:41:26 mergl Exp $
-#
-# Copyright (c) 1997, 1998  Edmund Mergl
-#
-#-------------------------------------------------------
+# $Id: ApachePg.pl,v 1.5 1998/09/27 19:12:33 mergl Exp $
 
 # demo script, tested with:
-#  - PostgreSQL-6.3
-#  - apache_1.3
-#  - mod_perl-1.08
-#  - perl5.004_04
+#  - PostgreSQL-6.4
+#  - apache_1.3.1
+#  - mod_perl-1.15
+#  - perl5.005_02
 
 use CGI;
 use Pg;
@@ -26,7 +20,7 @@ print  $query->header,
        "<CENTER><H3>Testing Module Pg</H3></CENTER>",
        "<P><CENTER><TABLE CELLPADDING=4 CELLSPACING=2 BORDER=1>",
        "<TR><TD>Enter conninfo string: </TD>",
-           "<TD>", $query->textfield(-name=>'conninfo', -size=>40, -default=>'dbname=template1 host=localhost'), "</TD>",
+           "<TD>", $query->textfield(-name=>'conninfo', -size=>40, -default=>'dbname=template1'), "</TD>",
        "</TR>",
        "<TR><TD>Enter select command: </TD>",
            "<TD>", $query->textfield(-name=>'cmd', -size=>40), "</TD>",
@@ -39,17 +33,21 @@ if ($query->param) {
 
     my $conninfo = $query->param('conninfo');
     my $conn = Pg::connectdb($conninfo);
-    if ($conn->status == PGRES_CONNECTION_OK) {
+    if (PGRES_CONNECTION_OK == $conn->status) {
         my $cmd = $query->param('cmd');
         my $result = $conn->exec($cmd);
-        print "<P><CENTER><TABLE CELLPADDING=4 CELLSPACING=2 BORDER=1>\n";
-        my @row;
-        while (@row = $result->fetchrow) {
-            print "<TR><TD>", join("</TD><TD>", @row), "</TD></TR>";
+        if (PGRES_TUPLES_OK == $result->resultStatus) {
+            print "<P><CENTER><TABLE CELLPADDING=4 CELLSPACING=2 BORDER=1>\n";
+            my @row;
+            while (@row = $result->fetchrow) {
+                print "<TR><TD>", join("</TD><TD>", @row), "</TD></TR>";
+            }
+            print "</TABLE></CENTER><P>\n";
+        } else {
+            print "<CENTER><H2>", $conn->errorMessage, "</H2></CENTER>\n";
         }
-        print "</TABLE></CENTER><P>\n";
     } else {
-        print "<CENTER><H2>Connect to database failed</H2></CENTER>\n";
+        print "<CENTER><H2>", $conn->errorMessage, "</H2></CENTER>\n";
     }
 }
 
