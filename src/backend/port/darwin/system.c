@@ -1,3 +1,7 @@
+/* only needed in OS X 10.1 and possibly early 10.2 releases */
+#include <AvailabilityMacros.h>
+#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_2 || !defined(MAC_OS_X_VERSION_10_2)
+
 /*
  * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -97,3 +101,5 @@ system(const char *command)
 	(void) sigprocmask(SIG_SETMASK, &oldsigblock, NULL);
 	return (pid == -1 ? -1 : pstat);
 }
+
+#endif /* OS X < 10.3 */

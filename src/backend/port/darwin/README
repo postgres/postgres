@@ -24,3 +24,8 @@ port/SUBSYS.o definition of _system in section (__TEXT,__text)
 /usr/lib/libm.dylib(system.o) unused definition of _system
 
 These are due to overriding system() per the above-described hack.
+
+
+The bug appears to be repaired in OS X 10.2.6 and later (possibly in
+earlier 10.2.* as well, but no systems handy to check).  We #ifdef out
+the substitute system() definition on 10.3 and later.
