@@ -1,18 +1,19 @@
 
                  Frequently Asked Questions (FAQ) o PostgreSQL
                                        
-   Ostatnia aktualizacja: Thu Apr 18 00:44:51 EDT 2002
+   Ostatnia aktualizacja: Sobota Luty 7 22:16:21 EST 2004
+   
+   Ostatnia aktualizacja tl/umaczenia: Piatek Marzec 5 19:31:12 EST 2004
    
    Obecny maintainer: Bruce Momjian (pgman@candle.pha.pa.us)
    
    Tl/umaczenie: Marcin Mazurek (m.mazurek@netsync.pl)
    
    Najbardziej aktualna wersje tego dokumentu mozna znalezc pod adresem:
-   http://www.PostgreSQL.org/docs/faq-english.html.
+   http://www.PostgreSQL.org/docs/faqs/FAQ.html.
    
    Odpowiedzi na pytania dotyczace konkretnych systemów operacyjnych
-   mozna znalezc pod adresem:
-   http://www.PostgreSQL.org/users-lounge/docs/faq.html.
+   mozna znalezc pod adresem: http://www.PostgreSQL.org/docs/index.html.
      _________________________________________________________________
    
                                Pytania ogólne
@@ -40,18 +41,17 @@
    2.1) Czy sa jakies driwery ODBC dla PostgreSQL?
    2.2) Jakie istnieja narzedzia pozwalajace na dostep do PostgreSQL
    przez www?
-   2.3) Czy istnieje jakies GUI dla PostgreSQL? Narzedzie do
-   raportowania? Interfejs dla "embedded query language"?
+   2.3) Czy istnieje jakies GUI dla PostgreSQL?
    2.4) Za pomoca jakich jezyków programowania mozna sie komunikowac z
    PostgreSQL?
    
-                           Pytania administratora
+                      Pytania dotyczace administracji
                                       
    3.1) Jak moge zainstalowac PostgreSQL w innej lokalizacji niz
    /usr/local/pgsql?
    3.2) Podczas startu postmaster'a, otrzymuje komunikat: Bad System Call
    lub "core dumped". Dlaczego?
-   3.3) Podczas startu postmaster'a, otrzymuje komunikato bl/edzie:
+   3.3) Podczas startu postmaster'a, otrzymuje komunikat o bl/edzie:
    IpcMemoryCreate. Dlaczego?
    3.4) Podczas startu postmaster'a, otrzymuje komunikat o bl/edzie:
    IpcSemaphoreCreate. Dlaczego?
@@ -61,8 +61,9 @@
    3.7) Jakie sa mozliwosci wyszukiwania bl/edów?
    3.8) Skad sie bierze komunikat: "Sorry, too many clients" podczas
    próby pol/aczenia sie z baza danych?
-   3.9) Co to za pliki typu pg_sorttempNNN.NN , które znajduja sie w
-   katalogu z plikami bazy danych?
+   3.9) Jakie pliki znajduja sie w pg_temp?
+   3.10) Dlaczego konieczne jest przy upgradzie PostgreSQL korzystanie ze
+   skryptów dump i restore?
    
                        Pytania dotyczace uzytkowania
                                       
@@ -72,7 +73,7 @@
    zapytania?
    4.3) Jak moge uzyskac liste wszystkich tabel czy innych rzeczy pod
    psql?
-   4.4) Jak usunac kolumne z tabeli?
+   4.4) Jak usunac kolumne z tabeli lub zmienic jej typ?
    4.5) Jaki jest maksymalny rozmiar dla rzedu, tabeli i bazy danych?
    4.6) Jak duzo miejsca w bazie danych jest potrzebne aby przechowac
    dane ze zwyczajnego pliku tekstowego?
@@ -110,6 +111,10 @@
    4.23) Jak wykonac "outer join"?
    4.24) Jak wykonywac zapytanie uzywajace kilku baz danych jednoczesnie?
    4.25) Jak zwrócic w funkcji wiele rzedów lub kolumn?
+   4.26) Dlaczego nie moge w sposób pewny tworzyc/usuwac tabel
+   tymczasowych w funkcjach PL/PgSQL?
+   4.27) Jakie sa mozliwosci replikacji w PostgreSQL?
+   4.28) Jakie mozliwosci szyfrowania oferuje PostgreSQL?
    
                            Rozwijanie PostgreSQL
                                       
@@ -125,7 +130,8 @@
                                       
     1.1) Co to jest PostgreSQL? Jak to wymawiac?
     
-   PostgreSQL wymawia sie Post-Gres-kju-el.
+   PostgreSQL wymawia sie Post-Gres-kju-el. Czesto podczas rozmów uzywany
+   jest termin "Postgres"
    
    PostgreSQL jest rozszerzeniem systemu zarzadzania bazami danych -
    POSTGRES, kolejna generacja rozwojowego prototypu DBMS. Mimo, ze
@@ -137,11 +143,13 @@
    Rozwój PostgreSQL jest prowadzony przez grupe ludzi z Internetu,
    komunikujacych sie poprzez mailowe listy dyskusyjne PostgreSQL.
    Obecnym koordynatorem jest Marc G. Fournier (scrappy@PostgreSQL.org).
-   (Zobacz ponizej jak sie przyl/aczyc). Ta grupa ludzi jest
-   odpowiedzialna za cal/y rozwój PostgreSQL.
+   (Zobacz pytanie 1.6 jak sie przyl/aczyc). Ta grupa ludzi jest
+   odpowiedzialna za cal/y rozwój PostgreSQL. PostgreSQL jest projektem
+   nie kontrolowanym przez zadna firme, aby wziac udzial/ w jego rozwoju
+   sprawdz, http://www.PostgreSQL.org/docs/faqs/FAQ_DEV.html
    
    Autorami PostgreSQL 1.01 byli Andrew Yu and Jolly Chen. Wiele innych
-   osób pomogl/o przy portowaniu, testowaniu, debugowaniu, i rozwijaniu
+   osób pomogl/o przy portowaniu, testowaniu, debugowaniu i rozwijaniu
    kodu. Oryginalny kod Postgresa, na którym zostal/ oparty PostgreSQL,
    byl/ wysil/kiem studentów oraz pracowników pracujacych pod
    kierownictwem profesora Michael'a Stonebraker'a z University of
@@ -194,11 +202,11 @@
     
    Klient
    
-   Mozliwa jest kompilacja bibliteki C libpq C, psql oraz innych
+   Mozliwa jest kompilacja bibliteki C libpq, psql oraz innych
    interfejsów i uruchamianie ich na platformie MS Windows. W tym wypadku
    klient jest uruchamiany na MS Windows a z serwerem komunikuje sie
    poprzez TCP/IP. Serwer moze dzial/ac na dowolnej wspieranej platformie
-   Unixowej. Plik win31.mak jest dol/aczony do zródel/, aby mozna byl/o
+   Unixowej. Plik win32.mak jest dol/aczony do zródel/, aby mozna byl/o
    stworzyc biblioteke libpq oraz program psql dzial/ajace w srodowisku
    Win32. PostgreSQL moze sie takze komunikowac z klientami ODBC.
    
@@ -206,9 +214,17 @@
    
    Serwer moze byc uruchamiany na Windows NT i Win2k uzywajac bibliotek
    Cygwin, Cygnus Unix/NT. W pliku pgsql/doc/FAQ_MSWIN znajdujacym sie w
-   zródl/ach lub pod adresem: MS Windows FAQ na naszych stronach. Nie
-   planujemy tworzyc portu przeznaczonego docelowo dla platformy
-   Microsoft.
+   zródl/ach lub pod adresem:
+   http://www.PostgreSQL.org/docs/faqs/text/FAQ_MSWIN na naszych
+   stronach.
+   
+   Obecnie prowadzone sa prace nad stworzeniem wersji dla MS Win
+   NT/200/XP. Jesli chcesz sie dowiedziec o obecnym statusie tych prac
+   zobacz http://techdocs.postgresql.org/guides/Windows and
+   http://momjian.postgresql.org/main/writings/pgsql/win32.html.
+   
+   Istnieje takze port pod Novell Netware 6 dostepny pod adresem
+   http://forge.novell.com.
    
     1.5) Skad mozna sciagnac PostgreSQL?
     
@@ -258,31 +274,31 @@
    irc.phoenix.net.
    
    Lista firm oferujacych wsparcie na zasadach komercyjnych znajduje sie
-   pod adresem:
-   http://www.postgresql.org/users-lounge/commercial-support.html.
+   pod adresem: http://techdocs.postgresql.org/companies.php.
    
     1.7) Jaka jest ostatnia dostepna wersja?
     
-   Ostatnia dostepna wersja PostgreSQL to 7.2.1.
+   Ostatnia dostepna wersja PostgreSQL to 7.4.1.
    
-   Planujemy publikowanie kolejnych wersji co cztery miesiace.
+   Planujemy publikowanie kolejnych wersji co szesc do osmiu miesiecy.
    
     1.8) Jaka dokumentacja jest dostepna?
     
    Kilka manuali, stron podecznika man, oraz kilka przykl/adów do
    testowania sa zal/aczone w samej dystrybucji. Znajduja sie one w
    katalogu /doc. Manual moze byc takze przegladany poprzez strony www
-   pod adresem http://www.PostgreSQL.org/users-lounge/docs/.
+   pod adresem http://www.PostgreSQL.org/docs.
    
    Istnieja takze dwie ksiazki dostepne online pod adresami
    http://www.PostgreSQL.org/docs/awbook.html i
    http://www.commandprompt.com/ppbook/. Lista ksiazek o PostgreSQL,
    które mozna kupic znajduje sie pod adresem
-   http://www.postgresql.org/books/. Zbiór technicznych artykul/ów o
-   PostgreSQL znajduje sie pod adresem http://techdocs.postgresql.org/.
+   http://techdocs.PostgreSQL.org/techdocs/bookreviews.php. Zbiór
+   technicznych artykul/ów o PostgreSQL znajduje sie pod adresem
+   http://techdocs.postgresql.org/.
    
    psql posiada kilka wbudowanych polecen \d, za pomoca których mozna
-   sprawdzic informacje dotyczace typów, operatorów, funkcji, aggregatów
+   sprawdzic informacje dotyczace typów, operatorów, funkcji, agregatów
    itd.
    
    Na naszej stronie mozna znalezc duzo wiecej dokumentacji.
@@ -327,7 +343,8 @@
    Jest okol/o 12 osób, które maja uprawnienia do commit'owania w CVS
    PostgreSQL'a. Kazdy z nich submitowal/ tak wiele wysokiej jakosci
    patchy, ze stal/o sie niemozliwe dla obecnych commiterów byc z nimi na
-   biezaco, majac pewnosc ze sa to poprawki wysokiej jakosci.
+   biezaco, wiec musielismy im ufac i miec pewnosc, ze ich poprawki sa
+   wysokiej jakosci.
    
     1.13) Jak moge zgl/aszac bl/edy?
     
@@ -349,44 +366,33 @@
           integrity, oraz wyrafinowany system blokowania. Mamy takze
           wl/asciowsci których inni nie posiadaja, jak typy definiowane
           przez uzytkownika, dziedziczenie, rules, multi-version
-          concurrency control, która redukuje problemy z blokowaiem (lock
-          contention).
+          concurrency control, która redukuje problemy z blokowaniem
+          (lock contention).
           
    Wydajnosc
-          PostgreSQL dzial/a w dwóch trybach. Standardowy tryb fsync
-          zrzuca kazda zakonczona transakcje na dysk, gwarantujac w ten
-          sposób to, ze jesli system operacyjny sie zawiesi lub straci
-          zasilanie wciagu kilku nastepnych sekund, wszystkie Twoje dane
-          zostana bezpiecznie zapisane na dysku. W tym trybie, jestesmy
-          wolniejsi niz wiekszosc komercyjnych baz danych, czesciowo
-          dlatego ze niewiele z nich wykonuje taki sposób zapisywania
-          danych jako domyslne ustawienie. W trybie no-fsync z regul/y
-          jestesmy szybsi niz komercyjne bazy danych, chociaz w tym
-          wypadku zawieszenie sie systemu moze spowodowac uszkodzenie
-          danych. Pracujemy nad tym, aby stworzyc posredni tryb, który
-          powoduje mniejsza redukcje wydajnosci niz tryb fsync i pozwoli
-          na integralnosc danych w przeciagu 30 sekund do zal/amania sie
-          systemu operacyjnego.
-          Porównujac do MySQL czy innych prostych baz danych, jestesmy
-          wolniejsi przy wykonywaniu insertów/updatów przez narzut
-          spowodowany przez transakcje. Oczywiscie MySQL nie posiada
-          zadnej z wymienionych wyzej mozliwosci. PostgreSQL zostal/
-          zbudowany aby byc DBMS elastycznym i bogatym z róznorakie
-          mozliwosci, aczkolwiek dbamy, aby poprawiac jego wydajnosc
-          poprzez analize kodu zródl/owego i profilowanie. Ciekawe
-          porównanie PostgreSQL i MySQL mozna znalezc pod adresem
-          http://openacs.org/why-not-mysql.html
-          Kazde pol/aczenie klienta jest obsl/ugiwane przez nas poprzez
-          stworzenie nowego procesu Unixowego. Procesy backendu dziela
-          bufory danych oraz informacje o blokadach. Uzywajac wielu
-          procesorów, rózne backendy moga bez problemu dzial/ac na
-          róznych procesorach.
+          Wydajnosc PostgreSQL jest podobna do innych komercyjnych i open
+          source baz danych. W niektórych sytuacjach jest szybszy w
+          niektórych wolniejszy. W porównianiu do MySQL lub mniejszych
+          baz danych jestesmy szybsi przy wielu uzytkownikach,
+          skomplikowaych zapytaniach i duzym obciazeniu podczas. MySQL
+          jest szybszy dla prostych SELECTów wykonywanych przez niewielu
+          uzytkowników. Spowodowane jest to narzutem, który sie pojawia
+          przy transakcjach. Oczywiscie MySQL nie ma wiekszosci z
+          rozwiazan opisanych powyzej w sekcji Mozliwosci . PostgreSQL
+          zostal/ stworzony z mysla o stabilnosci, oraz szerokiej gamie
+          mozliwosci, ale mimo to staramy sie w kazdej wersji poprawiac
+          jego wydajnosc. Ciekawe porównanie PostgreSQL i MySQL mozna
+          znalezc pod adresem
+          http://openacs.org/philosophy/why-not-mysql.html Dodatkowo,
+          MySQL jest firma, która dystrybuuje jej produkty poprzez zasade
+          Open Source i wymaga wykupienia licencji w przypadku tworzenia
+          close-source software, co ie ma miejsca w przypadku PostgreSQL.
           
    Stabilnosc
           Zdajemy sobie sprawe, ze DBMS musi byc stabilny, w przeciwnym
           wypadku jest bez wartosci. Staramy sie publikowac kod stabilny,
           dobrze przetestowany, z minimum mozliwych bl/edów. Kazde
-          wydanie poprzedza conajmniej miesiac testów wersji beta.
+          wydanie poprzedza co najmniej miesiac testów wersji beta.
           Patrzac na historie wydan PostgreSQL widac, ze dostarczamy
           stabilne, dobrze sprawdzone wersje, które sa gotowe do uzycia w
           srodowisku produkcyjnym. Myslimy, ze proces publikowania
@@ -415,9 +421,9 @@
     1.15) W jaki sposób moge wesprzec finansowo PostgreSQL?
     
    PostgreSQL korzysta z najlepszej infrastruktury od samego poczatku
-   istnienia projektu, tzn. szesciu lat. Wszystko to zawdzieczamy
-   Marc'owi Fournier'owi, który stworzyl/ ta infrastrukture i zarzadza
-   nia od lat.
+   istnienia projektu, czyli roku 1996 kiedy rozpoczelismy prace.
+   Wszystko to zawdzieczamy Marc'owi Fournier'owi, który stworzyl/ ta
+   infrastrukture i zarzadza nia od lat.
    
    Wysokiej jakosci infrastruktura jest bardzo wazna dla kazdego projektu
    open-source. Zapobiega przerwom w rozwoju projektu i jakimkolwiek
@@ -427,7 +433,7 @@
    tanie. Istnieje wiele róznych miesiecznych, czy jednorazowych
    wydatków, które trzeba ponosic aby wszystko dzial/al/o jak nalezy.
    Jesli Ty, badz Twoja firma moze wspomóc finansowo rozwój PostgreSQL
-   odwiedz adres: http://www.pgsql.com/pg_goodies gdzie opisane jest jak
+   odwiedz adres: http://store.pgsql.com/shopping/ gdzie opisane jest jak
    to zrobic.
    
    Chociaz na stronie wspomniana jest nazwa PostgreSQL Inc, "datki" sa
@@ -436,26 +442,27 @@
    wysl/ac czek na adres kontaktowy.
      _________________________________________________________________
    
+   Jesli mozesz sie pochwalic udanymi wdrozeniami PostgreSQL, prosimy
+   abys zgl/osil/ nam to na stronie: http://advocacy.postgresql.org.
+   
                            User Client Questions
                                       
     2.1) Czy sa jakies driwery ODBC dla PostgreSQL?
     
    Dostepne sa dwa driwery ODBC: PsqlODBC i OpenLink ODBC.
    
-   PsqlODBC jest dol/aczony do zródel/. Wiecej informacji na jego temat
-   mozesz znalezc pod adresem: ftp://ftp.PostgreSQL.org/pub/odbc/.
+   Mozesz pobrac PsqlODBC z adresu
+   http://gborg.postgresql.org/project/psqlodbc/projdisplay.php
    
    OpenLink ODBC moze byc pobrany z adresu: http://www.openlinksw.com.
    Wspól/pracuje ze standardowym oprogramowaniem klienckim ODBC wiec w
    ten sposób mozesz korzystac z PostgreSQL ODBC dostepnego na kazdej
-   plaformie która wspiera (Win, Mac, Unix, VMS).
+   pltaformie która wspiera (Win, Mac, Unix, VMS).
    
    Autorzy beda prawdopodobnie sprzedawac ten produkt osobom które
    wymagaja komercyjnego wsparcia, ale wersja darmowa bedzie zawsze
    dostepna. Wszystkie pytania mozesz wysyl/ac na adres:
    postgres95@openlink.co.uk.
-   
-   Sprawdz takze rozdzial/ o ODBC w "Programmer's Guide".
    
     2.2) Jakie istnieja narzedzia pozwalajace na dostep do PostgreSQL przez
     www?
@@ -463,42 +470,44 @@
    Dobry podrecznik dla poczatkujacych o dostepie do bazy danych przez
    www mozesz znalezc pod adresem: http://www.webreview.com
    
-   Inny znajduje sie pod adresem: http://www.phone.net/home/mwm/hotlist/.
-   
    Do integracji z www, swietnym rozwiazaniem jest PHP. Mozesz znalezc
    wiecej informacji na ten temat pod adresem http://www.php.net.
    
    Wiele osób w przypadku skomplikowanych rozwiazan uzywa Perl'a i
-   modul/u CGI.pl.
+   modul/u CGI.pl lub mod_perl.
    
-    2.3) Czy istnieje jakies GUI dla PostgreSQL? Narzedzie do raportowania?
-    Interfejs dla "embedded query language"?
+    2.3) Czy istnieje jakies GUI dla PostgreSQL?
     
-   Mamy cal/kiem mil/y interfejs graficzny, który zostal/ nazwany
-   pgaccess i jest on dostarczany jako czesc zródel/. pgaccess posiada
-   takze generator raportów. Mozna go znalezc pod adresem
-   http://www.flex.ro/pgaccess
+   Tak, istnieje kilka interfejsów graficznych dla PostgreSQL. Wsród nich
+   PgAccess ( http://www.pgaccess.org), PgAdmin III
+   (http://www.pgadmin.org), RHDB Admin (http://sources.redhat.com/rhdb/
+   ) oraz Rekall ( http://www.thekompany.com/products/rekall/,
+   komercyjny). Istnieje takze PHPPgAdmin (
+   http://phppgadmin.sourceforge.net/ ), webowy interfejs dla PostgreSQL.
    
-   Udostepnilismy takze ecpg, który jest "embedded SQL query language
-   interface" dla jezyka C.
+   Wiecej informacji na ten temat znajduje sie pod adresem See
+   http://techdocs.postgresql.org/guides/GUITools.
    
     2.4) Za pomoca jakich jezyków programowania mozna sie komunikowac z
     PostgreSQL?
     
-   Mamy wsparcie dla:
+   Najbardziej popularne jezyki posiiadaja wl/asny interfejs dla
+   PostgreSQL. Sprawdz liste rozszerzen dla intersujacego Ciebie jezyka
+   programowania.
+   
+   Ze zródl/ami PostreSQL dystrubuowane sa interfejsy dla nastepujacych
+   jezyków programowania:
      * C (libpq)
-     * C++ (libpq++)
      * Embedded C (ecpg)
      * Java (jdbc)
-     * Perl (perl5)
-     * ODBC (odbc)
      * Python (PyGreSQL)
      * TCL (libpgtcl)
-     * C Easy API (libpgeasy)
-     * Embedded HTML (PHP z http://www.php.net)
+       
+   Inne interfejsy sa dostepne pod adresem: http://gborg.postgresql.org w
+   sekcji Drivers/Interfaces.
      _________________________________________________________________
    
-                           Pytania administratora
+                      Pytania dotyczace administracji
                                       
     3.1) Jak moge zainstalowac PostgreSQL w innej lokalizacji niz
     /usr/local/pgsql?
@@ -566,7 +575,7 @@
    pojedyncze INSERTy. Po drugie polecenia SQL nie zawarte w bloku
    okreslajacym transakcje - BEGIN WORK/COMMIT, sa traktowane jako
    pojedyncza transakcja. Rozwaz wykonanie kilku polecen/zdan SQL w
-   jednym bloku transakcji. To redukuje narzut powodowany przez
+   jednym bloku transakcji. To redukuje narzut nakl/adany przez
    transakcje. Przy duzych zmianach w danych, warto usunac i stworzyc na
    nowo indeksy.
    
@@ -665,25 +674,36 @@
    limit na maksymalna liczbe procesów backendu to obawa o wyczerpanie
    zasobów systemu.
    
-   W wersjach PostgreSQL wczesniejszych niz 6.5, maksymalna liczba
-   backendów byl/a ustawiona na 64, a zmiana tej wartosci wymaga
-   rekompliacji po zmianie stal/ej MaxBackendId w pliku
-   include/storage/sinvaladt.h.
-   
-    3.9) Co to sa za pliki typu: pg_sorttempNNN.NN, które znajduja sie w
-    katalogu z plikami bazy danych?
+    3.9) Jakie pliki znajduja sie w pg_temp?
     
-   Sa to tymczasowe pliki utworzone przez executor. Dla przykl/adu, jesli
-   jakas operacja sortowania jest wymagana do wykonania ORDER BY, a samo
-   sortowanie wymaga wiecej miejsca niz paratmetr backendu -S ustawil/ do
-   wykorzystania, wtedy tymczasowe pliki sa uzywane do przechowywania
-   tych danych.
+   Katalog ten zawiera tymczasowe pliki utworzone przez executor. Dla
+   przykl/adu, jesli jakas operacja sortowania jest wymagana do wykonania
+   ORDER BY, a samo sortowanie wymaga wiecej miejsca niz parametr
+   backendu -S ustawil/ do wykorzystania, wtedy tymczasowe pliki sa
+   uzywane do przechowywania tych danych.
    
    Pliki tymczasowe powinny byc usuniete automatycznie, ale mogl/o sie to
    nie stac jesli proces backendu w miedzyczasie nie zakonczyl/ sie
    poprawnie podczas operacji sortowania. Jesli w danym momencie nie
    dzial/aja zadne procesy backendów mozesz spokojnie usunac pliki
    pg_tempNNN.NN.
+   
+    3.9) Dlaczego konieczne jest przy upgradzie PostgreSQL korzystanie ze
+    skryptów dump i restore?
+    
+   Twórcy PostgreSQL dokonuja jedynie mal/ych zmian pomiedzy mal/ymi
+   upgradami wersji, np z 7.2 do 7.2.1, wtedy upgrade nie wymaga
+   korzystania z dump i restore. Przy wiekszych zmianach, np. z wersji
+   7.2 do 7.3, czesto zmianymaja wpl/yw na format przechowywanych danych.
+   Zmiany te sa na tyle skomplikowane, ze nie utrzymujemy zgodosci z
+   poprzednimi wersjami PostgreSQL. dump pozwala na wydostanie danych w
+   takiej postaci, w której l/atwe jest ich zaimportowanie do nowszych
+   wersji bez kl/opotu.
+   
+   W wydaniach gdzie zmiany nie dotycza formatu danych na dysku, mozna
+   wykorzystac skryptu pg_upgrade, do upgradu bez uzycia dump/restore.
+   Dokumentacja do danego wydania zawiera informacje czy mozliwe jest
+   uzycie pg_upgrade.
      _________________________________________________________________
    
                          Pytania dotyczace uzywania
@@ -706,6 +726,13 @@
    pierwszych rzedów, byc moze bedzie koniecznosc wykonania zapytania do
    momentu az zostana znalezione pozadane wyniki.
    
+   Aby otrzymac losowy rzad, uzyj:
+    SELECT col
+    FROM tab
+    ORDER BY random()
+    LIMIT 1;
+        
+
     4.3) Jak moge uzyskac liste wszystkich tabel czy innych rzeczy pod psql?
     
    Mozesz sprawdzic zawartosc zródel/ psql, a konkretnie plik
@@ -714,36 +741,44 @@
    wtedy po wykonaniu polecenia z backslashem wyswietlane bedzie
    zapytanie, które w rzeczywistosci jest wykonywane.
    
-    4.4) Jak usunac kolumne z tabeli?
+    4.4) Jak usunac kolumne z tabeli lub zmienic jej typ?
     
-   Nie mamy zaimplementowanego ALTER TABLE DROP COLUMN, ale mozesz zrobic
-   tak:
-    SELECT ...  -- wybierz zawartosc wszystkich kolumn poza ta jedna której chc
-esz sie pozbyc
+   DROP COLUMNT zostal/o dodane w wersji 7.3 przy poleceniu ALTER TABLE
+   DROP COLUMN. We wczesniejszych wersjach mozesz zrobic tak:
+         BEGIN;
+         LOCAL TABLE old_table;
+    SELECT ...  -- wybierz wszystkie kolumny poza ta jedna której chcesz sie po
+zbyc
     INTO TABLE new_table
     FROM old_table;
     DROP TABLE old_table;
     ALTER TABLE new_table RENAME TO old_table;
 
+   Aby zmienic typ danych kolumny mozesz zrobic tak:
+   BEGIN;
+   ALTER TABLE tab ADD COLUMN new_col new_data_type;
+   UPDATE tab SET new_col = CAST(old_col AS new_data_type);
+   ALTER TABLE tab DROP COLUMN old_col;
+   COMMIT;
+        
     4.5) Jaki jest maksymalny rozmiar dla rzedu, tabeli i bazy danych?
     
    Oto wszystkie ograniczenia:
-    Maksymalny rozmiar dla bazdy danych?     nieograniczony ( istnieja bazy dan
-ych o wielkosci 500 GB databases )
-    Maksymalny rozmiar dla tabeli?           16 TB
-    Maksymalny rozmiar dla rzedu?            nieograniczony w 7.1 i pózniejszyc
-h
-    Maksymalny rozmiar pola?                 1 GB w 7.1 and later
+    Maksymalny rozmiar dla bazdy danych?     nieograniczony ( istnieja
+         bazy danych o wielkosci 32 TB databases )
+    Maksymalny rozmiar dla tabeli?           32 TB
+    Maksymalny rozmiar dla rzedu?            1.6 TB
+    Maksymalny rozmiar pola?                 1 GB
     Maksymalna liczba rzedów w tabeli?       nieograniczona
-    Maksymalna liczba kolumn w tabeli?    250-1600 w zalezonosci od typów kolum
-n
-    Makasymalna liczba indeksów na tabeli?    nieograniczona
+    Maksymalna liczba kolumn w tabeli?       250-1600 w zalezonosci od typów ko
+lumn
+    Makasymalna liczba indeksów na tabeli?   nieograniczona
 
    Oczywiscie "nieograniczony" nie jest prawda tak do konca, istnieja
    ograniczenia wynikajace z dostepnego miejsca na dysku, pamieci/swapa.
    Kiedy wielkosci te beda bardzo duze moze odbic sie to na wydajnosci.
    
-   Maksymalny rozmiar tabeli, czyli 16 TB nie wymaga od systemu
+   Maksymalny rozmiar tabeli, czyli 32 TB nie wymaga od systemu
    operacyjnego wsparcia dla duzych plików. Duze tabele sa przechowywane
    jako pliki o rozmiarze 1 GB, wiec ograniczenia co do wielkosci plików
    narzucone przez system plików nie sa istotne.
@@ -786,6 +821,9 @@ n
    zawieraja pewne dane, wiec w pewnych przypadkach moga byc cal/kiem
    duze.
    
+   NULLe sa przechowywane jako mapy bitowe, wiec uzywaja bardzo mal/o
+   miejsca.
+   
     4.7) Jak moge sprawdzic jakie tabele, klucze, bazy danych i uzytkownicy sa
     utworzeni?
     
@@ -821,14 +859,32 @@ n
    sortowanie jest zazwyczaj szybsze nie wyszukiwanie za pomoca indeksu
    na duzej tabeli.
    Jakkolwiek LIMIT w pol/aczeniu z ORDER BY czesto bedzie wykorzystywal/
-   indeksów poniewaz jedynie mal/a czesc z tabeli jest zwracana.
+   indeksy poniewaz jedynie mal/a czesc z tabeli jest zwracana. W
+   rzeczywistosci, chociaz MAX() i MIN() nie uzywaja indeksów, mozliwe
+   jest aby zwrócic te wartosci uzywajac indeksów poprzez uzycie ORDER BY
+   i LIMIT.
+    SELECT col
+    FROM tab
+    ORDER BY col [ DESC ]
+    LIMIT 1;
+        
+   Jesli uwazasz, ze optimizer myli sie wybierajac sequential scan, uzyj
+   SET enable_seqscan TO 'off' i uruchom testy aby sprawdzic czy wtym
+   wypadku zapytanie bedzie szybciej wykonywane.
    
    Kiedy uzywa sie operatorów dopasujacych takich jak LIKE lub ~, indeksy
-   beda uzywane jedynie jesli poczatek wyszukiwania jest oparty na
-   poczatku l/ancucha tekstu. Dlatego, aby uzywac indeksów, dopasowania
-   operatorem LIKE nie moga sie zaczynac %, a dopasowania operatorem ~
-   (dopasowania regularne) musza sie zaczynac znakiem specjalnym ^.
-   
+   beda uzywane jedynie w pewnych wypadkach:
+     * Poczatek wyszukiwania jest oparty na poczatku l/ancucha tekstu.
+          + wzorce LIKE nie moga sie zaczynac %
+          + dopasowania operatorem ~ (dopasowania regularne) musza sie
+            zaczynac znakiem specjalnym ^.
+     * Poczatek wyszukiwania nie moze sie zaczynac od klas znaków, np.
+       [a-e].
+     * Case-insensitive searches such as ILIKE and ~* do not utilise
+       indexes. Instead, use functional indexes, which are described in
+       section 4.12.
+     * Standardowe locale C musi byc uzyte przy wykonywaniu initdb
+       
     4.9) Jak moge sprawdzic w jakis sposób "query optimizer" wykonuje moje
     zapytanie?
     
@@ -869,13 +925,12 @@ n
    queries) bez wykorzystywania zasobozernego wyszukiwania.
    
     4.12) Jak moge uzywac wyrazen regularnych w zapytaniach i zapytan
-    case-insensitive w wyrazeniach regularnych? jak korzystac z indeksów dla
+    case-insensitive w wyrazeniach regularnych? Jak korzystac z indeksów dla
     zapytan case-insensitive?
     
    Operator ~ moze byc wykorzystywany do wyszukiwania za pomoca wyrazen
    regularnych, a ~* do wyszukiwania case-insensitive z wyrazeniami
-   regularnymi. Wariant case-insensitive dla LIKE zostal/ nazwany ILIKE i
-   jest dostepny w PostgreSQL 7.1 i pózniejszych wersjach.
+   regularnymi. Wariant case-insensitive dla LIKE zostal/ nazwany ILIKE.
    
    Porównania case-insensitive sa zazwyczaj wykonywane w nastepujacy
    sposób:
@@ -897,31 +952,35 @@ n
     
 Type            Nazwa wewnetrzna   Uwagi
 --------------------------------------------------
-"char"          char                      1 znak
-CHAR(#)         bpchar             wypel/niane pustymi znakami do podanej dl/ug
-osci
-VARCHAR(#)      varchar            rozmiar okresla maksymalna dl/ugosc, nie ma
+VARCHAR(n)      varchar            rozmiar okresla maksymalna dl/ugosc, nie ma
 tutaj wypel/niania
+CHAR(n)         bpchar             wypel/niane pustymi znakami do podanej dl/ug
+osci
 TEXT            text               bez limitu na dl/ugosc l/ancucha
 BYTEA           bytea              zmiennej dl/ugosci tablica bajtów (null-byte
  safe)
+"char"          char                      1 znak
 
    Jesli bedziesz przegladac katalogi systemowe lub komunikaty o bl/edach
    czesto spotkasz sie z podanymi powyzej nazwami wewnetrznymi.
    
-   Ostatnie cztery typy powyzej to tzw typy "varlena" (np. pierwsze
+   Pierwsze cztery typy powyzej to tzw typy "varlena" (np. pierwsze
    cztery bajty na dysku to dl/ugosc, po których jest data). Dlatego
    faktyczna dl/ugosc takiego l/ancucha jest troche wieksza niz
    zadeklarowany rozmiar. Te typy takze podlegaja kompresji lub moga byc
    przechowywane out-of-line jako TOAST, wiec faktyczne zuzycie miejsca
    na dysku moze byc mniejsze niz oczekiwane.
+   VARCHAR(n) jest najodpowiedniejszy do przechowywania l/ancuchów o
+   róznej dl/ugosci ale okresla on maksymalna jego dl/ugosc. TEXT jest
+   najlepszy dla l/ancuchów o dowolnej dl/ugosci, nie przekraczajacej
+   1GB.
    
-   CHAR() jast najlepszym typem do przechowywania l/ancuchów o tej samej
-   dl/ugosci. VARCHAR() jest najodpowiedniejszy do przechowywania
-   l/ancuchów o róznej dl/ugosci ale okresla on maksymalna jego dl/ugosc.
-   TEXT jest najlepszy dla l/ancuchów o dowolnej dl/ugosci, nie
-   przekraczajacej 1GB. BYTEA sl/uzy do przechowywania danych binarnych,
-   w szczególnosci dla danych zawierajacych NULL bajty.
+   CHAR(n) jast najlepszym typem do przechowywania l/ancuchów o tej samej
+   dl/ugosci. CHAR(n) wypel/nia dane do zadanej dl/ugosci, podczas gdy
+   VARCHAR(n) przechowuje jedynie dane dostarczone. BYTEA sl/uzy do
+   przechowywania danych binarnych, w szczególnosci dla danych
+   zawierajacych NULL bajty. Wszystkie typy opisane tutaj maja podobne
+   charakterystyki jesli chodzi o wydajnosc.
    
     4.15.1) Jak moge utworzyc pole które samo zwieksza swoja wartosc?
     
@@ -1039,16 +1098,16 @@ BYTEA           bytea              zmiennej dl/ugosci tablica bajtów (null-byte
      * range variable, table name, table alias
        
    Liste terminów zwiazanych z bazami danych mozesz znalezc pod tym
-   adresem:http://www.comptechnews.com/~reaster/dbdesign.html
+   adresem:http://hea-www.harvard.edu/MST/simul/software/docs/pkgs/pgsql/
+   glossary/glossary.html.
    
     4.18) Skad bierze sie ten bl/ad "ERROR: Memory exhausted in
     AllocSetAlloc()"?
     
-   Jesli uzywasz wersji starszej niz 7.1, upgrade moze rozwiazac ten
-   problem. Jest takze mozliwe, ze po prostu wyczerpal/a Ci sie pamiec
-   wirtualna (virtual memory) w systemie lub Twój kernel ma zbyt nisko
-   ustawione limity dla pewnych zasobów. Spróbuj wykonac nastepujace
-   polecenia zanim uruchomisz postmaster'a:
+   Prawdopodobnie wyczerpal/a Ci sie pamiec wirtualna (virtual memory) w
+   systemie lub Twój kernel ma zbyt nisko ustawione limity dla pewnych
+   zasobów. Spróbuj wykonac nastepujace polecenia zanim uruchomisz
+   postmaster'a:
     ulimit -d 262144
     limit datasize 256m
 
@@ -1087,24 +1146,31 @@ CREATE TABLE test (x int, modtime timestamp DEFAULT CURRENT_TIMESTAMP );
 
     4.22) Dlaczego zapytania uzywajace IN sa takie wolne?
     
-   Obecnie l/aczymy podzapytania w outer queries poprzez sekwencyjne
-   przeszukiwanie wyników podzapytania dla kazdego rzedu z outer query.
-   Mozna to ominac zastepujac IN przez EXISTS:
+   W wersjach wczesniejszych niz 7.4 l/aczymy podzapytania w outer
+   queries poprzez sekwencyjne przeszukiwanie wyników podzapytania dla
+   kazdego rzedu z outer query. Jesli podzapytanie zwraca jedynie kilka
+   rzedów a zewnetrzne zapytanie zwraca ich wiele, IN jest najszybsze.
+   Aby przyspieszyc inne zapytania mozna zastapic IN przez EXISTS:
 SELECT *
     FROM tab
-    WHERE col1 IN (SELECT col2 FROM TAB2)
+    WHERE col IN (SELECT subcol FROM subtab)
 
    na:
 SELECT *
     FROM tab
-    WHERE EXISTS (SELECT col2 FROM TAB2 WHERE col1 = col2)
+    WHERE EXISTS (SELECT subcol FROM subtab WHERE subcol = col)
 
-   Mamy zamiar poprawic to ograniczenie w przyszl/ych wydaniach.
+   Aby to rozwiazanie byl/o szybkie, subcol powinna byc kolumna
+   indeksowana.
+   
+   W wersji 7.4 i pózniejszych, IN w rzeczywistosci uzywa tej samej
+   wyrafinowanej techniki l/aczenia jak normalne zapytania i jest
+   preferowane nad uzywaniem EXISTS.
    
     4.23) Jak wykonac "outer join"?
     
-   PostgreSQL 7.1 i pózniejsze wersje maja zaimplementowane outer join
-   wykorzystujac standardowa skl/adnie SQL. Ponizej dwa przykl/ady:
+   PostgreSQL ma zaimplementowane outer join wykorzystujac standardowa
+   skl/adnie SQL. Ponizej dwa przykl/ady:
     SELECT *
     FROM t1 LEFT OUTER JOIN t2 ON (t1.col = t2.col);
 
@@ -1113,7 +1179,7 @@ SELECT *
     FROM t1 LEFT OUTER JOIN t2 USING (col);
 
    Te dwa identyczne zapytania l/acza kolumne t1.col z kolumna t2.col,
-   ale takze zwróca niepol/aczone rzedy w t1 (te które nie pasuja w t2).
+   ale takze zwróca niepol/aczone rzedy w t1 (te, które nie pasuja w t2).
    RIGHT join dodal/by niepol/aczone rzedy z tabeli t2. FULL join
    zwrócil/by rzedy plus dodatkowo wszystkie rzedy z tabel t1 i t2.
    Sl/owo OUTER jest opcjonalne i jest dodawane domyslnie przy LEFT,
@@ -1138,37 +1204,75 @@ SELECT *
    katalogi systemowe, nie jest do konca jasne jak zapytanie pomiedzy
    róznymi bazami danych powinno sie zachowywac.
    
-   Oczywiscie klient moze l/aczyc sie z róznymi bazami danych i l/aczyc
-   informacje w ten sposób uzyskana.
+   contrib/dblink pozwala na wykonywanie zapytan poprzez rózne bazy
+   danych wywol/ujac odpowiednie funkcje. Oczywiscie klient moze l/aczyc
+   sie z róznymi bazami danych i l/aczyc informacje w ten sposób uzyskana
+   po stronie klienta.
    
     4.25) Jak zwrócic w funkcji wiele rzedów lub kolumn?
     
-   Mozesz zwracac zbiory z funkcji PL/pgSQL uzywajac refcursors. Zobacz
-   http://developer.postgresql.org/docs/postgres/plpgsql-cursors.html,
-   sekcje 23.7.3.3.
+   Mozesz w l/atwy sposób zwracac wiele rzedów lub kolumn uzywajac
+   funkcji z:
+   http://techdocs.postgresql.org/guides/SetReturningFunctions.
    
+    4.26) Dlaczego nie moge w sposób pewny tworzyc/usuwac tabel tymczasowych w
+    funkcjach PL/PgSQL?
+    
+   PL/PgSQL przechowuje w cache zawartosc funkcji, niepozadanym efektem
+   tego jest to, ze gdy taka funkcja korzysta z tabel tymczasowych, które
+   sa pózniej kasowane i odtwarzane, a funkcja wywol/ywana jest
+   ponownie,jej wywol/anie nie powiedzie sie poniewaz cachowana funkcja
+   wciaz bedzie wskazywac na stara tablice tymczasowa. Rozwiazaniem tego
+   problemu jest uzywanie EXECUTE aby korzystac z tabel tymczasowych w
+   PL/PgSQL. To spowoduje, ze zapytanie bedzie parsowane przy kazdym
+   wywol/aniu funkcji.
+   
+    4.27) Jakie sa mozliwosci replikacji w PostgreSQL?
+    
+    Jest kilka opcji aby stosowac replikacje typu master/slave. Ten typ pozwala
+    jedynie masterowi na dokonywanie zmian w bazie danych, a slave moze jedynie
+    te zmiany odczytywac. Na stronie
+    http://gborg.PostgreSQL.org/genpage?replication_research znajduje sie ich
+    lista. Replikacja typu multi-master jest w trakcie prac, opis projektu
+    znajduje sie pod adresem:
+    http://gborg.PostgreSQL.org/project/pgreplication/projdisplay.php.
+    4.28) Jakie mozliwosci szyfrowania oferuje PostgreSQL?
+    
+     * contrib/pgcrypto zawiera wiele funkcji za pomoca, których mozemy
+       uzywac kryptografii w zapytaniach SQL.
+     * Aby szyfrowac transmisje od klienta do serwera, ten musi miec
+       ustawiona opcje ssl na true w pliku postgresql.conf, odpowiedni
+       wpis host lub hostssl musi wystepowac w pliku pg_hba.conf, oraz
+       sslmode nie moze byc wyl/aczone w kliencie. (Warto zwrócic uwage,
+       ze mozliwe jest takze uzywanie transportów szyfrujaców przez
+       strony trzecie, takie jak stunnel lub ssh, poza natywnym wsparciem
+       dla SSL przez PostgreSQL).
+     * Hasl/a uzytkowników bazy danych sa automatycznie szyfrowane od
+       wersji 7.3. W poprzednich wersjach, nalezy ta funkcjonalnosc
+       poprzez wl/aczenie opcji PASSWORD_ENCRYPTION w postgresql.conf.
+     * Serwer moze dzial/ac uzywajac szyfrowanego systemu plików.
+       
                            Rozwijanie PostgreSQL
                                       
     5.1) Napisal/em wl/asna funkcje. Kiedy uzyje jej w psql, program zrzuca
     pamiec (dump core)?
     
-   Problem moze byc spowodowany przez bardzo wiele rzeczy. Spróbuj
-   najpierw przetestowac Twoja funkcje w samodzielnie dzial/ajacym
-   programie.
-   
+    Problem moze byc spowodowany przez bardzo wiele rzeczy. Spróbuj najpierw
+    przetestowac Twoja funkcje w samodzielnie dzial/ajacym programie.
     5.2) Jak moge dodac/zgl/osic nowe typy czy funkcje do PostgreSQL?
     
-   Wyslij Twoje propozycje na liste mailowa pgsql-hackers, wtedy
-   prawdopodobnie Twój kod znajdzie sie w katalogu contrib/.
-   
+    Wyslij Twoje propozycje na liste mailowa pgsql-hackers, wtedy
+    prawdopodobnie Twój kod znajdzie sie w katalogu contrib/.
     5.3) Jak napisac funkcje C zwracajaca krotke (tuple)?
     
-   To wymaga wysil/ku tak olbrzymiego, ze nawet autorzy nigdy tego nie
-   prubowali, chociaz z zalozen wynika, ze jest to mozliwe.
-   
+    W wersjach PostgreSQL od numeru 7.3, funckje zwracajace tabele sa w pelni
+    wspierane w C, PL/PgSQL i SQL. Sprawdz w Programmer's Guide aby uzyskac
+    wiecej informacji. Przykl/ad funkcji napisanej w C zwracajacej tabele
+    zostal/ umieszczony w contrib/tablefunc.
     5.4) Zmienil/em plik zródl/owy. Dlaczego po rekompilacji nie widac zmiany?
     
-   Pliki Makefiles nie maja dorzuconych odpowiednich zaleznosci dla
-   plików nagl/ówkowych (include files). Wykonaj najpierw make clean, a
-   nastepnie ponownie make. Jesli uzywasz GCC mozesz uzyc opcji
-   --enable-depend przy wykonywaniu configure aby
+    Pliki Makefiles nie maja dorzuconych odpowiednich zaleznosci dla plików
+    nagl/ówkowych (include files). Wykonaj najpierw make clean, a nastepnie
+    ponownie make. Jesli uzywasz GCC mozesz uzyc opcji --enable-depend przy
+    wykonywaniu configure aby kompilator mógl/ okreslic zaleznosci
+    samodzielnie.
