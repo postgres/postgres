@@ -54,10 +54,10 @@ static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #include <string.h>
 #include <limits.h>
 #include <ctype.h>
-#include <regex.h>
 
-#include "regex/utils.h"
-#include "regex/regex2.h"
+#include <regex/regex.h>
+#include <regex/utils.h>
+#include <regex/regex2.h>
 
 static int nope = 0;		/* for use in asserts; shuts lint up */
 
