@@ -2,169 +2,31 @@
  *
  * xlogutils.c
  *
+ * PostgreSQL transaction log manager utility routines
+ *
+ * This file contains support routines that are used by XLOG replay functions.
+ * None of this code is used during normal system operation.
+ *
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.31 2004/06/18 06:13:15 tgl Exp $
+ * $PostgreSQL: pgsql/src/backend/access/transam/xlogutils.c,v 1.32 2004/07/21 22:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include "access/htup.h"
 #include "access/xlogutils.h"
-#include "catalog/pg_database.h"
-#include "storage/bufpage.h"
+#include "storage/bufmgr.h"
 #include "storage/smgr.h"
 #include "utils/hsearch.h"
-#include "utils/relcache.h"
 
 
 /*
- * ---------------------------------------------------------------
- *
- * Index support functions
- *
- *----------------------------------------------------------------
- */
-
-/*
- * Check if specified heap tuple was inserted by given
- * xaction/command and return
- *
- * - -1 if not
- * - 0	if there is no tuple at all
- * - 1	if yes
- */
-int
-XLogIsOwnerOfTuple(RelFileNode hnode, ItemPointer iptr,
-				   TransactionId xid, CommandId cid)
-{
-	Relation	reln;
-	Buffer		buffer;
-	Page		page;
-	ItemId		lp;
-	HeapTupleHeader htup;
-
-	reln = XLogOpenRelation(false, RM_HEAP_ID, hnode);
-	if (!RelationIsValid(reln))
-		return (0);
-
-	buffer = ReadBuffer(reln, ItemPointerGetBlockNumber(iptr));
-	if (!BufferIsValid(buffer))
-		return (0);
-
-	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page) ||
-		ItemPointerGetOffsetNumber(iptr) > PageGetMaxOffsetNumber(page))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return (0);
-	}
-	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(iptr));
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return (0);
-	}
-
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	Assert(PageGetSUI(page) == ThisStartUpID);
-	if (!TransactionIdEquals(HeapTupleHeaderGetXmin(htup), xid) ||
-		HeapTupleHeaderGetCmin(htup) != cid)
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return (-1);
-	}
-
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buffer);
-	return (1);
-}
-
-/*
- * MUST BE CALLED ONLY ON RECOVERY.
- *
- * Check if exists valid (inserted by not aborted xaction) heap tuple
- * for given item pointer
- */
-bool
-XLogIsValidTuple(RelFileNode hnode, ItemPointer iptr)
-{
-	Relation	reln;
-	Buffer		buffer;
-	Page		page;
-	ItemId		lp;
-	HeapTupleHeader htup;
-
-	reln = XLogOpenRelation(false, RM_HEAP_ID, hnode);
-	if (!RelationIsValid(reln))
-		return (false);
-
-	buffer = ReadBuffer(reln, ItemPointerGetBlockNumber(iptr));
-	if (!BufferIsValid(buffer))
-		return (false);
-
-	LockBuffer(buffer, BUFFER_LOCK_SHARE);
-	page = (Page) BufferGetPage(buffer);
-	if (PageIsNew((PageHeader) page) ||
-		ItemPointerGetOffsetNumber(iptr) > PageGetMaxOffsetNumber(page))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return (false);
-	}
-
-	if (PageGetSUI(page) != ThisStartUpID)
-	{
-		Assert(PageGetSUI(page) < ThisStartUpID);
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return (true);
-	}
-
-	lp = PageGetItemId(page, ItemPointerGetOffsetNumber(iptr));
-	if (!ItemIdIsUsed(lp) || ItemIdDeleted(lp))
-	{
-		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-		ReleaseBuffer(buffer);
-		return (false);
-	}
-
-	htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-	/* MUST CHECK WASN'T TUPLE INSERTED IN PREV STARTUP */
-
-	if (!(htup->t_infomask & HEAP_XMIN_COMMITTED))
-	{
-		if (htup->t_infomask & HEAP_XMIN_INVALID ||
-			(htup->t_infomask & HEAP_MOVED_IN &&
-			 TransactionIdDidAbort(HeapTupleHeaderGetXvac(htup))) ||
-			TransactionIdDidAbort(HeapTupleHeaderGetXmin(htup)))
-		{
-			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-			ReleaseBuffer(buffer);
-			return (false);
-		}
-	}
-
-	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
-	ReleaseBuffer(buffer);
-	return (true);
-}
-
-/*
- * ---------------------------------------------------------------
  *
  * Storage related support functions
  *
- *----------------------------------------------------------------
  */
 
 Buffer
@@ -198,8 +60,10 @@ XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno)
 	return (buffer);
 }
 
+
 /*
- * "Relation" cache
+ * Lightweight "Relation" cache --- this substitutes for the normal relcache
+ * during XLOG replay.
  */
 
 typedef struct XLogRelDesc

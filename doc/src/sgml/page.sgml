@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/page.sgml,v 1.17 2003/12/14 00:10:32 neilc Exp $
+$PostgreSQL: pgsql/doc/src/sgml/page.sgml,v 1.18 2004/07/21 22:31:18 tgl Exp $
 -->
 
 <chapter id="page">
@@ -114,37 +114,38 @@ data. Empty in ordinary tables.</entry>
    <entry>pd_lsn</entry>
    <entry>XLogRecPtr</entry>
    <entry>8 bytes</entry>
-   <entry>LSN: next byte after last byte of xlog</entry>
+   <entry>LSN: next byte after last byte of xlog record for last change
+   to this page</entry>
   </row>
   <row>
-   <entry>pd_sui</entry>
-   <entry>StartUpID</entry>
+   <entry>pd_tli</entry>
+   <entry>TimeLineID</entry>
    <entry>4 bytes</entry>
-   <entry>SUI of last changes (currently it's used by heap AM only)</entry>
+   <entry>TLI of last change</entry>
   </row>
   <row>
    <entry>pd_lower</entry>
    <entry>LocationIndex</entry>
    <entry>2 bytes</entry>
-   <entry>Offset to start of free space.</entry>
+   <entry>Offset to start of free space</entry>
   </row>
   <row>
    <entry>pd_upper</entry>
    <entry>LocationIndex</entry>
    <entry>2 bytes</entry>
-   <entry>Offset to end of free space.</entry>
+   <entry>Offset to end of free space</entry>
   </row>
   <row>
    <entry>pd_special</entry>
    <entry>LocationIndex</entry>
    <entry>2 bytes</entry>
-   <entry>Offset to start of special space.</entry>
+   <entry>Offset to start of special space</entry>
   </row>
   <row>
    <entry>pd_pagesize_version</entry>
    <entry>uint16</entry>
    <entry>2 bytes</entry>
-   <entry>Page size and layout version number information.</entry>
+   <entry>Page size and layout version number information</entry>
   </row>
  </tbody>
  </tgroup>

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.15 2004/06/03 02:08:05 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_control.h,v 1.16 2004/07/21 22:31:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,7 @@
 
 
 /* Version identifier for this pg_control format */
-#define PG_CONTROL_VERSION	73
+#define PG_CONTROL_VERSION	74
 
 /*
  * Body of CheckPoint XLOG records.  This is declared here because we keep
@@ -30,13 +30,13 @@
  */
 typedef struct CheckPoint
 {
-	XLogRecPtr	redo;			/* next RecPtr available when we */
-	/* began to create CheckPoint */
-	/* (i.e. REDO start point) */
-	XLogRecPtr	undo;			/* first record of oldest in-progress */
-	/* transaction when we started */
-	/* (i.e. UNDO end point) */
-	StartUpID	ThisStartUpID;	/* current SUI */
+	XLogRecPtr	redo;			/* next RecPtr available when we
+								 * began to create CheckPoint
+								 * (i.e. REDO start point) */
+	XLogRecPtr	undo;			/* first record of oldest in-progress
+								 * transaction when we started
+								 * (i.e. UNDO end point) */
+	TimeLineID	ThisTimeLineID;	/* current TLI */
 	TransactionId nextXid;		/* next free XID */
 	Oid			nextOid;		/* next free OID */
 	time_t		time;			/* time stamp of checkpoint */
@@ -46,8 +46,6 @@ typedef struct CheckPoint
 #define XLOG_CHECKPOINT_SHUTDOWN		0x00
 #define XLOG_CHECKPOINT_ONLINE			0x10
 #define XLOG_NEXTOID					0x30
-#define XLOG_FILE_HEADER				0x40
-#define XLOG_WASTED_SPACE				0x50
 
 
 /* System status indicator */

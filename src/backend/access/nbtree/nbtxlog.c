@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.15 2004/07/11 18:01:45 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtxlog.c,v 1.16 2004/07/21 22:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -136,7 +136,7 @@ _bt_restore_meta(Relation reln, XLogRecPtr lsn,
 	pageop->btpo_flags = BTP_META;
 
 	PageSetLSN(metapg, lsn);
-	PageSetSUI(metapg, ThisStartUpID);
+	PageSetTLI(metapg, ThisTimeLineID);
 	LockBuffer(metabuf, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(metabuf);
 }
@@ -197,7 +197,7 @@ btree_xlog_insert(bool redo, bool isleaf, bool ismeta,
 					elog(PANIC, "btree_insert_redo: failed to add item");
 
 				PageSetLSN(page, lsn);
-				PageSetSUI(page, ThisStartUpID);
+				PageSetTLI(page, ThisTimeLineID);
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				WriteBuffer(buffer);
 			}
@@ -281,7 +281,7 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 						 xlrec->leftlen);
 
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 	}
@@ -317,7 +317,7 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 					 record->xl_len - SizeOfBtreeSplit - xlrec->leftlen);
 
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 	}
@@ -353,7 +353,7 @@ btree_xlog_split(bool redo, bool onleft, bool isroot,
 				pageop->btpo_prev = rightsib;
 
 				PageSetLSN(page, lsn);
-				PageSetSUI(page, ThisStartUpID);
+				PageSetTLI(page, ThisTimeLineID);
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				WriteBuffer(buffer);
 			}
@@ -420,7 +420,7 @@ btree_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	}
 
 	PageSetLSN(page, lsn);
-	PageSetSUI(page, ThisStartUpID);
+	PageSetTLI(page, ThisTimeLineID);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
 }
@@ -489,7 +489,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 			}
 
 			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
+			PageSetTLI(page, ThisTimeLineID);
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buffer);
 		}
@@ -515,7 +515,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 			pageop->btpo_prev = leftsib;
 
 			PageSetLSN(page, lsn);
-			PageSetSUI(page, ThisStartUpID);
+			PageSetTLI(page, ThisTimeLineID);
 			LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 			WriteBuffer(buffer);
 		}
@@ -543,7 +543,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 				pageop->btpo_next = rightsib;
 
 				PageSetLSN(page, lsn);
-				PageSetSUI(page, ThisStartUpID);
+				PageSetTLI(page, ThisTimeLineID);
 				LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 				WriteBuffer(buffer);
 			}
@@ -569,7 +569,7 @@ btree_xlog_delete_page(bool redo, bool ismeta,
 		pageop->btpo_flags = BTP_DELETED;
 
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 	}
@@ -632,7 +632,7 @@ btree_xlog_newroot(bool redo, XLogRecPtr lsn, XLogRecord *record)
 						 record->xl_len - SizeOfBtreeNewroot);
 
 	PageSetLSN(page, lsn);
-	PageSetSUI(page, ThisStartUpID);
+	PageSetTLI(page, ThisTimeLineID);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
 

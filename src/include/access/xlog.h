@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.53 2004/07/19 02:47:13 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlog.h,v 1.54 2004/07/21 22:31:25 tgl Exp $
  */
 #ifndef XLOG_H
 #define XLOG_H
@@ -14,7 +14,7 @@
 #include "access/rmgr.h"
 #include "access/transam.h"
 #include "access/xlogdefs.h"
-#include "storage/bufmgr.h"
+#include "storage/buf.h"
 #include "utils/pg_crc.h"
 
 
@@ -76,107 +76,6 @@ typedef struct XLogRecord
 #define XLOG_NO_TRAN			XLR_INFO_MASK
 
 /*
- * Header info for a backup block appended to an XLOG record.
- *
- * Note that the backup block has its own CRC, and is not covered by
- * the CRC of the XLOG record proper.  Also note that we don't attempt
- * to align either the BkpBlock struct or the block's data.
- */
-typedef struct BkpBlock
-{
-	crc64		crc;
-	RelFileNode node;
-	BlockNumber block;
-} BkpBlock;
-
-/*
- * When there is not enough space on current page for whole record, we
- * continue on the next page with continuation record.	(However, the
- * XLogRecord header will never be split across pages; if there's less than
- * SizeOfXLogRecord space left at the end of a page, we just waste it.)
- *
- * Note that xl_rem_len includes backup-block data, unlike xl_len in the
- * initial header.
- */
-typedef struct XLogContRecord
-{
-	uint32		xl_rem_len;		/* total len of remaining data for record */
-
-	/* ACTUAL LOG DATA FOLLOWS AT END OF STRUCT */
-
-} XLogContRecord;
-
-#define SizeOfXLogContRecord	MAXALIGN(sizeof(XLogContRecord))
-
-/*
- * Each page of XLOG file has a header like this:
- */
-#define XLOG_PAGE_MAGIC 0xD05B	/* can be used as WAL version indicator */
-
-typedef struct XLogPageHeaderData
-{
-	uint16		xlp_magic;		/* magic value for correctness checks */
-	uint16		xlp_info;		/* flag bits, see below */
-	StartUpID	xlp_sui;		/* StartUpID of first record on page */
-	XLogRecPtr	xlp_pageaddr;	/* XLOG address of this page */
-} XLogPageHeaderData;
-
-#define SizeOfXLogPHD	MAXALIGN(sizeof(XLogPageHeaderData))
-
-typedef XLogPageHeaderData *XLogPageHeader;
-
-/* When record crosses page boundary, set this flag in new page's header */
-#define XLP_FIRST_IS_CONTRECORD		0x0001
-/* All defined flag bits in xlp_info (used for validity checking of header) */
-#define XLP_ALL_FLAGS				0x0001
-
-/*
- * We break each logical log file (xlogid value) into segment files of the
- * size indicated by XLOG_SEG_SIZE.  One possible segment at the end of each
- * log file is wasted, to ensure that we don't have problems representing
- * last-byte-position-plus-1.
- */
-#define XLogSegSize		((uint32) XLOG_SEG_SIZE)
-#define XLogSegsPerFile (((uint32) 0xffffffff) / XLogSegSize)
-#define XLogFileSize	(XLogSegsPerFile * XLogSegSize)
-
-/*
- * The first XLOG record in each segment file is always an XLOG_FILE_HEADER
- * record.  This record does nothing as far as XLOG replay is concerned,
- * but it is useful for verifying that we haven't mixed up XLOG segment files.
- * The body of an XLOG_FILE_HEADER record is a struct XLogFileHeaderData.
- * Note: the xlogid/segno fields are really redundant with xlp_pageaddr in
- * the page header, but we store them anyway as an extra check.
- */
-typedef struct XLogFileHeaderData
-{
-	uint64		xlfhd_sysid;	/* system identifier from pg_control */
-	uint32		xlfhd_xlogid;	/* logical log file # */
-	uint32		xlfhd_segno;	/* segment number within logical log file */
-	uint32		xlfhd_seg_size;	/* just as a cross-check */
-} XLogFileHeaderData;
-
-#define SizeOfXLogFHD	MAXALIGN(sizeof(XLogFileHeaderData))
-
-
-/*
- * Method table for resource managers.
- *
- * RmgrTable[] is indexed by RmgrId values (see rmgr.h).
- */
-typedef struct RmgrData
-{
-	const char *rm_name;
-	void		(*rm_redo) (XLogRecPtr lsn, XLogRecord *rptr);
-	void		(*rm_undo) (XLogRecPtr lsn, XLogRecord *rptr);
-	void		(*rm_desc) (char *buf, uint8 xl_info, char *rec);
-	void		(*rm_startup) (void);
-	void		(*rm_cleanup) (void);
-} RmgrData;
-
-extern RmgrData RmgrTable[];
-
-/*--------------------
  * List of these structs is used to pass data to XLogInsert().
  *
  * If buffer is valid then XLOG will check if buffer must be backed up
@@ -188,7 +87,6 @@ extern RmgrData RmgrTable[];
  * the XLOG record, since we assume it's present in the buffer.  Therefore,
  * rmgr redo routines MUST pay attention to XLR_BKP_BLOCK_X to know what
  * is actually stored in the XLOG record.
- *--------------------
  */
 typedef struct XLogRecData
 {
@@ -198,7 +96,7 @@ typedef struct XLogRecData
 	struct XLogRecData *next;
 } XLogRecData;
 
-extern StartUpID ThisStartUpID; /* current SUI */
+extern TimeLineID ThisTimeLineID; /* current TLI */
 extern bool InRecovery;
 extern XLogRecPtr MyLastRecPtr;
 extern bool MyXactMadeXLogEntry;

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.112 2004/04/21 18:24:25 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.113 2004/07/21 22:31:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -621,11 +621,11 @@ _bt_insertonpg(Relation rel,
 			if (BufferIsValid(metabuf))
 			{
 				PageSetLSN(metapg, recptr);
-				PageSetSUI(metapg, ThisStartUpID);
+				PageSetTLI(metapg, ThisTimeLineID);
 			}
 
 			PageSetLSN(page, recptr);
-			PageSetSUI(page, ThisStartUpID);
+			PageSetTLI(page, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -903,13 +903,13 @@ _bt_split(Relation rel, Buffer buf, OffsetNumber firstright,
 		recptr = XLogInsert(RM_BTREE_ID, xlinfo, rdata);
 
 		PageSetLSN(leftpage, recptr);
-		PageSetSUI(leftpage, ThisStartUpID);
+		PageSetTLI(leftpage, ThisTimeLineID);
 		PageSetLSN(rightpage, recptr);
-		PageSetSUI(rightpage, ThisStartUpID);
+		PageSetTLI(rightpage, ThisTimeLineID);
 		if (!P_RIGHTMOST(ropaque))
 		{
 			PageSetLSN(spage, recptr);
-			PageSetSUI(spage, ThisStartUpID);
+			PageSetTLI(spage, ThisTimeLineID);
 		}
 	}
 
@@ -1494,13 +1494,13 @@ _bt_newroot(Relation rel, Buffer lbuf, Buffer rbuf)
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, rdata);
 
 		PageSetLSN(rootpage, recptr);
-		PageSetSUI(rootpage, ThisStartUpID);
+		PageSetTLI(rootpage, ThisTimeLineID);
 		PageSetLSN(metapg, recptr);
-		PageSetSUI(metapg, ThisStartUpID);
+		PageSetTLI(metapg, ThisTimeLineID);
 		PageSetLSN(lpage, recptr);
-		PageSetSUI(lpage, ThisStartUpID);
+		PageSetTLI(lpage, ThisTimeLineID);
 		PageSetLSN(rpage, recptr);
-		PageSetSUI(rpage, ThisStartUpID);
+		PageSetTLI(rpage, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();

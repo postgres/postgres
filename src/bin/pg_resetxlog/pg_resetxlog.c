@@ -23,22 +23,22 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.20 2004/06/03 00:07:37 momjian Exp $
+ * $PostgreSQL: pgsql/src/bin/pg_resetxlog/pg_resetxlog.c,v 1.21 2004/07/21 22:31:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
-#include <errno.h>
-#include <unistd.h>
-#include <time.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <locale.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <fcntl.h>
-#include <dirent.h>
-#include <locale.h>
+#include <time.h>
+#include <unistd.h>
 
 #include "access/xlog.h"
+#include "access/xlog_internal.h"
 #include "catalog/catversion.h"
 #include "catalog/pg_control.h"
 
@@ -48,27 +48,7 @@ extern char *optarg;
 #define _(x) gettext((x))
 
 
-/******************** stuff copied from xlog.c ********************/
-
-/* Increment an xlogid/segment pair */
-#define NextLogSeg(logId, logSeg)	\
-	do { \
-		if ((logSeg) >= XLogSegsPerFile-1) \
-		{ \
-			(logId)++; \
-			(logSeg) = 0; \
-		} \
-		else \
-			(logSeg)++; \
-	} while (0)
-
-#define XLogFileName(path, log, seg)	\
-			snprintf(path, MAXPGPATH, "%s/%08X%08X",	\
-					 XLogDir, log, seg)
-
-/******************** end of stuff copied from xlog.c ********************/
-
-static char XLogDir[MAXPGPATH];
+char XLogDir[MAXPGPATH];		/* not static, see xlog_internal.h */
 static char ControlFilePath[MAXPGPATH];
 
 static ControlFileData ControlFile;		/* pg_control values */
@@ -388,9 +368,9 @@ GuessControlValues(void)
 	ControlFile.system_identifier = sysidentifier;
 
 	ControlFile.checkPointCopy.redo.xlogid = 0;
-	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD;
+	ControlFile.checkPointCopy.redo.xrecoff = SizeOfXLogLongPHD;
 	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
-	ControlFile.checkPointCopy.ThisStartUpID = 0;
+	ControlFile.checkPointCopy.ThisTimeLineID = 1;
 	ControlFile.checkPointCopy.nextXid = (TransactionId) 514;	/* XXX */
 	ControlFile.checkPointCopy.nextOid = BootstrapObjectIdData;
 	ControlFile.checkPointCopy.time = time(NULL);
@@ -430,7 +410,7 @@ GuessControlValues(void)
 
 	/*
 	 * XXX eventually, should try to grovel through old XLOG to develop
-	 * more accurate values for startupid, nextXID, and nextOID.
+	 * more accurate values for TimeLineID, nextXID, and nextOID.
 	 */
 }
 
@@ -463,7 +443,7 @@ PrintControlValues(bool guessed)
 	printf(_("Database system identifier:           %s\n"), sysident_str);
 	printf(_("Current log file ID:                  %u\n"), ControlFile.logId);
 	printf(_("Next log file segment:                %u\n"), ControlFile.logSeg);
-	printf(_("Latest checkpoint's StartUpID:        %u\n"), ControlFile.checkPointCopy.ThisStartUpID);
+	printf(_("Latest checkpoint's TimeLineID:       %u\n"), ControlFile.checkPointCopy.ThisTimeLineID);
 	printf(_("Latest checkpoint's NextXID:          %u\n"), ControlFile.checkPointCopy.nextXid);
 	printf(_("Latest checkpoint's NextOID:          %u\n"), ControlFile.checkPointCopy.nextOid);
 	printf(_("Database block size:                  %u\n"), ControlFile.blcksz);
@@ -506,7 +486,7 @@ RewriteControlFile(void)
 
 	ControlFile.checkPointCopy.redo.xlogid = newXlogId;
 	ControlFile.checkPointCopy.redo.xrecoff =
-		newXlogSeg * XLogSegSize + SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD;
+		newXlogSeg * XLogSegSize + SizeOfXLogLongPHD;
 	ControlFile.checkPointCopy.undo = ControlFile.checkPointCopy.redo;
 	ControlFile.checkPointCopy.time = time(NULL);
 
@@ -634,8 +614,8 @@ WriteEmptyXLOG(void)
 {
 	char	   *buffer;
 	XLogPageHeader page;
+	XLogLongPageHeader longpage;
 	XLogRecord *record;
-	XLogFileHeaderData *fhdr;
 	crc64		crc;
 	char		path[MAXPGPATH];
 	int			fd;
@@ -648,41 +628,20 @@ WriteEmptyXLOG(void)
 
 	/* Set up the XLOG page header */
 	page->xlp_magic = XLOG_PAGE_MAGIC;
-	page->xlp_info = 0;
-	page->xlp_sui = ControlFile.checkPointCopy.ThisStartUpID;
+	page->xlp_info = XLP_LONG_HEADER;
+	page->xlp_tli = ControlFile.checkPointCopy.ThisTimeLineID;
 	page->xlp_pageaddr.xlogid =
 		ControlFile.checkPointCopy.redo.xlogid;
 	page->xlp_pageaddr.xrecoff =
-		ControlFile.checkPointCopy.redo.xrecoff -
-		(SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD);
-
-	/* Insert the file header record */
-	record = (XLogRecord *) ((char *) page + SizeOfXLogPHD);
-	record->xl_prev.xlogid = 0;
-	record->xl_prev.xrecoff = 0;
-	record->xl_xact_prev.xlogid = 0;
-	record->xl_xact_prev.xrecoff = 0;
-	record->xl_xid = InvalidTransactionId;
-	record->xl_len = SizeOfXLogFHD;
-	record->xl_info = XLOG_FILE_HEADER;
-	record->xl_rmid = RM_XLOG_ID;
-	fhdr = (XLogFileHeaderData *) XLogRecGetData(record);
-	fhdr->xlfhd_sysid = ControlFile.system_identifier;
-	fhdr->xlfhd_xlogid = page->xlp_pageaddr.xlogid;
-	fhdr->xlfhd_segno = page->xlp_pageaddr.xrecoff / XLogSegSize;
-	fhdr->xlfhd_seg_size = XLogSegSize;
-
-	INIT_CRC64(crc);
-	COMP_CRC64(crc, fhdr, SizeOfXLogFHD);
-	COMP_CRC64(crc, (char *) record + sizeof(crc64),
-			   SizeOfXLogRecord - sizeof(crc64));
-	FIN_CRC64(crc);
-	record->xl_crc = crc;
+		ControlFile.checkPointCopy.redo.xrecoff - SizeOfXLogLongPHD;
+	longpage = (XLogLongPageHeader) page;
+	longpage->xlp_sysid = ControlFile.system_identifier;
+	longpage->xlp_seg_size = XLogSegSize;
 
 	/* Insert the initial checkpoint record */
-	record = (XLogRecord *) ((char *) page + SizeOfXLogPHD + SizeOfXLogRecord + SizeOfXLogFHD);
-	record->xl_prev.xlogid = page->xlp_pageaddr.xlogid;
-	record->xl_prev.xrecoff = page->xlp_pageaddr.xrecoff + SizeOfXLogPHD;
+	record = (XLogRecord *) ((char *) page + SizeOfXLogLongPHD);
+	record->xl_prev.xlogid = 0;
+	record->xl_prev.xrecoff = 0;
 	record->xl_xact_prev.xlogid = 0;
 	record->xl_xact_prev.xrecoff = 0;
 	record->xl_xid = InvalidTransactionId;
@@ -700,7 +659,8 @@ WriteEmptyXLOG(void)
 	record->xl_crc = crc;
 
 	/* Write the first page */
-	XLogFileName(path, newXlogId, newXlogSeg);
+	XLogFilePath(path, ControlFile.checkPointCopy.ThisTimeLineID,
+				 newXlogId, newXlogSeg);
 
 	unlink(path);
 

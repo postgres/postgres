@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.76 2004/06/02 17:28:17 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtpage.c,v 1.77 2004/07/21 22:31:20 tgl Exp $
  *
  *	NOTES
  *	   Postgres btree pages look like ordinary relation pages.	The opaque
@@ -84,7 +84,7 @@ _bt_metapinit(Relation rel)
 							rdata);
 
 		PageSetLSN(pg, recptr);
-		PageSetSUI(pg, ThisStartUpID);
+		PageSetTLI(pg, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -249,9 +249,9 @@ _bt_getroot(Relation rel, int access)
 			recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_NEWROOT, &rdata);
 
 			PageSetLSN(rootpage, recptr);
-			PageSetSUI(rootpage, ThisStartUpID);
+			PageSetTLI(rootpage, ThisTimeLineID);
 			PageSetLSN(metapg, recptr);
-			PageSetSUI(metapg, ThisStartUpID);
+			PageSetTLI(metapg, ThisTimeLineID);
 		}
 
 		END_CRIT_SECTION();
@@ -686,7 +686,7 @@ _bt_delitems(Relation rel, Buffer buf,
 		recptr = XLogInsert(RM_BTREE_ID, XLOG_BTREE_DELETE, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	END_CRIT_SECTION();
@@ -1080,22 +1080,22 @@ _bt_pagedel(Relation rel, Buffer buf, bool vacuum_full)
 		if (BufferIsValid(metabuf))
 		{
 			PageSetLSN(metapg, recptr);
-			PageSetSUI(metapg, ThisStartUpID);
+			PageSetTLI(metapg, ThisTimeLineID);
 		}
 		page = BufferGetPage(pbuf);
 		PageSetLSN(page, recptr);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		page = BufferGetPage(rbuf);
 		PageSetLSN(page, recptr);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		page = BufferGetPage(buf);
 		PageSetLSN(page, recptr);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		if (BufferIsValid(lbuf))
 		{
 			page = BufferGetPage(lbuf);
 			PageSetLSN(page, recptr);
-			PageSetSUI(page, ThisStartUpID);
+			PageSetTLI(page, ThisTimeLineID);
 		}
 	}
 

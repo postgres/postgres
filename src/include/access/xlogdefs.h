@@ -2,12 +2,12 @@
  * xlogdefs.h
  *
  * Postgres transaction log manager record pointer and
- * system startup number definitions
+ * timeline number definitions
  *
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.11 2003/12/20 17:31:21 momjian Exp $
+ * $PostgreSQL: pgsql/src/include/access/xlogdefs.h,v 1.12 2004/07/21 22:31:25 tgl Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -33,12 +33,6 @@ typedef struct XLogRecPtr
 	uint32		xrecoff;		/* byte offset of location in log file */
 } XLogRecPtr;
 
-typedef struct XLogwrtResult
-{
-	XLogRecPtr	Write;			/* last byte + 1 written out */
-	XLogRecPtr	Flush;			/* last byte + 1 flushed */
-} XLogwrtResult;
-
 
 /*
  * Macros for comparing XLogRecPtrs
@@ -57,10 +51,16 @@ typedef struct XLogwrtResult
 #define XLByteEQ(a, b)		\
 			((a).xlogid == (b).xlogid && (a).xrecoff == (b).xrecoff)
 
+
 /*
- * StartUpID (SUI) - system startups counter. It's to allow removing
- * pg_clog after shutdown, in future.
+ * TimeLineID (TLI) - identifies different database histories to prevent
+ * confusion after restoring a prior state of a database installation.
+ * TLI does not change in a normal stop/restart of the database (including
+ * crash-and-recover cases); but we must assign a new TLI after doing
+ * a recovery to a prior state, a/k/a point-in-time recovery.  This makes
+ * the new WAL logfile sequence we generate distinguishable from the
+ * sequence that was generated in the previous incarnation.
  */
-typedef uint32 StartUpID;
+typedef uint32 TimeLineID;
 
 #endif   /* XLOG_DEFS_H */

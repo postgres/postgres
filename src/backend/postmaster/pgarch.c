@@ -19,7 +19,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.1 2004/07/19 02:47:08 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/postmaster/pgarch.c,v 1.2 2004/07/21 22:31:22 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,10 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "postmaster/pgarch.h"
+#include "access/xlog_internal.h"
 #include "libpq/pqsignal.h"
 #include "miscadmin.h"
+#include "postmaster/pgarch.h"
 #include "postmaster/postmaster.h"
 #include "storage/fd.h"
 #include "storage/ipc.h"
@@ -63,8 +64,8 @@
  * ----------
  */
 #define MIN_XFN_CHARS	16
-#define MAX_XFN_CHARS	16
-#define VALID_XFN_CHARS	"0123456789ABCDEF"
+#define MAX_XFN_CHARS	24
+#define VALID_XFN_CHARS	"0123456789ABCDEF.history"
 
 #define NUM_ARCHIVE_RETRIES 3
 
@@ -73,8 +74,6 @@
  * Local data
  * ----------
  */
-static char XLogDir[MAXPGPATH];
-static char XLogArchiveStatusDir[MAXPGPATH];
 static time_t last_pgarch_start_time;
 
 /*
@@ -265,9 +264,8 @@ PgArchiverMain(int argc, char *argv[])
     init_ps_display("archiver process", "", "");
     set_ps_display("");
 
-    /* Init XLOG file paths */
-    snprintf(XLogDir, MAXPGPATH, "%s/pg_xlog", DataDir);
-    snprintf(XLogArchiveStatusDir, MAXPGPATH, "%s/archive_status", XLogDir);
+    /* Init XLOG file paths --- needed in EXEC_BACKEND case */
+	XLOGPathInit();
 
     pgarch_MainLoop();
 
@@ -497,6 +495,12 @@ pgarch_archiveXlog(char *xlog)
  * 1) to maintain the sequential chain of xlogs required for recovery
  * 2) because the oldest ones will sooner become candidates for
  * recycling at time of checkpoint
+ *
+ * NOTE: the "oldest" comparison will presently consider all segments of
+ * a timeline with a smaller ID to be older than all segments of a timeline
+ * with a larger ID; the net result being that past timelines are given
+ * higher priority for archiving.  This seems okay, or at least not
+ * obviously worth changing.
  */
 static bool
 pgarch_readyXlog(char *xlog)
@@ -507,11 +511,13 @@ pgarch_readyXlog(char *xlog)
 	 * It is possible to optimise this code, though only a single
 	 * file is expected on the vast majority of calls, so....
 	 */
+	char		XLogArchiveStatusDir[MAXPGPATH];
   	char		newxlog[MAX_XFN_CHARS + 6 + 1];
  	DIR		    *rldir;
  	struct dirent 	*rlde;
  	bool		found = false;
 
+    snprintf(XLogArchiveStatusDir, MAXPGPATH, "%s/archive_status", XLogDir);
 	rldir = AllocateDir(XLogArchiveStatusDir);
 	if (rldir == NULL)
 		ereport(ERROR,
@@ -575,14 +581,12 @@ pgarch_archiveDone(char *xlog)
 {
     char		rlogready[MAXPGPATH];
     char		rlogdone[MAXPGPATH];
- 	int 		rc;
 
-    snprintf(rlogready, MAXPGPATH, "%s/%s.ready", XLogArchiveStatusDir, xlog);
- 	snprintf(rlogdone, MAXPGPATH, "%s/%s.done", XLogArchiveStatusDir, xlog);
- 	rc = rename(rlogready, rlogdone);
- 	if (rc < 0)
+	StatusFilePath(rlogready, xlog, ".ready");
+	StatusFilePath(rlogdone, xlog, ".done");
+ 	if (rename(rlogready, rlogdone) < 0)
  		ereport(WARNING,
 				(errcode_for_file_access(),
-				 errmsg("could not rename \"%s\": %m",
-						rlogready)));
+				 errmsg("could not rename \"%s\" to \"%s\": %m",
+						rlogready, rlogdone)));
 }

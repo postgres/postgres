@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.170 2004/07/11 18:01:44 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/heap/heapam.c,v 1.171 2004/07/21 22:31:19 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1214,7 +1214,7 @@ heap_insert(Relation relation, HeapTuple tup, CommandId cid)
 		recptr = XLogInsert(RM_HEAP_ID, info, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 	}
 	else
 	{
@@ -1390,7 +1390,7 @@ l1:
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_DELETE, rdata);
 
 		PageSetLSN(dp, recptr);
-		PageSetSUI(dp, ThisStartUpID);
+		PageSetTLI(dp, ThisTimeLineID);
 	}
 	else
 	{
@@ -1748,10 +1748,10 @@ l2:
 		if (newbuf != buffer)
 		{
 			PageSetLSN(BufferGetPage(newbuf), recptr);
-			PageSetSUI(BufferGetPage(newbuf), ThisStartUpID);
+			PageSetTLI(BufferGetPage(newbuf), ThisTimeLineID);
 		}
 		PageSetLSN(BufferGetPage(buffer), recptr);
-		PageSetSUI(BufferGetPage(buffer), ThisStartUpID);
+		PageSetTLI(BufferGetPage(buffer), ThisTimeLineID);
 	}
 	else
 	{
@@ -1902,7 +1902,7 @@ l3:
 	 * XLOG stuff: no logging is required as long as we have no
 	 * savepoints. For savepoints private log could be used...
 	 */
-	PageSetSUI(BufferGetPage(*buffer), ThisStartUpID);
+	PageSetTLI(BufferGetPage(*buffer), ThisTimeLineID);
 
 	/* store transaction information of xact marking the tuple */
 	tuple->t_data->t_infomask &= ~(HEAP_XMAX_COMMITTED |
@@ -2184,7 +2184,7 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	PageRepairFragmentation(page, NULL);
 
 	PageSetLSN(page, lsn);
-	PageSetSUI(page, ThisStartUpID);	/* prev sui */
+	PageSetTLI(page, ThisTimeLineID);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
 }
@@ -2217,7 +2217,7 @@ heap_xlog_newpage(bool redo, XLogRecPtr lsn, XLogRecord *record)
 	memcpy(page, (char *) xlrec + SizeOfHeapNewpage, BLCKSZ);
 
 	PageSetLSN(page, lsn);
-	PageSetSUI(page, ThisStartUpID);
+	PageSetTLI(page, ThisTimeLineID);
 	LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 	WriteBuffer(buffer);
 }
@@ -2283,7 +2283,7 @@ heap_xlog_delete(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		/* Make sure there is no forward chain link in t_ctid */
 		htup->t_ctid = xlrec->target.tid;
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 		return;
@@ -2368,7 +2368,7 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "heap_insert_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);		/* prev sui */
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 		return;
@@ -2466,7 +2466,7 @@ heap_xlog_update(bool redo, XLogRecPtr lsn, XLogRecord *record, bool move)
 		if (samepage)
 			goto newsame;
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 		goto newt;
@@ -2564,7 +2564,7 @@ newsame:;
 		if (offnum == InvalidOffsetNumber)
 			elog(PANIC, "heap_update_redo: failed to add tuple");
 		PageSetLSN(page, lsn);
-		PageSetSUI(page, ThisStartUpID);		/* prev sui */
+		PageSetTLI(page, ThisTimeLineID);
 		LockBuffer(buffer, BUFFER_LOCK_UNLOCK);
 		WriteBuffer(buffer);
 		return;

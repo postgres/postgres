@@ -63,4 +63,12 @@
 #
 #recovery_target_inclusive = 'true'		# 'true' or 'false'
 #
+#
+# If you want to recover into a timeline other than the "main line" shown in
+# pg_control, specify the timeline number here, or write 'latest' to get
+# the latest branch for which there's a history file.
+#
+#recovery_target_timeline = '33'		# number or 'latest'
+#
+#
 #---------------------------------------------------------------------------

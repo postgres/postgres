@@ -56,7 +56,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.84 2004/07/19 02:47:03 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/access/nbtree/nbtsort.c,v 1.85 2004/07/21 22:31:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,14 +299,14 @@ _bt_blwritepage(BTWriteState *wstate, Page page, BlockNumber blkno)
 		recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_NEWPAGE, rdata);
 
 		PageSetLSN(page, recptr);
-		PageSetSUI(page, ThisStartUpID);
+		PageSetTLI(page, ThisTimeLineID);
 
 		END_CRIT_SECTION();
 	}
 	else
 	{
-		/* Leave the page LSN zero if not WAL-logged, but set SUI anyway */
-		PageSetSUI(page, ThisStartUpID);
+		/* Leave the page LSN zero if not WAL-logged, but set TLI anyway */
+		PageSetTLI(page, ThisTimeLineID);
 	}
 
 	/*
