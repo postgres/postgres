@@ -71,7 +71,7 @@ const char *ostr;
 			place = EMSG;
 			return -1;
 		}
-		if (place[1] && *++place == '-')
+		if (place[1] && *++place == '-' && place[1] == '\0')
 		{						/* found "--" */
 			++optind;
 			place = EMSG;
