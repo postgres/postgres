@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.64 2000/07/03 23:09:10 wieck Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.65 2000/07/04 02:40:56 tgl Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -90,7 +90,7 @@ DataFill(char *data,
 		bitmask = CSIGNBIT;
 	}
 
-	*infomask = 0;
+	*infomask &= HEAP_XACT_MASK;
 
 	for (i = 0; i < numberOfAttributes; i++)
 	{
