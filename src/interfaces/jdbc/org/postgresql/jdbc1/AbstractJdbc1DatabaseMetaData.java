@@ -2464,7 +2464,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			byte column[] = rs.getBytes("attname");
 			String owner = rs.getString("usename");
 			String acl = rs.getString("relacl");
-			Hashtable permissions = parseACL(acl);
+			Hashtable permissions = parseACL(acl, owner);
 			String permNames[] = new String[permissions.size()];
 			Enumeration e = permissions.keys();
 			int i=0;
@@ -2566,7 +2566,7 @@ public abstract class AbstractJdbc1DatabaseMetaData
 			byte table[] = rs.getBytes("relname");
 			String owner = rs.getString("usename");
 			String acl = rs.getString("relacl");
-			Hashtable permissions = parseACL(acl);
+			Hashtable permissions = parseACL(acl, owner);
 			String permNames[] = new String[permissions.size()];
 			Enumeration e = permissions.keys();
 			int i=0;
@@ -2690,7 +2690,11 @@ public abstract class AbstractJdbc1DatabaseMetaData
 	 * a Hashtable mapping the SQL permission name to a Vector of
 	 * usernames who have that permission.
 	 */
-	protected Hashtable parseACL(String aclArray) {
+	protected Hashtable parseACL(String aclArray, String owner) {
+ 		if (aclArray == null || aclArray == "") {
+ 			//null acl is a shortcut for owner having full privs
+ 			aclArray = "{" + owner + "=arwdRxt}";
+ 		}
 		Vector acls = parseACLArray(aclArray);
 		Hashtable privileges = new Hashtable();
 		for (int i=0; i<acls.size(); i++) {
