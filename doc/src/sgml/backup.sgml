@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.56 2005/02/25 04:56:01 momjian Exp $
+$PostgreSQL: pgsql/doc/src/sgml/backup.sgml,v 2.57 2005/03/17 05:03:37 momjian Exp $
 -->
 <chapter id="backup">
  <title>Backup and Restore</title>
@@ -371,6 +371,15 @@ tar -cf backup.tar /usr/local/pgsql/data
    to the consistent-snapshot technique in such situations.  The safest
    approach is to shut down the database server for long enough to
    establish all the frozen snapshots.
+  </para>
+
+  <para>
+   Another option is to use <application>rsync</> to perform a file
+   system backup.  First, while the database server is running, 
+   run <application>rsync</>, then shut down the database
+   server and perform a second <application>rsync</>, then
+   restart the database server.  This allows a file system backup to be
+   performed with minimal downtime.
   </para>
 
   <para>
