@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Sat May 12 22:19:42 EDT 2001
+Last updated:		Mon May 14 16:29:55 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -130,7 +130,7 @@ SYSTEM TABLES
 * Add unique indexes on pg_database
 * Check all system tables and add unique indexes as needed
 * Remove pg_listener index
-* Remove unused pg_variable, pg_inheritproc, pg_ipl tables
+* -Remove unused pg_variable, pg_inheritproc, pg_ipl tables
 
 COMMANDS
 
