@@ -19,10 +19,10 @@ version must be used.
 1) Back up your existing data directory, preferably by making a complete
 dump with pg_dumpall.
 .LP
-2) Copy the program pgsql/contrib/pg_upgrade/pg_upgrade from the current
-PostgreSQL distribution into somewhere in your path.
+2) Copy the program \fIpgsql/contrib/pg_upgrade/pg_upgrade\fP from the current
+PostgreSQL distribution somewhere into your path.
 .LP
-3)  Change your working directory to the  pgsql main directory, and type:
+3)  Change your working directory to the pgsql main directory, and type:
 .LP
 .B $ pg_upgrade -1
 .sp
@@ -40,18 +40,18 @@ to install the new binaries.
 .br
 .B $ make install
 .sp
-to install the pg_resetxlog utility which is needed by
+to install the \fIpg_resetxlog\fP utility which is needed by
 pg_upgrade.
 .LP
 6) Run initdb to create a new template1 database containing the system
 tables for the new release.  Make sure you use settings similar to those
 used in your previous version.
 .LP
-7) Start the new postmaster.  (Note: it is critical that no users connect
+7) Start the new \fIpostmaster.\fP  (Note: it is critical that no users connect
 to the server until the upgrade is complete.  You may wish to start the
-postmaster without -i and/or alter pg_hba.conf temporarily.)
+postmaster without -i or alter pg_hba.conf temporarily.)
 .LP
-8)  Change your working directory to the  pgsql main directory, and type: 
+8)  Change your working directory to the pgsql main directory, and type: 
 .LP
 .B $ pg_upgrade -2
 .sp
@@ -61,15 +61,15 @@ but with no data.  It will then physically move the data files
 containing non-system tables and indexes into the proper 
 subdirectories.
 .LP
-9)  Restore your old pg_hba.conf if needed to allow user logins.
+9)  Restore your old \fIpg_hba.conf\fP if needed to allow user logins.
 .sp
 .LP
 10)  Carefully examine the contents of the upgraded databases.  If you
 detect problems, you'll need to recover by restoring from your full
-pg_dump backup. You can delete the pg_upgrade_info/ directory when you
+pg_dump backup. You can delete the \fIpg_upgrade_info/\fP directory when you
 are satisfied.
 .LP
 The upgraded databases will be in an un-vacuumed state.  You will
-probably want to run a VACUUM ANALYZE before beginning production work.
+probably want to run a \fIVACUUM ANALYZE\fB before beginning production work.
 .SH SEE ALSO
 initdb(1), postmaster(1), pg_dump(1), pg_dumpall(1), vacuumdb(1)
