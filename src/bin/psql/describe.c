@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.36 2001/08/05 22:13:46 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/describe.c,v 1.37 2001/08/09 03:32:16 tgl Exp $
  */
 #include "postgres_fe.h"
 #include "describe.h"
@@ -630,6 +630,9 @@ describeTableDetails(const char *name, bool desc)
 			break;
 		case 's':
 			snprintf(title, 32 + NAMEDATALEN, _("Special relation \"%s\""), name);
+			break;
+		case 't':
+			snprintf(title, 32 + NAMEDATALEN, _("TOAST table \"%s\""), name);
 			break;
 		default:
 			snprintf(title, 32 + NAMEDATALEN, _("?%c? \"%s\""), tableinfo.relkind, name);
