@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.42 2004/08/07 20:44:50 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/ref/grant.sgml,v 1.43 2004/09/01 04:13:11 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -401,6 +401,18 @@ GRANT ALL PRIVILEGES ON kinds TO manuel;
     key word in <literal>ALL PRIVILEGES</literal> is required.  The
     SQL standard does not support setting the privileges on more than
     one object per command.
+   </para>
+
+   <para>
+    <productname>PostgreSQL</productname> allows an object owner to revoke his
+    own ordinary privileges: for example, a table owner can make the table
+    read-only to himself by revoking his own INSERT, UPDATE, and DELETE
+    privileges.  This is not possible according to the SQL standard.  The
+    reason is that <productname>PostgreSQL</productname> treats the owner's
+    privileges as having been granted by the owner to himself; therefore he
+    can revoke them too.  In the SQL standard, the owner's privileges are
+    granted by an assumed entity <quote>_SYSTEM</>.  Not being
+    <quote>_SYSTEM</>, the owner cannot revoke these rights.
    </para>
 
    <para>
