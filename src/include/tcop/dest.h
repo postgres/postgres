@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.26 2001/10/25 05:50:10 momjian Exp $
+ * $Id: dest.h,v 1.27 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,12 +55,12 @@
  */
 typedef enum
 {
-				None,			/* results are discarded */
-				Debug,			/* results go to debugging output */
-				Remote,			/* results sent to frontend process */
-				RemoteInternal, /* results sent to frontend process in
+	None,						/* results are discarded */
+	Debug,						/* results go to debugging output */
+	Remote,						/* results sent to frontend process */
+	RemoteInternal,				/* results sent to frontend process in
 								 * internal (binary) form */
-				SPI				/* results sent to SPI manager */
+	SPI							/* results sent to SPI manager */
 } CommandDest;
 
 /* ----------------
@@ -97,4 +97,5 @@ extern void ReceiveCopyBegin(void);
 extern void NullCommand(CommandDest dest);
 extern void ReadyForQuery(CommandDest dest);
 extern void UpdateCommandInfo(int operation, Oid lastoid, uint32 tuples);
+
 #endif	 /* DEST_H */

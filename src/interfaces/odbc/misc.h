@@ -94,4 +94,5 @@ char	   *my_strcat(char *buf, const char *fmt, const char *s, int len);
 #define STRCPY_NULL			(-2)
 
 int			my_strcpy(char *dst, int dst_len, const char *src, int src_len);
+
 #endif

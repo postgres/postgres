@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.66 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/rtree/Attic/rtree.c,v 1.67 2001/10/28 06:25:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -763,7 +763,7 @@ rtpicksplit(Relation r,
 				right_avail_space;
 	int			total_num_tuples,
 				num_tuples_without_seeds,
-				max_after_split;		/* in Guttman's lingo, (M - m) */
+				max_after_split;	/* in Guttman's lingo, (M - m) */
 	float		diff;			/* diff between cost of putting tuple left
 								 * or right */
 	SPLITCOST  *cost_vector;
@@ -1063,7 +1063,7 @@ rtpicksplit(Relation r,
 		else
 		{
 			elog(ERROR, "rtpicksplit: failed to find a workable page split");
-			choose_left = false;		/* keep compiler quiet */
+			choose_left = false;	/* keep compiler quiet */
 		}
 
 		if (choose_left)

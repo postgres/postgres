@@ -55,4 +55,5 @@ getcwd(char *buf, size_t size)
 {
 	return getwd(buf);
 }
+
 #endif

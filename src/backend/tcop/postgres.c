@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.239 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.240 2001/10/28 06:25:51 momjian Exp $
  *
  * NOTES
  *	  this is the "main" module of the postgres backend and
@@ -324,7 +324,7 @@ ReadCommand(StringInfo inBuf)
  */
 List *
 pg_parse_and_rewrite(char *query_string,		/* string to execute */
-					 Oid *typev,/* parameter types */
+					 Oid *typev,	/* parameter types */
 					 int nargs) /* number of parameters */
 {
 	List	   *raw_parsetree_list;
@@ -1502,7 +1502,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	pqsignal(SIGHUP, SigHupHandler);	/* set flag to read config file */
 	pqsignal(SIGINT, QueryCancelHandler);		/* cancel current query */
 	pqsignal(SIGTERM, die);		/* cancel current query and exit */
-	pqsignal(SIGQUIT, quickdie);		/* hard crash time */
+	pqsignal(SIGQUIT, quickdie);	/* hard crash time */
 	pqsignal(SIGALRM, HandleDeadLock);	/* check for deadlock after
 										 * timeout */
 
@@ -1642,7 +1642,7 @@ PostgresMain(int argc, char *argv[], const char *username)
 	if (!IsUnderPostmaster)
 	{
 		puts("\nPOSTGRES backend interactive interface ");
-		puts("$Revision: 1.239 $ $Date: 2001/10/25 05:49:43 $\n");
+		puts("$Revision: 1.240 $ $Date: 2001/10/28 06:25:51 $\n");
 	}
 
 	/*
@@ -2049,4 +2049,5 @@ assertTest(int val)
 	return val;
 }
 #endif
+
 #endif

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.3 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/s_lock.c,v 1.4 2001/10/28 06:25:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -248,8 +248,6 @@ tas_dummy()						/* really means: extern int tas(slock_t
 #if defined(NEED_I386_TAS_ASM)
 /* non gcc i386 based things */
 #endif	 /* NEED_I386_TAS_ASM */
-
-
 #endif	 /* not __GNUC__ */
 
 
@@ -292,4 +290,5 @@ main()
 	exit(3);
 
 }
+
 #endif	 /* S_LOCK_TEST */

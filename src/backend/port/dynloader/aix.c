@@ -607,4 +607,5 @@ findMain(void)
 	free(buf);
 	return ret;
 }
+
 #endif	 /* HAVE_DLOPEN */

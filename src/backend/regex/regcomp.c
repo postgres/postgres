@@ -1017,7 +1017,7 @@ bothcases(struct parse * p, int ch)
 	pg_wchar   *oldend = p->end;
 	pg_wchar	bracket[3];
 
-	assert(othercase(ch) != ch);		/* p_bracket() would recurse */
+	assert(othercase(ch) != ch);	/* p_bracket() would recurse */
 	p->next = bracket;
 	p->end = bracket + 2;
 	bracket[0] = ch;
@@ -1107,7 +1107,7 @@ repeat(struct parse * p,
 		case REP(0, N): /* as x{1,n}? */
 		case REP(0, INF):		/* as x{1,}? */
 			/* KLUDGE: emit y? as (y|) until subtle bug gets fixed */
-			INSERT(OCH_, start);		/* offset is wrong... */
+			INSERT(OCH_, start);	/* offset is wrong... */
 			repeat(p, start + 1, 1, to);
 			ASTERN(OOR1, start);
 			AHEAD(start);		/* ... fix it */
@@ -1577,7 +1577,7 @@ findmust(struct parse * p, struct re_guts * g)
 		switch (OP(s))
 		{
 			case OCHAR: /* sequence member */
-				if (newlen == 0)/* new sequence */
+				if (newlen == 0)	/* new sequence */
 					newstart = scan - 1;
 				newlen++;
 				break;

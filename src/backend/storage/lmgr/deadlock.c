@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.7 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/deadlock.c,v 1.8 2001/10/28 06:25:50 momjian Exp $
  *
  *	Interface:
  *
@@ -756,4 +756,5 @@ PrintLockQueue(LOCK *lock, const char *info)
 	printf("\n");
 	fflush(stdout);
 }
+
 #endif

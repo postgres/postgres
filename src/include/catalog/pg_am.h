@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_am.h,v 1.19 2001/10/25 05:49:56 momjian Exp $
+ * $Id: pg_am.h,v 1.20 2001/10/28 06:25:59 momjian Exp $
  *
  * NOTES
  *		the genbki.sh script reads this file and generates .bki
@@ -107,4 +107,5 @@ DATA(insert OID = 405 (  hash	PGUID	1 1 0 f f f t hashgettuple hashinsert hashbe
 DESCR("hash index access method");
 DATA(insert OID = 783 (  gist	PGUID 100 7 0 f t f f gistgettuple gistinsert gistbeginscan gistrescan gistendscan gistmarkpos gistrestrpos gistbuild gistbulkdelete gistcostestimate ));
 DESCR("GiST index access method");
+
 #endif	 /* PG_AM_H */

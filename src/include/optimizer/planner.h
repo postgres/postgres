@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: planner.h,v 1.21 2001/10/25 05:50:06 momjian Exp $
+ * $Id: planner.h,v 1.22 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,5 @@ extern Plan *subquery_planner(Query *parse, double tuple_fraction);
 
 extern Plan *make_sortplan(Query *parse, List *tlist,
 			  Plan *plannode, List *sortcls);
+
 #endif	 /* PLANNER_H */

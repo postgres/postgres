@@ -40,7 +40,7 @@
 int			print_err(SQLSMALLINT handletype, SQLINTEGER handle);
 
 int
-example1(SQLCHAR * server, SQLCHAR * uid, SQLCHAR * authen)
+example1(SQLCHAR *server, SQLCHAR *uid, SQLCHAR *authen)
 {
 	SQLHENV		henv;
 	SQLHDBC		hdbc;
@@ -135,12 +135,12 @@ example1(SQLCHAR * server, SQLCHAR * uid, SQLCHAR * authen)
 	/* this time, explicitly allocate an application row descriptor */
 	SQLAllocHandle(SQL_HANDLE_DESC, hdbc, &hdesc);
 	SQLSetDescRec(hdesc, 1, SQL_INTEGER, 0, 0L, 0, 0,
-		(SQLPOINTER) & id, (SQLINTEGER *) NULL, (SQLSMALLINT *) & idind);
+		 (SQLPOINTER) & id, (SQLINTEGER *) NULL, (SQLSMALLINT *) &idind);
 
 	SQLSetDescRec(hdesc, 2, SQL_
 				  CHAR, 0, (SQLINTEGER) sizeof(name),
-				  0, 0, (SQLPOINTER) & name, (SQLINTEGER *) & namelen,
-				  (SQLSMALLINT *) & nameind);
+				  0, 0, (SQLPOINTER) & name, (SQLINTEGER *) &namelen,
+				  (SQLSMALLINT *) &nameind);
 	/* associate descriptor with statement handle */
 	SQLSetStmtAttr(hstmt, SQL_ATTR_APP_ROW_DESC, &hdesc, 0);
 	/* execute the fetch */

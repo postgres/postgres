@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: clauses.h,v 1.46 2001/10/25 05:50:05 momjian Exp $
+ * $Id: clauses.h,v 1.47 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,4 +71,5 @@ extern void query_tree_mutator(Query *query, Node *(*mutator) (),
 #define is_subplan(clause)	((clause) != NULL && \
 							 IsA(clause, Expr) && \
 							 ((Expr *) (clause))->opType == SUBPLAN_EXPR)
+
 #endif	 /* CLAUSES_H */

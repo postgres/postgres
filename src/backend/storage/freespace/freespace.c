@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.8 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/freespace/freespace.c,v 1.9 2001/10/28 06:25:49 momjian Exp $
  *
  *
  * NOTES:
@@ -1116,4 +1116,5 @@ DumpFreeSpace(void)
 		fprintf(stderr, "DumpFreeSpace: %d chunks in list, but numFreeChunks = %d\n",
 				nChunks, FreeSpaceMap->numFreeChunks);
 }
+
 #endif	 /* FREESPACE_DEBUG */

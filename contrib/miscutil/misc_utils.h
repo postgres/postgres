@@ -6,4 +6,5 @@ int			unlisten(char *relname);
 int			max(int x, int y);
 int			min(int x, int y);
 int			active_listeners(text *relname);
+
 #endif

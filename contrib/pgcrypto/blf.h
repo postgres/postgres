@@ -79,4 +79,5 @@ void		blf_ecb_decrypt(blf_ctx *, uint8 *, uint32);
 
 void		blf_cbc_encrypt(blf_ctx *, uint8 *, uint8 *, uint32);
 void		blf_cbc_decrypt(blf_ctx *, uint8 *, uint8 *, uint32);
+
 #endif

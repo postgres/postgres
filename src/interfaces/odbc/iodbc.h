@@ -64,4 +64,5 @@ typedef int BOOL;
 #ifndef    NULL
 #define  NULL				((void FAR*)0UL)
 #endif
+
 #endif

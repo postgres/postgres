@@ -78,7 +78,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.19 2001/10/25 05:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplesort.c,v 1.20 2001/10/28 06:25:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -104,13 +104,12 @@
  */
 typedef enum
 {
-				TSS_INITIAL,	/* Loading tuples; still within memory
+	TSS_INITIAL,				/* Loading tuples; still within memory
 								 * limit */
-				TSS_BUILDRUNS,	/* Loading tuples; writing to tape */
-				TSS_SORTEDINMEM,/* Sort completed entirely in memory */
-				TSS_SORTEDONTAPE,		/* Sort completed, final run is on
-										 * tape */
-				TSS_FINALMERGE	/* Performing final merge on-the-fly */
+	TSS_BUILDRUNS,				/* Loading tuples; writing to tape */
+	TSS_SORTEDINMEM,			/* Sort completed entirely in memory */
+	TSS_SORTEDONTAPE,			/* Sort completed, final run is on tape */
+	TSS_FINALMERGE				/* Performing final merge on-the-fly */
 } TupSortStatus;
 
 /*

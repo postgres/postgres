@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: auth.h,v 1.18 2001/10/25 05:49:59 momjian Exp $
+ * $Id: auth.h,v 1.19 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -27,4 +27,5 @@ void		ClientAuthentication(Port *port);
 #define PG_KRB5_VERSION "PGVER5.1"
 
 extern char *pg_krb_server_keyfile;
+
 #endif	 /* AUTH_H */

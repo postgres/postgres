@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.27 2001/10/25 05:50:11 momjian Exp $
+ * $Id: relcache.h,v 1.28 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -72,4 +72,5 @@ extern void DestroyDummyCaches(void);
  */
 
 #define RELCACHE_INIT_FILENAME	"pg_internal.init"
+
 #endif	 /* RELCACHE_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pqsignal.h,v 1.11 2001/10/25 05:50:13 momjian Exp $
+ * $Id: pqsignal.h,v 1.12 2001/10/28 06:26:12 momjian Exp $
  *
  * NOTES
  *	  This shouldn't be in libpq, but the monitor and some other
@@ -23,4 +23,5 @@
 typedef void (*pqsigfunc) (int);
 
 extern pqsigfunc pqsignal(int signo, pqsigfunc func);
+
 #endif	 /* PQSIGNAL_H */

@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: openssl.c,v 1.6 2001/10/25 05:49:19 momjian Exp $
+ * $Id: openssl.c,v 1.7 2001/10/28 06:25:41 momjian Exp $
  */
 
 #include <postgres.h>
@@ -331,28 +331,28 @@ struct
 		"bf-cbc",
 		{
 			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_cbc_encrypt, bf_cbc_decrypt, gen_evp_free
+				bf_init, bf_cbc_encrypt, bf_cbc_decrypt, gen_evp_free
 		}
 	},
 	{
 		"bf-ecb",
 		{
 			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_ecb_encrypt, bf_ecb_decrypt, gen_evp_free
+				bf_init, bf_ecb_encrypt, bf_ecb_decrypt, gen_evp_free
 		}
 	},
 	{
 		"bf-cfb",
 		{
 			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_cfb64_encrypt, bf_cfb64_decrypt, gen_evp_free
+				bf_init, bf_cfb64_encrypt, bf_cfb64_decrypt, gen_evp_free
 		}
 	},
 	{
 		"bf-ofb",
 		{
 			gen_evp_block_size, gen_evp_key_size, gen_evp_iv_size,
-			bf_init, bf_ofb64_encrypt, bf_ofb64_decrypt, gen_evp_free
+				bf_init, bf_ofb64_encrypt, bf_ofb64_decrypt, gen_evp_free
 		}
 	},
 	{

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: indexing.h,v 1.54 2001/10/25 05:49:56 momjian Exp $
+ * $Id: indexing.h,v 1.55 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -196,4 +196,5 @@ DECLARE_UNIQUE_INDEX(pg_type_typname_index on pg_type using btree(typname name_o
 
 /* last step of initialization script: build the indices declared above */
 BUILD_INDICES
+
 #endif	 /* INDEXING_H */

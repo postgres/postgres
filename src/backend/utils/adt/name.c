@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.32 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.33 2001/10/28 06:25:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -240,4 +240,5 @@ NameComputeLength(Name name)
 		;
 	return (uint32) length;
 }
+
 #endif

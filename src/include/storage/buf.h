@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf.h,v 1.10 2001/10/25 05:50:09 momjian Exp $
+ * $Id: buf.h,v 1.11 2001/10/28 06:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,4 +43,5 @@ typedef int Buffer;
  * - plai 9/10/90
  */
 #undef NO_BUFFERISVALID
+
 #endif	 /* BUF_H */

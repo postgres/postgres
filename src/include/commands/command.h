@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: command.h,v 1.29 2001/10/25 05:49:58 momjian Exp $
+ * $Id: command.h,v 1.30 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -71,4 +71,5 @@ extern void AlterTableOwner(const char *relationName, const char *newOwnerName);
  * LOCK
  */
 extern void LockTableCommand(LockStmt *lockstmt);
+
 #endif	 /* COMMAND_H */

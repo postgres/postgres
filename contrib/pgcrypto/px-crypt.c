@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-crypt.c,v 1.3 2001/10/25 05:49:20 momjian Exp $
+ * $Id: px-crypt.c,v 1.4 2001/10/28 06:25:41 momjian Exp $
  */
 
 #include <postgres.h>
@@ -75,7 +75,7 @@ static struct
 	unsigned	id_len;
 	char	   *(*crypt) (const char *psw, const char *salt,
 									  char *buf, unsigned len);
-}			px_crypt_list[] =
+} px_crypt_list[] =
 
 {
 	{

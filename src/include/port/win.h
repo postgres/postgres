@@ -15,4 +15,5 @@ typedef unsigned char slock_t;
  */
 #if CYGWIN_VERSION_DLL_MAJOR < 1001
 #undef HAVE_UNIX_SOCKETS
+
 #endif

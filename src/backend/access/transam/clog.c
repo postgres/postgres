@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.6 2001/10/25 20:37:29 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/clog.c,v 1.7 2001/10/28 06:25:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -120,13 +120,11 @@
 
 typedef enum
 {
-				CLOG_PAGE_EMPTY,/* CLOG buffer is not in use */
-				CLOG_PAGE_READ_IN_PROGRESS,		/* CLOG page is being read
-												 * in */
-				CLOG_PAGE_CLEAN,/* CLOG page is valid and not dirty */
-				CLOG_PAGE_DIRTY,/* CLOG page is valid but needs write */
-				CLOG_PAGE_WRITE_IN_PROGRESS		/* CLOG page is being
-												 * written out in */
+	CLOG_PAGE_EMPTY,			/* CLOG buffer is not in use */
+	CLOG_PAGE_READ_IN_PROGRESS, /* CLOG page is being read in */
+	CLOG_PAGE_CLEAN,			/* CLOG page is valid and not dirty */
+	CLOG_PAGE_DIRTY,			/* CLOG page is valid but needs write */
+	CLOG_PAGE_WRITE_IN_PROGRESS /* CLOG page is being written out in */
 } ClogPageStatus;
 
 /*

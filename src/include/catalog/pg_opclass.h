@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_opclass.h,v 1.41 2001/10/25 05:49:57 momjian Exp $
+ * $Id: pg_opclass.h,v 1.42 2001/10/28 06:26:00 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -136,4 +136,5 @@ DATA(insert OID = 2003 (	403		varchar_ops		1043	t	0 ));
 DATA(insert OID = 2004 (	405		varchar_ops		1043	t	0 ));
 DATA(insert OID = 2039 (	403		timestamp_ops	1114	t	0 ));
 DATA(insert OID = 2040 (	405		timestamp_ops	1114	t	0 ));
+
 #endif	 /* PG_OPCLASS_H */

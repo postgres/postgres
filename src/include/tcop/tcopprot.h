@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tcopprot.h,v 1.44 2001/10/25 05:50:10 momjian Exp $
+ * $Id: tcopprot.h,v 1.45 2001/10/28 06:26:09 momjian Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -48,4 +48,5 @@ extern int	PostgresMain(int argc, char *argv[], const char *username);
 extern void ResetUsage(void);
 extern void ShowUsage(void);
 extern FILE *StatFp;
+
 #endif	 /* TCOPPROT_H */

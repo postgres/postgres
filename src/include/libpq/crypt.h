@@ -33,4 +33,5 @@ extern bool EncryptMD5(const char *passwd, const char *salt,
 
 #define isMD5(passwd)	(strncmp((passwd),"md5",3) == 0 && \
 						 strlen(passwd) == MD5_PASSWD_LEN)
+
 #endif

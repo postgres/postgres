@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: px-crypt.h,v 1.3 2001/10/25 05:49:20 momjian Exp $
+ * $Id: px-crypt.h,v 1.4 2001/10/28 06:25:41 momjian Exp $
  */
 
 #ifndef _PX_CRYPT_H
@@ -89,4 +89,5 @@ char	   *px_crypt_des(const char *key, const char *setting);
 char *px_crypt_md5(const char *pw, const char *salt,
 			 char *dst, unsigned dstlen);
 #endif	 /* !PX_SYSTEM_CRYPT */
+
 #endif	 /* _PX_CRYPT_H */

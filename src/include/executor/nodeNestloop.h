@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeNestloop.h,v 1.15 2001/10/25 05:49:59 momjian Exp $
+ * $Id: nodeNestloop.h,v 1.16 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,5 @@ extern int	ExecCountSlotsNestLoop(NestLoop *node);
 extern void ExecEndNestLoop(NestLoop *node);
 extern void ExecReScanNestLoop(NestLoop *node, ExprContext *exprCtxt,
 				   Plan *parent);
+
 #endif	 /* NODENESTLOOP_H */

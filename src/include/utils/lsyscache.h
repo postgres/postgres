@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lsyscache.h,v 1.37 2001/10/25 05:50:10 momjian Exp $
+ * $Id: lsyscache.h,v 1.38 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,4 +56,5 @@ extern void free_attstatsslot(Oid atttype,
 extern int32 get_usesysid(const char *username);
 
 #define TypeIsToastable(typid)	(get_typstorage(typid) != 'p')
+
 #endif	 /* LSYSCACHE_H */

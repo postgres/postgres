@@ -44,4 +44,5 @@ typedef struct
 }			TI_IN_STATE;
 
 int4		gettoken_txtidx(TI_IN_STATE * state);
+
 #endif

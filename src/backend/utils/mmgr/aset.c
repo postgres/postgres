@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.42 2001/10/25 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/aset.c,v 1.43 2001/10/28 06:25:57 momjian Exp $
  *
  * NOTE:
  *	This is a new (Feb. 05, 1999) implementation of the allocation set
@@ -1082,4 +1082,5 @@ AllocSetCheck(MemoryContext context)
 				 name, block);
 	}
 }
+
 #endif	 /* MEMORY_CONTEXT_CHECKING */

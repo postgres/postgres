@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/pl/plpython/Attic/plpython.h,v 1.3 2001/10/25 05:50:21 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/pl/plpython/Attic/plpython.h,v 1.4 2001/10/28 06:26:15 momjian Exp $ */
 
 #ifndef PLPYTHON_H
 #define PLPYTHON_H
@@ -64,4 +64,5 @@
 #define mark()
 #define refc(O)
 #endif
+
 #endif	 /* PLPYTHON_H */

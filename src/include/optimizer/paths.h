@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: paths.h,v 1.57 2001/10/25 05:50:05 momjian Exp $
+ * $Id: paths.h,v 1.58 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,12 +88,10 @@ extern RelOptInfo *make_jointree_rel(Query *root, Node *jtnode);
  */
 typedef enum
 {
-				PATHKEYS_EQUAL, /* pathkeys are identical */
-				PATHKEYS_BETTER1,		/* pathkey 1 is a superset of
-										 * pathkey 2 */
-				PATHKEYS_BETTER2,		/* vice versa */
-				PATHKEYS_DIFFERENT		/* neither pathkey includes the
-										 * other */
+	PATHKEYS_EQUAL,				/* pathkeys are identical */
+	PATHKEYS_BETTER1,			/* pathkey 1 is a superset of pathkey 2 */
+	PATHKEYS_BETTER2,			/* vice versa */
+	PATHKEYS_DIFFERENT			/* neither pathkey includes the other */
 } PathKeysComparison;
 
 extern void add_equijoined_keys(Query *root, RestrictInfo *restrictinfo);
@@ -132,4 +130,5 @@ extern int	pathkeys_useful_for_ordering(Query *root, List *pathkeys);
 extern List *truncate_useless_pathkeys(Query *root,
 						  RelOptInfo *rel,
 						  List *pathkeys);
+
 #endif	 /* PATHS_H */

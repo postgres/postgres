@@ -14,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.67 2001/10/25 05:49:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/prep/prepunion.c,v 1.68 2001/10/28 06:25:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -711,7 +711,7 @@ adjust_inherited_attrs_mutator(Node *node,
 			adjust_inherited_attrs_mutator((Node *) oldinfo->clause, context);
 
 		newinfo->subclauseindices = NIL;
-		newinfo->eval_cost = -1;		/* reset these too */
+		newinfo->eval_cost = -1;	/* reset these too */
 		newinfo->this_selec = -1;
 		newinfo->left_pathkey = NIL;	/* and these */
 		newinfo->right_pathkey = NIL;

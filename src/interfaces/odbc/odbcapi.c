@@ -37,7 +37,7 @@
 #include "connection.h"
 #include "statement.h"
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocConnect(HENV EnvironmentHandle,
 				HDBC FAR * ConnectionHandle)
 {
@@ -45,45 +45,45 @@ SQLAllocConnect(HENV EnvironmentHandle,
 	return PGAPI_AllocConnect(EnvironmentHandle, ConnectionHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocEnv(HENV FAR * EnvironmentHandle)
 {
 	mylog("[SQLAllocEnv]");
 	return PGAPI_AllocEnv(EnvironmentHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocStmt(HDBC ConnectionHandle,
-			 HSTMT * StatementHandle)
+			 HSTMT *StatementHandle)
 {
 	mylog("[SQLAllocStmt]");
 	return PGAPI_AllocStmt(ConnectionHandle, StatementHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBindCol(HSTMT StatementHandle,
 		   SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
 		   PTR TargetValue, SQLINTEGER BufferLength,
-		   SQLINTEGER * StrLen_or_Ind)
+		   SQLINTEGER *StrLen_or_Ind)
 {
 	mylog("[SQLBindCol]");
 	return PGAPI_BindCol(StatementHandle, ColumnNumber,
 				   TargetType, TargetValue, BufferLength, StrLen_or_Ind);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLCancel(HSTMT StatementHandle)
 {
 	mylog("[SQLCancel]");
 	return PGAPI_Cancel(StatementHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColumns(HSTMT StatementHandle,
-		   SQLCHAR * CatalogName, SQLSMALLINT NameLength1,
-		   SQLCHAR * SchemaName, SQLSMALLINT NameLength2,
-		   SQLCHAR * TableName, SQLSMALLINT NameLength3,
-		   SQLCHAR * ColumnName, SQLSMALLINT NameLength4)
+		   SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
+		   SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
+		   SQLCHAR *TableName, SQLSMALLINT NameLength3,
+		   SQLCHAR *ColumnName, SQLSMALLINT NameLength4)
 {
 	mylog("[SQLColumns]");
 	return PGAPI_Columns(StatementHandle, CatalogName, NameLength1,
@@ -92,18 +92,18 @@ SQLColumns(HSTMT StatementHandle,
 }
 
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLConnect(HDBC ConnectionHandle,
-		   SQLCHAR * ServerName, SQLSMALLINT NameLength1,
-		   SQLCHAR * UserName, SQLSMALLINT NameLength2,
-		   SQLCHAR * Authentication, SQLSMALLINT NameLength3)
+		   SQLCHAR *ServerName, SQLSMALLINT NameLength1,
+		   SQLCHAR *UserName, SQLSMALLINT NameLength2,
+		   SQLCHAR *Authentication, SQLSMALLINT NameLength3)
 {
 	mylog("[SQLConnect]");
 	return PGAPI_Connect(ConnectionHandle, ServerName, NameLength1,
 					 UserName, NameLength2, Authentication, NameLength3);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDriverConnect(HDBC hdbc,
 				 HWND hwnd,
 				 UCHAR FAR * szConnStrIn,
@@ -117,26 +117,26 @@ SQLDriverConnect(HDBC hdbc,
 	return PGAPI_DriverConnect(hdbc, hwnd, szConnStrIn, cbConnStrIn,
 		szConnStrOut, cbConnStrOutMax, pcbConnStrOut, fDriverCompletion);
 }
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBrowseConnect(
 				 HDBC hdbc,
-				 SQLCHAR * szConnStrIn,
+				 SQLCHAR *szConnStrIn,
 				 SQLSMALLINT cbConnStrIn,
-				 SQLCHAR * szConnStrOut,
+				 SQLCHAR *szConnStrOut,
 				 SQLSMALLINT cbConnStrOutMax,
-				 SQLSMALLINT * pcbConnStrOut)
+				 SQLSMALLINT *pcbConnStrOut)
 {
 	mylog("[SQLBrowseConnect]");
 	return PGAPI_BrowseConnect(hdbc, szConnStrIn, cbConnStrIn,
 						   szConnStrOut, cbConnStrOutMax, pcbConnStrOut);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDataSources(HENV EnvironmentHandle,
-			   SQLUSMALLINT Direction, SQLCHAR * ServerName,
-			   SQLSMALLINT BufferLength1, SQLSMALLINT * NameLength1,
-			   SQLCHAR * Description, SQLSMALLINT BufferLength2,
-			   SQLSMALLINT * NameLength2)
+			   SQLUSMALLINT Direction, SQLCHAR *ServerName,
+			   SQLSMALLINT BufferLength1, SQLSMALLINT *NameLength1,
+			   SQLCHAR *Description, SQLSMALLINT BufferLength2,
+			   SQLSMALLINT *NameLength2)
 {
 	mylog("[SQLDataSources]");
 
@@ -148,12 +148,12 @@ SQLDataSources(HENV EnvironmentHandle,
 	return SQL_ERROR;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDescribeCol(HSTMT StatementHandle,
-			   SQLUSMALLINT ColumnNumber, SQLCHAR * ColumnName,
-			   SQLSMALLINT BufferLength, SQLSMALLINT * NameLength,
-			   SQLSMALLINT * DataType, SQLUINTEGER * ColumnSize,
-			   SQLSMALLINT * DecimalDigits, SQLSMALLINT * Nullable)
+			   SQLUSMALLINT ColumnNumber, SQLCHAR *ColumnName,
+			   SQLSMALLINT BufferLength, SQLSMALLINT *NameLength,
+			   SQLSMALLINT *DataType, SQLUINTEGER *ColumnSize,
+			   SQLSMALLINT *DecimalDigits, SQLSMALLINT *Nullable)
 {
 	mylog("[SQLDescribeCol]");
 	return PGAPI_DescribeCol(StatementHandle, ColumnNumber,
@@ -161,41 +161,41 @@ SQLDescribeCol(HSTMT StatementHandle,
 						  DataType, ColumnSize, DecimalDigits, Nullable);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDisconnect(HDBC ConnectionHandle)
 {
 	mylog("[SQLDisconnect]");
 	return PGAPI_Disconnect(ConnectionHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLError(HENV EnvironmentHandle,
 		 HDBC ConnectionHandle, HSTMT StatementHandle,
-		 SQLCHAR * Sqlstate, SQLINTEGER * NativeError,
-		 SQLCHAR * MessageText, SQLSMALLINT BufferLength,
-		 SQLSMALLINT * TextLength)
+		 SQLCHAR *Sqlstate, SQLINTEGER *NativeError,
+		 SQLCHAR *MessageText, SQLSMALLINT BufferLength,
+		 SQLSMALLINT *TextLength)
 {
 	mylog("[SQLError]");
 	return PGAPI_Error(EnvironmentHandle, ConnectionHandle, StatementHandle,
 		   Sqlstate, NativeError, MessageText, BufferLength, TextLength);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLExecDirect(HSTMT StatementHandle,
-			  SQLCHAR * StatementText, SQLINTEGER TextLength)
+			  SQLCHAR *StatementText, SQLINTEGER TextLength)
 {
 	mylog("[SQLExecDirect]");
 	return PGAPI_ExecDirect(StatementHandle, StatementText, TextLength);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLExecute(HSTMT StatementHandle)
 {
 	mylog("[SQLExecute]");
 	return PGAPI_Execute(StatementHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFetch(HSTMT StatementHandle)
 {
 	static char *func = "SQLFetch";
@@ -218,21 +218,21 @@ SQLFetch(HSTMT StatementHandle)
 	return PGAPI_Fetch(StatementHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeConnect(HDBC ConnectionHandle)
 {
 	mylog("[SQLFreeStmt]");
 	return PGAPI_FreeConnect(ConnectionHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeEnv(HENV EnvironmentHandle)
 {
 	mylog("[SQLFreeEnv]");
 	return PGAPI_FreeEnv(EnvironmentHandle);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeStmt(HSTMT StatementHandle,
 			SQLUSMALLINT Option)
 {
@@ -240,37 +240,37 @@ SQLFreeStmt(HSTMT StatementHandle,
 	return PGAPI_FreeStmt(StatementHandle, Option);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetConnectOption(HDBC ConnectionHandle,
 					SQLUSMALLINT Option, PTR Value)
 {
 	mylog("[SQLGetConnectOption]");
 	return PGAPI_GetConnectOption(ConnectionHandle, Option, Value);
 }
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetCursorName(HSTMT StatementHandle,
-				 SQLCHAR * CursorName, SQLSMALLINT BufferLength,
-				 SQLSMALLINT * NameLength)
+				 SQLCHAR *CursorName, SQLSMALLINT BufferLength,
+				 SQLSMALLINT *NameLength)
 {
 	mylog("[SQLGetCursorName]");
 	return PGAPI_GetCursorName(StatementHandle, CursorName, BufferLength,
 							   NameLength);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetData(HSTMT StatementHandle,
 		   SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
 		   PTR TargetValue, SQLINTEGER BufferLength,
-		   SQLINTEGER * StrLen_or_Ind)
+		   SQLINTEGER *StrLen_or_Ind)
 {
 	mylog("[SQLGetData]");
 	return PGAPI_GetData(StatementHandle, ColumnNumber, TargetType,
 						 TargetValue, BufferLength, StrLen_or_Ind);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetFunctions(HDBC ConnectionHandle,
-				SQLUSMALLINT FunctionId, SQLUSMALLINT * Supported)
+				SQLUSMALLINT FunctionId, SQLUSMALLINT *Supported)
 {
 	mylog("[SQLGetFunctions]");
 #if (ODBCVER >= 0x3000)
@@ -279,10 +279,10 @@ SQLGetFunctions(HDBC ConnectionHandle,
 #endif
 	return PGAPI_GetFunctions(ConnectionHandle, FunctionId, Supported);
 }
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetInfo(HDBC ConnectionHandle,
 		   SQLUSMALLINT InfoType, PTR InfoValue,
-		   SQLSMALLINT BufferLength, SQLSMALLINT * StringLength)
+		   SQLSMALLINT BufferLength, SQLSMALLINT *StringLength)
 {
 #if (ODBCVER >= 0x3000)
 	RETCODE		ret;
@@ -303,7 +303,7 @@ SQLGetInfo(HDBC ConnectionHandle,
 #endif
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetStmtOption(HSTMT StatementHandle,
 				 SQLUSMALLINT Option, PTR Value)
 {
@@ -311,7 +311,7 @@ SQLGetStmtOption(HSTMT StatementHandle,
 	return PGAPI_GetStmtOption(StatementHandle, Option, Value);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetTypeInfo(HSTMT StatementHandle,
 			   SQLSMALLINT DataType)
 {
@@ -319,31 +319,31 @@ SQLGetTypeInfo(HSTMT StatementHandle,
 	return PGAPI_GetTypeInfo(StatementHandle, DataType);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLNumResultCols(HSTMT StatementHandle,
-				 SQLSMALLINT * ColumnCount)
+				 SQLSMALLINT *ColumnCount)
 {
 	mylog("[SQLNumResultCols]");
 	return PGAPI_NumResultCols(StatementHandle, ColumnCount);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLParamData(HSTMT StatementHandle,
-			 PTR * Value)
+			 PTR *Value)
 {
 	mylog("[SQLParamData]");
 	return PGAPI_ParamData(StatementHandle, Value);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLPrepare(HSTMT StatementHandle,
-		   SQLCHAR * StatementText, SQLINTEGER TextLength)
+		   SQLCHAR *StatementText, SQLINTEGER TextLength)
 {
 	mylog("[SQLPrepare]");
 	return PGAPI_Prepare(StatementHandle, StatementText, TextLength);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLPutData(HSTMT StatementHandle,
 		   PTR Data, SQLINTEGER StrLen_or_Ind)
 {
@@ -351,15 +351,15 @@ SQLPutData(HSTMT StatementHandle,
 	return PGAPI_PutData(StatementHandle, Data, StrLen_or_Ind);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLRowCount(HSTMT StatementHandle,
-			SQLINTEGER * RowCount)
+			SQLINTEGER *RowCount)
 {
 	mylog("[SQLRowCount]");
 	return PGAPI_RowCount(StatementHandle, RowCount);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetConnectOption(HDBC ConnectionHandle,
 					SQLUSMALLINT Option, SQLUINTEGER Value)
 {
@@ -367,20 +367,20 @@ SQLSetConnectOption(HDBC ConnectionHandle,
 	return PGAPI_SetConnectOption(ConnectionHandle, Option, Value);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetCursorName(HSTMT StatementHandle,
-				 SQLCHAR * CursorName, SQLSMALLINT NameLength)
+				 SQLCHAR *CursorName, SQLSMALLINT NameLength)
 {
 	mylog("[SQLSetCursorName]");
 	return PGAPI_SetCursorName(StatementHandle, CursorName, NameLength);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetParam(HSTMT StatementHandle,
 			SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
 			SQLSMALLINT ParameterType, SQLUINTEGER LengthPrecision,
 			SQLSMALLINT ParameterScale, PTR ParameterValue,
-			SQLINTEGER * StrLen_or_Ind)
+			SQLINTEGER *StrLen_or_Ind)
 {
 	mylog("[SQLSetParam]");
 
@@ -392,7 +392,7 @@ SQLSetParam(HSTMT StatementHandle,
 	return SQL_ERROR;
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetStmtOption(HSTMT StatementHandle,
 				 SQLUSMALLINT Option, SQLUINTEGER Value)
 {
@@ -400,11 +400,11 @@ SQLSetStmtOption(HSTMT StatementHandle,
 	return PGAPI_SetStmtOption(StatementHandle, Option, Value);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSpecialColumns(HSTMT StatementHandle,
-				  SQLUSMALLINT IdentifierType, SQLCHAR * CatalogName,
-				  SQLSMALLINT NameLength1, SQLCHAR * SchemaName,
-				  SQLSMALLINT NameLength2, SQLCHAR * TableName,
+				  SQLUSMALLINT IdentifierType, SQLCHAR *CatalogName,
+				  SQLSMALLINT NameLength1, SQLCHAR *SchemaName,
+				  SQLSMALLINT NameLength2, SQLCHAR *TableName,
 				  SQLSMALLINT NameLength3, SQLUSMALLINT Scope,
 				  SQLUSMALLINT Nullable)
 {
@@ -414,11 +414,11 @@ SQLSpecialColumns(HSTMT StatementHandle,
 								Scope, Nullable);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLStatistics(HSTMT StatementHandle,
-			  SQLCHAR * CatalogName, SQLSMALLINT NameLength1,
-			  SQLCHAR * SchemaName, SQLSMALLINT NameLength2,
-			  SQLCHAR * TableName, SQLSMALLINT NameLength3,
+			  SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
+			  SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
+			  SQLCHAR *TableName, SQLSMALLINT NameLength3,
 			  SQLUSMALLINT Unique, SQLUSMALLINT Reserved)
 {
 	mylog("[SQLStatistics]");
@@ -427,12 +427,12 @@ SQLStatistics(HSTMT StatementHandle,
 							Reserved);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLTables(HSTMT StatementHandle,
-		  SQLCHAR * CatalogName, SQLSMALLINT NameLength1,
-		  SQLCHAR * SchemaName, SQLSMALLINT NameLength2,
-		  SQLCHAR * TableName, SQLSMALLINT NameLength3,
-		  SQLCHAR * TableType, SQLSMALLINT NameLength4)
+		  SQLCHAR *CatalogName, SQLSMALLINT NameLength1,
+		  SQLCHAR *SchemaName, SQLSMALLINT NameLength2,
+		  SQLCHAR *TableName, SQLSMALLINT NameLength3,
+		  SQLCHAR *TableType, SQLSMALLINT NameLength4)
 {
 	mylog("[SQLTables]");
 	return PGAPI_Tables(StatementHandle, CatalogName, NameLength1,
@@ -440,7 +440,7 @@ SQLTables(HSTMT StatementHandle,
 						TableType, NameLength4);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLTransact(HENV EnvironmentHandle,
 			HDBC ConnectionHandle, SQLUSMALLINT CompletionType)
 {
@@ -448,31 +448,31 @@ SQLTransact(HENV EnvironmentHandle,
 	return PGAPI_Transact(EnvironmentHandle, ConnectionHandle, CompletionType);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColAttributes(
 				 HSTMT hstmt,
 				 SQLUSMALLINT icol,
 				 SQLUSMALLINT fDescType,
 				 PTR rgbDesc,
 				 SQLSMALLINT cbDescMax,
-				 SQLSMALLINT * pcbDesc,
-				 SQLINTEGER * pfDesc)
+				 SQLSMALLINT *pcbDesc,
+				 SQLINTEGER *pfDesc)
 {
 	mylog("[SQLColAttributes]");
 	return PGAPI_ColAttributes(hstmt, icol, fDescType, rgbDesc,
 							   cbDescMax, pcbDesc, pfDesc);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColumnPrivileges(
 					HSTMT hstmt,
-					SQLCHAR * szCatalogName,
+					SQLCHAR *szCatalogName,
 					SQLSMALLINT cbCatalogName,
-					SQLCHAR * szSchemaName,
+					SQLCHAR *szSchemaName,
 					SQLSMALLINT cbSchemaName,
-					SQLCHAR * szTableName,
+					SQLCHAR *szTableName,
 					SQLSMALLINT cbTableName,
-					SQLCHAR * szColumnName,
+					SQLCHAR *szColumnName,
 					SQLSMALLINT cbColumnName)
 {
 	mylog("[SQLColumnPrivileges]");
@@ -481,46 +481,46 @@ SQLColumnPrivileges(
 								  szColumnName, cbColumnName);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLDescribeParam(
 				 HSTMT hstmt,
 				 SQLUSMALLINT ipar,
-				 SQLSMALLINT * pfSqlType,
-				 SQLUINTEGER * pcbParamDef,
-				 SQLSMALLINT * pibScale,
-				 SQLSMALLINT * pfNullable)
+				 SQLSMALLINT *pfSqlType,
+				 SQLUINTEGER *pcbParamDef,
+				 SQLSMALLINT *pibScale,
+				 SQLSMALLINT *pfNullable)
 {
 	mylog("[SQLDescribeParam]");
 	return PGAPI_DescribeParam(hstmt, ipar, pfSqlType, pcbParamDef,
 							   pibScale, pfNullable);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLExtendedFetch(
 				 HSTMT hstmt,
 				 SQLUSMALLINT fFetchType,
 				 SQLINTEGER irow,
-				 SQLUINTEGER * pcrow,
-				 SQLUSMALLINT * rgfRowStatus)
+				 SQLUINTEGER *pcrow,
+				 SQLUSMALLINT *rgfRowStatus)
 {
 	mylog("[SQLExtendedFetch]");
 	return PGAPI_ExtendedFetch(hstmt, fFetchType, irow, pcrow, rgfRowStatus);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLForeignKeys(
 			   HSTMT hstmt,
-			   SQLCHAR * szPkCatalogName,
+			   SQLCHAR *szPkCatalogName,
 			   SQLSMALLINT cbPkCatalogName,
-			   SQLCHAR * szPkSchemaName,
+			   SQLCHAR *szPkSchemaName,
 			   SQLSMALLINT cbPkSchemaName,
-			   SQLCHAR * szPkTableName,
+			   SQLCHAR *szPkTableName,
 			   SQLSMALLINT cbPkTableName,
-			   SQLCHAR * szFkCatalogName,
+			   SQLCHAR *szFkCatalogName,
 			   SQLSMALLINT cbFkCatalogName,
-			   SQLCHAR * szFkSchemaName,
+			   SQLCHAR *szFkSchemaName,
 			   SQLSMALLINT cbFkSchemaName,
-			   SQLCHAR * szFkTableName,
+			   SQLCHAR *szFkTableName,
 			   SQLSMALLINT cbFkTableName)
 {
 	mylog("[SQLForeignKeys]");
@@ -530,54 +530,54 @@ SQLForeignKeys(
 		   szFkSchemaName, cbFkSchemaName, szFkTableName, cbFkTableName);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLMoreResults(HSTMT hstmt)
 {
 	mylog("[SQLMoreResults]");
 	return PGAPI_MoreResults(hstmt);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLNativeSql(
 			 HDBC hdbc,
-			 SQLCHAR * szSqlStrIn,
+			 SQLCHAR *szSqlStrIn,
 			 SQLINTEGER cbSqlStrIn,
-			 SQLCHAR * szSqlStr,
+			 SQLCHAR *szSqlStr,
 			 SQLINTEGER cbSqlStrMax,
-			 SQLINTEGER * pcbSqlStr)
+			 SQLINTEGER *pcbSqlStr)
 {
 	mylog("[SQLNativeSql]");
 	return PGAPI_NativeSql(hdbc, szSqlStrIn, cbSqlStrIn, szSqlStr,
 						   cbSqlStrMax, pcbSqlStr);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLNumParams(
 			 HSTMT hstmt,
-			 SQLSMALLINT * pcpar)
+			 SQLSMALLINT *pcpar)
 {
 	mylog("[SQLNumParams]");
 	return PGAPI_NumParams(hstmt, pcpar);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLParamOptions(
 				HSTMT hstmt,
 				SQLUINTEGER crow,
-				SQLUINTEGER * pirow)
+				SQLUINTEGER *pirow)
 {
 	mylog("[SQLParamOptions]");
 	return PGAPI_ParamOptions(hstmt, crow, pirow);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLPrimaryKeys(
 			   HSTMT hstmt,
-			   SQLCHAR * szCatalogName,
+			   SQLCHAR *szCatalogName,
 			   SQLSMALLINT cbCatalogName,
-			   SQLCHAR * szSchemaName,
+			   SQLCHAR *szSchemaName,
 			   SQLSMALLINT cbSchemaName,
-			   SQLCHAR * szTableName,
+			   SQLCHAR *szTableName,
 			   SQLSMALLINT cbTableName)
 {
 	mylog("[SQLPrimaryKeys]");
@@ -585,16 +585,16 @@ SQLPrimaryKeys(
 				   szSchemaName, cbSchemaName, szTableName, cbTableName);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLProcedureColumns(
 					HSTMT hstmt,
-					SQLCHAR * szCatalogName,
+					SQLCHAR *szCatalogName,
 					SQLSMALLINT cbCatalogName,
-					SQLCHAR * szSchemaName,
+					SQLCHAR *szSchemaName,
 					SQLSMALLINT cbSchemaName,
-					SQLCHAR * szProcName,
+					SQLCHAR *szProcName,
 					SQLSMALLINT cbProcName,
-					SQLCHAR * szColumnName,
+					SQLCHAR *szColumnName,
 					SQLSMALLINT cbColumnName)
 {
 	mylog("[SQLProcedureColumns]");
@@ -603,14 +603,14 @@ SQLProcedureColumns(
 								  szColumnName, cbColumnName);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLProcedures(
 			  HSTMT hstmt,
-			  SQLCHAR * szCatalogName,
+			  SQLCHAR *szCatalogName,
 			  SQLSMALLINT cbCatalogName,
-			  SQLCHAR * szSchemaName,
+			  SQLCHAR *szSchemaName,
 			  SQLSMALLINT cbSchemaName,
-			  SQLCHAR * szProcName,
+			  SQLCHAR *szProcName,
 			  SQLSMALLINT cbProcName)
 {
 	mylog("[SQLProcedures]");
@@ -618,7 +618,7 @@ SQLProcedures(
 					 szSchemaName, cbSchemaName, szProcName, cbProcName);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetPos(
 		  HSTMT hstmt,
 		  SQLUSMALLINT irow,
@@ -629,14 +629,14 @@ SQLSetPos(
 	return PGAPI_SetPos(hstmt, irow, fOption, fLock);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLTablePrivileges(
 				   HSTMT hstmt,
-				   SQLCHAR * szCatalogName,
+				   SQLCHAR *szCatalogName,
 				   SQLSMALLINT cbCatalogName,
-				   SQLCHAR * szSchemaName,
+				   SQLCHAR *szSchemaName,
 				   SQLSMALLINT cbSchemaName,
-				   SQLCHAR * szTableName,
+				   SQLCHAR *szTableName,
 				   SQLSMALLINT cbTableName)
 {
 	mylog("[SQLTablePrivileges]");
@@ -644,7 +644,7 @@ SQLTablePrivileges(
 				   szSchemaName, cbSchemaName, szTableName, cbTableName);
 }
 
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBindParameter(
 				 HSTMT hstmt,
 				 SQLUSMALLINT ipar,
@@ -655,7 +655,7 @@ SQLBindParameter(
 				 SQLSMALLINT ibScale,
 				 PTR rgbValue,
 				 SQLINTEGER cbValueMax,
-				 SQLINTEGER * pcbValue)
+				 SQLINTEGER *pcbValue)
 {
 	mylog("[SQLBindParameter]");
 	return PGAPI_BindParameter(hstmt, ipar, fParamType, fCType,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.25 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/buf_table.c,v 1.26 2001/10/28 06:25:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,4 +152,5 @@ DBG_LookupListCheck(int nlookup)
 
 	hash_stats("Shared", SharedBufHash);
 }
+
 #endif

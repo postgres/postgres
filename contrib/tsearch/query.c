@@ -104,7 +104,7 @@ gettoken_query(QPRS_STATE * state, int4 *val, int4 *lenval, char **strval)
 	{
 		switch (state->state)
 		{
-				case WAITOPERAND:
+			case WAITOPERAND:
 				if (*(state->buf) == '!')
 				{
 					(state->buf)++;
@@ -408,7 +408,7 @@ rexecqtxt(PG_FUNCTION_ARGS)
 							   execqtxt,
 							   PG_GETARG_DATUM(1),
 							   PG_GETARG_DATUM(0)
-	);
+		);
 }
 
 Datum

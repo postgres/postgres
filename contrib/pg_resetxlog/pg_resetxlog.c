@@ -23,7 +23,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.8 2001/10/25 05:49:19 momjian Exp $
+ * $Header: /cvsroot/pgsql/contrib/pg_resetxlog/Attic/pg_resetxlog.c,v 1.9 2001/10/28 06:25:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -491,7 +491,7 @@ ReadRecordV0(XLogRecPtr *RecPtr, char *buffer)
 		readFile = XLogFileOpen(readId, readSeg);
 		if (readFile < 0)
 			goto next_record_is_invalid;
-		readOff = (uint32) (-1);		/* force read to occur below */
+		readOff = (uint32) (-1);	/* force read to occur below */
 	}
 
 	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / BLCKSZ) * BLCKSZ;

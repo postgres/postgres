@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.101 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/lmgr/lock.c,v 1.102 2001/10/28 06:25:50 momjian Exp $
  *
  * NOTES
  *	  Outside modules can create a lock table and acquire/release
@@ -54,15 +54,15 @@ static void LockCountMyLocks(SHMEM_OFFSET lockOffset, PROC *proc,
 
 static char *lock_mode_names[] =
 {
-				"INVALID",
-				"AccessShareLock",
-				"RowShareLock",
-				"RowExclusiveLock",
-				"ShareUpdateExclusiveLock",
-				"ShareLock",
-				"ShareRowExclusiveLock",
-				"ExclusiveLock",
-				"AccessExclusiveLock"
+	"INVALID",
+		"AccessShareLock",
+		"RowShareLock",
+		"RowExclusiveLock",
+		"ShareUpdateExclusiveLock",
+		"ShareLock",
+		"ShareRowExclusiveLock",
+		"ExclusiveLock",
+		"AccessExclusiveLock"
 };
 
 
@@ -1463,4 +1463,5 @@ DumpAllLocks(void)
 			elog(DEBUG, "DumpAllLocks: holder->tag.lock = NULL");
 	}
 }
+
 #endif	 /* LOCK_DEBUG */

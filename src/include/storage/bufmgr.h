@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufmgr.h,v 1.55 2001/10/25 05:50:10 momjian Exp $
+ * $Id: bufmgr.h,v 1.56 2001/10/28 06:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,4 +191,5 @@ extern void BufmgrCommit(void);
 extern void BufferSync(void);
 
 extern void InitLocalBuffer(void);
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: defrem.h,v 1.26 2001/10/25 05:49:58 momjian Exp $
+ * $Id: defrem.h,v 1.27 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,4 +48,5 @@ extern void RemoveOperator(char *operatorName,
 			   char *typeName1, char *typeName2);
 extern void RemoveType(char *typeName);
 extern void RemoveAggregate(char *aggName, char *aggType);
+
 #endif	 /* DEFREM_H */

@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sequence.h,v 1.17 2001/10/25 05:49:58 momjian Exp $
+ * $Id: sequence.h,v 1.18 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -89,4 +89,5 @@ extern void CloseSequences(void);
 extern void seq_redo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_undo(XLogRecPtr lsn, XLogRecord *rptr);
 extern void seq_desc(char *buf, uint8 xl_info, char *rec);
+
 #endif	 /* SEQUENCE_H */

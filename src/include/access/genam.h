@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: genam.h,v 1.28 2001/10/25 05:49:55 momjian Exp $
+ * $Id: genam.h,v 1.29 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,4 +63,5 @@ extern struct FmgrInfo *index_getprocinfo(Relation irel, AttrNumber attnum,
 extern IndexScanDesc RelationGetIndexScan(Relation relation, bool scanFromEnd,
 					 uint16 numberOfKeys, ScanKey key);
 extern void IndexScanEnd(IndexScanDesc scan);
+
 #endif	 /* GENAM_H */

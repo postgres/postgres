@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: miscadmin.h,v 1.95 2001/10/25 05:49:54 momjian Exp $
+ * $Id: miscadmin.h,v 1.96 2001/10/28 06:25:59 momjian Exp $
  *
  * NOTES
  *	  some of the information in this file should be moved to
@@ -260,10 +260,9 @@ extern bool is_dbadmin(Oid dbid);		/* current user is owner of
 
 typedef enum ProcessingMode
 {
-				BootstrapProcessing,	/* bootstrap creation of template
-										 * database */
-				InitProcessing, /* initializing system */
-				NormalProcessing/* normal processing */
+	BootstrapProcessing,		/* bootstrap creation of template database */
+	InitProcessing,				/* initializing system */
+	NormalProcessing			/* normal processing */
 } ProcessingMode;
 
 extern ProcessingMode Mode;
@@ -305,4 +304,5 @@ extern void ValidatePgVersion(const char *path);
 extern void IgnoreSystemIndexes(bool mode);
 extern bool IsIgnoringSystemIndexes(void);
 extern bool IsCacheInitialized(void);
+
 #endif	 /* MISCADMIN_H */

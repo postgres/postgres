@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.45 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.46 2001/10/28 06:25:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -278,7 +278,7 @@ NullCommand(CommandDest dest)
 			/*
 			 * tell the fe that we saw an empty query string
 			 */
-			pq_putbytes("I", 2);		/* note we send I and \0 */
+			pq_putbytes("I", 2);	/* note we send I and \0 */
 			break;
 
 		case Debug:

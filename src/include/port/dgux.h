@@ -9,4 +9,5 @@
 #endif
 #ifndef			BYTE_ORDER
 #define			BYTE_ORDER		BIG_ENDIAN
+
 #endif

@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.235 2001/10/25 05:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.236 2001/10/28 06:25:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,8 @@
 
 typedef enum _formatLiteralOptions
 {
-				CONV_ALL = 0,
-				PASS_LFTAB = 3	/* NOTE: 1 and 2 are reserved in case we
+	CONV_ALL = 0,
+	PASS_LFTAB = 3				/* NOTE: 1 and 2 are reserved in case we
 								 * want to make a mask. */
 	/* We could make this a bit mask for control chars, but I don't */
 	/* see any value in making it more complex...the current code */
@@ -571,7 +571,7 @@ dumpClasses(const TableInfo *tblinfo, const int numTables, Archive *fout,
 		if (tblinfo[i].viewdef != NULL)
 			continue;
 
-		if (tblinfo[i].sequence)/* already dumped */
+		if (tblinfo[i].sequence)	/* already dumped */
 			continue;
 
 		if (!onlytable || (strcmp(classname, onlytable) == 0) || (strlen(onlytable) == 0))
@@ -892,10 +892,10 @@ main(int argc, char **argv)
 
 				/*
 				 * Option letters were getting scarce, so I invented this
-				 * new scheme: '-X feature' turns on some feature.
-				 * Compare to the -f option in GCC.  You should also add
-				 * an equivalent GNU-style option --feature.  Features
-				 * that require arguments should use '-X feature=foo'.
+				 * new scheme: '-X feature' turns on some feature. Compare
+				 * to the -f option in GCC.  You should also add an
+				 * equivalent GNU-style option --feature.  Features that
+				 * require arguments should use '-X feature=foo'.
 				 */
 			case 'X':
 				if (strcmp(optarg, "use-set-session-authorization") == 0)
@@ -4105,7 +4105,7 @@ dumpTables(Archive *fout, TableInfo *tblinfo, int numTables,
 
 	for (i = 0; i < numTables; i++)
 	{
-		if (tblinfo[i].sequence)/* already dumped */
+		if (tblinfo[i].sequence)	/* already dumped */
 			continue;
 
 		if (!tablename || (!strcmp(tblinfo[i].relname, tablename)) || (strlen(tablename) == 0))

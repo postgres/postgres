@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.146 2001/10/25 05:49:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.147 2001/10/28 06:25:42 momjian Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -2083,7 +2083,7 @@ LockTableCommand(LockStmt *lockstmt)
 
 		LockRelation(rel, lockstmt->mode);
 
-		heap_close(rel, NoLock);		/* close rel, keep lock */
+		heap_close(rel, NoLock);	/* close rel, keep lock */
 	}
 }
 

@@ -3,4 +3,5 @@
 
 ITEM	   *clean_NOT(ITEM * ptr, int4 *len);
 ITEM	   *clean_fakeval(ITEM * ptr, int4 *len);
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ultrix4.h,v 1.8 2001/10/25 05:49:40 momjian Exp $
+ * $Id: ultrix4.h,v 1.9 2001/10/28 06:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,9 +55,9 @@ typedef struct ScnInfo
 
 typedef enum
 {
-				DL_NEEDRELOC,	/* still need relocation */
-				DL_RELOCATED,	/* no relocation necessary */
-				DL_INPROG		/* relocation in progress */
+	DL_NEEDRELOC,				/* still need relocation */
+	DL_RELOCATED,				/* no relocation necessary */
+	DL_INPROG					/* relocation in progress */
 }			dlRStatus;
 
 typedef struct JmpTbl
@@ -120,4 +120,5 @@ extern char *dl_error( /* void */ );
 extern char **dl_undefinedSymbols( /* int *count */ );
 extern void dl_printAllSymbols( /* void *handle */ );
 extern void dl_setLibraries( /* char *libs */ );
+
 #endif	 /* _DL_HEADER_ */

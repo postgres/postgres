@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.204 2001/10/25 05:49:34 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.205 2001/10/28 06:25:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -859,7 +859,7 @@ transformColumnDefinition(ParseState *pstate, CreateStmtContext *cxt,
 
 		constraint = makeNode(Constraint);
 		constraint->contype = CONSTR_UNIQUE;
-		constraint->name = NULL;		/* assign later */
+		constraint->name = NULL;	/* assign later */
 		column->constraints = lappend(column->constraints, constraint);
 
 		constraint = makeNode(Constraint);

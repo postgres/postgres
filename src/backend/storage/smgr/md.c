@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.88 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/md.c,v 1.89 2001/10/28 06:25:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -58,7 +58,7 @@ typedef struct _MdfdVec
 
 	int			mdfd_nextFree;	/* link to next freelist member, if free */
 #ifndef LET_OS_MANAGE_FILESIZE
-	struct _MdfdVec *mdfd_chain;		/* for large relations */
+	struct _MdfdVec *mdfd_chain;	/* for large relations */
 #endif
 } MdfdVec;
 

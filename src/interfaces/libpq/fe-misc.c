@@ -25,7 +25,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.58 2001/10/25 05:50:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-misc.c,v 1.59 2001/10/28 06:26:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -894,4 +894,5 @@ WSSE_GOODEXIT:
 
 	return winsock_strerror_buf;
 }
+
 #endif

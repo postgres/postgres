@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.17 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/_deadcode/Attic/xfunc.c,v 1.18 2001/10/28 06:25:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -265,7 +265,7 @@ RestrictInfo
 xfunc_pullup(Query *queryInfo,
 			 Path childpath,
 			 JoinPath parentpath,
-			 RestrictInfo cinfo,/* clause to pull up */
+			 RestrictInfo cinfo,	/* clause to pull up */
 			 int whichchild,	/* whether child is INNER or OUTER of join */
 			 int clausetype)	/* whether clause to pull is join or local */
 {

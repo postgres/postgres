@@ -6,4 +6,5 @@ void		initmorph(void);
 char	   *lemmatize(char *word, int *len, int type);
 
 bool		is_stoptype(int type);
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_agg.h,v 1.18 2001/10/25 05:50:06 momjian Exp $
+ * $Id: parse_agg.h,v 1.19 2001/10/28 06:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,4 +22,5 @@ extern Aggref *ParseAgg(ParseState *pstate, char *aggname, Oid basetype,
 		 List *args, bool agg_star, bool agg_distinct,
 		 int precedence);
 extern void agg_error(char *caller, char *aggname, Oid basetypeID);
+
 #endif	 /* PARSE_AGG_H */

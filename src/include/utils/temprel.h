@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: temprel.h,v 1.18 2001/10/25 05:50:11 momjian Exp $
+ * $Id: temprel.h,v 1.19 2001/10/28 06:26:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,4 +29,5 @@ extern char *get_temp_rel_by_username(const char *user_relname);
 extern char *get_temp_rel_by_physicalname(const char *relname);
 
 #define is_temp_rel_name(relname) (get_temp_rel_by_username(relname) != NULL)
+
 #endif	 /* TEMPREL_H */

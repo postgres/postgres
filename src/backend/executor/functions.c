@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.46 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.47 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@
  */
 typedef enum
 {
-				F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
+	F_EXEC_START, F_EXEC_RUN, F_EXEC_DONE
 } ExecStatus;
 
 typedef struct local_es

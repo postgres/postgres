@@ -24,15 +24,15 @@
 
 
 
-RETCODE set_statement_option(ConnectionClass * conn,
-					 StatementClass * stmt,
+RETCODE set_statement_option(ConnectionClass *conn,
+					 StatementClass *stmt,
 					 UWORD fOption,
 					 UDWORD vParam);
 
 
 RETCODE
-set_statement_option(ConnectionClass * conn,
-					 StatementClass * stmt,
+set_statement_option(ConnectionClass *conn,
+					 StatementClass *stmt,
 					 UWORD fOption,
 					 UDWORD vParam)
 {
@@ -173,12 +173,12 @@ set_statement_option(ConnectionClass * conn,
 			mylog("SetStmtOption: SQL_NOSCAN, vParam = %d\n", vParam);
 			break;
 
-		case SQL_QUERY_TIMEOUT:/* ignored */
+		case SQL_QUERY_TIMEOUT:	/* ignored */
 			mylog("SetStmtOption: SQL_QUERY_TIMEOUT, vParam = %d\n", vParam);
 			/* "0" returned in SQLGetStmtOption */
 			break;
 
-		case SQL_RETRIEVE_DATA:/* ignored, but saved */
+		case SQL_RETRIEVE_DATA:	/* ignored, but saved */
 			mylog("SetStmtOption(): SQL_RETRIEVE_DATA, vParam = %d\n", vParam);
 			if (conn)
 				conn->stmtOptions.retrieve_data = vParam;
@@ -373,7 +373,7 @@ PGAPI_SetConnectOption(
 		case SQL_CURRENT_QUALIFIER:		/* ignored */
 			break;
 
-		case SQL_LOGIN_TIMEOUT:/* ignored */
+		case SQL_LOGIN_TIMEOUT:	/* ignored */
 			break;
 
 		case SQL_PACKET_SIZE:	/* ignored */
@@ -382,7 +382,7 @@ PGAPI_SetConnectOption(
 		case SQL_QUIET_MODE:	/* ignored */
 			break;
 
-		case SQL_TXN_ISOLATION:/* ignored */
+		case SQL_TXN_ISOLATION:	/* ignored */
 			break;
 
 			/* These options should be handled by driver manager */
@@ -462,7 +462,7 @@ PGAPI_GetConnectOption(
 
 			break;
 
-		case SQL_LOGIN_TIMEOUT:/* NOT SUPPORTED */
+		case SQL_LOGIN_TIMEOUT:	/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = 0;
 			break;
 
@@ -474,7 +474,7 @@ PGAPI_GetConnectOption(
 			*((UDWORD *) pvParam) = (UDWORD) NULL;
 			break;
 
-		case SQL_TXN_ISOLATION:/* NOT SUPPORTED */
+		case SQL_TXN_ISOLATION:	/* NOT SUPPORTED */
 			*((UDWORD *) pvParam) = SQL_TXN_SERIALIZABLE;
 			break;
 
@@ -632,11 +632,11 @@ PGAPI_GetStmtOption(
 			*((SDWORD *) pvParam) = SQL_NOSCAN_ON;
 			break;
 
-		case SQL_QUERY_TIMEOUT:/* NOT SUPPORTED */
+		case SQL_QUERY_TIMEOUT:	/* NOT SUPPORTED */
 			*((SDWORD *) pvParam) = 0;
 			break;
 
-		case SQL_RETRIEVE_DATA:/* NOT SUPPORTED, but saved */
+		case SQL_RETRIEVE_DATA:	/* NOT SUPPORTED, but saved */
 			*((SDWORD *) pvParam) = stmt->options.retrieve_data;
 			break;
 

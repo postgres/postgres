@@ -494,7 +494,7 @@ EN_Constructor(void)
 
 
 char
-EN_Destructor(EnvironmentClass * self)
+EN_Destructor(EnvironmentClass *self)
 {
 	int			lf;
 	char		rv = 1;
@@ -523,7 +523,7 @@ EN_Destructor(EnvironmentClass * self)
 
 
 char
-EN_get_error(EnvironmentClass * self, int *number, char **message)
+EN_get_error(EnvironmentClass *self, int *number, char **message)
 {
 	if (self && self->errormsg && self->errornumber)
 	{
@@ -539,7 +539,7 @@ EN_get_error(EnvironmentClass * self, int *number, char **message)
 
 
 char
-EN_add_connection(EnvironmentClass * self, ConnectionClass * conn)
+EN_add_connection(EnvironmentClass *self, ConnectionClass *conn)
 {
 	int			i;
 
@@ -563,7 +563,7 @@ EN_add_connection(EnvironmentClass * self, ConnectionClass * conn)
 
 
 char
-EN_remove_connection(EnvironmentClass * self, ConnectionClass * conn)
+EN_remove_connection(EnvironmentClass *self, ConnectionClass *conn)
 {
 	int			i;
 
@@ -579,7 +579,7 @@ EN_remove_connection(EnvironmentClass * self, ConnectionClass * conn)
 
 
 void
-EN_log_error(char *func, char *desc, EnvironmentClass * self)
+EN_log_error(char *func, char *desc, EnvironmentClass *self)
 {
 	if (self)
 		qlog("ENVIRON ERROR: func=%s, desc='%s', errnum=%d, errmsg='%s'\n", func, desc, self->errornumber, self->errormsg);

@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/bsdi.c,v 1.16 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/dynloader/bsdi.c,v 1.17 2001/10/28 06:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,4 +94,5 @@ pg_dlerror()
 {
 	return dld_strerror(dld_errno);
 }
+
 #endif	 /* not HAVE_DLOPEN */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.63 2001/10/25 05:49:28 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeIndexscan.c,v 1.64 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -222,7 +222,7 @@ IndexNext(IndexScan *node)
 					qual = lnext(qual);
 				}
 				if (!prev_matches)
-					return slot;		/* OK to return tuple */
+					return slot;	/* OK to return tuple */
 				/* Duplicate tuple, so drop it and loop back for another */
 				ExecClearTuple(slot);
 			}
@@ -701,10 +701,10 @@ ExecInitIndexScan(IndexScan *node, EState *estate, Plan *parent)
 			Expr	   *clause; /* one clause of index qual */
 			Oper	   *op;		/* operator used in clause */
 			Node	   *leftop; /* expr on lhs of operator */
-			Node	   *rightop;		/* expr on rhs ... */
+			Node	   *rightop;	/* expr on rhs ... */
 			bits16		flags = 0;
 
-			int			scanvar;		/* which var identifies varattno */
+			int			scanvar;	/* which var identifies varattno */
 			AttrNumber	varattno = 0;	/* att number used in scan */
 			Oid			opid;	/* operator id used in scan */
 			Datum		scanvalue = 0;	/* value used in scan (if const) */

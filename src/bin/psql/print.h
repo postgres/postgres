@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.10 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/print.h,v 1.11 2001/10/28 06:25:58 momjian Exp $
  */
 #ifndef PRINT_H
 #define PRINT_H
@@ -12,12 +12,11 @@
 
 enum printFormat
 {
-				PRINT_NOTHING = 0,		/* to make sure someone
-										 * initializes this */
-				PRINT_UNALIGNED,
-				PRINT_ALIGNED,
-				PRINT_HTML,
-				PRINT_LATEX
+	PRINT_NOTHING = 0,			/* to make sure someone initializes this */
+	PRINT_UNALIGNED,
+	PRINT_ALIGNED,
+	PRINT_HTML,
+	PRINT_LATEX
 	/* add your favourite output format here ... */
 };
 

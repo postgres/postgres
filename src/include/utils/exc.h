@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: exc.h,v 1.20 2001/10/25 05:50:10 momjian Exp $
+ * $Id: exc.h,v 1.21 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -84,4 +84,5 @@ extern void ExcRaise(Exception *excP,
  */
 extern void ExcAbort(const Exception *excP, ExcDetail detail, ExcData data,
 		 ExcMessage message);
+
 #endif	 /* EXC_H */

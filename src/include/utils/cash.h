@@ -45,4 +45,5 @@ extern Datum cashlarger(PG_FUNCTION_ARGS);
 extern Datum cashsmaller(PG_FUNCTION_ARGS);
 
 extern Datum cash_words(PG_FUNCTION_ARGS);
+
 #endif	 /* CASH_H */

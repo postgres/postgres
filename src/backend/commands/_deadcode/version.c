@@ -10,7 +10,7 @@
  *	doesn't work! - jolly 8/19/95
  *
  *
- *	$Id: version.c,v 1.27 2001/10/25 05:49:27 momjian Exp $
+ *	$Id: version.c,v 1.28 2001/10/28 06:25:43 momjian Exp $
  *
  * NOTES
  *	At the point the version is defined, 2 physical relations are created
@@ -342,4 +342,5 @@ VersionReplace(char *vname, char *bname, char *snapshot)
 /*	printf("%s\n",rule_buf); */
 
 }
+
 #endif

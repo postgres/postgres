@@ -193,4 +193,5 @@ struct re_guts
 			 (isalnum((unsigned char) (c)) || (c) == '_'))
 #else
 #define ISWORD(c)	(isalnum((unsigned char) (c)) || (c) == '_')
+
 #endif

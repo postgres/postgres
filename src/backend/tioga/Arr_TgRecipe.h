@@ -126,4 +126,5 @@ typedef struct Arr_TgNodePtr
   AppendVarray((Varray *) (A), (void *) (V), (CopyingFunct) copyTgNodePtr)
 
 #define deleteArr_TgNodePtr(A) FreeVarray(A)
+
 #endif	 /* _ARR_TgNodePtr_ */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: buf_internals.h,v 1.52 2001/10/25 05:50:09 momjian Exp $
+ * $Id: buf_internals.h,v 1.53 2001/10/28 06:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,7 +102,7 @@ typedef struct sbufdesc
 	 * BM_PIN_COUNT_WAITER. At present, there can be only one such waiter
 	 * per buffer.
 	 */
-	BackendId	wait_backend_id;		/* backend ID of pin-count waiter */
+	BackendId	wait_backend_id;	/* backend ID of pin-count waiter */
 } BufferDesc;
 
 #define BufferDescriptorGetBuffer(bdesc) ((bdesc)->buf_id + 1)
@@ -183,4 +183,5 @@ extern int	WriteLocalBuffer(Buffer buffer, bool release);
 extern int	FlushLocalBuffer(Buffer buffer, bool sync, bool release);
 extern void LocalBufferSync(void);
 extern void ResetLocalBufferPool(void);
+
 #endif	 /* BUFMGR_INTERNALS_H */

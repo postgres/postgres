@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlogdefs.h,v 1.5 2001/10/25 05:49:56 momjian Exp $
+ * $Id: xlogdefs.h,v 1.6 2001/10/28 06:25:59 momjian Exp $
  */
 #ifndef XLOG_DEFS_H
 #define XLOG_DEFS_H
@@ -55,4 +55,5 @@ typedef struct XLogRecPtr
  * pg_clog after shutdown, in future.
  */
 typedef uint32 StartUpID;
+
 #endif	 /* XLOG_DEFS_H */

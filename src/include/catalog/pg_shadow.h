@@ -9,7 +9,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_shadow.h,v 1.15 2001/10/25 05:49:58 momjian Exp $
+ * $Id: pg_shadow.h,v 1.16 2001/10/28 06:26:06 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -72,4 +72,5 @@ typedef FormData_pg_shadow *Form_pg_shadow;
 DATA(insert ( "POSTGRES" PGUID t t t t _null_ _null_ ));
 
 #define BOOTSTRAP_USESYSID 1
+
 #endif	 /* PG_SHADOW_H */

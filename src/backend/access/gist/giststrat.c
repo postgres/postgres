@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/gist/Attic/giststrat.c,v 1.18 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/gist/Attic/giststrat.c,v 1.19 2001/10/28 06:25:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -121,4 +121,5 @@ RelationInvokeGISTStrategy(Relation r,
 	return (RelationInvokeStrategy(r, &GISTEvaluationData, attnum, s,
 								   left, right));
 }
+
 #endif

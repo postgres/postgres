@@ -13,7 +13,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.210 2001/10/25 05:49:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.211 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,7 @@ typedef VacPageData *VacPage;
 
 typedef struct VacPageListData
 {
-	BlockNumber empty_end_pages;		/* Number of "empty" end-pages */
+	BlockNumber empty_end_pages;	/* Number of "empty" end-pages */
 	int			num_pages;		/* Number of pages in pagedesc */
 	int			num_allocated_pages;	/* Number of allocated pages in
 										 * pagedesc */

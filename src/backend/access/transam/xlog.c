@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.79 2001/10/25 05:49:22 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/access/transam/xlog.c,v 1.80 2001/10/28 06:25:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -955,7 +955,7 @@ AdvanceXLInsertBuffer(void)
 
 	/* And fill the new page's header */
 	NewPage->xlp_magic = XLOG_PAGE_MAGIC;
-	/* NewPage->xlp_info = 0; *//* done by memset */
+	/* NewPage->xlp_info = 0; */	/* done by memset */
 	NewPage->xlp_sui = ThisStartUpID;
 	NewPage->xlp_pageaddr.xlogid = NewPageEndPtr.xlogid;
 	NewPage->xlp_pageaddr.xrecoff = NewPageEndPtr.xrecoff - BLCKSZ;
@@ -1762,7 +1762,7 @@ ReadRecord(XLogRecPtr *RecPtr, int emode, char *buffer)
 		readFile = XLogFileOpen(readId, readSeg, (emode == LOG));
 		if (readFile < 0)
 			goto next_record_is_invalid;
-		readOff = (uint32) (-1);		/* force read to occur below */
+		readOff = (uint32) (-1);	/* force read to occur below */
 	}
 
 	targetPageOff = ((RecPtr->xrecoff % XLogSegSize) / BLCKSZ) * BLCKSZ;

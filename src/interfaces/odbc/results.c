@@ -1220,7 +1220,7 @@ PGAPI_MoreResults(
  *	Stuff for updatable cursors.
  */
 static QResultClass *
-positioned_load(StatementClass * stmt, BOOL latest, int res_cols, UInt4 oid, const char *tidval)
+positioned_load(StatementClass *stmt, BOOL latest, int res_cols, UInt4 oid, const char *tidval)
 {
 	int			i;
 	QResultClass *qres;
@@ -1250,7 +1250,7 @@ positioned_load(StatementClass * stmt, BOOL latest, int res_cols, UInt4 oid, con
 }
 
 RETCODE		SQL_API
-SC_pos_reload(StatementClass * stmt, UWORD irow, UWORD * count)
+SC_pos_reload(StatementClass *stmt, UWORD irow, UWORD *count)
 {
 	int			i,
 				res_cols;
@@ -1328,7 +1328,7 @@ SC_pos_reload(StatementClass * stmt, UWORD irow, UWORD * count)
 }
 
 RETCODE		SQL_API
-SC_pos_newload(StatementClass * stmt, UInt4 oid, const char *tidval)
+SC_pos_newload(StatementClass *stmt, UInt4 oid, const char *tidval)
 {
 	int			i;
 	QResultClass *res,
@@ -1399,7 +1399,7 @@ SC_pos_newload(StatementClass * stmt, UInt4 oid, const char *tidval)
 }
 
 RETCODE		SQL_API
-SC_pos_update(StatementClass * stmt,
+SC_pos_update(StatementClass *stmt,
 			  UWORD irow)
 {
 	int			i,
@@ -1472,7 +1472,7 @@ SC_pos_update(StatementClass * stmt,
 				mylog("%d used=%d\n", i, *bindings[i].used);
 				if (*bindings[i].used != SQL_IGNORE)
 				{
-					PGAPI_BindParameter(hstmt, (SQLUSMALLINT)++ j,
+					PGAPI_BindParameter(hstmt, (SQLUSMALLINT) ++j,
 								 SQL_PARAM_INPUT, bindings[i].returntype,
 					  pgtype_to_sqltype(stmt, QR_get_field_type(res, i)),
 										QR_get_fieldsize(res, i),
@@ -1533,7 +1533,7 @@ SC_pos_update(StatementClass * stmt,
 	return ret;
 }
 RETCODE		SQL_API
-SC_pos_delete(StatementClass * stmt,
+SC_pos_delete(StatementClass *stmt,
 			  UWORD irow)
 {
 	int			res_cols;
@@ -1606,7 +1606,7 @@ SC_pos_delete(StatementClass * stmt,
 	return ret;
 }
 RETCODE		SQL_API
-SC_pos_add(StatementClass * stmt,
+SC_pos_add(StatementClass *stmt,
 		   UWORD irow)
 {
 	int			num_cols,
@@ -1643,7 +1643,7 @@ SC_pos_add(StatementClass * stmt,
 					sprintf(addstr, "%s, \"%s\"", addstr, stmt->fi[i]->name);
 				else
 					sprintf(addstr, "%s\"%s\"", addstr, stmt->fi[i]->name);
-				PGAPI_BindParameter(hstmt, (SQLUSMALLINT)++ add_cols,
+				PGAPI_BindParameter(hstmt, (SQLUSMALLINT) ++add_cols,
 								 SQL_PARAM_INPUT, bindings[i].returntype,
 					  pgtype_to_sqltype(stmt, QR_get_field_type(res, i)),
 									QR_get_fieldsize(res, i),

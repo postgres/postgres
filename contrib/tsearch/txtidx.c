@@ -327,7 +327,7 @@ typedef struct
 {
 	uint16		len;
 	char	   *word;
-}			WORD;
+} WORD;
 
 typedef struct
 {
@@ -402,7 +402,7 @@ compareWORD(const void *a, const void *b)
 }
 
 static int
-uniqueWORD(WORD * a, int4 l)
+uniqueWORD(WORD *a, int4 l)
 {
 	WORD	   *ptr,
 			   *res;

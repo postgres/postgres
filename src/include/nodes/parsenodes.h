@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parsenodes.h,v 1.148 2001/10/25 05:50:04 momjian Exp $
+ * $Id: parsenodes.h,v 1.149 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,7 +79,7 @@ typedef struct Query
 	 * commit to the exact set of child tables at parse time.  This field
 	 * ought to go in some sort of TopPlan plan node, not in the Query.
 	 */
-	List	   *resultRelations;		/* integer list of RT indexes, or NIL */
+	List	   *resultRelations;	/* integer list of RT indexes, or NIL */
 
 	/* internal to planner */
 	List	   *base_rel_list;	/* list of base-relation RelOptInfos */
@@ -93,9 +93,9 @@ typedef struct Query
 
 typedef enum InhOption
 {
-				INH_NO,			/* Do NOT scan child tables */
-				INH_YES,		/* DO scan child tables */
-				INH_DEFAULT		/* Use current SQL_inheritance option */
+	INH_NO,						/* Do NOT scan child tables */
+	INH_YES,					/* DO scan child tables */
+	INH_DEFAULT					/* Use current SQL_inheritance option */
 } InhOption;
 
 /*****************************************************************************
@@ -228,18 +228,17 @@ typedef struct CreateStmt
 
 typedef enum ConstrType			/* types of constraints */
 {
-				CONSTR_NULL,	/* not SQL92, but a lot of people expect
+	CONSTR_NULL,				/* not SQL92, but a lot of people expect
 								 * it */
-				CONSTR_NOTNULL,
-				CONSTR_DEFAULT,
-				CONSTR_CHECK,
-				CONSTR_PRIMARY,
-				CONSTR_UNIQUE,
-				CONSTR_ATTR_DEFERRABLE, /* attributes for previous
-										 * constraint node */
-				CONSTR_ATTR_NOT_DEFERRABLE,
-				CONSTR_ATTR_DEFERRED,
-				CONSTR_ATTR_IMMEDIATE
+	CONSTR_NOTNULL,
+	CONSTR_DEFAULT,
+	CONSTR_CHECK,
+	CONSTR_PRIMARY,
+	CONSTR_UNIQUE,
+	CONSTR_ATTR_DEFERRABLE,		/* attributes for previous constraint node */
+	CONSTR_ATTR_NOT_DEFERRABLE,
+	CONSTR_ATTR_DEFERRED,
+	CONSTR_ATTR_IMMEDIATE
 } ConstrType;
 
 typedef struct Constraint
@@ -864,10 +863,10 @@ typedef struct UpdateStmt
  */
 typedef enum SetOperation
 {
-				SETOP_NONE = 0,
-				SETOP_UNION,
-				SETOP_INTERSECT,
-				SETOP_EXCEPT
+	SETOP_NONE = 0,
+	SETOP_UNION,
+	SETOP_INTERSECT,
+	SETOP_EXCEPT
 } SetOperation;
 
 typedef struct SelectStmt
@@ -1054,7 +1053,7 @@ typedef struct CaseWhen
 
 typedef enum NullTestType
 {
-				IS_NULL, IS_NOT_NULL
+	IS_NULL, IS_NOT_NULL
 } NullTestType;
 
 typedef struct NullTest
@@ -1076,7 +1075,7 @@ typedef struct NullTest
 
 typedef enum BoolTestType
 {
-				IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
+	IS_TRUE, IS_NOT_TRUE, IS_FALSE, IS_NOT_FALSE, IS_UNKNOWN, IS_NOT_UNKNOWN
 } BoolTestType;
 
 typedef struct BooleanTest
@@ -1341,7 +1340,7 @@ typedef struct RangeTblEntry
 typedef struct SortClause
 {
 	NodeTag		type;
-	Index		tleSortGroupRef;		/* reference into targetlist */
+	Index		tleSortGroupRef;	/* reference into targetlist */
 	Oid			sortop;			/* the sort operator to use */
 } SortClause;
 
@@ -1354,4 +1353,5 @@ typedef struct SortClause
  * nodetags...).  We have routines that operate interchangeably on both.
  */
 typedef SortClause GroupClause;
+
 #endif	 /* PARSENODES_H */

@@ -17,7 +17,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.38 2001/10/25 05:49:52 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup_archiver.h,v 1.39 2001/10/28 06:25:58 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *	-	Initial version.
@@ -118,8 +118,8 @@ typedef int (*TocSortCompareFn) (const void *te1, const void *te2);
 
 typedef enum _archiveMode
 {
-				archModeWrite,
-				archModeRead
+	archModeWrite,
+	archModeRead
 } ArchiveMode;
 
 typedef struct _outputContext
@@ -130,10 +130,10 @@ typedef struct _outputContext
 
 typedef enum
 {
-				SQL_SCAN = 0,
-				SQL_IN_SQL_COMMENT,
-				SQL_IN_EXT_COMMENT,
-				SQL_IN_QUOTE
+	SQL_SCAN = 0,
+	SQL_IN_SQL_COMMENT,
+	SQL_IN_EXT_COMMENT,
+	SQL_IN_QUOTE
 } sqlparseState;
 
 typedef struct
@@ -221,7 +221,7 @@ typedef struct _archiveHandle
 
 	int			loFd;			/* BLOB fd */
 	int			writingBlob;	/* Flag */
-	int			createdBlobXref;		/* Flag */
+	int			createdBlobXref;	/* Flag */
 	int			blobCount;		/* # of blobs restored */
 
 	int			lastID;			/* Last internal ID for a TOC entry */
@@ -318,4 +318,5 @@ int			ahwrite(const void *ptr, size_t size, size_t nmemb, ArchiveHandle *AH);
 int			ahprintf(ArchiveHandle *AH, const char *fmt,...) __attribute__((format(printf, 2, 3)));
 
 void		ahlog(ArchiveHandle *AH, int level, const char *fmt,...) __attribute__((format(printf, 3, 4)));
+
 #endif

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.63 2001/10/25 05:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.64 2001/10/28 06:25:42 momjian Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -356,7 +356,7 @@ DefineOperator(char *oprName,
 			   List *parameters)
 {
 	uint16		precedence = 0; /* operator precedence */
-	bool		canHash = false;		/* operator hashes */
+	bool		canHash = false;	/* operator hashes */
 	bool		isLeftAssociative = true;		/* operator is left
 												 * associative */
 	char	   *functionName = NULL;	/* function for operator */
@@ -367,7 +367,7 @@ DefineOperator(char *oprName,
 	char	   *negatorName = NULL;		/* optional negator operator name */
 	char	   *restrictionName = NULL; /* optional restrict. sel.
 										 * procedure */
-	char	   *joinName = NULL;		/* optional join sel. procedure name */
+	char	   *joinName = NULL;	/* optional join sel. procedure name */
 	char	   *sortName1 = NULL;		/* optional first sort operator */
 	char	   *sortName2 = NULL;		/* optional second sort operator */
 	List	   *pl;
@@ -446,7 +446,7 @@ DefineOperator(char *oprName,
 	OperatorCreate(oprName,		/* operator name */
 				   typeName1,	/* first type name */
 				   typeName2,	/* second type name */
-				   functionName,/* function for operator */
+				   functionName,	/* function for operator */
 				   precedence,	/* operator precedence */
 				   isLeftAssociative,	/* operator is left associative */
 				   commutatorName,		/* optional commutator operator
@@ -544,7 +544,7 @@ DefineType(char *typeName, List *parameters)
 	char		delimiter = DEFAULT_TYPDELIM;
 	char	   *shadow_type;
 	List	   *pl;
-	char		alignment = 'i';		/* default alignment */
+	char		alignment = 'i';	/* default alignment */
 	char		storage = 'p';	/* default TOAST storage method */
 
 	/*
@@ -676,7 +676,7 @@ DefineType(char *typeName, List *parameters)
 			   -1,				/* internal size */
 			   -1,				/* external size */
 			   'b',				/* type-type (base type) */
-			   DEFAULT_TYPDELIM,/* array element delimiter */
+			   DEFAULT_TYPDELIM,	/* array element delimiter */
 			   "array_in",		/* input procedure */
 			   "array_out",		/* output procedure */
 			   "array_in",		/* receive procedure */

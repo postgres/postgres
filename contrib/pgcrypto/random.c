@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: random.c,v 1.3 2001/10/25 05:49:20 momjian Exp $
+ * $Id: random.c,v 1.4 2001/10/28 06:25:41 momjian Exp $
  */
 
 
@@ -124,4 +124,5 @@ px_get_random_bytes(uint8 *dst, unsigned count)
 
 	return -1;
 }
+
 #endif	 /* RAND_OPENSSL */

@@ -1,4 +1,4 @@
-/* $Id: isinf.c,v 1.17 2001/10/25 05:49:40 momjian Exp $ */
+/* $Id: isinf.c,v 1.18 2001/10/28 06:25:47 momjian Exp $ */
 
 #include "c.h"
 
@@ -78,4 +78,5 @@ isinf(double x)
 		return -1;
 	return 0;
 }
+
 #endif

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.5 2001/10/25 05:50:09 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/include/port/solaris.h,v 1.6 2001/10/28 06:26:08 momjian Exp $ */
 
 #define HAS_TEST_AND_SET
 typedef unsigned char slock_t;
@@ -57,4 +57,5 @@ typedef unsigned char slock_t;
 
 #define NAN (0.0/0.0)
 #endif	 /* GCC.  */
+
 #endif	 /* not NAN */

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tqual.h,v 1.35 2001/10/25 05:50:11 momjian Exp $
+ * $Id: tqual.h,v 1.36 2001/10/28 06:26:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -90,14 +90,12 @@ extern bool ReferentialIntegritySnapshotOverride;
 /* Result codes for HeapTupleSatisfiesVacuum */
 typedef enum
 {
-				HEAPTUPLE_DEAD, /* tuple is dead and deletable */
-				HEAPTUPLE_LIVE, /* tuple is live (committed, no deleter) */
-				HEAPTUPLE_RECENTLY_DEAD,		/* tuple is dead, but not
-												 * deletable yet */
-				HEAPTUPLE_INSERT_IN_PROGRESS,	/* inserting xact is still
-												 * in progress */
-				HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still
-												 * in progress */
+	HEAPTUPLE_DEAD,				/* tuple is dead and deletable */
+	HEAPTUPLE_LIVE,				/* tuple is live (committed, no deleter) */
+	HEAPTUPLE_RECENTLY_DEAD,	/* tuple is dead, but not deletable yet */
+	HEAPTUPLE_INSERT_IN_PROGRESS,		/* inserting xact is still in
+										 * progress */
+	HEAPTUPLE_DELETE_IN_PROGRESS	/* deleting xact is still in progress */
 } HTSV_Result;
 
 extern bool HeapTupleSatisfiesItself(HeapTupleHeader tuple);
@@ -112,4 +110,5 @@ extern HTSV_Result HeapTupleSatisfiesVacuum(HeapTupleHeader tuple,
 extern Snapshot GetSnapshotData(bool serializable);
 extern void SetQuerySnapshot(void);
 extern void FreeXactSnapshot(void);
+
 #endif	 /* TQUAL_H */

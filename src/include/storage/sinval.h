@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinval.h,v 1.23 2001/10/25 05:50:10 momjian Exp $
+ * $Id: sinval.h,v 1.24 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -78,4 +78,5 @@ extern int	CountActiveBackends(void);
 
 /* Use "struct PROC", not PROC, to avoid including proc.h here */
 extern struct PROC *BackendIdGetProc(BackendId procId);
+
 #endif	 /* SINVAL_H */

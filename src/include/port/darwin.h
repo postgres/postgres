@@ -9,4 +9,5 @@ typedef unsigned int slock_t;
 
 #else
 typedef unsigned char slock_t;
+
 #endif

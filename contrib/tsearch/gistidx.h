@@ -62,4 +62,5 @@ typedef struct
 #define GETSIGN(x)	( (BITVECP)( (char*)x+GTHDRSIZE ) )
 #define GETARR(x)	( (int4*)( (char*)x+GTHDRSIZE ) )
 #define ARRNELEM(x) ( ( ((GISTTYPE*)x)->len - GTHDRSIZE )/sizeof(int4) )
+
 #endif

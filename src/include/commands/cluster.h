@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Id: cluster.h,v 1.10 2001/10/25 05:49:58 momjian Exp $
+ * $Id: cluster.h,v 1.11 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,4 +24,5 @@
  * functions
  */
 extern void cluster(char *oldrelname, char *oldindexname);
+
 #endif	 /* CLUSTER_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.17 2001/10/25 05:49:59 momjian Exp $
+ * $Id: execdebug.h,v 1.18 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -297,4 +297,5 @@ extern int	NIndexTupleInserted;
 
 extern long NDirectFileRead;
 extern long NDirectFileWrite;
+
 #endif	 /* ExecDebugIncluded */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_func.h,v 1.33 2001/10/25 05:50:06 momjian Exp $
+ * $Id: parse_func.h,v 1.34 2001/10/28 06:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,9 +41,9 @@ typedef struct _CandidateList
 /* Result codes for func_get_detail */
 typedef enum
 {
-				FUNCDETAIL_NOTFOUND,	/* no suitable interpretation */
-				FUNCDETAIL_NORMAL,		/* found a matching function */
-				FUNCDETAIL_COERCION		/* it's a type coercion request */
+	FUNCDETAIL_NOTFOUND,		/* no suitable interpretation */
+	FUNCDETAIL_NORMAL,			/* found a matching function */
+	FUNCDETAIL_COERCION			/* it's a type coercion request */
 } FuncDetailCode;
 
 
@@ -63,4 +63,5 @@ extern bool typeInheritsFrom(Oid subclassTypeId, Oid superclassTypeId);
 
 extern void func_error(char *caller, char *funcname,
 		   int nargs, Oid *argtypes, char *msg);
+
 #endif	 /* PARSE_FUNC_H */

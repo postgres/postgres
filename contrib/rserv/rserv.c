@@ -43,7 +43,7 @@ _rserv_log_()
 	char	  **args;			/* argument: argnum */
 	Relation	rel;			/* triggered relation */
 	HeapTuple	tuple;			/* tuple to return */
-	HeapTuple	newtuple = NULL;		/* tuple to return */
+	HeapTuple	newtuple = NULL;	/* tuple to return */
 	TupleDesc	tupdesc;		/* tuple description */
 	int			keynum;
 	char	   *key;

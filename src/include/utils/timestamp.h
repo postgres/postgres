@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: timestamp.h,v 1.22 2001/10/25 05:50:11 momjian Exp $
+ * $Id: timestamp.h,v 1.23 2001/10/28 06:26:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -180,4 +180,5 @@ extern void GetEpochTime(struct tm * tm);
 
 extern void isoweek2date(int woy, int *year, int *mon, int *mday);
 extern int	date2isoweek(int year, int mon, int mday);
+
 #endif	 /* TIMESTAMP_H */

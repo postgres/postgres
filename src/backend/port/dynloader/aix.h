@@ -1,5 +1,5 @@
 /*
- * $Id: aix.h,v 1.7 2001/10/25 05:49:40 momjian Exp $
+ * $Id: aix.h,v 1.8 2001/10/28 06:25:47 momjian Exp $
  *
  * @(#)dlfcn.h	1.4 revision of 95/04/25  09:36:52
  * This is an unpublished work copyright (c) 1992 HELIOS Software GmbH
@@ -42,6 +42,7 @@ extern		"C"
 	void	   *dlsym(void *handle, const char *symbol);
 	char	   *dlerror(void);
 	int			dlclose(void *handle);
+
 #else
 	void	   *dlopen();
 	void	   *dlsym();
@@ -60,4 +61,5 @@ extern		"C"
 #define  pg_dlsym	dlsym
 #define  pg_dlclose dlclose
 #define  pg_dlerror dlerror
+
 #endif	 /* PORT_PROTOS_H */

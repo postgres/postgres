@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: selfuncs.h,v 1.2 2001/10/25 05:50:11 momjian Exp $
+ * $Id: selfuncs.h,v 1.3 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -21,13 +21,13 @@
 
 typedef enum
 {
-				Pattern_Type_Like, Pattern_Type_Like_IC,
-				Pattern_Type_Regex, Pattern_Type_Regex_IC
+	Pattern_Type_Like, Pattern_Type_Like_IC,
+	Pattern_Type_Regex, Pattern_Type_Regex_IC
 } Pattern_Type;
 
 typedef enum
 {
-				Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
+	Pattern_Prefix_None, Pattern_Prefix_Partial, Pattern_Prefix_Exact
 } Pattern_Prefix_Status;
 
 
@@ -73,4 +73,5 @@ extern Datum btcostestimate(PG_FUNCTION_ARGS);
 extern Datum rtcostestimate(PG_FUNCTION_ARGS);
 extern Datum hashcostestimate(PG_FUNCTION_ARGS);
 extern Datum gistcostestimate(PG_FUNCTION_ARGS);
+
 #endif	 /* SELFUNCS_H */

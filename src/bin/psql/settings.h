@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/settings.h,v 1.11 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/settings.h,v 1.12 2001/10/28 06:25:58 momjian Exp $
  */
 #ifndef SETTINGS_H
 #define SETTINGS_H
@@ -69,4 +69,5 @@ extern PsqlSettings pset;
 #define EXIT_BADCONN 2
 
 #define EXIT_USER 3
+
 #endif

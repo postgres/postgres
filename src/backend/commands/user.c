@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.85 2001/10/25 05:49:26 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/user.c,v 1.86 2001/10/28 06:25:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -201,13 +201,13 @@ CreateUser(CreateUserStmt *stmt)
 	int			max_id;
 	List	   *item,
 			   *option;
-	char	   *password = NULL;		/* PostgreSQL user password */
+	char	   *password = NULL;	/* PostgreSQL user password */
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			sysid = 0;		/* PgSQL system id (valid if havesysid) */
 	bool		createdb = false;		/* Can the user create databases? */
 	bool		createuser = false;		/* Can this user create users? */
-	List	   *groupElts = NIL;		/* The groups the user is a member of */
+	List	   *groupElts = NIL;	/* The groups the user is a member of */
 	char	   *validUntil = NULL;		/* The time the login is valid
 										 * until */
 	DefElem    *dpassword = NULL;
@@ -447,11 +447,11 @@ AlterUser(AlterUserStmt *stmt)
 				new_tuple;
 	bool		null;
 	List	   *option;
-	char	   *password = NULL;		/* PostgreSQL user password */
+	char	   *password = NULL;	/* PostgreSQL user password */
 	bool		encrypt_password = Password_encryption; /* encrypt password? */
 	char		encrypted_password[MD5_PASSWD_LEN + 1];
 	int			createdb = -1;	/* Can the user create databases? */
-	int			createuser = -1;		/* Can this user create users? */
+	int			createuser = -1;	/* Can this user create users? */
 	char	   *validUntil = NULL;		/* The time the login is valid
 										 * until */
 	DefElem    *dpassword = NULL;
@@ -954,7 +954,7 @@ CreateGroup(CreateGroupStmt *stmt)
 		userarray = palloc(ARR_OVERHEAD(1) + length(newlist) * sizeof(int32));
 		userarray->size = ARR_OVERHEAD(1) + length(newlist) * sizeof(int32);
 		userarray->flags = 0;
-		ARR_NDIM(userarray) = 1;		/* one dimensional array */
+		ARR_NDIM(userarray) = 1;	/* one dimensional array */
 		ARR_LBOUND(userarray)[0] = 1;	/* axis starts at one */
 		ARR_DIMS(userarray)[0] = length(newlist);		/* axis is this long */
 		/* fill the array */
@@ -1150,7 +1150,7 @@ AlterGroup(AlterGroupStmt *stmt, const char *tag)
 		}
 	}							/* endif alter group add user */
 
-	else if (stmt->action == -1)/* drop users from group */
+	else if (stmt->action == -1)	/* drop users from group */
 	{
 		Datum		datum;
 		bool		null;

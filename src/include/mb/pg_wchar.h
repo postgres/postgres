@@ -1,4 +1,4 @@
-/* $Id: pg_wchar.h,v 1.35 2001/10/25 05:49:59 momjian Exp $ */
+/* $Id: pg_wchar.h,v 1.36 2001/10/28 06:26:07 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
@@ -88,7 +88,7 @@ typedef unsigned int pg_wchar;
  * Official multibyte byte encodings (0x90-0x99)
  * 0x9a-0x9d are free. 0x9e and 0x9f are reserved.
  */
-#define LC_JISX0208_1978	0x90/* Japanese Kanji, old JIS (not supported) */
+#define LC_JISX0208_1978	0x90	/* Japanese Kanji, old JIS (not supported) */
 /* #define FREE		0x90	free (unused) */
 #define LC_GB2312_80	0x91	/* Chinese */
 #define LC_JISX0208 0x92		/* Japanese Kanji (JIS X 0208) */
@@ -114,20 +114,20 @@ typedef unsigned int pg_wchar;
 #define LC_VISCII_UPPER 0xa3	/* Vietnamese VISCII1.1 upper-case (not
 								 * supported) */
 #define LC_ARABIC_DIGIT 0xa4	/* Arabic digit (not supported) */
-#define LC_ARABIC_1_COLUMN	0xa5/* Arabic 1-column (not supported) */
+#define LC_ARABIC_1_COLUMN	0xa5	/* Arabic 1-column (not supported) */
 #define LC_ASCII_RIGHT_TO_LEFT	0xa6	/* ASCII (left half of ISO8859-1)
 										 * with right-to-left direction
 										 * (not supported) */
 #define LC_LAO		0xa7		/* Lao characters (ISO10646 0E80..0EDF)
 								 * (not supported) */
-#define LC_ARABIC_2_COLUMN	0xa8/* Arabic 1-column (not supported) */
+#define LC_ARABIC_2_COLUMN	0xa8	/* Arabic 1-column (not supported) */
 
 /*
  * Private multi byte encodings (0xf0-0xff)
  */
 #define LC_INDIAN_1_COLUMN	0xf0/* Indian charset for 1-column width
 								 * glypps (not supported) */
-#define LC_TIBETAN_1_COLUMN 0xf1/* Tibetan 1 column glyph (not supported) */
+#define LC_TIBETAN_1_COLUMN 0xf1	/* Tibetan 1 column glyph (not supported) */
 #define LC_ETHIOPIC 0xf5		/* Ethiopic characters (not supported) */
 #define LC_CNS11643_3	0xf6	/* CNS 11643-1992 Plane 3 */
 #define LC_CNS11643_4	0xf7	/* CNS 11643-1992 Plane 4 */
@@ -154,37 +154,37 @@ typedef unsigned int pg_wchar;
  */
 typedef enum pg_enc
 {
-				PG_SQL_ASCII = 0,		/* SQL/ASCII */
-				PG_EUC_JP,		/* EUC for Japanese */
-				PG_EUC_CN,		/* EUC for Chinese */
-				PG_EUC_KR,		/* EUC for Korean */
-				PG_EUC_TW,		/* EUC for Taiwan */
-				PG_UTF8,		/* Unicode UTF-8 */
-				PG_MULE_INTERNAL,		/* Mule internal code */
-				PG_LATIN1,		/* ISO-8859-1 Latin 1 */
-				PG_LATIN2,		/* ISO-8859-2 Latin 2 */
-				PG_LATIN3,		/* ISO-8859-3 Latin 3 */
-				PG_LATIN4,		/* ISO-8859-4 Latin 4 */
-				PG_LATIN5,		/* ISO-8859-9 Latin 5 */
-				PG_LATIN6,		/* ISO-8859-10 Latin6 */
-				PG_LATIN7,		/* ISO-8859-13 Latin7 */
-				PG_LATIN8,		/* ISO-8859-14 Latin8 */
-				PG_LATIN9,		/* ISO-8859-15 Latin9 */
-				PG_LATIN10,		/* ISO-8859-16 Latin10 */
-				PG_KOI8R,		/* KOI8-R */
-				PG_WIN1251,		/* windows-1251 (was: WIN) */
-				PG_ALT,			/* (MS-DOS CP866) */
-				PG_ISO_8859_5,	/* ISO-8859-5 */
-				PG_ISO_8859_6,	/* ISO-8859-6 */
-				PG_ISO_8859_7,	/* ISO-8859-7 */
-				PG_ISO_8859_8,	/* ISO-8859-8 */
+	PG_SQL_ASCII = 0,			/* SQL/ASCII */
+	PG_EUC_JP,					/* EUC for Japanese */
+	PG_EUC_CN,					/* EUC for Chinese */
+	PG_EUC_KR,					/* EUC for Korean */
+	PG_EUC_TW,					/* EUC for Taiwan */
+	PG_UTF8,					/* Unicode UTF-8 */
+	PG_MULE_INTERNAL,			/* Mule internal code */
+	PG_LATIN1,					/* ISO-8859-1 Latin 1 */
+	PG_LATIN2,					/* ISO-8859-2 Latin 2 */
+	PG_LATIN3,					/* ISO-8859-3 Latin 3 */
+	PG_LATIN4,					/* ISO-8859-4 Latin 4 */
+	PG_LATIN5,					/* ISO-8859-9 Latin 5 */
+	PG_LATIN6,					/* ISO-8859-10 Latin6 */
+	PG_LATIN7,					/* ISO-8859-13 Latin7 */
+	PG_LATIN8,					/* ISO-8859-14 Latin8 */
+	PG_LATIN9,					/* ISO-8859-15 Latin9 */
+	PG_LATIN10,					/* ISO-8859-16 Latin10 */
+	PG_KOI8R,					/* KOI8-R */
+	PG_WIN1251,					/* windows-1251 (was: WIN) */
+	PG_ALT,						/* (MS-DOS CP866) */
+	PG_ISO_8859_5,				/* ISO-8859-5 */
+	PG_ISO_8859_6,				/* ISO-8859-6 */
+	PG_ISO_8859_7,				/* ISO-8859-7 */
+	PG_ISO_8859_8,				/* ISO-8859-8 */
 
 	/* followings are for client encoding only */
-				PG_SJIS,		/* Shift JIS */
-				PG_BIG5,		/* Big5 */
-				PG_WIN1250,		/* windows-1250 */
+	PG_SJIS,					/* Shift JIS */
+	PG_BIG5,					/* Big5 */
+	PG_WIN1250,					/* windows-1250 */
 
-				_PG_LAST_ENCODING_		/* mark only */
+	_PG_LAST_ENCODING_			/* mark only */
 
 } pg_enc;
 
@@ -257,8 +257,8 @@ typedef struct pg_enconv
 {
 	pg_enc		encoding;		/* encoding identifier */
 	to_mic_converter to_mic;	/* client encoding to MIC */
-	from_mic_converter from_mic;		/* MIC to client encoding */
-	to_mic_converter to_unicode;		/* client encoding to UTF-8 */
+	from_mic_converter from_mic;	/* MIC to client encoding */
+	to_mic_converter to_unicode;	/* client encoding to UTF-8 */
 	from_mic_converter from_unicode;	/* UTF-8 to client encoding */
 } pg_enconv;
 
@@ -346,4 +346,5 @@ extern unsigned short CNStoBIG5(unsigned short, unsigned char);
 
 char	   *pg_verifymbstr(const unsigned char *, int);
 #endif	 /* MULTIBYTE */
+
 #endif	 /* PG_WCHAR_H */

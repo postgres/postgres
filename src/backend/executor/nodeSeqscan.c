@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.32 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSeqscan.c,v 1.33 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -105,7 +105,7 @@ SeqNext(SeqScan *node)
 	 * tuple table slot is cleared.
 	 */
 
-	slot = ExecStoreTuple(tuple,/* tuple to store */
+	slot = ExecStoreTuple(tuple,	/* tuple to store */
 						  slot, /* slot to store in */
 						  scandesc->rs_cbuf,	/* buffer associated with
 												 * this tuple */

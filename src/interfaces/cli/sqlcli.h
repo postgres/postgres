@@ -473,7 +473,7 @@ SQLRETURN	SQLAllocEnv(SQLHENV * EnvironmentHandle);
 
 SQLRETURN SQLAllocHandle(SQLSMALLINT HandleType,
 			   SQLINTEGER InputHandle,
-			   SQLINTEGER * OutputHandle);
+			   SQLINTEGER *OutputHandle);
 
 SQLRETURN SQLAllocStmt(SQLHDBC ConnectionHandle,
 			 SQLSTMT * StatementHandle);
@@ -483,7 +483,7 @@ SQLRETURN SQLBindCol(SQLHSTMT StatementHandle,
 		   SQLSMALLINT BufferType,
 		   SQLPOINTER Data,
 		   SQLINTEGER BufferLength,
-		   SQLINTEGER * DataLength);
+		   SQLINTEGER *DataLength);
 
 SQLRETURN SQLBindParam(SQLHSTMT StatementHandle,
 			 SQLSMALLINT ParamNumber,
@@ -492,7 +492,7 @@ SQLRETURN SQLBindParam(SQLHSTMT StatementHandle,
 			 SQLINTEGER ParamLength,
 			 SQLSMALLINT Scale,
 			 SQLPOINTER Data,
-			 SQLINTEGER * DataLength);
+			 SQLINTEGER *DataLength);
 
 SQLRETURN	SQLCancel(SQLHSTMT StatementHandle);
 
@@ -501,17 +501,17 @@ SQLRETURN	SQLCloseCursor(SQLHSTMT StatementHandle);
 SQLRETURN SQLColAttribute(SQLHSTMT StatementHandle,
 				SQLSMALLINT ColumnNumber,
 				SQLSMALLINT FieldIdentifier,
-				SQLCHAR * CharacterAttribute,
+				SQLCHAR *CharacterAttribute,
 				SQLINTEGER BufferLength,
-				SQLINTEGER * AttributetLength,
-				SQLINTEGER * NumericAttribute);
+				SQLINTEGER *AttributetLength,
+				SQLINTEGER *NumericAttribute);
 
 SQLRETURN SQLConnect(SQLHDBC ConnectionHandle,
-		   SQLCHAR * ServerName,
+		   SQLCHAR *ServerName,
 		   SQLSMALLINT NameLength1,
-		   SQLCHAR * UserName,
+		   SQLCHAR *UserName,
 		   SQLSMALLINT NameLength2,
-		   SQLCHAR * Authentication,
+		   SQLCHAR *Authentication,
 		   SQLSMALLINT NameLength3);
 
 SQLRETURN SQLCopyDesc(SQLHDESC SourceDescHandle,
@@ -519,22 +519,22 @@ SQLRETURN SQLCopyDesc(SQLHDESC SourceDescHandle,
 
 SQLRETURN SQLDataSources(SQLHENV EnvironmentHandle,
 			   SQLSMALLINT Direction,
-			   SQLCHAR * ServerName,
+			   SQLCHAR *ServerName,
 			   SQLSMALLINT BufferLength1,
-			   SQLSMALLINT * NameLength1,
-			   SQLCHAR * Description,
+			   SQLSMALLINT *NameLength1,
+			   SQLCHAR *Description,
 			   SQLSMALLINT BufferLength2,
-			   SQLSMALLINT * NameLength2);
+			   SQLSMALLINT *NameLength2);
 
 SQLRETURN SQLDescribeCol(SQLHSTMT StatementHandle,
 			   SQLSMALLINT ColumnNumber,
-			   SQLCHAR * ColumnName,
+			   SQLCHAR *ColumnName,
 			   SQLSMALLINT BufferLength,
-			   SQLSMALLINT * ColumnNameLength,
-			   SQLSMALLINT * ColumnType,
-			   SQLINTEGER * ColumnLength,
-			   SQLSMALLINT * ColumnScale,
-			   SQLSMALLINT * Nullable);
+			   SQLSMALLINT *ColumnNameLength,
+			   SQLSMALLINT *ColumnType,
+			   SQLINTEGER *ColumnLength,
+			   SQLSMALLINT *ColumnScale,
+			   SQLSMALLINT *Nullable);
 
 SQLRETURN	SQLDisconnect(SQLHDBC ConnectionHandle);
 
@@ -545,14 +545,14 @@ SQLRETURN SQLEndTran(SQLSMALLINT HandleType,
 SQLRETURN SQLError(SQLHENV EnvironmentHandle,
 		 SQLHDBC ConnectionHandle,
 		 SQLSTMT StatementHandle,
-		 SQLCHAR * Sqlstate,
-		 SQLINTEGER * NativeError,
-		 SQLCHAR * MessageText,
+		 SQLCHAR *Sqlstate,
+		 SQLINTEGER *NativeError,
+		 SQLCHAR *MessageText,
 		 SQLINTEGER BufferLength,
-		 SQLINTEGER * TextLength);
+		 SQLINTEGER *TextLength);
 
 SQLRETURN SQLExecDirect(SQLHSTMT StatementHandle,
-			  SQLCHAR * StatementText,
+			  SQLCHAR *StatementText,
 			  SQLSMALLINT StringLength);
 
 SQLRETURN	SQLExecute(SQLHSTMT StatementHandle);
@@ -576,38 +576,38 @@ SQLRETURN SQLGetConnectAttr(SQLHDBC ConnectionHandle,
 				  SQLINTEGER Attribute,
 				  SQLPOINTER Value,
 				  SQLINTEGER BufferLength,
-				  SQLINTEGER * StringLength);
+				  SQLINTEGER *StringLength);
 
 SQLRETURN SQLGetCursorName(SQLHSTMT StatementHandle,
-				 SQLCHAR * CursorName,
+				 SQLCHAR *CursorName,
 				 SQLSMALLINT BufferLength,
-				 SQLSMALLINT * NameLength);
+				 SQLSMALLINT *NameLength);
 
 SQLRETURN SQLGetData(SQLHSTMT StatementHandle,
 		   SQLSMALLINT ColumnNumber,
 		   SQLSMALLINT TargetType,
 		   SQLPOINTER TargetValue,
 		   SQLINTEGER BufferLength,
-		   SQLINTEGER * IndicatorValue);
+		   SQLINTEGER *IndicatorValue);
 
 SQLRETURN SQLGetDescField(SQLHDESC DescriptorHandle,
 				SQLSMALLINT RecordNumber,
 				SQLSMALLINT FieldIdentifier,
 				SQLPOINTER Value,
 				SQLINTEGER BufferLength,
-				SQLINTEGER * StringLength);
+				SQLINTEGER *StringLength);
 
 SQLRETURN SQLGetDescRec(SQLHDESC DescriptorHandle,
 			  SQLSMALLINT RecordNumber,
-			  SQLCHAR * Name,
+			  SQLCHAR *Name,
 			  SQLSMALLINT BufferLength,
-			  SQLSMALLINT * StringLength,
-			  SQLSMALLINT * Type,
-			  SQLSMALLINT * SubType,
-			  SQLINTEGER * Length,
-			  SQLSMALLINT * Precision,
-			  SQLSMALLINT * Scale,
-			  SQLSMALLINT * Nullable);
+			  SQLSMALLINT *StringLength,
+			  SQLSMALLINT *Type,
+			  SQLSMALLINT *SubType,
+			  SQLINTEGER *Length,
+			  SQLSMALLINT *Precision,
+			  SQLSMALLINT *Scale,
+			  SQLSMALLINT *Nullable);
 
 SQLRETURN SQLGetDiagField(SQLSMALLINT HandleType,
 				SQLINTEGER Handle,
@@ -615,51 +615,51 @@ SQLRETURN SQLGetDiagField(SQLSMALLINT HandleType,
 				SQLSMALLINT DiagIdentifier,
 				SQLPOINTER DiagInfo,
 				SQLSMALLINT BufferLength,
-				SQLSMALLINT * StringLength);
+				SQLSMALLINT *StringLength);
 
 
 SQLRETURN SQLGetDiagRec(SQLSMALLINT HandleType,
 			  SQLINTEGER Handle,
 			  SQLSMALLINT RecordNumber,
-			  SQLCHAR * Sqlstate,
-			  SQLINTEGER * NativeError,
-			  SQLCHAR * MessageText,
+			  SQLCHAR *Sqlstate,
+			  SQLINTEGER *NativeError,
+			  SQLCHAR *MessageText,
 			  SQLSMALLINT BufferLength,
-			  SQLSMALLINT * StringLength);
+			  SQLSMALLINT *StringLength);
 
 SQLRETURN SQLGetEnvAttr(SQLHENV EnvironmentHandle,
 			  SQLINTEGER Attribute,
 			  SQLPOINTER Value,
 			  SQLINTEGER BufferLength,
-			  SQLINTEGER * StringLength);
+			  SQLINTEGER *StringLength);
 
 SQLRETURN SQLGetFunctions(SQLHDBC ConnectionHandle,
 				SQLSMALLINT FunctionId,
-				SQLSMALLINT * Supported);
+				SQLSMALLINT *Supported);
 
 SQLRETURN SQLGetInfo(SQLHDBC ConnectionHandle,
 		   SQLSMALLINT InfoType,
 		   SQLPOINTER InfoValue,
 		   SQLSMALLINT BufferLength,
-		   SQLSMALLINT * StringLength);
+		   SQLSMALLINT *StringLength);
 
 SQLRETURN SQLGetStmtAttr(SQLHSTMT StatementHandle,
 			   SQLINTEGER Attribute,
 			   SQLPOINTER Value,
 			   SQLINTEGER BufferLength,
-			   SQLINTEGER * StringLength);
+			   SQLINTEGER *StringLength);
 
 SQLRETURN SQLGetTypeInfo(SQLHSTMT StatementHandle,
 			   SQLSMALLINT DataType);
 
 SQLRETURN SQLNumResultCols(SQLHSTMT StatementHandle,
-				 SQLINTEGER * ColumnCount);
+				 SQLINTEGER *ColumnCount);
 
 SQLRETURN SQLParamData(SQLHSTMT StatementHandle,
 			 SQLPOINTER * Value);
 
 SQLRETURN SQLPrepare(SQLHSTMT StatementHandle,
-		   SQLCHAR * StatementText,
+		   SQLCHAR *StatementText,
 		   SQLSMALLINT StringLength);
 
 
@@ -668,7 +668,7 @@ SQLRETURN SQLPutData(SQLHSTMT StatementHandle,
 		   SQLINTEGER StringLength);
 
 SQLRETURN SQLRowCount(SQLHSTMT StatementHandle,
-			SQLINTEGER * RowCount);
+			SQLINTEGER *RowCount);
 
 SQLRETURN SQLSetConnectAttr(SQLHDBC ConnectionHandle,
 				  SQLINTEGER AttributeCursorName,
@@ -676,7 +676,7 @@ SQLRETURN SQLSetConnectAttr(SQLHDBC ConnectionHandle,
 				  SQLINTEGER StringLength);
 
 SQLRETURN SQLSetCursorName(SQLHSTMT StatementHandle,
-				 SQLCHAR * CursorName,
+				 SQLCHAR *CursorName,
 				 SQLSMALLINT NameLength);
 
 SQLRETURN SQLSetDescField(SQLHDESC DescriptorHandle,
@@ -692,8 +692,8 @@ SQLRETURN SQLSetDescRec(SQLHDESC DescriptorHandle,
 			  SQLSMALLINT Precision,
 			  SQLSMALLINT Scale,
 			  SQLPOINTER Data,
-			  SQLINTEGER * StringLength,
-			  SQLSMALLINT * Indicator);
+			  SQLINTEGER *StringLength,
+			  SQLSMALLINT *Indicator);
 
 SQLRETURN SQLSetEnvAttr(SQLHENV EnvironmentHandle,
 			  SQLINTEGER Attribute,

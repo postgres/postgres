@@ -1,4 +1,4 @@
-/*	$Id: sha1.h,v 1.6 2001/10/25 05:49:20 momjian Exp $ */
+/*	$Id: sha1.h,v 1.7 2001/10/28 06:25:41 momjian Exp $ */
 /*	   $KAME: sha1.h,v 1.4 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -71,4 +71,5 @@ typedef struct sha1_ctxt SHA1_CTX;
 #define SHA1Final(x, y)		sha1_result((y), (x))
 
 #define SHA1_RESULTLEN	(160/8)
+
 #endif	 /* _NETINET6_SHA1_H_ */

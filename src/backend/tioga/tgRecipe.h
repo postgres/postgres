@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: tgRecipe.h,v 1.18 2001/10/25 05:49:43 momjian Exp $
+ * $Id: tgRecipe.h,v 1.19 2001/10/28 06:25:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -29,44 +29,30 @@ typedef struct
 				y;
 } Point;						/* this should match whatever is in
 
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
-								 *
 								 * geo-decls.h */
 #endif	 /* TIOGA_FRONTEND */
 
 typedef enum
 {
-				TG_INGRED,
-				TG_EYE,
-				TG_RECIPE
+	TG_INGRED,
+	TG_EYE,
+	TG_RECIPE
 }			TgElemType;
 
 typedef enum
 {
-				TG_SQL,
-				TG_C,
-				TG_RECIPE_GRAPH,
-				TG_COMPILED
+	TG_SQL,
+	TG_C,
+	TG_RECIPE_GRAPH,
+	TG_COMPILED
 }			TgSrcLangType;
 
 typedef enum
 {
-				TG_INGRED_NODE,
-				TG_EYE_NODE,
-				TG_RECIPE_NODE,
-				TG_TEE_NODE		/* tee nodes are not stored in the db we
+	TG_INGRED_NODE,
+	TG_EYE_NODE,
+	TG_RECIPE_NODE,
+	TG_TEE_NODE					/* tee nodes are not stored in the db we
 								 * create them when we read the recipe
 								 * back */
 }			TgNodeType;

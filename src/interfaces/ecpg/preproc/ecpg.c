@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.50 2001/10/25 05:50:12 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/preproc/ecpg.c,v 1.51 2001/10/28 06:26:11 momjian Exp $ */
 
 /* New main for ecpg, the PostgreSQL embedded SQL precompiler. */
 /* (C) Michael Meskes <meskes@postgresql.org> Feb 5th, 1998 */
@@ -192,7 +192,7 @@ main(int argc, char *const argv[])
 				ptr2ext[4] = '\0';
 			}
 
-			if (out_option == 0)/* calculate the output name */
+			if (out_option == 0)	/* calculate the output name */
 			{
 				output_filename = strdup(input_filename);
 

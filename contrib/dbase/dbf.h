@@ -59,7 +59,7 @@ typedef struct
 {
 	u_char		dbf_name[DBF_NAMELEN];	/* field-name terminated with \0 */
 	u_char		dbf_type;		/* field-type */
-	u_char		dbf_reserved[4];		/* some reserved stuff */
+	u_char		dbf_reserved[4];	/* some reserved stuff */
 	u_char		dbf_flen;		/* field-length */
 	u_char		dbf_dec;		/* number of decimal positions if type is
 								 * 'N' */
@@ -135,4 +135,5 @@ extern long get_long(u_char *cp);
 extern void put_long(u_char *cp, long lval);
 extern short get_short(u_char *cp);
 extern void put_short(u_char *cp, short lval);
+
 #endif	 /* _DBF_H */

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for managed LargeObjects.
  *
- *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.9 2001/10/25 05:49:19 momjian Exp $
+ *	$Header: /cvsroot/pgsql/contrib/lo/lo.c,v 1.10 2001/10/28 06:25:40 momjian Exp $
  *
  */
 
@@ -33,8 +33,8 @@ typedef Oid Blob;
  */
 
 Blob	   *lo_in(char *str);	/* Create from String		*/
-char	   *lo_out(Blob * addr);		/* Output oid as String		*/
-Oid			lo_oid(Blob * addr);		/* Return oid as an oid		*/
+char	   *lo_out(Blob * addr);	/* Output oid as String		*/
+Oid			lo_oid(Blob * addr);	/* Return oid as an oid		*/
 Blob	   *lo(Oid oid);		/* Return Blob based on oid */
 Datum		lo_manage(PG_FUNCTION_ARGS);		/* Trigger handler		   */
 
@@ -139,7 +139,7 @@ lo_manage(PG_FUNCTION_ARGS)
 	TupleDesc	tupdesc;		/* Tuple Descriptor				*/
 	HeapTuple	rettuple;		/* Tuple to be returned			*/
 	bool		isdelete;		/* are we deleting?				*/
-	HeapTuple	newtuple = NULL;		/* The new value for tuple		*/
+	HeapTuple	newtuple = NULL;	/* The new value for tuple		*/
 	HeapTuple	trigtuple;		/* The original value of tuple	*/
 
 	if (!CALLED_AS_TRIGGER(fcinfo))

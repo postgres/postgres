@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.26 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/buffer/freelist.c,v 1.27 2001/10/28 06:25:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -309,4 +309,5 @@ PrintBufferFreeList()
 		buf = &(BufferDescriptors[buf->freeNext]);
 	}
 }
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relation.h,v 1.59 2001/10/25 05:50:05 momjian Exp $
+ * $Id: relation.h,v 1.60 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -32,7 +32,7 @@ typedef List *Relids;
  */
 typedef enum CostSelector
 {
-				STARTUP_COST, TOTAL_COST
+	STARTUP_COST, TOTAL_COST
 } CostSelector;
 
 /*----------
@@ -221,7 +221,7 @@ typedef struct IndexOptInfo
 	Oid		   *ordering;		/* OIDs of sort operators for each column */
 	Oid			relam;			/* OID of the access method (in pg_am) */
 
-	RegProcedure amcostestimate;		/* OID of the access method's cost fcn */
+	RegProcedure amcostestimate;	/* OID of the access method's cost fcn */
 
 	Oid			indproc;		/* if a functional index */
 	List	   *indpred;		/* if a partial index */
@@ -339,7 +339,7 @@ typedef struct TidPath
 {
 	Path		path;
 	List	   *tideval;
-	Relids		unjoined_relids;		/* some rels not yet part of my Path */
+	Relids		unjoined_relids;	/* some rels not yet part of my Path */
 } TidPath;
 
 /*
@@ -525,7 +525,7 @@ typedef struct RestrictInfo
 	Oid			hashjoinoperator;		/* copy of clause operator */
 
 	/* cache space for hashclause processing; -1 if not yet set */
-	Selectivity left_bucketsize;		/* avg bucketsize of left side */
+	Selectivity left_bucketsize;	/* avg bucketsize of left side */
 	Selectivity right_bucketsize;		/* avg bucketsize of right side */
 } RestrictInfo;
 
@@ -546,7 +546,7 @@ typedef struct RestrictInfo
 typedef struct JoinInfo
 {
 	NodeTag		type;
-	Relids		unjoined_relids;		/* some rels not yet part of my RelOptInfo */
+	Relids		unjoined_relids;	/* some rels not yet part of my RelOptInfo */
 	List	   *jinfo_restrictinfo;		/* relevant RestrictInfos */
 } JoinInfo;
 
@@ -587,4 +587,5 @@ typedef struct Stream
 	Cost		groupcost;
 	Selectivity groupsel;
 } Stream;
+
 #endif	 /* RELATION_H */

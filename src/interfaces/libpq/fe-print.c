@@ -10,7 +10,7 @@
  * didn't really belong there.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.43 2001/10/25 05:50:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/interfaces/libpq/fe-print.c,v 1.44 2001/10/28 06:26:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -572,7 +572,7 @@ PQdisplayTuples(const PGresult *res,
 				FILE *fp,		/* where to send the output */
 				int fillAlign,	/* pad the fields with spaces */
 				const char *fieldSep,	/* field separator */
-				int printHeader,/* display headers? */
+				int printHeader,	/* display headers? */
 				int quiet
 )
 {
@@ -662,7 +662,7 @@ PQdisplayTuples(const PGresult *res,
 void
 PQprintTuples(const PGresult *res,
 			  FILE *fout,		/* output stream */
-			  int PrintAttNames,/* print attribute names or not */
+			  int PrintAttNames,	/* print attribute names or not */
 			  int TerseOutput,	/* delimiter bars or not? */
 			  int colWidth		/* width of column, if 0, use variable
 								 * width */

@@ -29,7 +29,7 @@
 #include "pgapifunc.h"
 
 /*	SQLAllocConnect/SQLAllocEnv/SQLAllocStmt -> SQLAllocHandle */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLAllocHandle(SQLSMALLINT HandleType,
 			   SQLHANDLE InputHandle, SQLHANDLE * OutputHandle)
 {
@@ -49,12 +49,12 @@ SQLAllocHandle(SQLSMALLINT HandleType,
 }
 
 /*	SQLBindParameter/SQLSetParam -> SQLBindParam */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLBindParam(HSTMT StatementHandle,
 			 SQLUSMALLINT ParameterNumber, SQLSMALLINT ValueType,
 			 SQLSMALLINT ParameterType, SQLUINTEGER LengthPrecision,
 			 SQLSMALLINT ParameterScale, PTR ParameterValue,
-			 SQLINTEGER * StrLen_or_Ind)
+			 SQLINTEGER *StrLen_or_Ind)
 {
 	int			BufferLength = 512;		/* Is it OK ? */
 
@@ -63,7 +63,7 @@ SQLBindParam(HSTMT StatementHandle,
 }
 
 /*	New function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLCloseCursor(HSTMT StatementHandle)
 {
 	mylog("[[SQLCloseCursor]]");
@@ -71,11 +71,11 @@ SQLCloseCursor(HSTMT StatementHandle)
 }
 
 /*	SQLColAttributes -> SQLColAttribute */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLColAttribute(HSTMT StatementHandle,
 				SQLUSMALLINT ColumnNumber, SQLUSMALLINT FieldIdentifier,
 				PTR CharacterAttribute, SQLSMALLINT BufferLength,
-				SQLSMALLINT * StringLength, PTR NumericAttribute)
+				SQLSMALLINT *StringLength, PTR NumericAttribute)
 {
 	mylog("[[SQLColAttribute]]");
 	return PGAPI_ColAttributes(StatementHandle, ColumnNumber,
@@ -84,7 +84,7 @@ SQLColAttribute(HSTMT StatementHandle,
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLCopyDesc(SQLHDESC SourceDescHandle,
 			SQLHDESC TargetDescHandle)
 {
@@ -93,7 +93,7 @@ SQLCopyDesc(SQLHDESC SourceDescHandle,
 }
 
 /*	SQLTransact -> SQLEndTran */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle,
 		   SQLSMALLINT CompletionType)
 {
@@ -113,7 +113,7 @@ SQLEndTran(SQLSMALLINT HandleType, SQLHANDLE Handle,
 }
 
 /*	SQLExtendedFetch -> SQLFetchScroll */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFetchScroll(HSTMT StatementHandle,
 			   SQLSMALLINT FetchOrientation, SQLINTEGER FetchOffset)
 {
@@ -144,7 +144,7 @@ SQLFetchScroll(HSTMT StatementHandle,
 }
 
 /*	SQLFree(Connect/Env/Stmt) -> SQLFreeHandle */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
 {
 	mylog("[[SQLFreeHandle]]");
@@ -163,46 +163,46 @@ SQLFreeHandle(SQLSMALLINT HandleType, SQLHANDLE Handle)
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetDescField(SQLHDESC DescriptorHandle,
 				SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
 				PTR Value, SQLINTEGER BufferLength,
-				SQLINTEGER * StringLength)
+				SQLINTEGER *StringLength)
 {
 	mylog("[[SQLGetDescField]]\n");
 	return SQL_ERROR;
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetDescRec(SQLHDESC DescriptorHandle,
-			  SQLSMALLINT RecNumber, SQLCHAR * Name,
-			  SQLSMALLINT BufferLength, SQLSMALLINT * StringLength,
-			  SQLSMALLINT * Type, SQLSMALLINT * SubType,
-			  SQLINTEGER * Length, SQLSMALLINT * Precision,
-			  SQLSMALLINT * Scale, SQLSMALLINT * Nullable)
+			  SQLSMALLINT RecNumber, SQLCHAR *Name,
+			  SQLSMALLINT BufferLength, SQLSMALLINT *StringLength,
+			  SQLSMALLINT *Type, SQLSMALLINT *SubType,
+			  SQLINTEGER *Length, SQLSMALLINT *Precision,
+			  SQLSMALLINT *Scale, SQLSMALLINT *Nullable)
 {
 	mylog("[[SQLGetDescRec]]\n");
 	return SQL_ERROR;
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetDiagField(SQLSMALLINT HandleType, SQLHANDLE Handle,
 				SQLSMALLINT RecNumber, SQLSMALLINT DiagIdentifier,
 				PTR DiagInfo, SQLSMALLINT BufferLength,
-				SQLSMALLINT * StringLength)
+				SQLSMALLINT *StringLength)
 {
 	mylog("[[SQLGetDiagField]]\n");
 	return SQL_ERROR;
 }
 
 /*	SQLError -> SQLDiagRec */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
-			  SQLSMALLINT RecNumber, SQLCHAR * Sqlstate,
-			  SQLINTEGER * NativeError, SQLCHAR * MessageText,
-			  SQLSMALLINT BufferLength, SQLSMALLINT * TextLength)
+			  SQLSMALLINT RecNumber, SQLCHAR *Sqlstate,
+			  SQLINTEGER *NativeError, SQLCHAR *MessageText,
+			  SQLSMALLINT BufferLength, SQLSMALLINT *TextLength)
 {
 	RETCODE		ret;
 
@@ -240,10 +240,10 @@ SQLGetDiagRec(SQLSMALLINT HandleType, SQLHANDLE Handle,
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetEnvAttr(HENV EnvironmentHandle,
 			  SQLINTEGER Attribute, PTR Value,
-			  SQLINTEGER BufferLength, SQLINTEGER * StringLength)
+			  SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
 	EnvironmentClass *env = (EnvironmentClass *) EnvironmentHandle;
 
@@ -270,10 +270,10 @@ SQLGetEnvAttr(HENV EnvironmentHandle,
 }
 
 /*	SQLGetConnectOption -> SQLGetconnectAttr */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetConnectAttr(HDBC ConnectionHandle,
 				  SQLINTEGER Attribute, PTR Value,
-				  SQLINTEGER BufferLength, SQLINTEGER * StringLength)
+				  SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
 	ConnectionClass *conn = (ConnectionClass *) ConnectionHandle;
 
@@ -293,10 +293,10 @@ SQLGetConnectAttr(HDBC ConnectionHandle,
 }
 
 /*	SQLGetStmtOption -> SQLGetStmtAttr */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLGetStmtAttr(HSTMT StatementHandle,
 			   SQLINTEGER Attribute, PTR Value,
-			   SQLINTEGER BufferLength, SQLINTEGER * StringLength)
+			   SQLINTEGER BufferLength, SQLINTEGER *StringLength)
 {
 	static char *func = "SQLGetStmtAttr";
 	StatementClass *stmt = (StatementClass *) StatementHandle;
@@ -341,7 +341,7 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 			*((HSTMT *) Value) = StatementHandle;		/* this is useless */
 			len = 4;
 			break;
-		case SQL_ATTR_AUTO_IPD:/* 10001 */
+		case SQL_ATTR_AUTO_IPD:	/* 10001 */
 		case SQL_ATTR_ROW_BIND_TYPE:	/* == SQL_BIND_TYPE */
 		case SQL_ATTR_PARAMSET_SIZE:	/* 22 */
 		case SQL_ATTR_PARAM_STATUS_PTR: /* 20 */
@@ -376,7 +376,7 @@ SQLGetStmtAttr(HSTMT StatementHandle,
 }
 
 /*	SQLSetConnectOption -> SQLSetConnectAttr */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetConnectAttr(HDBC ConnectionHandle,
 				  SQLINTEGER Attribute, PTR Value,
 				  SQLINTEGER StringLength)
@@ -399,7 +399,7 @@ SQLSetConnectAttr(HDBC ConnectionHandle,
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetDescField(SQLHDESC DescriptorHandle,
 				SQLSMALLINT RecNumber, SQLSMALLINT FieldIdentifier,
 				PTR Value, SQLINTEGER BufferLength)
@@ -409,20 +409,20 @@ SQLSetDescField(SQLHDESC DescriptorHandle,
 }
 
 /*	new fucntion */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetDescRec(SQLHDESC DescriptorHandle,
 			  SQLSMALLINT RecNumber, SQLSMALLINT Type,
 			  SQLSMALLINT SubType, SQLINTEGER Length,
 			  SQLSMALLINT Precision, SQLSMALLINT Scale,
-			  PTR Data, SQLINTEGER * StringLength,
-			  SQLINTEGER * Indicator)
+			  PTR Data, SQLINTEGER *StringLength,
+			  SQLINTEGER *Indicator)
 {
 	mylog("[[SQLsetDescRec]]\n");
 	return SQL_ERROR;
 }
 
 /*	new function */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetEnvAttr(HENV EnvironmentHandle,
 			  SQLINTEGER Attribute, PTR Value,
 			  SQLINTEGER StringLength)
@@ -457,7 +457,7 @@ SQLSetEnvAttr(HENV EnvironmentHandle,
 }
 
 /*	SQLSet(Param/Scroll/Stmt)Option -> SQLSetStmtAttr */
-RETCODE SQL_API
+RETCODE		SQL_API
 SQLSetStmtAttr(HSTMT StatementHandle,
 			   SQLINTEGER Attribute, PTR Value,
 			   SQLINTEGER StringLength)
@@ -481,8 +481,8 @@ SQLSetStmtAttr(HSTMT StatementHandle,
 
 		case SQL_ATTR_APP_ROW_DESC:		/* 10010 */
 		case SQL_ATTR_APP_PARAM_DESC:	/* 10011 */
-		case SQL_ATTR_AUTO_IPD:/* 10001 */
-			/* case SQL_ATTR_ROW_BIND_TYPE: *//* == SQL_BIND_TYPE */
+		case SQL_ATTR_AUTO_IPD:	/* 10001 */
+			/* case SQL_ATTR_ROW_BIND_TYPE: */	/* == SQL_BIND_TYPE */
 		case SQL_ATTR_IMP_ROW_DESC:		/* 10012 */
 		case SQL_ATTR_IMP_PARAM_DESC:	/* 10013 */
 		case SQL_ATTR_METADATA_ID:		/* 10014 */
@@ -607,7 +607,7 @@ PGAPI_GetFunctions30(HDBC hdbc, UWORD fFunction, UWORD FAR * pfExists)
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETPOS); /* 68 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLSETSCROLLOPTIONS);		/* 69 deprecated */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLTABLEPRIVILEGES);		/* 70 */
-	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLDRIVERS); *//* 71 */
+	/* SQL_FUNC_ESET(pfExists, SQL_API_SQLDRIVERS); */	/* 71 */
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLBINDPARAMETER);	/* 72 */
 
 	SQL_FUNC_ESET(pfExists, SQL_API_SQLALLOCHANDLE);	/* 1001 */

@@ -42,7 +42,7 @@ static struct cname
 {
 	char	   *name;
 	char		code;
-}			cnames[] =
+} cnames[] =
 
 {
 	{

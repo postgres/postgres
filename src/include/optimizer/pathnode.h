@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pathnode.h,v 1.39 2001/10/25 05:50:05 momjian Exp $
+ * $Id: pathnode.h,v 1.40 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,4 +75,5 @@ extern RelOptInfo *build_join_rel(Query *root,
 			   RelOptInfo *inner_rel,
 			   JoinType jointype,
 			   List **restrictlist_ptr);
+
 #endif	 /* PATHNODE_H */

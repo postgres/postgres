@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_list.h,v 1.24 2001/10/25 05:50:05 momjian Exp $
+ * $Id: pg_list.h,v 1.25 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,4 +147,5 @@ extern void freeList(List *list);
 
 /* in copyfuncs.c */
 extern List *listCopy(List *list);
+
 #endif	 /* PG_LIST_H */

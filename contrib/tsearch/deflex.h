@@ -25,4 +25,5 @@
 #define FILEPATH	19
 
 extern const char *descr[];
+
 #endif

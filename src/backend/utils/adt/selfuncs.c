@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.100 2001/10/25 05:49:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.101 2001/10/28 06:25:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1102,7 +1102,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 				default:
 					elog(ERROR, "booltestsel: unexpected booltesttype %d",
 						 (int) clause->booltesttype);
-					selec = 0.0;		/* Keep compiler quiet */
+					selec = 0.0;	/* Keep compiler quiet */
 					break;
 			}
 
@@ -1143,7 +1143,7 @@ booltestsel(Query *root, BooleanTest *clause, int varRelid)
 				default:
 					elog(ERROR, "booltestsel: unexpected booltesttype %d",
 						 (int) clause->booltesttype);
-					selec = 0.0;		/* Keep compiler quiet */
+					selec = 0.0;	/* Keep compiler quiet */
 					break;
 			}
 		}
@@ -2037,7 +2037,7 @@ convert_string_datum(Datum value, Oid typid)
 
 #ifdef USE_LOCALE
 	/* Guess that transformed string is not much bigger than original */
-	xfrmsize = strlen(val) + 32;		/* arbitrary pad value here... */
+	xfrmsize = strlen(val) + 32;	/* arbitrary pad value here... */
 	xfrmstr = (char *) palloc(xfrmsize);
 	xfrmlen = strxfrm(xfrmstr, val, xfrmsize);
 	if (xfrmlen >= xfrmsize)
@@ -2758,7 +2758,7 @@ regex_selectivity_sub(char *patt, int pattlen, bool case_insensitive)
 		if (patt[pos] == '(')
 		{
 			if (paren_depth == 0)
-				paren_pos = pos;		/* remember start of parenthesized item */
+				paren_pos = pos;	/* remember start of parenthesized item */
 			paren_depth++;
 		}
 		else if (patt[pos] == ')' && paren_depth > 0)

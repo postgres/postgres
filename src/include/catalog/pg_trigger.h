@@ -92,4 +92,5 @@ typedef FormData_pg_trigger *Form_pg_trigger;
 #define TRIGGER_FOR_INSERT(type)		(type & TRIGGER_TYPE_INSERT)
 #define TRIGGER_FOR_DELETE(type)		(type & TRIGGER_TYPE_DELETE)
 #define TRIGGER_FOR_UPDATE(type)		(type & TRIGGER_TYPE_UPDATE)
+
 #endif	 /* PG_TRIGGER_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.84 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/catcache.c,v 1.85 2001/10/28 06:25:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include "utils/syscache.h"
 
 
- /* #define CACHEDEBUG *//* turns DEBUG elogs on */
+ /* #define CACHEDEBUG */	/* turns DEBUG elogs on */
 
 /*
  * Constants related to size of the catcache.

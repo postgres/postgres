@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.85 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.86 2001/10/28 06:25:49 momjian Exp $
  *
  * NOTES:
  *
@@ -118,11 +118,11 @@ typedef struct vfd
 	unsigned short fdstate;		/* bitflags for VFD's state */
 
 /* these are the assigned bits in fdstate: */
-#define FD_DIRTY		(1 << 0)/* written to, but not yet fsync'd */
-#define FD_TEMPORARY	(1 << 1)/* should be unlinked when closed */
+#define FD_DIRTY		(1 << 0)	/* written to, but not yet fsync'd */
+#define FD_TEMPORARY	(1 << 1)	/* should be unlinked when closed */
 
 	File		nextFree;		/* link to next free VFD, if in freelist */
-	File		lruMoreRecently;		/* doubly linked recency-of-use list */
+	File		lruMoreRecently;	/* doubly linked recency-of-use list */
 	File		lruLessRecently;
 	long		seekPos;		/* current logical file position */
 	char	   *fileName;		/* name of file, or NULL for unused VFD */

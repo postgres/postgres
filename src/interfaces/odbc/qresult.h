@@ -19,23 +19,22 @@
 
 enum QueryResultCode_
 {
-				PGRES_EMPTY_QUERY = 0,
-				PGRES_COMMAND_OK,		/* a query command that doesn't
-										 * return */
+	PGRES_EMPTY_QUERY = 0,
+	PGRES_COMMAND_OK,			/* a query command that doesn't return */
 	/* anything was executed properly by the backend */
-				PGRES_TUPLES_OK,/* a query command that returns tuples */
+	PGRES_TUPLES_OK,			/* a query command that returns tuples */
 	/* was executed properly by the backend, PGresult */
 	/* contains the resulttuples */
-				PGRES_COPY_OUT,
-				PGRES_COPY_IN,
-				PGRES_BAD_RESPONSE,		/* an unexpected response was
-										 * recv'd from the backend */
-				PGRES_NONFATAL_ERROR,
-				PGRES_FATAL_ERROR,
-				PGRES_FIELDS_OK,/* field information from a query was
+	PGRES_COPY_OUT,
+	PGRES_COPY_IN,
+	PGRES_BAD_RESPONSE,			/* an unexpected response was recv'd from
+								 * the backend */
+	PGRES_NONFATAL_ERROR,
+	PGRES_FATAL_ERROR,
+	PGRES_FIELDS_OK,			/* field information from a query was
 								 * successful */
-				PGRES_END_TUPLES,
-				PGRES_INTERNAL_ERROR
+	PGRES_END_TUPLES,
+	PGRES_INTERNAL_ERROR
 };
 typedef enum QueryResultCode_ QueryResultCode;
 
@@ -48,7 +47,7 @@ struct QResultClass_
 								 * (backend) */
 
 	/* Stuff for declare/fetch tuples */
-	int			count_allocated;		/* m(re)alloced count */
+	int			count_allocated;	/* m(re)alloced count */
 	int			fetch_count;	/* logical rows read so far */
 	int			fcount;			/* actual rows read in the fetch */
 	int			currTuple;
@@ -113,19 +112,20 @@ struct QResultClass_
 
 /*	Core Functions */
 QResultClass *QR_Constructor(void);
-void		QR_Destructor(QResultClass * self);
-char		QR_read_tuple(QResultClass * self, char binary);
-int			QR_next_tuple(QResultClass * self);
-int			QR_close(QResultClass * self);
-char		QR_fetch_tuples(QResultClass * self, ConnectionClass * conn, char *cursor);
-void		QR_free_memory(QResultClass * self);
-void		QR_set_command(QResultClass * self, char *msg);
-void		QR_set_notice(QResultClass * self, char *msg);
+void		QR_Destructor(QResultClass *self);
+char		QR_read_tuple(QResultClass *self, char binary);
+int			QR_next_tuple(QResultClass *self);
+int			QR_close(QResultClass *self);
+char		QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor);
+void		QR_free_memory(QResultClass *self);
+void		QR_set_command(QResultClass *self, char *msg);
+void		QR_set_notice(QResultClass *self, char *msg);
 
-void		QR_set_num_fields(QResultClass * self, int new_num_fields); /* manual result only */
+void		QR_set_num_fields(QResultClass *self, int new_num_fields);	/* manual result only */
 
-void		QR_inc_base(QResultClass * self, int base_inc);
-void		QR_set_cache_size(QResultClass * self, int cache_size);
-void		QR_set_rowset_size(QResultClass * self, int rowset_size);
-void		QR_set_position(QResultClass * self, int pos);
+void		QR_inc_base(QResultClass *self, int base_inc);
+void		QR_set_cache_size(QResultClass *self, int cache_size);
+void		QR_set_rowset_size(QResultClass *self, int rowset_size);
+void		QR_set_position(QResultClass *self, int pos);
+
 #endif

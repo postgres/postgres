@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: ibit.h,v 1.16 2001/10/25 05:49:55 momjian Exp $
+ * $Id: ibit.h,v 1.17 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,4 +28,5 @@ typedef IndexAttributeBitMapData *IndexAttributeBitMap;
  *		True iff attribute bit map is valid.
  */
 #define IndexAttributeBitMapIsValid(bits) PointerIsValid(bits)
+
 #endif	 /* IBIT_H */

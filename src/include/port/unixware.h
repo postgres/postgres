@@ -23,4 +23,5 @@ typedef unsigned char slock_t;
 #endif
 #ifndef			BYTE_ORDER
 #define			BYTE_ORDER		LITTLE_ENDIAN
+
 #endif

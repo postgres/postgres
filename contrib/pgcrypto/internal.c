@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: internal.c,v 1.6 2001/10/25 05:49:19 momjian Exp $
+ * $Id: internal.c,v 1.7 2001/10/28 06:25:41 momjian Exp $
  */
 
 
@@ -61,7 +61,7 @@ static struct int_digest
 {
 	char	   *name;
 	void		(*init) (PX_MD * h);
-}			int_digest_list[] =
+} int_digest_list[] =
 
 {
 	{
@@ -520,7 +520,7 @@ static struct
 {
 	char	   *name;
 	PX_Cipher  *(*load) (void);
-}			int_ciphers[] =
+} int_ciphers[] =
 
 {
 	{

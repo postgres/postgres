@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.46 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.47 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -429,7 +429,7 @@ ExecMergeJoin(MergeJoin *node)
 		default:
 			elog(ERROR, "ExecMergeJoin: unsupported join type %d",
 				 (int) node->join.jointype);
-			doFillOuter = false;		/* keep compiler quiet */
+			doFillOuter = false;	/* keep compiler quiet */
 			doFillInner = false;
 			break;
 	}

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.19 2001/10/25 05:49:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/Attic/hashstrat.c,v 1.20 2001/10/28 06:25:41 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,4 +80,5 @@ _hash_invokestrat(Relation rel,
 	return (RelationInvokeStrategy(rel, &HTEvaluationData, attno, strat,
 								   left, right));
 }
+
 #endif

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.75 2001/10/25 05:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.76 2001/10/28 06:25:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1897,7 +1897,7 @@ float84ge(PG_FUNCTION_ARGS)
 static const double one = 1.0,
 			TWO52[2] = {
 	4.50359962737049600000e+15, /* 0x43300000, 0x00000000 */
-	-4.50359962737049600000e+15,/* 0xC3300000, 0x00000000 */
+	-4.50359962737049600000e+15,	/* 0xC3300000, 0x00000000 */
 };
 
 static double
@@ -1981,4 +1981,5 @@ cbrt(double x)
 
 	return isneg ? -tmpres : tmpres;
 }
+
 #endif	 /* !HAVE_CBRT */

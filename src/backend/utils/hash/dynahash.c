@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.39 2001/10/25 05:49:50 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.40 2001/10/28 06:25:54 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -630,7 +630,7 @@ hash_search(HTAB *hashp,
 			{
 				/* no free elements.  allocate another chunk of buckets */
 				if (!element_alloc(hashp))
-					return NULL;		/* out of memory */
+					return NULL;	/* out of memory */
 				currBucket = hctl->freeList;
 				Assert(currBucket != NULL);
 			}

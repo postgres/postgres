@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_database.h,v 1.19 2001/10/25 05:49:57 momjian Exp $
+ * $Id: pg_database.h,v 1.20 2001/10/28 06:26:00 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -78,4 +78,5 @@ DATAMARKOID(= 2)
 #define RecoveryDb	2
 
 #undef DATAMARKOID
+
 #endif	 /* PG_DATABASE_H */

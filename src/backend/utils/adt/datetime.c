@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.75 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/datetime.c,v 1.76 2001/10/28 06:25:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -251,7 +251,7 @@ static datetkn deltatktbl[] = {
 	{DDAY, UNITS, DTK_DAY},		/* "day" relative */
 	{"days", UNITS, DTK_DAY},	/* "days" relative */
 	{"dec", UNITS, DTK_DECADE}, /* "decade" relative */
-	{"decs", UNITS, DTK_DECADE},/* "decades" relative */
+	{"decs", UNITS, DTK_DECADE},	/* "decades" relative */
 	{DDECADE, UNITS, DTK_DECADE},		/* "decade" relative */
 	{"decades", UNITS, DTK_DECADE},		/* "decades" relative */
 	{"h", UNITS, DTK_HOUR},		/* "hour" relative */
@@ -268,8 +268,8 @@ static datetkn deltatktbl[] = {
 	{"millisecon", UNITS, DTK_MILLISEC},		/* relative */
 	{"mils", UNITS, DTK_MILLENNIUM},	/* "millennia" relative */
 	{"min", UNITS, DTK_MINUTE}, /* "minute" relative */
-	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative */
-	{"mins", UNITS, DTK_MINUTE},/* "minutes" relative */
+	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
+	{"mins", UNITS, DTK_MINUTE},	/* "minutes" relative */
 	{DMINUTE, UNITS, DTK_MINUTE},		/* "minute" relative */
 	{"minutes", UNITS, DTK_MINUTE},		/* "minutes" relative */
 	{"mon", UNITS, DTK_MONTH},	/* "months" relative */
@@ -281,7 +281,7 @@ static datetkn deltatktbl[] = {
 	{DMILLISEC, UNITS, DTK_MILLISEC},
 	{"mseconds", UNITS, DTK_MILLISEC},
 	{"msecs", UNITS, DTK_MILLISEC},
-	{"qtr", UNITS, DTK_QUARTER},/* "quarter" relative */
+	{"qtr", UNITS, DTK_QUARTER},	/* "quarter" relative */
 	{DQUARTER, UNITS, DTK_QUARTER},		/* "quarter" relative */
 	{"reltime", IGNORE, 0},		/* pre-v6.1 "Undefined Reltime" */
 	{"s", UNITS, DTK_SECOND},
@@ -290,11 +290,11 @@ static datetkn deltatktbl[] = {
 	{"seconds", UNITS, DTK_SECOND},
 	{"secs", UNITS, DTK_SECOND},
 	{DTIMEZONE, UNITS, DTK_TZ}, /* "timezone" time offset */
-	{"timezone", UNITS, DTK_TZ},/* "timezone" time offset */
+	{"timezone", UNITS, DTK_TZ},	/* "timezone" time offset */
 	{"timezone_h", UNITS, DTK_TZ_HOUR}, /* timezone hour units */
 	{"timezone_m", UNITS, DTK_TZ_MINUTE},		/* timezone minutes units */
 	{"undefined", RESERV, DTK_INVALID}, /* pre-v6.1 invalid time */
-	{"us", UNITS, DTK_MICROSEC},/* "microsecond" relative */
+	{"us", UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"usec", UNITS, DTK_MICROSEC},		/* "microsecond" relative */
 	{DMICROSEC, UNITS, DTK_MICROSEC},	/* "microsecond" relative */
 	{"useconds", UNITS, DTK_MICROSEC},	/* "microseconds" relative */

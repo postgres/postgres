@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: fmgr.h,v 1.16 2001/10/25 05:49:54 momjian Exp $
+ * $Id: fmgr.h,v 1.17 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -383,4 +383,5 @@ extern void load_file(char *filename);
  * DEPRECATED, DO NOT USE IN NEW CODE
  */
 extern char *fmgr(Oid procedureId,...);
+
 #endif	 /* FMGR_H */

@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/typename.c,v 1.20 2001/10/25 05:50:12 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/typename.c,v 1.21 2001/10/28 06:26:11 momjian Exp $ */
 
 #include "postgres_fe.h"
 
@@ -59,11 +59,11 @@ ECPGDynamicType(Oid type)
 	switch (type)
 	{
 		case BOOLOID:
-			return SQL3_BOOLEAN;		/* bool */
+			return SQL3_BOOLEAN;	/* bool */
 		case INT2OID:
 			return SQL3_SMALLINT;		/* int2 */
 		case INT4OID:
-			return SQL3_INTEGER;		/* int4 */
+			return SQL3_INTEGER;	/* int4 */
 		case TEXTOID:
 			return SQL3_CHARACTER;		/* text */
 		case FLOAT4OID:
@@ -81,7 +81,7 @@ ECPGDynamicType(Oid type)
 		case TIMESTAMPOID:
 			return SQL3_DATE_TIME_TIMESTAMP;	/* datetime */
 		case NUMERICOID:
-			return SQL3_NUMERIC;		/* numeric */
+			return SQL3_NUMERIC;	/* numeric */
 		default:
 			return -type;
 	}

@@ -138,7 +138,7 @@ static char *conv_to_octal(unsigned char val);
 
 /*	This is called by SQLFetch() */
 int
-copy_and_convert_field_bindinfo(StatementClass * stmt, Int4 field_type, void *value, int col)
+copy_and_convert_field_bindinfo(StatementClass *stmt, Int4 field_type, void *value, int col)
 {
 	BindInfoClass *bic = &(stmt->bindings[col]);
 
@@ -149,8 +149,8 @@ copy_and_convert_field_bindinfo(StatementClass * stmt, Int4 field_type, void *va
 
 /*	This is called by SQLGetData() */
 int
-copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2 fCType,
-					   PTR rgbValue, SDWORD cbValueMax, SDWORD * pcbValue)
+copy_and_convert_field(StatementClass *stmt, Int4 field_type, void *value, Int2 fCType,
+					   PTR rgbValue, SDWORD cbValueMax, SDWORD *pcbValue)
 {
 	Int4		len = 0,
 				copy_len = 0;
@@ -756,7 +756,7 @@ copy_and_convert_field(StatementClass * stmt, Int4 field_type, void *value, Int2
  */
 #define INIT_MIN_ALLOC	4096
 static int
-enlarge_statement(StatementClass * stmt, unsigned int newsize)
+enlarge_statement(StatementClass *stmt, unsigned int newsize)
 {
 	unsigned int newalsize = INIT_MIN_ALLOC;
 	static char *func = "enlarge_statement";
@@ -952,7 +952,7 @@ table_for_update(const char *stmt, int *endpos)
  *	This function does a dynamic memory allocation to get rid of query size limit!
  */
 int
-copy_statement_with_parameters(StatementClass * stmt)
+copy_statement_with_parameters(StatementClass *stmt)
 {
 	static char *func = "copy_statement_with_parameters";
 	unsigned int opos,
@@ -1855,7 +1855,7 @@ convert_money(const char *s, char *sout, size_t soutmax)
  *	It does not zero out SIMPLE_TIME in case it is desired to initialize it with a value
  */
 char
-parse_datetime(char *buf, SIMPLE_TIME * st)
+parse_datetime(char *buf, SIMPLE_TIME *st)
 {
 	int			y,
 				m,
@@ -1922,7 +1922,7 @@ parse_datetime(char *buf, SIMPLE_TIME * st)
 
 /*	Change linefeed to carriage-return/linefeed */
 int
-convert_linefeeds(const char *si, char *dst, size_t max, BOOL * changed)
+convert_linefeeds(const char *si, char *dst, size_t max, BOOL *changed)
 {
 	size_t		i = 0,
 				out = 0;
@@ -2221,8 +2221,8 @@ decode(const char *in, char *out)
  *-------
  */
 int
-convert_lo(StatementClass * stmt, const void *value, Int2 fCType, PTR rgbValue,
-		   SDWORD cbValueMax, SDWORD * pcbValue)
+convert_lo(StatementClass *stmt, const void *value, Int2 fCType, PTR rgbValue,
+		   SDWORD cbValueMax, SDWORD *pcbValue)
 {
 	Oid			oid;
 	int			retval,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.17 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/ipc/shmqueue.c,v 1.18 2001/10/28 06:25:50 momjian Exp $
  *
  * NOTES
  *
@@ -253,4 +253,5 @@ dumpQ(SHM_QUEUE *q, char *s)
 	strcat(buf, elem);
 	elog(SHMQUEUE_DEBUG_ELOG, "%s: %s", s, buf);
 }
+
 #endif	 /* SHMQUEUE_DEBUG */

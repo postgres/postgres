@@ -13,4 +13,5 @@
 
 extern void CreateProceduralLanguage(CreatePLangStmt *stmt);
 extern void DropProceduralLanguage(DropPLangStmt *stmt);
+
 #endif	 /* PROCLANG_H */

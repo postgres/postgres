@@ -37,4 +37,5 @@ typedef unsigned int slock_t;
 typedef unsigned int slock_t;
 
 #define HAS_TEST_AND_SET
+
 #endif

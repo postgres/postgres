@@ -1446,7 +1446,8 @@ do
 -Twchar_t \
 /tmp/$$a >/tmp/$$ 2>&1
 	if [ "$?" -ne 0 -o -s /tmp/$$ ]
-	then	echo "$FILE"
+	then	echo
+		echo "$FILE"
 		cat /tmp/$$
 	fi
 	cat /tmp/$$a |
@@ -1458,8 +1459,6 @@ do
 	sed 's;^}[ 	][ 	]*/\*;}   /*;' |
 # pull in #endif comments
 	sed 's;^#endif[ 	][ 	]*/\*;#endif   /*;' |
-# add space after comments that start on tab stops
-	sed 's:\([^ 	]\)\(/\*.*\*/\)$:\1	\2:' |
 # work around #else indenting next line if #ifdef defines variables at top
 # work around misindenting of function with no variables defined
 	awk '
@@ -1474,6 +1473,8 @@ do
 # remove tabs and retab with four spaces
 	detab -t8 -qc |
 	entab -t4 -qc |
+# add space after comments that start on tab stops
+	sed 's:\([^ 	]\)\(/\*.*\*/\)$:\1	\2:' |
 # move trailing * in function return type
 	sed 's;^\([A-Za-z_][^ 	]*\)[ 	][ 	]*\*$;\1 *;' |
 # remove un-needed braces around single statements

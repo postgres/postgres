@@ -11,7 +11,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.34 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/pathkeys.c,v 1.35 2001/10/28 06:25:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -317,7 +317,7 @@ compare_pathkeys(List *keys1, List *keys2)
 	if (key1 == NIL && key2 == NIL)
 		return PATHKEYS_EQUAL;
 	if (key1 != NIL)
-		return PATHKEYS_BETTER1;		/* key1 is longer */
+		return PATHKEYS_BETTER1;	/* key1 is longer */
 	return PATHKEYS_BETTER2;	/* key2 is longer */
 }
 
@@ -367,7 +367,7 @@ compare_noncanonical_pathkeys(List *keys1, List *keys2)
 	if (key1 == NIL && key2 == NIL)
 		return PATHKEYS_EQUAL;
 	if (key1 != NIL)
-		return PATHKEYS_BETTER1;		/* key1 is longer */
+		return PATHKEYS_BETTER1;	/* key1 is longer */
 	return PATHKEYS_BETTER2;	/* key2 is longer */
 }
 

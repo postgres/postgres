@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1995, Regents of the University of California
  *
- * $Id: postgres.h,v 1.54 2001/10/25 05:49:54 momjian Exp $
+ * $Id: postgres.h,v 1.55 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,7 @@ typedef struct varattrib
 			int32		va_extsize;		/* External saved size */
 			Oid			va_valueid;		/* Unique identifier of value */
 			Oid			va_toastrelid;	/* RelID where to find chunks */
-		}			va_external;		/* External stored attribute */
+		}			va_external;	/* External stored attribute */
 
 		char		va_data[1]; /* Plain stored attribute */
 	}			va_content;

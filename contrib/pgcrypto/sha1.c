@@ -1,4 +1,4 @@
-/*	$Id: sha1.c,v 1.8 2001/10/25 05:49:20 momjian Exp $ */
+/*	$Id: sha1.c,v 1.9 2001/10/28 06:25:41 momjian Exp $ */
 /*	   $KAME: sha1.c,v 1.3 2000/02/22 14:01:18 itojun Exp $    */
 
 /*
@@ -345,4 +345,5 @@ sha1_result(struct sha1_ctxt * ctxt, uint8 *digest0)
 	digest[19] = ctxt->h.b8[16];
 #endif
 }
+
 #endif	 /* unsupported */

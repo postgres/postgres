@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_statistic.h,v 1.13 2001/10/25 05:49:58 momjian Exp $
+ * $Id: pg_statistic.h,v 1.14 2001/10/28 06:26:06 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -205,4 +205,5 @@ typedef FormData_pg_statistic *Form_pg_statistic;
  * their actual tuple positions.  The coefficient ranges from +1 to -1.
  */
 #define STATISTIC_KIND_CORRELATION	3
+
 #endif	 /* PG_STATISTIC_H */

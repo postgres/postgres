@@ -104,4 +104,5 @@ DllMain(
 	}
 	return TRUE;
 }
+
 #endif	 /* CYGWIN_VERSION_DLL_MAJOR < 1001 */

@@ -40,13 +40,13 @@ extern GLOBAL_VALUES globals;
 
 #ifdef	WIN32
 static int	driver_optionsDraw(HWND, const ConnInfo *, int src, BOOL enable);
-static int	driver_options_update(HWND hdlg, ConnInfo * ci, BOOL);
-static void updateCommons(const ConnInfo * ci);
+static int	driver_options_update(HWND hdlg, ConnInfo *ci, BOOL);
+static void updateCommons(const ConnInfo *ci);
 #endif
 
 #ifdef WIN32
 void
-SetDlgStuff(HWND hdlg, const ConnInfo * ci)
+SetDlgStuff(HWND hdlg, const ConnInfo *ci)
 {
 	/*
 	 * If driver attribute NOT present, then set the datasource name and
@@ -67,7 +67,7 @@ SetDlgStuff(HWND hdlg, const ConnInfo * ci)
 
 
 void
-GetDlgStuff(HWND hdlg, ConnInfo * ci)
+GetDlgStuff(HWND hdlg, ConnInfo *ci)
 {
 	GetDlgItemText(hdlg, IDC_DESC, ci->desc, sizeof(ci->desc));
 
@@ -80,7 +80,7 @@ GetDlgStuff(HWND hdlg, ConnInfo * ci)
 
 
 static int
-driver_optionsDraw(HWND hdlg, const ConnInfo * ci, int src, BOOL enable)
+driver_optionsDraw(HWND hdlg, const ConnInfo *ci, int src, BOOL enable)
 {
 	const GLOBAL_VALUES *comval;
 	static BOOL defset = FALSE;
@@ -164,7 +164,7 @@ driver_optionsDraw(HWND hdlg, const ConnInfo * ci, int src, BOOL enable)
 	return 0;
 }
 static int
-driver_options_update(HWND hdlg, ConnInfo * ci, BOOL updateProfile)
+driver_options_update(HWND hdlg, ConnInfo *ci, BOOL updateProfile)
 {
 	GLOBAL_VALUES *comval;
 
@@ -391,7 +391,7 @@ ds_optionsProc(HWND hdlg,
  *	to the ODBCINST.INI portion of the registry
  */
 static void
-updateCommons(const ConnInfo * ci)
+updateCommons(const ConnInfo *ci)
 {
 	const char *sectionName;
 	const char *fileName;
@@ -498,7 +498,7 @@ updateCommons(const ConnInfo * ci)
 
 
 void
-makeConnectString(char *connect_string, const ConnInfo * ci, UWORD len)
+makeConnectString(char *connect_string, const ConnInfo *ci, UWORD len)
 {
 	char		got_dsn = (ci->dsn[0] != '\0');
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN];
@@ -576,7 +576,7 @@ makeConnectString(char *connect_string, const ConnInfo * ci, UWORD len)
 
 
 void
-copyAttributes(ConnInfo * ci, const char *attribute, const char *value)
+copyAttributes(ConnInfo *ci, const char *attribute, const char *value)
 {
 	if (stricmp(attribute, "DSN") == 0)
 		strcpy(ci->dsn, value);
@@ -631,7 +631,7 @@ copyAttributes(ConnInfo * ci, const char *attribute, const char *value)
 }
 
 void
-copyCommonAttributes(ConnInfo * ci, const char *attribute, const char *value)
+copyCommonAttributes(ConnInfo *ci, const char *attribute, const char *value)
 {
 	if (stricmp(attribute, INI_FETCH) == 0 || stricmp(attribute, "A7") == 0)
 		ci->drivers.fetch_max = atoi(value);
@@ -694,7 +694,7 @@ copyCommonAttributes(ConnInfo * ci, const char *attribute, const char *value)
 
 
 void
-getDSNdefaults(ConnInfo * ci)
+getDSNdefaults(ConnInfo *ci)
 {
 	if (ci->port[0] == '\0')
 		strcpy(ci->port, DEFAULT_PORT);
@@ -720,7 +720,7 @@ getDSNdefaults(ConnInfo * ci)
 
 
 void
-getDSNinfo(ConnInfo * ci, char overwrite)
+getDSNinfo(ConnInfo *ci, char overwrite)
 {
 	char	   *DSN = ci->dsn;
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN],
@@ -840,7 +840,7 @@ getDSNinfo(ConnInfo * ci, char overwrite)
 
 /*	This is for datasource based options only */
 void
-writeDSNinfo(const ConnInfo * ci)
+writeDSNinfo(const ConnInfo *ci)
 {
 	const char *DSN = ci->dsn;
 	char		encoded_conn_settings[LARGE_REGISTRY_LEN],
@@ -931,7 +931,7 @@ writeDSNinfo(const ConnInfo * ci)
  *	the registry and gets any driver defaults.
  */
 void
-getCommonDefaults(const char *section, const char *filename, ConnInfo * ci)
+getCommonDefaults(const char *section, const char *filename, ConnInfo *ci)
 {
 	char		temp[256];
 	GLOBAL_VALUES *comval;

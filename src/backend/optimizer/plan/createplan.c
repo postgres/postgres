@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.110 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.111 2001/10/28 06:25:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1085,7 +1085,7 @@ fix_indxqual_operand(Node *node, int baserelid, IndexOptInfo *index,
 	 * the returned varattno must be 1.
 	 */
 	Assert(index->indproc != InvalidOid);
-	Assert(is_funcclause(node));		/* not a very thorough check, but easy */
+	Assert(is_funcclause(node));	/* not a very thorough check, but easy */
 
 	/* classlist[0] is the only class of a functional index */
 	*opclass = index->classlist[0];
@@ -1895,4 +1895,5 @@ generate_fjoin(List *tlist)
 	return newTlist;
 	return tlist;				/* do nothing for now - ay 10/94 */
 }
+
 #endif

@@ -178,7 +178,7 @@ PGAPI_GetInfo(
 			p = CC_is_onlyread(conn) ? "Y" : "N";
 			break;
 
-		case SQL_DATABASE_NAME:/* Support for old ODBC 1.0 Apps */
+		case SQL_DATABASE_NAME:	/* Support for old ODBC 1.0 Apps */
 
 			/*
 			 * Returning the database name causes problems in MS Query. It
@@ -789,7 +789,7 @@ PGAPI_GetTypeInfo(
 
 		if (fSqlType == SQL_ALL_TYPES || fSqlType == sqlType)
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (15 - 1) * sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (15 - 1) *sizeof(TupleField));
 
 			/* These values can't be NULL */
 			set_tuplefield_string(&row->tuple[0], pgtype_to_name(stmt, pgType));
@@ -1387,7 +1387,7 @@ PGAPI_Tables(
 			(view && show_views) ||
 			(regular_table && show_regular_tables))
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) * sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (5 - 1) *sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 
@@ -1698,7 +1698,7 @@ PGAPI_Columns(
 			/* For OID fields */
 			the_type = PG_TYPE_OID;
 			row = (TupleNode *) malloc(sizeof(TupleNode) +
-								 (result_cols - 1) * sizeof(TupleField));
+								  (result_cols - 1) *sizeof(TupleField));
 
 			set_tuplefield_string(&row->tuple[0], "");
 			/* see note in SQLTables() */
@@ -1727,7 +1727,7 @@ PGAPI_Columns(
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								 (result_cols - 1) * sizeof(TupleField));
+								   (result_cols - 1) *sizeof(TupleField));
 
 
 		set_tuplefield_string(&row->tuple[0], "");
@@ -1761,7 +1761,7 @@ PGAPI_Columns(
 		if (field_type == PG_TYPE_NUMERIC)
 		{
 			if (mod_length >= 4)
-				mod_length -= 4;		/* the length is in atttypmod - 4 */
+				mod_length -= 4;	/* the length is in atttypmod - 4 */
 
 			if (mod_length >= 0)
 			{
@@ -1785,7 +1785,7 @@ PGAPI_Columns(
 			useStaticPrecision = FALSE;
 
 			if (mod_length >= 4)
-				mod_length -= 4;		/* the length is in atttypmod - 4 */
+				mod_length -= 4;	/* the length is in atttypmod - 4 */
 
 			if (mod_length > ci->drivers.max_varchar_size || mod_length <= 0)
 				mod_length = ci->drivers.max_varchar_size;
@@ -1838,7 +1838,7 @@ PGAPI_Columns(
 		the_type = PG_TYPE_INT4;
 
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								 (result_cols - 1) * sizeof(TupleField));
+								   (result_cols - 1) *sizeof(TupleField));
 
 		set_tuplefield_string(&row->tuple[0], "");
 		set_tuplefield_string(&row->tuple[1], "");
@@ -1975,7 +1975,7 @@ PGAPI_SpecialColumns(
 		/* use the oid value for the rowid */
 		if (fColType == SQL_BEST_ROWID)
 		{
-			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
+			row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
 
 			set_tuplefield_int2(&row->tuple[0], SQL_SCOPE_SESSION);
 			set_tuplefield_string(&row->tuple[1], "oid");
@@ -1995,7 +1995,7 @@ PGAPI_SpecialColumns(
 
 			if (atoi(ci->row_versioning))
 			{
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) * sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (8 - 1) *sizeof(TupleField));
 
 				set_tuplefield_null(&row->tuple[0]);
 				set_tuplefield_string(&row->tuple[1], "xmin");
@@ -2303,7 +2303,7 @@ PGAPI_Statistics(
 	if (relhasrules[0] != '1' && atoi(ci->show_oid_column) && atoi(ci->fake_oid_index))
 	{
 		row = (TupleNode *) malloc(sizeof(TupleNode) +
-								   (13 - 1) * sizeof(TupleField));
+								   (13 - 1) *sizeof(TupleField));
 
 		/* no table qualifier */
 		set_tuplefield_string(&row->tuple[0], "");
@@ -2347,7 +2347,7 @@ PGAPI_Statistics(
 			while (i < 16 && fields_vector[i] != 0)
 			{
 				row = (TupleNode *) malloc(sizeof(TupleNode) +
-										   (13 - 1) * sizeof(TupleField));
+										   (13 - 1) *sizeof(TupleField));
 
 				/* no table qualifier */
 				set_tuplefield_string(&row->tuple[0], "");
@@ -2630,7 +2630,7 @@ PGAPI_PrimaryKeys(
 
 	while ((result == SQL_SUCCESS) || (result == SQL_SUCCESS_WITH_INFO))
 	{
-		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+		row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 		set_tuplefield_null(&row->tuple[0]);
 
@@ -2698,7 +2698,7 @@ isMultibyte(const unsigned char *str)
 	return FALSE;
 }
 static char *
-getClientTableName(ConnectionClass * conn, char *serverTableName, BOOL * nameAlloced)
+getClientTableName(ConnectionClass *conn, char *serverTableName, BOOL *nameAlloced)
 {
 	char		query[1024],
 				saveoid[24],
@@ -2778,7 +2778,7 @@ getClientTableName(ConnectionClass * conn, char *serverTableName, BOOL * nameAll
 	return ret;
 }
 static char *
-getClientColumnName(ConnectionClass * conn, const char *serverTableName, char *serverColumnName, BOOL * nameAlloced)
+getClientColumnName(ConnectionClass *conn, const char *serverTableName, char *serverColumnName, BOOL *nameAlloced)
 {
 	char		query[1024],
 				saveattrelid[24],
@@ -3277,7 +3277,7 @@ PGAPI_ForeignKeys(
 
 			for (k = 0; k < num_keys; k++)
 			{
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 #ifdef	MULTIBYTE
 				pkey_text = getClientColumnName(conn, pk_table, pkey_ptr, &pkey_alloced);
@@ -3533,7 +3533,7 @@ PGAPI_ForeignKeys(
 #endif	 /* MULTIBYTE */
 				mylog("pkey_ptr = '%s', fk_table = '%s', fkey_ptr = '%s'\n", pkey_text, fkt_text, fkey_text);
 
-				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) * sizeof(TupleField));
+				row = (TupleNode *) malloc(sizeof(TupleNode) + (result_cols - 1) *sizeof(TupleField));
 
 				mylog("pk_table_needed = '%s', pkey_ptr = '%s'\n", pk_table_needed, pkey_text);
 				set_tuplefield_null(&row->tuple[0]);

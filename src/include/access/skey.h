@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: skey.h,v 1.18 2001/10/25 05:49:55 momjian Exp $
+ * $Id: skey.h,v 1.19 2001/10/28 06:25:59 momjian Exp $
  *
  * Note:
  *		Needs more accessor/assignment routines.
@@ -47,4 +47,5 @@ extern void ScanKeyEntryInitialize(ScanKey entry, bits16 flags,
 extern void ScanKeyEntryInitializeWithInfo(ScanKey entry, bits16 flags,
 							 AttrNumber attributeNumber, FmgrInfo *finfo,
 							   MemoryContext mcxt, Datum argument);
+
 #endif	 /* SKEY_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.80 2001/10/25 05:49:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/path/allpaths.c,v 1.81 2001/10/28 06:25:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -668,4 +668,5 @@ debug_print_rel(Query *root, RelOptInfo *rel)
 	printf("\n");
 	fflush(stdout);
 }
+
 #endif	 /* OPTIMIZER_DEBUG */

@@ -2,7 +2,7 @@
 /* -----------------------------------------------------------------------
  * formatting.h
  *
- * $Id: formatting.h,v 1.10 2001/10/25 05:50:10 momjian Exp $
+ * $Id: formatting.h,v 1.11 2001/10/28 06:26:09 momjian Exp $
  *
  *
  *	 Portions Copyright (c) 1999-2000, PostgreSQL Global Development Group
@@ -32,4 +32,5 @@ extern Datum int4_to_char(PG_FUNCTION_ARGS);
 extern Datum int8_to_char(PG_FUNCTION_ARGS);
 extern Datum float4_to_char(PG_FUNCTION_ARGS);
 extern Datum float8_to_char(PG_FUNCTION_ARGS);
+
 #endif

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.16 2001/10/25 05:49:52 momjian Exp $
+ *		$Header: /cvsroot/pgsql/src/bin/pg_dump/pg_backup.h,v 1.17 2001/10/28 06:25:58 momjian Exp $
  *
  * Modifications - 28-Jun-2000 - pjw@rhyme.com.au
  *
@@ -56,11 +56,11 @@
 
 typedef enum _archiveFormat
 {
-				archUnknown = 0,
-				archCustom = 1,
-				archFiles = 2,
-				archTar = 3,
-				archNull = 4
+	archUnknown = 0,
+	archCustom = 1,
+	archFiles = 2,
+	archTar = 3,
+	archNull = 4
 } ArchiveFormat;
 
 /*
@@ -196,4 +196,5 @@ extern int
 archprintf(Archive *AH, const char *fmt,...)
 /* This extension allows gcc to check the format string */
 __attribute__((format(printf, 2, 3)));
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_coerce.h,v 1.35 2001/10/25 05:50:06 momjian Exp $
+ * $Id: parse_coerce.h,v 1.36 2001/10/28 06:26:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,18 +19,18 @@
 
 typedef enum CATEGORY
 {
-				INVALID_TYPE,
-				UNKNOWN_TYPE,
-				BOOLEAN_TYPE,
-				STRING_TYPE,
-				BITSTRING_TYPE,
-				NUMERIC_TYPE,
-				DATETIME_TYPE,
-				TIMESPAN_TYPE,
-				GEOMETRIC_TYPE,
-				NETWORK_TYPE,
-				USER_TYPE,
-				MIXED_TYPE
+	INVALID_TYPE,
+	UNKNOWN_TYPE,
+	BOOLEAN_TYPE,
+	STRING_TYPE,
+	BITSTRING_TYPE,
+	NUMERIC_TYPE,
+	DATETIME_TYPE,
+	TIMESPAN_TYPE,
+	GEOMETRIC_TYPE,
+	NETWORK_TYPE,
+	USER_TYPE,
+	MIXED_TYPE
 } CATEGORY;
 
 
@@ -81,4 +81,5 @@ extern Oid	select_common_type(List *typeids, const char *context);
 extern Node *coerce_to_common_type(ParseState *pstate, Node *node,
 					  Oid targetTypeId,
 					  const char *context);
+
 #endif	 /* PARSE_COERCE_H */

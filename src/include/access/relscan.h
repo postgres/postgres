@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relscan.h,v 1.23 2001/10/25 05:49:55 momjian Exp $
+ * $Id: relscan.h,v 1.24 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -75,4 +75,5 @@ typedef IndexScanDesc *IndexScanDescPtr;
  *		True iff the index scan is valid.
  */
 #define IndexScanIsValid(scan) PointerIsValid(scan)
+
 #endif	 /* RELSCAN_H */

@@ -29,7 +29,7 @@
  * MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.10 2001/10/25 05:50:20 momjian Exp $
+ *	$Header: /cvsroot/pgsql/src/pl/plpython/plpython.c,v 1.11 2001/10/28 06:26:15 momjian Exp $
  *
  *********************************************************************
  */
@@ -1686,7 +1686,7 @@ PyMethodDef PLy_plan_methods[] = {
 
 
 PySequenceMethods PLy_result_as_sequence = {
-	(inquiry) PLy_result_length,/* sq_length */
+	(inquiry) PLy_result_length,	/* sq_length */
 	(binaryfunc) 0,				/* sq_concat */
 	(intargfunc) 0,				/* sq_repeat */
 	(intargfunc) PLy_result_item,		/* sq_item */

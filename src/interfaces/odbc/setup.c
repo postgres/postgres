@@ -25,7 +25,7 @@
 
 #define INTFUNC  __stdcall
 
-extern HINSTANCE NEAR s_hModule;		/* Saved module handle. */
+extern HINSTANCE NEAR s_hModule;	/* Saved module handle. */
 
 /* Constants */
 #define MIN(x,y)	  ((x) < (y) ? (x) : (y))
@@ -303,14 +303,14 @@ ConfigDlgProc(HWND hdlg,
 				case IDC_DRIVER:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DRV),
-					hdlg, driver_optionsProc, (LPARAM) & lpsetupdlg->ci);
+					 hdlg, driver_optionsProc, (LPARAM) &lpsetupdlg->ci);
 					return TRUE;
 
 				case IDC_DATASOURCE:
 					lpsetupdlg = (LPSETUPDLG) GetWindowLong(hdlg, DWL_USER);
 
 					DialogBoxParam(s_hModule, MAKEINTRESOURCE(DLG_OPTIONS_DS),
-						hdlg, ds_optionsProc, (LPARAM) & lpsetupdlg->ci);
+						 hdlg, ds_optionsProc, (LPARAM) &lpsetupdlg->ci);
 
 					return TRUE;
 			}

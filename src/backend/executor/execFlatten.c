@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.15 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/Attic/execFlatten.c,v 1.16 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -239,4 +239,5 @@ FjoinBumpOuterNodes(TargetEntry *tlist,
 	}
 	return false;
 }
+
 #endif

@@ -39,7 +39,7 @@
  *	All info functions call this function to create the manual result set.
  */
 void
-QR_set_num_fields(QResultClass * self, int new_num_fields)
+QR_set_num_fields(QResultClass *self, int new_num_fields)
 {
 	mylog("in QR_set_num_fields\n");
 
@@ -54,28 +54,28 @@ QR_set_num_fields(QResultClass * self, int new_num_fields)
 
 
 void
-QR_set_position(QResultClass * self, int pos)
+QR_set_position(QResultClass *self, int pos)
 {
 	self->tupleField = self->backend_tuples + ((self->base + pos) * self->num_fields);
 }
 
 
 void
-QR_set_cache_size(QResultClass * self, int cache_size)
+QR_set_cache_size(QResultClass *self, int cache_size)
 {
 	self->cache_size = cache_size;
 }
 
 
 void
-QR_set_rowset_size(QResultClass * self, int rowset_size)
+QR_set_rowset_size(QResultClass *self, int rowset_size)
 {
 	self->rowset_size = rowset_size;
 }
 
 
 void
-QR_inc_base(QResultClass * self, int base_inc)
+QR_inc_base(QResultClass *self, int base_inc)
 {
 	self->base += base_inc;
 }
@@ -128,7 +128,7 @@ QR_Constructor()
 
 
 void
-QR_Destructor(QResultClass * self)
+QR_Destructor(QResultClass *self)
 {
 	mylog("QResult: in DESTRUCTOR\n");
 
@@ -168,7 +168,7 @@ QR_Destructor(QResultClass * self)
 
 
 void
-QR_set_command(QResultClass * self, char *msg)
+QR_set_command(QResultClass *self, char *msg)
 {
 	if (self->command)
 		free(self->command);
@@ -178,7 +178,7 @@ QR_set_command(QResultClass * self, char *msg)
 
 
 void
-QR_set_notice(QResultClass * self, char *msg)
+QR_set_notice(QResultClass *self, char *msg)
 {
 	if (self->notice)
 		free(self->notice);
@@ -188,7 +188,7 @@ QR_set_notice(QResultClass * self, char *msg)
 
 
 void
-QR_free_memory(QResultClass * self)
+QR_free_memory(QResultClass *self)
 {
 	register int lf,
 				row;
@@ -211,7 +211,7 @@ QR_free_memory(QResultClass * self)
 					free(tuple[lf].value);
 				}
 			}
-			tuple += num_fields;		/* next row */
+			tuple += num_fields;	/* next row */
 		}
 
 		free(self->backend_tuples);
@@ -226,7 +226,7 @@ QR_free_memory(QResultClass * self)
 
 /*	This function is called by send_query() */
 char
-QR_fetch_tuples(QResultClass * self, ConnectionClass * conn, char *cursor)
+QR_fetch_tuples(QResultClass *self, ConnectionClass *conn, char *cursor)
 {
 	int			tuple_size;
 
@@ -327,7 +327,7 @@ QR_fetch_tuples(QResultClass * self, ConnectionClass * conn, char *cursor)
  *	We only close cursor/end the transaction if a cursor was used.
  */
 int
-QR_close(QResultClass * self)
+QR_close(QResultClass *self)
 {
 	QResultClass *res;
 
@@ -379,7 +379,7 @@ QR_close(QResultClass * self)
 
 /*	This function is called by fetch_tuples() AND SQLFetch() */
 int
-QR_next_tuple(QResultClass * self)
+QR_next_tuple(QResultClass *self)
 {
 	int			id;
 	QResultClass *res;
@@ -620,7 +620,7 @@ QR_next_tuple(QResultClass * self)
 
 
 char
-QR_read_tuple(QResultClass * self, char binary)
+QR_read_tuple(QResultClass *self, char binary)
 {
 	Int2		field_lf;
 	TupleField *this_tuplefield;

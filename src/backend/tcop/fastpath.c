@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.50 2001/10/25 05:49:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/fastpath.c,v 1.51 2001/10/28 06:25:51 momjian Exp $
  *
  * NOTES
  *	  This cruft is the server side of PQfn.
@@ -74,7 +74,7 @@
  * ----------------
  */
 static void
-SendFunctionResult(Datum retval,/* actual return value */
+SendFunctionResult(Datum retval,	/* actual return value */
 				   bool retbyval,
 				   int retlen)	/* the length according to the catalogs */
 {

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-fe.h,v 1.76 2001/10/25 05:50:13 momjian Exp $
+ * $Id: libpq-fe.h,v 1.77 2001/10/28 06:26:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -190,12 +190,14 @@ extern		"C"
 	/* Asynchronous (non-blocking) */
 	extern PGconn *PQconnectStart(const char *conninfo);
 	extern PostgresPollingStatusType PQconnectPoll(PGconn *conn);
+
 	/* Synchronous (blocking) */
 	extern PGconn *PQconnectdb(const char *conninfo);
 	extern PGconn *PQsetdbLogin(const char *pghost, const char *pgport,
 								const char *pgoptions, const char *pgtty,
 											const char *dbName,
 									 const char *login, const char *pwd);
+
 #define PQsetdb(M_PGHOST,M_PGPORT,M_PGOPT,M_PGTTY,M_DBNAME)  \
 	PQsetdbLogin(M_PGHOST, M_PGPORT, M_PGOPT, M_PGTTY, M_DBNAME, NULL, NULL)
 
@@ -215,6 +217,7 @@ extern		"C"
 	/* Asynchronous (non-blocking) */
 	extern int	PQresetStart(PGconn *conn);
 	extern PostgresPollingStatusType PQresetPoll(PGconn *conn);
+
 	/* Synchronous (blocking) */
 	extern void PQreset(PGconn *conn);
 
@@ -235,6 +238,7 @@ extern		"C"
 	extern int	PQbackendPID(const PGconn *conn);
 	extern int	PQclientEncoding(const PGconn *conn);
 	extern int	PQsetClientEncoding(PGconn *conn, const char *encoding);
+
 #ifdef USE_SSL
 	/* Get the SSL structure associated with a connection */
 	extern SSL *PQgetssl(PGconn *conn);
@@ -374,4 +378,5 @@ extern		"C"
 #ifdef __cplusplus
 }
 #endif
+
 #endif	 /* LIBPQ_FE_H */

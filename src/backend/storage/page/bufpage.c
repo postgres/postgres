@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.39 2001/10/25 05:49:42 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.40 2001/10/28 06:25:51 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -389,7 +389,7 @@ PageGetFreeSpace(Page page)
 
 	if (space < sizeof(ItemIdData))
 		return 0;
-	space -= sizeof(ItemIdData);		/* XXX not always appropriate */
+	space -= sizeof(ItemIdData);	/* XXX not always appropriate */
 
 	return space;
 }

@@ -2,7 +2,7 @@
  *
  * spi.h
  *
- * $Id: spi.h,v 1.29 2001/10/25 05:49:59 momjian Exp $
+ * $Id: spi.h,v 1.30 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -112,4 +112,5 @@ extern void SPI_cursor_move(Portal portal, bool forward, int count);
 extern void SPI_cursor_close(Portal portal);
 
 extern void AtEOXact_SPI(void);
+
 #endif	 /* SPI_H */

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.15 2001/10/25 05:49:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/common.h,v 1.16 2001/10/28 06:25:58 momjian Exp $
  */
 #ifndef COMMON_H
 #define COMMON_H
@@ -36,4 +36,5 @@ extern void handle_sigint(SIGNAL_ARGS);
 extern PGresult *PSQLexec(const char *query);
 
 extern bool SendQuery(const char *query);
+
 #endif	 /* COMMON_H */

@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.106 2001/10/25 05:49:54 momjian Exp $
+ * $Id: c.h,v 1.107 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -645,4 +645,5 @@ extern int	vsnprintf(char *str, size_t count, const char *fmt, va_list args);
  *		end of c.h
  * ----------------
  */
+
 #endif	 /* C_H */

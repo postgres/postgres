@@ -33,4 +33,5 @@ typedef unsigned char slock_t;
 
 #if defined(__mips__)
 /* #	undef HAS_TEST_AND_SET */
+
 #endif

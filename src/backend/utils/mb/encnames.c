@@ -2,7 +2,7 @@
  * Encoding names and routines for work with it. All
  * in this file is shared bedween FE and BE.
  *
- * $Id: encnames.c,v 1.5 2001/10/25 05:49:51 momjian Exp $
+ * $Id: encnames.c,v 1.6 2001/10/28 06:25:56 momjian Exp $
  */
 #ifdef FRONTEND
 #include "postgres_fe.h"
@@ -38,7 +38,7 @@ pg_encname	pg_encname_tbl[] =
 {
 	{
 		"alt", PG_ALT
-	}		   ,				/* IBM866 */
+	},							/* IBM866 */
 	{
 		"big5", PG_BIG5
 	},							/* Big5; Chinese for Taiwan Multi-byte set */
@@ -191,7 +191,7 @@ pg_enc2name pg_enc2name_tbl[] =
 {
 	{
 		"SQL_ASCII", PG_SQL_ASCII
-	}		   ,
+	},
 	{
 		"EUC_JP", PG_EUC_JP
 	},
@@ -418,4 +418,5 @@ PG_encoding_to_char(PG_FUNCTION_ARGS)
 
 	return DirectFunctionCall1(namein, CStringGetDatum(encoding_name));
 }
+
 #endif

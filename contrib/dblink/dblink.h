@@ -66,4 +66,5 @@ extern Datum dblink_tok(PG_FUNCTION_ARGS);
  * Internal declarations
  */
 dblink_results *init_dblink_results(MemoryContext fn_mcxt);
+
 #endif	 /* DBLINK_H */

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: lwlock.h,v 1.2 2001/10/25 05:50:10 momjian Exp $
+ * $Id: lwlock.h,v 1.3 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,31 +25,31 @@
  */
 typedef enum LWLockId
 {
-				BufMgrLock,
-				LockMgrLock,
-				OidGenLock,
-				XidGenLock,
-				ShmemIndexLock,
-				SInvalLock,
-				FreeSpaceLock,
-				MMCacheLock,
-				WALInsertLock,
-				WALWriteLock,
-				ControlFileLock,
-				CheckpointLock,
-				CLogControlLock,
+	BufMgrLock,
+	LockMgrLock,
+	OidGenLock,
+	XidGenLock,
+	ShmemIndexLock,
+	SInvalLock,
+	FreeSpaceLock,
+	MMCacheLock,
+	WALInsertLock,
+	WALWriteLock,
+	ControlFileLock,
+	CheckpointLock,
+	CLogControlLock,
 
-				NumFixedLWLocks,/* must be last except for
+	NumFixedLWLocks,			/* must be last except for
 								 * MaxDynamicLWLock */
 
-				MaxDynamicLWLock = 1000000000
+	MaxDynamicLWLock = 1000000000
 } LWLockId;
 
 
 typedef enum LWLockMode
 {
-				LW_EXCLUSIVE,
-				LW_SHARED
+	LW_EXCLUSIVE,
+	LW_SHARED
 } LWLockMode;
 
 
@@ -66,4 +66,5 @@ extern void LWLockReleaseAll(void);
 extern int	NumLWLocks(void);
 extern int	LWLockShmemSize(void);
 extern void CreateLWLocks(void);
+
 #endif	 /* LWLOCK_H */

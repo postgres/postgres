@@ -94,8 +94,8 @@ const char *__movename[5] =
 
 static PyObject *pg_default_host;		/* default database host */
 static PyObject *pg_default_base;		/* default database name */
-static PyObject *pg_default_opt;		/* default connection options */
-static PyObject *pg_default_tty;		/* default debug tty */
+static PyObject *pg_default_opt;	/* default connection options */
+static PyObject *pg_default_tty;	/* default debug tty */
 static PyObject *pg_default_port;		/* default connection port */
 static PyObject *pg_default_user;		/* default username */
 static PyObject *pg_default_passwd;		/* default password */
@@ -111,7 +111,7 @@ int		   *get_type_array(PGresult *result, int nfields);
 
 typedef struct
 {
-				PyObject_HEAD
+	PyObject_HEAD
 	int			valid;			/* validity flag */
 	PGconn	   *cnx;			/* PostGres connection handle */
 	PGresult   *last_result;	/* last result content */
@@ -139,7 +139,7 @@ pgobject_New(void)
 
 typedef struct
 {
-				PyObject_HEAD
+	PyObject_HEAD
 	PGresult   *last_result;	/* last result content */
 	int			result_type;	/* type of previous result */
 	long		current_pos;	/* current position in last result */
@@ -154,7 +154,7 @@ staticforward PyTypeObject PgQueryType;
 
 typedef struct
 {
-				PyObject_HEAD
+	PyObject_HEAD
 	int			valid;			/* validity flag */
 	pgobject   *pgcnx;			/* parent connection object */
 	PGresult   *last_result;	/* last result content */
@@ -175,8 +175,8 @@ staticforward PyTypeObject PgSourceType;
 
 typedef struct
 {
-				PyObject_HEAD
-				pgobject * pgcnx;		/* parent connection object */
+	PyObject_HEAD
+	pgobject * pgcnx;			/* parent connection object */
 	Oid			lo_oid;			/* large object oid */
 	int			lo_fd;			/* large object fd */
 }			pglargeobject;

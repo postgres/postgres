@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: trigger.h,v 1.28 2001/10/25 05:49:58 momjian Exp $
+ * $Id: trigger.h,v 1.29 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -160,4 +160,5 @@ extern void DeferredTriggerSetState(ConstraintsSetStmt *stmt);
  *
  */
 extern bool RI_FKey_keyequal_upd(TriggerData *trigdata);
+
 #endif	 /* TRIGGER_H */

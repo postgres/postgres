@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.2 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mbprint.c,v 1.3 2001/10/28 06:25:58 momjian Exp $
  */
 
 #include "postgres_fe.h"
@@ -349,4 +349,5 @@ pg_wcswidth(unsigned char *pwcs, int len)
 {
 	return len;
 }
+
 #endif

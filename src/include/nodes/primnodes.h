@@ -10,7 +10,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.55 2001/10/25 05:50:05 momjian Exp $
+ * $Id: primnodes.h,v 1.56 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -103,7 +103,7 @@ typedef struct Fjoin
  */
 typedef enum OpType
 {
-				OP_EXPR, FUNC_EXPR, OR_EXPR, AND_EXPR, NOT_EXPR, SUBPLAN_EXPR
+	OP_EXPR, FUNC_EXPR, OR_EXPR, AND_EXPR, NOT_EXPR, SUBPLAN_EXPR
 } OpType;
 
 typedef struct Expr
@@ -345,7 +345,7 @@ typedef struct Aggref
  */
 typedef enum SubLinkType
 {
-				EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, MULTIEXPR_SUBLINK, EXPR_SUBLINK
+	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, MULTIEXPR_SUBLINK, EXPR_SUBLINK
 } SubLinkType;
 
 
@@ -549,4 +549,5 @@ typedef struct FromExpr
 	List	   *fromlist;		/* List of join subtrees */
 	Node	   *quals;			/* qualifiers on join, if any */
 } FromExpr;
+
 #endif	 /* PRIMNODES_H */

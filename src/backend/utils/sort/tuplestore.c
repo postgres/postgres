@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.4 2001/10/25 05:49:52 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.5 2001/10/28 06:25:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -43,11 +43,11 @@
  */
 typedef enum
 {
-				TSS_INITIAL,	/* Loading tuples; still within memory
+	TSS_INITIAL,				/* Loading tuples; still within memory
 								 * limit */
-				TSS_WRITEFILE,	/* Loading tuples; writing to temp file */
-				TSS_READMEM,	/* Reading tuples; entirely in memory */
-				TSS_READFILE	/* Reading tuples from temp file */
+	TSS_WRITEFILE,				/* Loading tuples; writing to temp file */
+	TSS_READMEM,				/* Reading tuples; entirely in memory */
+	TSS_READFILE				/* Reading tuples from temp file */
 } TupStoreStatus;
 
 /*

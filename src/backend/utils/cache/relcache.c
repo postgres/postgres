@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.147 2001/10/25 05:49:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.148 2001/10/28 06:25:53 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -379,7 +379,7 @@ scan_pg_rel_ind(RelationBuildDescInfo buildinfo)
 
 		default:
 			elog(ERROR, "ScanPgRelation: bad buildinfo");
-			return_tuple = NULL;		/* keep compiler quiet */
+			return_tuple = NULL;	/* keep compiler quiet */
 	}
 
 	heap_close(pg_class_desc, AccessShareLock);

@@ -43,7 +43,7 @@ static struct cclass
 	char	   *name;
 	char	   *chars;
 	char	   *multis;
-}			cclasses[] =
+} cclasses[] =
 
 {
 	{

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.59 2001/10/25 05:49:41 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteManip.c,v 1.60 2001/10/28 06:25:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -995,4 +995,5 @@ HandleRIRAttributeRule(Query *parsetree,
 	query_tree_mutator(parsetree, HandleRIRAttributeRule_mutator,
 					   (void *) &context, true);
 }
+
 #endif	 /* NOT_USED */

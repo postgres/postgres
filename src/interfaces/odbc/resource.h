@@ -62,4 +62,5 @@
 #define _APS_NEXT_CONTROL_VALUE			1062
 #define _APS_NEXT_SYMED_VALUE			101
 #endif	 /* */
+
 #endif	 /* */

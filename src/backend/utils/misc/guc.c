@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.56 2001/10/25 05:49:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.57 2001/10/28 06:25:56 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -95,11 +95,11 @@ bool		Password_encryption = false;
  */
 enum config_type
 {
-				PGC_NONE = 0,
-				PGC_BOOL,
-				PGC_INT,
-				PGC_REAL,
-				PGC_STRING
+	PGC_NONE = 0,
+	PGC_BOOL,
+	PGC_INT,
+	PGC_REAL,
+	PGC_STRING
 };
 
 
@@ -194,7 +194,7 @@ static struct config_bool
 {
 	{
 		"enable_seqscan", PGC_USERSET, &enable_seqscan, true, NULL
-	}		   ,
+	},
 	{
 		"enable_indexscan", PGC_USERSET, &enable_indexscan, true, NULL
 	},
@@ -353,34 +353,34 @@ static struct config_int
 {
 	{
 		"geqo_threshold", PGC_USERSET, &geqo_rels,
-		DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL
-	}		   ,
+			DEFAULT_GEQO_RELS, 2, INT_MAX, NULL, NULL
+	},
 	{
 		"geqo_pool_size", PGC_USERSET, &Geqo_pool_size,
-		DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL
+			DEFAULT_GEQO_POOL_SIZE, 0, MAX_GEQO_POOL_SIZE, NULL, NULL
 	},
 	{
 		"geqo_effort", PGC_USERSET, &Geqo_effort,
-		1, 1, INT_MAX, NULL, NULL
+			1, 1, INT_MAX, NULL, NULL
 	},
 	{
 		"geqo_generations", PGC_USERSET, &Geqo_generations,
-		0, 0, INT_MAX, NULL, NULL
+			0, 0, INT_MAX, NULL, NULL
 	},
 	{
 		"geqo_random_seed", PGC_USERSET, &Geqo_random_seed,
-		-1, INT_MIN, INT_MAX, NULL, NULL
+			-1, INT_MIN, INT_MAX, NULL, NULL
 	},
 
 	{
 		"deadlock_timeout", PGC_POSTMASTER, &DeadlockTimeout,
-		1000, 0, INT_MAX, NULL, NULL
+			1000, 0, INT_MAX, NULL, NULL
 	},
 
 #ifdef ENABLE_SYSLOG
 	{
 		"syslog", PGC_SIGHUP, &Use_syslog,
-		0, 0, 2, NULL, NULL
+			0, 0, 2, NULL, NULL
 	},
 #endif
 
@@ -391,116 +391,116 @@ static struct config_int
 	 */
 	{
 		"max_connections", PGC_POSTMASTER, &MaxBackends,
-		DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
+			DEF_MAXBACKENDS, 1, INT_MAX, NULL, NULL
 	},
 
 	{
 		"shared_buffers", PGC_POSTMASTER, &NBuffers,
-		DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
+			DEF_NBUFFERS, 16, INT_MAX, NULL, NULL
 	},
 
 	{
 		"port", PGC_POSTMASTER, &PostPortNumber,
-		DEF_PGPORT, 1, 65535, NULL, NULL
+			DEF_PGPORT, 1, 65535, NULL, NULL
 	},
 
 	{
 		"unix_socket_permissions", PGC_POSTMASTER, &Unix_socket_permissions,
-		0777, 0000, 0777, NULL, NULL
+			0777, 0000, 0777, NULL, NULL
 	},
 
 	{
 		"sort_mem", PGC_USERSET, &SortMem,
-		512, 4 * BLCKSZ / 1024, INT_MAX, NULL, NULL
+			512, 4 * BLCKSZ / 1024, INT_MAX, NULL, NULL
 	},
 
 	{
 		"vacuum_mem", PGC_USERSET, &VacuumMem,
-		8192, 1024, INT_MAX, NULL, NULL
+			8192, 1024, INT_MAX, NULL, NULL
 	},
 
 	{
 		"max_files_per_process", PGC_BACKEND, &max_files_per_process,
-		1000, 25, INT_MAX, NULL, NULL
+			1000, 25, INT_MAX, NULL, NULL
 	},
 
 	{
 		"debug_level", PGC_USERSET, &DebugLvl,
-		0, 0, 16, NULL, NULL
+			0, 0, 16, NULL, NULL
 	},
 
 #ifdef LOCK_DEBUG
 	{
 		"trace_lock_oidmin", PGC_SUSET, &Trace_lock_oidmin,
-		BootstrapObjectIdData, 1, INT_MAX, NULL, NULL
+			BootstrapObjectIdData, 1, INT_MAX, NULL, NULL
 	},
 	{
 		"trace_lock_table", PGC_SUSET, &Trace_lock_table,
-		0, 0, INT_MAX, NULL, NULL
+			0, 0, INT_MAX, NULL, NULL
 	},
 #endif
 	{
 		"max_expr_depth", PGC_USERSET, &max_expr_depth,
-		DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
+			DEFAULT_MAX_EXPR_DEPTH, 10, INT_MAX, NULL, NULL
 	},
 
 	{
 		"max_fsm_relations", PGC_POSTMASTER, &MaxFSMRelations,
-		100, 10, INT_MAX, NULL, NULL
+			100, 10, INT_MAX, NULL, NULL
 	},
 	{
 		"max_fsm_pages", PGC_POSTMASTER, &MaxFSMPages,
-		10000, 1000, INT_MAX, NULL, NULL
+			10000, 1000, INT_MAX, NULL, NULL
 	},
 
 	{
 		"max_locks_per_transaction", PGC_POSTMASTER, &max_locks_per_xact,
-		64, 10, INT_MAX, NULL, NULL
+			64, 10, INT_MAX, NULL, NULL
 	},
 
 	{
 		"authentication_timeout", PGC_SIGHUP, &AuthenticationTimeout,
-		60, 1, 600, NULL, NULL
+			60, 1, 600, NULL, NULL
 	},
 
 	{
 		"pre_auth_delay", PGC_SIGHUP, &PreAuthDelay,
-		0, 0, 60, NULL, NULL
+			0, 0, 60, NULL, NULL
 	},
 
 	{
 		"checkpoint_segments", PGC_SIGHUP, &CheckPointSegments,
-		3, 1, INT_MAX, NULL, NULL
+			3, 1, INT_MAX, NULL, NULL
 	},
 
 	{
 		"checkpoint_timeout", PGC_SIGHUP, &CheckPointTimeout,
-		300, 30, 3600, NULL, NULL
+			300, 30, 3600, NULL, NULL
 	},
 
 	{
 		"wal_buffers", PGC_POSTMASTER, &XLOGbuffers,
-		8, 4, INT_MAX, NULL, NULL
+			8, 4, INT_MAX, NULL, NULL
 	},
 
 	{
 		"wal_files", PGC_SIGHUP, &XLOGfiles,
-		0, 0, 64, NULL, NULL
+			0, 0, 64, NULL, NULL
 	},
 
 	{
 		"wal_debug", PGC_SUSET, &XLOG_DEBUG,
-		0, 0, 16, NULL, NULL
+			0, 0, 16, NULL, NULL
 	},
 
 	{
 		"commit_delay", PGC_USERSET, &CommitDelay,
-		0, 0, 100000, NULL, NULL
+			0, 0, 100000, NULL, NULL
 	},
 
 	{
 		"commit_siblings", PGC_USERSET, &CommitSiblings,
-		5, 1, 1000, NULL, NULL
+			5, 1, 1000, NULL, NULL
 	},
 
 	{
@@ -514,29 +514,29 @@ static struct config_real
 {
 	{
 		"effective_cache_size", PGC_USERSET, &effective_cache_size,
-		DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL
-	}		   ,
+			DEFAULT_EFFECTIVE_CACHE_SIZE, 0, DBL_MAX, NULL, NULL
+	},
 	{
 		"random_page_cost", PGC_USERSET, &random_page_cost,
-		DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
+			DEFAULT_RANDOM_PAGE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
 		"cpu_tuple_cost", PGC_USERSET, &cpu_tuple_cost,
-		DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
+			DEFAULT_CPU_TUPLE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
 		"cpu_index_tuple_cost", PGC_USERSET, &cpu_index_tuple_cost,
-		DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
+			DEFAULT_CPU_INDEX_TUPLE_COST, 0, DBL_MAX, NULL, NULL
 	},
 	{
 		"cpu_operator_cost", PGC_USERSET, &cpu_operator_cost,
-		DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
+			DEFAULT_CPU_OPERATOR_COST, 0, DBL_MAX, NULL, NULL
 	},
 
 	{
 		"geqo_selection_bias", PGC_USERSET, &Geqo_selection_bias,
-		DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
-		MAX_GEQO_SELECTION_BIAS, NULL, NULL
+			DEFAULT_GEQO_SELECTION_BIAS, MIN_GEQO_SELECTION_BIAS,
+			MAX_GEQO_SELECTION_BIAS, NULL, NULL
 	},
 
 	{
@@ -550,49 +550,49 @@ static struct config_string
 {
 	{
 		"default_transaction_isolation", PGC_USERSET, &default_iso_level_string,
-		"read committed", check_defaultxactisolevel, assign_defaultxactisolevel
-	}		   ,
+			"read committed", check_defaultxactisolevel, assign_defaultxactisolevel
+	},
 
 	{
 		"dynamic_library_path", PGC_SUSET, &Dynamic_library_path,
-		"$libdir", NULL, NULL
+			"$libdir", NULL, NULL
 	},
 
 	{
 		"krb_server_keyfile", PGC_POSTMASTER, &pg_krb_server_keyfile,
-		PG_KRB_SRVTAB, NULL, NULL
+			PG_KRB_SRVTAB, NULL, NULL
 	},
 
 #ifdef ENABLE_SYSLOG
 	{
 		"syslog_facility", PGC_POSTMASTER, &Syslog_facility,
-		"LOCAL0", check_facility, NULL
+			"LOCAL0", check_facility, NULL
 	},
 	{
 		"syslog_ident", PGC_POSTMASTER, &Syslog_ident,
-		"postgres", NULL, NULL
+			"postgres", NULL, NULL
 	},
 #endif
 
 	{
 		"unix_socket_group", PGC_POSTMASTER, &Unix_socket_group,
-		"", NULL, NULL
+			"", NULL, NULL
 	},
 
 	{
 		"unix_socket_directory", PGC_POSTMASTER, &UnixSocketDir,
-		"", NULL, NULL
+			"", NULL, NULL
 	},
 
 	{
 		"virtual_host", PGC_POSTMASTER, &VirtualHost,
-		"", NULL, NULL
+			"", NULL, NULL
 	},
 
 	{
 		"wal_sync_method", PGC_SIGHUP, &XLOG_sync_method,
-		XLOG_sync_method_default, check_xlog_sync_method,
-		assign_xlog_sync_method
+			XLOG_sync_method_default, check_xlog_sync_method,
+			assign_xlog_sync_method
 	},
 
 	{

@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.252 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.253 2001/10/28 06:25:47 momjian Exp $
  *
  * NOTES
  *
@@ -1092,7 +1092,7 @@ ProcessStartupPacket(Port *port, bool SSLdone)
 		{
 			elog(DEBUG, "failed to send SSL negotiation response: %s",
 				 strerror(errno));
-			return STATUS_ERROR;		/* close the connection */
+			return STATUS_ERROR;	/* close the connection */
 		}
 
 #ifdef USE_SSL

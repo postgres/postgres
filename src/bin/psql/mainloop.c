@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.41 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/mainloop.c,v 1.42 2001/10/28 06:25:58 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "mainloop.h"
@@ -393,7 +393,7 @@ MainLoop(FILE *source)
 					line = new;
 					len = strlen(new);
 
-					goto rescan;		/* reparse the just substituted */
+					goto rescan;	/* reparse the just substituted */
 				}
 				else
 				{

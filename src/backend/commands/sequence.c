@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.65 2001/10/25 05:49:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/sequence.c,v 1.66 2001/10/28 06:25:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -766,7 +766,7 @@ init_params(CreateSeqStmt *seq, Form_pg_sequence new)
 		if (new->increment_by > 0)
 			new->max_value = SEQ_MAXVALUE;		/* ascending seq */
 		else
-			new->max_value = -1;		/* descending seq */
+			new->max_value = -1;	/* descending seq */
 	}
 	else
 		new->max_value = get_param(max_value);

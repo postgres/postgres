@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: xlogutils.h,v 1.9 2001/10/25 05:49:56 momjian Exp $
+ * $Id: xlogutils.h,v 1.10 2001/10/28 06:25:59 momjian Exp $
  */
 #ifndef XLOG_UTILS_H
 #define XLOG_UTILS_H
@@ -25,4 +25,5 @@ extern void XLogCloseRelationCache(void);
 
 extern Relation XLogOpenRelation(bool redo, RmgrId rmid, RelFileNode rnode);
 extern Buffer XLogReadBuffer(bool extend, Relation reln, BlockNumber blkno);
+
 #endif

@@ -1,4 +1,4 @@
-/*	$Id: md5.h,v 1.5 2001/08/21 00:42:41 momjian Exp $	*/
+/*	$Id: md5.h,v 1.6 2001/10/28 06:25:41 momjian Exp $	*/
 /*	   $KAME: md5.h,v 1.3 2000/02/22 14:01:18 itojun Exp $	   */
 
 /*
@@ -75,4 +75,5 @@ do {				\
 	md5_pad((y));		\
 	md5_result((x), (y));	\
 } while (0)
+
 #endif	 /* ! _NETINET6_MD5_H_ */

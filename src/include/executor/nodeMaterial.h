@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodeMaterial.h,v 1.15 2001/10/25 05:49:59 momjian Exp $
+ * $Id: nodeMaterial.h,v 1.16 2001/10/28 06:26:06 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,4 +23,5 @@ extern void ExecEndMaterial(Material *node);
 extern void ExecMaterialMarkPos(Material *node);
 extern void ExecMaterialRestrPos(Material *node);
 extern void ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent);
+
 #endif	 /* NODEMATERIAL_H */

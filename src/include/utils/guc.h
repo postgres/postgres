@@ -4,7 +4,7 @@
  * External declarations pertaining to backend/utils/misc/guc.c and
  * backend/utils/misc/guc-file.l
  *
- * $Id: guc.h,v 1.11 2001/10/25 05:50:10 momjian Exp $
+ * $Id: guc.h,v 1.12 2001/10/28 06:26:09 momjian Exp $
  */
 #ifndef GUC_H
 #define GUC_H
@@ -39,11 +39,11 @@
  */
 typedef enum
 {
-				PGC_POSTMASTER,
-				PGC_SIGHUP,
-				PGC_BACKEND,
-				PGC_SUSET,
-				PGC_USERSET
+	PGC_POSTMASTER,
+	PGC_SIGHUP,
+	PGC_BACKEND,
+	PGC_SUSET,
+	PGC_USERSET
 } GucContext;
 
 
@@ -72,4 +72,5 @@ extern bool Show_btree_build_stats;
 
 extern bool SQL_inheritance;
 extern bool Australian_timezones;
+
 #endif	 /* GUC_H */

@@ -48,4 +48,5 @@ typedef struct
 
 bool execute(ITEM * curitem, void *checkval,
 		bool calcnot, bool (*chkcond) (void *checkval, ITEM * val));
+
 #endif

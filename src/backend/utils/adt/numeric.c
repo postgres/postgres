@@ -5,7 +5,7 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.46 2001/10/25 05:49:45 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/adt/numeric.c,v 1.47 2001/10/28 06:25:52 momjian Exp $
  *
  * ----------
  */
@@ -517,7 +517,7 @@ numeric_round(PG_FUNCTION_ARGS)
 
 			if (i < 0)
 			{
-				Assert(i == -1);		/* better not have added more than 1 digit */
+				Assert(i == -1);	/* better not have added more than 1 digit */
 				Assert(arg.digits > arg.buf);
 				arg.digits--;
 				arg.ndigits++;

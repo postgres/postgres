@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.15 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/lib/Attic/lispsort.c,v 1.16 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -55,4 +55,5 @@ lisp_qsort(List *the_list,		/* the list to be sorted */
 
 	return output;
 }
+
 #endif

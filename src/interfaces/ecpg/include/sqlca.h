@@ -44,7 +44,7 @@ extern		"C"
 
 		/*
 		 * 2: if 'W' a (hopefully) non-fatal notice occured
-*//* 3: empty */
+		 */	/* 3: empty */
 		/* 4: empty						*/
 		/* 5: empty						*/
 		/* 6: empty						*/
@@ -59,4 +59,5 @@ extern		"C"
 #ifdef __cplusplus
 }
 #endif
+
 #endif

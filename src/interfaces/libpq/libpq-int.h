@@ -12,7 +12,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: libpq-int.h,v 1.41 2001/10/25 05:50:13 momjian Exp $
+ * $Id: libpq-int.h,v 1.42 2001/10/28 06:26:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -139,7 +139,7 @@ struct pg_result
 	 */
 	PQnoticeProcessor noticeHook;		/* notice/error message processor */
 	void	   *noticeArg;
-	int			client_encoding;		/* encoding id */
+	int			client_encoding;	/* encoding id */
 
 
 	char	   *errMsg;			/* error message, or NULL if no error */
@@ -160,26 +160,22 @@ struct pg_result
 /* PGAsyncStatusType defines the state of the query-execution state machine */
 typedef enum
 {
-				PGASYNC_IDLE,	/* nothing's happening, dude */
-				PGASYNC_BUSY,	/* query in progress */
-				PGASYNC_READY,	/* result ready for PQgetResult */
-				PGASYNC_COPY_IN,/* Copy In data transfer in progress */
-				PGASYNC_COPY_OUT/* Copy Out data transfer in progress */
+	PGASYNC_IDLE,				/* nothing's happening, dude */
+	PGASYNC_BUSY,				/* query in progress */
+	PGASYNC_READY,				/* result ready for PQgetResult */
+	PGASYNC_COPY_IN,			/* Copy In data transfer in progress */
+	PGASYNC_COPY_OUT			/* Copy Out data transfer in progress */
 }			PGAsyncStatusType;
 
 /* PGSetenvStatusType defines the state of the PQSetenv state machine */
 typedef enum
 {
-				SETENV_STATE_OPTION_SEND,		/* About to send an
-												 * Environment Option */
-				SETENV_STATE_OPTION_WAIT,		/* Waiting for above send
-												 * to complete	*/
+	SETENV_STATE_OPTION_SEND,	/* About to send an Environment Option */
+	SETENV_STATE_OPTION_WAIT,	/* Waiting for above send to complete  */
 	/* these next two are only used in MULTIBYTE mode */
-				SETENV_STATE_ENCODINGS_SEND,	/* About to send an
-												 * "encodings" query */
-				SETENV_STATE_ENCODINGS_WAIT,	/* Waiting for query to
-												 * complete		 */
-				SETENV_STATE_IDLE
+	SETENV_STATE_ENCODINGS_SEND,	/* About to send an "encodings" query */
+	SETENV_STATE_ENCODINGS_WAIT,	/* Waiting for query to complete	  */
+	SETENV_STATE_IDLE
 }			PGSetenvStatusType;
 
 /* large-object-access data ... allocated only if large-object code is used. */
@@ -282,7 +278,7 @@ struct pg_conn
 	/* Buffer for receiving various parts of messages */
 	PQExpBufferData workBuffer; /* expansible string */
 
-	int			client_encoding;		/* encoding id */
+	int			client_encoding;	/* encoding id */
 };
 
 /* String descriptions of the ExecStatusTypes.
@@ -356,4 +352,5 @@ __attribute__((format_arg(1)));
 #else
 #define libpq_gettext(x) (x)
 #endif
+
 #endif	 /* LIBPQ_INT_H */

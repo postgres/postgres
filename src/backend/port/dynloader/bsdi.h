@@ -33,4 +33,5 @@ do { \
 	free(handle); \
 } while (0)
 #endif	 /* not HAVE_DLOPEN */
+
 #endif	 /* PORT_PROTOS_H */

@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.9 2001/10/25 05:49:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.10 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -79,8 +79,8 @@ typedef struct LVRelStats
 	BlockNumber nonempty_pages; /* actually, last nonempty page + 1 */
 	/* List of TIDs of tuples we intend to delete */
 	/* NB: this list is ordered by TID address */
-	int			num_dead_tuples;		/* current # of entries */
-	int			max_dead_tuples;		/* # slots allocated in array */
+	int			num_dead_tuples;	/* current # of entries */
+	int			max_dead_tuples;	/* # slots allocated in array */
 	ItemPointer dead_tuples;	/* array of ItemPointerData */
 	/* Array or heap of per-page info about free space */
 	/* We use a simple array until it fills up, then convert to heap */
@@ -88,7 +88,7 @@ typedef struct LVRelStats
 	int			num_free_pages; /* current # of entries */
 	int			max_free_pages; /* # slots allocated in arrays */
 	BlockNumber *free_pages;	/* array or heap of block numbers */
-	Size	   *free_spaceavail;		/* array or heap of available space */
+	Size	   *free_spaceavail;	/* array or heap of available space */
 } LVRelStats;
 
 

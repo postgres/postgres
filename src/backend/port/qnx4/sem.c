@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.8 2001/10/25 05:49:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.9 2001/10/28 06:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -176,7 +176,7 @@ semget(key_t key, int nsems, int semflg)
 		nsets = PROC_SEM_MAP_ENTRIES(MaxBackends);
 		sem_info_size = sizeof(struct sem_info) + (nsets - 1) * sizeof(struct sem_set_info);
 		ltrunc(fd, sem_info_size, SEEK_SET);
-		if (fstat(fd, &statbuf))/* would be strange : the only doc'ed */
+		if (fstat(fd, &statbuf))	/* would be strange : the only doc'ed */
 		{						/* error is EBADF */
 			close(fd);
 			return -1;

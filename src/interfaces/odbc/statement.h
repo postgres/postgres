@@ -23,10 +23,10 @@
 
 typedef enum
 {
-				STMT_ALLOCATED, /* The statement handle is allocated, but
+	STMT_ALLOCATED,				/* The statement handle is allocated, but
 								 * not used so far */
-				STMT_READY,		/* the statement is waiting to be executed */
-				STMT_PREMATURE, /* ODBC states that it is legal to call
+	STMT_READY,					/* the statement is waiting to be executed */
+	STMT_PREMATURE,				/* ODBC states that it is legal to call
 								 * e.g. SQLDescribeCol before a call to
 								 * SQLExecute, but after SQLPrepare. To
 								 * get all the necessary information in
@@ -34,9 +34,9 @@ typedef enum
 								 * query _before_ the actual call to
 								 * SQLExecute, so that statement is
 								 * considered to be "premature". */
-				STMT_FINISHED,	/* statement execution has finished */
-				STMT_EXECUTING	/* statement execution is still going on */
-}			STMT_Status;
+	STMT_FINISHED,				/* statement execution has finished */
+	STMT_EXECUTING				/* statement execution is still going on */
+} STMT_Status;
 
 #define STMT_ROW_VERSION_CHANGED					(-4)
 #define STMT_POS_BEFORE_RECORDSET					(-3)
@@ -79,18 +79,18 @@ typedef enum
 /* statement types */
 enum
 {
-				STMT_TYPE_UNKNOWN = -2,
-				STMT_TYPE_OTHER = -1,
-				STMT_TYPE_SELECT = 0,
-				STMT_TYPE_INSERT,
-				STMT_TYPE_UPDATE,
-				STMT_TYPE_DELETE,
-				STMT_TYPE_CREATE,
-				STMT_TYPE_ALTER,
-				STMT_TYPE_DROP,
-				STMT_TYPE_GRANT,
-				STMT_TYPE_REVOKE,
-				STMT_TYPE_PROCCALL
+	STMT_TYPE_UNKNOWN = -2,
+	STMT_TYPE_OTHER = -1,
+	STMT_TYPE_SELECT = 0,
+	STMT_TYPE_INSERT,
+	STMT_TYPE_UPDATE,
+	STMT_TYPE_DELETE,
+	STMT_TYPE_CREATE,
+	STMT_TYPE_ALTER,
+	STMT_TYPE_DROP,
+	STMT_TYPE_GRANT,
+	STMT_TYPE_REVOKE,
+	STMT_TYPE_PROCCALL
 };
 
 #define STMT_UPDATE(stmt)	(stmt->statement_type > STMT_TYPE_SELECT)
@@ -99,18 +99,18 @@ enum
 /*	Parsing status */
 enum
 {
-				STMT_PARSE_NONE = 0,
-				STMT_PARSE_COMPLETE,
-				STMT_PARSE_INCOMPLETE,
-				STMT_PARSE_FATAL,
+	STMT_PARSE_NONE = 0,
+	STMT_PARSE_COMPLETE,
+	STMT_PARSE_INCOMPLETE,
+	STMT_PARSE_FATAL,
 };
 
 /*	Result style */
 enum
 {
-				STMT_FETCH_NONE = 0,
-				STMT_FETCH_NORMAL,
-				STMT_FETCH_EXTENDED,
+	STMT_FETCH_NONE = 0,
+	STMT_FETCH_NORMAL,
+	STMT_FETCH_EXTENDED,
 };
 
 typedef struct
@@ -118,7 +118,7 @@ typedef struct
 	COL_INFO   *col_info;		/* cached SQLColumns info for this table */
 	char		name[MAX_TABLE_LEN + 1];
 	char		alias[MAX_TABLE_LEN + 1];
-}			TABLE_INFO;
+} TABLE_INFO;
 
 typedef struct
 {
@@ -137,7 +137,7 @@ typedef struct
 	char		dot[MAX_TABLE_LEN + 1];
 	char		name[MAX_COLUMN_LEN + 1];
 	char		alias[MAX_COLUMN_LEN + 1];
-}			FIELD_INFO;
+} FIELD_INFO;
 
 
 /********	Statement Handle	***********/
@@ -234,21 +234,21 @@ struct StatementClass_
 
 /*	Statement prototypes */
 StatementClass *SC_Constructor(void);
-void		InitializeStatementOptions(StatementOptions * opt);
-char		SC_Destructor(StatementClass * self);
+void		InitializeStatementOptions(StatementOptions *opt);
+char		SC_Destructor(StatementClass *self);
 int			statement_type(char *statement);
-char		parse_statement(StatementClass * stmt);
-void		SC_pre_execute(StatementClass * self);
-char		SC_unbind_cols(StatementClass * self);
-char		SC_recycle_statement(StatementClass * self);
+char		parse_statement(StatementClass *stmt);
+void		SC_pre_execute(StatementClass *self);
+char		SC_unbind_cols(StatementClass *self);
+char		SC_recycle_statement(StatementClass *self);
 
-void		SC_clear_error(StatementClass * self);
-char		SC_get_error(StatementClass * self, int *number, char **message);
-char	   *SC_create_errormsg(StatementClass * self);
-RETCODE		SC_execute(StatementClass * self);
-RETCODE		SC_fetch(StatementClass * self);
-void		SC_free_params(StatementClass * self, char option);
-void		SC_log_error(char *func, char *desc, StatementClass * self);
-unsigned long SC_get_bookmark(StatementClass * self);
+void		SC_clear_error(StatementClass *self);
+char		SC_get_error(StatementClass *self, int *number, char **message);
+char	   *SC_create_errormsg(StatementClass *self);
+RETCODE		SC_execute(StatementClass *self);
+RETCODE		SC_fetch(StatementClass *self);
+void		SC_free_params(StatementClass *self, char option);
+void		SC_log_error(char *func, char *desc, StatementClass *self);
+unsigned long SC_get_bookmark(StatementClass *self);
 
 #endif

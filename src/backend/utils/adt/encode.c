@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.4 2001/10/25 05:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/encode.c,v 1.5 2001/10/28 06:25:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -495,7 +495,7 @@ static struct
 {
 	const char *name;
 	struct pg_encoding enc;
-}			enclist[] =
+} enclist[] =
 
 {
 	{

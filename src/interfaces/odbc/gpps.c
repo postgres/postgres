@@ -55,7 +55,7 @@
  *	ODBCINSTDIR/ODBCINST_INI
  */
 DWORD
-GetPrivateProfileString(const char *theSection,			/* section name */
+GetPrivateProfileString(const char *theSection, /* section name */
 						const char *theKey,		/* search key name */
 						const char *theDefault, /* default value if not
 												 * found */

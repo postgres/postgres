@@ -31,4 +31,5 @@ extern void CommentObject(int objtype, char *objname, char *objproperty,
 extern void DeleteComments(Oid oid, Oid classoid);
 
 extern void CreateComments(Oid oid, Oid classoid, int32 subid, char *comment);
+
 #endif	 /* COMMENT_H */

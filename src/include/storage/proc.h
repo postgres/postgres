@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: proc.h,v 1.51 2001/10/25 05:50:10 momjian Exp $
+ * $Id: proc.h,v 1.52 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -152,4 +152,5 @@ extern void ProcSendSignal(BackendId procId);
 
 extern bool enable_sigalrm_interrupt(int delayms);
 extern bool disable_sigalrm_interrupt(void);
+
 #endif	 /* PROC_H */

@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.52 2001/10/25 05:50:15 momjian Exp $
+ * $Id: psqlodbc.h,v 1.53 2001/10/28 06:26:14 momjian Exp $
  *
  */
 
@@ -185,7 +185,7 @@ typedef struct GlobalValues_
 	char		extra_systable_prefixes[MEDIUM_REGISTRY_LEN];
 	char		conn_settings[LARGE_REGISTRY_LEN];
 	char		protocol[SMALL_REGISTRY_LEN];
-}			GLOBAL_VALUES;
+} GLOBAL_VALUES;
 
 typedef struct StatementOptions_
 {
@@ -202,7 +202,7 @@ typedef struct StatementOptions_
 	UInt4	   *rowsFetched;
 	UInt2	   *rowStatusArray;
 	void	   *bookmark_ptr;
-}			StatementOptions;
+} StatementOptions;
 
 /*	Used to pass extra query info to send_query */
 typedef struct QueryInfo_
@@ -210,7 +210,7 @@ typedef struct QueryInfo_
 	int			row_size;
 	QResultClass *result_in;
 	char	   *cursor;
-}			QueryInfo;
+} QueryInfo;
 
 void		logs_on_off(int cnopen, int, int);
 
@@ -249,4 +249,5 @@ void		debug_memory_check(void);
 #define strdup	debug_strdup
 #define free	debug_free
 #endif	 /* _MEMORY_DEBUG_ */
+
 #endif

@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.52 2001/10/25 05:49:54 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/startup.c,v 1.53 2001/10/28 06:25:58 momjian Exp $
  */
 #include "postgres_fe.h"
 
@@ -56,11 +56,11 @@ PsqlSettings pset;
  */
 enum _actions
 {
-				ACT_NOTHING = 0,
-				ACT_SINGLE_SLASH,
-				ACT_LIST_DB,
-				ACT_SINGLE_QUERY,
-				ACT_FILE
+	ACT_NOTHING = 0,
+	ACT_SINGLE_SLASH,
+	ACT_LIST_DB,
+	ACT_SINGLE_QUERY,
+	ACT_FILE
 };
 
 struct adhoc_opts
@@ -695,4 +695,5 @@ printSSLInfo(void)
 	printf(gettext("SSL connection (cipher: %s, bits: %i)\n\n"),
 		   SSL_get_cipher(ssl), sslbits);
 }
+
 #endif

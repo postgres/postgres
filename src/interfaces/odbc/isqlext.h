@@ -371,13 +371,13 @@ typedef struct
 {
 	SQLUINTEGER dwLowWord;
 	SQLUINTEGER dwHighWord;
-}			SQLUBIGINT;
+} SQLUBIGINT;
 
 typedef struct
 {
 	SQLUINTEGER dwLowWord;
 	SQLINTEGER	dwHighWord;
-}			SQLBIGINT;
+} SQLBIGINT;
 #endif	 /* GCC */
 
 typedef struct tagDATE_STRUCT
@@ -385,18 +385,18 @@ typedef struct tagDATE_STRUCT
 	SQLSMALLINT year;
 	SQLUSMALLINT month;
 	SQLUSMALLINT day;
-}			DATE_STRUCT,
+} DATE_STRUCT,
 
-			SQL_DATE_STRUCT;
+SQL_DATE_STRUCT;
 
 typedef struct tagTIME_STRUCT
 {
 	SQLUSMALLINT hour;
 	SQLUSMALLINT minute;
 	SQLUSMALLINT second;
-}			TIME_STRUCT,
+} TIME_STRUCT,
 
-			SQL_TIME_STRUCT;
+SQL_TIME_STRUCT;
 
 typedef struct tagTIMESTAMP_STRUCT
 {
@@ -407,9 +407,9 @@ typedef struct tagTIMESTAMP_STRUCT
 	SQLUSMALLINT minute;
 	SQLUSMALLINT second;
 	SQLUINTEGER fraction;
-}			TIMESTAMP_STRUCT,
+} TIMESTAMP_STRUCT,
 
-			SQL_TIMESTAMP_STRUCT;
+SQL_TIMESTAMP_STRUCT;
 
 /* postodbc doesn't use these but what the heck */
 /* Don't know what SQL_MAX_NUMERIC_LEN should be so I can't include this. It's
@@ -430,30 +430,30 @@ typedef struct tagSQLGUID
 	WORD		Data2;
 	WORD		Data3;
 	BYTE		Data4[8];
-}			SQLGUID;
+} SQLGUID;
 
 typedef enum
 {
-				SQL_IS_YEAR = 1,
-				SQL_IS_MONTH = 2,
-				SQL_IS_DAY = 3,
-				SQL_IS_HOUR = 4,
-				SQL_IS_MINUTE = 5,
-				SQL_IS_SECOND = 6,
-				SQL_IS_YEAR_TO_MONTH = 7,
-				SQL_IS_DAY_TO_HOUR = 8,
-				SQL_IS_DAY_TO_MINUTE = 9,
-				SQL_IS_DAY_TO_SECOND = 10,
-				SQL_IS_HOUR_TO_MINUTE = 11,
-				SQL_IS_HOUR_TO_SECOND = 12,
-				SQL_IS_MINUTE_TO_SECOND = 13
-}			SQLINTERVAL;
+	SQL_IS_YEAR = 1,
+	SQL_IS_MONTH = 2,
+	SQL_IS_DAY = 3,
+	SQL_IS_HOUR = 4,
+	SQL_IS_MINUTE = 5,
+	SQL_IS_SECOND = 6,
+	SQL_IS_YEAR_TO_MONTH = 7,
+	SQL_IS_DAY_TO_HOUR = 8,
+	SQL_IS_DAY_TO_MINUTE = 9,
+	SQL_IS_DAY_TO_SECOND = 10,
+	SQL_IS_HOUR_TO_MINUTE = 11,
+	SQL_IS_HOUR_TO_SECOND = 12,
+	SQL_IS_MINUTE_TO_SECOND = 13
+} SQLINTERVAL;
 
 typedef struct tagSQL_YEAR_MONTH
 {
 	SQLUINTEGER year;
 	SQLUINTEGER month;
-}			SQL_YEAR_MONTH_STRUCT;
+} SQL_YEAR_MONTH_STRUCT;
 
 typedef struct tagSQL_DAY_SECOND
 {
@@ -462,7 +462,7 @@ typedef struct tagSQL_DAY_SECOND
 	SQLUINTEGER minute;
 	SQLUINTEGER second;
 	SQLUINTEGER fraction;
-}			SQL_DAY_SECOND_STRUCT;
+} SQL_DAY_SECOND_STRUCT;
 
 typedef struct tagSQL_INTERVAL_STRUCT
 {
@@ -473,7 +473,7 @@ typedef struct tagSQL_INTERVAL_STRUCT
 		SQL_YEAR_MONTH_STRUCT year_month;
 		SQL_DAY_SECOND_STRUCT day_second;
 	}			intval;
-}			SQL_INTERVAL_STRUCT;
+} SQL_INTERVAL_STRUCT;
 
 #define SQL_MAX_OPTION_STRING_LENGTH	256
 #define SQL_NUM_EXTENSIONS	(SQL_EXT_API_LAST - SQL_EXT_API_START + 1)
@@ -1556,4 +1556,5 @@ extern		"C"
 #ifdef __cplusplus
 }
 #endif
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.40 2001/10/25 05:49:55 momjian Exp $
+ * $Id: hash.h,v 1.41 2001/10/28 06:25:59 momjian Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -81,8 +81,8 @@ typedef struct HashPageOpaqueData
 	bits16		hasho_flag;		/* is this page a bucket or ovfl */
 	Bucket		hasho_bucket;	/* bucket number this pg belongs to */
 	OverflowPageAddress hasho_oaddr;	/* ovfl address of this ovfl pg */
-	BlockNumber hasho_nextblkno;		/* next ovfl blkno */
-	BlockNumber hasho_prevblkno;		/* previous ovfl (or bucket) blkno */
+	BlockNumber hasho_nextblkno;	/* next ovfl blkno */
+	BlockNumber hasho_prevblkno;	/* previous ovfl (or bucket) blkno */
 } HashPageOpaqueData;
 
 typedef HashPageOpaqueData *HashPageOpaque;
@@ -150,12 +150,12 @@ typedef struct HashMetaPageData
 	uint16		hashm_bshift;	/* bucket shift */
 	uint16		hashm_bmsize;	/* bitmap array size (bytes) - must be a
 								 * power of 2 */
-	uint32		hashm_maxbucket;		/* ID of maximum bucket in use */
+	uint32		hashm_maxbucket;	/* ID of maximum bucket in use */
 	uint32		hashm_highmask; /* mask to modulo into entire table */
 	uint32		hashm_lowmask;	/* mask to modulo into lower half of table */
 	uint32		hashm_ovflpoint;/* pageno. from which ovflpgs being
 								 * allocated */
-	uint32		hashm_lastfreed;		/* last ovflpage freed */
+	uint32		hashm_lastfreed;	/* last ovflpage freed */
 	uint32		hashm_nmaps;	/* Initial number of bitmaps */
 	uint32		hashm_spares[NCACHED];	/* spare pages available at
 										 * splitpoints */
@@ -327,4 +327,5 @@ extern void _hash_checkpage(Page page, int flags);
 extern void hash_redo(XLogRecPtr lsn, XLogRecord *record);
 extern void hash_undo(XLogRecPtr lsn, XLogRecord *record);
 extern void hash_desc(char *buf, uint8 xl_info, char *rec);
+
 #endif	 /* HASH_H */

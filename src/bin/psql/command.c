@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.61 2001/10/25 05:49:53 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.62 2001/10/28 06:25:58 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "command.h"
@@ -56,7 +56,7 @@ static backslashResult exec_command(const char *cmd,
 
 enum option_type
 {
-				OT_NORMAL, OT_SQLID, OT_FILEPIPE
+	OT_NORMAL, OT_SQLID, OT_FILEPIPE
 };
 static char *scan_option(char **string, enum option_type type, char *quote, bool semicolon);
 static char *unescape(const unsigned char *source, size_t len);

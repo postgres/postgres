@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nbtree.h,v 1.57 2001/10/25 05:49:55 momjian Exp $
+ * $Id: nbtree.h,v 1.58 2001/10/28 06:25:59 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -44,11 +44,11 @@ typedef struct BTPageOpaqueData
 typedef BTPageOpaqueData *BTPageOpaque;
 
 /* Bits defined in btpo_flags */
-#define BTP_LEAF		(1 << 0)/* leaf page, if not internal page */
-#define BTP_ROOT		(1 << 1)/* root page (has no parent) */
-#define BTP_FREE		(1 << 2)/* page not in use */
-#define BTP_META		(1 << 3)/* meta-page */
-#define BTP_REORDER		(1 << 4)/* items need reordering */
+#define BTP_LEAF		(1 << 0)	/* leaf page, if not internal page */
+#define BTP_ROOT		(1 << 1)	/* root page (has no parent) */
+#define BTP_FREE		(1 << 2)	/* page not in use */
+#define BTP_META		(1 << 3)	/* meta-page */
+#define BTP_REORDER		(1 << 4)	/* items need reordering */
 
 
 /*
@@ -68,7 +68,7 @@ typedef struct BTMetaPageData
 	((BTMetaPageData *) &((PageHeader) p)->pd_linp[0])
 
 #define BTREE_METAPAGE	0		/* first page is meta */
-#define BTREE_MAGIC		0x053162/* magic number of btree pages */
+#define BTREE_MAGIC		0x053162	/* magic number of btree pages */
 
 #define BTreeInvalidParent(opaque)	\
 	(opaque->btpo_parent == InvalidBlockNumber || \
@@ -223,14 +223,14 @@ typedef BTStackData *BTStack;
  * XLOG allows to store some information in high 4 bits of log
  * record xl_info field
  */
-#define XLOG_BTREE_DELETE	0x00/* delete btitem */
-#define XLOG_BTREE_INSERT	0x10/* add btitem without split */
-#define XLOG_BTREE_SPLIT	0x20/* add btitem with split */
-#define XLOG_BTREE_SPLEFT	0x30/* as above + flag that new btitem */
+#define XLOG_BTREE_DELETE	0x00	/* delete btitem */
+#define XLOG_BTREE_INSERT	0x10	/* add btitem without split */
+#define XLOG_BTREE_SPLIT	0x20	/* add btitem with split */
+#define XLOG_BTREE_SPLEFT	0x30	/* as above + flag that new btitem */
  /* goes to the left sibling */
-#define XLOG_BTREE_NEWROOT	0x40/* new root page */
+#define XLOG_BTREE_NEWROOT	0x40	/* new root page */
 
-#define XLOG_BTREE_LEAF		0x80/* leaf/internal page was changed */
+#define XLOG_BTREE_LEAF		0x80	/* leaf/internal page was changed */
 
 /*
  * All what we need to find changed index tuple
@@ -398,4 +398,5 @@ extern BTSpool *_bt_spoolinit(Relation index, bool isunique);
 extern void _bt_spooldestroy(BTSpool *btspool);
 extern void _bt_spool(BTItem btitem, BTSpool *btspool);
 extern void _bt_leafbuild(BTSpool *btspool, BTSpool *spool2);
+
 #endif	 /* NBTREE_H */

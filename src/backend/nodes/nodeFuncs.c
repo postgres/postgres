@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.15 2001/10/25 05:49:31 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/nodeFuncs.c,v 1.16 2001/10/28 06:25:44 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,4 +114,5 @@ non_null(Expr *c)
 	else
 		return false;
 }
+
 #endif

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: float.h,v 1.7 2001/10/25 05:49:40 momjian Exp $
+ * $Id: float.h,v 1.8 2001/10/28 06:25:47 momjian Exp $
  *
  * NOTES
  *	  These come straight out of ANSI X3.159-1989 (p.18) and
@@ -27,4 +27,5 @@
 #define DBL_DIG 15
 #define DBL_MIN 2.2250738585072014e-308
 #define DBL_MAX 1.7976931348623157e+308
+
 #endif	 /* FLOAT_H */

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.20 2001/10/25 05:49:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeTidscan.c,v 1.21 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -162,7 +162,7 @@ TidNext(TidScan *node)
 			 * with palloc() and so should not be pfree()'d.
 			 */
 			ExecStoreTuple(tuple,		/* tuple to store */
-						   slot,/* slot to store in */
+						   slot,	/* slot to store in */
 						   buffer,		/* buffer associated with tuple  */
 						   false);		/* don't pfree */
 

@@ -15,7 +15,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.49 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execTuples.c,v 1.50 2001/10/28 06:25:43 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -406,7 +406,7 @@ ExecClearTuple(TupleTableSlot *slot)	/* slot in which to store tuple */
 
 	slot->val = (HeapTuple) NULL;
 
-	slot->ttc_shouldFree = true;		/* probably useless code... */
+	slot->ttc_shouldFree = true;	/* probably useless code... */
 
 	/*
 	 * Drop the pin on the referenced buffer, if there is one.

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.56 2001/10/25 05:49:39 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_node.c,v 1.57 2001/10/28 06:25:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -134,8 +134,8 @@ make_op(char *opname, Node *ltree, Node *rtree)
 		right = make_operand(opname, rtree, rtypeId, opform->oprright);
 	}
 
-	newop = makeOper(oprid(tup),/* opno */
-					 InvalidOid,/* opid */
+	newop = makeOper(oprid(tup),	/* opno */
+					 InvalidOid,	/* opid */
 					 opform->oprresult);		/* operator result type */
 
 	result = makeNode(Expr);
@@ -467,7 +467,7 @@ make_const(Value *value)
 		case T_String:
 			val = DirectFunctionCall1(textin, CStringGetDatum(strVal(value)));
 
-			typeid = UNKNOWNOID;		/* will be coerced later */
+			typeid = UNKNOWNOID;	/* will be coerced later */
 			typelen = -1;		/* variable len */
 			typebyval = false;
 			break;

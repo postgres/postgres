@@ -45,14 +45,14 @@
 #include "dlg_specific.h"
 
 /* prototypes */
-void		dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo * ci);
-static void dconn_get_common_attributes(const UCHAR FAR * connect_string, ConnInfo * ci);
+void		dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo *ci);
+static void dconn_get_common_attributes(const UCHAR FAR * connect_string, ConnInfo *ci);
 
 #ifdef WIN32
 BOOL FAR PASCAL dconn_FDriverConnectProc(HWND hdlg, UINT wMsg, WPARAM wParam, LPARAM lParam);
-RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo * ci);
+RETCODE		dconn_DoDialog(HWND hwnd, ConnInfo *ci);
 
-extern HINSTANCE NEAR s_hModule;		/* Saved module handle. */
+extern HINSTANCE NEAR s_hModule;	/* Saved module handle. */
 #endif
 
 
@@ -249,7 +249,7 @@ dialog:
 
 #ifdef WIN32
 RETCODE
-dconn_DoDialog(HWND hwnd, ConnInfo * ci)
+dconn_DoDialog(HWND hwnd, ConnInfo *ci)
 {
 	int			dialog_result;
 
@@ -342,7 +342,7 @@ dconn_FDriverConnectProc(
 
 
 void
-dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo * ci)
+dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo *ci)
 {
 	char	   *our_connect_string;
 	char	   *pair,
@@ -391,7 +391,7 @@ dconn_get_connect_attributes(const UCHAR FAR * connect_string, ConnInfo * ci)
 }
 
 static void
-dconn_get_common_attributes(const UCHAR FAR * connect_string, ConnInfo * ci)
+dconn_get_common_attributes(const UCHAR FAR * connect_string, ConnInfo *ci)
 {
 	char	   *our_connect_string;
 	char	   *pair,

@@ -6,7 +6,7 @@
  * WIN1250 client encoding support contributed by Pavel Behal
  * SJIS UDC (NEC selection IBM kanji) support contributed by Eiji Tokuya
  *
- * $Id: conv.c,v 1.33 2001/10/25 05:49:51 momjian Exp $
+ * $Id: conv.c,v 1.34 2001/10/28 06:25:54 momjian Exp $
  *
  *
  */
@@ -63,7 +63,6 @@
 #include "Unicode/utf8_to_alt.map"
 #include "Unicode/utf8_to_koi8r.map"
 #include "Unicode/utf8_to_win1251.map"
-
 #endif	 /* UNICODE_CONVERSION */
 
 /*
@@ -619,7 +618,7 @@ big52mic(unsigned char *big5, unsigned char *p, int len)
 			{
 				if (lc == LC_CNS11643_3 || lc == LC_CNS11643_4)
 				{
-					*p++ = 0x9d;		/* LCPRV2 */
+					*p++ = 0x9d;	/* LCPRV2 */
 				}
 				*p++ = lc;		/* Plane No. */
 				*p++ = (cnsBuf >> 8) & 0x00ff;
@@ -1677,7 +1676,7 @@ pg_enconv	pg_enconv_tbl[] =
 {
 	{
 		PG_SQL_ASCII, ascii2mic, mic2ascii, ascii2utf, utf2ascii
-	}		   ,
+	},
 	{
 		PG_EUC_JP, euc_jp2mic, mic2euc_jp, euc_jp_to_utf, utf_to_euc_jp
 	},
@@ -1765,7 +1764,7 @@ pg_enconv	pg_enconv_tbl[] =
 {
 	{
 		PG_SQL_ASCII, ascii2mic, mic2ascii, 0, 0
-	}		   ,
+	},
 	{
 		PG_EUC_JP, euc_jp2mic, mic2euc_jp, 0, 0
 	},
@@ -1845,4 +1844,5 @@ pg_enconv	pg_enconv_tbl[] =
 		PG_WIN1250, win12502mic, mic2win1250, 0, 0
 	},
 };
+
 #endif	 /* UNICODE_CONVERSION */

@@ -685,7 +685,7 @@ backref(struct match * m, pg_wchar *start, pg_wchar *stop,
 					return dp;
 				/* that one missed, try next one */
 				if (OP(m->g->strip[esub]) == O_CH)
-					return NULL;		/* there is none */
+					return NULL;	/* there is none */
 				esub++;
 				assert(OP(m->g->strip[esub]) == OOR2);
 				ssub = esub + 1;

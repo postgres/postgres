@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.95 2001/10/25 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/postinit.c,v 1.96 2001/10/28 06:25:54 momjian Exp $
  *
  *
  *-------------------------------------------------------------------------
@@ -409,7 +409,7 @@ ShutdownPostgres(void)
 	 * has to happen before bufmgr shutdown, so having smgr register a
 	 * callback for it wouldn't work.
 	 */
-	smgrDoPendingDeletes(false);		/* delete as though aborting xact */
+	smgrDoPendingDeletes(false);	/* delete as though aborting xact */
 }
 
 

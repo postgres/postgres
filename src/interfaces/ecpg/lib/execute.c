@@ -1,4 +1,4 @@
-/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.29 2001/10/25 05:50:11 momjian Exp $ */
+/* $Header: /cvsroot/pgsql/src/interfaces/ecpg/lib/Attic/execute.c,v 1.30 2001/10/28 06:26:11 momjian Exp $ */
 
 /*
  * The aim is to get a simpler inteface to the database routines.
@@ -32,9 +32,9 @@ struct sqlca sqlca =
 {
 	{
 		'S', 'Q', 'L', 'C', 'A', ' ', ' ', ' '
-	}		   ,
-				sizeof(struct sqlca),
-				0,
+	},
+	sizeof(struct sqlca),
+	0,
 	{
 		0,
 		{
@@ -76,7 +76,7 @@ static struct auto_mem
 {
 	void	   *pointer;
 	struct auto_mem *next;
-}		   *auto_allocs = NULL;
+} *auto_allocs = NULL;
 
 static void
 add_mem(void *ptr, int lineno)

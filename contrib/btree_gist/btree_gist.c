@@ -486,7 +486,7 @@ tskey_cmp(const void *a, const void *b)
 				  TimestampGetDatum(((TSKEY *) (((RIX *) a)->r))->lower),
 				   TimestampGetDatum(((TSKEY *) (((RIX *) b)->r))->lower)
 											 )
-	);
+		);
 }
 
 /**************************************************

@@ -13,7 +13,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.35 2001/10/25 05:50:10 momjian Exp $
+ * $Id: catcache.h,v 1.36 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -102,4 +102,5 @@ extern void CatalogCacheIdInvalidate(int cacheId, Index hashIndex,
 extern void PrepareToInvalidateCacheTuple(Relation relation,
 							  HeapTuple tuple,
 						void (*function) (int, Index, ItemPointer, Oid));
+
 #endif	 /* CATCACHE_H */

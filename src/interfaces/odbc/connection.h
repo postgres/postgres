@@ -17,14 +17,13 @@
 
 typedef enum
 {
-				CONN_NOT_CONNECTED,		/* Connection has not been
-										 * established */
-				CONN_CONNECTED, /* Connection is up and has been
+	CONN_NOT_CONNECTED,			/* Connection has not been established */
+	CONN_CONNECTED,				/* Connection is up and has been
 								 * established */
-				CONN_DOWN,		/* Connection is broken */
-				CONN_EXECUTING	/* the connection is currently executing a
+	CONN_DOWN,					/* Connection is broken */
+	CONN_EXECUTING				/* the connection is currently executing a
 								 * statement */
-}			CONN_Status;
+} CONN_Status;
 
 /*	These errors have general sql error state */
 #define CONNECTION_SERVER_NOT_REACHED				101
@@ -124,7 +123,7 @@ typedef struct _StartupPacket6_2
 	char		options[ARGV_SIZE];
 	char		execfile[ARGV_SIZE];
 	char		tty[PATH_SIZE];
-}			StartupPacket6_2;
+} StartupPacket6_2;
 
 
 /*	Structure to hold all the connection attributes for a specific
@@ -153,7 +152,7 @@ typedef struct
 	char		disallow_premature;
 	char		updatable_cursors;
 	GLOBAL_VALUES drivers;		/* moved from driver's option */
-}			ConnInfo;
+} ConnInfo;
 
 /*	Macro to determine is the connection using 6.2 protocol? */
 #define PROTOCOL_62(conninfo_)		(strncmp((conninfo_)->protocol, PG62, strlen(PG62)) == 0)
@@ -213,27 +212,27 @@ struct col_info
 #define HINSTANCE void *
 #endif
 
-typedef BOOL(FAR WINAPI * DataSourceToDriverProc) (UDWORD,
-										   SWORD,
-										   PTR,
-										   SDWORD,
-										   PTR,
-										   SDWORD,
-										   SDWORD FAR *,
-										   UCHAR FAR *,
-										   SWORD,
-										   SWORD FAR *);
+typedef BOOL (FAR WINAPI * DataSourceToDriverProc) (UDWORD,
+																SWORD,
+																PTR,
+																SDWORD,
+																PTR,
+																SDWORD,
+															SDWORD FAR *,
+															 UCHAR FAR *,
+																SWORD,
+															SWORD FAR *);
 
-typedef BOOL(FAR WINAPI * DriverToDataSourceProc) (UDWORD,
-										   SWORD,
-										   PTR,
-										   SDWORD,
-										   PTR,
-										   SDWORD,
-										   SDWORD FAR *,
-										   UCHAR FAR *,
-										   SWORD,
-										   SWORD FAR *);
+typedef BOOL (FAR WINAPI * DriverToDataSourceProc) (UDWORD,
+																SWORD,
+																PTR,
+																SDWORD,
+																PTR,
+																SDWORD,
+															SDWORD FAR *,
+															 UCHAR FAR *,
+																SWORD,
+															SWORD FAR *);
 
 /*******	The Connection handle	************/
 struct ConnectionClass_
@@ -290,23 +289,24 @@ struct ConnectionClass_
 
 /*	prototypes */
 ConnectionClass *CC_Constructor(void);
-char		CC_Destructor(ConnectionClass * self);
-int			CC_cursor_count(ConnectionClass * self);
-char		CC_cleanup(ConnectionClass * self);
-char		CC_abort(ConnectionClass * self);
-int			CC_set_translation(ConnectionClass * self);
-char		CC_connect(ConnectionClass * self, char do_password);
-char		CC_add_statement(ConnectionClass * self, StatementClass * stmt);
-char		CC_remove_statement(ConnectionClass * self, StatementClass * stmt);
-char		CC_get_error(ConnectionClass * self, int *number, char **message);
-QResultClass *CC_send_query(ConnectionClass * self, char *query, QueryInfo * qi);
-void		CC_clear_error(ConnectionClass * self);
-char	   *CC_create_errormsg(ConnectionClass * self);
-int			CC_send_function(ConnectionClass * conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG * argv, int nargs);
-char		CC_send_settings(ConnectionClass * self);
-void		CC_lookup_lo(ConnectionClass * conn);
-void		CC_lookup_pg_version(ConnectionClass * conn);
-void		CC_initialize_pg_version(ConnectionClass * conn);
-void		CC_log_error(char *func, char *desc, ConnectionClass * self);
-int			CC_get_max_query_len(const ConnectionClass * self);
+char		CC_Destructor(ConnectionClass *self);
+int			CC_cursor_count(ConnectionClass *self);
+char		CC_cleanup(ConnectionClass *self);
+char		CC_abort(ConnectionClass *self);
+int			CC_set_translation(ConnectionClass *self);
+char		CC_connect(ConnectionClass *self, char do_password);
+char		CC_add_statement(ConnectionClass *self, StatementClass *stmt);
+char		CC_remove_statement(ConnectionClass *self, StatementClass *stmt);
+char		CC_get_error(ConnectionClass *self, int *number, char **message);
+QResultClass *CC_send_query(ConnectionClass *self, char *query, QueryInfo *qi);
+void		CC_clear_error(ConnectionClass *self);
+char	   *CC_create_errormsg(ConnectionClass *self);
+int			CC_send_function(ConnectionClass *conn, int fnid, void *result_buf, int *actual_result_len, int result_is_int, LO_ARG *argv, int nargs);
+char		CC_send_settings(ConnectionClass *self);
+void		CC_lookup_lo(ConnectionClass *conn);
+void		CC_lookup_pg_version(ConnectionClass *conn);
+void		CC_initialize_pg_version(ConnectionClass *conn);
+void		CC_log_error(char *func, char *desc, ConnectionClass *self);
+int			CC_get_max_query_len(const ConnectionClass *self);
+
 #endif

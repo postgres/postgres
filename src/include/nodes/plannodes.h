@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.51 2001/10/25 05:50:05 momjian Exp $
+ * $Id: plannodes.h,v 1.52 2001/10/28 06:26:07 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -373,10 +373,10 @@ typedef struct Unique
  */
 typedef enum SetOpCmd
 {
-				SETOPCMD_INTERSECT,
-				SETOPCMD_INTERSECT_ALL,
-				SETOPCMD_EXCEPT,
-				SETOPCMD_EXCEPT_ALL
+	SETOPCMD_INTERSECT,
+	SETOPCMD_INTERSECT_ALL,
+	SETOPCMD_EXCEPT,
+	SETOPCMD_EXCEPT_ALL
 } SetOpCmd;
 
 typedef struct SetOp
@@ -463,4 +463,5 @@ typedef struct SubPlan
 	bool		needShutdown;	/* TRUE = need to shutdown subplan */
 	HeapTuple	curTuple;		/* copy of most recent tuple from subplan */
 } SubPlan;
+
 #endif	 /* PLANNODES_H */

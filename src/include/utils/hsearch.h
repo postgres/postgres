@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.23 2001/10/25 05:50:10 momjian Exp $
+ * $Id: hsearch.h,v 1.24 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,9 +31,9 @@
  * tables, the initial directory size can be left at the default.
  */
 #define DEF_SEGSIZE			   256
-#define DEF_SEGSIZE_SHIFT	   8/* must be log2(DEF_SEGSIZE) */
+#define DEF_SEGSIZE_SHIFT	   8	/* must be log2(DEF_SEGSIZE) */
 #define DEF_DIRSIZE			   256
-#define DEF_FFACTOR			   1/* default fill factor */
+#define DEF_FFACTOR			   1	/* default fill factor */
 
 #define PRIME1				   37		/* for the hash function */
 #define PRIME2				   1048583
@@ -87,7 +87,7 @@ typedef struct HTAB
 	HASHHDR    *hctl;			/* shared control information */
 	HASHSEGMENT *dir;			/* directory of segment starts */
 	long		(*hash) (void *key, int keysize);		/* Hash Function */
-	void	   *(*alloc) (Size);		/* memory allocator */
+	void	   *(*alloc) (Size);	/* memory allocator */
 	MemoryContext hcxt;			/* memory context if default allocator
 								 * used */
 	char	   *tabname;		/* table name (for error messages) */
@@ -106,7 +106,7 @@ typedef struct HASHCTL
 	long		entrysize;		/* total user element size in bytes */
 	long		max_dsize;		/* limit to dsize if directory size is
 								 * limited */
-	void	   *(*alloc) (Size);		/* memory allocation function */
+	void	   *(*alloc) (Size);	/* memory allocation function */
 	HASHSEGMENT *dir;			/* directory of segment starts */
 	HASHHDR    *hctl;			/* location of header in shared mem */
 	MemoryContext hcxt;			/* memory context to use for allocations */
@@ -132,11 +132,11 @@ typedef struct HASHCTL
 /* hash_search operations */
 typedef enum
 {
-				HASH_FIND,
-				HASH_ENTER,
-				HASH_REMOVE,
-				HASH_FIND_SAVE,
-				HASH_REMOVE_SAVED
+	HASH_FIND,
+	HASH_ENTER,
+	HASH_REMOVE,
+	HASH_FIND_SAVE,
+	HASH_REMOVE_SAVED
 } HASHACTION;
 
 /* hash_seq status (should be considered an opaque type by callers) */
@@ -166,4 +166,5 @@ extern long hash_select_dirsize(long num_entries);
  */
 extern long string_hash(void *key, int keysize);
 extern long tag_hash(void *key, int keysize);
+
 #endif	 /* HSEARCH_H */

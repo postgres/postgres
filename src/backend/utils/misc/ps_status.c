@@ -5,7 +5,7 @@
  * to contain some useful information. Mechanism differs wildly across
  * platforms.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.8 2001/10/25 05:49:51 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/ps_status.c,v 1.9 2001/10/28 06:25:57 momjian Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * various details abducted from various places
@@ -126,7 +126,7 @@ save_ps_display_args(int argc, char *argv[])
 				end_of_area = argv[i] + strlen(argv[i]);
 		}
 
-		if (end_of_area == NULL)/* probably can't happen? */
+		if (end_of_area == NULL)	/* probably can't happen? */
 		{
 			ps_buffer = NULL;
 			ps_buffer_size = 0;

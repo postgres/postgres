@@ -431,7 +431,7 @@ create_empty_bindings(int num_columns)
 
 
 void
-extend_bindings(StatementClass * stmt, int num_columns)
+extend_bindings(StatementClass *stmt, int num_columns)
 {
 	static char *func = "extend_bindings";
 	BindInfoClass *new_bindings;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: sinvaladt.h,v 1.28 2001/10/25 05:50:10 momjian Exp $
+ * $Id: sinvaladt.h,v 1.29 2001/10/28 06:26:09 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -114,4 +114,5 @@ extern bool SIInsertDataEntry(SISeg *segP, SharedInvalidationMessage *data);
 extern int SIGetDataEntry(SISeg *segP, int backendId,
 			   SharedInvalidationMessage *data);
 extern void SIDelExpiredDataEntries(SISeg *segP);
+
 #endif	 /* SINVALADT_H */
