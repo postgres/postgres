@@ -264,7 +264,7 @@
  * search.
  * For further information see README.GEQO <utesch@aut.tu-freiberg.de>.
  */
-#define GEQO /* backend/optimizer/path/allpaths.c */
+/*#define GEQO */ /* backend/optimizer/path/allpaths.c */
 
 
 
