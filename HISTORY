@@ -31,6 +31,9 @@ authentication option is available on Linux and *BSD systems.
 statistics module to get fine-grained information about table and index
 usage.
 
+	Internationalization - Error messages can now be displayed in
+several languages.
+
 Migration to 7.2
 
    A dump/restore using pg_dump is required for those wishing to migrate
@@ -488,6 +491,7 @@ New GIST seg/cube examples (Gene Selkov)
 Improved round(numeric) handling (Tom)
 Fix CIDR output formatting (Tom)
 New CIDR abbrev() function (Tom)
+New to_char(interval, text) function (Karel)
 
 Performance
 -----------

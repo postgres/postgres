@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.6 2001/09/10 21:58:46 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/libpgeasy.sgml,v 2.7 2001/10/01 21:47:24 momjian Exp $
 -->
 
  <chapter id="pgeasy-chapter">
@@ -132,7 +132,7 @@ void        unset_result(PGresult *oldres);
   </para>
 
   <para>
-   There are a variety of demonstration programs in the
+   There are several demonstration programs in the
    source directory.
   </para>
  </chapter>
