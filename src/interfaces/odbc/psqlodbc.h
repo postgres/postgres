@@ -5,7 +5,7 @@
  *
  * Comments:		See "notice.txt" for copyright and license information.
  *
- * $Id: psqlodbc.h,v 1.54 2001/11/05 09:46:17 inoue Exp $
+ * $Id: psqlodbc.h,v 1.55 2001/11/05 10:35:14 inoue Exp $
  *
  */
 
@@ -209,6 +209,14 @@ typedef struct StatementOptions_
 	UInt4	   *rowsFetched;
 	UInt2	   *rowStatusArray;
 	void	   *bookmark_ptr;
+	UInt2			*row_operation_ptr;
+	UInt4			*row_offset_ptr;
+	UInt4			paramset_size;
+	UInt4			param_bind_type;
+	UInt4			*param_processed_ptr;
+	UInt2			*param_status_ptr;
+	UInt2			*param_operation_ptr;
+	UInt4			*param_offset_ptr;
 } StatementOptions;
 
 /*	Used to pass extra query info to send_query */

@@ -204,6 +204,7 @@ PGAPI_FreeStmt(HSTMT hstmt,
 void
 InitializeStatementOptions(StatementOptions *opt)
 {
+	memset(opt, 0, sizeof(StatementOptions));
 	opt->maxRows = 0;			/* driver returns all rows */
 	opt->maxLength = 0;			/* driver returns all data for char/binary */
 	opt->rowset_size = 1;
@@ -213,6 +214,8 @@ InitializeStatementOptions(StatementOptions *opt)
 	opt->bind_size = 0;			/* default is to bind by column */
 	opt->retrieve_data = SQL_RD_ON;
 	opt->use_bookmarks = SQL_UB_OFF;
+	opt->paramset_size = 1;
+	opt->param_bind_type = 0; /*default is column-wise binding */
 }
 
 
