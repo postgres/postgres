@@ -318,7 +318,7 @@ typedef unsigned char slock_t;
  * of postgres C-like arrays, for example {{"a1" "a2"} {"b1" "b2"}} instead 
  * of {{"a1","a2"},{"b1","b2"}}.
  */
-#define TCL_ARRAY
+#define TCL_ARRAYS
 
 /*
  * The comparison routines for text and char data type give incorrect results
