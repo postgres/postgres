@@ -1,5 +1,5 @@
 #!/bin/sh
-#set -x
+set -x
 #-------------------------------------------------------------------------
 #
 # initdb.sh--
@@ -27,7 +27,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.72 1999/12/18 02:56:01 momjian Exp $
+#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.73 1999/12/18 03:21:21 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -322,7 +322,8 @@ TEMPLATE_DESCR="$PGLIB"/local1_template1.description
 GLOBAL_DESCR="$PGLIB"/global1.description
 PG_GEQO_SAMPLE="$PGLIB"/pg_geqo.sample
 
-for PREREQ_FILE in "$TEMPLATE" "$GLOBAL" "$PG_HBA_SAMPLE"; do
+for PREREQ_FILE in "$TEMPLATE" "$GLOBAL" "$PG_HBA_SAMPLE"
+do
     if [ ! -f "$PREREQ_FILE" ]
 	then 
         echo "$CMDNAME does not find the file '$PREREQ_FILE'."
@@ -338,9 +339,9 @@ if [ "$template_only" -eq 0 ]
 then
     [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $GLOBAL as input to create the global classes."
     [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $PG_HBA_SAMPLE as default authentication control file."
-fi  
+fi
 
-trap 'echo "Caught signal." ; exit_nicely' SIGINT SIGTERM
+trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 
 
 # -----------------------------------------------------------------------
