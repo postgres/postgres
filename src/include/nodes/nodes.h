@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: nodes.h,v 1.84 2000/11/24 20:16:40 petere Exp $
+ * $Id: nodes.h,v 1.85 2001/01/20 00:15:59 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -269,9 +269,6 @@ typedef struct Node
 #define IsA_Join(jp) \
 	(IsA(jp, Join) || IsA(jp, NestLoop) || \
 	 IsA(jp, MergeJoin) || IsA(jp, HashJoin))
-
-#define IsA_Value(t) \
-	(IsA(t, Integer) || IsA(t, Float) || IsA(t, String))
 
 /* ----------------------------------------------------------------
  *					  extern declarations follow

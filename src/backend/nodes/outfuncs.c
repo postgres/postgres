@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.137 2001/01/08 00:31:43 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/nodes/outfuncs.c,v 1.138 2001/01/20 00:15:58 petere Exp $
  *
  * NOTES
  *	  Every (plan) node in POSTGRES has an associated "out" routine which
@@ -1477,7 +1477,7 @@ _outNode(StringInfo str, void *obj)
 		}
 		appendStringInfoChar(str, ')');
 	}
-	else if (IsA_Value(obj))
+	else if (IsA(obj, Integer) || IsA(obj, Float) || IsA(obj, String) || IsA(obj, BitString))
 	{
 		/* nodeRead does not want to see { } around these! */
 		_outValue(str, obj);
