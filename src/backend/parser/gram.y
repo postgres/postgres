@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.251 2001/09/18 01:59:06 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.252 2001/09/20 14:20:27 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -89,7 +89,6 @@ static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *forUpdate,
 								Node *limitOffset, Node *limitCount);
 static Node *makeSetOp(SetOperation op, bool all, Node *larg, Node *rarg);
-static bool exprIsNullConstant(Node *arg);
 static Node *doNegate(Node *n);
 static void doNegateFloat(Value *v);
 
@@ -4465,29 +4464,7 @@ a_expr:  c_expr
 		| a_expr '>' a_expr
 				{	$$ = makeA_Expr(OP, ">", $1, $3); }
 		| a_expr '=' a_expr
-				{
-					/*
-					 * Special-case "foo = NULL" and "NULL = foo" for
-					 * compatibility with standards-broken products
-					 * (like Microsoft's).  Turn these into IS NULL exprs.
-					 */
-					if (exprIsNullConstant($3))
-					{
-						NullTest *n = makeNode(NullTest);
-						n->arg = $1;
-						n->nulltesttype = IS_NULL;
-						$$ = (Node *)n;
-					}
-					else if (exprIsNullConstant($1))
-					{
-						NullTest *n = makeNode(NullTest);
-						n->arg = $3;
-						n->nulltesttype = IS_NULL;
-						$$ = (Node *)n;
-					}
-					else
-						$$ = makeA_Expr(OP, "=", $1, $3);
-				}
+				{	$$ = makeA_Expr(OP, "=", $1, $3); }
 
 		| a_expr Op a_expr
 				{	$$ = makeA_Expr(OP, $2, $1, $3); }
@@ -6137,7 +6114,7 @@ Oid param_type(int t)
 /*
  * Test whether an a_expr is a plain NULL constant or not.
  */
-static bool
+bool
 exprIsNullConstant(Node *arg)
 {
 	if (arg && IsA(arg, A_Const))

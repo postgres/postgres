@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.99 2001/08/09 18:28:17 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.100 2001/09/20 14:20:27 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,8 +34,9 @@
 
 
 int			max_expr_depth = DEFAULT_MAX_EXPR_DEPTH;
-
 static int	expr_depth_counter = 0;
+
+bool		Transform_null_equals = false;
 
 static Node *parser_typecast_constant(Value *expr, TypeName *typename);
 static Node *parser_typecast_expression(ParseState *pstate,
@@ -157,14 +158,35 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 				{
 					case OP:
 						{
-							Node	   *lexpr = transformExpr(pstate,
-															  a->lexpr,
-															  precedence);
-							Node	   *rexpr = transformExpr(pstate,
-															  a->rexpr,
-															  precedence);
+							/*
+							 * Special-case "foo = NULL" and "NULL = foo" for
+							 * compatibility with standards-broken products
+							 * (like Microsoft's).  Turn these into IS NULL exprs.
+							 */
+							if (Transform_null_equals && strcmp(a->opname, "=")==0
+								&& (exprIsNullConstant(a->lexpr) || exprIsNullConstant(a->rexpr)))
+							{
+								NullTest *n = makeNode(NullTest);
+								n->nulltesttype = IS_NULL;
 
-							result = (Node *) make_op(a->opname, lexpr, rexpr);
+								if (exprIsNullConstant(a->lexpr))
+									n->arg = a->rexpr;
+								else
+									n->arg = a->lexpr;
+
+								result = transformExpr(pstate, n, precedence);
+							}
+							else
+							{
+								Node	   *lexpr = transformExpr(pstate,
+																  a->lexpr,
+																  precedence);
+								Node	   *rexpr = transformExpr(pstate,
+																  a->rexpr,
+																  precedence);
+
+								result = (Node *) make_op(a->opname, lexpr, rexpr);
+							}
 						}
 						break;
 					case AND:

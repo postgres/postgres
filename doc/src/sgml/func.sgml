@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.71 2001/09/10 02:46:18 ishii Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/func.sgml,v 1.72 2001/09/20 14:20:26 petere Exp $ -->
 
 <chapter id="functions">
  <title>Functions and Operators</title>
@@ -266,16 +266,24 @@
    Do <emphasis>not</emphasis> use
    <literal><replaceable>expression</replaceable> = NULL</literal>
    because NULL is not <quote>equal to</quote> NULL.  (NULL represents
-   an unknown value, so it is not known whether two unknown values are
-   equal.)  <productname>Postgres</productname> presently converts
-   <literal>x = NULL</literal> clauses to <literal>x IS NULL</literal> to
-   allow some broken client applications (such as
-   <productname>Microsoft Access</productname>) to work, but this may
-   be discontinued in a future release.
+   an unknown value, and it is not known whether two unknown values are
+   equal.)
   </para>
 
   <para>
-   Boolean values can be tested using the constructs
+   Some applications may (incorrectly) require that
+   <literal><replaceable>expression</replaceable> = NULL</literal>
+   returns true if <replaceable>expression</replaceable> evaluates to
+   the NULL value.  To support these applications, the run-time option
+   <varname>transform_null_equals</varname> can be turned on (e.g.,
+   <literal>SET transform_null_equals TO ON;</literal>).
+   <productname>PostgreSQL</productname> would then convert <literal>x
+   = NULL</literal> clauses to <literal>x IS NULL</literal>.  This was
+   the default behavior in releases 6.5 through 7.1.
+  </para>
+
+  <para>
+   Boolean values can also be tested using the constructs
 <synopsis>
 <replaceable>expression</replaceable> IS TRUE
 <replaceable>expression</replaceable> IS NOT TRUE

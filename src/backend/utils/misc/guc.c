@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.48 2001/09/12 14:06:37 petere Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.49 2001/09/20 14:20:27 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -247,12 +247,10 @@ static struct config_bool
 	{"show_source_port", PGC_SIGHUP, &ShowPortNumber, false, NULL},
 
 	{"sql_inheritance", PGC_USERSET, &SQL_inheritance, true, NULL},
-
 	{"australian_timezones", PGC_USERSET, &Australian_timezones, false, ClearDateCache},
-
 	{"fixbtree", PGC_POSTMASTER, &FixBTree, true, NULL},
-
 	{"password_encryption", PGC_USERSET, &Password_encryption, false, NULL},
+	{"transform_null_equals", PGC_USERSET, &Transform_null_equals, false, NULL},
 
 	{NULL, 0, NULL, false, NULL}
 };

@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.80 2001/09/16 16:11:09 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.81 2001/09/20 14:20:27 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -1197,6 +1197,49 @@ dynamic_library_path = '/usr/local/lib/postgresql:/home/my_project/lib:$libdir'
 	proven sufficient, but you might need to raise this value if you
 	have clients that touch many different tables in a single transaction.
 	This option can only be set at server start.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
+      <term><varname>TRANSFORM_NULL_EQUALS</varname> (<type>boolean</type>)</term>
+      <listitem>
+       <para>
+        When turned on, expressions of the form
+        <literal><replaceable>expr</> = NULL</literal> (or
+        <literal>NULL = <replaceable>expr</></literal>) are treated as
+        <literal><replaceable>expr</> IS NULL</literal>, that is, they
+        return true if <replaceable>expr</> evaluates to the NULL
+        value, and false otherwise.  The correct behavior of
+        <literal><replaceable>expr</> = NULL</literal> is to always
+        return NULL (unknown).  Therefore this option defaults to off.
+       </para>
+
+       <para>
+        However, filtered forms in <productname>Microsoft
+        Access</productname> generate queries that appear to use
+        <literal><replaceable>expr</> = NULL</literal> to test for
+        NULLs, so if you use that interface to access the database you
+        might want to turn this option on.  Since expressions of the
+        form <literal><replaceable>expr</> = NULL</literal> always
+        return NULL (using the correct interpretation) they are not
+        very useful and do not appear often in normal applications, so
+        this option does little harm in practice.  But new users are
+        frequently confused about the semantics of expressions
+        involving NULL, so we do not turn this option on by default.
+       </para>
+
+       <para>
+        Note that this option only affects the literal <literal>=</>
+        operator, not other comparison operators or other expressions
+        that are computationally equivalent to some expression
+        involving the equals operator (such as <literal>IN</literal>).
+        Thus, this option is not a general fix for bad programming.
+       </para>
+
+       <para>
+        Refer to the <citetitle>User's Guide</citetitle> for related
+        information.
        </para>
       </listitem>
      </varlistentry>
