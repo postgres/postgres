@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.65 2000/11/08 22:09:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/creatinh.c,v 1.66 2000/11/13 09:16:55 inoue Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -756,7 +756,7 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
          * lock to it.
          */
         relationRelation = heap_openr(RelationRelationName, RowExclusiveLock);
-        tuple = SearchSysCacheTuple(RELOID,
+        tuple = SearchSysCacheTupleCopy(RELOID,
                                     ObjectIdGetDatum(relationId),
                                     0, 0, 0)
 ;
@@ -771,6 +771,7 @@ setRelhassubclassInRelation(Oid relationId, bool relhassubclass)
 );
         CatalogCloseIndices(Num_pg_class_indices, idescs);
 
+	heap_freetuple(tuple);
         heap_close(relationRelation, RowExclusiveLock);
 }
 
