@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.41 2003/11/29 19:51:48 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/executor/execProcnode.c,v 1.42 2004/03/02 22:17:34 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -242,16 +242,13 @@ ExecInitNode(Plan *node, EState *estate)
 	 * do this after initializing initPlans, in case their arguments
 	 * contain subPlans (is that actually possible? perhaps not).
 	 */
-	subps = NIL;
 	foreach(subp, result->subPlan)
 	{
 		SubPlanState *sstate = (SubPlanState *) lfirst(subp);
 
 		Assert(IsA(sstate, SubPlanState));
 		ExecInitSubPlan(sstate, estate);
-		subps = lappend(subps, sstate);
 	}
-	result->subPlan = subps;
 
 	/* Set up instrumentation for this node if requested */
 	if (estate->es_instrument)
