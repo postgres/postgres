@@ -5,3 +5,19 @@ CREATE FUNCTION database_size (name) RETURNS bigint
 CREATE FUNCTION relation_size (text) RETURNS bigint
     AS 'MODULE_PATHNAME', 'relation_size'
     LANGUAGE C WITH (isstrict);
+
+CREATE FUNCTION pg_tablespace_size(oid) RETURNS bigint
+    AS 'MODULE_PATHNAME', 'pg_tablespace_size'
+    LANGUAGE C STABLE STRICT;
+
+CREATE FUNCTION pg_database_size(oid) RETURNS bigint
+    AS 'MODULE_PATHNAME', 'pg_database_size'
+    LANGUAGE C STABLE STRICT;
+
+CREATE FUNCTION pg_relation_size(oid) RETURNS bigint
+    AS 'MODULE_PATHNAME', 'pg_relation_size'
+    LANGUAGE C STABLE STRICT;
+
+CREATE FUNCTION pg_size_pretty(bigint) RETURNS text
+    AS 'MODULE_PATHNAME', 'pg_size_pretty'
+    LANGUAGE C STABLE STRICT;

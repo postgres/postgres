@@ -1,157 +1,285 @@
+/*
+ * dbsize.c
+ * object size functions
+ *
+ * Copyright (c) 2004, PostgreSQL Global Development Group
+ *
+ * Author: Andreas Pflug <pgadmin@pse-consulting.de>
+ *
+ * IDENTIFICATION
+ *	  $PostgreSQL: pgsql/contrib/dbsize/dbsize.c,v 1.13 2004/09/02 00:55:22 momjian Exp $
+ *
+ */
+
+
 #include "postgres.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #include "access/heapam.h"
-#include "catalog/catalog.h"
-#include "catalog/catname.h"
+#include "storage/fd.h"
+#include "utils/syscache.h"
+#include "utils/builtins.h"
 #include "catalog/namespace.h"
 #include "catalog/pg_tablespace.h"
 #include "commands/dbcommands.h"
-#include "fmgr.h"
-#include "storage/fd.h"
-#include "utils/builtins.h"
+#include "miscadmin.h"
+
+
+extern DLLIMPORT char *DataDir;
+
+Datum pg_tablespace_size(PG_FUNCTION_ARGS);
+Datum pg_database_size(PG_FUNCTION_ARGS);
+Datum pg_relation_size(PG_FUNCTION_ARGS);
+Datum pg_size_pretty(PG_FUNCTION_ARGS);
+
+Datum database_size(PG_FUNCTION_ARGS);
+Datum relation_size(PG_FUNCTION_ARGS);
+
+PG_FUNCTION_INFO_V1(pg_tablespace_size);
+PG_FUNCTION_INFO_V1(pg_database_size);
+PG_FUNCTION_INFO_V1(pg_relation_size);
+PG_FUNCTION_INFO_V1(pg_size_pretty);
+
+PG_FUNCTION_INFO_V1(database_size);
+PG_FUNCTION_INFO_V1(relation_size);
+
 
 
 static int64
-			get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK);
-
-static char *
-psnprintf(size_t len, const char *fmt,...)
+db_dir_size(char *path)
 {
-	va_list		ap;
-	char	   *buf;
+    int64 dirsize=0;
+    struct dirent *direntry;
+	DIR         *dirdesc;
+	char filename[MAXPGPATH];
 
-	buf = palloc(len);
+	dirdesc=AllocateDir(path);
 
-	va_start(ap, fmt);
-	vsnprintf(buf, len, fmt, ap);
-	va_end(ap);
+	if (!dirdesc)
+	    return 0;
 
-	return buf;
+	while ((direntry = readdir(dirdesc)) != 0)
+	{
+	    struct stat fst;
+
+	    if (!strcmp(direntry->d_name, ".") || !strcmp(direntry->d_name, ".."))
+		    continue;
+
+		snprintf(filename, MAXPGPATH, "%s/%s", path, direntry->d_name);
+
+		if (stat(filename, &fst) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat \"%s\": %m", filename)));
+		dirsize += fst.st_size;
+	}
+
+	FreeDir(dirdesc);
+	return dirsize;
 }
 
 
+static int64
+calculate_database_size(Oid dbOid)
+{
+	int64 totalsize=0;
+	DIR         *dirdesc;
+    struct dirent *direntry;
+	char pathname[MAXPGPATH];
+
+	snprintf(pathname, MAXPGPATH, "%s/global/%u", DataDir, (unsigned)dbOid);
+	totalsize += db_dir_size(pathname);
+	snprintf(pathname, MAXPGPATH, "%s/base/%u", DataDir, (unsigned)dbOid);
+	totalsize += db_dir_size(pathname);
+
+	snprintf(pathname, MAXPGPATH, "%s/pg_tblspc", DataDir);
+	dirdesc = AllocateDir(pathname);
+
+	if (!dirdesc)
+	    ereport(ERROR,
+				(errcode_for_file_access(),
+				 errmsg("could not open tablespace directory: %m")));
+
+	while ((direntry = readdir(dirdesc)) != 0)
+	{
+	    if (!strcmp(direntry->d_name, ".") || !strcmp(direntry->d_name, ".."))
+		    continue;
+
+		snprintf(pathname, MAXPGPATH, "%s/pg_tblspc/%s/%u", DataDir, direntry->d_name, (unsigned)dbOid);
+		totalsize += db_dir_size(pathname);
+	}
+
+	FreeDir(dirdesc);
+
+	if (!totalsize)
+	    ereport(ERROR,
+				(ERRCODE_UNDEFINED_DATABASE,
+				 errmsg("Database OID %u unknown.", (unsigned)dbOid)));
+
+	return totalsize;
+}
 
 /*
- * SQL function: database_size(name) returns bigint
+ * calculate total size of tablespace
  */
-
-PG_FUNCTION_INFO_V1(database_size);
-
-Datum		database_size(PG_FUNCTION_ARGS);
-
 Datum
-database_size(PG_FUNCTION_ARGS)
+pg_tablespace_size(PG_FUNCTION_ARGS)
 {
-	Name		dbname = PG_GETARG_NAME(0);
+    Oid tblspcOid = PG_GETARG_OID(0);
 
-	Oid			dbid;
-	int64		totalsize;
+	char tblspcPath[MAXPGPATH];
+	char pathname[MAXPGPATH];
+	int64		totalsize=0;
+	DIR         *dirdesc;
+    struct dirent *direntry;
 
-#ifdef SYMLINK
-	Relation	dbrel;
-	HeapScanDesc scan;
-	HeapTuple	tuple;
-#endif
+	if (tblspcOid == DEFAULTTABLESPACE_OID)
+	    snprintf(tblspcPath, MAXPGPATH, "%s/base", DataDir);
+	else if (tblspcOid == GLOBALTABLESPACE_OID)
+	    snprintf(tblspcPath, MAXPGPATH, "%s/global", DataDir);
+	else
+		snprintf(tblspcPath, MAXPGPATH, "%s/pg_tblspc/%u", DataDir, (unsigned)tblspcOid);
 
-	dbid = get_database_oid(NameStr(*dbname));
-	if (!OidIsValid(dbid))
+	dirdesc = AllocateDir(tblspcPath);
+
+	if (!dirdesc)
 		ereport(ERROR,
-				(errcode(ERRCODE_UNDEFINED_DATABASE),
-			errmsg("database \"%s\" does not exist", NameStr(*dbname))));
+				(errcode_for_file_access(),
+				 errmsg("No such tablespace OID: %u: %m", (unsigned)tblspcOid)));
 
-#ifdef SYMLINK
-
-	dbrel = heap_openr(TableSpaceRelationName, AccessShareLock);
-	scan = heap_beginscan(dbrel, SnapshotNow, 0, (ScanKey) NULL);
-
-	totalsize = 0;
-
-	while ((tuple = heap_getnext(scan, ForwardScanDirection)))
+	while ((direntry = readdir(dirdesc)) != 0)
 	{
-		Oid			spcid = HeapTupleGetOid(tuple);
+	    struct stat fst;
 
-		if (spcid != GLOBALTABLESPACE_OID)
-			totalsize += get_tablespace_size(dbid, spcid, true);
+	    if (!strcmp(direntry->d_name, ".") || !strcmp(direntry->d_name, ".."))
+		    continue;
+
+		snprintf(pathname, MAXPGPATH, "%s/%s", tblspcPath, direntry->d_name);
+		if (stat(pathname, &fst) < 0)
+			ereport(ERROR,
+					(errcode_for_file_access(),
+					 errmsg("could not stat \"%s\": %m", pathname)));
+		totalsize += fst.st_size;
+
+		if (fst.st_mode & S_IFDIR)
+		    totalsize += db_dir_size(pathname);
 	}
-	heap_endscan(scan);
-	heap_close(dbrel, AccessShareLock);
-#else
-	/* Same as always */
-	totalsize = get_tablespace_size(dbid, DEFAULTTABLESPACE_OID, false);
-#endif
 
-	/*
-	 * We need to keep in mind that we may not be called from the database
-	 * whose size we're reporting so, we need to look in every tablespace
-	 * to see if our database has data in there
-	 */
+	FreeDir(dirdesc);
 
 	PG_RETURN_INT64(totalsize);
 }
 
-static int64
-get_tablespace_size(Oid dbid, Oid spcid, bool baddirOK)
+
+/*
+ * calculate size of databases in all tablespaces
+ */
+Datum
+pg_database_size(PG_FUNCTION_ARGS)
 {
-	char	   *dbpath;
-	DIR		   *dirdesc;
-	struct dirent *direntry;
-	int64		totalsize;
+    Oid dbOid = PG_GETARG_OID(0);
 
-	dbpath = GetDatabasePath(dbid, spcid);
+	PG_RETURN_INT64(calculate_database_size(dbOid));
+}
 
-	dirdesc = AllocateDir(dbpath);
-	if (!dirdesc)
+
+Datum
+database_size(PG_FUNCTION_ARGS)
+{
+	Name dbName = PG_GETARG_NAME(0);
+	Oid dbOid = get_database_oid(NameStr(*dbName));
+
+	if (!OidIsValid(dbOid))
+		ereport(ERROR,
+				(errcode(ERRCODE_UNDEFINED_DATABASE),
+			errmsg("database \"%s\" does not exist", NameStr(*dbName))));
+
+	PG_RETURN_INT64(calculate_database_size(dbOid));
+}
+
+static int64
+calculate_relation_size(Oid tblspcOid, Oid relnodeOid)
+{
+	int64		totalsize=0;
+	unsigned int segcount=0;
+	char dirpath[MAXPGPATH];
+	char pathname[MAXPGPATH];
+
+	if (tblspcOid == 0 || tblspcOid == DEFAULTTABLESPACE_OID)
+	    snprintf(dirpath, MAXPGPATH, "%s/base/%u", DataDir, (unsigned)MyDatabaseId);
+	else if (tblspcOid == GLOBALTABLESPACE_OID)
+	    snprintf(dirpath, MAXPGPATH, "%s/global", DataDir);
+	else
+	    snprintf(dirpath, MAXPGPATH, "%s/pg_tblspc/%u/%u", DataDir, (unsigned)tblspcOid, (unsigned)MyDatabaseId);
+
+	for (segcount = 0 ;; segcount++)
 	{
-		if (baddirOK)
-			return 0;
+		struct stat fst;
+
+		if (segcount == 0)
+		    snprintf(pathname, MAXPGPATH, "%s/%u", dirpath, (unsigned) relnodeOid);
 		else
-			ereport(ERROR,
-					(errcode_for_file_access(),
-				 errmsg("could not open directory \"%s\": %m", dbpath)));
-	}
-	totalsize = 0;
-	for (;;)
-	{
-		char	   *fullname;
-		struct stat statbuf;
+		    snprintf(pathname, MAXPGPATH, "%s/%u.%u", dirpath, (unsigned) relnodeOid, segcount);
 
-		errno = 0;
-		direntry = readdir(dirdesc);
-		if (!direntry)
+		if (stat(pathname, &fst) < 0)
 		{
-			if (errno)
+			if (errno == ENOENT)
+				break;
+			else
 				ereport(ERROR,
 						(errcode_for_file_access(),
-						 errmsg("error reading directory: %m")));
-			else
-				break;
+						 errmsg("could not stat \"%s\": %m", pathname)));
 		}
-
-		fullname = psnprintf(strlen(dbpath) + 1 + strlen(direntry->d_name) + 1,
-							 "%s/%s", dbpath, direntry->d_name);
-		if (stat(fullname, &statbuf) == -1)
-			ereport(ERROR,
-					(errcode_for_file_access(),
-					 errmsg("could not stat \"%s\": %m", fullname)));
-		totalsize += statbuf.st_size;
-		pfree(fullname);
+		totalsize += fst.st_size;
 	}
 
-	FreeDir(dirdesc);
-	return (totalsize);
+	return totalsize;
 }
 
 /*
- * SQL function: relation_size(text) returns bigint
+ * calculate size of relation
  */
+Datum
+pg_relation_size(PG_FUNCTION_ARGS)
+{
+	Oid         relOid=PG_GETARG_OID(0);
 
-PG_FUNCTION_INFO_V1(relation_size);
+	HeapTuple   tuple;
+	Form_pg_class pg_class;
+	Oid			relnodeOid;
+	Oid         tblspcOid;
+    char        relkind;
 
-Datum		relation_size(PG_FUNCTION_ARGS);
+	tuple = SearchSysCache(RELOID, ObjectIdGetDatum(relOid), 0, 0, 0);
+	if (!HeapTupleIsValid(tuple))
+	    ereport(ERROR,
+				(ERRCODE_UNDEFINED_TABLE,
+				 errmsg("Relation OID %u does not exist", relOid)));
+
+	pg_class = (Form_pg_class) GETSTRUCT(tuple);
+	relnodeOid = pg_class->relfilenode;
+	tblspcOid = pg_class->reltablespace;
+	relkind = pg_class->relkind;
+
+	ReleaseSysCache(tuple);
+
+	switch(relkind)
+	{
+	    case RELKIND_INDEX:
+	    case RELKIND_RELATION:
+	    case RELKIND_TOASTVALUE:
+		    break;
+	    default:
+		    ereport(ERROR,
+					(ERRCODE_WRONG_OBJECT_TYPE,
+					 errmsg("Relation kind %d not supported", relkind)));
+	}
+
+	PG_RETURN_INT64(calculate_relation_size(tblspcOid, relnodeOid));
+}
+
 
 Datum
 relation_size(PG_FUNCTION_ARGS)
@@ -160,43 +288,58 @@ relation_size(PG_FUNCTION_ARGS)
 
 	RangeVar   *relrv;
 	Relation	relation;
-	Oid			relnode;
-	int64		totalsize;
-	unsigned int segcount;
+	Oid			relnodeOid;
+	Oid         tblspcOid;
 
 	relrv = makeRangeVarFromNameList(textToQualifiedNameList(relname,
 													   "relation_size"));
 	relation = heap_openrv(relrv, AccessShareLock);
 
-	relnode = relation->rd_rel->relfilenode;
-
-	totalsize = 0;
-	segcount = 0;
-	for (;;)
-	{
-		char	   *fullname;
-		struct stat statbuf;
-
-		if (segcount == 0)
-			fullname = psnprintf(25, "%u", (unsigned) relnode);
-		else
-			fullname = psnprintf(50, "%u.%u", (unsigned) relnode, segcount);
-
-		if (stat(fullname, &statbuf) == -1)
-		{
-			if (errno == ENOENT)
-				break;
-			else
-				ereport(ERROR,
-						(errcode_for_file_access(),
-						 errmsg("could not stat \"%s\": %m", fullname)));
-		}
-		totalsize += statbuf.st_size;
-		pfree(fullname);
-		segcount++;
-	}
+	tblspcOid  = relation->rd_rel->reltablespace;
+	relnodeOid = relation->rd_rel->relfilenode;
 
 	heap_close(relation, AccessShareLock);
 
-	PG_RETURN_INT64(totalsize);
+	PG_RETURN_INT64(calculate_relation_size(tblspcOid, relnodeOid));
+}
+
+/*
+ * formatting with size units
+ */
+Datum
+pg_size_pretty(PG_FUNCTION_ARGS)
+{
+    int64 size=PG_GETARG_INT64(0);
+	char *result=palloc(50+VARHDRSZ);
+	int64 limit = 10*1024;
+	int64 mult=1;
+
+	if (size < limit*mult)
+	    snprintf(VARDATA(result), 50, INT64_FORMAT" bytes", size);
+    else
+	{
+		mult *= 1024;
+		if (size < limit*mult)
+		     snprintf(VARDATA(result), 50, INT64_FORMAT " kB", (size+mult/2) / mult);
+		else
+		{
+			mult *= 1024;
+			if (size < limit*mult)
+			    snprintf(VARDATA(result), 50, INT64_FORMAT " MB", (size+mult/2) / mult);
+			else
+			{
+				mult *= 1024;
+				if (size < limit*mult)
+				    snprintf(VARDATA(result), 50, INT64_FORMAT " GB", (size+mult/2) / mult);
+				else
+				{
+				    mult *= 1024;
+				    snprintf(VARDATA(result), 50, INT64_FORMAT " TB", (size+mult/2) / mult);
+				}
+			}
+		}
+	}
+	VARATT_SIZEP(result) = strlen(VARDATA(result)) + VARHDRSZ;
+
+	PG_RETURN_TEXT_P(result);
 }
