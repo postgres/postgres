@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.43 2000/12/28 13:00:25 vadim Exp $
+ * $Id: htup.h,v 1.44 2000/12/30 15:19:56 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -131,6 +131,7 @@ typedef struct xl_heap_clean
 {
 	RelFileNode			node;
 	BlockNumber			block;
+	/* UNUSED OFFSET NUMBERS FOLLOW AT THE END */
 } xl_heap_clean;
 
 #define	SizeOfHeapClean	(offsetof(xl_heap_clean, block) + sizeof(BlockNumber))

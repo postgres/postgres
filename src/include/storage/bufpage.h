@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: bufpage.h,v 1.37 2000/11/30 08:46:26 vadim Exp $
+ * $Id: bufpage.h,v 1.38 2000/12/30 15:19:57 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -314,11 +314,12 @@ typedef enum
  */
 
 extern void PageInit(Page page, Size pageSize, Size specialSize);
+extern void PageZero(Page page);
 extern OffsetNumber PageAddItem(Page page, Item item, Size size,
 			OffsetNumber offsetNumber, ItemIdFlags flags);
 extern Page PageGetTempPage(Page page, Size specialSize);
 extern void PageRestoreTempPage(Page tempPage, Page oldPage);
-extern void PageRepairFragmentation(Page page);
+extern int PageRepairFragmentation(Page page, OffsetNumber *unused);
 extern Size PageGetFreeSpace(Page page);
 extern void PageIndexTupleDelete(Page page, OffsetNumber offset);
 extern void IndexPageCleanup(Buffer buffer);

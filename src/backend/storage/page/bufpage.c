@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.33 2000/10/21 15:43:29 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/page/bufpage.c,v 1.34 2000/12/30 15:19:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -48,6 +48,19 @@ PageInit(Page page, Size pageSize, Size specialSize)
 	p->pd_upper = pageSize - specialSize;
 	p->pd_special = pageSize - specialSize;
 	PageSetPageSize(page, pageSize);
+
+	p->pd_lsn.xlogid = p->pd_lsn.xrecoff = 0;
+	p->pd_sui = 0;
+}
+
+/*
+ * WAL needs in zero-ed page data content
+ */
+void
+PageZero(Page page)
+{
+	MemSet((char*)page + ((PageHeader)page)->pd_lower, 0,
+			((PageHeader)page)->pd_special - ((PageHeader)page)->pd_lower);
 }
 
 /* ----------------
@@ -251,8 +264,8 @@ itemidcompare(const void *itemidp1, const void *itemidp2)
  * This routine is usable for heap pages only.
  *
  */
-void
-PageRepairFragmentation(Page page)
+int
+PageRepairFragmentation(Page page, OffsetNumber *unused)
 {
 	int			i;
 	struct itemIdSortData *itemidbase,
@@ -272,6 +285,8 @@ PageRepairFragmentation(Page page)
 			(*lp).lp_flags &= ~(LP_USED | LP_DELETE);
 		if ((*lp).lp_flags & LP_USED)
 			nused++;
+		else if (unused)
+			unused[i - nused] = (OffsetNumber)i;
 	}
 
 	if (nused == 0)
@@ -328,6 +343,8 @@ PageRepairFragmentation(Page page)
 
 		pfree(itemidbase);
 	}
+
+	return(nline - nused);
 }
 
 /*

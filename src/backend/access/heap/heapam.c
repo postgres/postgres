@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.104 2000/12/30 06:52:33 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.105 2000/12/30 15:19:54 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -90,7 +90,8 @@
 
 XLogRecPtr	log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from, 
 							Buffer newbuf, HeapTuple newtup);
-XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer);
+XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer,
+							char *unused, int unlen);
 
 /* comments are in heap_update */
 static xl_heaptid	_locked_tuple_;
@@ -2002,11 +2003,11 @@ heap_restrpos(HeapScanDesc scan)
 }
 
 XLogRecPtr
-log_heap_clean(Relation reln, Buffer buffer)
+log_heap_clean(Relation reln, Buffer buffer, char *unused, int unlen)
 {
 	xl_heap_clean	xlrec;
 	XLogRecPtr		recptr;
-	XLogRecData		rdata[2];
+	XLogRecData		rdata[3];
 
 	xlrec.node = reln->rd_node;
 	xlrec.block = BufferGetBlockNumber(buffer);
@@ -2015,10 +2016,20 @@ log_heap_clean(Relation reln, Buffer buffer)
 	rdata[0].len = SizeOfHeapClean;
 	rdata[0].next = &(rdata[1]);
 
-	rdata[1].buffer = buffer;
-	rdata[1].data = NULL;
-	rdata[1].len = 0;
-	rdata[1].next = NULL;
+	if (unlen > 0)
+	{
+		rdata[1].buffer = buffer;
+		rdata[1].data = unused;
+		rdata[1].len = unlen;
+		rdata[1].next = &(rdata[2]);
+	}
+	else
+		rdata[0].next = &(rdata[2]);
+
+	rdata[2].buffer = buffer;
+	rdata[2].data = NULL;
+	rdata[2].len = 0;
+	rdata[2].next = NULL;
 
 	recptr = XLogInsert(RM_HEAP_ID, XLOG_HEAP_CLEAN, rdata);
 
@@ -2102,14 +2113,10 @@ log_heap_move(Relation reln, Buffer oldbuf, ItemPointerData from,
 static void
 heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 {
-	xl_heap_clean *xlrec = (xl_heap_clean*) XLogRecGetData(record);
+	xl_heap_clean  *xlrec = (xl_heap_clean*) XLogRecGetData(record);
 	Relation		reln;
 	Buffer			buffer;
 	Page			page;
-	OffsetNumber	maxoff;
-	OffsetNumber	offnum;
-	HeapTupleHeader	htup;
-	ItemId			lp;
 
 	if (!redo || (record->xl_info & XLR_BKP_BLOCK_1))
 		return;
@@ -2133,23 +2140,25 @@ heap_xlog_clean(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		return;
 	}
 
-	maxoff = PageGetMaxOffsetNumber(page);
-	for (offnum = FirstOffsetNumber;
-		 offnum <= maxoff;
-		 offnum = OffsetNumberNext(offnum))
+	if (record->xl_len > SizeOfHeapClean)
 	{
-		lp = PageGetItemId(page, offnum);
+		char			unbuf[BLCKSZ];
+		OffsetNumber   *unused = (OffsetNumber*)unbuf;
+		char		   *unend;
+		ItemId			lp;
 
-		if (!ItemIdIsUsed(lp))
-			continue;
+		memcpy(unbuf, (char*)xlrec + SizeOfHeapClean, record->xl_len - SizeOfHeapClean);
+		unend = unbuf + (record->xl_len - SizeOfHeapClean);
 
-		htup = (HeapTupleHeader) PageGetItem(page, lp);
-
-		if (!HeapTupleSatisfiesNow(htup))
+		while((char*)unused < unend)
+		{
+			lp = ((PageHeader) page)->pd_linp + *unused;
 			lp->lp_flags &= ~LP_USED;
+			unused++;
+		}
 	}
 
-	PageRepairFragmentation(page);
+	PageRepairFragmentation(page, NULL);
 	UnlockAndWriteBuffer(buffer);
 }
 
@@ -2247,7 +2256,10 @@ heap_xlog_insert(bool redo, XLogRecPtr lsn, XLogRecord *record)
 		uint32			newlen;
 
 		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
+		{
 			PageInit(page, BufferGetPageSize(buffer), 0);
+			PageZero(page);
+		}
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
@@ -2401,7 +2413,10 @@ newsame:;
 		uint32			newlen;
 
 		if (record->xl_info & XLOG_HEAP_INIT_PAGE)
+		{
 			PageInit(page, BufferGetPageSize(buffer), 0);
+			PageZero(page);
+		}
 
 		if (XLByteLE(lsn, PageGetLSN(page)))	/* changes are applied */
 		{
@@ -2582,6 +2597,12 @@ heap_desc(char *buf, uint8 xl_info, char* rec)
 		sprintf(buf + strlen(buf), "; new %u/%u",
 			ItemPointerGetBlockNumber(&(xlrec->newtid)), 
 			ItemPointerGetOffsetNumber(&(xlrec->newtid)));
+	}
+	else if (info == XLOG_HEAP_CLEAN)
+	{
+		xl_heap_clean	*xlrec = (xl_heap_clean*) rec;
+		sprintf(buf + strlen(buf), "clean: node %u/%u; blk %u",
+			xlrec->node.tblNode, xlrec->node.relNode, xlrec->block);
 	}
 	else
 		strcat(buf, "UNKNOWN");

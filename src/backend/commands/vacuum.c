@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.180 2000/12/28 13:00:18 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.181 2000/12/30 15:19:55 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -47,7 +47,8 @@
 #include "utils/syscache.h"
 #include "utils/temprel.h"
 
-extern XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer);
+extern XLogRecPtr	log_heap_clean(Relation reln, Buffer buffer,
+									char *unused, int unlen);
 extern XLogRecPtr	log_heap_move(Relation reln, 
 						Buffer oldbuf, ItemPointerData from,
 						Buffer newbuf, HeapTuple newtup);
@@ -878,7 +879,7 @@ scan_heap(VRelStats *vacrelstats, Relation onerel,
 
 		if (tempPage != (Page) NULL)
 		{						/* Some tuples are gone */
-			PageRepairFragmentation(tempPage);
+			PageRepairFragmentation(tempPage, NULL);
 			vacpage->free = ((PageHeader) tempPage)->pd_upper - ((PageHeader) tempPage)->pd_lower;
 			free_size += vacpage->free;
 			reap_page(vacuum_pages, vacpage);
@@ -1898,6 +1899,10 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 		if (vacpage->blkno == (BlockNumber) (blkno - 1) &&
 			vacpage->offsets_free > 0)
 		{
+			char			unbuf[BLCKSZ];
+			OffsetNumber   *unused = (OffsetNumber*)unbuf;
+			int				uncnt;
+
 			buf = ReadBuffer(onerel, vacpage->blkno);
 			LockBuffer(buf, BUFFER_LOCK_EXCLUSIVE);
 			START_CRIT_CODE;
@@ -1928,9 +1933,11 @@ failed to add item with len = %lu to page %u (free space %lu, nusd %u, noff %u)"
 
 			}
 			Assert(vacpage->offsets_free == num_tuples);
-			PageRepairFragmentation(page);
+			uncnt = PageRepairFragmentation(page, unused);
 			{
-				XLogRecPtr	recptr = log_heap_clean(onerel, buf);
+				XLogRecPtr	recptr;
+				recptr = log_heap_clean(onerel, buf, (char*)unused,
+					(char*)(&(unused[uncnt])) - (char*)unused);
 				PageSetLSN(page, recptr);
 				PageSetSUI(page, ThisStartUpID);
 			}
@@ -2039,9 +2046,12 @@ vacuum_heap(VRelStats *vacrelstats, Relation onerel, VacPageList vacuum_pages)
 static void
 vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 {
-	Page		page = BufferGetPage(buffer);
-	ItemId		itemid;
-	int			i;
+	char			unbuf[BLCKSZ];
+	OffsetNumber   *unused = (OffsetNumber*)unbuf;
+	int				uncnt;
+	Page			page = BufferGetPage(buffer);
+	ItemId			itemid;
+	int				i;
 
 	/* There shouldn't be any tuples moved onto the page yet! */
 	Assert(vacpage->offsets_used == 0);
@@ -2052,9 +2062,11 @@ vacuum_page(Relation onerel, Buffer buffer, VacPage vacpage)
 		itemid = &(((PageHeader) page)->pd_linp[vacpage->offsets[i] - 1]);
 		itemid->lp_flags &= ~LP_USED;
 	}
-	PageRepairFragmentation(page);
+	uncnt = PageRepairFragmentation(page, unused);
 	{
-		XLogRecPtr	recptr = log_heap_clean(onerel, buffer);
+		XLogRecPtr	recptr;
+		recptr = log_heap_clean(onerel, buffer, (char*)unused,
+					(char*)(&(unused[uncnt])) - (char*)unused);
 		PageSetLSN(page, recptr);
 		PageSetSUI(page, ThisStartUpID);
 	}
