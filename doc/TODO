@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Jan 24 17:20:03 EST 2002
+Last updated:		Thu Jan 24 18:35:14 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -479,6 +479,7 @@ SOURCE CODE
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Add optional CRC checksum to heap and index pages
 * Change representation of whole-tuple parameters to functions
+* Evaluate AIX cs() spinlock macro for performance optimizations (Tatsuo)
 
 ---------------------------------------------------------------------------
 
