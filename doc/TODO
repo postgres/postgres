@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Fri Jun  2 11:32:09 EDT 2000
+Last updated:		Wed Jun  7 15:55:34 EDT 2000
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -95,6 +95,7 @@ TYPES
 * Functions returning sets don't really work right[function]
 * Add hash for int8
 * SELECT col FROM tab WHERE numeric_col = 10.1 fails
+* Allow arrays to hold NULL elements
 
 VIEWS
 
