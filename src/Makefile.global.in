@@ -7,7 +7,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.22 1997/04/15 18:36:45 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/Makefile.global.in,v 1.23 1997/04/26 05:04:13 scrappy Exp $
 #
 # NOTES
 #    Essentially all Postgres make files include this file and use the 
@@ -232,7 +232,7 @@ YFLAGS= @YFLAGS@
 YACC= @YACC@
 LEX= @LEX@
 AROPT= @AROPT@
-CFLAGS= @CPPFLAGS@ @CFLAGS@
+CFLAGS= -I$(SRCDIR)/include @CPPFLAGS@ @CFLAGS@ 
 CFLAGS_SL= @SHARED_LIB@
 LDFLAGS= @LDFLAGS@ @LIBS@
 DLSUFFIX= @DLSUFFIX@

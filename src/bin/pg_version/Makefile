@@ -7,15 +7,16 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.4 1997/04/04 10:41:37 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/bin/pg_version/Attic/Makefile,v 1.5 1997/04/26 05:05:43 scrappy Exp $
 #
 #-------------------------------------------------------------------------
 
 SRCDIR= ../..
 include ../../Makefile.global
-include ../Makefile.global
 
 OBJS= pg_version.o ../../utils/version.o
+
+CFLAGS+= -I$(SRCDIR)/include
 
 all: pg_version
 
