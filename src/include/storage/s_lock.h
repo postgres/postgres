@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.92 2001/04/13 23:32:57 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/include/storage/s_lock.h,v 1.93 2001/05/24 15:53:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -106,7 +106,7 @@
  */
 
 
-#if defined(__i386__) && !defined(__QNX__)
+#if defined(__i386__)
 #define TAS(lock) tas(lock)
 
 static __inline__ int
@@ -396,18 +396,19 @@ tas(volatile slock_t *lock)
 
 #endif	 /* __hpux */
 
-
-#if defined(__QNX__)
+#if defined(__QNX__) && defined(__WATCOMC__)
 /*
- * QNX 4
- *
- * Note that slock_t under QNX is sem_t instead of char
+ * QNX 4 using WATCOM C
  */
-#define TAS(lock)		(sem_trywait((lock)) < 0)
-#define S_UNLOCK(lock)	sem_post((lock))
-#define S_INIT_LOCK(lock)		sem_init((lock), 1, 1)
-#define S_LOCK_FREE(lock)		((lock)->value)
-#endif	 /* __QNX__ */
+#define TAS(lock) wc_tas(lock)
+extern slock_t wc_tas(volatile slock_t *lock);
+#pragma aux wc_tas =\
+		"	mov   al,1    " \
+		" lock	xchg	al,[esi]" \
+		parm [esi]        \
+		value [al];
+
+#endif	 /* __QNX__ and __WATCOMC__*/
 
 
 #if defined(__sgi)
@@ -544,7 +545,6 @@ extern int	tas(volatile slock_t *lock);		/* in port/.../tas.s, or
 /****************************************************************************
  * Platform-independent out-of-line support routines
  */
-
 extern void s_lock(volatile slock_t *lock,
 	   const char *file, const int line);
 extern void s_lock_sleep(unsigned spins, int timeout, int microsec,

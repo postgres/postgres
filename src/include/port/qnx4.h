@@ -4,12 +4,8 @@
 #include <ioctl.h>				/* for unix.h */
 #include <unix.h>
 #include <sys/select.h>			/* for select */
-#if !defined(__GNUC__)
-#include <semaphore.h>			/* for sem_t */
-#endif
 
 #define HAS_TEST_AND_SET
-#define HAVE_STRING_H
 
 #undef HAVE_GETRUSAGE
 
@@ -26,13 +22,7 @@ extern unsigned char __nan[8];
 
 typedef u_short ushort;
 
-#if defined(__GNUC__)
 typedef unsigned char slock_t;
-
-#else
-typedef sem_t slock_t;
-
-#endif
 
 extern int	isnan(double dsrc);
 

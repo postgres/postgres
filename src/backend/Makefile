@@ -4,7 +4,7 @@
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.71 2001/04/23 20:27:55 petere Exp $
+# $Header: /cvsroot/pgsql/src/backend/Makefile,v 1.72 2001/05/24 15:53:32 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -25,7 +25,8 @@ OBJS := $(DIRS:%=%/SUBSYS.o)
 ifeq ($(PORTNAME), qnx4)
 # This file crashes qnx4's wlink and is therefore not in
 # bootstrap/SUBSYS.o on that platform. (Wotta hack ... is it still
-# necessary?)
+# necessary?) [ Yes, until the Watcom compiler goes open source it's
+# effectively unsupported ]
 OBJS+= bootstrap/bootstrap.o
 endif
 

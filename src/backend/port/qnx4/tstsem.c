@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstsem.c,v 1.3 2000/04/12 17:15:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/tstsem.c,v 1.4 2001/05/24 15:53:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -40,6 +40,10 @@ sig_handler(int sig_no)
 		printf("semval = %d\n", i);
 }
 
+void on_proc_exit( void (*function)(), Datum arg )
+{
+  atexit( function ); 
+}
 int
 main(int argc, char **argv)
 {

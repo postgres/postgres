@@ -1,5 +1,9 @@
 PostgresSQL on QNX 4
 --------------------
+last updated:           $Date: 2001/05/24 15:53:31 $
+
+current maintainer:     Bernd Tegge (tegge@repas-aeg.de)
+original author:        Andreas Kardos (kardos@repas-aeg.de)
 
 This port is an important step because PostgreSQL is now the only free
 relational database with full SQL and ODBC support available for QNX 4.
@@ -7,47 +11,66 @@ The only commercial databases available are Empress RDBMS and Velocis
 Database Server (not supported for Digital Unix).
 
 The most effort required the emulation of System V semaphore sets,
-shared memory and IPC and of some IEEE floating-point functionality. For
-the Watcom compiler spinlocks have been implemented using POSIX semaphores.
+shared memory and IPC and of some IEEE floating-point functionality.
 
-It is recomended to use the GNU C compiler instead of the Watcom compiler
+It is recommended to use the GNU C compiler instead of the Watcom compiler
 because the Watcom compiler doesn't support a int8 datatype (long or
-long long int) and it does not have a C++ frontend.
-It could be managed to build postgres using the Watcom compiler but it crashes
-quite early. These problems probably could be solved. The only advantage would
-be support of Tk and pgaccess. For the Watcom compiler some more modifications
-have to be made which are not described here.
+long long int) and it does not have a C++ frontend. The only advantage
+using Watcom C would be support of Tk and pgaccess.
 
 QNX 4 does not offer native support of shared libraries. Therefore the related
 functionality cannot be used. Shared library support could probably be
 implemented in future.
 
-QNX 4 does not support UNIX domain sockets. Connections can only be made
-with TCP/IP sockets. Therefore postmaster must always be started with the
--i option. Furthermore it would be useful to set the PGHOST variable.
+QNX 4 does not support UNIX domain sockets. Clients must use TCP/IP sockets.
+Therefore postmaster must always be started with the -i option. Furthermore
+it would be useful to set the PGHOST variable.
 
 Prerequisites:
 --------------
 
 The following prerequisites have been used:
 
-QNX 4.25
-Watcom C 10.6
-GNU make
+QNX standard:
+QNX 4.25, Watcom C 10.6, GNU make
+
+Available from http://www.teaser.fr/~jcmichot/
 flex-2.5.4a.tar.gz (flex)
-egcs111-qnx4-r20.tar[.gz] (GNU C)
+egcs-112-qnx4-r20.tar[.gz] (GNU C)
+
+Available from ftp://ftp.visi.com/users/hawkeyd/qnx/
+bison-1.2.5.tar.gz
+
+Available from http://quics.qnx.com/cgi-bin/dir_find.cgi?/usr/free/
 perl 5.004_04
+
+from ftp://ftp.freesoftware.com/pub/infozip/zlib/
+zlib 1.1.3
+
 tcl8.0.3.tar.Z (Tcl)
+
+In order to achieve meaningful results for the regression tests, you need
+a different shell. The standard QNX shell is quite broken with regard to
+scripting (even QSSL suggested to use pdksh or bash). Both are available
+in source and binaries at
+http://quics.qnx.com/cgi-bin/dir_find.cgi?/usr/free/
 
 flex can be built without any problems using the Watcom or GNU C compilers.
 
+The current version of bison (1.2.8 at the time of this writing) does not
+build cleanly on QNX4 with gcc installed, but you can download src and
+binary of a previous version from the above mentioned ftp site.
+
+download source
 GNU C can be installed by
-/etc/install -u egcs111-qnx4-r20.tar[.gz]
+/etc/install -u egcs112-qnx4-r20.tar[.gz]
 
 Although Tcl can be built after some slight code changes using the Watcom
 compiler, the GNU C compiler should be used instead. Otherwise it would be
 impossible to link postgres built with GNU C together with libtcl8.0.a built
-with the Watcom compiler.
+with the Watcom compiler. However, if you are going to build a Watcom version
+you must build the tcl and tk libraries with Watcom too.
+
 To make unix/tclUnixTest.c compilable uncomment
 #include <sys/resource.h>
 in it or
@@ -79,17 +102,14 @@ ln -s /usr/src/pgsql/src/backend/port/qnx4/sem.h /usr/include/sys/sem.h
 ln -s /usr/src/pgsql/src/backend/port/qnx4/shm.h /usr/include/sys/shm.h
 
 For ecgs-2.91.60 the file
-/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.60/include/g++/stl_alloc.h
+/usr/local/lib/gcc-lib/i386-pc-qnx4/egcs-2.91.66/include/g++/stl_alloc.h
 had to be patched (extern "C++" { ... } // extern "C++").
 See attached patch.
 
-If you use another ecpg version the include/g++ path in Makefile.qnx4
-(CXXFLAGS) has to be adopted.
-
 If all prerequisites are available postgres can be built and installed by
 cd pgsql/src
-./configure --with-tcl --with-perl --with-x
-gmake all > make.log 2>&1
+./configure --with-tcl --without-tk --with-perl
+gmake > make.log 2>&1
 gmake install > make.install.log 2>&1
 su
 cd interfaces/perl5
@@ -113,11 +133,15 @@ Currently yacc fails on backend/parser/gram.y and
 interfaces/ecpg/preproc/preproc.y due to exceeded maximum table size. You can
 generate the gram.h, parse.h, preproc.h and preproc.c files on another platform
 and use them. This is only a problem when you use the current source tree since
-parse.h, gram.c, preproc.h and preporc.c are included in official
-distributions.
+parse.h, gram.c, preproc.h and preproc.c are included in official
+distributions. In order to avoid this, install the bison binary mentioned
+above.
 
 Regression tests:
 -----------------
+please don't use the QNX shell for the parallel regression tests. Download
+bash from quics.qnx.com and run 'make SHELL=/usr/local/bin/bash check'
+instead.
 
 The majority of regression tests succeeded. The following tests failed:
 
@@ -136,7 +160,8 @@ if a value of type money is inserted in string representation e.g. as in
 "insert into rtest_emp values ('wiech', '5000.00');"
 Subject of further investigation.
 
-create_function_2, triggers, misc, plpgsql:
+create_function_1, create_function_2, create_type, create_operator,
+create_view, select_views, triggers, misc, plpgsql:
 Error messages due to the lack of shared library support.
 
 numeric, numeric_big, sanity_check:
@@ -147,14 +172,19 @@ Subject of further investigation. Probably because of the missing indices
 these numeric tests take a long time.
 The diffence in sanity_check.out is a consequence of this problem only.
 
-The reached state of this port should be sufficient for lot of applications.
+The current state of this port should be sufficient for lot of applications.
+
+The Watcom version failed additional tests because of the lack of int8
+support.
 
 Have fun!
 
 Andreas Kardos
-kardos@repas-aeg.de
 2000-04-04
 
+Bernd Tegge
+tegge@repas-aeg.de
+2001-03-01
 
 ---------------------------------------------------------------------------
 

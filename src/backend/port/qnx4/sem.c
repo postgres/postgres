@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.4 2001/02/02 18:21:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/sem.c,v 1.5 2001/05/24 15:53:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,14 +23,16 @@
 #include "storage/ipc.h"
 #include "storage/proc.h"
 #include <sys/sem.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
 
 
-#define SETMAX	((MAXBACKENDS + PROC_NSEMS_PER_SET - 1) / PROC_NSEMS_PER_SET)
+#define SETMAX	((MAXBACKENDS + PROC_NSEMS_PER_SET + 1) / PROC_NSEMS_PER_SET)
 #define SEMMAX	(PROC_NSEMS_PER_SET+1)
 #define OPMAX	8
 
 #define MODE	0700
-#define SHM_INFO_NAME	"SysV_Sem_Info"
+#define SHM_INFO_NAME	"PgSysV_Sem_Info"
 
 
 struct pending_ops
@@ -56,6 +58,17 @@ struct sem_info
 
 static struct sem_info *SemInfo = (struct sem_info *) - 1;
 
+/* ----------------------------------------------------------------
+ * semclean - remove the shared memory file on exit
+ *            only called by the process which created the shm file
+ * ----------------------------------------------------------------
+ */
+
+static void
+semclean( void )
+{
+  remove( "/dev/shmem/" SHM_INFO_NAME );
+}
 
 int
 semctl(int semid, int semnum, int cmd, /* ... */ union semun arg)
@@ -132,6 +145,7 @@ semget(key_t key, int nsems, int semflg)
 				semid,
 				semnum /* , semnum1 */ ;
 	int			exist = 0;
+  struct stat statbuf;
 
 	if (nsems < 0 || nsems > SEMMAX)
 	{
@@ -153,6 +167,26 @@ semget(key_t key, int nsems, int semflg)
 			return fd;
 		/* The size may only be set once. Ignore errors. */
 		ltrunc(fd, sizeof(struct sem_info), SEEK_SET);
+    if ( fstat( fd, &statbuf ) ) /* would be strange : the only doc'ed */
+    {                            /* error is EBADF */
+      close( fd );
+      return -1;
+    }
+    /*
+     * size is rounded by proc to the next __PAGESIZE
+     */
+    if ( statbuf.st_size != 
+         ((( sizeof(struct sem_info) /__PAGESIZE)+1) * __PAGESIZE) )
+    {
+       fprintf( stderr,
+         "Found a pre-existing shared memory block for the semaphore memory\n"
+         "of a different size (%ld instead %ld). Make sure that all executables\n"
+         "are from the same release or remove the file \"/dev/shmem/%s\"\n"
+         "left by a previous version.\n", statbuf.st_size,
+         sizeof(struct sem_info), SHM_INFO_NAME);
+         errno = EACCES;
+       return -1;
+    }
 		SemInfo = mmap(NULL, sizeof(struct sem_info),
 					   PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 		if (SemInfo == MAP_FAILED)
@@ -167,6 +201,7 @@ semget(key_t key, int nsems, int semflg)
 			for (semid = 0; semid < SETMAX; semid++)
 				SemInfo->set[semid].key = -1;
 			sem_post(&SemInfo->sem);
+      on_proc_exit( semclean, NULL );
 		}
 	}
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.4 2001/03/22 03:59:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/port/qnx4/Attic/shm.c,v 1.5 2001/05/24 15:53:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -15,9 +15,11 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/shm.h>
+#include <sys/stat.h>
 
 
 #define MODE	0777
@@ -41,6 +43,12 @@ static int	shm_updinfo(int i, struct shm_info * info);
 static int	shm_getinfo(int shmid, struct shm_info * info);
 static int	shm_getinfobyaddr(const void *addr, struct shm_info * info);
 
+static char *
+keytoname(key_t key, char *name)
+{
+  sprintf( name,"PgShm%x", key );
+  return name;
+}
 
 static int
 shm_putinfo(struct shm_info * info)
@@ -172,25 +180,51 @@ shmctl(int shmid, int cmd, struct shmid_ds * buf)
 {
 	struct shm_info info;
 	char		name[NAME_MAX + 1];
+  int     result;
+  int     fd;
+  struct stat statbuf;
 
-	if (cmd == IPC_RMID)
+  
+	switch( cmd )
 	{
+    case IPC_RMID :
 		if (shm_getinfo(shmid, &info) == -1)
 		{
 			errno = EACCES;
 			return -1;
 		}
-		return shm_unlink(itoa(info.key, name, 16));
+      close( info.shmid );
+      keytoname(info.key, name);
+      return shm_unlink( name );
+      
+    case IPC_STAT :
+      /*
+       * we have to open it first. stat() does no prefix tracking
+       * -> the call would go to fsys instead of proc
+       */
+      keytoname(shmid, name);
+      fd = shm_open( name, 0, MODE );
+      if ( fd >= 0 )
+      {
+        result = fstat( fd, &statbuf );
+        /*
+         * if the file exists, subtract 2 from linkcount :
+         *  one for our own open and one for the dir entry
+         */
+        if ( ! result )
+          buf->shm_nattch = statbuf.st_nlink-2;
+        close( fd );
+        return result;
 	}
-	if (cmd == IPC_STAT)
+      else
 	{
-
 		/*
-		 * Can we support IPC_STAT?  We only need shm_nattch ... For now,
-		 * punt and assume the shm seg does not exist.
+         * if there's no entry for this key it doesn't matter
+         * the next shmget() would get a different shm anyway
 		 */
-		errno = EINVAL;
-		return -1;
+        buf->shm_nattch = 0;
+        return 0;
+      }  
 	}
 	errno = EINVAL;
 	return -1;
@@ -214,7 +248,7 @@ shmget(key_t key, size_t size, int flags)
 		else
 			oflag |= O_RDONLY;
 	}
-	info.shmid = shm_open(itoa(key, name, 16), oflag, MODE);
+	info.shmid = shm_open(keytoname(key, name), oflag, MODE);
 
 	/* store shared memory information */
 	if (info.shmid != -1)
@@ -222,8 +256,13 @@ shmget(key_t key, size_t size, int flags)
 		info.key = key;
 		info.size = size;
 		info.addr = NULL;
-		if (shm_putinfo(&info) == -1)
+		if (shm_putinfo(&info) == -1) {
+      close( info.shmid );
+      if ( (oflag & (O_CREAT|O_EXCL)) == (O_CREAT|O_EXCL) ) {
+        shm_unlink( name );
+      }
 			return -1;
+    }
 	}
 
 	/* The size may only be set once. Ignore errors. */
