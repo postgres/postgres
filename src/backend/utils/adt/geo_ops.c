@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.60 2001/10/25 05:49:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.61 2002/05/14 18:16:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1099,7 +1099,6 @@ line_distance(PG_FUNCTION_ARGS)
 		PG_RETURN_FLOAT8(fabs(l1->C - l2->C));
 	tmp = point_construct(0.0, l1->C);
 	result = dist_pl_internal(tmp, l2);
-	pfree(tmp);
 	PG_RETURN_FLOAT8(result);
 }
 
@@ -1843,8 +1842,6 @@ lseg_intersect_internal(LSEG *l1, LSEG *l2)
 		retval = true;			/* interpt on l1 and l2 */
 	else
 		retval = false;
-	if (interpt != NULL)
-		pfree(interpt);
 	return retval;
 }
 
@@ -2061,10 +2058,7 @@ lseg_interpt(PG_FUNCTION_ARGS)
 	 */
 	if (!on_ps_internal(result, l1) ||
 		!on_ps_internal(result, l2))
-	{
-		pfree(result);
 		PG_RETURN_NULL();
-	}
 
 	/*
 	 * If there is an intersection, then check explicitly for matching
@@ -2152,10 +2146,10 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 		   ln->A, ln->B, ln->C, pt->x, pt->y, m);
 #endif
 
-/*
- * Calculate distance to the line segment
- *	or to the endpoints of the segment.
- */
+	/*
+	 * Calculate distance to the line segment
+	 * or to the endpoints of the segment.
+	 */
 
 	/* intersection is on the line segment? */
 	if ((ip = interpt_sl(lseg, ln)) != NULL)
@@ -2165,7 +2159,6 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 		printf("dist_ps- distance is %f to intersection point is (%f,%f)\n",
 			   result, ip->x, ip->y);
 #endif
-		pfree(ip);
 	}
 	else
 	{
@@ -2175,8 +2168,6 @@ dist_ps_internal(Point *pt, LSEG *lseg)
 		if (tmpdist < result)
 			result = tmpdist;
 	}
-
-	pfree(ln);
 
 	return result;
 }
@@ -2245,13 +2236,12 @@ dist_pb(PG_FUNCTION_ARGS)
 	Point	   *pt = PG_GETARG_POINT_P(0);
 	BOX		   *box = PG_GETARG_BOX_P(1);
 	float8		result;
-	Point	   *tmp;
+	Point	   *near;
 
-	tmp = DatumGetPointP(DirectFunctionCall2(close_pb,
-											 PointPGetDatum(pt),
-											 BoxPGetDatum(box)));
-	result = point_dt(tmp, pt);
-	pfree(tmp);
+	near = DatumGetPointP(DirectFunctionCall2(close_pb,
+											  PointPGetDatum(pt),
+											  BoxPGetDatum(box)));
+	result = point_dt(near, pt);
 
 	PG_RETURN_FLOAT8(result);
 }
@@ -2294,7 +2284,6 @@ dist_sb(PG_FUNCTION_ARGS)
 	result = DirectFunctionCall2(dist_pb,
 								 PointPGetDatum(tmp),
 								 BoxPGetDatum(box));
-	pfree(tmp);
 
 	PG_RETURN_DATUM(result);
 }
@@ -2308,7 +2297,7 @@ dist_lb(PG_FUNCTION_ARGS)
 	BOX		   *box = PG_GETARG_BOX_P(1);
 #endif
 
-	/* think about this one for a while */
+	/* need to think about this one for a while */
 	elog(ERROR, "dist_lb not implemented");
 
 	PG_RETURN_NULL();
@@ -2401,7 +2390,6 @@ interpt_sl(LSEG *lseg, LINE *line)
 		}
 		else
 		{
-			pfree(p);
 			p = NULL;
 		}
 	}
@@ -2417,10 +2405,7 @@ has_interpt_sl(LSEG *lseg, LINE *line)
 
 	tmp = interpt_sl(lseg, line);
 	if (tmp)
-	{
-		pfree(tmp);
 		return true;
-	}
 	return false;
 }
 
@@ -2624,7 +2609,6 @@ close_lseg(PG_FUNCTION_ARGS)
 											   PointPGetDatum(&l2->p[0]),
 													LsegPGetDatum(l1)));
 		memcpy(&point, result, sizeof(Point));
-		pfree(result);
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
 												  PointPGetDatum(&point),
 													LsegPGetDatum(l2)));
@@ -2632,14 +2616,10 @@ close_lseg(PG_FUNCTION_ARGS)
 
 	if ((d = dist_ps_internal(&l2->p[1], l1)) < dist)
 	{
-		if (result != NULL)
-			pfree(result);
-
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
 											   PointPGetDatum(&l2->p[1]),
 													LsegPGetDatum(l1)));
 		memcpy(&point, result, sizeof(Point));
-		pfree(result);
 		result = DatumGetPointP(DirectFunctionCall2(close_ps,
 												  PointPGetDatum(&point),
 													LsegPGetDatum(l2)));
@@ -3574,9 +3554,6 @@ box_mul(PG_FUNCTION_ARGS)
 
 	result = box_construct(high->x, low->x, high->y, low->y);
 
-	pfree(high);
-	pfree(low);
-
 	PG_RETURN_BOX_P(result);
 }
 
@@ -3597,9 +3574,6 @@ box_div(PG_FUNCTION_ARGS)
 											 PointPGetDatum(p)));
 
 	result = box_construct(high->x, low->x, high->y, low->y);
-
-	pfree(high);
-	pfree(low);
 
 	PG_RETURN_BOX_P(result);
 }
@@ -3700,7 +3674,6 @@ path_mul_pt(PG_FUNCTION_ARGS)
 											   PointPGetDatum(point)));
 		path->p[i].x = p->x;
 		path->p[i].y = p->y;
-		pfree(p);
 	}
 
 	PG_RETURN_PATH_P(path);
@@ -3721,7 +3694,6 @@ path_div_pt(PG_FUNCTION_ARGS)
 											   PointPGetDatum(point)));
 		path->p[i].x = p->x;
 		path->p[i].y = p->y;
-		pfree(p);
 	}
 
 	PG_RETURN_PATH_P(path);
@@ -3796,7 +3768,6 @@ poly_center(PG_FUNCTION_ARGS)
 												 PolygonPGetDatum(poly)));
 	result = DirectFunctionCall1(circle_center,
 								 CirclePGetDatum(circle));
-	pfree(circle);
 
 	PG_RETURN_DATUM(result);
 }
@@ -4232,7 +4203,6 @@ circle_mul_pt(PG_FUNCTION_ARGS)
 										   PointPGetDatum(point)));
 	result->center.x = p->x;
 	result->center.y = p->y;
-	pfree(p);
 	result->radius *= HYPOT(point->x, point->y);
 
 	PG_RETURN_CIRCLE_P(result);
@@ -4253,7 +4223,6 @@ circle_div_pt(PG_FUNCTION_ARGS)
 										   PointPGetDatum(point)));
 	result->center.x = p->x;
 	result->center.y = p->y;
-	pfree(p);
 	result->radius /= HYPOT(point->x, point->y);
 
 	PG_RETURN_CIRCLE_P(result);
