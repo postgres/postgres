@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.21 2000/02/18 09:29:37 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/indexcmds.c,v 1.22 2000/02/25 02:58:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -31,24 +31,26 @@
 #include "optimizer/planmain.h"
 #include "optimizer/prep.h"
 #include "parser/parsetree.h"
+#include "parser/parse_func.h"
 #include "utils/builtins.h"
 #include "utils/syscache.h"
 #include "miscadmin.h"	/* ReindexDatabase() */
 #include "utils/portal.h" /* ReindexDatabase() */
 #include "catalog/catalog.h" /* ReindexDatabase() */
 
-#define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args!=NULL)
+#define IsFuncIndex(ATTR_LIST) (((IndexElem*)lfirst(ATTR_LIST))->args != NIL)
 
 /* non-export function prototypes */
 static void CheckPredicate(List *predList, List *rangeTable, Oid baseRelOid);
-static void CheckPredExpr(Node *predicate, List *rangeTable,
-			  Oid baseRelOid);
-static void
-			CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
-static void FuncIndexArgs(IndexElem *funcIndex, AttrNumber *attNumP,
-			  Oid *argTypes, Oid *opOidP, Oid relId);
+static void CheckPredExpr(Node *predicate, List *rangeTable, Oid baseRelOid);
+static void CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid);
+static void FuncIndexArgs(IndexElem *funcIndex, FuncIndexInfo *funcInfo,
+						  AttrNumber *attNumP, Oid *opOidP, Oid relId);
 static void NormIndexAttrs(List *attList, AttrNumber *attNumP,
-			   Oid *opOidP, Oid relId);
+						   Oid *opOidP, Oid relId);
+static void ProcessAttrTypename(IndexElem *attribute,
+								Oid defType, int32 defTypmod);
+static Oid	GetAttrOpClass(IndexElem *attribute, Oid attrType);
 static char *GetDefaultOpClass(Oid atttypid);
 
 /*
@@ -169,30 +171,30 @@ DefineIndex(char *heapRelationName,
 
 		FIsetnArgs(&fInfo, nargs);
 
-		strcpy(FIgetname(&fInfo), funcIndex->name);
+		namestrcpy(&fInfo.funcName, funcIndex->name);
 
-		attributeNumberA = (AttrNumber *) palloc(nargs * sizeof attributeNumberA[0]);
+		attributeNumberA = (AttrNumber *) palloc(nargs *
+												 sizeof attributeNumberA[0]);
 
-		classObjectId = (Oid *) palloc(sizeof classObjectId[0]);
+		classObjectId = (Oid *) palloc(sizeof(Oid));
 
-
-		FuncIndexArgs(funcIndex, attributeNumberA,
-					  &(FIgetArg(&fInfo, 0)),
+		FuncIndexArgs(funcIndex, &fInfo, attributeNumberA,
 					  classObjectId, relationId);
 
 		index_create(heapRelationName,
 					 indexRelationName,
 					 &fInfo, NULL, accessMethodId,
 					 numberOfAttributes, attributeNumberA,
-			 classObjectId, parameterCount, parameterA, (Node *) cnfPred,
+					 classObjectId, parameterCount, parameterA,
+					 (Node *) cnfPred,
 					 lossy, unique, primary);
 	}
 	else
 	{
 		attributeNumberA = (AttrNumber *) palloc(numberOfAttributes *
-											 sizeof attributeNumberA[0]);
+												 sizeof attributeNumberA[0]);
 
-		classObjectId = (Oid *) palloc(numberOfAttributes * sizeof classObjectId[0]);
+		classObjectId = (Oid *) palloc(numberOfAttributes * sizeof(Oid));
 
 		NormIndexAttrs(attributeList, attributeNumberA,
 					   classObjectId, relationId);
@@ -200,9 +202,11 @@ DefineIndex(char *heapRelationName,
 		index_create(heapRelationName, indexRelationName, NULL,
 					 attributeList,
 					 accessMethodId, numberOfAttributes, attributeNumberA,
-			 classObjectId, parameterCount, parameterA, (Node *) cnfPred,
+					 classObjectId, parameterCount, parameterA,
+					 (Node *) cnfPred,
 					 lossy, unique, primary);
 	}
+
 	setRelhasindexInplace(relationId, true, false);
 }
 
@@ -320,7 +324,6 @@ ExtendIndex(char *indexRelationName, Expr *predicate, List *rangetable)
 	if (indproc != InvalidOid)
 	{
 		funcInfo = &fInfo;
-/*		FIgetnArgs(funcInfo) = numberOfAttributes; */
 		FIsetnArgs(funcInfo, numberOfAttributes);
 
 		tuple = SearchSysCacheTuple(PROCOID,
@@ -407,51 +410,62 @@ CheckPredClause(Expr *predicate, List *rangeTable, Oid baseRelOid)
 
 static void
 FuncIndexArgs(IndexElem *funcIndex,
+			  FuncIndexInfo *funcInfo,
 			  AttrNumber *attNumP,
-			  Oid *argTypes,
 			  Oid *opOidP,
 			  Oid relId)
 {
 	List	   *rest;
 	HeapTuple	tuple;
-	Form_pg_attribute att;
-
-	tuple = SearchSysCacheTuple(CLANAME,
-								PointerGetDatum(funcIndex->class),
-								0, 0, 0);
-
-	if (!HeapTupleIsValid(tuple))
-	{
-		elog(ERROR, "DefineIndex: %s class not found",
-			 funcIndex->class);
-	}
-	*opOidP = tuple->t_data->t_oid;
-
-	MemSet(argTypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
+	Oid			retType;
+	int			argn = 0;
 
 	/*
-	 * process the function arguments
+	 * process the function arguments, which are a list of T_String
+	 * (someday ought to allow more general expressions?)
 	 */
-	for (rest = funcIndex->args; rest != NIL; rest = lnext(rest))
-	{
-		char	   *arg;
+	MemSet(funcInfo->arglist, 0, FUNC_MAX_ARGS * sizeof(Oid));
 
-		arg = strVal(lfirst(rest));
+	foreach(rest, funcIndex->args)
+	{
+		char	   *arg = strVal(lfirst(rest));
+		Form_pg_attribute att;
 
 		tuple = SearchSysCacheTuple(ATTNAME,
 									ObjectIdGetDatum(relId),
 									PointerGetDatum(arg), 0, 0);
 
 		if (!HeapTupleIsValid(tuple))
-		{
-			elog(ERROR,
-				 "DefineIndex: attribute \"%s\" not found",
-				 arg);
-		}
+			elog(ERROR, "DefineIndex: attribute \"%s\" not found", arg);
 		att = (Form_pg_attribute) GETSTRUCT(tuple);
 		*attNumP++ = att->attnum;
-		*argTypes++ = att->atttypid;
+		funcInfo->arglist[argn++] = att->atttypid;
 	}
+
+	/* ----------------
+	 * Lookup the function procedure to get its OID and result type.
+	 * ----------------
+	 */
+	tuple = SearchSysCacheTuple(PROCNAME,
+								PointerGetDatum(FIgetname(funcInfo)),
+								Int32GetDatum(FIgetnArgs(funcInfo)),
+								PointerGetDatum(FIgetArglist(funcInfo)),
+								0);
+
+	if (!HeapTupleIsValid(tuple))
+	{
+		func_error("DefineIndex", FIgetname(funcInfo),
+				   FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
+	}
+
+	FIsetProcOid(funcInfo, tuple->t_data->t_oid);
+	retType = ((Form_pg_proc) GETSTRUCT(tuple))->prorettype;
+
+	/* Process type and opclass, using func return type as default */
+
+	ProcessAttrTypename(funcIndex, retType, -1);
+
+	*opOidP = GetAttrOpClass(funcIndex, retType);
 }
 
 static void
@@ -461,78 +475,83 @@ NormIndexAttrs(List *attList,	/* list of IndexElem's */
 			   Oid relId)
 {
 	List	   *rest;
-	HeapTuple	atttuple,
-				tuple;
 
 	/*
 	 * process attributeList
 	 */
-
-	for (rest = attList; rest != NIL; rest = lnext(rest))
+	foreach(rest, attList)
 	{
-		IndexElem  *attribute;
+		IndexElem  *attribute = lfirst(rest);
+		HeapTuple	atttuple;
 		Form_pg_attribute attform;
-
-		attribute = lfirst(rest);
 
 		if (attribute->name == NULL)
 			elog(ERROR, "missing attribute for define index");
 
 		atttuple = SearchSysCacheTupleCopy(ATTNAME,
 										   ObjectIdGetDatum(relId),
-										PointerGetDatum(attribute->name),
+										   PointerGetDatum(attribute->name),
 										   0, 0);
 		if (!HeapTupleIsValid(atttuple))
-		{
-			elog(ERROR,
-				 "DefineIndex: attribute \"%s\" not found",
+			elog(ERROR, "DefineIndex: attribute \"%s\" not found",
 				 attribute->name);
-		}
-
 		attform = (Form_pg_attribute) GETSTRUCT(atttuple);
+
 		*attNumP++ = attform->attnum;
 
-		/* we want the type so we can set the proper alignment, etc. */
-		if (attribute->typename == NULL)
-		{
-			tuple = SearchSysCacheTuple(TYPEOID,
-									 ObjectIdGetDatum(attform->atttypid),
-										0, 0, 0);
-			if (!HeapTupleIsValid(tuple))
-				elog(ERROR, "create index: type for attribute '%s' undefined",
-					 attribute->name);
-			/* we just set the type name because that is all we need */
-			attribute->typename = makeNode(TypeName);
-			attribute->typename->name = nameout(&((Form_pg_type) GETSTRUCT(tuple))->typname);
+		ProcessAttrTypename(attribute, attform->atttypid, attform->atttypmod);
 
-			/* we all need the typmod for the char and varchar types. */
-			attribute->typename->typmod = attform->atttypmod;
-		}
+		*classOidP++ = GetAttrOpClass(attribute, attform->atttypid);
 
-		if (attribute->class == NULL)
-		{
-			/* no operator class specified, so find the default */
-			attribute->class = GetDefaultOpClass(attform->atttypid);
-			if (attribute->class == NULL)
-			{
-				elog(ERROR,
-					 "Can't find a default operator class for type %u.",
-					 attform->atttypid);
-			}
-		}
-
-		tuple = SearchSysCacheTuple(CLANAME,
-									PointerGetDatum(attribute->class),
-									0, 0, 0);
-
-		if (!HeapTupleIsValid(tuple))
-		{
-			elog(ERROR, "DefineIndex: %s class not found",
-				 attribute->class);
-		}
-		*classOidP++ = tuple->t_data->t_oid;
 		heap_freetuple(atttuple);
 	}
+}
+
+static void
+ProcessAttrTypename(IndexElem *attribute,
+					Oid defType, int32 defTypmod)
+{
+	HeapTuple	tuple;
+
+	/* build a type node so we can set the proper alignment, etc. */
+	if (attribute->typename == NULL)
+	{
+		tuple = SearchSysCacheTuple(TYPEOID,
+									ObjectIdGetDatum(defType),
+									0, 0, 0);
+		if (!HeapTupleIsValid(tuple))
+			elog(ERROR, "DefineIndex: type for attribute '%s' undefined",
+				 attribute->name);
+
+		attribute->typename = makeNode(TypeName);
+		attribute->typename->name = nameout(&((Form_pg_type) GETSTRUCT(tuple))->typname);
+		attribute->typename->typmod = defTypmod;
+	}
+}
+
+static Oid
+GetAttrOpClass(IndexElem *attribute, Oid attrType)
+{
+	HeapTuple	tuple;
+
+	if (attribute->class == NULL)
+	{
+		/* no operator class specified, so find the default */
+		attribute->class = GetDefaultOpClass(attrType);
+		if (attribute->class == NULL)
+			elog(ERROR, "Can't find a default operator class for type %u",
+				 attrType);
+	}
+
+	tuple = SearchSysCacheTuple(CLANAME,
+								PointerGetDatum(attribute->class),
+								0, 0, 0);
+
+	if (!HeapTupleIsValid(tuple))
+		elog(ERROR, "DefineIndex: %s opclass not found",
+			 attribute->class);
+
+	return tuple->t_data->t_oid;
 }
 
 static char *

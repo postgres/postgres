@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.105 2000/02/18 09:28:41 inoue Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.106 2000/02/25 02:58:47 tgl Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1032,28 +1032,6 @@ index_create(char *heapRelationName,
 	 * We create the disk file for this relation here
 	 */
 	heap_storage_create(indexRelation);
-	/* ----------------
-	 * Now get the index procedure (only relevant for functional indices).
-	 * ----------------
-	 */
-
-	if (PointerIsValid(funcInfo))
-	{
-		HeapTuple	proc_tup;
-
-		proc_tup = SearchSysCacheTuple(PROCNAME,
-									PointerGetDatum(FIgetname(funcInfo)),
-									 Int32GetDatum(FIgetnArgs(funcInfo)),
-								 PointerGetDatum(FIgetArglist(funcInfo)),
-									   0);
-
-		if (!HeapTupleIsValid(proc_tup))
-		{
-			func_error("index_create", FIgetname(funcInfo),
-					 FIgetnArgs(funcInfo), FIgetArglist(funcInfo), NULL);
-		}
-		FIgetProcOid(funcInfo) = proc_tup->t_data->t_oid;
-	}
 
 	/* ----------------
 	 *	now update the object id's of all the attribute
