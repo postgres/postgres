@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.32 2000/05/05 09:38:40 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/command.c,v 1.33 2000/05/12 00:54:53 momjian Exp $
  */
 #include "postgres.h"
 #include "command.h"
@@ -814,7 +814,6 @@ scan_option(char **string, enum option_type type, char *quote)
 
 	switch (options_string[pos])
 	{
-
 			/*
 			 * Double quoted string
 			 */

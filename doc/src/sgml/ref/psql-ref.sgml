@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.32 2000/05/09 18:55:56 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/psql-ref.sgml,v 1.33 2000/05/12 00:54:52 momjian Exp $
 Postgres documentation
 -->
 
@@ -1614,7 +1614,7 @@ bar
     such as <literal>\set :foo 'something'</literal> and get <quote>soft
     links</quote> or <quote>variable variables</quote> of <productname>Perl</productname>
     or <productname><acronym>PHP</acronym></productname> fame, respectively.
-    Unfortunately (or fortunately?), there is not way to do anything useful
+    Unfortunately (or fortunately?), there is no way to do anything useful
     with these constructs. On the
     other hand, <literal>\set bar :foo</literal> is a perfectly valid way to copy
     a variable.
