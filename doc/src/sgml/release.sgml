@@ -1,5 +1,5 @@
 <!--
-$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.283 2004/08/15 00:09:24 tgl Exp $
+$PostgreSQL: pgsql/doc/src/sgml/release.sgml,v 1.284 2004/08/15 00:27:14 tgl Exp $
 -->
 
 <appendix id="release">
@@ -2551,7 +2551,7 @@ DROP SCHEMA information_schema CASCADE;
       <para>
        The server-side autocommit setting was removed and
        reimplemented in client applications and languages.
-       server-side autocommit was causing too many problems with
+       Server-side autocommit was causing too many problems with
        languages and applications that wanted to control their own
        autocommit behavior, so autocommit was removed from the server
        and added to individual client APIs as appropriate.
