@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Tue Jan  9 13:05:49 EST 2001
+Last updated:		Thu Jan 11 16:06:57 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -151,8 +151,12 @@ COMMANDS
 * Add ALTER TABLE ... DROP CONSTRAINT
 * -Add ALTER USER command to change user db attributes (Peter E)
 * Automatically drop constraints/functions when object is dropped
-* Allow CLUSTER on all tables at once, and improve CLUSTER, loses NOT
-	NULL specification, indexes, permissions, etc on table
+* CLUSTER
+	* cluster all tables at once
+	* prent lose of constraints, indexes, permissions, inheritance
+	* Automatically keep clustering on a table
+	* Keep statistics about clustering, perhaps during VACUUM ANALYZE
+	  [optimizer]
 * Add SIMILAR TO to allow character classes, 'pg_[a-c]%'
 * Auto-destroy sequence on DROP of table with SERIAL (Ryan)
 * Allow LOCK TABLE tab1, tab2, tab3 so all tables locked in unison [lock]
@@ -284,8 +288,6 @@ MISC
 * -Redesign ANALYZE in VACUUM so it can be run separately without locks
 * Make ANALYZE a separate command
 * Gather more accurate dispersion statistics using indexes
-* Keep statistics about clustering of table rows [optimizer]
-* Automatically keep clustering on a table
 * Improve statistics storage in pg_class [performance]
 * Improve VACUUM speed with indexes [vacuum]
 * Reduce VACUUM lock time by moving tuples with read lock, then write
