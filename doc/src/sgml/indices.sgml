@@ -335,6 +335,17 @@ CREATE MEMSTORE ON &lt;table&gt; COLUMNS &lt;cols&gt;
     </para>
    </note>
 
+   <note>
+    <title>Note</title>
+    <para>
+     Partial indices are not currently supported by
+     <productname>PostgreSQL</productname>, but they were once supported
+     by its predecessor <productname>Postgres</productname>, and much
+     of the code is still there.  We hope to revive support for this
+     feature someday.
+    </para>
+   </note>
+
    <para>
     A <firstterm>partial index</firstterm>
     is an index built over a subset of a table; the subset is defined by
