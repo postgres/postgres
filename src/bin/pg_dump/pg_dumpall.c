@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.4 2002/08/28 20:57:22 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dumpall.c,v 1.5 2002/09/02 22:18:56 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -620,7 +620,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 
 		if (!conn)
 		{
-			fprintf(stderr, _("%s: could not connection to database %s\n"),
+			fprintf(stderr, _("%s: could not connect to database %s\n"),
 					progname, dbname);
 			exit(0);
 		}
@@ -643,7 +643,7 @@ connectDatabase(const char *dbname, const char *pghost, const char *pgport,
 	/* check to see that the backend connection was successfully made */
 	if (PQstatus(conn) == CONNECTION_BAD)
 	{
-		fprintf(stderr, _("%s: could not connection to database %s: %s\n"),
+		fprintf(stderr, _("%s: could not connect to database %s: %s\n"),
 					progname, dbname, PQerrorMessage(conn));
 		exit(0);
 	}
