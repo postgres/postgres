@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.9 2000/05/02 20:01:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.10 2000/06/14 13:10:48 thomas Exp $
 -->
 
  <chapter id="sql">
@@ -155,20 +155,22 @@ $Header: /cvsroot/pgsql/doc/src/sgml/sql.sgml,v 1.9 2000/05/02 20:01:52 thomas E
     <example>
      <title id="supplier-fig">The Suppliers and Parts Database</title>
      <programlisting>
-   SUPPLIER   SNO |  SNAME  |  CITY      SELLS   SNO | PNO
-             -----+---------+--------           -----+-----
-               1  |  Smith  | London              1  |  1
-               2  |  Jones  | Paris               1  |  2
-               3  |  Adams  | Vienna              2  |  4
-               4  |  Blake  | Rome                3  |  1
-                                                  3  |  3
-                                                  4  |  2
-   PART       PNO |  PNAME  |  PRICE              4  |  3 
-             -----+---------+---------            4  |  4
-               1  |  Screw  |   10
-               2  |  Nut    |    8
-               3  |  Bolt   |   15
-               4  |  Cam    |   25
+SUPPLIER:                   SELLS:
+ SNO |  SNAME  |  CITY       SNO | PNO
+----+---------+--------     -----+-----
+ 1  |  Smith  | London        1  |  1
+ 2  |  Jones  | Paris         1  |  2
+ 3  |  Adams  | Vienna        2  |  4
+ 4  |  Blake  | Rome          3  |  1
+                              3  |  3
+                              4  |  2
+PART:                         4  |  3
+ PNO |  PNAME  |  PRICE       4  |  4
+----+---------+---------
+ 1  |  Screw  |   10
+ 2  |  Nut    |    8
+ 3  |  Bolt   |   15
+ 4  |  Cam    |   25
      </programlisting>
     </example>
    </para>
@@ -474,7 +476,7 @@ attributes are taken from. We often write a relation scheme as
 	INTERSECT (&cap;): builds the set-theoretic intersection of two
 	tables. Given the tables <classname>R</classname> and
 	<classname>S</classname>,
-	<classname>R</classname> &cup; <classname>S</classname> is the
+	<classname>R</classname> &cap; <classname>S</classname> is the
 	set of tuples
 	that are in <classname>R</classname> and in
 	<classname>S</classname>.
@@ -532,11 +534,12 @@ attributes are taken from. We often write a relation scheme as
 	 Let the following two tables be given:
 
 	 <programlisting>
-         R   A | B | C      S   C | D | E
-            ---+---+---        ---+---+---
-             1 | 2 | 3          3 | a | b
-             4 | 5 | 6          6 | c | d
-             7 | 8 | 9
+R:                 S:
+ A | B | C          C | D | E
+---+---+---        ---+---+---
+ 1 | 2 | 3          3 | a | b
+ 4 | 5 | 6          6 | c | d
+ 7 | 8 | 9
 	 </programlisting>
 	</para>
        </example>
@@ -547,14 +550,15 @@ attributes are taken from. We often write a relation scheme as
 	get:
 
 	<programlisting>
-       R x S   A | B | R.C | S.C | D | E
-              ---+---+-----+-----+---+---
-               1 | 2 |  3  |  3  | a | b
-               1 | 2 |  3  |  6  | c | d
-               4 | 5 |  6  |  3  | a | b
-               4 | 5 |  6  |  6  | c | d
-               7 | 8 |  9  |  3  | a | b
-               7 | 8 |  9  |  6  | c | d
+R x S:
+ A | B | R.C | S.C | D | E
+---+---+-----+-----+---+---
+ 1 | 2 |  3  |  3  | a | b
+ 1 | 2 |  3  |  6  | c | d
+ 4 | 5 |  6  |  3  | a | b
+ 4 | 5 |  6  |  6  | c | d
+ 7 | 8 |  9  |  3  | a | b
+ 7 | 8 |  9  |  6  | c | d
 	</programlisting>
        </para>
 
@@ -564,10 +568,10 @@ attributes are taken from. We often write a relation scheme as
 	we get:
 
 	<programlisting>
-               A | B | R.C | S.C | D | E
-              ---+---+-----+-----+---+---
-               1 | 2 |  3  |  3  | a | b
-               4 | 5 |  6  |  6  | c | d
+ A | B | R.C | S.C | D | E
+---+---+-----+-----+---+---
+ 1 | 2 |  3  |  3  | a | b
+ 4 | 5 |  6  |  6  | c | d
 	</programlisting>
        </para>
 
@@ -579,10 +583,10 @@ attributes are taken from. We often write a relation scheme as
 	and get:
 
 	<programlisting>
-                   A | B | C | D | E
-                  ---+---+---+---+---
-                   1 | 2 | 3 | a | b
-                   4 | 5 | 6 | c | d
+ A | B | C | D | E
+---+---+---+---+---
+ 1 | 2 | 3 | a | b
+ 4 | 5 | 6 | c | d
 	</programlisting>
        </para>
       </listitem>
@@ -595,8 +599,9 @@ attributes are taken from. We often write a relation scheme as
 	C and D.
 	Then we define the division as:
 
-R &divide; S = {t &mid; &forall; t<subscript>s</subscript> &isin; S
-	 &exist; t<subscript>r</subscript> &isin; R
+	<programlisting>
+R &divide; S = {t &mid; &forall; t<subscript>s</subscript> &isin; S &exist; t<subscript>r</subscript> &isin; R
+	</programlisting>
 
 	such that
 t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>s</subscript>}
@@ -614,24 +619,25 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	Given the following tables
 
 	<programlisting>
-          R   A | B | C | D        S   C | D
-             ---+---+---+---          ---+---
-              a | b | c | d            c | d
-              a | b | e | f            e | f
-              b | c | e | f
-              e | d | c | d
-              e | d | e | f
-              a | b | d | e
+R:                    S:
+ A | B | C | D         C | D
+---+---+---+---       ---+---
+ a | b | c | d         c | d
+ a | b | e | f         e | f
+ b | c | e | f
+ e | d | c | d
+ e | d | e | f
+ a | b | d | e
 	</programlisting>
 
 	R &divide; S
 	is derived as
 
 	<programlisting>
-                         A | B
-                        ---+---
-                         a | b
-                         e | d
+ A | B
+---+---
+ a | b
+ e | d
 	</programlisting>
        </para>
       </listitem>
@@ -668,10 +674,10 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       we will obtain the following result:
 
       <programlisting>
-                             SNAME
-                            -------
-                             Smith
-                             Adams
+ SNAME
+-------
+ Smith
+ Adams
       </programlisting>
      </para>
     </example>
@@ -720,7 +726,10 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
     <para>
      The queries used in <acronym>TRC</acronym> are of the following
      form:
-      x(A) &mid; F(x)
+
+     <programlisting>
+x(A) &mid; F(x)
+     </programlisting>
 
      where <literal>x</literal> is a tuple variable
      <classname>A</classname> is a set of attributes and <literal>F</literal> is a
@@ -733,11 +742,11 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      <xref linkend="suppl-rel-alg" endterm="suppl-rel-alg">
      using <acronym>TRC</acronym> we formulate the following query:
 
-<programlisting>
-     {x(SNAME) &mid; x &isin; SUPPLIER &and; \nonumber
-                       &exist; y &isin; SELLS &exist; z &isin; PART (y(SNO)=x(SNO) &and; \nonumber
-                        z(PNO)=y(PNO) &and; \nonumber
-                        z(PNAME)='Screw')} \nonumber
+     <programlisting>
+{x(SNAME) &mid; x &isin; SUPPLIER &and;
+    &exist; y &isin; SELLS &exist; z &isin; PART (y(SNO)=x(SNO) &and;
+    z(PNO)=y(PNO) &and;
+    z(PNAME)='Screw')}
      </programlisting>
     </para>
 
@@ -806,7 +815,9 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
        to involve
        arithmetic operations as well as comparisons, e.g.
 
-       A &lt; B + 3.
+       <programlisting>
+A &lt; B + 3.
+       </programlisting>
 
        Note
        that + or other arithmetic operators appear neither in relational
@@ -843,17 +854,17 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
      used to retrieve data. The syntax is:
 
      <synopsis>
-   SELECT [ALL|DISTINCT] 
-          { * | <replaceable class="parameter">expr_1</replaceable> [AS <replaceable class="parameter">c_alias_1</replaceable>] [, ... 
-                [, <replaceable class="parameter">expr_k</replaceable> [AS <replaceable class="parameter">c_alias_k</replaceable>]]]}
-   FROM <replaceable class="parameter">table_name_1</replaceable> [<replaceable class="parameter">t_alias_1</replaceable>] 
-        [, ... [, <replaceable class="parameter">table_name_n</replaceable> [<replaceable class="parameter">t_alias_n</replaceable>]]]
-   [WHERE <replaceable class="parameter">condition</replaceable>]
-   [GROUP BY <replaceable class="parameter">name_of_attr_i</replaceable> 
-             [,... [, <replaceable class="parameter">name_of_attr_j</replaceable>]] [HAVING <replaceable class="parameter">condition</replaceable>]]
-   [{UNION [ALL] | INTERSECT | EXCEPT} SELECT ...]
-   [ORDER BY <replaceable class="parameter">name_of_attr_i</replaceable> [ASC|DESC] 
-             [, ... [, <replaceable class="parameter">name_of_attr_j</replaceable> [ASC|DESC]]]];
+SELECT [ALL|DISTINCT]
+    { * | <replaceable class="parameter">expr_1</replaceable> [AS <replaceable class="parameter">c_alias_1</replaceable>] [, ... 
+     [, <replaceable class="parameter">expr_k</replaceable> [AS <replaceable class="parameter">c_alias_k</replaceable>]]]}
+    FROM <replaceable class="parameter">table_name_1</replaceable> [<replaceable class="parameter">t_alias_1</replaceable>] 
+     [, ... [, <replaceable class="parameter">table_name_n</replaceable> [<replaceable class="parameter">t_alias_n</replaceable>]]]
+    [WHERE <replaceable class="parameter">condition</replaceable>]
+    [GROUP BY <replaceable class="parameter">name_of_attr_i</replaceable> 
+     [,... [, <replaceable class="parameter">name_of_attr_j</replaceable>]] [HAVING <replaceable class="parameter">condition</replaceable>]]
+    [{UNION [ALL] | INTERSECT | EXCEPT} SELECT ...]
+    [ORDER BY <replaceable class="parameter">name_of_attr_i</replaceable> [ASC|DESC] 
+     [, ... [, <replaceable class="parameter">name_of_attr_j</replaceable> [ASC|DESC]]]];
      </synopsis>
     </para>
 
@@ -876,17 +887,17 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	greater than 10 we formulate the following query:
 
 	<programlisting>
-   SELECT * FROM PART
-     WHERE PRICE > 10;
+SELECT * FROM PART
+    WHERE PRICE > 10;
 	</programlisting>
 
 	and get the table:
 
 	<programlisting>
-                   PNO |  PNAME  |  PRICE
-                  -----+---------+--------
-                    3  |  Bolt   |   15
-                    4  |  Cam    |   25
+ PNO |  PNAME  |  PRICE
+-----+---------+--------
+  3  |  Bolt   |   15
+  4  |  Cam    |   25
 	</programlisting>
        </para>
 
@@ -896,9 +907,9 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	from table PART we use the statement:
 
 	<programlisting>
-   SELECT PNAME, PRICE 
-   FROM PART
-   WHERE PRICE > 10;
+SELECT PNAME, PRICE 
+    FROM PART
+    WHERE PRICE > 10;
 	</programlisting>
 
 	In this case the result is:
@@ -920,18 +931,18 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	using the keywords OR, AND, and NOT:
 
 	<programlisting>
-   SELECT PNAME, PRICE 
-   FROM PART
-   WHERE PNAME = 'Bolt' AND
+SELECT PNAME, PRICE 
+    FROM PART
+    WHERE PNAME = 'Bolt' AND
          (PRICE = 0 OR PRICE < 15);
 	</programlisting>
 
 	will lead to the result:
 
 	<programlisting>
-                      PNAME  |  PRICE
-                     --------+--------
-                      Bolt   |   15
+ PNAME  |  PRICE
+--------+--------
+ Bolt   |   15
 	</programlisting>
        </para>
 
@@ -941,19 +952,19 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	take two pieces of a part we could use the following query:
 
 	<programlisting>
-   SELECT PNAME, PRICE * 2 AS DOUBLE
-   FROM PART
-   WHERE PRICE * 2 < 50;
+SELECT PNAME, PRICE * 2 AS DOUBLE
+    FROM PART
+    WHERE PRICE * 2 < 50;
 	</programlisting>
 
 	and we get:
 
 	<programlisting>
-                      PNAME  |  DOUBLE
-                     --------+---------
-                      Screw  |    20
-                      Nut    |    16
-                      Bolt   |    30
+ PNAME  |  DOUBLE
+--------+---------
+ Screw  |    20
+ Nut    |    16
+ Bolt   |    30
 	</programlisting>
 
 	Note that the word DOUBLE after the keyword AS is the new title of the
@@ -980,25 +991,25 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
       attributes we formulate the following statement:
 
       <programlisting>
-   SELECT S.SNAME, P.PNAME
-   FROM SUPPLIER S, PART P, SELLS SE
-   WHERE S.SNO = SE.SNO AND
-         P.PNO = SE.PNO;
+SELECT S.SNAME, P.PNAME
+    FROM SUPPLIER S, PART P, SELLS SE
+    WHERE S.SNO = SE.SNO AND
+          P.PNO = SE.PNO;
       </programlisting>
 
       and get the following table as a result:
 
       <programlisting>
-                       SNAME | PNAME
-                      -------+-------
-                       Smith | Screw
-                       Smith | Nut
-                       Jones | Cam
-                       Adams | Screw
-                       Adams | Bolt
-                       Blake | Nut
-                       Blake | Bolt
-                       Blake | Cam
+ SNAME | PNAME
+-------+-------
+ Smith | Screw
+ Smith | Nut
+ Jones | Cam
+ Adams | Screw
+ Adams | Bolt
+ Blake | Nut
+ Blake | Bolt
+ Blake | Cam
       </programlisting>
      </para>
 
@@ -1040,8 +1051,8 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	the following query:
 
 	<programlisting>
-   SELECT AVG(PRICE) AS AVG_PRICE
-   FROM PART;
+SELECT AVG(PRICE) AS AVG_PRICE
+    FROM PART;
 	</programlisting>
        </para>
 
@@ -1049,9 +1060,9 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	The result is:
 
 	<programlisting>
-                         AVG_PRICE
-                        -----------
-                           14.5
+ AVG_PRICE
+-----------
+   14.5
 	</programlisting>
        </para>
 
@@ -1060,16 +1071,16 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	the statement:
 
 	<programlisting>
-   SELECT COUNT(PNO)
-   FROM PART;
+SELECT COUNT(PNO)
+    FROM PART;
 	</programlisting>
 
 	and get:
 
 	<programlisting>
-                           COUNT
-                          -------
-                             4
+ COUNT
+-------
+   4
 	</programlisting>
 
        </para>
@@ -1108,21 +1119,21 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	formulate the query:
 
 	<programlisting>
-   SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
-   FROM SUPPLIER S, SELLS SE
-   WHERE S.SNO = SE.SNO
-   GROUP BY S.SNO, S.SNAME;
+SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
+    FROM SUPPLIER S, SELLS SE
+    WHERE S.SNO = SE.SNO
+    GROUP BY S.SNO, S.SNAME;
 	</programlisting>
 
 	and get:
 
 	<programlisting>
-                     SNO | SNAME | COUNT
-                    -----+-------+-------
-                      1  | Smith |   2
-                      2  | Jones |   1
-                      3  | Adams |   2
-                      4  | Blake |   3
+ SNO | SNAME | COUNT
+-----+-------+-------
+  1  | Smith |   2
+  2  | Jones |   1
+  3  | Adams |   2
+  4  | Blake |   3
 	</programlisting>
        </para>
 
@@ -1132,16 +1143,16 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	tables SUPPLIER and SELLS is derived:
 
 	<programlisting>
-                  S.SNO | S.SNAME | SE.PNO
-                 -------+---------+--------
-                    1   |  Smith  |   1
-                    1   |  Smith  |   2
-                    2   |  Jones  |   4
-                    3   |  Adams  |   1
-                    3   |  Adams  |   3
-                    4   |  Blake  |   2
-                    4   |  Blake  |   3
-                    4   |  Blake  |   4
+ S.SNO | S.SNAME | SE.PNO
+-------+---------+--------
+   1   |  Smith  |   1
+   1   |  Smith  |   2
+   2   |  Jones  |   4
+   3   |  Adams  |   1
+   3   |  Adams  |   3
+   4   |  Blake  |   2
+   4   |  Blake  |   3
+   4   |  Blake  |   4
 	</programlisting>
        </para>
 
@@ -1150,19 +1161,19 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	together that agree on both attributes S.SNO and S.SNAME:
 
 	<programlisting>
-                  S.SNO | S.SNAME | SE.PNO
-                 -------+---------+--------
-                    1   |  Smith  |   1
-                                  |   2
-                 --------------------------
-                    2   |  Jones  |   4
-                 --------------------------
-                    3   |  Adams  |   1
-                                  |   3
-                 --------------------------
-                    4   |  Blake  |   2
-                                  |   3
-                                  |   4
+ S.SNO | S.SNAME | SE.PNO
+-------+---------+--------
+   1   |  Smith  |   1
+                 |   2
+--------------------------
+   2   |  Jones  |   4
+--------------------------
+   3   |  Adams  |   1
+                 |   3
+--------------------------
+   4   |  Blake  |   2
+                 |   3
+                 |   4
 	</programlisting>
        </para>
 
@@ -1204,21 +1215,21 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	query:
 
 	<programlisting>
-   SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
-   FROM SUPPLIER S, SELLS SE
-   WHERE S.SNO = SE.SNO
-   GROUP BY S.SNO, S.SNAME
-   HAVING COUNT(SE.PNO) > 1;
+SELECT S.SNO, S.SNAME, COUNT(SE.PNO)
+    FROM SUPPLIER S, SELLS SE
+    WHERE S.SNO = SE.SNO
+    GROUP BY S.SNO, S.SNAME
+    HAVING COUNT(SE.PNO) > 1;
 	</programlisting>
 
 	and get:
 
 	<programlisting>
-                     SNO | SNAME | COUNT
-                    -----+-------+-------
-                      1  | Smith |   2
-                      3  | Adams |   2
-                      4  | Blake |   3
+ SNO | SNAME | COUNT
+-----+-------+-------
+  1  | Smith |   2
+  3  | Adams |   2
+  4  | Blake |   3
 	</programlisting>
        </para>
       </example>
@@ -1243,10 +1254,10 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	named 'Screw' we use the query:
 
 	<programlisting>
-   SELECT * 
-   FROM PART 
-   WHERE PRICE > (SELECT PRICE FROM PART
-                  WHERE PNAME='Screw');
+SELECT * 
+    FROM PART 
+    WHERE PRICE > (SELECT PRICE FROM PART
+                   WHERE PNAME='Screw');
 	</programlisting>
        </para>
 
@@ -1254,10 +1265,10 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	The result is:
 
 	<programlisting>
-                   PNO |  PNAME  |  PRICE
-                  -----+---------+--------
-                    3  |  Bolt   |   15
-                    4  |  Cam    |   25
+ PNO |  PNAME  |  PRICE
+-----+---------+--------
+  3  |  Bolt   |   15
+  4  |  Cam    |   25
 	</programlisting>
        </para>
 
@@ -1272,16 +1283,16 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	greater. 
        </para>
 
-<para>
+       <para>
 	If we want to know all suppliers that do not sell any part 
 	(e.g. to be able to remove these suppliers from the database) we use:
 
 	<programlisting>
-   SELECT * 
-   FROM SUPPLIER S
-   WHERE NOT EXISTS
-             (SELECT * FROM SELLS SE
-              WHERE SE.SNO = S.SNO);
+SELECT * 
+    FROM SUPPLIER S
+    WHERE NOT EXISTS
+        (SELECT * FROM SELLS SE
+         WHERE SE.SNO = S.SNO);
 	</programlisting>
        </para>
 
@@ -1310,22 +1321,22 @@ t<subscript>r</subscript>(A,B)=t&and;t<subscript>r</subscript>(C,D)=t<subscript>
 	The following query is an example for UNION:
 
 	<programlisting>
-   SELECT S.SNO, S.SNAME, S.CITY
-   FROM SUPPLIER S
-   WHERE S.SNAME = 'Jones'
-   UNION
-   SELECT S.SNO, S.SNAME, S.CITY
-   FROM SUPPLIER S
-   WHERE S.SNAME = 'Adams';    
+SELECT S.SNO, S.SNAME, S.CITY
+    FROM SUPPLIER S
+    WHERE S.SNAME = 'Jones'
+    UNION
+    SELECT S.SNO, S.SNAME, S.CITY
+    FROM SUPPLIER S
+    WHERE S.SNAME = 'Adams';    
 	</programlisting>
 
 gives the result:
 
 	<programlisting>
-                     SNO | SNAME |  CITY
-                    -----+-------+--------
-                      2  | Jones | Paris
-                      3  | Adams | Vienna
+ SNO | SNAME |  CITY
+-----+-------+--------
+  2  | Jones | Paris
+  3  | Adams | Vienna
 	</programlisting>
        </para>
 
@@ -1333,45 +1344,46 @@ gives the result:
 	Here an example for INTERSECT:
 
 	<programlisting>
-   SELECT S.SNO, S.SNAME, S.CITY
-   FROM SUPPLIER S
-   WHERE S.SNO > 1
-   INTERSECT
-   SELECT S.SNO, S.SNAME, S.CITY
-   FROM SUPPLIER S
-   WHERE S.SNO > 2;
+SELECT S.SNO, S.SNAME, S.CITY
+    FROM SUPPLIER S
+    WHERE S.SNO > 1
+    INTERSECT
+    SELECT S.SNO, S.SNAME, S.CITY
+    FROM SUPPLIER S
+    WHERE S.SNO > 2;
 	</programlisting>
 
 	gives the result:
 
 	<programlisting>
-                     SNO | SNAME |  CITY
-                    -----+-------+--------
-                      2  | Jones | Paris
-The only tuple returned by both parts of the query is the one having $SNO=2$.
+ SNO | SNAME |  CITY
+-----+-------+--------
+  2  | Jones | Paris
 	</programlisting>
+
+	The only tuple returned by both parts of the query is the one having $SNO=2$.
        </para>
 
        <para>
 	Finally an example for EXCEPT:
 
 	<programlisting>
-   SELECT S.SNO, S.SNAME, S.CITY
-   FROM SUPPLIER S
-   WHERE S.SNO > 1
-   EXCEPT
-   SELECT S.SNO, S.SNAME, S.CITY
-   FROM SUPPLIER S
-   WHERE S.SNO > 3;
+SELECT S.SNO, S.SNAME, S.CITY
+    FROM SUPPLIER S
+    WHERE S.SNO > 1
+    EXCEPT
+    SELECT S.SNO, S.SNAME, S.CITY
+    FROM SUPPLIER S
+    WHERE S.SNO > 3;
 	</programlisting>
 
 	gives the result:
 
 	<programlisting>
-                     SNO | SNAME |  CITY
-                    -----+-------+--------
-                      2  | Jones | Paris
-                      3  | Adams | Vienna
+ SNO | SNAME |  CITY
+-----+-------+--------
+  2  | Jones | Paris
+  3  | Adams | Vienna
 	</programlisting>
        </para>
       </example>
@@ -1395,11 +1407,11 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       one that creates a new relation (a new table). The syntax of the
       CREATE TABLE command is:
 
-	<synopsis>
-   CREATE TABLE <replaceable class="parameter">table_name</replaceable>
-                (<replaceable class="parameter">name_of_attr_1</replaceable> <replaceable class="parameter">type_of_attr_1</replaceable>
-                 [, <replaceable class="parameter">name_of_attr_2</replaceable> <replaceable class="parameter">type_of_attr_2</replaceable> 
-                 [, ...]]);
+      <synopsis>
+CREATE TABLE <replaceable class="parameter">table_name</replaceable>
+    (<replaceable class="parameter">name_of_attr_1</replaceable> <replaceable class="parameter">type_of_attr_1</replaceable>
+     [, <replaceable class="parameter">name_of_attr_2</replaceable> <replaceable class="parameter">type_of_attr_2</replaceable> 
+     [, ...]]);
       </synopsis>
 
       <example>
@@ -1411,23 +1423,23 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 	following <acronym>SQL</acronym> statements are used:
 
 	<programlisting>
-   CREATE TABLE SUPPLIER
-                (SNO   INTEGER,
-                 SNAME VARCHAR(20),
-                 CITY  VARCHAR(20));
-	</programlisting>
+CREATE TABLE SUPPLIER
+    (SNO   INTEGER,
+     SNAME VARCHAR(20),
+     CITY  VARCHAR(20));
+     </programlisting>
 
-	<programlisting>
-   CREATE TABLE PART
-                (PNO   INTEGER,
-                 PNAME VARCHAR(20),
-                 PRICE DECIMAL(4 , 2));
-	</programlisting>
+     <programlisting>
+CREATE TABLE PART
+    (PNO   INTEGER,
+     PNAME VARCHAR(20),
+     PRICE DECIMAL(4 , 2));
+     </programlisting>
 
-	<programlisting>
-   CREATE TABLE SELLS
-                (SNO INTEGER,
-                 PNO INTEGER);
+     <programlisting>
+CREATE TABLE SELLS
+    (SNO INTEGER,
+     PNO INTEGER);
 	</programlisting>
        </para>
       </example>
@@ -1463,7 +1475,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 	 <replaceable class="parameter">q</replaceable>
 	 of them right to the decimal point.
 
-(15 &ge; <replaceable class="parameter">p</replaceable> &ge; <replaceable class="parameter">q</replaceable>q &ge; 0).
+(15 &ge; <replaceable class="parameter">p</replaceable> &ge; <replaceable class="parameter">q</replaceable> &ge; 0).
 
 	 If <replaceable class="parameter">q</replaceable>
 	 is omitted it is assumed to be 0.
@@ -1514,8 +1526,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       the CREATE INDEX command is used. The syntax is:
 
       <programlisting>
-   CREATE INDEX <replaceable class="parameter">index_name</replaceable> 
-   ON <replaceable class="parameter">table_name</replaceable> ( <replaceable class="parameter">name_of_attribute</replaceable> );
+CREATE INDEX <replaceable class="parameter">index_name</replaceable> 
+    ON <replaceable class="parameter">table_name</replaceable> ( <replaceable class="parameter">name_of_attribute</replaceable> );
       </programlisting>
      </para>
 
@@ -1528,8 +1540,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
 	we use the following statement:
 
       <programlisting>
-   CREATE INDEX I
-   ON SUPPLIER (SNAME);
+CREATE INDEX I ON SUPPLIER (SNAME);
       </programlisting>
      </para>
 
@@ -1578,8 +1589,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       is:
 
       <programlisting>
-   CREATE VIEW <replaceable class="parameter">view_name</replaceable>
-   AS <replaceable class="parameter">select_stmt</replaceable>
+CREATE VIEW <replaceable class="parameter">view_name</replaceable>
+    AS <replaceable class="parameter">select_stmt</replaceable>
       </programlisting>
 
       where <replaceable class="parameter">select_stmt</replaceable> 
@@ -1597,12 +1608,12 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       <xref linkend="supplier-fig" endterm="supplier-fig"> again):
 
       <programlisting>
-   CREATE VIEW London_Suppliers
-      AS SELECT S.SNAME, P.PNAME
-         FROM SUPPLIER S, PART P, SELLS SE
-         WHERE S.SNO = SE.SNO AND
-               P.PNO = SE.PNO AND
-               S.CITY = 'London';
+CREATE VIEW London_Suppliers
+    AS SELECT S.SNAME, P.PNAME
+        FROM SUPPLIER S, PART P, SELLS SE
+        WHERE S.SNO = SE.SNO AND
+              P.PNO = SE.PNO AND
+              S.CITY = 'London';
       </programlisting>
      </para>
 
@@ -1612,17 +1623,16 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       if it were another base table:
 
       <programlisting>
-   SELECT *
-   FROM London_Suppliers
-   WHERE P.PNAME = 'Screw';
+SELECT * FROM London_Suppliers
+    WHERE P.PNAME = 'Screw';
       </programlisting>
 
       which will return the following table:
 
       <programlisting>
-                       SNAME | PNAME
-                      -------+-------
-                       Smith | Screw                 
+ SNAME | PNAME
+-------+-------
+ Smith | Screw                 
       </programlisting>
      </para>
 
@@ -1646,7 +1656,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       DROP TABLE command is used:
 
       <programlisting>
-   DROP TABLE <replaceable class="parameter">table_name</replaceable>;
+DROP TABLE <replaceable class="parameter">table_name</replaceable>;
        </programlisting>
       </para>
 
@@ -1654,7 +1664,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       To destroy the SUPPLIER table use the following statement:
 
       <programlisting>
-   DROP TABLE SUPPLIER;
+DROP TABLE SUPPLIER;
       </programlisting>
      </para>
 
@@ -1662,7 +1672,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       The DROP INDEX command is used to destroy an index:
 
       <programlisting>
-   DROP INDEX <replaceable class="parameter">index_name</replaceable>;
+DROP INDEX <replaceable class="parameter">index_name</replaceable>;
       </programlisting>
      </para>
 
@@ -1670,7 +1680,7 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       Finally to destroy a given view use the command DROP VIEW:
 
       <programlisting>
-   DROP VIEW <replaceable class="parameter">view_name</replaceable>;
+DROP VIEW <replaceable class="parameter">view_name</replaceable>;
       </programlisting>
      </para>
     </sect3>
@@ -1689,10 +1699,9 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       The syntax is:
 
       <programlisting>
-   INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceable class="parameter">name_of_attr_1</replaceable> 
-                             [, <replaceable class="parameter">name_of_attr_2</replaceable> [,...]])
-   VALUES (<replaceable class="parameter">val_attr_1</replaceable> 
-           [, <replaceable class="parameter">val_attr_2</replaceable> [, ...]]);
+INSERT INTO <replaceable class="parameter">table_name</replaceable> (<replaceable class="parameter">name_of_attr_1</replaceable> 
+    [, <replaceable class="parameter">name_of_attr_2</replaceable> [,...]])
+    VALUES (<replaceable class="parameter">val_attr_1</replaceable> [, <replaceable class="parameter">val_attr_2</replaceable> [, ...]]);
       </programlisting>
      </para>
 
@@ -1702,8 +1711,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       following statement:
 
       <programlisting>
-   INSERT INTO SUPPLIER (SNO, SNAME, CITY)
-   VALUES (1, 'Smith', 'London');
+INSERT INTO SUPPLIER (SNO, SNAME, CITY)
+    VALUES (1, 'Smith', 'London');
       </programlisting>
      </para>
 
@@ -1711,8 +1720,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       To insert the first tuple into the relation SELLS we use:
 
       <programlisting>
-   INSERT INTO SELLS (SNO, PNO)
-   VALUES (1, 1);
+INSERT INTO SELLS (SNO, PNO)
+    VALUES (1, 1);
       </programlisting>
      </para>
     </sect3>
@@ -1725,10 +1734,10 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       UPDATE command is used. The syntax is:
 
       <programlisting>
-   UPDATE <replaceable class="parameter">table_name</replaceable>
-   SET <replaceable class="parameter">name_of_attr_1</replaceable> = <replaceable class="parameter">value_1</replaceable> 
-       [, ... [, <replaceable class="parameter">name_of_attr_k</replaceable> = <replaceable class="parameter">value_k</replaceable>]]
-   WHERE <replaceable class="parameter">condition</replaceable>;
+UPDATE <replaceable class="parameter">table_name</replaceable>
+    SET <replaceable class="parameter">name_of_attr_1</replaceable> = <replaceable class="parameter">value_1</replaceable> 
+        [, ... [, <replaceable class="parameter">name_of_attr_k</replaceable> = <replaceable class="parameter">value_k</replaceable>]]
+    WHERE <replaceable class="parameter">condition</replaceable>;
       </programlisting>
      </para>
 
@@ -1737,9 +1746,9 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       relation PART we use:
 
       <programlisting>
-   UPDATE PART
-   SET PRICE = 15
-   WHERE PNAME = 'Screw';
+UPDATE PART
+    SET PRICE = 15
+    WHERE PNAME = 'Screw';
       </programlisting>
      </para>
 
@@ -1757,8 +1766,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       FROM. The syntax is:
 
       <programlisting>
-   DELETE FROM <replaceable class="parameter">table_name</replaceable>
-   WHERE <replaceable class="parameter">condition</replaceable>;
+DELETE FROM <replaceable class="parameter">table_name</replaceable>
+    WHERE <replaceable class="parameter">condition</replaceable>;
       </programlisting>
      </para>
 
@@ -1767,8 +1776,8 @@ The only tuple returned by both parts of the query is the one having $SNO=2$.
       following statement is used:
 
       <programlisting>
-   DELETE FROM SUPPLIER
-   WHERE SNAME = 'Smith';
+DELETE FROM SUPPLIER
+    WHERE SNAME = 'Smith';
       </programlisting>
      </para>
     </sect3>
