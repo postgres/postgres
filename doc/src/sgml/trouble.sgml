@@ -2,29 +2,137 @@
   <Title>Troubleshooting</Title>
 
   <sect1>
-   <title>Client Connections</title>
-   <Para>
-    If  you get the following error message from a 
-    <ProductName>Postgres</ProductName>
-    command (such as <Application>psql</Application> or 
-    <Application>createdb</Application>):
+   <title>Postmaster Startup Failures</title>
 
+   <para>
+    There are several common reasons for the postmaster to fail to start up.
+    Check the postmaster's log file, or start it by hand (without redirecting
+    standard output or standard error) to see what complaint messages appear.
+    Some of the possible error messages are reasonably self-explanatory,
+    but here are some that are not:
+   </para>
+
+   <para>
     <ProgramListing>
-connectDB() failed: Is the postmaster running at 'localhost' on port '5432'?
+FATAL: StreamServerPort: bind() failed: Address already in use
+        Is another postmaster already running on that port?
     </ProgramListing>
-
-    it is usually because either the <Application>postmaster</Application> is not running,
-    or you are attempting to connect to the wrong server host.
-    If you get the following error message:
-
+    This usually means just what it suggests: you accidentally started a
+    second postmaster on the same port where one is already running.
+    However, if the kernel error
+    message is not "Address already in use" or some variant of that wording,
+    there may be a different problem.  For example, trying to start a
+    postmaster on a reserved port number may draw something like
     <ProgramListing>
-FATAL 1:Feb 17 23:19:55:process userid (2360) != database owner (268)
+$ postmaster -i -p 666
+FATAL: StreamServerPort: bind() failed: Permission denied
+        Is another postmaster already running on that port?
     </ProgramListing>
+   </para>
 
-    it means that the site administrator started the  <Application>postmaster</Application>
-    as  the  wrong user.  Tell him to restart it as
-    the <ProductName>Postgres</ProductName> superuser.
-   </Para>
+   <para>
+    <ProgramListing>
+IpcMemoryCreate: shmget failed (Invalid argument) key=5440001, size=83918612, permission=600
+FATAL 1:  ShmemCreate: cannot create region
+    </ProgramListing>
+    A message like this probably means that your kernel's limit on the size
+    of shared memory areas is smaller than the buffer area that Postgres
+    is trying to create.  (Or it could mean that you don't have SysV-style
+    shared memory support configured into your kernel at all.)  As a temporary
+    workaround, you can try starting the postmaster with a smaller-than-normal
+    number of buffers (-B switch).  You will eventually want to reconfigure
+    your kernel to increase the allowed shared memory size, however.
+    You may see this message when trying to start multiple postmasters on
+    the same machine, if their total space requests exceed the kernel limit.
+   </para>
+
+   <para>
+    <ProgramListing>
+IpcSemaphoreCreate: semget failed (No space left on device) key=5440026, num=16, permission=600
+    </ProgramListing>
+    A message like this does <emphasis>not</emphasis> mean that you've run out
+    of disk space; it means that your kernel's limit on the number of SysV
+    semaphores is smaller than the number Postgres wants to create.  As above,
+    you may be able to work around the problem by starting the postmaster with
+    a reduced number of backend processes (-N switch), but you'll eventually
+    want to increase the kernel limit.
+   </para>
+
+  </sect1>
+
+  <sect1>
+   <title>Client Connection Problems</title>
+
+   <para>
+    Once you have a running postmaster, trying to connect to it with
+    client applications can fail for a variety of reasons.  The sample
+    error messages shown here are for clients based on recent versions
+    of libpq --- clients based on other interface libraries may produce
+    other messages with more or less information.
+   </para>
+
+   <para>
+    <ProgramListing>
+connectDB() -- connect() failed: Connection refused
+Is the postmaster running (with -i) at 'server.joe.com' and accepting connections on TCP/IP port '5432'?
+    </ProgramListing>
+    This is the generic "I couldn't find a postmaster to talk to" failure.
+    It looks like the above when TCP/IP communication is attempted, or like
+    this when attempting Unix-socket communication to a local postmaster:
+    <ProgramListing>
+connectDB() -- connect() failed: No such file or directory
+Is the postmaster running at 'localhost' and accepting connections on Unix socket '5432'?
+    </ProgramListing>
+    The last line is useful in verifying that the client is trying to connect
+    where it is supposed to.  If there is in fact no postmaster
+    running there, the kernel error message will typically be either
+    "Connection refused" or "No such file or directory", as illustrated.
+    (It is particularly important to realize that "Connection refused" in
+    this context does <emphasis>not</emphasis> mean that the postmaster
+    got your connection request and rejected it --- that case will produce
+    a different message, as shown below.)
+    Other error messages such as "Connection timed out" may indicate more
+    fundamental problems, like lack of network connectivity.
+   </para>
+
+   <para>
+    <ProgramListing>
+No pg_hba.conf entry for host 123.123.123.123, user joeblow, database testdb
+    </ProgramListing>
+    This is what you are most likely to get if you succeed in contacting
+    a postmaster, but it doesn't want to talk to you.  As the message
+    suggests, the postmaster refused the connection request because it
+    found no authorizing entry in its pg_hba.conf configuration file.
+   </para>
+
+   <para>
+    <ProgramListing>
+Password authentication failed for user 'joeblow'
+    </ProgramListing>
+    Messages like this indicate that you contacted the postmaster, and it's
+    willing to talk to you, but not until you pass the authorization method
+    specified in the pg_hba.conf file.  Check the password you're providing,
+    or check your Kerberos or IDENT software if the complaint mentions
+    one of those authentication types.
+   </para>
+
+   <para>
+    <ProgramListing>
+FATAL 1:  SetUserId: user 'joeblow' is not in 'pg_shadow'
+    </ProgramListing>
+    This is another variant of authentication failure: no Postgres create_user
+    command has been executed for the given username.
+   </para>
+
+   <para>
+    <ProgramListing>
+FATAL 1:  Database testdb does not exist in pg_database
+    </ProgramListing>
+    There's no database by that name under the control of this postmaster.
+    Note that if you don't specify a database name, it defaults to your
+    Postgres username, which may or may not be the right thing.
+   </para>
+
   </sect1>
 
   <sect1>
