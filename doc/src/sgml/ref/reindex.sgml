@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.5 2001/11/20 02:45:00 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/reindex.sgml,v 1.6 2001/11/25 00:18:48 tgl Exp $
 Postgres documentation
 -->
 
@@ -197,6 +197,8 @@ REINDEX
     </listitem>
 
    </itemizedlist>
+
+   See the <xref linkend="app-postgres"> reference page for more information.
   </para>
  </refsect1>
 
