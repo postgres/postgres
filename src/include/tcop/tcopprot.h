@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.67 2004/06/11 01:09:22 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/tcop/tcopprot.h,v 1.68 2004/07/28 22:05:47 tgl Exp $
  *
  * OLD COMMENTS
  *	  This file was created so that other c files could get the two
@@ -33,7 +33,6 @@ extern bool InError;
 extern CommandDest whereToSendOutput;
 extern DLLIMPORT const char *debug_query_string;
 extern int	max_stack_depth;
-extern bool in_fatal_exit;
 
 /* GUC-configurable parameters */
 
