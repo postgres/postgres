@@ -1,15 +1,24 @@
+/*-------------------------------------------------------------------------
+ *
+ * Encoding.java
+ *     Converts to and from the character encoding used by the backend.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Encoding.java,v 1.10 2003/03/07 18:39:41 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.core;
 
-import java.io.*;
-import java.util.*;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
-import org.postgresql.util.*;
-
-/*
- * Converts to and from the character encoding used by the backend.
- *
- * $Id: Encoding.java,v 1.9 2003/02/09 23:14:55 barry Exp $
- */
+import java.util.Hashtable;
+import org.postgresql.util.PSQLException;
 
 public class Encoding
 {

@@ -4,7 +4,10 @@ import java.text.*;
 import java.sql.*;
 import java.util.*;
 import java.math.BigDecimal;
-import org.postgresql.Field;
+import org.postgresql.core.BaseConnection;
+import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Field;
 import org.postgresql.util.*;
 
 /*
@@ -25,9 +28,9 @@ import org.postgresql.util.*;
 
 public class Array implements java.sql.Array
 {
-	private org.postgresql.PGConnection conn = null;
-	private org.postgresql.Field field = null;
-	private ResultSet rs;
+	private BaseConnection conn = null;
+	private Field field = null;
+	private BaseResultSet rs;
 	private int idx = 0;
 	private String rawString = null;
 
@@ -39,14 +42,14 @@ public class Array implements java.sql.Array
 	 * @param field the Field descriptor for the field to load into this Array
 	 * @param rs the ResultSet from which to get the data for this Array
 	 */
-	public Array( org.postgresql.PGConnection conn, int idx, Field field, ResultSet rs )
+	public Array(BaseConnection conn, int idx, Field field, BaseResultSet rs )
 	throws SQLException
 	{
 		this.conn = conn;
 		this.field = field;
 		this.rs = rs;
 		this.idx = idx;
-		this.rawString = ((AbstractJdbc2ResultSet)rs).getFixedString(idx);
+		this.rawString = rs.getFixedString(idx);
 	}
 
 	public Object getArray() throws SQLException
@@ -343,8 +346,8 @@ public class Array implements java.sql.Array
 			default:
 				throw org.postgresql.Driver.notImplemented();
 		}
-		java.sql.Statement stat = ((AbstractJdbc2Connection)conn).createStatement();
-		return ((AbstractJdbc2Statement)stat).createResultSet(fields, rows, "OK", 1, 0, false);
+		BaseStatement stat = (BaseStatement) conn.createStatement();
+		return (ResultSet) stat.createResultSet(fields, rows, "OK", 1, 0, false);
 	}
 
 	public String toString()

@@ -1,12 +1,22 @@
+/*-------------------------------------------------------------------------
+ *
+ * PGtokenizer.java
+ *     This class is used to tokenize the text output of org.postgres.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGtokenizer.java,v 1.6 2003/03/07 18:39:46 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.util;
 
 import java.sql.*;
 import java.util.*;
 
 /*
- * This class is used to tokenize the text output of org.postgres.
- *
- * <p>It's mainly used by the geometric classes, but is useful in parsing any
+ * It's mainly used by the geometric classes, but is useful in parsing any
  * output from custom data types output from org.postgresql.
  *
  * @see org.postgresql.geometric.PGbox

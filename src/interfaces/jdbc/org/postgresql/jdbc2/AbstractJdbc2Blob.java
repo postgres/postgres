@@ -6,7 +6,6 @@ import java.math.*;
 import java.text.*;
 import java.util.*;
 import java.sql.*;
-import org.postgresql.Field;
 import org.postgresql.PGConnection;
 import org.postgresql.largeobject.*;
 

@@ -1,12 +1,23 @@
+/*-------------------------------------------------------------------------
+ *
+ * PGbox.java
+ *     This represents the box datatype within org.postgresql.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/geometric/Attic/PGbox.java,v 1.4 2003/03/07 18:39:42 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.geometric;
 
-import java.io.*;
-import java.sql.*;
-import org.postgresql.util.*;
+import java.sql.SQLException;
+import java.io.Serializable;
+import org.postgresql.util.PGobject;
+import org.postgresql.util.PGtokenizer;
+import org.postgresql.util.PSQLException;
 
-/*
- * This  represents the box datatype within org.postgresql.
- */
 public class PGbox extends PGobject implements Serializable, Cloneable
 {
 	/*

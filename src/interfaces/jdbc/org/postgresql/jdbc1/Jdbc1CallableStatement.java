@@ -2,6 +2,9 @@ package org.postgresql.jdbc1;
 
 
 import java.sql.*;
+import java.util.Vector;
+import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.Field;
 
 public class Jdbc1CallableStatement extends AbstractJdbc1Statement implements java.sql.CallableStatement
 {
@@ -11,7 +14,7 @@ public class Jdbc1CallableStatement extends AbstractJdbc1Statement implements ja
 		super(connection, sql);
 	}
 
-	public java.sql.ResultSet createResultSet (org.postgresql.Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
+	public BaseResultSet createResultSet (Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
 	{
 		return new Jdbc1ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}

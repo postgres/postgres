@@ -1,3 +1,18 @@
+/*-------------------------------------------------------------------------
+ *
+ * AbstractJdbc1Connection.java
+ *     This class defines methods of the jdbc1 specification.  This class is
+ *     extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds 
+ *     the jdbc2 methods.  The real Connection class (for jdbc1) is 
+ *     org.postgresql.jdbc1.Jdbc1Connection
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.17 2003/03/07 18:39:43 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.jdbc1;
 
 
@@ -7,25 +22,27 @@ import java.sql.*;
 import java.util.*;
 import org.postgresql.Driver;
 import org.postgresql.PGNotification;
-import org.postgresql.PG_Stream;
-import org.postgresql.core.*;
+import org.postgresql.core.BaseConnection;
+import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Encoding;
+import org.postgresql.core.PGStream;
+import org.postgresql.core.QueryExecutor;
+import org.postgresql.core.StartupPacket;
 import org.postgresql.fastpath.Fastpath;
 import org.postgresql.largeobject.LargeObjectManager;
-import org.postgresql.util.*;
+import org.postgresql.util.MD5Digest;
+import org.postgresql.util.PGobject;
+import org.postgresql.util.PSQLException;
+import org.postgresql.util.UnixCrypt;
 
-
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Connection.java,v 1.16 2003/02/27 05:45:44 barry Exp $
- * This class defines methods of the jdbc1 specification.  This class is
- * extended by org.postgresql.jdbc2.AbstractJdbc2Connection which adds the jdbc2
- * methods.  The real Connection class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Connection
- */
-public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnection
+public abstract class AbstractJdbc1Connection implements BaseConnection
 {
 	// This is the network stream associated with this connection
-	private PG_Stream pg_stream;
+	private PGStream pgStream;
 
-	public PG_Stream getPGStream() {
-		return pg_stream;
+	public PGStream getPGStream() {
+		return pgStream;
 	}
   
 	protected String PG_HOST;
@@ -55,7 +72,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	public boolean autoCommit = true;
 	public boolean readOnly = false;
 
-	public org.postgresql.Driver this_driver;
+	public Driver this_driver;
 	private String this_url;
 	private String cursor = null;	// The positioned update cursor name
 
@@ -84,10 +101,11 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	/*
 	 * Cache of the current isolation level
 	 */
-	private int isolationLevel = java.sql.Connection.TRANSACTION_READ_COMMITTED;
+	private int isolationLevel = Connection.TRANSACTION_READ_COMMITTED;
 
 
-	public abstract java.sql.Statement createStatement() throws SQLException;
+	public abstract Statement createStatement() throws SQLException;
+	public abstract DatabaseMetaData getMetaData() throws SQLException;
 
 	/*
 	 * This method actually opens the connection. It is called by Driver.
@@ -100,7 +118,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 * @param d the Driver instantation of the connection
 	 * @exception SQLException if a database access error occurs
 	 */
-	public void openConnection(String host, int port, Properties info, String database, String url, org.postgresql.Driver d) throws SQLException
+	public void openConnection(String host, int port, Properties info, String database, String url, Driver d) throws SQLException
 	  {
 		firstWarning = null;
 
@@ -110,7 +128,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		if (info.getProperty("user") == null)
 			throw new PSQLException("postgresql.con.user");
 
-		this_driver = (org.postgresql.Driver)d;
+		this_driver = (Driver)d;
 		this_url = url;
 
 		PG_DATABASE = database;
@@ -148,7 +166,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		try
 		{
 			l_logLevel = Integer.parseInt(l_logLevelProp);
-			if (l_logLevel > org.postgresql.Driver.DEBUG || l_logLevel < org.postgresql.Driver.INFO)
+			if (l_logLevel > Driver.DEBUG || l_logLevel < Driver.INFO)
 			{
 				l_logLevel = 0;
 			}
@@ -159,23 +177,23 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		}
 		if (l_logLevel > 0)
 		{
-			org.postgresql.Driver.setLogLevel(l_logLevel);
+			Driver.setLogLevel(l_logLevel);
 			enableDriverManagerLogging();
 		}
 
 		//Print out the driver version number
-		if (org.postgresql.Driver.logInfo)
-			org.postgresql.Driver.info(org.postgresql.Driver.getVersion());
-		if (org.postgresql.Driver.logDebug) {
-			org.postgresql.Driver.debug("    ssl = " + useSSL);
-			org.postgresql.Driver.debug("    compatible = " + compatible);
-			org.postgresql.Driver.debug("    loglevel = " + l_logLevel);
+		if (Driver.logInfo)
+			Driver.info(Driver.getVersion());
+		if (Driver.logDebug) {
+			Driver.debug("    ssl = " + useSSL);
+			Driver.debug("    compatible = " + compatible);
+			Driver.debug("    loglevel = " + l_logLevel);
 		}
 
 		// Now make the initial connection
 		try
 		{
-			pg_stream = new PG_Stream(host, port);
+			pgStream = new PGStream(host, port);
 		}
 		catch (ConnectException cex)
 		{
@@ -193,19 +211,19 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		try
 		{
 			if (useSSL) {
-				if (org.postgresql.Driver.logDebug)
-					org.postgresql.Driver.debug("Asking server if it supports ssl");
-				pg_stream.SendInteger(8,4);
-				pg_stream.SendInteger(80877103,4);
+				if (Driver.logDebug)
+					Driver.debug("Asking server if it supports ssl");
+				pgStream.SendInteger(8,4);
+				pgStream.SendInteger(80877103,4);
 
 				// now flush the ssl packets to the backend
-				pg_stream.flush();
+				pgStream.flush();
 
 				// Now get the response from the backend, either an error message
 				// or an authentication request
-				int beresp = pg_stream.ReceiveChar();
-				if (org.postgresql.Driver.logDebug)
-					org.postgresql.Driver.debug("Server response was (S=Yes,N=No): "+(char)beresp);
+				int beresp = pgStream.ReceiveChar();
+				if (Driver.logDebug)
+					Driver.debug("Server response was (S=Yes,N=No): "+(char)beresp);
 				switch (beresp)
 					{
 					case 'E':
@@ -215,7 +233,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 						// The most common one to be thrown here is:
 						// "User authentication failed"
 						//
-						throw new PSQLException("postgresql.con.misc", pg_stream.ReceiveString(encoding));
+						throw new PSQLException("postgresql.con.misc", pgStream.ReceiveString(encoding));
 						
 					case 'N':
 						// Server does not support ssl
@@ -223,9 +241,9 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 						
 					case 'S':
 						// Server supports ssl
-						if (org.postgresql.Driver.logDebug)
-							org.postgresql.Driver.debug("server does support ssl");
-						org.postgresql.Driver.makeSSL(pg_stream);
+						if (Driver.logDebug)
+							Driver.debug("server does support ssl");
+						Driver.makeSSL(pgStream);
 						break;
 
 					default:
@@ -245,17 +263,17 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 			new StartupPacket(PG_PROTOCOL_LATEST_MAJOR,
 							  PG_PROTOCOL_LATEST_MINOR,
 							  PG_USER,
-							  database).writeTo(pg_stream);
+							  database).writeTo(pgStream);
 
 			// now flush the startup packets to the backend
-			pg_stream.flush();
+			pgStream.flush();
 
 			// Now get the response from the backend, either an error message
 			// or an authentication request
 			int areq = -1; // must have a value here
 			do
 			{
-				int beresp = pg_stream.ReceiveChar();
+				int beresp = pgStream.ReceiveChar();
 				String salt = null;
 				byte [] md5Salt = new byte[4];
 				switch (beresp)
@@ -267,33 +285,33 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 						// The most common one to be thrown here is:
 						// "User authentication failed"
 						//
-						throw new PSQLException("postgresql.con.misc", pg_stream.ReceiveString(encoding));
+						throw new PSQLException("postgresql.con.misc", pgStream.ReceiveString(encoding));
 
 					case 'R':
 						// Get the type of request
-						areq = pg_stream.ReceiveIntegerR(4);
+						areq = pgStream.ReceiveIntegerR(4);
 						// Get the crypt password salt if there is one
 						if (areq == AUTH_REQ_CRYPT)
 						{
 							byte[] rst = new byte[2];
-							rst[0] = (byte)pg_stream.ReceiveChar();
-							rst[1] = (byte)pg_stream.ReceiveChar();
+							rst[0] = (byte)pgStream.ReceiveChar();
+							rst[1] = (byte)pgStream.ReceiveChar();
 							salt = new String(rst, 0, 2);
-							if (org.postgresql.Driver.logDebug)
-								org.postgresql.Driver.debug("Crypt salt=" + salt);
+							if (Driver.logDebug)
+								Driver.debug("Crypt salt=" + salt);
 						}
 
 						// Or get the md5 password salt if there is one
 						if (areq == AUTH_REQ_MD5)
 						{
 
-							md5Salt[0] = (byte)pg_stream.ReceiveChar();
-							md5Salt[1] = (byte)pg_stream.ReceiveChar();
-							md5Salt[2] = (byte)pg_stream.ReceiveChar();
-							md5Salt[3] = (byte)pg_stream.ReceiveChar();
+							md5Salt[0] = (byte)pgStream.ReceiveChar();
+							md5Salt[1] = (byte)pgStream.ReceiveChar();
+							md5Salt[2] = (byte)pgStream.ReceiveChar();
+							md5Salt[3] = (byte)pgStream.ReceiveChar();
 							salt = new String(md5Salt, 0, 4);
-							if (org.postgresql.Driver.logDebug)
-								org.postgresql.Driver.debug("MD5 salt=" + salt);
+							if (Driver.logDebug)
+								Driver.debug("MD5 salt=" + salt);
 						}
 
 						// now send the auth packet
@@ -303,42 +321,42 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 								break;
 
 							case AUTH_REQ_KRB4:
-								if (org.postgresql.Driver.logDebug)
-									org.postgresql.Driver.debug("postgresql: KRB4");
+								if (Driver.logDebug)
+									Driver.debug("postgresql: KRB4");
 								throw new PSQLException("postgresql.con.kerb4");
 
 							case AUTH_REQ_KRB5:
-								if (org.postgresql.Driver.logDebug)
-									org.postgresql.Driver.debug("postgresql: KRB5");
+								if (Driver.logDebug)
+									Driver.debug("postgresql: KRB5");
 								throw new PSQLException("postgresql.con.kerb5");
 
 							case AUTH_REQ_PASSWORD:
-								if (org.postgresql.Driver.logDebug)
-									org.postgresql.Driver.debug("postgresql: PASSWORD");
-								pg_stream.SendInteger(5 + password.length(), 4);
-								pg_stream.Send(password.getBytes());
-								pg_stream.SendInteger(0, 1);
-								pg_stream.flush();
+								if (Driver.logDebug)
+									Driver.debug("postgresql: PASSWORD");
+								pgStream.SendInteger(5 + password.length(), 4);
+								pgStream.Send(password.getBytes());
+								pgStream.SendInteger(0, 1);
+								pgStream.flush();
 								break;
 
 							case AUTH_REQ_CRYPT:
-								if (org.postgresql.Driver.logDebug)
-									org.postgresql.Driver.debug("postgresql: CRYPT");
+								if (Driver.logDebug)
+									Driver.debug("postgresql: CRYPT");
 								String crypted = UnixCrypt.crypt(salt, password);
-								pg_stream.SendInteger(5 + crypted.length(), 4);
-								pg_stream.Send(crypted.getBytes());
-								pg_stream.SendInteger(0, 1);
-								pg_stream.flush();
+								pgStream.SendInteger(5 + crypted.length(), 4);
+								pgStream.Send(crypted.getBytes());
+								pgStream.SendInteger(0, 1);
+								pgStream.flush();
 								break;
 
 							case AUTH_REQ_MD5:
-								if (org.postgresql.Driver.logDebug)
-									org.postgresql.Driver.debug("postgresql: MD5");
+								if (Driver.logDebug)
+									Driver.debug("postgresql: MD5");
 								byte[] digest = MD5Digest.encode(PG_USER, password, md5Salt);
-								pg_stream.SendInteger(5 + digest.length, 4);
-								pg_stream.Send(digest);
-								pg_stream.SendInteger(0, 1);
-								pg_stream.flush();
+								pgStream.SendInteger(5 + digest.length, 4);
+								pgStream.Send(digest);
+								pgStream.SendInteger(0, 1);
+								pgStream.flush();
 								break;
 
 							default:
@@ -363,17 +381,17 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		int beresp;
 		do
 		{
-			beresp = pg_stream.ReceiveChar();
+			beresp = pgStream.ReceiveChar();
 			switch (beresp)
 			{
 				case 'K':
-					pid = pg_stream.ReceiveIntegerR(4);
-					ckey = pg_stream.ReceiveIntegerR(4);
+					pid = pgStream.ReceiveIntegerR(4);
+					ckey = pgStream.ReceiveIntegerR(4);
 					break;
 				case 'E':
-					throw new PSQLException("postgresql.con.backend", pg_stream.ReceiveString(encoding));
+					throw new PSQLException("postgresql.con.backend", pgStream.ReceiveString(encoding));
 				case 'N':
-					addWarning(pg_stream.ReceiveString(encoding));
+					addWarning(pgStream.ReceiveString(encoding));
 					break;
 				default:
 					throw new PSQLException("postgresql.con.setup");
@@ -384,16 +402,16 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		// Expect ReadyForQuery packet
 		do
 		{
-			beresp = pg_stream.ReceiveChar();
+			beresp = pgStream.ReceiveChar();
 			switch (beresp)
 			{
 				case 'Z':
 					break;
 				case 'N':
-					addWarning(pg_stream.ReceiveString(encoding));
+					addWarning(pgStream.ReceiveString(encoding));
 					break;
 				case 'E':
-					throw new PSQLException("postgresql.con.backend", pg_stream.ReceiveString(encoding));
+					throw new PSQLException("postgresql.con.backend", pgStream.ReceiveString(encoding));
 				default:
 					throw new PSQLException("postgresql.con.setup");
 			}
@@ -419,7 +437,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		// more than one round trip to the backend during connection startup.
 
 
-		java.sql.ResultSet resultSet
+		BaseResultSet resultSet
 			= execSQL("set datestyle to 'ISO'; select version(), " + encodingQuery + ";");
 		
 		if (! resultSet.next())
@@ -441,7 +459,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		//support is now always included
 		if (haveMinimumServerVersion("7.3")) 
 		{
-			java.sql.ResultSet acRset =
+			BaseResultSet acRset =
 				execSQL("set client_encoding = 'UNICODE'; show autocommit");
 
 			//set encoding to be unicode
@@ -473,7 +491,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 * Return the instance of org.postgresql.Driver
 	 * that created this connection
 	 */
-	public org.postgresql.Driver getDriver()
+	public Driver getDriver()
 	{
 		return this_driver;
 	}
@@ -509,10 +527,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 
 	/** Simple query execution.
 	 */
-	public java.sql.ResultSet execSQL (String s) throws SQLException
+	public BaseResultSet execSQL (String s) throws SQLException
 	{
 		final Object[] nullarr = new Object[0];
-		java.sql.Statement stat = createStatement();
+		BaseStatement stat = (BaseStatement) createStatement();
 		return QueryExecutor.execute(new String[] { s }, 
 									 nullarr, 
 									 stat);
@@ -607,7 +625,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	public Fastpath getFastpathAPI() throws SQLException
 	{
 		if (fastpath == null)
-			fastpath = new Fastpath(this, pg_stream);
+			fastpath = new Fastpath(this, pgStream);
 		return fastpath;
 	}
 
@@ -636,7 +654,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	public LargeObjectManager getLargeObjectAPI() throws SQLException
 	{
 		if (largeobject == null)
-			largeobject = new LargeObjectManager((java.sql.Connection)this);
+			largeobject = new LargeObjectManager(this);
 		return largeobject;
 	}
 
@@ -654,13 +672,8 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 * You can use the getValue() or setValue() methods to handle the returned
 	 * object. Custom objects can have their own methods.
 	 *
-	 * In 6.4, this is extended to use the org.postgresql.util.Serialize class to
-	 * allow the Serialization of Java Objects into the database without using
-	 * Blobs. Refer to that class for details on how this new feature works.
-	 *
 	 * @return PGobject for this type, and set to value
 	 * @exception SQLException if value is not correct for this type
-	 * @see org.postgresql.util.Serialize
 	 */
 	public Object getObject(String type, String value) throws SQLException
 	{
@@ -668,22 +681,13 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		{
 			Object o = objectTypes.get(type);
 
-			// If o is null, then the type is unknown, so check to see if type
-			// is an actual table name. If it does, see if a Class is known that
-			// can handle it
-			if (o == null)
-			{
-				Serialize ser = new Serialize((java.sql.Connection)this, type);
-				objectTypes.put(type, ser);
-				return ser.fetch(Integer.parseInt(value));
-			}
-
+			// If o is null, then the type is unknown.
 			// If o is not null, and it is a String, then its a class name that
 			// extends PGobject.
 			//
 			// This is used to implement the org.postgresql unique types (like lseg,
 			// point, etc).
-			if (o instanceof String)
+			if (o != null && o instanceof String)
 			{
 				// 6.3 style extending PG_Object
 				PGobject obj = null;
@@ -691,13 +695,6 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 				obj.setType(type);
 				obj.setValue(value);
 				return (Object)obj;
-			}
-			else
-			{
-				// If it's an object, it should be an instance of our Serialize class
-				// If so, then call it's fetch method.
-				if (o instanceof Serialize)
-					return ((Serialize)o).fetch(Integer.parseInt(value));
 			}
 		}
 		catch (SQLException sx)
@@ -713,63 +710,6 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 
 		// should never be reached
 		return null;
-	}
-
-	/*
-	 * This stores an object into the database.  This method was
-	 * deprecated in 7.2 bacause an OID can be larger than the java signed
-	 * int returned by this method.
-	 * @deprecated Replaced by storeObject() in 7.2
-	 */
-	public int putObject(Object o) throws SQLException
-	{
-		return (int) storeObject(o);
-	}
-
-	/*
-	 * This stores an object into the database.
-	 * @param o Object to store
-	 * @return OID of the new rectord
-	 * @exception SQLException if value is not correct for this type
-	 * @see org.postgresql.util.Serialize
-	 * @since 7.2
-	 */
-	public long storeObject(Object o) throws SQLException
-	{
-		try
-		{
-			String type = o.getClass().getName();
-			Object x = objectTypes.get(type);
-
-			// If x is null, then the type is unknown, so check to see if type
-			// is an actual table name. If it does, see if a Class is known that
-			// can handle it
-			if (x == null)
-			{
-				Serialize ser = new Serialize((java.sql.Connection)this, type);
-				objectTypes.put(type, ser);
-				return ser.storeObject(o);
-			}
-
-			// If it's an object, it should be an instance of our Serialize class
-			// If so, then call it's fetch method.
-			if (x instanceof Serialize)
-				return ((Serialize)x).storeObject(o);
-
-			// Thow an exception because the type is unknown
-			throw new PSQLException("postgresql.con.strobj");
-
-		}
-		catch (SQLException sx)
-		{
-			// rethrow the exception. Done because we capture any others next
-			sx.fillInStackTrace();
-			throw sx;
-		}
-		catch (Exception ex)
-		{
-			throw new PSQLException("postgresql.con.strobjex", ex);
-		}
 	}
 
 	/*
@@ -836,19 +776,19 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 */
 	public void close() throws SQLException
 	{
-		if (pg_stream != null)
+		if (pgStream != null)
 		{
 			try
 			{
-				pg_stream.SendChar('X');
-				pg_stream.flush();
-				pg_stream.close();
+				pgStream.SendChar('X');
+				pgStream.flush();
+				pgStream.close();
 			}
 			catch (IOException e)
 			{}
 			finally
 			{
-				pg_stream = null;
+				pgStream = null;
 			}
 		}
 	}
@@ -1062,7 +1002,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		String sql = "show transaction isolation level";
 		String level = null;
 		if (haveMinimumServerVersion("7.3")) {
-			ResultSet rs = execSQL(sql);
+			BaseResultSet rs = execSQL(sql);
 			if (rs.next()) {
 				level = rs.getString(1);
 			}
@@ -1079,15 +1019,15 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		}
 		if (level != null) {
 			if (level.indexOf("READ COMMITTED") != -1)
-				return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+				return Connection.TRANSACTION_READ_COMMITTED;
 			else if (level.indexOf("READ UNCOMMITTED") != -1)
-				return java.sql.Connection.TRANSACTION_READ_UNCOMMITTED;
+				return Connection.TRANSACTION_READ_UNCOMMITTED;
 			else if (level.indexOf("REPEATABLE READ") != -1)
-				return java.sql.Connection.TRANSACTION_REPEATABLE_READ;
+				return Connection.TRANSACTION_REPEATABLE_READ;
 			else if (level.indexOf("SERIALIZABLE") != -1)
-				return java.sql.Connection.TRANSACTION_SERIALIZABLE;
+				return Connection.TRANSACTION_SERIALIZABLE;
 		}
-		return java.sql.Connection.TRANSACTION_READ_COMMITTED;
+		return Connection.TRANSACTION_READ_COMMITTED;
 	}
 
 	/*
@@ -1123,10 +1063,10 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 			isolationLevelSQL = "SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL ";
 			switch (isolationLevel)
 			{
-				case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+				case Connection.TRANSACTION_READ_COMMITTED:
 					isolationLevelSQL += "READ COMMITTED";
 					break;
-				case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+				case Connection.TRANSACTION_SERIALIZABLE:
 					isolationLevelSQL += "SERIALIZABLE";
 					break;
 				default:
@@ -1158,11 +1098,11 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 
 		switch (isolationLevel)
 		{
-			case java.sql.Connection.TRANSACTION_READ_COMMITTED:
+			case Connection.TRANSACTION_READ_COMMITTED:
 				sb.append(" READ COMMITTED");
 				break;
 
-			case java.sql.Connection.TRANSACTION_SERIALIZABLE:
+			case Connection.TRANSACTION_SERIALIZABLE:
 				sb.append(" SERIALIZABLE");
 				break;
 
@@ -1327,8 +1267,8 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 				} else {
 					sql = "SELECT typname FROM pg_type WHERE oid = " +oid;
 				}
-				ResultSet result = execSQL(sql);
-				if (((AbstractJdbc1ResultSet)result).getColumnCount() != 1 || ((AbstractJdbc1ResultSet)result).getTupleCount() != 1) {
+				BaseResultSet result = execSQL(sql);
+				if (result.getColumnCount() != 1 || result.getTupleCount() != 1) {
 					throw new PSQLException("postgresql.unexpected");
 				}
 				result.next();
@@ -1368,8 +1308,8 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 				} else {
 					sql = "SELECT oid FROM pg_type WHERE typname='" + typeName + "'";
 				}
-				ResultSet result = execSQL(sql);
-				if (((AbstractJdbc1ResultSet)result).getColumnCount() != 1 || ((AbstractJdbc1ResultSet)result).getTupleCount() != 1)
+				BaseResultSet result = execSQL(sql);
+				if (result.getColumnCount() != 1 || result.getTupleCount() != 1)
 					throw new PSQLException("postgresql.unexpected");
 				result.next();
 				oid = Integer.parseInt(result.getString(1));
@@ -1420,7 +1360,7 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 	 */
 	public boolean isClosed() throws SQLException
 	{
-		return (pg_stream == null);
+		return (pgStream == null);
 	}
 
 	/*
@@ -1491,6 +1431,51 @@ public abstract class AbstractJdbc1Connection implements org.postgresql.PGConnec
 		Types.TIME,
 		Types.TIMESTAMP, Types.TIMESTAMP, Types.TIMESTAMP
 	};
+
+	public void cancelQuery() throws SQLException
+	{
+		org.postgresql.core.PGStream cancelStream = null;
+		try
+		{
+			cancelStream = new org.postgresql.core.PGStream(PG_HOST, PG_PORT);
+		}
+		catch (ConnectException cex)
+		{
+			// Added by Peter Mount <peter@retep.org.uk>
+			// ConnectException is thrown when the connection cannot be made.
+			// we trap this an return a more meaningful message for the end user
+			throw new PSQLException ("postgresql.con.refused");
+		}
+		catch (IOException e)
+		{
+			throw new PSQLException ("postgresql.con.failed", e);
+		}
+
+		// Now we need to construct and send a cancel packet
+		try
+		{
+			cancelStream.SendInteger(16, 4);
+			cancelStream.SendInteger(80877102, 4);
+			cancelStream.SendInteger(pid, 4);
+			cancelStream.SendInteger(ckey, 4);
+			cancelStream.flush();
+		}
+		catch (IOException e)
+		{
+			throw new PSQLException("postgresql.con.failed", e);
+		}
+		finally
+		{
+			try
+			{
+				if (cancelStream != null)
+					cancelStream.close();
+			}
+			catch (IOException e)
+			{} // Ignore
+		}
+	}
+
 
 	//Methods to support postgres notifications
 	public void addNotification(org.postgresql.PGNotification p_notification)

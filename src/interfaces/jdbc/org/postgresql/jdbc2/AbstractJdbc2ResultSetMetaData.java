@@ -4,7 +4,7 @@ package org.postgresql.jdbc2;
 import java.lang.*;
 import java.sql.*;
 import java.util.*;
-import org.postgresql.*;
+import org.postgresql.core.Field;
 import org.postgresql.util.*;
 
 public abstract class AbstractJdbc2ResultSetMetaData extends org.postgresql.jdbc1.AbstractJdbc1ResultSetMetaData

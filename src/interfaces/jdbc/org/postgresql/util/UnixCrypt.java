@@ -1,12 +1,19 @@
+/*-------------------------------------------------------------------------
+ *
+ * UnixCrypt.java
+ *     Contains static methods to encrypt and compare
+ *     passwords with Unix encrypted passwords.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/UnixCrypt.java,v 1.4 2003/03/07 18:39:46 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.util;
 
 /*
- * This class provides us with the ability to encrypt passwords when sent
- * over the network stream
- *
- * <P>Contains static methods to encrypt and compare
- * passwords with Unix encrypted passwords.</P>
- *
  * <P>See <A HREF="http://www.zeh.com/local/jfd/crypt.html">
  * John Dumas's Java Crypt page</A> for the original source.</P>
  *

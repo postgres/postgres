@@ -3,7 +3,7 @@ package org.postgresql.jdbc1;
 
 import java.lang.*;
 import java.util.*;
-import org.postgresql.*;
+import org.postgresql.core.Field;
 import org.postgresql.util.*;
 import java.sql.SQLException;
 import java.sql.Types;

@@ -7,27 +7,28 @@ import java.sql.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Vector;
-import org.postgresql.Field;
+import org.postgresql.Driver;
+import org.postgresql.core.BaseConnection;
+import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Field;
 import org.postgresql.core.Encoding;
+import org.postgresql.core.QueryExecutor;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
+import org.postgresql.util.PGtokenizer;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.9 2003/02/04 09:20:08 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1ResultSet.java,v 1.10 2003/03/07 18:39:44 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2ResultSet which adds the jdbc2
  * methods.  The real ResultSet class (for jdbc1) is org.postgresql.jdbc1.Jdbc1ResultSet
  */
-public abstract class AbstractJdbc1ResultSet 
+public abstract class AbstractJdbc1ResultSet implements BaseResultSet
 {
 
 	protected Vector rows;			// The results
-	protected Statement statement;
-
-    public org.postgresql.PGStatement getPGStatement() {
-		return (org.postgresql.PGStatement) statement;
-	}
-
+	protected BaseStatement statement;
 	protected Field fields[];		// The field descriptions
 	protected String status;		// Status of the result
 	protected boolean binaryCursor = false; // is the data binary or Strings
@@ -35,19 +36,20 @@ public abstract class AbstractJdbc1ResultSet
 	protected long insertOID;		// The oid of an inserted row
 	protected int current_row;		// Our pointer to where we are at
 	protected byte[][] this_row;		// the current row result
-	protected org.postgresql.PGConnection connection;	// the connection which we returned from
+	protected BaseConnection connection;	// the connection which we returned from
 	protected SQLWarning warnings = null;	// The warning chain
 	protected boolean wasNullFlag = false;	// the flag for wasNull()
 
 	// We can chain multiple resultSets together - this points to
 	// next resultSet in the chain.
-	protected ResultSet next = null;
+	protected BaseResultSet next = null;
 
-	protected StringBuffer sbuf = null;
+	private StringBuffer sbuf = null;
 	public byte[][] rowBuffer = null;
 
+	public abstract ResultSetMetaData getMetaData() throws SQLException;
 
-	public AbstractJdbc1ResultSet(Statement statement,
+	public AbstractJdbc1ResultSet(BaseStatement statement,
 				      Field[] fields,
 				      Vector tuples,
 				      String status,
@@ -55,7 +57,7 @@ public abstract class AbstractJdbc1ResultSet
 				      long insertOID, 
 					  boolean binaryCursor)
 	{
-		this.connection = ((org.postgresql.jdbc1.AbstractJdbc1Statement)statement).getPGConnection();
+		this.connection = statement.getPGConnection();
 		this.statement = statement;
 		this.fields = fields;
 		this.rows = tuples;
@@ -68,6 +70,17 @@ public abstract class AbstractJdbc1ResultSet
 		this.binaryCursor = binaryCursor;
 	}
 
+    public BaseStatement getPGStatement() {
+		return statement;
+	}
+
+	public StringBuffer getStringBuffer() {
+		return sbuf;
+	}
+
+	//This is implemented in jdbc2
+	public void setStatement(BaseStatement statement) {
+	}
 
 	//method to reinitialize a result set with more data
 	public void reInit (Field[] fields, Vector tuples, String status,
@@ -93,7 +106,7 @@ public abstract class AbstractJdbc1ResultSet
 
 		if (++current_row >= rows.size())
 		{
-			int fetchSize = ((AbstractJdbc1Statement)statement).fetchSize;
+			int fetchSize = statement.getFetchSize();
 			// Must be false if we weren't batching.
 			if (fetchSize == 0)
 				return false;
@@ -104,11 +117,11 @@ public abstract class AbstractJdbc1ResultSet
 			String[] sql = new String[1];
 			String[] binds = new String[0];
 			// Is this the correct query???
-			String cursorName = ((AbstractJdbc1Statement)statement).m_statementName;
+			String cursorName = statement.getStatementName();
 			sql[0] = "FETCH FORWARD " + fetchSize + " FROM " + cursorName;
-			org.postgresql.core.QueryExecutor.execute(sql,
+			QueryExecutor.execute(sql,
 								  binds,
-								  (java.sql.ResultSet)this);
+								  this);
 
 			// Test the new rows array.
 			if (rows.size() == 0)
@@ -242,7 +255,7 @@ public abstract class AbstractJdbc1ResultSet
 				//If the data is already binary then just return it
 				return this_row[columnIndex - 1];
 			}
-			else if (((AbstractJdbc1Connection)connection).haveMinimumCompatibleVersion("7.2"))
+			else if (connection.haveMinimumCompatibleVersion("7.2"))
 			{
 				//Version 7.2 supports the bytea datatype for byte arrays
 				if (fields[columnIndex - 1].getPGType().equals("bytea"))
@@ -282,12 +295,12 @@ public abstract class AbstractJdbc1ResultSet
 
 	public Time getTime(int columnIndex) throws SQLException
 	{
-		return toTime( getString(columnIndex), (java.sql.ResultSet)this, fields[columnIndex - 1].getPGType() );
+		return toTime( getString(columnIndex), this, fields[columnIndex - 1].getPGType() );
 	}
 
 	public Timestamp getTimestamp(int columnIndex) throws SQLException
 	{
-		return toTimestamp( getString(columnIndex), (java.sql.ResultSet)this, fields[columnIndex - 1].getPGType() );
+		return toTimestamp( getString(columnIndex), this, fields[columnIndex - 1].getPGType() );
 	}
 
 	public InputStream getAsciiStream(int columnIndex) throws SQLException
@@ -297,7 +310,7 @@ public abstract class AbstractJdbc1ResultSet
 		if (wasNullFlag)
 			return null;
 
-		if (((AbstractJdbc1Connection)connection).haveMinimumCompatibleVersion("7.2"))
+		if (connection.haveMinimumCompatibleVersion("7.2"))
 		{
 			//Version 7.2 supports AsciiStream for all the PG text types
 			//As the spec/javadoc for this method indicate this is to be used for
@@ -328,7 +341,7 @@ public abstract class AbstractJdbc1ResultSet
 		if (wasNullFlag)
 			return null;
 
-		if (((AbstractJdbc1Connection)connection).haveMinimumCompatibleVersion("7.2"))
+		if (connection.haveMinimumCompatibleVersion("7.2"))
 		{
 			//Version 7.2 supports AsciiStream for all the PG text types
 			//As the spec/javadoc for this method indicate this is to be used for
@@ -359,7 +372,7 @@ public abstract class AbstractJdbc1ResultSet
 		if (wasNullFlag)
 			return null;
 
-		if (((AbstractJdbc1Connection)connection).haveMinimumCompatibleVersion("7.2"))
+		if (connection.haveMinimumCompatibleVersion("7.2"))
 		{
 			//Version 7.2 supports BinaryStream for all PG bytea type
 			//As the spec/javadoc for this method indicate this is to be used for
@@ -485,7 +498,7 @@ public abstract class AbstractJdbc1ResultSet
 
 	public String getCursorName() throws SQLException
 	{
-		return ((AbstractJdbc1Connection)connection).getCursorName();
+		return (connection.getCursorName());
 	}
 
 	/*
@@ -600,21 +613,21 @@ public abstract class AbstractJdbc1ResultSet
 	 *
 	 * @return the next ResultSet, or null if there are none
 	 */
-	public java.sql.ResultSet getNext()
+	public ResultSet getNext()
 	{
-		return (java.sql.ResultSet)next;
+		return (ResultSet)next;
 	}
 
 	/*
 	 * This following method allows us to add a ResultSet object
 	 * to the end of the current chain.
 	 */
-	public void append(AbstractJdbc1ResultSet r)
+	public void append(BaseResultSet r)
 	{
 		if (next == null)
-			next = (java.sql.ResultSet)r;
+			next = r;
 		else
-			((AbstractJdbc1ResultSet)next).append(r);
+			next.append(r);
 	}
 
 	/*
@@ -705,7 +718,7 @@ public abstract class AbstractJdbc1ResultSet
 		// Handle Money
 		if (s.charAt(0) == '(')
 		{
-			s = "-" + org.postgresql.util.PGtokenizer.removePara(s).substring(1);
+			s = "-" + PGtokenizer.removePara(s).substring(1);
 		}
 		if (s.charAt(0) == '$')
 		{
@@ -846,7 +859,7 @@ public abstract class AbstractJdbc1ResultSet
 		}
 	}
 
-	public static Time toTime(String s, java.sql.ResultSet resultSet, String pgDataType) throws SQLException
+	public static Time toTime(String s, BaseResultSet resultSet, String pgDataType) throws SQLException
 	{
 		if (s == null)
 			return null; // SQL NULL
@@ -912,10 +925,10 @@ public abstract class AbstractJdbc1ResultSet
 	*
 	* @throws SQLException if there is a problem parsing s.
 	**/
-	public static Timestamp toTimestamp(String s, java.sql.ResultSet resultSet, String pgDataType)
+	public static Timestamp toTimestamp(String s, BaseResultSet resultSet, String pgDataType)
 	throws SQLException
 	{
-		AbstractJdbc1ResultSet rs = (AbstractJdbc1ResultSet)resultSet;
+		BaseResultSet rs = resultSet;
 		if (s == null)
 			return null;
 
@@ -924,20 +937,21 @@ public abstract class AbstractJdbc1ResultSet
 		// SimpleDateFormat objects
 		synchronized (rs)
 		{
+			StringBuffer l_sbuf = rs.getStringBuffer();
 			SimpleDateFormat df = null;
-			if ( org.postgresql.Driver.logDebug )
-				org.postgresql.Driver.debug("the data from the DB is " + s);
+			if ( Driver.logDebug )
+				Driver.debug("the data from the DB is " + s);
 
 			// If first time, create the buffer, otherwise clear it.
-			if (rs.sbuf == null)
-				rs.sbuf = new StringBuffer(32);
+			if (l_sbuf == null)
+				l_sbuf = new StringBuffer(32);
 			else
 			{
-				rs.sbuf.setLength(0);
+				l_sbuf.setLength(0);
 			}
 
 			// Copy s into sbuf for parsing.
-			rs.sbuf.append(s);
+			l_sbuf.append(s);
 			int slen = s.length();
 
 			// For a Timestamp, the fractional seconds are stored in the
@@ -955,7 +969,7 @@ public abstract class AbstractJdbc1ResultSet
 
 				// cut the copy to second value "2001-12-07 16:29:22"
 				int i = 19;
-				rs.sbuf.setLength(i);
+				l_sbuf.setLength(i);
 
 				char c = s.charAt(i++);
 				if (c == '.')
@@ -996,14 +1010,14 @@ public abstract class AbstractJdbc1ResultSet
 				{
 					// prepend the GMT part and then add the remaining bit of
 					// the string.
-					rs.sbuf.append(" GMT");
-					rs.sbuf.append(c);
-					rs.sbuf.append(s.substring(i, slen));
+					l_sbuf.append(" GMT");
+					l_sbuf.append(c);
+					l_sbuf.append(s.substring(i, slen));
 
 					// Lastly, if the tz part doesn't specify the :MM part then
 					// we add ":00" for java.
 					if (slen - i < 5)
-						rs.sbuf.append(":00");
+						l_sbuf.append(":00");
 
 					// we'll use this dateformat string to parse the result.
 					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
@@ -1014,7 +1028,7 @@ public abstract class AbstractJdbc1ResultSet
 					//If timestamptz then we use GMT, else local timezone
 					if (pgDataType.equals("timestamptz"))
 					{
-						rs.sbuf.append(" GMT");
+						l_sbuf.append(" GMT");
 						df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 					}
 					else
@@ -1029,7 +1043,7 @@ public abstract class AbstractJdbc1ResultSet
 				//If timestamptz then we use GMT, else local timezone
 				if (pgDataType.equals("timestamptz"))
 				{
-					rs.sbuf.append(" GMT");
+					l_sbuf.append(" GMT");
 					df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss z");
 				}
 				else
@@ -1057,12 +1071,12 @@ public abstract class AbstractJdbc1ResultSet
 			try
 			{
 				// All that's left is to parse the string and return the ts.
-				if ( org.postgresql.Driver.logDebug )
-					org.postgresql.Driver.debug("the data after parsing is " 
-                     + rs.sbuf.toString() + " with " + nanos + " nanos");
+				if ( Driver.logDebug )
+					Driver.debug("the data after parsing is " 
+                     + l_sbuf.toString() + " with " + nanos + " nanos");
 
 				Timestamp result = 
-					new Timestamp(df.parse(rs.sbuf.toString()).getTime());
+					new Timestamp(df.parse(l_sbuf.toString()).getTime());
 				result.setNanos(nanos);
 				return result;
 			}

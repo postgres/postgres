@@ -1,3 +1,15 @@
+/*-------------------------------------------------------------------------
+ *
+ * Driver.java(.in)
+ *	  The Postgresql JDBC Driver implementation
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/Attic/Driver.java.in,v 1.27 2003/03/07 18:39:41 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql;
 
 import java.io.*;
@@ -22,7 +34,7 @@ import org.postgresql.util.PSQLException;
  * and register it with the DriverManager.	This means that a user can load
  * and register a driver by doing Class.forName("foo.bah.Driver")
  *
- * @see org.postgresql.Connection
+ * @see org.postgresql.PGConnection
  * @see java.sql.Driver
  */
 public class Driver implements java.sql.Driver
@@ -460,7 +472,7 @@ public class Driver implements java.sql.Driver
 	}
 
 
-	public static void makeSSL(PG_Stream p_stream) throws IOException {
+	public static void makeSSL(org.postgresql.core.PGStream p_stream) throws IOException {
 @SSL@		if (logDebug)
 @SSL@			debug("converting regular socket connection to ssl");
 @SSL@		javax.net.ssl.SSLSocketFactory factory = (javax.net.ssl.SSLSocketFactory) javax.net.ssl.SSLSocketFactory.getDefault();
@@ -477,6 +489,6 @@ public class Driver implements java.sql.Driver
 
 
 	//The build number should be incremented for every new build
-	private static int m_buildNumber = 202;
+	private static int m_buildNumber = 203;
 
 }

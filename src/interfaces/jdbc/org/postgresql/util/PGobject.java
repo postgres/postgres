@@ -1,18 +1,21 @@
+/*-------------------------------------------------------------------------
+ *
+ * PGobject.java
+ *     PGobject is a class used to describe unknown types
+ *     An unknown type is any type that is unknown by JDBC Standards
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGobject.java,v 1.4 2003/03/07 18:39:46 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.util;
 
-import java.io.*;
-import java.lang.*;
-import java.sql.*;
-import java.util.*;
+import java.io.Serializable;
+import java.sql.SQLException;
 
-/*
- * org.postgresql.PG_Object is a class used to describe unknown types
- * An unknown type is any type that is unknown by JDBC Standards
- *
- * <p>As of PostgreSQL 6.3, this allows user code to add their own
- * handlers via a call to org.postgresql.Connection. These handlers
- * must extend this class.
- */
 public class PGobject implements Serializable, Cloneable
 {
 	protected String	type;

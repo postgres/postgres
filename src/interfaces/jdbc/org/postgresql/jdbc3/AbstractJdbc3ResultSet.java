@@ -3,8 +3,11 @@ package org.postgresql.jdbc3;
 
 import java.sql.*;
 import java.util.Vector;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/AbstractJdbc3ResultSet.java,v 1.3 2003/02/04 09:20:10 barry Exp $
+
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/AbstractJdbc3ResultSet.java,v 1.4 2003/03/07 18:39:45 barry Exp $
  * This class defines methods of the jdbc3 specification.  This class extends
  * org.postgresql.jdbc2.AbstractJdbc2ResultSet which provides the jdbc2
  * methods.  The real Statement class (for jdbc3) is org.postgresql.jdbc3.Jdbc3ResultSet
@@ -12,7 +15,7 @@ import java.util.Vector;
 public abstract class AbstractJdbc3ResultSet extends org.postgresql.jdbc2.AbstractJdbc2ResultSet
 {
 
-	public AbstractJdbc3ResultSet(Statement statement, org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+	public AbstractJdbc3ResultSet(BaseStatement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		super (statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}

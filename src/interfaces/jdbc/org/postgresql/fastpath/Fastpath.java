@@ -1,26 +1,34 @@
+/*-------------------------------------------------------------------------
+ *
+ * Fastpath.java
+ *     This class implements the Fastpath api.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/Fastpath.java,v 1.12 2003/03/07 18:39:42 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.fastpath;
 
+import java.io.IOException;
+import java.sql.SQLException;
+import java.sql.ResultSet;
+import java.util.Hashtable;
 import org.postgresql.Driver;
-import java.io.*;
-import java.lang.*;
-import java.net.*;
-import java.util.*;
-import java.sql.*;
-import org.postgresql.util.*;
-
-// Important: There are a lot of debug code commented out. Please do not
-// delete these.
+import org.postgresql.core.BaseConnection;
+import org.postgresql.core.PGStream;
+import org.postgresql.util.PSQLException;
 
 /*
  * This class implements the Fastpath api.
  *
- * <p>This is a means of executing functions imbeded in the org.postgresql backend
- * from within a java application.
+ * <p>This is a means of executing functions imbeded in the org.postgresql
+ *  backend from within a java application.
  *
  * <p>It is based around the file src/interfaces/libpq/fe-exec.c
  *
- * @see org.postgresql.FastpathFastpathArg
- * @see org.postgresql.LargeObject
  */
 public class Fastpath
 {
@@ -28,20 +36,16 @@ public class Fastpath
 	// to a connection).
 	protected Hashtable func = new Hashtable();
 
-	protected org.postgresql.PGConnection conn;		// our connection
-	protected org.postgresql.PG_Stream stream;	// the network stream
+	protected BaseConnection conn;		// our connection
+	protected PGStream stream;	// the network stream
 
 	/*
 	 * Initialises the fastpath system
 	 *
-	 * <p><b>Important Notice</b>
-	 * <br>This is called from org.postgresql.Connection, and should not be called
-	 * from client code.
-	 *
-	 * @param conn org.postgresql.Connection to attach to
+	 * @param conn BaseConnection to attach to
 	 * @param stream The network stream to the backend
 	 */
-	public Fastpath(org.postgresql.PGConnection conn, org.postgresql.PG_Stream stream)
+	public Fastpath(BaseConnection conn, PGStream stream)
 	{
 		this.conn = conn;
 		this.stream = stream;
@@ -113,7 +117,7 @@ public class Fastpath
 						//------------------------------
 						// Notice from backend
 					case 'N':
-						((org.postgresql.jdbc1.AbstractJdbc1Connection)conn).addWarning(stream.ReceiveString(conn.getEncoding()));
+						conn.addWarning(stream.ReceiveString(conn.getEncoding()));
 						break;
 
 					case 'V':
@@ -164,7 +168,7 @@ public class Fastpath
 	 * This is the prefered method to call, as function id's can/may change
 	 * between versions of the backend.
 	 *
-	 * For an example of how this works, refer to org.postgresql.LargeObject
+	 * For an example of how this works, refer to org.postgresql.largeobject.LargeObject
 	 *
 	 * @param name Function name
 	 * @param resulttype True if the result is an integer, false for other
@@ -173,7 +177,7 @@ public class Fastpath
 	 * @return null if no data, Integer if an integer result, or byte[] otherwise
 	 * @exception SQLException if name is unknown or if a database-access error
 	 * occurs.
-	 * @see org.postgresql.LargeObject
+	 * @see org.postgresql.largeobject.LargeObject
 	 */
 	public Object fastpath(String name, boolean resulttype, FastpathArg[] args) throws SQLException
 	{
@@ -242,7 +246,7 @@ public class Fastpath
 	 * the function's required are entered into this table, keeping connection
 	 * times as fast as possible.
 	 *
-	 * <p>The org.postgresql.LargeObject class performs a query upon it's startup,
+	 * <p>The org.postgresql.largeobject.LargeObject class performs a query upon it's startup,
 	 * and passes the returned ResultSet to the addFunctions() method here.
 	 *
 	 * <p>Once this has been done, the LargeObject api refers to the functions by
@@ -255,7 +259,7 @@ public class Fastpath
 	 *
 	 * @param rs ResultSet
 	 * @exception SQLException if a database-access error occurs.
-	 * @see org.postgresql.LargeObjectManager
+	 * @see org.postgresql.largeobject.LargeObjectManager
 	 */
 	public void addFunctions(ResultSet rs) throws SQLException
 	{

@@ -5,10 +5,11 @@ import java.io.*;
 import java.math.*;
 import java.sql.*;
 import java.util.Vector;
+import org.postgresql.Driver;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.11 2003/02/04 09:20:10 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2Statement.java,v 1.12 2003/03/07 18:39:45 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1Statement which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2Statement
@@ -23,8 +24,8 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	public AbstractJdbc2Statement (AbstractJdbc2Connection c)
 	{
 		super(c);
-		resultsettype = java.sql.ResultSet.TYPE_SCROLL_INSENSITIVE;
-		concurrency = java.sql.ResultSet.CONCUR_READ_ONLY;
+		resultsettype = ResultSet.TYPE_SCROLL_INSENSITIVE;
+		concurrency = ResultSet.CONCUR_READ_ONLY;
 	}
 
 	public AbstractJdbc2Statement(AbstractJdbc2Connection connection, String sql) throws SQLException
@@ -48,7 +49,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 		boolean l_return = super.execute();
 		//Now do the jdbc2 specific stuff
 		//required for ResultSet.getStatement() to work and updateable resultsets
-		((AbstractJdbc2ResultSet)result).setStatement((Statement)this);
+		result.setStatement(this);
 
 		return l_return;
 	}
@@ -118,22 +119,17 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public void cancel() throws SQLException
 	{
-		((AbstractJdbc2Connection)connection).cancelQuery();
+		connection.cancelQuery();
 	}
 
-	public java.sql.Connection getConnection() throws SQLException
+	public Connection getConnection() throws SQLException
 	{
-		return (java.sql.Connection)connection;
+		return (Connection) connection;
 	}
 
 	public int getFetchDirection() throws SQLException
 	{
 		throw new PSQLException("postgresql.psqlnotimp");
-	}
-
-	public int getFetchSize() throws SQLException
-	{
-		return super.fetchSize;
 	}
 
 	public int getResultSetConcurrency() throws SQLException
@@ -150,7 +146,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 	{
 		// I don't think this should happen, since it's a hint it should just
 		// fail quietly.
-		//   throw org.postgresql.Driver.notImplemented();
+		//   throw Driver.notImplemented();
 	}
 
 	public void setFetchSize(int rows) throws SQLException
@@ -187,9 +183,9 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 		batch.addElement(l_statement);
 	}
 
-	public java.sql.ResultSetMetaData getMetaData() throws SQLException
+	public ResultSetMetaData getMetaData() throws SQLException
 	{
-		java.sql.ResultSet rs = getResultSet();
+		ResultSet rs = getResultSet();
 		if (rs != null)
 			return rs.getMetaData();
 
@@ -336,7 +332,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public void setRef(int i, Ref x) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public void setDate(int i, java.sql.Date d, java.util.Calendar cal) throws SQLException
@@ -376,7 +372,7 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public java.sql.Array getArray(int i) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public java.math.BigDecimal getBigDecimal(int parameterIndex) throws SQLException
@@ -387,43 +383,43 @@ public abstract class AbstractJdbc2Statement extends org.postgresql.jdbc1.Abstra
 
 	public Blob getBlob(int i) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public Clob getClob(int i) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public Object getObject(int i, java.util.Map map) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public Ref getRef(int i) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public java.sql.Date getDate(int i, java.util.Calendar cal) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public Time getTime(int i, java.util.Calendar cal) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	public Timestamp getTimestamp(int i, java.util.Calendar cal) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 	// no custom types allowed yet..
 	public void registerOutParameter(int parameterIndex, int sqlType, String typeName) throws SQLException
 	{
-		throw org.postgresql.Driver.notImplemented();
+		throw Driver.notImplemented();
 	}
 
 

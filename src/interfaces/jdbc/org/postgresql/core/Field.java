@@ -1,14 +1,24 @@
-package org.postgresql;
+/*-------------------------------------------------------------------------
+ *
+ * Field.java
+ *     Field is a class used to describe fields in a PostgreSQL ResultSet
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/Field.java,v 1.1 2003/03/07 18:39:41 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
+package org.postgresql.core;
 
 import java.lang.*;
 import java.sql.*;
 import java.util.*;
-import org.postgresql.*;
-import org.postgresql.util.*;
+import org.postgresql.core.BaseConnection;
+import org.postgresql.util.PSQLException;
 
 /*
- * org.postgresql.Field is a class used to describe fields in a PostgreSQL
- * ResultSet
  */
 public class Field
 {
@@ -17,7 +27,7 @@ public class Field
 	private int mod;		// type modifier of this field
 	private String name;		// Name of this field
 
-	private org.postgresql.PGConnection conn;	// Connection Instantation
+	private BaseConnection conn;	// Connection Instantation
 
 
 	/*
@@ -28,7 +38,7 @@ public class Field
 	 * @param oid the OID of the field
 	 * @param len the length of the field
 	 */
-	public Field(org.postgresql.PGConnection conn, String name, int oid, int length, int mod)
+	public Field(BaseConnection conn, String name, int oid, int length, int mod)
 	{
 		this.conn = conn;
 		this.name = name;
@@ -45,7 +55,7 @@ public class Field
 	 * @param oid the OID of the field
 	 * @param len the length of the field
 	 */
-	public Field(org.postgresql.PGConnection conn, String name, int oid, int length)
+	public Field(BaseConnection conn, String name, int oid, int length)
 	{
 		this(conn, name, oid, length, 0);
 	}

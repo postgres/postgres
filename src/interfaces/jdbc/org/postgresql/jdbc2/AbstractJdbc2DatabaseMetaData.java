@@ -5,7 +5,7 @@ import java.sql.*;
 import java.util.*;
 
 import org.postgresql.Driver;
-import org.postgresql.Field;
+import org.postgresql.core.Field;
 import org.postgresql.util.PSQLException;
 
 public abstract class AbstractJdbc2DatabaseMetaData extends org.postgresql.jdbc1.AbstractJdbc1DatabaseMetaData

@@ -2,6 +2,9 @@ package org.postgresql.jdbc2;
 
 
 import java.sql.*;
+import java.util.Vector;
+import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.Field;
 
 public class Jdbc2PreparedStatement extends org.postgresql.jdbc2.AbstractJdbc2Statement implements java.sql.PreparedStatement
 {
@@ -11,7 +14,7 @@ public class Jdbc2PreparedStatement extends org.postgresql.jdbc2.AbstractJdbc2St
 		super(connection, sql);
 	}
 
-	public java.sql.ResultSet createResultSet (org.postgresql.Field[] fields, java.util.Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
+	public BaseResultSet createResultSet (Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException
 	{
 		return new Jdbc2ResultSet(this, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}

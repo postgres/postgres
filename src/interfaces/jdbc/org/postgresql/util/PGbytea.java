@@ -1,12 +1,18 @@
+/*-------------------------------------------------------------------------
+ *
+ * PGbytea.java
+ *     Converts to and from the postgresql bytea datatype used by the backend.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGbytea.java,v 1.7 2003/03/07 18:39:46 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.util;
 
 import java.sql.*;
-
-/*
- * Converts to and from the postgresql bytea datatype used by the backend.
- *
- * $Id: PGbytea.java,v 1.6 2002/09/06 21:23:06 momjian Exp $
- */
 
 public class PGbytea
 {

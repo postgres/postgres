@@ -1,12 +1,11 @@
 package org.postgresql.core;
 
-import org.postgresql.PG_Stream;
 import java.io.IOException;
 
 /**
  * Sent to the backend to initialize a newly created connection.
  *
- * $Id: StartupPacket.java,v 1.2 2002/09/06 21:23:05 momjian Exp $
+ * $Id: StartupPacket.java,v 1.3 2003/03/07 18:39:42 barry Exp $
  */
 
 public class StartupPacket
@@ -30,7 +29,7 @@ public class StartupPacket
 		this.database = database;
 	}
 
-	public void writeTo(PG_Stream stream) throws IOException
+	public void writeTo(PGStream stream) throws IOException
 	{
 		stream.SendInteger(4 + 4 + SM_DATABASE + SM_USER + SM_OPTIONS + SM_UNUSED + SM_TTY, 4);
 		stream.SendInteger(protocolMajor, 2);

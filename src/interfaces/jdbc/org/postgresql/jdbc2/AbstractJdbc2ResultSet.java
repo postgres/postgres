@@ -8,14 +8,15 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import org.postgresql.Driver;
-import org.postgresql.Field;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Field;
 import org.postgresql.core.Encoding;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.PGbytea;
 import org.postgresql.util.PSQLException;
 
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.14 2003/02/27 05:56:27 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc2/Attic/AbstractJdbc2ResultSet.java,v 1.15 2003/03/07 18:39:45 barry Exp $
  * This class defines methods of the jdbc2 specification.  This class extends
  * org.postgresql.jdbc1.AbstractJdbc1ResultSet which provides the jdbc1
  * methods.  The real Statement class (for jdbc2) is org.postgresql.jdbc2.Jdbc2ResultSet
@@ -39,7 +40,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	private PreparedStatement selectStatement = null;
 
   
-	public AbstractJdbc2ResultSet(Statement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
+	public AbstractJdbc2ResultSet(BaseStatement statement, Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor)
 	{
 		super (statement, fields, tuples, status, updateCount, insertOID, binaryCursor);
 	}
@@ -236,7 +237,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 
 		if (i < 1 || i > fields.length)
 			throw new PSQLException("postgresql.res.colrange");
-		return (java.sql.Array) new org.postgresql.jdbc2.Array( connection, i, fields[i - 1], (java.sql.ResultSet) this );
+		return (java.sql.Array) new org.postgresql.jdbc2.Array( connection, i, fields[i - 1], this );
 	}
 
 
@@ -414,7 +415,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	// This one needs some thought, as not all ResultSets come from a statement
 	public Statement getStatement() throws SQLException
 	{
-		return statement;
+		return (Statement) statement;
 	}
 
 
@@ -1444,7 +1445,7 @@ public abstract class AbstractJdbc2ResultSet extends org.postgresql.jdbc1.Abstra
 	}
 
 
-	public void setStatement(Statement statement)
+	public void setStatement(BaseStatement statement)
 	{
 		this.statement = statement;
 	}

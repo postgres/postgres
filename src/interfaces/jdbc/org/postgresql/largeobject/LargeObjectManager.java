@@ -1,14 +1,30 @@
+/*-------------------------------------------------------------------------
+ *
+ * LargeObjectManager.java
+ *      This class implements the large object interface to org.postgresql.
+ *
+ *      It provides methods that allow client code to create, open and delete
+ *      large objects from the database. When opening an object, an instance of
+ *      org.postgresql.largeobject.LargeObject is returned, and its methods
+ *      then allow access to the object.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/largeobject/Attic/LargeObjectManager.java,v 1.10 2003/03/07 18:39:45 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.largeobject;
 
-import org.postgresql.Driver;
-import java.io.*;
-import java.lang.*;
-import java.net.*;
-import java.util.*;
-import java.sql.*;
 
-import org.postgresql.fastpath.*;
-import org.postgresql.util.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import org.postgresql.Driver;
+import org.postgresql.core.BaseConnection;
+import org.postgresql.fastpath.Fastpath;
+import org.postgresql.fastpath.FastpathArg;
+import org.postgresql.util.PSQLException;
 
 /*
  * This class implements the large object interface to org.postgresql.
@@ -29,7 +45,7 @@ import org.postgresql.util.*;
  *
  * ... code that opens a connection ...
  *
- * lobj = ((org.postgresql.Connection)myconn).getLargeObjectAPI();
+ * lobj = ((org.postgresql.PGConnection)myconn).getLargeObjectAPI();
  * </pre>
  *
  * <p>Normally, client code would use the getAsciiStream, getBinaryStream,
@@ -43,13 +59,6 @@ import org.postgresql.util.*;
  * <p>Refer to org.postgresql.largeobject.LargeObject on how to manipulate the
  * contents of a Large Object.
  *
- * @see org.postgresql.largeobject.LargeObject
- * @see org.postgresql.ResultSet#getAsciiStream
- * @see org.postgresql.ResultSet#getBinaryStream
- * @see org.postgresql.ResultSet#getUnicodeStream
- * @see org.postgresql.PreparedStatement#setAsciiStream
- * @see org.postgresql.PreparedStatement#setBinaryStream
- * @see org.postgresql.PreparedStatement#setUnicodeStream
  * @see java.sql.ResultSet#getAsciiStream
  * @see java.sql.ResultSet#getBinaryStream
  * @see java.sql.ResultSet#getUnicodeStream
@@ -94,10 +103,10 @@ public class LargeObjectManager
 	 * org.postgresql.Connection class keeps track of the various extension API's
 	 * and it's advised you use those to gain access, and not going direct.
 	 */
-	public LargeObjectManager(Connection conn) throws SQLException
+	public LargeObjectManager(BaseConnection conn) throws SQLException
 	{
 		// We need Fastpath to do anything
-		this.fp = ((org.postgresql.PGConnection)conn).getFastpathAPI();
+		this.fp = conn.getFastpathAPI();
 
 		// Now get the function oid's for the api
 		//

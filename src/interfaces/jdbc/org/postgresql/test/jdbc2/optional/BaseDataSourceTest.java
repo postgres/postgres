@@ -17,7 +17,7 @@ import javax.naming.*;
  * tests.
  *
  * @author Aaron Mulder (ammulder@chariotsolutions.com)
- * @version $Revision: 1.5 $
+ * @version $Revision: 1.6 $
  */
 public abstract class BaseDataSourceTest extends TestCase
 {
@@ -189,7 +189,7 @@ public abstract class BaseDataSourceTest extends TestCase
         try
         {
             con = getDataSourceConnection();
-            ((PGConnection)con).getEncoding().name();
+            ((PGConnection)con).getNotifications();
             con.close();
         }
         catch (Exception e)

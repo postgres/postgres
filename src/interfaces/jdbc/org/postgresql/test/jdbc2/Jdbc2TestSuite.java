@@ -63,7 +63,6 @@ public class Jdbc2TestSuite extends TestSuite
 		// Fastpath/LargeObject
 		suite.addTestSuite(BlobTest.class);
 
-		suite.addTestSuite(SerializeTest.class);
 		suite.addTestSuite(UpdateableResultTest.class );
 
 		suite.addTestSuite(CallableStmtTest.class );

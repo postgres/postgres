@@ -1,11 +1,21 @@
+/*-------------------------------------------------------------------------
+ *
+ * PGmoney.java
+ *     This implements a class that handles the PostgreSQL money and cash types
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/util/Attic/PGmoney.java,v 1.5 2003/03/07 18:39:46 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.util;
 
-import java.io.*;
-import java.sql.*;
 
-/*
- * This implements a class that handles the PostgreSQL money and cash types
- */
+import java.io.Serializable;
+import java.sql.SQLException;
+
 public class PGmoney extends PGobject implements Serializable, Cloneable
 {
 	/*
@@ -22,12 +32,6 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		val = value;
 	}
 
-	/*
-	 * This is called mainly from the other geometric types, when a
-	 * point is imbeded within their definition.
-	 *
-	 * @param value Definition of this point in PostgreSQL's syntax
-	 */
 	public PGmoney(String value) throws SQLException
 	{
 		this();
@@ -42,10 +46,6 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		setType("money");
 	}
 
-	/*
-	 * @param s Definition of this point in PostgreSQL's syntax
-	 * @exception SQLException on conversion failure
-	 */
 	public void setValue(String s) throws SQLException
 	{
 		try
@@ -76,10 +76,6 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		}
 	}
 
-	/*
-	 * @param obj Object to compare with
-	 * @return true if the two boxes are identical
-	 */
 	public boolean equals(Object obj)
 	{
 		if (obj instanceof PGmoney)
@@ -98,9 +94,6 @@ public class PGmoney extends PGobject implements Serializable, Cloneable
 		return new PGmoney(val);
 	}
 
-	/*
-	 * @return the PGpoint in the syntax expected by org.postgresql
-	 */
 	public String getValue()
 	{
 		if (val < 0)

@@ -3,10 +3,10 @@ package org.postgresql.jdbc1;
 
 import java.util.Vector;
 import java.sql.*;
-import org.postgresql.Field;
+import org.postgresql.core.Field;
 import org.postgresql.util.PSQLException;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.6 2003/02/04 09:20:10 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/Jdbc1Connection.java,v 1.7 2003/03/07 18:39:44 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC1.
  * However most of the implementation is really done in
  * org.postgresql.jdbc1.AbstractJdbc1Connection

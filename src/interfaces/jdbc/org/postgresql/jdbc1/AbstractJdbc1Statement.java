@@ -5,23 +5,24 @@ import java.io.*;
 import java.math.BigDecimal;
 import java.sql.*;
 import java.util.Vector;
+import org.postgresql.core.BaseConnection;
+import org.postgresql.core.BaseResultSet;
+import org.postgresql.core.BaseStatement;
+import org.postgresql.core.Field;
+import org.postgresql.core.QueryExecutor;
 import org.postgresql.largeobject.*;
 import org.postgresql.util.*;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.17 2003/02/09 23:14:55 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc1/Attic/AbstractJdbc1Statement.java,v 1.18 2003/03/07 18:39:44 barry Exp $
  * This class defines methods of the jdbc1 specification.  This class is
  * extended by org.postgresql.jdbc2.AbstractJdbc2Statement which adds the jdbc2
  * methods.  The real Statement class (for jdbc1) is org.postgresql.jdbc1.Jdbc1Statement
  */
-public abstract class AbstractJdbc1Statement implements org.postgresql.PGStatement
+public abstract class AbstractJdbc1Statement implements BaseStatement
 {
 
 	// The connection who created us
-	protected AbstractJdbc1Connection connection;
-
-	public org.postgresql.PGConnection getPGConnection() {
-		return connection;
-	}
+	protected BaseConnection connection;
 
 	/** The warnings chain. */
 	protected SQLWarning warnings = null;
@@ -38,7 +39,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	protected boolean replaceProcessingEnabled = true;
 
 	/** The current results */
-	protected java.sql.ResultSet result = null;
+	protected BaseResultSet result = null;
 
 	// Static variables for parsing SQL when replaceProcessing is true.
 	private static final short IN_SQLCODE = 0;
@@ -76,17 +77,29 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	protected Object callResult;
 
 
-	public abstract java.sql.ResultSet createResultSet(org.postgresql.Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
+	public abstract BaseResultSet createResultSet(Field[] fields, Vector tuples, String status, int updateCount, long insertOID, boolean binaryCursor) throws SQLException;
 
-	public AbstractJdbc1Statement (AbstractJdbc1Connection connection)
+	public AbstractJdbc1Statement (BaseConnection connection)
 	{
 		this.connection = connection;
 	}
 
-	public AbstractJdbc1Statement (AbstractJdbc1Connection connection, String p_sql) throws SQLException
+	public AbstractJdbc1Statement (BaseConnection connection, String p_sql) throws SQLException
 	{
 		this.connection = connection;
 		parseSqlStmt(p_sql);  // this allows Callable stmt to override
+	}
+
+	public BaseConnection getPGConnection() {
+		return connection;
+	}
+
+	public String getStatementName() {
+		return m_statementName;
+	}
+
+	public int getFetchSize() throws SQLException {
+		return fetchSize;
 	}
 
 	protected void parseSqlStmt (String p_sql) throws SQLException
@@ -146,7 +159,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		{
 			try
 			{
-				((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
+				connection.execSQL("DEALLOCATE " + m_statementName);
 			}
 			catch (Exception e)
 			{
@@ -175,11 +188,11 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		else
 			this.execute();
 	
-		while (result != null && !((AbstractJdbc1ResultSet)result).reallyResultSet())
-			result = ((AbstractJdbc1ResultSet)result).getNext();
+		while (result != null && !result.reallyResultSet())
+			result = (BaseResultSet) result.getNext();
 		if (result == null)
 			throw new PSQLException("postgresql.stat.noresult");
-		return result;
+		return (ResultSet) result;
 	}
 
 	/*
@@ -199,7 +212,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		//If we have already created a server prepared statement, we need
 		//to deallocate the existing one
 		if (m_statementName != null) {
-			((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
+			connection.execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_origSqlFragments = null;
 			m_executeSqlFragments = null;
@@ -219,7 +232,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	public int executeUpdate() throws SQLException
 	{
 		this.execute();
-		if (((AbstractJdbc1ResultSet)result).reallyResultSet())
+		if (result.reallyResultSet())
 			throw new PSQLException("postgresql.stat.result");
 		return this.getUpdateCount();
 	}
@@ -243,7 +256,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		//If we have already created a server prepared statement, we need
 		//to deallocate the existing one
 		if (m_statementName != null) {
-			((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
+			connection.execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_origSqlFragments = null;
 			m_executeSqlFragments = null;
@@ -341,14 +354,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 
 		// New in 7.1, pass Statement so that ExecSQL can customise to it
-		result = org.postgresql.core.QueryExecutor.execute(m_sqlFragments,
+		result = QueryExecutor.execute(m_sqlFragments,
 									   m_binds,
-									   (java.sql.Statement)this);
+									   this);
 
 		//If we are executing a callable statement function set the return data
 		if (isFunction)
 		{
-			if (!((AbstractJdbc1ResultSet)result).reallyResultSet())
+			if (!result.reallyResultSet())
 				throw new PSQLException("postgresql.call.noreturnval");
 			if (!result.next ())
 				throw new PSQLException ("postgresql.call.noreturnval");
@@ -363,7 +376,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 		else
 		{
-			return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
+			return (result != null && result.reallyResultSet());
 		}
 	}
 
@@ -432,14 +445,14 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 				m_sqlFragments[m_sqlFragments.length - 1] += (";" + endCurs);
 		}
 
-		result = org.postgresql.core.QueryExecutor.execute(m_sqlFragments,
+		result = QueryExecutor.execute(m_sqlFragments,
 									   m_binds,
-									   (java.sql.Statement)this);
+									   this);
 
 		//If we are executing a callable statement function set the return data
 		if (isFunction)
 		{
-			if (!((AbstractJdbc1ResultSet)result).reallyResultSet())
+			if (!result.reallyResultSet())
 				throw new PSQLException("postgresql.call.noreturnval");
 			if (!result.next ())
 				throw new PSQLException ("postgresql.call.noreturnval");
@@ -458,7 +471,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		}
 		else
 		{
-			return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
+			return (result != null && result.reallyResultSet());
 		}
 	}
 
@@ -484,7 +497,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public void setCursorName(String name) throws SQLException
 	{
-		((AbstractJdbc1Connection)connection).setCursorName(name);
+		connection.setCursorName(name);
 	}
 
 
@@ -502,9 +515,9 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			return -1;
 		if (isFunction)
 			return 1;
-		if (((AbstractJdbc1ResultSet)result).reallyResultSet())
+		if (result.reallyResultSet())
 			return -1;
-		return ((AbstractJdbc1ResultSet)result).getResultCount();
+		return result.getResultCount();
 	}
 
 	/*
@@ -516,8 +529,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public boolean getMoreResults() throws SQLException
 	{
-		result = ((AbstractJdbc1ResultSet)result).getNext();
-		return (result != null && ((AbstractJdbc1ResultSet)result).reallyResultSet());
+		result = (BaseResultSet) result.getNext();
+		return (result != null && result.reallyResultSet());
 	}
 
 
@@ -532,7 +545,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (result == null)
 			return null;
-		return ((AbstractJdbc1ResultSet)result).getStatusString();
+		return result.getStatusString();
 	}
 
 	/*
@@ -689,8 +702,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	 */
 	public java.sql.ResultSet getResultSet() throws SQLException
 	{
-		if (result != null && ((AbstractJdbc1ResultSet) result).reallyResultSet())
-			return result;
+		if (result != null && result.reallyResultSet())
+			return (ResultSet) result;
 		return null;
 	}
 
@@ -715,7 +728,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 		// If using server prepared statements deallocate them
 		if (m_useServerPrepare && m_statementName != null) {
-			((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
+			connection.execSQL("DEALLOCATE " + m_statementName);
 		}
 
 		// Disasociate it from us (For Garbage Collection)
@@ -806,7 +819,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	/*
 	 *
 	 * The following methods are postgres extensions and are defined
-	 * in the interface org.postgresql.Statement
+	 * in the interface BaseStatement
 	 *
 	 */
 
@@ -819,7 +832,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (result == null)
 			return 0;
-		return (int)((AbstractJdbc1ResultSet)result).getLastOID();
+		return (int) result.getLastOID();
 	}
 
 	/*
@@ -831,7 +844,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 	{
 		if (result == null)
 			return 0;
-		return ((AbstractJdbc1ResultSet)result).getLastOID();
+		return result.getLastOID();
 	}
 
 	/*
@@ -1522,9 +1535,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 
 	/*
 	 * This stores an Object into a parameter.
-	 * <p>New for 6.4, if the object is not recognised, but it is
-	 * Serializable, then the object is serialised using the
-	 * org.postgresql.util.Serialize class.
 	 */
 	public void setObject(int parameterIndex, Object x) throws SQLException
 	{
@@ -1588,8 +1598,8 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		else if (x instanceof PGobject)
 			setString(parameterIndex, ((PGobject)x).getValue(), PG_TEXT);
 		else
-			// Try to store java object in database
-			setSerialize(parameterIndex, connection.storeObject(x), x.getClass().getName() );
+			// Try to store as a string in database
+			setString(parameterIndex, x.toString(), PG_TEXT);
 	}
 
 	/*
@@ -1884,6 +1894,12 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 		return callResult;
 	}
 
+	//This method is implemeted in jdbc2
+	public int getResultSetConcurrency() throws SQLException
+	{
+		return 0;
+	}
+
 	/*
 	 * Returns the SQL statement with the current template values
 	 * substituted.
@@ -1928,28 +1944,6 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			throw new PSQLException ("postgresql.call.funcover");
 		m_binds[paramIndex - 1] = s;
 		m_bindTypes[paramIndex - 1] = type;
-	}
-
-	/*
-	 * Set a parameter to a tablerow-type oid reference.
-	 *
-	 * @param parameterIndex the first parameter is 1...
-	 * @param x the oid of the object from org.postgresql.util.Serialize.store
-	 * @param classname the classname of the java object x
-	 * @exception SQLException if a database access error occurs
-	 */
-	private void setSerialize(int parameterIndex, long x, String classname) throws SQLException
-	{
-		// converts . to _, toLowerCase, and ensures length < max name length
-		String tablename = Serialize.toPostgreSQL((java.sql.Connection)connection, classname );
-		DriverManager.println("setSerialize: setting " + x + "::" + tablename );
-
-		// OID reference to tablerow-type must be cast like:  <oid>::<tablename>
-		// Note that postgres support for tablerow data types is incomplete/broken.
-		// This cannot be just a plain OID because then there would be ambiguity
-		// between when you want the oid itself and when you want the object
-		// an oid references.
-		bind(parameterIndex, Long.toString(x) + "::" + tablename, PG_TEXT );
 	}
 
 	/**
@@ -2056,7 +2050,7 @@ public abstract class AbstractJdbc1Statement implements org.postgresql.PGStateme
 			//If turning server prepared statements off deallocate statement
 			//and reset statement name
 			if (m_useServerPrepare != flag && !flag)
-				((AbstractJdbc1Connection)connection).execSQL("DEALLOCATE " + m_statementName);
+				connection.execSQL("DEALLOCATE " + m_statementName);
 			m_statementName = null;
 			m_useServerPrepare = flag;
 		} else {

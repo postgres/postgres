@@ -1,25 +1,20 @@
+/*-------------------------------------------------------------------------
+ *
+ * FastpathArg.java
+ *     Each fastpath call requires an array of arguments, the number and type
+ *     dependent on the function being called.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/fastpath/Attic/FastpathArg.java,v 1.4 2003/03/07 18:39:42 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.fastpath;
 
-import java.io.*;
-import java.lang.*;
-import java.net.*;
-import java.util.*;
-import java.sql.*;
-import org.postgresql.util.*;
+import java.io.IOException;
 
-/*
- * Each fastpath call requires an array of arguments, the number and type
- * dependent on the function being called.
- *
- * <p>This class implements methods needed to provide this capability.
- *
- * <p>For an example on how to use this, refer to the org.postgresql.largeobject
- * package
- *
- * @see org.postgresql.fastpath.Fastpath
- * @see org.postgresql.largeobject.LargeObjectManager
- * @see org.postgresql.largeobject.LargeObject
- */
 public class FastpathArg
 {
 	/*
@@ -90,7 +85,7 @@ public class FastpathArg
 	 * @param s output stream
 	 * @exception IOException if something failed on the network stream
 	 */
-	protected void send(org.postgresql.PG_Stream s) throws IOException
+	protected void send(org.postgresql.core.PGStream s) throws IOException
 	{
 		if (type)
 		{

@@ -1,17 +1,26 @@
+/*-------------------------------------------------------------------------
+ *
+ * LargeObject.java
+ *     This class implements the large object interface to org.postgresql.
+ *
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/largeobject/Attic/LargeObject.java,v 1.10 2003/03/07 18:39:45 barry Exp $
+ *
+ *-------------------------------------------------------------------------
+ */
 package org.postgresql.largeobject;
 
-import java.io.*;
-import java.lang.*;
-import java.net.*;
-import java.util.*;
-import java.sql.*;
-
-import org.postgresql.fastpath.*;
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.sql.SQLException;
+import org.postgresql.fastpath.Fastpath;
+import org.postgresql.fastpath.FastpathArg;
 
 /*
- * This class implements the large object interface to org.postgresql.
- *
- * <p>It provides the basic methods required to run the interface, plus
+ * This class provides the basic methods required to run the interface, plus
  * a pair of methods that provide InputStream and OutputStream classes
  * for this object.
  *
@@ -27,12 +36,6 @@ import org.postgresql.fastpath.*;
  * to a Large Object, or how to create one.
  *
  * @see org.postgresql.largeobject.LargeObjectManager
- * @see org.postgresql.ResultSet#getAsciiStream
- * @see org.postgresql.ResultSet#getBinaryStream
- * @see org.postgresql.ResultSet#getUnicodeStream
- * @see org.postgresql.PreparedStatement#setAsciiStream
- * @see org.postgresql.PreparedStatement#setBinaryStream
- * @see org.postgresql.PreparedStatement#setUnicodeStream
  * @see java.sql.ResultSet#getAsciiStream
  * @see java.sql.ResultSet#getBinaryStream
  * @see java.sql.ResultSet#getUnicodeStream

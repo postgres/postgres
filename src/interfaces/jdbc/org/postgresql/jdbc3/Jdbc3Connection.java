@@ -4,9 +4,9 @@ package org.postgresql.jdbc3;
 import java.sql.*;
 import java.util.Vector;
 import java.util.Hashtable;
-import org.postgresql.Field;
+import org.postgresql.core.Field;
 
-/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/Jdbc3Connection.java,v 1.3 2003/02/04 09:20:10 barry Exp $
+/* $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/jdbc3/Attic/Jdbc3Connection.java,v 1.4 2003/03/07 18:39:45 barry Exp $
  * This class implements the java.sql.Connection interface for JDBC3.
  * However most of the implementation is really done in
  * org.postgresql.jdbc3.AbstractJdbc3Connection or one of it's parents

@@ -1,24 +1,28 @@
-package org.postgresql;
-
-import java.io.*;
-import java.lang.*;
-import java.net.*;
-import java.util.*;
-import java.sql.*;
-import org.postgresql.*;
-import org.postgresql.core.*;
-import org.postgresql.util.*;
-
-/*
- * $Id: PG_Stream.java,v 1.18 2003/02/27 05:45:44 barry Exp $
+/*-------------------------------------------------------------------------
  *
- * This class is used by Connection & PGlobj for communicating with the
- * backend.
+ * PGStream.java
+ *      This class is used by Connection for communicating with the
+ *      backend.
  *
- * @see java.sql.Connection
+ * Copyright (c) 2003, PostgreSQL Global Development Group
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/interfaces/jdbc/org/postgresql/core/Attic/PGStream.java,v 1.1 2003/03/07 18:39:41 barry Exp $
+ *
+ *-------------------------------------------------------------------------
  */
-//	This class handles all the Streamed I/O for a org.postgresql connection
-public class PG_Stream
+package org.postgresql.core;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.InputStream;
+import java.io.IOException;
+import java.net.Socket;
+import java.sql.*;
+import org.postgresql.util.PSQLException;
+
+
+public class PGStream
 {
 	public String host;
 	public int port;
@@ -35,7 +39,7 @@ public class PG_Stream
 	 * @param port the port number that the postmaster is sitting on
 	 * @exception IOException if an IOException occurs below it.
 	 */
-	public PG_Stream(String p_host, int p_port) throws IOException
+	public PGStream(String p_host, int p_port) throws IOException
 	{
 		host = p_host;
 		port = p_port;
