@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.21 2002/09/21 18:32:54 petere Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/create_aggregate.sgml,v 1.22 2002/10/21 04:33:39 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -52,8 +52,8 @@ CREATE AGGREGATE <replaceable class="PARAMETER">name</replaceable> ( BASETYPE = 
       <listitem>
        <para>
 	The input data type on which this aggregate function operates.
-	This can be specified as ANY for an aggregate that does not
-	examine its input values
+	This can be specified as <literal>"ANY"</> for an aggregate that does
+	not examine its input values
 	(an example is <function>count(*)</function>).
        </para>
       </listitem>
