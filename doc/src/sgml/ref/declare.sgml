@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.7 1999/07/22 15:09:09 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/declare.sgml,v 1.8 1999/12/30 22:58:10 momjian Exp $
 Postgres documentation
 -->
 
@@ -23,7 +23,7 @@ Postgres documentation
    <date>1999-07-20</date>
   </refsynopsisdivinfo>
   <synopsis>
-DECLARE <replaceable class="parameter">cursor</replaceable> [ BINARY ] [ INSENSITIVE ] [ SCROLL ]
+DECLARE <replaceable class="parameter">cursorname</replaceable> [ BINARY ] [ INSENSITIVE ] [ SCROLL ]
     CURSOR FOR <replaceable class="parameter">query</replaceable>
     [ FOR { READ ONLY | UPDATE [ OF <replaceable class="parameter">column</replaceable> [, ...] ] ]
   </synopsis>
@@ -37,7 +37,7 @@ DECLARE <replaceable class="parameter">cursor</replaceable> [ BINARY ] [ INSENSI
    <para>
     <variablelist>
      <varlistentry>
-      <term><replaceable class="parameter">cursor</replaceable></term>
+      <term><replaceable class="parameter">cursorname</replaceable></term>
       <listitem>
        <para>
 	The name of the cursor to be used in subsequent FETCH operations..
@@ -154,11 +154,11 @@ SELECT
      <varlistentry>
       <term><computeroutput>
 NOTICE
-BlankPortalAssignName: portal "<replaceable class="parameter">cursor</replaceable>" already exists
+BlankPortalAssignName: portal "<replaceable class="parameter">cursorname</replaceable>" already exists
        </computeroutput></term>
       <listitem>
        <para>
-	This error occurs if <replaceable class="parameter">cursor</replaceable> is already declared.
+	This error occurs if <replaceable class="parameter">cursorname</replaceable> is already declared.
        </para>
       </listitem>
      </varlistentry>
