@@ -465,12 +465,7 @@ stmt:  AlterSchemaStmt 			{ output_statement($1, 0, NULL, connection); }
 						if (connection)
 							mmerror(ET_ERROR, "no at option for connect statement.\n");
 
-						fputs("{ ECPGconnect(__LINE__,", yyout);
-
-						if ($1[1] == '?')
-							fprintf(yyout, "%s, %s, %d);", argsinsert->variable->name, $1 + sizeof("\"?\","), autocommit);
-						else				
-							fprintf(yyout, "%s, %d); ", $1, autocommit);
+						fprintf(yyout, "{ ECPGconnect(__LINE__, %s, %d); ", $1, autocommit);
 
 				                reset_variables();
 
@@ -3975,6 +3970,8 @@ connection_target: database_name opt_server opt_port
 		{
 		  if ($1[0] == '\"')
 			$$ = $1;
+		  else if (strcmp($1, "?") == 0)
+			$$ = mm_strdup(argsinsert->variable->name);
 		  else
 			$$ = make3_str(make_str("\""), $1, make_str("\""));
 		}

@@ -969,5 +969,9 @@ Thu Oct 12 20:13:00 CEST 2000
 Mon Oct 16 21:33:17 CEST 2000
 
 	- Fixed handling of variables in connect rule.
+
+Tue Oct 17 08:09:16 CEST 2000
+
+	- Simplified parsing ofr connect rule.
 	- Set ecpg version to 2.8.0. 
 	- Set library version to 3.2.0.

@@ -34,7 +34,10 @@ int j=1?1:2;
 /*int e=y->member; /* compile error */
 /*int c=10>>2; /* compile error */
 /*bool h=2||1; /* compile error */
+long long  iax;
 exec sql end declare section;
+
+iax = 40000000000LL;
 
 /* not working */
 int f=fa();
