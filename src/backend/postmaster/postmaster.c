@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.44 1997/03/12 21:18:38 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.45 1997/04/24 20:27:46 scrappy Exp $
  *
  * NOTES
  *
@@ -818,11 +818,15 @@ reaper(SIGNAL_ARGS)
         fprintf(stderr, "%s: reaping dead processes...\n",
                 progname);
 #ifdef HAVE_WAITPID
-    while((pid = waitpid(-1, &status, WNOHANG)) > 0)
+    while((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         CleanupProc(pid, status);
+        pqsignal(SIGCHLD, reaper);
+    }
 #else
-    while((pid = wait3(&statusp, WNOHANG, NULL)) > 0)
+    while((pid = wait3(&statusp, WNOHANG, NULL)) > 0) {
         CleanupProc(pid, statusp.w_status);
+        pqsignal(SIGCHLD, reaper);
+    }
 #endif
 }
 
