@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.40 2000/04/12 17:14:58 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/define.c,v 1.41 2000/04/13 11:51:07 wieck Exp $
  *
  * DESCRIPTION
  *	  The "DefineFoo" routines take the parse tree and pick out the
@@ -631,7 +631,7 @@ DefineType(char *typeName, List *parameters)
 
 			if (!strcasecmp(a, "double"))
 				alignment = 'd';
-			else if (!strcasecmp(a, "int"))
+			else if (!strcasecmp(a, "int4"))
 				alignment = 'i';
 			else
 			{
@@ -741,8 +741,11 @@ defGetTypeLength(DefElem *def)
 	if (nodeTag(def->arg) == T_Integer)
 		return intVal(def->arg);
 	else if (nodeTag(def->arg) == T_String &&
-			 !strcasecmp(strVal(def->arg), "variable"))
+			!strcasecmp(strVal(def->arg), "variable"))
 		return -1;				/* variable length */
+	else if (nodeTag(def->arg) == T_TypeName &&
+			!strcasecmp(((TypeName *)(def->arg))->name, "variable"))
+		return -1;
 
 	elog(ERROR, "Define: \"%s\" = what?", def->defname);
 	return -1;
