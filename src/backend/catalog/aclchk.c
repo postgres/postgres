@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.77 2002/09/04 20:31:13 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.78 2002/09/24 23:14:25 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -481,7 +481,7 @@ ExecuteGrantStmt_Language(GrantStmt *stmt)
 			elog(ERROR, "language \"%s\" not found", langname);
 		pg_language_tuple = (Form_pg_language) GETSTRUCT(tuple);
 
-		if (!pg_language_tuple->lanpltrusted)
+		if (!pg_language_tuple->lanpltrusted && stmt->is_grant)
 			elog(ERROR, "language \"%s\" is not trusted", langname);
 
 		/*

@@ -156,6 +156,7 @@ GRANT USAGE ON LANGUAGE sql TO regressuser2; -- fail
 CREATE FUNCTION testfunc1(int) RETURNS int AS 'select 2 * $1;' LANGUAGE sql;
 CREATE FUNCTION testfunc2(int) RETURNS int AS 'select 3 * $1;' LANGUAGE sql;
 
+REVOKE ALL ON FUNCTION testfunc1(int), testfunc2(int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION testfunc1(int), testfunc2(int) TO regressuser2;
 GRANT USAGE ON FUNCTION testfunc1(int) TO regressuser3; -- semantic error
 GRANT ALL PRIVILEGES ON FUNCTION testfunc1(int) TO regressuser4;

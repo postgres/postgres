@@ -22,7 +22,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.300 2002/09/22 20:57:20 petere Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.301 2002/09/24 23:14:25 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4839,16 +4839,18 @@ GetPrivileges(Archive *AH, const char *s, const char *type)
 }
 
 
-/*
+/*----------
  * Write out grant/revoke information
  *
- * 'type' must be TABLE, FUNCTION, LANGUAGE, or SCHEMA.  'name' is the
- * formatted name of the object.  Must be quoted etc. already.
+ * 'type' must be TABLE, FUNCTION, LANGUAGE, or SCHEMA.
+ * 'name' is the formatted name of the object.  Must be quoted etc. already.
+ * 'tag' is the tag for the archive entry (typ. unquoted name of object).
  * 'nspname' is the namespace the object is in (NULL if none).
  * 'usename' is the owner, NULL if there is no owner (for languages).
  * 'acls' is the string read out of the fooacl system catalog field;
  * it will be parsed here.
  * 'objoid' is the OID of the object for purposes of ordering.
+ *----------
  */
 static void
 dumpACL(Archive *fout, const char *type, const char *name,
@@ -4866,6 +4868,14 @@ dumpACL(Archive *fout, const char *type, const char *name,
 		return;					/* object has default permissions */
 
 	sql = createPQExpBuffer();
+
+	/*
+	 * Always start with REVOKE ALL FROM PUBLIC, so that we don't have to
+	 * wire-in knowledge about the default public privileges for different
+	 * kinds of objects.
+	 */
+	appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM PUBLIC;\n",
+					  type, name);
 
 	/* Make a working copy of acls so we can use strtok */
 	aclbuf = strdup(acls);
@@ -4938,18 +4948,21 @@ dumpACL(Archive *fout, const char *type, const char *name,
 		else
 		{
 			/* No privileges.  Issue explicit REVOKE for safety. */
-			appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
-							  type, name);
 			if (eqpos == tok)
 			{
-				/* Empty left-hand side means "PUBLIC" */
-				appendPQExpBuffer(sql, "PUBLIC;\n");
+				/* Empty left-hand side means "PUBLIC"; already did it */
 			}
 			else if (strncmp(tok, "group ", strlen("group ")) == 0)
-				appendPQExpBuffer(sql, "GROUP %s;\n",
+			{
+				appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM GROUP %s;\n",
+								  type, name,
 								  fmtId(tok + strlen("group ")));
+			}
 			else
-				appendPQExpBuffer(sql, "%s;\n", fmtId(tok));
+			{
+				appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
+								  type, name, fmtId(tok));
+			}
 		}
 		free(priv);
 	}
@@ -4960,9 +4973,8 @@ dumpACL(Archive *fout, const char *type, const char *name,
 	 */
 	if (!found_owner_privs && usename)
 	{
-		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM ",
-						  type, name);
-		appendPQExpBuffer(sql, "%s;\n", fmtId(usename));
+		appendPQExpBuffer(sql, "REVOKE ALL ON %s %s FROM %s;\n",
+						  type, name, fmtId(usename));
 	}
 
 	ArchiveEntry(fout, objoid, tag, nspname, usename ? usename : "",

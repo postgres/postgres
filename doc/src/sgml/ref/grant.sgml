@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.29 2002/09/03 22:17:34 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/grant.sgml,v 1.30 2002/09/24 23:14:25 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -62,15 +62,27 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
   </para>
 
   <para>
-   Users other than the creator of an object do not have any access privileges
-   to the object unless the creator grants permissions.
    There is no need to grant privileges to the creator of an object,
-   as the creator automatically holds all privileges.
+   as the creator has all privileges by default.
    (The creator could, however, choose to revoke
-   some of his own privileges for safety.  Note that the ability to
+   some of his own privileges for safety.)  Note that the ability to
    grant and revoke privileges is inherent in the creator and cannot
-   be lost.  The right to drop the object is likewise inherent in the
-   creator, and cannot be granted or revoked.)
+   be lost.  The right to drop an object, or to alter it in any way
+   not described by a grantable right, is likewise inherent in the
+   creator, and cannot be granted or revoked.
+  </para>
+
+  <para>
+   Depending on the type of object, the initial default privileges may
+   include granting some privileges to <literal>PUBLIC</literal>.
+   The default is no public access for tables and schemas;
+   <literal>TEMP</> table creation privilege for databases;
+   <literal>EXECUTE</> privilege for functions; and
+   <literal>USAGE</> privilege for languages.
+   The object creator may of course revoke these privileges.  (For maximum
+   security, issue the <command>REVOKE</> in the same transaction that
+   creates the object; then there is no window in which another user
+   may use the object.)
   </para>
 
   <para>
@@ -137,9 +149,9 @@ GRANT { { CREATE | USAGE } [,...] | ALL [ PRIVILEGES ] }
      <term>REFERENCES</term>
      <listitem>
       <para>
-       To create a table with a foreign key constraint, it is
-       necessary to have this privilege on the table with the referenced
-       key.
+       To create a foreign key constraint, it is
+       necessary to have this privilege on both the referencing and
+       referenced tables.
       </para>
      </listitem>
     </varlistentry>
@@ -292,10 +304,9 @@ GRANT SELECT,UPDATE,INSERT ON mytable TO GROUP todos;
    <para>
    If the <quote>Access privileges</> column is empty for a given object,
 it means the object has default privileges (that is, its privileges field
-is NULL).  Currently, default privileges are interpreted as <quote>all
-privileges for the owner and no privileges for anyone else</quote>, except
-for databases: the default privilege settings for a database allow anyone
-to create temporary tables in it.  The first <command>GRANT</> or
+is NULL).  Default privileges always include all privileges for the owner,
+and may include some privileges for <literal>PUBLIC</> depending on the
+object type, as explained above.  The first <command>GRANT</> or
 <command>REVOKE</> on an object
 will instantiate the default privileges (producing, for example,
 <literal>{=,miriam=arwdRxt}</>) and then modify them per the specified request.

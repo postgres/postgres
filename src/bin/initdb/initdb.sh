@@ -27,7 +27,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.174 2002/09/18 21:35:23 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.175 2002/09/24 23:14:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -1034,6 +1034,8 @@ $ECHO_N "setting privileges on built-in objects... "$ECHO_C
         WHERE proacl IS NULL;
     UPDATE pg_language SET lanacl = '{"=U"}' \
         WHERE lanpltrusted;
+    UPDATE pg_language SET lanacl = '{"="}' \
+        WHERE NOT lanpltrusted;
 EOF
 ) \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely

@@ -7,7 +7,7 @@
 # Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
 # Portions Copyright (c) 1994, Regents of the University of California
 #
-# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.38 2002/08/22 00:01:47 tgl Exp $
+# $Header: /cvsroot/pgsql/src/bin/scripts/Attic/createlang.sh,v 1.39 2002/09/24 23:14:25 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -291,8 +291,13 @@ if [ "$?" -ne 0 ]; then
 	exit 1
 fi
 
-if test -n "$trusted"; then
-    sqlcmd="GRANT USAGE ON LANGUAGE \"$langname\" TO PUBLIC;"
+# ----------
+# Grant privileges.  As of 7.3 the default privileges for a language include
+# public USAGE, so we need not change them for a trusted language; but it
+# seems best to disable public USAGE for an untrusted one.
+# ----------
+if test -z "$trusted"; then
+    sqlcmd="REVOKE ALL ON LANGUAGE \"$langname\" FROM PUBLIC;"
     if [ "$showsql" = yes ]; then
         echo "$sqlcmd"
     fi
@@ -302,4 +307,5 @@ if test -n "$trusted"; then
         exit 1
     fi
 fi
+
 exit 0
