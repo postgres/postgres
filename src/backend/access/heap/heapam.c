@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.11 1997/03/28 07:04:11 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.12 1997/08/06 02:08:39 vadim Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -1150,6 +1150,19 @@ heap_delete(Relation relation, ItemPointer tid)
     dp = (PageHeader) BufferGetPage(b);
     lp = PageGetItemId(dp, ItemPointerGetOffsetNumber(tid));
     
+    /* 
+     * Just like test against non-functional updates we try to catch
+     * non-functional delete attempts.		- vadim 05/05/97
+     */
+    tp = (HeapTuple) PageGetItem((Page)dp, lp);
+    Assert(HeapTupleIsValid(tp));
+    if (TupleUpdatedByCurXactAndCmd(tp)) {
+	elog(NOTICE, "Non-functional delete, tuple already deleted");
+	if ( IsSystemRelationName(RelationGetRelationName(relation)->data) )
+	    RelationUnsetLockForWrite(relation);
+	ReleaseBuffer(b);
+	return;
+    }
     /* ----------------
      *	check that we're deleteing a valid item
      * ----------------
