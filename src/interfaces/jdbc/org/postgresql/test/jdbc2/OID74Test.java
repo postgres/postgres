@@ -13,7 +13,7 @@ import java.sql.*;
  * User: alexei
  * Date: 17-Dec-2003
  * Time: 11:01:44
- * @version $Id: OID74Test.java,v 1.1 2003/12/17 15:38:42 davec Exp $
+ * @version $Id: OID74Test.java,v 1.2 2003/12/17 15:45:05 davec Exp $
  */
 public class OID74Test  extends TestCase
 {
@@ -41,7 +41,7 @@ public class OID74Test  extends TestCase
 			c =  DriverManager.getConnection("jdbc:postgresql://localhost/test?compatible=7.1&user=test");
     			c.setAutoCommit(false);
 			st = c.createStatement();
-        		st.execute("CREATE TABLE temp (col oid)");
+        		st.execute("CREATE temp TABLE temp (col oid)");
       		}
 		 catch (SQLException e) 
 		{
