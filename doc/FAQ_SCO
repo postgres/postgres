@@ -3,7 +3,7 @@ Frequently Asked Questions (FAQ) for PostgreSQL  V7.0
 SCO UnixWare and OpenServer Specific
 TO BE READ IN CONJUNCTION WITH THE NORMAL FAQ
 =======================================================
-last updated:           $Date: 2000/08/26 19:34:24 $
+last updated:           $Date: 2000/10/09 03:49:42 $
 
 current maintainer:     Billy G. Allie (Bill.Allie@mug.org)
 original author:        Andrew Merrill (andrew@compclass.com)
@@ -28,29 +28,28 @@ Topics:
 ***************************************************************************
 *) Skunkware
 
-You should locate your copy of the SCO Skunkware CD.  The Skunkware CD
-is included with UnixWare 7 and current versions of OpenServer 5.
+You should locate your copy of the SCO Skunkware CD.  The Skunkware CD is
+included with UnixWare 7 and current versions of OpenServer 5.
 
 Skunkware includes ready-to-install versions of many popular programs that
 are available on the Internet.  For example, gzip, gunzip, GNU make, flex,
 and bison are all included.
 
-If you do not have this CD, the software on it
-is available via anonymous ftp from ftp.sco.com/skunkware.
+If you do not have this CD, the software on it is available via anonymous
+ftp from ftp.sco.com/skunkware.
 
 For UnixWare 7.1, this CD is now labeled "Open License Software Supplement".
 
-Skunkware has different versions for UnixWare and
-OpenServer.  Make sure you install the correct version for your
-operating system, except as noted below.
-
+Skunkware has different versions for UnixWare and OpenServer.  Make sure
+you install the correct version for your operating system, except as noted
+below.
 
 ***************************************************************************
 *) GNU Make
 
-You need to use the GNU make program, which is on the Skunkware CD.
-By default, it installs as /usr/local/bin/make.  To avoid confusion
-with the SCO make program, you may want to rename GNU make to gmake.
+You need to use the GNU make program, which is on the Skunkware CD.  By
+default, it installs as /usr/local/bin/make.  To avoid confusion with the
+SCO make program, you may want to rename GNU make to gmake.
 
 
 ***************************************************************************
@@ -74,19 +73,19 @@ configure --without-CXX
 ***************************************************************************
 *) Readline
 
-If you install the readline library, then psql (the PostgreSQL command
-line SQL interpreter) remembers each command you type, and allows
-you to use arrow keys to recall and edit previous commands.  This is
-very helpful, and is strongly recommended.  The readline library is
-on the Skunkware CD.
+If you install the readline library, then psql (the PostgreSQL command line
+SQL interpreter) remembers each command you type, and allows you to use
+arrow keys to recall and edit previous commands.  This is very helpful, and
+is strongly recommended.  The readline library is on the Skunkware CD.
 
 The readline library is not included on the UnixWare 7.1 Skunkware CD.  If
-you have the UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it
-from there.  Otherwise, try ftp.sco.com/skunkware.
+you have the UnixWare 7.0.0 or 7.0.1 Skunkware CDs, you can install it from
+there.  Otherwise, try ftp.sco.com/skunkware.
 
 By default, readline installs into /usr/local/lib and /usr/local/include.
 However, the PostgreSQL configure program will not find it there without
-help.  If you installed readline, then use the following options to configure:
+help.  If you installed readline, then use the following options to
+configure:
 
 configure --with-libs=/usr/local/lib --with-includes=/usr/local/include
 
@@ -117,41 +116,67 @@ Putting these together with the no-C++ and readline options from above:
 *) Compiling PostgreSQL 7.0 with the UDK
 
 The program, backend/utils/adt/int8.c, tickles a compiler bug with in the
-following version of the C compiler:
+following versions (and probably others as well) of the C compiler:
 
-	Optimizing C Compilation System  (CCS) 3.2  08/18/98 (u701)
+	Optimizing C Compilation System  (CCS) 3.2  08/18/98
+	Optimizing C Compilation System  (CCS) 3.2  09/28/99 
 
 If you encounter an error compiling backend/utils/adt/int8.c, please apply
 the following patch:
 
 ------------------------------8< CUT HERE >8------------------------------
-*** ./src/backend/utils/adt/int8.c.orig	Mon Apr  3 13:24:12 2000
---- ./src/backend/utils/adt/int8.c	Mon Apr  3 13:28:47 2000
+*** src/backend/utils/adt/int8.c.orig	Sat Oct  7 20:48:17 2000
+--- src/backend/utils/adt/int8.c	Sat Oct  7 20:52:03 2000
 ***************
-*** 410,416 ****
-  	if (*arg1 < 1)
-  		*result = 0;
+*** 489,495 ****
+  	if (arg1 < 1)
+  		result = 0;
   	else
-! 		for (i = *arg1, *result = 1; i > 0; --i)
-  			*result *= i;
+! 		for (i = arg1, result = 1; i > 0; --i)
+  			result *= i;
   
-  	return result;
---- 410,416 ----
-  	if (*arg1 < 1)
-  		*result = 0;
+  	PG_RETURN_INT64(result);
+--- 489,495 ----
+  	if (arg1 < 1)
+  		result = 0;
   	else
-! 		for (i = *arg1, *result = 1; 0 < i; --i)
-  			*result *= i;
+! 		for (i = arg1, result = 1; i; --i)
+  			result *= i;
   
-  	return result;
+  	PG_RETURN_INT64(result);
+------------------------------8< CUT HERE >8------------------------------
+
+The bind function in UnixWare 7.1+ has a problem when used with the AF_UNIX
+family.  The following patch provides a work-around for the problem (thanks
+go to Oliver PRENANT <ohp@pyrenet.fre> for this patch).
+
+------------------------------8< CUT HERE >8------------------------------
+*** src/backend/libpq/pqcomm.c.orig	Sun Oct  8 02:21:25 2000
+--- src/backend/libpq/pqcomm.c	Sun Oct  8 02:42:57 2000
+***************
+*** 329,334 ****
+--- 329,341 ----
+  		return STATUS_ERROR;
+  	}
+  
++ 	/* Work around a bug in UnixWare 7.1.x - accept is not returning the
++ 	 * correct family when the family is AF_UNIX.
++ 	 */
++ 
++ 	if (port->raddr.sa.sa_family == 0)
++ 		port->raddr.sa.sa_family = AF_UNIX;
++ 
+  	/* fill in the server (local) address */
+  	addrlen = sizeof(port->laddr);
+  	if (getsockname(port->sock, (struct sockaddr *) & port->laddr,
 ------------------------------8< CUT HERE >8------------------------------
 
 ***************************************************************************
 *) Reading the PostgreSQL man pages on UnixWare
 
 By default, the PostgreSQL man pages are installed into /usr/local/pgsql/man.
-By default, UnixWare does not look there for man pages, so you will not
-be able to read them.
+By default, UnixWare does not look there for man pages, so you will not be
+able to read them.
 
 You need to make the following changes to access the PostgreSQL man pages
 from UnixWare.
