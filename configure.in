@@ -133,7 +133,7 @@ if test ! -f "src/template/$TEMPLATE"; then
 	echo ""
 	echo "Available Templates (select one using --with-template):"
 	echo ""
-	ls template
+	ls src/template
 	echo ""
 	exit
 fi
@@ -680,9 +680,6 @@ AC_PROG_LN_S
 AC_PROG_RANLIB
 AC_PATH_PROG(find, find)
 AC_PATH_PROG(tar, tar)
-AC_PATH_PROG(split, split)
-AC_PATH_PROG(etags, etags)
-AC_PATH_PROG(xargs, xargs)
 AC_PATH_PROGS(GZCAT, gzcat zcat, gzcat)
 AC_CHECK_PROGS(PERL, perl,)
 AC_PROG_YACC
@@ -1203,6 +1200,5 @@ AC_OUTPUT(
 	src/GNUmakefile
 	src/Makefile.global
 	src/backend/port/Makefile
-	src/backend/catalog/genbki.sh
 	src/test/regress/GNUmakefile
 )

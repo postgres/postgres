@@ -9,7 +9,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.15 2000/07/01 21:16:44 petere Exp $
+#    $Header: /cvsroot/pgsql/src/backend/utils/Attic/Gen_fmgrtab.sh,v 1.16 2000/07/06 21:33:30 petere Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -33,10 +33,10 @@ do
     case $1 in
 	-D)
             BKIOPTS="$BKIOPTS -D$2"
-            ;;
+            shift;;
 	-D*)
             BKIOPTS="$BKIOPTS $1"
-            shift;;
+            ;;
         --noclean)
             noclean=t
             ;;
@@ -60,6 +60,7 @@ do
             ;;
         *)
             INFILE=$1
+            ;;
     esac
     shift
 done

@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: c.h,v 1.74 2000/06/08 22:37:35 momjian Exp $
+ * $Id: c.h,v 1.75 2000/07/06 21:33:44 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -902,12 +902,6 @@ extern char *vararg_format(const char *fmt,...);
 #define	PG_BINARY	0
 #define	PG_BINARY_R	"r"
 #define	PG_BINARY_W	"w"
-#endif
-
-#ifdef FIXADE
-#if defined(hpux)
-#include "port/hpux/fixade.h"	/* for unaligned access fixup */
-#endif	 /* hpux */
 #endif
 
 #if defined(sun) && defined(__sparc__) && !defined(__SVR4)

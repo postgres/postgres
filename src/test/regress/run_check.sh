@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.20 2000/06/20 16:40:19 petere Exp $
+# $Header: /cvsroot/pgsql/src/test/regress/Attic/run_check.sh,v 1.21 2000/07/06 21:33:45 petere Exp $
 
 # ----------
 # Check call syntax
@@ -187,7 +187,7 @@ export PATH
 # Run initdb to initialize a database system in ./tmp_check
 # ----------
 echo "=============== Initializing check database instance   ================"
-initdb -L $LIBDIR -D $PGDATA --noclean >$LOGDIR/initdb.log 2>&1
+initdb -D $PGDATA --noclean >$LOGDIR/initdb.log 2>&1
 
 if [ $? -ne 0 ]
 then

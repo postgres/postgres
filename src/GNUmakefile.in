@@ -1,90 +1,41 @@
 #-------------------------------------------------------------------------
 #
-# Makefile.inc--
-#    Build and install postgres.
+# Makefile for src
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.56 2000/07/02 15:20:41 petere Exp $
+# $Header: /cvsroot/pgsql/src/Attic/GNUmakefile.in,v 1.57 2000/07/06 21:33:12 petere Exp $
 #
 #-------------------------------------------------------------------------
 
-SRCDIR= .
+subdir = src
+top_builddir = ..
 include Makefile.global
 
-FIND = @find@
 
-# assuming gnu tar and split here
-TAR  = @tar@
-SPLIT = @split@
-
-ETAGS = @etags@
-XARGS = @xargs@
-
-all:
-	$(MAKE) -C backend all
-	$(MAKE) -C interfaces all
-	$(MAKE) -C bin all
-	$(MAKE) -C pl all
-
-install: installdirs
-	$(MAKE) -C backend install
-	$(MAKE) -C interfaces install
-	$(MAKE) -C bin install
-	$(MAKE) -C pl install
-
-installdirs:
-	../config/mkinstalldirs $(BINDIR) $(LIBDIR) $(INCLUDEDIR)
+all install installdirs uninstall dep depend:
+	$(MAKE) -C backend $@
+	$(MAKE) -C include $@
+	$(MAKE) -C interfaces $@
+	$(MAKE) -C bin $@
+	$(MAKE) -C pl $@
 
 clean:
-	$(MAKE) -C utils clean
-	$(MAKE) -C backend clean
-	$(MAKE) -C interfaces clean
-	$(MAKE) -C bin clean
-	$(MAKE) -C pl clean
+	$(MAKE) -C backend $@
+	$(MAKE) -C include $@
+	$(MAKE) -C interfaces $@
+	$(MAKE) -C bin $@
+	$(MAKE) -C pl $@
+	$(MAKE) -C utils $@
 	$(MAKE) -C test clean
-	$(MAKE) -C ../contrib/spi clean
 
-# Not all subdirectories have a make distclean target yet
 distclean maintainer-clean:
-	-$(MAKE) -C utils clean
-	-$(MAKE) -C backend clean
-	rm -f backend/port/Makefile backend/catalog/genbki.sh \
-		backend/port/tas.s backend/port/dynloader.c
+	-$(MAKE) -C utils $@
+	-$(MAKE) -C backend $@
+	-$(MAKE) -C include $@
 	-$(MAKE) -C interfaces $@
 	-$(MAKE) -C bin $@
 	-$(MAKE) -C pl $@
 	-$(MAKE) -C test clean
 	rm -f test/regress/GNUmakefile
-	-$(MAKE) -C ../contrib/spi clean
-	rm -f Makefile.port \
-		include/config.h include/dynloader.h \
-		include/os.h include/version.h \
-		Makefile.global \
-		GNUmakefile
-
-.DEFAULT:
-	$(MAKE) -C utils $@
-	$(MAKE) -C backend $@
-	$(MAKE) -C interfaces $@
-	$(MAKE) -C bin $@
-	$(MAKE) -C pl $@
-
-TAGS:
-	rm -f TAGS; \
-	for i in backend interfaces/libpq bin; do \
-	  $(FIND) $$i -name '*.[chyl]' -print | $(XARGS) $(ETAGS) -a ; \
-	done
-
-# target to generate a backup tar file and split files that can be 
-# saved to 1.44M floppy
-BACKUP:
-	rm -f BACKUP.filelist BACKUP.tgz; \
-	$(FIND) . -not -path '*obj/*' -not -path '*data/*' -type f -print > BACKUP.filelist; \
-	$(TAR) --files-from BACKUP.filelist -c -z -v -f BACKUP.tgz
-	$(SPLIT) --bytes=1400k BACKUP.tgz pgBACKUP.	
-
-.PHONY: TAGS
-.PHONY: BACKUP
+	rm -f Makefile.port Makefile.global GNUmakefile

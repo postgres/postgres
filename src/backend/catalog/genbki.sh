@@ -1,4 +1,4 @@
-#!/bin/sh
+#! /bin/sh
 #-------------------------------------------------------------------------
 #
 # genbki.sh--
@@ -10,7 +10,7 @@
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh.in,v 1.5 2000/01/11 04:02:28 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/backend/catalog/Attic/genbki.sh,v 1.15 2000/07/06 21:33:22 petere Exp $
 #
 # NOTES
 #    non-essential whitespace is removed from the generated file.
@@ -18,45 +18,105 @@
 #    end can be changed into another awk script or something smarter..
 #
 #-------------------------------------------------------------------------
-trap "rm -f /tmp/genbki.tmp /tmp/genbkitmp.c" 0 1 2 3 15
 
-# make sure it is empty
->/tmp/genbki.tmp
+: ${AWK='awk'}
+: ${CPP='cc -E'}
 
-if [ $? != 0 ]
-then
-    echo `basename $0`: Bad option
-    exit 1
-fi
+CMDNAME=`basename $0`
 
-BKIOPTS=''
+BKIOPTS=
+INCLUDE_DIR=
+OUTPUT_PREFIX=
+INFILES=
 
-for opt in $*
+#
+# Process command line switches.
+#
+while [ $# -gt 0 ]
 do
-    case $opt in
-    -D) BKIOPTS="$BKIOPTS -D$2"; shift; shift;;
-    -D*) BKIOPTS="$BKIOPTS $1";shift;;
-    --) shift; break;;
+    case $1 in
+	-D)
+            BKIOPTS="$BKIOPTS -D$2"
+            shift;;
+	-D*)
+            BKIOPTS="$BKIOPTS $1"
+            ;;
+        -I)
+            INCLUDE_DIR="$2"
+            shift;;
+        -I*)
+            INCLUDE_DIR=`echo $1 | sed s/^-I//`
+            ;;
+        -o)
+            OUTPUT_PREFIX="$2"
+            shift;;
+        -o*)
+            OUTPUT_PREFIX=`echo $1 | sed s/^-o//`
+            ;;
+        --help)
+            echo "$CMDNAME generates system catalog bootstrapping files."
+            echo
+            echo "Usage:"
+            echo "  $CMDNAME [ -D define [...] ] [ -I dir ] [ -o prefix ]"
+            echo
+            echo "Options:"
+            echo "  -I  path to postgres_ext.h and config.h files"
+            echo "  -o  prefix of output files"
+            echo
+            echo "The environment variables CPP and AWK determine which C"
+            echo "preprocessor and Awk program to use. The defaults are"
+            echo "\`cc -E' and \`awk'."
+            echo
+            echo "Report bugs to <pgsql-bugs@postgresql.org>."
+            exit 0
+            ;;
+	-*)
+            echo "$CMDNAME: invalid option: $1"
+            exit 1
+            ;;
+        *)
+            INFILES="$INFILES $1"
+            ;;
     esac
-done
-
-# ----------------
-# 	collect nodefiles
-# ----------------
-SYSFILES=''
-x=1
-numargs=$#
-while test $x -le $numargs ; do
-    SYSFILES="$SYSFILES $1"
-    x=`expr $x + 1`
     shift
 done
 
+if [ x"$INFILES" = x"" ] ; then
+    echo "$CMDNAME: no input files" 1>&2
+    exit 1
+fi
+
+if [ x"$OUTPUT_PREFIX" = x"" ] ; then
+    echo "$CMDNAME: no output prefix specified" 1>&2
+    exit 1
+fi
+
+if [ x"$INCLUDE_DIR" = x"" ] ; then
+    echo "$CMDNAME: path to include directory unknown" 1>&2
+    exit 1
+fi
+
+
+if [ x"$TMPDIR" = x"" ] ; then
+    TMPDIR=/tmp
+fi
+
+
+TMPFILE="$TMPDIR/genbkitmp.c"
+
+trap "rm -f $TMPFILE" 0 1 2 3 15
+
+
+# clear output files
+> ${OUTPUT_PREFIX}.bki
+> ${OUTPUT_PREFIX}.description
+
+
 # Get NAMEDATALEN from postgres_ext.h
-NAMEDATALEN=`grep '#define[ 	]*NAMEDATALEN' ../../include/postgres_ext.h | awk '{ print $3 }'`
+NAMEDATALEN=`grep '#define[ 	]*NAMEDATALEN' $INCLUDE_DIR/postgres_ext.h | awk '{ print $3 }'`
 
 # Get INDEX_MAX_KEYS from config.h (who needs consistency?)
-INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' ../../include/config.h | awk '{ print $3 }'`
+INDEXMAXKEYS=`grep '#define[ 	]*INDEX_MAX_KEYS' $INCLUDE_DIR/config.h | awk '{ print $3 }'`
 
 # NOTE: we assume here that FUNC_MAX_ARGS has the same value as INDEX_MAX_KEYS,
 # and don't read it separately from config.h.  This is OK because both of them
@@ -73,7 +133,7 @@ INDEXMAXKEYS4=`expr $INDEXMAXKEYS '*' 4`
 #	also, change NameData to name. -- jolly 8/21/95.
 #	put multi-line start/end comments on a separate line
 #
-cat $SYSFILES | \
+cat $INFILES | \
 sed -e 's;/\*.*\*/;;g' \
     -e 's;/\*;\
 /*\
@@ -96,7 +156,7 @@ sed -e "s/;[ 	]*$//g" \
     -e "s/FUNC_MAX_ARGS\*2/$INDEXMAXKEYS2/g" \
     -e "s/FUNC_MAX_ARGS\*4/$INDEXMAXKEYS4/g" \
     -e "s/FUNC_MAX_ARGS/$INDEXMAXKEYS/g" \
-| awk '
+| $AWK '
 # ----------------
 #	now use awk to process remaining .h file..
 #
@@ -161,7 +221,7 @@ raw == 1 	{ print; next; }
 	{
 		data = substr($0, 8, length($0) - 9);
 		if (data != "")
-			printf "%d	%s\n", oid, data >> "/tmp/genbki.tmp";
+			printf "%d	%s\n", oid, data >>descriptionfile;
 	}
 	next;
 }
@@ -289,16 +349,11 @@ END {
 		reln_open = 0;
 	}
 }
-' >/tmp/genbkitmp.c
+' "descriptionfile=${OUTPUT_PREFIX}.description" > $TMPFILE || exit
 
-@CPP@ $BKIOPTS /tmp/genbkitmp.c | \
+$CPP $BKIOPTS $TMPFILE | \
 sed -e '/^[ 	]*$/d' \
-    -e 's/[ 	][ 	]*/ /g' || exit 1
+    -e 's/[ 	][ 	]*/ /g' > ${OUTPUT_PREFIX}.bki || exit
 
-# send pg_description file contents to standard error
-cat /tmp/genbki.tmp 1>&2
 
-# ----------------
-#	all done
-# ----------------
 exit 0

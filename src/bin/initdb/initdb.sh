@@ -1,40 +1,42 @@
-#!/bin/sh
+#! /bin/sh
 #-------------------------------------------------------------------------
 #
-# initdb.sh--
-#     Create (initialize) a Postgres database system.  
-# 
-#     A database system is a collection of Postgres databases all managed
-#     by the same postmaster.  
+# initdb creates (initializes) a Postgres database cluster (site,
+# instance, installation, whatever).  A database cluster is a
+# collection of Postgres databases all managed by the same postmaster.  
 #
-#     To create the database system, we create the directory that contains
-#     all its data, create the files that hold the global classes, create
-#     a few other control files for it, and create one database:  the
-#     template database.
+# To create the database cluster, we create the directory that contains
+# all its data, create the files that hold the global tables, create
+# a few other control files for it, and create one database:  the
+# template database.
 #
-#     The template database is an ordinary Postgres database.  Its data
-#     never changes, though.  It exists to make it easy for Postgres to 
-#     create other databases -- it just copies.
+# The template database is an ordinary Postgres database.  Its data
+# never changes, though.  It exists to make it easy for Postgres to 
+# create other databases -- it just copies.
 #
-#     Optionally, we can skip creating the database system and just create
-#     (or replace) the template database.
+# Optionally, we can skip creating the complete database cluster and
+# just create (or replace) the template database.
 #
-#     To create all those classes, we run the postgres (backend) program and
-#     feed it data from bki files that are in the Postgres library directory.
+# To create all those things, we run the postgres (backend) program and
+# feed it data from the bki files that were installed.
+#
 #
 # Copyright (c) 1994, Regents of the University of California
 #
-#
-# IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.100 2000/07/05 19:51:03 wieck Exp $
+# $Header: /cvsroot/pgsql/src/bin/initdb/Attic/initdb.sh,v 1.101 2000/07/06 21:33:38 petere Exp $
 #
 #-------------------------------------------------------------------------
+
+
+##########################################################################
+#
+# INITIALIZATION
 
 exit_nicely(){
     stty echo > /dev/null 2>&1
     echo
     echo "$CMDNAME failed."
-    if [ "$noclean" -eq 0 ]; then
+    if [ "$noclean" != yes ]; then
         echo "Removing $PGDATA."
         rm -rf "$PGDATA" || echo "Failed."
         echo "Removing temp file $TEMPFILE."
@@ -47,6 +49,15 @@ exit_nicely(){
 
 
 CMDNAME=`basename $0`
+
+# Placed here during build
+VERSION=__VERSION__
+bindir='__bindir__'
+# Note that "datadir" is not the directory we're initializing, it's
+# merely how Autoconf names PREFIX/share.
+datadir='__datadir__'
+# as set by configure --enable-multibyte[=XXX].
+MULTIBYTE=__MULTIBYTE__
 
 if [ "$TMPDIR" ]; then
     TEMPFILE="$TMPDIR/initdb.$$"
@@ -87,6 +98,10 @@ else
         done
 fi
 
+if [ x"$PGPATH" = x"" ] ; then
+    PGPATH=$bindir
+fi
+
 # Check if needed programs actually exist in path
 for prog in postgres pg_id
 do
@@ -117,24 +132,26 @@ then
     exit 1
 fi
 
-# Replaced at build time
-VERSION=__VERSION__
+
 short_version=`echo $VERSION | sed -e 's!^\([0-9][0-9]*\.[0-9][0-9]*\).*!\1!'`
 if [ x"$short_version" = x"" ] ; then
   echo "$CMDNAME: bug: version number is out of format"
   exit 1
 fi
 
+
+##########################################################################
+#
+# COMMAND LINE OPTIONS
+
 # 0 is the default (non-)encoding
 MULTIBYTEID=0
-# This is placed here by configure --enable-multibyte[=XXX].
-MULTIBYTE=__MULTIBYTE__
 
 # Set defaults:
-debug=0
-noclean=0
-template_only=0
-show_setting=0
+debug=
+noclean=
+template_only=
+show_setting=
 
 # Note: There is a single compelling reason that the name of the database
 #       superuser be the same as the Unix user owning the server process:
@@ -156,18 +173,18 @@ do
                 exit 0
                 ;;
         --debug|-d)
-                debug=1
+                debug=yes
                 echo "Running with debug mode on."
                 ;;
         --show|-s)
-        	show_setting=1
+        	show_setting=yes
         	;;        
         --noclean|-n)
-                noclean=1
+                noclean=yes
                 echo "Running with noclean mode on. Mistakes will not be cleaned up."
                 ;;
         --template|-t)
-                template_only=1
+                template_only=yes
                 echo "Updating template1 database only."
                 ;;
 # The sysid of the database superuser. Can be freely changed.
@@ -196,16 +213,13 @@ do
         -D*)
                 PGDATA=`echo $1 | sed 's/^-D//'`
                 ;;
-# The directory where the database templates are stored (traditionally in
-# $prefix/lib). This is now autodetected for the most common layouts.
-        --pglib|-L)
-                PGLIB="$2"
+# The directory where the database templates are stored. Normally
+# they are in PREFIX/share and this option should be unnecessary.
+        -L)
+                datadir="$2"
                 shift;;
-        --pglib=*)
-                PGLIB=`echo $1 | sed 's/^--pglib=//'`
-                ;;
         -L*)
-                PGLIB=`echo $1 | sed 's/^-L//'`
+                datadir=`echo $1 | sed 's/^-L//'`
                 ;;
 # The encoding of the template1 database. Defaults to what you chose
 # at configure time. (see above)
@@ -231,27 +245,26 @@ do
 done
 
 if [ "$usage" ]; then
-        echo "initdb initialized a PostgreSQL database."
- 	echo
- 	echo "Usage:"
-        echo "  $CMDNAME [options] datadir"
- 	echo
-        echo "Options:"
-        echo " [-D, --pgdata] <datadir>     Location for this database"
-        echo "  -W, --pwprompt              Prompt for a password for the new superuser's"
- 	if [ -n "$MULTIBYTE" ]
-	then 
- 		echo "  -E, --encoding <encoding>   Set the default multibyte encoding for new databases"
-	fi
-        echo "  -i, --sysid <sysid>         Database sysid for the superuser"
-        echo "Less commonly used options: "
-        echo "  -L, --pglib <libdir>        Where to find the input files"
-        echo "  -t, --template              Re-initialize template database only"
-        echo "  -d, --debug                 Generate lots of debugging output"
-        echo "  -n, --noclean               Do not clean up after errors"
- 	echo
-        echo "Report bugs to <pgsql-bugs@postgresql.org>."
- 	exit 0
+    echo "$CMDNAME initialized a PostgreSQL database cluster."
+    echo
+    echo "Usage:"
+    echo "  $CMDNAME [options] datadir"
+    echo
+    echo "Options:"
+    echo " [-D, --pgdata] <datadir>     Location for this database cluster"
+    echo "  -W, --pwprompt              Prompt for a password for the new superuser"
+    if [ -n "$MULTIBYTE" ] ; then 
+        echo "  -E, --encoding <encoding>   Set the default multibyte encoding for new databases"
+    fi
+    echo "  -i, --sysid <sysid>         Database sysid for the superuser"
+    echo "Less commonly used options: "
+    echo "  -L <directory>              Where to find the input files"
+    echo "  -t, --template              Re-initialize template database only"
+    echo "  -d, --debug                 Generate lots of debugging output"
+    echo "  -n, --noclean               Do not clean up after errors"
+    echo
+    echo "Report bugs to <pgsql-bugs@postgresql.org>."
+    exit 0
 fi
 
 #-------------------------------------------------------------------------
@@ -284,7 +297,7 @@ fi
 if [ -z "$PGDATA" ]
 then
     echo "$CMDNAME: You must identify where the the data for this database"
-    echo "system will reside.  Do this with either a --pgdata invocation"
+    echo "system will reside.  Do this with either a -D invocation"
     echo "option or a PGDATA environment variable."
     echo
     exit 1
@@ -305,76 +318,40 @@ fi
 # Find the input files
 #-------------------------------------------------------------------------
 
-if [ -z "$PGLIB" ]
+TEMPLATE1_BKI="$datadir"/template1.bki
+GLOBAL_BKI="$datadir"/global.bki
+
+TEMPLATE1_DESCR="$datadir"/template1.description
+GLOBAL_DESCR="$datadir"/global.description
+
+PG_HBA_SAMPLE="$datadir"/pg_hba.conf.sample
+POSTGRESQL_CONF_SAMPLE="$datadir"/postgresql.conf.sample
+
+if [ "$show_setting" = yes ] || [ "$debug" = yes ]
 then
-        for dir in "$PGPATH/../lib" "$PGPATH/../lib/pgsql"
-	do
-                if [ -f "$dir/global1.bki.source" ]
-		then
-                        PGLIB="$dir"
-                        break
-                fi
-        done
+    echo
+    echo "Initdb variables:"
+    for var in PGDATA datadir PGPATH TEMPFILE MULTIBYTE MULTIBYTEID \
+        POSTGRES_SUPERUSERNAME POSTGRES_SUPERUSERID TEMPLATE1_BKI GLOBAL_BKI \
+        TEMPLATE1_DESCR GLOBAL_DESCR POSTGRESQL_CONF_SAMPLE PG_HBA_SAMPLE ; do
+        eval "echo '  '$var=\$$var"
+    done
 fi
 
-if [ -z "$PGLIB" ]
-then
-        echo "$CMDNAME: Could not find the \"lib\" directory, that contains"
-        echo "the files needed by initdb. Please specify it with the"
-        echo "--pglib option."
-        exit 1
+if [ "$show_setting" = yes ] ; then
+    exit 0
 fi
 
-
-TEMPLATE="$PGLIB"/local1_template1.bki.source
-GLOBAL="$PGLIB"/global1.bki.source
-PG_HBA_SAMPLE="$PGLIB"/pg_hba.conf.sample
-POSTGRESQL_CONF_SAMPLE="$PGLIB"/postgresql.conf.sample
-
-TEMPLATE_DESCR="$PGLIB"/local1_template1.description
-GLOBAL_DESCR="$PGLIB"/global1.description
-
-if [ "$show_setting" -eq 1 ]
-then
-	echo
-	echo "The initdb setting:"
- 	echo
- 	echo "  DATADIR:        $PGDATA"
- 	echo "  PGLIB:          $PGLIB"
- 	echo "  PGPATH:         $PGPATH"
- 	echo "  TEMPFILE:       $TEMPFILE"
- 	echo "  MULTIBYTE:      $MULTIBYTE"
- 	echo "  MULTIBYTEID:    $MULTIBYTEID"
- 	echo "  SUPERUSERNAME:  $POSTGRES_SUPERUSERNAME"
- 	echo "  SUPERUSERID:    $POSTGRES_SUPERUSERID"
- 	echo "  TEMPLATE:       $TEMPLATE"	 
-	echo "  GLOBAL:         $GLOBAL"
-	echo "  PG_HBA_SAMPLE:  $PG_HBA_SAMPLE"
-        echo "  POSTGRESQL_CONF_SAMPLE: $POSTGRESQL_CONF_SAMPLE"
-	echo "  TEMPLATE_DESCR: $TEMPLATE_DESCR"
-	echo "  GLOBAL_DESCR:   $GLOBAL_DESCR"
-	echo 
-	exit 0
-fi
-
-for PREREQ_FILE in "$TEMPLATE" "$GLOBAL" "$PG_HBA_SAMPLE"
+for PREREQ_FILE in "$TEMPLATE1_BKI" "$GLOBAL_BKI" "$PG_HBA_SAMPLE"
 do
-    if [ ! -f "$PREREQ_FILE" ]
-	then 
+    if [ ! -f "$PREREQ_FILE" ] ; then
         echo "$CMDNAME does not find the file '$PREREQ_FILE'."
         echo "This means you have a corrupted installation or identified the"
-        echo "wrong directory with the --pglib invocation option."
+        echo "wrong directory with the -L invocation option."
         exit 1
     fi
 done
 
-[ "$debug" -ne 0 ] && echo "$CMDNAME: Using $TEMPLATE as input to create the template database."
-
-if [ "$template_only" -eq 0 ]
-then
-    [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $GLOBAL as input to create the global classes."
-    [ "$debug" -ne 0 ] && echo "$CMDNAME: Using $PG_HBA_SAMPLE as default authentication control file."
-fi
 
 trap 'echo "Caught signal." ; exit_nicely' 1 2 3 15
 
@@ -383,16 +360,17 @@ echo "This database system will be initialized with username \"$POSTGRES_SUPERUS
 echo "This user will own all the data files and must also own the server process."
 echo
 
-# -----------------------------------------------------------------------
-# Create the data directory if necessary
-# -----------------------------------------------------------------------
+
+##########################################################################
+#
+# CREATE DATABASE DIRECTORY
 
 # umask must disallow access to group, other for files and dirs
 umask 077
 
 if [ -f "$PGDATA"/PG_VERSION ]
 then
-    if [ "$template_only" -eq 0 ]
+    if [ "$template_only" != yes ]
     then
         echo "$CMDNAME: The file $PGDATA/PG_VERSION already exists."
         echo "This probably means initdb has already been run and the"
@@ -430,14 +408,15 @@ else
     fi
 fi
 
-#----------------------------------------------------------------------------
-# Create the template1 database
-#----------------------------------------------------------------------------
+
+##########################################################################
+#
+# CREATE TEMPLATE1 DATABASE
 
 rm -rf "$PGDATA"/base/template1 || exit_nicely
 mkdir "$PGDATA"/base/template1 || exit_nicely
 
-if [ "$debug" -eq 1 ]
+if [ "$debug" = yes ]
 then
     BACKEND_TALK_ARG="-d"
 else
@@ -448,25 +427,26 @@ BACKENDARGS="-boot -C -F -D$PGDATA $BACKEND_TALK_ARG"
 FIRSTRUN="-boot -x -C -F -D$PGDATA $BACKEND_TALK_ARG"
 
 echo "Creating template database in $PGDATA/base/template1"
-[ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
+[ "$debug" = yes ] && echo "Running: $PGPATH/postgres $FIRSTRUN template1"
 
-cat "$TEMPLATE" \
+cat "$TEMPLATE1_BKI" \
 | sed -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
 | "$PGPATH"/postgres $FIRSTRUN template1 \
 || exit_nicely
 
 echo $short_version > "$PGDATA"/base/template1/PG_VERSION || exit_nicely
 
-#----------------------------------------------------------------------------
-# Create the global classes, if requested.
-#----------------------------------------------------------------------------
 
-if [ "$template_only" -eq 0 ]
+##########################################################################
+#
+# CREATE GLOBAL TABLES
+
+if [ "$template_only" != yes ]
 then
     echo "Creating global relations in $PGDATA/global"
-    [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
+    [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1"
 
-    cat "$GLOBAL" \
+    cat "$GLOBAL_BKI" \
     | sed -e "s/POSTGRES/$POSTGRES_SUPERUSERNAME/g" \
           -e "s/PGUID/$POSTGRES_SUPERUSERID/g" \
     | "$PGPATH"/postgres $BACKENDARGS template1 \
@@ -485,7 +465,7 @@ then
     #echo "show" >> "$TEMPFILE"
     echo "close pg_database" >> "$TEMPFILE"
 
-    [ "$debug" -ne 0 ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE"
+    [ "$debug" = yes ] && echo "Running: $PGPATH/postgres $BACKENDARGS template1 < $TEMPFILE"
 
     "$PGPATH"/postgres $BACKENDARGS template1 < "$TEMPFILE"
     # Gotta remove that temp file before exiting on error.
@@ -493,6 +473,11 @@ then
     rm -f "$TEMPFILE" || exit_nicely
     [ "$retval" -ne 0 ] && exit_nicely
 fi
+
+
+##########################################################################
+#
+# CREATE VIEWS and other things
 
 echo
 
@@ -607,7 +592,7 @@ echo "CREATE VIEW pg_indexes AS \
 
 echo "Loading pg_description."
 echo "COPY pg_description FROM STDIN" > $TEMPFILE
-cat "$TEMPLATE_DESCR" >> $TEMPFILE
+cat "$TEMPLATE1_DESCR" >> $TEMPFILE
 cat "$GLOBAL_DESCR" >> $TEMPFILE
 
 cat $TEMPFILE \
@@ -617,6 +602,11 @@ rm -f "$TEMPFILE" || exit_nicely
 echo "Vacuuming database."
 echo "VACUUM ANALYZE" \
 	| "$PGPATH"/postgres $PGSQL_OPT template1 > /dev/null || exit_nicely
+
+
+##########################################################################
+#
+# FINISHED
 
 echo
 echo "Success. You can now start the database server using:"
