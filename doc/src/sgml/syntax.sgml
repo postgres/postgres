@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.23 2000/07/14 15:26:21 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.24 2000/08/07 19:53:27 tgl Exp $
 -->
 
  <chapter id="syntax">
@@ -502,7 +502,7 @@ float4 '1.23'  -- string style
      <synopsis>
 <replaceable>type</replaceable> '<replaceable>string</replaceable>'
 '<replaceable>string</replaceable>'::<replaceable>type</replaceable>
-CAST '<replaceable>string</replaceable>' AS <replaceable>type</replaceable>
+CAST ( '<replaceable>string</replaceable>' AS <replaceable>type</replaceable> )
      </synopsis>
 
      The value inside the string is passed to the input
