@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.99 1999/04/12 16:56:36 vadim Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.100 1999/05/01 19:09:46 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,6 +46,7 @@
 #include "utils/inval.h"
 #include "utils/mcxt.h"
 #include "utils/portal.h"
+#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 #ifndef HAVE_GETRUSAGE
@@ -219,7 +220,20 @@ vc_init()
 static void
 vc_shutdown()
 {
-	/* on entry, not in a transaction */
+	/* on entry, we are not in a transaction */
+
+	/* Flush the init file that relcache.c uses to save startup time.
+	 * The next backend startup will rebuild the init file with up-to-date
+	 * information from pg_class.  This lets the optimizer see the stats that
+	 * we've collected for certain critical system indexes.  See relcache.c
+	 * for more details.
+	 *
+	 * Ignore any failure to unlink the file, since it might not be there
+	 * if no backend has been started since the last vacuum...
+	 */
+	unlink(RELCACHE_INIT_FILENAME);
+
+	/* remove the vacuum cleaner lock file */
 	if (unlink("pg_vlock") < 0)
 		elog(ERROR, "vacuum: can't destroy lock file!");
 

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: relcache.h,v 1.11 1999/02/13 23:22:31 momjian Exp $
+ * $Id: relcache.h,v 1.12 1999/05/01 19:09:43 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,5 +33,11 @@ extern void RelationCacheInvalidate(bool onlyFlushReferenceCountZero);
 extern void RelationRegisterRelation(Relation relation);
 extern void RelationPurgeLocalRelation(bool xactComitted);
 extern void RelationInitialize(void);
+
+/*
+ * both vacuum.c and relcache.c need to know the name of the relcache init file
+ */
+
+#define RELCACHE_INIT_FILENAME	"pg_internal.init"
 
 #endif	 /* RELCACHE_H */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.59 1999/02/21 03:49:36 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/relcache.c,v 1.60 1999/05/01 19:09:44 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -77,7 +77,6 @@
 #include "utils/memutils.h"
 #include "utils/rel.h"
 #include "utils/relcache.h"
-#include "utils/relcache.h"
 #include "utils/syscache.h"
 
 
@@ -86,13 +85,6 @@ static void RelationFlushRelation(Relation *relationPtr,
 static Relation RelationNameCacheGetRelation(char *relationName);
 static void init_irels(void);
 static void write_irels(void);
-
-/* ----------------
- *		defines
- * ----------------
- */
-#define private static
-#define INIT_FILENAME	"pg_internal.init"
 
 /* ----------------
  *		externs
@@ -1826,11 +1818,20 @@ RelCheckFetch(Relation relation)
  *			  from an initialization file in the data/base/... directory.
  *
  *		   +  If the initialization file isn't there, then we create the
- *			  relation descriptor using sequential scans and write it to
+ *			  relation descriptors using sequential scans and write 'em to
  *			  the initialization file for use by subsequent backends.
  *
- *		This is complicated and interferes with system changes, but
- *		performance is so bad that we're willing to pay the tax.
+ *		We could dispense with the initialization file and just build the
+ *		critical reldescs the hard way on every backend startup, but that
+ *		slows down backend startup noticeably if pg_class is large.
+ *
+ *		As of v6.5, vacuum.c deletes the initialization file at completion
+ *		of a VACUUM, so that it will be rebuilt at the next backend startup.
+ *		This ensures that vacuum-collected stats for the system indexes
+ *		will eventually get used by the optimizer --- otherwise the relcache
+ *		entries for these indexes will show zero sizes forever, since the
+ *		relcache entries are pinned in memory and will never be reloaded
+ *		from pg_class.
  */
 
 /* pg_attnumind, pg_classnameind, pg_classoidind */
@@ -1852,9 +1853,9 @@ init_irels(void)
 	int			relno;
 
 #ifndef __CYGWIN32__
-	if ((fd = FileNameOpenFile(INIT_FILENAME, O_RDONLY, 0600)) < 0)
+	if ((fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_RDONLY, 0600)) < 0)
 #else
-	if ((fd = FileNameOpenFile(INIT_FILENAME, O_RDONLY | O_BINARY, 0600)) < 0)
+	if ((fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_RDONLY | O_BINARY, 0600)) < 0)
 #endif
 	{
 		write_irels();
@@ -2017,12 +2018,12 @@ write_irels(void)
 	RelationBuildDescInfo bi;
 
 #ifndef __CYGWIN32__
-	fd = FileNameOpenFile(INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0600);
+	fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC, 0600);
 #else
-	fd = FileNameOpenFile(INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
+	fd = FileNameOpenFile(RELCACHE_INIT_FILENAME, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0600);
 #endif
 	if (fd < 0)
-		elog(FATAL, "cannot create init file %s", INIT_FILENAME);
+		elog(FATAL, "cannot create init file %s", RELCACHE_INIT_FILENAME);
 
 	FileSeek(fd, 0L, SEEK_SET);
 
