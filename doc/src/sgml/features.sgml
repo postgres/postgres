@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.6 2002/08/04 06:17:29 thomas Exp $
 -->
 
  <appendix id="features">
@@ -1098,6 +1098,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
         <entry></entry>
        </row>
        <row>
+        <entry>S051</entry>
+        <entry>Create table of type</entry>
+        <entry></entry>
+       </row>
+       <row>
         <entry>S071</entry>
         <entry>SQL paths in function and type name resolution</entry>
         <entry></entry>
@@ -1116,6 +1121,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
         <entry>S092</entry>
         <entry>Arrays of user-defined types</entry>
         <entry></entry>
+       </row>
+       <row>
+        <entry>S151</entry>
+        <entry>Type predicate</entry>
+        <entry>IS OF</entry>
        </row>
        <row>
         <entry>S201</entry>
@@ -1145,6 +1155,11 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>T141</entry>
         <entry>SIMILAR predicate</entry>
+        <entry></entry>
+       </row>
+       <row>
+        <entry>T151</entry>
+        <entry>DISTINCT predicate</entry>
         <entry></entry>
        </row>
        <row>
@@ -1323,7 +1338,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>E182</entry>
         <entry>Module language</entry>
-        <entry></entry>
+        <entry>Alternate implementation</entry>
        </row>
        <row>
         <entry>F021</entry>
@@ -1413,7 +1428,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>F251</entry>
         <entry>Domain support</entry>
-        <entry></entry>
+        <entry>Alternate implementation</entry>
        </row>
        <row>
         <entry>F291</entry>
@@ -1528,7 +1543,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>F801</entry>
         <entry>Full set function</entry>
-        <entry></entry>
+        <entry>XXX May have this already</entry>
        </row>
        <row>
         <entry>F811</entry>
@@ -1559,7 +1574,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>S023</entry>
         <entry>Basic structured types</entry>
-        <entry></entry>
+        <entry>Alternate implementation</entry>
        </row>
        <row>
         <entry>S024</entry>
@@ -1574,11 +1589,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>S043</entry>
         <entry>Enhanced reference types</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>S051</entry>
-        <entry>Create table of type</entry>
         <entry></entry>
        </row>
        <row>
@@ -1605,11 +1615,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
         <entry>S111</entry>
         <entry>ONLY in query expressions</entry>
         <entry></entry>
-       </row>
-       <row>
-        <entry>S151</entry>
-        <entry>Type predicate</entry>
-        <entry>IS OF (type list)</entry>
        </row>
        <row>
         <entry>S161</entry>
@@ -1700,11 +1705,6 @@ $Header: /cvsroot/pgsql/doc/src/sgml/features.sgml,v 2.5 2002/07/16 00:51:37 mom
        <row>
         <entry>T131</entry>
         <entry>Recursive query</entry>
-        <entry></entry>
-       </row>
-       <row>
-        <entry>T151</entry>
-        <entry>DISTINCT predicate</entry>
         <entry></entry>
        </row>
        <row>
