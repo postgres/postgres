@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.13 2001/11/21 06:09:45 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.14 2002/01/08 20:03:58 momjian Exp $
 -->
 
 <sect1 id="y2k">
@@ -10,7 +10,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/Attic/y2k.sgml,v 1.13 2001/11/21 06:09:45 t
 
   <para>
    Written by Thomas Lockhart
-   (<email>lockhart@alumni.caltech.edu</email>)
+   (<email>lockhart@fourpalms.org</email>)
    on 1998-10-22. Updated 2000-03-31.
   </para>
  </note>
