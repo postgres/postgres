@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.81 2001/02/21 06:05:23 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/error/elog.c,v 1.82 2001/03/10 04:21:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -451,7 +451,10 @@ elog(int lev, const char *fmt, ...)
 		 * after proc_exit has begun to run.  (It's proc_exit's
 		 * responsibility to see that this doesn't turn into infinite
 		 * recursion!)	But in the latter case, we exit with nonzero exit
-		 * code to indicate that something's pretty wrong.
+		 * code to indicate that something's pretty wrong.  We also want
+		 * to exit with nonzero exit code if not running under the postmaster
+		 * (for example, if we are being run from the initdb script, we'd
+		 * better return an error status).
 		 */
 		if (lev == FATAL || !Warn_restart_ready || proc_exit_inprogress)
 		{
@@ -463,7 +466,7 @@ elog(int lev, const char *fmt, ...)
 			 */
 			fflush(stdout);
 			fflush(stderr);
-			proc_exit((int) proc_exit_inprogress);
+			proc_exit((int) (proc_exit_inprogress || !IsUnderPostmaster));
 		}
 
 		/*
