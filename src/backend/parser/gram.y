@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.79 1997/12/16 15:50:54 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.80 1997/12/23 19:47:32 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -63,6 +63,8 @@ extern List *parsetree;
 
 static char *xlateSqlType(char *);
 static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr);
+static Node *makeRowExpr(char *opr, List *largs, List *rargs);
+void mapTargetColumns(List *source, List *target);
 static List *makeConstantList( A_Const *node);
 static char *FlattenStringList(List *list);
 static char *fmtId(char *rawid);
@@ -111,7 +113,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <node>	stmt,
 		AddAttrStmt, ClosePortalStmt,
-		CopyStmt, CreateStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
+		CopyStmt, CreateStmt, CreateAsStmt, CreateSeqStmt, DefineStmt, DestroyStmt,
 		ExtendStmt, FetchStmt,	GrantStmt, CreateTrigStmt, DropTrigStmt,
 		CreatePLangStmt, DropPLangStmt,
 		IndexStmt, ListenStmt, OptimizableStmt,
@@ -190,6 +192,10 @@ Oid	param_type(int t); /* used in parse_expr.c */
 				a_expr, a_expr_or_null, AexprConst,
 				in_expr, in_expr_nodes, not_in_expr, not_in_expr_nodes,
 				having_clause
+%type <list>	row_descriptor, row_list
+%type <node>	row_expr
+%type <list>	OptCreateAs, CreateAsList
+%type <node>	CreateAsElement
 %type <value>	NumConst
 %type <attr>	event_object, attr
 %type <sortgroupby>		groupby
@@ -340,6 +346,7 @@ stmt :	  AddAttrStmt
 		| ClosePortalStmt
 		| CopyStmt
 		| CreateStmt
+		| CreateAsStmt
 		| CreateSeqStmt
 		| CreatePLangStmt
 		| CreateTrigStmt
@@ -984,10 +991,20 @@ constraint_expr:  AexprConst
 				{	$$ = nconc( $1, lcons( makeString( "AND"), $3)); }
 			| constraint_expr OR constraint_expr
 				{	$$ = nconc( $1, lcons( makeString( "OR"), $3)); }
+			| NOT constraint_expr
+				{	$$ = lcons( makeString( "NOT"), $2); }
 			| Op constraint_expr
 				{	$$ = lcons( makeString( $1), $2); }
 			| constraint_expr Op
 				{	$$ = lappend( $1, makeString( $2)); }
+			| constraint_expr ISNULL
+				{	$$ = lappend( $1, makeString( "IS NULL")); }
+			| constraint_expr IS NULL_P
+				{	$$ = lappend( $1, makeString( "IS NULL")); }
+			| constraint_expr NOTNULL
+				{	$$ = lappend( $1, makeString( "IS NOT NULL")); }
+			| constraint_expr IS NOT NULL_P
+				{	$$ = lappend( $1, makeString( "IS NOT NULL")); }
 			| constraint_expr IS TRUE_P
 				{	$$ = lappend( $1, makeString( "IS TRUE")); }
 			| constraint_expr IS FALSE_P
@@ -1028,6 +1045,45 @@ OptInherit:  INHERITS '(' relation_name_list ')'		{ $$ = $3; }
  */
 OptArchiveType:  ARCHIVE '=' NONE						{ }
 		| /*EMPTY*/										{ }
+		;
+
+CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
+				{
+					RetrieveStmt *n = makeNode(RetrieveStmt);
+					SubSelect *s = (SubSelect *)$6;
+					n->unique = s->unique;
+					n->targetList = s->targetList;
+					if ($4 != NIL)
+						mapTargetColumns($4, n->targetList);
+					n->into = $3;
+					n->fromClause = s->fromClause;
+					n->whereClause = s->whereClause;
+					n->groupClause = s->groupClause;
+					n->havingClause = s->havingClause;
+					n->unionClause = NULL;
+					n->sortClause = NULL;
+					$$ = (Node *)n;
+				}
+		;
+
+OptCreateAs:  '(' CreateAsList ')'				{ $$ = $2; }
+			| /*EMPTY*/							{ $$ = NULL; }
+		;
+
+CreateAsList:  CreateAsList ',' CreateAsElement	{ $$ = lappend($1, $3); }
+			| CreateAsElement					{ $$ = lcons($1, NIL); }
+		;
+
+CreateAsElement:  ColId
+				{
+					ColumnDef *n = makeNode(ColumnDef);
+					n->colname = $1;
+					n->typename = NULL;
+					n->defval = NULL;
+					n->is_not_null = FALSE;
+					n->constraints = NULL;
+					$$ = (Node *)n;
+				}
 		;
 
 
@@ -2227,18 +2283,28 @@ RetrieveStmt:  SELECT opt_unique res_target_list2
 					n->whereClause = $6;
 					n->groupClause = $7;
 					n->havingClause = $8;
-					n->selectClause = $9;
+					n->unionClause = $9;
 					n->sortClause = $10;
 					$$ = (Node *)n;
 				}
 		;
 
-union_clause:  UNION opt_union select_list		{ $$ = $3; }
-		| /*EMPTY*/								{ $$ = NIL; }
+union_clause:  UNION opt_union select_list
+				{
+					SubSelect *n = lfirst($3);
+					n->unionall = $2;
+					$$ = $3;
+				}
+		| /*EMPTY*/
+				{ $$ = NIL; }
 		;
 
 select_list:  select_list UNION opt_union SubSelect
-				{ $$ = lappend($1, $4); }
+				{
+					SubSelect *n = (SubSelect *)$4;
+					n->unionall = $3;
+					$$ = lappend($1, $4);
+				}
 		| SubSelect
 				{ $$ = lcons($1, NIL); }
 		;
@@ -2249,6 +2315,7 @@ SubSelect:	SELECT opt_unique res_target_list2
 				{
 					SubSelect *n = makeNode(SubSelect);
 					n->unique = $2;
+					n->unionall = FALSE;
 					n->targetList = $3;
 					n->fromClause = $4;
 					n->whereClause = $5;
@@ -2259,9 +2326,9 @@ SubSelect:	SELECT opt_unique res_target_list2
 		;
 
 result:  INTO TABLE relation_name
-				{  $$= $3; }
+				{	$$= $3; }
 		| /*EMPTY*/
-				{  $$ = NULL;  }
+				{	$$ = NULL; }
 		;
 
 opt_union:  ALL									{ $$ = TRUE; }
@@ -2490,7 +2557,7 @@ relation_expr:	relation_name
 				}
 		| relation_name '*'				  %prec '='
 				{
-					/* inheiritance query */
+					/* inheritance query */
 					$$ = makeNode(RelExpr);
 					$$->relname = $1;
 					$$->inh = TRUE;
@@ -2786,12 +2853,61 @@ a_expr_or_null:  a_expr
 					n->val.type = T_Null;
 					$$ = (Node *)n;
 				}
+		;
+
+/* Expressions using row descriptors
+ * Define row_descriptor to allow yacc to break the reduce/reduce conflict
+ *  with singleton expressions.
+ */
+row_expr: '(' row_descriptor ')' IN '(' SubSelect ')'
+				{
+					$$ = NULL;
+				}
+		| '(' row_descriptor ')' NOT IN '(' SubSelect ')'
+				{
+					$$ = NULL;
+				}
+		| '(' row_descriptor ')' '=' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("=", $2, $6);
+				}
+		| '(' row_descriptor ')' '<' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("<", $2, $6);
+				}
+		| '(' row_descriptor ')' '>' '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr("<", $2, $6);
+				}
+		| '(' row_descriptor ')' Op '(' row_descriptor ')'
+				{
+					$$ = makeRowExpr($4, $2, $6);
+				}
+		;
+
+row_descriptor:  row_list ',' a_expr
+				{
+					$$ = lappend($1, $3);
+				}
+		;
+
+row_list:  row_list ',' a_expr
+				{
+					$$ = lappend($1, $3);
+				}
+		| a_expr
+				{
+					$$ = lcons($1, NIL);
+				}
+		;
 
 a_expr:  attr opt_indirection
 				{
 					$1->indirection = $2;
 					$$ = (Node *)$1;
 				}
+		| row_expr
+				{	$$ = $1;  }
 		| AexprConst
 				{	$$ = $1;  }
 		| '-' a_expr %prec UMINUS
@@ -3052,33 +3168,46 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
 		| a_expr IS NOT NULL_P
 				{	$$ = makeA_Expr(NOTNULL, NULL, $1, NULL); }
+		/* IS TRUE, IS FALSE, etc used to be function calls
+		 *  but let's make them expressions to allow the optimizer
+		 *  a chance to eliminate them if a_expr is a constant string.
+		 * - thomas 1997-12-22
+		 */
 		| a_expr IS TRUE_P
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "istrue";
-					n->args = lcons($1,NIL);
-					$$ = (Node *)n;
-				}
-		| a_expr IS FALSE_P
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "isfalse";
-					n->args = lcons($1,NIL);
-					$$ = (Node *)n;
-				}
-		| a_expr IS NOT TRUE_P
-				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "isfalse";
-					n->args = lcons($1,NIL);
-					$$ = (Node *)n;
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "t";
+					n->typename = makeNode(TypeName);
+					n->typename->name = xlateSqlType("bool");
+					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
 		| a_expr IS NOT FALSE_P
 				{
-					FuncCall *n = makeNode(FuncCall);
-					n->funcname = "istrue";
-					n->args = lcons($1,NIL);
-					$$ = (Node *)n;
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "t";
+					n->typename = makeNode(TypeName);
+					n->typename->name = xlateSqlType("bool");
+					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
+				}
+		| a_expr IS FALSE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "f";
+					n->typename = makeNode(TypeName);
+					n->typename->name = xlateSqlType("bool");
+					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
+				}
+		| a_expr IS NOT TRUE_P
+				{
+					A_Const *n = makeNode(A_Const);
+					n->val.type = T_String;
+					n->val.val.str = "f";
+					n->typename = makeNode(TypeName);
+					n->typename->name = xlateSqlType("bool");
+					$$ = makeA_Expr(OP, "=", $1,(Node *)n);
 				}
 		| a_expr BETWEEN AexprConst AND AexprConst
 				{
@@ -3547,6 +3676,8 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = "t";
+					n->typename = makeNode(TypeName);
+					n->typename->name = xlateSqlType("bool");
 					$$ = (Node *)n;
 				}
 		| FALSE_P
@@ -3554,6 +3685,8 @@ AexprConst:  Iconst
 					A_Const *n = makeNode(A_Const);
 					n->val.type = T_String;
 					n->val.val.str = "f";
+					n->typename = makeNode(TypeName);
+					n->typename->name = xlateSqlType("bool");
 					$$ = (Node *)n;
 				}
 		;
@@ -3654,7 +3787,8 @@ SpecialRuleRelation:  CURRENT
 
 %%
 
-static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
+static Node *
+makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 {
 	A_Expr *a = makeNode(A_Expr);
 	a->oper = oper;
@@ -3664,6 +3798,90 @@ static Node *makeA_Expr(int oper, char *opname, Node *lexpr, Node *rexpr)
 	return (Node *)a;
 }
 
+/* makeRowExpr()
+ * Generate separate operator nodes for a single row descriptor expression.
+ * Perhaps this should go deeper in the parser someday... - thomas 1997-12-22
+ */
+static Node *
+makeRowExpr(char *opr, List *largs, List *rargs)
+{
+	Node *expr = NULL;
+	Node *larg, *rarg;
+
+	if (length(largs) != length(rargs))
+		elog(WARN,"Unequal number of entries in row expression",NULL);
+
+	if (lnext(largs) != NIL)
+		expr = makeRowExpr(opr,lnext(largs),lnext(rargs));
+
+	larg = lfirst(largs);
+	rarg = lfirst(rargs);
+
+	if ((strcmp(opr, "=") == 0)
+	 || (strcmp(opr, "<") == 0)
+	 || (strcmp(opr, "<=") == 0)
+	 || (strcmp(opr, ">") == 0)
+	 || (strcmp(opr, ">=") == 0))
+	{
+		if (expr == NULL)
+			expr = makeA_Expr(OP, opr, larg, rarg);
+		else
+			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+	}
+	else if (strcmp(opr, "<>") == 0)
+	{
+		if (expr == NULL)
+			expr = makeA_Expr(OP, opr, larg, rarg);
+		else
+			expr = makeA_Expr(OR, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+	}
+	else
+	{
+		elog(WARN,"Operator '%s' not implemented for row expressions",opr);
+	}
+
+#if FALSE
+	while ((largs != NIL) && (rargs != NIL))
+	{
+		larg = lfirst(largs);
+		rarg = lfirst(rargs);
+
+		if (expr == NULL)
+			expr = makeA_Expr(OP, opr, larg, rarg);
+		else
+			expr = makeA_Expr(AND, NULL, expr, makeA_Expr(OP, opr, larg, rarg));
+
+		largs = lnext(largs);
+		rargs = lnext(rargs);
+	}
+	pprint(expr);
+#endif
+
+	return expr;
+} /* makeRowExpr() */
+
+void
+mapTargetColumns(List *src, List *dst)
+{
+	ColumnDef *s;
+	ResTarget *d;
+
+	if (length(src) != length(dst))
+		elog(WARN,"CREATE TABLE/AS SELECT has mismatched column count",NULL);
+
+	while ((src != NIL) && (dst != NIL))
+	{
+		s = (ColumnDef *)lfirst(src);
+		d = (ResTarget *)lfirst(dst);
+
+		d->name = s->colname;
+
+		src = lnext(src);
+		dst = lnext(dst);
+	}
+
+	return;
+} /* mapTargetColumns() */
 
 static Node *makeIndexable(char *opname, Node *lexpr, Node *rexpr)
 {
