@@ -12,7 +12,7 @@
  *	by PostgreSQL
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.356 2003/11/21 22:32:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/bin/pg_dump/pg_dump.c,v 1.357 2003/11/24 17:25:14 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -4774,13 +4774,13 @@ dumpOneConversion(Archive *fout, ConvInfo *convinfo)
 	selectSourceSchema(convinfo->connamespace->nspname);
 
 	/* Get conversion-specific details */
-	appendPQExpBuffer(query, "SELECT conname,
-					pg_catalog.pg_encoding_to_char(conforencoding) AS conforencoding,
-					pg_catalog.pg_encoding_to_char(contoencoding) AS contoencoding,
-					conproc, condefault
-				FROM pg_catalog.pg_conversion c
-				WHERE c.oid = '%s'::pg_catalog.oid",
-					convinfo->oid);
+	appendPQExpBuffer(query, "SELECT conname, "
+					  "pg_catalog.pg_encoding_to_char(conforencoding) AS conforencoding, "
+					  "pg_catalog.pg_encoding_to_char(contoencoding) AS contoencoding, "
+					  "conproc, condefault "
+					  "FROM pg_catalog.pg_conversion c "
+					  "WHERE c.oid = '%s'::pg_catalog.oid",
+					  convinfo->oid);
 
 	res = PQexec(g_conn, query->data);
 	if (!res ||
