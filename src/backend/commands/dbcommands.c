@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.143 2004/08/30 02:54:38 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/dbcommands.c,v 1.144 2004/08/30 03:50:24 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1135,6 +1135,13 @@ dbase_redo(XLogRecPtr lsn, XLogRecord *record)
 					(errmsg("could not remove database directory \"%s\"",
 							dst_path)));
 		}
+
+		/*
+		 * Force dirty buffers out to disk, to ensure source database is
+		 * up-to-date for the copy.  (We really only need to flush buffers for
+		 * the source database...)
+		 */
+		BufferSync(-1, -1);
 
 #ifndef WIN32
 
