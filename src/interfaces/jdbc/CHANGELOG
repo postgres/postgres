@@ -1,3 +1,6 @@
+Tue May 18 07:00:00 BST 1999
+	- Set the ImageViewer application to use transactions
+
 Tue May 18 00:00:00 BST 1999
 	- Just after committing, I realised why internationalisation isn't
 	  working. This is now fixed (in the Makefile).

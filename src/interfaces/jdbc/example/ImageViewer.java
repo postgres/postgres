@@ -192,6 +192,9 @@ public class ImageViewer implements ItemListener
     // Create a statement
     stat = db.createStatement();
     
+    // Set the connection to use transactions
+    db.setAutoCommit(false);
+    
     // Also, get the LargeObjectManager for this connection
     lom = ((postgresql.Connection)db).getLargeObjectAPI();
     
@@ -209,6 +212,7 @@ public class ImageViewer implements ItemListener
     try {
       stat.executeUpdate("create table images (imgname name,imgoid oid)");
       label.setText("Initialised database");
+      db.commit();
     } catch(SQLException ex) {
       label.setText(ex.toString());
     }
@@ -310,6 +314,7 @@ public class ImageViewer implements ItemListener
 	  // our own thread
 	  stat = db.createStatement();
 	  stat.executeUpdate("insert into images values ('"+name+"',"+oid+")");
+	  db.commit();
 	  
 	  // Finally refresh the names list, and display the current image
 	  ImageViewer.this.refreshList();
@@ -372,9 +377,11 @@ public class ImageViewer implements ItemListener
       
       // Finally delete any entries for that name
       stat.executeUpdate("delete from images where imgname='"+currentImage+"'");
+      db.commit();
       
       label.setText(currentImage+" deleted");
       currentImage=null;
+      db.commit();
       refreshList();
     } catch(SQLException ex) {
       label.setText(ex.toString());
