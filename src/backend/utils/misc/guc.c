@@ -4,7 +4,7 @@
  * Support for grand unified configuration scheme, including SET
  * command, configuration file, and command line options.
  *
- * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.43 2001/06/27 23:31:39 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/utils/misc/guc.c,v 1.44 2001/06/30 22:03:26 petere Exp $
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  * Written by Peter Eisentraut <peter_e@gmx.net>.
@@ -50,6 +50,11 @@ extern char *Syslog_facility;
 extern char *Syslog_ident;
 static bool check_facility(const char *facility);
 #endif
+
+static char *default_iso_level_string;
+
+static bool check_defaultxactisolevel(const char *value);
+static void assign_defaultxactisolevel(const char *value);
 
 /*
  * Debugging options
@@ -355,6 +360,9 @@ static struct config_real
 static struct config_string
 			ConfigureNamesString[] =
 {
+	{"default_transaction_isolation", PGC_USERSET, &default_iso_level_string,
+	 "read committed", check_defaultxactisolevel, assign_defaultxactisolevel},
+
 	{"dynamic_library_path", PGC_SUSET, &Dynamic_library_path,
 	 "$libdir", NULL, NULL},
 
@@ -1092,3 +1100,25 @@ check_facility(const char *facility)
 }
 
 #endif
+
+
+
+static bool
+check_defaultxactisolevel(const char *value)
+{
+	return (strcasecmp(value, "read committed") == 0
+			|| strcasecmp(value, "serializable") == 0)
+		? true : false;
+}
+
+
+static void
+assign_defaultxactisolevel(const char *value)
+{
+	if (strcasecmp(value, "serializable") == 0)
+		DefaultXactIsoLevel = XACT_SERIALIZABLE;
+	else if (strcasecmp(value, "read committed") == 0)
+		DefaultXactIsoLevel = XACT_READ_COMMITTED;
+	else
+		elog(ERROR, "bogus transaction isolation level");
+}

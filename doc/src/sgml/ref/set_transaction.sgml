@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.3 2000/11/24 20:16:38 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/ref/set_transaction.sgml,v 1.4 2001/06/30 22:03:25 petere Exp $ -->
 <refentry id="SQL-SET-TRANSACTION">
  <docinfo>
   <date>2000-11-24</date>
@@ -71,6 +71,18 @@ SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL { READ COMMITTED | SE
      </listitem>
     </varlistentry>
    </variablelist>
+  </para>
+ </refsect1>
+
+ <refsect1>
+  <title>Notes</title>
+
+  <para>
+   The session default transaction isolation level can also be set
+   with the command <literal>SET default_transaction_isolation =
+   '<replaceable>value</replaceable>'</literal> and in the
+   configuration file.  Consult the <citetitle>Administrator's
+   Guide</citetitle> for more information.
   </para>
  </refsect1>
 

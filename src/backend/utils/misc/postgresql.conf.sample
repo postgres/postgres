@@ -166,6 +166,7 @@
 #
 #	Misc
 #
+#default_transaction_isolation = 'read committed'
 #sql_inheritance = true
 #australian_timezones = false
 #deadlock_timeout = 1000

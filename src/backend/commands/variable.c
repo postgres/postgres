@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.50 2001/06/12 22:54:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/variable.c,v 1.51 2001/06/30 22:03:25 petere Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,9 +46,6 @@ static bool show_timezone(void);
 static bool reset_timezone(void);
 static bool parse_timezone(char *);
 
-static bool show_DefaultXactIsoLevel(void);
-static bool reset_DefaultXactIsoLevel(void);
-static bool parse_DefaultXactIsoLevel(char *);
 static bool show_XactIsoLevel(void);
 static bool reset_XactIsoLevel(void);
 static bool parse_XactIsoLevel(char *);
@@ -449,69 +446,6 @@ reset_timezone(void)
 /* SET TRANSACTION */
 
 static bool
-parse_DefaultXactIsoLevel(char *value)
-{
-#if 0
-	TransactionState s = CurrentTransactionState;
-
-#endif
-
-	if (value == NULL)
-	{
-		reset_DefaultXactIsoLevel();
-		return TRUE;
-	}
-
-#if 0
-	if (s->state != TRANS_DEFAULT)
-	{
-		elog(ERROR, "ALTER SESSION/SET TRANSACTION ISOLATION LEVEL"
-			 " can not be called within a transaction");
-		return TRUE;
-	}
-#endif
-
-	if (strcasecmp(value, "SERIALIZABLE") == 0)
-		DefaultXactIsoLevel = XACT_SERIALIZABLE;
-	else if (strcasecmp(value, "COMMITTED") == 0)
-		DefaultXactIsoLevel = XACT_READ_COMMITTED;
-	else
-		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
-
-	return TRUE;
-}
-
-static bool
-show_DefaultXactIsoLevel(void)
-{
-
-	if (DefaultXactIsoLevel == XACT_SERIALIZABLE)
-		elog(NOTICE, "Default TRANSACTION ISOLATION LEVEL is SERIALIZABLE");
-	else
-		elog(NOTICE, "Default TRANSACTION ISOLATION LEVEL is READ COMMITTED");
-	return TRUE;
-}
-
-static bool
-reset_DefaultXactIsoLevel(void)
-{
-#if 0
-	TransactionState s = CurrentTransactionState;
-
-	if (s->state != TRANS_DEFAULT)
-	{
-		elog(ERROR, "ALTER SESSION/SET TRANSACTION ISOLATION LEVEL"
-			 " can not be called within a transaction");
-		return TRUE;
-	}
-#endif
-
-	DefaultXactIsoLevel = XACT_READ_COMMITTED;
-
-	return TRUE;
-}
-
-static bool
 parse_XactIsoLevel(char *value)
 {
 
@@ -530,7 +464,7 @@ parse_XactIsoLevel(char *value)
 
 	if (strcasecmp(value, "SERIALIZABLE") == 0)
 		XactIsoLevel = XACT_SERIALIZABLE;
-	else if (strcasecmp(value, "COMMITTED") == 0)
+	else if (strcasecmp(value, "READ COMMITTED") == 0)
 		XactIsoLevel = XACT_READ_COMMITTED;
 	else
 		elog(ERROR, "Bad TRANSACTION ISOLATION LEVEL (%s)", value);
@@ -711,8 +645,6 @@ SetPGVariable(const char *name, const char *value)
 		parse_datestyle(mvalue);
 	else if (strcasecmp(name, "timezone") == 0)
 		parse_timezone(mvalue);
-	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
-		parse_DefaultXactIsoLevel(mvalue);
 	else if (strcasecmp(name, "XactIsoLevel") == 0)
 		parse_XactIsoLevel(mvalue);
 	else if (strcasecmp(name, "client_encoding") == 0)
@@ -737,8 +669,6 @@ GetPGVariable(const char *name)
 		show_datestyle();
 	else if (strcasecmp(name, "timezone") == 0)
 		show_timezone();
-	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
-		show_DefaultXactIsoLevel();
 	else if (strcasecmp(name, "XactIsoLevel") == 0)
 		show_XactIsoLevel();
 	else if (strcasecmp(name, "client_encoding") == 0)
@@ -752,7 +682,6 @@ GetPGVariable(const char *name)
 		ShowAllGUCConfig();
 		show_datestyle();
 		show_timezone();
-		show_DefaultXactIsoLevel();
 		show_XactIsoLevel();
 		show_client_encoding();
 		show_server_encoding();
@@ -772,8 +701,6 @@ ResetPGVariable(const char *name)
 		reset_datestyle();
 	else if (strcasecmp(name, "timezone") == 0)
 		reset_timezone();
-	else if (strcasecmp(name, "DefaultXactIsoLevel") == 0)
-		reset_DefaultXactIsoLevel();
 	else if (strcasecmp(name, "XactIsoLevel") == 0)
 		reset_XactIsoLevel();
 	else if (strcasecmp(name, "client_encoding") == 0)
@@ -784,8 +711,6 @@ ResetPGVariable(const char *name)
 		reset_random_seed();
 	else if (strcasecmp(name, "all") == 0)
 	{
-		reset_DefaultXactIsoLevel();
-		reset_XactIsoLevel();
 		reset_random_seed();
 		/* reset_server_encoding(); */
 		reset_client_encoding();
@@ -793,7 +718,8 @@ ResetPGVariable(const char *name)
 		reset_timezone();
 
 		ResetAllOptions(false);
-	} else
+	}
+	else
 		SetConfigOption(name, NULL,
 						superuser() ? PGC_SUSET : PGC_USERSET,
 						false);

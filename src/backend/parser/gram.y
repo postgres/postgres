@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.232 2001/06/23 00:07:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.233 2001/06/30 22:03:25 petere Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -752,7 +752,7 @@ VariableSetStmt:  SET ColId TO var_value
         | SET SESSION CHARACTERISTICS AS TRANSACTION ISOLATION LEVEL opt_level
 				{
 					VariableSetStmt *n = makeNode(VariableSetStmt);
-					n->name  = "DefaultXactIsoLevel";
+					n->name  = "default_transaction_isolation";
 					n->value = $8;
 					$$ = (Node *) n;
 				}
@@ -772,7 +772,7 @@ VariableSetStmt:  SET ColId TO var_value
 				}
 		;
 
-opt_level:  READ COMMITTED					{ $$ = "committed"; }
+opt_level:  READ COMMITTED					{ $$ = "read committed"; }
 		| SERIALIZABLE						{ $$ = "serializable"; }
 		;
 

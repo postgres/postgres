@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.71 2001/06/30 21:15:57 darcy Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.72 2001/06/30 22:03:25 petere Exp $
 -->
 
 <Chapter Id="runtime">
@@ -997,6 +997,29 @@ env PGOPTIONS='-c geqo=off' psql
      </varlistentry>
 
      <varlistentry>
+      <indexterm>
+       <primary>transaction isolation level</primary>
+      </indexterm>
+
+      <term>DEFAUL_TRANSACTION_ISOLATION (<type>string</type>)</term>
+      <listitem>
+       <para>
+        Each SQL transaction has an isolation level, which can be
+        either <quote>read committed</quote> or
+        <quote>serializable</quote>.  This parameter controls what the
+        isolation level of each new transaction is set to.  The
+        default is read committed.
+       </para>
+
+       <para>
+        Consult the <citetitle>PostgreSQL User's Guide</citetitle> and
+        the command <command>SET TRANSACTION</command> for more
+        information.
+       </para>
+      </listitem>
+     </varlistentry>
+
+     <varlistentry>
       <term>DYNAMIC_LIBRARY_PATH (<type>string</type>)</term>
       <listitem>
        <para>
@@ -1051,9 +1074,9 @@ dynamic_library_path = '/usr/local/lib:/home/my_project/lib:$libdir:$libdir/cont
         will use the <function>fsync()</> system call in several
         places to make sure that updates are physically written to
         disk and do not hang around in the kernel buffer cache. This
-        increases the chance that a database installation will still
-        be usable after an operating system or hardware crash by a
-        large amount. (Crashes of the database server itself do
+        increases the chance by a large amount that a database
+        installation will still be usable after an operating system or
+        hardware crash.  (Crashes of the database server itself do
         <emphasis>not</> affect this consideration.)
        </para>
 
