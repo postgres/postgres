@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: rel.h,v 1.46 2001/06/01 02:41:36 tgl Exp $
+ * $Id: rel.h,v 1.47 2001/06/19 05:11:50 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -199,7 +199,7 @@ typedef Relation *RelationPtr;
 #define RelationGetRelationName(relation) \
 (\
 	(strncmp(RelationGetPhysicalRelationName(relation), \
-			 "pg_temp.", 8) != 0) \
+			 "pg_temp", 7) != 0) \
 	? \
 		RelationGetPhysicalRelationName(relation) \
 	: \
