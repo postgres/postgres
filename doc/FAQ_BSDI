@@ -2,8 +2,9 @@ This outlines modifications to BSD/OS for running PostgreSQL:
 
 1)  How to increase resource limits
 2)  How to increase the number of shared memory buffers
+3)  How to increasing the number of semaphores
 
-Bruce Momjian (pgman@candle.pha.pa.us)  2000-06-09
+Bruce Momjian (pgman@candle.pha.pa.us)  2000-07-7
 
 ---------------------------------------------------------------------------
 
@@ -44,3 +45,35 @@ plus add 1 for every additional 4MB of shared memory you desire.
 /sys/i386/i386/i386_param.c:28:#define  SYSPTSIZE 0        /* dynamically...
 
 sysptsize can not be changed by sysctl on the fly.
+
+---------------------------------------------------------------------------
+
+3)  How to increasing the number of semaphores.
+
+You may need to increase the number of sysv semaphores. By default,
+PostgreSQL allocates 32 semaphores, one for each backend connection. 
+This is just over half the default system total of 60.
+
+The defaults are in /sys/sys/sem.h:
+
+/* Configuration parameters */
+#ifndef SEMMNI
+#define SEMMNI  10              /* # of semaphore identifiers */
+#endif
+#ifndef SEMMNS
+#define SEMMNS  60              /* # of semaphores in system */
+#endif
+#ifndef SEMUME
+#define SEMUME  10              /* max # of undo entries per process */
+#endif
+#ifndef SEMMNU
+#define SEMMNU  30              /* # of undo structures in system */
+#endif
+
+Set the values you want in your kernel config file, e.g.:
+
+options "SEMMNI=40"
+options "SEMMNS=240"
+options "SEMUME=40"
+options "SEMMNU=120"
+

@@ -1,4 +1,3 @@
-<PRE>
 =======================================================
 Frequently Asked Questions (FAQ) for PostgreSQL  V6.5
 HP-UX Specific
@@ -172,4 +171,3 @@ Postgres 6.5 by not depending on the system versions of those routines.
 Any other error is cause for suspicion.  In particular, if you see
 failures in the datetime test on HPUX 9, you probably forgot to
 install the libm patch PHSS_4630 --- see item 1.1 above.
-</PRE>
