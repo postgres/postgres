@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.13 1996/10/13 04:01:05 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.14 1996/10/13 04:49:48 momjian Exp $
  *
  * NOTES
  *
@@ -47,25 +47,16 @@
 #include <sys/stat.h>		/* for umask */
 #include <sys/time.h>
 #include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
-
-#if defined(USES_WINSOCK)
-# include <winsock.h>
-# include <limits.h>
-# define MAXINT        INT_MAX
+#ifndef MAXHOSTNAMELEN
+#include <netdb.h>		/* for MAXHOSTNAMELEN on some */
+#endif
+#if defined(USE_LIMITS_H)
+# include <machine/limits.h>
+# define MAXINT		INT_MAX
 #else
-# include <netdb.h>		/* for MAXHOSTNAMELEN on some */
-# ifndef MAXHOSTNAMELEN		/* for MAXHOSTNAMELEN everywhere else */
-#  include <arpa/nameser.h>
-#  define MAXHOSTNAMELEN		MAXDNAME
-# endif
-# if defined(USE_LIMITS_H)
-#  include <machine/limits.h>
-#  define MAXINT		INT_MAX
-# else
-#  include <values.h>
-# endif /* !USE_LIMITS_H */
-# include <sys/wait.h>
-#endif /* USES_WINSOCK */
+# include <values.h>
+#endif /* !USE_LIMITS_H */
+#include <sys/wait.h>
 
 #include <errno.h>
 #include <fcntl.h>

@@ -28,8 +28,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/param.h>	/* for MAXHOSTNAMELEN on most */
-#if defined(PORTNAME_sparc_solaris) || defined(PORTNAME_i386_solaris)
+#ifndef  MAXHOSTNAMELEN
 #include <netdb.h>	/* for MAXHOSTNAMELEN on some */
+#endif
 #endif
 
 #include "tmp/postgres.h"

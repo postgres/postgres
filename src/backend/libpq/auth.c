@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.3 1996/10/12 07:47:08 bryanh Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/libpq/auth.c,v 1.4 1996/10/13 04:49:32 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -52,7 +52,10 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <sys/param.h>	/* for MAX{HOSTNAME,PATH}LEN, NOFILE */
+#include <sys/param.h>	/* for MAXHOSTNAMELEN on most */
+#ifndef  MAXHOSTNAMELEN
+#include <netdb.h>	/* for MAXHOSTNAMELEN on some */
+#endif
 #include <pwd.h>
 #include <ctype.h>		        /* isspace() declaration */
 

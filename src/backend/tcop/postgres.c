@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.9 1996/10/04 20:16:32 scrappy Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/tcop/postgres.c,v 1.10 1996/10/13 04:49:57 momjian Exp $
  *
  * NOTES
  *    this is the "main" module of the postgres backend and
@@ -27,13 +27,9 @@
 #include <time.h>
 #include <sys/time.h>
 #include <sys/param.h>		/* for MAXHOSTNAMELEN on most */
-#ifndef WIN32
+#ifndef MAXHOSTNAMELEN
 #include <netdb.h>		/* for MAXHOSTNAMELEN on some */
-#ifndef MAXHOSTNAMELEN		/* for MAXHOSTNAMELEN everywhere else */
-#include <arpa/nameser.h>
-#define MAXHOSTNAMELEN		MAXDNAME
 #endif
-#endif /* WIN32 */
 #include <errno.h>
 #ifdef PORTNAME_aix
 #include <sys/select.h>
@@ -1269,7 +1265,7 @@ PostgresMain(int argc, char *argv[])
      */
     if (IsUnderPostmaster == false) {
 	puts("\nPOSTGRES backend interactive interface");
-	puts("$Revision: 1.9 $ $Date: 1996/10/04 20:16:32 $");
+	puts("$Revision: 1.10 $ $Date: 1996/10/13 04:49:57 $");
     }
     
     /* ----------------
