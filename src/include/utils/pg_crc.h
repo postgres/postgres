@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_crc.h,v 1.2 2001/03/22 04:01:14 momjian Exp $
+ * $Id: pg_crc.h,v 1.3 2001/03/23 18:42:12 tgl Exp $
  */
 #ifndef PG_CRC_H
 #define PG_CRC_H
@@ -78,16 +78,23 @@ extern const uint32 crc_table1[];
 
 #else							/* int64 works */
 
+/* decide if we need to decorate constants */
+#ifdef HAVE_LL_CONSTANTS
+#define INT64CONST(x)  x##LL
+#else
+#define INT64CONST(x)  x
+#endif
+
 typedef struct crc64
 {
 	uint64		crc0;
 } crc64;
 
 /* Initialize a CRC accumulator */
-#define INIT_CRC64(crc) ((crc).crc0 = (uint64) 0xffffffffffffffff)
+#define INIT_CRC64(crc) ((crc).crc0 = INT64CONST(0xffffffffffffffff))
 
 /* Finish a CRC calculation */
-#define FIN_CRC64(crc)	((crc).crc0 ^= (uint64) 0xffffffffffffffff)
+#define FIN_CRC64(crc)	((crc).crc0 ^= INT64CONST(0xffffffffffffffff))
 
 /* Accumulate some (more) bytes into a CRC */
 #define COMP_CRC64(crc, data, len)	\

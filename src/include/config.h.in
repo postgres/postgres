@@ -8,7 +8,7 @@
  * or in config.h afterwards.  Of course, if you edit config.h, then your
  * changes will be overwritten the next time you run configure.
  *
- * $Id: config.h.in,v 1.160 2001/03/01 05:05:29 ishii Exp $
+ * $Id: config.h.in,v 1.161 2001/03/23 18:42:12 tgl Exp $
  */
 
 #ifndef CONFIG_H
@@ -590,6 +590,9 @@ extern int fdatasync(int fildes);
 
 /* Set to 1 if type "long long int" works and is 64 bits */
 #undef HAVE_LONG_LONG_INT_64
+
+/* Set to 1 if type "long long int" constants should be suffixed by LL */
+#undef HAVE_LL_CONSTANTS
 
 /* Define this as the appropriate snprintf format for 64-bit ints, if any */
 #undef INT64_FORMAT
