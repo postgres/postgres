@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Aug  8 19:50:27 EDT 2002
+Last updated:		Tue Aug 13 00:32:10 EDT 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -159,7 +159,8 @@ Indexes
 * Be smarter about insertion of already-ordered data into btree index
 * -Add deleted bit to index tuples to reduce heap access
 * Prevent index uniqueness checks when UPDATE does not modifying column
-* Add bitmap indexes [performance]
+* Use bitmaps to fetch heap pages in sequential order [performance]
+* Use bitmaps to combine existing indexes [performance]
 * Improve handling of index scans for NULL
 * Allow SELECT * FROM tab WHERE int2col = 4 to use int2col index, int8,
   float4, numeric/decimal too [optimizer]
