@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.25 1998/08/25 21:24:10 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/init/globals.c,v 1.26 1998/10/16 06:05:16 momjian Exp $
  *
  * NOTES
  *	  Globals used all over the place should be declared here and not
@@ -46,7 +46,7 @@ int			MyProcPid;
 struct Port *MyProcPort;
 long		MyCancelKey;
 
-char	   *DataDir;
+char	   *DataDir = NULL;
 
  /*
   * The PGDATA directory user says to use, or defaults to via environment

@@ -339,6 +339,11 @@ read_pg_options(SIGNAL_ARGS)
 	char	   *s,
 			   *p;
 
+	if (!DataDir) {
+	    fprintf(stderr, "read_pg_options: DataDir not defined\n");
+	    return;
+	}
+
 	sprintf(buffer, "%s/%s", DataDir, "pg_options");
 	if ((fd = open(buffer, O_RDONLY)) < 0)
 		return;
