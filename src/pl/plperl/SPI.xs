@@ -94,3 +94,7 @@ spi_spi_exec_query(query, ...)
 		RETVAL = newRV_noinc((SV*) ret_hash);
 	OUTPUT:
 		RETVAL
+
+
+BOOT:
+    items = 0;  /* avoid 'unused variable' warning */
