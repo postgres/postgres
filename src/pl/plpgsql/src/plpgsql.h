@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.43 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/plpgsql.h,v 1.44 2004/02/25 18:10:51 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -694,5 +694,6 @@ extern void plpgsql_push_back_token(int token);
 extern int	plpgsql_scanner_lineno(void);
 extern void plpgsql_scanner_init(const char *str, int functype);
 extern void plpgsql_scanner_finish(void);
+extern char *plpgsql_get_string_value(void);
 
 #endif   /* PLPGSQL_H */

@@ -4,7 +4,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.31 2004/02/24 22:06:32 tgl Exp $
+ *    $PostgreSQL: pgsql/src/pl/plpgsql/src/scan.l,v 1.32 2004/02/25 18:10:51 tgl Exp $
  *
  *    This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -57,6 +57,8 @@ static int	lookahead_token;
 static bool have_lookahead_token;
 static const char *cur_line_start;
 static int	cur_line_num;
+static char    *dolqstart;      /* current $foo$ quote start string */
+static int	dolqlen;			/* signal to plpgsql_get_string_value */
 
 int	plpgsql_SpaceScanned = 0;
 %}
@@ -70,7 +72,9 @@ int	plpgsql_SpaceScanned = 0;
 %option case-insensitive
 
 
-%x	IN_STRING IN_COMMENT
+%x	IN_STRING
+%x	IN_COMMENT
+%x	IN_DOLLARQUOTE
 
 digit			[0-9]
 ident_start		[A-Za-z\200-\377_]
@@ -83,6 +87,14 @@ identifier		({ident_start}{ident_cont}*|{quoted_ident})
 param			\${digit}+
 
 space			[ \t\n\r\f]
+
+/* $foo$ style quotes ("dollar quoting")
+ * copied straight from the backend SQL parser
+ */
+dolq_start		[A-Za-z\200-\377_]
+dolq_cont		[A-Za-z\200-\377_0-9]
+dolqdelim		\$({dolq_start}{dolq_cont}*)?\$
+dolqinside		[^$]+
 
 %%
     /* ----------
@@ -97,7 +109,7 @@ space			[ \t\n\r\f]
      * Reset the state when entering the scanner
      * ----------
      */
-    BEGIN INITIAL;
+    BEGIN(INITIAL);
     plpgsql_SpaceScanned = 0;
 
     /* ----------
@@ -247,9 +259,9 @@ dump			{ return O_DUMP;			}
 --[^\r\n]*		;
 
 \/\*			{ start_lineno = plpgsql_scanner_lineno();
-			  BEGIN IN_COMMENT;
+			  BEGIN(IN_COMMENT);
 			}
-<IN_COMMENT>\*\/	{ BEGIN INITIAL; plpgsql_SpaceScanned = 1; }
+<IN_COMMENT>\*\/	{ BEGIN(INITIAL); plpgsql_SpaceScanned = 1; }
 <IN_COMMENT>\n		;
 <IN_COMMENT>.		;
 <IN_COMMENT><<EOF>>	{
@@ -260,7 +272,7 @@ dump			{ return O_DUMP;			}
 			}
 
     /* ----------
-     * Collect anything inside of ''s and return one STRING
+     * Collect anything inside of ''s and return one STRING token
 	 *
 	 * Hacking yytext/yyleng here lets us avoid using yymore(), which is
 	 * a win for performance.  It's safe because we know the underlying
@@ -270,15 +282,18 @@ dump			{ return O_DUMP;			}
 '			{
 			  start_lineno = plpgsql_scanner_lineno();
 			  start_charpos = yytext;
-			  BEGIN IN_STRING;
+			  BEGIN(IN_STRING);
 			}
 <IN_STRING>\\.		{ }
 <IN_STRING>\\		{ /* can only happen with \ at EOF */ }
 <IN_STRING>''		{ }
 <IN_STRING>'		{
-			  yyleng -= (yytext - start_charpos);
+			  /* tell plpgsql_get_string_value it's not a dollar quote */
+			  dolqlen = 0;
+			  /* adjust yytext/yyleng to describe whole string token */
+			  yyleng += (yytext - start_charpos);
 			  yytext = start_charpos;
-			  BEGIN INITIAL;
+			  BEGIN(INITIAL);
 			  return T_STRING;
 			}
 <IN_STRING>[^'\\]+	{ }
@@ -287,6 +302,43 @@ dump			{ return O_DUMP;			}
 				ereport(ERROR,
 						(errcode(ERRCODE_DATATYPE_MISMATCH),
 						 errmsg("unterminated string")));
+			}
+
+{dolqdelim}		{
+			  start_lineno = plpgsql_scanner_lineno();
+			  start_charpos = yytext;
+			  dolqstart = pstrdup(yytext);
+			  BEGIN(IN_DOLLARQUOTE);
+			}
+<IN_DOLLARQUOTE>{dolqdelim} {
+			  if (strcmp(yytext, dolqstart) == 0)
+			  {
+					pfree(dolqstart);
+					/* tell plpgsql_get_string_value it is a dollar quote */
+					dolqlen = yyleng;
+					/* adjust yytext/yyleng to describe whole string token */
+					yyleng += (yytext - start_charpos);
+					yytext = start_charpos;
+					BEGIN(INITIAL);
+					return T_STRING;
+			  }
+			  else
+			  {
+					/*
+					 * When we fail to match $...$ to dolqstart, transfer
+					 * the $... part to the output, but put back the final
+					 * $ for rescanning.  Consider $delim$...$junk$delim$
+					 */
+					yyless(yyleng-1);
+			  }
+			}
+<IN_DOLLARQUOTE>{dolqinside} { }
+<IN_DOLLARQUOTE>.	{ /* needed for $ inside the quoted text */ }
+<IN_DOLLARQUOTE><<EOF>>	{ 
+				plpgsql_error_lineno = start_lineno;
+				ereport(ERROR,
+						(errcode(ERRCODE_DATATYPE_MISMATCH),
+						 errmsg("unterminated dollar-quoted string")));
 			}
 
     /* ----------
@@ -429,7 +481,6 @@ plpgsql_scanner_init(const char *str, int functype)
 	BEGIN(INITIAL);
 }
 
-
 /*
  * Called after parsing is done to clean up after plpgsql_scanner_init()
  */
@@ -438,4 +489,55 @@ plpgsql_scanner_finish(void)
 {
 	yy_delete_buffer(scanbufhandle);
 	pfree(scanbuf);
+}
+
+/*
+ * Called after a T_STRING token is read to get the string literal's value
+ * as a malloc'd string.  (We make this a separate call because in many
+ * scenarios there's no need to get the decoded value.)
+ *
+ * Note: we expect the literal to be the most recently lexed token.  This
+ * would not work well if we supported multiple-token pushback or if 
+ * plpgsql_yylex() wanted to read ahead beyond a T_STRING token.
+ */
+char *
+plpgsql_get_string_value(void)
+{
+	char	   *result;
+	const char *cp;
+	int			len;
+
+	if (dolqlen > 0)
+	{
+		/* Token is a $foo$...$foo$ string */
+		len = yyleng - 2 * dolqlen;
+		Assert(len >= 0);
+		result = (char *) malloc(len + 1);
+		memcpy(result, yytext + dolqlen, len);
+		result[len] = '\0';
+	}
+	else
+	{
+		/* Token is a '...' string */
+		result = (char *) malloc(yyleng + 1);	/* more than enough room */
+		len = 0;
+		for (cp = yytext; *cp; cp++)
+		{
+			if (*cp == '\'')
+			{
+				if (cp[1] == '\'')
+					result[len++] = *cp++;
+				/* else it must be string start or end quote */
+			}
+			else if (*cp == '\\')
+			{
+				if (cp[1] != '\0')	/* just a paranoid check */
+					result[len++] = *(++cp);
+			}
+			else
+				result[len++] = *cp;
+		}
+		result[len] = '\0';
+	}
+	return result;
 }

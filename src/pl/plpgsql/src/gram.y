@@ -4,7 +4,7 @@
  *						  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.50 2003/12/23 00:01:57 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/gram.y,v 1.51 2004/02/25 18:10:51 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1235,7 +1235,7 @@ stmt_raise		: K_RAISE lno raise_level raise_msg raise_params ';'
 
 raise_msg		: T_STRING
 					{
-						$$ = strdup(yytext);
+						$$ = plpgsql_get_string_value();
 					}
 				;
 
