@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: builtins.h,v 1.18 1997/05/14 04:33:41 thomas Exp $
+ * $Id: builtins.h,v 1.19 1997/06/23 15:03:38 thomas Exp $
  *
  * NOTES
  *    This should normally only be included by fmgr.h.
@@ -481,8 +481,6 @@ extern struct varlena *byteaSetByte(struct varlena *v, int32 n, int32 newByte);
 extern struct varlena *byteaSetBit(struct varlena *v, int32 n, int32 newBit);
 
 /* datetime.c */
-#if USE_NEW_DATE
-
 extern DateADT date_in(char *datestr);
 extern char *date_out(DateADT dateVal);
 extern bool date_eq(DateADT dateVal1, DateADT dateVal2);
@@ -501,29 +499,6 @@ extern DateTime *date_datetime(DateADT date);
 extern DateADT datetime_date(DateTime *datetime);
 extern DateTime *datetime_datetime(DateADT date, TimeADT *time);
 extern DateADT abstime_date(AbsoluteTime abstime);
-
-#else
-
-extern int4 date_in(char *datestr);
-extern char *date_out(int4 dateVal);
-extern bool date_eq(int4 dateVal1, int4 dateVal2);
-extern bool date_ne(int4 dateVal1, int4 dateVal2);
-extern bool date_lt(int4 dateVal1, int4 dateVal2);
-extern bool date_le(int4 dateVal1, int4 dateVal2);
-extern bool date_gt(int4 dateVal1, int4 dateVal2);
-extern bool date_ge(int4 dateVal1, int4 dateVal2);
-extern int date_cmp(int4 dateVal1, int4 dateVal2);
-extern int4 date_larger(int4 dateVal1, int4 dateVal2);
-extern int4 date_smaller(int4 dateVal1, int4 dateVal2);
-extern int32 date_mi(int4 dateVal1, int4 dateVal2);
-extern int4 date_pli(int4 dateVal, int32 days);
-extern int4 date_mii(int4 dateVal, int32 days);
-extern DateTime *date_datetime(int4 date);
-extern int4 datetime_date(DateTime *datetime);
-extern DateTime *datetime_datetime(int4 date, TimeADT *time);
-extern int4 abstime_date(AbsoluteTime abstime);
-
-#endif
 
 extern TimeADT *time_in(char *timestr);
 extern char *time_out(TimeADT *time);

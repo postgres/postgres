@@ -8,7 +8,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dt.h,v 1.11 1997/06/20 17:15:00 thomas Exp $
+ * $Id: dt.h,v 1.12 1997/06/23 15:03:45 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -34,15 +34,6 @@ typedef struct {
     double      time;   /* all time units other than months and years */
     int4        month;  /* months and years, after time for alignment */
 } TimeSpan;
-
-
-/*
- * USE_NEW_DATE enables a more efficient Julian day-based date type.
- * USE_NEW_TIME enables a more efficient double-based time type.
- */
-
-#define USE_NEW_DATE	1
-#define USE_NEW_TIME	1
 
 
 /* ----------------------------------------------------------------
