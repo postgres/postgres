@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.30 2000/05/02 20:01:51 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.31 2000/07/14 15:26:21 thomas Exp $
 -->
 
  <chapter id="datatype">
@@ -159,7 +159,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.30 2000/05/02 20:01:51 th
       </row>
       <row>
        <entry>time</entry>
-       <entry>time</entry>
+       <entry>time [ without time zone ]</entry>
        <entry>time of day</entry>
       </row>
       <row>
@@ -169,7 +169,7 @@ $Header: /cvsroot/pgsql/doc/src/sgml/datatype.sgml,v 1.30 2000/05/02 20:01:51 th
       </row>
       <row>
        <entry>timestamp</entry>
-       <entry>timestamp with time zone</entry>
+       <entry>timestamp [ with time zone ]</entry>
        <entry>date/time</entry>
       </row>
       <row>
@@ -581,7 +581,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>1 microsec / 14 digits</entry>
        </row>
        <row>
-        <entry><type>timestamp with time zone</type></entry>
+        <entry><type>timestamp [ with time zone ]</type></entry>
         <entry>date and time with time zone</entry>
         <entry>8 bytes</entry>
         <entry>1903 AD</entry>
@@ -605,7 +605,7 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
         <entry>1 day</entry>
        </row>
        <row>
-        <entry><type>time</type></entry>
+        <entry><type>time [ without time zone ]</type></entry>
         <entry>times of day only</entry>
         <entry>4 bytes</entry>
         <entry>00:00:00.00</entry>
@@ -843,7 +843,13 @@ CREATE TABLE <replaceable class="parameter">tablename</replaceable> (<replaceabl
     </sect3>
 
     <sect3>
-     <title>time</title>
+     <title>time [ without time zone ]</title>
+
+     <para>
+      Per SQL99, this type can be referenced as <type>time</type> and
+      as <type>time without time zone</type>.
+     </para>
+
      <para>
       The following are valid <type>time</type> inputs.
 

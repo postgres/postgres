@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.22 2000/06/20 18:04:18 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/syntax.sgml,v 1.23 2000/07/14 15:26:21 thomas Exp $
 -->
 
  <chapter id="syntax">
@@ -135,18 +135,18 @@ EXECUTE EXISTS EXTRACT
 FETCH FLOAT FOR FROM FULL
 GRANT 
 HAVING
-IN INNER INSERT INTERVAL INTO IS
+IN INNER INSERT INTERVAL INTO INOUT IS
 JOIN 
 LEADING LEFT LIKE LOCAL
 NAMES NATIONAL NATURAL NCHAR NO NOT NULL 
-ON OR OUTER
+ON OR OUT OUTER
 PARTIAL PRIMARY PRIVILEGES PROCEDURE PUBLIC
 REFERENCES REVOKE RIGHT ROLLBACK
-SELECT SET SUBSTRING
+SELECT SESSION SET SUBSTRING
 TO TRAILING TRIM 
 UNION UNIQUE UPDATE USING
 VALUES VARCHAR VARYING VIEW
-WHERE WITH WORK 
+WHERE WITH WITHOUT WORK 
      </programlisting>
     </para>
 
@@ -280,7 +280,7 @@ VALID VERSION
 
      <programlisting>
 ABSOLUTE ACTION
-CONSTRAINTS
+CHARACTERISTICS CONSTRAINTS
 DAY DEFERRABLE DEFERRED 
 HOUR
 IMMEDIATE INITIALLY INSENSITIVE ISOLATION 
@@ -289,9 +289,9 @@ LANGUAGE LEVEL
 MATCH MINUTE MONTH
 NEXT 
 OF ONLY OPTION 
-PENDANT PRIOR PRIVILEGES 
+PATH PENDANT PRIOR PRIVILEGES 
 READ RELATIVE RESTRICT 
-SCROLL SECOND
+SCHEMA SCROLL SECOND
 TIME TIMESTAMP TIMEZONE_HOUR TIMEZONE_MINUTE TRIGGER 
 YEAR
 ZONE
@@ -349,18 +349,21 @@ UNCOMMITTED UNNAMED
     <programlisting>
 -- This is a standard SQL comment
     </programlisting>
+   </para>
 
-We also support C-style block comments, e.g.:
+   <para>
+    We also support C-style block comments, e.g.:
 
     <programlisting>
-/* multi
-   line
-   comment
+/* multi-line comment
+ * with nesting: /* nested block comment */
  */
     </programlisting>
 
-A comment beginning with "/*" extends to the first occurrence of "*/".
-
+    where the comment begins with "<literal>/*</literal>" and extends
+    to the first occurrence of "<literal>*/</literal>". These block
+    comments nest, as specified in SQL99, so that one can comment out
+    larger blocks of code which may contain existing block comments.
    </para>
   </sect1>
 

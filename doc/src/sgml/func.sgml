@@ -1527,7 +1527,6 @@ Not defined by this name. Implements the intersection operator '#'
   </sect1>
 
   <sect1>
-
    <title id="aggregate-funcs">Aggregate Functions</title>
 
    <note>
@@ -1542,13 +1541,14 @@ Not defined by this name. Implements the intersection operator '#'
     <firstterm>Aggregate functions</firstterm> allow the generation of simple
     statistics about the values of particular columns over the selected set
     of rows.
-    See also the chapter on aggregates in
-    <citetitle>The PostgreSQL Tutorial</citetitle>
 <!--
-    <xref linkend="sql" endterm="aggregates-tutorial">
--->
-    and
+	See also <xref linkend="sql" endterm="aggregates-tutorial"> and
     <xref linkend="syntax" endterm="aggregates-syntax">.
+-->
+	See also <xref linkend="syntax" endterm="aggregates-syntax">;
+	refer to
+	the <citetitle>PostgreSQL Tutorial</citetitle> for additional
+	introductory information.
    </para>
 
    <para>
@@ -1612,7 +1612,6 @@ Not defined by this name. Implements the intersection operator '#'
     </table>
    </para>
   </sect1>
-
  </chapter>
 
 <!-- Keep this comment at the end of the file

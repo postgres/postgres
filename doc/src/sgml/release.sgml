@@ -1,9 +1,64 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.55 2000/06/14 13:12:52 thomas Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/release.sgml,v 1.56 2000/07/14 15:26:21 thomas Exp $
 -->
 
  <chapter id="release">
   <title>Release Notes</title>
+
+  <sect1>
+   <title>Release 7.1</title>
+   <!--
+  <docinfo>
+  <authorgroup>
+  <author>
+  <firstname>Bruce</firstname>
+  <surname>Momjian</surname>
+  </author>
+  </authorgroup>
+  <date>2000-07-13</date>
+  </docinfo>
+   -->
+
+   <para>
+    Release date 2000-xx-xx.
+
+   <para>
+    Major changes in this release:
+
+    <variablelist>
+     <varlistentry>
+      <term>
+       Nested block comments
+      </term>
+      <listitem>
+       <para>
+	SQL99 defines C-style block comments, and allows them to be nested.
+       </para>
+      </listitem>
+     </varlistentry>
+   </para>
+
+   <sect2>
+    <title>Migration to v7.1</title>
+
+    <para>
+     A dump/restore is required for those running any previous version.
+    </para>
+   </sect2>
+
+   <sect2>
+    <title>Changes</title>
+
+    <para>
+     <programlisting>
+Implement WITHOUT TIME ZONE date/time type qualifier per SQL99 (Thomas)
+Implement nested block comments per SQL99 (Thomas)
+Implement SET SESSION CHARACTERISTICS per SQL99 (Thomas)
+Set session-wide transaction mode READ COMMITTED or SERIALIZABLE (Thomas)
+     </programlisting>
+    </para>
+   </sect2>
+  </sect1>
 
   <sect1>
    <title>Release 7.0.2</title>
@@ -1872,7 +1927,8 @@ Better identify tcl and tk libs and includes(Bruce)
    </para>
    <para>
     We now have passwords definable independent of any Unix file.  There are
-    new SQL USER commands.  See the pg_hba.conf manual page for more
+    new SQL USER commands.
+    See the <citetitle>Administrator's Guide</citetitle> for more
     information.  There is a new table, pg_shadow, which is used to store
     user information and user passwords, and it by default only SELECT-able
     by the postgres super-user.  pg_user is now a view of pg_shadow, and is

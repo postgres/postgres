@@ -49,7 +49,9 @@ have different roles but may be implemented by the same executable.
 <Para>
 A frontend sends a startup packet to the postmaster.  This includes the names
 of the user and the database the user wants to connect to.  The postmaster then
-uses this, and the information in the pg_hba.conf(5) file to determine what
+uses this, and the information in the <filename>pg_hba.conf</filename>
+file
+to determine what
 further authentication information it requires the frontend to send (if any)
 and responds to the frontend accordingly.
 </para>
