@@ -152,7 +152,7 @@ get_opts(int argc, char **argv, struct options * my_opts)
 			case 'h':
 				fprintf(stderr, "\n\
 Usage: pg_oid2name [-d database [-x] ] [-t table | -o oid] \n\
-        dafault action        display all databases\n\
+        default action        display all databases\n\
         -d database           database to oid2name\n\
         -x                    display system tables\n\
         -t table | -o oid     search for table name (-t) or\n\
