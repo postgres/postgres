@@ -37,7 +37,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.255 2001/11/04 19:55:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/postmaster/postmaster.c,v 1.256 2001/11/04 20:12:57 tgl Exp $
  *
  * NOTES
  *
@@ -1369,8 +1369,7 @@ reset_shared(unsigned short port)
 
 
 /*
- * Set flag if SIGHUP was detected so config file can be reread in
- * main loop
+ * SIGHUP -- reread config files, and tell children to do same
  */
 static void
 SIGHUP_handler(SIGNAL_ARGS)
