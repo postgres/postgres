@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.96 2003/12/19 14:21:56 petere Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/aclchk.c,v 1.97 2004/01/14 03:44:53 tgl Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -1015,6 +1015,7 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	bool		usesuper,
 				usecatupd;
 	HeapTuple	tuple;
+	Form_pg_class classForm;
 	Datum		aclDatum;
 	bool		isNull;
 	Acl		   *acl;
@@ -1046,16 +1047,22 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 		ereport(ERROR,
 				(errcode(ERRCODE_UNDEFINED_TABLE),
 			  errmsg("relation with OID %u does not exist", table_oid)));
+	classForm = (Form_pg_class) GETSTRUCT(tuple);
 
 	/*
 	 * Deny anyone permission to update a system catalog unless
 	 * pg_shadow.usecatupd is set.	(This is to let superusers protect
-	 * themselves from themselves.)
+	 * themselves from themselves.)  Also allow it if allowSystemTableMods.
+	 *
+	 * As of 7.4 we have some updatable system views; those shouldn't
+	 * be protected in this way.  Assume the view rules can take care
+	 * of themselves.
 	 */
 	if ((mode & (ACL_INSERT | ACL_UPDATE | ACL_DELETE)) &&
-		!allowSystemTableMods &&
-		IsSystemClass((Form_pg_class) GETSTRUCT(tuple)) &&
-		!usecatupd)
+		IsSystemClass(classForm) &&
+		classForm->relkind != RELKIND_VIEW &&
+		!usecatupd &&
+		!allowSystemTableMods)
 	{
 #ifdef ACLDEBUG
 		elog(DEBUG2, "permission denied for system catalog update");
@@ -1084,9 +1091,8 @@ pg_class_aclcheck(Oid table_oid, AclId userid, AclMode mode)
 	if (isNull)
 	{
 		/* No ACL, so build default ACL */
-		AclId		ownerId;
+		AclId		ownerId = classForm->relowner;
 
-		ownerId = ((Form_pg_class) GETSTRUCT(tuple))->relowner;
 		acl = acldefault(ACL_OBJECT_RELATION, ownerId);
 		aclDatum = (Datum) 0;
 	}
