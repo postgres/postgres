@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.56 2003/01/20 18:54:45 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMergejoin.c,v 1.57 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1453,7 +1453,7 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 
 	mergestate->mj_MarkedTupleSlot = ExecInitExtraTupleSlot(estate);
 	ExecSetSlotDescriptor(mergestate->mj_MarkedTupleSlot,
-						  ExecGetTupType(innerPlanState(mergestate)),
+						  ExecGetResultType(innerPlanState(mergestate)),
 						  false);
 
 	switch (node->join.jointype)
@@ -1464,12 +1464,12 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 		case JOIN_LEFT:
 			mergestate->mj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetTupType(innerPlanState(mergestate)));
+							   ExecGetResultType(innerPlanState(mergestate)));
 			break;
 		case JOIN_RIGHT:
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetTupType(outerPlanState(mergestate)));
+							   ExecGetResultType(outerPlanState(mergestate)));
 
 			/*
 			 * Can't handle right or full join with non-nil extra
@@ -1481,10 +1481,10 @@ ExecInitMergeJoin(MergeJoin *node, EState *estate)
 		case JOIN_FULL:
 			mergestate->mj_NullOuterTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetTupType(outerPlanState(mergestate)));
+							   ExecGetResultType(outerPlanState(mergestate)));
 			mergestate->mj_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetTupType(innerPlanState(mergestate)));
+							   ExecGetResultType(innerPlanState(mergestate)));
 
 			/*
 			 * Can't handle right or full join with non-nil extra

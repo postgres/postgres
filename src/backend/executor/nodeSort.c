@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.42 2002/12/15 16:17:46 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSort.c,v 1.43 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -137,7 +137,7 @@ ExecSort(SortState *node)
 				   "calling tuplesort_begin");
 
 		outerNode = outerPlanState(node);
-		tupDesc = ExecGetTupType(outerNode);
+		tupDesc = ExecGetResultType(outerNode);
 
 		ExtractSortKeys(plannode, &sortOperators, &attNums);
 
@@ -172,11 +172,6 @@ ExecSort(SortState *node)
 		 * restore to user specified direction
 		 */
 		estate->es_direction = dir;
-
-		/*
-		 * make sure the tuple descriptor is up to date (is this needed?)
-		 */
-		ExecAssignResultType(&node->ss.ps, tupDesc, false);
 
 		/*
 		 * finally set the sorted flag to true

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: executor.h,v 1.91 2003/03/11 19:40:23 tgl Exp $
+ * $Id: executor.h,v 1.92 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -101,7 +101,6 @@ extern PlanState *ExecInitNode(Plan *node, EState *estate);
 extern TupleTableSlot *ExecProcNode(PlanState *node);
 extern int	ExecCountSlotsNode(Plan *node);
 extern void ExecEndNode(PlanState *node);
-extern TupleDesc ExecGetTupType(PlanState *node);
 
 /*
  * prototypes from functions in execQual.c

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.35 2003/02/09 00:30:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execProcnode.c,v 1.36 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,7 +22,6 @@
  *		ExecInitNode	-		initialize a plan node and its subplans
  *		ExecProcNode	-		get a tuple by executing the plan node
  *		ExecEndNode		-		shut down a plan node and its subplans
- *		ExecGetTupType	-		get result tuple type of a plan node
  *
  *	 NOTES
  *		This used to be three files.  It is now all combined into
@@ -601,182 +600,4 @@ ExecEndNode(PlanState *node)
 				 (int) nodeTag(node));
 			break;
 	}
-}
-
-
-/* ----------------------------------------------------------------
- *		ExecGetTupType
- *
- *		this gives you the tuple descriptor for tuples returned
- *		by this node.  I really wish I could ditch this routine,
- *		but since not all nodes store their type info in the same
- *		place, we have to do something special for each node type.
- *
- * ----------------------------------------------------------------
- */
-TupleDesc
-ExecGetTupType(PlanState *node)
-{
-	TupleTableSlot *slot;
-
-	if (node == NULL)
-		return NULL;
-
-	switch (nodeTag(node))
-	{
-		case T_ResultState:
-			{
-				ResultState *resstate = (ResultState *) node;
-
-				slot = resstate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_AppendState:
-			{
-				AppendState *appendstate = (AppendState *) node;
-
-				slot = appendstate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_SeqScanState:
-			{
-				SeqScanState *scanstate = (SeqScanState *) node;
-
-				slot = scanstate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_IndexScanState:
-			{
-				IndexScanState *scanstate = (IndexScanState *) node;
-
-				slot = scanstate->ss.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_TidScanState:
-			{
-				TidScanState *scanstate = (TidScanState *) node;
-
-				slot = scanstate->ss.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_SubqueryScanState:
-			{
-				SubqueryScanState *scanstate = (SubqueryScanState *) node;
-
-				slot = scanstate->ss.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_FunctionScanState:
-			{
-				FunctionScanState *scanstate = (FunctionScanState *) node;
-
-				slot = scanstate->ss.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_NestLoopState:
-			{
-				NestLoopState *nlstate = (NestLoopState *) node;
-
-				slot = nlstate->js.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_MergeJoinState:
-			{
-				MergeJoinState *mergestate = (MergeJoinState *) node;
-
-				slot = mergestate->js.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_HashJoinState:
-			{
-				HashJoinState *hashjoinstate = (HashJoinState *) node;
-
-				slot = hashjoinstate->js.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_MaterialState:
-			{
-				MaterialState *matstate = (MaterialState *) node;
-
-				slot = matstate->ss.ss_ScanTupleSlot;
-			}
-			break;
-
-		case T_SortState:
-			{
-				SortState  *sortstate = (SortState *) node;
-
-				slot = sortstate->ss.ss_ScanTupleSlot;
-			}
-			break;
-
-		case T_GroupState:
-			{
-				GroupState *grpstate = (GroupState *) node;
-
-				slot = grpstate->ss.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_AggState:
-			{
-				AggState   *aggstate = (AggState *) node;
-
-				slot = aggstate->ss.ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_UniqueState:
-			{
-				UniqueState *uniquestate = (UniqueState *) node;
-
-				slot = uniquestate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_HashState:
-			{
-				HashState  *hashstate = (HashState *) node;
-
-				slot = hashstate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_SetOpState:
-			{
-				SetOpState *setopstate = (SetOpState *) node;
-
-				slot = setopstate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		case T_LimitState:
-			{
-				LimitState *limitstate = (LimitState *) node;
-
-				slot = limitstate->ps.ps_ResultTupleSlot;
-			}
-			break;
-
-		default:
-
-			/*
-			 * should never get here
-			 */
-			elog(ERROR, "ExecGetTupType: node type %d unsupported",
-				 (int) nodeTag(node));
-			return NULL;
-	}
-
-	return slot->ttc_tupleDescriptor;
 }

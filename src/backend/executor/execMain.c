@@ -26,7 +26,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.205 2003/03/27 16:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.206 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -634,7 +634,7 @@ InitPlan(QueryDesc *queryDesc)
 	 * (this is especially important if we are creating a relation with
 	 * "SELECT INTO")
 	 */
-	tupType = ExecGetTupType(planstate);
+	tupType = ExecGetResultType(planstate);
 
 	/*
 	 * Initialize the junk filter if needed.  SELECT and INSERT queries need a
@@ -713,7 +713,7 @@ InitPlan(QueryDesc *queryDesc)
 					JunkFilter *j;
 
 					j = ExecInitJunkFilter(subplan->plan->targetlist,
-										   ExecGetTupType(subplan),
+										   ExecGetResultType(subplan),
 							  ExecAllocTableSlot(estate->es_tupleTable));
 					resultRelInfo->ri_junkFilter = j;
 					resultRelInfo++;

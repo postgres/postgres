@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.31 2003/01/27 20:51:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeNestloop.c,v 1.32 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -330,7 +330,7 @@ ExecInitNestLoop(NestLoop *node, EState *estate)
 		case JOIN_LEFT:
 			nlstate->nl_NullInnerTupleSlot =
 				ExecInitNullTupleSlot(estate,
-							   ExecGetTupType(innerPlanState(nlstate)));
+							   ExecGetResultType(innerPlanState(nlstate)));
 			break;
 		default:
 			elog(ERROR, "ExecInitNestLoop: unsupported join type %d",

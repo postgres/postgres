@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.98 2003/02/09 06:56:27 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execUtils.c,v 1.99 2003/05/05 17:57:47 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -413,7 +413,7 @@ ExecAssignResultTypeFromOuterPlan(PlanState *planstate)
 	TupleDesc	tupDesc;
 
 	outerPlan = outerPlanState(planstate);
-	tupDesc = ExecGetTupType(outerPlan);
+	tupDesc = ExecGetResultType(outerPlan);
 
 	ExecAssignResultType(planstate, tupDesc, false);
 }
@@ -606,7 +606,7 @@ ExecAssignScanTypeFromOuterPlan(ScanState *scanstate)
 	TupleDesc	tupDesc;
 
 	outerPlan = outerPlanState(scanstate);
-	tupDesc = ExecGetTupType(outerPlan);
+	tupDesc = ExecGetResultType(outerPlan);
 
 	ExecAssignScanType(scanstate, tupDesc, false);
 }
