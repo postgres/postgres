@@ -6,7 +6,7 @@
 # Copyright (c) 1994, Regents of the University of California
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.15 1999/06/30 23:57:27 tgl Exp $
+#    $Header: /cvsroot/pgsql/src/interfaces/libpq++/Attic/Makefile.in,v 1.16 1999/07/08 03:30:16 momjian Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -27,9 +27,7 @@ LIBPQHEADERDIR = $(SRCHEADERDIR)/libpq
 # because of our inclusion of c.h and we don't know how to stop that.
 
 ifeq ($(CXX), g++)
-CXXFLAGS= -Wno-error
-else
-CXXFLAGS=
+CXXFLAGS+= -Wno-error
 endif
 
 CXXFLAGS+=   -I$(SRCDIR)/backend \
