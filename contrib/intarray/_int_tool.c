@@ -137,7 +137,7 @@ inner_int_inter(ArrayType *a, ArrayType *b)
 	nb = ARRNELEMS(b);
 	da = ARRPTR(a);
 	db = ARRPTR(b);
-	r = new_intArrayType(min(na, nb));
+	r = new_intArrayType(Min(na, nb));
 	dr = ARRPTR(r);
 
 	i = j = 0;

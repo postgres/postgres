@@ -78,15 +78,6 @@ typedef struct
 
 #define LQUERY_HASNOT		0x01
 
-#ifndef max
-#define max(a,b)				((a) >	(b) ? (a) : (b))
-#endif
-#ifndef min
-#define min(a,b)				((a) <= (b) ? (a) : (b))
-#endif
-#ifndef abs
-#define abs(a)					((a) <	(0) ? -(a) : (a))
-#endif
 #define ISALNUM(x)	( isalnum((unsigned char)(x)) || (x) == '_' )
 
 /* full text query */

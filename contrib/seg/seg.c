@@ -14,8 +14,6 @@
 
 #include "segdata.h"
 
-#define abs(a)			((a) <	(0) ? (-a) : (a))
-
 /*
 #define GIST_DEBUG
 #define GIST_QUERY_DEBUG
@@ -717,7 +715,7 @@ rt_seg_size(SEG * a, float *size)
 	if (a == (SEG *) NULL || a->upper <= a->lower)
 		*size = 0.0;
 	else
-		*size = (float) abs(a->upper - a->lower);
+		*size = (float) Abs(a->upper - a->lower);
 
 	return;
 }
@@ -729,7 +727,7 @@ seg_size(SEG * a)
 
 	result = (float *) palloc(sizeof(float));
 
-	*result = (float) abs(a->upper - a->lower);
+	*result = (float) Abs(a->upper - a->lower);
 
 	return (result);
 }
@@ -948,7 +946,7 @@ restore(char *result, float val, int n)
 	}
 	else
 	{
-		if (abs(exp) <= 4)
+		if (Abs(exp) <= 4)
 		{
 			/*
 			 * remove the decimal point from the mantyssa and write the
@@ -1036,7 +1034,7 @@ restore(char *result, float val, int n)
 			}
 		}
 
-		/* do nothing for abs(exp) > 4; %e must be OK */
+		/* do nothing for Abs(exp) > 4; %e must be OK */
 		/* just get rid of zeroes after [eE]- and +zeroes after [Ee]. */
 
 		/* ... this is not done yet. */

@@ -30,9 +30,6 @@
 
 #include "misc_utils.h"
 
-#undef MIN
-#define MIN(x,y)	((x)<=(y) ? (x) : (y))
-
 
 int
 backend_pid()
@@ -48,15 +45,15 @@ unlisten(char *relname)
 }
 
 int
-max(int x, int y)
+int4max(int x, int y)
 {
-	return ((x > y) ? x : y);
+	return Max(x, y);
 }
 
 int
-min(int x, int y)
+int4min(int x, int y)
 {
-	return ((x < y) ? x : y);
+	return Min(x, y);
 }
 
 /*
@@ -84,7 +81,7 @@ active_listeners(text *relname)
 	if (relname && (VARSIZE(relname) > VARHDRSZ))
 	{
 		MemSet(listen_name, 0, NAMEDATALEN);
-		len = MIN(VARSIZE(relname) - VARHDRSZ, NAMEDATALEN - 1);
+		len = Min(VARSIZE(relname) - VARHDRSZ, NAMEDATALEN - 1);
 		memcpy(listen_name, VARDATA(relname), len);
 		ScanKeyInit(&key,
 					Anum_pg_listener_relname,

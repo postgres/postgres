@@ -700,7 +700,7 @@ gtxtidx_picksplit(PG_FUNCTION_ARGS)
 			}
 
 		}
-		costvector[j - 1].cost = abs(size_alpha - size_beta);
+		costvector[j - 1].cost = Abs(size_alpha - size_beta);
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 

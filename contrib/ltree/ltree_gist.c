@@ -259,7 +259,7 @@ ltree_penalty(PG_FUNCTION_ARGS)
 	cmpl = ltree_compare(LTG_GETLNODE(origval), LTG_GETLNODE(newval));
 	cmpr = ltree_compare(LTG_GETRNODE(newval), LTG_GETRNODE(origval));
 
-	*penalty = max(cmpl, 0) + max(cmpr, 0);
+	*penalty = Max(cmpl, 0) + Max(cmpr, 0);
 
 	PG_RETURN_POINTER(penalty);
 }
@@ -537,7 +537,7 @@ gist_tqcmp(ltree * t, lquery * q)
 	while (an > 0 && bn > 0)
 	{
 		bl = LQL_FIRST(ql);
-		if ((res = strncmp(al->name, bl->name, min(al->len, bl->len))) == 0)
+		if ((res = strncmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
 		{
 			if (al->len != bl->len)
 				return al->len - bl->len;

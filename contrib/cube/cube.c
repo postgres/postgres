@@ -15,8 +15,6 @@
 
 #include "cubedata.h"
 
-#define abs(a)			((a) <	(0) ? (-a) : (a))
-
 extern int	cube_yyparse();
 extern void cube_yyerror(const char *message);
 extern void cube_scanner_init(const char *str);
@@ -683,7 +681,7 @@ cube_size(NDBOX * a)
 
 	*result = 1.0;
 	for (i = 0, j = a->dim; i < a->dim; i++, j++)
-		*result = (*result) * abs((a->x[j] - a->x[i]));
+		*result = (*result) * Abs((a->x[j] - a->x[i]));
 
 	return (result);
 }
@@ -700,7 +698,7 @@ rt_cube_size(NDBOX * a, double *size)
 	{
 		*size = 1.0;
 		for (i = 0, j = a->dim; i < a->dim; i++, j++)
-			*size = (*size) * abs((a->x[j] - a->x[i]));
+			*size = (*size) * Abs((a->x[j] - a->x[i]));
 	}
 	return;
 }

@@ -425,7 +425,7 @@ g_int_picksplit(PG_FUNCTION_ARGS)
 		union_d = inner_int_union(datum_r, datum_alpha);
 		rt__int_size(union_d, &size_beta);
 		pfree(union_d);
-		costvector[i - 1].cost = abs((size_alpha - size_l) - (size_beta - size_r));
+		costvector[i - 1].cost = Abs((size_alpha - size_l) - (size_beta - size_r));
 	}
 	qsort((void *) costvector, maxoff, sizeof(SPLITCOST), comparecost);
 

@@ -36,14 +36,14 @@ LANGUAGE 'SQL';
 --
 CREATE OR REPLACE FUNCTION min(int4,int4)
 RETURNS int4
-AS 'MODULE_PATHNAME'
+AS 'MODULE_PATHNAME', 'int4min'
 LANGUAGE 'C';
 
 -- max(x,y)
 --
 CREATE OR REPLACE FUNCTION max(int4,int4)
 RETURNS int4
-AS 'MODULE_PATHNAME'
+AS 'MODULE_PATHNAME', 'int4max'
 LANGUAGE 'C';
 
 -- Return the number of active listeners on a relation

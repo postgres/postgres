@@ -55,7 +55,7 @@ ltree_compare(const ltree * a, const ltree * b)
 
 	while (an > 0 && bn > 0)
 	{
-		if ((res = strncmp(al->name, bl->name, min(al->len, bl->len))) == 0)
+		if ((res = strncmp(al->name, bl->name, Min(al->len, bl->len))) == 0)
 		{
 			if (al->len != bl->len)
 				return (al->len - bl->len) * 10 * (an + 1);
@@ -443,7 +443,7 @@ lca_inner(ltree ** a, int len)
 			l2 = LTREE_FIRST(*ptr);
 			tmp = num;
 			num = 0;
-			for (i = 0; i < min(tmp, (*ptr)->numlevel - 1); i++)
+			for (i = 0; i < Min(tmp, (*ptr)->numlevel - 1); i++)
 			{
 				if (l1->len == l2->len && strncmp(l1->name, l2->name, l1->len) == 0)
 					num = i + 1;

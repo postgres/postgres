@@ -165,7 +165,7 @@ calc_rank_and(float *w, tsvector * t, QUERYTYPE * q)
 			{
 				for (p = 0; p < lenct; p++)
 				{
-					dist = abs(post[l].pos - ct[p].pos);
+					dist = Abs(post[l].pos - ct[p].pos);
 					if (dist || (dist == 0 && (pos[i] == (uint16 *) POSNULL || pos[k] == (uint16 *) POSNULL)))
 					{
 						float		curw;

@@ -14,10 +14,6 @@
 /* number ranges for compression */
 #define MAXNUMRANGE 100
 
-#define max(a,b)		((a) >	(b) ? (a) : (b))
-#define min(a,b)		((a) <= (b) ? (a) : (b))
-#define abs(a)			((a) <	(0) ? -(a) : (a))
-
 /* dimension of array */
 #define NDIM 1
 

@@ -1,5 +1,5 @@
 /*
- * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.61 2004/10/07 15:21:58 momjian Exp $
+ * $PostgreSQL: pgsql/src/test/regress/regress.c,v 1.62 2004/10/21 19:28:36 tgl Exp $
  */
 
 #include "postgres.h"
@@ -272,8 +272,6 @@ pt_in_widget(PG_FUNCTION_ARGS)
 	PG_RETURN_BOOL(point_dt(point, &widget->center) < widget->radius);
 }
 
-#define ABS(X) ((X) >= 0 ? (X) : -(X))
-
 PG_FUNCTION_INFO_V1(boxarea);
 
 Datum
@@ -283,8 +281,8 @@ boxarea(PG_FUNCTION_ARGS)
 	double		width,
 				height;
 
-	width = ABS(box->high.x - box->low.x);
-	height = ABS(box->high.y - box->low.y);
+	width = Abs(box->high.x - box->low.x);
+	height = Abs(box->high.y - box->low.y);
 	PG_RETURN_FLOAT8(width * height);
 }
 

@@ -20,8 +20,6 @@
 /* define this if you want to see iso-8859 characters */
 #define ISO8859
 
-#undef MIN
-#define MIN(x, y)	((x) < (y) ? (x) : (y))
 #define VALUE(char) ((char) - '0')
 #define DIGIT(val)	((val) + '0')
 #define ISOCTAL(c)	(((c) >= '0') && ((c) <= '7'))
@@ -229,7 +227,7 @@ string_input(unsigned char *str, int size, int hdrsize, int *rtn_size)
 	else
 		/* result has variable length with maximum size */
 	if (size < 0)
-		size = MIN(len, -size) + 1;
+		size = Min(len, -size) + 1;
 
 	result = (char *) palloc(hdrsize + size);
 	memset(result, 0, hdrsize + size);
