@@ -410,6 +410,21 @@ AC_SUBST([enable_pltcl_unknown])
 
 
 #
+# If Tcl is enabled (above) then check for pltcl_utf
+#
+AC_MSG_CHECKING([whether to build with PL/Tcl with UTF support])
+if test "$with_tcl" = yes; then
+  PGAC_ARG_BOOL(enable, pltcl-utf, no,
+                [  --enable-pltcl-utf      build PL/Tcl UTF support (if Tcl is enabled)],
+                [AC_DEFINE([ENABLE_PLTCL_UTF])])
+else
+  enable_pltcl_utf=no
+fi
+AC_MSG_RESULT([$enable_pltcl_utf])
+AC_SUBST([enable_pltcl_utf])
+
+
+#
 # Optionally build Perl modules (Pg.pm and PL/Perl)
 #
 AC_MSG_CHECKING([whether to build Perl modules])

@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.51 2001/08/28 14:20:24 petere Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/installation.sgml,v 1.52 2001/09/06 02:56:32 momjian Exp $ -->
 
 <chapter id="installation">
  <title><![%flattext-install-include[<productname>PostgreSQL</>]]>
@@ -679,6 +679,17 @@ su - postgres
        <listitem>
         <para>
          Enables enables PL/Tcl unknown support.
+        </para>
+       </listitem>
+      </varlistentry>
+
+      <varlistentry>
+       <term>--enable-pltcl-utf</term>
+       <listitem>
+        <para>
+         Enables enables PL/Tcl Tcl_UtfToExternal and Tcl_ExternalToUtf
+         conversion support. These functions needed for Tcl versions 8.1
+         and above for proper handling of 8-bit characters.
         </para>
        </listitem>
       </varlistentry>

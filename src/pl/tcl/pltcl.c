@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.38 2001/08/02 15:45:55 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/pl/tcl/pltcl.c,v 1.39 2001/09/06 02:56:32 momjian Exp $
  *
  **********************************************************************/
 
@@ -59,6 +59,18 @@
 #include "catalog/pg_language.h"
 #include "catalog/pg_type.h"
 
+#if defined(ENABLE_PLTCL_UTF) && TCL_MAJOR_VERSION == 8 \
+	&& TCL_MINOR_VERSION > 0
+#	define UTF_BEGIN	do { Tcl_DString _pltcl_ds_tmp
+#       define UTF_END		Tcl_DStringFree(&_pltcl_ds_tmp); } while (0)
+#       define UTF_U2E(x)	(Tcl_UtfToExternalDString(NULL,(x),-1,&_pltcl_ds_tmp))
+#	define UTF_E2U(x)	(Tcl_ExternalToUtfDString(NULL,(x),-1,&_pltcl_ds_tmp))
+#else /* ENABLE_PLTCL_UTF */
+#	define	UTF_BEGIN
+#	define	UTF_END
+#	define	UTF_U2E(x)	(x)
+#	define	UTF_E2U(x)	(x)
+#endif /* ENABLE_PLTCL_UTF */
 
 /**********************************************************************
  * The information we cache about loaded procedures
@@ -333,7 +345,9 @@ pltcl_init_load_unknown(Tcl_Interp *interp)
 							SPI_tuptable->tupdesc, fno);
 		if (part != NULL)
 		{
-			Tcl_DStringAppend(&unknown_src, part, -1);
+			UTF_BEGIN;
+			Tcl_DStringAppend(&unknown_src, UTF_E2U(part), -1);
+			UTF_END;
 			pfree(part);
 		}
 	}
@@ -613,7 +627,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 		}
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
 								  PointerGetDatum(&procStruct->prosrc)));
-		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
+		UTF_BEGIN;
+		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
+		UTF_END;
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
 								 Tcl_DStringValue(&proc_internal_body));
@@ -715,7 +731,9 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 													fcinfo->arg[i],
 							  ObjectIdGetDatum(prodesc->arg_out_elem[i]),
 								Int32GetDatum(prodesc->arg_out_len[i])));
-				Tcl_DStringAppendElement(&tcl_cmd, tmp);
+				UTF_BEGIN;
+				Tcl_DStringAppendElement(&tcl_cmd, UTF_E2U(tmp));
+				UTF_END;
 				pfree(tmp);
 			}
 		}
@@ -777,13 +795,15 @@ pltcl_func_handler(PG_FUNCTION_ARGS)
 	if (SPI_finish() != SPI_OK_FINISH)
 		elog(ERROR, "pltcl: SPI_finish() failed");
 
+	UTF_BEGIN;
 	if (fcinfo->isnull)
 		retval = (Datum) 0;
 	else
 		retval = FunctionCall3(&prodesc->result_in_func,
-							   PointerGetDatum(interp->result),
+							   PointerGetDatum(UTF_U2E(interp->result)),
 							   ObjectIdGetDatum(prodesc->result_in_elem),
 							   Int32GetDatum(-1));
+	UTF_END;
 
 	/************************************************************
 	 * Finally we may restore normal error handling.
@@ -929,7 +949,9 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
 								  PointerGetDatum(&procStruct->prosrc)));
-		Tcl_DStringAppend(&proc_internal_body, proc_source, -1);
+		UTF_BEGIN;
+		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
+		UTF_END;
 		pfree(proc_source);
 		Tcl_DStringAppendElement(&proc_internal_def,
 								 Tcl_DStringValue(&proc_internal_body));
@@ -1230,11 +1252,13 @@ pltcl_trigger_handler(PG_FUNCTION_ARGS)
 		 ************************************************************/
 		modnulls[attnum - 1] = ' ';
 		fmgr_info(typinput, &finfo);
+		UTF_BEGIN;
 		modvalues[attnum - 1] =
 			FunctionCall3(&finfo,
-						  CStringGetDatum(ret_values[i++]),
+						  CStringGetDatum(UTF_U2E(ret_values[i++])),
 						  ObjectIdGetDatum(typelem),
 				   Int32GetDatum(tupdesc->attrs[attnum - 1]->atttypmod));
+		UTF_END;
 	}
 
 	rettup = SPI_modifytuple(trigdata->tg_relation, rettup, tupdesc->natts,
@@ -1558,7 +1582,9 @@ pltcl_SPI_exec(ClientData cdata, Tcl_Interp *interp,
 	/************************************************************
 	 * Execute the query and handle return codes
 	 ************************************************************/
-	spi_rc = SPI_exec(argv[query_idx], count);
+	UTF_BEGIN;
+	spi_rc = SPI_exec(UTF_U2E(argv[query_idx]), count);
+	UTF_END;
 	memcpy(&Warn_restart, &save_restart, sizeof(Warn_restart));
 
 	switch (spi_rc)
@@ -1794,7 +1820,9 @@ pltcl_SPI_prepare(ClientData cdata, Tcl_Interp *interp,
 	/************************************************************
 	 * Prepare the plan and check for errors
 	 ************************************************************/
-	plan = SPI_prepare(argv[1], nargs, qdesc->argtypes);
+	UTF_BEGIN;
+	plan = SPI_prepare(UTF_U2E(argv[1]), nargs, qdesc->argtypes);
+	UTF_END;
 
 	if (plan == NULL)
 	{
@@ -2078,11 +2106,13 @@ pltcl_SPI_execp(ClientData cdata, Tcl_Interp *interp,
 		 ************************************************************/
 		for (j = 0; j < callnargs; j++)
 		{
+			UTF_BEGIN;
 			qdesc->argvalues[j] =
 				FunctionCall3(&qdesc->arginfuncs[j],
-							  CStringGetDatum(callargs[j]),
+							  CStringGetDatum(UTF_U2E(callargs[j])),
 							  ObjectIdGetDatum(qdesc->argtypelems[j]),
 							  Int32GetDatum(qdesc->arglen[j]));
+			UTF_END;
 		}
 
 		/************************************************************
@@ -2377,7 +2407,9 @@ pltcl_set_tuple_values(Tcl_Interp *interp, char *arrayname,
 														 attr,
 											   ObjectIdGetDatum(typelem),
 							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
-			Tcl_SetVar2(interp, *arrptr, *nameptr, outputstr, 0);
+			UTF_BEGIN;
+			Tcl_SetVar2(interp, *arrptr, *nameptr, UTF_E2U(outputstr), 0);
+			UTF_END;
 			pfree(outputstr);
 		}
 		else
@@ -2448,7 +2480,9 @@ pltcl_build_tuple_argument(HeapTuple tuple, TupleDesc tupdesc,
 											   ObjectIdGetDatum(typelem),
 							  Int32GetDatum(tupdesc->attrs[i]->attlen)));
 			Tcl_DStringAppendElement(retval, attname);
-			Tcl_DStringAppendElement(retval, outputstr);
+			UTF_BEGIN;
+			Tcl_DStringAppendElement(retval, UTF_E2U(outputstr));
+			UTF_END;
 			pfree(outputstr);
 		}
 	}
