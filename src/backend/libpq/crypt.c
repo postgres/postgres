@@ -9,7 +9,7 @@
  * Dec 17, 1997 - Todd A. Brandys
  *	Orignal Version Completed.
  *
- * $Id: crypt.c,v 1.18 1999/05/27 04:09:45 momjian Exp $
+ * $Id: crypt.c,v 1.19 1999/07/14 01:19:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -24,6 +24,7 @@
 #include "utils/nabstime.h"
 #include "storage/fd.h"
 #include "libpq/crypt.h"
+#include "utils/mcxt.h"
 
 #ifdef HAVE_CRYPT_H
 #include <crypt.h>

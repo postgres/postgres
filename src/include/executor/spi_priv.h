@@ -3,13 +3,14 @@
  * spi.c
  *				Server Programming Interface private declarations
  *
- * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.4 1999/05/25 16:13:57 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/executor/spi_priv.h,v 1.5 1999/07/14 01:20:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef SPI_PRIV_H
 #define SPI_PRIV_H
 
+#include "executor/spi.h"
 #include "catalog/pg_type.h"
 #include "access/printtup.h"
 

@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: datetime.h,v 1.7 1999/02/13 23:22:16 momjian Exp $
+ * $Id: datetime.h,v 1.8 1999/07/14 01:20:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef DATETIME_H
 #define DATETIME_H
-
-#include "utils/dt.h"
 
 typedef int32 DateADT;
 

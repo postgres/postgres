@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.11 1999/02/13 23:18:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/smgr/smgrtype.c,v 1.12 1999/07/14 01:19:55 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "utils/builtins.h"		/* where the declarations go */
 #include "utils/palloc.h"
 #include "storage/smgr.h"
+#include "utils/mcxt.h"
 
 typedef struct smgrid
 {

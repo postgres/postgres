@@ -4,7 +4,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- *	  $Id: nabstime.c,v 1.55 1999/05/25 16:12:09 momjian Exp $
+ *	  $Id: nabstime.c,v 1.56 1999/07/14 01:20:05 momjian Exp $
  *
  */
 #include <stdio.h>
@@ -25,6 +25,7 @@
 #endif
 #include "utils/builtins.h"
 #include "access/xact.h"
+#include "utils/mcxt.h"
 
 static AbsoluteTime tm2abstime(struct tm * tm, int tz);
 

@@ -5,7 +5,7 @@
 *
 * Copyright (c) 1994, Regents of the University of California
 *
-* $Id: geqo_params.c,v 1.17 1999/05/22 23:27:19 tgl Exp $
+* $Id: geqo_params.c,v 1.18 1999/07/14 01:19:51 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -44,6 +44,8 @@
 #include "optimizer/geqo.h"
 
 #include "storage/fd.h"
+
+#include "utils/mcxt.h"
 
 /*
  * Parameter values read from the config file (or defaulted) are stored here

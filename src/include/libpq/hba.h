@@ -4,7 +4,7 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.13 1999/05/10 15:17:17 momjian Exp $
+ * $Id: hba.h,v 1.14 1999/07/14 01:20:17 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -13,8 +13,7 @@
 
 #include <netinet/in.h>
 
-#include "libpq/libpq-be.h"
-
+#include "libpq/pqcomm.h"
 
 #define CONF_FILE "pg_hba.conf"
  /* Name of the config file  */

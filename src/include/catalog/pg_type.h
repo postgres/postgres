@@ -7,7 +7,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.63 1999/07/09 03:28:52 momjian Exp $
+ * $Id: pg_type.h,v 1.64 1999/07/14 01:20:09 momjian Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -17,8 +17,6 @@
  */
 #ifndef PG_TYPE_H
 #define PG_TYPE_H
-
-#include <utils/rel.h>
 
 /* ----------------
  *		postgres.h contains the system type definitions and the

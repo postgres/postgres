@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.41 1999/02/21 03:49:30 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.42 1999/07/14 01:20:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -23,6 +23,7 @@
 
 #include "utils/geo_decls.h"
 #include "utils/palloc.h"
+#include "utils/mcxt.h"
 
 #ifndef PI
 #define PI 3.1415926536

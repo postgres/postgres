@@ -7,6 +7,9 @@
 #ifndef SUBSELECT_H
 #define SUBSELECT_H
 
+#include "nodes/pg_list.h"
+#include "nodes/plannodes.h"
+
 extern int	PlannerQueryLevel;	/* level of current query */
 extern List *PlannerInitPlan;	/* init subplans for current query */
 extern List *PlannerParamVar;	/* to get Var from Param->paramid */

@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Id: fd.c,v 1.43 1999/07/08 02:46:39 momjian Exp $
+ *	  $Id: fd.c,v 1.44 1999/07/14 01:19:53 momjian Exp $
  *
  * NOTES:
  *
@@ -52,6 +52,7 @@
 #include "utils/palloc.h"
 #include "storage/fd.h"
 #include "utils/elog.h"
+#include "utils/mcxt.h"
 
 /*
  * Problem: Postgres does a system(ld...) to do dynamic loading.

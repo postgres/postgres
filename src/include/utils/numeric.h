@@ -5,16 +5,13 @@
  *
  *	1998 Jan Wieck
  *
- * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.6 1999/05/25 22:43:37 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/include/utils/numeric.h,v 1.7 1999/07/14 01:20:30 momjian Exp $
  *
  * ----------
  */
 
 #ifndef _PG_NUMERIC_H_
 #define _PG_NUMERIC_H_
-
-#include "postgres.h"
-
 
 /* ----------
  * The hardcoded limits and defaults of the numeric data type

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: geqo_pool.c,v 1.12 1999/05/25 16:09:18 momjian Exp $
+ * $Id: geqo_pool.c,v 1.13 1999/07/14 01:19:52 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -41,6 +41,7 @@
 #include "optimizer/geqo_copy.h"
 #include "optimizer/geqo_recombination.h"
 
+#include "utils/mcxt.h"
 
 static int	compare(const void *arg1, const void *arg2);
 

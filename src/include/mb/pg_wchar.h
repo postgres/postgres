@@ -1,11 +1,9 @@
-/* $Id: pg_wchar.h,v 1.9 1999/07/11 22:47:19 ishii Exp $ */
+/* $Id: pg_wchar.h,v 1.10 1999/07/14 01:20:20 momjian Exp $ */
 
 #ifndef PG_WCHAR_H
 #define PG_WCHAR_H
 
 #include <sys/types.h>
-#include "postgres.h"
-#include "miscadmin.h"			/* for getdatabaseencoding() */
 
 #define SQL_ASCII 0				/* SQL/ASCII */
 #define EUC_JP 1				/* EUC for Japanese */

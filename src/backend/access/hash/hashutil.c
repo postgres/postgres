@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.15 1999/02/13 23:14:21 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashutil.c,v 1.16 1999/07/14 01:19:36 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,6 +18,7 @@
 #include <fmgr.h>
 #include <utils/memutils.h>
 #include <access/iqual.h>
+#include <utils/mcxt.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.17 1999/02/13 23:14:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/hash/hashscan.c,v 1.18 1999/07/14 01:19:36 momjian Exp $
  *
  * NOTES
  *	  Because we can be doing an index scan on a relation while we
@@ -30,6 +30,7 @@
 #include <postgres.h>
 
 #include <access/hash.h>
+#include <utils/mcxt.h>
 
 static void _hash_scandel(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);
 static bool _hash_scantouched(IndexScanDesc scan, BlockNumber blkno, OffsetNumber offno);

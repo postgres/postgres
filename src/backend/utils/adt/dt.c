@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.72 1999/07/08 03:22:46 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.73 1999/07/14 01:20:01 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,7 @@
 #include <sys/timeb.h>
 #endif
 #include "utils/builtins.h"
-
+#include "utils/mcxt.h"
 
 static int	DecodeDate(char *str, int fmask, int *tmask, struct tm * tm);
 static int DecodeNumber(int flen, char *field,

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.43 1999/07/13 20:12:47 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.44 1999/07/14 01:20:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -62,6 +62,7 @@
 #include "fmgr.h"
 #include "utils/builtins.h"		/* for ftod() prototype */
 #include "utils/palloc.h"
+#include "utils/mcxt.h"
 
 #ifndef NAN
 #define NAN		(0.0/0.0)

@@ -5,14 +5,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: async.h,v 1.11 1999/02/13 23:21:17 momjian Exp $
+ * $Id: async.h,v 1.12 1999/07/14 01:20:11 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ASYNC_H
 #define ASYNC_H
-
-#include <postgres.h>
 
 /* notify-related SQL statements */
 extern void Async_Notify(char *relname);

@@ -6,14 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: execdebug.h,v 1.8 1999/02/23 07:39:40 thomas Exp $
+ * $Id: execdebug.h,v 1.9 1999/07/14 01:20:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef EXECDEBUG_H
 #define EXECDEBUG_H
-
-#include "access/printtup.h"
 
 /* ----------------------------------------------------------------
  *		debugging defines.
@@ -318,8 +316,6 @@ extern int	NIndexTupleInserted;
  * ----------------
  */
 #ifdef EXEC_MERGEJOINDEBUG
-
-#include "nodes/print.h"
 
 #define MJ_nodeDisplay(l)				nodeDisplay(l)
 #define MJ_printf(s)					printf(s)

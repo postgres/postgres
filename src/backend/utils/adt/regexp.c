@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.22 1999/02/13 23:19:30 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regexp.c,v 1.23 1999/07/14 01:20:07 momjian Exp $
  *
  *		Alistair Crooks added the code for the regex caching
  *		agc - cached the regular expressions used - there's a good chance
@@ -33,6 +33,7 @@
 #include <regex/regex.h>
 
 #include "utils/builtins.h"		/* where the function declarations go */
+#include "utils/mcxt.h"
 
 #if defined(DISABLE_XOPEN_NLS)
 #undef _XOPEN_SOURCE

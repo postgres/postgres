@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.42 1999/05/25 22:04:11 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/nbtree/nbtinsert.c,v 1.43 1999/07/14 01:19:39 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,6 +20,7 @@
 #include <access/heapam.h>
 #include <access/xact.h>
 #include <fmgr.h>
+#include <utils/mcxt.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

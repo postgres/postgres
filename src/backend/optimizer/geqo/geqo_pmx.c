@@ -6,7 +6,7 @@
 *	 PMX operator according to Goldberg & Lingle
 *	 (Proc Int'l Conf on GA's)
 *
-* $Id: geqo_pmx.c,v 1.5 1999/02/13 23:16:11 momjian Exp $
+* $Id: geqo_pmx.c,v 1.6 1999/07/14 01:19:52 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -53,6 +53,7 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 
+#include "utils/mcxt.h"
 
 /* pmx
  *

@@ -17,8 +17,6 @@
 #include <time.h>
 #include <stdarg.h>
 
-#include "postgres.h"
-
 #ifdef ELOG_TIMESTAMPS
 char	   *tprintf_timestamp(void);
 

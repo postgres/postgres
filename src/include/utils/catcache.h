@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: catcache.h,v 1.15 1999/06/04 02:19:44 tgl Exp $
+ * $Id: catcache.h,v 1.16 1999/07/14 01:20:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,6 +19,7 @@
 #include <lib/dllist.h>
 #include <nodes/memnodes.h>
 #include <utils/rel.h>
+#include <utils/mcxt.h>
 
 /*
  *		struct catctup:			tuples in the cache.

@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Id: mac.c,v 1.8 1999/05/25 16:12:08 momjian Exp $
+ *	$Id: mac.c,v 1.9 1999/07/14 01:20:05 momjian Exp $
  */
 
 #include <stdio.h>
@@ -11,6 +11,7 @@
 #include <utils/palloc.h>
 #include <utils/builtins.h>
 #include <utils/inet.h>
+#include "utils/mcxt.h"
 
 manufacturer manufacturers[] = {
 	{0x00, 0x00, 0x0C, "Cisco"},

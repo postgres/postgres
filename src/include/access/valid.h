@@ -6,26 +6,12 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.18 1999/05/26 12:56:15 momjian Exp $
+ * $Id: valid.h,v 1.19 1999/07/14 01:20:08 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VALID_H
 #define VALID_H
-
-#include <fmgr.h>
-#include <access/heapam.h>
-#include <access/valid.h>
-#include <storage/bufmgr.h>
-#include <storage/bufpage.h>
-#include <utils/rel.h>
-#include <utils/builtins.h>
-#include <utils/tqual.h>
-
-/* ----------------
- *		extern decl's
- * ----------------
- */
 
 /* ----------------
  *		HeapKeyTest

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.46 1999/07/09 04:51:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/heap/heapam.c,v 1.47 1999/07/14 01:19:37 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -88,6 +88,8 @@
 #include <access/xact.h>
 #include <utils/inval.h>
 #include <utils/memutils.h>
+#include <utils/builtins.h>
+#include <utils/mcxt.h>
 
 #ifndef HAVE_MEMMOVE
 #include <regex/utils.h>

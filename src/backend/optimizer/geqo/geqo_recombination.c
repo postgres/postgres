@@ -3,7 +3,7 @@
 * geqo_recombination.c
 *	 misc recombination procedures
 *
-* $Id: geqo_recombination.c,v 1.7 1999/02/13 23:16:12 momjian Exp $
+* $Id: geqo_recombination.c,v 1.8 1999/07/14 01:19:53 momjian Exp $
 *
 *-------------------------------------------------------------------------
 */
@@ -38,6 +38,7 @@
 #include "optimizer/geqo_recombination.h"
 #include "optimizer/geqo_random.h"
 
+#include "utils/mcxt.h"
 
 /*
  * init_tour

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.22 1999/05/25 16:11:53 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/char.c,v 1.23 1999/07/14 01:19:58 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,7 @@
 #include "postgres.h"
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where the declarations go */
+#include "utils/mcxt.h"
 
 /*****************************************************************************
  *	 USER I/O ROUTINES														 *

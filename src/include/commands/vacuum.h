@@ -6,18 +6,20 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: vacuum.h,v 1.20 1999/05/25 22:42:43 momjian Exp $
+ * $Id: vacuum.h,v 1.21 1999/07/14 01:20:15 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef VACUUM_H
 #define VACUUM_H
 
+#include "fmgr.h"
 #include "access/funcindex.h"
 #include "catalog/pg_index.h"
 #include "catalog/pg_attribute.h"
 #include "nodes/pg_list.h"
 #include "storage/block.h"
+#include "storage/itemptr.h"
 #include "storage/off.h"
 
 

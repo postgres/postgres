@@ -15,7 +15,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "utils/trace.h"
 
 extern char *ps_status_buffer;
 

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.6 1999/02/13 23:19:34 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/tid.c,v 1.7 1999/07/14 01:20:07 momjian Exp $
  *
  * NOTES
  *	  input routine largely stolen from boxin().
@@ -21,7 +21,7 @@
 
 #include "utils/palloc.h"
 #include "utils/builtins.h"		/* where function declarations go */
-
+#include "utils/mcxt.h"
 
 #define LDELIM			'('
 #define RDELIM			')'
