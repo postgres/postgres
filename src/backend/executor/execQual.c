@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.136 2003/07/28 00:09:14 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.137 2003/07/30 19:02:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1603,6 +1603,10 @@ ExecEvalCase(CaseExprState *caseExpr, ExprContext *econtext,
 
 /* ----------------------------------------------------------------
  *		ExecEvalArray - ARRAY[] expressions
+ *
+ * NOTE: currently, if any input value is NULL then we return a NULL array,
+ * so the ARRAY[] construct can be considered strict.  Eventually this will
+ * change; when it does, be sure to fix contain_nonstrict_functions().
  * ----------------------------------------------------------------
  */
 static Datum
@@ -1642,9 +1646,10 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 
 			dvalues[i++] = ExecEvalExpr(e, econtext, &eisnull, NULL);
 			if (eisnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("arrays cannot have NULL elements")));
+			{
+				*isNull = true;
+				return (Datum) 0;
+			}
 		}
 
 		/* setup for 1-D array of the given length */
@@ -1686,9 +1691,10 @@ ExecEvalArray(ArrayExprState *astate, ExprContext *econtext,
 
 			arraydatum = ExecEvalExpr(e, econtext, &eisnull, NULL);
 			if (eisnull)
-				ereport(ERROR,
-						(errcode(ERRCODE_NULL_VALUE_NOT_ALLOWED),
-						 errmsg("arrays cannot have NULL elements")));
+			{
+				*isNull = true;
+				return (Datum) 0;
+			}
 
 			array = DatumGetArrayTypeP(arraydatum);
 
