@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.50 2002/07/16 17:55:25 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/numutils.c,v 1.51 2002/07/16 18:34:16 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -46,7 +46,7 @@ int32
 pg_atoi(char *s, int size, int c)
 {
 	long		l = 0;
-	char	   *badp;
+	char	   *badp = NULL;
 
 	Assert(s);
 
@@ -71,7 +71,7 @@ pg_atoi(char *s, int size, int c)
 	 */
 	if (errno && errno != EINVAL)
 		elog(ERROR, "pg_atoi: error reading \"%s\": %m", s);
-	if (*badp && *badp != c)
+	if (badp && *badp && *badp != c)
 		elog(ERROR, "pg_atoi: error in \"%s\": can\'t parse \"%s\"", s, badp);
 
 	switch (size)
