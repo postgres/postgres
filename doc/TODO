@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Thu Feb 21 20:17:02 EST 2002
+Last updated:		Thu Feb 21 22:05:06 EST 2002
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -458,7 +458,7 @@ SOURCE CODE
 * Add --port flag to regression tests
 * Increase identifier length (NAMEDATALEN) if small performance hit,
   perhaps to standard length of 128;  change struct pgNotify to use pid 
-  first, breaks notify API;
+  first, breaks notify API;  [namedatalen]
 * Increase maximum number of function parameters if little wasted space
 * Add documentation for perl, including mention of DBI/DBD perl location
 * Add optional CRC checksum to heap and index pages
