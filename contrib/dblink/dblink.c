@@ -57,7 +57,7 @@ dblink(PG_FUNCTION_ARGS)
 		conn = PQconnectdb(optstr);
 		if (PQstatus(conn) == CONNECTION_BAD)
 		{
-			msg = PQerrorMessage(conn);
+			msg = pstrdup(PQerrorMessage(conn));
 			PQfinish(conn);
 			elog(ERROR, "dblink: connection error: %s", msg);
 		}
@@ -65,7 +65,7 @@ dblink(PG_FUNCTION_ARGS)
 		res = PQexec(conn, "BEGIN");
 		if (PQresultStatus(res) != PGRES_COMMAND_OK)
 		{
-			msg = PQerrorMessage(conn);
+			msg = pstrdup(PQerrorMessage(conn));
 			PQclear(res);
 			PQfinish(conn);
 			elog(ERROR, "dblink: begin error: %s", msg);
@@ -84,7 +84,7 @@ dblink(PG_FUNCTION_ARGS)
 		res = PQexec(conn, execstatement);
 		if (!res || (PQresultStatus(res) != PGRES_COMMAND_OK && PQresultStatus(res) != PGRES_TUPLES_OK))
 		{
-			msg = PQerrorMessage(conn);
+			msg = pstrdup(PQerrorMessage(conn));
 			PQclear(res);
 			PQfinish(conn);
 			elog(ERROR, "dblink: sql error: %s", msg);
@@ -96,7 +96,7 @@ dblink(PG_FUNCTION_ARGS)
 
 		    res = PQexec(conn, "FETCH ALL in mycursor");
 		    if (!res || PQresultStatus(res) != PGRES_TUPLES_OK) {
-				msg = PQerrorMessage(conn);
+				msg = pstrdup(PQerrorMessage(conn));
 				PQclear(res);
 				PQfinish(conn);
 				elog(ERROR, "dblink: sql error: %s", msg);
@@ -230,20 +230,28 @@ dblink_tok(PG_FUNCTION_ARGS)
 		elog(ERROR, "dblink: field number %d does not exist", fldnum);
 	}
 
-	text_len = PQgetlength(results->res, results->tup_num, fldnum);
+	if (PQgetisnull(results->res, results->tup_num, fldnum) == 1) {
 
-	result = (char *) palloc(text_len + 1);
+		PG_RETURN_NULL();
 
-	if (result != NULL) {
-		strcpy(result, PQgetvalue(results->res, results->tup_num, fldnum));
-		strcat(result, "\0");
 	} else {
-		elog(ERROR, "dblink: insufficient memory" );
+
+		text_len = PQgetlength(results->res, results->tup_num, fldnum);
+
+		result = (char *) palloc(text_len + 1);
+
+		if (result != NULL) {
+			strcpy(result, PQgetvalue(results->res, results->tup_num, fldnum));
+			strcat(result, "\0");
+		} else {
+			elog(ERROR, "dblink: insufficient memory" );
+		}
+
+		result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(result)));
+
+		PG_RETURN_TEXT_P(result_text);
+
 	}
-
-	result_text = DatumGetTextP(DirectFunctionCall1(textin, CStringGetDatum(result)));
-
-	PG_RETURN_TEXT_P(result_text);
 }
 
 

@@ -24,11 +24,17 @@
  *
  */
 
-Version 0.2 (29 May, 2001):
+
+Version 0.3 (14 June, 2001):
   Function to test returning data set from remote database
   Tested under Linux (Red Hat 6.2 and 7.0) and PostgreSQL 7.1 and 7.2devel
 
 Release Notes:
+
+  Version 0.3
+    - fixed dblink invalid pointer causing corrupt elog message
+    - fixed dblink_tok improper handling of null results
+    - fixed examples in README.dblink
 
   Version 0.2
     - initial release    
@@ -124,11 +130,11 @@ to 'fake' a UNION, e.g.
                    'hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
                   ,'select f1, f2 from mytable'
                  ) as dblink_p
-    union
-    select null,null where false
+    union all
+    select null where false
    ) as t1
   where
-    f1 = 'mycriteria';
+    dblink_tok(t1.dblink_p,0) = 'mycriteria';
 
 in order to work around an issue with the query optimizer. A more convenient way to approach
 this problem is to create a view:
@@ -143,8 +149,8 @@ this problem is to create a view:
                    'hostaddr=127.0.0.1 port=5432 dbname=mydb user=postgres password=mypasswd'
                   ,'select f1, f2 from mytable'
                  ) as dblink_p
-    union
-    select null,null where false
+    union all
+    select null where false
    ) as t1;
 
 Then you can simply write:
