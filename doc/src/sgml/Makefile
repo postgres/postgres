@@ -2,7 +2,7 @@
 #
 # PostgreSQL documentation makefile
 #
-# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.57 2003/04/10 01:22:44 petere Exp $
+# $Header: /cvsroot/pgsql/doc/src/sgml/Makefile,v 1.58 2003/08/27 22:58:54 petere Exp $
 #
 #----------------------------------------------------------------------------
 
@@ -48,7 +48,7 @@ endif
 
 # Enable draft mode during development
 ifneq (,$(findstring devel, $(VERSION)))
-JADEFLAGS += -V draft-mode
+override JADEFLAGS += -V draft-mode
 endif
 
 
