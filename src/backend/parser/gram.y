@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.72 1997/11/25 22:05:29 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.73 1997/11/30 23:11:10 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -566,20 +566,25 @@ default_expr:  AexprConst
 		;
 
 opt_constraint:  NOT NULL_P						{ $$ = TRUE; }
+			| NOT NULL_P UNIQUE
+				{
+					elog(NOTICE,"UNIQUE clause ignored; not yet implemented",NULL);
+					$$ = TRUE;
+				}
 			| NOTNULL							{ $$ = TRUE; }
 			| UNIQUE
 				{
-					elog(WARN,"CREATE TABLE/UNIQUE not yet implemented",NULL);
+					elog(NOTICE,"UNIQUE clause ignored; not yet implemented",NULL);
 					$$ = FALSE;
 				}
 			| PRIMARY KEY
 				{
-					elog(WARN,"CREATE TABLE/PRIMARY KEY not yet implemented",NULL);
+					elog(NOTICE,"PRIMARY KEY clause ignored; not yet implemented",NULL);
 					$$ = FALSE;
 				}
 			| REFERENCES ColId opt_column_list key_match key_actions
 				{
-					elog(WARN,"CREATE TABLE/FOREIGN KEY not yet implemented",NULL);
+					elog(NOTICE,"FOREIGN KEY clause ignored; not yet implemented",NULL);
 					$$ = FALSE;
 				}
 			| /* EMPTY */						{ $$ = FALSE; }
@@ -728,9 +733,15 @@ ConstraintDef:	CHECK constraint_elem
 		| UNIQUE '(' columnList ')'
 				{	elog(WARN,"CREATE TABLE/UNIQUE not yet implemented",NULL); }
 		| PRIMARY KEY '(' columnList ')'
-				{	elog(WARN,"CREATE TABLE/PRIMARY KEY not yet implemented",NULL); }
+				{
+					ConstraintDef *constr = palloc (sizeof(ConstraintDef));
+					constr->type = CONSTR_PRIMARY;
+					constr->name = NULL;
+					constr->keys = $4;
+					$$ = constr;
+				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
-				{	elog(WARN,"CREATE TABLE/FOREIGN KEY not yet implemented",NULL); }
+				{	elog(NOTICE,"FOREIGN KEY clause ignored; not yet implemented",NULL); }
 		;
 
 constraint_elem:  AexprConst
@@ -2607,14 +2618,21 @@ a_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, ";", NULL, $2); }
 		| '|' a_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
-		| AexprConst TYPECAST Typename
+		| a_expr TYPECAST Typename
 				{
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const)
-						((A_Const *)$1)->typename = $3;
-					else
-						((ParamNo *)$1)->typename = $3;
 					$$ = (Node *)$1;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($1) == T_A_Const) {
+						((A_Const *)$1)->typename = $3;
+					} else if (nodeTag($1) == T_Param) {
+						((ParamNo *)$1)->typename = $3;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $3->name;
+						n->args = lcons($1,NIL);
+						$$ = (Node *)n;
+					}
 				}
 		| CAST a_expr AS Typename
 				{
@@ -2950,14 +2968,21 @@ position_expr:  attr opt_indirection
 				{	$$ = makeA_Expr(OP, "*", $1, $3); }
 		| '|' position_expr
 				{	$$ = makeA_Expr(OP, "|", NULL, $2); }
-		| AexprConst TYPECAST Typename
+		| position_expr TYPECAST Typename
 				{
-					/* AexprConst can be either A_Const or ParamNo */
-					if (nodeTag($1) == T_A_Const)
-						((A_Const *)$1)->typename = $3;
-					else
-						((ParamNo *)$1)->typename = $3;
 					$$ = (Node *)$1;
+					/* AexprConst can be either A_Const or ParamNo */
+					if (nodeTag($1) == T_A_Const) {
+						((A_Const *)$1)->typename = $3;
+					} else if (nodeTag($1) == T_Param) {
+						((ParamNo *)$1)->typename = $3;
+					/* otherwise, try to transform to a function call */
+					} else {
+						FuncCall *n = makeNode(FuncCall);
+						n->funcname = $3->name;
+						n->args = lcons($1,NIL);
+						$$ = (Node *)n;
+					}
 				}
 		| CAST position_expr AS Typename
 				{
