@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.65 2004/07/01 00:50:52 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/storage/ipc/sinval.c,v 1.66 2004/07/01 03:13:05 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -509,7 +509,6 @@ TransactionIdIsInProgress(TransactionId xid)
 
 			if (result)
 				break;
-
 		}
 	}
 
@@ -531,11 +530,17 @@ TransactionIdIsInProgress(TransactionId xid)
 		 * We don't care if it aborted, because if it did, we won't find
 		 * it in the array.
 		 */
-
 		for (i = 0; i < nxids; i++)
+		{
 			if (TransactionIdEquals(xids[i], xid))
-				return true;
+			{
+				result = true;
+				break;
+			}
+		}
 	}
+
+	pfree(xids);
 
 	return result;
 }
