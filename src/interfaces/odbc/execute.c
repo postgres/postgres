@@ -431,7 +431,8 @@ FARPROC addr;
 //      -       -       -       -       -       -       -       -       -
 
 //      Returns the SQL string as modified by the driver.
-
+//		Currently, just copy the input string without modification
+//		observing buffer limits and truncation.
 RETCODE SQL_API SQLNativeSql(
         HDBC      hdbc,
         UCHAR FAR *szSqlStrIn,
@@ -441,12 +442,40 @@ RETCODE SQL_API SQLNativeSql(
         SDWORD FAR *pcbSqlStr)
 {
 static char *func="SQLNativeSql";
+int len = 0;
+char *ptr;
+ConnectionClass *conn = (ConnectionClass *) hdbc;
+RETCODE result;
 
-	mylog( "%s: entering...\n", func);
+	mylog( "%s: entering...cbSqlStrIn=%d\n", func, cbSqlStrIn);
 
-    strncpy_null(szSqlStr, szSqlStrIn, cbSqlStrMax);
+	ptr = (cbSqlStrIn == 0) ? "" : make_string(szSqlStrIn, cbSqlStrIn, NULL);
+	if ( ! ptr) {
+		conn->errornumber = CONN_NO_MEMORY_ERROR;
+		conn->errormsg = "No memory available to store native sql string";
+		CC_log_error(func, "", conn);
+		return SQL_ERROR;
+	}
 
-    return SQL_SUCCESS;
+	result = SQL_SUCCESS;
+	len = strlen(ptr);
+
+	if (szSqlStr) {
+		strncpy_null(szSqlStr, ptr, cbSqlStrMax);
+
+		if (len >= cbSqlStrMax)  {
+			result = SQL_SUCCESS_WITH_INFO;
+			conn->errornumber = STMT_TRUNCATED;
+			conn->errormsg = "The buffer was too small for the result.";
+		}
+	}
+
+	if (pcbSqlStr)
+		*pcbSqlStr = len;
+
+	free(ptr);
+
+    return result;
 }
 
 //      -       -       -       -       -       -       -       -       -

@@ -65,6 +65,8 @@ typedef enum {
 #define CONN_OPTION_VALUE_CHANGED 213
 #define CONN_VALUE_OUT_OF_RANGE 214
 
+#define CONN_TRUNCATED 215
+
 /* Conn_status defines */
 #define CONN_IN_AUTOCOMMIT 0x01
 #define CONN_IN_TRANSACTION 0x02

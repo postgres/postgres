@@ -242,6 +242,7 @@ int status;
                     strcpy(szSqlState, "01S02");
 					break;
                 case STMT_TRUNCATED:
+				case CONN_TRUNCATED:
                     strcpy(szSqlState, "01004");
                     // data truncated
                     break;

@@ -79,12 +79,14 @@ static char *func = "SQLDriverConnect";
 ConnectionClass *conn = (ConnectionClass *) hdbc;
 ConnInfo *ci;
 #ifdef WIN32
-RETCODE dialog_result;
+RETCODE dialog_result, result;
 #endif
 char connStrIn[MAX_CONNECT_STRING];
 char connStrOut[MAX_CONNECT_STRING];
 int retval;
 char password_required = FALSE;
+int len = 0;
+
 
 	mylog("%s: entering...\n", func);
 
@@ -166,22 +168,6 @@ dialog:
 		return SQL_NO_DATA_FOUND;
 	}
 
-	if(szConnStrOut) {
-
-		/*	Return the completed string to the caller.
-			Only construct the connect string if a dialog was put up,
-			otherwise, just copy the connection input string to the output.
-		*/
-		makeConnectString(connStrOut, ci);
-
-		if(pcbConnStrOut) {
-			*pcbConnStrOut = strlen(connStrOut);
-		}
-		strncpy_null(szConnStrOut, connStrOut, cbConnStrOutMax);
-	}
-
-	mylog("szConnStrOut = '%s'\n", szConnStrOut);
-	qlog("conn=%u, SQLDriverConnect(out)='%s'\n", conn, szConnStrOut);
 
 	// do the actual connect
 	retval = CC_connect(conn, password_required);
@@ -205,8 +191,41 @@ dialog:
 		return SQL_ERROR;
 	}
 
-	mylog("SQLDRiverConnect: returning success\n");
-	return SQL_SUCCESS;
+	/*********************************************/
+	/*     Create the Output Connection String   */
+	/*********************************************/
+	result = SQL_SUCCESS;
+
+	makeConnectString(connStrOut, ci);
+	len = strlen(connStrOut);
+
+	if(szConnStrOut) {
+
+		/*	Return the completed string to the caller. The correct method is to 
+			only construct the connect string if a dialog was put up, otherwise, 
+			it should just copy the connection input string to the output.  
+			However, it seems ok to just always	construct an output string.  There
+			are possible bad side effects on working applications (Access) by 
+			implementing the correct behavior, anyway. 
+		*/
+		strncpy_null(szConnStrOut, connStrOut, cbConnStrOutMax);
+
+		if (len >= cbConnStrOutMax) {
+			result = SQL_SUCCESS_WITH_INFO;
+			conn->errornumber = CONN_TRUNCATED;
+			conn->errormsg = "The buffer was too small for the result.";
+		}
+	}
+
+	if(pcbConnStrOut)
+		*pcbConnStrOut = len;
+
+	mylog("szConnStrOut = '%s'\n", szConnStrOut);
+	qlog("conn=%u, SQLDriverConnect(out)='%s'\n", conn, szConnStrOut);
+
+
+	mylog("SQLDRiverConnect: returning %d\n", result);
+	return result;
 }
 
 #ifdef WIN32

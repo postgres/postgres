@@ -175,13 +175,16 @@ RETCODE SQL_API SQLDescribeCol(
 static char *func="SQLDescribeCol";
     /* gets all the information about a specific column */
 StatementClass *stmt = (StatementClass *) hstmt;
-QResultClass *result;
+QResultClass *res;
 char *col_name = NULL;
 Int4 fieldtype = 0;
 int precision = 0;
 ConnInfo *ci;
 char parse_ok;
 char buf[255];
+int len = 0;
+RETCODE result;
+
 
 	mylog("%s: entering...\n", func);
 
@@ -239,10 +242,10 @@ char buf[255];
 	if ( ! parse_ok) {
 		SC_pre_execute(stmt);
 	
-		result = SC_get_Result(stmt);
+		res = SC_get_Result(stmt);
 
-		mylog("**** SQLDescribeCol: result = %u, stmt->status = %d, !finished=%d, !premature=%d\n", result, stmt->status, stmt->status != STMT_FINISHED, stmt->status != STMT_PREMATURE);
-		if ( (NULL == result) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE))) {
+		mylog("**** SQLDescribeCol: res = %u, stmt->status = %d, !finished=%d, !premature=%d\n", res, stmt->status, stmt->status != STMT_FINISHED, stmt->status != STMT_PREMATURE);
+		if ( (NULL == res) || ((stmt->status != STMT_FINISHED) && (stmt->status != STMT_PREMATURE))) {
 			/* no query has been executed on this statement */
 			stmt->errornumber = STMT_SEQUENCE_ERROR;
 			stmt->errormsg = "No query has been assigned to this statement.";
@@ -250,16 +253,16 @@ char buf[255];
 			return SQL_ERROR;
 		}
 
-		if (icol >= QR_NumResultCols(result)) {
+		if (icol >= QR_NumResultCols(res)) {
 			stmt->errornumber = STMT_INVALID_COLUMN_NUMBER_ERROR;
 			stmt->errormsg = "Invalid column number in DescribeCol.";
-			sprintf(buf, "Col#=%d, #Cols=%d", icol, QR_NumResultCols(result));
+			sprintf(buf, "Col#=%d, #Cols=%d", icol, QR_NumResultCols(res));
 			SC_log_error(func, buf, stmt);
 			return SQL_ERROR;
 		}
 
-		col_name = QR_get_fieldname(result, icol);
-        fieldtype = QR_get_field_type(result, icol);
+		col_name = QR_get_fieldname(res, icol);
+        fieldtype = QR_get_field_type(res, icol);
 
 		precision = pgtype_precision(stmt, fieldtype, icol, globals.unknown_sizes);  // atoi(ci->unknown_sizes)
 	}
@@ -268,28 +271,40 @@ char buf[255];
 	mylog("describeCol: col %d fieldtype = %d\n", icol, fieldtype);
 	mylog("describeCol: col %d precision = %d\n", icol, precision);
 
-    if (cbColNameMax >= 1) {
-        if (pcbColName)  {
-            if (col_name) 
-                *pcbColName = strlen(col_name);
-            else
-                *pcbColName = 0;
-        }
-        if (szColName) {
-            if (col_name) 
-                strncpy_null(szColName, col_name, cbColNameMax);
-            else
-                szColName[0] = '\0';
-        }
+
+	result = SQL_SUCCESS;
+
+	/************************/
+	/*		COLUMN NAME     */
+	/************************/
+	len = strlen(col_name);
+
+	if (pcbColName)
+		*pcbColName = len;
+
+	if (szColName) {
+		strncpy_null(szColName, col_name, cbColNameMax);
+
+		if (len >= cbColNameMax)  {
+			result = SQL_SUCCESS_WITH_INFO;
+			stmt->errornumber = STMT_TRUNCATED;
+			stmt->errormsg = "The buffer was too small for the result.";
+		}
     }
 
 
+	/************************/
+	/*		SQL TYPE        */
+	/************************/
     if (pfSqlType) {
         *pfSqlType = pgtype_to_sqltype(stmt, fieldtype);
 
 		mylog("describeCol: col %d *pfSqlType = %d\n", icol, *pfSqlType);
 	}
 
+	/************************/
+	/*		PRECISION       */
+	/************************/
     if (pcbColDef) {
 
 		if ( precision < 0)
@@ -300,6 +315,9 @@ char buf[255];
 		mylog("describeCol: col %d  *pcbColDef = %d\n", icol, *pcbColDef);
 	}
 
+	/************************/
+	/*		SCALE           */
+	/************************/
     if (pibScale) {
         Int2 scale;
         scale = pgtype_scale(stmt, fieldtype);
@@ -309,16 +327,16 @@ char buf[255];
 		mylog("describeCol: col %d  *pibScale = %d\n", icol, *pibScale);
     }
 
+	/************************/
+	/*		NULLABILITY     */
+	/************************/
     if (pfNullable) {
-		if (parse_ok)
-			*pfNullable = stmt->fi[icol]->nullable;
-		else
-			*pfNullable = pgtype_nullable(stmt, fieldtype);
+		*pfNullable = (parse_ok) ? stmt->fi[icol]->nullable : pgtype_nullable(stmt, fieldtype);
 
 		mylog("describeCol: col %d  *pfNullable = %d\n", icol, *pfNullable);
     }
 
-    return SQL_SUCCESS;
+    return result;
 }
 
 //      Returns result column descriptor information for a result set.
@@ -334,12 +352,14 @@ RETCODE SQL_API SQLColAttributes(
 {
 static char *func = "SQLColAttributes";
 StatementClass *stmt = (StatementClass *) hstmt;
-char *value;
 Int4 field_type = 0;
 ConnInfo *ci;
 int unknown_sizes;
 int cols = 0;
 char parse_ok;
+RETCODE result;
+char *p = NULL;
+int len = 0, value = 0;
 
 	mylog("%s: entering...\n", func);
 
@@ -434,17 +454,14 @@ char parse_ok;
 
 	switch(fDescType) {
 	case SQL_COLUMN_AUTO_INCREMENT:
-		if (pfDesc) {
-			*pfDesc = pgtype_auto_increment(stmt, field_type);
-			if (*pfDesc == -1)  /*  non-numeric becomes FALSE (ODBC Doc) */
-				*pfDesc = FALSE;
+		value  = pgtype_auto_increment(stmt, field_type);
+		if (value == -1)  /*  non-numeric becomes FALSE (ODBC Doc) */
+			value = FALSE;
 				
-		}
 		break;
 
 	case SQL_COLUMN_CASE_SENSITIVE:
-		if (pfDesc)    
-			*pfDesc = pgtype_case_sensitive(stmt, field_type);
+		value = pgtype_case_sensitive(stmt, field_type);
 		break;
 
 	/* 	This special case is handled above.
@@ -453,151 +470,127 @@ char parse_ok;
 	*/
 
     case SQL_COLUMN_DISPLAY_SIZE:
-		if (pfDesc) {
-			if (parse_ok)
-				*pfDesc = stmt->fi[icol]->display_size;
-			else
-				*pfDesc = pgtype_display_size(stmt, field_type, icol, unknown_sizes);
-		}
+		value = (parse_ok) ? stmt->fi[icol]->display_size : pgtype_display_size(stmt, field_type, icol, unknown_sizes);
 
-		mylog("SQLColAttributes: col %d, display_size= %d\n", icol, *pfDesc);
+		mylog("SQLColAttributes: col %d, display_size= %d\n", icol, value);
 
         break;
 
 	case SQL_COLUMN_LABEL:
 		if (parse_ok && stmt->fi[icol]->alias[0] != '\0') {
-			strncpy_null((char *)rgbDesc, stmt->fi[icol]->alias, cbDescMax);
-			if (pcbDesc)
-				*pcbDesc = strlen(stmt->fi[icol]->alias);
+			p = stmt->fi[icol]->alias;
 
+			mylog("SQLColAttr: COLUMN_LABEL = '%s'\n", p);
 			break;
 
-			mylog("SQLColAttr: COLUMN_LABEL = '%s'\n", rgbDesc);
-		}	// otherwise same as column name
+		}	// otherwise same as column name -- FALL THROUGH!!!
 
 	case SQL_COLUMN_NAME:
 
-		if (parse_ok)
-			value = stmt->fi[icol]->name;
-		else
-			value = QR_get_fieldname(stmt->result, icol);
+		p = (parse_ok) ? stmt->fi[icol]->name : QR_get_fieldname(stmt->result, icol);
 
-		strncpy_null((char *)rgbDesc, value, cbDescMax);
-
-		if (pcbDesc)
-			*pcbDesc = strlen(value);
-
-		mylog("SQLColAttr: COLUMN_NAME = '%s'\n", rgbDesc);
+		mylog("SQLColAttr: COLUMN_NAME = '%s'\n", p);
 		break;
 
 	case SQL_COLUMN_LENGTH:
-		if (pfDesc) {
-			if (parse_ok)
-				*pfDesc = stmt->fi[icol]->length;
-			else
-				*pfDesc = pgtype_length(stmt, field_type, icol, unknown_sizes); 
-		}
-		mylog("SQLColAttributes: col %d, length = %d\n", icol, *pfDesc);
+		value = (parse_ok) ? stmt->fi[icol]->length :  pgtype_length(stmt, field_type, icol, unknown_sizes); 
+
+		mylog("SQLColAttributes: col %d, length = %d\n", icol, value);
         break;
 
 	case SQL_COLUMN_MONEY:
-		if (pfDesc)    
-			*pfDesc = pgtype_money(stmt, field_type);
+		value = pgtype_money(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_NULLABLE:
-		if (pfDesc) {
-			if (parse_ok)
-				*pfDesc = stmt->fi[icol]->nullable;
-			else
-				*pfDesc = pgtype_nullable(stmt, field_type);
-		}
+		value = (parse_ok) ? stmt->fi[icol]->nullable : pgtype_nullable(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_OWNER_NAME:
-		strncpy_null((char *)rgbDesc, "", cbDescMax);
-		if (pcbDesc)        
-			*pcbDesc = 0;
+		p = "";
 		break;
 
 	case SQL_COLUMN_PRECISION:
-		if (pfDesc) {
-			if (parse_ok)
-				*pfDesc = stmt->fi[icol]->precision;
-			else
-				*pfDesc = pgtype_precision(stmt, field_type, icol, unknown_sizes);
-		}
-		mylog("SQLColAttributes: col %d, precision = %d\n", icol, *pfDesc);
+		value = (parse_ok) ? stmt->fi[icol]->precision : pgtype_precision(stmt, field_type, icol, unknown_sizes);
+
+		mylog("SQLColAttributes: col %d, precision = %d\n", icol, value);
         break;
 
 	case SQL_COLUMN_QUALIFIER_NAME:
-		strncpy_null((char *)rgbDesc, "", cbDescMax);
-		if (pcbDesc)        
-			*pcbDesc = 0;
+		p = "";
 		break;
 
 	case SQL_COLUMN_SCALE:
-		if (pfDesc)    
-			*pfDesc = pgtype_scale(stmt, field_type);
+		value = pgtype_scale(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_SEARCHABLE:
-		if (pfDesc)    
-			*pfDesc = pgtype_searchable(stmt, field_type);
+		value = pgtype_searchable(stmt, field_type);
 		break;
 
     case SQL_COLUMN_TABLE_NAME:
-		if (parse_ok && stmt->fi[icol]->ti) {
-			strncpy_null((char *)rgbDesc, stmt->fi[icol]->ti->name, cbDescMax);
-			if (pcbDesc)        
-				*pcbDesc = strlen(stmt->fi[icol]->ti->name);
-		}
-		else {
-			strncpy_null((char *)rgbDesc, "", cbDescMax);
-			if (pcbDesc)        
-				*pcbDesc = 0;
-		}
 
-		mylog("SQLColAttr: TABLE_NAME = '%s'\n", rgbDesc);
+		p = (parse_ok && stmt->fi[icol]->ti) ? stmt->fi[icol]->ti->name : "";
+
+		mylog("SQLColAttr: TABLE_NAME = '%s'\n", p);
         break;
 
 	case SQL_COLUMN_TYPE:
-		if (pfDesc) {
-			*pfDesc = pgtype_to_sqltype(stmt, field_type);
-		}
+		value = pgtype_to_sqltype(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_TYPE_NAME:
-		value = pgtype_to_name(stmt, field_type);
-		strncpy_null((char *)rgbDesc, value, cbDescMax);
-		if (pcbDesc)        
-			*pcbDesc = strlen(value);
+		p = pgtype_to_name(stmt, field_type);
 		break;
 
 	case SQL_COLUMN_UNSIGNED:
-		if (pfDesc) {
-			*pfDesc = pgtype_unsigned(stmt, field_type);
-			if(*pfDesc == -1)	/* non-numeric becomes TRUE (ODBC Doc) */
-				*pfDesc = TRUE;
-		}
+		value = pgtype_unsigned(stmt, field_type);
+		if(value == -1)	/* non-numeric becomes TRUE (ODBC Doc) */
+			value = TRUE;
+
 		break;
 
 	case SQL_COLUMN_UPDATABLE:
-		if (pfDesc)    {
-			/*	Neither Access or Borland care about this.
+		/*	Neither Access or Borland care about this.
 
-			if (field_type == PG_TYPE_OID)
-				*pfDesc = SQL_ATTR_READONLY;
-			else
-			*/
+		if (field_type == PG_TYPE_OID)
+			*pfDesc = SQL_ATTR_READONLY;
+		else
+		*/
 
-			*pfDesc = SQL_ATTR_WRITE;
-			mylog("SQLColAttr: UPDATEABLE = %d\n", *pfDesc);
-		}
+		value = SQL_ATTR_WRITE;
+
+		mylog("SQLColAttr: UPDATEABLE = %d\n", value);
 		break;
     }
 
-    return SQL_SUCCESS;
+	result = SQL_SUCCESS;
+
+	if (p) {  /* char/binary data */
+		len = strlen(p);
+
+		if (rgbDesc) {
+			strncpy_null((char *)rgbDesc, p, (size_t)cbDescMax);
+
+			if (len >= cbDescMax)  {
+				result = SQL_SUCCESS_WITH_INFO;
+				stmt->errornumber = STMT_TRUNCATED;
+				stmt->errormsg = "The buffer was too small for the result.";
+			}
+		}
+
+		if (pcbDesc) 
+			*pcbDesc = len;
+	}
+	else {	/* numeric data */
+
+		if (pfDesc)
+			*pfDesc = value;
+
+	}
+
+
+    return result;
 }
 
 //      Returns result data for a single column in the current row.
@@ -1162,14 +1155,15 @@ mylog("SQLSetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d\n", hstmt, szCurs
 	}
 
 	len = (cbCursor == SQL_NTS) ? strlen(szCursor) : cbCursor;
-	mylog("cursor len = %d\n", len);
+
 	if (len <= 0 || len > sizeof(stmt->cursor_name) - 1) {
 		stmt->errornumber = STMT_INVALID_CURSOR_NAME;
 		stmt->errormsg = "Invalid Cursor Name";
 		SC_log_error(func, "", stmt);
 		return SQL_ERROR;
 	}
-	strncpy_null(stmt->cursor_name, szCursor, cbCursor);
+
+	strncpy_null(stmt->cursor_name, szCursor, len+1);
 	return SQL_SUCCESS;
 }
 
@@ -1183,6 +1177,8 @@ RETCODE SQL_API SQLGetCursorName(
 {
 static char *func="SQLGetCursorName";
 StatementClass *stmt = (StatementClass *) hstmt;
+int len = 0;
+RETCODE result;
 
 mylog("SQLGetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d, pcbCursor=%u\n", hstmt, szCursor, cbCursorMax, pcbCursor);
 
@@ -1191,7 +1187,6 @@ mylog("SQLGetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d, pcbCursor=%u\n",
 		return SQL_INVALID_HANDLE;
 	}
 
-
 	if ( stmt->cursor_name[0] == '\0') {
 		stmt->errornumber = STMT_NO_CURSOR_NAME;
 		stmt->errormsg = "No Cursor name available";
@@ -1199,12 +1194,23 @@ mylog("SQLGetCursorName: hstmt=%u, szCursor=%u, cbCursorMax=%d, pcbCursor=%u\n",
 		return SQL_ERROR;
 	}
 
-	strncpy_null(szCursor, stmt->cursor_name, cbCursorMax);
+	result = SQL_SUCCESS;
+	len = strlen(stmt->cursor_name);
+
+	if (szCursor) {
+		strncpy_null(szCursor, stmt->cursor_name, cbCursorMax);
+
+		if (len >= cbCursorMax)  {
+			result = SQL_SUCCESS_WITH_INFO;
+			stmt->errornumber = STMT_TRUNCATED;
+			stmt->errormsg = "The buffer was too small for the result.";
+		}
+	}
 
 	if (pcbCursor)
-		*pcbCursor = strlen(szCursor);
+		*pcbCursor = len;
 
-	return SQL_SUCCESS;
+	return result;
 }
 
 
