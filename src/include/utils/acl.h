@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.72 2004/08/01 20:30:49 tgl Exp $
+ * $PostgreSQL: pgsql/src/include/utils/acl.h,v 1.73 2004/08/06 18:05:49 tgl Exp $
  *
  * NOTES
  *	  An ACL array is simply an array of AclItems, representing the union
@@ -99,7 +99,7 @@ typedef struct AclItem
  * Definitions for convenient access to Acl (array of AclItem) and IdList
  * (array of AclId).  These are standard PostgreSQL arrays, but are restricted
  * to have one dimension.  We also ignore the lower bound when reading,
- * and set it to zero when writing.
+ * and set it to one when writing.
  *
  * CAUTION: as of PostgreSQL 7.1, these arrays are toastable (just like all
  * other array types).	Therefore, be careful to detoast them with the
