@@ -6,8 +6,9 @@
 
 /* Here are some methods used by the lib. */
 
-/* Stores the backend error message for client access */
+/* Store and retrieve the backend error message for client access */
 void set_backend_err(const char *err, int lineon);
+char *ECPGerrmsg(void);
 
 /* Returns a pointer to a string containing a simple type name. */
 void		ECPGadd_mem(void *ptr, int lineno);
