@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.62 1999/01/20 16:29:39 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/dt.c,v 1.63 1999/02/13 04:25:01 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -249,7 +249,7 @@ timespan_in(char *str)
 		case DTK_DELTA:
 			if (tm2timespan(tm, fsec, span) != 0)
 			{
-#if FALSE
+#if NOT_USED
 				TIMESPAN_INVALID(span);
 #endif
 				elog(ERROR, "Bad timespan external representation '%s'", str);
@@ -1412,7 +1412,7 @@ datetime_trunc(text *units, DateTime *datetime)
 
 	if (DATETIME_NOT_FINITE(*datetime))
 	{
-#if FALSE
+#if NOT_USED
 /* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
 		elog(ERROR, "Datetime is not finite", NULL);
 #endif
@@ -1494,7 +1494,7 @@ datetime_trunc(text *units, DateTime *datetime)
 			if (tm2datetime(tm, fsec, &tz, result) != 0)
 				elog(ERROR, "Unable to truncate datetime to '%s'", lowunits);
 
-#if FALSE
+#if NOT_USED
 		}
 		else if ((type == RESERV) && (val == DTK_EPOCH))
 		{
@@ -1552,7 +1552,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 
 	if (TIMESPAN_IS_INVALID(*timespan))
 	{
-#if FALSE
+#if NOT_USED
 		elog(ERROR, "Timespan is not finite", NULL);
 #endif
 		result = NULL;
@@ -1610,7 +1610,7 @@ timespan_trunc(text *units, TimeSpan *timespan)
 			result = NULL;
 		}
 
-#if FALSE
+#if NOT_USED
 	}
 	else if ((type == RESERV) && (val == DTK_EPOCH))
 	{
@@ -1678,7 +1678,7 @@ datetime_part(text *units, DateTime *datetime)
 
 	if (DATETIME_NOT_FINITE(*datetime))
 	{
-#if FALSE
+#if NOT_USED
 /* should return null but Postgres doesn't like that currently. - tgl 97/06/12 */
 		elog(ERROR, "Datetime is not finite", NULL);
 #endif
@@ -1843,7 +1843,7 @@ timespan_part(text *units, TimeSpan *timespan)
 
 	if (TIMESPAN_IS_INVALID(*timespan))
 	{
-#if FALSE
+#if NOT_USED
 		elog(ERROR, "Timespan is not finite", NULL);
 #endif
 		*result = 0;
@@ -1893,15 +1893,15 @@ timespan_part(text *units, TimeSpan *timespan)
 					break;
 
 				case DTK_DECADE:
-					*result = (tm->tm_year / 10) + 1;
+					*result = (tm->tm_year / 10);
 					break;
 
 				case DTK_CENTURY:
-					*result = (tm->tm_year / 100) + 1;
+					*result = (tm->tm_year / 100);
 					break;
 
 				case DTK_MILLENIUM:
-					*result = (tm->tm_year / 1000) + 1;
+					*result = (tm->tm_year / 1000);
 					break;
 
 				default:
@@ -2454,7 +2454,7 @@ datetime2tm(DateTime dt, int *tzp, struct tm * tm, double *fsec, char **tzn)
 			tm->tm_mday = tx->tm_mday;
 			tm->tm_hour = tx->tm_hour;
 			tm->tm_min = tx->tm_min;
-#if FALSE
+#if NOT_USED
 /* XXX HACK
  * Argh! My Linux box puts in a 1 second offset for dates less than 1970
  *	but only if the seconds field was non-zero. So, don't copy the seconds
@@ -2814,6 +2814,7 @@ DecodeDateTime(char **field, int *ftype, int nf,
 	int			flen,
 				val;
 	int			mer = HR24;
+	int			haveTextMonth = FALSE;
 	int			is2digits = FALSE;
 	int			bc = FALSE;
 
@@ -2955,14 +2956,23 @@ DecodeDateTime(char **field, int *ftype, int nf,
 #ifdef DATEDEBUG
 						printf("DecodeDateTime- month field %s value is %d\n", field[i], val);
 #endif
+						/* already have a (numeric) month? then see if we can substitute... */
+						if ((fmask & DTK_M(MONTH)) && (! haveTextMonth)
+						  && (!(fmask & DTK_M(DAY)))
+						  && ((tm->tm_mon >= 1) && (tm->tm_mon <= 31)))
+						{
+							tm->tm_mday = tm->tm_mon;
+							tmask = DTK_M(DAY);
+#ifdef DATEDEBUG
+							printf("DecodeNumber- misidentified month previously; assign as day %d\n", tm->tm_mday);
+#endif
+						}
+						haveTextMonth = TRUE;
 						tm->tm_mon = val;
 						break;
 
-						/*
-						 * daylight savings time modifier (solves "MET
-						 * DST" syntax)
-						 */
 					case DTZMOD:
+						/* daylight savings time modifier (solves "MET DST" syntax) */
 						tmask |= DTK_M(DTZ);
 						tm->tm_isdst = 1;
 						if (tzp == NULL)
@@ -3466,17 +3476,14 @@ DecodeNumber(int flen, char *str, int fmask,
 		*tmask = DTK_M(YEAR);
 
 		/* already have a year? then see if we can substitute... */
-		if (fmask & DTK_M(YEAR))
+		if ((fmask & DTK_M(YEAR)) && (!(fmask & DTK_M(DAY)))
+		  && ((tm->tm_year >= 1) && (tm->tm_year <= 31)))
 		{
-			if ((!(fmask & DTK_M(DAY)))
-				&& ((tm->tm_year >= 1) && (tm->tm_year <= 31)))
-			{
+			tm->tm_mday = tm->tm_year;
+			*tmask = DTK_M(DAY);
 #ifdef DATEDEBUG
-				printf("DecodeNumber- misidentified year previously; swap with day %d\n", tm->tm_mday);
+			printf("DecodeNumber- misidentified year previously; assign as day %d\n", tm->tm_mday);
 #endif
-				tm->tm_mday = tm->tm_year;
-				*tmask = DTK_M(DAY);
-			}
 		}
 
 		tm->tm_year = val;
