@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.24 2004/08/29 05:06:41 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/schemacmds.c,v 1.25 2004/09/02 00:22:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -217,10 +217,6 @@ RemoveSchema(List *names, DropBehavior behavior)
 	/*
 	 * Do the deletion.  Objects contained in the schema are removed by
 	 * means of their dependency links to the schema.
-	 *
-	 * XXX currently, index opclasses don't have creation/deletion commands,
-	 * so they will not get removed when the containing schema is removed.
-	 * This is annoying but not fatal.
 	 */
 	object.classId = get_system_catalog_relid(NamespaceRelationName);
 	object.objectId = namespaceId;
