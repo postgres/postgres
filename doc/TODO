@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Mar 15 09:06:53 EST 2004
+Last updated:		Tue Mar 16 11:13:31 EST 2004
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -266,6 +266,8 @@ Clients
 * Allow libpq to return information about prepared queries
 * Make pg_restore continue after errors, so it acts more like pg_dump scripts
 * Have psql show more information about sequences
+* Allow pg_dumpall to use non-text output formats
+
 
 * JDBC
 	o Comprehensive test suite. This may be available already.
