@@ -76,6 +76,7 @@ Fix path_inter, path_distance, path_length, dist_ppath to handle closed
   paths (Curtis Barrett, Tom)
 ALTER TABLE RENAME update foreign-key trigger arguments correctly (Brent Verner)
 Long value compression improvement (Tom)
+octet_length(text_col) now returns non-compressed length (Tatsuo, Bruce)
 
 Enhancements
 ------------
@@ -156,6 +157,7 @@ Allow SPI column functions to work for system columns (Tom)
 Dynahash portability improvements (Tom)
 Remove OID's from some system tables (Tom)
 Remove 'triggered data change violation' error check (Tom)
+Optimize LIKE/ILIKE when using single-byte encodings (Tatsuo)
 
 Types
 -----
@@ -167,10 +169,12 @@ INET, CIDR text conversion functions (Alex Pilosov)
 INET, CIDR operators << and <<= indexable (Alex Pilosov)
 Bytea comparison improvements, \### now requires three octal digits (Joe Conway)
 Make trim/ltrim/rtrim/btrim/lpad/rpad/translate() multibyte aware (Tatsuo)
+Formats with the correct number of columns for UNICODE in psql (Patrice)
 Add pg_database_encoding_max_length() (Tatsuo)
 Add pg_client_encoding() function (Tatsuo)
 Add LATIN5,6,7,8,9,10 support (Tatsuo)
 Change LATIN5 to mean ISO-8859-9, not ISO-8859-5 (Tatsuo)
+Add ISO 8859-5,6,7,8 support (Tatsuo)
 Make mic2ascii() non-ASCII aware (Tatsuo)
 Measure transaction times in milliseconds (Thomas)
 now() returns time in milliseconds (Thomas)
