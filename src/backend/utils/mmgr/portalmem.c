@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.45 2002/02/14 15:24:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/mmgr/portalmem.c,v 1.46 2002/02/27 19:35:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,8 +22,8 @@
  *		sees a
  *				fetch 1 from FOO
  *		the system looks up the portal named "FOO" in the portal table,
- *		gets the planned query and then calls the executor with a feature of
- *		'(EXEC_FOR 1).  The executor then runs the query and returns a single
+ *		gets the planned query and then calls the executor with a count
+ *		of 1.  The executor then runs the query and returns a single
  *		tuple.	The problem is that we have to hold onto the state of the
  *		portal query until we see a "close".  This means we have to be
  *		careful about memory management.

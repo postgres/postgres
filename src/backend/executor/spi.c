@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.66 2002/02/26 22:47:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/spi.c,v 1.67 2002/02/27 19:34:59 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -779,7 +779,7 @@ SPI_cursor_open(char *name, void *plan, Datum *Values, char *Nulls)
 	queryTree->isBinary = false;
 
 	/* Create the QueryDesc object and the executor state */
-	queryDesc = CreateQueryDesc(queryTree, planTree, SPI);
+	queryDesc = CreateQueryDesc(queryTree, planTree, SPI, NULL);
 	eState = CreateExecutorState();
 
 	/* If the plan has parameters, put them into the executor state */
@@ -1023,7 +1023,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		else if (plan == NULL)
 		{
 			qdesc = CreateQueryDesc(queryTree, planTree,
-									islastquery ? SPI : None);
+									islastquery ? SPI : None, NULL);
 			state = CreateExecutorState();
 			res = _SPI_pquery(qdesc, state, islastquery ? tcount : 0);
 			if (res < 0 || islastquery)
@@ -1033,7 +1033,7 @@ _SPI_execute(char *src, int tcount, _SPI_plan *plan)
 		else
 		{
 			qdesc = CreateQueryDesc(queryTree, planTree,
-									islastquery ? SPI : None);
+									islastquery ? SPI : None, NULL);
 			res = _SPI_pquery(qdesc, NULL, islastquery ? tcount : 0);
 			if (res < 0)
 				return res;
@@ -1094,7 +1094,7 @@ _SPI_execute_plan(_SPI_plan *plan, Datum *Values, char *Nulls, int tcount)
 		else
 		{
 			qdesc = CreateQueryDesc(queryTree, planTree,
-									islastquery ? SPI : None);
+									islastquery ? SPI : None, NULL);
 			state = CreateExecutorState();
 			if (nargs > 0)
 			{
@@ -1132,7 +1132,6 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	Query	   *parseTree = queryDesc->parsetree;
 	int			operation = queryDesc->operation;
 	CommandDest dest = queryDesc->dest;
-	TupleDesc	tupdesc;
 	bool		isRetrieveIntoPortal = false;
 	bool		isRetrieveIntoRelation = false;
 	char	   *intoName = NULL;
@@ -1174,11 +1173,13 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 
 	if (state == NULL)			/* plan preparation */
 		return res;
+
 #ifdef SPI_EXECUTOR_STATS
 	if (ShowExecutorStats)
 		ResetUsage();
 #endif
-	tupdesc = ExecutorStart(queryDesc, state);
+
+	ExecutorStart(queryDesc, state);
 
 	/*
 	 * Don't work currently --- need to rearrange callers so that we
@@ -1188,7 +1189,7 @@ _SPI_pquery(QueryDesc *queryDesc, EState *state, int tcount)
 	if (isRetrieveIntoPortal)
 		elog(FATAL, "SPI_select: retrieve into portal not implemented");
 
-	ExecutorRun(queryDesc, state, EXEC_FOR, (long) tcount);
+	ExecutorRun(queryDesc, state, ForwardScanDirection, (long) tcount);
 
 	_SPI_current->processed = state->es_processed;
 	save_lastoid = state->es_lastoid;
@@ -1230,6 +1231,7 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	QueryDesc  *querydesc;
 	EState	   *estate;
 	MemoryContext oldcontext;
+	ScanDirection direction;
 	CommandId	savedId;
 	CommandDest olddest;
 
@@ -1268,28 +1270,34 @@ _SPI_cursor_operation(Portal portal, bool forward, int count,
 	/* Run the executor like PerformPortalFetch and remember states */
 	if (forward)
 	{
-		if (!portal->atEnd)
-		{
-			ExecutorRun(querydesc, estate, EXEC_FOR, (long) count);
-			_SPI_current->processed = estate->es_processed;
-			if (estate->es_processed > 0)
-				portal->atStart = false;
-			if (count <= 0 || (int) estate->es_processed < count)
-				portal->atEnd = true;
-		}
+		if (portal->atEnd)
+			direction = NoMovementScanDirection;
+		else
+			direction = ForwardScanDirection;
+
+		ExecutorRun(querydesc, estate, direction, (long) count);
+
+		if (estate->es_processed > 0)
+			portal->atStart = false; /* OK to back up now */
+		if (count <= 0 || (int) estate->es_processed < count)
+			portal->atEnd = true;	/* we retrieved 'em all */
 	}
 	else
 	{
-		if (!portal->atStart)
-		{
-			ExecutorRun(querydesc, estate, EXEC_BACK, (long) count);
-			_SPI_current->processed = estate->es_processed;
-			if (estate->es_processed > 0)
-				portal->atEnd = false;
-			if (count <= 0 || estate->es_processed < count)
-				portal->atStart = true;
-		}
+		if (portal->atStart)
+			direction = NoMovementScanDirection;
+		else
+			direction = BackwardScanDirection;
+
+		ExecutorRun(querydesc, estate, direction, (long) count);
+
+		if (estate->es_processed > 0)
+			portal->atEnd = false;	/* OK to go forward now */
+		if (count <= 0 || (int) estate->es_processed < count)
+			portal->atStart = true; /* we retrieved 'em all */
 	}
+
+	_SPI_current->processed = estate->es_processed;
 
 	/*
 	 * Restore outer command ID.

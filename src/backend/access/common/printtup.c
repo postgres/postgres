@@ -1,15 +1,15 @@
 /*-------------------------------------------------------------------------
  *
  * printtup.c
- *	  Routines to print out tuples to the destination (binary or non-binary
- *	  portals, frontend/interactive backend, etc.).
+ *	  Routines to print out tuples to the destination (both frontend
+ *	  clients and interactive backends are supported here).
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.60 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.61 2002/02/27 19:34:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -18,10 +18,12 @@
 #include "access/heapam.h"
 #include "access/printtup.h"
 #include "catalog/pg_type.h"
+#include "libpq/libpq.h"
 #include "libpq/pqformat.h"
 #include "utils/syscache.h"
 
-static void printtup_setup(DestReceiver *self, TupleDesc typeinfo);
+static void printtup_setup(DestReceiver *self, int operation,
+						   const char *portalName, TupleDesc typeinfo);
 static void printtup(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_internal(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self);
 static void printtup_cleanup(DestReceiver *self);
@@ -97,17 +99,56 @@ printtup_create_DR(bool isBinary)
 }
 
 static void
-printtup_setup(DestReceiver *self, TupleDesc typeinfo)
+printtup_setup(DestReceiver *self, int operation,
+			   const char *portalName, TupleDesc typeinfo)
 {
+	/*
+	 * Send portal name to frontend.
+	 *
+	 * If portal name not specified, use "blank" portal.
+	 */
+	if (portalName == NULL)
+		portalName = "blank";
+
+	pq_puttextmessage('P', portalName);
+
+	/*
+	 * if this is a retrieve, then we send back the tuple
+	 * descriptor of the tuples.
+	 */
+	if (operation == CMD_SELECT)
+	{
+		Form_pg_attribute *attrs = typeinfo->attrs;
+		int			natts = typeinfo->natts;
+		int			i;
+		StringInfoData buf;
+
+		pq_beginmessage(&buf);
+		pq_sendbyte(&buf, 'T'); /* tuple descriptor message type */
+		pq_sendint(&buf, natts, 2);	/* # of attrs in tuples */
+
+		for (i = 0; i < natts; ++i)
+		{
+			pq_sendstring(&buf, NameStr(attrs[i]->attname));
+			pq_sendint(&buf, (int) attrs[i]->atttypid,
+					   sizeof(attrs[i]->atttypid));
+			pq_sendint(&buf, attrs[i]->attlen,
+					   sizeof(attrs[i]->attlen));
+			if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
+				pq_sendint(&buf, attrs[i]->atttypmod,
+						   sizeof(attrs[i]->atttypmod));
+		}
+		pq_endmessage(&buf);
+	}
+
 	/* ----------------
 	 * We could set up the derived attr info at this time, but we postpone it
-	 * until the first call of printtup, for 3 reasons:
+	 * until the first call of printtup, for 2 reasons:
 	 * 1. We don't waste time (compared to the old way) if there are no
 	 *	  tuples at all to output.
 	 * 2. Checking in printtup allows us to handle the case that the tuples
 	 *	  change type midway through (although this probably can't happen in
 	 *	  the current executor).
-	 * 3. Right now, ExecutorRun passes a NULL for typeinfo anyway :-(
 	 * ----------------
 	 */
 }
@@ -267,12 +308,12 @@ printatt(unsigned attributeId,
  *		showatts
  * ----------------
  */
-void
-showatts(char *name, TupleDesc tupleDesc)
+static void
+showatts(const char *name, TupleDesc tupleDesc)
 {
-	int			i;
 	int			natts = tupleDesc->natts;
 	Form_pg_attribute *attinfo = tupleDesc->attrs;
+	int			i;
 
 	puts(name);
 	for (i = 0; i < natts; ++i)
@@ -281,7 +322,24 @@ showatts(char *name, TupleDesc tupleDesc)
 }
 
 /* ----------------
- *		debugtup
+ *		debugSetup - prepare to print tuples for an interactive backend
+ * ----------------
+ */
+void
+debugSetup(DestReceiver *self, int operation,
+		   const char *portalName, TupleDesc typeinfo)
+{
+	/*
+	 * show the return type of the tuples
+	 */
+	if (portalName == NULL)
+		portalName = "blank";
+
+	showatts(portalName, typeinfo);
+}
+
+/* ----------------
+ *		debugtup - print one tuple for an interactive backend
  * ----------------
  */
 void

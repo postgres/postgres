@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.48 2002/02/26 22:47:05 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.49 2002/02/27 19:34:51 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -111,9 +111,8 @@ init_execution_state(char *src, Oid *argOidVect, int nargs)
 
 		nextes->next = NULL;
 		nextes->status = F_EXEC_START;
-		nextes->qd = CreateQueryDesc(queryTree,
-									 planTree,
-									 None);
+
+		nextes->qd = CreateQueryDesc(queryTree, planTree, None, NULL);
 		estate = CreateExecutorState();
 
 		if (nargs > 0)
@@ -268,7 +267,7 @@ postquel_start(execution_state *es)
 static TupleTableSlot *
 postquel_getnext(execution_state *es)
 {
-	int			feature;
+	long	count;
 
 	if (es->qd->operation == CMD_UTILITY)
 	{
@@ -281,9 +280,10 @@ postquel_getnext(execution_state *es)
 		return (TupleTableSlot *) NULL;
 	}
 
-	feature = (LAST_POSTQUEL_COMMAND(es)) ? EXEC_RETONE : EXEC_RUN;
+	/* If it's not the last command, just run it to completion */
+	count = (LAST_POSTQUEL_COMMAND(es)) ? 1L : 0L;
 
-	return ExecutorRun(es->qd, es->estate, feature, 0L);
+	return ExecutorRun(es->qd, es->estate, ForwardScanDirection, count);
 }
 
 static void

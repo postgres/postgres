@@ -1,11 +1,13 @@
 /*-------------------------------------------------------------------------
  *
  * dest.h
- *		Whenever the backend executes a query, the results
- *		have to go someplace.
+ *	  support for communication destinations
+ *
+ * Whenever the backend executes a query, the results
+ * have to go someplace.
  *
  *	  - stdout is the destination only when we are running a
- *		backend without a postmaster and are returning results
+ *		standalone backend (no postmaster) and are returning results
  *		back to an interactive user.
  *
  *	  - a remote process is the destination when we are
@@ -14,15 +16,21 @@
  *		to the frontend via the functions in backend/libpq.
  *
  *	  - None is the destination when the system executes
- *		a query internally.  This is not used now but it may be
- *		useful for the parallel optimiser/executor.
+ *		a query internally.  The results are discarded.
  *
  * dest.c defines three functions that implement destination management:
  *
- * BeginCommand: initialize the destination.
+ * BeginCommand: initialize the destination at start of command.
  * DestToFunction: return a pointer to a struct of destination-specific
  * receiver functions.
- * EndCommand: clean up the destination when output is complete.
+ * EndCommand: clean up the destination at end of command.
+ *
+ * BeginCommand/EndCommand are executed once per received SQL query.
+ *
+ * DestToFunction, and the receiver functions it links to, are executed
+ * each time we run the executor to produce tuples, which may occur
+ * multiple times per received query (eg, due to additional queries produced
+ * by rewrite rules).
  *
  * The DestReceiver object returned by DestToFunction may be a statically
  * allocated object (for destination types that require no local state)
@@ -32,14 +40,11 @@
  * by casting the DestReceiver* pointer passed to them.
  * The palloc'd object is pfree'd by the DestReceiver's cleanup function.
  *
- * XXX FIXME: the initialization and cleanup code that currently appears
- * in-line in BeginCommand and EndCommand probably should be moved out
- * to routines associated with each destination receiver type.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: dest.h,v 1.29 2002/02/26 22:47:11 tgl Exp $
+ * $Id: dest.h,v 1.30 2002/02/27 19:36:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -80,18 +85,17 @@ struct _DestReceiver
 {
 	/* Called for each tuple to be output: */
 	void		(*receiveTuple) (HeapTuple tuple, TupleDesc typeinfo,
-											 DestReceiver *self);
+								 DestReceiver *self);
 	/* Initialization and teardown: */
-	void		(*setup) (DestReceiver *self, TupleDesc typeinfo);
+	void		(*setup) (DestReceiver *self, int operation,
+						  const char *portalName, TupleDesc typeinfo);
 	void		(*cleanup) (DestReceiver *self);
 	/* Private fields might appear beyond this point... */
 };
 
 /* The primary destination management functions */
 
-extern void BeginCommand(char *pname, int operation, TupleDesc attinfo,
-			 bool isIntoRel, bool isIntoPortal, char *tag,
-			 CommandDest dest);
+extern void BeginCommand(const char *commandTag, CommandDest dest);
 extern DestReceiver *DestToFunction(CommandDest dest);
 extern void EndCommand(const char *commandTag, CommandDest dest);
 

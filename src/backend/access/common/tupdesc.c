@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.76 2001/10/25 05:49:20 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.77 2002/02/27 19:34:11 tgl Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -432,7 +432,7 @@ TupleDescInitEntry(TupleDesc desc,
 	 *
 	 * (Why not just make the atttypid point to the OID type, instead of the
 	 * type the query returns?	Because the executor uses the atttypid to
-	 * tell the front end what type will be returned (in BeginCommand),
+	 * tell the front end what type will be returned,
 	 * and in the end the type returned will be the result of the query,
 	 * not an OID.)
 	 *

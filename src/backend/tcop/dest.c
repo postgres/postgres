@@ -1,22 +1,22 @@
 /*-------------------------------------------------------------------------
  *
  * dest.c
- *	  support for various communication destinations - see include/tcop/dest.h
+ *	  support for communication destinations
+ *
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.47 2002/02/26 22:47:08 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/dest.c,v 1.48 2002/02/27 19:35:09 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*
  *	 INTERFACE ROUTINES
- *		BeginCommand - prepare destination for tuples of the given type
+ *		BeginCommand - initialize the destination at start of command
  *		DestToFunction - identify per-tuple processing routines
- *		EndCommand - tell destination that no more tuples will arrive
+ *		EndCommand - clean up the destination at end of command
  *		NullCommand - tell dest that an empty query string was recognized
  *		ReadyForQuery - tell dest that we are ready for a new query
  *
@@ -24,14 +24,6 @@
  *		These routines do the appropriate work before and after
  *		tuples are returned by a query to keep the backend and the
  *		"destination" portals synchronized.
- *
- *		There is a second level of initialization/cleanup performed by the
- *		setup/cleanup routines identified by DestToFunction.  This could
- *		probably be merged with the work done by BeginCommand/EndCommand,
- *		but as of right now BeginCommand/EndCommand are used in a rather
- *		unstructured way --- some places call Begin without End, some vice
- *		versa --- so I think I'll just leave 'em alone for now.  tgl 1/99.
- *
  */
 
 #include "postgres.h"
@@ -51,7 +43,8 @@ donothingReceive(HeapTuple tuple, TupleDesc typeinfo, DestReceiver *self)
 }
 
 static void
-donothingSetup(DestReceiver *self, TupleDesc typeinfo)
+donothingSetup(DestReceiver *self, int operation,
+			   const char *portalName, TupleDesc typeinfo)
 {
 }
 
@@ -68,97 +61,20 @@ static DestReceiver donothingDR = {
 	donothingReceive, donothingSetup, donothingCleanup
 };
 static DestReceiver debugtupDR = {
-	debugtup, donothingSetup, donothingCleanup
+	debugtup, debugSetup, donothingCleanup
 };
 static DestReceiver spi_printtupDR = {
 	spi_printtup, donothingSetup, donothingCleanup
 };
 
 /* ----------------
- *		BeginCommand - prepare destination for tuples of the given type
+ *		BeginCommand - initialize the destination at start of command
  * ----------------
  */
 void
-BeginCommand(char *pname,
-			 int operation,
-			 TupleDesc tupdesc,
-			 bool isIntoRel,
-			 bool isIntoPortal,
-			 char *tag,
-			 CommandDest dest)
+BeginCommand(const char *commandTag, CommandDest dest)
 {
-	Form_pg_attribute *attrs = tupdesc->attrs;
-	int			natts = tupdesc->natts;
-	int			i;
-
-	switch (dest)
-	{
-		case Remote:
-		case RemoteInternal:
-
-			/*
-			 * if this is a "retrieve into portal" query, done because
-			 * nothing needs to be sent to the fe.
-			 */
-			if (isIntoPortal)
-				break;
-
-			/*
-			 * if portal name not specified for remote query, use the
-			 * "blank" portal.
-			 */
-			if (pname == NULL)
-				pname = "blank";
-
-			/*
-			 * send fe info on tuples we're about to send
-			 */
-			pq_puttextmessage('P', pname);
-
-			/*
-			 * if this is a retrieve, then we send back the tuple
-			 * descriptor of the tuples.  "retrieve into" is an exception
-			 * because no tuples are returned in that case.
-			 */
-			if (operation == CMD_SELECT && !isIntoRel)
-			{
-				StringInfoData buf;
-
-				pq_beginmessage(&buf);
-				pq_sendbyte(&buf, 'T'); /* tuple descriptor message type */
-				pq_sendint(&buf, natts, 2);		/* # of attributes in
-												 * tuples */
-
-				for (i = 0; i < natts; ++i)
-				{
-					pq_sendstring(&buf, NameStr(attrs[i]->attname));
-					pq_sendint(&buf, (int) attrs[i]->atttypid,
-							   sizeof(attrs[i]->atttypid));
-					pq_sendint(&buf, attrs[i]->attlen,
-							   sizeof(attrs[i]->attlen));
-					if (PG_PROTOCOL_MAJOR(FrontendProtocol) >= 2)
-						pq_sendint(&buf, attrs[i]->atttypmod,
-								   sizeof(attrs[i]->atttypmod));
-				}
-				pq_endmessage(&buf);
-			}
-			break;
-
-		case Debug:
-
-			/*
-			 * show the return type of the tuples
-			 */
-			if (pname == NULL)
-				pname = "blank";
-
-			showatts(pname, tupdesc);
-			break;
-
-		case None:
-		default:
-			break;
-	}
+	/* Nothing to do at present */
 }
 
 /* ----------------
@@ -183,19 +99,15 @@ DestToFunction(CommandDest dest)
 			return &spi_printtupDR;
 
 		case None:
-		default:
 			return &donothingDR;
 	}
 
-	/*
-	 * never gets here, but DECstation lint appears to be stupid...
-	 */
-
+	/* should never get here */
 	return &donothingDR;
 }
 
 /* ----------------
- *		EndCommand - tell destination that query is complete
+ *		EndCommand - clean up the destination at end of command
  * ----------------
  */
 void

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.155 2002/02/26 22:47:04 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/Attic/command.c,v 1.156 2002/02/27 19:34:38 tgl Exp $
  *
  * NOTES
  *	  The PerformAddAttribute() code, like most of the relation
@@ -113,6 +113,7 @@ PerformPortalFetch(char *name,
 	QueryDesc  *queryDesc;
 	EState	   *estate;
 	MemoryContext oldcontext;
+	ScanDirection direction;
 	CommandId	savedId;
 	bool		temp_desc = false;
 
@@ -145,6 +146,9 @@ PerformPortalFetch(char *name,
 	 */
 	oldcontext = MemoryContextSwitchTo(PortalGetHeapMemory(portal));
 
+	queryDesc = PortalGetQueryDesc(portal);
+	estate = PortalGetState(portal);
+
 	/*
 	 * If the requested destination is not the same as the query's
 	 * original destination, make a temporary QueryDesc with the proper
@@ -156,9 +160,6 @@ PerformPortalFetch(char *name,
 	 * original dest.  This is necessary since a FETCH command will pass
 	 * dest = Remote, not knowing whether the cursor is binary or not.
 	 */
-	queryDesc = PortalGetQueryDesc(portal);
-	estate = PortalGetState(portal);
-
 	if (dest != queryDesc->dest &&
 		!(queryDesc->dest == RemoteInternal && dest == Remote))
 	{
@@ -171,19 +172,6 @@ PerformPortalFetch(char *name,
 	}
 
 	/*
-	 * Tell the destination to prepare to receive some tuples.
-	 */
-	BeginCommand(name,
-				 queryDesc->operation,
-				 PortalGetTupleDesc(portal),
-				 false,			/* portal fetches don't end up in
-								 * relations */
-				 false,			/* this is a portal fetch, not a "retrieve
-								 * portal" */
-				 NULL,			/* not used */
-				 queryDesc->dest);
-
-	/*
 	 * Restore the scanCommandId that was current when the cursor was
 	 * opened.  This ensures that we see the same tuples throughout the
 	 * execution of the cursor.
@@ -194,46 +182,48 @@ PerformPortalFetch(char *name,
 	/*
 	 * Determine which direction to go in, and check to see if we're
 	 * already at the end of the available tuples in that direction.  If
-	 * so, do nothing.	(This check exists because not all plan node types
+	 * so, set the direction to NoMovement to avoid trying to fetch any
+	 * tuples.  (This check exists because not all plan node types
 	 * are robust about being called again if they've already returned
-	 * NULL once.)	If it's OK to do the fetch, call the executor.  Then,
-	 * update the atStart/atEnd state depending on the number of tuples
-	 * that were retrieved.
+	 * NULL once.)  Then call the executor (we must not skip this, because
+	 * the destination needs to see a setup and shutdown even if no tuples
+	 * are available).  Finally, update the atStart/atEnd state depending
+	 * on the number of tuples that were retrieved.
 	 */
 	if (forward)
 	{
-		if (!portal->atEnd)
-		{
-			ExecutorRun(queryDesc, estate, EXEC_FOR, (long) count);
+		if (portal->atEnd)
+			direction = NoMovementScanDirection;
+		else
+			direction = ForwardScanDirection;
 
-			if (estate->es_processed > 0)
-				portal->atStart = false;		/* OK to back up now */
-			if (count <= 0 || (int) estate->es_processed < count)
-				portal->atEnd = true;	/* we retrieved 'em all */
+		ExecutorRun(queryDesc, estate, direction, (long) count);
 
-			if (completionTag)
-				snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
-						 (dest == None) ? "MOVE" : "FETCH",
-						 estate->es_processed);
-		}
+		if (estate->es_processed > 0)
+			portal->atStart = false; /* OK to back up now */
+		if (count <= 0 || (int) estate->es_processed < count)
+			portal->atEnd = true;	/* we retrieved 'em all */
 	}
 	else
 	{
-		if (!portal->atStart)
-		{
-			ExecutorRun(queryDesc, estate, EXEC_BACK, (long) count);
+		if (portal->atStart)
+			direction = NoMovementScanDirection;
+		else
+			direction = BackwardScanDirection;
 
-			if (estate->es_processed > 0)
-				portal->atEnd = false;	/* OK to go forward now */
-			if (count <= 0 || (int) estate->es_processed < count)
-				portal->atStart = true; /* we retrieved 'em all */
+		ExecutorRun(queryDesc, estate, direction, (long) count);
 
-			if (completionTag)
-				snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
-						 (dest == None) ? "MOVE" : "FETCH",
-						 estate->es_processed);
-		}
+		if (estate->es_processed > 0)
+			portal->atEnd = false;	/* OK to go forward now */
+		if (count <= 0 || (int) estate->es_processed < count)
+			portal->atStart = true; /* we retrieved 'em all */
 	}
+
+	/* Return command status if wanted */
+	if (completionTag)
+		snprintf(completionTag, COMPLETION_TAG_BUFSIZE, "%s %u",
+				 (dest == None) ? "MOVE" : "FETCH",
+				 estate->es_processed);
 
 	/*
 	 * Restore outer command ID.

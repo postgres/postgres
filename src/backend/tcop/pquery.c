@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.47 2002/02/26 22:47:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/tcop/pquery.c,v 1.48 2002/02/27 19:35:16 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -30,7 +30,8 @@
 QueryDesc *
 CreateQueryDesc(Query *parsetree,
 				Plan *plantree,
-				CommandDest dest)
+				CommandDest dest,
+				const char *portalName)
 {
 	QueryDesc  *qd = (QueryDesc *) palloc(sizeof(QueryDesc));
 
@@ -38,6 +39,9 @@ CreateQueryDesc(Query *parsetree,
 	qd->parsetree = parsetree;	/* parse tree */
 	qd->plantree = plantree;	/* plan */
 	qd->dest = dest;			/* output dest */
+	qd->portalName = portalName; /* name, if dest is a portal */
+	qd->tupDesc = NULL;			/* until set by ExecutorStart */
+
 	return qd;
 }
 
@@ -138,8 +142,7 @@ ProcessQuery(Query *parsetree,
 			 char *completionTag)
 {
 	int			operation = parsetree->commandType;
-	bool		isRetrieveIntoPortal;
-	bool		isRetrieveIntoRelation;
+	bool		isRetrieveIntoPortal = false;
 	char	   *intoName = NULL;
 	Portal		portal = NULL;
 	MemoryContext oldContext = NULL;
@@ -148,31 +151,28 @@ ProcessQuery(Query *parsetree,
 	TupleDesc	attinfo;
 
 	/*
-	 * initialize portal/into relation status
+	 * Check for special-case destinations
 	 */
-	isRetrieveIntoPortal = false;
-	isRetrieveIntoRelation = false;
-
 	if (operation == CMD_SELECT)
 	{
 		if (parsetree->isPortal)
 		{
 			isRetrieveIntoPortal = true;
 			intoName = parsetree->into;
-			if (parsetree->isBinary)
-			{
-				/*
-				 * For internal format portals, we change Remote
-				 * (externalized form) to RemoteInternal (internalized
-				 * form)
-				 */
+			/* If binary portal, switch to alternate output format */
+			if (dest == Remote && parsetree->isBinary)
 				dest = RemoteInternal;
-			}
 		}
 		else if (parsetree->into != NULL)
 		{
-			/* select into table */
-			isRetrieveIntoRelation = true;
+			/*
+			 * SELECT INTO table (a/k/a CREATE AS ... SELECT).
+			 *
+			 * Override the normal communication destination; execMain.c
+			 * special-cases this case.  (Perhaps would be cleaner to
+			 * have an additional destination type?)
+			 */
+			dest = None;
 		}
 	}
 
@@ -197,16 +197,7 @@ ProcessQuery(Query *parsetree,
 	/*
 	 * Now we can create the QueryDesc object.
 	 */
-	queryDesc = CreateQueryDesc(parsetree, plan, dest);
-
-	/*
-	 * When performing a retrieve into, we override the normal
-	 * communication destination during the processing of the the query.
-	 * This only affects the tuple-output function - the correct
-	 * destination will still see the BeginCommand() call.
-	 */
-	if (isRetrieveIntoRelation)
-		queryDesc->dest = None;
+	queryDesc = CreateQueryDesc(parsetree, plan, dest, intoName);
 
 	/*
 	 * create a default executor state.
@@ -217,18 +208,6 @@ ProcessQuery(Query *parsetree,
 	 * call ExecStart to prepare the plan for execution
 	 */
 	attinfo = ExecutorStart(queryDesc, state);
-
-	/*
-	 * report the query's result type information back to the front end or
-	 * to whatever destination we're dealing with.
-	 */
-	BeginCommand(NULL,
-				 operation,
-				 attinfo,
-				 isRetrieveIntoRelation,
-				 isRetrieveIntoPortal,
-				 NULL,			/* not used */
-				 dest);
 
 	/*
 	 * If retrieve into portal, stop now; we do not run the plan until a
@@ -256,7 +235,7 @@ ProcessQuery(Query *parsetree,
 	 * Now we get to the important call to ExecutorRun() where we actually
 	 * run the plan..
 	 */
-	ExecutorRun(queryDesc, state, EXEC_RUN, 0L);
+	ExecutorRun(queryDesc, state, ForwardScanDirection, 0L);
 
 	/*
 	 * Build command completion status string, if caller wants one.

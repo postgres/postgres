@@ -19,7 +19,7 @@
  *	query plan and ExecutorEnd() should always be called at the end of
  *	execution of a plan.
  *
- *	ExecutorRun accepts 'feature' and 'count' arguments that specify whether
+ *	ExecutorRun accepts direction and count arguments that specify whether
  *	the plan is to be executed forwards, backwards, and for how many tuples.
  *
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
@@ -27,7 +27,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.149 2001/10/25 05:49:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execMain.c,v 1.150 2002/02/27 19:34:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -88,7 +88,7 @@ static void ExecCheckRTEPerms(RangeTblEntry *rte, CmdType operation);
  *		query plan
  *
  *		returns a TupleDesc which describes the attributes of the tuples to
- *		be returned by the query.
+ *		be returned by the query.  (Same value is saved in queryDesc)
  *
  * NB: the CurrentMemoryContext when this is called must be the context
  * to be used as the per-query context for the query plan.	ExecutorRun()
@@ -137,6 +137,8 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
 					  queryDesc->plantree,
 					  estate);
 
+	queryDesc->tupDesc = result;
+
 	return result;
 }
 
@@ -149,25 +151,23 @@ ExecutorStart(QueryDesc *queryDesc, EState *estate)
  *
  *		ExecutorStart must have been called already.
  *
- *		the different features supported are:
- *			 EXEC_RUN:	retrieve all tuples in the forward direction
- *			 EXEC_FOR:	retrieve 'count' number of tuples in the forward dir
- *			 EXEC_BACK: retrieve 'count' number of tuples in the backward dir
- *			 EXEC_RETONE: return one tuple but don't 'retrieve' it
- *						   used in postquel function processing
+ *		If direction is NoMovementScanDirection then nothing is done
+ *		except to start up/shut down the destination.  Otherwise,
+ *		we retrieve up to 'count' tuples in the specified direction.
  *
  *		Note: count = 0 is interpreted as "no limit".
  *
  * ----------------------------------------------------------------
  */
 TupleTableSlot *
-ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, long count)
+ExecutorRun(QueryDesc *queryDesc, EState *estate,
+			ScanDirection direction, long count)
 {
 	CmdType		operation;
 	Plan	   *plan;
-	TupleTableSlot *result;
 	CommandDest dest;
 	DestReceiver *destfunc;
+	TupleTableSlot *result;
 
 	/*
 	 * sanity checks
@@ -181,69 +181,33 @@ ExecutorRun(QueryDesc *queryDesc, EState *estate, int feature, long count)
 	operation = queryDesc->operation;
 	plan = queryDesc->plantree;
 	dest = queryDesc->dest;
-	destfunc = DestToFunction(dest);
+
+	/*
+	 * startup tuple receiver
+	 */
 	estate->es_processed = 0;
 	estate->es_lastoid = InvalidOid;
 
+	destfunc = DestToFunction(dest);
+	(*destfunc->setup) (destfunc, (int) operation,
+						queryDesc->portalName, queryDesc->tupDesc);
+
 	/*
-	 * FIXME: the dest setup function ought to be handed the tuple desc
-	 * for the tuples to be output, but I'm not quite sure how to get that
-	 * info at this point.	For now, passing NULL is OK because no
-	 * existing dest setup function actually uses the pointer.
+	 * run plan
 	 */
-	(*destfunc->setup) (destfunc, (TupleDesc) NULL);
+	if (direction == NoMovementScanDirection)
+		result = NULL;
+	else
+		result = ExecutePlan(estate,
+							 plan,
+							 operation,
+							 count,
+							 direction,
+							 destfunc);
 
-	switch (feature)
-	{
-		case EXEC_RUN:
-			result = ExecutePlan(estate,
-								 plan,
-								 operation,
-								 count,
-								 ForwardScanDirection,
-								 destfunc);
-			break;
-
-		case EXEC_FOR:
-			result = ExecutePlan(estate,
-								 plan,
-								 operation,
-								 count,
-								 ForwardScanDirection,
-								 destfunc);
-			break;
-
-			/*
-			 * retrieve next n "backward" tuples
-			 */
-		case EXEC_BACK:
-			result = ExecutePlan(estate,
-								 plan,
-								 operation,
-								 count,
-								 BackwardScanDirection,
-								 destfunc);
-			break;
-
-			/*
-			 * return one tuple but don't "retrieve" it. (this is used by
-			 * the rule manager..) -cim 9/14/89
-			 */
-		case EXEC_RETONE:
-			result = ExecutePlan(estate,
-								 plan,
-								 operation,
-								 ONE_TUPLE,
-								 ForwardScanDirection,
-								 destfunc);
-			break;
-
-		default:
-			elog(DEBUG, "ExecutorRun: Unknown feature %d", feature);
-			result = NULL;
-			break;
-	}
-
+	/*
+	 * shutdown receiver
+	 */
 	(*destfunc->cleanup) (destfunc);
 
 	return result;
@@ -916,7 +880,7 @@ EndPlan(Plan *plan, EState *estate)
  *
  *		processes the query plan to retrieve 'numberTuples' tuples in the
  *		direction specified.
- *		Retrieves all tuples if tupleCount is 0
+ *		Retrieves all tuples if numberTuples is 0
  *
  *		result is either a slot containing the last tuple in the case
  *		of a RETRIEVE or NULL otherwise.
