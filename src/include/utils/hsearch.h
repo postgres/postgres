@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hsearch.h,v 1.25 2001/11/05 17:46:36 momjian Exp $
+ * $Id: hsearch.h,v 1.26 2002/03/09 17:35:37 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,9 +35,6 @@
 #define DEF_DIRSIZE			   256
 #define DEF_FFACTOR			   1	/* default fill factor */
 
-#define PRIME1				   37		/* for the hash function */
-#define PRIME2				   1048583
-
 
 /*
  * HASHELEMENT is the private part of a hashtable entry.  The caller's data
@@ -60,10 +57,10 @@ typedef struct HASHHDR
 {
 	long		dsize;			/* Directory Size */
 	long		ssize;			/* Segment Size --- must be power of 2 */
-	long		sshift;			/* Segment shift */
-	long		max_bucket;		/* ID of Maximum bucket in use */
-	long		high_mask;		/* Mask to modulo into entire table */
-	long		low_mask;		/* Mask to modulo into lower half of table */
+	int			sshift;			/* Segment shift = log2(ssize) */
+	uint32		max_bucket;		/* ID of Maximum bucket in use */
+	uint32		high_mask;		/* Mask to modulo into entire table */
+	uint32		low_mask;		/* Mask to modulo into lower half of table */
 	long		ffactor;		/* Fill factor */
 	long		nentries;		/* Number of entries in hash table */
 	long		nsegs;			/* Number of allocated segments */
@@ -86,7 +83,7 @@ typedef struct HTAB
 {
 	HASHHDR    *hctl;			/* shared control information */
 	HASHSEGMENT *dir;			/* directory of segment starts */
-	long		(*hash) (void *key, int keysize);		/* Hash Function */
+	uint32		(*hash) (void *key, int keysize);		/* Hash Function */
 	void	   *(*alloc) (Size);	/* memory allocator */
 	MemoryContext hcxt;			/* memory context if default allocator
 								 * used */
@@ -101,7 +98,7 @@ typedef struct HASHCTL
 	long		ssize;			/* Segment Size */
 	long		dsize;			/* (initial) Directory Size */
 	long		ffactor;		/* Fill factor */
-	long		(*hash) (void *key, int keysize);		/* Hash Function */
+	uint32		(*hash) (void *key, int keysize);		/* Hash Function */
 	long		keysize;		/* hash key length in bytes */
 	long		entrysize;		/* total user element size in bytes */
 	long		max_dsize;		/* limit to dsize if directory size is
@@ -143,7 +140,7 @@ typedef enum
 typedef struct
 {
 	HTAB	   *hashp;
-	long		curBucket;		/* index of current bucket */
+	uint32		curBucket;		/* index of current bucket */
 	HASHELEMENT *curEntry;		/* current entry in bucket */
 } HASH_SEQ_STATUS;
 
@@ -164,7 +161,7 @@ extern long hash_select_dirsize(long num_entries);
 /*
  * prototypes for functions in hashfn.c
  */
-extern long string_hash(void *key, int keysize);
-extern long tag_hash(void *key, int keysize);
+extern uint32 string_hash(void *key, int keysize);
+extern uint32 tag_hash(void *key, int keysize);
 
 #endif   /* HSEARCH_H */

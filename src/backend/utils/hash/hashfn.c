@@ -9,13 +9,15 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.15 2001/10/25 05:49:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/hashfn.c,v 1.16 2002/03/09 17:35:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include "access/hash.h"
 #include "utils/hsearch.h"
+
 
 /*
  * string_hash: hash function for keys that are null-terminated strings.
@@ -27,91 +29,17 @@
  *
  * NOTE: this is the default hash function if none is specified.
  */
-long
+uint32
 string_hash(void *key, int keysize)
 {
-	unsigned char *k = (unsigned char *) key;
-	long		h = 0;
-
-	while (*k)
-		h = (h * PRIME1) ^ (*k++);
-
-	h %= PRIME2;
-
-	return h;
+	return DatumGetUInt32(hash_any((unsigned char *) key, strlen((char *) key)));
 }
 
 /*
  * tag_hash: hash function for fixed-size tag values
- *
- * NB: we assume that the supplied key is aligned at least on an 'int'
- * boundary, if its size is >= sizeof(int).
  */
-long
+uint32
 tag_hash(void *key, int keysize)
 {
-	int		   *k = (int *) key;
-	long		h = 0;
-
-	/*
-	 * Use four byte chunks in a "jump table" to go a little faster.
-	 *
-	 * Currently the maximum keysize is 16 (mar 17 1992).  I have put in
-	 * cases for up to 32.	Bigger than this will resort to a for loop
-	 * (see the default case).
-	 */
-	switch (keysize)
-	{
-		case 8 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case 7 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case 6 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case 5 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case 4 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case 3 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case 2 * sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			/* fall through */
-
-		case sizeof(int):
-			h = (h * PRIME1) ^(*k++);
-			break;
-
-		default:
-			/* Do an int at a time */
-			for (; keysize >= (int) sizeof(int); keysize -= sizeof(int))
-				h = (h * PRIME1) ^ (*k++);
-
-			/* Cope with any partial-int leftover bytes */
-			if (keysize > 0)
-			{
-				unsigned char *keybyte = (unsigned char *) k;
-
-				do
-					h = (h * PRIME1) ^ (*keybyte++);
-				while (--keysize > 0);
-			}
-			break;
-	}
-
-	h %= PRIME2;
-
-	return h;
+	return DatumGetUInt32(hash_any((unsigned char *) key, keysize));
 }

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2001, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: hash.h,v 1.44 2002/03/06 20:49:45 momjian Exp $
+ * $Id: hash.h,v 1.45 2002/03/09 17:35:37 tgl Exp $
  *
  * NOTES
  *		modeled after Margo Seltzer's hash implementation for unix.
@@ -252,7 +252,8 @@ extern Datum hashbulkdelete(PG_FUNCTION_ARGS);
  * Datatype-specific hash functions in hashfunc.c.
  *
  * NOTE: some of these are also used by catcache operations, without
- * any direct connection to hash indexes.
+ * any direct connection to hash indexes.  Also, the common hash_any
+ * routine is also used by dynahash tables and hash joins.
  */
 extern Datum hashchar(PG_FUNCTION_ARGS);
 extern Datum hashint2(PG_FUNCTION_ARGS);
@@ -265,7 +266,7 @@ extern Datum hashoidvector(PG_FUNCTION_ARGS);
 extern Datum hashint2vector(PG_FUNCTION_ARGS);
 extern Datum hashname(PG_FUNCTION_ARGS);
 extern Datum hashvarlena(PG_FUNCTION_ARGS);
-extern Datum hash_any(register const char *k, register int keylen);
+extern Datum hash_any(register const unsigned char *k, register int keylen);
 
 /* private routines */
 

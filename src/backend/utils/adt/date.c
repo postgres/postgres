@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.64 2001/11/21 05:57:33 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/date.c,v 1.65 2002/03/09 17:35:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1116,7 +1116,7 @@ timetz_hash(PG_FUNCTION_ARGS)
 	 * sizeof(TimeTzADT), so that any garbage pad bytes in the structure
 	 * won't be included in the hash!
 	 */
-	return hash_any((char *) key, sizeof(double) + sizeof(int4));
+	return hash_any((unsigned char *) key, sizeof(double) + sizeof(int4));
 }
 
 Datum

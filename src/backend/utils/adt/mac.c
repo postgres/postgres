@@ -1,7 +1,7 @@
 /*
  *	PostgreSQL type definitions for MAC addresses.
  *
- *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.21 2001/08/21 21:23:21 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/utils/adt/mac.c,v 1.22 2002/03/09 17:35:35 tgl Exp $
  */
 
 #include "postgres.h"
@@ -230,7 +230,7 @@ hashmacaddr(PG_FUNCTION_ARGS)
 {
 	macaddr    *key = PG_GETARG_MACADDR_P(0);
 
-	return hash_any((char *) key, sizeof(macaddr));
+	return hash_any((unsigned char *) key, sizeof(macaddr));
 }
 
 /*

@@ -9,7 +9,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.41 2002/03/02 21:39:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/hash/dynahash.c,v 1.42 2002/03/09 17:35:36 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -329,8 +329,7 @@ init_htab(HTAB *hashp, long nelem)
 	}
 
 #if HASH_DEBUG
-	fprintf(stderr, "%s\n%s%p\n%s%d\n%s%d\n%s%d\n%s%d\n%s%d\n%s%x\n%s%x\n%s%d\n%s%d\n",
-			"init_htab:",
+	fprintf(stderr, "init_htab:\n%s%p\n%s%ld\n%s%ld\n%s%d\n%s%ld\n%s%u\n%s%x\n%s%x\n%s%ld\n%s%ld\n",
 			"TABLE POINTER   ", hashp,
 			"DIRECTORY SIZE  ", hctl->dsize,
 			"SEGMENT SIZE    ", hctl->ssize,
@@ -453,7 +452,7 @@ hash_stats(const char *where, HTAB *hashp)
 	fprintf(stderr, "%s: this HTAB -- accesses %ld collisions %ld\n",
 			where, hashp->hctl->accesses, hashp->hctl->collisions);
 
-	fprintf(stderr, "hash_stats: entries %ld keysize %ld maxp %d segmentcount %d\n",
+	fprintf(stderr, "hash_stats: entries %ld keysize %ld maxp %u segmentcount %ld\n",
 			hashp->hctl->nentries, hashp->hctl->keysize,
 			hashp->hctl->max_bucket, hashp->hctl->nsegs);
 	fprintf(stderr, "%s: total accesses %ld total collisions %ld\n",
@@ -470,7 +469,7 @@ static uint32
 call_hash(HTAB *hashp, void *k)
 {
 	HASHHDR    *hctl = hashp->hctl;
-	long		hash_val,
+	uint32		hash_val,
 				bucket;
 
 	hash_val = hashp->hash(k, (int) hctl->keysize);
@@ -479,7 +478,7 @@ call_hash(HTAB *hashp, void *k)
 	if (bucket > hctl->max_bucket)
 		bucket = bucket & hctl->low_mask;
 
-	return (uint32) bucket;
+	return bucket;
 }
 
 /*----------
@@ -647,7 +646,7 @@ hash_search(HTAB *hashp,
 			/* caller is expected to fill the data field on return */
 
 			/* Check if it is time to split the segment */
-			if (++hctl->nentries / (hctl->max_bucket + 1) > hctl->ffactor)
+			if (++hctl->nentries / (long) (hctl->max_bucket + 1) > hctl->ffactor)
 			{
 				/*
 				 * NOTE: failure to expand table is not a fatal error, it
@@ -795,10 +794,10 @@ expand_table(HTAB *hashp)
 	/*
 	 * If we crossed a power of 2, readjust masks.
 	 */
-	if (new_bucket > hctl->high_mask)
+	if ((uint32) new_bucket > hctl->high_mask)
 	{
 		hctl->low_mask = hctl->high_mask;
-		hctl->high_mask = new_bucket | hctl->low_mask;
+		hctl->high_mask = (uint32) new_bucket | hctl->low_mask;
 	}
 
 	/*

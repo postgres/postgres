@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  *
- *	$Id: nodeHash.c,v 1.61 2002/03/06 20:49:44 momjian Exp $
+ *	$Id: nodeHash.c,v 1.62 2002/03/09 17:35:35 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -22,6 +22,7 @@
 #include <sys/types.h>
 #include <math.h>
 
+#include "access/hash.h"
 #include "executor/execdebug.h"
 #include "executor/nodeHash.h"
 #include "executor/nodeHashjoin.h"
@@ -31,7 +32,7 @@
 #include "utils/lsyscache.h"
 
 
-static int	hashFunc(Datum key, int len, bool byVal);
+static uint32	hashFunc(Datum key, int len, bool byVal);
 
 /* ----------------------------------------------------------------
  *		ExecHash
@@ -553,7 +554,7 @@ ExecHashGetBucket(HashJoinTable hashtable,
 		bucketno = hashFunc(keyval,
 							(int) hashtable->typLen,
 							hashtable->typByVal)
-			% hashtable->totalbuckets;
+			% (uint32) hashtable->totalbuckets;
 	}
 
 #ifdef HJDEBUG
@@ -624,30 +625,29 @@ ExecScanHashBucket(HashJoinState *hjstate,
 /* ----------------------------------------------------------------
  *		hashFunc
  *
- *		the hash function, copied from Margo
+ *		the hash function for hash joins
  *
  *		XXX this probably ought to be replaced with datatype-specific
  *		hash functions, such as those already implemented for hash indexes.
  * ----------------------------------------------------------------
  */
-static int
+static uint32
 hashFunc(Datum key, int len, bool byVal)
 {
-	unsigned int h = 0;
+	unsigned char *k;
 
 	if (byVal)
 	{
 		/*
-		 * If it's a by-value data type, use the 'len' least significant
-		 * bytes of the Datum value.  This should do the right thing on
-		 * either bigendian or littleendian hardware --- see the Datum
-		 * access macros in c.h.
+		 * If it's a by-value data type, just hash the whole Datum value.
+		 * This assumes that datatypes narrower than Datum are consistently
+		 * padded (either zero-extended or sign-extended, but not random
+		 * bits) to fill Datum; see the XXXGetDatum macros in postgres.h.
+		 * NOTE: it would not work to do hash_any(&key, len) since this
+		 * would get the wrong bytes on a big-endian machine.
 		 */
-		while (len-- > 0)
-		{
-			h = (h * PRIME1) ^ (key & 0xFF);
-			key >>= 8;
-		}
+		k = (unsigned char *) &key;
+		len = sizeof(Datum);
 	}
 	else
 	{
@@ -662,8 +662,6 @@ hashFunc(Datum key, int len, bool byVal)
 		 * freeing the detoasted copy; that happens for free when the
 		 * per-tuple memory context is reset in ExecHashGetBucket.)
 		 */
-		unsigned char *k;
-
 		if (len < 0)
 		{
 			struct varlena *vkey = PG_DETOAST_DATUM(key);
@@ -673,12 +671,9 @@ hashFunc(Datum key, int len, bool byVal)
 		}
 		else
 			k = (unsigned char *) DatumGetPointer(key);
-
-		while (len-- > 0)
-			h = (h * PRIME1) ^ (*k++);
 	}
 
-	return h % PRIME2;
+	return DatumGetUInt32(hash_any(k, len));
 }
 
 /* ----------------------------------------------------------------
