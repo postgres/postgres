@@ -2,6 +2,17 @@
 -- INTERVAL
 --
 
+SET DATESTYLE = DEFAULT;
+
+-- check acceptance of "time zone style"
+SELECT INTERVAL '01:00';
+SELECT INTERVAL '+02:00';
+SELECT INTERVAL '-08:00';
+SELECT INTERVAL '-05';
+SELECT INTERVAL '-1 +02:03';
+SELECT INTERVAL '-1 days +02:03';
+SELECT INTERVAL '10 years -11 month -12 days +13:14';
+
 CREATE TABLE INTERVAL_TBL (f1 interval);
 
 INSERT INTO INTERVAL_TBL (f1) VALUES ('@ 1 minute');
@@ -46,3 +57,6 @@ SELECT '' AS fortyfive, r1.*, r2.*
    WHERE r1.f1 > r2.f1
    ORDER BY r1.f1, r2.f1;
 
+SET DATESTYLE = 'postgres';
+
+SELECT '' AS ten, INTERVAL_TBL.*;
