@@ -1,0 +1,97 @@
+Changes that were made in August 2002.
+
+Note that this was based on a 7.3 development version and changes may not
+directly work with earlier versions.
+
+I fixed a bug in cubescan.pl that prevented signed numbers with no digits
+before a decimal point from being accepted. This was submitted as a separate
+patch and may already be applied.
+
+I reported but did not fix a potential buffer overrun problem in cube_yyerror
+in cubeparse.y.
+
+cube_inter should really return NULL if the two cubes don't overlap. However
+this requires changing to the new calling sequence and I don't know enough
+about how to do it to make the change.
+
+I changed all floats to doubles except for g_cube_penalty which I don't
+think can be changed to return double. This might cause the penalty to
+overflow sooner than one might expect, but overflow could have happened
+even with floats.
+
+I changed the output format (in cube_out) to use %.16g instead of %g, since the
+default is only 6 digits of precision.
+
+I changed all of the functions declared with (isstrict) to use the current
+method of declaring this.
+
+I changed all of the externally visible functions to be immutable which
+they are. I don't think this matters for the gist functions and didn't
+try to declare them immutable in case there was something tricky about them
+that I don't understand.
+
+I changed the regression tests to use some larger exponents to test output
+in exponential form. 1e7 was too small for this.
+
+I added some regression tests to check for 16 digits of precision. This
+may or may not be a good idea.
+
+I got rid of the swap_corners function. It created scratch boxes that
+were iterated through and deleted. This is slower than just getting the
+larger or smaller coordinate as needed, since swap_corners was doing the
+same thing with the overhead of a function call and memory allocation.
+
+I added memset calls to zero out newly allocated NDBOXes as the documentation
+on functions indicates should be done.
+
+I got rid of a call to cube_same in cube_lt and cube_gt since the test
+was redundant with other checks being made. The call to cube_same would
+only be faster if most of the time you were comparing equivalent cubes.
+
+In cube_lt and cube_gt, the second (UR) for loop for comparing
+extra coordinates to 0 had the wrong range.
+
+Note that the cube_distance function wasn't mentioned in the README.cube file.
+
+I added regression tests for the cube_distance function.
+
+I added the following new functions:
+cube
+cube_dim
+cube_ll_coord
+cube_ur_coord
+cube_is_point
+cube_enlarge
+
+cube takes text input and returns a cube. This is useful for making cubes
+from computed strings.
+
+cube_dim returns the number of dimensions stored in the the data structure
+for a cube. This is useful for constraints on the dimensions of a cube.
+
+cube_ll_coord returns the nth coordinate value for the lower left corner
+of a cube. This is useful for doing coordinate transformations.
+
+cube_ur_coord returns the nth coordinate value for the upper right corner
+of a cube. This is useful for doing coordinate transformations.
+
+cube_is_point returns true if a cube is also a point. This is true when the
+two defining corners are the same.
+
+cube_enlarge increases the size of a cube by a specified radius in at least
+n dimensions. If the radius is negative the box is shrunk instead. This
+is useful for creating bounding boxes around a point for searching for
+nearby points. All defined dimensions are changed by the radius. If n
+is greater than the number of defined dimensions and the cube is being
+increased (r >= 0) then 0 is used as the base for the extra coordinates.
+LL coordinates are decreased by r and UR coordinates are increased by r. If a
+LL coordinate is increased to larger than the corresponding UR coordinate
+(this can only happen when r < 0) than both coordinates are set to their
+average.
+
+I added regression tests for the new functions.
+
+I added documentation for cube_distance and the new functions to README.cube
+as well as making a few other minor changes.
+
+Bruno Wolff III <bruno@wolff.to>
