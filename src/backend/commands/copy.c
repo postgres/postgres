@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.145.2.1 2002/02/27 01:47:31 ishii Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.145.2.2 2003/04/11 20:51:27 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include "postgres.h"
 
+#include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
