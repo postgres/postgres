@@ -24,7 +24,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.30 2003/05/09 15:44:40 tgl Exp $
+ *	$Header: /cvsroot/pgsql/src/backend/libpq/pqformat.c,v 1.31 2003/05/09 21:19:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -35,6 +35,8 @@
  *		pq_sendbyte		- append a raw byte to a StringInfo buffer
  *		pq_sendint		- append a binary integer to a StringInfo buffer
  *		pq_sendint64	- append a binary 8-byte int to a StringInfo buffer
+ *		pq_sendfloat4	- append a float4 to a StringInfo buffer
+ *		pq_sendfloat8	- append a float8 to a StringInfo buffer
  *		pq_sendbytes	- append raw data to a StringInfo buffer
  *		pq_sendcountedtext - append a counted text string (with character set conversion)
  *		pq_sendtext		- append a text string (with conversion)
@@ -56,6 +58,8 @@
  *		pq_getmsgbyte	- get a raw byte from a message buffer
  *		pq_getmsgint	- get a binary integer from a message buffer
  *		pq_getmsgint64	- get a binary 8-byte int from a message buffer
+ *		pq_getmsgfloat4	- get a float4 from a message buffer
+ *		pq_getmsgfloat8	- get a float8 from a message buffer
  *		pq_getmsgbytes	- get raw data from a message buffer
  *		pq_copymsgbytes	- copy raw data from a message buffer
  *		pq_getmsgtext	- get a counted text string (with conversion)
@@ -262,6 +266,82 @@ pq_sendint64(StringInfo buf, int64 i)
 }
 
 /* --------------------------------
+ *		pq_sendfloat4	- append a float4 to a StringInfo buffer
+ *
+ * The point of this routine is to localize knowledge of the external binary
+ * representation of float4, which is a component of several datatypes.
+ *
+ * We currently assume that float4 should be byte-swapped in the same way
+ * as int4.  This rule is not perfect but it gives us portability across
+ * most IEEE-float-using architectures.
+ * --------------------------------
+ */
+void
+pq_sendfloat4(StringInfo buf, float4 f)
+{
+	union
+	{
+		float4	f;
+		uint32	i;
+	} swap;
+
+	swap.f = f;
+	swap.i = htonl(swap.i);
+
+	appendBinaryStringInfo(buf, (char *) &swap.i, 4);
+}
+
+/* --------------------------------
+ *		pq_sendfloat8	- append a float8 to a StringInfo buffer
+ *
+ * The point of this routine is to localize knowledge of the external binary
+ * representation of float8, which is a component of several datatypes.
+ *
+ * We currently assume that float8 should be byte-swapped in the same way
+ * as int8.  This rule is not perfect but it gives us portability across
+ * most IEEE-float-using architectures.
+ * --------------------------------
+ */
+void
+pq_sendfloat8(StringInfo buf, float8 f)
+{
+#ifdef INT64_IS_BUSTED
+	union
+	{
+		float8	f;
+		uint32	h[2];
+	} swap;
+
+	swap.f = f;
+	swap.h[0] = htonl(swap.h[0]);
+	swap.h[1] = htonl(swap.h[1]);
+
+	/* Have to figure out endianness by testing... */
+	if (((uint32) 1) == htonl((uint32) 1))
+	{
+		/* machine seems to be big-endian, send h[0] first */
+		appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
+		appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
+	}
+	else
+	{
+		/* machine seems to be little-endian, send h[1] first */
+		appendBinaryStringInfo(buf, (char *) &swap.h[1], 4);
+		appendBinaryStringInfo(buf, (char *) &swap.h[0], 4);
+	}
+#else
+	union
+	{
+		float8	f;
+		int64	i;
+	} swap;
+
+	swap.f = f;
+	pq_sendint64(buf, swap.i);
+#endif
+}
+
+/* --------------------------------
  *		pq_endmessage	- send the completed message to the frontend
  *
  * The data buffer is pfree()d, but if the StringInfo was allocated with
@@ -430,6 +510,67 @@ pq_getmsgint64(StringInfo msg)
 #endif
 
 	return result;
+}
+
+/* --------------------------------
+ *		pq_getmsgfloat4	- get a float4 from a message buffer
+ *
+ * See notes for pq_sendfloat4.
+ * --------------------------------
+ */
+float4
+pq_getmsgfloat4(StringInfo msg)
+{
+	union
+	{
+		float4	f;
+		uint32	i;
+	} swap;
+
+	swap.i = pq_getmsgint(msg, 4);
+	return swap.f;
+}
+
+/* --------------------------------
+ *		pq_getmsgfloat8	- get a float8 from a message buffer
+ *
+ * See notes for pq_sendfloat8.
+ * --------------------------------
+ */
+float8
+pq_getmsgfloat8(StringInfo msg)
+{
+#ifdef INT64_IS_BUSTED
+	union
+	{
+		float8	f;
+		uint32	h[2];
+	} swap;
+
+	/* Have to figure out endianness by testing... */
+	if (((uint32) 1) == htonl((uint32) 1))
+	{
+		/* machine seems to be big-endian, receive h[0] first */
+		swap.h[0] = pq_getmsgint(msg, 4);
+		swap.h[1] = pq_getmsgint(msg, 4);
+	}
+	else
+	{
+		/* machine seems to be little-endian, receive h[1] first */
+		swap.h[1] = pq_getmsgint(msg, 4);
+		swap.h[0] = pq_getmsgint(msg, 4);
+	}
+	return swap.f;
+#else
+	union
+	{
+		float8	f;
+		int64	i;
+	} swap;
+
+	swap.i = pq_getmsgint64(msg);
+	return swap.f;
+#endif
 }
 
 /* --------------------------------

@@ -8,16 +8,18 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.86 2003/05/09 16:31:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/float.c,v 1.87 2003/05/09 21:19:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
 /*----------
  * OLD COMMENTS
  *		Basic float4 ops:
- *		 float4in, float4out, float4abs, float4um, float4up
+ *		 float4in, float4out, float4recv, float4send
+ *		 float4abs, float4um, float4up
  *		Basic float8 ops:
- *		 float8in, float8out, float8abs, float8um, float8up
+ *		 float8in, float8out, float8recv, float8send
+ *		 float8abs, float8um, float8up
  *		Arithmetic operators:
  *		 float4pl, float4mi, float4mul, float4div
  *		 float8pl, float8mi, float8mul, float8div
@@ -63,6 +65,7 @@
 
 #include "catalog/pg_type.h"
 #include "fmgr.h"
+#include "libpq/pqformat.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 
@@ -243,6 +246,31 @@ float4out(PG_FUNCTION_ARGS)
 }
 
 /*
+ *		float4recv			- converts external binary format to float4
+ */
+Datum
+float4recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_FLOAT4(pq_getmsgfloat4(buf));
+}
+
+/*
+ *		float4send			- converts float4 to binary format
+ */
+Datum
+float4send(PG_FUNCTION_ARGS)
+{
+	float4		num = PG_GETARG_FLOAT4(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat4(&buf, num);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
+/*
  *		float8in		- converts "num" to float8
  *						  restricted syntax:
  *						  {<sp>} [+|-] {digit} [.{digit}] [<exp>]
@@ -280,7 +308,6 @@ float8in(PG_FUNCTION_ARGS)
 	PG_RETURN_FLOAT8(val);
 }
 
-
 /*
  *		float8out		- converts float8 number to a string
  *						  using a standard output format
@@ -309,6 +336,32 @@ float8out(PG_FUNCTION_ARGS)
 
 	PG_RETURN_CSTRING(ascii);
 }
+
+/*
+ *		float8recv			- converts external binary format to float8
+ */
+Datum
+float8recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+
+	PG_RETURN_FLOAT8(pq_getmsgfloat8(buf));
+}
+
+/*
+ *		float8send			- converts float8 to binary format
+ */
+Datum
+float8send(PG_FUNCTION_ARGS)
+{
+	float8		num = PG_GETARG_FLOAT8(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, num);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
+}
+
 
 /* ========== PUBLIC ROUTINES ========== */
 

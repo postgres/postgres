@@ -2,8 +2,10 @@
  *
  * name.c
  *	  Functions for the built-in type "name".
+ *
  * name replaces char16 and is carefully implemented so that it
- * is a string of length NAMEDATALEN.  DO NOT use hard-coded constants anywhere
+ * is a string of physical length NAMEDATALEN.
+ * DO NOT use hard-coded constants anywhere
  * always use NAMEDATALEN as the symbolic constant!   - jolly 8/21/95
  *
  *
@@ -12,7 +14,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.44 2003/04/27 23:22:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/name.c,v 1.45 2003/05/09 21:19:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -20,11 +22,13 @@
 
 #include "catalog/namespace.h"
 #include "catalog/pg_type.h"
+#include "libpq/pqformat.h"
+#include "mb/pg_wchar.h"
 #include "miscadmin.h"
 #include "utils/array.h"
 #include "utils/builtins.h"
 #include "utils/lsyscache.h"
-#include "mb/pg_wchar.h"
+
 
 /*****************************************************************************
  *	 USER I/O ROUTINES (none)												 *
@@ -53,9 +57,7 @@ namein(PG_FUNCTION_ARGS)
 
 	len = pg_mbcliplen(s, len, NAMEDATALEN - 1);
 
-	result = (NameData *) palloc(NAMEDATALEN);
-	/* always keep it null-padded */
-	memset(result, 0, NAMEDATALEN);
+	result = (NameData *) palloc0(NAMEDATALEN);
 	memcpy(NameStr(*result), s, len);
 
 	PG_RETURN_NAME(result);
@@ -70,6 +72,40 @@ nameout(PG_FUNCTION_ARGS)
 	Name		s = PG_GETARG_NAME(0);
 
 	PG_RETURN_CSTRING(pstrdup(NameStr(*s)));
+}
+
+/*
+ *		namerecv			- converts external binary format to name
+ */
+Datum
+namerecv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Name		result;
+	char	   *str;
+	int			nbytes;
+
+	str = pq_getmsgtext(buf, buf->len - buf->cursor, &nbytes);
+	if (nbytes >= NAMEDATALEN)
+		elog(ERROR, "namerecv: input name too long");
+	result = (NameData *) palloc0(NAMEDATALEN);
+	memcpy(result, str, nbytes);
+	pfree(str);
+	PG_RETURN_NAME(result);
+}
+
+/*
+ *		namesend			- converts name to binary format
+ */
+Datum
+namesend(PG_FUNCTION_ARGS)
+{
+	Name		s = PG_GETARG_NAME(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendtext(&buf, NameStr(*s), strlen(NameStr(*s)));
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 
@@ -283,24 +319,3 @@ current_schemas(PG_FUNCTION_ARGS)
 
 	PG_RETURN_POINTER(array);
 }
-
-
-/*****************************************************************************
- *	 PRIVATE ROUTINES														 *
- *****************************************************************************/
-
-#ifdef NOT_USED
-uint32
-NameComputeLength(Name name)
-{
-	char	   *charP;
-	int			length;
-
-	for (length = 0, charP = NameStr(*name);
-		 length < NAMEDATALEN && *charP != '\0';
-		 length++, charP++)
-		;
-	return (uint32) length;
-}
-
-#endif

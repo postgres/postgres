@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $Id: pg_type.h,v 1.142 2003/05/09 15:44:41 tgl Exp $
+ * $Id: pg_type.h,v 1.143 2003/05/09 21:19:50 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -250,8 +250,8 @@ DATA(insert OID = 18 (	char	   PGNSP PGUID	1 t b t \054 0	 0 charin charout - - 
 DESCR("single character");
 #define CHAROID			18
 
-DATA(insert OID = 19 (	name	   PGNSP PGUID NAMEDATALEN f b t \054 0 18 namein nameout - - i p f 0 -1 0 _null_ _null_ ));
-DESCR("31-character type for storing system identifiers");
+DATA(insert OID = 19 (	name	   PGNSP PGUID NAMEDATALEN f b t \054 0 18 namein nameout namerecv namesend i p f 0 -1 0 _null_ _null_ ));
+DESCR("63-character type for storing system identifiers");
 #define NAMEOID			19
 
 DATA(insert OID = 20 (	int8	   PGNSP PGUID	8 f b t \054 0	 0 int8in int8out int8recv int8send d p f 0 -1 0 _null_ _null_ ));
@@ -323,7 +323,7 @@ DESCR("storage manager");
 /* OIDS 500 - 599 */
 
 /* OIDS 600 - 699 */
-DATA(insert OID = 600 (  point	   PGNSP PGUID 16 f b t \054 0 701 point_in point_out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 600 (  point	   PGNSP PGUID 16 f b t \054 0 701 point_in point_out point_recv point_send d p f 0 -1 0 _null_ _null_ ));
 DESCR("geometric point '(x, y)'");
 #define POINTOID		600
 DATA(insert OID = 601 (  lseg	   PGNSP PGUID 32 f b t \054 0 600 lseg_in lseg_out - - d p f 0 -1 0 _null_ _null_ ));
@@ -347,10 +347,10 @@ DESCR("");
 
 /* OIDS 700 - 799 */
 
-DATA(insert OID = 700 (  float4    PGNSP PGUID	4 f b t \054 0	 0 float4in float4out - - i p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 700 (  float4    PGNSP PGUID	4 f b t \054 0	 0 float4in float4out float4recv float4send i p f 0 -1 0 _null_ _null_ ));
 DESCR("single-precision floating point number, 4-byte storage");
 #define FLOAT4OID 700
-DATA(insert OID = 701 (  float8    PGNSP PGUID	8 f b t \054 0	 0 float8in float8out - - d p f 0 -1 0 _null_ _null_ ));
+DATA(insert OID = 701 (  float8    PGNSP PGUID	8 f b t \054 0	 0 float8in float8out float8recv float8send d p f 0 -1 0 _null_ _null_ ));
 DESCR("double-precision floating point number, 8-byte storage");
 #define FLOAT8OID 701
 DATA(insert OID = 702 (  abstime   PGNSP PGUID	4 t b t \054 0	 0 nabstimein nabstimeout - - i p f 0 -1 0 _null_ _null_ ));

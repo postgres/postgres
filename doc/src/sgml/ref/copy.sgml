@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.45 2003/05/07 22:23:27 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/ref/copy.sgml,v 1.46 2003/05/09 21:19:48 tgl Exp $
 PostgreSQL documentation
 -->
 
@@ -541,28 +541,22 @@ ZW      ZIMBABWE
   </para>
 
   <para>
-   XXX the following example is OBSOLETE and needs to be updated for the
-   7.4 binary format:
-  </para>
-
-  <para>
-   The following is the same data, output in binary format on a
-   Linux/i586 machine. The data is shown after filtering through the
+   The following is the same data, output in binary format.
+   The data is shown after filtering through the
    Unix utility <command>od -c</command>. The table has three columns;
    the first has type <type>char(2)</type>, the second has type <type>text</type>,
    and the third has type <type>integer</type>. All the rows have a null value
    in the third column.
 <programlisting>
-0000000   P   G   B   C   O   P   Y  \n 377  \r  \n  \0 004 003 002 001
-0000020  \0  \0  \0  \0  \0  \0  \0  \0 003  \0 377 377 006  \0  \0  \0
-0000040   A   F 377 377 017  \0  \0  \0   A   F   G   H   A   N   I   S
-0000060   T   A   N  \0  \0 003  \0 377 377 006  \0  \0  \0   A   L 377
-0000100 377  \v  \0  \0  \0   A   L   B   A   N   I   A  \0  \0 003  \0
-0000120 377 377 006  \0  \0  \0   D   Z 377 377  \v  \0  \0  \0   A   L
-0000140   G   E   R   I   A  \0  \0 003  \0 377 377 006  \0  \0  \0   Z
-0000160   M 377 377  \n  \0  \0  \0   Z   A   M   B   I   A  \0  \0 003
-0000200  \0 377 377 006  \0  \0  \0   Z   W 377 377  \f  \0  \0  \0   Z
-0000220   I   M   B   A   B   W   E  \0  \0 377 377
+0000000   P   G   C   O   P   Y  \n 377  \r  \n  \0  \0  \0  \0  \0  \0
+0000020  \0  \0  \0  \0 003  \0  \0  \0 002   A   F  \0  \0  \0 013   A
+0000040   F   G   H   A   N   I   S   T   A   N 377 377 377 377  \0 003
+0000060  \0  \0  \0 002   A   L  \0  \0  \0 007   A   L   B   A   N   I
+0000100   A 377 377 377 377  \0 003  \0  \0  \0 002   D   Z  \0  \0  \0
+0000120 007   A   L   G   E   R   I   A 377 377 377 377  \0 003  \0  \0
+0000140  \0 002   Z   M  \0  \0  \0 006   Z   A   M   B   I   A 377 377
+0000160 377 377  \0 003  \0  \0  \0 002   Z   W  \0  \0  \0  \b   Z   I
+0000200   M   B   A   B   W   E 377 377 377 377 377 377
 </programlisting>
   </para>
  </refsect1>

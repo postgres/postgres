@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.75 2003/03/11 21:01:33 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/geo_ops.c,v 1.76 2003/05/09 21:19:49 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -19,11 +19,11 @@
 #include <float.h>
 #include <ctype.h>
 
+#include "libpq/pqformat.h"
 #include "utils/builtins.h"
 #include "utils/geo_decls.h"
 
 #ifndef M_PI
-/* from my RH5.2 gcc math.h file - thomas 2000-04-03 */
 #define M_PI 3.14159265358979323846
 #endif
 
@@ -1587,6 +1587,36 @@ point_out(PG_FUNCTION_ARGS)
 	Point	   *pt = PG_GETARG_POINT_P(0);
 
 	PG_RETURN_CSTRING(path_encode(-1, 1, pt));
+}
+
+/*
+ *		point_recv			- converts external binary format to point
+ */
+Datum
+point_recv(PG_FUNCTION_ARGS)
+{
+	StringInfo	buf = (StringInfo) PG_GETARG_POINTER(0);
+	Point	   *point;
+
+	point = (Point *) palloc(sizeof(Point));
+	point->x = pq_getmsgfloat8(buf);
+	point->y = pq_getmsgfloat8(buf);
+	PG_RETURN_POINT_P(point);
+}
+
+/*
+ *		point_send			- converts point to binary format
+ */
+Datum
+point_send(PG_FUNCTION_ARGS)
+{
+	Point	   *pt = PG_GETARG_POINT_P(0);
+	StringInfoData buf;
+
+	pq_begintypsend(&buf);
+	pq_sendfloat8(&buf, pt->x);
+	pq_sendfloat8(&buf, pt->y);
+	PG_RETURN_BYTEA_P(pq_endtypsend(&buf));
 }
 
 

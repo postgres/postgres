@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.199 2003/05/09 18:08:48 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/copy.c,v 1.200 2003/05/09 21:19:48 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -17,6 +17,8 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "access/genam.h"
 #include "access/heapam.h"
@@ -88,13 +90,13 @@ static void CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				   char *delim, char *null_print);
 static void CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 					 char *delim, char *null_print);
-static Oid	GetInputFunction(Oid type);
-static Oid	GetTypeElement(Oid type);
 static char *CopyReadAttribute(const char *delim, CopyReadResult *result);
+static Datum CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo,
+									 Oid typelem, bool *isnull);
 static void CopyAttributeOut(char *string, char *delim);
 static List *CopyGetAttnums(Relation rel, List *attnamelist);
 
-static const char BinarySignature[12] = "PGBCOPY\n\377\r\n\0";
+static const char BinarySignature[11] = "PGCOPY\n\377\r\n\0";
 
 /*
  * Static communication variables ... pretty grotty, but COPY has
@@ -137,6 +139,10 @@ static int	CopyGetChar(void);
 #define CopyGetEof()  (fe_eof)
 static int	CopyPeekChar(void);
 static void CopyDonePeek(int c, bool pickup);
+static void CopySendInt32(int32 val);
+static int32 CopyGetInt32(void);
+static void CopySendInt16(int16 val);
+static int16 CopyGetInt16(void);
 
 /*
  * Send copy start/stop messages for frontend copies.  These have changed
@@ -519,6 +525,58 @@ CopyDonePeek(int c, bool pickup)
 }
 
 
+/*
+ * These functions do apply some data conversion
+ */
+
+/*
+ * CopySendInt32 sends an int32 in network byte order
+ */
+static void
+CopySendInt32(int32 val)
+{
+	uint32		buf;
+
+	buf = htonl((uint32) val);
+	CopySendData(&buf, sizeof(buf));
+}
+
+/*
+ * CopyGetInt32 reads an int32 that appears in network byte order
+ */
+static int32
+CopyGetInt32(void)
+{
+	uint32		buf;
+
+	CopyGetData(&buf, sizeof(buf));
+	return (int32) ntohl(buf);
+}
+
+/*
+ * CopySendInt16 sends an int16 in network byte order
+ */
+static void
+CopySendInt16(int16 val)
+{
+	uint16		buf;
+
+	buf = htons((uint16) val);
+	CopySendData(&buf, sizeof(buf));
+}
+
+/*
+ * CopyGetInt16 reads an int16 that appears in network byte order
+ */
+static int16
+CopyGetInt16(void)
+{
+	uint16		buf;
+
+	CopyGetData(&buf, sizeof(buf));
+	return (int16) ntohs(buf);
+}
+
 
 /*
  *	 DoCopy executes the SQL COPY statement.
@@ -802,7 +860,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	FmgrInfo   *out_functions;
 	Oid		   *elements;
 	bool	   *isvarlena;
-	int16		fld_size;
 	char	   *string;
 	Snapshot	mySnapshot;
 	List	   *cur;
@@ -817,7 +874,6 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	/*
 	 * Get info about the columns we need to process.
 	 *
-	 * For binary copy we really only need isvarlena, but compute it all...
 	 * +1's here are to avoid palloc(0) in a zero-column table.
 	 */
 	out_functions = (FmgrInfo *) palloc((num_phys_attrs + 1) * sizeof(FmgrInfo));
@@ -828,12 +884,15 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		int			attnum = lfirsti(cur);
 		Oid			out_func_oid;
 
-		getTypeOutputInfo(attr[attnum - 1]->atttypid,
-						  &out_func_oid, &elements[attnum - 1],
-						  &isvarlena[attnum - 1]);
+		if (binary)
+			getTypeBinaryOutputInfo(attr[attnum - 1]->atttypid,
+									&out_func_oid, &elements[attnum - 1],
+									&isvarlena[attnum - 1]);
+		else
+			getTypeOutputInfo(attr[attnum - 1]->atttypid,
+							  &out_func_oid, &elements[attnum - 1],
+							  &isvarlena[attnum - 1]);
 		fmgr_info(out_func_oid, &out_functions[attnum - 1]);
-		if (binary && attr[attnum - 1]->attlen == -2)
-			elog(ERROR, "COPY BINARY: cstring not supported");
 	}
 
 	/*
@@ -854,18 +913,15 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		int32		tmp;
 
 		/* Signature */
-		CopySendData((char *) BinarySignature, 12);
-		/* Integer layout field */
-		tmp = 0x01020304;
-		CopySendData(&tmp, sizeof(int32));
+		CopySendData((char *) BinarySignature, 11);
 		/* Flags field */
 		tmp = 0;
 		if (oids)
 			tmp |= (1 << 16);
-		CopySendData(&tmp, sizeof(int32));
+		CopySendInt32(tmp);
 		/* No header extension */
 		tmp = 0;
-		CopySendData(&tmp, sizeof(int32));
+		CopySendInt32(tmp);
 	}
 
 	mySnapshot = CopyQuerySnapshot();
@@ -884,17 +940,15 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 		if (binary)
 		{
 			/* Binary per-tuple header */
-			int16		fld_count = attr_count;
-
-			CopySendData(&fld_count, sizeof(int16));
-			/* Send OID if wanted --- note fld_count doesn't include it */
+			CopySendInt16(attr_count);
+			/* Send OID if wanted --- note attr_count doesn't include it */
 			if (oids)
 			{
 				Oid			oid = HeapTupleGetOid(tuple);
 
-				fld_size = sizeof(Oid);
-				CopySendData(&fld_size, sizeof(int16));
-				CopySendData(&oid, sizeof(Oid));
+				/* Hack --- assume Oid is same size as int32 */
+				CopySendInt32(sizeof(int32));
+				CopySendInt32(oid);
 			}
 		}
 		else
@@ -927,14 +981,9 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (isnull)
 			{
 				if (!binary)
-				{
 					CopySendString(null_print);		/* null indicator */
-				}
 				else
-				{
-					fld_size = 0;		/* null marker */
-					CopySendData(&fld_size, sizeof(int16));
-				}
+					CopySendInt32(-1);				/* null marker */
 			}
 			else
 			{
@@ -948,40 +997,15 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 				}
 				else
 				{
-					fld_size = attr[attnum - 1]->attlen;
-					CopySendData(&fld_size, sizeof(int16));
-					if (isvarlena[attnum - 1])
-					{
-						/* varlena */
-						Assert(fld_size == -1);
+					bytea	   *outputbytes;
 
-						/* If we have a toasted datum, detoast it */
-						value = PointerGetDatum(PG_DETOAST_DATUM(value));
-
-						CopySendData(DatumGetPointer(value),
-									 VARSIZE(value));
-					}
-					else if (!attr[attnum - 1]->attbyval)
-					{
-						/* fixed-length pass-by-reference */
-						Assert(fld_size > 0);
-						CopySendData(DatumGetPointer(value),
-									 fld_size);
-					}
-					else
-					{
-						/* pass-by-value */
-						Datum		datumBuf;
-
-						/*
-						 * We need this horsing around because we don't
-						 * know how shorter data values are aligned within
-						 * a Datum.
-						 */
-						store_att_byval(&datumBuf, value, fld_size);
-						CopySendData(&datumBuf,
-									 fld_size);
-					}
+					outputbytes = DatumGetByteaP(FunctionCall2(&out_functions[attnum - 1],
+															   value,
+															   ObjectIdGetDatum(elements[attnum - 1])));
+					/* We assume the result will not have been toasted */
+					CopySendInt32(VARSIZE(outputbytes) - VARHDRSZ);
+					CopySendData(VARDATA(outputbytes),
+								 VARSIZE(outputbytes) - VARHDRSZ);
 				}
 			}
 		}
@@ -996,9 +1020,7 @@ CopyTo(Relation rel, List *attnumlist, bool binary, bool oids,
 	if (binary)
 	{
 		/* Generate trailer for a binary copy */
-		int16		fld_count = -1;
-
-		CopySendData(&fld_count, sizeof(int16));
+		CopySendInt16(-1);
 	}
 
 	MemoryContextDelete(mycontext);
@@ -1033,7 +1055,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				attr_count,
 				num_defaults;
 	FmgrInfo   *in_functions;
+	FmgrInfo	oid_in_function;
 	Oid		   *elements;
+	Oid			oid_in_element;
 	ExprState **constraintexprs;
 	bool		hasConstraints = false;
 	int			i;
@@ -1042,6 +1066,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	Datum	   *values;
 	char	   *nulls;
 	bool		done = false;
+	bool		isnull;
 	ResultRelInfo *resultRelInfo;
 	EState	   *estate = CreateExecutorState(); /* for ExecConstraints() */
 	TupleTable	tupleTable;
@@ -1086,7 +1111,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	 * Pick up the required catalog information for each attribute in the
 	 * relation, including the input function, the element type (to pass
 	 * to the input function), and info about defaults and constraints.
-	 * (We don't actually use the input function if it's a binary copy.)
+	 * (Which input function we use depends on text/binary format choice.)
 	 * +1's here are to avoid palloc(0) in a zero-column table.
 	 */
 	in_functions = (FmgrInfo *) palloc((num_phys_attrs + 1) * sizeof(FmgrInfo));
@@ -1101,21 +1126,19 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		if (attr[i]->attisdropped)
 			continue;
 
-		/* Fetch the input function */
-		in_func_oid = (Oid) GetInputFunction(attr[i]->atttypid);
+		/* Fetch the input function and typelem info */
+		if (binary)
+			getTypeBinaryInputInfo(attr[i]->atttypid,
+								   &in_func_oid, &elements[i]);
+		else
+			getTypeInputInfo(attr[i]->atttypid,
+							 &in_func_oid, &elements[i]);
 		fmgr_info(in_func_oid, &in_functions[i]);
-		elements[i] = GetTypeElement(attr[i]->atttypid);
 
 		/* Get default info if needed */
-		if (intMember(i + 1, attnumlist))
+		if (!intMember(i + 1, attnumlist))
 		{
-			/* attribute is to be copied */
-			if (binary && attr[i]->attlen == -2)
-				elog(ERROR, "COPY BINARY: cstring not supported");
-		}
-		else
-		{
-			/* attribute is NOT to be copied */
+			/* attribute is NOT to be copied from input */
 			/* use default value if one exists */
 			Node   *defexpr = build_column_default(rel, i + 1);
 
@@ -1174,19 +1197,15 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 	else
 	{
 		/* Read and verify binary header */
-		char		readSig[12];
+		char		readSig[11];
 		int32		tmp;
 
 		/* Signature */
-		CopyGetData(readSig, 12);
-		if (CopyGetEof() || memcmp(readSig, BinarySignature, 12) != 0)
+		CopyGetData(readSig, 11);
+		if (CopyGetEof() || memcmp(readSig, BinarySignature, 11) != 0)
 			elog(ERROR, "COPY BINARY: file signature not recognized");
-		/* Integer layout field */
-		CopyGetData(&tmp, sizeof(int32));
-		if (CopyGetEof() || tmp != 0x01020304)
-			elog(ERROR, "COPY BINARY: incompatible integer layout");
 		/* Flags field */
-		CopyGetData(&tmp, sizeof(int32));
+		tmp = CopyGetInt32();
 		if (CopyGetEof())
 			elog(ERROR, "COPY BINARY: bogus file header (missing flags)");
 		file_has_oids = (tmp & (1 << 16)) != 0;
@@ -1194,7 +1213,7 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		if ((tmp >> 16) != 0)
 			elog(ERROR, "COPY BINARY: unrecognized critical flags in header");
 		/* Header extension length */
-		CopyGetData(&tmp, sizeof(int32));
+		tmp = CopyGetInt32();
 		if (CopyGetEof() || tmp < 0)
 			elog(ERROR, "COPY BINARY: bogus file header (missing length)");
 		/* Skip extension header, if present */
@@ -1204,6 +1223,13 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			if (CopyGetEof())
 				elog(ERROR, "COPY BINARY: bogus file header (wrong length)");
 		}
+	}
+
+	if (file_has_oids && binary)
+	{
+		getTypeBinaryInputInfo(OIDOID,
+							   &in_func_oid, &oid_in_element);
+		fmgr_info(in_func_oid, &oid_in_function);
 	}
 
 	values = (Datum *) palloc((num_phys_attrs + 1) * sizeof(Datum));
@@ -1351,10 +1377,9 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		else
 		{
 			/* binary */
-			int16		fld_count,
-						fld_size;
+			int16		fld_count;
 
-			CopyGetData(&fld_count, sizeof(int16));
+			fld_count = CopyGetInt16();
 			if (CopyGetEof() || fld_count == -1)
 			{
 				done = true;
@@ -1367,16 +1392,12 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 
 			if (file_has_oids)
 			{
-				CopyGetData(&fld_size, sizeof(int16));
-				if (CopyGetEof())
-					elog(ERROR, "COPY BINARY: unexpected EOF");
-				if (fld_size != (int16) sizeof(Oid))
-					elog(ERROR, "COPY BINARY: sizeof(Oid) is %d, expected %d",
-						 (int) fld_size, (int) sizeof(Oid));
-				CopyGetData(&loaded_oid, sizeof(Oid));
-				if (CopyGetEof())
-					elog(ERROR, "COPY BINARY: unexpected EOF");
-				if (loaded_oid == InvalidOid)
+				loaded_oid =
+					DatumGetObjectId(CopyReadBinaryAttribute(0,
+															 &oid_in_function,
+															 oid_in_element,
+															 &isnull));
+				if (isnull || loaded_oid == InvalidOid)
 					elog(ERROR, "COPY BINARY: Invalid Oid");
 			}
 
@@ -1387,63 +1408,11 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 				int			m = attnum - 1;
 
 				i++;
-
-				CopyGetData(&fld_size, sizeof(int16));
-				if (CopyGetEof())
-					elog(ERROR, "COPY BINARY: unexpected EOF");
-				if (fld_size == 0)
-					continue;	/* it's NULL; nulls[attnum-1] already set */
-				if (fld_size != attr[m]->attlen)
-					elog(ERROR, "COPY BINARY: sizeof(field %d) is %d, expected %d",
-					  i, (int) fld_size, (int) attr[m]->attlen);
-				if (fld_size == -1)
-				{
-					/* varlena field */
-					int32		varlena_size;
-					Pointer		varlena_ptr;
-
-					CopyGetData(&varlena_size, sizeof(int32));
-					if (CopyGetEof())
-						elog(ERROR, "COPY BINARY: unexpected EOF");
-					if (varlena_size < (int32) sizeof(int32))
-						elog(ERROR, "COPY BINARY: bogus varlena length");
-					varlena_ptr = (Pointer) palloc(varlena_size);
-					VARATT_SIZEP(varlena_ptr) = varlena_size;
-					CopyGetData(VARDATA(varlena_ptr),
-								varlena_size - sizeof(int32));
-					if (CopyGetEof())
-						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[m] = PointerGetDatum(varlena_ptr);
-				}
-				else if (!attr[m]->attbyval)
-				{
-					/* fixed-length pass-by-reference */
-					Pointer		refval_ptr;
-
-					Assert(fld_size > 0);
-					refval_ptr = (Pointer) palloc(fld_size);
-					CopyGetData(refval_ptr, fld_size);
-					if (CopyGetEof())
-						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[m] = PointerGetDatum(refval_ptr);
-				}
-				else
-				{
-					/* pass-by-value */
-					Datum		datumBuf;
-
-					/*
-					 * We need this horsing around because we don't know
-					 * how shorter data values are aligned within a Datum.
-					 */
-					Assert(fld_size > 0 && fld_size <= sizeof(Datum));
-					CopyGetData(&datumBuf, fld_size);
-					if (CopyGetEof())
-						elog(ERROR, "COPY BINARY: unexpected EOF");
-					values[m] = fetch_att(&datumBuf, true, fld_size);
-				}
-
-				nulls[m] = ' ';
+				values[m] = CopyReadBinaryAttribute(i,
+													&in_functions[m],
+													elements[m],
+													&isnull);
+				nulls[m] = isnull ? 'n' : ' ';
 			}
 		}
 
@@ -1454,8 +1423,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 		 */
 		for (i = 0; i < num_defaults; i++)
 		{
-			bool		isnull;
-
 			values[defmap[i]] = ExecEvalExpr(defexprs[i], econtext,
 											 &isnull, NULL);
 			if (!isnull)
@@ -1472,7 +1439,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 			for (i = 0; i < num_phys_attrs; i++)
 			{
 				ExprState  *exprstate = constraintexprs[i];
-				bool		isnull;
 
 				if (exprstate == NULL)
 					continue;	/* no constraint for this attr */
@@ -1577,38 +1543,6 @@ CopyFrom(Relation rel, List *attnumlist, bool binary, bool oids,
 }
 
 
-static Oid
-GetInputFunction(Oid type)
-{
-	HeapTuple	typeTuple;
-	Oid			result;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "GetInputFunction: Cache lookup of type %u failed", type);
-	result = ((Form_pg_type) GETSTRUCT(typeTuple))->typinput;
-	ReleaseSysCache(typeTuple);
-	return result;
-}
-
-static Oid
-GetTypeElement(Oid type)
-{
-	HeapTuple	typeTuple;
-	Oid			result;
-
-	typeTuple = SearchSysCache(TYPEOID,
-							   ObjectIdGetDatum(type),
-							   0, 0, 0);
-	if (!HeapTupleIsValid(typeTuple))
-		elog(ERROR, "GetTypeElement: Cache lookup of type %u failed", type);
-	result = ((Form_pg_type) GETSTRUCT(typeTuple))->typelem;
-	ReleaseSysCache(typeTuple);
-	return result;
-}
-
 /*
  * Read the value of a single attribute.
  *
@@ -1624,7 +1558,6 @@ GetTypeElement(Oid type)
  *
  * delim is the column delimiter string.
  */
-
 static char *
 CopyReadAttribute(const char *delim, CopyReadResult *result)
 {
@@ -1848,6 +1781,57 @@ copy_eof:
 	return attribute_buf.data;
 }
 
+/*
+ * Read a binary attribute
+ */
+static Datum
+CopyReadBinaryAttribute(int column_no, FmgrInfo *flinfo, Oid typelem,
+						bool *isnull)
+{
+	int32		fld_size;
+	Datum		result;
+
+	fld_size = CopyGetInt32();
+	if (CopyGetEof())
+		elog(ERROR, "COPY BINARY: unexpected EOF");
+	if (fld_size == -1)
+	{
+		*isnull = true;
+		return (Datum) 0;
+	}
+	if (fld_size < 0)
+		elog(ERROR, "COPY BINARY: bogus size for field %d", column_no);
+
+	/* reset attribute_buf to empty, and load raw data in it */
+	attribute_buf.len = 0;
+	attribute_buf.data[0] = '\0';
+	attribute_buf.cursor = 0;
+
+	enlargeStringInfo(&attribute_buf, fld_size);
+
+	CopyGetData(attribute_buf.data, fld_size);
+	if (CopyGetEof())
+		elog(ERROR, "COPY BINARY: unexpected EOF");
+
+	attribute_buf.len = fld_size;
+	attribute_buf.data[fld_size] = '\0';
+
+	/* Call the column type's binary input converter */
+	result = FunctionCall2(flinfo,
+						   PointerGetDatum(&attribute_buf),
+						   ObjectIdGetDatum(typelem));
+
+	/* Trouble if it didn't eat the whole buffer */
+	if (attribute_buf.cursor != attribute_buf.len)
+		elog(ERROR, "Improper binary format in field %d", column_no);
+
+	*isnull = false;
+	return result;
+}
+
+/*
+ * Send text representation of one attribute, with conversion and escaping
+ */
 static void
 CopyAttributeOut(char *server_string, char *delim)
 {
