@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.61 1998/02/03 21:57:27 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.62 1998/02/25 23:40:32 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1083,23 +1083,19 @@ vc_rpfheap(VRelStats *vacrelstats, Relation onerel,
 					/*
 					 * If no one tuple can't be added to this page -
 					 * remove page from Fvpl. - vadim 11/27/96
+					 *
+					 * But we can't remove last page - this is our
+					 * "show-stopper" !!!	- vadim 02/25/98
 					 */
-					if (!vc_enough_space(ToVpd, vacrelstats->min_tlen))
+					if (ToVpd != Fvplast && 
+						!vc_enough_space(ToVpd, vacrelstats->min_tlen))
 					{
-						if (ToVpd != Fvplast)
-						{
-							Assert(Fnpages > ToVpI + 1);
-							memmove(Fvpl->vpl_pgdesc + ToVpI,
-									Fvpl->vpl_pgdesc + ToVpI + 1,
-							sizeof(VPageDescr *) * (Fnpages - ToVpI - 1));
-						}
-						Assert(Fnpages >= 1);
+						Assert(Fnpages > ToVpI + 1);
+						memmove(Fvpl->vpl_pgdesc + ToVpI,
+								Fvpl->vpl_pgdesc + ToVpI + 1,
+								sizeof(VPageDescr *) * (Fnpages - ToVpI - 1));
 						Fnpages--;
-						if (Fnpages == 0)
-							break;
-						/* get prev reapped page from Fvpl */
-						Fvplast = Fvpl->vpl_pgdesc[Fnpages - 1];
-						Fblklast = Fvplast->vpd_blkno;
+						Assert (Fvplast == Fvpl->vpl_pgdesc[Fnpages - 1]);
 					}
 				}
 				for (i = 0; i < Fnpages; i++)
