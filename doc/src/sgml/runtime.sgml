@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.220 2003/11/16 03:58:10 tgl Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/runtime.sgml,v 1.221 2003/11/16 17:01:50 tgl Exp $
 -->
 
 <Chapter Id="runtime">
@@ -3269,7 +3269,7 @@ default:\
    <title>Linux Memory Overcommit</title>
 
    <para>
-    In Linux 2.4, the default virtual memory behavior is not
+    In Linux 2.4 and later, the default virtual memory behavior is not
     optimal for <productname>PostgreSQL</productname>. Because of the
     way that the kernel implements memory overcommit, the kernel may
     terminate the <productname>PostgreSQL</productname> server (the
@@ -3285,51 +3285,45 @@ default:\
 Out of Memory: Killed process 12345 (postmaster). 
 </programlisting>
     This indicates that the <filename>postmaster</filename> process
-    has been terminated due to memory pressure;
+    has been terminated due to memory pressure.
+    Although existing database connections will continue to function
+    normally, no new connections will be accepted.  To recover,
     <productname>PostgreSQL</productname> will need to be restarted.
    </para>
 
    <para>
-    To avoid this situation, run <productname>PostgreSQL</productname>
+    One way to avoid this problem is to run
+    <productname>PostgreSQL</productname>
     on a machine where you can be sure that other processes will not
-    run the machine out of memory. If your kernel supports the strict
-    and/or paranoid modes of overcommit handling, you can also relieve this
-    problem by altering the system's default behaviour. This can be
-    determined by examining the function <function>vm_enough_memory</>
-    in the file <filename>mm/mmap.c</> in the kernel source. If this
-    file reveals that the strict or paranoid modes are supported by
-    your kernel, turn one of these modes on by using
+    run the machine out of memory.
+   </para>
+
+   <para>
+    On Linux 2.6 and later, a better solution is to modify the kernel's
+    behavior so that it will not <quote>overcommit</> memory.  This is
+    done by selecting strict overcommit mode via sysctl:
 <programlisting>
 sysctl -w vm.overcommit_memory=2
 </programlisting>
-    for strict mode, or
-<programlisting>
-sysctl -w vm.overcommit_memory=3
-</programlisting>
-    for paranoid mode, or placing an equivalent entry in
-    <filename>/etc/sysctl.conf</>.  For more information on memory
-    overcommit handling and the meaning of these kernel settings,
-    consult the file
-    <filename>Documentation/vm/overcommit-accounting</filename> in a
-    recent version of the source code for the Linux kernel.
+    or placing an equivalent entry in <filename>/etc/sysctl.conf</>.
+    You may also wish to modify the related setting 
+    <literal>vm.overcommit_ratio</>.  For details see the kernel documentation
+    file <filename>Documentation/vm/overcommit-accounting</>.
    </para>
 
-   <caution>
-    <para>
-     Using these settings with a kernel which does not support these
-     modes will almost certainly increase the danger of the kernel
-     killing the database server, rather than reducing it. If in any
-     doubt, consult a kernel expert or your kernel vendor.
-    </para>
-   </caution>
-
    <para>
-    The method described above for changing the kernel's overcommit
-    behavior should work with Linux kernel versions 2.6 and later. In addition,
-    some versions of the 2.4 kernel distributed by some vendors may
-    also support this functionality. However, it is known that some
-    vendor documents suggest that they support them while examination
-    of the kernel source reveals that they do not.
+    Some vendors' Linux 2.4 kernels are reported to have early versions
+    of the 2.6 overcommit sysctl.  However, setting
+    <literal>vm.overcommit_memory</> to 2
+    on a kernel that does not have the relevant code will make
+    things worse not better.  It is recommended that you inspect
+    the actual kernel source code (see the function
+    <function>vm_enough_memory</> in the file <filename>mm/mmap.c</>)
+    to verify what is supported in your copy before you try this in a 2.4
+    installation.  The presence of the <filename>overcommit-accounting</>
+    documentation file should <emphasis>not</> be taken as evidence that the
+    feature is there.  If in any doubt, consult a kernel expert or your
+    kernel vendor.
    </para>
   </sect2>
  </sect1>
