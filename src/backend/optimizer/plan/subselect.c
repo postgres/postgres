@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.24 1999/08/25 23:21:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/subselect.c,v 1.25 1999/11/15 02:00:08 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -173,10 +173,43 @@ make_subplan(SubLink *slink)
 	}
 
 	/*
-	 * Un-correlated or undirect correlated plans of EXISTS or EXPR types
-	 * can be used as initPlans...
+	 * Un-correlated or undirect correlated plans of EXISTS, EXPR, or
+	 * MULTIEXPR types can be used as initPlans.  For EXISTS or EXPR,
+	 * we just produce a Param referring to the result of evaluating the
+	 * initPlan.  For MULTIEXPR, we must build an AND or OR-clause of the
+	 * individual comparison operators, using the appropriate lefthand
+	 * side expressions and Params for the initPlan's target items.
 	 */
-	if (node->parParam == NULL && slink->subLinkType == EXPR_SUBLINK)
+	if (node->parParam == NIL && slink->subLinkType == EXISTS_SUBLINK)
+	{
+		Var		   *var = makeVar(0, 0, BOOLOID, -1, 0);
+		Param	   *prm = makeNode(Param);
+
+		prm->paramkind = PARAM_EXEC;
+		prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
+		prm->paramtype = var->vartype;
+		pfree(var);				/* var is only needed for new_param */
+		node->setParam = lappendi(node->setParam, prm->paramid);
+		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		result = (Node *) prm;
+	}
+	else if (node->parParam == NIL && slink->subLinkType == EXPR_SUBLINK)
+	{
+		TargetEntry *te = lfirst(plan->targetlist);
+		/* need a var node just to pass to new_param()... */
+		Var		   *var = makeVar(0, 0, te->resdom->restype,
+								  te->resdom->restypmod, 0);
+		Param	   *prm = makeNode(Param);
+
+		prm->paramkind = PARAM_EXEC;
+		prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
+		prm->paramtype = var->vartype;
+		pfree(var);				/* var is only needed for new_param */
+		node->setParam = lappendi(node->setParam, prm->paramid);
+		PlannerInitPlan = lappend(PlannerInitPlan, node);
+		result = (Node *) prm;
+	}
+	else if (node->parParam == NIL && slink->subLinkType == MULTIEXPR_SUBLINK)
 	{
 		List	   *newoper = NIL;
 		int			i = 0;
@@ -202,6 +235,7 @@ make_subplan(SubLink *slink)
 			prm->paramkind = PARAM_EXEC;
 			prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
 			prm->paramtype = var->vartype;
+			pfree(var);			/* var is only needed for new_param */
 
 			Assert(IsA(oper, Oper));
 			tup = get_operator_tuple(oper->opno);
@@ -219,7 +253,6 @@ make_subplan(SubLink *slink)
 											(Var *) left,
 											(Var *) right));
 			node->setParam = lappendi(node->setParam, prm->paramid);
-			pfree(var);
 			i++;
 		}
 		slink->oper = newoper;
@@ -230,19 +263,6 @@ make_subplan(SubLink *slink)
 							   make_andclause(newoper));
 		else
 			result = (Node *) lfirst(newoper);
-	}
-	else if (node->parParam == NULL && slink->subLinkType == EXISTS_SUBLINK)
-	{
-		Var		   *var = makeVar(0, 0, BOOLOID, -1, 0);
-		Param	   *prm = makeNode(Param);
-
-		prm->paramkind = PARAM_EXEC;
-		prm->paramid = (AttrNumber) new_param(var, PlannerQueryLevel);
-		prm->paramtype = var->vartype;
-		node->setParam = lappendi(node->setParam, prm->paramid);
-		pfree(var);
-		PlannerInitPlan = lappend(PlannerInitPlan, node);
-		result = (Node *) prm;
 	}
 	else
 	{
@@ -333,7 +353,8 @@ set_unioni(List *l1, List *l2)
 
 /*
  * finalize_primnode: build lists of subplans and params appearing
- * in the given expression tree.
+ * in the given expression tree.  NOTE: items are added to lists passed in,
+ * so caller must initialize lists to NIL before first call!
  */
 
 typedef struct finalize_primnode_results {
@@ -341,20 +362,8 @@ typedef struct finalize_primnode_results {
 	List	*paramids;			/* List of PARAM_EXEC paramids found */
 } finalize_primnode_results;
 
-static bool finalize_primnode_walker(Node *node,
-									 finalize_primnode_results *results);
-
-static void
-finalize_primnode(Node *expr, finalize_primnode_results *results)
-{
-	results->subplans = NIL;	/* initialize */
-	results->paramids = NIL;
-	(void) finalize_primnode_walker(expr, results);
-}
-
 static bool
-finalize_primnode_walker(Node *node,
-						 finalize_primnode_results *results)
+finalize_primnode(Node *node, finalize_primnode_results *results)
 {
 	if (node == NULL)
 		return false;
@@ -389,7 +398,7 @@ finalize_primnode_walker(Node *node,
 		}
 		/* fall through to recurse into subplan args */
 	}
-	return expression_tree_walker(node, finalize_primnode_walker,
+	return expression_tree_walker(node, finalize_primnode,
 								  (void *) results);
 }
 
@@ -443,7 +452,7 @@ process_sublinks_mutator(Node *node, void *context)
 	{
 		SubLink	   *sublink = (SubLink *) node;
 
-		/* First, scan the lefthand-side expressions.
+		/* First, scan the lefthand-side expressions, if any.
 		 * This is a tad klugy since we modify the input SubLink node,
 		 * but that should be OK (make_subplan does it too!)
 		 */
@@ -475,23 +484,28 @@ SS_finalize_plan(Plan *plan)
 	List	   *lst;
 
 	if (plan == NULL)
-		return NULL;
+		return NIL;
 
-	/* Find params in targetlist, make sure there are no subplans there */
-	finalize_primnode((Node *) plan->targetlist, &results);
-	Assert(results.subplans == NIL);
-
-	/* From here on, we invoke finalize_primnode_walker not finalize_primnode,
-	 * so that results.paramids lists are automatically merged together and
-	 * we don't have to do it the hard way.  But when recursing to self,
-	 * we do have to merge the lists.  Oh well.
+	results.subplans = NIL;		/* initialize lists to NIL */
+	results.paramids = NIL;
+	/*
+	 * When we call finalize_primnode, results.paramids lists are
+	 * automatically merged together.  But when recursing to self,
+	 * we have to do it the hard way.  We want the paramids list
+	 * to include params in subplans as well as at this level.
+	 * (We don't care about finding subplans of subplans, though.)
 	 */
+
+	/* Find params and subplans in targetlist and qual */
+	finalize_primnode((Node *) plan->targetlist, &results);
+	finalize_primnode((Node *) plan->qual, &results);
+
+	/* Check additional node-type-specific fields */
 	switch (nodeTag(plan))
 	{
 		case T_Result:
-			finalize_primnode_walker(((Result *) plan)->resconstantqual,
-									 &results);
-			/* results.subplans is NOT necessarily empty here ... */
+			finalize_primnode(((Result *) plan)->resconstantqual,
+							  &results);
 			break;
 
 		case T_Append:
@@ -501,33 +515,26 @@ SS_finalize_plan(Plan *plan)
 			break;
 
 		case T_IndexScan:
-			finalize_primnode_walker((Node *) ((IndexScan *) plan)->indxqual,
-									 &results);
-			Assert(results.subplans == NIL);
+			finalize_primnode((Node *) ((IndexScan *) plan)->indxqual,
+							  &results);
 			break;
 
 		case T_MergeJoin:
-			finalize_primnode_walker((Node *) ((MergeJoin *) plan)->mergeclauses,
-									 &results);
-			Assert(results.subplans == NIL);
+			finalize_primnode((Node *) ((MergeJoin *) plan)->mergeclauses,
+							  &results);
 			break;
 
 		case T_HashJoin:
-			finalize_primnode_walker((Node *) ((HashJoin *) plan)->hashclauses,
-									 &results);
-			Assert(results.subplans == NIL);
+			finalize_primnode((Node *) ((HashJoin *) plan)->hashclauses,
+							  &results);
 			break;
 
 		case T_Hash:
-			finalize_primnode_walker((Node *) ((Hash *) plan)->hashkey,
-									 &results);
-			Assert(results.subplans == NIL);
+			finalize_primnode((Node *) ((Hash *) plan)->hashkey,
+							  &results);
 			break;
 
 		case T_Agg:
-			/* XXX Code used to reject subplans in Aggref args; needed?? */
-			break;
-
 		case T_SeqScan:
 		case T_NestLoop:
 		case T_Material:
@@ -539,12 +546,9 @@ SS_finalize_plan(Plan *plan)
 		default:
 			elog(ERROR, "SS_finalize_plan: node %d unsupported",
 				 nodeTag(plan));
-			return NULL;
 	}
 
-	finalize_primnode_walker((Node *) plan->qual, &results);
-	/* subplans are OK in the qual... */
-
+	/* Process left and right subplans, if any */
 	results.paramids = set_unioni(results.paramids,
 								  SS_finalize_plan(plan->lefttree));
 	results.paramids = set_unioni(results.paramids,

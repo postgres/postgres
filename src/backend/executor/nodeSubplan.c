@@ -3,6 +3,11 @@
  * nodeSubplan.c
  *	  routines to support subselects
  *
+ * Copyright (c) 1994, Regents of the University of California
+ *
+ * IDENTIFICATION
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeSubplan.c,v 1.16 1999/11/15 02:00:01 tgl Exp $
+ *
  *-------------------------------------------------------------------------
  */
 /*
@@ -68,19 +73,17 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	 * within a tuple (if there are multiple columns) using OR semantics
 	 * if "useor" is true, AND semantics if not.  We then combine results
 	 * across tuples (if the subplan produces more than one) using OR
-	 * semantics for ANY_SUBLINK or AND semantics for ALL_SUBLINK.  NULL
-	 * results from the combining operators are handled according to the
-	 * usual SQL semantics for OR and AND.  The result for no input
-	 * tuples is FALSE for ANY_SUBLINK, TRUE for ALL_SUBLINK.
+	 * semantics for ANY_SUBLINK or AND semantics for ALL_SUBLINK.
+	 * (MULTIEXPR_SUBLINK doesn't allow multiple tuples from the subplan.)
+	 * NULL results from the combining operators are handled according to
+	 * the usual SQL semantics for OR and AND.  The result for no input
+	 * tuples is FALSE for ANY_SUBLINK, TRUE for ALL_SUBLINK, NULL for
+	 * MULTIEXPR_SUBLINK.
 	 *
 	 * For EXPR_SUBLINK we require the subplan to produce no more than one
 	 * tuple, else an error is raised.  If zero tuples are produced, we
-	 * return NULL.  (XXX it would probably be more correct to evaluate
-	 * the combining operator with a NULL input?)  Assuming we get a tuple:
-	 * if there is only one column then we just return its result as-is, NULL
-	 * or otherwise.  If there is more than one column we combine the results
-	 * per "useor" --- this only makes sense if the combining operators yield
-	 * boolean, and we assume the parser has checked that.
+	 * return NULL.  Assuming we get a tuple, we just return its first
+	 * column (there can be only one non-junk column in this case).
 	 */
 	result = (Datum) (subLinkType == ALL_SUBLINK ? true : false);
 	*isNull = false;
@@ -98,13 +101,29 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 		if (subLinkType == EXISTS_SUBLINK)
 			return (Datum) true;
 
-		/* cannot allow multiple input tuples for EXPR sublink */
-		if (subLinkType == EXPR_SUBLINK && found)
+		if (subLinkType == EXPR_SUBLINK)
+		{
+			/* cannot allow multiple input tuples for EXPR sublink */
+			if (found)
+				elog(ERROR, "ExecSubPlan: more than one tuple returned by expression subselect");
+			found = true;
+			/* XXX need to copy tuple in case pass by ref */
+			/* XXX need to ref-count the tuple to avoid mem leak! */
+			tup = heap_copytuple(tup);
+			result = heap_getattr(tup, col, tdesc, isNull);
+			/* keep scanning subplan to make sure there's only one tuple */
+			continue;
+		}
+
+		/* cannot allow multiple input tuples for MULTIEXPR sublink either */
+		if (subLinkType == MULTIEXPR_SUBLINK && found)
 			elog(ERROR, "ExecSubPlan: more than one tuple returned by expression subselect");
 
 		found = true;
 
-		/* iterate over combining operators for columns of tuple */
+		/* For ALL, ANY, and MULTIEXPR sublinks, iterate over combining
+		 * operators for columns of tuple.
+		 */
 		foreach(lst, sublink->oper)
 		{
 			Expr	   *expr = (Expr *) lfirst(lst);
@@ -193,7 +212,7 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 		}
 		else
 		{
-			/* must be EXPR_SUBLINK */
+			/* must be MULTIEXPR_SUBLINK */
 			result = rowresult;
 			*isNull = rownull;
 		}
@@ -202,9 +221,10 @@ ExecSubPlan(SubPlan *node, List *pvar, ExprContext *econtext, bool *isNull)
 	if (!found)
 	{
 		/* deal with empty subplan result.  result/isNull were previously
-		 * initialized correctly for all sublink types except EXPR.
+		 * initialized correctly for all sublink types except EXPR and
+		 * MULTIEXPR; for those, return NULL.
 		 */
-		if (subLinkType == EXPR_SUBLINK)
+		if (subLinkType == EXPR_SUBLINK || subLinkType == MULTIEXPR_SUBLINK)
 		{
 				result = (Datum) false;
 				*isNull = true;
@@ -242,7 +262,7 @@ ExecInitSubPlan(SubPlan *node, EState *estate, Plan *parent)
 	 * If this plan is un-correlated or undirect correlated one and want
 	 * to set params for parent plan then prepare parameters.
 	 */
-	if (node->setParam != NULL)
+	if (node->setParam != NIL)
 	{
 		List	   *lst;
 
@@ -293,14 +313,6 @@ ExecSetParamPlan(SubPlan *node)
 		TupleDesc	tdesc = slot->ttc_tupleDescriptor;
 		int			i = 1;
 
-		if (sublink->subLinkType == EXPR_SUBLINK && found)
-		{
-			elog(ERROR, "ExecSetParamPlan: more than one tuple returned by expression subselect");
-			return;
-		}
-
-		found = true;
-
 		if (sublink->subLinkType == EXISTS_SUBLINK)
 		{
 			ParamExecData *prm = &(plan->state->es_param_exec_vals[lfirsti(node->setParam)]);
@@ -308,8 +320,16 @@ ExecSetParamPlan(SubPlan *node)
 			prm->execPlan = NULL;
 			prm->value = (Datum) true;
 			prm->isnull = false;
+			found = true;
 			break;
 		}
+
+		if (found &&
+			(sublink->subLinkType == EXPR_SUBLINK ||
+			 sublink->subLinkType == MULTIEXPR_SUBLINK))
+			elog(ERROR, "ExecSetParamPlan: more than one tuple returned by expression subselect");
+
+		found = true;
 
 		/*
 		 * If this is uncorrelated subquery then its plan will be closed

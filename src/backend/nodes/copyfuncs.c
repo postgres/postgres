@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.94 1999/11/01 05:15:13 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/nodes/copyfuncs.c,v 1.95 1999/11/15 02:00:01 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -86,10 +86,11 @@ CopyPlanFields(Plan *from, Plan *newnode)
 	newnode->locParam = listCopy(from->locParam);
 	newnode->chgParam = listCopy(from->chgParam);
 	Node_Copy(from, newnode, initPlan);
-	if (from->subPlan != NULL)
-		newnode->subPlan = SS_pull_subplan((Node *) newnode->qual);
+	if (from->subPlan != NIL)
+		newnode->subPlan = nconc(SS_pull_subplan((Node *) newnode->targetlist),
+								 SS_pull_subplan((Node *) newnode->qual));
 	else
-		newnode->subPlan = NULL;
+		newnode->subPlan = NIL;
 	newnode->nParamExec = from->nParamExec;
 }
 
@@ -137,8 +138,9 @@ _copyResult(Result *from)
 	 * We must add subplans in resconstantqual to the new plan's subPlan
 	 * list
 	 */
-	newnode->plan.subPlan = nconc(newnode->plan.subPlan,
-							  SS_pull_subplan(newnode->resconstantqual));
+	if (from->plan.subPlan != NIL)
+		newnode->plan.subPlan = nconc(newnode->plan.subPlan,
+									  SS_pull_subplan(newnode->resconstantqual));
 
 	return newnode;
 }

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: primnodes.h,v 1.36 1999/08/25 23:21:36 tgl Exp $
+ * $Id: primnodes.h,v 1.37 1999/11/15 02:00:15 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -98,8 +98,7 @@ typedef struct Fjoin
  * Expr
  *		typeOid			- oid of the type of this expression
  *		opType			- type of this expression
- *		oper			- the Oper node if it is an OPER_EXPR or the
- *						  Func node if it is a FUNC_EXPR
+ *		oper			- operator node if needed (Oper, Func, or SubPlan)
  *		args			- arguments to this expression
  * ----------------
  */
@@ -318,11 +317,30 @@ typedef struct Aggref
 
 /* ----------------
  * SubLink
- *		subLinkType		- EXISTS, ALL, ANY, EXPR
- *		useor			- TRUE for <> (combine op results with "or" not "and")
+ *		subLinkType		- EXISTS, ALL, ANY, MULTIEXPR, EXPR
+ *		useor			- TRUE to combine column results with "OR" not "AND"
  *		lefthand		- list of outer-query expressions on the left
- *		oper			- list of Oper nodes
+ *		oper			- list of Oper nodes for combining operators
  *		subselect		- subselect as Query* or parsetree
+ *
+ * A SubLink represents a subselect appearing in an expression, and in some
+ * cases also the combining operator(s) just above it.  The subLinkType
+ * indicates the form of the expression represented:
+ *	EXISTS_SUBLINK		EXISTS(SELECT ...)
+ *	ALL_SUBLINK			(lefthand) op ALL (SELECT ...)
+ *	ANY_SUBLINK			(lefthand) op ANY (SELECT ...)
+ *	MULTIEXPR_SUBLINK	(lefthand) op (SELECT ...)
+ *	EXPR_SUBLINK		(SELECT with single targetlist item ...)
+ * For ALL, ANY, and MULTIEXPR, the lefthand is a list of expressions of the
+ * same length as the subselect's targetlist.  MULTIEXPR will *always* have
+ * a list with more than one entry; if the subselect has just one target
+ * then the parser will create an EXPR_SUBLINK instead (and any operator
+ * above the subselect will be represented separately).  Note that both
+ * MULTIEXPR and EXPR require the subselect to deliver only one row.
+ * ALL, ANY, and MULTIEXPR require the combining operators to deliver boolean
+ * results.  These are reduced to one result per row using OR or AND semantics
+ * depending on the "useor" flag.  ALL and ANY combine the per-row results
+ * using AND and OR semantics respectively.
  *
  * NOTE: lefthand and oper have varying meanings depending on where you look
  * in the parse/plan pipeline:
@@ -348,12 +366,13 @@ typedef struct Aggref
  * representation 2 appears in a "bare" SubLink, while representation 3 is
  * found in SubLinks that are children of SubPlan nodes.
  *
- * In an EXISTS SubLink, both lefthand and oper are unused and are always NIL.
+ * In EXISTS and EXPR SubLinks, both lefthand and oper are unused and are
+ * always NIL.  useor is not significant either for these sublink types.
  * ----------------
  */
 typedef enum SubLinkType
 {
-	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, EXPR_SUBLINK
+	EXISTS_SUBLINK, ALL_SUBLINK, ANY_SUBLINK, MULTIEXPR_SUBLINK, EXPR_SUBLINK
 } SubLinkType;
 
 

@@ -6,7 +6,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.62 1999/11/01 05:18:31 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/rewrite/rewriteHandler.c,v 1.63 1999/11/15 02:00:03 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -56,9 +56,9 @@ static bool attribute_used(Node *node, int rt_index, int attno,
 						   int sublevels_up);
 static bool modifyAggrefUplevel(Node *node, void *context);
 static bool modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
-									   int sublevels_up);
+									   int sublevels_up, int new_sublevels_up);
 static Node *modifyAggrefDropQual(Node *node, Node *targetNode);
-static SubLink *modifyAggrefMakeSublink(Expr *origexp, Query *parsetree);
+static SubLink *modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree);
 static Node *modifyAggrefQual(Node *node, Query *parsetree);
 static bool checkQueryHasAggs(Node *node);
 static bool checkQueryHasAggs_walker(Node *node, void *context);
@@ -357,6 +357,7 @@ typedef struct {
 	int			rt_index;
 	int			new_index;
 	int			sublevels_up;
+	int			new_sublevels_up;
 } modifyAggrefChangeVarnodes_context;
 
 static bool
@@ -374,7 +375,7 @@ modifyAggrefChangeVarnodes_walker(Node *node,
 		{
 			var->varno = context->new_index;
 			var->varnoold = context->new_index;
-			var->varlevelsup = 0;
+			var->varlevelsup = context->new_sublevels_up;
 		}
 		return false;
 	}
@@ -392,7 +393,8 @@ modifyAggrefChangeVarnodes_walker(Node *node,
 		if (modifyAggrefChangeVarnodes((Node *) (sub->subselect),
 									   context->rt_index,
 									   context->new_index,
-									   context->sublevels_up + 1))
+									   context->sublevels_up + 1,
+									   context->new_sublevels_up + 1))
 			return true;
 		return false;
 	}
@@ -418,13 +420,14 @@ modifyAggrefChangeVarnodes_walker(Node *node,
 
 static bool
 modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
-						   int sublevels_up)
+						   int sublevels_up, int new_sublevels_up)
 {
 	modifyAggrefChangeVarnodes_context context;
 
 	context.rt_index = rt_index;
 	context.new_index = new_index;
 	context.sublevels_up = sublevels_up;
+	context.new_sublevels_up = new_sublevels_up;
 	return modifyAggrefChangeVarnodes_walker(node, &context);
 }
 
@@ -433,8 +436,13 @@ modifyAggrefChangeVarnodes(Node *node, int rt_index, int new_index,
  * modifyAggrefDropQual -
  *	remove the pure aggref clause from a qualification
  *
- * targetNode is a boolean expression node somewhere within the given
- * expression tree.  When we find it, replace it with a constant TRUE.
+ * targetNode is an Aggref node somewhere within the given expression tree.
+ * Find the boolean operator that's presumably somewhere above it, and replace
+ * that whole operator expression with a constant TRUE.  (This is NOT really
+ * quite the right thing, but it handles simple cases.  This whole set of
+ * Aggref-in-qual routines needs to be thrown away when we can do subselects
+ * in FROM.)
+ *
  * The return tree is a modified copy of the given tree; the given tree
  * is not altered.
  *
@@ -449,13 +457,27 @@ modifyAggrefDropQual(Node *node, Node *targetNode)
 		return NULL;
 	if (node == targetNode)
 	{
+		/* Oops, it's not inside an Expr we can rearrange... */
+		elog(ERROR, "Cannot handle aggregate function inserted at this place in WHERE clause");
+	}
+	if (IsA(node, Expr))
+	{
 		Expr	   *expr = (Expr *) node;
+		List	   *i;
 
-		if (! IsA(expr, Expr) || expr->typeOid != BOOLOID)
-			elog(ERROR,
-				 "aggregate expression in qualification isn't of type bool");
-		return (Node *) makeConst(BOOLOID, 1, (Datum) true,
-								  false, true, false, false);
+		foreach(i, expr->args)
+		{
+			if (((Node *) lfirst(i)) == targetNode)
+			{
+				/* Found the parent expression containing the Aggref */
+				if (expr->typeOid != BOOLOID)
+					elog(ERROR,
+						 "aggregate function in qual must be argument of boolean operator");
+				return (Node *) makeConst(BOOLOID, 1, (Datum) true,
+										  false, true, false, false);
+			}
+		}
+		/* else this isn't the expr we want, keep going */
 	}
 	return expression_tree_mutator(node, modifyAggrefDropQual,
 								   (void *) targetNode);
@@ -467,27 +489,17 @@ modifyAggrefDropQual(Node *node, Node *targetNode)
  *	uses an aggregate column of a view
  */
 static SubLink *
-modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
+modifyAggrefMakeSublink(Aggref *aggref, Query *parsetree)
 {
-	SubLink    *sublink;
-	Query	   *subquery;
-	RangeTblEntry *rte;
-	Aggref	   *aggref;
+	/* target and rte point to old structures: */
 	Var		   *target;
+	RangeTblEntry *rte;
+	/* these point to newly-created structures: */
+	Query	   *subquery;
+	SubLink    *sublink;
 	TargetEntry *tle;
 	Resdom	   *resdom;
-	Expr	   *exp = copyObject(origexp);
 
-	if (IsA(nth(0, exp->args), Aggref))
-	{
-		if (IsA(nth(1, exp->args), Aggref))
-			elog(ERROR, "rewrite: comparison of 2 aggregate columns not supported");
-		else
-			elog(ERROR, "rewrite: aggregate column of view must be at right side in qual");
-		/* XXX could try to commute operator, instead of failing */
-	}
-
-	aggref = (Aggref *) nth(1, exp->args);
 	target = (Var *) (aggref->target);
 	if (! IsA(target, Var))
 		elog(ERROR, "rewrite: aggregates of views only allowed on simple variables for now");
@@ -504,16 +516,15 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 
 	tle = makeNode(TargetEntry);
 	tle->resdom = resdom;
-	tle->expr = (Node *) aggref; /* note this is from the copied expr */
+	tle->expr = copyObject(aggref);	/* make a modifiable copy! */
+
+	subquery = makeNode(Query);
 
 	sublink = makeNode(SubLink);
 	sublink->subLinkType = EXPR_SUBLINK;
 	sublink->useor = false;
-	/* note lefthand and oper are made from the copied expr */
-	sublink->lefthand = lcons(lfirst(exp->args), NIL);
-	sublink->oper = lcons(exp->oper, NIL);
-
-	subquery = makeNode(Query);
+	sublink->lefthand = NIL;
+	sublink->oper = NIL;
 	sublink->subselect = (Node *) subquery;
 
 	subquery->commandType = CMD_SELECT;
@@ -526,33 +537,31 @@ modifyAggrefMakeSublink(Expr *origexp, Query *parsetree)
 	subquery->unionall = FALSE;
 	subquery->uniqueFlag = NULL;
 	subquery->sortClause = NULL;
-	subquery->rtable = lcons(rte, NIL);
+	subquery->rtable = lcons(copyObject(rte), NIL);
 	subquery->targetList = lcons(tle, NIL);
 	subquery->qual = modifyAggrefDropQual((Node *) parsetree->qual,
-										  (Node *) origexp);
+										  (Node *) aggref);
 	/*
 	 * If there are still aggs in the subselect's qual, give up.
 	 * Recursing would be a bad idea --- we'd likely produce an
 	 * infinite recursion.  This whole technique is a crock, really...
 	 */
 	if (checkQueryHasAggs(subquery->qual))
-		elog(ERROR, "Cannot handle aggregate function inserted at this place in WHERE clause");
+		elog(ERROR, "Cannot handle multiple aggregate functions in WHERE clause");
 	subquery->groupClause = NIL;
 	subquery->havingQual = NULL;
 	subquery->hasAggs = TRUE;
-	subquery->hasSubLinks = FALSE;
+	subquery->hasSubLinks = checkQueryHasSubLink(subquery->qual);
 	subquery->unionClause = NULL;
 
+	/* Increment all varlevelsup fields in the new subquery */
 	modifyAggrefUplevel((Node *) subquery, NULL);
-	/*
-	 * Note: it might appear that we should be passing target->varlevelsup+1
-	 * here, since modifyAggrefUplevel has increased all the varlevelsup
-	 * values in the subquery.  However, target itself is a pointer to a
-	 * Var node in the subquery, so it's been incremented too!  What a kluge
-	 * this all is ... we need to make subquery RTEs so it can go away...
+
+	/* Replace references to the target table with correct varno.
+	 * Note +1 here to account for effects of previous line!
 	 */
 	modifyAggrefChangeVarnodes((Node *) subquery, target->varno,
-							   1, target->varlevelsup);
+							   1, target->varlevelsup+1, 0);
 
 	return sublink;
 }
@@ -572,30 +581,17 @@ modifyAggrefQual(Node *node, Query *parsetree)
 {
 	if (node == NULL)
 		return NULL;
-	if (IsA(node, Expr))
-	{
-		Expr	   *expr = (Expr *) node;
-
-		if (length(expr->args) == 2 &&
-			(IsA(lfirst(expr->args), Aggref) ||
-			 IsA(lsecond(expr->args), Aggref)))
-		{
-			SubLink    *sub = modifyAggrefMakeSublink(expr,
-													  parsetree);
-			parsetree->hasSubLinks = true;
-			/* check for aggs in resulting lefthand... */
-			sub->lefthand = (List *) modifyAggrefQual((Node *) sub->lefthand,
-													  parsetree);
-			return (Node *) sub;
-		}
-		/* otherwise, fall through and copy the expr normally */
-	}
 	if (IsA(node, Aggref))
 	{
-		/* Oops, found one that's not inside an Expr we can rearrange... */
-		elog(ERROR, "Cannot handle aggregate function inserted at this place in WHERE clause");
+		SubLink    *sub = modifyAggrefMakeSublink((Aggref *) node, parsetree);
+
+		parsetree->hasSubLinks = true;
+		return (Node *) sub;
 	}
-	/* We do NOT recurse into subselects in this routine.  It's sufficient
+	/*
+	 * Otherwise, fall through and copy the expr normally.
+	 *
+	 * We do NOT recurse into subselects in this routine.  It's sufficient
 	 * to get rid of aggregates that are in the qual expression proper.
 	 */
 	return expression_tree_mutator(node, modifyAggrefQual,
@@ -1113,7 +1109,8 @@ fireRIRrules(Query *parsetree)
 	if (parsetree->hasSubLinks)
 		fireRIRonSubselect((Node *) parsetree, NULL);
 
-	parsetree->qual = modifyAggrefQual(parsetree->qual, parsetree);
+	if (parsetree->hasAggs)
+		parsetree->qual = modifyAggrefQual(parsetree->qual, parsetree);
 
 	return parsetree;
 }
@@ -1577,17 +1574,22 @@ BasicQueryRewrite(Query *parsetree)
 
 		/*
 		 * If the query was marked having aggregates, check if this is
-		 * still true after rewriting.  Ditto for sublinks.
-		 *
-		 * This check must get expanded when someday aggregates can appear
-		 * somewhere else than in the targetlist or the having qual.
+		 * still true after rewriting.  Ditto for sublinks.  Note there
+		 * should be no aggs in the qual at this point.
 		 */
 		if (query->hasAggs)
-			query->hasAggs = checkQueryHasAggs((Node *) (query->targetList))
-				|| checkQueryHasAggs((Node *) (query->havingQual));
+		{
+			query->hasAggs =
+				checkQueryHasAggs((Node *) (query->targetList)) ||
+				checkQueryHasAggs((Node *) (query->havingQual));
+			if (checkQueryHasAggs((Node *) (query->qual)))
+				elog(ERROR, "BasicQueryRewrite: failed to remove aggs from qual");
+		}
 		if (query->hasSubLinks)
-			query->hasSubLinks = checkQueryHasSubLink((Node *) (query->qual))
-				|| checkQueryHasSubLink((Node *) (query->havingQual));
+			query->hasSubLinks =
+				checkQueryHasSubLink((Node *) (query->targetList)) ||
+				checkQueryHasSubLink((Node *) (query->qual)) ||
+				checkQueryHasSubLink((Node *) (query->havingQual));
 		results = lappend(results, query);
 	}
 

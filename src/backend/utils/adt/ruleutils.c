@@ -3,7 +3,7 @@
  *			  out of it's tuple
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.30 1999/11/07 23:08:24 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/ruleutils.c,v 1.31 1999/11/15 02:00:05 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -1681,15 +1681,17 @@ get_sublink_expr(Node *node, deparse_context *context)
 	StringInfo	buf = context->buf;
 	SubLink    *sublink = (SubLink *) node;
 	Query	   *query = (Query *) (sublink->subselect);
-	Oper	   *oper;
 	List	   *l;
 	char	   *sep;
+	Oper	   *oper;
+	bool		need_paren;
 
 	appendStringInfo(buf, "(");
 
-	if (sublink->lefthand != NULL)
+	if (sublink->lefthand != NIL)
 	{
-		if (length(sublink->lefthand) > 1)
+		need_paren = (length(sublink->lefthand) > 1);
+		if (need_paren)
 			appendStringInfo(buf, "(");
 
 		sep = "";
@@ -1700,11 +1702,13 @@ get_sublink_expr(Node *node, deparse_context *context)
 			get_rule_expr((Node *) lfirst(l), context);
 		}
 
-		if (length(sublink->lefthand) > 1)
+		if (need_paren)
 			appendStringInfo(buf, ") ");
 		else
 			appendStringInfo(buf, " ");
 	}
+
+	need_paren = true;
 
 	switch (sublink->subLinkType)
 	{
@@ -1722,9 +1726,13 @@ get_sublink_expr(Node *node, deparse_context *context)
 			appendStringInfo(buf, "%s ALL ", get_opname(oper->opno));
 			break;
 
-		case EXPR_SUBLINK:
+		case MULTIEXPR_SUBLINK:
 			oper = (Oper *) lfirst(sublink->oper);
 			appendStringInfo(buf, "%s ", get_opname(oper->opno));
+			break;
+
+		case EXPR_SUBLINK:
+			need_paren = false;
 			break;
 
 		default:
@@ -1733,9 +1741,15 @@ get_sublink_expr(Node *node, deparse_context *context)
 			break;
 	}
 
-	appendStringInfo(buf, "(");
+	if (need_paren)
+		appendStringInfo(buf, "(");
+
 	get_query_def(query, buf, context->rangetables);
-	appendStringInfo(buf, "))");
+
+	if (need_paren)
+		appendStringInfo(buf, "))");
+	else
+		appendStringInfo(buf, ")");
 }
 
 /* ----------

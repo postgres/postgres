@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.58 1999/09/13 04:14:56 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_expr.c,v 1.59 1999/11/15 02:00:10 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -220,8 +220,30 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 					sublink->lefthand = NIL;
 					sublink->oper = NIL;
 				}
+				else if (sublink->subLinkType == EXPR_SUBLINK)
+				{
+					List	   *tlist = qtree->targetList;
+
+					/* Make sure the subselect delivers a single column
+					 * (ignoring resjunk targets).
+					 */
+					if (tlist == NIL ||
+						((TargetEntry *) lfirst(tlist))->resdom->resjunk)
+						elog(ERROR, "parser: subselect must have a field");
+					while ((tlist = lnext(tlist)) != NIL)
+					{
+						if (! ((TargetEntry *) lfirst(tlist))->resdom->resjunk)
+							elog(ERROR, "parser: subselect must have only one field");
+					}
+					/* EXPR needs no lefthand or combining operator.
+					 * These fields should be NIL already, but make sure.
+					 */
+					sublink->lefthand = NIL;
+					sublink->oper = NIL;
+				}
 				else
 				{
+					/* ALL, ANY, or MULTIEXPR: generate operator list */
 					char	   *op = lfirst(sublink->oper);
 					List	   *left_list = sublink->lefthand;
 					List	   *right_list = qtree->targetList;
@@ -231,9 +253,10 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 						lfirst(elist) = transformExpr(pstate, lfirst(elist),
 													  precedence);
 
-					if (length(left_list) > 1 &&
+					/* Combining operators other than =/<> is dubious... */
+					if (length(left_list) != 1 &&
 						strcmp(op, "=") != 0 && strcmp(op, "<>") != 0)
-						elog(ERROR, "parser: '%s' is not relational operator",
+						elog(ERROR, "parser: '%s' is not usable for row comparison",
 							 op);
 
 					sublink->oper = NIL;
@@ -266,8 +289,7 @@ transformExpr(ParseState *pstate, Node *expr, int precedence)
 									 FALSE);
 						opform = (Form_pg_operator) GETSTRUCT(optup);
 
-						if (opform->oprresult != BOOLOID &&
-							sublink->subLinkType != EXPR_SUBLINK)
+						if (opform->oprresult != BOOLOID)
 							elog(ERROR, "parser: '%s' must return 'bool' to be used with quantified predicate subquery", op);
 
 						newop = makeOper(oprid(optup),/* opno */
@@ -589,13 +611,14 @@ exprType(Node *expr)
 
 				if (sublink->subLinkType == EXPR_SUBLINK)
 				{
-					/* return the result type of the combining operator;
-					 * should only be one...
-					 */
-					Oper	   *op = (Oper *) lfirst(sublink->oper);
+					/* get the type of the subselect's first target column */
+					Query	   *qtree = (Query *) sublink->subselect;
+					TargetEntry *tent;
 
-					Assert(IsA(op, Oper));
-					type = op->opresulttype;
+					if (! qtree || ! IsA(qtree, Query))
+						elog(ERROR, "exprType: can't get type for untransformed sublink");
+					tent = (TargetEntry *) lfirst(qtree->targetList);
+					type = tent->resdom->restype;
 				}
 				else
 				{

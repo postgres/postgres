@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: plannodes.h,v 1.31 1999/10/17 22:15:07 tgl Exp $
+ * $Id: plannodes.h,v 1.32 1999/11/15 02:00:13 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -356,8 +356,8 @@ typedef struct SubPlan
 	List	   *setParam;		/* non-correlated EXPR & EXISTS subqueries
 								 * have to set some Params for paren Plan */
 	List	   *parParam;		/* indices of corr. Vars from parent plan */
-	SubLink    *sublink;		/* SubLink node for subselects in WHERE
-								 * and HAVING */
+	SubLink    *sublink;		/* SubLink node from parser; holds info about
+								 * what to do with subselect's results */
 	bool		shutdown;		/* shutdown plan if TRUE */
 } SubPlan;
 
