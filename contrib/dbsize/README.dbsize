@@ -8,4 +8,8 @@ These functions report the actual file system space.  Thus, users can
 avoid digging through the details of the database directories.
 
 Copy this directory to contrib/dbsize in your PostgreSQL source tree.
-Then just run make; make install.
+Then just run make; make install.  Finally, load the functions into any
+database using dbsize.sql.
+
+When computing the size of a table, it does not include TOAST or index
+disk space.
