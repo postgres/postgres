@@ -128,6 +128,7 @@ ExecAgg(Agg *node)
 	for (i = 0; i < nagg; i++)
 	{
 		aggregates[i] = lfirst(alist);
+		aggregates[i]->aggno = i;
 		alist = lnext(alist);
 	}
 

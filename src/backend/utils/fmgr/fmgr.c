@@ -7,12 +7,13 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.10 1998/01/15 19:45:58 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/fmgr.c,v 1.11 1998/01/15 22:31:33 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 
 #include "postgres.h"
 
@@ -81,7 +82,7 @@ fmgr_c(FmgrInfo *finfo,
 		 * Untrusted functions have very limited use and is clumsy. We
 		 * just get rid of it.
 		 */
-		elog(WARN, "internal error: untrusted function not supported.");
+		elog(ERROR, "internal error: untrusted function not supported.");
 	}
 
 	/*
@@ -159,7 +160,6 @@ fmgr_c(FmgrInfo *finfo,
 void
 fmgr_info(Oid procedureId, FmgrInfo *finfo)
 {
-	func_ptr	user_fn = NULL;
 	FmgrCall   *fcp;
 	HeapTuple	procedureTuple;
 	FormData_pg_proc *procedureStruct;
@@ -195,7 +195,7 @@ fmgr_info(Oid procedureId, FmgrInfo *finfo)
 				finfo->fn_addr = 
 							fmgr_lookupByName(procedureStruct->proname.data);
 				if (!finfo->fn_addr)
-					elog(WARN, "fmgr_info: function %s: not in internal table",
+					elog(ERROR, "fmgr_info: function %s: not in internal table",
 								procedureStruct->proname.data);
 				break;
 			case ClanguageId:
