@@ -15,9 +15,8 @@ RETURNS int4[]
 AS 'MODULE_PATHNAME','int_agg_final_array'
 LANGUAGE 'C' IMMUTABLE STRICT;
 
--- The aggration funcion.
+-- The aggregate function itself
 -- uses the above functions to create an array of integers from an aggregation.
-DROP AGGREGATE int_array_aggregate(int4);
 CREATE AGGREGATE int_array_aggregate (
 	BASETYPE = int4,
 	SFUNC = int_agg_state,
