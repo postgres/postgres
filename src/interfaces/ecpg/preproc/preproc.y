@@ -5428,7 +5428,7 @@ blockend : '}' {
 
 %%
 
-void yyerror(char * error)
+void yyerror(const char * error)
 {
 	mmerror(ET_ERROR, error);
 }
