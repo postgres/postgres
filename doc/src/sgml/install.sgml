@@ -1,5 +1,5 @@
 <!--
-$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.44 2000/06/05 10:57:57 momjian Exp $
+$Header: /cvsroot/pgsql/doc/src/sgml/Attic/install.sgml,v 1.45 2000/06/05 17:07:53 momjian Exp $
 -->
 
  <chapter id="install">
@@ -326,7 +326,7 @@ All of PostgreSQL is successfully made. Ready to install.
      </tip>
 
      <para>
-      If you used pg_dumpall, move the old directories out of the way.
+      If you used pg_dumpall, move the old directory out of the way.
       Type the following:      
 <programlisting>
 &gt; mv /usr/local/pgsql /usr/local/pgsql.old
@@ -392,7 +392,8 @@ libpq.so.2.1: cannot open shared object file: No such file or directory
 
     <step performance="required">
      <para>
-      Create the database installation (the working data files).
+      If you moved the old directory out of the way, 
+      create the database installation (the working data files).
       To do this you must log in to your
       <productname>PostgreSQL</productname> superuser account. It will not
       work as root.
