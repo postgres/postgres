@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Mon Jul 30 13:58:17 EDT 2001
+Last updated:		Tue Jul 31 09:21:21 EDT 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -285,6 +285,7 @@ VACUUM
 * -Make ANALYZE a separate command (Tom)
 * -Allow ANALYZE to ESTIMATE based on certain random precentage of rows (Tom)
 * Add LAZY VACUUM (Vadim)
+* Improve vacuum of large objects (/contrib/vacuumlo)
 
 MISCELLANEOUS
 
