@@ -6,7 +6,7 @@
  * Portions Copyright (c) 1996-2000, PostgreSQL, Inc
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- *	$Id: execAmi.c,v 1.46 2000/04/12 17:15:07 momjian Exp $
+ *	$Id: execAmi.c,v 1.46.2.1 2000/09/08 02:11:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -424,12 +424,16 @@ ExecMarkPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqMarkPos((SeqScan *) node);
 			break;
 
 		case T_IndexScan:
 			ExecIndexMarkPos((IndexScan *) node);
+			break;
+
+		case T_Material:
+			ExecMaterialMarkPos((Material *) node);
 			break;
 
 		case T_Sort:
@@ -458,7 +462,7 @@ ExecRestrPos(Plan *node)
 {
 	switch (nodeTag(node))
 	{
-			case T_SeqScan:
+		case T_SeqScan:
 			ExecSeqRestrPos((SeqScan *) node);
 			return;
 
@@ -466,12 +470,16 @@ ExecRestrPos(Plan *node)
 			ExecIndexRestrPos((IndexScan *) node);
 			return;
 
+		case T_Material:
+			ExecMaterialRestrPos((Material *) node);
+			break;
+
 		case T_Sort:
 			ExecSortRestrPos((Sort *) node);
 			return;
 
 		default:
-			elog(DEBUG, "ExecRestrPos: node type %u not supported", nodeTag(node));
+			elog(ERROR, "ExecRestrPos: node type %u not supported", nodeTag(node));
 			return;
 	}
 }

@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.90 2000/05/23 16:56:36 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/optimizer/plan/createplan.c,v 1.90.2.1 2000/09/08 02:11:33 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -638,6 +638,44 @@ create_mergejoin_node(MergePath *best_path,
 		inner_node = (Plan *) make_noname(inner_tlist,
 										  best_path->innersortkeys,
 										  inner_node);
+
+	/*
+	 * The executor requires the inner side of a mergejoin to support "mark"
+	 * and "restore" operations.  Not all plan types do, so we must be careful
+	 * not to generate an invalid plan.  If necessary, an invalid inner plan
+	 * can be handled by inserting a Materialize node.
+	 *
+	 * Since the inner side must be ordered, and only Sorts and IndexScans can
+	 * create order to begin with, you might think there's no problem --- but
+	 * you'd be wrong.  Nestloop and merge joins can *preserve* the order of
+	 * their inputs, so they can be selected as the input of a mergejoin,
+	 * and that won't work in the present executor.
+	 *
+	 * Doing this here is a bit of a kluge since the cost of the Materialize
+	 * wasn't taken into account in our earlier decisions.  But Materialize
+	 * is hard to estimate a cost for, and the above consideration shows that
+	 * this is a rare case anyway, so this seems an acceptable way to proceed.
+	 *
+	 * This check must agree with ExecMarkPos/ExecRestrPos in
+	 * executor/execAmi.c!
+	 */
+	switch (nodeTag(inner_node))
+	{
+		case T_SeqScan:
+		case T_IndexScan:
+		case T_Material:
+		case T_Sort:
+			/* OK, these inner plans support mark/restore */
+			break;
+
+		default:
+			/* Ooops, need to materialize the inner plan */
+			inner_node = (Plan *) make_material(inner_tlist,
+												_NONAME_RELATION_ID_,
+												inner_node,
+												0);
+			break;
+	}
 
 	join_node = make_mergejoin(tlist,
 							   qpqual,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.30 2000/03/02 04:06:39 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeMaterial.c,v 1.30.2.1 2000/09/08 02:11:32 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -352,35 +352,30 @@ ExecMaterialReScan(Material *node, ExprContext *exprCtxt, Plan *parent)
 
 }
 
-#ifdef NOT_USED					/* not used */
 /* ----------------------------------------------------------------
  *		ExecMaterialMarkPos
  * ----------------------------------------------------------------
  */
-List							/* nothing of interest */
-ExecMaterialMarkPos(Material node)
+void
+ExecMaterialMarkPos(Material *node)
 {
-	MaterialState matstate;
+	MaterialState *matstate;
 	HeapScanDesc scan;
 
 	/* ----------------
-	 *	if we haven't materialized yet, just return NIL.
+	 *	if we haven't materialized yet, just return.
 	 * ----------------
 	 */
-	matstate = get_matstate(node);
-	if (get_mat_Flag(matstate) == false)
-		return NIL;
+	matstate = node->matstate;
+	if (matstate->mat_Flag == false)
+		return;
 
 	/* ----------------
-	 *	XXX access methods don't return positions yet so
-	 *		for now we return NIL.	It's possible that
-	 *		they will never return positions for all I know -cim 10/16/89
+	 *	mark the scan position
 	 * ----------------
 	 */
-	scan = get_css_currentScanDesc((CommonScanState) matstate);
+	scan = matstate->csstate.css_currentScanDesc;
 	heap_markpos(scan);
-
-	return NIL;
 }
 
 /* ----------------------------------------------------------------
@@ -388,25 +383,23 @@ ExecMaterialMarkPos(Material node)
  * ----------------------------------------------------------------
  */
 void
-ExecMaterialRestrPos(Material node)
+ExecMaterialRestrPos(Material *node)
 {
-	MaterialState matstate;
+	MaterialState *matstate;
 	HeapScanDesc scan;
 
 	/* ----------------
 	 *	if we haven't materialized yet, just return.
 	 * ----------------
 	 */
-	matstate = get_matstate(node);
-	if (get_mat_Flag(matstate) == false)
+	matstate = node->matstate;
+	if (matstate->mat_Flag == false)
 		return;
 
 	/* ----------------
 	 *	restore the scan to the previously marked position
 	 * ----------------
 	 */
-	scan = get_css_currentScanDesc((CommonScanState) matstate);
+	scan = matstate->csstate.css_currentScanDesc;
 	heap_restrpos(scan);
 }
-
-#endif
