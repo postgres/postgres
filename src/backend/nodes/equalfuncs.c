@@ -18,7 +18,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.212 2004/01/05 05:07:35 tgl Exp $
+ *	  $PostgreSQL: pgsql/src/backend/nodes/equalfuncs.c,v 1.213 2004/01/06 23:55:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -884,10 +884,19 @@ _equalCreateFunctionStmt(CreateFunctionStmt *a, CreateFunctionStmt *b)
 {
 	COMPARE_SCALAR_FIELD(replace);
 	COMPARE_NODE_FIELD(funcname);
-	COMPARE_NODE_FIELD(argTypes);
+	COMPARE_NODE_FIELD(parameters);
 	COMPARE_NODE_FIELD(returnType);
 	COMPARE_NODE_FIELD(options);
 	COMPARE_NODE_FIELD(withClause);
+
+	return true;
+}
+
+static bool
+_equalFunctionParameter(FunctionParameter *a, FunctionParameter *b)
+{
+	COMPARE_STRING_FIELD(name);
+	COMPARE_NODE_FIELD(argType);
 
 	return true;
 }
@@ -1867,6 +1876,9 @@ equal(void *a, void *b)
 			break;
 		case T_CreateFunctionStmt:
 			retval = _equalCreateFunctionStmt(a, b);
+			break;
+		case T_FunctionParameter:
+			retval = _equalFunctionParameter(a, b);
 			break;
 		case T_RemoveAggrStmt:
 			retval = _equalRemoveAggrStmt(a, b);

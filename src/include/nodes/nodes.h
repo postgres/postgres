@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.148 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/nodes.h,v 1.149 2004/01/06 23:55:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -283,6 +283,7 @@ typedef enum NodeTag
 	T_CreateOpClassItem,
 	T_CompositeTypeStmt,
 	T_InhRelation,
+	T_FunctionParameter,
 
 	/*
 	 * TAGS FOR FUNCTION-CALL CONTEXT AND RESULTINFO NODES (see fmgr.h)

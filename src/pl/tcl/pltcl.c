@@ -31,7 +31,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.80 2003/11/29 19:52:13 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/pl/tcl/pltcl.c,v 1.81 2004/01/06 23:55:19 tgl Exp $
  *
  **********************************************************************/
 
@@ -1036,6 +1036,8 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		Tcl_DString proc_internal_def;
 		Tcl_DString proc_internal_body;
 		char		proc_internal_args[4096];
+		Datum		prosrcdatum;
+		bool		isnull;
 		char	   *proc_source;
 		char		buf[512];
 
@@ -1244,8 +1246,12 @@ compile_pltcl_function(Oid fn_oid, Oid tgreloid)
 		/************************************************************
 		 * Add user's function definition to proc body
 		 ************************************************************/
+		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
+									  Anum_pg_proc_prosrc, &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-								  PointerGetDatum(&procStruct->prosrc)));
+														  prosrcdatum));
 		UTF_BEGIN;
 		Tcl_DStringAppend(&proc_internal_body, UTF_E2U(proc_source), -1);
 		UTF_END;

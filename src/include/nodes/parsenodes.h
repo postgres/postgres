@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.250 2003/11/29 22:41:06 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/nodes/parsenodes.h,v 1.251 2004/01/06 23:55:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1294,11 +1294,19 @@ typedef struct CreateFunctionStmt
 	NodeTag		type;
 	bool		replace;		/* T => replace if already exists */
 	List	   *funcname;		/* qualified name of function to create */
-	List	   *argTypes;		/* list of argument types (TypeName nodes) */
+	List	   *parameters;		/* a list of FunctionParameter */
 	TypeName   *returnType;		/* the return type */
 	List	   *options;		/* a list of DefElem */
 	List	   *withClause;		/* a list of DefElem */
 } CreateFunctionStmt;
+
+typedef struct FunctionParameter
+{
+	NodeTag		type;
+	char	   *name;			/* parameter name, or NULL if not given */
+	TypeName   *argType;		/* TypeName for parameter type */
+	/* someday add IN/OUT/INOUT indicator here */
+} FunctionParameter;
 
 /* ----------------------
  *		Drop Aggregate Statement

@@ -3,7 +3,7 @@
  *			  procedural language
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.70 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plpgsql/src/pl_comp.c,v 1.71 2004/01/06 23:55:19 tgl Exp $
  *
  *	  This software is copyrighted by Jan Wieck - Hamburg.
  *
@@ -235,6 +235,8 @@ do_compile(FunctionCallInfo fcinfo,
 	Form_pg_proc procStruct = (Form_pg_proc) GETSTRUCT(procTup);
 	int			functype = CALLED_AS_TRIGGER(fcinfo) ? T_TRIGGER : T_FUNCTION;
 	PLpgSQL_function *function;
+	Datum		prosrcdatum;
+	bool		isnull;
 	char	   *proc_source;
 	HeapTuple	typeTup;
 	Form_pg_type typeStruct;
@@ -252,8 +254,11 @@ do_compile(FunctionCallInfo fcinfo,
 	 * function cannot be invoked recursively, so there's no need to save
 	 * and restore the static variables used here.
 	 */
-	proc_source = DatumGetCString(DirectFunctionCall1(textout,
-								  PointerGetDatum(&procStruct->prosrc)));
+	prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
+								  Anum_pg_proc_prosrc, &isnull);
+	if (isnull)
+		elog(ERROR, "null prosrc");
+	proc_source = DatumGetCString(DirectFunctionCall1(textout, prosrcdatum));
 	plpgsql_scanner_init(proc_source, functype);
 	pfree(proc_source);
 

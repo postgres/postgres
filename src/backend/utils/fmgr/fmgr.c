@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.77 2003/11/29 19:52:01 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/fmgr/fmgr.c,v 1.78 2004/01/06 23:55:19 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -155,6 +155,8 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 	const FmgrBuiltin *fbp;
 	HeapTuple	procedureTuple;
 	Form_pg_proc procedureStruct;
+	Datum		prosrcdatum;
+	bool		isnull;
 	char	   *prosrc;
 
 	/*
@@ -214,8 +216,12 @@ fmgr_info_cxt_security(Oid functionId, FmgrInfo *finfo, MemoryContext mcxt,
 			 * name of the internal function is stored in prosrc (it
 			 * doesn't have to be the same as the name of the alias!)
 			 */
+			prosrcdatum = SysCacheGetAttr(PROCOID, procedureTuple,
+										  Anum_pg_proc_prosrc, &isnull);
+			if (isnull)
+				elog(ERROR, "null prosrc");
 			prosrc = DatumGetCString(DirectFunctionCall1(textout,
-							 PointerGetDatum(&procedureStruct->prosrc)));
+														 prosrcdatum));
 			fbp = fmgr_lookupByName(prosrc);
 			if (fbp == NULL)
 				ereport(ERROR,

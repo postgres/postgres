@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.42 2003/11/29 19:51:47 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/commands/functioncmds.c,v 1.43 2004/01/06 23:55:18 tgl Exp $
  *
  * DESCRIPTION
  *	  These routines take the parse tree and pick out the
@@ -130,19 +130,22 @@ compute_return_type(TypeName *returnType, Oid languageOid,
 }
 
 /*
- * Interpret the argument-types list of the CREATE FUNCTION statement.
+ * Interpret the parameter list of the CREATE FUNCTION statement.
  */
 static int
-compute_parameter_types(List *argTypes, Oid languageOid,
-						Oid *parameterTypes)
+examine_parameter_list(List *parameter, Oid languageOid,
+					   Oid *parameterTypes, const char *parameterNames[])
 {
 	int			parameterCount = 0;
 	List	   *x;
 
 	MemSet(parameterTypes, 0, FUNC_MAX_ARGS * sizeof(Oid));
-	foreach(x, argTypes)
+	MemSet(parameterNames, 0, FUNC_MAX_ARGS * sizeof(char *));
+
+	foreach(x, parameter)
 	{
-		TypeName   *t = (TypeName *) lfirst(x);
+		FunctionParameter *fp = (FunctionParameter *) lfirst(x);
+		TypeName   *t = fp->argType;
 		Oid			toid;
 
 		if (parameterCount >= FUNC_MAX_ARGS)
@@ -182,7 +185,11 @@ compute_parameter_types(List *argTypes, Oid languageOid,
 					(errcode(ERRCODE_INVALID_FUNCTION_DEFINITION),
 					 errmsg("functions cannot accept set arguments")));
 
-		parameterTypes[parameterCount++] = toid;
+		parameterTypes[parameterCount] = toid;
+
+		parameterNames[parameterCount] = fp->name;
+
+		parameterCount++;
 	}
 
 	return parameterCount;
@@ -402,6 +409,7 @@ CreateFunction(CreateFunctionStmt *stmt)
 	AclResult	aclresult;
 	int			parameterCount;
 	Oid			parameterTypes[FUNC_MAX_ARGS];
+	const char *parameterNames[FUNC_MAX_ARGS];
 	bool		isStrict,
 				security;
 	char		volatility;
@@ -480,8 +488,8 @@ CreateFunction(CreateFunctionStmt *stmt)
 	compute_return_type(stmt->returnType, languageOid,
 						&prorettype, &returnsSet);
 
-	parameterCount = compute_parameter_types(stmt->argTypes, languageOid,
-											 parameterTypes);
+	parameterCount = examine_parameter_list(stmt->parameters, languageOid,
+											parameterTypes, parameterNames);
 
 	compute_attributes_with_style(stmt->withClause, &isStrict, &volatility);
 
@@ -527,7 +535,8 @@ CreateFunction(CreateFunctionStmt *stmt)
 					isStrict,
 					volatility,
 					parameterCount,
-					parameterTypes);
+					parameterTypes,
+					parameterNames);
 }
 
 

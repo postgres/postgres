@@ -33,7 +33,7 @@
  *	  ENHANCEMENTS, OR MODIFICATIONS.
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.41 2003/11/29 19:52:12 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/pl/plperl/plperl.c,v 1.42 2004/01/06 23:55:19 tgl Exp $
  *
  **********************************************************************/
 
@@ -569,6 +569,8 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		HeapTuple	typeTup;
 		Form_pg_language langStruct;
 		Form_pg_type typeStruct;
+		Datum		prosrcdatum;
+		bool		isnull;
 		char	   *proc_source;
 
 		/************************************************************
@@ -707,8 +709,12 @@ compile_plperl_function(Oid fn_oid, bool is_trigger)
 		 * through the reference.
 		 *
 		 ************************************************************/
+		prosrcdatum = SysCacheGetAttr(PROCOID, procTup,
+									  Anum_pg_proc_prosrc, &isnull);
+		if (isnull)
+			elog(ERROR, "null prosrc");
 		proc_source = DatumGetCString(DirectFunctionCall1(textout,
-								  PointerGetDatum(&procStruct->prosrc)));
+														  prosrcdatum));
 
 		/************************************************************
 		 * Create the procedure in the interpreter

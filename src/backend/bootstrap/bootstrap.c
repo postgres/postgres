@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.173 2004/01/06 23:15:22 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/bootstrap/bootstrap.c,v 1.174 2004/01/06 23:55:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -130,6 +130,7 @@ static struct typinfo Procid[] = {
 	{"oidvector", OIDVECTOROID, 0, INDEX_MAX_KEYS * 4, F_OIDVECTORIN, F_OIDVECTOROUT},
 	{"smgr", 210, 0, 2, F_SMGRIN, F_SMGROUT},
 	{"_int4", 1007, INT4OID, -1, F_ARRAY_IN, F_ARRAY_OUT},
+	{"_text", 1009, TEXTOID, -1, F_ARRAY_IN, F_ARRAY_OUT},
 	{"_aclitem", 1034, 1033, -1, F_ARRAY_IN, F_ARRAY_OUT}
 };
 
@@ -690,6 +691,11 @@ DefineAttr(char *name, char *type, int attnum)
 		attrtypes[attnum]->attbyval = Ap->am_typ.typbyval;
 		attrtypes[attnum]->attstorage = Ap->am_typ.typstorage;
 		attrtypes[attnum]->attalign = Ap->am_typ.typalign;
+		/* if an array type, assume 1-dimensional attribute */
+		if (Ap->am_typ.typelem != InvalidOid && Ap->am_typ.typlen < 0)
+			attrtypes[attnum]->attndims = 1;
+		else
+			attrtypes[attnum]->attndims = 0;
 	}
 	else
 	{
@@ -729,7 +735,14 @@ DefineAttr(char *name, char *type, int attnum)
 				attrtypes[attnum]->attalign = 'i';
 				break;
 		}
+		/* if an array type, assume 1-dimensional attribute */
+		if (Procid[typeoid].elem != InvalidOid && attlen < 0)
+			attrtypes[attnum]->attndims = 1;
+		else
+			attrtypes[attnum]->attndims = 0;
 	}
+
+	attrtypes[attnum]->attstattarget = -1;
 	attrtypes[attnum]->attcacheoff = -1;
 	attrtypes[attnum]->atttypmod = -1;
 	attrtypes[attnum]->attislocal = true;

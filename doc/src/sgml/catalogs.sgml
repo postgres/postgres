@@ -1,6 +1,6 @@
 <!--
  Documentation of the system catalogs, directed toward PostgreSQL developers
- $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.81 2003/12/06 23:10:21 joe Exp $
+ $PostgreSQL: pgsql/doc/src/sgml/catalogs.sgml,v 2.82 2004/01/06 23:55:18 tgl Exp $
  -->
 
 <chapter id="catalogs">
@@ -2796,6 +2796,17 @@
       <entry><type>oidvector</type></entry>
       <entry><literal><link linkend="catalog-pg-type"><structname>pg_type</structname></link>.oid</literal></entry>
       <entry>An array with the data types of the function arguments</entry>
+     </row>
+
+     <row>
+      <entry><structfield>proargnames</structfield></entry>
+      <entry><type>text[]</type></entry>
+      <entry></entry>
+      <entry>
+        An array with the names of the function arguments.
+        Arguments without a name are set to empty strings in the array.
+        If none of the arguments have a name, this field may be null.
+      </entry>
      </row>
 
      <row>

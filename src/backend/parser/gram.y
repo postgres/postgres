@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.441 2003/12/01 22:07:58 momjian Exp $
+ *	  $PostgreSQL: pgsql/src/backend/parser/gram.y,v 2.442 2004/01/06 23:55:18 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -87,6 +87,7 @@ static Node *makeRowNullTest(NullTestType test, List *args);
 static DefElem *makeDefElem(char *name, Node *arg);
 static A_Const *makeBoolConst(bool state);
 static FuncCall *makeOverlaps(List *largs, List *rargs);
+static List *extractArgTypes(List *parameters);
 static SelectStmt *findLeftmostSelect(SelectStmt *node);
 static void insertSelectOptions(SelectStmt *stmt,
 								List *sortClause, List *forUpdate,
@@ -116,6 +117,7 @@ static void doNegateFloat(Value *v);
 	ObjectType			objtype;
 
 	TypeName			*typnam;
+	FunctionParameter   *fun_param;
 	DefElem				*defelt;
 	SortBy				*sortby;
 	JoinExpr			*jexpr;
@@ -230,9 +232,10 @@ static void doNegateFloat(Value *v);
 %type <range>	into_clause OptTempTableName
 
 %type <defelt>	createfunc_opt_item
-%type <typnam>	func_arg func_return func_type aggr_argtype
+%type <fun_param> func_arg
+%type <typnam>	func_return func_type aggr_argtype
 
-%type <boolean> opt_arg TriggerForType OptTemp OptWithOids
+%type <boolean> arg_class TriggerForType OptTemp OptWithOids
 %type <oncommit>	OnCommitOption
 
 %type <list>	for_update_clause opt_for_update_clause update_list
@@ -303,7 +306,7 @@ static void doNegateFloat(Value *v);
 %type <str>		Sconst comment_text
 %type <str>		UserId opt_boolean ColId_or_Sconst
 %type <list>	var_list var_list_or_default
-%type <str>		ColId ColLabel type_name
+%type <str>		ColId ColLabel type_name param_name
 %type <node>	var_value zone_value
 
 %type <keyword> unreserved_keyword func_name_keyword
@@ -2433,7 +2436,7 @@ opclass_item:
 					CreateOpClassItem *n = makeNode(CreateOpClassItem);
 					n->itemtype = OPCLASS_ITEM_FUNCTION;
 					n->name = $3;
-					n->args = $4;
+					n->args = extractArgTypes($4);
 					n->number = $2;
 					$$ = (Node *) n;
 				}
@@ -2562,7 +2565,7 @@ CommentStmt:
 					CommentStmt *n = makeNode(CommentStmt);
 					n->objtype = OBJECT_FUNCTION;
 					n->objname = $4;
-					n->objargs = $5;
+					n->objargs = extractArgTypes($5);
 					n->comment = $7;
 					$$ = (Node *) n;
 				}
@@ -2994,7 +2997,7 @@ function_with_argtypes:
 				{
 					FuncWithArgs *n = makeNode(FuncWithArgs);
 					n->funcname = $1;
-					n->funcargs = $2;
+					n->funcargs = extractArgTypes($2);
 					$$ = (Node *)n;
 				}
 		;
@@ -3094,7 +3097,7 @@ CreateFunctionStmt:
 					CreateFunctionStmt *n = makeNode(CreateFunctionStmt);
 					n->replace = $2;
 					n->funcname = $4;
-					n->argTypes = $5;
+					n->parameters = $5;
 					n->returnType = $7;
 					n->options = $8;
 					n->withClause = $9;
@@ -3116,18 +3119,28 @@ func_args_list:
 			| func_args_list ',' func_arg			{ $$ = lappend($1, $3); }
 		;
 
-func_arg:	opt_arg func_type
+/* We can catch over-specified arguments here if we want to,
+ * but for now better to silently swallow typmod, etc.
+ * - thomas 2000-03-22
+ */
+func_arg:
+			arg_class param_name func_type
 				{
-					/* We can catch over-specified arguments here if we want to,
-					 * but for now better to silently swallow typmod, etc.
-					 * - thomas 2000-03-22
-					 */
-					$$ = $2;
+					FunctionParameter *n = makeNode(FunctionParameter);
+					n->name = $2;
+					n->argType = $3;
+					$$ = n;
 				}
-			| func_type								{ $$ = $1; }
+			| arg_class func_type
+				{
+					FunctionParameter *n = makeNode(FunctionParameter);
+					n->name = NULL;
+					n->argType = $2;
+					$$ = n;
+				}
 		;
 
-opt_arg:	IN_P									{ $$ = FALSE; }
+arg_class:	IN_P									{ $$ = FALSE; }
 			| OUT_P
 				{
 					ereport(ERROR,
@@ -3142,6 +3155,13 @@ opt_arg:	IN_P									{ $$ = FALSE; }
 							 errmsg("CREATE FUNCTION / INOUT parameters are not implemented")));
 					$$ = FALSE;
 				}
+			| /*EMPTY*/								{ $$ = FALSE; }
+		;
+
+/*
+ * Ideally param_name should be ColId, but that causes too many conflicts.
+ */
+param_name:	function_name
 		;
 
 func_return:
@@ -3255,7 +3275,7 @@ RemoveFuncStmt:
 				{
 					RemoveFuncStmt *n = makeNode(RemoveFuncStmt);
 					n->funcname = $3;
-					n->args = $4;
+					n->args = extractArgTypes($4);
 					n->behavior = $5;
 					$$ = (Node *)n;
 				}
@@ -3433,7 +3453,7 @@ RenameStmt: ALTER AGGREGATE func_name '(' aggr_argtype ')' RENAME TO name
 					RenameStmt *n = makeNode(RenameStmt);
 					n->renameType = OBJECT_FUNCTION;
 					n->object = $3;
-					n->objarg = $4;
+					n->objarg = extractArgTypes($4);
 					n->newname = $7;
 					$$ = (Node *)n;
 				}
@@ -7402,7 +7422,6 @@ unreserved_keyword:
 			| INCREMENT
 			| INDEX
 			| INHERITS
-			| INOUT
 			| INPUT_P
 			| INSENSITIVE
 			| INSERT
@@ -7428,7 +7447,6 @@ unreserved_keyword:
 			| MONTH_P
 			| MOVE
 			| NAMES
-			| NATIONAL
 			| NEXT
 			| NO
 			| NOCREATEDB
@@ -7440,13 +7458,11 @@ unreserved_keyword:
 			| OIDS
 			| OPERATOR
 			| OPTION
-			| OUT_P
 			| OWNER
 			| PARTIAL
 			| PASSWORD
 			| PATH_P
 			| PENDANT
-			| PRECISION
 			| PREPARE
 			| PRESERVE
 			| PRIOR
@@ -7543,15 +7559,19 @@ col_name_keyword:
 			| EXISTS
 			| EXTRACT
 			| FLOAT_P
+			| INOUT
 			| INT_P
 			| INTEGER
 			| INTERVAL
+			| NATIONAL
 			| NCHAR
 			| NONE
 			| NULLIF
 			| NUMERIC
+			| OUT_P
 			| OVERLAY
 			| POSITION
+			| PRECISION
 			| REAL
 			| ROW
 			| SETOF
@@ -7582,7 +7602,6 @@ func_name_keyword:
 			| FREEZE
 			| FULL
 			| ILIKE
-			| IN_P
 			| INNER_P
 			| IS
 			| ISNULL
@@ -7640,6 +7659,7 @@ reserved_keyword:
 			| GRANT
 			| GROUP_P
 			| HAVING
+			| IN_P
 			| INITIALLY
 			| INTERSECT
 			| INTO
@@ -7940,6 +7960,27 @@ makeOverlaps(List *largs, List *rargs)
 	n->agg_star = FALSE;
 	n->agg_distinct = FALSE;
 	return n;
+}
+
+/* extractArgTypes()
+ * Given a list of FunctionParameter nodes, extract a list of just the
+ * argument types (TypeNames).  Most of the productions using func_args
+ * don't currently want the full FunctionParameter data, so we use this
+ * rather than having two sets of productions.
+ */
+static List *
+extractArgTypes(List *parameters)
+{
+	List	   *result = NIL;
+	List	   *i;
+
+	foreach(i, parameters)
+	{
+		FunctionParameter *p = (FunctionParameter *) lfirst(i);
+
+		result = lappend(result, p->argType);
+	}
+	return result;
 }
 
 /* findLeftmostSelect()

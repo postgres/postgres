@@ -8,7 +8,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994, Regents of the University of California
  *
- * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.106 2003/11/29 22:40:58 pgsql Exp $
+ * $PostgreSQL: pgsql/src/include/catalog/pg_attribute.h,v 1.107 2004/01/06 23:55:19 tgl Exp $
  *
  * NOTES
  *	  the genbki.sh script reads this file and generates .bki
@@ -294,8 +294,8 @@ DATA(insert ( 1262 datvacuumxid		28 -1 4   7 0 -1 -1 t p f i t f f t 0));
 DATA(insert ( 1262 datfrozenxid		28 -1 4   8 0 -1 -1 t p f i t f f t 0));
 /* do not mark datpath as toastable; GetRawDatabaseInfo won't cope */
 DATA(insert ( 1262 datpath			25 -1 -1  9 0 -1 -1 f p f i t f f t 0));
-DATA(insert ( 1262 datconfig	  1009 -1 -1 10 0 -1 -1 f x f i f f f t 0));
-DATA(insert ( 1262 datacl		  1034 -1 -1 11 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1262 datconfig	  1009 -1 -1 10 1 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1262 datacl		  1034 -1 -1 11 1 -1 -1 f x f i f f f t 0));
 DATA(insert ( 1262 ctid				27 0  6  -1 0 -1 -1 f p f i t f f t 0));
 DATA(insert ( 1262 oid				26 0  4  -2 0 -1 -1 t p f i t f f t 0));
 DATA(insert ( 1262 xmin				28 0  4  -3 0 -1 -1 t p f i t f f t 0));
@@ -321,9 +321,10 @@ DATA(insert ( 1262 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f t 0));
 { 1255, {"pronargs"},			21, -1,	2, 10, 0, -1, -1, true, 'p', false, 's', true, false, false, true, 0 }, \
 { 1255, {"prorettype"},			26, -1,	4, 11, 0, -1, -1, true, 'p', false, 'i', true, false, false, true, 0 }, \
 { 1255, {"proargtypes"},		30, -1, INDEX_MAX_KEYS*4, 12, 0, -1, -1, false, 'p', false, 'i', true, false, false, true, 0 }, \
-{ 1255, {"prosrc"},				25, -1, -1, 13, 0, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }, \
-{ 1255, {"probin"},				17, -1, -1, 14, 0, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }, \
-{ 1255, {"proacl"},			  1034, -1, -1, 15, 0, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }
+{ 1255, {"proargnames"},	  1009, -1, -1, 13, 1, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }, \
+{ 1255, {"prosrc"},				25, -1, -1, 14, 0, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }, \
+{ 1255, {"probin"},				17, -1, -1, 15, 0, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }, \
+{ 1255, {"proacl"},			  1034, -1, -1, 16, 1, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }
 
 DATA(insert ( 1255 proname			19 -1 NAMEDATALEN	1 0 -1 -1 f p f i t f f t 0));
 DATA(insert ( 1255 pronamespace		26 -1 4   2 0 -1 -1 t p f i t f f t 0));
@@ -337,9 +338,10 @@ DATA(insert ( 1255 provolatile		18 -1 1   9 0 -1 -1 t p f c t f f t 0));
 DATA(insert ( 1255 pronargs			21 -1 2  10 0 -1 -1 t p f s t f f t 0));
 DATA(insert ( 1255 prorettype		26 -1 4  11 0 -1 -1 t p f i t f f t 0));
 DATA(insert ( 1255 proargtypes		30 -1 INDEX_MAX_KEYS*4 12 0 -1 -1 f p f i t f f t 0));
-DATA(insert ( 1255 prosrc			25 -1 -1 13 0 -1 -1 f x f i f f f t 0));
-DATA(insert ( 1255 probin			17 -1 -1 14 0 -1 -1 f x f i f f f t 0));
-DATA(insert ( 1255 proacl		  1034 -1 -1 15 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1255 proargnames	  1009 -1 -1 13 1 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1255 prosrc			25 -1 -1 14 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1255 probin			17 -1 -1 15 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1255 proacl		  1034 -1 -1 16 1 -1 -1 f x f i f f f t 0));
 DATA(insert ( 1255 ctid				27 0  6  -1 0 -1 -1 f p f i t f f t 0));
 DATA(insert ( 1255 oid				26 0  4  -2 0 -1 -1 t p f i t f f t 0));
 DATA(insert ( 1255 xmin				28 0  4  -3 0 -1 -1 t p f i t f f t 0));
@@ -359,7 +361,7 @@ DATA(insert ( 1260 usesuper			16	-1	1	4 0 -1 -1 t p f c t f f t 0));
 DATA(insert ( 1260 usecatupd		16	-1	1	5 0 -1 -1 t p f c t f f t 0));
 DATA(insert ( 1260 passwd			25	-1 -1	6 0 -1 -1 f x f i f f f t 0));
 DATA(insert ( 1260 valuntil		   702	-1	4	7 0 -1 -1 t p f i f f f t 0));
-DATA(insert ( 1260 useconfig	  1009	-1 -1	8 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1260 useconfig	  1009	-1 -1	8 1 -1 -1 f x f i f f f t 0));
 DATA(insert ( 1260 ctid				27 0  6  -1 0 -1 -1 f p f i t f f t 0));
 /* no OIDs in pg_shadow */
 DATA(insert ( 1260 xmin				28 0  4  -3 0 -1 -1 t p f i t f f t 0));
@@ -374,7 +376,7 @@ DATA(insert ( 1260 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f t 0));
  */
 DATA(insert ( 1261 groname			19 -1 NAMEDATALEN  1 0 -1 -1 f p f i t f f t 0));
 DATA(insert ( 1261 grosysid			23 -1  4   2 0 -1 -1 t p f i t f f t 0));
-DATA(insert ( 1261 grolist		  1007 -1 -1   3 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1261 grolist		  1007 -1 -1   3 1 -1 -1 f x f i f f f t 0));
 DATA(insert ( 1261 ctid				27 0  6  -1 0 -1 -1 f p f i t f f t 0));
 /* no OIDs in pg_group */
 DATA(insert ( 1261 xmin				28 0  4  -3 0 -1 -1 t p f i t f f t 0));
@@ -461,7 +463,7 @@ DATA(insert ( 1249 tableoid			26 0  4  -7 0 -1 -1 t p f i t f f t 0));
 { 1259, {"relhaspkey"},    16, -1,	1, 21, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
 { 1259, {"relhasrules"},   16, -1,	1, 22, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
 { 1259, {"relhassubclass"},16, -1,	1, 23, 0, -1, -1, true, 'p', false, 'c', true, false, false, true, 0 }, \
-{ 1259, {"relacl"},		 1034, -1, -1, 24, 0, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }
+{ 1259, {"relacl"},		 1034, -1, -1, 24, 1, -1, -1, false, 'x', false, 'i', false, false, false, true, 0 }
 
 DATA(insert ( 1259 relname			19 -1 NAMEDATALEN	1 0 -1 -1 f p f i t f f t 0));
 DATA(insert ( 1259 relnamespace		26 -1 4   2 0 -1 -1 t p f i t f f t 0));
@@ -486,7 +488,7 @@ DATA(insert ( 1259 relhasoids		16 -1 1  20 0 -1 -1 t p f c t f f t 0));
 DATA(insert ( 1259 relhaspkey		16 -1 1  21 0 -1 -1 t p f c t f f t 0));
 DATA(insert ( 1259 relhasrules		16 -1 1  22 0 -1 -1 t p f c t f f t 0));
 DATA(insert ( 1259 relhassubclass	16 -1 1  23 0 -1 -1 t p f c t f f t 0));
-DATA(insert ( 1259 relacl		  1034 -1 -1 24 0 -1 -1 f x f i f f f t 0));
+DATA(insert ( 1259 relacl		  1034 -1 -1 24 1 -1 -1 f x f i f f f t 0));
 DATA(insert ( 1259 ctid				27 0  6  -1 0 -1 -1 f p f i t f f t 0));
 DATA(insert ( 1259 oid				26 0  4  -2 0 -1 -1 t p f i t f f t 0));
 DATA(insert ( 1259 xmin				28 0  4  -3 0 -1 -1 t p f i t f f t 0));

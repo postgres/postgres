@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/utils/adt/sets.c,v 1.61 2003/11/29 19:51:59 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/utils/adt/sets.c,v 1.62 2004/01/06 23:55:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -65,8 +65,9 @@ SetDefine(char *querystr, Oid elemType)
 							 false,		/* security invoker */
 							 false,		/* isStrict (irrelevant, no args) */
 							 PROVOLATILE_VOLATILE,		/* assume unsafe */
-							 0, /* parameterCount */
-							 NULL);		/* parameterTypes */
+							 0,			/* parameterCount */
+							 NULL,		/* parameterTypes */
+							 NULL);		/* parameterNames */
 
 	/*
 	 * Since we're still inside this command of the transaction, we can't

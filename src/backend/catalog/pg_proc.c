@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.110 2003/11/29 19:51:46 pgsql Exp $
+ *	  $PostgreSQL: pgsql/src/backend/catalog/pg_proc.c,v 1.111 2004/01/06 23:55:18 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -42,6 +42,9 @@ Datum		fmgr_internal_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_c_validator(PG_FUNCTION_ARGS);
 Datum		fmgr_sql_validator(PG_FUNCTION_ARGS);
 
+static Datum create_parameternames_array(int parameterCount,
+										 const char *parameterNames[]);
+
 
 /* ----------------------------------------------------------------
  *		ProcedureCreate
@@ -62,7 +65,8 @@ ProcedureCreate(const char *procedureName,
 				bool isStrict,
 				char volatility,
 				int parameterCount,
-				const Oid *parameterTypes)
+				const Oid *parameterTypes,
+				const char *parameterNames[])
 {
 	int			i;
 	Relation	rel;
@@ -72,6 +76,7 @@ ProcedureCreate(const char *procedureName,
 	Datum		values[Natts_pg_proc];
 	char		replaces[Natts_pg_proc];
 	Oid			typev[FUNC_MAX_ARGS];
+	Datum		namesarray;
 	Oid			relid;
 	NameData	procname;
 	TupleDesc	tupDesc;
@@ -121,6 +126,9 @@ ProcedureCreate(const char *procedureName,
 	MemSet(typev, 0, FUNC_MAX_ARGS * sizeof(Oid));
 	if (parameterCount > 0)
 		memcpy(typev, parameterTypes, parameterCount * sizeof(Oid));
+
+	/* Process param names, if given */
+	namesarray = create_parameternames_array(parameterCount, parameterNames);
 
 	if (languageObjectId == SQLlanguageId)
 	{
@@ -197,6 +205,9 @@ ProcedureCreate(const char *procedureName,
 	values[i++] = UInt16GetDatum(parameterCount);		/* pronargs */
 	values[i++] = ObjectIdGetDatum(returnType); /* prorettype */
 	values[i++] = PointerGetDatum(typev);		/* proargtypes */
+	values[i++] = namesarray;					/* proargnames */
+	if (namesarray == PointerGetDatum(NULL))
+		nulls[Anum_pg_proc_proargnames - 1] = 'n';
 	values[i++] = DirectFunctionCall1(textin,	/* prosrc */
 									  CStringGetDatum(prosrc));
 	values[i++] = DirectFunctionCall1(textin,	/* probin */
@@ -333,6 +344,43 @@ ProcedureCreate(const char *procedureName,
 
 	return retval;
 }
+
+
+/*
+ * create_parameternames_array - build proargnames value from an array
+ * of C strings.  Returns a NULL pointer if no names provided.
+ */
+static Datum
+create_parameternames_array(int parameterCount, const char *parameterNames[])
+{
+	Datum		elems[FUNC_MAX_ARGS];
+	bool		found = false;
+	ArrayType  *names;
+	int			i;
+
+	if (!parameterNames)
+		return PointerGetDatum(NULL);
+
+	for (i=0; i<parameterCount; i++)
+	{
+		const char *s = parameterNames[i];
+
+		if (s && *s)
+			found = true;
+		else
+			s = "";
+
+		elems[i] = DirectFunctionCall1(textin, CStringGetDatum(s));
+	}
+
+	if (!found)
+		return PointerGetDatum(NULL);
+
+	names = construct_array(elems, parameterCount, TEXTOID, -1, false, 'i');
+
+	return PointerGetDatum(names);
+}
+
 
 /*
  * check_sql_fn_retval() -- check return value of a list of sql parse trees.
