@@ -5,7 +5,7 @@
  * Portions Copyright (c) 1996-2002, PostgreSQL Global Development Group
  * Portions Copyright (c) 1994-5, Regents of the University of California
  *
- * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.90 2002/11/06 00:00:43 tgl Exp $
+ * $Header: /cvsroot/pgsql/src/backend/commands/explain.c,v 1.91 2002/11/10 07:25:13 momjian Exp $
  *
  */
 
@@ -164,8 +164,7 @@ ExplainOneQuery(Query *query, ExplainStmt *stmt, TupOutputState *tstate)
 			(double) endtime.tv_usec / 1000000.0;
 	}
 
-	es = (ExplainState *) palloc(sizeof(ExplainState));
-	MemSet(es, 0, sizeof(ExplainState));
+	es = (ExplainState *) palloc0(sizeof(ExplainState));
 
 	es->printCost = true;		/* default */
 

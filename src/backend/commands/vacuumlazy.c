@@ -31,7 +31,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.20 2002/09/20 19:56:01 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuumlazy.c,v 1.21 2002/11/10 07:25:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -147,8 +147,7 @@ lazy_vacuum_rel(Relation onerel, VacuumStmt *vacstmt)
 	vacuum_set_xid_limits(vacstmt, onerel->rd_rel->relisshared,
 						  &OldestXmin, &FreezeLimit);
 
-	vacrelstats = (LVRelStats *) palloc(sizeof(LVRelStats));
-	MemSet(vacrelstats, 0, sizeof(LVRelStats));
+	vacrelstats = (LVRelStats *) palloc0(sizeof(LVRelStats));
 
 	/* Open all indexes of the relation */
 	vac_open_indexes(onerel, &nindexes, &Irel);

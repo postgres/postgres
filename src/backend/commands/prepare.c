@@ -6,7 +6,7 @@
  * Copyright (c) 2002, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.4 2002/09/20 03:45:08 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/prepare.c,v 1.5 2002/11/10 07:25:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -116,8 +116,7 @@ ExecuteQuery(ExecuteStmt *stmt, CommandDest outputDest)
 		if (nargs != length(stmt->params))
 			elog(ERROR, "ExecuteQuery: wrong number of arguments");
 
-		paramLI = (ParamListInfo) palloc((nargs + 1) * sizeof(ParamListInfoData));
-		MemSet(paramLI, 0, (nargs + 1) * sizeof(ParamListInfoData));
+		paramLI = (ParamListInfo) palloc0((nargs + 1) * sizeof(ParamListInfoData));
 
 		foreach(l, stmt->params)
 		{

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.139 2002/10/24 22:09:00 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.140 2002/11/10 07:25:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1070,8 +1070,7 @@ gen_cross_product(InhPaths *arginh, int nargs)
 	/* compute the cross product from right to left */
 	for (;;)
 	{
-		oneres = (Oid *) palloc(FUNC_MAX_ARGS * sizeof(Oid));
-		MemSet(oneres, 0, FUNC_MAX_ARGS * sizeof(Oid));
+		oneres = (Oid *) palloc0(FUNC_MAX_ARGS * sizeof(Oid));
 
 		for (i = nargs - 1; i >= 0 && cur[i] > arginh[i].nsupers; i--)
 			continue;

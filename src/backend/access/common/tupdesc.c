@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.91 2002/09/28 20:00:18 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/tupdesc.c,v 1.92 2002/11/10 07:25:13 momjian Exp $
  *
  * NOTES
  *	  some of the executor utility code such as "ExecTypeFromTL" should be
@@ -60,8 +60,7 @@ CreateTemplateTupleDesc(int natts, bool hasoid)
 	{
 		uint32		size = natts * sizeof(Form_pg_attribute);
 
-		desc->attrs = (Form_pg_attribute *) palloc(size);
-		MemSet(desc->attrs, 0, size);
+		desc->attrs = (Form_pg_attribute *) palloc0(size);
 	}
 	else
 		desc->attrs = NULL;

@@ -7,7 +7,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.136 2002/10/21 19:55:49 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/trigger.c,v 1.137 2002/11/10 07:25:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -94,7 +94,7 @@ CreateTrigger(CreateTrigStmt *stmt, bool forConstraint)
 		constrrelid = RangeVarGetRelid(stmt->constrrel, false);
 	else if (stmt->isconstraint)
 	{
-		/* 
+		/*
 		 * If this trigger is a constraint (and a foreign key one)
 		 * then we really need a constrrelid.  Since we don't have one,
 		 * we'll try to generate one from the argument information.
@@ -779,8 +779,7 @@ RelationBuildTriggers(Relation relation)
 			 RelationGetRelationName(relation));
 
 	/* Build trigdesc */
-	trigdesc = (TriggerDesc *) palloc(sizeof(TriggerDesc));
-	MemSet(trigdesc, 0, sizeof(TriggerDesc));
+	trigdesc = (TriggerDesc *) palloc0(sizeof(TriggerDesc));
 	trigdesc->triggers = triggers;
 	trigdesc->numtriggers = ntrigs;
 	for (found = 0; found < ntrigs; found++)
@@ -1146,12 +1145,8 @@ ExecBRInsertTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	/* Allocate cache space for fmgr lookup info, if not done yet */
 	if (relinfo->ri_TrigFunctions == NULL)
-	{
 		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc(trigdesc->numtriggers * sizeof(FmgrInfo));
-		MemSet(relinfo->ri_TrigFunctions, 0,
-			   trigdesc->numtriggers * sizeof(FmgrInfo));
-	}
+			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_INSERT | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
@@ -1206,12 +1201,8 @@ ExecBRDeleteTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	/* Allocate cache space for fmgr lookup info, if not done yet */
 	if (relinfo->ri_TrigFunctions == NULL)
-	{
 		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc(trigdesc->numtriggers * sizeof(FmgrInfo));
-		MemSet(relinfo->ri_TrigFunctions, 0,
-			   trigdesc->numtriggers * sizeof(FmgrInfo));
-	}
+			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_DELETE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
@@ -1282,12 +1273,8 @@ ExecBRUpdateTriggers(EState *estate, ResultRelInfo *relinfo,
 
 	/* Allocate cache space for fmgr lookup info, if not done yet */
 	if (relinfo->ri_TrigFunctions == NULL)
-	{
 		relinfo->ri_TrigFunctions = (FmgrInfo *)
-			palloc(trigdesc->numtriggers * sizeof(FmgrInfo));
-		MemSet(relinfo->ri_TrigFunctions, 0,
-			   trigdesc->numtriggers * sizeof(FmgrInfo));
-	}
+			palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 
 	LocTriggerData.type = T_TriggerData;
 	LocTriggerData.tg_event = TRIGGER_EVENT_UPDATE | TRIGGER_EVENT_ROW | TRIGGER_EVENT_BEFORE;
@@ -1769,9 +1756,7 @@ deferredTriggerInvokeEvents(bool immediate_only)
 					 * Allocate space to cache fmgr lookup info for triggers.
 					 */
 					finfo = (FmgrInfo *)
-						palloc(trigdesc->numtriggers * sizeof(FmgrInfo));
-					MemSet(finfo, 0,
-						   trigdesc->numtriggers * sizeof(FmgrInfo));
+						palloc0(trigdesc->numtriggers * sizeof(FmgrInfo));
 				}
 
 				DeferredTriggerExecute(event, i, rel, trigdesc, finfo,

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.47 2002/09/23 20:43:40 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/analyze.c,v 1.48 2002/11/10 07:25:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -423,8 +423,7 @@ examine_attribute(Relation onerel, int attnum)
 	 * If we have "=" then we're at least able to do the minimal
 	 * algorithm, so start filling in a VacAttrStats struct.
 	 */
-	stats = (VacAttrStats *) palloc(sizeof(VacAttrStats));
-	MemSet(stats, 0, sizeof(VacAttrStats));
+	stats = (VacAttrStats *) palloc0(sizeof(VacAttrStats));
 	stats->attnum = attnum;
 	stats->attr = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
 	memcpy(stats->attr, attr, ATTRIBUTE_TUPLE_SIZE);

@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.47 2002/11/01 19:33:09 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeAppend.c,v 1.48 2002/11/10 07:25:13 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -166,8 +166,7 @@ ExecInitAppend(Append *node, EState *estate, Plan *parent)
 	appendplans = node->appendplans;
 	nplans = length(appendplans);
 
-	initialized = (bool *) palloc(nplans * sizeof(bool));
-	MemSet(initialized, 0, nplans * sizeof(bool));
+	initialized = (bool *) palloc0(nplans * sizeof(bool));
 
 	/*
 	 * create new AppendState for our append node

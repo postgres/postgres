@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.202 2002/10/21 22:06:19 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/index.c,v 1.203 2002/11/10 07:25:13 momjian Exp $
  *
  *
  * INTERFACE ROUTINES
@@ -112,8 +112,7 @@ BuildFuncTupleDesc(Oid funcOid,
 	 * Allocate and zero a tuple descriptor for a one-column tuple.
 	 */
 	funcTupDesc = CreateTemplateTupleDesc(1, false);
-	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc(ATTRIBUTE_TUPLE_SIZE);
-	MemSet(funcTupDesc->attrs[0], 0, ATTRIBUTE_TUPLE_SIZE);
+	funcTupDesc->attrs[0] = (Form_pg_attribute) palloc0(ATTRIBUTE_TUPLE_SIZE);
 
 	/*
 	 * Lookup the function to get its name and return type.

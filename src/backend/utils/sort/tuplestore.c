@@ -26,7 +26,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.7 2002/08/12 00:36:12 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/tuplestore.c,v 1.8 2002/11/10 07:25:14 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -197,9 +197,7 @@ tuplestore_begin_common(bool randomAccess, int maxKBytes)
 {
 	Tuplestorestate *state;
 
-	state = (Tuplestorestate *) palloc(sizeof(Tuplestorestate));
-
-	MemSet((char *) state, 0, sizeof(Tuplestorestate));
+	state = (Tuplestorestate *) palloc0(sizeof(Tuplestorestate));
 
 	state->status = TSS_INITIAL;
 	state->randomAccess = randomAccess;
