@@ -3,9 +3,9 @@
 # 
 msgid ""
 msgstr ""
-"Project-Id-Version: PostgreSQL 7.4\n"
+"Project-Id-Version: PostgreSQL 8.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-08-31 08:57+0000\n"
+"POT-Creation-Date: 2004-12-02 09:58+0000\n"
 "PO-Revision-Date: 2004-01-10 13:47+0800\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -13,48 +13,48 @@ msgstr ""
 "Content-Type: text/plain; charset=GB2312\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: pg_resetxlog.c:120
+#: pg_resetxlog.c:123
 #, c-format
 msgid "%s: invalid argument for option -x\n"
 msgstr "%s: 为 -x 选项的无效参数\n"
 
-#: pg_resetxlog.c:121 pg_resetxlog.c:136 pg_resetxlog.c:151 pg_resetxlog.c:158
-#: pg_resetxlog.c:164 pg_resetxlog.c:172
+#: pg_resetxlog.c:124 pg_resetxlog.c:139 pg_resetxlog.c:154 pg_resetxlog.c:161
+#: pg_resetxlog.c:167 pg_resetxlog.c:175
 #, c-format
 msgid "Try \"%s --help\" for more information.\n"
 msgstr "输入 \"%s --help\" 获取更多的信息.\n"
 
-#: pg_resetxlog.c:126
+#: pg_resetxlog.c:129
 #, c-format
 msgid "%s: transaction ID (-x) must not be 0\n"
 msgstr "%s: 事务 ID (-x) 不能为 0\n"
 
-#: pg_resetxlog.c:135
+#: pg_resetxlog.c:138
 #, c-format
 msgid "%s: invalid argument for option -o\n"
 msgstr "%s: 为 -o 选项的无效参数\n"
 
-#: pg_resetxlog.c:141
+#: pg_resetxlog.c:144
 #, c-format
 msgid "%s: OID (-o) must not be 0\n"
 msgstr "%s: OID (-o) 不能为 0\n"
 
-#: pg_resetxlog.c:150 pg_resetxlog.c:157
+#: pg_resetxlog.c:153 pg_resetxlog.c:160
 #, c-format
 msgid "%s: invalid argument for option -l\n"
 msgstr "%s: 为 -l 选项的无效参数\n"
 
-#: pg_resetxlog.c:171
+#: pg_resetxlog.c:174
 #, c-format
 msgid "%s: no data directory specified\n"
 msgstr "%s: 没有指定数据目录\n"
 
-#: pg_resetxlog.c:191 pg_resetxlog.c:287
+#: pg_resetxlog.c:194 pg_resetxlog.c:290
 #, c-format
 msgid "%s: could not open file \"%s\" for reading: %s\n"
 msgstr "%s: 无法打开文件 \"%s\" 读取信息: %s\n"
 
-#: pg_resetxlog.c:197
+#: pg_resetxlog.c:200
 #, c-format
 msgid ""
 "%s: lock file \"%s\" exists\n"
@@ -63,7 +63,7 @@ msgstr ""
 "%s: 锁文件 \"%s\" 已经存在\n"
 "是否有一个服务正在运行? 如果没有, 删除那个锁文件然后再试一次.\n"
 
-#: pg_resetxlog.c:236
+#: pg_resetxlog.c:239
 #, c-format
 msgid ""
 "\n"
@@ -72,7 +72,7 @@ msgstr ""
 "\n"
 "如果这些值可接受, 用 -f 强制重置.\n"
 
-#: pg_resetxlog.c:248
+#: pg_resetxlog.c:251
 #, c-format
 msgid ""
 "The database server was not shut down cleanly.\n"
@@ -83,12 +83,12 @@ msgstr ""
 "重置事务日志有可能会引起丢失数据.\n"
 "如果你仍想继续, 用 -f 强制重置.\n"
 
-#: pg_resetxlog.c:261
+#: pg_resetxlog.c:264
 #, c-format
 msgid "Transaction log reset\n"
 msgstr "事务日志重置\n"
 
-#: pg_resetxlog.c:290
+#: pg_resetxlog.c:293
 #, c-format
 msgid ""
 "If you are sure the data directory path is correct, execute\n"
@@ -99,32 +99,32 @@ msgstr ""
 "  touch %s\n"
 "然后再试一次.\n"
 
-#: pg_resetxlog.c:303
+#: pg_resetxlog.c:306
 #, c-format
 msgid "%s: could not read file \"%s\": %s\n"
 msgstr "%s: 无法读取文件 \"%s\": %s\n"
 
-#: pg_resetxlog.c:326
+#: pg_resetxlog.c:329
 #, c-format
 msgid "%s: pg_control exists but has invalid CRC; proceed with caution\n"
 msgstr "%s: pg_control 已经存在, 但有无效的CRC; 带有警告的继续运行\n"
 
-#: pg_resetxlog.c:335
+#: pg_resetxlog.c:338
 #, c-format
 msgid "%s: pg_control exists but is broken or unknown version; ignoring it\n"
 msgstr "%s: pg_control 已经存在, 但已破坏或无效版本; 忽略它\n"
 
-#: pg_resetxlog.c:399
+#: pg_resetxlog.c:402
 #, c-format
 msgid "%s: invalid LC_COLLATE setting\n"
 msgstr "%s: 无效的 LC_COLLATE 设置\n"
 
-#: pg_resetxlog.c:406
+#: pg_resetxlog.c:409
 #, c-format
 msgid "%s: invalid LC_CTYPE setting\n"
 msgstr "%s: 无效的 LC_CTYPE 设置\n"
 
-#: pg_resetxlog.c:430
+#: pg_resetxlog.c:433
 #, c-format
 msgid ""
 "Guessed pg_control values:\n"
@@ -133,7 +133,7 @@ msgstr ""
 "猜测的 pg_control 值:\n"
 "\n"
 
-#: pg_resetxlog.c:432
+#: pg_resetxlog.c:435
 #, c-format
 msgid ""
 "pg_control values:\n"
@@ -142,141 +142,141 @@ msgstr ""
 "pg_control 值:\n"
 "\n"
 
-#: pg_resetxlog.c:441
+#: pg_resetxlog.c:444
 #, c-format
 msgid "pg_control version number:            %u\n"
 msgstr "pg_control 版本:                      %u\n"
 
-#: pg_resetxlog.c:442
+#: pg_resetxlog.c:445
 #, c-format
 msgid "Catalog version number:               %u\n"
 msgstr "Catalog 版本:                         %u\n"
 
-#: pg_resetxlog.c:443
+#: pg_resetxlog.c:446
 #, c-format
 msgid "Database system identifier:           %s\n"
 msgstr "数据库系统标识符:                     %s\n"
 
-#: pg_resetxlog.c:444
+#: pg_resetxlog.c:447
 #, c-format
 msgid "Current log file ID:                  %u\n"
 msgstr "当前日志文件ID:                       %u\n"
 
-#: pg_resetxlog.c:445
+#: pg_resetxlog.c:448
 #, c-format
 msgid "Next log file segment:                %u\n"
 msgstr "下一个日志文件段:                     %u\n"
 
-#: pg_resetxlog.c:446
+#: pg_resetxlog.c:449
 #, c-format
 msgid "Latest checkpoint's TimeLineID:       %u\n"
 msgstr "最新检查点的 TimeLineID:              %u\n"
 
-#: pg_resetxlog.c:447
+#: pg_resetxlog.c:450
 #, c-format
 msgid "Latest checkpoint's NextXID:          %u\n"
 msgstr "最新检查点的 NextXID:                 %u\n"
 
-#: pg_resetxlog.c:448
+#: pg_resetxlog.c:451
 #, c-format
 msgid "Latest checkpoint's NextOID:          %u\n"
 msgstr "最新检查点的 NextOID:                 %u\n"
 
-#: pg_resetxlog.c:449
+#: pg_resetxlog.c:452
 #, c-format
 msgid "Database block size:                  %u\n"
 msgstr "数据库块大小:                         %u\n"
 
-#: pg_resetxlog.c:450
+#: pg_resetxlog.c:453
 #, c-format
 msgid "Blocks per segment of large relation: %u\n"
 msgstr "大关系的每段块数:                     %u\n"
 
-#: pg_resetxlog.c:451
+#: pg_resetxlog.c:454
 #, c-format
 msgid "Maximum length of identifiers:        %u\n"
 msgstr "标示符的最大长度:                     %u\n"
 
-#: pg_resetxlog.c:452
+#: pg_resetxlog.c:455
 #, c-format
 msgid "Maximum number of function arguments: %u\n"
 msgstr "函数参数的最大个数:                   %u\n"
 
-#: pg_resetxlog.c:453
+#: pg_resetxlog.c:456
 #, c-format
 msgid "Date/time type storage:               %s\n"
 msgstr "日期/时间类型存储:                    %s\n"
 
-#: pg_resetxlog.c:454
+#: pg_resetxlog.c:457
 msgid "64-bit integers"
 msgstr "64位整型"
 
-#: pg_resetxlog.c:454
+#: pg_resetxlog.c:457
 msgid "floating-point numbers"
 msgstr "浮点数"
 
-#: pg_resetxlog.c:455
+#: pg_resetxlog.c:458
 #, c-format
 msgid "Maximum length of locale name:        %u\n"
 msgstr "本地名字的最大长度:                   %u\n"
 
-#: pg_resetxlog.c:456
+#: pg_resetxlog.c:459
 #, c-format
 msgid "LC_COLLATE:                           %s\n"
 msgstr "LC_COLLATE:                           %s\n"
 
-#: pg_resetxlog.c:457
+#: pg_resetxlog.c:460
 #, c-format
 msgid "LC_CTYPE:                             %s\n"
 msgstr "LC_CTYPE:                             %s\n"
 
-#: pg_resetxlog.c:518
+#: pg_resetxlog.c:521
 #, c-format
 msgid ""
 "%s: internal error -- sizeof(ControlFileData) is too large ... fix xlog.c\n"
 msgstr "%s: 内部错误 -- sizeof(ControlFileData) 太大 ... 修复 xlog.c\n"
 
-#: pg_resetxlog.c:531
+#: pg_resetxlog.c:534
 #, c-format
 msgid "%s: could not create pg_control file: %s\n"
 msgstr "%s: 无法创建 pg_control 文件: %s\n"
 
-#: pg_resetxlog.c:542
+#: pg_resetxlog.c:545
 #, c-format
 msgid "%s: could not write pg_control file: %s\n"
 msgstr "%s: 无法写 pg_control 文件: %s\n"
 
-#: pg_resetxlog.c:549 pg_resetxlog.c:705
+#: pg_resetxlog.c:552 pg_resetxlog.c:708
 #, c-format
 msgid "%s: fsync error: %s\n"
 msgstr "%s: fsync 错误: %s\n"
 
-#: pg_resetxlog.c:570
+#: pg_resetxlog.c:573
 #, c-format
 msgid "%s: could not open directory \"%s\": %s\n"
 msgstr "%s: 无法打开目录 \"%s\": %s\n"
 
-#: pg_resetxlog.c:584
+#: pg_resetxlog.c:587
 #, c-format
 msgid "%s: could not delete file \"%s\": %s\n"
 msgstr "%s: 无法删除文件 \"%s\": %s\n"
 
-#: pg_resetxlog.c:603
+#: pg_resetxlog.c:606
 #, c-format
 msgid "%s: could not read from directory \"%s\": %s\n"
 msgstr "%s: 无法从目录 \"%s\" 中读取: %s\n"
 
-#: pg_resetxlog.c:672
+#: pg_resetxlog.c:675
 #, c-format
 msgid "%s: could not open file \"%s\": %s\n"
 msgstr "%s: 无法打开文件 \"%s\": %s\n"
 
-#: pg_resetxlog.c:683 pg_resetxlog.c:697
+#: pg_resetxlog.c:686 pg_resetxlog.c:700
 #, c-format
 msgid "%s: could not write file \"%s\": %s\n"
 msgstr "%s: 无法写文件 \"%s\": %s\n"
 
-#: pg_resetxlog.c:716
+#: pg_resetxlog.c:719
 #, c-format
 msgid ""
 "%s resets the PostgreSQL transaction log.\n"
@@ -285,7 +285,7 @@ msgstr ""
 "%s 重置 PostgreSQL 事务日志.\n"
 "\n"
 
-#: pg_resetxlog.c:717
+#: pg_resetxlog.c:720
 #, c-format
 msgid ""
 "Usage:\n"
@@ -296,51 +296,51 @@ msgstr ""
 "  %s [选项]... 数据目录\n"
 "\n"
 
-#: pg_resetxlog.c:718
+#: pg_resetxlog.c:721
 #, c-format
 msgid "Options:\n"
 msgstr "选项:\n"
 
-#: pg_resetxlog.c:719
+#: pg_resetxlog.c:722
 #, c-format
 msgid "  -f              force update to be done\n"
 msgstr "  -f                强制更新\n"
 
-#: pg_resetxlog.c:720
+#: pg_resetxlog.c:723
 #, c-format
 msgid ""
 "  -l FILEID,SEG   force minimum WAL starting location for new transaction "
 "log\n"
 msgstr "  -l FILEID,SEG     在新的事务日志中强制最小 WAL 起始位置\n"
 
-#: pg_resetxlog.c:721
+#: pg_resetxlog.c:724
 #, c-format
 msgid ""
 "  -n              no update, just show extracted control values (for "
 "testing)\n"
 msgstr "  -n                未更新, 只显示抽取的控制值 (测试用途)\n"
 
-#: pg_resetxlog.c:722
+#: pg_resetxlog.c:725
 #, c-format
 msgid "  -o OID          set next OID\n"
 msgstr "  -o OID            设置下一个 OID\n"
 
-#: pg_resetxlog.c:723
+#: pg_resetxlog.c:726
 #, c-format
 msgid "  -x XID          set next transaction ID\n"
 msgstr "  -x XID            设置下一个事务 ID\n"
 
-#: pg_resetxlog.c:724
+#: pg_resetxlog.c:727
 #, c-format
 msgid "  --help          show this help, then exit\n"
 msgstr "  --help            显示此帮助信息, 然后退出\n"
 
-#: pg_resetxlog.c:725
+#: pg_resetxlog.c:728
 #, c-format
 msgid "  --version       output version information, then exit\n"
 msgstr "  --version         输出版本信息, 然后退出\n"
 
-#: pg_resetxlog.c:726
+#: pg_resetxlog.c:729
 #, c-format
 msgid ""
 "\n"

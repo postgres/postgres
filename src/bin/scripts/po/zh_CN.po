@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PostgreSQL 7.4\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2004-08-31 08:56+0000\n"
+"POT-Creation-Date: 2004-11-15 14:20+0000\n"
 "PO-Revision-Date: 2003-09-15 21:03+0000\n"
 "Last-Translator: Bao Wei <weibao@qmail.zhengmai.net.cn>\n"
 "Language-Team: Weiping He <laser@zhengmai.com.cn>\n"
@@ -657,37 +657,47 @@ msgstr ""
 "\n"
 "阅读 SQL 命令 VACUUM 的描述信息, 以便获得更详细的信息.\n"
 
-#: common.c:86 common.c:112
+#: common.c:33
+#, c-format
+msgid "%s: could not obtain information about current user: %s"
+msgstr "%s: 无法获得当前用户的信息: %s"
+
+#: common.c:44
+#, c-format
+msgid "%s: could not get current user name: %s"
+msgstr "%s: 无法获取当前用户名称: %s"
+
+#: common.c:89 common.c:115
 msgid "Password: "
 msgstr "口令: "
 
-#: common.c:99
+#: common.c:102
 #, c-format
 msgid "%s: could not connect to database %s\n"
 msgstr "%s: 无法联接到数据库 %s\n"
 
-#: common.c:122
+#: common.c:125
 #, c-format
 msgid "%s: could not connect to database %s: %s"
 msgstr "%s: 无法联接到数据库 %s: %s"
 
-#: common.c:146
+#: common.c:149
 #, c-format
 msgid "%s: query failed: %s"
 msgstr "%s: 查询失败: %s"
 
-#: common.c:147
+#: common.c:150
 #, c-format
 msgid "%s: query was: %s\n"
 msgstr "%s: 查询是: %s\n"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:161
+#: common.c:164
 msgid "y"
 msgstr "y"
 
 #. translator: Make sure the (y/n) prompts match the translation of this.
-#: common.c:163
+#: common.c:166
 msgid "n"
 msgstr "n"
 
