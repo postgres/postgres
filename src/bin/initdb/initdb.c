@@ -39,7 +39,7 @@
  * Portions Copyright (c) 1994, Regents of the University of California
  * Portions taken from FreeBSD.
  *
- * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.41 2004/07/01 00:51:36 tgl Exp $
+ * $PostgreSQL: pgsql/src/bin/initdb/initdb.c,v 1.42 2004/07/12 01:54:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -1137,7 +1137,7 @@ get_set_pwd(void)
 	PG_CMD_OPEN;
 
 	if (fprintf(pg,
-		  "ALTER USER \"%s\" WITH PASSWORD '%s';\n", username, pwd1) < 0)
+		  "ALTER USER \"%s\" WITH PASSWORD '%s';\n", effective_user, pwd1) < 0)
 	{
 		/* write failure */
 		exit_nicely();
@@ -1433,7 +1433,7 @@ setup_privileges(void)
 	PG_CMD_OPEN;
 
 	priv_lines = replace_token(privileges_setup,
-							   "$POSTGRES_SUPERUSERNAME", username);
+							   "$POSTGRES_SUPERUSERNAME", effective_user);
 	for (line = priv_lines; *line != NULL; line++)
 		PG_CMD_PUTLINE;
 
@@ -2002,9 +2002,10 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
-	effective_user = get_id();
-	if (!strlen(username))
-		username = effective_user;
+	if (strlen(username))
+		effective_user = username;
+	else
+		effective_user = get_id();
 
 	if (strlen(encoding))
 		encodingid = get_encoding_id(encoding);
@@ -2033,7 +2034,7 @@ main(int argc, char *argv[])
 				PG_VERSION,
 				pg_data, share_path, bin_path,
 				encoding, encodingid,
-				username, bki_file,
+				effective_user, bki_file,
 				desc_file, conf_file,
 				hba_file, ident_file);
 		if (show_setting)
