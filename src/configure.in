@@ -596,7 +596,7 @@ int does_int64_work()
 main() {
   exit(! does_int64_work());
 }],
-	[AC_DEFINE(HAVE_LONG_LONG_INT_64) AC_MSG_RESULT(yes)],
+	[AC_MSG_RESULT(yes) AC_DEFINE(HAVE_LONG_LONG_INT_64)],
 	AC_MSG_RESULT(no),
 	AC_MSG_RESULT(assuming not on target machine))
 
