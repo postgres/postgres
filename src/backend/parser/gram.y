@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.85 1998/01/05 16:39:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 1.86 1998/01/09 20:05:52 momjian Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -108,7 +108,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 	VersionStmt			*vstmt;
 	DefineStmt			*dstmt;
 	RuleStmt			*rstmt;
-	AppendStmt			*astmt;
+	InsertStmt			*astmt;
 }
 
 %type <node>	stmt,
@@ -121,7 +121,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		RemoveFuncStmt, RemoveStmt,
 		RenameStmt, RevokeStmt, RuleStmt, TransactionStmt, ViewStmt, LoadStmt,
 		CreatedbStmt, DestroydbStmt, VacuumStmt, CursorStmt, SubSelect,
-		ReplaceStmt, AppendStmt, RetrieveStmt, NotifyStmt, DeleteStmt, ClusterStmt,
+		UpdateStmt, InsertStmt, SelectStmt, NotifyStmt, DeleteStmt, ClusterStmt,
 		ExplainStmt, VariableSetStmt, VariableShowStmt, VariableResetStmt,
 		CreateUserStmt, AlterUserStmt, DropUserStmt
 
@@ -590,17 +590,17 @@ alter_clause:  ADD opt_column columnDef
 					Node *lp = lfirst($3);
 
 					if (length($3) != 1)
-						elog(ERROR,"ALTER TABLE/ADD() allows one column only",NULL);
+						elog(ERROR,"ALTER TABLE/ADD() allows one column only");
 					$$ = lp;
 				}
 			| DROP opt_column ColId
-				{	elog(ERROR,"ALTER TABLE/DROP COLUMN not yet implemented",NULL); }
+				{	elog(ERROR,"ALTER TABLE/DROP COLUMN not yet implemented"); }
 			| ALTER opt_column ColId SET DEFAULT default_expr
-				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented",NULL); }
+				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/SET DEFAULT not yet implemented"); }
 			| ALTER opt_column ColId DROP DEFAULT
-				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented",NULL); }
+				{	elog(ERROR,"ALTER TABLE/ALTER COLUMN/DROP DEFAULT not yet implemented"); }
 			| ADD ConstraintElem
-				{	elog(ERROR,"ALTER TABLE/ADD CONSTRAINT not yet implemented",NULL); }
+				{	elog(ERROR,"ALTER TABLE/ADD CONSTRAINT not yet implemented"); }
 		;
 
 
@@ -780,7 +780,7 @@ ColConstraintElem:  CHECK '(' constraint_expr ')'
 				}
 			| REFERENCES ColId opt_column_list key_match key_actions
 				{
-					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL);
+					elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented");
 					$$ = NULL;
 				}
 		;
@@ -811,11 +811,11 @@ default_expr:  AexprConst
 			| default_expr '*' default_expr
 				{	$$ = nconc( $1, lcons( makeString( "*"), $3)); }
 			| default_expr '=' default_expr
-				{	elog(ERROR,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
 			| default_expr '<' default_expr
-				{	elog(ERROR,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
 			| default_expr '>' default_expr
-				{	elog(ERROR,"boolean expressions not supported in DEFAULT",NULL); }
+				{	elog(ERROR,"boolean expressions not supported in DEFAULT"); }
 			| ':' default_expr
 				{	$$ = lcons( makeString( ":"), $2); }
 			| ';' default_expr
@@ -848,7 +848,7 @@ default_expr:  AexprConst
 			| default_expr Op default_expr
 				{
 					if (!strcmp("<=", $2) || !strcmp(">=", $2))
-						elog(ERROR,"boolean expressions not supported in DEFAULT",NULL);
+						elog(ERROR,"boolean expressions not supported in DEFAULT");
 					$$ = nconc( $1, lcons( makeString( $2), $3));
 				}
 			| Op default_expr
@@ -919,7 +919,7 @@ ConstraintElem:  CHECK '(' constraint_expr ')'
 					$$ = (Node *)n;
 				}
 		| FOREIGN KEY '(' columnList ')' REFERENCES ColId opt_column_list key_match key_actions
-				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented",NULL); }
+				{	elog(NOTICE,"CREATE TABLE/FOREIGN KEY clause ignored; not yet implemented"); }
 		;
 
 constraint_list:  constraint_list ',' constraint_expr
@@ -1050,7 +1050,7 @@ OptArchiveType:  ARCHIVE '=' NONE						{ }
 
 CreateAsStmt:  CREATE TABLE relation_name OptCreateAs AS SubSelect
 				{
-					RetrieveStmt *n = (RetrieveStmt *)$6;
+					SelectStmt *n = (SelectStmt *)$6;
 					if ($4 != NIL)
 						mapTargetColumns($4, n->targetList);
 					n->into = $3;
@@ -1379,7 +1379,7 @@ opt_direction:	FORWARD							{ $$ = FORWARD; }
 
 fetch_how_many:  Iconst
 			   { $$ = $1;
-				 if ($1 <= 0) elog(ERROR,"Please specify nonnegative count for fetch",NULL); }
+				 if ($1 <= 0) elog(ERROR,"Please specify nonnegative count for fetch"); }
 		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/ }
 		| /*EMPTY*/						{ $$ = 1; /*default*/ }
 		;
@@ -1597,7 +1597,7 @@ RecipeStmt:  EXECUTE RECIPE recipe_name
 				{
 					RecipeStmt *n;
 					if (!IsTransactionBlock())
-						elog(ERROR,"EXECUTE RECIPE may only be used in begin/end transaction blocks",NULL);
+						elog(ERROR,"EXECUTE RECIPE may only be used in begin/end transaction blocks");
 
 					n = makeNode(RecipeStmt);
 					n->recipeName = $3;
@@ -1725,7 +1725,7 @@ MathOp:	'+'				{ $$ = "+"; }
 
 oper_argtypes:	name
 				{
-				   elog(ERROR,"parser: argument type missing (use NONE for unary operators)",NULL);
+				   elog(ERROR,"parser: argument type missing (use NONE for unary operators)");
 				}
 		| name ',' name
 				{ $$ = makeList(makeString($1), makeString($3), -1); }
@@ -1955,11 +1955,13 @@ TransactionStmt:  ABORT_TRANS TRANSACTION
  *
  *****************************************************************************/
 
-ViewStmt:  CREATE VIEW name AS RetrieveStmt
+ViewStmt:  CREATE VIEW name AS SelectStmt
 				{
 					ViewStmt *n = makeNode(ViewStmt);
 					n->viewname = $3;
 					n->query = (Query *)$5;
+					if (n->query->unionClause != NULL)
+						elog(ERROR,"Views on unions not implemented.");
 					$$ = (Node *)n;
 				}
 		;
@@ -2063,7 +2065,7 @@ VacuumStmt:  VACUUM opt_verbose opt_analyze
 					n->vacrel = $4;
 					n->va_spec = $5;
 					if ( $5 != NIL && !$4 )
-						elog(ERROR,"parser: syntax error at or near \"(\"",NULL);
+						elog(ERROR,"parser: syntax error at or near \"(\"");
 					$$ = (Node *)n;
 				}
 		;
@@ -2117,10 +2119,10 @@ ExplainStmt:  EXPLAIN opt_verbose OptimizableStmt
  *																			 *
  *****************************************************************************/
 
-OptimizableStmt:  RetrieveStmt
+OptimizableStmt:  SelectStmt
 		| CursorStmt
-		| ReplaceStmt
-		| AppendStmt
+		| UpdateStmt
+		| InsertStmt
 		| NotifyStmt
 		| DeleteStmt					/* by default all are $$=$1 */
 		;
@@ -2133,7 +2135,7 @@ OptimizableStmt:  RetrieveStmt
  *
  *****************************************************************************/
 
-AppendStmt:  INSERT INTO relation_name opt_column_list insert_rest
+InsertStmt:  INSERT INTO relation_name opt_column_list insert_rest
 				{
 					$5->relname = $3;
 					$5->cols = $4;
@@ -2143,14 +2145,14 @@ AppendStmt:  INSERT INTO relation_name opt_column_list insert_rest
 
 insert_rest:  VALUES '(' res_target_list2 ')'
 				{
-					$$ = makeNode(AppendStmt);
+					$$ = makeNode(InsertStmt);
 					$$->targetList = $3;
 					$$->fromClause = NIL;
 					$$->whereClause = NULL;
 				}
 		| SELECT res_target_list2 from_clause where_clause
 				{
-					$$ = makeNode(AppendStmt);
+					$$ = makeNode(InsertStmt);
 					$$->targetList = $2;
 					$$->fromClause = $3;
 					$$->whereClause = $4;
@@ -2199,16 +2201,16 @@ DeleteStmt:  DELETE FROM relation_name
 /*****************************************************************************
  *
  *		QUERY:
- *				ReplaceStmt (UPDATE)
+ *				UpdateStmt (UPDATE)
  *
  *****************************************************************************/
 
-ReplaceStmt:  UPDATE relation_name
+UpdateStmt:  UPDATE relation_name
 			  SET res_target_list
 			  from_clause
 			  where_clause
 				{
-					ReplaceStmt *n = makeNode(ReplaceStmt);
+					UpdateStmt *n = makeNode(UpdateStmt);
 					n->relname = $2;
 					n->targetList = $4;
 					n->fromClause = $5;
@@ -2240,7 +2242,7 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 					 *							-- mao
 					 */
 					if (!IsTransactionBlock())
-						elog(ERROR,"Named portals may only be used in begin/end transaction blocks",NULL);
+						elog(ERROR,"Named portals may only be used in begin/end transaction blocks");
 
 					n->portalname = $2;
 					n->binary = $3;
@@ -2262,12 +2264,12 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
  *
  *****************************************************************************/
 
-RetrieveStmt:  SELECT opt_unique res_target_list2
+SelectStmt:  SELECT opt_unique res_target_list2
 			 result from_clause where_clause
 			 group_clause having_clause
 			 union_clause sort_clause
 				{
-					RetrieveStmt *n = makeNode(RetrieveStmt);
+					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = $2;
 					n->targetList = $3;
 					n->into = $4;
@@ -2283,7 +2285,7 @@ RetrieveStmt:  SELECT opt_unique res_target_list2
 
 union_clause:  UNION opt_union select_list
 				{
-					RetrieveStmt *n = (RetrieveStmt *)lfirst($3);
+					SelectStmt *n = (SelectStmt *)lfirst($3);
 					n->unionall = $2;
 					$$ = $3;
 				}
@@ -2293,7 +2295,7 @@ union_clause:  UNION opt_union select_list
 
 select_list:  select_list UNION opt_union SubSelect
 				{
-					RetrieveStmt *n = (RetrieveStmt *)$4;
+					SelectStmt *n = (SelectStmt *)$4;
 					n->unionall = $3;
 					$$ = lappend($1, $4);
 				}
@@ -2305,7 +2307,7 @@ SubSelect:	SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
 				{
-					RetrieveStmt *n = makeNode(RetrieveStmt);
+					SelectStmt *n = makeNode(SelectStmt);
 					n->unique = $2;
 					n->unionall = FALSE;
 					n->targetList = $3;
@@ -2444,7 +2446,7 @@ having_clause:  HAVING a_expr					{ $$ = $2; }
 from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
 				{
 					$$ = NIL;
-					elog(ERROR,"JOIN not yet implemented",NULL);
+					elog(ERROR,"JOIN not yet implemented");
 				}
 		| FROM from_list						{ $$ = $2; }
 		| /*EMPTY*/								{ $$ = NIL; }
@@ -2453,7 +2455,7 @@ from_clause:  FROM '(' relation_expr join_expr JOIN relation_expr join_spec ')'
 from_list:	from_list ',' from_val
 				{ $$ = lappend($1, $3); }
 		| from_val CROSS JOIN from_val
-				{ elog(ERROR,"CROSS JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"CROSS JOIN not yet implemented"); }
 		| from_val
 				{ $$ = lcons($1, NIL); }
 		;
@@ -2480,19 +2482,19 @@ from_val:  relation_expr AS ColLabel
 
 join_expr:  NATURAL join_expr					{ $$ = NULL; }
 		| FULL join_outer
-				{ elog(ERROR,"FULL OUTER JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"FULL OUTER JOIN not yet implemented"); }
 		| LEFT join_outer
-				{ elog(ERROR,"LEFT OUTER JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"LEFT OUTER JOIN not yet implemented"); }
 		| RIGHT join_outer
-				{ elog(ERROR,"RIGHT OUTER JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"RIGHT OUTER JOIN not yet implemented"); }
 		| OUTER_P
-				{ elog(ERROR,"OUTER JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"OUTER JOIN not yet implemented"); }
 		| INNER_P
-				{ elog(ERROR,"INNER JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"INNER JOIN not yet implemented"); }
 		| UNION
-				{ elog(ERROR,"UNION JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"UNION JOIN not yet implemented"); }
 		| /*EMPTY*/
-				{ elog(ERROR,"INNER JOIN not yet implemented",NULL); }
+				{ elog(ERROR,"INNER JOIN not yet implemented"); }
 		;
 
 join_outer:  OUTER_P							{ $$ = NULL; }
@@ -2653,13 +2655,13 @@ Numeric:  FLOAT opt_float
 opt_float:  '(' Iconst ')'
 				{
 					if ($2 < 1)
-						elog(ERROR,"precision for FLOAT must be at least 1",NULL);
+						elog(ERROR,"precision for FLOAT must be at least 1");
 					else if ($2 < 7)
 						$$ = xlateSqlType("float4");
 					else if ($2 < 16)
 						$$ = xlateSqlType("float8");
 					else
-						elog(ERROR,"precision for FLOAT must be less than 16",NULL);
+						elog(ERROR,"precision for FLOAT must be less than 16");
 				}
 		| /*EMPTY*/
 				{
@@ -3098,7 +3100,7 @@ a_expr:  attr opt_indirection
 		 */
 		| EXISTS '(' SubSelect ')'
 				{
-					elog(ERROR,"EXISTS not yet implemented",NULL);
+					elog(ERROR,"EXISTS not yet implemented");
 					$$ = $3;
 				}
 		| EXTRACT '(' extract_list ')'
@@ -3428,7 +3430,7 @@ trim_list:  a_expr FROM expr_list
 
 in_expr:  SubSelect
 				{
-					elog(ERROR,"IN (SUBSELECT) not yet implemented",NULL);
+					elog(ERROR,"IN (SUBSELECT) not yet implemented");
 					$$ = $1;
 				}
 		| in_expr_nodes
@@ -3445,7 +3447,7 @@ in_expr_nodes:  AexprConst
 
 not_in_expr:  SubSelect
 				{
-					elog(ERROR,"NOT IN (SUBSELECT) not yet implemented",NULL);
+					elog(ERROR,"NOT IN (SUBSELECT) not yet implemented");
 					$$ = $1;
 				}
 		| not_in_expr_nodes
@@ -3765,14 +3767,14 @@ SpecialRuleRelation:  CURRENT
 					if (QueryIsRule)
 						$$ = "*CURRENT*";
 					else
-						elog(ERROR,"CURRENT used in non-rule query",NULL);
+						elog(ERROR,"CURRENT used in non-rule query");
 				}
 		| NEW
 				{
 					if (QueryIsRule)
 						$$ = "*NEW*";
 					else
-						elog(ERROR,"NEW used in non-rule query",NULL);
+						elog(ERROR,"NEW used in non-rule query");
 				}
 		;
 
@@ -3800,7 +3802,7 @@ makeRowExpr(char *opr, List *largs, List *rargs)
 	Node *larg, *rarg;
 
 	if (length(largs) != length(rargs))
-		elog(ERROR,"Unequal number of entries in row expression",NULL);
+		elog(ERROR,"Unequal number of entries in row expression");
 
 	if (lnext(largs) != NIL)
 		expr = makeRowExpr(opr,lnext(largs),lnext(rargs));
@@ -3858,7 +3860,7 @@ mapTargetColumns(List *src, List *dst)
 	ResTarget *d;
 
 	if (length(src) != length(dst))
-		elog(ERROR,"CREATE TABLE/AS SELECT has mismatched column count",NULL);
+		elog(ERROR,"CREATE TABLE/AS SELECT has mismatched column count");
 
 	while ((src != NIL) && (dst != NIL))
 	{
@@ -4069,7 +4071,7 @@ makeConstantList( A_Const *n)
 {
 	char *defval = NULL;
 	if (nodeTag(n) != T_A_Const) {
-		elog(ERROR,"Cannot handle non-constant parameter",NULL);
+		elog(ERROR,"Cannot handle non-constant parameter");
 
 	} else if (n->val.type == T_Float) {
 		defval = (char*) palloc(20+1);
@@ -4086,7 +4088,7 @@ makeConstantList( A_Const *n)
 		strcat( defval, "'");
 
 	} else {
-		elog(ERROR,"Internal error in makeConstantList(): cannot encode node",NULL);
+		elog(ERROR,"Internal error in makeConstantList(): cannot encode node");
 	};
 
 #ifdef PARSEDEBUG

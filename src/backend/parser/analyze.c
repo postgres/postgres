@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.61 1998/01/05 03:32:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/analyze.c,v 1.62 1998/01/09 20:05:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -33,12 +33,12 @@
 
 static Query *transformStmt(ParseState *pstate, Node *stmt);
 static Query *transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt);
-static Query *transformInsertStmt(ParseState *pstate, AppendStmt *stmt);
+static Query *transformInsertStmt(ParseState *pstate, InsertStmt *stmt);
 static Query *transformIndexStmt(ParseState *pstate, IndexStmt *stmt);
 static Query *transformExtendStmt(ParseState *pstate, ExtendStmt *stmt);
 static Query *transformRuleStmt(ParseState *query, RuleStmt *stmt);
-static Query *transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt);
-static Query *transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt);
+static Query *transformSelectStmt(ParseState *pstate, SelectStmt *stmt);
+static Query *transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt);
 static Query *transformCursorStmt(ParseState *pstate, CursorStmt *stmt);
 static Query *transformCreateStmt(ParseState *pstate, CreateStmt *stmt);
 
@@ -163,24 +163,24 @@ transformStmt(ParseState *pstate, Node *parseTree)
 			 *	Optimizable statements
 			 *------------------------
 			 */
-		case T_AppendStmt:
-			result = transformInsertStmt(pstate, (AppendStmt *) parseTree);
+		case T_InsertStmt:
+			result = transformInsertStmt(pstate, (InsertStmt *) parseTree);
 			break;
 
 		case T_DeleteStmt:
 			result = transformDeleteStmt(pstate, (DeleteStmt *) parseTree);
 			break;
 
-		case T_ReplaceStmt:
-			result = transformUpdateStmt(pstate, (ReplaceStmt *) parseTree);
+		case T_UpdateStmt:
+			result = transformUpdateStmt(pstate, (UpdateStmt *) parseTree);
 			break;
 
 		case T_CursorStmt:
 			result = transformCursorStmt(pstate, (CursorStmt *) parseTree);
 			break;
 
-		case T_RetrieveStmt:
-			result = transformSelectStmt(pstate, (RetrieveStmt *) parseTree);
+		case T_SelectStmt:
+			result = transformSelectStmt(pstate, (SelectStmt *) parseTree);
 			break;
 
 		default:
@@ -231,7 +231,7 @@ transformDeleteStmt(ParseState *pstate, DeleteStmt *stmt)
  *	  transform an Insert Statement
  */
 static Query *
-transformInsertStmt(ParseState *pstate, AppendStmt *stmt)
+transformInsertStmt(ParseState *pstate, InsertStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);	/* make a new query tree */
 	List	   *icolumns;
@@ -800,7 +800,7 @@ transformRuleStmt(ParseState *pstate, RuleStmt *stmt)
  *
  */
 static Query *
-transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
+transformSelectStmt(ParseState *pstate, SelectStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 
@@ -851,7 +851,7 @@ transformSelectStmt(ParseState *pstate, RetrieveStmt *stmt)
  *
  */
 static Query *
-transformUpdateStmt(ParseState *pstate, ReplaceStmt *stmt)
+transformUpdateStmt(ParseState *pstate, UpdateStmt *stmt)
 {
 	Query	   *qry = makeNode(Query);
 
