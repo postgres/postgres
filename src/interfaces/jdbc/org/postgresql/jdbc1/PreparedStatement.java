@@ -164,7 +164,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setByte(int parameterIndex, byte x) throws SQLException
 	{
-		set(parameterIndex, (new Integer(x)).toString());
+		set(parameterIndex, Integer.toString(x));
 	}
 
 	/**
@@ -177,7 +177,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setShort(int parameterIndex, short x) throws SQLException
 	{
-		set(parameterIndex, (new Integer(x)).toString());
+		set(parameterIndex, Integer.toString(x));
 	}
 
 	/**
@@ -190,7 +190,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setInt(int parameterIndex, int x) throws SQLException
 	{
-		set(parameterIndex, (new Integer(x)).toString());
+		set(parameterIndex, Integer.toString(x));
 	}
 
 	/**
@@ -203,7 +203,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setLong(int parameterIndex, long x) throws SQLException
 	{
-		set(parameterIndex, (new Long(x)).toString());
+		set(parameterIndex, Long.toString(x));
 	}
 
 	/**
@@ -216,7 +216,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setFloat(int parameterIndex, float x) throws SQLException
 	{
-		set(parameterIndex, (new Float(x)).toString());
+		set(parameterIndex, Float.toString(x));
 	}
 
 	/**
@@ -229,7 +229,7 @@ public class PreparedStatement extends Statement implements java.sql.PreparedSta
 	 */
 	public void setDouble(int parameterIndex, double x) throws SQLException
 	{
-		set(parameterIndex, (new Double(x)).toString());
+		set(parameterIndex, Double.toString(x));
 	}
 
 	/**

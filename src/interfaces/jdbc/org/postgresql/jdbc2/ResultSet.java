@@ -128,7 +128,8 @@ public class ResultSet extends org.postgresql.ResultSet implements java.sql.Resu
    */
   public void close() throws SQLException
   {
-    // No-op
+    //release resources held (memory for tuples)
+    rows.setSize(0);
   }
   
   /**
