@@ -1,4 +1,4 @@
-<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.20 2002/09/06 20:26:00 momjian Exp $ -->
+<!-- $Header: /cvsroot/pgsql/doc/src/sgml/wal.sgml,v 1.21 2002/11/02 22:23:01 tgl Exp $ -->
 
 <chapter id="wal">
  <title>Write-Ahead Logging (<acronym>WAL</acronym>)</title>
@@ -223,33 +223,6 @@
   </para>
 
   <para>
-   There are two commonly used <acronym>WAL</acronym> functions:
-   <function>LogInsert</function> and <function>LogFlush</function>.
-   <function>LogInsert</function> is used to place a new record into
-   the <acronym>WAL</acronym> buffers in shared memory. If there is no
-   space for the new record, <function>LogInsert</function> will have
-   to write (move to kernel cache) a few filled <acronym>WAL</acronym>
-   buffers. This is undesirable because <function>LogInsert</function>
-   is used on every database low level modification (for example,
-   tuple insertion) at a time when an exclusive lock is held on
-   affected data pages, so the operation needs to be as fast as
-   possible.  What is worse, writing <acronym>WAL</acronym> buffers may
-   also force the creation of a new log segment, which takes even more
-   time. Normally, <acronym>WAL</acronym> buffers should be written
-   and flushed by a <function>LogFlush</function> request, which is
-   made, for the most part, at transaction commit time to ensure that
-   transaction records are flushed to permanent storage. On systems
-   with high log output, <function>LogFlush</function> requests may
-   not occur often enough to prevent <acronym>WAL</acronym> buffers
-   being written by <function>LogInsert</function>. On such systems
-   one should increase the number of <acronym>WAL</acronym> buffers by
-   modifying the <filename>postgresql.conf</filename> <varname>
-   WAL_BUFFERS</varname> parameter. The default number of <acronym>
-   WAL</acronym> buffers is 8.  Increasing this value will 
-   correspondingly increase shared memory usage.
-  </para>
-
-  <para>
    <firstterm>Checkpoints</firstterm> are points in the sequence of
    transactions at which it is guaranteed that the data files have
    been updated with all information logged before the checkpoint.  At
@@ -263,19 +236,6 @@
    removed. (When <acronym>WAL</acronym>-based <acronym>BAR</acronym> is
    implemented, the log segments would be archived before being recycled
    or removed.)
-  </para>
-
-  <para>
-   The checkpoint maker is also able to create a few log segments for
-   future use, so as to avoid the need for
-   <function>LogInsert</function> or <function>LogFlush</function> to
-   spend time in creating them.  (If that happens, the entire database
-   system will be delayed by the creation operation, so it's better if
-   the files can be created in the checkpoint maker, which is not on
-   anyone's critical path.)
-   By default a new 16MB segment file is created only if more than 75% of
-   the current segment has been used.  This is inadequate if the system
-   generates more than 4MB of log output between checkpoints.
   </para>
 
   <para>
@@ -303,14 +263,41 @@
 
   <para>
    There will be at least one 16MB segment file, and will normally 
-   not be more than <varname>CHECKPOINT_SEGMENTS</varname>
+   not be more than 2 * <varname>CHECKPOINT_SEGMENTS</varname>
    + 1 files.  You can use this to estimate space requirements for 
    WAL.  Ordinarily, when old log segment files are no longer needed, 
    they are recycled (renamed to become the next sequential future 
    segments). If, due to a short-term peak of log output rate, there 
-   are more than <varname>CHECKPOINT_SEGMENTS</varname> + 1 segment files, 
+   are more than 2 * <varname>CHECKPOINT_SEGMENTS</varname> + 1 segment files, 
    the unneeded segment files will be deleted instead of recycled until the
    system gets back under this limit.
+  </para>
+
+  <para>
+   There are two commonly used <acronym>WAL</acronym> functions:
+   <function>LogInsert</function> and <function>LogFlush</function>.
+   <function>LogInsert</function> is used to place a new record into
+   the <acronym>WAL</acronym> buffers in shared memory. If there is no
+   space for the new record, <function>LogInsert</function> will have
+   to write (move to kernel cache) a few filled <acronym>WAL</acronym>
+   buffers. This is undesirable because <function>LogInsert</function>
+   is used on every database low level modification (for example,
+   tuple insertion) at a time when an exclusive lock is held on
+   affected data pages, so the operation needs to be as fast as
+   possible.  What is worse, writing <acronym>WAL</acronym> buffers may
+   also force the creation of a new log segment, which takes even more
+   time. Normally, <acronym>WAL</acronym> buffers should be written
+   and flushed by a <function>LogFlush</function> request, which is
+   made, for the most part, at transaction commit time to ensure that
+   transaction records are flushed to permanent storage. On systems
+   with high log output, <function>LogFlush</function> requests may
+   not occur often enough to prevent <acronym>WAL</acronym> buffers
+   being written by <function>LogInsert</function>. On such systems
+   one should increase the number of <acronym>WAL</acronym> buffers by
+   modifying the <filename>postgresql.conf</filename> <varname>
+   WAL_BUFFERS</varname> parameter. The default number of <acronym>
+   WAL</acronym> buffers is 8.  Increasing this value will 
+   correspondingly increase shared memory usage.
   </para>
 
   <para>
