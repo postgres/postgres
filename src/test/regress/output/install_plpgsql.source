@@ -1,7 +1,0 @@
-QUERY: CREATE FUNCTION plpgsql_call_handler()
-   RETURNS opaque
-   AS '_LIBDIR_/plpgsql_DLSUFFIX_'
-   LANGUAGE 'c';
-QUERY: CREATE TRUSTED PROCEDURAL LANGUAGE 'plpgsql'
-   HANDLER plpgsql_call_handler
-   LANCOMPILER 'PL/pgSQL';

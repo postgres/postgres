@@ -1,13 +1,13 @@
 #-------------------------------------------------------------------------
 #
 # Makefile--
-#    Makefile for regress (the regression test)
+#    Makefile for regress/output (the regression test)
 #
 # Copyright (c) 1994, Regents of the University of California
 #
 #
 # IDENTIFICATION
-#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.9 1998/09/29 12:42:11 scrappy Exp $
+#    $Header: /cvsroot/pgsql/src/test/regress/output/Attic/Makefile,v 1.10 2000/01/09 19:34:40 tgl Exp $
 #
 #-------------------------------------------------------------------------
 
@@ -22,8 +22,7 @@ INFILES= copy.out \
          create_function_1.out \
          create_function_2.out \
          misc.out \
-	 constraints.out \
-	 install_plpgsql.out
+	 constraints.out
 
 all: $(INFILES)
 
