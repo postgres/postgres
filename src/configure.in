@@ -1,12 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 AC_INIT(backend/access/common/heaptuple.c)
-
-if test "$BUILDRUN" != "true"
-then
-  echo "You must run the build script, which will auto-run configure"
-  exit
-fi
-TR="tr"
+AC_PREFIX_DEFAULT(/usr/local/pgsql)
 
 AC_CANONICAL_HOST
 case "$host_os" in
@@ -43,6 +37,192 @@ nextstep*) PORTNAME='nextstep';;
    echo ""
    exit;;
 esac
+
+echo "checking echo setting..."
+if echo '\c' | grep -s c >/dev/null 2>&1
+then
+	ECHO_N="echo -n"
+	ECHO_C=""
+else
+	ECHO_N="echo"
+	ECHO_C='\c'
+fi
+
+cat <<EOT
+**************************************************************
+	PostreSQL v6.1 Installation Program
+
+Welcome to the new improved PostgreSQL installation program.
+This configuration program is for version 6.1alpha of the
+PostgreSQL software.
+
+EOT
+
+dnl this part selects the template from the one in the
+dnl template directory. 
+
+if test "X$with_template" != "X"
+then
+	TEMPLATE=template/$with_template
+else
+	TEMPLATE=DO_NOT_CHANGE_THIS_INVALID_FILENAME
+fi
+export TEMPLATE
+
+if test ! -f $TEMPLATE
+then
+	cat <<EOT
+Please select a template from the ones listed below.  If no
+template is available, then select the 'generic' one and
+consider emailling scrappy@hub.org with the above line which
+starts 'checking host system type...'
+**************************************************************
+EOT
+	TEMPLATE=generic
+	GUESS=`grep $host_os template/.similar 2>/dev/null`
+	if test $GUESS
+	then
+		TEMPLATE=`echo $GUESS | sed 's/.*=//'`
+	fi
+	export TEMPLATE
+	ls template
+	echo "**************************************************************"
+	$ECHO_N "Appropriate template file { $TEMPLATE }: $ECHO_C"
+	read a
+	if test "$a." != "."
+	then
+		TEMPLATE=$a
+	fi
+	if test ! -f template/$TEMPLATE
+	then
+		echo "You must choose an appropriate template file."
+		exit
+	fi
+	TEMPLATE=template/$TEMPLATE export TEMPLATE
+fi
+
+AROPT=`grep AROPT $TEMPLATE | awk -F: '{print $2}'`
+SHARED_LIB=`grep SHARED_LIB $TEMPLATE | awk -F: '{print $2}'`
+CFLAGS=`grep CFLAGS $TEMPLATE | awk -F: '{print $2}'`
+SRCH_INC=`grep SRCH_INC $TEMPLATE | awk -F: '{print $2}'`
+SRCH_LIB=`grep SRCH_LIB $TEMPLATE | awk -F: '{print $2}'`
+USE_LOCALE=`grep USE_LOCALE $TEMPLATE | awk -F: '{print $2}'`
+DLSUFFIX=`grep DLSUFFIX $TEMPLATE | awk -F: '{print $2}'`
+DL_LIB=`grep DL_LIB $TEMPLATE | awk -F: '{print $2}'`
+YACC=`grep YACC $TEMPLATE | awk -F: '{print $2}'`
+YFLAGS=`grep YFLAGS $TEMPLATE | awk -F: '{print $2}'`
+
+export AROPT SHARED_LIB CFLAGS SRCH_INC SRCH_LIB USE_LOCALE DLSUFFIX
+export DL_LIB YACC YFLAGS
+
+
+dnl We now need to check for additional directories (include
+dnl and library directories.
+echo "**************************************************************"
+echo "We now need to know if your compiler needs to search any
+echo "additional directories for include or library files.  If
+echo "you don't know the answers to these questions, then just
+echo "hit enter and we will try and figure it out.  If things
+echo "don't compile because of missing libraries or include
+echo "files, then you probably need to enter something here.
+echo ""
+$ECHO_N "Additional directories to search for include files { none }: $ECHO_C"
+read a
+if test "$a." != "." 
+then
+	SRCH_INC=$a
+	CPPFLAGS=`echo "$SRCH_INC" | sed 's@  *@ @g; s@^\([^ ]\)@-I\1@; s@ \([^ ]\)@ -I\1@g'`
+else
+	SRCH_INC=
+	CPPFLAGS=
+fi
+export SRCH_INC CPPFLAGS
+
+$ECHO_N "Additional directories to search for library files { none }: $ECHO_C"
+read a
+if test "$a." != "."
+then
+	SRCH_LIB=$a
+	LDFLAGS=`echo "$SRCH_LIB" | sed 's@  *@ @g; s@^\([^ ]\)@-L\1@; s@ \([^ ]\)@ -L\1@g'`
+else
+	SRCH_LIB=
+	LDFLAGS=
+fi
+export SRCH_LIB LDFLAGS
+echo "**************************************************************"
+
+dnl We have read the default value of USE_LOCALE from the template 
+dnl file.  We have a further option of using 
+dnl	--disable locale	to explicitly disable it 
+dnl	--enable locale		to explicitly enable it 
+dnl If you do not explicitly do it, it asks you here.
+dnl We need some explanatory text here.
+if test "$enable_locale" = "yes" -o "$enable_locale" = "no"
+then
+	USE_LOCALE=$enable_locale
+else
+	echo "Do you wish to enable LOCALE to get PostgreSQL to work with"
+	$ECHO_N "national characters { $USE_LOCALE }: $ECHO_C"
+	read a
+	if test "$a" = "yes"
+	then
+		USE_LOCALE=yes
+	else
+		USE_LOCALE=no
+	fi
+	echo "**************************************************************"
+fi
+export USE_LOCALE
+
+dnl We use the default value of 5432 for the DEF_PGPORT value.  If
+dnl we over-ride it with --with pgport=port then we bypass this piece
+dnl otherwise we ask.
+if test "X$with_pgport" != "X"
+then
+	DEF_PGPORT=$with_pgport
+else
+	echo "By default, the PostgreSQL postmaster listens on port 5432.  This"
+	echo "can be overriden by command options, environment variables and the"
+	echo "postconfig hook."
+	echo ""
+	$ECHO_N "Which port should the postmaster listen to by default { 5432 }: $ECHO_C"
+	read a
+	if test "X$a" != "X"
+	then
+		DEF_PGPORT=$a
+	else
+		DEF_PGPORT=5432
+	fi
+	echo "**************************************************************"
+fi
+export DEF_PGPORT
+
+dnl Unless we specify the command line options
+dnl	--disable hba		to explicitly disable it 
+dnl	--enable hba		to explicitly enable it 
+dnl If you do not explicitly do it, it asks you here.
+dnl We need some explanatory text here.
+if test "$enable_hba" = "yes" 
+then
+	NOHBA=no
+elif test "$enable_hba" = "no"
+then
+	NOHBA=yes
+else
+	echo "Host Based Authentication (HBA) allows you to limit access"
+	echo "to databases on a per-host basis."
+	$ECHO_N "Disable Host Based Authentication { no }: $ECHO_C"
+	read a
+	if test "$a" = "yes"
+	then
+		NOHBA=yes
+	else
+		NOHBA=no
+	fi
+	echo "**************************************************************"
+fi
+export NOHBA
+
 AC_CONFIG_HEADER(include/config.h)
 
 dnl Checks for programs.
@@ -59,8 +239,6 @@ AC_SUBST(SHARED_LIB)
 AC_SUBST(CFLAGS)
 AC_SUBST(DLSUFFIX)
 AC_SUBST(DL_LIB)
-AC_SUBST(YACC)
-AC_SUBST(YFLAGS)
 
 dnl ****************************************************************
 dnl Hold off on the C++ stuff until we can figure out why it doesn't 
@@ -123,8 +301,33 @@ AC_PATH_PROG(tar, tar)
 AC_PATH_PROG(split, split)
 AC_PATH_PROG(etags, etags)
 AC_PATH_PROG(xargs, xargs)
+AC_PATH_PROG(tr, tr)
 AC_PATH_PROG(ipcs, ipcs)
 AC_PATH_PROG(ipcrm, ipcrm)
+
+dnl Changes to look for YACC.  We have three choices (in order of pref.)
+dnl (1) We specify in YACC and YFLAGS what we want
+dnl (2) We have bison and we use bison -y
+dnl (3) We have yacc and use it
+
+AC_SUBST(YACC)
+AC_SUBST(YFLAGS)
+AC_PATH_PROG(yacc, yacc)
+AC_PATH_PROG(bison, bison)
+if test -f "$YACC" 
+then
+	echo "- Using $YACC $YFLAGS"
+elif test -f "$bison"
+then
+	echo "- Using $bison -y $YFLAGS"
+	YACC="$bison"
+	YFLAGS="-y $YFLAGS"
+	export YACC YFLAGS
+else
+	echo "- Using $yacc $YFLAGS"
+	YACC="$yacc"
+	export YACC
+fi
 
 AC_CHECK_LIB(curses,   main)
 AC_CHECK_LIB(termcap,  main)
@@ -151,6 +354,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(limits.h unistd.h termios.h values.h sys/select.h)
+AC_CHECK_HEADERS(sys/resource.h)
 AC_CHECK_HEADERS(readline.h history.h dld.h crypt.h endian.h float.h)
 
 dnl Checks for typedefs, structures, and compiler characteristics.
@@ -184,7 +388,7 @@ AC_FUNC_MEMCMP
 AC_TYPE_SIGNAL
 AC_FUNC_VPRINTF
 AC_CHECK_FUNCS(isinf tzset getrusage vfork memmove sigsetjmp kill sysconf)
-AC_CHECK_FUNCS(sigprocmask waitpid setsid )
+AC_CHECK_FUNCS(sigprocmask waitpid setsid random)
 AC_CHECK_FUNC(inet_aton, AC_DEFINE(HAVE_INET_ATON), INET_ATON='inet_aton.o')
 AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR), STRERROR='strerror.o')
 AC_CHECK_FUNC(strdup, AC_DEFINE(HAVE_STRDUP), STRDUP='../../utils/strdup.o')
