@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.11 1997/08/20 01:12:04 vadim Exp $
+ *    $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.12 1997/08/22 14:33:21 vadim Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -59,6 +59,7 @@ static ScanKeyword ScanKeywords[] = {
 	{ "cluster",		CLUSTER		},
 	{ "column",		COLUMN		},
 	{ "commit",		COMMIT		},
+	{ "constraint",		CONSTRAINT	},
 	{ "copy",		COPY		},
 	{ "create",		CREATE		},
 	{ "current",		CURRENT		},
