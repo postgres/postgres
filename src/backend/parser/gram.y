@@ -10,7 +10,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.29 1998/09/02 15:47:30 thomas Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.30 1998/09/13 04:19:29 thomas Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -185,6 +185,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
 
 %type <boolean> opt_inh_star, opt_binary, opt_instead, opt_with_copy,
 				index_opt_unique, opt_verbose, opt_analyze
+%type <boolean> cursor_clause, opt_cursor, opt_readonly, opt_of
 
 %type <ival>	copy_dirn, def_type, opt_direction, remove_type,
 				opt_column, event
@@ -256,7 +257,7 @@ Oid	param_type(int t); /* used in parse_expr.c */
  */
 
 /* Keywords (in SQL92 reserved words) */
-%token	ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
+%token	ABSOLUTE, ACTION, ADD, ALL, ALTER, AND, ANY AS, ASC,
 		BEGIN_TRANS, BETWEEN, BOTH, BY,
 		CASCADE, CAST, CHAR, CHARACTER, CHECK, CLOSE, COLLATE, COLUMN, COMMIT, 
 		CONSTRAINT, CREATE, CROSS, CURRENT, CURRENT_DATE, CURRENT_TIME, 
@@ -265,14 +266,14 @@ Oid	param_type(int t); /* used in parse_expr.c */
 		END_TRANS, EXECUTE, EXISTS, EXTRACT,
 		FETCH, FLOAT, FOR, FOREIGN, FROM, FULL,
 		GRANT, GROUP, HAVING, HOUR_P,
-		IN, INNER_P, INSERT, INTERVAL, INTO, IS,
+		IN, INNER_P, INSENSITIVE, INSERT, INTERVAL, INTO, IS,
 		JOIN, KEY, LANGUAGE, LEADING, LEFT, LIKE, LOCAL,
 		MATCH, MINUTE_P, MONTH_P, NAMES,
-		NATIONAL, NATURAL, NCHAR, NO, NOT, NOTIFY, NULL_P, NUMERIC,
-		ON, OPTION, OR, ORDER, OUTER_P,
-		PARTIAL, POSITION, PRECISION, PRIMARY, PRIVILEGES, PROCEDURE, PUBLIC,
-		REFERENCES, REVOKE, RIGHT, ROLLBACK,
-		SECOND_P, SELECT, SET, SUBSTRING,
+		NATIONAL, NATURAL, NCHAR, NEXT, NO, NOT, NOTIFY, NULL_P, NUMERIC,
+		OF, ON, ONLY, OPTION, OR, ORDER, OUTER_P,
+		PARTIAL, POSITION, PRECISION, PRIMARY, PRIOR, PRIVILEGES, PROCEDURE, PUBLIC,
+		READ, REFERENCES, RELATIVE, REVOKE, RIGHT, ROLLBACK,
+		SCROLL, SECOND_P, SELECT, SET, SUBSTRING,
 		TABLE, TIME, TIMESTAMP, TIMEZONE_HOUR, TIMEZONE_MINUTE,
 		TO, TRAILING, TRANSACTION, TRIM,
 		UNION, UNIQUE, UPDATE, USER, USING,
@@ -796,6 +797,16 @@ ColConstraint:
 				{ $$ = $1; }
 		;
 
+/* The column constraint WITH NULL gives a shift/reduce error
+ * because it requires yacc to look more than one token ahead to
+ * resolve WITH TIME ZONE and WITH NULL.
+ * So, leave it out of the syntax for now.
+			| WITH NULL_P
+				{
+					$$ = NULL;
+				}
+ * - thomas 1998-09-12
+ */
 ColConstraintElem:  CHECK '(' constraint_expr ')'
 				{
 					Constraint *n = makeNode(Constraint);
@@ -1512,13 +1523,26 @@ DestroyStmt:  DROP TABLE relation_name_list
 /*****************************************************************************
  *
  *		QUERY:
- *			fetch/move [forward | backward] [number | all ] [ in <portalname> ]
+ *			fetch/move [forward | backward] [ # | all ] [ in <portalname> ]
+ *			fetch [ forward | backward | absolute | relative ]
+ *			      [ # | all | next | prior ] [ [ in | from ] <portalname> ]
  *
  *****************************************************************************/
 
 FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					if ($2 == RELATIVE)
+					{
+						if ($3 == 0)
+							elog(ERROR,"FETCH/RELATIVE at current position is not supported");
+						$2 = FORWARD;
+					}
+					if ($3 < 0)
+					{
+						$3 = -$3;
+						$2 = (($2 == FORWARD)? BACKWARD: FORWARD);
+					}
 					n->direction = $2;
 					n->howMany = $3;
 					n->portalname = $4;
@@ -1528,6 +1552,11 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 		|	MOVE opt_direction fetch_how_many opt_portal_name
 				{
 					FetchStmt *n = makeNode(FetchStmt);
+					if ($3 < 0)
+					{
+						$3 = -$3;
+						$2 = (($2 == FORWARD)? BACKWARD: FORWARD);
+					}
 					n->direction = $2;
 					n->howMany = $3;
 					n->portalname = $4;
@@ -1536,19 +1565,27 @@ FetchStmt:	FETCH opt_direction fetch_how_many opt_portal_name
 				}
 		;
 
-opt_direction:	FORWARD							{ $$ = FORWARD; }
-		| BACKWARD								{ $$ = BACKWARD; }
-		| /*EMPTY*/								{ $$ = FORWARD; /* default */ }
+opt_direction:	FORWARD					{ $$ = FORWARD; }
+		| BACKWARD						{ $$ = BACKWARD; }
+		| RELATIVE						{ $$ = RELATIVE; }
+		| ABSOLUTE
+			{
+				elog(NOTICE,"FETCH/ABSOLUTE not supported, using RELATIVE");
+				$$ = RELATIVE;
+			}
+		| /*EMPTY*/						{ $$ = FORWARD; /* default */ }
 		;
 
-fetch_how_many:  Iconst
-			   { $$ = $1;
-				 if ($1 <= 0) elog(ERROR,"Please specify nonnegative count for fetch"); }
+fetch_how_many:  Iconst					{ $$ = $1; }
+		| '-' Iconst					{ $$ = - $2; }
 		| ALL							{ $$ = 0; /* 0 means fetch all tuples*/ }
+		| NEXT							{ $$ = 1; }
+		| PRIOR							{ $$ = -1; }
 		| /*EMPTY*/						{ $$ = 1; /*default*/ }
 		;
 
 opt_portal_name:  IN name				{ $$ = $2; }
+		| FROM name						{ $$ = $2; }
 		| /*EMPTY*/						{ $$ = NULL; }
 		;
 
@@ -2460,11 +2497,12 @@ UpdateStmt:  UPDATE relation_name
  *				CURSOR STATEMENTS
  *
  *****************************************************************************/
-CursorStmt:  DECLARE name opt_binary CURSOR FOR
+CursorStmt:  DECLARE name opt_cursor CURSOR FOR
  			 SELECT opt_unique res_target_list2
 			 from_clause where_clause
 			 group_clause having_clause
 			 union_clause sort_clause
+			 cursor_clause
 				{
 					SelectStmt *n = makeNode(SelectStmt);
 
@@ -2493,6 +2531,30 @@ CursorStmt:  DECLARE name opt_binary CURSOR FOR
 				}
 		;
 
+opt_cursor:  BINARY						{ $$ = TRUE; }
+		| INSENSITIVE					{ $$ = FALSE; }
+		| SCROLL						{ $$ = FALSE; }
+		| INSENSITIVE SCROLL			{ $$ = FALSE; }
+		| /*EMPTY*/						{ $$ = FALSE; }
+		;
+
+cursor_clause:  FOR opt_readonly		{ $$ = $2; }
+		| /*EMPTY*/						{ $$ = FALSE; }
+		;
+
+opt_readonly:  READ ONLY				{ $$ = TRUE; }
+		| UPDATE opt_of
+			{
+				elog(ERROR,"DECLARE/UPDATE not supported;"
+					 " Cursors must be READ ONLY.");
+				$$ = FALSE;
+			}
+		;
+
+opt_of:  OF columnList
+			{
+				$$ = FALSE;
+			}
 
 /*****************************************************************************
  *
@@ -4551,6 +4613,7 @@ TypeId:  ColId
  */
 ColId:  IDENT							{ $$ = $1; }
 		| datetime						{ $$ = $1; }
+		| ABSOLUTE						{ $$ = "absolute"; }
 		| ACTION						{ $$ = "action"; }
 		| CACHE							{ $$ = "cache"; }
 		| CYCLE							{ $$ = "cycle"; }
@@ -4562,18 +4625,26 @@ ColId:  IDENT							{ $$ = $1; }
 		| FUNCTION						{ $$ = "function"; }
 		| INCREMENT						{ $$ = "increment"; }
 		| INDEX							{ $$ = "index"; }
+		| INSENSITIVE					{ $$ = "insensitive"; }
 		| KEY							{ $$ = "key"; }
 		| LANGUAGE						{ $$ = "language"; }
 		| LOCATION						{ $$ = "location"; }
 		| MATCH							{ $$ = "match"; }
 		| MAXVALUE						{ $$ = "maxvalue"; }
 		| MINVALUE						{ $$ = "minvalue"; }
+		| NEXT							{ $$ = "next"; }
+		| OF							{ $$ = "of"; }
+		| ONLY							{ $$ = "only"; }
 		| OPERATOR						{ $$ = "operator"; }
 		| OPTION						{ $$ = "option"; }
 		| PASSWORD						{ $$ = "password"; }
+		| PRIOR							{ $$ = "prior"; }
 		| PRIVILEGES					{ $$ = "privileges"; }
+		| READ							{ $$ = "read"; }
 		| RECIPE						{ $$ = "recipe"; }
+		| RELATIVE						{ $$ = "relative"; }
 		| ROW							{ $$ = "row"; }
+		| SCROLL						{ $$ = "scroll"; }
 		| SERIAL						{ $$ = "serial"; }
 		| START							{ $$ = "start"; }
 		| STATEMENT						{ $$ = "statement"; }

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.44 1998/09/01 04:30:23 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/keywords.c,v 1.45 1998/09/13 04:19:31 thomas Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,8 +28,9 @@
  *		 search is used to locate entries.
  */
 static ScanKeyword ScanKeywords[] = {
-	/* name					value			*/
+	/* name, value */
 	{"abort", ABORT_TRANS},
+	{"absolute", ABSOLUTE},
 	{"action", ACTION},
 	{"add", ADD},
 	{"after", AFTER},
@@ -143,6 +144,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"natural", NATURAL},
 	{"nchar", NCHAR},
 	{"new", NEW},
+	{"next", NEXT},
 	{"no", NO},
 	{"nocreatedb", NOCREATEDB},
 	{"nocreateuser", NOCREATEUSER},
@@ -153,9 +155,11 @@ static ScanKeyword ScanKeywords[] = {
 	{"notnull", NOTNULL},
 	{"null", NULL_P},
 	{"numeric", NUMERIC},
+	{"of", OF},
 	{"oids", OIDS},
 	{"old", CURRENT},
 	{"on", ON},
+	{"only", ONLY},
 	{"operator", OPERATOR},
 	{"option", OPTION},
 	{"or", OR},
@@ -166,12 +170,15 @@ static ScanKeyword ScanKeywords[] = {
 	{"position", POSITION},
 	{"precision", PRECISION},
 	{"primary", PRIMARY},
+	{"prior", PRIOR},
 	{"privileges", PRIVILEGES},
 	{"procedural", PROCEDURAL},
 	{"procedure", PROCEDURE},
 	{"public", PUBLIC},
+	{"read", READ},
 	{"recipe", RECIPE},
 	{"references", REFERENCES},
+	{"relative", RELATIVE},
 	{"rename", RENAME},
 	{"reset", RESET},
 	{"returns", RETURNS},
@@ -180,6 +187,7 @@ static ScanKeyword ScanKeywords[] = {
 	{"rollback", ROLLBACK},
 	{"row", ROW},
 	{"rule", RULE},
+	{"scroll", SCROLL},
 	{"second", SECOND_P},
 	{"select", SELECT},
 	{"sequence", SEQUENCE},
