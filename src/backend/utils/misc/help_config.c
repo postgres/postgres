@@ -25,7 +25,7 @@
  * Portions Copyright (c) 1996-2003, PostgreSQL Global Development Group
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.1 2003/07/04 16:41:21 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/misc/help_config.c,v 1.2 2003/07/09 17:57:47 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -143,6 +143,7 @@ static const char *const GucContext_names[] = {
 	"SIGHUP",
 	"BACKEND",
 	"SUSET",
+	"USERLIMIT",
 	"USERSET"
 };
 
