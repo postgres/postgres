@@ -6,7 +6,7 @@
  * Copyright (c) 1994, Regents of the University of California
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.50 1999/10/17 23:09:02 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/file/fd.c,v 1.51 1999/11/23 01:08:36 tgl Exp $
  *
  * NOTES:
  *
@@ -400,7 +400,7 @@ ReleaseLruFile()
 	DO_DB(elog(DEBUG, "ReleaseLruFile. Opened %d", nfile));
 
 	if (nfile <= 0)
-		elog(FATAL, "ReleaseLruFile: No opened files - no one can be closed");
+		elog(ERROR, "ReleaseLruFile: No open files available to be closed");
 
 	/*
 	 * There are opened files and so there should be at least one used vfd
