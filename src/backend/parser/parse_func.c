@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.137 2002/09/18 21:35:22 tgl Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/parse_func.c,v 1.138 2002/10/19 21:23:20 tgl Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -191,9 +191,33 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					if (!OidIsValid(toid))
 						elog(ERROR, "Cannot find type OID for relation %u",
 							 rte->relid);
+					/* replace RangeVar in the arg list */
+					lfirst(i) = makeVar(vnum,
+										InvalidAttrNumber,
+										toid,
+										sizeof(Pointer),
+										sublevels_up);
 					break;
 				case RTE_FUNCTION:
 					toid = exprType(rte->funcexpr);
+					if (get_typtype(toid) == 'c')
+					{
+						/* func returns composite; same as relation case */
+						lfirst(i) = makeVar(vnum,
+											InvalidAttrNumber,
+											toid,
+											sizeof(Pointer),
+											sublevels_up);
+					}
+					else
+					{
+						/* func returns scalar; use attno 1 instead */
+						lfirst(i) = makeVar(vnum,
+											1,
+											toid,
+											-1,
+											sublevels_up);
+					}
 					break;
 				default:
 
@@ -210,13 +234,6 @@ ParseFuncOrColumn(ParseState *pstate, List *funcname, List *fargs,
 					toid = InvalidOid;	/* keep compiler quiet */
 					break;
 			}
-
-			/* replace RangeVar in the arg list */
-			lfirst(i) = makeVar(vnum,
-								InvalidAttrNumber,
-								toid,
-								sizeof(Pointer),
-								sublevels_up);
 		}
 		else
 			toid = exprType(arg);
