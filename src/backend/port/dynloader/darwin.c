@@ -3,7 +3,7 @@
  * available with a PostgreSQL-compatible license.	Kudos Wilfredo
  * Sánchez <wsanchez@apple.com>.
  *
- * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.5 2001/03/22 03:59:42 momjian Exp $
+ * $Header: /cvsroot/pgsql/src/backend/port/dynloader/darwin.c,v 1.6 2002/10/01 05:06:44 tgl Exp $
  */
 
 #include "postgres.h"
@@ -18,7 +18,9 @@ pg_dlopen(char *filename)
 	if (NSCreateObjectFileImageFromFile(filename, &image) !=
 		NSObjectFileImageSuccess)
 		return NULL;
-	return NSLinkModule(image, filename, TRUE);
+	return NSLinkModule(image, filename,
+			    NSLINKMODULE_OPTION_BINDNOW |
+			    NSLINKMODULE_OPTION_RETURN_ON_ERROR);
 }
 
 void
