@@ -1,6 +1,6 @@
 TODO list for PostgreSQL
 ========================
-Last updated:		Wed Nov 21 13:49:01 EST 2001
+Last updated:		Wed Nov 21 13:49:42 EST 2001
 
 Current maintainer:	Bruce Momjian (pgman@candle.pha.pa.us)
 
@@ -340,7 +340,7 @@ MISCELLANEOUS
 * Get faster regex() code from Henry Spencer <henry@zoo.utoronto.ca>
   when it is available
 * Use mmap() rather than SYSV shared memory(?) [mmap]
-* Use mmap() to write WAL files(?) [mmap]
+* Use mmap() to write WAL files (?) [mmap]
 * Improve Subplan list handling
 * Allow Subplans to use efficient joins(hash, merge) with upper variable
 * Improve dynamic memory allocation by introducing tuple-context memory
@@ -366,7 +366,7 @@ MISCELLANEOUS
 SOURCE CODE
 -----------
 * Add use of 'const' for variables in source tree
-* Does Mariposa source contain any other bug fixes?
+* Does Mariposa source contain any other bug fixes (?)
 * -Convert remaining fprintf(stderr,...)/perror() to elog() (Peter E)
 * Fix problems with libpq non-blocking/async code [async]
 * -Merge global and template BKI files (Tom)
@@ -387,7 +387,7 @@ SOURCE CODE
 * -Decide on spelling of indexes/indices (Peter E)
 * -Add mention of VACUUM, log rotation to Administrator's Guide (Tom, Bruce)
 * Make one version of simple_prompt() in code (Bruce, Tom)
-* Compile in syslog functionaility by default(?)
+* Compile in syslog functionaility by default (?)
 * Modify regression tests to prevent failures do to minor numeric rounding
 * Remove USING clause from pg_get_indexdef() if index is btree (Bruce)
 
