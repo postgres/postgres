@@ -4,14 +4,16 @@
  *	  Interface to hba.c
  *
  *
- * $Id: hba.h,v 1.24 2001/08/16 16:24:16 momjian Exp $
+ * $Id: hba.h,v 1.25 2001/08/24 16:59:10 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HBA_H
 #define HBA_H
 
+#ifndef WIN32
 #include <netinet/in.h>
+#endif
 
 #define CONF_FILE "pg_hba.conf"
  /* Name of the config file  */

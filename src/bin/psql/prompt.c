@@ -3,7 +3,7 @@
  *
  * Copyright 2000 by PostgreSQL Global Development Group
  *
- * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.19 2001/05/06 17:21:11 petere Exp $
+ * $Header: /cvsroot/pgsql/src/bin/psql/prompt.c,v 1.20 2001/08/24 16:59:10 momjian Exp $
  */
 #include "postgres_fe.h"
 #include "prompt.h"
@@ -129,6 +129,7 @@ get_prompt(promptStatus_t status)
 							if (*p == 'm')
 								buf[strcspn(buf, ".")] = '\0';
 						}
+#ifndef HAVE_UNIX_SOCKETS
 						/* UNIX socket */
 						else
 						{
@@ -139,6 +140,7 @@ get_prompt(promptStatus_t status)
 							else
 								snprintf(buf, MAX_PROMPT_SIZE, "[local:%s]", host);
 						}
+#endif
 					}
 					break;
 					/* DB server port number */
