@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.5 1998/01/05 16:38:51 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/dbcommands.c,v 1.6 1998/01/31 04:38:19 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -258,12 +258,12 @@ check_permissions(char *command,
 
 	if (dbfound)
 	{
-		dbowner = (Oid) heap_getattr(dbtup, InvalidBuffer,
+		dbowner = (Oid) heap_getattr(dbtup,
 									 Anum_pg_database_datdba,
 									 RelationGetTupleDescriptor(dbrel),
 									 (char *) NULL);
 		*dbIdP = dbtup->t_oid;
-		dbtext = (text *) heap_getattr(dbtup, InvalidBuffer,
+		dbtext = (text *) heap_getattr(dbtup,
 								 Anum_pg_database_datpath,
 								 RelationGetTupleDescriptor(dbrel),
 								 (char *) NULL);

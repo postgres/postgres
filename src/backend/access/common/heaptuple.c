@@ -1,4 +1,4 @@
-/*-------------------------------------------------------------------------
+ /*-------------------------------------------------------------------------
  *
  * heaptuple.c--
  *	  This file contains heap tuple accessor and mutator routines, as well
@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.30 1998/01/07 21:00:40 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/heaptuple.c,v 1.31 1998/01/31 04:38:02 momjian Exp $
  *
  * NOTES
  *	  The old interface functions have been converted to macros
@@ -32,6 +32,16 @@
 #include <string.h>
 #endif
 
+/* Used by heap_getattr() macro, for speed */
+long heap_sysoffset[] = {
+/* Only the first one is pass-by-ref, and is handled specially in the macro */
+		offsetof(HeapTupleData, t_ctid),		
+		offsetof(HeapTupleData, t_oid),
+		offsetof(HeapTupleData, t_xmin),
+		offsetof(HeapTupleData, t_cmin),
+		offsetof(HeapTupleData, t_xmax),
+		offsetof(HeapTupleData, t_cmax)
+};
 
 /* this is so the sparcstation debugger works */
 
@@ -345,7 +355,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 {
 	switch (attnum)
 	{
-		case SelfItemPointerAttributeNumber:
+		case  SelfItemPointerAttributeNumber:
 			return ((Datum) &tup->t_ctid);
 		case ObjectIdAttributeNumber:
 			return ((Datum) (long) tup->t_oid);
@@ -364,10 +374,12 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
 }
 
 /* ----------------
- *		fastgetattr
+ *		nocachegetattr
  *
- *		This is a newer version of fastgetattr which attempts to be
- *		faster by caching attribute offsets in the attribute descriptor.
+ *		This only gets called from fastgetattr() macro, in cases where
+ *		we can't use a cacheoffset and the value is not null.
+ *
+ *		This caches attribute offsets in the attribute descriptor.
  *
  *		an alternate way to speed things up would be to cache offsets
  *		with the tuple, but that seems more difficult unless you take
@@ -381,7 +393,7 @@ heap_getsysattr(HeapTuple tup, Buffer b, int attnum)
  * ----------------
  */
 Datum
-fastgetattr(HeapTuple tup,
+nocachegetattr(HeapTuple tup,
 			int attnum,
 			TupleDesc tupleDesc,
 			bool *isnull)
@@ -391,12 +403,14 @@ fastgetattr(HeapTuple tup,
 	int			slow;			/* do we have to walk nulls? */
 	AttributeTupleForm *att = tupleDesc->attrs;
 
-	/* ----------------
-	 *	sanity checks
-	 * ----------------
-	 */
-
+	
+#if IN_MACRO
+/* This is handled in the macro */
 	Assert(attnum > 0);
+
+	if (isnull)
+		*isnull = false;
+#endif
 
 	/* ----------------
 	 *	 Three cases:
@@ -407,12 +421,12 @@ fastgetattr(HeapTuple tup,
 	 * ----------------
 	 */
 
-	if (isnull)
-		*isnull = false;
-
 	if (HeapTupleNoNulls(tup))
 	{
 		attnum--;
+
+#if IN_MACRO
+/* This is handled in the macro */
 		if (att[attnum]->attcacheoff > 0)
 		{
 			return (Datum)
@@ -427,6 +441,7 @@ fastgetattr(HeapTuple tup,
 			 */
 			return ((Datum) fetchatt(&(att[0]), (char *) tup + tup->t_hoff));
 		}
+#endif
 
 		tp = (char *) tup + tup->t_hoff;
 
@@ -449,12 +464,15 @@ fastgetattr(HeapTuple tup,
 		 * ----------------
 		 */
 
+#if IN_MACRO
+/* This is handled in the macro */
 		if (att_isnull(attnum, bp))
 		{
 			if (isnull)
 				*isnull = true;
 			return (Datum) NULL;
 		}
+#endif
 
 		/* ----------------
 		 *		Now check to see if any preceeding bits are null...
@@ -539,7 +557,7 @@ fastgetattr(HeapTuple tup,
 					if (att[j]->attlen < sizeof(int32))
 					{
 						elog(ERROR,
-							 "fastgetattr: attribute %d has len %d",
+							 "nocachegetattr: attribute %d has len %d",
 							 j, att[j]->attlen);
 					}
 					if (att[j]->attalign == 'd')
@@ -599,7 +617,7 @@ fastgetattr(HeapTuple tup,
 				default:
 					if (att[i]->attlen < sizeof(int32))
 						elog(ERROR,
-							 "fastgetattr2: attribute %d has len %d",
+							 "nocachegetattr2: attribute %d has len %d",
 							 i, att[i]->attlen);
 					if (att[i]->attalign == 'd')
 						off = DOUBLEALIGN(off);
@@ -657,7 +675,7 @@ fastgetattr(HeapTuple tup,
 				break;
 			default:
 				if (att[attnum]->attlen < sizeof(int32))
-					elog(ERROR, "fastgetattr3: attribute %d has len %d",
+					elog(ERROR, "nocachegetattr3: attribute %d has len %d",
 						 attnum, att[attnum]->attlen);
 				if (att[attnum]->attalign == 'd')
 					off = DOUBLEALIGN(off);
@@ -719,7 +737,6 @@ heap_deformtuple(HeapTuple tuple,
 		bool		isnull;
 
 		values[i] = heap_getattr(tuple,
-								 InvalidBuffer,
 								 i + 1,
 								 tdesc,
 								 &isnull);
@@ -874,7 +891,6 @@ heap_modifytuple(HeapTuple tuple,
 		{
 			value[attoff] =
 				heap_getattr(tuple,
-							 InvalidBuffer,
 							 AttrOffsetGetAttrNumber(attoff),
 							 RelationGetTupleDescriptor(relation),
 							 &isNull);
@@ -959,3 +975,4 @@ heap_addheader(uint32 natts,	/* max domain index */
 
 	return (tup);
 }
+

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.7 1997/11/20 23:22:57 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/Attic/not_in.c,v 1.8 1998/01/31 04:38:45 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -83,7 +83,6 @@ int4notin(int16 not_in_arg, char *relation_and_attr)
 		 current_tuple = heap_getnext(scan_descriptor, 0, NULL))
 	{
 		value = heap_getattr(current_tuple,
-							 InvalidBuffer,
 							 (AttrNumber) attrid,
 							 RelationGetTupleDescriptor(relation_to_scan),
 							 &dummy);

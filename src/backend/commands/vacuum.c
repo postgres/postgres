@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.58 1998/01/15 19:42:40 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/commands/vacuum.c,v 1.59 1998/01/31 04:38:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ vc_getrels(NameData *VacRelP)
 
 		found = true;
 
-		d = heap_getattr(pgctup, buf, Anum_pg_class_relname, pgcdesc, &n);
+		d = heap_getattr(pgctup, Anum_pg_class_relname, pgcdesc, &n);
 		rname = (char *) d;
 
 		/*
@@ -317,7 +317,7 @@ vc_getrels(NameData *VacRelP)
 			continue;
 		}
 
-		d = heap_getattr(pgctup, buf, Anum_pg_class_relkind, pgcdesc, &n);
+		d = heap_getattr(pgctup, Anum_pg_class_relkind, pgcdesc, &n);
 
 		rkind = DatumGetChar(d);
 
@@ -1637,7 +1637,7 @@ vc_attrstats(Relation onerel, VRelStats *vacrelstats, HeapTuple htup)
 		VacAttrStats *stats = &vacattrstats[i];
 		bool		value_hit = true;
 
-		value = heap_getattr(htup, InvalidBuffer,
+		value = heap_getattr(htup,
 							 stats->attr->attnum, tupDesc, &isnull);
 
 		if (!VacAttrStatsEqValid(stats))
@@ -2166,7 +2166,7 @@ vc_getindices(Oid relid, int *nindices, Relation **Irel)
 
 	while (HeapTupleIsValid(pgitup = heap_getnext(pgiscan, 0, NULL)))
 	{
-		d = heap_getattr(pgitup, InvalidBuffer, Anum_pg_index_indexrelid,
+		d = heap_getattr(pgitup, Anum_pg_index_indexrelid,
 						 pgidesc, &n);
 		i++;
 		if (i % 10 == 0)

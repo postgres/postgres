@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.16 1998/01/07 21:06:26 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/fmgr/dfmgr.c,v 1.17 1998/01/31 04:38:57 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -99,7 +99,7 @@ fmgr_dynamic(Oid procedureId, int *pronargs)
 			 ProcedureRelationName);
 		return ((func_ptr) NULL);
 	}
-	probinattr = heap_getattr(procedureTuple, (Buffer) 0,
+	probinattr = heap_getattr(procedureTuple,
 							  Anum_pg_proc_probin,
 							  RelationGetTupleDescriptor(rdesc), &isnull);
 	if (!PointerIsValid(probinattr) /* || isnull */ )

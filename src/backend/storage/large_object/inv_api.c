@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.26 1998/01/07 21:05:17 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/storage/large_object/inv_api.c,v 1.27 1998/01/31 04:38:42 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -461,7 +461,7 @@ inv_read(LargeObjectDesc *obj_desc, char *buf, int nbytes)
 		}
 
 		/* copy the data from this block into the buffer */
-		d = heap_getattr(htup, b, 2, obj_desc->hdesc, &isNull);
+		d = heap_getattr(htup, 2, obj_desc->hdesc, &isNull);
 		fsblock = (struct varlena *) DatumGetPointer(d);
 
 		off = obj_desc->offset - obj_desc->lowbyte;
@@ -637,9 +637,9 @@ inv_fetchtup(LargeObjectDesc *obj_desc, Buffer *bufP)
 	 * return the tuple.
 	 */
 
-	d = heap_getattr(htup, *bufP, 1, obj_desc->hdesc, &isNull);
+	d = heap_getattr(htup, 1, obj_desc->hdesc, &isNull);
 	lastbyte = (int32) DatumGetInt32(d);
-	d = heap_getattr(htup, *bufP, 2, obj_desc->hdesc, &isNull);
+	d = heap_getattr(htup, 2, obj_desc->hdesc, &isNull);
 	fsblock = (struct varlena *) DatumGetPointer(d);
 
 	/*
@@ -807,7 +807,7 @@ inv_wrold(LargeObjectDesc *obj_desc,
 	newpage = BufferGetPage(newbuf);
 	hr = obj_desc->heap_r;
 	freespc = IFREESPC(page);
-	d = heap_getattr(htup, buffer, 2, obj_desc->hdesc, &isNull);
+	d = heap_getattr(htup, 2, obj_desc->hdesc, &isNull);
 	fsblock = (struct varlena *) DatumGetPointer(d);
 	tupbytes = fsblock->vl_len - sizeof(fsblock->vl_len);
 
@@ -1202,7 +1202,7 @@ _inv_getsize(Relation hreln, TupleDesc hdesc, Relation ireln)
 	index_endscan(iscan);
 
 	/* get olastbyte attribute */
-	d = heap_getattr(htup, buf, 1, hdesc, &isNull);
+	d = heap_getattr(htup, 1, hdesc, &isNull);
 	size = DatumGetInt32(d) + 1;
 
 	/* wei hates it if you forget to do this */

@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.3 1998/01/15 19:42:26 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/catalog/aclchk.c,v 1.4 1998/01/31 04:38:11 momjian Exp $
  *
  * NOTES
  *	  See acl.h.
@@ -140,7 +140,7 @@ ChangeAcl(char *relname,
 		return;
 	}
 	if (!heap_attisnull(htp, Anum_pg_class_relacl))
-		old_acl = (Acl *) heap_getattr(htp, buffer,
+		old_acl = (Acl *) heap_getattr(htp,
 									   Anum_pg_class_relacl,
 									RelationGetTupleDescriptor(relation),
 									   (bool *) NULL);
@@ -253,7 +253,7 @@ in_group(AclId uid, AclId gid)
 	if (HeapTupleIsValid(htp) &&
 		!heap_attisnull(htp, Anum_pg_group_grolist))
 	{
-		tmp = (IdList *) heap_getattr(htp, InvalidBuffer,
+		tmp = (IdList *) heap_getattr(htp,
 									  Anum_pg_group_grolist,
 									RelationGetTupleDescriptor(relation),
 									  (bool *) NULL);
@@ -453,7 +453,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 	if (!heap_attisnull(htp, Anum_pg_class_relacl))
 	{
 		relation = heap_openr(RelationRelationName);
-		tmp = (Acl *) heap_getattr(htp, InvalidBuffer,
+		tmp = (Acl *) heap_getattr(htp,
 								   Anum_pg_class_relacl,
 								   RelationGetTupleDescriptor(relation),
 								   (bool *) NULL);
@@ -471,7 +471,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		Oid			ownerId;
 
 		relation = heap_openr(RelationRelationName);
-		ownerId = (Oid) heap_getattr(htp, InvalidBuffer,
+		ownerId = (Oid) heap_getattr(htp,
 									 Anum_pg_class_relowner,
 									 RelationGetTupleDescriptor(relation),
 									 (bool *) NULL);
@@ -500,7 +500,7 @@ pg_aclcheck(char *relname, char *usename, AclMode mode)
 		if (HeapTupleIsValid(htp) &&
 			!heap_attisnull(htp, Anum_pg_class_relacl))
 		{
-			tmp = (Acl *) heap_getattr(htp, InvalidBuffer,
+			tmp = (Acl *) heap_getattr(htp,
 									   Anum_pg_class_relacl,
 									RelationGetTupleDescriptor(relation),
 									   (bool *) NULL);

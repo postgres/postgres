@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.9 1997/09/12 04:07:33 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execJunk.c,v 1.10 1998/01/31 04:38:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -315,7 +315,7 @@ ExecGetJunkAttribute(JunkFilter *junkfilter,
 	tuple = slot->val;
 	tupType = (TupleDesc) junkfilter->jf_tupType;
 
-	*value = heap_getattr(tuple, InvalidBuffer, resno, tupType, isNull);
+	*value = heap_getattr(tuple, resno, tupType, isNull);
 
 	return true;
 }
@@ -391,7 +391,7 @@ ExecRemoveJunk(JunkFilter *junkfilter, TupleTableSlot *slot)
 	for (i = 0; i < cleanLength; i++)
 	{
 		values[i] =
-			heap_getattr(tuple, InvalidBuffer, cleanMap[i], tupType, &isNull);
+			heap_getattr(tuple, cleanMap[i], tupType, &isNull);
 
 		if (isNull)
 			nulls[i] = 'n';

@@ -12,7 +12,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.14 1998/01/05 16:40:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/selfuncs.c,v 1.15 1998/01/31 04:38:49 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -364,7 +364,6 @@ gethilokey(Oid relid,
 	}
 	*high = textout((struct varlena *)
 					heap_getattr(tuple,
-								 InvalidBuffer,
 								 Anum_pg_statistic_stahikey,
 								 RelationGetTupleDescriptor(rdesc),
 								 &isnull));
@@ -372,7 +371,6 @@ gethilokey(Oid relid,
 		elog(DEBUG, "gethilokey: high key is null");
 	*low = textout((struct varlena *)
 				   heap_getattr(tuple,
-								InvalidBuffer,
 								Anum_pg_statistic_stalokey,
 								RelationGetTupleDescriptor(rdesc),
 								&isnull));

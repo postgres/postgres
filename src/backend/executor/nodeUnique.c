@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.11 1997/09/12 04:07:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeUnique.c,v 1.12 1998/01/31 04:38:31 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -187,9 +187,9 @@ ExecUnique(Unique *node)
 			char	   *val1,
 					   *val2;
 
-			attr1 = heap_getattr(slot->val, InvalidBuffer,
+			attr1 = heap_getattr(slot->val, 
 								 uniqueAttrNum, tupDesc, &isNull1);
-			attr2 = heap_getattr(resultTupleSlot->val, InvalidBuffer,
+			attr2 = heap_getattr(resultTupleSlot->val,
 								 uniqueAttrNum, tupDesc, &isNull2);
 
 			if (isNull1 == isNull2)

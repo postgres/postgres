@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.14 1997/12/11 17:36:16 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/functions.c,v 1.15 1998/01/31 04:38:28 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -82,7 +82,7 @@ ProjectAttribute(TupleDesc TD,
 	AttrNumber	attrno = attrVar->varattno;
 
 
-	val = heap_getattr(tup, InvalidBuffer, attrno, TD, isnullP);
+	val = heap_getattr(tup, attrno, TD, isnullP);
 	if (*isnullP)
 		return (Datum) NULL;
 

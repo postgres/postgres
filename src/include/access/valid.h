@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: valid.h,v 1.12 1998/01/15 19:46:18 pgsql Exp $
+ * $Id: valid.h,v 1.13 1998/01/31 04:39:24 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -53,7 +53,7 @@ do \
 	(result) = true; /* may change */ \
 	for (; __cur_nkeys--; __cur_keys++) \
 	{ \
-		__atp = heap_getattr((tuple), InvalidBuffer, \
+		__atp = heap_getattr((tuple), \
 						   __cur_keys->sk_attno, \
 						   (tupdesc), \
 						   &__isnull); \

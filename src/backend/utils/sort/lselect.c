@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.10 1998/01/15 19:46:08 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/sort/Attic/lselect.c,v 1.11 1998/01/31 04:39:12 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -198,12 +198,12 @@ tuplecmp(HeapTuple ltup, HeapTuple rtup, LeftistContext context)
 		return (1);
 	while (nkey < context->nKeys && !result)
 	{
-		lattr = heap_getattr(ltup, InvalidBuffer,
+		lattr = heap_getattr(ltup,
 							 context->scanKeys[nkey].sk_attno,
 							 context->tupDesc, &isnull);
 		if (isnull)
 			return (0);
-		rattr = heap_getattr(rtup, InvalidBuffer,
+		rattr = heap_getattr(rtup,
 							 context->scanKeys[nkey].sk_attno,
 							 context->tupDesc,
 							 &isnull);

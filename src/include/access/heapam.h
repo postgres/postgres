@@ -6,13 +6,14 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: heapam.h,v 1.26 1998/01/27 15:57:41 momjian Exp $
+ * $Id: heapam.h,v 1.27 1998/01/31 04:39:21 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef HEAPAM_H
 #define HEAPAM_H
 
+#include <access/tupmacs.h>
 #include <access/htup.h>
 #include <access/relscan.h>
 #include <storage/block.h>
@@ -80,6 +81,59 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
 	(heap_access_stats == NULL ? 0 : (heap_access_stats->x)++)
 
 /* ----------------
+ *		fastgetattr
+ *
+ *		This gets called many times, so we macro the cacheable and NULL
+ *		lookups, and call noncachegetattr() for the rest.
+ *
+ * ----------------
+ */
+#define fastgetattr(tup, attnum, tupleDesc, isnull) \
+( \
+	AssertMacro((attnum) > 0) ? \
+	( \
+		((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
+		HeapTupleNoNulls(tup) ? \
+		( \
+			((tupleDesc)->attrs[(attnum)-1]->attcacheoff > 0) ? \
+			( \
+				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
+			  	  (char *) (tup) + (tup)->t_hoff + (tupleDesc)->attrs[(attnum)-1]->attcacheoff) \
+			) \
+			: \
+			( \
+				((attnum)-1 == 0) ? \
+				( \
+					(Datum)fetchatt(&((tupleDesc)->attrs[0]), (char *) (tup) + (tup)->t_hoff) \
+				) \
+				: \
+				( \
+					nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
+				) \
+			) \
+		) \
+		: \
+		( \
+			att_isnull((attnum)-1, (tup)->t_bits) ? \
+			( \
+				((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
+				(Datum)NULL \
+			) \
+			: \
+			( \
+				nocachegetattr((tup), (attnum), (tupleDesc), (isnull)) \
+			) \
+		) \
+	) \
+	: \
+	( \
+		 (Datum)NULL \
+	) \
+)
+
+
+	
+/* ----------------
  *		heap_getattr
  *
  *		Find a particular field in a row represented as a heap tuple.
@@ -97,15 +151,46 @@ typedef HeapAccessStatisticsData *HeapAccessStatistics;
  *		Because this macro is often called with constants, it generates
  *		compiler warnings about 'left-hand comma expression has no effect.
  *
- * ---------------- */
-#define heap_getattr(tup, b, attnum, tupleDesc, isnull) \
-	(AssertMacro((tup) != NULL) ? \
+ * ----------------
+ */
+#define heap_getattr(tup, attnum, tupleDesc, isnull) \
+( \
+	AssertMacro((tup) != NULL && \
+		(attnum) > FirstLowInvalidHeapAttributeNumber && \
+		(attnum) != 0) ? \
+	( \
 		((attnum) > (int) (tup)->t_natts) ? \
-			(((isnull) ? (*(isnull) = true) : (dummyret)NULL), (Datum)NULL) : \
-		((attnum) > 0) ? \
-			fastgetattr((tup), (attnum), (tupleDesc), (isnull)) : \
-		(((isnull) ? (*(isnull) = false) : (dummyret)NULL), heap_getsysattr((tup), (b), (attnum))) : \
-	(Datum)NULL)
+		( \
+			((isnull) ? (*(isnull) = true) : (dummyret)NULL), \
+			(Datum)NULL \
+		) \
+		: \
+		( \
+			((attnum) > 0) ? \
+			( \
+				fastgetattr((tup), (attnum), (tupleDesc), (isnull)) \
+			) \
+			: \
+			( \
+				((isnull) ? (*(isnull) = false) : (dummyret)NULL), \
+				((attnum) == SelfItemPointerAttributeNumber) ? \
+				( \
+					(Datum)((char *)(tup) + \
+						heap_sysoffset[-SelfItemPointerAttributeNumber-1]) \
+				) \
+				: \
+				( \
+					(Datum)*(unsigned int *) \
+						((char *)(tup) + heap_sysoffset[-(attnum)-1]) \
+				) \
+			) \
+		) \
+	) \
+	: \
+	( \
+		 (Datum)NULL \
+	) \
+)
 
 extern HeapAccessStatistics heap_access_stats;	/* in stats.c */
 
@@ -143,7 +228,7 @@ extern int	heap_attisnull(HeapTuple tup, int attnum);
 extern int	heap_sysattrlen(AttrNumber attno);
 extern bool heap_sysattrbyval(AttrNumber attno);
 extern Datum heap_getsysattr(HeapTuple tup, Buffer b, int attnum);
-extern Datum fastgetattr(HeapTuple tup, int attnum,
+extern Datum nocachegetattr(HeapTuple tup, int attnum,
 						 TupleDesc att, bool *isnull);
 extern HeapTuple heap_copytuple(HeapTuple tuple);
 extern HeapTuple heap_formtuple(TupleDesc tupleDescriptor,

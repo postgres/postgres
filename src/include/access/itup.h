@@ -6,15 +6,18 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: itup.h,v 1.9 1998/01/24 22:48:06 momjian Exp $
+ * $Id: itup.h,v 1.10 1998/01/31 04:39:23 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
 #ifndef ITUP_H
 #define ITUP_H
 
+#include <access/ibit.h>
+#include <access/tupmacs.h>
 #include <access/tupdesc.h>
 #include <storage/itemptr.h>
+#include <utils/memutils.h>
 
 #define MaxIndexAttributeNumber 7
 
@@ -87,12 +90,87 @@ typedef struct PredInfo
 
 #define IndexTupleHasMinHeader(itup) (IndexTupleNoNulls(itup))
 
+/*
+ * Takes an infomask as argument (primarily because this needs to be usable
+ * at index_formtuple time so enough space is allocated).
+ *
+ * Change me if adding an attribute to IndexTuples!!!!!!!!!!!
+ */
+#define IndexInfoFindDataOffset(t_info) \
+( \
+	(!((unsigned short)(t_info) & INDEX_NULL_MASK)) ? \
+	( \
+		(Size)sizeof(IndexTupleData) \
+	) \
+	: \
+	( \
+		(Size)DOUBLEALIGN(sizeof(IndexTupleData) + sizeof(IndexAttributeBitMapData)) \
+	) \
+)
 
+/* ----------------
+ *		index_getattr
+ *
+ *		This gets called many times, so we macro the cacheable and NULL
+ *		lookups, and call noncachegetattr() for the rest.
+ *
+ * ----------------
+ */
+#define index_getattr(tup, attnum, tupleDesc, isnull) \
+( \
+	AssertMacro(PointerIsValid(isnull) && (attnum) > 0) ? \
+	( \
+		*(isnull) = false, \
+		IndexTupleNoNulls(tup) ? \
+		( \
+			((tupleDesc)->attrs[(attnum)-1]->attcacheoff > 0) ? \
+			( \
+				(Datum)fetchatt(&((tupleDesc)->attrs[(attnum)-1]), \
+			  	  (char *) (tup) + \
+					(IndexTupleHasMinHeader(tup) ? sizeof (*(tup)) : \
+					 IndexInfoFindDataOffset((tup)->t_info)) + \
+					(tupleDesc)->attrs[(attnum)-1]->attcacheoff) \
+			) \
+			: \
+			( \
+				((attnum)-1 == 0) ? \
+				( \
+					(Datum)fetchatt(&((tupleDesc)->attrs[0]), \
+						(char *) (tup) + \
+						(IndexTupleHasMinHeader(tup) ? sizeof (*(tup)) : \
+					 	 IndexInfoFindDataOffset((tup)->t_info))) \
+				) \
+				: \
+				( \
+					nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
+				) \
+			) \
+		) \
+		: \
+		( \
+			(att_isnull((attnum)-1, (char *)(tup) + sizeof(*(tup)))) ? \
+			( \
+				*(isnull) = true, \
+				(Datum)NULL \
+			) \
+			: \
+			( \
+				nocache_index_getattr((tup), (attnum), (tupleDesc), (isnull)) \
+			) \
+		) \
+	) \
+	: \
+	( \
+		 (Datum)NULL \
+	) \
+)
+
+	
 /* indextuple.h */
 extern IndexTuple index_formtuple(TupleDesc tupleDescriptor,
 				Datum value[], char null[]);
-extern Datum index_getattr(IndexTuple tuple, AttrNumber attNum,
-			  TupleDesc tupDesc, bool *isNullOutP);
+extern Datum nocache_index_getattr(IndexTuple tup, int attnum,
+			  TupleDesc tupleDesc, bool *isnull);
 extern RetrieveIndexResult FormRetrieveIndexResult(ItemPointer indexItemPointer,
 						ItemPointer heapItemPointer);
 extern void CopyIndexTuple(IndexTuple source, IndexTuple *target);

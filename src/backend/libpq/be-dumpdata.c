@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.10 1998/01/26 01:41:05 scrappy Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/libpq/Attic/be-dumpdata.c,v 1.11 1998/01/31 04:38:34 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -299,7 +299,7 @@ be_printtup(HeapTuple tuple, TupleDesc typeinfo)
 
 	for (i = 0; i < tuple->t_natts; i++)
 	{
-		attr = heap_getattr(tuple, InvalidBuffer, i + 1, typeinfo, &isnull);
+		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
 
 		lengths[i] = typeinfo->attrs[i]->attlen;

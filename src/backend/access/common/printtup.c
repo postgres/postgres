@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.22 1998/01/07 21:00:44 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/printtup.c,v 1.23 1998/01/31 04:38:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -97,7 +97,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	{
 		i++;					/* heap_getattr is a macro, so no
 								 * increment */
-		attr = heap_getattr(tuple, InvalidBuffer, i, typeinfo, &isnull);
+		attr = heap_getattr(tuple, i, typeinfo, &isnull);
 		if (!isnull)
 			j |= k;
 		k >>= 1;
@@ -117,7 +117,7 @@ printtup(HeapTuple tuple, TupleDesc typeinfo)
 	 */
 	for (i = 0; i < tuple->t_natts; ++i)
 	{
-		attr = heap_getattr(tuple, InvalidBuffer, i + 1, typeinfo, &isnull);
+		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
 
 		if (!isnull && OidIsValid(typoutput))
@@ -183,7 +183,7 @@ debugtup(HeapTuple tuple, TupleDesc typeinfo)
 
 	for (i = 0; i < tuple->t_natts; ++i)
 	{
-		attr = heap_getattr(tuple, InvalidBuffer, i + 1, typeinfo, &isnull);
+		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		typoutput = typtoout((Oid) typeinfo->attrs[i]->atttypid);
 
 		if (!isnull && OidIsValid(typoutput))
@@ -231,7 +231,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	{
 		i++;					/* heap_getattr is a macro, so no
 								 * increment */
-		attr = heap_getattr(tuple, InvalidBuffer, i, typeinfo, &isnull);
+		attr = heap_getattr(tuple, i, typeinfo, &isnull);
 		if (!isnull)
 			j |= k;
 		k >>= 1;
@@ -256,7 +256,7 @@ printtup_internal(HeapTuple tuple, TupleDesc typeinfo)
 	{
 		int32		len = typeinfo->attrs[i]->attlen;
 
-		attr = heap_getattr(tuple, InvalidBuffer, i + 1, typeinfo, &isnull);
+		attr = heap_getattr(tuple, i + 1, typeinfo, &isnull);
 		if (!isnull)
 		{
 			/* # of bytes, and opaque data */

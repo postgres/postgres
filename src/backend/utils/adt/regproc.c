@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.12 1998/01/05 16:40:12 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/adt/regproc.c,v 1.13 1998/01/31 04:38:46 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -68,7 +68,6 @@ regprocin(char *proname)
 	{
 		case 1:
 			result = (RegProcedure) heap_getattr(proctup,
-												 InvalidBuffer,
 												 ObjectIdAttributeNumber,
 										RelationGetTupleDescriptor(proc),
 												 &isnull);
@@ -129,7 +128,7 @@ regprocout(RegProcedure proid)
 			bool		isnull;
 
 		case 1:
-			s = (char *) heap_getattr(proctup, InvalidBuffer, 1,
+			s = (char *) heap_getattr(proctup, 1,
 							  RelationGetTupleDescriptor(proc), &isnull);
 			if (!isnull)
 			{
@@ -206,7 +205,7 @@ oid8types(Oid (*oidArray)[])
 				char	   *s;
 				bool		isnull;
 	
-				s = (char *) heap_getattr(typetup, InvalidBuffer, 1,
+				s = (char *) heap_getattr(typetup, 1,
 								  RelationGetTupleDescriptor(type), &isnull);
 				if (!isnull)
 				{

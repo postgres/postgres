@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.23 1998/01/15 19:44:24 pgsql Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/execQual.c,v 1.24 1998/01/31 04:38:27 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -301,7 +301,6 @@ ExecEvalVar(Var *variable, ExprContext *econtext, bool *isNull)
 	}
 
 	result = heap_getattr(heapTuple, /* tuple containing attribute */
-						  buffer,	/* buffer associated with tuple */
 						  attnum,	/* attribute number of desired attribute */
 					 	  tuple_type,/* tuple descriptor of tuple */
 						  isNull);	/* return: is attribute null? */
@@ -525,7 +524,6 @@ GetAttributeByNum(TupleTableSlot *slot,
 	}
 
 	retval = heap_getattr(slot->val,
-						  slot->ttc_buffer,
 						  attrno,
 						  slot->ttc_tupleDescriptor,
 						  isNull);
@@ -587,7 +585,6 @@ GetAttributeByName(TupleTableSlot *slot, char *attname, bool *isNull)
 		elog(ERROR, "GetAttributeByName: attribute %s not found", attname);
 
 	retval = heap_getattr(slot->val,
-						  slot->ttc_buffer,
 						  attrno,
 						  tupdesc,
 						  isNull);

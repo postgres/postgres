@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: parse_node.h,v 1.7 1998/01/20 22:12:16 momjian Exp $
+ * $Id: parse_node.h,v 1.8 1998/01/31 04:39:26 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -28,7 +28,6 @@ typedef struct QueryTreeList
 /* state information used during parse analysis */
 typedef struct ParseState
 {
-	struct 		ParseState;
 	int			p_last_resno;
 	List	   *p_rtable;
 	List	   *p_insert_columns;

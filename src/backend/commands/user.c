@@ -118,12 +118,12 @@ void DefineUser(CreateUserStmt *stmt) {
 
   scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, buffer, Anum_pg_user_usename, pg_user_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_user_usename, pg_user_dsc, &n);
 
     if (!exists && !strncmp((char*)datum, stmt->user, strlen(stmt->user)))
       exists = true;
 
-    datum = heap_getattr(tuple, buffer, Anum_pg_user_usesysid, pg_user_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_user_usesysid, pg_user_dsc, &n);
     if ((int)datum > max_id)
       max_id = (int)datum;
 
@@ -229,7 +229,7 @@ extern void AlterUser(AlterUserStmt *stmt) {
 
   scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, buffer, Anum_pg_user_usename, pg_user_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_user_usename, pg_user_dsc, &n);
 
     if (!strncmp((char*)datum, stmt->user, strlen(stmt->user))) {
       exists = true;
@@ -340,10 +340,10 @@ extern void RemoveUser(char* user) {
 
   scan = heap_beginscan(pg_user_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, buffer, Anum_pg_user_usename, pg_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_user_usename, pg_dsc, &n);
 
     if (!strncmp((char*)datum, user, strlen(user))) {
-      usesysid = (int)heap_getattr(tuple, buffer, Anum_pg_user_usesysid, pg_dsc, &n);
+      usesysid = (int)heap_getattr(tuple, Anum_pg_user_usesysid, pg_dsc, &n);
       ReleaseBuffer(buffer);
       break;
     }
@@ -367,10 +367,10 @@ extern void RemoveUser(char* user) {
 
   scan = heap_beginscan(pg_rel, false, false, 0, NULL);
   while (HeapTupleIsValid(tuple = heap_getnext(scan, 0, &buffer))) {
-    datum = heap_getattr(tuple, buffer, Anum_pg_database_datdba, pg_dsc, &n);
+    datum = heap_getattr(tuple, Anum_pg_database_datdba, pg_dsc, &n);
 
     if ((int)datum == usesysid) {
-      datum = heap_getattr(tuple, buffer, Anum_pg_database_datname, pg_dsc, &n);
+      datum = heap_getattr(tuple, Anum_pg_database_datname, pg_dsc, &n);
       if (memcmp((void*)datum, "template1", 9)) {
         dbase = (char**)realloc((void*)dbase, sizeof(char*) * (ndbase + 1));
         dbase[ndbase] = (char*)malloc(NAMEDATALEN + 1);

@@ -6,7 +6,7 @@
  *
  * Copyright (c) 1994, Regents of the University of California
  *
- * $Id: htup.h,v 1.7 1997/11/02 15:26:42 vadim Exp $
+ * $Id: htup.h,v 1.8 1998/01/31 04:39:22 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -63,6 +63,8 @@ typedef HeapTupleData *HeapTuple;
 #define MaxCommandIdAttributeNumber				(-6)
 #define FirstLowInvalidHeapAttributeNumber		(-7)
 
+/* If you make any changes above, the order off offsets in this must change */
+extern long heap_sysoffset[];
 
 /* ----------------
  *		support macros

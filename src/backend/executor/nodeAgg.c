@@ -663,7 +663,6 @@ aggGetAttr(TupleTableSlot *slot,
 
 	result = 
 		heap_getattr(heapTuple, /* tuple containing attribute */
-					 buffer,	/* buffer associated with tuple */
 					 attnum,	/* attribute number of desired attribute */
 					 tuple_type,/* tuple descriptor of tuple */
 					 isNull);	/* return: is attribute null? */

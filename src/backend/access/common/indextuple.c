@@ -8,7 +8,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.22 1998/01/07 21:00:43 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/access/common/indextuple.c,v 1.23 1998/01/31 04:38:03 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -25,11 +25,6 @@
 #else
 #include <string.h>
 #endif
-
-static Size IndexInfoFindDataOffset(unsigned short t_info);
-static char *
-fastgetiattr(IndexTuple tup, int attnum,
-			 TupleDesc att, bool *isnull);
 
 /* ----------------------------------------------------------------
  *				  index_ tuple interface routines
@@ -117,10 +112,12 @@ index_formtuple(TupleDesc tupleDescriptor,
 }
 
 /* ----------------
- *		fastgetiattr
+ *		nocache_index_getattr
  *
- *		This is a newer version of fastgetiattr which attempts to be
- *		faster by caching attribute offsets in the attribute descriptor.
+ *		This gets called from index_getattr() macro, and only in cases
+ *		where we can't use cacheoffset and the value is not null.
+ *
+ *		This caches attribute offsets in the attribute descriptor.
  *
  *		an alternate way to speed things up would be to cache offsets
  *		with the tuple, but that seems more difficult unless you take
@@ -133,8 +130,8 @@ index_formtuple(TupleDesc tupleDescriptor,
  *		the same attribute descriptor will go much quicker. -cim 5/4/91
  * ----------------
  */
-static char *
-fastgetiattr(IndexTuple tup,
+Datum
+nocache_index_getattr(IndexTuple tup,
 			 int attnum,
 			 TupleDesc tupleDesc,
 			 bool *isnull)
@@ -150,9 +147,6 @@ fastgetiattr(IndexTuple tup,
 	 * ----------------
 	 */
 
-	Assert(PointerIsValid(isnull));
-	Assert(attnum > 0);
-
 	/* ----------------
 	 *	 Three cases:
 	 *
@@ -162,27 +156,37 @@ fastgetiattr(IndexTuple tup,
 	 * ----------------
 	 */
 
+#ifdef IN_MACRO
+/* This is handled in the macro */
+	Assert(PointerIsValid(isnull));
+	Assert(attnum > 0);
+
 	*isnull = false;
+#endif
+
 	data_off = IndexTupleHasMinHeader(tup) ? sizeof *tup :
 		IndexInfoFindDataOffset(tup->t_info);
 
 	if (IndexTupleNoNulls(tup))
 	{
+		attnum--;
 
+#ifdef IN_MACRO
+/* This is handled in the macro */
+	
 		/* first attribute is always at position zero */
 
 		if (attnum == 1)
 		{
-			return (fetchatt(&(att[0]), (char *) tup + data_off));
+			return (Datum) fetchatt(&(att[0]), (char *) tup + data_off);
 		}
-		attnum--;
-
 		if (att[attnum]->attcacheoff > 0)
 		{
-			return (fetchatt(&(att[attnum]),
+			return (Datum) fetchatt(&(att[attnum]),
 							 (char *) tup + data_off +
-							 att[attnum]->attcacheoff));
+							 att[attnum]->attcacheoff);
 		}
+#endif
 
 		tp = (char *) tup + data_off;
 
@@ -191,8 +195,6 @@ fastgetiattr(IndexTuple tup,
 	else
 	{							/* there's a null somewhere in the tuple */
 
-		bp = (char *) tup + sizeof(*tup);		/* "knows" t_bits are
-												 * here! */
 		slow = 0;
 		/* ----------------
 		 *		check to see if desired att is null
@@ -200,13 +202,19 @@ fastgetiattr(IndexTuple tup,
 		 */
 
 		attnum--;
+
+		bp = (char *) tup + sizeof(*tup);		/* "knows" t_bits are
+												 * here! */
+#ifdef IN_MACRO
+/* This is handled in the macro */
+		
+		if (att_isnull(attnum, bp))
 		{
-			if (att_isnull(attnum, bp))
-			{
-				*isnull = true;
-				return NULL;
-			}
+			*isnull = true;
+			return (Datum)NULL;
 		}
+#endif
+
 		/* ----------------
 		 *		Now check to see if any preceeding bits are null...
 		 * ----------------
@@ -251,8 +259,8 @@ fastgetiattr(IndexTuple tup,
 	{
 		if (att[attnum]->attcacheoff > 0)
 		{
-			return (fetchatt(&(att[attnum]),
-							 tp + att[attnum]->attcacheoff));
+			return (Datum) fetchatt(&(att[attnum]),
+							 tp + att[attnum]->attcacheoff);
 		}
 		else if (!IndexTupleAllFixed(tup))
 		{
@@ -314,7 +322,7 @@ fastgetiattr(IndexTuple tup,
 						off = (att[j]->attalign == 'd') ?
 							DOUBLEALIGN(off) : LONGALIGN(off);
 					else
-						elog(ERROR, "fastgetiattr: attribute %d has len %d",
+						elog(ERROR, "nocache_index_getattr: attribute %d has len %d",
 							 j, att[j]->attlen);
 					break;
 
@@ -324,8 +332,8 @@ fastgetiattr(IndexTuple tup,
 			off += att[j]->attlen;
 		}
 
-		return (fetchatt(&(att[attnum]),
-						 tp + att[attnum]->attcacheoff));
+		return (Datum) fetchatt(&(att[attnum]),
+						 tp + att[attnum]->attcacheoff);
 	}
 	else
 	{
@@ -382,7 +390,7 @@ fastgetiattr(IndexTuple tup,
 							DOUBLEALIGN(off) + att[i]->attlen :
 							LONGALIGN(off) + att[i]->attlen;
 					else
-						elog(ERROR, "fastgetiattr2: attribute %d has len %d",
+						elog(ERROR, "nocache_index_getattr2: attribute %d has len %d",
 							 i, att[i]->attlen);
 
 					break;
@@ -391,7 +399,7 @@ fastgetiattr(IndexTuple tup,
 
 		/*
 		 * I don't know why this code was missed here! I've got it from
-		 * heaptuple.c:fastgetattr(). - vadim 06/12/97
+		 * heaptuple.c:nocachegetattr(). - vadim 06/12/97
 		 */
 		switch (att[attnum]->attlen)
 		{
@@ -409,7 +417,7 @@ fastgetiattr(IndexTuple tup,
 				break;
 			default:
 				if (att[attnum]->attlen < sizeof(int32))
-					elog(ERROR, "fastgetattr3: attribute %d has len %d",
+					elog(ERROR, "nocache_index_getattr: attribute %d has len %d",
 						 attnum, att[attnum]->attlen);
 				if (att[attnum]->attalign == 'd')
 					off = DOUBLEALIGN(off);
@@ -418,24 +426,8 @@ fastgetiattr(IndexTuple tup,
 				break;
 		}
 
-		return (fetchatt(&att[attnum], tp + off));
+		return (Datum) fetchatt(&att[attnum], tp + off);
 	}
-}
-
-/* ----------------
- *		index_getattr
- * ----------------
- */
-Datum
-index_getattr(IndexTuple tuple,
-			  AttrNumber attNum,
-			  TupleDesc tupDesc,
-			  bool *isNullOutP)
-{
-	Assert(attNum > 0);
-
-	return (Datum)
-		fastgetiattr(tuple, attNum, tupDesc, isNullOutP);
 }
 
 RetrieveIndexResult
@@ -453,29 +445,6 @@ FormRetrieveIndexResult(ItemPointer indexItemPointer,
 	result->heap_iptr = *heapItemPointer;
 
 	return (result);
-}
-
-/*
- * Takes an infomask as argument (primarily because this needs to be usable
- * at index_formtuple time so enough space is allocated).
- *
- * Change me if adding an attribute to IndexTuples!!!!!!!!!!!
- */
-static Size
-IndexInfoFindDataOffset(unsigned short t_info)
-{
-	if (!(t_info & INDEX_NULL_MASK))
-		return ((Size) sizeof(IndexTupleData));
-	else
-	{
-		Size		size = sizeof(IndexTupleData);
-
-		if (t_info & INDEX_NULL_MASK)
-		{
-			size += sizeof(IndexAttributeBitMapData);
-		}
-		return DOUBLEALIGN(size);		/* be conservative */
-	}
 }
 
 /*

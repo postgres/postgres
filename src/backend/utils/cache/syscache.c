@@ -7,7 +7,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.12 1998/01/07 21:06:15 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/utils/cache/syscache.c,v 1.13 1998/01/31 04:38:54 momjian Exp $
  *
  * NOTES
  *	  These routines allow the parser/planner/executor to perform
@@ -544,7 +544,6 @@ SearchSysCacheGetAttribute(int cacheId,
 	}
 
 	attributeValue = heap_getattr(tp,
-								  (Buffer) 0,
 								  attributeNumber,
 								  RelationGetTupleDescriptor(relation),
 								  &isNull);

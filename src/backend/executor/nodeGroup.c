@@ -13,7 +13,7 @@
  *	  columns. (ie. tuples from the same group are consecutive)
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.13 1998/01/27 15:41:32 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/executor/nodeGroup.c,v 1.14 1998/01/31 04:38:29 momjian Exp $
  *
  *-------------------------------------------------------------------------
  */
@@ -402,13 +402,11 @@ sameGroup(TupleTableSlot *oldslot,
 		typoutput = typtoout((Oid) tupdesc->attrs[att - 1]->atttypid);
 
 		attr1 = heap_getattr(oldslot->val,
-							 InvalidBuffer,
 							 att,
 							 tupdesc,
 							 &isNull1);
 
 		attr2 = heap_getattr(newslot->val,
-							 InvalidBuffer,
 							 att,
 							 tupdesc,
 							 &isNull2);

@@ -341,7 +341,7 @@ SPI_modifytuple(Relation rel, HeapTuple tuple, int natts, int *attnum,
 	/* fetch old values and nulls */
 	for (i = 0; i < numberOfAttributes; i++)
 	{
-		v[i] = heap_getattr(tuple, InvalidBuffer, i + 1, rel->rd_att, &isnull);
+		v[i] = heap_getattr(tuple, i + 1, rel->rd_att, &isnull);
 		n[i] = (isnull) ? 'n' : ' ';
 	}
 
@@ -420,7 +420,7 @@ SPI_getvalue(HeapTuple tuple, TupleDesc tupdesc, int fnumber)
 		return (NULL);
 	}
 
-	val = heap_getattr(tuple, InvalidBuffer, fnumber, tupdesc, &isnull);
+	val = heap_getattr(tuple, fnumber, tupdesc, &isnull);
 	if (isnull)
 		return (NULL);
 	foutoid = typtoout((Oid) tupdesc->attrs[fnumber - 1]->atttypid);
@@ -446,7 +446,7 @@ SPI_getbinval(HeapTuple tuple, TupleDesc tupdesc, int fnumber, bool * isnull)
 		return ((Datum) NULL);
 	}
 
-	val = heap_getattr(tuple, InvalidBuffer, fnumber, tupdesc, isnull);
+	val = heap_getattr(tuple, fnumber, tupdesc, isnull);
 
 	return (val);
 }
