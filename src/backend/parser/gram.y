@@ -11,7 +11,7 @@
  *
  *
  * IDENTIFICATION
- *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.158 2000/03/18 00:33:45 momjian Exp $
+ *	  $Header: /cvsroot/pgsql/src/backend/parser/gram.y,v 2.159 2000/03/18 04:32:35 tgl Exp $
  *
  * HISTORY
  *	  AUTHOR			DATE			MAJOR EVENT
@@ -4168,6 +4168,8 @@ a_expr:  c_expr
 		 * If you add more explicitly-known operators, be sure to add them
 		 * also to b_expr and to the MathOp list above.
 		 */
+		| '+' a_expr %prec UMINUS
+				{	$$ = makeA_Expr(OP, "+", NULL, $2); }
 		| '-' a_expr %prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' a_expr
@@ -4384,6 +4386,8 @@ b_expr:  c_expr
 				{	$$ = $1;  }
 		| b_expr TYPECAST Typename
 				{	$$ = makeTypeCast($1, $3); }
+		| '+' b_expr %prec UMINUS
+				{	$$ = makeA_Expr(OP, "+", NULL, $2); }
 		| '-' b_expr %prec UMINUS
 				{	$$ = doNegate($2); }
 		| '%' b_expr
@@ -5480,8 +5484,9 @@ mapTargetColumns(List *src, List *dst)
  * Do not convert "float", since that is handled elsewhere
  *  for FLOAT(p) syntax.
  *
- * Converting "datetime" to "timestamp" is a temporary expedient for
- *	pre-7.0 to 7.0 compatibility; it should go away again someday.
+ * Converting "datetime" to "timestamp" and "timespan" to "interval"
+ * is a temporary expedient for pre-7.0 to 7.0 compatibility;
+ * these should go away someday.
  */
 static char *
 xlateSqlFunc(char *name)
